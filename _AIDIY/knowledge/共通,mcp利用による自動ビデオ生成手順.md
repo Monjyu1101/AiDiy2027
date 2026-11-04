@@ -1,6 +1,6 @@
 # MCP 利用による自動ビデオ生成手順
 
-> 文書: `共通,mcp利用による自動ビデオ生成手順.md` | 実装: `backend_tools/aidiy_automations/ビデオページ生成/ビデオページ生成_紹介.py`, `backend_tools/aidiy_automations/ビデオページ生成/ビデオページ生成_解説.py`, `backend_tools/aidiy_automations/ビデオページ生成/_ビデオページ生成_紹介_設定.json`, `backend_tools/aidiy_automations/ビデオページ生成/_ビデオページ生成_紹介_状況.json`, `backend_tools/tools_proc/text_to_speech.py`, `backend_tools/tools_proc/ffmpeg_control.py`, `backend_tools/tools_proc/obs_studio_control.py`, `backend_tools/tools_proc/chrome_devtools.py`, `backend_tools/tools_proc/tools_chrome.py`, `_config/mcp_text_to_speech.json`
+> 文書: `共通,mcp利用による自動ビデオ生成手順.md` | 実装: `backend_tools/aidiy_automations/ビデオページ生成/ビデオページ生成_紹介.py`, `backend_tools/aidiy_automations/ビデオページ生成/ビデオページ生成_解説.py`, `backend_tools/aidiy_automations/ビデオページ生成/_ビデオページ生成_紹介_設定.json`, `backend_tools/aidiy_automations/ビデオページ生成/_ビデオページ生成_紹介_状況.json`, `backend_tools/aidiy_automations/ビデオページ生成/utils/steps.py`, `backend_tools/tools_proc/tools_media.py`, `backend_tools/tools_proc/image_generation.py`, `backend_tools/tools_proc/text_to_speech.py`, `backend_tools/tools_proc/ffmpeg_control.py`, `backend_tools/tools_proc/obs_studio_control.py`, `backend_tools/tools_proc/chrome_devtools.py`, `backend_tools/tools_proc/tools_chrome.py`, `_config/mcp_text_to_speech.json`（実行時に生成される設定）
 
 ## このメモを使う場面
 
@@ -11,23 +11,23 @@
 
 ## 生成サンプル（実例）
 
-成果物一式は `frontend_web/public/Xビデオ/` 配下にそのまま残してある。台本・音声・HTML の粒度感、命名、`scenario.js` の項目をそのまま流用できる。
+現行サンプルは `frontend_web/public/Xビデオ/` 配下を参照する。台本・HTML・`scenario.js` の命名と構造を確認できるが、音声などの生成物はチェックアウトに含まれない場合がある。シナリオの参照先と実ファイルの存在を別々に確認する。
 
 ```
 frontend_web/public/Xビデオ/
 ├─ _common/                 # 全ビデオ共通の scene.css / scene_core.js など
-├─ AiDiy紹介_AIコア_ja/     # 一人アバター（紹介型）の例
+├─ AiDiy紹介__all_ja/     # 一人アバター（紹介型）の例
 │   ├─ index.html           # 音声付き自動再生 HTML
 │   ├─ scenario.js          # シーン定義（尺・台詞・画像）
 │   ├─ scene_000.html 〜 scene_999.html
 │   └─ images/scene_000.png 〜
-└─ ニュース_20260521_anthropic2026前半_ja/  # 二人アバター（解説・ニュース型）の例
+└─ ニュース_20260906_gpt6astra_ja/  # 二人アバター（解説・ニュース型）の例
     ├─ _gen_dialogue_audio.py
-    ├─ audio/dlg_000_01_female.mp3 〜（話者交互）
+    ├─ scenario.js          # audio/dlg_000_01_female.mp3 〜を参照（話者交互）
     └─ images/scene_000.png 〜
 ```
 
-元 OBS 録画は `C:/Users/admin/Videos/<日時>.mp4`、トリム済み MP4 は同じ Videos フォルダか上記サンプルフォルダに置く。
+元 OBS 録画の保存先は OBS の出力設定と停止時の返却パスで確認する。トリム済み MP4 は用途に応じた保存先へ出力する。
 
 ## 実装済みの自動化スクリプト
 
@@ -40,8 +40,8 @@ frontend_web/public/Xビデオ/
 ### 生成中プレビューと完成後再生
 
 - Step 02〜03 はページを表示するだけで、自動再生しない
-- Step 04〜08 は `auto=loop&speaker=false` で無音ループ再生する
-- Step 09 は最終確認が完了した後に `auto=loop&speaker=true` で音声つきループ再生を開始する
+- Step 04〜09 は `auto=loop&speaker=false` で無音ループ再生する
+- Step 10 は最終確認が完了した後に `auto=loop&speaker=true` で音声つきループ再生を開始する
 - Step 99 は最終確認済みであることを保証して終了通知を読み上げるだけとし、ブラウザの再生状態は変更しない
 
 ## 全体フロー
@@ -69,7 +69,7 @@ frontend_web/public/Xビデオ/
 
 ## 1. シナリオと HTML の構造
 
-`scenario.json` は 1 シーン = 1 MP3 = 1 表示単位。`start_sec` / `duration_sec` は **生成後に MP3 実尺で再計算する**。HTML には `<audio>` を DOM に配置せず `new Audio()` をスクリプト保持し、シーン進行は次の二重トリガで保証する。
+以下の `scenario.json` と HTML は 1 シーン = 1 MP3 の最小構成例であり、現行サンプル全体の仕様ではない。紹介型の `scenario.js` は `short_audio` / `long_audio`、解説型は `dialogue` 内の発話別音声を持つため、既存ページではその構造に合わせる。`start_sec` / `duration_sec` は **生成後に MP3 実尺で再計算する**。HTML には `<audio>` を DOM に配置せず `new Audio()` をスクリプト保持し、シーン進行は次の二重トリガで保証する。
 
 - `audioPlayer.addEventListener("ended", …)` — 主タイマー
 - `setTimeout(advanceFromScene, (duration_sec + 0.8) * 1000)` — 保険タイマー（`ended` を取りこぼした場合）
@@ -247,14 +247,14 @@ for scene in sc["scenes"]:
 | `contain` | 縦横比を保ち全体を表示。余白は背景色で埋まる | 生成画像（余白が出ても画像全体を見せたい） |
 | `cover` | 枠全体を埋める。端が切れる | 写真・風景など切れてもよいもの |
 
-生成画像 (1792×1024) を動画プレイヤー枠 (≒ 16:9) に表示するときは **`contain` 推奨**（`cover` だと左右が大きく見切れる）。
+生成画像 (1792×1024) を動画プレイヤー枠 (≒ 16:9) に表示するときは **`contain` 推奨**（`cover` では枠との比率差に応じて上下または左右が切れる）。
 
 ## 2. ナレーション生成（aidiy_text_to_speech）
 
 ```
 mcp__aidiy_text_to_speech__synthesize_speech
   speech_text  : シーンのナレーション原文
-  provider     : "edge"        ← 紹介ビデオ標準。キー不要・常時利用可。openai / gemini / freeai / auto も指定可
+  provider     : "edge"        ← 紹介ビデオ標準。API キー不要。通信・サービスの利用可否は別途確認。openai / gemini / freeai / auto も指定可
   voice        : "female"
   save_path    : 絶対パス（例: D:/.../audio/scene_001.mp3）
 ```
@@ -263,20 +263,21 @@ mcp__aidiy_text_to_speech__synthesize_speech
 > ```
 > POST http://127.0.0.1:8095/aidiy_text_to_speech/synthesize
 > Content-Type: application/json
-> Body: { "text": "ナレーション本文", "provider": "edge", "voice": "female",
+> Body: { "speech_text": "ナレーション本文", "provider": "edge", "voice": "female",
 >         "save_path": "D:/.../audio/scene_001.mp3", "local_play": false }
-> Response: audio/mpeg バイナリ（save_path 指定時はファイルにも同時保存）
+> Response: JSON（save_path、used_provider、base64_audio 等。save_path 明示時の base64_audio は空文字）
 > ```
 
-- **紹介ビデオのナレーション音声は必ず MP3 で生成・保存する**。WAV ファイルをそのまま使うと duration 計算が狂う（WAV の byte_rate ÷ ファイルサイズ ≠ MP3 の実尺）。
+- **紹介ビデオのナレーション音声は必ず MP3 で生成・保存する**。拡張子やファイルサイズから尺を推定せず、保存された音声を ffprobe 等で実測する。
 - `freeai` プロバイダは Google Gemini TTS を使い、内部で PCM → WAV → MP3 変換を行う。MP3 変換には ffmpeg（優先）または `lameenc`（フォールバック）を使う。
 - `lameenc` は `backend_tools` の依存に含まれている（`uv add lameenc` で追加済み）。ffmpeg がない環境でも MP3 出力できる。
 - **フォールバック**は `backend_tools/tools_proc/text_to_speech.py` 側に実装で持つ（ここには書かない）。
 - **MP3 直接出力の試み**: Gemini TTS は `generationConfig.audioConfig.audioEncoding: "MP3"` で MP3 直接出力をリクエストする。現行の `generateContent` エンドポイントが非対応（HTTP 400）の場合は自動的に PCM モードで再試行し、ffmpeg で MP3 変換する。将来 API が対応すれば変換不要になる。
 - `_wav_to_mp3` バグ修正済み: ffmpeg 導入後に `None` を返す問題（else ブランチ欠落）を修正。ffmpeg 優先、失敗時は lameenc にフォールバック。
-- 発音辞書は **`_config/mcp_text_to_speech.json`** が単一の正本。`AiDiy → アイディー`, `MCP → エムシーピー`, `横展開 → よこてんかい` など。辞書を更新したら **必ず全シーンを取り直す**（シーン尺も変わる可能性あり）。
-- レスポンスには base64 audio が含まれ、トークン上限を超えてエラー扱いに見えることがあるが、`save_path` を指定していればファイルは正常保存されている。`save_path` 指定時はレスポンス本文を読み返す必要はなく、**ファイルサイズと尺だけ確認**する。
-- `local_play: true` を使えば、生成と同時に **MCP ホスト側のスピーカーで読み上げ**ができる。人間オペレーター向け案内（「Chrome を最前面にしてください」等）に使う。
+- 発音辞書は **`_config/mcp_text_to_speech.json`** が単一の正本（未起動のチェックアウトにはない場合がある）。`AiDiy → アイディー`, `MCP → エムシーピー`, `横展開 → よこてんかい` など。辞書を更新したら **必ず全シーンを取り直す**（シーン尺も変わる可能性あり）。
+- `save_path` 明示時は `base64_audio` が空文字になる。省略時は base64 を含む。HTTP の `error`、MCP のエラー内容、実際の `used_provider` と返却 `save_path` を確認してから、ファイルの存在・サイズ・尺を確認する。保存要求だけで成功とは判断しない。
+- `ratio` の `None` / `0` / `"auto"` は実際の provider ごとの既定値（edge/openai: 1.2、gemini/freeai: 1.1）。`1` は速度調整なし。`local_rate` では指定しない。
+- `local_play: true` を使えば、合成後に **MCP ホスト側でローカル再生を試行**できる。人間オペレーター向け案内（「Chrome を最前面にしてください」等）に使う。
 
 ## 3. 尺の確定（ffprobe または Python）
 
@@ -291,21 +292,20 @@ mcp__aidiy_ffmpeg_control__ffprobe_run
 
 落とし穴:
 
-- **`args_str` の引用符**: 内部で空白スプリットされるため、Windows パスを `"…"` で囲むと `ffprobe` 側に `"…"` ごと渡って `Invalid argument` になる。**スペースを含まないパスにし、引用符は付けない**。スペース必須なら一時ファイル名にコピー (`aidiy_intro_take1.mp4` など) してから渡す。
+- **`args_str` の引用符**: `ffmpeg_control.py` の `_split_args` は引用符付きの空白入りパスを1引数として扱い、外側の引用符だけを除く。Windows のバックスラッシュも維持する。例: `-v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "C:\Users\user\Videos\take 1.mp3"`。スペースなし名へのコピーは不要。
 
 ### ffprobe がない環境（Linux codespace 等）
 
-TTS 生成時に返ってくる `duration_sec` を使うか、`mutagen` ライブラリを使う:
+`mutagen` ライブラリなどで保存済み MP3 を実測する:
 
 ```python
 # mutagen がある場合
 from mutagen.mp3 import MP3
 duration = MP3("audio/scene_001.mp3").info.length
 
-# mutagen もない場合は TTS 呼び出し結果の duration_sec をそのまま利用
 ```
 
-`freeai` プロバイダは生成時に実測 `duration_sec` を返すため、**生成ログの秒数を直接 scenario.js に書き込む**のが最も確実（ファイルの再読み不要）。
+現行 TTS 応答に一般の音声全体の `duration_sec` はない。`silence_duration_sec` は無音処理の情報で、全体尺には使わない。ffprobe / mutagen が使えなければ計測環境を準備し、推定値で確定扱いにしない。
 
 `start_sec` は short / long の系列ごとに 0 秒から累積で再計算し、ルートの合計尺も更新する。`assets.json` はコピー元のシーン情報を残さず、確定した `scenario.js` と実ファイルから再構築する。更新後は `project_name`、画像件数、音声件数、`bytes`、`duration_sec`、`status` が出力先と一致することを確認する。
 
@@ -371,8 +371,8 @@ total = round(s, 3)  # 合計が目標以下か確認
 | 設定 | 推奨値 | 備考 |
 |------|--------|------|
 | provider | openai | 品質・安定性のバランスが良い |
-| model | gpt-image-2.5-sunburst | 現時点の最新（高精度）。高速重視なら gpt-image-2.5-flare |
-| size | 1792x1024 | 16:9 横長（動画向け） |
+| model | gpt-image-2.5-sunburst | 現行実装の OpenAI 既定モデル。利用可能性は provider の応答で確認 |
+| size | 1792x1024 | 横長だが厳密な16:9ではない。モデル対応サイズを確認 |
 | quality | medium | コスト削減しつつ十分な品質 |
 | save_path | images/scene_001.png〜 | PNG 拡張子で自動保存 |
 
@@ -395,7 +395,7 @@ mcp__aidiy_image_generation__generate_image
 > Body: { "prompt": "...", "provider": "openai", "model": "gpt-image-2.5-sunburst",
 >         "size": "1792x1024", "quality": "medium",
 >         "save_path": "D:/path/to/images/scene_001.png" }
-> Response: image/png バイナリ（save_path 指定時はファイルにも同時保存）
+> Response: JSON（save_path 指定時はファイル情報、未指定時は data に base64 と保存先情報。失敗時は error）
 > ```
 
 ### 注意点
@@ -403,7 +403,7 @@ mcp__aidiy_image_generation__generate_image
 - `title` や `subtitle` だけで画像生成しない。**必ず根拠文書の要点 (`source_summary`, `factual_bullets`) を先に整理し、それを prompt へ埋め込む**
 - `source_documents` を `scenario.json` や `assets.json` に残し、あとで「この画像はどの情報を元にしたか」を追跡できるようにする
 - AGENTS.md や既存 UI と食い違う要素（未実装の製品ロゴ、存在しない画面構成、MCP 数違いなど）は `forbidden_elements` として先に明記する
-- `save_path` 先が存在しない場合はエラーになるため、事前に `os.makedirs()` で作成する
+- `save_path` の親ディレクトリは保存処理が作成する。書込み権限と返却パス、実ファイルを確認する
 - 1 枚あたり 10〜30 秒かかるため、シーン数が多い場合も **逐次実行**（並列不可）。Codex 画像プロバイダーを同時実行すると一時出力パスが競合し、別シーンへ同一画像が保存される場合がある
 - `save_path` に既存ファイルがあると上書きされる
 - 生成完了後に `assets.json` の `images[].status` を `"generated"` に更新する
@@ -421,7 +421,7 @@ MCP ツール `mcp__aidiy_movie_generation__generate_movie` または HTTP POST 
 | 設定 | 推奨値 | 備考 |
 |------|--------|------|
 | provider | freeai / gemini | freeai_key_id または gemini_key_id が必要 |
-| model | auto（= veo-3.1-generate-preview） | 最新 Veo 3.1 |
+| model | auto（= veo-3.1-generate-preview） | 実装の既定値。利用可能性は provider の応答で確認 |
 | duration_seconds | 6〜8 | シーンの尺に合わせる |
 | aspect_ratio | 16:9 | 横型動画標準。縦型は 9:16 |
 | resolution | auto | 指定しなければモデルのデフォルト |
@@ -497,14 +497,14 @@ JSON.stringify({sceneIndex, playing, audioPaused: audioPlayer.paused, playBtnTex
 落とし穴:
 
 - **`StartRecord` の応答 `{}` ≠ 録画中**: 直後の `GetRecordStatus.outputActive` を必ず確認する。`outputActive: false` のまま固まる場合は OBS 側設定（プロファイル、出力先、ソース）が原因。シーン「シーン」に `画面キャプチャ` 等のソースが入っていること、`adv_file_output`（ffmpeg_muxer / 1920×1080）が選択されていることを OBS GUI で確認する。
-- **`obs_request` の `request_data` パラメータ**: tool 仕様は string だが、harness が `{...}` を JSON object に自動パースしてしまい pydantic が型エラーを返す。引数を要するリクエスト（`GetSceneItemList` 等）は現状この経路では送れない。**追加引数なしで通る `StartRecord` / `StopRecord` / `GetRecordStatus` / `GetOutputList` などに留める**。
-- 録画ファイル既定パスは `C:\Users\admin\Videos\YYYY-MM-DD HH-MM-SS.mp4`。スペースを含むためその後の ffprobe / ffmpeg はスペースなし名にコピーしてから扱う。
+- **`obs_request` の `request_data`**: 公開 MCP / HTTP 引数は文字列なので、JSON オブジェクト文字列（例: `"{\"sceneName\":\"シーン\"}"`）で渡す。内部の `parse_request_data` は辞書も受け付けるが、公開引数へ辞書を直接渡せるとは限らない。配列・不正 JSON はエラーになる。
+- 録画先は OBS のプロファイル・出力設定に依存し、固定の admin パスではない。停止時の返却パスと実ファイルを確認する。空白を含むパスも引用符で囲めば ffmpeg / ffprobe に渡せる。
 
 ## 6. 音声ナレーションで人間とコラボ実行（local_play:true）
 
 **撮影手順の一部**。ブラウザ再生 → 録画 → 録画停止 までの間、自動化できない GUI 操作（OBS の手動録画開始ボタン、Chrome ウィンドウの最前面化、視聴採否）を、TTS の音声指示でオペレーターに依頼するパターン。録画後のトリムや後処理ではなく、**録画タイミングを揃えるための撮影中ガイド**として使う。
 
-`mcp__aidiy_text_to_speech__synthesize_speech` に **`local_play: true`** を渡すと、合成と同時に **MCP ホスト側のスピーカーで読み上げる**。チャットの戻り値を待つ前に音だけが届くため、人間オペレーターの目を画面から離した状態でも次の操作を知らせられる。
+`mcp__aidiy_text_to_speech__synthesize_speech` に **`local_play: true`** を渡すと、合成後に **MCP ホスト側で再生を試行する**。人間オペレーターへの案内に使えるが、実際に音が聞こえたかは別途確認する。
 
 ### 何をしゃべらせるか
 
@@ -524,9 +524,9 @@ JSON.stringify({sceneIndex, playing, audioPaused: audioPlayer.paused, playBtnTex
 
 ### 注意点
 
-- `local_play:true` のレスポンスは base64 audio を含み、トークン上限超でエラー扱いに見えるが、**ホスト側の再生は通常通り進む**。本文を読み返さない。
-- 読み上げは非同期で、MCP 呼び出しは音声完了を待たずに戻ることがある。**人間に「聞かせる時間」を取りたい場合は、MCP 呼び出し後に `Bash sleep N` を挟む**（5 秒前後）。
-- 短い指示文は速度 1.2 倍（既定の `local_rate`）でも 5〜10 秒。長文を読ませる場合は文を分割して `local_play:true` を 2 回呼ぶか、合図ワード受領を「テキスト読了の代わり」に使う。
+- `save_path` を明示して base64 の返却を抑え、エラーと `local_play_executed` を確認する。再生要求や成功フラグだけで人間に聞こえたとは断定しない。
+- MCP / HTTP は `await asyncio.to_thread(tts.play_mp3, ...)` で再生処理を待つ。Windows は MCI の `play ... wait`、macOS は `afplay`、Linux は `gst-launch-1.0` を使う。機器・音量・再生コマンドの失敗確認は別に必要で、呼出し後の固定 sleep を音声完了保証にしない。
+- 話速は `ratio` で指定する（第2章参照）。長い指示は分割し、重要な操作開始はチャットの合図で同期する。
 - 合図ワードは **アシスタント側がチャット文字列として受信できるもの**にする。「開始」「OK」「準備完了」など 1〜数文字。アシスタント側は音声では聞けないので、必ずチャット入力で同期する。
 - 重要操作（録画停止、削除、コミット）の前後は **音声 + 画面状態確認の二重チェック**にする。音声だけだと聞き逃す。
 
@@ -534,7 +534,7 @@ JSON.stringify({sceneIndex, playing, audioPaused: audioPlayer.paused, playBtnTex
 
 | 状況 | 自動化 | 手動（音声ガイド） |
 |------|--------|------------------|
-| ブラウザ再生（autoplay） | `cdp_user_gesture.py` で自動 | 自動が効かない場合のみ手動クリック |
+| ブラウザ再生（autoplay） | `cdp_command` の `Runtime.evaluate` + `userGesture:true` で自動 | 自動が効かない場合のみ手動クリック |
 | OBS 録画開始 | `obs_record action=start` で自動 | `outputActive=false` 固定の時は手動 |
 | Chrome ウィンドウ最前面 | `chrome_devtools.activate_tab` を試行 | エラー時は音声ガイドで手動最前面 |
 | 録画後の確認・採否判断 | 不可 | 必ず人間が視聴して判断 |
@@ -569,7 +569,7 @@ mcp__aidiy_ffmpeg_control__video_trimming
   output_path : C:\Users\admin\Videos\aidiy_recording_trim.mp4
 ```
 
-`video_trimming` は H.264 (libx264 CRF 20) + AAC 192kbps + `+faststart` の既定値で再エンコードする。録画ファイル名にスペースが含まれていても、`input_path` 引数で渡す場合はコピー不要。`args_str` を直接使う `ffmpeg_run` / `ffprobe_run` ではスペース入りパスを避ける。
+`video_trimming` は H.264 (libx264 CRF 20) + AAC 192kbps + `+faststart` の既定値で再エンコードする。録画ファイル名にスペースが含まれていても、`input_path` 引数で渡す場合はコピー不要。`args_str` を使う `ffmpeg_run` / `ffprobe_run` でも、スペース入りパスを引用符で囲めばコピー不要。
 
 `ffmpeg_analyze_audio_timerange` が使えない場合だけ、`ffmpeg_run` + `silencedetect` で候補を拾う。
 
@@ -580,7 +580,7 @@ mcp__aidiy_ffmpeg_control__ffmpeg_run
 ```
 
 - stderr に `silence_start` / `silence_end` が出る。**先頭側は最初の `silence_end` を開始候補、末尾側は最後の `silence_start` を終了候補**として読むと分かりやすい。
-- 録画ファイルが `C:\Users\admin\Videos\2026-... .mp4` のようにスペースを含む場合は、**必ずスペースなし名へコピーしてから** `args_str` に渡す。
+- 録画ファイルが `C:\Users\admin\Videos\2026-... .mp4` のようにスペースを含む場合は、**パス全体を引用符で囲んで** `args_str` に渡す。
 - ナレーション中の短い間まで拾いすぎる場合は `d=0.8` へ伸ばす、環境ノイズを拾う場合は `noise=-30dB` 付近へ上げる、の順で調整する。
 - 無音抽出は **トリム秒数の初期候補を出すための補助**。最終的な採否は必ず人間が視聴して決める。
 
@@ -606,7 +606,7 @@ mcp__aidiy_ffmpeg_control__ffmpeg_run
 5. `aidiy_text_to_speech.synthesize_speech` を `local_play:true` で **「10秒後に録画と再生を開始します」を読み上げ**
 6. **10秒待機**（`Start-Sleep -Seconds 10` 等）— 人間が Chrome を最前面・OBS を確認する猶予
 7. `obs_record action=start` → `GetRecordStatus.outputActive=true` を確認
-8. `python scripts/cdp_user_gesture.py <tab_id> "sceneIndex=0; renderBaseForScene(); play()"` で先頭から再生開始
+8. `cdp_command` の `Runtime.evaluate` に `expression: "sceneIndex=0; renderBaseForScene(); play()"` と `userGesture:true` を渡して先頭から再生開始
 9. `eval_js` で `playing=true` / `audioPaused=false` を確認
 10. 合計尺 + 余白（例: 合計54秒なら60秒）待機
 11. `obs_record action=stop` → `outputActive=false` を確認、最新 mp4 を取得
@@ -626,5 +626,5 @@ mcp__aidiy_ffmpeg_control__ffmpeg_run
 - 画像を作り直すときは `image_prompt` だけで再生成せず、**元にした `source_documents` / `source_summary` / `factual_bullets` も見直してから**再生成する。誤った根拠のまま prompt だけ調整すると、見た目だけ直って内容がずれたまま残る。
 - ブラウザでの再生は **常に CDP `userGesture:true`** で起動する。`mcp__aidiy_chrome_devtools__click` は user activation 扱いにならない（Chrome のバージョン依存）。再生コマンドは `play()` 単体ではなく **`sceneIndex=0; renderBaseForScene(); play()`** にして先頭リセットを確実に行う。
 - OBS の手動操作（録画開始ボタンを GUI で押す）に切り替える場合は、`local_play:true` の音声案内で **「OBS の録画開始ボタンを押し、Chrome を最前面に」→ 完了したらチャットに合図** という対話パターンに揃える。手動と自動の混在を想定して MP3 を全シーン揃えておけば、いつ録画開始しても損失は前後トリムで吸収できる。
-- ファイルパスにスペースが入ると `ffprobe_run` / `ffmpeg_run` の `args_str` 経由で破綻する。**OBS 出力 `2026-... .mp4` は必ずスペースなし名にコピー**してから扱う。
-- レスポンスがトークン上限超でエラー扱いになっても、`save_path` 指定の TTS と `returncode==0` の ffmpeg は成功している。本文を読み返さず、**ファイルシステム側で結果確認**する。
+- `ffprobe_run` / `ffmpeg_run` の `args_str` では空白入りパスを引用符で囲む。OBS 出力をスペースなし名にコピーする必要はない。
+- TTS は返却エラー・provider・保存先を、ffmpeg は `returncode` を確認し、実ファイルの尺・音声・映像まで検証する。応答が欠落した場合は成功と決めつけず保存先を確認し、上書き再実行の前に結果を確定する。

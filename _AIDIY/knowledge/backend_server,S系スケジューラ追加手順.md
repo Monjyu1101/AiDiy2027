@@ -49,17 +49,19 @@ class ドラッグ更新Request(BaseModel):
 
 ### ドラッグ更新・リサイズ更新
 
+以下は更新部分の概念例。実際のAPIでは日時形式・対象行・重複・認証情報を既存ルーターに合わせて検証する。T配車は明細SEQを持たない。
+
 ```python
 @router.post("/ドラッグ更新")
 def ドラッグ更新(request: ドラッグ更新Request, db: Session = Depends(get_db),
                 current_user = Depends(get_current_user)):
     record = db.query(T配車).filter(
-        T配車.配車ID == request.ID, T配車.明細SEQ == 0
+        T配車.配車伝票ID == request.ID
     ).first()
     if not record:
         return {"status": "NG", "message": "対象データなし"}
-    record.開始日付 = request.新開始日付
-    record.終了日付 = request.新終了日付
+    record.配車開始日時 = request.新開始日付
+    record.配車終了日時 = request.新終了日付
     record.車両ID   = request.新行ID
     audit = update_audit_fields(request.dict())
     for k, v in audit.items():
@@ -91,7 +93,6 @@ def ドラッグ更新(request: ドラッグ更新Request, db: Session = Depends
 ```powershell
 cd backend_server
 .venv\Scripts\python.exe -m py_compile apps_router\S<名称>.py
-.venv\Scripts\python.exe -c "import apps_main"
 ```
 
 - Swagger `http://127.0.0.1:8098/docs` で各エンドポイントを実行する。
@@ -99,3 +100,5 @@ cd backend_server
 - ドラッグ更新後に再取得して位置が保存されていることを確認する。
 - 既存予定と重なる更新で `NG` が返ることを確認する。
 - 週表示 / 日表示を分けた場合、同じ更新結果が両方に反映されることを確認する。
+
+`apps_main.py` はimport時に `create_all()` を実行する。importによる確認は実DBへ向けず、設定・DBを隔離した検証環境で行う。

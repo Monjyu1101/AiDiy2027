@@ -65,7 +65,7 @@
 
 ## 設定変更手順
 
-Code CLIの `same（変更無し）` は、CLI起動時に `--model` を渡さない指定。Codex / Claude CLI / Copilot / Antigravity / Grok / OpenCode / AiDiy Hermes / Claude・Codex Ollamaの新規・継続の両方に適用する。Code画面とWeb / AvatarのAI設定画面は共通の `available_models.code_models` を使うため、同じ候補を表示する。候補の追加後はbackend_serverを再起動して画面のモデル一覧を再取得する。
+Code CLIの `same（変更無し）` は保存済み選択を使う指定。多くのCLIは `--model` を省略するが、Hermesは `--provider same --model same`、OpenCodeは保存済み最終選択モデルがあればそのモデルを明示する。Code画面とWeb / AvatarのAI設定画面は共通の `available_models.code_models` を使うため、同じ候補を表示する。候補の追加後はbackend_serverを再起動して画面のモデル一覧を再取得する。
 
 ### AI設定・再起動画面のプロバイダ変更
 
@@ -93,7 +93,7 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 - Decisions未起動・利用不可・タイムアウト・不正応答・回答拒否でもCLIを止めない。GPT系は今回の候補の `sol` → `terra` → `luna` の順、Claudeは `sonnet` へ戻す。GPT系で通常候補がない場合は `same` とし、`astra` へ自動フォールバックしない。判断の待機は最大15秒。
 - 選択結果は今回の実行だけに適用し、設定の `auto` は変更しない。選択できた場合は `[選択モデル: モデル名]` をCLIの最初の出力より先に `output_stream` で送る。
 - MCP `aidiy_code_agents` の `ai_model: "auto"` もCLIへそのまま渡す。明示モデル・`same` は判断を呼ばない。MCP結果の `selected_model` で使用モデルを確認でき、指定省略時は空文字。
-- `claude_sdk` はCLI自動選択の対象外。
+- `claude_sdk` も `auto` では `select_model("claude_cli", ...)` により同じ判断を使う。
 
 ### JSON を直接編集する場合
 
@@ -154,9 +154,9 @@ Web / Avatar とも「保存(json書換)」は `save: true`、再起動要求な
 
 JSONではLIVEブロックの後に `PREDICTION_AI_NAME` と方式別7モデル（`PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL`）を置き、その直後に判断用の `DECISION_AI_NAME` と方式別4モデル（`DECISION_OPENAI_MODEL` / `DECISION_OAUTH_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL`）を置く。Predictionの初期値・欠落時は方式とChat系4モデルが `auto`、CLI系3モデルが `gpt-6-luna`（Hermesは `openai_oauth/gpt-6-luna`）で、内部RESTの `aidiy_prediction_llms` が予測実行に使用する。Web / Avatar両方のAI設定再起動画面も CHAT → LIVE → PREDICTION → DECISION → CODE の順に表示する。判断の初期値・欠落時もすべて `auto` で、方式のautoは起動チェック成功のものから OAuth → FreeAI → Decisions API → Gemini の順で選ぶ。
 
-予測は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）で実行し、`project_path` が必須。方式は明示引数 → `PREDICTION_AI_NAME`、モデルは明示引数 → 決定した方式のキー（`openai_chat`→`PREDICTION_OPENAI_MODEL`、`openai_oauth`→`PREDICTION_OAUTH_MODEL`、`gemini_chat`→`PREDICTION_GEMINI_MODEL`、`freeai_chat`→`PREDICTION_FREEAI_MODEL`、`codex_cli`→`PREDICTION_CODEX_CLI_MODEL`、`copilot_cli`→`PREDICTION_COPILOT_CLI_MODEL`、`aidiy_hermes`→`PREDICTION_AIDIY_HERMES_MODEL`）の順で決める。方式設定もautoなら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。CLI方式（`codex_cli` / `copilot_cli` / `aidiy_hermes`）はautoで最優先に選ばれ、空の一時フォルダで権限none・継続なしの1回だけ実行する。正常応答の先頭に `[[PREDICTION]]` を付けさせ、目印がない応答は実行エラーとして扱う。CLI自身のセッション履歴はCLI側に残る場合がある。そのモデルもautoなら選んだ方式の先頭候補を使う。予測JSONではOpenAI API区分を `openai_chat` とし、`openai_decisions` は含めない。履歴の読み取り・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。判断側の候補・選択順は変更しない。
+予測は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）で実行し、`project_path` が必須。方式は明示引数 → `PREDICTION_AI_NAME`、モデルは明示引数 → 決定した方式のキー（`openai_chat`→`PREDICTION_OPENAI_MODEL`、`openai_oauth`→`PREDICTION_OAUTH_MODEL`、`gemini_chat`→`PREDICTION_GEMINI_MODEL`、`freeai_chat`→`PREDICTION_FREEAI_MODEL`、`codex_cli`→`PREDICTION_CODEX_CLI_MODEL`、`copilot_cli`→`PREDICTION_COPILOT_CLI_MODEL`、`aidiy_hermes`→`PREDICTION_AIDIY_HERMES_MODEL`）の順で決める。方式設定もautoなら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。CLI方式（`codex_cli` / `copilot_cli` / `aidiy_hermes`）はautoで最優先に選ばれ、指定プロジェクトでCLI読取専用・権限none・継続なしの1回だけ実行する。正常応答の先頭に `[[PREDICTION]]` を付けさせ、目印がない応答は実行エラーとして扱う。CLI自身のセッション履歴はCLI側に残る場合がある。そのモデルもautoなら選んだ方式の先頭候補を使う。予測JSONではOpenAI API区分を `openai_chat` とし、`openai_decisions` は含めない。履歴の読み取り・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。判断側の候補・選択順は変更しない。
 
-予測の候補は `conf_models.get_prediction_models()` が毎回読む `_AIDIY/aidiy_diag/prediction_models_info.json` を、取得APIの `available_models.prediction_models` へ渡す。実行側と同じ4方式・有効なモデルIDだけを展開し、外部APIへの照会や候補の補完は行わない。方式がautoの場合は実行時と同じ優先順で最初に候補のある1方式のモデルを表示し、OpenAI APIは明示指定時だけ選べる。方式の手動変更時はモデルをautoへ戻す。ファイルが未取得・空・不正でもautoと保存値を保持し、一覧外の保存値は「保持値・Diag一覧外／未確認」と表示する。未編集の値は他項目だけの保存で上書きしない。PredictionはToolsが共通JSONを読むため、取得APIでは保存済みの値をセッションの古い値より優先し、保存後の次回予測から適用する。
+予測の候補は `conf_models.get_prediction_models()` が毎回読む `_AIDIY/aidiy_diag/prediction_models_info.json` を、取得APIの `available_models.prediction_models` へ渡す。実行側と同じ7方式・有効なモデルIDだけを展開し、外部APIへの照会や候補の補完は行わない。方式がautoの場合は実行時と同じ優先順で最初に候補のある1方式のモデルを表示し、OpenAI APIもこの自動選択順に含まれる。方式の手動変更時はモデルをautoへ戻す。ファイルが未取得・空・不正でもautoと保存値を保持し、一覧外の保存値は「保持値・Diag一覧外／未確認」と表示する。未編集の値は他項目だけの保存で上書きしない。PredictionはToolsが共通JSONを読むため、取得APIでは保存済みの値をセッションの古い値より優先し、保存後の次回予測から適用する。
 
 判断の候補は `conf_models.get_decisions_models()` が毎回読む `_AIDIY/aidiy_diag/decisions_models_info.json` を、取得APIの `available_models.decision_models` へ渡す。方式がautoなら全方式の取得済み候補を合わせる。外部APIへの照会や、実行時の既定モデルを利用可能候補として補う処理はしない。ファイルが未取得・空・不正でもautoと現在設定を保持する。未掲載のモデルは「保持値・Diag一覧外／未確認」と表示し、旧別名 `openai_jsonchat` はOAuthの候補を使いながら保存値を維持する。
 
@@ -211,11 +211,7 @@ Code CLI の権限モードは `CODE_PERMISSIONS` で管理する。設定 UI �
 
 - `frontend_avatar/src/api/config.ts` の `defaultModelSettings()` は backend 取得前のフォールバック。`conf_json.py` のデフォルトとずれると初期表示が混乱する
 - `CODE_AI<N>_MODEL` はスロットごとの現在モデル、`CODE_CODEX_CLI_MODEL` のようなキーは CLI 種別ごとのデフォルト。混同しない
-- `claude_cli` のモデル候補は `scripts/cli_bat/_claude-code.bat` の `MODEL` 値と `auto` に揃える。`_config/AiDiy_code_claude_cli.json` が古い場合は `conf_model.py` の初期化時に候補を同期する
-- `copilot_cli` のモデル候補は `backend_server/conf/conf_model.py` で定義し、`scripts/cli_bat/_copilot_cli.bat` の `MODEL` 値と一致させる。`_config/AiDiy_code_copilot_cli.json` が古い場合は候補を同期する
-- `codex_cli` のモデル候補は `scripts/cli_bat/_codex_cli.bat` の `MODEL` 値と `auto` に揃える。`_config/AiDiy_code_codex_cli.json` が古い場合は `conf_model.py` の初期化時に候補を同期する
-- `grok_cli` のモデル候補も `scripts/cli_bat/_grok_cli.bat` の `MODEL` 値と `auto` に揃える。`_config/AiDiy_code_grok_cli.json` が古い場合は同様に同期する
-- `aidiy_hermes` の設定画面候補は `scripts/cli_bat/_hermes_cli.bat` の OpenAI OAuth モデルと `auto` に揃える。候補は `conf_model.py` の `_get_aidiy_hermes_models()` で定義する。候補値は `openai_oauth/<モデルID>` とし、専用の `AiDiy_code_*.json` は使わない
+- Codeモデル候補の正本はDiagの `_AIDIY/aidiy_diag/code_models_info.json`。`backend_diag/モデル情報/` が取得・合成し、`conf_model.py` は読込時に `auto` / `same` を付加する。旧 `_config/AiDiy_code_*.json` やbatとの同期は行わない。HermesのOAuth候補は `openai_oauth/<モデルID>` を保持する。
 - 設定変更は既存 WebSocket セッションへ即時完全反映される前提にしない。再起動後の再接続で確認する
 - Code AI は現行6枠。枠数確認は `backend_server/core_router/AIコア.py` と frontend の `PanelKey` を見る
 
@@ -226,4 +222,4 @@ Code CLI の権限モードは `CODE_PERMISSIONS` で管理する。設定 UI �
 - `node --test scripts/checks/decision-settings.test.cjs` で両実SFCの候補・保存・互換を確認する。任意のブラウザQAは `node scripts/checks/decision-settings-browser.cjs`。既存Chrome/Edgeを一時プロファイルで起動し、合成設定APIだけを使う。`SETTINGS_QA_OUTPUT` でスクリーンショット保存先を指定できる。
 - 「保存(json書換)」で `AiDiy_key.json` が更新され、サーバーが再起動しないことを確認する。再起動を要求した場合は、指定したサーバーの再起動と再接続を確認する
 
-設定JSONの生成・不足補完の順序は CHAT → LIVE → PREDICTION → DECISION → CODE → TASK → TEAM。Predictionの方式と方式別7モデルは新規・欠落時だけ `auto` を補完し、既存値を保持する。両設定画面にPredictionの方式・方式別モデルを表示する。判断の新規既定値は方式と4モデルとも `auto`。旧キーの移行・読み替えは行わない。設定取得・保存APIは `/core/AIコア/モデル情報/取得` と `/core/AIコア/モデル情報/設定`。
+設定JSONの生成・不足補完の順序は CHAT → LIVE → PREDICTION → DECISION → CODE → TASK → TEAM。Predictionの新規・欠落時は方式とChat系4モデルを `auto`、CLI系を `gpt-6-luna`（Hermesは `openai_oauth/gpt-6-luna`）で補完し、既存値を保持する。両設定画面にPredictionの方式・方式別モデルを表示する。判断の新規既定値は方式と4モデルとも `auto`。旧キーの移行・読み替えは行わない。設定取得・保存APIは `/core/AIコア/モデル情報/取得` と `/core/AIコア/モデル情報/設定`。

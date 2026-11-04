@@ -112,7 +112,7 @@ res = requests.post("http://127.0.0.1:8095/aidiy_sqlite/list_tables", json={})
 print(res.json())
 
 # Python 構文チェック
-res = requests.post("http://127.0.0.1:8095/aidiy_code_check/check_python_syntax",
+res = requests.post("http://127.0.0.1:8095/aidiy_code_check/python_syntax",
                     json={"file_path": "backend_server/core_main.py", "venv_project": "backend_server"})
 print(res.json())
 
@@ -172,7 +172,7 @@ Tools（8095）の標準起動は `127.0.0.1` のみに待ち受けます。ル�
 - Gemini 応答の `Part.thought_signature` は opaque な `bytes` のため、OpenAI 互換 `tool_calls` へ移すときは Base64 文字列として保持する。
 - MCP 実行後に Gemini の `functionCall` Part を再構築するとき、Base64 を `bytes` に戻して同じ Part の `thought_signature` へ設定する。
 - `use_tools=False` で回避するのは切り分け用途に限る。恒久対処は署名を改変せず履歴へ保持すること。
-- 回帰確認は `backend_server/.venv/Scripts/python.exe -m unittest tests.test_gemini_thought_signature -v` を実行する。
+- 専用の既存自動テストはない。署名保持・base64復元・署名なしの3経路を、外部AIを呼ばないmockで検証する（詳細はthought_signatureの専門文書を参照）。
 
 ## バックアップ系 MCP の注意
 
@@ -194,4 +194,4 @@ curl http://127.0.0.1:9222/json
 
 Toolsのteam_agents・task_agentsが接続不可を返す場合、8093のポート開放だけで起動成功とは判断しません。内部認証のHTTP状態とTaskTeamのログを確認します。資格情報の値は出力しません。
 
-TaskTeamの内部許可APIは、FastAPIのOpenAPIに登録された`POST /task/*`・`POST /team/*`・`POST /task_check_okng`から列挙します。`app.routes`の直下だけから`methods`・`path`を読むと、`include_router`が遅延登録されるFastAPIでは業務APIを拾えません。認証失敗を回避するための無条件許可は行わず、登録済みPOSTだけを許可します。回帰確認は`backend_taskteam/checks/test_taskteam_auth.py`のネストしたAPIRouterと、未登録パス・GET拒否の試験を使います。
+現行の内部認証は `backend_taskteam/taskteam_proc/internal_auth.py` の署名・issuer・audience・subject・scope・有効期限を検証し、API登録一覧には依存しません。`internal_post_endpoints()` の定義だけを認証条件と解釈しないでください。認証後も各ルーターの通常の業務条件を適用します。回帰確認は `backend_taskteam/checks/test_taskteam_auth.py` の登録一覧非依存の試験などを使います。

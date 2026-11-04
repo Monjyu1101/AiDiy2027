@@ -47,7 +47,7 @@ frontend_avatar/
 
 ### 適用範囲と順序
 
-確認対象は次の **11 アプリ**。下の5系統はソース所有元の分類であり、「5アプリだけ確認する」という意味ではない。起動入口ごとの回帰確認と、共有 renderer の配置確認を両方行う。
+確認対象は次の **12 アプリ**。下の5系統はソース所有元の分類であり、「5アプリだけ確認する」という意味ではない。起動入口ごとの回帰確認と、共有 renderer の配置確認を両方行う。
 
 | アプリ | 主な起動入口 | renderer の所有元 / bundle |
 |--------|--------------|------------------------------|
@@ -64,7 +64,7 @@ frontend_avatar/
 | Discord | `frontend_channels/panel/launch.mjs` | `frontend_channels/panel` → `view.js` |
 | Slack | `frontend_channels/slack/panel/launch.mjs` | `frontend_channels/slack/panel` → `view.js` |
 
-Console / Code / Live / IDE / Task / Team / Browser の入口は共通 `frontend_ide/launch.mjs` / `desktop.cjs` へ進む。`host/aidiy_code` / `host/aidiy_live` 等の互換入口を別アプリとして複製しない。Viewer、Explorer、比較、軌跡、Task の要求・フロー・明細・編集などの関連窓も、それぞれの所有元で確認する。
+Navigator / Console / Code / Live / IDE / Task / Team / Browser の入口は共通 `frontend_ide/launch.mjs` / `desktop.cjs` へ進む。`host/aidiy_code` / `host/aidiy_live` 等の互換入口を別アプリとして複製しない。Viewer、Explorer、比較、軌跡、Task の要求・フロー・明細・編集などの関連窓も、それぞれの所有元で確認する。
 
 Discord と Slack は **双子**として `panel/components/接続/接続パネル.vue`・`機能切替.vue`・`パネル状態.js` の配置と起動・停止・モデル設定の契約を揃える。Slack に Live / 音声部品を足さず、Discord の `components/ライブ/` だけが音声を持つ。互いの画像や実装を直接参照する新たな依存は作らない。
 
@@ -76,7 +76,7 @@ Discord と Slack は **双子**として `panel/components/接続/接続パネ�
 |--------|------|------------|
 | `frontend_avatar/src` | Avatar の Electron / Web 共通画面 | 上記の参照実例。既に役割分離されている箇所は維持 |
 | `backend_diag/ui/src` | Diag 通常・ミニ | `backend_diag/起動` の main 処理、配布先 `static/` と分離 |
-| `frontend_ide/src` | Console / Code / Live / IDE / Task / Team / Browser と関連別窓 | 同じ所有元の共通画面。Task / Team の専用 bundle 境界は維持 |
+| `frontend_ide/src` | Navigator / Console / Code / Live / IDE / Task / Team / Browser と関連別窓 | 同じ所有元の共通画面。Task / Team の専用 bundle 境界は維持 |
 | `frontend_channels/panel` | Discord 接続パネル | Bot の `frontend_channels/src` と分離。既存 `panel` を renderer ルートとして使う |
 | `frontend_channels/slack/panel` | Slack 接続パネル | Discord と対応する構成だが別モジュール。音声機能は追加しない |
 
@@ -96,7 +96,7 @@ Avatar を基準に、Diag → IDE 共通画面 → Discord → Slack の順で�
 
 AiDiy が所有する Electron の操作画面は、**通常画面の背景を同じ位置で左ボタンで0.5秒長押しした後のドラッグ移動**と、**表示開始時のズーム**を基本とする。選択欄・入力欄などの操作と、ポップアップ中のモデル選択を窓移動より優先する。新規のアプリ・別窓にも最初から組み込む。光沢・影が走る追加の登場演出は入れない。
 
-対象は aidiy_diag、Avatar、Console、Code、Live、IDE、Task、Team、Browser、Discord、Slack と、その機能別ウィンドウ。IDE の Explorer、Viewer、ソース比較、軌跡バー、Browser 本文、Avatar の設定、独立 Task の要求・フロー・明細・編集窓も含む。Webブラウザ版・VS Code拡張の埋め込み画面にはOS窓移動を導入しない。演出用の短命な透明キャンバスは操作画面ではないため、長押しを取り付けない。
+対象は aidiy_diag、Avatar、Navigator、Console、Code、Live、IDE、Task、Team、Browser、Discord、Slack と、その機能別ウィンドウ。IDE の Explorer、Viewer、ソース比較、軌跡バー、Browser 本文、Avatar の設定、独立 Task の要求・フロー・明細・編集窓も含む。Webブラウザ版・VS Code拡張の埋め込み画面にはOS窓移動を導入しない。演出用の短命な透明キャンバスは操作画面ではないため、長押しを取り付けない。
 
 ## タイトル操作と最前面ピン
 
@@ -121,7 +121,7 @@ AiDiy が所有する Electron の操作画面は、**通常画面の背景を�
 
 通常フォームとして確認する操作は、タイトルのダブルクリックで最大化、再ダブルクリックで元の位置・寸法へ復元、最大化中のタイトルドラッグで復元してポインターに追従すること。最大化ボタンのテストだけで、この3操作を検証済みとして扱わない。
 
-- Avatar の `_WindowShell.vue` / ログイン画面、Console / Code / Live / IDE / Task / Team / Browser の共通 `状態バー.vue`、Discord / Slack の header は通常タイトルを CSS `app-region: drag` としており、タイトルのダブルクリック専用ハンドラーは持たない。操作は Electron / OS の native hit-testing に委譲される。ボタン・入力・選択欄の `no-drag` と操作可能性を別途確認する。
+- Avatar の `_WindowShell.vue` / ログイン画面、Navigator / Console / Code / Live / IDE / Task / Team / Browser の共通 `状態バー.vue`、Discord / Slack の header は通常タイトルを CSS `app-region: drag` としており、タイトルのダブルクリック専用ハンドラーは持たない。操作は Electron / OS の native hit-testing に委譲される。ボタン・入力・選択欄の `no-drag` と操作可能性を別途確認する。
 - 共通の500ms背景長押しは最大化・全画面を拒否する。これは通常タイトルの即時ドラッグとは別経路であり、最大化解除ドラッグの代替実装ではない。
 - 最大化ボタンの経路は、通常の `maximize` / `unmaximize`、Browser の専用表示領域controller、Diag の通常窓サイズcontrollerに分かれる。IDEのVR、BrowserのF11全画面・glass header、最大化操作を持たない軌跡バーは通常窓とは分けて扱う。
 
@@ -185,7 +185,7 @@ Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明�
 |------|------------------|----------|
 | aidiy_diag 通常・ミニ | `backend_diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
 | Avatar 全12種類 | `createBaseWindow`、`openSettingsWindow` | `electron/main.ts` の `ウィンドウ表示` に集約。読込待ち、連打抑制、非表示要求を共用 |
-| Console / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
+| Navigator / Console / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
 | Explorer / 比較・Viewer / 軌跡の別窓 | `frontend_ide/デスクトップ/panel-windows.cjs` の `created` | `show` から共通 `拡大表示`。元DOM・状態・表示の保持を崩さない |
 | Discord / Slack | `frontend_channels/panel/desktop.cjs` / `frontend_channels/slack/panel/desktop.cjs` | 内容・配置確定後に共通 `拡大表示`。Botの実接続は演出と独立 |
 
@@ -199,7 +199,7 @@ Task / Team も共通の500ms長押し移動に対応する。`frontend_ide/desk
 - Task / Team の追加確認は `node --test frontend_ide/checks/native-window-move.test.mjs frontend_ide/checks/code-drag.test.mjs frontend_ide/checks/task-windows.test.mjs frontend_ide/checks/task-team-launchers.test.mjs`。Task の4窓とTeamで、499ms/500ms境界、実共有controllerへの到達、解放・再操作・Esc・blur・wheel・遷移・破棄、遅いDOM確認の取消を検査する。
 - `node frontend_ide/scripts/check-panel-controls.mjs`：実Vue部品を隔離データで描画し、ページ内の📌、Explorerの既存タイトルと復帰、軌跡の一行表示、繰返し切離し、入力保持、VRロックを確認する。外部通信は行わず、結果と描画画像を一時フォルダへ保存する。
 - `frontend_ide/host/node_modules/.bin/electron frontend_ide/checks/panel-hold-drag-desktop.cjs --ozone-platform=headless`：合成パネルへのtrusted入力で、一覧の行・余白、軌跡ハンドルの500ms長押しと、通常選択・rename・部品・ポップアップの保護を確認する。headlessの結果をWindows実機の位置・重なり確認とは扱わない。
-- `node --test frontend_avatar/checks/window-opening.test.cjs frontend_channels/checks/desktop.test.ts backend_diag/checks/desktop.check.mjs`：全12種類の表示経路、連打・取消、Discordへの取り付け、aidiy_diagの初期表示・終了処理。
+- ルートで `node --test frontend_avatar/checks/window-opening.test.cjs backend_diag/checks/desktop.check.mjs`、`frontend_channels` で `node --import tsx --test checks/desktop.test.ts`：全12種類の表示経路、連打・取消、Discordへの取り付け、aidiy_diagの初期表示・終了処理。
 - 隔離した実Electron入力: `frontend_avatar/node_modules/.bin/electron frontend_ide/checks/native-input-desktop.cjs`。sandboxを維持した合成画面で、元のtrusted down/up、背景のpointercancelとclick抑止、取消・次の通常クリック、native selectのキー選択、2行listboxのマウス選択、dialog内の背景移動禁止を確認する。Linuxの画面なし環境では`--ozone-platform=headless`を指定できるが、OS固有dropdown popupの実機確認は別途必要。結果はOSの一時フォルダへ出力し、画面を取得できた場合だけPNGも残す。
 - Task / Team の隔離Electron入力は上の `native-input-desktop.cjs` へ `AIDIY_TEST_WINDOW_KIND=task` / `team` を指定する（bash例: `AIDIY_TEST_WINDOW_KIND=task frontend_ide/host/node_modules/.bin/electron frontend_ide/checks/native-input-desktop.cjs --ozone-platform=headless`）。実native入力とDOMの保護を検査し、移動controllerは合成する。実controllerのDIP移動はNode回帰で別途検査するため、このheadless試験だけでOSの実窓位置・native dropdownを合格としない。
 - Avatarのmain変更後は `frontend_avatar` の `npm run build:electron` で `dist-electron` を同期する。`node frontend_avatar/checks/window-move-desktop.mjs` は全12種類の実生成関数と共通ズーム・長押しを検査する。本文だけを無害な合成画面へ置き換える。

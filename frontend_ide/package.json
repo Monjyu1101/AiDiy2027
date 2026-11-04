@@ -9,7 +9,7 @@
     "start": "node launch.mjs --app ide",
     "code": "node launch.mjs --app code",
     "live": "node launch.mjs --app live",
-    "test": "node --test checks/*.test.mjs",
+    "test": "node --test checks/*.test.mjs checks/*.test.cjs",
     "ide": "node launch.mjs --app ide",
     "console": "node launch.mjs --app console",
     "taskteam:type-check": "vue-tsc --noEmit -p tsconfig.taskteam.json",

@@ -17,7 +17,6 @@
 - `frontend_avatar/src/api/config.ts`
 - `frontend_avatar/src/api/client.ts`
 - `frontend_avatar/src/api/websocket.ts`
-- `frontend_avatar/src/AiDiy.vue`
 - `frontend_avatar/src/dialog/AI設定再起動.vue`
 
 ## Electron / Web の前提
@@ -119,7 +118,7 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - `AIコア_アバター.vue`
 - `AIコア_自立身体制御.ts`
 - `AIコア_自動カメラワーク.ts`
-- `WindowShell.vue`
+- `_WindowShell.vue`
 - `style.css`
 
 透明ウィンドウでは Electron の `transparent`、renderer 背景、補助 UI、字幕、発光要素が重なるため、1箇所だけの修正で完結しない。
@@ -147,7 +146,7 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 | 音声が出ない | speaker 有効、AudioContext、audio WebSocket |
 | マイクが使えない | Electron 権限、audio socket |
 | 補助パネルが同期しない | BroadcastChannel snapshot |
-| 透明ウィンドウが不自然 | `WindowShell.vue`、`AIコア_アバター.vue`、CSS |
+| 透明ウィンドウが不自然 | `_WindowShell.vue`、`AIコア_アバター.vue`、CSS |
 | デスクトップキャプチャできない | `desktop:set-source`、source 選択 |
 | Web モードでセッションが消える | `sessionStorage` の仕様 |
 | Web モードでパネルが開かない | IPC ではなく `アクティブタブ` 分岐 |

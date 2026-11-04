@@ -55,7 +55,7 @@
 ```
 
 実装上の注意:
-- `/q` は alias 衝突を避けるため、終了ショートカットとして先に処理する
+- `/q` は `COMMAND_REGISTRY` で `/queue` の alias。終了は `/quit` または `/exit` を使い、`/q` を終了用に横取りしない
 - `/model` 引数なしは provider picker を開く
 - `/model <model> --provider <provider>` と `/model <provider>:<model>` を受け付ける
 - `/model` はセッション内切替にし、必要に応じて `self.agent = None` で次ターンから新モデルを使わせる
@@ -101,7 +101,7 @@ AiDiy の常駐起動対象かどうかと、Python モジュールの同梱要�
 - `cli_main.py` 以外を単体で import して試すときは、先に `sys.path` へ `base/` と `command_hermes/` を追加し、`sys.modules["agent"] = core` を張る
 - 依存追加は `command_hermes/pyproject.toml` の dependencies へ追加する
 - `.venv` がない環境では、全 Python 構文確認と `tomllib` による `pyproject.toml` 検証を先に行う
-- console script ランチャは `_setup.py` が `~/.local/bin/aidiy_hermes.cmd` として生成する
+- console script ランチャは `_setup.py` が Windows では `~/.local/bin/aidiy_hermes.cmd`、Linux / macOS では `~/.local/bin/aidiy_hermes` として生成する
 - 依存追加後は `uv sync --upgrade` と `python ..\_setup.py` で同期・ランチャ再生成を行う
 - provider SDK は `openai`、`anthropic`、`google-genai` を明示する
 
@@ -138,7 +138,7 @@ cd command_hermes
 @'
 from cli_main import HermesCLI
 cli = HermesCLI(model="deepseek-v4-flash", base_url="http://127.0.0.1:11434/v1")
-print(cli.process_command("/q"))
+print(cli.process_command("/quit"))
 cli.process_command("/model qwen3:latest")
 print(cli.model)
 cli.conversation_history.append({"role": "user", "content": "x"})

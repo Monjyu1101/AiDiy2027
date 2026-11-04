@@ -15,7 +15,7 @@
 
 | 項目 | 紹介ビデオ（AiDiy紹介_\*） | ニュース型（ニュース_\*） |
 |------|---------------------------|--------------------------|
-| 音声 | **edge:female のみ** | **edge:female + edge:male の掛け合い** |
+| 音声 | **freeai:female を基準** | **edge:female + edge:male の掛け合い** |
 | アバター | 1体（VRM_AiDiy.vrm） | 2体（VRM_male.vrm 左, VRM_female.vrm 右） |
 | 1シーン当たりの音声 | **1音声**（short_audio / long_audio） | **複数ターン**（dialogue 配列） |
 | short/long モード | あり | **なし** |

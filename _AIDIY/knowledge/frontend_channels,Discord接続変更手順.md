@@ -27,7 +27,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 3. CLI 実行・停止・resume は `frontend_ide/host` の共通実装を使用する。CommonJS の日本語 export は `src/共通連携/IDE連携.ts` を通す。コードの実行環境は aidiy_hermes 固定で、パネルには固定表示する。モデルは aidiy_code と同じ1つの文字列（`auto` / `same` / `codex_cli/same` / `openai_oauth/gpt-…`）で選び、Hermes への引数は AIコア（`backend_server/AIコア/AIコード_cli.py`）と同じ規則で `src/コード/Hermesモデル.ts` の `Hermes会話引数` が作る。OAuth の provider は CLI に明示し、認証切れを別 provider への退避で隠さない。候補は AIコアのモデル情報API（`code_models.aidiy_hermes`）を優先し、停止中は `_AIDIY/aidiy_diag/code_models_info.json` を読む。未保存時の初期表示は共通 `CODE_AIDIY_HERMES_MODEL`（既定 `auto`）、実行回数は `CODE_MAX_TURNS`、作業フォルダは `CODE_BASE_PATH` を使う。
 4. Live は既存の input / 0 / audio 接続を使用する。入力レートは `init` のモデル設定に追従する。
    接続先はローカルの `PORT_CORE`、初回の AI とモデル・音声は共通の `LIVE_AI_NAME` / `LIVE_*_MODEL` / `LIVE_*_VOICE` を使う。手動選択は後述の `~/.aidiy/aidiy_discord.json` の `live_models` に保存し、次回以降は優先する。共通キー JSON に Discord 専用のモデル項目を追加しない。
-5. 専用チャンネルの通常投稿をチャットとして受け付ける。`commands.ts` と `bot.ts` の許可判定より前に外部操作・返信を行わない。既存コマンドは互換用として残すが、通常の利用手順に要求しない。
+5. 専用チャンネルの通常投稿をチャットとして受け付ける。`src/接続/コマンド処理.ts` と `src/接続/Bot接続.ts` の許可判定より前に外部操作・返信を行わない。短縮コマンドは後述の共通カタログに従い、旧 `!aidiy ...` 形式は受け付けない。通常投稿にコマンドを要求しない。
 6. 未接続時は設定画面、接続中（再接続中を含む）は aidiy_live の初期画面と同じ AiDiy 絵と回転する四角形のステージに切り替え、その下に最後の発言（発言者と本文）をターミナル演出で1回だけ表示し、約1分で消す。背景には aidiy_live と同じ円型インジケーター（`panel/components/ライブ/音声表示.js` は `aidiy_live/src/visualizer.ts` の移植。変更時は両方を揃える）を描く。入力はAIコアへ送るミキサー出力、再生音は `Discord音声出力` が実際に送出する20ms分から、worker で音量と128帯域の分布（`音声スペクトル` / `音声レベル`）だけを50ms間隔で求めてパネルへ送る。PCM自体は、接続中に「モニター」を ON にした間だけ（接続ごとに OFF から開始）無音を除いて base64 でパネルへ渡し、Web Audio で再生する（`Live接続.モニター送信` / `DiscordBot.モニター設定`）。スピーカー音を Discord のマイクが拾うとエコーになるため既定は OFF とする。Live の文字起こしはパネルへ逐次表示し、Discord へは発言ごとに投稿せず、AI の応答が1.5秒途切れた時点で「人間側の最後の発言＋AI の応答」を1件にまとめて投稿する（`Live接続.文字起こし送信`）。
 7. 設定パネルの「音声会話」「コード」見出し右に OFF (〇　) ON のトグルを置き、結果で Discord への接続制御を行う。Live は切替可（`aidiy_discord.json` の `live`、未保存時は OFF）、Code は現在 ON 固定で操作不可。固定は `src/接続パネル/パネル操作.ts` の `コード固定ON`、Bot への反映は `Discord設定.liveEnabled` / `codeEnabled`。Live OFF では音声の自動接続・`live` / `leave` を行わず、Live のモデル確認も省く。Code OFF では通常投稿・`stop` / `new` を処理せず、Hermes 確認も省く。両方 OFF では接続しない。接続中パネルのプロジェクト行の下（右寄せ、`#features` の状態チップ）に「LIVE ON/OFF」「CODE ON/OFF」を表示し、Live OFF の間は円型インジケーターとモニター切替を出さない。
 8. パネルの保存は `~/.aidiy/aidiy_discord.json` の1ファイル（`live` / `live_models` / `code_name` / `code_model`）とし、`src/接続パネル/パネル設定.ts` が検証・原子的保存・旧形式（`aidiy_discord_features.json` / `aidiy_discord_model.json` / `aidiy_discord_code_model.json`）からの1回限りの移行を行う。`code_name` は将来の別スタンドアロンハーネス用で、現在は `aidiy_hermes` だけを実行する（ない保存は読込時に書き足し、未対応の値では接続しない）。このファイルがあれば起動時（単独・Diag・全体起動）に自動接続し（`auto-start`）、未保存の初回は接続せずモデル設定画面から始める。切断・接続失敗ではモデル選択の画面に戻る。
@@ -63,7 +63,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 全体スクリプトの検証はルートで `python -X utf8 -m unittest discover -s frontend_channels/checks -p "test_*.py"` を実行する。プロセス停止はモック、削除は一時ディレクトリで確認し、実環境の `_cleanup.py` を検証目的で実行しない。全体 `_setup.py` は Discord 既定 Yes、`_start.py` の Discord 選択は既定 No、`_cleanup.py` の削除選択は既定 Yes。
 
-`aidiy_discord` / `npm start` は `panel/launch.mjs` から Electron の小型パネルを開く。プロジェクトフォルダ（Code の作業フォルダ）は aidiy_code / aidiy_live と共通の `frontend_ide/host/scripts/launch-project.mjs` で決め、`[作業フォルダ]` / `--project` 未指定時は起動したフォルダとする。worker へは `AIDIY_DISCORD_PROJECT` で渡し、未設定（`src/main.ts` 直接実行など）の場合だけ `CODE_BASE_PATH` を使う。全体起動はリポジトリ直下で起動する。画面位置はマウスのあるディスプレイの workArea 上部中央とする。単独起動は未接続、全体 `_start.py` で Yes の場合は `--connect` を渡して自動接続する。`--wait` を付けず独立起動する。全体の起動前整理・Ctrl+C 終了では Discord と必要な CLI / MCP 子孫を保持し、明示的な `_cleanup.py` では停止する。接続開始時に共通設定を再読込し、前回のモデルを適用する。接続・再接続中でも停止でき、終了時は worker に shutdown を送り、Code CLI・Live・Gateway を回収する。正常終了に応答しない場合だけ worker の子孫を停止する。Electron はセットアップで事前配置し、起動中にはダウンロードしない。
+`aidiy_discord` / `npm start` は `panel/launch.mjs` から Electron の小型パネルを開く。プロジェクトフォルダ（Code の作業フォルダ）は aidiy_code / aidiy_live と共通の `frontend_ide/host/scripts/launch-project.mjs` で決め、`[作業フォルダ]` / `--project` 未指定時は起動したフォルダとする。worker へは `AIDIY_DISCORD_PROJECT` で渡し、未設定（`src/main.ts` 直接実行など）の場合だけ `CODE_BASE_PATH` を使う。全体起動はリポジトリ直下で起動する。画面位置はマウスのあるディスプレイの workArea 上部中央とする。単独起動・全体起動とも保存済み設定があれば自動接続し、初回はモデル設定画面から始める。`--no-connect` では未接続で開く。`--wait` を付けず独立起動する。全体の起動前整理・Ctrl+C 終了では Discord と必要な CLI / MCP 子孫を保持し、明示的な `_cleanup.py` では停止する。接続開始時に共通設定を再読込し、前回のモデルを適用する。接続・再接続中でも停止でき、終了時は worker に shutdown を送り、Code CLI・Live・Gateway を回収する。正常終了に応答しない場合だけ worker の子孫を停止する。Electron はセットアップで事前配置し、起動中にはダウンロードしない。
 
 ブラウザ版（`--browser`、または Codespaces・画面のない Linux で自動）は Electron の代わりに `src/web-server.ts` を Node で起動し、同じ `panel/` の画面へ `panel/web-bridge.js` が `window.discordPanel` を WebSocket で提供する。操作の中継は Electron 版の `src/panel-worker.ts` と共通の `src/接続パネル/パネル中継.ts` に置き、通信路だけを入口ごとに分ける。接続元は aidiy_code / aidiy_live と共通の `frontend_ide/host/src/forwarded-origin.ts`（127.0.0.1、Codespaces ではポート転送先と localhost 転送も）だけを許可し、画面は推測できないトークン付きパスで配信する。Electron 版でパネルを閉じた時と同じく、画面を閉じると60秒（初回は120秒）後に Bot も終了する（`--wait` でも同じ）。専用ウィンドウを開けなければ理由を表示してブラウザ版に切り替える。4本（aidiy_code / aidiy_live / aidiy_discord / aidiy_slack）の起動規則は `frontend_ide/host/scripts/launch-project.mjs` 冒頭に一覧し、共通の関数（`ブラウザ自動判定` / `ブラウザ版表示` / `ブラウザ版へ切替`）を使う。入口ごとに独自の判定や案内文を追加しない。`checks/launch-restart.test.ts` で Electron 不可時のブラウザ版への切替と転送先 URL を確認する。`checks/web-server.test.ts` で接続元の拒否、要求・通知の中継、終了を確認する。Codespaces 実機と音声UDPは別途確認する。
 
@@ -71,7 +71,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 ## 接続に失敗する場合
 
-- パネルのエラー詳細欄を選択してコピーし、失敗段階（設定読込 / Hermes確認 / モデル確認 / Bot作成 / Discord接続 / 準備完了待ち）、経過時間、エラー名・コード・本文・入れ子の原因を確認する。同じ情報を `frontend_channels/out/aidiy_discord/*.stderr.log` にも出力する。
+- パネルのエラー詳細欄を選択してコピーし、失敗段階（設定読込 / Hermes確認 / モデル確認 / Bot作成 / Discord接続 / 準備完了待ち）、経過時間、エラー名・コード・本文・入れ子の原因を確認する。同じ情報を `temp/aidiy_discord/logs/<UUID>.stderr.log` にも出力する。
 - `src/接続/接続エラー.ts` は Bot トークンなどの認証情報を伏せ字にし、HTTP要求オブジェクト全体・本文・スタックを出力しない。エラーを拡張する場合もこの範囲を維持する。
 - `TokenInvalid` / `Authentication failed` はトークン認証、`Used disallowed intents` は Message Content Intent、`ENOTFOUND` はDNS、`UND_ERR_CONNECT_TIMEOUT` / `ETIMEDOUT` は通信タイムアウトの切り分けに使う。経過時間だけで原因を断定しない。パネルの接続待ち上限は40秒で、それ以前にもSDK側のエラーが返る。
 - `Hermes確認` の失敗は、実際に動かしているPCで `aidiy_discord --check` を実行してPython・CLIの起動パスを確認する。開発環境の不足を別PCの原因とみなさない。
@@ -81,7 +81,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 - `src/接続/ネットワーク接続.ts` は起動時の HTTP(S)_PROXY / NO_PROXY を読み、REST は Undici の安定API `Agent.factory` / `ProxyAgent`、Gateway は `https-proxy-agent` を使う。REST dispatcher を指定しただけで Gateway 対応済みとしない。
 - 現行の `@discordjs/ws` 1.2.3 は Node で `ws` を使用し、`ws` が `createConnection` を指定するため `https.globalAgent` の変更だけではプロキシが適用されない。正規の `ws.buildStrategy` / `WorkerShardingStrategy` と `src/gateway-worker.mjs` で Gateway を専用スレッドへ分離し、その中の `https.request` に Gateway と resume の `*.discord.gg` だけ agent を渡す。停止時はSDKによる worker 終了まで待ち、CONNECT待ち・再接続タイマー・ソケットをまとめて回収する。RESTはBot本体の dispatcher をdestroyする。通常のBot workerの通信関数やローカルAIコアには適用しない。SDK更新時は、この経路とSDKの正規拡張点の有無を再確認する。node_modulesは編集しない。
-- ローカルAIコアは常に直接接続する。プロキシURL・資格情報をIPCやログへ渡さず、`connection-error.ts` でも環境プロキシURLを伏せる。
+- ローカルAIコアは常に直接接続する。プロキシURL・資格情報をIPCやログへ渡さず、`src/接続/接続エラー.ts` でも環境プロキシURLを伏せる。
 - 音声用WebSocketは通常Gatewayとは別経路。`src/ライブ/ライブ会話.ts` のvoice adapterは `onVoiceServerUpdate` のendpointを `src/接続/ネットワーク接続.ts` の `Discord音声通信.接続先登録` へ渡してからSDKへ通知する。voice 0.19.2にはagent指定APIがないため、通知されたホスト・ポートへの `https.request` だけを捕捉する。非443ポート、NO_PROXY、音声サーバー変更・再接続を維持し、Live終了時にrequest関数・CONNECT待ち・ソケットを回収する。SDK更新時は正規のagent指定APIの有無を再確認する。
 - 「WebSocket接続中」のタイムアウトでは「音声接続先」のホスト・ポートと「プロキシ経由／直接接続」を照合し、プロキシのCONNECT許可も確認する。HTTPプロキシ対応はUDP中継を含まない。「UDP接続・IP検出中」の失敗はUDP経路を別途確認する。音声のトークン・セッションID・暗号鍵・プロキシURLはログへ出さない。
 - 設定方法は `frontend_channels/README.md` を参照する。環境変更後は旧パネルを閉じ、設定済みの起動元から開き直す。`panel/desktop.cjs` の fork は親環境を標準で継承する。GUIの起動元が端末と同じ環境を持つかは実機で確認する。
@@ -99,7 +99,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 ## 音声変更時の注意
 
 - 音声開始の成功判定にはソケット登録の `init` とProviderの待受準備を区別する。Discordはaudioの `connect` に `Live準備確認: true` を付け、同じセッションの `live_ready` を待ってからマイク中継・接続成功通知を開始する。バックエンドの `AIライブ.py` の `待受準備確認` は、Gemini / FreeAI のLiveセッション確立、OpenAIの `session.updated` による設定反映を確認する。要求しない旧クライアントは従来のinit完了方式を維持する。変更反映にはcoreとDiscordの両方を再起動する。
-- 「接続しました」後に無応答なら、`[Discord Live]` の「待受準備が完了」「Discordの受信音声を復号」「AIの音声応答を受信」を順に確認する。最初の音声フレームだけを記録し、PCMや話者ID・設定値をログに出さない。Providerの拒否理由・コードは `connection-error.ts` で秘密値を伏せ、開始失敗時はBot、開始後はLive接続から一度だけ通知する。Discordの音声接続待ちは停止時にAbortSignalで解除する。
+- 「接続しました」後に無応答なら、`[Discord Live]` の「待受準備が完了」「Discordの受信音声を復号」「AIの音声応答を受信」を順に確認する。最初の音声フレームだけを記録し、PCMや話者ID・設定値をログに出さない。Providerの拒否理由・コードは `src/接続/接続エラー.ts` で秘密値を伏せ、開始失敗時はBot、開始後はLive接続から一度だけ通知する。Discordの音声接続待ちは停止時にAbortSignalで解除する。
 - 「Discord のボイス接続でエラー」はVoiceConnectionの例外であり、BotのGateway接続成功やLiveAIの準備完了とは別に確認する。通知の「ボイス状態」「音声通信」（WebSocket接続・認証、UDP接続・IP検出、暗号方式選択、Ready、再接続）と、後続の「原因 / 種類・コード・内容」を照合する。汎用案内だけではネットワーク障害や暗号化の失敗を断定しない。受信ストリームの暗号化例外とOpus復号例外も元の原因を保持する。SDKのdebugやnetworking全体にはボイストークン・暗号鍵が含まれるため出力せず、状態名と伏せ字済み例外だけを残す。`checks/live.test.ts` で接続後のボイスエラー・受信エラーの原因保持、秘密値除外、一度だけの終了通知を確認する。
 - `checks/live.test.ts` と `checks/bot.test.ts` でinitのみでは入力を始めないこと、待受完了後の入力、準備中の終了、拒否理由の保持と伏せ字を確認する。バックエンドは `tests.test_live_text_response` と `tests.test_live_project_connection` でProvider設定受理と `live_ready` / `error` の通知順を検証する。
 
@@ -139,7 +139,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 ## ウィンドウの大きさと初回演出（4本共通）
 
-- 大きさは `frontend_ide/host/scripts/window-size.cjs`（幅476・最小幅360、高さは会話画面602／Discord・Slack パネル414の2種類）だけを使い、各 `desktop.cjs` に数値を書かない。ブラウザ版のアプリ表示も同じ値を使う。
+- 大きさは `frontend_ide/host/scripts/window-size.cjs`（幅480・最小幅360、高さは会話画面600／Discord・Slack パネル414の2種類）だけを使い、各 `desktop.cjs` に数値を書かない。ブラウザ版のアプリ表示も同じ値を使う。
 - 初回の拡大演出は `frontend_ide/host/scripts/window-opening.cjs` の `拡大表示`（frontend_avatar のログイン・コア画面も `electron/main.ts` の `主ウィンドウ表示` から同じものを使う）。実ウィンドウを毎フレーム `setBounds` で広げると、Windows では未描画の縁が白くちらつく（`backgroundColor` も届かない）。そのため、最終位置・最終サイズの透明なキャンバス用ウィンドウの中で矩形を CSS で拡大し、実ウィンドウは大きさを変えずに透明のまま表示して、描画後に見せる。
 - キャンバス用ウィンドウに `setIgnoreMouseEvents` / `focusable: false` を付けると、透明部分が白く描かれる環境がある。付けない。
 - 変更時は画面を連続キャプチャして白い画素が出ないことを実機で確認する。単体テスト（`checks/desktop.test.*`）は呼び出し順・透明度・大きさを変えないことだけを確認する。

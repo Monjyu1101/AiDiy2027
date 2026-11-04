@@ -42,14 +42,15 @@ Web／Avatar の親画面は `core` の初期化情報から `モデル設定.CO
 
 バックエンドは `init` を返す前にフォルダを確定し、LiveAI とコードエージェントの初期化に使用します。既存セッションと異なるフォルダや、バックエンドから参照できないフォルダは `error` 通知と切断コード `1008` で拒否します。Web／Avatar のフォルダ選択は既存のモデル設定画面を使い、設定後の音声接続でも同じ値を渡してください。
 
-## 共通の再接続ポリシー
+## 再接続ポリシー
 
-| 項目 | 値 |
-|------|-----|
-| 最大再試行回数 | 5 |
-| 再試行間隔 | 3 秒 |
-| 切断条件 | reconnectAttempts >= maxReconnectAttempts |
-| 意図的切断 | `isIntentionallyClosed` / `intentionallyClosed` フラグで判定 |
+| 項目 | frontend_web | frontend_avatar |
+|------|--------------|-----------------|
+| 最大再試行回数 | 5 | 回数で打ち切らない |
+| 再試行間隔 | 両者とも `min(3000 * reconnectAttempts, 15000)` ms | 同左 |
+| 意図的切断 | `isIntentionallyClosed` | `intentionallyClosed` |
+
+両者とも接続が開くと再試行回数を0へ戻します。切断コード `4000`（接続置換）、`1008`、`4401`、`4403` では再接続しません。認証失効・ログアウトも切断対象です。Avatarは手動再接続ボタンがないため、通常の接続断ではバックエンド再起動後も復帰を試みます。
 
 ## メッセージディスパッチ
 
@@ -128,12 +129,12 @@ const 認証延長対象メッセージ識別 = new Set(['input_text', 'input_fi
 |------|-------------|-----------------|
 | ソケット変数名 | `ws` | `socket` |
 | ハンドラ保存 | `Map<string, MessageHandler[]>` | `Map<string, Set<MessageHandler>>` |
-| init タイムアウト | setTimeout 30s + 別途 reject | setTimeout 30s（より堅牢な二重実行ガード） |
+| init タイムアウト | 30秒。`settled` で二重確定を防ぐ | 同左 |
 | エラーログ | `console.error` 詳細 | 最小限 |
 | sendChatMessage | 非推奨（warning 出力） | `sendInputText(message, '0')` に委譲 |
 | requestStream | 非推奨（warning 出力） | 未使用（warning 出力） |
 
-frontend_avatar の実装の方が後続でリファクタリングされており、コードがより簡潔です。frontend_web に古い非推奨メソッドが残っています。
+`sendChatMessage` / `requestStream` は両者の実装差を確認し、新規処理では現行の `sendInputText` / `send` を使います。
 
 ## 両方に修正を加えるべきケース
 

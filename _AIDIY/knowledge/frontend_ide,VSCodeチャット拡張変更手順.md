@@ -73,7 +73,7 @@
 - 入力欄の Enter は通常の改行。Tab で送信ボタンへ移動し、そこで Enter を押すと送信する。日本語 IME の変換確定では送信しない。
 - Code / Live の入力欄は共通の `field-sizing: content` で改行・折り返しに合わせて上へ伸縮する。最小高さは 76px、上限は 220px と画面高さの 35% の小さい方にし、上限を超えた内容は入力欄内でスクロールする。下書き復元・会話からのコピー・送信後のクリアにも自動で反映する。
 - Code / Live の会話末尾への追従は Vue 画面（`frontend_ide/src/components/コード/コードパネル.vue` / `frontend_ide/src/components/ライブ/ライブパネル.vue`）で同じ規則にする。メッセージ追加・入力・送信受理・ストリーム枠の更新／開閉で即時と次の描画フレームに末尾へ移動し、`ResizeObserver` で会話領域の伸縮にも追従する。Code は会話履歴と進捗の両方を揃え、一覧から会話へ戻る際も末尾へ移す。確認は frontend_ide の `checks/` で、入力直後・表示枠の開閉・描画後の高さ変更を検証する。
-- Code の接続表示は Live と同じタイトル左側の配置・文字色・10px文字・5pxの丸印に揃える。未接続は灰色、接続済みは緑、オンライン実行中は水色とし、文字は `未接続` / `接続中` / `接続済み` とする。CodeConnectionの接続開始・成功・失敗通知を単独版と拡張の `接続中` / `接続済み` に反映し、5秒の再試行待ちは未接続とする。シアンバーは実行状態ではなく接続状態へ連動させ、AIコアの入力・コード出力ソケットの初期化とモデル設定完了後に表示し、切断時に消す。オフライン中もタイトル左側は `未接続` を表示し、専用のオフライン表示・モードボタンは設けない。入力欄下は「上段：Enter の操作説明」「下段：モデル選択とモデル名」の2段にし、右端の送信／停止ボタンは2段分の高さにする。両モードで共通の HTML / CSS を使う。
+- Code の接続表示は Live と同じタイトル左側の配置・文字色・10px文字・5pxの丸印に揃える。未接続は灰色、接続済みは緑、オンライン実行中は水色とし、文字は `未接続` / `接続中` / `接続済み` とする。CodeConnectionの接続開始・成功・失敗通知を単独版と拡張の `接続中` / `接続済み` に反映し、10秒の再試行待ちは未接続とする。シアンバーは実行状態ではなく接続状態へ連動させ、AIコアの入力・コード出力ソケットの初期化とモデル設定完了後に表示し、切断時に消す。オフライン中もタイトル左側は `未接続` を表示し、専用のオフライン表示・モードボタンは設けない。入力欄下は「上段：Enter の操作説明」「下段：モデル選択とモデル名」の2段にし、右端の送信／停止ボタンは2段分の高さにする。両モードで共通の HTML / CSS を使う。
 - 履歴削除の確認は `frontend_ide/src/components/コード/コードパネル.vue` のパネル内ダイアログで共通処理し、確認後に `deleteHistory` を送る。拡張ホストや単独画面のブリッジで別の確認ダイアログを出さない。
 - 「新規」「一覧」、モデル選択、履歴削除、送信、停止は Webview 内の共通 UI を主操作にする。VS Code 固有のコマンドは外部からの呼び出しやエディター連携用に残す。
 - 単独画面の上部はタイトルバー、実行状態バー、会話操作行の順に置く。VS Code 拡張では接続状態の文字を含むタイトル行を省略し、シアンバーを表示する。「今の会話／会話一覧」、フォルダ名、「新規」「一覧」は会話操作行にまとめる。単独ウィンドウのドラッグ領域はタイトルバーだけに指定し、会話操作行を含めない。
@@ -88,7 +88,7 @@
 - 外部 CLI Provider のモデルが `auto` の場合は `--model auto` を渡さず、各 CLI 自身の既定モデル選択へ任せる。明示モデルを選んだ場合は Hermes の外部 CLI 実行まで `--model <ID>` を渡す。
 - `antigravity-cli` は Hermes の外部 CLI Provider 一覧から取得する。`xai-oauth` は API Provider のカタログ入口に含め、`grok-4.6` を Hermes の curated model 一覧から取得する。
 - xAI OAuth の初回認証は静的なワンショット実行中ではなく、拡張の「対話 CLI」から `/model` で `xai-oauth` を選ぶか、`hermes auth add xai-oauth` を実行する。
-- Code の履歴には `コアセッションID` を保存する。旧 `セッションID` はHermes用なのでAIコアへ渡さず、表示履歴だけ保持する。通信切断・初回失敗では約5秒後に再試行し、手動切断・画面破棄・サーバー終了ではタイマーと接続待ちを破棄する。
+- Code の履歴には `コアセッションID` を保存する。旧 `セッションID` はHermes用なのでAIコアへ渡さず、表示履歴だけ保持する。通信切断・初回失敗では約10秒後に再試行し、手動切断・画面破棄・サーバー終了ではタイマーと接続待ちを破棄する。
 
 ## セットアップと配置
 
@@ -122,44 +122,21 @@ Electron は VSIX 生成・単独画面コンパイルより前に `scripts/_set
 
 `aidiy_code/launch.mjs` は Electron の取得処理を呼ばず、準備済みの実行ファイルを使う。未配置またはバージョン不一致の場合は `python frontend_ide/host/_setup.py` の再実行を案内する。`npm ci` だけで Electron バイナリが取得されるとは限らないため、専用ウィンドウを使う環境ではセットアップを実行する。
 
-専用ウィンドウはページ読み込み後に `show()` / `focus()` を呼び、`isVisible()` の確認後に起動完了ファイルへ `windowShown: true` を書く。ランチャーはその通知まで待ち、サーバーの準備だけで表示成功とは判断しない。Electron の起動では `windowsHide: false` とし、ブラウザモードの Node サーバーだけを非表示起動する。起動失敗・タイムアウト時は `out/aidiy_code/<起動ID>.stderr.log` の場所と末尾のエラーを表示する。
+専用ウィンドウの現行起動は `frontend_ide/launch.mjs` に集約しています。`aidiy_code/launch.mjs` / `aidiy_live/launch.mjs` は互換入口です。`desktop.cjs` からIPCの `windowShown: true` または `existingWindow: true` を受け取るまで起動完了にせず、エラー・終了・20秒の表示待ち期限を確認します。Electronの起動は `デスクトップ/desktop-process.mjs` の `windowsHide: false` とIPCを使います。
 
-## Code の起動完了JSONだけが変更された場合
+## 起動完了通知を確認するとき
 
-### 対象の分類と関連箇所
-
-現行実装では `out/aidiy_code/<起動ID>.json` は単独画面の起動完了通知であり、会話履歴やモデル設定、テスト用の `.cjs` 生成物とは用途が異なる。変更一覧にこのJSONがあっても、挨拶や概要確認の応答をアプリ本体の修正原因とは判断しない。
-
-以下は `frontend_ide/host/` からの相対パス。
-
-| 関連ファイル | 確認箇所 |
-|--------------|----------|
-| `aidiy_code/launch.mjs` | `main` の `runId` / `readyPath`、`AIDIY_CODE_READY`、通知ファイルの読込と `windowShown` の確認。起動IDはハイフンを除いたUUIDで、起動ごとに新しいファイルを使う |
-| `frontend_ide/desktop.cjs` | `ready` の取得、ページ読み込みと拡大表示、`isVisible()` の確認後に `{ url, pid, windowShown: true }` をUTF-8で保存する箇所 |
-| `aidiy_code/src/server.ts` | `単独起動` の `randomBytes(24)` によるURLパス、`listen(0, '127.0.0.1')`、ブラウザ起動時の `{ url, publicUrl, pid }` 保存箇所 |
-| `checks/launcher.test.cjs` | 通知読込、表示完了フラグがない場合の拒否、起動失敗時のログ案内 |
-
-### 次回の検証方法と修正判断
-
-1. 対象JSONをUTF-8で読み、構文とBOMの有無を確認する。内容を再保存せず、生成側と読込側の項目を照合する。
-2. `url` が `http://127.0.0.1:<ポート>/<トークン>/`、ポートが1〜65535、トークンが24バイト由来の48桁の小文字16進数であることを確認する。`pid` は正の整数。これらの同期元は上表の `server.ts` と `frontend_ide/desktop.cjs` であり、起動時の実値をナレッジへ固定しない。
-3. Electronの通知は `windowShown: true` を持つ。ブラウザ版は `windowShown` を保存せず、`publicUrl` を保存する場合があるため、Electronの3項目だけを全起動モードの必須形式にしない。
-4. バックアップとの比較は [`command_hermes,共通,MCPバックアップ検証手順.md`](./command_hermes,共通,MCPバックアップ検証手順.md) に従う。取得された `before.timestamp` を確認する。同一内容ならその保存版との一致を示すだけで、起動前から無変更だったことや動作の正しさまでは示さない。
-5. 起動通知の生成と読込を確かめる場合は、プロジェクトルートから次の既存テストを直接実行する。`npm test` による `.cjs` の再生成は、このJSONの検証には不要。
-
-```powershell
-node --test frontend_ide/host/checks/launcher.test.cjs
-```
-
-このテストは模擬Electron・一時フォルダを使った起動通知の検証であり、実画面の表示や実AI接続の確認とは区別する。自己改善の文書更新時に、以前のテスト成功を新しい実行結果として記録しない。
-
-通知は起動時点の記録なので、後からPIDのプロセスやURLへの応答がなくても、それだけではJSONの不具合としない。現在の稼働を調べる依頼では、PID・実行ファイル・起動引数と待受ポートを別に照合する。形式と生成処理が整合する通知は変更一覧だけを理由に書き換えない。不整合があれば同じ起動IDのログと生成側を調べ、本体修正が依頼範囲に含まれる場合に生成側の修正を検討する。
+- 通常の単独起動はIPCで通知します。`--ready-file <パス>` を明示した場合だけ、共通ランチャーが `{ url, publicUrl, pid, kind, project }` を指定先へ保存します。現行の通知JSONに `windowShown` を必須としないでください。
+- 旧 `out/aidiy_code/<起動ID>.json` は旧起動経路の残存通知として扱い、現行ランチャーが毎回生成するとは判断しません。会話履歴・モデル設定・テスト用bundleと混同しないでください。
+- 通知のJSON構文・UTF-8・BOMと、現行の生成側・読込側を照合します。URLのポート・トークン長を旧実装から固定せず、`frontend_ide/server.mjs` と `launch.mjs` を確認します。実値をナレッジへ転記しません。
+- 通知は起動時点の記録です。現在の稼働確認ではPID・実行ファイル・引数・待受ポートを別に照合し、終了済みというだけでJSONを書き換えません。バックアップとの一致も動作の正しさとは別です。
+- 回帰の入口は `frontend_ide/checks/runtime.test.mjs` と `desktop-process.test.mjs`、実窓の確認は `scripts/check-launcher.mjs code` / `live` です。模擬試験・実画面・実AI接続を区別し、文書確認だけの依頼で再生成・再起動を行いません。
 
 ## Code の生成物だけが差分に出た場合
 
 ### 関連ファイルと確認箇所
 
-以下のパスは `frontend_ide/host/` からの相対パス。`scripts/test.mjs` はテスト実行前に6ファイルを esbuild で再生成する。更新日時や変更通知だけで仕様変更と判断せず、内容と生成元を照合する。bundle には依存モジュールも含まれるため、エントリの変更だけを見ない。
+以下のパスは `frontend_ide/host/` からの相対パス。`scripts/test.mjs` はテスト実行前に複数のbundleを esbuild で再生成する。以下はこの照合手順の対象6ファイルであり、生成物全体の一覧ではない。更新日時や変更通知だけで仕様変更と判断せず、内容と生成元を照合する。bundle には依存モジュールも含まれるため、エントリの変更だけを見ない。
 
 | 生成物 | 生成元のエントリ | 確認する関連箇所 |
 |--------|------------------|--------------------|
@@ -247,11 +224,11 @@ Code の停止・接続切替は、通常回答・検証途中・知見整理中
 
 停止の連打、送信直後のOFF、モデル候補確認中の新規・OFF、同じON通知の重複、Hermes実行中の自動再接続を確認する。画面中継のSSE切断はAIコアの切断と区別し、モデル・実行中状態を維持して操作を止める。検証入口は `checks/aidiy_code.test.cjs`、`checks/code-extension.test.cjs`、`checks/code-connection.test.cjs`（AIコア側の実行状態には専用の自動テストがない）。模擬AIと実HTTP/SSEで確認し、実機のWindows画面や実AIの確認と区別する。
 
-`aidiy_code` 単独起動版とVS Code拡張は未接続中の送信を自動的にHermesへ渡す。拡張の `src/extension.ts` も `aidiy_code/src/offline.ts` の固定候補・既定値探索・実行処理を共用する。表示用のprovider/modelだけを接続状態で切り替え、会話内のオンラインモデルへオフライン選択を代入しない。通常起動は自動接続ONを既定とし、10秒ごとの再接続を継続する。プロジェクトバー右側の「自動接続」「新規」「一覧」のスイッチでOFFにすると接続・再試行を止め、新規・履歴復帰・ready通知でも再開しない。ONへ戻すと接続を再開し、OFFの選択は次回起動へ保存しない。実行中・モデル変更中の切り替えはUIとホスト側の両方で拒否する。バーはONの未接続で黒、接続済みで従来のシアン明滅、OFFで赤の明滅にする。復帰時も実行中のHermesジョブを維持する。AIコアとHermesのセッションID・保存モデルは分離し、次の送信からAIコアへ戻す。`executionMode` または `--offline` で明示したオフラインは自動接続OFFにし、再接続しない。この場合にスイッチをONへ戻すと新しいオンライン会話へ切り替え、HermesセッションIDをAIコアへ渡さない。明示オフラインの履歴復帰でもOFFへ切り替える。画面に専用のオフライン表示・モードボタンは設けない。`aidiy_code/src/offline.ts` は既存の `runner.ts` / `protocol.ts` を使ってHermesを直接実行し、AIコア・バックアップ・検証ループは呼ばない。コードAIは `aidiy_hermes` に限定し、モデルIDはオンラインのHermesと同じ形式を使う。オンライン用の `aidiy_code_model.json` はそのまま保持し、オフライン用を `aidiy_code_model_offline.json` に別保存する。両ファイルを拡張・単独版で共用し、未接続のモデル変更はオフライン用ファイルだけへ保存する。Hermesの再開IDは `HermesセッションID` に保持し、`コアセッションID` と混在させない。オフラインのコードAI欄は `aidiy_hermes` 固定・変更不可とし、モデル候補は `auto` と同梱の `_hermes_cli.bat` の選択値（`codex_cli/auto`、`copilot_cli/auto`、`openai_oauth/` 付きの4モデル）だけにする。既定値・保存値から候補を追加しない。候補外の保存値は共通設定の既定値へ戻し、既定値も候補外なら `auto` を使う。bat未配置でも同じ固定候補を使う。モデルAPIへの接続・モデルIDの手入力は不要。単独版の初期モデルは明示した起動引数、モード別の保存値、`_config/AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL` の順に優先し、共通設定が未配置・未指定の場合だけ `auto` を使う。既定値は配置先、作業フォルダの順で親へ探索し、AIコア接続前から表示する。候補外の起動引数・モデル変更要求は拒否する。
+`aidiy_code` 単独起動版とVS Code拡張は未接続中の送信を自動的にHermesへ渡す。拡張の `src/extension.ts` も `aidiy_code/src/offline.ts` のDiag候補読込・既定値探索・実行処理を共用する。表示用のprovider/modelだけを接続状態で切り替え、会話内のオンラインモデルへオフライン選択を代入しない。通常起動は自動接続ONを既定とし、10秒ごとの再接続を継続する。プロジェクトバー右側の「自動接続」「新規」「一覧」のスイッチでOFFにすると接続・再試行を止め、新規・履歴復帰・ready通知でも再開しない。ONへ戻すと接続を再開し、OFFの選択は次回起動へ保存しない。実行中・モデル変更中の切り替えはUIとホスト側の両方で拒否する。バーはONの未接続で黒、接続済みで従来のシアン明滅、OFFで赤の明滅にする。復帰時も実行中のHermesジョブを維持する。AIコアとHermesのセッションID・保存モデルは分離し、次の送信からAIコアへ戻す。`executionMode` または `--offline` で明示したオフラインは自動接続OFFにし、再接続しない。この場合にスイッチをONへ戻すと新しいオンライン会話へ切り替え、HermesセッションIDをAIコアへ渡さない。明示オフラインの履歴復帰でもOFFへ切り替える。画面に専用のオフライン表示・モードボタンは設けない。`aidiy_code/src/offline.ts` は既存の `runner.ts` / `protocol.ts` を使ってHermesを直接実行し、AIコア・バックアップ・検証ループは呼ばない。コードAIは `aidiy_hermes` に限定し、モデルIDはオンラインのHermesと同じ形式を使う。オンライン用の `aidiy_code_model.json` はそのまま保持し、オフライン用を `aidiy_code_model_offline.json` に別保存する。両ファイルを拡張・単独版で共用し、未接続のモデル変更はオフライン用ファイルだけへ保存する。Hermesの再開IDは `HermesセッションID` に保持し、`コアセッションID` と混在させない。オフラインのコードAI欄は `aidiy_hermes` 固定・変更不可とし、モデル候補は `same` と `_AIDIY/aidiy_diag/code_models_info.json` の `aidiy_hermes.models`（`same` / `auto` を除く）から取得する。既定値・保存値から候補を追加しない。候補外の保存値は共通設定の既定値へ戻し、既定値も候補外なら `same` を使う。Diag一覧がなければ `same` だけを表示し、不正な一覧はエラーにする。モデルAPIへの接続・モデルIDの手入力は不要。単独版の初期モデルは明示した起動引数、モード別の保存値、`_config/AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL` の順に優先し、共通設定が未配置・未指定の場合だけ `auto` を使う。既定値は配置先、作業フォルダの順で親へ探索し、AIコア接続前から表示する。候補外の起動引数・モデル変更要求は拒否する。
 
 モード変更は実行中に拒否する。切り替え後は新規会話とし、一覧の各会話に実行モードを保持してAIコアのセッションIDをHermesへ渡さない。CLIジョブ終了前のモード変更・新規・モデル変更も拒否し、停止／サーバー終了では子プロセスを停止する。明示オフラインへオンライン接続の遅延通知を反映しない。自動オフラインでは再接続通知で実行中フラグを解除せず、停止を進行中のHermesジョブへ渡す。共通Webviewは `オフライン対応` が真の単独版・拡張で未接続時のHermes送信を許可し、オフライン中は検証0固定、オンライン復帰時は直前の検証回数へ戻す。
 
-Code の検証ループ選択（0〜3回、オンライン・オフラインとも初期値0回。オフラインの間は0回に固定し、オンラインへ戻ると直前のオンラインの回数を `オンライン検証回数` から戻す。オンラインで選び直した回数は画面から `setSelfCheckLoop` で送り、拡張と単独起動版が `src/model-preferences.ts` の `検証回数保存` で `~/.aidiy/aidiy_code_options.json`（`コード設定保存先`、モデルの保存先から決める）へ保存する。次回は状態通知の `検証回数` を最初の1回だけ画面へ復元する。モデルは従来どおりオンライン `aidiy_code_model.json`・オフライン `aidiy_code_model_offline.json` に最後の手動選択を保存する）は `frontend_ide/src/components/コード/コードパネル.vue` / `frontend_ide/src/components/コード/コードパネル.vue` で扱い、送信パケットに `self_check_loop` を含める。単独版の `aidiy_code/src/server.ts` と拡張の `src/extension.ts` の両方でAIコアまで渡す。0回はバックアップ・検証を省略する。UI・HTTP中継・拡張中継の確認は `checks/aidiy_code.test.cjs`、`checks/code-extension.test.cjs` を使う。単独版は既存のbundleを使うため、変更後に `npm run compile` で生成物を更新する。
+Code の検証ループ選択（0〜3回、オンライン・オフラインとも初期値0回。オフラインの間は0回に固定し、オンラインへ戻ると直前のオンラインの回数を `オンライン検証回数` から戻す。オンラインで選び直した回数は画面から `setSelfCheckLoop` で送り、拡張と単独起動版が `src/model-preferences.ts` の `検証回数保存` で `~/.aidiy/aidiy_code_options.json`（`コード設定保存先`、モデルの保存先から決める）へ保存する。次回は状態通知の `検証回数` を最初の1回だけ画面へ復元する。モデルは従来どおりオンライン `aidiy_code_model.json`・オフライン `aidiy_code_model_offline.json` に最後の手動選択を保存する）は `frontend_ide/src/components/コード/コードパネル.vue` で扱い、送信パケットに `self_check_loop` を含める。単独版の `aidiy_code/src/server.ts` と拡張の `src/extension.ts` の両方でAIコアまで渡す。0回はバックアップ・検証を省略する。UI・HTTP中継・拡張中継の確認は `checks/aidiy_code.test.cjs`、`checks/code-extension.test.cjs` を使う。単独版は既存のbundleを使うため、変更後に `npm run compile` で生成物を更新する。
 
 ```powershell
 Set-Location frontend_ide/host
@@ -295,7 +272,7 @@ VS CodeはWebview本文に既定の左右paddingを入れます。`src/vscode-ht
 
 Code / Live はどちらも `package.json` の `extensionKind` を `["workspace"]` とし、配置・解除の対象環境を揃える。Remote SSH / WSL / Codespaces では接続先の拡張ホストで動かす。旧版の Live の `["ui", "workspace"]` は接続元を優先するため、Windows 側に配置された Live を Linux の Remote CLI で解除できない。既存の接続元 Live は接続元の拡張機能一覧、または `code --uninstall-extension aidiy.aidiy-live` で一度解除する。`npm run package` で VSIX を再生成し、`python frontend_ide/host/_setup.py --extensions-only` で接続先に配置して、Code / Live の両 ID が同じ拡張一覧にあることを確認する。Live の WinMM マイクは Windows の拡張ホスト用であり、Linux の拡張ホストでは単独ブラウザ版を使用する。Linux の cleanup は接続先で両 ID の解除と解除後の一覧を確認し、Live が残れば失敗にする。Remote CLI では接続元の旧 Live を確認できないことも表示する。
 
-Code / Live の単独起動では、Electron の引数をエントリファイルだけにする。Chromium が追加のファイル引数を解釈して異常終了する場合があるため、起動設定は子プロセスの環境変数で渡す。Code は `AIDIY_CODE_PROJECT` / `AIDIY_CODE_READY` / `AIDIY_CODE_MODEL`、Live は `AIDIY_LIVE_BACKEND` / `AIDIY_LIVE_READY` / `AIDIY_LIVE_PROJECT` / `AIDIY_LIVE_MODELS` を使う。表示後の `windowShown: true` 通知は維持する。Code のブラウザ版は Node.js の引数で従来どおり渡す。
+Code / Live の単独起動では、共通 `launch.mjs` がElectronへ `desktop.cjs --app <kind>` と `AIDIY_DEVELOPMENT_URL` / `AIDIY_DEVELOPMENT_KIND` / `AIDIY_DEVELOPMENT_PROJECT` 等を渡す。表示後の `windowShown: true` はIPCで通知する。旧 `AIDIY_CODE_*` / `AIDIY_LIVE_*` の起動通知経路を現行の共通ランチャーへ追加しない。
 
 単独起動にはセットアップ済みの `aidiy_code` / `aidiy_live` コマンドを使います。Electron が未配置なら AiDiy の配置先で `python frontend_ide/host/_setup.py` を実行して準備します。ブラウザ版を確認する場合は各コマンドに `--browser` を付けます。Node.js の日本語出力とパス表示が文字化けしないよう、生成する `.cmd` の先頭では `chcp 65001 >nul` を実行します。生成済みランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。
 
@@ -336,20 +313,20 @@ cleanup は VS Code 本体を終了しない。起動中の拡張ホストには
 |------|----------|
 | `code` が見つからず VSIX を配置できない | VS Code CLI の PATH、`frontend_ide/host/_setup.py` の `find_vscode_cli()`。単独画面はセットアップ可能 |
 | Electron が未配置 | `python frontend_ide/host/_setup.py` を再実行する。Avatar の同じバージョン、共有 ZIP を優先して再利用する。`dist/version`・実行ファイル・`path.txt` の照合まで成功しているか確認する |
-| 専用ウィンドウが表示されない | ターミナルに出る起動エラーと `out/aidiy_code/*.stderr.log` を確認する。`frontend_ide/desktop.cjs` の表示後通知と `aidiy_code/launch.mjs` の表示確認を両方使う |
+| 専用ウィンドウが表示されない | ターミナルに出る起動エラーを確認する。`frontend_ide/desktop.cjs` のIPC通知と共通 `frontend_ide/launch.mjs` の表示確認を照合する |
 | Hermes が見つからない | `aidiyHermes.cliPath`、`~/.local/bin`、`command_hermes/.venv` |
 | Provider / モデルが空 | `scripts/model-catalog.py`、Hermes 設定、Cli Path が AiDiy CLI を指すか |
 | 送信できない | ワークスペース信頼、フォルダが開かれているか、実行中状態 |
 | 回答が出ない | VS Code 出力パネルの `AiDiy Code`、CLI の終了コード、認証が必要なら「対話 CLI」 |
 | `Session not found` | 古い拡張では新しい会話を開始する。更新版では `--resume` を外して一度だけ自動再試行するため、実行ログと保存セッション ID を確認する |
-| VSIX に変更が入らない | `npm run package` の prepublish、Code の `dist/extension.js` / `dist/webview.js`、Live の `aidiy_live/dist/extension.js` / `aidiy_live/dist/view.js`、`--force` 配置 |
+| VSIX に変更が入らない | `npm run package` の prepublish、Code の `dist/extension.js` / `dist/development/`、Live の `aidiy_live/dist/extension.js` / `aidiy_live/dist/development/`、`--force` 配置 |
 | Live の専用ウィンドウでマイクが ON にならない | `frontend_ide/desktop.cjs` の `audioAllowed` の origin 正規化と音声・メインフレーム制限。Windows のサウンド入力にデバイスがあるかを確認する。リモートデスクトップでは録音転送を有効にして再接続する。詳細は `aidiy_live/README.md` の「マイクを ON にできない場合」 |
 
 ## Live のローカル接続先
 
 - 接続先の画面表示、`--backend`、`aidiyLive.backendUrl` は使わない。`aidiy_live/local-backend.cjs` がホストを `127.0.0.1` に固定し、AiDiy配置先から親へ、次に作業フォルダから親へ `_config/AiDiy_key.json` を探索して `PORT_CORE` を使う。設定ファイルが無い配布済み拡張では8091を使う。読込失敗・不正ポートは既定値で隠さずエラーにする。
 - ランチャー・ブラウザ中継・拡張ホストで同じ解決処理を使う。ポート変更後はCoreとLiveを再起動する。モデル選択画面に接続先欄を再追加しない。
-- `checks/launcher.test.cjs` で既定起動と共通ポート変更後の起動を確認する。単独起動の `launch.mjs` は `build-state.cjs` でソース・生成物のハッシュを照合し、不一致・生成物欠落・旧配置で記録がない場合に起動前に再生成する。HTMLだけ更新され、削除済み要素を参照する古いJavaScriptが残る状態を避ける。手動では `frontend_ide/host` の `npm run live:compile` で更新できる。VS Code拡張はVSIXの更新も必要。
+- `checks/launcher.test.cjs` で既定起動と共通ポート変更後の起動を確認する。現行の単独起動は共通 `frontend_ide/launch.mjs` へ進み、Vue配布物がなければセットアップを案内する。起動時の自動再生成を前提にせず、画面とホストの配布物を変更後に更新する。手動では `frontend_ide/host` の `npm run live:compile` で更新できる。VS Code拡張はVSIXの更新も必要。
 - 画面テストの `getElementById` は実HTMLにないIDへ `null` を返す。任意IDのモック要素を生成すると、HTMLとJavaScriptの不整合を見逃す。
 - モデル情報APIへの通信失敗は、単独版・拡張とも実際の接続先と原因コードを表示する。`ECONNREFUSED` ならローカルCoreの起動・待受ポートを確認する。OpenAI側の障害と区別し、画面表示だけでAPIキーやモデルの問題と判断しない。
 

@@ -38,7 +38,9 @@ if self.code_ai == "opencode_cli":
 ```python
 if self.code_ai == "opencode_cli":
     _model = self._ollama_cloud_suffix除去(self.code_model)
-    model_args = ["--model", _model] if _model and _model.lower() != "auto" else []
+    if not _model or _model.lower() in ("auto", "same"):
+        _model = self._opencode最終選択モデル()
+    model_args = ["--model", _model] if _model else []
     cmd_args = base + ["run"]
     cmd_args += model_args + [プロンプト]
     if not 初回:

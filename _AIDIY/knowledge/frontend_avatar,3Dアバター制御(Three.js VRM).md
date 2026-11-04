@@ -62,7 +62,7 @@ VRMA再生開始()
   → 体姿勢補正開始() → 姿勢ゼロへ lerp（0.42s）
   → VRMA再生実行()
     → VRMAファイル選択() → シャッフルキューから選択
-    → motionLoader.load() → createVRMAAnimationClip() → mixer.clipAction()
+    → motionLoader.load() → createVRMAnimationClip() → mixer.clipAction()
     → crossFadeFrom(前のアクション, 0.3s)
     → play() + LoopOnce + clampWhenFinished
   → モーション終了時処理()
@@ -112,7 +112,7 @@ _gazeQuat.setFromEuler(_gazeEuler)
 毎フレームのアニメーションループで適用:
 
 ```typescript
-// まばたき（約 2.4Hz の正弦波、ピーク時のみ閉じる）
+// まばたき（角周波数 2.4 rad/s、周期約 2.62 秒の正弦波。ピーク時のみ閉じる）
 const blink = Math.sin(elapsed * 2.4) > 0.985 ? 1 : 0
 currentVrm.expressionManager?.setValue('blink', blink)
 
@@ -178,11 +178,11 @@ export type 自動カメラワーク設定 = {
   基準半径: number
   半径: number           // 現在の半径（補間中）
   目標半径: number       // lerp 目標
-  最小半径: 基準半径 * 0.12
+  最小半径: Math.max(0.12, 基準半径 * 0.12)
   最大半径: 基準半径 * 3.2
   注視Y: number
   角速度: (Math.PI * 2) / 9  // 約 9 秒/周
-  高さ振幅: modelSize.y * 0.018
+  高さ振幅: Math.max(0.015, modelSize.y * 0.018)
   半径補間速度: -ln(0.05) / 9s  // 1周で95%収束
   角度補間速度: 1.6
   注視補間速度: 2.2
@@ -195,11 +195,12 @@ export type 自動カメラワーク設定 = {
 |------|------|
 | ドラッグ | 角度オフセット (`0.0085 rad/px`) + 高さオフセット (`0.006/px`, clamp ±1.2) |
 | Ctrl + ホイール | 距離スケール変更（`×1.08` / `×0.92`、最小〜最大半径でクランプ） |
-| 手動操作後もカメラモード有効なら自動動作出続行 |
+
+手動操作後もカメラモード有効なら自動動作を続行します。
 
 ### カメラ距離倍率
 
-`カメラ距離倍率適用(設定, 倍率)` で基準半径に対する倍率を設定。ホイール操作は `cameraDistanceScale` に記憶され、`fitCamera()` 呼び出しで復元されます。
+`カメラ距離倍率適用(設定, 倍率)` で基準半径に対する倍率を設定。停止モードのホイール操作は `cameraDistanceScale` に記憶され、`fitCamera()` 呼び出しで復元されます。自動カメラ有効時は現在半径だけを一時変更し、倍率を1へ戻して基準半径へ補間します（`handleWheel()`）。
 
 ## 灯光
 
@@ -234,8 +235,8 @@ rimLight.position.set(-1.3, 0.7, 1.3) // 左上前方
 ## 注意点
 
 - **transparentMode**: `true` のとき背景完全透明＋コントロール非表示。サブウィンドウ表示用
-- **controlsVisible**: `false` でドラッグ制御も無効化（cursor: default）
+- **controlsVisible**: `false` で補助UIを隠しカーソルを通常表示にする。ドラッグや Ctrl + ホイールの処理自体は無効化しない
 - **VRMA ファイル不在**: `listVrmaFiles()` が空の場合、定数リストにフォールバック。それも空なら `motion error`
-- **カメラ目線と VRMA の競合**: VRMA 再生中は `カメラ目線一時解除中 = true` として目線制御を OFF に。VRMA 側が目線を動かすため
+- **カメラ目線と VRMA の競合**: 再生準備時は `カメラ目線一時解除中 = true` にし、クリップ開始後に解除する。ただし `首顔カメラ目線有効()` は `vrma再生中` も判定するため、再生中の首・頭の視線補助は無効
 - **フェードアウト競合**: 連続キャンセルや高速モーション切り替えは `vrma再生要求番号` で世代管理
 - **fitCamera 呼び出し**: resize 時と VRM 読み込み完了時に自動実行。前のカメラ状態を維持したまま再計算

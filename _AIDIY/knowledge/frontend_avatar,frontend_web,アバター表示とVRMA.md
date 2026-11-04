@@ -71,7 +71,7 @@ Electron / Web のカーソル・CPU取得、スプライト追加、表示選�
 - CSS の `#avatar-container` の `width` / `height` と `renderer.setSize(..., false)` を一致させる。
 - `getStageSize()` で `clientWidth/clientHeight` を読み、CSS と canvas の見た目をずらさない。
 - カメラは `-Z` 側に置き、`camera.lookAt()` で正面を見る構成に寄せる。
-- VRMA は `LoopOnce` で 1 本ずつ再生し、`clip.duration - XFADE` を基準に `setTimeout` で次クリップを予約する。
+- 現行の `X自己紹介/index.html` は VRMA を読み込まず、`applyIdlePose()` / `updateIdleSway()` で姿勢と揺れを制御する。以下のVRMA部分は、静的HTMLへ巡回再生を追加する場合の例であり、同ページの現行実装ではない。
 
 ```javascript
 const getStageSize = () => ({
@@ -94,7 +94,7 @@ nextClipTimer = window.setTimeout(playNext, Math.max(250, (clip.duration - XFADE
 ## 注意点
 - `fitCamera` の倍率変更は自動カメラワークにも影響する。
 - `action.crossFadeFrom` を設定しないと、モーション切替時に初期姿勢へ戻って見えることがある。
-- VRMA や設定 JSON は UTF-8 BOM なしを優先する。
+- 設定 JSON は UTF-8 BOM なしにする。VRM / VRMA はバイナリ資産のため、文字コード変換や BOM 除去を適用しない。
 - Electron の `mousemove` は BrowserWindow 内に入ったときしか取れない。ウィンドウ外カーソル追従には main process IPC が必要。
 - CPU 使用率は直前サンプルとの差分で出すため、初回値は 0 になり得る。
 - `requestAnimationFrame` や `setTimeout` はコンポーネント破棄時に解除する。
@@ -106,4 +106,4 @@ nextClipTimer = window.setTimeout(playNext, Math.max(250, (clip.duration - XFADE
 4. `表示選択` を切り替え、アバター以外の表示中にアバター固有設定が出ないことを確認する。
 5. `controls-visible=false` で設定 UI、字幕、補助発光が消えることを確認する。
 6. xeyes は Electron でウィンドウ外カーソル、Web で画面内 pointermove に追従することを確認する。
-7. 静的HTMLではリロード後に canvas サイズ、向き、VRMA 巡回再生が崩れないことを確認する。
+7. 静的HTMLではリロード後に canvas サイズ、向き、アイドル動作が崩れないことを確認する。VRMA 巡回を追加したページではその連続再生も確認する。

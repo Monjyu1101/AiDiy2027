@@ -36,9 +36,9 @@ def 商品一覧(request: Optional[schemas.ListRequest] = None,
     conditions = []
     params = {}
     append_active_condition(conditions, request, "M.有効")
-    if request and getattr(request, "商品名", None):
-        conditions.append("M.商品名 LIKE :商品名")
-        params["商品名"] = f"%{request.商品名}%"
+    if request and getattr(request, "商品分類ID", None):
+        conditions.append("M.商品分類ID = :商品分類ID")
+        params["商品分類ID"] = request.商品分類ID
 
     limit_sql, limit_value = get_limit_clause(request)
     if limit_value is not None:
@@ -49,16 +49,17 @@ def 商品一覧(request: Optional[schemas.ListRequest] = None,
         SELECT
             M.商品ID,
             M.商品名,
-            C.分類名
+            C.商品分類名
         FROM M商品 M
-        LEFT JOIN M商品分類 C ON M.分類ID = C.分類ID
+        LEFT JOIN M商品分類 C ON M.商品分類ID = C.商品分類ID
         {where_sql}
         ORDER BY M.商品ID
         {limit_sql}
     """
     rows = db.execute(text(sql), params).fetchall()
     items = [dict(row._mapping) for row in rows]
-    return {"status": "OK", "data": {"items": items, "total": len(items)}}
+    total = db.execute(text(f"SELECT count(*) FROM M商品 M {where_sql}"), params).scalar()
+    return {"status": "OK", "message": "取得しました", "data": {"items": items, "total": total, "limit": limit_value}}
 ```
 
 ### 2. `apps_main.py` に登録する
@@ -143,10 +144,11 @@ def apply_active_filter(query, model, request):
 ```powershell
 cd backend_server
 .venv\Scripts\python.exe -m py_compile apps_router\V<名称>.py
-.venv\Scripts\python.exe -c "import apps_main"
 ```
 
 - Swagger `http://127.0.0.1:8098/docs` で `/一覧` と `/最終更新日時` を実行する。
 - `無効も表示=False` で有効データのみ返ることを確認する。
 - `件数制限=True` で LIMIT が効くことを確認する。
 - 検索条件や分類条件がある場合、params 経由で絞り込まれることを確認する。
+
+`apps_main.py` はimport時に `create_all()` を実行する。importによる確認は実DBへ向けず、設定・DBを隔離した検証環境で行う。

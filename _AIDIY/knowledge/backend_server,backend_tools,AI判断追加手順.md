@@ -105,7 +105,7 @@ answers = response.json()["data"]["answers"]
 
 OAuth側は Responses の `text.format.type=json_schema`, `strict=true` を使う。全経路とも回答名・型・候補の一致、確率の範囲と合計、段階評価の加重平均を検証する。JSON不正・途中切断・タイムアウト・未完了は成功として返さない。HTTP入力不正は422、処理エラーは400と `status=NG`。MCPではToolErrorを返す。
 
-互換なのは入出力形式である。OAuth側の確率・confidenceは生成モデルの推定値で、Decisions APIと同じ校正値や実測頻度を保証しない。方式別に閾値を評価する。`method` は `decisions_api` または `responses_json_schema`。
+互換なのは入出力形式である。OAuth側の確率・confidenceは生成モデルの推定値で、Decisions APIと同じ校正値や実測頻度を保証しない。方式別に閾値を評価する。`method` は `decisions_api`、`responses_json_schema`、または Gemini / FreeAI の `gemini_json_schema`。
 
 ## プロバイダ・モデル追加
 

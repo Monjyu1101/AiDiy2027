@@ -15,7 +15,7 @@
 保持用テキストと送信用テキストを分ける。
 
 - system prompt は履歴やデバッグ表示で読むため、構築時点では複数行を保持する
-- CLI 引数へ渡す直前にだけ改行・復帰を空白へ置換し、1 行化する
+- cmd.exe 経由で CLI 引数へ渡す場合だけ、改行・タブ・連続空白を空白1つへまとめる。直接実行では改行を保持し、Hermes は UTF-8 標準入力で渡す
 - `None` は未設定値として空文字へ変換する
 - `int`、`list` など非文字列は呼び出し側の不整合として `TypeError` にする
 
@@ -27,14 +27,15 @@ def _CLI送信用テキスト正規化(self, text: Optional[str]) -> str:
         return ""
     if not isinstance(text, str):
         raise TypeError(f"CLI送信用テキストは文字列である必要があります: {type(text).__name__}")
-    return text.replace("\n", " ").replace("\r", " ").strip()
+    return " ".join(text.split())
 ```
 
-`_コマンド構築()` の冒頭で正規化する。
+`_コマンド構築()` では cmd.exe 経由の場合だけ正規化する（以下は該当部分）。
 
 ```python
 def _コマンド構築(self, プロンプト: str, 初回: bool = False, repo_path: str = None, 読取専用: bool = False) -> list:
-    プロンプト = self._CLI送信用テキスト正規化(プロンプト)
+    if cmd_exe経由:
+        プロンプト = self._CLI送信用テキスト正規化(プロンプト)
     ...
 ```
 
@@ -61,5 +62,5 @@ backend_server\.venv\Scripts\python.exe -m py_compile backend_server\AIコア\AI
 
 追加で確認すること:
 - `self.system_prompt` が複数行のまま保持される
-- `_コマンド構築()` で CLI 送信直前に 1 行化される
+- `_コマンド構築()` で cmd.exe 経由だけ1行化され、直接実行と Hermes の標準入力では改行が保持される
 - `None` は空文字、非文字列は例外になる

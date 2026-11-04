@@ -8,7 +8,7 @@
 - Windows 環境で UTF-8 without BOM を維持する
 
 ## 関連ファイル
-- `scripts/bom_anomaly_list.py` — BOM 混入ファイルの検出
+- `scripts/bom_anomaly_list.py` — ファイル途中（オフセット0以外）の BOM 検出
 - `scripts/remove_bom.py` — BOM の一括除去
 
 ## 検出手順
@@ -16,6 +16,8 @@
 ```powershell
 python scripts/bom_anomaly_list.py
 ```
+
+このスクリプトは先頭だけの BOM を異常として報告しない。先頭の BOM は次のようにバイト列で確認する。
 
 担当ファイルだけ確認する場合:
 
@@ -61,5 +63,5 @@ python scripts/remove_bom.py src/     # 指定フォルダ以下のみ除去
 
 ```powershell
 python scripts/bom_anomaly_list.py
-# 出力が空なら BOM なし
+# TOTAL_ANOMALIES 0 なら途中の BOM 異常なし（先頭 BOM は別途確認）
 ```

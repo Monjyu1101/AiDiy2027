@@ -93,7 +93,7 @@ router.push({
 ```
 
 - `qTublerFrame` は枠、ヘッダー、スロット、ページャを提供する。並び替え、フィルタ、ページ切替後の配列作成は呼び出し側で行う。
-- 現行 props / events は `columns`, `rows`, `rowKey`, `sort`, `page`。古い `headers/items/selectedId/row-click` 形式は使わない。
+- 主な props は `columns`, `rows`, `rowKey`, `sortKey`, `sortOrder`、events は `sort`, `page`, `row-click`, `row-dblclick`。`headers/items/selectedId` 形式は使わない。
 - `Column` は `src/types/qTubler.ts` の `key`, `label`, `width`, `align`, `sortable`。幅は固定値を入れ、数値や日付は `align: 'right'` / `'center'` を明示する。
 
 ## 一覧画面の手順

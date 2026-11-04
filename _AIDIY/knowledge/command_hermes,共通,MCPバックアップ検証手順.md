@@ -78,9 +78,9 @@
 
 ### 3. 判断基準
 
-- `added_lines == 0` かつ `removed_lines == 0` → バックアップと現行ファイルは同一（変更なし）
+- `added_lines == 0` かつ `removed_lines == 0` → 読み取った範囲の行内容に差分なし。`backup_get_before_after` で双方の存在と各 `truncated: false` を確認し、全体一致やバイト単位の一致とは区別する。
 - `added_lines > 0` または `removed_lines > 0` → 内容の精査が必要
-- バックアップフォルダ名が `YYYYMMDD/HHMMSS` 形式であることを確認する
+- バックアップフォルダ名が `YYYYMMDD/HHMMSS[.all][.コメント]` 形式であることを確認する
 
 ## 注意点
 
@@ -89,7 +89,7 @@
 - `_AIDIY/aidiy_code/` と `_AIDIY/aidiy_ide/` の会話・検索・解析記録は、全階層でバックアップと件数判定から除外する。IDEのバックアップ対象フィルターと `.gitignore` にも同じ除外を反映する。`_AIDIY/knowledge/`、`frontend_ide/aidiy_code/` などのソース、似た名前のフォルダは対象に残す。
 
 - 保存処理は、除外後の全対象ファイル数が100,000件以上になると走査中にキャンセルする（差分コピー件数ではない）。`backend_server/AIコア/AIバックアップ.py` の `_バックアップキャンセル件数` が判定値で、対象パスと検出件数を ERROR ログへ出力する。コピーや保存先フォルダ作成は行わず、MCP / HTTP の保存結果は `ok: false` と `error` を返す。
-- `backup_get_before_after` は内容全体を返す。ファイルが大きい場合は `backup_diff_stats` で軽量確認してから必要に応じて内容を取得する
+- `backup_get_before_after` は各ファイルを最大512 KiBまで読み、超過時は `truncated: true` を返す（`BackupCheck.MAX_CONTENT_BYTES`）。`backup_diff_stats` も同じ読み取り範囲から集計し、切り詰めの情報を返さないため、大きいファイルの全体一致判定には使わない
 - `backup_diff_stats` は行ベースの差分カウントであり、同一内容でも改行コードの違い（CRLF vs LF）は行数に影響しない
 - バックアップがないファイルの場合は `before` が `null` になる
 - この検証は MCP バックアップが正常稼働していることが前提。MCP が落ちている場合は `git diff` など代替手段を使う

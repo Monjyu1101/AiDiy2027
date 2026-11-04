@@ -54,11 +54,11 @@ T生産・M商品構成が参考実装。
 ```python
 class T生産(Base):
     __tablename__ = "T生産"
-    生産ID    = Column(String, primary_key=True)
+    生産伝票ID = Column(Text, primary_key=True)
     明細SEQ   = Column(Integer, primary_key=True)
-    生産日付  = Column(String)
-    商品ID    = Column(String)
-    数量      = Column(Integer)
+    生産開始日時 = Column(Text)
+    受入商品ID = Column(Text)
+    受入数量 = Column(Float)
 ```
 
 - `明細SEQ=0` をヘッダー行、`明細SEQ>=1` を明細行にする。
@@ -90,9 +90,10 @@ class T生産(Base):
 ```powershell
 cd backend_server
 .venv\Scripts\python.exe -m py_compile apps_models\T<名称>.py apps_schema\T<名称>.py apps_crud\T<名称>.py apps_router\T<名称>.py apps_router\V<名称>.py
-.venv\Scripts\python.exe -c "import apps_main"
 ```
 
 - Swagger `http://127.0.0.1:8098/docs` で POST エンドポイントを確認する。
 - 作成、一覧取得、更新、削除を実行する。
 - 明細型はヘッダー行だけの取得、明細行だけの取得、V系集計条件を確認する。
+
+`apps_main.py` はimport時に `create_all()` を実行する。importによる確認は実DBへ向けず、設定・DBを隔離した検証環境で行う。

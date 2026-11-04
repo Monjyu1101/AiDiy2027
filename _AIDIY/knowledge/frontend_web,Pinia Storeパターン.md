@@ -74,20 +74,24 @@ state: () => ({
 | action | 処理 |
 |--------|------|
 | `login(username, password)` | `POST /core/auth/ログイン` → token 格納 + `fetchUser()` → `router.push()` |
-| `fetchUser()` | `POST /core/auth/現在利用者` → user を localStorage 保存 + `authChecked = true`。失敗時は `logout()` |
+| `fetchUser()` | `POST /core/auth/現在利用者` → user を localStorage 保存 + `authChecked = true`。HTTPエラー応答時は `logout()`。応答なしの通信失敗はtokenを保持し、認証判定を保留する |
 | `logout()` | token/user/authChecked をクリア + localStorage 削除 → `router.push('/ログイン')` |
-| `ensureAuth()` | token 無し→早期return。`authChecked` が false なら `fetchUser()` を呼ぶ |
-| `refreshToken()` | `POST /core/auth/トークン更新` → token 差し替え。失敗は無視（401 インターセプター任せ） |
+| `ensureAuth()` | token 無し→早期return。`authChecked` が false なら `fetchUser()` を呼ぶ。同時呼出しは `認証確認Promise` を共有する |
+| `refreshToken()` | `POST /core/auth/トークン更新` → 送信時と現在のtokenが同じ場合だけ差し替える。失敗は無視（401 インターセプター任せ） |
 
 ### 認証フロー
 
 ```
-ページ遷移 → beforeEach ガード
-  → ensureAuth()
-    → token 無し → user = null, authChecked = true, そのまま遷移（login 画面へ）
-    → token あり、未チェック → fetchUser()
-      → 成功 → 遷続行
-      → 失敗 → logout() → /ログインへ
+ページ遷移 → beforeEach ガード（認証必須ルート）
+  → token 無し → /ログインへ
+  → 保存済み user あり → 遷移を続行し、ensureAuth() をバックグラウンド実行
+  → user なし → ensureAuth() を待つ
+    → user 取得成功 → 遷移続行
+    → user なし → /ログインへ
+
+ensureAuth() の未確認時 → fetchUser()
+  → HTTPエラー応答 → logout()
+  → 応答なし → 判定保留。次の遷移で再確認
 ```
 
 ## 新規 store 追加手順

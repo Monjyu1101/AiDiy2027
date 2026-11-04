@@ -40,7 +40,7 @@ const SETTINGS_BOUNDS = { width: 720, height: 580, minWidth: 580, minHeight: 400
 
 | 関数 | 用途 | 基準 |
 |------|------|------|
-| `getCenteredPosition()` | login, chat ウィンドウ | ワークエリア中央 |
+| `getCenteredPosition()` | login ウィンドウ、chat の基準位置 | ワークエリア中央。chat は `getPanelInitialPosition()` で core 窓との重なりを避ける方向へX座標を補正 |
 | `getBottomRightPosition()` | core ウィンドウ | 右下（右端 24px オフセット） |
 | `getBottomLeftPosition()` | image ウィンドウ | 左下（24px マージン） |
 | `getPanelInitialPosition()` | file/code1〜code6 | 左上起点で 48px ずつステップ配置 |
@@ -60,8 +60,8 @@ const SETTINGS_BOUNDS = { width: 720, height: 580, minWidth: 580, minHeight: 400
 ```text
 createLoginWindow() → ログイン成功 → openCoreWindow()
   ├─ createCoreWindow() + ensureAllPanelWindows() で全パネル作成
-  ├─ loginWindow.hide()
-  └─ nextCoreWindow.show() + focus()
+  ├─ waitForReady() → ウィンドウ表示(nextCoreWindow) → window:shown 通知
+  └─ ウィンドウ非表示(loginWindow)
 ```
 
 ### コア → ログイン（認証期限切れ）
@@ -69,19 +69,22 @@ createLoginWindow() → ログイン成功 → openCoreWindow()
 ```text
 openLoginWindow()
   ├─ closeAllPanelWindows() で全パネル破棄
-  ├─ coreWindow.close()
-  └─ loginWindow.show()
+  ├─ login 窓の読込待ち → restore / center → ウィンドウ表示()
+  └─ coreWindow.close()
 ```
 
 ### パネル開閉
 
 ```text
-togglePanel(panel)
-  ├─ createPanelWindow() で遅延作成
-  ├─ panelStates[panel] の反転
-  ├─ visible → window.show()
-  └─ hidden → window.hide()（destroy しない）
+panel:toggle
+  ├─ createPanelWindow() で窓を確保
+  └─ setPanelVisibility(panel, !panelStates[panel])
+       ├─ 状態更新・通知
+       ├─ visible → ウィンドウ表示() → window:shown 通知
+       └─ hidden → ウィンドウ非表示()（destroy しない）
 ```
+
+表示・非表示は共通関数で連打や表示待ちの取消を処理します。詳細は [変更チェック](./frontend_avatar,変更チェック.md) を参照します。
 
 `closePanelWindow()` はウィンドウを完全破棄します（`window.destroy()`）。
 

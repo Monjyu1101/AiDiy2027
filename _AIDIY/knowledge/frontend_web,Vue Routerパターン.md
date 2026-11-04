@@ -22,7 +22,7 @@
 ```typescript
 // index.ts — 3 つの配列をマージ
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [...baseRoutes, ...coreRoutes, ...appsRoutes],
 })
 ```
@@ -48,18 +48,18 @@ AIタスク・AIチームは `aidiy_task` / `aidiy_team` の単独アプリへ�
 |------|-------|
 | path | 日本語パス（`/C管理/...`、`/Mマスタ/...`） |
 | component | 原則 遅延ローディング（`() => import(...)`） |
-| meta.requiresAuth | 認証必要なし = `false` or 未指定（ログイン画面のみ） |
+| meta.requiresAuth | 認証必要なし = `false` or 未指定（ログイン画面と静的ページへの別名ルート） |
 | meta.title | ページタイトル（`afterEach` で `<title>` に設定） |
 | ネスト | 不使用。全ルートフラット |
 
-### ログイン画面（唯一の非認証ルート）
+### ログイン画面（非認証ルート）
 
 ```typescript
 {
   path: '/ログイン',
   name: 'login',
   component: ログイン, // eager import
-  meta: { requiresAuth: false, title: 'ログイン' },
+  meta: { title: 'ログイン' },
 }
 ```
 
@@ -68,24 +68,28 @@ AIタスク・AIチームは `aidiy_task` / `aidiy_team` の単独アプリへ�
 ### beforeEach — 認証チェック
 
 ```typescript
-router.beforeEach(async (to, from, next) => {
-  // 1. 日本語パスが URL エンコードされていたらデコードしてリダイレクト
-  if (decodeURIComponent(to.path) !== to.path) {
-    return next(decodeURIComponent(to.path))
+router.beforeEach(async (to, _from, next) => {
+  try {
+    const decodedPath = decodeURIComponent(to.path)
+    if (decodedPath !== to.path) {
+      return next({ path: decodedPath, query: to.query, hash: to.hash })
+    }
+  } catch (e) {
+    console.error('URL Decode Error:', e)
   }
 
-  // 2. requiresAuth が false なら無条件で通過
-  if (!to.meta.requiresAuth) return next()
-
-  // 3. ensureAuth() でトークンチェック
-  //    失敗 → /ログインへ
-  //    成功 → 遷移続行
-  const auth = useAuthStore()
-  await auth.ensureAuth()
-  if (!auth.isAuthenticated) {
-    return next('/ログイン')
+  const authStore = useAuthStore()
+  if (to.meta.requiresAuth) {
+    if (!authStore.token) return next('/ログイン')
+    if (authStore.user) {
+      // キャッシュ済み利用者がいれば遷移を止めず、裏で認証確認する
+      void authStore.ensureAuth()
+    } else {
+      await authStore.ensureAuth()
+      if (!authStore.user) return next('/ログイン')
+    }
   }
-  return next()
+  next()
 })
 ```
 
@@ -93,7 +97,8 @@ router.beforeEach(async (to, from, next) => {
 
 ```typescript
 router.afterEach((to) => {
-  document.title = to.meta.title ? `AiDiy - ${to.meta.title}` : 'AiDiy'
+  const pageTitle = to.meta?.title || (typeof to.name === 'string' ? to.name : '')
+  document.title = pageTitle ? `AiDiy - ${pageTitle}` : 'AiDiy'
 })
 ```
 
@@ -126,6 +131,8 @@ router.afterEach((to) => {
 | `/Xその他/X太陽系/表示` | X太陽系 | |
 | `/Xその他/X動画再生BGM/再生` | X動画再生BGM | |
 | `/Xその他/X自己紹介/表示` | X自己紹介 | |
+
+`createStaticAliasRoute()` による静的ページへの別名ルートもあります。`requiresAuth` は付けず、`beforeEnter` で `BASE_URL` を考慮した `public/` のHTMLへ `window.location.replace()` します。対象一覧は `index.ts` を参照してください。
 
 ### coreRoutes（coreRouter.ts）
 

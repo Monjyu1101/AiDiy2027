@@ -46,7 +46,7 @@ if self.code_ai == "grok_cli":
     common = list(base)
     if self.code_permissions != "none":
         common.append("--always-approve")
-    if self.code_model and self.code_model.lower() != "auto":
+    if self.code_model and self.code_model.lower() not in ("auto", "same"):
         common.extend(["--model", self.code_model])
     if repo_path:
         common.extend(["--cwd", repo_path])
@@ -86,14 +86,14 @@ if self.code_ai == "grok_cli":
 
 ## モデル候補
 
-候補の照合元: `scripts/cli_bat/_grok_cli.bat`。利用可能性はログイン済みアカウントの `grok models` で確認する。
+候補の正本: `backend_diag/モデル情報/models_info.mjs` の `FIXED_MODELS.grok_cli`。利用可能性はログイン済みアカウントの `grok models` で確認する。
 
 現行の候補は `grok-4.7` と `grok-4.6` の 2 つ（設定画面には `auto` も表示）。
 公開済みかは OpenRouter の `x-ai/` 一覧に載っているかで判断する（`~x-ai/grok-latest` の参照先が最新）。2026-10-15 時点で `grok-4.8` は発表のみで未掲載のため候補に含めない。
 `grok-4` / `grok-4-fast` / `grok-code-fast-1` / `grok-4.6-build` は `unknown model id` で拒否される。
 `grok-4.6-build` は `--output-format json` の `modelUsage` に出る内部名で、`-m` には渡せない。
 
-固定一覧方式のため `conf_model.py` の `CODE_GROK_CLI_MODELS` と `_config/AiDiy_code_grok_cli.json` を同期する。古いローカル設定JSONは `conf_model.py` の初期化時に更新する。
+固定候補はDiagが `code_models_info.json` に合成し、`conf_model.py` は読込だけを行う。旧 `_config/AiDiy_code_grok_cli.json` の作成・同期は行わない。
 
 ## 配線箇所
 
@@ -105,7 +105,7 @@ Code AI を 1 つ追加するときに触る箇所（`grok_cli` の実績）:
 | `AIコア/AIコード.py` | 未インストール案内の表示名 |
 | `AIコア/AIセッション管理.py` | `CODE_GROK_CLI_MODEL` をセッション設定へ |
 | `core_router/AIコア.py` | 設定保存キー一覧 / welcome の provider_key / `モデル情報/TASK選択肢` のフォールバック一覧 |
-| `conf/conf_model.py` | `CODE_GROK_CLI_MODELS` 定義・`_config` 同期・`get_code_models()` |
+| `conf/conf_model.py` | Diag合成JSONの読込・`get_code_models()` |
 | `conf/conf_json.py` | `CODE_GROK_CLI_MODEL` の既定値 |
 | `frontend_web` / `frontend_avatar` の `AI設定再起動.vue` | `CODE_MODEL_KEYS` |
 | 両フロントの `AIタスク_要求編集.vue` / `AIタスク_明細編集.vue` | `TASK_CODE_MODELS既定` |

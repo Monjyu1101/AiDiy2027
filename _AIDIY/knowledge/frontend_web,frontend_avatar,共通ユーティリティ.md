@@ -70,35 +70,29 @@ frontend_web のマップの方が充実しています。avatar にエントリ
 
 ## ダイアログユーティリティ (qAlert / qConfirm / qColorPicker)
 
-両プロジェクトとも `src/utils/qAlert.ts` にシングルトン形式のダイアログユーティリティを持ちます。
+両プロジェクトとも `src/utils/qAlert.ts` に `qAlert` / `qConfirm` / `qMessage` / `qColorPicker` を持ちます。
 
-### シングルトンパターン
+### マウントと呼び出し
+
+`qAlert` / `qConfirm` / `qMessage` は `createApp()` で一時DOMへ直接マウントし、終了時にアンマウントしてDOMを削除します。App.vue / AiDiy.vueへのインスタンス登録は不要です。`qAlert` / `qConfirm` は重複表示を防ぎ、`qMessage` は前のメッセージを置き換えます。
 
 ```typescript
-// インスタンス登録（App.vue / AiDiy.vue の onMounted で呼ぶ）
-setAlertInstance(alertDialogRef)
-setConfirmInstance(confirmDialogRef)
-setColorPickerInstance(colorPickerRef)
-
-// 呼び出し
 await qAlert('保存しました')
 const ok = await qConfirm('削除してよろしいですか？')
+await qMessage('更新しました', 'success', 3000)
+
+// qColorPicker だけは既存のインスタンス登録方式を維持する
+setColorPickerInstance(colorPickerRef.value)
 const color = await qColorPicker('#ff0000', '色を選択')
 ```
 
-### 差分
+`qColorPicker` が未登録の場合はエラーログを出して `null` を返します。ブラウザ標準のalert/confirmへのフォールバックはありません。
 
-| 項目 | frontend_web | frontend_avatar |
-|------|-------------|-----------------|
-| qMessage | あり（`setMessageInstance` + `qMessage()`） | なし |
-| 型定義インターフェース名 | `AlertDialogInstance`, `ConfirmDialogInstance`, `MessageDialogInstance`, `ColorPickerDialogInstance` | 同左（`MessageDialogInstance` 除く） |
-| フォールバック | alert/confirm のブラウザ標準関数 | 同左 |
+### 差分と修正時の注意
 
-### 修正時の注意
-
-- **両方の `qAlert.ts` を同時に修正してください。**
-- frontend_web の `qMessage()` を frontend_avatar に追加してもよいが、対応する `MessageDialogInstance` コンポーネントも必要です。
-- 新しいダイアログ種別を追加する場合は、両プロジェクトでセットで実装します（型定義 + `setXxxInstance` + `qXxx` 関数 + 呼び出し側コンポーネント）。
+- 共通処理は同じで、コンポーネントのimport先が Web は `@/components/_share/`、Avatar は `@/_share/` です。
+- 共通契約を変える場合は両方の `qAlert.ts` と対応するコンポーネントを確認します。存在しない `setAlertInstance` / `setConfirmInstance` / `setMessageInstance` を追加手順として使いません。
+- 新しいダイアログ種別を追加する場合は、両方で必要か判断し、関数・型・コンポーネント・呼び出し側を揃えます。
 
 ## AI 会話表示とメッセージ入力の文字サイズ
 
@@ -119,7 +113,7 @@ const color = await qColorPicker('#ff0000', '色を選択')
 
 ## コピー状態の同期ルール
 
-`utils/` 以下のファイルと、AIタスク / AIチーム / AiDiy / `_share` 系の**画面コンポーネント**は
+`utils/` 以下のファイルと、AiDiy / `_share` 系の**画面コンポーネント**は
 両プロジェクトで実質コピー状態です。以下のルールで運用します:
 
 | 操作 | 手順 |
@@ -133,9 +127,9 @@ const color = await qColorPicker('#ff0000', '色を選択')
 | ファイル | 状態 |
 |----------|------|
 | `utils/monaco.ts` | ほぼ同一（avatar のマップがやや少ない） |
-| `utils/qAlert.ts` | ほぼ同一（web に qMessage 追加） |
+| `utils/qAlert.ts` | ほぼ同一（import先の配置が異なる） |
 | `api/websocket.ts` | 同一インターフェース、実装に若干の差異あり |
-| `components/_share/*.vue`（qTublerFrame, qBooleanCheckbox など） | ほぼ同一 |
+| Webの `components/_share/*.vue` とAvatarの `_share/*.vue`（現存する対応部品） | ほぼ同一 |
 
 Task／Teamは `frontend_ide/src/components/タスクチーム/` が所有します。Web／Avatar内の旧実装は撤去済みで、上記のコピー同期対象には含めません。
 

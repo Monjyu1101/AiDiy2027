@@ -1,6 +1,6 @@
 # GitHub Issue 運用手順
 
-> 文書: `共通,GitHubIssue運用手順.md` | 実装: `.github/`
+> 文書: `共通,GitHubIssue運用手順.md` | 参照: GitHub Issue と対象機能の現行ソース
 
 ## このメモを使う場面
 

@@ -20,13 +20,9 @@
 
 新規レコード作成前に `C採番` から ID を取得する。AUTOINCREMENT は使わない。
 
-```python
-from core_crud import get_next_id
+現行に `get_next_id` という共通関数はない。`apps_router/T生産.py` の登録処理のように採番行を取得し、最終採番値を増やして伝票IDを組み立て、監査項目とともに保存する。
 
-new_id = get_next_id(db, "テーブル名")
-```
-
-API 経由で採番する場合は `POST /core/C採番/採番` を使い、対象テーブル名を渡す。採番IDは原則テーブル名と一致させる。
+API 経由で採番する場合は `POST /core/C採番/採番` を使い、`{"採番ID": "対象テーブル名"}` を渡し、応答の `data.発番値` を使う。採番IDは原則テーブル名と一致させる。
 
 ### 2. 採番IDを初期化する
 
@@ -96,5 +92,6 @@ sqlite3 _data/AiDiy/database.db "SELECT * FROM C採番"
 ```powershell
 cd backend_server
 .venv\Scripts\python.exe -m py_compile core_crud\C採番.py apps_crud\utils.py core_crud\utils.py
-.venv\Scripts\python.exe -c "import apps_main; import core_main"
 ```
+
+`apps_main.py` はimport時に `create_all()` を実行する。importによる確認は実DBへ向けず、設定・DBを隔離した検証環境で行う。

@@ -89,8 +89,8 @@ uv sync --locked --no-install-project
 import requests
 
 # コードチェック
-res = requests.post("http://127.0.0.1:8095/aidiy_code_check/check_python_ruff",
-                    json={"file_path": "backend_server/core_main.py", "venv_project": "backend_server"})
+res = requests.post("http://127.0.0.1:8095/aidiy_code_check/python_ruff",
+                    json={"path": "backend_server/core_main.py", "venv_project": "backend_server"})
 print(res.json())
 
 # バックアップ実行
@@ -222,7 +222,7 @@ curl -s -X POST http://127.0.0.1:8095/aidiy_chrome_devtools/screenshot \
 ## 注意点
 
 - Chrome は最初のツール呼び出し時に `_ensure_chrome()` が起動確認する。
-- Chrome プロセスは `ChromeManager` が単一インスタンスで管理する。
+- Chrome は `chrome_sessions.py` が `session` ごとに管理し、複数セッションを並行利用できる。使用後は所有するセッションだけを `close_session` で閉じる。
 - SQLite は `_data/AiDiy/database.db` を対象にする。
 - PostgreSQL は `psycopg[binary]` 未導入でもサーバー起動は継続し、PostgreSQL ツール呼び出し時にエラーを返す。
 - Code Check は副作用なしの検査系のみを実行する。build や dev server 起動はしない。
@@ -332,12 +332,11 @@ HTTP 200/MCP非エラーのJSONとして `status:"NG", available:false, service_
 と案内messageを返す。既に開始された処理は切替では取り消さない。
 Chat Completions互換HTTPもchat_llmsのenabledに従う。
 
-代表テストは別の管理設定を作らず、既存Chrome DevTools `open_session` / `close_session`を
-Diagの固定allowlist bridge `POST /api/Tools/representative`から呼ぶ。
-`data:{operation:"open",headless:false}` または `{operation:"close"}` のみ許可する。
+代表テストは別の管理設定を作らず、Diagの固定allowlist bridge `POST /api/Tools/representative` から登録済みToolごとの固定試験を呼ぶ。Chromeは `open_session` / `close_session` を使う。
+Chromeでは `data:{operation:"open",headless:false}` または `{operation:"close"}` を許可する。他Toolは固定ID付き `operation:"test"` を使う。
 セッション名は `diag-tools-test` 固定、任意URL/パス/コマンドは受けない。利用者ログインを毎回確認し、
 enabled/availableを確認してから実行する。起動時・一覧表示時に自動テストはしない。
-初版の代表テストはChromeのみ。他のツールは未対応理由を表示する。
+代表テストは登録済みToolに対応する。画像・動画・STT/TTS・Code Agents・Chat・Decisions・Taskの8種は説明APIの確認のみで、生成・AI実行を検証済みとは扱わない。固定操作と副作用は [環境診断運用](./backend_diag,環境診断運用.md) のTools管理を参照する。
 
 隔離試験（ブラウザ/有料API実行なし）:
 

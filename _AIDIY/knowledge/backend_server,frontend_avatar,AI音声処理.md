@@ -39,7 +39,7 @@
 
 ## マイク入力
 - `getUserMedia({ audio: { echoCancellation, noiseSuppression, autoGainControl } })` を使う。
-- `AudioContext({ sampleRate: 16000 })` と `ScriptProcessorNode(1024, 1, 1)` で入力を受ける。
+- `AudioContext({ sampleRate: this.inputSampleRate })`（通常16kHz、OpenAIは24kHz） と `ScriptProcessorNode(1024, 1, 1)` で入力を受ける。
 - スピーカー出力中は `currentSpeakerLevel` を使ってエコー抑制をかける。
 - Float32 を 16bit PCM に変換し、Base64 化して送信する。
 - 送信 payload は `メッセージ内容: 'audio/pcm'`, `チャンネル: 'audio'`, `ファイル名: <base64>` の形式に合わせる。

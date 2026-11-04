@@ -54,7 +54,7 @@ AiDiy.vue で管理される主要状態:
 
 ```text
 1. ロール検出 (フォールバックロール解決)
-   ├─ URL が "/" or "/index.html" → login
+   ├─ Web で URL が "/" or "/index.html"、かつ URL にセッションIDなし → 認証を初期化して login
    ├─ URL クエリ "role" が有効 → そのロール
    └─ token + セッションID あり → core
 
@@ -76,7 +76,7 @@ AiDiy.vue で管理される主要状態:
 
 ## コア接続とチャンネル
 
-AIコアとは2本の WebSocket で接続します。
+`AiDiy.vue` は core / input の2本の WebSocket を管理します。音声や各子パネルが管理する接続は別です。
 
 | チャンネル | 変数 | 役割 |
 |-----------|------|------|
@@ -131,6 +131,6 @@ const 認証Storage = isElectron ? localStorage : sessionStorage
 ## 注意点
 
 - **Pinia / Vue Router がない**: コンポーネント間の状態共有は props + BroadcastChannel のみ。大規模リファクタリング時は注意
-- **AiDiy.vue が肥大化している**: 2050 行。新規機能は可能な限り子コンポーネントに切り出す
+- **AiDiy.vue が肥大化している**: 新規機能は可能な限り子コンポーネントに切り出す
 - **スナップショットの陳腐化**: 子パネルはスナップショットをキャッシュするため、core の状態変更が即時反映されないことがある
 - **Web モードの左右分割**: 左ペインに chat/file/code2/4/6、右ペインに core/image/code1/3/5 と固定割り振り。変更時は `webTabs` / `webRightTabs` 両方を修正する

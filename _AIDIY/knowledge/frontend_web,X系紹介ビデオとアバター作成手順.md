@@ -41,12 +41,12 @@
 - 生成は `aidiy_text_to_speech` MCP を使う。MCP クライアントが不要な場合は以下の HTTP POST でも同等の処理を呼び出せる。
   ```
   POST http://127.0.0.1:8095/aidiy_text_to_speech/synthesize
-  Body: { "text": "ナレーション本文", "provider": "freeai", "voice": "female",
+  Body: { "speech_text": "ナレーション本文", "language": "ja", "provider": "freeai", "voice": "female",
           "save_path": "D:/.../audio/scene_NNN.mp3" }
-  Response: audio/mpeg バイナリ（save_path 指定時はファイルにも同時保存）
+  Response: JSON（save_path、使用provider、音声情報など。明示save_path時のbase64_audioは空文字）
   ```
-- 紹介ビデオの再生スピードは `ratio` 指定なし、または `ratio=None` で収録する。現時点の標準速度は 1.2 倍
-- `aidiy_text_to_speech` は `ratio=None`（未指定）を既定の 1.2 倍として扱う。`ratio=0` / `ratio=1` は速度調整なしになるため、通常収録では指定しない
+- 紹介ビデオの再生スピードは `ratio` 指定なし、または `ratio=None` で収録する。`freeai` の既定速度は 1.1 倍
+- `ratio=None`（未指定）/ `0` / `"auto"` は使用providerの既定速度（freeai/geminiは1.1倍、edge/openaiは1.2倍）。`ratio=1` だけが速度調整なし。同期元は `backend_tools/tools_proc/text_to_speech.py` の `_resolve_ratio_for_provider`
 - **出力形式は必ず MP3**（WAV は禁止）。各プロバイダは内部で PCM → WAV → MP3 変換（ffmpeg 優先、lameenc フォールバック）する
 - **フォールバック**は `backend_tools/tools_proc/text_to_speech.py` 側に実装で持つ（ここには書かない）。
 - 発音辞書は `_config/mcp_text_to_speech.json` が単一の正本
@@ -61,7 +61,7 @@
 
 ### scenario.js への追加フィールド
 
-各シーンに 4 フィールドを追加する:
+各シーンに以下の原稿・音声・尺のフィールドを追加する:
 
 ### ナレーション文章の作り方
 

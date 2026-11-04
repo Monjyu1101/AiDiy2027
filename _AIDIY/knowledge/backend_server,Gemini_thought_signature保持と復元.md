@@ -74,7 +74,7 @@ if signature:
 
 ## `base64` インポートの注意点
 
-`AIチャット_gemini.py` ではトップレベル（20行目）で `import base64` 済み。
+`AIチャット_gemini.py` ではトップレベルで `import base64` 済み。
 別の場所に局所インポートを追加しない。
 
 ## 確認観点

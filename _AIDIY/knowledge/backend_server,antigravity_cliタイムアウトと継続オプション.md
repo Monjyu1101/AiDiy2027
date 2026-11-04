@@ -44,8 +44,8 @@ elif self.code_ai == "antigravity_cli":
         common.append("--dangerously-skip-permissions")
     if repo_path:
         common.extend(["--add-dir", repo_path])
-    # --print-timeout: デフォルト5分を20分に延長
-    common.extend(["--print-timeout", "20m"])
+    # CLI固定上限を無効にし、バックエンドの無受信監視を使う
+    common.extend(["--print-timeout", "0"])
     if 初回:
         return common + ["-p", プロンプト]
     else:
@@ -53,8 +53,8 @@ elif self.code_ai == "antigravity_cli":
         return common + ["-p", プロンプト, "-c"]
 ```
 
-### タイムアウトの延長
-デフォルトのタイムアウト時間 `5m0s`（5分）から `--print-timeout 20m` を指定して20分に延長しています。これは、大規模なファイル変更や複雑な処理を伴う場合にタイムアウトが発生するのを防ぐためです。
+### タイムアウトの管理
+現行実装は `--print-timeout 0` でCLI固有の固定上限を無効にします。バックエンドはstdout / stderrのどちらにも受信がない状態が900秒続いた場合に終了し、受信ごとに待機時間を数え直します。
 
 ### 継続会話（-c フラグ）の位置
 `agy` の引数解析において、継続会話を示す `-c` フラグは `-p`（およびプロンプト）の後に付与する必要があります。
@@ -74,4 +74,4 @@ elif self.code_ai == "antigravity_cli":
 
 - `agy` は Go の標準フラグ解析機能を使用しており、オプションフラグの解析が厳密です。位置引数やフラグの指定順序が正しくない場合、引数解析エラー (`flag provided but not defined` 等) になる可能性があるため注意が必要です。
 - `-c`（または `--continue`）フラグは `-p`（プロンプト）の後方に付与することで、前回の会話コンテキストを正しく引き継ぎます。
-- タイムアウト値 `"20m"` は Go の duration 形式であり、正しく解釈されます。
+- 現行の引数は `--print-timeout 0`。CLI側のフラグ互換性は導入版で別途確認する。

@@ -21,11 +21,11 @@ VS Code の Office Viewer（cweijan/vscode-office）で採用・紹介されて�
 
 - Office/PDFの依存は `frontend_ide/viewer/package.json` / `package-lock.json` で管理し、他サブシステムから借りない。Markdownは `frontend_ide/package.json` に導入済みの `markdown-it`（MIT）を使う。ライセンスは各パッケージの同梱ファイルに従う。docx-preview / SheetJS / PDF.js は Apache-2.0、PptxViewJS / Chart.js は MIT、JSZip は MIT または GPL-3.0 の選択で MIT を利用する。
 - SheetJS は公式配布元 `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz` を固定する。npm registry の `xlsx` は旧版のため置き換えない。
-- `/api/file` が `kind: office` と `format` を返し、`app.js` が `/office.html` の iframe を右側に作る。
+- `/api/file` が `kind: office` と `format` を返し、`src/components/ファイル閲覧/ファイルビューア.vue` が `/office.html` の iframe を作る。
 - `/api/document` は対象拡張子のみをバイナリ配信する。既存の `/api/raw` は画像専用のままにする。
 - `/office-vendor/` は必要なファイルだけを配信する。Monaco の AMD ローダーとの干渉を避けるため、表示ライブラリを親画面へロードしない。
 - iframe 内の CSP で外部接続を制限し、変換サーバーを使わずブラウザ内で処理する。書き込み・マクロ実行は提供しない。Word の埋め込み HTML（altChunk）は描画しない。
-- 閉じる・別ファイル選択で iframe を破棄する。`fileToken` はフォルダ選択・閉じる場合も進め、以前の読み込み結果が新しい画面を上書きしないようにする。
+- 閉じる・別ファイル選択で iframe を破棄する。Vue部品の `revision` / `previewRun` と AbortController で古い読み込み結果を無効化し、別ファイルや破棄後の画面を上書きしないようにする。
 
 ## 導入と検証
 

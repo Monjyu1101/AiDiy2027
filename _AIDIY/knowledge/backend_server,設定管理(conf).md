@@ -82,7 +82,7 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 | CodeAI | `CODE_BASE_PATH`, `CODE_AI1~6_NAME/MODEL`, `CODE_CLAUDE_SDK_MODEL`, `CODE_MAX_TURNS`, `CODE_PLAN`, `CODE_VERIFY` |
 | TaskAI / TeamAI | `TASK_AI_NAME`, `TEAM_AI_NAME`, `TASK_AI_MODEL_plan/do/check`, `TEAM_AI_MODEL_plan/do/check`（各フェーズを別キーで保持） |
 
-予測キーがない既存JSONは通常の不足キー補完で `auto` を追加して保存する。設定済みの値は上書きせず、保存時は上記の順序へ並べる。
+予測キーがない既存JSONは通常の不足キー補完で上表の方式別初期値を追加して保存する。設定済みの値は上書きせず、保存時は上記の順序へ並べる。
 
 予測実行は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`）へ `project_path` を渡す。Live試行と同じ直接loopback・固定ヘッダーの制限があり、MCPには公開しない。明示引数を優先し、`auto` の引数は予測専用の設定値を使う。方式設定も `auto` なら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。モデルも `auto` なら選んだ方式の先頭候補を使い、候補外モデルには切り替えない。通常Chat・Decisionの設定や選択順とは独立する。Web / AvatarのAI設定再起動画面は `available_models.prediction_models` の候補を表示し、方式変更時はモデルを `auto` に戻す。保存済みの一覧外モデルは未確認の保持値として残す。履歴の範囲・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。
 
@@ -106,12 +106,12 @@ models.fetch_all_models()  # 互換入口。合成ファイルの読込確認の
 
 ### モデル一覧の取得元
 
-`_AIDIY/aidiy_diag/chat_models_info.json`、`live_models_info.json`、`code_models_info.json` だけを使います。各ファイルは `{区分名: {"models": {モデルID: 表示名}}}` 形式です。取得・絞り込み・重複統合・表示順は `aidiy_diag` が担当します。
+`_AIDIY/aidiy_diag/chat_models_info.json`、`live_models_info.json`、`prediction_models_info.json`、`decisions_models_info.json`、`code_models_info.json` を使います。各ファイルは `{区分名: {"models": {モデルID: 表示名}}}` 形式です。取得・絞り込み・重複統合・表示順は `aidiy_diag` が担当します。
 
 ### データフロー
 
 1. ルート `_start.py` が必ず `aidiy_diag --headless` の完了を待ち、合成JSONを生成します。
-2. `get_chat_models()`、`get_live_models()`、`get_code_models()` は呼出時に合成JSONを読み、モデル情報APIへ公開します。Coreから外部APIやモデル取得CLIは呼びません。
+2. `get_chat_models()`、`get_live_models()`、`get_prediction_models()`、`get_decisions_models()`、`get_code_models()` は呼出時に合成JSONを読み、モデル情報APIへ公開します。Coreから外部APIやモデル取得CLIは呼びません。
 3. 新規セッションとモデル情報APIの共通初期値は `normalize_initial_settings()` で候補に合わせます。有効な既定値と `auto` / `same` は維持し、候補外の値は先頭の有効な候補に補正します。共通設定への書き戻しは行いません。
 4. Code / Live はAPI経由、オフラインCodeとDiscordは同じ合成JSONを直接読みます。最後の手動選択は各クライアントの専用ファイルに保持します。
 
@@ -121,7 +121,7 @@ models.fetch_all_models()  # 互換入口。合成ファイルの読込確認の
 
 ### 音声とMCP
 
-声は `_AIDIY/aidiy_diag/live_voices_info.json` の `{区分: {voices: {音声ID: 表示名}}}` を読みます。区分は `gemini_live` / `freeai_live` / `openai_live` です。固定定義は `backend_diag/モデル情報/voices_info.mjs` で管理し、キー確認成功・現在設定済みのプロバイダだけを出力します。Python側に音声定義や旧設定への代替読込はありません。MCPは従来の設定を読みます。`conf_models` は設定ファイルを作成・更新しません。
+声は `_AIDIY/aidiy_diag/live_voices_info.json` の `{区分: {voices: {音声ID: 表示名}}}` を読みます。区分は `gemini_live` / `freeai_live` / `openai_live` です。固定定義は `backend_diag/モデル情報/voices_info.mjs` で管理し、取得・認証状態にかかわらず3区分すべてを出力します。Python側に音声定義や旧設定への代替読込はありません。MCPは従来の設定を読みます。`conf_models` は設定ファイルを作成・更新しません。
 
 ## 設定ファイル一覧
 
@@ -133,7 +133,7 @@ models.fetch_all_models()  # 互換入口。合成ファイルの読込確認の
 | `_config/AiDiy_code__context.json` | コード AI コンテキスト |
 | `_config/AiDiy_mcp.json` | MCP 設定 |
 | `_AIDIY/aidiy_diag/*_models_info.json` | モデル詳細・合成一覧（aidiy_diagが生成） |
-| `_AIDIY/aidiy_diag/live_voices_info.json` | 有効キーに対応した固定音声候補（aidiy_diagが生成） |
+| `_AIDIY/aidiy_diag/live_voices_info.json` | 3区分の固定音声候補（aidiy_diagが生成） |
 | `_config/AiDiy_live_gemini.json` / `AiDiy_live_openai.json` | 廃止済み。作成・参照・更新しない |
 | `_config/AiDiy_code_*.json` / `AiDiy_chat_local.json` | 廃止済み。作成・参照・更新しない |
 
@@ -162,8 +162,8 @@ models.fetch_all_models()  # 互換入口。合成ファイルの読込確認の
 readerのtoken未設定契約はDiscord同様、非文字列、trim後length<=1、`<`で始まる値、
 内部空白を拒否し、エラーには値を出さない。
 
-初期値と秘密値除去に加え、Diag外部連携はSlack Botトークンの認証確認に対応する。Slack接続reader・実接続・設定画面/APIを追加しない。
+初期値と秘密値除去に加え、Diag外部連携はSlack Botトークンの認証確認に対応する。現行の接続reader・runtime・パネルは `frontend_channels/slack/` にある。
 Diag既存診断ではSlackの2 tokenも秘密値として除去する。外部連携の `Slack Bot` はBot tokenの認証確認のみで、App token・ID設定・Socket Mode接続・投稿権限は確認しない。
 `backend_server/checks/test_slack_config_defaults.py` は一時JSONだけを使う。
 `frontend_channels/checks/config.test.ts` は現Discordの未設定契約・Slack欄の非干渉を検証し、
-Slack readerが実装済みであることを意味しない。
+Slackの実接続は `frontend_channels/slack/README.md` の手順で別途確認する。

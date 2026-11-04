@@ -101,7 +101,7 @@ IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の We
 - `window:get-pointer-snapshot` の `role` / `bounds` / `mouse` / `insideWindow` とステージの矩形からローカル座標へ変換する。CPU使用率は `system:get-cpu-usage` で取得する。
 - Web ではステージ内の `pointermove` を使う。画面外は追えない前提にする。
 - CPU 使用率は `os.cpus()` の直前サンプルとの差分から計算するため、初回値は 0 になり得る。
-- 色変化やグラフは `controlsVisible` が true のときだけ出す。表示本体の目線追従とは分離する。
+- CPUグラフとオプションは `controlsVisible` が true のときだけ出す。目の色変化・充血表現は `cpuColorEnabled` で制御し、`controlsVisible=false` でも有効になり得る。目線追従とは分離する。
 - `v-if` と `v-for` を同一要素に書かず、必要なら `<template v-if>` でラップする。
 
 ## xneko スプライト追加の要点

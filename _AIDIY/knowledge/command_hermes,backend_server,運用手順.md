@@ -35,7 +35,7 @@
 python _setup.py
 ```
 
-`_setup.py` の Hermes セットアップは、`command_hermes/pyproject.toml` を `uv sync --upgrade` で同期したうえで `~/.local/bin/aidiy_hermes.cmd` を生成する。
+`_setup.py` の Hermes セットアップは、`command_hermes/pyproject.toml` を `uv sync --upgrade` で同期したうえで、Windows は `~/.local/bin/aidiy_hermes.cmd`、Linux / macOS は `~/.local/bin/aidiy_hermes` を生成する。
 `uv tool install` は使わない（セキュリティ警告の原因になるため）。
 
 アプリ用 Python の条件は `command_hermes/pyproject.toml` の `requires-python`（現在 `>=3.13`）で管理する。セットアップはこの条件を表示して `uv` に Python 選択を委ね、`command_hermes/_start.py` は既存の仮想環境を使う場合に実際の Python の版を確認する。旧版や版数・条件の判定不能は警告して続行し、新たな版数停止条件にしない。実行ファイルの起動失敗・非0終了・確認タイムアウトや、実際の依存解決 / import / CLI 実行エラーは引き続き失敗として扱う。
@@ -140,7 +140,7 @@ Linux / macOS は `command_hermes/.venv/bin/python` を使う。
 
 ## 対応 provider
 
-- API provider: `ollama`, `openai`, `openrt`, `gemini`, `freeai`, `anthropic`, `openai_oauth`, `xai-oauth`
+- API provider: `ollama`, `openai`, `openrt`, `gemini`, `freeai`, `anthropic`, `local_chat`, `openai_oauth`, `xai-oauth`
 - CLI bridge: `claude-code`, `codex-cli`, `antigravity-cli`, `copilot-cli`, `opencode`, `grok-cli`（Hermes の provider slug。本体の Code AI 識別子とは区別する）
 
 選択優先順位・候補生成の正本は [Provider 一覧と選択ロジック](./command_hermes,Provider一覧と選択ロジック.md)。
@@ -186,7 +186,7 @@ Linux / macOS は `.venv/bin/python hermes_main.py auth add xai-oauth` を使う
 - `conf_model.py`: `get_code_models()["aidiy_hermes"]`。
 - frontend の AI 設定画面: code AI 選択肢。
 
-`aidiy_hermes` は専用の `AiDiy_code_*.json` を持たない。設定画面の候補は `conf_model.py` の `_get_aidiy_hermes_models()` が、`scripts/cli_bat/_hermes_cli.bat` にある OpenAI OAuth モデルと `auto` に合わせて返す。候補値には `openai_oauth/` を付け、Hermes 側が OAuth provider とモデルを解決できるようにする。
+`aidiy_hermes` は専用の `AiDiy_code_*.json` を持たない。設定画面の候補は `conf_model.py` の `get_code_models()` が `_AIDIY/aidiy_diag/code_models_info.json` の `aidiy_hermes.models` を読み、画面用の `auto` / `same` を加えて返す。外部 API や bat ファイルからは取得しない。合成ファイルが無い・不正な場合は候補を補完せず、`aidiy_diag --headless` による生成を案内する。OAuth 候補の `openai_oauth/` など、合成ファイルの provider 接頭辞は維持する。
 
 ## 変更時の確認
 

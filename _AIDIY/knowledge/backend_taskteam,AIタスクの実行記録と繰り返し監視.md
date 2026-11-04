@@ -135,12 +135,7 @@ AIの完了報告によってDBが完了となっても、呼出元がHTTP応答
 
 ### 確認方法
 
-```
-python -m unittest tests.test_task_seed
-```
-
-`backend_taskteam/.venv/Scripts/python.exe` で実行する（システム Python には `fastapi` が無い）。
-DAG 整合、勝手に起動しないこと、有効化すれば発火することを検証している。
+現行リポジトリに `tests.test_task_seed` はない。検証を追加する場合は一時DBと実行処理のmockを使い、DAG整合、未有効化では起動しないこと、有効化後の発火を確認する。実タスクや外部AIを不用意に起動しない。
 
 ## チーム依頼からの有効化と中止
 
