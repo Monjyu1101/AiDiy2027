@@ -1,0 +1,18 @@
+{
+  "date": "2026-11-03T12:29:50.881508",
+  "pdf_count": 22,
+  "pages": 362,
+  "changed_book_refs": 52,
+  "broken_refs": [],
+  "manifest_mismatch": [],
+  "visual_review": [
+    {
+      "file": "セルフテスト,aidiy_team,操作編.pdf",
+      "pages": 16
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.pdf",
+      "pages": 16
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+■ バックエンド（Python）
+関数名: snake_case（システム）、日本語（ビジネス）
+クラス名: PascalCase（システム）、日本語（ビジネス）
+定数: UPPER_SNAKE_CASE
+
+例:
+def get_C利用者_list(db: Session):
+ pass
+
+class C利用者(Base):
+ pass
+
+MAX_ITEMS = 10000
+
+■ フロントエンド（TypeScript）
+変数名: camelCase（システム）、日本語（ビジネス）
+関数名: camelCase（システム）、日本語（ビジネス）
+クラス名: PascalCase
+定数: UPPER_SNAKE_CASE または camelCase
+
+例:
+const 利用者名 = ref('')
+const apiClient = axios.create({...})
+
+function 利用者一覧取得() { ... }
+
+class WebSocketManager { ... }
+
+const MAX_RETRY_COUNT = 5

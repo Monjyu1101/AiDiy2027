@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>99 まとめ</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="04_設定ファイル.html">前へ: 04_設定ファイル</a>
+    <a href="_index.html">目次へ戻る</a>
+  </nav>
+
+  <h1>99_まとめ</h1>
+  <p>このハンズオンで確認した内容を、実務で使える形で最終整理します。</p>
+
+  <h2>要点の総復習</h2>
+  <ol>
+    <li><code>_setup.py</code> は「環境の準備」担当</li>
+    <li><code>_start.py</code> は「起動・監視・停止」担当</li>
+    <li>設定ファイルは <code>_config/</code> と <code>frontend_web/vite.config.ts</code> を最初に確認</li>
+    <li>開発ポートは 8090 / 8091 / 8098 をセットで理解する</li>
+  </ol>
+
+  <h2>最小手順（再確認）</h2>
+  <pre><code>cd workspace/AiDiy2027
+python _setup.py
+python _start.py
+
+# Frontend
+http://127.0.0.1:8090
+
+# API docs
+http://127.0.0.1:8091/docs
+http://127.0.0.1:8098/docs</code></pre>
+
+  <h2>チェックリスト</h2>
+  <table>
+    <tr><th>項目</th><th>確認内容</th></tr>
+    <tr><td>依存関係</td><td><code>uv sync</code> と <code>npm install</code> が成功している</td></tr>
+    <tr><td>起動</td><td><code>python _start.py</code> の対話で、5バックエンドとWeb/Avatarから必要なサービスを選ぶ</td></tr>
+    <tr><td>画面</td><td><code>http://127.0.0.1:8090</code> が表示される</td></tr>
+    <tr><td>API</td><td><code>/docs</code> 画面が 8091 と 8098 の両方で開く</td></tr>
+    <tr><td>DB</td><td><code>workspace/AiDiy2027/_data/AiDiy/database.db</code> を確認できる</td></tr>
+  </table>
+
+  <h2>トラブル時の短縮ルート</h2>
+  <table>
+    <tr><th>症状</th><th>まず確認</th><th>次に実行</th></tr>
+    <tr><td><code>uv</code> が見つからない</td><td>uv インストール済みか</td><td><code>cd backend_server &amp;&amp; uv sync</code></td></tr>
+    <tr><td><code>npm</code> が見つからない</td><td>Node.js インストール済みか</td><td><code>cd frontend_web &amp;&amp; npm install</code></td></tr>
+    <tr><td>ポート競合</td><td>8090/8091/8098 が使用中か</td><td><code>python _start.py</code> を再実行（必要なら手動停止）</td></tr>
+    <tr><td>API 404</td><td><code>vite.config.ts</code> proxy 設定</td><td><code>/core</code>, <code>/apps</code> の転送先を見直す</td></tr>
+  </table>
+
+  <h2>次に読む推奨ページ</h2>
+  <ul>
+    <li><a href="../02_明日のために！その２_設計/_index.html">02_明日のために！その２_設計</a></li>
+    <li><a href="../03_明日のために！その３_バックエンド開発/_index.html">03_明日のために！その３_バックエンド開発</a></li>
+    <li><a href="../04_明日のために！その４_フロントエンド開発/_index.html">04_明日のために！その４_フロントエンド開発</a></li>
+  </ul>
+
+  <h2>参照パス</h2>
+  <ul>
+    <li><code>workspace/AiDiy2027/AGENTS.md</code></li>
+    <li><code>workspace/AiDiy2027/backend_server/AGENTS.md</code></li>
+    <li><code>workspace/AiDiy2027/frontend_web/AGENTS.md</code></li>
+    <li><code>workspace/AiDiy2027/docs/開発ガイド/README.md</code></li>
+  </ul>
+
+  <section>
+    <h2>終了確認</h2>
+    <p>この章の目的は「環境を壊さず再現できること」です。次回以降は、まずこの章のチェックリストを実行してから実装作業に入ってください。</p>
+  </section>
+
+  <nav>
+    <a href="04_設定ファイル.html">前へ: 04_設定ファイル</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="../README.md">開発ガイドREADMEへ</a>
+  </nav>
+</body>
+</html>

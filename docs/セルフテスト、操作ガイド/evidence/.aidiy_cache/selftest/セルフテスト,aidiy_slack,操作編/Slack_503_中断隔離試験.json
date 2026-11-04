@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-03T07:26:35.664554+00:00",
+  "command": [
+    "node",
+    "node_modules/tsx/dist/cli.mjs",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=stop|二重実行を拒否",
+    "checks/code.test.ts",
+    "checks/bot.test.ts"
+  ],
+  "cwd": "frontend_channels/slack",
+  "exit_code": 0,
+  "external_posts": 0,
+  "ai_calls": 0,
+  "scope": "fake API/client and dedicated fake CLI only; real channel cancellation unverified",
+  "counts": {
+    "tests": 6,
+    "pass": 6,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "tap_sha256": "5837fce7c169c2ca5621985e797ac4932c422d45344b5b17d127928fb33e80f7"
+}

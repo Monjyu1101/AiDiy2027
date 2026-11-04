@@ -1,0 +1,57 @@
+{
+  "copy_equal": true,
+  "source_sha256": "549ea9dcf3f21a91437177d3889398af639abc78c2cacb8136e555c387247a26",
+  "completed_utc": "2026-11-02T13:37:40.626075+00:00",
+  "mode": "IDE Electron offline; formal CLI from repository cwd",
+  "copy": "PASS: Ctrl+C/Ctrl+V; copy bytes equal source",
+  "trash": "PASS: cancel kept copy; confirmed app Recycle Bin move; exact matching test item count 1; source retained",
+  "pdf": "PASS: two checked Markdown files; one bulk PDF command; two outputs; real IDE viewer 1/1 each; Japanese heading/body/bullets and table quantity 3/total 660 visible",
+  "preparation": "Initial self-folder copy rejected without changes; row positions reidentified after selection bar appeared.",
+  "narration": "Edge ja-JP-NanamiNeural ratio1.2; four serial playback calls completed, MCI error0",
+  "windows": "Test IDE normally closed; only AiDiy Diag remained",
+  "assets": [
+    {
+      "name": "copy-source.txt",
+      "bytes": 48,
+      "sha256": "549ea9dcf3f21a91437177d3889398af639abc78c2cacb8136e555c387247a26"
+    },
+    {
+      "name": "01-日本語.md",
+      "bytes": 99,
+      "sha256": "d6456fd8e723105a0dc74aecdb50c6f4d9972cb4fb3881f00f4a0e4db6382df0"
+    },
+    {
+      "name": "01-日本語.pdf",
+      "bytes": 37793,
+      "sha256": "3b321897917f8de2a68730d284ced8b7c7d61645f67a916ab268f2aab2ff4017"
+    },
+    {
+      "name": "02-表.md",
+      "bytes": 72,
+      "sha256": "89a344d63342ec01cebca963da9853c70abfbeaf4af5ba620ae15c7ffef9eb22"
+    },
+    {
+      "name": "02-表.pdf",
+      "bytes": 33698,
+      "sha256": "b982ec1a0ee12242b339162afc58747dceb42153fbdacb6bb3b5e4b97c5ae968"
+    }
+  ],
+  "limits": "Only new dedicated fixtures; no permanent deletion, existing-user-file changes, external AI or additional file-operation coverage.",
+  "services": {
+    "tcp": [
+      8095,
+      8091,
+      8098,
+      8093,
+      8090
+    ],
+    "http": {
+      "8095/docs": 200,
+      "8091/docs": 200,
+      "8098/docs": 200,
+      "8093/docs": 200,
+      "8090/": 200
+    },
+    "note": "/health returned404 on Tools/Core/Apps; actual exposed docs endpoint200; not treated as service failure"
+  }
+}

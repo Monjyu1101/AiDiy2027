@@ -1,0 +1,28 @@
+■ カテゴリ別の配置先
+
+C系（Core/Common）:
+ components/C管理/<テーブル名>/
+ 例: components/C管理/C権限/
+ components/C管理/C利用者/
+ components/C管理/C採番/
+
+M系（Master）:
+ components/Mマスタ/<テーブル名>/
+ 例: components/Mマスタ/M配車区分/
+ components/Mマスタ/M車両/
+ components/Mマスタ/M商品/
+
+T系（Transaction）:
+ components/Tトラン/<テーブル名>/
+ 例: components/Tトラン/T配車/
+ components/Tトラン/T商品入庫/
+
+S系（Scheduler）:
+ components/Sスケジューラー/ 直下に画面.vue、components/ に表示テーブルをまとめて配置
+ 例: components/Sスケジューラー/S配車_週表示.vue
+     components/Sスケジューラー/components/S配車_週表示テーブル.vue
+
+V系（View）:
+ components/Vビュー/ 直下に画面.vue、components/ に表示テーブルをまとめて配置
+ 例: components/Vビュー/V商品推移表.vue
+     components/Vビュー/components/V商品推移表テーブル.vue

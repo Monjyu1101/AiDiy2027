@@ -1,0 +1,4 @@
+{
+  "compilerOptions": { "target": "ES2022", "module": "ESNext", "moduleResolution": "Bundler", "strict": true, "skipLibCheck": true, "allowJs": true, "checkJs": false, "lib": ["ES2022", "DOM", "DOM.Iterable"], "baseUrl": ".", "paths": { "@taskteam/*": ["src/components/タスクチーム/*"] }, "types": [] },
+  "include": ["src/components/タスクチーム/**/*.ts", "src/components/タスクチーム/**/*.vue", "src/components/タスクチーム/**/*.d.ts"]
+}

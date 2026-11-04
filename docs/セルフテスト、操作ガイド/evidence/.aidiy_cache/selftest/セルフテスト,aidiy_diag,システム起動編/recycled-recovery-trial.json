@@ -1,0 +1,97 @@
+[
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\recovery-check.py",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\keyring-diagnostic.py",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\finalize-recovery.py",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\recovery-pdf-0-13.png",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\recovery-pdf-0-14.png",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\recovery-pdf-1-24.png",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\recovery-pdf-1-25.png",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_done.json",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_done.mp3",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_done.txt",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_finish.json",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_finish.mp3",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_finish.txt",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_intro.json",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_intro.mp3",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_intro.txt",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_start.json",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_start.mp3",
+    "action": "recycle",
+    "absent": true
+  },
+  {
+    "path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\narration-taskteam\\recovery_start.txt",
+    "action": "recycle",
+    "absent": true
+  }
+]

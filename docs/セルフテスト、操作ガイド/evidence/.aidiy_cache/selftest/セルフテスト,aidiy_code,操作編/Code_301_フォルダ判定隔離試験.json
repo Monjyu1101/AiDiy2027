@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-03T07:37:16.993797+00:00",
+  "command": "node --test --test-reporter=tap checks/workspace-folder.test.cjs",
+  "cwd": "frontend_ide/host",
+  "exit_code": 0,
+  "pass": 1,
+  "fail": 0,
+  "skip": 0,
+  "duration_ms": 269.0221,
+  "assertions": [
+    "実在ローカルディレクトリを許可",
+    "ファイル、不在パス、vscode-remote、untitled、undefinedを拒否"
+  ],
+  "source_sha256": "bfb878477a23f772a4dd95967932dcfa8b7678cb404915be50faba6098258f75",
+  "source_changed": false,
+  "ai_calls": 0
+}

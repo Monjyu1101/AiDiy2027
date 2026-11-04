@@ -1,0 +1,189 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>01_ディレクトリ構成 | フロントエンド画面追加例</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+  <div>AiDiy Frontend Lab</div>
+  <h1>フロントエンド画面追加例</h1>
+  <p>M系マスタ CRUD 画面を新規追加する手順</p>
+  <nav>
+   <a href="_index.html">目次</a>
+   <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+   <a href="02_一覧画面.html">02 一覧画面</a>
+   <a href="03_編集画面.html">03 編集画面</a>
+   <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+   <a href="05_チェックリスト.html">05 チェックリスト</a>
+  </nav>
+ </header>
+
+ <main>
+
+  <section>
+   <h2>CRUD 画面のフォルダ構造</h2>
+   <p>M系マスタ画面は <strong>3ファイル構成</strong> で実装します。<code>M車両</code> を例に示します。</p>
+   <pre><code>frontend_web/src/components/Mマスタ/M&lt;テーブル名&gt;/
+├── M&lt;テーブル名&gt;一覧.vue            # 一覧ページ（件数制限・無効も表示チェックボックス）
+├── M&lt;テーブル名&gt;編集.vue            # 編集/新規作成ページ（登録・変更・削除）
+└── components/
+    └── M&lt;テーブル名&gt;一覧テーブル.vue # qTublerFrame + V系API呼び出し</code></pre>
+   <p>新規追加時のフォルダ作成コマンド:</p>
+   <pre><code># Windows
+mkdir frontend_web\src\components\Mマスタ\M新テーブル
+mkdir frontend_web\src\components\Mマスタ\M新テーブル\components
+
+# Linux/Mac
+mkdir -p frontend_web/src/components/Mマスタ/M新テーブル/components</code></pre>
+  </section>
+
+  <section>
+   <h2>各ファイルの役割</h2>
+   <table>
+    <thead>
+     <tr>
+      <th>ファイル</th>
+      <th>役割</th>
+      <th>主な内容</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td><code>M&lt;テーブル名&gt;一覧.vue</code></td>
+      <td>一覧ページ（親）</td>
+      <td>
+       件数制限・無効も表示チェックボックス、再検索ボタン、新規ボタン、
+       <code>&lt;component :is="..."&gt;</code> で子コンポーネントを呼び出し、
+       <code>handleReload()</code> で子の <code>loadData()</code> を呼ぶ
+      </td>
+     </tr>
+     <tr>
+      <td><code>M&lt;テーブル名&gt;編集.vue</code></td>
+      <td>編集/新規作成ページ</td>
+      <td>
+       1件取得・登録・変更・削除の API 呼び出し、
+       フォーム入力バリデーション、
+       完了後に <code>URLメニュー</code> へリダイレクト
+      </td>
+     </tr>
+     <tr>
+      <td><code>components/M&lt;テーブル名&gt;一覧テーブル.vue</code></td>
+      <td>一覧テーブル（子）</td>
+      <td>
+       V系API (<code>/apps/V&lt;テーブル名&gt;/一覧</code>) でデータ取得、
+       qTublerFrame でテーブル表示、
+       <code>件数制限</code> / <code>無効も表示</code> / <code>有効列表示</code> / <code>URLメニュー</code> を props で受け取る、
+       <code>defineExpose({ loadData })</code> で親から呼び出し可能
+      </td>
+     </tr>
+    </tbody>
+   </table>
+  </section>
+
+  <section>
+   <h2>コンポーネント間の連携</h2>
+   <p>親（一覧.vue）から子（一覧テーブル.vue）へ 4つの props を渡します。</p>
+   <table>
+    <thead>
+     <tr>
+      <th>prop 名</th>
+      <th>型</th>
+      <th>デフォルト</th>
+      <th>説明</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td><code>件数制限</code></td>
+      <td>Boolean</td>
+      <td><code>true</code></td>
+      <td>true: 上限1000件取得 / false: 全件取得</td>
+     </tr>
+     <tr>
+      <td><code>無効も表示</code></td>
+      <td>Boolean</td>
+      <td><code>false</code></td>
+      <td>false: 有効レコードのみ / true: 無効レコードも含む</td>
+     </tr>
+     <tr>
+      <td><code>有効列表示</code></td>
+      <td>Boolean</td>
+      <td><code>false</code></td>
+      <td>「有効」列をテーブルに表示するか（通常は <code>無効も表示</code> と連動）</td>
+     </tr>
+     <tr>
+      <td><code>URLメニュー</code></td>
+      <td>String</td>
+      <td><code>''</code></td>
+      <td>大元のカテゴリメニューへ戻るためのURL</td>
+     </tr>
+     <tr>
+      <td><code>URL戻り先</code></td>
+      <td>String</td>
+      <td><code>''</code></td>
+      <td>行クリック時の現在画面。編集完了後に検索条件を保った一覧へ戻るために使う</td>
+     </tr>
+    </tbody>
+   </table>
+   <p>親での宣言パターン（<code>&lt;script setup&gt;</code> 内）:</p>
+   <pre><code>const 件数制限 = ref(true);
+const 無効も表示 = ref(false);
+const 有効列表示 = computed(() =&gt; 無効も表示.value); // 無効も表示ONのとき「有効」列を表示</code></pre>
+   <p><code>useListSessionState()</code> へ検索条件の <code>getState</code> / <code>applyState</code> を渡し、一覧離脱前に <code>saveListSession()</code> を呼びます。これにより、編集画面から戻ったときも検索条件と戻り先を復元できます。</p>
+   <p>子へ渡すテンプレートパターン:</p>
+   <pre><code>&lt;!-- ※ Vue コンポーネントタグ名は ASCII のみ有効。日本語コンポーネントは &lt;component :is="..."&gt; で使用する --&gt;
+&lt;component
+  :is="テーブル名一覧テーブル"
+  ref="テーブル名一覧テーブルRef"
+  :件数制限="件数制限"
+  :無効も表示="無効も表示"
+  :有効列表示="有効列表示"
+  :URLメニュー="URLメニュー" :URL戻り先="現在URL戻り先"
+/&gt;</code></pre>
+  </section>
+
+  <section>
+   <h2>M車両の具体例（ファイルパス）</h2>
+   <p>実際の実装ファイルパス:</p>
+   <table>
+    <thead>
+     <tr>
+      <th>ファイル</th>
+      <th>パス</th>
+     </tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td>一覧ページ</td>
+      <td><code>frontend_web/src/components/Mマスタ/M車両/M車両一覧.vue</code></td>
+     </tr>
+     <tr>
+      <td>編集ページ</td>
+      <td><code>frontend_web/src/components/Mマスタ/M車両/M車両編集.vue</code></td>
+     </tr>
+     <tr>
+      <td>一覧テーブル</td>
+      <td><code>frontend_web/src/components/Mマスタ/M車両/components/M車両一覧テーブル.vue</code></td>
+     </tr>
+    </tbody>
+   </table>
+   <p>
+    M車両は <code>件数制限</code> / <code>無効も表示</code> / <code>有効列表示</code> / <code>URLメニュー</code>
+    の標準パターンを全て実装しており、新規テーブル追加時のテンプレートとして最も参照しやすい実装例です。
+   </p>
+  </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

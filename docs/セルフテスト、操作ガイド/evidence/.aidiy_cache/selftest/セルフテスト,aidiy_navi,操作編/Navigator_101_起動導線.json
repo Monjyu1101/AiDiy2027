@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-11-03T15:54:35.113525+00:00",
+  "diag": {
+    "actualUIlaunch": "PASS",
+    "title": "AiDiy Navigator",
+    "project": "navigator-launch-fixture",
+    "modelDialog": "PASS aidiy_hermes / same",
+    "initialEvaluationDisabled": true,
+    "historyEmptyView": "observed",
+    "closedNormally": true,
+    "evidence": [
+      "navigator-diag-native.png",
+      "navigator-diag-model.png",
+      "navigator-diag-history.png"
+    ],
+    "evidenceNote": "original filenames identify earlier native launch capture; current guide screenshots use common UI in a dedicated browser"
+  },
+  "ide": {
+    "existingActualElectronEvidence": "check-navigation-desktop.mjs / navigation-desktop-probe.cjs",
+    "verified": [
+      "Navigator 1 and 2 titles",
+      "independent windows",
+      "goal/model isolation",
+      "VR return",
+      "close isolation"
+    ],
+    "repeated": false
+  },
+  "features": {
+    "existingRealAI": "Navigator_301_ナビ評価.json",
+    "requestsThisVerification": 0,
+    "jsonAndHistoryRegression": "29 PASS; see latest guide verification",
+    "codeSharedComponents": [
+      "状態バー.vue",
+      "共通ダイアログ.vue",
+      "パネル別窓.js"
+    ],
+    "readonlyModelDifferences": "Only verified readonly providers; no Code editing permissions"
+  },
+  "selfSourceAnalysis": "not sent; separate approval rejection retained",
+  "registeredCommand": {
+    "command": "aidiy_navi --foreground --new-window --project <専用フォルダ>",
+    "nativeTitle": "AiDiy Navigator",
+    "normalCloseExitCode": 0,
+    "aiRequests": 0
+  }
+}

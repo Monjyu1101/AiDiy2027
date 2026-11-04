@@ -1,0 +1,225 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>02_一覧画面 | フロントエンド画面追加例</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+  <div>AiDiy Frontend Lab</div>
+  <h1>フロントエンド画面追加例</h1>
+  <p>M系マスタ CRUD 画面を新規追加する手順</p>
+  <nav>
+   <a href="_index.html">目次</a>
+   <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+   <a href="02_一覧画面.html">02 一覧画面</a>
+   <a href="03_編集画面.html">03 編集画面</a>
+   <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+   <a href="05_チェックリスト.html">05 チェックリスト</a>
+  </nav>
+ </header>
+
+ <main>
+
+  <section>
+   <h2>一覧画面（M&lt;テーブル名&gt;一覧.vue）の構造概要</h2>
+   <p>
+    一覧画面は <strong>親コンポーネント</strong> です。
+    ツールバー（再検索・新規）、チェックボックス（件数制限・無効も表示）、
+    一覧テーブル子コンポーネントを組み合わせて構成します。
+   </p>
+   <table>
+    <thead>
+     <tr><th>要素</th><th>説明</th></tr>
+    </thead>
+    <tbody>
+     <tr><td>ツールバー左</td><td>「再検索」ボタン → <code>handleReload()</code></td></tr>
+     <tr><td>ツールバー右</td><td>「新規」ボタン → <code>openCreate()</code> で編集画面へ</td></tr>
+     <tr><td>チェックボックス</td><td>件数制限・無効も表示（変更時に <code>handleReload()</code>）</td></tr>
+     <tr><td>一覧テーブル</td><td><code>&lt;component :is="..."&gt;</code> で子コンポーネントをマウント</td></tr>
+     <tr><td>タイトルバー右端</td><td><code>URLメニュー</code> があれば「メニュー」、別の <code>URL戻り先</code> があれば「戻る」を表示</td></tr>
+    </tbody>
+    </table>
+    <p>現行実装では <code>src/utils/listSessionState.ts</code> の <code>useListSessionState()</code> を使い、検索条件・<code>URLメニュー</code>・<code>URL戻り先</code> を <code>sessionStorage</code> に保存します。編集画面から復帰したときは保存状態を復元し、成功メッセージは <code>consumeReturnMessage()</code> で一度だけ受け取ります。</p>
+   </section>
+
+  <section>
+   <h2>件数制限・無効も表示チェックボックスの UI パターン</h2>
+   <p>
+    <code>件数制限</code> と <code>無効も表示</code> は <code>ref()</code> で管理し、
+    チェックボックス変更時に子の <code>loadData()</code> を呼び直します（<code>handleReload</code>）。
+    <code>有効列表示</code> は <code>computed</code> で <code>無効も表示</code> と連動します。
+   </p>
+   <pre><code>// &lt;script setup&gt; 内
+const 件数制限 = ref(true);      // true: 上限1000件, false: 全件
+const 無効も表示 = ref(false);   // false: 有効レコードのみ, true: 無効も含む
+const 有効列表示 = computed(() =&gt; 無効も表示.value); // 無効も表示ONのとき「有効」列を表示</code></pre>
+   <p>テンプレート部分（M車両一覧.vue より抜粋）:</p>
+   <pre><code>&lt;div class="table-options"&gt;
+  &lt;label class="checkbox-label"&gt;
+    &lt;input type="checkbox" v-model="件数制限" @change="handleReload" /&gt;
+    件数制限
+  &lt;/label&gt;
+  &lt;label class="checkbox-label"&gt;
+    &lt;input type="checkbox" v-model="無効も表示" @change="handleReload" /&gt;
+    無効も表示
+  &lt;/label&gt;
+&lt;/div&gt;</code></pre>
+  </section>
+
+  <section>
+   <h2>子コンポーネントへの props 渡しパターン</h2>
+   <p>
+    Vue のコンポーネントタグ名には <strong>ASCII 文字のみ</strong>使用できます。
+    日本語名のコンポーネントは <code>&lt;component :is="..."&gt;</code> 構文で使います。
+   </p>
+   <pre><code>// import と ref
+import 車両一覧テーブル from './components/M車両一覧テーブル.vue';
+const 車両一覧テーブルRef = ref(null);</code></pre>
+   <pre><code>&lt;!-- template 内 --&gt;
+&lt;!--
+  :件数制限     — true: 上限1000件取得, false: 全件取得
+  :無効も表示   — APIリクエストに渡す（false: 有効のみ, true: 全レコード）
+  :有効列表示   — 無効も表示ONのとき「有効」列をテーブルに表示する
+  :URLメニュー  — 大元メニューへ戻るURL
+  :URL戻り先    — 行クリック時の一覧URL（編集完了後にここへ戻る）
+
+  ※ Vue コンポーネントタグ名は ASCII のみ有効。
+    日本語コンポーネントは &lt;component :is="..."&gt; で使用する。
+--&gt;
+&lt;component
+  :is="車両一覧テーブル"
+  ref="車両一覧テーブルRef"
+  :件数制限="件数制限"
+  :無効も表示="無効も表示"
+  :有効列表示="有効列表示"
+  :URLメニュー="URLメニュー" :URL戻り先="現在URL戻り先"
+/&gt;</code></pre>
+  </section>
+
+  <section>
+   <h2>handleReload — 子の loadData() を呼ぶパターン</h2>
+   <p>
+    「再検索」ボタンやチェックボックス変更時は、親から子の <code>loadData()</code> を呼び出します。
+    子コンポーネントは <code>defineExpose({ loadData })</code> で公開し、
+    親は <code>ref</code> 経由でアクセスします。
+   </p>
+   <pre><code>// 親（M車両一覧.vue）
+const 車両一覧テーブルRef = ref(null);
+
+const handleReload = () =&gt; {
+  車両一覧テーブルRef.value?.loadData();
+};</code></pre>
+   <pre><code>// 子（M車両一覧テーブル.vue）
+defineExpose({
+  loadData
+});</code></pre>
+  </section>
+
+  <section>
+   <h2>一覧テーブルコンポーネント（M&lt;テーブル名&gt;一覧テーブル.vue）の構造</h2>
+
+   <h3>props 定義</h3>
+   <pre><code>const props = defineProps({
+  件数制限: { type: Boolean, default: true },
+  無効も表示: { type: Boolean, default: false },
+  有効列表示: { type: Boolean, default: false },
+  URLメニュー: { type: String, default: '' }
+});</code></pre>
+
+   <h3>columns computed — 有効列の動的 splice</h3>
+   <p>
+    <code>有効列表示</code> prop が <code>true</code> のときだけ「有効」列を <code>splice</code> で挿入します。
+    <code>columns</code> を <code>computed</code> にすることで、prop 変化に連動して自動的に列が表示/非表示になります。
+   </p>
+   <pre><code>const columns = computed&lt;Column[]&gt;(() =&gt; {
+  const baseColumns: Column[] = [
+    { key: '車両ID',       label: '車両ID',       width: '120px', sortable: true, align: 'center' },
+    { key: '車両名',       label: '車両名',       width: '200px', sortable: true },
+    { key: '車両備考',     label: '車両備考',     width: '220px', sortable: true },
+    { key: '更新日時',     label: '更新日時',     width: '160px', sortable: true },
+    { key: '更新利用者名', label: '更新利用者名', width: '130px', sortable: true }
+  ];
+  if (props.有効列表示) {
+    // 「車両備考」の前（index=3）に「有効」列を挿入
+    baseColumns.splice(3, 0, { key: '有効', label: '有効', width: '60px', sortable: true, align: 'center' });
+  }
+  return baseColumns;
+});</code></pre>
+
+   <h3>loadData — V系API 呼び出し</h3>
+   <p>
+    一覧取得は V系API (<code>/apps/V&lt;テーブル名&gt;/一覧</code>) を POST で呼びます。
+    リクエストボディに <code>件数制限</code> と <code>無効も表示</code> を渡します（M車両一覧テーブル.vue より抜粋）。
+   </p>
+   <pre><code>const loadData = async () =&gt; {
+  message.value = '';
+  try {
+    const res = await apiClient.post('/apps/V車両/一覧', {
+      件数制限: props.件数制限,
+      無効も表示: props.無効も表示
+    });
+    if (res.data.status === 'OK') {
+      const data = res.data.data;
+      const items = Array.isArray(data) ? data : data?.items ?? [];
+      車両一覧.value = items;
+      serverTotal.value = Array.isArray(data) ? items.length : Number(data?.total ?? items.length);
+      currentPage.value = 1;
+    } else {
+      setMessage(res.data.message || 'M車両一覧の取得に失敗しました。', 'error');
+    }
+  } catch (e) {
+    setMessage('M車両一覧の取得でエラーが発生しました。', 'error');
+  }
+};</code></pre>
+
+   <h3>有効列のセル表示 — qBooleanCheckbox</h3>
+   <p>boolean 値の表示には <code>qBooleanCheckbox</code> コンポーネントを使います。</p>
+   <pre><code>import qBooleanCheckbox from '../../../_share/qBooleanCheckbox.vue';
+
+// template の #cell スロット内
+&lt;template v-else-if="column.key === '有効'"&gt;
+  &lt;qBooleanCheckbox :checked="Boolean(row.有効)" ariaLabel="有効状態" /&gt;
+&lt;/template&gt;</code></pre>
+
+   <h3>defineExpose</h3>
+   <pre><code>// 親から loadData() を呼び出せるように公開
+defineExpose({
+  loadData
+});</code></pre>
+  </section>
+
+  <section>
+   <h2>チェックリスト</h2>
+   <table>
+    <thead>
+     <tr><th>#</th><th>確認項目</th></tr>
+    </thead>
+    <tbody>
+     <tr><td>1</td><td><code>件数制限</code> / <code>無効も表示</code> を <code>ref()</code> で定義しているか</td></tr>
+     <tr><td>2</td><td><code>有効列表示 = computed(() =&gt; 無効も表示.value)</code> になっているか</td></tr>
+     <tr><td>3</td><td>チェックボックスに <code>@change="handleReload"</code> が付いているか</td></tr>
+     <tr><td>4</td><td><code>&lt;component :is="..."&gt;</code> で日本語コンポーネントを使用しているか（タグ名を直接使っていないか）</td></tr>
+     <tr><td>5</td><td>子コンポーネントに <code>:件数制限</code> / <code>:無効も表示</code> / <code>:有効列表示</code> / <code>:URLメニュー</code> を渡しているか</td></tr>
+     <tr><td>6</td><td>子コンポーネントに <code>ref="..."</code> が付いており <code>handleReload</code> から <code>?.loadData()</code> を呼んでいるか</td></tr>
+     <tr><td>7</td><td>一覧テーブル側で <code>props.件数制限</code> / <code>props.無効も表示</code> を API リクエストボディに含めているか</td></tr>
+     <tr><td>8</td><td><code>columns</code> が <code>computed</code> になっており、<code>props.有効列表示</code> で <code>splice</code> しているか</td></tr>
+     <tr><td>9</td><td>boolean 値の表示に <code>&lt;qBooleanCheckbox :checked="Boolean(row.有効)" /&gt;</code> を使っているか</td></tr>
+     <tr><td>10</td><td><code>defineExpose({ loadData })</code> が記述されているか</td></tr>
+    </tbody>
+   </table>
+  </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

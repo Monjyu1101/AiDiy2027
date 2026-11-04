@@ -1,0 +1,277 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif;
+  color: #f6fbff;
+  background: #071016;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #071016;
+}
+
+.world-map {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  opacity: 0;
+  transform: scale(1);
+  will-change: opacity, transform;
+}
+
+/* photo-active 時にアクティブ地図を暗くする */
+.app-shell.photo-active .world-map.is-active {
+  opacity: 0.26;
+  transition: opacity 0.5s ease;
+}
+
+.photo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 430;
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.04);
+  transition: opacity 0.65s ease, transform 4.5s ease;
+  pointer-events: none;
+}
+
+.photo-layer.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.photo-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(5, 12, 18, 0.38) 0%, rgba(5, 12, 18, 0.08) 46%, transparent 100%),
+    linear-gradient(0deg, rgba(5, 12, 18, 0.34) 0%, transparent 34%);
+}
+
+.photo-credit {
+  position: absolute;
+  right: clamp(14px, 3vw, 30px);
+  top: 12px;
+  z-index: 530;
+  max-width: min(420px, calc(100vw - 28px));
+  padding: 4px 8px;
+  background: rgba(2, 7, 12, 0.58);
+  color: rgba(235, 248, 255, 0.78);
+  font-size: 10px;
+  line-height: 1.4;
+  backdrop-filter: blur(8px);
+}
+
+.hero-panel {
+  position: absolute;
+  left: clamp(18px, 4vw, 58px);
+  bottom: clamp(88px, 15vh, 132px);
+  z-index: 500;
+  width: calc(100vw - clamp(18px, 4vw, 58px) - 18px);
+  padding: 0;
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.70);
+}
+
+.app-kicker {
+  margin-bottom: 10px;
+  color: #7ee8ff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+
+.hero-panel h1 {
+  margin: 0;
+  color: #ffffff;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(34px, 7vw, 72px);
+  line-height: 0.96;
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.place-location {
+  margin: 14px 0 0;
+  color: #d9f5ff;
+  font-size: clamp(15px, 2vw, 20px);
+  font-weight: 700;
+}
+
+.place-note {
+  margin: 10px 0 0;
+  max-width: 470px;
+  color: #d7e7ee;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.meta-row span {
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border: 1px solid rgba(126, 232, 255, 0.45);
+  background: rgba(4, 12, 18, 0.58);
+  color: #cbf7ff;
+  font-size: 12px;
+  font-weight: 700;
+  backdrop-filter: blur(8px);
+}
+
+.control-panel {
+  position: absolute;
+  left: clamp(18px, 4vw, 58px);
+  bottom: clamp(18px, 4vh, 34px);
+  z-index: 510;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: calc(100vw - 36px);
+}
+
+.control-panel button {
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(5, 14, 20, 0.70);
+  color: #e8faff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  backdrop-filter: blur(10px);
+  transition: background 0.16s, border-color 0.16s, color 0.16s;
+}
+
+.control-panel button:hover {
+  border-color: rgba(126, 232, 255, 0.95);
+  background: rgba(6, 36, 48, 0.84);
+}
+
+.control-panel .primary {
+  border-color: rgba(0, 229, 255, 0.85);
+  background: rgba(0, 105, 135, 0.78);
+}
+
+.control-panel .active {
+  border-color: rgba(104, 255, 174, 0.78);
+  color: #b8ffd8;
+}
+
+.history-panel {
+  position: absolute;
+  right: clamp(14px, 3vw, 30px);
+  bottom: clamp(72px, 9vh, 104px);
+  z-index: 500;
+  width: min(280px, calc(100vw - 28px));
+  max-height: 152px;
+  padding: 12px 14px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  background: rgba(4, 12, 18, 0.60);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+
+.history-title {
+  color: #7ee8ff;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  margin-bottom: 8px;
+}
+
+.history-panel ol {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding-left: 20px;
+  color: #e5f8ff;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.history-panel li {
+  padding-left: 2px;
+}
+
+.progress-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 520;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #00e5ff, #7cffba);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.75);
+}
+
+@media (max-width: 720px) {
+  .hero-panel {
+    bottom: 142px;
+    width: calc(100vw - 24px);
+    left: 12px;
+  }
+
+  .history-panel {
+    right: 10px;
+    bottom: 70px;
+    width: min(240px, calc(100vw - 20px));
+    padding: 10px 12px 9px;
+  }
+
+  .history-panel ol {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .photo-credit {
+    display: none;
+  }
+
+  .control-panel button {
+    height: 40px;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+}

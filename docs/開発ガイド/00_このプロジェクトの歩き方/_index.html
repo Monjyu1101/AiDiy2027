@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>このプロジェクトの歩き方 | 開発ガイド</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+  <h1><a href="../_index.html">開発ガイド</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <div>
+  <h1>このプロジェクトの歩き方</h1>
+  <p>はじめて触る人のための、迷子にならない地図。<br>全10ページで、動かす → 理解する → 困ったら調べる の順に進みます。</p>
+ </div>
+
+ <div>
+  <strong>AiDiy 2026年版について</strong>
+  <ul>
+  <li>フロント: <code>8090</code>(Web) / <code>8092</code>(Avatar)</li>
+  <li>常駐バックエンドは <code>8091</code>(Core) / <code>8098</code>(Apps) / <code>8095</code>(19 MCP) / <code>8093</code>(AIタスク・AIチーム) / <code>8096</code>(ローカルLLM、既定では未起動) の5サーバー構成。補助として常駐しないCLI <code>command_hermes</code>(<code>aidiy_hermes</code>) もある</li>
+  <li>本ガイドは業務画面(C/M/T/V/S/A系)を中心にCore・Apps・Web・Avatarの流れを解説する。MCP/ローカルLLM/AIタスク・AIチームの詳細は各サブプロジェクトの <code>AGENTS.md</code> を参照</li>
+  <li>DB: SQLiteファイル <code>_data/AiDiy/database.db</code></li>
+  <li>マイグレーションツール(Alembic)は使わず、既存DBの差分は起動時の冪等処理で反映する。DB削除はデータを破棄してよい開発環境の最終手段</li>
+  </ul>
+ </div>
+
+ <section id="overview">
+  <h2>このシステムは何をする？</h2>
+  <p>
+  AiDiyは「管理画面中心の業務アプリ」をサクッと構築できる仕組みです。<br>
+  日本語のテーブル名/JSON/URLで、現場の言葉にそのまま合わせて使います。<br>
+  <strong>環境構築 → 画面確認 → API確認 → テーブル追加 → 画面追加</strong> の順に学びます。
+  </p>
+
+  <div>
+  <strong>困ったら</strong>
+  <p>
+  詰まったら...<strong>まず動かして、エラーを読む</strong>のが一番の近道です。
+  <a href="09_困ったときは.html">09. 困ったときは</a> にAI活用法とFAQをまとめています。
+  </p>
+  <p>
+  <strong>開発の詳細は</strong> <strong><a href="../11_コーディングルール/_index.html">11_コーディングルール</a></strong>と<strong><a href="../12_フロントエンド画面追加例/_index.html">12_フロントエンド画面追加例</a></strong>を参照
+  </p>
+  </div>
+
+  <div>
+  <strong>学習レベル目安</strong>
+  <table>
+   <tr>
+   <td><strong>Lv.1</strong> 動かす</td>
+   <td>環境構築して起動確認<br><small>所要時間: 約30分</small></td>
+   </tr>
+   <tr>
+   <td><strong>Lv.2</strong> 読む</td>
+   <td>構成図とフォルダを眺める<br><small>既存コードを読むだけ...</small></td>
+   </tr>
+   <tr>
+   <td><strong>Lv.3</strong> 追う</td>
+   <td>APIリクエストの流れを追う<br><small>Swagger UIで動作確認</small></td>
+   </tr>
+   <tr>
+   <td><strong>Lv.4</strong> 写す</td>
+   <td>既存テーブルを参考に新テーブル追加<br><small>Model/CRUD/Routerを作成</small></td>
+   </tr>
+   <tr>
+   <td><strong>Lv.5</strong> 作る</td>
+   <td>画面を追加してフル機能実装<br><small>Vue画面とルーティング追加</small></td>
+   </tr>
+   <tr>
+   <td><strong>Lv.6</strong> 設計する</td>
+   <td>新機能の設計から実装まで<br><small>テーブル設計、API設計含む</small></td>
+   </tr>
+  </table>
+  </div>
+
+  <div>
+  <strong>3つの基本原則</strong>
+  <ol>
+   <li><strong>日本語ファースト</strong> &#x2014; テーブル名もAPIもJSON keyも日本語</li>
+   <li><strong>シンプル構成</strong> &#x2014; 余計な抽象化をしない、見れば分かるコード</li>
+   <li><strong>AI活用前提</strong> &#x2014; AIエージェントが読みやすい構造設計</li>
+  </ol>
+  </div>
+ </section>
+
+ <section id="quick-start">
+  <h2>クイックスタート</h2>
+  <p>最短で動かす手順です。</p>
+
+  <pre><code><span># プロジェクトに移動</span>
+cd workspace/AiDiy2027
+
+<span># 初回セットアップ</span>
+python _setup.py
+
+<span># 対話で必要なサービスを選択して起動</span>
+python _start.py</code></pre>
+
+  <p>起動後に確認するURL:</p>
+  <ul>
+  <li><strong>フロントエンド</strong>: <a href="http://127.0.0.1:8090/" target="_blank">http://127.0.0.1:8090/</a> ログイン: <code>admin</code> / <code>********</code></li>
+  <li><strong>Core API</strong>: <a href="http://127.0.0.1:8091/docs" target="_blank">http://127.0.0.1:8091/docs</a></li>
+  <li><strong>Apps API</strong>: <a href="http://127.0.0.1:8098/docs" target="_blank">http://127.0.0.1:8098/docs</a></li>
+  <li><strong>Task / Team API</strong>: <a href="http://127.0.0.1:8093/docs" target="_blank">http://127.0.0.1:8093/docs</a></li>
+  <li><strong>MCP一覧</strong>: <a href="http://127.0.0.1:8095/" target="_blank">http://127.0.0.1:8095/</a></li>
+  <li><strong>Local API</strong>: <a href="http://127.0.0.1:8096/docs" target="_blank">http://127.0.0.1:8096/docs</a>（起動選択時のみ）</li>
+  <li><strong>Avatar Web</strong>: <a href="http://127.0.0.1:8092/" target="_blank">http://127.0.0.1:8092/</a>（起動選択時のみ）</li>
+  </ul>
+
+  <div>
+  <strong>起動できないとき</strong>
+  <ul>
+   <li><strong>ポート競合</strong> &#x2192; 既に <code>python.exe</code> や <code>node.exe</code> が動いていないか確認</li>
+   <li><strong>ログイン失敗</strong> &#x2192; パスワードは <code>********</code> (大文字小文字に注意)</li>
+   <li><strong>DB異常</strong> &#x2192; まずログとスキーマ差分を確認し、<code>_AIDIY/knowledge/backend_server,スキーマ変更手順.md</code> に従う。DB削除はバックアップ後、データ破棄が許される場合だけ</li>
+  </ul>
+  <p>
+   <strong>停止方法</strong>: 起動したターミナルで <code>Ctrl+C</code>。必要なら <code>taskkill</code> で個別停止
+  </p>
+  </div>
+ </section>
+
+ <section id="navigation">
+  <h2>ページ一覧</h2>
+  <p>このガイドは全10ページ構成です。<br>
+  上から順に読めばOKですが、目的に合わせて飛ばし読みもできます。</p>
+
+  <div>
+  <a href="01_はじめに.html">
+   <strong>01. はじめに</strong>
+   <span>プロジェクトのゴールと学習パス</span>
+  </a>
+
+  <a href="02_技術スタックと構成.html">
+   <strong>02. 技術スタックと構成</strong>
+   <span>アーキテクチャとフォルダ構成</span>
+  </a>
+
+  <a href="03_セットアップと起動.html">
+   <strong>03. セットアップと起動</strong>
+   <span>環境構築と動作確認</span>
+  </a>
+
+  <a href="04_バックエンド開発.html">
+   <strong>04. バックエンド開発</strong>
+   <span>FastAPI + SQLiteの仕組み</span>
+  </a>
+
+  <a href="05_データベース管理.html">
+   <strong>05. データベース管理</strong>
+   <span>SQLiteの操作と管理</span>
+  </a>
+
+  <a href="06_フロントエンド開発.html">
+   <strong>06. フロントエンド開発</strong>
+   <span>Vue 3のコンポーネントとAPI通信</span>
+  </a>
+
+  <a href="07_テストの書き方.html">
+   <strong>07. テストの書き方</strong>
+   <span>unittest、型チェック、手動テストの進め方</span>
+  </a>
+
+  <a href="08_運用とメンテナンス.html">
+   <strong>08. 運用とメンテナンス</strong>
+   <span>データ管理と復旧手順</span>
+  </a>
+
+  <a href="09_困ったときは.html">
+   <strong>09. 困ったときは</strong>
+   <span>トラブルシューティングとAI活用</span>
+  </a>
+
+  <a href="10_セキュリティと本番環境.html">
+   <strong>10. セキュリティと本番環境</strong>
+   <span>本番デプロイとセキュリティ対策</span>
+  </a>
+  </div>
+ </section>
+
+ <section id="tools">
+  <h2>必要なツール</h2>
+  <p>開発に必要なツール一覧です。</p>
+
+  <div>
+  <strong>前提条件</strong>
+  <p>
+   以下のツールが事前にインストールされている必要があります。<br>
+   <strong>セットアップ手順の詳細</strong>は次章で解説します。
+  </p>
+  </div>
+
+  <div>
+  <div>
+   <div>Python 3.13</div>
+   <div>必須: <strong>バックエンド</strong></div>
+   <p>FastAPIにはPython 3.13 以上が必要です。</p>
+   <small><code>python --version</code> で確認</small>
+  </div>
+
+  <div>
+   <div>Node.js / npm</div>
+   <div>必須: <strong>フロントエンド</strong></div>
+   <p>Vue 3にはNode.js LTSが必要です。</p>
+   <small><code>node --version</code> で確認</small>
+  </div>
+
+  <div>
+   <div>SQLite</div>
+   <div>必須: <strong>データベース</strong></div>
+   <p>Pythonに同梱されているため個別インストール不要です。</p>
+   <small>データファイル: <code>_data\AiDiy\database.db</code></small>
+  </div>
+
+  <div>
+   <div>uv</div>
+   <div>必須: <strong>Pythonパッケージ管理</strong></div>
+   <p>高速なパッケージマネージャです。</p>
+   <small>pipの代替として使用</small>
+  </div>
+  </div>
+
+  <div>
+  <strong>バージョン確認コマンド</strong>
+  <pre><code>python --version
+node --version
+uv --version</code></pre>
+  </div>
+ </section>
+
+ <section id="links">
+  <h2>リンク一覧</h2>
+  <table>
+  <thead>
+   <tr>
+   <th>サービス</th>
+   <th>URL</th>
+   <th>備考</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+   <td><strong>フロントエンド</strong></td>
+   <td><a href="http://127.0.0.1:8090/" target="_blank">http://127.0.0.1:8090/</a></td>
+   <td><code>admin</code> / <code>********</code> でログイン</td>
+   </tr>
+   <tr>
+   <td><strong>Core API</strong></td>
+   <td><a href="http://127.0.0.1:8091/docs" target="_blank">http://127.0.0.1:8091/docs</a></td>
+   <td>Swagger UIでCore系(C系、A系)のAPIを確認</td>
+   </tr>
+   <tr>
+   <td><strong>Apps API</strong></td>
+   <td><a href="http://127.0.0.1:8098/docs" target="_blank">http://127.0.0.1:8098/docs</a></td>
+   <td>Swagger UIでApps系(M系、T系、V系、S系)のAPIを確認</td>
+   </tr>
+   <tr>
+   <td><strong>Task / Team API</strong></td>
+   <td><a href="http://127.0.0.1:8093/docs" target="_blank">http://127.0.0.1:8093/docs</a></td>
+   <td>AIタスク実行・定期タスク・AIチームAPIを確認</td>
+   </tr>
+   <tr>
+   <td><strong>Backend MCP 一覧</strong></td>
+   <td><a href="http://127.0.0.1:8095/" target="_blank">http://127.0.0.1:8095/</a></td>
+   <td>backend_tools が同居させる19個のMCPを確認</td>
+   </tr>
+  </tbody>
+  </table>
+ </section>
+
+ <section id="reading-guide">
+  <h2>読み方ガイド</h2>
+
+  <div>
+  <strong>初心者向け (全ページ順番に)</strong>
+  <p>
+   <a href="01_はじめに.html">01. はじめに</a> &#x2192;
+   <a href="02_技術スタックと構成.html">02. 技術スタック</a> &#x2192;
+   <a href="03_セットアップと起動.html">03. セットアップ</a> &#x2192;
+   <a href="04_バックエンド開発.html">04. バックエンド</a> &#x2192;
+   <a href="05_データベース管理.html">05. データベース</a> &#x2192;
+   <a href="06_フロントエンド開発.html">06. フロントエンド</a> &#x2192;
+   <a href="07_テストの書き方.html">07. テスト</a> &#x2192;
+   <a href="08_運用とメンテナンス.html">08. 運用</a>
+  </p>
+  <small>
+   <strong>補足:</strong> 開発ルールの詳細は<a href="../11_コーディングルール/_index.html">11_コーディングルール</a>と<a href="../12_フロントエンド画面追加例/_index.html">12_フロントエンド画面追加例</a>を参照
+  </small>
+  </div>
+
+  <div>
+  <strong>フロントエンダー向け</strong>
+  <p>
+   <a href="01_はじめに.html">01. はじめに</a> &#x2192;
+   <a href="02_技術スタックと構成.html">02. 技術スタック</a> &#x2192;
+   <a href="03_セットアップと起動.html">03. セットアップ</a> &#x2192;
+   <strong><a href="06_フロントエンド開発.html">06. フロントエンド</a></strong> &#x2192;
+   <a href="04_バックエンド開発.html">04. バックエンド</a> &#x2192;
+   <a href="07_テストの書き方.html">07. テスト</a>
+  </p>
+  <small>
+   Vue.jsやHTML/CSSが得意ならフロントエンドから入ると理解しやすい
+  </small>
+  </div>
+
+  <div>
+  <strong>バックエンダー向け</strong>
+  <p>
+   <a href="01_はじめに.html">01. はじめに</a> &#x2192;
+   <a href="02_技術スタックと構成.html">02. 技術スタック</a> &#x2192;
+   <a href="03_セットアップと起動.html">03. セットアップ</a> &#x2192;
+   <strong><a href="04_バックエンド開発.html">04. バックエンド</a></strong> &#x2192;
+   <a href="05_データベース管理.html">05. データベース</a> &#x2192;
+   <a href="07_テストの書き方.html">07. テスト</a> &#x2192;
+   <a href="08_運用とメンテナンス.html">08. 運用</a>
+  </p>
+  <small>
+   PythonやAPIが得意ならバックエンドから入ると理解しやすい
+  </small>
+  </div>
+
+  <div>
+  <strong>AIエージェント向け</strong>
+  <p>
+   <a href="09_困ったときは.html">09. 困ったときは</a> のAI活用ガイドを参照
+  </p>
+  <small>
+   エラーレポートテンプレートとFAQが特に有用
+  </small>
+  </div>
+ </section>
+
+ <section id="next-steps">
+  <h2>次のステップ</h2>
+  <p>まずは環境を動かすことから始めましょう。</p>
+
+  <div>
+  <strong>推奨する最初のステップ</strong>
+  <ol>
+   <li><strong>セットアップ</strong> &#x2014; 環境構築して起動確認する</li>
+   <li><strong>ログインOK</strong> &#x2014; 管理画面にログインできることを確認</li>
+   <li><strong>API確認</strong> &#x2014; Swagger UIでAPIを叩いてみる</li>
+   <li><strong>コード確認</strong> &#x2014; 既存コードを読んで構造を理解する</li>
+  </ol>
+  </div>
+
+  <div>
+  <a href="01_はじめに.html">
+   <span>次へ進む</span>
+   <strong>01. はじめに &#x2192;</strong>
+   <span>プロジェクトのゴールと学習パス</span>
+  </a>
+  </div>
+ </section>
+ </div>
+
+ <footer>
+ <p><strong>開発ガイド</strong> | Version 1.0.0 | 最終更新: 2026年2月15日</p>
+ <p>
+  <a href="../README.md">ドキュメント一覧</a> |
+  <a href="../../../AGENTS.md">プロジェクト概要</a>
+ </p>
+ </footer>
+</body>
+</html>

@@ -1,0 +1,84 @@
+{
+  "task_id": "TK00001003",
+  "date": "2026-11-03",
+  "mode": "standalone Electron, normal login",
+  "user_submissions": 1,
+  "task_runs": 1,
+  "state": "完了",
+  "details": [
+    {
+      "明細SEQ": 0,
+      "タイプ": "start",
+      "状態": "完了",
+      "実行回数": 1,
+      "応答内容": "【セルフテスト専用・単発挨拶 20261103】おはよう。挨拶を日本語一文だけ返してください。実行する作業はこの挨拶の応答1ステップのみです。ファイルの読込・変更、コマンド実行、追加の調査、繰り返し、監視は不要です。操作検証は不要です。"
+    },
+    {
+      "明細SEQ": 1,
+      "タイプ": "do",
+      "状態": "完了",
+      "実行回数": 1,
+      "応答内容": "おはようございます。"
+    },
+    {
+      "明細SEQ": 9999,
+      "タイプ": "end",
+      "状態": "完了",
+      "実行回数": 1,
+      "応答内容": "操作検証対象のファイル操作がないため、終了処理を完了しました。"
+    }
+  ],
+  "condition": {
+    "実行区分": "即時",
+    "間隔区分": "",
+    "次回実行日時": ""
+  },
+  "provider": "openai",
+  "method": "codex_cli",
+  "cli_calls": 3,
+  "models": [
+    "gpt-6.1-sol",
+    "gpt-6.1-sol",
+    "gpt-6-luna"
+  ],
+  "observed_model_usage_events": 4,
+  "http_retry_count": "not measured",
+  "scope": "short greeting and normal project CLI instructions; no explicit attachments; no Hermes USER.md",
+  "internal_artifact": "Task preparation JSON only; no user-file operation in do step",
+  "existing_tasks": "before/after row hashes matched for all baseline rows (4 requests,18 details,4 conditions)",
+  "source_edits": false,
+  "audio": {
+    "engine": "Edge",
+    "voice": "ja-JP-NanamiNeural",
+    "speed": 1.2,
+    "clips": 5,
+    "serial_playback_completed": true
+  },
+  "test_windows_closed": true,
+  "diag_mini": true,
+  "health": {
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  }
+}

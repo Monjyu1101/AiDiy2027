@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>目次 - 04_明日のために！その４_フロントエンド開発</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <h1>04_明日のために！その４_フロントエンド開発</h1>
+
+  <section>
+    <h2>この章の目的</h2>
+    <p>この章では、<code>workspace/AiDiy2027/frontend_web</code> に M商品 の一覧・編集画面を追加し、バックエンドAPI（8098）と接続する流れを学びます。</p>
+    <ul>
+      <li>Vue 3 のコンポーネント構成（一覧/編集）を理解する</li>
+      <li>Vue Router で画面遷移とクエリパラメータを扱う</li>
+      <li>API呼び出し（POST中心）で CRUD を実装する</li>
+      <li>一覧テーブル・メニュー登録・動作確認まで完了する</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>前提</h2>
+    <ul>
+      <li>プロジェクトルート: <code>workspace/AiDiy2027</code></li>
+      <li>実装規約参照: <code>workspace/AiDiy2027/frontend_web/AGENTS.md</code></li>
+      <li>フロントエンド: 8090、Apps API: 8098</li>
+      <li>バックエンド側で M商品 API が実装済み</li>
+      <li>開発サーバー起動: <code>python _start.py</code></li>
+      <li>VueコンポーネントタグはASCII名を使う（日本語名は <code>&lt;component :is="..." /&gt;</code> で扱う）</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>目次</h2>
+    <ul>
+      <li>01 準備と進め方 - <a href="01_準備と進め方.html">開く</a></li>
+      <li>02 編集画面作成 - <a href="02_編集画面作成.html">開く</a></li>
+      <li>03 ルーティング設定 - <a href="03_ルーティング設定.html">開く</a></li>
+      <li>04 一覧テーブル作成 - <a href="04_一覧テーブル作成.html">開く</a></li>
+      <li>05 一覧画面作成 - <a href="05_一覧画面作成.html">開く</a></li>
+      <li>06 ルーティング追加とメニュー登録 - <a href="06_ルーティング追加とメニュー登録.html">開く</a></li>
+      <li>07 動作確認 - <a href="07_動作確認.html">開く</a></li>
+      <li>99 まとめ - <a href="99_まとめ.html">開く</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>参照コード</h2>
+    <ul>
+      <li><code>code_samples/M商品編集.vue</code></li>
+      <li><code>code_samples/M商品一覧テーブル.vue</code></li>
+      <li><code>code_samples/M商品一覧.vue</code></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p><a href="../README.md">開発ガイド README に戻る</a></p>
+  </footer>
+</body>
+</html>

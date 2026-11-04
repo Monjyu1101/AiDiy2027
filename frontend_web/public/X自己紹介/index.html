@@ -1,0 +1,2372 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AiDiy - 日本語ファースト AI開発プラットフォーム</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', 'Orbitron', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* アニメーション背景（静的ベース） */
+        .animated-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(0, 255, 255, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 80% 80%, rgba(255, 0, 255, 0.08) 0%, transparent 45%),
+                radial-gradient(circle at 40% 60%, rgba(255, 255, 0, 0.04) 0%, transparent 45%),
+                linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #0a0a0a 100%);
+            z-index: -1;
+            transform: translateZ(0);
+        }
+
+        /* ヒーローセクション */
+        .hero-section {
+            min-height: 100vh;
+            padding: 80px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* タイトル合体アセンブリ */
+        .hero-title-assembly {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 1.15em;
+            margin-bottom: 10px;
+        }
+
+        .title-half {
+            font-family: 'Orbitron', monospace;
+            font-size: 4.5rem;
+            font-weight: 900;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        .title-left {
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0,255,255,.9), 0 0 50px rgba(0,255,255,.5);
+            animation: slideInLeft 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        }
+
+        .title-right {
+            color: #ff00ff;
+            text-shadow: 0 0 20px rgba(255,0,255,.9), 0 0 50px rgba(255,0,255,.5);
+            animation: slideInRight 0.75s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 1; transform: translateX(-65vw); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+            from { opacity: 1; transform: translateX(65vw); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        .title-half.merging {
+            animation: mergeFade 0.35s ease-in forwards !important;
+        }
+        @keyframes mergeFade {
+            0%   { opacity: 1; transform: scale(1);    filter: brightness(1); }
+            40%  { opacity: 1; transform: scale(1.15); filter: brightness(6); }
+            100% { opacity: 0; transform: scale(1.3);  filter: brightness(8); }
+        }
+
+        /* 衝撃フラッシュリング */
+        .title-flash {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 0; height: 0;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            opacity: 0;
+        }
+        .title-flash.active {
+            animation: flashBurst 0.55s ease-out forwards;
+        }
+        @keyframes flashBurst {
+            0%  { width: 0;    height: 0;    opacity: 1;
+                  box-shadow: 0 0 0 0 rgba(255,255,255,.9); }
+            40% { width: 280px; height: 280px; opacity: .9;
+                  box-shadow: 0 0 60px 30px rgba(0,255,255,.55),
+                              0 0 120px 60px rgba(255,0,255,.3); }
+            100%{ width: 600px; height: 600px; opacity: 0;
+                  box-shadow: 0 0 0 0 transparent; }
+        }
+
+        /* 最終タイトル */
+        .hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            opacity: 0;
+        }
+
+        .hero-title.revealed {
+            animation: titleReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+        }
+
+        @keyframes titleReveal {
+            0%   { opacity: 0; transform: scale(0.5);  filter: blur(6px) brightness(5); }
+            60%  { opacity: 1; transform: scale(1.08); filter: blur(0)   brightness(1.5); }
+            100% { opacity: 1; transform: scale(1);    filter: blur(0)   brightness(1); }
+        }
+
+        .hero-subtitle {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.5rem;
+            color: #00ffff;
+            margin-bottom: 10px;
+            opacity: 0;
+            animation: fadeInUp 1.6s ease 2.2s forwards;
+        }
+
+        .hero-description {
+            font-size: 1.2rem;
+            max-width: 800px;
+            margin-bottom: 15px;
+            opacity: 0;
+            animation: fadeInUp 1.6s ease 2.6s forwards;
+            line-height: 1.8;
+        }
+
+        /* ヒーロー アクションボタン */
+        .hero-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 15px;
+            opacity: 0;
+            animation: fadeInUp 1.6s ease 2.9s forwards;
+        }
+
+        /* ヒーロータグ */
+        .hero-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+            opacity: 0;
+            animation: fadeInUp 1.6s ease 3.1s forwards;
+        }
+        .hero-tags span {
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            font-size: 0.82rem;
+            color: rgba(200, 240, 255, 0.85);
+        }
+
+        .typing-text {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            color: #ffff00;
+            border-right: 2px solid #ffff00;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* セクション共通 */
+        .section {
+            padding: 50px 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            border-radius: 2px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: #99b8cc;
+            font-size: 1rem;
+            margin-top: -15px;
+            margin-bottom: 25px;
+        }
+
+        /* コア機能カード */
+        .core-features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(265px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 15px;
+            padding: 20px 15px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            will-change: transform, border-color, box-shadow;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .feature-card:hover::before { left: 100%; }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            border-color: #00ffff;
+            box-shadow: 0 20px 40px rgba(0, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .feature-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.3rem;
+            color: #00ffff;
+            margin-bottom: 10px;
+        }
+
+        .feature-description {
+            color: #ccc;
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* 技術統計 */
+        .tech-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            background: rgba(0, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .stat-number {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ffff00;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .stat-sub {
+            display: block;
+            color: #888;
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        /* アーキテクチャ */
+        .architecture-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .architecture-item {
+            background: linear-gradient(135deg, rgba(255, 0, 255, 0.1), rgba(0, 255, 255, 0.1));
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            border-radius: 12px;
+            padding: 18px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .architecture-item::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, #ff00ff, #00ffff);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+
+        .architecture-item:hover::after { transform: scaleY(1); }
+
+        .architecture-item:hover {
+            transform: translateX(10px);
+            border-color: #ff00ff;
+        }
+
+        .architecture-title {
+            font-family: 'Orbitron', monospace;
+            color: #ff00ff;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .architecture-item p { color: #ccc; font-size: 0.9rem; }
+
+        /* コードブロック（Naming セクション用） */
+        .architecture-item pre {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.45);
+            border-radius: 8px;
+            border-left: 2px solid #00ffff;
+            font-size: 0.82rem;
+            color: #aaf0ff;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            font-family: 'Orbitron', monospace;
+        }
+
+        .architecture-item .meta-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .architecture-item .meta-tags span {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(0, 255, 255, 0.08);
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            font-size: 0.75rem;
+            color: #00ffff;
+        }
+
+        /* 拡張性セクション */
+        .expansion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .expansion-item {
+            background: rgba(255, 255, 0, 0.05);
+            border: 1px solid rgba(255, 255, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .expansion-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 255, 0, 0.1), transparent);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .expansion-item:hover::before { width: 200px; height: 200px; }
+        .expansion-item:hover { border-color: #ffff00; transform: scale(1.05); }
+
+        /* ビジネスサンプル */
+        .sample-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+
+        .sample-item {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.05), rgba(255, 0, 255, 0.05));
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            border-radius: 14px;
+            padding: 22px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            transform: translateY(50px);
+            opacity: 0;
+            will-change: transform, opacity, border-color, box-shadow;
+        }
+
+        .sample-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.07), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .sample-item:hover::before { left: 100%; }
+
+        .sample-item:hover {
+            transform: translateY(-6px);
+            border-color: #00ffff;
+            box-shadow: 0 16px 36px rgba(0, 255, 255, 0.15);
+        }
+
+        .sample-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            color: #00ffff;
+            margin-bottom: 10px;
+        }
+
+        .sample-item p { color: #bbb; font-size: 0.9rem; line-height: 1.6; }
+
+        .sample-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .sample-tag {
+            padding: 3px 10px;
+            border-radius: 999px;
+            background: rgba(255, 0, 255, 0.08);
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            font-size: 0.74rem;
+            color: #ff88ff;
+        }
+
+        /* Advanced Layer */
+        .advanced-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        /* 自己改善機構 強調カード */
+        .feature-card.highlight-gold {
+            border-color: rgba(255, 215, 0, 0.7);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 165, 0, 0.05));
+            box-shadow: 0 0 24px rgba(255, 215, 0, 0.18), inset 0 0 40px rgba(255, 215, 0, 0.04);
+        }
+        .feature-card.highlight-gold:hover {
+            border-color: #ffd700;
+            box-shadow: 0 20px 50px rgba(255, 215, 0, 0.35);
+        }
+        .feature-card.highlight-gold .feature-title {
+            background: linear-gradient(90deg, #ffd700, #ffaa00, #ffd700);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: goldShine 3s linear infinite;
+        }
+        @keyframes goldShine {
+            0%   { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .self-improve-detail {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(255, 215, 0, 0.07);
+            border-left: 3px solid #ffd700;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #e0c87a;
+            line-height: 1.75;
+            text-align: left;
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 1280px) {
+            .hero-title { font-size: 3.5rem; }
+            .title-half { font-size: 3.5rem; }
+            .hero-subtitle { font-size: 1.2rem; }
+            .hero-description { font-size: 1rem; }
+            .hero-section { height: auto; padding: 100px 20px; }
+            .section { padding: 30px 15px; }
+            .section-title { font-size: 2rem; }
+            .core-features { grid-template-columns: repeat(2, 1fr); }
+            .advanced-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 720px) {
+            .hero-tags, .hero-actions { flex-direction: column; align-items: center; }
+            .sample-grid { grid-template-columns: 1fr; }
+        }
+
+        /* スクロールアニメーション用 */
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+            will-change: transform, opacity;
+        }
+
+        .animate-on-scroll.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* grid 内のカードは左からスライドインさせる（段階表示と合わせて左→右に流れる） */
+        .core-features      > .animate-on-scroll,
+        .architecture-grid  > .animate-on-scroll,
+        .expansion-grid     > .animate-on-scroll,
+        .sample-grid        > .animate-on-scroll,
+        .advanced-grid      > .animate-on-scroll,
+        .tech-stats         > .animate-on-scroll {
+            transform: translate3d(-60px, 0, 0);
+        }
+        .core-features      > .animate-on-scroll.animated,
+        .architecture-grid  > .animate-on-scroll.animated,
+        .expansion-grid     > .animate-on-scroll.animated,
+        .sample-grid        > .animate-on-scroll.animated,
+        .advanced-grid      > .animate-on-scroll.animated,
+        .tech-stats         > .animate-on-scroll.animated {
+            transform: translate3d(0, 0, 0);
+        }
+
+        /* サイバーボタン */
+        .cyber-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            will-change: transform, background-color, box-shadow;
+        }
+
+        .cyber-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            transition: left 0.5s ease;
+        }
+
+        .cyber-button:hover::before { left: 100%; }
+
+        .cyber-button:hover {
+            color: #000;
+            background: #00ffff;
+            box-shadow: 0 0 30px #00ffff;
+        }
+
+        .cyber-button-ghost {
+            display: inline-block;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            color: #aaddee;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+            text-decoration: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .cyber-button-ghost:hover {
+            border-color: #00ffff;
+            color: #00ffff;
+        }
+
+        .rainbow-blink {
+            border-color: #00ffff;
+            box-shadow: 0 0 20px #00ffff;
+            color: #00ffff;
+        }
+
+        /* ========================================================== */
+        /*  追加エフェクト: パーティクル Canvas / グロー / バー等         */
+        /* ========================================================== */
+
+        /* 背景パーティクル canvas（GPU 合成フレンドリー） */
+        #fx-particles {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.9;
+        }
+
+        /* 背景グリッド（微細な縦横線） */
+        .fx-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 0, 255, 0.04) 1px, transparent 1px);
+            background-size: 60px 60px, 60px 60px;
+            pointer-events: none;
+            z-index: -1;
+            mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%);
+            -webkit-mask-image: radial-gradient(ellipse at center, #000 40%, transparent 85%);
+        }
+
+        /* マウス追従グロー（transform のみ、GPU 合成） */
+        #fx-mouse-glow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 420px;
+            height: 420px;
+            border-radius: 50%;
+            background: radial-gradient(circle,
+                rgba(0, 255, 255, 0.14) 0%,
+                rgba(255, 0, 255, 0.06) 40%,
+                transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            transform: translate3d(-999px, -999px, 0);
+            transition: opacity 0.4s ease;
+            opacity: 0;
+            mix-blend-mode: screen;
+            will-change: transform;
+        }
+
+        /* スクロール進行バー */
+        #fx-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0;
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00);
+            z-index: 10001;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.7);
+            transform-origin: left;
+            transition: width 0.12s linear;
+        }
+
+        /* セクション scanline（縦スキャン） */
+        .section {
+            overflow: hidden;
+        }
+        .section.animated-scan::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -20%;
+            width: 140%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: scanSweep 4s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scanSweep {
+            0%   { transform: translateX(-100%) scaleX(0.6); opacity: 0; }
+            20%  { opacity: 0.8; }
+            80%  { opacity: 0.8; }
+            100% { transform: translateX(100%) scaleX(1);    opacity: 0; }
+        }
+
+        /* カード 3D tilt: transform-style のみ追加（既存 transition は維持） */
+        .feature-card,
+        .architecture-item,
+        .sample-item,
+        .expansion-item,
+        .stat-item {
+            transform-style: preserve-3d;
+        }
+        /* tilt 中は transform のトランジションを短くしてマウスに追従 */
+        .feature-card.tilt-active,
+        .architecture-item.tilt-active,
+        .sample-item.tilt-active {
+            transition: transform 0.05s linear, opacity 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* stat 数字のグローパルス */
+        .stat-number.counted {
+            animation: statPulse 1.2s ease-out;
+        }
+        @keyframes statPulse {
+            0%   { text-shadow: 0 0 0    rgba(255, 255, 0, 0); }
+            50%  { text-shadow: 0 0 28px rgba(255, 255, 0, 0.9); transform: scale(1.08); }
+            100% { text-shadow: 0 0 10px rgba(255, 255, 0, 0.4); transform: scale(1); }
+        }
+
+        /* クリック波紋 */
+        .fx-ripple {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            border: 2px solid rgba(0, 255, 255, 0.8);
+            transform: translate(-50%, -50%);
+            animation: rippleOut 0.7s ease-out forwards;
+        }
+        @keyframes rippleOut {
+            0%   { width: 0;     height: 0;     opacity: 0.9; border-width: 3px; }
+            100% { width: 240px; height: 240px; opacity: 0;   border-width: 0; }
+        }
+
+        /* タイトル revealed 後にグラデーションをゆっくり流す（GPU合成） */
+        .hero-title.revealed {
+            animation: titleReveal 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both,
+                       titleGradientShift 8s ease-in-out 0.6s infinite;
+        }
+        @keyframes titleGradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50%      { background-position: 100% 50%; }
+        }
+
+        /* ===== わくわく追加レイヤー ===== */
+
+        /* ヒーローのオーロラ光彩（CSS のみ・transform 合成） */
+        .hero-section::before,
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            width: 60vmax;
+            height: 60vmax;
+            border-radius: 50%;
+            filter: blur(90px);
+            opacity: 0.3;
+            mix-blend-mode: screen;
+            pointer-events: none;
+        }
+        .hero-section::before {
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.55), transparent 60%);
+            top: -20vmax;
+            left: -15vmax;
+            animation: auroraDrift1 22s ease-in-out infinite alternate;
+        }
+        .hero-section::after {
+            background: radial-gradient(circle, rgba(255, 0, 255, 0.5), transparent 60%);
+            bottom: -22vmax;
+            right: -12vmax;
+            animation: auroraDrift2 26s ease-in-out infinite alternate;
+        }
+        @keyframes auroraDrift1 {
+            0%   { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10vmax, 6vmax) scale(1.25); }
+        }
+        @keyframes auroraDrift2 {
+            0%   { transform: translate(0, 0) scale(1.15); }
+            100% { transform: translate(-8vmax, -7vmax) scale(0.9); }
+        }
+
+        /* ヒーロータグの順次ポップイン + ホバーグロー */
+        .hero-tags span {
+            opacity: 0;
+            animation: tagPop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease;
+        }
+        .hero-tags span:nth-child(1)  { animation-delay: 3.25s; }
+        .hero-tags span:nth-child(2)  { animation-delay: 3.37s; }
+        .hero-tags span:nth-child(3)  { animation-delay: 3.49s; }
+        .hero-tags span:nth-child(4)  { animation-delay: 3.61s; }
+        .hero-tags span:nth-child(5)  { animation-delay: 3.73s; }
+        .hero-tags span:nth-child(6)  { animation-delay: 3.85s; }
+        .hero-tags span:nth-child(7)  { animation-delay: 3.97s; }
+        .hero-tags span:nth-child(8)  { animation-delay: 4.09s; }
+        .hero-tags span:nth-child(9)  { animation-delay: 4.21s; }
+        .hero-tags span:nth-child(10) { animation-delay: 4.33s; }
+        @keyframes tagPop {
+            from { opacity: 0; transform: scale(0.6) translateY(12px); }
+            to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .hero-tags span:hover {
+            border-color: rgba(0, 255, 255, 0.9);
+            background: rgba(0, 255, 255, 0.14);
+            color: #ffffff;
+            box-shadow: 0 0 16px rgba(0, 255, 255, 0.45);
+        }
+
+        /* NEW バッジ（新機能の強調） */
+        .fx-new-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 9px;
+            font-size: 0.62em;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            vertical-align: middle;
+            border-radius: 999px;
+            color: #1a1a2e;
+            -webkit-text-fill-color: #1a1a2e;
+            background: linear-gradient(90deg, #ffd700, #ff7ad9, #00ffee, #ffd700);
+            background-size: 250% 100%;
+            animation: badgeShine 2.4s linear infinite, badgePulse 1.8s ease-in-out infinite;
+        }
+        @keyframes badgeShine {
+            0%   { background-position: 0% 0; }
+            100% { background-position: 250% 0; }
+        }
+        @keyframes badgePulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(255, 215, 0, 0.5); }
+            50%      { box-shadow: 0 0 16px rgba(255, 122, 217, 0.9); }
+        }
+
+        /* 特徴アイコンがホバーで跳ねる */
+        .feature-icon {
+            display: inline-block;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2);
+            animation: iconWiggle 0.7s ease;
+        }
+        @keyframes iconWiggle {
+            0%   { transform: scale(1)    rotate(0); }
+            30%  { transform: scale(1.35) rotate(-12deg); }
+            55%  { transform: scale(1.15) rotate(9deg); }
+            75%  { transform: scale(1.25) rotate(-4deg); }
+            100% { transform: scale(1.2)  rotate(0); }
+        }
+
+        /* セクション見出し下線: 表示時に伸びて虹シマー */
+        .section-title.animate-on-scroll::after {
+            width: 0;
+            opacity: 0;
+        }
+        .section-title.animate-on-scroll.animated::after {
+            background: linear-gradient(90deg, #00ffff, #ff00ff, #ffff00, #00ffff);
+            background-size: 250% 100%;
+            animation:
+                underlineGrow 0.7s 0.15s cubic-bezier(0.22, 1, 0.36, 1) forwards,
+                underlineShimmer 3.5s 1s linear infinite;
+        }
+        @keyframes underlineGrow {
+            from { width: 0;     opacity: 0; }
+            to   { width: 100px; opacity: 1; }
+        }
+        @keyframes underlineShimmer {
+            0%   { background-position: 0% 0; }
+            100% { background-position: 250% 0; }
+        }
+
+        /* タイピングカーソルの点滅 */
+        .typing-text {
+            animation: caretBlink 0.85s step-end infinite;
+        }
+        @keyframes caretBlink {
+            0%, 100% { border-right-color: #ffff00; }
+            50%      { border-right-color: transparent; }
+        }
+
+        /* 紙吹雪キャンバス */
+        #fx-confetti {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        /* reduced motion では追加演出を止める */
+        @media (prefers-reduced-motion: reduce) {
+            .hero-section::before,
+            .hero-section::after,
+            .fx-new-badge,
+            .typing-text,
+            .feature-card:hover .feature-icon,
+            .section-title.animate-on-scroll.animated::after {
+                animation: none !important;
+            }
+            .hero-tags span { animation: none; opacity: 1; transform: none; }
+            .section-title.animate-on-scroll::after,
+            .section-title.animate-on-scroll.animated::after { width: 100px; opacity: 1; }
+        }
+
+        /* 通知トースト */
+        .auto-scroll-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ffff;
+            padding: 10px 20px;
+            border-radius: 25px;
+            border: 1px solid #00ffff;
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            z-index: 10000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            animation: notifFadeIn 0.3s ease-out;
+        }
+        .auto-scroll-notification.fade-out {
+            animation: notifFadeOut 0.3s ease-in forwards;
+        }
+        @keyframes notifFadeIn {
+            0%   { opacity: 0; transform: translateX(80px) scale(0.85); }
+            100% { opacity: 1; transform: translateX(0)    scale(1); }
+        }
+        @keyframes notifFadeOut {
+            0%   { opacity: 1; transform: translateX(0)    scale(1); }
+            100% { opacity: 0; transform: translateX(80px) scale(0.85); }
+        }
+
+        /* モーション控えめ設定への配慮 */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            #fx-particles, .fx-grid, #fx-mouse-glow { display: none; }
+        }
+
+        /* スマホではリッチエフェクトを抑える */
+        @media (max-width: 720px) {
+            #fx-mouse-glow { display: none; }
+            .fx-grid { background-size: 40px 40px, 40px 40px; opacity: 0.5; }
+        }
+
+        /* ========================================================== */
+        /*  アイコンギャラリー（Powered By セクション）                */
+        /* ========================================================== */
+
+        .icon-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 12px;
+            padding: 10px 0;
+            min-height: 120px;
+        }
+
+        .icon-gallery .icon-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 10px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            width: 60px;
+            will-change: transform, border-color, box-shadow;
+        }
+
+        .icon-gallery .icon-card:hover {
+            background: #f0f8ff;
+            border-color: #00cccc;
+            transform: translateY(-4px) scale(1.08);
+            box-shadow: 0 8px 24px rgba(0, 200, 255, 0.3);
+        }
+
+        .icon-gallery .icon-card img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            border-radius: 4px;
+            filter: none;
+            transition: filter 0.25s ease;
+        }
+
+        .icon-gallery .icon-card:hover img {
+            filter: brightness(1.05);
+        }
+
+        .icon-gallery .icon-card .icon-fallback {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Orbitron', monospace;
+            font-size: 18px;
+            font-weight: 900;
+            color: #008888;
+            background: rgba(0, 200, 200, 0.08);
+            border-radius: 6px;
+        }
+
+        .icon-gallery .icon-card .icon-label {
+            font-size: 0.65rem;
+            color: #555;
+            text-align: center;
+            line-height: 1.2;
+            max-width: 52px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        @media (max-width: 720px) {
+            .icon-gallery { gap: 8px; }
+            .icon-gallery .icon-card { padding: 6px 8px; }
+            .icon-gallery .icon-card img { width: 28px; height: 28px; }
+            .icon-gallery .icon-card .icon-fallback { width: 28px; height: 28px; font-size: 14px; }
+        }
+    </style>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.179.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.0/examples/jsm/",
+            "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.2/lib/three-vrm.module.js",
+            "@pixiv/three-vrm-animation": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm-animation@3.4.2/lib/three-vrm-animation.module.js"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- 背景レイヤー -->
+    <div class="animated-bg"></div>
+    <div class="fx-grid"></div>
+    <canvas id="fx-particles"></canvas>
+    <div id="fx-mouse-glow"></div>
+    <div id="fx-progress"></div>
+
+    <!-- ヒーローセクション -->
+    <section class="hero-section">
+        <!-- タイトル合体アニメーション -->
+        <div class="hero-title-assembly" id="hero-title-assembly">
+            <span class="title-half title-left"  id="title-left">AI</span>
+            <span class="title-half title-right" id="title-right">DIY</span>
+            <div class="title-flash" id="title-flash"></div>
+        </div>
+        <h1 class="hero-title" id="hero-title-final" data-text="AiDiy">AiDiy</h1>
+        <h2 class="hero-subtitle">日本語で設計し、音声でもコードでも動かす。</h2>
+        <p class="hero-description">
+            日本語を第一言語にしたフルスタック業務システム開発フレームワーク。<br>
+            FastAPI マルチサーバー、Vue 3 Web UI、Electron/Web デュアルモードのアバター、<br>
+            WebSocket ベースの AI コアを一体で扱えます。<br>
+            プロジェクトを宇宙として眺め、変更は AI に頼む IDE へ。<br>
+            Navigator・Console・Code・Live・Task・Team・Browser を組み合わせ、Discord・Slack からも AI と作業できます。
+        </p>
+        <div class="hero-actions">
+            <a href="/AiDiy" class="cyber-button" target="_blank">AiDiy を開く</a>
+            <a href="#開発スペース" class="cyber-button-ghost">IDE を知る</a>
+            <a href="#外部連携" class="cyber-button-ghost">Discord / Slack</a>
+            <a href="#業務サンプル" class="cyber-button-ghost">業務サンプルを見る</a>
+        </div>
+        <div class="hero-tags">
+            <span>日本語テーブル名 / API / JSON / 画面</span>
+            <span>FastAPI 8091 + 8098</span>
+            <span>Vue 3 + Vite + TypeScript</span>
+            <span>Electron + VRM + 音声AI</span>
+            <span>🧠 自己改善機構 — 使うほど育つ</span>
+            <span>claude / copilot / codex / antigravity / grok / opencode / hermes CLI</span>
+            <span>🔌 MCP Hub — Windows 20 / Linux・macOS 19 — browser / capture / sqlite / postgres / logs / check / backup / image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows</span>
+            <span>🤖 AIタスク自動実行 — AI分解 × 自由なタスクフロー × クリティカルパス実行</span>
+            <span>🌌 8 つのアプリ — Navigator / Console / Code / Live / IDE / Task / Team / Browser</span>
+        </div>
+        <div class="typing-text" id="typing-text"></div>
+    </section>
+
+    <!-- Feature Overview（特徴概要） -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">Feature Overview</h2>
+        <p class="section-subtitle animate-on-scroll">業務テンプレートから、AI と一緒に開発する作業環境へ。</p>
+        <div class="core-features">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🇯🇵</span>
+                <h3 class="feature-title">日本語ファースト</h3>
+                <p class="feature-description">
+                    テーブル名・API・JSON キー・<br>
+                    Vue コンポーネントまで日本語で統一。<br>
+                    ビジネス用語とコードの完全一致。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🖥️</span>
+                <h3 class="feature-title">マルチサーバー構成</h3>
+                <p class="feature-description">
+                    core 8091 / apps 8098 / mcp 8095 /<br>
+                    local 8096 / task 8093 の 5 サーバーを分離。<br>
+                    AI 系・業務系・自己検証系を Vite Proxy で透過的にまとめます。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">📦</span>
+                <h3 class="feature-title">実務サンプル同梱</h3>
+                <p class="feature-description">
+                    配車・生産・在庫管理の実装例が、<br>
+                    そのままテンプレートになります。<br>
+                    明細型マスタ・トランザクションも完備。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🤖</span>
+                <h3 class="feature-title">AI + 音声 + アバター</h3>
+                <p class="feature-description">
+                    チャット・画像・音声・6 画面コード支援を<br>
+                    WebSocket で一体化。<br>
+                    Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma を切替。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🧠</span>
+                <h3 class="feature-title">自己改善機構</h3>
+                <p class="feature-description">
+                    修正完了後に <code style="color:#00ffff">_AIDIY/knowledge/</code> へ<br>
+                    知見を自動整理。次回の同種修正で再利用し、<br>
+                    <strong>使うほどに育つ</strong>テンプレート。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🔀</span>
+                <h3 class="feature-title">AIタスク自動実行 — 自由なタスクフロー<span class="fx-new-badge">NEW</span></h3>
+                <p class="feature-description">
+                    要求を AI が明細タスクへ自動分解。<br>
+                    カンバンでも垂直流れ作業だけでもない、水平並行分岐を<br>
+                    先行SEQ で自由に定義し、クリティカルパスのフロー図で可視化・実行。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🌌</span>
+                <h3 class="feature-title">開発スペース — AiDiy IDE<span class="fx-new-badge">NEW</span></h3>
+                <p class="feature-description">
+                    フォルダは銀河、ファイルは星。宇宙を眺めて・辿って・読み、<br>
+                    変更は Code（コード支援）と Live（音声会話）に頼む。<br>
+                    目指すのは「ソースをほぼ触らない IDE」。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🔌</span>
+                <h3 class="feature-title">MCP Hub + Multi CLI</h3>
+                <p class="feature-description">
+                    browser / capture / sqlite / postgres / logs / check / backup /<br>
+                    image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows の MCP サーバー同居（Windows は 20、Linux / macOS は 19）。<br>
+                    SDK / CLI の 8 方式を code1〜code6 パネルで並走可能。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">💬</span>
+                <h3 class="feature-title">Discord / Slack 連携</h3>
+                <p class="feature-description">普段のチャンネルから Hermes に依頼。Discord は Live 音声、Slack は HTTPS 定期取得によるスレッド会話に対応。</p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🩺</span>
+                <h3 class="feature-title">診断から起動まで</h3>
+                <p class="feature-description">Diag で導入・接続・Tools の試験結果を確認。プロジェクトを選び、必要なアプリをランチャーから開けます。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Current Numbers（数値的根拠） -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">Current Numbers</h2>
+        <p class="section-subtitle animate-on-scroll">数値で見る AiDiy — AGENTS.md の実構成をそのまま可視化。</p>
+        <div class="tech-stats">
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="5">0</span>
+                <span class="stat-label">常駐サーバー</span>
+                <span class="stat-sub">core 8091 / apps 8098 / tools 8095 / local 8096 / task 8093</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="6">0</span>
+                <span class="stat-label">対話 AI 系統</span>
+                <span class="stat-sub">Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma / OpenAI Realtime</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="7">0</span>
+                <span class="stat-label">分類系統</span>
+                <span class="stat-sub">C / M / T / V / S / A / X</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="6">0</span>
+                <span class="stat-label">コードパネル</span>
+                <span class="stat-sub">code1 から code6</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-label">コード AI 接続方式</span>
+                <span class="stat-sub">claude_sdk / claude / copilot / codex / antigravity / grok / opencode / hermes</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="1">0</span>
+                <span class="stat-label">独自エージェント基盤</span>
+                <span class="stat-sub">aidiy_hermes — カスタムツール・TUI・コンテキスト圧縮</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-label">独立アプリ</span>
+                <span class="stat-sub">Navigator / Console / Code / Live / IDE / Task / Team / Browser。Code / Live は VS Code 拡張でも利用</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="2">0</span>
+                <span class="stat-label">アバターモード</span>
+                <span class="stat-sub">Electron / Web</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="20">0</span>
+                <span class="stat-label">MCP サーバー（Windows）</span>
+                <span class="stat-sub">Linux / macOS は 19（Windows Control を除く）。browser / capture / sqlite / postgres / logs / check / backup / image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows</span>
+            </div>
+            <div class="stat-item animate-on-scroll">
+                <span class="stat-number" data-count="600">0</span>
+                <span class="stat-label">JWT 分</span>
+                <span class="stat-sub">認証有効期限（HS256）</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Implementation Details（特徴毎の実装詳細）                    -->
+    <!-- ============================================================ -->
+
+    <!-- 1. 日本語ファースト -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🇯🇵 日本語ファースト — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">DB から API、UI まで名前をズラさない。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🗄️ Database</h3>
+                <p>テーブル名・カラム名まで日本語で統一。ビジネス用語とコードの乖離をゼロにします。</p>
+                <pre>Table:  C利用者
+Column: 利用者ID
+Column: 登録日時
+Column: 更新利用者名</pre>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">⚡ API</h3>
+                <p>エンドポイント・JSON キーも日本語。POST 中心の統一 API 設計で一貫性を保ちます。</p>
+                <pre>POST /core/利用者/一覧
+POST /apps/商品/登録
+
+{ "利用者ID": "admin",
+  "権限ID":   "1" }</pre>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎨 Frontend</h3>
+                <p>Vue ルート・コンポーネントファイル名も日本語。ファイル名は日本語 OK、タグは ASCII で動的参照。</p>
+                <pre>Route: /C管理/C利用者/一覧
+File:  C利用者一覧.vue
+Key:   利用者名</pre>
+            </div>
+        </div>
+        <p class="section-subtitle animate-on-scroll" style="margin-top:36px;">7 系統で全機能を分類。</p>
+        <div class="expansion-grid">
+            <div class="expansion-item animate-on-scroll">
+                <h4>C系 — Core</h4>
+                <p>権限・利用者・採番</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>M系 — Master</h4>
+                <p>配車区分・車両・商品・工程</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>T系 — Transaction</h4>
+                <p>配車・生産・入庫・出庫・棚卸</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>V系 — View</h4>
+                <p>生 SQL クエリによる結合表示</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>S系 — Scheduler</h4>
+                <p>週表示・日表示スケジューラー</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>A系 — AI</h4>
+                <p>AI コア・会話履歴・Aタスク（要求 / 明細 / 実行条件）・Aチーム（要員 / 依頼 / 目標 / 経験 / 作業 / 会話 / 状況）</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>X系 — Experimental</h4>
+                <p>ゲーム・ビジュアルデモ・自動生成ビデオ・自己紹介ページ</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. マルチサーバー構成 -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🖥️ マルチサーバー構成 — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">構成は分かれていても、体験はひとつに寄せる。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🗄️ backend_server</h3>
+                <p>FastAPI + SQLAlchemy + SQLite。POST 中心 API、統一レスポンス形式、C採番、監査フィールド、Reboot 機構を標準装備。Alembic 不使用。</p>
+                <div class="meta-tags"><span>core_main.py:8091</span><span>apps_main.py:8098</span><span>No Alembic</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔌 MCP サーバー (統合)</h3>
+                <p>FastAPI + SSE で 20 個の MCP サーバーをポート 8095 に同居。AI エージェントのブラウザ操作・画面キャプチャ・DB 観測・ログ監視・型チェック・画像/動画生成・音声認識/合成・OBS 制御・ffmpeg 実行・通知音再生・コードエージェント実行・チャット LLM 実行・AI判断・AIタスク非同期投入・AIチーム依頼投入・Windows デスクトップ操作制御を一手に提供。SSE / Streamable HTTP / stdio gateway（mcp_stdio.py）の 3 トランスポートに加え、HTTP POST（FastAPI /docs）を同一ポートで提供。詳細は下の MCP Hub セクションへ。</p>
+                <div class="meta-tags"><span>tools_main.py:8095</span><span>SSE × 20</span><span>HTTP POST</span><span>stdio gateway</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🤖 backend_taskteam (AIタスク・AIチーム)<span class="fx-new-badge">NEW</span></h3>
+                <p>AIタスク要求の自動分解・Code CLI 実行と、複数AIエージェントのチーム活動を同一サーバーで管理。タスクは先行SEQ（複数指定可）で水平の並行分岐を含む自由なフローを定義し、依存が満たされた明細から自動実行する。単独アプリ aidiy_task / aidiy_team から操作（通常Webのメニューには含めません）。</p>
+                <div class="meta-tags"><span>taskteam_main.py:8093</span><span>/task + /team</span><span>クリティカルパス実行</span><span>Code CLI 実行</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧠 backend_local (ローカル LLM)</h3>
+                <p>HuggingFace Gemma を transformers + torch でローカル推論し、OpenAI 互換 Chat Completions API として提供。stream / tools 対応。クラウド API なしでもチャット AI を利用可能。</p>
+                <div class="meta-tags"><span>local_main.py:8096</span><span>OpenAI 互換</span><span>Gemma</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🌐 frontend_web</h3>
+                <p>Vue 3 + Vite + TypeScript + Pinia。日本語ルーティング、qTubler カスタムテーブル、共通ダイアログ。CRUD 画面パターンで実装を統一。</p>
+                <div class="meta-tags"><span>Vue Router</span><span>Pinia</span><span>qTubler</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📱 frontend_avatar</h3>
+                <p>Electron と通常ブラウザの両対応。BroadcastChannel で状態同期し、AI コアをマルチパネルで扱います。window.desktopApi でモード判定。</p>
+                <div class="meta-tags"><span>Electron</span><span>Web Mode</span><span>BroadcastChannel</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🌌 frontend_ide — 8 つのアプリ<span class="fx-new-badge">NEW</span></h3>
+                <p>Navigator / Console / Code / Live / IDE / Task / Team / Browser の画面を Vue 3 の共通部品で統一。VS Code 拡張ホストと Code / Live の通信は host/、ファイル API と Office 表示は viewer/ に集約。Electron と Web で共通画面を使い、ポートは自動割り当て。単独 Browser は Electron 専用です。</p>
+                <div class="meta-tags"><span>aidiy_navi / aidiy_code / aidiy_live / aidiy_ide</span><span>Vue 3 共通部品</span><span>VSIX × 2</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">💬 frontend_channels<span class="fx-new-badge">NEW</span></h3>
+                <p>Discord と Slack に AI の作業窓口を広げる、任意起動の Bot。Discord は Hermes チャットと AIコアの Live 音声、Slack は HTTPS 定期取得による Hermes のスレッド会話に対応。両者は同じ作りの双子の接続パネル（Electron / Web）を備え、保存した設定で起動時に自動接続します。</p>
+                <div class="meta-tags"><span>Discord / Slack</span><span>テキスト / Discord 音声</span><span>任意起動</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔒 認証 + 採番</h3>
+                <p>JWT 認証（HS256・600分）を Pinia + Axios interceptor で自動管理。C採番テーブルで AUTOINCREMENT 不使用のカスタム ID を一元管理。</p>
+                <div class="meta-tags"><span>JWT / HS256</span><span>C採番</span><span>監査フィールド</span></div>
+            </div>
+        </div>
+        <p class="section-subtitle animate-on-scroll" style="margin-top:36px;">共通基盤機能。</p>
+        <div class="expansion-grid">
+            <div class="expansion-item animate-on-scroll">
+                <h4>📊 qTubler</h4>
+                <p>独自カスタムテーブル。ソート・ページング・行選択</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🌐 WebSocket</h4>
+                <p>AI コアリアルタイム通信。セッション永続化対応</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>📝 監査フィールド</h4>
+                <p>全テーブルに登録 / 更新情報を自動付与</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🚀 POST 中心 API</h4>
+                <p>全 CRUD を POST で統一。一貫したレスポンス形式</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🔄 Reboot 機構</h4>
+                <p>txt ファイル作成でサーバー内部再起動</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🎯 V系実装</h4>
+                <p>Database VIEW 不使用。生 SQL クエリで JOIN</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. 実務サンプル -->
+    <section class="section" id="業務サンプル">
+        <h2 class="section-title animate-on-scroll">📦 実務サンプル — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">テンプレートの核は、ちゃんと動く業務システムにあります。</p>
+        <div class="sample-grid">
+            <div class="sample-item animate-on-scroll">
+                <h3 class="sample-title">🚚 配車管理システム</h3>
+                <p>配車区分と車両マスタを基に、日次の配車計画と週・日スケジュール表示を実現します。</p>
+                <div class="sample-tags">
+                    <span class="sample-tag">M配車区分</span>
+                    <span class="sample-tag">M車両</span>
+                    <span class="sample-tag">T配車</span>
+                    <span class="sample-tag">S配車_週表示</span>
+                </div>
+            </div>
+            <div class="sample-item animate-on-scroll">
+                <h3 class="sample-title">🏭 生産管理システム</h3>
+                <p>商品構成 BOM と生産指示を、明細型マスタ / 明細型トランザクションとして一体管理します。</p>
+                <div class="sample-tags">
+                    <span class="sample-tag">M商品構成</span>
+                    <span class="sample-tag">T生産</span>
+                    <span class="sample-tag">V生産</span>
+                    <span class="sample-tag">S生産_日表示</span>
+                </div>
+            </div>
+            <div class="sample-item animate-on-scroll">
+                <h3 class="sample-title">📦 資材在庫管理システム</h3>
+                <p>入庫・出庫・棚卸を記録し、V商品推移表で期間別の在庫推移を一覧化できます。</p>
+                <div class="sample-tags">
+                    <span class="sample-tag">T商品入庫</span>
+                    <span class="sample-tag">T商品出庫</span>
+                    <span class="sample-tag">T商品棚卸</span>
+                    <span class="sample-tag">V商品推移表</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. AI + 音声 + アバター -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🤖 AI + 音声 + アバター — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">チャット・音声・画像・コード支援をひとつの体験へ。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎙️ AI Voice + Avatar</h3>
+                <p>Gemini Live / OpenAI Realtime と VRM / VRMA の 3D 表示を接続。16kHz 入力・24kHz 出力のリアルタイムパイプラインで口パクと音声再生を同期。</p>
+                <div class="meta-tags"><span>16kHz Input</span><span>24kHz Output</span><span>Three.js + VRM</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔁 AI Flow</h3>
+                <p>マイク・テキスト・画像・コード操作 → REST + WebSocket + Vite Proxy → チャットは Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma、音声は Gemini Live / OpenAI Realtime、コードは 8 種の Code AI を用途ごとに切替 → チャット・音声応答・コード表示・アバター演出。</p>
+                <div class="meta-tags"><span>Input</span><span>Transport</span><span>AI Core</span><span>Output</span></div>
+            </div>
+        </div>
+        <div class="advanced-grid" style="margin-top:30px;">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🎙️</span>
+                <h3 class="feature-title">音声対話インターフェース</h3>
+                <p class="feature-description">
+                    16kHz 入力 PCM を WebSocket で AI コアへ送り、<br>
+                    24kHz 出力をキュー再生。口パク連動まで<br>
+                    一貫して扱います。Gemini Live / OpenAI Realtime 対応。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🦙</span>
+                <h3 class="feature-title">Ollama チャット対応</h3>
+                <p class="feature-description">
+                    ローカル Ollama と Ollama Cloud の両対応。<br>
+                    <code style="color:#00ffff">CHAT_AI_NAME = "ollama_chat"</code> で切替。<br>
+                    OpenAI 互換 API 経由でオープンモデルを利用。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    ローカル: <code>ollama list</code> から自動取得<br>
+                    クラウド: API キー設定で 8 ヶ月以内のモデル一覧<br>
+                    <strong>画像添付・ストリーミング・履歴管理</strong> 完備
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">👾</span>
+                <h3 class="feature-title">VRM アバター表示</h3>
+                <p class="feature-description">
+                    Three.js と @pixiv/three-vrm を使い、<br>
+                    背景透過の 3D アバターを Electron 常駐表示<br>
+                    または Web 左ペインへ表示。VRMA モーション対応。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. AIタスク・AIチーム -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🔀 AIタスク・AIチーム — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">要求を投げると、AI が分解し、依頼を配り、実行して、経験を残す。すべて backend_taskteam の単一サーバー（ポート 8093）が回します。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧩 要求の AI 分解</h3>
+                <p>要求を「準備開始」で仮登録すると、起動監視が AI を呼んで開始行・処理行・終了行の明細へ分解し本登録する。分解は 2 段構えで、第 1 段が対象プロジェクトを読んで内容を組み立て、第 2 段が既定形式の JSON を書き出す。</p>
+                <div class="meta-tags"><span>sub_init.py</span><span>2 段構え</span><span>TK+8桁 採番</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🕸️ 自由なタスクフロー（DAG）</h3>
+                <p>カンバンの固定列でも垂直の流れ作業でもなく、先行SEQ（カンマ区切りで複数指定可）による DAG。先行明細が全完了した明細を実行可能とし、依存を満たしたものから並行起動する。フロー図は最長経路をクリティカルパスとして配置。</p>
+                <div class="meta-tags"><span>先行SEQ</span><span>並行分岐</span><span>クリティカルパス</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">⏱️ 実行開始条件</h3>
+                <p>実行区分（即時 / 時間指定 / 間隔実行 / 定時実行）と実行条件（無し / フォルダ変化）の 2 軸。条件待ちは「準備完了」で待機し、成立したら明細 → 要求の順に「待機」へ戻して再実行する。停止中に過ぎた期限は一括発火せず次の周期へ送る。</p>
+                <div class="meta-tags"><span>Aタスク実行条件</span><span>毎分ゲート</span><span>フォルダ変化検知</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">✅ 自己検証つき実行</h3>
+                <p>開始明細は AI を使わず aidiy_backup で差分バックアップを取る。処理明細は 1 ステップだけを Code AI へ依頼し、操作検証ありなら AI 自身の報告を確認して、書き込みなし・エラーなら最大 2 回まで自動リトライ。終了明細が最終検証を行う。</p>
+                <div class="meta-tags"><span>差分バックアップ</span><span>操作検証</span><span>自動リトライ</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">👥 AIチーム要員と依頼</h3>
+                <p>依頼を登録すると、有効要員と各要員の蓄積経験（経験値・分類・直近の学び）を材料に AI が担当を選ぶ。経験のある要員へ寄せることで、貯めたナレッジがそのまま再利用される。担当が決まると AIタスク要求へ引き渡される。</p>
+                <div class="meta-tags"><span>persona 115 体</span><span>TR+8桁</span><span>経験ベース選定</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔁 作業ループ（PlanDo / SPDCA）</h3>
+                <p>チーム目標に対して PlanDo（P 計画 → D 実行）または SPDCA（S 相談 → P 計画 → D 実行 → C 評価 → A 改善）を回す。ソース変更を許すのは D だけで、C と A は読み取り・テスト・動作確認に徹する。ループ回数は 1〜99（99 は無制限）。</p>
+                <div class="meta-tags"><span>PlanDo</span><span>SPDCA</span><span>D のみ変更可</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">💬 自動会話と取りまとめ</h3>
+                <p>自動作業設定がオンなら、分の下一桁 1〜9 の回に雑談エリアの要員が 1 名ずつ「今やるべきこと」を発言する。発言はプロジェクトのソースを実際に読む調査モードで行う。下一桁 0 の回に、有効要員の 50% 以上の意見が集まっていれば admin 人格がチーム作業へ取りまとめる。</p>
+                <div class="meta-tags"><span>調査モード</span><span>50% ゲート</span><span>admin 取りまとめ</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧠 経験の蓄積</h3>
+                <p>依頼が完了すると、実行済み明細を AI が読み直して経験値・分類・まとめ・学びを生成し、Aチーム経験へ本登録する。次の依頼の担当選定がこの経験を参照するため、チームは回すほど適材適所になっていく。</p>
+                <div class="meta-tags"><span>sub_exp.py</span><span>TE+8桁</span><span>選定へフィードバック</span></div>
+            </div>
+        </div>
+        <div class="advanced-grid" style="margin-top:30px;">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🎛️</span>
+                <h3 class="feature-title">フェーズ別モデル指定</h3>
+                <p class="feature-description">
+                    plan（計画）/ do（実施）/ check（検証）の<br>
+                    3 種を別々のモデルで指定できます。<br>
+                    重い思考と軽い実行を使い分け。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    Aタスク: 準備=plan / 各ステップ=do / 最終確認=check<br>
+                    作業ループ: S・P=plan / D=do / C・A=check<br>
+                    <strong>目標 → 依頼 → タスク要求</strong> と 3 種のまま引き渡し
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🌾</span>
+                <h3 class="feature-title">3D チーム空間</h3>
+                <p class="feature-description">
+                    要員を 3D 草原に配置し、依頼・経験・作業・会話を<br>
+                    パネル表示。飛行船が吊るす掲示板にチーム目標を出し、<br>
+                    クリックで目標編集を開きます。
+                </p>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🔌</span>
+                <h3 class="feature-title">MCP からも起動</h3>
+                <p class="feature-description">
+                    <code style="color:#00ffff">aidiy_task_agents</code> /
+                    <code style="color:#00ffff">aidiy_team_agents</code> で<br>
+                    外部 AI エージェントから非同期投入。<br>
+                    登録だけ行い、進捗は別ツールで確認します。
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. 開発スペース -->
+    <section class="section" id="開発スペース">
+        <h2 class="section-title animate-on-scroll">🌌 AiDiy IDE — AI と開発する場所</h2>
+        <p class="section-subtitle animate-on-scroll">人は書かずに、眺めて・辿って・読んで・頼む。その作業の場を、宇宙という一つの空間にまとめました。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">💻 AiDiy Code — コード支援</h3>
+                <p>AIコード画面と同じ Code CLI・モデルを選び、AIコア経由でコードの調査・編集を依頼。AIコアに未接続なら aidiy_hermes の直接実行に自動で切り替えます。「検証ループ」0〜3 回で、バックアップ → 検証 → 修正を差分がなくなるまで繰り返します。</p>
+                <div class="meta-tags"><span>aidiy.aidiy-code</span><span>オンライン ⇄ オフライン</span><span>検証ループ 0〜3</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎙️ AiDiy Live — 音声会話</h3>
+                <p>AIコア（8091）へ接続し、作業フォルダを CODE_BASE_PATH として渡すため、LiveAI とコードエージェントが同じプロジェクトを参照します。VS Code の Webview にはマイク権限がないため、Windows の WinMM から Python 標準ライブラリだけで音声を取り込みます。FreeAI / Gemini / OpenAI を切替可能。</p>
+                <div class="meta-tags"><span>aidiy.aidiy-live</span><span>CODE_BASE_PATH</span><span>WinMM</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🌌 AiDiy IDE — 宇宙表示<span class="fx-new-badge">NEW</span></h3>
+                <p>フォルダは銀河、ファイルは星・惑星。フォルダの大きさ・ファイルの種類・更新の新しさを、銀河の形・星の色・明るさで表します。起点日時より後に更新されたファイルが明滅し、更新された場所がひと目でわかります。</p>
+                <div class="meta-tags"><span>aidiy_ide</span><span>Canvas</span><span>読み取り専用</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🚀 自動探索と変化の追跡</h3>
+                <p>自動飛行は彗星のような楕円軌道で星系を周回。AI がファイルを書き換えると、最終更新ファイルへ「旋回 → 前進 → ワープ」で 1 階層ずつ潜って開きます。手動操作の後は 1 分待機、開いたままのビューアは 5 分で閉じて航行を再開します。</p>
+                <div class="meta-tags"><span>彗星軌道</span><span>最終更新の追跡</span><span>ワープ航行</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔎 AiDiy 検索・AiDiy 分析<span class="fx-new-badge">NEW</span></h3>
+                <p>「認証機能に関わるファイル」のような文章で、aidiy_code_agents に読み取り調査を依頼。関連ファイルを理由付きでマークし、入口からの「AiDiy検索軌跡」として順に辿れます。ファイルごとの AI 分析も、結果を保存して再起動後に復元します。</p>
+                <div class="meta-tags"><span>aidiy_code_agents</span><span>検索軌跡</span><span>履歴保存</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📖 読み取り専用ビューア</h3>
+                <p>コードは Monaco Editor、画像・Office 文書・PDF も表示。HTML / SVG のプレビューにも対応。frontend_web の Vue 画面は開発サーバー起動中に対応ルートを表示できます。バックアップと現在のファイルを左右に並べる「更新履歴」、📌 で別ウィンドウに並べるピン留めにも対応。</p>
+                <div class="meta-tags"><span>Monaco</span><span>Office / PDF</span><span>更新履歴</span></div>
+            </div>
+        </div>
+        <div class="advanced-grid" style="margin-top:30px;">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🧩</span>
+                <h3 class="feature-title">同じ部品が 3 つの場所で動く</h3>
+                <p class="feature-description">
+                    Code / Live は Vue 3 の共通部品。<br>
+                    単独起動・VS Code 拡張・開発スペースの部品として<br>
+                    同じ画面がそのまま動きます。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    単独起動: <code>aidiy_code</code> / <code>aidiy_live</code><br>
+                    VS Code 拡張: セカンダリサイドバー<br>
+                    IDE 部品: 「＋ Console」「＋ Code」「＋ Live」（Electron は別ウィンドウ、Web は画面内タブ）<br>
+                    <strong>場所を変えても、同じ Code / Live の操作感</strong>
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🛰️</span>
+                <h3 class="feature-title">どこでも開ける</h3>
+                <p class="feature-description">
+                    Electron のフレームレスウィンドウを基本に、<br>
+                    ブラウザ版・GitHub Codespaces にも対応。<br>
+                    AIコアが止まっても作業を保ち、復帰時に再接続します。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    AIコアなしでも Console と Code（Hermes 直接実行）を利用。<br>
+                    AIコアへ接続すると Live 音声も使えます。<br>
+                    ここでのオフラインは AIコア未接続の意味で、外部 AI の利用には通信が必要です。
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="section" id="独立アプリ">
+        <h2 class="section-title animate-on-scroll">🧩 作業に合わせて、必要なアプリを開く</h2>
+        <p class="section-subtitle animate-on-scroll">Navigator で次の作業を考え、Console・Code・Live・IDE・Task・Team・Browser で進める。8 つの独立アプリが開発の各場面を支えます。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧭 Navigator — 次の一歩を考える</h3>
+                <p>開発目標と作業項目、推定達成率、次に AI へ渡すプロンプト案を確認する読み取り専用の案内画面。「ナビ」で作業項目を提案し、「評価」で達成度と次の提案を更新します。提案を自動実行せず、人が確認して次の作業を選びます。</p>
+                <div class="meta-tags"><span>aidiy_navi</span><span>単独 / IDE から起動</span><span>読み取り専用</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">⌨️ Console — 端末をそばに</h3>
+                <p>作業フォルダでコマンドやコード AI の CLI を実行するターミナル。IDE から複数の窓を開き、調査・実行・ログ確認を並べられます。Code への依頼と手元の操作を同じプロジェクトで進めます。</p>
+                <div class="meta-tags"><span>aidiy_console</span><span>PTY</span><span>複数ウィンドウ</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔀 Task — 要求を実行フローへ</h3>
+                <p>要求を AI が明細タスクへ分解し、依存関係のある処理をフロー図で確認。並行分岐を含む実行、進捗の追跡、検証、定期実行を専用画面で扱います。</p>
+                <div class="meta-tags"><span>aidiy_task</span><span>DAG</span><span>定期タスク</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🤝 Team — 役割を持つ AI と働く</h3>
+                <p>要員ごとに役割や目標を持たせ、チームへの依頼と活動を専用画面で管理。計画・実施・検証を分け、誰が何を担当し、どこまで進んだかを確認します。</p>
+                <div class="meta-tags"><span>aidiy_team</span><span>AI チーム</span><span>Plan / Do / Check</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🌐 Browser — 見ているページを AI へ</h3>
+                <p>URL・検索・履歴操作を備えた専用ブラウザ。tools 接続中は MCP による操作ができ、表示中の URL と撮影画像を Code / Live の下書きへ渡して、調査や修正を相談できます。単独版は Electron 専用です。</p>
+                <div class="meta-tags"><span>aidiy_browser</span><span>Chrome DevTools 連携</span><span>Code / Live へ</span></div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="section" id="外部連携">
+        <h2 class="section-title animate-on-scroll">💬 Discord / Slack — いつもの会話を作業の入口に</h2>
+        <p class="section-subtitle animate-on-scroll">開発画面の外からも、プロジェクトについて AI に依頼。接続パネルで設定・モデル・接続状態を確認できます。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎮 Discord — テキストも、声も</h3>
+                <p>専用テキストチャンネルにそのまま話しかけると aidiy_hermes がチャンネルに返信し、利用者・チャンネルごとに会話を引き継ぎます。Live 音声を ON にすれば、ボイスチャンネルで AIコアの Live 音声へ接続し、話しながら相談できます。テキストと音声、それぞれの入口を一つの Bot にまとめています。</p>
+                <div class="meta-tags"><span>aidiy_discord</span><span>Hermes チャット</span><span>Live 音声</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">💼 Slack — スレッドで依頼を進める</h3>
+                <p>専用チャンネルの投稿を HTTPS で定期取得し、aidiy_hermes の回答をスレッドに返します。スレッド内の返信は同じ会話として続きます。WebSocket を使わず外向き HTTPS だけで送受信し、プロキシ設定にも対応します（Slack API への通信許可と Bot 権限が必要です）。パネルは Discord 版と双子の構成で、Slack 版はテキスト会話に対応します。</p>
+                <div class="meta-tags"><span>aidiy_slack</span><span>Slack Web API</span><span>HTTPS 定期取得</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎛️ 作業フォルダとモデルを選ぶ</h3>
+                <p>Bot の接続先と許可する利用者を設定し、AI が扱うプロジェクトを選択。コードは aidiy_hermes 固定で、モデルは aidiy_code と同じ auto / same / openai_oauth/gpt-… などから選びます。画面下部の「モデル ▾」から、接続中でも設定を開き「適用して再接続」で切り替えられます。</p>
+                <div class="meta-tags"><span>プロジェクト選択</span><span>aidiy_hermes 固定</span><span>モデル選択</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔁 起動したら、そのまま使える</h3>
+                <p>選んだ設定は aidiy_discord.json / aidiy_slack.json に保存され、次からは起動するだけで前回の設定で自動接続します。初回は接続せず設定画面から始まり、切断するとモデル選択に戻ります。接続中にパネルを閉じるときは確認を出し、うっかり切断を防ぎます。</p>
+                <div class="meta-tags"><span>自動接続</span><span>設定は1ファイル</span><span>終了確認</span></div>
+            </div>
+        </div>
+    </section>
+
+
+    <section class="section" id="環境診断">
+        <h2 class="section-title animate-on-scroll">🩺 Diag — 確認して、そのまま起動</h2>
+        <p class="section-subtitle animate-on-scroll">環境を整えるときも、毎日の作業を始めるときも。aidiy_diag が診断とアプリ起動の入口になります。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔎 導入状況と公式サイト</h3>
+                <p>言語・開発ツール・AI CLI などの導入状態をカテゴリ別に確認。名前のそばの Web ボタンから公式サイトを開き、必要なプログラムの情報へ進めます。</p>
+                <div class="meta-tags"><span>導入状況</span><span>公式 Web</span><span>カテゴリ別一覧</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔑 モデルと外部連携</h3>
+                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。認証情報の確認と AI の試行を分けて、何が利用できるかを調べます。</p>
+                <div class="meta-tags"><span>モデル情報</span><span>外部連携</span><span>AI 試行</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧪 Tools の個別・一括テスト</h3>
+                <p>MCP の代表的な軽量チェックを個別または一括で実行。未導入・無効と、未実施・OK・ERR を分けて表示し、実行した試験の結果を確認できます。各チェックの範囲は項目ごとに表示します。</p>
+                <div class="meta-tags"><span>個別テスト</span><span>一括テスト</span><span>結果を区別</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🚀 アプリ起動とミニランチャー</h3>
+                <p>システムの起動操作に加え、プロジェクトを選んで IDE・Code・Live・Console・Task・Team・Browser や Discord・Slack を開く入口を用意。ミニ表示・アイコン表示で、作業中も手元に置けます。</p>
+                <div class="meta-tags"><span>aidiy_diag</span><span>アプリ起動</span><span>ミニ / アイコン表示</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. command_hermes 独自エージェント基盤 -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🧰 command_hermes — 独自エージェント基盤</h2>
+        <p class="section-subtitle animate-on-scroll">AiDiy に統合された on-demand コードエージェント CLI。TUI・ツール・コンテキスト圧縮を内蔵。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🤖 AIAgent コア</h3>
+                <p>OpenAI SDK 経由で Ollama（OpenAI 互換 API）と通信するエージェント中核クラス。既定 90 イテレーションのツール呼び出しループ（AiDiy から呼ぶときは CODE_MAX_TURNS で上書き）、割り込み機構（スレッドセーフ）、思考コールバック・ツール進捗コールバックを標準装備。</p>
+                <div class="meta-tags"><span>max_turns=90</span><span>thread-safe interrupt</span><span>callback chain</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔧 ツールシステム</h3>
+                <p>60 以上のツールをツールセット単位で管理。web / browser / terminal / file / vision / skills / memory / planning / process / mcp / delegate など用途別にグループ化。ツールセットは他のツールセットから構成可能。</p>
+                <div class="meta-tags"><span>60+ tools</span><span>toolset composition</span><span>registry pattern</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📐 コンテキスト圧縮エンジン</h3>
+                <p>長い会話のコンテキストウィンドウを自動圧縮。ヘッドとテールのコンテキストを保護しながら、補助モデル（安価・高速）で中間ターンを要約。構造化要約テンプレート・画像トークン見積もり・要約失敗クールダウン機構を内蔵。</p>
+                <div class="meta-tags"><span>ContextCompressor</span><span>summary ratio 20%</span><span>tail protection</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">⌨️ TUI + スラッシュコマンド</h3>
+                <p>prompt_toolkit ベースのリッチ TUI。スラッシュコマンド補完（Completer + AutoSuggest）、ファイル履歴、ステータスバー、スピナー、カラー表示。`/help` `/reset` `/compress` `/tokens` `/context` など実用的なスラッシュコマンドを標準搭載。</p>
+                <div class="meta-tags"><span>prompt_toolkit</span><span>slash commands</span><span>status bar</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔌 マルチプロバイダ対応</h3>
+                <p>API provider: ollama / openai / openrt / gemini / freeai / claude。CLI bridge: claude_cli / codex_cli / antigravity_cli / copilot_cli。既定は ollama。AiDiy_key.json から API キーを自動解決。</p>
+                <div class="meta-tags"><span>6 API providers</span><span>4 CLI bridges</span><span>AiDiy_key.json</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🧩 プラグイン + スキルシステム</h3>
+                <p>plugins/ ディレクトリに配置するだけで機能拡張可能。skills/ にスキルドキュメントを配置し、エージェントが動的に読み込み。optional-skills/ でオプトイン制御。コンテキストファイル（AGENTS.md / .hermes.md）の自動スキャンとプロンプトインジェクション検出も内蔵。</p>
+                <div class="meta-tags"><span>plugin system</span><span>skill hub</span><span>injection guard</span></div>
+            </div>
+        </div>
+        <div class="advanced-grid" style="margin-top:30px;">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">⚡</span>
+                <h3 class="feature-title">aidiy_hermes として統合</h3>
+                <p class="feature-description">
+                    AiDiy 本体では <code style="color:#00ffff">CODE_AI*_NAME = "aidiy_hermes"</code><br>
+                    としてコードパネルから呼び出し可能。<br>
+                    backend_server/AIコア/AIコード_cli.py が subprocess で起動。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    <code>aidiy_hermes -Q -z "指示"</code> の形式で<br>
+                    ワンショット実行。会話履歴は AiDiy 側が保持。<br>
+                    AiDiy Code のオフライン利用でも直接実行されます。
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">📂</span>
+                <h3 class="feature-title">主要ディレクトリ構成</h3>
+                <p class="feature-description">
+                    <code style="color:#00ffff">core/</code> — エージェント・コンテキスト・表示<br>
+                    <code style="color:#00ffff">tools/</code> — 60+ ツール実装<br>
+                    <code style="color:#00ffff">base/</code> — 定数・ツールセット・モデル解決<br>
+                    <code style="color:#00ffff">hermes_cli/</code> — TUI・スラッシュコマンド
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    元の Hermes Agent をベースに、Windows 対応・<br>
+                    AiDiy_key.json 連携・CodeAI 統合を追加。
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. 自己改善機構 -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🧠 自己改善機構 — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">使うほど育つ _AIDIY/knowledge/ 知見システム。</p>
+        <div class="advanced-grid">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🧠</span>
+                <h3 class="feature-title">_AIDIY/knowledge/ 知見フォルダ</h3>
+                <p class="feature-description">
+                    コードエージェントは修正が完了するたびに、<br>
+                    プロジェクト専用の <code style="color:#00ffff">_AIDIY/knowledge/</code> フォルダへ<br>
+                    知見を自動整理します。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    次回の同種修正では <code>_AIDIY/knowledge/_index.md</code> を参照し、<br>
+                    過去の成功パターンを再利用して精度を高めます。<br>
+                    <strong>使うほどに、システム自体が育ちます。</strong>
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">📚</span>
+                <h3 class="feature-title">運用フロー</h3>
+                <p class="feature-description">
+                    修正前に <code style="color:#00ffff">_index.md</code> と<br>
+                    <code style="color:#00ffff">_最終変更.md</code> を参照。<br>
+                    修正完了後にテーマ別メモへ追記・索引更新。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    単なる作業ログではなく<br>
+                    「次回の修正判断に使える情報」を残します。<br>
+                    <strong>仕様はソースへ、知見は _AIDIY/knowledge へ。</strong>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. MCP Hub + Multi CLI -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">🔌 MCP Hub + Multi CLI — 実装詳細</h2>
+        <p class="section-subtitle animate-on-scroll">ポート 8095 に Windows は 20 個、Linux / macOS は 19 個の MCP サーバーを同居。SSE / Streamable HTTP / stdio gateway の 3 トランスポートと HTTP POST APIを同一ポートで提供。Python からも直接呼び出し可能。</p>
+        <div class="architecture-grid">
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🌐 aidiy_chrome_devtools</h3>
+                <p>Chrome DevTools Protocol を Python 純正実装で MCP 化。navigate / click / screenshot / DOM 取得・JS 実行まで。</p>
+                <div class="meta-tags"><span>CDP</span><span>SSE</span><span>Python</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📸 aidiy_desktop_capture</h3>
+                <p>全画面・領域指定・ウィンドウ指定・マルチモニター対応のスクリーンショット取得。AI が UI を目視確認するチャネル。</p>
+                <div class="meta-tags"><span>pyautogui</span><span>PIL</span><span>multi-monitor</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🗄️ aidiy_sqlite</h3>
+                <p>AiDiy DB に対し、スキーマ確認 / 件数 / 監査フィールド抽出 / SELECT を安全に実行。既定は read-only、書き込みは明示許可のときのみ。</p>
+                <div class="meta-tags"><span>read-only default</span><span>PRAGMA</span><span>audit summary</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🐘 aidiy_postgres</h3>
+                <p>外部 PostgreSQL に psycopg 3 で接続。DB/スキーマ/テーブル探索、describe、件数、任意 SELECT。接続先は環境変数 or 呼び出し時の DSN 引数。</p>
+                <div class="meta-tags"><span>psycopg 3</span><span>read-only tx</span><span>statement_timeout 15s</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📜 aidiy_logs</h3>
+                <p>backend_server（core/apps/mcp）のログを tail、正規表現 grep、ERROR/Traceback 抽出（前後 2 行の文脈付き）。変更直後の回帰検知に。</p>
+                <div class="meta-tags"><span>tail</span><span>grep</span><span>error context</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">✅ aidiy_code_check</h3>
+                <p>Python 構文（py_compile）・ruff lint・TypeScript 型チェック（npm run type-check）を subprocess で実行。副作用なしの検査系だけ。</p>
+                <div class="meta-tags"><span>py_compile</span><span>ruff</span><span>tsc</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">📦 aidiy_backup</h3>
+                <p>AiDiy ネイティブの差分バックアップを保存・確認。初回は全件スナップショット、以降は差分のみを保存。変更前/変更後ソースの抽出や dry-run スキャンによる差分対象一覧も取得可能。</p>
+                <div class="meta-tags"><span>snapshot</span><span>diff stats</span><span>before/after</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎨 aidiy_image_generation</h3>
+                <p>OpenAI（gpt-image / DALL-E 3）と Google Gemini / FreeAI を切替可能な AI 画像生成。プロンプトから PNG を取得し、temp/output へ自動保存。参照画像によるバリエーションも対応。</p>
+                <div class="meta-tags"><span>OpenAI</span><span>Gemini</span><span>FreeAI</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎬 aidiy_movie_generation</h3>
+                <p>Google Gemini Veo でテキスト/画像から動画クリップを生成。MP4 をローカル保存し、base64 返却なしの軽量インターフェースで大容量動画に対応。</p>
+                <div class="meta-tags"><span>Gemini Veo</span><span>MP4</span><span>text-to-video</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎤 aidiy_speech_to_text</h3>
+                <p>16kHz WAV（base64 / ファイル）をテキストに変換。speech_recognition（Google Web Speech、無料）と OpenAI Whisper を選択可能。マイク入力の文字起こしや会議ログの一括変換に。</p>
+                <div class="meta-tags"><span>speech_recognition</span><span>Whisper</span><span>16kHz mono</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔊 aidiy_text_to_speech</h3>
+                <p>テキストから MP3 を合成。Edge ニューラル TTS（無料）/ OpenAI / Gemini / FreeAI を切替。日本語デフォルトボイスを内蔵し、ローカル再生（速度倍率指定）も可能。</p>
+                <div class="meta-tags"><span>Edge</span><span>OpenAI</span><span>Gemini</span><span>local play</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎥 aidiy_obs_studio_control</h3>
+                <p>OBS Studio の WebSocket v5 を直接制御。既定 localhost:4455 / aidiy4455 で、配信・録画・シーン切替・ソース表示・音声ミュートを操作。</p>
+                <div class="meta-tags"><span>OBS WebSocket</span><span>port 4455</span><span>scene control</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🎞️ aidiy_ffmpeg_control</h3>
+                <p>ffmpeg / ffprobe / ffplay の薄いランナー。args_str に直接コマンド文字列を渡し、動画合成・字幕焼き込み・オーバーレイ・リサイズ・プレビュー再生を AI が自由に組み立て。</p>
+                <div class="meta-tags"><span>ffmpeg</span><span>ffprobe</span><span>ffplay</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🤖 aidiy_code_agents</h3>
+                <p>Claude / Copilot / Codex / Antigravity / Grok / opencode / hermes など複数の CodeAI CLI をエージェントとして呼び出し。コード生成・修正・レビューを AI が直接 CLI 経由で実行。</p>
+                <div class="meta-tags"><span>CodeAI CLI</span><span>multi-agent</span><span>subprocess</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🔔 aidiy_notification_sounds</h3>
+                <p>scene 別（開始 / 終了 / 注意など）の通知音をローカル再生。tts シーンでは text_to_speech と連携してメッセージを読み上げ。長時間処理の進行を音で通知。</p>
+                <div class="meta-tags"><span>scene 別再生</span><span>tts 連携</span><span>local playback</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">💬 aidiy_chat_llms</h3>
+                <p>AIチャットの ChatAI を MCP ツールとして公開。OpenAI / Ollama 互換の aidiy_chat_completions エンドポイント（/v1/chat/completions）の実体で、外部クライアントからも標準 IF で利用可能。</p>
+                <div class="meta-tags"><span>OpenAI 互換</span><span>Ollama 互換</span><span>ChatAI</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">✅ aidiy_decisions_check</h3>
+                <p>文章や画像をもとに、条件に当てはまる確率、候補からの選択、段階評価を取得。問い合わせの振り分けや内容チェックを共通の形式で利用できます。</p>
+                <div class="meta-tags"><span>真偽の確率</span><span>候補選択</span><span>段階評価</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🤖 aidiy_task_agents<span class="fx-new-badge">NEW</span></h3>
+                <p>backend_taskteam の AIタスク要求へ非同期でタスクを投入。登録のみを行いタスク分解や実行完了は待たず、進捗は別ツールで確認する非ブロッキング設計。AI エージェントから AIタスク自動実行を起動する入口。</p>
+                <div class="meta-tags"><span>submit</span><span>get_request_status</span><span>非同期投入</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">👥 aidiy_team_agents<span class="fx-new-badge">NEW</span></h3>
+                <p>backend_taskteam の Aチーム依頼へ非同期で依頼を投入。依頼IDは TR+8桁で自動採番され、登録後は同サーバーの監視ループが AIタスク要求へ引き継ぐ。プロジェクトや AI 設定は未指定なら更新最終レコード → 規定値で補完。</p>
+                <div class="meta-tags"><span>submit</span><span>get_work_status</span><span>要員ID</span></div>
+            </div>
+            <div class="architecture-item animate-on-scroll">
+                <h3 class="architecture-title">🖱️ aidiy_windows_control<span class="fx-new-badge">NEW</span></h3>
+                <p>Windows デスクトップを直接操作。マウス/キーボード、ウィンドウ制御、プロセス管理、クリップボードに加え、UI Automation で要素 ID ベースのクリック・入力も可能。</p>
+                <div class="meta-tags"><span>UI Automation</span><span>ctypes</span><span>win32</span></div>
+            </div>
+        </div>
+        <div class="advanced-grid" style="margin-top:30px;">
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🔁</span>
+                <h3 class="feature-title">Self-Verification Loop</h3>
+                <p class="feature-description">
+                    「コードを直す → DB で結果を見る →<br>
+                    ログでエラーを見る → 型で再確認」を AI が自走。<br>
+                    人間は指示と判断に集中できます。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    edit → observe → verify → backup<br>
+                    MCP 20 サーバーの連携で、修正の影響範囲を<br>
+                    <strong>AI が自分で確認</strong>してから報告します。<br>
+                    SSE / Streamable HTTP / stdio と HTTP POSTでどの CLI からでも利用可。<br>
+                    バックアップ保存→チェックのサイクルも内蔵。
+                </div>
+            </div>
+            <div class="feature-card animate-on-scroll">
+                <span class="feature-icon">🔧</span>
+                <h3 class="feature-title">マルチ Code CLI 対応</h3>
+                <p class="feature-description">
+                    SDK / CLI の 8 方式を code1〜code6 パネルへ<br>
+                    自由に割り当てて並走できます。<br>
+                    新しいツールも手順に沿って追加可能。
+                </p>
+                <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
+                    claude_sdk &nbsp;/&nbsp; claude_cli &nbsp;/&nbsp; copilot_cli &nbsp;/&nbsp; codex_cli<br>
+                    antigravity_cli &nbsp;/&nbsp; grok_cli &nbsp;/&nbsp; opencode_cli &nbsp;/&nbsp; aidiy_hermes
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Future Roadmap（将来性） -->
+    <section class="section">
+        <h2 class="section-title animate-on-scroll">Future Roadmap</h2>
+        <p class="section-subtitle animate-on-scroll">ここからは今後の拡張方針。現在の機能を土台に、使い勝手と対応領域を育てます。</p>
+        <div class="expansion-grid">
+            <div class="expansion-item animate-on-scroll">
+                <h4>🌌 開発スペースをさらに磨く</h4>
+                <p>実装済みの宇宙表示・探索・AI への依頼を土台に、プロジェクトの把握と変更確認をさらにわかりやすく。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🌱 蓄積で育つ</h4>
+                <p>_AIDIY/knowledge/ の知見が積み上がるほど、修正の初手精度が上がる。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🔌 MCP 拡張</h4>
+                <p>AiDiy_mcp.json に追記するだけで新しい外部システム観測・操作を追加可能。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🤖 CLI エコシステム</h4>
+                <p>claude / copilot / codex / antigravity / grok / opencode / hermes に続く新 Code CLI も <code style="color:#00ffff">_sdk</code> / <code style="color:#00ffff">_cli</code> 命名規約で追加可能。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🧰 hermes 独自エージェント進化</h4>
+                <p>60+ ツール・コンテキスト圧縮・プラグインシステムを備えた aidiy_hermes をさらに拡張。カスタムツールセットの動的構成。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🏢 業務領域の横展開</h4>
+                <p>配車・生産・在庫の既存パターンを踏襲し、会計・HR・CRM など同じ設計で展開。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🌏 多言語対応の余地</h4>
+                <p>日本語識別子の設計思想はそのまま、他言語ネイティブの業務命名へ拡張可能。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>🧪 OSS テンプレート化</h4>
+                <p>非商用ライセンスのもと、コミュニティが業務テンプレートを共有・進化させる土台。</p>
+            </div>
+            <div class="expansion-item animate-on-scroll">
+                <h4>💬 チャンネルと実行環境を広げる</h4>
+                <p>Discord / Slack は双子の構成で、新しいチャンネルも同じ形で追加できる設計。設定には実行環境名（code_name）を持たせ、aidiy_hermes 以外のスタンドアロン・ハーネスにも備えます。</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Powered By（アイコンギャラリー） -->
+    <section class="section" id="powered-by-section">
+        <h2 class="section-title animate-on-scroll">⚡ Powered By</h2>
+        <p class="section-subtitle animate-on-scroll">AiDiy を支える企業・プロダクト・規格の数々。クリックで各公式ページへ。</p>
+        <div id="icon-gallery" class="icon-gallery"></div>
+    </section>
+
+    <!-- Launch -->
+    <section class="section" id="launch-section" style="text-align: center; padding-bottom: 120px;">
+        <h2 class="section-title animate-on-scroll">Launch</h2>
+        <p class="animate-on-scroll" style="margin-bottom: 10px; font-size: 1.05rem; color: #aaa;">
+            次は、実際に触って確認する番です。
+        </p>
+        <p class="animate-on-scroll" style="margin-bottom: 25px; font-size: 0.9rem; color: #777;">
+            管理画面を見るなら frontend_web、AI を試すなら /AiDiy、<br>
+            アバター体験まで含めるなら frontend_avatar、<br>
+            宇宙を旅しながら開発するなら aidiy_ide、<br>
+            次の作業を整理するなら aidiy_navi、会話から頼むなら aidiy_discord / aidiy_slack。
+        </p>
+        <a href="/AiDiy" class="cyber-button animate-on-scroll rainbow-blink" target="_blank">
+            AiDiy を開く
+        </a>
+    </section>
+
+    <!-- JavaScript -->
+    <script src="index.js"></script>
+    <script src="icons.js"></script>
+    <script>
+      // アイコンギャラリー初期化（スクロールアニメーションと連動）
+      document.addEventListener('DOMContentLoaded', () => {
+        const gallery = document.getElementById('icon-gallery')
+        if (gallery && typeof renderIconGallery === 'function') {
+          renderIconGallery(gallery, { showLabels: true, iconSize: 36 })
+        }
+      })
+    </script>
+
+    <!-- VRM Avatar - 右下固定（最下部直前でフェードイン） -->
+    <div id="avatar-container">
+        <canvas id="avatar-canvas"></canvas>
+    </div>
+    <style>
+        #avatar-container {
+            position: fixed;
+            bottom: 0;
+            right: 0;
+            width: 200px;
+            height: 340px;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #avatar-container.visible {
+            opacity: 1;
+        }
+        #avatar-canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        @media (max-width: 720px) {
+            #avatar-container {
+                width: 140px;
+                height: 238px;
+                right: 8px;
+            }
+        }
+    </style>
+    <script>
+    (function() {
+        const container = document.getElementById('avatar-container');
+        const launch    = document.getElementById('launch-section');
+        if (!container || !launch) return;
+
+        // Launch セクションが「見える手前」に来たらアバターを visible にする。
+        // rootMargin の bottom を広げると viewport の下方向に余裕ができ、
+        // Launch の上端が画面下 + 余裕の位置に入った時点で intersect = true になる。
+        const io = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) {
+                    container.classList.add('visible');
+                    io.disconnect();
+                    break;
+                }
+            }
+        }, {
+            // Launch の上端が画面下端の 240px 手前に入った時点で fade-in 開始
+            rootMargin: '0px 0px 240px 0px',
+            threshold: 0,
+        });
+        io.observe(launch);
+    })();
+    </script>
+    <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+    (async () => {
+        const canvas = document.getElementById('avatar-canvas');
+        const avatarContainer = document.getElementById('avatar-container');
+        if (!canvas) return;
+
+        // ---------- Renderer / Scene ----------
+        const getStageSize = () => ({
+            width: Math.max(1, avatarContainer?.clientWidth || 200),
+            height: Math.max(1, avatarContainer?.clientHeight || 340),
+        });
+        const initialSize = getStageSize();
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        renderer.setClearColor(0x000000, 0);
+        renderer.setSize(initialSize.width, initialSize.height, false);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(28, initialSize.width / initialSize.height, 0.01, 40);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+        keyLight.position.set(1.1, 1.5, 1.0);
+        scene.add(keyLight);
+        const rimLight = new THREE.DirectionalLight(0xd8ecff, 0.85);
+        rimLight.position.set(-1.3, 0.8, 1.1);
+        scene.add(rimLight);
+
+        const container = new THREE.Group();
+        const BODY_BASE_YAW  = Math.PI - Math.PI / 6;
+        const BODY_SWAY_RANGE = Math.PI / 48;
+        const CAMERA_BASE_X  = -0.06;
+        const CAMERA_SWAY_X  = 0.035;
+        const HEAD_BASE_YAW  = Math.PI / 12;
+        container.rotation.y = BODY_BASE_YAW;
+        scene.add(container);
+
+        const loader = new GLTFLoader();
+        loader.register(p => new VRMLoaderPlugin(p));
+
+        const loadWith = (gltfLoader, url) =>
+            new Promise((res, rej) => gltfLoader.load(url, res, undefined, rej));
+
+        // ---------- アイドルポーズ ----------
+        const IDLE_BONE_ROT = {
+            leftUpperArm:  { z: -1.25 },
+            rightUpperArm: { z:  1.25 },
+            leftLowerArm:  { y:  0.1  },
+            rightLowerArm: { y: -0.1  },
+            leftShoulder:  { z: -0.05 },
+            rightShoulder: { z:  0.05 },
+        };
+
+        const applyIdlePose = (vrmObject) => {
+            const humanoid = vrmObject?.humanoid;
+            if (!humanoid) return;
+            Object.entries(IDLE_BONE_ROT).forEach(([name, rot]) => {
+                const node = humanoid.getNormalizedBoneNode?.(name);
+                if (!node) return;
+                node.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
+            });
+        };
+
+        const updateIdleSway = (vrmObject, elapsed) => {
+            const humanoid = vrmObject?.humanoid;
+            if (!humanoid) return;
+            const chest = humanoid.getNormalizedBoneNode?.('chest');
+            const head  = humanoid.getNormalizedBoneNode?.('head');
+            if (chest) {
+                chest.rotation.x = Math.sin(elapsed * 1.4) * 0.02;
+            }
+            if (head) {
+                const lookAtSway = camera.position.x * 0.6;
+                head.rotation.y = HEAD_BASE_YAW + lookAtSway + Math.sin(elapsed * 0.7) * 0.02;
+                head.rotation.x = Math.sin(elapsed * 1.0 + 1.2) * 0.03;
+            }
+        };
+
+        let blinkTimer    = 0;
+        let blinkCooldown = 2 + Math.random() * 3;
+        const BLINK_DURATION = 0.15;
+        let vrm = null;
+        let avatarHeadHeight = 1.4;
+
+        // ---------- VRM 読み込み ----------
+        try {
+            const gltf = await loadWith(loader, './vrm/VRM_AiDiy.vrm');
+            vrm = gltf.userData?.vrm || null;
+            if (vrm) {
+                try { VRMUtils.removeUnnecessaryVertices(gltf.scene); } catch {}
+                try { VRMUtils.removeUnnecessaryJoints(gltf.scene);   } catch {}
+                vrm.scene.traverse(obj => { obj.frustumCulled = false; });
+
+                const box    = new THREE.Box3().setFromObject(vrm.scene);
+                const center = box.getCenter(new THREE.Vector3());
+                const size   = box.getSize(new THREE.Vector3());
+                vrm.scene.position.x -= center.x;
+                vrm.scene.position.y -= box.min.y;
+                vrm.scene.position.z -= center.z;
+                container.add(vrm.scene);
+
+                avatarHeadHeight = Math.max(0.1, size.y) * 0.88;
+                camera.position.set(CAMERA_BASE_X, Math.max(0.1, size.y) * 0.9, -Math.max(0.1, size.y) * 1.15);
+                camera.lookAt(0, avatarHeadHeight, 0);
+
+                vrm.lookAt.target = camera;
+                applyIdlePose(vrm);
+                vrm.update(0);
+                renderer.render(scene, camera);
+            }
+        } catch (e) {
+            console.warn('Avatar load error:', e);
+        } finally {
+            canvas.classList.add('ready');
+        }
+
+        // ---------- まばたき ----------
+        const updateBlink = (dt) => {
+            if (!vrm?.expressionManager) return;
+            blinkTimer += dt;
+            if (blinkTimer < blinkCooldown) {
+                vrm.expressionManager.setValue('blink', 0);
+            } else if (blinkTimer < blinkCooldown + BLINK_DURATION) {
+                const t = (blinkTimer - blinkCooldown) / BLINK_DURATION;
+                vrm.expressionManager.setValue('blink', Math.sin(t * Math.PI));
+            } else {
+                vrm.expressionManager.setValue('blink', 0);
+                blinkTimer    = 0;
+                blinkCooldown = 2 + Math.random() * 3;
+            }
+        };
+
+        // ---------- RAF 制御（可視／タブ可視時だけ回す） ----------
+        const clock = new THREE.Clock();
+        let rafId = 0;
+        let pageVisible = !document.hidden;
+
+        const resizeRenderer = () => {
+            const { width, height } = getStageSize();
+            renderer.setSize(width, height, false);
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+        };
+
+        const tick = () => {
+            const dt      = clock.getDelta();
+            const elapsed = clock.elapsedTime;
+            updateBlink(dt);
+
+            camera.position.x = CAMERA_BASE_X + Math.sin(elapsed * 0.45) * CAMERA_SWAY_X;
+            camera.lookAt(0, avatarHeadHeight, 0);
+
+            if (vrm) {
+                container.rotation.y = BODY_BASE_YAW + Math.sin(elapsed * 0.35) * BODY_SWAY_RANGE;
+                updateIdleSway(vrm, elapsed);
+                vrm.update(dt);
+            }
+            renderer.render(scene, camera);
+            rafId = requestAnimationFrame(tick);
+        };
+
+        const start = () => {
+            if (rafId) return;
+            clock.start();
+            rafId = requestAnimationFrame(tick);
+        };
+        const stop = () => {
+            if (!rafId) return;
+            cancelAnimationFrame(rafId);
+            rafId = 0;
+        };
+
+        resizeRenderer();
+        window.addEventListener('resize', resizeRenderer, { passive: true });
+
+        if (avatarContainer) {
+            new MutationObserver(() => {
+                if (avatarContainer.classList.contains('visible') && pageVisible) start();
+                else stop();
+            }).observe(avatarContainer, { attributes: true, attributeFilter: ['class'] });
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            pageVisible = !document.hidden;
+            if (pageVisible && avatarContainer?.classList.contains('visible')) start();
+            else stop();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            stop();
+            window.removeEventListener('resize', resizeRenderer);
+        });
+
+        if (avatarContainer?.classList.contains('visible')) start();
+    })();
+    </script>
+</body>
+</html>

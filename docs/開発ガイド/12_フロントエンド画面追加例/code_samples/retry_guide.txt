@@ -1,0 +1,30 @@
+■ 迷った時の戻り先
+
+症状: 一覧が出ない
+- 確認: listTable.vue の API が /apps/V商品/一覧 か
+- 確認: payload に 件数制限 / 無効も表示 / 商品分類ID を正しく入れているか
+- 次: Network タブで status/message を確認
+
+症状: 商品分類プルダウンが空
+- 確認: listPage.vue で /apps/M商品分類/一覧 を呼んでいるか
+- 次: 商品分類一覧 の items 取り出しが data?.items になっているか
+
+症状: 再検索が効かない
+- 確認: listPage.vue の ref と loadData 呼び出し
+- 次: defineExpose({ loadData }) があるか
+
+症状: 編集に遷移しない
+- 確認: 商品IDセルのリンク処理
+- 次: router/appsRouter.ts の /Mマスタ/M商品/編集 を確認
+
+症状: 保存できない
+- 確認: 必須項目（商品ID/商品名/単位/商品分類ID）
+- 次: /apps/M商品/登録 or /apps/M商品/変更 の payload を確認
+
+症状: 削除できない
+- 確認: qConfirm 後に /apps/M商品/削除 が呼ばれているか
+- 次: 商品ID が空になっていないか
+
+症状: 削除したデータが表示されない/表示される
+- 確認: 無効も表示=false なら有効=false は非表示
+- 次: 無効も表示=true で有効列が表示されるか確認

@@ -1,0 +1,492 @@
+/*
+ * 小説小話パターン検討用
+ * 同じ画像をぼかした全面背景 + 原寸比の前景画像 + 枠なし文字レイヤー。
+ * 共通 scene.css は変更せず、この動画だけに適用する。
+ */
+
+:root {
+  --scene-background: none;
+}
+
+/* 最終ページは、本編4コマと右上のオチ解説を同時表示する。 */
+.stage-recap .image-shell {
+  display: none;
+}
+
+.recap-grid {
+  position: absolute;
+  z-index: 3;
+  inset: 50% 36% auto 24px;
+  height: calc(100% - 128px);
+  transform: translateY(-50%);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.recap-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  background: #101923;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+}
+
+.recap-panel img {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  object-fit: contain;
+}
+
+.recap-panel figcaption {
+  padding: 8px 10px;
+  color: #fff;
+  font-size: clamp(12px, 1.2vw, 19px);
+  line-height: 1.4;
+}
+
+/* 横表示（横長画面）は、下段を 1 コマ分だけ右へずらした 3 列構成にする。
+ *   1 2 ・
+ *   ・ 3 4
+ * 画面幅いっぱいに広げ、右上の本文レイヤーとの重なりは許容する。
+ */
+@media not all and (max-aspect-ratio: 1/1) {
+  .recap-grid {
+    inset: 50% 24px auto 24px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .recap-panel:nth-child(1) {
+    grid-area: 1 / 1;
+  }
+
+  .recap-panel:nth-child(2) {
+    grid-area: 1 / 2;
+  }
+
+  .recap-panel:nth-child(3) {
+    grid-area: 2 / 2;
+  }
+
+  .recap-panel:nth-child(4) {
+    grid-area: 2 / 3;
+  }
+}
+
+/* 縦表示（縦長画面）は、左寄せ・右寄せを交互にした 4 段の縦並びにする。
+ * 左端・右端まで振り切らず、画面の 1/4 だけ左右に寄せる。
+ * 右上の本文レイヤーやアバターとの重なりは許容する。
+ */
+@media (max-aspect-ratio: 1/1) {
+  .stage-recap .recap-grid {
+    inset: 50% 14px auto;
+    height: calc(100% - 88px);
+    gap: 10px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+
+  /* 1 段分の高さに 16:9 の画像がちょうど収まる幅を逆算し、左右の黒帯を出さない。 */
+  .stage-recap .recap-panel {
+    width: min(100%, calc(((100vh - 118px) / 4 - 31px) * 16 / 9));
+    justify-self: center;
+  }
+
+  .stage-recap .recap-panel:nth-child(1) {
+    grid-row: 1;
+    grid-column: 1 / span 3;
+  }
+
+  .stage-recap .recap-panel:nth-child(2) {
+    grid-row: 2;
+    grid-column: 2 / span 3;
+  }
+
+  .stage-recap .recap-panel:nth-child(3) {
+    grid-row: 3;
+    grid-column: 1 / span 3;
+  }
+
+  .stage-recap .recap-panel:nth-child(4) {
+    grid-row: 4;
+    grid-column: 2 / span 3;
+  }
+
+  .stage-recap .content-panel {
+    top: 52px;
+    right: 16px;
+    bottom: auto;
+    width: min(84vw, 420px);
+    max-height: calc(40% - 64px);
+    padding: 0;
+  }
+
+  .stage-recap .headline {
+    font-size: clamp(20px, 4.8vw, 30px);
+  }
+
+  .stage-recap .lead {
+    margin-top: 10px;
+  }
+
+  .recap-panel figcaption {
+    padding: 6px;
+    font-size: 12px;
+  }
+}
+
+html,
+body {
+  overflow: hidden;
+  background: #030812;
+}
+
+body::before {
+  display: none;
+}
+
+.stage,
+.stage.stage-splash,
+.stage.stage-hero {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.visual-panel,
+.stage-splash .visual-panel,
+.stage-hero .visual-panel,
+.stage-hero.stage-hero-focus .visual-panel {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: #030812;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+/* 同じシーン画像を画面いっぱいに拡大し、背景としてぼかす。 */
+.visual-panel::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: -42px;
+  display: block;
+  background-image:
+    linear-gradient(rgba(3, 8, 18, 0.22), rgba(3, 8, 18, 0.48)),
+    var(--scene-background);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  opacity: 0.96;
+  filter: blur(14px) saturate(0.96) brightness(0.76);
+  transform: scale(1.04);
+  pointer-events: none;
+}
+
+/* 文字の可読性だけを補う。パネルとして見える塗りや境界は作らない。 */
+.visual-panel::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 0%, transparent 45%, rgba(2, 7, 15, 0.13) 56%, rgba(2, 7, 15, 0.72) 84%, rgba(2, 7, 15, 0.9) 100%),
+    linear-gradient(180deg, rgba(2, 7, 15, 0.12), transparent 22%, rgba(2, 7, 15, 0.18));
+  pointer-events: none;
+}
+
+.image-shell,
+.stage-splash .image-shell,
+.stage-hero .image-shell,
+.stage-hero.stage-hero-focus .image-shell {
+  position: absolute;
+  z-index: 1;
+  inset: 60px 0;
+  width: auto;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.image-shell::before,
+.stage-hero .image-shell::before {
+  display: none;
+}
+
+.scene-image,
+.stage-splash .scene-image,
+.stage-hero .scene-image,
+.stage-hero.stage-hero-focus .scene-image {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: contain;
+  object-position: center center;
+  filter:
+    drop-shadow(20px 0 42px rgba(0, 0, 0, 0.34))
+    saturate(1.05)
+    contrast(1.02)
+    brightness(0.96);
+}
+
+.stage:not(.stage-splash):not(.stage-hero) .image-overlay {
+  display: none;
+}
+
+.background-word {
+  z-index: 1;
+  opacity: 0.25;
+}
+
+/* 左上のメタ情報もフレームを外して画像へ直接重ねる。 */
+.visual-meta,
+.stage-splash .visual-meta,
+.stage-hero .visual-meta,
+.stage-hero.stage-hero-focus .visual-meta {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  z-index: 5;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.kicker,
+.scene-id {
+  text-shadow:
+    0 2px 8px rgba(0, 0, 0, 1),
+    0 0 22px rgba(0, 0, 0, 0.9);
+}
+
+.scene-id {
+  color: rgba(244, 251, 255, 0.88);
+}
+
+/* 右側の説明は完全な透過レイヤー。 */
+.content-panel {
+  position: absolute;
+  z-index: 6;
+  top: 6%;
+  right: 4.2%;
+  bottom: 6%;
+  width: clamp(320px, 30vw, 580px);
+  min-height: 0;
+  padding: 20px 0 18px 28px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.content-panel::before {
+  display: none;
+}
+
+.content-scroll {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  padding: 0 4px 0 0;
+}
+
+.header-row {
+  margin-bottom: 20px;
+}
+
+.scene-title {
+  display: block;
+  margin: 0 0 13px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0.09em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+}
+
+.headline {
+  font-size: clamp(29px, 3vw, 50px);
+  line-height: 1.1;
+  text-wrap: balance;
+  text-shadow:
+    0 3px 8px rgba(0, 0, 0, 1),
+    0 0 30px rgba(0, 0, 0, 0.92);
+}
+
+.lead {
+  margin-top: 18px;
+  color: rgba(248, 252, 255, 0.96);
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.82;
+  text-shadow:
+    0 2px 5px rgba(0, 0, 0, 1),
+    0 0 18px rgba(0, 0, 0, 0.92);
+}
+
+.chip-row:empty,
+.metric-row:empty,
+.card-grid:empty,
+.detail-panel:has(.fact-list:empty),
+.detail-panel:has(.evidence-list:empty) {
+  display: none;
+}
+
+.detail-grid {
+  display: block;
+}
+
+.detail-panel {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.panel-title {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: none;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+}
+
+.fact-list,
+.evidence-list {
+  gap: 7px;
+}
+
+.fact-item,
+.evidence-item {
+  padding: 5px 0 5px 15px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.fact-item::before {
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  box-shadow: 0 0 12px var(--accent);
+}
+
+.fact-text,
+.evidence-text {
+  color: rgba(244, 251, 255, 0.9);
+  font-size: 12px;
+  line-height: 1.6;
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 1),
+    0 0 14px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-width: 980px) {
+  .image-shell,
+  .stage-splash .image-shell,
+  .stage-hero .image-shell,
+  .stage-hero.stage-hero-focus .image-shell {
+    inset: 40px 0;
+  }
+
+  .scene-image,
+  .stage-splash .scene-image,
+  .stage-hero .scene-image,
+  .stage-hero.stage-hero-focus .scene-image {
+    object-position: center center;
+  }
+
+  .content-panel {
+    top: 4%;
+    left: auto;
+    right: 4%;
+    bottom: auto;
+    width: clamp(260px, 44vw, 420px);
+    max-height: 55%;
+    padding: 14px 0 0;
+  }
+
+  .headline {
+    font-size: clamp(25px, 4.8vw, 39px);
+  }
+
+  .lead {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.68;
+  }
+}
+
+@media (max-width: 620px) {
+  .visual-meta,
+  .stage-splash .visual-meta,
+  .stage-hero .visual-meta,
+  .stage-hero.stage-hero-focus .visual-meta {
+    top: 14px;
+    left: 14px;
+  }
+
+  .content-panel {
+    top: 16px;
+    left: auto;
+    right: 16px;
+    bottom: auto;
+    width: min(76vw, 300px);
+    max-height: 55%;
+    padding: 10px 0 0;
+  }
+
+  .scene-title {
+    margin-bottom: 9px;
+    font-size: 12px;
+  }
+
+  .headline {
+    font-size: clamp(22px, 7vw, 30px);
+  }
+
+  .lead {
+    font-size: 13px;
+  }
+
+  .detail-panel {
+    display: none;
+  }
+}

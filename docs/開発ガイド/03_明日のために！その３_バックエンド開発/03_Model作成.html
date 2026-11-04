@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 Model作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="02_Schema作成.html">前へ: 02_Schema作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_Migration実行.html">次へ: 04_スキーマ反映</a>
+  </nav>
+
+  <h1>03_Model作成</h1>
+  <p>ModelはDBテーブル定義です。Schemaと同じ項目名を維持し、監査フィールドを含めて定義します。</p>
+
+  <h2>M商品モデルの要点</h2>
+  <table>
+    <tr><th>項目</th><th>型</th><th>制約</th></tr>
+    <tr><td>商品ID</td><td>Text</td><td>PRIMARY KEY</td></tr>
+    <tr><td>商品名</td><td>Text</td><td>NOT NULL</td></tr>
+    <tr><td>単位</td><td>Text</td><td>NOT NULL</td></tr>
+    <tr><td>商品分類ID</td><td>Text</td><td>NOT NULL（M商品分類.商品分類IDを参照）</td></tr>
+    <tr><td>商品備考</td><td>Text</td><td>NULL可</td></tr>
+    <tr><td>監査8項目</td><td>Text</td><td>登録/更新のID・日時・利用者名・端末ID</td></tr>
+  </table>
+
+  <h2>実装例（参照）</h2>
+  <p>以下は <code>code_samples/M商品_model.py</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_model.py"><code>読み込み中...</code></pre>
+
+  <h2>関連ファイルの更新</h2>
+  <p>新規Model追加時は <code>backend_server/apps_models/__init__.py</code> へimportを追加します。これにより <code>create_all()</code> でテーブル生成対象になります。</p>
+
+  <h2>設計ポイント</h2>
+  <ul>
+    <li>テーブル名は日本語（<code>__tablename__ = "M商品"</code>）</li>
+    <li>主キーは業務上意味のあるIDを採用</li>
+    <li>監査項目は全テーブルでフォーマットを統一</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] ModelのカラムがSchemaの項目名と一致する</li>
+    <li>[ ] 主キー・NOT NULL制約が設計通り</li>
+    <li>[ ] <code>apps_models/__init__.py</code> へimport追加済み</li>
+  </ul>
+
+  <nav>
+    <a href="02_Schema作成.html">前へ: 02_Schema作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_Migration実行.html">次へ: 04_スキーマ反映</a>
+  </nav>
+</body>
+</html>

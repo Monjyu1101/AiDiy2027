@@ -1,0 +1,41 @@
+probe expectation corrected: connect(false) clears messages only (LivePanel:158), retains draft
+TAP version 13
+# Subtest: 追加確認: models失敗を解消して通常接続で復旧する
+ok 1 - 追加確認: models失敗を解消して通常接続で復旧する
+  ---
+  duration_ms: 433.3693
+  type: 'test'
+  ...
+# Subtest: 追加確認: socket失敗を解消して通常接続で復旧する
+ok 2 - 追加確認: socket失敗を解消して通常接続で復旧する
+  ---
+  duration_ms: 44.7968
+  type: 'test'
+  ...
+# Subtest: 追加確認: sessionModels失敗を解消して通常接続で復旧する
+ok 3 - 追加確認: sessionModels失敗を解消して通常接続で復旧する
+  ---
+  duration_ms: 33.0529
+  type: 'test'
+  ...
+# Subtest: 追加確認: 実protocol input切断後に新規socketで復旧する
+ok 4 - 追加確認: 実protocol input切断後に新規socketで復旧する
+  ---
+  duration_ms: 85.8673
+  type: 'test'
+  ...
+# Subtest: 追加確認: 実protocol 0切断後に新規socketで復旧する
+ok 5 - 追加確認: 実protocol 0切断後に新規socketで復旧する
+  ---
+  duration_ms: 85.5219
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1382.7372

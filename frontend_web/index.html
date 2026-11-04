@@ -1,0 +1,45 @@
+<!--
+  -*- coding: utf-8 -*-
+
+  -------------------------------------------------------------------------
+  COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+  Licensed under "AiDiy 公開利用ライセンス v1.1".
+  Commercial use requires prior written consent from all copyright holders.
+  See LICENSE for full terms. Thank you for keeping the rules.
+  https://github.com/monjyu1101/AiDiy2027
+  -------------------------------------------------------------------------
+-->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/x-icon" href="/icons/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AiDiy</title>
+  <script>
+    (function() {
+      var p = location.pathname;
+      if (p.indexOf('/AI') === 0 || p.indexOf('/%E') === 0) {
+        document.documentElement.classList.add('dark-route');
+      }
+    })();
+  </script>
+  <style>
+    html.dark-route,
+    html.dark-route body,
+    html.dark-route #app,
+    html.dark-route .app-layout,
+    html.dark-route .content {
+      background-color: #1a1a1a !important;
+    }
+  </style>
+</head>
+
+<body style="margin: 0;">
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
+</html>

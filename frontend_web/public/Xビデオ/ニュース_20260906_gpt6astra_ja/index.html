@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="video-project" content="ニュース_20260906_gpt6astra_ja">
+  <title>GPT-6 Astra 発表――ベンチマークを塗りつぶした最上位モデル</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(66, 133, 244, 0.14), transparent 26%),
+        radial-gradient(circle at 85% 78%, rgba(52, 168, 83, 0.14), transparent 28%),
+        linear-gradient(135deg, #040814 0%, #081420 46%, #081118 100%);
+      color: #f5fbff;
+      font-family: "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
+    }
+    body::before {
+      content: ""; position: fixed; inset: 0;
+      background:
+        linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 30px 30px; opacity: 0.14; pointer-events: none; z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .app {
+      position: relative;
+      display: grid; grid-template-rows: 64px 1fr 44px;
+      width: 100%; height: 100%; overflow: hidden;
+    }
+
+    /* ── Topbar ── */
+    .topbar, .controls {
+      display: flex; align-items: center; padding: 0 24px;
+      backdrop-filter: blur(16px); background: rgba(4,12,20,0.82);
+      border-color: rgba(255,255,255,0.08); border-style: solid; position: relative; z-index: 20;
+    }
+    .topbar { justify-content: space-between; gap: 20px; border-width: 0 0 1px; }
+    .brand-wrap { display: flex; flex-direction: column; min-width: 0; }
+    .brand { font-size: 20px; font-weight: 900; letter-spacing: 0.02em; }
+    .brand .g-blue  { color: #4285F4; }
+    .brand .g-red   { color: #EA4335; }
+    .brand .g-yellow{ color: #FBBC04; }
+    .brand .g-green { color: #34A853; }
+    .brand-sub { color: #9eb2c6; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+    .top-note { color: #d7e4ee; font-size: 13px; line-height: 1.7; text-align: right; }
+
+    /* ── Stage ── */
+    .stage { position: relative; min-height: 0; overflow: hidden; }
+    .scene-content { position: absolute; inset: 0; }
+    .sc-inner {
+      position: relative; width: 100%; height: 100%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .sc-backdrop, .sc-image {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+    }
+    .sc-backdrop {
+      object-fit: cover;
+      filter: blur(18px) saturate(1.14) brightness(0.62);
+      transform: scale(1.06);
+      opacity: 0.9;
+    }
+    .sc-image {
+      object-fit: contain;
+      z-index: 1;
+    }
+    /* 月バッジ：ステージ上部中央に固定 */
+    .sc-month-badge {
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+      z-index: 5;
+      padding: 8px 28px; border-radius: 999px;
+      background: var(--accent, #4285F4);
+      color: #040814; font-size: 22px; font-weight: 900;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      white-space: nowrap;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+    .sc-text-overlay {
+      position: relative; z-index: 2;
+      text-align: center;
+      padding: 0 calc(min(36vh, 30vw) + 24px);
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .sc-headline {
+      font-size: clamp(32px, 5.5vh, 68px); font-weight: 900; line-height: 1.25;
+      color: #3318c8;
+      text-shadow:
+        0 0 15px rgba(255,255,255,0.98),
+        0 0 40px rgba(255,255,255,0.82),
+        0 0 80px rgba(255,255,255,0.58);
+    }
+
+    /* ── Subtitle ── */
+    .subtitle {
+      position: absolute; bottom: 20px; z-index: 9999;
+      left: calc(min(36vh, 30vw) + 10px); right: calc(min(36vh, 30vw) + 10px);
+      padding: 20px 24px; border-radius: 18px;
+      background: rgba(4,10,18,0.76); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: flex-start; gap: 18px;
+      font-size: 34px; font-weight: 700; line-height: 1.55;
+      pointer-events: none;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.28);
+      opacity: 0; visibility: hidden;
+      transform: translateY(18px) scale(0.98);
+      filter: blur(6px);
+      transition:
+        opacity 0.26s ease-out,
+        transform 0.32s cubic-bezier(0.2, 0.9, 0.2, 1),
+        filter 0.28s ease-out,
+        visibility 0s linear 0.32s;
+    }
+    .subtitle::after {
+      content: "";
+      position: absolute;
+      left: 24px; right: 24px; bottom: 8px;
+      height: 2px; border-radius: 999px;
+      background: linear-gradient(90deg,
+        rgba(66,133,244,0),
+        rgba(66,133,244,0.85),
+        rgba(52,168,83,0.85),
+        rgba(52,168,83,0));
+      opacity: 0;
+      transform: scaleX(0.15);
+      transform-origin: center;
+      transition: opacity 0.24s ease-out, transform 0.38s ease-out;
+    }
+    .subtitle.active {
+      opacity: 1; visibility: visible;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+      transition:
+        opacity 0.2s ease-out,
+        transform 0.28s cubic-bezier(0.2, 0.9, 0.2, 1),
+        filter 0.24s ease-out,
+        visibility 0s;
+    }
+    .subtitle.active::after {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+    .subtitle.closing {
+      opacity: 0; visibility: visible;
+      transform: translateY(12px) scale(0.985);
+      filter: blur(4px);
+      transition:
+        opacity 0.24s ease-in,
+        transform 0.28s ease-in,
+        filter 0.24s ease-in,
+        visibility 0s;
+    }
+    .subtitle.closing::after {
+      opacity: 0;
+      transform: scaleX(0.2);
+    }
+    .subtitle-speaker {
+      font-size: 44px; font-weight: 900; flex-shrink: 0; line-height: 1.4;
+    }
+    .subtitle-text { flex: 1; color: #f0f8ff; }
+
+    /* ── Controls ── */
+    .controls { justify-content: space-between; gap: 18px; border-width: 1px 0 0; }
+    .controls-left { display: flex; align-items: center; gap: 6px; }
+    .controls-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .controls-center { flex: 1; display: flex; justify-content: center; }
+    .progress {
+      width: min(480px, 100%); height: 8px; border-radius: 999px; overflow: hidden;
+      background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.08);
+    }
+    .progress-fill {
+      height: 100%; width: 0%;
+      background: linear-gradient(90deg, #4285F4, #34A853, #FBBC04, #EA4335);
+      transition: width 120ms linear;
+    }
+    button {
+      height: 40px; min-width: 40px; padding: 0 14px;
+      border: 1px solid rgba(255,255,255,0.14); border-radius: 12px;
+      background: rgba(255,255,255,0.05); color: #f5fbff;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+    }
+    button:hover { border-color: rgba(66,133,244,0.58); background: rgba(66,133,244,0.12); }
+    .ghost-btn { color: #9eb2c6; font-weight: 700; }
+    .meta, .timer { color: #d5e1eb; font-size: 13px; font-weight: 700; white-space: nowrap; }
+    .timer { font-variant-numeric: tabular-nums; }
+
+    /* ── Dual Avatar Containers (fixed, outside .app) ── */
+    #avatar-left, #avatar-right {
+      position: fixed; bottom: 44px;
+      width: min(36vh, 30vw); height: 75vh; max-height: calc(100vh - 108px);
+      pointer-events: none; z-index: 10;
+    }
+    #avatar-left { left: 0; }
+    #avatar-right { right: 0; }
+
+    .avatar-wrap {
+      width: 100%; height: 100%;
+      transition: filter 380ms ease;
+    }
+    .avatar-wrap.silent {
+      filter: brightness(0.58) saturate(0.45);
+    }
+
+    canvas {
+      width: 100%; height: 100%; display: block;
+      opacity: 0; transition: opacity 600ms ease;
+    }
+    canvas.ready { opacity: 1; }
+
+    /* ── Responsive ── */
+    @media (max-width: 920px) {
+      .app { grid-template-rows: 108px 1fr 56px; }
+      .topbar { flex-direction: column; align-items: flex-start; justify-content: center; gap: 4px; padding-top: 8px; padding-bottom: 8px; }
+      .top-note { text-align: left; }
+      .controls { flex-wrap: nowrap; gap: 8px; }
+      #avatar-left, #avatar-right { width: min(28vh, 26vw); bottom: 56px; height: 52vh; }
+      .sc-text-overlay { padding: 0 calc(min(28vh, 26vw) + 12px); }
+      .subtitle { left: calc(min(28vh, 26vw) + 4px); right: calc(min(28vh, 26vw) + 4px); font-size: 28px; }
+    }
+    /* ── Landscape (横表示) ── */
+    @media (orientation: landscape) {
+      .sc-text-overlay { position: absolute; top: 30%; left: 0; right: 0; }
+    }
+    /* ── Portrait (縦表示: スマートフォン/タブレット縦向き) ── */
+    @media (orientation: portrait) and (max-width: 640px) {
+      #avatar-left, #avatar-right { display: none; }
+      .sc-text-overlay { padding: 0 16px; }
+      .subtitle {
+        left: 8px; right: 8px;
+        font-size: clamp(14px, 3.5vw, 24px);
+        padding: 14px 16px;
+      }
+      .subtitle-speaker { font-size: clamp(18px, 4.5vw, 30px); }
+    }
+    /* ── Portrait tablet 641–920px: subtitle overlay, avatars wider to show hands ── */
+    @media (max-width: 920px) and (min-width: 641px) and (orientation: portrait) {
+      .app { z-index: auto; }
+      #avatar-left, #avatar-right { width: 40vw; }
+      .sc-inner { justify-content: flex-start; padding-top: 30%; }
+      .sc-text-overlay { padding: 0 16px; }
+      .subtitle {
+        position: fixed;
+        z-index: 20;
+        left: 8px;
+        right: 8px;
+        bottom: 95px;
+      }
+    }
+    .tts-status {
+      position: fixed;
+      bottom: 52px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      padding: 4px 16px;
+      border-radius: 8px;
+      display: none;
+      z-index: 25;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .tts-status.male {
+      left: 24px;
+      background: rgba(30, 110, 220, 0.92);
+      border: 1px solid rgba(100, 180, 255, 0.55);
+    }
+    .tts-status.female {
+      right: 24px;
+      background: rgba(210, 60, 130, 0.92);
+      border: 1px solid rgba(255, 140, 200, 0.55);
+    }
+    .tts-status.neutral {
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(4, 12, 20, 0.88);
+      border: 1px solid rgba(100, 216, 255, 0.45);
+    }
+    /* 縦表示: フッター(56px)と字幕(104px)の中央 */
+    @media (max-width: 920px) {
+      .tts-status { bottom: 61px; }
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .top-actions .top-note {
+      flex: 1 1 auto;
+    }
+
+    .speaker-btn {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #eaf6ff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .speaker-btn:hover {
+      background: rgba(143, 232, 255, 0.18);
+      border-color: rgba(143, 232, 255, 0.48);
+      transform: translateY(-1px);
+    }
+
+    .speaker-btn[aria-pressed="true"] {
+      background: rgba(255, 255, 255, 0.04);
+      color: #9eb2c6;
+    }
+  </style>
+  <script src="scenario.js"></script>
+  <script src="../_common/playback_start_delay.js"></script>
+  <script src="../_common/playback_controls_autohide.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.2/lib/three-vrm.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <!-- Left avatar: male -->
+  <div id="avatar-left">
+    <div class="avatar-wrap" id="wrapMale">
+      <canvas id="canvasMale"></canvas>
+    </div>
+  </div>
+
+  <!-- Right avatar: female -->
+  <div id="avatar-right">
+    <div class="avatar-wrap" id="wrapFemale">
+      <canvas id="canvasFemale"></canvas>
+    </div>
+  </div>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand">
+          <span class="g-blue">GPT-6</span> <span class="g-red">Astra</span> 発表
+        </div>
+        <div class="brand-sub">OPENAI MODEL NEWS</div>
+      </div>
+      <div class="top-actions">
+        <div class="top-note">難問の評価、バイナリ解析、パソコン操作、仕様と料金、提供と安全性を、<br>確認済み情報と留保に分けて解説します。</div>
+        <button id="speakerBtn" class="speaker-btn" type="button" aria-label="スピーカー オン" aria-pressed="false" title="スピーカー オン">🔊</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <div id="sceneContent" class="scene-content"></div>
+      <div id="subtitle" class="subtitle">
+        <span id="speakerLabel" class="subtitle-speaker"></span>
+        <span id="subtitleText" class="subtitle-text"></span>
+      </div>
+    </main>
+
+    <footer class="controls">
+      <div class="controls-left">
+        <button id="restartBtn" type="button" aria-label="最初から">|◁</button>
+        <button id="prevBtn" type="button" aria-label="前のシーンへ">◁</button>
+        <button id="playBtn" type="button" aria-label="再生/一時停止">▶</button>
+        <button id="nextBtn" type="button" aria-label="次のシーンへ">▷</button>
+        <button id="lastBtn" type="button" aria-label="最後のシーンへ">▷|</button>
+      </div>
+      <div class="controls-center">
+        <div class="progress" aria-label="再生位置">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+      </div>
+      <div class="controls-right">
+        <div id="timer" class="timer">00:00 / 00:00</div>
+      </div>
+    </footer>
+  </div>
+  <div id="ttsStatus" class="tts-status"></div>
+
+  <!-- ── Main player script ── -->
+  <script>
+    const scenario = window.SCENARIO;
+    const scenes = scenario.scenes;
+    const totalDurationSec = scenario.total_duration_sec || 910.0;
+
+    // Pre-compute cumulative start time (sec) for each scene
+    const sceneStartSecs = [];
+    let _acc = 0;
+    for (const sc of scenes) {
+      sceneStartSecs.push(_acc);
+      _acc += (sc.duration_sec || 0);
+    }
+
+    // DOM refs
+    const subtitleEl    = document.getElementById("subtitle");
+    const speakerLabel  = document.getElementById("speakerLabel");
+    const subtitleText  = document.getElementById("subtitleText");
+    const timerEl       = document.getElementById("timer");
+    const progressFill  = document.getElementById("progressFill");
+    const playBtn       = document.getElementById("playBtn");
+    const prevBtn       = document.getElementById("prevBtn");
+    const nextBtn       = document.getElementById("nextBtn");
+    const restartBtn    = document.getElementById("restartBtn");
+    const lastBtn       = document.getElementById("lastBtn");
+    const speakerBtn    = document.getElementById("speakerBtn");
+    const sceneContent  = document.getElementById("sceneContent");
+    const wrapMale      = document.getElementById("wrapMale");
+    const wrapFemale    = document.getElementById("wrapFemale");
+
+    let sceneIndex   = 0;
+    let turnIndex    = 0;
+    let playing      = false;
+    let turnElapsedMs = 0;
+    let turnStartedAt = 0;
+    let tickTimer    = null;
+    let turnEndTimer = null;
+    let speechStartTimer = null;
+    let subtitleExitTimer = null;
+    let playbackToken = 0;
+    const SUBTITLE_SHOW_DELAY_MS = 120;
+    const SUBTITLE_EXIT_MS = 300;
+    const _qp = new URLSearchParams(window.location.search);
+    let speakerEnabled = (_qp.get("speaker") || "").toLowerCase() !== "false";
+    const _autoPlay = _qp.get("auto") === "yes";
+    const _loopPlay = _qp.get("auto") === "loop";
+    const _previewMinSceneSec = (() => {
+      const n = Number(_qp.get("preview_min_sec"));
+      return Number.isFinite(n) && n > 0 ? n : 5;
+    })();
+
+    const audioPlayer = new Audio();
+    audioPlayer.preload = "auto";
+    const playbackStartGate = AiDiyVideoPlayback.createStartGate();
+    function applySpeakerState() {
+      audioPlayer.volume = speakerEnabled ? 1 : 0;
+      if (speakerBtn) {
+        speakerBtn.textContent = speakerEnabled ? "🔊" : "🔇";
+        speakerBtn.setAttribute("aria-label", speakerEnabled ? "スピーカー オン" : "スピーカー オフ");
+        speakerBtn.setAttribute("aria-pressed", speakerEnabled ? "false" : "true");
+        speakerBtn.title = speakerEnabled ? "スピーカー オン" : "スピーカー オフ";
+      }
+    }
+    applySpeakerState();
+    window.audioPlayer = audioPlayer;
+
+    // Web Audio graph (lazy init)
+    let audioCtx     = null;
+    let pannerNode   = null;
+    let analyserNode = null;
+    let analyserData = null;
+
+    function setupAudioGraph() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = audioCtx.createMediaElementSource(audioPlayer);
+        pannerNode   = audioCtx.createStereoPanner();
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        analyserNode.smoothingTimeConstant = 0.5;
+        source.connect(pannerNode);
+        pannerNode.connect(analyserNode);
+        analyserNode.connect(audioCtx.destination);
+        analyserData = new Uint8Array(analyserNode.frequencyBinCount);
+        // Expose for avatar module
+        window._audioCtx     = audioCtx;
+        window._pannerNode   = pannerNode;
+        window._analyserNode = analyserNode;
+        window._analyserData = analyserData;
+      } catch(e) {}
+    }
+
+    function resumeAudioContext() {
+      setupAudioGraph();
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+    }
+
+    window.__avatarResumeAudioContext = resumeAudioContext;
+
+    function currentScene() { return scenes[sceneIndex]; }
+    function currentTurn()  { return currentScene()?.dialogue?.[turnIndex] || null; }
+
+    function formatTime(sec) {
+      const s = Math.max(0, Math.round(sec));
+      return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+    }
+
+    function getElapsedSec() {
+      const scene = currentScene();
+      if (!scene) return 0;
+      let sceneElapsed = 0;
+      const dlg = scene.dialogue || [];
+      for (let i = 0; i < turnIndex; i++) sceneElapsed += (dlg[i]?.duration_sec || 0);
+      sceneElapsed += turnElapsedMs / 1000;
+      return sceneStartSecs[sceneIndex] + sceneElapsed;
+    }
+
+    function snapTimerToScheduledEnd() {
+      const scene = currentScene();
+      if (!scene) return;
+      let elapsedBeforeCurrentTurn = 0;
+      const dlg = scene.dialogue || [];
+      for (let i = 0; i < turnIndex; i++) elapsedBeforeCurrentTurn += (dlg[i]?.duration_sec || 0);
+      turnElapsedMs = Math.max(0, (totalDurationSec - sceneStartSecs[sceneIndex] - elapsedBeforeCurrentTurn) * 1000);
+      updateTimerAndProgress();
+    }
+
+    function updateTimerAndProgress() {
+      const elapsed = getElapsedSec();
+      const sceneId = (currentScene()?.id ?? `scene_${String(sceneIndex).padStart(3,"0")}`).replace("scene_", "Scene_");
+      timerEl.textContent = `${formatTime(elapsed)} / ${formatTime(totalDurationSec)}  ${sceneId} (${sceneIndex + 1}/${scenes.length})`;
+      progressFill.style.width = `${Math.min(100, (elapsed / Math.max(0.1, totalDurationSec)) * 100)}%`;
+    }
+
+    function prepareSpeakerLabel(speaker) {
+      speakerLabel.textContent = speaker === "female" ? "♀" : "♂";
+      speakerLabel.style.color  = speaker === "female" ? "#ff8fce" : "#64d8ff";
+    }
+
+    function setActiveSpeaker(speaker) {
+      // Stereo panning
+      if (pannerNode) pannerNode.pan.value = speaker === "male" ? -1.0 : 1.0;
+
+      // Visual active/silent
+      if (speaker === "male") {
+        wrapMale.classList.remove("silent");
+        wrapFemale.classList.add("silent");
+        window.__maleOnAudioStart?.();
+        window.__femaleOnAudioStop?.();
+      } else {
+        wrapFemale.classList.remove("silent");
+        wrapMale.classList.add("silent");
+        window.__femaleOnAudioStart?.();
+        window.__maleOnAudioStop?.();
+      }
+
+      prepareSpeakerLabel(speaker);
+
+      // 表情は常に neutral 固定
+      window.__maleSetExpression?.("neutral");
+      window.__femaleSetExpression?.("neutral");
+    }
+
+    function stopAllSpeakers() {
+      wrapMale.classList.remove("silent");
+      wrapFemale.classList.remove("silent");
+      window.__maleOnAudioStop?.();
+      window.__femaleOnAudioStop?.();
+    }
+
+    function renderSceneContent(scene) {
+      const accent     = scene.accent      || "#4285F4";
+      const accentSoft = scene.accent_soft || "rgba(66,133,244,0.18)";
+
+      let html = `<div class="sc-inner" style="--accent:${accent}">`;
+      if (scene.image)   html += `<img class="sc-backdrop" src="${scene.image}" alt="" loading="eager" aria-hidden="true"><img class="sc-image" src="${scene.image}" alt="" loading="eager">`;
+      if (scene.kicker)  html += `<div class="sc-month-badge">${scene.kicker}</div>`;
+      if (scene.headline) html += `<div class="sc-text-overlay"><div class="sc-headline">${scene.headline.replace(/\n/g, "<br>")}</div></div>`;
+      html += `</div>`;
+      sceneContent.innerHTML = html;
+
+      updateTimerAndProgress();
+    }
+
+    function showSubtitle() {
+      clearTimeout(subtitleExitTimer);
+      subtitleEl.classList.remove("closing");
+      void subtitleEl.offsetWidth;
+      subtitleEl.classList.add("active");
+    }
+    function hideSubtitle() {
+      clearTimeout(subtitleExitTimer);
+      if (subtitleEl.classList.contains("active")) {
+        subtitleEl.classList.add("closing");
+      }
+      subtitleEl.classList.remove("active");
+      subtitleExitTimer = setTimeout(() => {
+        subtitleEl.classList.remove("closing");
+      }, SUBTITLE_EXIT_MS);
+    }
+    function resetSubtitleHidden() {
+      clearTimeout(subtitleExitTimer);
+      subtitleEl.classList.remove("active", "closing");
+      subtitleExitTimer = null;
+    }
+
+    function renderTurn() {
+      const turn = currentTurn();
+      if (!turn) return;
+      subtitleText.textContent = turn.telop_text || turn.subtitle || turn.text || "";
+      prepareSpeakerLabel(turn.speaker || "female");
+    }
+
+    function clearTimers() {
+      playbackStartGate.cancel();
+      clearInterval(tickTimer);
+      clearTimeout(turnEndTimer);
+      clearTimeout(speechStartTimer);
+      clearTimeout(subtitleExitTimer);
+      tickTimer = null;
+      turnEndTimer = null;
+      speechStartTimer = null;
+      subtitleExitTimer = null;
+    }
+
+    function startTurnClock(token) {
+      clearInterval(tickTimer);
+      turnStartedAt = Date.now() - turnElapsedMs;
+      tickTimer = setInterval(() => {
+        if (token !== playbackToken || !playing) return;
+        if (Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0) {
+          turnElapsedMs = audioPlayer.currentTime * 1000;
+        } else {
+          turnElapsedMs = Date.now() - turnStartedAt;
+        }
+        updateTimerAndProgress();
+      }, 100);
+    }
+
+    function armTurnEndTimer(remainingMs, token) {
+      clearTimeout(turnEndTimer);
+      turnEndTimer = setTimeout(() => {
+        if (token !== playbackToken) return;
+        advanceTurn();
+      }, Math.max(0, Math.ceil(remainingMs)));
+    }
+
+    function advanceTurn() {
+      const token = playbackToken;
+      hideSubtitle();
+      stopAllSpeakers();
+      clearInterval(tickTimer);
+      clearTimeout(turnEndTimer);
+      clearTimeout(speechStartTimer);
+      tickTimer = null;
+      turnEndTimer = null;
+      speechStartTimer = null;
+      clearTimeout(subtitleExitTimer);
+      subtitleExitTimer = setTimeout(() => {
+        subtitleEl.classList.remove("closing");
+        if (token !== playbackToken) return;
+
+        const scene = currentScene();
+        const dlg   = scene?.dialogue || [];
+        if (turnIndex < dlg.length - 1) {
+          turnIndex++;
+          turnElapsedMs = 0;
+          renderTurn();
+          if (playing) beginTurnPlayback();
+        } else if (sceneIndex < scenes.length - 1) {
+          moveToScene(sceneIndex + 1, 0);
+        } else if (_loopPlay) {
+          pause();
+          moveToScene(0, 0);
+          play();
+        } else {
+          // End of presentation
+          clearTimers();
+          audioPlayer.pause();
+          stopAllSpeakers();
+          snapTimerToScheduledEnd();
+          progressFill.style.width = "100%";
+          playing = false;
+          playBtn.textContent = "▶";
+        }
+      }, SUBTITLE_EXIT_MS);
+    }
+
+    // ── TTS helpers ──
+    const ttsAudioCache = new Map();
+    const ttsPendingCache = new Map();
+    const audioExistsCache = new Map();
+
+    let _ttsHideTimer = null;
+    function setTtsStatus(text, delayMs, speaker) {
+      clearTimeout(_ttsHideTimer);
+      _ttsHideTimer = null;
+      const el = document.getElementById("ttsStatus");
+      if (!el) return;
+      if (text) {
+        el.textContent = text;
+        el.className = "tts-status " + (speaker === "male" ? "male" : speaker === "female" ? "female" : "neutral");
+        el.style.display = "block";
+      } else if (delayMs > 0) {
+        _ttsHideTimer = setTimeout(() => { el.style.display = "none"; el.textContent = ""; }, delayMs);
+      } else {
+        el.style.display = "none";
+        el.textContent = "";
+      }
+    }
+
+    function _getTurnTtsConfig(turn) {
+      const policy = scenario.assets_policy || {};
+      const spec = turn.speaker === "male"
+        ? (policy.tts_male || "edge:male")
+        : (policy.tts_female || "edge:female");
+      const p = spec.split(":");
+      return { provider: p[0] || "edge", voice: p[1] || (turn.speaker || "female") };
+    }
+
+    async function audioFileExists(path) {
+      if (audioExistsCache.has(path)) return audioExistsCache.get(path);
+      try {
+        const r = await fetch(path, { method: "HEAD", cache: "no-store" });
+        const ct = (r.headers.get("content-type") || "").toLowerCase();
+        const ok = r.ok && !ct.startsWith("text/html");
+        audioExistsCache.set(path, ok);
+        return ok;
+      } catch { return false; }
+    }
+
+    async function _fetchTtsBlob(text, provider, voice) {
+      const endpoints = ["http://127.0.0.1:8095/aidiy_text_to_speech/synthesize"];
+      let lastErr;
+      for (const url of endpoints) {
+        try {
+          const r = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text, speech_text: text, provider, voice, language: "ja",
+                                   mcp_tool: "aidiy_text_to_speech.synthesize_speech" }),
+          });
+          if (r.ok) {
+            const ct = r.headers.get("content-type") || "";
+            if (ct.startsWith("audio/")) return r.blob();
+            const json = await r.json();
+            if (json.base64_audio) {
+              const bin = atob(json.base64_audio);
+              const bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+              const fmt = json.audio_format || "mp3";
+              return new Blob([bytes], { type: fmt === "mp3" ? "audio/mpeg" : "audio/" + fmt });
+            }
+            lastErr = new Error("no audio in response"); continue;
+          }
+          lastErr = new Error(`HTTP ${r.status}`);
+        } catch (e) { lastErr = e; }
+      }
+      throw lastErr || new Error("TTS unavailable");
+    }
+
+    async function getTtsBlobUrl(si, ti) {
+      const key = `${si}:${ti}`;
+      if (ttsAudioCache.has(key)) return ttsAudioCache.get(key);
+      const pend = ttsPendingCache.get(key);
+      if (pend) return pend;
+      const turn = scenario.scenes[si]?.dialogue?.[ti];
+      if (!turn) return "";
+      const text = turn.naration_text || turn.telop_text || turn.text || "";
+      if (!text) return "";
+      const { provider, voice } = _getTurnTtsConfig(turn);
+      const promise = (async () => {
+        const blob = await _fetchTtsBlob(text, provider, voice);
+        const blobUrl = URL.createObjectURL(blob);
+        ttsAudioCache.set(key, blobUrl);
+        return blobUrl;
+      })();
+      ttsPendingCache.set(key, promise);
+      try { return await promise; }
+      finally { if (ttsPendingCache.get(key) === promise) ttsPendingCache.delete(key); }
+    }
+
+    function prefetchUpcoming(count) {
+      let si = sceneIndex, ti = turnIndex + 1, fetched = 0;
+      while (fetched < count) {
+        const sc = scenario.scenes[si];
+        if (!sc) break;
+        const dlg = sc.dialogue || [];
+        if (ti >= dlg.length) { si++; ti = 0; continue; }
+        const capSi = si, capTi = ti;
+        const turn = dlg[capTi];
+        if (turn?.audio) {
+          audioFileExists(turn.audio).then(exists => {
+            if (!exists) getTtsBlobUrl(capSi, capTi).catch(() => {});
+          });
+        } else {
+          getTtsBlobUrl(capSi, capTi).catch(() => {});
+        }
+        ti++; fetched++;
+      }
+    }
+
+    function beginTurnPlayback() {
+      const turn = currentTurn();
+      const token = ++playbackToken;
+      clearTimers();
+      if (!turn) {
+        playing = false;
+        playBtn.textContent = "▶";
+        updateTimerAndProgress();
+        return;
+      }
+
+      const effectiveDuration = turn.duration_sec || _previewMinSceneSec || 5;
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      _playTurnAudio(turn, token, effectiveDuration);
+    }
+
+    async function _playTurnAudio(turn, token, effectiveDuration) {
+      const resumeMs = turnElapsedMs;  // await 前にキャプチャ — tick で増えた値を使わない
+      prefetchUpcoming(2);
+
+      const audioPath = turn.audio;
+      let audioSrc = null;
+
+      if (audioPath) {
+        const exists = await audioFileExists(audioPath);
+        if (token !== playbackToken || !playing) return;
+        if (exists) audioSrc = audioPath;
+      }
+
+      if (!audioSrc) {
+        const si = sceneIndex, ti = turnIndex;
+        setTtsStatus("TTS", 0, turn.speaker);
+        try {
+          const blobUrl = await getTtsBlobUrl(si, ti);
+          if (token !== playbackToken || !playing) { setTtsStatus(""); return; }
+          if (!blobUrl) {
+            setTtsStatus("");
+            stopAllSpeakers();
+            hideSubtitle();
+            playing = false;
+            playBtn.textContent = "▶";
+            clearTimers();
+            updateTimerAndProgress();
+            return;
+          }
+          audioSrc = blobUrl;
+        } catch (e) {
+          console.warn("TTS合成失敗", e);
+          setTtsStatus("");
+          stopAllSpeakers();
+          hideSubtitle();
+          playing = false;
+          playBtn.textContent = "▶";
+          clearTimers();
+          updateTimerAndProgress();
+          return;
+        }
+        setTtsStatus("", 1500);  // 合成完了後 1.5 秒表示を維持
+      }
+
+      turnElapsedMs = resumeMs;
+
+      audioPlayer.addEventListener("playing", () => {
+        if (token !== playbackToken || !playing) return;
+        if (!tickTimer) startTurnClock(token);
+        clearTimeout(speechStartTimer);
+        speechStartTimer = setTimeout(() => {
+          if (token !== playbackToken || !playing) return;
+          setActiveSpeaker(turn.speaker || "female");
+          showSubtitle();
+        }, SUBTITLE_SHOW_DELAY_MS);
+        prefetchUpcoming(3);
+      }, { once: true });
+
+      audioPlayer.addEventListener("loadedmetadata", () => {
+        if (token !== playbackToken) return;
+        if (Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+          effectiveDuration = audioPlayer.duration;
+        }
+      }, { once: true });
+
+      audioPlayer.src = audioSrc;
+      audioPlayer.currentTime = Math.min(resumeMs / 1000, Math.max(0, effectiveDuration - 0.05));
+      audioPlayer.play()
+        .then(() => {
+          if (token !== playbackToken || !playing) return;
+          if (!tickTimer) startTurnClock(token);
+          const remaining = effectiveDuration * 1000 - (audioPlayer.currentTime * 1000) + 1200;
+          armTurnEndTimer(remaining, token);
+        })
+        .catch(() => {
+          stopAllSpeakers();
+          hideSubtitle();
+          playing = false;
+          playBtn.textContent = "▶";
+          clearTimers();
+          updateTimerAndProgress();
+        });
+    }
+
+    function play({ startDelay = true } = {}) {
+      if (playing) return;
+      const dur = (currentTurn()?.duration_sec || _previewMinSceneSec || 5) * 1000;
+      if (turnElapsedMs >= dur - 80) turnElapsedMs = 0;
+      playing = true;
+      playBtn.textContent = "⏸";
+      const begin = () => {
+        if (!playing) return;
+        resumeAudioContext();
+        renderTurn();
+        beginTurnPlayback();
+      };
+      if (startDelay) playbackStartGate.start(begin);
+      else begin();
+    }
+
+    function pause() {
+      if (!playing) return;
+      playbackToken++;
+      playing = false;
+      playBtn.textContent = "▶";
+      const dur = (currentTurn()?.duration_sec || _previewMinSceneSec || 5) * 1000;
+      turnElapsedMs = Math.min(
+        Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0
+          ? audioPlayer.currentTime * 1000
+          : turnElapsedMs,
+        dur
+      );
+      audioPlayer.pause();
+      stopAllSpeakers();
+      clearTimers();
+      hideSubtitle();
+      updateTimerAndProgress();
+    }
+
+    function moveToScene(index, turn) {
+      sceneIndex    = Math.min(Math.max(index, 0), scenes.length - 1);
+      turnIndex     = turn || 0;
+      turnElapsedMs = 0;
+      resetSubtitleHidden();
+      renderSceneContent(currentScene());
+      renderTurn();
+      updateTimerAndProgress();
+      if (playing) beginTurnPlayback();
+    }
+
+    // Controls
+    restartBtn.addEventListener("click", () => { pause(); moveToScene(0, 0); });
+    prevBtn.addEventListener("click",    () => { pause(); moveToScene(sceneIndex - 1, 0); });
+    playBtn.addEventListener("click",    () => { if (playing) pause(); else play(); });
+    nextBtn.addEventListener("click",    () => { pause(); moveToScene(sceneIndex + 1, 0); });
+    lastBtn.addEventListener("click",    () => { pause(); moveToScene(scenes.length - 1, 0); });
+
+    speakerBtn?.addEventListener("click", () => { speakerEnabled = !speakerEnabled; applySpeakerState(); });
+    window.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Spacebar") { e.preventDefault(); if (playing) pause(); else play(); }
+      if (e.key === "ArrowRight") { e.preventDefault(); pause(); moveToScene(sceneIndex + 1, 0); }
+      if (e.key === "ArrowLeft")  { e.preventDefault(); pause(); moveToScene(sceneIndex - 1, 0); }
+    });
+
+    audioPlayer.addEventListener("ended", () => {
+      if (!playing) return;
+      clearTimers();
+      advanceTurn();
+    });
+    audioPlayer.addEventListener("error", () => {
+      if (!playing) return;
+      stopAllSpeakers();
+      hideSubtitle();
+      playing = false;
+      playBtn.textContent = "▶";
+      clearTimers();
+      updateTimerAndProgress();
+    });
+
+    // Init
+    const _initialScene = (() => {
+      const v = parseInt(new URLSearchParams(window.location.search).get("scene") || "1", 10);
+      return Math.min(Math.max((Number.isFinite(v) ? v : 1) - 1, 0), scenes.length - 1);
+    })();
+    moveToScene(_initialScene, 0);
+
+    let _playbackStarted = false;
+    let _autoplayFallbackTimer = null;
+    function _triggerPlay() {
+      if (_playbackStarted || !(_autoPlay || _loopPlay)) return;
+      _playbackStarted = true;
+      clearTimeout(_autoplayFallbackTimer);
+      _autoplayFallbackTimer = null;
+      resumeAudioContext();
+      play();
+    }
+    window._triggerPlay = _triggerPlay;
+    if (_autoPlay || _loopPlay) {
+      _autoplayFallbackTimer = setTimeout(_triggerPlay, 0);
+    }
+  </script>
+
+  <!-- ── Dual avatar module script ── -->
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader }     from "three/addons/loaders/GLTFLoader.js";
+    import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
+
+    const EXPRESSION_KEYS = ["happy", "angry", "sad", "relaxed", "surprised", "neutral"];
+
+    function createAvatar(canvasId, vrmUrl, bodyYaw, cameraOffsetX, hooksBag, onReady) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const pane = canvas.parentElement;
+
+      const getSize = () => ({
+        width:  Math.max(1, pane.clientWidth  || 240),
+        height: Math.max(1, pane.clientHeight || 360)
+      });
+
+      let sz = getSize();
+      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      renderer.setClearColor(0x000000, 0);
+      renderer.setSize(sz.width, sz.height, false);
+
+      const scene  = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(28, sz.width / sz.height, 0.01, 40);
+
+      // Lighting - key light direction depends on which side the avatar faces
+      scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+      const keyLight = new THREE.DirectionalLight(0xfff5e6, 1.0);
+      keyLight.position.set(cameraOffsetX < 0 ? 1.1 : -1.1, 1.5, 1.0);
+      scene.add(keyLight);
+      const rimLight = new THREE.DirectionalLight(0xd8ecff, 0.85);
+      rimLight.position.set(cameraOffsetX < 0 ? -1.3 : 1.3, 0.8, 1.1);
+      scene.add(rimLight);
+
+      const container        = new THREE.Group();
+      const BODY_SWAY_RANGE  = Math.PI / 48;
+      const CAMERA_SWAY_X   = 0.025;
+      const HEAD_BASE_YAW   = cameraOffsetX < 0 ? Math.PI / 12 : -Math.PI / 12;
+      container.rotation.y   = bodyYaw;
+      scene.add(container);
+
+      const loader = new GLTFLoader();
+      loader.register((parser) => new VRMLoaderPlugin(parser));
+
+      const IDLE_BONE_ROT = {
+        leftUpperArm:   { z: -1.25 },
+        rightUpperArm:  { z:  1.25 },
+        leftLowerArm:   { y:  0.1  },
+        rightLowerArm:  { y: -0.1  },
+        leftShoulder:   { z: -0.05 },
+        rightShoulder:  { z:  0.05 }
+      };
+
+      function applyIdlePose(vrmObj) {
+        const humanoid = vrmObj?.humanoid;
+        if (!humanoid) return;
+        Object.entries(IDLE_BONE_ROT).forEach(([name, rot]) => {
+          const node = humanoid.getNormalizedBoneNode?.(name);
+          if (!node) return;
+          node.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
+        });
+      }
+
+      function updateIdleSway(vrmObj, elapsed) {
+        const humanoid = vrmObj?.humanoid;
+        if (!humanoid) return;
+        const chest = humanoid.getNormalizedBoneNode?.("chest");
+        const head  = humanoid.getNormalizedBoneNode?.("head");
+        if (chest) chest.rotation.x = Math.sin(elapsed * 1.4) * 0.02;
+        if (head) {
+          head.rotation.y = HEAD_BASE_YAW + Math.sin(elapsed * 0.7) * 0.02;
+          head.rotation.x = Math.sin(elapsed * 1.0 + 1.2) * 0.03;
+        }
+      }
+
+      let currentExpression = "neutral";
+      let targetExpression  = "neutral";
+      let expressionValue   = 0;
+      let blinkTimer   = 0;
+      let blinkCooldown = 2 + Math.random() * 3;
+      const BLINK_DURATION = 0.15;
+      let vrm            = null;
+      let avatarHeadHeight = 1.4;
+      let lipsyncActive  = false;
+      let mouthSmooth    = 0;
+      const MOUTH_LEVEL_GAIN = 1.45;
+
+      // Register hooks into caller's bag
+      hooksBag.setExpression = (name) => {
+        targetExpression = EXPRESSION_KEYS.includes(name) ? name : "neutral";
+      };
+      hooksBag.onAudioStart = () => { lipsyncActive = true; };
+      hooksBag.onAudioStop  = () => {
+        lipsyncActive = false;
+        mouthSmooth   = 0;
+        try { vrm?.expressionManager?.setValue("aa", 0); } catch {}
+      };
+
+      function getMouthTarget() {
+        const an   = window._analyserNode;
+        const data = window._analyserData;
+        if (!lipsyncActive || !an || !data) return 0;
+        an.getByteFrequencyData(data);
+        let sum = 0;
+        for (let i = 0; i < data.length; i++) sum += data[i];
+        return Math.min(1, (sum / data.length / 128) * MOUTH_LEVEL_GAIN);
+      }
+
+      // Load VRM async
+      (async () => {
+        try {
+          const gltf = await new Promise((resolve, reject) => {
+            loader.load(vrmUrl, resolve, undefined, reject);
+          });
+          vrm = gltf.userData?.vrm || null;
+          if (vrm) {
+            try { VRMUtils.removeUnnecessaryVertices(gltf.scene); } catch {}
+            try { VRMUtils.removeUnnecessaryJoints(gltf.scene);  } catch {}
+            vrm.scene.traverse((obj) => { obj.frustumCulled = false; });
+            const box    = new THREE.Box3().setFromObject(vrm.scene);
+            const center = box.getCenter(new THREE.Vector3());
+            const size   = box.getSize(new THREE.Vector3());
+            vrm.scene.position.x -= center.x;
+            vrm.scene.position.y -= box.min.y;
+            vrm.scene.position.z -= center.z;
+            container.add(vrm.scene);
+            avatarHeadHeight = Math.max(0.1, size.y) * 0.88;
+            camera.position.set(
+              cameraOffsetX,
+              Math.max(0.1, size.y) * 0.9,
+              -Math.max(0.1, size.y) * 1.15
+            );
+            camera.lookAt(0, avatarHeadHeight, 0);
+            vrm.lookAt.target = camera;
+            applyIdlePose(vrm);
+            vrm.update(0);
+            renderer.render(scene, camera);
+          }
+        } catch {}
+        canvas.classList.add("ready");
+        onReady?.();
+      })();
+
+      function updateExpression(dt) {
+        if (!vrm?.expressionManager) return;
+        const lerpRate = 1 - Math.pow(0.001, dt);
+        if (currentExpression !== targetExpression) {
+          expressionValue = Math.max(0, expressionValue - dt * 4);
+          if (expressionValue <= 0.01) {
+            try { vrm.expressionManager.setValue(currentExpression, 0); } catch {}
+            currentExpression = targetExpression;
+          }
+        } else {
+          const goal = currentExpression === "neutral" ? 0 : 0.6;
+          expressionValue += (goal - expressionValue) * lerpRate;
+        }
+        EXPRESSION_KEYS.forEach((key) => {
+          if (key === "neutral") return;
+          try { vrm.expressionManager.setValue(key, key === currentExpression ? expressionValue : 0); } catch {}
+        });
+      }
+
+      function updateBlink(dt) {
+        if (!vrm?.expressionManager) return;
+        blinkTimer += dt;
+        if (blinkTimer < blinkCooldown) {
+          vrm.expressionManager.setValue("blink", 0);
+        } else if (blinkTimer < blinkCooldown + BLINK_DURATION) {
+          vrm.expressionManager.setValue("blink",
+            Math.sin((blinkTimer - blinkCooldown) / BLINK_DURATION * Math.PI));
+        } else {
+          vrm.expressionManager.setValue("blink", 0);
+          blinkTimer    = 0;
+          blinkCooldown = 2 + Math.random() * 3;
+        }
+      }
+
+      const clock = new THREE.Clock();
+
+      function resizeRenderer() {
+        const s = getSize();
+        renderer.setSize(s.width, s.height, false);
+        camera.aspect = s.width / s.height;
+        camera.updateProjectionMatrix();
+      }
+      window.addEventListener("resize", resizeRenderer, { passive: true });
+
+      function tick() {
+        const dt      = clock.getDelta();
+        const elapsed = clock.elapsedTime;
+        updateBlink(dt);
+        updateExpression(dt);
+        camera.position.x = cameraOffsetX + Math.sin(elapsed * 0.45) * CAMERA_SWAY_X;
+        camera.lookAt(0, avatarHeadHeight, 0);
+        if (vrm) {
+          container.rotation.y = bodyYaw + Math.sin(elapsed * 0.35) * BODY_SWAY_RANGE;
+          if (vrm.expressionManager) {
+            if (lipsyncActive) {
+              const target = getMouthTarget();
+              mouthSmooth += (target - mouthSmooth) * (target > mouthSmooth ? 0.82 : 0.48);
+            } else {
+              mouthSmooth = 0;
+            }
+            try { vrm.expressionManager.setValue("aa", mouthSmooth); } catch {}
+          }
+          updateIdleSway(vrm, elapsed);
+          vrm.update(dt);
+        }
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+
+      resizeRenderer();
+      requestAnimationFrame(tick);
+    }
+
+    // ── Instantiate both avatars ──
+    let _avatarReadyCount = 0;
+    function _onAvatarReady() {
+      if (++_avatarReadyCount >= 2) window._triggerPlay?.();
+    }
+
+    // Male: left canvas — π+π/6 で内側（右方向）へ30°
+    const maleHooks = {};
+    createAvatar("canvasMale",   "../_vrm/VRM_male.vrm",
+                 Math.PI + Math.PI / 6,  // 30° inward (right) for left-side avatar
+                  0.06,                  // camera slightly right
+                  maleHooks, _onAvatarReady);
+
+    // Female: right canvas — π-π/6 で内側（左方向）へ30°
+    const femaleHooks = {};
+    createAvatar("canvasFemale", "../_vrm/VRM_female.vrm",
+                 Math.PI - Math.PI / 6,  // 30° inward (left) for right-side avatar
+                 -0.06,                  // camera slightly left
+                  femaleHooks, _onAvatarReady);
+
+    // ── Expose global hooks ──
+    window.__maleSetExpression   = (n) => maleHooks.setExpression?.(n);
+    window.__maleOnAudioStart    = ()  => maleHooks.onAudioStart?.();
+    window.__maleOnAudioStop     = ()  => maleHooks.onAudioStop?.();
+    window.__femaleSetExpression = (n) => femaleHooks.setExpression?.(n);
+    window.__femaleOnAudioStart  = ()  => femaleHooks.onAudioStart?.();
+    window.__femaleOnAudioStop   = ()  => femaleHooks.onAudioStop?.();
+  </script>
+</body>
+</html>

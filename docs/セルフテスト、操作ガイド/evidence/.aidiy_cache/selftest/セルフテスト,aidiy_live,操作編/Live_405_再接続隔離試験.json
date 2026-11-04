@@ -1,0 +1,32 @@
+{
+  "id": "Live_405",
+  "started_utc": "2026-11-03T07:10:22.676372+00:00",
+  "command": "node --test --test-reporter=tap frontend_ide/checks/panel-recovery.test.mjs",
+  "exit_code": 0,
+  "test_sha256_before": "071fa2a1bf1b3aaec1847212644a3f088384c08136a382d7d9cb10716f135549",
+  "test_sha256_after": "071fa2a1bf1b3aaec1847212644a3f088384c08136a382d7d9cb10716f135549",
+  "network": "Environment.api/saveModel、Connection、WebSocket、fetch、Audioはメモリ内fixture。実protocolは模擬socketFactoryを使用。esbuild write:false。",
+  "ai_sends": 0,
+  "real_microphone_use": false,
+  "user_data_changes": false,
+  "source_changes": false,
+  "runtime_ui_test": false,
+  "tests": 17,
+  "pass": 17,
+  "fail": 0,
+  "skip": 0,
+  "cancelled": 0,
+  "mapping": {
+    "1-3": "models/socket/sessionModels失敗: 会話・下書き保持、接続/実行/マイク/選択フラグOFF、エラー表示、資源終了",
+    "5-6": "実protocol＋模擬socketでinput→0、0→audio初期化途中切断: 保持と全socket終了",
+    "15": "非表示/再表示: 会話・下書き保持、mic停止、自動再開なし",
+    "4,7,8": "通常接続失敗・再接続成功後の通常切断への回帰",
+    "14": "Live下書き公開APIの追記/古い宛先拒否",
+    "9-13,16-17": "同一ファイル内の解析保存・Code下書き回帰。Live実機確認へ流用しない"
+  },
+  "not_covered": [
+    "実機のモデル変更後の外部サービス失敗・復旧",
+    "実マイク/音声デバイス",
+    "OS窓の非表示・再表示"
+  ]
+}

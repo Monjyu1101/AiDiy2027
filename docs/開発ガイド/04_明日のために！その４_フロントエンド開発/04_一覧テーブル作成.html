@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 一覧テーブル作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="03_ルーティング設定.html">前へ: 03_ルーティング設定</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_一覧画面作成.html">次へ: 05_一覧画面作成</a>
+  </nav>
+
+  <h1>04_一覧テーブル作成</h1>
+  <p>一覧テーブルは表示専用コンポーネントとして分離します。検索・ソート・ページングをここで扱います。</p>
+
+  <h2>対象ファイル</h2>
+  <p><code>workspace/AiDiy2027/frontend_web/src/components/Mマスタ/M商品/components/M商品一覧テーブル.vue</code></p>
+
+  <h2>主な処理</h2>
+  <ul>
+    <li><code>POST /apps/V商品/一覧</code> で一覧データを取得</li>
+    <li>列定義（商品ID、商品名、単位、商品備考、更新日時、更新利用者名）</li>
+    <li>フィルタ・ソート・ページング計算</li>
+    <li>商品IDクリックで編集画面へ遷移</li>
+    <li><strong>件数制限・無効も表示 を props で受け取りAPIリクエストへ含める</strong></li>
+    <li><strong>有効列表示 props に応じて「有効」列を動的に追加する</strong></li>
+  </ul>
+
+  <h2>参照コード</h2>
+  <p>以下は <code>code_samples/M商品一覧テーブル.vue</code> の内容です。</p>
+  <pre data-src="code_samples/M商品一覧テーブル.vue"><code>読み込み中...</code></pre>
+
+  <h2>設計ポイント</h2>
+  <table>
+    <tr><th>観点</th><th>要点</th></tr>
+    <tr><td>データ取得</td><td>エラー時はmessageに集約して表示</td></tr>
+    <tr><td>再利用性</td><td>一覧親から <code>loadData</code> を呼べるよう expose</td></tr>
+    <tr><td>遷移導線</td><td>IDリンクで商品IDクエリ付き遷移</td></tr>
+    <tr><td>件数制限</td><td>props.件数制限 をAPIボディに含める。ONで最大1000件、OFFで全件</td></tr>
+    <tr><td>無効も表示</td><td>props.無効も表示 をAPIボディに含める。OFFで有効レコードのみ取得</td></tr>
+    <tr><td>有効列の動的表示</td><td>props.有効列表示 がONのとき columns に「有効」列を splice で挿入する</td></tr>
+  </table>
+
+  <h2>件数制限・無効も表示の props 定義と API 呼び出し（実装必須）</h2>
+  <p>
+    一覧テーブルコンポーネントは親から <code>件数制限</code>、<code>無効も表示</code>、<code>有効列表示</code> を受け取ります。
+    実際の実装は <code>C利用者一覧テーブル.vue</code> を参照してください。
+  </p>
+
+  <h3>props 定義</h3>
+  <pre><code>&lt;script setup lang="ts"&gt;
+const props = defineProps({
+  件数制限: { type: Boolean, default: true },
+  無効も表示: { type: Boolean, default: false },
+  有効列表示: { type: Boolean, default: false },
+  URLメニュー:    { type: String,  default: '' }
+});
+&lt;/script&gt;</code></pre>
+
+  <h3>列定義への「有効」列の動的追加</h3>
+  <pre><code>const columns = computed&lt;Column[]&gt;(() =&gt; {
+  const baseColumns: Column[] = [
+    { key: '商品ID',       label: '商品ID',       width: '100px', sortable: true, align: 'center' },
+    { key: '商品名',       label: '商品名',        width: '200px', sortable: true },
+    { key: '単位',         label: '単位',          width: '80px',  sortable: true },
+    { key: '商品備考',     label: '商品備考',      width: '250px', sortable: true },
+    { key: '更新日時',     label: '更新日時',      width: '160px', sortable: true },
+    { key: '更新利用者名', label: '更新利用者名',  width: '130px', sortable: true }
+  ];
+
+  // 無効も表示がONのとき「有効」列を挿入する（備考列の後ろなど任意位置でOK）
+  if (props.有効列表示) {
+    baseColumns.splice(4, 0, {
+      key: '有効', label: '有効', width: '60px', sortable: true, align: 'center'
+    });
+  }
+
+  return baseColumns;
+});</code></pre>
+
+  <h3>API 呼び出し（件数制限・無効も表示をリクエストボディへ含める）</h3>
+  <pre><code>const loadData = async () =&gt; {
+  try {
+    const res = await apiClient.post('/apps/V商品/一覧', {
+      件数制限: props.件数制限,
+      無効も表示: props.無効も表示
+    });
+    if (res.data.status === 'OK') {
+      const data = res.data.data;
+      const items = Array.isArray(data) ? data : data?.items ?? [];
+      rows.value = items;
+      serverTotal.value = Array.isArray(data) ? items.length : Number(data?.total ?? items.length);
+      currentPage.value = 1;
+    }
+  } catch (e) {
+    // エラー処理
+  }
+};
+
+defineExpose({ loadData });</code></pre>
+
+  <h3>「有効」列のセル描画</h3>
+  <p>
+    有効フラグは boolean 値なので、チェックボックス表示コンポーネント（<code>qBooleanCheckbox</code>）を使います。
+  </p>
+  <pre><code>&lt;template #cell="{ row, column, value }"&gt;
+  &lt;template v-if="column.key === '有効'"&gt;
+    &lt;qBooleanCheckbox :checked="Boolean(row.有効)" ariaLabel="有効状態" /&gt;
+  &lt;/template&gt;
+  &lt;template v-else&gt;
+    {{ value ?? '' }}
+  &lt;/template&gt;
+&lt;/template&gt;</code></pre>
+
+  <h2>AGENTS準拠メモ</h2>
+  <ul>
+    <li>API通信は <code>workspace/AiDiy2027/frontend_web/src/api/client.ts</code> の <code>apiClient</code> を使う</li>
+    <li>一覧表示は <code>workspace/AiDiy2027/frontend_web/src/components/_share/qTublerFrame.vue</code> の利用を前提にする</li>
+    <li><code>&lt;script setup lang="ts"&gt;</code> で記述し、Composition APIに統一する</li>
+    <li><strong>件数制限・無効も表示・有効列表示 は必ず props で受け取る（一覧画面側で定義）</strong></li>
+    <li><strong>「有効」列は <code>computed</code> 内で <code>splice</code> により動的挿入する</strong></li>
+    <li><strong>boolean フィールドのセルは <code>qBooleanCheckbox</code> で描画する</strong></li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] APIから一覧が表示される</li>
+    <li>[ ] フィルタ/ソートが動作する</li>
+    <li>[ ] IDクリックで編集画面へ遷移する</li>
+    <li>[ ] 件数制限 props がAPIリクエストに含まれている</li>
+    <li>[ ] 無効も表示 props がAPIリクエストに含まれている</li>
+    <li>[ ] 有効列表示 props がONのとき「有効」列が表示される</li>
+    <li>[ ] 有効列表示 props がOFFのとき「有効」列が表示されない</li>
+  </ul>
+
+  <nav>
+    <a href="03_ルーティング設定.html">前へ: 03_ルーティング設定</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_一覧画面作成.html">次へ: 05_一覧画面作成</a>
+  </nav>
+</body>
+</html>
+

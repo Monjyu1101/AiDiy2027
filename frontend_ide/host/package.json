@@ -1,0 +1,184 @@
+{
+  "name": "aidiy-code",
+  "displayName": "AiDiy Code",
+  "icon": "media/AiDiy.png",
+  "description": "AIコアに接続し、各 Code CLI を選択して右サイドバーでコード支援チャットを提供します。",
+  "version": "0.1.0",
+  "publisher": "aidiy",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monjyu1101/AiDiy2027.git",
+    "directory": "frontend_ide/host"
+  },
+  "engines": {
+    "vscode": "^1.106.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "aidiy",
+    "hermes",
+    "chat"
+  ],
+  "main": "./dist/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Hermes はワークスペース内で CLI とツールを実行します。"
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "ローカルファイルと CLI の実行環境が必要です。"
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "aidiy-code",
+          "title": "AiDiy Code",
+          "icon": "media/AiDiy.png"
+        }
+      ]
+    },
+    "views": {
+      "aidiy-code": [
+        {
+          "type": "webview",
+          "id": "aidiyHermes.chat",
+          "name": "AiDiy Code"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "aidiyHermes.open",
+        "title": "チャットを開く",
+        "category": "AiDiy Code"
+      },
+      {
+        "command": "aidiyHermes.newChat",
+        "title": "新しい会話",
+        "category": "AiDiy Code",
+        "icon": "$(add)"
+      },
+      {
+        "command": "aidiyHermes.attachSelection",
+        "title": "選択コードをチャットに添付",
+        "category": "AiDiy Code"
+      },
+      {
+        "command": "aidiyHermes.settings",
+        "title": "設定を開く",
+        "category": "AiDiy Code",
+        "icon": "$(settings-gear)"
+      },
+      {
+        "command": "aidiyHermes.terminal",
+        "title": "対話 CLI を開く",
+        "category": "AiDiy Code"
+      },
+      {
+        "command": "aidiyHermes.logs",
+        "title": "実行ログを開く",
+        "category": "AiDiy Code"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "aidiyHermes.settings",
+          "when": "view == aidiyHermes.chat",
+          "group": "aidiy"
+        },
+        {
+          "command": "aidiyHermes.attachSelection",
+          "when": "view == aidiyHermes.chat",
+          "group": "aidiy"
+        },
+        {
+          "command": "aidiyHermes.logs",
+          "when": "view == aidiyHermes.chat",
+          "group": "aidiy"
+        },
+        {
+          "command": "aidiyHermes.terminal",
+          "when": "view == aidiyHermes.chat",
+          "group": "aidiy"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "aidiyHermes.attachSelection",
+          "when": "editorHasSelection",
+          "group": "aidiy"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "AiDiy Code",
+      "properties": {
+        "aidiyHermes.cliPath": {
+          "type": "string",
+          "default": "aidiy_hermes",
+          "scope": "machine",
+          "description": "未接続時のチャット実行と「対話 CLI」に使う Hermes 実行ファイルまたは cli_main.py のパス。接続済みのチャットはAIコア経由。"
+        },
+        "aidiyHermes.pythonPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "cli_main.py を直接指定する場合の Python。空欄では隣接する .venv を利用します。"
+        },
+        "aidiyHermes.provider": {
+          "type": "string",
+          "default": "",
+          "description": "AIコアのコードAI名（copilot_cli、codex_cli、aidiy_hermes 等）。空欄はAIコアの既定設定。"
+        },
+        "aidiyHermes.model": {
+          "type": "string",
+          "default": "",
+          "description": "選択したコードAIのモデル。aidiy_hermes は openai_oauth/gpt-6.1-sol のように指定。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "live": "node aidiy_live/launch.mjs",
+    "live:browser": "node aidiy_live/launch.mjs --browser",
+    "live:check": "tsc --noEmit -p aidiy_live/tsconfig.json",
+    "live:compile": "node aidiy_live/build.mjs",
+    "live:test": "node aidiy_live/test.mjs",
+    "check": "tsc --noEmit && tsc --noEmit -p aidiy_live/tsconfig.json",
+    "compile": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs",
+    "vscode:prepublish": "npm run check && npm run compile",
+    "package": "node scripts/package.mjs",
+    "code": "node aidiy_code/launch.mjs",
+    "code:browser": "node aidiy_code/launch.mjs --browser"
+  },
+  "dependencies": {
+    "undici": "^7.30.1"
+  },
+  "overrides": {
+    "@vscode/vsce": {
+      "minimatch": "11.0.3"
+    }
+  },
+  "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.0.0",
+    "@types/vscode": "1.106.0",
+    "@vscode/vsce": "^4.0.0",
+    "electron": "^44.7.0",
+    "esbuild": "^0.25.0",
+    "markdown-it": "^14.1.0",
+    "typescript": "^5.9.0"
+  }
+}

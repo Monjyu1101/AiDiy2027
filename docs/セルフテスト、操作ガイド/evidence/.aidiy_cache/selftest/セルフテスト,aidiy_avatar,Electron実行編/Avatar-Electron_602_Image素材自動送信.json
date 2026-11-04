@@ -1,0 +1,57 @@
+{
+  "id": "Avatar-Electron_602",
+  "date": "2026-11-03",
+  "mode": "Avatar Electron Image / AiDiy Live Capture",
+  "session": "0062f50336",
+  "provider": "openai_live",
+  "model": "gpt-realtime-2.1-mini",
+  "voice": "marin",
+  "asset": "evidence/_work_records/selftest-20261102/test-assets/shapes-731.png",
+  "asset_sha256": "9cf400aea87208604f25ac4f2f57d558e0e9ad3b99008c3056bfdd373de1601a",
+  "selection_count": 1,
+  "core_image_input_count": 1,
+  "question_sends": 1,
+  "question": "この画像の図形の色と形、書かれた文字を簡潔に教えてください。",
+  "reply": "いいですね！左から順番に、赤い丸、青い四角、緑の三角形が描かれています。その下に「TEST 731」と書かれています。とてもシンプルな構成ですね。",
+  "preview_after_selection": "赤円・青四角・緑三角・TEST 731を実画面確認",
+  "auto_resend": "経過=切を実画面確認。画像入力ログ1件",
+  "result": "PASS: 画像選択・初回自動入力・表示・確認質問返信",
+  "observation_capture": "最新承認後の観察成功。拒否なし",
+  "log_lines": [
+    "18:00:12 - core_router.AIコア       - INFO     - 画像保存完了 (0062f50336): <USERPROFILE>\\Desktop\\AiDiy2027_dev\\backend_server\\temp\\input\\20261103.180012.image.png",
+    "18:00:12 - AIコア.AIライブ          - INFO     - [Live] 画像入力: format=jpeg size=unknownbytes (0062f50336)",
+    "18:01:02 - core_router.AIコア       - INFO     - LiveAIテキスト送信完了: socket=0062f50336"
+  ],
+  "source_changes": false,
+  "settings_changes": false,
+  "previous_attempt": "前回は画像1件/質問0、観察拒否で部分確認。今回の明示承認後結果と混同しない",
+  "data_scope": "公開図形画像と短い確認質問。通常Liveの既存プロジェクト指示。個人画像・マイク・カメラ不使用",
+  "voice_report": "Edge Nanami ratio1.2 serial complete",
+  "limit": "空テキストの画像入力だけでは返信を発火せず、通常テキスト質問1回で認識応答を確認。全モデル/全形態へ拡張しない",
+  "final_services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  },
+  "cleanup": "Image/会話/Core/認証窓を通常UIで終了。窓一覧Avatarなし"
+}

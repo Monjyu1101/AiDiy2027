@@ -1,0 +1,26 @@
+[project]
+name = "aidiy-backend-local"
+version = "0.1.0"
+description = "HuggingFace Gemma モデルを OpenAI / ChatGPT 互換 API で提供するローカル推論サーバー"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    # Gemma 4 対応版を使い、古い tokenizers への依存解決を防ぐ。
+    "transformers>=5.5,<6",
+    "torch",
+    "accelerate",
+    # tokenizers が対応する Hub 1 系に揃える。
+    "huggingface-hub>=1.5,<2",
+    "sentencepiece",
+    "protobuf",
+    "pillow",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

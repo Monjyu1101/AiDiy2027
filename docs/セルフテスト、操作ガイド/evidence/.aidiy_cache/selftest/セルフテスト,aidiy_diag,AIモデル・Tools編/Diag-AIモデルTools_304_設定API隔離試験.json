@@ -1,0 +1,20 @@
+{
+  "date": "2026-11-03T07:27:17.207839+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "backend_diag/checks/tools-settings-api.check.mjs"
+  ],
+  "exit_code": 0,
+  "scope": "in-memory injected reader/requestFn only; actual Tools permission settings unchanged",
+  "external_requests": 0,
+  "counts": {
+    "tests": 10,
+    "pass": 10,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "tap_sha256": "b4f35ae96f1727ca934a94d1ad29e226b5e9f893cc6eaca11b83bb786c81d09c"
+}

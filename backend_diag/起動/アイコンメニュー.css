@@ -1,0 +1,34 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* Diagアイコンの右クリックメニュー: 常時展開・2列・コンパクト表示。 */
+*{box-sizing:border-box}
+html,body{margin:0;background:transparent;color:#edf4ff;font:12px/1.5 "Segoe UI","Yu Gothic UI",sans-serif;height:100%;overflow:hidden}
+main{display:flex;flex-direction:column;margin:6px;background:linear-gradient(140deg,#182638fa,#0b1220fc 70%);border:1px solid #91cfff35;border-radius:12px;box-shadow:0 5px 12px #0005,inset 0 1px 0 #c3e8ff12;overflow:hidden;animation:appear .16s ease-out}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;text-align:left}
+button:focus-visible{outline:2px solid #7ed5ff;outline-offset:-2px}button:active{transform:scale(.98)}
+.main{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid #91cfff20}
+header{display:flex;align-items:center;gap:6px;flex-shrink:0}header strong{font-size:14px;font-weight:600}
+.brand{display:grid;place-items:center;width:25px;height:25px;border-radius:8px;color:#b8ebff;background:linear-gradient(135deg,#326b80,#252748);border:1px solid #a9dfff40;font-size:16px;font-weight:600}
+header small,.caption,footer,.dot,.size-icon{display:none}
+.sizes{display:flex;gap:5px;margin-left:auto}.sizes button{padding:6px 8px;font-size:11px;white-space:nowrap;border-radius:8px;background:#b2d4ff06;border:1px solid #b2d4ff15}.sizes button:hover{background:#78c9ff16;border-color:#78c9ff65}
+.close{display:flex;align-items:center;padding:6px 3px;gap:4px;font-size:10px;white-space:nowrap;border-radius:7px;color:#a6b7c9}.close span{font-size:17px;line-height:16px}.close:hover{background:#fa789d13;color:#ffa7bb}
+.apps{padding:9px 7px 7px;min-width:0}.apps-head{display:flex;align-items:center;justify-content:space-between;padding:0 5px 5px}.apps-head strong{font-size:11px;font-weight:600}.apps-head small{display:none}.count{font:10px monospace;color:#91c9eb;border:1px solid #78c8f32d;border-radius:7px;padding:1px 5px}
+.app-list{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3px;max-height:calc(100vh - 100px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#344c63 transparent}.column-title{font-size:9px;letter-spacing:.5px;color:#8ca9bf;padding:1px 5px 4px}.app-column+.app-column{border-left:1px solid #91cfff20;padding-left:4px}
+.app-list button{display:flex;align-items:center;gap:6px;width:100%;height:32px;min-height:32px;padding:4px 5px;border-radius:7px;font-size:12px}.app-list button:hover,.app-list button:focus-visible{background:linear-gradient(100deg,#6bbdff22,#8c93fc0d)}.app-list img{width:24px;height:24px;flex-shrink:0;object-fit:contain;filter:drop-shadow(0 2px 3px #0004)}.app-list button span:not(.launch-arrow){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.launch-arrow{display:none}
+@keyframes appear{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){main{animation:none}}
+
+/* 2列の余白をさらに約30%削減。 */
+.main{gap:4px;padding:8px 6px}header{gap:4px}header strong{font-size:12px}.brand{width:20px;height:20px;font-size:13px;border-radius:6px}.sizes{gap:3px}.sizes button{padding:5px 5px;font-size:10px}.close{padding:5px 1px;font-size:9px;gap:2px}.close span{font-size:14px}
+.apps{padding:8px 4px 6px}.apps-head{padding:0 3px 5px}.app-list{gap:2px}.column-title{padding:1px 3px 4px}.app-column+.app-column{padding-left:2px}.app-list button{padding:4px 3px;gap:4px;font-size:11px}.app-list img{width:22px;height:22px}
+
+/* OSのAcrylic / Vibrancyで背後の窓をぼかし、文字は不透明に保つ。 */
+.glass main{background:linear-gradient(135deg,#2a405d88,#101c30a8 70%);border-color:#d5edff55;box-shadow:inset 0 1px 0 #ffffff30,inset 0 0 22px #b9dcff08,0 5px 12px #0003}
+.glass .main{background:linear-gradient(110deg,#d2eeff12,transparent);border-bottom-color:#cfebff2a}.glass .app-column+.app-column{border-left-color:#d2eaff26}.glass .column-title{color:#b0c7db}.glass .sizes button{background:#c4e5ff0d;border-color:#c4e5ff25}.glass .app-list button:hover{background:linear-gradient(100deg,#9fdcff30,#bbc4ff14)}
+.glass main{margin:0;min-height:100vh;background:linear-gradient(135deg,#243b589c,#101c30b5 70%)}
+
+header strong{font-size:11px;white-space:nowrap;letter-spacing:0}.main{gap:3px}.sizes button{padding:5px 4px}
+
+.app-list button:disabled{opacity:.55;cursor:not-allowed;background:none;transform:none}

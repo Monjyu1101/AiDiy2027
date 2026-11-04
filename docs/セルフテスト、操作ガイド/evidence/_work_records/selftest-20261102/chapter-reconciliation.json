@@ -1,0 +1,143 @@
+{
+  "rows": 85,
+  "pending_atomic_case_count": null,
+  "reason": "chapters contain multiple conditions; no fixed atomic case inventory",
+  "changes": [
+    {
+      "book": "avatar / Electron実行編",
+      "chapter": "3. Liveで会話する",
+      "before": {
+        "book": "avatar / Electron実行編",
+        "chapter": "3. Liveで会話する",
+        "actual": "OpenAI gpt-realtime-2.1-miniへ切替後テキスト1回送信・画面返信確認",
+        "remaining": "実マイク。FreeAI原因追及は対象外、利用可能なOpenAIで確認する手順へ整理"
+      },
+      "after": {
+        "book": "avatar / Electron実行編",
+        "chapter": "3. Liveで会話する",
+        "actual": "OpenAI文字返信確認に加え、Avatar Electron Live入力へ公開図形PNGを実OSドラッグで1添付・1質問し色形文字の認識成功。image-attachment-results.json参照",
+        "remaining": "実マイク、Avatar Webその他形態、Image窓自動送信は未確認。FreeAI原因追及は残件対象外"
+      }
+    },
+    {
+      "book": "browser / 操作編",
+      "chapter": "4. URLと画像をCode／Liveへ渡す",
+      "before": {
+        "book": "browser / 操作編",
+        "chapter": "4. URLと画像をCode／Liveへ渡す",
+        "actual": "既存下書き試験を参照",
+        "remaining": "両宛先・画像有無・60秒境界・失敗時の現行実機"
+      },
+      "after": {
+        "book": "browser / 操作編",
+        "chapter": "4. URLと画像をCode／Liveへ渡す",
+        "actual": "同一プロジェクトの単独Electron Code（offline）とLive（未接続）へ、画像なしsession/tab_id/ローカルURLを各1回追加し入力欄を目視確認。AI送信0",
+        "remaining": "画像付きの両宛先、60秒境界、失敗時、既存非空下書き保持の現行実機。過去・自動試験とは区別"
+      }
+    },
+    {
+      "book": "code / 操作編",
+      "chapter": "2. 画像を添付する",
+      "before": {
+        "book": "code / 操作編",
+        "chapter": "2. 画像を添付する",
+        "actual": "過去Web添付結果のみ",
+        "remaining": "安全素材と送信範囲、実OSドラッグ"
+      },
+      "after": {
+        "book": "code / 操作編",
+        "chapter": "2. 画像を添付する",
+        "actual": "Code単独Electron、codex_cli/gpt-6.1-sol。公開図形PNGの実OSドラッグ・プレビュー・1質問・認識成功。image-attachment-results.json",
+        "remaining": "VS Code/--browser等の画像添付、他モデル条件は今回未確認"
+      }
+    },
+    {
+      "book": "live / 操作編",
+      "chapter": "2. 画像を添付する",
+      "before": {
+        "book": "live / 操作編",
+        "chapter": "2. 画像を添付する",
+        "actual": "過去OpenAI Web添付結果のみ",
+        "remaining": "送信許可・素材、Gemini／FreeAI画像"
+      },
+      "after": {
+        "book": "live / 操作編",
+        "chapter": "2. 画像を添付する",
+        "actual": "Live単独Electron、openai_live/gpt-realtime-2.1-mini。公開図形PNGの実OSドラッグ・プレビュー・1質問・認識成功。image-attachment-results.json",
+        "remaining": "VS Code/--browser等の画像添付、Gemini/FreeAI画像は今回未確認"
+      }
+    },
+    {
+      "book": "ide / 操作編",
+      "chapter": "2. エクスプローラー",
+      "before": {
+        "book": "ide / 操作編",
+        "chapter": "2. エクスプローラー",
+        "actual": "検索・軌跡・比較等の局所実画面",
+        "remaining": "Word／Excel素材、AI検索、コピー削除・一括PDF等の書込操作"
+      },
+      "after": {
+        "book": "ide / 操作編",
+        "chapter": "2. エクスプローラー",
+        "actual": "検索・軌跡・比較に加え、IDE Electron offlineで専用Word/Excelのページ・シート切替、専用素材コピー/取消/ごみ箱/一括PDF2件を実機確認。通常AiDiy検索は承認済み全プロジェクトと共有文脈で1依頼、3文書の参照・本文・履歴を照合",
+        "remaining": "通常AI検索の全体走査タイムアウトによる網羅性は未確認。Officeの他複雑形式、別実行形態、未記録の操作条件を一括合格にしない"
+      }
+    },
+    {
+      "book": "diag / システム起動編",
+      "chapter": "1. 一括起動する",
+      "before": {
+        "book": "diag / システム起動編",
+        "chapter": "1. 一括起動する",
+        "actual": "承認された復旧時に5サーバー起動",
+        "remaining": "全設定条件の再試験"
+      },
+      "after": {
+        "book": "diag / システム起動編",
+        "chapter": "1. 一括起動する",
+        "actual": "初回一括起動FAILを修正後、同じ5サーバーの正式一括起動全行程を実機PASS。個別起動補助なし、TCP/HTTP200、Web自動表示を確認。bulk-recheck.json",
+        "remaining": "Local、全設定組合せ、障害強制注入・全クライアント再接続は未確認"
+      }
+    },
+    {
+      "book": "diag / システム起動編",
+      "chapter": "2. 強制停止する",
+      "before": {
+        "book": "diag / システム起動編",
+        "chapter": "2. 強制停止する",
+        "actual": "cleanup／承認復旧の停止は章試験と別",
+        "remaining": "章手順通し未確認"
+      },
+      "after": {
+        "book": "diag / システム起動編",
+        "chapter": "2. 強制停止する",
+        "actual": "正式な強制停止で5ポート閉鎖を確認後、一括起動による5系統復旧まで実機PASS。bulk-recheck.json",
+        "remaining": "Local、実行中業務処理の停止、全障害条件は今回対象外"
+      }
+    },
+    {
+      "book": "diag / システム起動編",
+      "chapter": "4. チェックを付けてWeb画面を開く",
+      "before": {
+        "book": "diag / システム起動編",
+        "chapter": "4. チェックを付けてWeb画面を開く",
+        "actual": "復旧時自動Web窓を片付け",
+        "remaining": "チェック保存含む章通し未確認"
+      },
+      "after": {
+        "book": "diag / システム起動編",
+        "chapter": "4. チェックを付けてWeb画面を開く",
+        "actual": "修正後一括起動でWeb20秒安定確認と自動Chromeのログイン画面表示を実機確認。専用窓通常終了",
+        "remaining": "チェック設定変更・保存を含む全組合せは未確認"
+      }
+    }
+  ],
+  "common_table_additional_rows_synced": [
+    6,
+    25,
+    27,
+    30
+  ],
+  "note": "Browser基本操作、Hermes起動終了、IDE複数projectと--browserの後続証拠も既存JSONと共通表で整合。Avatar第2章は既存の窓移動記録を保持し表現差のみ。",
+  "current_authority": "2026-11-03: 22冊の末尾「証拠照合と残る確認」。旧changesは変更履歴であり現行残件ではない。"
+}

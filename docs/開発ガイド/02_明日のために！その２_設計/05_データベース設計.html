@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 データベース設計</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="04_内部設計_ビジネスロジック.html">前へ: 04_内部設計_ビジネスロジック</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_設計から実装への流れ.html">次へ: 06_設計から実装への流れ</a>
+  </nav>
+
+  <h1>05_データベース設計</h1>
+  <p>DB設計は、画面項目とAPI項目の最終的な受け皿です。ここでは M商品 テーブル設計と運用前提を整理します。</p>
+
+  <h2>テーブル方針</h2>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>テーブル名</td><td><code>M商品</code></td></tr>
+    <tr><td>主キー</td><td><code>商品ID</code></td></tr>
+    <tr><td>DB種別</td><td>SQLite</td></tr>
+    <tr><td>文字コード</td><td>UTF-8</td></tr>
+  </table>
+
+  <h2>業務カラムと監査カラム</h2>
+  <ul>
+    <li>業務カラム: 商品ID、商品名、単位、商品分類ID、商品備考</li>
+    <li>監査カラム（登録）: 登録日時、登録利用者ID、登録利用者名、登録端末ID</li>
+    <li>監査カラム（更新）: 更新日時、更新利用者ID、更新利用者名、更新端末ID</li>
+  </ul>
+
+  <h2>制約設計の要点</h2>
+  <ol>
+    <li>商品IDは主キー（重複不可、NULL不可）</li>
+    <li>商品名・単位・商品分類IDは業務必須（NOT NULL）</li>
+    <li>監査カラムのID/日時/端末は必須</li>
+    <li>文字数上限はアプリケーション側でバリデーション</li>
+  </ol>
+
+  <h2>DB設計書サンプル（原本）</h2>
+  <p>以下は <code>code_samples/M商品_DB設計書.sql</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_DB設計書.sql"><code>読み込み中...</code></pre>
+
+  <h2>論理削除の設計原則</h2>
+  <p>このプロジェクトでは物理削除（DELETE文）を使用しません。削除はすべて<strong>論理削除</strong>で行います。</p>
+  <table>
+    <tr><th>項目</th><th>内容</th></tr>
+    <tr><td>削除フラグ</td><td>全テーブルに <code>有効</code> カラム（Boolean）を持つ</td></tr>
+    <tr><td><code>/削除</code> エンドポイントの実態</td><td><code>有効 = False</code> を設定するだけ（DELETEは発行しない）</td></tr>
+    <tr><td>デフォルト値</td><td>新規登録時は <code>有効 = True</code> で作成</td></tr>
+    <tr><td>一覧表示</td><td>デフォルトは <code>有効 = True</code> のレコードのみ返す</td></tr>
+    <tr><td>無効レコードの参照</td><td>リクエストの <code>無効も表示</code> フラグを <code>true</code> にすると有効・無効の両方を返す</td></tr>
+  </table>
+
+  <h3>有効カラムの DDL 定義例</h3>
+  <pre><code>有効 BOOLEAN NOT NULL DEFAULT 1</code></pre>
+
+  <h3>削除 API のロジック（実装例）</h3>
+  <pre><code># /削除 エンドポイントの処理（物理削除ではない）
+item.有効 = False
+# 更新監査フィールドも同時に更新する
+db.commit()</code></pre>
+
+  <h3>注意点</h3>
+  <ul>
+    <li>M系（マスタ）の一覧 API は <code>有効</code> フィルタを持たない（全件返す）。論理削除対応は V系・T系の一覧で行う。</li>
+    <li>削除済みレコードを画面に表示したい場合はリクエストに <code>"無効も表示": true</code> を付与する。</li>
+    <li>DB上からはレコードが消えないため、必要なら管理画面から復元（<code>有効 = True</code> に戻す）できる。</li>
+  </ul>
+
+  <h2>実装時の確認ポイント</h2>
+  <table>
+    <tr><th>確認項目</th><th>観点</th></tr>
+    <tr><td>DDL</td><td>設計書のカラム定義と一致しているか</td></tr>
+    <tr><td>有効カラム</td><td>全テーブルに <code>有効</code> カラムが存在するか</td></tr>
+    <tr><td>APIレスポンス</td><td>画面が必要な項目を不足なく返しているか</td></tr>
+    <tr><td>監査値</td><td>登録/更新で想定通り自動設定されるか</td></tr>
+    <tr><td>検索性能</td><td>一覧取得で必要に応じた索引設計を検討しているか</td></tr>
+  </table>
+
+  <nav>
+    <a href="04_内部設計_ビジネスロジック.html">前へ: 04_内部設計_ビジネスロジック</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_設計から実装への流れ.html">次へ: 06_設計から実装への流れ</a>
+  </nav>
+</body>
+</html>
+

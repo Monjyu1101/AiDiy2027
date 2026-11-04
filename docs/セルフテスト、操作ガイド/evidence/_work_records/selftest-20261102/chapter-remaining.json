@@ -1,0 +1,1410 @@
+[
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "1. ログインして操作ボタンを表示する",
+    "actual": "通常ログイン・12 WindowRoleの窓確認",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全表示選択・全起動条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "2. ChatとCodeで会話する",
+    "actual": "Chat実回答、Code1/codex_cli・Code6/aidiy_hermesの挨拶各1返信",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "添付・その他モデル条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "3. Liveで会話する",
+    "actual": "OpenAI文字返信確認に加え、Avatar Electron Live入力へ公開図形PNGを実OSドラッグで1添付・1質問し色形文字の認識成功。image-attachment-results.json参照",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実マイク、Avatar Webその他形態、Image窓自動送信は未確認。FreeAI原因追及は残件対象外",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "4. ファイルを探して中身を見る",
+    "actual": "File背景除外の修正・再試験、画像表示",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "編集削除は対象外、全形式は未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "5. 接続が切れたときと終了",
+    "actual": "通常終了",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "Core障害復旧の今回再試験",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "avatar / Electron実行編",
+    "chapter": "6. 追加テストと確認範囲",
+    "actual": "後半の長押し表・File修正結果参照",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_avatar,Electron実行編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "Image素材選択後・全表示モードなどの未確認を維持",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "image_followup": {
+      "result": "PASS: Image窓1画像/1質問・表示と返信一致",
+      "evidence": "Avatar-Electron_602_Image素材自動送信.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "1. Browserを開く・Webページを操作する",
+    "actual": "単独窓・履歴往復・安全なローカルHTML。再読込・停止・ホーム追加実機PASS、関連51件成功",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "この基本操作の追加残件なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "2. FHD・縦表示・全画面を切り替える",
+    "actual": "標準・全画面長押し、常時表示",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全DPI・全ページの網羅",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "3. 表示中のWeb画面を撮影する",
+    "actual": "既存撮影試験を参照、今回再試験と確定しない",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "現在版の撮影試験は既存結果と分離",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "4. URLと画像をCode／Liveへ渡す",
+    "actual": "同一プロジェクトの単独Electron Code（offline）とLive（未接続）へ、画像なしsession/tab_id/ローカルURLを各1回追加し入力欄を目視確認。AI送信0。追加で専用非空メモを両宛先で保持し、同一session/tab_id/file URL追記を各1回実画面確認。AI送信0 Browser_405: ローカルページ通常撮影1回、約21秒後Liveへ1回追加、実入力欄で画像パス・元メモ・URL一致。未接続/マイクOFF/AI未送信。",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "画像付きの両宛先、60秒境界、失敗時の現行実機。過去・自動試験とは区別",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "5. Browserを終了する",
+    "actual": "実演用窓の通常終了",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "MCP終了等の全経路",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "browser / 操作編",
+    "chapter": "6. 追加テスト",
+    "actual": "長押し、入力欄除外・解放",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_browser,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "追加試験全体の再実行なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "boundary_review": {
+      "date": "2026-11-03",
+      "boundary": "existing automated PASS, not mandatory new runtime test",
+      "live_image_draft": "Browser_405 standalone Electron実Live画像付き下書きPASS。以前の模擬受信との区別を維持。",
+      "new_capture": 0,
+      "transfer": 0,
+      "ai_sends": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "code / 操作編",
+    "chapter": "1. 起動して会話する",
+    "actual": "VS Code・単独--browser・単独Electronの各短い1応答",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_code,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "基本経路は確認済み。全モデル・異常条件は別判定",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "folder_race_review": {
+      "date": "2026-11-03",
+      "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+      "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+      "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+      "new_ai_requests": 0,
+      "runtime_tests": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "code / 操作編",
+    "chapter": "2. 画像を添付する",
+    "actual": "Code単独Electron、codex_cli/gpt-6.1-sol。公開図形PNGの実OSドラッグ・プレビュー・1質問・認識成功。image-attachment-results.json",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_code,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "VS Code/--browser等の画像添付、他モデル条件は今回未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "folder_race_review": {
+      "date": "2026-11-03",
+      "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+      "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+      "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+      "new_ai_requests": 0,
+      "runtime_tests": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "code / 操作編",
+    "chapter": "3. VS Code拡張で使う",
+    "actual": "空→フォルダ→閉じるガード。1応答。docs/knowledgeで新規会話切替、閉じた後の実入力抑止",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_code,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実行中の旧要求抑止は今回未実施",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "folder_race_review": {
+      "date": "2026-11-03",
+      "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+      "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+      "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+      "new_ai_requests": 0,
+      "runtime_tests": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "followups": [
+      {
+        "date": "2026-11-03",
+        "result": "実VS Code準備確認/送信前保留。隔離11PASS維持。自動承認レビュー拒否、AI0回。",
+        "evidence": "evidence\\.aidiy_cache\\selftest\\セルフテスト,aidiy_code,操作編\\Code_301_VSCode実機競合準備.json"
+      },
+      {
+        "date": "2026-11-03",
+        "result": "利用者指定で実VS Code競合試験は実施不要。残件除外、実機PASSではない。"
+      }
+    ],
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "code / 操作編",
+    "chapter": "4. 終了する",
+    "actual": "試験用窓通常終了、--browser配信の専用ポート閉鎖",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_code,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "異常終了条件は未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "folder_race_review": {
+      "date": "2026-11-03",
+      "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+      "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+      "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+      "new_ai_requests": 0,
+      "runtime_tests": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "code / 操作編",
+    "chapter": "5. 追加テストと確認範囲",
+    "actual": "標準背景長押し・入力／モデルボタン除外",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_code,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "新設形態表の未検証を維持",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "folder_race_review": {
+      "date": "2026-11-03",
+      "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+      "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+      "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+      "new_ai_requests": 0,
+      "runtime_tests": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "live / 操作編",
+    "chapter": "1. 起動・モデル選択・会話",
+    "actual": "単独Gemini挨拶、VS Code Gemini1返信、--browser Gemini1返信",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_live,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実マイク・接続中モデル変更",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "model_review": {
+      "date": "2026-11-03",
+      "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+      "ai_sends": 0,
+      "connection_changes": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "Live_405_followup": {
+      "type": "isolated automated",
+      "pass": 17,
+      "fail": 0,
+      "skip": 0,
+      "runtime_reconnect_failure": "未確認・実機誘発条件未定義",
+      "evidence": "Live_405_再接続隔離試験.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "live / 操作編",
+    "chapter": "2. 画像を添付する",
+    "actual": "Live単独Electron、openai_live/gpt-realtime-2.1-mini。公開図形PNGの実OSドラッグ・プレビュー・1質問・認識成功。image-attachment-results.json",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_live,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "VS Code/--browser等の画像添付、Gemini/FreeAI画像は今回未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "model_review": {
+      "date": "2026-11-03",
+      "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+      "ai_sends": 0,
+      "connection_changes": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "Live_405_followup": {
+      "type": "isolated automated",
+      "pass": 17,
+      "fail": 0,
+      "skip": 0,
+      "runtime_reconnect_failure": "未確認・実機誘発条件未定義",
+      "evidence": "Live_405_再接続隔離試験.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "live / 操作編",
+    "chapter": "3. VS Code拡張で使う",
+    "actual": "空／開く／閉じるガードとGemini文字応答。複数フォルダのknowledge表示と閉じた後の実入力抑止",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_live,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実マイク、接続中フォルダ変更の全競合",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "model_review": {
+      "date": "2026-11-03",
+      "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+      "ai_sends": 0,
+      "connection_changes": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "Live_405_followup": {
+      "type": "isolated automated",
+      "pass": 17,
+      "fail": 0,
+      "skip": 0,
+      "runtime_reconnect_failure": "未確認・実機誘発条件未定義",
+      "evidence": "Live_405_再接続隔離試験.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "live / 操作編",
+    "chapter": "4. 切断して終了する",
+    "actual": "単独と--browserの切断・終了・専用ポート閉鎖",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_live,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "接続中のモデル変更と復旧",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "model_review": {
+      "date": "2026-11-03",
+      "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+      "ai_sends": 0,
+      "connection_changes": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "Live_405_followup": {
+      "type": "isolated automated",
+      "pass": 17,
+      "fail": 0,
+      "skip": 0,
+      "runtime_reconnect_failure": "未確認・実機誘発条件未定義",
+      "evidence": "Live_405_再接続隔離試験.json"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "live / 操作編",
+    "chapter": "5. 追加テストと確認範囲",
+    "actual": "未接続背景長押し・入力除外",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_live,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "機器不足・全障害復旧",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "model_review": {
+      "date": "2026-11-03",
+      "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+      "ai_sends": 0,
+      "connection_changes": 0,
+      "settings_changes": 0,
+      "source_changes": 0
+    },
+    "Live_405_followup": {
+      "type": "isolated automated",
+      "pass": 17,
+      "fail": 0,
+      "skip": 0,
+      "runtime_reconnect_failure": "未確認・実機誘発条件未定義",
+      "evidence": "Live_405_再接続隔離試験.json"
+    },
+    "followups": [
+      {
+        "date": "2026-11-03",
+        "result": "ケース405:隔離17PASS維持。通常操作での失敗誘発条件未確定、実機未確認。新試験/AI0。",
+        "evidence": "evidence\\.aidiy_cache\\selftest\\セルフテスト,aidiy_live,操作編\\Live_405_実機再接続条件照合.json"
+      },
+      {
+        "date": "2026-11-03",
+        "result": "ユーザー指定により実機再接続失敗試験は実施不要・残件から除外。実機PASSではない。隔離17PASS維持。",
+        "evidence": "evidence\\_work_records\\selftest-20261102\\remaining-safe-review-20261103.json"
+      },
+      {
+        "date": "2026-11-03",
+        "result": "失敗解除後の復旧を追加隔離5PASS。実機失敗試験は利用者指定で不要。"
+      }
+    ],
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "console / 操作編",
+    "chapter": "1. Consoleを開く",
+    "actual": "標準窓移動・端末本文選択除外",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_console,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "任意CLI実行の網羅は本冊対象外",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "console / 操作編",
+    "chapter": "2. DiagからCLIを開く（Hermesの例）",
+    "actual": "HermesはConsole内のCLI",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_console,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全CLIの会話・操作",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "console / 操作編",
+    "chapter": "3. 追加テスト",
+    "actual": "長押しと解放",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_console,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "他OS・長時間運転",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "hermes / 操作編",
+    "chapter": "1. 起動",
+    "actual": "Console経由起動。正式単体CLIでWelcome・入力待ち確認",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_hermes,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "通常起動の追加残件なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "cli_conversation_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+      "request_count": 1,
+      "api_call_count": 1
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "hermes / 操作編",
+    "chapter": "2. 会話・モデル・コマンド",
+    "actual": "/help、/help model、/status",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_hermes,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "会話・モデル変更・他スラッシュコマンド",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "cli_conversation_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+      "request_count": 1,
+      "api_call_count": 1
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "hermes / 操作編",
+    "chapter": "3. 終了",
+    "actual": "実演用Console終了。単体CLI /quit→Goodbye→プロンプト、exit0",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_hermes,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "異常終了・処理中中断は別条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "cli_conversation_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+      "request_count": 1,
+      "api_call_count": 1
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "ide / 操作編",
+    "chapter": "1. 基本画面とVR",
+    "actual": "標準・Explorer・軌跡・Viewer・比較窓の移動",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "複数物理画面、全VR条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "ide / 操作編",
+    "chapter": "2. エクスプローラー",
+    "actual": "検索・軌跡・比較に加え、IDE Electron offlineで専用Word/Excelのページ・シート切替、専用素材コピー/取消/ごみ箱/一括PDF2件を実機確認。通常AiDiy検索は承認済み全プロジェクトと共有文脈で1依頼、3文書の参照・本文・履歴を照合",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "通常AI検索の全体走査タイムアウトによる網羅性は未確認。Officeの他複雑形式、別実行形態、未記録の操作条件を一括合格にしない",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "ide / 操作編",
+    "chapter": "3. 各ウィンドウ",
+    "actual": "TASK／TEAMのUI起動・固定・内部認証・ピン・再利用・終了。root/docs複数IDEでTASK/TEAM別窓・固定先・所有終了を実機確認。--browserのCode/Live画面内タブ再選択・利用終了確認",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全寿命競合は別条件。ブラウザ内Liveの新たな送信なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "ide / 操作編",
+    "chapter": "4. 終了",
+    "actual": "親子窓終了・取消・復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全寿命条件の実機",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "ide / 操作編",
+    "chapter": "5. 追加テストと確認範囲",
+    "actual": "長押し派生窓・比較修正・TASK／TEAM連携の追記参照",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全追加項目を再実行した結果ではない",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "1. 起動して接続する",
+    "actual": "--no-connect起動・未接続窓",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "接続・初回設定・自動接続の今回再試験",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "2. 専用チャンネルで話しかける",
+    "actual": "今回投稿なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "投稿先・内容・AI実行の許可",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "3. モデルを選び直す",
+    "actual": "モデルボタンでの移動除外、未接続の候補表示→Esc無変更復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "変更・保存・再接続",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "4. 切断・再接続・終了する",
+    "actual": "未接続試験窓の終了",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "接続中の切断・終了取消・再接続",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "5. 追加テスト",
+    "actual": "背景長押し・除外・解放",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実サービスコマンド、長い処理の中断",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "cancellation_evidence_review": {
+      "date": "2026-11-03T04:09:39.413616+00:00",
+      "scope": "read-only cancellation evidence audit",
+      "guide": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md",
+      "past_evidence": "Discord_503_待機中の停止.png",
+      "original_explicit_not_tested_line": 200,
+      "configured_destination_ids_available": true,
+      "specific_test_destination_and_content_approval_found": false,
+      "result": "投稿先/内容未指定のため未実施（保留）",
+      "posts": 0,
+      "ai_requests": 0,
+      "runtime_cancel_actions": 0,
+      "source_changes": 0,
+      "settings_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "discord / 操作編",
+    "chapter": "6. 音声会話",
+    "actual": "実音声は未テスト",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "音声機器・ボイス宛先・実行許可",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "slack / 操作編",
+    "chapter": "1. 起動して接続する",
+    "actual": "--no-connect起動・未接続窓",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "接続・初回設定・自動接続",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "slack / 操作編",
+    "chapter": "2. 専用チャンネルで話しかける",
+    "actual": "今回投稿なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "宛先・スレッド・内容・AI許可",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "slack / 操作編",
+    "chapter": "3. モデルを選び直す",
+    "actual": "ピン除外、未接続の候補表示→Esc無変更復帰。保存・変更なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "変更・保存・再接続",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "slack / 操作編",
+    "chapter": "4. 切断・再接続・終了する",
+    "actual": "未接続試験窓の終了",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "接続中の切断・終了取消・再接続",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "slack / 操作編",
+    "chapter": "5. 追加テスト",
+    "actual": "長押し・除外・解放",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "実コマンド、アイドリング実時間・長時間運転",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "cancellation_evidence_review": {
+      "date": "2026-11-03T04:09:39.419232+00:00",
+      "scope": "read-only cancellation evidence audit",
+      "guide": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md",
+      "past_evidence": "Slack_503_待機中の停止.png",
+      "original_explicit_not_tested_line": 213,
+      "configured_destination_ids_available": true,
+      "specific_test_destination_and_content_approval_found": false,
+      "result": "投稿先/内容未指定のため未実施（保留）",
+      "posts": 0,
+      "ai_requests": 0,
+      "runtime_cancel_actions": 0,
+      "source_changes": 0,
+      "settings_changes": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "1. 起動してログインする",
+    "actual": "通常ログイン、単独・IDE連携",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "認証の全異常条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "2. 要求を登録する",
+    "actual": "TK0001002を1件登録、編集描画修正再試験。2026-11-03専用TK00001003を通常UIで1件登録、既存要求不変",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全入力・更新条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "3. 実行と結果を確認する",
+    "actual": "TK0001002実行1回、完了・挨拶返信。2026-11-03 TK00001003：実行1回、3明細完了、SEQ1挨拶と画面/DB一致。codex_cli sol/luna",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "複雑なDAG・全モデル",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "4. 実行を中止する",
+    "actual": "2026-11-03専用TK00001005：90秒の有限待機を実行中に中止/OFF保存、自然終了前にTask/AI側8プロセス終了、状態保持。前回TK00001004完了先行と区別",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "今回有限条件はPASS。他モデル・全処理種類は未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "5. 開始条件を選ぶ",
+    "actual": "未登録画面の条件切替・キャンセル。専用TK00001006時間指定1回→OFF、TK00001008空フォルダ基準化→追加1個で1回→2周期再発火なし→OFFを単独Electronで確認。初回TK00001007の早期発火は限定修正後の再試験と区別",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "間隔・毎週・毎月・長時間の今回実機。監視再試験のstart明細バックアップ中止注意は別課題",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "6. 📌で最前面を維持する",
+    "actual": "単独／IDEピンと重なり",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全窓組合せ",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "7. 窓の開閉・ログアウト・終了",
+    "actual": "閉じた子窓の再表示・通常終了・ログアウト後認証画面。専用TK00001004の完了/実行有効OFFを保存、再ログイン後保持",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "障害復帰条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "task / 操作編",
+    "chapter": "8. 追加テストと確認範囲",
+    "actual": "要求編集黒表示修正の単独／IDE回帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "明細応答の全データ・他GPU",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "calendar_review": {
+      "date": "2026-11-03",
+      "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+      "conditions": 10,
+      "new_tests": 0,
+      "new_ai": 0,
+      "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "1. 起動してログインする",
+    "actual": "通常ログイン・IDE連携固定等",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全認証異常条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "2. 要員と空間を見る",
+    "actual": "3D背景・依頼パネル移動。公開AlanTuringを1名召喚し1会話後退場、既存4名保持",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全persona・全表示条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "3. 依頼する・会話する",
+    "actual": "TR00001001でFAIL、修正後TR00001002を1回登録しTask/Team完了・do明細の挨拶確認。専用公開persona会話1回、挨拶実返信確認",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "中止の今回再試験・全会話条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "4. 目標と有限サイクルを設定する",
+    "actual": "掲示板読取、両停止・PlanDo1回・2人。保存なし。別専用目標でSPDCA相談1名・自動作業OFF・1周保存。S/P/D/C/A済、自動OFF、2周目なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "Cは挨拶原文未引継ぎで判断不能。内容評価と全パターン・複数周期は未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "followup_20261103_team_raw": {
+      "result": "原文引継ぎ修正PASS。D実明細とC実入力一致、Cが二文条件未達を具体評価。専用1周自動OFF、2周目なし。",
+      "evidence": ".aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_405_D原文引継ぎ.json",
+      "scope": "Windows単独Electron、SPDCA相談1名・1周、追加全パターン試験なし"
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "5. 📌で最前面を維持する",
+    "actual": "IDE連携ピン・重なり",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "単独ピン全条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "6. ログアウト・終了・再起動",
+    "actual": "単独終了・IDE所有窓終了・最小化復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "保存された業務状態の再起動復元",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "team / 操作編",
+    "chapter": "7. 追加テストと確認範囲",
+    "actual": "長押し・IDE連携記録参照",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "依頼内容・応答窓の全条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "1. 標準ランチャー画面を使う",
+    "actual": "通常表示復帰。2026-11-03 標準アプリ起動タブ・既存../表示・19アイコン確認、Console1回起動→ルートcwdプロンプト→通常終了→Diagミニ復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "第1章基本導線の追加残件なし。全19アプリ起動は第6章と分離",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "2. ミニ表示にする",
+    "actual": "330px・6列・40px・125%実窓414px",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全倍率での実Electron",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "3. アイコン表示に収納する",
+    "actual": "収納と移動",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全タイミング",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "4. アイコンを展開する",
+    "actual": "ダブルクリック修正後復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全競合タイミング",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "5. 右クリックメニューを使う",
+    "actual": "19項目一覧・Esc・ミニ復帰",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全19アプリ起動・終了選択は未実施",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "6. ミニランチャーから順に起動する",
+    "actual": "各対象の必要時起動",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "19項目一巡の今回再試験",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / ランチャー編",
+    "chapter": "7. 追加テスト",
+    "actual": "15fixture・116件と実窓結果を分離",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,ランチャー編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "追加項目全体の再実行なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / システム起動編",
+    "chapter": "1. 一括起動する",
+    "actual": "初回一括起動FAILを修正後、同じ5サーバーの正式一括起動全行程を実機PASS。個別起動補助なし、TCP/HTTP200、Web自動表示を確認。bulk-recheck.json",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,システム起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "Local、全設定組合せ、障害強制注入・全クライアント再接続は未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / システム起動編",
+    "chapter": "2. 強制停止する",
+    "actual": "正式な強制停止で5ポート閉鎖を確認後、一括起動による5系統復旧まで実機PASS。bulk-recheck.json",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,システム起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "Local、実行中業務処理の停止、全障害条件は今回対象外",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / システム起動編",
+    "chapter": "3. 個別に起動・停止する",
+    "actual": "承認されたTools反映等の運用",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,システム起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全サービス個別の通し未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / システム起動編",
+    "chapter": "4. チェックを付けてWeb画面を開く",
+    "actual": "修正後一括起動でWeb20秒安定確認と自動Chromeのログイン画面表示を実機確認。専用窓通常終了",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,システム起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "チェック設定変更・保存を含む全組合せは未確認",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / システム起動編",
+    "chapter": "5. 追加テスト",
+    "actual": "既存試験結果参照、今回全再実行なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,システム起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "異常系は隔離試験と実サービスを分離",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 環境確認編",
+    "chapter": "1. 導入状況を調べて保存する",
+    "actual": "保存済み一覧の読取",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,環境確認編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "新規状況確認・保存",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 環境確認編",
+    "chapter": "2. モデル一覧を取得して保存する",
+    "actual": "今回再試験記録なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,環境確認編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "取得・保存・各提供元の条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 環境確認編",
+    "chapter": "3. 外部連携を確認して保存する",
+    "actual": "今回再試験記録なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,環境確認編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "外部接続・保存",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 環境確認編",
+    "chapter": "4. 3タブをまとめて確認する",
+    "actual": "今回再試験記録なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,環境確認編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全テスト実行・保存",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 環境確認編",
+    "chapter": "5. 追加テスト",
+    "actual": "既存試験結果と読取紹介を区別",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,環境確認編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "未設定接続を成功へ置換しない",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / AIモデル・Tools編",
+    "chapter": "1. 設定モデルで応答を確認する",
+    "actual": "今回全行試行なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,AIモデル・Tools編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "モデル送信・履歴保存の範囲",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "defaults_followup": {
+      "result": "既定引数PASS。aidiy_chat_llms代表ON/OFF/保存再読込/完全復元PASS",
+      "evidence": "_work_records\\selftest-20261102\\diag-tools-defaults.json"
+    },
+    "tool_gate_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "ai_requests": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / AIモデル・Tools編",
+    "chapter": "2. AIと入力を選んで試す",
+    "actual": "今回5方式一括試行なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,AIモデル・Tools編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "方式別の許可と試験条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "defaults_followup": {
+      "result": "既定引数PASS。aidiy_chat_llms代表ON/OFF/保存再読込/完全復元PASS",
+      "evidence": "_work_records\\selftest-20261102\\diag-tools-defaults.json"
+    },
+    "tool_gate_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "ai_requests": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / AIモデル・Tools編",
+    "chapter": "3. Toolsを確認する",
+    "actual": "SQLite SELECT 1だけ成功",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,AIモデル・Tools編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "他Tools一括・副作用ある試験",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "defaults_followup": {
+      "result": "既定引数PASS。aidiy_chat_llms代表ON/OFF/保存再読込/完全復元PASS",
+      "evidence": "_work_records\\selftest-20261102\\diag-tools-defaults.json"
+    },
+    "tool_gate_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "ai_requests": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / AIモデル・Tools編",
+    "chapter": "4. 追加テストと確認範囲",
+    "actual": "既存195件等は過去記載、今回再実行なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,AIモデル・Tools編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全Tools実機・環境依存条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "defaults_followup": {
+      "result": "既定引数PASS。aidiy_chat_llms代表ON/OFF/保存再読込/完全復元PASS",
+      "evidence": "_work_records\\selftest-20261102\\diag-tools-defaults.json"
+    },
+    "tool_gate_followup": {
+      "result": "PASS",
+      "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "ai_requests": 0
+    },
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 設定再起動編",
+    "chapter": "1. 設定画面を開く",
+    "actual": "通常認証・設定表示・Coreログアウト",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,設定再起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全認証異常条件",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 設定再起動編",
+    "chapter": "2. 設定を選んで書き込む",
+    "actual": "今回章通し再試験記録なし",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,設定再起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "設定変更・書込",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 設定再起動編",
+    "chapter": "3. 未保存の変更をキャンセルする",
+    "actual": "LIVE音声1項目の未保存変更・取消・再認証後元値",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,設定再起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "他設定項目の取消・設定全体ハッシュ照合",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 設定再起動編",
+    "chapter": "4. 保存済みの設定で再起動する",
+    "actual": "修正反映のDiag再起動は本章の設定再起動試験と別",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,設定再起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "保存済み設定・対象バックエンド再起動",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  },
+  {
+    "book": "diag / 設定再起動編",
+    "chapter": "5. 追加テスト",
+    "actual": "既存試験結果のみ",
+    "audit_20261103": {
+      "source": "_AIDIY/knowledge/セルフテスト,aidiy_diag,設定再起動編.md#証拠照合と残る確認",
+      "scope": "本文と過去証拠を含めた文書末尾の照合が現行判定。今回再実行していないことは残件の根拠にしない。"
+    },
+    "previous_remaining_snapshot": "全回帰再試験なし",
+    "remaining": "現行の必須残件は文書末尾の「現行の判定」を参照。過去試験の未実施記述だけで再試験しない。",
+    "current_authority": "document-audit-20261103.json current_documents と各docs文書末尾。過去snapshot/followupの未実施は当時の記録。"
+  }
+]

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Xインベーダー改 - Retro 640x400</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        :root {
+            --frame-bg: #000;
+            --hud-fg: #00ff66;
+            --hud-accent: #ffee00;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            background: linear-gradient(135deg, #0d0221 0%, #1a0845 25%, #2d1b69 50%, #141852 75%, #0a0e27 100%);
+            color: #cce;
+            display: grid;
+            place-items: center;
+            font-family: monospace;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* サイバーパンク背景エフェクト */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: gridPulse 4s ease-in-out infinite;
+            z-index: -1;
+        }
+
+        @keyframes gridPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        /* デジタルスキャンライン */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 255, 255, 0.05) 2px,
+                rgba(0, 255, 255, 0.05) 4px
+            );
+            animation: scanMove 0.1s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes scanMove {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* アスペクト比16:10で可変。幅は画面幅と高さに応じて最適化 */
+        .retro-container {
+            position: relative;
+            aspect-ratio: 16 / 10; /* 640x400 */
+            width: min(98vw, calc(98vh * 1.6));
+            background: var(--frame-bg);
+            border: 4px solid #00d4ff;
+            box-shadow: 
+                0 0 30px rgba(0, 212, 255, 0.4),
+                inset 0 0 30px rgba(0, 212, 255, 0.1),
+                0 0 60px rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* ピクセル拡大表示 */
+        canvas#game-canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            display: block;
+            background: #000; /* 背景はキャンバス側で星を描画 */
+        }
+
+        /* HUDは上部に重ねて表示（簡易） */
+        .hud {
+            position: absolute;
+            inset: 8px 8px auto 8px;
+            display: flex;
+            gap: 8px;
+            font-size: 12px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            z-index: 10;
+            pointer-events: none;
+        }
+        .hud .chip {
+            padding: 4px 8px;
+            border: 1px solid #0f0;
+            color: var(--hud-fg);
+            text-shadow: 0 0 6px rgba(0,255,0,0.6);
+            background: rgba(0,0,0,0.35);
+            border-radius: 4px;
+        }
+        .hud .score { color: var(--hud-accent); border-color: var(--hud-accent); }
+
+        /* サイバーパンクオーバーレイ（開始・ゲームオーバー） */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(13, 2, 33, 0.95) 0%, rgba(10, 14, 39, 0.98) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            z-index: 20;
+            backdrop-filter: blur(8px);
+        }
+        .overlay.hidden { display: none; }
+        
+        /* サイバーパンクタイトル */
+        .overlay h1 { 
+            color: #00d4ff;
+            margin: 8px 0; 
+            font-size: 32px; 
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            text-shadow: 
+                0 0 10px #00d4ff,
+                0 0 20px #00d4ff,
+                0 0 30px #00d4ff;
+            animation: cyberGlow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes cyberGlow {
+            0% { 
+                text-shadow: 
+                    0 0 10px #00d4ff,
+                    0 0 20px #00d4ff,
+                    0 0 30px #00d4ff;
+            }
+            100% { 
+                text-shadow: 
+                    0 0 15px #ff0080,
+                    0 0 25px #ff0080,
+                    0 0 35px #ff0080;
+                color: #ff0080;
+            }
+        }
+        
+        .overlay .sub { 
+            color: #39ff14; 
+            font-size: 14px; 
+            opacity: 0.9;
+            text-shadow: 0 0 8px #39ff14;
+            letter-spacing: 1px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        /* サイバーパンクボタン */
+        .btn {
+            pointer-events: auto;
+            background: linear-gradient(45deg, rgba(0, 212, 255, 0.1), rgba(255, 0, 128, 0.1));
+            color: #00d4ff;
+            border: 2px solid #00d4ff;
+            padding: 12px 24px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 25px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            text-shadow: 0 0 8px currentColor;
+            box-shadow: 
+                0 0 15px rgba(0, 212, 255, 0.3),
+                inset 0 0 15px rgba(0, 212, 255, 0.1);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn:hover { 
+            transform: translateY(-2px);
+            border-color: #ff0080;
+            color: #ff0080;
+            text-shadow: 0 0 12px currentColor;
+            box-shadow: 
+                0 8px 25px rgba(255, 0, 128, 0.4),
+                0 0 20px rgba(255, 0, 128, 0.3),
+                inset 0 0 20px rgba(255, 0, 128, 0.1);
+        }
+
+        /* 小さな端末でも適切に縮小 */
+        @media (max-width: 480px) {
+            .hud { font-size: 10px; }
+            .overlay h1 { font-size: 24px; letter-spacing: 2px; }
+            .overlay .sub { font-size: 12px; }
+            .btn { 
+                padding: 10px 18px; 
+                font-size: 12px; 
+                letter-spacing: 1px; 
+            }
+        }
+    </style>
+    <link rel="preconnect" href="https://code.jquery.com" />
+    <link rel="preload" href="index.js" as="script" />
+    <link rel="icon" href="data:," />
+    <meta name="description" content="レトロ 640x400 ピクセルの Xインベーダー改" />
+</head>
+<body>
+    <div class="retro-container">
+        <div class="hud">
+            <div class="chip score">SCORE: <span id="score">0</span></div>
+            <div class="chip">WAVE: <span id="wave">1</span></div>
+            <div class="chip">LIVES: <span id="lives">3</span></div>
+        </div>
+
+        <div id="start-overlay" class="overlay">
+            <h1>SPACE INVADERS</h1>
+            <div class="sub">640x400 PIXELS • ←→ MOVE • SPACE FIRE • P PAUSE</div>
+            <button id="start-btn" class="btn">START</button>
+        </div>
+
+        <div id="over-overlay" class="overlay hidden">
+            <h1>GAME OVER</h1>
+            <div class="sub">FINAL SCORE: <span id="final-score">0</span></div>
+            <div>
+                <button id="restart-btn" class="btn">RESTART</button>
+                <button id="menu-btn" class="btn">MENU</button>
+            </div>
+        </div>
+
+        <canvas id="game-canvas" width="640" height="400"></canvas>
+    </div>
+
+    <script src="index.js"></script>
+    <noscript>JavaScriptを有効にしてください。</noscript>
+    <!-- jQuery CDNがブロックされる環境では、軽量な代替実装に切替を検討 -->
+</body>
+</html>
+

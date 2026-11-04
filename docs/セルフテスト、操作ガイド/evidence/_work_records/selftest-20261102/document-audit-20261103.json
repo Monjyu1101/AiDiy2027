@@ -1,0 +1,422 @@
+{
+  "date": "2026-11-03",
+  "books": 22,
+  "audit_sections": 22,
+  "audit_local_refs_checked": 17,
+  "broken_audit_refs": [],
+  "paused_source_edits": [
+    {
+      "file": "backend_taskteam/team_proc/team_pdca_db.py",
+      "sha256": "9acae7bc2a123f0b017a410daa1e9521794976fb7a79192f158e06cde171c81d",
+      "changed_from_saved_before": true,
+      "tests": "未実行",
+      "runtime_reflection": "この監査では反映操作なし"
+    },
+    {
+      "file": "backend_taskteam/team_sub/sub_SPDCA__common.py",
+      "sha256": "b9b8d4293ac61b4274833d5158cd4efc0dd595e90da4a6b339caa8bd05ffe036",
+      "changed_from_saved_before": true,
+      "tests": "未実行",
+      "runtime_reflection": "この監査では反映操作なし"
+    },
+    {
+      "file": "backend_server/AIコア/AIバックアップ.py",
+      "sha256": "1ede72ac2df89394bd55c78f5f2841fd2c3603e136048cf6e0ac8db1462929f8",
+      "changed_from_saved_before": true,
+      "tests": "未実行",
+      "runtime_reflection": "この監査では反映操作なし"
+    },
+    {
+      "file": "backend_tools/tools_proc/backup.py",
+      "sha256": "f626964ca188d82e39b2dd3ed223ca725df647b94d94aca751104509810cd557",
+      "changed_from_saved_before": true,
+      "tests": "未実行",
+      "runtime_reflection": "この監査では反映操作なし"
+    }
+  ],
+  "new_runtime_tests": 0,
+  "new_ai_sends": 0,
+  "source_edits_during_audit": 0,
+  "legacy_restart_scope": "旧互換2入力は本文に未実施。現行必須要件の根拠なし。再試験要求から除外。",
+  "residual_case_count": null,
+  "reason": "85章は16冊の章数であり、22冊全体の独立ケース数ではない。全形態の直積を追加しない。",
+  "pdf_count": 22,
+  "pdf_pages": 371,
+  "pdf_review": "全22冊末尾2ページ目視確認",
+  "local_references": 437,
+  "broken_local_references": 0,
+  "backup_followup": {
+    "status": "Tools経路修正確認済み",
+    "tests": 54,
+    "evidence": ".aidiy_cache/selftest/セルフテスト,backend_tools,主要メソッド編/Tools_901_空対象バックアップ.json",
+    "Team": "保存済み2ファイルのハッシュ不変・未テスト"
+  },
+  "team_raw_followup": {
+    "status": "修正・自動/実機確認済み",
+    "tests_passed": 24,
+    "environment_unconfirmed": 1,
+    "evidence": ".aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_405_D原文引継ぎ.json",
+    "source_state": "監査時のpaused_source_editsは当時の記録。最新差分・ハッシュはTeam_405参照。",
+    "runtime": "専用SPDCA1周、D原文とC入力一致、二文条件未達の根拠付き評価、自動OFF・2周目なし",
+    "pdf_check": "team-raw-pdf-check.json"
+  },
+  "diag_folder_followup": {
+    "result": "PASS",
+    "evidence": ".aidiy_cache\\selftest\\セルフテスト,aidiy_diag,設定再起動編\\Diag-設定再起動_502_フォルダ参照取消.json",
+    "date": "2026-11-03T12:43:17.690136",
+    "config_files_unchanged": 16,
+    "pdf_verified": true
+  },
+  "hermes_cli_followup": {
+    "model_switch_restore": "PASS",
+    "conversation": "送信文脈の承認範囲未確定・未送信",
+    "evidence": ".aidiy_cache\\selftest\\セルフテスト,aidiy_hermes,操作編\\Hermes_201_CLIモデル切替復帰.json",
+    "pdf_verified": true
+  },
+  "avatar_image_followup": {
+    "result": "部分確認・画面観察拒否",
+    "evidence": ".aidiy_cache\\selftest\\セルフテスト,aidiy_avatar,Electron実行編\\Avatar-Electron_602_Image素材自動送信.json",
+    "image_inputs": 1,
+    "questions": 0
+  },
+  "channel_cancellation_followup": {
+    "discord": {
+      "date": "2026-11-03T04:09:39.413616+00:00",
+      "scope": "read-only cancellation evidence audit",
+      "guide": "_AIDIY/knowledge/セルフテスト,aidiy_discord,操作編.md",
+      "past_evidence": "Discord_503_待機中の停止.png",
+      "original_explicit_not_tested_line": 200,
+      "configured_destination_ids_available": true,
+      "specific_test_destination_and_content_approval_found": false,
+      "result": "投稿先/内容未指定のため未実施（保留）",
+      "posts": 0,
+      "ai_requests": 0,
+      "runtime_cancel_actions": 0,
+      "source_changes": 0,
+      "settings_changes": 0
+    },
+    "slack": {
+      "date": "2026-11-03T04:09:39.419232+00:00",
+      "scope": "read-only cancellation evidence audit",
+      "guide": "_AIDIY/knowledge/セルフテスト,aidiy_slack,操作編.md",
+      "past_evidence": "Slack_503_待機中の停止.png",
+      "original_explicit_not_tested_line": 213,
+      "configured_destination_ids_available": true,
+      "specific_test_destination_and_content_approval_found": false,
+      "result": "投稿先/内容未指定のため未実施（保留）",
+      "posts": 0,
+      "ai_requests": 0,
+      "runtime_cancel_actions": 0,
+      "source_changes": 0,
+      "settings_changes": 0
+    },
+    "verification": {
+      "pdf_hash_mismatches": [],
+      "broken_local_refs": [],
+      "servers_http200": [
+        8091,
+        8098,
+        8095,
+        8093,
+        8090
+      ],
+      "local8096": "stopped",
+      "diag": "mini",
+      "audio_played_serial": 4
+    }
+  },
+  "diag_tools_defaults_followup": {
+    "result": "PASS for aspect ratio only; ON/OFF untested",
+    "evidence": "_work_records\\selftest-20261102\\diag-tools-defaults.json",
+    "verification": {
+      "pdf_hash_mismatches": [],
+      "broken_refs": []
+    }
+  },
+  "code_folder_race_review": {
+    "date": "2026-11-03",
+    "status": "original runtime race conditions undefined; minimal case proposed, not executed",
+    "guide": "_AIDIY\\knowledge\\セルフテスト,aidiy_code,操作編.md",
+    "evidence": "guide multi-folder runtime 2026-11-02, extension.ts 121-138/161-165/250-258",
+    "new_ai_requests": 0,
+    "runtime_tests": 0,
+    "settings_changes": 0,
+    "source_changes": 0,
+    "verification": {
+      "hash_mismatches": [],
+      "broken_refs": []
+    }
+  },
+  "live_model_review": {
+    "date": "2026-11-03",
+    "result": "405 evidence unconfirmed, failure condition undefined; no provider cross-product requirement",
+    "ai_sends": 0,
+    "connection_changes": 0,
+    "settings_changes": 0,
+    "source_changes": 0,
+    "verification": {
+      "hash_mismatches": [],
+      "broken_refs": []
+    }
+  },
+  "browser_boundary_review": {
+    "date": "2026-11-03",
+    "boundary": "existing automated PASS, not mandatory new runtime test",
+    "live_image_draft": "runtime evidence unconfirmed; real bridge with mock receiver distinct",
+    "new_capture": 0,
+    "transfer": 0,
+    "ai_sends": 0,
+    "source_changes": 0,
+    "verification": {
+      "hash_mismatches": [],
+      "broken_refs": []
+    }
+  },
+  "task_calendar_review": {
+    "date": "2026-11-03",
+    "existing_result": "watch-fix-tests.json 10:57:59 calendar tests2 exit0",
+    "conditions": 10,
+    "new_tests": 0,
+    "new_ai": 0,
+    "result": "calendar fixed-time PASS adopted; real week/month duration unconfirmed and not mandatory"
+  },
+  "twelve_item_final_check": {
+    "books": 22,
+    "pages": 363,
+    "hash_mismatches": [],
+    "broken_references": [],
+    "remaining_mismatches": [],
+    "servers_http200": [
+      8091,
+      8098,
+      8095,
+      8093,
+      8090
+    ],
+    "local": "stopped",
+    "all85pass": false
+  },
+  "historical_fields_notice": "先行followup/paused_source_edits/twelve_item_final_checkは当時の履歴。現行判定はcurrent_documentsを優先。",
+  "current_documents": [
+    {
+      "file": "セルフテスト,aidiy_avatar,Electron実行編.md",
+      "confirmed": "Image表示・初回自動入力・1質問の認識返信済み。",
+      "remaining_or_limit": "Core再起動・HTTP復帰と修正ソース一致、隔離5PASSを確認。Liveは接続時読込み。追加AI接続でのイベント再受信は行わず、次の通常接続へ適用。",
+      "evidence_refs": [
+        "evidence/_work_records/selftest-20261102/image-attachment-results.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_Image素材自動送信.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_OpenAI項目通知修正.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Web実行編.md",
+      "confirmed": "認証・独立タブ・Chat/Code/Live・再接続は本文の既存証拠を採用。",
+      "remaining_or_limit": "基本操作の追加必須残件なし。実マイク未確認、全画像経路・全providerは対象外。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,aidiy_browser,操作編.md",
+      "confirmed": "撮影、Code画像下書き、URL両宛先、非空下書き、実Live画像下書きPASS。60秒境界は既存自動試験。",
+      "remaining_or_limit": "追加必須残件なし。全DPI・全ページは対象外。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_403_URL下書き両宛先.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_404_非空下書き保持.json",
+        "images/セルフテスト,aidiy_browser,操作編/Browser_405_Live画像付き下書き受信.png",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_Live画像付き下書き受信.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_code,操作編.md",
+      "confirmed": "通常フォルダ切替・未選択ガード・返信・画像、隔離競合11PASSを採用。",
+      "remaining_or_limit": "実VS Code競合は利用者指定で実施不要。実機PASSではなく残件から除外。",
+      "evidence_refs": [
+        "evidence/_work_records/selftest-20261102/image-attachment-results.json",
+        "evidence/_work_records/selftest-20261102/code-live-condition-review.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験準備.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_フォルダ判定隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode競合隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode実機競合準備.json",
+        "evidence/_work_records/selftest-20261102/remaining-safe-review-20261103.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_console,操作編.md",
+      "confirmed": "Windows起動・Console/Hermes入力待ち・通常終了を確認済み。",
+      "remaining_or_limit": "追加必須残件なし。任意CLI全種・他OS・長時間は対象外。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.md",
+      "confirmed": "既定値保存復元、ChatLLM ON取得→OFF抑止→保存再読込→完全復元済み。",
+      "remaining_or_limit": "PostgreSQL DSN未設定・OBS接続拒否は当時の制約。現在可否未確認。他Tools全件への結果拡張なし。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,システム起動編.md",
+      "confirmed": "5系統停止→正式一括起動・復旧、過去Local個別起動停止を採用。",
+      "remaining_or_limit": "追加必須残件なし。旧reboot_task/team入口は現行必須根拠なし。Mac/Linux対象外。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/bulk-recheck.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,ランチャー編.md",
+      "confirmed": "標準・ミニ・アイコン・右クリック・19アプリ導線の既存証拠を採用。",
+      "remaining_or_limit": "追加必須残件なし。複数物理モニター・他OSは未確認。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,環境確認編.md",
+      "confirmed": "導入/モデル/外部認証の確認保存、Python・Slack個別確認を採用。",
+      "remaining_or_limit": "Ollama接続不可は当時の制約、現在可否未確認。Local表示成功は推論成功ではない。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,設定再起動編.md",
+      "confirmed": "設定保存・復元・再起動、参照フォルダ選択/取消し・未保存取消し・設定不変済み。",
+      "remaining_or_limit": "追加必須残件なし。全設定総当たり・他OSは対象外。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_502_フォルダ参照取消.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_discord,操作編.md",
+      "confirmed": "通常会話とユーザー投稿による実要求中断2回、隔離中断2PASS。",
+      "remaining_or_limit": "中断は残件なし。実音声会話は未確認で、機器・voice channel・取得範囲が必要。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_実要求中断.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_hermes,操作編.md",
+      "confirmed": "通常CLI挨拶1回/API1回/ツール0・返信一致、モデル変更復帰・通常終了済み。",
+      "remaining_or_limit": "追加必須残件なし。プロフィール送信の承認保留は解消。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_201_CLIモデル切替復帰.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.md",
+      "confirmed": "Office閲覧、コピー/ごみ箱/一括PDF、通常AI検索参照一致、TASK/TEAM連携済み。",
+      "remaining_or_limit": "検索全件網羅は走査タイムアウトで未確認。リンク権限不足14件・Linux専用2件は環境制約。追加網羅試験は作らない。",
+      "evidence_refs": [
+        "evidence/_work_records/selftest-20261102/office-view-results.json",
+        "evidence/_work_records/selftest-20261102/explorer-file-results.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_live,操作編.md",
+      "confirmed": "接続・返信・画像、再接続隔離17PASSと失敗解除後復旧5PASSを採用。",
+      "remaining_or_limit": "故障前提の実機失敗/復旧は利用者指定で実施不要。実マイクは未確認。全provider組合せは対象外。",
+      "evidence_refs": [
+        "evidence/_work_records/selftest-20261102/image-attachment-results.json",
+        "evidence/_work_records/selftest-20261102/code-live-condition-review.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_実機再接続条件照合.json",
+        "evidence/_work_records/selftest-20261102/remaining-safe-review-20261103.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.fixture.txt"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_slack,操作編.md",
+      "confirmed": "通常会話とユーザー投稿による実要求中断2回、隔離中断6PASS。",
+      "remaining_or_limit": "追加必須残件なし。通常会話と待機中stopだけを中断証拠にしていない。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.tap.txt",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_実要求中断.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_task,操作編.md",
+      "confirmed": "単発・中止・時刻・監視修正後1回/2周期再発火なし・暦計算・空対象バックアップ済み。",
+      "remaining_or_limit": "追加必須残件なし。週/月の実時間長期運転は対象外、実時間PASSにはしない。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_302_単発実行照合.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_403_有限待機中止.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_504_時間指定発火.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_505_フォルダ変化発火.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,backend_tools,主要メソッド編/Tools_901_空対象バックアップ.json",
+        "evidence/_work_records/selftest-20261102/watch-fix-tests.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,aidiy_team,操作編.md",
+      "confirmed": "召喚会話退場・有限SPDCA・D原文→C引継ぎ24試験/実機確認済み。",
+      "remaining_or_limit": "Windows権限不足のシンボリックリンク負例1件は未確認。一文指定に二文回答した品質限界は不具合修正PASSと区別。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_203_召喚会話退場.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_404_有限SPDCA.json",
+        "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_405_D原文引継ぎ.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,backend_tools,主要メソッド編.md",
+      "confirmed": "主要メソッドの既存結果、空対象バックアップ54試験/通常保存復元済み。",
+      "remaining_or_limit": "PostgreSQL DSN未設定・Veo既定モデル404は当時の制約。現在の接続/提供可否は未調査。未選定全メソッドは追加必須にしない。",
+      "evidence_refs": [
+        "evidence/.aidiy_cache/selftest/セルフテスト,backend_tools,主要メソッド編/Tools_901_空対象バックアップ.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,frontend_web,AiDiy編.md",
+      "confirmed": "Web認証・会話/添付・共通ナビ・X画面の既存結果を採用。",
+      "remaining_or_limit": "追加必須残件なし。実マイク・他OS・全ゲームロジック等は当初対象外。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,frontend_web,生産・在庫管理編.md",
+      "confirmed": "既存生産在庫CRUD/数量復元/推移/予定と後続の閲覧不変を採用。",
+      "remaining_or_limit": "追加必須残件なし。大量明細・全画面全サイズは対象外。",
+      "evidence_refs": [
+        "evidence/_work_records/selftest-20261102/web-data-before.json",
+        "evidence/_work_records/selftest-20261102/web-data-after.json"
+      ]
+    },
+    {
+      "file": "セルフテスト,frontend_web,配車管理編.md",
+      "confirmed": "既存配車CRUD/予定移動/復元と後続読取を採用。",
+      "remaining_or_limit": "追加必須残件なし。長期実時間・他OS・全画面総当たりは対象外。",
+      "evidence_refs": []
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.md",
+      "confirmed": "22冊の現行末尾と参照証拠を再照合。完了/実施不要/未確認を区別。",
+      "remaining_or_limit": "85章はケース数でない。全85章・全形態合格という総括はしない。具体的残りは本表と各冊末尾。",
+      "evidence_refs": []
+    }
+  ],
+  "current_audit": {
+    "books": 22,
+    "new_ai_sends": 0,
+    "new_runtime_tests": 0,
+    "source_changes": 0,
+    "core_reflection": "18:01実機ログで旧警告を確認。5孤立テスト成功と稼働反映は別。Core再起動なし。",
+    "final_validation": {
+      "documents": 22,
+      "current_sections": 22,
+      "local_references": 523,
+      "broken_references": [],
+      "pdf_count": 22,
+      "pdf_pages": 371,
+      "visual_review": "22冊の末尾/必要な前ページを目視確認済み",
+      "ai_calls_this_audit": 0,
+      "runtime_changes": 0,
+      "source_changes": 0
+    }
+  },
+  "core_reflection_followup": "2026-11-03 18:47 Core8091再起動/HTTP200/ソースハッシュ一致/隔離5PASS。遅延読込の実Live再接続は追加AI送信を避け未実施。"
+}

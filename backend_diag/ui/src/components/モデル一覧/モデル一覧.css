@@ -1,0 +1,16 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+@import "../キー設定共通/キー設定.css";
+.key-row{border-bottom:1px solid #304253;padding:12px 4px;display:flex;align-items:center;gap:12px}
+.key-row.selected{background:#25403d}
+.key-test{display:grid;justify-items:center;gap:6px}
+.key-test button{padding:5px 10px;font-size:12px}
+.key-test{grid-template-columns:auto auto;align-items:center}
+.key-test>.badge:not(.public-indicator){grid-column:2;min-width:60px}
+.models{font-size:13px;max-height:400px;overflow:auto}
+.models li{margin-bottom:14px}
+.model-meta{font-size:11px;color:#94afc5}
+.badge.public-indicator{font-size:10px}

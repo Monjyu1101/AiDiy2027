@@ -1,0 +1,470 @@
+{
+  "project_name": "小説解説_AiDiy誕生_ja",
+  "version": "mcp",
+  "status": "complete",
+  "policy": {
+    "visual_generation": "auto",
+    "audio_generation": "edge_female",
+    "language": "ja",
+    "layout": "left_avatar_38_right_content_62",
+    "avatar_model": "../_vrm/VRM_female.vrm",
+    "evidence_source": [
+      "../小説解説_AiDiy誕生.md"
+    ]
+  },
+  "images": [
+    {
+      "scene_id": "scene_000",
+      "status": "generated",
+      "path": "images/scene_000.png",
+      "bytes": 2522001
+    },
+    {
+      "scene_id": "scene_001",
+      "status": "generated",
+      "path": "images/scene_001.png",
+      "bytes": 1948989
+    },
+    {
+      "scene_id": "scene_002",
+      "status": "generated",
+      "path": "images/scene_002.png",
+      "bytes": 2779463
+    },
+    {
+      "scene_id": "scene_003",
+      "status": "generated",
+      "path": "images/scene_003.png",
+      "bytes": 2202204
+    },
+    {
+      "scene_id": "scene_004",
+      "status": "generated",
+      "path": "images/scene_004.png",
+      "bytes": 2254780
+    },
+    {
+      "scene_id": "scene_005",
+      "status": "generated",
+      "path": "images/scene_005.png",
+      "bytes": 2419218
+    },
+    {
+      "scene_id": "scene_006",
+      "status": "generated",
+      "path": "images/scene_006.png",
+      "bytes": 2122292
+    },
+    {
+      "scene_id": "scene_007",
+      "status": "generated",
+      "path": "images/scene_007.png",
+      "bytes": 2033890
+    },
+    {
+      "scene_id": "scene_008",
+      "status": "generated",
+      "path": "images/scene_008.png",
+      "bytes": 2545469
+    },
+    {
+      "scene_id": "scene_009",
+      "status": "generated",
+      "path": "images/scene_009.png",
+      "bytes": 2224501
+    },
+    {
+      "scene_id": "scene_010",
+      "status": "generated",
+      "path": "images/scene_010.png",
+      "bytes": 3574492
+    },
+    {
+      "scene_id": "scene_011",
+      "status": "generated",
+      "path": "images/scene_011.png",
+      "bytes": 1993432
+    },
+    {
+      "scene_id": "scene_012",
+      "status": "generated",
+      "path": "images/scene_012.png",
+      "bytes": 2183582
+    },
+    {
+      "scene_id": "scene_013",
+      "status": "generated",
+      "path": "images/scene_013.png",
+      "bytes": 2124272
+    },
+    {
+      "scene_id": "scene_014",
+      "status": "generated",
+      "path": "images/scene_014.png",
+      "bytes": 2615830
+    },
+    {
+      "scene_id": "scene_015",
+      "status": "generated",
+      "path": "images/scene_015.png",
+      "bytes": 2777789
+    },
+    {
+      "scene_id": "scene_016",
+      "status": "generated",
+      "path": "images/scene_016.png",
+      "bytes": 3762982
+    },
+    {
+      "scene_id": "scene_017",
+      "status": "generated",
+      "path": "images/scene_017.png",
+      "bytes": 2376958
+    },
+    {
+      "scene_id": "scene_018",
+      "status": "generated",
+      "path": "images/scene_018.png",
+      "bytes": 2123025
+    },
+    {
+      "scene_id": "scene_019",
+      "status": "generated",
+      "path": "images/scene_019.png",
+      "bytes": 1983883
+    },
+    {
+      "scene_id": "scene_020",
+      "status": "generated",
+      "path": "images/scene_020.png",
+      "bytes": 2631425
+    },
+    {
+      "scene_id": "scene_021",
+      "status": "generated",
+      "path": "images/scene_021.png",
+      "bytes": 3637114
+    },
+    {
+      "scene_id": "scene_022",
+      "status": "generated",
+      "path": "images/scene_022.png",
+      "bytes": 2489438
+    },
+    {
+      "scene_id": "scene_023",
+      "status": "generated",
+      "path": "images/scene_023.png",
+      "bytes": 2886451
+    },
+    {
+      "scene_id": "scene_024",
+      "status": "generated",
+      "path": "images/scene_024.png",
+      "bytes": 2824829
+    },
+    {
+      "scene_id": "scene_025",
+      "status": "generated",
+      "path": "images/scene_025.png",
+      "bytes": 1939029
+    },
+    {
+      "scene_id": "scene_026",
+      "status": "generated",
+      "path": "images/scene_026.png",
+      "bytes": 3081042
+    },
+    {
+      "scene_id": "scene_999",
+      "status": "generated",
+      "path": "images/scene_999.png",
+      "bytes": 2393260
+    }
+  ],
+  "audio": [
+    {
+      "scene_id": "scene_000",
+      "status": "generated",
+      "short_path": "audio/short_scene_000.mp3",
+      "short_bytes": 99792,
+      "short_duration_sec": 16.632,
+      "long_path": "audio/long_scene_000.mp3",
+      "long_bytes": 333648,
+      "long_duration_sec": 55.608
+    },
+    {
+      "scene_id": "scene_001",
+      "status": "generated",
+      "short_path": "audio/short_scene_001.mp3",
+      "short_bytes": 97632,
+      "short_duration_sec": 16.272,
+      "long_path": "audio/long_scene_001.mp3",
+      "long_bytes": 306000,
+      "long_duration_sec": 51.0
+    },
+    {
+      "scene_id": "scene_002",
+      "status": "generated",
+      "short_path": "audio/short_scene_002.mp3",
+      "short_bytes": 74592,
+      "short_duration_sec": 12.432,
+      "long_path": "audio/long_scene_002.mp3",
+      "long_bytes": 421488,
+      "long_duration_sec": 70.248
+    },
+    {
+      "scene_id": "scene_003",
+      "status": "generated",
+      "short_path": "audio/short_scene_003.mp3",
+      "short_bytes": 85536,
+      "short_duration_sec": 14.256,
+      "long_path": "audio/long_scene_003.mp3",
+      "long_bytes": 346176,
+      "long_duration_sec": 57.696
+    },
+    {
+      "scene_id": "scene_004",
+      "status": "generated",
+      "short_path": "audio/short_scene_004.mp3",
+      "short_bytes": 77328,
+      "short_duration_sec": 12.888,
+      "long_path": "audio/long_scene_004.mp3",
+      "long_bytes": 600624,
+      "long_duration_sec": 100.104
+    },
+    {
+      "scene_id": "scene_005",
+      "status": "generated",
+      "short_path": "audio/short_scene_005.mp3",
+      "short_bytes": 92448,
+      "short_duration_sec": 15.408,
+      "long_path": "audio/long_scene_005.mp3",
+      "long_bytes": 347760,
+      "long_duration_sec": 57.96
+    },
+    {
+      "scene_id": "scene_006",
+      "status": "generated",
+      "short_path": "audio/short_scene_006.mp3",
+      "short_bytes": 90720,
+      "short_duration_sec": 15.12,
+      "long_path": "audio/long_scene_006.mp3",
+      "long_bytes": 349056,
+      "long_duration_sec": 58.176
+    },
+    {
+      "scene_id": "scene_007",
+      "status": "generated",
+      "short_path": "audio/short_scene_007.mp3",
+      "short_bytes": 99792,
+      "short_duration_sec": 16.632,
+      "long_path": "audio/long_scene_007.mp3",
+      "long_bytes": 373968,
+      "long_duration_sec": 62.328
+    },
+    {
+      "scene_id": "scene_008",
+      "status": "generated",
+      "short_path": "audio/short_scene_008.mp3",
+      "short_bytes": 80784,
+      "short_duration_sec": 13.464,
+      "long_path": "audio/long_scene_008.mp3",
+      "long_bytes": 521856,
+      "long_duration_sec": 86.976
+    },
+    {
+      "scene_id": "scene_009",
+      "status": "generated",
+      "short_path": "audio/short_scene_009.mp3",
+      "short_bytes": 97056,
+      "short_duration_sec": 16.176,
+      "long_path": "audio/long_scene_009.mp3",
+      "long_bytes": 351792,
+      "long_duration_sec": 58.632
+    },
+    {
+      "scene_id": "scene_010",
+      "status": "generated",
+      "short_path": "audio/short_scene_010.mp3",
+      "short_bytes": 91296,
+      "short_duration_sec": 15.216,
+      "long_path": "audio/long_scene_010.mp3",
+      "long_bytes": 347328,
+      "long_duration_sec": 57.888
+    },
+    {
+      "scene_id": "scene_011",
+      "status": "generated",
+      "short_path": "audio/short_scene_011.mp3",
+      "short_bytes": 94752,
+      "short_duration_sec": 15.792,
+      "long_path": "audio/long_scene_011.mp3",
+      "long_bytes": 333216,
+      "long_duration_sec": 55.536
+    },
+    {
+      "scene_id": "scene_012",
+      "status": "generated",
+      "short_path": "audio/short_scene_012.mp3",
+      "short_bytes": 98640,
+      "short_duration_sec": 16.44,
+      "long_path": "audio/long_scene_012.mp3",
+      "long_bytes": 389664,
+      "long_duration_sec": 64.944
+    },
+    {
+      "scene_id": "scene_013",
+      "status": "generated",
+      "short_path": "audio/short_scene_013.mp3",
+      "short_bytes": 93456,
+      "short_duration_sec": 15.576,
+      "long_path": "audio/long_scene_013.mp3",
+      "long_bytes": 591984,
+      "long_duration_sec": 98.664
+    },
+    {
+      "scene_id": "scene_014",
+      "status": "generated",
+      "short_path": "audio/short_scene_014.mp3",
+      "short_bytes": 91296,
+      "short_duration_sec": 15.216,
+      "long_path": "audio/long_scene_014.mp3",
+      "long_bytes": 379440,
+      "long_duration_sec": 63.24
+    },
+    {
+      "scene_id": "scene_015",
+      "status": "generated",
+      "short_path": "audio/short_scene_015.mp3",
+      "short_bytes": 81792,
+      "short_duration_sec": 13.632,
+      "long_path": "audio/long_scene_015.mp3",
+      "long_bytes": 586080,
+      "long_duration_sec": 97.68
+    },
+    {
+      "scene_id": "scene_016",
+      "status": "generated",
+      "short_path": "audio/short_scene_016.mp3",
+      "short_bytes": 82080,
+      "short_duration_sec": 13.68,
+      "long_path": "audio/long_scene_016.mp3",
+      "long_bytes": 347904,
+      "long_duration_sec": 57.984
+    },
+    {
+      "scene_id": "scene_017",
+      "status": "generated",
+      "short_path": "audio/short_scene_017.mp3",
+      "short_bytes": 110448,
+      "short_duration_sec": 18.408,
+      "long_path": "audio/long_scene_017.mp3",
+      "long_bytes": 395136,
+      "long_duration_sec": 65.856
+    },
+    {
+      "scene_id": "scene_018",
+      "status": "generated",
+      "short_path": "audio/short_scene_018.mp3",
+      "short_bytes": 97632,
+      "short_duration_sec": 16.272,
+      "long_path": "audio/long_scene_018.mp3",
+      "long_bytes": 609552,
+      "long_duration_sec": 101.592
+    },
+    {
+      "scene_id": "scene_019",
+      "status": "generated",
+      "short_path": "audio/short_scene_019.mp3",
+      "short_bytes": 98352,
+      "short_duration_sec": 16.392,
+      "long_path": "audio/long_scene_019.mp3",
+      "long_bytes": 380304,
+      "long_duration_sec": 63.384
+    },
+    {
+      "scene_id": "scene_020",
+      "status": "generated",
+      "short_path": "audio/short_scene_020.mp3",
+      "short_bytes": 99360,
+      "short_duration_sec": 16.56,
+      "long_path": "audio/long_scene_020.mp3",
+      "long_bytes": 376128,
+      "long_duration_sec": 62.688
+    },
+    {
+      "scene_id": "scene_021",
+      "status": "generated",
+      "short_path": "audio/short_scene_021.mp3",
+      "short_bytes": 97200,
+      "short_duration_sec": 16.2,
+      "long_path": "audio/long_scene_021.mp3",
+      "long_bytes": 507024,
+      "long_duration_sec": 84.504
+    },
+    {
+      "scene_id": "scene_022",
+      "status": "generated",
+      "short_path": "audio/short_scene_022.mp3",
+      "short_bytes": 98208,
+      "short_duration_sec": 16.368,
+      "long_path": "audio/long_scene_022.mp3",
+      "long_bytes": 371232,
+      "long_duration_sec": 61.872
+    },
+    {
+      "scene_id": "scene_023",
+      "status": "generated",
+      "short_path": "audio/short_scene_023.mp3",
+      "short_bytes": 110304,
+      "short_duration_sec": 18.384,
+      "long_path": "audio/long_scene_023.mp3",
+      "long_bytes": 355824,
+      "long_duration_sec": 59.304
+    },
+    {
+      "scene_id": "scene_024",
+      "status": "generated",
+      "short_path": "audio/short_scene_024.mp3",
+      "short_bytes": 115056,
+      "short_duration_sec": 19.176,
+      "long_path": "audio/long_scene_024.mp3",
+      "long_bytes": 414864,
+      "long_duration_sec": 69.144
+    },
+    {
+      "scene_id": "scene_025",
+      "status": "generated",
+      "short_path": "audio/short_scene_025.mp3",
+      "short_bytes": 107856,
+      "short_duration_sec": 17.976,
+      "long_path": "audio/long_scene_025.mp3",
+      "long_bytes": 375840,
+      "long_duration_sec": 62.64
+    },
+    {
+      "scene_id": "scene_026",
+      "status": "generated",
+      "short_path": "audio/short_scene_026.mp3",
+      "short_bytes": 94464,
+      "short_duration_sec": 15.744,
+      "long_path": "audio/long_scene_026.mp3",
+      "long_bytes": 384192,
+      "long_duration_sec": 64.032
+    },
+    {
+      "scene_id": "scene_999",
+      "status": "generated",
+      "short_path": "audio/short_scene_999.mp3",
+      "short_bytes": 133488,
+      "short_duration_sec": 22.248,
+      "long_path": "audio/long_scene_999.mp3",
+      "long_bytes": 501696,
+      "long_duration_sec": 83.616
+    }
+  ],
+  "short_duration_sec": 448.56,
+  "long_duration_sec": 1933.296,
+  "duration_sec": 1933.296
+}

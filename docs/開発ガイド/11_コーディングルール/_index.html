@@ -1,0 +1,81 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>コーディングルール | AiDiy Docs</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Docs</div>
+ <h1>コーディングルール</h1>
+ <p>日本語ファーストの命名・ファイル形式・実装・レビュー基準</p>
+ <nav>
+ <a href="_index.html">目次</a>
+ <a href="01_命名規則.html">01 命名規則</a>
+ <a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a>
+ <a href="03_ベストプラクティス.html">03 ベストプラクティス</a>
+ <a href="04_アンチパターン.html">04 アンチパターン</a>
+ <a href="05_レビューチェック.html">05 レビューチェック</a>
+ </nav>
+ </header>
+
+ <main>
+ <section>
+ <span>INDEX</span>
+ <h2>ページ一覧</h2>
+ <ol>
+ <li><a href="_index.html">目次</a> - 基本原則と使い分け</li>
+ <li><a href="01_命名規則.html">01 命名規則</a> - テーブル / API / 変数 / Vue / JSON</li>
+ <li><a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a> - UTF-8、ライセンス、共通ファイル</li>
+ <li><a href="03_ベストプラクティス.html">03 ベストプラクティス</a> - backend / frontend の推奨実装</li>
+ <li><a href="04_アンチパターン.html">04 アンチパターン</a> - 禁止例と落とし穴</li>
+ <li><a href="05_レビューチェック.html">05 レビューチェック</a> - 実装後の確認項目</li>
+ </ol>
+ </section>
+
+ <section>
+ <span>PRINCIPLES</span>
+ <h2>AiDiyの基本原則</h2>
+ <pre data-src="code_samples/basic_principles.txt" data-label="基本原則">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <h2>日本語と英語の使い分け</h2>
+ <p>AiDiyでは業務ドメインを日本語、フレームワークや一般的な制御語を英語で表します。</p>
+ <div>
+ <div>
+ <h3>日本語を使うもの</h3>
+ <ul>
+ <li>テーブル名: C利用者, M商品, T配車</li>
+ <li>カラム名: 利用者ID, 商品名</li>
+ <li>API endpoint: /core/C利用者/一覧</li>
+ <li>JSON keys: 利用者名, 商品ID</li>
+ <li>Vue component: C利用者一覧.vue</li>
+ </ul>
+ </div>
+ <div>
+ <h3>英語を使うもの</h3>
+ <ul>
+ <li>フレームワーク用語: router, store</li>
+ <li>一般的な通信語: request, response, query</li>
+ <li>統一レスポンス: items, total, limit</li>
+ <li>Vue API: ref, computed</li>
+ </ul>
+ </div>
+ </div>
+ </section>
+ </main>
+
+ <footer>AiDiy Docs / コーディングルール</footer>
+</body>
+</html>

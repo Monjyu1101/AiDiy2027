@@ -1,0 +1,4 @@
+{
+  "rejected": ["claude_cli/same", "claude-code/sonnet", "codex_cli/same", "codex-cli/model", "copilot_cli/same", "copilot-cli/model", "antigravity_cli/same", "antigravity-cli/model", "grok_cli/same", "grok-cli/model", "opencode_cli/same", "opencode/model", "copilot-acp/model", "github-copilot-acp/model", "codex_app_server/model", "COPILOT_CLI:model", "copilot-acp:model"],
+  "allowed": ["openai_oauth/gpt-model", "openai-codex/gpt-model", "anthropic/claude-model", "github-copilot/model", "openrouter/vendor/model", "ollama/model", "model-without-provider"]
+}

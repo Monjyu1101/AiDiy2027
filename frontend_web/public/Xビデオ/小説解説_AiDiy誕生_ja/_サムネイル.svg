@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="100%" height="100%" viewBox="0 0 1920 1080"
+     preserveAspectRatio="xMidYMid meet">
+  <title>AiDiy誕生</title>
+  <defs>
+    <linearGradient id="scrimX" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#040814" stop-opacity="0.94"/>
+      <stop offset="0.42" stop-color="#040814" stop-opacity="0.80"/>
+      <stop offset="0.78" stop-color="#040814" stop-opacity="0.18"/>
+      <stop offset="1"    stop-color="#040814" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="scrimY" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#040814" stop-opacity="0.55"/>
+      <stop offset="0.35" stop-color="#040814" stop-opacity="0.05"/>
+      <stop offset="0.78" stop-color="#040814" stop-opacity="0.35"/>
+      <stop offset="1"    stop-color="#040814" stop-opacity="0.88"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#29d8ff"/>
+      <stop offset="0.55" stop-color="#00e0b8"/>
+      <stop offset="1"    stop-color="#c49bff"/>
+    </linearGradient>
+    <linearGradient id="ruleG" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#29d8ff"/>
+      <stop offset="1" stop-color="#c49bff" stop-opacity="0.15"/>
+    </linearGradient>
+    <clipPath id="frame"><rect x="0" y="0" width="1920" height="1080"/></clipPath>
+  </defs>
+
+  <style><![CDATA[
+    text { font-family: 'Noto Sans JP','Yu Gothic UI','Meiryo','Hiragino Kaku Gothic ProN',sans-serif; }
+    .ttl   { font-size: 138px; font-weight: 900; fill: #ffffff; letter-spacing: 0.02em; }
+    .lead  { font-size: 46px; font-weight: 700; fill: #dce9f5; letter-spacing: 0.01em; }
+    .label { font-size: 33px; font-weight: 800; fill: #8fe8ff; letter-spacing: 0.34em; }
+    .note  { font-size: 31px; font-weight: 600; fill: #93a9bd; letter-spacing: 0.04em; }
+  ]]></style>
+
+  <g clip-path="url(#frame)">
+    <image xlink:href="images/scene_999.png" href="images/scene_999.png"
+           x="0" y="0" width="1920" height="1080" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#scrimY)"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#scrimX)"/>
+  </g>
+
+  <rect x="78" y="168" width="9" height="540" rx="4.5" fill="url(#accent)"/>
+
+  <text x="108" y="225" class="label">小説解説</text>
+
+  <text x="108" y="429" class="ttl">AiDiy誕生</text>
+
+  <rect x="108" y="507" width="285" height="4" rx="2" fill="url(#ruleG)"/>
+
+  <text x="108" y="609" class="lead">話しかけるだけで、システムが育つ。</text>
+  <text x="108" y="684" class="lead">その始まりは、一枚のHTMLだった。</text>
+
+  <text x="108" y="996" class="note">AIと進めるシステム開発 ／ 実際の記録</text>
+
+  <rect x="0.5" y="0.5" width="1919" height="1079" fill="none"
+        stroke="#ffffff" stroke-opacity="0.10" stroke-width="1"/>
+</svg>

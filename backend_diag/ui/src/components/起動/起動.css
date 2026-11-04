@@ -1,0 +1,38 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+.start-panel{overflow:hidden;background:#000}.start-panel .panel-heading{gap:12px}.start-panel .panel-heading p{margin:5px 0 0;font-size:12px}.start-save{font-size:11px;color:#9cd7cc;white-space:nowrap}.start-targets{display:flex;overflow-x:auto;gap:2px;border-block:1px solid #263544;background:#000;padding:0 12px;flex:none}.start-targets button{display:flex;align-items:center;gap:7px;white-space:nowrap;flex:none;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:#a3b5c8;font-size:12px;padding:11px 13px}.start-targets button.active{color:#f2fffd;border-bottom-color:#fbbf24;background:#1b2d3d}.start-enabled{color:#55e0ba;font-size:11px}.start-dot{width:7px;height:7px;border-radius:50%;background:#637084}.start-dot[data-tone=running]{background:#34d399}.start-dot[data-tone=busy]{background:#fbbf24}.start-dot[data-tone=error]{background:#fb7185}.start-settings{display:flex;gap:12px 24px;align-items:center;flex-wrap:wrap;padding:13px 18px;border-bottom:1px solid #263544}.start-settings label{display:flex;align-items:center;gap:7px;font-size:12px;white-space:nowrap}.start-settings input{accent-color:#35e0d2;width:15px;height:15px;margin:0}.start-path{margin-left:auto;font:11px ui-monospace,Consolas,monospace;color:#8296ac;overflow-wrap:anywhere}.start-console-heading{display:flex;align-items:center;gap:12px;padding:10px 18px;background:#000;font-size:12px}.start-status{color:#a0afc0;font-size:11px}.start-status[data-tone=running]{color:#34d399}.start-status[data-tone=error]{color:#fb7185}.start-status[data-tone=busy]{color:#fbbf24}.start-console-actions{display:flex;gap:7px;margin-left:auto}.start-console-actions button{font-size:11px;padding:4px 11px;border-radius:3px}.start-panel .start-console{flex:1 1 auto;min-height:100px;overflow:auto;overscroll-behavior:contain;margin:0;padding:16px 18px;background:#000;color:#d2e1ed;font:12px/1.65 ui-monospace,"Cascadia Mono",Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:4}.start-console:focus-visible{outline:1px solid #35e0d2;outline-offset:-1px}.start-help,.start-message{margin:0;padding:8px 18px;font-size:11px;border-top:1px solid #263544}.start-help{color:#8ba1b7}.start-message{color:#d4e5f1;background:#000}.start-empty{padding:26px 18px;color:#9baec0}@media(max-width:650px){.start-settings{gap:10px 18px}.start-path{margin-left:0;width:100%}.start-console-heading{flex-wrap:wrap}.start-console-actions{margin-left:0}.start-save{white-space:normal}.start-targets{padding:0 4px}.start-targets button{padding:10px}.start-panel .start-console{font-size:11px;padding:12px}.start-panel .panel-heading{align-items:flex-start}}
+#app>.start-panel>.start-console{flex:1 1 auto}
+.start-setting{display:flex;align-items:center;gap:10px}.start-open-browser{font-size:11px;padding:4px 10px;white-space:nowrap}
+.start-panel .start-console{user-select:text;-webkit-user-select:text;cursor:text;min-width:0;max-width:100%;white-space:pre;overflow-wrap:normal;word-break:normal}
+/* 稼働中のタブは下線を緑にし、タイトルバーのシアン帯と同じ |sin(πt)| の非線形で明滅（周期と開始位置は 明滅.mjs で項目ごとにずらす）。選択中は背景と文字色で示す。 */
+.start-targets button[data-tone=running]{animation:start-bar-blink var(--mini-blink,4.5s) linear var(--mini-blink-delay,0s) infinite}
+@keyframes start-bar-blink{0%,100%{border-bottom-color:#000000;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.00)}2.5%,97.5%{border-bottom-color:#04140c;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.05)}5%,95%{border-bottom-color:#092818;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.11)}7.5%,92.5%{border-bottom-color:#0d3c24;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.16)}10%,90%{border-bottom-color:#124f30;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.22)}12.5%,87.5%{border-bottom-color:#16623b;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.27)}15%,85%{border-bottom-color:#1a7446;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.32)}17.5%,82.5%{border-bottom-color:#1e8550;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.37)}20%,80%{border-bottom-color:#22965b;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.41)}22.5%,77.5%{border-bottom-color:#25a664;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.45)}25%,75%{border-bottom-color:#28b46d;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.49)}27.5%,72.5%{border-bottom-color:#2bc275;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.53)}30%,70%{border-bottom-color:#2ece7d;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.57)}32.5%,67.5%{border-bottom-color:#31d983;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.60)}35%,65%{border-bottom-color:#33e389;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.62)}37.5%,62.5%{border-bottom-color:#35ec8e;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.65)}40%,60%{border-bottom-color:#36f392;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.67)}42.5%,57.5%{border-bottom-color:#37f896;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.68)}45%,55%{border-bottom-color:#38fc98;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.69)}47.5%,52.5%{border-bottom-color:#39fe9a;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.70)}50%{border-bottom-color:#39ff9a;box-shadow:inset 0 -6px 9px -5px rgba(57,255,154,0.70)}}
+
+/* 他に稼働中の機能があるとき、起動対象のポート閉鎖を同じ正弦波で赤く示す。 */
+.start-targets button[data-tone=stopped]{animation:start-stopped-blink var(--mini-blink,4.5s) linear var(--mini-blink-delay,0s) infinite}.start-dot[data-tone=stopped]{background:#ff4d6d}
+@keyframes start-stopped-blink{
+0%,100%{border-bottom-color:#000000;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.00)}
+2.5%,97.5%{border-bottom-color:#140609;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.05)}
+5%,95%{border-bottom-color:#280c11;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.11)}
+7.5%,92.5%{border-bottom-color:#3c1219;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.16)}
+10%,90%{border-bottom-color:#4f1822;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.22)}
+12.5%,87.5%{border-bottom-color:#621d2a;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.27)}
+15%,85%{border-bottom-color:#742331;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.32)}
+17.5%,82.5%{border-bottom-color:#852839;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.37)}
+20%,80%{border-bottom-color:#962d40;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.41)}
+22.5%,77.5%{border-bottom-color:#a63247;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.45)}
+25%,75%{border-bottom-color:#b4364d;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.49)}
+27.5%,72.5%{border-bottom-color:#c23b53;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.53)}
+30%,70%{border-bottom-color:#ce3e58;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.57)}
+32.5%,67.5%{border-bottom-color:#d9425d;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.60)}
+35%,65%{border-bottom-color:#e34561;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.62)}
+37.5%,62.5%{border-bottom-color:#ec4765;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.65)}
+40%,60%{border-bottom-color:#f34968;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.67)}
+42.5%,57.5%{border-bottom-color:#f84b6a;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.68)}
+45%,55%{border-bottom-color:#fc4c6c;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.69)}
+47.5%,52.5%{border-bottom-color:#fe4d6d;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.70)}
+50%{border-bottom-color:#ff4d6d;box-shadow:inset 0 -6px 9px -5px rgba(255,77,109,0.70)}
+}

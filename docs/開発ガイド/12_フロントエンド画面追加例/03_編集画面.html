@@ -1,0 +1,321 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>03_編集画面 | フロントエンド画面追加例</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Frontend Lab</div>
+ <h1>03 編集画面</h1>
+ <p>M&lt;テーブル名&gt;編集.vue の実装パターン（登録・変更・論理削除）</p>
+ <nav>
+ <a href="_index.html">インデックス</a>
+ <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+ <a href="02_一覧画面.html">02 一覧画面</a>
+ <a href="03_編集画面.html">03 編集画面</a>
+ <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+ <a href="05_チェックリスト.html">05 チェックリスト</a>
+ </nav>
+ </header>
+
+ <main>
+
+ <section>
+ <h2>1. 編集画面の役割</h2>
+ <p>
+  <code>M&lt;テーブル名&gt;編集.vue</code> は登録・変更・論理削除の3操作を1画面で担う。
+  クエリパラメータ <code>モード</code> で画面の動作モードを切り替える。
+ </p>
+ <table>
+  <thead><tr><th>操作</th><th>API エンドポイント</th><th>説明</th></tr></thead>
+  <tbody>
+  <tr><td>登録</td><td>POST /apps/M&lt;テーブル名&gt;/登録</td><td>新規レコードを作成する</td></tr>
+  <tr><td>変更</td><td>POST /apps/M&lt;テーブル名&gt;/変更</td><td>既存レコードを更新する</td></tr>
+  <tr><td>削除（論理削除）</td><td>POST /apps/M&lt;テーブル名&gt;/削除</td><td>有効フラグを False にセットする</td></tr>
+  </tbody>
+ </table>
+ </section>
+
+ <section>
+ <h2>2. モード判定（クエリパラメータ）</h2>
+ <p>
+  ルートのクエリパラメータ <code>モード</code> の値で動作モードを決定する。
+  <code>モード=新規</code> の場合は新規作成、<code>モード=表示</code> かつ ID パラメータあり の場合は閲覧専用、
+  ID パラメータのみの場合は編集モードになる。
+ </p>
+ <pre><code>const applyQueryParams = async (query) => {
+  message.value = '';
+  resetValidation();
+
+  if (query.モード === '新規') {
+    mode.value = 'create';
+    detailData.value = null;
+    resetForm();
+    return;
+  }
+
+  if (query.モード === '表示' && query.車両ID) {
+    mode.value = 'view';
+    await loadDetail(query.車両ID);
+    return;
+  }
+
+  if (query.車両ID) {
+    mode.value = 'edit';
+    await loadDetail(query.車両ID);
+    return;
+  }
+
+  mode.value = 'create';
+  detailData.value = null;
+  resetForm();
+};
+
+// onMounted と watch(route.query) の両方から呼ぶ
+onMounted(async () => { await applyQueryParams(route.query); });
+watch(() => route.query, async (query) => { await applyQueryParams(query); });</code></pre>
+ <table>
+  <thead><tr><th>クエリ例</th><th>mode 値</th><th>説明</th></tr></thead>
+  <tbody>
+  <tr><td>?モード=新規</td><td>create</td><td>フォーム空で登録モード</td></tr>
+  <tr><td>?車両ID=V001</td><td>edit</td><td>既存データを取得して変更モード</td></tr>
+  <tr><td>?モード=表示&amp;車両ID=V001</td><td>view</td><td>読み取り専用（全入力欄 readonly）</td></tr>
+  </tbody>
+ </table>
+ <p>
+  <code>isCreateMode</code> / <code>isEditMode</code> / <code>isViewMode</code> は <code>computed()</code> で定義しておき、
+  テンプレートの <code>:readonly</code> や <code>:disabled</code> に使う。
+ </p>
+ <pre><code>const isCreateMode = computed(() => mode.value === 'create');
+const isEditMode   = computed(() => mode.value === 'edit');
+const isViewMode   = computed(() => mode.value === 'view');</code></pre>
+ </section>
+
+ <section>
+ <h2>3. フォーム reactive オブジェクトの定義</h2>
+ <p>
+  <code>reactive()</code> でフォームデータ・エラー・touched の3オブジェクトを定義する。
+  <strong>有効フラグ（<code>有効: true</code>）を必ず含める</strong>こと。
+  論理削除はバックエンドがこのフラグを False にセットする。
+ </p>
+ <pre><code>const form = reactive({
+  車両ID: '',
+  車両名: '',
+  車両備考: '',
+  有効: true   // 論理削除フラグ。false = 無効（論理削除済み）
+});
+
+const errors = reactive({
+  車両ID: '',
+  車両名: '',
+  車両備考: ''
+});
+
+const touched = reactive({
+  車両ID: false,
+  車両名: false,
+  車両備考: false
+});
+
+// 必須フィールドリスト（バリデーション対象）
+const requiredFields = computed(() => ['車両ID', '車両名']);
+
+// APIレスポンスをフォームに適用するヘルパー
+const applyDataToForm = (data) => {
+  form.車両ID    = data?.車両ID    || '';
+  form.車両名    = data?.車両名    || '';
+  form.車両備考  = data?.車両備考  || '';
+  form.有効      = data?.有効      ?? true;
+};</code></pre>
+ </section>
+
+ <section>
+ <h2>4. API 呼び出しパターン（取得・登録・変更）</h2>
+ <p>
+  全 API は POST メソッド。レスポンスは <code>{ status: "OK"/"NG", message: "...", data: {...} }</code> 形式。
+  登録・変更はモードに応じてエンドポイントを切り替える。
+ </p>
+ <pre><code>// 1件取得
+const loadDetail = async (vehicleId) => {
+  try {
+    const res = await apiClient.post('/apps/M車両/取得', { 車両ID: String(vehicleId) });
+    if (res.data.status === 'OK' && res.data.data) {
+      detailData.value = res.data.data;
+      applyDataToForm(res.data.data);
+    } else {
+      void qMessage(res.data.message || '車両情報の取得に失敗しました。', 'error');
+    }
+  } catch (e) {
+    void qMessage('車両情報の取得でエラーが発生しました。', 'error');
+  }
+};
+
+// 登録・変更（モードで自動切替）
+const saveData = async () => {
+  if (!validateForm()) {
+    void qMessage('入力内容を確認してください。', 'error');
+    return;
+  }
+  try {
+    const endpoint = isCreateMode.value ? '/apps/M車両/登録' : '/apps/M車両/変更';
+    const res = await apiClient.post(endpoint, {
+      車両ID:   form.車両ID,
+      車両名:   form.車両名,
+      車両備考: form.車両備考,
+      有効:     form.有効
+    });
+    if (res.data.status === 'OK') {
+      handleSuccess(res.data.message);
+    } else {
+      void qMessage(res.data.message || '保存に失敗しました。', 'error');
+    }
+  } catch (e) {
+    void qMessage('保存に失敗しました。', 'error');
+  }
+};</code></pre>
+ </section>
+
+ <section>
+ <h2>5. 論理削除の実装パターン</h2>
+ <p>
+  削除は物理削除ではなく<strong>論理削除</strong>（バックエンドが <code>有効=False</code> にセット）。
+  APIレスポンスの <code>message</code> は <code>"車両の有効をオフにしました"</code> 形式になる（IDは含まれない）。
+  削除前に <code>qConfirm</code> で確認ダイアログを表示すること（<strong>native confirm は使用禁止</strong>）。
+ </p>
+ <pre><code>import { qConfirm, qMessage } from '../../../utils/qAlert';
+
+const deleteData = async () => {
+  if (!form.車両ID) return;
+
+  // qConfirm で確認（native confirm は禁止）
+  const confirmed = await qConfirm(
+    `M車両「${form.車両ID}」を削除しますか？この操作は取り消せません。`
+  );
+  if (!confirmed) return;
+
+  try {
+    const res = await apiClient.post('/apps/M車両/削除', { 車両ID: form.車両ID });
+    if (res.data.status === 'OK') {
+      // res.data.message = "車両の有効をオフにしました"（IDは含まれない）
+      handleSuccess(res.data.message);
+    } else {
+      void qMessage(res.data.message || '削除に失敗しました。', 'error');
+    }
+  } catch (e) {
+    void qMessage('削除に失敗しました。', 'error');
+  }
+};</code></pre>
+ <p>
+  削除後の一覧画面では「無効も表示」チェックボックスをオンにすることで、
+  論理削除済みレコード（<code>有効=False</code>）も確認できる。
+ </p>
+ </section>
+
+ <section>
+ <h2>6. バリデーション（必須チェック・エラー表示）</h2>
+ <p>
+  <code>validateField()</code> で1フィールドずつ、<code>validateForm()</code> で全フィールドをまとめてチェックする。
+  <code>touched</code> フラグで「送信前の未入力には警告を出さない」制御を行う。
+ </p>
+ <pre><code>const validateField = (field, showMsg = true) => {
+  const value = String(form[field] ?? '').trim();
+  if (!requiredFields.value.includes(field)) {
+    errors[field] = ''; return true;
+  }
+  if (!value) {
+    // showMsg=false のときは 'ERROR' を入れて input-error クラスだけ付ける
+    errors[field] = showMsg ? `${field}は必須です。` : 'ERROR';
+    return false;
+  }
+  errors[field] = '';
+  return true;
+};
+
+// blur 時: touched を立てて個別バリデーション
+const handleBlur  = (field) => { touched[field] = true; validateField(field); };
+// input 時: touched が立っている時だけ再バリデーション
+const handleInput = (field) => { if (touched[field]) validateField(field); };
+
+// 保存前: 全フィールドを一括チェック
+const validateForm = () => {
+  let isValid = true;
+  requiredFields.value.forEach((field) => {
+    touched[field] = true;
+    if (!validateField(field, false)) isValid = false;
+  });
+  return isValid;
+};</code></pre>
+ <p>
+  テンプレート側では <code>:class="{ 'input-error': errors.車両ID }"</code> で赤枠を表示し、
+  <code>v-if="errors.車両ID && errors.車両ID !== 'ERROR'"</code> でエラーメッセージを表示する。
+ </p>
+ <pre><code>&lt;input
+  id="form-vehicle-id"
+  type="text"
+  v-model="form.車両ID"
+  :readonly="!isCreateMode || isViewMode"
+  :class="{ 'input-error': errors.車両ID }"
+  @blur="handleBlur('車両ID')"
+  @input="handleInput('車両ID')"
+/&gt;
+&lt;span v-if="errors.車両ID" class="input-alert"&gt;!&lt;/span&gt;
+&lt;div v-if="errors.車両ID && errors.車両ID !== 'ERROR'" class="field-error"&gt;
+  {{ errors.車両ID }}
+&lt;/div&gt;</code></pre>
+ </section>
+
+ <section>
+ <h2>7. 登録・変更・削除成功後のリダイレクト</h2>
+ <p>
+  登録・変更・削除の成功後は、<code>URL戻り先</code>、<code>URLメニュー</code>、標準一覧の順で戻り先を決めます。
+  戻り先URLにメッセージ用クエリを足せない場合は <code>saveReturnMessage()</code> で <code>sessionStorage</code> に一時保存し、一覧画面が <code>consumeReturnMessage()</code> で一度だけ表示します。
+ </p>
+ <pre><code>import { saveReturnMessage } from '../../../utils/listSessionState';
+
+const pushReturnTarget = (messageText?: string): boolean =&gt; {
+  const target = URL戻り先.value || URLメニュー.value;
+  if (!target) return false;
+  const normalizedTarget = toHalfwidthUrl(target);
+  if (messageText) saveReturnMessage(normalizedTarget, messageText, 'success');
+  router.push(normalizedTarget);
+  return true;
+};
+
+const handleSuccess = (messageText) =&gt; {
+  if (pushReturnTarget(messageText)) return;
+  router.push({
+    path: '/Mマスタ/M車両/一覧',
+    query: { message: messageText, type: 'success' }
+  });
+};</code></pre>
+ <p>
+  一覧画面では <code>consumeReturnMessage(route)</code> または <code>route.query.message</code> を受け取り <code>qMessage()</code> で表示する。
+  <code>type=success</code> / <code>type=error</code> によって表示スタイルが変わる。
+ </p>
+ </section>
+
+ <section>
+ <h2>8. M商品編集.vue 実装例（全コード）</h2>
+ <p>
+  M商品の編集画面実装全体。新しいマスタ画面はこれをベースにテーブル名・フィールド名を
+  置き換えて作成する。<code>M車両編集.vue</code> も同じパターンで実装されている。
+ </p>
+ <pre data-src="code_samples/editPage.vue" data-label="M商品編集.vue（実装例）">
+ <code>...</code>
+ </pre>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

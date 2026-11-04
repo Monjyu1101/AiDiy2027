@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>99 まとめ</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="07_動作確認.html">前へ: 07_動作確認</a>
+    <a href="_index.html">目次へ戻る</a>
+  </nav>
+
+  <h1>99_まとめ</h1>
+  <p>この章では、M商品のフロント実装を一覧・編集・ルーティング・メニュー・E2E確認まで完了しました。</p>
+
+  <h2>完了した内容</h2>
+  <ol>
+    <li>編集画面を作成し、モード別動作を実装</li>
+    <li>一覧テーブルを作成し、表示・検索・遷移を実装</li>
+    <li>一覧画面で再検索/新規導線を実装</li>
+    <li>routerとメニューへ導線を追加</li>
+    <li>E2EでCRUD動作を確認</li>
+  </ol>
+
+  <h2>実装原則（再確認）</h2>
+  <ul>
+    <li>一覧と編集を分離し、責務を明確にする</li>
+    <li>APIパスとルーティングパスを一元管理する</li>
+    <li>画面メッセージは成功/失敗で統一形式にする</li>
+    <li>モード切り替えはURLクエリで明示する</li>
+    <li><code>script setup + TypeScript</code> と <code>apiClient</code> を標準利用する</li>
+    <li>日本語コンポーネントタグを直接使わず、必要時は <code>&lt;component :is=&quot;...&quot; /&gt;</code> を使う</li>
+  </ul>
+
+  <h2>AGENTS準拠の確認結果</h2>
+  <ul>
+    <li><code>workspace/AiDiy2027/frontend_web/AGENTS.md</code> の命名規約・実装方針（日本語識別子、Composition API、Routerガード）に沿っている</li>
+    <li>メニュー導線は <code>_TopMenu.vue</code> と <code>Mマスタ.vue</code> の役割分担に合わせて記述している</li>
+    <li>API呼び出しは <code>apiClient</code> 前提、認証はJWTインターセプター前提で説明している</li>
+  </ul>
+
+  <h2>最終チェックリスト</h2>
+  <ul>
+    <li>[ ] 一覧画面が正常表示される</li>
+    <li>[ ] 編集画面で新規/編集/表示が切り替わる</li>
+    <li>[ ] 一覧から編集への遷移が成立する</li>
+    <li>[ ] 登録/更新/削除がバックエンドへ反映される</li>
+    <li>[ ] メニュー導線が機能する</li>
+  </ul>
+
+  <h2>次に進む章</h2>
+  <ul>
+    <li><a href="../11_コーディングルール/_index.html">11_コーディングルール</a></li>
+    <li><a href="../12_フロントエンド画面追加例/_index.html">12_フロントエンド画面追加例</a></li>
+  </ul>
+
+  <h2>参照</h2>
+  <ul>
+    <li><code>workspace/AiDiy2027/frontend_web/AGENTS.md</code></li>
+    <li><code>workspace/AiDiy2027/docs/開発ガイド/README.md</code></li>
+  </ul>
+
+  <footer>
+    <p><a href="../README.md">開発ガイド README に戻る</a></p>
+  </footer>
+
+  <nav>
+    <a href="07_動作確認.html">前へ: 07_動作確認</a>
+    <a href="_index.html">目次へ戻る</a>
+  </nav>
+</body>
+</html>
+
+

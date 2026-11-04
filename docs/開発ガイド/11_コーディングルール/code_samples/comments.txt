@@ -1,0 +1,25 @@
+■ バックエンド（Python）日本語コメント
+
+def get_C利用者_list(db: Session):
+ """利用者の一覧を取得する
+
+ Args:
+ db: データベースセッション
+
+ Returns:
+ 利用者のリスト
+ """
+ # パスワードは除外して返す
+ return db.query(models.C利用者).all()
+
+■ フロントエンド（TypeScript）日本語コメント
+
+/**
+ * 利用者一覧を取得する
+ * @returns 利用者の配列
+ */
+const 利用者一覧取得 = async () => {
+ // API呼び出し
+ const response = await apiClient.post('/core/C利用者/一覧')
+ return response.data.data.items
+}

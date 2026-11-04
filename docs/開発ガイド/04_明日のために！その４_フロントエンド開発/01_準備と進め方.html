@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 準備と進め方</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_編集画面作成.html">次へ: 02_編集画面作成</a>
+  </nav>
+
+  <h1>01_準備と進め方</h1>
+  <p>フロントエンド実装では、一覧と編集の責務を分離して組み立てると保守しやすくなります。ここで全体像を先に固めます。</p>
+
+  <h2>今回作る画面</h2>
+  <table>
+    <tr><th>画面</th><th>役割</th><th>主な機能</th></tr>
+    <tr><td>M商品一覧</td><td>検索・一覧表示の入口</td><td>再検索、新規遷移、編集遷移</td></tr>
+    <tr><td>M商品編集</td><td>新規/更新/削除</td><td>入力検証、API呼び出し、一覧へ戻る</td></tr>
+  </table>
+
+  <h2>コンポーネント構成（推奨）</h2>
+  <pre><code>workspace/AiDiy2027/frontend_web/src/components/Mマスタ/M商品/
+├── M商品一覧.vue
+├── M商品編集.vue
+└── components/
+    └── M商品一覧テーブル.vue</code></pre>
+
+  <h2>実装の順序</h2>
+  <ol>
+    <li>編集画面（M商品編集.vue）を作る</li>
+    <li>ルーティングを設定する</li>
+    <li>一覧テーブル（M商品一覧テーブル.vue）を作る</li>
+    <li>一覧画面（M商品一覧.vue）を作る</li>
+    <li>メニュー導線を追加する</li>
+    <li>E2Eで登録→編集→削除を確認する</li>
+  </ol>
+
+  <h2>API接続の前提</h2>
+  <ul>
+    <li>一覧: <code>POST /apps/V商品/一覧</code></li>
+    <li>取得: <code>POST /apps/M商品/取得</code></li>
+    <li>登録: <code>POST /apps/M商品/登録</code></li>
+    <li>変更: <code>POST /apps/M商品/変更</code></li>
+    <li>削除: <code>POST /apps/M商品/削除</code></li>
+    <li>呼び出し実装: <code>workspace/AiDiy2027/frontend_web/src/api/client.ts</code> の <code>apiClient</code></li>
+  </ul>
+
+  <h2>事前チェック</h2>
+  <ul>
+    <li>[ ] <code>http://127.0.0.1:8090</code> にアクセスできる</li>
+    <li>[ ] <code>http://127.0.0.1:8098/docs</code> でM商品APIを確認できる</li>
+    <li>[ ] フロントの基底APIクライアント（<code>apiClient</code>）が利用できる</li>
+    <li>[ ] 実装は <code>script setup + TypeScript</code> を前提にする</li>
+    <li>[ ] 日本語コンポーネントタグを直接書かない（必要時は <code>&lt;component :is=&quot;...&quot; /&gt;</code>）</li>
+  </ul>
+
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_編集画面作成.html">次へ: 02_編集画面作成</a>
+  </nav>
+</body>
+</html>

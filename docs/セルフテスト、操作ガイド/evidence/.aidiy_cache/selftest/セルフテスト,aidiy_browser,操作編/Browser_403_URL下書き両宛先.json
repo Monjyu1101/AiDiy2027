@@ -1,0 +1,98 @@
+{
+  "completed_utc": "2026-11-02T23:39:50.178636+00:00",
+  "scope": "Browser chapter4 URL-only to standalone Electron Code offline and Live disconnected",
+  "result": "PASS for two empty-draft URL handoffs; preparation external-navigation deviation separately recorded",
+  "project": "<USERPROFILE>\\Desktop\\AiDiy2027_dev",
+  "draft": "session: aidiy_browser 176e9d6f-f6d7-41f5-a48b-b95949b87b9c\ntab_id: a42859ef-f67e-4f8d-87bb-96b2039cfc1b\nhttp://127.0.0.1:61377/draft",
+  "code": {
+    "label": "Code 1",
+    "insertions": 1,
+    "initial_empty": true,
+    "visual_match": true,
+    "offline": true,
+    "prediction_off": true
+  },
+  "live": {
+    "label": "Live",
+    "insertions": 1,
+    "initial_empty": true,
+    "visual_match": true,
+    "connected": false,
+    "mic_off": true
+  },
+  "image_attachment": false,
+  "ai_conversation_submissions": 0,
+  "preparation_deviation": {
+    "google_searches": 1,
+    "query": "http*//127.0.0.1*61377/draft",
+    "cause": "keyboard layout converted colon to asterisk; changed to clipboard paste",
+    "no_project_document_or_credential_sent": true,
+    "google_ai_overview_visible": true
+  },
+  "narration": {
+    "provider": "edge",
+    "voice": "ja-JP-NanamiNeural",
+    "ratio": 1.2,
+    "clips": 5,
+    "serial_playback_error": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "cleanup": "Only created draft cleared; Code Live Browser UI closed; dedicated loopback process interrupted; Diag restored mini",
+  "services": {
+    "8095": {
+      "tcp": true,
+      "http": 200,
+      "path": "/docs"
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200,
+      "path": "/docs"
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200,
+      "path": "/docs"
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200,
+      "path": "/health"
+    },
+    "8090": {
+      "tcp": true,
+      "http": 200,
+      "path": "/"
+    }
+  },
+  "local_listening": false,
+  "source_edits": false,
+  "limits": [
+    "nonempty existing draft preservation",
+    "image handoff",
+    "60-second boundary",
+    "other execution forms"
+  ],
+  "pdf": {
+    "books": 22,
+    "pages": 363,
+    "changed_books": [
+      "Browser操作編",
+      "共通確認結果"
+    ],
+    "visual_review": "PASS",
+    "renderer_warnings": "TT undefined function 5/3; rendered text readable"
+  },
+  "fixture_process_remaining": false,
+  "prior_source_hashes_preserved": {
+    "frontend_ide/launch.mjs": true,
+    "frontend_ide/ファイル機能/ai-search.mjs": true,
+    "backend_server/auth_keyring.py": true,
+    "backend_server/checks/test_auth_keyring.py": true
+  }
+}

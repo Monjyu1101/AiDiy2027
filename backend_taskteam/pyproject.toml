@@ -1,0 +1,16 @@
+[project]
+name = "aidiy-backend-taskteam"
+version = "0.1.0"
+description = "AiDiy task and multi-agent team server"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["task_proc", "taskteam_proc", "team_proc"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

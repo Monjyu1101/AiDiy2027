@@ -1,0 +1,19 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+@import "../キー設定共通/キー設定.css";
+.integration-row{border-bottom:1px solid #304253;padding:12px 4px;display:flex;align-items:center;gap:12px}
+.integration-row.selected{background:#25403d}
+.integration-test{display:grid;grid-template-columns:auto auto;align-items:center;justify-items:center;gap:6px;max-width:220px;margin-left:auto}
+.integration-test button{padding:5px 10px;font-size:12px}
+.integration-test>.badge{min-width:60px}
+.integration-reason{grid-column:1/-1;font-size:11px;color:#94afc5}
+.integration-panel .panel-actions{align-items:center}
+
+.integration-group{margin-bottom:18px}
+.integration-group-heading{display:flex;align-items:center;gap:8px;font-size:13px;color:#c2e6df;padding:8px 4px 2px}
+.integration-group .integration-row{margin-left:16px}
+.integration-web{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 7px;border:1px solid #52778d;border-radius:5px;color:#b8def2;background:#142632;font:11px Arial,sans-serif;text-decoration:none}
+.integration-web:hover,.integration-web:focus-visible{background:#183443;color:#fff;outline:1px solid #7dd3fc}

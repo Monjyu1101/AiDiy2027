@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>10. セキュリティと本番環境 | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+ <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>10. セキュリティと本番環境</h1>
+
+ <section id="overview">
+ <h2>セキュリティの概要</h2>
+ <p><strong>このシステムは学習・開発用です。</strong><br>
+ 本番環境で使用する場合は、以下のセキュリティ対策が必要です。</p>
+
+ <div>
+ <strong>重要 </strong>
+ <p><strong>開発環境のまま本番公開しないでください。</strong><br>
+ セキュリティ上の重大なリスクがあります。</p>
+ </div>
+ </section>
+
+ <section id="comparison">
+ <h2>開発環境 vs 本番環境</h2>
+
+ <table>
+ <thead>
+ <tr>
+ <th>項目</th>
+ <th>開発環境</th>
+ <th>本番環境</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>JWT秘密鍵</strong></td>
+ <td><code>your-secret-key-here</code></td>
+ <td>ランダム生成した強力な鍵</td>
+ </tr>
+ <tr>
+ <td><strong>パスワード</strong></td>
+ <td>初期投入アカウントは平文、API作成の利用者はbcryptハッシュ（<code>C利用者.パスワード</code>）</td>
+ <td>全アカウントをbcryptでハッシュ化（初期投入分も再設定）</td>
+ </tr>
+ <tr>
+ <td><strong>データベース</strong></td>
+ <td>SQLite（ファイル）</td>
+ <td>SQLite（現行実装）</td>
+ </tr>
+ <tr>
+ <td><strong>CORS</strong></td>
+ <td>localhost / 127.0.0.1 の 8090, 8092, 5173, 3000 とDocker用HTTP/HTTPSを許可</td>
+ <td>特定ドメインのみ</td>
+ </tr>
+ <tr>
+ <td><strong>HTTPS</strong></td>
+ <td>HTTP（暗号化なし）</td>
+ <td>HTTPS（SSL/TLS必須）</td>
+ </tr>
+ <tr>
+ <td><strong>ログレベル</strong></td>
+ <td>DEBUG</td>
+ <td>WARNING以上</td>
+ </tr>
+ <tr>
+ <td><strong>Webサーバー</strong></td>
+ <td>Web 8090、Avatar 8092、5バックエンド 8091/8093/8095/8096/8098</td>
+ <td>Nginx（リバースプロキシ）</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="security-checklist">
+ <h2>セキュリティチェックリスト</h2>
+ <p>本番環境に移行する前に確認すべき項目です。</p>
+
+ <div>
+ <div>ステップ 1. 認証とアクセス制御</div>
+ <ul>
+ <li>JWT秘密鍵をランダムな32文字以上に変更</li>
+ <li>トークン有効期限を短くする（推奨: 15分）</li>
+ <li>パスワードをハッシュ化する</li>
+ <li>不要なエンドポイントを無効化する</li>
+ </ul>
+ </div>
+
+ <div>
+ <div>ステップ 2. データベースの強化</div>
+ <ul>
+ <li>パスワードをbcryptでハッシュ化</li>
+ <li>SQLiteファイルの配置先・権限・バックアップ運用を固定する</li>
+ <li>外部RDBへ移行する場合は実装差分の洗い出しを行う</li>
+ <li>定期バックアップを設定</li>
+ </ul>
+ </div>
+
+ <div>
+ <div>ステップ 3. ネットワークセキュリティ</div>
+ <ul>
+ <li>HTTPSを有効化（Let's Encrypt推奨）</li>
+ <li>CORSを特定ドメインに制限</li>
+ <li>ファイアウォールを設定</li>
+ <li>DDoS対策（Cloudflare等のCDN利用）</li>
+ </ul>
+ </div>
+
+ <div>
+ <div>ステップ 4. ログと監視</div>
+ <ul>
+ <li>ログレベルをWARNING以上に設定</li>
+ <li>エラー通知を設定</li>
+ <li>アクセスログを記録</li>
+ <li>定期的なログ確認の仕組みを構築</li>
+ </ul>
+ </div>
+
+ <div>
+ <div>ステップ 5. 運用体制</div>
+ <ul>
+ <li>バックアップの自動化</li>
+ <li>障害時の復旧手順を文書化</li>
+ <li>セキュリティアップデートの定期適用</li>
+ <li>アクセス権限の定期見直し</li>
+ </ul>
+ </div>
+ </section>
+
+ <section id="env-variables">
+ <h2>環境変数管理</h2>
+ <p>秘密鍵や接続情報の管理方法です。</p>
+
+ <h3>開発環境での設定</h3>
+ <pre><code># backend_server/database.py
+SECRET_KEY = "your-secret-key-here" # 開発環境ではOK
+DATABASE_URL = "sqlite:///_data/AiDiy/database.db"</code></pre>
+
+ <h3>本番環境での設定</h3>
+ <pre><code># .env ファイル（Gitに含めない）
+SECRET_KEY=ランダム生成した強力な秘密鍵
+DATABASE_URL=sqlite:///_data/AiDiy/database.db
+
+# database.py
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+DATABASE_URL = os.getenv("DATABASE_URL")</code></pre>
+
+ <div>
+ <strong>重要 </strong>
+ <p>
+ 現行リポジトリの実装は<strong>SQLite前提</strong>です。<br>
+ 本番運用時はバックアップ、排他制御、配置先、同時アクセス量を事前に評価してください。外部RDB化は追加実装が必要です。
+ </p>
+ </div>
+
+ <pre><code><span># .envファイルをGitから除外する</span>
+echo ".env" >> .gitignore</code></pre>
+ </section>
+
+ <section id="production-config">
+ <h2>本番構成</h2>
+
+ <h3>JWT秘密鍵の生成</h3>
+ <pre><code><span># ランダムな秘密鍵を生成</span>
+python -c "import secrets; print(secrets.token_urlsafe(32))"</code></pre>
+
+ <h3>Nginx設定</h3>
+ <pre><code># /etc/nginx/sites-available/aidiy
+server {
+ listen 80;
+ server_name yourdomain.com;
+
+ # フロントエンド
+ location / {
+ proxy_pass http://127.0.0.1:8090;
+ proxy_set_header Host $host;
+ proxy_set_header X-Real-IP $remote_addr;
+ }
+
+ # Core API
+ location /core/ {
+ proxy_pass http://127.0.0.1:8091/core/;
+ proxy_set_header Host $host;
+ proxy_set_header X-Real-IP $remote_addr;
+ }
+
+ # Apps API
+ location /apps/ {
+ proxy_pass http://127.0.0.1:8098/apps/;
+ proxy_set_header Host $host;
+ proxy_set_header X-Real-IP $remote_addr;
+ }
+}</code></pre>
+
+ <h3>Systemdサービス</h3>
+ <p>Core APIとApps APIの2つのサービスを登録します。</p>
+
+ <pre><code># /etc/systemd/system/aidiy-core.service
+[Unit]
+Description=AiDiy2027 Core API
+After=network.target
+
+[Service]
+User=aidiyuser
+WorkingDirectory=/var/www/AiDiy2027/backend_server
+Environment="PATH=/var/www/AiDiy2027/backend_server/.venv/bin"
+ExecStart=/var/www/AiDiy2027/backend_server/.venv/bin/uvicorn core_main:app --host 0.0.0.0 --port 8091
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+
+ <pre><code># /etc/systemd/system/aidiy-apps.service
+[Unit]
+Description=AiDiy2027 Apps API
+After=network.target
+
+[Service]
+User=aidiyuser
+WorkingDirectory=/var/www/AiDiy2027/backend_server
+Environment="PATH=/var/www/AiDiy2027/backend_server/.venv/bin"
+ExecStart=/var/www/AiDiy2027/backend_server/.venv/bin/uvicorn apps_main:app --host 0.0.0.0 --port 8098
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+ </section>
+
+ <section id="deployment">
+ <h2>デプロイ手順</h2>
+ <ol>
+ <li><strong>サーバー準備</strong> — Ubuntu/CentOS等のLinuxサーバーを用意</li>
+ <li><strong>必要ソフトウェアのインストール</strong> — Python, Nginxをインストール</li>
+ <li><strong>コードのデプロイ</strong> — Git clone または SCP/FTPで転送</li>
+ <li><strong>環境変数の設定</strong> — .envファイルを作成</li>
+ <li><strong>依存パッケージのインストール</strong> — <code>uv sync</code></li>
+ <li><strong>データベースの初期化</strong> — SQLiteファイル配置と初期データ投入を確認</li>
+ <li><strong>サービスの起動</strong> — <code>systemctl start aidiy-core</code> および <code>systemctl start aidiy-apps</code></li>
+ <li><strong>Nginx設定</strong> — リバースプロキシとHTTPS設定</li>
+ <li><strong>動作確認</strong> — ブラウザからアクセスして確認</li>
+ </ol>
+
+ <div>
+ <strong>Tip</strong>
+ <p>デプロイ手順をスクリプト化しておくと、再デプロイ時に便利です。</p>
+ </div>
+ </section>
+
+ <section id="docker">
+ <h2>Docker対応</h2>
+ <p>現行リポジトリには <code>docker/</code> の実装済み構成があります。Core / Apps / frontend_webを1つのアプリコンテナで動かし、別のNginxコンテナがHTTPSと静的配信を担当します。</p>
+
+ <pre><code>cd docker
+docker_1build.bat  # 初回またはWeb変更反映時
+docker_2start.bat  # 起動
+docker_3stop.bat   # 停止</code></pre>
+
+ <ul>
+ <li>画面: <code>https://localhost/</code>（自己署名証明書）</li>
+ <li>ホスト公開ポート: <code>80</code>, <code>443</code>, <code>8091</code>, <code>8098</code>。Webの8090はコンテナ内部のみ</li>
+ <li>frontend_webは <code>docker/Dockerfile</code> の <code>frontend-builder</code> ステージでビルドし、named volume経由でNginxへ共有する。ホストの <code>frontend_web/dist/</code> は使わない</li>
+ <li><code>backend_tools</code> (8095)、<code>backend_taskteam</code> (8093)、<code>backend_local</code> (8096) はこのDocker構成に含まれない</li>
+ <li>Nginxに <code>/task</code> / <code>/team</code> proxyはないため、AIタスク画面とAIチーム画面はこの構成では動作しない</li>
+ <li>詳細と証明書・削除手順は <code>docker/README.md</code> を一次情報とする</li>
+ </ul>
+
+ <div>
+ <strong>注意 </strong>
+ <p><code>_config/</code> はread-onlyでマウントされます。秘密情報をイメージやComposeへ直書きせず、ホスト側の設定を管理してください。</p>
+ </div>
+ </section>
+
+ <section id="monitoring">
+ <h2>監視とロギング</h2>
+ <p>本番環境での監視項目です。</p>
+
+ <ul>
+ <li><strong>死活監視</strong> — uptimeチェック（UptimeRobot等）</li>
+ <li><strong>エラー監視</strong> — エラートラッキング（Sentry、Rollbar等）</li>
+ <li><strong>リソース監視</strong> — CPU/メモリ使用率の監視</li>
+ <li><strong>アクセスログ</strong> — 不正アクセスの検知</li>
+ <li><strong>バックアップ監視</strong> — DBバックアップの成功確認</li>
+ </ul>
+ </section>
+
+ <section id="final-words">
+ <h2>まとめ</h2>
+ <p>このガイドでは、AiDiyシステムの開発から本番環境への移行までを説明しました。</p>
+
+ <div>
+ <strong>学んだこと </strong>
+ <ul>
+ <li>プロジェクトの全体構成を理解した</li>
+ <li>バックエンド・フロントエンドの4つの開発パターンを習得した</li>
+ <li>データベース管理の方法を学んだ</li>
+ <li>テストの書き方を理解した</li>
+ <li>運用とメンテナンスの基本を学んだ</li>
+ <li>トラブルシューティングの方法を習得した</li>
+ <li>セキュリティと本番環境の考慮事項を理解した</li>
+ </ul>
+ </div>
+
+ <div>
+ <strong>最後に </strong>
+ <p>このシステムは学習と開発のための基盤です。<br>
+ ここから自分のアイデアを形にしていきましょう。</p>
+ </div>
+ </section>
+
+ <section id="back-to-index">
+ <div>
+ <a href="_index.html">
+ <span>トップに戻る</span>
+ <strong>目次ページへ</strong>
+ <span>全ページの一覧を表示</span>
+ </a>
+ </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+ <a href="09_困ったときは.html">← 前: 09. 困ったときは</a> |
+ <a href="_index.html">トップページ</a>
+ </p>
+ <p>
+ AiDiy2027 | Version 1.0.0
+ </p>
+ </footer>
+</body>
+</html>

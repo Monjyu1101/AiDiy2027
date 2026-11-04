@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>99 まとめ</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="06_設計から実装への流れ.html">前へ: 06_設計から実装への流れ</a>
+    <a href="_index.html">目次へ戻る</a>
+  </nav>
+
+  <h1>99_まとめ</h1>
+  <p>この章では、M商品の設計を外部設計・内部設計・DB設計まで一貫して整理しました。ここで作成した設計資料が実装の品質と速度を決めます。</p>
+
+  <h2>学習成果の確認</h2>
+  <ul>
+    <li><code>code_samples/M商品_画面設計書.md</code> を読み、画面要件を説明できる</li>
+    <li><code>code_samples/M商品_API設計書.md</code> を読み、API契約を説明できる</li>
+    <li><code>code_samples/M商品_DB設計書.sql</code> を読み、テーブル制約を説明できる</li>
+    <li>設計から実装への順序（DB→API→画面）を説明できる</li>
+  </ul>
+
+  <h2>レビュー用チェックリスト</h2>
+  <table>
+    <tr><th>観点</th><th>確認内容</th></tr>
+    <tr><td>整合性</td><td>画面/API/DBの項目名が一致しているか</td></tr>
+    <tr><td>入力制約</td><td>必須・最大文字数・重複制約が一致しているか</td></tr>
+    <tr><td>エラー設計</td><td>メッセージとコードが運用しやすいか</td></tr>
+    <tr><td>監査要件</td><td>登録系/更新系の更新ルールが明確か</td></tr>
+    <tr><td>実装可能性</td><td>設計情報だけで実装着手できるか</td></tr>
+  </table>
+
+  <h2>次の推奨アクション</h2>
+  <ol>
+    <li>03章でバックエンド実装に着手する
+      <br><a href="../03_明日のために！その３_バックエンド開発/_index.html">03_明日のために！その３_バックエンド開発</a></li>
+    <li>04章でフロントエンド画面を実装する
+      <br><a href="../04_明日のために！その４_フロントエンド開発/_index.html">04_明日のために！その４_フロントエンド開発</a></li>
+    <li>必要に応じて設計書を更新し、差分レビューを実施する</li>
+  </ol>
+
+  <h2>参照パス</h2>
+  <ul>
+    <li><code>workspace/AiDiy2027/docs/開発ガイド/02_明日のために！その２_設計/</code></li>
+    <li><code>workspace/AiDiy2027/backend_server/AGENTS.md</code></li>
+    <li><code>workspace/AiDiy2027/frontend_web/AGENTS.md</code></li>
+  </ul>
+
+  <footer>
+    <p><a href="../README.md">開発ガイド README に戻る</a></p>
+  </footer>
+
+  <nav>
+    <a href="06_設計から実装への流れ.html">前へ: 06_設計から実装への流れ</a>
+    <a href="_index.html">目次へ戻る</a>
+  </nav>
+</body>
+</html>
+
+

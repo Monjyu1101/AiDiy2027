@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X世界の絶景 - 世界の絶景ランダム巡回</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <iframe id="map-a" class="world-map" title="世界の絶景地図" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <iframe id="map-b" class="world-map" title="世界の絶景地図" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+    <div id="photo-layer" class="photo-layer" aria-hidden="true"></div>
+    <div id="photo-credit" class="photo-credit">Photo: loading...</div>
+
+    <section class="hero-panel" aria-label="絶景情報">
+      <div class="app-kicker">WORLD SCENERY</div>
+      <h1 id="place-title">X世界の絶景</h1>
+      <p id="place-location" class="place-location">世界のどこかへ移動中</p>
+      <p id="place-note" class="place-note">ランダムな絶景へ地図が飛びます。</p>
+      <div class="meta-row">
+        <span id="place-category">絶景</span>
+        <span id="place-coords">--</span>
+      </div>
+    </section>
+
+    <nav class="control-panel" aria-label="操作">
+      <button id="prev-btn" type="button">前へ</button>
+      <button id="next-btn" type="button" class="primary">次の絶景へ</button>
+      <button id="auto-btn" type="button" class="active">自動巡回 ON</button>
+      <button id="fullscreen-btn" type="button">全画面</button>
+    </nav>
+
+    <aside class="history-panel" aria-label="訪問履歴">
+      <div class="history-title">VISIT LOG</div>
+      <ol id="history-list"></ol>
+    </aside>
+
+    <div class="progress-track" aria-hidden="true">
+      <div id="auto-progress" class="progress-bar"></div>
+    </div>
+  </main>
+
+  <script src="list.js"></script>
+  <script src="index.js"></script>
+</body>
+</html>

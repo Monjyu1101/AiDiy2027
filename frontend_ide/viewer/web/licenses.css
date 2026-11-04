@@ -1,0 +1,27 @@
+/*
+ * -*- coding: utf-8 -*-
+ *
+ * -------------------------------------------------------------------------
+ * COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027
+ * -------------------------------------------------------------------------
+ */
+
+:root { color-scheme: dark; font: 15px/1.8 "Segoe UI", "Yu Gothic UI", sans-serif; color: #e6ebf7; background: #080d1b; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 980px; margin: 0 auto; padding: 32px 24px 64px; }
+.brand { color: #8fb4ff; letter-spacing: .1em; }
+h1 { font-size: 26px; margin: 8px 0 20px; }
+h2 { font-size: 14px; color: #c3d5fb; overflow-wrap: anywhere; }
+a { color: #9ac1ff; text-underline-offset: 3px; }
+details { margin: 10px 0; border: 1px solid #28334d; background: #10182a; }
+summary { padding: 12px 16px; cursor: pointer; overflow-wrap: anywhere; }
+summary span { color: #a5b4ce; margin-left: 8px; font-size: 13px; }
+details > p, details > h2 { margin: 16px; }
+pre { margin: 16px; padding: 16px; background: #080d1b; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.6 Consolas, monospace; }
+footer { margin-top: 28px; color: #a5b4ce; font-size: 12px; }
+:focus-visible { outline: 2px solid #9ac1ff; outline-offset: 3px; }

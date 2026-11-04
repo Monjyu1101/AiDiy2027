@@ -1,0 +1,16 @@
+TAP version 13
+# Subtest: Code offline: 実行中の切替を拒否し、停止と画面終了でジョブを終了する
+ok 1 - Code offline: 実行中の切替を拒否し、停止と画面終了でジョブを終了する
+  ---
+  duration_ms: 208.2379
+  type: 'test'
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 1
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 487.7482

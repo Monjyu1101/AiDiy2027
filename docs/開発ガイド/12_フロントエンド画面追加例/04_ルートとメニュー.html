@@ -1,0 +1,165 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>04_ルートとメニュー | フロントエンド画面追加例</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Frontend Lab</div>
+ <h1>04 ルートとメニュー</h1>
+ <p>appsRouter.ts へのルート追加と Mマスタ.vue へのメニューカード追加手順</p>
+ <nav>
+ <a href="_index.html">インデックス</a>
+ <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+ <a href="02_一覧画面.html">02 一覧画面</a>
+ <a href="03_編集画面.html">03 編集画面</a>
+ <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+ <a href="05_チェックリスト.html">05 チェックリスト</a>
+ </nav>
+ </header>
+
+ <main>
+
+ <section>
+ <h2>1. ルートパスの命名規則</h2>
+ <p>
+  M系マスタ画面のルートパスは以下の規則に従う。
+  テーブル名は日本語のまま使用し、ファイルパスと完全に対応させる。
+ </p>
+ <table>
+  <thead><tr><th>種別</th><th>パスパターン</th><th>例</th></tr></thead>
+  <tbody>
+  <tr><td>M系 一覧</td><td>/Mマスタ/M&lt;テーブル名&gt;/一覧</td><td>/Mマスタ/M車両/一覧</td></tr>
+  <tr><td>M系 編集</td><td>/Mマスタ/M&lt;テーブル名&gt;/編集</td><td>/Mマスタ/M車両/編集</td></tr>
+  <tr><td>T系 一覧</td><td>/Tトラン/T&lt;テーブル名&gt;/一覧</td><td>/Tトラン/T配車/一覧</td></tr>
+  <tr><td>T系 編集</td><td>/Tトラン/T&lt;テーブル名&gt;/編集</td><td>/Tトラン/T配車/編集</td></tr>
+  </tbody>
+ </table>
+ <p>
+  ルート <code>name</code> はパスの区切りを除いた日本語（例: <code>'M車両一覧'</code>, <code>'M車両編集'</code>）。
+  全ての業務画面に <code>meta: { requiresAuth: true, title: '...' }</code> を設定する。
+ </p>
+ </section>
+
+ <section>
+ <h2>2. appsRouter.ts へのルート追加</h2>
+ <p>
+  <code>frontend_web/src/router/appsRouter.ts</code> の M系ブロック（<code>// ---- M系 (マスタ) ----</code>）に
+  一覧・編集の2ルートを追加する。既存の M商品・M車両の直後が推奨配置。
+ </p>
+ <pre data-src="code_samples/router_add.ts" data-label="appsRouter.ts への追加例">
+ <code>...</code>
+ </pre>
+ <p>
+  <strong>ポイント：</strong>
+ </p>
+ <ul>
+  <li>M系は <code>/Mマスタ/...</code> 配下に配置する</li>
+  <li>一覧と編集の2ルートをセットで登録する</li>
+  <li><code>meta.requiresAuth</code> は必ず <code>true</code> にする（認証ガード）</li>
+  <li><code>meta.title</code> は画面名と揃える（ブラウザタブ表示）</li>
+  <li><code>component</code> は動的 import（<code>() => import('...')</code>）を使う</li>
+ </ul>
+ <pre><code>// appsRouter.ts 追加例（M&lt;テーブル名&gt; の場合）
+{
+    path: '/Mマスタ/M&lt;テーブル名&gt;/一覧',
+    name: 'M&lt;テーブル名&gt;一覧',
+    component: () => import('../components/Mマスタ/M&lt;テーブル名&gt;/M&lt;テーブル名&gt;一覧.vue'),
+    meta: { requiresAuth: true, title: 'M&lt;テーブル名&gt;一覧' }
+},
+{
+    path: '/Mマスタ/M&lt;テーブル名&gt;/編集',
+    name: 'M&lt;テーブル名&gt;編集',
+    component: () => import('../components/Mマスタ/M&lt;テーブル名&gt;/M&lt;テーブル名&gt;編集.vue'),
+    meta: { requiresAuth: true, title: 'M&lt;テーブル名&gt;編集' }
+},</code></pre>
+ </section>
+
+ <section>
+ <h2>3. meta: { requiresAuth, title } の設定</h2>
+ <p>
+  <code>meta.requiresAuth: true</code> を設定すると <code>router/index.ts</code> の
+  ナビゲーションガードが認証チェックを行い、未ログインの場合はログイン画面へリダイレクトする。
+  <code>meta.title</code> はブラウザのタブタイトルに使われる。
+ </p>
+ <pre><code>// router/index.ts のナビゲーションガード（既存コード）
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth && !isLoggedIn()) {
+    next('/login');
+  } else {
+    document.title = String(to.meta.title || 'AiDiy');
+    next();
+  }
+});</code></pre>
+ <p>
+  <strong>全業務画面（M系・T系・V系・S系）は必ず <code>requiresAuth: true</code> を設定する。</strong>
+  ログイン画面・エラーページのみ <code>false</code> または省略。
+ </p>
+ </section>
+
+ <section>
+ <h2>4. Mマスタ.vue へのメニューカード追加</h2>
+ <p>
+  <code>frontend_web/src/components/Mマスタ.vue</code> にメニューカードを追加する。
+  既存の M商品・M車両カードのすぐ後に同じ形式で追記する。
+ </p>
+ <pre data-src="code_samples/menuCard.vue" data-label="Mマスタ.vue のメニューカード例">
+ <code>...</code>
+ </pre>
+ <p>
+  新しいテーブル用のカードを追加する場合はこのパターンをコピーして
+  <code>M商品</code> を <code>M&lt;テーブル名&gt;</code> に置き換える。
+ </p>
+ <pre><code>&lt;!-- Mマスタ.vue に追加するカード（M&lt;テーブル名&gt; 用） --&gt;
+&lt;router-link class="menu-card menu-card-fixed" to="/Mマスタ/M&lt;テーブル名&gt;/一覧?URLメニュー=/Mマスタ"&gt;
+  &lt;div class="menu-card-title"&gt;
+    &lt;span class="icon"&gt;M名&lt;/span&gt;
+    M&lt;テーブル名&gt;
+  &lt;/div&gt;
+  &lt;div class="menu-card-description"&gt;
+    &lt;テーブルの説明文・ビジネスドメインに合わせて記載&gt;
+  &lt;/div&gt;
+&lt;/router-link&gt;</code></pre>
+ <p>
+  <strong>注意：</strong> Vue コンポーネントのタグ名は ASCII のみ有効。
+  日本語ファイル名のコンポーネントを動的に使う場合は
+  <code>&lt;component :is="コンポーネント変数" /&gt;</code> 形式を使う。
+  <code>&lt;M車両一覧 /&gt;</code> のような日本語タグは無効。
+ </p>
+ </section>
+
+ <section>
+ <h2>5. M車両の実装例（appsRouter.ts 抜粋）</h2>
+ <p>
+  参考として、実際の <code>appsRouter.ts</code> における M車両のルート定義を示す。
+  新規テーブルを追加する際はこの形式をコピーして名称を変更するだけでよい。
+ </p>
+ <pre><code>// appsRouter.ts（M車両の実際のルート定義）
+{
+    path: '/Mマスタ/M車両/一覧',
+    name: 'M車両一覧',
+    component: () => import('../components/Mマスタ/M車両/M車両一覧.vue'),
+    meta: { requiresAuth: true, title: 'M車両一覧' }
+},
+{
+    path: '/Mマスタ/M車両/編集',
+    name: 'M車両編集',
+    component: () => import('../components/Mマスタ/M車両/M車両編集.vue'),
+    meta: { requiresAuth: true, title: 'M車両編集' }
+},</code></pre>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

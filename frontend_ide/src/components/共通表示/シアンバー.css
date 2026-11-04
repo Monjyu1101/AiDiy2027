@@ -1,0 +1,29 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* Web の _TopBar.vue と同じ |sin(2πt / 9)| を、4.5秒の明滅周期に沿って標本化する。 */
+@keyframes cyan-bar-breathe {
+  0%, 100% { background-color: rgb(0, 0, 0); }
+  2.5%, 97.5% { background-color: rgb(0, 20, 20); }
+  5%, 95% { background-color: rgb(0, 40, 40); }
+  7.5%, 92.5% { background-color: rgb(0, 60, 60); }
+  10%, 90% { background-color: rgb(0, 79, 79); }
+  12.5%, 87.5% { background-color: rgb(0, 98, 98); }
+  15%, 85% { background-color: rgb(0, 116, 116); }
+  17.5%, 82.5% { background-color: rgb(0, 133, 133); }
+  20%, 80% { background-color: rgb(0, 150, 150); }
+  22.5%, 77.5% { background-color: rgb(0, 166, 166); }
+  25%, 75% { background-color: rgb(0, 180, 180); }
+  27.5%, 72.5% { background-color: rgb(0, 194, 194); }
+  30%, 70% { background-color: rgb(0, 206, 206); }
+  32.5%, 67.5% { background-color: rgb(0, 217, 217); }
+  35%, 65% { background-color: rgb(0, 227, 227); }
+  37.5%, 62.5% { background-color: rgb(0, 236, 236); }
+  40%, 60% { background-color: rgb(0, 243, 243); }
+  42.5%, 57.5% { background-color: rgb(0, 248, 248); }
+  45%, 55% { background-color: rgb(0, 252, 252); }
+  47.5%, 52.5% { background-color: rgb(0, 254, 254); }
+  50% { background-color: rgb(0, 255, 255); }
+}

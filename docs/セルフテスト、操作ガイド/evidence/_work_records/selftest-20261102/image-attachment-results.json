@@ -1,0 +1,73 @@
+{
+  "asset": "test-assets/shapes-731.png",
+  "sha256": "9cf400aea87208604f25ac4f2f57d558e0e9ad3b99008c3056bfdd373de1601a",
+  "code": {
+    "form": "standalone Electron",
+    "provider": "codex_cli",
+    "model": "gpt-6.1-sol",
+    "attachments": 1,
+    "requests": 1,
+    "preview": true,
+    "answer": "赤い円、青い正方形、緑の三角形。TEST 731",
+    "result": "PASS"
+  },
+  "live": {
+    "form": "standalone Electron",
+    "provider": "openai_live",
+    "model": "gpt-realtime-2.1-mini",
+    "attachments": 1,
+    "requests": 1,
+    "preview": true,
+    "answer": "左から、赤い丸、青い四角、緑の三角です。下に書いてある文字は「TEST 731」です。",
+    "result": "PASS"
+  },
+  "avatar": {
+    "form": "Electron Live input",
+    "provider": "openai_live",
+    "model": "gpt-realtime-2.1-mini",
+    "attachments": 1,
+    "requests": 1,
+    "preview": true,
+    "drag_attempts": 2,
+    "answer": "赤い丸、青い四角、緑の三角。TEST 731",
+    "result": "PASS",
+    "preparation": "初回ドロップ時はCore窓が重なり受付表示なし。窓を分離した2回目に画像1件を受付。質問送信は1回。"
+  },
+  "final_health": {
+    "8095": {
+      "tcp": true,
+      "http": 200,
+      "path": "/"
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200,
+      "path": "/"
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200,
+      "path": "/"
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8090": {
+      "tcp": true,
+      "http": 200
+    }
+  },
+  "pdf_review": {
+    "books": 22,
+    "pages": 357,
+    "changed": [
+      "Code",
+      "Live",
+      "Avatar Electron",
+      "共通確認結果"
+    ],
+    "last_pages_visually_checked": true
+  },
+  "cleanup": "Code/Live/Avatar/Core/auth/Explorer test windows closed; Diag mini retained"
+}

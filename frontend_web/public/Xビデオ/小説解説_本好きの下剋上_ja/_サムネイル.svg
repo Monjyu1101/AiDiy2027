@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="100%" height="100%" viewBox="0 0 1920 1080"
+     preserveAspectRatio="xMidYMid meet">
+  <title>本好きの下剋上</title>
+  <defs>
+    <linearGradient id="scrimTop" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#03060f" stop-opacity="0.55"/>
+      <stop offset="1"    stop-color="#03060f" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="scrimBottom" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0"    stop-color="#03060f" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#03060f" stop-opacity="0.35"/>
+      <stop offset="1"    stop-color="#03060f" stop-opacity="0.95"/>
+    </linearGradient>
+    <linearGradient id="bandTop" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#9eaf91"/>
+      <stop offset="0.24" stop-color="#d7e0c8"/>
+      <stop offset="0.5"  stop-color="#f4f1df"/>
+      <stop offset="0.76" stop-color="#d7e0c8"/>
+      <stop offset="1"    stop-color="#9eaf91"/>
+    </linearGradient>
+    <linearGradient id="bandBottom" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0"    stop-color="#07170f"/>
+      <stop offset="0.27" stop-color="#133628"/>
+      <stop offset="0.5"  stop-color="#2e6048"/>
+      <stop offset="0.73" stop-color="#133628"/>
+      <stop offset="1"    stop-color="#07170f"/>
+    </linearGradient>
+    <filter id="titleShadow" x="-25%" y="-35%" width="150%" height="180%">
+      <feDropShadow dx="0" dy="6" stdDeviation="7" flood-color="#07150f" flood-opacity="0.88"/>
+    </filter>
+    <filter id="bandShadow" x="-20%" y="-60%" width="140%" height="260%">
+      <feDropShadow dx="0" dy="4" stdDeviation="10" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+    <clipPath id="frame"><rect x="0" y="0" width="1920" height="1080"/></clipPath>
+  </defs>
+
+  <style><![CDATA[
+    text { font-family: 'Noto Sans JP','Yu Gothic UI','Meiryo','Hiragino Kaku Gothic ProN',sans-serif; }
+    .band    { font-size: 90px; font-weight: 900; fill: #183025; letter-spacing: 0; }
+    .ttl     { font-size: 258px; font-weight: 900; fill: #fff7e8; letter-spacing: 0em; }
+    .ttlOut  { font-size: 258px; font-weight: 900; fill: none; stroke: #10281e; stroke-width: 19; stroke-linejoin: round; letter-spacing: 0em; }
+    .subttl  { font-size: 129px; font-weight: 900; fill: #fff7e8; letter-spacing: 0em; }
+    .subttlOut { font-size: 129px; font-weight: 900; fill: none; stroke: #10281e; stroke-width: 10; stroke-linejoin: round; letter-spacing: 0em; }
+    .teaser  { font-size: 78px; font-weight: 900; fill: #fff4dc; letter-spacing: 0em; }
+    .note    { font-size: 36px; font-weight: 800; fill: #e2bd72; letter-spacing: 0.06em; }
+  ]]></style>
+
+  <!-- 背景アート -->
+  <g clip-path="url(#frame)">
+    <image xlink:href="images/scene_999.png" href="images/scene_999.png"
+           x="0" y="0" width="1920" height="1080" preserveAspectRatio="xMidYMid slice"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#scrimTop)"/>
+    <rect x="0" y="0" width="1920" height="1080" fill="url(#scrimBottom)"/>
+  </g>
+
+  <!-- 上部：淡いセージグリーンと深緑の罫線で文芸誌風に構成 -->
+  <g filter="url(#bandShadow)">
+    <rect x="0" y="0" width="1920" height="104" fill="url(#bandTop)"/>
+    <rect x="0" y="98" width="1920" height="6" fill="#4f7355"/>
+  </g>
+  <text x="960" y="89" class="band" text-anchor="middle">聞いて楽しむ小説解説</text>
+
+  <!-- 中央：1行目=タイトル、2行目=あらすじ（背景を透かす） -->
+  <g>
+    <text x="960" y="420" class="ttlOut" text-anchor="middle">本好きの下剋上</text>
+    <text x="960" y="420" class="ttl" text-anchor="middle" filter="url(#titleShadow)">本好きの下剋上</text>
+    <text x="960" y="685" class="subttlOut" text-anchor="middle">あらすじ</text>
+    <text x="960" y="685" class="subttl" text-anchor="middle" filter="url(#titleShadow)">あらすじ</text>
+  </g>
+
+  <!-- 下部：深い森林色と金の罫線で雑誌の特集見出し風に構成 -->
+  <g filter="url(#bandShadow)">
+    <rect x="0" y="760" width="1920" height="320" fill="url(#bandBottom)"/>
+    <rect x="0" y="760" width="1920" height="7" fill="#d1ad67"/>
+    <rect x="0" y="1074" width="1920" height="6" fill="#d1ad67"/>
+  </g>
+
+  <text x="960" y="852" class="teaser" text-anchor="middle">本を読みたい。ただそれだけの願いが、</text>
+  <text x="960" y="938" class="teaser" text-anchor="middle">国の未来を動かした。</text>
+
+  <rect x="820" y="978" width="280" height="3" fill="#d1ad67" opacity="0.9"/>
+  <text x="960" y="1032" class="note" text-anchor="middle">本編 全5部 完結</text>
+
+  <rect x="0.5" y="0.5" width="1919" height="1079" fill="none"
+        stroke="#ffffff" stroke-opacity="0.12" stroke-width="1.5"/>
+</svg>

@@ -1,0 +1,50 @@
+{
+  "observed": "2026-11-03T11:12:29.675581",
+  "services": {
+    "8090": 200,
+    "8091": 200,
+    "8093": 200,
+    "8095": 200,
+    "8098": 200
+  },
+  "local_listening": false,
+  "task_final": [
+    {
+      "タスクID": "TK00001006",
+      "状態": "完了",
+      "実行有効": 0,
+      "PID": ""
+    },
+    {
+      "タスクID": "TK00001007",
+      "状態": "完了",
+      "実行有効": 0,
+      "PID": ""
+    },
+    {
+      "タスクID": "TK00001008",
+      "状態": "完了",
+      "実行有効": 0,
+      "PID": ""
+    }
+  ],
+  "active_requests": 0,
+  "goals": [
+    {
+      "作業ループ": 0,
+      "自動作業設定": 0
+    },
+    {
+      "作業ループ": 0,
+      "自動作業設定": 0
+    }
+  ],
+  "existing_preserved": {
+    "Aチーム要員": true,
+    "Aチーム目標": true
+  },
+  "source_sha256": {
+    "backend_taskteam/task_proc/tasks_db.py": "2fc5e31d4feb0a59338063afae2503df4cac0b74bba189600677d771b66633e2",
+    "backend_taskteam/task_proc/tasks_watcher.py": "00d8ff06c7c5581cd13f24079b8874b94c4b7ccaaf9648aa0706b6b5c278c792"
+  }
+}

@@ -1,0 +1,175 @@
+test_mcp_omitted_false_true_preserve_exact_fields (test_backup_batch.BackupBatchApiTests.test_mcp_omitted_false_true_preserve_exact_fields) ... ok
+test_mcp_strict_bool_rejected_and_disabled_rest_gate_stays_active (test_backup_batch.BackupBatchApiTests.test_mcp_strict_bool_rejected_and_disabled_rest_gate_stays_active) ... [11/03/26 12:00:57] INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+ok
+test_rest_batch_rejects_non_bool_before_backup (test_backup_batch.BackupBatchApiTests.test_rest_batch_rejects_non_bool_before_backup) ...                     INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 422 Unprocessable                    
+                             Entity"                                           
+ok
+test_rest_failure_echoes_batch_without_job_or_status_fields (test_backup_batch.BackupBatchApiTests.test_rest_failure_echoes_batch_without_job_or_status_fields) ...                     INFO     http_backup save/run:          tools_backup.py:257
+                             batch=False, count=0                              
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+                    INFO     http_backup save/run:          tools_backup.py:257
+                             batch=True, count=0                               
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+ok
+test_rest_omitted_false_true_preserve_exact_old_fields_and_echo_batch (test_backup_batch.BackupBatchApiTests.test_rest_omitted_false_true_preserve_exact_old_fields_and_echo_batch) ...                     INFO     http_backup save/run:          tools_backup.py:257
+                             batch=False, count=1                              
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+                    INFO     http_backup save/run:          tools_backup.py:257
+                             batch=False, count=1                              
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+                    INFO     http_backup save/run:          tools_backup.py:257
+                             batch=True, count=1                               
+                    INFO     HTTP Request: POST                 _client.py:1740
+                             http://fixture/aidiy_backup/save/r                
+                             un "HTTP/1.1 200 OK"                              
+ok
+test_batch_rejects_promptly_while_sync_copy_runs_and_retry_works (test_backup_batch.BackupBatchTests.test_batch_rejects_promptly_while_sync_copy_runs_and_retry_works) ... ok
+test_duplicate_batch_rejects_without_waiting_across_instances_and_paths (test_backup_batch.BackupBatchTests.test_duplicate_batch_rejects_without_waiting_across_instances_and_paths) ...                     INFO     バッチバックアップ完了(件数=2,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-un40tafq\.aid             
+                             iy_backup\20270115\170000.all)                    
+ok
+test_exception_copy_is_logged_and_guard_released (test_backup_batch.BackupBatchTests.test_exception_copy_is_logged_and_guard_released) ... ok
+test_explicit_false_waits_for_real_copy (test_backup_batch.BackupBatchTests.test_explicit_false_waits_for_real_copy) ... ok
+test_external_destination_is_not_overwritten (test_backup_batch.BackupBatchTests.test_external_destination_is_not_overwritten) ... ok
+test_failed_copy_is_logged_not_published_and_next_request_can_retry (test_backup_batch.BackupBatchTests.test_failed_copy_is_logged_not_published_and_next_request_can_retry) ... ok
+test_incremental_batch_keeps_previous_snapshot_until_copy_finishes (test_backup_batch.BackupBatchTests.test_incremental_batch_keeps_previous_snapshot_until_copy_finishes) ...                     INFO     バッチバックアップ完了(件数=1,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-upyu6qfj\.aid             
+                             iy_backup\20270115\170010)                        
+ok
+test_missing_source_never_publishes_partial_snapshot (test_backup_batch.BackupBatchTests.test_missing_source_never_publishes_partial_snapshot) ... ok
+test_no_changes_batch_returns_zero_without_background_thread (test_backup_batch.BackupBatchTests.test_no_changes_batch_returns_zero_without_background_thread) ... ok
+test_omitted_batch_waits_for_real_copy (test_backup_batch.BackupBatchTests.test_omitted_batch_waits_for_real_copy) ... ok
+test_other_project_batch_can_copy_independently (test_backup_batch.BackupBatchTests.test_other_project_batch_can_copy_independently) ...                     INFO     バッチバックアップ完了(件数=1,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-d7cnohmx\othe             
+                             r-project\.aidiy_backup\20270115\1700             
+                             00.all)                                           
+                    INFO     バッチバックアップ完了(件数=3,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-d7cnohmx\.aid             
+                             iy_backup\20270115\170000.all)                    
+ok
+test_strict_bool_input_and_empty_project_success_echo_batch (test_backup_batch.BackupBatchTests.test_strict_bool_input_and_empty_project_success_echo_batch) ... ok
+test_sync_first_copy_failure_is_not_reported_as_completed_or_unchanged (test_backup_batch.BackupBatchTests.test_sync_first_copy_failure_is_not_reported_as_completed_or_unchanged) ... ok
+test_sync_incremental_copy_failure_is_not_reported_as_completed (test_backup_batch.BackupBatchTests.test_sync_incremental_copy_failure_is_not_reported_as_completed) ... ok
+test_sync_waits_for_inflight_batch_before_new_scan (test_backup_batch.BackupBatchTests.test_sync_waits_for_inflight_batch_before_new_scan) ...                     INFO     バッチバックアップ完了(件数=2,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-bpa7a3q_\.aid             
+                             iy_backup\20270115\170000.all)                    
+ok
+test_thread_start_failure_returns_failure_and_unlocks (test_backup_batch.BackupBatchTests.test_thread_start_failure_returns_failure_and_unlocks) ... ok
+test_true_returns_plan_before_copy_and_worker_survives_response (test_backup_batch.BackupBatchTests.test_true_returns_plan_before_copy_and_worker_survives_response) ...                     INFO     バッチバックアップ完了(件数=2,        backup.py:97
+                             保存先=C:\Users\admin\AppData\Local\T             
+                             emp\aidiy-batch-fixture-baljnyyq\.aid             
+                             iy_backup\20270115\170000.all)                    
+ok
+test_cancel_result (test_backup_empty.EmptyBackupTests.test_cancel_result) ... ok
+test_copy_and_no_difference (test_backup_empty.EmptyBackupTests.test_copy_and_no_difference) ... ok
+test_copy_failure (test_backup_empty.EmptyBackupTests.test_copy_failure) ... ok
+test_empty (test_backup_empty.EmptyBackupTests.test_empty) ... ok
+test_empty_common_log_is_completion (test_backup_empty.EmptyBackupTests.test_empty_common_log_is_completion) ... ok
+test_excluded_only (test_backup_empty.EmptyBackupTests.test_excluded_only) ... ok
+test_limit (test_backup_empty.EmptyBackupTests.test_limit) ...                     ERROR    バックアップ実行エラー:      AIバックアップ.py:363
+                             バックアップキャンセル:                           
+                             対象ファイル数が1件以上です                       
+                             （検出件数=1,                                     
+                             対象=C:\Users\admin\AppData\                      
+                             Local\Temp\aidiy-empty-backu                      
+                             p-aivkiht2）                                      
+ok
+test_missing (test_backup_empty.EmptyBackupTests.test_missing) ... ok
+test_scan_exception (test_backup_empty.EmptyBackupTests.test_scan_exception) ...                     ERROR    バックアップ実行エラー:      AIバックアップ.py:363
+                             fixture                                           
+ok
+test_stat_failure_is_not_empty (test_backup_empty.EmptyBackupTests.test_stat_failure_is_not_empty) ...                     ERROR    バックアップ実行エラー:      AIバックアップ.py:363
+                             fixture stat denied                               
+ok
+test_walk_permission_failure_is_not_empty (test_backup_empty.EmptyBackupTests.test_walk_permission_failure_is_not_empty) ...                     ERROR    バックアップ実行エラー:      AIバックアップ.py:363
+                             fixture read denied                               
+ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 0.391s
+
+OK
+
+test_exclusion_is_relative_to_selected_project (test_backup_local.BackupLocalTest.test_exclusion_is_relative_to_selected_project) ... ok
+test_first_save_uses_new_store_and_keeps_ordinary_backup_sources (test_backup_local.BackupLocalTest.test_first_save_uses_new_store_and_keeps_ordinary_backup_sources) ... ok
+test_internal_credentials_never_enter_snapshots (test_backup_local.BackupLocalTest.test_internal_credentials_never_enter_snapshots) ... ok
+test_old_store_is_not_a_reader_or_diff_fallback (test_backup_local.BackupLocalTest.test_old_store_is_not_a_reader_or_diff_fallback) ... ok
+test_project_named_backup_is_not_excluded (test_backup_local.BackupLocalTest.test_project_named_backup_is_not_excluded) ... ok
+test_scanners_exclude_new_store_but_not_ordinary_backup (test_backup_local.BackupLocalTest.test_scanners_exclude_new_store_but_not_ordinary_backup) ... ok
+test_second_save_and_mcp_queries_share_new_store (test_backup_local.BackupLocalTest.test_second_save_and_mcp_queries_share_new_store) ... ok
+test_core_has_nonwaiting_initialization_and_awaited_ordered_calls (test_backup_thread.BackupCallsitesTest.test_core_has_nonwaiting_initialization_and_awaited_ordered_calls) ... ok
+test_cancel_waiter_keeps_worker_and_duplicate_guard (test_backup_thread.BackupThreadTest.test_cancel_waiter_keeps_worker_and_duplicate_guard) ... ok
+test_completion_is_published_before_next_worker_can_start (test_backup_thread.BackupThreadTest.test_completion_is_published_before_next_worker_can_start) ... ok
+test_duplicate_same_normalized_path_is_ignored_not_queued (test_backup_thread.BackupThreadTest.test_duplicate_same_normalized_path_is_ignored_not_queued) ... ok
+test_exception_releases_guard_and_allows_retry (test_backup_thread.BackupThreadTest.test_exception_releases_guard_and_allows_retry) ... バックアップスレッドでエラーが発生しました
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\AiDiy2027_dev\backend_server\AIコア\AIバックアップ実行.py", line 46, in run
+    result = バックアップ実行_共通ログ(
+        呼出しロガー=log, アプリ設定=アプリ設定,
+        backend_dir=backend_dir, セッション設定=settings,
+    )
+  File "C:\Python3\Lib\unittest\mock.py", line 1176, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python3\Lib\unittest\mock.py", line 1180, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Python3\Lib\unittest\mock.py", line 1241, in _execute_mock_call
+    raise effect
+ValueError: fixture
+ok
+test_ordered_session_wait_completes_after_metadata (test_backup_thread.BackupThreadTest.test_ordered_session_wait_completes_after_metadata) ... ok
+test_ordered_session_wait_does_not_apply_changed_project (test_backup_thread.BackupThreadTest.test_ordered_session_wait_does_not_apply_changed_project) ... ok
+test_other_project_can_run_and_loop_is_not_blocked (test_backup_thread.BackupThreadTest.test_other_project_can_run_and_loop_is_not_blocked) ... ok
+test_real_rest_initialization_returns_while_backup_runs (test_backup_thread.BackupThreadTest.test_real_rest_initialization_returns_while_backup_runs) ... ok
+test_removed_session_or_changed_project_does_not_get_stale_result (test_backup_thread.BackupThreadTest.test_removed_session_or_changed_project_does_not_get_stale_result) ... ok
+test_request_path_is_snapshotted (test_backup_thread.BackupThreadTest.test_request_path_is_snapshotted) ... ok
+test_session_result_applies_on_loop_without_waiting (test_backup_thread.BackupThreadTest.test_session_result_applies_on_loop_without_waiting) ... ok
+test_thread_start_failure_releases_guard (test_backup_thread.BackupThreadTest.test_thread_start_failure_releases_guard) ... ok
+test_two_sessions_share_result_without_new_backup (test_backup_thread.BackupThreadTest.test_two_sessions_share_result_without_new_backup) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.554s
+
+OK

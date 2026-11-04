@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>02. 技術スタックと構成 | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+ <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1> 02. 技術スタックと構成</h1>
+
+ <section id="system-architecture">
+ <h2>システムアーキテクチャ</h2>
+ <p><strong>全体構成図</strong></p>
+
+ <pre><code>
+ ブラウザ
+ ユーザー
+
+ フロントエンド (Vue 3 + Vite) サーバー
+ 127.0.0.1:8090
+ 画面コンポーネント
+ C管理/ Mマスタ/ Tトラン/ Vビュー/ Sスケジューラー/
+ AIコア/ Xその他/ _share/共有部品
+
+
+ APIリクエスト
+ /core/*   /apps/*
+ (proxy)   (proxy)
+
+
+ Core サーバー    Apps サーバー
+ 127.0.0.1:8091   127.0.0.1:8098
+
+ FastAPI + JWT認証   FastAPI + JWT認証
+
+
+ Router → CRUD     Router → CRUD
+ ↓ ↓     ↓ ↓
+ Model Model     Model Model
+ (C系) (A系)     (M/T/V/S/X系)
+
+
+
+
+ データベース
+
+ SQLite
+ database.db
+</code></pre>
+
+ <div>
+ <strong>ポイント: デュアルサーバー構成</strong>
+ <p>
+ <strong>業務画面(C/M/T/V/S/A系)のバックエンドは2つのサーバーで構成されます</strong><br>
+ • <strong>Core API (8091)</strong>: C系（共通管理）とA系（AI機能）を担当<br>
+ • <strong>Apps API (8098)</strong>: M系（マスタ）、T系（トランザクション）、V系（ビュー）、S系（スケジューラー）を担当
+ </p>
+ </div>
+
+ <div>
+ <strong>補足: 実際の常駐サーバーは5つ</strong>
+ <p>
+ このガイドはCore/Apps/Web/Avatarを中心に解説しますが、現行リポジトリには次のサーバーも存在します。
+ </p>
+ <ul>
+ <li><strong>backend_tools/tools_main.py (8095)</strong> — Chrome操作、DB確認、メディア生成、Task/Team Agents、Windows操作など19個のMCPとOpenAI/Ollama互換Chat Completions</li>
+ <li><strong>backend_taskteam/taskteam_main.py (8093)</strong> — AIタスク要求の分解・実行、定期タスク、複数AIエージェントのチーム活動を同一プロセスで管理</li>
+ <li><strong>backend_local/local_main.py (8096)</strong> — OpenAI互換のローカルLLM(Gemma)推論。<code>_start.py</code>の既定では起動しない</li>
+ </ul>
+ <p>
+ また <code>command_hermes</code>(<code>aidiy_hermes</code>)というコード支援CLIもあるが、常駐サーバーではなく<code>_start.py</code>の起動対象外。詳細は各フォルダの <code>AGENTS.md</code> を参照してください。
+ </p>
+ </div>
+ </section>
+
+ <section id="tech-stack">
+ <h2>技術スタック</h2>
+
+ <h3>バックエンド</h3>
+ <table>
+ <thead>
+ <tr>
+ <th>技術</th>
+ <th>バージョン</th>
+ <th>用途</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>Python</strong></td>
+ <td>3.13以上</td>
+ <td>サーバーサイド言語</td>
+ </tr>
+ <tr>
+ <td><strong>FastAPI</strong></td>
+ <td>0.141.1</td>
+ <td>APIフレームワーク</td>
+ </tr>
+ <tr>
+ <td><strong>SQLite</strong></td>
+ <td>組み込み</td>
+ <td>データベース</td>
+ </tr>
+ <tr>
+ <td><strong>SQLAlchemy</strong></td>
+ <td>2.x</td>
+ <td>PythonのORMライブラリ</td>
+ </tr>
+ <tr>
+ <td><strong>JWT</strong></td>
+ <td>-</td>
+ <td>認証トークン</td>
+ </tr>
+ <tr>
+ <td><strong>uv</strong></td>
+ <td>最新</td>
+ <td>pipの高速代替パッケージマネージャ</td>
+ </tr>
+ <tr>
+ <td><strong>python-jose</strong></td>
+ <td>-</td>
+ <td>JWT認証ライブラリ（HS256）</td>
+ </tr>
+ <tr>
+ <td><strong>AI SDKs</strong></td>
+ <td>最新</td>
+ <td>anthropic, openai, google-genai, claude-agent-sdk</td>
+ </tr>
+ </tbody>
+ </table>
+
+ <h3>フロントエンド</h3>
+ <table>
+ <thead>
+ <tr>
+ <th>技術</th>
+ <th>バージョン</th>
+ <th>用途</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>Vue 3</strong></td>
+ <td>3.5.41</td>
+ <td>UIフレームワーク（Composition API使用）</td>
+ </tr>
+ <tr>
+ <td><strong>Vite</strong></td>
+ <td>8.2.2</td>
+ <td>ビルドツール（HMR対応）</td>
+ </tr>
+ <tr>
+ <td><strong>Pinia</strong></td>
+ <td>4.0.3</td>
+ <td>Vue状態管理ライブラリ</td>
+ </tr>
+ <tr>
+ <td><strong>jQuery</strong></td>
+ <td>4.0.0</td>
+ <td>一部レガシー機能の補助</td>
+ </tr>
+ <tr>
+ <td><strong>TypeScript</strong></td>
+ <td>5.9.3</td>
+ <td>型安全なJavaScript（strict mode 無効、現行vue-tsc互換の最新版）</td>
+ </tr>
+ <tr>
+ <td><strong>Vue Router</strong></td>
+ <td>5.2.0</td>
+ <td>ルーティング（日本語URL対応）</td>
+ </tr>
+ <tr>
+ <td><strong>Axios</strong></td>
+ <td>最新</td>
+ <td>HTTPクライアント（JWT interceptor付き）</td>
+ </tr>
+ <tr>
+ <td><strong>dayjs</strong></td>
+ <td>最新</td>
+ <td>日付処理ライブラリ</td>
+ </tr>
+ </tbody>
+ </table>
+
+ <div>
+ <strong>推奨バージョン</strong>
+ <p>2026-08-26 時点で Node.js <strong>v24.18.0</strong> / npm <strong>11.3.0</strong>、Python <strong>3.14.4</strong> で動作確認済みです。</p>
+ </div>
+
+ <div>
+ <strong>なぜこの技術スタックか</strong>
+ <p><strong>選定理由</strong></p>
+ <ul>
+ <li>FastAPIはOpenAPIドキュメントを自動生成できる</li>
+ <li>PythonとSQLAlchemyの組み合わせで日本語カラム名が使える</li>
+ <li>Vue 3のComposition APIで画面ごとのロジックを整理しやすい</li>
+ </ul>
+ </div>
+ </section>
+
+ <section id="folder-structure">
+ <h2>フォルダ構成</h2>
+ <p>プロジェクト全体のディレクトリ構成です。</p>
+
+ <pre><code>workspace/AiDiy2027/
+
+ _start.py # 全サーバー起動スクリプト
+ _setup.py # 初期セットアップスクリプト
+ _cleanup.py # クリーンアップスクリプト
+ CLAUDE.md # Claude Code用ガイド
+ AGENTS.md # エージェント用ガイド
+
+ backend_server/ # バックエンドサーバー
+  core_main.py # Core APIエントリポイント (ポート8091)
+  apps_main.py # Apps APIエントリポイント (ポート8098)
+  database.py # DB接続設定
+  auth.py, deps.py # JWT認証・依存性注入
+
+  core_models/ # C系・A系のモデル定義
+  apps_models/ # M系・T系・V系・S系のモデル定義
+  core_crud/ # C系・A系のDB操作
+  apps_crud/ # M系・T系・V系・S系のDB操作
+  core_router/ # C系・A系のAPIエンドポイント
+  apps_router/ # M系・T系・V系・S系のAPIエンドポイント
+  core_schema/ # C系・A系の Pydantic models（テーブルごとに1ファイル）
+  apps_schema/ # M系・T系・V系・S系の Pydantic models（テーブルごとに1ファイル）
+
+  _data/AiDiy/
+   database.db # SQLiteデータベースファイル
+  AGENTS.md
+
+ frontend_web/ # フロントエンドサーバー
+  src/
+   main.ts # アプリケーションエントリポイント
+   App.vue # ルートコンポーネント
+   router/ # ルーティング定義
+   components/ # 画面コンポーネント
+    C管理/ # C系 CRUDスクリーン
+    Mマスタ/ # M系マスタスクリーン
+    Tトラン/ # T系トランザクションスクリーン
+    Vビュー/ # V系ビュースクリーン
+    Sスケジューラー/ # S系スケジューラースクリーン
+    AiDiy/ # AI機能インターフェース
+    Xその他/ # 実験的機能
+    _share/ # 共有コンポーネント
+   stores/ # 状態管理(Pinia)
+   api/client.ts # Axios with JWT
+  vite.config.ts
+  AGENTS.md
+
+ frontend_avatar/ # AIアバタークライアント
+  src/ # Vue 3 + TypeScript
+  vite.config.mts # Avatar Webモード (8092)
+  AGENTS.md
+
+ backend_tools/ # MCPサーバー群 (ポート8095、19個)
+ backend_local/ # ローカルLLM(Gemma)サーバー (ポート8096)
+ backend_taskteam/ # AIタスク実行+AIチーム統合サーバー (ポート8093)
+ command_hermes/ # aidiy_hermes コード支援CLI (常駐なし)
+
+ docs/開発ガイド/
+  00_このプロジェクトの歩き方/</code></pre>
+
+ <h3>主要ディレクトリの役割</h3>
+ <table>
+ <thead>
+ <tr>
+ <th>ディレクトリ</th>
+ <th>説明</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><code>backend_server/core_*</code></td>
+ <td>Core API関連のModel・CRUD・Router（C系・A系を担当）</td>
+ </tr>
+ <tr>
+ <td><code>backend_server/apps_*</code></td>
+ <td>Apps API関連のModel・CRUD・Router（M系・T系・V系・S系を担当）</td>
+ </tr>
+ <tr>
+ <td><code>_data/</code></td>
+ <td>SQLiteデータベースファイルの格納場所</td>
+ </tr>
+ <tr>
+ <td><code>frontend_web/src/components/</code></td>
+ <td>Vue コンポーネント（カテゴリ別に整理）</td>
+ </tr>
+ <tr>
+ <td><code>docs/開発ガイド/</code></td>
+ <td>開発ドキュメント一式</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="urls">
+ <h2>URL一覧</h2>
+ <p>開発時に使用するURL一覧です。</p>
+
+ <table>
+ <thead>
+ <tr>
+ <th>サービス</th>
+ <th>URL</th>
+ <th>備考</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><strong>フロントエンド画面</strong></td>
+ <td><a href="http://127.0.0.1:8090/" target="_blank">http://127.0.0.1:8090/</a></td>
+ <td><code>admin</code> / <code>********</code> でログイン。AI画面は <code>/AiDiy</code></td>
+ </tr>
+ <tr>
+ <td><strong>Avatar Webモード</strong></td>
+ <td><a href="http://127.0.0.1:8092/" target="_blank">http://127.0.0.1:8092/</a></td>
+ <td><code>frontend_avatar</code> のVite開発サーバー</td>
+ </tr>
+ <tr>
+ <td><strong>Swagger Core API</strong></td>
+ <td><a href="http://127.0.0.1:8091/docs" target="_blank">http://127.0.0.1:8091/docs</a></td>
+ <td>Swagger UIでC系・A系のAPIを確認・テスト</td>
+ </tr>
+ <tr>
+ <td><strong>Swagger Apps API</strong></td>
+ <td><a href="http://127.0.0.1:8098/docs" target="_blank">http://127.0.0.1:8098/docs</a></td>
+ <td>Swagger UIでM系・T系・V系・S系のAPIを確認・テスト</td>
+ </tr>
+ <tr>
+ <td><strong>Swagger Task / Team API</strong></td>
+ <td><a href="http://127.0.0.1:8093/docs" target="_blank">http://127.0.0.1:8093/docs</a></td>
+ <td>AIタスク・定期タスク・AIチームのAPIを確認</td>
+ </tr>
+ <tr>
+ <td><strong>Swagger Local API</strong></td>
+ <td><a href="http://127.0.0.1:8096/docs" target="_blank">http://127.0.0.1:8096/docs</a></td>
+ <td>ローカルLLMを起動した場合のみ利用</td>
+ </tr>
+ <tr>
+ <td><strong>Backend MCP 一覧</strong></td>
+ <td><a href="http://127.0.0.1:8095/" target="_blank">http://127.0.0.1:8095/</a></td>
+ <td>backend_tools が提供する19個のMCPサーバー一覧（例: <code>/aidiy_chrome_devtools/list</code>）</td>
+ </tr>
+ </tbody>
+ </table>
+
+ <div>
+ <strong>プロキシ設定について</strong>
+ <p>フロントエンドからのAPIリクエストはプロキシ経由で転送されます。</p>
+ <ul>
+ <li><code>/core</code> → 8091、<code>/apps</code> → 8098、<code>/task</code>・<code>/team</code> → 8093、<code>/mcp</code> → 8095 に転送</li>
+ <li><code>/mcp</code> は転送時にprefixを除去する。Avatar側には <code>/mcp</code> proxyはない</li>
+ <li>業務CRUDのAPI操作は原則<strong>POST</strong>メソッドを使用</li>
+ </ul>
+ <p>詳細は <code>frontend_web/vite.config.ts</code> を参照してください。</p>
+ </div>
+
+ <div>
+ <strong>CORS許可オリジン</strong>
+ <p><code>backend_server/core_main.py</code> と <code>apps_main.py</code> で以下のオリジンが許可されています。</p>
+ <ul>
+ <li><code>http://127.0.0.1:8090</code> — Vite本番開発サーバー</li>
+ <li><code>http://127.0.0.1:5173</code> — Viteデフォルトポート</li>
+ <li><code>http://127.0.0.1:3000</code> — 代替ポート</li>
+ </ul>
+ </div>
+
+ <div>
+ <strong>ポート変更時の注意</strong>
+ <p>
+ フロントエンドのポートを変更する場合、<code>frontend_web/vite.config.ts</code> または <code>frontend_avatar/vite.config.mts</code> の <code>server.port</code> だけでなく、
+ 以下の設定も連動して更新する必要があります。
+ </p>
+ <ul>
+ <li><code>backend_server/core_main.py</code> の CORS 許可リスト</li>
+ <li><code>backend_server/apps_main.py</code> の CORS 許可リスト</li>
+ <li><code>_start.py</code> のポート設定</li>
+ </ul>
+ </div>
+ </section>
+
+ <section id="data-flow">
+ <h2>データフロー</h2>
+ <p>リクエストがどのように処理されるかを説明します。</p>
+
+ <div>
+ <h4>一覧取得の流れ（例）</h4>
+ <ol>
+ <li><strong>ユーザー操作</strong>: ブラウザで一覧画面を開く</li>
+ <li><strong>Vue コンポーネント</strong>: <code>C利用者一覧.vue</code> がAPI呼び出しを実行</li>
+ <li><strong>Viteプロキシ</strong>: <code>/core/C利用者/一覧</code> → <code>127.0.0.1:8091/core/C利用者/一覧</code> へ転送</li>
+ <li><strong>FastAPI Router</strong>: <code>core_router/C利用者.py</code> がPOSTリクエストを受信</li>
+ <li><strong>認証チェック</strong>: JWTトークンを検証</li>
+ <li><strong>CRUD処理</strong>: <code>core_crud/C利用者.py</code> がデータベースを検索</li>
+ <li><strong>SQLite</strong>: SQLクエリを実行して結果を返却</li>
+ <li><strong>Response</strong>: JSON形式で返却 <code>{"status": "OK", "data": {"items": [...], "total": N}}</code></li>
+ <li><strong>Vue コンポーネント</strong>: 受信したデータを画面に表示</li>
+ </ol>
+ </div>
+
+ <div>
+ <strong>API設計の注意点</strong>
+ <ul>
+ <li>全てのAPI操作は<strong>POST</strong>メソッドのみ（GET・PUT・DELETEは使わない）</li>
+ <li>レスポンス形式は統一: <code>{"status": "OK"/"NG", "message": "...", "data": {...}}</code> </li>
+ <li>Serviceレイヤーは原則無し。RouterからCRUDを直接呼び出す</li>
+ <li>一覧の上限は10000件</li>
+ </ul>
+ </div>
+ </section>
+
+ <section id="api-flow">
+  <h2>APIルーティングの流れ</h2>
+  <p>Core系とApps系でリクエストの流れが分かれます。</p>
+
+  <pre><code>[例1: Core系]
+[フロント] → /core/C利用者/一覧
+   ↓
+[core_router] → [core_crud] → [core_models] → SQLite
+
+[例2: Apps系]
+[フロント] → /apps/V商品/一覧
+   ↓
+[apps_router] → [apps_crud or 生SQL] → [apps_models] → SQLite</code></pre>
+
+  <h3>送信先の判断</h3>
+  <p>テーブル名の先頭文字で送信先が決まります。</p>
+  <table>
+  <thead>
+   <tr>
+   <th>サーバー</th>
+   <th>ポート</th>
+   <th>パス</th>
+   <th>対象テーブル</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+   <td><strong>Core</strong></td>
+   <td>8091</td>
+   <td><code>/core/*</code></td>
+   <td>C系 (C権限, C利用者, C採番) / A系 (AIコア, A会話履歴)</td>
+   </tr>
+   <tr>
+   <td><strong>Apps</strong></td>
+   <td>8098</td>
+   <td><code>/apps/*</code></td>
+   <td>M系 (M商品, M車両, M配車区分) / T系 (T配車, T商品入庫等) / V系 / S系</td>
+   </tr>
+   <tr>
+   <td><strong>Task / Team</strong></td>
+   <td>8093</td>
+   <td><code>/task/*</code> / <code>/team/*</code></td>
+   <td>Aタスク要求/明細、定期タスク、AIチーム依頼・会話・作業</td>
+   </tr>
+  </tbody>
+  </table>
+
+  <div>
+  <strong>迷ったら</strong>
+  <ol>
+   <li>テーブル名の先頭文字 (C/A/M/T/V/S) を見る</li>
+    <li>C系とAIコア/A会話履歴は <code>/core</code>、M/T/V/S系は <code>/apps</code>、AIタスク・AIチームは <code>/task</code> / <code>/team</code></li>
+   <li>一覧APIで先に疎通確認する</li>
+  </ol>
+  </div>
+ </section>
+
+ <section id="audit-fields">
+  <h2>監査項目 (共通カラム)</h2>
+  <p>すべてのテーブルに共通の「登録/更新」情報を持ちます。新テーブル追加時も必ずこの項目を含めてください。</p>
+
+  <table>
+  <thead>
+   <tr>
+   <th>カラム名</th>
+   <th>説明</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr><td>登録日時</td><td>レコード作成日時</td></tr>
+   <tr><td>登録利用者ID</td><td>作成した利用者のID</td></tr>
+   <tr><td>登録利用者名</td><td>作成した利用者の名前</td></tr>
+   <tr><td>登録端末ID</td><td>作成時の端末識別子</td></tr>
+   <tr><td>更新日時</td><td>最終更新日時</td></tr>
+   <tr><td>更新利用者ID</td><td>更新した利用者のID</td></tr>
+   <tr><td>更新利用者名</td><td>更新した利用者の名前</td></tr>
+   <tr><td>更新端末ID</td><td>更新時の端末識別子</td></tr>
+  </tbody>
+  </table>
+ </section>
+
+ <section id="next">
+ <h2>次のステップ</h2>
+ <p>技術スタックと構成を理解したら、実際にセットアップして動かしてみましょう。</p>
+
+ <div>
+ <a href="03_セットアップと起動.html">
+ <span>次の章へ進む</span>
+ <strong>03. セットアップと起動 →</strong>
+ <span>環境構築と起動手順を学びます</span>
+ </a>
+ </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+ <a href="01_はじめに.html">← 前: 01. はじめに</a> |
+ <a href="_index.html">トップページ</a> |
+ <a href="03_セットアップと起動.html">次: 03. セットアップと起動 →</a>
+ </p>
+ </footer>
+</body>
+</html>

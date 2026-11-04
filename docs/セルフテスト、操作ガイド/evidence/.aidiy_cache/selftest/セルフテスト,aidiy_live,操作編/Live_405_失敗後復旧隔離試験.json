@@ -1,0 +1,30 @@
+{
+  "id": "Live_405",
+  "at_utc": "2026-11-03T08:27:16.012623+00:00",
+  "command": "node --test --test-timeout=20000 --test-reporter=tap --test-name-pattern=追加確認 frontend_ide/checks/panel-recovery-followup.local.test.mjs",
+  "test_method": "既存panel-recovery.test.mjsを一時コピーし既存liveFixture/実protocolを再利用、追加5ケースのみ選択。製品/既存テストの変更なし。",
+  "pass": 5,
+  "fail": 0,
+  "skip": 0,
+  "exit_code": 0,
+  "cases": [
+    "models失敗解除→通常接続成功",
+    "socket失敗解除→通常接続成功",
+    "sessionModels失敗解除→通常接続成功",
+    "実protocol input切断→健全な新socket3本で復旧",
+    "実protocol 0切断→健全な新socket3本で復旧"
+  ],
+  "assertions": [
+    "connected=true",
+    "error空、busy=false、mic=false",
+    "失敗時下書き保持",
+    "通常connect(false)再開は会話表示初期化・下書き保持",
+    "実protocol新socket3本readyState1、通常終了で全3本close"
+  ],
+  "first_probe": "初回2PASS/3FAIL。3件は復旧成功確認後、追加probeが下書きを空にする誤期待を置いたため失敗。実装158行は会話のみ初期化するので下書き保持へprobe期待を訂正。製品不具合ではない。",
+  "network": "API/model storage/audio/socketはメモリfixture。実protocolも模擬socket。外部通信0。",
+  "ai_sends": 0,
+  "source_changes": false,
+  "real_failure_test": "ユーザー指定により実施不要",
+  "fixture_sha256": "03e0049922925ab6688fbf51a9481c72da4dbfed9dae6b183e35881a89bc8bf9"
+}

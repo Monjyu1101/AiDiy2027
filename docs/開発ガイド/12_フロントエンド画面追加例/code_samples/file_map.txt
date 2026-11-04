@@ -1,0 +1,31 @@
+■ M商品画面（実装済み）で参照するファイル
+
+frontend_web/src/
+├── components/
+│ ├── Mマスタ/
+│ │ ├── Mマスタ.vue # メニューカード配置
+│ │ └── M商品/
+│ │ ├── M商品一覧.vue # 一覧画面
+│ │ ├── M商品編集.vue # 編集画面
+│ │ └── components/
+│ │ └── M商品一覧テーブル.vue # 一覧テーブル
+│ └── _share/
+│ └── qTublerFrame.vue # 共通テーブルフレーム
+│ └── qBooleanCheckbox.vue # 有効列などの読み取り用チェック表示
+│
+├── router/
+│ └── appsRouter.ts # /Mマスタ/M商品/一覧, /編集
+│
+├── api/
+│ └── client.ts # APIクライアント
+│
+└── utils/
+ └── qAlert.ts # qConfirm 利用
+
+■ M商品で使う主なAPI
+- POST /apps/V商品/一覧（商品分類ID / 件数制限 / 無効も表示）
+- POST /apps/M商品分類/一覧
+- POST /apps/M商品/取得
+- POST /apps/M商品/登録
+- POST /apps/M商品/変更
+- POST /apps/M商品/削除

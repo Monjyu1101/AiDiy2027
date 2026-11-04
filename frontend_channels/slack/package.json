@@ -1,0 +1,35 @@
+{
+  "name": "aidiy-slack",
+  "version": "0.1.0",
+  "private": true,
+  "license": "SEE LICENSE IN ../LICENSE",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "node panel/launch.mjs",
+    "bot": "tsx src/main.ts",
+    "config:check": "tsx src/main.ts --check",
+    "check": "tsc --noEmit && node scripts/verify-panel.mjs",
+    "test": "tsx --test checks/*.test.ts",
+    "build:panel": "node scripts/build-panel.mjs",
+    "check:panel": "node scripts/verify-panel.mjs",
+    "update:electron": "npm update electron --no-fund --no-audit"
+  },
+  "dependencies": {
+    "tsx": "4.23.15",
+    "undici": "6.29.0",
+    "vue": "3.5.43",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/ws": "^8.18.1",
+    "@vue/compiler-sfc": "3.5.43",
+    "electron": "^44.7.0",
+    "esbuild": "0.28.2",
+    "happy-dom": "^20.8.4",
+    "typescript": "^5.9.0"
+  }
+}

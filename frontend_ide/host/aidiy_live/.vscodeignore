@@ -1,0 +1,14 @@
+**/*
+!package.json
+!README.md
+!LICENSE
+!dist/extension.js
+!dist/THIRD_PARTY_NOTICES.txt
+!dist/microphone.py
+!dist/AiDiy.png
+!dist/sending.png
+!media/capture.js
+!media/microphone.png
+!media/speaker.png
+
+!dist/development/**

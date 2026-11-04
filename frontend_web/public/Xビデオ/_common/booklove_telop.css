@@ -1,0 +1,33 @@
+/* 本好きの下剋上・各編のテロップ。共通の再生ボタン制御より詳細な指定で位置を固定する。 */
+.frame-wrap > #subtitle {
+  position: absolute;
+  z-index: 2;
+  left: calc(3vw + 45vh + 20px);
+  right: 78px;
+  bottom: 98px !important;
+  height: auto;
+  max-height: calc(100% - 114px);
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  padding: 14px 18px;
+  font-size: 54px;
+  line-height: 1.3;
+  visibility: hidden;
+}
+
+.frame-wrap > #subtitle.telop-active {
+  visibility: visible;
+}
+
+@media (max-width: 980px) {
+  #avatar-container {
+    width: min(32vh, 34vw);
+  }
+
+  .frame-wrap > #subtitle {
+    left: calc(1.5vw + min(32vh, 34vw) + 12px);
+    right: 54px;
+    padding: 12px 14px;
+    font-size: 42px;
+  }
+}

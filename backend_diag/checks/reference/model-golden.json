@@ -1,0 +1,2570 @@
+[
+  {
+    "name": "provider cutoff inclusivity and duplicate insertion order",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openrouter",
+    "source": {
+      "data": [
+        {
+          "id": "perplexity/edge",
+          "created": 1760488200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/outside",
+          "created": 1760488199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/inside",
+          "created": 1760488201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/edge",
+          "created": 1771288200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/outside",
+          "created": 1771288199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/inside",
+          "created": 1771288201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/edge",
+          "created": 1771288200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/outside",
+          "created": 1771288199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/inside",
+          "created": 1771288201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/edge",
+          "created": 1771288200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/outside",
+          "created": 1771288199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/inside",
+          "created": 1771288201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/edge",
+          "created": 1771288200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/outside",
+          "created": 1771288199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/inside",
+          "created": 1771288201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/edge",
+          "created": 1784248200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/outside",
+          "created": 1784248199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/inside",
+          "created": 1784248201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/edge",
+          "created": 1771288200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/outside",
+          "created": 1771288199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/inside",
+          "created": 1771288201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "missing"
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791937800.0,
+          "context_length": 1
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791851400.0,
+          "context_length": 2
+        },
+        {
+          "id": "other/none",
+          "created": 1792024200.0,
+          "context_length": null
+        },
+        {
+          "id": "other/bool",
+          "created": 1792024200.0,
+          "context_length": true
+        },
+        {
+          "id": "other/null-modality",
+          "created": 1792024200.0,
+          "architecture": {
+            "modality": null
+          }
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "perplexity/edge": {
+        "model_id": "perplexity/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "perplexity/inside": {
+        "model_id": "perplexity/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "google/edge": {
+        "model_id": "google/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "google/inside": {
+        "model_id": "google/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/edge": {
+        "model_id": "openai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/inside": {
+        "model_id": "openai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/edge": {
+        "model_id": "anthropic/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/inside": {
+        "model_id": "anthropic/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/edge": {
+        "model_id": "x-ai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/inside": {
+        "model_id": "x-ai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/edge": {
+        "model_id": "other/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "other/inside": {
+        "model_id": "other/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "GOOGLE/edge": {
+        "model_id": "GOOGLE/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "GOOGLE/inside": {
+        "model_id": "GOOGLE/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/duplicate": {
+        "model_id": "other/duplicate",
+        "トークン数": "2",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/13"
+      },
+      "other/none": {
+        "model_id": "other/none",
+        "トークン数": "None",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/bool": {
+        "model_id": "other/bool",
+        "トークン数": "True",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/null-modality": {
+        "model_id": "other/null-modality",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      }
+    },
+    "order": [
+      "perplexity/edge",
+      "perplexity/inside",
+      "google/edge",
+      "google/inside",
+      "openai/edge",
+      "openai/inside",
+      "anthropic/edge",
+      "anthropic/inside",
+      "x-ai/edge",
+      "x-ai/inside",
+      "other/edge",
+      "other/inside",
+      "GOOGLE/edge",
+      "GOOGLE/inside",
+      "other/duplicate",
+      "other/none",
+      "other/bool",
+      "other/null-modality"
+    ]
+  },
+  {
+    "name": "google empty cache retains all generating models",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {},
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "missing": {
+        "model_id": "missing",
+        "トークン数": "None",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "nested": {
+        "model_id": "nested",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "missing",
+      "LIVE-unlisted",
+      "nested"
+    ]
+  },
+  {
+    "name": "google populated cache filters except live",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {
+      "google/match": {
+        "作成日": "2026/10/01"
+      }
+    },
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": "2026/10/01"
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "LIVE-unlisted"
+    ]
+  },
+  {
+    "name": "openai empty cache date cutoff",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771288200.0
+      },
+      {
+        "id": "outside",
+        "created": 1771288199.0
+      },
+      {
+        "id": "inside",
+        "created": 1771288201.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771201800.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791937800.0
+      },
+      {
+        "id": "zero",
+        "created": 1791937800.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791937800.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791937800.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791851400.0
+      }
+    ],
+    "router": {},
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "inside": {
+        "model_id": "inside",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "zero": {
+        "model_id": "zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/13"
+      }
+    },
+    "order": [
+      "edge",
+      "inside",
+      "REALTIME-new",
+      "zero",
+      "numeric-zero",
+      "duplicate"
+    ]
+  },
+  {
+    "name": "openai zero token exact type and realtime exemption",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771288200.0
+      },
+      {
+        "id": "outside",
+        "created": 1771288199.0
+      },
+      {
+        "id": "inside",
+        "created": 1771288201.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771201800.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791937800.0
+      },
+      {
+        "id": "zero",
+        "created": 1791937800.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791937800.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791937800.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791851400.0
+      }
+    ],
+    "router": {
+      "openai/edge": {
+        "トークン数": "123",
+        "モダリティ": "text"
+      },
+      "openai/zero": {
+        "トークン数": "0",
+        "モダリティ": "text"
+      },
+      "openai/numeric-zero": {
+        "トークン数": 0,
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "123",
+        "モダリティ": "text",
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": 0,
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      }
+    },
+    "order": [
+      "edge",
+      "REALTIME-new",
+      "numeric-zero"
+    ]
+  },
+  {
+    "name": "claude local offset unknown dates and normalization",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "claude",
+    "source": {
+      "data": [
+        {
+          "id": "claude-3-5-20241022",
+          "created_at": "2026-10-15T00:30:00+09:00"
+        },
+        {
+          "id": "claude-4-1-20abcdef",
+          "created_at": "2026-10-14T23:30:00-10:00"
+        },
+        {
+          "id": "unknown",
+          "created_at": null
+        },
+        {
+          "id": "bad",
+          "created_at": "not-a-date"
+        },
+        {
+          "id": "invalid-calendar",
+          "created_at": "2026-02-30T00:00:00Z"
+        },
+        {
+          "id": "old",
+          "created_at": "2025-01-01T00:00:00Z"
+        },
+        {
+          "id": "naive",
+          "created_at": "2026-10-15T00:30:00"
+        },
+        {
+          "id": "edge",
+          "created_at": "2026-02-17T00:30:00"
+        },
+        {
+          "id": "outside",
+          "created_at": "2026-02-17T00:29:59"
+        }
+      ]
+    },
+    "router": {
+      "anthropic/claude-3.5": {
+        "トークン数": "88",
+        "モダリティ": "text"
+      },
+      "anthropic/claude-4.1": {
+        "トークン数": "99",
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "claude-3-5-20241022": {
+        "model_id": "claude-3-5-20241022",
+        "トークン数": "88",
+        "モダリティ": "text",
+        "作成日": "2026/10/15"
+      },
+      "claude-4-1-20abcdef": {
+        "model_id": "claude-4-1-20abcdef",
+        "トークン数": "99",
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      },
+      "unknown": {
+        "model_id": "unknown",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "bad": {
+        "model_id": "bad",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "invalid-calendar": {
+        "model_id": "invalid-calendar",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "naive": {
+        "model_id": "naive",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      },
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "claude-3-5-20241022",
+      "claude-4-1-20abcdef",
+      "unknown",
+      "bad",
+      "invalid-calendar",
+      "naive",
+      "edge"
+    ]
+  },
+  {
+    "name": "ollama reverse stable order and duplicates",
+    "timezone": "UTC",
+    "now": "2026-10-15T00:30:00",
+    "kind": "ollama",
+    "source": {
+      "data": [
+        {
+          "id": "old",
+          "created": 1771288200.0
+        },
+        {
+          "id": "new",
+          "created": 1791937800.0
+        },
+        {
+          "id": "expired",
+          "created": 1771288199.0
+        },
+        {
+          "id": "missing"
+        },
+        null,
+        {
+          "id": "duplicate",
+          "created": 1791851400.0
+        },
+        {
+          "id": "duplicate",
+          "created": 1791765000.0
+        },
+        {
+          "id": "equal-first",
+          "created": 1791678600.0
+        },
+        {
+          "id": "equal-second",
+          "created": 1791678600.0
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "new": {
+        "model_id": "new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/12"
+      },
+      "equal-first": {
+        "model_id": "equal-first",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "equal-second": {
+        "model_id": "equal-second",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "old": {
+        "model_id": "old",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "new",
+      "duplicate",
+      "equal-first",
+      "equal-second",
+      "old"
+    ]
+  },
+  {
+    "name": "provider cutoff inclusivity and duplicate insertion order",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openrouter",
+    "source": {
+      "data": [
+        {
+          "id": "perplexity/edge",
+          "created": 1760455800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/outside",
+          "created": 1760455799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/inside",
+          "created": 1760455801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/edge",
+          "created": 1771255800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/outside",
+          "created": 1771255799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/inside",
+          "created": 1771255801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/edge",
+          "created": 1771255800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/outside",
+          "created": 1771255799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/inside",
+          "created": 1771255801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/edge",
+          "created": 1771255800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/outside",
+          "created": 1771255799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/inside",
+          "created": 1771255801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/edge",
+          "created": 1771255800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/outside",
+          "created": 1771255799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/inside",
+          "created": 1771255801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/edge",
+          "created": 1784215800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/outside",
+          "created": 1784215799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/inside",
+          "created": 1784215801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/edge",
+          "created": 1771255800.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/outside",
+          "created": 1771255799.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/inside",
+          "created": 1771255801.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "missing"
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791905400.0,
+          "context_length": 1
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791819000.0,
+          "context_length": 2
+        },
+        {
+          "id": "other/none",
+          "created": 1791991800.0,
+          "context_length": null
+        },
+        {
+          "id": "other/bool",
+          "created": 1791991800.0,
+          "context_length": true
+        },
+        {
+          "id": "other/null-modality",
+          "created": 1791991800.0,
+          "architecture": {
+            "modality": null
+          }
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "perplexity/edge": {
+        "model_id": "perplexity/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "perplexity/inside": {
+        "model_id": "perplexity/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "google/edge": {
+        "model_id": "google/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "google/inside": {
+        "model_id": "google/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/edge": {
+        "model_id": "openai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/inside": {
+        "model_id": "openai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/edge": {
+        "model_id": "anthropic/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/inside": {
+        "model_id": "anthropic/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/edge": {
+        "model_id": "x-ai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/inside": {
+        "model_id": "x-ai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/edge": {
+        "model_id": "other/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "other/inside": {
+        "model_id": "other/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "GOOGLE/edge": {
+        "model_id": "GOOGLE/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "GOOGLE/inside": {
+        "model_id": "GOOGLE/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/duplicate": {
+        "model_id": "other/duplicate",
+        "トークン数": "2",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/13"
+      },
+      "other/none": {
+        "model_id": "other/none",
+        "トークン数": "None",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/bool": {
+        "model_id": "other/bool",
+        "トークン数": "True",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/null-modality": {
+        "model_id": "other/null-modality",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      }
+    },
+    "order": [
+      "perplexity/edge",
+      "perplexity/inside",
+      "google/edge",
+      "google/inside",
+      "openai/edge",
+      "openai/inside",
+      "anthropic/edge",
+      "anthropic/inside",
+      "x-ai/edge",
+      "x-ai/inside",
+      "other/edge",
+      "other/inside",
+      "GOOGLE/edge",
+      "GOOGLE/inside",
+      "other/duplicate",
+      "other/none",
+      "other/bool",
+      "other/null-modality"
+    ]
+  },
+  {
+    "name": "google empty cache retains all generating models",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {},
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "missing": {
+        "model_id": "missing",
+        "トークン数": "None",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "nested": {
+        "model_id": "nested",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "missing",
+      "LIVE-unlisted",
+      "nested"
+    ]
+  },
+  {
+    "name": "google populated cache filters except live",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {
+      "google/match": {
+        "作成日": "2026/10/01"
+      }
+    },
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": "2026/10/01"
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "LIVE-unlisted"
+    ]
+  },
+  {
+    "name": "openai empty cache date cutoff",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771255800.0
+      },
+      {
+        "id": "outside",
+        "created": 1771255799.0
+      },
+      {
+        "id": "inside",
+        "created": 1771255801.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771169400.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791905400.0
+      },
+      {
+        "id": "zero",
+        "created": 1791905400.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791905400.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791905400.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791819000.0
+      }
+    ],
+    "router": {},
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "inside": {
+        "model_id": "inside",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "zero": {
+        "model_id": "zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/13"
+      }
+    },
+    "order": [
+      "edge",
+      "inside",
+      "REALTIME-new",
+      "zero",
+      "numeric-zero",
+      "duplicate"
+    ]
+  },
+  {
+    "name": "openai zero token exact type and realtime exemption",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771255800.0
+      },
+      {
+        "id": "outside",
+        "created": 1771255799.0
+      },
+      {
+        "id": "inside",
+        "created": 1771255801.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771169400.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791905400.0
+      },
+      {
+        "id": "zero",
+        "created": 1791905400.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791905400.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791905400.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791819000.0
+      }
+    ],
+    "router": {
+      "openai/edge": {
+        "トークン数": "123",
+        "モダリティ": "text"
+      },
+      "openai/zero": {
+        "トークン数": "0",
+        "モダリティ": "text"
+      },
+      "openai/numeric-zero": {
+        "トークン数": 0,
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "123",
+        "モダリティ": "text",
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": 0,
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      }
+    },
+    "order": [
+      "edge",
+      "REALTIME-new",
+      "numeric-zero"
+    ]
+  },
+  {
+    "name": "claude local offset unknown dates and normalization",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "claude",
+    "source": {
+      "data": [
+        {
+          "id": "claude-3-5-20241022",
+          "created_at": "2026-10-15T00:30:00+09:00"
+        },
+        {
+          "id": "claude-4-1-20abcdef",
+          "created_at": "2026-10-14T23:30:00-10:00"
+        },
+        {
+          "id": "unknown",
+          "created_at": null
+        },
+        {
+          "id": "bad",
+          "created_at": "not-a-date"
+        },
+        {
+          "id": "invalid-calendar",
+          "created_at": "2026-02-30T00:00:00Z"
+        },
+        {
+          "id": "old",
+          "created_at": "2025-01-01T00:00:00Z"
+        },
+        {
+          "id": "naive",
+          "created_at": "2026-10-15T00:30:00"
+        },
+        {
+          "id": "edge",
+          "created_at": "2026-02-17T00:30:00"
+        },
+        {
+          "id": "outside",
+          "created_at": "2026-02-17T00:29:59"
+        }
+      ]
+    },
+    "router": {
+      "anthropic/claude-3.5": {
+        "トークン数": "88",
+        "モダリティ": "text"
+      },
+      "anthropic/claude-4.1": {
+        "トークン数": "99",
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "claude-3-5-20241022": {
+        "model_id": "claude-3-5-20241022",
+        "トークン数": "88",
+        "モダリティ": "text",
+        "作成日": "2026/10/15"
+      },
+      "claude-4-1-20abcdef": {
+        "model_id": "claude-4-1-20abcdef",
+        "トークン数": "99",
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      },
+      "unknown": {
+        "model_id": "unknown",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "bad": {
+        "model_id": "bad",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "invalid-calendar": {
+        "model_id": "invalid-calendar",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "naive": {
+        "model_id": "naive",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      },
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "claude-3-5-20241022",
+      "claude-4-1-20abcdef",
+      "unknown",
+      "bad",
+      "invalid-calendar",
+      "naive",
+      "edge"
+    ]
+  },
+  {
+    "name": "ollama reverse stable order and duplicates",
+    "timezone": "Asia/Tokyo",
+    "now": "2026-10-15T00:30:00",
+    "kind": "ollama",
+    "source": {
+      "data": [
+        {
+          "id": "old",
+          "created": 1771255800.0
+        },
+        {
+          "id": "new",
+          "created": 1791905400.0
+        },
+        {
+          "id": "expired",
+          "created": 1771255799.0
+        },
+        {
+          "id": "missing"
+        },
+        null,
+        {
+          "id": "duplicate",
+          "created": 1791819000.0
+        },
+        {
+          "id": "duplicate",
+          "created": 1791732600.0
+        },
+        {
+          "id": "equal-first",
+          "created": 1791646200.0
+        },
+        {
+          "id": "equal-second",
+          "created": 1791646200.0
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "new": {
+        "model_id": "new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/12"
+      },
+      "equal-first": {
+        "model_id": "equal-first",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "equal-second": {
+        "model_id": "equal-second",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "old": {
+        "model_id": "old",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "new",
+      "duplicate",
+      "equal-first",
+      "equal-second",
+      "old"
+    ]
+  },
+  {
+    "name": "provider cutoff inclusivity and duplicate insertion order",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openrouter",
+    "source": {
+      "data": [
+        {
+          "id": "perplexity/edge",
+          "created": 1760502600.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/outside",
+          "created": 1760502599.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "perplexity/inside",
+          "created": 1760502601.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/edge",
+          "created": 1771306200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/outside",
+          "created": 1771306199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "google/inside",
+          "created": 1771306201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/edge",
+          "created": 1771306200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/outside",
+          "created": 1771306199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "openai/inside",
+          "created": 1771306201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/edge",
+          "created": 1771306200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/outside",
+          "created": 1771306199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "anthropic/inside",
+          "created": 1771306201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/edge",
+          "created": 1771306200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/outside",
+          "created": 1771306199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "x-ai/inside",
+          "created": 1771306201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/edge",
+          "created": 1784262600.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/outside",
+          "created": 1784262599.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "other/inside",
+          "created": 1784262601.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/edge",
+          "created": 1771306200.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/outside",
+          "created": 1771306199.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "GOOGLE/inside",
+          "created": 1771306201.0,
+          "context_length": 123,
+          "architecture": {
+            "modality": "text->text"
+          }
+        },
+        {
+          "id": "missing"
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791952200.0,
+          "context_length": 1
+        },
+        {
+          "id": "other/duplicate",
+          "created": 1791865800.0,
+          "context_length": 2
+        },
+        {
+          "id": "other/none",
+          "created": 1792038600.0,
+          "context_length": null
+        },
+        {
+          "id": "other/bool",
+          "created": 1792038600.0,
+          "context_length": true
+        },
+        {
+          "id": "other/null-modality",
+          "created": 1792038600.0,
+          "architecture": {
+            "modality": null
+          }
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "perplexity/edge": {
+        "model_id": "perplexity/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "perplexity/inside": {
+        "model_id": "perplexity/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2025/10/15"
+      },
+      "google/edge": {
+        "model_id": "google/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "google/inside": {
+        "model_id": "google/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/edge": {
+        "model_id": "openai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "openai/inside": {
+        "model_id": "openai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/edge": {
+        "model_id": "anthropic/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "anthropic/inside": {
+        "model_id": "anthropic/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/edge": {
+        "model_id": "x-ai/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "x-ai/inside": {
+        "model_id": "x-ai/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/edge": {
+        "model_id": "other/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "other/inside": {
+        "model_id": "other/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/07/17"
+      },
+      "GOOGLE/edge": {
+        "model_id": "GOOGLE/edge",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "GOOGLE/inside": {
+        "model_id": "GOOGLE/inside",
+        "トークン数": "123",
+        "モダリティ": "text->text",
+        "作成日": "2026/02/17"
+      },
+      "other/duplicate": {
+        "model_id": "other/duplicate",
+        "トークン数": "2",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/13"
+      },
+      "other/none": {
+        "model_id": "other/none",
+        "トークン数": "None",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/bool": {
+        "model_id": "other/bool",
+        "トークン数": "True",
+        "モダリティ": "unknown",
+        "作成日": "2026/10/15"
+      },
+      "other/null-modality": {
+        "model_id": "other/null-modality",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      }
+    },
+    "order": [
+      "perplexity/edge",
+      "perplexity/inside",
+      "google/edge",
+      "google/inside",
+      "openai/edge",
+      "openai/inside",
+      "anthropic/edge",
+      "anthropic/inside",
+      "x-ai/edge",
+      "x-ai/inside",
+      "other/edge",
+      "other/inside",
+      "GOOGLE/edge",
+      "GOOGLE/inside",
+      "other/duplicate",
+      "other/none",
+      "other/bool",
+      "other/null-modality"
+    ]
+  },
+  {
+    "name": "google empty cache retains all generating models",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {},
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "missing": {
+        "model_id": "missing",
+        "トークン数": "None",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      },
+      "nested": {
+        "model_id": "nested",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "missing",
+      "LIVE-unlisted",
+      "nested"
+    ]
+  },
+  {
+    "name": "google populated cache filters except live",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "google",
+    "source": [
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent",
+          "countTokens"
+        ],
+        "input_token_limit": 123
+      },
+      {
+        "name": "models/missing",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": null
+      },
+      {
+        "name": "models/LIVE-unlisted",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/embed",
+        "supported_actions": [
+          "embedContent"
+        ]
+      },
+      {
+        "name": "models/models/nested",
+        "supported_actions": [
+          "generateContent"
+        ]
+      },
+      {
+        "name": "models/match",
+        "supported_actions": [
+          "generateContent"
+        ],
+        "input_token_limit": 456
+      }
+    ],
+    "router": {
+      "google/match": {
+        "作成日": "2026/10/01"
+      }
+    },
+    "expected": {
+      "match": {
+        "model_id": "match",
+        "トークン数": "456",
+        "モダリティ": "generateContent",
+        "作成日": "2026/10/01"
+      },
+      "LIVE-unlisted": {
+        "model_id": "LIVE-unlisted",
+        "トークン数": "0",
+        "モダリティ": "generateContent",
+        "作成日": null
+      }
+    },
+    "order": [
+      "match",
+      "LIVE-unlisted"
+    ]
+  },
+  {
+    "name": "openai empty cache date cutoff",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771306200.0
+      },
+      {
+        "id": "outside",
+        "created": 1771306199.0
+      },
+      {
+        "id": "inside",
+        "created": 1771306201.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771219800.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791952200.0
+      },
+      {
+        "id": "zero",
+        "created": 1791952200.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791952200.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791952200.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791865800.0
+      }
+    ],
+    "router": {},
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "inside": {
+        "model_id": "inside",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "zero": {
+        "model_id": "zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/13"
+      }
+    },
+    "order": [
+      "edge",
+      "inside",
+      "REALTIME-new",
+      "zero",
+      "numeric-zero",
+      "duplicate"
+    ]
+  },
+  {
+    "name": "openai zero token exact type and realtime exemption",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "openai",
+    "source": [
+      {
+        "id": "edge",
+        "created": 1771306200.0
+      },
+      {
+        "id": "outside",
+        "created": 1771306199.0
+      },
+      {
+        "id": "inside",
+        "created": 1771306201.0
+      },
+      {
+        "id": "REALTIME-old",
+        "created": 1771219800.0
+      },
+      {
+        "id": "REALTIME-new",
+        "created": 1791952200.0
+      },
+      {
+        "id": "zero",
+        "created": 1791952200.0
+      },
+      {
+        "id": "numeric-zero",
+        "created": 1791952200.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791952200.0
+      },
+      {
+        "id": "duplicate",
+        "created": 1791865800.0
+      }
+    ],
+    "router": {
+      "openai/edge": {
+        "トークン数": "123",
+        "モダリティ": "text"
+      },
+      "openai/zero": {
+        "トークン数": "0",
+        "モダリティ": "text"
+      },
+      "openai/numeric-zero": {
+        "トークン数": 0,
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "123",
+        "モダリティ": "text",
+        "作成日": "2026/02/17"
+      },
+      "REALTIME-new": {
+        "model_id": "REALTIME-new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "numeric-zero": {
+        "model_id": "numeric-zero",
+        "トークン数": 0,
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      }
+    },
+    "order": [
+      "edge",
+      "REALTIME-new",
+      "numeric-zero"
+    ]
+  },
+  {
+    "name": "claude local offset unknown dates and normalization",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "claude",
+    "source": {
+      "data": [
+        {
+          "id": "claude-3-5-20241022",
+          "created_at": "2026-10-15T00:30:00+09:00"
+        },
+        {
+          "id": "claude-4-1-20abcdef",
+          "created_at": "2026-10-14T23:30:00-10:00"
+        },
+        {
+          "id": "unknown",
+          "created_at": null
+        },
+        {
+          "id": "bad",
+          "created_at": "not-a-date"
+        },
+        {
+          "id": "invalid-calendar",
+          "created_at": "2026-02-30T00:00:00Z"
+        },
+        {
+          "id": "old",
+          "created_at": "2025-01-01T00:00:00Z"
+        },
+        {
+          "id": "naive",
+          "created_at": "2026-10-15T00:30:00"
+        },
+        {
+          "id": "edge",
+          "created_at": "2026-02-17T00:30:00"
+        },
+        {
+          "id": "outside",
+          "created_at": "2026-02-17T00:29:59"
+        }
+      ]
+    },
+    "router": {
+      "anthropic/claude-3.5": {
+        "トークン数": "88",
+        "モダリティ": "text"
+      },
+      "anthropic/claude-4.1": {
+        "トークン数": "99",
+        "モダリティ": "text"
+      }
+    },
+    "expected": {
+      "claude-3-5-20241022": {
+        "model_id": "claude-3-5-20241022",
+        "トークン数": "88",
+        "モダリティ": "text",
+        "作成日": "2026/10/15"
+      },
+      "claude-4-1-20abcdef": {
+        "model_id": "claude-4-1-20abcdef",
+        "トークン数": "99",
+        "モダリティ": "text",
+        "作成日": "2026/10/14"
+      },
+      "unknown": {
+        "model_id": "unknown",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "bad": {
+        "model_id": "bad",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "invalid-calendar": {
+        "model_id": "invalid-calendar",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": null
+      },
+      "naive": {
+        "model_id": "naive",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/15"
+      },
+      "edge": {
+        "model_id": "edge",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "claude-3-5-20241022",
+      "claude-4-1-20abcdef",
+      "unknown",
+      "bad",
+      "invalid-calendar",
+      "naive",
+      "edge"
+    ]
+  },
+  {
+    "name": "ollama reverse stable order and duplicates",
+    "timezone": "America/New_York",
+    "now": "2026-10-15T00:30:00",
+    "kind": "ollama",
+    "source": {
+      "data": [
+        {
+          "id": "old",
+          "created": 1771306200.0
+        },
+        {
+          "id": "new",
+          "created": 1791952200.0
+        },
+        {
+          "id": "expired",
+          "created": 1771306199.0
+        },
+        {
+          "id": "missing"
+        },
+        null,
+        {
+          "id": "duplicate",
+          "created": 1791865800.0
+        },
+        {
+          "id": "duplicate",
+          "created": 1791779400.0
+        },
+        {
+          "id": "equal-first",
+          "created": 1791693000.0
+        },
+        {
+          "id": "equal-second",
+          "created": 1791693000.0
+        }
+      ]
+    },
+    "router": null,
+    "expected": {
+      "new": {
+        "model_id": "new",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/14"
+      },
+      "duplicate": {
+        "model_id": "duplicate",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/12"
+      },
+      "equal-first": {
+        "model_id": "equal-first",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "equal-second": {
+        "model_id": "equal-second",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/10/11"
+      },
+      "old": {
+        "model_id": "old",
+        "トークン数": "0",
+        "モダリティ": null,
+        "作成日": "2026/02/17"
+      }
+    },
+    "order": [
+      "new",
+      "duplicate",
+      "equal-first",
+      "equal-second",
+      "old"
+    ]
+  }
+]

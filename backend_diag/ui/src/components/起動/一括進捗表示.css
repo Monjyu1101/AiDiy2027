@@ -1,0 +1,22 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* 非モーダル。通常フロー内で領域を確保し、タブ・タイトル・他パネルの操作を覆わない。 */
+.batch-progress{--batch-accent:#79e9d7;display:flex;align-items:center;gap:14px;margin:8px 16px;padding:13px 16px;border:1px solid #48616e;border-left:5px solid var(--batch-accent);border-radius:8px;background:#17333c;color:#e5f4fa;min-width:0;max-height:26vh;overflow:auto;-webkit-app-region:no-drag}
+.batch-progress[data-kind=stop]{--batch-accent:#ffd18c;background:#352b20}
+.batch-progress-message{display:flex;flex:1;flex-direction:column;min-width:0;gap:5px;font-size:13px;overflow-wrap:anywhere}
+.batch-progress-message strong{color:var(--batch-accent);font-size:18px;line-height:1.4;font-weight:700}
+.batch-progress-detail{line-height:1.5}
+.batch-progress-message small,.batch-progress-hint{font-size:11px;color:#bed0dc}
+.batch-progress-hint{max-width:180px;line-height:1.6}
+.batch-progress button{flex:none;padding:5px 10px;font-size:11px}
+.batch-progress[data-state=error]{--batch-accent:#ffcf91;border-color:#ae7650;background:#35271f}
+.batch-progress-spinner{width:26px;height:26px;flex:none;border:3px solid #48616e;border-top-color:var(--batch-accent);border-right-color:var(--batch-accent);border-radius:50%;animation:batch-progress-spin .9s linear infinite}
+.batch-progress.compact{margin:5px 6px;padding:8px;max-height:130px;gap:8px;border-left-width:4px}
+.batch-progress.compact .batch-progress-message{font-size:11px;gap:3px}.batch-progress.compact strong{font-size:14px}
+.batch-progress.compact .batch-progress-spinner{width:18px;height:18px;border-width:2px}
+@keyframes batch-progress-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.batch-progress-spinner{animation:none}}
+@media(max-width:600px){.batch-progress-hint{display:none}.batch-progress{margin:6px 8px}}

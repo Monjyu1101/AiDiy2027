@@ -1,0 +1,79 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  color: #111;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif;
+  line-height: 1.6;
+}
+body {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+}
+a { color: #111; text-decoration: underline; }
+a:hover { color: #000; }
+h1, h2, h3, h4, h5, h6 { margin: 1.2em 0 0.5em; color: #111; }
+p, li, td, th { color: #111; }
+hr { border: 0; border-top: 1px solid #ccc; }
+section, article, nav, header, footer, main, .card, .callout, .info-box, .warning-box, .success-box, .tip-box, .problem-box, .step, .step-box, .feature-box, .tool-card, .nav-card {
+  border: 1px solid #ccc;
+  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 12px;
+  margin: 12px 0;
+}
+.card-container, .nav-grid, .tool-grid, .grid, .checklist {
+  display: block;
+  gap: 0;
+}
+pre, code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+}
+code {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 1px 4px;
+}
+pre {
+  position: relative;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  padding: 12px;
+  margin: 12px 0;
+  overflow-x: auto;
+}
+pre code {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  border: 1px solid #888;
+  background: #fff;
+  color: #111;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  vertical-align: top;
+}
+img, svg, video, canvas { max-width: 100%; height: auto; }

@@ -1,0 +1,40 @@
+{
+  "project_name": "AiDiy紹介__all_ja",
+  "version": "mcp",
+  "status": "images_generated",
+  "policy": {
+    "visual_generation": "openai_gpt-image-2",
+    "audio_generation": "freeai_female",
+    "layout": "left_avatar_38_right_content_62",
+    "avatar_model": "../_vrm/VRM_AiDiy.vrm",
+    "evidence_source": [
+      "AGENTS.md",
+      "frontend_web/AGENTS.md",
+      "frontend_avatar/AGENTS.md",
+      "backend_tools/AGENTS.md",
+      "command_hermes/AGENTS.md",
+      "_AIDIY/knowledge/_index.md"
+    ]
+  },
+  "images": [
+    { "scene_id": "scene_000", "status": "generated", "path": "images/scene_000.png", "bytes": 2123854 },
+    { "scene_id": "scene_001", "status": "generated", "path": "images/scene_001.png", "bytes": 1928001 },
+    { "scene_id": "scene_002", "status": "generated", "path": "images/scene_002.png", "bytes": 1580835 },
+    { "scene_id": "scene_003", "status": "generated", "path": "images/scene_003.png", "bytes": 1578461 },
+    { "scene_id": "scene_004", "status": "generated", "path": "images/scene_004.png", "bytes": 1747349 },
+    { "scene_id": "scene_005", "status": "generated", "path": "images/scene_005.png", "bytes": 1689844 },
+    { "scene_id": "scene_006", "status": "generated", "path": "images/scene_006.png", "bytes": 1891188 },
+    { "scene_id": "scene_999", "status": "generated", "path": "images/scene_999.png", "bytes": 1831253 }
+  ],
+  "audio": [
+    { "scene_id": "scene_000", "status": "not_generated", "short_path": "audio/short_scene_000.mp3", "long_path": "audio/long_scene_000.mp3" },
+    { "scene_id": "scene_001", "status": "not_generated", "short_path": "audio/short_scene_001.mp3", "long_path": "audio/long_scene_001.mp3" },
+    { "scene_id": "scene_002", "status": "not_generated", "short_path": "audio/short_scene_002.mp3", "long_path": "audio/long_scene_002.mp3" },
+    { "scene_id": "scene_003", "status": "not_generated", "short_path": "audio/short_scene_003.mp3", "long_path": "audio/long_scene_003.mp3" },
+    { "scene_id": "scene_004", "status": "not_generated", "short_path": "audio/short_scene_004.mp3", "long_path": "audio/long_scene_004.mp3" },
+    { "scene_id": "scene_005", "status": "not_generated", "short_path": "audio/short_scene_005.mp3", "long_path": "audio/long_scene_005.mp3" },
+    { "scene_id": "scene_006", "status": "not_generated", "short_path": "audio/short_scene_006.mp3", "long_path": "audio/long_scene_006.mp3" },
+    { "scene_id": "scene_999", "status": "not_generated", "short_path": "audio/short_scene_999.mp3", "long_path": "audio/long_scene_999.mp3" }
+  ],
+  "duration_sec": 0.0
+}

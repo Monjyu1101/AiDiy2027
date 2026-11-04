@@ -1,0 +1,11 @@
+■ 必須：全ファイルは UTF-8 エンコーディング
+
+確認方法（Windows PowerShell）:
+Get-Content -Path ファイル名.py -Encoding UTF8
+
+VSCode設定（推奨）:
+"files.encoding": "utf8"
+"files.autoGuessEncoding": false
+
+新規ファイル作成時:
+必ずUTF-8で保存すること

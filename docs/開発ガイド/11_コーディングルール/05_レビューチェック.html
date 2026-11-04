@@ -1,0 +1,127 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>05_レビューチェック | コーディングルール</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Docs</div>
+ <h1>コーディングルール</h1>
+ <p>05 レビューチェック</p>
+ <nav>
+ <a href="_index.html">目次</a>
+ <a href="01_命名規則.html">01 命名規則</a>
+ <a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a>
+ <a href="03_ベストプラクティス.html">03 ベストプラクティス</a>
+ <a href="04_アンチパターン.html">04 アンチパターン</a>
+ <a href="05_レビューチェック.html">05 レビューチェック</a>
+ </nav>
+ </header>
+
+ <main>
+ <section>
+ <h2>バックエンドレビュー</h2>
+ <pre data-src="code_samples/review_backend.txt" data-label="バックエンドレビュー">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <h2>フロントエンドレビュー</h2>
+ <pre data-src="code_samples/review_frontend.txt" data-label="フロントエンドレビュー">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <h2>件数制限・論理削除チェックリスト（バックエンド）</h2>
+ <ul>
+ <li>
+  <label>
+   <input type="checkbox" />
+   V系・T系の一覧エンドポイントで <code>list_controls.py</code>（<code>append_active_condition</code> / <code>get_limit_clause</code>）を使っているか
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   M系・C系の一覧エンドポイントで Router 上部に <code>MAX_ITEMS = 10000</code> を定数定義し、クエリに <code>.limit(MAX_ITEMS)</code> を付けているか
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   <code>.all()</code> のみ（件数制限なし）になっていないか（禁止パターン）
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   <code>/削除</code> エンドポイントが <code>有効 = False</code>（論理削除）になっているか（<code>db.delete()</code> は禁止）
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   論理削除後に <code>db.refresh(item)</code> を呼んでレコードを返しているか
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   <code>/削除</code> のレスポンス <code>message</code> が「〜の有効をオフにしました」形式になっているか
+  </label>
+ </li>
+ </ul>
+ </section>
+
+ <section>
+ <h2>件数制限・無効も表示チェックリスト（フロントエンド）</h2>
+ <ul>
+ <li>
+  <label>
+   <input type="checkbox" />
+   一覧画面（一覧.vue）に「件数制限」チェックボックスがあるか（<code>v-model="件数制限"</code>）
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   一覧画面（一覧.vue）に「無効も表示」チェックボックスがあるか（<code>v-model="無効も表示"</code>）
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   一覧テーブルコンポーネントが <code>件数制限</code> / <code>無効も表示</code> を props で受け取っているか
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   一覧テーブルコンポーネントの API リクエストに <code>件数制限</code> / <code>無効も表示</code> を含めているか
+  </label>
+ </li>
+ <li>
+  <label>
+   <input type="checkbox" />
+   <code>無効も表示 = true</code> のときに「有効」列が表示されるよう <code>有効列表示 = computed(() =&gt; 無効も表示.value)</code> を使っているか
+  </label>
+ </li>
+ </ul>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / コーディングルール</footer>
+</body>
+</html>

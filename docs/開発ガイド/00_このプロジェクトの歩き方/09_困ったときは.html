@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>09. 困ったときは | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+ <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>09. 困ったときは</h1>
+
+ <section id="overview">
+ <h2>AIを使ったトラブルシューティング</h2>
+ <p>AIアシスタントを活用してトラブルシューティングを行いましょう。<br>
+ AIに質問する際は<strong>具体的な情報を提供する</strong>ことが重要です。</p>
+
+ <div>
+ <strong>効果的なAI活用の3ステップ</strong>
+ <ol>
+ <li>エラーメッセージを正確にコピーする</li>
+ <li>何をしようとしていたかを説明する</li>
+ <li>関連するコードやファイル名を共有する</li>
+ </ol>
+ </div>
+ </section>
+
+ <section id="good-questions">
+ <h2>良い質問の例</h2>
+
+ <div>
+ <div>✅ Good: モデル追加の質問</div>
+ <p>
+ <code>backend_server/core_models/C利用者.py</code>を参考に新しいテーブルを追加したいです。<br>
+ 手順を教えてください。
+ </p>
+ </div>
+
+ <div>
+ <div>✅ Good: エラーの質問</div>
+ <p>
+ FastAPIサーバー起動時に以下のエラーが出ます。<br>
+ <code>sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) no such column: C利用者.権限ID</code><br>
+ どうすれば解決できますか？
+ </p>
+ </div>
+
+ <div>
+ <div>✅ Good: フロントエンドの質問</div>
+ <p>
+ 一覧画面でデータが表示されません。<br>
+ <code>frontend_web/src/components/C管理/C利用者/C利用者一覧.vue</code>を確認してください。<br>
+ コンソールにエラーは出ていません。
+ </p>
+ </div>
+ </section>
+
+ <section id="bad-questions">
+ <h2>悪い質問の例</h2>
+
+ <div>
+ <div>❌ Bad: 曖昧な質問</div>
+ <p>
+ 動きません。<br>
+ <small>→ 何が動かないのか、エラーメッセージは何か、具体的に説明してください。</small>
+ </p>
+ </div>
+
+ <div>
+ <div>❌ Bad: 情報不足の質問</div>
+ <p>
+ エラーが出ます。<br>
+ <small>→ エラーメッセージの全文と、どの操作で発生したかを教えてください。</small>
+ </p>
+ </div>
+
+ <div>
+ <div>❌ Bad: 範囲が広すぎる質問</div>
+ <p>
+ 全部直してください。<br>
+ <small>→ 具体的な問題を1つずつ質問してください。</small>
+ </p>
+ </div>
+ </section>
+
+ <section id="error-report">
+ <h2>エラーレポートテンプレート</h2>
+ <p>AIに質問する際は以下のテンプレートを使うと効果的です。</p>
+
+ <pre><code>## やりたいこと
+新しいAPIエンドポイントを追加したい
+
+## 実行した操作
+サーバーを起動してAPIを呼び出した
+
+## エラーメッセージ
+以下のエラーが発生した
+```
+sqlalchemy.exc.IntegrityError: (sqlite3.IntegrityError)
+UNIQUE constraint failed: C利用者.利用者ID
+```
+
+## 試したこと
+1. core_models/C利用者.py で unique=True の設定を確認した
+2. database.db を削除して再作成した
+3. 同じIDで再度登録を試みた
+→ 同じエラーが発生する
+
+## 環境情報
+- Python 3.13
+- SQLite (開発環境)
+- FastAPI 0.115.0</code></pre>
+
+ <div>
+ <strong>Tip</strong>
+ <p>エラーメッセージは省略せずにコピーしてください。<br>
+ スクリーンショットよりもテキストの方が5〜30倍効果的です。</p>
+ </div>
+ </section>
+
+ <section id="common-errors">
+ <h2>よくあるエラーと対応</h2>
+
+ <table>
+ <thead>
+ <tr>
+ <th>エラー</th>
+ <th>原因</th>
+ <th>対処法</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td><code>ModuleNotFoundError</code></td>
+ <td>パッケージ未インストール</td>
+ <td><code>cd backend_server &amp;&amp; uv sync</code></td>
+ </tr>
+ <tr>
+ <td><code>OperationalError: database is locked</code></td>
+ <td>SQLiteが他のプロセスでロック中</td>
+ <td>他のツールを閉じてから再起動</td>
+ </tr>
+ <tr>
+ <td><code>401 Unauthorized</code></td>
+ <td>トークン期限切れ</td>
+ <td>再ログインしてください</td>
+ </tr>
+ <tr>
+ <td><code>404 Not Found</code></td>
+ <td>エンドポイント未登録</td>
+ <td><code>core_main.py</code> または <code>apps_main.py</code> のルーター登録を確認</td>
+ </tr>
+ <tr>
+ <td><code>EADDRINUSE :8090/:8091/:8092/:8093/:8095/:8096/:8098</code></td>
+ <td>ポートが既に使用中</td>
+ <td><code>taskkill /F /IM python.exe</code></td>
+ </tr>
+ <tr>
+ <td><code>no such column</code></td>
+ <td>モデルとDBの不一致</td>
+ <td>起動時のスキーマ差分処理を確認し、バックアップ後に再起動。DB削除はデータ破棄可能な場合だけ</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="debugging">
+ <h2>デバッグ手順</h2>
+ <ol>
+ <li><strong>エラーメッセージを確認</strong> — コンソール出力を読む</li>
+ <li><strong>ログを確認</strong> — <code>_start.py</code> のコンソール出力</li>
+ <li><strong>ブラウザのDevToolsを確認</strong> — ネットワークタブでAPIレスポンスを確認</li>
+ <li><strong>データを確認</strong> — DBブラウザでデータの状態を確認</li>
+ <li><strong>AIに質問</strong> — エラー情報をまとめて質問する</li>
+ </ol>
+
+ <div>
+ <strong>重要 </strong>
+ <p>問題の切り分けが最も重要です。<br>
+ フロントエンドの問題かバックエンドの問題かを最初に特定してください。</p>
+ </div>
+ </section>
+
+ <section id="references">
+ <h2>参考資料</h2>
+ <p>公式ドキュメントへのリンク集です。</p>
+
+ <table>
+ <thead>
+ <tr>
+ <th>ドキュメント</th>
+ <th>URL</th>
+ <th>用途</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td>FastAPI</td>
+ <td><a href="https://fastapi.tiangolo.com/ja/" target="_blank">fastapi.tiangolo.com/ja</a></td>
+ <td>バックエンドフレームワーク</td>
+ </tr>
+ <tr>
+ <td>SQLAlchemy</td>
+ <td><a href="https://docs.sqlalchemy.org/" target="_blank">docs.sqlalchemy.org</a></td>
+ <td>ORMリファレンス</td>
+ </tr>
+ <tr>
+ <td>Vue 3</td>
+ <td><a href="https://ja.vuejs.org/" target="_blank">ja.vuejs.org</a></td>
+ <td>Composition API</td>
+ </tr>
+ <tr>
+ <td>Pinia</td>
+ <td><a href="https://pinia.vuejs.org/" target="_blank">pinia.vuejs.org</a></td>
+ <td>状態管理（Store、Getters/Actions）</td>
+ </tr>
+ <tr>
+ <td>Vite</td>
+ <td><a href="https://ja.vite.dev/" target="_blank">ja.vite.dev</a></td>
+ <td>フロントエンド開発サーバー・ビルド</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="ai-tips">
+ <h2>AIの活用Tips</h2>
+
+ <div>
+ <div>
+ <div>コードを見せる </div>
+ <p>エラーが発生したコードをそのまま貼り付けてください。</p>
+ </div>
+
+ <div>
+ <div>段階的に質問する </div>
+ <p>AIに一度に大きな質問をせず、小さく分けて質問しましょう。</p>
+ </div>
+
+ <div>
+ <div>結果を検証する </div>
+ <p>AIの回答は必ず自分で動作確認してください。</p>
+ </div>
+
+ <div>
+ <div>フィードバックする </div>
+ <p>AIの回答が不正確な場合は、追加情報を提供して再質問してください。</p>
+ </div>
+ </div>
+ </section>
+
+ <section id="faq">
+ <h2>よくある質問 (FAQ)</h2>
+
+ <h3>API関連</h3>
+ <table>
+ <thead>
+  <tr><th>質問</th><th>回答</th></tr>
+ </thead>
+ <tbody>
+  <tr>
+  <td>APIが404になる</td>
+  <td>すべてPOSTメソッドです。URLは日本語です。GETやPUTは使いません。</td>
+  </tr>
+  <tr>
+  <td>一覧が空になる</td>
+  <td>token切れか、limit(10000)に達している可能性があります。再ログインしてください。</td>
+  </tr>
+  <tr>
+  <td>401 Unauthorizedエラー</td>
+  <td>JWTトークンが600分で期限切れになります。再ログインしてください。</td>
+  </tr>
+  <tr>
+  <td>CORSエラー</td>
+  <td>core_main.py/apps_main.pyの許可リストを確認。127.0.0.1:8090, :5173, :3000が許可されています。</td>
+  </tr>
+ </tbody>
+ </table>
+
+ <h3>認証関連</h3>
+ <table>
+ <thead>
+  <tr><th>質問</th><th>回答</th></tr>
+ </thead>
+ <tbody>
+  <tr>
+  <td>ログインできない</td>
+  <td>初期は admin / ********。大文字小文字に注意してください。</td>
+  </tr>
+  <tr>
+  <td>権限IDで比較が効かない</td>
+  <td>権限IDは文字列型です。<code>'1'</code> と比較してください (数値の 1 ではない)。</td>
+  </tr>
+ </tbody>
+ </table>
+
+ <h3>起動関連</h3>
+ <table>
+ <thead>
+  <tr><th>質問</th><th>回答</th></tr>
+ </thead>
+ <tbody>
+  <tr>
+  <td>ポート競合エラー</td>
+  <td><code>_start.py</code> が起動時にポートをクリアします。必要なら <code>taskkill /F /IM python.exe</code> などで停止します。</td>
+  </tr>
+  <tr>
+  <td>コード変更が反映されない</td>
+  <td>_start.pyは--reloadなし。<code>temp/reboot_core.txt</code> または <code>temp/reboot_apps.txt</code> を作成して再起動。</td>
+  </tr>
+  <tr>
+  <td>サーバーが再起動を繰り返す</td>
+  <td>コンソールでエラーを確認。モジュール不足や構文エラーが原因です。サーバーは15秒後に自動再起動されるため、根本原因を修正する必要があります。</td>
+  </tr>
+  <tr>
+  <td>ポート変更後にCORSエラー</td>
+  <td>フロントエンドのポートを変えた場合、<code>core_main.py</code> と <code>apps_main.py</code> のCORS許可リスト、<code>_start.py</code> のポート設定も更新が必要です。</td>
+  </tr>
+  <tr>
+  <td>_setup.py 完了後の案内メッセージ</td>
+  <td>起動ファイルは <code>python _start.py</code> です（アンダースコア付き）。以前のバージョンでは <code>python start.py</code> と表示されることがありました。</td>
+  </tr>
+ </tbody>
+ </table>
+
+ <h3>データベース関連</h3>
+ <table>
+ <thead>
+  <tr><th>質問</th><th>回答</th></tr>
+ </thead>
+ <tbody>
+  <tr>
+  <td>Database locked エラー</td>
+  <td>SQLiteブラウザや他ツールを閉じてからサーバーを起動してください。</td>
+  </tr>
+  <tr>
+  <td>初期データが更新されない</td>
+  <td>初期投入は「adminが未存在」の時のみ実行されます。既存データを更新する場合は対象レコードを明示的に変更し、DB全体は削除しません。</td>
+  </tr>
+ </tbody>
+ </table>
+
+ <h3>フロントエンド関連</h3>
+ <table>
+ <thead>
+  <tr><th>質問</th><th>回答</th></tr>
+ </thead>
+ <tbody>
+  <tr>
+  <td>Vue componentが表示されない</td>
+  <td>日本語タグは無効です。<code>&lt;component :is="日本語名" /&gt;</code> を使用してください。</td>
+  </tr>
+  <tr>
+  <td>文字化け</td>
+  <td>すべてのファイルがUTF-8エンコーディングか確認してください。</td>
+  </tr>
+  <tr>
+  <td>WebSocket接続エラー (AIコア)</td>
+  <td>接続 → 設定送信の順序を確認。バックエンドログで初期化ステップを確認。</td>
+  </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="next">
+ <h2>次のステップ</h2>
+ <p>トラブルシューティングの方法を理解したら、次はセキュリティと本番環境について学びましょう。</p>
+
+ <div>
+ <a href="10_セキュリティと本番環境.html">
+ <span>次のページ</span>
+ <strong>10. セキュリティと本番環境 →</strong>
+ <span>本番環境へのデプロイとセキュリティ対策</span>
+ </a>
+ </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+ <a href="08_運用とメンテナンス.html">← 前: 08. 運用とメンテナンス</a> |
+ <a href="_index.html">トップページ</a> |
+ <a href="10_セキュリティと本番環境.html">次: 10. セキュリティと本番環境 →</a>
+ </p>
+ </footer>
+</body>
+</html>

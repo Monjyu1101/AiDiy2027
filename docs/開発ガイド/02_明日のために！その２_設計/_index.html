@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>目次 - 02_明日のために！その２_設計</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <h1>02_明日のために！その２_設計</h1>
+
+  <section>
+    <h2>この章の目的</h2>
+    <p>この章は、M商品を題材に「設計書を先に固めてから実装する」ための実践ガイドです。対象プロジェクトは <code>workspace/AiDiy2027</code> です。</p>
+    <ul>
+      <li>外部設計（画面）と内部設計（API・業務ロジック）を分離して整理できる</li>
+      <li>DB設計まで落とし込んだうえで実装着手できる</li>
+      <li>設計成果を 03（バックエンド）と 04（フロントエンド）へ接続できる</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>設計と実装の順序</h2>
+    <table>
+      <tr><th>フェーズ</th><th>推奨順序</th><th>理由</th></tr>
+      <tr><td>設計</td><td>外部設計 → 内部設計 → DB設計</td><td>利用者視点から仕様を固め、内部仕様へ詳細化するため</td></tr>
+      <tr><td>実装</td><td>DB → バックエンド → フロントエンド</td><td>依存関係を下流から解消し、手戻りを減らすため</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>目次</h2>
+    <ul>
+      <li>01 設計の基本と進め方 - <a href="01_設計の基本と進め方.html">開く</a></li>
+      <li>02 外部設計_画面設計 - <a href="02_外部設計_画面設計.html">開く</a></li>
+      <li>03 内部設計_API設計 - <a href="03_内部設計_API設計.html">開く</a></li>
+      <li>04 内部設計_ビジネスロジック - <a href="04_内部設計_ビジネスロジック.html">開く</a></li>
+      <li>05 データベース設計 - <a href="05_データベース設計.html">開く</a></li>
+      <li>06 設計から実装への流れ - <a href="06_設計から実装への流れ.html">開く</a></li>
+      <li>99 まとめ - <a href="99_まとめ.html">開く</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>参照ファイル</h2>
+    <ul>
+      <li><code>workspace/AiDiy2027/docs/開発ガイド/02_明日のために！その２_設計/code_samples/M商品_画面設計書.md</code></li>
+      <li><code>workspace/AiDiy2027/docs/開発ガイド/02_明日のために！その２_設計/code_samples/M商品_API設計書.md</code></li>
+      <li><code>workspace/AiDiy2027/docs/開発ガイド/02_明日のために！その２_設計/code_samples/M商品_DB設計書.sql</code></li>
+    </ul>
+  </section>
+
+  <footer>
+    <p><a href="../README.md">開発ガイド README に戻る</a></p>
+  </footer>
+</body>
+</html>
+

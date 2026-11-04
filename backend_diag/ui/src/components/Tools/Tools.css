@@ -1,0 +1,22 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE. */
+.tools-panel{background:#000;color:#e5edf7;overflow:hidden}
+.tools-heading{flex-wrap:wrap;gap:10px}.tools-heading .panel-actions{margin-left:auto}.tools-heading h2,.tools-heading button{white-space:nowrap}.tools-reload{padding:3px 10px;font-size:11px}
+/* 共通 #app>.panel>* の flex:none より優先し、画面の残り高さを本文へ渡す。 */
+.tools-panel>.tools-scroll{flex:1 1 auto!important;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain}
+.tools-scroll.tools-authenticated{overflow:hidden}
+.tools-columns{flex:1 1 auto;min-height:0;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);overflow:hidden}
+.tools-auth,.tools-list,.tools-detail{padding:16px 24px;min-width:0}
+.tools-list,.tools-detail{min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;background:#000}
+.tools-list{border-right:1px solid #304253}.tools-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0 18px}.tools-section-heading h3{margin:0;min-width:0;font-size:15px}.tools-section-heading button{flex:none}
+.tools-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.tools-note,.tools-notice{line-height:1.5}.tools-help,.tools-note,.tools-id{font-size:12px;color:#91a5b9;overflow-wrap:anywhere}.tools-help{line-height:1.7}.tools-help summary{padding:3px 0;letter-spacing:normal}.tools-login{display:flex;align-items:end;gap:8px;flex-wrap:wrap}.tools-login label{display:grid;gap:4px}.tools-login input{width:min(240px,100%);min-width:0}.tools-login label{min-width:0;max-width:100%}
+.tools-list ul{list-style:none;margin:12px 0 0;padding:0}.tools-list li{display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:7px 4px;border-bottom:1px solid #242f3b}.tools-list li.selected{box-shadow:inset 2px 0 #72cbd5;background:#0d222b}
+.tools-name{flex:1 1 150px;min-width:0;text-align:left;overflow-wrap:anywhere;background:transparent;border:0;color:#e5edf7;padding:4px 6px}.tools-list .tools-switch{flex:none;min-width:44px;padding:3px 6px;font-size:11px;border-radius:4px}.tools-list .tools-switch[aria-pressed=true]{background:#0d3431;color:#cafff0}.tools-status,.tools-result{font-size:11px;min-width:4em;overflow-wrap:anywhere}.tools-result{flex:none}.tools-unsaved{color:#fbd18b}
+.tools-detail h4{margin:18px 0 8px;font-size:13px}.tools-detail .tools-selected-name{margin:8px 0;font-size:15px;overflow-wrap:anywhere}.tools-id{margin:4px 0 16px}.tools-config-row{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:10px;margin:12px 0}.tools-config-row>span{font-size:12px;color:#9fb3c6;overflow-wrap:anywhere}.tools-config-row select{width:100%;min-width:0;border-radius:4px;font-size:13px;padding:7px 9px}
+.tools-test-content{min-width:0;border:1px solid #304253;margin:18px 0;padding:12px}.tools-test-content h4{margin:0 0 8px}.tools-test-option{display:flex;align-items:center;gap:6px;margin:12px 0;font-size:13px}.tools-test-option input{flex:none;width:auto}.tools-test-output{white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#000;min-height:130px;max-height:480px;border:1px solid #304253;padding:12px;overflow:auto;font:13px/1.7 ui-monospace,monospace}
+/* AIモデルと同じく701px以上は左右。狭幅では一覧と内容に別々の高さを確保する。 */
+@media(max-width:700px){.tools-columns{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,40%) minmax(0,1fr)}.tools-list{border-right:0;border-bottom:1px solid #304253}.tools-auth,.tools-list,.tools-detail{padding:14px 16px}}
+@media(max-width:480px){.tools-config-row{grid-template-columns:minmax(0,1fr);gap:4px}.tools-section-heading{gap:6px;margin:4px 0 10px}}
+@media(max-height:500px){.tools-panel .tools-heading{padding:6px 12px}.tools-auth,.tools-list,.tools-detail{padding:8px 12px}.tools-section-heading{margin:4px 0 10px}}
+
+.tools-name .tools-status{display:inline-block;margin-left:6px;min-width:0;color:#fbd18b;font-size:11px;white-space:nowrap}

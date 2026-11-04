@@ -1,0 +1,272 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>02_ファイルとフォーマット | コーディングルール</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+  <div>AiDiy Docs</div>
+  <h1>コーディングルール</h1>
+  <p>02 ファイルとフォーマット</p>
+  <nav>
+   <a href="_index.html">目次</a>
+   <a href="01_命名規則.html">01 命名規則</a>
+   <a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a>
+   <a href="03_ベストプラクティス.html">03 ベストプラクティス</a>
+   <a href="04_アンチパターン.html">04 アンチパターン</a>
+   <a href="05_レビューチェック.html">05 レビューチェック</a>
+  </nav>
+ </header>
+
+ <main>
+
+  <section>
+   <h2>エンコーディング</h2>
+   <p>全ファイルは <strong>UTF-8（BOM なし）</strong> 必須。Python ファイルは先頭行に <code># -*- coding: utf-8 -*-</code> を付ける。</p>
+   <pre><code># -*- coding: utf-8 -*-
+# ↑ 全 Python ファイルの先頭に必須</code></pre>
+   <p>VSCode 設定（<code>.vscode/settings.json</code> またはユーザー設定）:</p>
+   <pre><code>{
+  "files.encoding": "utf8",
+  "files.autoGuessEncoding": false
+}</code></pre>
+   <p>確認方法（Windows PowerShell）:</p>
+   <pre><code>Get-Content -Path ファイル名.py -Encoding UTF8</code></pre>
+   <ul>
+    <li>BOM あり UTF-8（UTF-8 with BOM）は不可。ファイル保存時に必ず確認する</li>
+    <li>Windows メモ帳はデフォルトで BOM を付けることがあるため使用しない</li>
+   </ul>
+  </section>
+
+  <section>
+   <h2>ライセンスヘッダー</h2>
+   <p>AiDiy は非商用利用限定ライセンス（<code>AiDiy 公開利用ライセンス v1.1</code>）です。商用利用には全著作権者の書面承諾が必要になります。この方針を周知するため、全ソースファイルの先頭に統一ヘッダーを付けます。</p>
+   <pre><code># Python（.py）ファイルの先頭
+# -*- coding: utf-8 -*-
+
+# -------------------------------------------------------------------------
+# COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+# Licensed under "AiDiy 公開利用ライセンス v1.1".
+# Commercial use requires prior written consent from all copyright holders.
+# See LICENSE for full terms. Thank you for keeping the rules.
+# https://github.com/monjyu1101/AiDiy2027
+# -------------------------------------------------------------------------</code></pre>
+   <pre><code>// TypeScript（.ts）ファイルの先頭
+// -*- coding: utf-8 -*-
+
+// -------------------------------------------------------------------------
+// COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+// Licensed under "AiDiy 公開利用ライセンス v1.1".
+// Commercial use requires prior written consent from all copyright holders.
+// See LICENSE for full terms. Thank you for keeping the rules.
+// https://github.com/monjyu1101/AiDiy2027
+// -------------------------------------------------------------------------</code></pre>
+   <pre><code>&lt;!-- Vue（.vue）ファイルの先頭 --&gt;
+&lt;!--
+  -*- coding: utf-8 -*-
+
+  -------------------------------------------------------------------------
+  COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+  Licensed under "AiDiy 公開利用ライセンス v1.1".
+  Commercial use requires prior written consent from all copyright holders.
+  See LICENSE for full terms. Thank you for keeping the rules.
+  https://github.com/monjyu1101/AiDiy2027
+  -------------------------------------------------------------------------
+--&gt;</code></pre>
+   <ul>
+    <li>文言はコピー＆ペーストでそのまま使う（著作年・著作者名・ライセンス名を書き換えない）。</li>
+    <li>実例: <code>backend_local/log_config.py</code>（Python）、<code>frontend_web/src/main.ts</code>（TypeScript）、<code>frontend_web/src/components/Mマスタ/M商品/M商品一覧.vue</code>（Vue）。</li>
+   </ul>
+  </section>
+
+  <section>
+   <h2>インデント</h2>
+   <p>タブ文字は使用禁止。スペースのみ。</p>
+   <table>
+    <thead>
+     <tr><th>ファイル種別</th><th>インデント</th></tr>
+    </thead>
+    <tbody>
+     <tr><td>Python（<code>.py</code>）</td><td>スペース 4 個</td></tr>
+     <tr><td>TypeScript（<code>.ts</code>）</td><td>スペース 2 個</td></tr>
+     <tr><td>Vue（<code>.vue</code>）</td><td>スペース 2 個</td></tr>
+     <tr><td>SQL / JSON</td><td>スペース 2 個</td></tr>
+    </tbody>
+   </table>
+   <pre><code># Python: 4スペース
+def get_M商品(db: Session, 商品ID: str):
+    return db.query(models.M商品).filter(
+        models.M商品.商品ID == 商品ID
+    ).first()</code></pre>
+   <pre><code>// TypeScript/Vue: 2スペース
+const 利用者一覧取得 = async () => {
+  const response = await apiClient.post('/core/C利用者/一覧')
+  return response.data.data.items
+}</code></pre>
+  </section>
+
+  <section>
+   <h2>コメント</h2>
+   <p>コメントは業務ロジックに関する補足のみ書く。コードを読めばわかる自明な処理には不要。</p>
+   <pre><code># 正解: 業務的な理由が必要な箇所にのみコメント
+item.有効 = False   # 論理削除: 物理削除は行わない
+db.refresh(item)    # フロント側の状態更新のためリフレッシュが必要
+
+# 誤り: コードそのままの説明は不要
+item.有効 = False   # 有効を False にする  ← 不要
+db.commit()         # コミットする          ← 不要</code></pre>
+   <pre><code>// 正解: 業務的な補足にのみコメント
+// 論理削除済みレコードは一覧に表示しない（デフォルト動作）
+const 無効も表示 = ref(false)
+
+// 誤り: Vue の文法そのままの説明は不要
+const loading = ref(false)  // ローディング状態を管理する ref  ← 不要</code></pre>
+  </section>
+
+  <section>
+   <h2>重要ファイルの構成</h2>
+   <p>以下のファイルはプロジェクト全体で共有される。新規エンドポイントや画面を追加するときは必ず参照・活用すること。</p>
+
+   <h3>バックエンド共通ファイル</h3>
+   <table>
+    <thead>
+     <tr><th>ファイルパス</th><th>役割</th></tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td><code>backend_server/core_schema/common.py</code></td>
+      <td>core 系共通スキーマ。<code>ResponseBase</code>、<code>ErrorResponse</code>、<code>ListRequest</code>（件数制限・無効も表示）、<code>LoginRequest</code>、<code>Token</code></td>
+     </tr>
+     <tr>
+      <td><code>backend_server/apps_schema/common.py</code></td>
+      <td>apps 系共通スキーマ。<code>ResponseBase</code>、<code>ErrorResponse</code>、<code>ListRequest</code>（件数制限・無効も表示・開始/終了日付・商品 ID・商品分類 ID・生産区分 ID）</td>
+     </tr>
+     <tr>
+      <td><code>backend_server/list_controls.py</code></td>
+      <td>V系・T系一覧エンドポイントの件数制限・有効フィルター制御。<code>append_active_condition()</code>、<code>get_limit_clause()</code>、<code>apply_active_filter()</code></td>
+     </tr>
+    </tbody>
+   </table>
+
+   <h4>ListRequest（core_schema/common.py）</h4>
+   <pre><code>class ListRequest(BaseModel):
+    件数制限: Optional[bool] = True    # デフォルト ON（1000件制限）
+    無効も表示: Optional[bool] = False  # デフォルト OFF（有効なレコードのみ）</code></pre>
+
+   <h4>ListRequest（apps_schema/common.py）</h4>
+   <pre><code>class ListRequest(BaseModel):
+    件数制限: Optional[bool] = True
+    無効も表示: Optional[bool] = False
+    開始日付: Optional[str] = None
+    終了日付: Optional[str] = None
+    商品ID: Optional[str] = None
+    商品分類ID: Optional[str] = None
+    生産区分ID: Optional[str] = None</code></pre>
+
+   <h4>list_controls.py の定数と主要関数</h4>
+   <pre><code>LIMITED_MAX_ITEMS = 1000  # 件数制限 ON 時の上限
+
+def get_limit_clause(request) -> tuple[str, Optional[int]]:
+    """LIMIT SQL 句と値を返す。件数制限=False の場合は ("", None)"""
+
+def append_active_condition(conditions: list[str], request, column_name: str) -> None:
+    """無効も表示=False の場合のみ "{column_name} = 1" 条件を追加"""
+
+def apply_active_filter(query, model, request):
+    """ORM クエリに有効フィルターを適用（ORM 版）"""</code></pre>
+
+   <h4>M系・C系（MAX_ITEMS 固定）と V系・T系（list_controls）の使い分け</h4>
+   <pre><code># M系・C系: リクエストボディなし、MAX_ITEMS 固定
+MAX_ITEMS = 10000  # Router ファイル上部に定義
+
+items = (
+    db.query(models.M商品)
+    .filter(models.M商品.有効 == True)
+    .order_by(models.M商品.商品ID)
+    .limit(MAX_ITEMS)
+    .all()
+)
+return {"items": items, "total": total, "limit": MAX_ITEMS}
+
+
+# V系・T系: ListRequest を受け取り list_controls を使う
+from list_controls import append_active_condition, get_limit_clause
+
+conditions = []
+append_active_condition(conditions, request, "M.有効")
+limit_sql, limit_value = get_limit_clause(request)
+params = {}
+if limit_value is not None:
+    params["limit"] = limit_value
+
+sql = f"""
+    SELECT ...
+    FROM M商品 M
+    WHERE {' AND '.join(conditions)}
+    ORDER BY M.商品ID
+    {limit_sql}
+"""
+result = db.execute(text(sql), params).fetchall()</code></pre>
+
+   <h3>フロントエンド共通ファイル</h3>
+   <table>
+    <thead>
+     <tr><th>ファイルパス</th><th>役割</th></tr>
+    </thead>
+    <tbody>
+     <tr>
+      <td><code>frontend_web/src/api/client.ts</code></td>
+      <td>Axios インスタンス。JWT トークン自動付与（Bearer）、401 応答で自動ログアウト。全 API 呼び出しはこれを使う</td>
+     </tr>
+     <tr>
+      <td><code>frontend_web/src/components/_share/qTublerFrame.vue</code></td>
+      <td>カスタムテーブルコンポーネント。<code>columns</code> / <code>rows</code> / <code>rowKey</code> / <code>sortKey</code> / <code>sortOrder</code> / <code>message</code> / <code>caption</code> props を持つ</td>
+     </tr>
+    </tbody>
+   </table>
+
+   <h4>api/client.ts の使い方</h4>
+   <pre><code>import apiClient from '@/api/client'
+
+// Content-Type は自動で application/json
+// Bearer トークンは interceptor で自動付与
+// 401 応答時は自動ログアウト
+
+const res = await apiClient.post('/apps/V商品/一覧', {
+  件数制限: props.件数制限,
+  無効も表示: props.無効も表示,
+})
+const { items, total } = res.data.data</code></pre>
+
+   <h4>qTublerFrame の基本的な使い方</h4>
+   <pre><code>import qTublerFrame from '@/components/_share/qTublerFrame.vue'
+
+const columns = [
+  { key: '商品ID', label: '商品ID', width: '120px', sortable: true },
+  { key: '商品名', label: '商品名', width: '200px', sortable: true },
+  { key: '有効',   label: '有効',   width: '60px'  },
+]</code></pre>
+   <pre><code>&lt;component
+  :is="qTublerFrame"
+  :columns="columns"
+  :rows="items"
+  rowKey="商品ID"
+  sortKey="商品ID"
+  sortOrder="asc"
+/&gt;</code></pre>
+  </section>
+
+ </main>
+
+ <footer>AiDiy Docs / コーディングルール</footer>
+</body>
+</html>

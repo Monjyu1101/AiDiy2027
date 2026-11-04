@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 準備と進め方</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_Schema作成.html">次へ: 02_Schema作成</a>
+  </nav>
+
+  <h1>01_準備と進め方</h1>
+  <p>M商品APIを追加する前に、実装方針と作業順序を確定します。ここで順序を間違えると、RouterやSwagger確認時に原因切り分けが難しくなります。</p>
+
+  <h2>実装対象</h2>
+  <table>
+    <tr><th>分類</th><th>対象</th><th>配置先</th></tr>
+    <tr><td>Schema</td><td>入力/出力の型定義</td><td><code>backend_server/apps_schema/M商品.py</code></td></tr>
+    <tr><td>Model</td><td>SQLAlchemyモデル</td><td><code>backend_server/apps_models/M商品.py</code></td></tr>
+    <tr><td>CRUD</td><td>DBアクセス処理</td><td><code>backend_server/apps_crud/M商品.py</code></td></tr>
+    <tr><td>Router</td><td>APIエンドポイント</td><td><code>backend_server/apps_router/M商品.py</code></td></tr>
+    <tr><td>View Router</td><td>生SQL一覧API</td><td><code>backend_server/apps_router/V商品.py</code></td></tr>
+  </table>
+
+  <h2>API設計（M商品）</h2>
+  <table>
+    <tr><th>エンドポイント</th><th>メソッド</th><th>用途</th></tr>
+    <tr><td><code>/apps/M商品/一覧</code></td><td>POST</td><td>一覧取得</td></tr>
+    <tr><td><code>/apps/M商品/取得</code></td><td>POST</td><td>1件取得</td></tr>
+    <tr><td><code>/apps/M商品/登録</code></td><td>POST</td><td>新規作成</td></tr>
+    <tr><td><code>/apps/M商品/変更</code></td><td>POST</td><td>更新</td></tr>
+    <tr><td><code>/apps/M商品/削除</code></td><td>POST</td><td>削除</td></tr>
+  </table>
+
+  <h2>実装順序</h2>
+  <ol>
+    <li>Schemaを定義する</li>
+    <li>Modelを作成する</li>
+    <li>テーブル作成を確認する（SQLite）</li>
+    <li>CRUDを作成する</li>
+    <li>Routerを作成して <code>apps_main.py</code> に登録する</li>
+    <li>View Router（V商品）を作成する</li>
+    <li>Swagger UIで動作確認する</li>
+  </ol>
+
+  <h2>実装時の注意（必須）</h2>
+  <ul>
+    <li>新規M系（例: M○○）を実装したら、<code>backend_server/apps_crud/init.py</code> の <code>init_db_data()</code> に初期化処理を必ず追加する</li>
+    <li>初回確認の効率を上げるため、可能な限りサンプルデータを投入する（一覧・検索・変更確認ができる件数を推奨）</li>
+    <li>初期化処理は冪等にし、既存データがあるときはスキップする</li>
+  </ul>
+
+  <h2>デュアルサーバーの注意点</h2>
+  <ul>
+    <li>core_main.py (8091): C系/A系</li>
+    <li>apps_main.py (8098): M系/T系/V系/S系</li>
+    <li>M商品のRouterは <code>apps_main.py</code> 側へ登録する</li>
+  </ul>
+
+  <h2>ID運用の方針</h2>
+  <p>マスタ系は固定ID運用が基本です。M商品も固定ID（例: ITEM001）で扱い、登録時に重複チェックします。</p>
+
+  <h2>着手前チェック</h2>
+  <ul>
+    <li>[ ] <code>python _start.py</code> で 8091/8098 が起動する</li>
+    <li>[ ] <code>http://127.0.0.1:8098/docs</code> にアクセスできる</li>
+    <li>[ ] <code>backend_server/apps_main.py</code> のRouter登録位置を把握している</li>
+    <li>[ ] この章の <code>code_samples/</code> ファイルを参照できる</li>
+  </ul>
+
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_Schema作成.html">次へ: 02_Schema作成</a>
+  </nav>
+</body>
+</html>

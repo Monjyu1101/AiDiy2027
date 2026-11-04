@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 CRUD作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="04_Migration実行.html">前へ: 04_スキーマ反映</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_Service作成.html">次へ: 06_実装方針整理</a>
+  </nav>
+
+  <h1>05_CRUD作成</h1>
+  <p>CRUD層はDB操作に専念させます。HTTP依存や認証依存はRouter層に置き、責務を分離します。</p>
+
+  <h2>主な関数</h2>
+  <table>
+    <tr><th>関数</th><th>役割</th></tr>
+    <tr><td><code>get_M商品</code></td><td>商品IDで1件取得</td></tr>
+    <tr><td><code>get_M商品一覧</code></td><td>一覧取得（商品ID順）</td></tr>
+    <tr><td><code>create_M商品</code></td><td>登録処理（監査項目付与）</td></tr>
+  </table>
+
+  <h2>実装例（参照）</h2>
+  <p>以下は <code>code_samples/M商品_crud.py</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_crud.py"><code>読み込み中...</code></pre>
+
+  <h2>監査項目の扱い</h2>
+  <ul>
+    <li>登録時は登録系+更新系の8項目を設定</li>
+    <li>更新時は更新系4項目のみ更新</li>
+    <li>認証情報がない場合は system を利用（初期化時など）</li>
+  </ul>
+
+  <h2>論理削除パターン（T系を中心に使用）</h2>
+  <p>物理削除（<code>db.delete()</code>）ではなく <code>有効 = False</code> に設定する論理削除を使います。T系では特に重要です。</p>
+  <pre><code>def delete_T配車(db: Session, 配車伝票ID: str, 認証情報=None):
+    """T配車を論理削除（有効フラグをFalseに設定）"""
+    db_item = get_T配車(db, 配車伝票ID)
+    if not db_item:
+        return False
+    audit = update_audit_fields(認証情報)
+    db_item.有効 = False  # 物理削除ではなく論理削除
+    for key, value in audit.items():
+        setattr(db_item, key, value)
+    db.commit()
+    return True</code></pre>
+
+  <p><strong>ポイント:</strong></p>
+  <ul>
+    <li>CRUD関数内で論理削除する場合は <code>update_audit_fields</code>（更新系4項目のみ）を使う</li>
+    <li>Router側で論理削除する場合は <code>create_audit_fields(認証情報, is_update=True)</code> を使う（どちらも同じ動作）</li>
+    <li>論理削除後も <code>get_</code> 関数では取得できてしまうため、一覧取得時の <code>list_controls.py</code> による有効フィルタが重要</li>
+  </ul>
+
+  <h2>設計ポイント</h2>
+  <ul>
+    <li>CRUDは例外時に呼び出し元で rollback できるようにする</li>
+    <li>戻り値はRouterでそのままレスポンス化できる形式にする</li>
+    <li>重複チェックや存在チェックはRouterで行う（必要時のみ補助関数へ切り出す）</li>
+    <li><strong>削除はCRUD関数またはRouter内で論理削除（<code>有効 = False</code>）を実装する</strong></li>
+  </ul>
+
+  <h2>【重要】apps_crud/__init__.py への登録を忘れずに</h2>
+  <p><strong>新規CRUD作成後は必ず <code>apps_crud/__init__.py</code> への登録が必要です。</strong></p>
+  <ul>
+    <li>CRUDファイル（例: <code>apps_crud/M仕入先.py</code>）を作成しただけでは不十分</li>
+    <li><code>apps_crud/__init__.py</code> に以下を追加する必要があります:
+      <ul>
+        <li>import 文: <code>from apps_crud.M仕入先 import get_M仕入先, get_M仕入先一覧, create_M仕入先</code></li>
+        <li>__all__ リスト: <code>'get_M仕入先', 'get_M仕入先一覧', 'create_M仕入先'</code></li>
+      </ul>
+    </li>
+    <li>忘れると Router で <code>crud.get_M仕入先</code> が使えず、ImportErrorやAttributeErrorが発生します</li>
+    <li>過去実績: M仕入先追加時にこの登録漏れでエラーが発生しました</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] CRUD関数名とRouter呼び出し名が一致する</li>
+    <li>[ ] 監査項目の設定漏れがない</li>
+    <li>[ ] コミット/リフレッシュ処理が適切に配置されている</li>
+    <li>[ ] <strong>【重要】apps_crud/__init__.py にimportと__all__追加済み</strong></li>
+    <li>[ ] 削除関数は物理削除（<code>db.delete()</code>）ではなく論理削除（<code>有効 = False</code>）になっている</li>
+  </ul>
+
+  <nav>
+    <a href="04_Migration実行.html">前へ: 04_スキーマ反映</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_Service作成.html">次へ: 06_実装方針整理</a>
+  </nav>
+</body>
+</html>

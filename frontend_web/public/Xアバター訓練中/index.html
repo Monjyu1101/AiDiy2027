@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xアバター訓練中</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; min-height: 100%; background: #07111f; color: #edf7ff; font-family: "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif; }
+    body { background: radial-gradient(circle at 20% 10%, #173a51 0, transparent 35%), linear-gradient(135deg, #07111f, #0d1a2d); }
+    .app { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100dvh; min-height: 590px; }
+    header { display: flex; justify-content: space-between; gap: 20px; align-items: center; padding: 16px 24px; border-bottom: 1px solid #2b455d; background: #07111fbb; }
+    header strong { color: #8fe8ff; font-size: 22px; }
+    header span { color: #aabfd2; font-size: 13px; text-align: right; }
+    main { min-height: 0; display: grid; grid-template-columns: minmax(310px, 43%) minmax(0, 1fr); }
+    .avatar-pane { position: relative; min-height: 0; overflow: hidden; border-right: 1px solid #2b455d; }
+    #avatarCanvas { display: block; width: 100%; height: 100%; }
+    .avatar-label { position: absolute; top: 18px; left: 20px; padding: 7px 12px; border-radius: 999px; background: #07111fbd; color: #8fe8ff; font-size: 13px; }
+    #loadStatus { position: absolute; left: 20px; right: 20px; bottom: 18px; padding: 10px 13px; border-radius: 10px; background: #07111fcb; color: #cfe1ed; font-size: 13px; }
+    #loadStatus:empty { display: none; }
+    .details { min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+    #sceneFrame { border: 0; width: 100%; height: 100%; background: transparent; }
+    .index-panel { padding: 12px 20px 16px; border-top: 1px solid #2b455d; background: #081523a8; }
+    .index-title { margin-bottom: 9px; color: #aabfd2; font-size: 13px; }
+    #sceneIndex { display: flex; flex-wrap: wrap; gap: 6px; }
+    button { cursor: pointer; color: #edf7ff; background: #173046; border: 1px solid #3b5c74; border-radius: 10px; font: inherit; }
+    button:hover, button:focus-visible { border-color: #8fe8ff; background: #21445d; }
+    button:disabled { opacity: .4; cursor: default; }
+    .scene-chip { min-width: 40px; height: 34px; padding: 0 8px; font-size: 12px; }
+    .scene-chip.active { background: #087e9b; border-color: #78e6ff; color: white; }
+    footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-top: 1px solid #2b455d; background: #07111fdf; }
+    .navigation { display: flex; align-items: center; gap: 8px; }
+    .navigation button { padding: 9px 16px; font-weight: 700; }
+    #pageLabel { color: #cfe1ed; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .hint { color: #8ea8bb; font-size: 12px; }
+    @media (max-width: 800px) {
+      .app { min-height: 800px; height: 100dvh; }
+      main { grid-template-columns: 1fr; grid-template-rows: minmax(340px, 52%) minmax(0, 1fr); }
+      .avatar-pane { border-right: 0; border-bottom: 1px solid #2b455d; }
+      .index-panel { padding: 8px 12px; }
+      .scene-chip { min-width: 32px; height: 30px; }
+      header, footer { padding: 10px 12px; }
+      header span, .hint { display: none; }
+    }
+  </style>
+  <script src="motions.js"></script>
+  <script type="importmap">
+    {"imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.185.1/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.185.1/examples/jsm/",
+      "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.5.5/lib/three-vrm.module.js",
+      "@pixiv/three-vrm-animation": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm-animation@3.5.5/lib/three-vrm-animation.module.js"
+    }}
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header><strong>Xアバター訓練中</strong><span>00 は現在の標準モーション / 01〜20 は待機動作の候補</span></header>
+    <main>
+      <section class="avatar-pane" aria-label="モーションプレビュー">
+        <canvas id="avatarCanvas"></canvas>
+        <div class="avatar-label">VRM プレビュー</div>
+        <div id="loadStatus" role="status">アバターを読み込み中…</div>
+      </section>
+      <section class="details">
+        <iframe id="sceneFrame" title="モーション説明"></iframe>
+        <div class="index-panel"><div class="index-title">確認一覧：番号を選んで直接移動できます</div><div id="sceneIndex"></div></div>
+      </section>
+    </main>
+    <footer>
+      <div class="navigation">
+        <button id="firstBtn" type="button" aria-label="最初へ">|◁</button>
+        <button id="prevBtn" type="button">◁ 前へ</button>
+        <button id="nextBtn" type="button">次へ ▷</button>
+        <button id="lastBtn" type="button" aria-label="最後へ">▷|</button>
+      </div>
+      <div id="pageLabel" aria-live="polite"></div>
+      <div class="hint">← → キーでもページを送れます</div>
+    </footer>
+  </div>
+  <script>
+    const scenes = window.MOTION_SCENES;
+    const sceneFrame = document.getElementById("sceneFrame");
+    const sceneIndex = document.getElementById("sceneIndex");
+    const status = document.getElementById("loadStatus");
+    const params = new URLSearchParams(location.search);
+    const requested = params.get("scene");
+    let index = Math.max(0, scenes.findIndex(scene => scene.number === requested || scene.id === requested));
+    const chips = scenes.map((scene, n) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "scene-chip";
+      button.textContent = scene.number;
+      button.title = scene.title;
+      button.setAttribute("aria-label", `${scene.number} ${scene.title}`);
+      button.addEventListener("click", () => show(n));
+      sceneIndex.append(button);
+      return button;
+    });
+    function show(nextIndex) {
+      index = Math.min(scenes.length - 1, Math.max(0, nextIndex));
+      const selected = scenes[index];
+      sceneFrame.src = `scene_${selected.id}.html`;
+      chips.forEach((chip, n) => {
+        chip.classList.toggle("active", n === index);
+        chip.setAttribute("aria-current", n === index ? "page" : "false");
+      });
+      document.getElementById("pageLabel").textContent = `${selected.number} / ${selected.title}  (${index + 1}/${scenes.length})`;
+      document.getElementById("firstBtn").disabled = index === 0;
+      document.getElementById("prevBtn").disabled = index === 0;
+      document.getElementById("nextBtn").disabled = index === scenes.length - 1;
+      document.getElementById("lastBtn").disabled = index === scenes.length - 1;
+      history.replaceState(null, "", `?scene=${selected.number}`);
+      window.showMotion?.(selected);
+    }
+    document.getElementById("firstBtn").addEventListener("click", () => show(0));
+    document.getElementById("prevBtn").addEventListener("click", () => show(index - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => show(index + 1));
+    document.getElementById("lastBtn").addEventListener("click", () => show(scenes.length - 1));
+    document.addEventListener("keydown", event => {
+      if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+        event.preventDefault();
+        show(index + (event.key === "ArrowRight" ? 1 : -1));
+      }
+    });
+    window.addEventListener("message", event => {
+      if (event.origin !== location.origin || event.source !== sceneFrame.contentWindow) return;
+      if (event.data?.type === "avatar-motion-page") show(index + event.data.direction);
+    });
+    show(index);
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { VRMHumanBoneList, VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
+    import { VRMAnimationLoaderPlugin, createVRMAnimationClip } from "@pixiv/three-vrm-animation";
+
+    const canvas = document.getElementById("avatarCanvas");
+    const pane = canvas.parentElement;
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+    renderer.setClearColor(0, 0);
+    const scene = new THREE.Scene();
+    scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const key = new THREE.DirectionalLight(0xffffff, 2.0);
+    key.position.set(1.2, 1.5, 1.1);
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xdde8ff, 1.0);
+    rim.position.set(-1.3, .7, 1.3);
+    scene.add(rim);
+    const container = new THREE.Group();
+    container.rotation.y = Math.PI;
+    scene.add(container);
+    const camera = new THREE.PerspectiveCamera(28, 1, .01, 40);
+    const modelLoader = new GLTFLoader();
+    modelLoader.register(parser => new VRMLoaderPlugin(parser));
+    const motionLoader = new GLTFLoader();
+    motionLoader.register(parser => new VRMAnimationLoaderPlugin(parser));
+    const clock = new THREE.Clock();
+    const motionCache = new Map();
+    const transitionSeconds = 1.1;
+    const bones = [];
+    let vrm = null;
+    let mixer = null;
+    let activeTracks = { rotation: new Set(), translation: new Set() };
+    let transition = null;
+    let ending = true;
+    let currentAction = null;
+    let finishPending = false;
+    let requestId = 0;
+    let targetHeight = 1.4;
+    let footContact = null;
+    let motionNumber = "999";
+
+    function resize() {
+      const width = Math.max(1, pane.clientWidth);
+      const height = Math.max(1, pane.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(pane);
+    resize();
+
+    function load(loader, url) {
+      return new Promise((resolve, reject) => loader.load(url, resolve, undefined, reject));
+    }
+    function capturePose() {
+      return bones.map(({ node }) => ({
+        rotation: node.quaternion.clone(),
+        position: node.position.clone(),
+      }));
+    }
+    function captureFeet() {
+      if (!footContact) return [];
+      return footContact.legs.map(leg => {
+        const position = leg.foot.getWorldPosition(new THREE.Vector3());
+        const hip = leg.upper.getWorldPosition(new THREE.Vector3());
+        const axis = position.clone().sub(hip).normalize();
+        const bend = leg.lower.getWorldPosition(new THREE.Vector3()).sub(hip);
+        bend.addScaledVector(axis, -bend.dot(axis));
+        return {
+          position, rotation: leg.foot.getWorldQuaternion(new THREE.Quaternion()),
+          bend: bend.lengthSq() > 1e-12 ? bend.normalize() : leg.bend.clone(),
+        };
+      });
+    }
+    function createFootContact() {
+      // VRMA の標準脚長ではなく、読み込んだモデルの正規化骨から接地位置と脚長を得る。
+      const hips = vrm.humanoid.getNormalizedBoneNode("hips");
+      const legs = ["left", "right"].map(side => {
+        const upper = vrm.humanoid.getNormalizedBoneNode(`${side}UpperLeg`);
+        const lower = vrm.humanoid.getNormalizedBoneNode(`${side}LowerLeg`);
+        const foot = vrm.humanoid.getNormalizedBoneNode(`${side}Foot`);
+        if (!upper || !lower || !foot) return null;
+        const hip = upper.getWorldPosition(new THREE.Vector3());
+        const knee = lower.getWorldPosition(new THREE.Vector3());
+        const anchor = foot.getWorldPosition(new THREE.Vector3());
+        const axis = anchor.clone().sub(hip).normalize();
+        const bend = knee.clone().sub(hip);
+        bend.addScaledVector(axis, -bend.dot(axis));
+        if (bend.lengthSq() < 1e-12) {
+          bend.set(0, 0, 1).transformDirection(vrm.scene.matrixWorld);
+        }
+        return { side, upper, lower, foot, anchor, bend: bend.normalize(),
+          rotation: foot.getWorldQuaternion(new THREE.Quaternion()),
+          upperLength: hip.distanceTo(knee), lowerLength: knee.distanceTo(anchor),
+          restReach: hip.distanceTo(anchor) };
+      }).filter(Boolean);
+      return hips && legs.length === 2 ? { hips, legs, sourcePose: null } : null;
+    }
+    function aimBone(node, child, target) {
+      const origin = node.getWorldPosition(new THREE.Vector3());
+      const from = child.getWorldPosition(new THREE.Vector3()).sub(origin).normalize();
+      const to = target.clone().sub(origin).normalize();
+      const world = node.getWorldQuaternion(new THREE.Quaternion());
+      world.premultiply(new THREE.Quaternion().setFromUnitVectors(from, to));
+      node.quaternion.copy(node.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(world));
+      node.updateWorldMatrix(false, true);
+    }
+    function applyFootContact(blend = 1) {
+      if (!footContact || motionNumber === "00" || blend === 0) return;
+      const targets = footContact.legs.map((leg, index) => {
+        if (motionNumber === "12" && leg.side === "left") return null;
+        const from = transition?.feet[index];
+        const position = from ? from.position.clone().lerp(leg.anchor, blend) : leg.anchor.clone();
+        const rotation = from ? from.rotation.clone().slerp(leg.rotation, blend) : leg.rotation.clone();
+        const bend = leg.bend.clone();
+        if (from) {
+          const turn = new THREE.Quaternion().setFromUnitVectors(from.bend, bend);
+          bend.copy(from.bend).applyQuaternion(new THREE.Quaternion().slerp(turn, blend));
+        }
+        return { leg, position, rotation, bend };
+      }).filter(Boolean);
+      // 横への重心移動で伸び切った脚が届かなくなる分だけ、骨盤を下げる。
+      let drop = 0;
+      for (const { leg, position } of targets) {
+        const hip = leg.upper.getWorldPosition(new THREE.Vector3());
+        const reach = leg.restReach;
+        const horizontalSq = (hip.x - position.x) ** 2 + (hip.z - position.z) ** 2;
+        drop = Math.max(drop, hip.y - position.y - Math.sqrt(Math.max(0, reach ** 2 - horizontalSq)));
+      }
+      // 中立脚長までの余裕だけで立ち上がりを滑らかにし、伸び切り付近の膝速度の急変を避ける。
+      const soften = Math.min(...targets.map(({ leg }) => leg.upperLength + leg.lowerLength - leg.restReach));
+      if (soften > 0 && drop > 0) {
+        drop = drop < soften ? drop * drop / (2 * soften) : drop - soften / 2;
+      }
+      if (drop > 0) {
+        const { hips } = footContact;
+        const position = hips.getWorldPosition(new THREE.Vector3());
+        position.y -= drop;
+        hips.position.copy(hips.parent.worldToLocal(position));
+        hips.updateWorldMatrix(false, true);
+      }
+      for (const { leg, position, rotation, bend } of targets) {
+        // 既に接地している中立姿勢には丸め誤差由来の膝回転を加えない。
+        if (leg.foot.getWorldPosition(new THREE.Vector3()).distanceToSquared(position) < 1e-16
+            && leg.foot.getWorldQuaternion(new THREE.Quaternion()).angleTo(rotation) < 1e-7) continue;
+        const hip = leg.upper.getWorldPosition(new THREE.Vector3());
+        const axis = position.clone().sub(hip);
+        const distance = Math.max(1e-8, axis.length());
+        axis.divideScalar(distance);
+        const along = THREE.MathUtils.clamp((leg.upperLength ** 2 - leg.lowerLength ** 2 + distance ** 2) / (2 * distance), -leg.upperLength, leg.upperLength);
+        const height = Math.sqrt(Math.max(0, leg.upperLength ** 2 - along ** 2));
+        bend.addScaledVector(axis, -bend.dot(axis)).normalize();
+        const knee = hip.clone().addScaledVector(axis, along).addScaledVector(bend, height);
+        aimBone(leg.upper, leg.lower, knee);
+        aimBone(leg.lower, leg.foot, position);
+        leg.foot.quaternion.copy(leg.foot.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(rotation));
+        leg.foot.updateWorldMatrix(false, true);
+      }
+    }
+    function startTransition(nextMotion = "999") {
+      // 表示中の姿勢を起点にするため、補間中の連続ページ送りでも跳ねない。
+      const from = transition?.elapsed === 0 ? transition.from : capturePose();
+      const feet = transition?.elapsed === 0 ? transition.feet : captureFeet();
+      // 中立から02へ入るときは、VRMA自身の外回り軌道をそのまま使う。
+      const armsAtIdle = bones.every((bone, index) =>
+        !["leftUpperArm", "rightUpperArm"].includes(bone.name)
+        || from[index].rotation.angleTo(bone.idleRotation) < 1e-4);
+      const clearSleeves = motionNumber === "02" || transition?.clearSleeves
+        || (nextMotion === "02" && !armsAtIdle);
+      transition = { from, feet, target: null, elapsed: 0, clearSleeves };
+      currentAction = null;
+      finishPending = false;
+      mixer.stopAllAction();
+      if (footContact) footContact.sourcePose = null;
+    }
+    async function showMotion(selected) {
+      const id = ++requestId;
+      if (!vrm || !mixer) return;
+      if (!selected.file) {
+        startTransition();
+        motionNumber = "999";
+        activeTracks = { rotation: new Set(), translation: new Set() };
+        ending = true;
+        status.textContent = "確認終了";
+        return;
+      }
+      status.textContent = `${selected.number} ${selected.title} を読み込み中…`;
+      try {
+        if (!motionCache.has(selected.file)) {
+          const pending = load(motionLoader, selected.file).then(gltf => {
+            const animation = gltf.userData?.vrmAnimations?.[0];
+            if (!animation) throw new Error("VRMA 内にアニメーションがありません");
+            const clip = createVRMAnimationClip(animation, vrm);
+            // 候補の骨盤移動は、モデルの中立位置を起点にした相対移動として扱う。
+            if (selected.number !== "00") {
+              const hips = bones.find(bone => bone.name === "hips");
+              const track = clip.tracks.find(track => track.name === `${hips.node.name}.position`);
+              if (track) {
+                const offset = hips.restPosition.clone().sub(new THREE.Vector3().fromArray(track.values));
+                for (let i = 0; i < track.values.length; i += 3) {
+                  track.values[i] += offset.x;
+                  track.values[i + 1] += offset.y;
+                  track.values[i + 2] += offset.z;
+                }
+              }
+            }
+            return {
+              clip,
+              tracks: {
+                rotation: new Set(animation.humanoidTracks.rotation.keys()),
+                translation: new Set(animation.humanoidTracks.translation.keys()),
+              },
+            };
+          }).catch(error => {
+            // 別ページへ移動済みでも失敗を残さず、次の選択で再読み込みする。
+            if (motionCache.get(selected.file) === pending) motionCache.delete(selected.file);
+            throw error;
+          });
+          motionCache.set(selected.file, pending);
+        }
+        const { clip, tracks } = await motionCache.get(selected.file);
+        if (id !== requestId) return;
+        startTransition(selected.number);
+        motionNumber = selected.number;
+        activeTracks = tracks;
+        ending = false;
+        const action = mixer.clipAction(clip);
+        action.reset();
+        action.setLoop(THREE.LoopOnce, 1);
+        action.clampWhenFinished = true;
+        action.enabled = true;
+        action.setEffectiveWeight(1);
+        currentAction = action;
+        action.play();
+        status.textContent = "";
+      } catch (error) {
+        if (id !== requestId) return;
+        status.textContent = `モーションを読み込めませんでした: ${error.message || error}`;
+        console.error(error);
+      }
+    }
+    window.showMotion = showMotion;
+
+    try {
+      const gltf = await load(modelLoader, "../Xビデオ/_vrm/VRM_AiDiy.vrm");
+      vrm = gltf.userData?.vrm;
+      if (!vrm) throw new Error("VRM データがありません");
+      VRMUtils.removeUnnecessaryVertices(gltf.scene);
+      VRMUtils.removeUnnecessaryJoints(gltf.scene);
+      vrm.scene.traverse(object => { object.frustumCulled = false; });
+      const box = new THREE.Box3().setFromObject(vrm.scene);
+      const center = box.getCenter(new THREE.Vector3());
+      const size = box.getSize(new THREE.Vector3());
+      vrm.scene.position.set(-center.x, -box.min.y, -center.z);
+      targetHeight = size.y * .52;
+      camera.position.set(0, size.y * .55, -size.y * 2.2);
+      camera.lookAt(0, targetHeight, 0);
+      container.add(vrm.scene);
+      for (const name of VRMHumanBoneList) {
+        const node = vrm.humanoid.getNormalizedBoneNode(name);
+        if (!node) continue;
+        const restRotation = node.quaternion.clone();
+        const idleRotation = restRotation.clone();
+        const idleAngles = {
+          leftUpperArm: [0, 0, -75], rightUpperArm: [0, 0, 75],
+          leftLowerArm: [0, -10, 0], rightLowerArm: [0, 10, 0],
+        }[name];
+        if (idleAngles) idleRotation.setFromEuler(new THREE.Euler(...idleAngles.map(THREE.MathUtils.degToRad)));
+        bones.push({ name, node, restRotation, idleRotation, restPosition: node.position.clone() });
+      }
+      footContact = createFootContact();
+      mixer = new THREE.AnimationMixer(vrm.scene);
+      mixer.addEventListener("finished", event => {
+        if (event.action === currentAction) finishPending = true;
+      });
+      showMotion(scenes[index]);
+    } catch (error) {
+      status.textContent = `アバターを読み込めませんでした: ${error.message || error}`;
+      console.error(error);
+    }
+    function tick() {
+      const delta = Math.min(clock.getDelta(), .1);
+      // Mixer は値が変化しないトラックを再適用しないため、補間前の姿勢を復元する。
+      // 表示姿勢を次の補間先にすると、前ページの曲がった膝などが残ってしまう。
+      const sourcePose = footContact?.sourcePose || transition?.target;
+      if (sourcePose) {
+        bones.forEach(({ node }, index) => {
+          node.quaternion.copy(sourcePose[index].rotation);
+          node.position.copy(sourcePose[index].position);
+        });
+      }
+      mixer?.update(delta);
+      if (finishPending) {
+        startTransition();
+        motionNumber = "999";
+        activeTracks = { rotation: new Set(), translation: new Set() };
+        ending = true;
+      }
+      for (const bone of bones) {
+        const { name, node, restRotation, idleRotation, restPosition } = bone;
+        if (!activeTracks.rotation.has(name)) node.quaternion.copy(ending ? idleRotation : restRotation);
+        if (!activeTracks.translation.has(name)) node.position.copy(restPosition);
+      }
+      // 接地補正も Mixer に戻さない。定数トラックや骨盤の補正量が次フレームに残るのを防ぐ。
+      if (footContact) {
+        if (!footContact.sourcePose) footContact.sourcePose = capturePose();
+        else bones.forEach(({ node }, index) => {
+          footContact.sourcePose[index].rotation.copy(node.quaternion);
+          footContact.sourcePose[index].position.copy(node.position);
+        });
+      }
+      let contactBlend = 1;
+      if (transition) {
+        transition.elapsed += delta;
+        const progress = Math.min(1, transition.elapsed / transitionSeconds);
+        const eased = progress * progress * (3 - 2 * progress);
+        contactBlend = eased;
+        if (!transition.target) transition.target = capturePose();
+        bones.forEach((bone, index) => {
+          const from = transition.from[index];
+          const target = transition.target[index];
+          target.rotation.copy(bone.node.quaternion);
+          target.position.copy(bone.node.position);
+          // 出力 quaternion を第2引数に渡すと上書きで補間できないため、別の値を使う。
+          bone.node.quaternion.slerpQuaternions(from.rotation, target.rotation, eased);
+          bone.node.position.lerpVectors(from.position, target.position, eased);
+          // 02の袖を腰の外側に回す。中断した姿勢から始め、両端では補正をゼロにする。
+          if (transition.clearSleeves && (bone.name === "leftUpperArm" || bone.name === "rightUpperArm")) {
+            const amount = Math.min(1, from.rotation.angleTo(target.rotation) / THREE.MathUtils.degToRad(15));
+            const direction = bone.name === "leftUpperArm" ? 1 : -1;
+            const angle = direction * THREE.MathUtils.degToRad(25) * 4 * eased * (1 - eased) * amount;
+            bone.node.quaternion.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), angle));
+          }
+        });
+      }
+      applyFootContact(contactBlend);
+      if (transition?.elapsed >= transitionSeconds) transition = null;
+      vrm?.update(delta);
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+    tick();
+  </script>
+</body>
+</html>

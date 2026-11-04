@@ -1,0 +1,47 @@
+[project]
+name = "aidiy-hermes"
+version = "0.21.0"
+description = "AiDiy code agent CLI (hermes)"
+requires-python = ">=3.13"
+dependencies = [
+    # --- upstream hermes-agent 0.21 core ---
+    "openai",
+    "certifi",
+    "python-dotenv",
+    "fire",
+    "httpx[socks]",
+    "rich",
+    "tenacity",
+    "pyyaml",
+    "ruamel.yaml",
+    "requests",
+    "jinja2",
+    "firecrawl-anydoc",
+    "pydantic",
+    "prompt-toolkit",
+    "croniter",
+    "snowballstemmer",
+    "packaging",
+    "Markdown",
+    "PyJWT[crypto]",
+    "urllib3>=2.7.0,<3",
+    "cryptography",
+    "psutil",
+    "websockets",
+    "pathspec",
+    "fastapi",
+    "uvicorn[standard]",
+    "python-multipart",
+    "Pillow",
+    "tzdata; sys_platform == 'win32'",
+    "pywinpty; sys_platform == 'win32'",
+    "pywin32; sys_platform == 'win32'",
+    "concurrent-log-handler; sys_platform == 'win32'",
+    "ptyprocess; sys_platform != 'win32'",
+    # --- AiDiy additions ---
+    "anthropic",
+    "google-genai",
+    "fal-client",
+    "mcp>=2,<3",
+    "windows-curses; sys_platform == 'win32'",
+]

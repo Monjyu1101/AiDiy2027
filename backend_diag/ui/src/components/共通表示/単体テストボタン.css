@@ -1,0 +1,36 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* 個別のテスト・確認専用。一括実行や導入・削除の操作には適用しない。 */
+.panel button.single-test-button {
+  flex: none;
+  box-sizing: border-box;
+  min-width: 52px;
+  min-height: 24px;
+  padding: 3px 8px;
+  border: 1px solid #7dd3fc;
+  border-radius: 4px;
+  background: #7dd3fc;
+  color: #082f49;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.panel button.single-test-button:hover:not(:disabled) {
+  background: #bae6fd;
+  border-color: #bae6fd;
+}
+.panel button.single-test-button:focus-visible {
+  outline: 2px solid #e0f2fe;
+  outline-offset: 2px;
+}
+.panel button.single-test-button:disabled {
+  background: #526d7a;
+  border-color: #6d8793;
+  color: #e0f2fe;
+  opacity: 1;
+  cursor: not-allowed;
+}

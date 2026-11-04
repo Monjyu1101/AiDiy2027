@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 全体像</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="00_用語集.html">前へ: 00_用語集</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_setup.py解説.html">次へ: 02_setup.py解説</a>
+  </nav>
+
+  <h1>01_全体像</h1>
+  <p>ここでは「セットアップ」と「起動」の関係を先に理解します。詳細実装は次ページ以降でコードを追います。</p>
+
+  <h2>最初に押さえる2つのスクリプト</h2>
+  <table>
+    <tr><th>スクリプト</th><th>役割</th><th>実行タイミング</th></tr>
+    <tr><td><code>workspace/AiDiy2027/_setup.py</code></td><td>依存関係の準備と初期セットアップ</td><td>初回導入時、または環境を作り直す時</td></tr>
+    <tr><td><code>workspace/AiDiy2027/_start.py</code></td><td>サーバー起動・監視・停止の制御</td><td>日常開発で毎回</td></tr>
+  </table>
+
+  <h2>処理の流れ（全体）</h2>
+  <pre><code>1. python _setup.py
+   - uv sync（バックエンド依存関係）
+   - npm install + npm update（フロントエンド依存関係）
+   - DB種別が postgresql のときのみ追加処理
+
+2. python _start.py
+   - 8090 / 8091 / 8098 の既存プロセス確認と停止
+   - core_main:app を 8091 で起動
+   - apps_main:app を 8098 で起動
+   - vite を 8090 で起動
+   - 出力監視、異常終了時は15秒後に再起動
+
+3. ブラウザで動作確認
+   - Frontend: http://127.0.0.1:8090
+   - Core API docs: http://127.0.0.1:8091/docs
+   - Apps API docs: http://127.0.0.1:8098/docs</code></pre>
+
+  <h2>構成の見取り図</h2>
+  <table>
+    <tr><th>層</th><th>主要フォルダ</th><th>要点</th></tr>
+    <tr><td>起動制御</td><td><code>workspace/AiDiy2027</code></td><td><code>_setup.py</code> と <code>_start.py</code> が入口</td></tr>
+    <tr><td>バックエンド</td><td><code>workspace/AiDiy2027/backend_server</code></td><td>FastAPI (core/apps の2系統)</td></tr>
+    <tr><td>フロントエンド</td><td><code>workspace/AiDiy2027/frontend_web</code></td><td>Vue 3 + Vite</td></tr>
+    <tr><td>ドキュメント</td><td><code>workspace/AiDiy2027/docs/開発ガイド</code></td><td>実装手順と設計方針を整理</td></tr>
+  </table>
+
+  <h2>この章で見る観点</h2>
+  <ol>
+    <li>なぜ <code>_setup.py</code> と <code>_start.py</code> を分けているか</li>
+    <li>なぜバックエンドが 2 ポートに分かれているか</li>
+    <li>なぜフロントエンドからは <code>/core</code> / <code>/apps</code> を使うか</li>
+    <li>エラー時にどこから切り分けるか</li>
+  </ol>
+
+  <h2>よくある誤解</h2>
+  <table>
+    <tr><th>誤解</th><th>正しい理解</th></tr>
+    <tr><td><code>_setup.py</code> は毎回実行が必須</td><td>通常は初回のみ。依存関係破損時に再実行</td></tr>
+    <tr><td><code>_start.py</code> は単純な起動だけ</td><td>ポート解放、出力監視、再起動制御まで担当</td></tr>
+    <tr><td>DBは <code>_setup.py</code> で完全作成される</td><td>SQLite運用では主にサーバー起動時にテーブル作成される</td></tr>
+  </table>
+
+  <h2>補足: 実際のルートスクリプトとの違い</h2>
+  <p>
+  現在のルート <code>_setup.py</code> / <code>_start.py</code> は、本ハンズオンの簡略サンプルに加えて
+  バックエンド(tools/local/task,team)と <code>command_hermes</code> のセットアップ・起動確認も行います
+  （MCPサーバー群 8095、ローカルLLM 8096、AIタスク・AIチーム 8093。詳細は
+  <a href="../00_このプロジェクトの歩き方/02_技術スタックと構成.html">00_このプロジェクトの歩き方/02_技術スタックと構成</a> を参照）。<br>
+  ここでは考え方を掴むため、まず core/apps/Web/Avatar だけの単純化した流れで理解します。
+  </p>
+
+  <h2>次ページで読む内容</h2>
+  <p>次の <a href="02_setup.py解説.html">02_setup.py解説</a> では、実際のコード（<code>code_samples/_setup.py</code>）を読みながら処理順と分岐条件を確認します。</p>
+
+  <nav>
+    <a href="00_用語集.html">前へ: 00_用語集</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_setup.py解説.html">次へ: 02_setup.py解説</a>
+  </nav>
+</body>
+</html>

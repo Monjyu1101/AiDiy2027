@@ -1,0 +1,10 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+.key-select{border:0;background:none;text-align:left;min-width:0;flex:1;padding:4px 8px}
+.key-select>span{display:block}
+.config-state{font-size:12px;color:#c8d7e5}
+.key-layout{grid-template-columns:480px minmax(0,1fr)}
+@media(max-width:800px){.key-layout{grid-template-columns:1fr}.key-layout aside{max-height:50vh}}

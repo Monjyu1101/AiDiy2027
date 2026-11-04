@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小説解説_本好きの下剋上_ja | 紙一枚から図書館都市へ</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(41, 216, 255, 0.16), transparent 26%),
+        radial-gradient(circle at 85% 78%, rgba(196, 155, 255, 0.16), transparent 28%),
+        linear-gradient(135deg, #040814 0%, #091425 46%, #0a1120 100%);
+      color: #f5fbff;
+      font-family: "Noto Sans JP", "Yu Gothic UI", "Meiryo", sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+      background-size: 30px 30px;
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .app {
+      position: relative;
+      display: grid;
+      grid-template-rows: 40px 1fr 44px;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .topbar,
+    .controls {
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      backdrop-filter: blur(16px);
+      background: rgba(5, 12, 22, 0.78);
+      border-color: rgba(255, 255, 255, 0.08);
+      border-style: solid;
+      position: relative;
+      z-index: 20;
+    }
+
+    .topbar {
+      grid-row: 1;
+      justify-content: space-between;
+      gap: 20px;
+      border-width: 0 0 1px;
+    }
+
+    .brand-wrap {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .brand {
+      font-size: 18px;
+      font-weight: 900;
+      color: #8fe8ff;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 46vw;
+    }
+
+    .brand-sub {
+      color: #9eb2c6;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .top-note {
+      color: #d7e4ee;
+      font-size: 12px;
+      line-height: 1.4;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .stage {
+      position: relative;
+      grid-row: 2 / 4;
+      grid-column: 1;
+      z-index: 1;
+      min-height: 0;
+      padding: 0;
+    }
+
+    .frame-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 0;
+      overflow: hidden;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .scene-frame {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: transparent;
+    }
+
+    .subtitle {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      bottom: 20px;
+      padding: 14px 18px;
+      border-radius: 18px;
+      background: rgba(4, 10, 18, 0.55);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #f7fbff;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.7;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+      pointer-events: none;
+    }
+
+    .controls {
+      grid-row: 3;
+      grid-column: 1;
+      z-index: 30;
+      justify-content: space-between;
+      gap: 18px;
+      border-width: 1px 0 0;
+    }
+
+    .controls-reveal-zone {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 29;
+      height: 132px;
+      background: transparent;
+      pointer-events: auto;
+    }
+
+    .controls-left { display: flex; align-items: center; gap: 6px; }
+    .controls-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+    .controls-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+    }
+
+    .progress {
+      width: min(440px, 100%);
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #29d8ff, #00e0b8, #c49bff);
+      transition: width 120ms linear;
+    }
+
+    button {
+      height: 40px;
+      min-width: 40px;
+      padding: 0 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #f5fbff;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: rgba(41, 216, 255, 0.58);
+      background: rgba(41, 216, 255, 0.12);
+    }
+
+    .ghost-btn {
+      color: #9eb2c6;
+      font-weight: 700;
+    }
+
+    .mode-btn {
+      background: rgba(41, 216, 255, 0.08);
+      border-color: rgba(41, 216, 255, 0.45);
+      color: #29d8ff;
+      font-size: 13px;
+      min-width: 76px;
+    }
+
+    .mode-btn.mode-long {
+      background: rgba(196, 155, 255, 0.08);
+      border-color: rgba(196, 155, 255, 0.45);
+      color: #c49bff;
+    }
+
+    .meta,
+    .timer {
+      color: #d5e1eb;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tts-status {
+      position: fixed;
+      right: 24px;
+      bottom: 52px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      padding: 4px 16px;
+      border-radius: 8px;
+      display: none;
+      z-index: 25;
+      pointer-events: none;
+      white-space: nowrap;
+      background: rgba(210, 60, 130, 0.92);
+      border: 1px solid rgba(255, 140, 200, 0.55);
+    }
+
+    .tts-status.active {
+      display: block;
+    }
+
+    #avatar-container {
+      position: fixed;
+      left: 3vw;
+      right: auto;
+      bottom: 44px;
+      width: 45vh;
+      height: 75vh;
+      max-height: calc(100vh - 108px);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #avatarCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      opacity: 0;
+      transition: opacity 600ms ease;
+    }
+
+    #avatarCanvas.ready {
+      opacity: 1;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-rows: 65px 1fr 56px;
+      }
+
+      .topbar,
+      .controls {
+        padding: 0 14px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 2px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+
+      .top-note {
+        text-align: left;
+      }
+
+      .controls { flex-wrap: nowrap; gap: 8px; }
+
+      .subtitle {
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        padding: 12px 14px;
+        font-size: 14px;
+      }
+
+      .tts-status { bottom: 61px; }
+
+      #avatar-container {
+        left: 1.5vw;
+        right: auto;
+        width: 32vh;
+        height: 52vh;
+        bottom: 56px;
+      }
+    }
+    .top-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .top-actions .top-note {
+      flex: 1 1 auto;
+    }
+
+    .speaker-btn {
+      width: 40px;
+      height: 40px;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #eaf6ff;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    }
+
+    .speaker-btn:hover {
+      background: rgba(143, 232, 255, 0.18);
+      border-color: rgba(143, 232, 255, 0.48);
+      transform: translateY(-1px);
+    }
+
+    .speaker-btn[aria-pressed="true"] {
+      background: rgba(255, 255, 255, 0.04);
+      color: #9eb2c6;
+    }
+  </style>
+  <link rel="stylesheet" href="../_common/booklove_telop.css">
+  <script src="scenario.js"></script>
+  <script src="../_common/playback_start_delay.js"></script>
+  <script src="../_common/playback_controls_autohide.js?v=20260905-2"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.179.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.179.0/examples/jsm/",
+        "@pixiv/three-vrm": "https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3.4.2/lib/three-vrm.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand-wrap">
+        <div class="brand">小説解説『本好きの下剋上』</div>
+      </div>
+      <div class="top-actions">
+        <div class="top-note">本を求める病弱な少女が、紙作りから王権、そして図書館都市へ駆け上がる本編全5部を紹介します。全編ネタバレあり。</div>
+        <button id="speakerBtn" class="speaker-btn" type="button" aria-label="スピーカー オン" aria-pressed="false" title="スピーカー オン">🔊</button>
+      </div>
+    </header>
+
+    <main class="stage">
+      <section class="frame-wrap">
+        <iframe id="sceneFrame" class="scene-frame" title="本好きの下剋上 小説解説 scene"></iframe>
+        <div id="subtitle" class="subtitle"></div>
+      </section>
+    </main>
+
+    <div id="ttsStatus" class="tts-status" aria-live="polite"></div>
+
+    <footer class="controls">
+      <div class="controls-left">
+        <button id="restartBtn" type="button" aria-label="最初から">|◁</button>
+        <button id="prevBtn" type="button" aria-label="前へ">◁</button>
+        <button id="modeBtn" type="button" class="mode-btn">ショート</button>
+        <button id="playBtn" type="button" aria-label="再生">▶</button>
+        <button id="nextBtn" type="button" aria-label="次へ">▷</button>
+        <button id="lastBtn" type="button" aria-label="最後のシーンへ">▷|</button>
+      </div>
+
+      <div class="controls-center">
+        <div class="progress" aria-label="progress">
+          <div id="progressFill" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <div class="controls-right">
+        <div id="timer" class="timer">00:00 / 00:51</div>
+      </div>
+    </footer>
+  </div>
+
+  <div class="controls-reveal-zone" aria-hidden="true"></div>
+
+  <div id="avatar-container">
+    <canvas id="avatarCanvas"></canvas>
+  </div>
+
+  <script>
+    const scenario = window.SCENARIO;
+    const sceneFrame = document.getElementById("sceneFrame");
+    const subtitle = document.getElementById("subtitle");
+    const timer = document.getElementById("timer");
+    const progressFill = document.getElementById("progressFill");
+    const playBtn = document.getElementById("playBtn");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const lastBtn = document.getElementById("lastBtn");
+    const speakerBtn    = document.getElementById("speakerBtn");
+    const modeBtn = document.getElementById("modeBtn");
+    const ttsStatus = document.getElementById("ttsStatus");
+    const searchParams = new URLSearchParams(window.location.search);
+    let speakerEnabled = (searchParams.get("speaker") || "").toLowerCase() !== "false";
+    const autoParam = (searchParams.get("auto") || "").toLowerCase();
+    const requestedAutoMode = ["short", "long", "loop"].includes(autoParam) ? autoParam : "";
+    const autoPlayRequested = requestedAutoMode !== "" || searchParams.get("autoplay") === "1";
+    const previewMinSceneSec = requestedAutoMode
+      ? Math.max(0, Number.parseFloat(searchParams.get("preview_min_sec") || "0") || 0)
+      : 0;
+
+    let audioMode = requestedAutoMode === "short"
+      ? "short"
+      : (requestedAutoMode === "long" || requestedAutoMode === "loop" ? "long" : "short");
+    let effectiveSceneDuration = 0;
+
+    function getSceneAudio(scene) {
+      return audioMode === "long" ? (scene.long_audio || "") : (scene.short_audio || "");
+    }
+
+    function getSceneNarration(scene) {
+      return audioMode === "long" ? (scene.long_narration || "") : (scene.short_narration || "");
+    }
+
+    function getSceneDurationSec(scene) {
+      const raw = audioMode === "long" ? (scene.long_duration_sec || 0) : (scene.short_duration_sec || 0);
+      return raw || previewMinSceneSec;
+    }
+
+    const _shortStartSecs = [];
+    const _longStartSecs = [];
+    (function() {
+      let sa = 0, la = 0;
+      for (const sc of scenario.scenes) {
+        _shortStartSecs.push(sa); sa += (sc.short_duration_sec || previewMinSceneSec || 0);
+        _longStartSecs.push(la);  la += (sc.long_duration_sec  || previewMinSceneSec || 0);
+      }
+    })();
+
+    function getSceneStartSec(scene) {
+      const idx = scenario.scenes.indexOf(scene);
+      return idx < 0 ? 0 : (audioMode === "long" ? _longStartSecs[idx] : _shortStartSecs[idx]);
+    }
+
+    function getTotalDurationSec() {
+      const raw = audioMode === "long" ? (scenario.long_duration_sec || 0) : (scenario.short_duration_sec || 0);
+      if (raw > 0) return raw;
+      const fallbackTotal = (scenario.scenes || []).reduce((sum, scene) => sum + getSceneDurationSec(scene), 0);
+      return fallbackTotal || 1;
+    }
+
+    function updateModeBtn() {
+      if (audioMode === "short") {
+        modeBtn.textContent = "ショート";
+        modeBtn.classList.remove("mode-long");
+      } else {
+        modeBtn.textContent = "ロング";
+        modeBtn.classList.add("mode-long");
+      }
+    }
+
+    function getInitialSceneIndex() {
+      const value = Number.parseInt(searchParams.get("scene") || "1", 10);
+      if (!Number.isFinite(value)) return 0;
+      return Math.min(Math.max(value - 1, 0), scenario.scenes.length - 1);
+    }
+
+    function isLoopPlayback() {
+      return requestedAutoMode === "loop" && audioMode === "long";
+    }
+
+    function formatTime(sec) {
+      const safe = Math.max(0, Math.round(sec));
+      const mm = String(Math.floor(safe / 60)).padStart(2, "0");
+      const ss = String(safe % 60).padStart(2, "0");
+      return `${mm}:${ss}`;
+    }
+
+    let sceneIndex = getInitialSceneIndex();
+    let playing = false;
+    let sceneElapsedMs = 0;
+    let sceneStartedAt = 0;
+    let tickTimer = null;
+    let sceneEndTimer = null;
+    let playbackToken = 0;
+    let pendingGesturePlayback = false;
+    let requestedPlaybackStarted = false;
+    let autoplayFallbackTimer = null;
+    let audioEndedHandler = null;
+    let bgPrefetchCount = 0;
+    const audioPlayer = new Audio();
+    window.audioPlayer = audioPlayer;
+    const playbackStartGate = AiDiyVideoPlayback.createStartGate();
+    audioPlayer.preload = "auto";
+    function applySpeakerState() {
+      audioPlayer.volume = speakerEnabled ? 1 : 0;
+      if (speakerBtn) {
+        speakerBtn.textContent = speakerEnabled ? "🔊" : "🔇";
+        speakerBtn.setAttribute("aria-label", speakerEnabled ? "スピーカー オン" : "スピーカー オフ");
+        speakerBtn.setAttribute("aria-pressed", speakerEnabled ? "false" : "true");
+        speakerBtn.title = speakerEnabled ? "スピーカー オン" : "スピーカー オフ";
+      }
+    }
+    applySpeakerState();
+
+    const ttsAudioCache = new Map();
+    const ttsPendingCache = new Map();
+    const audioExistsCache = new Map();
+    function revokeTtsBlobs() {
+      ttsAudioCache.forEach((blobUrl) => URL.revokeObjectURL(blobUrl));
+      ttsAudioCache.clear();
+      ttsPendingCache.clear();
+    }
+
+    function currentScene() {
+      return scenario.scenes[sceneIndex];
+    }
+
+    function clearTimers() {
+      playbackStartGate.cancel();
+      clearInterval(tickTimer);
+      clearTimeout(sceneEndTimer);
+      tickTimer = null;
+      sceneEndTimer = null;
+      if (audioEndedHandler) {
+        audioPlayer.removeEventListener("ended", audioEndedHandler);
+        audioEndedHandler = null;
+      }
+    }
+
+    function currentTimelineSec() {
+      return getSceneStartSec(currentScene()) + sceneElapsedMs / 1000;
+    }
+
+    function getSceneScheduledEndSec(scene = currentScene()) {
+      return Math.min(
+        getSceneStartSec(scene) + getSceneDurationSec(scene),
+        getTotalDurationSec()
+      );
+    }
+
+    function snapTimerToSceneScheduledEnd(scene = currentScene()) {
+      sceneElapsedMs = Math.max(0, (getSceneScheduledEndSec(scene) - getSceneStartSec(scene)) * 1000);
+      updateTimerAndProgress();
+    }
+
+    function updateTimerAndProgress() {
+      const total = getTotalDurationSec();
+      const current = currentTimelineSec();
+      const sceneId = (scenario.scenes[sceneIndex]?.id ?? `scene_${String(sceneIndex).padStart(3,"0")}`).replace("scene_", "Scene_");
+      timer.textContent = `${formatTime(current)} / ${formatTime(total)}  ${sceneId} (${sceneIndex + 1}/${scenario.scenes.length})`;
+      progressFill.style.width = `${Math.min(100, (current / Math.max(0.1, total)) * 100)}%`;
+    }
+
+    function armSceneEndTimer(remainingMs, token) {
+      clearTimeout(sceneEndTimer);
+      sceneEndTimer = setTimeout(() => {
+        if (token !== playbackToken) return;
+        nextScene(true);
+      }, Math.max(0, Math.ceil(remainingMs)));
+    }
+
+    function armAudioEndedHook(token) {
+      if (audioEndedHandler) {
+        audioPlayer.removeEventListener("ended", audioEndedHandler);
+      }
+      audioEndedHandler = () => {
+        audioEndedHandler = null;
+        if (token !== playbackToken || !playing) return;
+        clearTimeout(sceneEndTimer);
+        nextScene(true);
+      };
+      audioPlayer.addEventListener("ended", audioEndedHandler, { once: true });
+    }
+
+    function startSceneClock(token) {
+      clearInterval(tickTimer);
+      sceneStartedAt = Date.now() - sceneElapsedMs;
+      tickTimer = setInterval(() => {
+        if (token !== playbackToken || !playing) return;
+        if (Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0) {
+          sceneElapsedMs = audioPlayer.currentTime * 1000;
+        } else {
+          sceneElapsedMs = Date.now() - sceneStartedAt;
+        }
+        updateTimerAndProgress();
+      }, 100);
+    }
+
+    function getTtsConfig() {
+      const policy = scenario.assets_policy || {};
+      const ttsSpec = (policy.tts_provider || "freeai:female").split(":");
+      return {
+        provider: ttsSpec[0] || "freeai",
+        voice: ttsSpec[1] || "female",
+        model: policy.tts_model || "auto",
+        ratio: policy.tts_ratio ?? null,
+      };
+    }
+
+    function getTtsCacheKey(scene) {
+      return `${audioMode}:${scene.id}`;
+    }
+
+    function getVersionedAudioSrc(audioPath) {
+      return `${audioPath}?v=${encodeURIComponent(audioMode)}`;
+    }
+
+    function setTtsStatus(text) {
+      if (!ttsStatus) return;
+      ttsStatus.textContent = text || "";
+      ttsStatus.classList.toggle("active", Boolean(text));
+    }
+
+    function handleAutoplayBlocked(error, token) {
+      const message = String(error?.message || "");
+      const blocked = error?.name === "NotAllowedError"
+        || /gesture|interact|allowed/i.test(message);
+      if (!blocked || token !== playbackToken) return false;
+
+      playing = false;
+      pendingGesturePlayback = true;
+      clearTimers();
+      audioPlayer.pause();
+      window.__avatarOnAudioStop?.();
+      playBtn.textContent = "▶";
+      sceneElapsedMs = 0;
+      effectiveSceneDuration = 0;
+      updateTimerAndProgress();
+      setTtsStatus("自動再生待機中（クリックで開始）");
+      return true;
+    }
+
+    function tryResumePendingPlayback() {
+      if (!pendingGesturePlayback || playing) return;
+      pendingGesturePlayback = false;
+      setTtsStatus("");
+      play();
+    }
+
+    function triggerRequestedPlayback() {
+      if (!autoPlayRequested || requestedPlaybackStarted) return;
+      requestedPlaybackStarted = true;
+      clearTimeout(autoplayFallbackTimer);
+      autoplayFallbackTimer = null;
+      setTtsStatus("");
+      play();
+    }
+
+    function scheduleRequestedPlayback() {
+      if (!autoPlayRequested || requestedPlaybackStarted) return;
+      const waitMs = 0; // play() 側の共通 3 秒ゲートで開始をそろえる。
+      if (requestedAutoMode) {
+        setTtsStatus("再生準備中...");
+      }
+      autoplayFallbackTimer = setTimeout(() => {
+        triggerRequestedPlayback();
+      }, waitMs);
+    }
+    window.triggerRequestedPlayback = triggerRequestedPlayback;
+
+    async function audioFileExists(audioPath) {
+      const audioSrc = getVersionedAudioSrc(audioPath);
+      if (audioExistsCache.has(audioSrc)) return audioExistsCache.get(audioSrc);
+
+      try {
+        const response = await fetch(audioSrc, { method: "HEAD", cache: "no-store" });
+        const contentType = (response.headers.get("content-type") || "").toLowerCase();
+        const exists = response.ok
+          && !contentType.startsWith("text/html")
+          && (!contentType || contentType.startsWith("audio/") || contentType.includes("octet-stream"));
+        audioExistsCache.set(audioSrc, exists);
+        return exists;
+      } catch (error) {
+        console.warn("音声ファイル存在確認に失敗したため、通常再生で確認します", error);
+        return true;
+      }
+    }
+
+    async function fetchTtsBlob(body) {
+      const endpoints = ["http://127.0.0.1:8095/aidiy_text_to_speech/synthesize"];
+      let lastError = null;
+
+      for (const endpoint of endpoints) {
+        try {
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+          });
+          if (response.ok) {
+            const ct = response.headers.get("content-type") || "";
+            if (ct.startsWith("audio/")) return response.blob();
+            const json = await response.json();
+            if (json.base64_audio) {
+              const bin = atob(json.base64_audio);
+              const bytes = new Uint8Array(bin.length);
+              for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+              const fmt = json.audio_format || "mp3";
+              return new Blob([bytes], { type: fmt === "mp3" ? "audio/mpeg" : "audio/" + fmt });
+            }
+          }
+          const errorText = await response.text().catch(() => "");
+          lastError = new Error(`${endpoint} HTTP ${response.status}${errorText ? `: ${errorText}` : ""}`);
+          if (response.status === 400 || response.status >= 500) break;
+        } catch (error) {
+          lastError = error;
+        }
+      }
+
+      throw lastError || new Error("MCP TTS endpoint unavailable");
+    }
+
+    async function getTtsBlobUrl(scene) {
+      const cacheKey = getTtsCacheKey(scene);
+      const cachedUrl = ttsAudioCache.get(cacheKey);
+      if (cachedUrl) return cachedUrl;
+      const pendingPromise = ttsPendingCache.get(cacheKey);
+      if (pendingPromise) return pendingPromise;
+
+      const narration = getSceneNarration(scene);
+      if (!narration) return "";
+
+      const { provider, voice, model, ratio } = getTtsConfig();
+      const promise = (async () => {
+        const blob = await fetchTtsBlob({
+          text: narration,
+          speech_text: narration,
+          provider,
+          model,
+          voice,
+          ratio,
+          language: "ja",
+          mcp_tool: "aidiy_text_to_speech.synthesize_speech",
+        });
+        const blobUrl = URL.createObjectURL(blob);
+        ttsAudioCache.set(cacheKey, blobUrl);
+        return blobUrl;
+      })();
+      ttsPendingCache.set(cacheKey, promise);
+      try {
+        return await promise;
+      } finally {
+        if (ttsPendingCache.get(cacheKey) === promise) {
+          ttsPendingCache.delete(cacheKey);
+        }
+      }
+    }
+
+    async function prefetchSceneAudio(scene) {
+      if (!scene) return;
+
+      const audioPath = getSceneAudio(scene);
+      if (audioPath) {
+        const exists = await audioFileExists(audioPath);
+        if (exists) return;
+      }
+
+      if (!getSceneNarration(scene)) return;
+
+      bgPrefetchCount++;
+      if (!ttsStatus?.textContent) setTtsStatus("TTS");
+      try {
+        await getTtsBlobUrl(scene);
+      } catch (error) {
+        console.warn("TTS 先読み失敗", error);
+      } finally {
+        bgPrefetchCount = Math.max(0, bgPrefetchCount - 1);
+        if (bgPrefetchCount === 0 && ttsStatus?.textContent === "TTS") {
+          setTtsStatus("");
+        }
+      }
+    }
+
+    async function playSceneTts(scene, token, reason) {
+      if (!playing || token !== playbackToken) return;
+      const resumeMs = sceneElapsedMs;
+      sceneElapsedMs = resumeMs;
+      sceneStartedAt = Date.now() - resumeMs;
+      updateTimerAndProgress();
+      window.__avatarOnAudioStop?.();
+
+
+      try {
+        console.warn(`${reason}; MCP aidiy_text_to_speech で音声合成します`);
+        setTtsStatus(pendingGesturePlayback ? "自動再生待機中（クリックで開始）" : "TTS");
+        const blobUrl = await getTtsBlobUrl(scene);
+        if (!blobUrl || token !== playbackToken || !playing) return;
+
+        const resumeSec = Math.max(0, resumeMs / 1000);
+        const syncResumePosition = () => {
+          if (token !== playbackToken) return;
+          const duration = Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0
+            ? audioPlayer.duration
+            : (effectiveSceneDuration || getSceneDurationSec(scene));
+          effectiveSceneDuration = duration;
+          if (resumeSec <= 0) return;
+          try {
+            audioPlayer.currentTime = Math.min(resumeSec, Math.max(0, duration - 0.05));
+          } catch (error) {
+            console.warn("TTS 音声のシークに失敗", error);
+          }
+        };
+        audioPlayer.addEventListener("loadedmetadata", syncResumePosition, { once: true });
+        audioPlayer.src = blobUrl;
+        audioPlayer.addEventListener("loadedmetadata", () => {
+          if (token !== playbackToken) return;
+          if (Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+            effectiveSceneDuration = audioPlayer.duration;
+          }
+        }, { once: true });
+        audioPlayer.addEventListener("playing", () => {
+          if (token !== playbackToken || !playing) return;
+          if (!tickTimer) {
+            sceneElapsedMs = Number.isFinite(audioPlayer.currentTime) ? audioPlayer.currentTime * 1000 : sceneElapsedMs;
+            startSceneClock(token);
+          }
+          const currentMs = Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0
+            ? audioPlayer.currentTime * 1000
+            : sceneElapsedMs;
+          const dur = Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0
+            ? audioPlayer.duration
+            : (effectiveSceneDuration || getSceneDurationSec(scene));
+          effectiveSceneDuration = dur;
+          armAudioEndedHook(token);
+          armSceneEndTimer(dur * 1000 - currentMs + 5000, token);
+          prefetchSceneAudio(scenario.scenes[sceneIndex + 2]);
+        }, { once: true });
+        if (audioPlayer.readyState >= 1) {
+          syncResumePosition();
+        }
+        await audioPlayer.play();
+        window.__avatarOnAudioStart?.();
+      } catch (e) {
+        if (token !== playbackToken) return;
+        if (handleAutoplayBlocked(e, token)) return;
+        console.warn("MCP TTS 合成または再生に失敗", e);
+        playing = false;
+        playBtn.textContent = "▶";
+        clearTimers();
+        updateTimerAndProgress();
+      } finally {
+        if (token === playbackToken && !pendingGesturePlayback) {
+          setTtsStatus("");
+        }
+      }
+    }
+
+    function renderScene() {
+      const scene = currentScene();
+      sceneFrame.src = `${scenario.scenes[sceneIndex].id}.html`;
+      subtitle.textContent = scene.subtitle || scene.lead || "";
+      setTtsStatus("");
+      updateTimerAndProgress();
+      window.__avatarSetExpression?.(scene.expression || "neutral");
+      prefetchSceneAudio(scene);
+      prefetchSceneAudio(scenario.scenes[sceneIndex + 1]);
+    }
+
+    async function beginPlayback() {
+      const scene = currentScene();
+      const token = ++playbackToken;
+      clearTimers();
+      effectiveSceneDuration = getSceneDurationSec(scene);
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      const audioPath = getSceneAudio(scene);
+      if (!audioPath) {
+        audioPlayer.removeAttribute("src");
+        audioPlayer.load();
+        playSceneTts(scene, token, "音声ファイル指定なし");
+        return;
+      }
+      const exists = await audioFileExists(audioPath);
+      if (token !== playbackToken || !playing) return;
+      if (!exists) {
+        audioPlayer.removeAttribute("src");
+        audioPlayer.load();
+        playSceneTts(scene, token, `音声ファイルなし: ${audioPath}`);
+        return;
+      }
+      audioPlayer.addEventListener("loadedmetadata", () => {
+        if (token !== playbackToken) return;
+        if (Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0) {
+          effectiveSceneDuration = audioPlayer.duration;
+        }
+      }, { once: true });
+      const handlePlaying = () => {
+        if (token !== playbackToken || !playing) return;
+        if (!tickTimer) {
+          sceneElapsedMs = Number.isFinite(audioPlayer.currentTime) ? audioPlayer.currentTime * 1000 : sceneElapsedMs;
+          startSceneClock(token);
+        }
+        const currentMs = Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0
+          ? audioPlayer.currentTime * 1000
+          : sceneElapsedMs;
+        armAudioEndedHook(token);
+        armSceneEndTimer(effectiveSceneDuration * 1000 - currentMs + 5000, token);
+        prefetchSceneAudio(scenario.scenes[sceneIndex + 2]);
+      };
+      audioPlayer.addEventListener("playing", handlePlaying, { once: true });
+      audioPlayer.src = getVersionedAudioSrc(audioPath);
+      audioPlayer.currentTime = Math.min(sceneElapsedMs / 1000, Math.max(0, effectiveSceneDuration - 0.05));
+      audioPlayer.play().then(() => {
+        handlePlaying();
+      }).catch((error) => {
+        if (handleAutoplayBlocked(error, token)) return;
+        console.warn("音声を再生できないため、再生時間は進めません", error);
+        playing = false;
+        playBtn.textContent = "▶";
+        clearTimers();
+        updateTimerAndProgress();
+      });
+    }
+
+    function play({ startDelay = true } = {}) {
+      if (playing) return;
+      const dur = effectiveSceneDuration > 0 ? effectiveSceneDuration : getSceneDurationSec(currentScene());
+      if (sceneElapsedMs >= dur * 1000 - 80) {
+        sceneElapsedMs = 0;
+      }
+      playing = true;
+      playBtn.textContent = "⏸";
+      const begin = () => {
+        if (!playing) return;
+        window.__avatarResumeAudioContext?.();
+        beginPlayback();
+      };
+      if (startDelay) playbackStartGate.start(begin);
+      else begin();
+    }
+
+    function pause() {
+      if (!playing) return;
+      playing = false;
+      playBtn.textContent = "▶";
+      const pauseDur = effectiveSceneDuration > 0 ? effectiveSceneDuration : getSceneDurationSec(currentScene());
+      sceneElapsedMs = Math.min(
+        Number.isFinite(audioPlayer.currentTime) && audioPlayer.currentTime > 0
+          ? audioPlayer.currentTime * 1000
+          : sceneElapsedMs,
+        pauseDur * 1000
+      );
+      audioPlayer.pause();
+      window.__avatarOnAudioStop?.();
+      clearTimers();
+      updateTimerAndProgress();
+    }
+
+    function moveToScene(index) {
+      sceneIndex = Math.min(Math.max(index, 0), scenario.scenes.length - 1);
+      sceneElapsedMs = 0;
+      effectiveSceneDuration = 0;
+      renderScene();
+      if (playing) {
+        beginPlayback();
+      }
+    }
+
+    function nextScene(fromAuto) {
+      if (sceneIndex < scenario.scenes.length - 1) {
+        moveToScene(sceneIndex + 1);
+      } else if (fromAuto && isLoopPlayback()) {
+        pause();
+        moveToScene(0);
+        play();
+      } else {
+        clearTimers();
+        audioPlayer.pause();
+        window.__avatarOnAudioStop?.();
+        snapTimerToSceneScheduledEnd();
+        progressFill.style.width = "100%";
+        playing = false;
+        playBtn.textContent = "▶";
+      }
+    }
+
+    function prevScene() {
+      moveToScene(sceneIndex - 1);
+    }
+
+    restartBtn.addEventListener("click", () => { pause(); moveToScene(0); });
+    prevBtn.addEventListener("click", () => { pause(); prevScene(); });
+    playBtn.addEventListener("click", () => { if (playing) pause(); else play(); });
+    nextBtn.addEventListener("click", () => { pause(); nextScene(false); });
+    lastBtn.addEventListener("click", () => { pause(); moveToScene(scenario.scenes.length - 1); });
+
+    speakerBtn?.addEventListener("click", () => { speakerEnabled = !speakerEnabled; applySpeakerState(); });
+    modeBtn.addEventListener("click", () => {
+      const wasPlaying = playing;
+      if (wasPlaying) pause();
+      audioMode = audioMode === "short" ? "long" : "short";
+      updateModeBtn();
+      effectiveSceneDuration = 0;
+      sceneElapsedMs = 0;
+      renderScene();
+      if (wasPlaying) play({ startDelay: false });
+    });
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === " " || event.key === "Spacebar") {
+        event.preventDefault();
+        if (playing) pause(); else play();
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        pause();
+        nextScene(false);
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        pause();
+        prevScene();
+      }
+    });
+
+    audioPlayer.addEventListener("ended", () => {
+      window.__avatarOnAudioStop?.();
+      if (!playing) return;
+      clearTimers();
+      nextScene(true);
+    });
+    audioPlayer.addEventListener("error", () => {
+      window.__avatarOnAudioStop?.();
+      // TTS blob URL の再生失敗はタイマーで継続
+      if (audioPlayer.src.startsWith("blob:")) {
+        console.warn("TTS audio error", audioPlayer.src);
+        return;
+      }
+      if (!playing) return;
+      playSceneTts(currentScene(), playbackToken, `音声ファイル読込失敗: ${audioPlayer.src}`);
+    });
+    audioPlayer.addEventListener("play", () => {
+      window.__avatarOnAudioStart?.();
+    });
+    audioPlayer.addEventListener("pause", () => {
+      window.__avatarOnAudioStop?.();
+    });
+
+    updateModeBtn();
+    renderScene();
+    scheduleRequestedPlayback();
+    window.addEventListener("pointerdown", tryResumePendingPlayback, true);
+    window.addEventListener("keydown", tryResumePendingPlayback, true);
+    window.addEventListener("beforeunload", revokeTtsBlobs);
+  </script>
+
+  <script src="../_common/novel_telop_timing.js?v=20260923-light"></script>
+  <script src="../_common/booklove_telop.js?v=20260923-light3"></script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { VRMLoaderPlugin, VRMUtils } from "@pixiv/three-vrm";
+
+    const canvas = document.getElementById("avatarCanvas");
+    const pane = canvas.parentElement;
+
+    const getStageSize = () => ({
+      width: Math.max(1, pane.clientWidth || 240),
+      height: Math.max(1, pane.clientHeight || 360)
+    });
+
+    let { width, height } = getStageSize();
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setClearColor(0x000000, 0);
+    renderer.setSize(width, height, false);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(28, width / height, 0.01, 40);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    keyLight.position.set(1.1, 1.5, 1.0);
+    scene.add(keyLight);
+    const rimLight = new THREE.DirectionalLight(0xd8ecff, 0.85);
+    rimLight.position.set(-1.3, 0.8, 1.1);
+    scene.add(rimLight);
+
+    const container = new THREE.Group();
+    const BODY_BASE_YAW = Math.PI + Math.PI / 6;
+    const BODY_SWAY_RANGE = Math.PI / 48;
+    const CAMERA_BASE_X = 0.06;
+    const CAMERA_SWAY_X = 0.035;
+    const HEAD_BASE_YAW = -Math.PI / 12;
+    container.rotation.y = BODY_BASE_YAW;
+    scene.add(container);
+
+    const loader = new GLTFLoader();
+    loader.register((parser) => new VRMLoaderPlugin(parser));
+
+    function loadWith(gltfLoader, url) {
+      return new Promise((resolve, reject) => {
+        gltfLoader.load(url, resolve, undefined, reject);
+      });
+    }
+
+    const IDLE_BONE_ROT = {
+      leftUpperArm: { z: -1.25 },
+      rightUpperArm: { z: 1.25 },
+      leftLowerArm: { y: 0.1 },
+      rightLowerArm: { y: -0.1 },
+      leftShoulder: { z: -0.05 },
+      rightShoulder: { z: 0.05 }
+    };
+
+    function applyIdlePose(vrmObject) {
+      const humanoid = vrmObject?.humanoid;
+      if (!humanoid) return;
+      Object.entries(IDLE_BONE_ROT).forEach(([name, rot]) => {
+        const node = humanoid.getNormalizedBoneNode?.(name);
+        if (!node) return;
+        node.rotation.set(rot.x || 0, rot.y || 0, rot.z || 0);
+      });
+    }
+
+    function updateIdleSway(vrmObject, elapsed) {
+      const humanoid = vrmObject?.humanoid;
+      if (!humanoid) return;
+      const chest = humanoid.getNormalizedBoneNode?.("chest");
+      const head = humanoid.getNormalizedBoneNode?.("head");
+
+      if (chest) {
+        chest.rotation.x = Math.sin(elapsed * 1.4) * 0.02;
+      }
+      if (head) {
+        const lookAtSway = camera.position.x * 0.6;
+        head.rotation.y = HEAD_BASE_YAW + lookAtSway + Math.sin(elapsed * 0.7) * 0.02;
+        head.rotation.x = Math.sin(elapsed * 1.0 + 1.2) * 0.03;
+      }
+    }
+
+    const EXPRESSION_KEYS = ["happy", "angry", "sad", "relaxed", "surprised", "neutral"];
+    let currentExpression = "neutral";
+    let targetExpression = "neutral";
+    let expressionValue = 0;
+    let blinkTimer = 0;
+    let blinkCooldown = 2 + Math.random() * 3;
+    const BLINK_DURATION = 0.15;
+    let vrm = null;
+    let avatarHeadHeight = 1.4;
+
+    window.__avatarSetExpression = (name) => {
+      targetExpression = EXPRESSION_KEYS.includes(name) ? name : "neutral";
+    };
+
+    let audioCtx = null;
+    let analyser = null;
+    let analyserData = null;
+    let lipsyncActive = false;
+    let mouthSmooth = 0;
+    const MOUTH_LEVEL_GAIN = 1.45;
+
+    const ensureAudioGraph = () => {
+      if (audioCtx) return;
+      const player = window.audioPlayer;
+      if (!player) return;
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const source = ctx.createMediaElementSource(player);
+        const an = ctx.createAnalyser();
+        an.fftSize = 256;
+        an.smoothingTimeConstant = 0.5;
+        source.connect(an);
+        an.connect(ctx.destination);
+        audioCtx = ctx;
+        analyser = an;
+        analyserData = new Uint8Array(an.frequencyBinCount);
+      } catch (e) {
+        console.warn("lipsync setup failed", e);
+      }
+    };
+
+    const computeMouthLevel = (data) => {
+      if (!data || data.length === 0) return 0;
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) sum += data[i];
+      return Math.min(1, (sum / data.length / 128) * MOUTH_LEVEL_GAIN);
+    };
+
+    window.__avatarResumeAudioContext = () => {
+      ensureAudioGraph();
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume().catch(() => {});
+      }
+    };
+
+    window.__avatarOnAudioStart = () => {
+      lipsyncActive = true;
+      window.__avatarResumeAudioContext?.();
+    };
+
+    window.__avatarOnAudioStop = () => {
+      lipsyncActive = false;
+      mouthSmooth = 0;
+      try { vrm?.expressionManager?.setValue("aa", 0); } catch {}
+    };
+
+    const getMouthTarget = () => {
+      const player = window.audioPlayer;
+      if (!lipsyncActive || !player || player.paused || !analyser || !analyserData) return 0;
+      analyser.getByteFrequencyData(analyserData);
+      return computeMouthLevel(analyserData);
+    };
+
+    try {
+      const gltf = await loadWith(loader, "../_vrm/VRM_female.vrm");
+      vrm = gltf.userData?.vrm || null;
+      if (vrm) {
+        try { VRMUtils.removeUnnecessaryVertices(gltf.scene); } catch {}
+        try { VRMUtils.removeUnnecessaryJoints(gltf.scene); } catch {}
+        vrm.scene.traverse((obj) => { obj.frustumCulled = false; });
+
+        const box = new THREE.Box3().setFromObject(vrm.scene);
+        const center = box.getCenter(new THREE.Vector3());
+        const size = box.getSize(new THREE.Vector3());
+        vrm.scene.position.x -= center.x;
+        vrm.scene.position.y -= box.min.y;
+        vrm.scene.position.z -= center.z;
+        container.add(vrm.scene);
+
+        avatarHeadHeight = Math.max(0.1, size.y) * 0.88;
+        camera.position.set(CAMERA_BASE_X, Math.max(0.1, size.y) * 0.9, -Math.max(0.1, size.y) * 1.15);
+        camera.lookAt(0, avatarHeadHeight, 0);
+
+        vrm.lookAt.target = camera;
+
+        applyIdlePose(vrm);
+        vrm.update(0);
+        renderer.render(scene, camera);
+      }
+    } catch (error) {} finally {
+      canvas.classList.add("ready");
+      window.triggerRequestedPlayback?.();
+    }
+
+    function updateExpression(dt) {
+      if (!vrm?.expressionManager) return;
+      const lerpRate = 1 - Math.pow(0.001, dt);
+      if (currentExpression !== targetExpression) {
+        expressionValue = Math.max(0, expressionValue - dt * 4);
+        if (expressionValue <= 0.01) {
+          try { vrm.expressionManager.setValue(currentExpression, 0); } catch {}
+          currentExpression = targetExpression;
+        }
+      } else {
+        const goal = currentExpression === "neutral" ? 0 : 0.6;
+        expressionValue += (goal - expressionValue) * lerpRate;
+      }
+      EXPRESSION_KEYS.forEach((key) => {
+        if (key === "neutral") return;
+        try {
+          vrm.expressionManager.setValue(key, key === currentExpression ? expressionValue : 0);
+        } catch {}
+      });
+    }
+
+    function updateBlink(dt) {
+      if (!vrm?.expressionManager) return;
+      blinkTimer += dt;
+      if (blinkTimer < blinkCooldown) {
+        vrm.expressionManager.setValue("blink", 0);
+      } else if (blinkTimer < blinkCooldown + BLINK_DURATION) {
+        const progress = (blinkTimer - blinkCooldown) / BLINK_DURATION;
+        vrm.expressionManager.setValue("blink", Math.sin(progress * Math.PI));
+      } else {
+        vrm.expressionManager.setValue("blink", 0);
+        blinkTimer = 0;
+        blinkCooldown = 2 + Math.random() * 3;
+      }
+    }
+
+    const clock = new THREE.Clock();
+    function resizeRenderer() {
+      const size = getStageSize();
+      renderer.setSize(size.width, size.height, false);
+      camera.aspect = size.width / size.height;
+      camera.updateProjectionMatrix();
+    }
+
+    window.addEventListener("resize", resizeRenderer, { passive: true });
+
+    function tick() {
+      const dt = clock.getDelta();
+      const elapsed = clock.elapsedTime;
+      updateBlink(dt);
+      updateExpression(dt);
+
+      camera.position.x = CAMERA_BASE_X + Math.sin(elapsed * 0.45) * CAMERA_SWAY_X;
+      camera.lookAt(0, avatarHeadHeight, 0);
+
+      if (vrm) {
+        container.rotation.y = BODY_BASE_YAW + Math.sin(elapsed * 0.35) * BODY_SWAY_RANGE;
+
+        if (vrm.expressionManager) {
+          ensureAudioGraph();
+          const target = getMouthTarget();
+          mouthSmooth += (target - mouthSmooth) * (target > mouthSmooth ? 0.82 : 0.48);
+          try { vrm.expressionManager.setValue("aa", mouthSmooth); } catch {}
+        }
+
+        updateIdleSway(vrm, elapsed);
+        vrm.update(dt);
+      }
+      renderer.render(scene, camera);
+      requestAnimationFrame(tick);
+    }
+
+    window.__avatarSetExpression?.("neutral");
+    resizeRenderer();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>

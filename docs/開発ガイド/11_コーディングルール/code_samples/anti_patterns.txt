@@ -1,0 +1,33 @@
+■ 1. 平文パスワードの本番使用
+ 絶対ダメ（本番環境）
+パスワード = "********" # 平文保存
+
+ 本番ではハッシュ化必須（実装は bcrypt を直接使用）
+import bcrypt
+パスワードハッシュ = bcrypt.hashpw(パスワード.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+■ 2. 日本語コンポーネントタグ
+ 絶対ダメ（無効なHTML）
+<C利用者一覧 />
+
+ 動的コンポーネント使用
+<component :is="C利用者一覧" />
+
+■ 3. GET/PUT/DELETEメソッドの使用
+ 誤り（このプロジェクトの規約違反）
+@router.get("/一覧")
+@router.put("/変更")
+@router.delete("/削除")
+
+ 正解（POST統一）
+@router.post("/一覧")
+@router.post("/変更")
+@router.post("/削除")
+
+■ 4. Database VIEWの作成
+ 誤り（このプロジェクトでは不使用）
+CREATE VIEW V利用者 AS SELECT ...
+
+ 正解（生SQLクエリ）
+sql = "SELECT C利用者.*, C権限.権限名 FROM C利用者 LEFT JOIN C権限 ..."
+result = db.execute(text(sql))

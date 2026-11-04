@@ -1,0 +1,39 @@
+{
+  "_comment": [
+    "ビデオページ生成_翻訳ja2xx.py 専用設定。",
+    "日本語の二人アバター解説動画（duo-v2）を指定言語へ翻訳する生成設定です。",
+    "template_dir にコピー元日本語フォルダ、folder_name に出力フォルダ名、language に翻訳先言語コードを書いてから実行してください。",
+    "優先度: CLI引数 > このファイル。OS環境変数は使用しません。"
+  ],
+
+  "topic": [
+    "template_dir の日本語 scenario.js / index.html を、language に指定した言語へ翻訳する。",
+    "scene ID、画像パス、音声ファイル名、version=duo-v2、dialogue 配列形式（dlg_NNN_NN_speaker.mp3）は維持する。",
+    "固有名詞、製品名、API パス、JSON キー、ファイル名は原則として変更しない。",
+    "AiDiy = AI + Do It Yourself のコンセプトは、翻訳先言語でも意味が伝わるように説明する。",
+    "ビデオページ生成機能という名称は、必要に応じて日本語名を併記してよい。",
+    "female / male の speaker 割り当ては維持し、掛け合いの流れを自然な英語会話に翻訳する。"
+  ],
+
+  "template_dir": "../../../frontend_web/public/Xビデオ/AiDiy解説__all_ja",
+  "folder_name": "AiDiy解説__all_en",
+  "language": "en",
+
+  "shared": {
+    "_comment": "両スクリプト共通設定。通常は変更不要。",
+    "video_base_dir": "../../../frontend_web/public/Xビデオ",
+    "frontend_base_url": "http://127.0.0.1:8090",
+    "backup_api_url": "http://127.0.0.1:8095/aidiy_backup/save",
+    "tts_api_url": "http://127.0.0.1:8095/aidiy_text_to_speech/synthesize",
+    "image_gen_api_url": "http://127.0.0.1:8095/aidiy_image_generation/generate",
+    "code_agents_api_url": "http://127.0.0.1:8095/aidiy_code_agents",
+    "chrome_api_url": "http://127.0.0.1:8095/aidiy_chrome_devtools",
+    "ffmpeg_api_url": "http://127.0.0.1:8095/aidiy_ffmpeg_control",
+    "tts_guide": true,
+    "browser_preview": true,
+    "chrome_debug_port": 9222,
+    "max_retries": 3,
+    "retry_wait_sec": 5,
+    "max_backup_stabilize": 5
+  }
+}

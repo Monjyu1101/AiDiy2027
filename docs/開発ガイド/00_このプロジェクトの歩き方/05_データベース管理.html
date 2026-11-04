@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>05. データベース管理 | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+ <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>05. データベース管理</h1>
+
+ <section id="overview">
+ <h2>SQLiteの概要</h2>
+ <p>このプロジェクトではデータベースにSQLiteを使用しています。</p>
+
+ <div>
+ <strong>この章で学ぶこと</strong>
+ <ul>
+ <li>SQLiteデータベースの基本</li>
+ <li>スキーマの確認方法</li>
+ <li>テーブル構造の変更手順</li>
+ <li>データベースのリセット方法</li>
+ </ul>
+ </div>
+
+ <div>
+ <strong>ポイント: SQLiteの特徴</strong>
+ <p>
+ SQLiteはファイルベースのデータベースです。<strong>サーバー不要</strong>で動作します。<br>
+ <code>_data\AiDiy\database.db</code> が実体ファイルです。<br>
+ サーバー起動時にModelの定義からテーブルが自動作成されます。
+ </p>
+ </div>
+ </section>
+
+ <section id="where-to-look">
+ <h2>どこを見るか</h2>
+ <table>
+ <thead>
+ <tr>
+ <th>確認したいこと</th>
+ <th>ファイル / 場所</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td>テーブル定義</td>
+ <td><code>backend_server/core_models/</code> および <code>backend_server/apps_models/</code></td>
+ </tr>
+ <tr>
+ <td>テーブル作成の流れ</td>
+ <td>Modelの定義 → <code>database.db</code> にテーブル自動生成 → サーバー起動時に実行</td>
+ </tr>
+ <tr>
+ <td>DBファイルの場所</td>
+ <td><code>_data\AiDiy\database.db</code></td>
+ </tr>
+ <tr>
+ <td>DB接続設定</td>
+ <td><code>database.py</code> を参照</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="schema-change">
+ <h2>スキーマ変更手順</h2>
+ <p>このプロジェクトではAlembic等のマイグレーションツールは<strong>使用していません</strong>。<br>
+ 現行実装ではModelを更新し、既存DB向けの差分SQLを <code>backend_server/core_crud/init.py</code> または <code>backend_server/apps_crud/init.py</code> の起動時処理へ冪等に追加します。</p>
+
+ <h3>1. Modelファイルを編集</h3>
+ <p><code>backend_server/core_models/</code> または <code>backend_server/apps_models/</code> のModelファイルを編集します。</p>
+ <pre><code># 例: backend_server/core_models/C利用者.py
+class C利用者(Base):
+ __tablename__ = "C利用者"
+
+ 利用者ID = Column(Text, primary_key=True)
+ # ↓ 新しいカラムを追加
+ メールアドレス = Column(Text)</code></pre>
+
+ <h3>2. 起動時の差分処理を追加</h3>
+ <p><code>inspect()</code> でテーブルとカラムの存在を確認してから、必要な場合だけ <code>ALTER TABLE</code> などを実行します。再起動しても同じSQLを重複実行しない形にしてください。</p>
+ <pre><code>if inspector.has_table("C利用者"):
+ columns = [column["name"] for column in inspector.get_columns("C利用者")]
+ if "メールアドレス" not in columns:
+  db.execute(text('ALTER TABLE "C利用者" ADD COLUMN "メールアドレス" TEXT'))
+  db.commit()</code></pre>
+
+ <h3>3. サーバーを再起動</h3>
+ <p>サーバーを再起動すると、新規テーブルは <code>create_all()</code>、既存テーブルは上記の起動時差分処理で反映されます。</p>
+ <pre><code>cd workspace/AiDiy2027
+python _start.py</code></pre>
+
+ <div>
+ <strong>注意事項</strong>
+ <ul>
+ <li>本番データや検証データを残す場合、<code>database.db</code> を削除しないでください</li>
+ <li>カラム削除、複合主キー変更、テーブル再作成を伴う処理は必ず事前バックアップを取って検証してください</li>
+ <li>初期データはSQLiteのテーブル作成時に自動投入されます</li>
+ </ul>
+ </div>
+
+ <div>
+ <strong>初期データの投入条件</strong>
+ <p>
+ 初期データ（admin等のアカウント）は<strong>「adminが未存在」の場合のみ</strong>投入されます。<br>
+  既存DBにadminが存在する場合、初期ユーザーは重複投入されません。初期値を変更したい場合は、対象レコードを明示的に更新してください。
+ </p>
+ </div>
+
+ <div>
+ <strong>補足情報</strong>
+ <p>
+  モデル変更だけでは既存テーブルへ差分が入りません。<br>
+  詳細な判断と確認方法は <code>_AIDIY/knowledge/backend_server,スキーマ変更手順.md</code> を優先してください。DB削除によるリセットは、データ破棄が許可された開発環境に限る最終手段です。
+ </p>
+ </div>
+ </section>
+
+ <section id="check-structure">
+ <h2>構造確認の方法</h2>
+ <p>データベースの構造を確認するには以下の方法があります。</p>
+
+ <h3>方法1: Modelファイルを読む</h3>
+ <p>Modelファイルを直接読むのが最も確実な方法です。</p>
+ <ul>
+ <li><code>backend_server/core_models/</code> - C系・A系テーブル</li>
+ <li><code>backend_server/apps_models/</code> - M系・T系・V系・S系テーブル</li>
+ </ul>
+
+ <h3>方法2: SQLiteのGUIツール</h3>
+ <p>GUIツールを使うと視覚的にテーブル構造を確認できます。</p>
+ <ul>
+ <li><strong>DB Browser for SQLite</strong> (<a href="https://sqlitebrowser.org/" target="_blank">https://sqlitebrowser.org/</a>) - 無料のGUIツール</li>
+ <li><strong>VS Code拡張機能</strong> - SQLite Viewer 拡張機能をインストール</li>
+ </ul>
+ <p><code>_data\AiDiy\database.db</code> を開いて確認できます。</p>
+
+ <h3>方法3: SQLコマンドライン</h3>
+ <pre><code><span># SQLiteコマンドラインを起動</span>
+sqlite3 workspace/AiDiy2027/_data\AiDiy\database.db
+
+<span># テーブル一覧を表示</span>
+.tables
+
+<span># テーブル構造を表示</span>
+.schema C利用者
+
+<span># 終了</span>
+.quit</code></pre>
+ </section>
+
+ <section id="reset-db">
+ <h2>データベースリセット</h2>
+
+ <h3>リセット手順</h3>
+ <p>データベースを初期状態に戻すには以下の手順を実行します。</p>
+ <pre><code><span># 1. サーバーを停止 (Ctrl+C 推奨)</span>
+
+<span># 2. データベースファイルを削除</span>
+del workspace/AiDiy2027/_data\AiDiy\database.db
+
+<span># 3. サーバーを再起動してDBを再作成</span>
+cd workspace/AiDiy2027
+python _start.py</code></pre>
+
+ <div>
+ <strong>重要</strong>
+ <p>リセットすると<strong>全データが失われます</strong>。必要に応じてバックアップを取ってください。</p>
+ </div>
+
+ <h3>バックアップと復元</h3>
+ <p>データベースファイルをコピーするだけでバックアップできます。</p>
+ <p>以下の <code>backup/</code> は利用者が任意に用意する手動DBバックアップ先の例です。AiDiy の差分バックアップ先 <code>.aidiy_backup/</code> とは別用途で、AiDiy の保存版の自動保存先・履歴参照先ではありません。保存先は用途を確認し、既存ファイルを上書きしないように選んでください。</p>
+ <pre><code><span># バックアップ</span>
+copy workspace/AiDiy2027/_data\AiDiy\database.db workspace/AiDiy2027/backup\database_20260214.db
+
+<span># 復元</span>
+copy workspace/AiDiy2027/backup\database_20260214.db workspace/AiDiy2027/_data\AiDiy\database.db</code></pre>
+ </section>
+
+ <section id="common-commands">
+ <h2>よく使うコマンド</h2>
+ <table>
+ <thead>
+ <tr>
+ <th>やりたいこと</th>
+ <th>手順</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr>
+ <td>テーブル構造を確認</td>
+ <td>Modelファイルを読むか、SQLiteのGUIツールで確認</td>
+ </tr>
+ <tr>
+ <td>DBをリセット</td>
+ <td>バックアップを取り、データ破棄が許可された開発環境でだけ <code>database.db</code> を退避してサーバー再起動</td>
+ </tr>
+ <tr>
+ <td>カラムを追加</td>
+ <td>Model更新 → <code>core_crud/init.py</code> または <code>apps_crud/init.py</code> に冪等な <code>ALTER TABLE</code> を追加 → 再起動</td>
+ </tr>
+ <tr>
+ <td>データを確認</td>
+ <td>GUIツールで <code>database.db</code> を開く</td>
+ </tr>
+ <tr>
+ <td>テーブルを追加</td>
+ <td>Model作成・<code>__init__.py</code> export・<code>create_all(tables=[...])</code> 登録 → 再起動（DB削除不要）</td>
+ </tr>
+ </tbody>
+ </table>
+ </section>
+
+ <section id="id-generation">
+ <h2>ID採番の仕組み (C採番)</h2>
+ <p>本プロジェクトではAUTOINCREMENTを使用せず、<code>C採番</code>テーブルでIDを管理しています。</p>
+ <ul>
+ <li>各テーブルの最終番号をC採番テーブルに記録</li>
+ <li>新規レコード作成時にC採番から次のIDを取得</li>
+ <li>トランザクション保護でID重複を防止</li>
+ </ul>
+ <p>C採番テーブルの確認・編集は管理画面の「C採番」メニューから行えます。</p>
+ </section>
+
+ <section id="troubleshooting">
+ <h2>トラブルシューティング</h2>
+
+ <h3>問題1: テーブルが見つからない</h3>
+ <p><strong>エラー</strong>: <code>OperationalError: no such table</code></p>
+ <p><strong>対処法</strong>: Modelのexportと <code>core_main.py</code> / <code>apps_main.py</code> の <code>create_all(tables=[...])</code> 登録を確認し、サーバーを再起動します。新規テーブル追加だけならDB削除は不要です。</p>
+
+ <h3>問題2: カラムが見つからない</h3>
+ <p><strong>エラー</strong>: <code>OperationalError: no such column</code></p>
+ <p><strong>対処法</strong>:</p>
+ <ol>
+ <li>Modelファイルにカラム定義があるか確認</li>
+ <li><code>core_crud/init.py</code> / <code>apps_crud/init.py</code> に対象差分の冪等処理があるか確認</li>
+ <li>バックアップ後にサーバーを再起動し、SQLiteの実カラムを確認</li>
+ </ol>
+
+ <h3>問題3: データベースロック</h3>
+ <p><strong>エラー</strong>: <code>OperationalError: database is locked</code></p>
+ <p><strong>対処法</strong>:</p>
+ <ol>
+ <li>他のプロセスがデータベースを使用していないか確認</li>
+ <li>タスクマネージャーで <code>python.exe</code> プロセスを確認</li>
+ <li><code>taskkill /F /IM python.exe</code> で強制終了</li>
+ <li>サーバーを再起動</li>
+ </ol>
+ </section>
+
+ <section id="next">
+ <h2>次のステップ</h2>
+ <p>データベースの管理方法を理解したら、次はフロントエンド開発に進みましょう。</p>
+
+ <div>
+ <a href="06_フロントエンド開発.html">
+ <span>次の章へ</span>
+ <strong>06. フロントエンド開発 →</strong>
+ <span>Vue 3を使ったフロントエンドとAPI通信について学びます</span>
+ </a>
+ </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+ <a href="04_バックエンド開発.html">← 前: 04. バックエンド開発</a> |
+ <a href="_index.html">トップページ</a> |
+ <a href="06_フロントエンド開発.html">次: 06. フロントエンド開発 →</a>
+ </p>
+ </footer>
+</body>
+</html>

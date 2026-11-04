@@ -1,0 +1,51 @@
+<!doctype html>
+<!--
+  -*- coding: utf-8 -*-
+  
+  -------------------------------------------------------------------------
+  COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+  Licensed under "AiDiy 公開利用ライセンス v1.1".
+  Commercial use requires prior written consent from all copyright holders.
+  See LICENSE for full terms. Thank you for keeping the rules.
+  https://github.com/monjyu1101/AiDiy2027
+  -------------------------------------------------------------------------
+-->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文書ビューア</title>
+  <link rel="stylesheet" href="/office.css">
+</head>
+<body>
+  <header id="toolbar">
+    <span id="format-name">文書</span>
+    <span class="readonly">読み取り専用</span>
+    <span class="spacer"></span>
+    <button id="previous" type="button" aria-label="前のページ" hidden>‹</button>
+    <span id="page-status" aria-live="polite"></span>
+    <button id="next" type="button" aria-label="次のページ" hidden>›</button>
+    <label id="zoom-label" hidden>表示
+      <select id="zoom" aria-label="表示倍率">
+        <option value="fit">幅に合わせる</option>
+        <option value="0.75">75%</option>
+        <option value="1">100%</option>
+        <option value="1.5">150%</option>
+        <option value="2">200%</option>
+      </select>
+    </label>
+  </header>
+  <div id="notice" role="status">読み込み中…</div>
+  <main id="content">
+    <nav id="page-top" class="page-navigation" aria-label="ページ先頭の操作" hidden>
+      <button id="page-previous" type="button" aria-controls="document-page">前のページへ</button>
+    </nav>
+    <div id="document-page"></div>
+    <nav id="page-bottom" class="page-navigation" aria-label="ページ末尾の操作" hidden>
+      <button id="page-next" type="button" aria-controls="document-page">次のページへ</button>
+    </nav>
+  </main>
+  <nav id="sheets" aria-label="シート" hidden></nav>
+  <script type="module" src="/office.js"></script>
+</body>
+</html>

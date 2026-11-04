@@ -1,0 +1,75 @@
+{
+  "read_at": "2026-11-03",
+  "channel": "ref-001",
+  "messages": [
+    {
+      "id": "ref-002",
+      "utc": "T+173.443000s",
+      "bot": true,
+      "text": "停止しました。実行済みのファイル変更は残ります。",
+      "reply_to": null
+    },
+    {
+      "id": "ref-003",
+      "utc": "T+173.047000s",
+      "bot": true,
+      "text": "停止を要求しました。実行済みの変更は残ります。",
+      "reply_to": "ref-004"
+    },
+    {
+      "id": "ref-004",
+      "utc": "T+172.615000s",
+      "bot": false,
+      "text": "！stop",
+      "reply_to": null
+    },
+    {
+      "id": "ref-005",
+      "utc": "T+168.993000s",
+      "bot": false,
+      "text": "おはよう",
+      "reply_to": null
+    },
+    {
+      "id": "ref-006",
+      "utc": "T+12.167000s",
+      "bot": true,
+      "text": "停止しました。実行済みのファイル変更は残ります。",
+      "reply_to": null
+    },
+    {
+      "id": "ref-007",
+      "utc": "T+11.845000s",
+      "bot": true,
+      "text": "停止を要求しました。実行済みの変更は残ります。\n\nコマンド: !help（使い方） / !status（状態） / !stop（停止） / !new（新しい会話） / !chat 本文（チャット）\n先頭の ! は ！ でも使えます。未登録コマンドは使い方を表示します。\nこのチャンネルに、そのまま話しかけてください。AiDiy が返信します。",
+      "reply_to": "ref-008"
+    },
+    {
+      "id": "ref-008",
+      "utc": "T+11.521000s",
+      "bot": false,
+      "text": "！stop",
+      "reply_to": null
+    },
+    {
+      "id": "ref-009",
+      "utc": "T+0.000000s",
+      "bot": false,
+      "text": "おはよう",
+      "reply_to": null
+    }
+  ],
+  "operator_posts": 0,
+  "user_posts": true,
+  "verdict": "PASS: user initiated running request cancellation twice",
+  "process_check": "終了後の対象Hermes/oneshotプロセス該当なし（読取）",
+  "scope": "今回の設定済専用チャンネル、ユーザー操作2回のみ。全モデル/全並列条件には一般化しない",
+  "publication": {
+    "kind": "anonymized evidence copy",
+    "rules": [
+      "channel/message/thread identifiers replaced by consistent aliases",
+      "message timestamps replaced by elapsed seconds from earliest message; observation date retained"
+    ],
+    "limits": "Aliases support sequence/reply correlation, not direct lookup on Discord or Slack."
+  }
+}

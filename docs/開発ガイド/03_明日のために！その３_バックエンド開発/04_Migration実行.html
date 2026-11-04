@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 スキーマ反映</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="03_Model作成.html">前へ: 03_Model作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_CRUD作成.html">次へ: 05_CRUD作成</a>
+  </nav>
+
+  <h1>04_スキーマ反映</h1>
+  <p>このプロジェクトの標準運用は SQLite + <code>create_all()</code> です。Alembicのようなマイグレーションツールは使いません。</p>
+
+  <h2>新規テーブル追加時の手順（M商品のようなケース）</h2>
+  <p><code>M商品</code> は新規テーブルなので、既存DBを削除しなくても <code>create_all()</code> だけでテーブルが追加されます。</p>
+  <ol>
+    <li><code>backend_server/apps_models/__init__.py</code> に <code>M商品</code> のimportを追加する</li>
+    <li><code>backend_server/apps_main.py</code> の <code>database.Base.metadata.create_all(bind=database.engine, tables=[...])</code> のリストへ <code>apps_models.M商品.__table__</code> を追加する</li>
+    <li>サーバーを再起動する（<code>python _start.py</code> または個別に <code>uvicorn</code> 起動）</li>
+  </ol>
+
+  <pre><code>cd workspace/AiDiy2027
+python _start.py</code></pre>
+
+  <p><strong>注意:</strong> <code>create_all()</code> は「まだ存在しないテーブル」だけを作成し、既存テーブルのデータは変更しません。新規テーブル追加のためだけに <code>database.db</code> を削除する必要はありません。</p>
+
+  <h2>既存テーブルのカラム追加・削除・型変更が必要な場合</h2>
+  <p><code>create_all()</code> は既存テーブルへのカラム追加・削除・型変更には効きません。この場合は <code>backend_server/core_crud/init.py</code> または <code>backend_server/apps_crud/init.py</code> に、存在確認つきの冪等な差分処理（<code>ALTER TABLE</code> やテーブル再作成）を追加します。手順は <code>_AIDIY/knowledge/backend_server,スキーマ変更手順.md</code> を参照してください。</p>
+  <p>開発環境で「既存データを残す必要がない」場合に限り、<code>database.db</code> を削除して全テーブルを作り直す方法も選択肢になります。ただし実データがある環境では行わないでください。</p>
+
+  <h2>生成確認</h2>
+  <ul>
+    <li><code>http://127.0.0.1:8098/docs</code> でM商品APIが表示される</li>
+    <li>SQLiteブラウザで <code>M商品</code> テーブルが作成されている</li>
+  </ul>
+
+  <h2>よくあるつまずき</h2>
+  <table>
+    <tr><th>症状</th><th>原因</th><th>対処</th></tr>
+    <tr><td>テーブルが作成されない</td><td>Model import漏れ、または <code>create_all(tables=[...])</code> への追加漏れ</td><td><code>apps_models/__init__.py</code> と <code>apps_main.py</code> の <code>create_all(tables=[...])</code> を確認</td></tr>
+    <tr><td>既存テーブルのカラムが増えない</td><td><code>create_all()</code> は既存テーブルの変更に対応しない</td><td>スキーマ変更手順に従い、起動時の冪等な差分処理を追加</td></tr>
+    <tr><td>起動時エラー</td><td>型定義不整合</td><td>Model/Schema/Routerの項目名整合を再確認</td></tr>
+  </table>
+
+  <h2>初期データ投入の考え方</h2>
+  <p>新規M系（例: M○○）を追加した場合、<code>backend_server/apps_crud/init.py</code> の <code>init_db_data()</code> に初期化処理を必ず追加してください。初回確認で一覧が空だと確認品質が落ちるため、可能な限りサンプルデータを投入します。既存データがある場合はスキップし、冪等性を保ちます。</p>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] <code>M商品</code> テーブルが生成された</li>
+    <li>[ ] <code>apps_crud/init.py</code> に初期化処理を追加した</li>
+    <li>[ ] 一覧/検索/変更確認に使えるサンプルデータを投入した</li>
+    <li>[ ] 起動ログに致命的エラーがない</li>
+    <li>[ ] 8098 Swagger UIが正常表示される</li>
+  </ul>
+
+  <nav>
+    <a href="03_Model作成.html">前へ: 03_Model作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_CRUD作成.html">次へ: 05_CRUD作成</a>
+  </nav>
+</body>
+</html>

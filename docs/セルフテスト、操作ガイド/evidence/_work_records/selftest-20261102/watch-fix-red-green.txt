@@ -1,0 +1,29 @@
+F
+======================================================================
+FAIL: test_immediate_query_excludes_folder_and_scheduled_conditions (regression.WatchInitialFireTests.test_immediate_query_excludes_folder_and_scheduled_conditions)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\AiDiy2027_dev\scripts/checks/test_task_watch_initial_fire.py", line 39, in test_immediate_query_excludes_folder_and_scheduled_conditions
+    self.assertEqual([r["タスクID"] for r in tasks_db.即時発火対象一覧()], ["missing", "normal"])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['folder', 'missing', 'normal'] != ['missing', 'normal']
+
+First differing element 0:
+'folder'
+'missing'
+
+First list contains 1 additional elements.
+First extra element 2:
+'normal'
+
+- ['folder', 'missing', 'normal']
+?  ----------
+
++ ['missing', 'normal']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.027s
+
+FAILED (failures=1)
+
+Final source: 19 tests passed; syntax compile passed. Ruff unavailable in existing venv.

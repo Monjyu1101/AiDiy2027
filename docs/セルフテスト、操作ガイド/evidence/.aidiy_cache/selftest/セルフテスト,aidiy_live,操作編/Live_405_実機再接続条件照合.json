@@ -1,0 +1,39 @@
+{
+  "id": "Live_405",
+  "at_utc": "2026-11-03T07:55:43.481480+00:00",
+  "status": "REAL_FAILURE_RECOVERY_NOT_TESTED",
+  "scope": "通常UIで共有サービス/既存作業を妨げず再接続失敗を誘発できるかの読取確認",
+  "findings": [
+    "applyModel:207-225はsaveModel成功後disconnect(false)→connect(true)。選択変更の保存を伴う。",
+    "connect:144-166はmodels、socket、sessionModels失敗でdisconnect(!preserve)。保持条件は既存隔離試験でPASS。",
+    "通常切断操作は再接続失敗と異なる。",
+    "launch公開引数に失敗注入用のCore接続先指定なし。portはローカル配信ポート。",
+    "protocolはsocket error/初期化途中closeを受けて失敗するが通常UIに失敗発生操作はない。"
+  ],
+  "options_not_executed": [
+    "共有Core停止・ネットワーク遮断:既存作業への影響",
+    "無効なモデル/認証値:保存設定変更、無関係な異常条件",
+    "専用ブラウザ通信ブロック/模擬proxy:追加の障害注入手順。既存実機条件未定義のため今回追加しない"
+  ],
+  "existing_pass": {
+    "evidence": "Live_405_再接続隔離試験.json",
+    "pass": 17,
+    "fail": 0,
+    "skip": 0,
+    "real_runtime": false
+  },
+  "source_hashes": {
+    "frontend_ide/src/components/ライブ/ライブパネル.vue": "9c1b0cb95d56034438cd1c7fd3634e5d7189f9139b8d8839a4fad59f51be3ba6",
+    "frontend_ide/host/aidiy_live/src/protocol.ts": "92257365dc3f750baecb5245f769e7ad4fb83c2b2f7f49ec878fe02300f087cd",
+    "frontend_ide/host/aidiy_live/src/server.ts": "608304359afb29616e268301eefd4071d18dca6e6f031fc1bac98ebd4ed82f72",
+    "frontend_ide/launch.mjs": "5a30095b473959b43c9ff3e51d70f47932a316922b2bbc9565656b85297772b3",
+    "frontend_ide/checks/panel-recovery.test.mjs": "071fa2a1bf1b3aaec1847212644a3f088384c08136a382d7d9cb10716f135549"
+  },
+  "ai_sends": 0,
+  "runtime_tests": 0,
+  "source_changes": false,
+  "settings_changes": false,
+  "service_operations": 0,
+  "not_environment_impossible": "機器不足とは断定しない。定義済み通常操作だけで再現可能な失敗誘発手順を確認できない制約。",
+  "narration": "Edge ja-JP-NanamiNeural ratio1.2 開始/結果を直列ローカル再生"
+}

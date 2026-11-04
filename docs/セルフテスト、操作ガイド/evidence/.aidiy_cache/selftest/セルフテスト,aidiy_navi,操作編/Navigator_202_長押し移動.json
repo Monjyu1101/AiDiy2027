@@ -1,0 +1,62 @@
+{
+  "testPassed": true,
+  "input": "Electron sendInputEvent; cursor/focus fixture; actual OS window bounds",
+  "results": [
+    {
+      "label": "Navigator背景_release",
+      "before": {
+        "x": 1028,
+        "y": 8,
+        "width": 502,
+        "height": 601
+      },
+      "after": {
+        "x": 1076,
+        "y": 36,
+        "width": 502,
+        "height": 601
+      },
+      "originalPressDelivered": true,
+      "pointerGestureCancelled": true,
+      "originalReleaseDelivered": true,
+      "noClickOnRelease": true,
+      "noMoveBeforeMs": 400,
+      "holdDetectedAfterMs": 523.6453000000001,
+      "ending": "release"
+    },
+    {
+      "label": "Navigator背景_escape",
+      "before": {
+        "x": 1076,
+        "y": 36,
+        "width": 502,
+        "height": 601
+      },
+      "after": {
+        "x": 1124,
+        "y": 64,
+        "width": 502,
+        "height": 601
+      },
+      "originalPressDelivered": true,
+      "pointerGestureCancelled": true,
+      "originalReleaseDelivered": true,
+      "noClickOnRelease": true,
+      "noMoveBeforeMs": 400,
+      "holdDetectedAfterMs": 518.5835999999981,
+      "ending": "escape"
+    },
+    {
+      "label": "Navigator目標入力",
+      "bounds": {
+        "x": 1124,
+        "y": 64,
+        "width": 502,
+        "height": 601
+      },
+      "originalPressDelivered": true,
+      "noDrag": true,
+      "noSyntheticPress": true
+    }
+  ]
+}

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xテトリス - Cyber Tetris</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            color: #00ffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Cyber grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.3),
+                inset 0 0 30px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .game-title {
+            font-size: clamp(1.2em, 3vh, 2.2em);
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            margin-bottom: 0.5vh;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: titlePulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% { 
+                filter: drop-shadow(0 0 10px #00ffff);
+                transform: scale(1);
+            }
+            100% { 
+                filter: drop-shadow(0 0 20px #ff00ff);
+                transform: scale(1.05);
+            }
+        }
+
+        .subtitle {
+            font-size: clamp(0.7em, 1.8vh, 1em);
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .game-content {
+            display: flex;
+            gap: 2vh;
+            /* 盤面の高さを確保し、収まらない画面は親でスクロールする。 */
+            flex: 1 0 auto;
+            align-items: stretch;
+        }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tetris-board {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 1px;
+            background: linear-gradient(45deg, #000, #1a1a1a);
+            padding: 1vh;
+            border-radius: 10px;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            width: 100%;
+            max-width: min(50vh, 400px);
+            aspect-ratio: 0.5;
+            margin: 0 auto;
+        }
+
+        .tetris-cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 3px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tetris-cell.filled {
+            border: 1px solid rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        /* テトリスブロックの色 */
+        .tetris-cell.cyan { background: linear-gradient(135deg, #00ffff, #008888); }
+        .tetris-cell.blue { background: linear-gradient(135deg, #0088ff, #0044aa); }
+        .tetris-cell.orange { background: linear-gradient(135deg, #ff8800, #cc4400); }
+        .tetris-cell.yellow { background: linear-gradient(135deg, #ffff00, #cccc00); }
+        .tetris-cell.green { background: linear-gradient(135deg, #00ff00, #008800); }
+        .tetris-cell.purple { background: linear-gradient(135deg, #ff00ff, #aa00aa); }
+        .tetris-cell.red { background: linear-gradient(135deg, #ff0000, #aa0000); }
+
+        .tetris-cell.clearing {
+            animation: clearLine 0.5s ease-out;
+            background: linear-gradient(135deg, #ffff00, #ffffff);
+        }
+
+        @keyframes clearLine {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); filter: brightness(2); }
+            100% { opacity: 0; transform: scale(0.8); }
+        }
+
+        /* ゴーストピース（落下予測位置） */
+        .tetris-cell.ghost {
+            filter: brightness(0.4) saturate(0.6);
+            border: 1px dashed rgba(255, 255, 255, 0.45);
+            box-shadow: none;
+        }
+
+        .side-panel {
+            width: 200px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1vh;
+        }
+
+        .info-panel {
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 1vh;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .info-title {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5vh;
+        }
+
+        .score-display {
+            font-size: 1.5em;
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .level-display {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #ff00ff;
+        }
+
+        .lines-display {
+            font-size: 1.1em;
+            color: #ffff00;
+        }
+
+        .next-piece {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2px;
+            margin-top: 0.5vh;
+        }
+
+        .next-cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid rgba(0, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+
+        .next-cell.filled {
+            border: 1px solid rgba(0, 255, 255, 0.8);
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1vh;
+            flex-wrap: wrap;
+            margin-top: auto;
+            padding: 1vh 0;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            padding: 1vh 2vh;
+            border-radius: 25px;
+            font-size: clamp(0.7em, 1.5vh, 0.9em);
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            min-width: 80px;
+            white-space: nowrap;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 25px rgba(0, 255, 255, 0.3),
+                0 0 20px rgba(0, 255, 255, 0.2);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn.pause {
+            border-color: #ffff00;
+            color: #ffff00;
+        }
+
+        .btn.pause:hover {
+            border-color: #ffff88;
+            color: #ffff88;
+        }
+
+        .btn.reset {
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .btn.reset:hover {
+            border-color: #ff3742;
+            color: #ff3742;
+        }
+
+        .game-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(135deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 40, 0.95));
+            color: #00ffff;
+            font-size: 2em;
+            font-weight: 900;
+            padding: 30px 50px;
+            border-radius: 20px;
+            border: 3px solid #00ffff;
+            box-shadow: 
+                0 0 40px rgba(0, 255, 255, 0.6),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+            z-index: 1000;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-align: center;
+            animation: messageAppear 0.5s ease-out forwards;
+        }
+
+        @keyframes messageAppear {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .game-over {
+            color: #ff4757;
+            border-color: #ff4757;
+            box-shadow: 
+                0 0 40px rgba(255, 71, 87, 0.6),
+                inset 0 0 20px rgba(255, 71, 87, 0.1);
+        }
+
+        .key-instructions {
+            font-size: 0.8em;
+            color: #888;
+            text-align: center;
+            margin-top: 1vh;
+        }
+
+        .cyber-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: cyberParticleFloat 2s ease-out forwards;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        @keyframes cyberParticleFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .game-content {
+                flex-direction: column;
+                gap: 1vh;
+            }
+            
+            .side-panel {
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+            
+            .info-panel {
+                flex: 1;
+                margin: 0 0.5vh;
+            }
+            
+            .tetris-board {
+                max-width: min(70vw, 350px);
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 60%;
+                max-width: 150px;
+            }
+        }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            .game-header {
+                margin-bottom: 0.5vh;
+            }
+            
+            .game-title {
+                font-size: clamp(1em, 3vh, 1.5em);
+            }
+            
+            .subtitle {
+                font-size: clamp(0.6em, 1.5vh, 0.8em);
+            }
+        }
+
+        /* 縦長画面対応 */
+        @media (orientation: portrait) and (max-width: 600px) {
+            .container {
+                padding: 5px;
+            }
+            
+            .game-container {
+                max-width: 98vw;
+                max-height: 98vh;
+                padding: 1vh;
+            }
+            
+            .tetris-board {
+                max-width: min(80vw, 300px);
+            }
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-title">CYBER TETRIS</h1>
+                <div class="subtitle">Neural Block Assembly</div>
+            </div>
+            
+            <div class="game-content">
+                <div class="game-area">
+                    <div class="tetris-board" id="tetris-board">
+                        <!-- ボードはJavaScriptで生成 -->
+                    </div>
+                </div>
+                
+                <div class="side-panel">
+                    <div class="info-panel">
+                        <div class="info-title">Score</div>
+                        <div class="score-display" id="score">0</div>
+                    </div>
+                    
+                    <div class="info-panel">
+                        <div class="info-title">Level</div>
+                        <div class="level-display" id="level">1</div>
+                    </div>
+                    
+                    <div class="info-panel">
+                        <div class="info-title">Lines</div>
+                        <div class="lines-display" id="lines">0</div>
+                    </div>
+                    
+                    <div class="info-panel">
+                        <div class="info-title">Next</div>
+                        <div class="next-piece" id="next-piece">
+                            <!-- 次のピースはJavaScriptで生成 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" id="start-btn">START</button>
+                <button class="btn pause" id="pause-btn">PAUSE</button>
+                <button class="btn reset" id="reset-btn">RESET</button>
+            </div>
+            
+            <div class="key-instructions">
+                ← → : Move | ↑ : Rotate | ↓ : Soft Drop | Space : Hard Drop
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

@@ -1,0 +1,1836 @@
+{
+  "scope": "Current canonical guides, images and evidence only",
+  "pdf_count": 22,
+  "pdf_manifest": "evidence/pdf-manifest.json",
+  "publication_review": "evidence/publication-review.json",
+  "current_files": [
+    {
+      "file": "_index.md",
+      "sha256": "a3070760318279615c29ba640ddee9eb00a12351c5645c7475a919227c6db0a3"
+    },
+    {
+      "file": "_tools/画像サイズ調整.py",
+      "sha256": "37a9553415df53852ffb24d9050278535bcd87e632207b1ef06ab98132b30623"
+    },
+    {
+      "file": "_tools/総合テストPDF.mjs",
+      "sha256": "d1882fd9490b5eb0b5ef76a15f924d7d2d34b81773f3e0d139cc1550a8550aa2"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_Image素材自動送信.json",
+      "sha256": "188f777e5f00c150c3d64303190561e023dd00e813aa5bd82ce9b16a102563c0"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_OpenAI項目通知修正.json",
+      "sha256": "409b649b38df87f7837e0dfcca99a78e765777a8669a4fbf6b4c3f3c0994ce1c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_403_URL下書き両宛先.json",
+      "sha256": "12c6e56585383854c58b20fe2e6e6a03a24ee2224b48895c4a20c9134556fa2f"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_404_非空下書き保持.json",
+      "sha256": "945bb9ef1b976efbb47ac6ad9869b61c661fb82efda59654ed66934dd6f480ed"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_Live画像付き下書き受信.json",
+      "sha256": "0fdc2829e22bbef6eb130b01fe3500aea7edbe62bb7a949d1e53a09e98284b32"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_試験素材/index.html",
+      "sha256": "6e0e7db68ef6c1f15d4781c81808f5aa01175ac31ee4ce9047cfa4ce64e95c0a"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_試験素材/試験ページ撮影.png",
+      "sha256": "82991344500532f4d092e5b3ee3a6f7913c67b6dce13924e7f285e754798dc25"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode実機競合準備.json",
+      "sha256": "99ebbbdc88587b993ceaa6d529776a147f85e01ab66730e82dbfb01ca5731bcd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode競合隔離試験.json",
+      "sha256": "69d1eefba50fdf03eb78ae405a7f60d8fc4952d493e289bccecb80b7051faedf"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_フォルダ判定隔離試験.json",
+      "sha256": "4d9329bedb7b1abeaa83e96addca46d06ab9ecc9c6e62db1d23c0cad6a25a154"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.json",
+      "sha256": "ed137f993aaeca9488586d72d0dfcea1bfbf430cedf917050d4c877bbd2a818b"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.tap.txt",
+      "sha256": "bd78a821b50af671ef4a3883a8e5ad58910f3f56b6a249c2977a65f4aca54cfd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.json",
+      "sha256": "3b3b0ebfdde02aa6c01c0cd26f2218b7fcdaa6f74cbdb2db24a94595bbb3eede"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.tap.txt",
+      "sha256": "485588d5acfac965012fa97d4f80e24d0ed56b586430f61d017434ccb2eade70"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験準備.json",
+      "sha256": "23d1397bdd62841798255b5fa73c93e6bcd9c5b765211f5e44791dc6a11ff3ce"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験準備.tap.txt",
+      "sha256": "4f8760d178688b9dc9de4115f46d69f99b9a5986cd871b6732084c29800ec999"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "sha256": "24e7a5bf5ebea8c67eb230e9593a1857365bba665f0b22da910ee04feffc1a9e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_設定API隔離試験.json",
+      "sha256": "0a7aff400bd091f569a15896f2085642ed8802128638279cbc7338d4ff942b79"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_設定API隔離試験.tap.txt",
+      "sha256": "b4f35ae96f1727ca934a94d1ad29e226b5e9f893cc6eaca11b83bb786c81d09c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/auth-validation-fix.diff",
+      "sha256": "0d3605dc0600c03ad896787c0a4dc634171c1377aad8aa1ebd2b0d769c14298e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/bulk-recheck.json",
+      "sha256": "e6ba6ca8297e2b231cecddab9c75a8894f3c2905e124158064c4a6d5943aef3e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/recycled-bulk-trial.json",
+      "sha256": "75a51c5423334ad8019163e2a883de34742e3206d5f23e717a64b1cd7c64cec0"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/recycled-recovery-trial.json",
+      "sha256": "0d3a319ff5bc79e37854dc9c24e8d2250691044aa456d6ed5bc7b66026d91884"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-processes-after.json",
+      "sha256": "d0b23931fb34f8c806e6ba91b046a1723033fcf1b1610621627491b52befff7a"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-processes-before.json",
+      "sha256": "a5c0a9e0aa2b4d311bb9acb93558ff8aee5fa22a1987215f7f41b8be71d27230"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-recovery-results.json",
+      "sha256": "1278b64f09f5ab9cd18a094c891722cf60cafb97e80750fc799d0dfa662e65e9"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_102_標準起動導線.json",
+      "sha256": "1097f63ff79a78652964b6453e38616279b939cffc0f024ac525b2a071b1b4da"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_502_フォルダ参照取消.json",
+      "sha256": "85f7d115e025c87a1f435a97552e4c666879b8039a274710274cb3a88653eabe"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.json",
+      "sha256": "5de4891d4a0151493cde9e25474cecc147498a1b329472f53546e57402263109"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.tap.txt",
+      "sha256": "1f73a312277ab2f9abdceb96db08d26042e01221c2aa9edcd5de366c578b5f08"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_実要求中断.json",
+      "sha256": "07ce5e30aaf5c94143f5033240e73281018ea890c06036665897de425ce1c3a4"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_201_CLIモデル切替復帰.json",
+      "sha256": "fb2a414aa04e2957c18c779b117d574632593a9df31eb9c754d3a7d72a47fb7d"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+      "sha256": "ca2c1f271bd6f391e51fc78f9ecf88ca1214721ccf36ff1d0919fb8f7e92ee59"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.json",
+      "sha256": "72120e7c0efb591054dc4c943e095eb4aba40294ed4dea23bdafc4d3082455eb"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.json",
+      "sha256": "c35d9f410dda044dbc9edf12cc18181332a082e8143d2ae902a05067e718708d"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.tap.txt",
+      "sha256": "6864a45cbb0b6677ac5dcf943ae62f7cd56a4ee0d063096e6ed5aaba614bc760"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.fixture.txt",
+      "sha256": "03e0049922925ab6688fbf51a9481c72da4dbfed9dae6b183e35881a89bc8bf9"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.json",
+      "sha256": "2a30bf3cb397b0ae33bc161d3d1989fce0ab08a3a8ea24e4f6db2fbcd551e5b7"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.tap.txt",
+      "sha256": "40f831c2249895a1f4251ad6ecf9f779d4a27c1f054afca44be4e989a1b2c7cf"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_実機再接続条件照合.json",
+      "sha256": "baad94b148603d56dd911777aeb159679d646d06f6693a0e7fe537fca400925f"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.json",
+      "sha256": "8bc4ac8b34bd76d39394ca07fb271c30a8f97915499a10f248191eeb94f922d4"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.tap.txt",
+      "sha256": "5837fce7c169c2ca5621985e797ac4932c422d45344b5b17d127928fb33e80f7"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_実要求中断.json",
+      "sha256": "217b1335e247ceedb11c47a67dbe2af31c29dc8e460a6d51e6068a5a11118c6e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_302_単発実行照合.json",
+      "sha256": "9ac6ccdebd4314a1931203692cdc3cc726ddaf1ee2faea57a0944790fdec26b5"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_402_中止前完了.json",
+      "sha256": "9c4763bdcd7358b4614cc0a93842d03645aff1852141ce24a208c6e1b9f9ad7c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_403_有限待機中止.json",
+      "sha256": "14ad9dffc0d492cfcb8d20ca74afb12bf10b5300054dd83009a93fac75e97362"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_504_時間指定発火.json",
+      "sha256": "9ee17ec80961af6ed9b8ba7da2ef347f8ebd6d0b53c0fd02d35caadb817da668"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_505_フォルダ変化発火.json",
+      "sha256": "c372231850dc361887d5269984ce5031ee73b8f7774cdc7efb360076ab0921cd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_203_召喚会話退場.json",
+      "sha256": "0b77a84595281fa929f81290503da208cc364a81512d4be4bad63b5f840599c8"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_404_有限SPDCA.json",
+      "sha256": "7997535a8e143e7f85d4ce43bf891ae25d206add39a5638deed9f9cd837726ef"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_405_D原文引継ぎ.json",
+      "sha256": "040e19d6a44c14d73d52d12c65dadea3e4d365a988c199b7c6566ec822cf3447"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,backend_tools,主要メソッド編/Tools_901_空対象バックアップ.json",
+      "sha256": "4052f8724f17c25d6547338c748d0eab14433d095ff942a357d53558a210bf3f"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/avatar-openai-trial.json",
+      "sha256": "f96f0d2e7db8794095fc443dfa5076f4415cd5f4d926ad46e9df0966bf42fe98"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/backup-empty-fix.diff",
+      "sha256": "cc58c268b891062f6a01e7c5678e6b1f790ad89274d5705bba52a277885cac8f"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/backup-empty-regression.txt",
+      "sha256": "1ed9ea22622c3596d7cdabef3dbea5345c90ac96e7ffd5471a8abc82132b684b"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/chapter-reconciliation.json",
+      "sha256": "30bc600c7743f999157103a00971e378e0aa6948e8bd8aed4cfba690cd0c2688"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/chapter-remaining.json",
+      "sha256": "2e585ce1f93d69efa2d16fa842a4aa0e6bec5105582fd37008b48de9c6895255"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/code-live-condition-review.json",
+      "sha256": "30c796cc769770144c41b3727279cb8bcc548d877d86fdc5fb097a6f5b9e4390"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/collect-team-raw-ai.py",
+      "sha256": "30537699aa3d98dfab4b079786ff30b416a3470ee94fbeff62f6510902be4dad"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/diag-folder-final-services.json",
+      "sha256": "1445a3f918fd4ca09f5c3acf08d48dc5f5e7209f353328ee9c4483d1edc01e68"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/diag-tools-defaults.json",
+      "sha256": "bb9f1754933c173332ba7442717e00233b8a15a1aabfe9b6784c15b2275d4029"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/document-audit-20261103.json",
+      "sha256": "7849fe754891da72e1bdec018fdecc6bc809d85df893021bb9819fb91d2fe943"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/document-link-check.json",
+      "sha256": "21a62f4bc9822749d4fc264e8fd4b5637bb9b82372be791d943692a0810c952e"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/evidence-audit.json",
+      "sha256": "d8a3b17af29b232925c346ae24006ac23e0e4aa3bc132fcddf9751565693eddf"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/evidence-organization.json",
+      "sha256": "242da6d9f0a61b2a7a3facdc4d8a88206ed3e57bde9c57f33976174edf5c8302"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/explorer-file-results.json",
+      "sha256": "3e40bd11631b63c30ce2c831a23a333c30cf8b225d038a27b75199d532db3adf"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-batch-ai-calls.json",
+      "sha256": "4f96e17ee333689e13e9d692ea4b977a9a757d7bf4d1d6574d70ffd9380b2793"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-batch-baseline.json",
+      "sha256": "1eb61d623059b047d2b4d84a9cf70500181f2708284c51f2f2de12c2fd94b9aa"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-batch-final-state.json",
+      "sha256": "9f621c59127208eb8922c46c53b4daa277a287746346be2c17c0fce0221e7510"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-cycle-observations.jsonl",
+      "sha256": "a391797e8027042c16ea3e7b6a319529e328e1457745fd267d23e8b360170d22"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-cycle-terminal.json",
+      "sha256": "7d7df6bf8d14f1c1368ff43d83ac7281b8e430354dd6f5273556bab44684f9b5"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-observations.jsonl",
+      "sha256": "11588535ee05668cf71a25d636be919123d2fb057a5fa3df412c247a002177b8"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-team-chat-result.json",
+      "sha256": "7df7d9c3f3686c5ebe0b341fddcce742e82161074311e0c9e8f356d4e59eb3df"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-time-scheduled.json",
+      "sha256": "7b9a3d96c078a421dd103bffaa983704e97b8724ec06e354b3e77cc24ec06d7d"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/finite-watch-diagnosis.json",
+      "sha256": "0f67120bc62583556b2ab3934f08e72b78df1717eefd55dfdcb2c68b38909ee1"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/image-attachment-results.json",
+      "sha256": "8b5d69219f5c370ae52273759e5eebb04235c51c1265c1366d42ffc98c1b1f86"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/observe-team-raw.py",
+      "sha256": "f3a13fcf1ecb098d44ac7f98fa29fa6cd399e3212d78d2b90837ac2b7ec09b3d"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/office-view-results.json",
+      "sha256": "6564f87fa15f64e6be961562113c5a1362dc2dce7c0585b01a5792f61aabcf9e"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/pdf-manifest.json",
+      "sha256": "af9c6217e31307733ac9df0c6b902509ab6e680c712c4866d46eea302b432088"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/readonly-followup-health.json",
+      "sha256": "ea831e078eed095c00c54e21c88ba6f6221602a2acd1c8969b44403d12b49dd8"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/readonly-followup-review.json",
+      "sha256": "0a14b23488b750ec64644bb360aebd8bb0f89d98a34cbc0a0fa88972e441617a"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/recycled-avatar-final.json",
+      "sha256": "604e640583eebcf3fe38880024ab5361139e19cc073ec43019d7d6ee79bcbd03"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/remaining-actions.md",
+      "sha256": "5f0d604ea9840c3350a268c17c481de30ef8bc0df17b2816b378b0b4039a15f0"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/remaining-safe-review-20261103.json",
+      "sha256": "3305cc1e5e46b56e5dd2ee68d833912c85231ce3c2901c5034bc6747e5090c0c"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/results.md",
+      "sha256": "2ede8d7198deb23ee255fe10c12d98594f7f42ee2a00cd3951cde109631a7a18"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/stop-retry-health.json",
+      "sha256": "dd978b258a88004d93483c21086f1d24ee19edb86f5d2911463c46c0f08c0a9d"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/stop-retry-pdf.json",
+      "sha256": "ffe484e785588f35217a817aa5418bb75d91ef0ab8b21a70d064fd362b1876f4"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-once-baseline.json",
+      "sha256": "c0a836fc59fb7355df31fd2738ab446a3473792423b3c212bf24a38793952c77"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-once-health.json",
+      "sha256": "ea831e078eed095c00c54e21c88ba6f6221602a2acd1c8969b44403d12b49dd8"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-baseline.json",
+      "sha256": "c20d0187bd1ce071fd457fdcd8f2585307cd9ebec9abfc32a98a568f770b5b67"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-final.json",
+      "sha256": "8208cd9ede67a1a1549a3a9285f3c9c0f5bedf44d24c2c9aa3e8304bcdbd6e51"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-health.json",
+      "sha256": "85960ea0a3203d44956bf2950ba08065f37aa11a3a87a415e377cd325376ba4e"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-retry-accepted.json",
+      "sha256": "5b844af31559e99e0d8f1acb433759e3ea0e10153bb90634e05268fb2dd3fb66"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-retry-baseline.json",
+      "sha256": "4e0941db562764db35e4dcb71a52b0bd31853de46bc5af26229a6233edb6d2a1"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-retry-process-after.json",
+      "sha256": "569da28c1a5e11640b831e835449749e88b264f13ce33c287b8e396bacc17876"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-retry-running.json",
+      "sha256": "dc1b22ec80c523572f5b41e89603a6faedbb502ecdae56f01de26a1427b1123e"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/task-stop-running.json",
+      "sha256": "c031c1a380bf5d7fc2c09b964d0748a06b946f9e40c2ee87be8b3cb7c9b49daa"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-ai-calls.json",
+      "sha256": "b64bde9080e4d904422123f81cc4ee46317a7152a8508d1f4d4abb3c294849f4"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-do-details.json",
+      "sha256": "774026ad03c76e755597353ce01ae59f6edf0d4d00a72a8dd4fcf26682b47b2d"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-fix.diff",
+      "sha256": "fab2bc113f5075b68866210523d82e4c09007cd2bb6d20cbd8361533c7210643"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-observations.jsonl",
+      "sha256": "242bf5479de54fbc99789d267d4b19cfcdbf43cabeee9ceb3aa8914956836cdf"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-pdf-check.json",
+      "sha256": "71dc19b2986c4da2a5b480cff522c4e3955814455b403afd78ca589705948476"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-regression.txt",
+      "sha256": "bdc921be723e741b1a720afd26c7c86c53ecf3ff5d8b247bc95e7a53f22ed308"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/team-raw-utf8-check.txt",
+      "sha256": "1232411b458a7ba9b24b05d2f4a041bf25c031fcd2e44ff08ba14c5de7b0a555"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/explorer/01-日本語.md",
+      "sha256": "d6456fd8e723105a0dc74aecdb50c6f4d9972cb4fb3881f00f4a0e4db6382df0"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/explorer/01-日本語.pdf",
+      "sha256": "3b321897917f8de2a68730d284ced8b7c7d61645f67a916ab268f2aab2ff4017"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/explorer/02-表.md",
+      "sha256": "89a344d63342ec01cebca963da9853c70abfbeaf4af5ba620ae15c7ffef9eb22"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/explorer/02-表.pdf",
+      "sha256": "b982ec1a0ee12242b339162afc58747dceb42153fbdacb6bb3b5e4b97c5ae968"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/explorer/copy-source.txt",
+      "sha256": "549ea9dcf3f21a91437177d3889398af639abc78c2cacb8136e555c387247a26"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/office/日本語文書.docx",
+      "sha256": "22b69f48e3266252b45e7dea41ab3ae26743756389bbeecaf242f37fbf6c931c"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/office/日本語表.xlsx",
+      "sha256": "f2af04c610587d3b286f0b9e432978cc95b26363c3ccb4549d0bbfa27c9771ab"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/test-assets/shapes-731.png",
+      "sha256": "9cf400aea87208604f25ac4f2f57d558e0e9ad3b99008c3056bfdd373de1601a"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fix-red-green.txt",
+      "sha256": "455f485ffe03ce3f3e6c28e40409cf2e96b940aa93af613671d4e66fde3e607e"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fix-restart-readiness.json",
+      "sha256": "76318e6e21f9af37cd8dfe997f220f9f4be5c19f259cfa030ca3680ac7492dd0"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fix-restart.json",
+      "sha256": "9e1abc9e9df55ce650517bc806ff5c2506d9f497cc2d6b6ad4e3aff2de9c489d"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fix-tests.json",
+      "sha256": "bc1711c08c5f49cd24300557bcc955daee64c032ece90c8df7637dc718869457"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fix.diff",
+      "sha256": "b150dcf2a3fb644ea6618bad70d418b4658e2cc2e303d101a93427365d636cc8"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fixed-observations.jsonl",
+      "sha256": "8a0333e0b6570782855b0d9f0305efcad6371cec6690a5c5689fc57da71bd921"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fixed-registration.json",
+      "sha256": "148ea7784a0ddd0b6dc0fd1eb0ecbffa36d8154d3d80e36c7040c4d1926542cd"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/watch-fixed-trigger.json",
+      "sha256": "1b0b3b5b9b3f8c709ddde829717fb3889026b2e43f34d92edd6d917d2317e6db"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/web-data-after.json",
+      "sha256": "68ac6fdcfc173d8b2fa865ad5194e4dd83812c03fbc973cd8885d176d31ed99c"
+    },
+    {
+      "file": "evidence/_work_records/selftest-20261102/web-data-before.json",
+      "sha256": "68ac6fdcfc173d8b2fa865ad5194e4dd83812c03fbc973cd8885d176d31ed99c"
+    },
+    {
+      "file": "evidence/pdf-manifest.json",
+      "sha256": "40af5e7bf3f8c5c8d36093e092faddde9f90d428fceb9a3c8faf15c12dd9ac94"
+    },
+    {
+      "file": "evidence/publication-review.json",
+      "sha256": "fa79a055e4c5fbc7c48a06e5f8483228deb3ced1e568f1113c64609da2e2b975"
+    },
+    {
+      "file": "images/backend_diag,アイコンメニュー/右クリックメニュー.jpg",
+      "sha256": "0425e2b631e85e589b9ce75c23207ce08220d7491b62c0d974d3c8412320b10e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_101_ログイン.png",
+      "sha256": "589fc9fd72cb825a09ec6b30cb59117dbcf22ae9733a66ce5f07bc87c4627340"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_102_Avatar認証後.png",
+      "sha256": "a83a86c1d144c24bb67565429030cd146986a0bff7dffa20c7d2370258a061c5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_201_Chat応答.png",
+      "sha256": "188fdc9c2bb596e38cf0ea6fce1b74f47069d1a7a3e8058898f39fad93746e0a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_202_Code1応答.png",
+      "sha256": "51f1eb0fa29aa3360a270b59ad6b74440da6da49c4227fc9ec046de4b0b6badf"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_203_Code6応答.png",
+      "sha256": "dbfa353056055369b926449d7f5e2ad881fb7bd694f45253682bd52f686bee67"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_204_Chat表示.png",
+      "sha256": "2b203468ccc8ad1eaba0429e87be5601089b0f03343ec42fb63c5203f922df35"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_205_Code表示.png",
+      "sha256": "e5a973b849d801ea901c565fffa9b93366f4f1c6b7a57e35d95010471abb0b6c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_301_Live応答.png",
+      "sha256": "d6992233e60e910c913b1361f459950773339c55fd48a87e51d19b6e6bb8a725"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_401_ファイル窓.png",
+      "sha256": "9c471d3ecbd1b80ebe16e8e685626226ff53815eb9c666cb4fc4cf2a1b29929b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_402_画像プレビュー.png",
+      "sha256": "925df49acb85b96d9e83a1c8d960cdfa9d0bd1dfc4e415c914bfdd83d9713c65"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_501_再接続後Live応答.png",
+      "sha256": "10ec5a2ef838d01952d260d4cb3f43a66a8afd3c4d1a4719263d491873ccd36f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_601_Avatar準備完了後応答.png",
+      "sha256": "aee4844533f2d920f0a8ddd095cdfd08a305b3eea795b616d98b2170a4ef1b97"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_101_ログイン.png",
+      "sha256": "41b7378485f946f4bb8098983d470e90d9ae654ecb5ee99fe6c5442c014bd52f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_102_別タブと認証エラー.png",
+      "sha256": "04ff0833ecc1d722fefc4a57a46a3373d48f6d4064105fd5cdb3a86ab0e09a38"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_103_再読み込み後.png",
+      "sha256": "8ffdb438b9fe942ebacabd901e9cb0b12f5817ab9b303a71d4792a085939419c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_201_タブ切替.png",
+      "sha256": "81de7780221f2c831026652feebcccffe1060d6543e9b9d2532322a2211d21b7"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_202_Chat応答全文.png",
+      "sha256": "90457ee70ac5682e4cdc103e05e34f339aceb7d4890a3726f89f31cffd7f157e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_203_Code1とCode6応答.png",
+      "sha256": "6aed30e9b25ca65d28f6bea962223d5468d3bb4762a9eb15d991ec459422c80f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_204_タブ表示.png",
+      "sha256": "3d39f9d5ce6299922a6afc60655a4596d8ab2fbd4dd030531aa50c526cb28caf"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_301_Live応答.png",
+      "sha256": "11a9d44cedd0c2e3906327b66758a166eb5720e790188799af96919915bb8d2d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_avatar,Web実行編/Avatar-Web_401_再接続後ChatとLive応答.png",
+      "sha256": "610e6da6d4a576e8d71b26ea94101b3f5c1f32232661739d5493e0e34f4b89cb"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_101_Browser起動画面.png",
+      "sha256": "5d97a16a3beb2880a89efb09cffdc9007b6decda30884c4a24e64df2f1d6066b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_102_Webページ表示.png",
+      "sha256": "0c42b9e6a92a65fb80b9095f7a463ae158b4d0a48fab63c299774af233955aa1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_201_FHD.png",
+      "sha256": "ad1c8b99ad7c749f2a39553538024585836aae3854d48e3f4747854cee2b77b2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_202_縦表示.png",
+      "sha256": "080fba1c25c2a17f72b637c9f53f1986d09399284c6a2be8be3d30901ca5b0c2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_203_全面表示.png",
+      "sha256": "b6f65927199dea305dd1a97ad16e1d0ddc502c3e07bc2aa6f4c4c2acb113ad28"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_204_上端ヘッダー.png",
+      "sha256": "058c0bb06062a88f8d9798c71dfe1df885c2fb7c54fd256783575f5cf03a020d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_205_移動と常時表示.png",
+      "sha256": "ca239c247afbf866d2b1e8ed085af0b08f5b19a6b00be6c8679153763d5073dc"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_301_Web撮影.png",
+      "sha256": "8d1b974e04489d800a3c31f361a8ab0ab253aefaafd2da13760f4492fde1fda0"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_401_連携先選択.png",
+      "sha256": "b5534e3a5ddf25869b30013c4e05064971140032fe9d28a15f85828794c40980"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_402_Code下書き受信.png",
+      "sha256": "ab88c55857416347f7f137024c79e4f337dd3f1947efc22984b197e87691b650"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_405_Live画像付き下書き受信.png",
+      "sha256": "dbe7f3b5d2dc23a219a2e1f0a2a4bc6fa3dbeab8ee8e8434a915ce34fe109798"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_browser,操作編/Browser_601_IDEのVR連携.png",
+      "sha256": "2f20a6c24c500006bb1ad9761ddd977e2fd84ec091636d6cb2c79462a06b21c2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_code,操作編/Code_101_Code起動画面.png",
+      "sha256": "4cc116b50773a6b163dfe1c7be277bbb61004b11bb465321e97ff338559339f2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_code,操作編/Code_102_Code挨拶応答画面.png",
+      "sha256": "73b133d9949747de30a3e63a9ffe7aa3b92fabe1b2a9800cf8020ec04f84d8f2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_code,操作編/Code_201_画像添付.png",
+      "sha256": "01d1940b0f2ac7e7d654903b8e90a013eee72ba0f59d8bb17b7ecbb140069c4a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_code,操作編/Code_202_画像への実回答.png",
+      "sha256": "6d3b1ab272dde33ebeeab646fcff82a6fae123354b57be3c6aefb9122759768f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_code,操作編/Code_301_VSCodeCode.png",
+      "sha256": "c240ec9e73c8206fbb91c6a3ce4d3709e891506712b01c2922290ef2903e5fb5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_console,操作編/Console_101_Console起動画面.png",
+      "sha256": "f613dee702c58c6682b81b769090e7a76c2a7bebcd693a2595f7083bc50b2331"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_console,操作編/Console_201_Hermes起動画面.png",
+      "sha256": "a386184edfb2d45539577e0fc044c88364e91bd17cfe831144ab113724103f14"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_101_設定モデル初期画面.png",
+      "sha256": "440841a99242a995751997a70664af1cb16ce77f5bd899ae4debb436b122702c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_102_設定モデル実行中.png",
+      "sha256": "f0d59ea94f9ae3448eb40fac4b75d1cef796b2c9bb1737f4d4e97ec6d548461c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_103_設定モデル完了.png",
+      "sha256": "ad3c018a621bc0c611b02ab832c3b9c38704091d0e68f8a269e0922fd0b146d1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_104_設定モデルChat応答.png",
+      "sha256": "b635187d95dbc85af51592dd7699a1a66ea118059f72767c0eabb9a8e4b6cb7d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_105_設定モデルLive音声.png",
+      "sha256": "ef9492588e109778db07292872c69e5f9e94ffcc42feb38a63d89be7689c6430"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_106_設定モデル入力予測.png",
+      "sha256": "8d5e77e250d123fb4705205e41aa171e765ef056361ae43b44554f39e8e0c607"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_107_TaskTeam結果共有.png",
+      "sha256": "ad9cf66d01993609930f60b8594d3245cea44195229c012693f0710dbe7307b2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_201_AIモデル入力画面.png",
+      "sha256": "f4abb494fea385068a9896a02750e026fd0d6d40c8455b6c42564c5e0f2a04a1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_202_AIモデル一括試行中.png",
+      "sha256": "c540c53cc033340ee56d647b3712daf576df4cbda0a30b7bb708e0e3a53e5b28"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_203_AIモデルChat応答.png",
+      "sha256": "5b33e7866bf9bd1c88deffee08a518845aea7edb1f36167feab40dd236f55cd3"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_204_AIモデルLive音声.png",
+      "sha256": "d6f5835b5b45bb30f2776480d6e484ca5a34ce9f5b0afd1f59e2d6702c569d25"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_205_AIモデル入力予測.png",
+      "sha256": "64abd23568a58de4fa7c2ffe53e5cc8250b3a1e559a006bf6ea7c0ab9c8f1eb8"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_206_AIモデル判断JSON.png",
+      "sha256": "e70880ff57ee03e627ed897000e091ac7765df0452a486a637c9462e3f63c5ea"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_207_AIモデルCode応答.png",
+      "sha256": "bf5c0d1175f7cafe0784c66aa842e1d24dfb207ca949820b6ba1467d8dbb444b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_301_Toolsログイン画面.png",
+      "sha256": "1a49ba173cdc19cb4a1791ac5d4ac85d78dab15e94843d95b1af622afb39833c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_302_Tools一覧.png",
+      "sha256": "9125d66d09909ee1242673e138c271e97fe24ae454ba6c23fcc55b17d7e6a649"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_303_SQLite個別結果.png",
+      "sha256": "c379f3de73871a27274b365c85f86d03d8065a6dcf631c69d9369ed7eb15aed5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_Backupのbatch設定.png",
+      "sha256": "9833b00cf43ffabbd7a4490b208858b5695236c2c003b8b8998e224d12dea6b3"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_305_Tools一括実行中.png",
+      "sha256": "53ecc4d06375bbc37a5e7020f42daaf342a77a4a9ce0f8b9e3026831189d392b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_306_Tools一括結果.png",
+      "sha256": "1836f6368f9180e17a6ad631f4106e1d1af5411e48fddef9642d39f4019adb40"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_307_Backup受付結果.png",
+      "sha256": "d72ae12bb7436883ad1467894b36238b1c2e8d9757ae5afa1c779998b910a865"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_308_専用Chrome終了.png",
+      "sha256": "743518221cab24e0704ebab4c20e3aad36b32f0945c3698b3e78e0f336dfef3f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_401_チーム要員一覧.png",
+      "sha256": "187398b0620c51d596124c4af04e7da5e0fc3ac1d92353605e721e842d1a407c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_402_説明APIの確認範囲.png",
+      "sha256": "dedbdea6e5fb17da7d568391e7186222884ffa1b6012470ccb0900bae4a20f9c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_403_PostgreSQL未設定.png",
+      "sha256": "931d230e30a511700b50f3a33f424dbd8274b7b5e9362e1958aeda2116034a96"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_404_OBS接続不可.png",
+      "sha256": "855deee86144580311714dfc6eb48af0c56e388a1d9f981135b6c7b4fff901f1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_101_起動直後.png",
+      "sha256": "a9a38aeedb093eea4cf98bd619c2dde1d359913b4238a5902707bd32205b8486"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_102_一括起動中.png",
+      "sha256": "2ee9bfaf82190fcd1dc12e8a14a603ba50d1b4a65a1bd3840af61b2fc42dae0d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_103_一括起動完了.png",
+      "sha256": "9fd565160fa164ce9a3f37b72d77bc82f030602adf6021f9d0746bf0630ee4ba"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_201_強制停止中.png",
+      "sha256": "84c072c25031c04f46503b57db3b1381c12aa17ef36902e4611d0b2ae3c2097e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_202_強制停止完了.png",
+      "sha256": "66c2642c69bdf618c9d53dfde28eabc1f129a12c414e59c3b67fb895c0087bd9"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_301_個別起動.png",
+      "sha256": "9d146053fd167a43db1beff047abeb2e73734839dfcc7c667d7017d11e6c260b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_302_個別停止.png",
+      "sha256": "ddb35583349c336afcf1fe7c71513d071aa7b84dcdd3d1d2b07cd11bdd47ee67"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_303_個別起動の復帰.png",
+      "sha256": "947585c3110a9707e106052c1e7237b0e57e234d342856dafbe54f7bce06ea84"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_401_Web表示チェック.png",
+      "sha256": "71dc29600880dffa593dde1a8be6ce27d9ad1d2fdb17e685cf76c2be74bc9a88"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,システム起動編/Diag-システム起動_402_Webログイン画面.png",
+      "sha256": "9d86ef5d891839738f7e119210d19ae3bef7d024f9a4d43c8b0ce78a457f40ac"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_101_標準画面.png",
+      "sha256": "c0d410a89d4614fe6dd6f2718320ec929427c6474f2a9c814133404f579c50e1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_201_ミニ表示.png",
+      "sha256": "4da580c404e57f1ed6abb8fd70ce02465827d71995977e47b1878b80cb613ed2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_301_アイコン収納.png",
+      "sha256": "b60049f8760fbb49dd0a001429d4809fcc10d801600df44774c2d79b6e999508"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_401_アイコン展開.png",
+      "sha256": "fa216d8faa44f21af8ec660410963698487260a64b4f2960131379492363b44e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_501_右クリックメニュー.png",
+      "sha256": "61aa81197f9e12fbd0451c13aa8f66f394fe48481cc1aac86211a2308651f147"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_601_Avatar起動画面.png",
+      "sha256": "5c8b8b77a724064b5fc2fd81f7e58f05411a64be61e081397360f1745f82697f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_602_Avatarログイン後.png",
+      "sha256": "6ba38f4cfc51e9cae68622a252ff0a98def46327ebbf82d3537d48d1f7db3a47"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_603_Task起動画面.png",
+      "sha256": "1b0648c3db5c177a779555a5fb9ca4089343028ced3cf5307fa910f13cd0bdb6"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_604_Team起動画面.png",
+      "sha256": "9425936837cd96c886492aacb0c96b00bfece13be77aa180966aba65f18a8ba5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_605_IDE起動画面.png",
+      "sha256": "5e2e06cee521f99bdf91326c0ec4e4ae292ce2cbcc6e8de4d77480549e6863f8"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_606_Console起動画面.png",
+      "sha256": "f613dee702c58c6682b81b769090e7a76c2a7bebcd693a2595f7083bc50b2331"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_607_Code起動画面.png",
+      "sha256": "a5b0c2fec4249669eecaf36469c5dd66f00c9b00ca96e6dfcf0defc553c72943"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_608_Live起動画面.png",
+      "sha256": "64de73608933ca32260e4ee0d4ffa527af300ce2ad789a29b1696902b9996a4b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_609_Browser起動画面.png",
+      "sha256": "a2fc19e2acdfdb32561cafaeca2a8d69eeec0d7364e363a0998dc3760d309ae4"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_610_Hermes起動画面.png",
+      "sha256": "a386184edfb2d45539577e0fc044c88364e91bd17cfe831144ab113724103f14"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_611_Discord起動画面.png",
+      "sha256": "db6c78a14a862528f042bd203708938182e88936145cda59fa3d9b2517ddb49d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_612_Slack起動画面.png",
+      "sha256": "79d6828afd41a70075c0b8ddc0db644d2c0ff17ce3ba9e894b6fb49580a640de"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_613_Claude起動画面.png",
+      "sha256": "23944aab6c8af825d9bfc0935ef5c1002ca0b1e76d2a088a5fee3c886314c476"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_614_Codex起動画面.png",
+      "sha256": "86b8ec9adff1ed42adde993b2955875f758d64c58c675f1713e9d4abe06e011b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_615_Copilot起動画面.png",
+      "sha256": "b473fe3c264354b4f918446643bc1350c2e9ae34075ea6a7198d456a7a4ce07f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_616_Antigravity起動画面.png",
+      "sha256": "b90b1bdd889b54d2804f69fbcc427b4ffccaef97950e491703da400cecdafb23"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_617_Grok起動画面.png",
+      "sha256": "0095c10574d7290574ce717e34a51d2abcc9427ddcef4a259a875773044927db"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_618_OpenCode起動画面.png",
+      "sha256": "ed201ba2fdd58f3cd7279cd987cb3f206eb23ab340554cd9d4eedbd71163a45a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_619_VSCode起動画面.png",
+      "sha256": "19b6e5c1207b13adcf67adeb27cb55b49d55b4f333fdc3e994e4542224d3934d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_620_Chrome起動画面.png",
+      "sha256": "f03058f6e52230e490fd3bf52007859d3c98227e31033389ea1f31f0230778b8"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_701_TaskTeam停止アイコン.png",
+      "sha256": "68a93d12548c063bafc5ece0ec18fb3e41eaa861503b15760d73f316034da133"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_702_Tools停止アイコン.png",
+      "sha256": "58d1ee0dffbadc54348ed8957643aad1ac4ffb27d6d04bbc74776abbc7b40a13"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_703_全停止アイコン.png",
+      "sha256": "1245786036839965143bca77a4abeb23cb715e3a816315a1bbfcbd97da7ea82a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_704_全停止ミニ.png",
+      "sha256": "293f8c0f8cbcf2420397e990325bdd2233825c3960d4cef025af68f85a76abf9"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_705_全停止標準.png",
+      "sha256": "010bb03e741877e4fb4ffeaa26a1906df57d94b446b32022eacd3e04db3b0a6f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_101_導入状況の初期画面.png",
+      "sha256": "e726dd2eba5cea954f0a8d41086c2abcb03d03c4219c1d54c8db2fd5961b3988"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_102_導入確認結果.png",
+      "sha256": "52dd51cc1988ed1b37edd773a3f04092cb6fbf0cb6abfd59e02ce59369df44be"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_103_導入結果書込済.png",
+      "sha256": "c29f1c2fc8b1c49888a5a879d32ef830b8b553bb75d4e4c6dcfd2e7cec2f5c99"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_201_モデル一覧の初期画面.png",
+      "sha256": "40ad55374c03aa36abd32162eb9a8036c5f6bb6e7ae97b586d9a7ee9d8beeaf9"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_202_モデル取得結果.png",
+      "sha256": "fdd952f470f94d446b8cd483d3e11d5b2dbbcad61a3d8b6cbdb21f2ee9f2ea2c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_203_モデル一覧書込済.png",
+      "sha256": "6175989bc8eeec45ed2f1450213c5179b1a1f9157b25d6eb72049e6c7ec9b753"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_204_Ollama接続不可.png",
+      "sha256": "4f119c883b5abc789e17f85a7f79802973277cd161b669eeec9010b0900a6eef"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_205_Local固定候補.png",
+      "sha256": "c340837b651ebdf02e0b4b3a0261fe24003d5188c2a616dcd4f184a055659e33"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_301_外部連携の初期画面.png",
+      "sha256": "d218f0d2b52c6473e0f94fdf976fcace284349ffa3c23a92b60437f7010ff9d9"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_302_外部連携4件の結果.png",
+      "sha256": "5ab3cf7bdcbc3c5f314f18fc09c67f98ffbc061641b10f68906972f287f29339"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_303_外部連携書込済.png",
+      "sha256": "9512667b46bba51cc2e0c1c99b71b3c332603cdaa08c16a997e3bf06627631fc"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_304_Slack認証詳細.png",
+      "sha256": "92d3f53f565c86ead0c91f83ee21c3c1344d717c5e8174da39300215319e56be"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_401_全テスト実行中.png",
+      "sha256": "eb9d4c8ed9907f2ec658e261de35179dc7687ddf2aaa65cf37a92cb0801c314a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_402_全テストのモデル書込.png",
+      "sha256": "75d1f6e67dd05176c4427eca1b9c976f41433b0e29ece74bdb28f48f8fd3e5f5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_403_全テスト完了.png",
+      "sha256": "4ed25758b87ebd205212bdd79a0b742cca946dde0eca5b025aa7b88f96aec0f4"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_404_全テスト後モデル書込済.png",
+      "sha256": "a5857ec2cd7cf42f72a5c3f4e15f19fd89fa192b6e4346d34100cf26634a7bff"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_405_全テスト後外部連携書込済.png",
+      "sha256": "278f27be352f2233a73922c873609fac912bd697cb205809af23e93f8deb60a8"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_501_Python個別確認.png",
+      "sha256": "b0a3f99464e8853ac0af09975cd7fd8d389188503b52eba76a59aff5d489ae07"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,環境確認編/Diag-環境確認_502_Slack個別確認.png",
+      "sha256": "f38d877973568df3e404fbc694ab3e2bbf9c0198ca866f528367ac9c618cb377"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_101_ログイン画面.png",
+      "sha256": "49c09609b7fd0312e0c7d6d6ebdc67ab82ed1a6ef137d29fee410a62f53b36fd"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_102_設定フォーム.png",
+      "sha256": "58b64287d15281f26673db37e6158cf3886ada8544ad73c20f80ad14cfda5564"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_201_音声の選択.png",
+      "sha256": "a3a22cdfb38fa1bea70e58964738a13a41603c2f9d362b3afdd2e31a4f4a69f6"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_202_末尾の操作ボタン.png",
+      "sha256": "340c446244dc8ff0fdbef31733d913c39767cb7ca42e9e3decfede534be8a7ba"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_203_書込み完了.png",
+      "sha256": "833ace79a73cc20fcac7bdbca10af3cb3ef7af02c70c2e26a41e9ab19a218367"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_204_保存値の再読込.png",
+      "sha256": "384c0f78fd822d63dc5790a26e2ee56e2b11863441c8b1444ae7d2d683257ffc"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_301_未保存の変更.png",
+      "sha256": "c894d04aa156e0613d8fff8e9d8a7ce29bb7ca1e3535ce83cd77644f001f1de1"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_302_キャンセル後.png",
+      "sha256": "d66efbbc29a32673f895a4d28460df968f7b1bc9693e9e05055a1088b2e4fa3e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_303_キャンセル後の保存値.png",
+      "sha256": "1964617e0b04b44860eb827b26980b415d9f4eb3ea3cc4170abb8b1a159b7d29"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_401_再起動の確認.png",
+      "sha256": "1be8d8557f55c91f09c511c98ca25f915efdc8cd4d420bb1f232a0a2c25768fe"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_402_Core切断中.png",
+      "sha256": "074135bfa24338246d97f692b85f8079351d14e85e56c532ee054526235aedca"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_403_復帰後の再ログイン.png",
+      "sha256": "e7abd913121d6a30c776233b689bd531eeecac626780f014697050e9df177a9d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_404_再起動後の保存値.png",
+      "sha256": "ace62b071917cd3085b0349894d6a55ae59f7727878244b2c8fd728dc491a16b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_501_元設定の復元.png",
+      "sha256": "07fa4cb3e3c26141fa0ac237790ee364b2329551bf6235472c65f0154ced90e4"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_101_ミニ表示.png",
+      "sha256": "b62c094cda0e6e4c3aa138a9d62b8aae729b68fcbedf2fc96f630eff53c22d21"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_102_初回起動.png",
+      "sha256": "7195dcde69dda0036d05b7313096f3a192b1092e619a3483b1eac019aae8d2cf"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_103_自動接続.png",
+      "sha256": "038614980eb25449c2371f67e976d8249aefabf7d568a1e7bb463d20b208f916"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_201_投稿表示.png",
+      "sha256": "b91f407a0b542160251d4eb204d4674354e175d94df0a7c66d501aa8c908654e"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_202_回答表示.png",
+      "sha256": "cff4d189c59abd8174b6e89089786f8e16241a0287351b3d38a1c4bb0dd57ae2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_203_チャンネルの回答.png",
+      "sha256": "68241fabda4da3bbe6f378cc5fd55594039325886c5c29e2e290330cb25cd5c4"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_301_接続中のモデル設定.png",
+      "sha256": "0ae023b7974e1c400b239e1b2433d88550d7f073e2eba5f460026c03673abb4a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_302_モデル選択例.png",
+      "sha256": "c1b690f7229a9ca415a3f27dee092505400704651338ced6ccab78ed702dab21"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_303_取消後の接続継続.png",
+      "sha256": "37542d240c1db4d0a88cdc2bae928395d44eac521a5b8f9daac53924f874d12b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_304_適用して再接続.png",
+      "sha256": "e5116fba6861d1f7529371bb16140cde1b55acc83e3a69fba48bad6e0b353b10"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_305_再接続完了.png",
+      "sha256": "c5a3ac8fc97fe84c9a56053583f3077535be39f5593746926773d780e014b221"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_401_切断.png",
+      "sha256": "4afb480c4a8e6b6f422c58a154db71981bf034edbce61098175dcd86d3bf7b2b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_402_再接続.png",
+      "sha256": "1816e3d4368be19885ed997a8cfdba362ec8d9a71c7d34c0db74c480e054db64"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_403_接続中の終了確認.png",
+      "sha256": "06c31bb94a49269c7dabbaf5068067b1392e76a076e1d06bb837f81825438d51"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_404_終了取消で接続継続.png",
+      "sha256": "a5a7cba7e737c3db0a2b997f54e54b21950c68752204caf091c58e7c06f12a68"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_501_状態コマンド.png",
+      "sha256": "3110f056b37f345a128a9c5e33aedb34fbdc2460652c6dddc77407d3bf427030"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_502_ヘルプ表示.png",
+      "sha256": "66ff80e0c788a546278b7858eb969db66865de4284f8d9e3418b2007e27288de"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_503_待機中の停止.png",
+      "sha256": "d30e3a25ea2574bc6b4e93fcc6a35b74d6eb46a82a8539b419ca4c712da09331"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_504_会話のリセット.png",
+      "sha256": "53d0d9e8e61916bb0d69042dff64f0646974ccfbdec459910dca99c52e981626"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_discord,操作編/Discord_505_単一起動.png",
+      "sha256": "e6f3c6e51f5e33c59e68a6cc460eec5117c4c0331a86ea52cbfb392c35a7a9d3"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_101_3D基本画面.png",
+      "sha256": "d1b32866113cde17f5e9eb23fab136d996519679f9c3a8d8884e431009d21649"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_102_2D基本画面.png",
+      "sha256": "e1b928df8151aaef26cafff61483c970f780ce38597bcdfc6b8c7cfb08b8a2fa"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_103_VRで閲覧と検索.png",
+      "sha256": "68e23efcd3c93b4270b89df2102a573eca65a07179736c759634df33aa8428c5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_104_VRでCodeとLiveとConsole.png",
+      "sha256": "4018e6b19dfedc9c20ef9151e11b7d7ce06f81c50fa0251740953b1520c00ffe"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_201_エクスプローラー独立窓.png",
+      "sha256": "38b07af4b18239bb0bc2380612b3711012beb90864c968a339fe489adbec55f0"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_202_時刻検索.png",
+      "sha256": "492435be1251ae8d10b83963924dc53b2201756cab87c9d896e72839ba3dcc82"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_203_grep検索.png",
+      "sha256": "69d3a10c7dc5e506261ee00e28dc262748fe9b966e23523e5dbe339d43cede44"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.png",
+      "sha256": "22431055935c11e4630e09b2ccd6dd5b7bb1720876a58641f9ea875b3b2c0a6f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_205_検索履歴.png",
+      "sha256": "acc72a7579ad10895687456a5f8586f5834796faf4663cb80719c083bd927398"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_206_ファイル操作メニュー.png",
+      "sha256": "f541a52b199542b8851290512d71f2ce6d4e4c0bdc1d933f459f4b38527c0a76"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_207_複数チェック.png",
+      "sha256": "5690fec2627888cf6ad17d25a135118d4a52e7e2982b77573f20c1c0a2e45a0b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_208_一括操作メニュー.png",
+      "sha256": "6500bf0491665024c2e47de8741b75c27fbf52475d6cea6ca85e850bc1807dce"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_209_一括削除確認.png",
+      "sha256": "b1477c9678d48810f0149bf88e195b94c7a56cd27112616b1f31d906473d4845"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_301_ビューア独立窓.png",
+      "sha256": "03bb4903269ebbd22698bda62f1b569a2de98799d4ad7dc33e1bfa0e618822cb"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_302_比較表示独立窓.png",
+      "sha256": "9d5f913b3a136ade7e93818b4504413b2db5efb9309e9bd0602b7db332824e94"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_303_閲覧軌跡.png",
+      "sha256": "b9bb8eea09445a56545d72c94fb53af3cea3e5f73872c73f1a8466ba88d6b259"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_304_検索軌跡.png",
+      "sha256": "aa3a83f6385210fa22500baeb4bd0c52a236e553da28f99e90ce19f9d5e14354"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_305_AiDiy検索軌跡.png",
+      "sha256": "4d271f91d3ab44c23350a7e56f910e2536f3cb415e041def4830641fa0704b77"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_306_Console独立窓.png",
+      "sha256": "6e905c9a8ec5345aedbc70e87f8218b9a8391cc0bfecfe01432b83bdc9f9830a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_307_Code独立窓.png",
+      "sha256": "58d661d817df75ec379508e443eb246c1beffc41753b45d63e5b8e3f502fe70d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_308_Live独立窓.png",
+      "sha256": "fa024776d7ce1380fe918cfcefdfbb0c587095f2fbd8091a7f771af314b22574"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_309_Browser独立窓.png",
+      "sha256": "5b50758022d4ba5d9d2ed48a0efce1708b700a8b89447d2bd61fdf1c648a0bc6"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_310_Word独立窓.png",
+      "sha256": "36f48a76c73d51abc3327d67f8e8a4d0f6472d267fac9fbfbdc8e40999b8aeca"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_ide,操作編/IDE_401_終了確認.png",
+      "sha256": "ecc3e1f0de3fb7ed88f7e5659d31dbbdb7bf13029ad386459f476426335178a7"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_101_Live起動画面.png",
+      "sha256": "84e7b653882f319503078b55fc5084b1d41adfece3eac36572eeb9ec54d3e1c0"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_102_OpenAIモデル選択.png",
+      "sha256": "419833315fb26d8945775754b6c6379683f7be21a8272467821ce8c2a46c6012"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_103_接続準備完了.png",
+      "sha256": "51a6323c2c684b803c5a42c9b828ed642b7a2885549752886efd81aef2777786"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_104_OpenAI初回応答.png",
+      "sha256": "e0a53094fc116aace768e7ca2859ee8affab2c87b27909a51d27f9097b46b4fe"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_201_OpenAI画像添付.png",
+      "sha256": "9d1a4d1fb866d8ae3452a21886b1f32b736b46dd74d60973c43c95d0865917d3"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_202_OpenAI画像への実回答.png",
+      "sha256": "f89b3e245253b1ae974f46f06532e72ff3c27e3363f1f8aa8e045b3d77536337"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_301_VSCodeLive.png",
+      "sha256": "0d7861547e9356cccad108431622e5e475b0f3c365325be3f7fa893c31e3ef23"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_live,操作編/Live_401_切断後画面.png",
+      "sha256": "192ce1a4d5ce5ca201dfa592af3cf3f51b7a212a907cb92cd2ea42b709b07e2b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_101_ミニ表示.png",
+      "sha256": "b62c094cda0e6e4c3aa138a9d62b8aae729b68fcbedf2fc96f630eff53c22d21"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_102_初回起動.png",
+      "sha256": "ab63bf60e03ad9229a216af7075c7f2cbc3d0084269ed391c440e41c4add16bc"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_103_自動接続.png",
+      "sha256": "e2896baf93df1bb5b02dbba4d90a92d55a6ccb466061c6c29f9fdf1f16e8a470"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_201_投稿表示.png",
+      "sha256": "aefbe88c2f68a4424890e95119d6a3bdbd5aef7567f95ac397719eecc05c8627"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_202_回答表示.png",
+      "sha256": "f1ec8c9eadbf21a385e37e0fdeb51fd619fcfd4b4b005fef2441edf81823b695"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_203_スレッド返信.png",
+      "sha256": "d8b174311754b07969dba37bbe63aac2e9fed74cde042cfc5670730eb032bbef"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_301_接続中のモデル設定.png",
+      "sha256": "87d05bb3b492cba2bebae43f431fea2ae437d788bcffefa301722c0c7e7df034"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_302_モデル選択例.png",
+      "sha256": "460944083f110c9b3f6692151a86d9d0e6346f32484ffa3d0f436a2da28e2228"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_303_適用して再接続.png",
+      "sha256": "a2ae5aa3e7eff7ffa042e1a85410d5a098fd1fbe4ab8d44e0060c691bfb9a350"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_304_再接続完了.png",
+      "sha256": "79fc932b15ae8ffac735ef0afa4c8611689e38701cd74617d018e9d07997fcbb"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_401_切断.png",
+      "sha256": "fcf785ef79412e32b0612d972915fef9ae0c30fdec2f88e4365c051efce65258"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_402_再接続.png",
+      "sha256": "e16d72ec83e6e017e0a7e51cdeeb8dee4f95dc0bffccc48a6647f8f791257d88"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_403_接続中の終了確認.png",
+      "sha256": "f51e93e606af9450547721f468cd5daabbbe4c2ce63edd9f7c8448e1d96c97d2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_404_終了取消で接続継続.png",
+      "sha256": "c9539d03501bc9e6181549badefe1f6f28462e048f9117b5ced3ba75b3723df4"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_501_状態コマンド.png",
+      "sha256": "d2e7339bcc29b22bb5f3167108f3e6a699023a724d964fb01177bb5949b1ce9a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_502_ヘルプ表示.png",
+      "sha256": "a67d5d435307d8b5d804c4717cb17b0a8175a67f903c0b34bbbc7258d06b20c8"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_503_待機中の停止.png",
+      "sha256": "518752f24a16bc2e4f10d8ee5c469309bbc3f166bdef051bce26625d06a56fd9"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_504_会話のリセット.png",
+      "sha256": "9b245a373b2b8202a5bd21dfce5c740774ed4fca63ed29a9c95cd9c88e7f5cca"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_slack,操作編/Slack_505_単一起動.png",
+      "sha256": "36588be7f526988b0714e35ffa5e14f42cec9eb4e06f194fc21b11ec832e5371"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_101_ログイン画面.jpg",
+      "sha256": "d7fba242ecfada9362b7bc5ca44f9c1187fe217b0308fac26f4c1c4d0a36e046"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_102_Task要求一覧.jpg",
+      "sha256": "c9e2a80cc17f9c7d7cbad40956bd9193034e4c788589e0e4895d9a54f7725640"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_301_分岐合流完了.png",
+      "sha256": "fe5f31bd5582363fab6b27d1384eb3f696e23944f8a9084b4c99b3312de43092"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_401_中止設定.png",
+      "sha256": "d31873b46f50be7094a228d40d70ec523042a0c69234fda134a6be9ed0598021"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_501_時間指定.png",
+      "sha256": "e868f2a16752958a4d5d562bfdcffe012e1c10cb3cff0efb15fc9be7e739089d"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_502_間隔検証.png",
+      "sha256": "259b6ad28f11c4ac3811f75aad36af46b294e106aa4cedb1eb2e6dd8f94c3a66"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_503_定時実行.png",
+      "sha256": "5649bef4cd89baf2b0a179016f443e32be5dc423c1b4a93a4e0b6c1d62ab2aa5"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_601_最前面ピン.png",
+      "sha256": "50defe8e7dff25a4c85bcc88634f01bc70db22e64dec29413731388ba68440b7"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_701_再起動後の保存設定.png",
+      "sha256": "cb9773dd43b6dac01277ad8bf117d07ca914891d7ae851235686197f29e6d09f"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_801_Taskミニ表示起動.png",
+      "sha256": "36a0724230714638f7d14804ccf1cb375661c55f1f23a0d2d81953b8854d133c"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_task,操作編/Task_802_Taskアイコン起動.png",
+      "sha256": "c9d8658b4ca0d4a0e8bd3729c9e1a49e84953702f8abdb93c56b28d2862a2769"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_101_ログイン画面.jpg",
+      "sha256": "a9bcaae50d3278a6d0661b44a9ccb773f5d4c3b035e160b583d45020351a2334"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_102_Teamログイン後.jpg",
+      "sha256": "04a9d4a297cc2709a58cf25912be5678d759298dc8e7623ba538babc0f031120"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_201_要員召喚.png",
+      "sha256": "7dec22e6c4844f330dd3b8e7dadb408f3303f292b7710beb50ba194a37a8dd5a"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_301_依頼と経験完了.png",
+      "sha256": "f70193ed6dc3cdcdec781e380e8e09287d42239883e59f1ac6931c848ed9c303"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_302_要員会話.png",
+      "sha256": "73eb25d06816eb3dad2868a676fee3a877cbf7788cd155746ef507818a56475b"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_303_中止後の再依頼完了.png",
+      "sha256": "053b5fb8f6504a964c5fff5a917bc038fccf1d26ab1a4fb74c31b76fc54ea6a3"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_401_有限サイクル設定.png",
+      "sha256": "fd98e9da5fa8567833c1c3703ff90c12341f79508aa05fdcacfe7ec58de57b38"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_402_一周完了後OFF.png",
+      "sha256": "358168bf920d3ff22d7716bf5d1610aaf2bded49f8a24110b65c09cbfb84fcbb"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_501_最前面ピン.png",
+      "sha256": "77a57be31b3ab921901126488468994ca054d0151d2d58129d486213a8d27c33"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_601_再起動後の停止設定.png",
+      "sha256": "3288e7dbe740691e93b18e80e1e7ee217dd4aa8befa1fefb766271efcb149994"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_701_Teamミニ表示起動.png",
+      "sha256": "4a83ea1447e7086438bbf8a65dfb07d54fa85277ad87d37e8ca0b110ae9dace2"
+    },
+    {
+      "file": "images/セルフテスト,aidiy_team,操作編/Team_702_Teamアイコン起動.png",
+      "sha256": "7c673f8426e9e143f5cdbc61f5b36c29af3c36acf13e4056346054b5e1f47062"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_101_呼び出しの流れ.svg",
+      "sha256": "0f2b247c369a1abb8e8a2ba9125450fb590ed8dada517bb5505daef2fe466f2a"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_401_DBとバックアップ.svg",
+      "sha256": "472f027fd359fe4075dd86bf6b47e506ff342c663ae1463f2590dfa08e5c5042"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_501_音声処理.svg",
+      "sha256": "27792eaebb99c6273a06fe33625e1bf18c1eea43021b316ac117d76bbeabb9a2"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_502_音声合成.mp3",
+      "sha256": "c3dae7e99802a2d9040ec3e71b22343ac0863dd3cf856540303e5d858bcce58a"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_503_音声認識入力.wav",
+      "sha256": "90a79af7edf3f827651835fd487195c029ac0c481d774f01ae24c8b663b72ff5"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_601_AI応答.svg",
+      "sha256": "26ea14851c6b7a5c802c2615c0ad7b6482df4315c33e955377115756a16c551f"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_701_非同期依頼.svg",
+      "sha256": "6526b277aed536360fb0345aa108cfc2957d86ab593c974e9934fac7456b0ad9"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_801_ブラウザとOBS.svg",
+      "sha256": "e816aa0c5a420f81d31ec59f828bb4174d3b748a3500f437c3c85a4778028951"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_802_ブラウザ操作結果.png",
+      "sha256": "edbfd721e918183e22debc775cebefb8ef843c6aca076b842c8158814af8ba6d"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_803_ウィンドウ撮影.png",
+      "sha256": "613006a5b457aabf3e810b6e88f5e3782e5d625b17040cbff7bf71d6dcbb8c8e"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_804_OBS起動確認.png",
+      "sha256": "15046efb578205ffa596b62bb73df87a775407d5eb62a3cfa5bb6d9bc50e8341"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_901_生成と対象外.svg",
+      "sha256": "c054e09d315f455743c1eeb6474361042ae9a449e43bb5381c6c55ba0ce5d14b"
+    },
+    {
+      "file": "images/セルフテスト,backend_tools,主要メソッド編/Tools_902_生成画像.png",
+      "sha256": "9ff18dc7a88d5cd13d9abdb235309a136781fddd1da9295cc5f4a5aeddd9ff34"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_101_ログインと誤入力.png",
+      "sha256": "8253e15653f9a4d6232bf202359a6d5a1364b734c4f096bbd71fac9ba60237df"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_201_Chat応答.png",
+      "sha256": "bdce11dc1a578789783fdb9e86537385f2108e151853db019ee4e508081c9532"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_202_会話の分離.png",
+      "sha256": "eeea650faa27dd991abdae0a0e8fe7558a7c6ad85b82275eb7d7412400416ee0"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_203_Code1とCode2応答.png",
+      "sha256": "54c78fa7e17005473649d63d544cd32af4b31c2fe2dbc7bfc9008abfdb275ce9"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_204_Code3とCode4応答.png",
+      "sha256": "1c077e1a57d90f16587094ec149b0e5e015bd469b82e6b0a40b39543d09ce07c"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_205_Code5とCode6応答.png",
+      "sha256": "2045c3b2e962b680d22bb1e6941a134265fe03ecdf32db1a49dd07889c1031bc"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_301_9パネル再接続.png",
+      "sha256": "7e3f8435ec409b0866f9566b31df92089f565f33a19ee17ed87894846f061434"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_401_Live応答.png",
+      "sha256": "ec2e035dba16ee728e374cdb9cb9ceefeb7282f9bf61b92e43f50f3341fe7b9f"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_501_ファイル添付.png",
+      "sha256": "b6cb1e5d764add11857a91fcb326600c1f4aa56bf7e2d3f76e9414fb85ef7095"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_601_設定保存.png",
+      "sha256": "1c7a5d2307e8a54f69b8de2adcabdf2f87f5eef2e83a8fbe0f0e359f16ed2e05"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_701_利用者一覧.png",
+      "sha256": "16772542c3f1f4c846d03efa5b968d43c57aeb858f20dccf7a8cccdc94b301cd"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_702_自己紹介.png",
+      "sha256": "87d3997f628bd6bba7f160731f7583d1775b61d12f81a3dc8550665f66420442"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_703_アバター訓練.png",
+      "sha256": "ebd45efb0b42783b97e11b6947041fce6bc21bb630f4373a541665bc33a0c32a"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_704_世界の絶景.png",
+      "sha256": "917b6e44c8172c0a7d8a23bcef74be59bef2cb13358dbc60b394dc18e63dee84"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_705_立体リバーシ.png",
+      "sha256": "65194b95624240853a351843f322cf049e051aa0414fa6d7b66f709225b7c7a5"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/AiDiy_801_ログアウト後保護.png",
+      "sha256": "dc1fa1f8f64cf90311e88a27981e53348c5d7e645d33c052e731b35d9e6a23ba"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,AiDiy編/Web-AiDiy_001_操作パネル.png",
+      "sha256": "eb4b35776f26e939b8c5300feac8d355288a56967b4a4d8d0f376ab8c4d07efd"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_101_完成品材料登録.jpg",
+      "sha256": "c625517ad644825b16be0f474a7f3c3c40e49a43c355ff35835e5078bbff6aa1"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_102_商品構成再表示.jpg",
+      "sha256": "6ac4a008f613ba7b491e9a48c26b316f2f4ebaf07c7f64509e1e9739d2c2eff3"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_103_構成明細追加変更.jpg",
+      "sha256": "b9a07fca26d614e876a9018f2fc9e8b5313f6e57956097e9e7368bc2a084f411"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_201_生産所要量6個.jpg",
+      "sha256": "68680e9d0e0e65cc127f92d6e4b3667665105340621c49f8b202ceef91d73bee"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_202_生産更新払出8個.jpg",
+      "sha256": "a97188378fab05d2ec2a71826c07722f07d91b317a19d55fb8a6d22813b1a9f4"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_203_生産日時逆転拒否.jpg",
+      "sha256": "2150222ed99221118231a824aa8cbe29c0bf969346549a38da4ea31f65f382fa"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_301_在庫推移.jpg",
+      "sha256": "8de3344335fd64fa8d568cade3d8caefe3afbc506673cbfe21bc093965d2172f"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_302_在庫更新.jpg",
+      "sha256": "acf288e1475362a22f3af397157a0a17ebf410486f490c798f5ae4d69320c870"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_401_生産日表示更新反映.jpg",
+      "sha256": "e7b8e7ebea0048c05749ff0a7cdf9725ecc28f65f9b418e77c280dcf2edb4a4f"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_501_狭幅一覧操作.jpg",
+      "sha256": "aaf341c27fbcbb8d3ce6d54632cfc7d8d331414feb80196d72b1e161907a8cf4"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_502_縦長生産編集.jpg",
+      "sha256": "77c74966d2fc531228240f343218f612955e4af0afd7e0c465e38b4b5795de47"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_503_101件の2ページ目.jpg",
+      "sha256": "90b2c8cd7727980ca7b7d1a3ee6c28954e783b236d1f635776e8deec9edbe9a5"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,生産・在庫管理編/生産在庫_504_縦長マスタ編集.jpg",
+      "sha256": "bd58c0325f173d434cb1c805e722e10b78304992ad4b090d9a0ac81770a30472"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_101_配車区分重複拒否.jpg",
+      "sha256": "c6c1d05e306115f46c6766da91ded631b77583288c882b47362899ac00c5edcb"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_102_配車区分必須検証.jpg",
+      "sha256": "5b6b9b3cd63b0147d3caaea5faeeecaad946339556db915ef01a7a5494183d6f"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_201_配車区分登録検索.jpg",
+      "sha256": "3e4e3ab33e862d54a63c2aaa00fb8c3e69a980922e8feab5ec3a7cdce6080c05"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_202_取引先分類連携.jpg",
+      "sha256": "ee5c27a062b6ef77cf898165d9867d94d88fcda05d6eb78f928d5f9a16924903"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_301_配車登録検索.jpg",
+      "sha256": "e2f27ee95ea36083d6b52c9e05f72fc4aa6c740ceb38ecbd8b0e70de647b1291"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_302_配車日時逆転拒否.jpg",
+      "sha256": "96489c256498661a21e566e799c85dc1c76a0bc5521e52688b597c7100a761dc"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_401_配車日表示.jpg",
+      "sha256": "a1cc29ec1120b13a0da37d40981f949c8d723cd055ac1b8c07eec15d8530e1ec"
+    },
+    {
+      "file": "images/セルフテスト,frontend_web,配車管理編/配車管理_402_配車ドラッグ移動.jpg",
+      "sha256": "33ec21c1eaea4ca74f7790d1d88ca1c3ea9df8fb69ff54d91cdb03382b9bc292"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Electron実行編.md",
+      "sha256": "235f402d82a2064e8cea953e7c9636d6af62714c48690c759576129e3026ebe8"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Electron実行編.pdf",
+      "sha256": "1592d493f9acc215999d6047567ac8b5f0949522692d5e83757cbd6c4eb273b3"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Web実行編.md",
+      "sha256": "70666a6a62a9c475039acb13ba14aa1652eb96a188c88b815b702b3680b93f71"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Web実行編.pdf",
+      "sha256": "802def76666c871222ebdf1a394e121e8680c59907e0a04e5a401f9ee1d860f8"
+    },
+    {
+      "file": "セルフテスト,aidiy_browser,操作編.md",
+      "sha256": "2f8ae20e880f7aa10e03e242e5c4b254874bdfbe5daa011534c5587ed0fa4bc2"
+    },
+    {
+      "file": "セルフテスト,aidiy_browser,操作編.pdf",
+      "sha256": "9aafd2f94a3418b05714af81b592189a9e0de35c04275d4461451f03490e7955"
+    },
+    {
+      "file": "セルフテスト,aidiy_code,操作編.md",
+      "sha256": "3caad3aa9280a7dedd6caf0bd7df16448908bd9387d99d708449c91054ca5c4d"
+    },
+    {
+      "file": "セルフテスト,aidiy_code,操作編.pdf",
+      "sha256": "ab1690a16f47a55329e6d55ef73e864f66340ef62aed3b4bf2ca0aeeb7172106"
+    },
+    {
+      "file": "セルフテスト,aidiy_console,操作編.md",
+      "sha256": "5cb87b4d601a4f307e9f77d8d556b365a785d8c430093bbf1afe826d604a568d"
+    },
+    {
+      "file": "セルフテスト,aidiy_console,操作編.pdf",
+      "sha256": "50a8bc24e3f9845437da69131ee0586f4c488f9cc1e1df50109ed96eb0133ed5"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.md",
+      "sha256": "15949fa784d0a8a22dd3f07b69a20db71c1678f1a22e7155230de7616ae3a505"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.pdf",
+      "sha256": "0771c741e0b8aa2b3f424a95bb65e04bf4e98d4dbce8b08bd057f8278527f762"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,システム起動編.md",
+      "sha256": "1415e4b72a33e3294adb29bd7763305927043cbbbd4cb8ab4c63a02f6bcdaa36"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,システム起動編.pdf",
+      "sha256": "f8b81c6473f38e7f30474f95da2d034cb621360171b09a71e1b3e21d83a3f36d"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,ランチャー編.md",
+      "sha256": "6e802b4ec3e0a65b2a398e38839a8bf1009240848e94558560415d0d22efe67d"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,ランチャー編.pdf",
+      "sha256": "0bd4d3ca102e1526a4012d567e85ec628bdc7bac016deedb1b062c51ba916b6a"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,環境確認編.md",
+      "sha256": "784e62bfa2564e20fa915db86ee988594a3a0111b8fb0dd20ca690d569710693"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,環境確認編.pdf",
+      "sha256": "f2f9d84e1af65e074fc8ca012b6ad9e952c4f2bf59f45be578246be70f1e0b7e"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,設定再起動編.md",
+      "sha256": "affcf8e88e09edd4704f51054472a1a202d0916f5fc219d25f6a5d61305ceb3c"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,設定再起動編.pdf",
+      "sha256": "ec90ec1920f0e8bef7dbf90b9f8ee3f2f4fac84c87473d691f05076eb792fbcc"
+    },
+    {
+      "file": "セルフテスト,aidiy_discord,操作編.md",
+      "sha256": "507a3c990e4bda975b88c1556320d1aa7e9630cbad5eeffa3ac58255c4a2376c"
+    },
+    {
+      "file": "セルフテスト,aidiy_discord,操作編.pdf",
+      "sha256": "6c513cd59cc23a73ea9d92624a77778fa1fcf10c3ca967f142b5fed44940f72e"
+    },
+    {
+      "file": "セルフテスト,aidiy_hermes,操作編.md",
+      "sha256": "92423c89daff372197a1a75f152873d47783ae4f232fa4ea3da96750b6170340"
+    },
+    {
+      "file": "セルフテスト,aidiy_hermes,操作編.pdf",
+      "sha256": "5cf303e9a721362f17fbe6a0bd79b956470fd3bb2c445140747ba128ab748176"
+    },
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.md",
+      "sha256": "e916d4a18087e3a34a94a2ec3c806e65f2137d219291e0db6859d22275bb3746"
+    },
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.pdf",
+      "sha256": "7149acb44c569b744c593977151ea1e6be1eb11ff7c9236345bc8bab705ecf1f"
+    },
+    {
+      "file": "セルフテスト,aidiy_live,操作編.md",
+      "sha256": "e336cf4ba7ee717d8338d96e4f841078fc719b21c12cf4d96e98861307fb98b8"
+    },
+    {
+      "file": "セルフテスト,aidiy_live,操作編.pdf",
+      "sha256": "bedeb0b65d4a46a7c880d6aff97ef71823c83469aca36573e55d4ebd8f4e5a2d"
+    },
+    {
+      "file": "セルフテスト,aidiy_slack,操作編.md",
+      "sha256": "ed555b1d4b0980ca8cd13d5c6ca90b728d24b8407dfb795452b9a0bab244501a"
+    },
+    {
+      "file": "セルフテスト,aidiy_slack,操作編.pdf",
+      "sha256": "6872e295e24b5d3d8e9ec4a9a72879f5b48260e3950d7884abb268806c4038b9"
+    },
+    {
+      "file": "セルフテスト,aidiy_task,操作編.md",
+      "sha256": "02488100718104406869e6ff71fdbb49285cee899c3753bccd794646d880549d"
+    },
+    {
+      "file": "セルフテスト,aidiy_task,操作編.pdf",
+      "sha256": "5b17e6d7dcc8faca115642f9c02c154b9cc72b6cc9b8e9b47f2688d59598ed5a"
+    },
+    {
+      "file": "セルフテスト,aidiy_team,操作編.md",
+      "sha256": "a93eaea261516f4932180101c3210fef8503ce1b783eab204e21d51238bf65d3"
+    },
+    {
+      "file": "セルフテスト,aidiy_team,操作編.pdf",
+      "sha256": "4bc9ab62c71e1815741408bf8c89f52eab7d59fe047f036d928608d82c330c32"
+    },
+    {
+      "file": "セルフテスト,backend_tools,主要メソッド編.md",
+      "sha256": "e77f7ded8b078de6d3e571e47d8d9a7392a5107d74ca3ef0580f36418abdc7c3"
+    },
+    {
+      "file": "セルフテスト,backend_tools,主要メソッド編.pdf",
+      "sha256": "fb93a20cd7e1e321692cfe4c73368ff880710c82c13cf67edcd61aafe4c54436"
+    },
+    {
+      "file": "セルフテスト,frontend_web,AiDiy編.md",
+      "sha256": "185954c86cba7b06c422489ad4357dc3c953e8de6eb3fdf0c24dc3e27887d68c"
+    },
+    {
+      "file": "セルフテスト,frontend_web,AiDiy編.pdf",
+      "sha256": "231be52193ec9cd181ee1cd868d76becd55acc1269556d46dd879c2b783892ea"
+    },
+    {
+      "file": "セルフテスト,frontend_web,生産・在庫管理編.md",
+      "sha256": "91d99356996823bd38e4a4df8e0eed4075b89d2a6400fc2d32ca72b5c695a610"
+    },
+    {
+      "file": "セルフテスト,frontend_web,生産・在庫管理編.pdf",
+      "sha256": "f409a93035dbe6006c1e3b08ce4a716c5b096e5df2aca7399a488e29fc24ca64"
+    },
+    {
+      "file": "セルフテスト,frontend_web,配車管理編.md",
+      "sha256": "43d92d1c9dd8e66c1e2d96041f804aa73945805f77dc8c077ba3fed8fd8433f0"
+    },
+    {
+      "file": "セルフテスト,frontend_web,配車管理編.pdf",
+      "sha256": "3dcf01c4318f9ed17ec6fe5449cb45f073267cdd5a0547a30417f9686618d456"
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.md",
+      "sha256": "e473817db8e0bb8a8c888401b04fd89383298fc2af3d0b4ca447f1b5dbb6aae1"
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.pdf",
+      "sha256": "00634f987ea45af48aa6c120355a774bdc611a7c6ea40b32deea5aad35f92ff1"
+    },
+    {
+      "file": "共通,セルフテスト解説・ナレーション方法.md",
+      "sha256": "1fb9798d9daed338b0ef58ffbe6664e093e12971749d10dc4f22f42dd1ee0356"
+    }
+  ]
+}

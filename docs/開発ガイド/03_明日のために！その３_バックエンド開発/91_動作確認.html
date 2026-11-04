@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>91 動作確認</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="08_View作成.html">前へ: 08_View作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+
+  <h1>91_動作確認</h1>
+  <p>実装後はSwagger UIまたはcurlで、登録→取得→変更→一覧→削除の順に確認します。</p>
+
+  <h2>サーバー起動</h2>
+  <pre><code>cd workspace/AiDiy2027
+python _start.py</code></pre>
+
+  <ul>
+    <li>Core API: <a href="http://127.0.0.1:8091/docs" target="_blank">http://127.0.0.1:8091/docs</a></li>
+    <li>Apps API: <a href="http://127.0.0.1:8098/docs" target="_blank">http://127.0.0.1:8098/docs</a></li>
+  </ul>
+
+  <h2>認証トークン取得</h2>
+  <ol>
+    <li>8091のSwaggerで <code>POST /core/auth/ログイン</code> を実行</li>
+    <li>レスポンスの <code>access_token</code> を取得</li>
+    <li>8098のSwaggerでも Authorize に同じトークンを設定</li>
+  </ol>
+
+  <h2>初期データ確認（必須）</h2>
+  <ul>
+    <li><code>backend_server/apps_crud/init.py</code> の <code>init_db_data()</code> に、対象マスタ（例: M○○）の初期化処理が追加されていることを確認する</li>
+    <li>一覧APIで、投入したサンプルデータが取得できることを確認する</li>
+  </ul>
+
+  <h2>CRUDテスト順</h2>
+  <table>
+    <tr><th>順番</th><th>API</th><th>確認点</th></tr>
+    <tr><td>1</td><td><code>/apps/M商品/登録</code></td><td>status=OK、登録データ返却</td></tr>
+    <tr><td>2</td><td><code>/apps/M商品/取得</code></td><td>指定IDのデータ取得</td></tr>
+    <tr><td>3</td><td><code>/apps/M商品/変更</code></td><td>変更内容が反映される</td></tr>
+    <tr><td>4</td><td><code>/apps/M商品/一覧</code></td><td>items/total/limitの整合</td></tr>
+    <tr><td>5</td><td><code>/apps/M商品/削除</code></td><td>削除後に取得NG</td></tr>
+  </table>
+
+  <h2>curl例</h2>
+  <pre><code>curl -X POST http://127.0.0.1:8091/core/auth/ログイン \
+  -H "Content-Type: application/json" \
+  -d "{\"利用者ID\":\"admin\",\"パスワード\":\"********\"}"
+
+curl -X POST http://127.0.0.1:8098/apps/M商品/登録 \
+  -H "Authorization: Bearer TOKEN" \
+  -H "Content-Type: application/json" \
+  -d "{\"商品ID\":\"TEST001\",\"商品名\":\"テスト商品\",\"単位\":\"個\",\"商品分類ID\":\"A\",\"商品備考\":\"テスト\"}"</code></pre>
+
+  <h2>よくあるエラー</h2>
+  <table>
+    <tr><th>症状</th><th>主な原因</th><th>対処</th></tr>
+    <tr><td>401</td><td>トークン未設定/期限切れ</td><td>再ログインして再設定</td></tr>
+    <tr><td>NG: DUPLICATE</td><td>重複IDで登録</td><td>ID変更または既存削除</td></tr>
+    <tr><td>NG: NOT_FOUND</td><td>存在しないID</td><td>一覧で存在確認</td></tr>
+    <tr><td>422</td><td>JSON形式や必須項目不備</td><td>Schema定義と照合</td></tr>
+  </table>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 認証トークンを取得し、apps側に設定できた</li>
+    <li>[ ] 初期化処理とサンプルデータ投入が反映されている</li>
+    <li>[ ] CRUD5操作を順番通り確認できた</li>
+    <li>[ ] エラーケース（重複/未検出）を再現できた</li>
+  </ul>
+
+  <nav>
+    <a href="08_View作成.html">前へ: 08_View作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,306 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+
+.config-panel-embedded .config-model-note,
+.config-panel-embedded .config-decision-note { font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; opacity: 0.85; }
+.config-panel-embedded .config-model-note p,
+.config-panel-embedded .config-decision-note p { margin: 6px 0; }
+.config-panel-embedded { min-height: 0; height: 100%; display: flex; flex-direction: column; }
+.config-panel-embedded .config-panel { width: 100%; min-height: 0; height: 100%; box-sizing: border-box; background: #000; color: #e5edf7; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #e2e8f0; }
+.config-panel-embedded .config-panel-content { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+.config-panel-embedded .config-panel-header {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f3f5f7;
+  background: #000;
+  border-bottom: 1px solid #e2e8f0;
+  letter-spacing: 0.02em;
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+}
+
+.config-panel-embedded .config-panel-title {
+  text-align: center;
+}
+
+.config-panel-embedded .config-panel-close {
+  width: 24px;
+  height: 24px;
+  border: 1px solid #cbd5f5;
+  background: #ffffff;
+  color: #0f172a;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.config-panel-embedded .config-panel-close:hover {
+  background: #eff6ff;
+}
+
+.config-panel-embedded .config-panel-spacer {
+  width: 24px;
+  height: 24px;
+}
+
+.config-panel-embedded .config-panel-body {
+  padding: 8px 12px;
+  background: #000;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.config-panel-embedded .config-panel-error {
+  margin: 0;
+  padding: 12px;
+  background: #fee2e2;
+  border: 1px solid #dc2626;
+  border-radius: 6px;
+  color: #b91c1c;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.config-panel-embedded .config-panel-description {
+  margin: 0 0 4px 0;
+  color: #b8c7d5;
+  font-size: 11px;
+}
+
+.config-panel-embedded .config-panel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.config-panel-embedded .config-panel-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 4px 8px 2px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #000;
+  min-width: 0;
+}
+
+.config-panel-embedded .config-panel-section-header {
+  font-weight: 700;
+  color: #f3f5f7;
+  margin: 0 0 2px 0;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-left: 3px solid #2563eb;
+  padding-left: 6px;
+}
+
+.config-panel-embedded .config-panel-code-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+}
+
+.config-panel-embedded .config-panel-code-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.config-panel-embedded .config-panel-field {
+  display: grid;
+  grid-template-columns: 25% 1fr;
+  gap: 4px;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  min-width: 0;
+}
+
+.config-panel-embedded .config-panel-label {
+  font-size: 11px;
+  color: #d8e3ed;
+  text-align: right;
+  margin: 0;
+  padding: 0;
+}
+
+.config-panel-embedded .config-panel-control {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.config-panel-embedded .config-panel-control-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.config-panel-embedded .config-panel-select {
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  border: 1px solid #cbd5f5;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-size: 11px;
+  background: #ffffff;
+  color: #0f172a;
+  box-sizing: border-box;
+}
+
+.config-panel-embedded .config-panel-code-base-field {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.config-panel-embedded .config-panel-control-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.config-panel-embedded .config-panel-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 22px;
+  border: 1px solid #cbd5f5;
+  border-radius: 3px;
+  padding: 0 6px;
+  font-size: 11px;
+  background: #ffffff;
+  color: #0f172a;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+.config-panel-embedded .config-panel-browse {
+  flex: 0 0 40px;
+  height: 22px;
+  border: 1px solid #2563eb;
+  border-radius: 3px;
+  background: #ffffff;
+  color: #2563eb;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  width: 40px;
+}
+
+.config-panel-embedded .config-panel-browse:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.config-panel-embedded .config-panel-browse:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 500px) {
+  .config-panel-embedded .config-panel-field {
+    grid-template-columns: 1fr;
+  }
+
+  .config-panel-embedded .config-panel-control-inline {
+    align-items: stretch;
+  }
+}
+
+.config-panel-embedded .config-panel-actions {
+  padding: 8px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  background: #000;
+}
+
+.config-panel-embedded .config-panel-actions-edge {
+  flex: 1;
+  display: flex;
+}
+
+.config-panel-embedded .config-panel-actions-edge:last-child {
+  justify-content: flex-end;
+}
+
+.config-panel-embedded .config-panel-actions-center {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.config-panel-embedded .config-panel-actions button {
+  border: 1px solid #cbd5f5;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.config-panel-embedded .config-panel-actions button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.config-panel-embedded .config-panel-actions button.primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.config-panel-embedded .config-panel-actions button.primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.config-panel-embedded .config-panel-actions button.danger {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.config-panel-embedded .config-panel-actions button.danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+.config-panel-embedded .config-panel-actions button.save {
+  background: #f97316;
+  border-color: #f97316;
+  color: #ffffff;
+}
+
+.config-panel-embedded .config-panel-actions button.save:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+
+
+.config-panel-embedded .config-panel-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+

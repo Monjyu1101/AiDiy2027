@@ -1,0 +1,121 @@
+{
+  "Aタスク要求": {
+    "count": 4,
+    "rows": [
+      {
+        "id": "TK00001001",
+        "hash": "fbf9a8ab6a1fd811b16c41d1a52ede8cd1798cc3e7a8a5c9153d6965464321d8"
+      },
+      {
+        "id": "TK00001002",
+        "hash": "53c7c21b4d3ec2f3064c36f1443c7a313d5adf89363c4023949d17e5127939c3"
+      },
+      {
+        "id": "TR00001001",
+        "hash": "93a78b441c350d5d29dcb935260a2b3c712652990141f87f5b37c316ce1bc294"
+      },
+      {
+        "id": "TR00001002",
+        "hash": "dc325321841d5717517dbfc9053e94185add43e313eb27f4283338c50b51aa01"
+      }
+    ]
+  },
+  "Aタスク明細": {
+    "count": 18,
+    "rows": [
+      {
+        "id": "TK00001001",
+        "hash": "ce5ca741409be8bd15f389a296f0b31fd8f83654619e4d0903dfae6bf7755a7c"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "2590089178649f55d145188a8795d4fce0c8daaf125bc6b430a085402d13e94e"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "2940f1d545936e0ef5236bda6ca6a073e344b89454ea13c949830f52df826aec"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "1bb46381f3238ad745550e65ff45e93ecc4ea1d13485417ca1e84ebb70cb4bb0"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "286f0f4a0973a866815d7b4b6244767c371a334c7e43b2c29701d96cacd62199"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "f439e489c2bb9e81f02c41d2f9a4cb66b20446baf45d22a1a109f33b6ce5ec80"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "ecdddcf17dce4006a284e241e8a08f63ed805270f40e8840a054037cf454d827"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "a4435abf7dec7040afb0852566f68f3f10c06077d6ec47eb53db1f71b855381c"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "3b8e8e1a41c29a159b186ad60f7a7a2f426669393c40f48b20e76ebc9bcf2cae"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "a2bdaf892edd9021959effbd98ca978a0a9d19b551c154113eee761de525ece9"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "3ee28b6aadd29133afb0da29db49595fd66c253dc656b75389a5c8b0bb0fa2b4"
+      },
+      {
+        "id": "TK00001001",
+        "hash": "f44a045ff0fc96483707cb47d7803b769f3c969a0bcccfa12c7766c466029b6d"
+      },
+      {
+        "id": "TK00001002",
+        "hash": "06b89b4f778e1d45b2b6fb581481b0c42dd897b7657af783c1946a6898202165"
+      },
+      {
+        "id": "TK00001002",
+        "hash": "0d6e5f70658c62e1f79782e1b5a69d650ee132db9bcb67d0d10a82979c1cfb0d"
+      },
+      {
+        "id": "TK00001002",
+        "hash": "5965558f5e5ec11fbbea9b5705267d264e8c6d56c798eab4bce21733acc165a2"
+      },
+      {
+        "id": "TR00001002",
+        "hash": "b3fcafa6ec003960aa1de011e83548e105e7c60ed809e27cdf70b882869cebda"
+      },
+      {
+        "id": "TR00001002",
+        "hash": "c08afb82ae3203a7efd53e024b02a8f7c5db2b1a94e45879036f3a2503cfb8ed"
+      },
+      {
+        "id": "TR00001002",
+        "hash": "1a63f63edbf354a1b8bd3aa02b848e281b1eb6c2805b341a9341354937d084bf"
+      }
+    ]
+  },
+  "Aタスク実行条件": {
+    "count": 4,
+    "rows": [
+      {
+        "id": "TK00001001",
+        "hash": "8041a572713d64a3a46cc998007f1eaad541a9a1daccc3cd6d2e3400cd1787fe"
+      },
+      {
+        "id": "TK00001002",
+        "hash": "cf8f4a2433c2af49ba2849b6202212b7cea92efdb6ee9d48e9efd3b32ae4d476"
+      },
+      {
+        "id": "TR00001001",
+        "hash": "530cab464c4bd25a98e349b793207e22539dae8ce56f5b230549c8bbce5c8760"
+      },
+      {
+        "id": "TR00001002",
+        "hash": "84e5efb89600db13aca12fa215f0417f0f7dfe9332c5c0b19fbf44943742d63e"
+      }
+    ]
+  }
+}

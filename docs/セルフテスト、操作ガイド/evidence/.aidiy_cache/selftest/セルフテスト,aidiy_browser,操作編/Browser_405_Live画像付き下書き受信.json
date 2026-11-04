@@ -1,0 +1,56 @@
+{
+  "id": "Browser_405",
+  "date": "2026-11-03",
+  "mode": "Windows standalone Electron Browser→standalone Electron Live",
+  "project": "<USERPROFILE>\\Desktop\\AiDiy2027_dev",
+  "capture_button_clicks": 1,
+  "handoff_clicks": 1,
+  "capture_requested_utc": "2026-11-03T07:01:40.145Z",
+  "handoff_clicked_utc": "2026-11-03T07:02:01.106Z",
+  "elapsed_click_seconds": 20.961,
+  "result": "PASS: 実Live入力欄で元メモ・session・tab_id・URL・PNG絶対パスを目視し、入力欄のコピーでも照合",
+  "memo": "Browser画像下書き確認：元メモを保持。AI送信しません。",
+  "session": "aidiy_browser eb8ec1a5-2f5e-480c-926c-9feff1f60b1b",
+  "tab_id": "b0b6d395-4cc8-48a1-8d2e-832c70a55352",
+  "url": "file:///<USERPROFILE>/Desktop/AiDiy2027_dev/temp/browser-live-draft-fixture/index.html",
+  "captured_path": "<USERPROFILE>\\Desktop\\AiDiy2027_dev\\temp\\input\\browser-142b5333-d609-4d68-9e99-ce6e67e031a7.png",
+  "captured_sha256": "82991344500532f4d092e5b3ee3a6f7913c67b6dce13924e7f285e754798dc25",
+  "live_connected": false,
+  "microphone_on": false,
+  "ai_sends": 0,
+  "settings_changes": false,
+  "source_changes": false,
+  "existing_user_drafts_touched": false,
+  "cleanup": "専用入力だけ消去、Live/Browserの×で通常終了。Diagミニと既存窓保持。",
+  "startup": "制限付き実行でElectron終了・窓なし確認後、承認された実デスクトップ起動で両窓生成。Browser初期ホームGoogleの通常読込後、ローカルページへ移動。検索やログインはなし。",
+  "voice": "Edge ja-JP-NanamiNeural ratio1.2 serial playback",
+  "limits": [
+    "Liveの画像認識AI応答は対象外",
+    "60秒境界は既存自動試験を維持、再実行なし"
+  ],
+  "final_services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  }
+}

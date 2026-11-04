@@ -1,0 +1,112 @@
+{
+  "start_utc": "2026-11-02T23:12:46.468828+00:00",
+  "source_hashes": {
+    "frontend_ide/launch.mjs": "5a30095b473959b43c9ff3e51d70f47932a316922b2bbc9565656b85297772b3",
+    "frontend_ide/ファイル機能/ai-search.mjs": "0fb81318bf795b29d11874e18f5a05cc64d574ca378833d2eabe9c358ad02a05",
+    "backend_server/auth_keyring.py": "b9eff33cd1ee38947014a21c55d2e43dda4cba8f76604c1be6a4e4156ca37fc9",
+    "backend_server/checks/test_auth_keyring.py": "f15148a17ea9129bf4466203c4f901272679140b6e74a5b85253b426bcf3e4e6"
+  },
+  "normal_search_requests": 1,
+  "withdrawn_isolation_requests": 1,
+  "hermes": {
+    "id": "20261103_081325_039233",
+    "model": "gpt-6.1-terra",
+    "billing_provider": "openai-codex",
+    "api_call_count": 7,
+    "tool_call_count": 12,
+    "started_at": 1793661215.718539,
+    "ended_at": 1793661384.2090569,
+    "end_reason": "cli_close"
+  },
+  "read_paths": [
+    "_AIDIY/knowledge/_index.md",
+    "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md",
+    "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md",
+    "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md",
+    "temp/20261103_081243_result.json"
+  ],
+  "result": {
+    "requestId": "5cf49409-d9fb-481b-856d-f61572fd9b87",
+    "query": "IDEからTASK／TEAMを起動する手順が載ったセルフテスト文書を、プロジェクト全体から探してください。固定プロジェクト、タイトル、ピン留め開始を確認する手順を優先し、関連文書を3件以内で示してください。資格情報・秘密設定・プロジェクト外ファイルは検索しないでください。ソースや設定の変更は不要です。",
+    "title": "IDEからのTASK・TEAM起動セルフテスト",
+    "files": [
+      {
+        "path": "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md",
+        "reason": "「TASK／TEAM連携」にIDEからの起動手順と固定プロジェクト・タイトル・ピン留め開始の確認、再利用や終了のチェックを掲載する中心資料。"
+      },
+      {
+        "path": "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md",
+        "reason": "IDE操作編の連携手順へ誘導し、TASKの初期表示、ピン操作、IDE連携と単独起動の追加確認を補足する。"
+      },
+      {
+        "path": "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md",
+        "reason": "IDE操作編の連携手順へ誘導し、TEAMのピン操作、IDE連携の追加確認と複数IDEでの固定先の分離を補足する。"
+      }
+    ],
+    "route": [
+      "_AIDIY/knowledge/セルフテスト,aidiy_ide,操作編.md",
+      "_AIDIY/knowledge/セルフテスト,aidiy_task,操作編.md",
+      "_AIDIY/knowledge/セルフテスト,aidiy_team,操作編.md"
+    ]
+  },
+  "sources_unchanged": true,
+  "limitations": [
+    "Project-wide search_files operations timed out; returned documents verified, exhaustive coverage not claimed.",
+    "One terminal script call blocked by existing one-shot guard; guard/settings unchanged."
+  ],
+  "status": "PASS_RETURNED_RESULTS_WITH_COVERAGE_LIMIT",
+  "ui_checks": [
+    "three results",
+    "IDE document open",
+    "TASK/TEAM section at lines276-282",
+    "history reopen same 3 results"
+  ],
+  "narration": {
+    "voice": "ja-JP-NanamiNeural",
+    "ratio": 1.2,
+    "clips_completed": 4
+  },
+  "rollback": {
+    "modified_files_restored": 2,
+    "insertions_removed": 5,
+    "new_files_recycled": 4
+  },
+  "services": {
+    "Tools": {
+      "tcp": true,
+      "http": 200
+    },
+    "Core": {
+      "tcp": true,
+      "http": 200
+    },
+    "Apps": {
+      "tcp": true,
+      "http": 200
+    },
+    "TaskTeam": {
+      "tcp": true,
+      "http": 200
+    },
+    "Web": {
+      "tcp": true,
+      "http": 200
+    },
+    "Local": {
+      "tcp": false,
+      "http": null
+    }
+  },
+  "completed_utc": "2026-11-02T23:23:40.666114+00:00",
+  "scope": "Project-wide normal search with explicitly authorized shared context and USER profile; read-file tool paths recorded without private content",
+  "ui_closed": true,
+  "diag_mode": "mini launcher",
+  "pdf": {
+    "count": 22,
+    "pages": 361,
+    "reviewed": [
+      "IDE p31",
+      "Common p25"
+    ]
+  }
+}

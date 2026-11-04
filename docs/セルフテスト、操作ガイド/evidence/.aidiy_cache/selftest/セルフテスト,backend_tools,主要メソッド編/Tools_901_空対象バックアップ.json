@@ -1,0 +1,103 @@
+{
+  "time_utc": "2026-11-03T02:58:54.484949+00:00",
+  "route": "http://127.0.0.1:8095/aidiy_backup/save/run",
+  "empty": {
+    "ok": true,
+    "batch": false,
+    "最終時刻": "",
+    "対象なし": true,
+    "全件数": 0,
+    "バックアップ件数": 0,
+    "全件フラグ": false,
+    "バックアップ先": "",
+    "差分なし": true
+  },
+  "normal": {
+    "ok": true,
+    "batch": false,
+    "最終時刻": "2026-11-03 11:55:34",
+    "対象なし": false,
+    "全件数": 1,
+    "バックアップ件数": 1,
+    "全件フラグ": true,
+    "バックアップ先": "<USERPROFILE>/Desktop/AiDiy2027_dev/temp/backup-empty-20261103/normal/.aidiy_backup/20261103/115534.all",
+    "差分なし": false
+  },
+  "unchanged": {
+    "ok": true,
+    "batch": false,
+    "最終時刻": "2026-11-03 11:55:34",
+    "対象なし": false,
+    "全件数": 1,
+    "バックアップ件数": 0,
+    "全件フラグ": false,
+    "バックアップ先": "",
+    "差分なし": true
+  },
+  "copy_restore_sha256": "1fd057824f0728565c27d9e295eab3ef4fbd949fbc9305384da34c93219769ee",
+  "restored_to_new_fixture_only": true,
+  "services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  },
+  "ai_calls": 0,
+  "tests": 54,
+  "source_scope": [
+    "backend_server/AIコア/AIバックアップ.py",
+    "backend_tools/tools_proc/backup.py"
+  ],
+  "final_native_reload_empty": {
+    "ok": true,
+    "batch": false,
+    "最終時刻": "",
+    "対象なし": true,
+    "全件数": 0,
+    "バックアップ件数": 0,
+    "全件フラグ": false,
+    "バックアップ先": "",
+    "差分なし": true
+  },
+  "source_sha256": {
+    "backend_server/AIコア/AIバックアップ.py": "8913e2b8fd1d5b5e552bc78c502ea25389cda63f29e111a28e196a485e3e4b1c",
+    "backend_tools/tools_proc/backup.py": "f626964ca188d82e39b2dd3ed223ca725df647b94d94aca751104509810cd557"
+  },
+  "narration": {
+    "provider": "edge",
+    "voice": "ja-JP-NanamiNeural",
+    "ratio": 1.2,
+    "local_play": true,
+    "reports": 3,
+    "completion_wait": "local_play uses blocking MCI play wait; each tool call awaited"
+  },
+  "diag_window": {
+    "title": "AiDiy 診断",
+    "x": 60,
+    "y": 60,
+    "width": 414,
+    "height": 359,
+    "unchanged": true
+  },
+  "pdf_count": 22,
+  "pdf_pages": 361
+}

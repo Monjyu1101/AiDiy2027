@@ -1,0 +1,22 @@
+TAP version 13
+# Subtest: 未知コマンドはAIに渡さずhelp、短縮stop/newは同じ会話を操作する
+ok 1 - 未知コマンドはAIに渡さずhelp、短縮stop/newは同じ会話を操作する
+  ---
+  duration_ms: 42.4493
+  type: 'test'
+  ...
+# Subtest: 二重実行を拒否し、停止・終了でCLIを回収する
+ok 2 - 二重実行を拒否し、停止・終了でCLIを回収する
+  ---
+  duration_ms: 140.1941
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 2
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4749.2763

@@ -1,0 +1,38 @@
+{
+  "name": "aidiy-live",
+  "displayName": "AiDiy Live",
+  "description": "AiDiy のライブ会話拡張です。既存 AIコアに接続し、音声・文字の会話を提供します。",
+  "version": "0.1.0",
+  "publisher": "aidiy",
+  "license": "SEE LICENSE IN LICENSE",
+  "icon": "dist/AiDiy.png",
+  "repository": { "type": "git", "url": "https://github.com/monjyu1101/AiDiy2027.git", "directory": "frontend_ide/host/aidiy_live" },
+  "engines": { "vscode": "^1.106.0" },
+  "categories": ["AI", "Other"],
+  "keywords": ["aidiy", "live", "voice"],
+  "main": "./dist/extension.js",
+  "extensionKind": ["workspace"],
+  "capabilities": {
+    "untrustedWorkspaces": { "supported": false, "description": "マイク入力とローカル AIコアへの接続は信頼済みのワークスペースで利用します。" },
+    "virtualWorkspaces": { "supported": false, "description": "Windows のマイクとローカル AIコアを使用します。" }
+  },
+  "contributes": {
+    "viewsContainers": { "secondarySidebar": [{ "id": "aidiy-live", "title": "AiDiy Live", "icon": "dist/AiDiy.png" }] },
+    "views": { "aidiy-live": [{ "type": "webview", "id": "aidiyLive.chat", "name": "AiDiy Live" }] },
+    "commands": [
+      { "command": "aidiyLive.open", "title": "ライブ会話を開く", "category": "AiDiy Live" },
+      { "command": "aidiyLive.stop", "title": "会話を切断する", "category": "AiDiy Live", "icon": "$(debug-stop)" },
+      { "command": "aidiyLive.standalone", "title": "専用ウィンドウで開く", "category": "AiDiy Live", "icon": "$(link-external)" },
+      { "command": "aidiyLive.settings", "title": "設定を開く", "category": "AiDiy Live", "icon": "$(settings-gear)" }
+    ],
+    "menus": { "view/title": [
+      { "command": "aidiyLive.stop", "when": "view == aidiyLive.chat", "group": "navigation" },
+      { "command": "aidiyLive.standalone", "when": "view == aidiyLive.chat", "group": "navigation" },
+      { "command": "aidiyLive.settings", "when": "view == aidiyLive.chat", "group": "navigation" }
+    ] },
+    "configuration": { "title": "AiDiy Live", "properties": {
+      "aidiyLive.pythonPath": { "type": "string", "default": "", "scope": "machine", "description": "Windows マイク入力用 Python の実行ファイル。空欄では作業フォルダの backend_tools/.venv、その後 PATH の python を使います。追加ライブラリは不要です。" }
+    } }
+  },
+  "scripts": { "vscode:prepublish": "node build.mjs" }
+}

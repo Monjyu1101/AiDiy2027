@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: 同じスレッドの要求とstopを同じ巡回で受けても、未開始の要求を実行しない
+ok 1 - 同じスレッドの要求とstopを同じ巡回で受けても、未開始の要求を実行しない
+  ---
+  duration_ms: 25.7503
+  type: 'test'
+  ...
+# Subtest: 考えています投稿の待機中のstopは後続のCLI起動を防ぎ、次の要求は実行できる
+ok 2 - 考えています投稿の待機中のstopは後続のCLI起動を防ぎ、次の要求は実行できる
+  ---
+  duration_ms: 9.197
+  type: 'test'
+  ...
+# Subtest: stopは同じスレッドの実行と待ち行列だけを停止し、別スレッドには影響しない
+ok 3 - stopは同じスレッドの実行と待ち行列だけを停止し、別スレッドには影響しない
+  ---
+  duration_ms: 5.6765
+  type: 'test'
+  ...
+# Subtest: stop直後の新要求は、取り消した10件の待ち行列とは別に受け付ける
+ok 4 - stop直後の新要求は、取り消した10件の待ち行列とは別に受け付ける
+  ---
+  duration_ms: 10.7128
+  type: 'test'
+  ...
+# Subtest: stopを繰り返しても新要求の順序と会話キーを保つ
+ok 5 - stopを繰り返しても新要求の順序と会話キーを保つ
+  ---
+  duration_ms: 6.2836
+  type: 'test'
+  ...
+# Subtest: 二重実行を拒否し、停止・終了でCLIを回収する
+ok 6 - 二重実行を拒否し、停止・終了でCLIを回収する
+  ---
+  duration_ms: 665.4502
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3217.7797

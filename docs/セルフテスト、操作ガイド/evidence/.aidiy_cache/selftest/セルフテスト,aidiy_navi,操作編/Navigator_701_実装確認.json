@@ -1,0 +1,136 @@
+{
+  "date": "2026-11-03",
+  "result": "PASS within recorded scopes: isolated tests, native UI, approved fixture nav/eval, real-project explicit/default navigation. No real-project evaluation request.",
+  "node_test_cases_passed": 61,
+  "python_readonly_cases_passed": 47,
+  "build": "IDE app-only Vite success",
+  "actual_ai_additional_requests": 0,
+  "ui": {
+    "web": "two popups, history list/select, model isolation, standalone dialog",
+    "electron_standalone": "AiDiy Navigator native title/project/dialog PASS",
+    "electron_ide": "AiDiy IDE / Navigator 1 and 2 native titles; VR return and close isolation PASS"
+  },
+  "limitations": [
+    "Self-analysis goal would send selected project source, recent paths/timestamps and goal to configured AI. Earlier explicit test approval covered only red/blue fixture; no project self-analysis request sent.",
+    "Saved Hermes same resolution supports OpenAI OAuth aliases; unsupported saved providers fail closed.",
+    "Updated multi-item JSON-example prompt real-AI retest was denied before execution; no retry."
+  ],
+  "changes": {
+    "frontend_ide/ファイル機能/navigation_readonly.py": "f603d9bd8851950811b74c78110a4297c31136db839d73768b9eab71159943ad",
+    "frontend_ide/ファイル機能/navigation.mjs": "bcbf35e5aca4b24e8f3052a136800b3588edb6ffc1ccfdf1e30bf6a0a9fb16bf",
+    "frontend_ide/ファイル機能/navigation-slot.mjs": "1da3f613145f6e03be51ab8a36ed17111ed8efba83effce8a02505f6b800dcb9",
+    "frontend_ide/src/components/開発スペース/Navigationパネル.vue": "39fba520f6e14aad91576efcdb8c85b4d6fc82d4d5765b92657bf47966331852",
+    "frontend_ide/src/App.vue": "0d126874d9af1918f1f5af5f05367377ea5208adb3f5e3ebc6ceb6d4cfd1d312",
+    "frontend_ide/src/main.js": "6ce0c054608c1a794880f033680f931434b2b82229ad076316bbc96ae242efd6",
+    "frontend_ide/server.mjs": "841c1a410bac0b4b5d403d6c8ead916cc2d4719002fc37d74d7120196b5fd045",
+    "frontend_ide/launch.mjs": "5b55d03fc2bc6ae7c565a15b3531ccaf25c68107c4dc75ff339b7a7f0d686ed8",
+    "frontend_ide/desktop.cjs": "c5648097b2f9a00b982f68ed118f376916fe0ccf3b63c31c0f386799f3ba5f75",
+    "frontend_ide/_setup.py": "6f349578597b1df43e9d9ff6af8844e87566aa00dc7d1b6e240db92924498428",
+    "frontend_ide/_cleanup.py": "7a5cea748d7b2b9260ad7e8ba4a86fbe8363e10cb9656891ab726fb997098b04",
+    "frontend_ide/package.json": "d95928ded41109385d5348ea3ffa14f4c5ef3ec54f9582b096ff0beba117b44f",
+    "frontend_ide/README.md": "9f73580902137a45e777c5885946b10f84b8d703b6fd89ef2d2e41807f9fc605",
+    "frontend_ide/aidiy_navi.cmd": "998039e837ec364ec146da381ddff760c6ecf8a789c681d9cf68d20760740866",
+    "frontend_ide/aidiy_navi/launch.mjs": "0fe369b8d6fb4fd45654a8d20866a7e04e4f3f0be30aad7535fdda08173f1f47",
+    "frontend_ide/aidiy_navi/_setup.py": "35bdacd78be1fe0084bbd479184052b4cd01410fcb60242b31ae8a7fe4a5c42c",
+    "frontend_ide/aidiy_navi/_start.py": "d5dc0c09d308b88818022f2b34fb840d0c22e0b69289c9cbdd891ed9b17ee20a",
+    "frontend_ide/aidiy_navi/_cleanup.py": "db75cb2c3abfe5de68d9a1102ac43b99ac278fcdf4e9863f848a257eb7a68914",
+    "frontend_ide/checks/test_navigation_readonly.py": "768dfdc2347185ca8cf851eadcf0dd8f5a1cd2b439468dab4823b6fa7c63b0ba",
+    "frontend_ide/checks/navigation.test.mjs": "10d9839d44bc39f00aafb687618d33011e8f74d5f067fe56a3d6d3a88f250cb0",
+    "frontend_ide/checks/navigation-standalone.test.mjs": "7e9d34ae91ee3570cdf33ca57a454f767d2073dbaeae59809bf4cee96527a57a",
+    "frontend_ide/checks/navigation-desktop-probe.cjs": "927e77dd3d48b11404866343e7d8139af301db506f1d8a88003c1dca19740e70",
+    "frontend_ide/checks/navigation-standalone-probe.cjs": "d259e7f41789d2997e28425adcb86dd0ca41111bf736d8e8f01b8b523fa9844e",
+    "frontend_ide/scripts/check-navigation.mjs": "253a7e6eb068b8f1bdc4929f31cc193d73e677d3a77b0996f0a3c9be00729f1a",
+    "frontend_ide/scripts/check-navigation-desktop.mjs": "303f79376acc7407b8a92a6885d25a581956f2815040a8fbcd15498ad0bea9d6",
+    "frontend_ide/scripts/check-navigation-real.mjs": "3324f50075916261086bd5e9f85a230a10e98f376541bdfd4bd09ea45da79476",
+    "_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md": "89229c89ecfd6de7c13bef07e030321360200e5e0a6586e6722d699e65094e14"
+  },
+  "existing_term": "not operated",
+  "services": "not restarted",
+  "push": false,
+  "status": "implemented and verified",
+  "displayName": "Navigator",
+  "standaloneTitle": "AiDiy Navigator",
+  "ideTitle": "AiDiy IDE / Navigator <起動番号>",
+  "command": "aidiy_navi",
+  "realAI": {
+    "applicationRequests": 2,
+    "navigation": "PASS",
+    "evaluation": "PASS",
+    "provider": "aidiy_hermes",
+    "model": "openai_oauth/gpt-6.1-sol",
+    "projectHashesUnchanged": true,
+    "evaluationItemsPreserved": true,
+    "evidence": "Navigator_301_ナビ評価.json",
+    "internalModelCallCount": "not separately established",
+    "realProjectSelfAnalysis": "not sent"
+  },
+  "icon": {
+    "band": "NAVI",
+    "background": "#FACC15",
+    "foreground": "#111827",
+    "owner": "frontend_ide/aidiy_navi",
+    "diagOrder": "immediately before Console",
+    "testsPassed": 15,
+    "diagBuild": "PASS typecheck and build",
+    "distributionManifest": "PASS",
+    "realBrowser": "PASS mini/full icon and Console order",
+    "screenshot": "temp/diag-app-browser/navigator-launcher.png"
+  },
+  "toolsDependency": {
+    "requiresRunning8095": false,
+    "implementation": "navigation-agent.mjs -> backend_tools .venv Python -> navigation_readonly.py -> CodeAgents.run_async -> CodeAgent -> CLI",
+    "readonly": "permissions none + readonly execution options; no mutable fallback"
+  },
+  "currentUIReview": {
+    "screenshots": "500x600 isolated browser; no external AI",
+    "guideImages": [
+      "Navigator_101_Diag起動.png",
+      "Navigator_201_単独起動画面.png",
+      "Navigator_401_履歴一覧.png",
+      "Navigator_501_モデル選択.png"
+    ],
+    "sourceHashesScope": "changes contains earlier implementation snapshot, not a claim of testing current hashes"
+  },
+  "currentAdditionalVerification": {
+    "navigationRegressionTests": 31,
+    "welcome": "Code TerminalWelcome reused; 500x600 screenshot; result/history hides welcome",
+    "modelDefault": "saved instance selection > CODE_AIDIY_HERMES_MODEL > auto",
+    "providers": [
+      "aidiy_hermes",
+      "codex_cli",
+      "copilot_cli"
+    ],
+    "mockBrowserRequests": 5,
+    "externalRequestsForUIModelChanges": 0,
+    "readonlyCLITests": 23,
+    "copilotInstalled": true,
+    "libraryUpload": "explicit and default screenshots saved; see Navigator_302 evidence",
+    "naviCatalogRegressionSuite": 65,
+    "naviCatalogFile": "_AIDIY/aidiy_diag/navi_models_info.json",
+    "codeCatalogUnchanged": true
+  },
+  "titlebarWelcomeProgress": {
+    "date": "2026-11-03T17:36:37.101003+00:00",
+    "titlebar": "Code shared 31px / grid / native actions right gap 2px",
+    "native": "standalone and IDE two windows PASS; VR return PASS",
+    "welcome": "Code unbanded AiDiy + navi English text",
+    "progress": "shared prompt-reflect 4.2s alternate; navigate/evaluate, completion, failure, window close, independent other window",
+    "tests": 56,
+    "externalAIRequests": 0,
+    "sameDPIComparison": {
+      "Code": {
+        "height": 31,
+        "font": "14px"
+      },
+      "Navigator": {
+        "height": 31,
+        "font": "14px"
+      }
+    },
+    "tools": "mock ping online -> offline -> online PASS; actual services unchanged",
+    "defaultGoal": "prefilled editable; blank rejected in UI and API before AI",
+    "modelLabel": "Code shared values: white background black text",
+    "library_file_id": "libfile_440f2c16bbd48191aafcc3bfc9218f6a",
+    "file_id": "file_00000000588081f892edf80eb70cf931"
+  }
+}

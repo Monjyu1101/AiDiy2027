@@ -1,0 +1,115 @@
+{
+  "project_name": "四コマ漫画_伝説のプログラマ_ja",
+  "version": "mcp",
+  "status": "complete",
+  "policy": {
+    "visual_generation": "auto",
+    "audio_generation": "edge_female",
+    "language": "ja",
+    "layout": "left_avatar_38_right_content_62",
+    "avatar_model": "../_vrm/VRM_female.vrm",
+    "evidence_source": [
+      "四コマ漫画_伝説のプログラマ_ja.md"
+    ]
+  },
+  "images": [
+    {
+      "scene_id": "scene_000",
+      "status": "generated",
+      "path": "images/scene_000.png",
+      "bytes": 2216030
+    },
+    {
+      "scene_id": "scene_001",
+      "status": "generated",
+      "path": "images/scene_001.png",
+      "bytes": 2189610
+    },
+    {
+      "scene_id": "scene_002",
+      "status": "generated",
+      "path": "images/scene_002.png",
+      "bytes": 2110218
+    },
+    {
+      "scene_id": "scene_003",
+      "status": "generated",
+      "path": "images/scene_003.png",
+      "bytes": 2148415
+    },
+    {
+      "scene_id": "scene_004",
+      "status": "generated",
+      "path": "images/scene_004.png",
+      "bytes": 2128040
+    },
+    {
+      "scene_id": "scene_999",
+      "status": "generated",
+      "path": "images/scene_999.png",
+      "bytes": 3417415
+    }
+  ],
+  "audio": [
+    {
+      "scene_id": "scene_000",
+      "status": "generated",
+      "short_path": "audio/short_scene_000.mp3",
+      "short_bytes": 55296,
+      "short_duration_sec": 9.216,
+      "long_path": "audio/long_scene_000.mp3",
+      "long_bytes": 106272,
+      "long_duration_sec": 17.712
+    },
+    {
+      "scene_id": "scene_001",
+      "status": "generated",
+      "short_path": "audio/short_scene_001.mp3",
+      "short_bytes": 34992,
+      "short_duration_sec": 5.832,
+      "long_path": "audio/long_scene_001.mp3",
+      "long_bytes": 86832,
+      "long_duration_sec": 14.472
+    },
+    {
+      "scene_id": "scene_002",
+      "status": "generated",
+      "short_path": "audio/short_scene_002.mp3",
+      "short_bytes": 38592,
+      "short_duration_sec": 6.432,
+      "long_path": "audio/long_scene_002.mp3",
+      "long_bytes": 86832,
+      "long_duration_sec": 14.472
+    },
+    {
+      "scene_id": "scene_003",
+      "status": "generated",
+      "short_path": "audio/short_scene_003.mp3",
+      "short_bytes": 37728,
+      "short_duration_sec": 6.288,
+      "long_path": "audio/long_scene_003.mp3",
+      "long_bytes": 89712,
+      "long_duration_sec": 14.952
+    },
+    {
+      "scene_id": "scene_004",
+      "status": "generated",
+      "short_path": "audio/short_scene_004.mp3",
+      "short_bytes": 43344,
+      "short_duration_sec": 7.224,
+      "long_path": "audio/long_scene_004.mp3",
+      "long_bytes": 101808,
+      "long_duration_sec": 16.968
+    },
+    {
+      "scene_id": "scene_999",
+      "status": "generated",
+      "short_path": "audio/short_scene_999.mp3",
+      "short_bytes": 72144,
+      "short_duration_sec": 12.024,
+      "long_path": "audio/long_scene_999.mp3",
+      "long_bytes": 88128,
+      "long_duration_sec": 14.688
+    }
+  ]
+}

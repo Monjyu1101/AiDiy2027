@@ -1,0 +1,32 @@
+■ バックエンド落とし穴
+
+1. C採番の使い忘れ
+ 新規テーブル追加時はcore_crud/init.py または apps_crud/init.py に
+ C採番の初期値を追加する
+
+2. 監査フィールドの設定漏れ
+ 全てのCRUDで create_audit_fields または update_audit_fields を使用
+
+3. トランザクション管理
+ 複数テーブル更新は db.commit() でまとめて確定
+ エラー時は必ず db.rollback() を呼び出す
+
+4. Rebootファイルの削除忘れ
+ temp/reboot_core.txt, temp/reboot_apps.txt は自動削除される
+
+■ フロントエンド落とし穴
+
+1. 権限IDの型
+ 数値ではなく文字列型
+ if (authStore.user.権限ID === 1)
+ if (authStore.user.権限ID === '1')
+
+2. ログイン後のリダイレクト
+ stores/auth.ts でAPI応答の初期ページへ遷移し、未設定時は /Xその他 を使う
+
+3. WebSocketのリロード対応
+ URLクエリパラメータ ?セッションID=<uuid> で管理
+
+4. TypeScript型エラー
+ Strict mode無効だが、型エラーは適切に対処
+ any の多用は避ける

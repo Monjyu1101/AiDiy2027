@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>00 用語集</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="01_全体像.html">次へ: 01_全体像</a>
+  </nav>
+
+  <h1>00_用語集</h1>
+  <p>このページは、環境構築ハンズオンで頻出する用語の最小辞典です。迷ったらここに戻って意味を確認してください。</p>
+
+  <h2>開発環境とツール</h2>
+  <table>
+    <tr><th>用語</th><th>意味</th><th>補足</th></tr>
+    <tr><td>uv</td><td>Python 依存関係を高速に扱うツール</td><td><code>uv sync</code> で <code>pyproject.toml</code> から環境を構築</td></tr>
+    <tr><td>npm</td><td>Node.js のパッケージ管理ツール</td><td><code>npm install</code> で <code>package.json</code> の依存関係を取得</td></tr>
+    <tr><td>venv</td><td>Python の仮想環境</td><td>本プロジェクトは通常 <code>backend_server/.venv</code> を利用</td></tr>
+    <tr><td>Vite</td><td>フロントエンド開発サーバー兼ビルドツール</td><td>開発時のポートは 8090</td></tr>
+    <tr><td>Uvicorn</td><td>FastAPI を動かす ASGI サーバー</td><td>core:8091 / apps:8098</td></tr>
+  </table>
+
+  <h2>ネットワークとAPI</h2>
+  <table>
+    <tr><th>用語</th><th>意味</th><th>補足</th></tr>
+    <tr><td>ポート</td><td>通信先を識別する番号</td><td>このプロジェクトは 8090 / 8091 / 8098 を使用</td></tr>
+    <tr><td>localhost</td><td>自分自身のPCを指すホスト名</td><td><code>127.0.0.1</code> と同義</td></tr>
+    <tr><td>Proxy</td><td>リクエストを別サーバーに転送する仕組み</td><td>Vite が <code>/core</code> と <code>/apps</code> を振り分ける</td></tr>
+    <tr><td>CORS</td><td>異なるオリジン間通信を制御する仕組み</td><td>許可設定が不足すると API がブラウザで失敗する</td></tr>
+    <tr><td>Swagger UI</td><td>API をブラウザで試せる画面</td><td><code>http://127.0.0.1:8091/docs</code> と <code>http://127.0.0.1:8098/docs</code></td></tr>
+  </table>
+
+  <h2>OSとプロセス</h2>
+  <table>
+    <tr><th>用語</th><th>意味</th><th>補足</th></tr>
+    <tr><td>プロセス</td><td>実行中プログラムの単位</td><td>Python / Node.js が別プロセスで動く</td></tr>
+    <tr><td>PID</td><td>プロセスID</td><td>OSが各プロセスに割り当てる番号</td></tr>
+    <tr><td>netstat</td><td>ポート使用状況を確認するコマンド</td><td>Windows では <code>netstat -ano</code> が基本</td></tr>
+    <tr><td>taskkill</td><td>Windows でプロセスを停止するコマンド</td><td><code>taskkill /F /T /PID &lt;PID&gt;</code></td></tr>
+    <tr><td>Ctrl+C</td><td>実行中プロセスを停止する操作</td><td><code>_start.py</code> を終了するときに使う</td></tr>
+  </table>
+
+  <h2>データベース</h2>
+  <table>
+    <tr><th>用語</th><th>意味</th><th>補足</th></tr>
+    <tr><td>SQLite</td><td>ファイルベースのRDB</td><td>DBファイルは <code>workspace/AiDiy2027/_data/AiDiy/database.db</code></td></tr>
+    <tr><td>SQLAlchemy</td><td>Python の ORM</td><td>モデル定義と SQL 発行を扱う</td></tr>
+    <tr><td>Alembic</td><td>DB マイグレーションツール</td><td>本プロジェクトの標準運用では未使用</td></tr>
+    <tr><td>create_all()</td><td>モデルからテーブルを作成する処理</td><td>サーバー起動時の初期化で利用</td></tr>
+  </table>
+
+  <h2>認証</h2>
+  <table>
+    <tr><th>用語</th><th>意味</th><th>補足</th></tr>
+    <tr><td>JWT</td><td>トークン形式の認証情報</td><td>ログイン後に発行され API 呼び出し時に利用</td></tr>
+    <tr><td>SECRET_KEY</td><td>JWT の署名に使う秘密鍵</td><td>漏洩するとトークン偽造リスクがある</td></tr>
+    <tr><td>ALGORITHM</td><td>署名アルゴリズム</td><td>通常は <code>HS256</code></td></tr>
+  </table>
+
+  <h2>よく使うコマンド</h2>
+  <table>
+    <tr><th>コマンド</th><th>目的</th></tr>
+    <tr><td><code>python _setup.py</code></td><td>初回セットアップを対話形式で実行</td></tr>
+    <tr><td><code>python _start.py</code></td><td>バックエンド2系統とフロントエンドを一括起動</td></tr>
+    <tr><td><code>cd backend_server &amp;&amp; uv sync</code></td><td>バックエンド依存関係を再同期</td></tr>
+    <tr><td><code>cd frontend_web &amp;&amp; npm install</code></td><td>フロントエンド依存関係を再インストール</td></tr>
+  </table>
+
+  <section>
+    <h2>確認ポイント</h2>
+    <ul>
+      <li>ポート番号は 8090 / 8091 / 8098 で統一されているか</li>
+      <li>パスは <code>workspace/AiDiy2027</code> 基準で読めているか</li>
+      <li>「なぜこのツールを使うか」を説明できるか</li>
+    </ul>
+  </section>
+
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="01_全体像.html">次へ: 01_全体像</a>
+  </nav>
+</body>
+</html>

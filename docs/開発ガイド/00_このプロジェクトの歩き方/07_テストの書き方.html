@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>07. テストの書き方 | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+ <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>07. テストの書き方</h1>
+
+ <section id="overview">
+ <h2>テストの概要</h2>
+ <p>このプロジェクトでは、設定管理の <code>unittest</code>、フロントエンドの型チェック、Swagger UIとブラウザによる手動確認を組み合わせます。</p>
+
+ <div>
+ <strong>この章で学ぶこと</strong>
+ <ul>
+ <li>バックエンドAPIのテスト方法</li>
+ <li>フロントエンドの動作確認方法</li>
+ <li>テストの基本的な流れ</li>
+ <li>デバッグのコツ</li>
+ </ul>
+ </div>
+ </section>
+
+ <section id="backend-test">
+ <h2>バックエンドテスト</h2>
+
+ <div>
+ <strong>重要なポイント</strong>
+ <p>
+ <strong>backend_server の自動テストは <code>backend_server/checks/</code> にあります（AIコア・バックアップ・予測まわり）。</strong><br>
+ 業務APIはSwagger UIを使った手動テストも行います。
+ </p>
+ </div>
+
+ <h3>unittest の実行</h3>
+ <pre><code>cd backend_server
+.venv\Scripts\python.exe -X utf8 -m unittest discover -s checks -v</code></pre>
+ <p>テストは各コンポーネントの <code>checks/</code> に置きます。<code>tests/</code> ディレクトリ、<code>backend_tools</code> の自動テスト、pytestスイートはありません。</p>
+
+ <h3>Swagger UI での手動テスト</h3>
+ <p>バックエンドAPIのテストにはSwagger UI を使用します。</p>
+
+ <h4>1. Swagger UI を開く</h4>
+ <ul>
+ <li><strong>Core API</strong>: <a href="http://127.0.0.1:8091/docs" target="_blank">http://127.0.0.1:8091/docs</a></li>
+ <li><strong>Apps API</strong>: <a href="http://127.0.0.1:8098/docs" target="_blank">http://127.0.0.1:8098/docs</a></li>
+ </ul>
+
+ <h4>2. APIテスト手順</h4>
+ <ol>
+ <li>Swagger UI の右上にある「Authorize」ボタンをクリック</li>
+ <li>ユーザー名: <code>admin</code>、パスワード: <code>********</code> でログイン</li>
+ <li>テストしたいAPIエンドポイントを選択</li>
+ <li>「Try it out」ボタンをクリック</li>
+ <li>「Execute」ボタンでAPIを実行</li>
+ <li>レスポンスの内容を確認</li>
+ </ol>
+
+ <h4>3. 確認ポイント</h4>
+ <ul>
+ <li>正常系: 期待通りのデータが返ること</li>
+ <li>異常系: 適切なエラーメッセージが返ること</li>
+ <li>権限: 権限のないユーザーで403エラーが返ること</li>
+ <li>バリデーション: 不正な入力で422エラーが返ること</li>
+ </ul>
+
+ <div>
+ <strong>補足情報</strong>
+ <p>
+  pytestは導入されていません。現行の自動テストはPython標準の <code>unittest</code> です。<br>
+  テスト対象や実行コマンドは <code>backend_server/checks/</code> の実在ファイルを基準にしてください。
+ </p>
+ </div>
+ </section>
+
+ <section id="test-structure">
+ <h2>テスト構造</h2>
+ <p>自動テストとSwagger UIでの確認は以下の流れで行います。</p>
+
+ <div>
+ <div>
+ <div>ステップ1: 準備</div>
+ <p>変更対象に対応するunittestとAPIエンドポイントを確認</p>
+ </div>
+
+ <div>
+ <div>ステップ2: 実行</div>
+ <p>unittestを実行し、必要に応じてSwaggerでリクエストを実行</p>
+ </div>
+
+ <div>
+ <div>ステップ3: 検証</div>
+ <p>レスポンスの内容を確認</p>
+ </div>
+
+ <div>
+ <div>ステップ4: 記録</div>
+ <p>テスト結果を記録し、不具合があればAPIを修正</p>
+ </div>
+ </div>
+ </section>
+
+ <section id="frontend-test">
+ <h2>フロントエンドテスト</h2>
+ <div>
+ <strong>重要なポイント</strong>
+ <p>
+ フロントエンドも手動テストが基本です。<br>
+ ブラウザで実際に操作して動作を確認します。
+ </p>
+ </div>
+
+ <h3>ブラウザでの確認手順</h3>
+ <ol>
+ <li><a href="http://127.0.0.1:8090/" target="_blank">http://127.0.0.1:8090/</a> をブラウザで開く</li>
+ <li>各画面を操作して表示や動作を確認</li>
+ <li>データの登録・更新・削除が正しく動作するか確認</li>
+ <li>F12キーで開発者ツールを開き、エラーがないか確認</li>
+ </ol>
+
+  <h3>TypeScript 型チェック</h3>
+ <p>フロントエンドのコード品質を確認するためのコマンドです。</p>
+ <pre><code><span># TypeScript 型チェック（ビルドなし）</span>
+cd frontend_web
+npm run type-check</code></pre>
+ <div>
+ <strong>補足</strong>
+ <p>
+ TypeScript は strict mode 無効で運用しています。<br>
+  日常の確認は <code>npm run type-check</code> を使います。<br>
+  <code>npm run build</code> は配布物作成、Docker反映、ビルド成果物確認など実行理由が明確な場合だけ行います。
+ </p>
+ </div>
+ </section>
+
+ <section id="best-practices">
+ <h2>ベストプラクティス</h2>
+ <ol>
+ <li><strong>正常系を先にテスト</strong> — 基本的な動作が正しいことを確認してから異常系に進む</li>
+ <li><strong>境界値を意識する</strong> — 最大値・最小値・空文字などの境界条件をテスト</li>
+ <li><strong>1つずつ変更する</strong> — 複数の変更を同時にテストせず、1つずつ確認する</li>
+ <li><strong>エラーメッセージを読む</strong> — エラーが出たらまずメッセージを正確に読む</li>
+ <li><strong>再現手順を記録</strong> — 不具合を見つけたら再現手順を必ず記録する</li>
+ </ol>
+ </section>
+
+ <section id="next">
+ <h2>次のステップ</h2>
+ <p>テストの方法を理解したら、次は運用とメンテナンスについて学びましょう。</p>
+
+ <div>
+ <a href="08_運用とメンテナンス.html">
+ <span>次の章へ</span>
+ <strong>08. 運用とメンテナンス →</strong>
+ <span>システムの運用と保守について学びます</span>
+ </a>
+ </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+ <a href="06_フロントエンド開発.html">← 前: 06. フロントエンド開発</a> |
+ <a href="_index.html">トップページ</a> |
+ <a href="08_運用とメンテナンス.html">次: 08. 運用とメンテナンス →</a>
+ </p>
+ </footer>
+</body>
+</html>

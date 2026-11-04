@@ -1,0 +1,85 @@
+{
+  "observed": "2026-11-03T10:30:02.718722",
+  "case": "Team public persona summon/chat/retire",
+  "project": "temp/selftest-finite-20261103/team",
+  "persona": "AlanTuring",
+  "request": "おはよう。挨拶を一文だけ返してください。ファイル変更・コマンド実行不要。",
+  "user_sends": 1,
+  "code_agent_runs": 1,
+  "provider": "codex_cli",
+  "requested_model": "auto",
+  "actual_models": [
+    "gpt-6-luna"
+  ],
+  "model_response_count": 2,
+  "visible_response": "おはようございます。",
+  "cli_exit": 0,
+  "session_id": "01a19f04-f1d7-76c0-b154-0bf85bcac4c5",
+  "members_after": [
+    {
+      "要員ID": "admin",
+      "要員名": "admin",
+      "有効": 1,
+      "登録日時": "2026-11-02 10:26:37",
+      "更新日時": "2026-11-02 10:26:37"
+    },
+    {
+      "要員ID": "MELCHIOR",
+      "要員名": "MELCHIOR",
+      "有効": 1,
+      "登録日時": "2026-11-02 10:26:37",
+      "更新日時": "2026-11-02 10:26:37"
+    },
+    {
+      "要員ID": "BALTHASAR",
+      "要員名": "BALTHASAR",
+      "有効": 1,
+      "登録日時": "2026-11-02 10:26:37",
+      "更新日時": "2026-11-02 10:26:37"
+    },
+    {
+      "要員ID": "CASPER",
+      "要員名": "CASPER",
+      "有効": 1,
+      "登録日時": "2026-11-02 10:26:37",
+      "更新日時": "2026-11-02 10:26:37"
+    },
+    {
+      "要員ID": "AlanTuring",
+      "要員名": "AlanTuring",
+      "有効": 0,
+      "登録日時": "2026-11-03 10:26:10",
+      "更新日時": "2026-11-03 10:29:20"
+    }
+  ],
+  "tasks": [
+    {
+      "タスクID": "TK00001006",
+      "状態": "完了",
+      "実行有効": 0,
+      "PID": ""
+    },
+    {
+      "タスクID": "TK00001007",
+      "状態": "完了",
+      "実行有効": 0,
+      "PID": ""
+    }
+  ],
+  "cycle_started": false,
+  "source_changes": false,
+  "final_health": {
+    "8090": 200,
+    "8091": 200,
+    "8093": 200,
+    "8095": 200,
+    "8098": 200,
+    "local8096_listening": false
+  },
+  "agent_tool_note": "会話内部で専用フォルダの入口ファイル存在確認を読み取り実行。利用者依頼はコマンド不要だが調査モードの内部処理を記録。書込み操作なし。",
+  "windows_closed": [
+    "Task",
+    "Team"
+  ],
+  "diag_mini_restored": true
+}

@@ -1,0 +1,23 @@
+{
+  "files": [
+    "temp\\bulk-recheck.py",
+    "temp\\bulk-finish.py",
+    "temp\\finalize-bulk.py",
+    "temp\\narration-taskteam\\bulk_finish.json",
+    "temp\\narration-taskteam\\bulk_finish.mp3",
+    "temp\\narration-taskteam\\bulk_finish.txt",
+    "temp\\narration-taskteam\\bulk_intro.json",
+    "temp\\narration-taskteam\\bulk_intro.mp3",
+    "temp\\narration-taskteam\\bulk_intro.txt",
+    "temp\\narration-taskteam\\bulk_start.json",
+    "temp\\narration-taskteam\\bulk_start.mp3",
+    "temp\\narration-taskteam\\bulk_start.txt",
+    "temp\\bulk-pdf-diag13.png",
+    "temp\\bulk-pdf-diag14.png",
+    "temp\\bulk-pdf-result24.png",
+    "temp\\bulk-pdf-result25.png"
+  ],
+  "count": 16,
+  "method": "Windows Recycle Bin",
+  "emptied": false
+}

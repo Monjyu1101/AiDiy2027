@@ -1,0 +1,483 @@
+{
+  "count": 22,
+  "pages": 363,
+  "generation": "総合テストPDF.mjs: 全22冊exit0、訂正した共通結果/システム起動編のみ追加再生成exit0",
+  "review": "2026-11-03: 22冊の末尾2ページ（44ページ）を描画・目視。追記見出し22/22を抽出確認。437ローカル参照、切れ0。共通結果の旧85章残件表を各文書末尾への案内に整理し全体366→361ページ。元操作章保持。PDF.js TT font警告あり、目視上の文字欠けなし。 バックアップ対象0件: Task/Toolsの2冊のみ再生成exit0、追記ページ目視済み。",
+  "files": [
+    {
+      "file": "セルフテスト,aidiy_avatar,Electron実行編.pdf",
+      "pages": 16,
+      "bytes": 1096301,
+      "rendered": 15,
+      "sha256": "35acffee27ca51fe0e181e1cc1fa688d8202be7914df90ed1820628ac59b2a52",
+      "source_sha256": "4ff9ed4da5cb83067a0c508fb031a2de72be503276d4acbb5bead6c512edaf7c",
+      "image_attachment_review": "last page visually checked: Japanese text, preview/response findings and limitations readable",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "avatar_image_review": "15/16頁目視、部分確認と拒否・未確認の区別明記。文字欠け/重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Web実行編.pdf",
+      "pages": 11,
+      "bytes": 2662846,
+      "rendered": 11,
+      "sha256": "3a79c33cd338b27a052ac268ec8208c70da44e2b7c5bfe8370d9dc222250efd1",
+      "source_sha256": "461f97735562276d692bbf67b4e37faa32ea4218427ae115e637fd95c6544449",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          10,
+          11
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_browser,操作編.pdf",
+      "pages": 15,
+      "bytes": 1577953,
+      "rendered": 14,
+      "sha256": "86753fb129dbf65e00e44f38ac8924933c08c22756ed4f7535b27a0810810a9a",
+      "source_sha256": "fe9780415d932ab8f2856bba2f85d235602813bbd64c4f16fcfc36f8f89e5ed3",
+      "draft_review": {
+        "visual": "PASS: Japanese text, final result paragraphs and Browser chapter table checked; temporary renders recycled",
+        "pages": [
+          14
+        ]
+      },
+      "readonly_followup_review": "Last changed page rendered and visually checked readable; scope and limitations retained",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          14,
+          15
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "boundary_review": "2026-11-03 14/15頁目視。欠け重なりなし"
+    },
+    {
+      "file": "セルフテスト,aidiy_code,操作編.pdf",
+      "pages": 10,
+      "bytes": 710874,
+      "rendered": 9,
+      "sha256": "b8b73a90f95b38307089a4d45e845ebec44695d56746cc17c7f34379276f4696",
+      "source_sha256": "b86fe82a5243fd5af5450fd1cf2709119a63f9e8b0bd8c34a767cd022acfadb2",
+      "image_attachment_review": "last page visually checked: Japanese text, preview/response findings and limitations readable",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          8,
+          9
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "folder_race_review": "2026-11-03 9/10頁目視。文字欠け・重なりなし。未実行の1ケース案を区別"
+    },
+    {
+      "file": "セルフテスト,aidiy_console,操作編.pdf",
+      "pages": 3,
+      "bytes": 797015,
+      "rendered": 3,
+      "sha256": "73e1b565eb46531d6a9ed3a28dd55558207f93d5041cd7bb93223594d4e87a6c",
+      "source_sha256": "d7537b463cbbfc562c3a56a65ffe4f24aceb47afc0e8d4388cea09a5232ff09b",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          2,
+          3
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.pdf",
+      "pages": 29,
+      "bytes": 9613886,
+      "rendered": 28,
+      "sha256": "3a9c98428add1372a5c2d0376511144237e987a8d7306b6472c71b713ac592a9",
+      "source_sha256": "7395f471fcc364e6f972427102020e2bee81e4392ad04214c06d049e2dae8cd9",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          28,
+          29
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "defaults_review": "2026-11-03: 28/29頁目視、欠け重なりなし"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,システム起動編.pdf",
+      "pages": 15,
+      "bytes": 4545608,
+      "rendered": 13,
+      "sha256": "9a87387551ac9666d19920cefed26bf168bdcd8b10ce4f960135b1f20b51a15d",
+      "source_sha256": "2379d23053eb554816c87632b4abd9c681f91e09fa47188b92b24f9c0ce46bbf",
+      "latest_last_page_rendered": 14,
+      "bulk_recheck_review": "Diag p13-14 / common p24-25 rendered and visually checked; full formal bulk startup PASS, scope and auth distinction readable.",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          14,
+          15
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,ランチャー編.pdf",
+      "pages": 28,
+      "bytes": 6017556,
+      "rendered": 28,
+      "sha256": "dcf2fc6a66e0d0bb3e344ae1752e340fb8a5c6ed3840ae1676774d3bffcdb861",
+      "source_sha256": "adb12d41a44bf7b11f5faca96c24dbbb386b6ee936e0241da439d8b8590db111",
+      "readonly_followup_review": "Last changed page rendered and visually checked readable; scope and limitations retained",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          27,
+          28
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,環境確認編.pdf",
+      "pages": 21,
+      "bytes": 7171389,
+      "rendered": 21,
+      "sha256": "52f66112724e9d916a3225188d120e1728bf0305e6a2be3350f71a6d6a5d2cf8",
+      "source_sha256": "0256229f6620b23f8a082dc3d942919c00a303d48e0474349f32d6e714a43f02",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          20,
+          21
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,設定再起動編.pdf",
+      "pages": 16,
+      "bytes": 3672076,
+      "rendered": 15,
+      "sha256": "38109f35bb4486077ba452f73b1731c539243d8eba0e90b8c247d93516ff7ad7",
+      "source_sha256": "f572cbcda7f7545557b404916333bd80b3f5b1bfe2d710fd83f727f5678c7c73",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "diag_folder_review": "2026-11-03: 15/16頁をPDF.jsで描画・目視。追記文字欠け/重なりなし。TT font警告3/5は描画上異常なし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_discord,操作編.pdf",
+      "pages": 23,
+      "bytes": 1660802,
+      "rendered": 22,
+      "sha256": "58d9de716a2cae1424cd5bd5665dbd99de9acd6efa1b9ac502f2d45d1b65e9d1",
+      "source_sha256": "2762ea77efbce8bb4cc9396102ecd159f97cbeacb0c692b541e01a1aa29ca993",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          22,
+          23
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "channel_cancellation_review": {
+        "date": "2026-11-03",
+        "pages": [
+          22,
+          23
+        ],
+        "visual": "末尾2ページ目視。文字欠け・重なりなし。待機中停止と実行中中断の未実施を区別。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_hermes,操作編.pdf",
+      "pages": 2,
+      "bytes": 215642,
+      "rendered": 2,
+      "sha256": "8430e421b6f752ad1d2b8c49ceeb08fe4bceefff2d3862f103998c536953a737",
+      "source_sha256": "8a9f26b417eedaa19481b50c0eb00ec0d5fa852739ac510e2db963311c85c9be",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          1,
+          2
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "hermes_cli_review": "全2頁を描画・目視。文字欠け/重なりなし。モデル確認PASS/会話保留を区別。"
+    },
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.pdf",
+      "pages": 31,
+      "bytes": 3143109,
+      "rendered": 30,
+      "sha256": "cdc6f8bcfc04bcdda194c1449e9e7d1e48d632980a0a5050566ecf4a51ffb683",
+      "source_sha256": "26aa6c0e889a522681295e04df6f4fb5ec298ea07fb7094b14938c00a37aec14",
+      "latest_last_page_rendered": 31,
+      "ai_search_review": "Normal Hermes result/limits rendered and visually checked: IDE p31, common p25, Japanese text readable and not cropped.",
+      "ai_search_review_pages": [
+        31
+      ],
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          30,
+          31
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_live,操作編.pdf",
+      "pages": 15,
+      "bytes": 1055201,
+      "rendered": 14,
+      "sha256": "ccb0966cebc0f7695f05b1cbd1b0b1ee217fa12c772d7bfb619083f2c2e45c07",
+      "source_sha256": "8b6c2d1595e8068917c5053b756b68aeb99d7aafeb8d7f45564f07133cc09318",
+      "image_attachment_review": "last page visually checked: Japanese text, preview/response findings and limitations readable",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          14,
+          15
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "model_review": "2026-11-03 14/15頁目視。文字欠け・重なりなし"
+    },
+    {
+      "file": "セルフテスト,aidiy_slack,操作編.pdf",
+      "pages": 22,
+      "bytes": 2669508,
+      "rendered": 22,
+      "sha256": "80f647c100011c570a6d68add38a315430bd65e846a1f4c1f4a49d2dcc726224",
+      "source_sha256": "8533420879b586f04194860a458b0a5a3d31d9347ec5b8b9965489e15cdd22be",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          21,
+          22
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "channel_cancellation_review": {
+        "date": "2026-11-03",
+        "pages": [
+          21,
+          22
+        ],
+        "visual": "末尾2ページ目視。文字欠け・重なりなし。待機中停止と実行中中断の未実施を区別。"
+      }
+    },
+    {
+      "file": "セルフテスト,aidiy_task,操作編.pdf",
+      "pages": 18,
+      "bytes": 1293044,
+      "rendered": 17,
+      "sha256": "c572a2ea29cfb32567d08128ee33098e05a327aaf1a02a27dcfc736c019c44b7",
+      "source_sha256": "09e0e4a0df59cad480b707bedd7d1369331428e8c745cfb2850007069c500183",
+      "task_once_review": "Final two pages rendered and visually checked: readable Japanese, correct greeting and limited scope; no clipping.",
+      "task_stop_review": "Updated final page visually verified: natural completion before cancellation explicitly unconfirmed; no clipping.",
+      "task_stop_retry_review": "Final page visually checked: bounded cancellation PASS scope and previous attempt separate; readable, no clipping.",
+      "finite_batch_review": {
+        "pages": [
+          16,
+          17
+        ],
+        "visual": "Rendered final two pages visually inspected: Japanese text readable, no clipping; runtime results and limitations retained."
+      },
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          17,
+          18
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "backup_empty_review": "2026-11-03: 修正追記を含む最終ページを描画・目視確認。日本語・54テスト・通常HTTP範囲・参照が読み取れ、欠けや重なりなし。",
+      "final_review": "2026-11-03 末尾の暦条件/Team完了訂正を目視。欠け重なりなし"
+    },
+    {
+      "file": "セルフテスト,aidiy_team,操作編.pdf",
+      "pages": 16,
+      "bytes": 3388382,
+      "rendered": 15,
+      "sha256": "4a7b61cb5b7f7d441342941edf0d1f97858f292ec46fae8bb351e1705e0f29c7",
+      "source_sha256": "d0d6d7d5f4417df2cf028132446c8c01bfcce62a61cfeeaebf2ea78baac5e880",
+      "finite_batch_review": {
+        "pages": [
+          14,
+          15
+        ],
+        "visual": "Rendered final two pages visually inspected: Japanese text readable, no clipping; runtime results and limitations retained."
+      },
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          14,
+          15
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "team_raw_review": {
+        "date": "2026-11-03T12:29:50.782406",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "原文受渡しの実機結果・判定・限界を目視。欠け・重なりなし。"
+      }
+    },
+    {
+      "file": "セルフテスト,backend_tools,主要メソッド編.pdf",
+      "pages": 12,
+      "bytes": 1286593,
+      "rendered": 12,
+      "sha256": "3e7558c848e91c6f458ff2cfe71877da4c2728804b32507a7af6280c1e02eee7",
+      "source_sha256": "6eba44790a39b85002b67377b41c818786a75359a10277e03c91c98fce15ad5a",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          11,
+          12
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "backup_empty_review": "2026-11-03: 修正追記を含む最終ページを描画・目視確認。日本語・54テスト・通常HTTP範囲・参照が読み取れ、欠けや重なりなし。",
+      "final_review": "2026-11-03 末尾の暦条件/Team完了訂正を目視。欠け重なりなし"
+    },
+    {
+      "file": "セルフテスト,frontend_web,AiDiy編.pdf",
+      "pages": 19,
+      "bytes": 7313324,
+      "rendered": 19,
+      "sha256": "cb255f94c3d9361ec2d521723be8f4d2dd4044a5bc1bcdcf8516271cfefa22c8",
+      "source_sha256": "ef07a60ea17be6455711a36ae7c453e3184cde78da65afa37946a6dae5bfd1a4",
+      "latest_last_page_rendered": 19,
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          18,
+          19
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,frontend_web,生産・在庫管理編.pdf",
+      "pages": 16,
+      "bytes": 1141711,
+      "rendered": 16,
+      "sha256": "bb0feb45c72e0c86c49bc6e6ac91ba91c827994025ba4ae3747d60b95ac6822e",
+      "source_sha256": "3f0dc87e201467435a66888858b971c61436d08b6b3b7c08541d5f5ffc7c9ca1",
+      "latest_last_page_rendered": 16,
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,frontend_web,配車管理編.pdf",
+      "pages": 9,
+      "bytes": 666622,
+      "rendered": 9,
+      "sha256": "6f23aa3e1b4692b125a65f15ac24b1cf5201254ce4f959fc425592ed289b00ac",
+      "source_sha256": "db69a5dd9a64b22fbeb03538e5a594c2fd1e6c203b4aac661ef700c9bcc9b50e",
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          8,
+          9
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      }
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.pdf",
+      "pages": 16,
+      "bytes": 577012,
+      "rendered": 28,
+      "sha256": "14d740fe4e8c7b041c8d102ba76cc7675a5f5b3fae0e0ab637fd241d55b99a2e",
+      "source_sha256": "eaf3a86b5ca5980251bd5a4a53fdb6a4167ed2610dd66f785f5cf90fc2963542",
+      "latest_last_page_rendered": 25,
+      "image_attachment_review": "last page visually checked: Japanese text, preview/response findings and limitations readable",
+      "bulk_recheck_review": "Diag p13-14 / common p24-25 rendered and visually checked; full formal bulk startup PASS, scope and auth distinction readable.",
+      "ai_search_review": "Normal Hermes result/limits rendered and visually checked: IDE p31, common p25, Japanese text readable and not cropped.",
+      "ai_search_review_pages": [
+        25
+      ],
+      "draft_review": {
+        "visual": "PASS: Japanese text, final result paragraphs and Browser chapter table checked; temporary renders recycled",
+        "pages": [
+          12,
+          27
+        ]
+      },
+      "task_once_review": "Final two pages rendered and visually checked: readable Japanese, correct greeting and limited scope; no clipping.",
+      "task_stop_review": "Updated final page visually verified: natural completion before cancellation explicitly unconfirmed; no clipping.",
+      "task_stop_retry_review": "Final page visually checked: bounded cancellation PASS scope and previous attempt separate; readable, no clipping.",
+      "readonly_followup_review": "Last changed page rendered and visually checked readable; scope and limitations retained",
+      "finite_batch_review": {
+        "pages": [
+          28,
+          29
+        ],
+        "visual": "Rendered final two pages visually inspected: Japanese text readable, no clipping; runtime results and limitations retained."
+      },
+      "document_audit_review": {
+        "date": "2026-11-03",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "追記を含む末尾2ページを描画・目視。日本語・見出しに欠けや重なりなし。システム起動編は互換範囲訂正後に再確認。"
+      },
+      "team_raw_review": {
+        "date": "2026-11-03T12:29:50.800365",
+        "pages": [
+          15,
+          16
+        ],
+        "visual": "原文受渡しの実機結果・判定・限界を目視。欠け・重なりなし。"
+      }
+    }
+  ],
+  "team_raw_update": "Team/共通結果2冊だけ再生成し末尾2ページを目視確認。",
+  "diag_folder_update": "設定再起動編のみ再生成exit0、末尾読戻しと15/16頁目視済み",
+  "hermes_cli_update": "Hermesのみ生成exit0/2頁目視済",
+  "channel_cancellation_update": {
+    "date": "2026-11-03",
+    "posts": 0,
+    "ai_requests": 0,
+    "guides": [
+      {
+        "file": "セルフテスト,aidiy_discord,操作編.pdf",
+        "pages": 23
+      },
+      {
+        "file": "セルフテスト,aidiy_slack,操作編.pdf",
+        "pages": 22
+      }
+    ]
+  }
+}

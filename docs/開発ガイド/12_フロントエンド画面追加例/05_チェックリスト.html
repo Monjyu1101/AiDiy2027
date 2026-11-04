@@ -1,0 +1,212 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>05_チェックリスト | フロントエンド画面追加例</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+ <style>
+  .checklist label { display: block; margin: 4px 0; cursor: pointer; }
+  .checklist input[type="checkbox"] { margin-right: 6px; }
+  .checklist-group { margin: 0 0 8px 16px; }
+  .checklist-title { font-weight: bold; margin: 12px 0 4px; }
+ </style>
+</head>
+<body>
+ <header>
+ <div>AiDiy Frontend Lab</div>
+ <h1>05 チェックリスト</h1>
+ <p>M系 CRUD 画面を追加するときの確認項目一覧</p>
+ <nav>
+ <a href="_index.html">インデックス</a>
+ <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+ <a href="02_一覧画面.html">02 一覧画面</a>
+ <a href="03_編集画面.html">03 編集画面</a>
+ <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+ <a href="05_チェックリスト.html">05 チェックリスト</a>
+ </nav>
+ </header>
+
+ <main>
+
+ <section>
+ <h2>1. ディレクトリ・ファイル作成チェック</h2>
+ <p>3ファイルが揃っているか確認する。</p>
+ <div class="checklist">
+  <div class="checklist-title">ディレクトリ</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>frontend_web/src/components/Mマスタ/M&lt;テーブル名&gt;/</code> が存在する</label>
+  <label><input type="checkbox" /> <code>frontend_web/src/components/Mマスタ/M&lt;テーブル名&gt;/components/</code> が存在する</label>
+  </div>
+  <div class="checklist-title">ファイル（3ファイルセット）</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>M&lt;テーブル名&gt;一覧テーブル.vue</code>（components/ 配下）が作成済み</label>
+  <label><input type="checkbox" /> <code>M&lt;テーブル名&gt;一覧.vue</code> が作成済み</label>
+  <label><input type="checkbox" /> <code>M&lt;テーブル名&gt;編集.vue</code> が作成済み</label>
+  </div>
+  <div class="checklist-title">共通確認</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 全ファイルが UTF-8 エンコーディングで保存されている</label>
+  <label><input type="checkbox" /> <code>&lt;script setup lang="ts"&gt;</code> 構文を使っている</label>
+  </div>
+ </div>
+ </section>
+
+ <section>
+ <h2>2. 一覧テーブルコンポーネントチェック（M&lt;テーブル名&gt;一覧テーブル.vue）</h2>
+ <div class="checklist">
+  <div class="checklist-title">Props 定義</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>件数制限: boolean</code> prop が定義されている</label>
+  <label><input type="checkbox" /> <code>無効も表示: boolean</code> prop が定義されている</label>
+  <label><input type="checkbox" /> <code>有効</code> 列がテーブルに表示されている（✅ / ☐ 等で視覚的に表示）</label>
+  </div>
+  <div class="checklist-title">データ取得</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>POST /apps/V&lt;テーブル名&gt;/一覧</code> を呼んでいる</label>
+  <label><input type="checkbox" /> リクエストボディに <code>件数制限: props.件数制限</code>（boolean）を渡している（true のときサーバー側で上限1000件のLIMITが適用される）</label>
+  <label><input type="checkbox" /> リクエストボディに <code>無効も表示: props.無効も表示</code>（boolean）を渡している（false のときサーバー側で有効レコードのみに絞られる）</label>
+  </div>
+  <div class="checklist-title">公開インターフェース</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>defineExpose({ loadData })</code> で親から再読み込みを呼べる</label>
+  <label><input type="checkbox" /> ID セルがリンクになっていて編集画面へ遷移できる</label>
+  </div>
+ </div>
+ </section>
+
+ <section>
+ <h2>3. 一覧画面チェック（M&lt;テーブル名&gt;一覧.vue）</h2>
+ <div class="checklist">
+  <div class="checklist-title">UI 要素</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 「件数制限」チェックボックス UI がある</label>
+  <label><input type="checkbox" /> 「無効も表示」チェックボックス UI がある</label>
+  <label><input type="checkbox" /> 「新規」ボタンが <code>?モード=新規</code> へ遷移する</label>
+  <label><input type="checkbox" /> 「再検索」ボタンが一覧テーブルの <code>loadData()</code> を呼ぶ</label>
+  </div>
+  <div class="checklist-title">Props 受け渡し</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>:件数制限="件数制限"</code> を一覧テーブルコンポーネントへ渡している</label>
+  <label><input type="checkbox" /> <code>:無効も表示="無効も表示"</code> を一覧テーブルコンポーネントへ渡している</label>
+  <label><input type="checkbox" /> チェックボックス変更時に <code>handleReload()</code> を呼んで自動再読み込みされる</label>
+  </div>
+  <div class="checklist-title">メッセージ表示</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>route.query.message</code> を受け取り <code>qMessage()</code> で表示する</label>
+  <label><input type="checkbox" /> <code>route.query.type</code>（success / error）によって表示スタイルが変わる</label>
+  </div>
+ </div>
+ </section>
+
+ <section>
+ <h2>4. 編集画面チェック（M&lt;テーブル名&gt;編集.vue）</h2>
+ <div class="checklist">
+  <div class="checklist-title">モード判定</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>モード=新規</code> で空フォーム（create モード）になる</label>
+  <label><input type="checkbox" /> ID パラメータで既存データを取得して表示（edit モード）になる</label>
+  <label><input type="checkbox" /> <code>モード=表示</code> で全入力欄が readonly（view モード）になる</label>
+  </div>
+  <div class="checklist-title">フォーム定義</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>reactive()</code> で <code>form</code> オブジェクトを定義している</label>
+  <label><input type="checkbox" /> <code>form.有効</code>（boolean）が含まれている</label>
+  <label><input type="checkbox" /> <code>errors</code> と <code>touched</code> オブジェクトが定義されている</label>
+  </div>
+  <div class="checklist-title">バリデーション</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>requiredFields</code>（computed）で必須フィールドを定義している</label>
+  <label><input type="checkbox" /> 保存前に <code>validateForm()</code> を呼んでいる</label>
+  <label><input type="checkbox" /> エラー時に対象フィールドに <code>input-error</code> クラスが付く</label>
+  </div>
+  <div class="checklist-title">論理削除</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 削除前に <code>qConfirm()</code> で確認ダイアログを出している（native confirm 不使用）</label>
+  <label><input type="checkbox" /> <code>/apps/M&lt;テーブル名&gt;/削除</code> を呼んでいる</label>
+  <label><input type="checkbox" /> 成功時に一覧へリダイレクト（<code>?message=...&type=success</code>）している</label>
+  </div>
+  <div class="checklist-title">エラーハンドリング</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 全 API 呼び出しを <code>try-catch</code> で囲んでいる</label>
+  <label><input type="checkbox" /> エラー時に <code>qMessage(message, 'error')</code> を呼んでいる</label>
+  </div>
+ </div>
+ </section>
+
+ <section>
+ <h2>5. ルーティングチェック</h2>
+ <div class="checklist">
+  <div class="checklist-title">appsRouter.ts</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>/Mマスタ/M&lt;テーブル名&gt;/一覧</code> ルートが登録されている</label>
+  <label><input type="checkbox" /> <code>/Mマスタ/M&lt;テーブル名&gt;/編集</code> ルートが登録されている</label>
+  <label><input type="checkbox" /> 両ルートに <code>meta: { requiresAuth: true, title: '...' }</code> が設定されている</label>
+  <label><input type="checkbox" /> <code>component</code> が動的 import（<code>() => import('...')</code>）になっている</label>
+  </div>
+  <div class="checklist-title">メニュー（Mマスタ.vue）</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>Mマスタ.vue</code> に新しいメニューカードが追加されている</label>
+  <label><input type="checkbox" /> <code>router-link to="/Mマスタ/M&lt;テーブル名&gt;/一覧"</code> が設定されている</label>
+  </div>
+ </div>
+ </section>
+
+ <section>
+ <h2>6. 動作確認チェック</h2>
+ <p>以下をブラウザで実際に操作して確認する（M商品・M車両 の動作を参考に）。</p>
+ <div class="checklist">
+  <div class="checklist-title">一覧表示</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> <code>/Mマスタ/M&lt;テーブル名&gt;/一覧</code> へ正常に遷移できる</label>
+  <label><input type="checkbox" /> 「再検索」でデータが表示される（<code>/apps/V&lt;テーブル名&gt;/一覧</code> が呼ばれる）</label>
+  <label><input type="checkbox" /> 「件数制限 ON」でレコード数が制限される</label>
+  <label><input type="checkbox" /> 「件数制限 OFF」で全件表示される</label>
+  <label><input type="checkbox" /> 「無効も表示 ON」で有効=false のレコードも表示される</label>
+  <label><input type="checkbox" /> 「無効も表示 OFF」で有効=true のレコードのみ表示される</label>
+  </div>
+  <div class="checklist-title">新規登録</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 「新規」押下で <code>?モード=新規</code> へ遷移してフォームが空になる</label>
+  <label><input type="checkbox" /> 必須項目が空のまま保存するとバリデーションエラーが表示される</label>
+  <label><input type="checkbox" /> 保存で <code>/apps/M&lt;テーブル名&gt;/登録</code> が呼ばれる</label>
+  <label><input type="checkbox" /> 成功後に一覧へリダイレクトして成功メッセージが表示される</label>
+  </div>
+  <div class="checklist-title">変更</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> ID リンク押下で編集画面へ遷移し既存データが表示される</label>
+  <label><input type="checkbox" /> 保存で <code>/apps/M&lt;テーブル名&gt;/変更</code> が呼ばれる</label>
+  <label><input type="checkbox" /> 成功後に一覧へリダイレクトして成功メッセージが表示される</label>
+  </div>
+  <div class="checklist-title">削除（論理削除）</div>
+  <div class="checklist-group">
+  <label><input type="checkbox" /> 削除ボタンで <code>qConfirm</code> ダイアログが表示される</label>
+  <label><input type="checkbox" /> キャンセルで何も起きない</label>
+  <label><input type="checkbox" /> OK で <code>/apps/M&lt;テーブル名&gt;/削除</code> が呼ばれる</label>
+  <label><input type="checkbox" /> 一覧へ戻り「〜の有効をオフにしました」メッセージが表示される</label>
+  <label><input type="checkbox" /> 「無効も表示 ON」で削除済みレコードが一覧に表示される</label>
+  </div>
+ </div>
+
+ <h3>参考：コードサンプル（checklist.txt）</h3>
+ <pre data-src="code_samples/checklist.txt" data-label="M商品 実装チェックリスト">
+ <code>...</code>
+ </pre>
+
+ <h3>参考：動作確認手順（test_flow.txt）</h3>
+ <pre data-src="code_samples/test_flow.txt" data-label="M商品 動作確認手順">
+ <code>...</code>
+ </pre>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

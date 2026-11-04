@@ -1,0 +1,65 @@
+{
+  "id": "Hermes_201",
+  "date": "2026-11-03T12:52:16.557070",
+  "mode": "Windows通常CLI / aidiy_hermes / ルートcwd",
+  "session": "20261103_124724_b02b2e",
+  "provider": "openai-codex (picker: OpenAI OAuth / openai_oauth)",
+  "models": [
+    "gpt-6.1-sol",
+    "gpt-6.1-sol-900k",
+    "gpt-6.1-sol"
+  ],
+  "selection": "/model→OpenAI OAuth→同一providerのモデル選択、復帰も同じ通常選択画面",
+  "status_checked_after_each": true,
+  "tokens": 0,
+  "agent_running": false,
+  "conversation_result": "保留・未送信",
+  "ai_question_sends": 0,
+  "reason": "通常会話はプロジェクト外の~/.hermes/memories/USER.mdを自動文脈に含む。既存1746bytes、内容は今回読まず。先行プロフィール承認はIDE検索用であり今回CLI会話への拡大は未確定。共有文脈除外やソース変更はしない。",
+  "code_evidence": [
+    "command_hermes/core/agent_init.py:1907",
+    "command_hermes/core/system_prompt.py:937",
+    "command_hermes/tools/memory_tool.py:get_builtin_memory_store_flags"
+  ],
+  "config_sha256_before": "887a8c6ce7770e158c54b807196119407b5758282af2332889055bcefe1ef226",
+  "config_sha256_after": "887a8c6ce7770e158c54b807196119407b5758282af2332889055bcefe1ef226",
+  "config_unchanged": true,
+  "exit": "/quit→Goodbye→ルートcmdへ復帰→exit",
+  "source_changes": false,
+  "voice": {
+    "provider": "edge",
+    "voice": "ja-JP-NanamiNeural",
+    "ratio": 1.2,
+    "serial_local_play_completed": 2
+  },
+  "pdf_count": 22,
+  "pdf_pages": 362,
+  "broken_refs": [],
+  "manifest_errors": [],
+  "final_services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  },
+  "final_windows": "専用CLI終了・Diagミニ維持"
+}

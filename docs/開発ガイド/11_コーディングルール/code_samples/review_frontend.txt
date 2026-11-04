@@ -1,0 +1,12 @@
+■ フロントエンド コードレビュー チェックリスト
+
+[ ] 全ファイルUTF-8エンコーディング
+[ ] script setup 使用（Composition API）
+[ ] qAlert/qConfirm 使用（ネイティブダイアログ不使用）
+[ ] エラーハンドリング（try-catch）
+[ ] qTubler 使用（統一テーブルUI）
+[ ] 日本語命名規約に従っている
+[ ] コンポーネントタグはASCII名（<component :is="...">使用）
+[ ] M/T/V/S系は router/appsRouter.ts、C/A系は router/coreRouter.ts へルート追加
+[ ] カテゴリメニューへのカード追加
+[ ] 権限IDは文字列比較（'1', '2' など）

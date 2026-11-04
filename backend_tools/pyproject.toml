@@ -1,0 +1,37 @@
+[project]
+name = "chrome-devtools-mcp"
+version = "0.1.0"
+description = "Chrome DevTools Protocol を MCP ツールとして公開するサーバー"
+requires-python = ">=3.13"
+dependencies = [
+    "psutil",
+    "mcp[cli]>=2,<3",
+    "fastapi",
+    "starlette",
+    "uvicorn",
+    "websockets",
+    "Pillow",
+    "screeninfo",
+    "pyautogui",
+    "psycopg[binary]",
+    "edge-tts",
+    "google-genai",
+    "openai",
+    "anthropic",
+    "claude-agent-sdk",
+    "requests",
+    "httpx",
+    "PyYAML",
+    "speechrecognition",
+    "lameenc",
+    "uiautomation; sys_platform == 'win32'",
+    "numpy",
+    "websocket-client",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

@@ -1,0 +1,15 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+.ai-settings-tab{min-height:0;overflow:auto;padding:16px;color:#ddd}.ai-settings-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px}.ai-settings-toolbar h2{font-size:16px;margin:0}.ai-settings-login{display:flex;flex-wrap:wrap;align-items:end;gap:12px}.ai-settings-login label{display:grid;gap:5px}.ai-settings-login input{background:#171717;color:#eee;border:1px solid #555;border-radius:4px;padding:7px;max-width:100%}
+
+/* 固定高のDiag内では、このタブ自身を残り高さに収めて末尾までスクロールする。 */
+#app > .ai-settings-tab { flex: 1 1 auto; min-width: 0; }
+.ai-settings-tab .config-panel-embedded,
+.ai-settings-tab .config-panel { height: auto; }
+.ai-settings-tab .config-panel-body { overflow: visible; flex: none; }
+.ai-settings-tab .config-panel-body p { color: #b8c7d5; }
+.ai-settings-tab .config-panel-body .config-panel-error { color: #b91c1c; }
+.ai-settings-tab .config-panel-header button { background: #fff; color: #0f172a; }

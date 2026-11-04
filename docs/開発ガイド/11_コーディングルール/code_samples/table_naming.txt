@@ -1,0 +1,15 @@
+■ テーブルプレフィックス
+
+C = Core/Common (C権限, C利用者, C採番)
+M = Master (M配車区分, M車両, M商品, M取引先分類, M取引先, M商品構成)
+T = Transaction (T配車, T生産, T商品入庫, T商品出庫, T商品棚卸)
+V = View (V利用者, V車両, V商品, V取引先分類, V取引先, V商品推移表)
+ ※ Database VIEWは作成しない。生SQLで実装
+S = Scheduler/Special (S配車_週表示, S配車_日表示, S生産_週表示, S生産_日表示)
+A = AI/Advanced (AIコア, A会話履歴, Aタスク要求, Aタスク明細, Aチーム要員)
+X = Experimental (Xテトリス, Xインベーダー, Xリバーシ, X立体リバーシ, X世界の絶景, X太陽系, Xドッグファイト, Xビデオ)
+
+■ 命名パターン
+<プレフィックス><テーブル名>
+例: C利用者, M商品, T配車
+

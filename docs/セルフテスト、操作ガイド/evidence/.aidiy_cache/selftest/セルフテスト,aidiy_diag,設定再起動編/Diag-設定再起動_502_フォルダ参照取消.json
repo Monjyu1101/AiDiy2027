@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-03T12:43:17.690136",
+  "id": "Diag-設定再起動_502",
+  "mode": "Windows Diag Electron / 設定再起動",
+  "result": "PASS",
+  "field": "Code AI Setting / フォルダ / CODE_BASE_PATH",
+  "before": "<USERPROFILE>\\Desktop\\AiDiy2027_dev",
+  "selected": "<USERPROFILE>/Desktop/AiDiy2027_dev/temp/selftest-diag-folder-20261103/",
+  "checks": {
+    "native_dialog_selection": true,
+    "cancel_dialog_retains_selected_path": true,
+    "cancel_form_returns_login_password_empty": true,
+    "relogin_restores_original_path": true,
+    "config_16_hashes_equal": true
+  },
+  "config_hashes_before": {
+    "_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+    "_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+    "_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+    "_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+    "_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+    "_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+    "_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+    "_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+    "_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+    "_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+    "_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+    "_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+    "_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+    "_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+    "_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+    "_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+  },
+  "config_hashes_after": {
+    "_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+    "_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+    "_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+    "_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+    "_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+    "_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+    "_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+    "_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+    "_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+    "_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+    "_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+    "_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+    "_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+    "_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+    "_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+    "_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+  },
+  "save_apply_restart": false,
+  "ai_sends": 0,
+  "source_changes": false,
+  "input_note": "初回はネイティブダイアログへのキー入力が反映されず元フォルダを選択。次回は欄をクリックして貼付値を目視後に選択し専用フォルダ反映を確認。エスケープは前面フォーカス未取得で閉じなかったため取消ボタンを通常クリック。",
+  "pdf_count": 22,
+  "pdf_pages": 362,
+  "pdf_review_pages": [
+    15,
+    16
+  ],
+  "broken_references": [],
+  "manifest_hash_errors": [],
+  "audio": {
+    "engine": "edge",
+    "voice": "ja-JP-NanamiNeural",
+    "ratio": 1.2,
+    "serial_local_play_completed": 3
+  },
+  "final_services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  },
+  "final_ui": "Diagミニ、試験ダイアログなし"
+}

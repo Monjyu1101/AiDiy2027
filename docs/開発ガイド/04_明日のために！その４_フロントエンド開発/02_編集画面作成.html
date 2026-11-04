@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 編集画面作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="01_準備と進め方.html">前へ: 01_準備と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_ルーティング設定.html">次へ: 03_ルーティング設定</a>
+  </nav>
+
+  <h1>02_編集画面作成</h1>
+  <p>編集画面は新規/編集/表示モードを1つのコンポーネントで扱う構成にします。URLクエリでモードを切り替える設計です。</p>
+
+  <h2>対象ファイル</h2>
+  <p><code>workspace/AiDiy2027/frontend_web/src/components/Mマスタ/M商品/M商品編集.vue</code></p>
+  <p>実装スタイルは <code>&lt;script setup lang="ts"&gt;</code>（Composition API）を前提にします。</p>
+
+  <h2>役割</h2>
+  <ul>
+    <li>フォーム状態管理（商品ID、商品名、単位、商品備考）</li>
+    <li>必須チェックとエラー表示</li>
+    <li>取得/登録/変更/削除APIの呼び出し</li>
+    <li>完了後の一覧画面への遷移</li>
+  </ul>
+
+  <h2>参照コード</h2>
+  <p>以下は <code>code_samples/M商品編集.vue</code> の内容です。</p>
+  <pre data-src="code_samples/M商品編集.vue"><code>読み込み中...</code></pre>
+
+  <h2>実装ポイント</h2>
+  <table>
+    <tr><th>観点</th><th>要点</th></tr>
+    <tr><td>モード判定</td><td>queryのモード/商品IDから新規・編集・表示を切り替える</td></tr>
+    <tr><td>バリデーション</td><td>必須項目は blur/input で段階的にチェック</td></tr>
+    <tr><td>保存処理</td><td>新規は登録API、編集は変更APIを呼ぶ</td></tr>
+    <tr><td>削除処理</td><td>確認ダイアログ後に削除APIを呼ぶ</td></tr>
+    <tr><td>監査表示</td><td>その他タブで登録/更新情報を表示する</td></tr>
+  </table>
+
+  <h2>AGENTS準拠メモ</h2>
+  <ul>
+    <li>VueコンポーネントタグはASCII名のみを使用する（日本語タグを直接書かない）</li>
+    <li>日本語名コンポーネントを使う場合は <code>&lt;component :is=&quot;...&quot; /&gt;</code> を使う</li>
+    <li>API呼び出しは <code>workspace/AiDiy2027/frontend_web/src/api/client.ts</code> の <code>apiClient</code> を利用する</li>
+    <li>ルート遷移先は M/T/V/S系なら <code>workspace/AiDiy2027/frontend_web/src/router/appsRouter.ts</code>、C/A系なら <code>coreRouter.ts</code> と一致させる</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 新規モードで商品ID入力が有効</li>
+    <li>[ ] 編集モードで商品IDが固定表示</li>
+    <li>[ ] 保存成功後に一覧へ戻る</li>
+    <li>[ ] 入力不備で適切なエラーメッセージが出る</li>
+  </ul>
+
+  <nav>
+    <a href="01_準備と進め方.html">前へ: 01_準備と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_ルーティング設定.html">次へ: 03_ルーティング設定</a>
+  </nav>
+</body>
+</html>
+

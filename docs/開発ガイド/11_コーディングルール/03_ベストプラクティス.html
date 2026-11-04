@@ -1,0 +1,156 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>03_ベストプラクティス | コーディングルール</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Docs</div>
+ <h1>コーディングルール</h1>
+ <p>03 ベストプラクティス</p>
+ <nav>
+ <a href="_index.html">目次</a>
+ <a href="01_命名規則.html">01 命名規則</a>
+ <a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a>
+ <a href="03_ベストプラクティス.html">03 ベストプラクティス</a>
+ <a href="04_アンチパターン.html">04 アンチパターン</a>
+ <a href="05_レビューチェック.html">05 レビューチェック</a>
+ </nav>
+ </header>
+
+ <main>
+ <section>
+ <h2>バックエンド</h2>
+ <pre data-src="code_samples/best_backend.py" data-label="バックエンドの推奨例">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <h2>フロントエンド</h2>
+ <pre data-src="code_samples/best_frontend.ts" data-label="フロントエンドの推奨例">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <h2>件数制限の実装ルール（バックエンド）</h2>
+ <p>一覧エンドポイントは必ず件数制限を設ける。系統によって使う方法が異なる。</p>
+
+ <h3>V系・T系：list_controls.py を使う</h3>
+ <p>直接 <code>.limit()</code> を書いてはいけない。<code>list_controls.py</code> の関数を必ず使用する。</p>
+ <pre><code class="language-python"># V系・T系 一覧エンドポイントの件数制限（正しいパターン）
+from list_controls import append_active_condition, get_limit_clause
+
+# 有効フラグの絞り込みも list_controls で行う
+append_active_condition(conditions, request, 's."有効"')
+
+# LIMIT 句と値を取得して SQL に組み込む
+limit_sql, limit_value = get_limit_clause(request)
+params = {}
+if limit_value is not None:
+    params["limit"] = limit_value
+
+sql = f"""
+    SELECT ...
+    FROM ...
+    WHERE {where_clause}
+    ORDER BY s."商品ID"
+    {limit_sql}
+"""
+result = db.execute(text(sql), params).fetchall()
+</code></pre>
+
+ <h3>M系・C系：MAX_ITEMS 定数を Router 上部に定義して使う</h3>
+ <pre><code class="language-python"># M系・C系 Router ファイル上部に定義
+MAX_ITEMS = 10000
+
+# 一覧クエリで使用
+items = (
+    db.query(models.M商品)
+    .filter(models.M商品.有効 == True)
+    .order_by(models.M商品.商品ID)
+    .limit(MAX_ITEMS)
+    .all()
+)
+</code></pre>
+ </section>
+
+ <section>
+ <h2>論理削除の実装ルール（バックエンド）</h2>
+ <p>物理削除（<code>db.delete()</code> / <code>DROP</code>）は原則禁止。削除は「有効フラグを False にする」論理削除で行う。</p>
+ <pre><code class="language-python"># /削除 エンドポイントの正しい実装パターン
+@router.post("/M商品/削除")
+def M商品_削除(request: M商品削除Request, db: Session = Depends(get_db), 認証情報=Depends(verify_token)):
+    item = db.query(models.M商品).filter(models.M商品.商品ID == request.商品ID).first()
+    if not item:
+        return {"status": "NG", "message": "対象データが見つかりません"}
+
+    # 論理削除: 有効フラグを False にする
+    item.有効 = False
+    for key, value in update_audit_fields(認証情報).items():
+        setattr(item, key, value)
+    db.commit()
+    db.refresh(item)  # 削除後もレコードを返す（フロントの状態更新のため）
+
+    return {"status": "OK", "message": "商品の有効をオフにしました", "data": item}
+</code></pre>
+ <ul>
+ <li>レスポンスの <code>message</code> は「〜の有効をオフにしました」形式にする</li>
+ <li><code>db.refresh(item)</code> を必ず呼んでレコードを返す（フロント側の状態更新に必要）</li>
+ </ul>
+ </section>
+
+ <section>
+ <h2>一覧画面の標準パターン（フロントエンド）</h2>
+ <p>一覧画面には「件数制限」「無効も表示」の制御を必ず実装する。</p>
+
+ <h3>親コンポーネント（一覧.vue）の state 定義</h3>
+ <pre><code class="language-typescript">// 一覧.vue — 必須の state
+const 件数制限 = ref(true);
+const 無効も表示 = ref(false);
+
+// 「有効」列の表示制御: 無効も表示している場合だけ列を出す
+const 有効列表示 = computed(() => 無効も表示.value);
+</code></pre>
+
+ <h3>チェックボックス UI（一覧画面に必ず設置）</h3>
+ <pre><code class="language-html">&lt;label&gt;
+  &lt;input type="checkbox" v-model="件数制限" @change="handleReload" /&gt; 件数制限
+&lt;/label&gt;
+&lt;label&gt;
+  &lt;input type="checkbox" v-model="無効も表示" @change="handleReload" /&gt; 無効も表示
+&lt;/label&gt;
+</code></pre>
+
+ <h3>一覧テーブルコンポーネントの props 定義</h3>
+ <pre><code class="language-typescript">// components/一覧テーブル.vue
+const props = defineProps({
+  件数制限: { type: Boolean, default: true },
+  無効も表示: { type: Boolean, default: false },
+});
+</code></pre>
+
+ <h3>API リクエストへの組み込み</h3>
+ <pre><code class="language-typescript">// 一覧テーブルコンポーネント内での API 呼び出し
+const res = await apiClient.post('/apps/V商品/一覧', {
+  件数制限: props.件数制限,
+  無効も表示: props.無効も表示,
+});
+</code></pre>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / コーディングルール</footer>
+</body>
+</html>

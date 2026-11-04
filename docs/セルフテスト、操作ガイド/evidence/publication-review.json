@@ -1,0 +1,215 @@
+{
+  "scope": "52 previously ignored self-test evidence files only",
+  "review": "Public evidence uses aliases for channel/message/thread identifiers and relative message times. User home paths are masked. Test verdicts and message relationships are retained. Current copies only; no comparison originals. This is not a repository-wide privacy audit.",
+  "files": [
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_Image素材自動送信.json",
+      "sha256": "188f777e5f00c150c3d64303190561e023dd00e813aa5bd82ce9b16a102563c0"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_OpenAI項目通知修正.json",
+      "sha256": "409b649b38df87f7837e0dfcca99a78e765777a8669a4fbf6b4c3f3c0994ce1c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_403_URL下書き両宛先.json",
+      "sha256": "12c6e56585383854c58b20fe2e6e6a03a24ee2224b48895c4a20c9134556fa2f"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_404_非空下書き保持.json",
+      "sha256": "945bb9ef1b976efbb47ac6ad9869b61c661fb82efda59654ed66934dd6f480ed"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_Live画像付き下書き受信.json",
+      "sha256": "0fdc2829e22bbef6eb130b01fe3500aea7edbe62bb7a949d1e53a09e98284b32"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_試験素材/index.html",
+      "sha256": "6e0e7db68ef6c1f15d4781c81808f5aa01175ac31ee4ce9047cfa4ce64e95c0a"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_browser,操作編/Browser_405_試験素材/試験ページ撮影.png",
+      "sha256": "82991344500532f4d092e5b3ee3a6f7913c67b6dce13924e7f285e754798dc25"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode実機競合準備.json",
+      "sha256": "99ebbbdc88587b993ceaa6d529776a147f85e01ab66730e82dbfb01ca5731bcd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_VSCode競合隔離試験.json",
+      "sha256": "69d1eefba50fdf03eb78ae405a7f60d8fc4952d493e289bccecb80b7051faedf"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_フォルダ判定隔離試験.json",
+      "sha256": "4d9329bedb7b1abeaa83e96addca46d06ab9ecc9c6e62db1d23c0cad6a25a154"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.json",
+      "sha256": "ed137f993aaeca9488586d72d0dfcea1bfbf430cedf917050d4c877bbd2a818b"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_会話競合隔離試験.tap.txt",
+      "sha256": "bd78a821b50af671ef4a3883a8e5ad58910f3f56b6a249c2977a65f4aca54cfd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.json",
+      "sha256": "3b3b0ebfdde02aa6c01c0cd26f2218b7fcdaa6f74cbdb2db24a94595bbb3eede"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験.tap.txt",
+      "sha256": "485588d5acfac965012fa97d4f80e24d0ed56b586430f61d017434ccb2eade70"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験準備.json",
+      "sha256": "23d1397bdd62841798255b5fa73c93e6bcd9c5b765211f5e44791dc6a11ff3ce"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_code,操作編/Code_301_単独中断試験準備.tap.txt",
+      "sha256": "4f8760d178688b9dc9de4115f46d69f99b9a5986cd871b6732084c29800ec999"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+      "sha256": "24e7a5bf5ebea8c67eb230e9593a1857365bba665f0b22da910ee04feffc1a9e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_設定API隔離試験.json",
+      "sha256": "0a7aff400bd091f569a15896f2085642ed8802128638279cbc7338d4ff942b79"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_設定API隔離試験.tap.txt",
+      "sha256": "b4f35ae96f1727ca934a94d1ad29e226b5e9f893cc6eaca11b83bb786c81d09c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/auth-validation-fix.diff",
+      "sha256": "0d3605dc0600c03ad896787c0a4dc634171c1377aad8aa1ebd2b0d769c14298e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/bulk-recheck.json",
+      "sha256": "e6ba6ca8297e2b231cecddab9c75a8894f3c2905e124158064c4a6d5943aef3e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/recycled-bulk-trial.json",
+      "sha256": "75a51c5423334ad8019163e2a883de34742e3206d5f23e717a64b1cd7c64cec0"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/recycled-recovery-trial.json",
+      "sha256": "0d3a319ff5bc79e37854dc9c24e8d2250691044aa456d6ed5bc7b66026d91884"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-processes-after.json",
+      "sha256": "d0b23931fb34f8c806e6ba91b046a1723033fcf1b1610621627491b52befff7a"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-processes-before.json",
+      "sha256": "a5c0a9e0aa2b4d311bb9acb93558ff8aee5fa22a1987215f7f41b8be71d27230"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,システム起動編/server-recovery-results.json",
+      "sha256": "1278b64f09f5ab9cd18a094c891722cf60cafb97e80750fc799d0dfa662e65e9"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,ランチャー編/Diag-ランチャー_102_標準起動導線.json",
+      "sha256": "1097f63ff79a78652964b6453e38616279b939cffc0f024ac525b2a071b1b4da"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,設定再起動編/Diag-設定再起動_502_フォルダ参照取消.json",
+      "sha256": "85f7d115e025c87a1f435a97552e4c666879b8039a274710274cb3a88653eabe"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.json",
+      "sha256": "5de4891d4a0151493cde9e25474cecc147498a1b329472f53546e57402263109"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_中断隔離試験.tap.txt",
+      "sha256": "1f73a312277ab2f9abdceb96db08d26042e01221c2aa9edcd5de366c578b5f08"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_discord,操作編/Discord_503_実要求中断.json",
+      "sha256": "07ce5e30aaf5c94143f5033240e73281018ea890c06036665897de425ce1c3a4"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_201_CLIモデル切替復帰.json",
+      "sha256": "fb2a414aa04e2957c18c779b117d574632593a9df31eb9c754d3a7d72a47fb7d"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+      "sha256": "ca2c1f271bd6f391e51fc78f9ecf88ca1214721ccf36ff1d0919fb8f7e92ee59"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.json",
+      "sha256": "72120e7c0efb591054dc4c943e095eb4aba40294ed4dea23bdafc4d3082455eb"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.json",
+      "sha256": "c35d9f410dda044dbc9edf12cc18181332a082e8143d2ae902a05067e718708d"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_再接続隔離試験.tap.txt",
+      "sha256": "6864a45cbb0b6677ac5dcf943ae62f7cd56a4ee0d063096e6ed5aaba614bc760"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.fixture.txt",
+      "sha256": "03e0049922925ab6688fbf51a9481c72da4dbfed9dae6b183e35881a89bc8bf9"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.json",
+      "sha256": "2a30bf3cb397b0ae33bc161d3d1989fce0ab08a3a8ea24e4f6db2fbcd551e5b7"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_失敗後復旧隔離試験.tap.txt",
+      "sha256": "40f831c2249895a1f4251ad6ecf9f779d4a27c1f054afca44be4e989a1b2c7cf"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_live,操作編/Live_405_実機再接続条件照合.json",
+      "sha256": "baad94b148603d56dd911777aeb159679d646d06f6693a0e7fe537fca400925f"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.json",
+      "sha256": "8bc4ac8b34bd76d39394ca07fb271c30a8f97915499a10f248191eeb94f922d4"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_中断隔離試験.tap.txt",
+      "sha256": "5837fce7c169c2ca5621985e797ac4932c422d45344b5b17d127928fb33e80f7"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_slack,操作編/Slack_503_実要求中断.json",
+      "sha256": "217b1335e247ceedb11c47a67dbe2af31c29dc8e460a6d51e6068a5a11118c6e"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_302_単発実行照合.json",
+      "sha256": "9ac6ccdebd4314a1931203692cdc3cc726ddaf1ee2faea57a0944790fdec26b5"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_402_中止前完了.json",
+      "sha256": "9c4763bdcd7358b4614cc0a93842d03645aff1852141ce24a208c6e1b9f9ad7c"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_403_有限待機中止.json",
+      "sha256": "14ad9dffc0d492cfcb8d20ca74afb12bf10b5300054dd83009a93fac75e97362"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_504_時間指定発火.json",
+      "sha256": "9ee17ec80961af6ed9b8ba7da2ef347f8ebd6d0b53c0fd02d35caadb817da668"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_task,操作編/Task_505_フォルダ変化発火.json",
+      "sha256": "c372231850dc361887d5269984ce5031ee73b8f7774cdc7efb360076ab0921cd"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_203_召喚会話退場.json",
+      "sha256": "0b77a84595281fa929f81290503da208cc364a81512d4be4bad63b5f840599c8"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_404_有限SPDCA.json",
+      "sha256": "7997535a8e143e7f85d4ce43bf891ae25d206add39a5638deed9f9cd837726ef"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_team,操作編/Team_405_D原文引継ぎ.json",
+      "sha256": "040e19d6a44c14d73d52d12c65dadea3e4d365a988c199b7c6566ec822cf3447"
+    },
+    {
+      "file": "evidence/.aidiy_cache/selftest/セルフテスト,backend_tools,主要メソッド編/Tools_901_空対象バックアップ.json",
+      "sha256": "4052f8724f17c25d6547338c748d0eab14433d095ff942a357d53558a210bf3f"
+    }
+  ],
+  "total": 52
+}

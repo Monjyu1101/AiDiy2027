@@ -1,0 +1,70 @@
+TAP version 13
+# Subtest: two fixed routes forward JWT, write false stays false and payload is filtered
+ok 1 - two fixed routes forward JWT, write false stays false and payload is filtered
+  ---
+  duration_ms: 3.0928
+  type: 'test'
+  ...
+# Subtest: strict input rejects arbitrary URL command path secret settings and absent login
+ok 2 - strict input rejects arbitrary URL command path secret settings and absent login
+  ---
+  duration_ms: 2.152
+  type: 'test'
+  ...
+# Subtest: invalid ports fail closed, config errors and transport failures are sanitized
+ok 3 - invalid ports fail closed, config errors and transport failures are sanitized
+  ---
+  duration_ms: 1.4714
+  type: 'test'
+  ...
+# Subtest: auth failure returns authExpired and backend errors never echo secrets
+ok 4 - auth failure returns authExpired and backend errors never echo secrets
+  ---
+  duration_ms: 0.6822
+  type: 'test'
+  ...
+# Subtest: bounded reads and calls cancel without external requests
+ok 5 - bounded reads and calls cancel without external requests
+  ---
+  duration_ms: 12.4755
+  type: 'test'
+  ...
+# Subtest: Diag gates both APIs with bearer, POST JSON, same-origin, body cap and known actions
+ok 6 - Diag gates both APIs with bearer, POST JSON, same-origin, body cap and known actions
+  ---
+  duration_ms: 21.316
+  type: 'test'
+  ...
+# Subtest: representative authenticates every operation then availability, calls only fixed browser session
+ok 7 - representative authenticates every operation then availability, calls only fixed browser session
+  ---
+  duration_ms: 1.3161
+  type: 'test'
+  ...
+# Subtest: representative denies arbitrary actions, target inputs, missing login and never runs disabled tool
+ok 8 - representative denies arbitrary actions, target inputs, missing login and never runs disabled tool
+  ---
+  duration_ms: 0.4186
+  type: 'test'
+  ...
+# Subtest: representative expires auth before checking tools and rejects false success response
+ok 9 - representative expires auth before checking tools and rejects false success response
+  ---
+  duration_ms: 0.3906
+  type: 'test'
+  ...
+# Subtest: representative route shares Diag auth and origin protections
+ok 10 - representative route shares Diag auth and origin protections
+  ---
+  duration_ms: 0.7335
+  type: 'test'
+  ...
+1..10
+# tests 10
+# suites 0
+# pass 10
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 223.0945

@@ -1,0 +1,77 @@
+{
+  "at_utc": "2026-11-03T08:25:41.659517+00:00",
+  "live": "ユーザーが実機再接続試験を実施不要と指定。残件から除外、実機PASSではない。隔離17PASS維持。",
+  "hermes": {
+    "result": "PASS",
+    "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_hermes,操作編/Hermes_202_CLI送信条件照合.json",
+    "request_count": 1,
+    "api_call_count": 1
+  },
+  "avatar": {
+    "result": "PASS: 公開画像1回/質問1回/表示返信一致",
+    "evidence": "Avatar-Electron_602_Image素材自動送信.json",
+    "approval": "最新明示承認により再選択・観察実施済み"
+  },
+  "diag": {
+    "result": "PASS: aidiy_chat_llms ON→OFF→保存再読込→完全復元",
+    "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_diag,AIモデル・Tools編/Diag-AIモデルTools_304_ChatLLM利用停止復元.json",
+    "ai_requests": 0
+  },
+  "code": {
+    "path": "VS Code → Core(input_text) → codex_cli → 設定済みOpenAI Codex",
+    "model_last_observed": "gpt-6.1-sol",
+    "question": "おはよう。挨拶を一文だけ返してください。ファイルの読取・変更やコマンド実行は不要です。",
+    "payload": "添付なしなら本文のみ。Core定型指示6行、作業フォルダの実行コンテキストが加わる。",
+    "context_readcheck": "Core定型6行確認。~/.codex/AGENTS.md空、AGENTS.overrideなし、config.tomlのinline instructions/developer_instructionsなし。",
+    "limit": "CLIの通常アクセスを専用フォルダだけに強制隔離する保証ではない。プロジェクト内容を添付せず読取を依頼しない。ソース/権限変更なし。",
+    "no_fallback": "offlineならHermesに流れるため接続未確認時は送信しない",
+    "approval": "ユーザー最新指定で実機競合試験は実施不要。送信案は中止、承認待ち残件から除外。",
+    "already_pass": "隔離11件、通常複数フォルダ/未選択ガード実機"
+  },
+  "new_ai_requests": 0,
+  "new_setting_changes": 0,
+  "denied_retries": 0,
+  "live_recovery": "既存fixtureを再利用した追加5ケースで失敗解除後復旧PASS。実機試験不要。",
+  "avatar_event_fix": {
+    "id": "Avatar-Electron_602",
+    "date": "2026-11-03",
+    "cause": "正常なconversation.item.added/doneがunknown警告へ落ちる。停止や無応答原因と断定しない",
+    "change": "既存無視イベントへ2種追加。response回答/error/未知イベント処理保持",
+    "tests": {
+      "file": "backend_server/checks/test_live_openai_item_events.py",
+      "pass": 5,
+      "fail": 0,
+      "coverage": [
+        "正常通知",
+        "テキスト一重転送",
+        "音声転送",
+        "実エラー通知",
+        "未知イベント警告"
+      ]
+    },
+    "source_hashes": {
+      "backend_server/AIコア/AIライブ_openai.py": "a3e56044da5d9a36a2b2bef765b42edd968bc53fe48a479ba05dbc2a99b0cccb",
+      "backend_server/checks/test_live_openai_item_events.py": "b7361bf7a4bc4862369221036d5cd1e6e014119a57ffa543284eaf57224656cb"
+    },
+    "openai_switch": {
+      "log": "backend_server/temp/logs/20261102.210000.core_main.log",
+      "window": "2026-11-02 21:08-21:10 local",
+      "connection": "success",
+      "text_send": "success",
+      "screen_reply": "avatar-openai-trial.jsonで確認済み",
+      "errors": 0,
+      "warnings": "conversation.item.added/done"
+    },
+    "quota": "利用者推定。保持ログから枠超過確定証拠なし",
+    "runtime": "Core再起動なし、稼働プロセスへの修正反映未確認",
+    "new_ai_requests": 0,
+    "new_avatar_captures": 0,
+    "reference": "https://developers.openai.com/api/reference/resources/realtime/client-events/"
+  },
+  "avatar_observation": {
+    "status": "PASS",
+    "image_input_count": 1,
+    "question_count": 1,
+    "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_avatar,Electron実行編/Avatar-Electron_602_Image素材自動送信.json"
+  }
+}

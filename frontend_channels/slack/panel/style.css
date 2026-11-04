@@ -1,0 +1,137 @@
+/*!
+ * -*- coding: utf-8 -*-
+ *
+ * -------------------------------------------------------------------------
+ * COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027
+ * -------------------------------------------------------------------------
+ */
+
+@import "./titlebar.css";
+
+:root{color-scheme:dark;font-family:"Yu Gothic UI","Meiryo",sans-serif;color:#edf0f8;background:#000;font-size:12px}
+#activity-bar { height: 2px; box-sizing: content-box; border-top: 1px solid #242424; background: #000; pointer-events: none; }
+body.connected #activity-bar { background: #00ffff; animation: cyan-bar-breathe 4.5s linear infinite; }
+/* aidiy_live と同じ |sin(2πt / 9)| を、4.5秒の明滅周期に沿って標本化する。 */
+@keyframes cyan-bar-breathe {
+  0%, 100% { background-color: rgb(0, 0, 0); }
+  2.5%, 97.5% { background-color: rgb(0, 20, 20); }
+  5%, 95% { background-color: rgb(0, 40, 40); }
+  7.5%, 92.5% { background-color: rgb(0, 60, 60); }
+  10%, 90% { background-color: rgb(0, 79, 79); }
+  12.5%, 87.5% { background-color: rgb(0, 98, 98); }
+  15%, 85% { background-color: rgb(0, 116, 116); }
+  17.5%, 82.5% { background-color: rgb(0, 133, 133); }
+  20%, 80% { background-color: rgb(0, 150, 150); }
+  22.5%, 77.5% { background-color: rgb(0, 166, 166); }
+  25%, 75% { background-color: rgb(0, 180, 180); }
+  27.5%, 72.5% { background-color: rgb(0, 194, 194); }
+  30%, 70% { background-color: rgb(0, 206, 206); }
+  32.5%, 67.5% { background-color: rgb(0, 217, 217); }
+  35%, 65% { background-color: rgb(0, 227, 227); }
+  37.5%, 62.5% { background-color: rgb(0, 236, 236); }
+  40%, 60% { background-color: rgb(0, 243, 243); }
+  42.5%, 57.5% { background-color: rgb(0, 248, 248); }
+  45%, 55% { background-color: rgb(0, 252, 252); }
+  47.5%, 52.5% { background-color: rgb(0, 254, 254); }
+  50% { background-color: rgb(0, 255, 255); }
+}
+*{box-sizing:border-box}body{transition:opacity .45s ease-out;margin:0;background:#000;border:1px solid var(--aidiy-panel-border);height:100vh;display:flex;flex-direction:column;overflow:hidden}header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;min-height:31px;padding:1px 2px;gap:8px;font-family:"Segoe UI","Yu Gothic UI",sans-serif;color:var(--aidiy-titlebar-foreground);line-height:1.65;background:var(--aidiy-titlebar-background);border-bottom:1px solid #242424;-webkit-app-region:drag;user-select:none}
+.brand{grid-column:2;display:flex;align-items:center;justify-content:center;gap:7px;font-size:14px;letter-spacing:-.5px}.window-actions{grid-column:3;justify-self:end;display:flex;gap:2px}button,select,input{-webkit-app-region:no-drag;font:inherit}button{cursor:pointer}.window-actions button{border:0;background:none;color:var(--aidiy-titlebar-secondary);font-size:18px;width:28px;height:28px;padding:0}.window-actions button:hover{background:color-mix(in srgb,#667eea 8%,#000)}#close:hover{color:#fff;background:#cc415714}
+main{flex:1;min-height:0;overflow:auto;padding:17px 18px 12px}.section-label{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;gap:8px;align-items:center}.section-label>span{font-size:9px;letter-spacing:1px;color:#a8b9ff;border:1px solid #405283;border-radius:3px;padding:1px 5px}
+.row{display:flex;align-items:center;gap:8px;margin:9px 0}label{width:50px;flex-shrink:0;color:#aeb7ce;font-size:11px}select,input{min-width:0;border:1px solid #353e53;background:#1b202c;color:#e9ecf5;border-radius:5px;padding:6px 8px;height:32px}select:focus,input:focus,button:focus-visible{outline:2px solid #8d9fff;outline-offset:1px}#code-model{flex:1;font-size:12px}.fixed-value{flex:1;min-width:0;height:32px;display:flex;align-items:center;padding:0 8px;border:1px solid #2c3342;border-radius:5px;background:#10141c;color:#c9d2e3;font-size:12px}.code-section{margin:0 0 10px}.section-label small{font-weight:400;font-size:10px;color:#7d89a4}.code-last{margin-bottom:16px}#status{grid-column:1;justify-self:start;font-size:10px;display:flex;align-items:center;gap:5px;min-width:0;margin-left:6px;color:var(--aidiy-titlebar-secondary);font-family:"Yu Gothic UI","Meiryo",sans-serif;line-height:1.3}#status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#dot{display:block;border-radius:50%;width:5px;height:5px;flex-shrink:0;background:#9aa7b8}#dot[data-phase=connected]{background:#00ff00}#dot[data-phase=error]{background:#ff8e9e}#dot[data-phase=connecting],#dot[data-phase=reconnecting],#dot[data-phase=stopping]{background:#00ffff;box-shadow:0 0 0 3px #00ffff15,0 0 10px #00ffff60}:disabled{opacity:.6;cursor:default}.hint{font-size:11px;color:#adb6cb;margin:13px 0 0}.note{font-size:10px;color:#7d89a4;margin:5px 0 0;line-height:1.5}.note.error{color:#f4aaa8}
+
+#error-detail{display:block;width:100%;height:130px;margin-top:10px;resize:vertical;border:1px solid #70434a;border-radius:5px;padding:8px;background:#171b23;color:#f4aaa8;font:11px/1.6 Consolas,"Yu Gothic UI",monospace;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}#error-detail[hidden]{display:none}
+
+/* aidiy_live と同じ「プロジェクト: フォルダ名」と接続ボタン。 */
+.conversation-toolbar{display:flex;align-items:center;justify-content:space-between;gap:6px;min-height:28px;padding:2px 4px;color:#9aa7b8;font-size:11px;border-bottom:1px solid #242424;background:#000}
+.conversation-context{display:flex;flex:1;min-width:0;align-items:baseline;gap:4px}
+.project-label{flex:0 0 auto;white-space:nowrap;font-size:11px;color:#9aa7b8}
+#project-folder{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;color:#e3e9f2}
+#project-folder:empty::before{content:'未選択';color:#9aa7b8}
+#toggle{flex:0 0 auto;border:1px solid #69dcff;border-radius:0;padding:2px 7px;font-size:11px;line-height:1.4;color:#000;background:#fff;transition:background .15s,border-color .15s}
+#toggle:disabled{opacity:1}
+#toggle:hover:enabled{color:#000;background:#69dcff}
+body.connected #toggle,body.connected #toggle:hover:enabled{color:#000;background:#fff;border-color:#fff}
+#toggle.awaiting:enabled{animation:connect-breathe 4.5s ease-in-out infinite}
+@keyframes connect-breathe{0%,100%{background-color:#fff}50%{background-color:#69dcff}}
+
+/* 接続後のステージ。aidiy_live の初期画面（AiDiy 絵と回転する四角形）に揃える。 */
+#stage{display:none}
+body.live-view{background:#000}
+body.live-view #settings{display:none}
+body.live-view main{display:flex;flex-direction:column;overflow:visible;padding:36px 12px 10px}
+body.live-view #stage{display:flex;flex:1;min-height:0;flex-direction:column;align-items:center}
+.welcome-mark{position:relative;display:grid;place-items:center;flex-shrink:0;width:88px;height:88px;background:radial-gradient(circle at 25% 15%,color-mix(in srgb,#667eea 5%,transparent),transparent 75%);animation:welcome-float 12s ease-in-out infinite}
+.welcome-mark::before,.welcome-mark::after{content:'';position:absolute;inset:0;border:1px solid #00ffff;box-shadow:0 0 24px #00ffff40,inset 0 0 16px #00ffff15;pointer-events:none}
+.welcome-mark::before{transform:rotate(-6deg);animation:welcome-rotate-clockwise 40s linear infinite,welcome-glow 12s ease-in-out infinite,welcome-rainbow 24s linear infinite}
+.welcome-mark::after{transform:rotate(6deg);animation:welcome-rotate-counterclockwise 40s linear infinite,welcome-glow 12s ease-in-out -6s infinite,welcome-rainbow 24s linear -12s infinite}
+.welcome-mark img{position:relative;z-index:1;width:54px;height:54px;object-fit:contain}
+@keyframes welcome-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes welcome-rotate-clockwise{from{transform:rotate(-6deg)}to{transform:rotate(354deg)}}
+@keyframes welcome-rotate-counterclockwise{from{transform:rotate(6deg)}to{transform:rotate(-354deg)}}
+@keyframes welcome-rainbow{from{filter:hue-rotate(0deg)}to{filter:hue-rotate(360deg)}}
+@keyframes welcome-glow{0%,100%{opacity:.2}50%{opacity:.7}}
+#stage-log{display:flex;flex:1;min-height:0;width:100%;flex-direction:column;align-items:center;margin-top:26px}
+#stage-idle[hidden],#stage-message[hidden]{display:none}
+/* 案内（接続先）とやり取りは同じ形: 枠の左肩に発言者名を置く。 */
+.stage-entry{display:flex;min-height:0;max-width:100%;flex-direction:column;transition:opacity .6s ease-out}
+#stage-message.fading{opacity:0}
+.stage-who{align-self:flex-start;margin-bottom:3px;color:#9aa7b8;font-size:10px;line-height:1.4}
+.stage-text{--message-color:#00ff00;min-height:0;overflow:auto;padding:4px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--message-color);font:11px/1.5 Consolas,"Yu Gothic UI",monospace;border:1px solid color-mix(in srgb,var(--message-color) 16%,#242424);background:#000;text-shadow:0 1px 4px #000,0 0 8px #000}
+#stage-idle .stage-text{color:#9aa7b8;font-family:"Yu Gothic UI","Meiryo",sans-serif;border-color:#2c3342;background:#000}
+#stage-message[data-role=user] #stage-text{color:#fff;font-family:"Yu Gothic UI","Meiryo",sans-serif;border-color:color-mix(in srgb,#667eea 25%,#242424);background:#000}
+.terminal-cursor{display:inline-block;width:1ch;height:1em;margin-left:.1ch;vertical-align:text-bottom;background:currentColor;animation:live-cursor-blink .7s step-end infinite}
+@keyframes live-cursor-blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.switch-track{position:relative;width:28px;height:14px;border:1px solid #3a4152;border-radius:7px;background:#000;transition:background .15s,border-color .15s}
+.switch-knob{position:absolute;top:2px;left:2px;width:8px;height:8px;border-radius:50%;background:#9aa7b8;transition:left .15s,background .15s}
+/* ブラウザ版（web-bridge.js が付与）: ウィンドウ操作はブラウザに任せ、パネル幅の列として中央に置く。
+   transform で固定配置の基準をこの列にする。 */
+.browser-mode{background:#000}
+.browser-mode .window-actions{visibility:hidden}
+.browser-mode body{max-width:476px;margin:0 auto;transform:translateZ(0)}
+
+/* 設定パネルの機能切替: OFF (〇　) ON。Slack の Code は ON 固定で操作不可。 */
+.feature-switch{margin-left:auto;display:flex;align-items:center;gap:6px;border:0;padding:2px 4px;background:none;color:#7d89a4;font-size:11px;font-weight:400;line-height:1.4}
+.feature-switch:hover:enabled .switch-track{border-color:#69dcff}
+.feature-switch[aria-checked=false] .switch-off,.feature-switch[aria-checked=true] .switch-on{color:#e3e9f2}
+.feature-switch[aria-checked=true] .switch-track{border-color:#69dcff;background:color-mix(in srgb,#69dcff 25%,#000)}
+.feature-switch[aria-checked=true] .switch-knob{left:16px;background:#69dcff}
+.feature-switch:disabled{opacity:.6}
+/* 接続中: プロジェクト行の下に、機能ごとの状態チップを並べる。ON は水色に発光、OFF は消灯。 */
+#features{display:none;justify-content:flex-end;gap:5px;padding:3px 4px;background:#000}
+body.live-view #features{display:flex}
+.feature-chip{display:inline-flex;align-items:center;gap:4px;padding:0 6px 0 5px;border:1px solid #69dcff80;border-radius:999px;background:color-mix(in srgb,#69dcff 8%,#000);color:#e3e9f2;font-size:9px;line-height:1.5;letter-spacing:.8px;box-shadow:0 0 8px #69dcff30,inset 0 0 6px #69dcff18;transition:border-color .3s,box-shadow .3s,color .3s}
+.feature-chip i{width:4px;height:4px;border-radius:50%;background:#69dcff;box-shadow:0 0 4px #69dcff,0 0 8px #69dcff80;animation:chip-pulse 2.4s ease-in-out infinite}
+.feature-chip em{font-style:normal;font-weight:600}
+.feature-chip b{font-weight:600;color:#69dcff;text-shadow:0 0 8px #69dcff80}
+.feature-chip.off{border-color:#2c3342;background:#000;color:#5f6b82;box-shadow:none}
+.feature-chip.off i{background:#3a4152;box-shadow:none;animation:none}
+.feature-chip.off b{color:#5f6b82;text-shadow:none}
+@keyframes chip-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+#app{display:contents}
+
+/* 最前面ピンだけを沈んだ OFF / 明るい ON で区別し、28px の操作寸法を保つ。 */
+.window-actions .window-pin{background:transparent;box-shadow:none;color:#778394;font-size:14px}.window-pin>span{display:inline-block;filter:grayscale(1) brightness(2);opacity:.9;transform:translateY(1px)}.window-actions .window-pin.pinned{background:transparent;box-shadow:inset 0 0 0 1px #6bbed0;color:#c3f7ff}.window-pin.pinned>span{filter:none;opacity:1;transform:none}.window-actions .window-pin:focus-visible{outline:2px solid #8d9fff;outline-offset:-2px}.window-actions .window-pin:disabled{cursor:not-allowed;opacity:.75}.window-maximize{display:inline-block;width:10px;height:10px;border:1px solid currentColor}.maximized .window-maximize{box-shadow:2px -2px 0 -1px var(--aidiy-titlebar-background),2px -2px 0 0 currentColor}
+
+.window-actions .window-pin:hover{background:transparent}
+
+/* 画面下部のモデル表示。aidiy_code / aidiy_live の「モデル ▾  AI - モデル」に揃える。 */
+#model-bar{display:flex;align-items:center;gap:6px;min-height:24px;padding:2px 4px;border-top:1px solid #242424;background:#000;color:#9aa7b8;font-size:10px;line-height:1.3}
+#choose-model{flex:none;display:inline-flex;align-items:center;gap:5px;padding:2px 6px;border:1px solid #353e53;border-radius:0;background:#1b202c;color:#e9ecf5;font-size:10px;line-height:1.4}
+#choose-model:hover:enabled{border-color:#69dcff}
+.model-caption{padding:0 4px;font-size:11px;line-height:calc(1.65em - 2px);background:#fff;color:#000}
+.model-chevron{color:#9aa7b8}
+#model-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#9aa7b8;font-size:10px}
+/* 接続中に開いたモデル設定。ステージの代わりに設定欄を出し、適用で再接続する。 */
+body.live-view.settings-open #settings{display:block}
+body.live-view.settings-open #stage{display:none}
+body.live-view.settings-open main{display:block;overflow:auto;padding:17px 18px 12px}
+#settings-actions{display:flex;justify-content:flex-end;gap:6px;margin-top:12px}
+#settings-actions button{border:1px solid #353e53;border-radius:0;padding:3px 10px;background:#1b202c;color:#e9ecf5;font-size:11px}
+#settings-actions #settings-apply{border-color:#69dcff;background:#fff;color:#000}
+#settings-actions button:hover:enabled{border-color:#69dcff}

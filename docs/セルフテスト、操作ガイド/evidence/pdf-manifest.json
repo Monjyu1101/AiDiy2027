@@ -1,0 +1,169 @@
+{
+  "count": 23,
+  "pages": 383,
+  "generation": "docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs",
+  "files": [
+    {
+      "file": "セルフテスト,aidiy_avatar,Electron実行編.pdf",
+      "pages": 16,
+      "sha256": "1592d493f9acc215999d6047567ac8b5f0949522692d5e83757cbd6c4eb273b3",
+      "source_sha256": "235f402d82a2064e8cea953e7c9636d6af62714c48690c759576129e3026ebe8",
+      "review": "2026-11-03 Core再起動結果の追記末尾を目視。欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_avatar,Web実行編.pdf",
+      "pages": 11,
+      "sha256": "802def76666c871222ebdf1a394e121e8680c59907e0a04e5a401f9ee1d860f8",
+      "source_sha256": "70666a6a62a9c475039acb13ba14aa1652eb96a188c88b815b702b3680b93f71",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_browser,操作編.pdf",
+      "pages": 17,
+      "sha256": "9aafd2f94a3418b05714af81b592189a9e0de35c04275d4461451f03490e7955",
+      "source_sha256": "2f8ae20e880f7aa10e03e242e5c4b254874bdfbe5daa011534c5587ed0fa4bc2",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_code,操作編.pdf",
+      "pages": 11,
+      "sha256": "ab1690a16f47a55329e6d55ef73e864f66340ef62aed3b4bf2ca0aeeb7172106",
+      "source_sha256": "3caad3aa9280a7dedd6caf0bd7df16448908bd9387d99d708449c91054ca5c4d",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_console,操作編.pdf",
+      "pages": 3,
+      "sha256": "50a8bc24e3f9845437da69131ee0586f4c488f9cc1e1df50109ed96eb0133ed5",
+      "source_sha256": "5cb87b4d601a4f307e9f77d8d556b365a785d8c430093bbf1afe826d604a568d",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.pdf",
+      "pages": 29,
+      "sha256": "0771c741e0b8aa2b3f424a95bb65e04bf4e98d4dbce8b08bd057f8278527f762",
+      "source_sha256": "15949fa784d0a8a22dd3f07b69a20db71c1678f1a22e7155230de7616ae3a505",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,システム起動編.pdf",
+      "pages": 15,
+      "sha256": "f8b81c6473f38e7f30474f95da2d034cb621360171b09a71e1b3e21d83a3f36d",
+      "source_sha256": "1415e4b72a33e3294adb29bd7763305927043cbbbd4cb8ab4c63a02f6bcdaa36",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,ランチャー編.pdf",
+      "pages": 29,
+      "sha256": "0bd4d3ca102e1526a4012d567e85ec628bdc7bac016deedb1b062c51ba916b6a",
+      "source_sha256": "6e802b4ec3e0a65b2a398e38839a8bf1009240848e94558560415d0d22efe67d",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,環境確認編.pdf",
+      "pages": 21,
+      "sha256": "f2f9d84e1af65e074fc8ca012b6ad9e952c4f2bf59f45be578246be70f1e0b7e",
+      "source_sha256": "784e62bfa2564e20fa915db86ee988594a3a0111b8fb0dd20ca690d569710693",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_diag,設定再起動編.pdf",
+      "pages": 16,
+      "sha256": "ec90ec1920f0e8bef7dbf90b9f8ee3f2f4fac84c87473d691f05076eb792fbcc",
+      "source_sha256": "affcf8e88e09edd4704f51054472a1a202d0916f5fc219d25f6a5d61305ceb3c",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_discord,操作編.pdf",
+      "pages": 23,
+      "sha256": "6c513cd59cc23a73ea9d92624a77778fa1fcf10c3ca967f142b5fed44940f72e",
+      "source_sha256": "507a3c990e4bda975b88c1556320d1aa7e9630cbad5eeffa3ac58255c4a2376c",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_hermes,操作編.pdf",
+      "pages": 2,
+      "sha256": "5cf303e9a721362f17fbe6a0bd79b956470fd3bb2c445140747ba128ab748176",
+      "source_sha256": "92423c89daff372197a1a75f152873d47783ae4f232fa4ea3da96750b6170340",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.pdf",
+      "pages": 31,
+      "sha256": "7149acb44c569b744c593977151ea1e6be1eb11ff7c9236345bc8bab705ecf1f",
+      "source_sha256": "e916d4a18087e3a34a94a2ec3c806e65f2137d219291e0db6859d22275bb3746",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_live,操作編.pdf",
+      "pages": 17,
+      "sha256": "bedeb0b65d4a46a7c880d6aff97ef71823c83469aca36573e55d4ebd8f4e5a2d",
+      "source_sha256": "e336cf4ba7ee717d8338d96e4f841078fc719b21c12cf4d96e98861307fb98b8",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_slack,操作編.pdf",
+      "pages": 23,
+      "sha256": "6872e295e24b5d3d8e9ec4a9a72879f5b48260e3950d7884abb268806c4038b9",
+      "source_sha256": "ed555b1d4b0980ca8cd13d5c6ca90b728d24b8407dfb795452b9a0bab244501a",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_task,操作編.pdf",
+      "pages": 18,
+      "sha256": "5b17e6d7dcc8faca115642f9c02c154b9cc72b6cc9b8e9b47f2688d59598ed5a",
+      "source_sha256": "02488100718104406869e6ff71fdbb49285cee899c3753bccd794646d880549d",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_team,操作編.pdf",
+      "pages": 16,
+      "sha256": "4bc9ab62c71e1815741408bf8c89f52eab7d59fe047f036d928608d82c330c32",
+      "source_sha256": "a93eaea261516f4932180101c3210fef8503ce1b783eab204e21d51238bf65d3",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,backend_tools,主要メソッド編.pdf",
+      "pages": 12,
+      "sha256": "fb93a20cd7e1e321692cfe4c73368ff880710c82c13cf67edcd61aafe4c54436",
+      "source_sha256": "e77f7ded8b078de6d3e571e47d8d9a7392a5107d74ca3ef0580f36418abdc7c3",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,frontend_web,AiDiy編.pdf",
+      "pages": 19,
+      "sha256": "231be52193ec9cd181ee1cd868d76becd55acc1269556d46dd879c2b783892ea",
+      "source_sha256": "185954c86cba7b06c422489ad4357dc3c953e8de6eb3fdf0c24dc3e27887d68c",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,frontend_web,生産・在庫管理編.pdf",
+      "pages": 16,
+      "sha256": "f409a93035dbe6006c1e3b08ce4a716c5b096e5df2aca7399a488e29fc24ca64",
+      "source_sha256": "91d99356996823bd38e4a4df8e0eed4075b89d2a6400fc2d32ca72b5c695a610",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,frontend_web,配車管理編.pdf",
+      "pages": 9,
+      "sha256": "3dcf01c4318f9ed17ec6fe5449cb45f073267cdd5a0547a30417f9686618d456",
+      "source_sha256": "43d92d1c9dd8e66c1e2d96041f804aa73945805f77dc8c077ba3fed8fd8433f0",
+      "review": "文書順再照合の末尾を目視。Browser/共通結果は前ページも確認。文字欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.pdf",
+      "pages": 17,
+      "sha256": "00634f987ea45af48aa6c120355a774bdc611a7c6ea40b32deea5aad35f92ff1",
+      "source_sha256": "e473817db8e0bb8a8c888401b04fd89383298fc2af3d0b4ca447f1b5dbb6aae1",
+      "review": "2026-11-03 Core再起動結果の追記末尾を目視。欠け・重なりなし。"
+    },
+    {
+      "file": "セルフテスト,aidiy_navi,操作編.pdf",
+      "pages": 12,
+      "sha256": "a09531a03146e8981921f12613f2000aec8a6cd5c6344e98fe080f681ffe5186",
+      "source_sha256": "c90982d50381f33f016216a9eeac475ad17f57bab3de5291616f876b26e31e3f",
+      "review": "長押し移動の図202と追記末尾を目視確認。文字欠け・重なりなし。"
+    }
+  ],
+  "visual_review": "2026-11-03: 全22冊の追記を描画して目視確認。PDFテキスト抽出の日本語判定は使用せず、実表示で確認。"
+}

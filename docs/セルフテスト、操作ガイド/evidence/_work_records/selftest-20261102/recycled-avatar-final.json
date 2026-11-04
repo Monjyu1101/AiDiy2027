@@ -1,0 +1,42 @@
+[
+  {
+    "directory": true,
+    "path": "temp\\pdf-final-avatar"
+  },
+  {
+    "directory": false,
+    "path": "temp\\setup-observation\\current.png"
+  },
+  {
+    "directory": false,
+    "path": "tmp\\pdfs\\セルフテスト,aidiy_avatar,Electron実行編.html"
+  },
+  {
+    "directory": false,
+    "path": "tmp\\pdfs\\セルフテスト,共通,確認結果.html"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_end.json"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_end.mp3"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_intro.json"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_intro.mp3"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_live.json"
+  },
+  {
+    "directory": false,
+    "path": "temp\\narration-taskteam\\ae_live.mp3"
+  }
+]

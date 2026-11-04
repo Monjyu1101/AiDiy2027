@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xリバーシ - Ultimate Reversi</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', monospace;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+            color: #00ffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Cyber grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            padding: 10px;
+            overflow: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        .game-container {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 
+                0 0 50px rgba(0, 255, 255, 0.3),
+                inset 0 0 30px rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 95vw;
+            max-height: 95vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .game-title {
+            font-size: clamp(1.2em, 3vh, 2.2em);
+            font-weight: 900;
+            background: linear-gradient(45deg, #00ffff, #ff00ff, #ffff00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            margin-bottom: 0.5vh;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: titlePulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titlePulse {
+            0% { 
+                filter: drop-shadow(0 0 10px #00ffff);
+                transform: scale(1);
+            }
+            100% { 
+                filter: drop-shadow(0 0 20px #ff00ff);
+                transform: scale(1.05);
+            }
+        }
+
+        .subtitle {
+            font-size: clamp(0.7em, 1.8vh, 1em);
+            color: #00ffff;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1vh;
+            padding: 1vh;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+            flex-wrap: wrap;
+            gap: 1vh;
+            flex-shrink: 0;
+        }
+
+        .player-info {
+            text-align: center;
+            flex: 1;
+            min-width: 80px;
+        }
+
+        .player-name {
+            font-size: clamp(0.7em, 1.5vh, 1em);
+            font-weight: bold;
+            margin-bottom: 0.5vh;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .player-score {
+            font-size: clamp(1.2em, 2.5vh, 1.8em);
+            font-weight: 900;
+            color: #00ffff;
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .current-player {
+            text-align: center;
+            flex: 1;
+            min-width: 100px;
+            font-size: clamp(0.8em, 1.8vh, 1.1em);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: currentPlayerGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes currentPlayerGlow {
+            0% { 
+                color: #00ffff;
+                text-shadow: 0 0 10px #00ffff;
+            }
+            100% { 
+                color: #ff00ff;
+                text-shadow: 0 0 20px #ff00ff;
+            }
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 1px;
+            background: linear-gradient(45deg, #000, #1a1a1a);
+            padding: 1vh;
+            border-radius: 15px;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 255, 0.3),
+                inset 0 0 20px rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            width: 100%;
+            height: auto;
+            aspect-ratio: 1;
+            max-width: min(85vw, 600px);
+            max-height: min(85vw, 600px);
+            margin: 0 auto;
+            flex: 1 1 auto;
+            align-self: center;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.3), transparent);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+
+        .cell:hover::before {
+            width: 100%;
+            height: 100%;
+        }
+
+        .cell:hover {
+            background: linear-gradient(135deg, #2a2a3a, #3a3a4a);
+            border-color: #00ffff;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        /* 置ける場所: HUMAN=シアン系背景 / A.I.=グレー系背景、置かれる石の色（白/黒）はゴーストで見分ける */
+        .cell.valid-move {
+            background: linear-gradient(135deg, #004d4d, #006666);
+            border-color: #00ffff;
+            animation: validMovePulse 1.5s infinite;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+        }
+
+        .cell.valid-move.valid-move-ai {
+            background: linear-gradient(135deg, #3a3a3a, #555555);
+            border-color: #c0c0c0;
+            animation: validMovePulseAi 1.5s infinite;
+            box-shadow: 0 0 20px rgba(200, 200, 200, 0.35);
+        }
+
+        /* 置かれる石のゴースト表示（どちらの色の石が置かれるか一目で分かる） */
+        .cell.valid-move::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 62%;
+            height: 62%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .cell.valid-move.valid-move-human::after {
+            background: linear-gradient(135deg, #000, #333);
+            border: 2px solid rgba(255, 255, 255, 0.40);
+            opacity: 0.65;
+        }
+
+        .cell.valid-move.valid-move-ai::after {
+            background: linear-gradient(135deg, #fff, #ddd);
+            border: 2px solid rgba(0, 0, 0, 0.30);
+            opacity: 0.80;
+        }
+
+        @keyframes validMovePulse {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 30px rgba(0, 255, 255, 0.6);
+            }
+        }
+
+        @keyframes validMovePulseAi {
+            0%, 100% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(200, 200, 200, 0.35);
+            }
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 30px rgba(230, 230, 230, 0.55);
+            }
+        }
+
+        /* 裏返せる枚数バッジ */
+        .cell .flip-count {
+            position: absolute;
+            bottom: 4%;
+            right: 8%;
+            font-size: clamp(0.55em, 1.6vh, 0.9em);
+            font-weight: bold;
+            color: rgba(0, 255, 255, 0.95);
+            text-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .piece {
+            width: 85%;
+            height: 85%;
+            border-radius: 50%;
+            position: relative;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .piece::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 30%;
+            width: 30%;
+            height: 30%;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.8), transparent);
+            border-radius: 50%;
+            filter: blur(3px);
+        }
+
+        .piece.black {
+            background: linear-gradient(135deg, #000, #333);
+            border: 2px solid #444;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.8),
+                inset 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .piece.white {
+            background: linear-gradient(135deg, #fff, #ddd);
+            border: 2px solid #ccc;
+            box-shadow: 
+                0 5px 15px rgba(0, 0, 0, 0.5),
+                inset 0 0 10px rgba(255, 0, 255, 0.2);
+        }
+
+        .piece.flip {
+            animation: cyberFlip 0.6s ease-in-out;
+        }
+
+        .piece.new {
+            animation: cyberDrop 0.7s ease-out;
+        }
+
+        @keyframes cyberFlip {
+            0% { 
+                transform: rotateY(0deg) scale(1);
+                filter: brightness(1);
+            }
+            50% { 
+                transform: rotateY(90deg) scale(1.3);
+                filter: brightness(2) drop-shadow(0 0 20px #00ffff);
+            }
+            100% { 
+                transform: rotateY(180deg) scale(1);
+                filter: brightness(1);
+            }
+        }
+
+        @keyframes cyberDrop {
+            0% { 
+                transform: scale(0) rotateY(180deg) translateY(-50px);
+                opacity: 0;
+                filter: drop-shadow(0 0 20px #ff00ff);
+            }
+            50% { 
+                transform: scale(1.4) rotateY(90deg) translateY(0);
+                opacity: 0.8;
+                filter: drop-shadow(0 0 30px #00ffff);
+            }
+            100% { 
+                transform: scale(1) rotateY(0deg) translateY(0);
+                opacity: 1;
+                filter: drop-shadow(0 0 10px rgba(0, 255, 255, 0.3));
+            }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 1vh;
+            flex-wrap: wrap;
+            margin-top: auto;
+            padding: 1vh 0;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            padding: 1vh 2vh;
+            border-radius: 25px;
+            font-size: clamp(0.7em, 1.5vh, 0.9em);
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            min-width: 100px;
+            white-space: nowrap;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 25px rgba(0, 255, 255, 0.3),
+                0 0 20px rgba(0, 255, 255, 0.2);
+            border-color: #ff00ff;
+            color: #ff00ff;
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+        }
+
+        .btn.reset {
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+
+        .btn.reset:hover {
+            border-color: #ff3742;
+            color: #ff3742;
+            box-shadow: 
+                0 10px 25px rgba(255, 71, 87, 0.3),
+                0 0 20px rgba(255, 71, 87, 0.2);
+        }
+
+        .game-message {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 15px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(255, 0, 255, 0.1));
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            color: #00ffff;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .game-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .game-message.winner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: auto;
+            min-width: 400px;
+            margin: 0;
+            font-size: 3em;
+            font-weight: 900;
+            padding: 40px 60px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.95), rgba(255, 140, 0, 0.95));
+            color: #000;
+            border: 4px solid #ffd700;
+            border-radius: 25px;
+            box-shadow: 
+                0 0 50px rgba(255, 215, 0, 0.8),
+                inset 0 0 30px rgba(255, 255, 255, 0.3);
+            z-index: 2000;
+            animation: winnerAppear 0.8s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+        }
+
+        @keyframes winnerAppear {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(-10deg);
+                opacity: 0;
+            }
+            60% {
+                transform: translate(-50%, -50%) scale(1.1) rotate(2deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes winnerCelebration {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+            }
+            25% { 
+                transform: scale(1.05) rotate(1deg);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            }
+            75% { 
+                transform: scale(1.05) rotate(-1deg);
+                box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            }
+        }
+
+        /* サイバーパーティクル */
+        .cyber-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #00ffff;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: cyberParticleFloat 3s ease-out forwards;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        @keyframes cyberParticleFloat {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-150px) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* ブラウザUI対応の真のビューポート調整 */
+        @media (min-width: 1680px) and (min-height: 1000px) {
+            .container {
+                padding: 15px;
+            }
+            .game-container {
+                max-width: min(80vw, 800px);
+                max-height: min(85vh, 900px);
+                padding: 2vh;
+            }
+            .board {
+                max-width: min(60vh, 70vw);
+                max-height: min(60vh, 70vw);
+            }
+        }
+
+        @media (min-width: 1400px) and (max-width: 1679px) and (min-height: 900px) {
+            .container {
+                padding: 12px;
+            }
+            .game-container {
+                max-width: min(85vw, 750px);
+                max-height: min(90vh, 850px);
+            }
+            .board {
+                max-width: min(65vh, 75vw);
+                max-height: min(65vh, 75vw);
+            }
+        }
+
+        @media (min-width: 1200px) and (max-width: 1399px) {
+            .game-container {
+                max-width: min(90vw, 700px);
+                max-height: min(92vh, 800px);
+            }
+            .board {
+                max-width: min(68vh, 78vw);
+                max-height: min(68vh, 78vw);
+            }
+        }
+
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .game-container {
+                max-width: min(92vw, 650px);
+                max-height: min(94vh, 750px);
+            }
+            .board {
+                max-width: min(70vh, 80vw);
+                max-height: min(70vh, 80vw);
+            }
+        }
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .container {
+                padding: 8px;
+            }
+            .game-container {
+                max-width: min(94vw, 600px);
+                max-height: min(96vh, 700px);
+            }
+            .board {
+                max-width: min(72vh, 85vw);
+                max-height: min(72vh, 85vw);
+            }
+        }
+
+        @media (max-width: 767px) {
+            .container {
+                padding: 5px;
+            }
+            .game-container {
+                max-width: 98vw;
+                max-height: 98vh;
+                padding: 1vh;
+            }
+            .game-info {
+                flex-direction: column;
+                gap: 1vh;
+                padding: 1vh;
+            }
+            .player-info {
+                display: flex;
+                justify-content: space-between;
+                width: 100%;
+                align-items: center;
+            }
+            .board {
+                max-width: min(75vh, 90vw);
+                max-height: min(75vh, 90vw);
+                padding: 0.5vh;
+            }
+            .controls {
+                gap: 0.5vh;
+                padding: 0.5vh 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 3px;
+            }
+            .game-container {
+                max-width: 99vw;
+                max-height: 99vh;
+                padding: 0.8vh;
+            }
+            .board {
+                max-width: min(78vh, 95vw);
+                max-height: min(78vh, 95vw);
+            }
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            .btn {
+                width: 60%;
+                max-width: 150px;
+            }
+        }
+
+        /* 縦長画面対応（Portrait モード） */
+        @media (orientation: portrait) {
+            .container {
+                padding: 5px;
+            }
+            
+            .game-container {
+                max-width: 98vw;
+                max-height: 98vh;
+                padding: 1vh;
+                justify-content: flex-start;
+                overflow: hidden;
+            }
+            
+            .game-header {
+                margin-bottom: 0.5vh;
+            }
+            
+            .game-title {
+                font-size: clamp(1.5em, 4vw, 2.5em);
+                margin-bottom: 0.3vh;
+            }
+            
+            .subtitle {
+                font-size: clamp(0.8em, 2.5vw, 1.2em);
+            }
+            
+            .game-info {
+                padding: 1vh;
+                margin-bottom: 0.5vh;
+                flex-shrink: 0;
+            }
+            
+            .board {
+                max-width: min(90vw, 80vh);
+                max-height: min(90vw, 80vh);
+                flex: 0 0 auto;
+                margin: auto;
+            }
+            
+            .controls {
+                margin-top: 0.5vh;
+                padding: 0.5vh 0;
+                flex-shrink: 0;
+            }
+        }
+
+        /* 1080x1920 縦長画面専用調整 */
+        @media (min-width: 1000px) and (max-width: 1200px) and (orientation: portrait) {
+            .game-container {
+                max-width: 95vw;
+                max-height: 95vh;
+                padding: 1.5vh;
+            }
+            
+            .board {
+                max-width: min(85vw, 70vh);
+                max-height: min(85vw, 70vh);
+            }
+        }
+
+        /* 横長で高さが少ない画面 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .game-title {
+                font-size: clamp(1em, 4vh, 1.5em);
+                margin-bottom: 0.2vh;
+            }
+            .subtitle {
+                font-size: clamp(0.6em, 2vh, 0.8em);
+            }
+            .game-info {
+                padding: 0.5vh;
+                margin-bottom: 0.3vh;
+            }
+            .board {
+                max-height: min(60vh, 80vw);
+                padding: 0.3vh;
+            }
+            .controls {
+                padding: 0.3vh 0;
+            }
+        }
+
+        /* パスメッセージ */
+        .pass-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.9), rgba(255, 140, 0, 0.9));
+            color: #000;
+            font-size: 2em;
+            font-weight: 900;
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 3px solid #ffd700;
+            box-shadow: 
+                0 0 30px rgba(255, 215, 0, 0.6),
+                inset 0 0 20px rgba(255, 255, 255, 0.3);
+            z-index: 1000;
+            animation: passMessageAnim 1.5s ease-out;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        @keyframes passMessageAnim {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+                opacity: 0;
+            }
+            20% {
+                transform: translate(-50%, -50%) scale(1.2);
+                opacity: 1;
+            }
+            80% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 0;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    
+    <div class="container">
+        <div class="game-container">
+            <div class="game-header">
+                <h1 class="game-title">CYBER REVERSI</h1>
+                <div class="subtitle">Ultimate Battle System</div>
+            </div>
+            
+            <div class="game-info">
+                <div class="player-info">
+                    <div class="player-name">HUMAN</div>
+                    <div class="player-score" id="black-score">2</div>
+                </div>
+                <div class="current-player">
+                    <div id="current-turn">HUMAN TURN</div>
+                </div>
+                <div class="player-info">
+                    <div class="player-name">A.I.</div>
+                    <div class="player-score" id="white-score">2</div>
+                </div>
+            </div>
+            
+            <div class="board" id="game-board">
+                <!-- ボードはJavaScriptで生成 -->
+            </div>
+            
+            <div class="game-message" id="game-message"></div>
+            
+            <div class="controls">
+                <button class="btn" id="hint-btn">TACTICAL HINT</button>
+                <button class="btn reset" id="reset-btn">SYSTEM RESET</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="index.js"></script>
+</body>
+</html>

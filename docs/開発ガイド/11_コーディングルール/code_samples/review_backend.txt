@@ -1,0 +1,13 @@
+■ バックエンド コードレビュー チェックリスト
+
+[ ] 全ファイルUTF-8エンコーディング
+[ ] 監査フィールド（登録/更新日時、利用者ID）が設定されている
+[ ] エラーハンドリング（try-catch, db.rollback）
+[ ] 統一レスポンス形式（ResponseBase）
+[ ] POST メソッド使用（GET/PUT/DELETE不使用）
+[ ] ログ出力（logger.info, logger.error）
+[ ] 日本語命名規約に従っている
+[ ] C採番の初期値追加（新規テーブル時）
+[ ] models/__init__.py へのエクスポート追加
+[ ] core_main.py または apps_main.py への router 登録
+[ ] core_schema/ / apps_schema/ 配下の該当エンティティファイルへの Pydantic モデル追加

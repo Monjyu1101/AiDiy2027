@@ -1,0 +1,37 @@
+{
+  "date": "2026-11-03",
+  "scope": "既存ガイド・証拠・現行ソース読取りのみ",
+  "code": {
+    "required_behavior": "別フォルダで古い認証・会話へ送信しない",
+    "existing_pass": "docs/knowledgeの通常切替・新規会話・閉じた後の操作抑止",
+    "undefined": "実行中の処理/切替時点/操作を指定した当初実機条件",
+    "implementation": "会話の作業URI保持、新規等は実行中またはモデル変更中に拒否。ワークスペースからフォルダ削除は別経路",
+    "decision": "新しい競合ケースを必須残件として追加しない。既済維持。"
+  },
+  "live": {
+    "guide_case": "405 モデル再接続失敗と復旧、Webパネル非表示・再表示",
+    "expected": "会話・下書き保持、非表示時マイク停止、意図しない録音再開なし",
+    "defined_offline_cases": [
+      "models取得失敗",
+      "socket接続失敗",
+      "sessionModels取得失敗",
+      "input初期化後0待ち中切断",
+      "0初期化後audio待ち中切断"
+    ],
+    "tests_file": "frontend_ide/checks/panel-recovery.test.mjs:96-177",
+    "execution_result": "今回未実行。保存証拠でこのテストファイル単位の実行ログは未確認。定義の存在をPASSとしない。",
+    "runtime_missing": "失敗させる操作・切替モデル・元値復帰の実機条件と同条件成功証拠",
+    "implementation": "applyModel:設定保存後disconnect(false)→connect(true)。表示切替でaudio.stop、mic=false。",
+    "decision": "405の期待結果は定義あり。実機で安全に再現する方法は未定義。設定変更/停止による障害注入を勝手に追加しない。"
+  },
+  "ai_sends": 0,
+  "tests_run": 0,
+  "connection_changes": 0,
+  "settings_changes": 0,
+  "source_changes": 0,
+  "source_sha256": {
+    "frontend_ide/host/src/extension.ts": "8c4ab7b3ee03c3dc75e201f203f419b315a18d2643c5a11fc4707bcf7ea11da4",
+    "frontend_ide/src/components/ライブ/ライブパネル.vue": "9c1b0cb95d56034438cd1c7fd3634e5d7189f9139b8d8839a4fad59f51be3ba6",
+    "frontend_ide/checks/panel-recovery.test.mjs": "071fa2a1bf1b3aaec1847212644a3f088384c08136a382d7d9cb10716f135549"
+  }
+}

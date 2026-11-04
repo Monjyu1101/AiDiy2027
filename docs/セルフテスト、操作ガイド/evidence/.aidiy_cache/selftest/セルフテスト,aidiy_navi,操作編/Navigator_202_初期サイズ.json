@@ -1,0 +1,25 @@
+{
+  "requestedDIP": [
+    500,
+    600
+  ],
+  "standaloneActualDIP": [
+    502,
+    601
+  ],
+  "ideActualDIP": [
+    500,
+    602
+  ],
+  "windowsRoundingTolerance": 2,
+  "manualResizeVRRestore": "PASS",
+  "sizeClampTest": "PASS",
+  "build": "PASS",
+  "existingLayoutSuite": {
+    "pass": 14,
+    "fail": 0,
+    "fixture": "taskWindows stub added; product unchanged"
+  },
+  "newAIRequests": 0,
+  "newAIStatus": "denied before execution"
+}

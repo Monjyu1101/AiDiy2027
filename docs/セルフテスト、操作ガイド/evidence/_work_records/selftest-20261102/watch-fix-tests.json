@@ -1,0 +1,35 @@
+{
+  "time": "2026-11-03T10:57:59.768717",
+  "results": [
+    {
+      "test": "test_task_watch_initial_fire.py",
+      "exit": 0,
+      "output": "...\n----------------------------------------------------------------------\nRan 3 tests in 0.028s\n\nOK\n"
+    },
+    {
+      "test": "test_task_cycle_lifetime.py",
+      "exit": 0,
+      "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.002s\n\nOK\n"
+    },
+    {
+      "test": "test_task_schedule_calendar.py",
+      "exit": 0,
+      "output": "..\n----------------------------------------------------------------------\nRan 2 tests in 0.000s\n\nOK\n"
+    },
+    {
+      "test": "test_task_edit_enabled.py",
+      "exit": 0,
+      "output": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.037s\n\nOK\n"
+    },
+    {
+      "test": "test_task_timeout_stopped.py",
+      "exit": 0,
+      "output": ".\n----------------------------------------------------------------------\nRan 1 test in 0.042s\n\nOK\n"
+    },
+    {
+      "test": "test_team_task_control.py",
+      "exit": 0,
+      "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.001s\n\nOK\n"
+    }
+  ]
+}

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 設定ファイル</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="03_start.py解説.html">前へ: 03_start.py解説</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+
+  <h1>04_設定ファイル</h1>
+  <p>このページでは、環境構築時に最初に確認すべき設定ファイルを整理します。</p>
+
+  <h2>確認対象</h2>
+  <table>
+    <tr><th>パス</th><th>役割</th></tr>
+    <tr><td><code>_config/</code></td><td>AI API キー・AIコンテキスト・ベンダー別設定</td></tr>
+    <tr><td><code>frontend_web/vite.config.ts</code></td><td>フロントエンド開発サーバー設定と Proxy</td></tr>
+  </table>
+
+  <h2>_config/ の設定ファイル一覧</h2>
+  <p>AI 機能に関わる設定はすべてこのフォルダに JSON 形式で格納されています。環境構築時に最初に確認・編集が必要です。</p>
+  <table>
+    <tr><th>ファイル名</th><th>役割</th></tr>
+    <tr><td><code>AiDiy_key.json</code></td><td>AI API キー（Anthropic / OpenAI / Google Gemini）。<strong>漏洩厳禁。Git に含めない。</strong></td></tr>
+    <tr><td><code>AiDiy_chat__context.json</code></td><td>チャット AI のシステムコンテキスト（プロンプト設定）</td></tr>
+    <tr><td><code>AiDiy_live__context.json</code></td><td>ライブ AI のシステムコンテキスト</td></tr>
+    <tr><td><code>AiDiy_code__context.json</code></td><td>コード AI のシステムコンテキスト</td></tr>
+    <tr><td><code>AiDiy_live_gemini.json</code></td><td>Gemini を使用するライブ AI の詳細設定</td></tr>
+    <tr><td><code>AiDiy_live_openai.json</code></td><td>OpenAI を使用するライブ AI の詳細設定</td></tr>
+    <tr><td><code>AiDiy_code_claude_cli.json</code></td><td>Claude CLI を使用するコード AI の設定</td></tr>
+    <tr><td><code>AiDiy_code_claude_sdk.json</code></td><td>Claude SDK を使用するコード AI の設定</td></tr>
+    <tr><td><code>AiDiy_code_codex_cli.json</code></td><td>Codex CLI を使用するコード AI の設定</td></tr>
+    <tr><td><code>AiDiy_code_copilot_cli.json</code></td><td>Copilot CLI を使用するコード AI の設定</td></tr>
+    <tr><td><code>AiDiy_code_antigravity_cli.json</code></td><td>Antigravity CLI を使用するコード AI の設定</td></tr>
+  </table>
+
+  <h3>注意点（_config フォルダ全般）</h3>
+  <table>
+    <tr><th>項目</th><th>注意</th></tr>
+    <tr><td><code>AiDiy_key.json</code></td><td>API キーを含む。漏洩禁止。Git 管理対象外（<code>.gitignore</code> 確認）</td></tr>
+    <tr><td>文字コード</td><td>すべて UTF-8 で保存する</td></tr>
+    <tr><td>JSON 構文エラー</td><td>起動時に読み込み失敗するため、編集後は構文確認を行う</td></tr>
+  </table>
+
+  <h2>vite.config.ts の要点</h2>
+  <p>フロントエンドの開発体験と API 接続動作を決めるファイルです。</p>
+  <pre><code>server: {
+  port: 8090,
+  host: '0.0.0.0',
+  proxy: {
+    '/core': { target: 'http://127.0.0.1:8091', changeOrigin: true },
+    '/apps': { target: 'http://127.0.0.1:8098', changeOrigin: true }
+  }
+}</code></pre>
+
+  <h3>Proxy を使う理由</h3>
+  <ul>
+    <li>フロントエンドは同一オリジン（8090）として API を呼べる</li>
+    <li>バックエンドの実ポート（8091/8098）を画面側から意識しなくてよい</li>
+    <li>CORS 周りのトラブルを減らせる</li>
+  </ul>
+
+  <h2>変更時の連動チェック</h2>
+  <ol>
+    <li><code>vite.config.ts</code> のポートを変えたら <code>_start.py</code> も確認する</li>
+    <li>API 側 CORS 許可オリジンを更新する</li>
+    <li>ブラウザアクセスURLの案内文書も更新する</li>
+  </ol>
+
+  <h2>よくある不具合と確認箇所</h2>
+  <table>
+    <tr><th>症状</th><th>確認箇所</th><th>対処</th></tr>
+    <tr><td>API が 404</td><td><code>vite.config.ts</code> の proxy</td><td><code>/core</code> / <code>/apps</code> の target を確認</td></tr>
+    <tr><td>CORS エラー</td><td>バックエンドCORS設定</td><td>8090 を許可オリジンに含める</td></tr>
+    <tr><td>ログイン後に 401</td><td>JWT関連設定</td><td><code>SECRET_KEY</code> 変更有無とトークン再取得を確認</td></tr>
+  </table>
+
+  <nav>
+    <a href="03_start.py解説.html">前へ: 03_start.py解説</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+</body>
+</html>

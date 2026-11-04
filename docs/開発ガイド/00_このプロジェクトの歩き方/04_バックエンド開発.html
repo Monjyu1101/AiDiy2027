@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>04. バックエンド開発 | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+  <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>04. バックエンド開発</h1>
+
+ <section id="structure">
+  <h2>バックエンドの4層構造</h2>
+  <p>バックエンドは4つのレイヤーで構成されています。</p>
+
+  <pre><code>
+ Router (core_router/ または apps_router/)
+ ──────────────────
+ URLとHTTPメソッドの定義
+ リクエスト受付と認証チェック
+
+       ↓
+
+ CRUD (core_crud/ または apps_crud/)
+ ──────────────────
+ データベース操作
+ SQLAlchemy によるクエリ
+
+       ↓
+
+ Model (core_models/ または apps_models/)
+ ──────────────────
+ テーブル定義（SQLAlchemyモデル）
+
+ Schema (core_schema/ または apps_schema/)
+ ──────────────────
+ API入出力の型定義（Pydanticモデル）
+ ※ Model/CRUD/Routerと同様、テーブルごとに1ファイル
+</code></pre>
+ </section>
+
+ <section id="api-verify">
+  <h2>API実装の確認方法</h2>
+  <p>実装したAPIの動作確認手順です。</p>
+  <ol>
+  <li><strong>Swagger UI</strong> (<code>:8091/docs</code> または <code>:8098/docs</code>) でAPI一覧とURLを確認</li>
+  <li><strong>Router</strong> ファイルでURLとメソッドの対応を確認</li>
+  <li><strong>CRUD</strong> → <strong>Model</strong> でDB操作とテーブル定義を確認。現行実装はRouterからCRUDを直接呼ぶ構成が基本</li>
+  </ol>
+
+  <div>
+  <strong>実践: APIの追跡方法</strong>
+  <p>例として、利用者一覧APIの流れを追います。</p>
+  <ol>
+   <li>Swagger UI (Core API :8091/docs) で POST /core/C利用者/一覧 を探す</li>
+   <li><code>backend_server/core_router/C利用者.py</code> を開く</li>
+   <li><code>@router.post("/一覧")</code> の関数を見る</li>
+   <li>関数内で呼ばれる <code>core_crud.C利用者</code> を追う</li>
+  </ol>
+  </div>
+
+  <div>
+  <strong>テーブルタイプの分類</strong>
+  <p>テーブル名の先頭文字で、役割とサーバーが決まります。</p>
+  <ul>
+   <li><strong>C (Core/Common)</strong>: C権限, C利用者, C採番 &#x2014; Core API (8091)</li>
+   <li><strong>M (Master)</strong>: M配車区分, M車両, M商品, M取引先分類, M取引先, M商品構成 &#x2014; Apps API (8098)</li>
+   <li><strong>T (Transaction)</strong>: T配車, T生産, T商品入庫, T商品出庫, T商品棚卸 &#x2014; Apps API (8098)</li>
+   <li><strong>V (View)</strong>: 生SQLのJOINクエリ。DB VIEWは使わない &#x2014; Apps API (8098)</li>
+   <li><strong>S (Scheduler)</strong>: S配車_週表示/日表示, S生産_週表示/日表示 &#x2014; Apps API (8098)</li>
+   <li><strong>A (AI/Advanced)</strong>: AIコア, A会話履歴 &#x2014; Core API (8091)。Aタスク要求/明細とAIチームはTaskTeam API (8093)</li>
+   <li><strong>X (Experimental)</strong>: Xテトリス, X立体リバーシ, X世界の絶景, X太陽系, Xドッグファイト, Xビデオ等 &#x2014; frontend_webの実験画面（Apps API分類ではない）</li>
+  </ul>
+  </div>
+ </section>
+
+ <section id="layers">
+  <h2>各レイヤーの役割</h2>
+
+  <h3>Router (core_router/ / apps_router/)</h3>
+  <p><strong>役割</strong>: HTTPエンドポイントの定義</p>
+  <ul>
+  <li>URLとHTTPメソッドの対応付け</li>
+  <li>リクエスト/レスポンスの型指定</li>
+  <li><code>Depends(get_現在利用者)</code> でJWT認証チェック</li>
+  <li>CRUDの呼び出し（複雑な業務処理で必要な場合だけService相当を分離）</li>
+  </ul>
+
+  <div>
+  <strong>認証付きエンドポイントの実装例</strong>
+  <pre><code>from deps import get_db, get_現在利用者
+from core_models import C利用者
+
+@router.post("/一覧")
+def list_items(
+    db: Session = Depends(get_db),
+    現在利用者: C利用者 = Depends(get_現在利用者)
+):
+    # 現在利用者 には JWT認証済みのユーザー情報が入る
+    ...</code></pre>
+  <p><code>get_現在利用者</code> を <code>Depends</code> に指定することで、JWTトークンの検証と現在ログイン中の利用者情報の取得が自動で行われます。</p>
+  </div>
+
+  <h3>Service（必要な場合のみ）</h3>
+  <p><strong>役割</strong>: ビジネスロジックの実装</p>
+  <div>
+  <strong>補足</strong>
+  <p>
+   Serviceレイヤーは必須ではありません。<br>
+   単純なCRUD操作の場合は Router から直接 CRUD を呼んでOKです。<br>
+   複数テーブルにまたがる処理がある場合にServiceレイヤーを使います。
+  </p>
+  </div>
+
+  <h3>CRUD (core_crud/ / apps_crud/)</h3>
+  <p><strong>役割</strong>: データベース操作</p>
+  <ul>
+  <li>SELECT, INSERT, UPDATE, DELETE の実行</li>
+  <li>SQLAlchemyのクエリビルダーを使用</li>
+  <li>トランザクション管理</li>
+  </ul>
+
+  <h3>Model (core_models/ / apps_models/)</h3>
+  <p><strong>役割</strong>: テーブル定義</p>
+  <ul>
+  <li>テーブル名とカラムの定義</li>
+  <li>型制約とリレーション</li>
+  <li>監査項目 (登録日時、更新日時等) の定義</li>
+  </ul>
+
+  <h3>Schema (core_schema/ / apps_schema/)</h3>
+  <p><strong>役割</strong>: API入出力の型定義</p>
+  <ul>
+  <li>リクエストボディの検証</li>
+  <li>レスポンスの形式定義</li>
+  <li>Pydanticモデルを使用</li>
+  </ul>
+
+  <div>
+  <strong>補足: Schemaファイルの構成</strong>
+  <p>
+  Schemaは Model / CRUD / Router と同様に<strong>フォルダ</strong>です。<br>
+  <code>core_schema/</code>（C系・A系、例: <code>core_schema/C利用者.py</code>）と <code>apps_schema/</code>（M系・T系・V系・S系、例: <code>apps_schema/T配車.py</code>）にテーブルごとの定義があり、共通の型は各フォルダの <code>common.py</code> にまとめられています。
+  </p>
+  </div>
+ </section>
+
+ <section id="audit-fields">
+  <h2>監査フィールド (共通カラム)</h2>
+  <p>全テーブルに以下の8つの監査カラムが必須です。CRUD操作時に共通ヘルパー関数で自動設定されます。</p>
+
+  <pre><code>from core_crud.utils import create_audit_fields, update_audit_fields
+
+# 登録時
+監査項目 = create_audit_fields(認証情報)
+db.add(Model(..., **監査項目))
+
+# 更新時
+監査項目 = update_audit_fields(認証情報)
+for key, value in 監査項目.items():
+    setattr(record, key, value)</code></pre>
+
+  <p>設定される項目: 登録日時、登録利用者ID、登録利用者名、登録端末ID、更新日時、更新利用者ID、更新利用者名、更新端末ID</p>
+ </section>
+
+ <section id="custom-id">
+  <h2>カスタムID生成 (C採番)</h2>
+  <p>本プロジェクトではAUTOINCREMENTを使わず、<code>C採番</code>テーブルで各テーブルのID採番を管理します。</p>
+  <ul>
+   <li><strong>M系 (マスタ)</strong>: 固定IDを手動で設定（例: M配車区分のIDを 1, 2, 3... と定義）</li>
+   <li><strong>T系 (トランザクション)</strong>: C採番テーブルから自動採番</li>
+   <li><strong>C系 (共通)</strong>: テーブルにより固定IDまたは自動採番</li>
+  </ul>
+  <p>C採番のID生成はトランザクション保護されており、同時アクセスでもID重複が発生しません。</p>
+ </section>
+
+ <section id="auth-flow">
+  <h2>認証フロー (JWT)</h2>
+  <p>ログインからAPI呼び出しまでの認証の流れです。</p>
+
+  <ol>
+  <li><code>/core/auth/ログイン</code> で token を取得</li>
+  <li>フロントが token を保存 (Pinia Store)</li>
+  <li>API呼び出し時に <code>Authorization: Bearer &lt;token&gt;</code> ヘッダーを付与</li>
+  <li>FastAPI が token を検証し、現在利用者の情報を取得</li>
+  </ol>
+
+  <div>
+  <strong>ログインリクエスト例</strong>
+  <pre><code>POST /core/auth/ログイン
+{
+  "利用者ID": "admin",
+  "パスワード": "********"
+}</code></pre>
+  </div>
+
+  <div>
+  <strong>ログインレスポンス例</strong>
+  <pre><code>{
+  "status": "OK",
+  "message": "ログイン成功",
+  "data": {
+    "access_token": "eyJhbGciOiJIUzI1NiIs...",
+    "token_type": "bearer"
+  }
+}</code></pre>
+  </div>
+
+  <div>
+  <strong>注意</strong>
+  <ul>
+   <li>JWTトークンの有効期限は600分です。期限切れ時は再ログインが必要</li>
+   <li>初期投入アカウント（admin等）は平文で保存されます。API経由で新規作成した利用者はbcryptでハッシュ化されます（<code>core_crud/C利用者.py</code> の <code>hash_パスワード</code>/<code>verify_パスワード</code>）</li>
+   <li>権限IDは文字列型です。<code>'1'</code> で比較してください (数値の <code>1</code> ではない)</li>
+  </ul>
+  </div>
+ </section>
+
+ <section id="permissions">
+  <h2>権限の一覧</h2>
+  <p>標準の権限は初期データで登録済みです。</p>
+
+  <table>
+  <thead>
+   <tr>
+   <th>権限ID</th>
+   <th>名称</th>
+   <th>View</th>
+   <th>Create</th>
+   <th>Update</th>
+   <th>Delete</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+   <td>1</td>
+   <td>システム管理者</td>
+   <td>可</td>
+   <td>可</td>
+   <td>可</td>
+   <td>可</td>
+   </tr>
+   <tr>
+   <td>2</td>
+   <td>管理者</td>
+   <td>可</td>
+   <td>可</td>
+   <td>可</td>
+   <td>可</td>
+   </tr>
+   <tr>
+   <td>3</td>
+   <td>利用者</td>
+   <td>可</td>
+   <td>可</td>
+   <td>可</td>
+   <td>-</td>
+   </tr>
+   <tr>
+   <td>4</td>
+   <td>閲覧者</td>
+   <td>可</td>
+   <td>-</td>
+   <td>-</td>
+   <td>-</td>
+   </tr>
+   <tr>
+   <td>9</td>
+   <td>その他</td>
+   <td>可</td>
+   <td>-</td>
+   <td>-</td>
+   <td>-</td>
+   </tr>
+  </tbody>
+  </table>
+  <p>権限の追加・変更は <code>C権限</code> / <code>C利用者</code> テーブルを編集します。</p>
+
+  <h3>初期ユーザー一覧</h3>
+  <p>サーバー初回起動時に以下のユーザーが自動作成されます。</p>
+  <table>
+   <thead>
+    <tr><th>利用者ID</th><th>パスワード</th><th>権限</th></tr>
+   </thead>
+   <tbody>
+    <tr><td><code>admin</code></td><td><code>********</code></td><td>システム管理者</td></tr>
+    <tr><td><code>leader</code></td><td><code>secret</code></td><td>管理者</td></tr>
+    <tr><td><code>user</code></td><td><code>user</code></td><td>利用者</td></tr>
+    <tr><td><code>guest</code></td><td><code>guest</code></td><td>閲覧者</td></tr>
+    <tr><td><code>other</code></td><td><code>other</code></td><td>その他</td></tr>
+   </tbody>
+  </table>
+  <div>
+  <strong>注意</strong>
+  <p>初期ユーザーは「adminが未存在」の場合のみ投入されます。既存DBでは自動更新されません。<br>
+  リセットするにはDBファイルを削除してサーバーを再起動してください。</p>
+  </div>
+ </section>
+
+ <section id="data-crud">
+  <h2>データ操作の基本手順</h2>
+  <p>APIでデータを追加する基本的な流れです。</p>
+
+  <ol>
+  <li>送信先を決める (<code>/core</code> or <code>/apps</code>)</li>
+  <li>ログインして token を取得</li>
+  <li>登録API に JSON を送る (POST)</li>
+  <li>取得API で登録内容を確認</li>
+  <li>一覧API で反映を確認</li>
+  </ol>
+
+  <h3>APIレスポンスの統一形式</h3>
+  <pre><code>// 単件レスポンス
+{
+  "status": "OK",
+  "message": "登録しました",
+  "data": { ... }
+}
+
+// 一覧レスポンス
+{
+  "status": "OK",
+  "message": "",
+  "data": {
+    "items": [ ... ],
+    "total": 8,
+    "limit": 10000
+  }
+}</code></pre>
+
+  <div>
+  <strong>完了条件</strong>
+  <ul>
+   <li>status がすべて OK</li>
+   <li>一覧に追加データが表示される</li>
+   <li>失敗時は message をそのまま記録して原因切り分け</li>
+  </ul>
+  </div>
+ </section>
+
+ <section id="list-controls">
+  <h2>件数制限・論理削除の実装パターン</h2>
+  <p>V系・T系の一覧APIでは、<code>backend_server/list_controls.py</code> と共通スキーマ <code>ListRequest</code> を組み合わせた標準パターンを使用します。</p>
+
+  <h3>list_controls.py の主要関数</h3>
+  <pre><code>from list_controls import (
+    LIMITED_MAX_ITEMS,     # = 1000
+    is_limit_enabled,      # 件数制限フラグ取得（デフォルトTrue）
+    should_show_inactive,  # 無効も表示フラグ取得（デフォルトFalse）
+    get_list_limit,        # 件数上限値を返す（制限なしの場合はNone）
+    get_limit_clause,      # LIMIT句と値のタプルを返す
+    append_active_condition,  # 生SQL用: conditions リストに有効=1条件を追加
+    apply_active_filter,   # SQLAlchemy用: .filter(有効==True) を適用
+)</code></pre>
+
+  <h3>ListRequest スキーマ（V系・T系の共通リクエストボディ）</h3>
+  <pre><code># apps_schema/common.py
+class ListRequest(BaseModel):
+    件数制限: Optional[bool] = True   # True → LIMIT 1000 適用
+    無効も表示: Optional[bool] = False # False → 有効=1 のみ取得
+    開始日付: Optional[str] = None
+    終了日付: Optional[str] = None
+    # ... その他フィルタ項目</code></pre>
+
+  <h3>API系による違い</h3>
+  <table>
+  <thead>
+   <tr><th>API系</th><th>リクエストボディ</th><th>件数上限</th><th>有効フィルタ</th></tr>
+  </thead>
+  <tbody>
+   <tr><td>V系・T系</td><td>ListRequest</td><td>MAX 1000件（動的）</td><td>デフォルトで有効=1のみ</td></tr>
+   <tr><td>M系・C系</td><td>なし（固定）</td><td>MAX 10000件（固定）</td><td>フィルタなし（全件）</td></tr>
+  </tbody>
+  </table>
+
+  <h3>論理削除の仕様</h3>
+  <ul>
+  <li><strong>/削除 エンドポイント</strong> = <code>有効=False</code> に更新（物理削除なし）</li>
+  <li><strong>V系一覧</strong>: デフォルトで <code>有効=1</code> のみ取得。<code>無効も表示=True</code> 送信で全件取得</li>
+  <li><strong>M系一覧</strong>: 有効フィルタなし（全件取得）</li>
+  </ul>
+
+  <h3>V系 Router での実装例（生SQL）</h3>
+  <pre><code>from list_controls import append_active_condition, get_limit_clause
+
+@router.post("/一覧")
+def list_items(request: ListRequest, db: Session = Depends(get_db), ...):
+    conditions = ["1=1"]
+    params = {}
+    append_active_condition(conditions, request, "t.有効")
+
+    limit_clause, limit_value = get_limit_clause(request)
+    if limit_value:
+        params["limit"] = limit_value
+
+    sql = f"SELECT ... WHERE {' AND '.join(conditions)} {limit_clause}"
+    rows = db.execute(text(sql), params).fetchall()</code></pre>
+
+  <h3>T系 CRUD での実装例（SQLAlchemy）</h3>
+  <pre><code>from list_controls import apply_active_filter, get_list_limit
+
+def get_list(db, request):
+    query = db.query(Model)
+    query = apply_active_filter(query, Model, request)
+    limit = get_list_limit(request)
+    if limit:
+        query = query.limit(limit)
+    return query.all()</code></pre>
+ </section>
+
+ <section id="next">
+  <h2>次のステップ</h2>
+  <div>
+  <a href="05_データベース管理.html">
+   <span>次へ進む</span>
+   <strong>05. データベース管理 &#x2192;</strong>
+   <span>SQLiteの操作と管理方法</span>
+  </a>
+  </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+  <a href="03_セットアップと起動.html">&#x2190; 前: 03. セットアップと起動</a> |
+  <a href="_index.html">トップページ</a> |
+  <a href="05_データベース管理.html">次: 05. データベース管理 &#x2192;</a>
+ </p>
+ </footer>
+</body>
+</html>

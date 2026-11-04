@@ -1,0 +1,20 @@
+■ API Endpoint命名規則
+
+バックエンド（すべてPOST）:
+@router.post("/一覧") # 一覧取得
+@router.post("/取得") # 1件取得
+@router.post("/登録") # 作成
+@router.post("/変更") # 更新
+@router.post("/削除") # 削除
+
+ 誤り（GET/PUT/DELETEは使わない）:
+@router.get("/一覧")
+@router.put("/変更")
+@router.delete("/削除")
+
+フロントエンド（ルート）:
+{
+ path: '/C管理/C利用者/一覧',
+ name: 'C利用者一覧',
+ component: () => import('@/components/C管理/C利用者/C利用者一覧.vue')
+}

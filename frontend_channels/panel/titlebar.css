@@ -1,0 +1,12 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* 通常タイトル行とパネル外枠の共通配色。本文の黒や全画面ガラスの専用色は独立させる。 */
+:root {
+  --aidiy-titlebar-background: #30343a;
+  --aidiy-titlebar-foreground: #fff;
+  --aidiy-titlebar-secondary: #fff;
+  --aidiy-panel-border: var(--aidiy-titlebar-background);
+}

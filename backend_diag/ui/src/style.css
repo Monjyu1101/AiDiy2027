@@ -1,0 +1,106 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+@import "./components/共通表示/シアンバー.css";
+@import "./components/共通表示/タイトルバー配色.css";
+:root{color-scheme:dark;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:#e5edf7;background:#000}*{box-sizing:border-box}body{margin:0}header{display:flex;align-items:center;justify-content:space-between;padding:25px 34px;border-bottom:1px solid #304253;background:#000}h1{margin:2px 0 0;font-size:26px;letter-spacing:.05em}.eyebrow{font-size:11px;letter-spacing:.16em;color:#89c9c6}button,input,select{font:inherit;border:1px solid #385164;border-radius:7px;padding:9px 12px;background:#1a2c3a;color:inherit}button{cursor:pointer}button:hover{background:#294453}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #a2e1da;outline-offset:3px}button:disabled{opacity:.5;cursor:wait}#run{background:#a0dbd2;color:#102c2b;font-weight:700;border-color:#a0dbd2}#message{margin:0;padding:13px 34px;background:#000;color:#b8cbdc;font-size:13px;min-height:48px}main{display:grid;grid-template-columns:310px minmax(0,1fr);min-height:calc(100vh - 205px)}aside{border-right:1px solid #304253;padding:20px 16px;background:#000}details{margin-bottom:14px}summary{cursor:pointer;color:#a1b9ce;font-size:12px;font-weight:700;letter-spacing:.04em;padding:9px 4px}article{padding:36px clamp(24px,5vw,76px);max-width:1100px;overflow-wrap:anywhere}h2{font-size:30px;line-height:1.3;margin:12px 0 18px}h3{font-size:15px;margin-top:30px}p{color:#b8c7d5}dl{display:grid;grid-template-columns:120px 1fr;gap:0;border-top:1px solid #304253;margin-top:30px}dt,dd{padding:15px 0;border-bottom:1px solid #304253;margin:0}dt{color:#8ba6bb;font-size:12px}dd{font-size:14px}ul{padding-left:18px;font-size:12px;color:#94afc5}.login{margin:20px 34px;padding:18px;background:#000;border-radius:8px}.login label{display:block;margin-bottom:12px}.login input{width:min(75%,550px)}footer{padding:15px 34px;font-size:11px;color:#8da4b7;border-top:1px solid #304253}[hidden]{display:none!important}@media(max-width:700px){header{padding:18px}#message{padding:12px 18px}main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid #304253;max-height:45vh;overflow:auto}article{padding:26px 20px}h2{font-size:25px}.login{margin:15px}dl{grid-template-columns:95px 1fr}footer{padding:15px 20px}}
+
+
+
+/* 状態は共通の色とラベルで区別し、明るい背景には濃い文字色を使う。 */
+.badge{--badge-fg:#ffffff;--badge-bg:#111318;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:23px;padding:2px 8px;border:0;border-radius:4px;background:var(--badge-bg);color:var(--badge-fg);font-size:10px;font-weight:600;line-height:1.5;letter-spacing:.02em;white-space:nowrap;vertical-align:middle;flex-shrink:0}
+.badge[data-tone="success"]{--badge-fg:#052e16;--badge-bg:#22c55e}
+.badge[data-tone="warning"]{--badge-fg:#332500;--badge-bg:#facc15}
+.badge[data-tone="danger"]{--badge-fg:#30050d;--badge-bg:#ff4d6d}
+.badge[data-tone="pending"]{--badge-fg:#082f49;--badge-bg:#38bdf8}.badge[data-tone="cache"]{--badge-fg:#332500;--badge-bg:#facc15}
+
+.badge.status{min-height:28px;padding:3px 9px;font-size:12px}.status 
+
+.tabs{display:flex;align-items:center;gap:8px;padding:14px 34px;border-bottom:1px solid #304253}.tabs .active{background:#31514d;color:#d8fff4}.tabs span{margin-left:auto;font-size:12px;color:#94afc5}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:18px 34px;background:#000}.panel-heading h2{font-size:18px;margin:0}.panel-note{margin:0;padding:12px 34px;font-size:13px;border-bottom:1px solid #304253}main{min-height:calc(100vh - 340px)}@media(max-width:800px){.tabs{padding:12px 18px;flex-wrap:wrap}.tabs span{width:100%;margin-left:0}.panel-heading,.panel-note{padding:16px 18px}}
+
+.warning{color:#f6ce39}
+
+
+
+.panel-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}.panel-actions button{font-size:12px}.test-notes{margin:0;padding:8px 34px;border-top:1px solid #304253}.test-notes p{font-size:12px;max-width:900px}.test-notes summary{font-weight:400}@media(max-width:800px){.test-notes{padding:8px 18px}.panel-heading{flex-wrap:wrap}}
+
+/* Console の共有 StatusBar と同じ31pxタイトル・3px接続線・操作領域。 */
+:root{font-size:13px;background:#000}body{background:#000}.panel-brand{position:sticky;top:0;z-index:20;height:31px;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:4px;padding:0 3px;border:0;background:var(--aidiy-titlebar-background);color:var(--aidiy-titlebar-foreground)}.panel-brand strong{text-align:center;font-size:13px;white-space:nowrap}.panel-brand.desktop{-webkit-app-region:drag;app-region:drag;user-select:none}.panel-brand.desktop>strong,.panel-brand.desktop>.launcher-selector{-webkit-app-region:drag;app-region:drag}.panel-brand button,.window-actions{-webkit-app-region:no-drag;app-region:no-drag}.panel-brand button *,.window-actions *{-webkit-app-region:no-drag;app-region:no-drag}.connection-label{overflow:hidden;text-overflow:ellipsis;font-size:10px;color:var(--aidiy-titlebar-secondary);white-space:nowrap}.connection-label i{display:inline-block;width:5px;height:5px;border-radius:50%;margin:0 5px;background:#667080}.connection-label i.online{background:cyan}.window-actions{justify-self:end;display:flex;gap:2px}.window-actions button{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:0;color:var(--aidiy-titlebar-secondary);font-size:21px;background:transparent}.window-actions button:hover{background:transparent}.window-actions button:last-child:hover{color:#ff8e9e;background:transparent}.window-minimize{width:10px;border-top:1px solid currentColor}.window-maximize{width:10px;height:10px;border:1px solid currentColor}.window-maximized .window-maximize{box-shadow:2px -2px 0 -1px var(--aidiy-titlebar-background),2px -2px 0 0 currentColor}.connection-bar{position:sticky;top:31px;z-index:20;height:3px;background:#000;border-top:1px solid #242424}.connection-bar.online{background:cyan;animation:cyan-bar-breathe 4.5s linear infinite}.connection-bar.offline{background:#f00020;animation:connection-breathe 4.5s ease-in-out infinite}@keyframes connection-breathe{0%,100%{opacity:.25}50%{opacity:1}}.diag-meta{display:flex;justify-content:space-between;gap:8px;color:#9aa7b8;font-size:10px}.tabs{padding:8px 16px}.tabs button{border-radius:0;padding:4px 10px;font-size:12px}#message{padding:7px 16px;min-height:32px;font-size:12px}.panel-heading{padding:12px 16px}.panel-heading h2{font-size:16px}footer{padding:8px 16px}main{min-height:calc(100vh - 250px)}/* シアンの接続表示はWindowsのアニメーションOFF時も明滅させる。 */
+@media(max-width:480px){.panel-brand{grid-template-columns:minmax(0,1fr) auto minmax(86px,1fr)}.tabs{gap:4px}.tabs span{font-size:10px}}
+/* タブは余白だけを詰め、縮小表示でも押せる高さを確保する。全テストは右端。 */
+.tabs{display:flex;align-items:stretch;gap:1px;padding:0 8px;border-bottom:2px solid #263544;background:#000}.tabs button{position:relative;min-height:30px;margin-bottom:-2px;padding:3px 9px 2px;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:#7f91a6;font-size:13px}.tabs button:hover{color:#d8e6f3;background:#121b25}.tabs button.active{color:#f2fffd;font-weight:700;background:#132230;border-bottom-color:#35e0d2}.tabs #run.run-all{align-self:center;margin:1px 0 1px auto;padding:3px 12px;border:1px solid #ffb547;border-radius:4px;background:#f59e0b;color:#1b1203;font-weight:700;letter-spacing:.04em}.tabs #run.run-all:hover:not(:disabled){background:#ffb84d;border-color:#ffd08a}.tabs #run.run-all:disabled{opacity:.45;cursor:not-allowed}@media(max-width:480px){.tabs{padding:0 4px;flex-wrap:wrap}.tabs button{padding:3px 6px 2px;font-size:12px}}
+/* 画面全体は固定し、スクロールは各パネルの一覧・詳細の内側だけにする。 */
+html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}#app>*{flex:none}#app>.panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}#app>.panel>*{flex:none}#app>.panel>main{flex:1 1 auto;min-height:0;overflow:hidden}#app>.panel>main>aside,#app>.panel>main>article{min-height:0;overflow:auto;overscroll-behavior:contain}#app>footer{max-height:30vh;overflow:auto}@media(max-width:700px){#app>.panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.panel>main>aside{max-height:none}}
+@media(max-width:800px){#app>.panel>main.key-layout{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.panel>main.key-layout>aside{max-height:none}}
+/* 確認中は回転表示。結果が出たら地色が切り替わる。 */
+.badge{transition:background-color .35s ease}.badge-spinner{width:9px;height:9px;flex:none;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:badge-spin .7s linear infinite}@keyframes badge-spin{to{transform:rotate(360deg)}}
+.heading-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px}.public-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#9fb3c6;white-space:nowrap}
+.public-status .public-retry{padding:3px 10px;font-size:11px}
+
+/* 専用窓は共通の拡大演出が終わるまで内容を隠し、Web表示には適用しない。 */
+.desktop-window #app{animation:startup-fade-in .45s ease-out both}
+.desktop-opening #app{opacity:0;animation:none}
+@keyframes startup-fade-in{from{opacity:0}to{opacity:1}}
+
+.previous-run{align-self:center;color:#9aa7b8;font-size:11px;white-space:nowrap}
+
+/* 通常画面の全ページを一回り小さくする。タイトルバーとミニ画面は元の寸法を保つ。 */
+#app>.tabs,#app>.login,#app>#message,#app>.panel:not(.start-mini),#app>footer{zoom:.85}
+
+/* 明細は文字サイズより上下余白を詰め、800×600でも項目を一覧しやすくする。 */
+#app>.panel:not(.start-mini)>main>article{padding:18px 22px}
+#app>.panel:not(.start-mini) article h2{font-size:25px;margin:8px 0 12px}
+#app>.panel:not(.start-mini) article h3{margin:16px 0 8px}
+#app>.panel:not(.start-mini) article p{margin:6px 0;line-height:1.45}
+#app>.panel:not(.start-mini) dl{margin:12px 0;grid-template-columns:110px minmax(0,1fr)}
+#app>.panel:not(.start-mini) dt,#app>.panel:not(.start-mini) dd{padding:6px 0;line-height:1.4}
+#app>.panel:not(.start-mini) article ul{margin:6px 0;line-height:1.45}
+#app>.panel:not(.start-mini) .models li{margin-bottom:6px}
+#app>.panel:not(.start-mini) .item{padding:7px 8px}
+#app>.panel:not(.start-mini) .key-row,#app>.panel:not(.start-mini) .integration-row{padding:6px 4px;gap:8px}
+#app>.panel:not(.start-mini) .trial-select{padding:6px 8px}
+#app>.panel:not(.start-mini) .trial-test{padding:5px;gap:4px}
+#app>.panel:not(.start-mini) .ai-config-row{margin:7px 0;grid-template-columns:100px minmax(0,1fr)}
+#app>footer{padding:6px 16px;line-height:1.35}
+#app>footer p{margin:3px 0}
+
+/* 800px幅では一覧と明細を左右に置き、狭い画面だけ上下表示へ切り替える。 */
+@media(min-width:701px) and (max-width:1000px){
+ #app>.install-panel>main,#app>.panel>main.key-layout,#app>.panel>main.trial-layout{grid-template-columns:minmax(280px,34%) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ #app>.panel>main>aside{border-right:1px solid #304253;border-bottom:0;max-height:none;padding:12px 10px}
+ #app>.ai-model-panel>.ai-model-scroll{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ #app>.ai-model-panel .ai-model-form{border-right:1px solid #304253;border-bottom:0}
+}
+@media(max-width:480px){#app>.panel:not(.start-mini) .ai-config-row{grid-template-columns:minmax(0,1fr)}}
+
+/* 次の操作: 確認前は水色、確認後の未保存結果は青で書込を案内する。 */
+.panel-actions button.check-next,.trial-test button.check-next{background:#38bdf8;border-color:#7dd3fc;color:#082f49}
+.panel-actions button.check-next:hover:not(:disabled),.trial-test button.check-next:hover:not(:disabled){background:#7dd3fc}
+.panel-actions button.write-next{background:#2563eb;border-color:#60a5fa;color:#fff}
+.panel-actions button.write-next:hover:not(:disabled){background:#1d4ed8}
+
+.tabs #run.run-all.force-stop{background:#ff4d6d;border-color:#ff8a9c;color:#30050d}.tabs #run.run-all.force-stop:hover:not(:disabled){background:#ff718b;border-color:#ffb0be}
+
+/* 小さい通常画面でもタイトル操作を収める。 */
+@media(max-width:480px){.panel-brand:not(.compact){grid-template-columns:minmax(0,1fr) auto minmax(182px,1fr)}}
+
+/* ピン OFF は沈んだ表示。寸法は共通のタイトルバー操作を維持する。 */
+.window-actions .window-pin{background:transparent;box-shadow:none;color:#778394;font-size:14px}.window-pin>span{display:inline-block;filter:grayscale(1) brightness(2);opacity:.9;transform:translateY(1px)}.window-actions .window-pin.pinned{background:transparent;box-shadow:inset 0 0 0 1px #6bbed0;color:#c3f7ff}.window-pin.pinned>span{filter:none;opacity:1;transform:none}.window-actions .window-pin:focus-visible{outline:2px solid #8d9fff;outline-offset:-2px}.window-actions button:disabled{cursor:not-allowed}.window-actions .window-pin:disabled{opacity:.75}
+
+/* 外寸を保った1px外周。装飾を重ねず、操作項目は枠の内側へ収める。 */
+#app{box-sizing:border-box;border:1px solid var(--aidiy-panel-border)}
+
+/* 通常タブは黒地。選択中だけ分類色と下線で区別する。 */
+.tabs .tab-headless{--tab-bg:#e7f4fa;--tab-line:#72a8bf}
+.tabs .tab-model{--tab-bg:#eaf5ec;--tab-line:#78a382}
+.tabs .tab-settings,.tabs .tab-tools{--tab-bg:#fff0df;--tab-line:#c69862}
+.tabs .tab-launch{--tab-bg:#fbeaf0;--tab-line:#bf8ca0}
+.tabs button[class*="tab-"]{background:#000;color:#cbd5e1}
+.tabs button[class*="tab-"]:not(.active):hover:not(:disabled){color:#fff;box-shadow:inset 0 0 0 1px var(--tab-line)}
+.tabs button[class*="tab-"].active{background:var(--tab-bg);color:#1e293b;border-bottom-color:var(--tab-line)}
+.window-actions .window-pin:hover{background:transparent}
+
+/* 標準タイトルは疑似最大化と同じmain側操作を使う。ミニのnativeドラッグは維持。 */
+.panel-brand.desktop[data-aidiy-standard-title],.panel-brand.desktop[data-aidiy-standard-title]>strong,.panel-brand.desktop[data-aidiy-standard-title]>.launcher-selector{-webkit-app-region:no-drag;app-region:no-drag}

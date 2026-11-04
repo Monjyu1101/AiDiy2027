@@ -1,0 +1,52 @@
+/*
+ * -*- coding: utf-8 -*-
+ *
+ * -------------------------------------------------------------------------
+ * COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027
+ * -------------------------------------------------------------------------
+ */
+
+:root { color-scheme: light; font-family: "Segoe UI", "Yu Gothic UI", sans-serif; font-size: 12px; color: #202638; background: #e6e8ed; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body { display: flex; flex-direction: column; }
+#toolbar { flex: none; min-height: 38px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 6px 8px; background: #101729; color: #dce5f7; border-bottom: 1px solid #29354b; }
+#format-name { font-weight: 600; }
+.readonly { color: #98a7c0; font-size: 10px; }
+.spacer { flex: 1; }
+button, select { font: inherit; border: 1px solid #a5aebe; border-radius: 0; background: #f5f7fa; color: #202638; padding: 3px 7px; cursor: pointer; }
+button:hover:not(:disabled) { background: #dce7fc; }
+button:disabled { opacity: .4; cursor: default; }
+button:focus-visible, select:focus-visible { outline: 2px solid #4c88dd; outline-offset: 1px; }
+#page-status { white-space: nowrap; font-variant-numeric: tabular-nums; }
+#zoom-label { display: flex; align-items: center; gap: 4px; }
+#notice { padding: 8px 12px; background: #fff5d7; border-bottom: 1px solid #e8d9a7; overflow-wrap: anywhere; }
+#notice.error { color: #8e2626; background: #ffeded; }
+#content { flex: 1; min-height: 0; overflow: auto; padding: 12px; }
+#content.canvas-view #document-page { display: flex; flex-direction: column; align-items: flex-start; min-width: 100%; }
+.page-navigation { display: flex; justify-content: flex-end; position: sticky; left: 0; width: 100%; }
+#page-top { padding-bottom: 10px; }
+#page-bottom { padding-top: 10px; }
+.page-navigation button { min-height: 32px; padding: 6px 12px; border-color: #587bac; color: #17477d; }
+#content.sheet-view .page-navigation { padding: 8px 12px; background: #f5f7fa; }
+#content canvas { display: block; flex: none; margin: 0 auto; background: white; box-shadow: 0 2px 10px #24324b30; max-width: none; }
+#content.word-view { padding: 0; }
+#content.word-view .page-navigation { padding: 8px 12px; }
+.word-pages { transform-origin: top left; }
+.word-pages .docx-wrapper { padding: 12px; background: transparent; }
+.word-pages .docx-wrapper > section.docx { margin-bottom: 12px; }
+#content.sheet-view { padding: 0; background: white; }
+.sheet-table { border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 12px; color: #202638; }
+.sheet-table th, .sheet-table td { border-right: 1px solid #d9dee7; border-bottom: 1px solid #d9dee7; padding: 4px 7px; min-width: 80px; max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: pre-wrap; overflow-wrap: anywhere; vertical-align: top; }
+.sheet-table thead th { position: sticky; top: 0; z-index: 2; background: #edf1f7; font-weight: 500; text-align: center; }
+.sheet-table tbody th { position: sticky; left: 0; z-index: 1; min-width: 44px; background: #edf1f7; font-weight: 400; text-align: right; }
+.sheet-table thead th:first-child { left: 0; z-index: 3; min-width: 44px; }
+.sheet-table td.numeric { text-align: right; font-variant-numeric: tabular-nums; }
+#sheets { display: flex; gap: 3px; overflow-x: auto; flex: none; padding: 5px; border-top: 1px solid #bbc5d5; background: #edf1f7; }
+#sheets button { flex: none; white-space: nowrap; }
+#sheets button[aria-selected="true"] { border-color: #437e60; background: #e1f2e6; color: #225c3b; box-shadow: inset 0 -2px #437e60; }

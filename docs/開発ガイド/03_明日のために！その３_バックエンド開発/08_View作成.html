@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>08 View作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="07_Router作成.html">前へ: 07_Router作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="91_動作確認.html">次へ: 91_動作確認</a>
+  </nav>
+
+  <h1>08_View作成</h1>
+  <p>V系は DBの CREATE VIEW ではなく、Routerで生SQLを実行して一覧を返す方針です。</p>
+
+  <h2>方針</h2>
+  <ul>
+    <li>V系は表示用途の読み取り専用APIとして実装する</li>
+    <li><code>sqlalchemy.text()</code> で明示的にSQLを実行する</li>
+    <li>戻り値は <code>items/total/limit</code> を含む統一形式</li>
+    <li>リクエストには <code>ListRequest</code>（件数制限・無効も表示）を受け取る</li>
+    <li>有効フラグのフィルタとLIMIT句は <code>list_controls.py</code> のユーティリティ関数で統一管理する</li>
+  </ul>
+
+  <h2>list_controls.py ユーティリティ</h2>
+  <p><code>backend_server/list_controls.py</code> は一覧系APIで共通利用するヘルパーモジュールです。</p>
+  <pre><code># backend_server/list_controls.py（抜粋）
+LIMITED_MAX_ITEMS = 1000
+
+def is_limit_enabled(request) -> bool:
+    """リクエストの件数制限フラグを読み取る（デフォルト: True）"""
+    return _to_bool(getattr(request, "件数制限", None), True)
+
+def should_show_inactive(request) -> bool:
+    """無効も表示フラグを読み取る（デフォルト: False）"""
+    return _to_bool(getattr(request, "無効も表示", None), False)
+
+def get_list_limit(request) -> Optional[int]:
+    """LIMIT値を返す（件数制限=Trueなら1000、Falseならなし）"""
+    if is_limit_enabled(request):
+        return LIMITED_MAX_ITEMS
+    return None
+
+def get_limit_clause(request) -> tuple[str, Optional[int]]:
+    """SQL用のLIMIT句文字列とバインド値のタプルを返す"""
+    limit_value = get_list_limit(request)
+    if limit_value is None:
+        return "", None
+    return "LIMIT :limit", limit_value
+
+def append_active_condition(conditions: list[str], request, column_name: str) -> None:
+    """無効も表示=Falseのとき 'カラム名 = 1' をWHERE条件リストに追加する"""
+    if not should_show_inactive(request):
+        conditions.append(f"{column_name} = 1")
+
+def apply_active_filter(query, model, request):
+    """ORM queryに有効=1フィルタを追加する（M系用）"""
+    if should_show_inactive(request):
+        return query
+    return query.filter(model.有効 == True)</code></pre>
+
+  <h2>V系一覧エンドポイントの雛形（list_controls.py 利用版）</h2>
+  <p>以下が最新の実装パターンです。<code>list_controls</code> をインポートして件数制限・有効フィルタを一元管理します。</p>
+  <pre><code>from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from typing import Optional
+import apps_schema as schemas, deps, apps_models as models
+from list_controls import append_active_condition, get_limit_clause
+
+router = APIRouter(prefix="/apps/V商品", tags=["V商品"])
+
+@router.post("/一覧", response_model=schemas.ResponseBase)
+def list_V商品(
+    request: Optional[schemas.ListRequest] = None,
+    db: Session = Depends(deps.get_db),
+    現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
+):
+    conditions = []
+    # 有効フラグフィルタ（request.無効も表示=Falseの場合に 有効=1 条件を追加）
+    append_active_condition(conditions, request, 's."有効"')
+    where_sql = f"WHERE {' AND '.join(conditions)}" if conditions else ""
+
+    # LIMIT句（request.件数制限=Trueの場合に LIMIT 1000 を追加）
+    limit_sql, limit_value = get_limit_clause(request)
+    params = {}
+    if limit_value is not None:
+        params["limit"] = limit_value
+
+    sql = f"""
+    SELECT s.*, m."商品分類名"
+    FROM "M商品" s
+    LEFT JOIN "M商品分類" m ON s."商品分類ID" = m."商品分類ID"
+    {where_sql}
+    ORDER BY s."商品ID"
+    {limit_sql}
+    """
+    result = db.execute(text(sql), params).fetchall()
+
+    count_sql = f"""
+    SELECT count(*) FROM "M商品" s
+    LEFT JOIN "M商品分類" m ON s."商品分類ID" = m."商品分類ID"
+    {where_sql}
+    """
+    total = db.execute(text(count_sql), params).scalar()
+
+    return schemas.ResponseBase(
+        status="OK",
+        message="V商品一覧を取得しました",
+        data={"items": [dict(row._mapping) for row in result], "total": total, "limit": limit_value}
+    )</code></pre>
+
+  <p><strong>ポイント:</strong></p>
+  <ul>
+    <li><code>request: Optional[schemas.ListRequest] = None</code> — リクエストなし（省略可）でもデフォルト動作（件数制限あり・有効のみ）が適用される</li>
+    <li><code>append_active_condition</code> の第3引数はSQL上のエイリアス付きカラム名（例: <code>s."有効"</code>）で指定する</li>
+    <li>件数SQLの <code>params</code> は WHERE条件のバインド変数と共用しているため、count側でも同じ <code>params</code> を渡す</li>
+    <li>行データは <code>dict(row._mapping)</code> で辞書変換する（古い <code>row.カラム名</code> 参照より安全）</li>
+  </ul>
+
+  <h2>実装例（参照）</h2>
+  <p>以下は <code>code_samples/V商品_router.py</code> の内容です。実際の <code>backend_server/apps_router/V商品.py</code>、および他の全 V系 Router（<code>V取引先.py</code>、<code>V生産.py</code> など）も同じく、列を明示的に列挙して辞書化するこのスタイルで実装されています。上記の <code>dict(row._mapping)</code> 版は今後の実装で使ってよい簡潔な代替パターンですが、現時点のコードベースはこちらの明示列挙スタイルで統一されています。</p>
+  <pre data-src="code_samples/V商品_router.py"><code>読み込み中...</code></pre>
+
+  <h2>M系との使い分け</h2>
+  <table>
+    <tr><th>分類</th><th>用途</th><th>実装スタイル</th></tr>
+    <tr><td>M系</td><td>CRUD操作</td><td>ORM中心（Model + CRUD）</td></tr>
+    <tr><td>V系</td><td>一覧表示・集計表示</td><td>生SQL中心（Router内）</td></tr>
+  </table>
+
+  <h2>拡張時の注意</h2>
+  <ul>
+    <li>検索条件を追加する場合はバインド変数を使う</li>
+    <li>JOIN追加時は返却項目名を画面仕様に合わせる</li>
+    <li>件数SQL（count）もセットで管理する</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] View Routerが <code>apps_main.py</code> に登録されている</li>
+    <li>[ ] SQLインジェクション対策としてバインド変数を使っている</li>
+    <li>[ ] レスポンス形式が一覧API標準に一致している</li>
+    <li>[ ] <code>list_controls</code> をインポートして件数制限・有効フィルタを使っている</li>
+    <li>[ ] リクエストスキーマに <code>Optional[schemas.ListRequest] = None</code> を使っている</li>
+    <li>[ ] 件数カウント用SQLも同じ <code>params</code>（WHERE条件）を渡している</li>
+  </ul>
+
+  <nav>
+    <a href="07_Router作成.html">前へ: 07_Router作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="91_動作確認.html">次へ: 91_動作確認</a>
+  </nav>
+</body>
+</html>
+
+
+
+

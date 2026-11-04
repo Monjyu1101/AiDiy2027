@@ -1,0 +1,73 @@
+{
+  "before": {
+    "text_to_speech": {
+      "auto_provider": "edge",
+      "auto_voice": "female"
+    },
+    "speech_to_text": {
+      "auto_provider": "google"
+    },
+    "image_generation": {
+      "auto_provider": "codex"
+    },
+    "movie_generation": {
+      "auto_provider": "freeai",
+      "auto_model": "veo-3.1-generate-preview",
+      "auto_aspect_ratio": "16:9",
+      "auto_resolution": "auto"
+    }
+  },
+  "sha256_before": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+  "all_config_hashes": {
+    "AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+    "AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+    "AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+    "AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+    "AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+    "AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+    "AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+    "AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+    "AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+    "AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+    "AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+    "AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+    "AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+    "mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+    "mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+    "mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+  },
+  "temporary": {
+    "text_to_speech": {
+      "auto_provider": "edge",
+      "auto_voice": "female"
+    },
+    "speech_to_text": {
+      "auto_provider": "google"
+    },
+    "image_generation": {
+      "auto_provider": "codex"
+    },
+    "movie_generation": {
+      "auto_provider": "freeai",
+      "auto_model": "veo-3.1-generate-preview",
+      "auto_aspect_ratio": "9:16",
+      "auto_resolution": "auto"
+    }
+  },
+  "only_expected_change": true,
+  "restored_equal": true,
+  "restored_hash_equal": true,
+  "other_config_changes": [],
+  "date": "2026-11-03",
+  "scope": "Diag Tools normal UI",
+  "field": "movie_generation.auto_aspect_ratio",
+  "original": "16:9",
+  "temporary_value": "9:16",
+  "apply_only_disk_unchanged": true,
+  "reload_temporary_ui": true,
+  "reload_restored_ui": true,
+  "ai_requests": 0,
+  "generation_calls": 0,
+  "on_off_changed": false,
+  "source_changes": 0
+}

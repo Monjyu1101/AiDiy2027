@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>07 動作確認</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="06_ルーティング追加とメニュー登録.html">前へ: 06_ルーティング追加とメニュー登録</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+
+  <h1>07_動作確認</h1>
+  <p>一覧と編集のE2E動作を確認します。最低限、登録→更新→削除の一連操作を通してください。</p>
+
+  <h2>事前条件</h2>
+  <ul>
+    <li>フロント: <code>http://127.0.0.1:8090</code></li>
+    <li>Apps API: <code>http://127.0.0.1:8098/docs</code></li>
+    <li>ログイン済み（例: admin）</li>
+  </ul>
+
+  <h2>E2Eテスト手順</h2>
+  <ol>
+    <li>一覧画面を開き、既存データ表示を確認</li>
+    <li>新規ボタンから編集画面へ移動し、商品を登録</li>
+    <li>一覧に戻って対象商品を開き、内容を変更して保存</li>
+    <li>再度開いて削除を実行</li>
+    <li>一覧から対象が消えることを確認</li>
+  </ol>
+
+  <h2>件数制限・無効も表示の動作確認</h2>
+  <ol>
+    <li>一覧画面を開き、<strong>件数制限</strong> チェックボックスをOFF → 全件取得されることを Network タブで確認（<code>件数制限: false</code> がリクエストボディに含まれる）</li>
+    <li>件数制限をONに戻し、リクエストボディが <code>件数制限: true</code> になることを確認</li>
+    <li><strong>無効も表示</strong> をONにすると「有効」列がテーブルに追加されることを確認</li>
+    <li>無効レコード（有効=false）がテーブルに表示されることを確認</li>
+    <li>無効も表示をOFFに戻すと「有効」列が消え、有効レコードのみ表示されることを確認</li>
+  </ol>
+
+  <h2>論理削除（無効化）の動作確認</h2>
+  <p>
+    このシステムの「削除」は物理削除ではなく <strong>論理削除</strong>（有効フラグのOFF）です。
+    フロントエンドでは「有効をオフ」「無効にする」などのボタン名で実装します。
+  </p>
+  <ol>
+    <li>対象レコードの編集画面を開き、削除（無効化）を実行</li>
+    <li><code>無効も表示=false</code> の状態で一覧に戻ると、対象レコードがリストから消えることを確認</li>
+    <li><code>無効も表示=ON</code> に切り替えると、対象レコードが「有効=false」として一覧に現れることを確認</li>
+    <li>再度編集画面を開いて有効を戻せば復元できることを確認</li>
+  </ol>
+
+  <h2>確認観点</h2>
+  <table>
+    <tr><th>観点</th><th>期待結果</th></tr>
+    <tr><td>メッセージ表示</td><td>成功/失敗メッセージが適切に表示される</td></tr>
+    <tr><td>入力検証</td><td>必須未入力で保存できない</td></tr>
+    <tr><td>URL連携</td><td>モードと商品IDクエリが正しく解釈される</td></tr>
+    <tr><td>API連携</td><td>Networkで期待エンドポイントにPOSTされる</td></tr>
+    <tr><td>件数制限</td><td>リクエストボディに <code>件数制限: true/false</code> が含まれる</td></tr>
+    <tr><td>無効も表示</td><td>リクエストボディに <code>無効も表示: true/false</code> が含まれる</td></tr>
+    <tr><td>有効列</td><td>無効も表示ONで「有効」列が表示、OFFで非表示になる</td></tr>
+    <tr><td>論理削除</td><td>削除後は無効も表示OFFの一覧から消え、ONで有効=falseとして残る</td></tr>
+  </table>
+
+  <h2>不具合切り分け</h2>
+  <ul>
+    <li>画面が出ない: router pathとcomponent importを確認</li>
+    <li>APIエラー: 8098側のRouter/URL/認証を確認</li>
+    <li>値が反映されない: formバインディングとpayloadを確認</li>
+    <li>一覧更新されない: 子コンポーネントの再読み込み呼び出しを確認</li>
+  </ul>
+
+  <h2>AGENTS準拠チェック</h2>
+  <ul>
+    <li>Networkで <code>Authorization: Bearer ...</code> が自動付与される（<code>apiClient</code> interceptor）</li>
+    <li>401応答時にログアウトへ遷移する（認証フローと整合）</li>
+    <li>日本語URLをリロードしても対象画面に復帰できる</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 登録/更新/削除を通せる</li>
+    <li>[ ] 主要エラー時にユーザーへ通知できる</li>
+    <li>[ ] 再読み込み後も画面状態が破綻しない</li>
+  </ul>
+
+  <nav>
+    <a href="06_ルーティング追加とメニュー登録.html">前へ: 06_ルーティング追加とメニュー登録</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+</body>
+</html>

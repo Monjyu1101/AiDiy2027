@@ -1,0 +1,18 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* 起動受付時だけ枠の光が二周する。アイコンや操作領域は動かさない。
+ * IDE の自動探索と同じ conic-gradient の彗星（暗い尾→シアン→白い先頭）で、真下から時計回りに二周する。
+ * 要素は発光と明滅、::before は mask で縁だけを残したリング。角度は登録済みプロパティとして補間する。 */
+@property --launch-spin{syntax:'<angle>';inherits:true;initial-value:0deg}
+.launch-frame{position:relative;z-index:1;display:inline-block;flex:none;vertical-align:middle;width:40px;height:40px;pointer-events:none}
+.launch-frame.launch-frame-72{width:72px;height:72px}
+.launch-frame.launch-frame>img{position:absolute;inset:0;display:block;width:100%;height:100%;border-radius:0;pointer-events:none}
+.launch-frame>.launch-trace{position:absolute;inset:0;display:block;opacity:0;pointer-events:none;filter:drop-shadow(0 0 2px #00f0ff) drop-shadow(0 0 5px #00b8ffaa)}
+.launch-trace::before{content:'';position:absolute;inset:0;box-sizing:border-box;padding:3px;border-radius:18%;background:conic-gradient(from calc(180deg + var(--launch-spin)),transparent 0deg 150deg,#0e4f66 205deg,#00b8ff 270deg,#00f0ff 315deg,#9ffcff 345deg,#ffffff 357deg,transparent 360deg);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.launch-frame-72>.launch-trace::before{padding:4px}
+
+/* 受付の光が回っている間だけ、他の起動アイコンを暗くする。操作は妨げない。 */
+:root:has(.launch-frame.launch-active) .launch-frame:not(.launch-active)>img{filter:brightness(.3)}

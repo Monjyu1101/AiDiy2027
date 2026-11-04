@@ -1,0 +1,65 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+html.micro-mode,html.micro-mode body,html.micro-mode #app{background:transparent!important;overflow:hidden;height:100%;margin:0}
+/* アイコン表示の透明領域には通常パネルの外周枠を描かない。 */
+html.micro-mode #app{border:0}
+.micro-launcher{position:fixed;inset:0;display:grid;place-items:center;isolation:isolate;pointer-events:none}
+.micro-launcher.unfolded{--core-y:50%}
+.micro-launcher button{pointer-events:auto;-webkit-app-region:no-drag}
+.micro-move{position:absolute;left:50%;top:var(--core-y,64px);transform:translate(-50%,-50%);width:90px;height:90px;border-radius:50%;pointer-events:auto;z-index:2}
+.micro-core{position:absolute;left:50%;top:var(--core-y,64px);width:64px;height:64px;transform:translate(-50%,-50%);display:grid;place-items:center;padding:0;border:0;border-radius:0;background:transparent!important;z-index:3;cursor:pointer}
+/* 名前幅は維持し、実測した折り返し高さだけ収納窓を縦へ広げる。展開中も中心アイコンの下に残す。 */
+.micro-project{position:absolute;left:50%;top:calc(var(--core-y,64px) + 48px);transform:translateX(-50%);box-sizing:border-box;width:120px;min-height:18px;padding:0 4px;background:transparent;color:#fff;font-size:11px;line-height:18px;text-align:center;white-space:normal;overflow-wrap:anywhere;text-shadow:0 1px 3px #000,0 0 3px #000;pointer-events:auto;touch-action:none;user-select:none;-webkit-app-region:no-drag;z-index:3;cursor:grab}
+/* 展開中は周回アイコンへ重ねないよう2行までにする。全文は title で確認できる。 */
+.micro-launcher.unfolded .micro-project-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.micro-core:disabled{opacity:1;cursor:pointer}
+.micro-core::before,.micro-app::before{content:'';position:absolute;inset:4px;background:#09121fd9;filter:blur(8px);box-shadow:0 3px 9px #0008;pointer-events:none}
+/* Codeの開始表示と同じ二重四角・20秒の逆回転・12秒の色循環。
+ * 大きさもCodeと同じ比率（枠≒アイコン×1.63）とし、回転中も四角がアイコンに掛からない。
+ * 斜めの角は中心から約45pxまで届くため、名前はその下（中心+48px）に置く。 */
+.micro-mark{position:relative;display:grid;place-items:center;width:64px;height:64px;pointer-events:none}
+.micro-core,.micro-move{touch-action:none;user-select:none}.micro-core img{-webkit-user-drag:none}.micro-launcher.moving,.micro-launcher.moving *{cursor:grabbing!important}
+.micro-mark::before,.micro-mark::after{content:'';position:absolute;inset:0;border:2px solid #8fffff;animation:micro-square 20s linear infinite,micro-rainbow 12s linear infinite,micro-glow 6s ease-in-out infinite}
+.micro-mark::after{animation-direction:reverse,normal,normal;animation-delay:0s,-6s,-3s}
+.micro-mark img{z-index:1;object-fit:contain;filter:none}
+@keyframes micro-square{from{transform:rotate(-6deg)}to{transform:rotate(354deg)}}
+@keyframes micro-rainbow{to{filter:hue-rotate(360deg)}}
+@keyframes micro-glow{0%,100%{opacity:.78}50%{opacity:1}}
+.micro-deploy{position:absolute;left:50%;top:50%;width:var(--menu-size);height:var(--menu-size);transform:translate(-50%,-50%) scale(.12) rotate(-24deg);opacity:0;transition:transform .44s cubic-bezier(.2,.8,.2,1),opacity .4s;pointer-events:none}
+.unfolded .micro-deploy{transform:translate(-50%,-50%) scale(1) rotate(0);opacity:1}
+.micro-deploy[inert] button{pointer-events:none}
+.micro-orbit{position:absolute;inset:0;--period:120s;animation:micro-orbit var(--period) linear infinite}
+.micro-position{position:absolute;left:50%;top:50%;width:0;height:0;transform:rotate(var(--angle)) translateX(0) rotate(calc(-1 * var(--angle)));opacity:0;transition:transform .42s cubic-bezier(.2,.8,.2,1),opacity .25s;transition-delay:var(--close-delay,0ms)}
+.expanded .micro-position{transform:rotate(var(--angle)) translateX(var(--radius)) rotate(calc(-1 * var(--angle)));opacity:1;transition-delay:var(--open-delay,0ms)}
+.micro-upright{position:absolute;left:0;top:0;animation:micro-orbit var(--period) linear infinite reverse}
+.micro-app{position:absolute;transform:translate(-50%,-50%);width:48px;height:48px;padding:4px;border:0;border-radius:0;background:transparent!important;transition:border-color .2s}
+.micro-app::before{inset:-4px}
+.micro-app img{position:relative;z-index:1;width:40px;height:40px;object-fit:contain;display:block}
+.micro-app:hover{border-color:#b4ffff;box-shadow:0 0 8px #40d7ff66}
+.micro-launcher:has(.micro-app:hover) .micro-orbit,.micro-launcher:has(.micro-app:hover) .micro-upright,.micro-launcher:has(.micro-app:focus-visible) .micro-orbit,.micro-launcher:has(.micro-app:focus-visible) .micro-upright{animation-play-state:paused}
+@keyframes micro-orbit{to{transform:rotate(360deg)}}
+.launcher-selector{display:flex;align-items:center;gap:6px;white-space:nowrap;min-width:0}
+.launcher-selector>span{font-size:10px;color:#8caaba}
+.launcher-selector button{font-size:10px;padding:2px 7px;border-radius:4px;background:transparent;color:var(--aidiy-titlebar-foreground);line-height:1.6}
+/* 無効操作も白文字を薄めず、暗い面と破線で実行不可を示す。 */
+.launcher-selector button:disabled{cursor:not-allowed;opacity:1;background:#20242a;border-style:dashed;border-color:#64717f}
+.launcher-selector button:hover:not(:disabled){background:#294453}
+.launcher-selector button:focus-visible{outline:2px solid var(--aidiy-titlebar-foreground);outline-offset:1px}
+
+.micro-core:focus-visible{outline:none}.micro-core:focus-visible .micro-mark::before{border-color:#dfffff}
+
+/* 小さい表示でも完了通知は残さず、実行中と確認が必要な失敗だけを示す。 */
+.micro-project-name{display:block}
+.micro-batch-status{display:block;margin-top:3px;padding:2px 3px;border-radius:4px;background:#102d38;color:#a2fff0;font-size:11px;font-weight:700;line-height:18px;text-shadow:none}
+.micro-batch-status[data-kind=stop],.micro-batch-status[data-state=error]{background:#36291c;color:#ffcf91}
+.micro-batch-spinner{display:inline-block;width:9px;height:9px;margin-right:4px;border:2px solid #48616e;border-top-color:currentColor;border-radius:50%;vertical-align:-1px;animation:micro-batch-spin .9s linear infinite}
+.micro-batch-status button{display:block;margin:2px auto;padding:1px 5px;font-size:10px;line-height:16px}
+@keyframes micro-batch-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.micro-batch-spinner{animation:none}}
+
+/* 外周は逆回転し、画像の向きは逆補正で上向きに保つ。 */
+.micro-outer-orbit{animation-direction:reverse}
+.micro-outer-orbit .micro-upright{animation-direction:normal}

@@ -1,0 +1,22 @@
+{
+  "discord/panel/AiDiy_discord.png": "16605e78dd287eef46624db971c6f165929bb38e696beaab7a0b35bc6dc15627",
+  "discord/panel/AiDiy_discord.svg": "9b2625a735d3120f9379726fe141e6dacebf51b82927907f74ae05cefdace1e7",
+  "package-lock.json": "5bd99c28a810cdf7a895f2697f411f880de6e2811f36d7118a2edd2d635c71aa",
+  "package.json": "83f29b992bb3fc25b510ad66c52f0276b730ce577d8f86a2601b8098ff6ba0c1",
+  "panel/AiDiy.png": "3b580e91b8e91a2accd55675c07f2b2b8c3c9cf85677da804ef6b74ae8267042",
+  "panel/AiDiy_discord.png": "16605e78dd287eef46624db971c6f165929bb38e696beaab7a0b35bc6dc15627",
+  "panel/THIRD_PARTY_NOTICES.txt": "991f108cf9b45856e7f9864d918cb66c1f6f9ab41f18dd885f0c95bf8aa10d12",
+  "panel/components/ライブ/音声表示.js": "adfbfb27e5d1a454645afde3cf8297057b887be067a92915ff56045fbcf26987",
+  "panel/components/接続/パネル状態.js": "1e38a894c77bce856ade78bd0672e3fedb1eab4a0c40ad78181fcfb63fbde74a",
+  "panel/components/接続/接続パネル.vue": "ca10bf0ecec264fc64cd63d31f1cd347c5730738a22fe0a8ee709014e55c0fd7",
+  "panel/components/接続/機能切替.vue": "1cd911c0dac6c2f3fc14c810c5c4bcbdb8d54e0f02959b3d65b0a7fa459051f2",
+  "panel/index.html": "a6bd2ff29d8416ec53d3b3b0f572d4278b75a3be8ad24c8cbb3459df520bfe74",
+  "panel/main.js": "365464f455f7b64e69c91fb085d4b5e4780d3c801f0d1a2bf021220797cd1934",
+  "panel/style.css": "eb63b82004088577f107ee9de5d255b136cdd384a5915dcff39d2353cc4499a0",
+  "panel/titlebar.css": "35f57ac2c9227b2fa9a09e748b56bae5dd2cfe4761725dc1402a18e7ba616f6c",
+  "panel/view.js": "8359fd6abe66a319b2ce8862cb3020cec9b4016cfc5c81fa2a70b86a93ee373a",
+  "panel/visualizer.js": "4ff5202bee0fe0c85fa74fa628b9a00d4cd6c00fdfef88bb0ccbff6dbaeec8d7",
+  "scripts/build-panel.mjs": "32525be53c67c1779456dd34d0df7ea0c49c293cb0d2526b9565fee4084d5b2d",
+  "scripts/verify-lock.mjs": "d88f888bf600d543ee6ed93382524b4268f02537e15f6ca156a99ee30a540670",
+  "scripts/verify-panel.mjs": "83a2f068a3eeb40bc43591f7238338ff3458cf2f5763e983908edff0f1975d29"
+}

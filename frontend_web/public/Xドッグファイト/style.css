@@ -1,0 +1,241 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/*
+
+  計器類は #hud-canvas へ毎フレーム描画する。ここでは土台と
+  オーバーレイ（タイトル・警告演出・操作パッド）だけを持つ。
+*/
+
+:root {
+  --hud: #7ff0d0;
+  --warn: #ff6a4d;
+  --edge: rgba(127, 240, 208, .35);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #05080f;
+  color: var(--hud);
+  font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Sans", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#stage { position: fixed; inset: 0; overflow: hidden; }
+
+#game, #hud-canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#hud-canvas { pointer-events: none; }
+#hud-canvas.hidden { display: none; }
+
+/* HUD ガラスの走査線（雰囲気付け） */
+#scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .16;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(127, 240, 208, .22) 0px,
+    rgba(127, 240, 208, .22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.load-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #cfe9ff;
+  background: #05080f;
+  pointer-events: none;
+  transition: opacity .4s ease;
+  z-index: 5;
+}
+.load-error.hidden { opacity: 0; }
+
+#announcer {
+  position: absolute;
+  left: 50%;
+  top: 24%;
+  transform: translateX(-50%);
+  padding: 6px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  white-space: nowrap;
+  color: #eafff8;
+  background: rgba(4, 14, 22, .55);
+  border-left: 3px solid var(--hud);
+  border-right: 3px solid var(--hud);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 6;
+}
+#announcer.on { opacity: 1; }
+
+/* デモ飛行の実況解説（プレイヤー操作中は出さない） */
+#commentary {
+  position: absolute;
+  left: 50%;
+  bottom: 15.5%;
+  transform: translate(-50%, 8px);
+  width: min(660px, 66vw);
+  padding: 9px 16px 11px;
+  background: linear-gradient(180deg, rgba(10, 30, 38, .62), rgba(5, 18, 26, .74));
+  border: 1px solid rgba(127, 240, 208, .34);
+  border-left: 3px solid var(--hud);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .3s ease, transform .3s ease;
+  z-index: 6;
+}
+#commentary.on { opacity: 1; transform: translate(-50%, 0); }
+
+#commentary-tag {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 9px;
+  letter-spacing: .26em;
+  color: rgba(127, 240, 208, .7);
+}
+#commentary-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #e6fff8;
+  text-shadow: 0 0 12px rgba(127, 240, 208, .35);
+}
+
+@media (max-width: 720px), (max-height: 520px) {
+  #commentary { width: min(420px, 86vw); bottom: 18%; padding: 6px 11px 8px; }
+  #commentary-text { font-size: 11px; }
+}
+
+#damage-flash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 42%, rgba(255, 60, 40, .55) 100%);
+  opacity: 0;
+  transition: opacity .18s ease;
+  z-index: 6;
+}
+#damage-flash.on { opacity: 1; }
+
+/* ---------- 操作パッド ---------- */
+
+#touch-pad {
+  position: fixed;
+  left: 14px;
+  bottom: 14px;
+  display: none;
+  grid-template-columns: repeat(3, 46px);
+  grid-auto-rows: 40px;
+  gap: 5px;
+  z-index: 8;
+}
+#touch-pad.on { display: grid; }
+.pad-btn {
+  border: 1px solid var(--edge);
+  background: rgba(4, 14, 22, .7);
+  color: var(--hud);
+  font-size: 13px;
+  cursor: pointer;
+  touch-action: none;
+}
+.pad-btn.wide { grid-column: span 3; }
+.pad-btn:active, .pad-btn.pressed { background: rgba(127, 240, 208, .28); }
+[data-key="pitchUp"] { grid-area: 1 / 2; }
+[data-key="rollLeft"] { grid-area: 2 / 1; }
+[data-key="rollRight"] { grid-area: 2 / 3; }
+[data-key="pitchDown"] { grid-area: 2 / 2; }
+
+/* ---------- オーバーレイ ---------- */
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(3, 7, 13, .82);
+  backdrop-filter: blur(3px);
+  z-index: 20;
+}
+#overlay.show { display: flex; }
+.overlay-inner {
+  max-width: 540px;
+  width: 100%;
+  padding: 26px 30px;
+  text-align: center;
+  background: rgba(6, 16, 26, .9);
+  border: 1px solid var(--edge);
+  box-shadow: 0 0 42px rgba(127, 240, 208, .16);
+}
+.overlay-inner h1 {
+  margin: 0 0 12px;
+  font-size: 27px;
+  letter-spacing: .3em;
+  color: #eafff8;
+  text-shadow: 0 0 20px rgba(127, 240, 208, .5);
+}
+#overlay-text { margin: 0 0 18px; font-size: 13px; line-height: 1.9; color: #bfe6dc; }
+.keymap {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 5px 14px;
+  margin-bottom: 20px;
+  font-size: 11px;
+  text-align: left;
+}
+.keymap div { display: flex; gap: 9px; align-items: baseline; }
+.keymap b {
+  min-width: 74px;
+  padding: 1px 6px;
+  text-align: center;
+  color: #05080f;
+  background: var(--hud);
+  font-size: 10px;
+  letter-spacing: .06em;
+}
+.keymap span { color: rgba(127, 240, 208, .55); }
+#start-btn {
+  padding: 10px 40px;
+  font-size: 14px;
+  letter-spacing: .22em;
+  color: #05080f;
+  background: var(--hud);
+  border: 0;
+  cursor: pointer;
+}
+#start-btn:hover { background: #a5fbe2; box-shadow: 0 0 22px rgba(127, 240, 208, .6); }
+.overlay-inner small { display: block; margin-top: 12px; font-size: 10px; color: rgba(127, 240, 208, .55); }
+
+@media (max-width: 720px), (max-height: 520px) {
+  .overlay-inner { padding: 18px; }
+  .overlay-inner h1 { font-size: 20px; }
+}

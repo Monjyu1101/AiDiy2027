@@ -1,0 +1,102 @@
+{
+  "id": "Avatar-Electron_602",
+  "date": "2026-11-03",
+  "cause": "正常なconversation.item.added/doneがunknown警告へ落ちる。停止や無応答原因と断定しない",
+  "change": "既存無視イベントへ2種追加。response回答/error/未知イベント処理保持",
+  "tests": {
+    "file": "backend_server/checks/test_live_openai_item_events.py",
+    "pass": 5,
+    "fail": 0,
+    "coverage": [
+      "正常通知",
+      "テキスト一重転送",
+      "音声転送",
+      "実エラー通知",
+      "未知イベント警告"
+    ]
+  },
+  "source_hashes": {
+    "backend_server/AIコア/AIライブ_openai.py": "a3e56044da5d9a36a2b2bef765b42edd968bc53fe48a479ba05dbc2a99b0cccb",
+    "backend_server/checks/test_live_openai_item_events.py": "b7361bf7a4bc4862369221036d5cd1e6e014119a57ffa543284eaf57224656cb"
+  },
+  "openai_switch": {
+    "log": "backend_server/temp/logs/20261102.210000.core_main.log",
+    "window": "2026-11-02 21:08-21:10 local",
+    "connection": "success",
+    "text_send": "success",
+    "screen_reply": "avatar-openai-trial.jsonで確認済み",
+    "errors": 0,
+    "warnings": "conversation.item.added/done"
+  },
+  "quota": "利用者推定。保持ログから枠超過確定証拠なし",
+  "runtime": "2026-11-03 18:46:51に正式reboot_core.txt経路でCore8091のみ再起動。18:47:07起動のPID22976/864へ交代しHTTP200、5系統HTTP200・Local停止を確認。修正ソースのハッシュ一致、Core仮想環境で隔離5件PASS。OpenAI Liveモジュールは接続時の遅延読込みのため、実接続での新規イベント受信は追加AI送信を避けて未実施。再起動前の旧プロセス問題は解消し、次の通常接続から修正を読み込む状態。",
+  "new_ai_requests": 0,
+  "new_avatar_captures": 0,
+  "reference": "https://developers.openai.com/api/reference/resources/realtime/client-events/",
+  "runtime_readcheck": {
+    "core_pids": [
+      18328,
+      31580
+    ],
+    "process_started_local": "2026-11-03 04:55:23",
+    "source_modified_local": "2026-11-03 17:32:51",
+    "last_old_warning_local": "2026-11-03 18:01:04",
+    "status": "再起動前の履歴。後続runtime_restartを参照",
+    "safe_reflection_condition": "Core8091の通常再起動と接続中クライアント復帰が必要。今回文書監査では中断操作を行わない。",
+    "reply_impact": "同時刻のImage認識返信は成功しており、誤警告を無応答原因と扱わない"
+  },
+  "runtime_restart": {
+    "time": "2026-11-03 18:46:51",
+    "new_process_started": "2026-11-03 18:47:07",
+    "old_pids": [
+      18328,
+      31580
+    ],
+    "new_pids": [
+      22976,
+      864
+    ],
+    "source_hash_match": true,
+    "regression": {
+      "pass": 5,
+      "seconds": 0.063,
+      "command": "backend_server/.venv/Scripts/python.exe -B -X utf8 -m unittest discover -s backend_server/checks -p test_live_openai_item_events.py -v",
+      "earlier_attempts": "システムPythonはnumpy不足。制限環境のvenv実行は進行停止し中止。通常権限の同一テストは5件成功。"
+    },
+    "services": [
+      {
+        "port": 8090,
+        "tcp": true,
+        "http": 200
+      },
+      {
+        "port": 8091,
+        "tcp": true,
+        "http": 200
+      },
+      {
+        "port": 8093,
+        "tcp": true,
+        "http": 200
+      },
+      {
+        "port": 8095,
+        "tcp": true,
+        "http": 200
+      },
+      {
+        "port": 8098,
+        "tcp": true,
+        "http": 200
+      },
+      {
+        "port": 8096,
+        "tcp": false,
+        "http": null
+      }
+    ],
+    "ai_requests": 0,
+    "runtime_event_replay": false,
+    "lazy_import": "AIライブ.py:221 接続時import。現行モジュール読込みは隔離テストで確認し、実Live接続を新規生成しない。"
+  }
+}

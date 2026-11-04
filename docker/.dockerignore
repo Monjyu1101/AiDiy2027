@@ -1,0 +1,70 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+backend_server/.venv/
+backend_server/venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data directories (mounted as volumes)
+_data/
+*.db
+*.db-*
+
+# Temp directories (mounted as volumes)
+temp/
+
+# Logs
+*.log
+
+# Backup
+.aidiy_backup/
+.backup_local/
+.aidiy_cache/
+
+# Docker
+docker/ssl/
+
+# Git
+.git/
+.gitignore
+
+# Node modules (will be installed in container)
+frontend_web/node_modules/
+node_modules/
+
+# Frontend build output (will be built in container)
+frontend_web/dist/

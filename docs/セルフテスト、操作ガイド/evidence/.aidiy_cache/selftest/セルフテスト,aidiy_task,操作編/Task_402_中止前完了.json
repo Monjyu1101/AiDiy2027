@@ -1,0 +1,67 @@
+{
+  "task": {
+    "タスクID": "TK00001004",
+    "状態": "完了",
+    "実行有効": 0,
+    "実行回数": 1,
+    "開始日時": "2026-11-03 09:18:14",
+    "終了日時": "2026-11-03 09:18:45",
+    "PID": ""
+  },
+  "condition": {
+    "実行区分": "即時",
+    "間隔区分": "",
+    "次回実行日時": ""
+  },
+  "result": "UNCONFIRMED: natural completion preceded stop action; stop not submitted",
+  "ui_running_seen": true,
+  "stop_clicked": false,
+  "stop_registered": false,
+  "user_requests": 1,
+  "cli_invocations": 3,
+  "observed_model_usage_events": 5,
+  "method": "OpenAI codex_cli",
+  "models": [
+    "gpt-6.1-sol",
+    "gpt-6.1-sol",
+    "gpt-6.1-sol"
+  ],
+  "http_retries": "not measured",
+  "scope": "50 numbered short morning greetings in one do step; no attachments, no Hermes profile",
+  "cleanup": "only this task disabled; completed state preserved; logout/login retention checked; test windows closed",
+  "existing_rows_unchanged": {
+    "Aタスク要求": true,
+    "Aタスク明細": true,
+    "Aタスク実行条件": true
+  },
+  "health": {
+    "specific_process_matches": [],
+    "health": {
+      "8095": {
+        "tcp": true,
+        "http": 200
+      },
+      "8091": {
+        "tcp": true,
+        "http": 200
+      },
+      "8098": {
+        "tcp": true,
+        "http": 200
+      },
+      "8093": {
+        "tcp": true,
+        "http": 200
+      },
+      "8090": {
+        "tcp": true,
+        "http": 200
+      },
+      "8096": {
+        "tcp": false
+      }
+    }
+  },
+  "source_edits": false,
+  "audio": "Nanami1.2: intro/start/action/outcome/close all serial playback completed; result clip not used"
+}

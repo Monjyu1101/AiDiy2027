@@ -1,0 +1,34 @@
+{
+  "result": "PASS in tested scope",
+  "form": "IDE Electron offline",
+  "assets": [
+    {
+      "file": "test-assets\\office\\日本語文書.docx",
+      "sha256": "22b69f48e3266252b45e7dea41ab3ae26743756389bbeecaf242f37fbf6c931c"
+    },
+    {
+      "file": "test-assets\\office\\日本語表.xlsx",
+      "sha256": "f2af04c610587d3b286f0b9e432978cc95b26363c3ccb4549d0bbfa27c9771ab"
+    }
+  ],
+  "word": [
+    "Japanese title/body",
+    "1/2 -> 2/2 -> 1/2",
+    "fit/150%/75%"
+  ],
+  "excel": [
+    "Japanese and values 3,2,120,150,360,300",
+    "horizontal scroll",
+    "一覧 -> 集計(total660) -> 一覧"
+  ],
+  "external_document_transmission": false,
+  "new_software": false,
+  "cleanup": "viewer/use-session/IDE closed",
+  "health": {
+    "8095": 200,
+    "8091": 200,
+    "8098": 200,
+    "8093": 200,
+    "8090": 200
+  }
+}

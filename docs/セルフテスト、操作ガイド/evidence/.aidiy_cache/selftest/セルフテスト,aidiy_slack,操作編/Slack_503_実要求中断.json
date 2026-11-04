@@ -1,0 +1,112 @@
+{
+  "read_at": "2026-11-03",
+  "channel": "ref-001",
+  "threads": [
+    {
+      "thread": "ref-002",
+      "ok": true,
+      "messages": [
+        {
+          "ts": "ref-002",
+          "utc": "T+80.342860s",
+          "bot": false,
+          "text": "おはよう",
+          "thread_ts": "ref-002"
+        },
+        {
+          "ts": "ref-003",
+          "utc": "T+82.410200s",
+          "bot": true,
+          "text": "停止しました。実行済みのファイル変更は残ります。",
+          "thread_ts": "ref-002",
+          "edited_ts": "ref-004",
+          "edited_utc": "T+93.041421s"
+        },
+        {
+          "ts": "ref-005",
+          "utc": "T+91.328160s",
+          "bot": false,
+          "text": "！stop",
+          "thread_ts": "ref-002"
+        },
+        {
+          "ts": "ref-006",
+          "utc": "T+92.764780s",
+          "bot": true,
+          "text": "停止を要求しました。実行済みの変更は残ります。",
+          "thread_ts": "ref-002"
+        }
+      ]
+    },
+    {
+      "thread": "ref-007",
+      "ok": true,
+      "messages": [
+        {
+          "ts": "ref-007",
+          "utc": "T+7.343380s",
+          "bot": false,
+          "text": "！stop",
+          "thread_ts": "ref-007"
+        },
+        {
+          "ts": "ref-008",
+          "utc": "T+10.710550s",
+          "bot": true,
+          "text": "実行中のコード要求はありません。\n\nこのチャンネルに、そのまま話しかけてください。AiDiy がスレッドで返信します。\nスレッド内の返信は同じ会話として続きます。\n`!stop` で停止、`!new` で会話をやり直し、`!status` で状態、`!help` で使い方を表示します。\n先頭の ! は全角の ！ でも使えます。`!chat 本文` でも会話できます。旧形式は使わず短いコマンドを入力してください。",
+          "thread_ts": "ref-007"
+        }
+      ]
+    },
+    {
+      "thread": "ref-009",
+      "ok": true,
+      "messages": [
+        {
+          "ts": "ref-009",
+          "utc": "T+0.000000s",
+          "bot": false,
+          "text": "おはよう",
+          "thread_ts": "ref-009"
+        },
+        {
+          "ts": "ref-010",
+          "utc": "T+0.504990s",
+          "bot": true,
+          "text": "停止しました。実行済みのファイル変更は残ります。",
+          "thread_ts": "ref-009",
+          "edited_ts": "ref-011",
+          "edited_utc": "T+21.041421s"
+        },
+        {
+          "ts": "ref-012",
+          "utc": "T+19.665130s",
+          "bot": false,
+          "text": "！stop",
+          "thread_ts": "ref-009"
+        },
+        {
+          "ts": "ref-013",
+          "utc": "T+21.110040s",
+          "bot": true,
+          "text": "停止を要求しました。実行済みの変更は残ります。",
+          "thread_ts": "ref-009"
+        }
+      ]
+    }
+  ],
+  "operator_posts": 0,
+  "user_posts": true,
+  "verdict": "PASS: user initiated running request cancellation twice",
+  "interpretation": "Slack返信tsは仮返信作成時刻。停止完了時刻はedited.tsで区別。",
+  "process_check": "終了後の対象Hermes/oneshotプロセス該当なし（読取）",
+  "scope": "今回の設定済専用チャンネル、ユーザー操作2回のみ。全モデル/全並列条件には一般化しない",
+  "publication": {
+    "kind": "anonymized evidence copy",
+    "rules": [
+      "channel/message/thread identifiers replaced by consistent aliases",
+      "message timestamps replaced by elapsed seconds from earliest message; observation date retained"
+    ],
+    "limits": "Aliases support sequence/reply correlation, not direct lookup on Discord or Slack."
+  }
+}

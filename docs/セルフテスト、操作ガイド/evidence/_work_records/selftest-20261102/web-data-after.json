@@ -1,0 +1,58 @@
+{
+  "M配車区分": {
+    "count": 8,
+    "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+  },
+  "M生産区分": {
+    "count": 5,
+    "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+  },
+  "M生産工程": {
+    "count": 8,
+    "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+  },
+  "M商品分類": {
+    "count": 6,
+    "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+  },
+  "M取引先分類": {
+    "count": 4,
+    "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+  },
+  "M取引先": {
+    "count": 4,
+    "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+  },
+  "M車両": {
+    "count": 8,
+    "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+  },
+  "M商品": {
+    "count": 16,
+    "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+  },
+  "M商品構成": {
+    "count": 22,
+    "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+  },
+  "T配車": {
+    "count": 8,
+    "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+  },
+  "T生産": {
+    "count": 44,
+    "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+  },
+  "T商品出庫": {
+    "count": 16,
+    "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+  },
+  "T商品棚卸": {
+    "count": 17,
+    "sha256": "461a1ea75c6586918ef04ccf48fe8908d7966e83f0592f774c7fe1764fc0af78"
+  },
+  "T商品入庫": {
+    "count": 15,
+    "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+  }
+}

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 Schema作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="01_準備と進め方.html">前へ: 01_準備と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_Model作成.html">次へ: 03_Model作成</a>
+  </nav>
+
+  <h1>02_Schema作成</h1>
+  <p>SchemaはAPI契約の中心です。入力（Create/Update/Get/Delete）と出力（レスポンス）を分け、型と必須項目を明確にします。</p>
+
+  <h2>作成するSchema</h2>
+  <table>
+    <tr><th>Schema名</th><th>用途</th></tr>
+    <tr><td><code>M商品Base</code></td><td>共通入力項目（商品名、単位、商品分類ID、商品備考）</td></tr>
+    <tr><td><code>M商品Create</code></td><td>新規登録用（商品ID含む）</td></tr>
+    <tr><td><code>M商品Update</code></td><td>更新用（商品ID必須、他はOptional）</td></tr>
+    <tr><td><code>M商品Get</code></td><td>1件取得用（商品ID）</td></tr>
+    <tr><td><code>M商品Delete</code></td><td>削除用（商品ID）</td></tr>
+    <tr><td><code>M商品</code></td><td>レスポンス用（監査項目含む）</td></tr>
+  </table>
+
+  <h2>共通レスポンス形式</h2>
+  <p>Routerでは <code>ResponseBase</code> を返却します。</p>
+  <pre><code>{
+  "status": "OK | NG",
+  "message": "メッセージ",
+  "data": {},
+  "error": {}
+}</code></pre>
+
+  <h2>共通リクエスト形式：ListRequest</h2>
+  <p><code>apps_schema/common.py</code>（および <code>core_schema/common.py</code>）に定義されている一覧取得用の共通スキーマです。</p>
+  <pre><code>from pydantic import BaseModel
+from typing import Optional
+
+class ListRequest(BaseModel):
+    件数制限: Optional[bool] = True   # True のとき LIMIT 1000 を適用
+    無効も表示: Optional[bool] = False  # False のとき 有効=1 のレコードのみ表示</code></pre>
+
+  <p><strong>使い分け:</strong></p>
+  <table>
+    <tr><th>API分類</th><th>リクエスト</th><th>上限件数</th></tr>
+    <tr><td>V系・T系の一覧</td><td><code>request: Optional[ListRequest] = None</code></td><td>デフォルト1,000件（件数制限=False で無制限）</td></tr>
+    <tr><td>M系・C系の一覧</td><td>リクエストボディなし</td><td>固定10,000件（<code>MAX_ITEMS = 10000</code>）</td></tr>
+  </table>
+
+  <p><strong>ポイント:</strong></p>
+  <ul>
+    <li><code>request</code> を省略（<code>None</code>）した場合でも、<code>list_controls.py</code> のデフォルト（件数制限あり・有効のみ）が適用される</li>
+    <li>V系の一覧ではJOINを伴う生SQLに条件を組み込むため、<code>append_active_condition</code> / <code>get_limit_clause</code> を使う</li>
+    <li>T系・M系でORMを使う場合は <code>apply_active_filter</code> / <code>get_list_limit</code> を使う</li>
+  </ul>
+
+  <h2>実装例（参照）</h2>
+  <p>以下は <code>code_samples/M商品_schema.py</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_schema.py"><code>読み込み中...</code></pre>
+
+  <h2>設計ポイント</h2>
+  <ul>
+    <li>Updateは変更対象のみ送れるよう Optional を使う</li>
+    <li>レスポンスSchemaには監査項目を含める</li>
+    <li><code>from_attributes = True</code> で ORM オブジェクトを変換可能にする</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] Schema命名とエンドポイント用途が一致している</li>
+    <li>[ ] 商品IDがCreate/Get/Delete/Updateで必須になっている</li>
+    <li>[ ] レスポンスSchemaに監査項目が含まれている</li>
+    <li>[ ] V系・T系の一覧Routerでは <code>ListRequest</code> を <code>Optional</code> で受け取るようになっている</li>
+  </ul>
+
+  <nav>
+    <a href="01_準備と進め方.html">前へ: 01_準備と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_Model作成.html">次へ: 03_Model作成</a>
+  </nav>
+</body>
+</html>
+

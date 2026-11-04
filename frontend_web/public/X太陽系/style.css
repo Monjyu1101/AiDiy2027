@@ -1,0 +1,245 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  color: #edf4ff;
+  font-family: "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif;
+}
+
+input {
+  font: inherit;
+}
+
+.solar-app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background:
+    #000;
+}
+
+#solar-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+}
+
+.load-error {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: min(520px, calc(100vw - 40px));
+  padding: 16px 18px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(193, 219, 255, 0.28);
+  background: rgba(4, 8, 18, 0.82);
+  color: #dce8f8;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.load-error.hidden {
+  display: none;
+}
+
+.date-panel,
+.planet-panel {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid rgba(193, 219, 255, 0.22);
+  background: rgba(6, 13, 25, 0.72);
+  box-shadow: 0 18px 46px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(12px);
+}
+
+.date-panel {
+  left: 10px;
+  top: 10px;
+  width: min(260px, calc(100vw - 20px));
+  padding: 8px;
+}
+
+.planet-panel {
+  right: 10px;
+  bottom: 10px;
+  width: min(104px, calc(100vw - 20px));
+  max-height: calc(100vh - 56px);
+  padding: 7px;
+  overflow: auto;
+}
+
+.kicker {
+  margin: 0 0 5px;
+  color: #75d5ff;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.date-display {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#date-label {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+#offset-label {
+  color: #f9c46a;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.slider-row {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: #dce8f8;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: #56c6ff;
+}
+
+.speed-display {
+  margin-top: 4px;
+  color: #f9c46a;
+  font-size: 11px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.speed-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 0;
+  margin-left: 52px;
+  margin-top: 4px;
+  color: rgba(220, 235, 255, 0.64);
+  font-size: 7px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.speed-labels span {
+  width: 16px;
+  transform: translateX(-8px);
+}
+
+.panel-heading {
+  margin-bottom: 5px;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+#planet-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planet-item {
+  display: grid;
+  grid-template-columns: 6px 28px 1fr;
+  align-items: center;
+  gap: 3px;
+  min-height: 16px;
+  color: #dce8f8;
+  font-size: 8px;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.planet-item.active {
+  background: rgba(86, 198, 255, 0.16);
+  color: #ffffff;
+}
+
+.planet-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  box-shadow: 0 0 5px currentColor;
+}
+
+.planet-name {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.planet-meta {
+  color: #aebdd0;
+  text-align: right;
+  font-size: 6px;
+}
+
+@media (max-width: 900px) {
+  .date-panel {
+    left: 8px;
+    top: 8px;
+    width: min(260px, calc(100vw - 16px));
+    padding: 8px;
+  }
+
+  .planet-panel {
+    left: auto;
+    right: 8px;
+    bottom: 8px;
+    width: min(126px, calc(100vw - 16px));
+    max-height: 24vh;
+    padding: 7px;
+  }
+
+  h1 {
+    font-size: 16px;
+  }
+
+  #date-label {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 560px) {
+  .speed-labels {
+    font-size: 7px;
+  }
+}

@@ -1,0 +1,54 @@
+test_actual_check_prompt_contains_raw_and_plan (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_actual_check_prompt_contains_raw_and_plan) ... ok
+test_control_and_end_notifications_excluded (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_control_and_end_notifications_excluded) ... ok
+test_empty_raw_state_kept_without_fabrication (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_empty_raw_state_kept_without_fabrication) ... ok
+test_multiple_order_and_states (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_multiple_order_and_states) ... ok
+test_no_data_d_retains_empty_skip_behavior (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_no_data_d_retains_empty_skip_behavior) ... ok
+test_no_raw_is_explicit_not_end_answer (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_no_raw_is_explicit_not_end_answer) ... ok
+test_non_d_fallback_unchanged_and_no_query (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_non_d_fallback_unchanged_and_no_query) ... ok
+test_non_d_query_has_no_raw (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_non_d_query_has_no_raw) ... ok
+test_other_request_not_mixed (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_other_request_not_mixed) ... ok
+test_project_mismatch_not_mixed (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_project_mismatch_not_mixed) ... ok
+test_single_raw_preserved_separate_from_summary (backend_taskteam.checks.test_pdca_raw_handoff.RawHandoffTests.test_single_raw_preserved_separate_from_summary) ... ok
+test_failure_propagates_but_cancelled_task_is_preserved (backend_taskteam.checks.test_project_and_failure.FailureTests.test_failure_propagates_but_cancelled_task_is_preserved) ... ok
+test_other_endpoint_is_not_rewritten (backend_taskteam.checks.test_project_and_failure.ProjectTests.test_other_endpoint_is_not_rewritten) ... ok
+test_tools_project_resolution_without_mutating_request (backend_taskteam.checks.test_project_and_failure.ProjectTests.test_tools_project_resolution_without_mutating_request) ... ok
+test_all_post_wrappers_use_helper_and_prompts_do_not_read_token (backend_taskteam.checks.test_internal_client.ConsumerTests.test_all_post_wrappers_use_helper_and_prompts_do_not_read_token) ... ERROR
+test_does_not_retry_other_failures (backend_taskteam.checks.test_internal_client.ConsumerTests.test_does_not_retry_other_failures) ... ok
+test_fresh_read_between_calls (backend_taskteam.checks.test_internal_client.ConsumerTests.test_fresh_read_between_calls) ... ok
+test_generic_cli_and_report_alias (backend_taskteam.checks.test_internal_client.ConsumerTests.test_generic_cli_and_report_alias) ... ok
+test_localhost_is_sent_to_numeric_loopback (backend_taskteam.checks.test_internal_client.ConsumerTests.test_localhost_is_sent_to_numeric_loopback) ... ok
+test_missing_malformed_symlink_fail_closed (backend_taskteam.checks.test_internal_client.ConsumerTests.test_missing_malformed_symlink_fail_closed) ... ERROR
+test_no_credentials_to_tools_or_other_services (backend_taskteam.checks.test_internal_client.ConsumerTests.test_no_credentials_to_tools_or_other_services) ... ok
+test_redirect_is_never_followed (backend_taskteam.checks.test_internal_client.ConsumerTests.test_redirect_is_never_followed) ... ok
+test_repeated_401_bounded_redacted (backend_taskteam.checks.test_internal_client.ConsumerTests.test_repeated_401_bounded_redacted) ... ok
+test_restart_401_rereads_once (backend_taskteam.checks.test_internal_client.ConsumerTests.test_restart_401_rereads_once) ... ok
+test_untrusted_origin_and_ambiguous_urls_rejected_before_read_or_send (backend_taskteam.checks.test_internal_client.ConsumerTests.test_untrusted_origin_and_ambiguous_urls_rejected_before_read_or_send) ... ok
+
+======================================================================
+ERROR: test_all_post_wrappers_use_helper_and_prompts_do_not_read_token (backend_taskteam.checks.test_internal_client.ConsumerTests.test_all_post_wrappers_use_helper_and_prompts_do_not_read_token)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\AiDiy2027_dev\backend_taskteam\checks\test_internal_client.py", line 125, in test_all_post_wrappers_use_helper_and_prompts_do_not_read_token
+    wrappers = [path for path in files if 'def POST騾∽ｿ｡(' in path.read_text()]
+                                                             ~~~~~~~~~~~~~~^^
+  File "C:\Python3\Lib\pathlib\__init__.py", line 788, in read_text
+    return f.read()
+           ~~~~~~^^
+UnicodeDecodeError: 'cp932' codec can't decode byte 0x86 in position 507: illegal multibyte sequence
+
+======================================================================
+ERROR: test_missing_malformed_symlink_fail_closed (backend_taskteam.checks.test_internal_client.ConsumerTests.test_missing_malformed_symlink_fail_closed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\admin\Desktop\AiDiy2027_dev\backend_taskteam\checks\test_internal_client.py", line 98, in test_missing_malformed_symlink_fail_closed
+    self.file.symlink_to(target)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^
+  File "C:\Python3\Lib\pathlib\__init__.py", line 1213, in symlink_to
+    os.symlink(target, self, target_is_directory)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [WinError 1314] 繧ｯ繝ｩ繧､繧｢繝ｳ繝医・隕∵ｱゅ＆繧後◆迚ｹ讓ｩ繧剃ｿ晄怏縺励※縺・∪縺帙ｓ縲・ 'C:\\Users\\admin\\AppData\\Local\\Temp\\tmp6d48kiy9\\target.json' -> 'C:\\Users\\admin\\AppData\\Local\\Temp\\tmp6d48kiy9\\internal_auth.json'
+
+----------------------------------------------------------------------
+Ran 25 tests in 2.672s
+
+FAILED (errors=2)

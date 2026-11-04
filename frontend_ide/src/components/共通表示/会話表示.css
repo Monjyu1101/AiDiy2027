@@ -1,0 +1,315 @@
+@import "./シアンバー.css";
+@import "./タイトルバー配色.css";
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* 旧 Code / Live の寸法・配色・キーフレームを維持。Vue の部品境界だけを変更。 */
+:root {
+  color-scheme: dark;
+  --accent: var(--vscode-button-background, #667eea);
+  --accent-soft: color-mix(in srgb, var(--accent) 5%, transparent);
+  --surface: #000;
+  --foreground: #e3e9f2;
+  --input-surface: color-mix(in srgb, var(--accent) 3%, var(--surface));
+  --code-surface: #080808;
+  --hover-surface: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  --border: #242424;
+  --muted: #9aa7b8;
+  --terminal: #00ff00;
+  --stream: #00ffff;
+  --focus: var(--vscode-focusBorder, #889aff);
+  --voice: #69dcff;
+  --mic: #ff536e;
+}
+
+.ai-component { font: var(--vscode-font-size, 13px)/1.65 var(--vscode-font-family, "Segoe UI", "Yu Gothic UI", sans-serif); color: var(--foreground); }
+.code-component { animation: standalone-reveal 1s cubic-bezier(.16, 1, .3, 1) both; }
+.code-component.desktop-window { animation: startup-fade-in .45s ease-out both; }
+.vscode-host .code-component { animation: startup-fade-in .8s ease-out both; }
+.live-component { animation: standalone-reveal 1s cubic-bezier(.16, 1, .3, 1) both; }
+.live-component.desktop-window { animation: startup-fade-in .45s ease-out both; }
+.vscode-host .live-component { animation: startup-fade-in .8s ease-out both; }
+@keyframes startup-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes standalone-reveal { from { opacity: 0; transform: scale(.86); } to { opacity: 1; transform: none; } }
+.ai-component .component-toolbar button { padding: 2px 7px; border-color: var(--border); font-size: 11px; line-height: 1.4; background: transparent; }
+.code-component .component-toolbar { flex-wrap: wrap; }
+.code-component .component-toolbar > nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 2px; max-width: 100%; margin-left: auto; }
+.auto-connect { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.auto-connect-track { display: inline-flex; align-items: center; width: 26px; height: 14px; padding: 2px; border-radius: 7px; background: #444; }
+.auto-connect-thumb { width: 10px; height: 10px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.auto-connect[aria-checked="true"] .auto-connect-track { background: #008b8b; }
+.auto-connect[aria-checked="true"] .auto-connect-thumb { transform: translateX(12px); }
+.ai-component .conversation { padding: 2px; }
+.ai-component .message { padding: 0; margin: 0 0 4px; border: 0; animation: none; white-space: normal; }
+.terminal-welcome { height: auto; min-height: 100%; gap: 0; overflow: visible; }
+.ai-component .composer { padding: 0 2px 2px; }
+.ai-component .composer-actions { min-height: 0; }
+.ai-component .model-label { color: var(--muted); }
+.ai-component .progress { max-height: none; overflow: visible; flex: none; }
+.ai-component .message pre { font-size: inherit; }
+.terminal-welcome { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 0 40px; text-align: center; }
+.welcome-mark { position: relative; display: grid; place-items: center; width: 88px; height: 88px; margin-bottom: 24px; background: radial-gradient(circle at 25% 15%, var(--accent-soft), transparent 75%); animation: welcome-float 6s ease-in-out infinite; }
+.welcome-mark::before, .welcome-mark::after { content: ''; position: absolute; border: 1px solid #00ffff; box-shadow: 0 0 24px #00ffff40, inset 0 0 16px #00ffff15; pointer-events: none; }
+.welcome-mark::before { inset: 0; transform: rotate(-6deg); animation: welcome-rotate-clockwise 20s linear infinite, welcome-glow 6s ease-in-out infinite, welcome-rainbow 12s linear infinite; }
+.welcome-mark::after { inset: 0; transform: rotate(6deg); animation: welcome-rotate-counterclockwise 20s linear infinite, welcome-glow 6s ease-in-out -3s infinite, welcome-rainbow 12s linear -6s infinite; }
+.welcome-mark img { position: relative; z-index: 1; width: 54px; height: 54px; object-fit: contain; }
+@keyframes welcome-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes welcome-rotate-clockwise { from { transform: rotate(-6deg); } to { transform: rotate(354deg); } }
+@keyframes welcome-rotate-counterclockwise { from { transform: rotate(6deg); } to { transform: rotate(-354deg); } }
+@keyframes welcome-rainbow { from { filter: hue-rotate(0deg); } to { filter: hue-rotate(360deg); } }
+@keyframes welcome-glow { 0%, 100% { opacity: .2; } 50% { opacity: .7; } }
+.terminal-welcome .welcome-eyebrow { color: var(--muted); font-size: 9px; letter-spacing: 2px; margin: 0 0 10px; }
+.terminal-welcome h1 { color: var(--terminal); margin: 0 0 8px; font-size: clamp(14px, 4vw, 24px); letter-spacing: -.5px; font-weight: 600; }
+.terminal-welcome p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.9; }
+.terminal-welcome .welcome-type { position: relative; display: inline-block; font-family: var(--vscode-editor-font-family, Consolas, "SFMono-Regular", monospace); }
+.terminal-welcome .welcome-text { display: block; white-space: nowrap; animation: var(--typing-animation) 12s steps(var(--typing-steps), end) infinite; }
+.terminal-welcome .welcome-eyebrow { --typing-animation: welcome-typewriter-eyebrow; --caret-animation: welcome-caret-eyebrow; --typing-steps: 21; }
+.terminal-welcome h1 { --typing-animation: welcome-typewriter-title; --caret-animation: welcome-caret-title; --typing-steps: 20; }
+.terminal-welcome .welcome-caption { --typing-animation: welcome-typewriter-caption; --caret-animation: welcome-caret-caption; --typing-steps: 15; }
+.terminal-welcome .welcome-type::after { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 1ch; height: 1em; margin-left: .1ch; background: currentColor; pointer-events: none; animation: var(--caret-animation) 12s steps(var(--typing-steps), end) infinite, terminal-cursor-blink 1.2s step-end infinite; }
+@keyframes welcome-typewriter-eyebrow { 0%, 4% { clip-path: inset(0 100% 0 0); } 16%, 100% { clip-path: inset(0 0 0 0); } }
+@keyframes welcome-typewriter-title { 0%, 26% { clip-path: inset(0 100% 0 0); } 38%, 100% { clip-path: inset(0 0 0 0); } }
+@keyframes welcome-typewriter-caption { 0%, 48% { clip-path: inset(0 100% 0 0); } 60%, 100% { clip-path: inset(0 0 0 0); } }
+@keyframes welcome-caret-eyebrow { 0%, 3.99% { left: 0; visibility: hidden; } 4% { left: 0; visibility: visible; } 16%, 25.99% { left: 100%; visibility: visible; } 26%, 100% { left: 100%; visibility: hidden; } }
+@keyframes welcome-caret-title { 0%, 25.99% { left: 0; visibility: hidden; } 26% { left: 0; visibility: visible; } 38%, 47.99% { left: 100%; visibility: visible; } 48%, 100% { left: 100%; visibility: hidden; } }
+@keyframes welcome-caret-caption { 0%, 47.99% { left: 0; visibility: hidden; } 48% { left: 0; visibility: visible; } 60%, 100% { left: 100%; visibility: visible; } }
+.terminal-welcome.welcome-input-started .welcome-text { animation: none !important; clip-path: none; }
+.terminal-welcome.welcome-input-started .welcome-type::after { display: none; }
+
+.terminal-welcome.live h1 { font-size: clamp(9px, 3.4vw, 18px); --typing-steps: 31; }
+.terminal-welcome.console .welcome-eyebrow { font-size: 10px; letter-spacing: .08em; --typing-steps: 30; }
+.terminal-welcome.console h1 { font-size: clamp(14px, 3.4vw, 22px); --typing-steps: 26; }
+.terminal-welcome.console .welcome-caption { --typing-steps: 30; }
+.terminal-welcome.live .welcome-eyebrow { --typing-steps: 25; }
+.terminal-welcome.live .welcome-caption { --typing-steps: 26; }
+.terminal-welcome.live p { font-family: var(--vscode-editor-font-family, Consolas, monospace); font-size: clamp(9px, 2.6vw, 12px); text-shadow: 0 1px 4px #000, 0 0 8px #000; }
+.terminal-welcome.live .welcome-eyebrow { font-size: 9px; }
+.code-component .message { margin-bottom: 4px; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; }
+.code-component .user { max-width: 70%; width: fit-content; margin-left: auto; }
+.code-component .assistant { max-width: 90%; width: fit-content; margin-right: auto; }
+.code-component .user .content { color: #fff; white-space: pre-wrap; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--border)); border-radius: 0; padding: 4px; max-height: 260px; overflow: auto; cursor: pointer; }
+.code-component .user .content:hover { border-color: var(--vscode-focusBorder); }
+.code-component .message.arrival-waiting { display: none; }
+.code-component .message.arrival-pending { opacity: 0; }
+.code-component .message.arrival-reveal .content { animation: user-arrival-haze .9s ease-out both; }
+@keyframes user-arrival-haze {
+  0% { opacity: 0; filter: blur(8px) brightness(2.4); transform: scale(.97); background: #ffffff38; box-shadow: 0 0 0 #ffffff00; }
+  35% { opacity: 1; filter: blur(3px) brightness(1.8); background: #ffffff24; box-shadow: 0 0 22px #ffffffb0; }
+  100% { opacity: 1; filter: none; transform: none; box-shadow: 0 0 0 #ffffff00; }
+}
+.code-component .assistant .content { color: var(--terminal); background: color-mix(in srgb, var(--terminal) 3%, var(--surface)); border: 1px solid color-mix(in srgb, var(--terminal) 16%, var(--border)); border-radius: 0; padding: 4px; font-family: var(--vscode-editor-font-family, Consolas, "SFMono-Regular", monospace); }
+.code-component .progress pre, .answer-popup-text { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.5; }
+@keyframes terminal-cursor-blink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+.code-component .error .content { color: var(--vscode-errorForeground); white-space: pre-wrap; padding-left: 10px; border-left: 2px solid var(--vscode-errorForeground); }
+.code-component .content > :first-child { margin-top: 0; }
+.code-component .content > :last-child { margin-bottom: 0; }
+.code-component .content p, .code-component .content ul, .code-component .content ol { margin: 4px 0; }
+.code-component .content ul, .code-component .content ol { padding-left: 20px; }
+.code-component .content :is(h1, h2, h3, h4, h5, h6) { margin: 6px 0; font-size: inherit; line-height: inherit; }
+.code-component .content pre { background: var(--code-surface); margin: 6px 0; padding: 4px; border: 1px solid var(--border); border-radius: 0; overflow: auto; white-space: pre; }
+.code-component code { font-family: var(--vscode-editor-font-family); font-size: inherit; }
+.code-component .content :not(pre) > code { background: var(--code-surface); padding: 2px 4px; border-radius: 0; }
+.code-component a { color: var(--vscode-textLink-foreground); }
+.code-component table { border-collapse: collapse; display: block; overflow: auto; }
+.code-component td, .code-component th { padding: 4px; border: 1px solid var(--border); }
+.code-component blockquote { border-left: 2px solid var(--vscode-textBlockQuote-border, var(--border)); padding-left: 8px; margin: 6px 0; }
+.answer-popup { position: fixed; inset: 0; z-index: 20; display: flex; width: min(560px, calc(100vw - 32px)); height: 30vh; min-height: 96px; margin: auto; overflow: hidden; pointer-events: none; color: #fff; background: #000; border: 1px solid #fff; box-shadow: 0 18px 60px #000c; font: 11px/1.5 var(--vscode-editor-font-family, monospace); animation: answer-popup-in .42s cubic-bezier(.2, .9, .3, 1.15) both; }
+.answer-popup-text { flex: 1; min-width: 0; min-height: 0; padding: 6px; overflow: hidden auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--terminal); }
+@keyframes answer-popup-in { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
+.input-flight { position: fixed; z-index: 20; margin: 0; padding: 4px; overflow: hidden; pointer-events: none; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; color: var(--foreground); background: var(--input-surface); border: 1px solid #fff; box-shadow: 0 0 16px #ffffff70, inset 0 0 10px #ffffff20; }
+
+.answer-popup, .input-flight { z-index: 100; }
+.answer-popup.output_request .answer-popup-text { color: var(--stream); }
+.answer-popup.recognition_output .answer-popup-text { color: #9ae6b4; }
+.code-component .progress { margin: 0 2px 2px; border: 1px solid color-mix(in srgb, var(--stream) 16%, var(--border)); border-radius: 0; background: color-mix(in srgb, var(--stream) 3%, var(--surface)); padding: 4px; font-size: 11px; }
+.code-component .progress.running { border-color: color-mix(in srgb, var(--stream) 35%, var(--border)); }
+.code-component summary { cursor: pointer; overflow-wrap: anywhere; color: var(--muted); }
+.code-component .progress pre { max-height: 150px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--stream); }
+.ai-component form { border: 0; background: transparent; }
+.ai-component textarea { font-size: 12px; field-sizing: content; resize: none; display: block; width: 100%; min-height: 76px; max-height: min(220px, 35vh); overflow-y: auto; padding: 4px; color: var(--foreground); background: var(--input-surface); border: 1px solid var(--border); border-radius: 0; }
+.ai-component textarea:focus-visible { outline: none; border-color: var(--vscode-focusBorder); }
+/* 入力欄の光は、ストリーム枠が開くとストリーム枠の上下の枠線へ移す（入力欄側は CodePanel.vue の waitingForStream で止める）。 */
+.ai-component .prompt-frame, .code-component .progress { position: relative; }
+.ai-component form.running .prompt-frame::before, .ai-component form.running .prompt-frame::after,
+.code-component .progress.running::before, .code-component .progress.running::after,
+.navigation-display.running::before, .navigation-display.running::after {
+  content: ''; position: absolute; left: 0; right: 0; height: 1px; pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent, var(--stream), transparent) 0 0 / 35% 100% no-repeat,
+    linear-gradient(90deg, transparent, #fff, transparent) 0 0 / 35% 100% no-repeat;
+  animation: prompt-reflect 4.2s linear infinite alternate;
+}
+.ai-component form.running .prompt-frame::before { top: 0; }
+.ai-component form.running .prompt-frame::after { bottom: 0; }
+.navigation-display.running::before, .navigation-display.running::after { left: 12px; right: 12px; z-index: 1; }
+.navigation-display.running::before { top: 2px; }
+.navigation-display.running::after { bottom: 2px; }
+.code-component .progress.running::before { top: -1px; left: -1px; right: -1px; }
+.code-component .progress.running::after { bottom: -1px; left: -1px; right: -1px; }
+@keyframes prompt-reflect {
+  0%, 20% { background-position: -60% 0, 160% 0; }
+  80%, 100% { background-position: 160% 0, -60% 0; }
+}
+.ai-component textarea::placeholder { color: var(--muted); }
+.code-component form.predicting .prompt-frame::before, .code-component form.predicting .prompt-frame::after { animation-duration: 1.4s; }
+.code-component form.predicting textarea { cursor: progress; }
+.code-component form.predicting textarea::placeholder { color: var(--stream); }
+.code-component .prediction-status { position: absolute; top: 4px; left: 5px; right: 5px; color: var(--stream); font-size: 12px; pointer-events: none; }
+.code-component .prediction-notice { white-space: pre-wrap; overflow-wrap: anywhere; }
+.ai-component .composer-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto 34px; grid-template-rows: auto auto; gap: 2px 6px; align-items: center; padding: 2px 0; }
+.ai-component .model-selection { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.ai-component #choose-model { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; padding: 2px 6px; font-size: 10px; line-height: 1.4; border-color: var(--border); background: var(--surface); }
+.ai-component .model-caption { padding: 0 4px; font-size: 11px; font-weight: 400; line-height: calc(1.65em - 2px); background: #fff; color: #000; }
+.ai-component .model-chevron { color: var(--muted); }
+.ai-component #model-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 10px; }
+.ai-component .send, .ai-component .stop { grid-column: 3; grid-row: 1 / span 2; align-self: stretch; }
+.ai-component .send { display: flex; align-items: center; justify-content: center; width: 34px; height: 100%; min-height: 34px; padding: 0; border-radius: 0; background: rgba(255, 255, 255, .95); border-color: #667eea; color: #000; }
+.ai-component .send img { width: 30px; height: 30px; object-fit: contain; filter: brightness(0); }
+.ai-component .send:not(:disabled) { background: #667eea; border-color: #667eea; }
+.ai-component .send:not(:disabled) img { filter: brightness(0) invert(1); }
+.ai-component .send:not(:disabled):hover { background: #5a6fd8; border-color: #5a6fd8; }
+.ai-component .send:disabled { opacity: 1; cursor: not-allowed; }
+.ai-component .send.ws-disabled { background: #808080; border-color: #808080; color: #fff; }
+.ai-component .send.ws-disabled img { filter: brightness(0) invert(1); }
+.ai-component .stop { position: relative; width: 34px; height: 100%; min-height: 34px; padding: 0; border: 1px solid #e04458; border-radius: 0; background: #e04458; color: #fff; font-family: var(--vscode-editor-font-family, Consolas, "SFMono-Regular", monospace); }
+.ai-component .stop .stop-icon { position: absolute; top: 0; left: 1px; width: 30px; height: 30px; object-fit: contain; filter: brightness(0) invert(1); pointer-events: none; }
+.ai-component .stop .stop-label { position: absolute; bottom: 3px; left: 0; width: 100%; font-size: 7px; font-weight: bold; line-height: 8px; text-align: center; }
+.ai-component .stop:hover { background: #c83246; border-color: #c83246; }
+.ai-component .stop:disabled { opacity: .4; cursor: default; }
+.ai-component .stop:focus-visible { outline: 2px solid var(--vscode-focusBorder, #889aff); outline-offset: 2px; }
+.ai-component .composer-meta { grid-column: 1; grid-row: 2; display: flex; justify-content: space-between; align-items: center; gap: 6px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+.ai-component .keyboard-hint { grid-column: 1; grid-row: 1; text-align: left; color: var(--muted); font-size: 9px; line-height: 1.3; }
+.ai-component .keyboard-hint span { padding: 0 3px; }
+/* Code は「予測」「検証」「送信」の順。Live は従来の2列のまま。 */
+.code-component .composer-actions { grid-template-columns: minmax(0, 1fr) auto auto 34px; }
+.code-component .send, .code-component .stop { grid-column: 4; }
+/* 予測は1行。検証と同じ2段の枠（22px＋説明11px）にして、検証のラベル・回数と同じ高さに並べる。 */
+.code-component .prediction-options { grid-column: 2; grid-row: 1 / span 2; display: grid; grid-template-columns: auto auto; grid-template-rows: 22px 11px; align-content: center; align-items: center; gap: 1px 6px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.code-component .prediction-options .auto-suggest { gap: 4px; padding: 0; border: 0; background: transparent; color: var(--muted); font-size: 10px; }
+.code-component .verification-options { grid-column: 3; grid-row: 1 / span 2; display: grid; grid-template-columns: auto 52px; align-content: center; align-items: center; gap: 1px 6px; color: var(--muted); font-size: 10px; white-space: nowrap; }
+/* 予測と検証の見出しは同じ label 要素・同じ指定にして、VS Code のフォントでも高さをそろえる。 */
+.code-component .verification-options > label, .code-component .prediction-options > .prediction-caption { justify-self: start; padding: 0 4px; line-height: calc(1.65em - 2px); background: #fff; color: #000; }
+.code-component .verification-options select { width: 52px; height: 22px; min-height: 22px; padding: 0 2px; font-size: 11px; }
+.code-component .verification-hint { grid-column: 1 / -1; text-align: left; color: var(--muted); font-size: 9px; line-height: 11px; }
+.live-component .message { width: fit-content; margin-bottom: 4px; padding: 4px; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.5; border: 1px solid var(--border); text-shadow: 0 1px 4px #000, 0 0 8px #000; }
+.live-component .message:last-child { margin-bottom: 0; }
+.live-component .message.user { color: #fff; cursor: pointer; max-width: 70%; margin-left: auto; background: color-mix(in srgb, var(--accent) 5%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 25%, var(--border)); }
+.live-component .message.assistant { --message-color: #00ff00; max-width: 90%; color: var(--message-color); font-family: var(--vscode-editor-font-family, Consolas, monospace); background: color-mix(in srgb, var(--message-color) 3%, var(--surface)); border-color: color-mix(in srgb, var(--message-color) 16%, var(--border)); }
+.live-component .message.assistant.output_request { --message-color: var(--stream); }
+.live-component .message.assistant.recognition_output { --message-color: #9ae6b4; }
+.live-component .message.recognition { cursor: pointer; }
+.live-component .message.recognition_input { color: #e5e7eb; }
+.live-component .message.user:hover, .live-component .message.recognition:hover { border-color: var(--focus); }
+.live-component .message.system { max-width: 100%; color: var(--muted); font-size: 11px; border: 0; padding: 2px; }
+.live-component .message.arrival-waiting { display: none; }
+.live-component .message.arrival-pending { opacity: 0; }
+.live-component .message.arrival-reveal { animation: user-arrival-haze .9s ease-out both; }
+@keyframes user-arrival-haze {
+  0% { opacity: 0; filter: blur(8px) brightness(2.4); transform: scale(.97); background: #ffffff38; box-shadow: 0 0 0 #ffffff00; }
+  35% { opacity: 1; filter: blur(3px) brightness(1.8); background: #ffffff24; box-shadow: 0 0 22px #ffffffb0; }
+  100% { opacity: 1; filter: none; transform: none; box-shadow: 0 0 0 #ffffff00; }
+}
+.live-component .audio-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.live-component .audio-button { position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1px; min-height: 38px; padding: 3px 4px; background: #000c; }
+.live-component .audio-button strong { position: relative; z-index: 1; text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+.live-component .audio-button strong { font-size: 9px; font-weight: 500; line-height: 1.4; }
+.live-component .audio-button[aria-pressed="true"] { border-color: color-mix(in srgb, var(--voice) 35%, var(--border)); background: color-mix(in srgb, var(--voice) 5%, var(--surface)); }
+.live-component .microphone[aria-pressed="true"] { border-color: color-mix(in srgb, var(--mic) 35%, var(--border)); background: color-mix(in srgb, var(--mic) 5%, var(--surface)); }
+.live-component .symbol { position: absolute; top: 50%; left: 50%; display: block; width: 36px; max-width: calc(100% - 12px); height: 36px; transform: translate(-50%, -50%); pointer-events: none; opacity: .55; color: var(--voice); background: currentColor; mask: var(--symbol-image) center / contain no-repeat; }
+.live-component .audio-button[aria-pressed="true"] .symbol { opacity: .8; }
+.live-component .microphone .symbol { color: var(--mic); }
+
+.live-component { isolation: isolate; }
+.live-component .audio-cloud { z-index: -1; }
+.live-component .conversation { background: transparent; margin-top: 6px; }
+.live-component .composer-actions { grid-template-columns: minmax(0, 1fr) 34px; }
+.live-component .send { grid-column: 2; }
+.ai-component .composer-meta { justify-content: flex-start; min-width: 0; }
+.ai-component .composer-meta button { flex: none; padding: 2px 6px; border-color: var(--border); font-size: 10px; line-height: 1.4; }
+.ai-component .keyboard-hint { margin: 0; }
+.ai-component .running textarea { border-color: var(--border); }
+.ai-component .history-list { flex: 1; min-height: 0; max-height: none; }
+.ai-component .audio-actions { margin: 6px 2px 0; padding: 0; }
+.ai-component .audio-actions .audio-button { font-size: inherit; }
+.live-component .component-toolbar .live-connect { color: #000; background: #fff; border-color: var(--voice); }
+.live-component .live-connect.awaiting:enabled { animation: connect-breathe 4.5s ease-in-out infinite; }
+@keyframes connect-breathe { 0%, 100% { background-color: #fff; } 50% { background-color: var(--voice); } }
+.panel-brand { --surface: var(--aidiy-titlebar-background); --muted: var(--aidiy-titlebar-secondary); grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); min-height: 34px; height: auto; padding: 2px; background: var(--aidiy-titlebar-background); color: var(--aidiy-titlebar-foreground); }
+.panel-brand .connection-label { color: var(--aidiy-titlebar-secondary); }
+/* ファイル閲覧の見出しも、埋込・Web・別窓で同じタイトル帯にする。 */
+:is(.explorer-panel,.viewer-popup,.viewer-pinned) > header { --surface: var(--aidiy-titlebar-background); --muted: var(--aidiy-titlebar-secondary); background: var(--aidiy-titlebar-background); color: var(--aidiy-titlebar-foreground); }
+.panel-brand strong { font-size: 16px; letter-spacing: -.5px; white-space: nowrap; }
+.code-component .panel-brand, .navigation-panel .panel-brand, .navigation-window .panel-brand { min-height: 31px; padding: 1px 2px; }
+.code-component .panel-brand strong { font-size: 14px; }
+.live-component .panel-brand { min-height: 31px; }
+.live-component .panel-brand strong { font-size: 14px; }
+.window-actions { gap: 2px; -webkit-app-region: no-drag; }
+.window-actions button { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; color: var(--muted); font-size: 21px; background: transparent; }
+.window-actions button:hover { background: transparent; }
+.window-actions .window-all { width: 36px; font-size: 11px; font-weight: 600; }
+.window-actions .window-all[aria-pressed=true] { color: #a7f6ff; background: #113039; }
+.window-actions .window-close:hover { color: #ff8e9e; background: transparent; }
+.window-actions .window-pin { color: #748091; background:transparent; box-shadow: none; font-size: 14px; }
+.window-actions .window-pin span { filter: grayscale(1) brightness(2); opacity: .9; transform: translateY(1px); }
+.window-actions .window-pin:hover:not(:disabled) { color: #b7c8da; background:transparent; }
+.window-actions .window-pin.pin-active { color: #a7f6ff; background:transparent; box-shadow: inset 0 0 0 1px #5bafb8, 0 0 5px #55e8ff24; }
+.window-actions .window-pin.pin-active span { filter: none; opacity: 1; transform: none; }
+.window-actions .window-pin.pin-locked { opacity: 1; cursor: not-allowed; }
+.window-minimize { width: 10px; border-top: 1px solid currentColor; }
+.window-maximize { width: 10px; height: 10px; border: 1px solid currentColor; }
+.window-maximized .window-maximize { box-shadow: 2px -2px 0 -1px var(--surface), 2px -2px 0 0 currentColor; }
+.connection-label i.online { background: var(--terminal); }
+.connection-bar.online { animation: cyan-bar-breathe 4.5s linear infinite; }
+.connection-bar.offline { animation: red-bar-breathe 4.5s linear infinite; }
+@keyframes red-bar-breathe { 0%, 100% { background-color: #000; } 50% { background-color: #ff0000; } }
+@keyframes cyan-breathe { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+
+
+/* 旧 Code の会話一覧と、Code / Live 共通のネイティブモーダル。 */
+.ai-component .history-row { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 4px; padding: 2px; border: 1px solid var(--border, #303030); }
+.ai-component .history-row.active { border-color: #667eea; background: #667eea20; }
+.ai-component .history-open { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; padding: 2px; }
+.ai-component .history-title { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.ai-component .history-date { font-size: 10px; color: var(--muted, #999); font-variant-numeric: tabular-nums; }
+.ai-component .history-delete { flex: 0 0 auto; margin-top: 6px; font-size: 10px; color: var(--muted, #999); }
+.ai-component .history-empty { margin: 24px 4px; color: var(--muted, #999); font-size: 11px; text-align: center; }
+dialog.model-dialog { color: inherit; margin: auto; }
+dialog.model-dialog::backdrop { background: #000a; }
+.connection-label i.active { background: #00ffff; box-shadow: 0 0 5px #00ffff; }
+
+/* Live の入力・モデル選択は旧画面と同じ余白、配色、操作状態にする。 */
+.live-component .composer { padding: 0 2px 2px; background: transparent; }
+.live-component .conversation { padding: 2px; margin-left: 2px; margin-right: 2px; }
+.live-component .component-toolbar { margin: 2px 2px 0; padding: 2px 0; min-height: 28px; }
+.live-component .component-toolbar nav { gap: 6px; }
+.live-component .component-toolbar button:first-child { background: var(--accent-soft); }
+.live-component button:disabled { opacity: .4; }
+.live-component .live-connect:disabled, .live-component .send:disabled { opacity: 1; }
+.live-component .send { font-size: inherit; line-height: inherit; }
+.live-component .live-connect:hover:enabled { background: var(--voice); }
+.live-component.connected .live-connect, .live-component.connected .live-connect:hover:enabled { background: #fff; border-color: #fff; }
+.live-component .audio-button { color: var(--foreground); border-color: var(--border); }
+.live-component .connection-label i.active { box-shadow: 0 0 0 3px #00ffff15, 0 0 10px #00ffff60; }
+.live-component .error { margin: 0 0 2px; color: var(--vscode-errorForeground, #ff8e9e); background: #cc415708; border: 1px solid #cc415740; padding: 4px; font-size: 11px; }
+.live-component button:focus-visible, .live-component input:focus-visible, .live-component select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.live-component textarea:focus-visible { outline: none; border-color: var(--focus); }
+.live-component .live-model-dialog { width: min(420px, calc(100vw - 4px)); padding: 0; background: var(--surface); border-color: var(--border); box-shadow: 0 16px 60px #0006; }
+.live-model-dialog::backdrop { background: #0008; backdrop-filter: blur(3px); }
+.live-model-dialog .settings-content { display: flex; flex-direction: column; gap: 9px; padding: 4px; background: var(--surface); font-size: 11px; }
+.live-model-dialog .picker-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.live-model-dialog .picker-header h2 { margin: 0; font-size: 15px; }
+.live-model-dialog .picker-header p { margin: 4px 0 0; }
+.live-model-dialog button { margin: 0; padding: 5px 9px; background: transparent; border-color: var(--border); }
+.live-model-dialog button:hover:enabled { background: var(--hover-surface); }
+.live-model-dialog .picker-close { flex: 0 0 auto; padding: 0 5px; border: 0; font-size: 20px; line-height: 1.4; }
+.live-model-dialog .picker-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 6px; }
+.live-model-dialog .picker-actions button { min-height: 32px; }
+.live-model-dialog .primary { background: var(--accent-soft); color: var(--foreground); border-color: color-mix(in srgb, var(--accent) 25%, var(--border)); }
+.live-model-dialog label { display: grid; grid-template-columns: 68px 1fr; gap: 6px; align-items: center; margin: 0; }
+.live-model-dialog select { min-height: 34px; min-width: 0; background: var(--input-surface); border-color: var(--border); }
+.live-model-dialog .muted { color: var(--muted); font-size: 10px; margin: 0; overflow-wrap: anywhere; }
+.development-app.ide.desktop-window { animation: startup-fade-in .45s ease-out both; }
+.desktop-opening .development-app, .desktop-opening .ai-component { opacity: 0; animation: none; }
+.desktop-opening .terminal-welcome *, .desktop-opening .terminal-welcome *::before, .desktop-opening .terminal-welcome *::after { animation-play-state: paused !important; }

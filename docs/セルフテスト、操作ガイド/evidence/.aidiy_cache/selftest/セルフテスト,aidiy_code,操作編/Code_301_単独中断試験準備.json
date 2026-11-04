@@ -1,0 +1,14 @@
+{
+  "date": "2026-11-03T07:27:50.938301+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=Code offline: 実行中の切替を拒否",
+    "checks/aidiy_code.test.cjs"
+  ],
+  "cwd": "frontend_ide/host",
+  "exit_code": 1,
+  "scope": "fake core and injected job, dedicated temporary history/model files, loopback HTTP/SSE only; folder switching case not covered",
+  "external_ai_calls": 0
+}

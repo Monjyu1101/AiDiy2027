@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>01. はじめに | このプロジェクトの歩き方</title>
+ <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+ <header>
+ <div>
+  <h1><a href="_index.html">このプロジェクトの歩き方</a></h1>
+ </div>
+ </header>
+
+ <div>
+ <h1>01. はじめに</h1>
+
+ <section id="goal">
+  <h2>このプロジェクトのゴール</h2>
+  <p>
+  AiDiyは「管理画面中心の業務アプリ」を素早く構築するためのフレームワークです。<br>
+  <strong>環境構築 → 画面確認 → API確認 → テーブル追加 → 画面追加</strong> の流れで進めます。<br>
+  日本語のテーブル名・APIパス・JSONキーで、現場の言葉にそのまま合わせて開発します。
+  </p>
+
+  <div>
+  <strong>学習レベル目安</strong>
+  <p>自分の現在地を確認して、次の目標を決めましょう。</p>
+  <table>
+   <thead>
+   <tr>
+    <th>レベル</th>
+    <th>内容</th>
+   </tr>
+   </thead>
+   <tbody>
+   <tr>
+    <td><span>Lv.1</span> 動かす</td>
+    <td>環境構築して起動できる</td>
+   </tr>
+   <tr>
+    <td><span>Lv.2</span> 読む</td>
+    <td>構成図とフォルダ構成を理解できる</td>
+   </tr>
+   <tr>
+    <td><span>Lv.3</span> 追う</td>
+    <td>APIリクエストの流れを追える</td>
+   </tr>
+   <tr>
+    <td><span>Lv.4</span> 写す</td>
+    <td>既存テーブルを参考に新テーブルを追加できる</td>
+   </tr>
+   <tr>
+    <td><span>Lv.5</span> 作る</td>
+    <td>画面を追加してフル機能を実装できる</td>
+   </tr>
+   <tr>
+    <td><span>Lv.6</span> 設計する</td>
+    <td>新機能の設計から実装まで一人でできる</td>
+   </tr>
+   </tbody>
+  </table>
+  </div>
+ </section>
+
+ <section id="how-to-use">
+  <h2>使い方ガイド</h2>
+  <p>目的に応じて、読み始めるページを選べます。</p>
+
+  <div>
+  <div>
+   <strong>まず動かしたい人</strong>
+   <p><a href="03_セットアップと起動.html">03. セットアップと起動</a> から始めましょう</p>
+  </div>
+
+  <div>
+   <strong>全体像を把握したい人</strong>
+   <p><a href="02_技術スタックと構成.html">02. 技術スタックと構成</a> でアーキテクチャを確認</p>
+  </div>
+
+  <div>
+   <strong>バックエンドを知りたい人</strong>
+   <p><a href="04_バックエンド開発.html">04. バックエンド開発</a> で4層構造を理解</p>
+  </div>
+
+  <div>
+   <strong>フロントエンドを知りたい人</strong>
+   <p><a href="06_フロントエンド開発.html">06. フロントエンド開発</a> でVue 3とAPI通信を学ぶ</p>
+  </div>
+  </div>
+ </section>
+
+ <section id="principles">
+  <h2>3つの基本原則</h2>
+  <p>このプロジェクトを貫く3つの原則です。</p>
+
+  <div>
+  <div>
+   <div>日本語ファースト</div>
+   <p>テーブル名、カラム名、APIパス、JSONキーは全て日本語。<br>フレームワーク固有の語句(router, request等)のみ英語。</p>
+  </div>
+
+  <div>
+   <div>シンプル構成</div>
+   <p>余計な抽象化をしない。コードを読めば処理が分かる。<br>Router → CRUD → Model の直線的な流れ。</p>
+  </div>
+
+  <div>
+   <div>AI活用前提</div>
+   <p>AIエージェントが読みやすい構造設計。<br>CLAUDE.mdとAGENTS.mdでプロジェクトの全容を把握可能。</p>
+  </div>
+  </div>
+ </section>
+
+ <section id="project-overview">
+  <h2>プロジェクト概要</h2>
+
+  <h3>コンセプト</h3>
+  <p>
+  <strong>管理画面中心の業務アプリフレームワーク</strong><br>
+  配車管理、商品管理、在庫管理などの業務機能をテンプレートとして提供します。
+  </p>
+
+  <h3>技術スタック</h3>
+  <p>使用している主要技術の一覧です。</p>
+  <table>
+  <thead>
+   <tr>
+   <th>技術</th>
+   <th>用途</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr>
+   <td><strong>FastAPI</strong></td>
+   <td>APIサーバー(バックエンド)</td>
+   </tr>
+   <tr>
+   <td><strong>SQLite</strong></td>
+   <td>データベース(ファイルベース)</td>
+   </tr>
+   <tr>
+   <td><strong>SQLAlchemy</strong></td>
+   <td>PythonのORM(DB操作)</td>
+   </tr>
+   <tr>
+   <td><strong>Vue 3 + Vite</strong></td>
+   <td>フロントエンド(画面)</td>
+   </tr>
+   <tr>
+   <td><strong>Pinia</strong></td>
+   <td>Vue状態管理(ストア)</td>
+   </tr>
+  </tbody>
+  </table>
+
+  <div>
+  <strong>ポイント</strong>
+  <p><strong>業務APIはデュアルサーバー構成</strong>: Core(8091)とApps(8098)で分離運用。プロジェクト全体ではTools(8095)、Task・Team(8093)、Local(8096)を加えた5バックエンドです。</p>
+  </div>
+ </section>
+
+ <section id="features">
+  <h2>提供される機能</h2>
+  <p>AiDiyは開発フレームワーク/テンプレートシステムとして以下のサンプル実装を提供しています。</p>
+
+  <table>
+   <thead>
+    <tr>
+     <th>分類</th>
+     <th>テーブル例</th>
+     <th>説明</th>
+    </tr>
+   </thead>
+   <tbody>
+    <tr>
+     <td><strong>C系</strong> (Core/Common)</td>
+     <td>C権限, C利用者, C採番</td>
+     <td>権限管理、ユーザー管理、ID採番</td>
+    </tr>
+    <tr>
+     <td><strong>M系</strong> (Master)</td>
+     <td>M配車区分, M車両, M商品, M取引先分類, M取引先, M商品構成</td>
+     <td>マスタデータ管理</td>
+    </tr>
+    <tr>
+     <td><strong>T系</strong> (Transaction)</td>
+     <td>T配車, T生産, T商品入庫/出庫/棚卸</td>
+     <td>トランザクション管理（配車、生産、在庫）</td>
+    </tr>
+    <tr>
+     <td><strong>V系</strong> (View)</td>
+     <td>V利用者, V車両, V取引先分類, V取引先, V商品推移表</td>
+     <td>複数テーブルのJOIN表示（生SQL使用、DB VIEWは不使用）</td>
+    </tr>
+    <tr>
+     <td><strong>S系</strong> (Scheduler)</td>
+     <td>S配車_週表示/日表示, S生産_週表示/日表示</td>
+     <td>スケジュール表示</td>
+    </tr>
+    <tr>
+     <td><strong>A系</strong> (AI/Advanced)</td>
+     <td>AIコア, A会話履歴, Aタスク要求/明細, Aチーム要員</td>
+     <td>マルチベンダーAI対話、AIタスク実行、複数AIエージェントのチーム活動</td>
+    </tr>
+    <tr>
+     <td><strong>X系</strong> (Experimental)</td>
+     <td>Xテトリス, Xインベーダー, Xリバーシ, X立体リバーシ, X世界の絶景, X太陽系, Xドッグファイト, Xビデオ</td>
+     <td>フロントエンドのみの実験的機能</td>
+    </tr>
+   </tbody>
+  </table>
+ </section>
+
+ <section id="design-patterns">
+  <h2>主要な設計パターン</h2>
+  <p>このプロジェクトで採用している設計パターンの一覧です。</p>
+
+  <table>
+   <thead>
+    <tr>
+     <th>パターン</th>
+     <th>説明</th>
+    </tr>
+   </thead>
+   <tbody>
+    <tr>
+     <td><strong>業務APIのデュアルサーバー</strong></td>
+     <td>Core API (8091) と Apps API (8098) を分離し、AIタスク・チームは TaskTeam (8093) が担当</td>
+    </tr>
+    <tr>
+     <td><strong>POST中心のAPI</strong></td>
+     <td>全CRUDエンドポイントをPOSTメソッドに統一</td>
+    </tr>
+    <tr>
+     <td><strong>DB VIEWs不使用</strong></td>
+     <td>V系は生SQLクエリ（SELECT + LEFT JOIN）で実装</td>
+    </tr>
+    <tr>
+     <td><strong>カスタムID生成 (C採番)</strong></td>
+     <td>AUTOINCREMENTを使わず、C採番テーブルで管理</td>
+    </tr>
+    <tr>
+     <td><strong>監査フィールド標準化</strong></td>
+     <td>全テーブルに登録/更新の8カラムを共通付与</td>
+    </tr>
+    <tr>
+     <td><strong>No Alembic</strong></td>
+     <td>マイグレーションツール不使用。既存DBは起動時の冪等な差分処理で更新し、DBリセットはデータ破棄可能時のみ</td>
+    </tr>
+    <tr>
+     <td><strong>qTublerシステム</strong></td>
+     <td>UIフレームワーク不使用のカスタムテーブルコンポーネント</td>
+    </tr>
+    <tr>
+     <td><strong>Reboot機構</strong></td>
+     <td>temp/reboot_*.txt でバックエンドサーバーを個別再起動</td>
+    </tr>
+   </tbody>
+  </table>
+ </section>
+
+ <section id="target-users">
+  <h2>対象ユーザー</h2>
+  <ul>
+   <li>日本語でビジネスアプリケーションを開発したいチーム</li>
+   <li>FastAPI + Vue 3 のフルスタック開発を学びたい開発者</li>
+   <li>AI統合の実装例を探している開発者</li>
+   <li>管理画面・CRUDシステムのテンプレートを必要とするプロジェクト</li>
+  </ul>
+ </section>
+
+ <section id="learning-path">
+  <h2>学習パス</h2>
+  <p>段階的に学べるよう構成されています。</p>
+
+  <div>
+  <div>
+   <div>
+   <div>ステップ1</div>
+   <div>
+    <strong>Lv.1 動かす</strong>
+    <p><a href="03_セットアップと起動.html">セットアップと起動</a>で環境構築</p>
+   </div>
+   </div>
+
+   <div>
+   <div>ステップ2</div>
+   <div>
+    <strong>Lv.2 読む</strong>
+    <p><a href="02_技術スタックと構成.html">技術スタックと構成</a>でアーキテクチャ理解</p>
+   </div>
+   </div>
+
+   <div>
+   <div>ステップ3</div>
+   <div>
+    <strong>Lv.2-3 追う</strong>
+    <p><a href="04_バックエンド開発.html">バックエンド開発</a>と<a href="06_フロントエンド開発.html">フロントエンド開発</a>でコードの流れを追う</p>
+   </div>
+   </div>
+
+   <div>
+   <div>ステップ4</div>
+   <div>
+    <strong>Lv.4 写す</strong>
+    <p>既存テーブルを参考にAPI追加を実践</p>
+   </div>
+   </div>
+
+   <div>
+   <div>ステップ5</div>
+   <div>
+    <strong>Lv.5 作る</strong>
+    <p><a href="07_テストの書き方.html">テストの書き方</a>で品質確認</p>
+   </div>
+   </div>
+
+   <div>
+   <div>ステップ6</div>
+   <div>
+    <strong>Lv.6 設計する</strong>
+    <p><a href="08_運用とメンテナンス.html">運用とメンテナンス</a>で本番運用を理解</p>
+   </div>
+   </div>
+  </div>
+  </div>
+ </section>
+
+ <section id="next">
+  <h2>次のステップ</h2>
+  <p>プロジェクトの全体構成を確認しましょう。</p>
+
+  <div>
+  <a href="02_技術スタックと構成.html">
+   <span>次へ進む</span>
+   <strong>02. 技術スタックと構成 &#x2192;</strong>
+   <span>アーキテクチャとフォルダ構成を理解する</span>
+  </a>
+  </div>
+ </section>
+ </div>
+
+ <footer>
+ <p>
+  <a href="_index.html">&#x2190; トップページ</a> |
+  <a href="02_技術スタックと構成.html">次: 02. 技術スタックと構成 &#x2192;</a>
+ </p>
+ </footer>
+</body>
+</html>

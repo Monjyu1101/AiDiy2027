@@ -1,0 +1,112 @@
+TAP version 13
+# Subtest: Live: モデル再接続のmodels失敗でも会話・下書きを保持して資源を閉じる
+ok 1 - Live: モデル再接続のmodels失敗でも会話・下書きを保持して資源を閉じる
+  ---
+  duration_ms: 490.2044
+  type: 'test'
+  ...
+# Subtest: Live: モデル再接続のsocket失敗でも会話・下書きを保持して資源を閉じる
+ok 2 - Live: モデル再接続のsocket失敗でも会話・下書きを保持して資源を閉じる
+  ---
+  duration_ms: 18.4143
+  type: 'test'
+  ...
+# Subtest: Live: モデル再接続のsessionModels失敗でも会話・下書きを保持して資源を閉じる
+ok 3 - Live: モデル再接続のsessionModels失敗でも会話・下書きを保持して資源を閉じる
+  ---
+  duration_ms: 14.6267
+  type: 'test'
+  ...
+# Subtest: Live: 通常の新規接続失敗は従来どおり初期状態へ戻す
+ok 4 - Live: 通常の新規接続失敗は従来どおり初期状態へ戻す
+  ---
+  duration_ms: 13.0594
+  type: 'test'
+  ...
+# Subtest: Live: 実protocolのinput切断が0再接続待ちに届いても会話・下書きを保持する
+ok 5 - Live: 実protocolのinput切断が0再接続待ちに届いても会話・下書きを保持する
+  ---
+  duration_ms: 57.1572
+  type: 'test'
+  ...
+# Subtest: Live: 実protocolの0切断がaudio再接続待ちに届いても会話・下書きを保持する
+ok 6 - Live: 実protocolの0切断がaudio再接続待ちに届いても会話・下書きを保持する
+  ---
+  duration_ms: 22.1127
+  type: 'test'
+  ...
+# Subtest: Live: 実protocolで通常の新規接続中に切断した場合は初期状態へ戻す
+ok 7 - Live: 実protocolで通常の新規接続中に切断した場合は初期状態へ戻す
+  ---
+  duration_ms: 28.2511
+  type: 'test'
+  ...
+# Subtest: Live: モデル再接続成功後には保持方針を解除し、通常の切断処理へ戻る
+ok 8 - Live: モデル再接続成功後には保持方針を解除し、通常の切断処理へ戻る
+  ---
+  duration_ms: 26.5319
+  type: 'test'
+  ...
+# Subtest: 解析: 保存失敗・結果再読込・編集継続では指示を失わず閉じない
+ok 9 - 解析: 保存失敗・結果再読込・編集継続では指示を失わず閉じない
+  ---
+  duration_ms: 14.5652
+  type: 'test'
+  ...
+# Subtest: 解析: 保存失敗後の明示破棄は再保存せず一度だけ閉じる
+ok 10 - 解析: 保存失敗後の明示破棄は再保存せず一度だけ閉じる
+  ---
+  duration_ms: 7.3176
+  type: 'test'
+  ...
+# Subtest: 解析: 保存失敗後の再試行は最新の指示を保存してから閉じる
+ok 11 - 解析: 保存失敗後の再試行は最新の指示を保存してから閉じる
+  ---
+  duration_ms: 7.5663
+  type: 'test'
+  ...
+# Subtest: 解析: 保存待ちの連打と破棄は無視し、失敗後は再び操作できる
+ok 12 - 解析: 保存待ちの連打と破棄は無視し、失敗後は再び操作できる
+  ---
+  duration_ms: 6.9773
+  type: 'test'
+  ...
+# Subtest: 解析: 初回読込中に閉じた場合は未取得の指示を上書きしない
+ok 13 - 解析: 初回読込中に閉じた場合は未取得の指示を上書きしない
+  ---
+  duration_ms: 4.2576
+  type: 'test'
+  ...
+# Subtest: Live: 公開受信APIは既存下書きへ追記だけを行い、再接続・会話変更・上限を照合する
+ok 14 - Live: 公開受信APIは既存下書きへ追記だけを行い、再接続・会話変更・上限を照合する
+  ---
+  duration_ms: 32.9725
+  type: 'test'
+  ...
+# Subtest: Live: パネルを隠しても下書きは保ち、マイクは停止して勝手に再開しない
+ok 15 - Live: パネルを隠しても下書きは保ち、マイクは停止して勝手に再開しない
+  ---
+  duration_ms: 11.3371
+  type: 'test'
+  ...
+# Subtest: Code: 公開受信APIは既存下書きへ追記し、履歴を閉じてもAI要求を一切送らない
+ok 16 - Code: 公開受信APIは既存下書きへ追記し、履歴を閉じてもAI要求を一切送らない
+  ---
+  duration_ms: 23.2115
+  type: 'test'
+  ...
+# Subtest: Code: 送信受理待ち・切断・会話変更・プロジェクト変更・破棄では古い渡し先を拒否する
+ok 17 - Code: 送信受理待ち・切断・会話変更・プロジェクト変更・破棄では古い渡し先を拒否する
+  ---
+  duration_ms: 11.0879
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1305.5224

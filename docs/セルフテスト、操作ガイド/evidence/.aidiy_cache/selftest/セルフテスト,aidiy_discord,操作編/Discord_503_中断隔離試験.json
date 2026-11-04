@@ -1,0 +1,25 @@
+{
+  "date": "2026-11-03T07:26:31.633899+00:00",
+  "command": [
+    "node",
+    "node_modules/tsx/dist/cli.mjs",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=stop|二重実行を拒否",
+    "checks/code.test.ts",
+    "checks/bot.test.ts"
+  ],
+  "cwd": "frontend_channels",
+  "exit_code": 0,
+  "external_posts": 0,
+  "ai_calls": 0,
+  "scope": "fake API/client and dedicated fake CLI only; real channel cancellation unverified",
+  "counts": {
+    "tests": 2,
+    "pass": 2,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "tap_sha256": "1f73a312277ab2f9abdceb96db08d26042e01221c2aa9edcd5de366c578b5f08"
+}

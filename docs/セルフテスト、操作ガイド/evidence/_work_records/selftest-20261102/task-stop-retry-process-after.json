@@ -1,0 +1,61 @@
+{
+  "at": "2026-11-03T00:29:28.911866+00:00",
+  "processes": [
+    {
+      "pid": 9936,
+      "ppid": 31572,
+      "name": "python.exe",
+      "kind": "wait90",
+      "alive": false
+    },
+    {
+      "pid": 11100,
+      "ppid": 9936,
+      "name": "node.exe",
+      "kind": "wait90",
+      "alive": false
+    },
+    {
+      "pid": 14900,
+      "ppid": 25656,
+      "name": "python.exe",
+      "kind": "task",
+      "alive": false
+    },
+    {
+      "pid": 18056,
+      "ppid": 11100,
+      "name": "codex.exe",
+      "kind": "wait90",
+      "alive": false
+    },
+    {
+      "pid": 25656,
+      "ppid": 29760,
+      "name": "python.exe",
+      "kind": "task",
+      "alive": false
+    },
+    {
+      "pid": 26052,
+      "ppid": 31608,
+      "name": "python.exe",
+      "kind": "wait90",
+      "alive": false
+    },
+    {
+      "pid": 31572,
+      "ppid": 20344,
+      "name": "python.exe",
+      "kind": "wait90",
+      "alive": false
+    },
+    {
+      "pid": 31608,
+      "ppid": 18056,
+      "name": "pwsh.exe",
+      "kind": "wait90",
+      "alive": false
+    }
+  ]
+}

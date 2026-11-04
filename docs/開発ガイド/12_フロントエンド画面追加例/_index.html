@@ -1,0 +1,201 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>フロントエンド画面追加例 | AiDiy Frontend Lab</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+ <div>AiDiy Frontend Lab</div>
+ <h1>フロントエンド画面追加例</h1>
+ <p>M系 CRUD 画面を新規追加する手順とパターン解説（M車両を実装例として使用）</p>
+ <nav>
+ <a href="_index.html">インデックス</a>
+ <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+ <a href="02_一覧画面.html">02 一覧画面</a>
+ <a href="03_編集画面.html">03 編集画面</a>
+ <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+ <a href="05_チェックリスト.html">05 チェックリスト</a>
+ </nav>
+ </header>
+
+ <main>
+
+ <section>
+ <span>目的</span>
+ <h2>このドキュメントの目的</h2>
+ <p>
+  AiDiy プロジェクトで M系（マスタ）CRUD 画面を新規追加する手順を解説する。
+  M車両の実装（<code>frontend_web/src/components/Mマスタ/M車両/</code>）を参照例として、
+  ディレクトリ作成から一覧・編集画面の実装、ルーティング登録、動作確認までの全工程を扱う。
+ </p>
+ <p>
+  T系（トランザクション）画面の追加も基本的に同じパターンで実装できる。
+  その場合はパスプレフィックスを <code>/Mマスタ/M&lt;テーブル名&gt;</code> から
+  <code>/Tトラン/T&lt;テーブル名&gt;</code> に読み替えること。
+ </p>
+ <p>
+  <strong>前提：</strong> バックエンドの M系 API（登録・変更・削除・取得・一覧）が実装済みであること。
+  バックエンド実装の手順は <code>backend_server/AGENTS.md</code> を参照。
+ </p>
+ </section>
+
+ <section>
+ <span>ページ一覧</span>
+ <h2>ドキュメント構成</h2>
+ <table>
+  <thead><tr><th>ページ</th><th>内容</th></tr></thead>
+  <tbody>
+  <tr>
+   <td><a href="_index.html">インデックス（このページ）</a></td>
+   <td>目的・実装の流れ・参照ファイル一覧</td>
+  </tr>
+  <tr>
+   <td><a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a></td>
+   <td>作成する3ファイルの配置場所とディレクトリ構造</td>
+  </tr>
+  <tr>
+   <td><a href="02_一覧画面.html">02 一覧画面</a></td>
+   <td>一覧テーブルコンポーネント・一覧ページの実装パターン（件数制限・無効も表示）</td>
+  </tr>
+  <tr>
+   <td><a href="03_編集画面.html">03 編集画面</a></td>
+   <td>登録・変更・論理削除の実装パターン・モード判定・バリデーション</td>
+  </tr>
+  <tr>
+   <td><a href="04_ルートとメニュー.html">04 ルートとメニュー</a></td>
+   <td>appsRouter.ts へのルート追加・Mマスタ.vue へのメニューカード追加</td>
+  </tr>
+  <tr>
+   <td><a href="05_チェックリスト.html">05 チェックリスト</a></td>
+   <td>インタラクティブな実装・動作確認チェックリスト</td>
+  </tr>
+  </tbody>
+ </table>
+ </section>
+
+ <section>
+ <span>実装の流れ</span>
+ <h2>実装ステップ（推奨順序）</h2>
+ <ol>
+  <li>
+   <strong>ディレクトリ作成</strong>
+   — <code>components/Mマスタ/M&lt;テーブル名&gt;/</code> と
+   <code>components/Mマスタ/M&lt;テーブル名&gt;/components/</code> を作成する。
+   詳細 → <a href="01_ディレクトリ構成.html">01 ディレクトリ構成</a>
+  </li>
+  <li>
+   <strong>一覧テーブルコンポーネント作成</strong>
+   — <code>M&lt;テーブル名&gt;一覧テーブル.vue</code>（components/ 配下）を作成する。
+   <code>POST /apps/V&lt;テーブル名&gt;/一覧</code> でデータ取得、件数制限・無効も表示 props を実装する。
+   <code>defineExpose({ loadData })</code> で親から再読み込みできるようにする。
+   詳細 → <a href="02_一覧画面.html">02 一覧画面</a>
+  </li>
+  <li>
+   <strong>一覧画面作成</strong>
+   — <code>M&lt;テーブル名&gt;一覧.vue</code> を作成する。
+   件数制限・無効も表示のチェックボックス UI、新規ボタン、再検索ボタンを実装する。
+   詳細 → <a href="02_一覧画面.html">02 一覧画面</a>
+  </li>
+  <li>
+   <strong>編集画面作成</strong>
+   — <code>M&lt;テーブル名&gt;編集.vue</code> を作成する。
+   モード判定（新規/編集/表示）、フォーム reactive、バリデーション、論理削除（qConfirm）を実装する。
+   詳細 → <a href="03_編集画面.html">03 編集画面</a>
+  </li>
+  <li>
+   <strong>ルーティング登録</strong>
+   — <code>appsRouter.ts</code> に一覧・編集の2ルートを追加する。
+   詳細 → <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+  </li>
+  <li>
+   <strong>メニュー追加</strong>
+   — <code>Mマスタ.vue</code> にメニューカードを追加する。
+   詳細 → <a href="04_ルートとメニュー.html">04 ルートとメニュー</a>
+  </li>
+  <li>
+   <strong>動作確認</strong>
+   — 一覧表示・新規登録・変更・削除・件数制限・無効も表示を実際に操作して確認する。
+   詳細 → <a href="05_チェックリスト.html">05 チェックリスト</a>
+  </li>
+ </ol>
+
+ <h3>実装順序（code_samples/implementation_order.txt）</h3>
+ <pre data-src="code_samples/implementation_order.txt" data-label="実装順序">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <span>参照ファイル</span>
+ <h2>M車両を例として参照するファイル一覧</h2>
+ <p>
+  M車両は最もシンプルな M系 CRUD 画面の実装例。新しいマスタ画面はこれをコピーして
+  テーブル名・フィールド名を置き換えることで素早く作成できる。
+ </p>
+ <pre data-src="code_samples/file_map.txt" data-label="参照ファイル一覧（M商品の例）">
+ <code>...</code>
+ </pre>
+ <table>
+  <thead><tr><th>ファイル</th><th>用途</th></tr></thead>
+  <tbody>
+  <tr>
+   <td><code>frontend_web/src/components/Mマスタ/M車両/M車両一覧.vue</code></td>
+   <td>一覧画面の実装例（件数制限・無効も表示チェックボックス）</td>
+  </tr>
+  <tr>
+   <td><code>frontend_web/src/components/Mマスタ/M車両/M車両編集.vue</code></td>
+   <td>編集画面の実装例（モード判定・バリデーション・論理削除）</td>
+  </tr>
+  <tr>
+   <td><code>frontend_web/src/components/Mマスタ/M車両/components/M車両一覧テーブル.vue</code></td>
+   <td>一覧テーブルコンポーネントの実装例（qTublerFrame 使用）</td>
+  </tr>
+  <tr>
+   <td><code>frontend_web/src/router/appsRouter.ts</code></td>
+   <td>M系ルート定義（M車両の実装例が含まれる）</td>
+  </tr>
+  <tr>
+   <td><code>frontend_web/src/components/Mマスタ.vue</code></td>
+   <td>メニューカード配置（M車両カードの実装例が含まれる）</td>
+  </tr>
+  <tr>
+   <td><code>frontend_web/src/utils/qAlert.ts</code></td>
+   <td>qConfirm / qMessage の実装（削除確認ダイアログで使用）</td>
+  </tr>
+  </tbody>
+ </table>
+ </section>
+
+ <section>
+ <span>CRUD フロー</span>
+ <h2>CRUD 画面の基本フロー</h2>
+ <pre data-src="code_samples/crud_flow.txt" data-label="CRUD フロー">
+ <code>...</code>
+ </pre>
+ </section>
+
+ <section>
+ <span>AI 作業ルール</span>
+ <h2>AI エージェント作業ルール</h2>
+ <pre data-src="code_samples/ai_agent_playbook.txt" data-label="AI エージェント作業ルール">
+ <code>...</code>
+ </pre>
+ <pre data-src="code_samples/retry_guide.txt" data-label="迷った時の戻り先">
+ <code>...</code>
+ </pre>
+ </section>
+
+ </main>
+
+ <footer>AiDiy Docs / フロントエンド画面追加例</footer>
+</body>
+</html>

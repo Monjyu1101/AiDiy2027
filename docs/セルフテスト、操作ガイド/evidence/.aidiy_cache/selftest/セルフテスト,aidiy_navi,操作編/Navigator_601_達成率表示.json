@@ -1,0 +1,47 @@
+{
+  "result": "PASS",
+  "implementation": "HSL hue = progress * 1.2; dark background and light numeric accent",
+  "values": [
+    {
+      "progress": 0,
+      "color": "red",
+      "width": "0%"
+    },
+    {
+      "progress": 50,
+      "color": "yellow",
+      "width": "50%"
+    },
+    {
+      "progress": 100,
+      "color": "green",
+      "width": "100%"
+    }
+  ],
+  "verified": [
+    "actual browser CSS variables and numeric aria values",
+    "320px item no horizontal overflow",
+    "two popup windows and independent results",
+    "model/evaluation/history/close regression",
+    "app-only distribution build"
+  ],
+  "unscored": "No result shows existing empty state; invalid or missing score fallback displays 未評価 and omits aria-valuenow; invalid AI results remain rejected by schema",
+  "externalAIRequests": 0,
+  "editableGoalUI": {
+    "pass": true,
+    "viewport": [
+      500,
+      600
+    ],
+    "mockRequests": 5,
+    "externalRequests": 0,
+    "checks": [
+      "fixed top input",
+      "editable during running",
+      "changed/restored/empty draft",
+      "failure and retry",
+      "history sync",
+      "window isolation"
+    ]
+  }
+}

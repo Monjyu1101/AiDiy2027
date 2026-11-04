@@ -1,0 +1,943 @@
+{
+  "before": {
+    "utc": "2026-11-02T19:34:08.590990+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": true,
+        "http": 200
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": true,
+        "http": 200
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "16c82093d88bc6f41f5b1a98d7716a7acdba03f3420c98c361e16fd1cd4744b6"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "stopped": {
+    "utc": "2026-11-02T19:36:16.209107+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": false,
+        "http": null
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": false,
+        "http": null
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "702a0d31765666fb887a156a55e1dfcc4d3f96c5463ba7fd527d1f34411d34b0"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "starting": {
+    "utc": "2026-11-02T19:38:58.207832+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": false,
+        "http": null
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": false,
+        "http": null
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "702a0d31765666fb887a156a55e1dfcc4d3f96c5463ba7fd527d1f34411d34b0"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "after": {
+    "utc": "2026-11-02T19:39:37.679439+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": false,
+        "http": null
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": false,
+        "http": null
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": false,
+        "http": null
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "702a0d31765666fb887a156a55e1dfcc4d3f96c5463ba7fd527d1f34411d34b0"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "restored": {
+    "utc": "2026-11-02T19:43:55.165052+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": true,
+        "http": 200
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": true,
+        "http": 200
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "88a50c327c4ebfdb71b9d17df657bda250cb8d744d911a6b722af408e36fd4df"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "final": {
+    "utc": "2026-11-02T19:45:33.238824+00:00",
+    "services": {
+      "Tools": {
+        "port": 8095,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Core": {
+        "port": 8091,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "Apps": {
+        "port": 8098,
+        "path": "/docs",
+        "tcp": true,
+        "http": 200
+      },
+      "TaskTeam": {
+        "port": 8093,
+        "path": "/health",
+        "tcp": true,
+        "http": 200
+      },
+      "Web": {
+        "port": 8090,
+        "path": "/",
+        "tcp": true,
+        "http": 200
+      }
+    },
+    "local_tcp": false,
+    "data": {
+      "M配車区分": {
+        "count": 8,
+        "sha256": "681f76e81145b4c6f55a2a177700c8e7df164b89da2799f829a375ec6e5aae54"
+      },
+      "M生産区分": {
+        "count": 5,
+        "sha256": "646a2bf94fd23e24cf6d31179595121062df4e05db4895e830d5be3c904297f9"
+      },
+      "M生産工程": {
+        "count": 8,
+        "sha256": "7c33bffa7ef1508962c59a69d38f10566b2455956b5ef3abd00d19285431abba"
+      },
+      "M商品分類": {
+        "count": 6,
+        "sha256": "f32b198405b20510e1be02917b6c0a2517c000e7afba5aed3dc4b69fd9f56405"
+      },
+      "M取引先分類": {
+        "count": 4,
+        "sha256": "d1b49b152394f4d8bdd78f0caff5e4d7f1084c620d81ac9e45fac58829c82678"
+      },
+      "M取引先": {
+        "count": 4,
+        "sha256": "1ca884c81b9c893143144aea02ddfd31d8fd6d50c024a0cfc87893cdf695cc05"
+      },
+      "M車両": {
+        "count": 8,
+        "sha256": "72a7c9a520e0353b255f0277693779c6124cc352b79bd6b56497d69b8425db1c"
+      },
+      "M商品": {
+        "count": 16,
+        "sha256": "5033427426a41ac3246501cf04a1d5d1f7a83dabcb95ff0af53467a747f88d1b"
+      },
+      "M商品構成": {
+        "count": 22,
+        "sha256": "d9da0b17a684bd75ed8c7d84ab65fe617c0668db8a5b96fd608c32a63df5862e"
+      },
+      "T配車": {
+        "count": 8,
+        "sha256": "230d6faa75e7531f9f9e3e561fcb6fc352d5cefb14a01a4112ca90930e3796e5"
+      },
+      "T生産": {
+        "count": 44,
+        "sha256": "a3ffba8ddaf753a4c9d68a8be2d9b60ce3e6af408f578367e6a0bef31bad41dc"
+      },
+      "T商品出庫": {
+        "count": 16,
+        "sha256": "4bf53cf73d517de38d0eedd35207789338cc43c76d8ee404b739f409d9a8483c"
+      },
+      "T商品棚卸": {
+        "count": 17,
+        "sha256": "5d8456be691ffefc03c78436007980f9727aca36825dab106106d69c8928c1a8"
+      },
+      "T商品入庫": {
+        "count": 15,
+        "sha256": "788b4cb9678ddb27dd4a07ce64d72c199a66ce0d908e4d4b992e7872278ca469"
+      },
+      "Aチーム要員": {
+        "count": 4,
+        "sha256": "ed3baad56ae16044876b22e02e704bb5479937d3a29c8acaf7ab3408ec973465"
+      },
+      "Aチーム依頼": {
+        "count": 2,
+        "sha256": "9bc8c7e45ea718c56455f5e7518f5557c0b25e37b40e3b2966f3337c81a40f68"
+      },
+      "Aチーム経験": {
+        "count": 1,
+        "sha256": "cc8ddc77c4f15b38ec894600702b83f28e9a2a33b7fc180578336578eee07221"
+      },
+      "Aチーム作業": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aチーム目標": {
+        "count": 1,
+        "sha256": "240e8048b896bb4e102c1f6856d869749305b9158dbcd9d9c7872cd7e90c3fa9"
+      },
+      "Aチーム会話": {
+        "count": 0,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "Aタスク要求": {
+        "count": 4,
+        "sha256": "a8b4e0cf11fddcc98aa3cb8fe5631ba8595f5bc19fee4e1e557262465f710a91"
+      },
+      "Aタスク明細": {
+        "count": 18,
+        "sha256": "399fa5890af883dfb58892ef042d0fa61425873d3ab2c5b89c6930d2ebac7f57"
+      },
+      "Aタスク実行条件": {
+        "count": 4,
+        "sha256": "55903c91df6c603e4e19aad82d1d774d74d2203b719d636df6e7776bd4d4bb23"
+      },
+      "Aチーム状況": {
+        "count": 4,
+        "sha256": "79cab8ac09a6fac924ebdf260dddb0d85c136564c9e7cececaa64acb7c0feaaa"
+      }
+    },
+    "config_hashes": {
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_chat__context.json": "001df6f5776fdd71ddb7e41999d543cba774c6de55219fbb4d025af83154a4e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_code__context.json": "7d5d521d23132710aa2b5a8fab6789ba6142bf745de6b9a052432ebd5ee3a2ec",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_diag_start.json": "baea0066b999bfbb855c2bff777b24fd3755f8fb0f816a072afcb9ac738789c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_key.json": "2f50adea0af9ef63b745c7d47d90c443053d1383c8c3db19d509e8f67d084f59",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_live__context.json": "e062dec35e6a910eab013db168c356bcafc439b2370f0d758f8b10aaaf65b488",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_mcp.json": "9faacfb8f1ede4a485a1059d3fa4d2f8419a2df007ea9bd749a0bd6c84ab2768",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_task__context.json": "42add6b9cc0d9514f70d6215e1de4cf8b4a7f7076b3d34a32e900c9e56d2571f",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__chat_context.json": "cde5a56bcb98774c05d937567dd3f1b827c38944fd1867070bcd8f51c398dc95",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__exp_context.json": "fdf575f54df2fd88a8db43597a67dc2610d5b8e574e027b7378f11b5d3617bfd",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__select_context.json": "eaf72e69619a0181b94564a890373298c31094381584d6a17773e1cf1ecf51e9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__spdca_context.json": "ad4f8605d8c4ee8aca0bb71647cc3e0d6cd8bf340ad19786d6299e661a85cd88",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_team__talk_context.json": "e3b0cca6da55eea0e061516f22cbfd8d6f9bc6f7680c6aaf3643644bd60c91c3",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\AiDiy_tools.json": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_ffmpeg_control.json": "904909b170771a21fb17a5d5db22f2fea114ed7c59f0a4608fd7e0d60ad1d7d9",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_obs_studio_control.json": "d16a80d49c4cd19dae73a286dcf3cbf60b4c28537c4ff4990dcf2cac92670f08",
+      "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\_config\\mcp_text_to_speech.json": "9c18c41dcf3d9019108b149a97a3709a7637a7f2695d07c665381908d747e03b"
+    }
+  },
+  "verdict": {
+    "stop": "PASS",
+    "initial_bulk_start": "FAIL: Core expired persisted JWT rejected as invalid keyring",
+    "recovery": "PASS after minimal persisted validation fix; individual Core/Apps/TaskTeam/Web start",
+    "tests": {
+      "passed": 18,
+      "skipped_posix": 2
+    },
+    "data": "23 tables unchanged; Aチーム状況 automatic updates only, count4 unchanged; _config JSON unchanged",
+    "ui": "Diag five green, Web login rendered, own Chrome closed, Diagmini restored",
+    "limits": "No second bulk restart, Local, forced crash or all-client reconnect tests",
+    "audio": "4 serial Edge Nanami ratio1.2 playbacks, error0"
+  },
+  "pdf": {
+    "books": 22,
+    "total_pages": 361,
+    "changed_pages": {
+      "Diag system start": 14,
+      "common results": 25
+    },
+    "reviewed": [
+      "Diag p13-14",
+      "common p24-25"
+    ]
+  },
+  "source_sha256": {
+    "backend_server/auth_keyring.py": "b9eff33cd1ee38947014a21c55d2e43dda4cba8f76604c1be6a4e4156ca37fc9",
+    "backend_server/checks/test_auth_keyring.py": "f15148a17ea9129bf4466203c4f901272679140b6e74a5b85253b426bcf3e4e6"
+  }
+}

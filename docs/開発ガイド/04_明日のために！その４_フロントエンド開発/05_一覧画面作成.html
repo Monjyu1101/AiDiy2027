@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>05 一覧画面作成</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="04_一覧テーブル作成.html">前へ: 04_一覧テーブル作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_ルーティング追加とメニュー登録.html">次へ: 06_ルーティング追加とメニュー登録</a>
+  </nav>
+
+  <h1>05_一覧画面作成</h1>
+  <p>一覧画面はページ全体のレイアウトと操作導線を担当します。実データ表示は子コンポーネント（一覧テーブル）へ委譲します。</p>
+
+  <h2>対象ファイル</h2>
+  <p><code>workspace/AiDiy2027/frontend_web/src/components/Mマスタ/M商品/M商品一覧.vue</code></p>
+
+  <h2>主な要素</h2>
+  <ul>
+    <li>再検索ボタン</li>
+    <li>新規ボタン（編集画面の新規モードへ遷移）</li>
+    <li>成功/失敗メッセージ表示</li>
+    <li>一覧テーブルコンポーネントの埋め込み</li>
+    <li><strong>件数制限チェックボックス</strong>（デフォルト: ON）</li>
+    <li><strong>無効も表示チェックボックス</strong>（デフォルト: OFF）</li>
+  </ul>
+
+  <h2>参照コード</h2>
+  <p>以下は <code>code_samples/M商品一覧.vue</code> の内容です。</p>
+  <pre data-src="code_samples/M商品一覧.vue"><code>読み込み中...</code></pre>
+
+  <h2>実装ポイント</h2>
+  <ul>
+    <li>一覧再読み込みは子コンポーネントの <code>loadData</code> を呼ぶ</li>
+    <li>編集画面から戻る際のクエリメッセージを表示し、表示後にURLを整理する</li>
+    <li>ページコンテナとツールバーは一貫したUIに揃える</li>
+  </ul>
+
+  <h2>件数制限・無効も表示パターン（実装必須）</h2>
+  <p>
+    一覧画面では <strong>件数制限</strong> と <strong>無効も表示</strong> の2つのチェックボックスを設け、
+    それぞれを <code>ref</code> で管理して一覧テーブルコンポーネントへ props として渡します。
+    実際の実装は <code>C利用者一覧.vue</code> を参照してください。
+  </p>
+
+  <h3>動作仕様</h3>
+  <table>
+    <tr><th>フラグ</th><th>デフォルト</th><th>動作</th></tr>
+    <tr><td>件数制限</td><td>ON（true）</td><td>上限1000件で取得（通常運用）</td></tr>
+    <tr><td>件数制限</td><td>OFF（false）</td><td>全件取得（V系・T系のみ対応）</td></tr>
+    <tr><td>無効も表示</td><td>OFF（false）</td><td>有効=true のレコードのみ表示</td></tr>
+    <tr><td>無効も表示</td><td>ON（true）</td><td>無効レコードも含めて表示。テーブルに「有効」列が自動追加される</td></tr>
+  </table>
+
+  <h3>実装コード（<code>C利用者一覧.vue</code> より抜粋）</h3>
+  <pre><code>&lt;script setup lang="ts"&gt;
+ import { ref, computed } from 'vue';
+ import { useRoute, useRouter } from 'vue-router';
+ import UserListTable from './components/C利用者一覧テーブル.vue';
+ import { useListSessionState } from '../../../utils/listSessionState';
+
+ const route = useRoute();
+ const router = useRouter();
+ const userListTableRef = ref(null);
+const 件数制限 = ref(true);      // デフォルトON
+const 無効も表示 = ref(false);   // デフォルトOFF
+ const 有効列表示 = computed(() =&gt; 無効も表示.value);
+
+ // route/router と getState/applyState を渡し、検索条件と戻り先を sessionStorage に保持する
+ const { URLメニュー, 現在URL戻り先, saveListSession } = useListSessionState(route, router, {
+   getState: () =&gt; ({ 件数制限: 件数制限.value, 無効も表示: 無効も表示.value })
+ });
+
+ const handleReload = () =&gt; {
+   saveListSession();
+   userListTableRef.value?.loadData();
+};
+&lt;/script&gt;
+
+&lt;template&gt;
+  &lt;!-- ツールバー内のチェックボックス --&gt;
+  &lt;div class="table-options"&gt;
+    &lt;label class="checkbox-label"&gt;
+      &lt;input type="checkbox" v-model="件数制限" @change="handleReload" /&gt;
+      件数制限
+    &lt;/label&gt;
+    &lt;label class="checkbox-label"&gt;
+      &lt;input type="checkbox" v-model="無効も表示" @change="handleReload" /&gt;
+      無効も表示
+    &lt;/label&gt;
+  &lt;/div&gt;
+
+  &lt;!-- 一覧テーブルコンポーネントへの props 渡し --&gt;
+  &lt;UserListTable
+    ref="userListTableRef"
+    :件数制限="件数制限"
+    :無効も表示="無効も表示"
+    :有効列表示="有効列表示"
+    :URLメニュー="URLメニュー" :URL戻り先="現在URL戻り先"
+  /&gt;
+&lt;/template&gt;</code></pre>
+
+  <h3>スタイル（<code>.table-options</code>）</h3>
+  <p>チェックボックス群はツールバーの下、テーブルの直上に配置します。</p>
+  <pre><code>.table-options {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  margin: 0;
+}</code></pre>
+
+  <h3>チェックボックス変更時の再取得フロー</h3>
+  <ol>
+    <li>チェックボックスが変更される（<code>@change="handleReload"</code>）</li>
+    <li>親コンポーネントが子の <code>loadData()</code> を呼び出す</li>
+    <li>子テーブルが最新の props（<code>件数制限</code>/<code>無効も表示</code>）でAPIへリクエスト</li>
+    <li>結果を再描画（<code>無効も表示=ON</code> なら「有効」列も自動表示）</li>
+  </ol>
+
+  <h2>AGENTS準拠メモ</h2>
+  <ul>
+    <li>日本語名の子コンポーネントは <code>&lt;component :is="..." /&gt;</code> で埋め込む</li>
+    <li>一覧画面実体: <code>workspace/AiDiy2027/frontend_web/src/components/Mマスタ/M商品/M商品一覧.vue</code></li>
+    <li>編集遷移先は <code>/Mマスタ/M商品/編集</code> に統一する</li>
+    <li><strong>件数制限・無効も表示は一覧画面で定義し、子コンポーネントへ props で渡す</strong></li>
+    <li><code>有効列表示</code> は <code>computed(() =&gt; 無効も表示.value)</code> で派生させる</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 再検索が動作する</li>
+    <li>[ ] 新規ボタンで編集画面へ遷移する</li>
+    <li>[ ] 編集/登録後のメッセージ表示が機能する</li>
+    <li>[ ] 件数制限チェックボックスの切り替えで再取得される</li>
+    <li>[ ] 無効も表示チェックボックスをONにすると「有効」列が現れ、無効レコードが表示される</li>
+    <li>[ ] 無効も表示をOFFに戻すと「有効」列が消え、有効レコードのみ表示される</li>
+  </ul>
+
+  <nav>
+    <a href="04_一覧テーブル作成.html">前へ: 04_一覧テーブル作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="06_ルーティング追加とメニュー登録.html">次へ: 06_ルーティング追加とメニュー登録</a>
+  </nav>
+</body>
+</html>
+

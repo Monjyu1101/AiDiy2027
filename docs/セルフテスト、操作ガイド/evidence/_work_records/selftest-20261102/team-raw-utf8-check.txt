@@ -1,0 +1,6 @@
+test_all_post_wrappers_use_helper_and_prompts_do_not_read_token (backend_taskteam.checks.test_internal_client.ConsumerTests.test_all_post_wrappers_use_helper_and_prompts_do_not_read_token) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.112s
+
+OK

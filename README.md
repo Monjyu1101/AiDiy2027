@@ -81,8 +81,8 @@
 ### リポジトリ取得
 
 ```bash
-git clone https://github.com/Monjyu1101/AiDiy2026
-cd AiDiy2026
+git clone https://github.com/Monjyu1101/AiDiy2027
+cd AiDiy2027
 ```
 
 ---
@@ -319,7 +319,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 
 ## 著作権・ライセンス
 
-Copyright (c) 2014-2026 Mitsuo KONDOU and contributors
+Copyright (c) 2014-2027 Mitsuo KONDOU and contributors
 
 AiDiy 独自部分の利用条件は [AiDiy 公開利用ライセンス v1.1](./LICENSE) を参照してください。非商用利用に限る公開ライセンスで、OSI が定義するオープンソースライセンスではありません。商用利用には事前に全著作権者の書面承諾が必要です。再配布時はライセンス全文と著作権表示を含めてください。
 

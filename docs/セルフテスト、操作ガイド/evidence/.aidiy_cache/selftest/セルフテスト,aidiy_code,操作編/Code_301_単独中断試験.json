@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-03T07:36:42.530494+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-timeout=20000",
+    "--test-reporter=tap",
+    "--test-name-pattern=Code offline: 実行中の切替を拒否",
+    "checks/aidiy_code.test.cjs"
+  ],
+  "exit_code": 0,
+  "mode": "outside sandbox; loopback fixture only; fake Core and injected run; 20s test timeout",
+  "preparation": "3 test-only out artifacts using official scripts/test.mjs options; no source changes",
+  "ai_calls": 0
+}

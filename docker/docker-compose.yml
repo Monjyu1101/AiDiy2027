@@ -1,0 +1,53 @@
+services:
+  aidiy2027:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: aidiy2027
+    # External ports exposed for direct access
+    ports:
+      - "8091:8091"  # Backend Core API
+      - "8098:8098"  # Backend Apps API
+    volumes:
+      # Mount temp directory for persistent data
+      - ../temp:/app/temp
+      # Mount database directory (project root)
+      - ../_data:/app/_data
+      # Mount shared icons (if needed)
+      - ../_icons:/app/_icons
+      # Mount config directory for API keys
+      - ../_config:/app/_config:ro
+      # Share frontend dist with nginx
+      - frontend-dist:/app/frontend_web/dist
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONIOENCODING=utf-8
+      - SERVER_HOST=0.0.0.0
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8091/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # HTTPS Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: aidiy2027-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - frontend-dist:/usr/share/nginx/html:ro
+    depends_on:
+      - aidiy2027
+    restart: unless-stopped
+
+volumes:
+  aidiy-data:
+    driver: local
+  frontend-dist:
+    driver: local

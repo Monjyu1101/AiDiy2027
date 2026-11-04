@@ -1,0 +1,74 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#05080f">
+  <title>Xドッグファイト</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="stage" aria-label="Xドッグファイト 空中戦">
+    <!-- 3D 空域 + コックピット -->
+    <canvas id="game"></canvas>
+    <!-- 計器一式（毎フレーム描画） -->
+    <canvas id="hud-canvas" aria-hidden="true"></canvas>
+
+    <div id="load-error" class="load-error">
+      空域を読み込み中です。表示されない場合は WebGL が有効か確認してください。
+    </div>
+
+    <div id="announcer" role="status"></div>
+
+    <!-- デモ飛行の実況解説 -->
+    <div id="commentary" aria-live="polite">
+      <b id="commentary-tag">AUTO PILOT</b>
+      <p id="commentary-text"></p>
+    </div>
+
+    <div id="damage-flash" aria-hidden="true"></div>
+    <div id="scanlines" aria-hidden="true"></div>
+  </main>
+
+  <!-- 操作パネル（タッチ環境のみ） -->
+  <div id="touch-pad" aria-hidden="true">
+    <button class="pad-btn" data-key="pitchUp" type="button">▲</button>
+    <button class="pad-btn" data-key="pitchDown" type="button">▼</button>
+    <button class="pad-btn" data-key="rollLeft" type="button">◀</button>
+    <button class="pad-btn" data-key="rollRight" type="button">▶</button>
+    <button class="pad-btn wide" data-key="gun" type="button">GUN</button>
+    <button class="pad-btn wide" data-key="missile" type="button">MSL</button>
+  </div>
+
+  <!-- タイトル / 結果 -->
+  <div id="overlay" class="show">
+    <div class="overlay-inner">
+      <h1>X ドッグファイト</h1>
+      <p id="overlay-text">
+        コックピットから敵編隊を全機撃墜せよ。<br>
+        ミサイルはロックオン後に発射すると追尾する。
+      </p>
+      <div class="keymap">
+        <div><b>W / S</b><span>機首下げ / 上げ</span></div>
+        <div><b>A / D</b><span>ロール</span></div>
+        <div><b>Q / E</b><span>ヨー</span></div>
+        <div><b>Shift / Ctrl</b><span>加速 / 減速</span></div>
+        <div><b>Space</b><span>機銃</span></div>
+        <div><b>F</b><span>ミサイル</span></div>
+        <div><b>V</b><span>視点切替（コックピット / 後方）</span></div>
+        <div><b>H</b><span>HUD 表示切替</span></div>
+        <div><b>P</b><span>一時停止</span></div>
+      </div>
+      <button id="start-btn" type="button">MISSION START</button>
+      <small>操作しなければデモ飛行を表示します</small>
+    </div>
+  </div>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>

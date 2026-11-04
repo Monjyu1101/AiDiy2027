@@ -1,0 +1,53 @@
+{
+  "name": "frontend-avatar",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Vue 3 + TypeScript + Vite + Electron desktop app base",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "node electron/dev-start.cjs",
+    "dev:renderer": "vite",
+    "dev:electron": "concurrently -k \"npm:dev:main\" \"npm:dev:run\"",
+    "dev:main": "tsc -p tsconfig.electron.json --watch --preserveWatchOutput",
+    "dev:run": "wait-on tcp:127.0.0.1:8092 file:dist-electron/main.js && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:8092 node electron/dev-filter.cjs dist-electron/main.js",
+    "build": "npm run build:renderer && npm run build:electron",
+    "build:renderer": "vue-tsc --noEmit && vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "preview": "vite preview",
+    "start": "electron dist-electron/main.js",
+    "type-check": "vue-tsc --noEmit && tsc -p tsconfig.electron.json --noEmit"
+  },
+  "dependencies": {
+    "@pixiv/three-vrm": "^3.5.5",
+    "@pixiv/three-vrm-animation": "^3.5.5",
+    "axios": "^1.20.0",
+    "monaco-editor": "^0.56.0",
+    "three": "^0.185.1",
+    "vue": "^3.5.41"
+  },
+  "devDependencies": {
+    "@types/node": "^26.3.0",
+    "@types/three": "^0.185.4",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/tsconfig": "^0.9.1",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "electron": "^44.7.0",
+    "electronmon": "^2.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.2.2",
+    "vue-tsc": "^3.3.11",
+    "wait-on": "^9.1.0"
+  },
+  "overrides": {
+    "dompurify": "^3.4.14",
+    "esbuild": "^0.28.2",
+    "electronmon": {
+      "watchboy": {
+        "micromatch": {
+          "picomatch": "2.3.2"
+        }
+      }
+    }
+  }
+}

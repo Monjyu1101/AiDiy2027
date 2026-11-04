@@ -1,0 +1,213 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+ <meta charset="utf-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1" />
+ <title>01_命名規則 | コーディングルール</title>
+ <link rel="stylesheet" href="../_shared/doc.css" />
+ <script defer src="../_shared/doc.js"></script>
+</head>
+<body>
+ <header>
+  <div>AiDiy Docs</div>
+  <h1>コーディングルール</h1>
+  <p>01 命名規則</p>
+  <nav>
+   <a href="_index.html">目次</a>
+   <a href="01_命名規則.html">01 命名規則</a>
+   <a href="02_ファイルとフォーマット.html">02 ファイルとフォーマット</a>
+   <a href="03_ベストプラクティス.html">03 ベストプラクティス</a>
+   <a href="04_アンチパターン.html">04 アンチパターン</a>
+   <a href="05_レビューチェック.html">05 レビューチェック</a>
+  </nav>
+ </header>
+
+ <main>
+
+  <section>
+   <h2>テーブル命名規則</h2>
+   <p>全テーブル名はプレフィックス1文字＋日本語業務名。Database VIEW オブジェクトは作成しない（V系は生 SQL で実装）。</p>
+   <table>
+    <thead>
+     <tr><th>プレフィックス</th><th>種別</th><th>例</th><th>主なサーバー</th></tr>
+    </thead>
+    <tbody>
+     <tr><td><code>C</code></td><td>Core / Common</td><td>C権限, C利用者, C採番</td><td>core_main (8091)</td></tr>
+     <tr><td><code>M</code></td><td>Master</td><td>M車両, M商品, M商品分類, M取引先分類, M取引先, M配車区分, M生産区分, M生産工程, M商品構成</td><td>apps_main (8098)</td></tr>
+     <tr><td><code>T</code></td><td>Transaction</td><td>T配車, T商品入庫, T商品出庫, T商品棚卸, T生産</td><td>apps_main (8098)</td></tr>
+     <tr><td><code>V</code></td><td>View（生 SQL）</td><td>V利用者, V商品, V取引先分類, V取引先, V配車, V生産, V商品推移表</td><td>core / apps</td></tr>
+     <tr><td><code>S</code></td><td>Scheduler / Special</td><td>S配車_週表示, S配車_日表示, S生産_週表示, S生産_日表示</td><td>apps_main (8098)</td></tr>
+     <tr><td><code>A</code></td><td>AI / Advanced</td><td>AIコア, A会話履歴, Aタスク要求, Aタスク明細, Aチーム要員</td><td>core_main (8091) / taskteam_main (8093)</td></tr>
+     <tr><td><code>X</code></td><td>Experimental</td><td>Xテトリス, Xインベーダー, Xリバーシ, X立体リバーシ, X世界の絶景, X太陽系, Xドッグファイト, Xビデオ, X自己紹介</td><td>フロントエンドのみ</td></tr>
+    </tbody>
+   </table>
+   <p>明細型パターン（単一テーブルでヘッダー＋明細を管理）:</p>
+   <table>
+    <thead>
+     <tr><th>テーブル</th><th>明細SEQ=0</th><th>明細SEQ≥1</th></tr>
+    </thead>
+    <tbody>
+     <tr><td>M商品構成</td><td>商品構成ヘッダー</td><td>材料明細</td></tr>
+     <tr><td>T生産</td><td>生産指示ヘッダー</td><td>材料払出明細</td></tr>
+    </tbody>
+   </table>
+  </section>
+
+  <section>
+   <h2>API Endpoint 命名規則</h2>
+   <p>全エンドポイントは <strong>POST</strong> メソッド。動詞は日本語統一。サーバーに応じて <code>/core/</code> または <code>/apps/</code> プレフィックスを使う。</p>
+   <table>
+    <thead>
+     <tr><th>動詞</th><th>用途</th><th>例（C利用者）</th><th>例（M商品）</th></tr>
+    </thead>
+    <tbody>
+     <tr><td><code>一覧</code></td><td>一覧取得</td><td><code>POST /core/C利用者/一覧</code></td><td><code>POST /apps/M商品/一覧</code></td></tr>
+     <tr><td><code>取得</code></td><td>1件取得</td><td><code>POST /core/C利用者/取得</code></td><td><code>POST /apps/M商品/取得</code></td></tr>
+     <tr><td><code>登録</code></td><td>新規作成</td><td><code>POST /core/C利用者/登録</code></td><td><code>POST /apps/M商品/登録</code></td></tr>
+     <tr><td><code>変更</code></td><td>更新</td><td><code>POST /core/C利用者/変更</code></td><td><code>POST /apps/M商品/変更</code></td></tr>
+     <tr><td><code>削除</code></td><td>論理削除（有効=False）</td><td><code>POST /core/C利用者/削除</code></td><td><code>POST /apps/M商品/削除</code></td></tr>
+    </tbody>
+   </table>
+   <pre><code># 正しいパターン（全て @router.post）
+router = APIRouter(prefix="/apps/M商品", tags=["M商品"])
+
+@router.post("/一覧", response_model=schemas.ResponseBase)
+def list_M商品(db: Session = Depends(deps.get_db), ...): ...
+
+@router.post("/取得", response_model=schemas.ResponseBase)
+def get_M商品(request: schemas.M商品Get, db: Session = Depends(deps.get_db), ...): ...
+
+@router.post("/登録", response_model=schemas.ResponseBase)
+def create_M商品(request: schemas.M商品Create, db: Session = Depends(deps.get_db), ...): ...
+
+@router.post("/変更", response_model=schemas.ResponseBase)
+def update_M商品(request: schemas.M商品Update, db: Session = Depends(deps.get_db), ...): ...
+
+@router.post("/削除", response_model=schemas.ResponseBase)
+def delete_M商品(request: schemas.M商品Delete, db: Session = Depends(deps.get_db), ...): ...
+
+
+# 誤り（GET / PUT / DELETE は使用禁止）
+@router.get("/一覧")     # NG
+@router.put("/変更")     # NG
+@router.delete("/削除")  # NG</code></pre>
+  </section>
+
+  <section>
+   <h2>日本語変数名の使い方</h2>
+   <p>業務ドメイン用語は日本語、フレームワーク・ライブラリ用語は英語。</p>
+   <table>
+    <thead>
+     <tr><th>種別</th><th>言語</th><th>例</th></tr>
+    </thead>
+    <tbody>
+     <tr><td>業務エンティティ（変数・引数）</td><td>日本語</td><td><code>利用者ID</code>, <code>配車日付</code>, <code>商品名</code>, <code>有効</code></td></tr>
+     <tr><td>業務関数名</td><td>日本語</td><td><code>利用者一覧取得()</code>, <code>商品登録処理()</code></td></tr>
+     <tr><td>業務クラス（ORM モデル）</td><td>日本語</td><td><code>class C利用者</code>, <code>class M商品</code></td></tr>
+     <tr><td>フレームワーク変数</td><td>英語</td><td><code>router</code>, <code>db</code>, <code>request</code>, <code>response</code></td></tr>
+     <tr><td>一覧 API 共通キー</td><td>英語</td><td><code>items</code>, <code>total</code>, <code>limit</code>, <code>query</code></td></tr>
+     <tr><td>Vue / Pinia</td><td>英語</td><td><code>ref()</code>, <code>computed()</code>, <code>useRouter()</code>, <code>loading</code></td></tr>
+     <tr><td>定数</td><td>英語 UPPER_SNAKE</td><td><code>MAX_ITEMS = 10000</code>, <code>LIMITED_MAX_ITEMS = 1000</code></td></tr>
+    </tbody>
+   </table>
+   <pre><code># Python バックエンド
+MAX_ITEMS = 10000                           # 定数: 英語 UPPER_SNAKE
+
+class M商品(Base):                          # クラス: 日本語
+    __tablename__ = "M商品"
+    商品ID   = Column(String, primary_key=True)
+    商品名   = Column(String)
+    有効     = Column(Boolean, default=True)
+
+def get_M商品(db: Session, 商品ID: str):    # 関数・引数: 日本語
+    return db.query(models.M商品).filter(
+        models.M商品.商品ID == 商品ID
+    ).first()
+
+router = APIRouter(prefix="/apps/M商品")    # フレームワーク変数: 英語</code></pre>
+   <pre><code>// TypeScript フロントエンド
+const 利用者名 = ref('')             // 業務変数: 日本語
+const 権限ID   = ref('')
+
+const loading  = ref(false)          // フレームワーク変数: 英語
+const router   = useRouter()
+const items    = ref&lt;any[]&gt;([])     // 一覧: 英語
+
+const 利用者一覧取得 = async () => {  // 業務関数: 日本語
+  const response = await apiClient.post('/core/C利用者/一覧')
+  items.value = response.data.data.items
+}</code></pre>
+  </section>
+
+  <section>
+   <h2>Vue コンポーネント命名</h2>
+   <p>ファイル名は日本語でよい。ただし HTML テンプレート内のタグ名は ASCII のみ有効。日本語コンポーネントは <code>&lt;component :is="..."&gt;</code> で使う。</p>
+   <pre><code>// ファイル名: C利用者一覧.vue （日本語OK）
+
+// router/coreRouter.ts
+{
+  path: '/C管理/C利用者/一覧',
+  name: 'C利用者一覧',
+  component: () =&gt; import('@/components/C管理/C利用者/C利用者一覧.vue')
+}</code></pre>
+   <pre><code>&lt;!-- 誤り: 日本語タグ名は HTML として無効 --&gt;
+&lt;C利用者一覧 /&gt;
+
+&lt;!-- 正解: 動的コンポーネント構文を使う --&gt;
+&lt;component :is="C利用者一覧コンポーネント" /&gt;</code></pre>
+   <p>CRUD 画面のファイル構成パターン:</p>
+   <pre><code>src/components/Mマスタ/M商品/
+  M商品一覧.vue            ← ルートコンポーネント（親・件数制限/無効も表示の state を持つ）
+  M商品編集.vue            ← 編集ダイアログ
+  components/
+    M商品一覧テーブル.vue  ← 一覧テーブル（子・props で件数制限/無効も表示を受け取る）</code></pre>
+  </section>
+
+  <section>
+   <h2>JSON キー命名</h2>
+   <p>リクエスト・レスポンス JSON のキーも日本語が原則。以下の共通項目は英語のまま使用する。</p>
+   <table>
+    <thead>
+     <tr><th>英語キー（固定）</th><th>意味</th><th>使用場所</th></tr>
+    </thead>
+    <tbody>
+     <tr><td><code>status</code></td><td>"OK" / "NG"</td><td>全レスポンス</td></tr>
+     <tr><td><code>message</code></td><td>メッセージ文字列</td><td>全レスポンス</td></tr>
+     <tr><td><code>data</code></td><td>レスポンスデータ本体</td><td>全レスポンス</td></tr>
+     <tr><td><code>items</code></td><td>一覧配列</td><td>一覧レスポンス</td></tr>
+     <tr><td><code>total</code></td><td>総件数</td><td>一覧レスポンス</td></tr>
+     <tr><td><code>limit</code></td><td>取得上限数</td><td>一覧レスポンス</td></tr>
+     <tr><td><code>error</code></td><td>エラー詳細オブジェクト</td><td>NG レスポンス</td></tr>
+    </tbody>
+   </table>
+   <pre><code>// 一覧レスポンスの例
+{
+  "status": "OK",
+  "message": "商品一覧を取得しました",
+  "data": {
+    "items": [
+      { "商品ID": "G001", "商品名": "サンプル商品", "有効": true }
+    ],
+    "total": 42,
+    "limit": 10000
+  }
+}
+
+// リクエストの例（業務フィールドは日本語）
+{
+  "商品ID": "G001",
+  "件数制限": true,
+  "無効も表示": false
+}</code></pre>
+  </section>
+
+ </main>
+
+ <footer>AiDiy Docs / コーディングルール</footer>
+</body>
+</html>

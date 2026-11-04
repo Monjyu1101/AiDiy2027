@@ -1,0 +1,45 @@
+--- backend_server/AIコア/AIバックアップ.py (before)
++++ backend_server/AIコア/AIバックアップ.py
+@@ -164,7 +164,11 @@
+     workspace_root = os.path.abspath(ベースパス)
+     # 高速ルックアップ用セット
+     _除外フォルダセット = set(_バックアップ除外フォルダ)
+-    for root, dirs, file_names in os.walk(workspace_root):
++    def 走査エラー(error):
++        # 読取不能を正常な対象0件へ読み替えない。
++        raise error
++
++    for root, dirs, file_names in os.walk(workspace_root, onerror=走査エラー):
+         # 除外は選択したプロジェクトの内側だけに適用する。
+         # 親が temp/log 等でも、明示された作業フォルダを丸ごと除外しない。
+         root_parts = os.path.relpath(root, workspace_root).split(os.sep)
+@@ -202,7 +206,8 @@
+             try:
+                 mtime = os.path.getmtime(file_path)
+             except OSError:
+-                continue
++                # 取得失敗を対象なしとして成功させない。
++                raise
+             rel_path = os.path.relpath(file_path, workspace_root).replace("\\", "/")
+             更新日時 = datetime.fromtimestamp(mtime).strftime("%Y/%m/%d %H:%M:%S")
+             files.append({"パス": rel_path, "更新日時": 更新日時, "更新時刻": mtime})
+@@ -306,7 +311,8 @@
+         all_scan = _全ファイルスキャン(base_path, 最大件数=_バックアップキャンセル件数)
+         _ローカルGit記録(base_path, [f["パス"] for f in all_scan])
+         if not all_scan:
+-            return None
++            # 正常な空の対象。失敗のNoneと分け、コピー先も作らない。
++            return ("", [], [], False, "")
+         max_mtime = max(f["更新時刻"] for f in all_scan)
+         all_files: List[ファイル情報] = [{"パス": f["パス"], "更新日時": f["更新日時"]} for f in all_scan]
+ 
+--- backend_tools/tools_proc/backup.py (before)
++++ backend_tools/tools_proc/backup.py
+@@ -190,6 +190,7 @@
+             "ok": True,
+             "batch": batch,
+             "最終時刻": 最終時刻,
++            "対象なし": not all_files,
+             "全件数": len(all_files or []),
+             "バックアップ件数": len(changed),
+             "全件フラグ": bool(全件フラグ),

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 _setup.py 解説</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="01_全体像.html">前へ: 01_全体像</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_start.py解説.html">次へ: 03_start.py解説</a>
+  </nav>
+
+  <h1>02_setup.py解説</h1>
+  <p>対象ファイルは <code>workspace/AiDiy2027/_setup.py</code> です。このページでは、何を準備し、何をスキップするかを整理します。</p>
+
+  <h2>コード全体（参照）</h2>
+  <p>
+  次のコードブロックは、理解しやすいよう <strong>core/apps・Web・Avatarのセットアップだけに絞った簡略版</strong>（<code>code_samples/_setup.py</code>）を読み込んで表示しています。<br>
+  実際のルート <code>_setup.py</code> はこれに加えて、バックエンド(tools/local/task,team)と <code>command_hermes</code> のセットアップも行います（対象は8項目）。処理の考え方（対話形式で項目ごとに実行可否を確認する）は共通です。
+  </p>
+  <pre data-src="code_samples/_setup.py"><code>読み込み中...</code></pre>
+
+  <h2>主な定数</h2>
+  <table>
+    <tr><th>定数</th><th>内容</th><th>影響</th></tr>
+    <tr><td><code>BACKEND_PATH</code></td><td><code>backend_server</code></td><td>バックエンド作業ディレクトリ</td></tr>
+    <tr><td><code>FRONTEND_PATH</code></td><td><code>frontend_web</code></td><td>フロントエンド作業ディレクトリ</td></tr>
+    <tr><td><code>DATABASE_TYPE</code></td><td><code>sqlite</code></td><td>PostgreSQL 関連処理をスキップする分岐条件</td></tr>
+    <tr><td><code>AUTO_MODE</code></td><td>対話質問の自動回答フラグ</td><td>開始時に <code>a</code> を選ぶと有効</td></tr>
+  </table>
+
+  <h2>処理順序</h2>
+  <ol>
+    <li>開始確認（y / n / a=auto）</li>
+    <li>グローバルツール更新（pip, wheel, setuptools, uv）</li>
+    <li>グローバル npm ツール更新（AI CLI群）</li>
+    <li>バックエンド環境準備（<code>uv sync</code>）</li>
+    <li>フロントエンド環境準備（<code>npm install</code> + <code>npm update</code>）</li>
+    <li><code>DATABASE_TYPE</code> が <code>postgresql</code> の場合のみ DB 復元とマイグレーション</li>
+    <li>完了メッセージ表示</li>
+  </ol>
+
+  <h2>重要ポイント1: 依存関係の準備</h2>
+  <h3>バックエンド</h3>
+  <ul>
+    <li><code>check_uv_installed()</code> で <code>uv</code> の存在確認</li>
+    <li><code>check_python_venv()</code> で既存仮想環境確認</li>
+    <li><code>uv sync</code> で Python 依存関係を同期</li>
+  </ul>
+
+  <h3>フロントエンド</h3>
+  <ul>
+    <li><code>check_npm_installed()</code> で npm の存在確認</li>
+    <li><code>package.json</code> の存在確認</li>
+    <li><code>npm install</code> で依存関係を取得</li>
+    <li><code>npm update</code> で <code>package.json</code> の宣言範囲内の最新版へ更新</li>
+  </ul>
+
+  <h2>重要ポイント2: SQLite運用時の挙動</h2>
+  <p>本プロジェクトの既定値は <code>DATABASE_TYPE="sqlite"</code> です。したがって、以下は通常スキップされます。</p>
+  <ul>
+    <li>PostgreSQL ユーザー作成確認</li>
+    <li>初期 SQL 復元</li>
+    <li><code>alembic upgrade head</code></li>
+  </ul>
+  <p>SQLite ファイルの実体は <code>workspace/AiDiy2027/_data/AiDiy/database.db</code> です。</p>
+
+  <h2>重要ポイント3: 対話形式と失敗時の継続</h2>
+  <table>
+    <tr><th>設計</th><th>説明</th></tr>
+    <tr><td>質問ベース</td><td>各ステップで実行可否を確認して進む</td></tr>
+    <tr><td>続行確認</td><td>失敗時に「続行するか」を確認する箇所がある</td></tr>
+    <tr><td>AUTOモード</td><td>デフォルト回答で進めるため、繰り返し検証時に便利</td></tr>
+  </table>
+
+  <h2>実行例</h2>
+  <pre><code>cd workspace/AiDiy2027
+python _setup.py
+
+# 対話に従って必要な処理を実行
+# 完了後は以下で起動
+python _start.py</code></pre>
+
+  <h2>チェックリスト</h2>
+  <ul>
+    <li><code>uv sync</code> が成功している</li>
+    <li><code>npm install</code> と <code>npm update</code> が成功している</li>
+    <li><code>python _start.py</code> に進める状態になっている</li>
+  </ul>
+
+  <nav>
+    <a href="01_全体像.html">前へ: 01_全体像</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_start.py解説.html">次へ: 03_start.py解説</a>
+  </nav>
+</body>
+</html>

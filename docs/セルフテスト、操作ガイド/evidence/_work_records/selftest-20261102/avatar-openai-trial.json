@@ -1,0 +1,40 @@
+{
+  "utc": "2026-11-02T12:09:05Z",
+  "provider_before": "freeai_live",
+  "provider_after": "openai_live",
+  "model": "gpt-realtime-2.1-mini",
+  "voice": "marin",
+  "send_count": 1,
+  "screen_response": "おはようございます。今日も素敵な一日になるといいですね。",
+  "input_history": 1,
+  "output_history": 0,
+  "output_history_is_not_delivery_evidence": true,
+  "services": [
+    {
+      "port": 8095,
+      "tcp": true,
+      "http": 200
+    },
+    {
+      "port": 8091,
+      "tcp": true,
+      "http": 200
+    },
+    {
+      "port": 8098,
+      "tcp": true,
+      "http": 200
+    },
+    {
+      "port": 8093,
+      "tcp": true,
+      "http": 200
+    },
+    {
+      "port": 8090,
+      "tcp": true,
+      "http": 200
+    }
+  ],
+  "settings_retained": true
+}

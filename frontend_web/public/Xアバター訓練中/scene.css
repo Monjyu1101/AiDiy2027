@@ -1,0 +1,28 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: #edf7ff;
+  font-family: "Noto Sans JP", "Yu Gothic UI", Meiryo, sans-serif;
+  background: transparent;
+}
+.scene-card {
+  width: min(100%, 700px);
+  padding: clamp(28px, 5vw, 60px);
+  border: 1px solid rgba(143, 232, 255, .26);
+  border-radius: 28px;
+  background: linear-gradient(145deg, rgba(23, 45, 65, .96), rgba(10, 20, 37, .96));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .27);
+}
+.scene-number { color: #66dfff; font-size: clamp(56px, 10vw, 110px); font-weight: 900; line-height: 1; }
+h1 { font-size: clamp(27px, 3.4vw, 46px); line-height: 1.3; margin: 24px 0 14px; }
+p { line-height: 1.8; }
+.scene-description { font-size: clamp(16px, 1.5vw, 20px); }
+.scene-note { margin-top: 34px; color: #aabfd2; font-size: 15px; }

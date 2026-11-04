@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>01 設計の基本と進め方</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_外部設計_画面設計.html">次へ: 02_外部設計_画面設計</a>
+  </nav>
+
+  <h1>01_設計の基本と進め方</h1>
+  <p>設計の目的は「実装者とレビュアーが同じ完成像を持てる状態」を作ることです。曖昧なまま実装を始めると、後でAPIやDBの再設計が必要になり工数が膨らみます。</p>
+
+  <h2>設計で最初に決める3点</h2>
+  <ol>
+    <li>利用者が画面で何をしたいか（外部設計）</li>
+    <li>その操作を実現するAPI契約は何か（内部設計）</li>
+    <li>永続化するデータ構造は何か（DB設計）</li>
+  </ol>
+
+  <h2>外部設計から始める理由</h2>
+  <ul>
+    <li>入力項目・表示項目・操作ボタンが明確になる</li>
+    <li>APIの入出力項目が自然に定義できる</li>
+    <li>DBカラムの粒度と必要性を判断しやすい</li>
+  </ul>
+
+  <h2>実装時に順序を逆にする理由</h2>
+  <table>
+    <tr><th>実装順序</th><th>狙い</th></tr>
+    <tr><td>DB</td><td>データ構造を固定して上位層の仕様を安定させる</td></tr>
+    <tr><td>バックエンド</td><td>APIの動作を先に保証してフロント側の開発を容易にする</td></tr>
+    <tr><td>フロントエンド</td><td>API仕様に沿って画面実装を仕上げる</td></tr>
+  </table>
+
+  <h2>この章で作る成果物</h2>
+  <table>
+    <tr><th>成果物</th><th>配置</th><th>用途</th></tr>
+    <tr><td>画面設計書</td><td><code>code_samples/M商品_画面設計書.md</code></td><td>画面項目・操作・遷移の定義</td></tr>
+    <tr><td>API設計書</td><td><code>code_samples/M商品_API設計書.md</code></td><td>エンドポイントと入出力契約の定義</td></tr>
+    <tr><td>DB設計書</td><td><code>code_samples/M商品_DB設計書.sql</code></td><td>DDLと運用前提の定義</td></tr>
+  </table>
+
+  <h2>設計レビュー観点</h2>
+  <ul>
+    <li>項目名が画面・API・DBで一致しているか</li>
+    <li>必須/任意・桁数・重複制約が矛盾していないか</li>
+    <li>成功/失敗時のユーザー通知が決まっているか</li>
+    <li>運用で必要な監査項目（登録/更新情報）を定義しているか</li>
+  </ul>
+
+  <h2>着手前チェック</h2>
+  <ul>
+    <li>[ ] 画面の操作シナリオが文章化されている</li>
+    <li>[ ] API一覧が画面操作と1対1で対応している</li>
+    <li>[ ] DB定義に必須制約と主キーが反映されている</li>
+    <li>[ ] 実装担当（03/04章）へ渡す資料がそろっている</li>
+  </ul>
+
+  <p>次のページで、M商品の画面設計を具体化します。</p>
+
+  <nav>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="02_外部設計_画面設計.html">次へ: 02_外部設計_画面設計</a>
+  </nav>
+</body>
+</html>
+

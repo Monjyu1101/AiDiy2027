@@ -99,7 +99,7 @@ if defined GIT_INDEX_FILE goto failed
 if defined GIT_OBJECT_DIRECTORY goto failed
 set "GIT_TERMINAL_PROMPT=0"
 rem Priority: original cwd, original script directory, USERPROFILE fallback.
-set "TARGET=%USERPROFILE%\AiDiy2026"
+set "TARGET=%USERPROFILE%\AiDiy2027"
 if exist "%AIDIY_SOURCE_DIR%\backend_server\" set "TARGET=%AIDIY_SOURCE_DIR%"
 if exist "%AIDIY_CWD%\backend_server\" set "TARGET=%AIDIY_CWD%"
 >>"%LOG%" echo TARGET="%TARGET%"
@@ -112,12 +112,12 @@ echo リポジトリの新規取得
 echo ============================================================
 echo(
 set "STAGE=clone"
-set "STAGING=%USERPROFILE%\.AiDiy2026-clone-%AIDIY_RUN%"
-git clone --branch main --single-branch https://github.com/Monjyu1101/AiDiy2026.git "%STAGING%"
+set "STAGING=%USERPROFILE%\.AiDiy2027-clone-%AIDIY_RUN%"
+git clone --branch main --single-branch https://github.com/Monjyu1101/AiDiy2027.git "%STAGING%"
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto failed
 rem REN refuses an existing destination. Keep the staging clone on failure.
-ren "%STAGING%" "AiDiy2026"
+ren "%STAGING%" "AiDiy2027"
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto failed
 
@@ -269,7 +269,7 @@ echo [INFO] originの接続先
 >>"%LOG%" echo CHECK %STAGE%
 git remote get-url --all origin >"%AIDIY_TEMP%\origin.txt" 2>"%AIDIY_TEMP%\validation.txt"
 if errorlevel 1 goto repository_failed
-"%PYTHON%" -X utf8 -c "import os,sys;from pathlib import Path;sys.stderr.reconfigure(encoding='cp932',errors='backslashreplace');urls=(Path(os.environ['AIDIY_TEMP'])/'origin.txt').read_text(encoding='utf-8').splitlines();allowed={'https://github.com/monjyu1101/aidiy2026.git','https://github.com/monjyu1101/aidiy2026','git@github.com:monjyu1101/aidiy2026.git','git@github.com:monjyu1101/aidiy2026'};urls and all(url.lower() in allowed for url in urls) or sys.exit('Origin must be Monjyu1101/AiDiy2026 on GitHub (HTTPS or git@github.com). URL values omitted for privacy.')" >"%AIDIY_TEMP%\validation.txt" 2>&1
+"%PYTHON%" -X utf8 -c "import os,sys;from pathlib import Path;sys.stderr.reconfigure(encoding='cp932',errors='backslashreplace');urls=(Path(os.environ['AIDIY_TEMP'])/'origin.txt').read_text(encoding='utf-8').splitlines();allowed={'https://github.com/monjyu1101/aidiy2027.git','https://github.com/monjyu1101/aidiy2027','git@github.com:monjyu1101/aidiy2027.git','git@github.com:monjyu1101/aidiy2027'};urls and all(url.lower() in allowed for url in urls) or sys.exit('Origin must be Monjyu1101/AiDiy2027 on GitHub (HTTPS or git@github.com). URL values omitted for privacy.')" >"%AIDIY_TEMP%\validation.txt" 2>&1
 if errorlevel 1 goto repository_failed
 set "STAGE=repository_branch"
 echo [INFO] mainブランチ

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 実装方針整理</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="05_CRUD作成.html">前へ: 05_CRUD作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="07_Router作成.html">次へ: 07_Router作成</a>
+  </nav>
+
+  <h1>06_実装方針整理</h1>
+  <p>AiDiy2027の現行構成では、Service層は必須ではありません。ビジネスロジックは主にRouter層に記述し、CRUDを直接呼び出します。</p>
+
+  <h2>現行方針</h2>
+  <table>
+    <tr><th>層</th><th>役割</th></tr>
+    <tr><td>Router</td><td>認証、入力検証、業務判定、レスポンス組み立て</td></tr>
+    <tr><td>CRUD</td><td>DBアクセス</td></tr>
+    <tr><td>Service</td><td>原則未導入（必要時のみ導入）</td></tr>
+  </table>
+
+  <h2>参照コード（Service層の扱い）</h2>
+  <p>以下は <code>code_samples/M商品_service.py</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_service.py"><code>読み込み中...</code></pre>
+
+  <h2>Service層を導入する判断基準</h2>
+  <ul>
+    <li>複数Routerで同じ業務ロジックを共有する必要がある</li>
+    <li>権限判定や状態遷移が複雑化している</li>
+    <li>Routerが肥大化しレビューしにくい</li>
+  </ul>
+
+  <h2>導入しない場合の注意</h2>
+  <ul>
+    <li>Routerの責務が増えるため関数を短く保つ</li>
+    <li>共通化できるロジックはCRUD util等へ切り出す</li>
+    <li>業務判定の重複を増やさない</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 現行構成でService未導入であることを理解した</li>
+    <li>[ ] Routerに書くべき処理範囲を説明できる</li>
+    <li>[ ] 導入条件を説明できる</li>
+  </ul>
+
+  <nav>
+    <a href="05_CRUD作成.html">前へ: 05_CRUD作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="07_Router作成.html">次へ: 07_Router作成</a>
+  </nav>
+</body>
+</html>
+

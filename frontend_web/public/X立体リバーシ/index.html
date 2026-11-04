@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X立体リバーシ - Cube Reversi 4x4</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+
+    <aside class="side-panel">
+      <header class="game-header">
+        <div class="header-title">
+          <h1>X立体リバーシ</h1>
+          <p>6面立方体 / 4x4 / Cube Flip Reversi</p>
+        </div>
+        <div class="turn-panel">
+          <span id="mode-label">通常モード</span>
+          <strong id="turn-label">青の手番</strong>
+        </div>
+      </header>
+
+      <div class="score-board">
+        <div class="score-card black">
+          <span>青</span>
+          <strong id="black-score">12</strong>
+        </div>
+        <div class="score-card white">
+          <span>赤</span>
+          <strong id="white-score">12</strong>
+        </div>
+        <div class="score-card empty">
+          <span>空き</span>
+          <strong id="empty-score">72</strong>
+        </div>
+      </div>
+
+      <div id="message" class="message">青の手番です。光る〇のマスに置けます。</div>
+
+      <section class="panel-block controls">
+        <h2>操作</h2>
+        <label class="switch-row">
+          <input id="black-cpu-toggle" type="checkbox">
+          <span>青をCPUにする</span>
+        </label>
+        <label class="switch-row">
+          <input id="cpu-toggle" type="checkbox" checked>
+          <span>赤をCPUにする</span>
+        </label>
+        <label class="switch-row">
+          <input id="sound-toggle" type="checkbox" checked>
+          <span>効果音を鳴らす</span>
+        </label>
+        <div class="button-row">
+          <button id="reset-btn" type="button">新規対局</button>
+          <button id="undo-btn" type="button">待った</button>
+          <button id="hint-btn" type="button">置ける場所</button>
+        </div>
+        <div class="legend">
+          <span><i class="legend-dot legal"></i>光る〇: 置ける場所</span>
+          <span><i class="legend-dot last"></i>直前の手</span>
+          <span><i class="legend-dot challenge"></i>金の〇: チャレンジ</span>
+        </div>
+      </section>
+
+      <section class="panel-block rules">
+        <h2>立体リバーシルール</h2>
+        <ul>
+          <li>青と赤が交互に、3D立方体の空いているマスへ石を置きます。</li>
+          <li>盤面は 4x4 マスの面が 6 枚つながった立方体です。</li>
+          <li>通常モードでは、相手の石を自分の石ではさめるマスだけに置けます。</li>
+          <li>横方向と縦方向の判定は、立方体の辺をまたいで隣の面へ続きます。</li>
+          <li>斜め方向の判定は、石を置いた同じ面の中だけで行います。</li>
+          <li>青赤どちらも通常モードで置けなくなると、チャレンジモードへ入ります。</li>
+          <li>チャレンジモード開始時、全6面の中央4マス、合計24マスを空にします。</li>
+          <li>チャレンジモードでは中央24マスだけに置けます。反転の判定は通常モードと同じです。</li>
+          <li>チャレンジモードで置ける場所がなくなった時点で終了し、石が多い色の勝ちです。</li>
+        </ul>
+        <p class="copyright">&copy; 2014-2027 Mitsuo KONDOU. All rights reserved.</p>
+      </section>
+
+      <section class="panel-block ai-log">
+        <h2>戦況</h2>
+        <div id="battle-log" class="battle-log"></div>
+      </section>
+    </aside>
+
+    <section class="cube-3d-panel" aria-label="3D立方体リバーシ盤">
+      <div class="cube-3d-header">
+        <span>3D CUBE VIEW</span>
+        <small>ドラッグで自由回転 / 立方体のマスをクリックして着手</small>
+      </div>
+      <canvas id="cube-3d-canvas"></canvas>
+    </section>
+
+  </main>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>

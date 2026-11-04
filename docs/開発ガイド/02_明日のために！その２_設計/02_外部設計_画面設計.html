@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>02 外部設計_画面設計</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="01_設計の基本と進め方.html">前へ: 01_設計の基本と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_内部設計_API設計.html">次へ: 03_内部設計_API設計</a>
+  </nav>
+
+  <h1>02_外部設計_画面設計</h1>
+  <p>外部設計では、利用者の操作を中心に画面を定義します。ここで曖昧なまま進むと、APIとDB設計がぶれます。</p>
+
+  <h2>設計対象</h2>
+  <table>
+    <tr><th>画面</th><th>URL</th><th>目的</th></tr>
+    <tr><td>M商品一覧</td><td><code>/Mマスタ/M商品/一覧</code></td><td>一覧表示、検索、編集/削除の入口</td></tr>
+    <tr><td>M商品編集</td><td><code>/Mマスタ/M商品/編集</code></td><td>新規登録・更新</td></tr>
+  </table>
+
+  <h2>画面設計で先に決める項目</h2>
+  <ol>
+    <li>一覧で表示する列（商品ID、商品名、単位、商品備考、更新情報）</li>
+    <li>入力フォームの必須項目と最大文字数</li>
+    <li>ボタン操作時の遷移先と確認ダイアログ</li>
+    <li>エラー表示位置とメッセージ</li>
+  </ol>
+
+  <h2>一覧画面の要件</h2>
+  <ul>
+    <li>初期表示で一覧取得APIを呼び出す</li>
+    <li>再検索ボタンで同条件再取得を行う</li>
+    <li>編集ボタンで更新モードの編集画面へ遷移</li>
+    <li>削除ボタンで確認ダイアログ後に削除APIを呼び出す</li>
+  </ul>
+
+  <h2>編集画面の要件</h2>
+  <table>
+    <tr><th>モード</th><th>商品ID</th><th>ボタン</th><th>備考</th></tr>
+    <tr><td>新規</td><td>入力可</td><td>登録</td><td>重複チェックが必要</td></tr>
+    <tr><td>更新</td><td>表示のみ</td><td>変更</td><td>監査情報を表示する</td></tr>
+  </table>
+
+  <h2>UI/UX観点の補足</h2>
+  <ul>
+    <li>主要アクション（登録・変更）と破壊的操作（削除）を明確に区別する</li>
+    <li>必須項目は入力前に分かるよう表現する</li>
+    <li>成功時は次の操作に迷わない導線（一覧に戻す等）を用意する</li>
+  </ul>
+
+  <h2>画面設計書サンプル（原本）</h2>
+  <p>以下は <code>code_samples/M商品_画面設計書.md</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_画面設計書.md"><code>読み込み中...</code></pre>
+
+  <h2>内部設計へ渡す情報</h2>
+  <ul>
+    <li>画面操作ごとのAPI呼び出しタイミング</li>
+    <li>入力値バリデーション条件</li>
+    <li>成功/失敗時に表示するメッセージ方針</li>
+  </ul>
+
+  <nav>
+    <a href="01_設計の基本と進め方.html">前へ: 01_設計の基本と進め方</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="03_内部設計_API設計.html">次へ: 03_内部設計_API設計</a>
+  </nav>
+</body>
+</html>
+

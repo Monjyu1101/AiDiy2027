@@ -1,0 +1,120 @@
+{
+  "name": "Catppuccin Icons",
+  "version": "1.26.0",
+  "repository": "https://github.com/catppuccin/vscode-icons",
+  "commit": "b6915da9f6889b683a110aa747de96c2820a537d",
+  "license": "MIT",
+  "flavour": "mocha",
+  "files": [
+    {
+      "path": "mocha/3d.svg",
+      "upstream": "icons/mocha/3d.svg",
+      "sha256": "c5a05831b03a835f2f4dc599604be0fa2c656fb54a4b0e1d702a566cfc47a858"
+    },
+    {
+      "path": "mocha/_file.svg",
+      "upstream": "icons/mocha/_file.svg",
+      "sha256": "96501f8a63e73632a782bd127c27299de3f1e8a59a2bdb7989cf2605350ea6c4"
+    },
+    {
+      "path": "mocha/_folder.svg",
+      "upstream": "icons/mocha/_folder.svg",
+      "sha256": "9dd6d64bce489ce7e970f9c938a9d019d9d50f69bce91d2e95b4155e171f2a96"
+    },
+    {
+      "path": "mocha/_folder_open.svg",
+      "upstream": "icons/mocha/_folder_open.svg",
+      "sha256": "e35c231ead1f595565426cbf84e464ff38573d8dcffcb117b58ac289f368d45a"
+    },
+    {
+      "path": "mocha/audio.svg",
+      "upstream": "icons/mocha/audio.svg",
+      "sha256": "ea5f81039860cf0fc6106d4bdf32263d38d703451ff4b7b047d14fd08241a109"
+    },
+    {
+      "path": "mocha/batch.svg",
+      "upstream": "icons/mocha/batch.svg",
+      "sha256": "ace83d4d135a23bfa1a6e1bc5b0ac1e98d490cb92bce905316b25912a19f027e"
+    },
+    {
+      "path": "mocha/binary.svg",
+      "upstream": "icons/mocha/binary.svg",
+      "sha256": "44818daf7c19968a1c5a50b813a98aba3aadb69f4cdcb9b0ee12f32ed2eea45f"
+    },
+    {
+      "path": "mocha/config.svg",
+      "upstream": "icons/mocha/config.svg",
+      "sha256": "32912c2c585628d5fd64b1dc25c50258ce26b9465d566b39fce46847b4b9d712"
+    },
+    {
+      "path": "mocha/csv.svg",
+      "upstream": "icons/mocha/csv.svg",
+      "sha256": "28044e40ac4b4488f4ec1de4cb9994e70093c1e14922147b291d25ab2d0d16c6"
+    },
+    {
+      "path": "mocha/database.svg",
+      "upstream": "icons/mocha/database.svg",
+      "sha256": "7bc5559489ed13edcfd9a577e5aa286351b1746af22ef7e3469e265b212db711"
+    },
+    {
+      "path": "mocha/env.svg",
+      "upstream": "icons/mocha/env.svg",
+      "sha256": "dd5f868afdc3e0254520e95dee1d0db7eec18b806cb33eee48fce0223ad93fc2"
+    },
+    {
+      "path": "mocha/font.svg",
+      "upstream": "icons/mocha/font.svg",
+      "sha256": "acc713568c27044ce2a4b5ab97049cb2c244849f336db0b8793e2e16b0907f7c"
+    },
+    {
+      "path": "mocha/image.svg",
+      "upstream": "icons/mocha/image.svg",
+      "sha256": "317cd66a1f979181efbc1bc78691209c99b772967b8c73d7da9a82b86b880756"
+    },
+    {
+      "path": "mocha/json.svg",
+      "upstream": "icons/mocha/json.svg",
+      "sha256": "33b3396f7f4d7e56f12b394509219b14752d6db58190efd02f711c34a2f8fc25"
+    },
+    {
+      "path": "mocha/license.svg",
+      "upstream": "icons/mocha/license.svg",
+      "sha256": "05ee1a480f8820601ed24455894db8f62bf88a7b2b4399ecacf99f423943a034"
+    },
+    {
+      "path": "mocha/lock.svg",
+      "upstream": "icons/mocha/lock.svg",
+      "sha256": "f07ff3a5e12bc9a4f9a7b7ad69b712a9e9fc524852cac53f8b3fd9ab3be0591c"
+    },
+    {
+      "path": "mocha/markdown.svg",
+      "upstream": "icons/mocha/markdown.svg",
+      "sha256": "f4d2b356a5ce2fad063df6944da812e9d10b8b2c16a1610f6d225c14fb8f68fd"
+    },
+    {
+      "path": "mocha/readme.svg",
+      "upstream": "icons/mocha/readme.svg",
+      "sha256": "7cefd684f5665b3f9439e2c8e682e5c41d70b58d97cdc3615a0baa9d30c434e9"
+    },
+    {
+      "path": "mocha/text.svg",
+      "upstream": "icons/mocha/text.svg",
+      "sha256": "a0371d48e3693862452524ff01a9a542f93ef45989535afd529fe0c6af4fa9ed"
+    },
+    {
+      "path": "mocha/video.svg",
+      "upstream": "icons/mocha/video.svg",
+      "sha256": "eabc396b2a8e70478023957b4be0a0b45a506e55493228e7d7fe16e51e4c5fdc"
+    },
+    {
+      "path": "mocha/xml.svg",
+      "upstream": "icons/mocha/xml.svg",
+      "sha256": "5f54e891db95f210f304bdd4fb503a4d44d68ce1ced6269bf3ec7cc0bddd63ab"
+    },
+    {
+      "path": "mocha/zip.svg",
+      "upstream": "icons/mocha/zip.svg",
+      "sha256": "3f8c338bfc762ff508bd1b504e682dc771eac287a12c943e4e2ab726b85800c7"
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>X太陽系 - 日付連動シミュレーション</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="solar-app">
+    <canvas id="solar-canvas" aria-label="太陽系シミュレーション"></canvas>
+    <div id="load-error" class="load-error">
+      3D 表示を読み込み中です。表示されない場合はネットワーク接続を確認してください。
+    </div>
+
+    <section class="date-panel" aria-label="日付操作">
+      <div class="title-block">
+        <p class="kicker">SOLAR SYSTEM</p>
+        <h1>X太陽系</h1>
+      </div>
+
+      <div class="date-display">
+        <span id="date-label">----</span>
+        <span id="offset-label">今日</span>
+      </div>
+
+      <label class="slider-row">
+        <span>速度</span>
+        <input id="speed-slider" type="range" min="0" max="10" step="1" value="6">
+      </label>
+
+      <div class="speed-labels" aria-hidden="true">
+        <span>-360</span>
+        <span>-180</span>
+        <span>-60</span>
+        <span>-7</span>
+        <span>-1</span>
+        <span>0</span>
+        <span>+1</span>
+        <span>+7</span>
+        <span>+60</span>
+        <span>+180</span>
+        <span>+360</span>
+      </div>
+
+      <div class="speed-display">
+        <span id="speed-label">停止</span>
+      </div>
+    </section>
+
+    <aside class="planet-panel" aria-label="惑星情報">
+      <div class="panel-heading">惑星の状況</div>
+      <ol id="planet-list"></ol>
+    </aside>
+  </main>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>

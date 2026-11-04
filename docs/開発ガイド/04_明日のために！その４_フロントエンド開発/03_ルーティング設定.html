@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 ルーティング設定</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="02_編集画面作成.html">前へ: 02_編集画面作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_一覧テーブル作成.html">次へ: 04_一覧テーブル作成</a>
+  </nav>
+
+  <h1>03_ルーティング設定</h1>
+  <p>Vue Routerへ一覧・編集ルートを追加します。画面遷移を安定させるため、name/path/queryの対応を先に決めます。</p>
+
+  <h2>設定対象</h2>
+  <p>ルーターはバックエンドと対応する形で分割されています。<strong>M系（マスタ）はappsRouter.ts</strong>に追加します。</p>
+  <table>
+    <tr><th>ファイル</th><th>対象系</th></tr>
+    <tr><td><code>src/router/appsRouter.ts</code></td><td>M系, T系, V系, S系 ← M商品はここ</td></tr>
+    <tr><td><code>src/router/coreRouter.ts</code></td><td>C系（C管理, C権限, C利用者, C採番）, A系（/AiDiy, /AIタスク, /AIチーム）</td></tr>
+    <tr><td><code>src/router/index.ts</code></td><td>ベースルート（ログイン, X系）+ ルーター本体</td></tr>
+  </table>
+
+  <h2>追加するルート（例）</h2>
+  <table>
+    <tr><th>ルート名</th><th>path</th><th>用途</th></tr>
+    <tr><td>M商品一覧</td><td><code>/Mマスタ/M商品/一覧</code></td><td>一覧表示</td></tr>
+    <tr><td>M商品編集</td><td><code>/Mマスタ/M商品/編集</code></td><td>新規/編集/表示</td></tr>
+  </table>
+
+  <h2>クエリパラメータ設計</h2>
+  <ul>
+    <li><code>モード=新規</code>: 新規入力</li>
+    <li><code>商品ID=ITEM001</code>: 編集対象指定</li>
+    <li><code>モード=表示</code> + 商品ID: 参照モード</li>
+  </ul>
+
+  <h2>実装ポイント</h2>
+  <ul>
+    <li>画面名とルート名を一致させる</li>
+    <li>認証が必要な画面は <code>meta.requiresAuth</code> を設定</li>
+    <li>一覧→編集、編集→一覧の遷移を <code>router.push</code> で統一</li>
+  </ul>
+
+  <h2>AGENTS準拠メモ</h2>
+  <ul>
+    <li>M/T/V/S系のルート定義は <code>src/router/appsRouter.ts</code> に追加する（index.tsは触らない）</li>
+    <li>C系/A系のルート定義は <code>src/router/coreRouter.ts</code> に追加する</li>
+    <li>コンポーネント読み込みは遅延読み込み（<code>() =&gt; import(...)</code>）を基本にする</li>
+    <li>日本語URLリロード時の復元（decode対応）を壊さないよう既存実装に合わせる</li>
+  </ul>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] 直接URLアクセスで一覧/編集が表示される</li>
+    <li>[ ] クエリを変えるとモードが正しく切り替わる</li>
+    <li>[ ] 未ログイン時はガードで遷移制御される</li>
+  </ul>
+
+  <nav>
+    <a href="02_編集画面作成.html">前へ: 02_編集画面作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_一覧テーブル作成.html">次へ: 04_一覧テーブル作成</a>
+  </nav>
+</body>
+</html>

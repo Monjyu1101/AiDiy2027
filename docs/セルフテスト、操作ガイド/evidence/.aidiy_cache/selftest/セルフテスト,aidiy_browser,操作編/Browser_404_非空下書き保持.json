@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-03",
+  "scope": "Browser chapter4, standalone Electron Code offline and Live disconnected",
+  "status": "PASS within scope",
+  "memo_code": "下書き保持確認：Code専用メモ。送信しません。",
+  "memo_live": "下書き保持確認：Live専用メモ。送信しません。",
+  "session": "aidiy_browser b3c0b75d-012a-4cf4-88a8-2fd60933e4e3",
+  "tab_id": "7b77712b-d24c-45f8-813b-383198aa975a",
+  "url": "file:///<USERPROFILE>/Desktop/AiDiy2027_dev/docs/開発ガイド/_index.html",
+  "handoffs": {
+    "Code": 1,
+    "Live": 1
+  },
+  "observed": "Both original memos preserved above matching session/tab_id/URL. No image path. Both disconnected, empty conversation. Inputs cleared and three owned windows closed via UI. Diag restored.",
+  "ai_sends": 0,
+  "source_changes": false,
+  "narration": "Edge ja-JP-NanamiNeural ratio1.2 intro and close serial playback error0",
+  "limits": [
+    "image handoff",
+    "60-second boundary",
+    "other execution forms"
+  ]
+}

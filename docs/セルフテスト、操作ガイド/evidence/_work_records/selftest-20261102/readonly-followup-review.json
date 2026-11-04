@@ -1,0 +1,17 @@
+{
+  "pdf_count": 22,
+  "pdf_pages": 365,
+  "pdf_hashes_all_match": true,
+  "source_hashes": {
+    "frontend_ide/launch.mjs": true,
+    "frontend_ide/ファイル機能/ai-search.mjs": true,
+    "backend_server/auth_keyring.py": true,
+    "backend_server/checks/test_auth_keyring.py": true
+  },
+  "ai_send_count": 0,
+  "completed": [
+    "Browser nonempty dedicated drafts Code and Live",
+    "Diag standard launch Console"
+  ],
+  "limits": "see remaining-actions.md latest section"
+}

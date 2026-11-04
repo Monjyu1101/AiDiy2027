@@ -1,0 +1,63 @@
+{
+  "id": "Diag-AIモデルTools_304",
+  "date": "2026-11-03",
+  "tool": "aidiy_chat_llms",
+  "endpoint": "GET http://127.0.0.1:8095/aidiy_chat_completions/v1/models",
+  "implementation": "tools_chat.py get_models -> chat_llm.available_models: in-memory model metadata only",
+  "on": {
+    "phase": "ON",
+    "http": 200,
+    "object": "list",
+    "count": 4
+  },
+  "off": {
+    "phase": "OFF applied",
+    "http": 200,
+    "response": {
+      "status": "NG",
+      "available": false,
+      "service_status": "out_of_service",
+      "tool": "aidiy_chat_llms",
+      "message": "サービス外です。Tools設定と導入状態を確認してください。"
+    },
+    "file_unchanged": true
+  },
+  "saved_reload": "OFF表示とNGを確認。enabled.aidiy_chat_llms=falseだけ追加",
+  "restored": {
+    "phase": "restored",
+    "http": 200,
+    "object": "list",
+    "count": 4,
+    "exact_config_restored": true,
+    "sha256": "5c5f9d7f197a41e1dea2cf2aaed360f7a0ee1b74412784fa5885b41378d745a0"
+  },
+  "services": {
+    "8090": {
+      "tcp": true,
+      "http": 200
+    },
+    "8091": {
+      "tcp": true,
+      "http": 200
+    },
+    "8093": {
+      "tcp": true,
+      "http": 200
+    },
+    "8095": {
+      "tcp": true,
+      "http": 200
+    },
+    "8098": {
+      "tcp": true,
+      "http": 200
+    },
+    "8096": {
+      "tcp": false
+    }
+  },
+  "ai_requests": 0,
+  "movie_generation": 0,
+  "restoration": "UI ON保存後に他項目不変を照合し元ファイルbytes復元、再読込ON",
+  "limit": "モデル一覧APIのゲート確認。生成成功や他ツール全件へ拡張しない"
+}

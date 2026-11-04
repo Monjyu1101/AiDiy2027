@@ -1,0 +1,55 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* ミニは幅330px・内容に合わせた高さ。タイトル31px・接続線3px・タイトル文字13pxは通常表示と共通で、内容だけを縮める。 */
+#app:has(>.start-mini){background:#000}#app>.panel.start-mini{width:100%;max-width:330px;margin-inline:auto;flex:0 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;background:#000}.mini-content{display:flex;flex-direction:column}.mini-content>*{flex:none}
+.mini-app-launch{padding:3px 4px 2px;border-bottom:1px solid #263544}.mini-app-buttons{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}.mini-app-buttons .mini-app-button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:46px;padding:2px 0;overflow:hidden;border:1px solid #345062;border-radius:3px;background:#000}.mini-app-buttons .mini-app-button:disabled{cursor:not-allowed;opacity:.42}.mini-app-buttons .mini-app-button:hover:not(:disabled){background:#1e4852}.mini-app-message{margin:2px 0 0;font-size:9px;line-height:12px;color:#a8becd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.mini-app-message.required{color:#ff6b82}
+.mini-services{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:3px 4px}.mini-services .mini-service{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;height:30px;min-height:30px;padding:1px 4px;border:1px solid #2a394b;border-radius:3px;background:#000;text-align:center;color:#a9b9cb;--mini-tone:#718096}.mini-service[data-tone=running]{--mini-tone:#34d399;border-color:#235348;background:#0d2523}.mini-service[data-tone=busy]{--mini-tone:#fbbf24;border-color:#5a4a23;background:#262215}.mini-service[data-tone=error]{--mini-tone:#fb7185;border-color:#6b3043;background:#2b1622}.mini-name{font-size:10px;line-height:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dfebf5}.start-mini .mini-service:hover{filter:brightness(1.15)}.start-mini button:focus-visible{outline:1px solid #35e0d2;outline-offset:-1px}
+.start-view-actions{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px}
+.panel-brand.compact .mini-restore:hover{color:#d8fff4;background:#20474d}
+/* 未選択の案内：電光掲示板風。右端から入り左端へ抜けるマーキー（padding-left:100%で親の右端から始め、自身の幅ぶん左へ流す）。
+   段落の上に固定の黒い格子線を重ね、格子の中のマスだけが流れる文字で光るようにして、ドット文字に見せる。
+   ピッチ1.6px・線0.8pxは表示倍率125%で物理2px（点灯1px＋黒線1px）。帯の高さは縦12マス（19.2px）。
+   消灯中のマスも暗い赤で見せて格子が固定されていることを示し、文字は1マスずつ送って点灯するマスだけを切り替える。 */
+.mini-app-message.required{position:relative;height:19.2px;margin-top:2px;line-height:19.2px;font-size:15px;font-family:Consolas,'Cascadia Mono',monospace;font-weight:700;letter-spacing:.1em;text-overflow:clip;background:#2a0710}.mini-app-message.required::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(90deg,#000 0 .8px,transparent .8px),linear-gradient(#000 0 .8px,transparent .8px);background-size:1.6px 1.6px}
+.mini-app-marquee{display:inline-block;color:#ff9fb0;text-shadow:0 0 1px #ff4d6d,0 0 3px rgba(255,42,85,.8);padding-left:100%;animation:mini-marquee 15s steps(var(--marquee-cells,240)) infinite;will-change:transform}
+/* ネイティブbuttonでクリック・Enter・Spaceを扱い、長押し窓移動の入力抑止を妨げない。 */
+.mini-project-link{display:block;width:100%;padding:0;border:0;border-radius:0;text-align:left;-webkit-app-region:no-drag}.mini-project-link:hover .mini-app-marquee{color:#fff1f4}.start-mini .mini-project-link:focus-visible{outline:2px solid #35e0d2;outline-offset:-2px}
+@keyframes mini-marquee{from{transform:translateX(0)}to{transform:translateX(calc(var(--marquee-cells,240) * -1.6px))}}
+/* 稼働中の項目：タイトルバーのシアン帯と同じ非線形（明るさ＝|sin(πt)|を2.5%刻みで直線補間、約4.5秒）で緑に明滅。周期と開始位置は 明滅.mjs で項目ごとにずらす。 */
+.mini-service[data-tone=running]{animation:mini-blink var(--mini-blink,4.5s) linear var(--mini-blink-delay,0s) infinite}.mini-service[data-tone=running] .mini-name{color:#c9ffe4}
+@keyframes mini-blink{0%,100%{border-color:#163a2c;background:#0a1c16;box-shadow:inset 0 0 0.0px rgba(57,255,154,0.00),0 0 0.0px rgba(57,255,154,0.00)}2.5%,97.5%{border-color:#1a4936;background:#0b1f18;box-shadow:inset 0 0 0.5px rgba(57,255,154,0.04),0 0 0.4px rgba(57,255,154,0.04)}5%,95%{border-color:#1f593f;background:#0b231a;box-shadow:inset 0 0 1.1px rgba(57,255,154,0.08),0 0 0.8px rgba(57,255,154,0.08)}7.5%,92.5%{border-color:#236848;background:#0c261c;box-shadow:inset 0 0 1.6px rgba(57,255,154,0.12),0 0 1.2px rgba(57,255,154,0.12)}10%,90%{border-color:#277752;background:#0c291e;box-shadow:inset 0 0 2.2px rgba(57,255,154,0.15),0 0 1.5px rgba(57,255,154,0.15)}12.5%,87.5%{border-color:#2b855b;background:#0d2c20;box-shadow:inset 0 0 2.7px rgba(57,255,154,0.19),0 0 1.9px rgba(57,255,154,0.19)}15%,85%{border-color:#2f9363;background:#0e3021;box-shadow:inset 0 0 3.2px rgba(57,255,154,0.23),0 0 2.3px rgba(57,255,154,0.23)}17.5%,82.5%{border-color:#33a16c;background:#0e3223;box-shadow:inset 0 0 3.7px rgba(57,255,154,0.26),0 0 2.6px rgba(57,255,154,0.26)}20%,80%{border-color:#36ae74;background:#0f3525;box-shadow:inset 0 0 4.1px rgba(57,255,154,0.29),0 0 2.9px rgba(57,255,154,0.29)}22.5%,77.5%{border-color:#3aba7b;background:#0f3826;box-shadow:inset 0 0 4.5px rgba(57,255,154,0.32),0 0 3.2px rgba(57,255,154,0.32)}25%,75%{border-color:#3dc582;background:#103a28;box-shadow:inset 0 0 4.9px rgba(57,255,154,0.35),0 0 3.5px rgba(57,255,154,0.35)}27.5%,72.5%{border-color:#40d089;background:#103d29;box-shadow:inset 0 0 5.3px rgba(57,255,154,0.38),0 0 3.8px rgba(57,255,154,0.38)}30%,70%{border-color:#42d98f;background:#103f2a;box-shadow:inset 0 0 5.7px rgba(57,255,154,0.40),0 0 4.0px rgba(57,255,154,0.40)}32.5%,67.5%{border-color:#45e294;background:#11412b;box-shadow:inset 0 0 6.0px rgba(57,255,154,0.43),0 0 4.3px rgba(57,255,154,0.43)}35%,65%{border-color:#47ea99;background:#11422c;box-shadow:inset 0 0 6.2px rgba(57,255,154,0.45),0 0 4.5px rgba(57,255,154,0.45)}37.5%,62.5%{border-color:#49f09d;background:#11442d;box-shadow:inset 0 0 6.5px rgba(57,255,154,0.46),0 0 4.6px rgba(57,255,154,0.46)}40%,60%{border-color:#4af5a0;background:#12452e;box-shadow:inset 0 0 6.7px rgba(57,255,154,0.48),0 0 4.8px rgba(57,255,154,0.48)}42.5%,57.5%{border-color:#4bfaa3;background:#12462e;box-shadow:inset 0 0 6.8px rgba(57,255,154,0.49),0 0 4.9px rgba(57,255,154,0.49)}45%,55%{border-color:#4cfda4;background:#12462f;box-shadow:inset 0 0 6.9px rgba(57,255,154,0.49),0 0 4.9px rgba(57,255,154,0.49)}47.5%,52.5%{border-color:#4dfea6;background:#12472f;box-shadow:inset 0 0 7.0px rgba(57,255,154,0.50),0 0 5.0px rgba(57,255,154,0.50)}50%{border-color:#4dffa6;background:#12472f;box-shadow:inset 0 0 7.0px rgba(57,255,154,0.50),0 0 5.0px rgba(57,255,154,0.50)}}
+
+/* 他に稼働中の機能があるとき、起動対象のポート閉鎖を同じ正弦波で赤く示す。 */
+.mini-service[data-tone=stopped]{--mini-tone:#ff4d6d;animation:mini-stopped-blink var(--mini-blink,4.5s) linear var(--mini-blink-delay,0s) infinite}.mini-service[data-tone=stopped] .mini-name{color:#ffd5dc}
+@keyframes mini-stopped-blink{
+0%,100%{border-color:#3a1620;background:#1c0a10;box-shadow:inset 0 0 0.0px rgba(255,77,109,0.00),0 0 0.0px rgba(255,77,109,0.00)}
+2.5%,97.5%{border-color:#491a26;background:#1f0b11;box-shadow:inset 0 0 0.5px rgba(255,77,109,0.04),0 0 0.4px rgba(255,77,109,0.04)}
+5%,95%{border-color:#591f2c;background:#230b12;box-shadow:inset 0 0 1.1px rgba(255,77,109,0.08),0 0 0.8px rgba(255,77,109,0.08)}
+7.5%,92.5%{border-color:#682332;background:#260c14;box-shadow:inset 0 0 1.6px rgba(255,77,109,0.12),0 0 1.2px rgba(255,77,109,0.12)}
+10%,90%{border-color:#772738;background:#290c15;box-shadow:inset 0 0 2.2px rgba(255,77,109,0.15),0 0 1.5px rgba(255,77,109,0.15)}
+12.5%,87.5%{border-color:#852b3d;background:#2c0d16;box-shadow:inset 0 0 2.7px rgba(255,77,109,0.19),0 0 1.9px rgba(255,77,109,0.19)}
+15%,85%{border-color:#932f43;background:#300e17;box-shadow:inset 0 0 3.2px rgba(255,77,109,0.23),0 0 2.3px rgba(255,77,109,0.23)}
+17.5%,82.5%{border-color:#a13348;background:#320e18;box-shadow:inset 0 0 3.7px rgba(255,77,109,0.26),0 0 2.6px rgba(255,77,109,0.26)}
+20%,80%{border-color:#ae364d;background:#350f19;box-shadow:inset 0 0 4.1px rgba(255,77,109,0.29),0 0 2.9px rgba(255,77,109,0.29)}
+22.5%,77.5%{border-color:#ba3a52;background:#380f1a;box-shadow:inset 0 0 4.5px rgba(255,77,109,0.32),0 0 3.2px rgba(255,77,109,0.32)}
+25%,75%{border-color:#c53d56;background:#3a101b;box-shadow:inset 0 0 4.9px rgba(255,77,109,0.35),0 0 3.5px rgba(255,77,109,0.35)}
+27.5%,72.5%{border-color:#d0405b;background:#3d101b;box-shadow:inset 0 0 5.3px rgba(255,77,109,0.38),0 0 3.8px rgba(255,77,109,0.38)}
+30%,70%{border-color:#d9425e;background:#3f101c;box-shadow:inset 0 0 5.7px rgba(255,77,109,0.40),0 0 4.0px rgba(255,77,109,0.40)}
+32.5%,67.5%{border-color:#e24562;background:#41111d;box-shadow:inset 0 0 6.0px rgba(255,77,109,0.43),0 0 4.3px rgba(255,77,109,0.43)}
+35%,65%{border-color:#ea4765;background:#42111d;box-shadow:inset 0 0 6.2px rgba(255,77,109,0.45),0 0 4.5px rgba(255,77,109,0.45)}
+37.5%,62.5%{border-color:#f04967;background:#44111e;box-shadow:inset 0 0 6.5px rgba(255,77,109,0.46),0 0 4.6px rgba(255,77,109,0.46)}
+40%,60%{border-color:#f54a69;background:#45121e;box-shadow:inset 0 0 6.7px rgba(255,77,109,0.48),0 0 4.8px rgba(255,77,109,0.48)}
+42.5%,57.5%{border-color:#fa4b6b;background:#46121f;box-shadow:inset 0 0 6.8px rgba(255,77,109,0.49),0 0 4.9px rgba(255,77,109,0.49)}
+45%,55%{border-color:#fd4c6c;background:#46121f;box-shadow:inset 0 0 6.9px rgba(255,77,109,0.49),0 0 4.9px rgba(255,77,109,0.49)}
+47.5%,52.5%{border-color:#fe4d6d;background:#47121f;box-shadow:inset 0 0 7.0px rgba(255,77,109,0.50),0 0 5.0px rgba(255,77,109,0.50)}
+50%{border-color:#ff4d6d;background:#47121f;box-shadow:inset 0 0 7.0px rgba(255,77,109,0.50),0 0 5.0px rgba(255,77,109,0.50)}
+}
+
+/* アプリと外部CLIはともに6列幅に揃え、下段は存在する項目だけ中央に置く。アイコン出典はCLIアイコン/README。名前帯は画像内に含め、HTMLで重ねない。 */
+.mini-cli-launch{padding:2px 4px 3px;border-bottom:1px solid #263544}.mini-cli-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:2px}.mini-cli-buttons .mini-cli-button{flex:0 0 calc((100% - 10px)/6);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:46px;padding:2px 0;border:1px solid #45535d;border-radius:3px;overflow:hidden;background:#000}.mini-cli-button:disabled{opacity:.42;cursor:not-allowed}.mini-cli-button:hover:not(:disabled){background:#2d4555}
+
+/* 名称帯を含む画像全体を同じ40px枠・40px表示に揃え、縦横比を保持する。 */
+.mini-icon-frame{display:flex;align-items:center;justify-content:center;width:40px;height:40px;flex:0 0 40px;overflow:hidden}.mini-icon-frame img{display:block;width:40px;height:40px;object-fit:contain}

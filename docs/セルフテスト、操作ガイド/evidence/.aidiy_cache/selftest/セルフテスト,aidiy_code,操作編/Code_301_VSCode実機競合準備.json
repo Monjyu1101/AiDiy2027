@@ -1,0 +1,36 @@
+{
+  "at_utc": "2026-11-03T07:52:53.415405+00:00",
+  "scope": "VS Code専用A/Bワークスペースの実機競合準備",
+  "status": "BLOCKED_BEFORE_AI_SEND",
+  "confirmed": [
+    "専用A/Bのみのワークスペース起動",
+    "AiDiy CodeプロジェクトA表示",
+    "online / codex_cli / gpt-6.1-sol",
+    "予測OFF・検証0回",
+    "添付なし・入力欄空・会話メッセージ0",
+    "Alt+F4による試験窓通常終了"
+  ],
+  "ai_requests": 0,
+  "blocked_action": "入力欄へフォーカスするmouse_click(1399,880)",
+  "denial_reason": "自動承認レビュー: 実VS CodeからAI要求を送信する可能性、外部モデル・自動文脈・送信先および明示的送信承認が未確定",
+  "retry": 0,
+  "followup": "同一バッチの後続clipboard/pasteが実行されたが、直後画面で入力欄空・元の公開readme不変・保存履歴0件を確認。送信操作なし。",
+  "histories": [
+    {
+      "file": "temp\\code-vscode-concurrency-20261103\\A\\_AIDIY\\aidiy_code\\histories\\c292b81a-4b83-4482-a7ef-4e584d4e00c1.json",
+      "sha256": "ea4d7f84eecdbc93009d61577e6e7b0ace3a4e17754359a4a3bc812eafb79ad2",
+      "id": "c292b81a-4b83-4482-a7ef-4e584d4e00c1",
+      "mode": "online",
+      "provider": "codex_cli",
+      "model": "gpt-6.1-sol",
+      "message_count": 0
+    }
+  ],
+  "source_changes": false,
+  "limits": [
+    "実行中B選択/新規拒否/返信A帰属/完了後B切替は未実施",
+    "既存11件PASSは隔離試験のみ",
+    "Hermesへのフォールバック利用なし"
+  ],
+  "narration": "Edge ja-JP-NanamiNeural ratio1.2 開始/結果のlocal_play_executed=true"
+}

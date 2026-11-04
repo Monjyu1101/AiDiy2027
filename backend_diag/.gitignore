@@ -1,0 +1,6 @@
+__pycache__/
+.stop-request
+.stop-request.tmp
+node_modules/
+
+.desktop-errors.log

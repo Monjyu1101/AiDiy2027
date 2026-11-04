@@ -1,0 +1,14 @@
+--- before/backend_server/auth_keyring.py
++++ after/backend_server/auth_keyring.py
+@@ -154,8 +154,10 @@
+                 header = jwt.get_unverified_header(generation["internal_token"])
+                 claims = jwt.decode(generation["internal_token"], generation["internal_key"], algorithms=["HS256"],
+                                     issuer=ISSUER, audience=AUDIENCE,
++                                     # 保存世代は期限切れでも署名を検証してから整理する。
++                                     # python-jose の require_exp は verify_exp=False を上書きする。
++                                     # iat/exp の存在・値は直後の世代情報との一致で検証する。
+                                      options={"verify_exp": False, "verify_iat": False,
+-                                              "require_exp": True, "require_iat": True,
+                                              "require_sub": True, "require_aud": True, "require_iss": True})
+                 if (header.get("kid") != kid or claims.get("iat") != generation["issued_at"]
+                         or claims.get("exp") != generation["internal_expires_at"]

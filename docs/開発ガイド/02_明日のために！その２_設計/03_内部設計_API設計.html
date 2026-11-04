@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>03 内部設計_API設計</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="02_外部設計_画面設計.html">前へ: 02_外部設計_画面設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_内部設計_ビジネスロジック.html">次へ: 04_内部設計_ビジネスロジック</a>
+  </nav>
+
+  <h1>03_内部設計_API設計</h1>
+  <p>API設計では、画面操作をサーバー処理へ正確に対応付けます。入力仕様とレスポンス仕様を明確にすると、フロント/バック両方の実装が安定します。</p>
+
+  <h2>M商品API一覧</h2>
+  <table>
+    <tr><th>エンドポイント</th><th>用途</th><th>備考</th></tr>
+    <tr><td><code>POST /apps/V商品/一覧</code></td><td>一覧取得</td><td>画面初期表示、再検索</td></tr>
+    <tr><td><code>POST /apps/M商品/取得</code></td><td>詳細取得</td><td>更新モード初期表示</td></tr>
+    <tr><td><code>POST /apps/M商品/登録</code></td><td>新規登録</td><td>商品ID重複チェックが必要</td></tr>
+    <tr><td><code>POST /apps/M商品/変更</code></td><td>更新</td><td>存在チェックが必要</td></tr>
+    <tr><td><code>POST /apps/M商品/削除</code></td><td>論理削除</td><td>確認ダイアログ後に呼び出し。物理削除ではなく <code>有効=False</code> を設定する</td></tr>
+  </table>
+
+  <h2>共通仕様</h2>
+  <ul>
+    <li>認証方式: JWT（Authorization: Bearer ...）</li>
+    <li>正常系/業務エラーともに JSON 形式で返却</li>
+    <li>レスポンスは <code>status</code>, <code>message</code>, <code>data/error</code> で統一</li>
+    <li>全 CRUD エンドポイントは <code>POST</code> メソッドのみ使用する</li>
+  </ul>
+
+  <h2>件数制限・論理削除フラグ（V系・T系一覧）</h2>
+  <p>V系・T系の一覧エンドポイントは、リクエストボディとして <code>ListRequest</code> を受け取ります。M系・C系の一覧はリクエストボディなし（固定上限 10,000 件）です。</p>
+
+  <h3>ListRequest スキーマ（<code>apps_schema/common.py</code>）</h3>
+  <pre><code>class ListRequest(BaseModel):
+    件数制限: Optional[bool] = True   # True=最大1000件、False=無制限
+    無効も表示: Optional[bool] = False  # False=有効レコードのみ、True=全件
+    開始日付: Optional[str] = None
+    終了日付: Optional[str] = None
+    商品ID: Optional[str] = None
+    商品分類ID: Optional[str] = None
+    生産区分ID: Optional[str] = None</code></pre>
+
+  <h3>フィールドの意味</h3>
+  <table>
+    <tr><th>フィールド</th><th>デフォルト</th><th>意味</th></tr>
+    <tr><td><code>件数制限</code></td><td><code>true</code></td><td><code>true</code> のとき最大 1,000 件（<code>LIMITED_MAX_ITEMS</code>）に制限する。<code>false</code> で制限なし。</td></tr>
+    <tr><td><code>無効も表示</code></td><td><code>false</code></td><td><code>false</code> のとき <code>有効=True</code> のレコードのみ返す。<code>true</code> で論理削除済みレコードも含めて全件返す。</td></tr>
+  </table>
+
+  <h3>バックエンドの処理ユーティリティ（<code>backend_server/list_controls.py</code>）</h3>
+  <pre><code>LIMITED_MAX_ITEMS = 1000  # V系・T系の最大件数上限
+
+# 件数制限の ON/OFF を取得
+def is_limit_enabled(request) -> bool: ...
+
+# 無効レコードを含めるかを取得
+def should_show_inactive(request) -> bool: ...
+
+# 有効フィルタを WHERE 句の conditions リストに追加
+def append_active_condition(conditions, request, column_name): ...
+
+# LIMIT 句の文字列と値を返す（件数制限 OFF なら None）
+def get_limit_clause(request) -> tuple[str, Optional[int]]: ...</code></pre>
+
+  <h3>一覧APIのレスポンス例</h3>
+  <pre><code>{
+  "status": "OK",
+  "message": "V商品一覧を取得しました",
+  "data": {
+    "items": [ ... ],
+    "total": 42,
+    "limit": 1000   // 件数制限 OFF の場合は null
+  }
+}</code></pre>
+
+  <h3>M系一覧との違い</h3>
+  <table>
+    <tr><th>種別</th><th>リクエストボディ</th><th>上限件数</th><th>有効フィルタ</th></tr>
+    <tr><td>M系・C系 一覧</td><td>なし（引数なし）</td><td>固定 10,000 件</td><td>なし（全件返す）</td></tr>
+    <tr><td>V系・T系 一覧</td><td><code>ListRequest</code></td><td>デフォルト 1,000 件（制御可）</td><td>デフォルトで <code>有効=True</code> のみ</td></tr>
+  </table>
+
+  <h2>設計時に固定すべき項目</h2>
+  <ol>
+    <li>必須項目と文字数制約</li>
+    <li>重複チェック、存在チェックのタイミング</li>
+    <li>画面表示用の項目名（日本語キー）</li>
+    <li>エラーコードと画面メッセージの対応</li>
+  </ol>
+
+  <h2>外部設計との対応表（例）</h2>
+  <table>
+    <tr><th>画面操作</th><th>API</th><th>期待結果</th></tr>
+    <tr><td>一覧初期表示</td><td><code>/apps/V商品/一覧</code></td><td>items と total が返る</td></tr>
+    <tr><td>編集画面表示（更新）</td><td><code>/apps/M商品/取得</code></td><td>商品ID指定で詳細が返る</td></tr>
+    <tr><td>登録ボタン押下</td><td><code>/apps/M商品/登録</code></td><td>成功時に登録済みデータを返却</td></tr>
+    <tr><td>変更ボタン押下</td><td><code>/apps/M商品/変更</code></td><td>更新監査情報を含んで返却</td></tr>
+  </table>
+
+  <h2>API設計書サンプル（原本）</h2>
+  <p>以下は <code>code_samples/M商品_API設計書.md</code> の内容です。</p>
+  <pre data-src="code_samples/M商品_API設計書.md"><code>読み込み中...</code></pre>
+
+  <h2>次工程へ渡すポイント</h2>
+  <ul>
+    <li>schema / model / crud / router の実装単位を決める</li>
+    <li>Swagger UI で確認する想定リクエストを先に定義する</li>
+    <li>フロント側の入力フォーム仕様と完全一致させる</li>
+  </ul>
+
+  <nav>
+    <a href="02_外部設計_画面設計.html">前へ: 02_外部設計_画面設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="04_内部設計_ビジネスロジック.html">次へ: 04_内部設計_ビジネスロジック</a>
+  </nav>
+</body>
+</html>
+

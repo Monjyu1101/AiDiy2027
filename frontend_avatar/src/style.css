@@ -1,0 +1,278 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+:root {
+  /* Avatar固有のタイトル配色を、1pxのパネル枠にも共有する。 */
+  --avatar-title-background: linear-gradient(135deg, rgba(108, 78, 196, 0.94), rgba(143, 104, 221, 0.9));
+  --avatar-title-edge: rgba(108, 78, 196, 0.94);
+  --avatar-light-title-background: rgba(200, 200, 200, 0.92);
+  color-scheme: dark;
+  font-family: "BIZ UDPGothic", "Yu Gothic UI", "Segoe UI Variable", sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #f4f3ff;
+  background: transparent;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  background: transparent;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.app-root {
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+  overflow: hidden;
+}
+
+.core-panel-body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.panel-icons {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  grid-template-columns: 32px;
+  gap: 6px;
+  z-index: 3;
+}
+
+.tool-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 0;
+  border: 2px solid transparent;
+  background: rgba(255, 255, 255, 0.95);
+  color: #000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Courier New", monospace;
+  font-size: 17px;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(128, 128, 128, 0.3);
+  transition:
+    background-color 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease,
+    box-shadow 0.16s ease;
+}
+
+.tool-button img {
+  width: 21px;
+  height: 21px;
+  margin: auto;
+  object-fit: contain;
+  pointer-events: none;
+  filter: brightness(0);
+}
+
+.tool-button:hover {
+  transform: scale(1.05);
+}
+
+.microphone-button {
+  border-color: #ff4444;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.3);
+}
+
+.microphone-button.active {
+  background: #ff4444;
+  border-color: #ff4444;
+  box-shadow: 0 2px 8px rgba(255, 68, 68, 0.5);
+}
+
+.microphone-button.active img {
+  filter: brightness(0) invert(1);
+}
+
+.speaker-button {
+  background: #00bfff;
+  border-color: #00bfff;
+  box-shadow: 0 2px 8px rgba(0, 191, 255, 0.3);
+}
+
+.speaker-button.inactive {
+  border-color: #00bfff;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.file-button,
+.camera-button,
+.chat-button.inactive,
+.agent-button.inactive {
+  border-color: #2e7d32;
+  background: #888888;
+  color: #000;
+  box-shadow: 0 2px 8px rgba(68, 255, 68, 0.3);
+}
+
+.file-button.active,
+.camera-button.active,
+.chat-button.active,
+.agent-button.active {
+  background: #000;
+  border-color: #44ff44;
+  color: #00ff00;
+  box-shadow: 0 2px 8px rgba(68, 255, 68, 0.5);
+}
+
+.file-button.active img,
+.camera-button.active img {
+  filter: brightness(0) invert(1);
+}
+
+.sync-button {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.exit-button {
+  border-color: #888;
+  background: #888;
+  color: #fff;
+  font-size: 0.42rem;
+  letter-spacing: 0.04em;
+}
+
+.sync-button:hover,
+.file-button:hover,
+.camera-button:hover,
+.chat-button:hover,
+.agent-button:hover {
+  box-shadow: 0 4px 12px rgba(68, 255, 68, 0.4);
+}
+
+.speaker-button:hover {
+  box-shadow: 0 4px 12px rgba(0, 191, 255, 0.4);
+}
+
+.microphone-button:hover {
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.4);
+}
+
+.panel-toast {
+  position: absolute;
+  left: 14px;
+  bottom: 14px;
+  max-width: min(380px, calc(100% - 28px));
+  padding: 8px 12px;
+  border: 1px solid rgba(153, 141, 214, 0.42);
+  background: rgba(3, 5, 10, 0.42);
+  color: #f3f1ff;
+  backdrop-filter: blur(12px);
+  font-size: 0.78rem;
+  z-index: 3;
+}
+
+.panel-toast.error {
+  border-color: rgba(255, 131, 131, 0.34);
+  color: #ffd4d4;
+}
+
+.panel-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: rgba(255, 255, 255, 0.24);
+  color: #333;
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+.mini-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(33, 21, 76, 0.18);
+  color: rgba(251, 248, 255, 0.94);
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+}
+
+.mini-pill.ok {
+  border-color: rgba(156, 240, 203, 0.72);
+  color: #e5fff4;
+}
+
+.mini-pill.warn {
+  border-color: rgba(255, 205, 120, 0.68);
+  color: #fff0cd;
+}
+
+.loading-state {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  color: #d8d6e7;
+  background:
+    radial-gradient(circle at top left, rgba(136, 105, 235, 0.2), transparent 26%),
+    radial-gradient(circle at bottom right, rgba(93, 177, 255, 0.12), transparent 22%);
+}
+
+.loading-logo {
+  width: 48px;
+  height: 48px;
+}
+
+@media (max-width: 720px) {
+  .panel-icons {
+    grid-template-columns: 28px;
+  }
+
+  .tool-button {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .tool-button img {
+    width: 18px;
+    height: 18px;
+  }
+}

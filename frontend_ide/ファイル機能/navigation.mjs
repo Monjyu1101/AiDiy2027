@@ -1,0 +1,180 @@
+import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navigation既定値.js';
+// COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+// Licensed under "AiDiy 公開利用ライセンス v1.1".
+// Commercial use requires prior written consent from all copyright holders.
+// See LICENSE for full terms. Thank you for keeping the rules.
+// https://github.com/monjyu1101/AiDiy2027
+// 開発目標のナビゲーション。既存CLI読取専用境界を使い、実作業は開始しない。
+import {readFile, readdir, realpath, stat, writeFile, rename, mkdir, rm} from 'node:fs/promises';
+import {join, relative, isAbsolute, sep} from 'node:path';
+import {randomUUID,createHash} from 'node:crypto';
+import {homedir} from 'node:os';
+import {fileURLToPath} from 'node:url';
+import {scanTree} from '../viewer/file-scan.mjs';
+import {latestFiles} from '../src/components/ファイル閲覧/最新ファイル.js';
+import {runNavigationAgent,navigationAvailability} from './navigation-agent.mjs';
+import {NAVI_PROVIDERS} from '../../backend_diag/モデル情報/navi_providers.mjs';
+async function replaceState(source,target){for(let attempt=0;;attempt++){try{return await rename(source,target);}catch(error){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=4)throw error;await new Promise(done=>setTimeout(done,25*(attempt+1)));}}}
+const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
+const text=(value,max)=>typeof value==='string'&&!!value.trim()&&value.length<=max;
+export function validateNavigation(data,job){
+ if(data?.schemaVersion!==3)throw Error('Navigator記録の形式が未対応です。旧形式への切替は行いません。「＋ 新規」で記録を切り替えてから「ナビ」で再作成してください。');
+ if(!text(data?.requestId,80)||!text(data?.goal,4000)||data?.requestId!==job.id||((!job.inferred||job.action==='evaluate')&&data.goal!==job.goal)||!Array.isArray(data.items)||data.items.length>50)throw Error('Navigator結果の依頼・目標・項目・次のプロンプトを確認してください。');
+ if(job.action==='evaluate'&&(data.items.length!==job.items.length||data.items.some((item,index)=>item?.id!==job.items[index].id||item?.name!==job.items[index].name)))throw Error('評価では項目の追加・削除・並べ替え・改名はできません。');
+ const ids=new Set();
+ const items=data.items.map(item=>{
+  if(!text(item?.id,80)||ids.has(item.id)||!text(item.name,200)||(!Number.isInteger(item.progress)||item.progress<0||item.progress>100)||!Number.isInteger(item.weight)||item.weight<1||item.weight>100||!text(item.weightReason,2000)||!text(item.reason,2000))throw Error('Navigator項目のID・名前・達成度（整数0〜100、未実施・未評価は0）・工数比率（1〜100）・根拠が不正です。');
+  ids.add(item.id);return {id:item.id,name:item.name,progress:item.progress,reason:item.reason,weight:item.weight,weightReason:item.weightReason};
+ });
+ if(items.length&&items.reduce((sum,item)=>sum+item.weight,0)!==100)throw Error('Navigatorの工数比率は合計100%にしてください。');
+ const expected=Math.round(items.reduce((sum,item)=>sum+item.weight*item.progress,0)/100);
+ if(!data.overall||!text(data.overall.reason,4000)||data.overall.progress!==expected)throw Error('Navigatorの総合評価と工数比率・達成度が一致しません。総合は未実施・未評価を0%として加重平均を四捨五入し、項目がない場合は0にしてください。');
+ const nextItem=items.find(item=>item.progress<100);
+ if(data.nextItemId!==(nextItem?.id??null)||(nextItem?!text(data.nextPrompt,8000):data.nextPrompt!==''))throw Error('おすすめプロンプトは上から最初の100%未満の項目1つだけを対象にしてください。全項目100%・項目なしの場合はnextItemIdをnull、nextPromptを空文字にしてください。');
+ return {schemaVersion:3,requestId:job.id,goal:data.goal,inferred:!!job.inferred,items,overall:{progress:data.overall.progress,reason:data.overall.reason},nextItemId:data.nextItemId,nextPrompt:data.nextPrompt};
+}
+
+// 返答全体がJSONならその構造を保持する。説明文付きの場合だけ最初の{〜最後の}を解析する。
+// JSON.parseに括弧・引用符・エスケープの解釈を任せ、複数オブジェクトから勝手に1件を選ばない。
+export function parseNavigationResponse(content){
+ if(typeof content!=='string'||Buffer.byteLength(content)>1024*1024)throw Error('Navigatorの回答サイズ・形式が不正です。');
+ const text=content.trim().replace(/^\uFEFF/,'').trim().replace(/^```(?:json)?\s*([\s\S]*?)\s*```$/i,'$1').trim();
+ try{return JSON.parse(text);}catch{}
+ const start=text.indexOf('{'),end=text.lastIndexOf('}');
+ if(start<0||end<start)throw Error('Navigatorの回答に完成したJSONオブジェクトが見つかりません。');
+ if(text.slice(0,start).trimEnd().endsWith('[')&&text.slice(end+1).trimStart().startsWith(']'))throw Error('Navigatorの回答は配列ではなく単一のJSONオブジェクトにしてください。');
+ try{return JSON.parse(text.slice(start,end+1));}
+ catch{throw Error('Navigatorの回答を単一のJSONとして読み取れません。複数の結果や未完成のJSONが含まれていないか確認してください。');}
+}
+
+// 今回のAI応答だけに適用する未評価0%の規約。保存済み記録の読戻しには使わない。
+export function validateNavigationResponse(data,job){
+ if(data?.schemaVersion!==3||!Array.isArray(data.items)||!data.overall)return validateNavigation(data,job);
+ const note=(reason,extra,max)=>text(reason,max)&&reason.length+extra.length<=max?reason+extra:reason;
+ const items=data.items.map(item=>item?.progress===null?{...item,progress:0,reason:note(item.reason,'\n未評価のため0%として集計。',2000)}:item);
+ const overall=data.overall.progress===null?{...data.overall,progress:Math.round(items.reduce((sum,item)=>sum+(item?.weight*item?.progress),0)/100),reason:note(data.overall.reason,'\n未実施・未評価を0%とする規約に従い、全項目の工数比率による加重評価を数値化。',4000)}:data.overall;
+ return validateNavigation({...data,items,overall},job);
+}
+
+export function validateNavigationModel(value){
+ if(!value||!NAVI_PROVIDERS.includes(value.provider)||!text(value.model,300)||/[\x00-\x1f]/.test(value.model))throw Error('読取専用対応AIとモデルを選択してください。');
+ return {provider:value.provider,model:value.model.trim()};
+}
+// DiagがCode一覧から生成したread-only専用候補を使用。実行時の制約は別途必須。
+export async function navigationCatalog(provider,file=fileURLToPath(new URL('../../_AIDIY/aidiy_diag/navi_models_info.json',import.meta.url))){
+ if(!NAVI_PROVIDERS.includes(provider))throw Error('対応していないAIです。');
+ let models,notice='';try{const info=JSON.parse(await readFile(file,'utf8'));if(info._meta?.schema!==1||info._meta?.readOnly!==true)throw Error('旧形式');models=info[provider]?.models;}catch{notice='Navi用モデル一覧が未作成・旧形式・読込不能です。Diagでモデル情報を書き出してください。';}
+ const items=[{id:'same',label:'same（前回のモデル）'},{id:'auto',label:'auto（自動選択）'}];
+ if(models&&typeof models==='object'&&!Array.isArray(models))for(const [id,label]of Object.entries(models)){
+  if(['same','auto'].includes(id)||typeof label!=='string'||!text(id,300)||/[\x00-\x1f]/.test(id))continue;
+  if(provider==='aidiy_hermes'&&/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id))continue;
+  items.push({id,label});
+ }
+ return {items,notice};
+}
+export async function navigationModels(provider,file){return (await navigationCatalog(provider,file)).items;}
+// Diagが保存した候補をそのまま使う。画面表示時には環境を再確認しない。
+export async function navigationProviders(file=fileURLToPath(new URL('../../_AIDIY/aidiy_diag/navi_models_info.json',import.meta.url))){
+ let info;try{info=JSON.parse(await readFile(file,'utf8'));if(info._meta?.schema!==1||info._meta?.readOnly!==true)throw Error('旧形式');}catch{return {providers:[],notice:'Navi用モデル一覧をDiagで書き出してください。'};}
+ const candidates=Object.keys(info).filter(provider=>{if(!NAVI_PROVIDERS.includes(provider))return false;const models=info[provider]?.models;return models&&typeof models==='object'&&!Array.isArray(models)&&Object.entries(models).some(([id,label])=>text(id,300)&&typeof label==='string'&&!/[\x00-\x1f]/.test(id)&&(provider!=='aidiy_hermes'||!/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id)));});
+ return {providers:candidates,notice:candidates.length?'':'Navi用AIの候補がありません。Diagの一覧を更新してください。'};
+}
+// CodeのHermes用既定値を共有し、保存済みの窓別選択を優先する。
+export async function navigationDefaultModel(file=fileURLToPath(new URL('../../_config/AiDiy_key.json',import.meta.url))){
+ let model='auto';
+ try{const config=JSON.parse((await readFile(file,'utf8')).replace(/^\uFEFF/,''));model=config.CODE_AIDIY_HERMES_MODEL||'auto';}catch{}
+ try{return validateNavigationModel({provider:'aidiy_hermes',model});}catch{return {provider:'aidiy_hermes',model:'auto'};}
+}
+export function createNavigation(project,{state,defaultModel=navigationDefaultModel,runAgent=runNavigationAgent,availability=runAgent===runNavigationAgent?navigationAvailability:async()=>({available:true,reason:''}),providerList=navigationProviders,waitMs=300000,now=Date.now,scan=scanTree,stateRoot=join(homedir(),'.aidiy','navigation'),instance='default'}={}){
+ if(!/^[a-zA-Z0-9_-]{1,80}$/.test(instance))throw Error('Navigator IDが不正です。');
+ let job=null,closed=false,starting=false;
+ const directory=async()=>{const identity=await realpath(project);const folder=join(stateRoot,createHash('sha256').update(process.platform==='win32'?identity.toLowerCase():identity).digest('hex'),instance);await mkdir(folder,{recursive:true});const base=await realpath(stateRoot);if(!within(base,await realpath(folder)))throw Error('Navigator保存先が不正です。');return folder;};
+ const historyDirectory=async()=>{const dir=join(await directory(),'..','history');await mkdir(dir,{recursive:true});const base=await realpath(stateRoot),full=await realpath(dir);if(!within(base,full))throw Error('Navigator履歴の保存先が不正です。');return full;};
+ const validId=id=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
+ const restored=data=>({...validateNavigation(data,{id:data.requestId,goal:data.goal,inferred:data.inferred}),createdAt:data.createdAt,navigationId:validId(data.navigationId)?data.navigationId:data.requestId,updatedAt:data.updatedAt||data.createdAt,...(data.selection?{selection:validateNavigationModel(data.selection)}:{})});
+ async function atomicJSON(file,data){const temporary=file+'.'+randomUUID()+'.tmp';try{await writeFile(temporary,JSON.stringify(data,null,2),{encoding:'utf8',flag:'wx'});await replaceState(temporary,file);}finally{await rm(temporary,{force:true});}}
+ async function historyRead(id){if(!validId(id))throw Error('Navigator履歴IDが不正です。');const dir=await historyDirectory(),file=await realpath(join(dir,id+'.json'));if(!within(dir,file)||(await stat(file)).size>1024*1024)throw Error('Navigator履歴が不正です。');return restored(JSON.parse(await readFile(file,'utf8')));}
+ async function list(){active();const dir=await historyDirectory(),items=[];for(const name of await readdir(dir)){if(!name.endsWith('.json')||!validId(name.slice(0,-5)))continue;try{const item=await historyRead(name.slice(0,-5));items.push({id:item.navigationId,goal:item.goal,updatedAt:item.updatedAt});}catch{}}return items.sort((a,b)=>b.updatedAt-a.updatedAt);}
+ async function select(id){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後に履歴を選択してください。');const result=await historyRead(id);if(result.selection)await saveModel(result.selection);await atomicJSON(join(await directory(),'latest.json'),result);job=null;return get();}
+ async function fresh(){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後に新規作成してください。');await rm(join(await directory(),'latest.json'),{force:true});job=null;return get();}
+ const modelFile=async()=>join(await directory(),'model.json');
+ async function readModel(){try{return validateNavigationModel(JSON.parse(await readFile(await modelFile(),'utf8')));}catch{return validateNavigationModel(await defaultModel());}}
+ async function saveModel(value){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後にモデルを変更してください。');const model=validateNavigationModel(value);await mkdir(stateRoot,{recursive:true,mode:0o700});const target=await modelFile(),temp=target+'.'+randomUUID()+'.tmp';try{await writeFile(temp,JSON.stringify(model,null,2),{encoding:'utf8',mode:0o600,flag:'wx'});await replaceState(temp,target);}finally{await rm(temp,{force:true});}return model;}
+ const active=()=>{if(closed||!state().active)throw Error('IDEの利用を開始してください。');};
+ const current=j=>!closed&&state().active&&state().startedAt===j.session&&job===j;
+ async function read(){
+  const dir=await directory(),path=join(dir,'latest.json');
+  try{const full=await realpath(path);if(!within(dir,full)||(await stat(full)).size>1024*1024)throw Error('Navigator記録の保存先・サイズが不正です。');
+   const data=JSON.parse(await readFile(full,'utf8'));return restored(data);
+  }catch(e){if(e.code==='ENOENT')return null;throw e;}
+ }
+ const describe=()=>job&&current(job)?{id:job.id,goal:job.goal,status:job.status,message:job.message,deadline:job.deadline}:null;
+ async function get(){active();const selection=await readModel();return {result:await read(),job:describe(),selection,availability:state().mode==='offline'?{available:false,reason:'オフライン利用中です。オンライン利用へ戻すと実行できます。'}:await availability(selection)};}
+ async function execute(j,dir){
+  let timer;
+  try{
+   const answer=await Promise.race([runAgent({project,prompt:j.prompt,signal:j.controller.signal,selection:j.selection}),new Promise((_,reject)=>{timer=setTimeout(()=>{j.controller.abort();reject(Error('5分以内にNavigation結果を確認できませんでした。'));},waitMs);timer.unref?.();})]);
+   if(!current(j))return;
+   const content=typeof answer==='string'?answer:answer?.content;
+   const result={...validateNavigationResponse(parseNavigationResponse(content),j),createdAt:j.createdAt||now(),updatedAt:now(),navigationId:j.navigationId||j.id,selection:j.selection};
+   if(!current(j))return;
+   const temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
+   if(!current(j))return;
+   await replaceState(temporary,join(dir,'latest.json'));
+   await atomicJSON(join(await historyDirectory(),result.navigationId+'.json'),result);
+   j.status='complete';j.message='Navigatorを更新しました。';
+  }catch(e){if(current(j)){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;}}
+  finally{clearTimeout(timer);}
+ }
+ async function start(goal,action='navigate'){
+  active();if(!['navigate','evaluate'].includes(action))throw Error('Navigator操作が不正です。');if(state().mode==='offline')throw Error('オンラインで利用を開始してください。');
+  if(action==='navigate'&&(typeof goal!=='string'||goal.length>4000||!goal.trim()))throw Error('開発目標を1〜4000文字で入力してください。');
+  if(starting||job&&current(job)&&job.status==='running')throw Error('Navigatorを作成中です。');
+  starting=true;
+  try{
+   const session=state().startedAt,dir=await directory();active();if(state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
+   const previous=action==='evaluate'?await read():null;if(action==='evaluate'&&!previous)throw Error('先にNavigatorで作業項目を作成してください。');
+   if(previous)goal=previous.goal;
+   const ready=await availability(await readModel());if(!ready.available)throw Error(ready.reason||'実行環境が利用できません。');
+   const id=randomUUID();
+   const j={id,action,navigationId:previous?.navigationId,createdAt:previous?.createdAt,selection:await readModel(),items:previous?.items,goal:goal.trim(),inferred:previous?previous.inferred:goal.trim()===DEFAULT_NAVIGATION_GOAL,session,status:'running',message:'プロジェクトを確認しています。最大5分お待ちください。',deadline:now()+waitMs,controller:new AbortController()};
+   const recentScan=await scan(project,{filter:'backup',limits:{timeMs:3000,maxFiles:10000}});
+   if(closed||!state().active||state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
+   const recent=latestFiles(recentScan.tree,0).sort((a,b)=>b.mtime-a.mtime).slice(0,30).map(({path,mtime})=>({path,updatedAt:new Date(mtime).toISOString()}));
+   j.prompt=`プロジェクトを読み取り調査し、開発目標のNavigationを作成してください。秘密や私的情報を結果に含めないでください。\n開発目標（調査対象）: ${j.inferred?'既定の調査指示。最近の変更と関連内容から意図を推測し、仮の開発目標をgoalに設定してください。推測の根拠と不確実さを各reasonにも明記してください。':JSON.stringify(j.goal)}\n観測日時: ${new Date(now()).toISOString()}。最近の更新（相対パスと日時、${recentScan.truncated?'走査上限による一部のみ':'除外規則適用済み'}）: ${JSON.stringify(recent)}。日時だけで達成を断定せず、関連ファイルの内容を読んで判断してください。手掛かりが不足なら不足を明記し、完了を推測しないでください。\nやることを最大50項目に分け、現状の根拠から達成度progressを整数0〜100で推定してください。未実施・未評価・根拠不足で判定できない項目は0%にしてください。nullは使わず、すべて数値で評価してください。0%は未確認部分がないという意味ではありません。reasonに未実施・未評価の区別、根拠と未確認部分を書いてください。各項目のweightは目標達成までの全体の見積工数に占める相対比率（整数1〜100%、非空なら合計100%）です。残工数だけの比率や重要度と混同せず、規模・難しさ・検証範囲からAIが推定し、weightReasonに具体的な配分理由と不確実さを書いてください。実時間は根拠なしに断定しないでください。総合overall.progressもAIが算出します。未実施・未評価を0%として全項目を含め、sum(weight*progress)/100を四捨五入した整数にしてください。項目なしなら0です。nullは使いません。overall.reasonに全体の工数配分・総合値の理由・残る大きな作業と不確実さを簡潔に書いてください。schemaVersionは必ず3です。旧形式は受け付けません。おすすめプロンプトは、itemsを上から順に見て最初にprogressが100未満となる項目1つだけを対象にし、そのidをnextItemIdに設定してください。未評価は0%として対象選択に含めます。nextPromptは、別のAIにそのまま渡せる自然で実用的な依頼文をあなた自身が作成してください。本文の上から「今回の目標」「対処しようとしている内容」「今回の作業」の流れで、目標の意図、対象項目で残っている課題と確認済みの根拠、今回その1項目を進める具体的な作業と確認方法を含めてください。目標や項目名を機械的に転記するだけにせず、調査で得た文脈を踏まえて文章にしてください。未確認のことは断定せず明記してください。画面・コピー側では説明を追加しないので、依頼文だけで目標と対象が分かるようにしてください。全体目標は背景の説明にとどめ、作業の依頼には後続項目・複数項目・一般的な追加作業を含めないでください。全項目が100%または項目がない場合、nextItemIdはnull、nextPromptは空文字にし、新たな仕事を作らないでください。自動実行はしません。\n以下は形式を示す出力例です。例の項目名・割合を固定で転記せず、実目標に応じた適切な粒度の複数項目を生成してください。評価モードでは新規生成せず保存済み全項目を維持してください。次の形式のJSONだけを回答してください。結果の保存はアプリ側で行います。\n${JSON.stringify({schemaVersion:3,requestId:id,goal:j.inferred?'仮の開発目標':j.goal,items:[{id:'step-1',name:'バックエンド調整',progress:100,reason:'必要なAPIと関連試験を確認済みの場合の例',weight:50,weightReason:'複数APIとデータ整合性の検証が全体工数の半分を占める見積例'},{id:'step-2',name:'フロントエンド',progress:70,reason:'基本画面は確認済みで残る表示確認がある場合の例',weight:30,weightReason:'画面実装と状態遷移の検証範囲から3割と見積もる例'},{id:'step-3',name:'セルフテスト',progress:0,reason:'計画された試験が未実施と確認できた場合の例',weight:20,weightReason:'結合試験と回帰確認に2割を見積もる例'}],overall:{progress:71,reason:'工数配分50:30:20の加重平均は71%。残作業は画面確認と結合試験が中心。工数比率はAIの推定です。'},nextItemId:'step-2',nextPrompt:'今回の目標は、利用者が画面を迷わず使える状態に仕上げることです。\n対処しようとしている内容は、基本画面の実装後に残っている表示確認です。現在の調査では表示の検証結果を確認できていません。\n今回の作業では、フロントエンドの対象画面とその検証手順を確認し、表示崩れの有無を調べ、必要な修正と表示の再確認を行ってください。確認できた内容と未確認部分を報告してください。今回はこの項目だけを対象にしてください。'})}`;
+   if(previous)j.prompt+=`\n評価モードです。以下の保存済み目標・全項目をそのまま使い、目標・項目ID・項目名・順序・項目数を変えないでください。進捗・根拠・工数比率weight・配分理由weightReason・総合overall・nextPromptを最新状態から評価し更新してください。工数配分を変更する場合も全体工数の比率として合計100%を維持し、その理由を明記してください。更新した達成度から最初の100%未満の項目を選び直し、nextItemIdをその1項目だけに合わせ、nextPromptも最新の根拠から「今回の目標」「対処しようとしている内容」「今回の作業」を含む依頼文として書き直してください。保存済みの提案を機械的に再利用しないでください。全項目100%ならnextItemIdはnull、nextPromptは空文字です。schemaVersion:3の形式は維持してください。\n保存済み: ${JSON.stringify(previous)}\n出力形式: ${JSON.stringify({schemaVersion:3,requestId:id,goal:previous.goal,items:previous.items,overall:previous.overall,nextItemId:previous.nextItemId,nextPrompt:previous.nextPrompt})}`;
+   j.deadline=now()+waitMs;job=j;void execute(j,dir);return {job:describe()};
+  }finally{starting=false;}
+ }
+ return {get,start,saveModel,list,select,fresh,close(){closed=true;job?.controller.abort();},async handle(req,res,url){
+  if(url.pathname!=='/api/navigation')return false;
+  const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
+  try{
+   if(req.method==='GET')reply(200,url.searchParams.get('providers')==='1'?await providerList():url.searchParams.has('catalog')?await navigationCatalog(url.searchParams.get('catalog')):url.searchParams.get('list')==='1'?{items:await list()}:await get());
+   else if(req.method==='POST'||req.method==='PUT'){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>20000)throw Error('入力が大きすぎます。');chunks.push(Buffer.from(chunk));}const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(req.method==='PUT')reply(200,{selection:await saveModel(data)});else if(data.action==='select')reply(200,await select(data.id));else if(data.action==='new')reply(200,await fresh());else reply(202,await start(data.goal,data.action));}
+   else reply(405,{error:'対応していない操作です。'});
+  }catch(e){reply(400,{error:e.message});}return true;
+ }};
+}
+
+// 各作業窓に独立したジョブ・モデル・保存領域を割り当てる。
+export function createNavigationInstances(project,options){
+ const instances=new Map();
+ return {
+  close(){for(const service of instances.values())service.close();instances.clear();},
+  async handle(req,res,url){
+   if(url.pathname!=='/api/navigation')return false;
+   const id=url.searchParams.get('instance');
+   if(!id||!/^navi-[1-9][0-9]{0,5}$/.test(id)){
+    res.writeHead(400,{'content-type':'application/json'}).end(JSON.stringify({error:'Navigator IDが不正です。'}));return true;
+   }
+   let service=instances.get(id);
+   if(req.method==='DELETE'){
+    service?.close();instances.delete(id);res.writeHead(200,{'content-type':'application/json'}).end('{}');return true;
+   }
+   if(!service){service=createNavigation(project,{...options,instance:(options.instancePrefix||'')+id});instances.set(id,service);}
+   return service.handle(req,res,url);
+  }
+ };
+}
+

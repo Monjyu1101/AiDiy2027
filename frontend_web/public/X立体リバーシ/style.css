@@ -1,0 +1,741 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  font-family: "Segoe UI", "Yu Gothic UI", "Meiryo", sans-serif;
+  color: #a8d8ee;
+  /* サイバーパンク背景: 暗い地に微細なシアングリッド */
+  background:
+    linear-gradient(rgba(0, 210, 255, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 210, 255, 0.028) 1px, transparent 1px),
+    radial-gradient(ellipse at 18% 18%, rgba(0, 80, 220, 0.14), transparent 38%),
+    radial-gradient(ellipse at 82% 82%, rgba(160, 0, 255, 0.11), transparent 40%),
+    linear-gradient(160deg, #020610 0%, #040b18 55%, #030810 100%);
+  background-size: 48px 48px, 48px 48px, 100% 100%, 100% 100%, 100% 100%;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+/* ─── 2カラムレイアウト ─────────────────────────── */
+
+.app-shell {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 10px;
+  padding: 10px;
+}
+
+/* ─── 左パネル ──────────────────────────────────── */
+
+.side-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 200, 255, 0.30) transparent;
+}
+
+/* ─── ゲームヘッダー ──────────────────────────── */
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid rgba(0, 200, 255, 0.40);
+  border-bottom: 2px solid rgba(0, 200, 255, 0.60);
+  background: rgba(2, 8, 22, 0.94);
+  box-shadow:
+    0 0 18px rgba(0, 150, 255, 0.14),
+    0 6px 20px rgba(0, 0, 0, 0.55);
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* 左上・右上コーナーアクセント */
+.game-header::before,
+.game-header::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 8px;
+}
+.game-header::before {
+  top: -1px; left: -1px;
+  border-top: 2px solid #00ffee;
+  border-left: 2px solid #00ffee;
+}
+.game-header::after {
+  top: -1px; right: -1px;
+  border-top: 2px solid #00ffee;
+  border-right: 2px solid #00ffee;
+}
+
+.header-title h1 {
+  margin: 0;
+  font-size: 17px;
+  letter-spacing: 0.12em;
+  color: #00e5ff;
+  text-shadow:
+    0 0 8px rgba(0, 229, 255, 0.80),
+    0 0 20px rgba(0, 180, 255, 0.45);
+}
+
+.header-title p {
+  margin: 3px 0 0;
+  font-size: 10px;
+  color: #3a8aaa;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.turn-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.turn-panel span {
+  color: #00ccff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.turn-panel strong {
+  font-size: 15px;
+  color: #e0f8ff;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.55);
+}
+
+/* ─── スコアボード ──────────────────────────────── */
+
+.score-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.score-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(3, 8, 22, 0.90);
+  position: relative;
+}
+
+.score-card span {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.score-card strong {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+@keyframes score-bump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.40); }
+  100% { transform: scale(1); }
+}
+
+.score-card strong.bump {
+  display: inline-block;
+  animation: score-bump 0.35s ease;
+}
+
+/* 青石（先手） = ブルー系 */
+.score-card.black {
+  border-left: 3px solid #0066ff;
+  box-shadow: inset 0 0 20px rgba(0, 60, 220, 0.15);
+}
+.score-card.black span   { color: #3355aa; }
+.score-card.black strong { color: #4488ff; text-shadow: 0 0 10px rgba(0, 100, 255, 0.70); }
+
+/* 赤石（後手CPU） = レッド系 */
+.score-card.white {
+  border-left: 3px solid #ff2200;
+  box-shadow: inset 0 0 20px rgba(200, 20, 0, 0.15);
+}
+.score-card.white span   { color: #aa4433; }
+.score-card.white strong { color: #ff4422; text-shadow: 0 0 10px rgba(255, 60, 0, 0.70); }
+
+/* 空き = 暗めのシアン */
+.score-card.empty {
+  border-left: 3px solid #006688;
+}
+.score-card.empty span   { color: #2a6880; }
+.score-card.empty strong { color: #60aac8; }
+
+/* ─── メッセージ ──────────────────────────────── */
+
+.message {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-left: 3px solid #00ffcc;
+  background: rgba(0, 20, 30, 0.72);
+  color: #b0f0e0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 200, 255, 0.08);
+}
+
+/* ─── パネルブロック共通 ──────────────────────── */
+
+.panel-block {
+  border: 1px solid rgba(0, 180, 255, 0.22);
+  background: rgba(2, 7, 20, 0.88);
+  box-shadow:
+    0 0 12px rgba(0, 100, 200, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.45);
+  padding: 10px 12px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+/* 左上コーナー装飾 */
+.panel-block::before {
+  content: "";
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 7px; height: 7px;
+  border-top: 1px solid #00aaff;
+  border-left: 1px solid #00aaff;
+  pointer-events: none;
+}
+
+.panel-block.ai-log {
+  flex: 1;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-block h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: #00ccff;
+  letter-spacing: 0.16em;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.50);
+  border-bottom: 1px solid rgba(0, 180, 255, 0.20);
+  padding-bottom: 5px;
+}
+
+/* ─── 操作パネル ──────────────────────────────── */
+
+.switch-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  font-size: 12px;
+  color: #7ab8cc;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.switch-row input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #00ccff;
+  cursor: pointer;
+}
+
+.button-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.button-row button {
+  height: 32px;
+  border: 1px solid rgba(0, 200, 255, 0.55);
+  background: rgba(0, 20, 40, 0.90);
+  color: #00e5ff;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(0, 200, 255, 0.45);
+  transition: background 0.14s, box-shadow 0.14s, border-color 0.14s;
+  position: relative;
+  overflow: hidden;
+}
+
+.button-row button:hover {
+  background: rgba(0, 40, 70, 0.95);
+  border-color: #00e5ff;
+  box-shadow: 0 0 14px rgba(0, 200, 255, 0.45), inset 0 0 12px rgba(0, 200, 255, 0.10);
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  color: #4a7a90;
+  font-size: 10px;
+  flex-wrap: wrap;
+  letter-spacing: 0.06em;
+}
+
+.legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  display: inline-block;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-dot.legal     { background: #00ffcc; box-shadow: 0 0 6px #00ffcc; }
+.legend-dot.last      { background: #ffe040; box-shadow: 0 0 6px #ffe040; }
+.legend-dot.challenge { background: #ff9900; box-shadow: 0 0 6px #ff9900; }
+
+/* ─── ルール ──────────────────────────────────── */
+
+.rules ul {
+  margin: 0;
+  padding-left: 14px;
+  color: #3a6880;
+  font-size: 10px;
+  line-height: 1.70;
+  letter-spacing: 0.03em;
+}
+
+/* ─── 戦況ログ ──────────────────────────────── */
+
+.battle-log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #3a7a90;
+  font-size: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 180, 255, 0.25) transparent;
+}
+
+.battle-log p {
+  margin: 0;
+  padding: 5px 8px;
+  background: rgba(0, 20, 40, 0.55);
+  border-left: 2px solid rgba(0, 160, 220, 0.40);
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+}
+
+.copyright {
+  margin: 0;
+  padding: 2px 4px 0;
+  color: #245a70;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ─── 右カラム: 3D キャンバスパネル ──────────── */
+
+.cube-3d-panel {
+  display: grid;
+  grid-template-rows: 26px 1fr;
+  border: 1px solid rgba(0, 200, 255, 0.35);
+  background: radial-gradient(ellipse at 50% 40%, rgba(0, 60, 120, 0.22), rgba(2, 5, 14, 0.96) 70%);
+  box-shadow:
+    0 0 40px rgba(0, 140, 255, 0.12),
+    inset 0 0 40px rgba(0, 80, 180, 0.08),
+    0 10px 30px rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+  min-height: 0;
+  position: relative;
+}
+
+/* スキャンライン効果 */
+.cube-3d-panel::after {
+  content: "";
+  position: absolute;
+  inset: 26px 0 0 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.10) 3px,
+    rgba(0, 0, 0, 0.10) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.cube-3d-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 14px;
+  color: #00ccff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  text-shadow: 0 0 8px rgba(0, 200, 255, 0.60);
+  background: rgba(0, 10, 28, 0.80);
+  border-bottom: 1px solid rgba(0, 200, 255, 0.25);
+  z-index: 3;
+  position: relative;
+}
+
+.cube-3d-header small {
+  color: #205a70;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.08em;
+  font-size: 9px;
+}
+
+#cube-3d-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  cursor: crosshair;
+  position: relative;
+  z-index: 1;
+}
+
+#cube-3d-canvas:active {
+  cursor: grabbing;
+}
+
+/* ─── チャレンジモード突入メッセージ ─────────── */
+
+.challenge-banner {
+  position: absolute;
+  inset: 26px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.challenge-banner.visible {
+  opacity: 0.86;
+  transform: scale(1);
+}
+
+.challenge-banner__text {
+  min-width: min(620px, 86%);
+  padding: 28px 34px;
+  border: 1px solid rgba(255, 210, 0, 0.78);
+  border-top: 3px solid rgba(255, 240, 80, 0.95);
+  border-bottom: 3px solid rgba(255, 140, 0, 0.85);
+  background:
+    linear-gradient(90deg, rgba(255, 170, 0, 0.06), rgba(0, 20, 40, 0.36), rgba(255, 170, 0, 0.06)),
+    rgba(3, 8, 18, 0.34);
+  box-shadow:
+    0 0 24px rgba(255, 190, 0, 0.40),
+    0 0 70px rgba(255, 120, 0, 0.22),
+    inset 0 0 32px rgba(255, 190, 0, 0.08);
+  text-align: center;
+}
+
+.challenge-banner__text span {
+  display: block;
+  color: #ffd84a;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-shadow: 0 0 12px rgba(255, 200, 0, 0.85);
+}
+
+.challenge-banner__text strong {
+  display: block;
+  margin-top: 10px;
+  color: #fff6b0;
+  font-size: 44px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 12px rgba(255, 230, 80, 0.95),
+    0 0 32px rgba(255, 130, 0, 0.60);
+}
+
+/* ─── 反転数ポップアップ ─────────────────────── */
+
+@keyframes flip-popup-float {
+  0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1.10); }
+  70%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -170%) scale(1); }
+}
+
+.flip-popup {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 5;
+  pointer-events: none;
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  white-space: nowrap;
+  animation: flip-popup-float 1.15s ease-out forwards;
+}
+
+.flip-popup.black {
+  color: #66bbff;
+  text-shadow: 0 0 12px rgba(0, 120, 255, 0.90), 0 0 30px rgba(0, 100, 255, 0.50);
+}
+
+.flip-popup.white {
+  color: #ff6644;
+  text-shadow: 0 0 12px rgba(255, 60, 0, 0.90), 0 0 30px rgba(255, 40, 0, 0.50);
+}
+
+.flip-popup.big {
+  font-size: 46px;
+}
+
+/* ─── 勝敗リザルトバナー ─────────────────────── */
+
+.result-banner {
+  position: absolute;
+  inset: 26px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transform: scale(0.88);
+  transition: opacity 0.32s ease, transform 0.32s ease;
+}
+
+.result-banner.visible {
+  opacity: 0.92;
+  transform: scale(1);
+}
+
+.result-banner__text {
+  min-width: min(560px, 84%);
+  padding: 26px 34px;
+  background: rgba(2, 8, 18, 0.42);
+  text-align: center;
+  border: 1px solid rgba(120, 200, 255, 0.60);
+  box-shadow: 0 0 26px rgba(0, 160, 255, 0.35), inset 0 0 30px rgba(0, 160, 255, 0.08);
+}
+
+.result-banner__text span {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.30em;
+  color: #9adcff;
+  text-shadow: 0 0 10px rgba(0, 200, 255, 0.80);
+}
+
+.result-banner__text strong {
+  display: block;
+  margin-top: 10px;
+  font-size: 44px;
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #eaf8ff;
+  text-shadow: 0 0 14px rgba(0, 200, 255, 0.85), 0 0 36px rgba(0, 140, 255, 0.50);
+}
+
+.result-banner__text small {
+  display: block;
+  margin-top: 10px;
+  font-size: 14px;
+  letter-spacing: 0.14em;
+  color: #7ab8d8;
+}
+
+.result-banner.black .result-banner__text {
+  border-color: rgba(70, 140, 255, 0.80);
+  box-shadow: 0 0 26px rgba(0, 100, 255, 0.45), inset 0 0 30px rgba(0, 100, 255, 0.10);
+}
+
+.result-banner.black .result-banner__text strong {
+  color: #bcd8ff;
+  text-shadow: 0 0 14px rgba(40, 120, 255, 0.95), 0 0 40px rgba(0, 90, 255, 0.55);
+}
+
+.result-banner.white .result-banner__text {
+  border-color: rgba(255, 90, 40, 0.80);
+  box-shadow: 0 0 26px rgba(255, 60, 0, 0.40), inset 0 0 30px rgba(255, 60, 0, 0.10);
+}
+
+.result-banner.white .result-banner__text span {
+  color: #ffb09a;
+  text-shadow: 0 0 10px rgba(255, 100, 40, 0.80);
+}
+
+.result-banner.white .result-banner__text strong {
+  color: #ffd4c4;
+  text-shadow: 0 0 14px rgba(255, 80, 20, 0.95), 0 0 40px rgba(255, 50, 0, 0.55);
+}
+
+/* ─── 2D展開図（参照用定義保持） ────────────── */
+
+.face {
+  border: 1px solid rgba(0, 200, 255, 0.22);
+  background: linear-gradient(145deg, rgba(4, 14, 30, 0.92), rgba(2, 7, 18, 0.92));
+}
+
+@keyframes cyber-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(0, 255, 200, 0.55),
+      inset 0 0 10px rgba(0, 255, 200, 0.06),
+      0 0 6px rgba(0, 255, 200, 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px rgba(0, 255, 255, 1.0),
+      inset 0 0 18px rgba(0, 255, 255, 0.18),
+      0 0 18px rgba(0, 220, 255, 0.55),
+      0 0 36px rgba(0, 180, 255, 0.22);
+  }
+}
+
+@keyframes challenge-pulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 160, 0, 0.55),
+      0 0 6px rgba(255, 140, 0, 0.22);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 2px rgba(255, 200, 0, 1.0),
+      inset 0 0 18px rgba(255, 200, 0, 0.18),
+      0 0 18px rgba(255, 160, 0, 0.55);
+  }
+}
+
+.cell {
+  position: relative;
+  border: 1px solid rgba(0, 180, 255, 0.14);
+  background: linear-gradient(145deg, #04101e, #020810);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.cell.legal {
+  animation: cyber-pulse 1.0s ease-in-out infinite;
+  background: linear-gradient(145deg, #051828, #020c18);
+}
+
+.cell.challenge {
+  animation: challenge-pulse 1.0s ease-in-out infinite;
+  background: linear-gradient(145deg, #201008, #100804);
+}
+
+.cell.last {
+  outline: 2px solid #ffe040;
+  outline-offset: -2px;
+  box-shadow: 0 0 10px rgba(255, 220, 0, 0.35);
+}
+
+.piece {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.piece.black {
+  background: radial-gradient(circle at 35% 30%, #1a3a5a 0 8%, #060c18 38%, #020508 100%);
+  border: 1.5px solid #004488;
+  box-shadow: 0 0 8px rgba(0, 100, 200, 0.40);
+}
+
+.piece.white {
+  background: radial-gradient(circle at 34% 28%, #ffffff 0 18%, #e0d0ff 52%, #aa80cc 100%);
+  border: 1.5px solid #cc88ff;
+  box-shadow: 0 0 8px rgba(180, 80, 255, 0.40);
+}
+
+@keyframes flip {
+  0%   { transform: translate(-50%, -50%) rotateY(0) scale(1); }
+  50%  { transform: translate(-50%, -50%) rotateY(90deg) scale(1.28); }
+  100% { transform: translate(-50%, -50%) rotateY(180deg) scale(1); }
+}
+
+@keyframes drop {
+  0%   { transform: translate(-50%, -64%) scale(0.2); opacity: 0; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+
+/* ─── レスポンシブ ──────────────────────────── */
+
+@media (max-width: 900px) {
+  body { overflow: auto; }
+
+  .app-shell {
+    height: auto;
+    min-height: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(480px, 70vh);
+  }
+
+  .side-panel { overflow-y: visible; }
+  .cube-3d-panel { min-height: 480px; }
+  .legend { gap: 10px; }
+  .challenge-banner__text strong { font-size: 30px; }
+  .result-banner__text strong { font-size: 30px; }
+  .flip-popup { font-size: 24px; }
+  .flip-popup.big { font-size: 34px; }
+}

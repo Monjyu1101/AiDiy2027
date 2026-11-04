@@ -1,0 +1,71 @@
+{
+  "date": "2026-11-03T07:44:05.497426+00:00",
+  "command": "node --test --test-timeout=20000 --test-reporter=tap --test-name-pattern=実VS Codeホスト frontend_ide/checks/code-transition-handoff.test.mjs",
+  "exit_code": 0,
+  "tests": 11,
+  "pass": 11,
+  "fail": 0,
+  "skipped": 0,
+  "duration_ms": 2021.0001,
+  "cases": [
+    {
+      "name": "New:固定中AからアクティブBへ切替",
+      "result": "PASS"
+    },
+    {
+      "name": "new/run:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "new/model:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "selectHistory/run:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "selectHistory/model:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "deleteHistory/run:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "deleteHistory/model:要求ID照合・拒否・下書き保持",
+      "result": "PASS"
+    },
+    {
+      "name": "selectHistory:消えた履歴を拒否",
+      "result": "PASS"
+    },
+    {
+      "name": "deleteHistory:消えた履歴を拒否",
+      "result": "PASS"
+    },
+    {
+      "name": "selectHistory:同じプロジェクトの成功応答で再公開",
+      "result": "PASS"
+    },
+    {
+      "name": "deleteHistory:同じプロジェクトの成功応答で再公開",
+      "result": "PASS"
+    }
+  ],
+  "changed_file": "frontend_ide/checks/code-transition-handoff.test.mjs",
+  "fixture_changes": [
+    "現行workspace-folder.tsをメモリ変換してVM依存マップへ渡す",
+    "mkdtempで実在する専用project/otherを用意しafterで回収",
+    "期待パスをfixture実パスへ更新。拒否/下書き保持アサーション維持"
+  ],
+  "source_sha256": {
+    "frontend_ide\\checks\\code-transition-handoff.test.mjs": "56235a86226bc11be37053d255023460143e72f866cc799a07a395bd4d31fc9a",
+    "frontend_ide\\host\\src\\extension.ts": "8c4ab7b3ee03c3dc75e201f203f419b315a18d2643c5a11fc4707bcf7ea11da4",
+    "frontend_ide\\host\\src\\workspace-folder.ts": "bfb878477a23f772a4dd95967932dcfa8b7678cb404915be50faba6098258f75"
+  },
+  "product_source_changed": false,
+  "network": "Core接続と予測fetchはassert.fail。VS Code API/保存はfixture。AI送信なし。",
+  "ai_calls": 0,
+  "scope": "実製品のextension.ts/パネル/通信を使う隔離試験。実VS Code窓でのAI実行中試験ではない。"
+}

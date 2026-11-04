@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 ルーティング追加とメニュー登録</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="05_一覧画面作成.html">前へ: 05_一覧画面作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="07_動作確認.html">次へ: 07_動作確認</a>
+  </nav>
+
+  <h1>06_ルーティング追加とメニュー登録</h1>
+  <p>一覧/編集画面をユーザーが辿れるよう、routerとメニューの両方に導線を追加します。</p>
+
+  <h2>対応箇所</h2>
+  <table>
+    <tr><th>ファイル</th><th>対応</th></tr>
+    <tr><td><code>src/router/appsRouter.ts</code></td><td>M商品一覧・編集ルートを追加 ← M系はここ</td></tr>
+    <tr><td><code>src/components/_TopMenu.vue</code></td><td>上位タブ（Mマスタ）導線を確認</td></tr>
+    <tr><td><code>src/components/Mマスタ.vue</code></td><td>M商品カード導線を確認/追加</td></tr>
+  </table>
+
+  <h2>ルーターファイルの構成（参考）</h2>
+  <table>
+    <tr><th>ファイル</th><th>管理する系</th></tr>
+    <tr><td><code>src/router/appsRouter.ts</code></td><td>M系, T系, V系, S系</td></tr>
+    <tr><td><code>src/router/coreRouter.ts</code></td><td>C系（C管理等）, A系（/AiDiy, /AIタスク, /AIチーム）</td></tr>
+    <tr><td><code>src/router/index.ts</code></td><td>ベースルート（ログイン, X系）のみ ← 通常は触らない</td></tr>
+  </table>
+
+  <h2>ポイント</h2>
+  <ul>
+    <li>pathとrouter.push先のURLを一致させる</li>
+    <li>表示権限が必要な場合はメニュー表示条件を設定する</li>
+    <li>トップタブは <code>_TopMenu.vue</code>、カテゴリ内導線は <code>Mマスタ.vue</code> で管理する</li>
+    <li>メニュー追加後はログインして表示確認する</li>
+  </ul>
+
+  <h2>確認手順</h2>
+  <ol>
+    <li>8090へアクセスしてログイン</li>
+    <li>メニューからM商品一覧へ遷移</li>
+    <li>一覧→編集→一覧の導線が切れないことを確認</li>
+  </ol>
+
+  <h2>チェック</h2>
+  <ul>
+    <li>[ ] メニューから一覧画面へ遷移できる</li>
+    <li>[ ] URL直打ちでも画面表示できる</li>
+    <li>[ ] ルーティング衝突や404が発生しない</li>
+  </ul>
+
+  <nav>
+    <a href="05_一覧画面作成.html">前へ: 05_一覧画面作成</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="07_動作確認.html">次へ: 07_動作確認</a>
+  </nav>
+</body>
+</html>

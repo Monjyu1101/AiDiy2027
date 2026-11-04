@@ -1,0 +1,16 @@
+■ M商品 実装ファイル位置（作成済み）
+
+frontend_web/src/components/Mマスタ/M商品/
+├── M商品一覧.vue
+├── M商品編集.vue
+└── components/
+ └── M商品一覧テーブル.vue
+
+■ 参考: 新規M系CRUDを追加する場合の作成コマンド
+
+# Windows
+mkdir frontend_web\src\components\Mマスタ\M新テーブル
+mkdir frontend_web\src\components\Mマスタ\M新テーブル\components
+
+# Linux/Mac
+mkdir -p frontend_web/src/components/Mマスタ/M新テーブル/components

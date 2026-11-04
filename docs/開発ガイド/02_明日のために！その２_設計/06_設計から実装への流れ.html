@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>06 設計から実装への流れ</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="05_データベース設計.html">前へ: 05_データベース設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+
+  <h1>06_設計から実装への流れ</h1>
+  <p>設計書を実装へ落とすときは、成果物をそのまま作業分解へ変換します。ここでは <code>workspace/AiDiy2027</code> の実装順に沿って説明します。</p>
+
+  <h2>作業分解（推奨）</h2>
+  <table>
+    <tr><th>ステップ</th><th>主担当</th><th>成果物</th></tr>
+    <tr><td>1. DB実装</td><td>バックエンド</td><td>モデル定義、初期化確認、SQL確認</td></tr>
+    <tr><td>2. API実装</td><td>バックエンド</td><td>schema / model / crud / router</td></tr>
+    <tr><td>3. API検証</td><td>バックエンド</td><td>Swagger UIで仕様確認</td></tr>
+    <tr><td>4. 画面実装</td><td>フロントエンド</td><td>一覧・編集画面、バリデーション、メッセージ</td></tr>
+    <tr><td>5. 結合確認</td><td>双方</td><td>画面操作とAPI結果の整合確認</td></tr>
+  </table>
+
+  <h2>バックエンド実装への接続</h2>
+  <ul>
+    <li>次章: <a href="../03_明日のために！その３_バックエンド開発/_index.html">03_明日のために！その３_バックエンド開発</a></li>
+    <li>API設計書を基準に request/response を固定する</li>
+    <li>監査カラム設定を共通処理として統一する</li>
+  </ul>
+
+  <h2>フロントエンド実装への接続</h2>
+  <ul>
+    <li>次章: <a href="../04_明日のために！その４_フロントエンド開発/_index.html">04_明日のために！その４_フロントエンド開発</a></li>
+    <li>画面設計書の項目名・必須条件をフォームへ反映する</li>
+    <li>APIの <code>status/message</code> をそのまま通知に活用する</li>
+  </ul>
+
+  <h2>実装時に崩れやすいポイント</h2>
+  <table>
+    <tr><th>崩れやすい点</th><th>対策</th></tr>
+    <tr><td>項目名の不一致</td><td>設計書を1つの正としてコピー運用する</td></tr>
+    <tr><td>バリデーション差分</td><td>フロント/バックで共通一覧を持つ</td></tr>
+    <tr><td>エラーハンドリングの齟齬</td><td>error.code と message の対応表を固定する</td></tr>
+    <tr><td>監査項目の漏れ</td><td>登録系/更新系をテンプレート化する</td></tr>
+  </table>
+
+  <h2>コミット単位の推奨</h2>
+  <ol>
+    <li>設計書更新のみ</li>
+    <li>DB/モデル実装のみ</li>
+    <li>API実装のみ</li>
+    <li>画面実装のみ</li>
+    <li>結合修正のみ</li>
+  </ol>
+
+  <h2>最終確認</h2>
+  <ul>
+    <li>[ ] 画面設計書の操作シナリオどおりに遷移する</li>
+    <li>[ ] API設計書どおりのJSONが返る</li>
+    <li>[ ] DB設計書どおりのカラムが保存される</li>
+    <li>[ ] 監査情報が登録/更新で正しく反映される</li>
+  </ul>
+
+  <nav>
+    <a href="05_データベース設計.html">前へ: 05_データベース設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="99_まとめ.html">次へ: 99_まとめ</a>
+  </nav>
+</body>
+</html>
+

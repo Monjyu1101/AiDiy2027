@@ -1,0 +1,46 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+ * Licensed under "AiDiy 公開利用ライセンス v1.1".
+ * Commercial use requires prior written consent from all copyright holders.
+ * See LICENSE for full terms. Thank you for keeping the rules.
+ * https://github.com/monjyu1101/AiDiy2027 */
+/* インストール一覧・詳細専用。共通レイアウトと状態バッジは ../style.css。 */
+.install-panel>main{grid-template-columns:clamp(400px,34vw,480px) minmax(0,1fr)}
+.install-panel>main>aside,.install-panel>main>article{min-width:0}
+.item{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;background:none;text-align:left;border-radius:5px;padding:11px 10px}
+.item.selected{background:#25403d;color:#b0eee2}
+.welcome{padding-top:45px;max-width:650px}
+@media(max-width:700px){.welcome{padding-top:0}}
+#list > details > summary{font-size:15px;color:#c2e6df}
+#list > details > details{margin-left:10px}
+.install-item{border-radius:5px;margin-bottom:5px}
+.install-item.selected{background:#25403d}
+.install-check{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:8px;padding:0 10px 0 0}
+.install-check button{padding:3px 10px;font-size:11px;white-space:nowrap}
+.install-check>.badge{min-width:60px}
+/* 1行目は左に名称、右に確認・状態。2行目の導入操作は左寄せし、長い名称と重ねない。 */
+.install-item{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name check" "manage manage";align-items:center;gap:0 4px}
+.install-name{grid-area:name;display:flex;align-items:center;gap:5px;min-width:0;padding:0 4px 0 10px}
+.install-name>.item{width:auto;min-width:0;padding:11px 0;overflow-wrap:anywhere;justify-content:flex-start}
+.install-web{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 7px;flex:0 0 auto;border:1px solid #52778d;border-radius:5px;color:#b8def2;background:#142632;font:11px Arial,sans-serif;text-decoration:none}
+.install-web:hover,.install-web:focus-visible{background:#183443;color:#fff;outline:1px solid #7dd3fc}
+.install-name>.item>span{min-width:0}
+.install-manage{grid-area:manage;display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px;padding:0 10px 10px}
+.install-manage button{padding:3px 7px;font-size:11px;white-space:nowrap}
+.install-manage .install-delete{border-color:#925064;color:#ffbdc8}
+.install-check{grid-area:check;min-width:0}
+.install-progress{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.install-progress button,.install-detail-tabs button,.install-console-heading button{padding:4px 10px;font-size:12px}
+.install-detail-tabs{display:flex;gap:6px;margin-bottom:18px}
+.install-detail-tabs button[aria-pressed="true"]{background:#25403d;border-color:#5da99b;color:#b0eee2}
+.install-console-heading{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.install-console-heading #install-cancel{margin-left:auto;border-color:#925064}
+.install-console{font:12px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;background:#000;border:1px solid #304253;border-radius:5px;color:#cde5dd;padding:14px;min-height:220px;max-height:55vh;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;tab-size:2}
+.install-recheck{margin-top:18px;border-top:1px solid #304253;padding-top:15px}
+.install-recheck>strong{margin-right:10px}
+.install-recheck p,.install-capability-note{font-size:12px}
+/* 詳細・コンソールを圧迫する幅では上下に分け、各領域の内部スクロールを保つ。 */
+@media(max-width:900px){.install-panel>main{grid-template-columns:minmax(0,1fr)}#app>.install-panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}.install-panel>main>aside{border-right:0;border-bottom:1px solid #304253;max-height:none}.install-panel>main>article{padding:26px 20px}}
+@media(max-width:380px){.install-check{gap:4px;padding-right:4px}.install-manage{gap:3px;padding-right:8px}.install-manage button{padding:3px 5px}}
+.security-version-warning{padding:14px 16px;margin:12px 0;border:1px solid #d6a24b;border-left:4px solid #e5ad51;border-radius:8px;background:#3b301c;color:#ffe0a4;overflow-wrap:anywhere}
+.security-version-warning strong{font-size:1.12rem}
+.security-version-warning p{margin:8px 0 0;line-height:1.7}

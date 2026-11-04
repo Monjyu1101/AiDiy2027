@@ -1,0 +1,1110 @@
+[
+  {
+    "id": "python",
+    "name": "Python",
+    "category": "基盤",
+    "commands": [
+      "python",
+      "python3",
+      "python3.13"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "開発環境・セットアップ",
+    "required_by": [
+      "開発環境・セットアップ"
+    ],
+    "sources": [
+      "_setup.py",
+      "backend_server/pyproject.toml",
+      "backend_tools/pyproject.toml",
+      "backend_local/pyproject.toml",
+      "backend_taskteam/pyproject.toml"
+    ],
+    "notes": "Pythonバックエンド用。一覧の先頭に表示。現在実行中の診断サーバー環境を検査します。 各プロジェクトの.venvで別バージョンを使用する場合がある。グローバルPythonのみで全バックエンド互換性は判定できない。",
+    "priority": 1,
+    "wholeSystemRequired": true,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core",
+    "minimumVersion": "3.13",
+    "allow_version": true,
+    "project_paths": {
+      "win32": [
+        "backend_server/.venv/Scripts/python.exe",
+        "backend_tools/.venv/Scripts/python.exe",
+        "backend_local/.venv/Scripts/python.exe",
+        "backend_taskteam/.venv/Scripts/python.exe"
+      ],
+      "linux": [
+        "backend_server/.venv/bin/python",
+        "backend_tools/.venv/bin/python",
+        "backend_local/.venv/bin/python",
+        "backend_taskteam/.venv/bin/python"
+      ],
+      "darwin": [
+        "backend_server/.venv/bin/python",
+        "backend_tools/.venv/bin/python",
+        "backend_local/.venv/bin/python",
+        "backend_taskteam/.venv/bin/python"
+      ]
+    },
+    "kind": "runtime",
+    "evidence": [
+      {
+        "path": "_setup.py",
+        "line": 14,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 30,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 163,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
+    "id": "uv",
+    "name": "uv",
+    "category": "基盤",
+    "commands": [
+      "uv"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "開発環境・セットアップ",
+    "required_by": [
+      "開発環境・セットアップ"
+    ],
+    "sources": [
+      "_setup.py"
+    ],
+    "notes": "npm/npxの残存シムだけで正常と判定しない。",
+    "priority": 2,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "_setup.py",
+        "line": 587,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 596,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 850,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Microsoft/WinGet/Links/uv.exe",
+        "$PROGRAMFILES/WinGet/Links/uv.exe",
+        "${PROGRAMFILES(X86)}/WinGet/Links/uv.exe"
+      ]
+    }
+  },
+  {
+    "id": "node",
+    "name": "Node.js",
+    "category": "基盤",
+    "commands": [
+      "node"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "開発環境・セットアップ",
+    "required_by": [
+      "開発環境・セットアップ"
+    ],
+    "sources": [
+      "_setup.py",
+      "frontend_channels/package.json"
+    ],
+    "notes": "npm/npxの残存シムだけで正常と判定しない。 診断サーバー起動にNode.jsが必須。 frontend_channelsのみ package.jsonで >=22.12.0 を要求。診断本体の最小バージョンとは別。",
+    "priority": 3,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": true,
+    "featureRequired": true,
+    "scope": "core",
+    "allow_version": true,
+    "kind": "runtime",
+    "evidence": [
+      {
+        "path": "_setup.py",
+        "line": 162,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 292,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 294,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_channels/package.json",
+        "line": 8,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_channels/package.json",
+        "line": 11,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_channels/package.json",
+        "line": 28,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
+    "id": "npm",
+    "name": "npm",
+    "category": "基盤",
+    "commands": [
+      "npm",
+      "npm.cmd"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "開発環境・セットアップ",
+    "required_by": [
+      "開発環境・セットアップ"
+    ],
+    "sources": [
+      "_setup.py"
+    ],
+    "notes": "npm/npxの残存シムだけで正常と判定しない。",
+    "priority": 4,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "_setup.py",
+        "line": 50,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 293,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 332,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
+    "id": "npx",
+    "name": "npx",
+    "category": "基盤",
+    "commands": [
+      "npx",
+      "npx.cmd"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "開発環境・セットアップ",
+    "required_by": [
+      "開発環境・セットアップ"
+    ],
+    "sources": [
+      "_setup.py"
+    ],
+    "notes": "npm/npxの残存シムだけで正常と判定しない。",
+    "priority": 5,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "_setup.py",
+        "line": 293,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
+    "id": "electron",
+    "name": "Electron",
+    "category": "IDE追加機能",
+    "commands": [
+      "electron",
+      "electron.cmd",
+      "electron.exe"
+    ],
+    "version_args": null,
+    "description": "Avatar・IDE・Discordのデスクトップモード",
+    "required_by": [
+      "Avatar・IDE・Discordのデスクトップモード"
+    ],
+    "sources": [
+      "scripts/_setup_electron.py",
+      "frontend_avatar/_start.py",
+      "frontend_ide/package.json",
+      "frontend_channels/package.json"
+    ],
+    "notes": "プロジェクトのnode_modules内バイナリーを利用。PATHにないのが通常。Web版では不要。起動しない。 Diag 通常起動も Electron を利用。--browser / Codespaces / GUI なしでは不要。scripts/_setup_electron.py の共有 ZIP / 同版 dist を再利用します。",
+    "priority": 6,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "optional_feature",
+    "allow_version": false,
+    "project_paths": {
+      "win32": [
+        "backend_diag/node_modules/electron/dist/electron.exe",
+        "frontend_ide/node_modules/electron/dist/electron.exe",
+        "frontend_ide/host/node_modules/electron/dist/electron.exe",
+        "frontend_ide/viewer/node_modules/electron/dist/electron.exe",
+        "frontend_avatar/node_modules/electron/dist/electron.exe",
+        "frontend_channels/node_modules/electron/dist/electron.exe"
+      ],
+      "linux": [
+        "backend_diag/node_modules/electron/dist/electron",
+        "frontend_ide/node_modules/electron/dist/electron",
+        "frontend_ide/host/node_modules/electron/dist/electron",
+        "frontend_ide/viewer/node_modules/electron/dist/electron",
+        "frontend_avatar/node_modules/electron/dist/electron",
+        "frontend_channels/node_modules/electron/dist/electron"
+      ],
+      "darwin": [
+        "backend_diag/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        "frontend_ide/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        "frontend_ide/host/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        "frontend_ide/viewer/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        "frontend_avatar/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        "frontend_channels/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+      ]
+    },
+    "kind": "package_executable",
+    "evidence": [
+      {
+        "path": "scripts/_setup_electron.py",
+        "line": 6,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "scripts/_setup_electron.py",
+        "line": 21,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "scripts/_setup_electron.py",
+        "line": 39,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_avatar/_start.py",
+        "line": 13,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_avatar/_start.py",
+        "line": 14,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_avatar/_start.py",
+        "line": 144,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_channels/package.json",
+        "line": 30,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
+    "id": "claude",
+    "name": "Claude Code",
+    "category": "AI CLI",
+    "commands": [
+      "claude",
+      "claude.cmd",
+      "claude.exe",
+      "claude-code"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "$APPDATA/npm/claude.cmd"
+      ]
+    },
+    "priority": 20,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 213,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 300,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 335,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 481,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "codex",
+    "name": "OpenAI Codex CLI",
+    "category": "AI CLI",
+    "commands": [
+      "codex",
+      "codex.cmd"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "$APPDATA/npm/codex.cmd"
+      ]
+    },
+    "priority": 21,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 300,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 324,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 404,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 483,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 496,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 506,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "copilot",
+    "name": "GitHub Copilot CLI",
+    "category": "AI CLI",
+    "commands": [
+      "copilot",
+      "copilot.cmd"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "$APPDATA/npm/copilot.cmd"
+      ]
+    },
+    "priority": 22,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 30,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 40,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 64,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 482,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 496,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 506,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "agy",
+    "name": "Antigravity CLI",
+    "category": "AI CLI",
+    "commands": [
+      "agy",
+      "agy.exe"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/agy/bin/agy.exe"
+      ]
+    },
+    "priority": 23,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 385,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 388,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 615,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "grok",
+    "name": "Grok Build",
+    "category": "AI CLI",
+    "commands": [
+      "grok",
+      "grok.exe"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "~/.grok/bin/grok.exe"
+      ],
+      "linux": [
+        "~/.grok/bin/grok"
+      ],
+      "darwin": [
+        "~/.grok/bin/grok"
+      ]
+    },
+    "priority": 24,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 390,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 392,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 393,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 462,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 489,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 496,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "opencode",
+    "name": "OpenCode",
+    "category": "AI CLI",
+    "commands": [
+      "opencode",
+      "opencode.exe",
+      "opencode.cmd"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "paths": {
+      "win32": [
+        "~/.local/bin/opencode.exe",
+        "$APPDATA/npm/opencode.cmd"
+      ]
+    },
+    "priority": 25,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 324,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 374,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 378,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 484,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "_setup.py",
+        "line": 496,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli"
+  },
+  {
+    "id": "ollama",
+    "name": "Ollama",
+    "category": "AI CLI",
+    "commands": [
+      "ollama"
+    ],
+    "version_args": null,
+    "description": "対応プロバイダーを選択したときのみ必要",
+    "required_by": [
+      "対応プロバイダーを選択したときのみ必要"
+    ],
+    "sources": [
+      "backend_server/AIコア/AIコード_cli.py",
+      "_setup.py"
+    ],
+    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。 --versionもローカルOllama APIへ問い合わせるため自動実行しない。",
+    "priority": 26,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 650,
+        "kind": "argv_assignment"
+      },
+      {
+        "path": "backend_server/AIコア/AIコード_cli.py",
+        "line": 682,
+        "kind": "argv_assignment"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Programs/Ollama/ollama.exe"
+      ]
+    }
+  },
+  {
+    "id": "ffmpeg",
+    "name": "ffmpeg",
+    "category": "音声・動画",
+    "commands": [
+      "ffmpeg",
+      "ffmpeg.exe"
+    ],
+    "version_args": [
+      "-version"
+    ],
+    "description": "FFmpeg MCP・音声動画処理",
+    "required_by": [
+      "FFmpeg MCP・音声動画処理"
+    ],
+    "sources": [
+      "backend_tools/tools_proc/ffmpeg_control.py",
+      "backend_tools/tools_proc/text_to_speech.py",
+      "backend_tools/aidiy_automations/ビデオページ生成/utils/audio_review.py"
+    ],
+    "notes": "既存アプリは _config/mcp_ffmpeg_control.json の ffmpeg_path を使用可能。診断実装が設定パスを読まない場合はPATH外を未検出とする可能性があります。 TTSは別途PATH上のffmpegを探すためMCP設定パスのみ検出してもTTS利用を保証しない。lameencによる一部フォールバックあり。",
+    "priority": 30,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_tools/aidiy_automations/ビデオページ生成/utils/audio_review.py",
+        "line": 79,
+        "kind": "exec_argv"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Microsoft/WinGet/Links/ffmpeg.exe",
+        "$PROGRAMFILES/WinGet/Links/ffmpeg.exe",
+        "${PROGRAMFILES(X86)}/WinGet/Links/ffmpeg.exe"
+      ]
+    }
+  },
+  {
+    "id": "ffprobe",
+    "name": "ffprobe",
+    "category": "音声・動画",
+    "commands": [
+      "ffprobe",
+      "ffprobe.exe"
+    ],
+    "version_args": [
+      "-version"
+    ],
+    "description": "FFmpeg MCP・音声動画処理",
+    "required_by": [
+      "FFmpeg MCP・音声動画処理"
+    ],
+    "sources": [
+      "backend_tools/tools_proc/ffmpeg_control.py"
+    ],
+    "notes": "既存アプリは _config/mcp_ffmpeg_control.json の ffprobe_path を使用可能。診断実装が設定パスを読まない場合はPATH外を未検出とする可能性があります。",
+    "priority": 30,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 12,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 43,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 47,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Microsoft/WinGet/Links/ffprobe.exe",
+        "$PROGRAMFILES/WinGet/Links/ffprobe.exe",
+        "${PROGRAMFILES(X86)}/WinGet/Links/ffprobe.exe"
+      ]
+    }
+  },
+  {
+    "id": "ffplay",
+    "name": "ffplay",
+    "category": "音声・動画",
+    "commands": [
+      "ffplay",
+      "ffplay.exe"
+    ],
+    "version_args": [
+      "-version"
+    ],
+    "description": "FFmpeg MCP・音声動画処理",
+    "required_by": [
+      "FFmpeg MCP・音声動画処理"
+    ],
+    "sources": [
+      "backend_tools/tools_proc/ffmpeg_control.py"
+    ],
+    "notes": "既存アプリは _config/mcp_ffmpeg_control.json の ffplay_path を使用可能。診断実装が設定パスを読まない場合はPATH外を未検出とする可能性があります。",
+    "priority": 30,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 12,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 43,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/ffmpeg_control.py",
+        "line": 47,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Microsoft/WinGet/Links/ffplay.exe",
+        "$PROGRAMFILES/WinGet/Links/ffplay.exe",
+        "${PROGRAMFILES(X86)}/WinGet/Links/ffplay.exe"
+      ]
+    }
+  },
+  {
+    "id": "chrome",
+    "name": "Chrome",
+    "category": "ブラウザー",
+    "commands": [
+      "google-chrome",
+      "google-chrome-stable",
+      "chromium",
+      "chromium-browser",
+      "chrome",
+      "chrome.exe"
+    ],
+    "version_args": null,
+    "description": "Chrome DevTools MCP",
+    "required_by": [
+      "Chrome DevTools MCP"
+    ],
+    "sources": [
+      "backend_tools/tools_proc/chrome_manager.py"
+    ],
+    "notes": "CHROME_EXECUTABLE・標準インストール場所を確認。GUIを起動しない。",
+    "paths": {
+      "win32": [
+        "$PROGRAMFILES/Google/Chrome/Application/chrome.exe",
+        "${PROGRAMFILES(X86)}/Google/Chrome/Application/chrome.exe",
+        "$LOCALAPPDATA/Google/Chrome/Application/chrome.exe"
+      ],
+      "darwin": [
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+      ],
+      "linux": [
+        "/usr/bin/google-chrome",
+        "/usr/bin/chromium-browser",
+        "/usr/bin/chromium"
+      ]
+    },
+    "priority": 30,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "backend_tools/tools_proc/chrome_manager.py",
+        "line": 31,
+        "kind": "argv_assignment"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration"
+  },
+  {
+    "id": "obs",
+    "name": "OBS Studio",
+    "category": "外部サービス",
+    "commands": [
+      "obs",
+      "obs64.exe",
+      "obs32.exe"
+    ],
+    "version_args": null,
+    "description": "OBS WebSocket MCPを使用するときのみ。接続先は別マシンでも可",
+    "required_by": [
+      "OBS WebSocket MCPを使用するときのみ。接続先は別マシンでも可"
+    ],
+    "sources": [
+      "backend_tools/tools_proc/obs_studio_control.py"
+    ],
+    "notes": "実行ファイルの有無とWebSocket疎通は別。未検出でもリモートOBSは利用可能。",
+    "paths": {
+      "win32": [
+        "$PROGRAMFILES/obs-studio/bin/64bit/obs64.exe"
+      ],
+      "darwin": [
+        "/Applications/OBS.app/Contents/MacOS/OBS"
+      ]
+    },
+    "priority": 30,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_service",
+    "evidence": [
+      {
+        "path": "backend_tools/tools_proc/obs_studio_control.py",
+        "line": 12,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/obs_studio_control.py",
+        "line": 14,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "backend_tools/tools_proc/obs_studio_control.py",
+        "line": 37,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration"
+  },
+  {
+    "id": "code",
+    "name": "VS Code",
+    "category": "IDE追加機能",
+    "commands": [
+      "code",
+      "code.cmd",
+      "code-insiders",
+      "code-insiders.cmd"
+    ],
+    "version_args": null,
+    "description": "VS Code拡張のインストール/利用",
+    "required_by": [
+      "VS Code拡張のインストール/利用"
+    ],
+    "sources": [
+      "frontend_ide/host/_setup.py",
+      "frontend_ide/host/_cleanup.py"
+    ],
+    "notes": "ブラウザー版・単独Web版では不要。VS Code remote-cliやVSCODE_CWD経由も既存セットアップが検出。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "priority": 35,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "optional_feature",
+    "allow_version": false,
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Programs/Microsoft VS Code/bin/code.cmd",
+        "$LOCALAPPDATA/Programs/Microsoft VS Code Insiders/bin/code-insiders.cmd",
+        "$PROGRAMFILES/Microsoft VS Code/bin/code.cmd",
+        "${PROGRAMFILES(X86)}/Microsoft VS Code/bin/code.cmd"
+      ],
+      "linux": [
+        "$VSCODE_CWD/bin/remote-cli/code"
+      ],
+      "darwin": [
+        "$VSCODE_CWD/bin/remote-cli/code"
+      ]
+    },
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "frontend_ide/host/_setup.py",
+        "line": 145,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_ide/host/_setup.py",
+        "line": 160,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_ide/host/_setup.py",
+        "line": 164,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_ide/host/_cleanup.py",
+        "line": 181,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_ide/host/_cleanup.py",
+        "line": 186,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "frontend_ide/host/_cleanup.py",
+        "line": 189,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "その他拡張",
+    "usageTier": "integration"
+  }
+]

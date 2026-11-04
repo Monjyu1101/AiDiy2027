@@ -1,0 +1,47 @@
+{
+  "recycle_candidates": [
+    "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_browser,操作編\\Browser_602_MCPページ操作.png",
+    "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_701_全表示アイコン.png",
+    "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_705_全表示ミニ.png",
+    "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_slack,操作編\\Slack_303_取消後の接続継続.png"
+  ],
+  "renames": [
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_702_TaskTeam停止アイコン.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_701_TaskTeam停止アイコン.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_703_Tools停止アイコン.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_702_Tools停止アイコン.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_704_全停止アイコン.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_703_全停止アイコン.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_706_全停止ミニ.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_704_全停止ミニ.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_707_全停止標準.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_diag,ランチャー編\\Diag-ランチャー_705_全停止標準.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_slack,操作編\\Slack_304_適用して再接続.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_slack,操作編\\Slack_303_適用して再接続.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_slack,操作編\\Slack_305_再接続完了.png",
+      "_AIDIY\\knowledge\\images\\セルフテスト,aidiy_slack,操作編\\Slack_304_再接続完了.png"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,backend_tools,主要メソッド編\\Tools_303_音声合成.mp3",
+      "_AIDIY\\knowledge\\images\\セルフテスト,backend_tools,主要メソッド編\\Tools_502_音声合成.mp3"
+    ],
+    [
+      "_AIDIY\\knowledge\\images\\セルフテスト,backend_tools,主要メソッド編\\Tools_304_音声認識入力.wav",
+      "_AIDIY\\knowledge\\images\\セルフテスト,backend_tools,主要メソッド編\\Tools_503_音声認識入力.wav"
+    ]
+  ],
+  "rule": "セルフテスト,_説明資料の書き方.md: ファイル・画像・PDF"
+}

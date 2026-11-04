@@ -1,0 +1,57 @@
+{
+  "at": "2026-11-03T00:30:58.988231+00:00",
+  "request": {
+    "タスクID": "TK00001005",
+    "状態": "中止",
+    "実行有効": 0,
+    "実行回数": 1,
+    "開始日時": "2026-11-03 09:28:02",
+    "終了日時": "2026-11-03 09:29:12",
+    "PID": ""
+  },
+  "details": [
+    {
+      "明細SEQ": 0,
+      "状態": "完了",
+      "実行回数": 1,
+      "PID": "",
+      "応答内容": "【セルフテスト専用・有限待機中止確認 20261103】1つのdoステップだけで、Python標準ライブラリ time.sleep(90) による90秒の待機を一度だけ実行し、終わったら「待機完了」と一文返してください。これは中止操作の確認用です。ループ・再試行・監視・ファイル読込書込・外部通信や調査は不要です。待機以外のコマンド操作は不要、操作検証はfalseにしてください。"
+    },
+    {
+      "明細SEQ": 1,
+      "状態": "待機",
+      "実行回数": 1,
+      "PID": "",
+      "応答内容": ""
+    },
+    {
+      "明細SEQ": 9999,
+      "状態": "待機",
+      "実行回数": 0,
+      "PID": "",
+      "応答内容": ""
+    }
+  ],
+  "baseline_unchanged": {
+    "Aタスク要求": true,
+    "Aタスク明細": true,
+    "Aタスク実行条件": true
+  },
+  "result": "PASS: running -> canceled/OFF -> worker and AI wait process tree exited before 90-second natural end",
+  "wait_start_utc": "2026-11-03T00:28:17.730Z",
+  "stop_accepted_utc": "2026-11-03T00:29:12Z",
+  "all_recorded_processes_absent_utc": "2026-11-03T00:29:28.911Z",
+  "user_requests": 1,
+  "cli_calls": 3,
+  "observed_model_usage_events": 7,
+  "models": [
+    "gpt-6.1-sol",
+    "gpt-6.1-sol",
+    "gpt-6.1-terra"
+  ],
+  "method": "OpenAI codex_cli",
+  "source_edits": false,
+  "scope": "single python time.sleep(90), no user file changes; normal task preparation JSON; no repeated AI requests",
+  "previous_attempt": "TK00001004 separately counted; completion won before stop",
+  "limits": "No broad stop/service changes; no timed recurring or watcher tests"
+}

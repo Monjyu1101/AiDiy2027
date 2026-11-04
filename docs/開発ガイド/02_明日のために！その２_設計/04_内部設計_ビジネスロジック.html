@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1".
+Commercial use requires prior written consent from all copyright holders.
+See LICENSE for full terms. Thank you for keeping the rules.
+https://github.com/monjyu1101/AiDiy2027 -->
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>04 内部設計_ビジネスロジック</title>
+  <link rel="stylesheet" href="../_shared/doc.css">
+  <script src="../_shared/doc.js" defer></script>
+</head>
+<body>
+  <nav>
+    <a href="03_内部設計_API設計.html">前へ: 03_内部設計_API設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_データベース設計.html">次へ: 05_データベース設計</a>
+  </nav>
+
+  <h1>04_内部設計_ビジネスロジック</h1>
+  <p>ビジネスロジック設計では、API仕様を「処理順」と「失敗時挙動」に変換します。実装前にここを明確化すると、挙動差分のレビューが容易になります。</p>
+
+  <h2>登録処理の標準フロー</h2>
+  <pre><code>1. JWT認証
+2. 必須・文字数バリデーション
+3. 商品ID重複チェック
+4. 監査フィールド自動設定
+5. INSERT実行
+6. 成功レスポンス返却</code></pre>
+
+  <h2>更新処理の標準フロー</h2>
+  <pre><code>1. JWT認証
+2. 必須・文字数バリデーション
+3. 商品ID存在チェック
+4. 更新監査フィールド設定
+5. UPDATE実行
+6. 成功レスポンス返却</code></pre>
+
+  <h2>削除処理の標準フロー</h2>
+  <pre><code>1. JWT認証
+2. 商品IDバリデーション
+3. 存在チェック
+4. 参照制約チェック（必要時）
+5. 有効=False へのUPDATE実行（物理削除のDELETEは発行しない）
+6. 成功レスポンス返却</code></pre>
+
+  <h2>バリデーションルール（M商品）</h2>
+  <table>
+    <tr><th>項目</th><th>ルール</th><th>例</th></tr>
+    <tr><td>商品ID</td><td>必須、最大50文字、登録時重複不可</td><td>空文字はNG</td></tr>
+    <tr><td>商品名</td><td>必須、最大200文字</td><td>201文字はNG</td></tr>
+    <tr><td>単位</td><td>必須、最大50文字</td><td>空文字はNG</td></tr>
+    <tr><td>商品備考</td><td>任意、最大500文字</td><td>501文字はNG</td></tr>
+  </table>
+
+  <h2>監査フィールドの設計方針</h2>
+  <ul>
+    <li>登録時: 登録系と更新系を同時に設定</li>
+    <li>更新時: 登録系は保持し、更新系のみ更新</li>
+    <li>利用者情報はJWTから取得、端末情報はリクエスト情報から取得</li>
+  </ul>
+
+  <h2>業務エラー設計</h2>
+  <table>
+    <tr><th>ケース</th><th>message</th><th>error.code</th></tr>
+    <tr><td>入力不備</td><td>項目別メッセージ</td><td><code>VALIDATION_ERROR</code></td></tr>
+    <tr><td>重複</td><td>商品ID重複メッセージ</td><td><code>DUPLICATE_ERROR</code></td></tr>
+    <tr><td>未検出</td><td>対象データが見つからない</td><td><code>NOT_FOUND</code></td></tr>
+    <tr><td>認証不備</td><td>認証に失敗しました</td><td><code>UNAUTHORIZED</code></td></tr>
+  </table>
+
+  <h2>実装へ渡す指示</h2>
+  <ol>
+    <li>ロジックは <code>crud</code> 側で一貫して管理する</li>
+    <li>router は入出力制御に集中させる</li>
+    <li>フロントは <code>message</code> をそのまま利用できるようにする</li>
+    <li>設計書の項目名と同じキー名を維持する</li>
+  </ol>
+
+  <nav>
+    <a href="03_内部設計_API設計.html">前へ: 03_内部設計_API設計</a>
+    <a href="_index.html">目次へ戻る</a>
+    <a href="05_データベース設計.html">次へ: 05_データベース設計</a>
+  </nav>
+</body>
+</html>
+

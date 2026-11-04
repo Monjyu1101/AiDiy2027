@@ -1,0 +1,178 @@
+TAP version 13
+# Subtest: Code: 実VS CodeホストのNewは固定中の会話Aからアクティブな別ルートBへ安全に切り替わる
+not ok 1 - Code: 実VS CodeホストのNewは固定中の会話Aからアクティブな別ルートBへ安全に切り替わる
+  ---
+  duration_ms: 228.6821
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:135:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS Codeホストのnew/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 2 - Code: 実VS Codeホストのnew/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 46.8814
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS Codeホストのnew/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 3 - Code: 実VS Codeホストのnew/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 48.1435
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS CodeホストのselectHistory/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 4 - Code: 実VS CodeホストのselectHistory/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 37.626
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS CodeホストのselectHistory/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 5 - Code: 実VS CodeホストのselectHistory/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 36.3177
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS CodeホストのdeleteHistory/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 6 - Code: 実VS CodeホストのdeleteHistory/run拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 35.4702
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+# Subtest: Code: 実VS CodeホストのdeleteHistory/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+not ok 7 - Code: 実VS CodeホストのdeleteHistory/model拒否は要求IDを照合し、下書きを保って操作へ復帰する
+  ---
+  duration_ms: 35.304
+  type: 'test'
+  location: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\code-transition-handoff.test.mjs:147:3'
+  failureType: 'testCodeFailure'
+  error: |-
+    Cannot find module './workspace-folder'
+    Require stack:
+    - <USERPROFILE>\Desktop\AiDiy2027_dev\frontend_ide\checks\code-transition-handoff.test.mjs
+  code: 'MODULE_NOT_FOUND'
+  stack: |-
+    Module._resolveFilename (node:internal/modules/cjs/loader:1564:15)
+    wrapResolveFilename (node:internal/modules/cjs/loader:1118:27)
+    defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1142:10)
+    resolveForCJSWithHooks (node:internal/modules/cjs/loader:1169:12)
+    Module._load (node:internal/modules/cjs/loader:1341:5)
+    wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    Module.require (node:internal/modules/cjs/loader:1674:12)
+    require (node:internal/modules/helpers:157:16)
+    require (file:///<USERPROFILE>/Desktop/AiDiy2027_dev/frontend_ide/checks/code-transition-handoff.test.mjs:121:117)
+    evalmachine.<anonymous>:34:31
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 0
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 747.4093

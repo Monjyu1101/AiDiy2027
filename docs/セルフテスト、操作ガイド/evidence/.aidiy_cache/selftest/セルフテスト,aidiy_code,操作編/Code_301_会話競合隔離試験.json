@@ -1,0 +1,22 @@
+{
+  "date": "2026-11-03T07:28:12.597910+00:00",
+  "command": [
+    "node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-name-pattern=実VS Codeホストの(new|selectHistory|deleteHistory)/(run|model)拒否|実VS CodeホストのNew",
+    "frontend_ide/checks/code-transition-handoff.test.mjs"
+  ],
+  "exit_code": 1,
+  "scope": "source Vue/extension compiled in memory; mocked vscode, storage, network; no AI",
+  "external_ai_calls": 0,
+  "counts": {
+    "tests": 7,
+    "pass": 0,
+    "fail": 7,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "tap_sha256": "bd78a821b50af671ef4a3883a8e5ad58910f3f56b6a249c2977a65f4aca54cfd",
+  "tap_publication": "Public TAP copy masks user home."
+}
