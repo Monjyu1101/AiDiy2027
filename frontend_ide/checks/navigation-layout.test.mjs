@@ -23,7 +23,7 @@ test('総合評価・おすすめプロンプトを明細スクロール外に�
  for(const node of [overall,next])assert.equal(node.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'result&&!history');
  assert.match(source,/\.navigation-panel>\.navigation-overall\{flex:none;/);
  assert.match(source,/\.navigation-overall>\.navigation-disclosure\{min-height:0;overflow:auto\}/);
- assert.match(source,/>目標<\/label>/);assert.doesNotMatch(descriptor.template.content,/未評価|>開発目標<\/label>/);
+ assert.match(source,/>目標<small/);assert.doesNotMatch(descriptor.template.content,/未評価|>開発目標<\/label>/);
  assert.match(source,/:aria-valuenow="overall.progress"/);assert.match(source,/:aria-valuenow="item.progress"/);
 });
 
@@ -49,8 +49,8 @@ test('明細と総合の理由は独立したネイティブ開閉で、初期�
 
 test('おすすめプロンプトはAI本文をそのまま表示し機械的な説明を付けない',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),section=nodes.find(node=>hasClass(node,'navigation-next'));
- assert.equal(attr(section,'aria-label'),'おすすめプロンプト(案)');
- const heading=walk(section).find(node=>node.tag==='h2');assert.equal(heading.children[0].content,'おすすめプロンプト(案)');
+ assert.equal(attr(section,'aria-label'),'プロンプト(案)');
+ const heading=walk(section).find(node=>node.tag==='h2');assert.equal(heading.children[0].content,'プロンプト(案)');
  const prompt=walk(section).find(node=>hasClass(node,'navigation-prompt'));
  const body=elements(prompt)[0];assert.equal(body.children[0].content.content,'recommendedPrompt');
  assert.equal(body.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'nextItem');
@@ -83,7 +83,7 @@ test('明細項目と総合評価の枠はスクエアで、パネル外枠は�
 test('目標入力とおすすめ本文は同じ角丸なしの背景・枠・文字を使い、本文は閲覧専用',()=>{
  const css=descriptor.styles.map(style=>style.content).join('\n');
  const shared=css.match(/\.navigation-goal-form textarea,\.navigation-panel>\.navigation-next \.navigation-prompt\{([^}]+)\}/)?.[1];assert.ok(shared);
- for(const value of ['background:#000','color:#edf5ff','border:1px solid #47637b','border-radius:0','padding:10px','font:inherit','line-height:1.5'])assert.ok(shared.includes(value),value);
+ for(const value of ['background:#000','color:#edf5ff','border:1px solid #454545','border-radius:0','padding:10px','font:inherit','line-height:1.5'])assert.ok(shared.includes(value),value);
  const nodes=walk(baseParse(descriptor.template.content)),prompt=nodes.find(node=>hasClass(node,'navigation-prompt'));
  assert.equal(prompt.tag,'p');assert.equal(attr(prompt,'contenteditable'),undefined);
  assert.ok(nodes.some(node=>node.tag==='textarea'&&node.props.some(p=>p.type===7&&p.name==='model'&&p.exp.content==='goal')));
@@ -101,7 +101,7 @@ test('目標は4行、左の説明・目標差異・モデル3段の右に同サ
  assert.equal(meta[1].props.find(p=>p.type===7&&p.name==='if').exp.content,'result&&!matchesResult');assert.equal(attr(meta[1],'role'),'status');
  assert.equal(nodes.filter(node=>hasClass(node,'navigation-draft-note')).length,1);assert.ok(!children.some(node=>hasClass(node,'navigation-draft-note')));
  const [navi,evaluate]=elements(controls[1]);assert.ok(hasClass(navi,'navigation-run')&&hasClass(evaluate,'navigation-run'));assert.equal(elements(navi)[0].props.find(p=>p.type===7&&p.name==='bind'&&p.arg?.content==='src').exp.content,'sendIcon');assert.equal(evaluate.children[0].content,'再評価');
- assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate');
+ assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
  assert.doesNotMatch(descriptor.template.content,/navigation-model-footer/);
  assert.match(source,/grid-template-columns:minmax\(0,1fr\) auto/);assert.match(source,/width:40\.6px;height:40\.6px/);assert.match(source,/\.navigation-form-foot \.navigation-model-line\{min-width:0;flex-wrap:wrap/);
 });
@@ -120,4 +120,16 @@ test('ナビの手紙は大きく、文字を重ねても同サイズのボタ�
  assert.match(source,/\.navigation-input-meta\{display:flex;flex-direction:column;gap:6px;min-width:0/);
  assert.match(source,/\.navigation-input-hint\{[^}]*overflow-wrap:anywhere/);
  assert.match(source,/\.navigation-draft-note\{[^}]*margin:0;overflow-wrap:anywhere/);
+});
+
+test('自動航行中の総合評価は周回枠と枠内下部中央の状態を表示し、再評価中も表示する',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),overall=nodes.find(node=>hasClass(node,'navigation-overall'));
+ assert.equal(overall.props.find(p=>p.type===7&&p.name==='show').exp.content,'!routing||codeDriving');
+ assert.equal(overall.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,'{driving:codeDriving}');
+ const [details,status]=elements(overall);assert.equal(details.tag,'details');assert.equal(hasClass(status,'navigation-overall-cruise-status'),true);assert.equal(status.props.find(p=>p.type===7&&p.name==='if').exp.content,'codeDriving');assert.equal(status.children[0].content,'自動航行中');assert.equal(attr(status,'role'),'status');
+ assert.match(source,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 1\.6s linear infinite/);
+ assert.match(source,/@media\(prefers-reduced-motion:reduce\)\{[^}]*navigation-overall\.driving\{animation:none/);
+ assert.match(source,/\.navigation-overall-cruise-status\{flex:none;[^}]*text-align:center/);
+ assert.match(source,/\.navigation-panel>\.navigation-overall\.driving\{[^}]*border-radius:0/);
+ assert.match(source,/:aria-valuenow="overall.progress"/);assert.equal(elements(details)[0].tag,'summary');
 });

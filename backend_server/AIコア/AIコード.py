@@ -29,6 +29,7 @@ from AIコア.AIバックアップ実行 import バックアップ完了待機
 from AIコア.AIストリーム制御 import AIストリーム開始, AIストリーム終了, AIストリーム中断
 
 from AIコア.AIファイルプレビュー import 画像プレビュー生成
+from AIコア.AI要求相関 import ナビ要求相関
 from AIコア.AI応答 import 応答正規化, エラー応答, エラー応答判定
 from AIコア.AI履歴コンテキスト import 履歴要求コピー, 履歴要求コンテキスト, セッション履歴パス
 from AIコア.AI実行オプション import AI実行オプション, 既定実行オプション, 接続適用, 保存関数適用
@@ -600,10 +601,17 @@ class CodeAgent:
                             text = "プロジェクトが変更されたため要求を実行しませんでした。再送してください。"
                             await self.接続.send_to_channel(self.チャンネル, {
                                 "セッションID": self.セッションID, "メッセージ識別": "output_text", "メッセージ内容": text, "実行中": False,
+                                **ナビ要求相関(受信データ),
                             })
                             if self.保存関数:
                                 self.保存関数(セッションID=self.セッションID, チャンネル=self.チャンネル,
                                           メッセージ識別="output_text", メッセージ内容=text)
+                            if ナビ要求相関(受信データ):
+                                await self.接続.send_to_channel(self.チャンネル, {
+                                    "セッションID": self.セッションID, "チャンネル": self.チャンネル,
+                                    "メッセージ識別": "output_end", "メッセージ内容": "", "実行中": False,
+                                    **ナビ要求相関(受信データ), "navigationStatus": "failed",
+                                })
                         else:
                             メッセージ識別 = 受信データ.get("メッセージ識別", "")
 
@@ -631,14 +639,22 @@ class CodeAgent:
     async def _実行状態つき要求処理(self, 受信データ: dict) -> None:
         """途中回答と要求全体の完了を分け、停止後のAI再開まで操作を待たせる。"""
         処理 = self._処理_input_text if 受信データ["メッセージ識別"] == "input_text" else self._処理_input_request
+        相関 = ナビ要求相関(受信データ)
+        状態 = "failed"  # 完了通知だけでは成功と見なさない。
         await self.接続.send_to_channel(self.チャンネル, {
             "セッションID": self.セッションID, "チャンネル": self.チャンネル,
             "メッセージ識別": "output_stream", "メッセージ内容": AIストリーム開始, "実行中": True,
+            **相関,
         })
         self.要求タスク = asyncio.create_task(処理(受信データ))
         try:
-            await self.要求タスク
+            結果 = await self.要求タスク
+            if self.強制停止フラグ:
+                状態 = "cancelled"
+            elif not エラー応答判定(応答正規化(結果)):
+                状態 = "succeeded"
         except asyncio.CancelledError:
+            状態 = "cancelled"
             if asyncio.current_task().cancelling():
                 raise
         finally:
@@ -648,9 +664,10 @@ class CodeAgent:
                 await self.接続.send_to_channel(self.チャンネル, {
                     "セッションID": self.セッションID, "チャンネル": self.チャンネル,
                     "メッセージ識別": "output_end", "メッセージ内容": "", "実行中": False,
+                    **相関, **({"navigationStatus": 状態} if 相関 else {}),
                 })
 
-    async def _処理_input_text(self, 受信データ: dict) -> None:
+    async def _処理_input_text(self, 受信データ: dict) -> Optional[str]:
         """
         input_text処理:
         1. AI実行 + output_stream/output_text送信
@@ -676,13 +693,14 @@ class CodeAgent:
                 元要求=受信データ.get("メッセージ内容", ""),
                 最終応答=最終応答 or "",
             )
+            return 最終応答
         except asyncio.CancelledError:
             # 中断通知は強制停止()で即時送信済み
             logger.info(f"[CodeAgent] チャンネル{self.チャンネル} タスクがキャンセルされました")
         finally:
             self.現在タスク = None
 
-    async def _処理_input_request(self, 受信データ: dict) -> None:
+    async def _処理_input_request(self, 受信データ: dict) -> Optional[str]:
         """
         input_request処理:
         1. inputチャンネルへ開始通知（音声付き）
@@ -821,6 +839,7 @@ class CodeAgent:
                 元要求=受信データ.get("メッセージ内容", ""),
                 最終応答=出力メッセージ内容,
             )
+            return 出力メッセージ内容
 
         except Exception as e:
             logger.error(f"[CodeAgent] チャンネル{self.チャンネル} input_request処理エラー: {e}")

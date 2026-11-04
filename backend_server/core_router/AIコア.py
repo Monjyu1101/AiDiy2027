@@ -40,6 +40,7 @@ import core_models as models
 if バックエンドディレクトリ not in sys.path:
     sys.path.insert(0, バックエンドディレクトリ)
 
+from AIコア.AI要求相関 import ナビ要求相関
 from log_config import get_logger
 
 # ロガー取得
@@ -1482,6 +1483,7 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                             "セッションID": セッションID, "チャンネル": 受信データ.get("チャンネル", "0"),
                             "メッセージ識別": "error", "メッセージ内容": str(e),
                             "エラーコード": "PROJECT_CONTEXT_MISMATCH",
+                            **ナビ要求相関(受信データ),
                         })
                         # 拒否でも送信待ち状態を解除する。Code拡張には本文を重複表示しない。
                         通知チャンネル = str(受信データ.get("チャンネル", "0"))
@@ -1493,6 +1495,8 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                             "メッセージ識別": "output_end" if 実行状態通知 else "output_text",
                             "メッセージ内容": "" if 実行状態通知 else f"! {e}",
                             "実行中": False,
+                            **ナビ要求相関(受信データ),
+                            **({"navigationStatus": "failed"} if ナビ要求相関(受信データ) else {}),
                         })
                         continue
 

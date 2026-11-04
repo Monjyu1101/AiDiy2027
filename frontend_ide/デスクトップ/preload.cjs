@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld('aidiyWindow',{
  moveCode:token=>ipcRenderer.invoke('development:code-move',token),
  endCodeMove:token=>ipcRenderer.invoke('development:code-move-end',token),
  prepareExplorer:(rect,kind,previewRect)=>ipcRenderer.invoke('development:prepare-explorer',rect,kind,previewRect),
+ navigationCruise:(active,name)=>ipcRenderer.invoke('development:navigation-cruise',active,name),
+ navigationCode:(expanded,name)=>ipcRenderer.invoke('development:navigation-code',expanded,name),
  resizeRoutes:(name,height)=>ipcRenderer.invoke('development:resize-routes',name,height),
  showExplorer:(name,reduced)=>ipcRenderer.invoke('development:show-explorer',name,reduced),
  panelAction:(name,action)=>ipcRenderer.invoke('development:panel-action',name,action),

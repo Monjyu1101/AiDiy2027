@@ -9,7 +9,7 @@ import WindowActions from '../共通表示/窓操作.vue';
 import { createPanelWindowApi } from '../共通表示/窓操作.js';
 
 // 既存Viewerと同じ状態バーを使用。窓操作は所有元IDE経由で対象の別窓だけへ送る。
-export function mountPanelTitle(host, child, owner, title, kind, { restore } = {}) {
+export function mountPanelTitle(host, child, owner, title, kind, { restore, titleTools, displayTitle } = {}) {
   const container = child.document.createElement('div');
   container.className = kind === 'panel-routes' ? 'route-window-actions' : 'panel-window-title';
   if (kind === 'panel-routes') host.append(container);
@@ -32,7 +32,7 @@ export function mountPanelTitle(host, child, owner, title, kind, { restore } = {
   const returnButton = () => restore && !state.hideClose ? h('button', { type: 'button', class: 'panel-return', title: '閉じて本体へ戻す', 'aria-label': title + 'を閉じて本体へ戻す', onClick: restore }, [h('span', { class: 'close-icon', 'aria-hidden': 'true' })]) : null;
   const app = createApp({ render: () => kind === 'panel-routes'
     ? h('span', { class: 'route-pin-tools' }, [h(WindowActions, { windowApi, windowContext: child, pinOnly: true }), returnButton()])
-    : h(StatusBar, { title: kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }) });
+    : h(StatusBar, { title: displayTitle ? displayTitle() : kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }, titleTools ? { 'window-tools': titleTools } : undefined) });
   app.mount(container);
   return () => { observer.disconnect(); app.unmount(); container.remove(); };
 }

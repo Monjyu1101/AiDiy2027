@@ -256,7 +256,8 @@ class CodeGeneratedFilesTest(unittest.IsolatedAsyncioTestCase):
 
     def test_source_line_endings_and_shared_preview_import_are_preserved(self):
         data = SOURCE.read_bytes()
-        self.assertEqual(data.count(b'\n'), data.count(b'\r\n'))
+        # Git checkouts may use LF or CRLF; reject mixed line endings.
+        self.assertIn(data.count(b'\r\n'), (0, data.count(b'\n')))
         self.assertIn('from AIコア.AIファイルプレビュー import 画像プレビュー生成', data.decode('utf-8'))
 
 

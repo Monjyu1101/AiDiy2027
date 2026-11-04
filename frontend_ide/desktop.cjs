@@ -69,6 +69,9 @@ function closeApplication(){
 }
 const {panelBounds,createPanelWindows}=require('./デスクトップ/panel-windows.cjs');
 const panelWindows=createPanelWindows({windows,trustedEvent,readState,sessionKey:state=>sessionKey(state),screen,BrowserWindow,拡大表示,isQuitting:()=>quitting,isAllDisplays:record=>allDisplays.state(record).active,attachWindowMove,registerWindowPin,windowPins});
+const {createNavigationCodeWindow,createNavigationCruiseWindow,navigationWindowTitle}=require('./デスクトップ/navigation-code-window.cjs');
+const navigationCodeWindow=createNavigationCodeWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),screen,isQuitting:()=>quitting});
+const navigationCruiseWindow=createNavigationCruiseWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),isQuitting:()=>quitting});
 const {createCodeDrag}=require('./デスクトップ/code-drag.cjs');
 const codeDrag=createCodeDrag({trustedEvent,screen,resolvePanel:panelWindows.dragTarget,isCenterMove:record=>allDisplays.isActive(record)});
 const {installNativeWindowMove}=require('./デスクトップ/長押し窓移動.cjs');
@@ -206,9 +209,9 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
  // Windowsのフレームレス窓も、外枠の論理座標を明示してDPI差を補正する。
  window.setBounds(bounds);
  const contents=window.webContents;
- contents.on('page-title-updated',event=>{event.preventDefault();window.setTitle(title);});
+ contents.on('page-title-updated',event=>{event.preventDefault();window.setTitle(kind==='navi'?navigationWindowTitle(record,title):title);});
  // 窓番号は全体で一意、重ね位置は選択した画面ごとに数える。
- const record={window,kind,url:base,viewerPath,server,owner,linkKey,slot,displayId,displaySlot,taskView,taskController:taskOptions?.controller||taskWindows,taskPayload:taskOptions?.payload,revision:0,pending:new Map()};windows.set(contents,record);
+ const record={window,kind,...(kind==='navi'?{navigationNormalTitle:title}:{}),url:base,viewerPath,server,owner,linkKey,slot,displayId,displaySlot,taskView,taskController:taskOptions?.controller||taskWindows,taskPayload:taskOptions?.payload,revision:0,pending:new Map()};windows.set(contents,record);
  // 起動元・寿命はrecord.ownerで管理し、OS上は独立したパネルのままピンを設定する。
  registerWindowPin(record);
  attachWindowMove(record);
@@ -399,6 +402,8 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:window-move-end',(event,token,name)=>codeDrag.end(event,token,name));
  ipcMain.handle('development:prepare-explorer',(event,rect,kind,previewRect)=>panelWindows.prepare(event,rect,kind,previewRect));
  ipcMain.handle('development:show-explorer',(event,name,reduced)=>panelWindows.show(event,name,reduced));
+ ipcMain.handle('development:navigation-cruise',(event,active,name)=>navigationCruiseWindow(event,active,name));
+ ipcMain.handle('development:navigation-code',(event,expanded,name)=>navigationCodeWindow(event,expanded,name));
  ipcMain.handle('development:resize-routes',(event,name,height)=>panelWindows.resizeRoutes(event,name,height));
  ipcMain.handle('development:panel-action',(event,name,action)=>panelWindows.action(event,name,action));
  // ピン留め: IDEのプレビューを、同じIDEサーバーのファイルAPIを使う独立ウィンドウ（record.ownerでIDEに所属）で開く。

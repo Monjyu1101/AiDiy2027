@@ -56,7 +56,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
     modeModels.offline = selected;
   }
   const state = {
-    type: 'state', 会話ID: randomUUID() as string, 作業URI: folder, 信頼済み: true,
+    type: 'state', navigationRunSupported: true, 会話ID: randomUUID() as string, 作業URI: folder, 信頼済み: true,
     作業フォルダ: { 名前: basename(folder), パス: folder },
     ...modeModels[initialModel.offline ? 'offline' : 'online'],
     オフライン対応: true, 実行モード: (initialModel.offline ? 'offline' : 'online') as 'online' | 'offline',
@@ -95,6 +95,16 @@ export async function 単独起動(project: string, backend?: string, initialMod
   let allowed: 接続元許可 | undefined;
   let idle: NodeJS.Timeout | undefined;
   const broadcast = (packet: unknown) => { for (const client of clients) client.write(`data: ${JSON.stringify(packet)}\n\n`); };
+  type NavigationRun = { id: string; offline: boolean; started: boolean; reply: boolean; failed: boolean; cancelling?: boolean };
+  let navigationRun: NavigationRun | undefined;
+  // 中止要求が送信要求より先に届いても、遅延した送信を実行しない。IDは再利用不可。
+  const navigationRequests = new Set<string>();
+  const navigationResult = (status: 'accepted' | 'succeeded' | 'failed' | 'cancelled', message = '') => {
+    const run = navigationRun;
+    if (!run) return;
+    if (status !== 'accepted') navigationRun = undefined;
+    broadcast({ type: 'navigationRunResult', requestId: run.id, status, message });
+  };
   // 自動接続ONでは再試行を継続し、未接続中とHermes実行中は単独実行の状態を画面へ返す。
   const オフライン使用 = () => state.実行モード === 'offline' || !state.接続済み || Boolean(offlineJob);
   const 表示状態 = () => オフライン使用() ? { ...state, 実行モード: 'offline',
@@ -122,6 +132,20 @@ export async function 単独起動(project: string, backend?: string, initialMod
     if (closed) return;
     broadcast(packet);
     const text = typeof packet.メッセージ内容 === 'string' ? packet.メッセージ内容 : '';
+    const navigation = navigationRun;
+    if (navigation) {
+      const control = packet.メッセージ識別 === 'output_stream' ? streamControlOf(text) : undefined;
+      const requestId = (packet as Packet).navigationRequestId;
+      if (['error', 'cancel_run'].includes(packet.メッセージ識別 || '') || control === 'cancel' || /^\s*!/.test(text)) navigation.failed = true;
+      if (!navigation.offline && requestId === navigation.id && control === 'start') navigation.started = true;
+      if (navigation.offline || navigation.started) {
+        if (['output_text', 'output'].includes(packet.メッセージ識別 || '') && text.trim() && !/^【(?:検証|自己改善)(?:開始|完了)】/.test(text)) navigation.reply = true;
+      }
+      if (!navigation.offline && requestId === navigation.id && packet.メッセージ識別 === 'output_end' && packet.実行中 === false) {
+        navigationResult(navigation.cancelling ? 'cancelled' : (packet as Packet).navigationStatus === 'succeeded' && !navigation.failed && navigation.started && navigation.reply ? 'succeeded' : 'failed',
+          navigation.failed ? 'Codeの実行が失敗または停止しました。' : !navigation.reply ? 'Codeの回答を確認できません。' : '');
+      }
+    }
     if (['input_file', 'output_file'].includes(packet.メッセージ識別 || '')) {
       const attachment = fileAttachment(packet, connection.session, '1');
       if (!attachment) return;
@@ -140,7 +164,8 @@ export async function 単独起動(project: string, backend?: string, initialMod
       state.実行中 = false;
     } else return;
     if ('実行中' in packet && typeof packet.実行中 === 'boolean') state.実行中 = packet.実行中;
-    if (offlineJob) state.実行中 = true;
+    // 中断の途中通知や無関係なidleでは、所有する要求の実行ロックを解除しない。
+    if (offlineJob || navigationRun) state.実行中 = true;
     if (!state.実行中) state.停止中 = false;
     trimHistory(); save(); notify();
   };
@@ -154,7 +179,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
     if (connection.connected) {
       state.セッションID = connection.session;
       state.provider = connection.model.provider; state.model = connection.model.model;
-    } else if (!offlineJob) { state.実行中 = false; state.停止中 = false; }
+    } else if (!offlineJob) { state.実行中 = false; state.停止中 = false; navigationResult('failed', 'Codeの接続が切れました。'); }
     notify();
   }, createSocket, undefined, authorization || internalAuthorization(new URL(backend || ローカル接続先(root, folder)), [root, folder]));
   const reconnect = () => {
@@ -170,14 +195,19 @@ export async function 単独起動(project: string, backend?: string, initialMod
       // 検証回数に関係なくHermesを1回だけ直接実行する。バックアップ・検証ループはない。
       state.実行中 = true; state.進捗 = [];
       state.メッセージ.push({ 種別: 'user', 本文: text }); trimHistory();
-      save(); broadcast({ type: 'accepted' }); notify();
+      save(); broadcast({ type: 'accepted', ...(navigationRun ? { navigationRequestId: navigationRun.id } : {}) }); navigationResult('accepted'); notify();
       try {
         const manualOffline = state.実行モード === 'offline';
         const job = runOffline(root, folder, manualOffline ? state.model : modeModels.offline.model, text,
           manualOffline ? state.セッションID : state.HermesセッションID, receive);
         offlineJob = job;
+        const ownedNavigation = navigationRun;
         void job.完了.then(result => {
           if (closed) return;
+          if (ownedNavigation && navigationRun === ownedNavigation) {
+            navigationResult(ownedNavigation.cancelling ? 'cancelled' : !ownedNavigation.failed && ownedNavigation.reply && !result.停止理由 && result.終了コード === 0 ? 'succeeded' : 'failed',
+              result.停止理由 || (result.終了コード !== 0 ? `Hermes終了コード: ${result.終了コード}` : !ownedNavigation.reply ? 'Codeの回答を確認できません。' : ''));
+          }
           if (result.セッションID) {
             state.HermesセッションID = result.セッションID;
             if (manualOffline) state.セッションID = result.セッションID;
@@ -186,18 +216,19 @@ export async function 単独起動(project: string, backend?: string, initialMod
             if (manualOffline) state.セッションID = undefined;
           }
           if (result.停止理由 || result.終了コード !== 0) receive({ メッセージ識別: 'error', メッセージ内容: result.停止理由 || result.ログ || `Hermes終了コード: ${result.終了コード}` });
-        }).catch(error => receive({ メッセージ識別: 'error', メッセージ内容: String(error) }))
+        }).catch(error => { navigationResult('failed', String(error)); receive({ メッセージ識別: 'error', メッセージ内容: String(error) }); })
           .finally(() => { offlineJob = undefined; state.実行中 = false; state.停止中 = false; if (!closed) { save(); notify(); } });
       } catch (error) {
+        navigationResult('failed', String(error));
         receive({ メッセージ識別: 'error', メッセージ内容: String(error) });
       }
       return;
     }
     const self_check_loop = typeof 検証ループ回数 === 'number' && Number.isInteger(検証ループ回数) ? Math.max(0, Math.min(3, 検証ループ回数)) : 1;
-    if (!connection.send({ メッセージ識別: 'input_text', メッセージ内容: text, self_check_loop })) throw new Error('AIコアが未接続のため送信できません。');
+    if (!connection.send({ メッセージ識別: 'input_text', メッセージ内容: text, self_check_loop, ...(navigationRun ? { navigationRequestId: navigationRun.id } : {}) })) throw new Error('AIコアが未接続のため送信できません。');
     state.実行中 = true; state.進捗 = [];
     state.メッセージ.push({ 種別: 'user', 本文: text }); trimHistory();
-    save(); broadcast({type:'accepted'}); notify();
+    save(); broadcast({type:'accepted', ...(navigationRun ? { navigationRequestId: navigationRun.id } : {})}); navigationResult('accepted'); notify();
   };
   const server = createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -250,7 +281,16 @@ export async function 単独起動(project: string, backend?: string, initialMod
         }
         if (type === 'cancelPrediction') { prediction.cancel(data.requestId); reply(200, {ok:true}); return; }
         if (type === 'cancel_run') {
-          if (!state.実行中 || state.停止中) { reply(200, {ok:true}); return; }
+          if (data.navigationRequestId !== undefined) {
+            if (typeof data.navigationRequestId !== 'string' || !/^[a-zA-Z0-9-]{1,100}$/.test(data.navigationRequestId)) { reply(400, {error:'実行IDが不正です。'}); return; }
+            if (navigationRequests.size >= 10000 && !navigationRequests.has(data.navigationRequestId)) { reply(409, {error:'Codeを開き直してください。'}); return; }
+            navigationRequests.add(data.navigationRequestId);
+            if (navigationRun?.id !== data.navigationRequestId) { reply(200, {ok:true, navigationPending:false}); return; }
+          }
+          const ownedNavigation = navigationRun;
+          // HTTP応答は停止要求の受付だけ。terminalは実際のoutput_end/プロセス終了まで待つ。
+          if (ownedNavigation) ownedNavigation.cancelling = true;
+          if ((!state.実行中 && !ownedNavigation) || state.停止中) { reply(200, {ok:true, navigationPending:!!navigationRun}); return; }
           state.停止中 = true;
           if (offlineJob) offlineJob.停止();
           else if (!connection.send({ メッセージ識別: 'cancel_run', メッセージ内容: '強制停止！' })) {
@@ -259,7 +299,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
           notify();
         } else if (type === 'autoConnect') {
           if (typeof data.enabled !== 'boolean') { reply(400, {error:'自動接続の指定が不正です。'}); return; }
-          if (state.実行中 || offlineJob || connection.modelChanging) { reply(409, {error:'実行中またはモデル変更中は自動接続を変更できません。'}); return; }
+          if (state.実行中 || offlineJob || navigationRun || connection.modelChanging) { reply(409, {error:'実行中またはモデル変更中は自動接続を変更できません。'}); return; }
           if (state.自動接続 === data.enabled) { reply(200, {ok:true}); return; }
           state.自動接続 = data.enabled;
           if (data.enabled && state.実行モード === 'offline') {
@@ -271,13 +311,13 @@ export async function 単独起動(project: string, backend?: string, initialMod
           try { state.検証回数 = 検証回数保存(data.count, optionsFile); }
           catch { reply(400, {error:'検証回数の指定が不正です。'}); return; }
         } else if (type === 'disconnect' || type === 'connect') {
-          if (state.実行中 || offlineJob || connection.modelChanging) { reply(409, {error:'実行中またはモデル変更中は接続を変更できません。'}); return; }
+          if (state.実行中 || offlineJob || navigationRun || connection.modelChanging) { reply(409, {error:'実行中またはモデル変更中は接続を変更できません。'}); return; }
           if (state.実行モード === 'offline') { reply(409, {error:'オフラインではAIコアへ接続しません。'}); return; }
           state.自動接続 = type === 'connect';
           接続開始済み = true; reconnect();
         }
         else if (connection.modelChanging) { reply(409, {error:'モデルを変更しています。'}); return; }
-        else if (state.実行中 || offlineJob) { reply(409, {error:'実行中です。'}); return; }
+        else if (state.実行中 || offlineJob || navigationRun) { reply(409, {error:'実行中です。'}); return; }
         else if (type === 'executionMode') {
           if (!['online','offline'].includes(data.mode)) { reply(400, {error:'実行モードが不正です。'}); return; }
           if (state.実行モード !== data.mode) {
@@ -299,7 +339,18 @@ export async function 単独起動(project: string, backend?: string, initialMod
           }
         } else if (type === 'input_text') {
           if (typeof data.メッセージ内容 !== 'string' || !data.メッセージ内容.trim() || data.メッセージ内容.length > 200000) { reply(400, {error:'入力が空か長すぎます。'}); return; }
-          execute(data.メッセージ内容, data.self_check_loop);
+          if (data.navigationRequestId !== undefined) {
+            const displayed = 表示状態();
+            if (typeof data.navigationRequestId !== 'string' || !/^[a-zA-Z0-9-]{1,100}$/.test(data.navigationRequestId)) { reply(400, {error:'実行IDが不正です。'}); return; }
+            if (navigationRequests.has(data.navigationRequestId) || navigationRequests.size >= 10000) { reply(409, {error:'この実行IDは再送できません。'}); return; }
+            navigationRequests.add(data.navigationRequestId);
+            if (data.projectPath !== folder || data.conversationId !== state.会話ID
+                || data.sessionId !== (displayed.セッションID || '') || data.connectionEpoch !== state.接続世代
+                || requestEpoch !== connection.epoch || state.停止中) { reply(409, {error:'Codeのプロジェクト・会話・接続状態が変わりました。'}); return; }
+            navigationRun = { id: data.navigationRequestId, offline: オフライン使用(), started: false, reply: false, failed: false };
+          }
+          try { execute(data.メッセージ内容, data.self_check_loop); }
+          catch (error) { navigationResult('failed', error instanceof Error ? error.message : String(error)); throw error; }
         } else if (type === 'new') {
           newConversation();
         } else if (type === 'selectHistory') {
@@ -337,14 +388,14 @@ export async function 単独起動(project: string, backend?: string, initialMod
           if (!offline || state.実行モード === 'offline') { state.provider = selected.provider; state.model = selected.model; }
           save(false); notify();
         } else { reply(400, {error:'Unknown message'}); return; }
-        reply(200, {ok:true}); return;
+        reply(200, {ok:true, ...(type === 'cancel_run' ? { navigationPending: !!navigationRun } : {})}); return;
       }
       // 画面は frontend_ide の Vue 画面（IDE / Code 単独起動）が提供し、このサーバーは API だけを返す。
       reply(404, {error:'Not found'});
     } catch (error) { if (!res.headersSent) reply(500, {error: error instanceof Error ? error.message : '処理に失敗しました。'}); else res.end(); }
   });
   async function close() {
-    if (closed) return; closed = true;
+    if (closed) return; navigationResult('cancelled', 'Code画面を閉じました。'); closed = true;
     prediction.clear();
     書込実行();
     clearTimeout(idle);

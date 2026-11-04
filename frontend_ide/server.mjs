@@ -37,7 +37,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  files['/development/taskteam.js']=['taskteam.js','text/javascript; charset=utf-8'];
  files['/development/taskteam.css']=['taskteam.css','text/css; charset=utf-8'];
  const aiSearch=createAISearch(project,{...aiSearchOptions,state:connection.state});
- let navigationSlot;
+ let navigationSlot, panels;
  const navigation=createNavigationInstances(project,{...navigationOptions,instancePrefix:kind==='navi'?'standalone-':'',state:connection.state});
  const fileAnalysis=createFileAnalysis(project,{...fileAnalysisOptions,state:connection.state});
  const fileHistory=createFileHistory(project,{state:connection.state});
@@ -45,7 +45,20 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
   requestHandler:async(req,res,url)=>{
    // Browser単独画面にはプロジェクト操作・Console/AI起動APIを公開しない。
    if(kind==='browser'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/connection'){res.writeHead(url.pathname.startsWith('/api/connection/')?405:404).end();return true;}
-   if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
+   if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/navigation/code','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
+   if (['ide','navi'].includes(kind) && url.pathname === '/api/navigation/code') {
+    const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
+    const instance=url.searchParams.get('instance'), snapshot=connection.state();
+    req.resume();
+    if (!['POST','DELETE'].includes(req.method)) { reply(405,{error:'POST / DELETE required'});return true; }
+    if (!instance || !/^navi-[1-9][0-9]{0,5}$/.test(instance) || (kind==='navi' && instance!==navigationSlot?.instance)) { reply(400,{error:'Navigator IDが不正です。'});return true; }
+    if (!snapshot.active || url.searchParams.get('session')!==String(snapshot.startedAt)) { reply(409,{error:'利用セッションが変わりました。'});return true; }
+    try {
+     if (req.method==='DELETE') { await panels.release('code',instance);reply(200,{}); }
+     else reply(200,{url:await panels.open('code',instance)});
+    } catch(error) { reply(400,{error:error.message}); }
+    return true;
+   }
    if(taskTeamProxy && await taskTeamProxy.handle(req,res,url))return true;
    if(['ide','navi'].includes(kind)&&await navigation.handle(req,res,url))return true;
    if(kind==='ide'&&await aiSearch.handle(req,res,url))return true;
@@ -60,15 +73,15 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
    const content=await readFile(join(root,'dist',asset[0]));
    res.writeHead(200,{'content-type':asset[1],'cache-control':'no-store','x-content-type-options':'nosniff',...(iconAsset?{'content-security-policy':"default-src 'none'; sandbox"}:{})}).end(content);return true;
   },
-  panelsFactory:(project,state)=>createPanels(project,state,async(type,folder,snapshot)=>{
-   if(kind!=='ide'&&type!==kind)throw Error('このアプリでは利用できません。');
+  panelsFactory:(project,state)=>(panels=createPanels(project,state,async(type,folder,snapshot,{instance}={})=>{
+   if(kind!=='ide'&&type!==kind&&!(kind==='navi'&&type==='code'&&instance))throw Error('このアプリでは利用できません。');
    if(type==='console')return startTerminal(folder,{env,cli,cliAutoApprove,onCliStarted,onCliAbandoned});
    const bundle=require(join(vscodeRoot,'dist',`aidiy_${type}`,'server.cjs'));
-   if(type==='code')return bundle.単独起動(folder,backend,{offline:snapshot.mode==='offline',lockedMode:kind==='ide'||linked,keepAlive:true,provider,model});
+   if(type==='code')return bundle.単独起動(folder,backend,{offline:snapshot.mode==='offline',lockedMode:kind==='ide'||kind==='navi'||linked,keepAlive:true,provider,model});
    const vendor=provider==='openai_live'?'OPENAI':provider==='freeai_live'?'FREEAI':'GEMINI';
    const settings={...(provider?{LIVE_AI_NAME:provider}:{}),...(model?{[`LIVE_${vendor}_MODEL`]:model}:{})};
    return bundle.ライブ起動(vscodeRoot,backend,false,folder,settings,undefined,autoConnect);
-  })
+  }))
  });
  if(kind==='navi'){try{navigationSlot=await reserveNavigationSlot(project);}catch(error){await app.close();throw error;}}
  app.server.once('close',()=>{void navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();});

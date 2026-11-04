@@ -4,7 +4,9 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {randomUUID}=require('node:crypto');
-const {windowBounds}=require('./window-layout.cjs');
+const {windowBounds,windowMinimumSize}=require('./window-layout.cjs');
+const size=require('../host/scripts/window-size.cjs');
+const {registerNavigationCruiseTitle}=require('./navigation-code-window.cjs');
 
 // getContentBounds / screen.workArea はDIP。CSS pxにzoomだけ掛け、OSのDPI倍率は掛けない。
 function panelBounds(rect,owner,screen,kind='explorer'){
@@ -12,7 +14,7 @@ function panelBounds(rect,owner,screen,kind='explorer'){
  const origin=owner.window.getContentBounds(),zoom=owner.window.webContents.getZoomFactor();
  const desired={x:Math.round(origin.x+rect.left*zoom),y:Math.round(origin.y+rect.top*zoom),width:Math.round(Math.max(300,rect.width)*zoom),height:Math.round(Math.max(kind==='panel-routes'?40:320,rect.height)*zoom)};
  // NavigatorもCode同様にDIPで初期寸法を指定。表示後の手動リサイズは変更しない。
- if(kind==='panel-navigation'){desired.width=500;desired.height=600;}
+ if(kind==='panel-navigation'){desired.width=size.幅;desired.height=size.会話高さ;}
  // 別画面へまたがるパネルは、そのパネルが最も重なるディスプレイを選ぶ。
  const area=screen.getDisplayMatching(desired).workArea,margin=8;
  if(kind==='panel-navigation')return windowBounds('navi',area);
@@ -64,7 +66,7 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   if(!request||request.used||details.url!=='about:blank'||details.frameName!==request.name||Date.now()>request.expires||request.revision!==owner.revision||isQuitting())return null;
   request.used=true;
   const route=request.kind==='panel-routes';
-  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#080c1a',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
+  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:request.kind==='panel-navigation'?windowMinimumSize('navi',request.bounds):{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#080c1a',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
  }
  function created(owner,window,details){
   const request=requests.get(owner);requests.delete(owner);
@@ -73,6 +75,7 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   window.setParentWindow(null);window.setBounds(request.bounds);
   const contents=window.webContents;
   const record={window,owner,kind:request.kind,url:'about:blank',linkKey:request.key,revision:0,ownerRevision:request.revision,barHeight:request.bounds.height,pending:new Map(),name:request.name};windows.set(contents,record);
+  registerNavigationCruiseTitle(record);
   registerWindowPin(record);
   attachWindowMove(record);
   contents.setWindowOpenHandler(()=>({action:'deny'}));

@@ -69,7 +69,7 @@ export function codeTransport({ host = false, base = '', api } = {}, receive) {
         const result = await request(`catalog?provider=${encodeURIComponent(message.provider || '')}`);
         receive({ type: 'modelCatalog', provider: message.provider || '', items: message.provider ? result.models : result.providers });
       } else {
-        await request('message', message.type === 'setModel' ? { ...message, type: 'model' } : message, message.type === 'sendFile');
+        return await request('message', message.type === 'setModel' ? { ...message, type: 'model' } : message, message.type === 'sendFile');
       }
     },
     link(url) { if (!/^https?:\/\//i.test(url)) return; if (host) vscode.postMessage({ type: 'link', url }); else window.open(url, '_blank', 'noopener,noreferrer'); },

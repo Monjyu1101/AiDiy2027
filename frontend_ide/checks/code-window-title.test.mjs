@@ -11,6 +11,7 @@ import vm from 'node:vm';
 import taskWindowsModule from '../デスクトップ/task-windows.cjs';
 import routerModule from '../デスクトップ/draft-router.cjs';
 import panelModule from '../デスクトップ/panel-windows.cjs';
+import navigationCodeWindowModule from '../デスクトップ/navigation-code-window.cjs';
 import codeDragModule from '../デスクトップ/code-drag.cjs';
 import browserModule from '../デスクトップ/ブラウザ.cjs';
 import nativeMoveModule from '../デスクトップ/長押し窓移動.cjs';
@@ -47,6 +48,8 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const modules={
   electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
   'node:path':{join:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
+  './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},
+  './デスクトップ/navigation-code-window.cjs':navigationCodeWindowModule,
   './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:()=>({}),windowMinimumSize:()=>({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},
   './host/scripts/window-opening.cjs':{拡大表示:async(_Window,window)=>{window.focus();return true;}},
   './host/scripts/MacOS-Menu.cjs':macMenuModule,
@@ -256,5 +259,18 @@ test('Console browser tab title uses launch metadata and leaves ordinary and lin
   const mounted=[];
   vm.runInNewContext(source,{document,devicePixelRatio:1,addEventListener(){},App:{},createApp:(_app,props)=>({provide(){return this;},mount(){mounted.push(props);}})});
   await tick();assert.equal(document.title,title);assert.equal(mounted.length,1);
+ }
+});
+
+test('Navigator native Cruise title survives page updates and restores without changing Code or IDE',async()=>{
+ const f=await desktopFixture({kind:'navi'}),record=f.owner,change=f.handlers.get('development:navigation-cruise');
+ assert.equal((await change(f.event(record),true)).ok,true);assert.equal(record.window.getTitle(),'Navigation Cruise');
+ record.window.webContents.emit('page-title-updated',{preventDefault(){}},'AiDiy Navigator');assert.equal(record.window.getTitle(),'Navigation Cruise');
+ assert.equal((await change(f.event(record),false)).ok,true);assert.equal(record.window.getTitle(),'AiDiy Navigator');
+ record.window.webContents.emit('page-title-updated',{preventDefault(){}},'Navigation Cruise');assert.equal(record.window.getTitle(),'AiDiy Navigator');record.window.destroy();
+ for(const kind of ['ide','code']){
+  const other=await desktopFixture({kind});const normal=other.owner.window.getTitle();
+  assert.equal((await other.handlers.get('development:navigation-cruise')(other.event(other.owner),true)).ok,false);
+  assert.equal(other.owner.window.getTitle(),normal);other.owner.window.destroy();
  }
 });

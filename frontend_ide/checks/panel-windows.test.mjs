@@ -177,3 +177,15 @@ test('小さな軌跡パネル: 負座標の実画面内へ収め、DPI倍率を
   assert.equal(result.width,420*zoom);assert.equal(result.height,360*zoom);
  }
 });
+
+test('Navigator別窓は通常・VR・小画面ともCodeと同じ初期寸法と最小寸法を使う',async()=>{
+ const {windowBounds,windowMinimumSize}=await import('../デスクトップ/window-layout.cjs');
+ for(const all of [false,true])for(const area of [{x:0,y:0,width:1920,height:1040},{x:-300,y:-200,width:320,height:240}]){
+  const f=fixture({all,area}),request=await f.controller.prepare(f.event,f.rect,'panel-navigation');
+  const {overrideBrowserWindowOptions:options}=f.controller.open(f.owner,{url:'about:blank',frameName:request.name});
+  const code=windowBounds('code',area);
+  assert.deepEqual([options.width,options.height],[code.width,code.height]);
+  assert.deepEqual({minWidth:options.minWidth,minHeight:options.minHeight},windowMinimumSize('code',code));
+  assert.notEqual(options.resizable,false);
+ }
+});

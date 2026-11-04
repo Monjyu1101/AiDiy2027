@@ -37,7 +37,7 @@ export function fadePanel(element) {
 
 // Vueのインスタンス・DOM・イベントをそのまま移動する。検索ジョブを再発行せず、
 // AI入力、検索結果、展開、選択、スクロールも同じ実体を保持する。
-export function createPanelWindow({ element, changed, report, closed = () => {}, recovered = () => {}, moved = () => {}, title = 'Explorer', kind = 'explorer', className = 'explorer-window', rectangle = element, win = window }) {
+export function createPanelWindow({ element, changed, report, closed = () => {}, recovered = () => {}, moved = () => {}, title = 'Explorer', kind = 'explorer', className = 'explorer-window', rectangle = element, win = window, titleTools, displayTitle }) {
   let child, parent, anchor, timer, pinRequest, opening = false, disposed = false, detached = false, documentSeen;
   let cleanupDocument = () => {};
   let preview;
@@ -84,7 +84,7 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
         if (disposed || child !== target || target.closed || target.document !== doc) return;
         if (kind !== 'panel-routes') host.classList.add('native-panel-window');
         // 軌跡バーは既存の一行に操作を置き、窓の高さ・展開位置を変えない。
-        removeTitle = mountPanelTitle(kind === 'panel-routes' ? element().querySelector('.route-controls') : host, target, win, title, kind, ['explorer','panel-routes'].includes(kind) ? { restore } : {});
+        removeTitle = mountPanelTitle(kind === 'panel-routes' ? element().querySelector('.route-controls') : host, target, win, title, kind, { ...(['explorer','panel-routes'].includes(kind) ? { restore } : {}), titleTools, displayTitle });
       }
       if(kind==='panel-routes'){doc.documentElement.classList.add('route-window-document');if(win.aidiyWindow?.resizeRoutes)doc.documentElement.classList.add('native-route-window');}
       // 元Documentのタイムラインを別窓へ持ち込まない（裏のIDEでは停止し得る）。

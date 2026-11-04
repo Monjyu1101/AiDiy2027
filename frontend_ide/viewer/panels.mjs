@@ -41,33 +41,59 @@ export function createPanels(project, state, launchPanel = launch) {
     if (session !== next) { session = next; void reset(); }
   }
   const timer = setInterval(sync, 250); timer.unref();
-  async function open(kind) {
+  async function open(kind, instance = '') {
     sync();
     if (disposed || !permitted(kind)) throw new Error('この利用モードでは開けません。');
-    if (!entries.has(kind)) {
+    if (instance && (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance))) throw new Error('Navigator IDが不正です。');
+    const id = instance ? `${kind}:${instance}` : kind;
+    if (!entries.has(id)) {
       const run = generation;
       const pending = (async () => {
-        const app = await launchPanel(kind, project, state());
-        if (run !== generation || disposed) { await app.close(); throw new Error('利用が終了しました。'); }
+        const app = await launchPanel(kind, project, state(), { instance });
+        sync();
+        if (run !== generation || disposed || entries.get(id) !== pending) { await app.close(); throw new Error('利用が終了しました。'); }
         const target = new URL(app.url);
-        return { app, target, prefix: `/panels/${kind}${target.pathname}` };
+        return { app, target, streams: new Set(), prefix: `/panels/${kind}${instance ? `/${instance}` : ''}${target.pathname}` };
       })();
-      entries.set(kind, pending);
-      pending.catch(() => { if (entries.get(kind) === pending) entries.delete(kind); });
+      entries.set(id, pending);
+      pending.catch(() => { if (entries.get(id) === pending) entries.delete(id); });
     }
-    return (await entries.get(kind)).prefix;
+    return (await entries.get(id)).prefix;
+  }
+  async function release(kind, instance) {
+    sync();
+    if (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance)) throw new Error('Navigator IDが不正です。');
+    const id = `${kind}:${instance}`, pending = entries.get(id);
+    if (!pending) return;
+    entries.delete(id);
+    const closing = (async () => {
+      const entry = await pending.catch(() => null);
+      if (!entry) return; // 起動中の解放はopen側で終了する。
+      for (const stream of entry.streams) stream.destroy();
+      await entry.app.close();
+    })();
+    resetting.add(closing);
+    try { await closing; }
+    finally { resetting.delete(closing); }
   }
   async function resolve(req) {
     sync();
-    const kind = /^\/panels\/(code|live|console)\//.exec(req.url)?.[1];
-    if (!permitted(kind) || !entries.has(kind)) return null;
-    const entry = await entries.get(kind);
-    if (!req.url.startsWith(entry.prefix)) return null;
+    const match = /^\/panels\/(code|live|console)\/(navi-[1-9][0-9]{0,5}\/)?/.exec(req.url);
+    const kind = match?.[1], instance = match?.[2]?.slice(0, -1);
+    const id = instance ? `${kind}:${instance}` : kind, pending = entries.get(id);
+    if (disposed || !permitted(kind) || !pending) return null;
+    const entry = await pending;
+    sync();
+    if (disposed || !permitted(kind) || entries.get(id) !== pending || !req.url.startsWith(entry.prefix)) return null;
     const tail = req.url.slice(entry.prefix.length);
     if (tail.includes('..') || tail.startsWith('/')) return null;
     return { ...entry, kind, url: new URL(entry.target.pathname + tail, entry.target.origin) };
   }
-  function track(stream) { streams.add(stream); stream.on('close', () => streams.delete(stream)); return stream; }
+  function track(stream, entry) {
+    streams.add(stream); entry.streams.add(stream);
+    stream.on('close', () => { streams.delete(stream); entry.streams.delete(stream); });
+    return stream;
+  }
   const headers = (req, target) => {
     const result = { ...req.headers, host: target.host, origin: target.origin };
     // 転送先をブラウザ由来のヘッダーで変更させない。
@@ -82,7 +108,7 @@ export function createPanels(project, state, launchPanel = launch) {
       if (responseHeaders['content-security-policy']) responseHeaders['content-security-policy'] = responseHeaders['content-security-policy'].replace("frame-ancestors 'none'", "frame-ancestors 'self'");
       res.writeHead(upstream.statusCode || 502, responseHeaders);
       upstream.on('error', () => res.destroy()); upstream.pipe(res);
-    }));
+    }), entry);
     proxy.on('error', () => { if (!res.headersSent) res.writeHead(502).end('パネルに接続できません。'); else res.destroy(); });
     res.on('close', () => proxy.destroy());
     req.pipe(proxy);
@@ -90,10 +116,10 @@ export function createPanels(project, state, launchPanel = launch) {
   async function upgrade(req, socket, head) {
     const entry = await resolve(req);
     if (!entry || !['live', 'console'].includes(entry.kind) || !entry.url.pathname.endsWith('/socket')) { socket.destroy(); return; }
-    const proxy = track(request(entry.url, { headers: headers(req, entry.target) }));
-    track(socket);
+    const proxy = track(request(entry.url, { headers: headers(req, entry.target) }), entry);
+    track(socket, entry);
     proxy.on('upgrade', (response, upstream, upstreamHead) => {
-      track(upstream);
+      track(upstream, entry);
       socket.write(`HTTP/1.1 101 Switching Protocols\r\n${Object.entries(response.headers).map(([k, v]) => `${k}: ${v}`).join('\r\n')}\r\n\r\n`);
       if (head.length) upstream.write(head);
       if (upstreamHead.length) socket.write(upstreamHead);
@@ -106,5 +132,5 @@ export function createPanels(project, state, launchPanel = launch) {
     socket.on('error', () => proxy.destroy()); socket.on('close', () => proxy.destroy());
     proxy.end();
   }
-  return { open, http, upgrade, sync, async close() { disposed = true; clearInterval(timer); await reset(); await Promise.allSettled([...resetting]); } };
+  return { open, release, http, upgrade, sync, async close() { disposed = true; clearInterval(timer); await reset(); await Promise.allSettled([...resetting]); } };
 }

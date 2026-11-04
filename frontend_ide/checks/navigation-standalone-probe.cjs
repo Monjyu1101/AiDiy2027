@@ -19,7 +19,7 @@ let running=false;
 app.on('browser-window-created',(_,window)=>{if(running)return;running=true;window.webContents.once('did-finish-load',async()=>{try{
  await until(()=>evaluate(window,`!!document.querySelector('.navigation-panel.standalone textarea')`),'Navigation');
  assert.equal(window.getTitle(),'AiDiy Navigator');
- assert.ok(Math.abs(window.getBounds().width-500)<=2&&Math.abs(window.getBounds().height-600)<=2,'初期500×600 DIP（Windows丸め2px以内）');
+ assert.ok(Math.abs(window.getBounds().width-480)<=2&&Math.abs(window.getBounds().height-600)<=2,'初期480×600 DIP（Windows丸め2px以内）');
  const bounds=window.getBounds(),area=screen.getDisplayMatching(bounds).workArea;
  assert.ok(Math.abs(bounds.x-(area.x+8))<=2&&Math.abs(bounds.y-(area.y+area.height-8-bounds.height))<=2,'単独Navigatorは作業領域の左下');
  console.log('Navigator initial bounds',JSON.stringify(window.getBounds()));
