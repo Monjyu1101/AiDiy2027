@@ -1,0 +1,13 @@
+# ライセンス生成処理に合わせ、Windows でも対象ファイルの改行を LF に保つ。
+/frontend_ide/viewer/LICENSE text eol=lf
+/frontend_ide/viewer/web/LICENSE.txt text eol=lf
+/frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt text eol=lf
+/frontend_ide/viewer/web/licenses.html text eol=lf
+# 固定コミットのSHA-256で原文確認する同梱アイコンは改行変換しない。
+/frontend_ide/public/assets/catppuccin_icons/** -text
+/frontend_ide/dist/assets/catppuccin_icons/** -text
+/frontend_ide/host/dist/development/assets/catppuccin_icons/** -text
+/frontend_ide/host/aidiy_live/dist/development/assets/catppuccin_icons/** -text
+
+# PDF はバイナリとして扱い、改行変換しない。
+*.pdf binary

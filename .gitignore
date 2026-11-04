@@ -1,0 +1,204 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+*.pyo
+*.pdb
+*.so
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+uv.lock
+
+# Virtualenv
+.env
+.env.*
+.venv/
+env/
+venv/
+ENV/
+backend_server/.env/
+backend_server/.venv/
+backend_server/env/
+backend_server/venv/
+backend_server/env.bak/
+backend_server/venv.bak/
+
+# Type checkers
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Distribution / packaging
+# NOTE: lib / var / parts などの一般名は、リポジトリ直下に限定する。
+#       未限定にすると command_hermes/scripts/lib のような通常ディレクトリまで除外される。
+.Python
+build/
+dist/
+/develop-eggs/
+/downloads/
+/eggs/
+.eggs/
+/lib/
+/lib64/
+/parts/
+/sdist/
+/var/
+/wheels/
+/share/python-wheels/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+cover/
+coverage/
+
+# Runtime config (local only)
+# _config directories may exist, but their real contents must not be synced.
+**/_config/*
+!**/_config/.gitkeep
+!**/_config/.gitignore
+!**/_config/README.md
+!**/_config/*.example.json
+!**/_config/*.sample.json
+!**/_config/*.template.json
+
+# Logs & temp
+*.log
+logs/
+# 一時フォルダは全階層で除外する（末尾 / はディレクトリだけに一致）。
+temp/
+_temp/
+.temp/
+# 試験用の作業フォルダも全階層で除外する（tests/ などの正式なテストは対象外）。
+test/
+_test/
+.test/
+_work/
+_log/
+
+# Runtime data / pids
+pids
+*.pid
+*.seed
+*.pid.lock
+_data/
+**/_data/**
+*.db
+*.sqlite
+*.sqlite3
+
+# Node
+node_modules/
+dist/
+frontend_web/node_modules/
+frontend_web/dist/
+frontend_avatar/node_modules/
+frontend_avatar/dist/
+frontend_avatar/dist-electron/
+.npm
+.node_repl_history
+*.tgz
+.yarn-integrity
+
+# IDEs / Editors
+# Microsoft Office が文書と同じフォルダに作成する一時ロックファイル（全階層）。
+~$*
+.idea/
+.vscode/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific directories
+# Code / IDE がプロジェクト内に保存する会話・検索・解析の実行記録。
+**/_AIDIY/aidiy_code/
+**/_AIDIY/aidiy_ide/
+# 環境診断（aidiy_diag）の出力。インストール状況・モデル情報は PC ごとの個別環境データ。
+**/_AIDIY/aidiy_diag/
+_cache/
+.aidiy_cache/
+
+# docs に集約したセルフテスト証拠は、追加分も含めて収録する。
+!/docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/
+!/docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/**
+
+_controls/
+_datas/
+.aidiy_backup/
+# 旧保存版も公開しない。自動移動・削除はしない。
+.backup_local/
+# ローカル専用の Git 履歴は親リポジトリにも登録しない（全階層）。
+.git_local/
+julius/
+_MCP/
+
+# Secrets / sensitive
+# 全階層の内部認証情報と、同一ディレクトリで原子的に保存する際の一時ファイル。
+internal_auth.json
+.internal_auth.json.*.tmp
+internal_auth_keys.json
+.internal_auth_keys.json.*.tmp
+.internal_auth_keys.lock
+# NOTE: ここでは「実際の資格情報ファイル」だけを対象にする。
+#       *key* / *secret* のような広いパターンは、
+#       command_hermes/core/secret_scope.py や
+#       command_hermes/gateway/platforms/qqbot/keyboards.py のような
+#       通常のソースモジュールまで除外してしまうため使用しない。
+*.key
+*.pem
+*.pfx
+*.p12
+*.keystore
+*_key.json
+*_keys.json
+*_apikey.json
+*_api_key.json
+*_secret.json
+*_secrets.json
+*_credential.json
+*_credentials.json
+.secrets
+.secrets.*
+AZiP*.*
+firiend*
