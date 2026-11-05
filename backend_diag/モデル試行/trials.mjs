@@ -22,7 +22,7 @@ export const TRIAL_ROW_TIMEOUT_MS=150000;
 export const PREDICTION_ROW_TIMEOUT_MS=TRIAL_ROW_TIMEOUT_MS*2;
 export const TRIAL_RUN_TTL_MS=45*60*1000;
 
-const CHAT = {gemini_chat:'GEMINI',freeai_chat:'FREEAI',openrt_chat:'OPENRT',openai_chat:'OPENAI',openai_oauth:'OPENAI',ollama_chat:'OLLAMA',local_chat:'LOCAL'};
+const CHAT = {gemini_chat:'GEMINI',freeai_chat:'FREEAI',openrt_chat:'OPENRT',openrt_free:'OPENRT_FREE',openai_chat:'OPENAI',openai_oauth:'OPENAI',ollama_chat:'OLLAMA',local_chat:'LOCAL'};
 const LIVE = {gemini_live:'GEMINI',freeai_live:'FREEAI',openai_live:'OPENAI'};
 const DECISION = new Set(['auto','openai_oauth','openai_jsonchat','freeai_chat','openai_decisions','gemini_chat']);
 import {TRIAL_PROMPT,DECISION_CHOICES,decisionQuestions,TRIAL_FAMILIES,PREDICTION_PROVIDERS,PREDICTION_AUTO_PROVIDERS,PREDICTION_MODEL_KEYS,PREDICTION_CLI_PROVIDERS,PREDICTION_STORY_PROMPTS,predictionPerfect} from './defaults.mjs';

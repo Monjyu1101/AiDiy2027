@@ -5006,6 +5006,17 @@ _AIDIY_WELCOME_TEXT = "Welcome to AiDiy Hermes! Type your message or /help for c
 
 _AIDIY_CONFIG_DIR = _PROJECT_ROOT.parent / "_config"
 _AIDIY_KEY_JSON = _AIDIY_CONFIG_DIR / "AiDiy_key.json"
+from hermes_cli.aidiy_model_catalog import (
+    CHAT_PROVIDERS as _AIDIY_CHAT_PROVIDERS,
+    normalize_chat_provider as _normalize_aidiy_chat_provider,
+    read_model_labels as _read_aidiy_model_labels,
+)
+
+
+def _aidiy_hermes_catalog_path() -> Path:
+    return _AIDIY_CONFIG_DIR.parent / "_AIDIY" / "aidiy_diag" / "hermes_models_info.json"
+
+
 _AIDIY_CODE_CATALOG_KEYS = {
     "claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
     "codex-cli": "codex_cli", "copilot-cli": "copilot_cli",
@@ -5015,10 +5026,14 @@ _AIDIY_CODE_CATALOG_KEYS = {
 
 
 def _aidiy_code_model_labels(provider: str) -> List[Tuple[str, str]]:
-    """DiagのCode候補を毎回読み、Hermesの表示名・実行IDへ変換する。"""
+    """Hermes 専用一覧を読む。未生成の旧環境だけ Code 一覧へ互換退避。"""
     key = _AIDIY_CODE_CATALOG_KEYS.get(provider)
     if not key:
         return []
+    hermes_catalog = _aidiy_hermes_catalog_path()
+    if hermes_catalog.exists():
+        rows, _notice = _read_aidiy_model_labels(hermes_catalog, provider)
+        return rows
     filename = _AIDIY_CONFIG_DIR.parent / "_AIDIY" / "aidiy_diag" / "code_models_info.json"
     try:
         with filename.open(encoding="utf-8-sig") as source:
@@ -12482,22 +12497,22 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
     def _aidiy_provider_slugs() -> set:
         return {
             "ollama", "openai", "openrt", "openrouter", "gemini", "freeai", "anthropic",
+            "openrt_free",
+            "openai_chat", "claude_chat", "anthropic_chat", "gemini_chat", "freeai_chat", "openrt_chat",
             "local_chat", _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG,
             "claude-code", "antigravity-cli", "codex-cli", "copilot-cli", "opencode",
         }
 
     @staticmethod
     def _aidiy_runtime_provider(slug: str) -> str:
-        slug = (slug or "").lower()
+        slug = _normalize_aidiy_chat_provider(slug)
         if slug == _OPENAI_OAUTH_SLUG:
             return _OPENAI_OAUTH_RUNTIME_PROVIDER
         if slug == _XAI_OAUTH_SLUG:
             return _XAI_OAUTH_SLUG
-        if slug in {"openai", "openrouter"}:
-            return slug
-        if slug == "openrt":
+        if slug in {"openrt", "openrt_free"}:
             return "openrouter"
-        if slug in {"anthropic", "claude-code", "antigravity-cli"}:
+        if slug in {"claude_chat", "claude-code", "antigravity-cli"}:
             return "anthropic"
         if slug == "codex-cli":
             return "openai-codex"
@@ -12508,25 +12523,31 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         return "custom"
 
     def _current_aidiy_provider_slug(self) -> str:
-        current = (getattr(self, "_aidiy_provider_slug", None) or "").strip().lower()
+        current = _normalize_aidiy_chat_provider(getattr(self, "_aidiy_provider_slug", None))
         if current:
             return current
         provider = (self.provider or self.requested_provider or "").strip().lower()
         if provider == "openrouter":
             return "openrt"
         if provider == "anthropic":
-            return "anthropic"
-        if provider in {"ollama", "openai", "openrt", "gemini", "freeai"}:
-            return provider
+            return "claude_chat"
+        if provider in {"ollama", "openai", "openai_chat", "claude_chat", "openrt", "gemini", "freeai"}:
+            return _normalize_aidiy_chat_provider(provider)
         base_url = (self.base_url or "").strip().lower()
         if "openrouter.ai" in base_url:
             return "openrt"
         if "api.openai.com" in base_url:
-            return "openai"
+            return "openai_chat"
         if "generativelanguage.googleapis.com" in base_url:
+            cfg = self._aidiy_config or {}
+            current_key = str(self.api_key or "").strip()
+            freeai_key = str(cfg.get("freeai_key_id") or "").strip()
+            gemini_key = str(cfg.get("gemini_key_id") or "").strip()
+            if current_key and current_key == freeai_key and current_key != gemini_key:
+                return "freeai"
             return "gemini"
         if "api.anthropic.com" in base_url:
-            return "anthropic"
+            return "claude_chat"
         if "ollama.com" in base_url or "localhost:11434" in base_url or "127.0.0.1:11434" in base_url:
             return "ollama"
         port_local = str((self._aidiy_config or {}).get("PORT_LOCAL") or "8096").strip() or "8096"
@@ -12536,18 +12557,20 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
     def _aidiy_provider_default_model(self, provider: str) -> str:
         cfg = self._aidiy_config or {}
-        provider = (provider or "").lower()
-        if provider == "openai":
+        provider = _normalize_aidiy_chat_provider(provider)
+        if provider == "openai_chat":
             return cfg.get("CHAT_OPENAI_MODEL") or "gpt-5.2"
         if provider in ("openrt", "openrouter"):
             return cfg.get("CHAT_OPENRT_MODEL") or "google/gemini-3.1-flash-image-preview"
+        if provider == "openrt_free":
+            return cfg.get("CHAT_OPENRT_FREE_MODEL") or "auto"
         if provider == "gemini":
             return cfg.get("CHAT_GEMINI_MODEL") or "gemini-nano-banana-2.1"
         if provider == "freeai":
             return _normalize_aidiy_freeai_model(
                 cfg.get("CHAT_FREEAI_MODEL") or cfg.get("CHAT_GEMINI_MODEL")
             )
-        if provider == "anthropic":
+        if provider == "claude_chat":
             return cfg.get("CHAT_CLAUDE_MODEL") or "claude-sonnet-5-5"
         if provider == "local_chat":
             return cfg.get("CHAT_LOCAL_MODEL") or "google/gemma-4-E2B-it"
@@ -12559,9 +12582,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         return cfg.get("CODE_AIDIY_HERMES_MODEL") or cfg.get("CHAT_OLLAMA_MODEL") or "deepseek-v4-flash:cloud"
 
     def _get_aidiy_provider_entry(self, provider: str, include_models: bool = False) -> Optional[Dict[str, Any]]:
-        provider = (provider or "ollama").strip().lower()
-        if provider == "openrouter":
-            provider = "openrt"
+        provider = _normalize_aidiy_chat_provider(provider or "ollama")
         cfg = self._aidiy_config or {}
 
         if provider == "ollama":
@@ -12577,13 +12598,13 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 "api_mode": "chat_completions",
                 "default_model": _strip_cloud_suffix(self._aidiy_provider_default_model("ollama")) if cloud else self._aidiy_provider_default_model("ollama"),
             }
-        elif provider == "openai":
+        elif provider == "openai_chat":
             api_key = str(cfg.get("openai_key_id", "") or "")
             if not _is_valid_key(api_key):
                 return None
             entry = {
-                "slug": "openai",
-                "name": "OpenAI",
+                "slug": "openai_chat",
+                "name": "OpenAI Chat",
                 # Upstream Hermes aliases bare "openai" to OpenRouter.  Use a
                 # direct custom runtime so AiDiy's OpenAI key/base URL are used.
                 "runtime_provider": "custom",
@@ -12592,18 +12613,18 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 "api_mode": "chat_completions",
                 "default_model": self._aidiy_provider_default_model("openai"),
             }
-        elif provider == "openrt":
+        elif provider in ("openrt", "openrt_free"):
             api_key = str(cfg.get("openrt_key_id", "") or "")
             if not _is_valid_key(api_key):
                 return None
             entry = {
-                "slug": "openrt",
-                "name": "OpenRouter",
+                "slug": provider,
+                "name": "OpenRouter Free" if provider == "openrt_free" else "OpenRouter",
                 "runtime_provider": "openrouter",
                 "base_url": _OPENROUTER_BASE_URL,
                 "api_key": api_key.strip(),
                 "api_mode": "chat_completions",
-                "default_model": self._aidiy_provider_default_model("openrt"),
+                "default_model": self._aidiy_provider_default_model(provider),
             }
         elif provider in ("gemini", "freeai"):
             key_name = "freeai_key_id" if provider == "freeai" else "gemini_key_id"
@@ -12619,13 +12640,13 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 "api_mode": "chat_completions",
                 "default_model": self._aidiy_provider_default_model(provider),
             }
-        elif provider == "anthropic":
+        elif provider == "claude_chat":
             api_key = str(cfg.get("claude_key_id", "") or "")
             if not _is_valid_key(api_key):
                 return None
             entry = {
-                "slug": "anthropic",
-                "name": "Anthropic",
+                "slug": "claude_chat",
+                "name": "Claude Chat (Anthropic)",
                 "runtime_provider": "anthropic",
                 "base_url": _CLAUDE_BASE_URL,
                 "api_key": api_key.strip(),
@@ -12691,10 +12712,15 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             return None
 
         if include_models:
-            entry["models"] = self._fetch_aidiy_provider_model_labels(entry, limit=50)
-            if not entry["models"]:
-                default_model = entry["default_model"]
-                entry["models"] = [(f"yyyy/mm/dd - {default_model}", default_model)]
+            if provider in _AIDIY_CHAT_PROVIDERS:
+                entry["models"], entry["model_list_notice"] = _read_aidiy_model_labels(
+                    _aidiy_hermes_catalog_path(), provider,
+                )
+            else:
+                entry["models"] = self._fetch_aidiy_provider_model_labels(entry, limit=50)
+                if not entry["models"]:
+                    default_model = entry["default_model"]
+                    entry["models"] = [(f"yyyy/mm/dd - {default_model}", default_model)]
             entry["total_models"] = len(entry["models"])
         return entry
 
@@ -12702,8 +12728,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         current = self._current_aidiy_provider_slug()
         providers: List[Dict[str, Any]] = []
         for slug in (
-            _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG, "ollama", "openai", "openrt",
-            "gemini", "freeai", "anthropic", "local_chat",
+            _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG, "ollama", "openai_chat", "openrt", "openrt_free",
+            "gemini", "freeai", "claude_chat", "local_chat",
         ):
             entry = self._get_aidiy_provider_entry(slug, include_models=include_models)
             if entry:
@@ -13094,8 +13120,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 marker = "*" if entry.get("is_current") else " "
                 _cprint(f"   {marker} {entry['slug']:<12} {entry['name']}")
         _cprint("  Usage:")
-        _cprint("    /model --provider openai")
-        _cprint("    /model gpt-5.2 --provider openai")
+        _cprint("    /model --provider openai_chat")
+        _cprint("    /model gpt-5.2 --provider openai_chat")
+        _cprint("    /model --provider claude_chat")
+        _cprint("    /model --provider openrt_free")
         _cprint("    /model grok-4.6 --provider xai-oauth")
         _cprint("    /model --provider claude-code")
         _cprint("    /model openrt:anthropic/claude-sonnet-4.5")
@@ -13118,6 +13146,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._invalidate(min_interval=0.0)
 
     def _handle_aidiy_model_command(self, cmd_original: str) -> bool:
+        # Diag で更新したキー・候補は次の /model から反映する。
+        self._aidiy_config = _load_aidiy_config()
         parts = cmd_original.split(None, 1)
         raw_args = parts[1].strip() if len(parts) > 1 else ""
         model_input, explicit_provider = self._parse_aidiy_model_args(raw_args)
@@ -13142,7 +13172,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 return True
             models = provider_entry.get("models") or []
             if not models:
-                _cprint(f"  No models listed for provider: {explicit_provider}")
+                _cprint(f"  {provider_entry.get('model_list_notice') or 'No models listed for provider: ' + explicit_provider}")
                 return True
             self._apply_aidiy_provider_model(provider_entry, models[0][1])
             return True
@@ -13158,6 +13188,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         provider_name = provider_name or self._current_aidiy_provider_slug() or self.provider or self.requested_provider
         provider_entry = self._get_aidiy_provider_entry(provider_name, include_models=False)
         if not provider_entry:
+            if _normalize_aidiy_chat_provider(provider_name) in _AIDIY_CHAT_PROVIDERS:
+                _cprint(f"  Provider is not available in AiDiy_key.json: {provider_name}")
+                return True
             return False
         self._apply_aidiy_provider_model(provider_entry, model_name)
         return True
@@ -13297,6 +13330,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     self._close_model_picker()
                     return
                 provider_data = providers[selected]
+                if provider_data.get("model_list_notice"):
+                    _cprint(f"  {provider_data['model_list_notice']}")
                 state["stage"] = "model"
                 state["provider_data"] = provider_data
                 state["model_list"] = provider_data.get("models") or []
@@ -23420,6 +23455,7 @@ def main(
     pass_session_id: bool = False,
     ignore_user_config: bool = False,
     ignore_rules: bool = False,
+    aidiy_provider_slug: str = None,
 ):
     """
     AiDiy Hermes CLI - Interactive AI Assistant
@@ -23648,6 +23684,9 @@ def main(
                 ignore_rules=ignore_rules,
             )
             cli._aidiy_remember_model_selection = not quiet
+            if aidiy_provider_slug:
+                # runtime の custom 変換後も Gemini / FreeAI の独立したキーを保つ。
+                cli._aidiy_provider_slug = _normalize_aidiy_chat_provider(aidiy_provider_slug)
             cli_provider_configured = _configure_aidiy_cli_provider(
                 cli,
                 provider,
@@ -24195,6 +24234,7 @@ def _load_freeai_defaults(cfg: dict[str, Any], model_override: str | None = None
     api_key = str(cfg.get("freeai_key_id") or "").strip()
     defaults = {
         "provider": "custom",
+        "aidiy_provider_slug": "freeai",
         "base_url": _GEMINI_OPENAI_BASE_URL,
         "model": model,
     }
@@ -24254,7 +24294,7 @@ def _load_xai_oauth_defaults(model_override: str | None = None) -> dict[str, str
 def _load_aidiy_hermes_defaults(requested_model: str | None = None) -> dict[str, str]:
     config_path = _AIDIY_KEY_JSON
     try:
-        with config_path.open("r", encoding="utf-8") as f:
+        with config_path.open("r", encoding="utf-8-sig") as f:
             cfg = json.load(f)
     except Exception:
         # AiDiy の共通設定が未作成でも、初回起動は OpenAI OAuth を使う。
@@ -24301,44 +24341,46 @@ def _load_aidiy_hermes_defaults(requested_model: str | None = None) -> dict[str,
     }
 
 
-def _load_aidiy_hermes_provider_defaults(provider: str | None) -> dict[str, str]:
-    provider_slug = (provider or "").strip().lower()
+def _load_aidiy_hermes_provider_defaults(provider: str | None, api_key_override: str | None = None) -> dict[str, str]:
+    provider_slug = _normalize_aidiy_chat_provider(provider)
     if not provider_slug:
         return {}
 
     config_path = _AIDIY_KEY_JSON
     try:
-        with config_path.open("r", encoding="utf-8") as f:
+        with config_path.open("r", encoding="utf-8-sig") as f:
             cfg = json.load(f)
     except Exception:
         cfg = {}
 
-    if provider_slug in {"openai", "openrt", "openrouter", "gemini", "ollama"}:
+    if api_key_override:
+        key_name = {"openai_chat": "openai_key_id", "claude_chat": "claude_key_id",
+                    "gemini": "gemini_key_id", "freeai": "freeai_key_id", "openrt": "openrt_key_id",
+                    "openrt_free": "openrt_key_id"}.get(provider_slug)
+        if key_name:
+            cfg[key_name] = api_key_override
+
+    if provider_slug in _AIDIY_CHAT_PROVIDERS | {"ollama"}:
         picker = HermesCLI.__new__(HermesCLI)
         picker._aidiy_config = cfg
         entry = picker._get_aidiy_provider_entry(provider_slug, include_models=False)
         if entry:
             return {"provider": entry["runtime_provider"], "model": entry["default_model"],
-                    "base_url": entry["base_url"], "api_key": entry["api_key"]}
+                    "base_url": entry["base_url"], "api_key": entry["api_key"],
+                    "aidiy_provider_slug": entry["slug"]}
+        if provider_slug == "claude_chat":
+            # 旧 --provider anthropic の環境変数・保存済み API キー経路を維持。
+            # /model の一覧表示には引き続き AiDiy の claude_key_id が必要。
+            return {"provider": "anthropic", "model": picker._aidiy_provider_default_model(provider_slug),
+                    "base_url": _CLAUDE_BASE_URL, "aidiy_provider_slug": "claude_chat"}
+        if provider_slug == "openrt_free":
+            # 一覧名だけを分離。キー解決は通常の OpenRouter と同じ経路。
+            return {"provider": "openrouter", "model": picker._aidiy_provider_default_model(provider_slug),
+                    "base_url": _OPENROUTER_BASE_URL, "aidiy_provider_slug": "openrt_free"}
         return {}
-
-    if provider_slug == "anthropic":
-        api_key = str(cfg.get("claude_key_id") or "").strip()
-        model = str(cfg.get("CHAT_CLAUDE_MODEL") or "claude-sonnet-5-5").strip()
-        defaults = {
-            "provider": "anthropic",
-            "base_url": _CLAUDE_BASE_URL,
-            "model": model,
-        }
-        if _is_valid_key(api_key):
-            defaults["api_key"] = api_key
-        return defaults
 
     if provider_slug == "local_chat":
         return _load_local_chat_defaults(cfg)
-
-    if provider_slug == "freeai":
-        return _load_freeai_defaults(cfg)
 
     if provider_slug in {_OPENAI_OAUTH_SLUG, "openai-oauth", "openai-codex"}:
         return _load_openai_oauth_defaults(cfg)
@@ -24433,7 +24475,7 @@ def cli_entry(argv: list[str] | None = None) -> int:
     # auto なのに特定モデル（OAuth 未認証時は FreeAI）を指定した起動になってしまう。
     cli_provider = provider_entry_is_cli(args.provider or "")
     if args.provider and not cli_provider:
-        defaults = _load_aidiy_hermes_provider_defaults(args.provider)
+        defaults = _load_aidiy_hermes_provider_defaults(args.provider, args.api_key)
     elif args.provider:
         defaults = {}
     elif args.model:
@@ -24445,6 +24487,10 @@ def cli_entry(argv: list[str] | None = None) -> int:
     provider = defaults.get("provider") or args.provider
     base_url = args.base_url or defaults.get("base_url")
     api_key = args.api_key or defaults.get("api_key")
+    aidiy_provider_slug = defaults.get("aidiy_provider_slug") or _normalize_aidiy_chat_provider(args.provider)
+    if aidiy_provider_slug == "freeai" and not _is_valid_key(api_key or ""):
+        print(f"AiDiy_key.json に {aidiy_provider_slug} の API キーを設定してください。", file=sys.stderr)
+        return 2
     model = args.model if args.provider and args.model else (defaults.get("model") or args.model)
     if cli_provider and (model or "").strip().lower() in {"auto", "same"}:
         model = None
@@ -24486,6 +24532,7 @@ def cli_entry(argv: list[str] | None = None) -> int:
             pass_session_id=args.pass_session_id,
             ignore_user_config=args.ignore_user_config,
             ignore_rules=args.ignore_rules,
+            aidiy_provider_slug=aidiy_provider_slug if aidiy_provider_slug in _AIDIY_CHAT_PROVIDERS else None,
         )
     except SystemExit as exc:
         code = exc.code

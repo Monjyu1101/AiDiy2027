@@ -103,7 +103,7 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 
 ## モデル設定を変える場合
 
-- `CHAT_AI_NAME` は原則 `_chat` 末尾。OAuth 接続の `openai_oauth` は例外。
+- `CHAT_AI_NAME` は原則 `_chat` 末尾。OAuth 接続の `openai_oauth` と無料OpenRouterの `openrt_free` は例外。
 - `LIVE_AI_NAME` は `_live` 末尾。
 - `CODE_AI*_NAME` は原則 `_sdk` または `_cli`、例外として `aidiy_hermes` を許容する。
 - 比較は完全一致を使い、`startswith` に寄せない。

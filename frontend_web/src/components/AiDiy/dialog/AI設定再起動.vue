@@ -75,6 +75,7 @@ const CHAT_MODEL_KEYS: Record<string, string> = {
   gemini_chat: 'CHAT_GEMINI_MODEL',
   freeai_chat: 'CHAT_FREEAI_MODEL',
   openrt_chat: 'CHAT_OPENRT_MODEL',
+  openrt_free: 'CHAT_OPENRT_FREE_MODEL',
   openai_chat: 'CHAT_OPENAI_MODEL',
   openai_oauth: 'CHAT_OPENAI_MODEL',
   ollama_chat: 'CHAT_OLLAMA_MODEL',

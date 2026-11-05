@@ -48,6 +48,7 @@ class ChatLLMError(Exception):
 # ai_name -> (モジュール, モデル設定キー, APIキー設定キー)
 _AI_TABLE = {
     "openrt_chat": ("AIコア.AIチャット_openrt", "CHAT_OPENRT_MODEL", "openrt_key_id"),
+    "openrt_free": ("AIコア.AIチャット_openrt", "CHAT_OPENRT_FREE_MODEL", "openrt_key_id"),
     "gemini_chat": ("AIコア.AIチャット_gemini", "CHAT_GEMINI_MODEL", "gemini_key_id"),
     "freeai_chat": ("AIコア.AIチャット_gemini", "CHAT_FREEAI_MODEL", "freeai_key_id"),
     "ollama_chat": ("AIコア.AIチャット_ollama", "CHAT_OLLAMA_MODEL", "ollama_key_id"),
@@ -58,7 +59,7 @@ _AI_TABLE = {
 }
 
 # ai_name 候補（key.json の並びに依らず固定の優先順）
-_AI_CANDIDATES = ["openrt_chat", "gemini_chat", "freeai_chat", "ollama_chat"]
+_AI_CANDIDATES = ["openrt_chat", "openrt_free", "gemini_chat", "freeai_chat", "ollama_chat"]
 
 
 class _ConfShim:

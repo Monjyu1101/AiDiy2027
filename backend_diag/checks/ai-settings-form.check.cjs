@@ -86,3 +86,41 @@ test('cancel invalidates delayed load and never writes', async () => {
   assert.equal(f.state.hasLoadedConfig.value,false);
   assert.equal(f.events[0][0],'close'); f.stop();
 });
+
+test('openrt_free uses an independent setting and keeps paid OpenRouter selections on repeated switches and saves', async () => {
+  const settings = {CHAT_AI_NAME:'openrt_chat',CHAT_OPENRT_MODEL:'vendor/paid',CHAT_OPENRT_FREE_MODEL:'auto'};
+  const calls=[];
+  const f=form(async (p,b)=>{
+    calls.push([p,b]);
+    if(b?.save) Object.assign(settings,b.モデル設定);
+    return {data:{status:'OK',data:{モデル設定:{...settings},available_models:{chat_models:{openrt_chat:{'vendor/paid':'Paid'},openrt_free:{'vendor/new:free':'Free','vendor/other:free':'Other'}}}}}};
+  });
+  try {
+    await tick();
+    assert.ok(f.state.chatAiOptions.value.includes('openrt_free'));
+    f.state.selections.chatAi='openrt_free';await tick();
+    assert.equal(f.state.selections.chatModel,'vendor/new:free');
+    f.state.selections.chatModel='vendor/other:free';
+    await f.state.handleSaveOnly();
+    assert.equal(calls.at(-1)[1].モデル設定.CHAT_OPENRT_FREE_MODEL,'vendor/other:free');
+    assert.equal(settings.CHAT_OPENRT_MODEL,'vendor/paid');
+    await f.state.loadConfig();await tick();
+    assert.equal(f.state.selections.chatAi,'openrt_free');
+    assert.equal(f.state.selections.chatModel,'vendor/other:free');
+    f.state.selections.chatAi='openrt_chat';await tick();
+    assert.equal(f.state.selections.chatModel,'vendor/paid');
+    f.state.selections.chatAi='openrt_free';await tick();
+    assert.equal(f.state.selections.chatModel,'vendor/other:free');
+  } finally {f.stop();}
+});
+test('missing or empty free catalog follows normal provider selection', async () => {
+  for(const free of [{},{openrt_free:{}}]){
+    const f=form(async()=>({data:{status:'OK',data:{モデル設定:{CHAT_AI_NAME:'openrt_free',CHAT_OPENRT_FREE_MODEL:'auto',CHAT_OPENRT_MODEL:'vendor/paid'},available_models:{chat_models:{openrt_chat:{'vendor/paid':'Paid'},...free}}}}}));
+    try {
+      await tick();
+      assert.equal(f.state.selections.chatAi,free.openrt_free?'openrt_free':'openrt_chat');
+      assert.equal(f.state.selections.chatModel,free.openrt_free?'':'vendor/paid');
+      assert.equal(f.state.buildNextSettings().CHAT_OPENRT_FREE_MODEL,'auto');
+    } finally {f.stop();}
+  }
+});

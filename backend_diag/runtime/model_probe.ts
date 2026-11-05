@@ -13,7 +13,7 @@ import https from 'node:https';
 import http from 'node:http';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from './transport_limit';
 import {proxyRoute,MetadataProxyAgent,networkFailure} from './environment_proxy';
-import {openrouterCatalog,googleCatalog,openaiCatalog,claudeCatalog,ollamaCatalog,codexCatalog,codexSlugs,codexFallbackCatalog,grokCatalog,idsCatalog,ollamaLocalCatalog,withoutRetired,GROK_CLI_MODELS,LOCAL_CHAT_MODELS,pythonString,type Catalog} from './model_catalog';
+import {openrouterCatalog,googleCatalog,openaiCatalog,claudeCatalog,ollamaCatalog,codexCatalog,codexSlugs,codexFallbackCatalog,grokCatalog,idsCatalog,ollamaLocalCatalog,withoutRetired,GROK_CLI_MODELS,LOCAL_CHAT_MODELS,pythonString,safeRouterMetadata,type Model,type Catalog} from './model_catalog';
 export const CONFIG_LIMIT=128*1024, RESPONSE_LIMIT=DIAG_TRANSPORT_BYTE_LIMIT;
 // 公開・認証付き一覧とも同じHTTP上限。ローカルのCLIキャッシュは従来の上限を保つ。
 export const PUBLIC_RESPONSE_LIMIT=DIAG_TRANSPORT_BYTE_LIMIT;
@@ -151,13 +151,13 @@ export const fetchMetadata:Fetch=(provider,headers,pageToken,signal)=>new Promis
 });
 function secretValues(values:Dictionary):string[] {return SECRET_CONFIG_KEYS.map(name=>values[name]).filter((value):value is string=>configured(value,'')).map(value=>value.trim());}
 export function safeDetails(models:Dictionary,secrets:string[],limit:number|null=500) {
- const result:Record<string,string|null>[]=[];
+ const result:Model[]=[];
  for(const [id,entry] of Object.entries(models)) {
   // OpenRouter の別名（~provider/model）も本体と同じく通す。
   if(!/^~?[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,199}$/.test(id)||!record(entry))continue;
   const values={...entry,model_id:id},cleaned:Record<string,string|null>={};
   for(const name of ['model_id','作成日','トークン数','モダリティ']){const value=values[name as keyof typeof values];let val=value==null?null:pythonString(value);if(val!==null&&(val.length>512||secrets.some(secret=>val!.includes(secret))))val=null;cleaned[name]=val;}
-  if(cleaned.model_id!==null)result.push(cleaned);
+  if(cleaned.model_id!==null)result.push({...cleaned,...safeRouterMetadata(entry,secrets)} as Model);
  }
  return limit===null?result:result.slice(0,limit);
 }
@@ -213,7 +213,7 @@ function authenticatedRouterResult<T extends object>(result:T,key:string):T {
  }});
 }
 export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch=fetchMetadata,now,cache,signal}:{reader?:Reader;oauthReader?:OAuthReader;codexLocalReader?:CodexLocalReader;fetch?:Fetch;now?:Date;cache?:unknown;signal?:AbortSignal}={}) {
- const output={id,状態:'未実施',説明:'未対応の項目です。',モデル:[] as string[],モデル詳細:[] as Record<string,string|null>[],確認日時:null as string|null,警告:[] as string[]};
+ const output={id,状態:'未実施',説明:'未対応の項目です。',モデル:[] as string[],モデル詳細:[] as Model[],確認日時:null as string|null,警告:[] as string[]};
  const selected=KEY_PROVIDERS.find(row=>row.id===id);if(!selected?.probe)return output;
  if(selected.oauth){
   const kind=selected.oauth,cli=OAUTH_CLI[kind],credential=await readOAuth(kind,oauthReader);

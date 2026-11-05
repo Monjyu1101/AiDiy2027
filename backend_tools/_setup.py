@@ -62,7 +62,7 @@ AUTO_MODE = False
 #       IPv4 0.0.0.0 のみ待受の場合 VS Code/Electron から ERR_CONNECTION_REFUSED になる）。
 CHAT_COMPLETIONS_PROVIDER_NAME = "aidiy_chat_completions"
 CHAT_COMPLETIONS_URL = "http://127.0.0.1:8095/aidiy_chat_completions/v1/chat/completions"
-CHAT_COMPLETIONS_MODEL_IDS = ["freeai_chat", "openrt_chat", "gemini_chat", "ollama_chat"]
+CHAT_COMPLETIONS_MODEL_IDS = ["freeai_chat", "openrt_chat", "openrt_free", "gemini_chat", "ollama_chat"]
 VSCODE_CHAT_MODEL_MAX_INPUT_TOKENS = 256000
 VSCODE_CHAT_MODEL_MAX_OUTPUT_TOKENS = 16000
 

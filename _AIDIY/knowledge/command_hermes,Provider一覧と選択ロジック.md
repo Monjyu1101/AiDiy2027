@@ -26,13 +26,24 @@
 
 引数なしの対話起動（`aidiy_hermes`）は `same/same` として前回選択を復元します。`--compact` などの表示設定を付けても同じです。セッション再開（`--resume`）や接続先・キーの明示指定時は、その指定を優先して通常の解決を使います。`--provider auto --model auto`（または `--model auto/auto`）を明示した場合と、非対話実行のモデル未指定も従来の自動解決を使います。AI検索や Code の非対話実行（`-Q` / ワンショット）は手動選択を上書きしません。外部 CLI の `<provider>/same` は従来どおり、その CLI へのモデル指定を省略する意味です。
 
-確認: 専用の自動テストはないため、`aidiy_hermes` を起動して起動選択・picker 保存・次回復元・キー再読込・非対話実行・初期描画を確認します。
+確認: `test_aidiy_model_catalog.py` で候補・キー分離・起動provider識別をオフライン検証し、`aidiy_hermes` の実起動で起動選択・picker保存・次回復元・非対話実行・初期描画を確認します。
 
 AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_aidiy_hermes_defaults()` が共通設定を読みます。`CODE_AIDIY_HERMES_MODEL` は `openai_oauth/gpt-6.1-sol` に加えて `xai-oauth/grok-4.6` を受理します。対応する OAuth が認証済みなら指定 provider を使い、非対話の Code AI 起動時に未認証または認証切れなら `freeai/gemini-3.8-flash` へ退避します。`--provider openai_oauth` / `--provider xai-oauth` を明示指定した場合は OAuth 経路を維持します。CLI の `--model` / `--provider` は初期値より優先されます。
 
-Hermes CLI 自身の選択画面で `anthropic` を選んだときのモデル候補は、`cli_main.py` の `_fetch_aidiy_claude_model_labels` が `hermes_cli/models.py` の `_PROVIDER_MODELS["anthropic"]`（厳選した現行モデル：Fable 5.1 / Opus 5.5 / Sonnet 5.5 / Haiku 5.5）だけを返します。`provider_model_ids("anthropic")` は Anthropic API の一覧（旧世代を含む）を後ろに足すため使いません。新しいモデルが出たら `_PROVIDER_MODELS["anthropic"]` を更新します。`CHAT_CLAUDE_MODEL` 未設定時の既定モデル（`_aidiy_provider_default_model` と `anthropic` の接続設定）も同じ現行モデル（`claude-sonnet-5-5`）に揃えます。
+Hermes の `/model` は `_AIDIY/aidiy_diag/hermes_models_info.json` を使用します。`aidiy_diag` のモデル一覧取得・保存時に、既存の Chat / Code 合成一覧と一緒に生成されます。AIチャットパネルの `chat_models_info.json` や Code ダイアログの `code_models_info.json` の構成・絞り込みは変更しません。
 
-API キーのプロバイダ（`openai` / `ollama` / `openrt` / `gemini` / `freeai`）の候補は `_fetch_aidiy_provider_model_labels` が各 API の `/models` から取得します。`cli_main.py` はモジュール先頭で `urllib` を読み込まないため、同関数内で `import urllib.request` します。これが無いと `NameError` を `except` が握りつぶし、候補が既定モデル1件（`yyyy/mm/dd - 既定モデル`）になります。どのプロバイダも「作成から240日以内の対話モデル」に揃えます。`_AIDIY_NON_CHAT_MODEL` で画像・音声・動画（veo）・音楽（lyria）・埋め込み・リアルタイム・文字起こし・検索・deep-research・antigravity・バッチ専用（`:batch`）などの対話以外のモデルを名前で除き、作成日を返す API（OpenAI / OpenRouter / Ollama）は240日以内だけを新しい順に出します（最大50件、240日以内なら旧世代も残る）。作成日を返さない API（Gemini / FreeAI。OpenAI 互換・ネイティブとも日付なし）は240日で絞れないため、`_aidiy_newest_generation_only` で gemini / gemma の系列ごとに最大の主版（例：最新が 3.8 なら 3.x）だけを残し、版の無い別名（`gemini-flash-latest` など）は残します。OpenRouter のキー（`openrt_key_id`）が使えるときは、`openai` / `gemini` / `freeai` の候補を OpenRouter の `/models` と照合して絞り込みます（`_fetch_aidiy_openrouter_model_meta`、OpenRouter の `openai/` / `google/` の名前を `:free` / `:batch` などの付記を除いて照合）。OpenRouter に無いモデルと、出力がテキストだけではないモデル（`architecture.output_modalities`）を除き、作成日の無い Gemini にも OpenRouter の作成日を使って240日の判定をします。キーが無い・取得できないときは上の従来の判定に戻ります。`openai_oauth` の picker は `_aidiy_code_model_labels()` で診断の合成 JSON を読みます。`_fetch_aidiy_codex_model_labels()` はソースに残っていますが、この picker の取得経路ではありません。
+- `gemini` / `freeai` / `openrt` / `openai_chat` は Chat 一覧のモデルID・表示名・順序を元にします。Hermes独自の50件上限・240日制限・最新主版限定・他社一覧との交差による絞り込みは追加しません。
+- `claude_chat` は Diag が Anthropic から取得した完全なAPIモデルIDを使います。外部Claude CLIの `sonnet` / `opus` 等の短縮名を混ぜず、既存の Anthropic Messages API と `claude_key_id` を使います。AIチャット本体のプロバイダを増やす変更ではありません。
+- 画像生成、音声出力、Live、埋め込み、バッチ等の非対応モデルは専用一覧から除きます。画像を入力してテキストを返すモデルは対象です。Hermes内の画像生成ツールは、この会話モデル選択とは別です。
+- APIキーが未設定のプロバイダは選択肢に出しません。候補ファイル未作成・破損・該当区分なし・空の場合は取得・保存を案内し、未確認の既定モデル1件を候補に捏造しません。直接モデルIDを指定する操作は従来どおりです。
+- `/model` ごとにキー設定を、候補を開くたびに一覧ファイルを読み直します。FreeAIとGeminiは同じGoogleエンドポイントでも、`freeai_key_id` / `gemini_key_id` を独立して使います。起動時に内部providerが `custom` へ変換されてもFreeAIの識別を保持し、provider省略のモデル変更でGeminiキーへ切り替わらないようにします。明示キー付きの `custom` 接続では、同じURLの保存済み資格情報でキーを上書きしません。キーを明示しない従来の資格情報プール利用は維持します。
+- 表示・保存するAPIプロバイダ名は `openai_chat` / `claude_chat`。以前の `openai` / `anthropic` と `anthropic_chat` は別名として受け付け、一覧には二重表示しません。OpenAIは直接のOpenAI互換経路、ClaudeはAnthropicネイティブ経路です。
+
+`openrt_free` は `openrt_key_id` と同じOpenRouter接続先を使う無料会話専用区分です。`chat_models_info.json` と `hermes_models_info.json` の両方に生成し、設定は通常の `CHAT_OPENRT_MODEL` と分離した `CHAT_OPENRT_FREE_MODEL` を使います。直近の期間は既存OpenRouter一覧と同じ（Google/OpenAI/Anthropic/xAI 240日、Perplexity 365日、その他90日）。`:free` 接尾辞だけで判定せず、取得した全料金項目が明示的にゼロでテキスト出力のみのモデルを採用します。モデルIDを加工しません。
+
+`openrt_free` の無料判定は一覧生成時だけです。選択後は通常のOpenRouterと同じAPI・キー・モデルID・実行処理を使い、価格上限、料金証拠の再検査、プラグイン/検索/フォールバックの無料専用制限は追加しません。料金や提供状態は変わることがあるため、一覧を更新するときはDiagでOpenRouterのモデル取得・保存を行います。
+
+Ollama / Local / xAI OAuth の候補・接続処理は今回変更しません。`_fetch_aidiy_provider_model_labels()` などの旧API取得ヘルパーはこれらの既存経路や互換コードとして残りますが、上記5種類のAPIプロバイダの `/model` 候補には使いません。
 
 `frontend_ide/host/scripts/model-catalog.py` は Hermes の picker メソッドを抽出・実行せず、`_AIDIY/aidiy_diag/chat_models_info.json` / `code_models_info.json` と同スクリプトの `PROVIDERS` 対応表から候補を読みます。CLI 自身の picker と画面側の一覧は取得経路を区別します。画面側の確認は Python で `frontend_ide/host/scripts/model-catalog.py command_hermes/cli_main.py <provider>` を実行します。
 
@@ -91,11 +102,11 @@ AiDiy の `/model` picker と `--provider` では、API provider に加えて次
 | `opencode` | `opencode` |
 | `grok-cli` | `grok` |
 
-Hermesの `/model` は `_AIDIY/aidiy_diag/code_models_info.json` の各CLI区分から候補・表示名・順序を読みます。CLIを選んだ後もモデル選択へ進み、先頭は `same (変更なし)`、`auto` は候補に出しません。`same` は外部CLIへの `--model` を省略し、明示モデルだけ `--model <ID>` を渡します。OpenCodeの `openai/` は維持します。旧保存値 `auto` も受け付け、手動選択時は `same` へ正規化します。一覧未作成・破損時のCLI候補はsameだけです。
+Hermesの `/model` は `hermes_models_info.json` の各CLI区分から候補・表示名・順序を読みます。Diagは従来の `code_models_info.json` と同じ導入済みCLIの候補・絞り込み結果を専用一覧へ写します。CLIを選んだ後もモデル選択へ進み、先頭は `same (変更なし)`、`auto` は候補に出しません。`same` は外部CLIへの `--model` を省略し、明示モデルだけ `--model <ID>` を渡します。OpenCodeの `openai/` は維持します。旧保存値 `auto` も受け付け、手動選択時は `same` へ正規化します。一覧未作成・破損時のCLI候補はsameだけです。
 
-OpenAI OAuthは同じファイルの `aidiy_hermes.models` から `openai_oauth/` の候補だけを読み、Hermes内部へ渡す際はその接頭辞を外します。他のAPI providerは既存の取得経路を使います。ファイルは候補を開くたびに読み、実行中に更新された一覧も再表示時に反映します。Diagが生成するHermesのCLI経路も `xx/same` に統一し、バックエンドからHermesを呼ぶ際はモデル引数を省略します。
+OpenAI OAuthは専用一覧の `openai_oauth.models` を読みます。生成時にCode一覧の `aidiy_hermes.models` から `openai_oauth/` の候補だけを取り、実行IDから接頭辞を外して従来の表示名を保持します。専用一覧がまだ存在しない旧環境では、CLIとOpenAI OAuthだけ従来のCode一覧へ互換退避します。専用一覧が存在して破損している場合や区分がない場合は、旧候補を復活させません。ファイルは候補を開くたびに読み、実行中に更新された一覧も再表示時に反映します。Diagが生成するHermesのCLI経路も `xx/same` に統一し、バックエンドからHermesを呼ぶ際はモデル引数を省略します。
 
-検証は `models-info.check.mjs`（backend_diag/checks）で行います。Hermes 側のモデル候補・標準入力・設定保存には専用の自動テストがないため、`aidiy_hermes` の実起動で確認します。
+検証は `models-info.check.mjs` / `hermes-info.check.mjs`（backend_diag/checks）と `test_aidiy_model_catalog.py`（command_hermes/checks）で行います。実キーによる接続、TUI操作、設定保存・次回起動の全体確認は実環境で別途行います。
 
 `antigravity-cli` は本体の `antigravity_cli` と同じ引数規則を使います。初回は `-p <prompt>`、継続時はその後ろに `-c` を付け、`--add-dir <cwd>` と `--print-timeout 20m` を指定します。`CODE_PERMISSIONS` が `none` 以外なら `--dangerously-skip-permissions` も指定します。Windowsでは `%USERPROFILE%\AppData\Local\agy\bin\agy.exe` を優先し、`DETACHED_PROCESS` で親コンソールから切り離します。
 

@@ -118,7 +118,9 @@ class Chat:
     def _select_ai_module(self):
         """AI_NAMEに応じたチャットモジュールを選択してインポート"""
         module_name = "AIコア.AIチャット_openrt"
-        if self.AI_NAME in ("gemini_chat", "freeai_chat"):
+        if self.AI_NAME in ("openrt_chat", "openrt_free"):
+            module_name = "AIコア.AIチャット_openrt"
+        elif self.AI_NAME in ("gemini_chat", "freeai_chat"):
             module_name = "AIコア.AIチャット_gemini"
         elif self.AI_NAME in ("openai_chat", "openai_oauth"):
             module_name = "AIコア.AIチャット_openai"

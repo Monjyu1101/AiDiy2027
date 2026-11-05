@@ -12,11 +12,13 @@ import {readFile} from 'node:fs/promises';
 import { OUTPUT_DIRECTORY, writeResult } from '../診断/headless.mjs';
 import {catalog, resolveProgram} from '../診断/probes.mjs';
 import {currentOpenRouterProof, readConfig} from '../runtime/model_probe.mjs';
+import {openrouterFreeModel, safeRouterMetadata} from '../runtime/model_catalog.mjs';
 import {LIVE_VOICES_FILE, liveVoicesInfo} from './voices_info.mjs';
 import {PREDICTION_MODELS_FILE, predictionModelsInfo} from './prediction_info.mjs';
 import {DECISIONS_MODELS_FILE,decisionsModelsInfo} from './decisions_info.mjs';
 import {COPILOT_FALLBACK_MODELS, OAUTH_FALLBACK_SOURCE, oauthModelFallback} from './model_fallbacks.mjs';
 import {antigravityModels} from './antigravity_models.mjs';
+import {HERMES_MODELS_FILE, hermesModelsInfo} from './hermes_info.mjs';
 
 // 順序はHermesの先頭候補にも使う。存在確認のみでCLIは実行しない。
 const CODE_CLIS = Object.freeze({copilot_cli:'copilot', claude_cli:'claude', codex_cli:'codex',
@@ -156,7 +158,7 @@ const latestCodexModels = rows => {
     return !match || compare(match[1], latest.get(match[2])) === 0;
   });
 };
-const details = result => newestFirst((Array.isArray(result?.モデル詳細) ? result.モデル詳細 : []).map(row => ({model_id:row.model_id, 作成日:row.作成日 ?? null, トークン数:row.トークン数 ?? null, モダリティ:row.モダリティ ?? null})));
+const details = result => newestFirst((Array.isArray(result?.モデル詳細) ? result.モデル詳細 : []).map(row => ({model_id:row.model_id, 作成日:row.作成日 ?? null, トークン数:row.トークン数 ?? null, モダリティ:row.モダリティ ?? null,...safeRouterMetadata(row)})));
 
 // 1 プロバイダ分のファイル内容。result は画面と同じキーテスト結果（サーバー側で保持したもの）。
 export async function modelsInfo(provider, result, {now = () => new Date()} = {}) {
@@ -177,6 +179,8 @@ export async function modelsInfo(provider, result, {now = () => new Date()} = {}
   // 区分名以下は各プログラムがそのまま使う {models} のみ。API の詳細は chat.モデル に残す。
   // Claude / Grok の API 一覧は詳細だけで、本体に存在しない chat 区分は作らない。
   if (layout.chat) info.chat[layout.chat] = layout.chatFixed ? fixedSection(layout.chatFixed) : {models:labels(chatModels)};
+  // 同じ認証済みOpenRouter一覧から、価格と対応出力を確認した無料区分だけを追加する。
+  if (provider.id === 'openrt') info.chat.openrt_free = {models:labels(chatModels.filter(openrouterFreeModel))};
   if (layout.live) {
     const acquired = result?.状態 === 'OK';
     const apiIds = acquired && Array.isArray(result?.ライブ候補) ? result.ライブ候補 : [];
@@ -233,6 +237,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
       if (id === 'openai_oauth' && providers.some(row => row.id === id && row.設定済み === false)) continue;
       // 旧公開一覧の OK や、キー削除後の保存済み候補を引き継がない。
       if (id === 'openrt' && (info.認証確認 !== true || !providers.some(row => row.id === id && row.設定済み === true) || !routerVerified)) continue;
+      if (id === 'openrt') (info.chat ??= {}).openrt_free = {models:chatLabels(newestFirst((Array.isArray(info.chat?.モデル) ? info.chat.モデル : []).filter(openrouterFreeModel)), LAYOUT.openrt)};
       infos.push(info);
     }
     catch (error) { if (error?.code !== 'ENOENT') throw error; }
@@ -248,6 +253,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     }};
   }
   merged.code = availableCodeModels(merged.code, installedClis);
+  const selections = {};
   for (const [group, info] of Object.entries(merged)) {
     // 無効ラベルや旧 auto/same の除外後、CLI の補完後に空区分を落とす。
     let nonempty = Object.fromEntries(Object.entries(info).filter(([, entry]) => Object.keys(entry.models).length));
@@ -279,9 +285,12 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     }
     const file = modelsInfoFile(group);
     await writeResult(path.join(directory, file), nonempty);
+    selections[group] = nonempty;
     saved.push(file);
     if(group==='code'){const naviHermesAvailable=options.naviHermesAvailable??await naviHermesInstalled();await writeResult(path.join(directory,NAVI_MODELS_FILE),naviModelsInfo(nonempty,{...options,naviHermesAvailable}));saved.push(NAVI_MODELS_FILE);}
   }
+  await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:infos}));
+  saved.push(HERMES_MODELS_FILE);
   return saved;
 }
 

@@ -184,7 +184,7 @@ def create_router(chat_llm) -> APIRouter:
                     "parameters": {
                         "prompt": {"type": "string", "required": True, "description": "AI への入力テキスト（日本語可）"},
                         "project_path": {"type": "string", "required": False, "description": "プロジェクト絶対パス。実行先は省略時 CODE_BASE_PATH、DB履歴の所属は未指定ならNULL"},
-                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "openrt_chat", "gemini_chat", "freeai_chat", "ollama_chat"], "description": "使用する AI。auto で CHAT_AI_NAME を優先選択"},
+                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "openrt_chat", "openrt_free", "gemini_chat", "freeai_chat", "ollama_chat"], "description": "使用する AI。auto で CHAT_AI_NAME を優先選択。openrt_free は無料候補の区分。同じOpenRouter処理・キーで実行"},
                         "ai_model": {"type": "string", "required": False, "default": "auto", "description": "モデル名。auto で ai_name の既定モデルを使用"},
                         "system_instruction": {"type": "string", "required": False, "description": "システム指示"},
                         "session_id": {"type": "string", "required": False, "default": "mcp_default", "description": "モデル文脈の継続キー（resume=True）。DBの呼出し単位history_session_idとは別"},
@@ -317,7 +317,7 @@ def create_completions_router(chat_llm) -> APIRouter:
                 "stream": "true で SSE ストリーミング（text/event-stream、全文 1 チャンク + [DONE]）",
             },
             "vision": "対応。最後の user メッセージの content に image_url パート（data: URL / http(s) URL）を含めると、vision 対応モデルへ画像を添付する（単一画像）。",
-            "tool_calling": "対応（openrt_chat / ollama_chat / gemini_chat / freeai_chat）。tools / tool_choice を渡すと function calling を行い、tool_calls と finish_reason='tool_calls' を返す。gemini 系は OpenAI tools を Gemini function calling に内部変換する。",
+            "tool_calling": "対応（openrt_chat / openrt_free / ollama_chat / gemini_chat / freeai_chat）。tools / tool_choice を渡すと function calling を行い、tool_calls と finish_reason='tool_calls' を返す。gemini 系は OpenAI tools を Gemini function calling に内部変換する。",
             "openai_sdk_example": {
                 "base_url": "http://127.0.0.1:8095/aidiy_chat_completions/v1",
                 "api_key": "（任意・未使用）",

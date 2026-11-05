@@ -139,3 +139,23 @@ test('AI settings filters Slack credential fields from success data and never ec
  const failed=await handlerRequest(handler);assert.equal(failed.status,503);
  for(const value of Object.values(secrets))assert.ok(!JSON.stringify(failed.body).includes(value));
 });
+
+test('free OpenRouter model is whitelisted end to end but API keys remain private and unwritable',async()=>{
+ const calls=[];
+ const settings={CHAT_AI_NAME:'openrt_free',CHAT_OPENRT_FREE_MODEL:'vendor/new:free',CHAT_OPENRT_MODEL:'vendor/paid',openrt_key_id:'must-not-return',openrt_free_key_id:'must-not-return'};
+ const bridge=createCoreSettingsBridge({reader,requestFn:async request=>{
+  calls.push(request);
+  if(request.path===AI_SETTINGS_ACTIONS.現在利用者)return ok({利用者ID:'fixture'});
+  if(request.path===AI_SETTINGS_ACTIONS.初期化)return ok({セッションID:'fixture-session'});
+  if(request.path===AI_SETTINGS_ACTIONS.取得)return ok({モデル設定:settings,available_models:{chat_models:{openrt_free:{'vendor/new:free':'Free'}}}});
+  return ok({});
+ }});
+ await bridge('初期化',envelope());
+ const loaded=await bridge('取得',envelope({セッションID:'fixture-session'}));
+ assert.equal(loaded.data.モデル設定.CHAT_OPENRT_FREE_MODEL,'vendor/new:free');
+ assert.deepEqual(loaded.data.available_models.chat_models.openrt_free,{'vendor/new:free':'Free'});
+ assert.ok(!JSON.stringify(loaded).includes('must-not-return'));
+ await bridge('設定',envelope({...mutation,モデル設定:loaded.data.モデル設定}));
+ assert.equal(calls.at(-1).data.モデル設定.CHAT_OPENRT_FREE_MODEL,'vendor/new:free');
+ for(const key of ['openrt_key_id','openrt_free_key_id'])await assert.rejects(bridge('設定',envelope({...mutation,モデル設定:{[key]:'secret'}})),e=>e.status===400);
+});

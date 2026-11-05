@@ -67,8 +67,8 @@ test('models step tests only model providers that can be tested (2 at a time) an
  const publicCache={refresh:async()=>({}),input:()=>({公開モデル:{},公開状態:'取得済'})};
  const result=await modelsStep({configReader:()=>'{}',directory,statusFn,testFn,publicCache,log:line=>lines.push(line)});
  assert.deepEqual(tested.sort(),['gemini','ollama','openrt']);assert.equal(maximum,2);
- assert.deepEqual(result.集計,{OK:2,NG:1});assert.deepEqual(result.保存先,['gemini_models_info.json','openrt_models_info.json','ollama_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);
- assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','ollama_models_info.json','openrt_models_info.json','prediction_models_info.json']);
+ assert.deepEqual(result.集計,{OK:2,NG:1});assert.deepEqual(result.保存先,['gemini_models_info.json','openrt_models_info.json','ollama_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);
+ assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','ollama_models_info.json','openrt_models_info.json','prediction_models_info.json']);
  assert.ok(lines.some(line=>line.includes('NG  Ollama')));
 }));
 

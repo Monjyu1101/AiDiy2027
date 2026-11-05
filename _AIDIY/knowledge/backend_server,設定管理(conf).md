@@ -75,7 +75,7 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 | API Key | `gemini_key_id`, `freeai_key_id`, `claude_key_id`, `openai_key_id`, `copilot_key_id`, `openrt_key_id`, `ollama_key_id` |
 | OpenAI/Azure | `openai_api_type`, `openai_organization`, `azure_endpoint`, `azure_version`, `azure_key_id` |
 | Ollama | `ollama_host` |
-| ChatAI | `CHAT_AI_NAME`, `CHAT_GEMINI_MODEL`, `CHAT_FREEAI_MODEL`, `CHAT_OPENRT_MODEL`, `CHAT_OPENAI_MODEL`, `CHAT_OLLAMA_MODEL`, `CHAT_LOCAL_MODEL` |
+| ChatAI | `CHAT_AI_NAME`, `CHAT_GEMINI_MODEL`, `CHAT_FREEAI_MODEL`, `CHAT_OPENRT_MODEL`, `CHAT_OPENRT_FREE_MODEL`, `CHAT_OPENAI_MODEL`, `CHAT_OLLAMA_MODEL`, `CHAT_LOCAL_MODEL` |
 | LiveAI | `LIVE_AI_NAME`, `LIVE_GEMINI_MODEL/VOICE`, `LIVE_FREEAI_MODEL/VOICE`, `LIVE_OPENAI_MODEL/VOICE` |
 | PredictionAI | LIVE設定ブロックの後、DecisionAIの直前に `PREDICTION_AI_NAME`, `PREDICTION_OPENAI_MODEL`, `PREDICTION_OAUTH_MODEL`, `PREDICTION_GEMINI_MODEL`, `PREDICTION_FREEAI_MODEL`, `PREDICTION_CODEX_CLI_MODEL`, `PREDICTION_COPILOT_CLI_MODEL`, `PREDICTION_AIDIY_HERMES_MODEL`（初期値は方式とChat系4モデルが `auto`、`PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` が `gpt-6-luna`、`PREDICTION_AIDIY_HERMES_MODEL` が `openai_oauth/gpt-6-luna`）。内部RESTの `aidiy_prediction_llms` が次のユーザー入力予測に使用する。Web / AvatarのAI設定再起動画面でもLIVEとDECISIONの間に表示する |
 | DecisionAI | `DECISION_AI_NAME`, `DECISION_OPENAI_MODEL`, `DECISION_OAUTH_MODEL`, `DECISION_GEMINI_MODEL`, `DECISION_FREEAI_MODEL`（初期値はすべて `auto`）（[AI判断](./backend_server,backend_tools,AI判断追加手順.md)） |
@@ -85,6 +85,8 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 予測キーがない既存JSONは通常の不足キー補完で上表の方式別初期値を追加して保存する。設定済みの値は上書きせず、保存時は上記の順序へ並べる。
 
 予測実行は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`）へ `project_path` を渡す。Live試行と同じ直接loopback・固定ヘッダーの制限があり、MCPには公開しない。明示引数を優先し、`auto` の引数は予測専用の設定値を使う。方式設定も `auto` なら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。モデルも `auto` なら選んだ方式の先頭候補を使い、候補外モデルには切り替えない。通常Chat・Decisionの設定や選択順とは独立する。Web / AvatarのAI設定再起動画面は `available_models.prediction_models` の候補を表示し、方式変更時はモデルを `auto` に戻す。保存済みの一覧外モデルは未確認の保持値として残す。履歴の範囲・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。
+
+`openrt_free` のモデル設定は `CHAT_OPENRT_FREE_MODEL`（初期値 `auto`）で独立して保持する。候補は `chat_models_info.json` の `openrt_free` 区分、API キーは通常の `openrt_key_id` を共用する。初期値補正・候補欠落時の選択は他のChat方式と共通とし、無料専用の実行制限は設けない。共通設定へ補正値を書き戻さない。
 
 ### `:cloud` サフィックスの扱い
 

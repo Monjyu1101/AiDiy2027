@@ -123,6 +123,27 @@ function networkFailure(error) {
 }
 
 // ../runtime/model_catalog.ts
+var DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+function safeRouterMetadata(value, secrets = []) {
+  const source = value !== null && typeof value === "object" && !Array.isArray(value) ? value : {};
+  const out = {};
+  if (Object.hasOwn(source, "pricing")) {
+    const raw = source.pricing;
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw) || Object.keys(raw).length > 64 || Object.keys(raw).some((key) => !/^[a-z][a-z0-9_]{0,63}$/.test(key))) out.pricing = null;
+    else out.pricing = Object.fromEntries(Object.entries(raw).map(([key, price]) => [
+      key,
+      ["overrides", "pricing_overrides"].includes(key) && Array.isArray(price) && price.length === 0 ? [] : typeof price === "number" && Number.isFinite(price) ? price : typeof price === "string" && price.length <= 64 && DECIMAL.test(price) && !secrets.some((secret) => price.includes(secret)) ? price : null
+    ]));
+  }
+  const architecture = source.architecture !== null && typeof source.architecture === "object" && !Array.isArray(source.architecture) ? source.architecture : {};
+  for (const name of ["output_modalities", "supported_parameters"]) {
+    const owner = Object.hasOwn(source, name) ? source : name === "output_modalities" ? architecture : {};
+    if (!Object.hasOwn(owner, name)) continue;
+    const values = owner[name];
+    out[name] = Array.isArray(values) && values.length <= 100 && values.every((item) => typeof item === "string" && /^[a-z][a-z0-9_]{0,63}$/.test(item) && !secrets.some((secret) => item.includes(secret))) ? [...values] : [];
+  }
+  return out;
+}
 var empty = () => /* @__PURE__ */ Object.create(null);
 var pythonString = (value) => value === null || value === void 0 ? "None" : value === true ? "True" : value === false ? "False" : String(value);
 function dateLabel(date) {
@@ -159,7 +180,7 @@ function openrouterCatalog(body, now = /* @__PURE__ */ new Date()) {
     const days = provider === "perplexity" ? 365 : ["google", "openai", "anthropic", "x-ai"].includes(provider) ? 240 : 90;
     const created = number(Object.hasOwn(item, "created") ? item.created : 0);
     if (created < cutoff(now, days)) continue;
-    out[id] = { model_id: id, \u30C8\u30FC\u30AF\u30F3\u6570: pythonString(Object.hasOwn(item, "context_length") ? item.context_length : 0), \u30E2\u30C0\u30EA\u30C6\u30A3: Object.hasOwn(row(Object.hasOwn(item, "architecture") ? item.architecture : {}), "modality") ? row(item.architecture).modality : "unknown", \u4F5C\u6210\u65E5: dateLabel(new Date(created * 1e3)) };
+    out[id] = { model_id: id, \u30C8\u30FC\u30AF\u30F3\u6570: pythonString(Object.hasOwn(item, "context_length") ? item.context_length : 0), \u30E2\u30C0\u30EA\u30C6\u30A3: Object.hasOwn(row(Object.hasOwn(item, "architecture") ? item.architecture : {}), "modality") ? row(item.architecture).modality : "unknown", \u4F5C\u6210\u65E5: dateLabel(new Date(created * 1e3)), ...safeRouterMetadata(item) };
   }
   return out;
 }
@@ -564,7 +585,7 @@ function safeDetails(models, secrets, limit = 500) {
       if (val !== null && (val.length > 512 || secrets.some((secret) => val.includes(secret)))) val = null;
       cleaned[name] = val;
     }
-    if (cleaned.model_id !== null) result.push(cleaned);
+    if (cleaned.model_id !== null) result.push({ ...cleaned, ...safeRouterMetadata(entry, secrets) });
   }
   return limit === null ? result : result.slice(0, limit);
 }

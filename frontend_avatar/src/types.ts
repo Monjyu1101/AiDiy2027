@@ -51,6 +51,7 @@ export interface ModelSettings {
   CHAT_GEMINI_MODEL?: string;
   CHAT_FREEAI_MODEL?: string;
   CHAT_OPENRT_MODEL?: string;
+  CHAT_OPENRT_FREE_MODEL?: string;
   CHAT_OPENAI_MODEL?: string;
   CHAT_OLLAMA_MODEL?: string;
   CHAT_LOCAL_MODEL?: string;

@@ -40,11 +40,72 @@ function load(project, filename, data) {
   const dependencies = {...vue, onMounted: () => {}, defineProps: () => ({isOpen: false, sessionId: 'fixture'}), defineEmits: () => () => {},
     apiClient: {post: async (url, body) => {calls.push({url, body});return {data: {status: 'OK', data: {available_models: {code_models: data.code_models, ...data.available_models}, モデル設定: structuredClone(data.settings)}}};}},
     qAlert: async () => {}, qMessage: async () => {}, qConfirm: async () => true};
-  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
+  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
   return {...api, calls, nextTick: vue.nextTick, close: () => scope.stop(), template: descriptor.template.content};
 }
 
 for (const [project, filename] of [['frontend_web', 'frontend_web/src/components/AiDiy/dialog/AI設定再起動.vue'], ['frontend_avatar', 'frontend_avatar/src/dialog/AI設定再起動.vue']]) {
+  test(`${project}: openrt_free selects and saves its own models without changing paid OpenRouter settings`, async () => {
+    const data = fixture();
+    Object.assign(data.settings, {CHAT_AI_NAME: 'openrt_chat', CHAT_OPENRT_MODEL: 'vendor/paid', CHAT_OPENRT_FREE_MODEL: 'auto'});
+    data.available_models = {chat_models: {openrt_chat: {'vendor/paid': 'Paid'}, openrt_free: {'vendor/new:free': 'New free', 'vendor/other:free': 'Other free'}}};
+    const app = load(project, filename, data);
+    try {
+      await app.loadConfig(); await app.nextTick();
+      assert.ok(app.chatAiOptions.value.includes('openrt_free'));
+      app.selections.chatAi = 'openrt_free'; await app.nextTick();
+      assert.ok(app.chatModelOptions.value.every(model => model.value !== 'vendor/paid'));
+      assert.equal(app.selections.chatModel, 'vendor/new:free');
+      app.selections.chatModel = 'vendor/other:free';
+      await app.handleSaveOnly();
+      const saved = app.calls.at(-1).body.モデル設定;
+      assert.equal(saved.CHAT_AI_NAME, 'openrt_free');
+      assert.equal(saved.CHAT_OPENRT_FREE_MODEL, 'vendor/other:free');
+      assert.equal(saved.CHAT_OPENRT_MODEL, 'vendor/paid');
+      Object.assign(data.settings, saved);
+      await app.loadConfig(); await app.nextTick();
+      assert.equal(app.selections.chatAi, 'openrt_free');
+      assert.equal(app.selections.chatModel, 'vendor/other:free');
+      app.selections.chatAi = 'openrt_chat'; await app.nextTick();
+      assert.equal(app.selections.chatModel, 'vendor/paid');
+      app.selections.chatAi = 'openrt_free'; await app.nextTick();
+      assert.equal(app.selections.chatModel, 'vendor/other:free');
+    } finally {app.close();}
+  });
+  test(`${project}: missing free setting uses free candidates, never the paid setting`, async () => {
+    const data = fixture();
+    Object.assign(data.settings, {CHAT_AI_NAME: 'openrt_chat', CHAT_OPENRT_MODEL: 'vendor/paid'});
+    data.available_models = {chat_models: {openrt_chat: {'vendor/paid': 'Paid'}, openrt_free: {'vendor/new:free': 'Free'}}};
+    const app = load(project, filename, data);
+    try {
+      await app.loadConfig(); await app.nextTick();
+      assert.ok(app.chatAiOptions.value.includes('openrt_free'));
+      app.selections.chatAi = 'openrt_free'; await app.nextTick();
+      assert.ok(app.chatModelOptions.value.every(model => model.value !== 'vendor/paid'));
+      assert.equal(app.selections.chatModel, 'vendor/new:free');
+      assert.equal(app.buildNextSettings().CHAT_OPENRT_FREE_MODEL, 'vendor/new:free');
+      assert.equal(app.buildNextSettings().CHAT_OPENRT_MODEL, 'vendor/paid');
+    } finally {app.close();}
+  });
+  test(`${project}: missing or empty free catalog follows normal provider selection`, async () => {
+    for (const free of [{}, {openrt_free: {}}]) {
+      const data = fixture();
+      Object.assign(data.settings, {CHAT_AI_NAME: 'openrt_free', CHAT_OPENRT_MODEL: 'vendor/paid', CHAT_OPENRT_FREE_MODEL: 'auto'});
+      data.available_models = {chat_models: {openrt_chat: {'vendor/paid': 'Paid'}, ...free}};
+      const app = load(project, filename, data);
+      try {
+        await app.loadConfig(); await app.nextTick();
+        assert.equal(app.selections.chatAi, free.openrt_free ? 'openrt_free' : 'openrt_chat');
+        assert.equal(app.selections.chatModel, free.openrt_free ? '' : 'vendor/paid');
+        // 他の方式と同じく、未編集の設定値は表示上の補正だけで書き換えない。
+        await app.handleSaveOnly();
+        const saved = app.calls.at(-1).body.モデル設定;
+        assert.equal(saved.CHAT_AI_NAME, 'openrt_free');
+        assert.equal(saved.CHAT_OPENRT_FREE_MODEL, 'auto');
+        assert.equal(saved.CHAT_OPENRT_MODEL, 'vendor/paid');
+      } finally {app.close();}
+    }
+  });
   test(`${project}: Chat/Live watchers select available values without replacing untouched saved settings`, async () => {
     const data = fixture();
     Object.assign(data.settings, {

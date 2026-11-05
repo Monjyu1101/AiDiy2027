@@ -107,6 +107,10 @@ Ollama の「導入・更新」は、導入済みなら公式の `winget upgrade
 - `code`: `claude_sdk` / `claude_cli` は Claude、`antigravity_cli` は Gemini、`codex_cli` は各ファイルの OpenAI API / OpenAI OAuth、`opencode_cli` は Ollama の取得モデルから `models` を生成します。`codex_cli` は `realtime` を含むモデルを除外し、同じ系列（`sol` / `luna` / `pro` など）は数値として比較した最新バージョンだけを残します。例: `gpt-6.1-sol` があれば `gpt-5.6-sol` は除外します。`-900k` などの別仕様は独立した系列として扱います。`aidiy_hermes` も OpenAI OAuth の取得モデルを使い、モデルIDに `openai_oauth/` を付けます。合成の `aidiy_hermes.models` には、導入済みCLIの `xx/same`（CLI のモデルを維持して呼び出す選択肢）を追加します（下記）。Claude SDK / CLI はモデルIDから `haiku`・`sonnet`・`opus`・`fable` などの名前を抽出してキーに使い、同名は最新の1件へまとめます。表示名は「YYYY/MM/DD - バージョン付きモデルID」とし、最新バージョンを残します。`copilot_cli` は Claude / OpenAI / OpenAI OAuth のファイルに出力し、Claude は系列ごとの最新モデルをバージョン付きIDのキーで保存し、数字間の `-` を `.` に変換します（キー・表示名とも `claude-haiku-5.5` など）。OpenAI / OpenAI OAuth は `codex_cli` と同じ候補で保存します。詳細配列には元のモデルIDを保持します。作成日・並び順は chat と共通です。
 - 固定候補は Grok（`grok_cli`）と backend_local（`local_chat`）だけです。aidiy_diag が管理し、本体は合成JSONから読みます。それ以外は取得に失敗した場合に候補を空にし、状態・説明・警告を残します。
 
+`openrt_free` は同じ OpenRouter キーを使う追加の Chat 区分です。既存の `openrt_chat` は変えず、認証済みの取得結果から、`pricing.prompt` / `pricing.completion` と記載された追加料金がすべて明示的に 0、かつ出力がテキストのみの会話モデルを抽出します。不明な料金・非空の条件付き料金・画像／音声出力・専用の安全判定モデルは除き、`:free` の名前だけでは無料と判定しません。API のモデルIDを変更せず、既存の日付条件（Google / OpenAI / Anthropic / xAI は240日、Perplexity は365日、その他は90日）と新しい順を使います。
+
+価格・出力・対応パラメータは `openrt_models_info.json` の `chat.モデル` に `pricing` / `output_modalities` / `supported_parameters` として残します。選択候補は同ファイルの `chat.openrt_free.models` と `chat_models_info.json` の `openrt_free.models`、Hermes対応候補は `hermes_models_info.json` の `openrt_free.models` に保存します。キー変更・削除・認証失敗後は以前の候補を合成しません。反映するには Diag を再起動して公開情報を取り直し、OpenRouter 行の「テスト」→「書込」を実行します。設定モデル試行は他の区分と同じ処理で `CHAT_OPENRT_FREE_MODEL` を参照します。料金の絞り込みは一覧生成時に行い、実行時は通常の OpenRouter モデルと同じ処理を使います。
+
 Gemini / FreeAI はモデルIDに `lyria` を含むものを詳細・chat・live・code すべての出力対象から除外します。`antigravity_cli` もこの絞り込み後の候補から生成します。
 
 モデル情報の生成・保存は `_config` 上のモデル設定ファイルに依存しません。API 接続用のキー・ログイン情報の読み取りは従来どおりです。保存するのは、このサーバーが直前に取得した結果と Grok / local の固定候補だけで、画面から値は送りません。

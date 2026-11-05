@@ -21,7 +21,7 @@
 
 | キー | 末尾ルール | 例 |
 |------|-----------|----|
-| `CHAT_AI_NAME` | 原則 `_chat`（OAuth は例外） | `gemini_chat`, `openrt_chat`, `openai_chat`, `openai_oauth`, `freeai_chat`, `ollama_chat`, `local_chat` |
+| `CHAT_AI_NAME` | 原則 `_chat`（OAuth・無料OpenRouter は例外） | `gemini_chat`, `openrt_chat`, `openrt_free`, `openai_chat`, `openai_oauth`, `freeai_chat`, `ollama_chat`, `local_chat` |
 | `LIVE_AI_NAME` | `_live` | `gemini_live`, `freeai_live`, `openai_live` |
 | `PREDICTION_AI_NAME` | 予測用のChat / CLI方式 | `auto`, `openai_oauth`, `freeai_chat`, `openai_chat`, `gemini_chat`, `codex_cli`, `copilot_cli`, `aidiy_hermes` |
 | `DECISION_AI_NAME` | 判断用の方式 | `auto`, `openai_oauth`, `freeai_chat`, `openai_decisions`, `gemini_chat` |
@@ -74,6 +74,15 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 読込時は各枠・各フェーズの保存値を使う。Code1→2〜6、Code4→5・6、Task→Teamの既存連動は利用者の変更イベントで行い、コピーによるプロバイダ変更から規定値選択を再発火させない。未編集の値は `buildNextSettings()` で元の保存値を保持する。
 
 検証は `node --test frontend_avatar/checks/ai-settings-models.test.cjs`。両画面の実SFCスクリプトをVueのリアクティビティで動かし、全Code方式・全枠の切替、初期値保持、連動コピー、Grokのsame、OpenCode / Hermesの接頭辞を含む保存API入力を合成データで確認する。実APIへの保存・再起動は行わない。
+
+### OpenRouter の無料モデルを選ぶ
+
+- Chat の方式を `openrt_free` にすると、`chat_models_info.json` の同名区分だけを候補に表示する。通常の `openrt_chat` の候補とは分離する。
+- 実行処理・API 接続先・API キーは通常OpenRouterと共通の `openrt_key_id` を使う。無料用キーは追加しない。
+- 無料用のモデル設定は `CHAT_OPENRT_FREE_MODEL`。初期値は `auto` とし、候補の先頭を選ぶ。既存の `CHAT_OPENRT_MODEL` を転用しない。
+- 分離するのはモデル候補一覧と保存キーだけ。候補欠落時の初期値補正・画面選択も他の方式と同じ処理を使い、無料専用の実行制限は設けない。
+- Web / Avatar / Diag の設定保存APIは無料モデルキーを保存できるが、API キーを設定画面へ返したり書き換えたりしない。
+- 回帰確認は `python -B -m unittest discover -s backend_server/checks -p test_openrt_free_settings.py -v`、`node --test frontend_avatar/checks/ai-settings-models.test.cjs backend_diag/checks/ai-settings-form.check.cjs backend_diag/checks/ai-settings-api.check.mjs`。合成JSONと模擬APIだけを使い、実設定・外部モデルへの接続は行わない。
 
 ### Code CLIのautoによるモデル自動選択
 

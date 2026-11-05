@@ -5,7 +5,49 @@
 // https://github.com/monjyu1101/AiDiy2027
 // backend_server/conf/conf_model.py (blob 7b70e037c3c9e5624509a6a7678f6d104c188f9a)
 // 由来の診断専用移植。I/O・OAuth・静的候補の補充なし。日付は元実装と同じローカル時刻。
-export type Model = {model_id:string; トークン数:unknown; モダリティ:unknown; 作成日:string|null};
+export type Pricing = Record<string,string|number|null|[]>;
+export type Model = {model_id:string; トークン数:unknown; モダリティ:unknown; 作成日:string|null; pricing?:Pricing|null; output_modalities?:string[]; supported_parameters?:string[]};
+// 不明・非数値の料金は null を残し、無料と誤認しない。既知の項目だけを抜いて追加料金を捨てない。
+const DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
+const ZERO_DECIMAL = /^[+-]?(?:0+(?:\.0*)?|\.0+)(?:[eE][+-]?\d+)?$/;
+export function safeRouterMetadata(value:unknown,secrets:string[]=[]):Partial<Model> {
+ const source=value!==null&&typeof value==='object'&&!Array.isArray(value)?value as Record<string,unknown>:{};
+ const out:Partial<Model>={};
+ if(Object.hasOwn(source,'pricing')) {
+  const raw=source.pricing;
+  if(raw===null||typeof raw!=='object'||Array.isArray(raw)||Object.keys(raw).length>64||Object.keys(raw).some(key=>!/^[a-z][a-z0-9_]{0,63}$/.test(key)))out.pricing=null;
+  else out.pricing=Object.fromEntries(Object.entries(raw).map(([key,price])=>[key,
+   ['overrides','pricing_overrides'].includes(key)&&Array.isArray(price)&&price.length===0?[]:
+   typeof price==='number'&&Number.isFinite(price)?price:
+   typeof price==='string'&&price.length<=64&&DECIMAL.test(price)&&!secrets.some(secret=>price.includes(secret))?price:null])) as Pricing;
+ }
+ const architecture=source.architecture!==null&&typeof source.architecture==='object'&&!Array.isArray(source.architecture)?source.architecture as Record<string,unknown>:{};
+ for(const name of ['output_modalities','supported_parameters'] as const) {
+  const owner=Object.hasOwn(source,name)?source:name==='output_modalities'?architecture:{};
+  if(!Object.hasOwn(owner,name))continue;
+  const values=owner[name];
+  out[name]=Array.isArray(values)&&values.length<=100&&values.every(item=>typeof item==='string'&&/^[a-z][a-z0-9_]{0,63}$/.test(item)&&!secrets.some(secret=>item.includes(secret)))?[...values]:[];
+ }
+ return out;
+}
+// prompt/completion が両方明示され、追加料金も全て0の場合だけ無料。微小な正数の丸め落ちも許可しない。
+export function zeroOpenrouterPricing(value:unknown):boolean {
+ const pricing=safeRouterMetadata({pricing:value}).pricing;
+ return !!pricing&&Object.hasOwn(pricing,'prompt')&&Object.hasOwn(pricing,'completion')&&Object.entries(pricing).every(([key,price])=>
+  ['overrides','pricing_overrides'].includes(key)&&Array.isArray(price)&&price.length===0||typeof price==='number'&&price===0||typeof price==='string'&&ZERO_DECIMAL.test(price));
+}
+// 音声/画像生成にはtoken単価0でも従量料金があるため、無料Chatは出力textのみを確認する。
+export function openrouterFreeModel(model:unknown):boolean {
+ if(model===null||typeof model!=='object'||Array.isArray(model))return false;
+ const detail=model as Record<string,unknown>,metadata=safeRouterMetadata(model);
+ if(typeof detail.model_id==='string'&&/(?:^|[-/:])(?:content-safety|moderation|guard(?:rails)?)(?:[-/:]|$)/i.test(detail.model_id))return false;
+ const output=metadata.output_modalities;
+ const modality=typeof detail.モダリティ==='string'?detail.モダリティ:typeof (detail.architecture as Record<string,unknown>|undefined)?.modality==='string'?(detail.architecture as Record<string,unknown>).modality as string:'';
+ const parts=modality.toLowerCase().split(/->|→/);
+ const outputs=output??(parts.length===2?parts[1].split(/[+,/\s]+/).filter(Boolean):[]);
+ const declared=parts.length===2?parts[1].split(/[+,/\s]+/).filter(Boolean):[];
+ return zeroOpenrouterPricing(metadata.pricing)&&outputs.length>0&&outputs.every(value=>value==='text')&&declared.every(value=>value==='text');
+}
 export type Catalog = Record<string,Model>;
 const empty = ():Catalog => Object.create(null);
 export const pythonString = (value:unknown):string => value === null || value === undefined ? 'None' : value === true ? 'True' : value === false ? 'False' : String(value);
@@ -27,7 +69,7 @@ export function openrouterCatalog(body:unknown,now=new Date()):Catalog {
   const id=string(item.id ?? ''),provider=id.includes('/')?id.split('/')[0].toLowerCase():'';
   const days=provider==='perplexity'?365:['google','openai','anthropic','x-ai'].includes(provider)?240:90;
   const created=number(Object.hasOwn(item,'created')?item.created:0);if(created<cutoff(now,days))continue;
-  out[id]={model_id:id,トークン数:pythonString(Object.hasOwn(item,'context_length')?item.context_length:0),モダリティ:Object.hasOwn(row(Object.hasOwn(item,'architecture')?item.architecture:{}),'modality') ? row(item.architecture).modality : 'unknown',作成日:dateLabel(new Date(created*1000))};
+  out[id]={model_id:id,トークン数:pythonString(Object.hasOwn(item,'context_length')?item.context_length:0),モダリティ:Object.hasOwn(row(Object.hasOwn(item,'architecture')?item.architecture:{}),'modality') ? row(item.architecture).modality : 'unknown',作成日:dateLabel(new Date(created*1000)),...safeRouterMetadata(item)};
  }
  return out;
 }

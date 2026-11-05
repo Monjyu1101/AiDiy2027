@@ -8,6 +8,7 @@
 import {runModels} from './key_status.mjs';
 import {publicFailureDescription} from '../runtime/model_probe.mjs';
 import {loadBundledModels} from './bundled_models.mjs';
+import {safeRouterMetadata} from '../runtime/model_catalog.mjs';
 export const SOURCES=Object.freeze({network:'ネットワーク',bundled:'キャッシュ'});
 export function createPublicModelCache({run=runModels,warn=console.warn,loadBundled=loadBundledModels}={}) {
  let state='未取得',models={},checked=null,message='公開モデルはまだ取得していません。',revision=0,pending=null,source=null;
@@ -19,7 +20,7 @@ export function createPublicModelCache({run=runModels,warn=console.warn,loadBund
   if(response.error || data?.状態!=='OK' || !data.公開モデル || typeof data.公開モデル!=='object' || Array.isArray(data.公開モデル))throw new Error(publicFailureDescription(response.error || data?.失敗理由));
   const safe={};for(const [id,details] of Object.entries(data.公開モデル).slice(0,5000)){
    if(!/^~?[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,199}$/.test(id) || !details || typeof details!=='object')continue;
-   safe[id]={model_id:id,作成日:typeof details.作成日==='string'?details.作成日.slice(0,20):null,トークン数:String(details.トークン数 ?? '').slice(0,30),モダリティ:typeof details.モダリティ==='string'?details.モダリティ.slice(0,200):null};
+   safe[id]={model_id:id,作成日:typeof details.作成日==='string'?details.作成日.slice(0,20):null,トークン数:String(details.トークン数 ?? '').slice(0,30),モダリティ:typeof details.モダリティ==='string'?details.モダリティ.slice(0,200):null,...safeRouterMetadata(details)};
   }
   return safe;
  };

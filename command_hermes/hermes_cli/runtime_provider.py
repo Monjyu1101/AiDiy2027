@@ -1286,10 +1286,12 @@ def _resolve_named_custom_runtime(
             pass
     if requested_norm == "custom" and explicit_base_url:
         base_url = explicit_base_url.strip().rstrip("/")
-        # Check credential pool first — mirrors the named-custom-provider path
-        # so bare `provider: custom` with a configured custom_providers entry
-        # also gets its api_key from the pool instead of env var fallbacks.
-        pool_result = _try_resolve_from_custom_pool(base_url, "custom", None)
+        # An explicit key belongs to this selection. In AiDiy, Gemini and
+        # FreeAI share this URL but use independent keys; a URL-matched pool
+        # must not replace either one. Keyless custom routes still use pools.
+        pool_result = None
+        if not has_usable_secret((explicit_api_key or "").strip()):
+            pool_result = _try_resolve_from_custom_pool(base_url, "custom", None)
         if pool_result:
             pool_result["source"] = "direct-alias"
             return pool_result
