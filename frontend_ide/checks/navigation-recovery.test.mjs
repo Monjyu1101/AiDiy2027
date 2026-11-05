@@ -14,7 +14,7 @@ import {localDateTimeInput} from '../src/components/ファイル閲覧/ファイ
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 function fixture({props={},draftActions=null,native=false}={}){
  const calls=[],pending=[],timers=new Map();let serial=0;
- const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,handoff,canHandoff,draftRequest})`,{
+ const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,nextNavigationAction,history,autopilot,submitting,reconciling,savingModel,toolsState,handoff,canHandoff,draftRequest})`,{
   ref,computed,createNavigationPopupSizer,createNavigationMessage,localDateTimeInput,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),
   fetch:(url,options)=>{calls.push(options.method);return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
@@ -164,4 +164,37 @@ test('デスクトップのNaviは共有下書き経路を使いBrowserの本文
  const handlers={},calls=[],source={kind:'navi'},value={text:'AI本文\nそのまま  ',projectPath:'/project'};
  vm.runInNewContext(desktop.slice(start,end),{ipcMain:{handle:(name,fn)=>handlers[name]=fn},trustedEvent:()=>source,sharedDrafts:async()=>({list:async s=>{assert.equal(s,source);calls.push('list');return{ok:true};},insert:async(s,v)=>{assert.equal(s,source);assert.equal(v,value);calls.push('insert');return{ok:true};}}),draftRouter:{list(){throw Error('wrong router');},insert(){throw Error('wrong router');}},browserViews:{action(){throw Error('wrong browser');}}});
  assert.equal((await handlers['development:draft-targets']({})).ok,true);assert.equal((await handlers['development:draft-insert']({},value)).ok,true);assert.deepEqual(calls,['list','insert']);
+});
+
+
+test('次の操作の強調は初期・保存結果・入力変更・入力を戻した場合に一方だけへ切り替わる',()=>{
+ const {api}=fixture();api.availability.value={available:false};assert.equal(api.nextNavigationAction.value,'');
+ api.availability.value={available:true};assert.equal(api.nextNavigationAction.value,'navigate','未実行で有効な目標があればナビ');
+ api.result.value={goal:'目標'};assert.equal(api.nextNavigationAction.value,'evaluate');
+ api.goal.value='変更した目標';assert.equal(api.nextNavigationAction.value,'navigate');
+ api.goal.value=' 目標 ';assert.equal(api.nextNavigationAction.value,'evaluate','既存のtrim比較と同じ扱い');
+ for(const goal of ['', '   ', '\n\t']){api.goal.value=goal;assert.equal(api.nextNavigationAction.value,'');}
+ api.goal.value='新しい目標';assert.equal(api.nextNavigationAction.value,'navigate');
+});
+
+for(const field of ['submitting','reconciling','savingModel','autopilot','history'])test(`${field}中はナビ・再評価のどちらも強調せず、解除後に戻す`,()=>{
+ const {api}=fixture();api.result.value={goal:'目標'};assert.equal(api.nextNavigationAction.value,'evaluate');
+ api[field].value=true;assert.equal(api.nextNavigationAction.value,'');api.goal.value='変更';assert.equal(api.nextNavigationAction.value,'');
+ api[field].value=false;assert.equal(api.nextNavigationAction.value,'navigate');
+});
+
+test('実行環境の利用不可・toolsオフライン・ジョブ実行中は次の操作を強調しない',()=>{
+ const {api}=fixture();api.result.value={goal:'目標'};
+ api.toolsState.value={connected:false,mode:'offline'};api.availability.value={available:false};assert.equal(api.nextNavigationAction.value,'');
+ api.toolsState.value={connected:true,mode:'online'};api.availability.value={available:true};api.job.value={status:'running'};assert.equal(api.nextNavigationAction.value,'');
+ api.job.value={status:'complete'};assert.equal(api.nextNavigationAction.value,'evaluate');
+});
+
+test('履歴の選択中は強調せず、選択完了は再評価、新規作成はナビへ戻す',async()=>{
+ const f=fixture();f.api.history.value=true;f.api.result.value={goal:'以前の目標'};assert.equal(f.api.nextNavigationAction.value,'');
+ const selected=f.api.selectHistory('saved');assert.equal(f.api.nextNavigationAction.value,'');
+ await f.answer({...state(null),result:{schemaVersion:3,goal:'保存済みの目標',items:[],overall:{progress:100},nextItemId:null,nextPrompt:''}});await selected;
+ assert.equal(f.api.goal.value,'保存済みの目標');assert.equal(f.api.nextNavigationAction.value,'evaluate');
+ const fresh=f.api.selectHistory();assert.equal(f.api.nextNavigationAction.value,'');await f.answer(state(null));await fresh;
+ assert.equal(f.api.nextNavigationAction.value,'navigate');
 });

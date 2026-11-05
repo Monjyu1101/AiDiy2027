@@ -8,7 +8,7 @@ import {ref,computed,watch} from 'vue';
 export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearTimeout}){
  const 項目=ref([]),選択=ref(''),読込中=ref(false),保存中=ref(false),処理中=ref(false),起動中=ref(false),通知=ref(''),保存表示=ref('');
  const 更新失敗=ref(false);
- const 一括進捗=ref(null),閉じた進捗=ref('');
+ const 一括進捗=ref(null),閉じた進捗=ref(''),自動起動完了=ref(null);
  // 成功・取消の結果は残さない。失敗だけは確認できるまで表示する。
  const 進捗表示=computed(()=>['running','error'].includes(一括進捗.value?.状態)&&一括進捗.value.実行ID!==閉じた進捗.value?一括進捗.value:null);
  let lifecycle=0,pendingBatch=false,localRun=0,lastServerRun='',requestPreviousRun='';
@@ -39,6 +39,11 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
    if(ports)ポート項目.value=ports.対象||[];
    項目.value=data.対象.map(item=>保存中.value?{...item,設定:項目.value.find(old=>old.id===item.id)?.設定||item.設定}:item);
    起動中.value=data.実行中;一括停止中.value=Boolean(data.一括停止中);if(data.通知)通知.value=['done','cancelled'].includes(incoming?.状態)&&data.通知===incoming.通知?'':data.通知;
+   // 起動・ポート取得が成功した現在の応答だけを使う。手動受付中や前回の完了は流用しない。
+   // 完了直後に終了した場合も表示を奪わないよう、実際に起動した対象の現状を確認する。
+   const 自動起動対象=incoming?.対象;
+   const 自動起動稼働中=Array.isArray(自動起動対象)&&自動起動対象.length>0&&自動起動対象.every(id=>data.対象.some(item=>item.id===id&&item.状態==='稼働中')&&ports?.対象?.some(item=>item.id===id&&item.開放===true));
+   自動起動完了.value=!pendingBatch&&!処理中.value&&!data.実行中&&!data.一括停止中&&一括進捗.value?.実行ID===incoming?.実行ID&&incoming?.自動起動===true&&incoming.種別==='start'&&incoming.状態==='done'&&自動起動稼働中?incoming:null;
    const follow=data.起動表示;
    if(follow?.実行ID&&follow.実行ID!==最後の起動表示&&項目.value.some(item=>item.id===follow.対象)){
     最後の起動表示=follow.実行ID;選択.value=follow.対象;
@@ -50,7 +55,7 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
   }catch(error){if(error.name!=='AbortError'&&revision===version&&operation===localRun){通知.value=error.message;更新失敗.value=true;}}
   finally{if(revision===version){読込中.value=false;controller=undefined;if(visible)timer=setTimer(refresh,logsVisible||一括進捗.value?.状態==='running'?800:5000);}}
  }
- function 表示(value,logs=true){if(!value){lifecycle++;pendingBatch=false;処理中.value=false;一括進捗.value=null;ポート項目.value=[];}visible=value;logsVisible=logs;version++;clearTimer(timer);controller?.abort();if(value){読込中.value=!項目.value.length;void refresh();}}
+ function 表示(value,logs=true){if(!value){lifecycle++;pendingBatch=false;処理中.value=false;一括進捗.value=null;自動起動完了.value=null;ポート項目.value=[];}visible=value;logsVisible=logs;version++;clearTimer(timer);controller?.abort();if(value){読込中.value=!項目.value.length;void refresh();}}
  watch(選択,()=>{if(visible){version++;clearTimer(timer);controller?.abort();void refresh();}});
  async function 設定変更(id,key,value){
   if(保存中.value)return;const item=項目.value.find(item=>item.id===id);if(!item)return;
@@ -85,5 +90,5 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
   catch(error){ブラウザ通知.value=error.message;}finally{ブラウザ起動中.value=false;}
  }
  function 終了(){表示(false);}
- return {Core利用可能,進捗表示,進捗を閉じる,項目,ポート項目,停止警告対象,選択,選択対象,読込中,保存中,処理中,起動中,一括停止中,稼働あり,設定起動可能,一括操作,通知,保存表示,更新失敗,コンソール,表示,設定変更,再起動,停止,終了,ブラウザ起動中,ブラウザ通知,ブラウザ起動可能,ブラウザで開く};
+ return {Core利用可能,進捗表示,進捗を閉じる,自動起動完了,項目,ポート項目,停止警告対象,選択,選択対象,読込中,保存中,処理中,起動中,一括停止中,稼働あり,設定起動可能,一括操作,通知,保存表示,更新失敗,コンソール,表示,設定変更,再起動,停止,終了,ブラウザ起動中,ブラウザ通知,ブラウザ起動可能,ブラウザで開く};
 }

@@ -37,11 +37,11 @@ test('--auto waits for released ports, then runs the saved start once',async t=>
  const {manager,calls,openPorts}=await fixture(t,{open:['tools']});let waits=0,progressId;
  assert.equal(await autoStart(manager,{retries:5,wait:async()=>{
   const progress=(await manager.snapshot()).一括進捗;
-  assert.equal(progress.種別,'start');assert.equal(progress.状態,'running');assert.match(progress.通知,/自動起動/);
+  assert.equal(progress.自動起動,true);assert.equal(progress.種別,'start');assert.equal(progress.状態,'running');assert.match(progress.通知,/自動起動/);
   progressId??=progress.実行ID;assert.equal(progress.実行ID,progressId);
   if(++waits===2)openPorts.delete('tools');
  }}),true);
- await manager.settled();assert.equal(waits,2);assert.equal((await manager.snapshot()).一括進捗.実行ID,progressId);assert.equal((await manager.snapshot()).一括進捗.状態,'done');
+ await manager.settled();assert.equal((await manager.snapshot()).一括進捗.自動起動,true);assert.equal(waits,2);assert.equal((await manager.snapshot()).一括進捗.実行ID,progressId);assert.equal((await manager.snapshot()).一括進捗.状態,'done');
  assert.deepEqual(calls.map(call=>call.id),targets.filter(target=>target.初期設定.起動対象).map(target=>target.id));
 });
 test('--auto gives up on a lasting conflict and shows the reason without starting',async t=>{
@@ -121,7 +121,7 @@ test('bulk restart waits for each target and follows root order without a shell'
  assert.deepEqual(calls.map(call=>call.id),['tools','core','apps','taskteam','web']);
  for(const call of calls){assert.equal(call.options.shell,false);assert.equal(call.args.at(-2),'--diag-start');assert.ok(call.args[3].endsWith('_start.py'));}
  const tail=await manager.logSnapshot('core');assert.match(tail.ログ,/日本語の出力/);assert.equal((await manager.logSnapshot('core',tail.位置)).ログ,'');
- assert.equal((await manager.snapshot()).実行中,false);
+ assert.equal((await manager.snapshot()).実行中,false);assert.equal(Object.hasOwn((await manager.snapshot()).一括進捗,'自動起動'),false);
 });
 
 test('startup focus follows each target and distinguishes another run of the same target',async t=>{
@@ -273,4 +273,49 @@ test('cleanup covers every reboot txt literal emitted or consumed by current bac
  for(const [folder,name] of rebootPaths){await mkdir(join(root,folder,'temp'),{recursive:true});await writeFile(join(root,folder,'temp',name),'test');}
  await manager.restart();await manager.settled();
  for(const [folder,name] of rebootPaths)assert.equal(existsSync(join(root,folder,'temp',name)),false,name);
+});
+
+async function waitForChildren(children,count){
+ const deadline=Date.now()+1000;
+ while(children.length<count){assert.ok(Date.now()<deadline,'synthetic child must appear');await new Promise(resolve=>setTimeout(resolve,2));}
+}
+test('--auto startup failure retains its provenance but never reports completion',async t=>{
+ const {manager,calls}=await fixture(t,{fail:true});
+ assert.equal(await autoStart(manager),true);const id=(await manager.snapshot()).一括進捗.実行ID;
+ await manager.settled();const progress=(await manager.snapshot()).一括進捗;
+ assert.equal(progress.自動起動,true);assert.equal(progress.実行ID,id);assert.equal(progress.状態,'error');assert.equal(calls.length,1);
+});
+for(const action of ['stop previous','stop future','restart','forceStopAll','close'])test(`--auto accepted startup never completes after ${action}`,async t=>{
+ const {manager,children,calls}=await fixture(t,{hold:true});
+ await autoStart(manager);await waitForChildren(children,1);children[0].ready();await waitForChildren(children,2);
+ if(action==='stop previous')await manager.stop('tools');
+ else if(action==='stop future')await manager.stop('web');
+ else if(action==='restart')await assert.rejects(()=>manager.restart('local'),{status:409});
+ else if(action==='forceStopAll')await manager.forceStopAll();
+ else await manager.close();
+ if(action!=='close'&&action!=='forceStopAll')children[1].ready();
+ await manager.settled();const progress=(await manager.snapshot()).一括進捗;
+ assert.ok(!(progress?.自動起動&&progress.状態==='done'));assert.equal(calls.length,2);
+ if(action==='stop previous'||action==='stop future')assert.equal(progress.状態,'error');
+});
+for(const outcome of ['exit','error','restarting'])test(`--auto checks earlier selected services before completion: ${outcome}`,async t=>{
+ const {manager,children}=await fixture(t,{hold:true});await autoStart(manager);
+ for(let index=0;index<5;index++){
+  await waitForChildren(children,index+1);
+  if(index===4){
+   if(outcome==='exit'){children[0].closed=true;children[0].emit('close',0);}
+   else children[0].stdout.write(JSON.stringify(outcome==='error'?{type:'error',message:'late failure'}:{type:'status',state:'再起動待ち'})+'\n');
+  }
+  children[index].ready();
+ }
+ await manager.settled();const progress=(await manager.snapshot()).一括進捗;
+ assert.equal(progress.自動起動,true);assert.equal(progress.状態,'error');
+});
+test('manual restart after automatic success cannot retain its completion marker',async t=>{
+ const {manager}=await fixture(t);await autoStart(manager);await manager.settled();assert.equal((await manager.snapshot()).一括進捗.自動起動,true);
+ const completed=(await manager.snapshot()).一括進捗;assert.deepEqual(completed.対象,['tools','core','apps','taskteam','web']);
+ completed.対象.pop();assert.equal((await manager.snapshot()).一括進捗.対象.length,5,'snapshot must not mutate the completed target list');
+ await manager.restart('web');await manager.settled();assert.equal((await manager.snapshot()).一括進捗,null);
+ await manager.forceStopAll();await manager.settled();await manager.restart();await manager.settled();
+ assert.equal(Object.hasOwn((await manager.snapshot()).一括進捗,'自動起動'),false);
 });

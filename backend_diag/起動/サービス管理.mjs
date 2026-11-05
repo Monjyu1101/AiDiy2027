@@ -44,9 +44,9 @@ export function createStartManager({root=ROOT,spawnFn=spawn,python,readyTimeout=
  let startRevision=0,batchProgress=null,autoProgressRevision=null;
  const beginBatch=(kind,text)=>{batchProgress={実行ID:randomUUID(),種別:kind,状態:'running',通知:text};return batchProgress;};
  const updateBatch=(progress,text,state='running')=>{if(progress&&progress===batchProgress){progress.通知=text;progress.状態=state;}};
- function beginAutoStart(revision){if(revision!==startRevision||busy||stopping||closed)return;autoProgressRevision=revision;beginBatch('start','自動起動の準備・ポート解放を待っています。');}
+ function beginAutoStart(revision){if(revision!==startRevision||busy||stopping||closed)return;autoProgressRevision=revision;beginBatch('start','自動起動の準備・ポート解放を待っています。').自動起動=true;}
  function failAutoStart(revision,text){if(revision!==startRevision||autoProgressRevision!==revision)return;updateBatch(batchProgress,text,'error');autoProgressRevision=null;}
- function cancelAutoProgress(){if(autoProgressRevision!==null){batchProgress=null;autoProgressRevision=null;}}
+ function cancelAutoProgress(){if(autoProgressRevision!==null||batchProgress?.自動起動===true){batchProgress=null;autoProgressRevision=null;}}
  const checkRevision=revision=>{if(revision!==startRevision)throw failure('起動操作は取り消されました。',499);};
  const settingsFile=join(root,'_config','AiDiy_diag_start.json'),runtime=join(root,'temp','aidiy_diag','起動');
  const log=(id,text)=>{const old=logs.get(id)||{text:'',offset:0};old.text+=stripVTControlCharacters(String(text));if(old.text.length>120000){const size=old.text.length-120000;old.offset+=size;old.text=old.text.slice(size);}logs.set(id,old);};
@@ -68,7 +68,7 @@ export function createStartManager({root=ROOT,spawnFn=spawn,python,readyTimeout=
  function targetFor(id){const target=targets?.find(item=>item.id===id);if(!target)throw failure('起動対象が不正です。');return target;}
  const hasOwned=()=>[...sessions.values()].some(session=>session.child&&!session.exited);
  async function ports(){await load();portChecker??=portStatusFn||createPortStatusChecker({targets});return (await portChecker()).対象;}
- async function snapshot(){await load();return {対象:targets.map(target=>({...target,設定:{...settings[target.id]},状態:sessions.get(target.id)?.state||'未起動',管理中:Boolean(sessions.get(target.id)?.child&&!sessions.get(target.id)?.exited)})),実行中:busy||stopping,一括停止中:stopping,一括進捗:batchProgress?{...batchProgress}:null,通知:operation,起動表示:focus?{...focus}:null,終了時停止あり:busy||stopping||hasOwned()};}
+ async function snapshot(){await load();return {対象:targets.map(target=>({...target,設定:{...settings[target.id]},状態:sessions.get(target.id)?.state||'未起動',管理中:Boolean(sessions.get(target.id)?.child&&!sessions.get(target.id)?.exited)})),実行中:busy||stopping,一括停止中:stopping,一括進捗:batchProgress?structuredClone(batchProgress):null,通知:operation,起動表示:focus?{...focus}:null,終了時停止あり:busy||stopping||hasOwned()};}
  async function save(id,value){
   await load();const target=targetFor(id),validated=validateSettings(target,value);
   const task=writing.catch(()=>{}).then(async()=>{
@@ -136,7 +136,7 @@ export function createStartManager({root=ROOT,spawnFn=spawn,python,readyTimeout=
   try{await started;}catch(error){await stop(id);throw error;}finally{clearTimeout(timeout);}
  }
  async function restart(id,{revision=++startRevision}={}){
-  if(autoProgressRevision!==null&&autoProgressRevision!==revision)cancelAutoProgress();
+  if(autoProgressRevision!==revision)cancelAutoProgress();
   checkRevision(revision);
   await load();await writing.catch(()=>{});checkRevision(revision);if(closed)throw failure('起動画面を終了しています。',409);if(busy||stopping)throw failure('起動・停止処理の完了を待ってください。',409);
   if(!id){if(hasOwned()||(await ports()).some(item=>item.開放!==false))throw failure('稼働中または未確認の機能があります。強制停止してから一括起動してください。',409);checkRevision(revision);if(busy||stopping||closed)throw failure('起動・停止処理の完了を待ってください。',409);}
@@ -145,11 +145,23 @@ export function createStartManager({root=ROOT,spawnFn=spawn,python,readyTimeout=
   if(id){const old=logs.get(id)||{text:'',offset:0};logs.set(id,{text:'',offset:old.offset+old.text.length+1});}
   const selected=structuredClone(settings);cancelled.clear();busy=true;operation='設定した順序で起動します。';
   const progress=id?null:(autoProgressRevision===revision&&batchProgress?.状態==='running'?batchProgress:beginBatch('start',operation));
+  if(progress?.自動起動)progress.対象=[...ids];
   autoProgressRevision=null;updateBatch(progress,operation);
   work=(async()=>{
    try{
     if(!id){operation='残っている再起動ファイルを除去しています。';updateBatch(progress,operation);await clearRebootFiles(root);checkRevision(revision);}
-    for(const current of ids){if(closed)break;if(cancelled.has(current))continue;focus={対象:current,実行ID:randomUUID()};operation=targetFor(current).名前+' を再起動しています。';updateBatch(progress,operation);await startOne(current,selected[current]);}if(!closed){operation='起動処理が完了しました。';updateBatch(progress,operation,'done');}}
+    for(const current of ids){
+     if(progress?.自動起動)checkRevision(revision);
+     if(closed)break;if(cancelled.has(current))continue;
+     focus={対象:current,実行ID:randomUUID()};operation=targetFor(current).名前+' を再起動しています。';updateBatch(progress,operation);await startOne(current,selected[current]);
+    }
+    // 自動起動の完了は画面切替の根拠になる。途中の停止・手動操作や、先に起動した対象の終了を成功扱いにしない。
+    if(progress?.自動起動){
+     checkRevision(revision);
+     if(closed||ids.some(current=>{const session=sessions.get(current);return cancelled.has(current)||!session?.child||session.exited||session.stopping||session.state!=='稼働中';}))throw failure('自動起動したすべての機能の稼働を確認できませんでした。',500);
+    }
+    if(!closed){operation='起動処理が完了しました。';updateBatch(progress,operation,'done');}
+   }
    catch(error){operation=error.message||'起動に失敗したため後続の起動を中止しました。';updateBatch(progress,operation,'error');}
    finally{busy=false;}
   })();return {受理:true};

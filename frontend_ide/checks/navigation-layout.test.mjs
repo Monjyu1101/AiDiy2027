@@ -209,3 +209,16 @@ test('自動航行の停止操作はトグル1つだけで、準備・Code実行
  }
  assert.equal(visible(false,{},false,true),false,'手動調査中は従来どおり非表示');assert.equal(disabled(false,false,null),true);
 });
+
+
+test('ナビ・再評価の一方だけを薄紫にし、通常色・無効条件・実行中表示を保持する',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),navi=nodes.find(node=>hasClass(node,'navigation-start')),evaluate=nodes.find(node=>hasClass(node,'navigation-evaluate'));
+ assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}");
+ assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-next-action':nextNavigationAction==='evaluate'}");
+ assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
+ const css=descriptor.styles.map(style=>style.content).join('\n');
+ assert.match(css,/\.navigation-goal-form \.navigation-run\.is-next-action:not\(:disabled\)[^{]*\{background:#c4b5fd;color:#161026;border-color:#c4b5fd\}/);
+ assert.match(css,/\.navigation-run\.is-next-action:not\(:disabled\) img\{filter:brightness\(0\)\}/);
+ assert.match(css,/\.navigation-goal-form \.navigation-run:not\(:disabled\)\{background:#667eea;color:#fff\}/);
+ assert.match(css,/\.navigation-goal-form \.navigation-run\.is-routing\{background:#667eea;color:#fff\}/);
+});

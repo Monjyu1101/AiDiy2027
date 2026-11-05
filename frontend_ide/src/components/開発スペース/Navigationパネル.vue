@@ -56,6 +56,11 @@ watch(()=>[props.project?.path,props.startedAt,recommendedPrompt.value],()=>{dra
 
 const matchesResult=computed(()=>!!result.value&&goal.value.trim()===result.value.goal);
 const canEvaluate=computed(()=>!busy.value&&availability.value.available&&matchesResult.value);
+// 次に実行できる側だけを案内する。実行可否・送信処理自体は変更しない。
+const nextNavigationAction=computed(()=>{
+ if(busy.value||autopilot.value||history.value||!availability.value.available||!goal.value.trim())return '';
+ return matchesResult.value?'evaluate':'navigate';
+});
 let draftInitialized=false,draftEdited=false,pendingGoal=null;
 function editGoal(){draftEdited=true;stopAutopilot('目標が編集されたため停止しました。');}
 // 応答を失った開始要求はGETで状態を確認するまで再送しない。
@@ -286,7 +291,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <form class="navigation-goal-form" @submit.prevent="navigate()">
     <label :for="instance+'-goal'">目標<small v-if="result?.inferred&&matchesResult">（AIの推測・編集できます）</small></label>
     <textarea :id="instance+'-goal'" v-model="goal" :readonly="autopilot" maxlength="4000" rows="4" @input="editGoal" placeholder="目標を入力してください"></textarea>
-    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。ナビを作成すると評価できます。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button type="submit" class="navigation-start navigation-run" :class="{'is-routing':routing}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></button><button type="button" class="navigation-evaluate navigation-run" :disabled="!canEvaluate||autopilot" title="保存済みの作業項目を変えずに再採点" @click="navigate('evaluate')">再評価</button></div></div>
+    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。ナビを作成すると評価できます。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button type="submit" class="navigation-start navigation-run" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></button><button type="button" class="navigation-evaluate navigation-run" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="保存済みの作業項目を変えずに再採点" @click="navigate('evaluate')">再評価</button></div></div>
    </form>
   <div v-if="history" class="navigation-history" role="list"><p v-if="!historyItems.length">このフォルダにナビ履歴はありません</p><button v-for="item in historyItems" :key="item.id" :disabled="busy||autopilot" @click="selectHistory(item.id)"><time>{{new Date(item.updatedAt).toLocaleString()}}</time><span>{{item.goal}}</span></button></div>
   <div v-show="!history" class="navigation-display" :class="{running:submitting||job?.status==='running'}"><div class="navigation-content">
@@ -353,6 +358,9 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 
 <style>
 .navigation-goal-form{flex:none;padding:10px 12px 3px;border-bottom:1px solid var(--aidiy-titlebar-background);background:#0b1220}.navigation-goal-form label{margin-bottom:5px}.navigation-goal-form button:disabled{opacity:.55;cursor:default}.navigation-goal-form button:focus-visible{outline:2px solid #8de8e0;outline-offset:2px}.navigation-draft-note{font-size:11px;color:#f5cf85;margin:0;overflow-wrap:anywhere}.navigation-form-foot button{flex:none}.navigation-estimate-note{display:block;margin-top:8px;color:#b3c5d8}.navigation-content{padding:10px 12px}.navigation-content .navigation-task-heading{margin:0 0 5px;font-size:inherit;font-weight:600;line-height:inherit}
+.navigation-goal-form .navigation-run.is-next-action:not(:disabled),.navigation-goal-form .navigation-run.is-next-action:not(:disabled) .navigation-button-label{background:#c4b5fd;color:#161026;border-color:#c4b5fd}
+.navigation-goal-form .navigation-run.is-next-action:not(:disabled):hover,.navigation-goal-form .navigation-run.is-next-action:not(:disabled):hover .navigation-button-label{background:#d8ccff;border-color:#d8ccff}
+.navigation-run.is-next-action:not(:disabled) img{filter:brightness(0)}
 .navigation-goal-form .navigation-run.is-routing{background:#667eea;color:#fff}.navigation-run.is-routing img{display:none}.navigation-run.is-routing .navigation-button-label{margin-top:0;background:#667eea;color:#fff;font-size:9px;letter-spacing:-.5px;padding:0 1px;white-space:nowrap}
 </style>
 

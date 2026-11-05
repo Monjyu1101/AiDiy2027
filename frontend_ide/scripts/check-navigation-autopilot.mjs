@@ -62,6 +62,11 @@ try{
   const toggle=await evaluate(`(()=>{const button=document.querySelector('.navigation-autopilot-toggle'),track=button.querySelector('.motion-switch');return {role:button.getAttribute('role'),checked:button.getAttribute('aria-checked'),state:button.querySelector('.navigation-autopilot-state').textContent,label:button.firstElementChild.textContent,hidden:track.getAttribute('aria-hidden'),radius:getComputedStyle(button).borderTopLeftRadius,trackWidth:getComputedStyle(track).width}})()`);
   assert.equal(toggle.role,'switch');assert.equal(toggle.checked,String(active));assert.equal(toggle.state,active?'オン':'オフ');assert.equal(toggle.label,'自動航行');assert.equal(toggle.hidden,'true');assert.equal(toggle.radius,'0px');assert.equal(toggle.trackWidth,'28px');
  };
+ const checkNextAction=async expected=>{
+  const buttons=await evaluate(`[...document.querySelectorAll('.navigation-run-actions .navigation-run')].map(button=>({action:button.classList.contains('navigation-start')?'navigate':'evaluate',next:button.classList.contains('is-next-action'),disabled:button.disabled,color:getComputedStyle(button).backgroundColor}))`);
+  assert.deepEqual(buttons.filter(button=>button.next).map(button=>button.action),expected?[expected]:[]);
+  for(const button of buttons)if(button.next){assert.equal(button.disabled,false);assert.equal(button.color,'rgb(196, 181, 253)');}
+ };
  const checkEmbeddedHeader=async active=>{
   const header=await evaluate(`(()=>{const pane=document.querySelector('.navigation-code'),header=pane.querySelector(':scope>header');return {title:pane.querySelector(':scope>header strong')?.textContent??null,header:!!header,stop:header?.querySelector('button')?.textContent??null,mainTitle:document.title}})()`);
   assert.equal(header.title,null,'Navigator右側にはCodeタイトルを表示しない');
@@ -73,7 +78,11 @@ try{
  await until(()=>evaluate(`!!document.querySelector('.navigation-autopilot-toggle')`),'toggle');
  assert.equal(await evaluate(`document.querySelector('.navigation-task-heading time').dateTime`),'2026-11-05T00:00:00.000Z');assert.match(await evaluate(`document.querySelector('.navigation-task-heading time').textContent`),/^ \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/);
  assert.equal(await evaluate(`document.querySelectorAll('.navigation-task-heading time').length`),1);assert.equal(await evaluate(`document.querySelector('.navigation-items time')===null`),true);
- await checkCodeFrame(false);await checkAutopilotToggle(false);
+ await checkCodeFrame(false);await checkAutopilotToggle(false);await checkNextAction('evaluate');
+ const editGoal=text=>evaluate(`(()=>{const input=document.querySelector('.navigation-goal-form textarea');input.value=${JSON.stringify(text)};input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+ await editGoal('入力を変更した目標');await checkNextAction('navigate');
+ await editGoal('   ');await checkNextAction('');
+ await editGoal(result.goal);await checkNextAction('evaluate');
  assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
  await checkCodeFrame(true);
  await checkEmbeddedHeader(false);
@@ -88,7 +97,7 @@ try{
  writeFileSync(join(out,'completed.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  // Reload restores only the record, never the permission to execute. Stop before completion.
  result=makeResult(20);job=null;hold=true;await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.navigation-autopilot-toggle')&&!document.querySelector('.navigation-autopilot-toggle').disabled`),'reload');const count=calls.filter(x=>x==='input_text').length;await click('自動航行 オフ');await until(()=>calls.filter(x=>x==='input_text').length===count+1,'running');
- await checkAutopilotToggle(true);await checkEmbeddedHeader(true);writeFileSync(join(out,'cruise-without-code-title.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
+ await checkAutopilotToggle(true);await checkNextAction('');await checkEmbeddedHeader(true);writeFileSync(join(out,'cruise-without-code-title.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  await click('自動航行 オン');await until(()=>calls.includes('cancel_run'),'visible Code stop');await checkEmbeddedHeader(false);
  await click('自動航行 オフ');await until(()=>calls.filter(x=>x==='input_text').length===count+2,'running again');await click('CODE非表示');await click('自動航行 オン');await until(()=>calls.filter(x=>x==='cancel_run').length===2,'hidden Code stop');await sleep(1700);assert.equal(evaluations,2,'OFF must not reevaluate');assert.equal(calls.filter(x=>x==='input_text').length,count+2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
  // 実行エラーで停止した後、同じ埋込Codeを閉じずに明示オンから再開できる。

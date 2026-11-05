@@ -49,13 +49,15 @@ test('実Vueタイトル欄: ミニ→最小化→最大化→ピン→終了の
 });
 async function appState(switchMini=async()=>true,globals={}){
  const {認証セッションを作成}=await import('../ui/src/components/ウィンドウ/認証セッション.mjs');
+ const 自動起動表示=await import('../ui/src/components/起動/自動起動表示.mjs');
  const {起動ミニ表示を作成}=await import('../ui/src/components/ウィンドウ/起動ミニ表示.mjs');const displays=[],switches=[],noop=()=>{};
  const methods={接続:noop,終了:noop,中止:noop,切断:noop,表示を離れる:noop,読込:async()=>{},一覧:vue.ref(null),実行中:vue.ref(false)};
  const modules={
   './components/ウィンドウ/認証セッション.mjs':{認証セッションを作成:options=>認証セッションを作成({...options,storage:()=>globals.sessionStorage})},
   './components/導入状況/導入状況状態.mjs':{導入状況状態を作成:()=>({一覧を反映:noop})},'./components/導入状況/導入操作状態.mjs':{導入操作状態を作成:()=>methods},
   './components/キー設定共通/キー設定状態.mjs':{キー設定状態を作成:()=>({終了:noop,resetPublic:noop,設定を破棄:noop})},'./components/ウィンドウ/Tools接続.mjs':{Tools接続を作成:()=>methods},
-  './components/起動/起動状態.mjs':{起動状態を作成:()=>({表示:(...args)=>displays.push(args),終了:noop})},'./components/アプリ起動/アプリ状態.mjs':{アプリ状態を作成:()=>({...methods,フォルダ:vue.ref('')})},
+  './components/起動/起動状態.mjs':{起動状態を作成:()=>({表示:(...args)=>displays.push(args),終了:noop,自動起動完了:vue.ref(null)})},'./components/アプリ起動/アプリ状態.mjs':{アプリ状態を作成:()=>({...methods,フォルダ:vue.ref('')})},
+  './components/起動/自動起動表示.mjs':自動起動表示,
   './components/アプリ起動/CLI状態.mjs':{CLI状態を作成:()=>methods},'./components/ウィンドウ/起動ミニ表示.mjs':{起動ミニ表示を作成:options=>起動ミニ表示を作成({...options,切替:async value=>{switches.push(value);return switchMini(value);}})},
   './components/AIモデル/AIモデル状態.mjs':{AIモデル状態を作成:()=>methods},'./components/設定モデル/設定モデル状態.mjs':{設定モデル状態を作成:()=>methods},
  };
@@ -63,6 +65,26 @@ async function appState(switchMini=async()=>true,globals={}){
  const scope=vue.effectScope();let state;const warn=console.warn;console.warn=()=>{};try{state=scope.run(()=>app.setup({}, {expose(){}}));}finally{console.warn=warn;}
  return {scope,state,displays,switches};
 }
+test('実App状態: 自動起動完了でアプリ起動へ一度だけ移り、表示モードを変えない',async()=>{
+ const {scope,state,displays,switches}=await appState();
+ try{
+  state.connected.value=true;await flush();
+  state.起動.自動起動完了.value={実行ID:'auto-1',自動起動:true,種別:'start',状態:'done'};await flush();
+  assert.equal(state.tab.value,'apps');assert.equal(state.ミニ表示.value,false);assert.deepEqual(switches,[]);assert.deepEqual(displays.at(-1),[true,false]);
+  await state.changeTab('start');state.起動.自動起動完了.value={実行ID:'auto-1',自動起動:true,種別:'start',状態:'done'};await flush();assert.equal(state.tab.value,'start');
+ }finally{scope.stop();}
+});
+test('実App状態: 完了前のタブ選択・表示切替を優先する',async()=>{
+ for(const action of ['tab','mini']){
+  const {scope,state}=await appState();
+  try{
+   state.connected.value=true;await flush();
+   if(action==='tab')await state.changeTab('start');else await state.表示切替('mini');
+   state.起動.自動起動完了.value={実行ID:'auto-2',自動起動:true,種別:'start',状態:'done'};await flush();
+   assert.equal(state.tab.value,'start');assert.equal(state.ミニ表示.value,action==='mini');
+  }finally{scope.stop();}
+ }
+});
 test('実App状態: 全7タブからミニへ移行し元のタブへ復帰、ミニ中はポート監視を維持する',async()=>{
  const {scope,state,displays,switches}=await appState();
  try{state.connected.value=true;await flush();for(const tab of ['install','keys','integrations','trials','manual','start','apps']){state.tab.value=tab;await flush();assert.equal(state.ミニ表示.value,false);await state.ミニ.変更(true);await flush();assert.equal(state.tab.value,tab);assert.equal(state.ミニ表示.value,true);assert.deepEqual(displays.at(-1),[true,false]);await state.ミニ.変更(false);await flush();assert.equal(state.tab.value,tab);assert.equal(state.ミニ表示.value,false);}assert.equal(switches.length,14);await state.ミニ.変更(true);state.connected.value=false;await flush();assert.equal(state.ミニ表示.value,false);}finally{scope.stop();}
