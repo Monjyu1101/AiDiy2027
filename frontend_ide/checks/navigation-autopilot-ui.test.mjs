@@ -7,6 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
 import {ref,computed,toRaw} from 'vue';
 import {runNavigationAutopilot} from '../src/components/開発スペース/Navigation自動運転.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
@@ -15,7 +16,7 @@ const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 function fixture(handler,props={}){
  const calls=[],resizes=[],timers=new Map();let id=0,evaluations=0,state=makeResult(0),job=null;
- const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
+ const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,createNavigationPopupSizer,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
   const method=options.method||'GET';calls.push({url,method});const custom=await handler?.(url,options);if(custom)return custom;
   if(url==='/api/connection')return reply({active:true,startedAt:1});
   if(url.startsWith('/api/navigation/code'))return reply({url:'/panels/code/navi-1/test/'});

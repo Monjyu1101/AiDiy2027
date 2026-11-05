@@ -733,7 +733,7 @@ CodeとNaviの `sending.png` は `scripts/build.mjs` が `host/media` からビ�
 
 ### Navigator の埋込Codeと自動航行（Navi Cruise）
 
-タイトル部分の「Code オン／オフ」はNavigator自身を右へ拡大し、専用Codeを内部に表示します。開くだけでは提案の入力・送信を行いません。自動航行がオフなら、埋込Codeは人間が入力・送信・モデル選択を行う通常のCodeとして使えます。自動航行の完了・停止後も、実行中の停止確認が終われば同じ画面で手動操作へ戻れます。Codeをオフにすると通常幅へ戻します。自動航行をオンにするとCodeを自動で表示します。その後はタイトルのCode切替で手動で隠せます。非表示でも同じCodeの実行・再評価を継続し、再表示すると会話・入力・実行状態を引き継ぎます。非表示中も総合評価の光と「自動航行中」、状態欄の停止ボタンを表示します。Code切替は表示だけを変更し、通常の手動操作中もセッションを破棄しません。デスクトップは元の寸法を保存し、ディスプレイの作業領域に収めます。VRのパネル移動中は拡大を開始せず案内します。最大化中は既存の領域を使います。Webでは同じパネル内の右列に表示します。
+タイトル部分の「Code オン／オフ」はNavigator自身を右へ拡大し、専用Codeを内部に表示します。開くだけでは提案の入力・送信を行いません。自動航行がオフなら、埋込Codeは人間が入力・送信・モデル選択を行う通常のCodeとして使えます。自動航行の完了・停止後も、実行中の停止確認が終われば同じ画面で手動操作へ戻れます。Codeをオフにすると通常幅へ戻します。自動航行をオンにするとCodeを自動で表示します。その後はタイトルのCode切替で手動で隠せます。非表示でも同じCodeの実行・再評価を継続し、再表示すると会話・入力・実行状態を引き継ぎます。非表示中も総合評価の光と「自動航行中」、状態欄の停止ボタンを表示します。Code切替は表示だけを変更し、通常の手動操作中もセッションを破棄しません。最初のCodeオンでは標準幅480pxの2倍（960px）を使い、すでに960px以上なら狭めません。その後は通常表示とCode表示の手動調整した幅・高さを窓ごとに別々に記憶し、切替時に復元します。位置は現在の位置を維持してディスプレイの作業領域へ収め、小さい画面への一時的な縮小では記憶寸法を上書きしません。Code表示で手動指定した幅は960px未満でも次回に復元します。ただしオンにする時点の通常幅が960px以上なら、より小さい記憶幅への復元より現在幅の維持を優先します。この場合もCode側の手動指定は失わず、通常幅を960px未満へ狭めてからオンにすると記憶幅へ戻ります。寸法記憶は既存Code窓と同様に窓を閉じるまでで、再起動後は標準寸法から始めます。VRのパネル移動中は切替を開始せず案内します。最初から最大化・全画面の場合は既存の領域を維持します。通常表示でCodeを開いた後に最大化した場合は、Codeオフで通常寸法へ戻します。Web別窓も同じ寸法記憶を使いますが、窓のリサイズ・移動はブラウザーの許可範囲に従います。通常ブラウザータブとIDE本体の寸法は変更せず、同じパネル内の右列に表示します。
 
 総合評価100%未満で、保存済み目標・有効な提案・評価環境が揃うと「コピー」の隣の「自動航行」をオンにできます。許可は現在の画面内だけに保持し、履歴、再起動、再表示から復元しません。専用Codeで提案本文を実行し、依頼IDに一致する受付・成功通知を確認した後だけ、既存の読取専用経路で再評価します。100%になれば終了します。評価はAIの推定であり、品質保証ではありません。
 
@@ -745,7 +745,7 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 各Navigatorは `/api/navigation/code?instance=navi-N&session=...` により独立Codeプロセスを持ちます。既存Code窓や他のNavigatorとは共有しません。作成・破棄と幅変更は直列化し、連続した表示切替で重複作成や実行中断を起こしません。Codeの破棄はNavigator終了・プロジェクト変更・利用セッション変更時に行います。サーバー側でも利用セッション・モード・所有窓・Originを検証します。Coreへ渡す `navigationRequestId` は任意の相関IDであり、権限を付与しません。STXと終端のID、および `navigationStatus` の成功を照合し、単なる待機状態・別依頼の出力・エラーを完了扱いにしません。
 
-関連試験は `node --test checks/navigation-autopilot*.test.mjs checks/navigation-code-*.test.* checks/code-navigation-*.test.mjs checks/navigation-recovery.test.mjs checks/navigation-layout.test.mjs`。`npm run build` 後の `node scripts/check-navigation-autopilot.mjs` は実VueとChromium、模擬API/SSEで右側配置、単独表示、2周から100%終了、オフ後の後続禁止を確認し、`temp/navigation-autopilot-check/` に証跡を保存します。実AIの課金・ユーザープロジェクトの変更は行いません。Chromiumのローカルソケット利用が許可される環境で実行してください。実Windows/Electronでの境界・VR・最大化を含む目視確認は別途必要です。
+関連試験は `node --test checks/navigation-autopilot*.test.mjs checks/navigation-code-*.test.* checks/navigation-popup-size.test.mjs checks/code-navigation-*.test.mjs checks/navigation-recovery.test.mjs checks/navigation-layout.test.mjs`。`npm run build` 後の `node scripts/check-navigation-autopilot.mjs` は実VueとChromium、模擬API/SSEで右側配置、単独表示、2周から100%終了、オフ後の後続禁止を確認し、`temp/navigation-autopilot-check/` に証跡を保存します。実AIの課金・ユーザープロジェクトの変更は行いません。Chromiumのローカルソケット利用が許可される環境で実行してください。実Windows/Electronでの境界・VR・最大化を含む目視確認は別途必要です。
 
 自動航行がオンかつ総合評価100%未満の場合だけ、埋込Codeの外枠にIDEの「自動探索」と同じシアンの周回光を表示します。Code実行中だけでなく準備・再評価中も継続し、オフ・停止・失敗・100%達成で消えます。既存の `motion-spin` を使うCSS描画だけで、タイマーやCanvasは追加しません。`prefers-reduced-motion: reduce` では動かさず固定色の枠にします。
 

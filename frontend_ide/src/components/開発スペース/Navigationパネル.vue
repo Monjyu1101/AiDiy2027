@@ -8,6 +8,7 @@ import {h,ref,computed,inject,nextTick,onBeforeUnmount,watch,onMounted} from 'vu
 import CodePanel from '../コード/コードパネル.vue';
 import {runNavigationAutopilot,navigationWait} from './Navigation自動運転.js';
 import {DEFAULT_NAVIGATION_GOAL} from './Navigation既定値.js';
+import {createNavigationPopupSizer} from './Navigation窓サイズ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../ターミナル/開始表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
@@ -133,6 +134,7 @@ const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false
 let codeSession,codePromise,autopilotController,visibilityTimer,codeGeneration=0;
 let codeQueue=Promise.resolve(),codeReleaseUncertain=false;
 let codeResizeQueue=Promise.resolve();
+const resizePopupCode=createNavigationPopupSizer();
 function resizeCode(expanded){
  const operation=codeResizeQueue.catch(()=>{}).then(()=>performCodeResize(expanded));
  codeResizeQueue=operation;return operation;
@@ -140,7 +142,7 @@ function resizeCode(expanded){
 async function performCodeResize(expanded){
  const owner=panel.value?.ownerDocument?.defaultView;
  if(window.aidiyWindow?.navigationCode&&(props.standalone||detached.value)){const response=await window.aidiyWindow.navigationCode(expanded,detached.value?owner?.name:undefined);if(!response?.ok)throw Error(response?.error||'Navigatorの幅を変更できません。');}
- else if(detached.value&&owner&&owner!==window){if(expanded){owner.__navigationWidth??=owner.outerWidth;owner.resizeTo?.(Math.min(owner.screen.availWidth,owner.outerWidth+480),owner.outerHeight);}else if(owner.__navigationWidth){owner.resizeTo?.(owner.__navigationWidth,owner.outerHeight);delete owner.__navigationWidth;}}
+ else if(detached.value&&owner&&owner!==window)await resizePopupCode(owner,expanded);
 }
 function syncCruiseTitle(){
  const doc=panel.value?.ownerDocument||(props.standalone?window.document:null);

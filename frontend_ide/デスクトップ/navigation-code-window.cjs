@@ -20,23 +20,27 @@ function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionK
    const state=await readState(owner);
    if(!valid()||!state.active||(record.owner&&record.linkKey!==sessionKey(state)))throw Error('Navigatorの利用状態が変わりました。');
    if(owner.vrPanelMoving)throw Error('VRパネルの移動が終わってから開いてください。');
-   const win=record.window,previous=saved.get(record);
-   let current=win.getBounds();
-   // 最大化・全画面から開くときは既存領域を使う。拡張後に最大化した窓を閉じる場合は元の寸法へ戻す。
-   if(win.isMaximized?.()||win.isFullScreen?.()){
-    if(expanded||!previous)return{ok:true,width:current.width};
-    if(win.isFullScreen?.())win.setFullScreen(false);
-    if(win.isMaximized?.())win.unmaximize();
-    current={...previous};
+   const {createNavigationSizeMemory,fitNavigationBounds}=await import('../src/components/開発スペース/Navigation窓サイズ.js');
+   if(!valid())throw Error('Navigatorの利用状態が変わりました。');
+   if(owner.vrPanelMoving)throw Error('VRパネルの移動が終わってから開いてください。');
+   const win=record.window;
+   let entry=saved.get(record);if(!entry){entry={memory:createNavigationSizeMemory(size.幅*2),keepMaximized:false};saved.set(record,entry);}
+   const {memory}=entry;
+   const maximized=win.isMaximized?.()||win.isFullScreen?.();
+   const current=maximized&&win.getNormalBounds?win.getNormalBounds():win.getBounds();
+   const change=memory.prepare(expanded,current);
+   if(!change)return{ok:true,width:win.getBounds().width};
+   // 最大化・全画面で開く場合は既存領域を使い、通常寸法だけを記憶する。
+   if(maximized&&(expanded||entry.keepMaximized)){
+    entry.keepMaximized=expanded;memory.commit(change,current);return{ok:true,width:win.getBounds().width};
    }
-   if(expanded&&previous||!expanded&&!previous)return{ok:true,width:current.width};
-   const area=screen.getDisplayMatching(current).workArea,margin=8;
-   const width=Math.min(expanded?current.width+size.幅:previous.width,Math.max(1,area.width-margin*2));
-   const height=Math.min(expanded?current.height:previous.height,Math.max(1,area.height-margin*2));
-   const next={x:Math.max(area.x+margin,Math.min(current.x,area.x+area.width-margin-width)),y:Math.max(area.y+margin,Math.min(current.y,area.y+area.height-margin-height)),width,height};
+   if(win.isFullScreen?.())win.setFullScreen(false);
+   if(win.isMaximized?.())win.unmaximize();
+   const area=screen.getDisplayMatching(current).workArea;
+   const next=fitNavigationBounds(current,change.size,area);
    win.setBounds(next);
-   if(expanded)saved.set(record,current);else saved.delete(record);
-   return{ok:true,width};
+   entry.keepMaximized=false;memory.commit(change,win.getBounds());
+   return{ok:true,width:win.getBounds().width};
   }catch(error){return{ok:false,error:error.message};}
  };
 }
