@@ -132,7 +132,7 @@ test('目標は4行、左の説明・目標差異・モデル3段の右に同サ
  assert.equal(nodes.filter(node=>hasClass(node,'navigation-draft-note')).length,1);assert.ok(!children.some(node=>hasClass(node,'navigation-draft-note')));
  const [navi,evaluate]=elements(controls[1]);assert.ok(hasClass(navi,'navigation-run')&&hasClass(evaluate,'navigation-run'));assert.equal(elements(navi)[0].props.find(p=>p.type===7&&p.name==='bind'&&p.arg?.content==='src').exp.content,'sendIcon');assert.equal(evaluate.children[0].content,'再評価');
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
- assert.equal(attr(evaluate,'title'),'目標を最終実行時に戻し、保存済み明細の達成率を再評価');
+ assert.match(attr(evaluate,'title'),/^目標を最終実行時に戻し、保存済み明細の達成率を再評価/);
  assert.match(descriptor.template.content,/再評価では最終実行時の目標へ戻します/);
  assert.doesNotMatch(descriptor.template.content,/navigation-model-footer/);
  assert.match(source,/grid-template-columns:minmax\(0,1fr\) auto/);assert.match(source,/width:40\.6px;height:40\.6px/);assert.match(source,/\.navigation-form-foot \.navigation-model-line\{min-width:0;flex-wrap:wrap/);

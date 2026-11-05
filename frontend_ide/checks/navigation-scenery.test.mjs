@@ -19,6 +19,13 @@ test('波紋点は毎回異なる位置から広がり、寿命と上限で片�
  for(let i=0;i<40;i++)ripples.add();assert.equal(ripples.points.length,32);
  ripples.step(8);assert.equal(ripples.points.length,0);
 });
+test('波紋点は指定したポインター位置を使い、不正な位置はランダムへ戻す',()=>{
+ const ripples=createRipples(()=>.5);
+ assert.deepEqual(ripples.add({x:.8,y:.2}),{x:.8,y:.2,age:0});
+ assert.deepEqual(ripples.add({x:-1,y:2}),{x:0,y:1,age:0});
+ assert.deepEqual(ripples.add({x:NaN,y:.2}),{x:.5,y:.5,age:0});
+ assert.deepEqual(ripples.add(),{x:.5,y:.5,age:0});
+});
 function target(selector){return {closest:query=>query.includes(selector)?{}:null};}
 test('別窓の要素はinstanceofなしで判定し、入力・IME・標準操作を奪わない',()=>{
  const focus={};const el={ownerDocument:{activeElement:focus},contains:value=>value===focus};

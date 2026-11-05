@@ -15,7 +15,8 @@ import TerminalWelcome from '../コンソール/開始表示.vue';
 import NaviCruise from './ナビ航行.vue';
 import NaviFireworks from './ナビ花火.vue';
 import NaviScenery from './ナビ風景.vue';
-import {NAVIGATION_SCENES, pickNavigationScene} from './ナビ風景.js';
+import NavigationRunButton from './ナビ実行ボタン.vue';
+import {NAVIGATION_SCENES, NAVIGATION_SCENE_LABELS, pickNavigationScene} from './ナビ風景.js';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
@@ -71,8 +72,19 @@ function editGoal(){draftEdited=true;stopAutopilot('目標が編集されたた�
 const reconciling=ref(false);
 const busy=computed(()=>savingModel.value||submitting.value||reconciling.value||job.value?.status==='running');
 const routing=computed(()=>submitting.value||reconciling.value||job.value?.status==='running');
-// ナビ調査中の遊び場は、ナビ（調査）が始まるたびにナビ航行 / ナビ花火のどちらかをランダムに選ぶ。
-watch(routing,value=>{if(value)cruiseKind.value=pickNavigationScene();},{flush:'sync'});
+// 選択は今回の実行だけに適用する。通常操作・自動航行は従来どおりランダム。
+const sceneAction=ref('');let nextScene='';
+const pressContext=computed(()=>[props.project?.path,props.startedAt,detached.value,visible.value]);
+watch(routing,value=>{if(value){cruiseKind.value=nextScene||pickNavigationScene();nextScene='';cruiseFailed.value=false;}},{flush:'sync'});
+function chooseScene(action){
+ if(!visible.value||busy.value||autopilot.value||!availability.value.available||(action==='evaluate'&&!canEvaluate.value))return;
+ sceneAction.value=action;
+}
+function runWithScene(scene){
+ const action=sceneAction.value;sceneAction.value='';
+ if(!action||!NAVIGATION_SCENES.includes(scene))return;
+ void navigate(action,scene);
+}
 let windowPanel,timer,disposed=false,version=0,request;
 
 async function api(method='GET',body,signal){
@@ -96,12 +108,13 @@ async function pin(){
  return windowPanel.pin();
 }
 function close(){stopAutopilot('Navigatorを閉じたため停止しました。');void releaseCode();draftRequest.value=null;if(detached.value)windowPanel.dismiss();else{visible.value=false;emit('closed');}clearTimeout(timer);}
-async function navigate(action='navigate'){
+async function navigate(action='navigate',scene=''){
  if(autopilot.value)return;
  if(busy.value||!availability.value.available||(action==='evaluate'&&!canEvaluate.value))return;
  // 再評価は現在のナビを対象にする。編集中の別目標では新規作成しない。
  if(action==='evaluate')goal.value=result.value.goal;
  if(!goal.value.trim()){error.value='開発目標を入力してください。';return;}
+ nextScene=scene;sceneAction.value='';
  const submittedGoal=goal.value;draftEdited=false;submitting.value=true;error.value='';copied.value=false;const generation=++version;clearTimeout(timer);
  try{const data=await api('POST',{goal:submittedGoal,action});if(generation===version){job.value=data.job;pendingGoal={id:data.job.id,text:submittedGoal};}}
  catch(e){if(generation===version){error.value=e.message;reconciling.value=true;}}
@@ -145,6 +158,7 @@ watch(recommendedPrompt,()=>{copied.value=false;copyError.value='';});
 
 // 自動航行の許可はメモリ内だけに保持し、履歴・再表示から復元しない。
 const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false),autopilot=ref(false),autopilotStatus=ref(''),autopilotPhase=ref('');
+watch(()=>[busy.value,autopilot.value,availability.value.available,visible.value,props.project?.path,props.startedAt,detached.value],()=>{sceneAction.value='';},{flush:'sync'});
 const codeToggleLabel=computed(()=>codeOpen.value?'CODE非表示':'CODE表示');
 const autopilotMessage=createNavigationMessage(text=>autopilotStatus.value=text);
 let codeSession,codePromise,autopilotController,visibilityTimer,codeGeneration=0;
@@ -299,7 +313,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <form class="navigation-goal-form" @submit.prevent="navigate()">
     <label :for="instance+'-goal'">目標<small v-if="result?.inferred&&matchesResult">（AIの推測・編集できます）</small></label>
     <textarea :id="instance+'-goal'" v-model="goal" :readonly="autopilot" maxlength="4000" rows="4" @input="editGoal" placeholder="目標を入力してください"></textarea>
-    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button type="submit" class="navigation-start navigation-run" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></button><button type="button" class="navigation-evaluate navigation-run" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価" @click="navigate('evaluate')">再評価</button></div></div>
+    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><NavigationRunButton :context="pressContext" class="navigation-start navigation-run" title="クリックでナビ。0.5秒長押し、または↓キーで待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate')" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></NavigationRunButton><NavigationRunButton :context="pressContext" class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate')" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。0.5秒長押し、または↓キーで待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
    </form>
   <div v-if="history" class="navigation-history" role="list"><p v-if="!historyItems.length">このフォルダにナビ履歴はありません</p><button v-for="item in historyItems" :key="item.id" :disabled="busy||autopilot" @click="selectHistory(item.id)"><time>{{new Date(item.updatedAt).toLocaleString()}}</time><span>{{item.goal}}</span></button></div>
   <div v-show="!history" class="navigation-display" :class="{running:submitting||job?.status==='running'}"><div class="navigation-content">
@@ -330,6 +344,12 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 
   <p v-if="autopilotStatus" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}</p>
   <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
+  <ModalDialog v-if="sceneAction" label="待機中のナビ画面を選択" @close="sceneAction=''">
+   <h3>待機中のナビ画面</h3>
+   <p>画面を選ぶと{{sceneAction==='evaluate'?'再評価':'ナビ'}}を開始します。今回の実行だけに適用します。</p>
+   <div class="navigation-scene-picker"><button v-for="scene in NAVIGATION_SCENES" :key="scene" type="button" :data-scene="scene" @click="runWithScene(scene)">{{NAVIGATION_SCENE_LABELS[scene]}}</button></div>
+   <button type="button" autofocus @click="sceneAction=''">キャンセル</button>
+  </ModalDialog>
   <ModalDialog v-if="failureDialog!==null" label="ナビの実行に失敗しました" @close="failureDialog=null">
    <h3>ナビの実行に失敗しました</h3>
    <p>別のエージェントをお試しください。</p>
@@ -350,6 +370,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
  </section>
 </template>
 <style>
+.navigation-scene-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}.navigation-scene-picker button{min-height:44px;padding:10px;font:inherit}.navigation-scene-picker button:focus-visible{outline:2px solid #8de8e0;outline-offset:2px}
 .navigation-display{position:relative;display:flex;flex:1;min-height:0;--stream:#00ffff}.navigation-history{flex:1;overflow:auto;padding:12px}.navigation-history>button{display:flex;width:100%;gap:16px;padding:12px;text-align:left}.navigation-history time{flex:none;color:#98a6b8}.navigation-project nav{display:flex;align-items:center;gap:8px;margin-left:auto;}
 .navigation-panel.standalone{position:relative;inset:auto;width:100%;height:100%;max-height:none;max-width:none;border:0;border-radius:0;}
 .navigation-model-line{display:flex;align-items:center;gap:8px;font-size:11px}.navigation-model-line>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigation-model-picker{display:grid;gap:8px;max-height:50vh;overflow:auto}.navigation-model-picker label{display:grid;gap:4px}.navigation-model-picker select,.navigation-model-picker input{width:100%;box-sizing:border-box;font:inherit;background:#142235;color:#edf5ff;border:1px solid #47637b;padding:6px}.navigation-model-picker small{color:#b3c5d8}.navigation-model-picker>div{display:flex;gap:8px}
