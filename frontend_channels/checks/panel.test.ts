@@ -33,7 +33,7 @@ function fixture() {
   const read = () => ({ ...config(), coreUrl:'ws://127.0.0.1:1/core/ws/AIコア', liveModels: { LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'common-model', LIVE_FREEAI_VOICE: 'Zephyr' } });
   const catalog = { models: { freeai_live: { 'common-model': 'Common' }, openai_live: { 'test-live-model': 'Test' } },
     voices: { freeai_live: { Zephyr: 'Zephyr' }, openai_live: { marin: 'Marin', cedar: 'Cedar' } } };
-  const panel = () => new Discordパネル(() => {}, read, create, file, () => {}, undefined, () => catalog);
+  const panel = () => new Discordパネル(() => {}, read, create, file, () => {}, undefined, () => catalog, async () => undefined);
   return { file, configurations, read, create, panel, catalog, counts: () => [startCount, stopCount], setReady: (value: boolean) => { ready = value; }, cleanup: () => rmSync(directory, { recursive: true, force: true }) };
 }
 
@@ -159,7 +159,7 @@ test('接続失敗は秘密を表示せず回収し、再試行できる。タ�
   const panel = new Discordパネル(() => {}, f.read, () => ({
     起動: async () => { if (++attempt === 1) throw Object.assign(new Error(`invalid token: ${f.read().token}`), { code: 'TokenInvalid' }); },
     終了: async () => { stopped++; }, client: { isReady: () => true },
-  }), f.file, () => {}, undefined, () => f.catalog);
+  }), f.file, () => {}, undefined, () => f.catalog, async () => undefined);
   try {
     await panel.開始(); assert.equal(panel.状態.phase, 'error'); assert.equal(stopped, 1);
     assert.match(panel.状態.message, /トークン認証/);
@@ -169,7 +169,7 @@ test('接続失敗は秘密を表示せず回収し、再試行できる。タ�
     await panel.開始(); assert.equal(panel.状態.phase, 'connected'); assert.equal(panel.状態.details, undefined); await panel.終了();
     const timeout = new Discordパネル(() => {}, f.read, () => ({
       起動: () => new Promise<void>(() => {}), 終了: async () => { stopped++; }, client: { isReady: () => false },
-    }), f.file, () => {}, 10, () => f.catalog);
+    }), f.file, () => {}, 10, () => f.catalog, async () => undefined);
     await timeout.開始(); await waitFor(() => timeout.状態.phase === 'error');
     assert.match(timeout.状態.message, /Discord接続が0.01秒以内/);
     assert.match(timeout.状態.details || '', /失敗段階: Discord接続/);
@@ -181,7 +181,7 @@ test('Hermes確認で失敗した場合はBotに接続せず原因を表示す�
   const f = fixture();
   const panel = new Discordパネル(() => {}, f.read, f.create, f.file, () => {
     throw new Error('Python が見つかりません。Python Path を確認してください。');
-  }, undefined, () => f.catalog);
+  }, undefined, () => f.catalog, async () => undefined);
   try {
     await panel.開始();
     assert.equal(panel.状態.phase, 'error'); assert.deepEqual(f.counts(), [0, 0]);

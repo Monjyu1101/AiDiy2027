@@ -170,3 +170,10 @@ Discord / Slack の正本はそれぞれ `frontend_channels/discord/panel/AiDiy_
 - 起動後の自動 help は Bot インスタンス単位。一時的な Gateway 復帰・Slack の巡回復旧ではリセットしない。新しい Bot を生成する再起動ではリセットする。Discord は音声接続通知も対象、Slack の仮表示「考えています…」は対象外で確定回答へ付加する。
 - 最初が help なら追加しない。最初の送信を直列化して重複を防ぎ、案内を含む最後の送信が成功してから消費する。失敗時は次の返信へ持ち越す。長文・添付では回答本体の成功と案内自体の成功を区別する。
 - 再検証は両ディレクトリで `npm run check` と `npm test`。実サービス不要の `checks/commands.test.ts` / `checks/bot.test.ts` に半角・全角、空・未知、先頭空白、旧形式の拒否、メンションの通常投稿、初回 help、同時送信、送信失敗、長文、再接続、別 Bot の境界を置く。tsx CLI の IPC pipe が sandbox で EPERM になる場合、同じ test 群を `node --import tsx --test checks/*.test.ts` で実行できる（ネットワーク制限の解除ではない）。実 Slack / Discord 接続・有料 AI 実行の検証とは区別する。
+
+## 外部接続なしのパネル回帰確認
+
+- Discord / Slack の `checks/layout.test.ts` は、接続部品の完全な一覧（`逃げるマーク.vue` を含む）を維持する。部品追加時は両方を更新し、未知のファイルを許す緩い判定へ変えない。
+- Discord の `checks/panel-vue.test.ts` は音声表示と逃げるマークの ResizeObserver を個別に記録し、終了時に各監視が一度ずつ解除されることを確認する。
+- `checks/panel.test.ts` の API を使わない fixture では `Discordパネル` の `readAPI` に `async () => undefined` を渡す。接続先のポートを閉じるだけでは取得処理・再試行が走るため、通信の代わりに明示した候補を使う。API 優先・フォールバックの試験は専用の模擬応答で維持する。
+- 各フォルダで依存導入後、`node --import tsx --test checks/desktop.test.ts checks/launch-restart.test.ts checks/panel-vue.test.ts checks/titlebar.test.ts checks/layout.test.ts checks/panel.test.ts checks/panel-manifest.test.ts` を実行する。Electron / Bot は模擬実装、manifest のビルド・改変検出は一時コピーだけを使い、実サービスには接続しない。

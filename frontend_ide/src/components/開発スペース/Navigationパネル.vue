@@ -14,6 +14,8 @@ import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import NaviCruise from './ナビ航行.vue';
 import NaviFireworks from './ナビ花火.vue';
+import NaviScenery from './ナビ風景.vue';
+import {NAVIGATION_SCENES, pickNavigationScene} from './ナビ風景.js';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
@@ -70,7 +72,7 @@ const reconciling=ref(false);
 const busy=computed(()=>savingModel.value||submitting.value||reconciling.value||job.value?.status==='running');
 const routing=computed(()=>submitting.value||reconciling.value||job.value?.status==='running');
 // ナビ調査中の遊び場は、ナビ（調査）が始まるたびにナビ航行 / ナビ花火のどちらかをランダムに選ぶ。
-watch(routing,value=>{if(value)cruiseKind.value=Math.random()<.5?'ride':'fireworks';},{flush:'sync'});
+watch(routing,value=>{if(value)cruiseKind.value=pickNavigationScene();},{flush:'sync'});
 let windowPanel,timer,disposed=false,version=0,request;
 
 async function api(method='GET',body,signal){
@@ -304,7 +306,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed" @unsupported="cruiseFailed=true" /><TerminalWelcome kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>

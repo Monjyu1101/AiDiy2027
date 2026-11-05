@@ -171,6 +171,8 @@ class DiscordSetupOwnershipTest(unittest.TestCase):
 
 class DiscordLifecycleTest(unittest.TestCase):
     def setUp(self):
+        self.enterContext(patch.object(cleanup._opencode_service, 'stop_opencode_service'))
+        self.enterContext(patch.object(cleanup, 'remove_launcher_path', return_value=True))
         self.enterContext(patch.object(discord_setup, "check_project_node_runtime", return_value=(True, "fixture Node")))
         self.enterContext(patch.object(discord_start, "check_project_node_runtime", return_value=(True, "fixture Node")))
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))

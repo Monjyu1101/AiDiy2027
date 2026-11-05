@@ -28,7 +28,7 @@ TREE = ast.parse((ROOT / "cli_main.py").read_text(encoding="utf-8"))
 
 def load_picker(directory):
     names = {"_AIDIY_CODE_CATALOG_PROVIDERS", "_AIDIY_CLI_PROVIDERS",
-             "_DEFAULT_OLLAMA_HOST", "_OLLAMA_CLOUD_BASE_URL", "_OPENAI_BASE_URL",
+             "_DEFAULT_OLLAMA_HOST", "_OLLAMA_CLOUD_BASE_URL", "_OLLAMA_CLOUD_SUFFIXES", "_OPENAI_BASE_URL",
              "_OPENROUTER_BASE_URL", "_GEMINI_OPENAI_BASE_URL", "_CLAUDE_BASE_URL",
              "_FREEAI_DEFAULT_MODEL", "_OPENAI_OAUTH_SLUG", "_OPENAI_OAUTH_RUNTIME_PROVIDER",
              "_OPENAI_OAUTH_FALLBACK_MODEL", "_XAI_OAUTH_SLUG", "_XAI_OAUTH_DEFAULT_MODEL"}
@@ -209,9 +209,10 @@ class HermesModelCatalogTests(unittest.TestCase):
         # 旧スラッグ ollama は受け付けない。
         self.assertNotIn("ollama", self.ns["_aidiy_provider_slugs"]() if callable(self.ns.get("_aidiy_provider_slugs")) else self.picker._aidiy_provider_slugs())
 
-    def run_entry(self, provider, model="chosen-model", previous=None):
+    def run_entry(self, provider, model="chosen-model", previous=None, *, ignore_user_config=False):
         args = SimpleNamespace(**dict.fromkeys("image toolsets skills reasoning max_turns run_budget verbose gateway worktree checkpoints pass_session_id resume base_url api_key".split()))
         args.version = args.yolo = args.oneshot_stdin = args.compact = args.list_tools = args.list_toolsets = args.ignore_user_config = args.ignore_rules = False
+        args.ignore_user_config = ignore_user_config
         args.quiet = True
         args.oneshot = "test"
         args.query = args.prompt = None
@@ -252,6 +253,43 @@ class HermesModelCatalogTests(unittest.TestCase):
             self.assertEqual(code, 0)
             self.assertEqual(calls[0]["aidiy_provider_slug"], canonical)
             self.assertEqual(calls[0]["model"], "saved-model")
+
+    def test_saved_legacy_openrt_and_ollama_use_current_provider_routes(self):
+        for old, current, runtime, key in [
+            ("openrt", "openrt_chat", "openrouter", "fake-openrt_key_id"),
+            ("ollama", "ollama_chat", "custom", "no-key-required"),
+        ]:
+            with self.subTest(provider=old):
+                previous = {"provider": old, "model": "saved-model"}
+                code, calls = self.run_entry("same", "same", previous)
+                self.assertEqual(code, 0)
+                self.assertEqual(calls[0]["provider"], runtime)
+                self.assertEqual(calls[0]["model"], "saved-model")
+                self.assertEqual(calls[0]["api_key"], key)
+                expected = self.ns["_load_aidiy_hermes_provider_defaults"](current)
+                self.assertEqual(calls[0]["base_url"], expected["base_url"])
+                self.assertEqual(previous["provider"], old, "保存データを書き換えない")
+        self.assertNotIn("ollama", self.picker._aidiy_provider_slugs())
+        self.assertNotIn("openrt", self.picker._aidiy_provider_slugs())
+
+    def test_legacy_restore_does_not_override_auto_or_ignored_settings(self):
+        previous = {"provider": "openrt", "model": "saved-model"}
+        for provider, model, ignore in [("auto", "auto", False),
+                                         (None, None, False), ("same", "same", True)]:
+            with self.subTest(provider=provider, ignore=ignore):
+                code, calls = self.run_entry(provider, model, previous, ignore_user_config=ignore)
+                self.assertEqual(code, 0)
+                for field in ["provider", "model", "api_key", "base_url"]:
+                    self.assertIsNone(calls[0][field])
+
+    def test_saved_legacy_ollama_reloads_current_cloud_credentials(self):
+        self.picker._aidiy_config["ollama_key_id"] = "fake-current-cloud-key"
+        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(self.picker._aidiy_config))
+        code, calls = self.run_entry("same", "same", {"provider": "ollama", "model": "saved-model"})
+        self.assertEqual(code, 0)
+        self.assertEqual(calls[0]["base_url"], self.ns["_OLLAMA_CLOUD_BASE_URL"])
+        self.assertEqual(calls[0]["api_key"], "fake-current-cloud-key")
+        self.assertEqual(calls[0]["model"], "saved-model")
 
     def test_anthropic_environment_or_stored_api_key_resolution_remains_available(self):
         self.ns["_AIDIY_KEY_JSON"].write_text("{}")

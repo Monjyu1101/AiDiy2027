@@ -29,11 +29,17 @@ function fixture(overrides: Record<string, any> = {}) {
   const window: any = new Window({ url: 'http://localhost/token/', settings: { enableJavaScriptEvaluation: true, disableJavaScriptFileLoading: true, disableCSSFileLoading: true } });
   const calls: any[][] = [], listeners = new Map<string, Set<Function>>(), contexts: any[] = [];
   let disconnected = 0, cancelled = 0, timerId = 0, now = 0;
+  const observers: { disconnected: number }[] = [];
   const timers = new Map<number, { at: number; callback: Function }>();
   window.setTimeout = (callback: Function, ms: number) => { const id = ++timerId; timers.set(id, { at: now + ms, callback }); return id; };
   window.clearTimeout = (id: number) => timers.delete(id);
   window.requestAnimationFrame = () => 1; window.cancelAnimationFrame = () => { cancelled++; };
-  window.ResizeObserver = class { observe() {} disconnect() { disconnected++; } };
+  window.ResizeObserver = class {
+    disconnected = 0;
+    constructor() { observers.push(this); }
+    observe() {}
+    disconnect() { this.disconnected++; disconnected++; }
+  };
   window.HTMLCanvasElement.prototype.getContext = () => null;
   window.AudioContext = class {
     currentTime = 0; destination = {}; closed = 0; starts: number[] = []; samples: any[] = [];
@@ -69,7 +75,7 @@ function fixture(overrides: Record<string, any> = {}) {
     now = end;
   };
   const dispose = async () => { window.dispatchEvent(new window.Event('pagehide')); await flush(); await window.happyDOM.close(); };
-  return { window, calls, listeners, contexts, get, emit, change, click, tick, dispose, timers, resources: () => ({ disconnected, cancelled }) };
+  return { observers, window, calls, listeners, contexts, get, emit, change, click, tick, dispose, timers, resources: () => ({ disconnected, cancelled }) };
 }
 
 test('Vue 配布画面は既存の項目・選択・機能切替と外部設定キーを保つ', async () => {
@@ -146,7 +152,8 @@ test('音声はモニター ON の間だけ再生し、切断/終了で音声・
     await f.click('monitor'); await f.emit('Activity', { who: 'AI', text: 'typing' });
     await f.dispose();
     assert.equal(f.contexts[1].closed, 1); assert.equal(f.timers.size, 0);
-    assert.ok([...f.listeners.values()].every(set => set.size === 0)); assert.equal(f.resources().disconnected, 1);
+    assert.ok([...f.listeners.values()].every(set => set.size === 0)); assert.equal(f.observers.length, 2, '音声表示と逃げるマークを監視する');
+    assert.ok(f.observers.every(observer => observer.disconnected === 1), 'すべての監視を一度ずつ解除する');
   } finally { await f.dispose(); }
 });
 

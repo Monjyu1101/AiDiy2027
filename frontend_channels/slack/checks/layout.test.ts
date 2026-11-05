@@ -49,7 +49,7 @@ test('設定ルートと IDE の CommonJS 共有 export を維持し、Discord �
 
 test('renderer は components の日本語機能にまとめ、旧コピーと空 dialog を増やさない', () => {
   const panel = join(root, 'panel');
-  assert.deepEqual(readdirSync(join(panel, 'components/接続')).sort(), ['パネル状態.js', '接続パネル.vue', '機能切替.vue'].sort());
+  assert.deepEqual(readdirSync(join(panel, 'components/接続')).sort(), ['パネル状態.js', '接続パネル.vue', '機能切替.vue', '逃げるマーク.vue'].sort());
   for (const folder of ['画面', '接続', 'ライブ', 'dialog']) assert.equal(existsSync(join(panel, folder)), false, folder);
   const files = readdirSync(join(panel, 'components'), { recursive: true, encoding: 'utf8' }).filter(file => /\.(vue|js)$/.test(file));
   for (const file of files) {

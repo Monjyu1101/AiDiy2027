@@ -24241,6 +24241,11 @@ def cli_entry(argv: list[str] | None = None) -> int:
         previous = None if args.ignore_user_config else load_model_choice()
         args.provider = previous["provider"] if previous else None
         args.model = previous["model"] if previous else None
+        # 旧版が保存した provider 名だけを現行ルートへ引き継ぐ。
+        # picker / 明示指定の候補に旧名を復活させず、保存ファイルも変更しない。
+        args.provider = {"openrt": "openrt_chat", "ollama": "ollama_chat"}.get(
+            args.provider, args.provider
+        )
     elif (args.provider or "").lower() in {"", "auto"} and (args.model or "").lower() in {"", "auto"}:
         args.provider = args.model = None
 

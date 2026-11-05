@@ -36,6 +36,7 @@ import _cleanup_processes as processes
 class ToolsCleanupTest(unittest.TestCase):
     def setUp(self):
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+        self.enterContext(patch.object(root_cleanup, 'remove_launcher_path', return_value=True))
 
     def test_venv_launcher_and_base_python_child_are_matched(self):
         root = PROJECT / 'backend_tools'

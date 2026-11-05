@@ -10,6 +10,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 // 押していなければ一定時間ごとにランダムに切る。ハンドル角に応じて車体も最大±15°傾く。↑↓（W/S）で加減速、押し続けると加速。
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as THREE from 'three';
+import {navigationKeyActive, bindNavigationKeys} from './ナビ入力.js';
 const emit = defineEmits(['unsupported']);
 const stage = ref(), canvas = ref();
 const ready = ref(false);
@@ -249,11 +250,7 @@ onMounted(() => {
   const onEnter = () => { input.hover = true; };
   const onLeave = () => { input.hover = false; };
   // キーは「この画面にフォーカスがある」か「マウスが画面上にある」ときだけ受け付け、文字入力欄の操作は邪魔しない。
-  const active = e => {
-    const t = e.target;
-    if (t instanceof Element && t.closest('input,textarea,select,[contenteditable="true"]')) return false;
-    return input.hover || el.contains(document.activeElement);
-  };
+  const active = e => navigationKeyActive(e, el, input.hover);
   const STEER_KEYS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
   const onKeyDown = e => {
     if (e.ctrlKey || e.metaKey || e.altKey || !active(e)) return;
@@ -261,17 +258,17 @@ onMounted(() => {
     else if (e.key === 'Delete' || e.key === 'Backspace') { resetTrail(); e.preventDefault(); }
   };
   const onKeyUp = e => { input.keys.delete(e.key); };
-  const onBlur = () => { input.keys.clear(); input.hold = false; };
+  const onBlur = () => { input.keys.clear(); input.hold = false; input.hover = false; };
   el.addEventListener('pointerdown', onDown); el.addEventListener('pointerup', onUp); el.addEventListener('pointercancel', onUp);
   el.addEventListener('pointerenter', onEnter); el.addEventListener('pointerleave', onLeave); el.addEventListener('dblclick', resetTrail);
-  document.addEventListener('keydown', onKeyDown); document.addEventListener('keyup', onKeyUp); globalThis.addEventListener('blur', onBlur);
+  const unbindKeys = bindNavigationKeys(el, {keydown:onKeyDown, keyup:onKeyUp, blur:onBlur});
   raf = requestAnimationFrame(frame);
 
   cleanup = () => {
     disposed = true; cancelAnimationFrame(raf); ro.disconnect();
     el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointerup', onUp); el.removeEventListener('pointercancel', onUp);
     el.removeEventListener('pointerenter', onEnter); el.removeEventListener('pointerleave', onLeave); el.removeEventListener('dblclick', resetTrail);
-    document.removeEventListener('keydown', onKeyDown); document.removeEventListener('keyup', onKeyUp); globalThis.removeEventListener('blur', onBlur);
+    unbindKeys();
     for (const g of [gridFine, gridBold]) { g.geometry.dispose(); g.material.dispose(); }
     bandGeo.dispose(); bandMat.dispose(); sparkGeo.dispose(); sparkMat.dispose();
     bodyGeo.dispose(); noseGeo.dispose(); riderGeo.dispose(); wheelGeo.dispose(); shipMat.dispose(); wheelMat.dispose(); glowMat.dispose(); tex.dispose();

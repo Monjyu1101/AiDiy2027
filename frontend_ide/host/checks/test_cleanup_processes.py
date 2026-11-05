@@ -29,6 +29,9 @@ import _cleanup_processes as common
 class CleanupProcessesTest(unittest.TestCase):
     def setUp(self):
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+        # 新しい共有サービス停止も実環境へ流さず、呼び出し側だけを検証する。
+        self.enterContext(patch('_opencode_service.stop_opencode_service'))
+        self.enterContext(patch.object(cleanup, 'remove_launcher_path', return_value=True))
 
     def owned(self, name, command):
         return processes.is_standalone(dict(Name=name, CommandLine=command), ROOT, True)

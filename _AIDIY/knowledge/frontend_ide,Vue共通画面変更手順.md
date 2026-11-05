@@ -754,3 +754,12 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 自動航行中のNavigatorタイトルは単独版で `AiDiy Navigation Cruise`、IDE起動で `AiDiy IDE / Navigation Cruise N` と表示し、VR・別窓でもブランド名と起動番号を保持します。停止・完了時は単独版の `AiDiy Navigator`、または番号付き `AiDiy IDE / Navigator N` に戻します。画面・ブラウザ・OSのタイトルを連動させ、窓の識別IDや履歴・所有関係は変更しません。
 
 総合評価枠にもCodeと同じ条件・色・周期で周回光を表示し、枠内下部中央に「自動航行中」を表示します。航行中の再評価では直前の総合評価枠を表示したままにし、%と根拠の開閉・スクロールを保ちます。状態文字は根拠のスクロール外に配置し、数値や操作に重ねません。停止・完了で光と文字を消し、動きを減らす設定では固定色の四角い枠にします。
+
+
+### Navigator の待機演出と別窓キー
+
+ナビ／再評価の待機開始ごとに「航行」「花火」「アクアリウム」「万華鏡」「水面」の5種類から選びます。従来の航行・花火の操作と、非対応環境の開始表示へのフォールバックは維持します。追加3種類は黒背景のCanvas 2D表示で、外部画像や通信は使いません。水面はランダムな位置から波紋が広がり、演出にフォーカスまたはポインターがあるとき、Spaceで波紋点を1つ追加します。長押しのrepeatは追加しません。波紋には寿命と32点の上限を設けます。
+
+`ナビ入力.js` はDOMの現在の `ownerDocument` にキーを登録し、別窓化・復帰で購読先を切り替えます。realmが異なるため `instanceof Element` は使いません。input、textarea、select、contenteditable（空属性／plaintext-onlyを含む）、標準ボタン等とIME入力を奪わず、blur／移動時に押下状態を解除します。破棄時はキー購読・移動検知タイマー・描画を解除します。
+
+単体検証は `node --test frontend_ide/checks/navigation-scenery.test.mjs`。実描画確認は `node frontend_ide/scripts/check-navigation-scenery.mjs` を使います。これは配布用buildや本番アプリを起動せずVue部品を一時的に束ねる隔離ハーネスです。3種類の描画、黒地、Space、repeat、入力欄、別Documentへの移動・復帰、破棄をChromiumで検証し、画像を `frontend_ide/temp/navigation-scenery-check/` に保存します。ローカルソケットを許可されたChromium環境が必要です。Electronの実別窓・実画面の目視確認は別途行ってください。

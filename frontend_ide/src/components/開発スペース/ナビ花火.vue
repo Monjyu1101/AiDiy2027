@@ -10,6 +10,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 // 軌道は打ち上げの円の中を突っ切り、中心に近いほど速く、火花の真ん中を通過していく。
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import * as THREE from 'three';
+import {navigationKeyActive, bindNavigationKeys} from './ナビ入力.js';
 const emit = defineEmits(['unsupported']);
 const stage = ref(), canvas = ref();
 const ready = ref(false), charge = ref(0);
@@ -243,11 +244,7 @@ onMounted(() => {
   const onEnter = () => { input.hover = true; };
   const onLeave = () => { input.hover = false; };
   // キーは「この画面にフォーカスがある」か「マウスが画面上にある」ときだけ受け付け、文字入力欄の操作は邪魔しない。
-  const active = e => {
-    const t = e.target;
-    if (t instanceof Element && t.closest('input,textarea,select,[contenteditable="true"]')) return false;
-    return input.hover || el.contains(document.activeElement);
-  };
+  const active = e => navigationKeyActive(e, el, input.hover);
   const release = () => {
     if (!input.space) return;
     input.space = false;
@@ -261,15 +258,15 @@ onMounted(() => {
     if (!e.repeat && !input.space) { input.space = true; input.held = 0; }
   };
   const onKeyUp = e => { if (e.code === 'Space') { if (input.space) e.preventDefault(); release(); } };
-  const onBlur = () => { input.space = false; input.held = 0; charge.value = 0; };
+  const onBlur = () => { input.space = false; input.held = 0; input.hover = false; charge.value = 0; };
   el.addEventListener('pointerenter', onEnter); el.addEventListener('pointerleave', onLeave);
-  document.addEventListener('keydown', onKeyDown); document.addEventListener('keyup', onKeyUp); globalThis.addEventListener('blur', onBlur);
+  const unbindKeys = bindNavigationKeys(el, {keydown:onKeyDown, keyup:onKeyUp, blur:onBlur});
   raf = requestAnimationFrame(frame);
 
   cleanup = () => {
     disposed = true; cancelAnimationFrame(raf); ro.disconnect();
     el.removeEventListener('pointerenter', onEnter); el.removeEventListener('pointerleave', onLeave);
-    document.removeEventListener('keydown', onKeyDown); document.removeEventListener('keyup', onKeyUp); globalThis.removeEventListener('blur', onBlur);
+    unbindKeys();
     ground.geometry.dispose(); ground.material.dispose(); starGeo.dispose(); starMat.dispose(); geo.dispose(); mat.dispose();
     renderer.dispose(); renderer.forceContextLoss();
   };
