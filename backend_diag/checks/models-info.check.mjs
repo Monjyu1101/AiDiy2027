@@ -110,7 +110,7 @@ test('Gemini generates chat and live candidates, independently of Antigravity',a
 test('each provider follows the main app grouping without reading model configuration',async()=>{
  const shapes={};
  for(const id of MODEL_PROVIDER_IDS){const info=await modelsInfo({id,名前:id},ok(),{read,now});shapes[id]=[!!info.chat,!!info.live,Object.keys(info.code??{})];}
- assert.deepEqual(shapes,{gemini:[true,true,[]],freeai:[true,true,[]],claude:[true,false,['claude_sdk','claude_cli','copilot_cli']],openai:[true,true,['codex_cli','copilot_cli']],openai_oauth:[true,false,['codex_cli','copilot_cli','aidiy_hermes']],grok:[true,false,['grok_cli']],openrt:[true,false,[]],ollama:[true,false,['opencode_cli']],local:[true,false,[]]});
+ assert.deepEqual(shapes,{gemini:[true,true,[]],freeai:[true,true,[]],claude:[true,false,['claude_sdk','claude_cli','copilot_cli']],openai:[true,true,['codex_cli','copilot_cli']],openai_oauth:[true,false,['codex_cli','copilot_cli','aidiy_hermes']],grok:[true,false,['grok_cli']],openrt_chat:[true,false,[]],ollama:[true,false,['opencode_cli']],local:[true,false,[]]});
  const local=await modelsInfo({id:'local',名前:'local'},{状態:'PASS',モデル詳細:[{model_id:'google/gemma-4-E2B-it'}]},{read:async name=>{throw Error('must not read '+name);},now});
  assert.match(local.chat.取得元,/固定候補/);assert.equal(local.chat.local_chat.models['google/gemma-4-E2B-it'],'google/gemma-4-E2B-it / 約10GB bf16 / 速い (default)');
  const claude=await modelsInfo({id:'claude',名前:'Claude'},ok({モデル詳細:[{model_id:'claude-haiku-5-5',作成日:'2026/10/07'},{model_id:'claude-opus-5',作成日:'2026/07/24'},{model_id:'claude-haiku-5',作成日:'2026/06/01'}]}),{read,now});
@@ -123,8 +123,8 @@ test('each provider follows the main app grouping without reading model configur
 test('NG keeps the reason and Grok fixed candidates; only tested providers are written, one file each',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-models-info-'));
  try{
-  const providers=[{id:'grok',名前:'Grok'},{id:'gemini',名前:'Gemini'},{id:'discord',名前:'Discord'},{id:'openrt',名前:'OpenRouter'}];
-  const saved=await writeModelsInfo(providers,{grok:{...ok(),状態:'NG',説明:'expired',警告:['fallback']},gemini:ok(),discord:ok(),openrt:{状態:'未実施'}},{directory,read,now});
+  const providers=[{id:'grok',名前:'Grok'},{id:'gemini',名前:'Gemini'},{id:'discord',名前:'Discord'},{id:'openrt_chat',名前:'OpenRouter'}];
+  const saved=await writeModelsInfo(providers,{grok:{...ok(),状態:'NG',説明:'expired',警告:['fallback']},gemini:ok(),discord:ok(),openrt_chat:{状態:'未実施'}},{directory,read,now});
   assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','prediction_models_info.json']);
   const grok=JSON.parse(await readFile(path.join(directory,modelsInfoFile('grok')),'utf8'));
   assert.equal(grok.状態,'NG');assert.equal(grok.説明,'expired');assert.match(grok.chat.取得元,/固定候補/);assert.deepEqual(grok.警告,['fallback']);
@@ -138,11 +138,11 @@ test('model write saves only results this server obtained; reloading settings di
  const h=createHandler({token:'k',entries:[],keyStatusFn:async()=>({項目:[]}),publicCache:{snapshot:()=>({}),input:()=>({})},keyTestFn:async id=>id==='azure'?{id,状態:'未実施'}:{id,状態:'OK',モデル:[]},modelsWriteFn:async(_providers,results)=>{writes.push(Object.keys(results));return Object.keys(results).map(modelsInfoFile);}});
  assert.equal((await request(h,'/api/モデル書込','POST')).status,409);
  await request(h,'/api/キーテスト/azure','POST');assert.equal((await request(h,'/api/モデル書込','POST')).status,409);
- await request(h,'/api/キーテスト/gemini','POST');await request(h,'/api/キーテスト/openrt','POST');
+ await request(h,'/api/キーテスト/gemini','POST');await request(h,'/api/キーテスト/openrt_chat','POST');
  const saved=await request(h,'/api/モデル書込','POST');assert.equal(saved.status,200);
- assert.deepEqual(saved.body,{保存先:['_AIDIY/aidiy_diag/gemini_models_info.json','_AIDIY/aidiy_diag/openrt_models_info.json'],件数:2});
+ assert.deepEqual(saved.body,{保存先:['_AIDIY/aidiy_diag/gemini_models_info.json','_AIDIY/aidiy_diag/openrt_chat_models_info.json'],件数:2});
  await request(h,'/api/キー設定');assert.equal((await request(h,'/api/モデル書込','POST')).status,409);
- assert.deepEqual(writes,[['gemini','openrt']]);
+ assert.deepEqual(writes,[['gemini','openrt_chat']]);
 });
 test('chat models are written newest first; same dates and undated models keep their original order (undated last)',async()=>{
  const rows=[{model_id:'old',作成日:'2025/01/01'},{model_id:'none-a',作成日:null},{model_id:'new',作成日:'2026/10/14'},{model_id:'same-1',作成日:'2026/09/01'},{model_id:'placeholder',作成日:'yyyy/mm/dd'},{model_id:'same-2',作成日:'2026/09/01'},{model_id:'none-b'}];
@@ -191,7 +191,7 @@ test('chat keeps the detailed モデル array and exposes selectable chat names 
 });
 
 test('all selectable chat, live and code entries expose models; Claude API metadata stays separate',async()=>{
- const chatKeys={gemini:'gemini_chat',freeai:'freeai_chat',openai:'openai_chat',openai_oauth:'openai_oauth',openrt:'openrt_chat',ollama:'ollama_chat',local:'local_chat'};
+ const chatKeys={gemini:'gemini_chat',freeai:'freeai_chat',openai:'openai_chat',openai_oauth:'openai_oauth',openrt_chat:'openrt_chat',ollama:'ollama_chat',local:'local_chat'};
  const liveKeys={gemini:'gemini_live',freeai:'freeai_live',openai:'openai_live'};
  for(const id of MODEL_PROVIDER_IDS){
   const info=await modelsInfo({id,名前:id},ok(),{read,now});
@@ -281,20 +281,20 @@ test('consolidated outputs omit every empty provider after CLI fallback and labe
 });
 test('OpenRouter requires verified results and current key presence even for saved legacy files',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-router-auth-'));
- const provider={id:'openrt',名前:'OpenRouter',設定済み:true};
+ const provider={id:'openrt_chat',名前:'OpenRouter',設定済み:true};
  const load=async()=>JSON.parse(await readFile(path.join(directory,'chat_models_info.json'),'utf8'));
  try {
-  await writeModelsInfo([provider],{openrt:ok()},{directory,installedClis:{}});assert.deepEqual(await load(),{});
+  await writeModelsInfo([provider],{openrt_chat:ok()},{directory,installedClis:{}});assert.deepEqual(await load(),{});
   const configReader=()=>JSON.stringify({openrt_key_id:'fixture-key'});
-  const verified=await probe('openrt',{reader:configReader,cache:{公開状態:'取得済',公開モデル:{m1:{作成日:'2026/10/01'}}},fetch:async()=>({data:{is_free_tier:false}})});
-  await writeModelsInfo([provider],{openrt:verified},{directory,installedClis:{},configReader});assert.deepEqual((await load()).openrt_chat.models,{m1:'2026/10/01 - m1'});
-  await writeModelsInfo([provider],{openrt:verified},{directory,installedClis:{},configReader:()=>JSON.stringify({openrt_key_id:'changed-key'})});assert.deepEqual(await load(),{},'external key edit invalidates the in-memory result');
-  await writeModelsInfo([provider],{openrt:JSON.parse(JSON.stringify(verified))},{directory,installedClis:{},configReader});assert.deepEqual(await load(),{},'serialized proof cannot authorize a provider');
+  const verified=await probe('openrt_chat',{reader:configReader,cache:{公開状態:'取得済',公開モデル:{m1:{作成日:'2026/10/01'}}},fetch:async()=>({data:{is_free_tier:false}})});
+  await writeModelsInfo([provider],{openrt_chat:verified},{directory,installedClis:{},configReader});assert.deepEqual((await load()).openrt_chat.models,{m1:'2026/10/01 - m1'});
+  await writeModelsInfo([provider],{openrt_chat:verified},{directory,installedClis:{},configReader:()=>JSON.stringify({openrt_key_id:'changed-key'})});assert.deepEqual(await load(),{},'external key edit invalidates the in-memory result');
+  await writeModelsInfo([provider],{openrt_chat:JSON.parse(JSON.stringify(verified))},{directory,installedClis:{},configReader});assert.deepEqual(await load(),{},'serialized proof cannot authorize a provider');
   await writeModelsInfo([provider],{},{directory,installedClis:{}});assert.deepEqual(await load(),{},'saved authentication is not evidence for the currently configured key');
   await writeModelsInfo([{...provider,設定済み:false}],{},{directory,installedClis:{}});assert.deepEqual(await load(),{});
-  await writeModelsInfo([provider],{openrt:{状態:'未実施'}},{directory,installedClis:{}});assert.deepEqual(await load(),{});
-  await writeModelsInfo([provider],{openrt:{状態:'NG'}},{directory,installedClis:{}});assert.deepEqual(await load(),{});
-  await writeFile(path.join(directory,'openrt_models_info.json'),JSON.stringify({状態:'OK',chat:{openrt_chat:{models:{old:'old'}}}}));
+  await writeModelsInfo([provider],{openrt_chat:{状態:'未実施'}},{directory,installedClis:{}});assert.deepEqual(await load(),{});
+  await writeModelsInfo([provider],{openrt_chat:{状態:'NG'}},{directory,installedClis:{}});assert.deepEqual(await load(),{});
+  await writeFile(path.join(directory,'openrt_chat_models_info.json'),JSON.stringify({状態:'OK',chat:{openrt_chat:{models:{old:'old'}}}}));
   await writeModelsInfo([provider],{},{directory,installedClis:{}});assert.deepEqual(await load(),{});
  }finally{await rm(directory,{recursive:true,force:true});}
 });

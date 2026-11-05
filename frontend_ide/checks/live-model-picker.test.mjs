@@ -117,7 +117,7 @@ async function fixture(t, { host = false, settings = initialSettings, folder = {
     '../../../host/aidiy_live/src/microphone-error': { microphoneError: error => error.message },
     '../下書き連携/下書き受け渡し.js': { createDraftReceiver: () => ({ mount: noop, publish: noop, dispose: noop }) },
     '../コード/会話到着演出': { chatArrival: () => ({ reset: noop, dispose: noop, show: noop }) },
-    '../共通表示/状態バー.vue': {}, '../ターミナル/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
+    '../共通表示/状態バー.vue': {}, '../コンソール/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
   };
   vm.runInNewContext(componentCode, {
     module, URL, console, crypto: { randomUUID }, location: { href: 'http://localhost/live/' }, window: {},

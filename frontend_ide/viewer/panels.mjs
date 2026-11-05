@@ -13,7 +13,7 @@ import { join } from 'node:path';
 const require = createRequire(import.meta.url);
 const vscodeRoot = fileURLToPath(new URL('../host/', import.meta.url));
 async function launch(kind, project, state) {
-  if (kind === 'console') return (await import('../aidiy_console/terminal.mjs')).startTerminal(project);
+  if (kind === 'console') return (await import('../aidiy_console/console.mjs')).startConsole(project);
   let module;
   try { module = require(join(vscodeRoot, 'dist', `aidiy_${kind}`, 'server.cjs')); }
   catch { throw new Error('Code / Live のセットアップが必要です。frontend_ide/host のセットアップを実行してください。'); }

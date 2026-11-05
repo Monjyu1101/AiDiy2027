@@ -140,7 +140,7 @@ Linux / macOS は `command_hermes/.venv/bin/python` を使う。
 
 ## 対応 provider
 
-- API provider: `ollama`, `openai`, `openrt`, `gemini`, `freeai`, `anthropic`, `local_chat`, `openai_oauth`, `xai-oauth`
+- API provider: `ollama`, `openai`, `openrt_chat`, `openrt_free`, `gemini`, `freeai`, `anthropic`, `local_chat`, `openai_oauth`, `xai-oauth`
 - CLI bridge: `claude-code`, `codex-cli`, `antigravity-cli`, `copilot-cli`, `opencode`, `grok-cli`（Hermes の provider slug。本体の Code AI 識別子とは区別する）
 
 選択優先順位・候補生成の正本は [Provider 一覧と選択ロジック](./command_hermes,Provider一覧と選択ロジック.md)。

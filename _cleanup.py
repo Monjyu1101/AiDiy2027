@@ -60,6 +60,10 @@ _path_helper = importlib.util.module_from_spec(_path_spec)
 _path_spec.loader.exec_module(_path_helper)
 remove_launcher_path = _path_helper.remove_launcher_path
 
+_opencode_spec = importlib.util.spec_from_file_location("aidiy_cleanup_opencode_service", BASE_DIR / "scripts" / "_opencode_service.py")
+_opencode_service = importlib.util.module_from_spec(_opencode_spec)
+_opencode_spec.loader.exec_module(_opencode_service)
+
 BACKEND_PATH = "backend_server"
 BACKEND_ENV_LIST = [".venv", "venv"]
 BACKEND_TASKTEAM_PATH = "backend_taskteam"
@@ -374,6 +378,10 @@ def stop_all_services(
             "tools の Python / MCP 接続",
             lambda: _load_folder_module("backend_tools").stop_tools_processes(),
         )
+
+    # 停止の最後に OpenCode の常駐サービスを止める。利用者全体で共有されるため、失敗しても中止しない。
+    print_info("OpenCode の常駐サービスを停止します")
+    _opencode_service.stop_opencode_service(print_info, print_warning)
 
     # OS側のポート解放を短時間待つ。
     time.sleep(1)

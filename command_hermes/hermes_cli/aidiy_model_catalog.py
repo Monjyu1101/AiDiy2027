@@ -11,15 +11,26 @@ from pathlib import Path
 import re
 
 
-CHAT_PROVIDERS = frozenset({"gemini", "freeai", "openrt", "openrt_free", "openai_chat", "claude_chat"})
+CHAT_PROVIDERS = frozenset({"gemini", "freeai", "openrt_chat", "openrt_free", "openai_chat", "claude_chat"})
 _ALIASES = {
     "openai": "openai_chat",
     "anthropic": "claude_chat",
     "anthropic_chat": "claude_chat",
-    "openrouter": "openrt",
-    "openrt_chat": "openrt",
+    "openrouter": "openrt_chat",
     "gemini_chat": "gemini",
     "freeai_chat": "freeai",
+}
+# hermes_models_info.json のキーは Chat / Code 一覧と同じ区分名。実行時のスラッグ（/model --provider）から対応づける。
+_CATALOG_KEYS = {
+    "gemini": "gemini_chat",
+    "freeai": "freeai_chat",
+    "claude-code": "claude_cli",
+    "antigravity-cli": "antigravity_cli",
+    "codex-cli": "codex_cli",
+    "copilot-cli": "copilot_cli",
+    "opencode": "opencode_cli",
+    "grok-cli": "grok_cli",
+    "xai-oauth": "xai_oauth",
 }
 _MODEL_ID = re.compile(r"~?[A-Za-z0-9][A-Za-z0-9._:/@+\-]{0,199}\Z")
 _MAX_CATALOG_BYTES = 4 * 1024 * 1024
@@ -28,6 +39,12 @@ _MAX_CATALOG_BYTES = 4 * 1024 * 1024
 def normalize_chat_provider(provider: str | None) -> str:
     slug = str(provider or "").strip().lower()
     return _ALIASES.get(slug, slug)
+
+
+def catalog_key(provider: str | None) -> str:
+    """スラッグに対応する hermes_models_info.json のキー。"""
+    slug = normalize_chat_provider(provider)
+    return _CATALOG_KEYS.get(slug, slug)
 
 
 def read_model_labels(
@@ -41,7 +58,7 @@ def read_model_labels(
     Chat パネルと異なり Hermes が返せない画像・音声等は Diag の生成時に除外する。
     空/破損時に未検証の既定モデルを追加して、取得成功に見せない。
     """
-    key = normalize_chat_provider(provider)
+    key = catalog_key(provider)
     guidance = "aidiy_diag でモデル一覧を取得・保存してください。"
     try:
         with Path(filename).open("rb") as source:

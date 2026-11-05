@@ -25,7 +25,7 @@ function fixture(host = false, options = {}) {
   assert.deepEqual(template.errors, []);
   const module = { exports: {} }, modules = {
     '../共通表示/状態バー.vue': { name: 'StatusBar' },
-    '../ターミナル/開始表示.vue': { name: 'TerminalWelcome' },
+    '../コンソール/開始表示.vue': { name: 'TerminalWelcome' },
     '../コード/コード通信.js': { codeTransport: (_props, callback) => { receive = callback; return { send: message => send(message), cancelFiles: () => cancel(), saveDraft: no, dispose: no }; } },
     '../添付ファイル/ファイル送信.js': helper.exports,
     '../コード/会話到着演出': { chatArrival: (_scroll, host) => { notificationHost = host; return { reset: no, dispose: no, show: no, reserve: no, cancelReservation: no }; } },

@@ -3,9 +3,9 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-import * as cliTitles from '../src/components/ターミナル/CLIタイトル.js';
+import * as cliTitles from '../src/components/コンソール/CLIタイトル.js';
 import test from 'node:test';
-import * as keyboard from '../src/components/ターミナル/キー入力.js';
+import * as keyboard from '../src/components/コンソール/キー入力.js';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
@@ -15,7 +15,7 @@ const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transf
 const flush=async()=>{for(let n=0;n<10;n++)await Promise.resolve();};
 function fixture({desktop=true,linked=true,title=()=>Promise.resolve('AiDiy IDE / Console 3')}={}){
  const mounted=[],unmounted=[];let calls=0;
- const source=readFileSync(new URL('../src/components/ターミナル/ターミナルパネル.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/コンソール/コンソールパネル.vue',import.meta.url),'utf8');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
  const script=compileScript(descriptor,{id:'console',genDefaultAs:'component'});
  const template=compileTemplate({source:descriptor.template.content,filename:'ConsolePanel.vue',id:'console',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
@@ -24,7 +24,7 @@ function fixture({desktop=true,linked=true,title=()=>Promise.resolve('AiDiy IDE 
  const module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,URL,window:{aidiyWindow:{title:()=>{calls++;return title();}}},location:{href:'http://localhost/'},ResizeObserver:class{observe(){}disconnect(){}},WebSocket:class{close(){}},
-  require:id=>id==='./CLIタイトル.js'?cliTitles:id==='./キー入力.js'?keyboard:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:id==='@xterm/xterm'?{Terminal}:id==='@xterm/addon-fit'?{FitAddon:class{}}:id==='../ターミナル/コマンド補完.js'?{cliCompletions:{}}:{},
+  require:id=>id==='./CLIタイトル.js'?cliTitles:id==='./キー入力.js'?keyboard:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:id==='@xterm/xterm'?{Terminal}:id==='@xterm/addon-fit'?{FitAddon:class{}}:id==='../コンソール/コマンド補完.js'?{cliCompletions:{}}:{},
  });
  const scope=vue.effectScope(),component=module.exports,props={desktop,linked,visible:true,base:'/console/'};
  const state=scope.run(()=>component.setup(props,{expose(){}}));state.container.value={addEventListener:noop,removeEventListener:noop};

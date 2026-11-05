@@ -8,14 +8,14 @@ import { randomBytes } from 'node:crypto';
 import { basename, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
-import { cliCompletions } from '../src/components/ターミナル/コマンド補完.js';
+import { cliCompletions } from '../src/components/コンソール/コマンド補完.js';
 import { toolsTarget } from '../ファイル機能/ai-search.mjs';
 import { resolveCliLaunch, validateCliOptions } from './cli-launch.mjs';
 import { createCliSession } from './cli-session.mjs';
 
 // IDEのパネル中継だけが接続する、ランダムパス付きのローカル端末。
 // シェル・開始フォルダはサーバー側で決め、ブラウザから指定させない。
-export async function startTerminal(project, { spawnTerminal, env = process.env, cli, cliAutoApprove = false, cliReconnectGrace = 30000, onCliStarted, onCliAbandoned, checkTools, toolsPollInterval = 10000 } = {}) {
+export async function startConsole(project, { spawnConsole, env = process.env, cli, cliAutoApprove = false, cliReconnectGrace = 30000, onCliStarted, onCliAbandoned, checkTools, toolsPollInterval = 10000 } = {}) {
   validateCliOptions('console', { cli, cliAutoApprove });
   if (!Number.isFinite(cliReconnectGrace) || cliReconnectGrace < 0) throw Error('CLI再接続の猶予時間が不正です。');
   const cliLaunch = cli ? await resolveCliLaunch(cli, { autoApprove: cliAutoApprove, env }) : undefined;
@@ -25,8 +25,8 @@ export async function startTerminal(project, { spawnTerminal, env = process.env,
     const result = await response.json();
     return result.status === 'ok' && result.name === 'aidiy_code_agents';
   };
-  spawnTerminal ??= (await import('./terminal-process.mjs')).spawnTerminal;
-  const cliSession = cliLaunch ? createCliSession(cliLaunch, project, spawnTerminal) : undefined;
+  spawnConsole ??= (await import('./console-process.mjs')).spawnConsole;
+  const cliSession = cliLaunch ? createCliSession(cliLaunch, project, spawnConsole) : undefined;
   const cliInfo = cliLaunch ? { id: cliLaunch.id, name: cliLaunch.name, mode: cliLaunch.mode, autoApprove: cliLaunch.autoApprove } : undefined;
   const shell = process.platform === 'win32'
     ? join(env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe')
@@ -140,7 +140,7 @@ export async function startTerminal(project, { spawnTerminal, env = process.env,
           cliSession.resize(message.cols, message.rows);
         } else if (message.type === 'start' && !terminal) {
           size(); clearTimeout(initializing);
-          terminal = spawnTerminal(shell, args, { name: 'xterm-256color', cols: message.cols, rows: message.rows,
+          terminal = spawnConsole(shell, args, { name: 'xterm-256color', cols: message.cols, rows: message.rows,
             cwd: project, env: { ...env, TERM: 'xterm-256color' } });
           output = terminal.onData(data => {
             unacknowledged += data.length;

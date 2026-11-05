@@ -12,7 +12,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocket } from 'ws';
 import { CLI_LAUNCHERS } from '../aidiy_console/cli-launch.mjs';
-import { startTerminal } from '../aidiy_console/terminal.mjs';
+import { startConsole } from '../aidiy_console/console.mjs';
 import { startDevelopment } from '../server.mjs';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -31,7 +31,7 @@ function mockOwner() {
   const terminals = [];
   return {
     terminals,
-    spawnTerminal(file, args, options) {
+    spawnConsole(file, args, options) {
       const dataListeners = new Set(), exitListeners = new Set();
       const subscribe = (listeners, listener) => {
         listeners.add(listener);
@@ -89,9 +89,9 @@ async function withParallelTerminals(cli, run, options = () => ({})) {
     await writeFile(executable, 'TEST FIXTURE, NEVER EXECUTE\n');
     await chmod(executable, 0o755);
     const starts = await Promise.allSettled(owners.map(async (owner, index) => {
-      apps[index] = await startTerminal(project, {
+      apps[index] = await startConsole(project, {
         cli, cliAutoApprove: true, env: { PATH: project },
-        checkTools: async () => false, spawnTerminal: owner.spawnTerminal,
+        checkTools: async () => false, spawnConsole: owner.spawnConsole,
         ...options(index, apps),
       });
     }));

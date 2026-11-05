@@ -189,7 +189,8 @@ class DiagCleanupTests(unittest.TestCase):
         module.stop_processes.return_value = False
         with patch.object(cleanup, '_load_folder_module', return_value=module), \
                 patch.object(cleanup, '_load_folder_start_module', return_value=module), \
-                patch.object(cleanup.time, 'sleep'), patch('builtins.print'):
+                patch.object(cleanup.time, 'sleep'), patch('builtins.print'), \
+                patch.object(cleanup._opencode_service, 'stop_opencode_service'):
             with self.assertRaisesRegex(RuntimeError, 'Diag'):
                 cleanup.stop_all_services(keep_diag=False)
         module.kill_ports.assert_called()
@@ -200,7 +201,8 @@ class DiagCleanupTests(unittest.TestCase):
         module.process_tree_pids.return_value = set()
         with patch.object(cleanup, '_load_folder_module', return_value=module), \
                 patch.object(cleanup, '_load_folder_start_module', return_value=module), \
-                patch.object(cleanup.time, 'sleep'), patch('builtins.print'):
+                patch.object(cleanup.time, 'sleep'), patch('builtins.print'), \
+                patch.object(cleanup._opencode_service, 'stop_opencode_service'):
             self.assertTrue(cleanup.stop_all_services(keep_code=True, keep_dev=True, keep_discord=True))
         module.stop_processes.assert_not_called()
 

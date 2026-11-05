@@ -12,7 +12,7 @@
 
 - `components/コード/`: コードパネル・通信・会話到着演出（Liveも共有）
 - `components/ライブ/`: ライブパネル・通信
-- `components/ターミナル/`: ターミナルパネル・コマンド補完・進捗表示・開始表示（Code / Liveも共有）
+- `components/コンソール/`: コンソールパネル・コマンド補完・進捗表示・開始表示（Code / Liveも共有）
 - `components/開発スペース/`: 開発スペース・宇宙キャンバス・描画・視点・経路記録
 - `components/ファイル閲覧/`: 一覧・ビューア・フォルダページ・アイコン・ファイル操作・最新ファイル・走査警告
 - `components/ファイル検索/`: AI検索パネル
@@ -25,7 +25,7 @@
 
 日本語の機能フォルダを維持し、描画・通信だけを `engines` / `transports` などへ分散しません。既存の関数名・props・emit・保存キー・IPC/API・CSSクラスは互換契約として保ち、移動だけで変更しません。`host/src` のDiscord共有モジュール、公開起動入口、worker、配布URLも維持します。
 
-移動時は通常のimportに加え、テストのreadFile・仮想require、型宣言の隣接、`viewer/server.mjs` の最新ファイル共有、`aidiy_console/terminal.mjs` のPowerShell補完情報を確認してください。日本語パスをファイルAPIへ渡すときはURLオブジェクトか `fileURLToPath()` を使い、URLの `.pathname` を直接ファイル名として使わないでください。`checks/component-paths.mjs` は実Vueマウントの論理名とファイルの対応を一か所にまとめます。
+移動時は通常のimportに加え、テストのreadFile・仮想require、型宣言の隣接、`viewer/server.mjs` の最新ファイル共有、`aidiy_console/console.mjs` のPowerShell補完情報を確認してください。日本語パスをファイルAPIへ渡すときはURLオブジェクトか `fileURLToPath()` を使い、URLの `.pathname` を直接ファイル名として使わないでください。`checks/component-paths.mjs` は実Vueマウントの論理名とファイルの対応を一か所にまとめます。
 
 ## Task / Team の独立版（Avatarからの移設）
 
@@ -287,33 +287,33 @@ Codespacesの転送先からAPIを開いた場合は、既存の `forwardedOrigi
 
 ## Console（ターミナル）の変更・検証
 
-Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。最小幅360px、初期の幅2/3・高さは横長で1/3、縦長・正方形で1/4、Code / Live / IDE / ビューアの最小寸法は変えません。作業領域がさらに小さい時は初期配置の寸法を上限にします。`ターミナルパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `console-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
+Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。最小幅360px、初期の幅2/3・高さは横長で1/3、縦長・正方形で1/4、Code / Live / IDE / ビューアの最小寸法は変えません。作業領域がさらに小さい時は初期配置の寸法を上限にします。`コンソールパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `console-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
 
-`checks/window-layout.test.mjs` は小さい作業領域・単独/IDE子窓の最小寸法と従来の初期配置、`checks/console-size.test.mjs` は実Vue処理と実FitAddonによる1〜5行への縮小・復元・入力・表示クリア・タブ往復・再起動、`checks/terminal.test.mjs` は小さい行数のサーバー検証と実PTYのリサイズを確認します。これらは実描画の検証ではありません。Electronの `checks/console-desktop-probe.cjs` では360×180への縮小・入力・クリア・操作ボタン・最下行・元の大きさへの復元も撮影して確認してください。
+`checks/window-layout.test.mjs` は小さい作業領域・単独/IDE子窓の最小寸法と従来の初期配置、`checks/console-size.test.mjs` は実Vue処理と実FitAddonによる1〜5行への縮小・復元・入力・表示クリア・タブ往復・再起動、`checks/console.test.mjs` は小さい行数のサーバー検証と実PTYのリサイズを確認します。これらは実描画の検証ではありません。Electronの `checks/console-desktop-probe.cjs` では360×180への縮小・入力・クリア・操作ボタン・最下行・元の大きさへの復元も撮影して確認してください。
 
 ConsoleのElectron窓は作業領域の幅2/3・高さは横長で1/3、縦長・正方形で1/4として画面下中央に開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Consoleはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/console-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
 
 プロジェクトバーの「Tools接続確認」はCodeの `auto-connect` トグルを共用します。既定ON、WebSocketの `tools-check` で切り替え、`tools` 応答の `enabled` / `online` で画面を同期します。OFFは疎通の定期実行を止め、シアン表示を解除して赤いバーにします。ONへ戻すと即時に疎通確認を再開します。シェルの再起動は行わず、端末の再起動でも同じサーバー内の選択を維持します。確認中にOFFへ変わった場合の古い応答は世代番号で無視してください。
 
-キー変換は `src/components/ターミナル/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs` と `node frontend_ide/scripts/check-console-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
+キー変換は `src/components/コンソール/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs` と `node frontend_ide/scripts/check-console-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
 
 Consoleの入力前はCodeと同じ `開始表示.vue` とアイコンを使い、実PTYの入力欄を下部へ小さく配置します。xtermの `onKey` とDOMの `input` / `paste` で初回操作を検出し、同じ端末要素を拡張・再fitします。シェルや端末を作り直さず、初回の文字・日本語IME・貼り付けを失わないようにしてください。シェルが自動送信する制御応答を入力開始と誤認しないよう、`onData` だけで判定しません。再起動時は初期表示へ戻し、タブ切替では表示状態を保持します。
 
-CLI補完候補は `ターミナルパネル.vue` でカーソル直後へ薄いグレーの文字として重ねます。xtermのセル寸法・表示中の行位置から配置し、右端で折り返します。端末バッファには候補を書き込まず、Tab確定時だけPSReadLineが入力へ追加します。描画・スクロール・サイズ変更時に位置を更新し、別画面や終了時には表示しません。候補を常設の下部パネルへ戻さず、下部はキー操作の案内だけにします。
+CLI補完候補は `コンソールパネル.vue` でカーソル直後へ薄いグレーの文字として重ねます。xtermのセル寸法・表示中の行位置から配置し、右端で折り返します。端末バッファには候補を書き込まず、Tab確定時だけPSReadLineが入力へ追加します。描画・スクロール・サイズ変更時に位置を更新し、別画面や終了時には表示しません。候補を常設の下部パネルへ戻さず、下部はキー操作の案内だけにします。
 
-タイトルバーはCodeと同じ `状態バー.vue`、プロジェクトバーは共通の `component-toolbar` を使い、フォルダ名と完全パスのツールチップを表示します。シェルの状態は下部に分け、シアンバーはtoolsの疎通だけで決めます。`aidiy_console/terminal.mjs` は `ファイル機能/ai-search.mjs` の接続先解決（`PORT_TOOLS`、既定8095）を共用し、`aidiy_code_agents/ping` を10秒ごと・タイムアウト1.5秒で確認します。tools停止でシェルを終了させず、シェルの自然終了後もtoolsの状態通知は維持します。
+タイトルバーはCodeと同じ `状態バー.vue`、プロジェクトバーは共通の `component-toolbar` を使い、フォルダ名と完全パスのツールチップを表示します。シェルの状態は下部に分け、シアンバーはtoolsの疎通だけで決めます。`aidiy_console/console.mjs` は `ファイル機能/ai-search.mjs` の接続先解決（`PORT_TOOLS`、既定8095）を共用し、`aidiy_code_agents/ping` を10秒ごと・タイムアウト1.5秒で確認します。tools停止でシェルを終了させず、シェルの自然終了後もtoolsの状態通知は維持します。
 
-Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッションだけにPSReadLineのTabハンドラーを設定します。入力が対象CLI名だけでカーソルが末尾なら、`scripts/cli_bat` と同じ権限省略オプションを追加し、実行はEnterに任せます。対象は `codex` / `claude` / `copilot` / `agy` / `grok` / `aidiy_hermes` で、Claudeは既存バッチに合わせて `--chrome` も追加します。モデルは変更しません。それ以外は元のTab処理へ戻します。`src/components/ターミナル/コマンド補完.js` の `cliCompletions` を候補表示とシェル補完で共用し、履歴予測の斜体表示と確定済み引数を区別します。ユーザーのプロファイルは変更しません。検証では同名の模擬関数で引数を確認し、実CLIを起動しないでください。
+Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッションだけにPSReadLineのTabハンドラーを設定します。入力が対象CLI名だけでカーソルが末尾なら、`scripts/cli_bat` と同じ権限省略オプションを追加し、実行はEnterに任せます。対象は `codex` / `claude` / `copilot` / `agy` / `grok` / `aidiy_hermes` で、Claudeは既存バッチに合わせて `--chrome` も追加します。モデルは変更しません。それ以外は元のTab処理へ戻します。`src/components/コンソール/コマンド補完.js` の `cliCompletions` を候補表示とシェル補完で共用し、履歴予測の斜体表示と確定済み引数を区別します。ユーザーのプロファイルは変更しません。検証では同名の模擬関数で引数を確認し、実CLIを起動しないでください。
 
-`aidiy_console` は `aidiy_console/launch.mjs` → 共通 `launch.mjs` の `--app console` で起動します。IDEのElectron版は「＋ Console」で独立した子窓を複数開き、Web版は `ターミナルパネル.vue` をConsoleタブに保持します。利用モードはオンライン・オフライン両方で有効です。setup / start / cleanup の表示と処理は Console → Code → Live → IDE の順に揃えます。`aidiy_console/_setup.py` はランチャー、`_start.py` は環境確認・独立起動・プロセス照合、`_cleanup.py` は停止とランチャー解除を担当し、依存物は共通UIにまとめます。
+`aidiy_console` は `aidiy_console/launch.mjs` → 共通 `launch.mjs` の `--app console` で起動します。IDEのElectron版は「＋ Console」で独立した子窓を複数開き、Web版は `コンソールパネル.vue` をConsoleタブに保持します。利用モードはオンライン・オフライン両方で有効です。setup / start / cleanup の表示と処理は Console → Code → Live → IDE の順に揃えます。`aidiy_console/_setup.py` はランチャー、`_start.py` は環境確認・独立起動・プロセス照合、`_cleanup.py` は停止とランチャー解除を担当し、依存物は共通UIにまとめます。
 
 旧 `aidiy_term` から更新した場合は setup を再実行してください。同じ配置先が所有する旧ランチャーだけを解除して `aidiy_console` を登録します。他の作業コピーのランチャー・プロファイル・ユーザーデータは変更しません。
 
-`aidiy_console/terminal.mjs` はランダムパス付きのローカルサーバー、`viewer/panels.mjs` は同一公開元への中継です。Host / Origin・IDE利用状態を検証し、シェル・開始フォルダはサーバー側で決めます。入力サイズと端末寸法を制限し、描画完了のACKで出力を制御します。パネル初期化中・終了中のセッション切替では、破棄中のサーバーも完了まで待ちます。
+`aidiy_console/console.mjs` はランダムパス付きのローカルサーバー、`viewer/panels.mjs` は同一公開元への中継です。Host / Origin・IDE利用状態を検証し、シェル・開始フォルダはサーバー側で決めます。入力サイズと端末寸法を制限し、描画完了のACKで出力を制御します。パネル初期化中・終了中のセッション切替では、破棄中のサーバーも完了まで待ちます。
 
-`aidiy_console/terminal-process.mjs` は `aidiy_console/terminal-worker.mjs` を端末ごとに起動します。ネイティブのPTYと補助スレッドをそのプロセスに閉じ込め、ElectronからもNodeモードで動かします。Windowsの終了はそのworkerのプロセスツリーを停止します。WebSocket切断・ページ再読込・窓終了・IDE終了で停止し、タブ非表示だけでは切断しません。自然終了では末尾のIPC出力を送り終えてからworkerを終了します。ConPTYをIDEメインプロセスで直接保持すると補助スレッドの寿命がIDEに影響するため、この境界を維持してください。
+`aidiy_console/console-process.mjs` は `aidiy_console/console-worker.mjs` を端末ごとに起動します。ネイティブのPTYと補助スレッドをそのプロセスに閉じ込め、ElectronからもNodeモードで動かします。Windowsの終了はそのworkerのプロセスツリーを停止します。WebSocket切断・ページ再読込・窓終了・IDE終了で停止し、タブ非表示だけでは切断しません。自然終了では末尾のIPC出力を送り終えてからworkerを終了します。ConPTYをIDEメインプロセスで直接保持すると補助スレッドの寿命がIDEに影響するため、この境界を維持してください。
 
-- `node --test frontend_ide/checks/terminal.test.mjs`: 不正接続・寸法・フロー制御、実PTYの日本語、開始フォルダ、リサイズ、Ctrl+C、シェル配下の子プロセスの終了。
+- `node --test frontend_ide/checks/console.test.mjs`: 不正接続・寸法・フロー制御、実PTYの日本語、開始フォルダ、リサイズ、Ctrl+C、シェル配下の子プロセスの終了。
 - `node frontend_ide/scripts/check-console.mjs`: 専用ブラウザで日本語入力、タブ保持、狭い画面、exit後の再起動、利用終了。WindowsのChrome / Edgeで実行します。
 - `node frontend_ide/scripts/check-console-desktop.mjs`: 専用Electronプロファイルで日本語入力、複数窓、個別終了、IDEとの終了連携。
 - `node frontend_ide/scripts/check-launcher.mjs console`: プロンプト復帰、同一プロジェクトの複数起動、幅2/3・向きに応じた高さ1/3または1/4、右上への配置、個別終了、待機指定、サーバー終了。
@@ -420,7 +420,7 @@ IDE連携CodeのOSタイトルは、既存の窓配置番号 `record.slot + 1` �
 
 ## IDE連携Consoleの番号付きタイトル
 
-IDEから開いたConsoleは、既存の `reserveTermSlot()` が確保した配置番号 `record.slot + 1` を使って `AiDiy IDE / Console n` と表示します。OSタイトルと `ターミナルパネル.vue` の見出しは、Codeと同じ限定 `title()` IPCで一致させます。番号用の別カウンターは追加しません。配置slotは単独Consoleや別IDEとも共有するため、使用中のslotがあれば番号は1から始まらない場合があります。閉鎖されたslotは再利用し、単独ConsoleとWeb内Consoleの表示、初期サイズ・位置は維持します。
+IDEから開いたConsoleは、既存の `reserveTermSlot()` が確保した配置番号 `record.slot + 1` を使って `AiDiy IDE / Console n` と表示します。OSタイトルと `コンソールパネル.vue` の見出しは、Codeと同じ限定 `title()` IPCで一致させます。番号用の別カウンターは追加しません。配置slotは単独Consoleや別IDEとも共有するため、使用中のslotがあれば番号は1から始まらない場合があります。閉鎖されたslotは再利用し、単独ConsoleとWeb内Consoleの表示、初期サイズ・位置は維持します。
 
 `node --test frontend_ide/checks/code-window-title.test.mjs frontend_ide/checks/console-window-title.test.mjs frontend_ide/checks/window-layout.test.mjs` で、複数起動、単独Consoleとのslot共有、閉鎖・再起動、OSタイトルの維持、送信元照合、Vue見出しへの反映、取得失敗、破棄後の遅延応答、配置の回帰を確認します。Electronと端末接続は模擬環境、Vueは実setup・実テンプレートをコンパイルして検証します。実OSでのタイトル表示やDPIは別途実画面で確認してください。
 

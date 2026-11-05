@@ -10,7 +10,7 @@ import { mkdtemp, writeFile, chmod, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocket } from 'ws';
-import { startTerminal } from '../aidiy_console/terminal.mjs';
+import { startConsole } from '../aidiy_console/console.mjs';
 import { createCliSession } from '../aidiy_console/cli-session.mjs';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(condition) { for (let i = 0; i < 200; i++) { if (condition()) return; await delay(10); } throw Error('timeout'); }
@@ -29,8 +29,8 @@ async function fixture(run) {
 const subscription = () => ({ dispose() {} });
 test('CLI端末: 指定project・固定argv、重複start・再接続・終了後に再実行せず状態保持', async () => fixture(async project => {
   const starts = [], writes = []; let onData, onExit, killed = 0;
-  const app = await startTerminal(project, { cli: 'copilot', cliAutoApprove: true, env: { PATH: project }, checkTools: async () => false,
-    spawnTerminal: (file, args, options) => { starts.push({ file, args, options }); return {
+  const app = await startConsole(project, { cli: 'copilot', cliAutoApprove: true, env: { PATH: project }, checkTools: async () => false,
+    spawnConsole: (file, args, options) => { starts.push({ file, args, options }); return {
       onData: fn => { onData = fn; return subscription(); }, onExit: fn => { onExit = fn; return subscription(); },
       write: data => writes.push(data), resize() {}, kill: () => killed++,
     }; } });
@@ -59,8 +59,8 @@ test('CLI端末: 指定project・固定argv、重複start・再接続・終了�
 
 test('CLI端末: 同期起動エラーを表示し、再接続でも再試行しない', async () => fixture(async project => {
   let count = 0;
-  const app = await startTerminal(project, { cli: 'copilot', env: { PATH: project }, checkTools: async () => false,
-    spawnTerminal: () => { count++; throw Error('fixture startup error'); } });
+  const app = await startConsole(project, { cli: 'copilot', env: { PATH: project }, checkTools: async () => false,
+    spawnConsole: () => { count++; throw Error('fixture startup error'); } });
   let current;
   try {
     for (let i = 0; i < 2; i++) {
@@ -86,9 +86,9 @@ test('CLIセッション: 非同期エラーと出力上限を保持し、close�
 test('CLI再接続猶予: 有効な開始だけが期限を解除し、未開始・不正接続では延長しない', async () => fixture(async project => {
   let count = 0, killed = 0, started = 0, abandoned = 0;
   const clients = [], grace = 80;
-  const app = await startTerminal(project, { cli: 'copilot', env: { PATH: project }, cliReconnectGrace: grace, checkTools: async () => false,
+  const app = await startConsole(project, { cli: 'copilot', env: { PATH: project }, cliReconnectGrace: grace, checkTools: async () => false,
     onCliStarted: () => started++, onCliAbandoned: () => abandoned++,
-    spawnTerminal: () => { count++; return { onData: subscription, onExit: subscription, resize() {}, kill: () => killed++ }; } });
+    spawnConsole: () => { count++; return { onData: subscription, onExit: subscription, resize() {}, kill: () => killed++ }; } });
   const open = async () => { const client = await connect(app.url); clients.push(client); return client; };
   const disconnect = async client => { const closed = once(client.ws, 'close'); client.ws.close(); await closed; };
   try {
@@ -110,9 +110,9 @@ test('CLI再接続猶予: 有効な開始だけが期限を解除し、未開始
 
 test('CLI再接続猶予: 期限切れ通知から所有サーバーを閉じても待ち合わせが循環しない', async () => fixture(async project => {
   let closed = false;
-  const app = await startTerminal(project, { cli: 'copilot', env: { PATH: project }, cliReconnectGrace: 20, checkTools: async () => false,
+  const app = await startConsole(project, { cli: 'copilot', env: { PATH: project }, cliReconnectGrace: 20, checkTools: async () => false,
     onCliAbandoned: async () => { await app.close(); closed = true; },
-    spawnTerminal: () => ({ onData: subscription, onExit: subscription, resize() {}, kill() {} }) });
+    spawnConsole: () => ({ onData: subscription, onExit: subscription, resize() {}, kill() {} }) });
   try {
     const client = await connect(app.url); client.start(); await until(() => client.messages.some(message => message.type === 'ready'));
     client.ws.close(); await until(() => closed);

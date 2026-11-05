@@ -27,7 +27,7 @@ TREE = ast.parse((ROOT / "cli_main.py").read_text(encoding="utf-8"))
 
 
 def load_picker(directory):
-    names = {"_AIDIY_CODE_CATALOG_KEYS", "_AIDIY_CLI_PROVIDERS", "_AIDIY_NON_CHAT_MODEL",
+    names = {"_AIDIY_CODE_CATALOG_PROVIDERS", "_AIDIY_CLI_PROVIDERS",
              "_DEFAULT_OLLAMA_HOST", "_OLLAMA_CLOUD_BASE_URL", "_OPENAI_BASE_URL",
              "_OPENROUTER_BASE_URL", "_GEMINI_OPENAI_BASE_URL", "_CLAUDE_BASE_URL",
              "_FREEAI_DEFAULT_MODEL", "_OPENAI_OAUTH_SLUG", "_OPENAI_OAUTH_RUNTIME_PROVIDER",
@@ -54,7 +54,6 @@ def load_picker(directory):
     module = ast.Module(body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0), *nodes], type_ignores=[])
     exec(compile(ast.fix_missing_locations(module), str(ROOT / "cli_main.py"), "exec"), ns)
     cls = ns["HermesCLI"]
-    cls._fetch_aidiy_provider_model_labels = lambda *a, **k: (_ for _ in ()).throw(AssertionError("unexpected live fetch"))
     picker = cls()
     picker._aidiy_config = {name: "fake-" + name for name in ["gemini_key_id", "freeai_key_id", "openrt_key_id", "openai_key_id", "claude_key_id"]}
     picker._aidiy_provider_slug = "freeai"
@@ -78,7 +77,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(self.picker._aidiy_config), encoding="utf-8-sig")
 
     def write(self, sections):
-        self.path.write_text(json.dumps({key: {"models": value} for key, value in sections.items()}), encoding="utf-8-sig")
+        self.path.write_text(json.dumps({catalog.catalog_key(key): {"models": value} for key, value in sections.items()}), encoding="utf-8-sig")
 
     def test_all_api_providers_read_exact_ids_and_labels_without_network(self):
         sections = {key: {f"model-{i}": f"2020/01/01 - model-{i}" for i in range(75)} for key in catalog.CHAT_PROVIDERS}
@@ -88,6 +87,27 @@ class HermesModelCatalogTests(unittest.TestCase):
             self.assertEqual(entry["models"], [(label, model) for model, label in sections[key].items()])
             self.assertEqual(entry["total_models"], 75)
 
+    def test_slugs_read_the_chat_and_code_section_names_used_by_the_catalog_file(self):
+        pairs = {"gemini": "gemini_chat", "freeai": "freeai_chat", "claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
+                 "codex-cli": "codex_cli", "copilot-cli": "copilot_cli", "opencode": "opencode_cli", "grok-cli": "grok_cli",
+                 "openrt_chat": "openrt_chat", "openrt_free": "openrt_free", "openai_chat": "openai_chat", "openai_oauth": "openai_oauth", "claude_chat": "claude_chat",
+                 "xai-oauth": "xai_oauth"}
+        for slug, key in pairs.items():
+            self.assertEqual(catalog.catalog_key(slug), key)
+        # 別名は同じ区分へ。旧スラッグ名のキー（gemini / claude-code など）はファイルにあっても読まない。
+        self.assertEqual(catalog.catalog_key("openrouter"), "openrt_chat")
+        self.assertEqual(catalog.catalog_key("gemini_chat"), "gemini_chat")
+        self.path.write_text(json.dumps({"claude-code": {"models": {"old": "Old"}}, "claude_cli": {"models": {"same": "same", "haiku": "Haiku"}}}), encoding="utf-8-sig")
+        rows = self.ns["_aidiy_code_model_labels"]("claude-code")
+        self.assertEqual(rows, [("Haiku", "haiku")])
+        entry = self.picker._get_aidiy_provider_entry("claude-code", True)
+        self.assertEqual([model for _, model in entry["models"]], ["same", "haiku"], "same は先頭に1つだけ")
+
+    def test_xai_oauth_lists_the_diag_grok_candidates_not_the_upstream_fixed_list(self):
+        self.path.write_text(json.dumps({"xai_oauth": {"models": {"grok-4.7": "yyyy/mm/dd - grok-4.7", "grok-4.6": "yyyy/mm/dd - grok-4.6"}}}), encoding="utf-8-sig")
+        rows = self.ns["_aidiy_code_model_labels"]("xai-oauth")
+        self.assertEqual([model for _, model in rows], ["grok-4.7", "grok-4.6"])
+
     def test_generations_and_generator_approved_vision_model_preserved(self):
         ids = ["gemini-3.8-flash", "gemini-4-pro", "gemma-3", "gemma-4", "gemini-flash-latest", "image-understanding"]
         self.write({"gemini": {m: m for m in ids}})
@@ -95,7 +115,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual([m for _, m in entry["models"]], ids)
 
     def test_aliases_use_one_canonical_provider_and_right_protocol(self):
-        for alias, canonical in [("openai", "openai_chat"), ("anthropic", "claude_chat"), ("anthropic_chat", "claude_chat"), ("openrouter", "openrt")]:
+        for alias, canonical in [("openai", "openai_chat"), ("anthropic", "claude_chat"), ("anthropic_chat", "claude_chat"), ("openrouter", "openrt_chat"), ("openrt_chat", "openrt_chat")]:
             entry = self.picker._get_aidiy_provider_entry(alias)
             self.assertEqual(entry["slug"], canonical)
         claude = self.picker._get_aidiy_provider_entry("claude_chat")
@@ -108,7 +128,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertNotIn("anthropic", slugs)
 
     def test_missing_empty_malformed_do_not_invent_default(self):
-        for payload in [None, "{}", '{"freeai":{"models":{}}}', '{"freeai":{"models":[]}}', "not json", '{"freeai":{"models":{"bad\\nmodel":"label"}}}']:
+        for payload in [None, "{}", '{"freeai_chat":{"models":{}}}', '{"freeai_chat":{"models":[]}}', "not json", '{"freeai_chat":{"models":{"bad\\nmodel":"label"}}}']:
             if payload is None:
                 self.path.unlink(missing_ok=True)
             else:
@@ -166,11 +186,28 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual(self.picker.model, "same")
         self.assertEqual(self.picker._explicit_api_key, None)
 
-    def test_old_cli_catalog_fallback_only_when_new_file_absent(self):
+    def test_no_legacy_fallback_to_code_models_info(self):
+        # 一覧は hermes_models_info.json だけから出す。ファイルが無いとき Code 一覧へは退避しない。
         (self.path.parent / "code_models_info.json").write_text(json.dumps({"claude_cli": {"models": {"sonnet": "Existing"}}}))
-        self.assertEqual(self.ns["_aidiy_code_model_labels"]("claude-code"), [("Existing", "sonnet")])
+        self.assertEqual(self.ns["_aidiy_code_model_labels"]("claude-code"), [])
         self.write({})
         self.assertEqual(self.ns["_aidiy_code_model_labels"]("claude-code"), [])
+
+    def test_every_listed_provider_reads_only_the_file_including_ollama_local_and_oauth(self):
+        self.write({"ollama_chat": {"mistral-large-3:675b": "L", "gpt-oss:20b": "S"}, "local_chat": {"google/gemma-4-E2B-it": "Local"},
+                    "openai_oauth": {"gpt-6.1-sol": "O"}, "xai-oauth": {"grok-4.7": "X"}})
+        self.picker._aidiy_config["ollama_host"] = "http://localhost:11434"
+        for slug, expected in [("ollama_chat", ["mistral-large-3:675b", "gpt-oss:20b"]), ("local_chat", ["google/gemma-4-E2B-it"]),
+                               ("openai_oauth", ["gpt-6.1-sol"]), ("xai-oauth", ["grok-4.7"])]:
+            entry = self.picker._get_aidiy_provider_entry(slug, include_models=True)
+            self.assertEqual([model for _, model in entry["models"]], expected, slug)
+        # 候補が無いプロバイダは API を呼ばず、取得・保存の案内を出す。
+        self.write({})
+        entry = self.picker._get_aidiy_provider_entry("ollama_chat", include_models=True)
+        self.assertEqual(entry["models"], [])
+        self.assertIn("ollama_chat", entry["model_list_notice"])
+        # 旧スラッグ ollama は受け付けない。
+        self.assertNotIn("ollama", self.ns["_aidiy_provider_slugs"]() if callable(self.ns.get("_aidiy_provider_slugs")) else self.picker._aidiy_provider_slugs())
 
     def run_entry(self, provider, model="chosen-model", previous=None):
         args = SimpleNamespace(**dict.fromkeys("image toolsets skills reasoning max_turns run_budget verbose gateway worktree checkpoints pass_session_id resume base_url api_key".split()))
@@ -265,7 +302,7 @@ console.log(JSON.stringify(hermesModelsInfo({{chatModels:{{gemini_chat:{{models}
     def test_openrt_free_is_normal_openrouter_with_a_separate_model_list(self):
         self.write({"openrt_free": {"vendor/model:free": "Free model"}})
         entry = self.picker._get_aidiy_provider_entry("openrt_free", True)
-        normal = self.picker._get_aidiy_provider_entry("openrt")
+        normal = self.picker._get_aidiy_provider_entry("openrt_chat")
         for key in ["api_key", "base_url", "runtime_provider", "api_mode"]:
             self.assertEqual(entry[key], normal[key])
         self.assertEqual(entry["models"], [("Free model", "vendor/model:free")])

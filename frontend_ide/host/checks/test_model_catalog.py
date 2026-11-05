@@ -34,6 +34,25 @@ class ModelCatalogTest(unittest.TestCase):
             self.assertEqual(catalog.catalog(str(root / "command_hermes" / "cli_main.py"), "copilot-cli"), {"models": [{"id": "same", "label": "same (変更なし)"}, {"id": "claude-haiku-5.5", "label": "2026/10/07 - claude-haiku-5.5"}]})
             self.assertEqual(catalog.catalog(str(root / "command_hermes" / "cli_main.py"), "freeai"), {"models": [{"id": "gemini-new", "label": "New Gemini"}]})
 
+    def test_openrouter_paid_and_free_are_separate_providers(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output = root / "_AIDIY" / "aidiy_diag"
+            output.mkdir(parents=True)
+            (output / "code_models_info.json").write_text("{}", encoding="utf-8")
+            (output / "chat_models_info.json").write_text(json.dumps({
+                "openrt_chat": {"models": {"vendor/paid": "Paid"}},
+                "openrt_free": {"models": {"vendor/new:free": "Free"}},
+            }), encoding="utf-8")
+            cli = str(root / "command_hermes" / "cli_main.py")
+            self.assertEqual(catalog.catalog(cli, "openrt_chat"), {"models": [{"id": "vendor/paid", "label": "Paid"}]})
+            self.assertEqual(catalog.catalog(cli, "openrt_free"), {"models": [{"id": "vendor/new:free", "label": "Free"}]})
+            self.assertEqual(catalog.catalog(cli, "openrt"), {"models": []})
+            self.assertEqual(catalog.catalog(cli)["providers"], [{"id": "openrt_chat", "label": "OpenRouter"}, {"id": "openrt_free", "label": "OpenRouter Free"}])
+            (output / "chat_models_info.json").write_text(json.dumps({"ollama_chat": {"models": {"gpt-oss:20b": "Small"}}}), encoding="utf-8")
+            self.assertEqual(catalog.catalog(cli, "ollama_chat"), {"models": [{"id": "gpt-oss:20b", "label": "Small"}]})
+            self.assertEqual(catalog.catalog(cli, "ollama"), {"models": []})
+
     def test_old_config_models_are_ignored(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

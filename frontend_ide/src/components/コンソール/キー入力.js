@@ -6,7 +6,7 @@
 
 // falseはxtermの変換だけを止める。コピー・貼付けはブラウザーの既定動作と
 // xtermのcopy/pasteイベントへ任せ、権限付きClipboard APIや二重貼付けを避ける。
-export function terminalKeyHandler(send, { platform = globalThis.navigator?.platform || '' } = {}) {
+export function consoleKeyHandler(send, { platform = globalThis.navigator?.platform || '' } = {}) {
   const isMac = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'].includes(platform);
   return event => {
     if (event.isComposing || event.keyCode === 229 || event.getModifierState?.('AltGraph')) return true;

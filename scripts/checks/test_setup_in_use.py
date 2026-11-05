@@ -81,7 +81,7 @@ class InUseTest(unittest.TestCase):
 
     def test_shared_node_pty_protected_for_browser_or_worker(self):
         root=WindowsPathFixture(r'C:\fixture\frontend_ide')
-        for entry in ('launch.mjs --app navi --browser','launch.mjs --app code --browser','aidiy_console/terminal-worker.mjs'):
+        for entry in ('launch.mjs --app navi --browser','launch.mjs --app code --browser','aidiy_console/console-worker.mjs'):
             records=[{'Name':'node.exe','CommandLine':f'node "{root}/{entry.split()[0]}" '+ ' '.join(entry.split()[1:])}]
             with patch.object(subject.sys,'platform','win32'),patch.object(_cleanup_processes,'list_processes',return_value=records):
                 self.assertTrue(subject._runtime_in_use(root))

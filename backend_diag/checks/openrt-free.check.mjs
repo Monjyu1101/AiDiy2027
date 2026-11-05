@@ -59,14 +59,14 @@ test('public cache, authenticated key result and merged Chat/Hermes retain prici
   const directory = await mkdtemp(path.join(os.tmpdir(), 'diag-openrt-free-'));
   const load = async name => JSON.parse(await readFile(path.join(directory, `${name}_models_info.json`), 'utf8'));
   const configReader = () => JSON.stringify({openrt_key_id:'fixture-key'});
-  const provider = {id:'openrt',名前:'OpenRouter',設定済み:true};
+  const provider = {id:'openrt_chat',名前:'OpenRouter',設定済み:true};
   const options = {directory,configReader,installedClis:{},naviHermesAvailable:false,now:() => NOW};
   const rows = [row('vendor/new:free'),row('stealth/crouton-alpha',2),row('vendor/paid',1,{...zero,request:'0.1'}),row('google/lyria-3-pro-preview',1,zero,['text','audio']),row('vendor/unknown',1,null)];
   const publicResult = await publicCatalog({now:NOW,fetch:async () => ({data:rows})});
   const cache = createPublicModelCache({run:async () => ({data:publicResult}),loadBundled:async () => {throw Error('unused');}});
   await cache.refresh();
   const calls = [];
-  const result = await testKey('openrt',{publicCache:cache.input(),run:async (action,id,args) => {
+  const result = await testKey('openrt_chat',{publicCache:cache.input(),run:async (action,id,args) => {
     assert.equal(action,'test');
     return {data:await probe(id,{reader:configReader,now:NOW,cache:args.input,fetch:async (endpoint,headers) => {
       calls.push(endpoint); assert.deepEqual(headers,{Authorization:'Bearer fixture-key'}); return {data:{is_free_tier:false}};
@@ -76,28 +76,34 @@ test('public cache, authenticated key result and merged Chat/Hermes retain prici
     assert.deepEqual(calls,['openrouter-key']);
     assert.deepEqual(result.モデル詳細[0].pricing,zero);
     assert.deepEqual(result.モデル詳細[0].output_modalities,['text']);
-    await writeModelsInfo([provider],{openrt:result},options);
-    const chat = await load('chat'), info = await load('openrt'), hermes = await load('hermes');
+    await writeModelsInfo([provider],{openrt_chat:result},options);
+    const chat = await load('chat'), info = await load('openrt_chat'), freeInfo = await load('openrt_free'), hermes = await load('hermes');
     const expected = ['vendor/new:free','stealth/crouton-alpha'];
     assert.deepEqual(Object.keys(chat.openrt_free.models),expected);
     assert.deepEqual(Object.keys(hermes.openrt_free.models),expected);
-    assert.deepEqual(chat.openrt_free,info.chat.openrt_free);
+    assert.deepEqual(chat.openrt_free,freeInfo.chat.openrt_free);
+    assert.equal(info.chat.openrt_free,undefined);
+    assert.deepEqual(Object.keys(freeInfo.chat.openrt_free.models),expected);
+    assert.deepEqual(freeInfo.chat.モデル.map(row => row.model_id),expected);
+    assert.equal(freeInfo.プロバイダ,'openrt_free');
+    assert.equal(freeInfo.認証確認,true);
     assert.equal(Object.keys(chat.openrt_chat.models).length,rows.length);
     assert.deepEqual(Object.keys(chat.openrt_free),['models']);
     assert.deepEqual(info.chat.モデル.find(row => row.model_id==='vendor/paid').pricing,{...zero,request:'0.1'});
     assert.doesNotMatch(JSON.stringify([chat,info,hermes]),/fixture-key/);
     // Saved candidates cannot override known paid metadata when a later partial write merges them.
-    info.chat.openrt_free.models['vendor/paid']='tampered';
-    await writeFile(path.join(directory,'openrt_models_info.json'),JSON.stringify(info));
-    await writeModelsInfo([provider],{openrt:result},options);
+    freeInfo.chat.openrt_free.models['vendor/paid']='tampered';
+    await writeFile(path.join(directory,'openrt_free_models_info.json'),JSON.stringify(freeInfo));
+    await writeModelsInfo([provider],{openrt_chat:result},options);
     assert.deepEqual(Object.keys((await load('chat')).openrt_free.models),expected);
-    await writeModelsInfo([provider],{openrt:result},{...options,configReader:() => JSON.stringify({openrt_key_id:'different-key'})});
+    await writeModelsInfo([provider],{openrt_chat:result},{...options,configReader:() => JSON.stringify({openrt_key_id:'different-key'})});
     assert.equal((await load('chat')).openrt_free,undefined);
     assert.equal((await load('hermes')).openrt_free,undefined);
-    await writeModelsInfo([provider],{openrt:JSON.parse(JSON.stringify(result))},options);
+    await writeModelsInfo([provider],{openrt_chat:JSON.parse(JSON.stringify(result))},options);
     assert.equal((await load('chat')).openrt_free,undefined);
-    await writeModelsInfo([provider],{openrt:{状態:'NG'}},options);
-    assert.deepEqual((await load('openrt')).chat.openrt_free.models,{});
+    await writeModelsInfo([provider],{openrt_chat:{状態:'NG'}},options);
+    assert.deepEqual((await load('openrt_free')).chat.openrt_free.models,{});
+    assert.equal((await load('openrt_chat')).chat.openrt_free,undefined);
   } finally {await rm(directory,{recursive:true,force:true});}
 });
 

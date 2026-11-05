@@ -98,7 +98,7 @@ Ollama の「導入・更新」は、導入済みなら公式の `winget upgrade
 
 ### モデル情報ファイル（`<プロバイダ>_models_info.json`）
 
-キー設定画面の「書込」（一括取得の後に押せます）・「全テスト」・`--headless` で、gemini / freeai / claude / openai / openai_oauth / grok / openrt / ollama / local のうちテストしたものを 1 ファイルずつ保存します。用途の分け方は本体の `get_chat_models` / `get_live_models` / `get_code_models` に合わせています。
+キー設定画面の「書込」（一括取得の後に押せます）・「全テスト」・`--headless` で、gemini / freeai / claude / openai / openai_oauth / grok / openrt_chat / ollama / local のうちテストしたものを 1 ファイルずつ保存します。用途の分け方は本体の `get_chat_models` / `get_live_models` / `get_code_models` に合わせています。
 
 保存形式は `形式: 2` です。選択候補は用途にかかわらず「区分名 → `{models}`」で取得できます。例: `chat.gemini_chat.models`、`code.claude_sdk.models`、`live.gemini_live.models`。区分名以下は各プログラムへそのまま渡せるよう `models` だけを持ちます。取得元などの説明や詳細情報はその外側に置きます。旧形式のファイルは次回の「書込」または `--headless` で置き換わります。
 
@@ -109,7 +109,7 @@ Ollama の「導入・更新」は、導入済みなら公式の `winget upgrade
 
 `openrt_free` は同じ OpenRouter キーを使う追加の Chat 区分です。既存の `openrt_chat` は変えず、認証済みの取得結果から、`pricing.prompt` / `pricing.completion` と記載された追加料金がすべて明示的に 0、かつ出力がテキストのみの会話モデルを抽出します。不明な料金・非空の条件付き料金・画像／音声出力・専用の安全判定モデルは除き、`:free` の名前だけでは無料と判定しません。API のモデルIDを変更せず、既存の日付条件（Google / OpenAI / Anthropic / xAI は240日、Perplexity は365日、その他は90日）と新しい順を使います。
 
-価格・出力・対応パラメータは `openrt_models_info.json` の `chat.モデル` に `pricing` / `output_modalities` / `supported_parameters` として残します。選択候補は同ファイルの `chat.openrt_free.models` と `chat_models_info.json` の `openrt_free.models`、Hermes対応候補は `hermes_models_info.json` の `openrt_free.models` に保存します。キー変更・削除・認証失敗後は以前の候補を合成しません。反映するには Diag を再起動して公開情報を取り直し、OpenRouter 行の「テスト」→「書込」を実行します。設定モデル試行は他の区分と同じ処理で `CHAT_OPENRT_FREE_MODEL` を参照します。料金の絞り込みは一覧生成時に行い、実行時は通常の OpenRouter モデルと同じ処理を使います。
+OpenRouter のプロバイダ別ファイルは `openrt_chat_models_info.json`（旧 `openrt_models_info.json`、旧名の読み込みは行いません）と `openrt_free_models_info.json` の2つです。価格・出力・対応パラメータは `openrt_chat_models_info.json` の `chat.モデル` に `pricing` / `output_modalities` / `supported_parameters` として残し、`openrt_free_models_info.json` には無料と判定した行の詳細を同じ形式で保存します。選択候補は `openrt_free_models_info.json` の `chat.openrt_free.models` と `chat_models_info.json` の `openrt_free.models`、Hermes対応候補は `hermes_models_info.json` の `openrt_free.models` に保存します。キー変更・削除・認証失敗後は以前の候補を合成しません。反映するには Diag を再起動して公開情報を取り直し、OpenRouter 行の「テスト」→「書込」を実行します。設定モデル試行は他の区分と同じ処理で `CHAT_OPENRT_FREE_MODEL` を参照します。料金の絞り込みは一覧生成時に行い、実行時は通常の OpenRouter モデルと同じ処理を使います。
 
 Gemini / FreeAI はモデルIDに `lyria` を含むものを詳細・chat・live・code すべての出力対象から除外します。`antigravity_cli` もこの絞り込み後の候補から生成します。
 

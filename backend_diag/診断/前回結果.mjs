@@ -6,7 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { OUTPUT_DIRECTORY, INSTALL_FILE } from './headless.mjs';
-import { MODEL_PROVIDER_IDS } from '../モデル情報/models_info.mjs';
+import { MODEL_PROVIDER_IDS, modelsInfoFile } from '../モデル情報/models_info.mjs';
 import { INTEGRATION_IDS, INTEGRATION_FILE } from '../モデル情報/integration_info.mjs';
 
 const 日時 = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
@@ -24,7 +24,7 @@ async function 読込(file) { try { const value=JSON.parse((await readFile(file,
 
 export function createPreviousResults({directory=OUTPUT_DIRECTORY}={}) {
   async function snapshot() {
-    const [install,integration,...models]=await Promise.all([INSTALL_FILE,INTEGRATION_FILE,...MODEL_PROVIDER_IDS.map(id=>`${id}_models_info.json`)].map(file=>読込(path.join(directory,file))));
+    const [install,integration,...models]=await Promise.all([INSTALL_FILE,INTEGRATION_FILE,...MODEL_PROVIDER_IDS.map(modelsInfoFile)].map(file=>読込(path.join(directory,file))));
     const groups={導入状況:{結果:[],前回実行日時:null},モデル一覧:{結果:[],前回実行日時:null},外部連携:{結果:[],前回実行日時:null}};
     const merge=(group,values,date,ids)=>{
       const target=groups[group],byId=new Map(target.結果.map(item=>[item.id,item]));

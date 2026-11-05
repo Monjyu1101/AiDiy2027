@@ -15,7 +15,7 @@ test('Node status uses only bounded config reader and never contacts a provider'
  const response=await runModels('status',undefined,{reader:reader({openai_key_id:'fixture-secret',gemini_key_id:' < placeholder > ',ollama_key_id:'ollama'}),fetch:forbidden});
  assert.equal(response.data.設定状態,'読込済み');
  const rows=Object.fromEntries(response.data.項目.map(row=>[row.id,row]));
- assert.equal(rows.openai.設定済み,true);assert.equal(rows.gemini.設定済み,false);assert.equal(rows.ollama.設定済み,null);assert.equal(rows.ollama.ローカル,true);assert.equal(rows.ollama.キー不要,true);assert.equal(rows.ollama.テスト可能,true);assert.equal(rows.openrt.キー不要,false);
+ assert.equal(rows.openai.設定済み,true);assert.equal(rows.gemini.設定済み,false);assert.equal(rows.ollama.設定済み,null);assert.equal(rows.ollama.ローカル,true);assert.equal(rows.ollama.キー不要,true);assert.equal(rows.ollama.テスト可能,true);assert.equal(rows.openrt_chat.キー不要,false);
  assert.ok(!JSON.stringify(response).includes('fixture-secret'));
 });
 test('unknown and unsupported IDs never read config or fetch',async()=>{
@@ -43,8 +43,8 @@ test('external integrations: read-only auth GET with fixed headers, role checks,
  assert.equal(rows.discord.テスト可能,true);assert.equal(rows.huggingface_read.テスト可能,false);assert.equal(rows.huggingface_read.理由,'キーが未設定です。');
 });
 test('safe runner schema discards unknown fields and formats model details',async()=>{
- const status=await getKeyStatus({run:async()=>({data:{設定状態:'読込済み',項目:[null,{id:'openrt',設定済み:false,キー不要:true,テスト可能:true,secret:'hidden'}]}})});
- assert.equal(status.項目.length,KEY_PROVIDERS.length);assert.equal(status.項目.find(row=>row.id==='openrt').キー不要,true);assert.ok(!JSON.stringify(status).includes('hidden'));
+ const status=await getKeyStatus({run:async()=>({data:{設定状態:'読込済み',項目:[null,{id:'openrt_chat',設定済み:false,キー不要:true,テスト可能:true,secret:'hidden'}]}})});
+ assert.equal(status.項目.length,KEY_PROVIDERS.length);assert.equal(status.項目.find(row=>row.id==='openrt_chat').キー不要,true);assert.ok(!JSON.stringify(status).includes('hidden'));
  const tested=await testKey('openai',{run:async()=>({data:{id:'openai',状態:'OK',説明:'fixture',モデル:['model','<script>','model'],モデル詳細:[{model_id:'model',作成日:'2026/10/01',トークン数:'100',モダリティ:'text',secret:'hidden'}],警告:['補完未確認'],確認日時:'2026-10-15T00:00:00Z',secret:'hidden'}})});
  assert.deepEqual(tested.モデル,['model']);assert.equal(tested.モデル詳細[0].作成日,'2026/10/01');assert.deepEqual(tested.警告,['補完未確認']);assert.ok(!JSON.stringify(tested).includes('hidden'));
 });
@@ -62,9 +62,9 @@ test('public acquisition uses anonymous fetch, never configuration',async()=>{
 });
 test('OpenRouter individual test verifies key and preserves authentication marker',async()=>{
  const input={公開状態:'取得済',公開モデル:{example:{model_id:'example',作成日:'2026/10/15',トークン数:'100',モダリティ:'text'}},確認日時:now.toISOString()};
- const result=await runModels('test','openrt',{input,reader:reader({openrt_key_id:'fixture-key'}),fetch:async provider=>{assert.equal(provider,'openrouter-key');return {data:{is_free_tier:false}};}});
+ const result=await runModels('test','openrt_chat',{input,reader:reader({openrt_key_id:'fixture-key'}),fetch:async provider=>{assert.equal(provider,'openrouter-key');return {data:{is_free_tier:false}};}});
  assert.equal(result.data.認証確認,true);
- const safe=await testKey('openrt',{run:async()=>result});assert.equal(safe.認証確認,true);
+ const safe=await testKey('openrt_chat',{run:async()=>result});assert.equal(safe.認証確認,true);
  const {currentOpenRouterProof}=await import('../runtime/model_probe.mjs');
  assert.equal(await currentOpenRouterProof(safe,reader({openrt_key_id:'fixture-key'})),true);
  assert.equal(await currentOpenRouterProof(safe,reader({openrt_key_id:'changed-key'})),false);

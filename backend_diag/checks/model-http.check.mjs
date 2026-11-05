@@ -58,7 +58,7 @@ test('anonymous public catalog accepts multi-MiB metadata and retains bounded sa
   const cache=createPublicModelCache({run:(action)=>runner.run(action,undefined,{now,reader:()=>assert.fail('public retrieval must not read configuration')})});
   await cache.refresh();assert.equal(cache.snapshot().状態,'取得済');assert.equal(cache.snapshot().件数,700);
   assert.ok(Buffer.byteLength(JSON.stringify(cache.input()))<RESPONSE_LIMIT);
-  const result=await runner.run('test','openrt',{input:cache.input(),reader:()=> '{}'});assert.equal(result.data.状態,'未実施');assert.equal(result.data.モデル.length,0);
+  const result=await runner.run('test','openrt_chat',{input:cache.input(),reader:()=> '{}'});assert.equal(result.data.状態,'未実施');assert.equal(result.data.モデル.length,0);
  });
 });
 test('public and authenticated-provider transport caps stay bounded',async()=>{

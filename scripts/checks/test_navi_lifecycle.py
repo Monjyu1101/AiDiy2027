@@ -69,7 +69,7 @@ class NaviLifecycle(unittest.TestCase):
         def start(folder):
             return starts.setdefault(folder, SimpleNamespace(kill_ports=Mock(return_value=True)))
         modules = SimpleNamespace(stop_standalone_processes=Mock(return_value=True), stop_tools_processes=Mock(return_value=True))
-        with patch.object(cleanup, '_load_folder_start_module', side_effect=start), patch.object(cleanup, '_load_folder_module', return_value=modules), patch.object(cleanup.time, 'sleep'), patch.object(cleanup.subprocess, 'run', side_effect=AssertionError('real process forbidden')):
+        with patch.object(cleanup, '_load_folder_start_module', side_effect=start), patch.object(cleanup, '_load_folder_module', return_value=modules), patch.object(cleanup.time, 'sleep'), patch.object(cleanup.subprocess, 'run', side_effect=AssertionError('real process forbidden')), patch.object(cleanup._opencode_service, 'stop_opencode_service'):
             self.assertTrue(cleanup.stop_all_services({'ide': False}))
             starts['frontend_ide/aidiy_navi'].kill_ports.assert_called_once_with()
             starts['frontend_ide/viewer'].kill_ports.assert_called_once_with()

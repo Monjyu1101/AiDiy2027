@@ -12,7 +12,7 @@ import { AudioCloud } from '../../../host/aidiy_live/src/visualizer';
 import { ライブ選択エラー } from '../../../host/aidiy_live/src/model-catalog';
 import { microphoneError } from '../../../host/aidiy_live/src/microphone-error';
 import StatusBar from '../共通表示/状態バー.vue';
-import TerminalWelcome from '../ターミナル/開始表示.vue';
+import TerminalWelcome from '../コンソール/開始表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import { chatArrival } from '../コード/会話到着演出';
 import { createDraftReceiver } from '../下書き連携/下書き受け渡し.js';

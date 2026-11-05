@@ -104,7 +104,7 @@ for (const [name, path, start, end, returned] of [
 });
 
 for (const [name, path] of [
-  ['Console', '../aidiy_console/terminal.mjs'], ['Browser CDP', '../デスクトップ/ブラウザCDP.cjs'],
+  ['Console', '../aidiy_console/console.mjs'], ['Browser CDP', '../デスクトップ/ブラウザCDP.cjs'],
 ]) test(`${name} WS: 20MiBを許可し、20MiB+1は1009で拒否（socket不使用）`, async () => {
   const options = source(path).match(/new WebSocketServer\((\{[^}]+\})\)/)?.[1];
   assert.ok(options);

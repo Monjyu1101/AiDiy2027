@@ -15,7 +15,7 @@ export type モデル初期情報 = {
 const providerKeys: Record<string, [string, string, string]> = {
   freeai:['chat','freeai_chat','FreeAI'], gemini:['chat','gemini_chat','Gemini'],
   openai:['chat','openai_chat','OpenAI'], openai_oauth:['chat','openai_oauth','OpenAI OAuth'],
-  openrt:['chat','openrt_chat','OpenRouter'], ollama:['chat','ollama_chat','Ollama'], local_chat:['chat','local_chat','Local'],
+  openrt_chat:['chat','openrt_chat','OpenRouter'], openrt_free:['chat','openrt_free','OpenRouter Free'], ollama_chat:['chat','ollama_chat','Ollama'], local_chat:['chat','local_chat','Local'],
   'claude-code':['code','claude_cli','Claude Code (CLI)'], 'codex-cli':['code','codex_cli','Codex CLI'],
   'copilot-cli':['code','copilot_cli','Copilot CLI'], 'grok-cli':['code','grok_cli','Grok CLI'],
   opencode:['code','opencode_cli','OpenCode'], 'antigravity-cli':['code','antigravity_cli','Antigravity CLI'],

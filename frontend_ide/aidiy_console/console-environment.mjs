@@ -6,7 +6,7 @@
 
 // ConsoleのPTY子プロセスだけに適用する。OS・親プロセス・利用者の明示設定は変えない。
 // Windowsの環境変数名は大文字小文字を区別しない。空文字や"0"も明示設定として残す。
-export function terminalEnvironment(env = process.env, platform = process.platform) {
+export function consoleEnvironment(env = process.env, platform = process.platform) {
   const result = { ...env };
   if (platform === 'win32') {
     const names = new Set(Object.keys(result).map(name => name.toUpperCase()));

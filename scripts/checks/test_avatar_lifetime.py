@@ -62,7 +62,8 @@ class AvatarLifetimeTest(unittest.TestCase):
                 return module
             with patch.object(cleanup, '_load_folder_start_module', side_effect=fake_module), \
                     patch.object(cleanup, '_load_folder_module', side_effect=fake_module), \
-                    patch.object(cleanup.time, 'sleep'):
+                    patch.object(cleanup.time, 'sleep'), \
+                    patch.object(cleanup._opencode_service, 'stop_opencode_service'):
                 cleanup.stop_all_services(keep_code=keep, keep_dev=keep, keep_discord=True)
             self.assertIn('frontend_avatar', calls)
             self.assertEqual('frontend_ide/viewer' in calls, not keep)

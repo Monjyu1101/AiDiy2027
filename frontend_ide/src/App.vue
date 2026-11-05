@@ -7,12 +7,12 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import { ref, reactive, computed, provide, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { installWindowMove } from './components/共通表示/長押し窓移動.js';
 import CodePanel from './components/コード/コードパネル.vue';
-import ConsolePanel from './components/ターミナル/ターミナルパネル.vue';
+import ConsolePanel from './components/コンソール/コンソールパネル.vue';
 import LivePanel from './components/ライブ/ライブパネル.vue';
 import NavigationPanel from './components/開発スペース/Navigationパネル.vue';
 import SpaceView from './components/開発スペース/開発スペース.vue';
 import StatusBar from './components/共通表示/状態バー.vue';
-import TerminalWelcome from './components/ターミナル/開始表示.vue';
+import TerminalWelcome from './components/コンソール/開始表示.vue';
 import ViewerWindow from './components/ファイル閲覧/閲覧ウィンドウ.vue';
 import BrowserPanel from './components/ブラウザ/ブラウザパネル.vue';
 import {openBrowser} from './components/ブラウザ/起動.js';

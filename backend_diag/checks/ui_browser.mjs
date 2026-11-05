@@ -65,7 +65,7 @@ try{
  assert.equal(await page.locator('.public-indicator').count(),1);assert.equal(await page.locator('.public-indicator').innerText(),'OK');
  // 全テストは状況確認→書込のあと、テストできる行だけ一覧再取得→モデル書込まで行う。
  const firstRun=requests.filter(([method])=>method==='POST').map(([,url])=>decodeURIComponent(url).split('/api/')[1]);
- assert.deepEqual(firstRun,['診断','書込','キーテスト/openai','キーテスト/openrt','モデル書込','キーテスト/discord','外部連携書込'],String(firstRun));
+ assert.deepEqual(firstRun,['診断','書込','キーテスト/openai','キーテスト/openrt_chat','モデル書込','キーテスト/discord','外部連携書込'],String(firstRun));
  await page.locator('.key-row').first().getByRole('button',{name:'テスト',exact:true}).click();await page.waitForSelector('.models li');assert.equal(await page.locator('.models li').last().innerText(),'<script>alert(1)</script>');
  assert.ok(await page.locator('.key-row').nth(1).getByRole('button',{name:'テスト'}).isDisabled());
  assert.ok((await page.locator('.model-meta').innerText()).includes('128000'));

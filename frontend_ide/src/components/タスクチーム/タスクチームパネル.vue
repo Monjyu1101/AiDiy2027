@@ -6,6 +6,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup lang="ts">
 import { ref, provide, onMounted, onBeforeUnmount } from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
+import EscapingMark from '../コンソール/逃げるマーク.vue';
 import TaskPanel from './components/AIタスク/AIタスク.vue';
 import TeamPanel from './components/AIチーム/AIチーム.vue';
 import TaskRequest from './components/AIタスク/windows/AIタスク_要求ウィンドウ.vue';
@@ -135,7 +136,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
     <p v-if="config.projectFixed" class="fixed-project">IDE連携・プロジェクト固定: {{ config.fixedProject }}（変更不可）</p>
     <p v-if="restoring" class="taskteam-message" role="status">認証を確認しています…</p>
     <div v-else-if="!user" class="taskteam-login-screen">
-      <div class="welcome-mark" aria-hidden="true"><img :src="'/development/AiDiy.png'" alt=""></div>
+      <EscapingMark icon="/development/AiDiy.png" />
     <p v-if="config.projectFixed" class="taskteam-message" role="alert">{{ error || "内部認証を確認しています…" }}</p>
     <form v-else class="taskteam-login" @submit.prevent="login">
       <label>利用者ID<input v-model="userId" autocomplete="username" required :disabled="busy" /></label>
@@ -161,7 +162,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
 .taskteam-content{flex:1;min-height:0;overflow:auto;position:relative}
 .taskteam-login{box-sizing:border-box;width:min(408px,calc(100% - 32px));margin:auto;display:grid;gap:16px;background:#000;border:1px solid rgba(143,104,221,.5);border-radius:12px;padding:32px 28px 24px;box-shadow:0 16px 48px #0005,inset 0 1px 0 #c4b5fd14}
 .taskteam-login-screen{box-sizing:border-box;flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:safe center;padding:36px 0 24px;gap:32px}
-.taskteam-login-screen .welcome-mark{margin:0;flex-shrink:0}
+.taskteam-login-screen :deep(.welcome-mark){margin:0;flex-shrink:0}
 .taskteam-login-screen .taskteam-login{margin:0;flex-shrink:0;padding-top:24px}
 .taskteam-login label{display:grid;gap:7px;font-size:12px;color:#c3c5df}
 .taskteam-login input{min-width:0;padding:10px 12px;border:1px solid #6972a45c;border-radius:6px;background:#080c1a99;color:#eef0ff;outline:none}
@@ -170,7 +171,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
 .taskteam-login button[type=submit]:hover:not(:disabled){background:linear-gradient(115deg,#4668cdcf,#6c4ec4cf);border-color:#b8a9ef}
 .taskteam-login button[type=submit]:focus-visible{outline:2px solid #b8a9ef;outline-offset:3px}
 .taskteam-login p{margin:0;font-size:11px;line-height:1.6;color:#a8accb}.taskteam-login .error{color:#ffb7b7}.taskteam-message{padding:12px}
-@media(max-height:560px){.taskteam-login-screen{padding:24px 0 16px;gap:24px}.taskteam-login{gap:12px;padding:20px 24px}.taskteam-login-screen .welcome-mark{width:64px;height:64px}.taskteam-login-screen .welcome-mark img{width:42px;height:42px}}
+@media(max-height:560px){.taskteam-login-screen{padding:24px 0 16px;gap:24px}.taskteam-login{gap:12px;padding:20px 24px}.taskteam-login-screen :deep(.welcome-mark){width:64px;height:64px}.taskteam-login-screen :deep(.welcome-mark img){width:42px;height:42px}}
 /* コピー元の機能は維持し、外側の操作面は Code と同じ黒・細枠へ揃える。 */
 .taskteam-content :deep(.ai-task-view){background:#000}.taskteam-content :deep(.task-grid){gap:4px;padding:4px}.taskteam-content :deep(.task-panel){border:1px solid #343943;background:#000;border-radius:0;box-shadow:none}.taskteam-content :deep(.task-panel:hover){border-color:#56606e;box-shadow:none}
 .taskteam-shell .taskteam-content :deep(.panel-header){background:#000;border-bottom:1px solid #242424;box-shadow:none}

@@ -48,7 +48,7 @@ async function panel(t, { host = false, desktop = false } = {}) {
     '../コード/コード通信.js': transport.exports, '../下書き連携/下書き受け渡し.js': draftHandoff,
     '../../../host/src/stream-control': { visibleStreamContent: value => value },
     '../コード/会話到着演出': { chatArrival: () => ({ reset() {}, dispose() {}, show() {}, reserve() {}, cancelReservation() {} }) },
-    'markdown-it': require('markdown-it'), '../ターミナル/進捗表示.vue': progress,
+    'markdown-it': require('markdown-it'), '../コンソール/進捗表示.vue': progress,
   };
   const { descriptor } = parse(readFileSync(new URL('../src/components/コード/コードパネル.vue', import.meta.url), 'utf8'));
   const script = compileScript(descriptor, { id: 'CodePanel', genDefaultAs: 'component' });

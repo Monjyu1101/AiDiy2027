@@ -32,7 +32,7 @@ https.request=(options,callback)=>{if(options.hostname!=='openrouter.ai'||option
   let publicStatus;for(let i=0;i<100;i++){publicStatus=await api(encodeURIComponent('公開モデル'));if(publicStatus.状態==='取得済')break;await new Promise(resolve=>setTimeout(resolve,10));}
   assert.equal(publicStatus.状態,'取得済');assert.equal(publicStatus.件数,1);
   const status=await api(encodeURIComponent('キー設定'));assert.equal(status.設定状態,'読込済み');assert.equal(status.項目.find(row=>row.id==='gemini').設定済み,true);assert.ok(!JSON.stringify(status).includes('synthetic-gemini-key'));
-  const result=await api(encodeURIComponent('キーテスト')+'/openrt','POST');assert.equal(result.状態,'未実施');assert.deepEqual(result.モデル,[]);
+  const result=await api(encodeURIComponent('キーテスト')+'/openrt_chat','POST');assert.equal(result.状態,'未実施');assert.deepEqual(result.モデル,[]);
   child.kill('SIGTERM');await exited;
   // Windows の SIGTERM は TerminateProcess で、終了コードではなくシグナル終了として報告される。
   if(process.platform==='win32')assert.equal(child.signalCode,'SIGTERM');else assert.equal(child.exitCode,0);assert.equal(stderr,'');

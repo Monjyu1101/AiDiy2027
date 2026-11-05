@@ -67,8 +67,10 @@ function availableCodeModels(code, installedClis) {
 }
 
 // モデル一覧に表示する（モデル一覧を取得する）プロバイダ。ファイル名にも使う。
-export const MODEL_PROVIDER_IDS = Object.freeze(['gemini', 'freeai', 'claude', 'openai', 'openai_oauth', 'grok', 'openrt', 'ollama', 'local']);
+export const MODEL_PROVIDER_IDS = Object.freeze(['gemini', 'freeai', 'claude', 'openai', 'openai_oauth', 'grok', 'openrt_chat', 'ollama', 'local']);
+// OpenRouter は有料を含む一覧を openrt_chat（プロバイダ ID と同名）、無料の絞り込みを派生の openrt_free ファイルに保存する。
 export const modelsInfoFile = id => `${id}_models_info.json`;
+export const OPENRT_FREE_FILE = 'openrt_free_models_info.json';
 
 // Grok / local の固定候補も aidiy_diag で管理し、本体は合成ファイルを読む。
 const fixed = (source, models) => Object.freeze({source, models:Object.freeze(models)});
@@ -90,7 +92,7 @@ const LAYOUT = Object.freeze({
   openai: {chat:'openai_chat', live:'openai_live', code:{codex_cli:'取得結果', copilot_cli:'取得結果'}},
   openai_oauth: {chat:'openai_oauth', code:{codex_cli:'取得結果', copilot_cli:'取得結果', aidiy_hermes:'openai_oauth/'}},
   grok: {chat:null, code:{grok_cli:'fixed'}},
-  openrt: {chat:'openrt_chat'},
+  openrt_chat: {chat:'openrt_chat'},
   ollama: {chat:'ollama_chat', code:{opencode_cli:'取得結果'}},
   // backend_local: 固定候補。サイズ・速度の説明は固定候補の表示名に残す。
   local: {chat:'local_chat', chatFixed:'local_chat'},
@@ -170,17 +172,15 @@ export async function modelsInfo(provider, result, {now = () => new Date()} = {}
   const fixedKey = provider.id === 'grok' ? 'grok_cli' : layout.chatFixed;
   const chatModels = fixedKey
     ? details({モデル詳細:Object.keys(FIXED_MODELS[fixedKey].models).map(model_id => ({model_id}))})
-    : (provisional || result?.状態 === 'OK') && (provider.id !== 'openrt' || result.認証確認 === true) ? details(result).filter(row => !gemini || !row.model_id.includes('lyria')) : [];
+    : (provisional || result?.状態 === 'OK') && (provider.id !== 'openrt_chat' || result.認証確認 === true) ? details(result).filter(row => !gemini || !row.model_id.includes('lyria')) : [];
   const info = {形式:2, 種類:'モデル情報', プロバイダ:provider.id, 名前:provider.名前, 保存日時:now().toISOString(), 確認日時:result?.確認日時 ?? null,
     状態:result?.状態 ?? '未実施', 説明:result?.説明 ?? '', 警告:Array.isArray(result?.警告) ? result.警告 : [],
     chat:{取得元:provisional ? OAUTH_FALLBACK_SOURCE : fixedKey ? '固定候補（aidiy_diag）' : result?.状態 === 'OK' ? 'API（本体と同じ絞り込み）' : '取得できませんでした', 件数:chatModels.length, モデル:chatModels}};
   if (provisional) { info.認証確認 = false; info.補完 = OAUTH_FALLBACK_SOURCE; }
-  if (provider.id === 'openrt') info.認証確認 = result?.状態 === 'OK' && result.認証確認 === true;
+  if (provider.id === 'openrt_chat') info.認証確認 = result?.状態 === 'OK' && result.認証確認 === true;
   // 区分名以下は各プログラムがそのまま使う {models} のみ。API の詳細は chat.モデル に残す。
   // Claude / Grok の API 一覧は詳細だけで、本体に存在しない chat 区分は作らない。
   if (layout.chat) info.chat[layout.chat] = layout.chatFixed ? fixedSection(layout.chatFixed) : {models:labels(chatModels)};
-  // 同じ認証済みOpenRouter一覧から、価格と対応出力を確認した無料区分だけを追加する。
-  if (provider.id === 'openrt') info.chat.openrt_free = {models:labels(chatModels.filter(openrouterFreeModel))};
   if (layout.live) {
     const acquired = result?.状態 === 'OK';
     const apiIds = acquired && Array.isArray(result?.ライブ候補) ? result.ライブ候補 : [];
@@ -202,6 +202,15 @@ export async function modelsInfo(provider, result, {now = () => new Date()} = {}
     }
   }
   return info;
+}
+
+// 認証済みOpenRouter一覧（openrt_chat ファイルの chat.モデル）から、価格と対応出力を確認した無料区分だけを取り出す。
+// 保存済みの無料ファイルは信用せず、常に価格付きの詳細から作り直す。
+export function openrtFreeInfo(info) {
+  const rows = newestFirst((Array.isArray(info.chat?.モデル) ? info.chat.モデル : []).filter(openrouterFreeModel));
+  return {形式:2, 種類:'モデル情報', プロバイダ:'openrt_free', 名前:'OpenRouter Free', 保存日時:info.保存日時, 確認日時:info.確認日時 ?? null,
+    状態:info.状態, 説明:info.説明 ?? '', 警告:Array.isArray(info.警告) ? info.警告 : [], 認証確認:info.認証確認 === true,
+    chat:{取得元:info.chat?.取得元 ?? '', 件数:rows.length, モデル:rows, openrt_free:{models:chatLabels(rows, LAYOUT.openrt_chat)}}};
 }
 
 // 各プログラムへ渡す区分だけを合成。同じモデルIDの表示名は日付が新しいものを優先する。
@@ -227,8 +236,8 @@ function mergeModelsInfo(infos) {
 // 保存済みの全プロバイダを合成する。個別テスト後の書込でも他プロバイダの候補を維持する。
 async function writeMergedModelsInfo(directory, installedClis, providers, results, options) {
   const infos = [];
-  const routerVerified = results.openrt?.状態 === 'OK' && results.openrt?.認証確認 === true
-    && await currentOpenRouterProof(results.openrt, options.configReader);
+  const routerVerified = results.openrt_chat?.状態 === 'OK' && results.openrt_chat?.認証確認 === true
+    && await currentOpenRouterProof(results.openrt_chat, options.configReader);
   // 合成時だけ FreeAI を先頭にする。画面・診断のプロバイダ順は維持する。
   const order = ['freeai', ...MODEL_PROVIDER_IDS.filter(id => id !== 'freeai')];
   for (const id of order) {
@@ -236,8 +245,8 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
       const info = JSON.parse(await readFile(path.join(directory, modelsInfoFile(id)), 'utf8'));
       if (id === 'openai_oauth' && providers.some(row => row.id === id && row.設定済み === false)) continue;
       // 旧公開一覧の OK や、キー削除後の保存済み候補を引き継がない。
-      if (id === 'openrt' && (info.認証確認 !== true || !providers.some(row => row.id === id && row.設定済み === true) || !routerVerified)) continue;
-      if (id === 'openrt') (info.chat ??= {}).openrt_free = {models:chatLabels(newestFirst((Array.isArray(info.chat?.モデル) ? info.chat.モデル : []).filter(openrouterFreeModel)), LAYOUT.openrt)};
+      if (id === 'openrt_chat' && (info.認証確認 !== true || !providers.some(row => row.id === id && row.設定済み === true) || !routerVerified)) continue;
+      if (id === 'openrt_chat') (info.chat ??= {}).openrt_free = openrtFreeInfo(info).chat.openrt_free;
       infos.push(info);
     }
     catch (error) { if (error?.code !== 'ENOENT') throw error; }
@@ -260,7 +269,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     if (group === 'chat' && Object.keys(nonempty).every(key => key === 'local_chat')) {
       const [, config] = await readConfig(options.configReader);
       const modelKeys = {gemini_chat:'CHAT_GEMINI_MODEL', freeai_chat:'CHAT_FREEAI_MODEL',
-        openai_chat:'CHAT_OPENAI_MODEL', openai_oauth:'CHAT_OPENAI_MODEL', openrt_chat:'CHAT_OPENRT_MODEL',
+        openai_chat:'CHAT_OPENAI_MODEL', openai_oauth:'CHAT_OPENAI_MODEL', openrt_chat:'CHAT_OPENRT_MODEL', openrt_free:'CHAT_OPENRT_FREE_MODEL',
         ollama_chat:'CHAT_OLLAMA_MODEL', local_chat:'CHAT_LOCAL_MODEL'};
       const provider = typeof config.CHAT_AI_NAME === 'string' ? config.CHAT_AI_NAME.trim() : '';
       const value = Object.hasOwn(modelKeys, provider) ? config[modelKeys[provider]] : null;
@@ -289,7 +298,9 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     saved.push(file);
     if(group==='code'){const naviHermesAvailable=options.naviHermesAvailable??await naviHermesInstalled();await writeResult(path.join(directory,NAVI_MODELS_FILE),naviModelsInfo(nonempty,{...options,naviHermesAvailable}));saved.push(NAVI_MODELS_FILE);}
   }
-  await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:infos}));
+  // xAI OAuth は openai_oauth と同じく、未設定（ログインなし）なら Hermes の一覧に出さない。
+  const hermesInfos = infos.filter(info => !(info.プロバイダ === 'grok' && providers.some(row => row.id === 'grok' && row.設定済み === false)));
+  await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
   saved.push(HERMES_MODELS_FILE);
   return saved;
 }
@@ -302,8 +313,13 @@ export async function writeModelsInfo(providers, results, {directory = OUTPUT_DI
     const result = results[provider.id];
     if (!MODEL_PROVIDER_IDS.includes(provider.id) || !result || !(['OK', 'NG', 'PASS'].includes(result.状態) || (provider.id === 'ollama' && result.スキップ === true && result.状態 === '未実施'))) continue;
     const file = modelsInfoFile(provider.id);
-    await writeResult(path.join(directory, file), await modelsInfo(provider, result, options));
+    const info = await modelsInfo(provider, result, options);
+    await writeResult(path.join(directory, file), info);
     saved.push(file);
+    if (provider.id === 'openrt_chat') {
+      await writeResult(path.join(directory, OPENRT_FREE_FILE), openrtFreeInfo(info));
+      saved.push(OPENRT_FREE_FILE);
+    }
   }
   saved.push(...await writeMergedModelsInfo(directory, options.installedClis ?? await installedCodeClis(), providers, results, options));
   // 予測・判断用はディスクの旧一覧を認証証跡にしない。実行中の取得結果と現在の認証で再合成。

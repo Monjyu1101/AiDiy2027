@@ -14,7 +14,7 @@ Navigator / Console / Code / Live / IDE / Task / Team / Browser は AiDiy の正
 - 自作ソースには既存の著作権・利用条件の定型文を維持する。第三者ライセンスは配布物へ含める。
 - 実装変更は画面を撮影して確認する。手順はREADMEと `_AIDIY/knowledge/` に記載する。
 
-- Consoleは `ターミナルパネル.vue`（xterm.js）と `aidiy_console/terminal.mjs`（WebSocket）を使い、`aidiy_console/terminal-process.mjs` / `aidiy_console/terminal-worker.mjs` が端末ごとのPTYとプロセス終了を管理する。端末は通常のシェル権限を持ち、ファイルビューアだけが読み取り専用。ConsoleにはVS Code拡張を作らない。
+- Consoleは `コンソールパネル.vue`（xterm.js）と `aidiy_console/console.mjs`（WebSocket）を使い、`aidiy_console/console-process.mjs` / `aidiy_console/console-worker.mjs` が端末ごとのPTYとプロセス終了を管理する。端末は通常のシェル権限を持ち、ファイルビューアだけが読み取り専用。ConsoleにはVS Code拡張を作らない。
 - setup / cleanup の表示・処理順は Navigator → Console → Code → Live → IDE → Task → Team → Browser。全体startの自動起動対象は従来どおりで、Navigator / Task / Team / Browser は独立コマンドから手動起動する。共有依存物は各アプリの停止・解除後に片付ける。
 
 - Navigator は独立した開発案内画面。目標・作業項目・推定達成率・次のプロンプトの作成と再評価は読み取り専用。明示的に自動航行をオンにした場合だけ、右側に埋め込んだ専用Codeへ提案を送り、成功後に再評価する。単独起動は `aidiy_navi`、IDEでは「＋ Navigator」から複数窓を開く。

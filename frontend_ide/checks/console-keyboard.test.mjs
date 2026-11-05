@@ -9,17 +9,17 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-import { terminalKeyHandler } from '../src/components/ターミナル/キー入力.js';
+import { consoleKeyHandler } from '../src/components/コンソール/キー入力.js';
 const event=(key,extra={})=>({type:'keydown',key,preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;},...extra});
 test('Console clipboard: 全キー段階でOSのコピー・貼付けを妨げず、制御文字も送らない',()=>{
- const sent=[],handle=terminalKeyHandler(data=>sent.push(data),{platform:'Win32'});
+ const sent=[],handle=consoleKeyHandler(data=>sent.push(data),{platform:'Win32'});
  for(const type of ['keydown','keypress','keyup'])for(const key of ['c','C','v','V'])for(const modifier of ['ctrlKey','metaKey'])for(const shiftKey of [false,true]){
   const e=event(key,{type,[modifier]:true,shiftKey});assert.equal(handle(e),false);assert.equal(e.prevented,undefined);
  }
  assert.deepEqual(sent,[]);
 });
 test('Console modified Enter: Alt・Shiftを区別し、keyup/keypressは二重送信しない',()=>{
- const sent=[],handle=terminalKeyHandler(data=>sent.push(data),{platform:'Win32'});
+ const sent=[],handle=consoleKeyHandler(data=>sent.push(data),{platform:'Win32'});
  for(const [modifiers,expected] of [[{altKey:true},'\x1b\r'],[{shiftKey:true},'\x1b[13;2u'],[{altKey:true,shiftKey:true},'\x1b[13;4u']]){
   for(const type of ['keydown','keypress','keyup']){const e=event('Enter',{...modifiers,type});assert.equal(handle(e),false);assert.ok(e.prevented&&e.stopped);}
   assert.equal(sent.at(-1),expected);
@@ -27,12 +27,12 @@ test('Console modified Enter: Alt・Shiftを区別し、keyup/keypressは二重�
  assert.equal(sent.length,3);
 });
 test('Console IMEと通常キー: 変換確定・AltGr・既存の端末制御をxtermへ委ねる',()=>{
- const handle=terminalKeyHandler(()=>assert.fail('unexpected input'));
+ const handle=consoleKeyHandler(()=>assert.fail('unexpected input'));
  for(const e of [event('Enter'),event('Enter',{shiftKey:true,isComposing:true}),event('Enter',{altKey:true,keyCode:229}),event('@',{ctrlKey:true,altKey:true,getModifierState:name=>name==='AltGraph'}),event('Dead',{altKey:true}),event('A',{shiftKey:true}),event('Tab'),event('ArrowUp')]){assert.equal(handle(e),true);assert.equal(e.prevented,undefined);}
 });
 
 test('Console修飾キー: Ctrlの英字・JIS記号、AltとShiftの組合せを欠落・重複なく送信する',()=>{
- const sent=[],handle=terminalKeyHandler(data=>sent.push(data),{platform:'Win32'});
+ const sent=[],handle=consoleKeyHandler(data=>sent.push(data),{platform:'Win32'});
  const cases=[];
  for(const shiftKey of [false,true])for(let code=97;code<=122;code++){
   const key=String.fromCharCode(code);if(key==='c'||key==='v')continue;
@@ -55,7 +55,7 @@ test('Console修飾キー: Ctrlの英字・JIS記号、AltとShiftの組合せ�
 
 test('Console Mac Option: 通常文字・Shift・dead key・IMEを既定のxterm入力へ委ねる',()=>{
  for(const platform of ['MacIntel','Macintosh','MacPPC','Mac68K']){
-  const handle=terminalKeyHandler(()=>assert.fail('unexpected ESC input'),{platform});
+  const handle=consoleKeyHandler(()=>assert.fail('unexpected ESC input'),{platform});
   const cases=[['@',{}],['å',{}],['Å',{shiftKey:true}],['€',{}],['Dead',{}],
    ['é',{}],['Enter',{isComposing:true}],['あ',{keyCode:229}],['あ',{isComposing:true}]];
   for(const [key,extra] of cases)for(const type of ['keydown','keypress','keyup']){
@@ -68,18 +68,18 @@ test('Console Mac Option: 通常文字・Shift・dead key・IMEを既定のxterm
 
 test('Console OS判定: 引数省略時は入力元navigator.platformを使う',()=>{
  const require=createRequire(import.meta.url),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/ターミナル/キー入力.js',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/コンソール/キー入力.js',import.meta.url),'utf8');
  for(const platform of ['MacIntel','Win32','Linux x86_64']){
   const module={exports:{}};
   vm.runInNewContext(transformSync(source,{format:'cjs'}).code,{module,navigator:{platform}});
-  const sent=[],handle=module.exports.terminalKeyHandler(data=>sent.push(data)),e=event('@',{altKey:true});
+  const sent=[],handle=module.exports.consoleKeyHandler(data=>sent.push(data)),e=event('@',{altKey:true});
   assert.equal(handle(e),platform==='MacIntel');
   assert.deepEqual(sent,platform==='MacIntel'?[]:['\x1b@']);
  }
 });
 
 test('Console Mac: Ctrl・Ctrl+Option・修飾Enterの既存送信は維持する',()=>{
- const sent=[],handle=terminalKeyHandler(data=>sent.push(data),{platform:'MacIntel'});
+ const sent=[],handle=consoleKeyHandler(data=>sent.push(data),{platform:'MacIntel'});
  for(const [key,extra,expected] of [['d',{ctrlKey:true},'\x04'],
   ['d',{ctrlKey:true,altKey:true},'\x1b\x04'],['Enter',{altKey:true},'\x1b\r'],
   ['Enter',{altKey:true,shiftKey:true},'\x1b[13;4u']]){
@@ -93,7 +93,7 @@ test('Console Mac: Ctrl・Ctrl+Option・修飾Enterの既存送信は維持す�
 
 test('Console Windows/Linux: Alt文字を送り、AltGraphの文字入力は奪わない',()=>{
  for(const platform of ['Win32','Linux x86_64']){
-  const sent=[],handle=terminalKeyHandler(data=>sent.push(data),{platform});
+  const sent=[],handle=consoleKeyHandler(data=>sent.push(data),{platform});
   for(const [key,extra,expected] of [['@',{altKey:true},'\x1b@'],['A',{altKey:true,shiftKey:true},'\x1bA']]){
    assert.equal(handle(event(key,extra)),false);assert.equal(sent.at(-1),expected);
   }

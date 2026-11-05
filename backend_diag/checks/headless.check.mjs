@@ -62,13 +62,13 @@ test('full diagnosis includes provider model info after installation',()=>{
 });
 test('models step tests only model providers that can be tested (2 at a time) and saves one file per provider',async()=>folder(async directory=>{
  let active=0,maximum=0;const tested=[],lines=[];
- const statusFn=async()=>({項目:[{id:'gemini',名前:'Gemini',テスト可能:true},{id:'claude',名前:'Claude',テスト可能:false},{id:'openrt',名前:'OpenRouter',テスト可能:true},{id:'ollama',名前:'Ollama',テスト可能:true},{id:'discord',名前:'Discord',テスト可能:true},{id:'slack',名前:'Slack Bot',テスト可能:true}]});
+ const statusFn=async()=>({項目:[{id:'gemini',名前:'Gemini',テスト可能:true},{id:'claude',名前:'Claude',テスト可能:false},{id:'openrt_chat',名前:'OpenRouter',テスト可能:true},{id:'ollama',名前:'Ollama',テスト可能:true},{id:'discord',名前:'Discord',テスト可能:true},{id:'slack',名前:'Slack Bot',テスト可能:true}]});
  const testFn=async(id,{publicCache})=>{active++;maximum=Math.max(maximum,active);tested.push(id);assert.equal(publicCache.公開状態,'取得済');await new Promise(r=>setTimeout(r,10));active--;return id==='ollama'?{id,状態:'NG',モデル:[],モデル詳細:[]}:{id,状態:'OK',モデル:['m'],モデル詳細:[{model_id:'m'}]};};
  const publicCache={refresh:async()=>({}),input:()=>({公開モデル:{},公開状態:'取得済'})};
  const result=await modelsStep({configReader:()=>'{}',directory,statusFn,testFn,publicCache,log:line=>lines.push(line)});
- assert.deepEqual(tested.sort(),['gemini','ollama','openrt']);assert.equal(maximum,2);
- assert.deepEqual(result.集計,{OK:2,NG:1});assert.deepEqual(result.保存先,['gemini_models_info.json','openrt_models_info.json','ollama_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);
- assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','ollama_models_info.json','openrt_models_info.json','prediction_models_info.json']);
+ assert.deepEqual(tested.sort(),['gemini','ollama','openrt_chat']);assert.equal(maximum,2);
+ assert.deepEqual(result.集計,{OK:2,NG:1});assert.deepEqual(result.保存先,['gemini_models_info.json','openrt_chat_models_info.json','openrt_free_models_info.json','ollama_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);
+ assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','ollama_models_info.json','openrt_chat_models_info.json','openrt_free_models_info.json','prediction_models_info.json']);
  assert.ok(lines.some(line=>line.includes('NG  Ollama')));
 }));
 

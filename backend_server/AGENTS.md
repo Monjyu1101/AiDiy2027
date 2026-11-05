@@ -134,7 +134,7 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 - `AIセッション管理`
 - `AIストリーミング処理`
 - `AI音声処理`
-- `AIチャット*`（`gemini` / `local` / `ollama` / `openrt` / `openai` / `openai_oauth`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
+- `AIチャット*`（`gemini` / `local` / `ollama` / `openrt_chat` / `openrt_free` / `openai` / `openai_oauth`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
 - `AI判断*`（`openai_decisions` / `openai_jsonchat`。共通の真偽確率・選択・段階評価）
 - `AIライブ*`（`gemini` / `openai`。`freeai_live` は `AIライブ_gemini.py` が扱う）
 - `AIコード*`（`AIコード_cli.py`、`AIコード_claude.py`）

@@ -6,7 +6,7 @@
 import { authFixture } from './internal-auth-fixture';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {モデル情報取得} from '../src/モデル情報/モデル情報';
+import {APIコード候補, モデル情報取得} from '../src/モデル情報/モデル情報';
 
 test('APIはセッションを作らず初期値と候補を取得し、通信・形式エラーはファイル参照へ戻す',async(t)=>{
  const fixture = authFixture(); t.after(fixture.cleanup);
@@ -24,4 +24,19 @@ test('APIはセッションを作らず初期値と候補を取得し、通信�
   assert.equal(await モデル情報取得('ws://127.0.0.1:8091',async()=>response, fixture.root, {wait: async () => {}}),undefined);
  }
  assert.equal(await モデル情報取得('ws://127.0.0.1:8091',async()=>{throw Error('offline');}, fixture.root, {wait: async () => {}}),undefined);
+});
+
+test('OpenRouterは有料(openrt_chat)と無料(openrt_free)を別のプロバイダとして扱う',()=>{
+ const info={settings:{},catalog:{models:{},voices:{}},chat:{openrt_chat:{'vendor/paid':'Paid'},openrt_free:{'vendor/new:free':'Free'}},code:{}} as Parameters<typeof APIコード候補>[0];
+ assert.deepEqual(APIコード候補(info,''),{providers:[{id:'openrt_chat',label:'OpenRouter'},{id:'openrt_free',label:'OpenRouter Free'}]});
+ assert.deepEqual(APIコード候補(info,'openrt_chat'),{models:[{id:'vendor/paid',label:'Paid'}]});
+ assert.deepEqual(APIコード候補(info,'openrt_free'),{models:[{id:'vendor/new:free',label:'Free'}]});
+ assert.deepEqual(APIコード候補(info,'openrt'),{models:[]});
+});
+
+test('Ollamaも本体と同じ ollama_chat で扱い、旧名 ollama は受け付けない',()=>{
+ const info={settings:{},catalog:{models:{},voices:{}},chat:{ollama_chat:{'gpt-oss:20b':'Small'}},code:{}} as Parameters<typeof APIコード候補>[0];
+ assert.deepEqual(APIコード候補(info,''),{providers:[{id:'ollama_chat',label:'Ollama'}]});
+ assert.deepEqual(APIコード候補(info,'ollama_chat'),{models:[{id:'gpt-oss:20b',label:'Small'}]});
+ assert.deepEqual(APIコード候補(info,'ollama'),{models:[]});
 });

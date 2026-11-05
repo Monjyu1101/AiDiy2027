@@ -16,6 +16,7 @@
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { パネル状態作成 } from './パネル状態.js';
 import 機能切替 from './機能切替.vue';
+import EscapingMark from './逃げるマーク.vue';
 // Discord 版と同じ構成から、音声会話（Live）の設定・円型インジケーター・モニターを除いた画面。
 const 画面 = パネル状態作成(window.slackPanel);
 const 本文 = ref(), 詳細 = ref();
@@ -57,7 +58,7 @@ onBeforeUnmount(() => { 終了済み = true; ピン購読解除?.(); window.remo
       <div v-if="画面.設定表示" id="settings-actions"><button id="settings-cancel" type="button" :disabled="画面.操作中" @click="画面.設定取消">キャンセル</button><button id="settings-apply" type="button" :disabled="画面.操作中" @click="画面.設定適用">適用して再接続</button></div>
     </div>
     <section id="stage" aria-label="最後のやり取り">
-      <div class="welcome-mark" aria-hidden="true"><img src="AiDiy.png" alt=""></div>
+      <EscapingMark icon="AiDiy.png" />
       <div id="stage-log" aria-live="polite"><div id="stage-idle" class="stage-entry" :hidden="画面.発言表示"><span class="stage-who">接続先</span><span class="stage-text">専用チャンネルに投稿すると、スレッドで返信します。</span></div><div id="stage-message" class="stage-entry" :hidden="!画面.発言表示" :class="{ fading: 画面.発言消去中 }" :data-role="画面.発言役割"><span id="stage-who" class="stage-who">{{ 画面.発言者 }}</span><span id="stage-text" ref="本文" class="stage-text"><span>{{ 画面.発言本文 }}</span><span v-if="画面.文字表示中" class="terminal-cursor"></span></span></div></div>
     </section>
   </main>

@@ -34,7 +34,7 @@ export const KEY_PROVIDERS=Object.freeze([
  ['claude','Claude','claude_key_id','anthropic'],['openai','OpenAI API','openai_key_id','openai'],
  ['openai_oauth','OpenAI OAuth','~/.codex/auth.json','codex'],['grok','Grok（xAI）','~/.grok/auth.json','grok'],
  ['azure','Azure OpenAI','azure_key_id',null],['copilot','GitHub Copilot','copilot_key_id',null],
- ['openrt','OpenRouter','openrt_key_id','openrouter'],['ollama','Ollama（ローカル）','ollama list','ollama-local'],['local','ローカル（backend_local）','固定候補','local-fixed'],
+ ['openrt_chat','OpenRouter','openrt_key_id','openrouter'],['ollama','Ollama（ローカル）','ollama list','ollama-local'],['local','ローカル（backend_local）','固定候補','local-fixed'],
  ['huggingface_read','Hugging Face 読取','huggingface_key_read','huggingface'],['huggingface_write','Hugging Face 書込','huggingface_key_write','huggingface'],
  ['discord','Discord Bot','discord_bot_token','discord'],
  ['slack','Slack Bot','slack_bot_token','slack'],
@@ -116,7 +116,7 @@ export async function status({reader,oauthReader}:{reader?:Reader;oauthReader?:O
   if(p.oauth){const present=oauth[p.oauth];return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:present,キー不要:false,状態:'未実施',理由:present?'':`ログイン情報がありません。${OAUTH_CLI[p.oauth]} CLI でログインしてください。`,テスト可能:present,説明:'ログイン情報（OAuth）の有無のみ。接続は未確認です。'};}
   const present=state==='読込不可'?null:configured(values[p.キー名],p.id);
   const reason=state==='読込不可'?'設定を読み取れません。':!present?'キーが未設定です。':!p.probe?'この項目の接続テストは未対応です。':'';
-  return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:present,キー不要:false,状態:'未実施',理由:reason,テスト可能:state!=='読込不可'&&!!p.probe&&!!present,説明:p.id==='openrt'?'設定キーを確認し、公開モデル一覧キャッシュから候補を表示します。':INTEGRATION_PROBES.includes(p.probe as string)?'設定有無のみ。接続はテストで確認します（読み取り専用の認証確認）。':'設定有無のみ。接続は未確認です。'};
+  return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:present,キー不要:false,状態:'未実施',理由:reason,テスト可能:state!=='読込不可'&&!!p.probe&&!!present,説明:p.id==='openrt_chat'?'設定キーを確認し、公開モデル一覧キャッシュから候補を表示します。':INTEGRATION_PROBES.includes(p.probe as string)?'設定有無のみ。接続はテストで確認します（読み取り専用の認証確認）。':'設定有無のみ。接続は未確認です。'};
  }),モデル:[]};
 }
 // ローカル Ollama は ollama list と同じ API を loopback 固定で読む（プロセスは起動しない）。
@@ -209,7 +209,7 @@ export async function currentOpenRouterProof(result:unknown,reader?:Reader):Prom
 function authenticatedRouterResult<T extends object>(result:T,key:string):T {
  return Object.defineProperty(result,ROUTER_PROOF,{value:async(reader?:Reader)=>{
   const [state,values]=await readConfig(reader);
-  return state==='読込済み'&&configured(values.openrt_key_id,'openrt')&&values.openrt_key_id.trim()===key;
+  return state==='読込済み'&&configured(values.openrt_key_id,'openrt_chat')&&values.openrt_key_id.trim()===key;
  }});
 }
 export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch=fetchMetadata,now,cache,signal}:{reader?:Reader;oauthReader?:OAuthReader;codexLocalReader?:CodexLocalReader;fetch?:Fetch;now?:Date;cache?:unknown;signal?:AbortSignal}={}) {
@@ -256,7 +256,7 @@ export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch
  const key=keyValue.trim(),provider=selected.probe,timestamp=new Date().toISOString();
  if(INTEGRATION_PROBES.includes(provider))return integrationProbe(id,provider,key,{...output,確認日時:timestamp},secretValues(values),fetch,signal);
  // 公開 /models はキー認証の証拠にならない。生成せず専用 GET /key で確認する。
- if(id==='openrt'){
+ if(id==='openrt_chat'){
   try {
    const body=await fetch('openrouter-key',{Authorization:'Bearer '+key},undefined,signal);
    if(!record(body.data)||typeof body.data.is_free_tier!=='boolean')throw new Error('shape');

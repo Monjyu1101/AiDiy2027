@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-import * as cliTitles from '../src/components/ターミナル/CLIタイトル.js';
+import * as cliTitles from '../src/components/コンソール/CLIタイトル.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -21,7 +21,7 @@ function fixture(opened, browser = true, desktopFailure = false) {
   Object.assign(process, { argv: [], env: { AIDIY_LAUNCHER_CHILD: '1' }, cwd: () => '/fixture', pid: 123, send: value => messages.push(value) });
   const app = { url: 'http://127.0.0.1:9999/', publicUrl: 'http://127.0.0.1:9999/', close: async () => { closed++; } };
   const modules = {
-    './src/components/ターミナル/CLIタイトル.js': cliTitles,
+    './src/components/コンソール/CLIタイトル.js': cliTitles,
     'node:child_process': { spawn() { throw Error('process spawning is forbidden in fixture'); } },
     'node:fs': { existsSync: () => true }, 'node:path': path, 'node:url': url, 'node:util': { parseArgs },
     './server.mjs': { startDevelopment: async (_project, value) => { options = value; return app; } },

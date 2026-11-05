@@ -4,16 +4,16 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
-import * as cliTitles from '../src/components/ターミナル/CLIタイトル.js';
-import * as keyboard from '../src/components/ターミナル/キー入力.js';
+import * as cliTitles from '../src/components/コンソール/CLIタイトル.js';
+import * as keyboard from '../src/components/コンソール/キー入力.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
-import * as completion from '../src/components/ターミナル/コマンド補完.js';
+import * as completion from '../src/components/コンソール/コマンド補完.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileStyle}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
-const {descriptor}=parse(readFileSync(new URL('../src/components/ターミナル/ターミナルパネル.vue',import.meta.url),'utf8'));
+const {descriptor}=parse(readFileSync(new URL('../src/components/コンソール/コンソールパネル.vue',import.meta.url),'utf8'));
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 
 // 実Vueのsetupと実FitAddonを通す。文字セルの測定・描画・WebSocketだけを代替する。
@@ -41,7 +41,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle=''}={}){
  class ResizeObserver{
   constructor(callback){this.callback=callback;observers.add(this);} observe(target){this.target=target;} disconnect(){observers.delete(this);}
  }
- const modules={'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/コマンド補完.js':completion};
+ const modules={'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/コマンド補完.js':completion};
  const script=compileScript(descriptor,{id:'ConsolePanel',genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,URL,window,WebSocket:Socket,ResizeObserver,location:{href:'http://localhost/'},

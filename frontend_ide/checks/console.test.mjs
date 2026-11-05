@@ -10,9 +10,9 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocket } from 'ws';
-import { startTerminal } from '../aidiy_console/terminal.mjs';
+import { startConsole } from '../aidiy_console/console.mjs';
 import { startDevelopment } from '../server.mjs';
-import { cliCompletions } from '../src/components/ターミナル/コマンド補完.js';
+import { cliCompletions } from '../src/components/コンソール/コマンド補完.js';
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(condition) { for (let i = 0; i < 200; i++) { if (condition()) return; await delay(50); } throw Error('端末の応答がタイムアウトしました。'); }
 async function connect(url, origin) {
@@ -24,7 +24,7 @@ async function connect(url, origin) {
 }
 test('端末: 不正Origin・パス・サイズ拒否、入出力、フロー制御、切断時の終了', async () => {
   let spawned = 0, killed = 0, writes = [], sizes = [], onData, pauses = 0, resumes = 0, toolsOnline = false, toolsChecks = 0;
-  const app = await startTerminal(tmpdir(), { checkTools: async () => { toolsChecks++; return toolsOnline; }, toolsPollInterval: 30, spawnTerminal: () => {
+  const app = await startConsole(tmpdir(), { checkTools: async () => { toolsChecks++; return toolsOnline; }, toolsPollInterval: 30, spawnConsole: () => {
     spawned++;
     return { onData: fn => { onData = fn; return { dispose() {} }; }, onExit: () => ({ dispose() {} }),
       write: value => writes.push(value), resize: (...value) => sizes.push(value), kill: () => killed++, pause: () => pauses++, resume: () => resumes++ };
@@ -63,7 +63,7 @@ test('端末: 不正Origin・パス・サイズ拒否、入出力、フロー制
 
 test('tools確認OFF後の遅れた成功応答でオンラインに戻らない', async () => {
   let resolveCheck;
-  const app = await startTerminal(tmpdir(), { spawnTerminal: () => {}, toolsPollInterval: 30, checkTools: () => new Promise(resolve => { resolveCheck = resolve; }) });
+  const app = await startConsole(tmpdir(), { spawnConsole: () => {}, toolsPollInterval: 30, checkTools: () => new Promise(resolve => { resolveCheck = resolve; }) });
   let ws;
   try {
     const client = await connect(app.url, new URL(app.url).origin); ws = client.ws;
@@ -75,7 +75,7 @@ test('tools確認OFF後の遅れた成功応答でオンラインに戻らない
 });
 test('小さい端末: 1〜5行の起動・縮小・復元をPTYへそのまま渡し、0行・小数は拒否する',async()=>{
  const starts=[],sizes=[];let killed=0;
- const app=await startTerminal(tmpdir(),{checkTools:async()=>false,spawnTerminal:(_shell,_args,options)=>{
+ const app=await startConsole(tmpdir(),{checkTools:async()=>false,spawnConsole:(_shell,_args,options)=>{
   starts.push([options.cols,options.rows]);return{onData:()=>({dispose(){}}),onExit:()=>({dispose(){}}),resize:(...size)=>sizes.push(size),kill:()=>killed++};
  }});
  try{
@@ -130,7 +130,7 @@ test('IDEのConsole: 実PTYで日本語・作業フォルダ・リサイズ・Ct
 });
 
 test('PowerShell: 各CLIのTab補完と通常のTab補完を共存させる', { skip: process.platform !== 'win32', timeout: 30000 }, async () => {
-  const app = await startTerminal(tmpdir(), { checkTools: async () => true, toolsPollInterval: 30 }); let ws;
+  const app = await startConsole(tmpdir(), { checkTools: async () => true, toolsPollInterval: 30 }); let ws;
   try {
     const client = await connect(app.url, new URL(app.url).origin); ws = client.ws;
     client.send({ type: 'start', cols: 160, rows: 30 });

@@ -109,7 +109,7 @@ python _setup.py
 10. `frontend_channels` のDiscord依存・パネル・ランチャー準備
 11. `frontend_channels/slack` のSlack依存・パネル・ランチャー準備
 
-Diagを選択した場合は診断UI・Electron・ランチャーを準備し、最後にheadless診断で導入状況とモデル情報を書き込みます。外部連携の認証試験はheadless対象外です。
+Diagを選択した場合は診断UI・Electron・ランチャーを準備し（診断UIの開発用依存 `@vue/compiler-sfc` などは `backend_diag/ui` で `npm ci` するため、画面のビルドと検証をそのまま実行できます）、最後にheadless診断で導入状況とモデル情報を書き込みます。外部連携の認証試験はheadless対象外です。
 
 補足:
 

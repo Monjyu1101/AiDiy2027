@@ -15,8 +15,8 @@ import { reserveNavigationSlot } from './ファイル機能/navigation-slot.mjs'
 import { createNavigationInstances } from './ファイル機能/navigation.mjs';
 import { createAISearch } from './ファイル機能/ai-search.mjs';
 import { createFileAnalysis } from './ファイル機能/file-analysis.mjs';
-import { startTerminal } from './aidiy_console/terminal.mjs';
-import { cliTitleName } from './src/components/ターミナル/CLIタイトル.js';
+import { startConsole } from './aidiy_console/console.mjs';
+import { cliTitleName } from './src/components/コンソール/CLIタイトル.js';
 import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
 import { createFileHistory } from './ファイル機能/file-history.mjs';
 import { catppuccinAsset } from './src/components/ファイル閲覧/ファイルアイコン.js';
@@ -75,7 +75,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
   },
   panelsFactory:(project,state)=>(panels=createPanels(project,state,async(type,folder,snapshot,{instance}={})=>{
    if(kind!=='ide'&&type!==kind&&!(kind==='navi'&&type==='code'&&instance))throw Error('このアプリでは利用できません。');
-   if(type==='console')return startTerminal(folder,{env,cli,cliAutoApprove,onCliStarted,onCliAbandoned});
+   if(type==='console')return startConsole(folder,{env,cli,cliAutoApprove,onCliStarted,onCliAbandoned});
    const bundle=require(join(vscodeRoot,'dist',`aidiy_${type}`,'server.cjs'));
    if(type==='code')return bundle.単独起動(folder,backend,{offline:snapshot.mode==='offline',lockedMode:kind==='ide'||kind==='navi'||linked,keepAlive:true,provider,model});
    const vendor=provider==='openai_live'?'OPENAI':provider==='freeai_live'?'FREEAI':'GEMINI';

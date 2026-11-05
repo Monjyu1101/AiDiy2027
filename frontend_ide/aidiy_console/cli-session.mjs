@@ -6,7 +6,7 @@
 
 // 1つのConsole窓が1つのCLIプロセスを所有する。通信の再接続・重複startは再実行にしない。
 // 再接続猶予中は直近の出力を保持し、猶予切れまたは所有サーバー終了時にプロセスを片付ける。
-export function createCliSession(launch, project, spawnTerminal, { outputLimit = 256 * 1024 } = {}) {
+export function createCliSession(launch, project, spawnConsole, { outputLimit = 256 * 1024 } = {}) {
   let terminal, state = 'idle', output = '', exitCode, error, closing;
   const listeners = new Set(), subscriptions = [];
   const emit = value => { for (const listener of listeners) listener(value); };
@@ -28,7 +28,7 @@ export function createCliSession(launch, project, spawnTerminal, { outputLimit =
       if (state !== 'idle') return;
       state = 'running';
       try {
-        terminal = spawnTerminal(launch.executable, launch.args, { name: 'xterm-256color', cols, rows, cwd: project, env: { ...launch.env, TERM: 'xterm-256color' } });
+        terminal = spawnConsole(launch.executable, launch.args, { name: 'xterm-256color', cols, rows, cwd: project, env: { ...launch.env, TERM: 'xterm-256color' } });
         subscriptions.push(terminal.onData(data => { output = (output + data).slice(-outputLimit); emit({ type: 'data', data }); }));
         subscriptions.push(terminal.onExit(result => { exitCode = result.exitCode; if (state !== 'error') state = 'exited'; emit({ type: 'exit', exitCode }); }));
         if (terminal.onError) subscriptions.push(terminal.onError(fail));

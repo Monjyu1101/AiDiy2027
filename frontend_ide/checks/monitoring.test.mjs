@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { tmpdir } from 'node:os';
-import { startTerminal } from '../aidiy_console/terminal.mjs';
+import { startConsole } from '../aidiy_console/console.mjs';
 import { createSpace, ORBIT_PATH_SCALE } from '../src/components/開発スペース/宇宙描画.js';
 import { validConnectionState } from '../src/components/共通表示/接続状態.js';
 import { createDraftTargetRegistry } from '../src/components/下書き連携/連携先登録.js';
@@ -85,7 +85,7 @@ test('ピン留めビューア: 10秒間隔、遅い応答を重ねず、閉じ�
 
 test('Console: toolsの初回確認は即時、既定10秒、遅い確認は重複せず終了で止まる',async t=>{
   t.mock.timers.enable({apis:['setInterval']});let calls=0,release;
-  const app=await startTerminal(tmpdir(),{spawnTerminal(){throw Error('PTYを起動しない');},checkTools:()=>{calls++;return new Promise(resolve=>{release=resolve;});}});
+  const app=await startConsole(tmpdir(),{spawnConsole(){throw Error('PTYを起動しない');},checkTools:()=>{calls++;return new Promise(resolve=>{release=resolve;});}});
   try{
     assert.equal(calls,1);release(true);await flush();
     t.mock.timers.tick(9999);assert.equal(calls,1);t.mock.timers.tick(1);assert.equal(calls,2);

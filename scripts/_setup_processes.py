@@ -18,6 +18,7 @@ import sys
 import time
 
 from _cleanup_processes import list_processes, process_arguments
+from _opencode_service import stop_opencode_service
 
 COMPONENTS = ('backend_diag', 'backend_local', 'backend_tools', 'backend_server',
               'backend_taskteam', 'frontend_web', 'frontend_avatar', 'frontend_channels',
@@ -269,6 +270,15 @@ def identity(process):
 
 
 def stop_setup_processes(root, info=print, error=print):
+    """AiDiy の停止（setup / start 共通）。停止に成功したら、最後に OpenCode の常駐サービスも止める。"""
+    if not _stop_aidiy_processes(root, info, error):
+        return False
+    # OpenCode のサービスは利用者全体で共有される。止められなくても setup / start は止めない。
+    stop_opencode_service(info, info)
+    return True
+
+
+def _stop_aidiy_processes(root, info=print, error=print):
     """保護集合を先に確定し、個別PIDで停止。Windowsでも/Tによる巻き込みを避ける。"""
     windows = sys.platform == 'win32'
     try:

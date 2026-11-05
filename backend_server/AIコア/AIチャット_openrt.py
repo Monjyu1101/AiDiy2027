@@ -36,7 +36,7 @@ class ChatAI:
     """
 
     def __init__(self, 親=None, セッションID: str = "", チャンネル: int = 0, 絶対パス: str = None,
-                 AI_NAME: str = "openrt", AI_MODEL: str = "google/gemini-2.5-flash",
+                 AI_NAME: str = "openrt_free", AI_MODEL: str = "google/gemini-2.5-flash",
                  api_key: str = None, system_instruction: str = None, 実行オプション=None):
         """初期化"""
 
@@ -668,7 +668,7 @@ if __name__ == "__main__":
     # openrt_key_id = "< your openrouter api key >"
 
     async def _main(api_key: str, AI_MODEL: str):
-        AI_NAME = "openrt"
+        AI_NAME = "openrt_free"
         chatai = ChatAI(親=None, セッションID="image_test", AI_NAME=AI_NAME, AI_MODEL=AI_MODEL, api_key=api_key)
 
         try:

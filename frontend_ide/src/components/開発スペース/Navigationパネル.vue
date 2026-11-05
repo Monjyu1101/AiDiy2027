@@ -11,7 +11,9 @@ import {DEFAULT_NAVIGATION_GOAL} from './Navigation既定値.js';
 import {createNavigationPopupSizer} from './Navigation窓サイズ.js';
 import {createNavigationMessage} from './Navigationメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
-import TerminalWelcome from '../ターミナル/開始表示.vue';
+import TerminalWelcome from '../コンソール/開始表示.vue';
+import NaviCruise from './ナビ航行.vue';
+import NaviFireworks from './ナビ花火.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
@@ -24,7 +26,7 @@ const native=!!window.aidiyWindow;
 // Code同様、ビルド後に配布される画像を実行時URLで参照する。静的srcはViteのimport対象になる。
 const sendIcon=computed(()=>new URL('sending.png',new URL('/development/AiDiy.png',location.href)).href);
 const visible=ref(false),detached=ref(false),panel=ref(),goal=ref(DEFAULT_NAVIGATION_GOAL),result=ref(null),job=ref(null),error=ref(''),submitting=ref(false),copied=ref(false),copyError=ref(''),copying=ref(false);
-const openingWindow=ref(!props.standalone);
+const openingWindow=ref(!props.standalone),cruiseFailed=ref(false),cruiseKind=ref('ride');
 const selection=ref({provider:'aidiy_hermes',model:'same'}),modelOpen=ref(false),chosenProvider=ref('aidiy_hermes'),chosenModel=ref('same'),savingModel=ref(false),modelChoice=ref('same');
 const modelItems=ref([]),catalogBusy=ref(false),catalogNotice=ref(''),providerItems=ref([]),providerBusy=ref(false),providerNotice=ref('');let catalogVersion=0,providerVersion=0;
 const toolsState=ref({connected:false,mode:'online'});
@@ -67,6 +69,8 @@ function editGoal(){draftEdited=true;stopAutopilot('目標が編集されたた�
 const reconciling=ref(false);
 const busy=computed(()=>savingModel.value||submitting.value||reconciling.value||job.value?.status==='running');
 const routing=computed(()=>submitting.value||reconciling.value||job.value?.status==='running');
+// ナビ調査中の遊び場は、ナビ（調査）が始まるたびにナビ航行 / ナビ花火のどちらかをランダムに選ぶ。
+watch(routing,value=>{if(value)cruiseKind.value=Math.random()<.5?'ride':'fireworks';},{flush:'sync'});
 let windowPanel,timer,disposed=false,version=0,request;
 
 async function api(method='GET',body,signal){
@@ -300,7 +304,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <TerminalWelcome v-if="routing" kind="navi" icon="/development/AiDiy.png" :routing="true" :started="true" />
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed" @unsupported="cruiseFailed=true" /><TerminalWelcome kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>
@@ -439,4 +443,10 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-panel>.navigation-overall.driving{border-width:2px;border-style:solid;border-radius:0}
 .navigation-overall-cruise-status{flex:none;margin:4px 0 0;text-align:center;color:#b9eeee;font-size:11px;line-height:1.4;pointer-events:none}
 .navigation-checked-at{font-size:10px;font-weight:normal;color:#b3c5d8;white-space:nowrap}
+</style>
+
+<style>
+/* ナビ調査中は3D格子面の遊び場を全面に敷き、アイコンなしの案内文3段を中央へ重ねる（案内文は操作を妨げない）。 */
+.navigation-cruise-stage{position:relative;height:calc(100% + 20px);min-height:240px;margin:-10px -12px}
+.navigation-cruise-stage.is-3d>.terminal-welcome{position:absolute;inset:0;z-index:1;min-height:0;padding:10px 12px;pointer-events:none;text-shadow:0 0 6px #000,0 0 12px #000}.navigation-cruise-stage:not(.is-3d){padding:10px 12px}
 </style>

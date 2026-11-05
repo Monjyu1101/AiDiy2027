@@ -44,7 +44,7 @@ test('source edits and altered bundle invalidate deployment manifest',async()=>{
  }finally{fs.rmSync(folder,{recursive:true,force:true});}
 });
 test('config key order and public acquisition status are separate from tests with no router prerequisite',async()=>{
- const app=source('App.vue'),panel=source('components/モデル一覧/モデル一覧パネル.vue');const {KEY_PROVIDERS}=await import('../モデル情報/key_status.mjs');assert.deepEqual(KEY_PROVIDERS.slice(0,9).map(row=>row.id),['gemini','freeai','claude','openai','openai_oauth','grok','azure','copilot','openrt']);
+ const app=source('App.vue'),panel=source('components/モデル一覧/モデル一覧パネル.vue');const {KEY_PROVIDERS}=await import('../モデル情報/key_status.mjs');assert.deepEqual(KEY_PROVIDERS.slice(0,9).map(row=>row.id),['gemini','freeai','claude','openai','openai_oauth','grok','azure','copilot','openrt_chat']);
  assert.match(panel,/公開モデル一覧取得: <component :is="状態バッジ" class="public-indicator" :state="公開状態"\/>/);const view=source('components/モデル一覧/モデル一覧表示.mjs');assert.match(view,/取得元 === 'キャッシュ' \? 'キャッシュ利用' : 'OK'/);
  assert.doesNotMatch(app+panel,/prerequisite|先に実行してください|OpenRouter を選択/);assert.match(panel,/public-indicator/);const state=source('components/キー設定共通/キー設定状態.mjs');assert.match(state,/api\/公開モデル/);assert.match(state,/Number\(data.世代\)>=Number\(publicModels.value.世代\)/);assert.match(app,/response.status===401&&key.value===requestKey\)\{認証セッション\.破棄\(\);設定を破棄\(\)/);assert.match(state,/generation!==publicGeneration/);
 });

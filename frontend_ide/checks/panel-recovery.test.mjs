@@ -82,7 +82,7 @@ async function liveFixture(t,{socketFactory,props={}}={}) {
       '../../../host/aidiy_live/src/visualizer':{AudioCloud:class {setVisible(){}dispose(){}}},
       '../../../host/aidiy_live/src/model-catalog':{ライブ選択エラー:()=>''},
       '../../../host/aidiy_live/src/microphone-error':{microphoneError:error=>error.message},
-      '../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../../dialog/共通ダイアログ.vue':{},
+      '../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../../dialog/共通ダイアログ.vue':{},
       '../コード/会話到着演出':{chatArrival:()=>({reset(){},dispose(){},show(){}})},
     },
   });
@@ -283,7 +283,7 @@ async function codeFixture(t){
   const fixture=setupComponent('CodePanel',{modules:{
     '../コード/コード通信.js':{codeTransport(_props,callback){receive=callback;return{draft:()=>'',saveDraft:value=>saved.push(value),start(){},dispose(){},async send(message){sent.push(message);}};}},
     '../../../host/src/stream-control':{visibleStreamContent:value=>value},
-    '../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/進捗表示.vue':{},'../../dialog/共通ダイアログ.vue':{},
+    '../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/進捗表示.vue':{},'../../dialog/共通ダイアログ.vue':{},
     '../コード/会話到着演出':{chatArrival:()=>({reset(){},dispose(){},show(){},reserve(){},cancelReservation(){}})},
   }});
   t.after(()=>fixture.dispose());await fixture.mount();

@@ -21,6 +21,35 @@ def load(name):
     spec=importlib.util.spec_from_file_location('diag_'+name,ROOT/(name+'.py'))
     module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);return module
 setup=load('_setup');cleanup=load('_cleanup')
+class UiDependencyTests(unittest.TestCase):
+    def test_ui_dev_dependencies_are_installed_by_npm_ci_in_the_ui_folder(self):
+        with patch.object(setup.subprocess,'run') as run,patch('builtins.print'):
+            self.assertTrue(setup.setup_ui_dependencies('npm'))
+        command=run.call_args.args[0]
+        self.assertEqual(command[:2],['npm','ci']);self.assertIn('--include=dev',command)
+        self.assertEqual(Path(run.call_args.kwargs['cwd']),ROOT/'ui');self.assertTrue(run.call_args.kwargs['check'])
+        package=json.loads((ROOT/'ui'/'package.json').read_text(encoding='utf-8'))
+        self.assertIn('@vue/compiler-sfc',package['devDependencies']);self.assertTrue((ROOT/'ui'/'package-lock.json').is_file())
+    def test_failure_and_missing_npm_are_reported_not_hidden(self):
+        with patch.object(setup.subprocess,'run',side_effect=setup.subprocess.CalledProcessError(1,'npm')),patch('builtins.print'):
+            self.assertFalse(setup.setup_ui_dependencies('npm'))
+        with patch.object(setup.shutil,'which',return_value=None),patch.object(setup.subprocess,'run') as run,patch('builtins.print'):
+            self.assertFalse(setup.setup_ui_dependencies())
+        run.assert_not_called()
+    def test_desktop_setup_also_installs_ui_dependencies_and_reflects_both_results(self):
+        for electron,ui,expected in ((True,True,True),(True,False,False),(False,True,False)):
+            helper=SimpleNamespace(setup_dependencies=lambda *a,**k:electron)
+            with ExitStack() as stack:
+                stack.enter_context(patch.dict('os.environ',{'CODESPACES':''}))
+                stack.enter_context(patch.object(setup.sys,'platform','win32'))
+                stack.enter_context(patch.object(setup.shutil,'which',return_value='tool'))
+                stack.enter_context(patch.object(setup.importlib.util,'module_from_spec',return_value=helper))
+                stack.enter_context(patch.object(setup.importlib.util,'spec_from_file_location',return_value=SimpleNamespace(loader=SimpleNamespace(exec_module=lambda m:None))))
+                stack.enter_context(patch('builtins.print'))
+                stack.enter_context(patch('_runtime_requirements.check_project_node_runtime',return_value=(True,'ok'),create=True))
+                installer=stack.enter_context(patch.object(setup,'setup_ui_dependencies',return_value=ui))
+                self.assertEqual(setup.setup_desktop(),expected)
+                installer.assert_called_once()
 class LauncherTests(unittest.TestCase):
     def test_launch_has_node_prerequisite_no_python_runtime(self):
         shell=setup.launcher_content('/space dir/diag_main.mjs',False)
@@ -426,14 +455,14 @@ class ElectronSetupTests(unittest.TestCase):
         self.enterContext(patch.object(setup, 'ensure_launcher_path', return_value=True))
 
     def test_browser_environment_skips_electron_installs(self):
-        with patch.dict('os.environ',{'CODESPACES':'true'}),patch.dict('sys.modules',{'_runtime_requirements':SimpleNamespace(check_node_runtime=lambda *args,**kwargs:(True,'Node fixture'))}),patch.object(setup.shutil,'which') as which,patch('builtins.print'):
+        with patch.object(setup,'setup_ui_dependencies',return_value=True),patch.dict('os.environ',{'CODESPACES':'true'}),patch.dict('sys.modules',{'_runtime_requirements':SimpleNamespace(check_node_runtime=lambda *args,**kwargs:(True,'Node fixture'))}),patch.object(setup.shutil,'which') as which,patch('builtins.print'):
             self.assertTrue(setup.setup_desktop());which.assert_not_called()
     def test_desktop_uses_shared_helper(self):
         from types import SimpleNamespace
         calls=[]
         helper=SimpleNamespace(setup_dependencies=lambda *args, **kwargs: calls.append(args) or True)
         spec=SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module:None))
-        with patch.dict('os.environ',{'CODESPACES':'false','DISPLAY':':fixture'}),patch.object(setup.shutil,'which',return_value='/mock/npm'),patch.dict('sys.modules',{'_runtime_requirements':SimpleNamespace(check_project_node_runtime=lambda *args,**kwargs:(True,'Node fixture'))}),patch.object(setup.importlib.util,'spec_from_file_location',return_value=spec) as load,patch.object(setup.importlib.util,'module_from_spec',return_value=helper),patch('builtins.print'):
+        with patch.object(setup,'setup_ui_dependencies',return_value=True),patch.dict('os.environ',{'CODESPACES':'false','DISPLAY':':fixture'}),patch.object(setup.shutil,'which',return_value='/mock/npm'),patch.dict('sys.modules',{'_runtime_requirements':SimpleNamespace(check_project_node_runtime=lambda *args,**kwargs:(True,'Node fixture'))}),patch.object(setup.importlib.util,'spec_from_file_location',return_value=spec) as load,patch.object(setup.importlib.util,'module_from_spec',return_value=helper),patch('builtins.print'):
             self.assertTrue(setup.setup_desktop())
         self.assertEqual(load.call_args.args[1],ROOT.parent/'scripts'/'_setup_electron.py')
         self.assertEqual(calls[0][0],ROOT)

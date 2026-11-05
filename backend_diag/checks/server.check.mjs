@@ -91,7 +91,7 @@ test('key test concurrency is bounded and installation action never runs key tes
 });
 test('public status/retry authenticated, bounded and separate from individual test results',async()=>{
  let refreshes=0;const publicCache={snapshot:()=>({状態:'取得済',件数:1,世代:2}),input:()=>({公開モデル:{example:{model_id:'example'}},公開状態:'取得済'}),refresh:async()=>{refreshes++;return {状態:'取得済'};}};
- const calls=[];const h=createHandler({token:'test-key',publicCache,keyStatusFn:async()=>({項目:[{id:'openrt',設定済み:true}]}),keyTestFn:async(id,options)=>{calls.push({id,options});return {id,状態:'OK',モデル:[]};}});
+ const calls=[];const h=createHandler({token:'test-key',publicCache,keyStatusFn:async()=>({項目:[{id:'openrt_chat',設定済み:true}]}),keyTestFn:async(id,options)=>{calls.push({id,options});return {id,状態:'OK',モデル:[]};}});
  assert.equal((await request(h,'/api/公開モデル','GET')).status,401);assert.equal((await request(h,'/api/公開モデル/再取得','POST')).status,401);
  assert.equal(JSON.parse((await request(h,'/api/キー設定','GET',auth)).body).公開モデル.状態,'取得済');assert.equal(refreshes,0);
  assert.equal((await request(h,'/api/キーテスト/openai','POST',auth)).status,200);assert.equal(calls[0].options.publicCache.公開状態,'取得済');assert.equal(refreshes,0);

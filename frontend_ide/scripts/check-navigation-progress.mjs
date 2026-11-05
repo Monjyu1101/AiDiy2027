@@ -145,7 +145,8 @@ try {
   assert.equal(await child(1,`document.querySelector('textarea').value`),'');
   assert.equal(aiCalls,5);
   assert.equal(await child(0,`document.querySelectorAll('.terminal-welcome').length`),0);
-  assert.equal(await child(1,`document.querySelectorAll('.terminal-welcome .welcome-mark').length`),1);
+  assert.equal(await child(1,`document.querySelectorAll('.terminal-welcome').length`),1);
+  assert.equal(await child(1,`document.querySelectorAll('.terminal-welcome .welcome-mark').length`),0);
   await child(0,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
   await until(()=>evaluate(`testNavi[0].closed`),'Navi 1 close');
   assert.equal(await child(1,`document.querySelector('textarea').value`),'');

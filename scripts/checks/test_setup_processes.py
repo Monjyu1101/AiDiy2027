@@ -32,6 +32,10 @@ class SetupProcessesTest(unittest.TestCase):
         signal = patch.object(subject.signal, 'SIGKILL', 9, create=True)
         signal.start()
         self.addCleanup(signal.stop)
+        # 実機の OpenCode サービスは触らない。
+        opencode = patch.object(subject, 'stop_opencode_service')
+        self.opencode = opencode.start()
+        self.addCleanup(opencode.stop)
 
     def test_all_components_except_code_ide_discord(self):
         records = [app(10, 'code'), app(11, 'ide'), app(12, 'live'), app(13, 'console')]
@@ -252,6 +256,10 @@ class StopOutputTest(unittest.TestCase):
         signal = patch.object(subject.signal, 'SIGKILL', 9, create=True)
         signal.start()
         self.addCleanup(signal.stop)
+        # 実機の OpenCode サービスは触らない。
+        opencode = patch.object(subject, 'stop_opencode_service')
+        self.opencode = opencode.start()
+        self.addCleanup(opencode.stop)
 
     def test_no_targets_is_not_stop_success(self):
         info, errors = [], []

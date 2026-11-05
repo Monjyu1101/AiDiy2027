@@ -75,6 +75,27 @@ def setup(choices=None, *, desktop=True):
     return setup_desktop(continue_on_error=bool((choices or {}).get("continue_on_error")), copy_warnings=choices.setdefault("_setup_warnings", []) if choices is not None else None) if desktop else True
 
 
+def setup_ui_dependencies(npm=None):
+    """Diag 画面のビルド・検証に使う開発用依存（@vue/compiler-sfc / esbuild / typescript / vue）を ui/ に導入する。
+
+    実行時には不要（配布済みの static/ を使う）。`npm ci` でロックファイルどおりに入れる。
+    """
+    ui = THIS_DIR / 'ui'
+    if not (ui / 'package.json').is_file():
+        return True
+    npm = npm or shutil.which('npm.cmd' if sys.platform == 'win32' else 'npm')
+    if not npm:
+        print(f'Diag UI の依存導入には npm が必要です。導入後に python "{THIS_DIR / "_setup.py"}" を再実行してください。')
+        return False
+    print_info('Diag UI の開発用依存（@vue/compiler-sfc など）を導入します: npm ci')
+    try:
+        subprocess.run([npm, 'ci', '--include=dev', '--no-fund', '--no-audit'], cwd=ui, check=True)
+    except (OSError, subprocess.SubprocessError) as exc:
+        print(f'Diag UI の依存導入に失敗しました（npm ci）: {exc}')
+        return False
+    return True
+
+
 def setup_desktop(*, continue_on_error=False, copy_warnings=None):
     if os.environ.get('CODESPACES') == 'true' or (sys.platform.startswith('linux') and not (os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY'))):
         # Electronを省略しても、ブラウザ版のサーバーにはNode.jsが必要。
@@ -87,7 +108,7 @@ def setup_desktop(*, continue_on_error=False, copy_warnings=None):
         if detail.startswith('[WARN]'):
             print(detail)
         print('GUI なし / Codespaces: ブラウザ起動を使用します。Electron 導入をスキップします。')
-        return True
+        return setup_ui_dependencies()
     npm = shutil.which('npm.cmd' if sys.platform == 'win32' else 'npm')
     if not shutil.which('node.exe' if sys.platform == 'win32' else 'node') or not npm:
         print(f'Electron の準備には Node.js と npm が必要です。導入後に python "{THIS_DIR / "_setup.py"}" を再実行してください。')
@@ -109,7 +130,9 @@ def setup_desktop(*, continue_on_error=False, copy_warnings=None):
             return True
         except (OSError, subprocess.SubprocessError):
             return False
-    return helper.setup_dependencies(THIS_DIR, npm, 'Diag', run, continue_on_error=continue_on_error, copy_warnings=copy_warnings)
+    electron_ok = helper.setup_dependencies(THIS_DIR, npm, 'Diag', run, continue_on_error=continue_on_error, copy_warnings=copy_warnings)
+    # Electron の準備に失敗しても UI の依存導入は試し、結果は両方を反映する。
+    return setup_ui_dependencies(npm) and electron_ok
 
 
 if __name__ == '__main__':

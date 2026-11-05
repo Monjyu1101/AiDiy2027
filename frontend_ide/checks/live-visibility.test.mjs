@@ -91,7 +91,7 @@ async function livePanel(t, { visible = true, host = true, ...options } = {}) {
     '../../../host/aidiy_live/src/microphone-error': { microphoneError: error => error.message },
     '../下書き連携/下書き受け渡し.js': draftHandoff,
     '../コード/会話到着演出': { chatArrival: () => ({ reset() {}, dispose() {}, show() {} }) },
-    '../共通表示/状態バー.vue': {}, '../ターミナル/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
+    '../共通表示/状態バー.vue': {}, '../コンソール/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
   };
   const { descriptor } = parse(readFileSync(new URL('../src/components/ライブ/ライブパネル.vue', import.meta.url), 'utf8'));
   const script = compileScript(descriptor, { id: 'LivePanel', genDefaultAs: 'component' });

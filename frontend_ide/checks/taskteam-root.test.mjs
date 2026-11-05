@@ -16,7 +16,7 @@ script = script.replace(/import\s+(?:\{[^}]*\}|[\w,\s]+)\s+from\s+['"]vue['"];?/
   const binding = match.match(/import\s+(.*?)\s+from/s)[1].replace(/\s+as\s+/g, ': ');
   return `const ${binding} = Vue;`;
 });
-script = script.replace(/import StatusBar[^;]+;/, 'const StatusBar = {};').replace(/import TaskPanel[^;]+;/, 'const TaskPanel = {};').replace(/import TeamPanel[^;]+;/, 'const TeamPanel = {};');
+script = script.replace(/import StatusBar[^;]+;/, 'const StatusBar = {};').replace(/import EscapingMark[^;]+;/, 'const EscapingMark = {};').replace(/import TaskPanel[^;]+;/, 'const TaskPanel = {};').replace(/import TeamPanel[^;]+;/, 'const TeamPanel = {};');
 script = script.replace(/import Task(?:Request|Flow|Detail|Editor)[^;]+;/g, match => 'const ' + match.match(/import (\w+)/)[1] + ' = {};');
 script = script.replace(/import \{ resolveTaskView, createTaskSession, createTaskSelectionCache \}[^;]+;/, 'const { resolveTaskView, createTaskSession, createTaskSelectionCache } = sessionTools;');
 script = script.replace(/import apiClient[^;]+;/, 'const { apiClient, token } = bridge;').replace('export default', 'return');

@@ -80,7 +80,7 @@
 - Windows の監視ラッパー `backend_tools/tools_proc/process_lifetime.py` では、子の `subprocess.Popen` に `stdin=sys.stdin`、`stdout=sys.stdout`、`stderr=sys.stderr` を明示する。`CREATE_NO_WINDOW` と標準ハンドルの省略を組み合わせると、CLIが動いても出力が届かず「応答なし」になる。この出力経路の専用テストは現行にないため、mockした子プロセスとWindows実機で標準入出力の受け渡しを別途確認する。
 - `antigravity_cli` は CLI 固有の `--print-timeout` に固定の時間を渡すと、受信が続いていても先に終了する。`0` を渡して固定上限を無効にし、バックエンド側の無受信監視に任せる
 - Hermesの明示モデルは通常 `--model` へ渡す。外部CLIの `provider/model` は対応する `--provider` とモデルへ分離し、`local_chat` は `lmstudio` とローカルAPI URLを使う。Ollama固定ではない。
-- TUI の `/model` では `AiDiy_key.json` を使い、`ollama` / `openai` / `openrt` / `gemini` / `freeai` / `anthropic` を選べるようにする。Code AI 経由のモデル指定とは役割を分ける
+- TUI の `/model` では `AiDiy_key.json` を使い、`ollama` / `openai` / `openrt_chat` / `openrt_free` / `gemini` / `freeai` / `anthropic` を選べるようにする。Code AI 経由のモデル指定とは役割を分ける
 - OpenAI / Claude / Google 系 provider を有効にする場合、`command_hermes/pyproject.toml` に `openai` / `anthropic` / `google-genai` を明示する
 
 ## 確認方法

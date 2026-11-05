@@ -9,7 +9,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath,pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { startDevelopment } from './server.mjs';
-import { cliTitleName } from './src/components/ターミナル/CLIタイトル.js';
+import { cliTitleName } from './src/components/コンソール/CLIタイトル.js';
 import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
 import { createCliOwnerLifetime } from './aidiy_console/cli-session.mjs';
 import { projectFolder,useBrowser,electronExecutable } from './viewer/launch-options.mjs';

@@ -9,10 +9,10 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import StatusBar from '../共通表示/状態バー.vue';
-import TerminalWelcome from '../ターミナル/開始表示.vue';
+import TerminalWelcome from '../コンソール/開始表示.vue';
 import { cliTitleName } from './CLIタイトル.js';
-import { terminalKeyHandler } from './キー入力.js';
-import { terminalCompletion, cliCompletions } from '../ターミナル/コマンド補完.js';
+import { consoleKeyHandler } from './キー入力.js';
+import { consoleCompletion, cliCompletions } from '../コンソール/コマンド補完.js';
 const props = defineProps({ base: String, icon: String, desktop: Boolean, linked: Boolean, visible: { type: Boolean, default: true } });
 const windowTitle = ref('');
 const container = ref(null), connected = ref(false), status = ref('起動中'), project = ref(''), shell = ref(''), error = ref('');
@@ -37,7 +37,7 @@ async function clearDisplay() {
   fitTerminal(); updateCompletion(); terminal.focus();
 }
 function updateCompletion() {
-  completion.value = connected.value && completionEnabled ? terminalCompletion(terminal.buffer.active) : '';
+  completion.value = connected.value && completionEnabled ? consoleCompletion(terminal.buffer.active) : '';
   ghostRows.value = [];
   if (!completion.value || !props.visible) return;
   const buffer = terminal.buffer.active, screen = container.value.querySelector('.xterm-screen');
@@ -100,9 +100,9 @@ watch(() => props.visible, async visible => { if (visible) { await nextTick(); f
 onMounted(() => {
   if (props.desktop && props.linked) void window.aidiyWindow?.title?.().then(title => { if (!disposed && typeof title === 'string') windowTitle.value = title; }).catch(() => {});
   terminal = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: 'Consolas, "Noto Sans Mono", monospace', scrollback: 5000,
-    theme: { background: '#000', foreground: '#dce6f2', cursor: '#81e4e8', selectionBackground: '#365b78' } });
+    theme: { background: '#000', foreground: '#dce6f2', cursor: '#ffffff', selectionBackground: '#365b78' } });
   fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fitTerminal();
-  terminal.attachCustomKeyEventHandler(terminalKeyHandler(data => { startInput(); sendInput(data); }));
+  terminal.attachCustomKeyEventHandler(consoleKeyHandler(data => { startInput(); sendInput(data); }));
   input = terminal.onData(sendInput);
   key = terminal.onKey(startInput);
   container.value.addEventListener('input', startInput, true);

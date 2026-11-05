@@ -127,7 +127,7 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 
 実行ファイルは固定IDからPATH / 標準配置を探索し、絶対パスと引数配列で直接PTYへ渡します。Windowsのnpm `.cmd` はシェルで実行せず、許可済みパッケージの宣言済みbinを検証してNodeから起動します。`aidiy_hermes` はPATHまたは `~/.local/bin` の導入済みランチャーを使用し、Windowsでは `command_hermes/_setup.py` が生成する `.cmd` 全体の形式とPython / CLIの実在を確認して、仮想環境のPythonへ `cli_main.py` と固定引数を直接渡します。形式不明・ファイル不足は起動せず、リポジトリ内の仮想環境への自動退避や導入、認証確認は行いません。任意コマンド・モデル・環境変数をブラウザから渡す入口はありません。
 
-確認は `node --test frontend_ide/checks/cli-launch.test.mjs frontend_ide/checks/cli-terminal.test.mjs frontend_ide/checks/console-size.test.mjs`。CLIはすべて制御されたfixture / mockで代替し、実CLI・認証・外部APIは実行しません。Windows実機のPTY・画面確認は別途必要です。
+確認は `node --test frontend_ide/checks/cli-launch.test.mjs frontend_ide/checks/cli-console.test.mjs frontend_ide/checks/console-size.test.mjs`。CLIはすべて制御されたfixture / mockで代替し、実CLI・認証・外部APIは実行しません。Windows実機のPTY・画面確認は別途必要です。
 
 実装と確認手順は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` のConsole節を参照してください。
 

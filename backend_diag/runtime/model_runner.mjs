@@ -390,7 +390,7 @@ var KEY_PROVIDERS = Object.freeze([
   ["grok", "Grok\uFF08xAI\uFF09", "~/.grok/auth.json", "grok"],
   ["azure", "Azure OpenAI", "azure_key_id", null],
   ["copilot", "GitHub Copilot", "copilot_key_id", null],
-  ["openrt", "OpenRouter", "openrt_key_id", "openrouter"],
+  ["openrt_chat", "OpenRouter", "openrt_key_id", "openrouter"],
   ["ollama", "Ollama\uFF08\u30ED\u30FC\u30AB\u30EB\uFF09", "ollama list", "ollama-local"],
   ["local", "\u30ED\u30FC\u30AB\u30EB\uFF08backend_local\uFF09", "\u56FA\u5B9A\u5019\u88DC", "local-fixed"],
   ["huggingface_read", "Hugging Face \u8AAD\u53D6", "huggingface_key_read", "huggingface"],
@@ -496,7 +496,7 @@ async function status({ reader, oauthReader } = {}) {
     }
     const present = state === "\u8AAD\u8FBC\u4E0D\u53EF" ? null : configured(values[p.\u30AD\u30FC\u540D], p.id);
     const reason = state === "\u8AAD\u8FBC\u4E0D\u53EF" ? "\u8A2D\u5B9A\u3092\u8AAD\u307F\u53D6\u308C\u307E\u305B\u3093\u3002" : !present ? "\u30AD\u30FC\u304C\u672A\u8A2D\u5B9A\u3067\u3059\u3002" : !p.probe ? "\u3053\u306E\u9805\u76EE\u306E\u63A5\u7D9A\u30C6\u30B9\u30C8\u306F\u672A\u5BFE\u5FDC\u3067\u3059\u3002" : "";
-    return { id: p.id, \u540D\u524D: p.\u540D\u524D, \u30AD\u30FC\u540D: p.\u30AD\u30FC\u540D, \u8A2D\u5B9A\u6E08\u307F: present, \u30AD\u30FC\u4E0D\u8981: false, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u7406\u7531: reason, \u30C6\u30B9\u30C8\u53EF\u80FD: state !== "\u8AAD\u8FBC\u4E0D\u53EF" && !!p.probe && !!present, \u8AAC\u660E: p.id === "openrt" ? "\u8A2D\u5B9A\u30AD\u30FC\u3092\u78BA\u8A8D\u3057\u3001\u516C\u958B\u30E2\u30C7\u30EB\u4E00\u89A7\u30AD\u30E3\u30C3\u30B7\u30E5\u304B\u3089\u5019\u88DC\u3092\u8868\u793A\u3057\u307E\u3059\u3002" : INTEGRATION_PROBES.includes(p.probe) ? "\u8A2D\u5B9A\u6709\u7121\u306E\u307F\u3002\u63A5\u7D9A\u306F\u30C6\u30B9\u30C8\u3067\u78BA\u8A8D\u3057\u307E\u3059\uFF08\u8AAD\u307F\u53D6\u308A\u5C02\u7528\u306E\u8A8D\u8A3C\u78BA\u8A8D\uFF09\u3002" : "\u8A2D\u5B9A\u6709\u7121\u306E\u307F\u3002\u63A5\u7D9A\u306F\u672A\u78BA\u8A8D\u3067\u3059\u3002" };
+    return { id: p.id, \u540D\u524D: p.\u540D\u524D, \u30AD\u30FC\u540D: p.\u30AD\u30FC\u540D, \u8A2D\u5B9A\u6E08\u307F: present, \u30AD\u30FC\u4E0D\u8981: false, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u7406\u7531: reason, \u30C6\u30B9\u30C8\u53EF\u80FD: state !== "\u8AAD\u8FBC\u4E0D\u53EF" && !!p.probe && !!present, \u8AAC\u660E: p.id === "openrt_chat" ? "\u8A2D\u5B9A\u30AD\u30FC\u3092\u78BA\u8A8D\u3057\u3001\u516C\u958B\u30E2\u30C7\u30EB\u4E00\u89A7\u30AD\u30E3\u30C3\u30B7\u30E5\u304B\u3089\u5019\u88DC\u3092\u8868\u793A\u3057\u307E\u3059\u3002" : INTEGRATION_PROBES.includes(p.probe) ? "\u8A2D\u5B9A\u6709\u7121\u306E\u307F\u3002\u63A5\u7D9A\u306F\u30C6\u30B9\u30C8\u3067\u78BA\u8A8D\u3057\u307E\u3059\uFF08\u8AAD\u307F\u53D6\u308A\u5C02\u7528\u306E\u8A8D\u8A3C\u78BA\u8A8D\uFF09\u3002" : "\u8A2D\u5B9A\u6709\u7121\u306E\u307F\u3002\u63A5\u7D9A\u306F\u672A\u78BA\u8A8D\u3067\u3059\u3002" };
   }), \u30E2\u30C7\u30EB: [] };
 }
 var LOCAL_ENDPOINTS = { "ollama-local": ["127.0.0.1", 11434, "/api/tags"] };
@@ -616,7 +616,7 @@ function decisionResult(result, id, models, valid) {
 function authenticatedRouterResult(result, key) {
   return Object.defineProperty(result, ROUTER_PROOF, { value: async (reader) => {
     const [state, values] = await readConfig(reader);
-    return state === "\u8AAD\u8FBC\u6E08\u307F" && configured(values.openrt_key_id, "openrt") && values.openrt_key_id.trim() === key;
+    return state === "\u8AAD\u8FBC\u6E08\u307F" && configured(values.openrt_key_id, "openrt_chat") && values.openrt_key_id.trim() === key;
   } });
 }
 async function probe(id, { reader, oauthReader, codexLocalReader, fetch = fetchMetadata, now, cache, signal } = {}) {
@@ -665,7 +665,7 @@ async function probe(id, { reader, oauthReader, codexLocalReader, fetch = fetchM
   if (!configured(keyValue, id)) return { ...output, \u8AAC\u660E: "\u30AD\u30FC\u304C\u672A\u8A2D\u5B9A\u3067\u3059\u3002" };
   const key = keyValue.trim(), provider = selected.probe, timestamp = (/* @__PURE__ */ new Date()).toISOString();
   if (INTEGRATION_PROBES.includes(provider)) return integrationProbe(id, provider, key, { ...output, \u78BA\u8A8D\u65E5\u6642: timestamp }, secretValues(values), fetch, signal);
-  if (id === "openrt") {
+  if (id === "openrt_chat") {
     try {
       const body = await fetch("openrouter-key", { Authorization: "Bearer " + key }, void 0, signal);
       if (!record(body.data) || typeof body.data.is_free_tier !== "boolean") throw new Error("shape");

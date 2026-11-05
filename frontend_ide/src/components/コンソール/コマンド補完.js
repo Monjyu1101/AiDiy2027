@@ -14,7 +14,7 @@ export const cliCompletions = Object.freeze({
 });
 
 // 候補の表示だけを担当する。Tab確定はPSReadLineが実際の入力バッファで判定する。
-export function terminalCompletion(buffer) {
+export function consoleCompletion(buffer) {
   if (!buffer || buffer.type !== 'normal') return '';
   let row = buffer.baseY + buffer.cursorY;
   const current = buffer.getLine(row);

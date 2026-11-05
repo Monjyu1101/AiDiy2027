@@ -78,13 +78,13 @@
 - `ollama` は `ollama_key_id` が有効なら Ollama Cloud、無効なら `ollama_host` の local `/v1` を使う
 - `/model` 引数なしは provider -> model picker を開く。非TUIでは provider 一覧と使用例を出す
 - `/model --provider openai` は provider の先頭モデルへ切り替える
-- `/model gpt-5.2 --provider openai` と `/model openrt:anthropic/claude-sonnet-4.5` を受け付ける
+- `/model gpt-5.2 --provider openai` と `/model openrt_chat:anthropic/claude-sonnet-4.5` を受け付ける
 - 切替後は `self.agent = None` と route signature reset により、次ターンで新 provider / model の agent を作り直す
 
 代表 provider:
 - `ollama`: local または Ollama Cloud
 - `openai`: `https://api.openai.com/v1`
-- `openrt`: `https://openrouter.ai/api/v1`
+- `openrt_chat` / `openrt_free`: `https://openrouter.ai/api/v1`（Hermes 内部は同じ `openrouter` インターフェース）
 - `gemini` / `freeai`: `https://generativelanguage.googleapis.com/v1beta/openai`
 - `anthropic`: `https://api.anthropic.com`
 

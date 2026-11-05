@@ -19,7 +19,7 @@ test('モジュール配置: 公開入口を維持し、内部処理は担当フ
     'ファイル機能/ai-search.mjs': 'createAISearch',
     'ファイル機能/file-analysis.mjs': 'createFileAnalysis',
     'ファイル機能/file-history.mjs': 'createFileHistory',
-    'aidiy_console/terminal.mjs': 'startTerminal',
+    'aidiy_console/console.mjs': 'startConsole',
     'viewer/markdown-preview.mjs': 'renderMarkdownDocument',
   };
   for (const [path, name] of Object.entries(modules)) {
@@ -32,13 +32,13 @@ test('モジュール配置: 公開入口を維持し、内部処理は担当フ
 test('モジュール配置: Electron preload・端末worker・PowerShell補完を配置先から解決する', async () => {
   const desktop = await readFile(new URL('desktop.cjs', root), 'utf8');
   assert.match(desktop, /preload:join\(__dirname,'デスクトップ\/preload\.cjs'\)/);
-  for (const path of ['デスクトップ/preload.cjs', 'aidiy_console/terminal-worker.mjs', 'aidiy_console/powershell-init.ps1']) {
+  for (const path of ['デスクトップ/preload.cjs', 'aidiy_console/console-worker.mjs', 'aidiy_console/powershell-init.ps1']) {
     await access(new URL(path, root));
   }
-  const terminal = await readFile(new URL('aidiy_console/terminal.mjs', root), 'utf8');
+  const terminal = await readFile(new URL('aidiy_console/console.mjs', root), 'utf8');
   assert.match(terminal, /new URL\('\.\/powershell-init\.ps1', import\.meta\.url\)/);
-  const worker = await readFile(new URL('aidiy_console/terminal-process.mjs', root), 'utf8');
-  assert.match(worker, /new URL\('\.\/terminal-worker\.mjs', import\.meta\.url\)/);
+  const worker = await readFile(new URL('aidiy_console/console-process.mjs', root), 'utf8');
+  assert.match(worker, /new URL\('\.\/console-worker\.mjs', import\.meta\.url\)/);
 });
 
 test('Vue機能配置: 四画面と共通部品は日本語の担当フォルダを使う', async () => {
@@ -49,7 +49,7 @@ test('Vue機能配置: 四画面と共通部品は日本語の担当フォルダ
   assert.deepEqual(entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort(), ['components', 'dialog']);
   const featureEntries = await readdir(new URL('src/components/', root), { withFileTypes: true });
   assert.deepEqual(featureEntries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort(),
-    ['コード', 'ライブ', 'ターミナル', '開発スペース', 'ファイル閲覧', 'ファイル検索', 'ブラウザ', '下書き連携', '共通表示', 'タスクチーム', '添付ファイル'].sort());
+    ['コード', 'ライブ', 'コンソール', '開発スペース', 'ファイル閲覧', 'ファイル検索', 'ブラウザ', '下書き連携', '共通表示', 'タスクチーム', '添付ファイル'].sort());
   assert.deepEqual((await readdir(new URL('src/dialog/', root))).sort(), ['ファイル解析ダイアログ.vue', 'ファイル履歴ダイアログ.vue', '下書き連携ダイアログ.vue', '共通ダイアログ.vue'].sort());
   const app = await readFile(new URL('src/App.vue', root), 'utf8');
   for (const name of ['CodePanel', 'LivePanel', 'ConsolePanel', 'SpaceView', 'StatusBar', 'DraftHandoffDialog']) {
@@ -77,6 +77,6 @@ test('Vue機能配置: 相対import・CSS参照と共有サーバーの読込先
   await verify(new URL('src/', root));
   const viewer = await readFile(new URL('viewer/server.mjs', root), 'utf8');
   assert.ok(viewer.includes("'../src/components/ファイル閲覧/最新ファイル.js'"));
-  const terminal = await readFile(new URL('aidiy_console/terminal.mjs', root), 'utf8');
-  assert.ok(terminal.includes("'../src/components/ターミナル/コマンド補完.js'"));
+  const terminal = await readFile(new URL('aidiy_console/console.mjs', root), 'utf8');
+  assert.ok(terminal.includes("'../src/components/コンソール/コマンド補完.js'"));
 });

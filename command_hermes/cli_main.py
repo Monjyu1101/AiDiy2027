@@ -3528,7 +3528,6 @@ except Exception:
     pass
 
 
-
 class _SkinAwareAnsi:
     """Lazy ANSI escape that resolves from the skin engine on first use.
 
@@ -4125,9 +4124,6 @@ def _resolve_attachment_path(raw_path: str) -> Path | None:
     except OSError:
         return None
     return resolved
-
-
-
 
 
 def _detect_file_drop(user_input: str) -> "dict | None":
@@ -4922,7 +4918,6 @@ HERMES_CADUCEUS = """[#CD7F32]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⡀⠀⣀⣀�
 [#B8860B]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]"""
 
 
-
 def _build_compact_banner() -> str:
     """Build a compact banner that fits the current terminal width."""
     try:
@@ -4973,7 +4968,6 @@ def _build_compact_banner() -> str:
     )
 
 
-
 # ============================================================================
 # Slash-command detection helper
 # ============================================================================
@@ -5017,77 +5011,26 @@ def _aidiy_hermes_catalog_path() -> Path:
     return _AIDIY_CONFIG_DIR.parent / "_AIDIY" / "aidiy_diag" / "hermes_models_info.json"
 
 
-_AIDIY_CODE_CATALOG_KEYS = {
-    "claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
-    "codex-cli": "codex_cli", "copilot-cli": "copilot_cli",
-    "opencode": "opencode_cli", "grok-cli": "grok_cli",
-    "openai_oauth": "aidiy_hermes",
-}
+# hermes_models_info.json から一覧を引く CLI / OAuth のスラッグ。キーへの変換は aidiy_model_catalog.catalog_key が行う。
+_AIDIY_CODE_CATALOG_PROVIDERS = frozenset({
+    "claude-code", "antigravity-cli", "codex-cli", "copilot-cli", "opencode", "grok-cli",
+    "openai_oauth", "xai-oauth",
+})
 
 
 def _aidiy_code_model_labels(provider: str) -> List[Tuple[str, str]]:
-    """Hermes 専用一覧を読む。未生成の旧環境だけ Code 一覧へ互換退避。"""
-    key = _AIDIY_CODE_CATALOG_KEYS.get(provider)
-    if not key:
+    """Hermes 専用一覧（hermes_models_info.json）を読む。未生成・破損のときは空。"""
+    if provider not in _AIDIY_CODE_CATALOG_PROVIDERS:
         return []
-    hermes_catalog = _aidiy_hermes_catalog_path()
-    if hermes_catalog.exists():
-        rows, _notice = _read_aidiy_model_labels(hermes_catalog, provider)
-        return rows
-    filename = _AIDIY_CONFIG_DIR.parent / "_AIDIY" / "aidiy_diag" / "code_models_info.json"
-    try:
-        with filename.open(encoding="utf-8-sig") as source:
-            models = json.load(source)[key]["models"]
-        if not isinstance(models, dict):
-            return []
-        rows = []
-        for model, label in models.items():
-            if not isinstance(label, str) or not model.strip():
-                continue
-            if provider == "openai_oauth":
-                if not model.startswith("openai_oauth/"):
-                    continue
-                model = model.removeprefix("openai_oauth/")
-            if model.lower() not in {"auto", "same"}:
-                rows.append((label, model))
-        return rows
-    except (OSError, ValueError, KeyError, TypeError):
-        return []
+    rows, _notice = _read_aidiy_model_labels(_aidiy_hermes_catalog_path(), provider)
+    return rows
 
 
 _DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 _OLLAMA_CLOUD_BASE_URL = "https://ollama.com/v1"
 _OLLAMA_CLOUD_SUFFIXES = (":cloud", ":cloude", ":clude")
-_CLOUD_MODEL_MAX_AGE_DAYS = 240
-# AiDiy の選択画面で API キーのプロバイダ（OpenAI / Ollama / OpenRouter / Gemini / FreeAI）の /models
-# から除く、対話以外のモデル（画像・音声・動画・音楽・埋め込み・リアルタイム・文字起こし・検索・
-# エージェント専用・バッチ専用など）。新しい対話モデルは除外されず自動で候補に増える。
-_AIDIY_NON_CHAT_MODEL = re.compile(
-    r"image|imagen|nano-banana|realtime|audio|transcribe|tts|whisper|embed|moderation|search|translate"
-    r"|computer-use|dall-e|sora|veo|lyria|aqa|robotics|deep-research|antigravity|davinci|babbage"
-    r"|(?:^|[-/])live(?:-|$)|:batch$",
-    re.IGNORECASE,
-)
-# 作成日を返さない API（Gemini / FreeAI）は240日の判定ができないため、系列ごとに最新の世代
-# （gemini は最大の主版、gemma も同様）だけを出す。版の無い別名（gemini-flash-latest など）は残す。
-_AIDIY_MODEL_GENERATION = re.compile(r"^(gemini|gemma)-?(\d+)(?:\.\d+)?", re.IGNORECASE)
 
 
-def _aidiy_newest_generation_only(model_ids: List[str]) -> List[str]:
-    newest: Dict[str, int] = {}
-    for model_id in model_ids:
-        match = _AIDIY_MODEL_GENERATION.match(model_id)
-        if match:
-            family, major = match.group(1).lower(), int(match.group(2))
-            newest[family] = max(newest.get(family, major), major)
-    kept = []
-    for model_id in model_ids:
-        match = _AIDIY_MODEL_GENERATION.match(model_id)
-        if not match or int(match.group(2)) == newest[match.group(1).lower()]:
-            kept.append(model_id)
-    return kept
-# AiDiy の選択画面で OpenAI (OAuth) に出す世代。ChatGPT 側が返す旧世代（gpt-5.x）は除く。
-_AIDIY_OPENAI_OAUTH_CURRENT_MODEL = re.compile(r"^gpt-6(?:[.\-]|$)", re.IGNORECASE)
 _OPENAI_BASE_URL = "https://api.openai.com/v1"
 _OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 _GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai"
@@ -5157,19 +5100,6 @@ def _xai_oauth_is_authenticated() -> bool:
         return bool((get_xai_oauth_auth_status() or {}).get("logged_in"))
     except Exception:
         return False
-
-
-def _xai_oauth_model_ids() -> List[str]:
-    """xAI OAuth で利用できる curated モデル ID 一覧。"""
-    try:
-        from hermes_cli.models import provider_model_ids
-
-        model_ids = [m for m in provider_model_ids(_XAI_OAUTH_SLUG) if m]
-    except Exception:
-        model_ids = []
-    if _XAI_OAUTH_DEFAULT_MODEL not in model_ids:
-        model_ids.insert(0, _XAI_OAUTH_DEFAULT_MODEL)
-    return model_ids
 
 
 def _openai_oauth_access_token() -> Optional[str]:
@@ -5465,20 +5395,6 @@ def _load_aidiy_config() -> dict:
     return {}
 
 
-def _parse_date_to_timestamp(value: Any) -> int:
-    if not value:
-        return 0
-    try:
-        return int(float(value))
-    except Exception:
-        pass
-    try:
-        text = str(value).strip().replace("Z", "+00:00")
-        return int(datetime.fromisoformat(text).timestamp())
-    except Exception:
-        return 0
-
-
 # ============================================================================
 # Skill Slash Commands — dynamic commands generated from installed skills
 # ============================================================================
@@ -5618,8 +5534,6 @@ def save_config_value(key_path: str, value: any) -> bool:
     except Exception as e:
         logger.error("Failed to save config: %s", e)
         return False
-
-
 
 
 # ============================================================================
@@ -9394,7 +9308,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 pass
 
 
-
     def _install_tool_callbacks(self) -> None:
         """Install tool callbacks that need the live prompt UI."""
         if getattr(self, "_tool_callbacks_installed", False):
@@ -9995,7 +9908,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             self._console_print(f"[dim]{_escape(msg)}[/dim]")
 
 
-
     def _render_resume_history_panel_lines(self, panel) -> list[str]:
         """Render the resume panel at the current terminal width for resize replay."""
         from io import StringIO
@@ -10045,9 +9957,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         except ValueError:
             # Treat as a git hash
             return ref
-
-
-
 
 
     def _write_osc52_clipboard(self, text: str) -> None:
@@ -10168,7 +10077,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     f"  {_DIM}Recovered terminal from cooked-mode drift "
                     f"(input should respond normally again).{_RST}"
                 )
-
 
 
     def _preprocess_images_with_vision(self, text: str, images: list, *, announce: bool = True) -> str:
@@ -12496,9 +12404,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
     @staticmethod
     def _aidiy_provider_slugs() -> set:
         return {
-            "ollama", "openai", "openrt", "openrouter", "gemini", "freeai", "anthropic",
-            "openrt_free",
-            "openai_chat", "claude_chat", "anthropic_chat", "gemini_chat", "freeai_chat", "openrt_chat",
+            "ollama_chat", "openai", "openrouter", "gemini", "freeai", "anthropic",
+            "openrt_chat", "openrt_free",
+            "openai_chat", "claude_chat", "anthropic_chat", "gemini_chat", "freeai_chat",
             "local_chat", _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG,
             "claude-code", "antigravity-cli", "codex-cli", "copilot-cli", "opencode",
         }
@@ -12510,7 +12418,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             return _OPENAI_OAUTH_RUNTIME_PROVIDER
         if slug == _XAI_OAUTH_SLUG:
             return _XAI_OAUTH_SLUG
-        if slug in {"openrt", "openrt_free"}:
+        if slug in {"openrt_chat", "openrt_free"}:
             return "openrouter"
         if slug in {"claude_chat", "claude-code", "antigravity-cli"}:
             return "anthropic"
@@ -12528,14 +12436,14 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             return current
         provider = (self.provider or self.requested_provider or "").strip().lower()
         if provider == "openrouter":
-            return "openrt"
+            return "openrt_chat"
         if provider == "anthropic":
             return "claude_chat"
-        if provider in {"ollama", "openai", "openai_chat", "claude_chat", "openrt", "gemini", "freeai"}:
+        if provider in {"ollama_chat", "openai", "openai_chat", "claude_chat", "openrt_chat", "gemini", "freeai"}:
             return _normalize_aidiy_chat_provider(provider)
         base_url = (self.base_url or "").strip().lower()
         if "openrouter.ai" in base_url:
-            return "openrt"
+            return "openrt_chat"
         if "api.openai.com" in base_url:
             return "openai_chat"
         if "generativelanguage.googleapis.com" in base_url:
@@ -12549,7 +12457,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         if "api.anthropic.com" in base_url:
             return "claude_chat"
         if "ollama.com" in base_url or "localhost:11434" in base_url or "127.0.0.1:11434" in base_url:
-            return "ollama"
+            return "ollama_chat"
         port_local = str((self._aidiy_config or {}).get("PORT_LOCAL") or "8096").strip() or "8096"
         if f"localhost:{port_local}" in base_url or f"127.0.0.1:{port_local}" in base_url:
             return "local_chat"
@@ -12560,7 +12468,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         provider = _normalize_aidiy_chat_provider(provider)
         if provider == "openai_chat":
             return cfg.get("CHAT_OPENAI_MODEL") or "gpt-5.2"
-        if provider in ("openrt", "openrouter"):
+        if provider == "openrt_chat":
             return cfg.get("CHAT_OPENRT_MODEL") or "google/gemini-3.1-flash-image-preview"
         if provider == "openrt_free":
             return cfg.get("CHAT_OPENRT_FREE_MODEL") or "auto"
@@ -12582,21 +12490,21 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         return cfg.get("CODE_AIDIY_HERMES_MODEL") or cfg.get("CHAT_OLLAMA_MODEL") or "deepseek-v4-flash:cloud"
 
     def _get_aidiy_provider_entry(self, provider: str, include_models: bool = False) -> Optional[Dict[str, Any]]:
-        provider = _normalize_aidiy_chat_provider(provider or "ollama")
+        provider = _normalize_aidiy_chat_provider(provider or "ollama_chat")
         cfg = self._aidiy_config or {}
 
-        if provider == "ollama":
+        if provider == "ollama_chat":
             api_key = str(cfg.get("ollama_key_id", "") or "")
             host = str(cfg.get("ollama_host", _DEFAULT_OLLAMA_HOST) or _DEFAULT_OLLAMA_HOST).rstrip("/")
             cloud = _is_valid_key(api_key)
             entry = {
-                "slug": "ollama",
+                "slug": "ollama_chat",
                 "name": "Ollama Cloud" if cloud else "Ollama Local",
                 "runtime_provider": "custom",
                 "base_url": _OLLAMA_CLOUD_BASE_URL if cloud else f"{host}/v1",
                 "api_key": api_key.strip() if cloud else "no-key-required",
                 "api_mode": "chat_completions",
-                "default_model": _strip_cloud_suffix(self._aidiy_provider_default_model("ollama")) if cloud else self._aidiy_provider_default_model("ollama"),
+                "default_model": _strip_cloud_suffix(self._aidiy_provider_default_model("ollama_chat")) if cloud else self._aidiy_provider_default_model("ollama_chat"),
             }
         elif provider == "openai_chat":
             api_key = str(cfg.get("openai_key_id", "") or "")
@@ -12613,7 +12521,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 "api_mode": "chat_completions",
                 "default_model": self._aidiy_provider_default_model("openai"),
             }
-        elif provider in ("openrt", "openrt_free"):
+        elif provider in ("openrt_chat", "openrt_free"):
             api_key = str(cfg.get("openrt_key_id", "") or "")
             if not _is_valid_key(api_key):
                 return None
@@ -12712,15 +12620,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             return None
 
         if include_models:
-            if provider in _AIDIY_CHAT_PROVIDERS:
-                entry["models"], entry["model_list_notice"] = _read_aidiy_model_labels(
-                    _aidiy_hermes_catalog_path(), provider,
-                )
-            else:
-                entry["models"] = self._fetch_aidiy_provider_model_labels(entry, limit=50)
-                if not entry["models"]:
-                    default_model = entry["default_model"]
-                    entry["models"] = [(f"yyyy/mm/dd - {default_model}", default_model)]
+            # 候補はすべて aidiy_diag が保存した hermes_models_info.json から出す（API は呼ばない）。
+            entry["models"], entry["model_list_notice"] = _read_aidiy_model_labels(
+                _aidiy_hermes_catalog_path(), provider,
+            )
             entry["total_models"] = len(entry["models"])
         return entry
 
@@ -12728,7 +12631,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         current = self._current_aidiy_provider_slug()
         providers: List[Dict[str, Any]] = []
         for slug in (
-            _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG, "ollama", "openai_chat", "openrt", "openrt_free",
+            _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG, "ollama_chat", "openai_chat", "openrt_chat", "openrt_free",
             "gemini", "freeai", "claude_chat", "local_chat",
         ):
             entry = self._get_aidiy_provider_entry(slug, include_models=include_models)
@@ -13055,7 +12958,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 model_name = "same"
         else:
             model_name = _model_from_display_label(model_name) or provider_entry.get("default_model") or self.model
-            if provider_entry.get("slug") == "ollama" and provider_entry.get("base_url", "").rstrip("/") == _OLLAMA_CLOUD_BASE_URL:
+            if provider_entry.get("slug") == "ollama_chat" and provider_entry.get("base_url", "").rstrip("/") == _OLLAMA_CLOUD_BASE_URL:
                 model_name = _strip_cloud_suffix(model_name)
 
         old_provider = (
@@ -13126,7 +13029,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         _cprint("    /model --provider openrt_free")
         _cprint("    /model grok-4.6 --provider xai-oauth")
         _cprint("    /model --provider claude-code")
-        _cprint("    /model openrt:anthropic/claude-sonnet-4.5")
+        _cprint("    /model openrt_chat:anthropic/claude-sonnet-4.5")
 
     def _open_aidiy_model_picker(self) -> None:
         providers = self._list_aidiy_provider_entries(include_models=True)
@@ -13195,127 +13098,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         self._apply_aidiy_provider_model(provider_entry, model_name)
         return True
 
-    def _fetch_aidiy_openrouter_model_meta(self, vendor: str) -> Dict[str, Tuple[int, bool]]:
-        """OpenRouter のキーが使えるとき、vendor（openai / google）のモデル名 → (作成日, テキスト出力のみ) を返す。
-
-        `:free` / `:batch` などの付記を除いた名前で照合できるようにする。キーが無い・取得できない場合は空。
-        """
-        api_key = str((self._aidiy_config or {}).get("openrt_key_id", "") or "")
-        if not _is_valid_key(api_key):
-            return {}
-        cache = getattr(self, "_aidiy_openrouter_meta_cache", None)
-        if cache is None:
-            import urllib.request
-
-            cache = {}
-            try:
-                req = urllib.request.Request(f"{_OPENROUTER_BASE_URL.rstrip('/')}/models", headers={
-                    "Authorization": f"Bearer {api_key.strip()}",
-                    "HTTP-Referer": "https://github.com/monjyu1101/AiDiy2027",
-                    "X-Title": "AiDiy Hermes",
-                })
-                with urllib.request.urlopen(req, timeout=10) as res:
-                    items = json.loads(res.read().decode("utf-8")).get("data", [])
-                for item in items:
-                    if not isinstance(item, dict):
-                        continue
-                    owner, _, name = str(item.get("id", "")).partition("/")
-                    name = name.split(":", 1)[0].strip().lower()
-                    if not owner or not name:
-                        continue
-                    outputs = (item.get("architecture") or {}).get("output_modalities") or ["text"]
-                    text_only = {str(output).lower() for output in outputs} == {"text"}
-                    created = _parse_date_to_timestamp(item.get("created"))
-                    cache.setdefault(owner.lower(), {}).setdefault(name, (created, text_only))
-            except Exception:
-                cache = {}
-            self._aidiy_openrouter_meta_cache = cache
-        return cache.get(vendor, {})
-
-    def _fetch_aidiy_provider_model_labels(self, provider_entry: Dict[str, Any], limit: int = 12) -> List[Tuple[str, str]]:
-        try:
-            if provider_entry.get("slug") == _OPENAI_OAUTH_SLUG:
-                return _aidiy_code_model_labels(_OPENAI_OAUTH_SLUG)[:limit]
-            if provider_entry.get("slug") == _XAI_OAUTH_SLUG:
-                return [(model_id, model_id) for model_id in _xai_oauth_model_ids()[:limit]]
-            if provider_entry.get("api_mode") == "anthropic_messages":
-                return self._fetch_aidiy_claude_model_labels(provider_entry, limit=limit)
-
-            # cli_main はモジュール先頭で urllib を読み込まない。未読込のままだと NameError を
-            # 下の except が握りつぶし、OpenAI / Ollama / OpenRouter / Gemini の候補が既定モデル1件になる。
-            import urllib.request
-
-            base_url = provider_entry["base_url"].rstrip("/")
-            url = f"{base_url}/models"
-            headers = {"Authorization": f"Bearer {provider_entry['api_key']}"}
-            if provider_entry.get("slug") == "openrt":
-                headers["HTTP-Referer"] = "https://github.com/monjyu1101/AiDiy2027"
-                headers["X-Title"] = "AiDiy Hermes"
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as res:
-                payload = json.loads(res.read().decode("utf-8"))
-
-            items = [item for item in payload.get("data", []) if isinstance(item, dict)]
-            rows: List[Tuple[int, str, str]] = []
-            cutoff = datetime.now() - timedelta(days=_CLOUD_MODEL_MAX_AGE_DAYS)
-            provider = provider_entry.get("slug", "")
-            # OpenRouter のキーが使えるときは、同じモデルの OpenRouter の情報と照合して絞り込む。
-            # OpenRouter に無いモデル・テキスト以外も出力するモデルは除き、作成日の無い API（Gemini）
-            # にも OpenRouter の作成日を使って240日の判定をする。キーが無い・取得できないときは従来の判定。
-            vendor = {"openai": "openai", "gemini": "google", "freeai": "google"}.get(provider)
-            openrouter = self._fetch_aidiy_openrouter_model_meta(vendor) if vendor else {}
-            for item in items:
-                model_id = str(item.get("id", "")).strip()
-                if not model_id:
-                    continue
-                if provider == "ollama":
-                    model_id = _strip_cloud_suffix(model_id)
-                if provider in ("gemini", "freeai") and model_id.startswith("models/"):
-                    model_id = model_id.replace("models/", "", 1)
-                if _AIDIY_NON_CHAT_MODEL.search(model_id):
-                    continue
-                created_ts = _parse_date_to_timestamp(item.get("created") or item.get("created_at"))
-                if openrouter:
-                    matched = openrouter.get(model_id.lower())
-                    if not matched or not matched[1]:
-                        continue
-                    created_ts = created_ts or matched[0]
-                if created_ts > 0:
-                    created_dt = datetime.fromtimestamp(created_ts)
-                    if provider in ("ollama", "openai", "openrt", "gemini", "freeai") and created_dt < cutoff:
-                        continue
-                    label = f"{created_dt.strftime('%Y/%m/%d')} - {model_id.lstrip('~')}"
-                else:
-                    label = f"yyyy/mm/dd - {model_id.lstrip('~')}"
-                rows.append((created_ts, label, model_id))
-            # 作成日の無い行は240日で絞れないため、系列ごとの最新世代だけを残す。
-            undated = _aidiy_newest_generation_only([model_id for created_ts, _label, model_id in rows if created_ts <= 0])
-            rows = [row for row in rows if row[0] > 0 or row[2] in undated]
-            rows.sort(key=lambda row: row[0], reverse=True)
-            return [(label, model_id) for _created, label, model_id in rows[:limit]]
-        except Exception:
-            return []
-
-    def _fetch_aidiy_codex_model_labels(self, limit: int = 12) -> List[Tuple[str, str]]:
-        """ChatGPT OAuth バックエンドが提供するモデル一覧を返す。
-
-        アクセストークンがあればライブ取得、無ければ curated fallback を使う。
-        """
-        model_ids = _openai_oauth_model_ids(refresh=True) or [_OPENAI_OAUTH_FALLBACK_MODEL]
-        # 旧世代（gpt-5.x）は出さず gpt-6 系だけにする。該当が無ければ取得した一覧をそのまま使う。
-        current = [model_id for model_id in model_ids if _AIDIY_OPENAI_OAUTH_CURRENT_MODEL.match(model_id)]
-        return [(model_id, model_id) for model_id in (current or model_ids)[:limit]]
-
-    def _fetch_aidiy_claude_model_labels(self, provider_entry: Dict[str, Any], limit: int = 12) -> List[Tuple[str, str]]:
-        # AiDiy の選択画面では、hermes_cli/models.py の厳選した現行モデルだけを出す。
-        # provider_model_ids は Anthropic API の一覧（旧世代を含む）を後ろに足すため使わない。
-        try:
-            from hermes_cli.models import _PROVIDER_MODELS
-
-            model_ids = list(_PROVIDER_MODELS.get("anthropic", []))
-            return [(model_id, model_id) for model_id in model_ids[:limit]]
-        except Exception:
-            return []
 
     def _handle_model_picker_selection(self, persist_global: bool = False) -> None:
         state = self._model_picker_state
@@ -13966,7 +13748,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
 
 
     
-
 
 
     def _show_gateway_status(self):
@@ -14780,7 +14561,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         return try_launch_chrome_debug(port, system)
 
 
-
     # ────────────────────────────────────────────────────────────────
     # /goal — persistent cross-turn goals (Ralph-style loop)
     # ────────────────────────────────────────────────────────────────
@@ -15027,7 +14807,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             _cprint(f"  {_DIM}↻ Loop: {mgr.state.remaining_label()}.{_RST}")
 
 
-
     def _owns_process_notification(self, event: dict) -> bool:
         """Return whether this CLI session provably owns a delegation event.
 
@@ -15227,7 +15006,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     self._pending_input.put(prompt)
                 except Exception as exc:
                     logging.debug("goal continuation enqueue failed: %s", exc)
-
 
 
     def _toggle_verbose(self):
@@ -15438,8 +15216,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             db.set_session_yolo(session_key, enabled)
         except Exception:
             pass
-
-
 
 
     def _on_reasoning(self, reasoning_text: str):
@@ -15682,7 +15458,6 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                     committed=False,
                 )
                 print(f"  ❌ Compression failed: {e}")
-
 
 
     def _handle_usage_command(self, cmd_original: str):
@@ -24355,12 +24130,12 @@ def _load_aidiy_hermes_provider_defaults(provider: str | None, api_key_override:
 
     if api_key_override:
         key_name = {"openai_chat": "openai_key_id", "claude_chat": "claude_key_id",
-                    "gemini": "gemini_key_id", "freeai": "freeai_key_id", "openrt": "openrt_key_id",
+                    "gemini": "gemini_key_id", "freeai": "freeai_key_id", "openrt_chat": "openrt_key_id",
                     "openrt_free": "openrt_key_id"}.get(provider_slug)
         if key_name:
             cfg[key_name] = api_key_override
 
-    if provider_slug in _AIDIY_CHAT_PROVIDERS | {"ollama"}:
+    if provider_slug in _AIDIY_CHAT_PROVIDERS | {"ollama_chat"}:
         picker = HermesCLI.__new__(HermesCLI)
         picker._aidiy_config = cfg
         entry = picker._get_aidiy_provider_entry(provider_slug, include_models=False)
