@@ -39,12 +39,12 @@ test('破棄後のタイマー・遅延通知は画面を書き換えない',()=
  const f=fixture();f.show('元の通知');f.dismiss({type:'click'});const late=[...f.timers.values()][0];
  f.dispose();assert.equal(f.timers.size,0);late();f.show('遅延通知');f.dismiss({type:'click'});f.flush();assert.deepEqual(f.writes,['元の通知']);
 });
-test('Naviの通知処理はcaptureで先に記録し、非表示Codeの停止操作を通知と独立して維持する',()=>{
+test('Naviの通知処理はcaptureで先に記録し、停止操作を通知欄に重複させない',()=>{
  const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
  const {descriptor}=parse(source);assert.deepEqual(compileTemplate({source:descriptor.template.content,filename:'Navigationパネル.vue',id:'navigation-message'}).errors,[]);
  for(const event of ['click.capture','keydown.capture','wheel.capture.passive','touchmove.capture.passive'])assert.ok(source.includes(`@${event}="autopilotMessage.dismiss"`));
- assert.match(source,/v-if="autopilotStatus\|\|\(autopilot&&!codeOpen\)" class="navigation-autopilot-status"/);
- assert.match(source,/v-if="autopilot&&!codeOpen" type="button" @click="stopAutopilot\(\)"/);
+ assert.match(source,/v-if="autopilotStatus" class="navigation-autopilot-status"/);
+ assert.doesNotMatch(source,/@click="stopAutopilot\(\)"/);
  assert.match(source,/onClick:event=>\{autopilotMessage.dismiss\(event\);toggleCode\(\);\}/,'別窓のタイトル操作も対象');
  assert.equal((source.match(/autopilotStatus\.value\s*=/g)||[]).length,1,'全ての通知を同じ世代管理へ通す');
  assert.match(source,/autopilotMessage\.dispose\(\)/);

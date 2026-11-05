@@ -54,38 +54,43 @@ try{
  const evaluate=async expression=>{const data=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(data.result?.exceptionDetails,undefined,JSON.stringify(data));return data.result?.result?.value;};
  const click=text=>evaluate(`[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===${JSON.stringify(text)}).click()`);
  const checkCodeFrame=async(checked,desktop=false)=>{
-  const frame=await evaluate(`(()=>{const button=document.querySelector('.navigation-code-toggle'),style=getComputedStyle(button);return {checked:button.getAttribute('aria-checked'),desktop:!!button.closest('.window-actions'),widths:[style.borderTopWidth,style.borderRightWidth,style.borderBottomWidth,style.borderLeftWidth],styles:[style.borderTopStyle,style.borderRightStyle,style.borderBottomStyle,style.borderLeftStyle],radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],color:style.borderTopColor}})()`);
-  assert.equal(frame.checked,String(checked));assert.equal(frame.desktop,desktop);assert.deepEqual(frame.widths,['1px','1px','1px','1px']);assert.deepEqual(frame.styles,['solid','solid','solid','solid']);assert.deepEqual(frame.radii,['0px','0px','0px','0px']);assert.equal(frame.color,checked?'rgb(125, 226, 207)':'rgb(139, 155, 170)');
+  const frame=await evaluate(`(()=>{const button=document.querySelector('.navigation-code-toggle'),style=getComputedStyle(button);return {label:button.textContent.trim(),ariaLabel:button.getAttribute('aria-label'),checked:button.getAttribute('aria-checked'),desktop:!!button.closest('.window-actions'),widths:[style.borderTopWidth,style.borderRightWidth,style.borderBottomWidth,style.borderLeftWidth],styles:[style.borderTopStyle,style.borderRightStyle,style.borderBottomStyle,style.borderLeftStyle],radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],color:style.borderTopColor}})()`);
+  assert.equal(frame.label,checked?'CODE非表示':'CODE表示');assert.equal(frame.ariaLabel,frame.label);assert.equal(frame.checked,String(checked));assert.equal(frame.desktop,desktop);assert.deepEqual(frame.widths,['1px','1px','1px','1px']);assert.deepEqual(frame.styles,['solid','solid','solid','solid']);assert.deepEqual(frame.radii,['0px','0px','0px','0px']);assert.equal(frame.color,checked?'rgb(125, 226, 207)':'rgb(139, 155, 170)');
+ };
+ const checkAutopilotToggle=async active=>{
+  await until(()=>evaluate(`(()=>{const button=document.querySelector('.navigation-autopilot-toggle'),track=button?.querySelector('.motion-switch');return !!track&&getComputedStyle(track,'::after').transform===${JSON.stringify(active?'matrix(1, 0, 0, 1, 14, 0)':'none')}})()`),'autopilot toggle position');
+  const toggle=await evaluate(`(()=>{const button=document.querySelector('.navigation-autopilot-toggle'),track=button.querySelector('.motion-switch');return {role:button.getAttribute('role'),checked:button.getAttribute('aria-checked'),state:button.querySelector('.navigation-autopilot-state').textContent,label:button.firstElementChild.textContent,hidden:track.getAttribute('aria-hidden'),radius:getComputedStyle(button).borderTopLeftRadius,trackWidth:getComputedStyle(track).width}})()`);
+  assert.equal(toggle.role,'switch');assert.equal(toggle.checked,String(active));assert.equal(toggle.state,active?'オン':'オフ');assert.equal(toggle.label,'自動航行');assert.equal(toggle.hidden,'true');assert.equal(toggle.radius,'0px');assert.equal(toggle.trackWidth,'28px');
  };
  const checkEmbeddedHeader=async active=>{
   const header=await evaluate(`(()=>{const pane=document.querySelector('.navigation-code'),header=pane.querySelector(':scope>header');return {title:pane.querySelector(':scope>header strong')?.textContent??null,header:!!header,stop:header?.querySelector('button')?.textContent??null,mainTitle:document.title}})()`);
   assert.equal(header.title,null,'Navigator右側にはCodeタイトルを表示しない');
-  assert.equal(header.header,active,'停止操作がない時は空のタイトル行も残さない');
-  assert.equal(header.stop,active?'自動航行をオフ':null);
+  assert.equal(header.header,false,'右側Codeには重複する操作行を残さない');
+  assert.equal(header.stop,null);
   assert.equal(header.mainTitle,active?'AiDiy Navigation Cruise':'AiDiy Navigator');
  };
  await send('Runtime.enable');await send('Page.enable');await send('Page.navigate',{url:'http://127.0.0.1:'+server.address().port});
  await until(()=>evaluate(`!!document.querySelector('.navigation-autopilot-toggle')`),'toggle');
  assert.equal(await evaluate(`document.querySelector('.navigation-task-heading time').dateTime`),'2026-11-05T00:00:00.000Z');assert.match(await evaluate(`document.querySelector('.navigation-task-heading time').textContent`),/^ \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/);
  assert.equal(await evaluate(`document.querySelectorAll('.navigation-task-heading time').length`),1);assert.equal(await evaluate(`document.querySelector('.navigation-items time')===null`),true);
- await checkCodeFrame(false);
- assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('Code オフ');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
+ await checkCodeFrame(false);await checkAutopilotToggle(false);
+ assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
  await checkCodeFrame(true);
  await checkEmbeddedHeader(false);
  assert.equal(await evaluate(`document.querySelector('.navigation-code .code-component>.panel-brand,.navigation-code .code-component>.connection-bar')===null`),true,'embedded Code omits only its duplicate title and connection strip');
  await until(()=>evaluate(`(()=>{const image=document.querySelector('.navigation-code .welcome-mark img');return image?.complete&&image.naturalWidth>0&&image.naturalHeight>0})()`),'embedded AiDiy image loaded');
  const geometry=await evaluate(`(()=>{const a=document.querySelector('.navigation-goal-form').getBoundingClientRect(),b=document.querySelector('.navigation-code').getBoundingClientRect();return {left:a.x,right:a.right,codeLeft:b.x,codeRight:b.right,width:innerWidth}})()`);assert.ok(geometry.codeLeft>=geometry.right-1,JSON.stringify(geometry));assert.ok(geometry.codeRight<=geometry.width);
  writeFileSync(join(out,'embedded-code.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- await click('Code オン');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide Code');
- await click('自動航行 オフ');await click('Code オン');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide active Code');await until(()=>evaluate(`document.querySelector('.navigation-autopilot-status')?.textContent.includes('100%')`),'autopilot complete');assert.equal(evaluations,2);assert.equal(calls.filter(x=>x==='input_text').length,2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
- assert.equal(calls.filter(x=>x==='POST Code').length,1,'hiding and resuming must reuse the same Code');await click('Code オフ');assert.equal(calls.filter(x=>x==='input_text').length,2,'showing completed Code must not submit');
+ await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide Code');
+ await click('自動航行 オフ');await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide active Code');await until(()=>evaluate(`document.querySelector('.navigation-autopilot-status')?.textContent.includes('100%')`),'autopilot complete');assert.equal(evaluations,2);assert.equal(calls.filter(x=>x==='input_text').length,2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
+ assert.equal(calls.filter(x=>x==='POST Code').length,1,'hiding and resuming must reuse the same Code');await click('CODE表示');assert.equal(calls.filter(x=>x==='input_text').length,2,'showing completed Code must not submit');
  assert.equal(await evaluate(`document.querySelector('.navigation-task-heading time').dateTime`),'2026-11-05T00:02:00.000Z');
  writeFileSync(join(out,'completed.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  // Reload restores only the record, never the permission to execute. Stop before completion.
  result=makeResult(20);job=null;hold=true;await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.navigation-autopilot-toggle')&&!document.querySelector('.navigation-autopilot-toggle').disabled`),'reload');const count=calls.filter(x=>x==='input_text').length;await click('自動航行 オフ');await until(()=>calls.filter(x=>x==='input_text').length===count+1,'running');
- await checkEmbeddedHeader(true);writeFileSync(join(out,'cruise-without-code-title.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- await evaluate(`document.querySelector('.navigation-code>header button').click()`);await until(()=>calls.includes('cancel_run'),'visible Code stop');await checkEmbeddedHeader(false);
- await click('自動航行 オフ');await until(()=>calls.filter(x=>x==='input_text').length===count+2,'running again');await click('Code オン');await click('自動航行をオフ');await until(()=>calls.filter(x=>x==='cancel_run').length===2,'hidden Code stop');await sleep(1700);assert.equal(evaluations,2,'OFF must not reevaluate');assert.equal(calls.filter(x=>x==='input_text').length,count+2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
+ await checkAutopilotToggle(true);await checkEmbeddedHeader(true);writeFileSync(join(out,'cruise-without-code-title.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
+ await click('自動航行 オン');await until(()=>calls.includes('cancel_run'),'visible Code stop');await checkEmbeddedHeader(false);
+ await click('自動航行 オフ');await until(()=>calls.filter(x=>x==='input_text').length===count+2,'running again');await click('CODE非表示');await click('自動航行 オン');await until(()=>calls.filter(x=>x==='cancel_run').length===2,'hidden Code stop');await sleep(1700);assert.equal(evaluations,2,'OFF must not reevaluate');assert.equal(calls.filter(x=>x==='input_text').length,count+2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
  // 実行エラーで停止した後、同じ埋込Codeを閉じずに明示オンから再開できる。
  result=makeResult(20);job=null;hold=false;failNext=true;const beforeFailure=calls.filter(x=>x==='input_text').length,beforeEvaluations=evaluations;
  await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.navigation-autopilot-toggle')&&!document.querySelector('.navigation-autopilot-toggle').disabled`),'failure scenario ready');
@@ -101,10 +106,10 @@ try{
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.aidiyWindow={navigationCode:async()=>({ok:true}),pinState:async()=>({pinned:false,locked:false})};`});
  await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.window-actions .navigation-code-toggle')`),'desktop title');await checkCodeFrame(false,true);
  writeFileSync(join(out,'title-code-hidden.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- const sent=calls.filter(x=>x==='input_text').length;await click('Code オフ');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'desktop embedded Code');await checkCodeFrame(true,true);
+ const sent=calls.filter(x=>x==='input_text').length;await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'desktop embedded Code');await checkCodeFrame(true,true);
  await checkEmbeddedHeader(false);
  writeFileSync(join(out,'title-code-visible.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- await click('Code オン');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'desktop hide Code');await checkCodeFrame(false,true);assert.equal(calls.filter(x=>x==='input_text').length,sent,'title visibility toggle must not submit');
+ await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'desktop hide Code');await checkCodeFrame(false,true);assert.equal(calls.filter(x=>x==='input_text').length,sent,'title visibility toggle must not submit');
  // 共通Codeは変更せず、単独版のタイトル・接続バー・入力操作も維持する。
  appKind='code';await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.code-component>.panel-brand')&&!!document.querySelector('.code-component textarea')`),'standalone Code title');
  assert.equal(await evaluate(`document.querySelector('.code-component>.panel-brand strong').textContent`),'AiDiy Code');assert.equal(await evaluate(`document.title`),'AiDiy Code');

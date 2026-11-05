@@ -17,7 +17,7 @@ const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 function fixture(handler,props={}){
  const calls=[],resizes=[],timers=new Map();let id=0,evaluations=0,state=makeResult(0),job=null;
- const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,autopilotMessage,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,createNavigationPopupSizer,createNavigationMessage,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
+ const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeToggleLabel,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,autopilotMessage,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot,busy,routing})`,{ref,computed,createNavigationPopupSizer,createNavigationMessage,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
   const method=options.method||'GET';calls.push({url,method});const custom=await handler?.(url,options);if(custom)return custom;
   if(url==='/api/connection')return reply({active:true,startedAt:1});
   if(url.startsWith('/api/navigation/code'))return reply({url:'/panels/code/navi-1/test/'});
@@ -34,7 +34,7 @@ test('Vue handlers open only on demand, run two rounds, stop at100 and retain hi
 });
 test('OFF aborts Code and never starts reevaluation',async()=>{
  const f=fixture();let signal;f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:request=>{signal=request.signal;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('stopped')),{once:true}));}};
- const run=f.api.toggleAutopilot();await flush();assert.ok(signal);f.api.stopAutopilot();await run;assert.equal(signal.aborted,true);assert.equal(f.calls.filter(x=>x.method==='POST'&&x.url.startsWith('/api/navigation?')).length,0);assert.equal(f.api.autopilot.value,false);
+ const run=f.api.toggleAutopilot();await flush();assert.ok(signal);f.api.toggleAutopilot();await run;assert.equal(signal.aborted,true);assert.equal(f.calls.filter(x=>x.method==='POST'&&x.url.startsWith('/api/navigation?')).length,0);assert.equal(f.api.autopilot.value,false);
 });
 test('open-hide-show during initialization retains one POST and restores expansion',async()=>{
  let resolve;let first=true;const f=fixture((url,options)=>{if(first&&url.startsWith('/api/navigation/code')&&options.method==='POST'){first=false;return new Promise(done=>resolve=done);}});
@@ -54,7 +54,7 @@ test('Codeの接続確定を待ち、未対応サーバーは理由を出して�
 
 test('autopilot opens Code, allows hiding, stops while hidden and restores the same session',async()=>{
  const f=fixture();let signal;const code={navigationReadiness:()=>({ready:true}),runNavigationPrompt:request=>{signal=request.signal;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('stopped')),{once:true}));}};f.api.codePanel.value=code;
- const run=f.api.toggleAutopilot();assert.equal(f.api.codeOpen.value,true);await flush();const base=f.api.codeBase.value;f.api.toggleCode();await flush();assert.equal(f.api.codeOpen.value,false);assert.equal(signal.aborted,false);assert.equal(f.api.codeDriving.value,true);assert.equal(f.calls.filter(x=>x.method==='DELETE').length,0);f.api.stopAutopilot();await run;assert.equal(signal.aborted,true);assert.equal(f.api.codeOpen.value,false);f.api.toggleCode();await flush();assert.equal(f.api.codeOpen.value,true);assert.equal(f.api.codeBase.value,base);assert.equal(toRaw(f.api.codePanel.value),code);assert.equal(f.calls.filter(x=>x.method==='POST'&&x.url.startsWith('/api/navigation/code')).length,1);
+ const run=f.api.toggleAutopilot();assert.equal(f.api.codeOpen.value,true);await flush();const base=f.api.codeBase.value;f.api.toggleCode();await flush();assert.equal(f.api.codeOpen.value,false);assert.equal(signal.aborted,false);assert.equal(f.api.codeDriving.value,true);assert.equal(f.calls.filter(x=>x.method==='DELETE').length,0);f.api.toggleAutopilot();await run;assert.equal(signal.aborted,true);assert.equal(f.api.codeOpen.value,false);f.api.toggleCode();await flush();assert.equal(f.api.codeOpen.value,true);assert.equal(f.api.codeBase.value,base);assert.equal(toRaw(f.api.codePanel.value),code);assert.equal(f.calls.filter(x=>x.method==='POST'&&x.url.startsWith('/api/navigation/code')).length,1);
 });
 test('hidden Code finishes both rounds and reopens with the same state without sending again',async()=>{
  const f=fixture();let finish;const prompts=[];const code={navigationReadiness:()=>({ready:true}),runNavigationPrompt:request=>{prompts.push(request.text);return prompts.length===1?new Promise(resolve=>finish=resolve):Promise.resolve();}};f.api.codePanel.value=code;
@@ -66,14 +66,14 @@ test('hiding during Code launch still mounts one session and continues navigatio
 });
 test('Code toggle lives in title slots and embedded Code does not control the owner OS window',()=>{
  const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
- assert.match(full,/<template #window-tools><button[^>]+class="navigation-code-toggle"/);assert.match(full,/titleTools:.*navigation-code-toggle/);assert.doesNotMatch(full,/:disabled="autopilot" @click="toggleCode"/);assert.match(full,/<aside v-show="codeOpen"/);assert.match(full,/v-if="autopilot&&!codeOpen"[^>]*type="button" @click="stopAutopilot/);assert.doesNotMatch(full,/:base="codeBase"[^>]*:desktop=/);
+ assert.match(full,/<template #window-tools><button[^>]+class="navigation-code-toggle"/);assert.match(full,/titleTools:.*navigation-code-toggle/);assert.doesNotMatch(full,/:disabled="autopilot" @click="toggleCode"/);assert.match(full,/<aside v-show="codeOpen"/);assert.doesNotMatch(full,/@click="stopAutopilot/);assert.doesNotMatch(full,/:base="codeBase"[^>]*:desktop=/);
 });
 
-test('Navigator右側はCode見出しと空のタイトル行を出さず、自動航行の停止操作を残す',()=>{
+test('Navigator右側はCode見出し・空のタイトル行・重複する停止ボタンを出さない',()=>{
  const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
  const aside=full.match(/<aside v-show="codeOpen"[\s\S]*?<\/aside>/)?.[0];
  assert.ok(aside);assert.doesNotMatch(aside,/<strong>Code<\/strong>/);
- assert.match(aside,/<header v-if="autopilot"><button type="button" @click="stopAutopilot\(\)">自動航行をオフ<\/button><\/header>/);
+ assert.doesNotMatch(aside,/<header|自動航行をオフ/);
  assert.match(aside,/<CodePanel[^>]+embedded hide-status-bar/);
 });
 
@@ -112,6 +112,35 @@ test('最下部通知の消去だけでは航行・Codeを止めず、同じク�
  const run=f.api.toggleAutopilot();await flush();const base=f.api.codeBase.value;assert.ok(f.api.autopilotStatus.value);
  f.api.autopilotMessage.dismiss({type:'click',pointerType:'touch'});await new Promise(resolve=>setTimeout(resolve,5));
  assert.equal(f.api.autopilotStatus.value,'');assert.equal(f.api.autopilot.value,true);assert.equal(signal.aborted,false);assert.equal(f.api.codeBase.value,base);
- f.api.autopilotMessage.show('実行中');f.api.autopilotMessage.dismiss({type:'click'});f.api.stopAutopilot();await run;await new Promise(resolve=>setTimeout(resolve,5));
+ f.api.autopilotMessage.show('実行中');f.api.autopilotMessage.dismiss({type:'click'});f.api.toggleAutopilot();await run;await new Promise(resolve=>setTimeout(resolve,5));
  assert.match(f.api.autopilotStatus.value,/停止を要求/);assert.equal(signal.aborted,true);
+});
+
+
+test('NaviのCodeボタンは現在の状態でなく押すと行う表示・非表示を案内する',()=>{
+ const f=fixture();assert.equal(f.api.codeToggleLabel.value,'CODE表示');
+ for(let i=0;i<2;i++){
+  f.api.codeOpen.value=true;assert.equal(f.api.codeToggleLabel.value,'CODE非表示');
+  f.api.autopilot.value=true;assert.equal(f.api.codeToggleLabel.value,'CODE非表示');
+  f.api.codeOpen.value=false;assert.equal(f.api.codeToggleLabel.value,'CODE表示');
+  f.api.autopilot.value=false;assert.equal(f.api.codeToggleLabel.value,'CODE表示');
+ }
+});
+
+
+test('唯一の自動航行トグルはCode準備中にも停止でき、遅れた起動完了後に送信しない',async()=>{
+ let finish;
+ const f=fixture((url,options)=>url.startsWith('/api/navigation/code')&&options.method==='POST'?new Promise(resolve=>finish=resolve):undefined);
+ let runs=0;f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:async()=>{runs++;}};
+ const run=f.api.toggleAutopilot();await flush();assert.ok(finish);assert.equal(f.api.autopilot.value,true);
+ await f.api.toggleAutopilot();assert.equal(f.api.autopilot.value,false);finish(reply({url:'/panels/code/navi-1/delayed/'}));await run;assert.equal(runs,0);
+});
+
+for(const codeVisible of [true,false])test(`唯一の自動航行トグルは再評価中にも停止できる（Code表示=${codeVisible}）`,async()=>{
+ let finish;
+ const f=fixture((url,options)=>url.startsWith('/api/navigation?')&&options.method==='POST'?new Promise(resolve=>finish=resolve):undefined);
+ let runs=0;f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:async()=>{runs++;}};
+ const run=f.api.toggleAutopilot();await flush();assert.ok(finish);assert.equal(f.api.routing.value,true);assert.equal(f.api.busy.value,true);assert.equal(runs,1);
+ f.api.codeOpen.value=codeVisible;await f.api.toggleAutopilot();assert.equal(f.api.autopilot.value,false);
+ finish(reply({job:{id:'late-evaluation',status:'running'}}));await run;assert.equal(runs,1);assert.match(f.api.autopilotStatus.value,/停止を要求/);
 });

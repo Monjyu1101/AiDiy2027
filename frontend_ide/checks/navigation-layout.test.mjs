@@ -20,7 +20,7 @@ test('総合評価・おすすめプロンプトを明細スクロール外に�
  const positions=['navigation-display','navigation-overall','navigation-next'].map(name=>children.findIndex(node=>hasClass(node,name)));
  assert.ok(positions.every(index=>index>=0));assert.deepEqual([...positions].sort((a,b)=>a-b),positions);
  const overall=children[positions[1]],next=children[positions[2]];
- for(const node of [overall,next])assert.equal(node.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'result&&!history');
+ assert.equal(overall.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'result&&!history');assert.equal(next.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'autopilot||(result&&!history)');
  assert.match(source,/\.navigation-panel>\.navigation-overall\{flex:none;/);
  assert.match(source,/\.navigation-overall>\.navigation-disclosure\{min-height:0;overflow:auto\}/);
  assert.match(source,/>目標<small/);assert.doesNotMatch(descriptor.template.content,/未評価|>開発目標<\/label>/);
@@ -40,7 +40,7 @@ test('タイトルのCode切替は表示・非表示とも四角い枠を持ち�
 test('Navigator専用Codeは重複タイトルと接続線だけを省略し、共通AiDiy画像を指定する',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),code=nodes.find(node=>node.tag==='CodePanel');assert.ok(code);
  assert.equal(attr(code,'icon'),'/development/AiDiy.png');assert.ok(code.props.some(prop=>prop.type===6&&prop.name==='hide-status-bar'));
- const aside=nodes.find(node=>hasClass(node,'navigation-code'));assert.equal(elements(aside)[0].tag,'header');assert.ok(walk(aside).some(node=>node.tag==='button'&&node.props.some(prop=>prop.type===7&&prop.name==='on'&&prop.exp?.content==='stopAutopilot()')));
+ const aside=nodes.find(node=>hasClass(node,'navigation-code'));assert.equal(elements(aside).some(node=>node.tag==='header'||node.tag==='button'),false);
 });
 
 test('Navigatorの制御説明は専用Codeだけへ指定し、従来の上部説明を重複させない',()=>{
@@ -162,4 +162,50 @@ test('自動航行中の総合評価は周回枠と枠内下部中央の状態�
  assert.match(source,/\.navigation-overall-cruise-status\{flex:none;[^}]*text-align:center/);
  assert.match(source,/\.navigation-panel>\.navigation-overall\.driving\{[^}]*border-radius:0/);
  assert.match(source,/:aria-valuenow="overall.progress"/);assert.equal(elements(details)[0].tag,'summary');
+});
+
+
+test('単独・IDE・別窓タイトルは共通のCode操作ラベルと読み上げ名を使う',()=>{
+ const toggles=walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-code-toggle'));
+ assert.equal(toggles.length,3);
+ for(const button of toggles){
+  assert.equal(button.props.find(p=>p.type===7&&p.arg?.content==='aria-label').exp.content,'codeToggleLabel');
+  assert.equal(button.children.find(child=>child.type===5).content.content,'codeToggleLabel');
+ }
+ assert.match(source,/titleTools:.*'aria-label':codeToggleLabel\.value.*codeToggleLabel\.value/);
+ assert.doesNotMatch(source,/Code \{\{codeOpen|\(codeOpen\.value\?'オン':'オフ'\)/);
+});
+
+
+test('自動航行はラベル・共通トグル・オンオフ表記を並べ、ネイティブbuttonの操作契約を保つ',()=>{
+ const toggle=walk(baseParse(descriptor.template.content)).find(node=>hasClass(node,'navigation-autopilot-toggle'));
+ assert.equal(toggle.tag,'button');assert.equal(attr(toggle,'type'),'button');assert.equal(attr(toggle,'role'),'switch');assert.equal(attr(toggle,'aria-label'),'自動航行（Navi Cruise）');
+ assert.equal(toggle.props.find(p=>p.type===7&&p.arg?.content==='aria-checked').exp.content,'autopilot');
+ assert.equal(toggle.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!autopilot&&(!canAutopilot||!!autopilotController)');
+ assert.equal(toggle.props.find(p=>p.type===7&&p.name==='on'&&p.arg?.content==='click').exp.content,'toggleAutopilot');
+ const [label,track,state]=elements(toggle);assert.equal(label.children[0].content,'自動航行');assert.ok(hasClass(track,'motion-switch'));assert.equal(attr(track,'aria-hidden'),'true');
+ assert.ok(hasClass(state,'navigation-autopilot-state'));assert.equal(attr(state,'aria-hidden'),'true');assert.equal(state.children[0].content.content,"autopilot?'オン':'オフ'");
+ assert.ok(toggle.props.every(p=>!(p.type===7&&p.name==='on'&&['keydown','keyup'].includes(p.arg?.content))),'EnterとSpaceはbuttonの標準操作を使う');
+});
+
+test('自動航行のトグルはスクエアの共通レールでつまみ位置と色を切り替え、動きを減らす設定を尊重する',()=>{
+ const css=descriptor.styles.map(style=>style.content).join('\n'),shared=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ assert.match(css,/\.navigation-autopilot-toggle\{[^}]*display:inline-flex;[^}]*align-items:center;[^}]*border-radius:0/);
+ assert.match(shared,/\.motion-switch\{width:28px;height:14px/);assert.match(shared,/\.motion-switch:after\{[^}]*left:2px;[^}]*width:8px;height:8px/);
+ assert.match(css,/\.navigation-autopilot-toggle\[aria-checked="true"\] \.motion-switch:after\{[^}]*transform:translateX\(14px\)/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.navigation-autopilot-toggle \.motion-switch:after\{transition:none\}\}/);
+});
+
+
+test('自動航行の停止操作はトグル1つだけで、準備・Code実行・再評価中にも隠れず無効にならない',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),toggles=nodes.filter(node=>hasClass(node,'navigation-autopilot-toggle'));
+ assert.equal(toggles.length,1);assert.equal(nodes.some(node=>node.tag==='button'&&node.props.some(p=>p.type===7&&p.name==='on'&&p.exp?.content==='stopAutopilot()')),false);
+ const next=nodes.find(node=>hasClass(node,'navigation-next')),toggle=toggles[0];
+ const condition=name=>next.props.find(p=>p.type===7&&p.name===name).exp.content;
+ const visible=new Function('autopilot','result','history','routing',`return (${condition('if')})&&(${condition('show')});`);
+ const disabled=new Function('autopilot','canAutopilot','autopilotController',`return ${toggle.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content};`);
+ for(const routing of [false,true])for(const history of [false,true])for(const result of [null,{}]){
+  assert.equal(visible(true,result,history,routing),true);assert.equal(disabled(true,false,{}),false);
+ }
+ assert.equal(visible(false,{},false,true),false,'手動調査中は従来どおり非表示');assert.equal(disabled(false,false,null),true);
 });
