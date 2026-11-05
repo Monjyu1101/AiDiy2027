@@ -52,6 +52,18 @@ test('追加対象は同じコンソール・排他を使い、未承認対象�
   for(const id of ['node','python','uv','code','electron','constructor','toString','__proto__'])await assert.rejects(()=>f.manager.start(id,'導入'),{status:404});
   await f.manager.start('ollama','削除');assert.equal((await settled(f.manager)).状態,'失敗');assert.equal(f.calls.length,0);
 });
+test('Ollama 更新はモデル保存先だけを確認・更新環境へ渡し、他のCLIや秘密設定には広げない',async t=>{
+  for(const id of ['ollama','obs']){
+    const models='D:\\shared models',inspections=[];
+    const f=fixture(t,{env:{OLLAMA_MODELS:models,OLLAMA_API_KEY:'fixture-private-key',OLLAMA_HOST:'http://other.invalid',OPENAI_API_KEY:'fixture-private-key'},inspectWingetFn:async({entries,env})=>{
+      inspections.push(env);return {items:entries.map(entry=>({id:entry.id,操作:['再導入']})),context:{lockKey:'C:\\Windows\\aidiy-winget'}};
+    }});
+    await f.manager.start(id,'再導入');assert.equal((await settled(f.manager)).状態,'完了');assert.equal(f.calls.length,1);
+    assert.ok(inspections.length>0);assert.ok(inspections.every(env=>env.OLLAMA_MODELS===models));
+    assert.equal(f.calls[0].options.env.OLLAMA_MODELS,id==='ollama'?models:undefined);
+    for(const env of [...inspections,f.calls[0].options.env])for(const key of ['OLLAMA_API_KEY','OLLAMA_HOST','OPENAI_API_KEY'])assert.equal(env[key],undefined);
+  }
+});
 test('WinGet 所有元とロックキーをロック下で再照合し、変更時は操作しない',async t=>{
   for(const change of ['ownership','lock']){
     let locked=false,released=false;const f=fixture(t,{acquireLock:async()=>{locked=true;return async()=>{released=true;};},inspectWingetFn:async({entries})=>({items:entries.map(entry=>({id:entry.id,操作:locked&&change==='ownership'?[]:['導入']})),context:{lockKey:locked&&change==='lock'?'changed':'original'}})});

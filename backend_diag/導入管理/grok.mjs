@@ -79,6 +79,7 @@ async function inspectWindows(context,{env,run,signal}) {
 
 export async function inspectGrok(entry,{env=process.env,platform=process.platform,run,resolve=resolveProgram,signal}={}) {
   const item={id:entry.id,パッケージ:'Grok Build CLI (grok)',説明:'公式 Windows インストーラー（stable）を使用します。認証・設定・履歴・セッションは削除しません。',
+    再導入説明:'旧ファイルを退避してから公式インストーラーで更新・再導入します。失敗・中止時は旧ファイルを復元します。',
     確認説明:'~/.grok/bin の grok.exe / agent.exe（配布がある版は grove 系も）だけを導入・再導入・削除します。公式インストーラーは ~/.grok/config.toml の [cli] installer 行を更新し、ユーザー PATH に ~/.grok/bin が無ければ追加します。再導入は旧ファイルを退避し、失敗・中止時に復元します。削除では PATH・認証・設定・同梱 git（%LOCALAPPDATA%\\grok）を残します。',操作:[]};
   let context=null;
   try{

@@ -188,6 +188,28 @@ async function packageTree(t,{id='codex',platform='linux',manifest={name:NPM_PAC
   return {...tree,directory,target,id,manifest};
 }
 
+test('Copilot の native bin と標準 npm shim は導入済みでも削除せず更新できる',async t=>{
+  const entry=entries.find(item=>item.id==='copilot');
+  for(const platform of ['linux','win32']){
+    const tree=await npmTree(t,platform),directory=path.join(tree.root,'@github','copilot'),binary=path.join(directory,'bin','copilot.exe');
+    await mkdir(path.dirname(binary),{recursive:true});await writeFile(binary,'MZ synthetic Copilot; never execute');
+    await writeFile(path.join(directory,'package.json'),JSON.stringify({name:'@github/copilot',bin:{copilot:'./bin/copilot.exe'}}));
+    const paths=[binary];
+    if(platform==='win32')for(const extension of ['', '.cmd', '.ps1']){
+      const shim=path.join(tree.prefix,'copilot'+extension);await writeFile(shim,windowsShim(extension,'node_modules/@github/copilot/bin/copilot.exe'));paths.push(shim);
+    }
+    for(const executable of paths){
+      const cap=await npmCapability(entry,tree,{platform,resolve:async()=>executable});
+      assert.deepEqual(cap.操作,['再導入','削除']);
+      const commands=npmCommands(tree,'copilot','再導入','/fixture/npmrc',cap);
+      assert.equal(commands.length,1);assert.equal(commands[0].args[1],'install');assert.equal(commands[0].args.at(-1),'@github/copilot');
+      assert.doesNotMatch(commands[0].表示,/uninstall/);
+    }
+    const foreign=path.join(tree.prefix,'unowned-copilot.exe');await writeFile(foreign,'MZ unowned');
+    assert.deepEqual((await npmCapability(entry,tree,{platform,resolve:async()=>foreign})).操作,[]);
+  }
+});
+
 test('能力判定は未導入・npm 管理・別導入元・所有情報不正を区別する',async t=>{
   const tree=await npmTree(t),entry=entries.find(item=>item.id==='codex');
   assert.deepEqual((await npmCapability(entry,tree,{resolve:async()=>null})).操作,['導入']);

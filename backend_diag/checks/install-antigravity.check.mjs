@@ -139,6 +139,7 @@ test('新規導入は固定公式 cmd と manifest で二重検証し、設定�
 
 test('再導入は旧バイナリを退避してから公式 cmd を実行し、成功後だけ退避を削除する',async t=>{
   const f=await fixture(t,{binary:OLD,owned:true});f.state.beforeInstall=async()=>{await absent(f.target);assert.equal((await readdir(f.prefix)).filter(x=>x.includes('.aidiy-backup-')).length,1);};
+  const cap=(await f.inspect()).item;assert.match(cap.再導入説明,/旧バイナリを退避.*更新・再導入/);assert.match(cap.再導入説明,/失敗・中止時.*復元/);assert.doesNotMatch(cap.再導入説明,/削除してから/);
   await f.execute('再導入');assert.deepEqual(await readFile(f.target),NEW);assert.equal((await readdir(f.prefix)).filter(x=>x.includes('.aidiy-backup-')).length,0);await preserved(f);
 });
 

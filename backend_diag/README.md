@@ -60,13 +60,13 @@ aidiy_diag --auto           # 画面を開き、保存済みの起動設定で�
 
 ### 各項目の導入・再導入・削除
 
-各項目の1行目は左に名称、右に「確認」と状態を表示します。安全な導入方法と所有元を確認できた項目だけ、2行目の左に「導入」または「再導入」「削除」を表示します。初期表示・全テスト・headless は導入操作を実行しません。
+各項目の1行目は左に名称、右に「確認」と状態を表示します。CLI群7項目は2行目の左に「導入・更新」を常に表示し、未導入なら導入、導入済みなら既存の再導入処理で更新します。所有元不明・未対応OS・確認中の場合は無効にして理由を行内に表示します。「削除」とCLI群以外の導入操作は、安全な導入方法と所有元を確認できた場合だけ表示します。初期表示・全テスト・headless は導入操作を実行しません。
 
 | 対象 | 導入方法・制限 |
 |---|---|
 | Claude Code / Codex / Copilot / OpenCode | 固定 npm グローバルパッケージ（OpenCode は 2.x の公式名 `@opencode/cli`）。標準 prefix / root と実体・shim を照合します。 |
 | FFmpeg 一式 | Windows の `Gyan.FFmpeg`。ffmpeg / ffprobe / ffplay のどの行からもパッケージ操作は1回だけ。終了後は3行を各1回確認します。 |
-| Ollama | Windows の `Ollama.Ollama` の新規導入のみ。モデル保持を保証できないため再導入・削除は表示しません。 |
+| Ollama | Windows の `Ollama.Ollama`。新規導入と `winget upgrade` による上書き更新。公式 Inno 登録・標準配置・有効署名を確認し、更新時にアンインストールしません。削除は対象外です。 |
 | Chrome | Windows の `Google.Chrome` の新規導入のみ。プロファイル・拡張機能を保護するため再導入・削除は表示しません。 |
 | OBS | Windows の `OBSProject.OBSStudio`。標準配置と導入記録を確認できる場合のみ再導入・削除。設定・プロファイル・シーンを保持しますが、OBS 本体内の追加プラグインは再導入が必要になる場合があります。 |
 | Antigravity CLI | Windows の公式 `https://antigravity.google/cli/install.cmd`。標準の `%LOCALAPPDATA%\agy\bin\agy.exe` の Google 署名（製品情報がある版はその一致も）または一致する導入記録を照合します。 |
@@ -80,7 +80,9 @@ Grok Build の公式インストーラーは削除用のサブコマンドを持
 
 Antigravity の公式インストーラーは既存バイナリがあると何もしないため、再導入では所有確認済みの `agy.exe` だけを退避してから実行し、公式 SHA512 を確認します。失敗・中止時は旧バイナリを復元し、未確認の出力や復旧が必要な退避ファイルを推測で削除しません。公式の `--skip-path --skip-aliases` を指定し、`.gemini/antigravity-cli`・認証・OS 資格情報を保持します。フォルダ全体の削除、共有 staging の削除、PATH の一括編集はしません。レビュー済み installer の SHA256 が変わった場合は安全確認の更新まで停止します。公式の [導入オプション](https://www.antigravity.google/docs/cli/install/) を参照してください。
 
-操作前に対象・一式の範囲・影響・提供元の案内を確認します。npm の再導入は同じ固定パッケージへ `npm install --global` を1回実行して更新し、事前に削除しません。「削除」だけが `npm uninstall --global` を実行します。WinGet の再導入は従来どおり削除後に導入するため、失敗・中止すると本体が未導入になることがあります。WinGet の標準インストーラーが PATH 登録や OS の管理者承認を求める場合がありますが、利用規約への自動同意・権限回避・再起動・任意のコマンド入力は行いません。認証・利用者設定・履歴を削除するコマンドは実行しません。
+Ollama の「導入・更新」は、導入済みなら公式の `winget upgrade --id Ollama.Ollama --exact --source winget --scope user --disable-interactivity --silent --installer-type inno` を1回実行します。更新がなければ正常終了します。実行前に Ollama アプリ・サーバー・関連プロセスを終了してください。公式 Inno の登録、標準配置の本体・アプリ・アンインストーラー、有効な Ollama 署名と実体ハッシュを照合し、確認できない導入は操作しません。モデル・設定・履歴を削除せず、カスタム保存先 `OLLAMA_MODELS` も引き継ぎます。本体フォルダや更新用一時領域内のモデル保存先は安全のため自動更新しません。公式の [Windows インストーラー](https://github.com/ollama/ollama/blob/main/app/ollama.iss) と [WinGet 更新](https://learn.microsoft.com/en-us/windows/package-manager/winget/upgrade) を参照してください。
+
+操作前に対象・一式の範囲・影響・提供元の案内を確認します。npm の再導入は同じ固定パッケージへ `npm install --global` を1回実行して更新し、事前に削除しません。「削除」だけが `npm uninstall --global` を実行します。Ollama 以外の WinGet の再導入は従来どおり削除後に導入するため、失敗・中止すると本体が未導入になることがあります。WinGet の標準インストーラーが PATH 登録や OS の管理者承認を求める場合がありますが、利用規約への自動同意・権限回避・再起動・任意のコマンド入力は行いません。認証・利用者設定・履歴を削除するコマンドは実行しません。
 
 右パネルは共通の実行コンソールへ切り替わり、完了・失敗・中止後に「確認」ボタンと同じ固定 probe と結果反映を対象ごとに1回実行します。FFmpeg 一式では3行の結果を同じコンソールへ表示します。別項目・タブへ移った場合はその選択を維持し、新しい個別確認結果を古い実行結果で巻き戻しません。自動保存やモデル・認証試験は行いません。
 

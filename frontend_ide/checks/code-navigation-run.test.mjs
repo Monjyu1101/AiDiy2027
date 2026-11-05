@@ -152,6 +152,66 @@ test('Navigator Code: HTTP結果不明でも再送せず、受付後の実行期
   }
 });
 
+for (const status of ['failed', 'cancelled']) test(`Navigator Code: 確定した${status}後は手動オンで新しいIDを送れる`, async () => {
+  const f = fixture(); try {
+    const first = run(f), rejected = assert.rejects(first), oldId = f.calls[0].navigationRequestId;
+    result(f, 'accepted'); f.state({ 実行中: true });
+    f.packet({ type: 'navigationRunResult', requestId: oldId, status, settled: true, message: '実行終了' });
+    await rejected; assert.equal(f.data.navigationRunning.value, false);
+    assert.equal(f.calls.filter(p => p.type === 'cancel_run').length, 0, '終了済みの依頼をもう一度停止しない');
+    assert.equal(f.exposed.navigationReadiness('/project').ready, false, 'idle状態通知も待つ');
+    f.state({ 実行中: false }); await flush();
+    assert.equal(f.exposed.navigationReadiness('/project').ready, true);
+    assert.equal(f.calls.length, 1, '失敗から自動再送しない');
+    const second = run(f), newId = f.calls.at(-1).navigationRequestId;
+    assert.notEqual(newId, oldId);
+    result(f, 'accepted', oldId); result(f, 'failed', oldId);
+    assert.equal(f.data.navigationRunning.value, true, '旧IDの遅延通知で新しい実行を止めない');
+    result(f, 'accepted', newId); result(f, 'succeeded', newId); await second;
+  } finally { f.dispose(); }
+});
+
+test('Navigator Code: エラー途中通知後は結果不明・別IDで解除せず、同じIDの実終了で再開できる', async () => {
+  const f = fixture(); try {
+    f.setSend(async message => { f.calls.push(structuredClone(message)); return { ok: true, navigationPending: true }; });
+    const first = run(f), rejected = assert.rejects(first), id = f.calls[0].navigationRequestId;
+    result(f, 'accepted'); f.state({ 実行中: true });
+    f.packet({ メッセージ識別: 'error', メッセージ内容: 'CLI実行エラー' }); await rejected; await flush();
+    f.state({ 実行中: false }); await assert.rejects(run(f), /開き直して/);
+    f.packet({ type: 'navigationRunResult', requestId: 'other', status: 'failed', settled: true });
+    await assert.rejects(run(f), /開き直して/);
+    f.packet({ type: 'navigationRunResult', requestId: id, status: 'failed', settled: false });
+    await assert.rejects(run(f), /開き直して/);
+    f.packet({ type: 'navigationRunResult', requestId: id, status: 'failed', settled: true });
+    assert.equal(f.exposed.navigationReadiness('/project').ready, true);
+    assert.equal(f.calls.filter(p => p.type === 'input_text').length, 1);
+    const second = run(f), newId = f.calls.at(-1).navigationRequestId;
+    result(f, 'accepted', newId); result(f, 'succeeded', newId); await second;
+  } finally { f.dispose(); }
+});
+
+test('Navigator Code: 確定終了後の旧停止HTTP応答は再開した実行のロックを解除しない', async () => {
+  for (const lateFailure of [false, true]) {
+    const f = fixture(); try {
+      const cancellations = [];
+      f.setSend(message => { f.calls.push(structuredClone(message)); return message.type === 'cancel_run'
+        ? new Promise((resolve, reject) => cancellations.push({ resolve, reject })) : Promise.resolve(); });
+      const controller = new AbortController(), first = run(f, controller.signal), rejected = assert.rejects(first), oldId = f.calls[0].navigationRequestId;
+      controller.abort(); await rejected;
+      f.packet({ type: 'navigationRunResult', requestId: oldId, status: 'cancelled', settled: true });
+      const nextController = new AbortController(), second = run(f, nextController.signal), nextRejected = assert.rejects(second);
+      const newId = f.calls.at(-1).navigationRequestId;nextController.abort(); await nextRejected;
+      const message = f.data.error.value;
+      if (lateFailure) cancellations[0].reject(Error('旧停止の応答喪失'));
+      else cancellations[0].resolve({ ok: true, navigationPending: false });
+      await flush(); assert.equal(f.data.navigationCancelling.value, true); assert.equal(f.data.error.value, message);
+      f.packet({ type: 'navigationRunResult', requestId: newId, status: 'cancelled', settled: true });
+      cancellations[1].resolve({ ok: true, navigationPending: false }); await flush();
+      assert.equal(f.exposed.navigationReadiness('/project').ready, true);
+    } finally { f.dispose(); }
+  }
+});
+
 function nodeOf(node, predicate) {
   if (predicate(node)) return node;
   const children = Array.isArray(node?.children) ? node.children : node?.children?.default?.() || [];

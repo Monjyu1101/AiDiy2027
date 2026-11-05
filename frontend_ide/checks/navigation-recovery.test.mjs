@@ -8,13 +8,14 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
 import {ref,computed} from 'vue';
 import {localDateTimeInput} from '../src/components/ファイル閲覧/ファイル日時.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 function fixture({props={},draftActions=null,native=false}={}){
  const calls=[],pending=[],timers=new Map();let serial=0;
  const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,handoff,canHandoff,draftRequest})`,{
-  ref,computed,createNavigationPopupSizer,localDateTimeInput,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
+  ref,computed,createNavigationPopupSizer,createNavigationMessage,localDateTimeInput,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),
   fetch:(url,options)=>{calls.push(options.method);return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
  });

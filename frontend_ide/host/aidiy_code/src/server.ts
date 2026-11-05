@@ -99,11 +99,12 @@ export async function 単独起動(project: string, backend?: string, initialMod
   let navigationRun: NavigationRun | undefined;
   // 中止要求が送信要求より先に届いても、遅延した送信を実行しない。IDは再利用不可。
   const navigationRequests = new Set<string>();
-  const navigationResult = (status: 'accepted' | 'succeeded' | 'failed' | 'cancelled', message = '') => {
+  const navigationResult = (status: 'accepted' | 'succeeded' | 'failed' | 'cancelled', message = '', settled = false) => {
     const run = navigationRun;
     if (!run) return;
     if (status !== 'accepted') navigationRun = undefined;
-    broadcast({ type: 'navigationRunResult', requestId: run.id, status, message });
+    // 切断・終了要求だけを実終了と扱わず、画面が安全に明示再開できる時点を伝える。
+    broadcast({ type: 'navigationRunResult', requestId: run.id, status, message, settled });
   };
   // 自動接続ONでは再試行を継続し、未接続中とHermes実行中は単独実行の状態を画面へ返す。
   const オフライン使用 = () => state.実行モード === 'offline' || !state.接続済み || Boolean(offlineJob);
@@ -143,7 +144,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
       }
       if (!navigation.offline && requestId === navigation.id && packet.メッセージ識別 === 'output_end' && packet.実行中 === false) {
         navigationResult(navigation.cancelling ? 'cancelled' : (packet as Packet).navigationStatus === 'succeeded' && !navigation.failed && navigation.started && navigation.reply ? 'succeeded' : 'failed',
-          navigation.failed ? 'Codeの実行が失敗または停止しました。' : !navigation.reply ? 'Codeの回答を確認できません。' : '');
+          navigation.failed ? 'Codeの実行が失敗または停止しました。' : !navigation.reply ? 'Codeの回答を確認できません。' : '', true);
       }
     }
     if (['input_file', 'output_file'].includes(packet.メッセージ識別 || '')) {
@@ -206,7 +207,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
           if (closed) return;
           if (ownedNavigation && navigationRun === ownedNavigation) {
             navigationResult(ownedNavigation.cancelling ? 'cancelled' : !ownedNavigation.failed && ownedNavigation.reply && !result.停止理由 && result.終了コード === 0 ? 'succeeded' : 'failed',
-              result.停止理由 || (result.終了コード !== 0 ? `Hermes終了コード: ${result.終了コード}` : !ownedNavigation.reply ? 'Codeの回答を確認できません。' : ''));
+              result.停止理由 || (result.終了コード !== 0 ? `Hermes終了コード: ${result.終了コード}` : !ownedNavigation.reply ? 'Codeの回答を確認できません。' : ''), true);
           }
           if (result.セッションID) {
             state.HermesセッションID = result.セッションID;

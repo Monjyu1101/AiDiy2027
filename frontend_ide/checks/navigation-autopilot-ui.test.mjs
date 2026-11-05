@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
 import {ref,computed,toRaw} from 'vue';
 import {runNavigationAutopilot} from '../src/components/開発スペース/Navigation自動運転.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
@@ -16,7 +17,7 @@ const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 function fixture(handler,props={}){
  const calls=[],resizes=[],timers=new Map();let id=0,evaluations=0,state=makeResult(0),job=null;
- const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,createNavigationPopupSizer,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
+ const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,autopilotMessage,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,createNavigationPopupSizer,createNavigationMessage,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
   const method=options.method||'GET';calls.push({url,method});const custom=await handler?.(url,options);if(custom)return custom;
   if(url==='/api/connection')return reply({active:true,startedAt:1});
   if(url.startsWith('/api/navigation/code'))return reply({url:'/panels/code/navi-1/test/'});
@@ -68,6 +69,14 @@ test('Code toggle lives in title slots and embedded Code does not control the ow
  assert.match(full,/<template #window-tools><button[^>]+class="navigation-code-toggle"/);assert.match(full,/titleTools:.*navigation-code-toggle/);assert.doesNotMatch(full,/:disabled="autopilot" @click="toggleCode"/);assert.match(full,/<aside v-show="codeOpen"/);assert.match(full,/v-if="autopilot&&!codeOpen"[^>]*type="button" @click="stopAutopilot/);assert.doesNotMatch(full,/:base="codeBase"[^>]*:desktop=/);
 });
 
+test('Navigator右側はCode見出しと空のタイトル行を出さず、自動航行の停止操作を残す',()=>{
+ const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const aside=full.match(/<aside v-show="codeOpen"[\s\S]*?<\/aside>/)?.[0];
+ assert.ok(aside);assert.doesNotMatch(aside,/<strong>Code<\/strong>/);
+ assert.match(aside,/<header v-if="autopilot"><button type="button" @click="stopAutopilot\(\)">自動航行をオフ<\/button><\/header>/);
+ assert.match(aside,/<CodePanel[^>]+embedded hide-status-bar/);
+});
+
 test('Code orbit light is enabled only while autopilot is on and total is below100',()=>{
  const f=fixture();assert.equal(f.api.codeDriving.value,false);f.api.autopilot.value=true;assert.equal(f.api.codeDriving.value,true);f.api.result.value=makeResult(100);assert.equal(f.api.codeDriving.value,false);f.api.result.value=makeResult(50);assert.equal(f.api.codeDriving.value,true);f.api.stopAutopilot();assert.equal(f.api.codeDriving.value,false);
 });
@@ -94,4 +103,15 @@ test('starting cruise from a previously hidden Code reopens the existing session
  const f=fixture();let finish;f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:()=>new Promise(resolve=>finish=resolve)};
  f.api.toggleCode();await flush();f.api.toggleCode();await flush();assert.equal(f.api.codeOpen.value,false);const base=f.api.codeBase.value;
  const run=f.api.toggleAutopilot();assert.equal(f.api.codeOpen.value,true);await flush();assert.equal(f.api.codeBase.value,base);assert.equal(f.resizes.at(-1),true);assert.equal(f.calls.filter(x=>x.method==='POST'&&x.url.startsWith('/api/navigation/code')).length,1);f.api.stopAutopilot();finish();await run;
+});
+
+
+test('最下部通知の消去だけでは航行・Codeを止めず、同じクリックで生じた停止通知は保持する',async()=>{
+ const f=fixture();let signal;
+ f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:request=>{signal=request.signal;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('stopped')),{once:true}));}};
+ const run=f.api.toggleAutopilot();await flush();const base=f.api.codeBase.value;assert.ok(f.api.autopilotStatus.value);
+ f.api.autopilotMessage.dismiss({type:'click',pointerType:'touch'});await new Promise(resolve=>setTimeout(resolve,5));
+ assert.equal(f.api.autopilotStatus.value,'');assert.equal(f.api.autopilot.value,true);assert.equal(signal.aborted,false);assert.equal(f.api.codeBase.value,base);
+ f.api.autopilotMessage.show('実行中');f.api.autopilotMessage.dismiss({type:'click'});f.api.stopAutopilot();await run;await new Promise(resolve=>setTimeout(resolve,5));
+ assert.match(f.api.autopilotStatus.value,/停止を要求/);assert.equal(signal.aborted,true);
 });

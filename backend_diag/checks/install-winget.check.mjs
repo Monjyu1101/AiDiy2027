@@ -7,6 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {WINGET_PACKAGES,WINGET_INSPECTION_SCRIPT,inspectWinget,executeWinget} from '../導入管理/winget.mjs';
 const win=path.win32,SOURCE='Microsoft.Winget.Source_8wekyb3d8bbwe';
 const success={code:0,error:false,cancelled:false,timedOut:false,overflow:false};
@@ -50,7 +51,14 @@ function fixture(){
     if(group==='ffmpeg')for(const id of ['ffmpeg','ffprobe','ffplay']){resolved[id]=win.join(root,'ffmpeg-8.0-full_build','bin',`${id}.exe`);memory.file(resolved[id]);}
     if(group==='obs'){resolved.obs=win.join(root,'bin','64bit','obs64.exe');memory.file(resolved.obs);memory.file(win.join(root,'uninstall.exe'));row.quietUninstallString=row.uninstallString+' /S';}
     if(group==='code'){resolved.code=win.join(root,'bin','code.cmd');memory.file(resolved.code);memory.file(win.join(root,'Code.exe'));memory.file(win.join(root,'unins000.exe'));row.quietUninstallString=row.uninstallString+' /SILENT';}
-    if(group==='ollama'){resolved.ollama=win.join(root,'ollama.exe');memory.file(resolved.ollama);}
+    if(group==='ollama'){
+      Object.assign(row,{key:'{44E83376-CE68-45EB-8FC1-393500EB558C}_is1',publisher:'Ollama',uninstallString:`"${win.join(root,'unins000.exe')}"`,quietUninstallString:`"${win.join(root,'unins000.exe')}" /SILENT`});
+      resolved.ollama=win.join(root,'ollama.exe');
+      metadata.ollamaSignatures=['ollama.exe','ollama app.exe','unins000.exe'].map(name=>{
+        const filename=win.join(root,name);memory.file(filename);
+        return {path:filename,status:'Valid',subject:'CN=Ollama Inc., O=Ollama Inc., C=CA',sha256:createHash('sha256').update('fixture executable').digest('hex')};
+      });
+    }
     if(registered){metadata.registrations.push(row);listed.add(pkg);}return {root,row};
   };
   f.uninstall=group=>{
@@ -63,7 +71,7 @@ function fixture(){
   return f;
 }
 const cap=(snapshot,id)=>snapshot.items.find(item=>item.id===id);
-const changes=f=>f.calls.filter(command=>['install','uninstall'].includes(command.args[0]));
+const changes=f=>f.calls.filter(command=>['install','uninstall','upgrade'].includes(command.args[0]));
 async function ownNative(f,group){
   f.onChange=async command=>{assert.equal(command.args[0],'install');f.install(group);return success;};
   const state=await f.inspect();await executeWinget({id:group},'導入',state.context,{platform:'win32',run:f.run});f.onChange=null;
@@ -125,10 +133,12 @@ test('実行中または確認不可のプロセスでは破壊操作を隠す',
   const f=fixture();f.install('ffmpeg');f.metadata.processKnown=false;assert.deepEqual(cap(await f.inspect(),'ffmpeg').操作,[]);assert.deepEqual(cap(await f.inspect(),'obs').操作,[]);
 });
 
-test('Ollamaは新規導入だけ、モデルの再導入・削除は許可しない',async()=>{
-  const f=fixture();assert.deepEqual(cap(await f.inspect(),'ollama').操作,['導入']);f.install('ollama');assert.deepEqual(cap(await f.inspect(),'ollama').操作,[]);
-  const state=await f.inspect();for(const action of ['再導入','削除'])await assert.rejects(()=>executeWinget({id:'ollama'},action,state.context,{platform:'win32',run:f.run}),{status:409});assert.equal(changes(f).length,0);
+test('Ollamaは署名付き標準Inno導入の更新だけを許可し、削除しない',async()=>{
+  const f=fixture();assert.deepEqual(cap(await f.inspect(),'ollama').操作,['導入']);f.install('ollama');const state=await f.inspect();
+  assert.deepEqual(cap(state,'ollama').操作,['再導入']);assert.match(cap(state,'ollama').再導入説明,/アンインストール.*行いません/);assert.doesNotMatch(cap(state,'ollama').確認説明,/削除後/);
+  await assert.rejects(()=>executeWinget({id:'ollama'},'削除',state.context,{platform:'win32',run:f.run}),{status:409});assert.equal(changes(f).length,0);
 });
+
 
 test('残存導入ディレクトリ・壊れたreceipt・junction parentで上書き導入しない',async()=>{
   for(const setup of [f=>f.mkdir(win.join(env.PROGRAMFILES,'obs-studio')),f=>f.file(win.join(env.LOCALAPPDATA,'AiDiy','diag-install-receipts','obs.json'),'{broken'),f=>{f.nodes.get(norm(env.PROGRAMFILES)).link='C:\\other';}]){const f=fixture();setup(f);assert.deepEqual(cap(await f.inspect(),'obs').操作,[]);}
@@ -218,4 +228,65 @@ test('preserveで残った追加ファイル/ディレクトリは消さず再�
   f.onChange=async command=>{assert.equal(command.args[0],'uninstall');f.uninstall('ffmpeg');f.file(extra,'keep');return success;};
   await assert.rejects(async()=>executeWinget({id:'ffmpeg'},'再導入',(await f.inspect()).context,{platform:'win32',run:f.run}),/変わりました/);
   assert.deepEqual(changes(f).map(command=>command.args[0]),['uninstall']);assert.equal(await f.io.readFile(extra,'utf8'),'keep');
+});
+
+
+test('Ollama更新は固定upgrade一回だけ、モデル・設定・履歴を保持し自動起動を許容',async()=>{
+  for(const autoStart of [false,true]){
+    const f=fixture();f.install('ollama');
+    const kept=['C:\\Users\\fixture\\.ollama\\models\\blobs\\sha256-data','C:\\Users\\fixture\\.ollama\\history',win.join(env.LOCALAPPDATA,'Ollama','config.json'),'D:\\custom-models\\weights'];
+    kept.forEach(file=>f.file(file,'keep'));const before=[...f.nodes.entries()].map(([key,value])=>[key,value.text?.toString()]);
+    f.onChange=async command=>{assert.equal(command.args[0],'upgrade');f.metadata.registrations[0].version='1.2.4';if(autoStart)f.metadata.processes=['ollama.exe','ollama app.exe'];return success;};
+    await executeWinget({id:'ollama'},'再導入',(await f.inspect()).context,{platform:'win32',run:f.run});
+    assert.deepEqual(changes(f).map(c=>c.args),[['upgrade','--id','Ollama.Ollama','--exact','--source','winget','--scope','user','--disable-interactivity','--silent','--installer-type','inno']]);
+    assert.deepEqual([...f.nodes.entries()].map(([key,value])=>[key,value.text?.toString()]),before);
+    for(const file of kept)assert.equal(await f.io.readFile(file,'utf8'),'keep');
+    for(const command of f.calls)assert.ok(command.args.every(arg=>!/^--(?:accept|force|purge|override|custom|ignore|allow-reboot|uninstall-previous|all|include-unknown)/.test(arg)));
+  }
+});
+
+test('Ollama適用可能な更新なしだけを成功に正規化し、失敗・中止を隠さない',async()=>{
+  for(const code of [0x8a15002b,0x8a15002b|0]){
+    const f=fixture();f.install('ollama');const output=[];f.onChange=async()=>({...success,code});
+    const result=await executeWinget({id:'ollama'},'再導入',(await f.inspect()).context,{platform:'win32',run:f.run,onData:text=>output.push(text)});
+    assert.equal(result.code,0);assert.match(output.join(''),/更新はありません/);assert.equal(changes(f).length,1);
+  }
+  for(const bad of [{code:7},{error:true},{timedOut:true},{cancelled:true},{overflow:true},{code:0x8a15002b,error:true},{code:0x8a15002b,cancelled:true},{code:0x8a15002b,timedOut:true},{code:0x8a15002b,overflow:true}]){
+    const f=fixture();f.install('ollama');f.onChange=async()=>({...success,...bad});
+    await assert.rejects(async()=>executeWinget({id:'ollama'},'再導入',(await f.inspect()).context,{platform:'win32',run:f.run}),{status:409});assert.deepEqual(changes(f).map(c=>c.args[0]),['upgrade']);
+  }
+});
+
+test('Ollamaの登録・署名・実体・別PATH・processが不明/変更なら更新しない',async()=>{
+  const mutations=[
+    f=>f.metadata.registrations[0].publisher='Other',f=>f.metadata.registrations[0].key='Ollama',f=>f.metadata.registrations[0].sourceIdentifier='other',f=>f.metadata.registrations[0].scope='machine',
+    f=>f.metadata.registrations.push({...f.metadata.registrations[0]}),f=>f.metadata.ollamaSignatures=[],f=>f.metadata.ollamaSignatures[0].status='NotSigned',f=>f.metadata.ollamaSignatures[0].subject='O=Not Ollama Inc.',f=>f.metadata.ollamaSignatures[0].sha256='bad',
+    f=>f.file(f.resolved.ollama,'replaced'),f=>{f.nodes.get(norm(f.resolved.ollama)).nlink=2;},f=>{f.resolved.ollama='C:\\foreign\\ollama.exe';f.file(f.resolved.ollama);},
+    f=>f.metadata.processKnown=false,...['ollama.exe','ollama app.exe','llama-server.exe','ollama_llama_server.exe'].map(name=>f=>f.metadata.processes=[name])
+  ];
+  for(const mutate of mutations){
+    const f=fixture();f.install('ollama');const state=await f.inspect();mutate(f);
+    assert.deepEqual(cap(await f.inspect(),'ollama').操作,[]);
+    await assert.rejects(()=>executeWinget({id:'ollama'},'再導入',state.context,{platform:'win32',run:f.run}),{status:409});assert.equal(changes(f).length,0);
+  }
+  const f=fixture();f.listed.add('Ollama.Ollama');assert.deepEqual(cap(await f.inspect(),'ollama').操作,[]);
+});
+
+test('Ollamaの直前の正規バージョン変更と更新後の証拠消失も検出する',async()=>{
+  const f=fixture();f.install('ollama');const state=await f.inspect();f.metadata.registrations[0].version='1.2.4';
+  await assert.rejects(()=>executeWinget({id:'ollama'},'再導入',state.context,{platform:'win32',run:f.run}),/変わりました/);assert.equal(changes(f).length,0);
+  for(const code of [0,0x8a15002b]){
+    const bad=fixture();bad.install('ollama');bad.onChange=async()=>{bad.metadata.ollamaSignatures=[];return {...success,code};};
+    await assert.rejects(async()=>executeWinget({id:'ollama'},'再導入',(await bad.inspect()).context,{platform:'win32',run:bad.run}),/更新後/);assert.equal(changes(bad).length,1);
+  }
+});
+
+test('Ollama本体内のカスタムモデル保存先は上書き更新しない',async()=>{
+  const f=fixture(),{root}=f.install('ollama');
+  for(const models of [root,win.join(root,'lib','ollama','models'),'relative-models'])assert.deepEqual(cap(await inspectWinget({...f.options,env:{...env,OLLAMA_MODELS:models}}),'ollama').操作,[]);
+  assert.deepEqual(cap(await inspectWinget({...f.options,env:{...env,OLLAMA_MODELS:'D:\\models'}}),'ollama').操作,['再導入']);
+  for(const models of ['C:\\Temp\\ollama-models',win.join(env.LOCALAPPDATA,'Ollama','updates'),win.join(env.LOCALAPPDATA,'Ollama','updates','models'),win.join(env.LOCALAPPDATA,'OLLAMA','UPDATES','models')])assert.deepEqual(cap(await inspectWinget({...f.options,env:{...env,TEMP:'C:\\Temp',OLLAMA_MODELS:models}}),'ollama').操作,[]);
+  for(const overrides of [{TMP:'D:\\Temp',TEMP:'C:\\Temp',OLLAMA_MODELS:'D:\\Temp\\ollama-models'},{USERPROFILE:'C:\\Users\\fixture',OLLAMA_MODELS:'C:\\Users\\fixture\\ollama-models'},{OLLAMA_MODELS:'C:\\Windows\\ollama-models'}])assert.deepEqual(cap(await inspectWinget({...f.options,env:{...env,...overrides}}),'ollama').操作,[]);
+  f.mkdir('D:\\models');f.nodes.get(norm('D:\\models')).link=root;
+  assert.deepEqual(cap(await inspectWinget({...f.options,env:{...env,OLLAMA_MODELS:'D:\\models'}}),'ollama').操作,[]);
 });

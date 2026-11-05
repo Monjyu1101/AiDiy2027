@@ -180,9 +180,9 @@ function finishNavigation(failure, cancel = false) {
       void transport.send({ type: 'cancel_run', navigationRequestId: run.id,
         メッセージ識別: 'cancel_run', メッセージ内容: '強制停止！' }).then(result => {
           // 元のIDの中止受付を確認してから手動操作を戻す。実行中なら通常のbusyガードを維持する。
-          if (!disposed && result?.navigationPending !== true) navigationCancelling.value = false;
+          if (!disposed && navigationCancellationId === run.id && result?.navigationPending !== true) navigationCancelling.value = false;
         }).catch(() => {
-          if (!disposed) error.value = 'Codeの停止受付を確認できません。実行状態を確認してから画面を開き直してください。';
+          if (!disposed && navigationCancellationId === run.id) error.value = 'Codeの停止受付を確認できません。実行状態を確認してから画面を開き直してください。';
         });
     }
     error.value = failure.message;
@@ -217,8 +217,11 @@ function runNavigationPrompt({ text, projectPath, signal } = {}) {
 function receiveNavigation(packet) {
   const run = navigationRun;
   if (!run) {
-    // terminalは実終了か接続破棄の後だけ届く。HTTP応答を失っても手動操作へ戻せるが、自動再送は禁止のまま。
-    if (packet.type === 'navigationRunResult' && packet.requestId === navigationCancellationId && ['succeeded', 'failed', 'cancelled'].includes(packet.status)) navigationCancelling.value = false;
+    // 同じ依頼の実終了が確認できた場合だけ、次の明示開始を許可する。切断による結果不明は解除しない。
+    if (packet.type === 'navigationRunResult' && packet.requestId === navigationCancellationId && ['succeeded', 'failed', 'cancelled'].includes(packet.status)) {
+      navigationCancelling.value = false;
+      if (packet.settled === true) { navigationBlocked = false; navigationCancellationId = undefined; }
+    }
     return;
   }
   if (packet.type === 'navigationRunResult') {
@@ -231,7 +234,7 @@ function receiveNavigation(packet) {
       if (run.accepted) finishNavigation();
       else finishNavigation(new Error('Codeの受付確認なしで完了通知を受け取りました。'), true);
     } else if (['failed', 'cancelled'].includes(packet.status)) {
-      finishNavigation(new Error(packet.message || 'Codeの実行が失敗または停止しました。'), true);
+      finishNavigation(new Error(packet.message || 'Codeの実行が失敗または停止しました。'), packet.settled !== true);
     }
   } else if (packet.type === 'state') {
     const scope = navigationScope(packet);

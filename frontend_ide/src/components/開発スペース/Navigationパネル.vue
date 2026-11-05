@@ -9,6 +9,7 @@ import CodePanel from '../コード/コードパネル.vue';
 import {runNavigationAutopilot,navigationWait} from './Navigation自動運転.js';
 import {DEFAULT_NAVIGATION_GOAL} from './Navigation既定値.js';
 import {createNavigationPopupSizer} from './Navigation窓サイズ.js';
+import {createNavigationMessage} from './Navigationメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../ターミナル/開始表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
@@ -80,7 +81,7 @@ async function open(){
 onMounted(open);
 async function pin(){
  await nextTick();
- windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navigator '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:()=>h('button',{type:'button',class:'navigation-code-toggle',role:'switch','aria-label':'Codeパネルを表示','aria-checked':codeOpen.value,onClick:toggleCode},'Code '+(codeOpen.value?'オン':'オフ')),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Navigatorを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
+ windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navigator '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:()=>h('button',{type:'button',class:'navigation-code-toggle',role:'switch','aria-label':'Codeパネルを表示','aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},'Code '+(codeOpen.value?'オン':'オフ')),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Navigatorを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
  return windowPanel.pin();
 }
 function close(){stopAutopilot('Navigatorを閉じたため停止しました。');void releaseCode();draftRequest.value=null;if(detached.value)windowPanel.dismiss();else{visible.value=false;emit('closed');}clearTimeout(timer);}
@@ -131,6 +132,7 @@ watch(recommendedPrompt,()=>{copied.value=false;copyError.value='';});
 
 // 自動航行の許可はメモリ内だけに保持し、履歴・再表示から復元しない。
 const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false),autopilot=ref(false),autopilotStatus=ref(''),autopilotPhase=ref('');
+const autopilotMessage=createNavigationMessage(text=>autopilotStatus.value=text);
 let codeSession,codePromise,autopilotController,visibilityTimer,codeGeneration=0;
 let codeQueue=Promise.resolve(),codeReleaseUncertain=false;
 let codeResizeQueue=Promise.resolve();
@@ -194,17 +196,17 @@ async function releaseCode(){
   if(session){const response=await fetch(codeEndpoint(session),{method:'DELETE',keepalive:true,signal:AbortSignal.timeout(15000)});if(!response.ok)throw Error('Codeの終了を確認できません。');}
  });
  // 終了の結果不明時は次の作成を許可しない。新規openにも同じエラーを渡す。
- codeQueue=operation;try{await operation;}catch{codeReleaseUncertain=true;autopilotStatus.value='Codeを閉じた結果を確認できません。Navigatorを開き直してください。';}
+ codeQueue=operation;try{await operation;}catch{codeReleaseUncertain=true;autopilotMessage.show('Codeを閉じた結果を確認できません。Navigatorを開き直してください。');}
 }
 function toggleCode(){
  // 表示だけを切り替える。実行・会話・下書きはNavigatorを閉じるまで保持する。
  codeOpen.value=!codeOpen.value;
- if(codeOpen.value)void ensureCode().catch(e=>{autopilotStatus.value=e.message;});
- else void resizeCode(false).catch(e=>{autopilotStatus.value=e.message;});
+ if(codeOpen.value)void ensureCode().catch(e=>{autopilotMessage.show(e.message);});
+ else void resizeCode(false).catch(e=>{autopilotMessage.show(e.message);});
 }
 function stopAutopilot(reason='自動航行をオフにしました。実行中のCodeには停止を要求しました。'){
  if(!autopilot.value)return;
- autopilot.value=false;autopilotStatus.value=reason;autopilotController?.abort();
+ autopilot.value=false;autopilotMessage.show(reason);autopilotController?.abort();
 }
 function shown(){
  const element=panel.value,doc=element?.ownerDocument;
@@ -247,7 +249,7 @@ async function toggleAutopilot(){
  const hidden=()=>{if(!shown())stopAutopilot('Navigatorが非表示になったため停止しました。再開にはオンにしてください。');};
  const leaving=()=>{stopAutopilot('Navigatorを離れたため停止しました。');syncCruiseTitle();if(codeSession)void fetch(codeEndpoint(codeSession),{method:'DELETE',keepalive:true}).catch(()=>{});};
  doc?.addEventListener?.('visibilitychange',hidden);owner?.addEventListener?.('pagehide',leaving);
- autopilotStatus.value='専用Codeパネルを準備しています…';autopilotPhase.value='opening';
+ autopilotMessage.show('専用Codeパネルを準備しています…');autopilotPhase.value='opening';
  try{
   await ensureCode();
   const deadline=Date.now()+30000;
@@ -256,26 +258,26 @@ async function toggleAutopilot(){
    if(readiness?.ready)break;
    if(!current()||controller.signal.aborted)throw Error('自動航行を停止しました。');
    if(readiness?.fatal||Date.now()>deadline)throw Error(readiness?.reason||'Codeが実行可能になりませんでした。接続・モデル・信頼状態を確認してください。');
-   autopilotStatus.value=readiness?.reason||'専用Codeパネルの状態通知を待っています…';
+   autopilotMessage.show(readiness?.reason||'専用Codeパネルの状態通知を待っています…');
    await navigationWait(200,controller.signal);
   }
   const message=await runNavigationAutopilot({initial,signal:controller.signal,isCurrent:current,
    runCode:(text,signal)=>codePanel.value.runNavigationPrompt({text,projectPath,signal}),evaluate:evaluateForAutopilot,
-   report:({phase,text})=>{autopilotPhase.value=phase;autopilotStatus.value=text;}});
-  if(autopilot.value)autopilotStatus.value=message;
- }catch(e){if(autopilot.value)autopilotStatus.value=e.message||'自動航行を停止しました。';}
+   report:({phase,text})=>{autopilotPhase.value=phase;autopilotMessage.show(text);}});
+  if(autopilot.value)autopilotMessage.show(message);
+ }catch(e){if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
  finally{doc?.removeEventListener?.('visibilitychange',hidden);owner?.removeEventListener?.('pagehide',leaving);autopilot.value=false;autopilotController=null;autopilotPhase.value='';}
 }
 watch(()=>props.project?.path,()=>{stopAutopilot('プロジェクトが変わったため停止しました。');void releaseCode();codeOpen.value=false;});
 onMounted(()=>{visibilityTimer=setInterval(()=>{if(autopilot.value&&!shown())stopAutopilot('Navigatorが非表示になったため停止しました。再開にはオンにしてください。');},250);});
-onBeforeUnmount(()=>{stopAutopilot('Navigatorを閉じたため停止しました。');clearInterval(visibilityTimer);void releaseCode();});
+onBeforeUnmount(()=>{stopAutopilot('Navigatorを閉じたため停止しました。');autopilotMessage.dispose();clearInterval(visibilityTimer);void releaseCode();});
 
 watch(()=>props.startedAt,()=>{stopAutopilot('利用セッションが変わったため停止しました。');void releaseCode();codeOpen.value=false;version++;request?.abort();close();windowPanel?.close();windowPanel=null;draftInitialized=false;draftEdited=false;pendingGoal=null;failureDialog.value=null;notifiedFailureId=null;goal.value=DEFAULT_NAVIGATION_GOAL;result.value=null;job.value=null;error.value='';submitting.value=false;modelOpen.value=false;selection.value={provider:'aidiy_hermes',model:'same'};});
 onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(props.instance),{method:'DELETE'}).catch(()=>{});disposed=true;version++;request?.abort();clearTimeout(timer);windowPanel?.close();});
 
 </script>
 <template>
- <section ref="panel" v-show="visible" class="navigation-panel" :class="{detached,standalone,'has-code':codeOpen}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navigator">
+ <section ref="panel" v-show="visible" class="navigation-panel" :class="{detached,standalone,'has-code':codeOpen}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navigator" @click.capture="autopilotMessage.dismiss" @keydown.capture="autopilotMessage.dismiss" @wheel.capture.passive="autopilotMessage.dismiss" @touchmove.capture.passive="autopilotMessage.dismiss">
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="draftActions.loadTargets" :insert-draft="draftActions.insertDraft" :launch-target="standalone?undefined:draftActions.launchTarget" :empty-hint="standalone?'同じプロジェクトで aidiy_code または aidiy_live を起動してください。':undefined" @close="draftRequest=null" />
   <StatusBar v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #window-tools><button type="button" class="navigation-code-toggle" role="switch" aria-label="Codeパネルを表示" :aria-checked="codeOpen" @click="toggleCode">Code {{codeOpen?'オン':'オフ'}}</button></template><template v-if="!native" #connection-tools><button type="button" class="navigation-code-toggle" role="switch" aria-label="Codeパネルを表示" :aria-checked="codeOpen" @click="toggleCode">Code {{codeOpen?'オン':'オフ'}}</button></template></StatusBar>
   <header class="navigation-local-header" v-else-if="!detached||!native"><span class="navigation-emblem" aria-hidden="true">◇</span><strong>{{title}}</strong><span class="navigation-header-space"></span><button type="button" class="navigation-code-toggle" role="switch" aria-label="Codeパネルを表示" :aria-checked="codeOpen" @click="toggleCode">Code {{codeOpen?'オン':'オフ'}}</button><button v-if="!detached" aria-label="Navigatorを別窓にピン留め" title="別窓にピン留め" @click="pin">📌</button><button aria-label="Navigatorを閉じる" @click="close">×</button></header>
@@ -312,8 +314,8 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
     </section>
     <section v-if="result&&!history" v-show="!routing" class="navigation-next" aria-label="プロンプト(案)"><div class="navigation-prompt-actions"><h2>プロンプト(案)</h2><button v-if="nextItem" class="navigation-handoff" :disabled="!canHandoff" :title="canHandoff?'Code / Liveの入力欄へ追加します。送信はしません。':'デスクトップ版、またはIDE内のNavigatorで利用できます。'" @click="handoff">CODE/LIVEへ</button><button v-if="nextItem" :disabled="copying" @click="copy">{{copied?'コピーしました':'コピー'}}</button><button type="button" class="navigation-autopilot-toggle" role="switch" title="Navi Cruise" aria-label="自動航行（Navi Cruise）" :aria-checked="autopilot" :disabled="!autopilot&&(!canAutopilot||!!autopilotController)" @click="toggleAutopilot">自動航行 {{autopilot?'オン':'オフ'}}</button></div><p v-if="copyError" class="navigation-copy-error" role="alert">{{copyError}}</p><p class="navigation-prompt"><span v-if="nextItem">{{recommendedPrompt}}</span><span v-else>{{result.items.length?'全項目が100%です。おすすめの追加作業はありません。':'作業項目がないため、おすすめプロンプトはありません。'}}</span></p></section>
 
-  <p v-if="autopilotStatus" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}<button v-if="autopilot&&!codeOpen" type="button" @click="stopAutopilot()">自動航行をオフ</button></p>
-  <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><header><strong>Code</strong><button v-if="autopilot" type="button" @click="stopAutopilot()">自動航行をオフ</button></header><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
+  <p v-if="autopilotStatus||(autopilot&&!codeOpen)" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}<button v-if="autopilot&&!codeOpen" type="button" @click="stopAutopilot()">自動航行をオフ</button></p>
+  <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><header v-if="autopilot"><button type="button" @click="stopAutopilot()">自動航行をオフ</button></header><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
   <ModalDialog v-if="failureDialog!==null" label="ナビの実行に失敗しました" @close="failureDialog=null">
    <h3>ナビの実行に失敗しました</h3>
    <p>別のエージェントをお試しください。</p>
@@ -399,7 +401,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-panel.has-code>*{grid-column:1;min-width:0}.has-code>.navigation-local-header,.has-code>.panel-brand{grid-column:1/-1;grid-row:1}.has-code>.connection-bar{grid-column:1/-1;grid-row:1;align-self:end}.has-code>.navigation-project{grid-row:2}.has-code>.navigation-goal-form{grid-row:3}.has-code>.navigation-display,.has-code>.navigation-history{grid-row:4}.has-code>.navigation-overall{grid-row:5;max-height:150px}.has-code>.navigation-next{grid-row:6;max-height:180px}.has-code>.navigation-autopilot-status{grid-row:7}
 .navigation-panel.standalone.has-code,.navigation-window .navigation-panel.has-code{width:100%}
 .navigation-code{grid-column:2!important;grid-row:2/8;width:auto;box-sizing:border-box;border-left:1px solid var(--aidiy-titlebar-background,#395069);display:flex;flex-direction:column;min-width:0;background:#000;overflow:hidden}
-.navigation-code>header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--aidiy-titlebar-background,#30343a)}
+.navigation-code>header{display:flex;align-items:center;justify-content:flex-end;padding:6px 10px;background:var(--aidiy-titlebar-background,#30343a)}
 .navigation-code .code-project-notice{flex:none;margin:0;padding:5px 8px;line-height:1.5;color:#b3c5d8;font-size:10px}.navigation-code>.code-component{flex:1;min-height:0;min-width:0}
 .navigation-autopilot-status{flex:none;margin:0;padding:6px 12px;color:#b9e8df;font-size:11px;overflow-wrap:anywhere}
 .navigation-autopilot-toggle[aria-checked="true"]{border-color:#7de2cf;background:#144d42;color:#fff}

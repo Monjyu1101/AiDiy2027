@@ -27,6 +27,7 @@
 .install-manage{grid-area:manage;display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px;padding:0 10px 10px}
 .install-manage button{padding:3px 7px;font-size:11px;white-space:nowrap}
 .install-manage .install-delete{border-color:#925064;color:#ffbdc8}
+.install-unavailable{flex-basis:100%;font-size:11px;line-height:1.5;color:#c1cbd5;overflow-wrap:anywhere}
 .install-check{grid-area:check;min-width:0}
 .install-progress{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .install-progress button,.install-detail-tabs button,.install-console-heading button{padding:4px 10px;font-size:12px}

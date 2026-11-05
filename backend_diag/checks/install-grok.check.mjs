@@ -35,6 +35,7 @@ test('Antigravity は製品情報が空でも有効な Google 署名なら公式
 
 test('Grok は Windows 以外・未対応操作では実行しない',async()=>{
   const state=await inspectGrok({id:'grok'},{platform:'linux',env:{},run:()=>assert.fail('実行しない')});
+  assert.match(state.item.再導入説明,/旧ファイルを退避.*更新・再導入/);assert.match(state.item.再導入説明,/失敗・中止時.*復元/);assert.doesNotMatch(state.item.再導入説明,/削除してから/);
   assert.deepEqual(state.item.操作,[]);assert.match(state.item.理由,/Windows のみ/);
   for(const [entry,action] of [[{id:'grok'},'更新'],[{id:'agy'},'導入']])await assert.rejects(()=>executeGrok(entry,action,{},{platform:'win32',run:()=>assert.fail('実行しない')}),{status:400});
 });

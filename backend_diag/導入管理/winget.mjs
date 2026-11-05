@@ -23,13 +23,13 @@ const same=(a,b)=>Boolean(a&&b)&&normal(a)===normal(b);
 const absolute=value=>typeof value==='string'&&/^[a-z]:[\\/]/i.test(value)&&!/[\x00-\x1f<>|?*]/.test(value)&&!value.slice(2).includes(':');
 const join=(root,...parts)=>absolute(root)?win.join(root,...parts):null;
 const groups=Object.freeze({ffmpeg:['ffmpeg','ffprobe','ffplay'],ollama:['ollama'],obs:['obs'],chrome:['chrome']});
-// 利用者データ（モデル・ブラウザープロファイル）を抱えるため、未導入時の新規導入だけを行う。
-const INSTALL_ONLY=new Set(['ollama','chrome']);
+// Chrome は新規のみ。Ollama は通常の Inno 導入を削除せず上書き更新する。
+const INSTALL_ONLY=new Set(['chrome']);
 const groupFor=id=>['ffmpeg','ffprobe','ffplay'].includes(id)?'ffmpeg':id;
-const processNames=Object.freeze({ffmpeg:['ffmpeg.exe','ffprobe.exe','ffplay.exe'],ollama:['ollama.exe','ollama app.exe'],obs:['obs64.exe','obs32.exe','obs-browser-page.exe'],chrome:['chrome.exe']});
-const descriptions={ffmpeg:'FFmpeg 一式（ffmpeg / ffprobe / ffplay）をまとめて操作します。',ollama:'モデル保持を保証できないため、Ollama は新規導入だけに対応します。',obs:'OBS 本体だけを操作し、設定・プロファイル・シーン・録画は削除しません。アプリ内に追加したプラグインは再導入が必要になる場合があります。',chrome:'Google Chrome の新規導入だけに対応します。プロファイル・拡張機能・同期データを守るため、再導入・削除は自動実行しません。'};
+const processNames=Object.freeze({ffmpeg:['ffmpeg.exe','ffprobe.exe','ffplay.exe'],ollama:['ollama.exe','ollama app.exe','llama-server.exe','ollama_llama_server.exe'],obs:['obs64.exe','obs32.exe','obs-browser-page.exe'],chrome:['chrome.exe']});
+const descriptions={ffmpeg:'FFmpeg 一式（ffmpeg / ffprobe / ffplay）をまとめて操作します。',ollama:'Ollama は新規導入・上書き更新に対応します。モデル・設定・履歴を削除するアンインストールは行いません。',obs:'OBS 本体だけを操作し、設定・プロファイル・シーン・録画は削除しません。アプリ内に追加したプラグインは再導入が必要になる場合があります。',chrome:'Google Chrome の新規導入だけに対応します。プロファイル・拡張機能・同期データを守るため、再導入・削除は自動実行しません。'};
 const terms={ffmpeg:'https://ffmpeg.org/legal.html',ollama:'https://github.com/ollama/ollama/blob/main/LICENSE',obs:'https://github.com/obsproject/obs-studio/blob/master/COPYING',chrome:'https://www.google.com/chrome/terms/'};
-const baseFor=id=>({id,パッケージ:packageFor(id),説明:descriptions[groupFor(id)],関連項目:groups[groupFor(id)],規約URL:terms[groupFor(id)],確認説明:'公式の winget 配布元を使用します。導入先・PATH が標準インストーラーにより変更され、管理者の承認画面が出る場合があります。利用規約の追加承諾や昇格が必要な場合は自動回避せず停止します。再導入は削除後に導入するため、途中で失敗すると本体が未導入になります。'});
+const baseFor=id=>({id,パッケージ:packageFor(id),説明:descriptions[groupFor(id)],関連項目:groups[groupFor(id)],規約URL:terms[groupFor(id)],...(id==='ollama'?{再導入説明:'winget upgrade で Ollama 本体を上書き更新します。事前のアンインストールやモデル・設定・履歴の削除は行いません。更新がなければ変更しません。'}:{}),確認説明:'公式の winget 配布元を使用します。導入先・PATH が標準インストーラーにより変更され、管理者の承認画面が出る場合があります。利用規約の追加承諾や昇格が必要な場合は自動回避せず停止します。'+(id==='ollama'?'Ollama は削除せず上書き更新します。':'再導入は削除後に導入するため、途中で失敗すると本体が未導入になります。')});
 
 // 固定の読み取りだけ。入力値の連結、コマンドラインの取得、ExecutionPolicy 変更はしない。
 export const WINGET_INSPECTION_SCRIPT=String.raw`
@@ -57,9 +57,19 @@ foreach ($spec in $specs) {
   } catch { $registryKnown = $false } finally { if ($null -ne $root) { $root.Dispose() }; if ($null -ne $base) { $base.Dispose() } }
 }
 try {
-  $names = @(Get-CimInstance Win32_Process -Filter "Name='ffmpeg.exe' OR Name='ffprobe.exe' OR Name='ffplay.exe' OR Name='ollama.exe' OR Name='ollama app.exe' OR Name='obs64.exe' OR Name='obs32.exe' OR Name='obs-browser-page.exe' OR Name='chrome.exe'" | ForEach-Object { [string]$_.Name })
+  $names = @(Get-CimInstance Win32_Process -Filter "Name='ffmpeg.exe' OR Name='ffprobe.exe' OR Name='ffplay.exe' OR Name='ollama.exe' OR Name='ollama app.exe' OR Name='llama-server.exe' OR Name='ollama_llama_server.exe' OR Name='obs64.exe' OR Name='obs32.exe' OR Name='obs-browser-page.exe' OR Name='chrome.exe'" | ForEach-Object { [string]$_.Name })
 } catch { $processKnown = $false }
-[pscustomobject]@{schema=1;registryKnown=$registryKnown;processKnown=$processKnown;registrations=@($rows);processes=@($names)} | ConvertTo-Json -Depth 5 -Compress
+# 公式署名者名は ollama/scripts/install.ps1 の検証条件と同じ。実行はしない。
+$ollamaSignatures = @()
+foreach ($filename in @('ollama.exe','ollama app.exe','unins000.exe')) {
+  try {
+    $file = Join-Path $env:LOCALAPPDATA ('Programs\Ollama\' + $filename)
+    $signature = Get-AuthenticodeSignature -LiteralPath $file
+    $digest = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+    $ollamaSignatures += [pscustomobject]@{path=$file;status=[string]$signature.Status;subject=[string]$signature.SignerCertificate.Subject;sha256=$digest}
+  } catch {}
+}
+[pscustomobject]@{schema=1;ollamaSignatures=@($ollamaSignatures);registryKnown=$registryKnown;processKnown=$processKnown;registrations=@($rows);processes=@($names)} | ConvertTo-Json -Depth 5 -Compress
 `;
 
 function commandOK(result){return result&&result.code===0&&!result.error&&!result.cancelled&&!result.timedOut&&!result.overflow;}
@@ -104,7 +114,7 @@ function nativeIdentity(row,group){
   return group==='obs'&&row.scope==='machine'&&row.key==='OBS Studio'&&row.publisher==='OBS Project'&&/^OBS Studio(?: \([^)]+\))?$/.test(row.name);
 }
 function uninstallPath(value){const match=typeof value==='string'&&value.match(/^"([^"\r\n]+\.exe)"(?:\s+(?:\/SILENT|\/VERYSILENT|\/SUPPRESSMSGBOXES|\/NORESTART|\/S))*\s*$/i);return match?.[1]||null;}
-async function candidateProof(group,row,resolved,env,io){
+async function candidateProof(group,row,resolved,env,io,signatures=[]){
   const declaredRoot=row.installLocation||(group==='obs'?win.dirname(uninstallPath(row.uninstallString)||''):null);
   if(!['user','machine'].includes(row.scope)||!['Registry32','Registry64'].includes(row.view)||!rootsFor(group,env,row.scope).some(root=>same(root,declaredRoot)))return null;
   const root=win.normalize(declaredRoot);await plainDirectory(root,io);
@@ -119,6 +129,31 @@ async function candidateProof(group,row,resolved,env,io){
       if(!/^ffmpeg-[\w.+-]+-full_build\\bin\\(?:ffmpeg|ffprobe|ffplay)\.exe$/i.test(relative))return null;
       if(win.basename(target).toLowerCase()!==`${id}.exe`)return null;
       if(parent&&!same(parent,win.dirname(target)))return null;parent=win.dirname(target);files.push(await fileIdentity(target,io,{hash:false}));
+    }
+  }else if(group==='ollama'){
+    // 公式 Inno の AppId / Publisher / user scope と標準の3実体を照合する。
+    // https://github.com/ollama/ollama/blob/main/app/ollama.iss
+    // https://github.com/microsoft/winget-pkgs/blob/master/manifests/o/Ollama/Ollama/0.40.13/Ollama.Ollama.installer.yaml
+    // InstallerType=inno, UpgradeBehavior=install。--uninstall-previous は使わない。
+    if(row.scope!=='user'||row.view!=='Registry64'||row.key!=='{44E83376-CE68-45EB-8FC1-393500EB558C}_is1'||row.publisher!=='Ollama'||!/^Ollama(?: version)?(?: \d[\w.+-]*)?$/.test(row.name)||!/^\d+(?:\.\d+)+(?:[-+][\w.-]+)?$/.test(row.version))return null;
+    if(row.packageIdentifier&&row.packageIdentifier!==WINGET_PACKAGES.ollama||row.sourceIdentifier&&row.sourceIdentifier!==SOURCE||row.installerType&&row.installerType!=='inno')return null;
+    const cli=win.join(root,'ollama.exe'),uninstaller=win.join(root,'unins000.exe');
+    if(!resolved.ollama||!same(resolved.ollama,cli)||!same(await io.realpath(resolved.ollama),cli)||!same(uninstallPath(row.uninstallString),uninstaller)||row.quietUninstallString&&!same(uninstallPath(row.quietUninstallString),uninstaller))return null;
+    const models=environment(env,'OLLAMA_MODELS');
+    if(models){
+      if(!absolute(models)||same(models,root)||normal(models).startsWith(normal(root)+'\\'))return null;
+      // インストーラーが回収する一時ファイルと更新キャッシュ内は保存先として扱わない。
+      const temporary=['TMP','TEMP'].map(key=>environment(env,key)).filter(Boolean);
+      if(!temporary.length)temporary.push(environment(env,'USERPROFILE')||environment(env,'SYSTEMROOT'));
+      if(temporary.some(root=>root&&(!absolute(root)||/^ollama/i.test(win.relative(root,models).split('\\')[0]))))return null;
+      const updates=join(environment(env,'LOCALAPPDATA'),'Ollama','updates');
+      if(same(models,updates)||normal(models).startsWith(normal(updates)+'\\'))return null;
+      await plainDirectory(models,io,{allowMissing:true});
+    }
+    for(const filename of [cli,win.join(root,'ollama app.exe'),uninstaller]){
+      const identity=await fileIdentity(filename,io),signed=Array.isArray(signatures)?signatures.filter(item=>same(item.path,filename)):[];
+      if(signed.length!==1||signed[0].status!=='Valid'||!/(^|, )O=Ollama Inc\.(,|$)/.test(signed[0].subject)||String(signed[0].sha256).toLowerCase()!==identity.sha256)return null;
+      files.push(identity);
     }
   }else{
     if(!nativeIdentity(row,group)||!resolved[group])return null;
@@ -197,16 +232,16 @@ export async function inspectWinget({entries=[],env=process.env,platform=process
         for(const scope of ['user','machine'])for(const root of rootsFor(group,env,scope))try{await plainDirectory(root,io,{allowMissing:true});await io.lstat(root);residual=true;}catch(error){if(error.code!=='ENOENT')residual=true;}
         if(residual||await receiptExists(group,env,io))reason='標準導入先または導入記録が残っています。状態を確認してから操作してください。';
         else actions=['導入'];
-      }else if(INSTALL_ONLY.has(group))reason={ollama:'モデル・設定の保持を保証できないため、Ollama の再導入・削除は自動実行しません。',chrome:'プロファイル・拡張機能を保護するため、Chrome の再導入・削除は自動実行しません。'}[group];
+      }else if(INSTALL_ONLY.has(group))reason={chrome:'プロファイル・拡張機能を保護するため、Chrome の再導入・削除は自動実行しません。'}[group];
       else if(rows.length!==1||listed!==1)reason='複数の導入先、手動導入、または一致しない登録があるため、自動操作しません。';
       else{
-        try{proof=await candidateProof(group,rows[0],resolved,env,io);}catch{}
-        const receipt=proof&&!proof.portable?await readReceipt(group,env,io):null;
-        owned=Boolean(proof&&(proof.portable||receipt&&JSON.stringify(receipt)===JSON.stringify(proof)));
-        if(!owned)reason=proof?'この Diag での導入記録を確認できません。手動・他方式の導入は元の方法で管理してください。':'導入登録と実行ファイルの所有元が一致しないため、自動操作しません。';
+        try{proof=await candidateProof(group,rows[0],resolved,env,io,metadata.ollamaSignatures);}catch{}
+        const receipt=proof&&!proof.portable&&group!=='ollama'?await readReceipt(group,env,io):null;
+        owned=Boolean(proof&&(group==='ollama'||proof.portable||receipt&&JSON.stringify(receipt)===JSON.stringify(proof)));
+        if(!owned)reason=proof?'この Diag での導入記録を確認できません。手動・他方式の導入は元の方法で管理してください。':(group==='ollama'?'Ollama の公式登録・標準配置・署名・モデル保存先を確認できないため、自動更新しません。':'導入登録と実行ファイルの所有元が一致しないため、自動操作しません。');
         else if(metadata.processKnown!==true)reason='実行中プロセスの確認に失敗したため、再導入・削除はできません。';
         else if(running)reason='対象アプリまたは関連プロセスが実行中です。終了後に再確認してください。';
-        else actions=['再導入','削除'];
+        else actions=group==='ollama'?['再導入']:['再導入','削除'];
       }
       if(actions.length&&metadata.processKnown!==true){actions=[];reason='実行中プロセスを確認できないため、自動操作しません。';}
       if(actions.length&&running){actions=[];reason='対象アプリまたは関連プロセスが実行中です。終了後に再確認してください。';}
@@ -225,19 +260,27 @@ export async function executeWinget(entry,action,context,{env,platform=process.p
   env=env||privateContext.env;
   const cancelled=()=>{if(signal?.aborted)throw failure('操作を中止しました。');};
   const refresh=()=>privateContext.refresh(command=>run({...command,signal,onUncertain,timeout:Math.min(command.timeout??timeout,timeout)}));
-  const steps=action==='再導入'?['uninstall','install']:[action==='削除'?'uninstall':'install'];let last;
+  const steps=action==='再導入'?(group==='ollama'?['upgrade']:['uninstall','install']):[action==='削除'?'uninstall':'install'];let last;
   for(const step of steps){
     cancelled();
     // 表示後だけでなく、各変更の直前にも全登録・所有元・プロセスを取り直す。
     const fresh=await refresh(),current=fresh.context?.evidence?.[group];
-    const needed=step==='uninstall'?'削除':'導入';
+    const needed=step==='upgrade'?'再導入':step==='uninstall'?'削除':'導入';
     if(!current?.actions.includes(needed)||(current.proof&&current.scope!==initial.scope))throw failure('導入状況・所有元・実行状態が変わりました。操作せず再確認します。');
+    if(step==='upgrade'&&JSON.stringify(current.proof)!==JSON.stringify(initial.proof))throw failure('Ollama の導入元・実体が変わりました。更新せず再確認します。');
     cancelled();
     const args=[step,'--id',pkg,'--exact','--source','winget','--scope',initial.scope,'--disable-interactivity','--silent'];
     if(step==='install')args.push('--no-upgrade');else if(current.proof?.portable)args.push('--preserve');
-    last=await run({executable:fresh.context.executable,args,表示:`winget ${args.join(' ')}`,env,platform,signal,timeout,onData,onUncertain});checkResult(last);
+    if(step==='upgrade')args.push('--installer-type','inno');
+    last=await run({executable:fresh.context.executable,args,表示:`winget ${args.join(' ')}`,env,platform,signal,timeout,onData,onUncertain});
+    // APPINSTALLER_CLI_ERROR_UPDATE_NOT_APPLICABLE のみ更新なしとして扱う。
+    const unchanged=step==='upgrade'&&Number.isInteger(last?.code)&&(last.code>>>0)===0x8a15002b&&commandOK({...last,code:0});
+    if(!unchanged)checkResult(last);
     const after=await refresh(),post=after.context?.evidence?.[group];
-    if(step==='uninstall'){
+    if(step==='upgrade'){
+      if(!post?.proof||!post.owned||post.scope!==initial.scope||post.proof.root!==initial.proof.root||unchanged&&JSON.stringify(post.proof)!==JSON.stringify(current.proof))throw failure('更新後の Ollama の導入元・実体を確認できませんでした。再確認してください。');
+      if(unchanged){onData('Ollama に適用できる更新はありません。\n');last={...last,code:0};}
+    }else if(step==='uninstall'){
       if(!post?.absent)throw failure('削除後の登録または実行ファイルが残っています。再導入を続行しません。');
       if(!current.proof.portable)await removeReceipt(group,current.proof,privateContext.env,privateContext.io);
     }else if(group==='ffmpeg'){

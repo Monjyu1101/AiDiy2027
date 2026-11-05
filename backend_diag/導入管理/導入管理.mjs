@@ -43,9 +43,9 @@ export async function acquireInstallLock(prefix,{platform=process.platform,direc
   let released=false;return async()=>{if(released)return;released=true;await handle.close();await unlink(file);};
 }
 
-export function installEnvironment(env=process.env,{discovery=false}={}) {
+export function installEnvironment(env=process.env,{discovery=false,ollama=false}={}) {
   const output={};
-  for(const [key,value] of Object.entries(env))if(/^(PATH|PATHEXT|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|TEMP|TMP|TMPDIR|SYSTEMROOT|WINDIR|SYSTEMDRIVE|COMSPEC|PROGRAMFILES(?:\(X86\))?|HTTPS?_PROXY|ALL_PROXY|NO_PROXY|NODE_EXTRA_CA_CERTS|NODE_USE_ENV_PROXY)$/i.test(key)||(discovery&&/^NPM_CONFIG_(PREFIX|USERCONFIG|GLOBALCONFIG)$/i.test(key)))output[key]=value;
+  for(const [key,value] of Object.entries(env))if(/^(PATH|PATHEXT|HOME|USERPROFILE|APPDATA|LOCALAPPDATA|TEMP|TMP|TMPDIR|SYSTEMROOT|WINDIR|SYSTEMDRIVE|COMSPEC|PROGRAMFILES(?:\(X86\))?|HTTPS?_PROXY|ALL_PROXY|NO_PROXY|NODE_EXTRA_CA_CERTS|NODE_USE_ENV_PROXY)$/i.test(key)||(discovery&&/^NPM_CONFIG_(PREFIX|USERCONFIG|GLOBALCONFIG)$/i.test(key))||(ollama&&/^OLLAMA_MODELS$/i.test(key)))output[key]=value;
   return {...output,NO_COLOR:'1',CI:'1',DO_NOT_TRACK:'1'};
 }
 export function safeInstallLog(text,env=process.env) {
@@ -199,7 +199,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
     // 導入元ごとの読み取り確認は互いに独立しているため並行して行う。
     await Promise.all([
       (async()=>{if(entries.some(entry=>packageFor(entry.id)))try{npm=await findNpmFn({env,platform,run});}catch(error){reason=error.status?error.message:'npm の導入先を確認できません。';}})(),
-      (async()=>{if(windowsEntries.length)try{winget=await inspectWingetFn({entries:windowsEntries,env:installEnvironment(env),platform,run});}catch{winget={items:windowsEntries.map(entry=>({id:entry.id,操作:[],理由:'WinGet の導入元を確認できません。'}))};}})(),
+      (async()=>{if(windowsEntries.length)try{winget=await inspectWingetFn({entries:windowsEntries,env:installEnvironment(env,{ollama:windowsEntries.some(entry=>entry.id==='ollama')}),platform,run});}catch{winget={items:windowsEntries.map(entry=>({id:entry.id,操作:[],理由:'WinGet の導入元を確認できません。'}))};}})(),
       (async()=>{if(agy)try{antigravity=await inspectAntigravityFn(agy,{env:installEnvironment(env),platform,run});}catch{antigravity={item:{id:'agy',操作:[],理由:'Antigravity の導入元を確認できません。'}};}})(),
       (async()=>{if(grokEntry)try{grok=await inspectGrokFn(grokEntry,{env:installEnvironment(env),platform,run});}catch{grok={item:{id:'grok',操作:[],理由:'Grok Build の導入元を確認できません。'}};}})(),
     ]);
@@ -286,7 +286,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
       }else{
         const executeProvider=provider==='winget'?executeWingetFn:provider==='grok'?executeGrokFn:executeAntigravityFn;
         // 実コマンドは共通の期限・中止・終了確認を通す。プロバイダー内の照会も実行中として排他する。
-        const result=await executeProvider(entry,action,fresh[provider],{env:installEnvironment(env),platform,run:operationRun,signal:controller.signal,timeout,cwd:directory,onData:log,onUncertain});
+        const result=await executeProvider(entry,action,fresh[provider],{env:installEnvironment(env,{ollama:entry.id==='ollama'}),platform,run:operationRun,signal:controller.signal,timeout,cwd:directory,onData:log,onUncertain});
         if(result?.code!==undefined)job.終了コード=result.code;
         if(controller.signal.aborted)throw failure('操作を中止しました。');
       }

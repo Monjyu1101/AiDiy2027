@@ -105,6 +105,7 @@ async function receiptFor(context) {
 
 export async function inspectAntigravity(entry,{env=process.env,platform=process.platform,run,resolve=resolveProgram,signal}={}) {
   const item={id:entry.id,パッケージ:'Antigravity CLI (agy)',説明:'公式 Windows インストーラーを使用します。設定・認証・履歴・PATH・既存エイリアスは残します。',
+    再導入説明:'旧バイナリを退避してから公式インストーラーで更新・再導入します。失敗・中止時は旧バイナリを復元します。',
     確認説明:'標準配置の agy.exe だけを導入・再導入・削除します。再導入は旧バイナリを退避し、失敗・中止時に復元します。公式インストーラーには --skip-path / --skip-aliases を指定します。設定・認証・OS の資格情報は変更せず、フォルダ全体の削除や PATH 編集はしません。',操作:[]};
   let context=null;
   try{

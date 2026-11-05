@@ -72,7 +72,8 @@ for (const status of ['failed', 'cancelled', undefined]) test(`Code server: ${st
   f.output().emit({ メッセージ識別: 'output_stream', メッセージ内容: '\x02', 実行中: true, navigationRequestId: 'nav-1' });
   f.output().emit({ メッセージ識別: 'output_text', メッセージ内容: '途中の回答' });
   f.output().emit({ メッセージ識別: 'output_end', 実行中: false, navigationRequestId: 'nav-1', navigationStatus: status });
-  assert.equal((await f.wait(terminal)).status, 'failed');
+  const ended = await f.wait(terminal);assert.equal(ended.status, 'failed');assert.equal(ended.settled, true);
+  assert.equal((await f.request('retry-after-error')).status, 200, '新しいIDの明示再開を受け付ける');
 });
 test('Code server: abort-before-send and scope mismatch cannot execute', async t => {
   const f = await fixture(t, true);
@@ -88,13 +89,13 @@ for (const success of [true, false]) test(`Code server: offline actual process e
   const job = f.jobs[0]; job.args[5]({ メッセージ識別: 'output_text', メッセージ内容: '回答' });
   await pause(10); assert.equal(f.packets.some(terminal), false);
   job.complete({ 終了コード: success ? 0 : 1, セッションID: 'created-session' });
-  assert.equal((await f.wait(terminal)).status, success ? 'succeeded' : 'failed');
+  const ended = await f.wait(terminal);assert.equal(ended.status, success ? 'succeeded' : 'failed');assert.equal(ended.settled, true);
   assert.equal(f.jobs.length, 1);
 });
 test('Code server: matching cancel stops offline run once and prevents another request until actual exit', async t => {
   const f = await fixture(t, true); await f.request();
   await f.post({ type: 'cancel_run', navigationRequestId: 'nav-1' });
-  assert.equal((await f.wait(terminal)).status, 'cancelled'); assert.equal(f.jobs[0].stopped, true);
+  const ended = await f.wait(terminal);assert.equal(ended.status, 'cancelled');assert.equal(ended.settled, true); assert.equal(f.jobs[0].stopped, true);
   assert.equal(f.packets.some(p => terminal(p) && p.status === 'succeeded'), false);
 });
 test('Code server: unrelated idle event cannot prevent cancellation of owned active run', async t => {
@@ -105,6 +106,13 @@ test('Code server: unrelated idle event cannot prevent cancellation of owned act
   f.output().emit({ メッセージ識別: 'output_end', 実行中: false, navigationRequestId: 'nav-1', navigationStatus: 'cancelled' });
   assert.equal((await f.wait(terminal)).status, 'cancelled');
   assert.equal(f.core.sockets.flatMap(s => s.sent).filter(p => p.メッセージ識別 === 'cancel_run').length, 1);
+});
+
+test('Code server: 接続切断は実終了の確認と区別して通知する', async t => {
+  const f = await fixture(t); await f.request();
+  f.output().close();
+  const ended = await f.wait(terminal);
+  assert.equal(ended.status, 'failed');assert.equal(ended.settled, false);assert.match(ended.message, /接続が切れ/);
 });
 
 test('Code server: 停止受付と途中通知だけでは手動送信・モデル変更を解放しない', async t => {

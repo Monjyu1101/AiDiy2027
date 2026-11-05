@@ -45,11 +45,91 @@ test('名称の下の2行目左側に能力由来の導入・再導入・削除�
   assert.doesNotMatch(html, /data-install-id="node"/);
   assert.doesNotMatch(html, /<button\b[^>]*>(?:(?!<\/button>)[\s\S])*<button\b/);
   const noCapabilities = await render('components/導入状況/導入状況パネル.vue', { 項目: items, 結果: [], 接続済み: true });
-  assert.doesNotMatch(noCapabilities, /data-install-action=/);
+  assert.equal((noCapabilities.match(/data-install-action=/g) || []).length, 2);
+  assert.equal((noCapabilities.match(/class="install-unavailable"/g) || []).length, 2);
+  assert.doesNotMatch(noCapabilities, /data-install-id="node"/);
   const css = source('components/導入状況/導入状況.css'); assert.match(css, /grid-template-areas:"name check" "manage manage"/);
   const nameIndex = html.indexOf('<span>Claude Code</span>');
   assert.ok(nameIndex >= 0 && nameIndex < html.indexOf('data-install-check="claude"'), 'キーボード順序は1行目の名称から右側の確認へ進む');
   assert.ok(html.indexOf('data-install-check="claude"') < html.indexOf('data-install-id="claude"'), 'キーボード順序も1行目の確認から2行目の導入操作へ進む');
+});
+
+const updateItems = require('../../../../../診断/catalog.json').filter(item => item.menuGroup === 'CLI群');
+test('CLI群7項目は未導入・導入済みとも同じ導入・更新ボタンを表示する', async () => {
+  assert.deepEqual(updateItems.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'ollama']);
+  for (const installed of [false, true]) {
+    const actions = id => installed ? id === 'ollama' ? ['再導入'] : ['再導入', '削除'] : ['導入'];
+    const operation = { 可能操作: actions, 能力: id => ({ id, 操作: actions(id) }) };
+    const ui = mount(() => ({ 項目: updateItems, 結果: updateItems.map(item => ({ id: item.id, 状態: installed ? 'OK' : '未検出' })), 接続済み: true, 操作: operation }));
+    try {
+      for (const item of updateItems) {
+        const button = ui.action(item.id, installed ? '再導入' : '導入');
+        assert.ok(button); assert.equal(text(button), '導入・更新'); assert.equal(button.props.disabled, false);
+        assert.equal(button.props['aria-label'], `${item.name} を導入・更新`);
+        assert.equal(Boolean(ui.action(item.id, '削除')), installed && item.id !== 'ollama');
+        assert.equal(ui.nodes().filter(node => node.props['data-install-id'] === item.id && text(node) === '導入・更新').length, 1);
+      }
+    } finally { ui.app.unmount(); }
+  }
+});
+
+test('導入元不明・Windows未対応・確認中でも入口と理由を残し、権限のない操作を送らない', async () => {
+  const calls = [], caps = ref([]), connected = ref(true);
+  const operation = { 可能操作: id => caps.value.find(row => row.id === id)?.操作 || [], 能力: id => caps.value.find(row => row.id === id), 開始: (...args) => calls.push(args) };
+  const ui = mount(() => ({ 項目: updateItems, 結果: updateItems.map(item => ({ id: item.id, 状態: 'OK' })), 接続済み: connected.value, 操作: operation }));
+  try {
+    for (const item of updateItems) {
+      const button = ui.action(item.id, '導入'); assert.equal(button.props.disabled, true);
+      assert.equal(button.props['aria-describedby'], `install-reason-${item.id}`);
+      assert.equal(text(ui.byId(`install-reason-${item.id}`)), '導入元を確認しています。');
+      button.props.onClick();
+    }
+    caps.value = [{ id: 'copilot', 操作: [], 理由: '検出された実行ファイルは別の導入元です。元の方法で管理してください。' }, { id: 'agy', 操作: [], 理由: 'Antigravity の自動導入・削除は Windows のみ対応しています。' }];
+    await flush();
+    for (const cap of caps.value) {
+      assert.equal(ui.action(cap.id, '導入').props.disabled, true);
+      assert.equal(text(ui.byId(`install-reason-${cap.id}`)), cap.理由);
+      assert.equal(ui.action(cap.id, '導入').props.title, cap.理由);
+      ui.action(cap.id, '導入').props.onClick();
+      assert.equal(ui.action(cap.id, '削除'), undefined);
+    }
+    caps.value = updateItems.map(item => ({ id: item.id, 操作: ['再導入', '削除'] })); await flush();
+    for (const item of updateItems) { assert.equal(ui.action(item.id, '再導入').props.disabled, false); assert.equal(ui.byId(`install-reason-${item.id}`), undefined); }
+    connected.value = false; caps.value = []; await flush();
+    for (const item of updateItems) { assert.equal(ui.action(item.id, '導入').props.disabled, true); assert.equal(text(ui.byId(`install-reason-${item.id}`)), '接続後に導入元を確認します。'); }
+    assert.deepEqual(calls, []);
+  } finally { ui.app.unmount(); }
+});
+
+test('導入・更新の実Vueクリックは既存の導入／再導入APIへ送り、取消・連打・完了後の更新を守る', async () => {
+  const { 導入操作状態を作成 } = await import('../導入操作状態.mjs');
+  for (const installed of [false, true]) for (const item of updateItems) {
+    const 接続済み = ref(true), 操作中 = ref(false), calls = [], prompts = [];
+    let approved = false, run = null;
+    const capability = { id: item.id, 操作: installed ? ['再導入', '削除'] : ['導入'], 再導入説明: item.id === 'copilot' ? 'npm install --global @github/copilot を1回実行して更新・再導入します。事前のアンインストールは行いません。' : '旧バイナリを退避してから公式インストーラーで更新・再導入します。失敗・中止時は旧バイナリを復元します。' };
+    const operation = 導入操作状態を作成({ 接続済み, 操作中, 確認: prompt => { prompts.push(prompt); return approved; }, setTimer: () => 1, clearTimer: () => {}, api: async (url, method) => {
+      calls.push([url, method]);
+      if (method === 'POST') run = { 実行ID: `job-${calls.length}`, 対象: item.id, 操作: decodeURIComponent(url.split('/').at(-1)), 状態: '実行中', 実行中: true, ログ: 'fixture' };
+      return { 項目: [capability], 実行: run };
+    } });
+    await operation.接続(true);
+    const ui = mount(() => ({ 項目: [item], 結果: [{ id: item.id, 状態: installed ? 'OK' : '未検出' }], 接続済み: true, 操作: operation, 操作中: 操作中.value }));
+    try {
+      const action = installed ? '再導入' : '導入';
+      ui.action(item.id, action).props.onClick(); await flush();
+      assert.equal(prompts.length, 1); assert.equal(calls.filter(([, method]) => method === 'POST').length, 0);
+      approved = true; ui.action(item.id, action).props.onClick(); ui.action(item.id, action).props.onClick(); await flush();
+      assert.deepEqual(calls.filter(([, method]) => method === 'POST'), [[`api/導入管理/${item.id}/${encodeURIComponent(action)}`, 'POST']]);
+      assert.equal(ui.action(item.id, action).props.disabled, true);
+      if (installed) { assert.ok(prompts.at(-1).includes(capability.再導入説明)); assert.doesNotMatch(prompts.at(-1), /削除してから/); }
+      run = { ...run, 状態: '完了', 実行中: false }; capability.操作 = ['再導入', '削除'];
+      await operation.読込(); await flush();
+      assert.equal(text(ui.action(item.id, '再導入')), '導入・更新'); assert.equal(ui.action(item.id, '再導入').props.disabled, false);
+      ui.action(item.id, '再導入').props.onClick(); await flush();
+      assert.equal(calls.filter(([, method]) => method === 'POST').length, 2);
+      assert.equal(calls.filter(([, method]) => method === 'POST').at(-1)[0], `api/導入管理/${item.id}/${encodeURIComponent('再導入')}`);
+    } finally { operation.終了(); ui.app.unmount(); }
+  }
 });
 
 test('実Vueクリックで確認を取り消せる。承認後は一度だけ実行し、その項目の操作と全確認・書込を無効化する', async () => {
