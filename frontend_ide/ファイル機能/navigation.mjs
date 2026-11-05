@@ -17,6 +17,7 @@ import {NAVI_PROVIDERS} from '../../backend_diag/モデル情報/navi_providers.
 async function replaceState(source,target){for(let attempt=0;;attempt++){try{return await rename(source,target);}catch(error){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=4)throw error;await new Promise(done=>setTimeout(done,25*(attempt+1)));}}}
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
 const text=(value,max)=>typeof value==='string'&&!!value.trim()&&value.length<=max;
+const checkedTime=value=>Number.isSafeInteger(value)&&value>=0&&Number.isFinite(new Date(value).getTime())?value:null;
 export function validateNavigation(data,job){
  if(data?.schemaVersion!==3)throw Error('Navigator記録の形式が未対応です。旧形式への切替は行いません。「＋ 新規」で記録を切り替えてから「ナビ」で再作成してください。');
  if(!text(data?.requestId,80)||!text(data?.goal,4000)||data?.requestId!==job.id||((!job.inferred||job.action==='evaluate')&&data.goal!==job.goal)||!Array.isArray(data.items)||data.items.length>50)throw Error('Navigator結果の依頼・目標・項目・次のプロンプトを確認してください。');
@@ -91,7 +92,8 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
  const directory=async()=>{const identity=await realpath(project);const folder=join(stateRoot,createHash('sha256').update(process.platform==='win32'?identity.toLowerCase():identity).digest('hex'),instance);await mkdir(folder,{recursive:true});const base=await realpath(stateRoot);if(!within(base,await realpath(folder)))throw Error('Navigator保存先が不正です。');return folder;};
  const historyDirectory=async()=>{const dir=join(await directory(),'..','history');await mkdir(dir,{recursive:true});const base=await realpath(stateRoot),full=await realpath(dir);if(!within(base,full))throw Error('Navigator履歴の保存先が不正です。');return full;};
  const validId=id=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
- const restored=data=>({...validateNavigation(data,{id:data.requestId,goal:data.goal,inferred:data.inferred}),createdAt:data.createdAt,navigationId:validId(data.navigationId)?data.navigationId:data.requestId,updatedAt:data.updatedAt||data.createdAt,...(data.selection?{selection:validateNavigationModel(data.selection)}:{})});
+ // 旧記録の明示的な更新日時だけを評価日時として使う。作成日時から補完せず、不明は履歴選択後も保持する。
+ const restored=data=>({...validateNavigation(data,{id:data.requestId,goal:data.goal,inferred:data.inferred}),createdAt:data.createdAt,navigationId:validId(data.navigationId)?data.navigationId:data.requestId,updatedAt:data.updatedAt||data.createdAt,checkedAt:checkedTime(Object.hasOwn(data,'checkedAt')?data.checkedAt:data.updatedAt),...(data.selection?{selection:validateNavigationModel(data.selection)}:{})});
  async function atomicJSON(file,data){const temporary=file+'.'+randomUUID()+'.tmp';try{await writeFile(temporary,JSON.stringify(data,null,2),{encoding:'utf8',flag:'wx'});await replaceState(temporary,file);}finally{await rm(temporary,{force:true});}}
  async function historyRead(id){if(!validId(id))throw Error('Navigator履歴IDが不正です。');const dir=await historyDirectory(),file=await realpath(join(dir,id+'.json'));if(!within(dir,file)||(await stat(file)).size>1024*1024)throw Error('Navigator履歴が不正です。');return restored(JSON.parse(await readFile(file,'utf8')));}
  async function list(){active();const dir=await historyDirectory(),items=[];for(const name of await readdir(dir)){if(!name.endsWith('.json')||!validId(name.slice(0,-5)))continue;try{const item=await historyRead(name.slice(0,-5));items.push({id:item.navigationId,goal:item.goal,updatedAt:item.updatedAt});}catch{}}return items.sort((a,b)=>b.updatedAt-a.updatedAt);}
@@ -116,7 +118,9 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    const answer=await Promise.race([runAgent({project,prompt:j.prompt,signal:j.controller.signal,selection:j.selection}),new Promise((_,reject)=>{timer=setTimeout(()=>{j.controller.abort();reject(Error('5分以内にNavigation結果を確認できませんでした。'));},waitMs);timer.unref?.();})]);
    if(!current(j))return;
    const content=typeof answer==='string'?answer:answer?.content;
-   const result={...validateNavigationResponse(parseNavigationResponse(content),j),createdAt:j.createdAt||now(),updatedAt:now(),navigationId:j.navigationId||j.id,selection:j.selection};
+   const validated=validateNavigationResponse(parseNavigationResponse(content),j),checkedAt=now();
+   // AIが各ファイルを見た瞬間ではなく、全項目の有効な評価結果をアプリが受け取った日時。
+   const result={...validated,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection};
    if(!current(j))return;
    const temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
    if(!current(j))return;

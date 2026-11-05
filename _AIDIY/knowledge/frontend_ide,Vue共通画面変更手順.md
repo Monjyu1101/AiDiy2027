@@ -67,6 +67,8 @@ Mac のアプリ名とメニューは `desktop.cjs` と `host/scripts/MacOS-Menu
 
 IDEのElectron版はプロジェクト表示行の名前のすぐ右側に並ぶ「＋ Console」「＋ Code」「＋ Live」から別ウィンドウを開き、Web版は画面内タブです。切り分けは `window.aidiyWindow` で行います。IPCにはアプリ種別だけを渡し、プロジェクト・モードはメインプロセスでIDEサーバーの状態から取得します。
 
+Codeの回答通知は、IDEブラウザー版のCodeタブだけ `page-notifications` でページ中央へ表示します。Navi内・別窓・単独・VS CodeのCodeは各自の領域内へ表示します。Naviの別窓化では同じVue DOMを別Documentへ移すため、通知・文字送り・飛行演出・可視状態・タイマーは発言要素の `ownerDocument` とその `defaultView` を使います。元IDEのglobal documentへ追加しないでください。`checks/code-notification-ownership.test.mjs` で複数窓、移動、非表示、破棄、Web例外と領域内の飛行を検証します。
+
 画面は `frontend_ide/src/` の対応する日本語機能フォルダを変更します。Code / LiveをIDEへ配置するときも同じVue部品を使用します。ホストと通信プロトコルは `frontend_ide/host`、ファイルAPIとOffice表示資産は `frontend_ide/viewer` に統合しています。親ディレクトリ数を固定して共通設定やHermesを探さず、配置先から親方向へ探索してください。
 
 IDEのオンライン利用では、`viewer/core-connection.mjs` がConsoleと同じ `PORT_TOOLS`（既定8095）の `GET /aidiy_code_agents/ping` を10秒ごとに確認し、`src/App.vue` も状態を10秒ごとに取得します。応答期限はConsoleと同じ1.5秒で、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live子パネルの接続先は `PORT_CORE` のままです。接続済みの定期確認中は `connected=true` / `connecting=false` を維持し、確認が失敗した時に接続表示を変えます。初回接続と切断後の再接続では `connecting=true` を表示します。tools停止でも利用開始時刻・作業・子窓を維持してください。単体検証は `node --test frontend_ide/viewer/checks/connection.test.mjs`、実画面検証はVue配布ファイル生成後の `node frontend_ide/scripts/check-connection.mjs`（Chromeを任意配置している場合は `CHROME_PATH` で指定）。模擬toolsを使い、10秒周期・定期確認中の表示維持・停止と復帰を確認し、日本時間の日時付き画像を `temp/connection-check/` へ保存します。
@@ -737,6 +739,8 @@ CodeとNaviの `sending.png` は `scripts/build.mjs` が `host/media` からビ�
 
 Codeのモデル・権限・承認方式・検証回数は既存設定を使い、自動承認や権限緩和へ切り替えません。Navigator評価用のAI選択とは別です。従来の「CODE/LIVEへ」は引き続き下書き追記のみで、送信しません。
 
+自動接続ONのCodeは初回の状態通知で一時的にoffline表示になるため、自動航行はオンライン接続・セッション・プロジェクトの確定を待ってから送信します。この待機中は理由を表示し、オフラインHermesへ自動で切り替えて実行しません。自動送信する提案はCode入力欄にも表示し、受付後に会話へ移します。人間の入力途中の下書きは別に保持します。Codeの受付確認は30秒、受付後の自動航行の完了監視は1時間です。Code CLI側の15分無応答タイムアウトなど、各実行経路の既存制限は変更せず、先に失敗・中断が届いた場合はその時点で停止します。監視期限超過・結果不明時の自動再送は行いません。
+
 自動航行オフ、Navigator全体を閉じる・非表示にする、プロジェクト・会話・利用セッション変更、切断、Code失敗、再評価失敗、結果不明、空または対象不一致の提案で停止します。Code実行中のオフはその依頼IDだけに停止要求を送ります。停止要求は変更済みファイルの取り消しではありません。再評価中のオフは後続のCode実行を禁止します。3回続けて各項目の最高達成率が改善しない場合も停止し、理由を表示します。失敗・中断したCodeは結果を確認し、パネルを開き直してから手動で再開してください。
 
 各Navigatorは `/api/navigation/code?instance=navi-N&session=...` により独立Codeプロセスを持ちます。既存Code窓や他のNavigatorとは共有しません。作成・破棄と幅変更は直列化し、連続した表示切替で重複作成や実行中断を起こしません。Codeの破棄はNavigator終了・プロジェクト変更・利用セッション変更時に行います。サーバー側でも利用セッション・モード・所有窓・Originを検証します。Coreへ渡す `navigationRequestId` は任意の相関IDであり、権限を付与しません。STXと終端のID、および `navigationStatus` の成功を照合し、単なる待機状態・別依頼の出力・エラーを完了扱いにしません。
@@ -745,6 +749,6 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 自動航行がオンかつ総合評価100%未満の場合だけ、埋込Codeの外枠にIDEの「自動探索」と同じシアンの周回光を表示します。Code実行中だけでなく準備・再評価中も継続し、オフ・停止・失敗・100%達成で消えます。既存の `motion-spin` を使うCSS描画だけで、タイマーやCanvasは追加しません。`prefers-reduced-motion: reduce` では動かさず固定色の枠にします。
 
-自動航行中のNavigatorタイトルは `Navigation Cruise` と表示します。停止・完了時は単独版の `AiDiy Navigator`、または番号付き `AiDiy IDE / Navigator N` に戻します。窓の識別IDや履歴・所有関係は変更せず、表示だけを切り替えます。
+自動航行中のNavigatorタイトルは単独版で `AiDiy Navigation Cruise`、IDE起動で `AiDiy IDE / Navigation Cruise N` と表示し、VR・別窓でもブランド名と起動番号を保持します。停止・完了時は単独版の `AiDiy Navigator`、または番号付き `AiDiy IDE / Navigator N` に戻します。画面・ブラウザ・OSのタイトルを連動させ、窓の識別IDや履歴・所有関係は変更しません。
 
 総合評価枠にもCodeと同じ条件・色・周期で周回光を表示し、枠内下部中央に「自動航行中」を表示します。航行中の再評価では直前の総合評価枠を表示したままにし、%と根拠の開閉・スクロールを保ちます。状態文字は根拠のスクロール外に配置し、数値や操作に重ねません。停止・完了で光と文字を消し、動きを減らす設定では固定色の四角い枠にします。

@@ -85,9 +85,22 @@ async function panel(t, { host = false, desktop = false } = {}) {
     if (type === 'selectHistory') { state.history.value = true; await flush(); }
     return () => find(node => node.type === 'button' && (type === 'new' ? textOf(node) === '＋ 新規' : node.props['aria-label'] === `会話を開く: ${id === 'first' ? '最初の会話' : '次の会話'}`)).props.onClick();
   }
-  return { state, exposed, sent, requests, registrations, packet, action, dispose, notice: () => textOf(find(node => node.props.role === 'status') || { text: '', children: [] }), onPost: callback => { hostSend = callback; }, handoff: data => handoff(data),
+  return { state, exposed, sent, requests, registrations, packet, action, dispose, textarea: () => find(node => node.type === 'textarea'), notice: () => textOf(find(node => node.props.role === 'status') || { text: '', children: [] }), onPost: callback => { hostSend = callback; }, handoff: data => handoff(data),
     disconnect: () => events.onerror(), reply: (index = 0, status = 200) => requests[index].resolve(new Response(JSON.stringify(status === 200 ? { ok: true } : { error: '会話がありません。' }), { status })) };
 }
+
+test('Navigator実Vue・実transport: 接続待ちから入力欄へ提案を表示し、確定sessionで一度だけHTTP送信する', async t => {
+  const f = await panel(t), base = { ...initial(), navigationRunSupported: true, 自動接続: true, 接続世代: 1 };
+  f.packet({ ...base, 接続済み: false, 接続中: true, 実行モード: 'offline', 接続プロジェクトパス: '', セッションID: '' });await flush();
+  assert.equal(f.exposed.navigationReadiness('/project').ready, false);await assert.rejects(f.exposed.runNavigationPrompt({ text: '最初の提案', projectPath: '/project' }));assert.equal(f.sent.length, 0);
+  const connected = { ...base, 接続中: false, 接続済み: true, 実行モード: 'online', 接続プロジェクトパス: '/project', セッションID: 'connected-session' };f.packet(connected);await flush();
+  const pending = f.exposed.runNavigationPrompt({ text: '最初の提案', projectPath: '/project' });await flush();
+  assert.equal(f.textarea().value, '最初の提案');assert.equal(f.textarea().props.readonly, true);assert.equal(f.state.prompt.value, '保持する下書き');
+  assert.equal(f.sent.length, 1);assert.equal(f.sent[0].メッセージ内容, '最初の提案');assert.equal(f.sent[0].sessionId, 'connected-session');
+  const requestId = f.sent[0].navigationRequestId;f.reply();f.packet({ type: 'navigationRunResult', requestId, status: 'accepted' });f.packet({ ...connected, 実行中: true, メッセージ: [{ 種別: 'user', 本文: '最初の提案' }] });await flush();
+  assert.equal(f.textarea().value, '保持する下書き');f.packet({ ...connected, 実行中: false, メッセージ: [{ 種別: 'user', 本文: '最初の提案' }, { 種別: 'assistant', 本文: '完了' }] });f.packet({ type: 'navigationRunResult', requestId, status: 'succeeded' });await pending;await flush();
+  assert.equal(f.sent.length, 1);assert.equal(f.exposed.navigationReadiness('/project').ready, true);
+});
 
 async function extensionPanel(t) {
   // 現行ホストの実在判定をそのまま使い、試験所有のローカルフォルダだけを渡す。

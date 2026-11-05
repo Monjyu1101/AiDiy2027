@@ -8,11 +8,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {ref,computed} from 'vue';
+import {localDateTimeInput} from '../src/components/ファイル閲覧/ファイル日時.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 function fixture({props={},draftActions=null,native=false}={}){
  const calls=[],pending=[],timers=new Map();let serial=0;
- const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,handoff,canHandoff,draftRequest})`,{
-  ref,computed,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
+ const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,handoff,canHandoff,draftRequest})`,{
+  ref,computed,localDateTimeInput,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),
   fetch:(url,options)=>{calls.push(options.method);return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
  });
@@ -22,6 +23,13 @@ function fixture({props={},draftActions=null,native=false}={}){
  return {api,calls,pending,timers,settle,answer};
 }
 const state=job=>({result:null,job,availability:{available:true},selection:{provider:'aidiy_hermes',model:'auto'}});
+test('確認日時は端末の日時を秒まで表示し、記録・再評価の切替に追従する',()=>{
+ const {api}=fixture(),at=new Date(2026,10,5,9,7,3).getTime();api.result.value={checkedAt:at};
+ assert.equal(api.checkedAt.value.text,'2026-11-05 09:07:03');assert.equal(api.checkedAt.value.iso,new Date(at).toISOString());
+ api.result.value={checkedAt:at+61000};assert.equal(api.checkedAt.value.text,'2026-11-05 09:08:04');
+ for(const checkedAt of [undefined,null,'2026-11-05',NaN,Infinity,1e20]){api.result.value={checkedAt,createdAt:at,updatedAt:at};assert.equal(api.checkedAt.value,null);}
+ api.result.value=null;assert.equal(api.checkedAt.value,null);
+});
 test('開始応答を失っても状態確認を再開し、確認前・実行中の再送を防止する',async()=>{
  const f=fixture();const request=f.api.navigate();assert.deepEqual(f.calls,['POST']);
  f.pending.shift().reject(Error('response lost'));await request;await f.settle();

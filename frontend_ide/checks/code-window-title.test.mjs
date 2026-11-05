@@ -264,8 +264,8 @@ test('Console browser tab title uses launch metadata and leaves ordinary and lin
 
 test('Navigator native Cruise title survives page updates and restores without changing Code or IDE',async()=>{
  const f=await desktopFixture({kind:'navi'}),record=f.owner,change=f.handlers.get('development:navigation-cruise');
- assert.equal((await change(f.event(record),true)).ok,true);assert.equal(record.window.getTitle(),'Navigation Cruise');
- record.window.webContents.emit('page-title-updated',{preventDefault(){}},'AiDiy Navigator');assert.equal(record.window.getTitle(),'Navigation Cruise');
+ assert.equal((await change(f.event(record),true)).ok,true);assert.equal(record.window.getTitle(),'AiDiy Navigation Cruise');
+ record.window.webContents.emit('page-title-updated',{preventDefault(){}},'AiDiy Navigator');assert.equal(record.window.getTitle(),'AiDiy Navigation Cruise');
  assert.equal((await change(f.event(record),false)).ok,true);assert.equal(record.window.getTitle(),'AiDiy Navigator');
  record.window.webContents.emit('page-title-updated',{preventDefault(){}},'Navigation Cruise');assert.equal(record.window.getTitle(),'AiDiy Navigator');record.window.destroy();
  for(const kind of ['ide','code']){

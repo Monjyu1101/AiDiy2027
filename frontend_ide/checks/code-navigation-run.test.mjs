@@ -17,33 +17,75 @@ vm.runInNewContext(buildSync({ entryPoints: [fileURLToPath(new URL('../src/compo
 const source = readFileSync(new URL('../src/components/コード/コードパネル.vue', import.meta.url), 'utf8');
 const file = (name = '画像.png', body = 'image') => ({ name, size: Buffer.byteLength(body), arrayBuffer: async () => Uint8Array.from(Buffer.from(body)).buffer });
 const flush = async () => { for (let i = 0; i < 25; i++) await Promise.resolve(); };
-function fixture(host = false) {
-  const calls = [], unmounted = [], timers = new Map(), no = () => {}; let exposed, timerId = 0;
-  let receive, cancel = () => {}, send = async message => calls.push(structuredClone(message));
+function fixture(host = false, options = {}) {
+  const calls = [], unmounted = [], timers = new Map(), timerDelays = new Map(), no = () => {}; let exposed, timerId = 0;
+  let receive, notificationHost, cancel = () => {}, send = async message => calls.push(structuredClone(message));
   const { descriptor } = parse(source), script = compileScript(descriptor, { id: 'code', genDefaultAs: 'component' });
   const template = compileTemplate({ source: descriptor.template.content, filename: 'code.vue', id: 'code', compilerOptions: { bindingMetadata: script.bindings } });
   assert.deepEqual(template.errors, []);
   const module = { exports: {} }, modules = {
+    '../共通表示/状態バー.vue': { name: 'StatusBar' },
+    '../ターミナル/開始表示.vue': { name: 'TerminalWelcome' },
     '../コード/コード通信.js': { codeTransport: (_props, callback) => { receive = callback; return { send: message => send(message), cancelFiles: () => cancel(), saveDraft: no, dispose: no }; } },
     '../添付ファイル/ファイル送信.js': helper.exports,
-    '../コード/会話到着演出': { chatArrival: () => ({ reset: no, dispose: no, show: no, reserve: no, cancelReservation: no }) },
+    '../コード/会話到着演出': { chatArrival: (_scroll, host) => { notificationHost = host; return { reset: no, dispose: no, show: no, reserve: no, cancelReservation: no }; } },
     '../下書き連携/下書き受け渡し.js': { createDraftReceiver: () => ({ publish: no, dispose: no }) },
     '../../../host/src/stream-control': { visibleStreamContent: text => text, streamControlOf: text => text === '\x18' ? 'cancel' : undefined },
   };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
-    module, URL, console, location: { href: 'http://localhost/code/' }, crypto, setTimeout: fn => { timers.set(++timerId, fn); return timerId; }, clearTimeout: id => timers.delete(id),
+    module, URL, console, window: {}, location: { href: 'http://localhost/code/' }, crypto, setTimeout: (fn, ms) => { timers.set(++timerId, fn); timerDelays.set(timerId, ms); return timerId; }, clearTimeout: id => { timers.delete(id); timerDelays.delete(id); },
     require: id => id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: no, onBeforeUnmount: callback => unmounted.push(callback) }
       : id === 'markdown-it' ? require('markdown-it') : modules[id] || {},
   });
-  const scope = vue.effectScope(), props = { host }, data = scope.run(() => module.exports.setup(props, { expose: value => { exposed = value; } }));
+  const scope = vue.effectScope(), props = { host, ...options }, data = scope.run(() => module.exports.setup(props, { expose: value => { exposed = value; } }));
   let snapshot = { type: 'state', navigationRunSupported: true, 会話ID: 'conversation', メッセージ: [], 履歴: [], 進捗: [], 作業フォルダ: { パス: '/project' }, 接続プロジェクトパス: '/project', セッションID: 'session', 接続世代: 1, 信頼済み: true, 接続済み: true, 実行モード: 'online' };
   receive(snapshot);
-  return { data, calls, exposed, packet: receive, timers, render: () => module.exports.render({}, [], props, vue.proxyRefs(data), {}, {}), state(change) { snapshot = { ...snapshot, ...change }; receive(snapshot); }, setSend(fn) { send = fn; }, setCancel(fn) { cancel = fn; },
+  return { data, calls, exposed, packet: receive, timers, timerDelays, notificationHost: row => notificationHost(row), render: () => module.exports.render({}, [], props, vue.proxyRefs(data), {}, {}), state(change) { snapshot = { ...snapshot, ...change }; receive(snapshot); }, setSend(fn) { send = fn; }, setCancel(fn) { cancel = fn; },
     dispose() { for (const callback of unmounted) callback(); scope.stop(); } };
 }
 
 const run = (f, signal) => f.exposed.runNavigationPrompt({ text: '次の作業', projectPath: '/project', signal });
 const result = (f, status, id = f.calls[0].navigationRequestId) => f.packet({ type: 'navigationRunResult', requestId: id, status });
+test('Code通知: Web IDEタブの明示指定以外は単独・子窓・VS Code・Navi埋込の自分の領域だけを選ぶ', () => {
+  const root = {}, body = {}, row = { ownerDocument: { body }, closest(selector) { assert.equal(selector, '.code-component'); return root; } };
+  for (const [host, options] of [[false, {}], [false, { desktop: true }], [false, { embedded: true, linked: true, desktop: true }], [true, {}], [false, { embedded: true, hideStatusBar: true }], [false, { embedded: true, pageNotifications: true }]]) {
+    const f = fixture(host, options);try { assert.equal(f.notificationHost(row), options.pageNotifications ? body : root); } finally { f.dispose(); }
+  }
+});
+test('Navigator Code: 初回の一時offline表示・接続失敗・未確定sessionでは送らず、オンライン確定後に1回だけ送る', async () => {
+  const f = fixture();try {
+    for (const connecting of [true, false]) {
+      f.state({ 自動接続: true, 接続済み: false, 接続中: connecting, 実行モード: 'offline', セッションID: undefined, 接続プロジェクトパス: '', provider: 'aidiy_hermes', model: 'same' });
+      assert.equal(f.exposed.navigationReadiness('/project').ready, false);await assert.rejects(run(f), /オンライン接続/);assert.equal(f.calls.length, 0);
+    }
+    f.state({ 接続済み: true, 接続中: false, 実行モード: 'online', セッションID: 'session', 接続プロジェクトパス: '/project' });
+    for (const invalid of [{ セッションID: '' }, { 接続プロジェクトパス: '' }, { 接続プロジェクトパス: '/other' }, { 接続世代: undefined }]) {
+      f.state(invalid);assert.equal(f.exposed.navigationReadiness('/project').ready, false);f.state({ セッションID: 'session', 接続プロジェクトパス: '/project', 接続世代: 1 });
+    }
+    const pending = run(f);assert.equal(f.calls.length, 1);assert.equal(f.calls[0].sessionId, 'session');result(f, 'accepted');result(f, 'succeeded');await pending;
+    assert.equal(f.exposed.navigationReadiness('/project').ready, true);
+  } finally { f.dispose(); }
+});
+test('Navigator Code: 明示オフラインは維持し、自動入力は人間の下書きを変更しない', async () => {
+  const f = fixture();try {
+    f.state({ 自動接続: false, 接続済み: false, 実行モード: 'offline', セッションID: undefined, 接続プロジェクトパス: '' });f.data.prompt.value = '人間の下書き';
+    const pending = run(f);assert.equal(f.data.displayedPrompt.value, '次の作業');assert.equal(f.data.prompt.value, '人間の下書き');
+    result(f, 'accepted', 'other');assert.equal(f.data.displayedPrompt.value, '次の作業');result(f, 'accepted');assert.equal(f.data.displayedPrompt.value, '人間の下書き');
+    result(f, 'succeeded');await pending;assert.equal(f.calls.filter(p => p.type === 'input_text').length, 1);
+  } finally { f.dispose(); }
+});
+test('Navigator Code: 完了監視だけ1時間、Codeの15分無応答失敗は直ちに停止し再評価・再送しない', async () => {
+  for (const backendFailure of [false, true]) {
+    const f = fixture();try {
+      const pending = run(f), rejected = assert.rejects(pending);assert.deepEqual([...f.timerDelays.values()], [30000]);result(f, 'accepted');assert.deepEqual([...f.timerDelays.values()], [3600000]);
+      result(f, 'accepted');assert.deepEqual([...f.timerDelays.values()], [3600000]);
+      if (backendFailure) f.packet({ type: 'navigationRunResult', requestId: f.calls[0].navigationRequestId, status: 'failed', message: '処理タイムアウト(900秒)が発生しました。' });
+      else [...f.timers.values()][0]();
+      await rejected;assert.match(f.data.error.value, backendFailure ? /900秒/ : /1時間/);assert.equal(f.data.navigationRunning.value, false);assert.equal(f.calls.filter(p => p.type === 'input_text').length, 1);assert.equal(f.calls.filter(p => p.type === 'cancel_run').length, 1);
+    } finally { f.dispose(); }
+  }
+  const cli=readFileSync(new URL('../../backend_server/AIコア/AIコード_cli.py',import.meta.url),'utf8');assert.match(cli,/タイムアウト秒数: int = 900/);assert.match(cli,/time\.monotonic\(\) - last_output_time > timeout/);
+});
 test('Navigator Code: ID一致の受付と成功だけで完了、idle・別ID・重複送信は無効', async () => {
   const f = fixture(); try {
     f.data.prompt.value = '手動の下書き';
@@ -116,6 +158,31 @@ function nodeOf(node, predicate) {
   for (const child of children) { const found = nodeOf(child, predicate); if (found) return found; }
 }
 const element = (f, predicate) => nodeOf(f.render(), predicate);
+test('Codeの指定説明はプロジェクト表示の直下に1つだけ置き、通常Codeには出さない', () => {
+  const notice='Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。';
+  for (const options of [{}, { embedded:true, projectNotice:notice }]) {
+    const f=fixture(false,options);try {
+      const children=f.render().children,toolbar=children.findIndex(node=>node.props?.class==='component-toolbar'),notes=children.filter(node=>node.props?.class==='code-project-notice');
+      assert.equal(notes.length,options.projectNotice?1:0);if(notes.length){assert.equal(children[toolbar+1],notes[0]);assert.equal(notes[0].children,notice);}
+    } finally { f.dispose(); }
+  }
+});
+test('Navigator埋込だけタイトルと接続バーを省略し、空会話へAiDiyアイコンを渡す', () => {
+  const f = fixture(false, { embedded: true, hideStatusBar: true, icon: '/development/AiDiy.png' });
+  try {
+    assert.equal(element(f, node => node.type?.name === 'StatusBar'), undefined);
+    const welcome = element(f, node => node.type?.name === 'TerminalWelcome');assert.ok(welcome);assert.equal(welcome.props.icon, '/development/AiDiy.png');
+    f.state({ メッセージ: [{ 種別: 'user', 本文: '依頼' }] });assert.equal(element(f, node => node.type?.name === 'TerminalWelcome'), undefined);
+    f.state({ メッセージ: [], 会話ID: 'new-conversation' });assert.equal(element(f, node => node.type?.name === 'TerminalWelcome').props.icon, '/development/AiDiy.png');
+  } finally { f.dispose(); }
+});
+test('通常・IDE埋込・VS CodeのCodeは既存タイトルと接続バーを維持する', () => {
+  for (const [host, options] of [[false, {}], [false, { embedded: true, linked: true }], [true, {}]]) {
+    const f = fixture(host, options);
+    try { const status = element(f, node => node.type?.name === 'StatusBar');assert.ok(status);assert.equal(status.props.title, options.linked ? 'AiDiy IDE / Code' : 'AiDiy Code'); }
+    finally { f.dispose(); }
+  }
+});
 async function humanSend(f, text) {
   const input = element(f, node => node?.type === 'textarea');
   assert.equal(Boolean(input.props.disabled), false); assert.equal(Boolean(input.props.readonly), false);

@@ -344,6 +344,10 @@ export async function 単独起動(project: string, backend?: string, initialMod
             if (typeof data.navigationRequestId !== 'string' || !/^[a-zA-Z0-9-]{1,100}$/.test(data.navigationRequestId)) { reply(400, {error:'実行IDが不正です。'}); return; }
             if (navigationRequests.has(data.navigationRequestId) || navigationRequests.size >= 10000) { reply(409, {error:'この実行IDは再送できません。'}); return; }
             navigationRequests.add(data.navigationRequestId);
+            // 自動接続中の一時offline表示でNavigatorだけが先走り、Hermesへ迂回しない。
+            if (state.自動接続 && (!connection.connected || connection.接続中 || connection.modelChanging)) {
+              reply(409, {error:'Codeのオンライン接続がまだ確定していません。接続完了後に自動航行を再開してください。'}); return;
+            }
             if (data.projectPath !== folder || data.conversationId !== state.会話ID
                 || data.sessionId !== (displayed.セッションID || '') || data.connectionEpoch !== state.接続世代
                 || requestEpoch !== connection.epoch || state.停止中) { reply(409, {error:'Codeのプロジェクト・会話・接続状態が変わりました。'}); return; }

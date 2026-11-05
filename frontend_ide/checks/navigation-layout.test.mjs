@@ -28,6 +28,36 @@ test('総合評価・おすすめプロンプトを明細スクロール外に�
 });
 
 const walk=node=>[node,...(node.children||[]).flatMap(walk)];
+test('タイトルのCode切替は表示・非表示とも四角い枠を持ち、窓操作の枠なし指定に負けない',()=>{
+ const css=descriptor.styles.map(style=>style.content).join('\n');
+ const shared=css.match(/\.navigation-code-toggle,\.window-actions \.navigation-code-toggle\{([^}]+)\}/)?.[1];assert.ok(shared);
+ assert.match(shared,/(?:^|;)border:1px solid #[\da-f]{6}(?:;|$)/i);assert.match(shared,/(?:^|;)border-radius:0(?:;|$)/);
+ assert.match(css,/\.navigation-code-toggle\[aria-checked="true"\]\{border-color:#7de2cf\}/);
+ const toggles=walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-code-toggle'));assert.equal(toggles.length,3);
+ for(const toggle of toggles){assert.equal(toggle.tag,'button');assert.equal(attr(toggle,'role'),'switch');assert.equal(toggle.props.find(p=>p.type===7&&p.arg?.content==='aria-checked').exp.content,'codeOpen');assert.equal(toggle.props.find(p=>p.type===7&&p.name==='on'&&p.arg?.content==='click').exp.content,'toggleCode');}
+});
+
+test('Navigator専用Codeは重複タイトルと接続線だけを省略し、共通AiDiy画像を指定する',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),code=nodes.find(node=>node.tag==='CodePanel');assert.ok(code);
+ assert.equal(attr(code,'icon'),'/development/AiDiy.png');assert.ok(code.props.some(prop=>prop.type===6&&prop.name==='hide-status-bar'));
+ const aside=nodes.find(node=>hasClass(node,'navigation-code'));assert.equal(elements(aside)[0].tag,'header');assert.ok(walk(aside).some(node=>node.tag==='button'&&node.props.some(prop=>prop.type===7&&prop.name==='on'&&prop.exp?.content==='stopAutopilot()')));
+});
+
+test('Navigatorの制御説明は専用Codeだけへ指定し、従来の上部説明を重複させない',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),aside=nodes.find(node=>hasClass(node,'navigation-code')),code=walk(aside).find(node=>node.tag==='CodePanel');
+ assert.equal(attr(code,'project-notice'),'Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。');
+ assert.equal(elements(aside).some(node=>node.tag==='small'),false);assert.doesNotMatch(source,/このNavigator専用です。/);
+ assert.equal((source.match(/Navigator制御下です。/g)||[]).length,1);
+});
+
+test('共通の確認日時をタスク見出しに1つだけ表示し、各行や不明日時を捏造しない',()=>{
+ const nodes=walk(baseParse(descriptor.template.content)),items=nodes.find(node=>hasClass(node,'navigation-items')),heading=nodes.find(node=>hasClass(node,'navigation-task-heading'));
+ assert.equal(heading.tag,'h2');assert.equal(heading.children[0].content,'タスク');assert.equal(walk(items).filter(node=>hasClass(node,'navigation-checked-at')).length,0);
+ const [time,unknown]=elements(heading);assert.equal(time.tag,'time');assert.equal(time.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'checkedAt');assert.equal(time.props.find(prop=>prop.type===7&&prop.arg?.content==='datetime').exp.content,'checkedAt.iso');
+ assert.match(time.children[0].content,/\(/);assert.equal(time.children[1].content.content,'checkedAt.text');assert.match(time.children[2].content,/\)/);assert.match(unknown.children[0].content,/確認日時不明/);
+ assert.match(attr(time,'title'),/AI評価結果の確定日時/);assert.equal(nodes.filter(node=>node.tag==='time'&&hasClass(node,'navigation-checked-at')).length,1);assert.equal(walk(items).filter(node=>attr(node,'role')==='progressbar').length,1);
+});
+
 test('明細と総合の理由は独立したネイティブ開閉で、初期は折りたたむ',()=>{
  const nodes=walk(baseParse(descriptor.template.content));
  const disclosures=nodes.filter(node=>node.tag==='details');

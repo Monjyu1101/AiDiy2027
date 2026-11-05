@@ -28,12 +28,13 @@ export const 速度設定 = (文字数: number, isStream: boolean) => isStream
 export const 演出初期化 = (表示領域: HTMLElement, options: {
   カーソル色: string; isStream: boolean; 初期文字列?: string; 表示更新?: () => void; 完了?: () => void;
 }): ターミナル演出 => {
-  const textSpan = document.createElement('span'); textSpan.className = 'terminal-text'; textSpan.textContent = options.初期文字列 ?? '';
-  const cursorSpan = document.createElement('span'); cursorSpan.className = 'terminal-cursor'; cursorSpan.textContent = ' ';
+  const doc = 表示領域.ownerDocument, win = doc.defaultView!;
+  const textSpan = doc.createElement('span'); textSpan.className = 'terminal-text'; textSpan.textContent = options.初期文字列 ?? '';
+  const cursorSpan = doc.createElement('span'); cursorSpan.className = 'terminal-cursor'; cursorSpan.textContent = ' ';
   Object.assign(cursorSpan.style, { display: 'inline-block', width: '8px', backgroundColor: options.カーソル色, color: '#000000' });
   表示領域.replaceChildren(textSpan, cursorSpan);
   let blinkVisible = true;
-  const blinkInterval = window.setInterval(() => {
+  const blinkInterval = win.setInterval(() => {
     cursorSpan.style.backgroundColor = blinkVisible ? 'transparent' : options.カーソル色;
     blinkVisible = !blinkVisible;
   }, 300);
@@ -41,7 +42,7 @@ export const 演出初期化 = (表示領域: HTMLElement, options: {
   let running = false, ready = false, finalizeOnEmpty = false, stopped = false;
   let timer: number | undefined;
   const 表示更新 = () => options.表示更新?.();
-  const 停止 = () => { stopped = true; clearTimeout(timer); window.clearInterval(blinkInterval); cursorSpan.remove(); };
+  const 停止 = () => { stopped = true; win.clearTimeout(timer); win.clearInterval(blinkInterval); cursorSpan.remove(); };
   const 演出実行 = () => {
     if (stopped || running || !ready) return;
     if (!queue.length) {
@@ -57,11 +58,11 @@ export const 演出初期化 = (表示領域: HTMLElement, options: {
       const end = Math.min(index + batch, chunk.length);
       if (end > index) { textSpan.textContent += chunk.slice(index, end); index = end; 表示更新(); }
       if (index >= chunk.length) { running = false; 演出実行(); return; }
-      timer = window.setTimeout(tick, interval);
+      timer = win.setTimeout(tick, interval);
     };
     tick();
   };
-  timer = window.setTimeout(() => { ready = true; 演出実行(); }, options.isStream ? 30 : 500);
+  timer = win.setTimeout(() => { ready = true; 演出実行(); }, options.isStream ? 30 : 500);
   表示更新();
   return {
     追加: (文字列, finalize = false) => { if (文字列) queue.push(文字列); if (finalize) finalizeOnEmpty = true; 演出実行(); },
@@ -85,22 +86,26 @@ export const 即時表示 = (target?: HTMLElement) => {
 
 /** 枠を起点から到着先（場所を確保した発言の表示枠）へ飛ばす。飛び終えたら枠を外して 完了 を呼ぶ。 */
 export const 枠飛行 = (frame: HTMLElement, 起点: DOMRect, 到着先: () => HTMLElement | null | undefined, 完了: () => void) => {
+  const doc = frame.ownerDocument, win = doc.defaultView!;
   let 終了済み = false;
   let firstFrame = 0, secondFrame = 0;
   let flight: Animation | undefined;
-  const 取消 = () => { 終了済み = true; clearTimeout(安全期限); cancelAnimationFrame(firstFrame); cancelAnimationFrame(secondFrame); flight?.cancel(); frame.remove(); };
-  const 終了 = () => { if (終了済み) return; 終了済み = true; clearTimeout(安全期限); frame.remove(); 完了(); };
+  const 取消 = () => { 終了済み = true; win.clearTimeout(安全期限); win.cancelAnimationFrame(firstFrame); win.cancelAnimationFrame(secondFrame); flight?.cancel(); frame.remove(); };
+  const 終了 = () => { if (終了済み) return; 終了済み = true; win.clearTimeout(安全期限); frame.remove(); 完了(); };
   // 画面が裏にあると描画更新が止まるため、演出せずに表示する。止まっても発言を透明のまま残さない。
-  const 安全期限 = window.setTimeout(終了, 1500);
-  if (document.hidden) { 終了(); return 取消; }
-  firstFrame = requestAnimationFrame(() => { secondFrame = requestAnimationFrame(() => {
+  const 安全期限 = win.setTimeout(終了, 1500);
+  if (doc.hidden) { 終了(); return 取消; }
+  firstFrame = win.requestAnimationFrame(() => { secondFrame = win.requestAnimationFrame(() => {
     if (終了済み) return;
-    const goal = 到着先()?.getBoundingClientRect?.();
+    const target = 到着先(), goal = frame.ownerDocument === doc && target?.ownerDocument === doc ? target.getBoundingClientRect?.() : undefined;
     if (!goal || !goal.width || !goal.height || !起点.width) { 終了(); return; }
-    const box = (rect: DOMRect) => ({ left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+    // パネル内通知は飛行中も同じ領域内に置き、IDEの別領域へはみ出さない。
+    const local = frame.classList.contains('answer-popup-local') ? frame.parentElement : null;
+    const bounds = local?.getBoundingClientRect();
+    const box = (rect: DOMRect) => ({ left: `${rect.left - (bounds?.left ?? 0) + (local?.scrollLeft ?? 0) - (local?.clientLeft ?? 0)}px`, top: `${rect.top - (bounds?.top ?? 0) + (local?.scrollTop ?? 0) - (local?.clientTop ?? 0)}px`, width: `${rect.width}px`, height: `${rect.height}px` });
     // 中央寄せなどの配置を外し、現在の位置・大きさから飛ばす。
-    Object.assign(frame.style, { position: 'fixed', inset: 'auto', margin: '0', transform: 'none', maxHeight: 'none', ...box(起点) });
-    if (!frame.isConnected) document.body.append(frame);
+    Object.assign(frame.style, { position: local ? 'absolute' : 'fixed', inset: 'auto', margin: '0', transform: 'none', maxHeight: 'none', ...box(起点) });
+    if (!frame.isConnected) doc.body.append(frame);
     flight = frame.animate([
       { ...box(起点), opacity: 1 },
       { ...box(goal), opacity: 1, offset: .8 },
@@ -113,16 +118,17 @@ export const 枠飛行 = (frame: HTMLElement, 起点: DOMRect, 到着先: () => 
 };
 
 /** 送信した入力欄を模した、飛ばすための枠。 */
-export const 入力枠作成 = (本文: string) => {
-  const frame = document.createElement('div'); frame.className = 'input-flight'; frame.setAttribute('aria-hidden', 'true');
-  const text = document.createElement('span'); text.textContent = 本文; frame.append(text);
+export const 入力枠作成 = (本文: string, doc: Document = document) => {
+  const frame = doc.createElement('div'); frame.className = 'input-flight'; frame.setAttribute('aria-hidden', 'true');
+  const text = doc.createElement('span'); text.textContent = 本文; frame.append(text);
   return frame;
 };
 
-/** 画面中央に出す受信通知（ヘッダーは付けず、ターミナル演出を流す本文欄だけ）。body へ追加済みで返す。 */
-export const 受信通知作成 = (種別 = '') => {
-  const popup = document.createElement('div'); popup.className = `answer-popup${種別 ? ` ${種別}` : ''}`; popup.setAttribute('aria-hidden', 'true');
-  const body = document.createElement('div'); body.className = 'answer-popup-text';
-  popup.append(body); document.body.append(popup);
+/** 受信元の画面またはCode領域へ通知する。移動した別窓から元IDEのbodyへ戻さない。 */
+export const 受信通知作成 = (種別 = '', host: HTMLElement = document.body) => {
+  const doc = host.ownerDocument;
+  const popup = doc.createElement('div'); popup.className = `answer-popup${host !== doc.body ? ' answer-popup-local' : ''}${種別 ? ` ${種別}` : ''}`; popup.setAttribute('aria-hidden', 'true');
+  const body = doc.createElement('div'); body.className = 'answer-popup-text';
+  popup.append(body); host.append(popup);
   return { popup, body };
 };

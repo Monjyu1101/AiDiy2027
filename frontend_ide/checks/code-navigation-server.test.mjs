@@ -14,11 +14,11 @@ const require = createRequire(import.meta.url);
 const { buildSync } = require('esbuild');
 const source = buildSync({ entryPoints: [fileURLToPath(new URL('../host/aidiy_code/src/server.ts', import.meta.url))], bundle: true, write: false, platform: 'node', format: 'cjs' }).outputFiles[0].text;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
-async function fixture(t, offline = false) {
+async function fixture(t, offline = false, connecting = false) {
   const folder = mkdtempSync(join(tmpdir(), 'navi-code-'));
   const filename = join(folder, 'install/out/aidiy_code/server.cjs');
   const loaded = new Module(filename); loaded.filename = filename; loaded.paths = require.resolve.paths('esbuild'); loaded._compile(source, filename);
-  const core = require('../host/checks/fake-core.cjs').core(); core.install(t); core.hold = true;
+  const core = require('../host/checks/fake-core.cjs').core(); core.install(t); core.hold = true;core.unavailable = connecting;
   const jobs = [];
   const execute = (...args) => { let complete; const done = new Promise(resolve => { complete = resolve; });
     const job = { args, complete, stopped: false }; jobs.push(job);
@@ -33,7 +33,7 @@ async function fixture(t, offline = false) {
     while ((end = buffer.indexOf('\n\n')) >= 0) { const block = buffer.slice(0, end); buffer = buffer.slice(end + 2); if (block.startsWith('data: ')) packets.push(JSON.parse(block.slice(6))); }
   } })();
   const wait = async predicate => { const deadline = Date.now() + 3000; while (Date.now() < deadline) { const found = packets.findLast(predicate); if (found) return found; await pause(5); } throw Error('SSE timeout'); };
-  const state = await wait(p => p.type === 'state' && (offline || p.接続済み));
+  const state = await wait(p => p.type === 'state' && (offline || connecting || p.接続済み));
   t.after(async () => { await reader.cancel(); await pump; await app.close(); rmSync(folder, { recursive: true, force: true }); });
   const post = data => fetch(app.url + 'message', { method: 'POST', headers: { Origin: new URL(app.url).origin, 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   const request = (id = 'nav-1', extra = {}) => post({ type: 'input_text', navigationRequestId: id, projectPath: folder, conversationId: state.会話ID,
@@ -41,6 +41,13 @@ async function fixture(t, offline = false) {
   return { core, jobs, app, packets, wait, post, request, state, output: () => core.sockets.findLast(s => s.channel === '1') };
 }
 const terminal = p => p.type === 'navigationRunResult' && p.status !== 'accepted';
+test('Code server: 自動接続の一時offline表示中はNavigatorの送信を拒否しHermesへ迂回しない', async t => {
+  const f = await fixture(t, false, true);
+  const state = await f.wait(p => p.type === 'state' && !p.接続済み && !!p.接続エラー);
+  assert.equal(state.自動接続, true);assert.equal(state.実行モード, 'offline');
+  const response = await f.request('startup', { sessionId: state.セッションID || '', connectionEpoch: state.接続世代 });
+  assert.equal(response.status, 409);assert.match((await response.json()).error, /オンライン接続/);assert.equal(f.jobs.length, 0);assert.equal(f.packets.some(p => p.type === 'navigationRunResult'), false);
+});
 test('Code server: correlated start + terminal success required, duplicates and stale cancellation isolated', async t => {
   const f = await fixture(t);
   assert.equal(f.state.navigationRunSupported, true);

@@ -125,7 +125,7 @@ test('Codeパネル実setup: ホストが返したCode番号付きタイトル�
   for(const fn of mounted)fn();if(late)for(const fn of unmounted)fn();resolve('AiDiy IDE / Code 3');await flush();assert.equal(s.windowTitle.value,late?'':'AiDiy IDE / Code 3');
   if(!late)for(const fn of unmounted)fn();scope.stop();
  }
- const source=readFileSync(new URL('../src/components/コード/コードパネル.vue',import.meta.url),'utf8');assert.match(source,/<StatusBar :title="windowTitle \|\|/);
+ const source=readFileSync(new URL('../src/components/コード/コードパネル.vue',import.meta.url),'utf8');assert.match(source,/<StatusBar\b[^>]*:title="windowTitle \|\|/);
 });
 
 

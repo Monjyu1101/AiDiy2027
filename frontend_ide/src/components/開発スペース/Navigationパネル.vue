@@ -13,10 +13,11 @@ import TerminalWelcome from '../ターミナル/開始表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
+import {localDateTimeInput} from '../ファイル閲覧/ファイル日時.js';
 const props=defineProps({standalone:Boolean,startedAt:Number,allDisplays:Boolean,project:Object,instance:{type:String,required:true}});
 const emit=defineEmits(['closed']);
 const normalTitle=computed(()=>props.standalone?'AiDiy Navigator':'AiDiy IDE / Navigator '+props.instance.slice(5));
-const title=computed(()=>autopilot.value?'Navigation Cruise':normalTitle.value);
+const title=computed(()=>autopilot.value?normalTitle.value.replace('Navigator','Navigation Cruise'):normalTitle.value);
 const native=!!window.aidiyWindow;
 // Code同様、ビルド後に配布される画像を実行時URLで参照する。静的srcはViteのimport対象になる。
 const sendIcon=computed(()=>new URL('sending.png',new URL('/development/AiDiy.png',location.href)).href);
@@ -40,6 +41,7 @@ function verifiedResult(value){
 }
 // 総合値・理由はAIの検証済み回答をそのまま表示する。旧形式を補完しない。
 const overall=computed(()=>result.value?.overall);
+const checkedAt=computed(()=>{const at=result.value?.checkedAt,text=localDateTimeInput(at).replace('T',' ');return text?{text,iso:new Date(at).toISOString()}:null;});
 const nextItem=computed(()=>result.value?.items.find(item=>item.progress<100));
 const recommendedPrompt=computed(()=>result.value&&nextItem.value?result.value.nextPrompt:'');
 const draftActions=inject('fileDraftActions',null),draftRequest=ref(null);
@@ -247,9 +249,12 @@ async function toggleAutopilot(){
  try{
   await ensureCode();
   const deadline=Date.now()+30000;
-  while(!codePanel.value?.navigationReadiness?.(projectPath).ready){
+  while(true){
+   const readiness=codePanel.value?.navigationReadiness?.(projectPath);
+   if(readiness?.ready)break;
    if(!current()||controller.signal.aborted)throw Error('自動航行を停止しました。');
-   if(Date.now()>deadline)throw Error(codePanel.value?.navigationReadiness?.(projectPath).reason||'Codeが実行可能になりませんでした。接続・モデル・信頼状態を確認してください。');
+   if(readiness?.fatal||Date.now()>deadline)throw Error(readiness?.reason||'Codeが実行可能になりませんでした。接続・モデル・信頼状態を確認してください。');
+   autopilotStatus.value=readiness?.reason||'専用Codeパネルの状態通知を待っています…';
    await navigationWait(200,controller.signal);
   }
   const message=await runNavigationAutopilot({initial,signal:controller.signal,isCurrent:current,
@@ -285,7 +290,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
    <TerminalWelcome v-if="routing" kind="navi" icon="/development/AiDiy.png" :routing="true" :started="true" />
    <template v-else-if="result">
-    <h2 class="navigation-task-heading">タスク</h2>
+    <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>
     <ol class="navigation-items" :key="result.navigationId||result.requestId"><li v-for="item in result.items" :key="item.id"><details class="navigation-disclosure">
      <summary>
@@ -306,7 +311,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
     <section v-if="result&&!history" v-show="!routing" class="navigation-next" aria-label="プロンプト(案)"><div class="navigation-prompt-actions"><h2>プロンプト(案)</h2><button v-if="nextItem" class="navigation-handoff" :disabled="!canHandoff" :title="canHandoff?'Code / Liveの入力欄へ追加します。送信はしません。':'デスクトップ版、またはIDE内のNavigatorで利用できます。'" @click="handoff">CODE/LIVEへ</button><button v-if="nextItem" :disabled="copying" @click="copy">{{copied?'コピーしました':'コピー'}}</button><button type="button" class="navigation-autopilot-toggle" role="switch" title="Navi Cruise" aria-label="自動航行（Navi Cruise）" :aria-checked="autopilot" :disabled="!autopilot&&(!canAutopilot||!!autopilotController)" @click="toggleAutopilot">自動航行 {{autopilot?'オン':'オフ'}}</button></div><p v-if="copyError" class="navigation-copy-error" role="alert">{{copyError}}</p><p class="navigation-prompt"><span v-if="nextItem">{{recommendedPrompt}}</span><span v-else>{{result.items.length?'全項目が100%です。おすすめの追加作業はありません。':'作業項目がないため、おすすめプロンプトはありません。'}}</span></p></section>
 
   <p v-if="autopilotStatus" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}<button v-if="autopilot&&!codeOpen" type="button" @click="stopAutopilot()">自動航行をオフ</button></p>
-  <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><header><strong>Code</strong><button v-if="autopilot" type="button" @click="stopAutopilot()">自動航行をオフ</button></header><small>このNavigator専用です。自動航行オンで提案を実行し、完了後に再評価します。評価が3回改善しない場合は停止します。</small><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" embedded /></aside>
+  <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><header><strong>Code</strong><button v-if="autopilot" type="button" @click="stopAutopilot()">自動航行をオフ</button></header><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
   <ModalDialog v-if="failureDialog!==null" label="ナビの実行に失敗しました" @close="failureDialog=null">
    <h3>ナビの実行に失敗しました</h3>
    <p>別のエージェントをお試しください。</p>
@@ -393,7 +398,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-panel.standalone.has-code,.navigation-window .navigation-panel.has-code{width:100%}
 .navigation-code{grid-column:2!important;grid-row:2/8;width:auto;box-sizing:border-box;border-left:1px solid var(--aidiy-titlebar-background,#395069);display:flex;flex-direction:column;min-width:0;background:#000;overflow:hidden}
 .navigation-code>header{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:var(--aidiy-titlebar-background,#30343a)}
-.navigation-code>small{padding:5px 8px;line-height:1.5;color:#b3c5d8;font-size:10px}.navigation-code>.code-component{flex:1;min-height:0;min-width:0}
+.navigation-code .code-project-notice{flex:none;margin:0;padding:5px 8px;line-height:1.5;color:#b3c5d8;font-size:10px}.navigation-code>.code-component{flex:1;min-height:0;min-width:0}
 .navigation-autopilot-status{flex:none;margin:0;padding:6px 12px;color:#b9e8df;font-size:11px;overflow-wrap:anywhere}
 .navigation-autopilot-toggle[aria-checked="true"]{border-color:#7de2cf;background:#144d42;color:#fff}
 .navigation-prompt-actions .navigation-autopilot-toggle{margin-left:0}.navigation-project nav{flex-wrap:wrap;justify-content:flex-end}
@@ -401,7 +406,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 </style>
 
 <style>
-.navigation-code-toggle,.window-actions .navigation-code-toggle{flex:none;width:auto;min-width:62px;font-size:10px;padding:2px 6px;white-space:nowrap}.navigation-code-toggle[aria-checked="true"]{border-color:#7de2cf}.navigation-code-toggle:disabled{opacity:.6;cursor:not-allowed}
+.navigation-code-toggle,.window-actions .navigation-code-toggle{flex:none;width:auto;min-width:62px;font-size:10px;padding:2px 6px;border:1px solid #8b9baa;border-radius:0;white-space:nowrap}.navigation-code-toggle[aria-checked="true"]{border-color:#7de2cf}.navigation-code-toggle:disabled{opacity:.6;cursor:not-allowed}
 </style>
 
 <style>
@@ -414,4 +419,5 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 <style>
 .navigation-panel>.navigation-overall.driving{border-width:2px;border-style:solid;border-radius:0}
 .navigation-overall-cruise-status{flex:none;margin:4px 0 0;text-align:center;color:#b9eeee;font-size:11px;line-height:1.4;pointer-events:none}
+.navigation-checked-at{font-size:10px;font-weight:normal;color:#b3c5d8;white-space:nowrap}
 </style>

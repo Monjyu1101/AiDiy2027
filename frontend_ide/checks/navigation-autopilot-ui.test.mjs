@@ -15,7 +15,7 @@ const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 function fixture(handler,props={}){
  const calls=[],resizes=[],timers=new Map();let id=0,evaluations=0,state=makeResult(0),job=null;
- const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,availability,result,goal,panel,visible,job,refresh,canAutopilot})`,{ref,computed,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
+ const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,codeOpen,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot})`,{ref,computed,inject:()=>null,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
   const method=options.method||'GET';calls.push({url,method});const custom=await handler?.(url,options);if(custom)return custom;
   if(url==='/api/connection')return reply({active:true,startedAt:1});
   if(url.startsWith('/api/navigation/code'))return reply({url:'/panels/code/navi-1/test/'});
@@ -41,6 +41,13 @@ test('open-hide-show during initialization retains one POST and restores expansi
 });
 test('failed Code initialization collapses and reports error without running',async()=>{
  const f=fixture(url=>url.startsWith('/api/navigation/code')?{ok:false,json:async()=>({error:'cannot launch'})}:undefined);await f.api.toggleAutopilot();assert.equal(f.api.codeOpen.value,false);assert.equal(f.api.autopilot.value,false);assert.match(f.api.autopilotStatus.value,/cannot launch/);assert.deepEqual(f.resizes,[true,false]);
+});
+test('Codeの接続確定を待ち、未対応サーバーは理由を出して送信せず停止する',async()=>{
+ const f=fixture();let checks=0,sends=0;
+ f.api.codePanel.value={navigationReadiness:()=>++checks<3?{ready:false,reason:'Codeのオンライン接続・セッション確定を待っています…'}:{ready:true},runNavigationPrompt:async()=>{sends++;}};
+ await f.api.toggleAutopilot();assert.equal(checks,3);assert.equal(sends,2);assert.equal(f.api.autopilot.value,false);
+ const old=fixture();old.api.codePanel.value={navigationReadiness:()=>({ready:false,fatal:true,reason:'Code実行サーバーが自動航行に未対応です。'}),runNavigationPrompt:()=>assert.fail('must not send')};
+ await old.api.toggleAutopilot();assert.equal(old.api.autopilot.value,false);assert.match(old.api.autopilotStatus.value,/未対応/);
 });
 
 test('autopilot opens Code, allows hiding, stops while hidden and restores the same session',async()=>{
@@ -74,12 +81,12 @@ test('opening Code with autopilot OFF never inserts or submits the suggested pro
  f.api.toggleCode();await flush();assert.deepEqual(automated,[]);
 });
 
-test('active title is exactly Navigation Cruise and restores the original Navigator title',()=>{
- const f=fixture();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.autopilot.value=true;assert.equal(f.api.title.value,'Navigation Cruise');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'Navigation Cruise');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navigator');
+test('active standalone title retains AiDiy and restores the original Navigator title',()=>{
+ const f=fixture();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy Navigation Cruise');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navigation Cruise');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navigator');
 });
 
-test('IDE Navigator keeps its instance identity and restores its numbered title',()=>{
- const f=fixture(undefined,{standalone:false,instance:'navi-7'});assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');f.api.autopilot.value=true;assert.equal(f.api.title.value,'Navigation Cruise');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');
+for(const allDisplays of [false,true])test(`IDE Navigator retains AiDiy IDE and its window number during Cruise (VR=${allDisplays})`,()=>{
+ const f=fixture(undefined,{standalone:false,instance:'navi-7',allDisplays});assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy IDE / Navigation Cruise 7');f.api.detached.value=true;f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navigation Cruise 7');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navigator 7');
 });
 
 test('starting cruise from a previously hidden Code reopens the existing session',async()=>{

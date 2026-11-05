@@ -22,6 +22,8 @@ test('standalone config, API, model persistence and no file mutation API',async(
   a=await startDevelopment(root,options);b=await startDevelopment(root,options);
   const ca=await(await fetch(a.url+'development/config')).json(),cb=await(await fetch(b.url+'development/config')).json();
   assert.equal(ca.kind,'navi');assert.equal(ca.project.path,root);assert.notEqual(ca.navigationInstance,cb.navigationInstance);
+  const icon=await fetch(new URL(ca.icon,a.url));assert.equal(icon.status,200);assert.equal(icon.headers.get('content-type'),'image/png');
+  const png=Buffer.from(await icon.arrayBuffer());assert.equal(png.subarray(0,8).toString('hex'),'89504e470d0a1a0a');assert.ok(png.readUInt32BE(16)>0&&png.readUInt32BE(20)>0,'AiDiy画像の寸法が有効');
   const endpoint=app=>app.url+'api/navigation?instance='+ (app===a?ca.navigationInstance:cb.navigationInstance);
   assert.equal((await fetch(a.url+'api/files/create',{method:'POST'})).status,404);
   assert.equal((await fetch(endpoint(a),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({provider:'aidiy_hermes',model:'openai_oauth/test'})})).status,200);

@@ -116,6 +116,7 @@
 .code-component td, .code-component th { padding: 4px; border: 1px solid var(--border); }
 .code-component blockquote { border-left: 2px solid var(--vscode-textBlockQuote-border, var(--border)); padding-left: 8px; margin: 6px 0; }
 .answer-popup { position: fixed; inset: 0; z-index: 20; display: flex; width: min(560px, calc(100vw - 32px)); height: 30vh; min-height: 96px; margin: auto; overflow: hidden; pointer-events: none; color: #fff; background: #000; border: 1px solid #fff; box-shadow: 0 18px 60px #000c; font: 11px/1.5 var(--vscode-editor-font-family, monospace); animation: answer-popup-in .42s cubic-bezier(.2, .9, .3, 1.15) both; }
+.answer-popup.answer-popup-local { position: absolute; width: min(560px, calc(100% - 16px)); height: 30%; min-height: 0; max-height: calc(100% - 16px); }
 .answer-popup-text { flex: 1; min-width: 0; min-height: 0; padding: 6px; overflow: hidden auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--terminal); }
 @keyframes answer-popup-in { from { opacity: 0; transform: translateY(-16px); } to { opacity: 1; transform: none; } }
 .input-flight { position: fixed; z-index: 20; margin: 0; padding: 4px; overflow: hidden; pointer-events: none; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; color: var(--foreground); background: var(--input-surface); border: 1px solid #fff; box-shadow: 0 0 16px #ffffff70, inset 0 0 10px #ffffff20; }

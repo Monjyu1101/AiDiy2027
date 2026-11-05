@@ -18,12 +18,12 @@ function fixture(kind='navi'){
  if(kind!=='navi')page('AiDiy IDE / Navigator 7');
  return{source,record,state,page,change:active=>change({},active,kind==='navi'?undefined:'navi-window'),raw:change,pending:fn=>{pending=fn;}};
 }
-for(const kind of ['navi','panel-navigation'])test(`${kind} title switches exactly and restores original including number`,async()=>{
- const f=fixture(kind),original=f.record.window.getTitle();
- assert.equal((await f.change(true)).title,'Navigation Cruise');assert.equal(f.record.window.getTitle(),'Navigation Cruise');
+for(const kind of ['navi','panel-navigation'])for(const vr of [false,true])test(`${kind} title retains AiDiy and the window number (VR=${vr})`,async()=>{
+ const f=fixture(kind),original=f.record.window.getTitle(),cruise=kind==='navi'?'AiDiy Navigation Cruise':'AiDiy IDE / Navigation Cruise 7';f.source.vrPanelMoving=vr;
+ assert.equal((await f.change(true)).title,cruise);assert.equal(f.record.window.getTitle(),cruise);
  await f.change(true);assert.equal(f.record.navigationNormalTitle,original);
- if(kind==='panel-navigation'){f.page('unexpected title');f.page('AiDiy IDE / Navigator 99');assert.equal(f.record.window.getTitle(),'Navigation Cruise');}
- else assert.equal(navigationWindowTitle(f.record,'ignored'),'Navigation Cruise');
+ if(kind==='panel-navigation'){f.page('unexpected title');f.page('AiDiy IDE / Navigator 99');assert.equal(f.record.window.getTitle(),cruise);}
+ else assert.equal(navigationWindowTitle(f.record,'ignored'),cruise);
  assert.equal((await f.change(false)).title,original);assert.equal(f.record.window.getTitle(),original);
  if(kind==='panel-navigation'){f.page('Navigation Cruise');assert.equal(f.record.window.getTitle(),original);}
  await f.change(true);await f.change(false);assert.equal(f.record.window.getTitle(),original);

@@ -41,7 +41,7 @@ function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionK
  };
 }
 const CRUISE_TITLE='Navigation Cruise';
-function navigationWindowTitle(record,fallback){return record.navigationCruise?CRUISE_TITLE:record.navigationNormalTitle||fallback;}
+function navigationWindowTitle(record,fallback){const title=record.navigationNormalTitle||fallback;return record.navigationCruise?title.replace('Navigator',CRUISE_TITLE):title;}
 // DOMをIDEから移したNavigatorにも、通常の番号付きタイトルを保持する。
 function registerNavigationCruiseTitle(record){
  if(record.kind!=='panel-navigation')return;

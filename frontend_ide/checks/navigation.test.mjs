@@ -36,6 +36,25 @@ test('通常経路1回→JSON保存→再起動読戻し、失敗時に前回成
  await service.start('次の目標');const failed=await finish(service);assert.equal(failed.job.status,'failed');assert.equal(failed.result.goal,'検索画面を整える');assert.equal(calls,2);
  const second=createNavigation(root,{state:()=>state,stateRoot});assert.equal((await second.get()).result.items[0].progress,25);second.close();assert.deepEqual(await readdir(root),[]);
 });
+
+test('確認日時はAI結果の検証成功時に記録し、再評価だけで更新、失敗・閲覧では維持する',async t=>{
+ let clock=Date.UTC(2026,10,5,0,0,0),calls=0;
+ const {service,root,state,stateRoot}=await fixture(t,async({prompt},root)=>{calls++;clock+=3000;return respond(prompt,root,d=>calls===3?{...d,items:[{...d.items[0],progress:999}]}:{...d,checkedAt:1,updatedAt:1});},{now:()=>clock});
+ await service.start('目標');const first=(await finish(service)).result;assert.equal(first.checkedAt,clock);assert.equal(first.updatedAt,clock);
+ clock+=60000;assert.equal((await service.get()).result.checkedAt,first.checkedAt);
+ await service.start('','evaluate');const second=(await finish(service)).result;assert.equal(second.checkedAt,clock);assert.ok(second.checkedAt>first.checkedAt);assert.equal(second.createdAt,first.createdAt);
+ clock+=60000;await service.start('','evaluate');const failed=await finish(service);assert.equal(failed.job.status,'failed');assert.equal(failed.result.checkedAt,second.checkedAt);
+ const reopened=createNavigation(root,{state:()=>state,stateRoot});t.after(()=>reopened.close());assert.equal((await reopened.get()).result.checkedAt,second.checkedAt);await reopened.fresh();await reopened.select(first.navigationId);assert.equal((await reopened.get()).result.checkedAt,second.checkedAt);assert.equal(calls,3);
+});
+
+for(const legacyTime of ['known','missing','invalid'])test('旧記録の確認日時: '+legacyTime,async t=>{
+ const {service,stateRoot}=await fixture(t,async({prompt},root)=>respond(prompt,root));await service.start('目標');const saved=(await finish(service)).result;
+ const dir=join(stateRoot,(await readdir(stateRoot))[0]),latest=join(dir,'default','latest.json'),history=join(dir,'history',saved.navigationId+'.json');
+ const old={...saved};delete old.checkedAt;if(legacyTime==='missing')delete old.updatedAt;if(legacyTime==='invalid')old.updatedAt='not-a-time';
+ await writeFile(latest,JSON.stringify(old));await writeFile(history,JSON.stringify(old));
+ const expected=legacyTime==='known'?saved.updatedAt:null;assert.equal((await service.get()).result.checkedAt,expected);
+ await service.select(saved.navigationId);assert.equal((await service.get()).result.checkedAt,expected);assert.equal(JSON.parse(await readFile(latest,'utf8')).checkedAt,expected);
+});
 test('空入力・オフラインを送信前に拒否',async t=>{let calls=0;const {service,state}=await fixture(t,()=>calls++);await assert.rejects(service.start('x'.repeat(4001)));state.mode='offline';await assert.rejects(service.start('test'));assert.equal(calls,0);});
 test('連打でも1回、セッション変更後の結果を保存しない',async t=>{
  let release,calls=0;const {service,root,state}=await fixture(t,async({prompt},root)=>{calls++;await new Promise(r=>release=r);return respond(prompt,root);});

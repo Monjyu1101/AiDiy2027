@@ -16,12 +16,15 @@ import { chatArrival } from '../コード/会話到着演出';
 import { createDraftReceiver } from '../下書き連携/下書き受け渡し.js';
 import ChatAttachment from '../添付ファイル/チャット添付.vue';
 import { readDroppedFiles } from '../添付ファイル/ファイル送信.js';
-const props = defineProps({ base: String, host: Boolean, icon: String, embedded: Boolean, linked: Boolean, desktop: Boolean });
+const props = defineProps({ base: String, host: Boolean, icon: String, embedded: Boolean, hideStatusBar: Boolean, linked: Boolean, desktop: Boolean, pageNotifications: Boolean, projectNotice: String });
 const windowTitle = ref('');
 const state = reactive({ メッセージ: [], 履歴: [], 進捗: [], 信頼済み: false, 自動接続: true });
 const prompt = ref(''), error = ref(''), pending = ref(false), history = ref(false), picker = ref(false), catalogBusy = ref(false);
 const stopPending = ref(false);
 const navigationRunning = ref(false), navigationCancelling = ref(false);
+// 自動送信は入力欄にも表示する。人間の下書きとは分け、受付・停止後に元へ戻す。
+const navigationPrompt = ref(null);
+const displayedPrompt = computed({ get: () => navigationPrompt.value ?? prompt.value, set: value => { if (!navigationRunning.value && !navigationCancelling.value) prompt.value = value; } });
 let navigationRun, navigationCancellationId, navigationBlocked = false;
 const uploading = ref(false), fileNotice = ref(''), draggingFiles = ref(false);
 let fileGeneration = 0;
@@ -39,7 +42,8 @@ const hasStreamContent = ref(false);
 const sendIcon = computed(() => new URL('sending.png', new URL(props.icon || '/development/AiDiy.png', location.href)).href);
 const stopIcon = computed(() => new URL('abort.png', sendIcon.value).href);
 const rows = new Map();
-const arrivals = chatArrival(scroll);
+// IDEブラウザー版のCodeタブだけ画面全体へ通知する。他のCodeは自分の領域内に収める。
+const arrivals = chatArrival(scroll, row => props.pageNotifications ? row.ownerDocument.body : row.closest('.code-component'));
 let revision = 0, resizeObserver, checksRestored = false;
 function scroll() { if (conversation.value) conversation.value.scrollTop = conversation.value.scrollHeight; }
 const markdown = new MarkdownIt({ html: false, linkify: false, breaks: true });
@@ -147,20 +151,29 @@ const navigationScope = snapshot => JSON.stringify([snapshot.作業フォルダ?
   snapshot.セッションID || snapshot.コアセッションID, snapshot.接続世代, snapshot.実行モード, snapshot.自動接続 !== false, snapshot.provider, snapshot.model]);
 function navigationReadiness(projectPath) {
   const path = state.作業フォルダ?.パス;
+  // 自動接続ONの初回SSEは接続前のためoffline表示になる。これを明示オフラインと混同して送信しない。
+  const online = state.自動接続 !== false;
+  const connectionReady = !online || (state.実行モード === 'online' && state.接続済み && !state.接続中 && !state.モデル変更中
+    && !!(state.セッションID || state.コアセッションID) && state.接続プロジェクトパス === path && Number.isSafeInteger(state.接続世代));
   const ready = !disposed && !props.host && state.navigationRunSupported === true && !navigationBlocked
-    && allowed.value && !busy.value && !predicting.value && !picker.value && !deleting.value
+    && connectionReady && allowed.value && !busy.value && !predicting.value && !picker.value && !deleting.value
     && !autoPending.value && !stopPending.value && !state.停止中 && !!state.会話ID
     && !state.添付 && (!projectPath || projectPath === path);
-  return { ready: !!ready, projectPath: path || '', running: navigationRunning.value,
+  const unsupported = !!state.会話ID && state.navigationRunSupported !== true;
+  return { ready: !!ready, projectPath: path || '', running: navigationRunning.value, fatal: navigationBlocked || unsupported,
     reason: navigationBlocked ? '前の実行結果を確認できません。Codeを開き直して確認してください。'
+      : unsupported ? 'Code実行サーバーが自動航行に未対応です。セットアップで更新し、Navigatorを開き直してください。'
+      : !state.会話ID ? 'Codeの状態通知を待っています…'
+      : !connectionReady ? state.接続エラー ? `Codeの接続待ち: ${state.接続エラー}` : 'Codeのオンライン接続・セッション確定を待っています…'
       : ready ? '' : 'Codeの接続・プロジェクト・実行状態を確認してください。' };
 }
 function finishNavigation(failure, cancel = false) {
   const run = navigationRun;
   if (!run) return;
-  navigationRun = undefined; navigationRunning.value = false; pending.value = false; predictionReply = false;
+  navigationRun = undefined; navigationRunning.value = false; navigationPrompt.value = null; pending.value = false; predictionReply = false;
   clearTimeout(run.timer); run.signal?.removeEventListener('abort', run.abort);
   if (failure) {
+    arrivals.cancelReservation();
     // 結果不明時に同じ依頼を再送しない。停止もID付きで元の依頼だけへ送る。
     if (cancel) {
       navigationBlocked = true; navigationCancellationId = run.id; navigationCancelling.value = true;
@@ -185,10 +198,11 @@ function runNavigationPrompt({ text, projectPath, signal } = {}) {
   cancelPrediction(); history.value = false; error.value = ''; hasStreamContent.value = false;
   return new Promise((resolve, reject) => {
     const run = { id: crypto.randomUUID(), scope: navigationScope(state), accepted: false, signal, resolve, reject };
-    navigationRun = run; navigationRunning.value = true;
+    navigationRun = run; navigationRunning.value = true; navigationPrompt.value = text;
+    arrivals.reserve(input.value, text, state.メッセージ.length);
     run.abort = () => { if (navigationRun === run) finishNavigation(new Error('Navigatorの自動実行を停止しました。'), true); };
     signal?.addEventListener('abort', run.abort, { once: true });
-    // 通信応答が不明でも再送しない。実行全体の期限は既存CLIと同じ30分。
+    // 受付確認は30秒。受付後の自動航行の完了監視だけを1時間にし、Code側の実行制限は変更しない。
     run.timer = setTimeout(() => { if (navigationRun === run) finishNavigation(new Error('Codeの受付を確認できません。実行状態を確認してください。'), true); }, 30000);
     pending.value = true;
     const packet = { type: 'input_text', navigationRequestId: run.id, projectPath,
@@ -210,9 +224,9 @@ function receiveNavigation(packet) {
   if (packet.type === 'navigationRunResult') {
     if (packet.requestId !== run.id) return;
     if (packet.status === 'accepted' && !run.accepted) {
-      run.accepted = true; pending.value = false;
+      run.accepted = true; navigationPrompt.value = null; pending.value = false;
       clearTimeout(run.timer);
-      run.timer = setTimeout(() => { if (navigationRun === run) finishNavigation(new Error('Codeの完了確認が期限を超えました。'), true); }, 1800000);
+      run.timer = setTimeout(() => { if (navigationRun === run) finishNavigation(new Error('Codeの完了監視が1時間を超えたため、自動航行を停止しました。'), true); }, 3600000);
     } else if (packet.status === 'succeeded') {
       if (run.accepted) finishNavigation();
       else finishNavigation(new Error('Codeの受付確認なしで完了通知を受け取りました。'), true);
@@ -430,11 +444,12 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
 </script>
 <template>
   <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
-    <StatusBar :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" clock-pulse />
+    <StatusBar v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" clock-pulse />
     <div class="component-toolbar"><span :title="state.作業フォルダ?.パス">プロジェクト: {{ state.作業フォルダ?.名前 }}</span><nav>
       <button v-if="!embedded" class="auto-connect" role="switch" :aria-checked="state.自動接続" :title="`自動接続 ${state.自動接続 ? 'ON' : 'OFF'}`" :disabled="busy || autoPending || !operable" @click="toggleAuto"><span>自動接続</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button>
       <button :disabled="busy || autoPending || !operable || (!offline && !state.接続済み) || (!state.作業フォルダ && !state.新規可能)" @click="send('new')">＋ 新規</button><button :disabled="!operable" :aria-expanded="history" @click="arrivals.reset(); history = !history">{{ history ? '戻る' : '一覧' }}</button>
     </nav></div>
+    <p v-if="projectNotice" class="code-project-notice">{{ projectNotice }}</p>
     <p v-if="navigationCancelling" role="status" class="error">Codeの停止受付を確認しています。確認後、手動操作に戻ります。</p>
     <p v-if="changingConversation" role="status" class="error">会話の切り替えを確認しています。完了しない場合は、下書きを控えてから画面を再読み込みしてください。</p>
     <div v-if="history" class="history-list" role="list">
@@ -445,7 +460,7 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
       </div>
     </div>
     <main v-show="!history" ref="conversation" class="conversation" @click="link">
-      <TerminalWelcome v-if="!state.メッセージ.length" :key="state.会話ID" :icon="icon" :started="!!prompt" />
+      <TerminalWelcome v-if="!state.メッセージ.length" :key="state.会話ID" :icon="icon" :started="!!displayedPrompt" />
       <article v-for="(item, i) in state.メッセージ" :ref="el => el ? rows.set(i, el) : rows.delete(i)" :key="`${state.会話ID}:${i}`" :class="['message', item.種別]">
         <ChatAttachment v-if="item.添付" :attachment="item.添付" />
         <div v-else-if="item.種別 === 'user'" class="content user-text" title="クリックして入力欄へ戻す" @click="copyInput(item.本文)">{{ item.本文 }}</div>
@@ -459,7 +474,7 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
       <div v-if="state.添付" class="attachment">{{ state.添付 }} <button :disabled="busy || !operable" aria-label="添付を外す" @click="send('removeAttachment')"><span class="close-icon" aria-hidden="true"></span></button></div>
       <p v-if="!state.信頼済み && host" class="error">VS Codeでワークスペースを信頼してください。</p><p v-if="error" role="alert" class="error">{{ error }}</p>
       <p v-if="folderMissing" class="workspace-required" role="alert">先にプロジェクトフォルダを開いてください <button type="button" @click="transport.send({ type: 'openFolder' })">フォルダを開く</button></p>
-      <form :class="{ running: waitingForStream || predicting, predicting }" @submit.prevent="submit"><div class="prompt-frame"><textarea ref="input" :disabled="folderMissing" v-model="prompt" rows="3" maxlength="200000" :readonly="predicting || navigationRunning" :aria-busy="predicting" :placeholder="predicting ? '予測中、、、' : 'AiDiyに依頼する…'" aria-label="Codeへの依頼" @keydown.tab="event => { if (!event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && !event.isComposing && canSend) { event.preventDefault(); sendButton.focus(); } }"></textarea><span v-if="predicting && prompt" class="prediction-status" aria-hidden="true">予測中、、、</span></div>
+      <form :class="{ running: waitingForStream || predicting, predicting }" @submit.prevent="submit"><div class="prompt-frame"><textarea ref="input" :disabled="folderMissing" v-model="displayedPrompt" rows="3" maxlength="200000" :readonly="predicting || navigationRunning" :aria-busy="predicting || navigationRunning" :placeholder="predicting ? '予測中、、、' : 'AiDiyに依頼する…'" aria-label="Codeへの依頼" @keydown.tab="event => { if (!event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && !event.isComposing && canSend) { event.preventDefault(); sendButton.focus(); } }"></textarea><span v-if="predicting && prompt" class="prediction-status" aria-hidden="true">予測中、、、</span></div>
         <div class="composer-actions"><div class="keyboard-hint">Enter で改行 · Tab → Enter で送信</div><div class="composer-meta"><button type="button" :disabled="busy || autoPending || !operable || (!offline && !state.作業フォルダ)" @click="openModels"><span class="model-caption">モデル</span> <span class="model-chevron">▾</span></button><span class="model-label" :title="modelLabel">{{ modelLabel }}</span></div>
           <div class="prediction-options"><label class="prediction-caption">予測</label><button type="button" class="auto-connect auto-suggest" :disabled="!operable" role="switch" :aria-checked="autoSuggest" aria-label="予測" :title="`予測 ${autoSuggest ? 'ON' : 'OFF'}`" @click="toggleSuggestion"><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span><span>{{ autoSuggest ? 'ON' : 'OFF' }}</span></button></div>
           <div class="verification-options"><label>検証</label><select :value="offline ? 0 : checks" :disabled="offline || !operable || navigationRunning || navigationCancelling" aria-label="検証回数" @change="checks = Number($event.target.value); checksRestored = true; send('setSelfCheckLoop', { count: checks })"><option v-for="n in [0,1,2,3]" :key="n" :value="n">{{ n }}回</option></select><span class="verification-hint">0回:バックアップ・検証無</span></div>
