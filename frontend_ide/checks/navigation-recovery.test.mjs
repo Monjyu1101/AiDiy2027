@@ -13,16 +13,16 @@ import {ref,computed} from 'vue';
 import {localDateTimeInput} from '../src/components/ファイル閲覧/ファイル日時.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 function fixture({props={},draftActions=null,native=false}={}){
- const calls=[],pending=[],timers=new Map();let serial=0;
- const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,nextNavigationAction,history,autopilot,submitting,reconciling,savingModel,toolsState,handoff,canHandoff,draftRequest})`,{
+ const calls=[],requests=[],pending=[],timers=new Map();let serial=0;
+ const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,editGoal,canEvaluate,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,nextNavigationAction,history,autopilot,submitting,reconciling,savingModel,toolsState,handoff,canHandoff,draftRequest})`,{
   ref,computed,createNavigationPopupSizer,createNavigationMessage,localDateTimeInput,inject:()=>draftActions,watch(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({instance:'navi-1',standalone:false,...props}),defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),
-  fetch:(url,options)=>{calls.push(options.method);return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
+  fetch:(url,options)=>{calls.push(options.method);requests.push({url,...options});return new Promise((resolve,reject)=>pending.push({resolve,reject}));},
  });
  api.visible.value=true;api.availability.value={available:true};
  const settle=async()=>{for(let n=0;n<15;n++)await Promise.resolve();};
  const answer=async(data)=>{pending.shift().resolve({ok:true,json:async()=>data});await settle();};
- return {api,calls,pending,timers,settle,answer};
+ return {api,calls,requests,pending,timers,settle,answer};
 }
 const state=job=>({result:null,job,availability:{available:true},selection:{provider:'aidiy_hermes',model:'auto'}});
 test('確認日時は端末の日時を秒まで表示し、記録・再評価の切替に追従する',()=>{
@@ -197,4 +197,86 @@ test('履歴の選択中は強調せず、選択完了は再評価、新規作�
  assert.equal(f.api.goal.value,'保存済みの目標');assert.equal(f.api.nextNavigationAction.value,'evaluate');
  const fresh=f.api.selectHistory();assert.equal(f.api.nextNavigationAction.value,'');await f.answer(state(null));await fresh;
  assert.equal(f.api.nextNavigationAction.value,'navigate');
+});
+
+const evaluatedResult=(goal='最終実行時の目標',progress=25)=>({schemaVersion:3,goal,navigationId:'saved-navigation',requestId:'previous',items:[{id:'work',name:'保存済みの作業',progress,reason:'保存済みの説明',weight:100,weightReason:'保存済みの配分'}],overall:{progress,reason:'前回の根拠'},nextItemId:progress<100?'work':null,nextPrompt:progress<100?'次の作業を確認してください。':''});
+
+test('未実行・初回失敗では目標を変更しても再評価せず、ナビだけを案内する',async()=>{
+ const f=fixture();f.api.job.value={status:'failed'};
+ for(const goal of ['目標','変更した目標','','   ']){
+  f.api.goal.value=goal;assert.equal(f.api.canEvaluate.value,false);
+  await f.api.navigate('evaluate');assert.equal(f.api.goal.value,goal);
+ }
+ assert.deepEqual(f.calls,[]);
+});
+
+for(const draft of ['新しいテーマ','',' \n\t '])test('編集済み目標を復元し保存済みナビだけを再評価する: '+JSON.stringify(draft),async()=>{
+ const f=fixture(),saved=evaluatedResult();f.api.result.value=saved;f.api.goal.value=draft;f.api.editGoal();
+ assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,draft.trim()?'navigate':'');
+ const run=f.api.navigate('evaluate');
+ assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests[0].body),{goal:saved.goal,action:'evaluate'});
+ assert.deepEqual(f.api.result.value,saved,'送信開始では既存の明細を変更しない');assert.equal(f.api.canEvaluate.value,false);
+ await f.api.navigate('evaluate');assert.equal(f.calls.filter(method=>method==='POST').length,1,'連打は重複送信しない');
+ await f.answer({job:{id:'reevaluation',status:'running'}});await run;
+ const updated={...evaluatedResult(saved.goal,60),requestId:'reevaluation'};
+ await f.answer({...state({id:'reevaluation',status:'complete'}),result:updated});
+ assert.equal(f.api.goal.value,saved.goal);assert.equal(f.api.result.value.items[0].progress,60);
+ assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,'evaluate');
+});
+
+for(const outcome of ['failed','invalid'])test('再評価の'+outcome+'応答は既存明細を保ち復元目標を維持する',async()=>{
+ const f=fixture(),saved=evaluatedResult();f.api.result.value=saved;f.api.goal.value='誤って変更した目標';
+ const run=f.api.navigate('evaluate');await f.answer({job:{id:'reevaluation',status:'running'}});await run;
+ const invalid={...saved,items:[{...saved.items[0],progress:null}]};
+ await f.answer({...state({id:'reevaluation',status:outcome==='failed'?'failed':'complete',message:'結果を確認できません。'}),result:outcome==='failed'?saved:invalid});
+ assert.deepEqual(f.api.result.value,saved);assert.equal(f.api.goal.value,saved.goal);assert.equal(f.api.canEvaluate.value,true);
+ if(outcome==='invalid')assert.match(f.api.error.value,/数値評価/);
+});
+
+test('再評価の開始応答喪失中は復元目標と前回結果を保持し確認完了まで再送しない',async()=>{
+ const f=fixture(),saved=evaluatedResult();f.api.result.value=saved;f.api.goal.value='誤入力';
+ const run=f.api.navigate('evaluate');f.pending.shift().reject(Error('response lost'));await run;
+ assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(f.api.result.value,saved);assert.equal(f.api.canEvaluate.value,false);
+ await f.api.navigate('evaluate');assert.equal(f.calls.filter(method=>method==='POST').length,1);
+ await f.answer({...state(null),result:saved});assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,'evaluate');
+});
+
+test('再評価を押した後の新たな編集は完了時に上書きしない',async()=>{
+ const f=fixture(),saved=evaluatedResult();f.api.result.value=saved;f.api.goal.value='押下前の編集';
+ const run=f.api.navigate('evaluate');assert.equal(f.api.goal.value,saved.goal);
+ f.api.goal.value='押下後に入力した新テーマ';f.api.editGoal();
+ await f.answer({job:{id:'reevaluation',status:'running'}});await run;
+ await f.answer({...state({id:'reevaluation',status:'complete'}),result:{...evaluatedResult(saved.goal,60),requestId:'reevaluation'}});
+ assert.equal(f.api.goal.value,'押下後に入力した新テーマ');assert.equal(f.api.result.value.goal,saved.goal);
+ assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,'navigate');
+});
+
+test('履歴選択後の再評価はその履歴の目標へ戻し、新規作成後は再評価できない',async()=>{
+ const f=fixture(),saved=evaluatedResult('選択した履歴の目標');
+ f.api.result.value=evaluatedResult('直前の別ナビ');
+ const select=f.api.selectHistory('history');await f.answer({...state(null),result:saved});await select;
+ f.api.goal.value='誤入力';const run=f.api.navigate('evaluate');
+ assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests.at(-1).body),{goal:saved.goal,action:'evaluate'});
+ await f.answer({job:{id:'reevaluation',status:'running'}});await run;await f.answer({...state({id:'reevaluation',status:'failed'}),result:saved});
+ const fresh=f.api.selectHistory();await f.answer(state(null));await fresh;
+ assert.equal(f.api.canEvaluate.value,false);assert.equal(f.api.nextNavigationAction.value,'navigate');
+ const count=f.calls.length;await f.api.navigate('evaluate');assert.equal(f.calls.length,count);
+});
+
+test('利用不可・実行中・自動航行中の再評価では編集を勝手に戻さない',async()=>{
+ for(const blocked of ['unavailable','running','autopilot']){
+  const f=fixture();f.api.result.value=evaluatedResult();f.api.goal.value='編集中';
+  if(blocked==='unavailable')f.api.availability.value={available:false};
+  if(blocked==='running')f.api.job.value={status:'running'};
+  if(blocked==='autopilot')f.api.autopilot.value=true;
+  await f.api.navigate('evaluate');assert.equal(f.api.goal.value,'編集中');assert.deepEqual(f.calls,[]);
+ }
+});
+
+test('保存済みの推測目標に前後空白があっても再評価では原文を復元し再評価側を強調する',async()=>{
+ const f=fixture(),saved={...evaluatedResult(' \n仮の目標\t '),inferred:true};f.api.result.value=saved;f.api.goal.value='別のテーマ';
+ const run=f.api.navigate('evaluate');assert.equal(f.api.goal.value,saved.goal);assert.equal(JSON.parse(f.requests[0].body).goal,saved.goal);
+ await f.answer({job:{id:'reevaluation',status:'running'}});await run;await f.answer({...state({id:'reevaluation',status:'complete'}),result:saved});
+ assert.equal(f.api.goal.value,saved.goal);assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,'evaluate');
+ f.api.goal.value='仮の目標';assert.equal(f.api.nextNavigationAction.value,'evaluate','入力と保存目標は双方の前後空白だけを除いて比較する');
 });

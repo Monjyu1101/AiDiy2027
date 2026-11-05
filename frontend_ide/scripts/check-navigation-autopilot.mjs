@@ -63,9 +63,14 @@ try{
   assert.equal(toggle.role,'switch');assert.equal(toggle.checked,String(active));assert.equal(toggle.state,active?'オン':'オフ');assert.equal(toggle.label,'自動航行');assert.equal(toggle.hidden,'true');assert.equal(toggle.radius,'0px');assert.equal(toggle.trackWidth,'28px');
  };
  const checkNextAction=async expected=>{
-  const buttons=await evaluate(`[...document.querySelectorAll('.navigation-run-actions .navigation-run')].map(button=>({action:button.classList.contains('navigation-start')?'navigate':'evaluate',next:button.classList.contains('is-next-action'),disabled:button.disabled,color:getComputedStyle(button).backgroundColor}))`);
+  const buttons=await evaluate(`[...document.querySelectorAll('.navigation-run-actions .navigation-run')].map(button=>({action:button.classList.contains('navigation-start')?'navigate':'evaluate',next:button.classList.contains('is-next-action'),routing:button.classList.contains('is-routing'),disabled:button.disabled,color:getComputedStyle(button).backgroundColor,labelColor:button.querySelector('.navigation-button-label')?getComputedStyle(button.querySelector('.navigation-button-label')).backgroundColor:null}))`);
   assert.deepEqual(buttons.filter(button=>button.next).map(button=>button.action),expected?[expected]:[]);
-  for(const button of buttons)if(button.next){assert.equal(button.disabled,false);assert.equal(button.color,'rgb(196, 181, 253)');}
+  for(const button of buttons){
+   if(button.next)assert.equal(button.disabled,false);
+   const color=button.next||button.routing?'rgb(102, 126, 234)':'rgb(128, 128, 128)';
+   assert.equal(button.color,color,button.action+' background');
+   if(button.labelColor)assert.equal(button.labelColor,color,button.action+' label');
+  }
  };
  const checkEmbeddedHeader=async active=>{
   const header=await evaluate(`(()=>{const pane=document.querySelector('.navigation-code'),header=pane.querySelector(':scope>header');return {title:pane.querySelector(':scope>header strong')?.textContent??null,header:!!header,stop:header?.querySelector('button')?.textContent??null,mainTitle:document.title}})()`);
@@ -79,13 +84,33 @@ try{
  assert.equal(await evaluate(`document.querySelector('.navigation-task-heading time').dateTime`),'2026-11-05T00:00:00.000Z');assert.match(await evaluate(`document.querySelector('.navigation-task-heading time').textContent`),/^ \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/);
  assert.equal(await evaluate(`document.querySelectorAll('.navigation-task-heading time').length`),1);assert.equal(await evaluate(`document.querySelector('.navigation-items time')===null`),true);
  await checkCodeFrame(false);await checkAutopilotToggle(false);await checkNextAction('evaluate');
+ const capture=async name=>writeFileSync(join(out,name+'.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
+ await capture('action-saved-goal');
  const editGoal=text=>evaluate(`(()=>{const input=document.querySelector('.navigation-goal-form textarea');input.value=${JSON.stringify(text)};input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
- await editGoal('入力を変更した目標');await checkNextAction('navigate');
- await editGoal('   ');await checkNextAction('');
+ await editGoal('入力を変更した目標');await checkNextAction('navigate');await capture('action-new-theme');
+ await editGoal('   ');await checkNextAction('');await capture('action-blank-goal');
  await editGoal(result.goal);await checkNextAction('evaluate');
+ const savedResult=result;result=null;await send('Page.reload');
+ await until(()=>evaluate(`document.querySelector('.navigation-start')?.classList.contains('is-next-action')`),'default goal');
+ await checkNextAction('navigate');await capture('action-default-goal');
+ await editGoal('');await checkNextAction('');
+ await editGoal('初回の目標');await checkNextAction('navigate');
+ result=savedResult;await send('Page.reload');await until(()=>evaluate(`document.querySelector('.navigation-evaluate')?.classList.contains('is-next-action')`),'saved goal restored');
+ await checkNextAction('evaluate');
+ for(const selector of ['.navigation-start','.navigation-evaluate']){
+  const rect=await evaluate(`(()=>{const r=document.querySelector('${selector}').getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`);
+  await send('Input.dispatchMouseEvent',{type:'mouseMoved',...rect});
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('${selector}')).backgroundColor`),selector==='.navigation-start'?'rgb(128, 128, 128)':'rgb(90, 111, 216)');
+ }
+ await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});
  assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
  await checkCodeFrame(true);
  await checkEmbeddedHeader(false);
+ await evaluate(`(()=>{const input=document.querySelector('.navigation-code .code-component textarea');input.value='入力時の配色を確認するだけ';input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+ await until(()=>evaluate(`!document.querySelector('.navigation-code .send')?.disabled`),'Code send enabled');
+ assert.equal(await evaluate(`getComputedStyle(document.querySelector('.navigation-code .send')).backgroundColor`),await evaluate(`getComputedStyle(document.querySelector('.navigation-evaluate')).backgroundColor`),'再評価はCode入力時の送信ボタンと同じ色');
+ await capture('action-code-color-match');
+ await evaluate(`(()=>{const input=document.querySelector('.navigation-code .code-component textarea');input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
  assert.equal(await evaluate(`document.querySelector('.navigation-code .code-component>.panel-brand,.navigation-code .code-component>.connection-bar')===null`),true,'embedded Code omits only its duplicate title and connection strip');
  await until(()=>evaluate(`(()=>{const image=document.querySelector('.navigation-code .welcome-mark img');return image?.complete&&image.naturalWidth>0&&image.naturalHeight>0})()`),'embedded AiDiy image loaded');
  const geometry=await evaluate(`(()=>{const a=document.querySelector('.navigation-goal-form').getBoundingClientRect(),b=document.querySelector('.navigation-code').getBoundingClientRect();return {left:a.x,right:a.right,codeLeft:b.x,codeRight:b.right,width:innerWidth}})()`);assert.ok(geometry.codeLeft>=geometry.right-1,JSON.stringify(geometry));assert.ok(geometry.codeRight<=geometry.width);
@@ -119,6 +144,16 @@ try{
  await checkEmbeddedHeader(false);
  writeFileSync(join(out,'title-code-visible.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'desktop hide Code');await checkCodeFrame(false,true);assert.equal(calls.filter(x=>x==='input_text').length,sent,'title visibility toggle must not submit');
+ // 目標を誤編集しても、再評価は現在のナビの保存済み目標へ戻して実行できる。
+ result=makeResult(20);job=null;await send('Page.reload');
+ await until(()=>evaluate(`document.querySelector('.navigation-evaluate')?.classList.contains('is-next-action')`),'reevaluation ready');
+ const beforeReevaluation=evaluations,savedGoal=result.goal;
+ await editGoal('誤って変更した別の目標');await checkNextAction('navigate');
+ assert.equal(await evaluate(`document.querySelector('.navigation-evaluate').disabled`),false);
+ await click('再評価');
+ await until(()=>evaluate(`document.querySelector('.navigation-goal-form textarea').value===${JSON.stringify(savedGoal)}&&!document.querySelector('.navigation-evaluate').disabled`),'reevaluation restores saved goal');
+ assert.equal(evaluations,beforeReevaluation+1);await checkNextAction('evaluate');await capture('reevaluation-restored-goal');
+ await editGoal('');await checkNextAction('');assert.equal(await evaluate(`document.querySelector('.navigation-evaluate').disabled`),false,'保存済み結果があれば空欄でも再評価できる');
  // 共通Codeは変更せず、単独版のタイトル・接続バー・入力操作も維持する。
  appKind='code';await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.code-component>.panel-brand')&&!!document.querySelector('.code-component textarea')`),'standalone Code title');
  assert.equal(await evaluate(`document.querySelector('.code-component>.panel-brand strong').textContent`),'AiDiy Code');assert.equal(await evaluate(`document.title`),'AiDiy Code');

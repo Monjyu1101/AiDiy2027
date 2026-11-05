@@ -72,9 +72,9 @@ test('評価は保存済み目標と項目を固定し採点のみ更新、削�
  let calls=0;const {service}=await fixture(t,async({prompt})=>{calls++;const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));const data=valid(shape.requestId,shape.goal);data.items[0].progress=75;data.overall.progress=75;if(calls===3)data.items[0].name='別の項目';return {content:JSON.stringify(data)};});
  await assert.rejects(service.start('', 'evaluate'));await service.start('目標');await finish(service);await service.start('無視する入力','evaluate');let value=await finish(service);assert.equal(value.job.status,'complete',value.job.message);assert.equal(value.result.goal,'目標');assert.equal(value.result.items[0].progress,75);await service.start('','evaluate');value=await finish(service);assert.equal(value.job.status,'failed');assert.equal(value.result.items[0].name,'入力を整える');
 });
-for(const action of ['add','remove','rename','id','reorder','goal'])test('評価の構造変更を拒否: '+action,()=>{
+for(const action of ['add','remove','rename','id','reorder','goal','reason','weight','weightReason'])test('評価の構造変更を拒否: '+action,()=>{
  const d=valid();d.items.push({...d.items[0],id:'2',name:'2番目'});d.items.forEach(item=>item.weight=50);const job={id:d.requestId,goal:d.goal,items:structuredClone(d.items),action:'evaluate'};
- if(action==='add')d.items.push({...d.items[0],id:'3'});if(action==='id')d.items[0].id='changed';if(action==='remove')d.items.pop();if(action==='rename')d.items[0].name='変更';if(action==='reorder')d.items.reverse();if(action==='goal')d.goal='変更';assert.throws(()=>validateNavigation(d,job));
+ if(action==='add')d.items.push({...d.items[0],id:'3'});if(action==='id')d.items[0].id='changed';if(action==='remove')d.items.pop();if(action==='rename')d.items[0].name='変更';if(action==='reorder')d.items.reverse();if(action==='goal')d.goal='変更';if(['reason','weight','weightReason'].includes(action))d.items[0][action]=action==='weight'?60:'変更';assert.throws(()=>validateNavigation(d,job));
 });
 
 test('モデル初期値と保存/再読込、ナビと評価は同じ選択を固定して使用',async t=>{
@@ -174,18 +174,18 @@ test('加重総合は整数に丸め、未実施・未評価の0%を分母に含
  d.items[0].progress=0;d.overall.progress=0;d.nextItemId='1';assert.equal(validateNavigation(d,{id:d.requestId,goal:d.goal}).overall.progress,0);
 });
 
-test('評価で工数比率・両根拠・総合評価を変更し、保存・再起動・履歴選択で保持する',async t=>{
+test('評価は明細の数値だけを変更し、固定工数の総合評価を保存・再起動・履歴選択で保持する',async t=>{
  let calls=0;const {service,root,state,stateRoot}=await fixture(t,async({prompt})=>{
   calls++;const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));const d=valid(shape.requestId,shape.goal);
-  d.items[0].progress=100;d.nextItemId='2';d.items[0].weight=calls===1?50:80;d.items[0].weightReason=calls===1?'初回の作業量':'調査後の主要作業量';
-  d.items.push({...d.items[0],id:'2',name:'追加確認',progress:0,weight:calls===1?50:20,weightReason:'残りの作業量'});
-  d.overall={progress:calls===1?50:80,reason:calls===1?'初回評価':'追加調査に基づく工数比率の再評価'};
+  d.items[0].progress=100;d.nextItemId='2';d.items[0].weight=80;d.items[0].weightReason='初回の作業量';
+  d.items.push({...d.items[0],id:'2',name:'追加確認',progress:calls===1?0:50,weight:20,weightReason:'残りの作業量'});
+  d.overall={progress:calls===1?80:90,reason:calls===1?'初回評価':'固定工数比率と最新の達成度から再評価'};
   return {content:JSON.stringify(d)};
  });
  await service.start('目標');const first=(await finish(service)).result;
  await service.start('','evaluate');const updated=await finish(service);assert.equal(updated.job.status,'complete',updated.job.message);
- assert.deepEqual(updated.result.items.map(({id,name})=>({id,name})),first.items.map(({id,name})=>({id,name})));
- assert.deepEqual(updated.result.items.map(item=>item.weight),[80,20]);assert.equal(updated.result.overall.progress,80);assert.equal(updated.result.navigationId,first.navigationId);
+ assert.deepEqual(updated.result.items.map(({progress,...item})=>item),first.items.map(({progress,...item})=>item));
+ assert.deepEqual(updated.result.items.map(item=>item.weight),[80,20]);assert.equal(updated.result.overall.progress,90);assert.equal(updated.result.navigationId,first.navigationId);
  const reopened=createNavigation(root,{state:()=>state,stateRoot});t.after(()=>reopened.close());assert.deepEqual((await reopened.get()).result,updated.result);
  await reopened.fresh();await reopened.select(first.navigationId);assert.deepEqual((await reopened.get()).result,updated.result);
  assert.equal((await service.list()).length,1);
@@ -246,6 +246,7 @@ test('長さ上限の根拠は切り捨てず保持して数値化する',()=>{
 test('現行AIのnull回答を数値で保存・再評価・再起動・履歴復元し、失敗時は前回数値を保つ',async t=>{
  let calls=0;const {service,root,state,stateRoot}=await fixture(t,async({prompt},root)=>{
   calls++;if(calls===3)throw Error('AIとの通信失敗');
+  if(calls===2){const d=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));d.items[1].progress=null;d.overall.progress=null;return {content:JSON.stringify(d)};}
   return respond(prompt,root,d=>{d.items[0].weight=35;d.items[0].progress=100;d.nextItemId='2';d.items.push({...d.items[0],id:'2',weight:65,progress:calls===1?null:0});d.overall.progress=null;return d;});
  });
  await service.start('目標');let value=await finish(service);assert.equal(value.job.status,'complete',value.job.message);assert.equal(value.result.overall.progress,35);assert.equal(value.result.items[1].progress,0);
@@ -327,3 +328,50 @@ test('再評価で以前の対象IDを返す不整合は失敗にして前回結
  });
  await service.start('目標');const saved=(await finish(service)).result;await service.start('','evaluate');const v=await finish(service);assert.equal(v.job.status,'failed');assert.match(v.job.message,/おすすめプロンプト/);assert.deepEqual(v.result,saved);
 });
+
+for(const [name,mutate] of [
+ ['項目根拠',d=>d.items[0].reason='変更した根拠'],
+ ['配分理由',d=>d.items[0].weightReason='変更した配分理由'],
+ ['工数配分',d=>{d.items[0].weight=60;d.items[1].weight=40;}],
+ ['欠損した根拠',d=>delete d.items[0].reason],
+ ['不正な数値',d=>d.items[0].progress=101],
+])test('再評価の変更・不正応答は保存結果と履歴を一切置き換えない: '+name,async t=>{
+ let calls=0;const {service,stateRoot}=await fixture(t,async({prompt})=>{
+  const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  const d=++calls===1?targetResult([25,50]):shape;d.requestId=shape.requestId;d.goal=shape.goal;
+  if(calls>1)mutate(d);return {content:JSON.stringify(d)};
+ });
+ await service.start('元の目標');const saved=(await finish(service)).result;
+ const dir=join(stateRoot,(await readdir(stateRoot))[0]),latest=join(dir,'default','latest.json'),history=join(dir,'history',saved.navigationId+'.json');
+ const latestText=await readFile(latest,'utf8'),historyText=await readFile(history,'utf8');
+ await service.start('誤入力された別の目標','evaluate');const result=await finish(service);
+ assert.equal(result.job.status,'failed');assert.deepEqual(result.result,saved);
+ assert.equal(await readFile(latest,'utf8'),latestText);assert.equal(await readFile(history,'utf8'),historyText);
+});
+test('推測目標の再評価も保存目標を固定し、目標の再推測や明細再作成を依頼しない',async t=>{
+ const prompts=[];const {service}=await fixture(t,async({prompt})=>{
+  prompts.push(prompt);const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  return {content:JSON.stringify(prompts.length===1?valid(shape.requestId,'保存された仮の目標'):shape)};
+ });
+ await assert.rejects(service.start('未実行','evaluate'),/先にNavigator/);assert.equal(prompts.length,0);
+ await service.start(DEFAULT_NAVIGATION_GOAL);const saved=(await finish(service)).result;
+ await service.start('誤入力の新しい目標','evaluate');const result=await finish(service);
+ assert.equal(result.job.status,'complete',result.job.message);assert.equal(result.result.goal,saved.goal);assert.deepEqual(result.result.items,saved.items);
+ assert.match(prompts[1],/明細はprogressの数値だけ/);assert.match(prompts[1],/工数比率を再配分しない/);
+ assert.doesNotMatch(prompts[1],/誤入力の新しい目標|仮の開発目標をgoalに設定|やることを最大50項目に分け|工数配分を変更する場合|適切な粒度の複数項目を生成/);
+});
+
+test('推測目標の前後空白を再評価・再起動・履歴復元でもそのまま保持する',async t=>{
+ const goal='  仮の目標 \n';let calls=0;
+ const {service,root,state,stateRoot}=await fixture(t,async({prompt})=>{
+  const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  if(++calls===1)return {content:JSON.stringify(valid(shape.requestId,goal))};
+  assert.equal(shape.goal,goal);shape.items[0].progress=75;shape.overall.progress=75;
+  return {content:JSON.stringify(shape)};
+ });
+ await service.start(DEFAULT_NAVIGATION_GOAL);const first=await finish(service);assert.equal(first.job.status,'complete');assert.equal(first.result.goal,goal);
+ const started=await service.start('誤入力した目標','evaluate');assert.equal(started.job.goal,goal);
+ const updated=await finish(service);assert.equal(updated.job.status,'complete',updated.job.message);assert.equal(updated.result.goal,goal);assert.equal(updated.result.items[0].progress,75);assert.equal(updated.result.navigationId,first.result.navigationId);
+ const reopened=createNavigation(root,{state:()=>state,stateRoot});t.after(()=>reopened.close());assert.deepEqual((await reopened.get()).result,updated.result);
+ await reopened.fresh();await reopened.select(updated.result.navigationId);assert.deepEqual((await reopened.get()).result,updated.result);
+ });

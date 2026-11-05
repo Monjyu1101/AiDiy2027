@@ -132,6 +132,8 @@ test('目標は4行、左の説明・目標差異・モデル3段の右に同サ
  assert.equal(nodes.filter(node=>hasClass(node,'navigation-draft-note')).length,1);assert.ok(!children.some(node=>hasClass(node,'navigation-draft-note')));
  const [navi,evaluate]=elements(controls[1]);assert.ok(hasClass(navi,'navigation-run')&&hasClass(evaluate,'navigation-run'));assert.equal(elements(navi)[0].props.find(p=>p.type===7&&p.name==='bind'&&p.arg?.content==='src').exp.content,'sendIcon');assert.equal(evaluate.children[0].content,'再評価');
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
+ assert.equal(attr(evaluate,'title'),'目標を最終実行時に戻し、保存済み明細の達成率を再評価');
+ assert.match(descriptor.template.content,/再評価では最終実行時の目標へ戻します/);
  assert.doesNotMatch(descriptor.template.content,/navigation-model-footer/);
  assert.match(source,/grid-template-columns:minmax\(0,1fr\) auto/);assert.match(source,/width:40\.6px;height:40\.6px/);assert.match(source,/\.navigation-form-foot \.navigation-model-line\{min-width:0;flex-wrap:wrap/);
 });
@@ -211,14 +213,21 @@ test('自動航行の停止操作はトグル1つだけで、準備・Code実行
 });
 
 
-test('ナビ・再評価の一方だけを薄紫にし、通常色・無効条件・実行中表示を保持する',()=>{
+test('ナビ・再評価は通常灰色で、次の一方だけをCode入力時と同じ青紫にする',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),navi=nodes.find(node=>hasClass(node,'navigation-start')),evaluate=nodes.find(node=>hasClass(node,'navigation-evaluate'));
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}");
  assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-next-action':nextNavigationAction==='evaluate'}");
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
  const css=descriptor.styles.map(style=>style.content).join('\n');
- assert.match(css,/\.navigation-goal-form \.navigation-run\.is-next-action:not\(:disabled\)[^{]*\{background:#c4b5fd;color:#161026;border-color:#c4b5fd\}/);
- assert.match(css,/\.navigation-run\.is-next-action:not\(:disabled\) img\{filter:brightness\(0\)\}/);
- assert.match(css,/\.navigation-goal-form \.navigation-run:not\(:disabled\)\{background:#667eea;color:#fff\}/);
+ assert.match(css,/\.navigation-goal-form \.navigation-run\{[^}]*border:1px solid #808080;[^}]*background:#808080;color:#fff/);
+ assert.match(css,/\.navigation-button-label\{[^}]*background:#808080;color:#fff\}/);
+ assert.match(css,/\.navigation-goal-form \.navigation-run\.is-next-action:not\(:disabled\)[^{]*\{background:#667eea;color:#fff;border-color:#667eea\}/);
+ assert.match(css,/\.navigation-goal-form \.navigation-run\.is-next-action:not\(:disabled\):hover[^{]*\{background:#5a6fd8;border-color:#5a6fd8\}/);
+ assert.match(css,/\.navigation-run img\{[^}]*filter:brightness\(0\) invert\(1\)\}/);
+ assert.doesNotMatch(css,/\.navigation-run:not\(:disabled\)/,'有効なだけでは強調しない');
+ assert.doesNotMatch(css,/#c4b5fd|#d8ccff/,'Codeと異なる薄紫は使用しない');
+ const codeCss=readFileSync(new URL('../src/components/共通表示/会話表示.css',import.meta.url),'utf8');
+ assert.match(codeCss,/\.ai-component \.send:not\(:disabled\) \{ background: #667eea; border-color: #667eea; \}/);
+ assert.match(codeCss,/\.ai-component \.send:not\(:disabled\):hover \{ background: #5a6fd8; border-color: #5a6fd8; \}/);
  assert.match(css,/\.navigation-goal-form \.navigation-run\.is-routing\{background:#667eea;color:#fff\}/);
 });
