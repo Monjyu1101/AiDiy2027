@@ -17,6 +17,7 @@ import miniWindow from '../起動/ミニ表示.cjs';
 import microWindow from '../起動/マイクロ表示.cjs';
 import resizeEffect from '../起動/サイズ切替.cjs';
 import normalSize from '../起動/通常窓サイズ.cjs';
+import displayPosition from '../起動/表示切替位置.cjs';
 import closeWindow from '../起動/終了確認.cjs';
 import macMenu from '../起動/MacOS-Menu.cjs';
 import windowPins from '../../frontend_ide/デスクトップ/最前面ピン.cjs';
@@ -36,7 +37,7 @@ async function mainFixture({sizeEffects=resizeEffect,opening,load,toolsOpen=fals
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(menu){app.menu=menu;}};
  const session={fromPartition(name){assert.ok(!name.startsWith('persist:'));return {setPermissionRequestHandler(fn){policy.permission=fn;},setPermissionCheckHandler(fn){policy.check=fn;},webRequest:{onBeforeRequest(fn){policy.request=fn;}}};}};
  class Window extends EventEmitter {constructor(value){super();options=value;win=this;this.webContents=new EventEmitter();this.webContents.mainFrame={};this.webContents.isDestroyed=()=>false;this.webContents.send=(channel,state)=>{this.pinMessage={channel,state};};this.webContents.executeJavaScript=async script=>{scripts.push(script);};this.webContents.setWindowOpenHandler=fn=>{policy.window=fn;};}isDestroyed(){return !!this.destroyed;}isVisible(){return false;}isMinimized(){return !!this.minimized;}isMaximized(){return !!this.maximized;}maximize(){this.maximized=true;}unmaximize(){this.maximized=false;}minimize(){this.minimized=true;}close(){const event={preventDefault(){this.prevented=true;}};this.emit('close',event);if(!event.prevented)this.closed=true;}getBounds(){return {...this.getNormalBounds()};}getNormalBounds(){return this.bounds||{x:150,y:100,width:options.width,height:options.height};}getMinimumSize(){return this.minimum||[420,320];}isResizable(){return this.resizable!==false;}setResizable(value){this.resizable=value;}setIgnoreMouseEvents(){}isMaximizable(){return true;}setMinimumSize(...value){this.minimum=value;}setMaximizable(value){this.maximizable=value;}setBounds(value){this.bounds=value;}isAlwaysOnTop(){return !!this.top;}setAlwaysOnTop(value){this.top=value;}setMenuBarVisibility(){}show(){this.shown=true;}async loadURL(value){loaded=value;this.webContents.emit('did-start-loading');await load?.();}}
- vm.runInNewContext(source,{__dirname:'/fixture',require:id=>id==='node:path'?path:id==='../ui/src/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:28,width:1920,height:1052}}),getDisplayMatching:()=>({workArea:{x:0,y:28,width:1920,height:1052}})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
+ vm.runInNewContext(source,{__dirname:'/fixture',require:id=>id==='node:path'?path:id==='../ui/src/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./表示切替位置.cjs'?displayPosition:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:28,width:1920,height:1052}}),getDisplayMatching:()=>({workArea:{x:0,y:28,width:1920,height:1052}})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
  return {stdin,proc,app,policy,sent,exits,handlers,scripts,openings,dialogs,moves,iconMenus,get options(){return options;},get win(){return win;},get loaded(){return loaded;}};
 }
 test('desktop default; explicit browser, Codespaces, headless remain Node-only',()=>{
@@ -383,6 +384,45 @@ test('全表示経路は準備完了前にnative寸法を変更せず、遅れ�
   assert.ok(changes.length>0);assert.equal(effect.active,false);
   if(target==='mini')assert.equal(f.win.getBounds().height,186,'最新の完成高さを古い予約値で戻さない');
   if(target==='micro'){assert.equal(f.win.getBounds().height,290);control(event,'startMicro',false);}
+ }
+});
+
+test('標準・ミニ・アイコンの全6方向で開始位置から基準を決め、演出と実測後も維持',async()=>{
+ const sizes={normal:{width:800,height:600},mini:{width:330,height:186},micro:{width:128,height:138}};
+ for(const corner of [null,'top-left','top-right','bottom-left','bottom-right'])for(const source of Object.keys(sizes))for(const target of Object.keys(sizes)){
+  if(source===target)continue;
+  let planned;
+  const effect={準備:async bounds=>{planned=bounds;return true;},完了:async()=>true,中止(){}};
+  const f=await mainFixture({sizeEffects:{画面サイズ演出を作成:()=>effect}});
+  f.proc.emit('message',{type:'diag-start',url});await flush();
+  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
+  if(source==='mini'){control(event,'startMini',true);control(event,'resizeMini',186);}
+  if(source==='micro'){control(event,'startMicro',true);control(event,'resizeMicroLabel',18);}
+  const right=corner?.endsWith('right'),bottom=corner?.startsWith('bottom');
+  const left=corner?24:120,top=corner?60:180;
+  const size=sizes[source],origin={x:right?1896-size.width:left,y:bottom?1048-size.height:top,...size};
+  f.win.setBounds(origin);
+  for(let repeat=0;repeat<2;repeat++){
+   assert.equal(await control(event,'beginDisplay',target),true);
+   assert.equal(planned.x+(right?planned.width:0),right?1896:left,'演出予定の横基準');
+   assert.equal(planned.y+(bottom?planned.height:0),bottom?1048:top,'演出予定の縦基準');
+   if(source==='micro')control(event,'startMicro',false);
+   if(source==='mini')control(event,'startMini',false);
+   if(target==='mini'){control(event,'startMini',true);control(event,'resizeMini',186);}
+   if(target==='micro'){control(event,'startMicro',true);control(event,'resizeMicroLabel',18);}
+   await control(event,'finishDisplay');
+   const actual=f.win.getBounds();
+   assert.deepEqual(actual,{x:right?1896-sizes[target].width:left,y:bottom?1048-sizes[target].height:top,...sizes[target]},`${source} → ${target}`);
+   // 次の試行は同じ開始モードへ戻し、保存した通常寸法と最前面ロックも再利用する。
+   await control(event,'beginDisplay',source);
+   if(target==='micro')control(event,'startMicro',false);
+   if(target==='mini')control(event,'startMini',false);
+   if(source==='mini'){control(event,'startMini',true);control(event,'resizeMini',186);}
+   if(source==='micro'){control(event,'startMicro',true);control(event,'resizeMicroLabel',18);}
+   await control(event,'finishDisplay');
+   assert.deepEqual(f.win.getBounds(),origin);
+  }
+  if(source==='micro')control(event,'startMicro',false);
  }
 });
 

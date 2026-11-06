@@ -74,10 +74,10 @@ test('透明部分は背後へ通し、操作対象で解除。復帰後に遅�
   control.set(false);finish(false);await sleep(20);assert.equal(w.ignored,false);
  }finally{control.set(false);w.emit('closed');}
 });
-test('画面端の展開は領域内に収まり、通常復帰はフォーム左肩を保持',()=>{
+test('画面端の展開は領域内に収まり、右下に達した展開窓から通常復帰も右下を保持',()=>{
  const {w,control}=fixture();w.bounds={x:1700,y:900,width:800,height:600};w.maximized=true;
  control.set(true);control.expand(true);assert.ok(w.bounds.x>=0&&w.bounds.x+376<=1920);assert.ok(w.bounds.y>=0&&w.bounds.y+376<=1080);
- const origin=w.getBounds();control.set(false);assert.equal(w.maximized,false);assert.equal(w.bounds.x,origin.x);assert.equal(w.bounds.y,origin.y);assert.equal(w.bounds.width,800);
+ const origin=w.getBounds();control.set(false);assert.equal(w.maximized,false);assert.equal(w.bounds.x+w.bounds.width,origin.x+origin.width);assert.equal(w.bounds.y+w.bounds.height,origin.y+origin.height);assert.equal(w.bounds.width,800);
 });
 
 test('四隅では展開だけ内側へ補正し、収納後は元のアイコン位置へ戻る',()=>{
@@ -175,4 +175,31 @@ test('名前の折り返し高さだけ縦に広げ、中央アイコンの位�
  for(const v of [17,4097,NaN,'54',54.5])assert.equal(control.resizeLabel(v),false);
  w.bounds.y=1000;control.resizeLabel(180);assert.equal(w.bounds.height,300);assert.equal(w.bounds.y,780);
  control.set(false);
+});
+
+test('右下アイコンは長短の名前・展開収納・通常復帰で右下の余白を保つ',()=>{
+ const {w,control,screen}=fixture();
+ const area={x:-1280,y:-720,width:1280,height:720};screen.getDisplayMatching=()=>({workArea:area,scaleFactor:1.25});
+ w.bounds={x:-820,y:-632,width:800,height:600};const original=w.getBounds();
+ control.set(true);
+ for(const height of [18,90,180,18]){
+  control.resizeLabel(height);assert.deepEqual(w.bounds,{x:-148,y:-32-(120+height),width:128,height:120+height});
+ }
+ const folded=w.getBounds();
+ control.expand(true,13);control.expand(false);assert.deepEqual(w.getBounds(),folded);
+ control.set(false);assert.deepEqual(w.bounds,original);
+});
+
+test('名前が画面の高さ上限に達しても、短名復帰時は元の下余白へ戻る',()=>{
+ const {w,control}=fixture();control.set(true);
+ w.bounds={x:1772,y:922,width:128,height:138};
+ control.resizeLabel(1000);assert.deepEqual(w.bounds,{x:1772,y:0,width:128,height:1080});
+ control.resizeLabel(18);assert.deepEqual(w.bounds,{x:1772,y:922,width:128,height:138});
+ w.bounds.y=20;control.resizeLabel(1000);control.resizeLabel(18);assert.equal(w.bounds.y,20);
+ control.set(false);
+});
+
+test('角基準ではない画面外位置のアイコン化は補正後の左肩から通常へ戻る',()=>{
+ const {w,control}=fixture();w.bounds={x:-300,y:200,width:800,height:600};
+ control.set(true);assert.equal(w.bounds.x,0);control.set(false);assert.deepEqual(w.bounds,{x:0,y:200,width:800,height:600});
 });

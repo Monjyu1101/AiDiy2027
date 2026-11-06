@@ -100,3 +100,32 @@ test('mini restore keeps pin changes made while compact instead of restoring a s
   controller.set(false);assert.equal(window.top,!top);
  }
 });
+
+test('右下ミニは高さの増減と通常復帰で余白を保ち、移動後は基準を選び直す',()=>{
+ const window=fakeWindow(),screen={getDisplayMatching:()=>({workArea:{x:-1920,y:-1040,width:1920,height:1040}})};
+ window.bounds={x:-1180,y:-852,width:1160,height:820};
+ const original=window.getBounds(),controller=miniWindow.ミニ表示を作成(window,{screen});
+ controller.set(true);
+ for(const height of [134,186,80,360,134]){
+  controller.resize(height);
+  assert.deepEqual(window.bounds,{x:-350,y:-32-height,width:330,height});
+ }
+ assert.deepEqual(controller.演出範囲(false),original);
+ controller.set(false);assert.deepEqual(window.bounds,original);
+ controller.set(true);window.bounds.x=-1850;window.bounds.y=-980;
+ controller.resize(200);controller.set(false);
+ assert.deepEqual(window.bounds,{...original,x:-1850,y:-980});
+});
+
+test('低い画面で上下余白が同じ高さまで広げても、下基準を失わない',()=>{
+ const window=fakeWindow(),screen={getDisplayMatching:()=>({workArea:{x:0,y:0,width:800,height:400}})};
+ const controller=miniWindow.ミニ表示を作成(window,{screen});controller.set(true);
+ window.bounds={x:450,y:246,width:330,height:134};
+ controller.resize(360);assert.deepEqual(window.bounds,{x:450,y:20,width:330,height:360});
+ controller.resize(134);assert.deepEqual(window.bounds,{x:450,y:246,width:330,height:134});
+ // 通常寸法が画面より大きくても、続くミニ復帰は元の角と余白を使う。
+ controller.set(false);assert.deepEqual(window.bounds,{x:0,y:0,width:1160,height:820});
+ controller.set(true);assert.deepEqual(window.bounds,{x:450,y:246,width:330,height:134});
+ // ユーザー移動があれば、保持していた下基準を引き継がない。
+ window.bounds.y=20;controller.resize(360);controller.resize(134);assert.equal(window.bounds.y,20);
+});

@@ -5,11 +5,12 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const {pinLevel}=require('../../frontend_ide/デスクトップ/最前面ピン.cjs');
+const {表示切替基準を作成}=require('./表示切替位置.cjs');
 // 名前上端: 中央アイコン中心(64px)+回転枠の外側(48px)。CSS の .micro-project と合わせる。
 const 閉じた幅=128,開いた幅=320,名前上端=112;
 const {円周配置}=require('../ui/src/components/アプリ起動/円周配置.cjs');
 const {createCodeDrag}=require('../../frontend_ide/デスクトップ/code-drag.cjs');
-function マイクロ表示を作成(window,{screen,pins}={}){
+function マイクロ表示を作成(window,{screen,pins,位置=表示切替基準を作成(screen)}={}){
  let saved,expanded=false,timer,busy=false,generation=0,ignored=false,foldedBounds,expandedBounds;
  // closed 後は BrowserWindow.webContents の取得自体が失敗するため、生存中に保持する。
  const contents=window.webContents;
@@ -67,11 +68,14 @@ function マイクロ表示を作成(window,{screen,pins}={}){
    saved={bounds:window.getNormalBounds(),minimum:window.getMinimumSize(),maximized:window.isMaximized(),maximizable:window.isMaximizable(),resizable:window.isResizable()};
    if(saved.maximized)window.unmaximize();
    window.setMaximizable(false);window.setResizable(false);pins.setLocked(window,true);
-   expanded=false;foldedBounds=expandedBounds=undefined;fit(閉じた幅,{...start,width:閉じた幅,height:閉じた幅});最前面維持();timer=setInterval(hit,60);timer.unref?.();
+   expanded=false;foldedBounds=expandedBounds=undefined;
+   window.setMinimumSize(閉じた幅-2,閉じた幅-2);place(位置.計算(start,{width:閉じた幅,height:閉じた幅},{画面内:true}));
+   最前面維持();timer=setInterval(hit,60);timer.unref?.();
   }else{
    endMove();clearInterval(timer);ignore(false);const previous=saved;saved=undefined;expanded=false;
-   pins.setLocked(window,false);window.setAlwaysOnTop(pins.state(window).pinned,pinLevel);window.setMinimumSize(...previous.minimum);window.setResizable(previous.resizable);window.setMaximizable(previous.maximizable);window.setBounds({...previous.bounds,x:start.x,y:start.y});
+   pins.setLocked(window,false);window.setAlwaysOnTop(pins.state(window).pinned,pinLevel);window.setMinimumSize(...previous.minimum);window.setResizable(previous.resizable);window.setMaximizable(previous.maximizable);place(位置.計算(start,previous.bounds));
   }
+  位置.記録(window.getBounds());
   return true;
  }
  window.on('blur',()=>endMove());
@@ -83,7 +87,7 @@ function マイクロ表示を作成(window,{screen,pins}={}){
   if(!saved||expanded||window.isDestroyed()||!Number.isInteger(height)||height<18||height>4096)return false;
   const b=window.getBounds(),area=screen.getDisplayMatching(b).workArea;
   const target=Math.min(area.height,Math.max(閉じた幅,名前上端+height+8));
-  if(b.height!==target){window.setMinimumSize(閉じた幅-2,閉じた幅-2);place({...b,width:閉じた幅,height:target,y:Math.max(area.y,Math.min(area.y+area.height-target,b.y))});}
+  if(b.height!==target){window.setMinimumSize(閉じた幅-2,閉じた幅-2);place(位置.計算(b,{width:閉じた幅,height:target},{画面内:true}));位置.記録(window.getBounds());}
   return true;
  },expand(value,count=13){
   const layout=円周配置(count);

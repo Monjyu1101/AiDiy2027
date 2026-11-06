@@ -12,6 +12,7 @@ const {ミニ表示を作成,ミニ高さは有効,ミニ幅}=require('./ミニ�
 const {マイクロ表示を作成,閉じた幅}=require('./マイクロ表示.cjs');
 const {画面サイズ演出を作成}=require('./サイズ切替.cjs');
 const {通常窓サイズを作成}=require('./通常窓サイズ.cjs');
+const {表示切替基準を作成}=require('./表示切替位置.cjs');
 const {標準タイトル操作を取り付け}=require('./標準タイトル操作.cjs');
 const {checkPort}=require('./ポート接続.cjs');
 const {attachNativeWindowMove}=require('../../frontend_ide/デスクトップ/長押し窓移動.cjs');
@@ -60,8 +61,9 @@ async function start(value) {
   Macメニューを設定({app,Menu,window,icon:path.join(__dirname,'../static/AiDiy_diag.png')});
   const sizeEffect=画面サイズ演出を作成(BrowserWindow,window,{topmostLevel:()=>micro.active&&process.platform==='win32'?'pop-up-menu':pinLevel});
   const sizingWindow=通常窓サイズを作成(sizeEffect.window||window,screen);
-  const mini=ミニ表示を作成(sizingWindow,{screen});
-  const micro=マイクロ表示を作成(sizingWindow,{screen,pins:{setLocked:(_target,value)=>pins.setLocked(window,value),state:()=>pins.state(window)}});
+  const displayPosition=表示切替基準を作成(screen);
+  const mini=ミニ表示を作成(sizingWindow,{screen,位置:displayPosition});
+  const micro=マイクロ表示を作成(sizingWindow,{screen,位置:displayPosition,pins:{setLocked:(_target,value)=>pins.setLocked(window,value),state:()=>pins.state(window)}});
   window.once('closed',()=>sizeEffect.中止());
   let firstLoad=true,opening=false,pendingMiniHeight,pendingMicroHeight,displaySwitch=false,displayOrigin;
   let maximizeOperation;
@@ -100,12 +102,7 @@ async function start(value) {
       if(!['normal','mini','micro'].includes(value)||opening||displaySwitch||sizeEffect.active)return false;
       displayOrigin=window.getBounds();
       const base=micro.normalBounds||mini.normalBounds||window.getNormalBounds();
-      const target={...(value==='micro'?{width:閉じた幅,height:閉じた幅}:value==='mini'?{width:ミニ幅,height:360}:base),x:displayOrigin.x,y:displayOrigin.y};
-      if(value==='micro'){
-        const area=screen.getDisplayMatching(displayOrigin).workArea;
-        target.x=Math.max(area.x,Math.min(area.x+area.width-target.width,target.x));
-        target.y=Math.max(area.y,Math.min(area.y+area.height-target.height,target.y));
-      }
+      const target=displayPosition.計算(displayOrigin,value==='micro'?{width:閉じた幅,height:閉じた幅}:value==='mini'?{width:ミニ幅,height:360}:base,{画面内:value==='micro'});
       pendingMicroHeight=undefined;displaySwitch=true;
       return sizeEffect.準備(target).then(ready=>{if(!ready)displaySwitch=false;return ready;});
     }
