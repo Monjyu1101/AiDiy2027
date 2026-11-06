@@ -80,9 +80,9 @@ test('Navigator右側はCode見出し・空のタイトル行・重複する停�
 test('Code orbit light is enabled only while autopilot is on and total is below100',()=>{
  const f=fixture();assert.equal(f.api.codeDriving.value,false);f.api.autopilot.value=true;assert.equal(f.api.codeDriving.value,true);f.api.result.value=makeResult(100);assert.equal(f.api.codeDriving.value,false);f.api.result.value=makeResult(50);assert.equal(f.api.codeDriving.value,true);f.api.stopAutopilot();assert.equal(f.api.codeDriving.value,false);
 });
-test('Code light reuses exploration orbit with reduced-motion fallback and no overlay loop',()=>{
+test('Code and overall light share a calm five-second orbit without slowing IDE exploration',()=>{
  const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');const shared=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
- assert.match(full,/:class="\{driving:codeDriving\}"/);assert.match(full,/animation:motion-spin 1\.6s linear infinite/);assert.match(shared,/@keyframes motion-spin/);assert.match(full,/@media\(prefers-reduced-motion:reduce\)\{\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{animation:none/);assert.doesNotMatch(full,/requestAnimationFrame/);
+ assert.match(full,/:class="\{driving:codeDriving\}"/);assert.match(full,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 5s linear infinite/);assert.match(shared,/\.space-motion-toggle\.driving\{[^}]*animation:motion-spin 1\.6s linear infinite/);assert.match(shared,/@keyframes motion-spin/);assert.match(full,/@media\(prefers-reduced-motion:reduce\)\{\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{animation:none/);assert.doesNotMatch(full,/requestAnimationFrame/);
 });
 
 test('opening Code with autopilot OFF never inserts or submits the suggested prompt',async()=>{

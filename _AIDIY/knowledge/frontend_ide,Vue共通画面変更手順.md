@@ -749,7 +749,7 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 関連試験は `node --test checks/navigation-autopilot*.test.mjs checks/navigation-code-*.test.* checks/navigation-popup-size.test.mjs checks/code-navigation-*.test.mjs checks/navigation-recovery.test.mjs checks/navigation-layout.test.mjs`。`npm run build` 後の `node scripts/check-navigation-autopilot.mjs` は実VueとChromium、模擬API/SSEで右側配置、単独表示、2周から100%終了、オフ後の後続禁止を確認し、`temp/navigation-autopilot-check/` に証跡を保存します。実AIの課金・ユーザープロジェクトの変更は行いません。Chromiumのローカルソケット利用が許可される環境で実行してください。実Windows/Electronでの境界・VR・最大化を含む目視確認は別途必要です。
 
-自動航行がオンかつ総合評価100%未満の場合だけ、埋込Codeの外枠にIDEの「自動探索」と同じシアンの周回光を表示します。Code実行中だけでなく準備・再評価中も継続し、オフ・停止・失敗・100%達成で消えます。既存の `motion-spin` を使うCSS描画だけで、タイマーやCanvasは追加しません。`prefers-reduced-motion: reduce` では動かさず固定色の枠にします。
+自動航行がオンかつ総合評価100%未満の場合だけ、埋込Codeの外枠にIDEの「自動探索」と同じシアンの周回光を表示します。長時間眺めても落ち着くよう、自動航行の枠は5秒で1周します。IDE自動探索のボタンは従来の1.6秒を維持します。Code実行中だけでなく準備・再評価中も継続し、オフ・停止・失敗・100%達成で消えます。既存の `motion-spin` を使うCSS描画だけで、タイマーやCanvasは追加しません。`prefers-reduced-motion: reduce` では動かさず固定色の枠にします。
 
 自動航行中のNavigatorタイトルは単独版で `AiDiy Navigation Cruise`、IDE起動で `AiDiy IDE / Navigation Cruise N` と表示し、VR・別窓でもブランド名と起動番号を保持します。停止・完了時は単独版の `AiDiy Navigator`、または番号付き `AiDiy IDE / Navigator N` に戻します。画面・ブラウザ・OSのタイトルを連動させ、窓の識別IDや履歴・所有関係は変更しません。
 

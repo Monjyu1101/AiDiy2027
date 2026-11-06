@@ -159,7 +159,7 @@ test('自動航行中の総合評価は周回枠と枠内下部中央の状態�
  assert.equal(overall.props.find(p=>p.type===7&&p.name==='show').exp.content,'!routing||codeDriving');
  assert.equal(overall.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,'{driving:codeDriving}');
  const [details,status]=elements(overall);assert.equal(details.tag,'details');assert.equal(hasClass(status,'navigation-overall-cruise-status'),true);assert.equal(status.props.find(p=>p.type===7&&p.name==='if').exp.content,'codeDriving');assert.equal(status.children[0].content,'自動航行中');assert.equal(attr(status,'role'),'status');
- assert.match(source,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 1\.6s linear infinite/);
+ assert.match(source,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 5s linear infinite/);
  assert.match(source,/@media\(prefers-reduced-motion:reduce\)\{[^}]*navigation-overall\.driving\{animation:none/);
  assert.match(source,/\.navigation-overall-cruise-status\{flex:none;[^}]*text-align:center/);
  assert.match(source,/\.navigation-panel>\.navigation-overall\.driving\{[^}]*border-radius:0/);

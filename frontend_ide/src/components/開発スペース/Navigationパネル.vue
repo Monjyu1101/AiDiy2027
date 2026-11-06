@@ -472,9 +472,9 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 </style>
 
 <style>
-/* IDEの自動探索と同じ光色・周回速度。Codeと総合評価の外枠だけを描き、本文操作は覆わない。 */
+/* IDEの自動探索と同じ光色で、長時間の自動航行は5秒でゆっくり一周する。Codeと総合評価の外枠だけを描き、本文操作は覆わない。 */
 .navigation-code{border:2px solid var(--aidiy-titlebar-background,#395069)}
-.navigation-code.driving,.navigation-panel>.navigation-overall.driving{border-color:transparent;background:linear-gradient(#000,#000) padding-box,conic-gradient(from var(--motion-spin),#2c5a5c 0deg,#2c5a5c 200deg,#85e9e9 300deg,#e8ffff 340deg,#2c5a5c 360deg) border-box;box-shadow:0 0 10px #85e9e940;animation:motion-spin 1.6s linear infinite}
+.navigation-code.driving,.navigation-panel>.navigation-overall.driving{border-color:transparent;background:linear-gradient(#000,#000) padding-box,conic-gradient(from var(--motion-spin),#2c5a5c 0deg,#2c5a5c 200deg,#85e9e9 300deg,#e8ffff 340deg,#2c5a5c 360deg) border-box;box-shadow:0 0 10px #85e9e940;animation:motion-spin 5s linear infinite}
 @media(prefers-reduced-motion:reduce){.navigation-code.driving,.navigation-panel>.navigation-overall.driving{animation:none;border-color:#85e9e9;background:#000;box-shadow:none}}
 </style>
 
