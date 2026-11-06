@@ -153,7 +153,7 @@ class SlackProcessMatchingTest(unittest.TestCase):
             dict(ProcessId=10, ParentProcessId=1, Name='node.exe', CommandLine=f'node.exe "{FRONTEND / "src/panel-worker.ts"}"'),
             dict(ProcessId=11, ParentProcessId=10, Name='python.exe', CommandLine='python.exe hermes'),
             dict(ProcessId=12, ParentProcessId=11, Name='python.exe', CommandLine='python.exe mcp_stdio.py'),
-            dict(ProcessId=20, ParentProcessId=1, Name='node.exe', CommandLine=f'node.exe "{FRONTEND.parent / "src/panel-worker.ts"}"'),
+            dict(ProcessId=20, ParentProcessId=1, Name='node.exe', CommandLine=f'node.exe "{FRONTEND.parent / "discord/src/panel-worker.ts"}"'),
             dict(ProcessId=21, ParentProcessId=20, Name='python.exe', CommandLine='python.exe mcp_stdio.py'),
         ]
         with patch.object(processes, 'list_processes', return_value=records), patch.object(processes.sys, 'platform', 'win32'):
@@ -170,7 +170,7 @@ class SlackProcessMatchingTest(unittest.TestCase):
 
     def test_discord_other_checkouts_and_script_arguments_are_excluded(self):
         main = FRONTEND / 'src/main.ts'; cli = FRONTEND / 'node_modules/tsx/dist/cli.mjs'
-        discord = FRONTEND.parent
+        discord = FRONTEND.parent / 'discord'
         for command in (
             f'node.exe other.js "{main}"', f'node.exe "{main}.other"', f'node.exe "{cli}" checks/code.test.ts',
             'node.exe src/main.ts', f'node.exe --eval "{main}"',
@@ -194,7 +194,7 @@ class SlackLauncherTest(unittest.TestCase):
 
     def test_package_name_and_module_names_stay_separate_from_discord(self):
         self.assertEqual(json.loads((FRONTEND / 'package.json').read_text(encoding='utf-8'))['name'], 'aidiy-slack')
-        discord_scripts = json.loads((FRONTEND.parent / 'package.json').read_text(encoding='utf-8'))['scripts']
+        discord_scripts = json.loads((FRONTEND.parent / 'discord' / 'package.json').read_text(encoding='utf-8'))['scripts']
         slack_scripts = json.loads((FRONTEND / 'package.json').read_text(encoding='utf-8'))['scripts']
         for name in ('start', 'bot', 'config:check', 'check', 'test', 'build:panel', 'check:panel', 'update:electron'):
             self.assertIn(name, discord_scripts, name); self.assertIn(name, slack_scripts, name)

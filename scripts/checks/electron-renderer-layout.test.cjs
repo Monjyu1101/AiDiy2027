@@ -47,7 +47,7 @@ test('Task / Team は専用 bundle と機能内 dialog / windows の境界を保
   assert.deepEqual(config.compilerOptions.paths['@taskteam/*'], ['src/components/タスクチーム/*']);
 });
 
-for (const [name, base] of [['Discord', 'frontend_channels/panel/'], ['Slack', 'frontend_channels/slack/panel/']]) {
+for (const [name, base] of [['Discord', 'frontend_channels/discord/panel/'], ['Slack', 'frontend_channels/slack/panel/']]) {
   test(`${name} は Bot と分離した既存 panel 入口と日本語の接続部品を使う`, () => {
     present(['main.js', 'desktop.cjs', 'preload.cjs', 'index.html', 'web-bridge.js', 'style.css', 'components/接続/接続パネル.vue', 'components/接続/機能切替.vue', 'components/接続/パネル状態.js'].map(path => base + path));
     absent(['画面', '接続', 'ライブ'].map(path => base + path));
@@ -59,7 +59,7 @@ for (const [name, base] of [['Discord', 'frontend_channels/panel/'], ['Slack', '
 test('main / preload、拡張ホストと viewer API は renderer 整理で移さない', () => {
   present(['frontend_avatar/electron/main.ts', 'frontend_avatar/electron/preload.ts',
     'backend_diag/起動/electron-main.cjs', 'frontend_ide/desktop.cjs',
-    'frontend_ide/host/src', 'frontend_ide/viewer', 'frontend_channels/src/main.ts', 'frontend_channels/slack/src/main.ts']);
+    'frontend_ide/host/src', 'frontend_ide/viewer', 'frontend_channels/discord/src/main.ts', 'frontend_channels/slack/src/main.ts']);
 });
 
 for (const kind of ['console', 'code', 'live', 'ide', 'task', 'team', 'browser']) {
@@ -74,7 +74,7 @@ for (const kind of ['console', 'code', 'live', 'ide', 'task', 'team', 'browser']
 
 test('11 アプリの所有元を網羅し、互換入口・補助 worker を別 renderer に複製しない', () => {
   present(['backend_diag/diag_main.mjs', 'frontend_avatar/launch.mjs',
-    'frontend_channels/panel/launch.mjs', 'frontend_channels/slack/panel/launch.mjs',
+    'frontend_channels/discord/panel/launch.mjs', 'frontend_channels/slack/panel/launch.mjs',
     'frontend_ide/host/aidiy_code/launch.mjs', 'frontend_ide/host/aidiy_live/launch.mjs',
     'frontend_ide/ファイル機能/MarkdownPDF-worker.cjs']);
   for (const kind of ['code', 'live']) {

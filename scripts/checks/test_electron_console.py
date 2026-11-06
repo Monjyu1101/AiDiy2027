@@ -101,7 +101,7 @@ class ElectronConsoleTest(unittest.TestCase):
                 self.check_child(module, action)
 
     def test_discord_start(self):
-        module = load('frontend_channels/_start.py')
+        module = load('frontend_channels/discord/_start.py')
         self.check_child(module, lambda: module.start(True))
 
     def test_ide_and_term_detached_start(self):
@@ -112,7 +112,7 @@ class ElectronConsoleTest(unittest.TestCase):
                     self.check_child(module, lambda: module.start(kind=kind))
 
     def test_discord_preflight_and_direct_entry(self):
-        module = load('frontend_channels/_start.py')
+        module = load('frontend_channels/discord/_start.py')
         self.enterContext(patch.object(module, 'check_project_node_runtime', return_value=(True, 'Node fixture')))
         import _setup_electron
         real_run = subprocess.run
@@ -167,7 +167,7 @@ class PosixLaunchOptionsTest(unittest.TestCase):
         for relative, name, args in (
             ('backend_diag/_start.py', 'start', ()),
             ('frontend_ide/host/_start.py', 'start_code', ()),
-            ('frontend_channels/_start.py', 'start', ()),
+            ('frontend_channels/discord/_start.py', 'start', ()),
         ):
             module = load(relative)
             for platform in ('darwin', 'linux'):

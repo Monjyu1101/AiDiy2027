@@ -48,7 +48,7 @@ class SetupProcessesTest(unittest.TestCase):
             root = r'C:\repo\AiDiy' if windows else ROOT
             entries = ('panel/launch.mjs', 'panel/desktop.cjs', 'src/panel-worker.ts',
                        'src/web-server.ts', 'src/main.ts', '_start.py')
-            for entry in (*entries, *(f'slack/{entry}' for entry in entries)):
+            for entry in (*(f'discord/{entry}' for entry in entries), *(f'slack/{entry}' for entry in entries)):
                 with self.subTest(windows=windows, entry=entry):
                     records = [proc(5, f'python {root}/_start.py', name='python'),
                                proc(10, f'node "{root}/frontend_channels/{entry}"', 5),
@@ -60,7 +60,7 @@ class SetupProcessesTest(unittest.TestCase):
                     self.assertEqual(set(subject.select_targets(records, root, windows, 999)), {5, 20, 21})
 
     def test_orphan_discord_electron_is_preserved(self):
-        exe = f'{ROOT}/frontend_channels/node_modules/electron/dist/electron'
+        exe = f'{ROOT}/frontend_channels/discord/node_modules/electron/dist/electron'
         p = proc(10, f'{exe} --type=gpu-process', name='electron', executable=exe)
         self.assertEqual(subject.select_targets([p], ROOT, current_pid=999), {})
 
@@ -80,7 +80,7 @@ class SetupProcessesTest(unittest.TestCase):
             spec = importlib.util.spec_from_file_location('discord_route_' + method, root / filename)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-            records = [proc(10, f'node {root}/frontend_channels/src/web-server.ts'),
+            records = [proc(10, f'node {root}/frontend_channels/discord/src/web-server.ts'),
                        proc(11, f'python {root}/command_hermes/cli_main.py', 10, 'python'),
                        proc(12, f'python {root}/backend_tools/mcp_stdio.py', 11, 'python'),
                        proc(20, f'node {root}/frontend_channels/slack/src/web-server.ts'),
@@ -172,9 +172,9 @@ class SetupProcessesTest(unittest.TestCase):
             self.assertEqual(subject.process_role(proc(10,f'node {ROOT}/frontend_ide/{entry}'),ROOT),kind)
 
     def test_orphan_dedicated_electron_but_not_shared(self):
-        for component in ('frontend_avatar','backend_diag','frontend_channels'):
+        for component in ('frontend_avatar','backend_diag','frontend_channels/discord','frontend_channels/slack'):
             exe=f'{ROOT}/{component}/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'
-            self.assertEqual(subject.process_role(proc(10,f'"{exe}" --type=gpu-process',name='Electron',executable=exe),ROOT),component)
+            self.assertEqual(subject.process_role(proc(10,f'"{exe}" --type=gpu-process',name='Electron',executable=exe),ROOT),component.split('/')[0])
         exe=f'{ROOT}/frontend_ide/node_modules/electron/dist/electron'
         self.assertIsNone(subject.process_role(proc(10,f'{exe} --type=renderer',name='electron'),ROOT))
 
@@ -199,9 +199,9 @@ class SetupProcessesTest(unittest.TestCase):
         self.assertIsNone(subject.process_role(proc(10,'node /repo/aidiy/backend_diag/diag_main.mjs'),ROOT))
 
     def test_loader_options_skip_loader_value(self):
-        p=proc(10, f'node --import /global/loader.mjs {ROOT}/frontend_channels/src/main.ts')
+        p=proc(10, f'node --import /global/loader.mjs {ROOT}/frontend_channels/discord/src/main.ts')
         self.assertEqual(subject.process_role(p,ROOT),'frontend_channels')
-        p=proc(10, f'node --import {ROOT}/frontend_channels/loader.mjs /other/main.ts')
+        p=proc(10, f'node --import {ROOT}/frontend_channels/discord/loader.mjs /other/main.ts')
         self.assertIsNone(subject.process_role(p,ROOT))
 
     def test_windows_never_taskkills_tree(self):

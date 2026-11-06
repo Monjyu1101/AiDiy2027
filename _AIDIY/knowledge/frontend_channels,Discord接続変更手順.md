@@ -1,6 +1,6 @@
 # Discord 接続変更手順
 
-> 文書: `frontend_channels,Discord接続変更手順.md` | 実装: `frontend_channels/src/ライブ/音声処理.ts`, `frontend_channels/checks/audio.test.ts`, `frontend_channels/src/`, `frontend_ide/host/src/runner.ts`, `frontend_ide/host/src/protocol.ts`, `frontend_ide/host/aidiy_live/src/protocol.ts`, `backend_server/conf/conf_json.py`
+> 文書: `frontend_channels,Discord接続変更手順.md` | 実装: `frontend_channels/discord/src/ライブ/音声処理.ts`, `frontend_channels/discord/checks/audio.test.ts`, `frontend_channels/discord/src/`, `frontend_ide/host/src/runner.ts`, `frontend_ide/host/src/protocol.ts`, `frontend_ide/host/aidiy_live/src/protocol.ts`, `backend_server/conf/conf_json.py`
 
 ## このメモを使う場面
 
@@ -15,15 +15,15 @@
 - パネル、Bot worker、ブラウザ版サーバーだけでなく、依頼処理に必要な Hermes / CLI / MCP の子孫も保持する。共通判定は `scripts/_setup_processes.py`、全体 start の通常終了は `_start.py::stop_processes` で揃える。
 - Core 停止中の Live など、停止したバックエンドに依存する機能まで利用できることは保証しない。独立した Live / Console 等を Discord 配下という理由だけで保持しない。
 - 明示的な `_cleanup.py` とパネルからの停止・終了は従来どおり対象を停止する。cleanup の停止要求は自動再起動を抑止する。
-- 起動中の Discord は依存更新でも停止させない。通常の `frontend_channels/_setup.py` は起動中または判定不能なら依存・ランチャー・共通設定を変更せず `False` で保留する。一括setupで「エラーが発生しても続行」を選択した場合は保留せず、依存・パネル生成・Electron配置・ランチャー・設定補完を可能な限り試行する。Electronコピー・配置の `OSError` のみ WARN（入力欠損は除外）として別集計し、配置未確認と表示する。npm・ビルド等の失敗は NG のまま後続を試行し、最終 `False` を維持する。コピー警告だけなら警告付き `True`。実行中画面の継続動作は保証しない。
-- 回帰確認は `python -B -m unittest discover -s scripts/checks -p test_setup_processes.py`、`python -B -m unittest discover -s scripts/checks -p test_start_shutdown_flow.py`、`python -B -m unittest discover -s frontend_channels/checks -p test_lifecycle.py`。合成プロセスとモックで保持・停止を検証し、実際のサービスは停止しない。
+- 起動中の Discord は依存更新でも停止させない。通常の `frontend_channels/discord/_setup.py` は起動中または判定不能なら依存・ランチャー・共通設定を変更せず `False` で保留する。一括setupで「エラーが発生しても続行」を選択した場合は保留せず、依存・パネル生成・Electron配置・ランチャー・設定補完を可能な限り試行する。Electronコピー・配置の `OSError` のみ WARN（入力欠損は除外）として別集計し、配置未確認と表示する。npm・ビルド等の失敗は NG のまま後続を試行し、最終 `False` を維持する。コピー警告だけなら警告付き `True`。実行中画面の継続動作は保証しない。
+- 回帰確認は `python -B -m unittest discover -s scripts/checks -p test_setup_processes.py`、`python -B -m unittest discover -s scripts/checks -p test_start_shutdown_flow.py`、`python -B -m unittest discover -s frontend_channels/discord/checks -p test_lifecycle.py`。合成プロセスとモックで保持・停止を検証し、実際のサービスは停止しない。
 
 ## 変更箇所
 
-Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.md](./共通,Electronウィンドウ基本方針.md) に従う。`panel/desktop.cjs` が本体窓へ共通の `attachNativeWindowMove(window,screen,'discord')` を一度取り付け、内容・配置の確定後に共通 `拡大表示` で透明パネル内をズームする。接続処理・終了時のworker回収は従来のまま。`node --test frontend_channels/checks/desktop.test.ts` は取り付け・最小メニュー・終了回収を確認する。
+Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.md](./共通,Electronウィンドウ基本方針.md) に従う。`panel/desktop.cjs` が本体窓へ共通の `attachNativeWindowMove(window,screen,'discord')` を一度取り付け、内容・配置の確定後に共通 `拡大表示` で透明パネル内をズームする。接続処理・終了時のworker回収は従来のまま。`node --test frontend_channels/discord/checks/desktop.test.ts` は取り付け・最小メニュー・終了回収を確認する。
 
-1. `frontend_channels/AGENTS.md` で構成を確認し、導入・操作は `frontend_channels/README.md` を参照する。
-2. Discord 専用設定はトークン、サーバー ID、`discord_allowed_user_id`、`discord_text_channel_id`、`discord_voice_channel_id` の5項目とする。ID は配列ではなく単一文字列で指定する。`backend_server/conf/conf_json.py` の `DEFAULT_CONFIG`、`frontend_channels/src/接続/接続設定.ts`、README を揃える。旧キーの移行・読み替えは行わない。実トークンの内容は出力しない。
+1. `frontend_channels/discord/AGENTS.md` で構成を確認し、導入・操作は `frontend_channels/discord/README.md` を参照する。
+2. Discord 専用設定はトークン、サーバー ID、`discord_allowed_user_id`、`discord_text_channel_id`、`discord_voice_channel_id` の5項目とする。ID は配列ではなく単一文字列で指定する。`backend_server/conf/conf_json.py` の `DEFAULT_CONFIG`、`frontend_channels/discord/src/接続/接続設定.ts`、README を揃える。旧キーの移行・読み替えは行わない。実トークンの内容は出力しない。
 3. CLI 実行・停止・resume は `frontend_ide/host` の共通実装を使用する。CommonJS の日本語 export は `src/共通連携/IDE連携.ts` を通す。コードの実行環境は aidiy_hermes 固定で、パネルには固定表示する。モデルは aidiy_code と同じ1つの文字列（`auto` / `same` / `codex_cli/same` / `openai_oauth/gpt-…`）で選び、Hermes への引数は AIコア（`backend_server/AIコア/AIコード_cli.py`）と同じ規則で `src/コード/Hermesモデル.ts` の `Hermes会話引数` が作る。OAuth の provider は CLI に明示し、認証切れを別 provider への退避で隠さない。候補は AIコアのモデル情報API（`code_models.aidiy_hermes`）を優先し、停止中は `_AIDIY/aidiy_diag/code_models_info.json` を読む。未保存時の初期表示は共通 `CODE_AIDIY_HERMES_MODEL`（既定 `auto`）、実行回数は `CODE_MAX_TURNS`、作業フォルダは `CODE_BASE_PATH` を使う。
 4. Live は既存の input / 0 / audio 接続を使用する。入力レートは `init` のモデル設定に追従する。
    接続先はローカルの `PORT_CORE`、初回の AI とモデル・音声は共通の `LIVE_AI_NAME` / `LIVE_*_MODEL` / `LIVE_*_VOICE` を使う。手動選択は後述の `~/.aidiy/aidiy_discord.json` の `live_models` に保存し、次回以降は優先する。共通キー JSON に Discord 専用のモデル項目を追加しない。
@@ -38,17 +38,17 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 `_setup.py` の `b=build` は Discord だけ `npm ci --include=dev` で配布 lock を固定して導入する。他の画面の `npm install` と混同しない。npm 11 の `install` は `@discordjs/voice` 配下の optional peer `opusscript@0.0.8` を削除し、ルートの `0.1.1` では prism-media の要求を満たせず `build:panel` が失敗する場合がある。lock 検証は無効化しない。
 
-以前の実行で lock が変更された場合は、`git diff -- frontend_channels/package-lock.json` で変更を確認し、必要な変更を退避してから配布版へ戻して再実行する。独自の依存変更は上書きしない。稼働中の Discord の保護は共通 `frontend_dependency_guard` に従う。
+以前の実行で lock が変更された場合は、`git diff -- frontend_channels/discord/package-lock.json` で変更を確認し、必要な変更を退避してから配布版へ戻して再実行する。独自の依存変更は上書きしない。稼働中の Discord の保護は共通 `frontend_dependency_guard` に従う。
 
 回帰確認: `python -B -m unittest discover -s scripts/checks -p test_node_refresh.py`。Discord だけが ci を使うこと、再試行でも install に戻らないこと、使用中の保護と失敗通知を確認する。
 
 ## 確認
 
-起動ログは配置先リポジトリの `temp/aidiy_discord/logs/<UUID>.stdout.log` / `.stderr.log`、起動完了通知は `temp/aidiy_discord/runtime/<UUID>.ready.json` に保存する。`panel/launch.mjs` が保存先を決め、Electron / Web の通知書込先は `AIDIY_DISCORD_READY` で渡す。終了中の再起動も同じ通知ファイルで確認する。旧ログの移行・削除・旧保存先への退避は行わない。Windowsブラウザ版の `frontend_channels/out/aidiy_discord/browser-profile` と Electron の userData、モデル設定は従来のまま維持する。`checks/launch-restart.test.ts` で新保存先・profile維持・再起動・書込失敗時の非起動を、`checks/launch.test.ts` で設定検証失敗時に一時ファイルを作らないことを確認する。
+起動ログは配置先リポジトリの `temp/aidiy_discord/logs/<UUID>.stdout.log` / `.stderr.log`、起動完了通知は `temp/aidiy_discord/runtime/<UUID>.ready.json` に保存する。`panel/launch.mjs` が保存先を決め、Electron / Web の通知書込先は `AIDIY_DISCORD_READY` で渡す。終了中の再起動も同じ通知ファイルで確認する。旧ログの移行・削除・旧保存先への退避は行わない。Windowsブラウザ版の profile は `frontend_channels/discord/out/aidiy_discord/browser-profile` に置く。Electron の userData、モデル設定の保存先は変更しない。`checks/launch-restart.test.ts` で新保存先・profile維持・再起動・書込失敗時の非起動を、`checks/launch.test.ts` で設定検証失敗時に一時ファイルを作らないことを確認する。
 
-独自実装のソース・パネル・起動スクリプト・検証コードには、README にある AiDiy の著作権・ライセンス定型文を付ける。JS / TS / CSS は `/*! ... */`、その他は各言語のコメント形式を使う。`frontend_channels/LICENSE` はルート `LICENSE` の全文と揃え、`package.json` の `license` は `SEE LICENSE IN LICENSE` とする。第三者ライブラリの表記には独自実装の定型文を適用しない。
+独自実装のソース・パネル・起動スクリプト・検証コードには、README にある AiDiy の著作権・ライセンス定型文を付ける。JS / TS / CSS は `/*! ... */`、その他は各言語のコメント形式を使う。`frontend_channels/LICENSE` はルート `LICENSE` の全文と揃え、`frontend_channels/discord/package.json` の `license` は親の共通ライセンスを参照する `SEE LICENSE IN ../LICENSE` とする。第三者ライブラリの表記には独自実装の定型文を適用しない。
 
-`frontend_channels` で `npm run check` と `npm test` を実行する。通常起動には同梱の配布物を使うためビルド不要。Vue の画面・状態管理・描画ソースや依存関係を変更した場合だけ `npm run build:panel` で `panel/view.js` と `panel/build-manifest.json` を更新する。`npm run check:panel` はソースと配布物の一致を確認する。 セットアップは Electron 更新で lockfile が変わり得るため、依存導入後に `build:panel` → `check:panel` を実行し、いずれかが失敗した場合は導入失敗とする。manifest だけの書き換えや package-lock の検証除外で不一致を隠さない。
+`frontend_channels/discord` で `npm run check` と `npm test` を実行する。通常起動には同梱の配布物を使うためビルド不要。Vue の画面・状態管理・描画ソースや依存関係を変更した場合だけ `npm run build:panel` で `panel/view.js` と `panel/build-manifest.json` を更新する。`npm run check:panel` はソースと配布物の一致を確認する。 セットアップは Electron 更新で lockfile が変わり得るため、依存導入後に `build:panel` → `check:panel` を実行し、いずれかが失敗した場合は導入失敗とする。manifest だけの書き換えや package-lock の検証除外で不一致を隠さない。
 
 - `checks/code.test.ts`: stdin、ユーザー別・チャンネル別の resume、停止・終了。
 - `checks/bot.test.ts`: 通常投稿→CLI→返信、連続投稿の順序、許可拒否、長文添付、起動・入室時の自動接続と準備中の退出、手動操作との競合、Live OFF / Code OFF 時の接続制御。
@@ -61,7 +61,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 本物の Bot の疎通には `AiDiy_key.json` に接続情報が必要。`npm run config:check` は外部に接続しない。実接続では専用チャンネルへの通常投稿、ボイス参加→自動接続→発話→退出による自動終了を確認する。mock の成功だけで Discord Gateway / DAVE / AI Provider まで検証済みとは扱わない。
 
-全体スクリプトの検証はルートで `python -X utf8 -m unittest discover -s frontend_channels/checks -p "test_*.py"` を実行する。プロセス停止はモック、削除は一時ディレクトリで確認し、実環境の `_cleanup.py` を検証目的で実行しない。全体 `_setup.py` は Discord 既定 Yes、`_start.py` の Discord 選択は既定 No、`_cleanup.py` の削除選択は既定 Yes。
+全体スクリプトの検証はルートで `python -X utf8 -m unittest discover -s frontend_channels/discord/checks -p "test_*.py"` を実行する。プロセス停止はモック、削除は一時ディレクトリで確認し、実環境の `_cleanup.py` を検証目的で実行しない。全体 `_setup.py` は Discord 既定 Yes、`_start.py` の Discord 選択は既定 No、`_cleanup.py` の削除選択は既定 Yes。
 
 `aidiy_discord` / `npm start` は `panel/launch.mjs` から Electron の小型パネルを開く。プロジェクトフォルダ（Code の作業フォルダ）は aidiy_code / aidiy_live と共通の `frontend_ide/host/scripts/launch-project.mjs` で決め、`[作業フォルダ]` / `--project` 未指定時は起動したフォルダとする。worker へは `AIDIY_DISCORD_PROJECT` で渡し、未設定（`src/main.ts` 直接実行など）の場合だけ `CODE_BASE_PATH` を使う。全体起動はリポジトリ直下で起動する。画面位置はマウスのあるディスプレイの workArea 上部中央とする。単独起動・全体起動とも保存済み設定があれば自動接続し、初回はモデル設定画面から始める。`--no-connect` では未接続で開く。`--wait` を付けず独立起動する。全体の起動前整理・Ctrl+C 終了では Discord と必要な CLI / MCP 子孫を保持し、明示的な `_cleanup.py` では停止する。接続開始時に共通設定を再読込し、前回のモデルを適用する。接続・再接続中でも停止でき、終了時は worker に shutdown を送り、Code CLI・Live・Gateway を回収する。正常終了に応答しない場合だけ worker の子孫を停止する。Electron はセットアップで事前配置し、起動中にはダウンロードしない。
 
@@ -84,7 +84,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 - ローカルAIコアは常に直接接続する。プロキシURL・資格情報をIPCやログへ渡さず、`src/接続/接続エラー.ts` でも環境プロキシURLを伏せる。
 - 音声用WebSocketは通常Gatewayとは別経路。`src/ライブ/ライブ会話.ts` のvoice adapterは `onVoiceServerUpdate` のendpointを `src/接続/ネットワーク接続.ts` の `Discord音声通信.接続先登録` へ渡してからSDKへ通知する。voice 0.19.2にはagent指定APIがないため、通知されたホスト・ポートへの `https.request` だけを捕捉する。非443ポート、NO_PROXY、音声サーバー変更・再接続を維持し、Live終了時にrequest関数・CONNECT待ち・ソケットを回収する。SDK更新時は正規のagent指定APIの有無を再確認する。
 - 「WebSocket接続中」のタイムアウトでは「音声接続先」のホスト・ポートと「プロキシ経由／直接接続」を照合し、プロキシのCONNECT許可も確認する。HTTPプロキシ対応はUDP中継を含まない。「UDP接続・IP検出中」の失敗はUDP経路を別途確認する。音声のトークン・セッションID・暗号鍵・プロキシURLはログへ出さない。
-- 設定方法は `frontend_channels/README.md` を参照する。環境変更後は旧パネルを閉じ、設定済みの起動元から開き直す。`panel/desktop.cjs` の fork は親環境を標準で継承する。GUIの起動元が端末と同じ環境を持つかは実機で確認する。
+- 設定方法は `frontend_channels/discord/README.md` を参照する。環境変更後は旧パネルを閉じ、設定済みの起動元から開き直す。`panel/desktop.cjs` の fork は親環境を標準で継承する。GUIの起動元が端末と同じ環境を持つかは実機で確認する。
 - `checks/network.test.ts` は外部通信なしで大小文字・NO_PROXY・直接経路・失敗後の回収を検証する。模擬HTTP CONNECTプロキシとHTTPS/Gatewayを用い、実際の discord.js ClientReady と resume、認証付きプロキシ、ローカル通信の除外、実SDKの接続途中停止とスレッド終了も確認する。`checks/fixtures/network-*.fixture` はテスト専用の自己署名証明書・秘密鍵であり、製品には使用しない。子プロセスの `NODE_EXTRA_CA_CERTS` だけで信頼し、TLS検証を無効化しない。
 - `node checks/network-diagnostic.mjs` はBot設定を読まず、直接経路と環境経路の公開REST・認証前Gateway HELLOを比較する。通常テストから分離し、経路の失敗だけでは非ゼロ終了しない。Bot認証、対象PCのGUI接続、Hermes返信、音声UDPと実通話は別途確認する。
 - `checks/fixtures/network-runner.ts` は実際のLive adapterとvoice SDKを使い、模擬CONNECTプロキシ経由の非443ポートへの音声WSS接続、ローカル通信の除外、接続待ち中の停止も確認する。模擬音声WSSの成功を、UDP・DAVE・実通話の成功とは扱わない。
@@ -129,7 +129,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 1. 編集前に `_index.md` と本手順を読み、上記クラス・テストの現行実装を照合する。行番号ではなくクラス名・テスト名を入口にする。
 2. 60msは発話末尾を推定する猶予であり、明示的な終了通知でも `_read` 内の待機タイマーでもない。空チャンクで猶予を延長せず、無音パケットの送出とPCM端数の消費を混同しない。
 3. 回帰テストを追加する場合は実時間の sleep に依存せず、モック時刻とフレーム比較を使う。59ms/60msの境界や空チャンクも、変更対象に応じて確認候補にする。既存テストが全候補を網羅済みとは扱わない。
-4. 本体を変更する作業では `frontend_channels` で `npm run check` と `npm test` を実行する。単体テスト成功と実通話での試聴を区別する。知見整理だけの依頼では、本体・テスト・設定・再起動ファイルを変更しない。
+4. 本体を変更する作業では `frontend_channels/discord` で `npm run check` と `npm test` を実行する。単体テスト成功と実通話での試聴を区別する。知見整理だけの依頼では、本体・テスト・設定・再起動ファイルを変更しない。
 
 ## ライブモデル・声の候補
 
@@ -156,7 +156,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 
 ## アプリアイコンの所有者
 
-Discord / Slack の正本はそれぞれ `frontend_channels/discord/panel/AiDiy_discord.{svg,png}`、`frontend_channels/slack/panel/AiDiy_slack.{svg,png}` です。現行 Discord の `panel/AiDiy_discord.png` と Diag の PNG は配布コピーで、別の SVG 原本を置きません。
+Discord / Slack の正本はそれぞれ `frontend_channels/discord/panel/AiDiy_discord.{svg,png}`、`frontend_channels/slack/panel/AiDiy_slack.{svg,png}` です。Discord の `panel/AiDiy_discord.png` は同じモジュールの正本です。Diag の PNG は配布コピーで、別の SVG 原本を置きません。
 
 名称帯は黒・白文字、8px白枠は下の帯だけ。人物原画は無改変です。`build:panel` は現行 module 内の Discord PNG を配布します。Diag へのコピーは明示的な保守作業で行い、通常 Diag build / verify / test / 起動に他 module の asset を必要としません。welcome 原画も `panel/AiDiy.png` を使い、旧 frontend_ide 素材パスを公開しません。
 

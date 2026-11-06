@@ -10,7 +10,7 @@
 
 ## 始める前に
 
-- `aidiy_discord`とHermesの導入・認証を済ませます。導入とサービス側の設定は[Discord README](../../frontend_channels/README.md)を参照します。
+- `aidiy_discord`とHermesの導入・認証を済ませます。導入とサービス側の設定は[Discord README](../../frontend_channels/discord/README.md)を参照します。
 - 専用チャンネルと許可利用者を設定します。Botトークンは画面や資料に載せません。
 - Diagの起動と作業フォルダ選択は[システム起動編](セルフテスト,aidiy_diag,システム起動編.md)と[ランチャー編](セルフテスト,aidiy_diag,ランチャー編.md)を参照します。
 

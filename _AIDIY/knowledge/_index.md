@@ -209,7 +209,9 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | IDE の今日・本日最新の強調、銀河の光輪・ラベル、描画負荷を確認する | [`frontend_ide,更新の目印と電子表示.md`](./frontend_ide,更新の目印と電子表示.md) |
 | IDE の文書表示（Word / Excel / PowerPoint / PDF）を変更する | [`frontend_ide,文書ビューア.md`](./frontend_ide,文書ビューア.md) |
 
-## Frontend Discord / Slack
+## Frontend Channels / Discord / Slack
+
+`frontend_channels/` はチャンネル群の親ディレクトリです。実装・依存・起動入口は `discord/` と `slack/` に分けます。共通方針は [Channels AGENTS](../../frontend_channels/AGENTS.md)、各実装は [Discord AGENTS](../../frontend_channels/discord/AGENTS.md) / [Slack AGENTS](../../frontend_channels/slack/AGENTS.md) を参照してください。将来のチャンネルも同じ階層へ追加します。
 
 | 目的 | 参照ファイル |
 |------|--------------|

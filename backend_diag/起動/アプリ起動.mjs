@@ -37,7 +37,7 @@ export function アプリタスク(id,{command=''}){
  const entry=path=>new RegExp('(?:^|[\\s"\'])[^\\s"\']*'+path+'(?=[\\s"\']|$)','i').test(text);
  if(id==='avatar')return entry('frontend_avatar/(?:launch\\.mjs|_start\\.py|dist-electron/main\\.js)')||entry('frontend_avatar/node_modules/[^\\s"\']*electron[^\\s"\']*')&&/\s\.\s*$/.test(text);
  if(id==='live')return (entry('frontend_ide/desktop\\.cjs')||entry('frontend_ide/launch\\.mjs'))&&/--app(?:=|\s+)live(?:[\s"']|$)/.test(text)||entry('frontend_ide/(?:host/)?aidiy_live/(?:launch\\.mjs|desktop\\.cjs)');
- if(id==='discord')return entry('frontend_channels/(?:panel/(?:desktop\\.cjs|launch\\.mjs)|src/(?:web-server|panel-worker|main)\\.ts)');
+ if(id==='discord')return entry('frontend_channels/discord/(?:panel/(?:desktop\\.cjs|launch\\.mjs)|src/(?:web-server|panel-worker|main)\\.ts)');
  if(id==='slack')return entry('frontend_channels/slack/(?:panel/(?:desktop\\.cjs|launch\\.mjs)|src/(?:web-server|panel-worker|main)\\.ts)');
  return false;
 }
@@ -103,7 +103,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
    }
    let command=node,args,cwd=path;
    if(id==='avatar'){args=[join(root,'frontend_avatar','launch.mjs')];cwd=root;}
-   else if(id==='discord')args=[join(root,'frontend_channels','panel','launch.mjs'),'--project',path];
+   else if(id==='discord')args=[join(root,'frontend_channels','discord','panel','launch.mjs'),'--project',path];
    else if(id==='slack')args=[slackEntry,'--project',path];
    else args=[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',path,...(id==='live'?[]:['--new-window'])];
    const env={...process.env,PYTHONIOENCODING:'utf-8',PYTHONUNBUFFERED:'1'};

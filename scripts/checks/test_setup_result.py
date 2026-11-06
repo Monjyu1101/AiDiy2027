@@ -73,7 +73,7 @@ class SetupResultTests(unittest.TestCase):
         with self.execution() as (module, _, component, output, _git):
             self.assertIsNone(module.main())
             self.assertIn("セットアップは正常終了しました。", output.getvalue())
-            component("frontend_channels").setup.assert_called_once()
+            component("frontend_channels/discord").setup.assert_called_once()
             component("frontend_channels/slack").setup.assert_called_once()
             module.run_diag_headless.assert_called_once()
 
@@ -94,13 +94,13 @@ class SetupResultTests(unittest.TestCase):
                 self.assertIn(failure, output.getvalue())
                 self.assertIn("セットアップに失敗した項目があります。", output.getvalue())
                 self.assertNotIn("セットアップは正常終了しました。", output.getvalue())
-                component("frontend_channels").setup.assert_called_once()
+                component("frontend_channels/discord").setup.assert_called_once()
                 module.run_diag_headless.assert_called_once()
 
     def test_all_failed_stages_are_preserved_in_summary(self):
         with self.execution() as (module, _, component, output, _git):
             component("frontend_web").setup.return_value = False
-            component("frontend_channels").setup.return_value = False
+            component("frontend_channels/discord").setup.return_value = False
             module.run_diag_headless.return_value = False
             with self.assertRaises(SystemExit) as caught:
                 module.main()
@@ -267,7 +267,7 @@ class SetupResultTests(unittest.TestCase):
             self.assertIn("  - 共通: AI CLI ツール導入 (@anthropic-ai/claude-code)", output.getvalue())
             self.assertNotIn("  - 共通: AI CLI ツール導入 (grok-build)", output.getvalue())
             self.assertNotIn("セットアップは正常終了しました。", output.getvalue())
-            component("frontend_channels").setup.assert_called_once()
+            component("frontend_channels/discord").setup.assert_called_once()
 
     def test_all_cli_success_keeps_success_result(self):
         with self.execution(real_common=True) as (module, choices, _component, output, _git):

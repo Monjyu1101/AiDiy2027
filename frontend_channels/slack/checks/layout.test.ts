@@ -41,7 +41,7 @@ test('設定ルートと IDE の CommonJS 共有 export を維持し、Discord �
     for (const match of content.matchAll(/(?:from\s*|import\s*\(|require\s*\()(['"])(\.[^'"]+)\1/g)) {
       const target = resolve(dirname(absolute), match[2]);
       assert.ok([target, `${target}.ts`, `${target}.mjs`, `${target}.cjs`].some(candidate => existsSync(candidate)), `${file}: ${match[2]}`);
-      assert.ok(!target.startsWith(resolve(root, '..', 'src')) && !target.startsWith(resolve(root, '..', 'panel')), `${file} は Discord の部品を読まない`);
+      assert.ok(!target.startsWith(resolve(root, '..', 'discord', 'src')) && !target.startsWith(resolve(root, '..', 'discord', 'panel')), `${file} は Discord の部品を読まない`);
     }
   }
 });

@@ -36,6 +36,7 @@ test('project argument/cwd remain exact; Avatar retains app base; detached logs 
   assert.equal((await f.manager.launch(id,f.project)).受付,true);
   const call=f.calls.at(-1);assert.equal(call.options.cwd,id==='avatar'?f.root:f.project);
   assert.equal(call.options.detached,true);assert.equal(call.options.shell,false);assert.equal(call.options.windowsHide,true);assert.equal(call.options.stdio[0],'ignore');assert.equal(call.options.stdio.includes('ipc'),false);assert.equal(call.child.unreferenced,true);
+  if(id==='discord')assert.equal(call.args[0],join(f.root,'frontend_channels','discord','panel','launch.mjs'));
   if(id==='avatar'){assert.equal(call.command,process.execPath);assert.equal(call.args.at(-1),join(f.root,'frontend_avatar','launch.mjs'));}
   else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['ide','console','code'].includes(id));}
  }
@@ -43,7 +44,7 @@ test('project argument/cwd remain exact; Avatar retains app base; detached logs 
 });
 test('singleton checks run only on click, block existing tasks, permit IDE/Console/Code repeats and serialize races',async t=>{
  const f=await fixture(t);let reads=0,calls=0,release;
- const tasks=[{command:'python "C:/AiDiy/frontend_avatar/_start.py"'},{command:'electron "C:/AiDiy/frontend_ide/desktop.cjs" --app live'},{command:'node "/a/frontend_channels/src/web-server.ts"'}];
+ const tasks=[{command:'python "C:/AiDiy/frontend_avatar/_start.py"'},{command:'electron "C:/AiDiy/frontend_ide/desktop.cjs" --app live'},{command:'node "/a/frontend_channels/discord/src/web-server.ts"'}];
  const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),tasks:async()=>{reads++;return tasks;},spawnFn(){calls++;throw Error();}});
  manager.catalog();assert.equal(reads,0);
  for(const id of ['avatar','live','discord'])assert.equal((await manager.launch(id,f.project)).起動済み,true);
@@ -57,7 +58,7 @@ test('singleton checks run only on click, block existing tasks, permit IDE/Conso
 test('Windows/macOS/Linux task entries and legacy Live match without matching other apps or tests',()=>{
  for(const command of ['python "C:\\work space\\frontend_avatar\\_start.py"','/usr/bin/python3 /home/x/frontend_avatar/_start.py','/Applications/Electron.app/Contents/MacOS/Electron /work/frontend_avatar/dist-electron/main.js'])assert.equal(アプリタスク('avatar',{command}),true,command);
  for(const command of ['electron "C:\\x\\frontend_ide\\desktop.cjs" --app live','node /work/frontend_ide/launch.mjs --app live --project /tmp/a','node /work/frontend_ide/host/aidiy_live/launch.mjs'])assert.equal(アプリタスク('live',{command}),true,command);
- for(const command of ['electron /work/frontend_channels/panel/desktop.cjs','node --import /loader.mjs /work/frontend_channels/src/web-server.ts'])assert.equal(アプリタスク('discord',{command}),true,command);
+ for(const command of ['electron /work/frontend_channels/discord/panel/desktop.cjs','node --import /loader.mjs /work/frontend_channels/discord/src/web-server.ts'])assert.equal(アプリタスク('discord',{command}),true,command);
  for(const command of ['electron /work/frontend_ide/desktop.cjs --app code','node --test /work/frontend_ide/host/aidiy_live/launch.mjs','node -e "frontend_avatar/_start.py"','editor /work/project.txt'])for(const id of ['avatar','live','discord'])assert.equal(アプリタスク(id,{command}),false,command);
 });
 test('task lookup failure fails closed and releases pending state',async t=>{
@@ -137,4 +138,9 @@ test('Navigator is before Console and launches only selected project in a separa
  const {起動項目を整列,アプリアイコン}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');const f=await fixture(t);
  const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='console'));assert.equal(items.find(x=>x.id==='navi').名前,'Navigator');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
  await f.manager.launch('navi',f.project);assert.deepEqual(f.calls[0].args,[join(f.root,'frontend_ide','launch.mjs'),'--app','navi','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.cwd,f.project);
+});
+
+test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
+ for(const command of ['node /repo/frontend_channels/discord/panel/launch.mjs','node C:\\repo\\frontend_channels\\discord\\src\\web-server.ts'])assert.equal(アプリタスク('discord',{command}),true,command);
+ for(const command of ['node /repo/frontend_channels/slack/panel/launch.mjs','node /repo/frontend_channels/panel/launch.mjs','node /repo/frontend_channels/discord-other/panel/launch.mjs'])assert.equal(アプリタスク('discord',{command}),false,command);
 });

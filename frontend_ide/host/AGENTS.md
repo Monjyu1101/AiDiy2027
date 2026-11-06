@@ -16,7 +16,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | プロジェクト全体のセットアップ | [`../../_AIDIY/knowledge/共通,開発環境運用手順.md`](../../_AIDIY/knowledge/共通,開発環境運用手順.md) |
 | 拡張機能と生成物のクリーンアップ | [`../../_AIDIY/knowledge/共通,クリーンアップ手順.md`](../../_AIDIY/knowledge/共通,クリーンアップ手順.md) |
 | Hermes の Provider / モデル選択 | [`../../_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md`](../../_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md) |
-| Discord / Slack Bot からの共有利用 | [`../../frontend_channels/AGENTS.md`](../../frontend_channels/AGENTS.md)、[`../../_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md`](../../_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md) |
+| Discord / Slack Bot からの共有利用 | [`../../frontend_channels/AGENTS.md`](../../frontend_channels/AGENTS.md)、[`../../frontend_channels/discord/AGENTS.md`](../../frontend_channels/discord/AGENTS.md)、[`../../_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md`](../../_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md) |
 | Hermes の Windows 対応 | [`../../_AIDIY/knowledge/command_hermes,Windows対応規則.md`](../../_AIDIY/knowledge/command_hermes,Windows対応規則.md) |
 
 ## 概要
@@ -29,7 +29,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 `aidiy_live/` は Live 拡張とスタンドアロンの共通画面・音声処理を持ちます。拡張ホスト側で REST / WebSocket と Windows マイクを扱い、Webview へ渡します。マイク補助は Python 標準ライブラリだけを使います。利用・検証方法は [`aidiy_live/README.md`](./aidiy_live/README.md) を参照してください。
 
-`frontend_channels`（`aidiy_discord`）と `frontend_channels/slack`（`aidiy_slack`）は、本フォルダの `src/runner.ts`、`src/protocol.ts`、`src/forwarded-origin.ts`（Discord は `aidiy_live/src/protocol.ts` と `aidiy_live/src/model-catalog.ts` も）と、`scripts/` の起動規則（`launch-project.mjs`・`single-instance.cjs`・`window-size.cjs`・`window-opening.cjs`）をビルドせず直接読み込み、同じ Code / Live を利用します。コードは aidiy_hermes 固定で、モデルの保存とモデル候補は各アプリ側（`aidiy_discord.json` / `aidiy_slack.json`、AIコアのモデル情報API）で扱います。
+`frontend_channels/discord`（`aidiy_discord`）と `frontend_channels/slack`（`aidiy_slack`）は、本フォルダの `src/runner.ts`、`src/protocol.ts`、`src/forwarded-origin.ts`（Discord は `aidiy_live/src/protocol.ts` と `aidiy_live/src/model-catalog.ts` も）と、`scripts/` の起動規則（`launch-project.mjs`・`single-instance.cjs`・`window-size.cjs`・`window-opening.cjs`）をビルドせず直接読み込み、同じ Code / Live を利用します。コードは aidiy_hermes 固定で、モデルの保存とモデル候補は各アプリ側（`aidiy_discord.json` / `aidiy_slack.json`、AIコアのモデル情報API）で扱います。
 
 ## 技術スタック
 
@@ -52,7 +52,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 - 拡張側から `--yolo` を付与せず、Hermes 側の承認・ツール設定を維持する。
 - Code の AIコア接続と Webview 中継では、既存の `AIコード.vue` / `AIコード.py` / `AIコード_cli.py` と同じメッセージ識別子を使う。
 - Live は既存 AIコアの WebSocket（`/core/ws/AIコア`）とモデル情報 API をそのまま使い、拡張専用の API を追加しない。
-- `src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts`、`src/model-preferences.ts`、`scripts/model-catalog.py` は `frontend_channels` と共有する。export 名や引数を変える場合は `frontend_channels/src/共通連携/IDE連携.ts` と利用箇所を合わせて更新する。
+- `src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts`、`src/model-preferences.ts`、`scripts/model-catalog.py` は `frontend_channels/discord` と共有する。export 名や引数を変える場合は `frontend_channels/discord/src/共通連携/IDE連携.ts` と利用箇所を合わせて更新する。
 - HTML を含む Markdown は無効化し、外部画像や任意の command URI を回答から実行しない。
 - Windows デスクトップ版 VS Code を主対象とする。Codespaces のブラウザ版ではリモートの Node.js 拡張ホストを使う。Live 拡張のマイク入力は Windows のローカルホストで扱い、Codespaces では単独ブラウザ版を使う。リモートホストの Live 接続先はそのホストの AIコアとなる。仮想ワークスペースと、リモート拡張ホストのない Web 版は対象外。
 

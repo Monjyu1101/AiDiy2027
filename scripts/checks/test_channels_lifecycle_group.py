@@ -14,7 +14,7 @@ from unittest.mock import Mock, call, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-FOLDERS = ('frontend_channels', 'frontend_channels/slack')
+FOLDERS = ('frontend_channels/discord', 'frontend_channels/slack')
 
 
 def load(relative):

@@ -20,9 +20,9 @@ class SlackLifecycleMessagesTests(unittest.TestCase):
             ('_setup.py', 'main', 'print_info'),
             ('_start.py', 'collect_startup_choices', 'print_info'),
             ('_cleanup.py', 'main', 'print_info'),
-            ('frontend_channels/_setup.py', 'setup', 'print_info'),
-            ('frontend_channels/_start.py', 'main', 'print'),
-            ('frontend_channels/_cleanup.py', 'cleanup', 'print_info'),
+            ('frontend_channels/discord/_setup.py', 'setup', 'print_info'),
+            ('frontend_channels/discord/_start.py', 'main', 'print'),
+            ('frontend_channels/discord/_cleanup.py', 'cleanup', 'print_info'),
         ]
         for filename, function, printer in cases:
             with self.subTest(filename=filename):

@@ -130,12 +130,22 @@ class ElectronSetupTest(unittest.TestCase):
         self.assertTrue(common.electron_binary_ready(self.root))
 
     def test_discord_binary_is_reused_without_network(self):
-        peer = self.make_app('frontend_channels')
+        peer = self.make_app('frontend_channels/discord')
         self.make_ready(peer)
         with patch.object(common.urllib.request, 'urlopen') as download:
             self.assertTrue(common.prepare_electron_binary(self.root, 'test'))
             download.assert_not_called()
         self.assertTrue(common.electron_binary_ready(self.root))
+
+    def test_channel_siblings_reuse_root_peer_without_network(self):
+        self.make_ready(self.root)
+        for folder in ('frontend_channels/discord', 'frontend_channels/slack'):
+            with self.subTest(folder=folder):
+                target = self.make_app(folder)
+                with patch.object(common.urllib.request, 'urlopen') as download:
+                    self.assertTrue(common.prepare_electron_binary(target, 'test'))
+                    download.assert_not_called()
+                self.assertTrue(common.electron_binary_ready(target))
 
     def test_different_peer_version_is_not_reused(self):
         peer = self.make_app('frontend_avatar', '44.5.0')

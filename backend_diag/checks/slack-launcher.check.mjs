@@ -31,7 +31,7 @@ test('configured Slack catalog follows Discord; absent or non-file entry stays v
 });
 test('Slack fixed installed entry passes exact project argv, keeps Discord separate and rechecks missing entry',async t=>{
  const f=await fixture(t);await f.install();assert.equal((await f.manager.catalog()).対象.find(x=>x.id==='slack').利用可能,true);
- f.tasks.push({command:'node /repo/frontend_channels/panel/launch.mjs'});
+ f.tasks.push({command:'node /repo/frontend_channels/discord/panel/launch.mjs'});
  assert.equal((await f.manager.launch('slack',f.project)).受付,true);assert.equal(f.calls.length,1);
  const call=f.calls[0];assert.equal(call.command,'fixture-node');assert.deepEqual(call.args,[f.entry,'--project',f.project]);assert.equal(call.options.cwd,f.project);assert.equal(call.options.shell,false);assert.equal(call.options.detached,true);
  f.tasks.push({command:'node '+f.entry});assert.equal((await f.manager.launch('slack',f.project)).起動済み,true);assert.equal(f.calls.length,1);
@@ -45,7 +45,7 @@ test('Slack launch serializes repeated clicks and releases pending state',async 
 });
 test('Slack process matching is module-local and does not match Discord, command text or tests',()=>{
  for(const command of ['node C:\\repo\\frontend_channels\\slack\\panel\\launch.mjs --project C:\\work','electron /repo/frontend_channels/slack/panel/desktop.cjs','node --import loader /repo/frontend_channels/slack/src/web-server.ts'])assert.equal(アプリタスク('slack',{command}),true,command);
- for(const command of ['node /repo/frontend_channels/panel/launch.mjs','node /repo/frontend_channels/src/main.ts','node -e "frontend_channels/slack/panel/launch.mjs"','node --test /repo/frontend_channels/slack/panel/launch.mjs'])assert.equal(アプリタスク('slack',{command}),false,command);
+ for(const command of ['node /repo/frontend_channels/discord/panel/launch.mjs','node /repo/frontend_channels/discord/src/main.ts','node -e "frontend_channels/slack/panel/launch.mjs"','node --test /repo/frontend_channels/slack/panel/launch.mjs'])assert.equal(アプリタスク('slack',{command}),false,command);
  assert.equal(アプリタスク('discord',{command:'node /repo/frontend_channels/slack/panel/launch.mjs'}),false);
 });
 test('normal keeps unavailable Slack disabled; mini hides it and orders available Slack after Discord',async()=>{

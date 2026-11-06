@@ -72,7 +72,7 @@ class SetupMessageTests(unittest.TestCase):
             "command_hermes": ("Hermes", "Python / uv / Hermes CLI"),
             "frontend_ide/host": ("Code / Live", "Node.js / Vue 3 / TypeScript / Electron / VS Code / VSIX"),
             "frontend_ide/viewer": ("IDE", "Node.js / Electron / Monaco Editor / docx-preview / SheetJS / PptxViewJS / PDF.js"),
-            "frontend_channels": ("Discord", "Discord / Node.js / Vue 3 / TypeScript / Electron"),
+            "frontend_channels/discord": ("Discord", "Discord / Node.js / Vue 3 / TypeScript / Electron"),
         }
         for folder, (label, technologies) in inventories.items():
             with self.subTest(folder=folder), contextlib.ExitStack() as stack:

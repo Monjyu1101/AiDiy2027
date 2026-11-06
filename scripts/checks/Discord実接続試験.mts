@@ -5,12 +5,12 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {writeFile,mkdir} from 'node:fs/promises';
 import {resolve} from 'node:path';
-import {設定読込} from '../../frontend_channels/src/接続/接続設定';
-import {Discord通信} from '../../frontend_channels/src/接続/ネットワーク接続';
-import {Code接続} from '../../frontend_channels/src/コード/コード会話';
+import {設定読込} from '../../frontend_channels/discord/src/接続/接続設定';
+import {Discord通信} from '../../frontend_channels/discord/src/接続/ネットワーク接続';
+import {Code接続} from '../../frontend_channels/discord/src/コード/コード会話';
 
 if(!process.argv.includes('--send'))throw Error('許可済みの試験投稿に限り --send を付けてください。');
-const require=createRequire(resolve('frontend_channels/package.json'));
+const require=createRequire(resolve('frontend_channels/discord/package.json'));
 const {REST,Routes}=require('discord.js');
 const out=resolve(process.argv.find(a=>a.startsWith('--out='))?.slice(6)||'temp/discord-live-result.json');
 const config={...設定読込(),folder:resolve('temp/総合テストプロジェクト'),timeoutMs:180000};

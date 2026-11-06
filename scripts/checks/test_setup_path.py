@@ -206,7 +206,7 @@ class PathTests(unittest.TestCase):
     def test_root_cleanup_rechecks_path_after_all_selected_launchers(self):
         self.register()
         cleanup = load(ROOT / '_cleanup.py')
-        launchers = {'backend_diag': 'aidiy_diag.cmd', 'frontend_channels': 'aidiy_discord.cmd',
+        launchers = {'backend_diag': 'aidiy_diag.cmd', 'frontend_channels/discord': 'aidiy_discord.cmd',
                      'frontend_channels/slack': 'aidiy_slack.cmd'}
         for name in launchers.values():
             (self.directory / name).write_text('fixture', encoding='utf-8')
@@ -235,7 +235,7 @@ class PathTests(unittest.TestCase):
         self.enterContext(patch.object(cleanup, '_run_folder_cleanup', side_effect=folder_cleanup))
         self.enterContext(patch.object(cleanup, 'remove_launcher_path', side_effect=remove_path))
         self.assertTrue(cleanup.execute_cleanup(ROOT, choices))
-        self.assertEqual(events, ['backend_diag', 'frontend_channels', 'frontend_channels/slack', 'path'])
+        self.assertEqual(events, ['backend_diag', 'frontend_channels/discord', 'frontend_channels/slack', 'path'])
         self.assertEqual(self.value, (r'%USERPROFILE%\tools;', 2))
 
     def test_all_eight_launchers_register_resolve_and_unlink(self):
@@ -245,7 +245,7 @@ class PathTests(unittest.TestCase):
             'backend_diag': 'diag_main.mjs',
             'frontend_ide/viewer': 'launch.mjs',
             'frontend_ide/aidiy_console': 'launch.mjs',
-            'frontend_channels': 'panel/launch.mjs',
+            'frontend_channels/discord': 'panel/launch.mjs',
             'frontend_ide/host': 'aidiy_code/launch.mjs',
             'frontend_avatar': 'launch.mjs',
             'command_hermes': 'pyproject.toml',
@@ -260,7 +260,7 @@ class PathTests(unittest.TestCase):
         live.write_text('', encoding='utf-8')
         diag = load(ROOT / 'backend_diag/_setup.py')
         viewer = load(ROOT / 'frontend_ide/viewer/launcher.py')
-        discord = load(ROOT / 'frontend_channels/launcher.py')
+        discord = load(ROOT / 'frontend_channels/discord/launcher.py')
         host = load(ROOT / 'frontend_ide/host/_setup.py')
         avatar = load(ROOT / 'frontend_avatar/_setup.py')
         hermes = load(ROOT / 'command_hermes/_setup.py')
@@ -280,7 +280,7 @@ class PathTests(unittest.TestCase):
         with patch.object(shutil, 'which', return_value='node.exe'):
             viewer.install_launcher(project / 'frontend_ide/viewer')
             viewer.install_launcher(project / 'frontend_ide/aidiy_console', 'console')
-            discord.install_launcher(project / 'frontend_channels')
+            discord.install_launcher(project / 'frontend_channels/discord')
         commands = ('diag', 'ide', 'console', 'code', 'live', 'avatar', 'hermes', 'discord')
         for command in commands:
             name = f'aidiy_{command}.cmd'
@@ -305,7 +305,7 @@ class PathTests(unittest.TestCase):
         self.enterContext(patch.object(diag_cleanup, 'stop_processes', return_value=True))
         self.assertTrue(viewer.remove_launcher(project / 'frontend_ide/viewer'))
         self.assertTrue(viewer.remove_launcher(project / 'frontend_ide/aidiy_console', 'console'))
-        self.assertTrue(discord.remove_launcher(project / 'frontend_channels'))
+        self.assertTrue(discord.remove_launcher(project / 'frontend_channels/discord'))
         self.assertTrue(host_cleanup.cleanup_app('code', report=False))
         self.assertTrue(host_cleanup.cleanup_app('live', report=False))
         self.assertTrue(avatar_cleanup.cleanup())

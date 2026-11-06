@@ -36,7 +36,7 @@ def is_slack_process(process: dict, root: Path, windows: bool) -> bool:
                 value = value[1:]
         return path_module.normcase(path_module.normpath(value))
 
-    # Discord（frontend_channels/src/main.ts）とは入口のパスで区別する。
+    # Discord（frontend_channels/discord/src/main.ts）とは入口のパスで区別する。
     main = normalize(path_module.join(str(root), 'src', 'main.ts'))
     entries = {main, *(normalize(path_module.join(str(root), *parts)) for parts in (
         ('src', 'panel-worker.ts'), ('src', 'web-server.ts'), ('panel', 'desktop.cjs'), ('panel', 'launch.mjs'),

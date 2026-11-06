@@ -28,7 +28,7 @@
 - frontend_ide/aidiy_console/_start.py  check_environment / start / kill_ports
 - frontend_ide/host/_start.py  check_environment / start_code / start_live / kill_ports
 - frontend_ide/viewer/_start.py     check_environment / start / kill_ports（空きポート）
-- frontend_channels/_start.py check_environment / start / kill_ports（パネルから自動接続）
+- frontend_channels/discord/_start.py check_environment / start / kill_ports（パネルから自動接続）
 - frontend_channels/slack/_start.py check_environment / start / kill_ports（パネルから自動接続）
 
 開始承認後と Ctrl+C 終了時は、setupと共通のプロセス照合で停止します。
@@ -202,11 +202,11 @@ def _init_modules() -> None:
     CONSOLE = _load_folder_module("frontend_ide/aidiy_console")
     VSCODE = _load_folder_module("frontend_ide/host")
     DEV = _load_folder_module("frontend_ide/viewer")
-    DISCORD = _load_folder_module("frontend_channels")
+    DISCORD = _load_folder_module("frontend_channels/discord")
     SLACK = _load_folder_module("frontend_channels/slack")
 
     # 起動そのものには不要なので、import で残ったキャッシュは畳んでおく。
-    for folder in ("backend_diag", "frontend_web", "frontend_avatar", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels", "frontend_channels/slack"):
+    for folder in ("backend_diag", "frontend_web", "frontend_avatar", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels/discord", "frontend_channels/slack"):
         _remove_folder_import_cache(folder)
 
 

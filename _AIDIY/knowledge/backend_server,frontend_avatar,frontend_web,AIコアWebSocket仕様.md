@@ -178,7 +178,7 @@ Code AI の `output_stream` は、本文と同じパケットの `メッセー�
 
 `connect` の `CODE_BASE_PATH` は任意指定です。新規セッションでは `init` 通知・バックアップ・LiveAI／CodeAI 初期化より先にセッションのフォルダへ反映し、共通設定ファイルは変更しません。既存セッションでは同じフォルダを指定してください。相対パスは `backend_server/` 基準で解決します。参照できないフォルダや既存セッションと異なるフォルダは `error` と切断コード `1008` で拒否します。
 
-`aidiy_live` と `frontend_channels`（Live）は input／0／audio の接続時に作業フォルダを送信します。Web／Avatar は core 初期化情報の `モデル設定.CODE_BASE_PATH` を音声接続時に送信します。指定しない旧クライアントは従来のセッション設定を使用します。
+`aidiy_live` と `frontend_channels/discord`（Live）は input／0／audio の接続時に作業フォルダを送信します。Web／Avatar は core 初期化情報の `モデル設定.CODE_BASE_PATH` を音声接続時に送信します。指定しない旧クライアントは従来のセッション設定を使用します。
 
 Discordのaudio接続は `connect.Live準備確認: true` を指定し、ソケット登録の `init` に加えて `{ メッセージ識別: "live_ready", セッションID: "<確定ID>" }` を待つ。backendの `Live.待受準備確認()` がProviderの準備完了を確認してから同じaudioソケットへ返す。開始拒否・未設定キー・準備タイムアウトは `error` を返す。`Live準備確認` を指定しない接続は従来のinit方式を維持する。共有クライアントでは `waitForLiveReady: true` を指定した場合のみこの確認を使う。
 

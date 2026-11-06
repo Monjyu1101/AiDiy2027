@@ -25,7 +25,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 - frontend_avatar/_setup.py  フロントエンド(Avatar)
 - command_hermes/_setup.py   コマンド(hermes)
 - frontend_ide/_setup.py     IDE群(Navigator / Console / Code / Live / IDE / Task / Team)
-- frontend_channels/_setup.py / slack/_setup.py Channels(Discord / Slack、まとめて選択)
+- frontend_channels/discord/_setup.py / slack/_setup.py Channels(Discord / Slack、まとめて選択)
 
 Usage:
     python _setup.py
@@ -180,7 +180,7 @@ IMPORT_CACHE_FOLDERS = (
     "frontend_ide",
     "frontend_ide/host",
     "frontend_ide/viewer",
-    "frontend_channels",
+    "frontend_channels/discord",
     "frontend_channels/slack",
 )
 
@@ -765,7 +765,7 @@ def setup_channels(choices: dict) -> list[str]:
     warnings = choices.setdefault("_setup_warnings", [])
     warning_count = len(warnings)
     errors = []
-    for label, folder in (("Discord", "frontend_channels"), ("Slack", "frontend_channels/slack")):
+    for label, folder in (("Discord", "frontend_channels/discord"), ("Slack", "frontend_channels/slack")):
         try:
             ok = _load_folder_module(folder).setup(choices, report=False)
         except (OSError, ValueError, ImportError, RuntimeError, subprocess.SubprocessError) as exc:
@@ -791,7 +791,7 @@ def setup_channels(choices: dict) -> list[str]:
 def check_refresh_node_runtime(version: str) -> bool:
     """一括buildの実package条件を案内。版数だけでは停止しない。"""
     projects = ("backend_diag", "backend_diag/ui", "frontend_web", "frontend_avatar",
-                "frontend_ide", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels")
+                "frontend_ide", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels/discord")
     try:
         for folder in projects:
             directory = BASE_DIR / folder
@@ -832,7 +832,7 @@ def setup_node_refresh() -> list[str]:
         directory = BASE_DIR / folder
         if electron:
             return helper.setup_dependencies(directory, npm, folder, run_command,
-                                             update=False, desktop=desktop, locked=(folder == "frontend_channels"),
+                                             update=False, desktop=desktop, locked=(folder == "frontend_channels/discord"),
                                              info=print_info, warning=print_warning, error=print_error)
         guarded = helper.frontend_dependency_guard(
             directory, folder, desktop=False, info=print_info, warning=print_warning, error=print_error,
@@ -866,9 +866,9 @@ def setup_node_refresh() -> list[str]:
         ("Task: aidiy_task", lambda: _load_folder_module("frontend_ide/aidiy_task").setup()),
         ("Team: aidiy_team", lambda: _load_folder_module("frontend_ide/aidiy_team").setup()),
         ("Browser: aidiy_browser", lambda: _load_folder_module("frontend_ide/aidiy_browser").setup()),
-        ("Discord: 依存", lambda: dependencies("frontend_channels", electron=True)),
-        ("Discord: ビルド", lambda: build("frontend_channels", "build:panel")),
-        ("Discord: aidiy_discord", lambda: _load_folder_module("frontend_channels").install_launcher(BASE_DIR / "frontend_channels")),
+        ("Discord: 依存", lambda: dependencies("frontend_channels/discord", electron=True)),
+        ("Discord: ビルド", lambda: build("frontend_channels/discord", "build:panel")),
+        ("Discord: aidiy_discord", lambda: _load_folder_module("frontend_channels/discord").install_launcher(BASE_DIR / "frontend_channels/discord")),
         ("Slack: 依存", lambda: dependencies("frontend_channels/slack", electron=True)),
         ("Slack: ビルド", lambda: build("frontend_channels/slack", "build:panel")),
         ("Slack: aidiy_slack", lambda: _load_folder_module("frontend_channels/slack").install_launcher(BASE_DIR / "frontend_channels/slack")),
@@ -901,7 +901,7 @@ def setup_launchers_only() -> list[str]:
         ('Task', lambda: _load_folder_module('frontend_ide/aidiy_task').setup()),
         ('Team', lambda: _load_folder_module('frontend_ide/aidiy_team').setup()),
         ('Browser', lambda: _load_folder_module('frontend_ide/aidiy_browser').setup()),
-        ('Discord', lambda: _load_folder_module('frontend_channels').install_launcher(BASE_DIR / 'frontend_channels')),
+        ('Discord', lambda: _load_folder_module('frontend_channels/discord').install_launcher(BASE_DIR / 'frontend_channels/discord')),
         ('Slack', lambda: _load_folder_module('frontend_channels/slack').install_launcher(BASE_DIR / 'frontend_channels/slack')),
     ]
     errors = []

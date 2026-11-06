@@ -88,7 +88,7 @@ class ElectronPosixTests(unittest.TestCase):
     def test_all_component_paths_reuse_new_cache_on_windows_and_posix(self):
         for platform_name in ('win32', 'darwin', 'linux'):
             for name in ('backend_diag', 'frontend_avatar', 'frontend_ide/host',
-                         'frontend_ide/viewer', 'frontend_channels'):
+                         'frontend_ide/viewer', 'frontend_channels/discord'):
                 with self.subTest(platform=platform_name, component=name), \
                         patch.object(setup.sys, 'platform', platform_name), \
                         patch.object(setup.platform, 'machine', return_value='x86_64'), \

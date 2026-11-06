@@ -71,7 +71,7 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 | カテゴリ | 主なキー |
 |---------|---------|
 | サービス / WebUI | `PORT_WEB`, `PORT_CORE`, `PORT_AVATAR`, `PORT_TASKTEAM`, `PORT_TOOLS`, `PORT_LOCAL`, `PORT_APPS`, `WEBUI_FIRST_PAGE` |
-| Discord | `discord_bot_token`, `discord_guild_id`, `discord_allowed_user_id`, `discord_text_channel_id`, `discord_voice_channel_id` の接続情報5項目。ID は単一文字列。初期値は `< your discord bot token >` などの `<` で始まる仮設定（未設定扱い）。Live / Code は共通設定を使用（詳細は `frontend_channels/README.md`） |
+| Discord | `discord_bot_token`, `discord_guild_id`, `discord_allowed_user_id`, `discord_text_channel_id`, `discord_voice_channel_id` の接続情報5項目。ID は単一文字列。初期値は `< your discord bot token >` などの `<` で始まる仮設定（未設定扱い）。Live / Code は共通設定を使用（詳細は `frontend_channels/discord/README.md`） |
 | API Key | `gemini_key_id`, `freeai_key_id`, `claude_key_id`, `openai_key_id`, `copilot_key_id`, `openrt_key_id`, `ollama_key_id` |
 | OpenAI/Azure | `openai_api_type`, `openai_organization`, `azure_endpoint`, `azure_version`, `azure_key_id` |
 | Ollama | `ollama_host` |
@@ -167,5 +167,5 @@ readerのtoken未設定契約はDiscord同様、非文字列、trim後length<=1�
 初期値と秘密値除去に加え、Diag外部連携はSlack Botトークンの認証確認に対応する。現行の接続reader・runtime・パネルは `frontend_channels/slack/` にある。
 Diag既存診断ではSlackの2 tokenも秘密値として除去する。外部連携の `Slack Bot` はBot tokenの認証確認のみで、App token・ID設定・Socket Mode接続・投稿権限は確認しない。
 `backend_server/checks/test_slack_config_defaults.py` は一時JSONだけを使う。
-`frontend_channels/checks/config.test.ts` は現Discordの未設定契約・Slack欄の非干渉を検証し、
+`frontend_channels/discord/checks/config.test.ts` は現Discordの未設定契約・Slack欄の非干渉を検証し、
 Slackの実接続は `frontend_channels/slack/README.md` の手順で別途確認する。

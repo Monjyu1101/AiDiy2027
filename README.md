@@ -19,6 +19,7 @@
 - [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md)
 - [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md)
 - [frontend_channels/AGENTS.md](./frontend_channels/AGENTS.md)
+- [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md)
 - [frontend_ide/viewer/AGENTS.md](./frontend_ide/viewer/AGENTS.md)
 - [docs/](./docs/)
 
@@ -106,7 +107,7 @@ python _setup.py
 7. `frontend_avatar` の `npm install`、必要に応じて Electron バイナリの補完
 8. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
 9. `frontend_ide` の共通Vue依存、Navigator / Console / Code / Live / IDE / Task / Team / Browserのセットアップ、ランチャー登録、Code / LiveのVS Code拡張配置
-10. Channels(Discord / Slack) を一括選択し、`frontend_channels` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
+10. Channels(Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
 Diagを選択した場合は診断UI・Electron・ランチャーを準備し（診断UIの開発用依存 `@vue/compiler-sfc` などは `backend_diag/ui` で `npm ci` するため、画面のビルドと検証をそのまま実行できます）、最後にheadless診断で導入状況とモデル情報を書き込みます。外部連携の認証試験はheadless対象外です。
 
@@ -144,7 +145,9 @@ python _start.py
 `command_hermes` は **常駐サーバーではないため `_start.py` の起動対象外** です。セットアップ後は、AIコードパネルから `aidiy_hermes` として呼び出すか、必要時に手動で起動します。
 `frontend_ide/host` も常駐サービスではありません。セットアップ後は VS Code のコマンドパレットから **AiDiy (Code): チャットを開く** / **AiDiy (Live): ライブ会話を開く**を実行します。単独ウィンドウは作業フォルダで `aidiy_code` / `aidiy_live`を実行します。Live は `backend_server`（8091）の起動が必要です。
 
-`frontend_channels` は `_config/AiDiy_key.json` の `DISCORD_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels && npm start` での個別起動も可能です。保存済みの設定（`~/.aidiy/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/README.md](./frontend_channels/README.md) を参照してください。
+`frontend_channels/` は外部接続チャンネル群の親ディレクトリです。`discord/` と `slack/` は同じ階層の独立モジュールで、将来のチャンネルもここへ追加します。構成と共通方針は [Channels README](./frontend_channels/README.md) を参照してください。
+
+`frontend_channels/discord` は `_config/AiDiy_key.json` の `DISCORD_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`~/.aidiy/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
 
 `frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `~/.aidiy/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
 
@@ -273,7 +276,7 @@ python _cleanup.py
 - 必要に応じて SQLite DB
 
 `_cleanup.py` は `command_hermes` の `.venv` / `venv` と Python キャッシュに加え、`frontend_ide/host` の配置済み拡張機能（Code / Live）、単独起動ランチャー（`aidiy_code` / `aidiy_live`）、`node_modules`、`dist`、`out` も削除対象として確認します。
-Channels(Discord / Slack) は1項目として一括選択します（既定 Yes）。`frontend_channels` と `frontend_channels/slack` の依存物・生成物・キャッシュが対象です。削除前に両方の実行パスを照合して Bot を停止し、全体監視の自動再起動も止めます。共通 `AiDiy_key.json` の Discord / Slack 設定は保持します。各フォルダの `_setup.py` / `_cleanup.py` を直接実行する場合は、その機能だけが対象です。
+Channels(Discord / Slack) は1項目として一括選択します（既定 Yes）。`frontend_channels/discord` と `frontend_channels/slack` の依存物・生成物・キャッシュが対象です。削除前に両方の実行パスを照合して Bot を停止し、全体監視の自動再起動も止めます。共通 `AiDiy_key.json` の Discord / Slack 設定は保持します。各フォルダの `_setup.py` / `_cleanup.py` を直接実行する場合は、その機能だけが対象です。
 
 `frontend_ide/viewer` も全体クリーンアップに対応しています（既定 Yes）。この配置先のサーバープロセス停止、`aidiy_ide` ランチャー解除、依存物・Python キャッシュの削除を行います。利用方法は [frontend_ide/viewer/README.md](./frontend_ide/viewer/README.md) を参照してください。
 クリーンアップを実行すると、ファイル削除の前に、選択した対象に限らず全常駐サービスの待受プロセス（Avatar は残留 Electron も含む）を停止します。この作業コピーの Code / Live 単独実行と、tools の MCP 接続プロセスも終了します。ルート `_start.py` の監視中でも全常駐サービスが自動再起動の対象から外れ、クリーンアップ中や直後に再起動しません。
@@ -310,7 +313,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 9. [backend_diag/AGENTS.md](./backend_diag/AGENTS.md) — Diag の診断・Vue 画面
 10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — Navigator / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面
 11. [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) — Code / Live の拡張ホスト・通信
-12. [frontend_channels/AGENTS.md](./frontend_channels/AGENTS.md) — Discord の接続・Vue パネル
+12. [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) — Discord の接続・Vue パネル
 13. [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md) — Slack の接続・Vue パネル（Discord の双子）
 14. [frontend_ide/viewer/AGENTS.md](./frontend_ide/viewer/AGENTS.md) — ファイルAPI・Office表示
 15. [docs/開発ガイド/README.md](./docs/開発ガイド/README.md)
@@ -322,4 +325,4 @@ Copyright (c) 2014-2027 Mitsuo KONDOU and contributors
 
 AiDiy 独自部分の利用条件は [AiDiy 公開利用ライセンス v1.1](./LICENSE) を参照してください。非商用利用に限る公開ライセンスで、OSI が定義するオープンソースライセンスではありません。商用利用には事前に全著作権者の書面承諾が必要です。再配布時はライセンス全文と著作権表示を含めてください。
 
-第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./backend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。
+第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/discord/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./backend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。

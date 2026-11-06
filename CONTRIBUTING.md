@@ -19,6 +19,7 @@
   - `frontend_avatar/AGENTS.md`
   - `frontend_ide/host/AGENTS.md`
   - `frontend_channels/AGENTS.md`
+  - `frontend_channels/discord/AGENTS.md`
   - `frontend_channels/slack/AGENTS.md`
   - `frontend_ide/AGENTS.md`
   - `backend_diag/AGENTS.md`
@@ -36,7 +37,7 @@
 
 ## テスト
 
-主な自動テストは `backend_server/checks/` の `unittest` と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/checks/` の Node.js / Python テストです。サーバー起動や Discord への接続は不要です。`command_hermes/checks/`、`scripts/checks/` にも `unittest` があります。
+主な自動テストは `backend_server/checks/` の `unittest` と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/discord/checks/` の Node.js / Python テストです。サーバー起動や Discord への接続は不要です。`command_hermes/checks/`、`scripts/checks/` にも `unittest` があります。
 
 ```powershell
 cd backend_server
@@ -48,7 +49,7 @@ npm test
 npm run live:test
 python -m unittest discover -s checks -p "test_*.py"
 
-cd ../frontend_channels
+cd ../../frontend_channels/discord
 npm run check
 npm test
 ```
@@ -58,8 +59,8 @@ npm test
 - API: http://127.0.0.1:8091/docs / http://127.0.0.1:8098/docs / http://127.0.0.1:8093/docs
 - UI: http://127.0.0.1:8090
 - 型チェック: `frontend_web` / `frontend_avatar` は `npm run type-check`（`npm run build` は配布物作成・成果物確認・明示依頼など、実行理由がある場合のみ）
-- VS Code 拡張変更時: `frontend_ide/host` で `npm run check` / `npm test` / `npm run live:test`。配布物確認時は `npm run package`（Code / Live の 2 つの VSIX を生成）。`frontend_channels` は `frontend_ide/host` の CLI 実行・Live 通信・モデル保存処理を共有するため、これらを変えた場合は Discord のテストも実行
-- Discord Bot 変更時: `frontend_channels` で `npm run check` / `npm test`（ビルド不要）。ルートで `python -X utf8 -m unittest discover -s frontend_channels/checks -p "test_*.py"`
+- VS Code 拡張変更時: `frontend_ide/host` で `npm run check` / `npm test` / `npm run live:test`。配布物確認時は `npm run package`（Code / Live の 2 つの VSIX を生成）。`frontend_channels/discord` は `frontend_ide/host` の CLI 実行・Live 通信・モデル保存処理を共有するため、これらを変えた場合は Discord のテストも実行
+- Discord Bot 変更時: `frontend_channels/discord` で `npm run check` / `npm test`（ビルド不要）。ルートで `python -X utf8 -m unittest discover -s frontend_channels/discord/checks -p "test_*.py"`
 - Slack Bot 変更時: `frontend_channels/slack` で `npm run check` / `npm test`。ルートで `python -X utf8 -m unittest discover -s frontend_channels/slack/checks -p "test_*.py"`
 - MCP 連携変更時: `backend_tools` の MCP サーバー（Windows は20、Linux / macOS は19）（一覧は `GET http://127.0.0.1:8095/`、SSE は `http://127.0.0.1:8095/<mcp_name>/sse`）も確認
 

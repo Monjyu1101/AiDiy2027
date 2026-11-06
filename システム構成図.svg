@@ -183,7 +183,7 @@ frontend_ide/ファイル機能/navigation_readonly.py;
 frontend_web/vite.config.ts; frontend_avatar/vite.config.ts;
 frontend_ide/host/src/code-connection.ts; frontend_ide/host/src/runner.ts;
 frontend_ide/タスクチーム/api-proxy.mjs;
-frontend_channels/src/コード/コード会話.ts; frontend_channels/src/接続/接続設定.ts;
+frontend_channels/discord/src/コード/コード会話.ts; frontend_channels/discord/src/接続/接続設定.ts;
 frontend_channels/slack/src/接続/Bot接続.ts; frontend_channels/slack/src/コード/コード会話.ts;
 backend_server/AIコア/AI内部ツール.py; backend_server/AIコア/AIチャット_local.py;
 backend_server/AIコア/AIコード_cli.py; backend_server/database.py;

@@ -1,6 +1,6 @@
 # Node.js 外部 API 通信の注意点
 
-> 文書: `共通,Node.js外部API通信の注意点.md` | 実装: `backend_diag/runtime/environment_proxy.ts`, `backend_diag/runtime/model_probe.ts`, `frontend_channels/src/接続/ネットワーク接続.ts`, `frontend_channels/src/接続/接続エラー.ts`
+> 文書: `共通,Node.js外部API通信の注意点.md` | 実装: `backend_diag/runtime/environment_proxy.ts`, `backend_diag/runtime/model_probe.ts`, `frontend_channels/discord/src/接続/ネットワーク接続.ts`, `frontend_channels/discord/src/接続/接続エラー.ts`
 
 ## このメモを使う場面
 
@@ -46,7 +46,7 @@ Discord の `プロキシ経路` と Diag の `proxyRoute` は次の優先順位
 
 ## Discord と Diag の実装上の根拠
 
-Discord は `frontend_channels/src/接続/ネットワーク接続.ts` で REST に Undici `ProxyAgent`、Gateway / 音声 WSS に `HttpsProxyAgent` を明示的に使う。`接続エラー.ts` はネットワーク分類と安全な説明を扱う。履歴 `a8535f1497f49e13bb466126cc015fa0f43fb697` が REST / Gateway、`f50d3884a4c5ba0510c81bc5073071ee9dc84288` が音声 WSS 経路追加の参照点。
+Discord は `frontend_channels/discord/src/接続/ネットワーク接続.ts` で REST に Undici `ProxyAgent`、Gateway / 音声 WSS に `HttpsProxyAgent` を明示的に使う。`接続エラー.ts` はネットワーク分類と安全な説明を扱う。履歴 `a8535f1497f49e13bb466126cc015fa0f43fb697` が REST / Gateway、`f50d3884a4c5ba0510c81bc5073071ee9dc84288` が音声 WSS 経路追加の参照点。
 
 Diag は旧 `model_probe.ts` の外部 HTTPS も `agent:false` 固定だったため環境 proxy を使わなかった。現行は `environment_proxy.ts` が経路選択と標準モジュールによる CONNECT を所有し、`model_probe.ts` が固定宛先・タイムアウト・応答上限・キャンセルを維持する。OAuth / 公開一覧 / 個別 API で同じ通信処理を使う。モデル試行の外部 API は MCP / Live 側の既存実装が担当し、この変更で一括制御されるわけではない。
 

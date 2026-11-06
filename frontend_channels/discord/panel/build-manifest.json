@@ -1,0 +1,22 @@
+{
+  "package-lock.json": "cff321e28cdfd8baf39d00dfed2fff0404e2581a613a280098db9e86520ca354",
+  "package.json": "77bbd6b2cafb248f5b41d3850e235d5d5077b851a2281446d9e2bf37e0944a3a",
+  "panel/AiDiy.png": "3b580e91b8e91a2accd55675c07f2b2b8c3c9cf85677da804ef6b74ae8267042",
+  "panel/AiDiy_discord.png": "16605e78dd287eef46624db971c6f165929bb38e696beaab7a0b35bc6dc15627",
+  "panel/AiDiy_discord.svg": "9b2625a735d3120f9379726fe141e6dacebf51b82927907f74ae05cefdace1e7",
+  "panel/THIRD_PARTY_NOTICES.txt": "991f108cf9b45856e7f9864d918cb66c1f6f9ab41f18dd885f0c95bf8aa10d12",
+  "panel/components/ライブ/音声表示.js": "b289a0ab148c3ee84cf2e5a415f5278bb376a81b778c5e2ac777330ed30c2f81",
+  "panel/components/接続/パネル状態.js": "f95b959582ad2e827ca0330c6b3abbb06222ea2dd78d0cf138dfc94d5940e670",
+  "panel/components/接続/接続パネル.vue": "dcf5fa2fe8b45be36bd30f09df33d64c7e1fabbf466d998d7deded1b91ca1528",
+  "panel/components/接続/機能切替.vue": "2d9a368fef8e11b98cff072ade805e175eeb9beb0e4c0b5f12cbba889acf975b",
+  "panel/components/接続/逃げるマーク.vue": "5a1e8974766d2dcec020eb830ffd4510f286a7ce2b75118ad5dd6ad310aefa15",
+  "panel/index.html": "e40ee51a212e95c5b7e92a923ffd509350c1920354ff281ebd2b24a94620b1a6",
+  "panel/main.js": "bc9b7ea29c435bf7e1beacbb15091a0b272447e787e614509610831952b54c21",
+  "panel/style.css": "65414ac4ec2429d42abec42b810b112aaad4181a71d4f326ff2e06bce3a360dc",
+  "panel/titlebar.css": "5d61d68094a9ddfa5c5271a96d19808bcbb664965f88cb9b249bd07d58e1aeb0",
+  "panel/view.js": "3643528fa799f3b2083eaeee0d266eafb428928c448748f33d637e86842bc689",
+  "panel/visualizer.js": "f16f4bfc3b0bb249fc67060d02b341039119a0e4eecaba8f3f5fcecfc5fd343d",
+  "scripts/build-panel.mjs": "9e2a1e2572043ecd026ed299fe8ed3b2d93ca200ba25d780cce6e28891bcfdef",
+  "scripts/verify-lock.mjs": "dcb26b5b317175525bd8e8b251f8b2c8ed839839e4c73b43df533c5ce82b0359",
+  "scripts/verify-panel.mjs": "58a713915460a9b92ac926b43cda6ed428336035d152b1f6fd78840bd9fd21cf"
+}

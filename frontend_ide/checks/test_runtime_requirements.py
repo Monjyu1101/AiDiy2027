@@ -39,8 +39,8 @@ class FrontendRequirementsTests(unittest.TestCase):
             ('frontend_web', 'vite', '22.11.0', False),
             ('frontend_avatar', 'electron', '20.19.0', False),
             ('frontend_avatar', 'electron', '22.12.0', True),
-            ('frontend_channels', None, '22.11.0', False),
-            ('frontend_channels', None, '22.12.0', True),
+            ('frontend_channels/discord', None, '22.11.0', False),
+            ('frontend_channels/discord', None, '22.12.0', True),
             ('frontend_ide/viewer', None, '22.12.0', False),
             ('frontend_ide/viewer', None, '22.13.0', True),
         )
@@ -51,17 +51,17 @@ class FrontendRequirementsTests(unittest.TestCase):
         for folder in ('frontend_ide/host', 'frontend_ide/host/aidiy_live'):
             package = json.loads((ROOT / folder / 'package.json').read_text(encoding='utf-8'))
             self.assertEqual(package['engines']['vscode'], '^1.106.0')
-        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels', 'frontend_ide'):
+        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels/discord', 'frontend_ide'):
             package = json.loads((ROOT / folder / 'package.json').read_text(encoding='utf-8'))
             self.assertTrue(package['dependencies']['vue'].lstrip('^~').startswith('3.'))
 
     def test_unavailable_node_stops_setups_before_install(self):
-        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels', 'frontend_ide/host', 'frontend_ide/viewer', 'frontend_ide'):
+        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels/discord', 'frontend_ide/host', 'frontend_ide/viewer', 'frontend_ide'):
             with self.subTest(folder=folder):
                 module = load(folder + '/_setup.py')
                 with patch.object(module, 'check_project_node_runtime', return_value=(False, 'Node command failed')), \
                         patch.object(module.subprocess, 'run') as run, contextlib.ExitStack() as mocks:
-                    if folder == 'frontend_channels':
+                    if folder == 'frontend_channels/discord':
                         mocks.enter_context(patch.object(module, '_discord_in_use', return_value=False))
                     if hasattr(module, 'run_command'):
                         mocks.enter_context(patch.object(module, 'run_command', side_effect=AssertionError('must not install')))
@@ -69,7 +69,7 @@ class FrontendRequirementsTests(unittest.TestCase):
                     run.assert_not_called()
 
     def test_node_failure_is_preserved_by_start_preflight(self):
-        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels', 'frontend_ide/host'):
+        for folder in ('frontend_web', 'frontend_avatar', 'frontend_channels/discord', 'frontend_ide/host'):
             module = load(folder + '/_start.py')
             with self.subTest(folder=folder), patch.object(module, 'check_project_node_runtime', return_value=(False, 'Node command failed')), \
                     patch.object(module.subprocess, 'Popen') as spawn:
@@ -127,7 +127,7 @@ class FrontendRequirementsTests(unittest.TestCase):
             self.assertIn('[WARN] VS Code old', output.getvalue())
 
     def test_node_version_warning_allows_direct_launchers(self):
-        for folder in ('frontend_avatar', 'frontend_channels', 'frontend_ide/host'):
+        for folder in ('frontend_avatar', 'frontend_channels/discord', 'frontend_ide/host'):
             module = load(folder + '/_start.py')
             with self.subTest(folder=folder), patch.object(module, 'check_project_node_runtime', return_value=(True, '[WARN] Node old')), \
                     patch.object(module.shutil, 'which', return_value='node'), contextlib.redirect_stdout(io.StringIO()) as output:
@@ -162,7 +162,7 @@ class FrontendRequirementsTests(unittest.TestCase):
                 self.assertIn('Web', detail)
 
     def test_discord_check_does_not_require_electron_to_validate_web_mode(self):
-        module = load('frontend_channels/_start.py')
+        module = load('frontend_channels/discord/_start.py')
         import _setup_electron as electron
         with patch.object(module, 'check_project_node_runtime', return_value=(True, 'Node')), \
                 patch.object(module.shutil, 'which', return_value='node'), patch.object(Path, 'is_file', return_value=True), \

@@ -138,7 +138,7 @@
     "id": "discord",
     "名前": "Discord",
     "区分": "その他",
-    "フォルダ": "frontend_channels",
+    "フォルダ": "frontend_channels/discord",
     "監視名": "フロントエンド(Discord)",
     "初期設定": {
       "起動対象": false,

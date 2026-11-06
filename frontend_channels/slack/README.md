@@ -1,6 +1,6 @@
 # AiDiy Slack
 
-> Discord 版（`frontend_channels/`、`aidiy_discord`）から音声会話を除いた双子のプログラムです。ファイル構成・画面・起動引数・試験をそろえ、接続部品とモデル設定だけが異なります。
+> Discord 版（`frontend_channels/discord/`、`aidiy_discord`）から音声会話を除いた双子のプログラムです。ファイル構成・画面・起動引数・試験をそろえ、接続部品とモデル設定だけが異なります。
 
 自分と AiDiy の専用チャンネルに普通に投稿すると、`aidiy_hermes` がスレッドで返信します。スレッド内の続きは同じ会話として続きます。チャットは `frontend_ide/host` の Code と同じ CLI 実行処理を使います。
 
@@ -20,7 +20,7 @@ Electron のタイトルバーは「ー □ 📌 ×」で最小化・最大化�
 python frontend_channels/slack/_setup.py
 ```
 
-`npm ci` → `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `~/.local/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Slack」からも導入できます。
+`npm ci` → `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `~/.local/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。
 
 ## プロキシが必要なネットワーク
 
@@ -78,7 +78,7 @@ Diag の Slack ボタン、ルート `_start.py` で Slack を Yes にした場�
 
 ## クリーンアップ
 
-ルート `python _cleanup.py` の Slack 項目、または単独の `python frontend_channels/slack/_cleanup.py` で、この作業コピーのパネル・Bot を子孫プロセスごと停止してから、`node_modules`・`out`・`temp`・Python キャッシュと `aidiy_slack` ランチャーを削除します。ソース、`package-lock.json`、`_config/AiDiy_key.json`、前回のモデル選択は残ります。
+ルート `python _cleanup.py` の Channels 項目、または単独の `python frontend_channels/slack/_cleanup.py` で、この作業コピーのパネル・Bot を子孫プロセスごと停止してから、`node_modules`・`out`・`temp`・Python キャッシュと `aidiy_slack` ランチャーを削除します。ソース、`package-lock.json`、`_config/AiDiy_key.json`、前回のモデル選択は残ります。
 
 ## 会話のしかた
 

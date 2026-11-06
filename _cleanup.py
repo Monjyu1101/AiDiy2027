@@ -29,7 +29,7 @@ setup / start の Code / IDE / Discord 継続方針とは異なります。ル�
 - frontend_avatar/_cleanup.py  cleanup(choices)
 - command_hermes/_cleanup.py   cleanup(choices)（ランチャー/PATH も解除）
 - frontend_ide/_cleanup.py   cleanup(choices)（IDE群の拡張・ランチャー・依存物・共通UIを解除）
-- frontend_channels/_cleanup.py / slack/_cleanup.py cleanup(choices)
+- frontend_channels/discord/_cleanup.py / slack/_cleanup.py cleanup(choices)
   （Channels の1項目で両 Bot の停止確認・依存物削除）
 
 Usage:
@@ -232,11 +232,11 @@ SERVICE_CLEANUP_TARGETS = (
     ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navigator)", ("フロントエンド(navi)",)),
     ("ide", "frontend_ide/aidiy_console", "フロントエンド(console)", ("フロントエンド(console)",)),
     ("ide", "frontend_ide/viewer", "フロントエンド(IDE)", ("フロントエンド(IDE)",)),
-    ("channels", "frontend_channels", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
+    ("channels", "frontend_channels/discord", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
     ("channels", "frontend_channels/slack", "フロントエンド(Slack)", ("フロントエンド(Slack)",)),
 )
 # 外部チャンネルの Bot。全体停止では keep_discord で Discord と同じく継続を選べる。
-CHANNEL_FOLDERS = ("frontend_channels", "frontend_channels/slack")
+CHANNEL_FOLDERS = ("frontend_channels/discord", "frontend_channels/slack")
 
 # `_start.py` / `_cleanup.py` を import するフォルダ（= `__pycache__` が生成される）。
 IMPORT_CACHE_FOLDERS = tuple(
@@ -343,7 +343,7 @@ def stop_all_services(
             lambda: _load_folder_module("frontend_ide/host").stop_standalone_processes(),
         )
     for folder, description, keep in (("frontend_ide/viewer", "フロントエンド(IDE)", keep_dev),
-                                      ("frontend_channels", "フロントエンド(Discord)", keep_discord),
+                                      ("frontend_channels/discord", "フロントエンド(Discord)", keep_discord),
                                       ("frontend_channels/slack", "フロントエンド(Slack)", keep_discord)):
         if keep:
             print_info(f"{description} は継続します")
@@ -360,7 +360,7 @@ def stop_all_services(
                 protected_pids.update(_load_folder_start_module("frontend_ide/aidiy_console").process_tree_pids())
                 protected_pids.update(_load_folder_start_module("frontend_ide/viewer").process_tree_pids())
             if keep_discord:
-                protected_pids.update(_load_folder_start_module("frontend_channels").process_tree_pids())
+                protected_pids.update(_load_folder_start_module("frontend_channels/discord").process_tree_pids())
                 protected_pids.update(_load_folder_start_module("frontend_channels/slack").process_tree_pids())
         except Exception as e:
             # 継続対象の配下を判別できないときは、巻き込まないよう MCP 接続を止めない。
@@ -720,7 +720,7 @@ def cleanup_channels(choices: dict) -> list[str]:
         return []
     print_header("Channels(Discord / Slack) のクリーンアップ")
     errors = []
-    for label, folder in (("Discord", "frontend_channels"), ("Slack", "frontend_channels/slack")):
+    for label, folder in (("Discord", "frontend_channels/discord"), ("Slack", "frontend_channels/slack")):
         try:
             ok = _run_folder_cleanup(folder, choices, report=False)
         except (OSError, ValueError, ImportError, RuntimeError, subprocess.SubprocessError) as exc:

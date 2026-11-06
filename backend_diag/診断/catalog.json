@@ -139,9 +139,9 @@
     ],
     "sources": [
       "_setup.py",
-      "frontend_channels/package.json"
+      "frontend_channels/discord/package.json"
     ],
-    "notes": "npm/npxの残存シムだけで正常と判定しない。 診断サーバー起動にNode.jsが必須。 frontend_channelsのみ package.jsonで >=22.12.0 を要求。診断本体の最小バージョンとは別。",
+    "notes": "npm/npxの残存シムだけで正常と判定しない。 診断サーバー起動にNode.jsが必須。 frontend_channels/discordのみ package.jsonで >=22.12.0 を要求。診断本体の最小バージョンとは別。",
     "priority": 3,
     "wholeSystemRequired": false,
     "diagnosticsRequired": true,
@@ -166,17 +166,17 @@
         "kind": "source_text_reference"
       },
       {
-        "path": "frontend_channels/package.json",
+        "path": "frontend_channels/discord/package.json",
         "line": 8,
         "kind": "source_text_reference"
       },
       {
-        "path": "frontend_channels/package.json",
+        "path": "frontend_channels/discord/package.json",
         "line": 11,
         "kind": "source_text_reference"
       },
       {
-        "path": "frontend_channels/package.json",
+        "path": "frontend_channels/discord/package.json",
         "line": 28,
         "kind": "source_text_reference"
       }
@@ -284,7 +284,7 @@
       "scripts/_setup_electron.py",
       "frontend_avatar/_start.py",
       "frontend_ide/package.json",
-      "frontend_channels/package.json"
+      "frontend_channels/discord/package.json"
     ],
     "notes": "プロジェクトのnode_modules内バイナリーを利用。PATHにないのが通常。Web版では不要。起動しない。 Diag 通常起動も Electron を利用。--browser / Codespaces / GUI なしでは不要。scripts/_setup_electron.py の共有 ZIP / 同版 dist を再利用します。",
     "priority": 6,
@@ -300,7 +300,7 @@
         "frontend_ide/host/node_modules/electron/dist/electron.exe",
         "frontend_ide/viewer/node_modules/electron/dist/electron.exe",
         "frontend_avatar/node_modules/electron/dist/electron.exe",
-        "frontend_channels/node_modules/electron/dist/electron.exe"
+        "frontend_channels/discord/node_modules/electron/dist/electron.exe"
       ],
       "linux": [
         "backend_diag/node_modules/electron/dist/electron",
@@ -308,7 +308,7 @@
         "frontend_ide/host/node_modules/electron/dist/electron",
         "frontend_ide/viewer/node_modules/electron/dist/electron",
         "frontend_avatar/node_modules/electron/dist/electron",
-        "frontend_channels/node_modules/electron/dist/electron"
+        "frontend_channels/discord/node_modules/electron/dist/electron"
       ],
       "darwin": [
         "backend_diag/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
@@ -316,7 +316,7 @@
         "frontend_ide/host/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
         "frontend_ide/viewer/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
         "frontend_avatar/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
-        "frontend_channels/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
+        "frontend_channels/discord/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron"
       ]
     },
     "kind": "package_executable",
@@ -352,7 +352,7 @@
         "kind": "source_text_reference"
       },
       {
-        "path": "frontend_channels/package.json",
+        "path": "frontend_channels/discord/package.json",
         "line": 30,
         "kind": "source_text_reference"
       }

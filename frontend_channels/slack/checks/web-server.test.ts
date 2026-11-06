@@ -120,7 +120,8 @@ test('Codespaces は初回画面接続を120秒以上待っても終了しない
 
 // ネットワーク待受なしでローカル画像の配布境界を固定する。
 test('welcome画像と配色は自moduleのassetsだけを参照する', () => {
- const component=readFileSync(new URL('../panel/components/接続/接続パネル.vue',import.meta.url),'utf8');assert.ok(component.includes('src="AiDiy.png"'));assert.doesNotMatch(component,/frontend_ide\/host\/media/);
+ const component=readFileSync(new URL('../panel/components/接続/接続パネル.vue',import.meta.url),'utf8');assert.ok(component.includes('<EscapingMark icon="AiDiy.png" />'));
+ const mark=readFileSync(new URL('../panel/components/接続/逃げるマーク.vue',import.meta.url),'utf8');assert.ok(mark.includes(':src="icon"'));assert.doesNotMatch(mark,/frontend_ide\/host\/media/);assert.doesNotMatch(component,/frontend_ide\/host\/media/);
  const server=readFileSync(new URL('../src/web-server.ts',import.meta.url),'utf8');assert.ok(server.includes("'AiDiy.png': 'image/png'"));assert.ok(server.includes("'AiDiy_slack.png': 'image/png'"));assert.doesNotMatch(server,/iconPath|frontend_ide\/host\/media/);
  for(const file of ['scripts/build-panel.mjs','scripts/verify-panel.mjs'])assert.doesNotMatch(readFileSync(new URL('../'+file,import.meta.url),'utf8'),/frontend_ide\/src/);
 });
