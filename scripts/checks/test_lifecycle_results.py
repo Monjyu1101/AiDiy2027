@@ -74,9 +74,9 @@ class LifecycleResultsTests(unittest.TestCase):
     def test_root_aggregates_every_module_and_auxiliary_failure(self):
         functions = ('stop_all_services', 'cleanup_backup', 'uninstall_global_npm_tools', '_run_folder_cleanup',
                      'remove_launcher_path', 'cleanup_temp_directories', '_remove_folder_import_cache', '_remove_root_python_caches')
-        choices = dict.fromkeys(('diag', 'npm_uninstall', 'local', 'tools', 'backend', 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'discord'), True)
+        choices = dict.fromkeys(('diag', 'npm_uninstall', 'local', 'tools', 'backend', 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'channels'), True)
         modules = ('backend_diag', 'backend_local', 'backend_tools', 'backend_server', 'backend_taskteam',
-                   'frontend_web', 'frontend_avatar', 'command_hermes', 'frontend_ide', 'frontend_channels')
+                   'frontend_web', 'frontend_avatar', 'command_hermes', 'frontend_ide', 'frontend_channels', 'frontend_channels/slack')
         cases = [(None, None)] + [('_run_folder_cleanup', name) for name in modules] + [(name, None) for name in functions if name not in ('stop_all_services', '_run_folder_cleanup')]
         for failure, folder in cases:
             with self.subTest(failure=failure, folder=folder), contextlib.ExitStack() as stack:
@@ -84,7 +84,7 @@ class LifecycleResultsTests(unittest.TestCase):
                 stack.enter_context(patch.object(cleanup.time, 'sleep'))
                 if failure:
                     if folder:
-                        mocks[failure].side_effect = lambda name, _choices, target=folder: name != target
+                        mocks[failure].side_effect = lambda name, _choices, target=folder, **kwargs: name != target
                     else:
                         mocks[failure].return_value = False
                 self.assertEqual(cleanup.execute_cleanup(ROOT, choices), failure is None)
@@ -117,11 +117,13 @@ class LifecycleResultsTests(unittest.TestCase):
         helper = SimpleNamespace(setup_dependencies=dependency_setup)
         with patch.dict(os.environ, {'CODESPACES': 'false', 'DISPLAY': ':fixture'}), \
                 patch.object(diag_setup.shutil, 'which', return_value='/fixture/node'), \
+                patch.object(diag_setup, 'setup_ui_dependencies', return_value=True) as ui_dependencies, \
                 patch.object(_runtime_requirements, 'check_project_node_runtime', return_value=(True, '[WARN] fixture version')), \
                 patch.object(diag_setup.importlib.util, 'spec_from_file_location', return_value=SimpleNamespace(loader=SimpleNamespace(exec_module=lambda module: None))), \
                 patch.object(diag_setup.importlib.util, 'module_from_spec', return_value=helper):
             self.assertTrue(diag_setup.setup_desktop())
         dependency_setup.assert_called_once()
+        ui_dependencies.assert_called_once()
         self.assertIn('[WARN] fixture version', self.output.getvalue())
 
 

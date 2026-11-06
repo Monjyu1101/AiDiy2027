@@ -206,12 +206,13 @@ class PathTests(unittest.TestCase):
     def test_root_cleanup_rechecks_path_after_all_selected_launchers(self):
         self.register()
         cleanup = load(ROOT / '_cleanup.py')
-        launchers = {'backend_diag': 'aidiy_diag.cmd', 'frontend_channels': 'aidiy_discord.cmd'}
+        launchers = {'backend_diag': 'aidiy_diag.cmd', 'frontend_channels': 'aidiy_discord.cmd',
+                     'frontend_channels/slack': 'aidiy_slack.cmd'}
         for name in launchers.values():
             (self.directory / name).write_text('fixture', encoding='utf-8')
         events = []
 
-        def folder_cleanup(folder, _):
+        def folder_cleanup(folder, _, **kwargs):
             events.append(folder)
             (self.directory / launchers[folder]).unlink()
             if folder == 'backend_diag':
@@ -224,8 +225,8 @@ class PathTests(unittest.TestCase):
             return helper.remove_launcher_path(self.directory)
 
         choices = dict.fromkeys(['diag', 'npm_uninstall', 'local', 'tools', 'backend',
-                                 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'discord'], False)
-        choices.update(diag=True, discord=True)
+                                 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'channels'], False)
+        choices.update(diag=True, channels=True)
         for name in ('stop_all_services', 'cleanup_backup', '_remove_folder_import_cache',
                      '_remove_root_python_caches'):
             self.enterContext(patch.object(cleanup, name))
@@ -234,7 +235,7 @@ class PathTests(unittest.TestCase):
         self.enterContext(patch.object(cleanup, '_run_folder_cleanup', side_effect=folder_cleanup))
         self.enterContext(patch.object(cleanup, 'remove_launcher_path', side_effect=remove_path))
         self.assertTrue(cleanup.execute_cleanup(ROOT, choices))
-        self.assertEqual(events, ['backend_diag', 'frontend_channels', 'path'])
+        self.assertEqual(events, ['backend_diag', 'frontend_channels', 'frontend_channels/slack', 'path'])
         self.assertEqual(self.value, (r'%USERPROFILE%\tools;', 2))
 
     def test_all_eight_launchers_register_resolve_and_unlink(self):

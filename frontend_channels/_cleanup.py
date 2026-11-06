@@ -84,11 +84,12 @@ def remove_directory(path: Path) -> bool:
         return False
 
 
-def cleanup(choices: dict | None = None) -> bool:
-    if choices is not None and choices.get('discord') is False:
+def cleanup(choices: dict | None = None, *, report: bool = True) -> bool:
+    if choices is not None and choices.get('channels', choices.get('discord')) is False:
         return True
-    print_header(f'{LABEL} のクリーンアップ')
-    print_info("外部チャンネル: Discord / Slack")
+    if report:
+        print_header(f'{LABEL} のクリーンアップ')
+        print_info("外部チャンネル: Discord / Slack")
     if not stop_discord_processes(THIS_DIR):
         print_warning('Discord Bot の停止を確認できないため、ランチャーと生成物の削除を中止します。')
         return False
@@ -110,10 +111,11 @@ def cleanup(choices: dict | None = None) -> bool:
         if path.is_relative_to(THIS_DIR / 'slack'):
             continue
         remove_counted(path)
-    if ok and deleted_count:
-        print_success(f'{LABEL} のクリーンアップ完了 ({deleted_count}個削除)')
-    elif ok:
-        print_info(f'{LABEL}: 削除対象はありませんでした')
+    if ok:
+        if report and deleted_count:
+            print_success(f'{LABEL} のクリーンアップ完了 ({deleted_count}個削除)')
+        elif report:
+            print_info(f'{LABEL}: 削除対象はありませんでした')
     else:
         print_warning(f'{LABEL}: 一部のクリーンアップを完了できませんでした')
     return ok

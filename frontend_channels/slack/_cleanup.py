@@ -84,10 +84,11 @@ def remove_directory(path: Path) -> bool:
         return False
 
 
-def cleanup(choices: dict | None = None) -> bool:
-    if choices is not None and choices.get('slack') is False:
+def cleanup(choices: dict | None = None, *, report: bool = True) -> bool:
+    if choices is not None and choices.get('channels', choices.get('slack')) is False:
         return True
-    print_header(f'{LABEL} のクリーンアップ')
+    if report:
+        print_header(f'{LABEL} のクリーンアップ')
     if not stop_slack_processes(THIS_DIR):
         print_warning('Slack パネル・Bot の停止を確認できないため、ランチャーと生成物の削除を中止します。')
         return False
@@ -104,10 +105,11 @@ def cleanup(choices: dict | None = None) -> bool:
 
     for name in TARGETS:
         remove_counted(THIS_DIR / name)
-    if ok and deleted_count:
-        print_success(f'{LABEL} のクリーンアップ完了 ({deleted_count}個削除)')
-    elif ok:
-        print_info(f'{LABEL}: 削除対象はありませんでした')
+    if ok:
+        if report and deleted_count:
+            print_success(f'{LABEL} のクリーンアップ完了 ({deleted_count}個削除)')
+        elif report:
+            print_info(f'{LABEL}: 削除対象はありませんでした')
     else:
         print_warning(f'{LABEL}: 一部のクリーンアップを完了できませんでした')
     return ok

@@ -12,7 +12,7 @@ import {createKaleidoscope} from './ナビ万華鏡.js';
 const props = defineProps({kind: {type:String, required:true}});
 const emit = defineEmits(['unsupported']);
 const stage = ref(), canvas = ref();
-const labels = {aquarium:'ナビアクアリウム。魚はポインターを避け、クリックした位置の水面から餌を投入', kaleidoscope:'ナビ万華鏡。ポインター付近の模様が優先的に変化', water:'ナビ水面。ポインター位置から優先して波紋が広がり、スペースキーでランダムな位置に波紋を追加'};
+const labels = {aquarium:'ナビアクアリウム。ポインター位置から気泡が上がり、魚はポインターを避けます。クリックした位置の水面から餌を投入。食べた魚は15秒ほど餌を追いません', kaleidoscope:'ナビ万華鏡。ポインター付近の模様が優先的に変化', water:'ナビ水面。ポインター位置から優先して波紋が広がり、スペースキーでランダムな位置に波紋を追加'};
 let cleanup = () => {};
 onMounted(() => {
   const el = stage.value, surface = canvas.value;
@@ -71,6 +71,12 @@ onMounted(() => {
     }
     ctx.strokeStyle='#295c70';ctx.lineWidth=1;
     for(let i=0;i<16;i++){ctx.beginPath();ctx.arc(((i*.137)%1)*w+Math.sin(time+i)*4,h-((time*12+i*47)%(h+10)),2+i%3,0,Math.PI*2);ctx.stroke();}
+    ctx.strokeStyle='#5fadc4';
+    for(const bubble of aquarium.bubbles){
+      ctx.globalAlpha=(1-bubble.age/8)*.75;
+      ctx.beginPath();ctx.arc(bubble.x*w,bubble.y*h,bubble.radius*(1+bubble.age*.04),0,Math.PI*2);ctx.stroke();
+    }
+    ctx.globalAlpha=1;
     ctx.fillStyle='#e7b768';
     for(const pellet of aquarium.food){ctx.beginPath();ctx.arc(pellet.x*w,pellet.y*h,2.5,0,Math.PI*2);ctx.fill();}
     for(const f of aquarium.fish){

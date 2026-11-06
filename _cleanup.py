@@ -29,8 +29,8 @@ setup / start の Code / IDE / Discord 継続方針とは異なります。ル�
 - frontend_avatar/_cleanup.py  cleanup(choices)
 - command_hermes/_cleanup.py   cleanup(choices)（ランチャー/PATH も解除）
 - frontend_ide/_cleanup.py   cleanup(choices)（IDE群の拡張・ランチャー・依存物・共通UIを解除）
-- frontend_channels/_cleanup.py cleanup(choices)（Bot 停止・依存物削除）
-- frontend_channels/slack/_cleanup.py cleanup(choices)（Slack Bot 停止・依存物削除）
+- frontend_channels/_cleanup.py / slack/_cleanup.py cleanup(choices)
+  （Channels の1項目で両 Bot の停止確認・依存物削除）
 
 Usage:
     python _cleanup.py
@@ -198,10 +198,10 @@ def _remove_root_python_caches() -> bool:
     return ok
 
 
-def _run_folder_cleanup(folder: str, choices: dict) -> bool:
+def _run_folder_cleanup(folder: str, choices: dict, **kwargs) -> bool:
     """フォルダ別 cleanup を実行し、明示的な False だけを失敗として返す。"""
     try:
-        result = _load_folder_module(folder).cleanup(choices)
+        result = _load_folder_module(folder).cleanup(choices, **kwargs)
     finally:
         cache_ok = _remove_folder_import_cache(folder)
     return result is not False and cache_ok is not False
@@ -232,8 +232,8 @@ SERVICE_CLEANUP_TARGETS = (
     ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navigator)", ("フロントエンド(navi)",)),
     ("ide", "frontend_ide/aidiy_console", "フロントエンド(console)", ("フロントエンド(console)",)),
     ("ide", "frontend_ide/viewer", "フロントエンド(IDE)", ("フロントエンド(IDE)",)),
-    ("discord", "frontend_channels", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
-    ("slack", "frontend_channels/slack", "フロントエンド(Slack)", ("フロントエンド(Slack)",)),
+    ("channels", "frontend_channels", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
+    ("channels", "frontend_channels/slack", "フロントエンド(Slack)", ("フロントエンド(Slack)",)),
 )
 # 外部チャンネルの Bot。全体停止では keep_discord で Discord と同じく継続を選べる。
 CHANNEL_FOLDERS = ("frontend_channels", "frontend_channels/slack")
@@ -632,8 +632,7 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
         "avatar":         False,
         "hermes":         False,
         "ide":            False,
-        "discord":        False,
-        "slack":          False,
+        "channels":       False,
         "hermes_envs":    {},
         "hermes_temp":    None,
     }
@@ -709,10 +708,31 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
                     )
 
     choices["ide"] = ask_yes_no("IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)をクリーンアップしますか？", default="y")
-    choices["discord"] = ask_yes_no("フロントエンド(Discord)をクリーンアップしますか？", default="y")
-    choices["slack"] = ask_yes_no("フロントエンド(Slack)をクリーンアップしますか？", default="y")
+    choices["channels"] = ask_yes_no("Channels(Discord / Slack)をクリーンアップしますか？", default="y")
 
     return choices
+
+
+def cleanup_channels(choices: dict) -> list[str]:
+    """Channels を一括選択し、停止・削除確認は各機能の既存処理へ委譲する。"""
+    if not choices.get("channels"):
+        print_info("Channels(Discord / Slack)のクリーンアップをスキップしました")
+        return []
+    print_header("Channels(Discord / Slack) のクリーンアップ")
+    errors = []
+    for label, folder in (("Discord", "frontend_channels"), ("Slack", "frontend_channels/slack")):
+        try:
+            ok = _run_folder_cleanup(folder, choices, report=False)
+        except (OSError, ValueError, ImportError, RuntimeError, subprocess.SubprocessError) as exc:
+            print_error(f"Channels: {label} のクリーンアップに失敗しました: {exc}")
+            ok = False
+        if not ok:
+            errors.append(f"Channels: {label}")
+    if errors:
+        print_warning("Channels(Discord / Slack): 一部のクリーンアップを完了できませんでした")
+    else:
+        print_success("Channels(Discord / Slack) のクリーンアップ完了")
+    return errors
 
 
 # ============================================================
@@ -797,18 +817,7 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
         print_info("IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)のクリーンアップをスキップしました")
 
     print()
-    if choices.get("discord"):
-        if not _run_folder_cleanup("frontend_channels", choices):
-            cleanup_errors.append("フロントエンド(Discord)")
-    else:
-        print_info("フロントエンド(Discord)のクリーンアップをスキップしました")
-
-    print()
-    if choices.get("slack"):
-        if not _run_folder_cleanup("frontend_channels/slack", choices):
-            cleanup_errors.append("フロントエンド(Slack)")
-    else:
-        print_info("フロントエンド(Slack)のクリーンアップをスキップしました")
+    cleanup_errors.extend(cleanup_channels(choices))
 
     # Diag の解除時点では他のランチャーが残るため、全項目の解除後に再確認する。
     if not remove_launcher_path():
@@ -862,10 +871,8 @@ def main():
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
     print_info("  9. IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)")
-    print_info(" 10. フロントエンド(Discord)")
-    print_info(" 11. フロントエンド(Slack)")
-    print_info("外部チャンネル: Discord / Slack")
-    print_info(f" 12. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
+    print_info(" 10. Channels(Discord / Slack)")
+    print_info(f" 11. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()
 
     choices = collect_cleanup_choices(base_dir)

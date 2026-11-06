@@ -183,7 +183,7 @@ class DiscordLifecycleTest(unittest.TestCase):
         with patch.object(setup, 'ask_start_mode', return_value=(True, False)), patch.object(
             setup, 'ask_yes_no', side_effect=setup_answer
         ) as ask:
-            self.assertTrue(setup.collect_setup_choices()['discord'])
+            self.assertTrue(setup.collect_setup_choices()['channels'])
         self.assertEqual(next(call.kwargs['default'] for call in ask.call_args_list if 'Discord' in call.args[0]), 'y')
         with patch.object(start, 'prompt_choice', side_effect=lambda prompt, default_yes: False if 'Diag' in prompt else default_yes) as ask:
             flags = start.collect_startup_choices()
@@ -197,7 +197,7 @@ class DiscordLifecycleTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder, patch.object(cleanup, 'ask_start_mode', return_value=(True, False)), patch.object(
             cleanup, 'ask_yes_no', side_effect=setup_answer
         ):
-            self.assertTrue(cleanup.collect_cleanup_choices(Path(folder))['discord'])
+            self.assertTrue(cleanup.collect_cleanup_choices(Path(folder))['channels'])
 
     def test_unselected_discord_needs_no_configuration(self):
         module = Mock()
@@ -259,19 +259,21 @@ class DiscordLifecycleTest(unittest.TestCase):
         with patch.object(cleanup, '_load_folder_start_module', side_effect=modules.get), patch.object(
             cleanup, '_load_folder_module', return_value=Mock()
         ), patch.object(cleanup.time, 'sleep'):
-            cleanup.stop_all_services({'discord': False})
+            cleanup.stop_all_services({'channels': False})
         modules['frontend_channels'].kill_ports.assert_called_once()
+        modules['frontend_channels/slack'].kill_ports.assert_called_once()
 
     def test_root_cleanup_reports_discord_deletion_failure(self):
         choices = dict.fromkeys(('npm_uninstall', 'backup', 'local', 'tools', 'backend', 'taskteam', 'web', 'avatar', 'hermes', 'vscode'), False)
-        choices['discord'] = True
+        choices['channels'] = True
         with tempfile.TemporaryDirectory() as folder, patch.object(cleanup, 'stop_all_services'), patch.object(
             cleanup, '_run_folder_cleanup', return_value=False
         ) as remove, patch.object(cleanup, '_remove_folder_import_cache'), patch.object(
             cleanup, '_remove_root_python_caches'
         ), patch.object(cleanup.time, 'sleep'):
             self.assertFalse(cleanup.execute_cleanup(Path(folder), choices))
-        remove.assert_called_once_with('frontend_channels', choices)
+        self.assertEqual([call.args[0] for call in remove.call_args_list], ['frontend_channels', 'frontend_channels/slack'])
+        self.assertTrue(all(call.kwargs == {'report': False} for call in remove.call_args_list))
 
     def test_stop_failure_preserves_dependencies(self):
         with patch.object(discord_cleanup, 'stop_discord_processes', return_value=False), patch.object(

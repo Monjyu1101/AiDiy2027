@@ -772,10 +772,10 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 ナビ／再評価の待機開始ごとに「航行」「花火」「アクアリウム」「万華鏡」「水面」の5種類から選びます。従来の航行・花火の操作と、非対応環境の開始表示へのフォールバックは維持します。追加3種類は黒背景のCanvas 2D表示で、外部画像や通信は使いません。水面はランダムな位置から波紋が広がり、演出にフォーカスまたはポインターがあるとき、Spaceで波紋点を1つ追加します。長押しのrepeatは追加しません。波紋には寿命と32点の上限を設けます。
 
-アクアリウムの状態は `ナビ水槽.js` が保持します。魚はポインターの近くでは餌への追従より回避を優先し、クリック時はクリックの縦位置にかかわらず、その横位置の水面から餌を落とします。餌は食べられたとき・水底到達時・18秒経過時に除去し、連打時も64粒を上限にします。水面の波紋はホバー中の位置を優先し、移動時は0.12秒以上の間隔で最新位置へ追従します。ポインターが離れると自動ランダム波紋へ戻し、Spaceのランダム追加も維持します。共通のpointer入力は要素の現在の表示範囲から比率へ変換し、leave・cancel・blur・別窓移動時に解除します。
+アクアリウムの状態は `ナビ水槽.js` が保持します。魚はポインターの近くでは餌への追従より回避を優先し、クリック時はクリックの縦位置にかかわらず、その横位置の水面から餌を落とします。餌は食べられたとき・水底到達時・18秒経過時に除去し、連打時も64粒を上限にします。一粒を食べた魚は個体ごとに15秒間、餌を追わず食べず、通常遊泳とポインター回避を続けます。待機期限は単調増加時計の実時間で保持するため、動きを減らす設定・非表示・別Documentへの移動でも延長しません。ホバー位置からは0.35〜0.75秒間隔で小さな気泡が上昇し、静止中も続きます。move連打では発生間隔を変えず、次の気泡を最新位置から出します。離脱後は新規発生を止め、既存の泡は水面到達または描画時間8秒で消えます。追加気泡は32個までとし、既存の背景の泡は維持します。気泡の動きは既存RAFと動きを減らす設定に従い、非表示中は停止、終了時に全て破棄します。水面の波紋はホバー中の位置を優先し、移動時は0.12秒以上の間隔で最新位置へ追従します。ポインターが離れると自動ランダム波紋へ戻し、Spaceのランダム追加も維持します。共通のpointer入力は要素の現在の表示範囲から比率へ変換し、leave・cancel・blur・別窓移動時に解除します。
 
 万華鏡は `ナビ万華鏡.js` が描画し、ポインターに近い模様ほど形・色・線幅を強く変化させます。回転後の画面座標で距離を計算し、反対側の鏡像まで同じ強さで変化させません。既存の描画時計を共用し、動きを減らす設定にも従います。
 
 `ナビ入力.js` はDOMの現在の `ownerDocument` にキーを登録し、別窓化・復帰で購読先を切り替えます。realmが異なるため `instanceof Element` は使いません。input、textarea、select、contenteditable（空属性／plaintext-onlyを含む）、標準ボタン等とIME入力を奪わず、blur／移動時に押下状態を解除します。破棄時はキー購読・移動検知タイマー・描画を解除します。
 
-単体検証は `node --test frontend_ide/checks/navigation-scenery.test.mjs frontend_ide/checks/navigation-aquarium.test.mjs frontend_ide/checks/navigation-kaleidoscope.test.mjs`。実描画確認は `node frontend_ide/scripts/check-navigation-scenery.mjs` を使います。これは配布用buildや本番アプリを起動せずVue部品を一時的に束ねる隔離ハーネスです。3種類の描画、黒地、魚の回避、水面からの餌投入、ホバー地点の波紋、Space、repeat、入力欄、別Documentへの移動・復帰、破棄をChromiumで検証し、画像を `frontend_ide/temp/navigation-scenery-check/` に保存します。ローカルソケットを許可されたChromium環境が必要です。Electronの実別窓・実画面の目視確認は別途行ってください。
+単体検証は `node --test frontend_ide/checks/navigation-scenery.test.mjs frontend_ide/checks/navigation-aquarium.test.mjs frontend_ide/checks/navigation-kaleidoscope.test.mjs`。実描画確認は `node frontend_ide/scripts/check-navigation-scenery.mjs` を使います。ブラウザーを使わないコンパイル確認は `--compile-only` を付けます。これは配布用buildや本番アプリを起動せずVue部品を一時的に束ねる隔離ハーネスです。3種類の描画、黒地、魚の回避、ホバー気泡の上昇・追従・離脱、水面からの餌投入、ホバー地点の波紋、Space、repeat、入力欄、別Documentへの移動・復帰、破棄をChromiumで検証し、画像を `frontend_ide/temp/navigation-scenery-check/` に保存します。ローカルソケットを許可されたChromium環境が必要です。Electronの実別窓・実画面の目視確認は別途行ってください。

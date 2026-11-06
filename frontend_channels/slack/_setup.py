@@ -71,18 +71,21 @@ def _supplement_config():
     print_success("共通設定の不足キーを補完しました。")
 
 
-def setup(choices=None) -> bool:
+def setup(choices=None, *, report=True) -> bool:
+    if choices is not None and choices.get("channels") is False:
+        return True
     continue_on_error = bool(choices and choices.get("continue_on_error"))
     failures = []
     copy_warnings = []
-    print_header("Slack セットアップ")
+    if report:
+        print_header("Slack セットアップ")
     print_info(f"作業ディレクトリ: {THIS_DIR}")
     print_info("対象: Slack / Node.js / Vue 3 / TypeScript / Electron（HTTPS の定期取得、WebSocket 不使用）")
     # 続行を明示した場合だけ、稼働中でも停止せず可能な処理を試す。
     try:
         if _slack_in_use():
             if not continue_on_error:
-                print_error('起動中の Slack は停止せず、依存更新を保留しました。他項目だけ更新する場合は Slack を選択しないでください。')
+                print_error('起動中の Slack は停止せず、依存更新を保留しました。他項目だけ更新する場合は Channels(Discord / Slack) を選択しないでください。')
                 return False
             print_info('[WARN] Slack は起動中ですが、エラーでも継続の指定によりセットアップを試行します。使用中ファイルの更新に失敗する場合があります。')
     except (OSError, ValueError, subprocess.SubprocessError):
@@ -149,7 +152,7 @@ def setup(choices=None) -> bool:
         return False
     if copy_warnings:
         print_info('[WARN] Slack: 警告あり／Electron配置未確認。画面を閉じてセットアップを再実行してください。')
-    else:
+    elif report:
         print_success("Slack: aidiy_slack で起動できます。")
     return True
 

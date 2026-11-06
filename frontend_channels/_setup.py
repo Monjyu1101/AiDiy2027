@@ -101,19 +101,23 @@ def _supplement_config():
     print_success("共通設定の不足キーを補完しました。")
 
 
-def setup(choices=None) -> bool:
+def setup(choices=None, *, report=True) -> bool:
+    if choices is not None and choices.get("channels") is False:
+        return True
     continue_on_error = bool(choices and choices.get("continue_on_error"))
     failures = []
     copy_warnings = []
-    print_header("Discord セットアップ")
+    if report:
+        print_header("Discord セットアップ")
     print_info(f"作業ディレクトリ: {THIS_DIR}")
     print_info("対象: Discord / Node.js / Vue 3 / TypeScript / Electron")
-    print_info("外部チャンネル: Discord / Slack")
+    if report:
+        print_info("外部チャンネル: Discord / Slack")
     # 続行を明示した場合だけ、稼働中でも停止せず可能な処理を試す。
     try:
         if _discord_in_use():
             if not continue_on_error:
-                print_error('起動中の Discord は停止せず、この Discord の依存更新を保留しました。他項目だけ更新する場合は Discord を選択しないでください。')
+                print_error('起動中の Discord は停止せず、この Discord の依存更新を保留しました。他項目だけ更新する場合は Channels(Discord / Slack) を選択しないでください。')
                 return False
             print_info('[WARN] Discord は起動中ですが、エラーでも継続の指定によりセットアップを試行します。使用中ファイルの更新に失敗する場合があります。')
     except (OSError, ValueError, subprocess.SubprocessError):
@@ -180,7 +184,7 @@ def setup(choices=None) -> bool:
         return False
     if copy_warnings:
         print_info('[WARN] Discord: 警告あり／Electron配置未確認。画面を閉じてセットアップを再実行してください。')
-    else:
+    elif report:
         print_success("Discord: aidiy_discord で起動できます。")
     return True
 

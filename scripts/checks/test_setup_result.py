@@ -30,7 +30,7 @@ class SetupResultTests(unittest.TestCase):
         module = load_setup()
         choices = dict.fromkeys((
             "common", "local", "mcp", "mcp_config", "backend", "taskteam",
-            "web", "avatar", "hermes", "ide", "diag", "discord",
+            "web", "avatar", "hermes", "ide", "diag", "channels",
         ), True)
         choices.update(continue_on_error=continue_on_error, local_download="no")
         components = {}
@@ -74,6 +74,7 @@ class SetupResultTests(unittest.TestCase):
             self.assertIsNone(module.main())
             self.assertIn("セットアップは正常終了しました。", output.getvalue())
             component("frontend_channels").setup.assert_called_once()
+            component("frontend_channels/slack").setup.assert_called_once()
             module.run_diag_headless.assert_called_once()
 
     def test_continue_runs_later_stages_but_returns_failure(self):
@@ -104,7 +105,7 @@ class SetupResultTests(unittest.TestCase):
             with self.assertRaises(SystemExit) as caught:
                 module.main()
             self.assertEqual(caught.exception.code, 1)
-            for label in ("  - Web", "  - Discord", "  - Diag: aidiy_diag --headless"):
+            for label in ("  - Web", "  - Channels: Discord", "  - Diag: aidiy_diag --headless"):
                 self.assertIn(label, output.getvalue())
 
     def test_fail_fast_stops_before_later_stage(self):

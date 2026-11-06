@@ -106,8 +106,7 @@ python _setup.py
 7. `frontend_avatar` の `npm install`、必要に応じて Electron バイナリの補完
 8. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
 9. `frontend_ide` の共通Vue依存、Navigator / Console / Code / Live / IDE / Task / Team / Browserのセットアップ、ランチャー登録、Code / LiveのVS Code拡張配置
-10. `frontend_channels` のDiscord依存・パネル・ランチャー準備
-11. `frontend_channels/slack` のSlack依存・パネル・ランチャー準備
+10. Channels(Discord / Slack) を一括選択し、`frontend_channels` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
 Diagを選択した場合は診断UI・Electron・ランチャーを準備し（診断UIの開発用依存 `@vue/compiler-sfc` などは `backend_diag/ui` で `npm ci` するため、画面のビルドと検証をそのまま実行できます）、最後にheadless診断で導入状況とモデル情報を書き込みます。外部連携の認証試験はheadless対象外です。
 
@@ -274,7 +273,7 @@ python _cleanup.py
 - 必要に応じて SQLite DB
 
 `_cleanup.py` は `command_hermes` の `.venv` / `venv` と Python キャッシュに加え、`frontend_ide/host` の配置済み拡張機能（Code / Live）、単独起動ランチャー（`aidiy_code` / `aidiy_live`）、`node_modules`、`dist`、`out` も削除対象として確認します。
-`frontend_channels` と `frontend_channels/slack` の依存物・生成物・キャッシュも削除対象です（既定 Yes）。削除前に実行パスを照合して Bot を停止し、全体監視の自動再起動も止めます。共通 `AiDiy_key.json` の Discord / Slack 設定は保持します。
+Channels(Discord / Slack) は1項目として一括選択します（既定 Yes）。`frontend_channels` と `frontend_channels/slack` の依存物・生成物・キャッシュが対象です。削除前に両方の実行パスを照合して Bot を停止し、全体監視の自動再起動も止めます。共通 `AiDiy_key.json` の Discord / Slack 設定は保持します。各フォルダの `_setup.py` / `_cleanup.py` を直接実行する場合は、その機能だけが対象です。
 
 `frontend_ide/viewer` も全体クリーンアップに対応しています（既定 Yes）。この配置先のサーバープロセス停止、`aidiy_ide` ランチャー解除、依存物・Python キャッシュの削除を行います。利用方法は [frontend_ide/viewer/README.md](./frontend_ide/viewer/README.md) を参照してください。
 クリーンアップを実行すると、ファイル削除の前に、選択した対象に限らず全常駐サービスの待受プロセス（Avatar は残留 Electron も含む）を停止します。この作業コピーの Code / Live 単独実行と、tools の MCP 接続プロセスも終了します。ルート `_start.py` の監視中でも全常駐サービスが自動再起動の対象から外れ、クリーンアップ中や直後に再起動しません。
