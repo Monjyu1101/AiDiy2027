@@ -15,7 +15,7 @@ const source=readFileSync(new URL('../src/components/開発スペース/Navigati
 const saved={schemaVersion:3,navigationId:'saved',goal:'保存済み目標',overall:{progress:20},items:[{id:'first',progress:20}],nextItemId:'first',nextPrompt:'次の作業'};
 function fixture(t){
  const scope=effectScope(),requests=[],props=reactive({instance:'navi-1',project:{path:'/fixture'},startedAt:1});let randoms=0;
- const api=scope.run(()=>vm.runInNewContext(source+`;({navigate,chooseScene,runWithScene,sceneAction,cruiseKind,cruiseFailed,goal,result,availability,submitting,job,autopilot,visible,detached,pressContext})`,{
+ const api=scope.run(()=>vm.runInNewContext(source+`;({navigate,chooseScene,runWithScene,sceneAction,cruiseKind,cruiseFailed,goal,result,availability,submitting,job,autopilot,visible,detached,sceneRequest})`,{
   ref,computed,watch,createNavigationPopupSizer,createNavigationMessage,NAVIGATION_SCENES,NAVIGATION_SCENE_LABELS,pickNavigationScene:()=>{randoms++;return 'ride';},
   inject:()=>null,onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>props,defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},
   fetch:(url,options)=>{requests.push({url,...options});return new Promise(()=>{});},
@@ -23,14 +23,14 @@ function fixture(t){
  t.after(()=>scope.stop());api.visible.value=true;api.availability.value={available:true};api.result.value=saved;api.goal.value='編集中の目標';
  return {api,requests,props,randoms:()=>randoms};
 }
-test('5候補に表示名が揃い、長押しだけでは目標・APIを変更しない',t=>{
+test('5候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
  const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面']);
  f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
  f.api.sceneAction.value='';assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
 });
 for(const scene of NAVIGATION_SCENES)test(`選択した ${scene} は同期routing処理でも上書きせず、再評価は保存目標で一度実行する`,t=>{
  const f=fixture(t);f.api.chooseScene('evaluate');f.api.runWithScene(scene);assert.equal(f.api.sceneAction.value,'');assert.equal(f.api.cruiseKind.value,scene);assert.equal(f.randoms(),0);
- assert.deepEqual(JSON.parse(f.requests[0].body),{goal:'保存済み目標',action:'evaluate'});f.api.runWithScene(scene);assert.equal(f.requests.length,1);
+ assert.deepEqual(JSON.parse(f.requests[0].body),{goal:'保存済み目標',action:'evaluate',clientRequestId:JSON.parse(f.requests[0].body).clientRequestId});assert.match(JSON.parse(f.requests[0].body).clientRequestId,/^navi-1-/);f.api.runWithScene(scene);assert.equal(f.requests.length,1);
 });
 test('選択演出は今回だけで、次の通常実行・自動航行待機は再びランダムになる',t=>{
  const f=fixture(t);f.api.chooseScene('navigate');f.api.runWithScene('water');assert.equal(f.api.cruiseKind.value,'water');assert.equal(JSON.parse(f.requests[0].body).goal,'編集中の目標');

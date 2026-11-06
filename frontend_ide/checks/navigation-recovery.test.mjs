@@ -214,7 +214,7 @@ for(const draft of ['新しいテーマ','',' \n\t '])test('編集済み目標�
  const f=fixture(),saved=evaluatedResult();f.api.result.value=saved;f.api.goal.value=draft;f.api.editGoal();
  assert.equal(f.api.canEvaluate.value,true);assert.equal(f.api.nextNavigationAction.value,draft.trim()?'navigate':'');
  const run=f.api.navigate('evaluate');
- assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests[0].body),{goal:saved.goal,action:'evaluate'});
+ assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests[0].body),{goal:saved.goal,action:'evaluate',clientRequestId:JSON.parse(f.requests[0].body).clientRequestId});assert.match(JSON.parse(f.requests[0].body).clientRequestId,/^navi-1-/);
  assert.deepEqual(f.api.result.value,saved,'送信開始では既存の明細を変更しない');assert.equal(f.api.canEvaluate.value,false);
  await f.api.navigate('evaluate');assert.equal(f.calls.filter(method=>method==='POST').length,1,'連打は重複送信しない');
  await f.answer({job:{id:'reevaluation',status:'running'}});await run;
@@ -256,7 +256,7 @@ test('履歴選択後の再評価はその履歴の目標へ戻し、新規作�
  f.api.result.value=evaluatedResult('直前の別ナビ');
  const select=f.api.selectHistory('history');await f.answer({...state(null),result:saved});await select;
  f.api.goal.value='誤入力';const run=f.api.navigate('evaluate');
- assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests.at(-1).body),{goal:saved.goal,action:'evaluate'});
+ assert.equal(f.api.goal.value,saved.goal);assert.deepEqual(JSON.parse(f.requests.at(-1).body),{goal:saved.goal,action:'evaluate',clientRequestId:JSON.parse(f.requests.at(-1).body).clientRequestId});assert.match(JSON.parse(f.requests.at(-1).body).clientRequestId,/^navi-1-/);
  await f.answer({job:{id:'reevaluation',status:'running'}});await run;await f.answer({...state({id:'reevaluation',status:'failed'}),result:saved});
  const fresh=f.api.selectHistory();await f.answer(state(null));await fresh;
  assert.equal(f.api.canEvaluate.value,false);assert.equal(f.api.nextNavigationAction.value,'navigate');

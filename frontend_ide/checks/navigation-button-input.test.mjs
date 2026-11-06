@@ -7,149 +7,69 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {bindNavigationButton} from '../src/components/開発スペース/ナビボタン入力.js';
 
-// イベント伝播は明示的に渡し、別Documentと時計を独立して検証する。
 class Target {
-  listeners = new Map();
-  addEventListener(type, handler) {
-    if (!this.listeners.has(type)) this.listeners.set(type, new Set());
-    this.listeners.get(type).add(handler);
-  }
-  removeEventListener(type, handler) { this.listeners.get(type)?.delete(handler); }
-  send(type, values = {}) {
-    const event = {type, defaultPrevented:false, preventDefault() { this.defaultPrevented=true; }, ...values};
-    for (const handler of [...(this.listeners.get(type) || [])]) handler(event);
-    return event;
-  }
-  get count() { return [...this.listeners.values()].reduce((sum, entries) => sum+entries.size, 0); }
+ listeners=new Map();
+ addEventListener(type,fn){if(!this.listeners.has(type))this.listeners.set(type,new Set());this.listeners.get(type).add(fn);}
+ removeEventListener(type,fn){this.listeners.get(type)?.delete(fn);}
+ send(type,values={}){const event={type,button:0,defaultPrevented:false,stopped:false,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;},...values};for(const fn of [...this.listeners.get(type)||[]])fn(event);return event;}
+ get count(){return [...this.listeners.values()].reduce((n,set)=>n+set.size,0);}
 }
-function fixture() {
-  let now=0, id=0;
-  const timers=new Map(), calls=[], doc=new Target(), owner=new Target(), element=new Target();
-  Object.assign(doc, {defaultView:owner, hidden:false});
-  Object.assign(element, {ownerDocument:doc, disabled:false, isConnected:true,
-    getClientRects:()=>[{}], getBoundingClientRect:()=>({left:0,right:100,top:0,bottom:50}),
-    setPointerCapture(id) { this.capture=id; }, hasPointerCapture(id) { return this.capture===id; },
-    releasePointerCapture() { this.capture=null; },
-  });
-  const clock={performance:{now:()=>now},setTimeout(fn, delay) { timers.set(++id,{fn,at:now+delay}); return id; }, clearTimeout(id) { timers.delete(id); }};
-  const binding=bindNavigationButton(element,{run:()=>calls.push('run'),choose:()=>calls.push('choose')},clock);
-  const pointer={button:0,isPrimary:true,pointerId:1,clientX:30,clientY:25,pointerType:'mouse'};
-  return {doc,owner,element,timers,calls,binding,
-    elapse(ms) { now+=ms; },
-    tick(ms) { now+=ms; for (const [id,timer] of [...timers]) if (timer.at<=now) { timers.delete(id); timer.fn(); } },
-    down(values={}) { return element.send('pointerdown',{...pointer,...values}); },
-    move(values={}) { return doc.send('pointermove',{...pointer,...values}); },
-    up(values={}) { return doc.send('pointerup',{...pointer,...values}); },
-    click(values={}) { return element.send('click',{detail:1,...values}); },
-    key(key,values={}) { return element.send('keydown',{key,...values}); },
-  };
+function fixture(){
+ const element=new Target(),doc=new Target(),owner=new Target(),calls=[];
+ Object.assign(doc,{defaultView:owner});Object.assign(element,{ownerDocument:doc,disabled:false,isConnected:true,setPointerCapture(){assert.fail('ポインター捕捉は不要');}});
+ const clock={setTimeout(){assert.fail('長押しタイマーは不要');},clearTimeout(){assert.fail('長押しタイマーは不要');}};
+ const binding=bindNavigationButton(element,{run:()=>calls.push('run'),choose:value=>calls.push(value)},clock);
+ return {element,doc,owner,calls,binding};
 }
-function cleaned(f) {
-  assert.equal(f.timers.size,0,'中断後のタイマーを残さない');
-  assert.equal(f.doc.count,0,'押下先Documentの購読を残さない');
-  assert.equal(f.owner.count,0,'押下先Windowの購読を残さない');
-  assert.equal(f.element.capture,null,'ポインター捕捉を解除する');
-}
-
-test('499msの短押しはrelease後のclickで一度だけ実行する',()=>{
-  const f=fixture(); f.down(); f.tick(499); assert.deepEqual(f.calls,[]);
-  f.up(); assert.deepEqual(f.calls,[]); cleaned(f);
-  assert.equal(f.click().defaultPrevented,true); assert.deepEqual(f.calls,['run']);
+test('通常クリックはrelease後のclickだけで実行し、押下監視・タイマーを作らない',()=>{
+ const f=fixture();assert.deepEqual([...f.element.listeners.keys()].sort(),['click','contextmenu','keydown']);
+ for(const pointerType of ['mouse','touch','pen']){
+  f.element.send('pointerdown',{pointerType});assert.equal(f.calls.length,0);
+  f.element.send('pointerup',{pointerType});assert.equal(f.calls.length,0);
+ }
+ assert.equal(f.doc.count,0);assert.equal(f.owner.count,0);
+ assert.equal(f.element.send('click').defaultPrevented,true);assert.deepEqual(f.calls,['run']);
 });
-test('500msの長押しは選択を開き、releaseと後続clickで実行しない',()=>{
-  const f=fixture(); f.down(); f.tick(500); assert.deepEqual(f.calls,['choose']);
-  f.tick(5000); f.up(); f.click(); assert.deepEqual(f.calls,['choose']); cleaned(f);
-  f.down(); f.tick(100); f.up(); f.click(); assert.deepEqual(f.calls,['choose','run']);
+test('長い左押下でも選択を開かず、通常clickを抑制しない',async()=>{
+ const f=fixture();f.element.send('pointerdown');await new Promise(resolve=>setTimeout(resolve,550));
+ assert.deepEqual(f.calls,[]);f.element.send('pointerup');f.element.send('click');assert.deepEqual(f.calls,['run']);
 });
-test('長押し後にEscapeで閉じてもreleaseのclickを実行しない',()=>{
-  const f=fixture(); f.down(); f.tick(500); f.doc.send('keydown',{key:'Escape'});
-  f.up(); f.click(); assert.deepEqual(f.calls,['choose']); cleaned(f);
+test('右クリックは座標付き候補だけを開き、通常実行しない',()=>{
+ const f=fixture();const event=f.element.send('contextmenu',{button:2,clientX:123,clientY:67,pointerType:'mouse'});
+ assert.equal(event.defaultPrevented,true);assert.equal(event.stopped,true);
+ assert.deepEqual(f.calls,[{anchor:f.element,point:{x:123,y:67}}]);
+ f.element.send('click',{button:2});f.element.send('click',{button:1});assert.equal(f.calls.length,1);
+ f.element.send('click');assert.equal(f.calls.at(-1),'run');
 });
-for (const [name,cancel] of [
-  ['Escape',f=>f.doc.send('keydown',{key:'Escape'})],
-  ['Tab',f=>f.doc.send('keydown',{key:'Tab'})],
-  ['blur',f=>f.owner.send('blur')],
-  ['pagehide',f=>f.owner.send('pagehide')],
-  ['非表示',f=>{ f.doc.hidden=true; f.doc.send('visibilitychange'); }],
-  ['外側への移動',f=>f.move({clientX:101})],
-  ['10pxを超えるタッチ移動',f=>f.move({clientX:41,pointerType:'touch'})],
-  ['外側でrelease',f=>f.up({clientY:51})],
-  ['pointercancel',f=>f.doc.send('pointercancel',{pointerId:1})],
-  ['lostpointercapture',f=>f.doc.send('lostpointercapture',{pointerId:1})],
-  ['別ポインター',f=>f.doc.send('pointerdown',{pointerId:2})],
-  ['外部から取消',f=>f.binding.cancel()],
-]) test(name+'で長押しを中断し、遅いclickを消費する',()=>{
-  const f=fixture(); f.down({pointerType:'touch'}); f.tick(200); cancel(f);
-  cleaned(f); f.tick(1000); f.up(); f.click(); assert.deepEqual(f.calls,[]);
+test('Controlクリックは候補のみで実行しない',()=>{
+ const f=fixture();f.element.send('click',{ctrlKey:true});f.element.send('contextmenu',{ctrlKey:true,clientX:4,clientY:8});
+ assert.deepEqual(f.calls,[{anchor:f.element,point:{x:4,y:8}}]);
 });
-test('別ポインターのmove/up/cancelでは主ポインターを終了しない',()=>{
-  const f=fixture(); f.down(); f.move({pointerId:2,clientX:200}); f.up({pointerId:2});
-  f.doc.send('pointercancel',{pointerId:2}); f.tick(500); assert.deepEqual(f.calls,['choose']);
-  f.up(); cleaned(f);
+test('タッチ長押し由来contextmenuは候補を開かない',()=>{
+ const f=fixture();assert.equal(f.element.send('contextmenu',{pointerType:'touch',button:2}).defaultPrevented,true);
+ assert.deepEqual(f.calls,[]);f.element.send('click',{pointerType:'touch'});assert.deepEqual(f.calls,['run']);
 });
-test('右クリックと非primaryポインターは長押しを開始しない',()=>{
-  for (const values of [{button:2},{isPrimary:false}]) {
-    const f=fixture(); f.down(values); f.tick(1000);
-    assert.deepEqual(f.calls,[]); assert.equal(f.timers.size,0); assert.equal(f.doc.count,0);
-  }
+for(const [key,extra]of [['ContextMenu',{}],['F10',{shiftKey:true}],['ArrowDown',{}]])test(key+'はアンカー付き候補を開き、repeatは無視する',()=>{
+ const f=fixture();const event=f.element.send('keydown',{key,...extra});assert.equal(event.defaultPrevented,true);assert.equal(event.stopped,true);
+ f.element.send('keydown',{key,...extra,repeat:true});assert.deepEqual(f.calls,[{anchor:f.element,point:null}]);
 });
-for (const [name,change] of [
-  ['disabled',f=>{f.element.disabled=true;}],
-  ['切断',f=>{f.element.isConnected=false;}],
-  ['表示領域なし',f=>{f.element.getClientRects=()=>[];}],
-  ['Document移動',f=>{f.element.ownerDocument={defaultView:new Target(),hidden:false};}],
-]) test(name+'を閾値時に再確認し、選択も実行もしない',()=>{
-  const f=fixture(); f.down(); change(f); f.tick(500); f.up(); f.click();
-  assert.deepEqual(f.calls,[]); cleaned(f);
+test('IME・修飾キー・通常F10は候補を開かない',()=>{
+ const f=fixture();for(const extra of [{isComposing:true},{ctrlKey:true},{metaKey:true},{altKey:true}])f.element.send('keydown',{key:'ArrowDown',...extra});
+ f.element.send('keydown',{key:'F10'});assert.deepEqual(f.calls,[]);
 });
-test('破棄は全購読を除去し、遅いタイマーや入力を無効にする',()=>{
-  const f=fixture(); f.down(); f.binding.dispose(); cleaned(f); assert.equal(f.element.count,0);
-  f.tick(1000); f.up(); f.click(); f.key('ArrowDown'); assert.deepEqual(f.calls,[]);
-  f.binding.dispose();
+test('Enter・Spaceと支援技術のnative clickを維持しキーリピートだけ抑制する',()=>{
+ const f=fixture();for(const key of ['Enter',' ']){assert.equal(f.element.send('keydown',{key}).defaultPrevented,false);assert.equal(f.element.send('keydown',{key,repeat:true}).defaultPrevented,true);f.element.send('click',{detail:0});}
+ assert.deepEqual(f.calls,['run','run']);
 });
-test('通常の支援技術clickとEnter/Spaceのnative clickを受け入れる',()=>{
-  const f=fixture(); f.click({detail:0}); assert.deepEqual(f.calls,['run']);
-  for (const key of ['Enter',' ']) {
-    assert.equal(f.key(key).defaultPrevented,false); f.click({detail:0});
-  }
-  assert.deepEqual(f.calls,['run','run','run']); assert.equal(f.timers.size,0);
+for(const property of ['disabled','isConnected'])test(property+'で実行不可ならどの入力も実行しない',()=>{
+ const f=fixture();f.element[property]=property==='disabled';
+ f.element.send('click');f.element.send('contextmenu',{button:2});f.element.send('keydown',{key:'ArrowDown'});assert.deepEqual(f.calls,[]);
 });
-test('ArrowDownは一度だけ選択を開き、repeatとIME入力を無視する',()=>{
-  const f=fixture(); assert.equal(f.key('ArrowDown').defaultPrevented,true);
-  assert.equal(f.key('ArrowDown',{repeat:true}).defaultPrevented,true);
-  f.key('ArrowDown',{isComposing:true}); f.click(); assert.deepEqual(f.calls,['choose']);
-  for (const key of ['Enter',' ']) assert.equal(f.key(key,{repeat:true}).defaultPrevented,true);
-  f.key('Enter'); f.click(); assert.deepEqual(f.calls,['choose','run']);
+test('DOM移動後も現在のアンカーを使い旧Documentは購読しない',()=>{
+ const f=fixture(),doc=new Target();f.element.ownerDocument=doc;f.element.send('contextmenu',{button:2,clientX:0,clientY:0});
+ assert.equal(f.calls[0].anchor.ownerDocument,doc);assert.equal(f.doc.count,0);assert.equal(f.owner.count,0);
 });
-test('disabled時のキーボードとclickは実行しない',()=>{
-  const f=fixture(); f.element.disabled=true;
-  f.down(); f.key('ArrowDown'); f.key('Enter'); f.click(); f.tick(1000);
-  assert.deepEqual(f.calls,[]); assert.equal(f.timers.size,0);
-});
-test('長押し中だけcontextmenuを抑制する',()=>{
-  const f=fixture(); assert.equal(f.element.send('contextmenu').defaultPrevented,false);
-  f.down(); assert.equal(f.element.send('contextmenu').defaultPrevented,true);
-  f.tick(500); f.up(); assert.equal(f.element.send('contextmenu').defaultPrevented,true);
-  f.down(); f.up(); f.click(); assert.equal(f.element.send('contextmenu').defaultPrevented,false);
-});
-
-test('タイマーが遅れても500ms以上のreleaseは長押しとして一度だけ扱う',()=>{
-  for (const elapsed of [500,650,3000]) {
-    const f=fixture(); f.down(); f.elapse(elapsed); assert.deepEqual(f.calls,[]);
-    f.up(); f.click(); f.tick(1000); assert.deepEqual(f.calls,['choose']); cleaned(f);
-  }
-});
-test('長押し後も支援技術clickは使え、物理clickだけを抑制する',()=>{
-  const f=fixture(); f.down(); f.tick(500);
-  f.click({detail:0}); assert.deepEqual(f.calls,['choose'],'押下が続く間は支援技術clickも抑制する');
-  f.up(); f.click({detail:1}); assert.deepEqual(f.calls,['choose']);
-  f.click({detail:0}); assert.deepEqual(f.calls,['choose','run']);
-});
-test('移動後の次の押下は新しいDocumentとWindowだけを購読する',()=>{
-  const f=fixture(); f.down(); f.binding.cancel(); cleaned(f);
-  const doc=new Target(), owner=new Target(); Object.assign(doc,{defaultView:owner,hidden:false});
-  f.element.ownerDocument=doc; f.down(); assert.equal(f.doc.count,0); assert.ok(doc.count>0);
-  f.owner.send('blur'); f.tick(500); assert.deepEqual(f.calls,['choose']);
-  owner.send('blur'); assert.equal(doc.count,0); assert.equal(owner.count,0);
-  f.click(); assert.deepEqual(f.calls,['choose']);
+test('破棄は全購読を除去し、繰り返し破棄も安全',()=>{
+ const f=fixture();f.binding.dispose();f.binding.dispose();assert.equal(f.element.count,0);
+ f.element.send('click');f.element.send('contextmenu',{button:2});f.element.send('keydown',{key:'ArrowDown'});assert.deepEqual(f.calls,[]);
 });

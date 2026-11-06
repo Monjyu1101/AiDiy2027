@@ -88,7 +88,10 @@ export async function navigationDefaultModel(file=fileURLToPath(new URL('../../_
 }
 export function createNavigation(project,{state,defaultModel=navigationDefaultModel,runAgent=runNavigationAgent,availability=runAgent===runNavigationAgent?navigationAvailability:async()=>({available:true,reason:''}),providerList=navigationProviders,waitMs=300000,now=Date.now,scan=scanTree,stateRoot=join(homedir(),'.aidiy','navigation'),instance='default'}={}){
  if(!/^[a-zA-Z0-9_-]{1,80}$/.test(instance))throw Error('Navigator IDが不正です。');
- let job=null,closed=false,starting=false;
+ let job=null,closed=false,starting=null;
+ const cancelledRequests=new Set();
+ const validRequest=id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{1,160}$/.test(id);
+ const rememberCancel=id=>{cancelledRequests.add(id);if(cancelledRequests.size>256)cancelledRequests.delete(cancelledRequests.values().next().value);};
  const directory=async()=>{const identity=await realpath(project);const folder=join(stateRoot,createHash('sha256').update(process.platform==='win32'?identity.toLowerCase():identity).digest('hex'),instance);await mkdir(folder,{recursive:true});const base=await realpath(stateRoot);if(!within(base,await realpath(folder)))throw Error('Navigator保存先が不正です。');return folder;};
  const historyDirectory=async()=>{const dir=join(await directory(),'..','history');await mkdir(dir,{recursive:true});const base=await realpath(stateRoot),full=await realpath(dir);if(!within(base,full))throw Error('Navigator履歴の保存先が不正です。');return full;};
  const validId=id=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
@@ -110,52 +113,72 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    const data=JSON.parse(await readFile(full,'utf8'));return restored(data);
   }catch(e){if(e.code==='ENOENT')return null;throw e;}
  }
- const describe=()=>job&&current(job)?{id:job.id,goal:job.goal,status:job.status,message:job.message,deadline:job.deadline}:null;
+ const describeJob=j=>({id:j.id,action:j.action,clientRequestId:j.clientRequestId,goal:j.goal,status:j.status,message:j.message,deadline:j.deadline});
+ const describe=()=>job&&current(job)?describeJob(job):null;
+ async function cancel({clientRequestId,jobId}={}){
+  active();if(clientRequestId!==undefined&&!validRequest(clientRequestId)||jobId!==undefined&&!validId(jobId)||clientRequestId===undefined&&jobId===undefined)throw Error('中止するNavigator要求IDが不正です。');
+  if(clientRequestId!==undefined)rememberCancel(clientRequestId);
+  const j=job;
+  if(j&&current(j)&&(clientRequestId!==undefined?j.clientRequestId===clientRequestId:j.id===jobId)&&j.status==='running'){
+   // 保存開始後は完了まで待ち、中止したとは返さない。次の開始も同じ間は拒否する。
+   if(j.committing)await j.done;
+   else{j.status='cancelled';j.message='処理を中止しました。';if(starting===j)starting=null;j.controller.abort();}
+  }
+  return {job:describe()};
+ }
  async function get(){active();const selection=await readModel();return {result:await read(),job:describe(),selection,availability:state().mode==='offline'?{available:false,reason:'オフライン利用中です。オンライン利用へ戻すと実行できます。'}:await availability(selection)};}
  async function execute(j,dir){
-  let timer;
+  let timer,temporary,abort;
   try{
-   const answer=await Promise.race([runAgent({project,prompt:j.prompt,signal:j.controller.signal,selection:j.selection}),new Promise((_,reject)=>{timer=setTimeout(()=>{j.controller.abort();reject(Error('5分以内にNavigation結果を確認できませんでした。'));},waitMs);timer.unref?.();})]);
-   if(!current(j))return;
+   const answer=await Promise.race([runAgent({project,prompt:j.prompt,signal:j.controller.signal,selection:j.selection}),new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Error('5分以内にNavigation結果を確認できませんでした。'));j.controller.abort();},waitMs);timer.unref?.();}),new Promise((_,reject)=>{abort=()=>reject(Error('処理を中止しました。'));j.controller.signal.addEventListener('abort',abort,{once:true});})]);
+   if(!current(j)||j.status!=='running')return;
    const content=typeof answer==='string'?answer:answer?.content;
    const validated=validateNavigationResponse(parseNavigationResponse(content),j),checkedAt=now();
    // AIが各ファイルを見た瞬間ではなく、全項目の有効な評価結果をアプリが受け取った日時。
    const result={...validated,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection};
-   if(!current(j))return;
-   const temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
-   if(!current(j))return;
+   if(!current(j)||j.status!=='running')return;
+   temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
+   if(!current(j)||j.status!=='running')return;
+   // この代入から保存完了までは中止不可。非同期renameの直前を確定境界にする。
+   j.committing=true;clearTimeout(timer);
    await replaceState(temporary,join(dir,'latest.json'));
    await atomicJSON(join(await historyDirectory(),result.navigationId+'.json'),result);
    j.status='complete';j.message='Navigatorを更新しました。';
-  }catch(e){if(current(j)){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;}}
-  finally{clearTimeout(timer);}
+  }catch(e){if((current(j)||j.committing)&&j.status==='running'){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;}}
+  finally{clearTimeout(timer);j.controller.signal.removeEventListener('abort',abort);if(temporary)await rm(temporary,{force:true});}
  }
- async function start(goal,action='navigate'){
+ async function start(goal,action='navigate',clientRequestId){
   active();if(!['navigate','evaluate'].includes(action))throw Error('Navigator操作が不正です。');if(state().mode==='offline')throw Error('オンラインで利用を開始してください。');
   if(action==='navigate'&&(typeof goal!=='string'||goal.length>4000||!goal.trim()))throw Error('開発目標を1〜4000文字で入力してください。');
-  if(starting||job&&current(job)&&job.status==='running')throw Error('Navigatorを作成中です。');
-  starting=true;
+  if(clientRequestId!==undefined&&!validRequest(clientRequestId))throw Error('Navigator要求IDが不正です。');
+  if(clientRequestId!==undefined&&cancelledRequests.has(clientRequestId))return {job:{id:null,action,clientRequestId,goal,status:'cancelled',message:'処理を中止しました。',deadline:null}};
+  if(starting||job?.committing&&job.status==='running'||job&&current(job)&&job.status==='running')throw Error('Navigatorを作成中です。');
+  const j={id:randomUUID(),action,clientRequestId:clientRequestId??null,goal,session:state().startedAt,status:'running',message:'プロジェクトを確認しています。最大5分お待ちください。',deadline:now()+waitMs,controller:new AbortController()};
+  starting=j;job=j;
+  const interrupted=()=>j.status==='cancelled'||job!==j;
   try{
-   const session=state().startedAt,dir=await directory();active();if(state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
-   const previous=action==='evaluate'?await read():null;if(action==='evaluate'&&!previous)throw Error('先にNavigatorで作業項目を作成してください。');
+   const session=j.session,dir=await directory();if(interrupted())return {job:describeJob(j)};active();if(state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
+   const previous=action==='evaluate'?await read():null;if(interrupted())return {job:describeJob(j)};if(action==='evaluate'&&!previous)throw Error('先にNavigatorで作業項目を作成してください。');
    if(previous)goal=previous.goal;
-   const ready=await availability(await readModel());if(!ready.available)throw Error(ready.reason||'実行環境が利用できません。');
-   const id=randomUUID();
-   const j={id,action,navigationId:previous?.navigationId,createdAt:previous?.createdAt,selection:await readModel(),items:previous?.items,goal:previous?previous.goal:goal.trim(),inferred:previous?previous.inferred:goal.trim()===DEFAULT_NAVIGATION_GOAL,session,status:'running',message:'プロジェクトを確認しています。最大5分お待ちください。',deadline:now()+waitMs,controller:new AbortController()};
+   const ready=await availability(await readModel());if(interrupted())return {job:describeJob(j)};if(!ready.available)throw Error(ready.reason||'実行環境が利用できません。');
+   const selection=await readModel();if(interrupted())return {job:describeJob(j)};
+   const id=j.id;
+   Object.assign(j,{navigationId:previous?.navigationId,createdAt:previous?.createdAt,selection,items:previous?.items,goal:previous?previous.goal:goal.trim(),inferred:previous?previous.inferred:goal.trim()===DEFAULT_NAVIGATION_GOAL});
    const recentScan=await scan(project,{filter:'backup',limits:{timeMs:3000,maxFiles:10000}});
+   if(interrupted())return {job:describeJob(j)};
    if(closed||!state().active||state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
    const recent=latestFiles(recentScan.tree,0).sort((a,b)=>b.mtime-a.mtime).slice(0,30).map(({path,mtime})=>({path,updatedAt:new Date(mtime).toISOString()}));
    j.prompt=`プロジェクトを読み取り調査し、開発目標のNavigationを作成してください。秘密や私的情報を結果に含めないでください。\n開発目標（調査対象）: ${j.inferred&&!previous?'既定の調査指示。最近の変更と関連内容から意図を推測し、仮の開発目標をgoalに設定してください。推測の根拠と不確実さを各reasonにも明記してください。':JSON.stringify(j.goal)}\n観測日時: ${new Date(now()).toISOString()}。最近の更新（相対パスと日時、${recentScan.truncated?'走査上限による一部のみ':'除外規則適用済み'}）: ${JSON.stringify(recent)}。日時だけで達成を断定せず、関連ファイルの内容を読んで判断してください。手掛かりが不足なら不足を明記し、完了を推測しないでください。\n${previous?'保存済み全項目の達成度だけを再評価し、':'やることを最大50項目に分け、'}現状の根拠から達成度progressを整数0〜100で推定してください。未実施・未評価・根拠不足で判定できない項目は0%にしてください。nullは使わず、すべて数値で評価してください。0%は未確認部分がないという意味ではありません。${previous?'各明細はprogressの数値だけを置き換え、id・name・reason・weight・weightReasonは保存済みの値を一字も変えず維持してください。最新の根拠と未確認部分はoverall.reasonとnextPromptに記載してください。工数比率を再配分しないでください。':'reasonに未実施・未評価の区別、根拠と未確認部分を書いてください。各項目のweightは目標達成までの全体の見積工数に占める相対比率（整数1〜100%、非空なら合計100%）です。残工数だけの比率や重要度と混同せず、規模・難しさ・検証範囲からAIが推定し、weightReasonに具体的な配分理由と不確実さを書いてください。実時間は根拠なしに断定しないでください。'}総合overall.progressもAIが算出します。未実施・未評価を0%として全項目を含め、sum(weight*progress)/100を四捨五入した整数にしてください。項目なしなら0です。nullは使いません。overall.reasonに全体の工数配分・総合値の理由・残る大きな作業と不確実さを簡潔に書いてください。schemaVersionは必ず3です。旧形式は受け付けません。おすすめプロンプトは、itemsを上から順に見て最初にprogressが100未満となる項目1つだけを対象にし、そのidをnextItemIdに設定してください。未評価は0%として対象選択に含めます。nextPromptは、別のAIにそのまま渡せる自然で実用的な依頼文をあなた自身が作成してください。本文の上から「今回の目標」「対処しようとしている内容」「今回の作業」の流れで、目標の意図、対象項目で残っている課題と確認済みの根拠、今回その1項目を進める具体的な作業と確認方法を含めてください。目標や項目名を機械的に転記するだけにせず、調査で得た文脈を踏まえて文章にしてください。未確認のことは断定せず明記してください。画面・コピー側では説明を追加しないので、依頼文だけで目標と対象が分かるようにしてください。全体目標は背景の説明にとどめ、作業の依頼には後続項目・複数項目・一般的な追加作業を含めないでください。全項目が100%または項目がない場合、nextItemIdはnull、nextPromptは空文字にし、新たな仕事を作らないでください。自動実行はしません。\n${previous?'以下は保存済みの出力形式です。新規生成せず保存済み全項目を維持してください。':'以下は形式を示す出力例です。例の項目名・割合を固定で転記せず、実目標に応じた適切な粒度の複数項目を生成してください。'}次の形式のJSONだけを回答してください。結果の保存はアプリ側で行います。\n${JSON.stringify(previous?{schemaVersion:3,requestId:id,goal:previous.goal,items:previous.items,overall:previous.overall,nextItemId:previous.nextItemId,nextPrompt:previous.nextPrompt}:{schemaVersion:3,requestId:id,goal:j.inferred?'仮の開発目標':j.goal,items:[{id:'step-1',name:'バックエンド調整',progress:100,reason:'必要なAPIと関連試験を確認済みの場合の例',weight:50,weightReason:'複数APIとデータ整合性の検証が全体工数の半分を占める見積例'},{id:'step-2',name:'フロントエンド',progress:70,reason:'基本画面は確認済みで残る表示確認がある場合の例',weight:30,weightReason:'画面実装と状態遷移の検証範囲から3割と見積もる例'},{id:'step-3',name:'セルフテスト',progress:0,reason:'計画された試験が未実施と確認できた場合の例',weight:20,weightReason:'結合試験と回帰確認に2割を見積もる例'}],overall:{progress:71,reason:'工数配分50:30:20の加重平均は71%。残作業は画面確認と結合試験が中心。工数比率はAIの推定です。'},nextItemId:'step-2',nextPrompt:'今回の目標は、利用者が画面を迷わず使える状態に仕上げることです。\n対処しようとしている内容は、基本画面の実装後に残っている表示確認です。現在の調査では表示の検証結果を確認できていません。\n今回の作業では、フロントエンドの対象画面とその検証手順を確認し、表示崩れの有無を調べ、必要な修正と表示の再確認を行ってください。確認できた内容と未確認部分を報告してください。今回はこの項目だけを対象にしてください。'})}`;
    if(previous)j.prompt+=`\n評価モードです。以下の保存済み目標・全項目をそのまま使い、目標・項目ID・項目名・順序・項目数・根拠reason・工数比率weight・配分理由weightReasonを変えないでください。明細はprogressの数値だけを最新状態から評価し更新してください。総合overall.progressは保存済みの工数比率と更新した達成度の加重平均から算出し、overall.reasonには最新の根拠・未確認部分を書いてください。更新した達成度から最初の100%未満の項目を選び直し、nextItemIdをその1項目だけに合わせ、nextPromptも最新の根拠から「今回の目標」「対処しようとしている内容」「今回の作業」を含む依頼文として書き直してください。保存済みの提案を機械的に再利用しないでください。全項目100%ならnextItemIdはnull、nextPromptは空文字です。schemaVersion:3の形式は維持してください。\n保存済み: ${JSON.stringify(previous)}\n出力形式: ${JSON.stringify({schemaVersion:3,requestId:id,goal:previous.goal,items:previous.items,overall:previous.overall,nextItemId:previous.nextItemId,nextPrompt:previous.nextPrompt})}`;
-   j.deadline=now()+waitMs;job=j;void execute(j,dir);return {job:describe()};
-  }finally{starting=false;}
+   j.deadline=now()+waitMs;j.done=execute(j,dir);return {job:describe()};
+  }catch(error){if(interrupted())return {job:describeJob(j)};if(current(j)){j.status='failed';j.message=error.message;}throw error;}finally{if(starting===j)starting=null;}
  }
- return {get,start,saveModel,list,select,fresh,close(){closed=true;job?.controller.abort();},async handle(req,res,url){
+ return {get,start,cancel,saveModel,list,select,fresh,close(){closed=true;job?.controller.abort();},async handle(req,res,url){
   if(url.pathname!=='/api/navigation')return false;
   const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
   try{
    if(req.method==='GET')reply(200,url.searchParams.get('providers')==='1'?await providerList():url.searchParams.has('catalog')?await navigationCatalog(url.searchParams.get('catalog')):url.searchParams.get('list')==='1'?{items:await list()}:await get());
-   else if(req.method==='POST'||req.method==='PUT'){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>20000)throw Error('入力が大きすぎます。');chunks.push(Buffer.from(chunk));}const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(req.method==='PUT')reply(200,{selection:await saveModel(data)});else if(data.action==='select')reply(200,await select(data.id));else if(data.action==='new')reply(200,await fresh());else reply(202,await start(data.goal,data.action));}
+   else if(req.method==='POST'||req.method==='PUT'){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>20000)throw Error('入力が大きすぎます。');chunks.push(Buffer.from(chunk));}const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(req.method==='PUT')reply(200,{selection:await saveModel(data)});else if(data.action==='cancel')reply(200,await cancel(data));else if(data.action==='select')reply(200,await select(data.id));else if(data.action==='new')reply(200,await fresh());else reply(202,await start(data.goal,data.action,data.clientRequestId));}
    else reply(405,{error:'対応していない操作です。'});
   }catch(e){reply(400,{error:e.message});}return true;
  }};

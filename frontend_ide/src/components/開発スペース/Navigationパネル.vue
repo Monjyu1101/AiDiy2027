@@ -16,7 +16,8 @@ import NaviCruise from './ナビ航行.vue';
 import NaviFireworks from './ナビ花火.vue';
 import NaviScenery from './ナビ風景.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
-import {NAVIGATION_SCENES, NAVIGATION_SCENE_LABELS, pickNavigationScene} from './ナビ風景.js';
+import NavigationSceneMenu from './ナビ画面メニュー.vue';
+import {NAVIGATION_SCENES, pickNavigationScene} from './ナビ風景.js';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
@@ -28,6 +29,7 @@ const title=computed(()=>autopilot.value?normalTitle.value.replace('Navigator','
 const native=!!window.aidiyWindow;
 // Code同様、ビルド後に配布される画像を実行時URLで参照する。静的srcはViteのimport対象になる。
 const sendIcon=computed(()=>new URL('sending.png',new URL('/development/AiDiy.png',location.href)).href);
+const stopIcon=computed(()=>new URL('abort.png',sendIcon.value).href);
 const visible=ref(false),detached=ref(false),panel=ref(),goal=ref(DEFAULT_NAVIGATION_GOAL),result=ref(null),job=ref(null),error=ref(''),submitting=ref(false),copied=ref(false),copyError=ref(''),copying=ref(false);
 const openingWindow=ref(!props.standalone),cruiseFailed=ref(false),cruiseKind=ref('ride');
 const selection=ref({provider:'aidiy_hermes',model:'same'}),modelOpen=ref(false),chosenProvider=ref('aidiy_hermes'),chosenModel=ref('same'),savingModel=ref(false),modelChoice=ref('same');
@@ -69,16 +71,19 @@ const nextNavigationAction=computed(()=>{
 let draftInitialized=false,draftEdited=false,pendingGoal=null;
 function editGoal(){draftEdited=true;stopAutopilot('目標が編集されたため停止しました。');}
 // 応答を失った開始要求はGETで状態を確認するまで再送しない。
-const reconciling=ref(false);
-const busy=computed(()=>savingModel.value||submitting.value||reconciling.value||job.value?.status==='running');
-const routing=computed(()=>submitting.value||reconciling.value||job.value?.status==='running');
+const reconciling=ref(false),stopping=ref(false),activeRun=ref(null),pendingCancel=ref(null);let runSerial=0;
+const operationLabel=computed(()=>(activeRun.value?.action||job.value?.action)==='evaluate'?'評価中':'調査中');
+const canStop=computed(()=>!!(activeRun.value||pendingCancel.value||job.value?.status==='running'));
+function beginRun(action){const run={action,clientRequestId:props.instance+'-'+Date.now()+'-'+(++runSerial)+'-'+Math.random().toString(36).slice(2)};activeRun.value=run;return run;}
+const sameCancelledJob=value=>!!value&&!!pendingCancel.value&&(pendingCancel.value.clientRequestId?value.clientRequestId===pendingCancel.value.clientRequestId:value.id===pendingCancel.value.jobId);
+const busy=computed(()=>savingModel.value||stopping.value||!!pendingCancel.value||submitting.value||reconciling.value||job.value?.status==='running');
+const routing=computed(()=>stopping.value||!!pendingCancel.value||submitting.value||reconciling.value||job.value?.status==='running');
 // 選択は今回の実行だけに適用する。通常操作・自動航行は従来どおりランダム。
-const sceneAction=ref('');let nextScene='';
-const pressContext=computed(()=>[props.project?.path,props.startedAt,detached.value,visible.value]);
+const sceneAction=ref(''),sceneRequest=ref(null);let nextScene='';
 watch(routing,value=>{if(value){cruiseKind.value=nextScene||pickNavigationScene();nextScene='';cruiseFailed.value=false;}},{flush:'sync'});
-function chooseScene(action){
+function chooseScene(action,request={}){
  if(!visible.value||busy.value||autopilot.value||!availability.value.available||(action==='evaluate'&&!canEvaluate.value))return;
- sceneAction.value=action;
+ sceneRequest.value=request;sceneAction.value=action;
 }
 function runWithScene(scene){
  const action=sceneAction.value;sceneAction.value='';
@@ -92,8 +97,9 @@ async function api(method='GET',body,signal){
  const data=await response.json();if(!response.ok)throw Error(data.error||'Navigatorを取得できません。');return data;
 }
 async function refresh(){
+ if(stopping.value)return;
  const generation=version;
- try{if(props.standalone){try{const r=await fetch('/api/connection',{signal:AbortSignal.timeout(3000)});if(r.ok)toolsState.value=await r.json();else toolsState.value.connected=false;}catch{toolsState.value.connected=false;}}const data=await api();if(disposed||generation!==version)return;if(data.job?.status==='failed'&&data.job.id!==notifiedFailureId&&(pendingGoal?.id===data.job.id||(job.value?.id===data.job.id&&job.value.status==='running'))){notifiedFailureId=data.job.id;failureDialog.value=data.job.message||'';}job.value=data.job;reconciling.value=false;result.value=verifiedResult(data.result);availability.value=data.availability||{available:true,reason:""};selection.value=data.selection||selection.value;if(!draftInitialized){draftInitialized=true;if(!draftEdited&&data.result)goal.value=data.result.goal;}if(pendingGoal&&data.job?.id===pendingGoal.id&&data.job.status!=='running'){if(data.job.status==='complete'&&goal.value===pendingGoal.text&&!draftEdited)goal.value=data.result.goal;pendingGoal=null;}}
+ try{if(props.standalone){try{const r=await fetch('/api/connection',{signal:AbortSignal.timeout(3000)});if(r.ok)toolsState.value=await r.json();else toolsState.value.connected=false;}catch{toolsState.value.connected=false;}}const data=await api();if(disposed||generation!==version)return;if(data.job?.status==='failed'&&data.job.id!==notifiedFailureId&&(pendingGoal?.id===data.job.id||(job.value?.id===data.job.id&&job.value.status==='running'))){notifiedFailureId=data.job.id;failureDialog.value=data.job.message||'';}job.value=data.job;if(sameCancelledJob(data.job)&&data.job.status!=='running'){pendingCancel.value=null;error.value='';if(data.job.status==='cancelled')autopilotMessage.show('処理を中止しました。');}reconciling.value=!!pendingCancel.value;if(!submitting.value&&!pendingCancel.value&&data.job?.status!=='running')activeRun.value=null;result.value=verifiedResult(data.result);availability.value=data.availability||{available:true,reason:""};selection.value=data.selection||selection.value;if(!draftInitialized){draftInitialized=true;if(!draftEdited&&data.result)goal.value=data.result.goal;}if(pendingGoal&&data.job?.id===pendingGoal.id&&data.job.status!=='running'){if(data.job.status==='complete'&&goal.value===pendingGoal.text&&!draftEdited)goal.value=data.result.goal;pendingGoal=null;}}
  catch(e){if(!disposed&&generation===version&&e.name!=='AbortError')error.value=e.message;}
  finally{if(!disposed&&generation===version&&visible.value){clearTimeout(timer);timer=setTimeout(refresh,job.value?.status==='running'?2000:5000);}}
 }
@@ -114,11 +120,26 @@ async function navigate(action='navigate',scene=''){
  // 再評価は現在のナビを対象にする。編集中の別目標では新規作成しない。
  if(action==='evaluate')goal.value=result.value.goal;
  if(!goal.value.trim()){error.value='開発目標を入力してください。';return;}
- nextScene=scene;sceneAction.value='';
+ nextScene=scene;sceneAction.value='';const run=beginRun(action);
  const submittedGoal=goal.value;draftEdited=false;submitting.value=true;error.value='';copied.value=false;const generation=++version;clearTimeout(timer);
- try{const data=await api('POST',{goal:submittedGoal,action});if(generation===version){job.value=data.job;pendingGoal={id:data.job.id,text:submittedGoal};}}
+ try{const data=await api('POST',{goal:submittedGoal,action,clientRequestId:run.clientRequestId});if(generation===version){job.value=data.job;pendingGoal={id:data.job.id,text:submittedGoal};}}
  catch(e){if(generation===version){error.value=e.message;reconciling.value=true;}}
  finally{if(generation===version){submitting.value=false;void refresh();}}
+}
+// 起動前にも分かる要求IDで中止する。通信中断だけではサーバーのAI処理は止まらない。
+async function cancelNavigation(){
+ if(stopping.value||!canStop.value)return;
+ const target=pendingCancel.value||(activeRun.value?.clientRequestId?{clientRequestId:activeRun.value.clientRequestId}:job.value?.clientRequestId?{clientRequestId:job.value.clientRequestId}:{jobId:job.value.id});
+ const generation=++version;pendingCancel.value=target;stopping.value=true;sceneAction.value='';clearTimeout(timer);
+ stopAutopilot('処理の中止を要求し、自動航行をオフにしました。');
+ request?.abort();request=new AbortController();submitting.value=false;reconciling.value=true;error.value='';pendingGoal=null;failureDialog.value=null;
+ try{
+  const data=await api('POST',{action:'cancel',...target});
+  if(disposed||generation!==version)return;
+  job.value=data.job;pendingCancel.value=null;activeRun.value=null;reconciling.value=false;
+  autopilotMessage.show(data.job?.status==='complete'?'処理は中止前に完了しました。自動航行はオフです。':data.job?.status==='failed'?'処理は失敗して終了しています。自動航行はオフです。':'処理を中止しました。');
+ }catch(e){if(!disposed&&generation===version)error.value='中止を確認できません。状態を確認中です。「！」で中止を再試行できます。 '+e.message;}
+ finally{if(!disposed&&generation===version){stopping.value=false;void refresh();}}
 }
 async function toggleHistory(){if(busy.value||autopilot.value)return;history.value=!history.value;if(history.value)try{const r=await fetch('/api/navigation?instance='+encodeURIComponent(props.instance)+'&list=1',{cache:'no-store'});const data=await r.json();if(!r.ok)throw Error(data.error);historyItems.value=data.items;}catch(e){error.value=e.message;}}
 async function selectHistory(id){if(busy.value||autopilot.value)return;submitting.value=true;try{const data=await api('POST',{action:id?'select':'new',id});result.value=verifiedResult(data.result);job.value=data.job;availability.value=data.availability||availability.value;goal.value=data.result?.goal||DEFAULT_NAVIGATION_GOAL;draftInitialized=true;draftEdited=false;pendingGoal=null;selection.value=data.selection||selection.value;history.value=false;error.value='';}catch(e){error.value=e.message;}finally{submitting.value=false;}}
@@ -242,9 +263,9 @@ function shown(){
 }
 async function evaluateForAutopilot(signal){
  if(!matchesResult.value||!availability.value.available||busy.value)throw Error('現在のナビを再評価できないため停止しました。');
- const generation=++version;clearTimeout(timer);submitting.value=true;error.value='';
+ const generation=++version,run=beginRun('evaluate');clearTimeout(timer);submitting.value=true;error.value='';
  try{
-  const started=await api('POST',{goal:result.value.goal,action:'evaluate'},signal);
+  const started=await api('POST',{goal:result.value.goal,action:'evaluate',clientRequestId:run.clientRequestId},signal);
   if(signal.aborted||generation!==version)throw Error('自動航行を停止しました。');
   if(!started.job?.id)throw Error('再評価の受付を確認できません。');
   job.value=started.job;
@@ -264,8 +285,8 @@ async function evaluateForAutopilot(signal){
    }
    if(data.job.status!=='running'||Date.now()>deadline)throw Error('再評価の完了を確認できないため停止しました。');
   }
- }catch(e){reconciling.value=true;throw e;}
- finally{submitting.value=false;if(!disposed&&visible.value)void refresh();}
+ }catch(e){if(generation===version)reconciling.value=true;throw e;}
+ finally{if(generation===version){submitting.value=false;if(!disposed&&visible.value)void refresh();}}
 }
 async function toggleAutopilot(){
  if(autopilot.value){stopAutopilot();return;}
@@ -300,7 +321,7 @@ watch(()=>props.project?.path,()=>{stopAutopilot('プロジェクトが変わっ
 onMounted(()=>{visibilityTimer=setInterval(()=>{if(autopilot.value&&!shown())stopAutopilot('Navigatorが非表示になったため停止しました。再開にはオンにしてください。');},250);});
 onBeforeUnmount(()=>{stopAutopilot('Navigatorを閉じたため停止しました。');autopilotMessage.dispose();clearInterval(visibilityTimer);void releaseCode();});
 
-watch(()=>props.startedAt,()=>{stopAutopilot('利用セッションが変わったため停止しました。');void releaseCode();codeOpen.value=false;version++;request?.abort();close();windowPanel?.close();windowPanel=null;draftInitialized=false;draftEdited=false;pendingGoal=null;failureDialog.value=null;notifiedFailureId=null;goal.value=DEFAULT_NAVIGATION_GOAL;result.value=null;job.value=null;error.value='';submitting.value=false;modelOpen.value=false;selection.value={provider:'aidiy_hermes',model:'same'};});
+watch(()=>props.startedAt,()=>{stopAutopilot('利用セッションが変わったため停止しました。');void releaseCode();codeOpen.value=false;version++;request?.abort();close();windowPanel?.close();windowPanel=null;draftInitialized=false;draftEdited=false;pendingGoal=null;failureDialog.value=null;notifiedFailureId=null;goal.value=DEFAULT_NAVIGATION_GOAL;result.value=null;job.value=null;error.value='';submitting.value=false;stopping.value=false;activeRun.value=null;pendingCancel.value=null;reconciling.value=false;modelOpen.value=false;selection.value={provider:'aidiy_hermes',model:'same'};});
 onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(props.instance),{method:'DELETE'}).catch(()=>{});disposed=true;version++;request?.abort();clearTimeout(timer);windowPanel?.close();});
 
 </script>
@@ -313,7 +334,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <form class="navigation-goal-form" @submit.prevent="navigate()">
     <label :for="instance+'-goal'">目標<small v-if="result?.inferred&&matchesResult">（AIの推測・編集できます）</small></label>
     <textarea :id="instance+'-goal'" v-model="goal" :readonly="autopilot" maxlength="4000" rows="4" @input="editGoal" placeholder="目標を入力してください"></textarea>
-    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><NavigationRunButton :context="pressContext" class="navigation-start navigation-run" title="クリックでナビ。0.5秒長押し、または↓キーで待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate')" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></NavigationRunButton><NavigationRunButton :context="pressContext" class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate')" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。0.5秒長押し、または↓キーで待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
+    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button v-if="routing&&canStop" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-start navigation-run" title="クリックでナビ。右クリック、またはShift+F10で待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate',$event)" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></NavigationRunButton><NavigationRunButton class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate',$event)" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
    </form>
   <div v-if="history" class="navigation-history" role="list"><p v-if="!historyItems.length">このフォルダにナビ履歴はありません</p><button v-for="item in historyItems" :key="item.id" :disabled="busy||autopilot" @click="selectHistory(item.id)"><time>{{new Date(item.updatedAt).toLocaleString()}}</time><span>{{item.goal}}</span></button></div>
   <div v-show="!history" class="navigation-display" :class="{running:submitting||job?.status==='running'}"><div class="navigation-content">
@@ -344,12 +365,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 
   <p v-if="autopilotStatus" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}</p>
   <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
-  <ModalDialog v-if="sceneAction" label="待機中のナビ画面を選択" @close="sceneAction=''">
-   <h3>待機中のナビ画面</h3>
-   <p>画面を選ぶと{{sceneAction==='evaluate'?'再評価':'ナビ'}}を開始します。今回の実行だけに適用します。</p>
-   <div class="navigation-scene-picker"><button v-for="scene in NAVIGATION_SCENES" :key="scene" type="button" :data-scene="scene" @click="runWithScene(scene)">{{NAVIGATION_SCENE_LABELS[scene]}}</button></div>
-   <button type="button" autofocus @click="sceneAction=''">キャンセル</button>
-  </ModalDialog>
+  <NavigationSceneMenu v-if="sceneAction" :request="sceneRequest" :action="sceneAction" @select="runWithScene" @close="sceneAction=''" />
   <ModalDialog v-if="failureDialog!==null" label="ナビの実行に失敗しました" @close="failureDialog=null">
    <h3>ナビの実行に失敗しました</h3>
    <p>別のエージェントをお試しください。</p>
@@ -370,7 +386,6 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
  </section>
 </template>
 <style>
-.navigation-scene-picker{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:16px 0}.navigation-scene-picker button{min-height:44px;padding:10px;font:inherit}.navigation-scene-picker button:focus-visible{outline:2px solid #8de8e0;outline-offset:2px}
 .navigation-display{position:relative;display:flex;flex:1;min-height:0;--stream:#00ffff}.navigation-history{flex:1;overflow:auto;padding:12px}.navigation-history>button{display:flex;width:100%;gap:16px;padding:12px;text-align:left}.navigation-history time{flex:none;color:#98a6b8}.navigation-project nav{display:flex;align-items:center;gap:8px;margin-left:auto;}
 .navigation-panel.standalone{position:relative;inset:auto;width:100%;height:100%;max-height:none;max-width:none;border:0;border-radius:0;}
 .navigation-model-line{display:flex;align-items:center;gap:8px;font-size:11px}.navigation-model-line>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigation-model-picker{display:grid;gap:8px;max-height:50vh;overflow:auto}.navigation-model-picker label{display:grid;gap:4px}.navigation-model-picker select,.navigation-model-picker input{width:100%;box-sizing:border-box;font:inherit;background:#142235;color:#edf5ff;border:1px solid #47637b;padding:6px}.navigation-model-picker small{color:#b3c5d8}.navigation-model-picker>div{display:flex;gap:8px}
@@ -389,6 +404,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-goal-form{flex:none;padding:10px 12px 3px;border-bottom:1px solid var(--aidiy-titlebar-background);background:#0b1220}.navigation-goal-form label{margin-bottom:5px}.navigation-goal-form button:disabled{opacity:.55;cursor:default}.navigation-goal-form button:focus-visible{outline:2px solid #8de8e0;outline-offset:2px}.navigation-draft-note{font-size:11px;color:#f5cf85;margin:0;overflow-wrap:anywhere}.navigation-form-foot button{flex:none}.navigation-estimate-note{display:block;margin-top:8px;color:#b3c5d8}.navigation-content{padding:10px 12px}.navigation-content .navigation-task-heading{margin:0 0 5px;font-size:inherit;font-weight:600;line-height:inherit}
 .navigation-goal-form .navigation-run.is-next-action:not(:disabled),.navigation-goal-form .navigation-run.is-next-action:not(:disabled) .navigation-button-label{background:#667eea;color:#fff;border-color:#667eea}
 .navigation-goal-form .navigation-run.is-next-action:not(:disabled):hover,.navigation-goal-form .navigation-run.is-next-action:not(:disabled):hover .navigation-button-label{background:#5a6fd8;border-color:#5a6fd8}
+.navigation-goal-form .navigation-stop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:#000;color:#ff667c;border-color:#e04458;cursor:pointer}.navigation-stop .navigation-stop-label{font-size:9px;line-height:12px;white-space:nowrap}.navigation-stop img{position:static;inset:auto;flex:none;width:24px;height:26px;object-fit:contain;filter:invert(39%) sepia(90%) saturate(2186%) hue-rotate(326deg) brightness(97%) contrast(91%)}.navigation-stop:hover{background:#341019}.navigation-stop:disabled{opacity:.55;cursor:wait}.navigation-stop:focus-visible{outline:2px solid var(--focus,#889aff);outline-offset:2px}
 .navigation-goal-form .navigation-run.is-routing{background:#667eea;color:#fff}.navigation-run.is-routing img{display:none}.navigation-run.is-routing .navigation-button-label{margin-top:0;background:#667eea;color:#fff;font-size:9px;letter-spacing:-.5px;padding:0 1px;white-space:nowrap}
 </style>
 

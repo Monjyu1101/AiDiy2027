@@ -758,11 +758,17 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 ### Navigator の待機演出と別窓キー
 
-ナビ／再評価ボタンは通常クリックを離した時に実行します。0.5秒長押しすると待機画面の候補が開き、選んだ画面で今回の実行を開始します。候補をキャンセルした時は実行せず、目標も変更しません。通常クリックと次回以降の自動航行は従来のランダム選択です。キーボードはEnter／Spaceで通常実行、↓キーで候補を開き、Escapeで閉じます。タッチも同じ長押しに対応します。
+ナビ／再評価ボタンは通常クリックを離した時に実行します。左ボタンを長く押しても候補は開きません。右クリックでボタンの近くに小さな待機画面メニューを表示し、候補の選択で今回の実行を開始します。通常クリックと次回以降の自動航行は従来のランダム選択です。メニューを閉じただけでは実行せず、目標も変更しません。
+- 調査・再評価中の実行ボタンは、赤い「！」の上に「調査中」「評価中」を表示する停止ボタンへ切り替える。クリック、Enter、Spaceで現在の処理を中止し、自動航行も即座にオフにする。Codeの接続や会話は保持する。
+- 中止は開始時に発行した `clientRequestId` を `POST /api/navigation` の `action: cancel` で照合する。復元済みジョブは `jobId` でも照合できる。開始応答前や遅延応答でも対象外の要求を止めず、保存済み結果を保つ。保存確定開始後は完了を待ち、中止済みと誤表示しない。中止応答を失った場合は再実行をロックしたまま状態確認し、「！」から同じIDで再試行する。
+- 中止経路は `node --test checks/navigation-cancel.test.mjs checks/navigation-cancel-ui.test.mjs checks/navigation-autopilot-ui.test.mjs checks/code-navigation-run.test.mjs` で確認する。右クリック選択と停止マークの実画面確認は `node scripts/check-navigation-scene-picker.mjs` を使用する。
 
-`ナビ実行ボタン.vue` と `ナビボタン入力.js` は500msの入力判定・長押し後のクリック抑止を共有します。ポインターの範囲外移動／10px超の移動、cancel、Escape／Tab、非表示、窓のblur、無効化、画面破棄、プロジェクト／利用セッション／表示先変更では予約を取り消します。現在のownerDocumentで購読し、毎回解除するため別窓でも古い窓にイベントを残しません。タイマーが遅れても実押下時間が500ms以上なら通常実行しません。
 
-入力・画面選択の検証は `node --test frontend_ide/checks/navigation-button-input.test.mjs frontend_ide/checks/navigation-scene-picker.test.mjs`。実Vue・模擬APIで5候補、長押し後の解除、通常再操作、タッチ／キー、別Documentを確認する画面ハーネスは `node frontend_ide/scripts/check-navigation-scene-picker.mjs` です。配布用buildや実AIは使わず、Chromiumのローカルソケット権限が必要です。画像は `frontend_ide/temp/navigation-scene-picker-check/` に出力します。
+キーボードはEnter／Spaceで通常実行、Shift+F10／メニューキー／↓キーで候補を開き、上下／Home／Endで移動、Enter／Spaceで選択します。Escapeで元のボタンへ戻り、Tabで閉じて次の操作へ進みます。外側のクリック、スクロール、窓のblur／resize、非表示、無効化、プロジェクト／利用セッション／表示先変更でも閉じます。タッチの長押しでは選択を開きません。
+
+`ナビ実行ボタン.vue` と `ナビボタン入力.js` は通常クリックと右クリック／メニューキーを振り分けます。長押しタイマーやポインター捕捉はありません。`ナビ画面メニュー.vue`／`.js` は5候補を縦に並べ、現在のパネル内に位置を収めます。購読とフォーカスは現在のownerDocumentを使い、閉じる時に解除するため、別窓や複数Navigatorでも干渉しません。
+
+入力・メニュー・実行の検証は `node --test frontend_ide/checks/navigation-button-input.test.mjs frontend_ide/checks/navigation-scene-menu.test.mjs frontend_ide/checks/navigation-scene-picker.test.mjs`。実Vue・模擬APIの画面ハーネスは `node frontend_ide/scripts/check-navigation-scene-picker.mjs`、ブラウザーなしのコンパイル検証は同じコマンドに `--compile-only` を付けます。配布用buildや実AIは使わず、画面検証にはChromiumのローカルソケット権限が必要です。画像は `frontend_ide/temp/navigation-scene-picker-check/` に出力します。
 
 ナビ／再評価の待機開始ごとに「航行」「花火」「アクアリウム」「万華鏡」「水面」の5種類から選びます。従来の航行・花火の操作と、非対応環境の開始表示へのフォールバックは維持します。追加3種類は黒背景のCanvas 2D表示で、外部画像や通信は使いません。水面はランダムな位置から波紋が広がり、演出にフォーカスまたはポインターがあるとき、Spaceで波紋点を1つ追加します。長押しのrepeatは追加しません。波紋には寿命と32点の上限を設けます。
 
