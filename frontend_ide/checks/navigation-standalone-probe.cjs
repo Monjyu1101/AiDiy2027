@@ -21,7 +21,7 @@ app.on('browser-window-created',(_,window)=>{if(running)return;running=true;wind
  assert.equal(window.getTitle(),'AiDiy Navigator');
  assert.ok(Math.abs(window.getBounds().width-480)<=2&&Math.abs(window.getBounds().height-600)<=2,'初期480×600 DIP（Windows丸め2px以内）');
  const bounds=window.getBounds(),area=screen.getDisplayMatching(bounds).workArea;
- assert.ok(Math.abs(bounds.x-(area.x+8))<=2&&Math.abs(bounds.y-(area.y+area.height-8-bounds.height))<=2,'単独Navigatorは作業領域の左下');
+ assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'単独Navigatorは作業領域の左中央');
  console.log('Navigator initial bounds',JSON.stringify(window.getBounds()));
  assert.equal(await evaluate(window,`document.title`),'AiDiy Navigator');
  assert.ok(await evaluate(window,`document.querySelector('.navigation-project').textContent.includes('プロジェクト:')`));

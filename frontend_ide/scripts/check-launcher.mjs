@@ -54,9 +54,10 @@ try{
     assert.notEqual(next.pid,window.pid);assert.notEqual(next.url,window.url);
     // WindowsのDPI丸めによる外枠の1〜2論理px差を許容する。
     assert.ok(Math.abs(window.bounds.width-Math.round(window.area.width*2/3))<=2);assert.ok(Math.abs(window.bounds.height-Math.round(window.area.height/(window.area.width>window.area.height?3:4)))<=2);
+    assert.ok(Math.abs(window.bounds.x-window.area.x-8)<=2);assert.ok(Math.abs(window.bounds.y+window.bounds.height-window.area.y-window.area.height+8)<=2);
     assert.ok(Math.abs(next.bounds.x-window.bounds.x-28)<=2);assert.ok(Math.abs(next.bounds.y-window.bounds.y+28)<=2);
     await close(monitor);assert.equal((await fetch(ready.url)).status,200);
-    console.log('LAUNCH PASS: Consoleの同一プロジェクト複数起動・幅2/3・横画面高さ1/3／縦画面1/4・右上配置・個別終了');
+    console.log('LAUNCH PASS: Consoleの同一プロジェクト複数起動・幅2/3・横画面高さ1/3／縦画面1/4・左下から右上配置・個別終了');
    }else{
     const second=launch(folder);await until(()=>second.child.exitCode!==null);
     assert.equal(await second.exit,0);assert.match(second.output(),/起動済み/);

@@ -9,19 +9,19 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import layout from '../デスクトップ/window-layout.cjs';
 const {windowBounds,windowMinimumSize,allWindowBounds}=layout;
-test('CLI付きConsoleは800×600で中央に置き、小画面では作業領域へ収める',()=>{
+test('CLI付きConsoleは800×600で左下に置き、小画面では作業領域へ収める',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:0,width:640,height:480}]){
   for(const slot of [0,1,4]){
    const b=windowBounds('console',area,undefined,slot,true);
    assert.equal(b.width,Math.min(800,area.width-16));assert.equal(b.height,Math.min(600,area.height-16));
-   assert.ok(Math.abs(b.x+b.width/2-area.x-area.width/2)<=.5);assert.ok(Math.abs(b.y+b.height/2-area.y-area.height/2)<=.5);
+   assert.equal(b.x,area.x+8);assert.equal(b.y+b.height,area.y+area.height-8);
   }
  }
 });
-test('ALL選択画面: 負座標・縦画面・狭い画面でもConsole下部、Code右上、Live左上',()=>{
+test('ALL選択画面: 負座標・縦画面・狭い画面でもConsole左下、Code右上、Live左上',()=>{
  for(const area of [{x:-1920,y:-1080,width:1920,height:1040},{x:0,y:90,width:1080,height:1880},{x:0,y:0,width:320,height:240}]){
   const consoleWindow=allWindowBounds('console',area),code=allWindowBounds('code',area),live=allWindowBounds('live',area);
-  assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
+  assert.equal(consoleWindow.x,area.x+8);assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
   assert.equal(code.x+code.width,area.x+area.width-8);assert.equal(code.y,area.y+8);
   assert.equal(live.x,area.x+8);assert.equal(live.y,area.y+8);
   for(const kind of ['console','code','live'])for(let slot=0;slot<12;slot++){
@@ -57,7 +57,7 @@ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,hei
    }
    const consoleWindow=windowBounds('console',area,owner),next=windowBounds('console',area,owner,1);
    assert.equal(consoleWindow.width,Math.round(area.width*2/3));assert.equal(consoleWindow.height,Math.round(area.height/(area.width>area.height?3:4)));
-   assert.ok(Math.abs(consoleWindow.x+(consoleWindow.width/2)-(area.x+area.width/2))<=1);
+   assert.equal(consoleWindow.x,area.x+8);
    assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
    assert.equal(next.x,consoleWindow.x+28);assert.equal(next.y,consoleWindow.y-28);
    if(area.width>1000&&owner===ide){
@@ -67,6 +67,18 @@ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,hei
   }
  });
 }
+test('Consoleは左下から28pxずつ右上へ並び、画面端で初期位置へ戻る',()=>{
+ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1080,y:40,width:1080,height:1880},{x:40,y:-240,width:240,height:240}]){
+  const first=windowBounds('console',area);
+  const steps=Math.max(1,Math.floor(Math.min(area.x+area.width-8-first.width-first.x,first.y-area.y-8)/28)+1);
+  for(let slot=0;slot<steps*2+1;slot++){
+   const offset=(slot%steps)*28,bounds=windowBounds('console',area,undefined,slot);
+   assert.equal(bounds.x,first.x+offset);assert.equal(bounds.y,first.y-offset);
+  }
+  assert.deepEqual(windowBounds('console',area,undefined,steps),first);
+ }
+});
+
 test('最小寸法: Consoleだけ高さ180、横幅・Code/Live/IDE/ビューアは従来どおり',()=>{
  const bounds={width:1000,height:900};
  for(const [kind,minWidth,minHeight] of [['console',360,180],['code',360,480],['live',360,480],['ide',400,550],['viewer',360,480]]){
@@ -88,7 +100,7 @@ test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を�
  context.registerWindowPin=()=>{};context.attachWindowMove=()=>{};
  vm.runInNewContext(body+';globalThis.create=createWindow;',context);
  const owner={window:{getBounds:()=>windowBounds('ide',area),isDestroyed:()=>false},revision:0};
- for(const parent of [undefined,owner])for(const kind of ['console','code','live','ide','viewer']){
+ for(const parent of [undefined,owner])for(const kind of ['navi','console','code','live','ide','viewer']){
   const window=await context.create(kind,'http://127.0.0.1:1234/',undefined,parent,'offline:1');
   const bounds=windowBounds(kind,area,parent?.window.getBounds());
   assert.deepEqual(window.bounds,bounds);
@@ -97,6 +109,13 @@ test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を�
   assert.equal(window.options.height,bounds.height);assert.equal(window.options.width,bounds.width);
   assert.equal(window.options.frame,false);assert.notEqual(window.options.resizable,false);
  }
+ context.cliConsoleWindow=true;context.process={env:{}};
+ for(const parent of [undefined,owner]){
+  const window=await context.create('console','http://127.0.0.1:1234/',undefined,parent,'offline:1');
+  assert.deepEqual(window.bounds,windowBounds('console',area,parent?.window.getBounds(),0,!parent));
+  assert.equal(window.bounds.x,area.x+8);assert.equal(window.bounds.y+window.bounds.height,area.y+area.height-8);
+ }
+
 });
 
 
@@ -150,7 +169,8 @@ test('Electron生成: 親IDE側の画面を選び、Code番号・閉鎖後のslo
  assert.deepEqual(live.bounds,windowBounds('live',secondary));assert.equal(consoleWindow.bounds.height,470);
  assert.ok(matched.length>=6);assert.deepEqual(matched[0],owner.window.getBounds());
  const standalone=await context.create('code','http://127.0.0.1:1234/');assert.deepEqual(standalone.bounds,windowBounds('code',primary));
- const manual={x:-750,y:100,width:500,height:700};first.setBounds(manual);
+ const navi=await create('navi');assert.deepEqual(navi.bounds,windowBounds('navi',secondary));
+ const manual={x:-750,y:100,width:500,height:700};
  vm.runInNewContext(source.slice(source.indexOf('function focusWindow(window){'),source.indexOf("app.on('second-instance'"))+';globalThis.focus=focusWindow;',context);
- context.focus(first);assert.deepEqual(first.bounds,manual);
+ for(const window of [first,navi,consoleWindow]){window.setBounds(manual);context.focus(window);assert.deepEqual(window.bounds,manual);}
 });

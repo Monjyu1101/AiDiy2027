@@ -4,12 +4,14 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const test=require('node:test');const assert=require('node:assert/strict');
-const {windowBounds,windowMinimumSize}=require('../デスクトップ/window-layout.cjs');
+const {windowBounds,windowMinimumSize,allWindowBounds}=require('../デスクトップ/window-layout.cjs');
 const {panelBounds}=require('../デスクトップ/panel-windows.cjs');
-test('Navigator initial DIP and screen-edge clamp',()=>{
- for(const area of [{x:0,y:0,width:1920,height:1040},{x:-900,y:-50,width:900,height:700},{x:0,y:0,width:400,height:480}]){
+test('Navigator starts at the left center of the work area and clamps its initial DIP size',()=>{
+ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-900,y:-50,width:900,height:700},{x:0,y:0,width:400,height:480},{x:100,y:-1900,width:1080,height:1880},{x:-321,y:41,width:641,height:641}]){
   const code=windowBounds('code',area),expected=[code.width,code.height];
-  const standalone=windowBounds('navi',area);assert.deepEqual([standalone.width,standalone.height],expected);assert.deepEqual(windowMinimumSize('navi',standalone),windowMinimumSize('code',code));assert.equal(standalone.x,area.x+8);assert.equal(standalone.y,area.y+area.height-8-standalone.height);
+  const standalone=windowBounds('navi',area);assert.deepEqual([standalone.width,standalone.height],expected);assert.deepEqual(windowMinimumSize('navi',standalone),windowMinimumSize('code',code));assert.equal(standalone.x,area.x+8);assert.ok(Math.abs(standalone.y+standalone.height/2-area.y-area.height/2)<=.5);
+  assert.deepEqual(windowBounds('navi',area,{x:area.x+200,y:area.y+100,width:800,height:600}),standalone);
+  assert.deepEqual(allWindowBounds('navi',area),standalone);
   for(const zoom of [1,1.25,1.5,2]){
    const b=panelBounds({left:1900,top:900,width:400,height:700},{window:{getContentBounds:()=>area,webContents:{getZoomFactor:()=>zoom}}},{getDisplayMatching:()=>({workArea:area})},'panel-navigation');
    assert.deepEqual(b,standalone);

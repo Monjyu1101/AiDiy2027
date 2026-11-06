@@ -31,7 +31,7 @@ app.on('browser-window-created',(_,owner)=>{
   assert.deepEqual(await evaluate(owner,`navigationFlashObserver.disconnect();navigationFlash`),[],'別窓の準備中にIDE内へNavigatorを表示しない');
   assert.ok(Math.abs(first.getBounds().width-480)<=2&&Math.abs(first.getBounds().height-600)<=2,'初期480×600 DIP（Windows丸め2px以内）');
   const area=screen.getDisplayMatching(first.getBounds()).workArea,bounds=first.getBounds();
-  assert.ok(Math.abs(bounds.x-(area.x+8))<=2&&Math.abs(bounds.y-(area.y+area.height-8-bounds.height))<=2,'Navigatorは作業領域の左下');
+  assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'Navigatorは作業領域の左中央');
  console.log('Navigator initial bounds',JSON.stringify(first.getBounds()));
   first.setSize(540,640);
   await evaluate(first,`(()=>{const t=document.querySelector('textarea');t.value='第一の目標';t.dispatchEvent(new Event('input',{bubbles:true}));})()`);

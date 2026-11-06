@@ -15,7 +15,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='ide')return available;
  if(kind==='navi'){
   const width=Math.min(size.幅,available.width),height=Math.min(size.会話高さ,available.height);
-  return{x:available.x,y:available.y+available.height-height,width,height};
+  return{x:available.x,y:Math.round(area.y+(area.height-height)/2),width,height};
  }
  if(kind==='task'||kind==='team'){
   const width=Math.min(1200,available.width),height=Math.min(820,available.height);
@@ -28,10 +28,10 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='console'){
   if(cli){
    const width=Math.min(800,available.width),height=Math.min(600,available.height);
-   return{x:Math.round(area.x+(area.width-width)/2),y:Math.round(area.y+(area.height-height)/2),width,height};
+   return{x:available.x,y:available.y+available.height-height,width,height};
   }
   const width=Math.min(Math.round(area.width*2/3),available.width),height=Math.min(Math.round(area.height/(area.width>area.height?3:4)),available.height);
-  const originX=area.x+(area.width-width)/2,originY=available.y+available.height-height;
+  const originX=available.x,originY=available.y+available.height-height;
   const steps=Math.max(1,Math.floor(Math.min(available.x+available.width-width-originX,originY-available.y)/28)+1),offset=(slot%steps)*28;
   return{x:Math.round(originX+offset),y:Math.round(originY-offset),width,height};
  }
@@ -51,7 +51,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const y=available.y+offset;
  return{x:Math.round(Math.max(available.x,Math.min(x,available.x+available.width-width))),y:Math.round(Math.max(available.y,Math.min(y,available.y+available.height-height))),width,height};
 }
-// ALLの選択画面ではConsoleを下部、Codeを右上、Liveを左上へ置く。
+// ALLの選択画面でもConsoleを左下、Navigatorを左中央へ。Codeは右上、Liveは左上へ置く。
 function allWindowBounds(kind,area,slot=0){
  const bounds=windowBounds(kind,area,area,slot);
  if(kind==='code'||kind==='live')bounds.x=area.x+area.width-(bounds.x-area.x)-bounds.width;

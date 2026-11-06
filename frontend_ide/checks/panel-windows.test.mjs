@@ -54,6 +54,7 @@ test('ALL中の新規パネルは仮想領域でなく操作画面へ収め、�
   const request=await f.controller.prepare(f.event,{left:9000,top:-9000,width:8000,height:4000},kind,{left:9000,top:-9000,width:8000,height:4000});assert.equal(request.ok,true);assert.equal(request.preview,undefined);
   const details={url:'about:blank',frameName:request.name},bounds=f.controller.open(f.owner,details).overrideBrowserWindowOptions;
   assert.ok(bounds.x>=area.x&&bounds.y>=area.y&&bounds.x+bounds.width<=area.x+area.width&&bounds.y+bounds.height<=area.y+area.height);assert.ok(bounds.width<=680);
+  if(kind==='panel-navigation'){assert.equal(bounds.x,area.x+8);assert.ok(Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=.5);}
   const child=new f.Window();f.controller.created(f.owner,child,details);assert.equal(child.parent,null);child.destroy();
  }
 });
@@ -186,6 +187,7 @@ test('Navigator別窓は通常・VR・小画面ともCodeと同じ初期寸法�
   const code=windowBounds('code',area);
   assert.deepEqual([options.width,options.height],[code.width,code.height]);
   assert.deepEqual({minWidth:options.minWidth,minHeight:options.minHeight},windowMinimumSize('code',code));
+  assert.equal(options.x,area.x+8);assert.ok(Math.abs(options.y+options.height/2-area.y-area.height/2)<=.5);
   assert.notEqual(options.resizable,false);
  }
 });
