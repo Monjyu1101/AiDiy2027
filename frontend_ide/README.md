@@ -277,6 +277,7 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - AiDiy検索の自動検証: `npm test`。模擬エージェントで実画面まで確認する場合はルートから `node frontend_ide/scripts/check-ai-search.mjs`（AI呼び出しなし、`nn-ai-search-*.png` を保存）。実際のエージェントとの疎通は `node frontend_ide/scripts/check-ai-search-live.mjs`（明示実行専用・AI利用あり）。
 
 - Consoleキー入力: `node --test checks/console-keyboard.test.mjs checks/console-size.test.mjs checks/console-window-title.test.mjs`。実ブラウザーのclipboard / 修飾Enter確認は `node scripts/check-console-keyboard.mjs`（`CHROME_PATH` でChromiumを指定可能、PTYはfixture）。Windows Electron / 各CLIでの改行動作は別途確認します。
+- Consoleフォーカス復帰: `node --test checks/console-focus.test.mjs checks/console-size.test.mjs`。実Vue/xtermの隔離画面は `node scripts/check-console-focus.mjs`（配布用build・実PTYなし、`--compile-only` はブラウザー不要）。OS固有の非アクティブ窓クリック・最小化復帰・IMEは別途実機確認します。
 - Console文字コード: WindowsのPowerShellセッション内だけでコンソール入出力と外部コマンド向け `$OutputEncoding` をBOMなしUTF-8にそろえます。共通PTY起動ではPythonの `PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8` を未指定時だけ追加し、大小文字違いを含む明示設定を維持します。Diagからの直接CLI起動にも適用し、OS・親プロセス・利用者のプロファイルは変更しません。`node --test checks/console-encoding.test.mjs` で環境・IPCを確認し、Windowsでは実PTYのPowerShell経由／直接Pythonの `•・·日本語` 入出力も検証します（他OSではWindows実PTY部分をスキップ）。ElectronでのIME／貼付けとHermes入力欄の表示は別途実機確認します。
 - 配布画面更新: このフォルダで `npm run build`。同じbundleをCode / LiveのVS Code配布先にもコピーします。
 - 拡張作成: `frontend_ide/host` で `npm run package`。既存の2つの拡張IDとVSIX名を維持します。

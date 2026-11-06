@@ -297,6 +297,10 @@ ConsoleのElectron窓は作業領域の幅2/3・高さは横長で1/3、縦長�
 
 キー変換は `src/components/コンソール/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs` と `node frontend_ide/scripts/check-console-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
 
+Consoleの入力フォーカス復帰は `src/components/コンソール/入力フォーカス.js` が担当します。窓・ブラウザータブの復帰とConsole内の通常の余白クリックで、接続済み・表示中の同じxtermへ戻します。窓自体の前面化、入力の合成、シェルのカーソル移動はしません。ボタン・入力欄・リンク・文字選択・端末内部の操作を優先し、非表示・切断・破棄時は復帰しません。WebのConsoleタブを明示的に開いた時は従来どおり入力先を戻しますが、その後の新しいクリックやフォーカス移動を優先します。購読と復帰待ちタイマーは破棄時に解除します。
+
+フォーカス境界の単体・実Vue setup検証は `node --test checks/console-focus.test.mjs checks/console-size.test.mjs checks/console-window-title.test.mjs`。`node scripts/check-console-focus.mjs --compile-only` は配布用buildなしでVue・xterm・scoped CSSをコンパイルします。`node scripts/check-console-focus.mjs` は隔離Chromiumと模擬WebSocketで、余白クリック直後の日本語入力・再復帰・ボタン・選択保持・タブ・再起動・破棄を確認して `temp/console-focus-check/` に撮影します。実行にはChromiumのローカルソケット権限が必要です。この試験の窓focus通知は模擬のため、実Windows/macOSの非アクティブ窓のクリック、Alt+Tab、最小化からの復元、IMEの変換途中の復帰は別途実機で確認してください。
+
 Consoleの入力前はCodeと同じ `開始表示.vue` とアイコンを使い、実PTYの入力欄を下部へ小さく配置します。xtermの `onKey` とDOMの `input` / `paste` で初回操作を検出し、同じ端末要素を拡張・再fitします。シェルや端末を作り直さず、初回の文字・日本語IME・貼り付けを失わないようにしてください。シェルが自動送信する制御応答を入力開始と誤認しないよう、`onData` だけで判定しません。再起動時は初期表示へ戻し、タブ切替では表示状態を保持します。
 
 CLI補完候補は `コンソールパネル.vue` でカーソル直後へ薄いグレーの文字として重ねます。xtermのセル寸法・表示中の行位置から配置し、右端で折り返します。端末バッファには候補を書き込まず、Tab確定時だけPSReadLineが入力へ追加します。描画・スクロール・サイズ変更時に位置を更新し、別画面や終了時には表示しません。候補を常設の下部パネルへ戻さず、下部はキー操作の案内だけにします。

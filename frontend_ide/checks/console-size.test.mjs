@@ -6,6 +6,7 @@
 import test from 'node:test';
 import * as cliTitles from '../src/components/コンソール/CLIタイトル.js';
 import * as keyboard from '../src/components/コンソール/キー入力.js';
+import * as focus from '../src/components/コンソール/入力フォーカス.js';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -17,10 +18,14 @@ const {descriptor}=parse(readFileSync(new URL('../src/components/コンソール
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 
 // 実Vueのsetupと実FitAddonを通す。文字セルの測定・描画・WebSocketだけを代替する。
-async function fixture(t,{desktop=false,linked=false,nativeTitle=''}={}){
+async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=false}={}){
  const mounted=[],unmounted=[],observers=new Set(),sockets=[],packets=[],resources={terminals:0,disposed:0};
  const container=new EventTarget();container.clientWidth=344;container.clientHeight=76;
- const window={getComputedStyle:element=>({getPropertyValue:key=>key==='height'?String(element.clientHeight):key==='width'?String(element.clientWidth):'0'})};
+ const timers=new Map();let timerId=0;
+ const doc=Object.assign(new EventTarget(),{activeElement:null,visibilityState:'visible',hasFocus:()=>true,getSelection:()=>({isCollapsed:true})});
+ const window=Object.assign(new EventTarget(),{getComputedStyle:element=>({getPropertyValue:key=>key==='height'?String(element.clientHeight):key==='width'?String(element.clientWidth):'0'}),setTimeout:fn=>{timers.set(++timerId,fn);return timerId;},clearTimeout:id=>timers.delete(id)});
+ doc.defaultView=window;
+ const panel=Object.assign(new EventTarget(),{ownerDocument:doc,isConnected:true,getClientRects:()=>[{}]});
  const fitModule={exports:{}};
  vm.runInNewContext(readFileSync(require.resolve('@xterm/addon-fit'),'utf8'),{window,module:fitModule,exports:fitModule.exports});
  let terminal,titleCalls=0;
@@ -29,7 +34,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle=''}={}){
   cols=80;rows=24;options={scrollback:5000};listeners={};buffer={active:{}};
   _core={_renderService:{dimensions:{css:{cell:{width:8,height:17}}},clear(){}}};
   constructor(){terminal=this;resources.terminals++;}
-  open(parent){this.element={parentElement:parent};} loadAddon(addon){addon.activate(this);} attachCustomKeyEventHandler(handler){this.handleKey=handler;} reset(){} clear(){} focus(){} writeln(){} dispose(){resources.disposed++;}
+  open(parent){this.element={parentElement:parent};} loadAddon(addon){addon.activate(this);} attachCustomKeyEventHandler(handler){this.handleKey=handler;} reset(){} clear(){} textarea={closest:()=>null};focusCount=0;hasSelection(){return false;} focus(){this.focusCount++;doc.activeElement=this.textarea;} writeln(){} dispose(){resources.disposed++;}
   resize(cols,rows){this.cols=cols;this.rows=rows;this.listeners.Resize?.({cols,rows});}
  }
  for(const event of ['Data','Key','Resize','CursorMove','Scroll','Render'])Terminal.prototype['on'+event]=function(callback){this.listeners[event]=callback;return{dispose:()=>delete this.listeners[event]};};
@@ -41,18 +46,19 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle=''}={}){
  class ResizeObserver{
   constructor(callback){this.callback=callback;observers.add(this);} observe(target){this.target=target;} disconnect(){observers.delete(this);}
  }
- const modules={'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/コマンド補完.js':completion};
+ const modules={'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/コマンド補完.js':completion};
  const script=compileScript(descriptor,{id:'ConsolePanel',genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,URL,window,WebSocket:Socket,ResizeObserver,location:{href:'http://localhost/'},
   require(id){if(id==='vue')return{...vue,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)};if(id in modules)return modules[id];throw Error(id);},
  });
  const props=vue.reactive({base:'/',visible:true,desktop,linked}),scope=vue.effectScope(),state=scope.run(()=>module.exports.setup(props,{expose(){}}));
- state.container.value=vue.markRaw(container);
- t.after(()=>{for(const callback of unmounted)callback();scope.stop();});
+ state.container.value=vue.markRaw(container);if(withFocus)state.panel.value=vue.markRaw(panel);
+ let cleaned=false;const dispose=()=>{if(cleaned)return;cleaned=true;for(const callback of unmounted)callback();scope.stop();};
+ t.after(dispose);
  for(const callback of mounted)await callback();
  sockets[0].onopen();sockets[0].receive({type:'ready',project:'/fixture',shell:'bash',completion:false});
- return{state,props,terminal,container,sockets,packets,resources,observers,titleCalls:()=>titleCalls,resize(height,width=344){container.clientHeight=height;container.clientWidth=width;for(const observer of observers)observer.callback();}};
+ return{state,props,terminal,container,sockets,packets,resources,observers,doc,window,timers,flushFocus(){const tasks=[...timers.values()];timers.clear();for(const fn of tasks)fn();},dispose,titleCalls:()=>titleCalls,resize(height,width=344){container.clientHeight=height;container.clientWidth=width;for(const observer of observers)observer.callback();}};
 }
 
 test('Console: 数行の初期サイズ・縮小・拡大・最下行が実FitAddonとresize送信へ反映する',async t=>{
@@ -180,4 +186,16 @@ test('Hermes Console title omits repeated AiDiy without changing CLI metadata or
  await flush();assert.equal(f.state.title.value,'AiDiy Console / Hermes');
  assert.equal(f.state.cli.value.name,'AiDiy Hermes');assert.equal(f.state.cli.value.id,'aidiy_hermes');
  assert.equal(f.state.projectName.value,'日本語 プロジェクト');assert.equal(f.titleCalls(),0);
+});
+
+
+test('Console実setup: ready・窓復帰・タブ復帰と非表示/破棄の遅延フォーカス境界',async t=>{
+ const f=await fixture(t,{withFocus:true});
+ f.flushFocus();assert.equal(f.terminal.focusCount,1);assert.equal(f.doc.activeElement,f.terminal.textarea);
+ f.doc.activeElement=null;f.window.dispatchEvent(new Event('focus'));f.flushFocus();assert.equal(f.terminal.focusCount,2);
+ f.props.visible=false;await flush();f.doc.activeElement=null;f.window.dispatchEvent(new Event('focus'));f.flushFocus();assert.equal(f.terminal.focusCount,2);
+ f.props.visible=true;await flush();f.flushFocus();assert.equal(f.terminal.focusCount,3);
+ f.props.visible=false;await flush();f.props.visible=true;await flush();f.props.visible=false;await flush();f.flushFocus();assert.equal(f.terminal.focusCount,3,'newer hide cancels pending tab focus');
+ f.props.visible=true;await flush();f.dispose();f.flushFocus();assert.equal(f.terminal.focusCount,3,'unmount cancels pending tab focus');
+ f.window.dispatchEvent(new Event('focus'));assert.equal(f.timers.size,0);
 });

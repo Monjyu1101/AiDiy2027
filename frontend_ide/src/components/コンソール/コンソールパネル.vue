@@ -12,9 +12,10 @@ import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import { cliTitleName } from './CLIタイトル.js';
 import { consoleKeyHandler } from './キー入力.js';
+import { consoleInputFocus } from './入力フォーカス.js';
 import { consoleCompletion, cliCompletions } from '../コンソール/コマンド補完.js';
 const props = defineProps({ base: String, icon: String, desktop: Boolean, linked: Boolean, visible: { type: Boolean, default: true } });
-const windowTitle = ref('');
+const windowTitle = ref(''), panel = ref(null);
 const container = ref(null), connected = ref(false), status = ref('起動中'), project = ref(''), shell = ref(''), error = ref('');
 const completion = ref(''), toolsOnline = ref(false), cli = ref(null);
 const title = computed(() => (windowTitle.value || (props.linked ? 'AiDiy IDE / Console' : 'AiDiy Console')) + (cliTitleName(cli.value) ? ' / ' + cliTitleName(cli.value) : ''));
@@ -23,7 +24,7 @@ const ghostRows = ref([]);
 const inputStarted = ref(false);
 const completionDescription = computed(() => cliCompletions[completion.value.split(' ')[0]]?.description || '');
 const projectName = computed(() => project.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || project.value);
-let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, completionEnabled = false, disposed = false;
+let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, inputFocus, completionEnabled = false, disposed = false;
 function startInput() {
   if (!connected.value || inputStarted.value) return;
   inputStarted.value = true;
@@ -87,7 +88,7 @@ function connect() {
   current.onmessage = event => {
     if (current !== socket || disposed) return;
     const message = JSON.parse(event.data);
-    if (message.type === 'ready') { cli.value = message.cli || null; connected.value = !cli.value || message.state === 'running'; if (cli.value) { inputStarted.value = true; nextTick(fitTerminal); } socketReady.value = true; toolsOnline.value = !!message.toolsOnline; toolsEnabled.value = !!message.toolsEnabled; completionEnabled = !!message.completion; status.value = connected.value ? '実行中' : message.state === 'error' ? 'エラー' : '終了'; project.value = message.project; shell.value = message.shell; terminal.focus(); }
+    if (message.type === 'ready') { cli.value = message.cli || null; connected.value = !cli.value || message.state === 'running'; if (cli.value) { inputStarted.value = true; nextTick(fitTerminal); } socketReady.value = true; toolsOnline.value = !!message.toolsOnline; toolsEnabled.value = !!message.toolsEnabled; completionEnabled = !!message.completion; status.value = connected.value ? '実行中' : message.state === 'error' ? 'エラー' : '終了'; project.value = message.project; shell.value = message.shell; inputFocus.request(); }
     if (message.type === 'tools') { toolsOnline.value = !!message.online; toolsEnabled.value = !!message.enabled; toolsChanging.value = false; }
     if (message.type === 'data') terminal.write(message.data, () => { if (current === socket && current.readyState === WebSocket.OPEN) { current.send(JSON.stringify({ type: 'ack', length: message.data.length })); updateCompletion(); } });
     if (message.type === 'exit') { connected.value = false; completion.value = ''; status.value = `終了 (${message.exitCode})`; terminal.writeln(`\r\n[${cli.value?.name || 'シェル'}が終了しました: ${message.exitCode}]`); }
@@ -96,12 +97,13 @@ function connect() {
   current.onclose = () => { if (current !== socket || disposed) return; socketReady.value = false; toolsChanging.value = false; connected.value = false; toolsOnline.value = false; completion.value = ''; if (status.value === '実行中' || status.value === '起動中') status.value = '切断'; };
   current.onerror = () => { if (current === socket && !disposed) error.value = '端末に接続できません。接続し直してください。'; };
 }
-watch(() => props.visible, async visible => { if (visible) { await nextTick(); fitTerminal(); terminal?.focus(); } });
+watch(() => props.visible, async visible => { inputFocus?.cancel(); if (visible) { await nextTick(); if (!disposed && props.visible) { fitTerminal(); inputFocus?.request({ explicit: true }); } } });
 onMounted(() => {
   if (props.desktop && props.linked) void window.aidiyWindow?.title?.().then(title => { if (!disposed && typeof title === 'string') windowTitle.value = title; }).catch(() => {});
   terminal = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: 'Consolas, "Noto Sans Mono", monospace', scrollback: 5000,
     theme: { background: '#000', foreground: '#dce6f2', cursor: '#ffffff', selectionBackground: '#365b78' } });
   fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fitTerminal();
+  inputFocus = consoleInputFocus({ panel: panel.value, terminal, available: () => props.visible && connected.value });
   terminal.attachCustomKeyEventHandler(consoleKeyHandler(data => { startInput(); sendInput(data); }));
   input = terminal.onData(sendInput);
   key = terminal.onKey(startInput);
@@ -114,10 +116,10 @@ onMounted(() => {
   observer = new ResizeObserver(fitTerminal); observer.observe(container.value);
   connect();
 });
-onBeforeUnmount(() => { disposed = true; socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
+onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
 </script>
 <template>
-  <section class="console-component" :class="{ 'desktop-window': desktop, 'console-waiting': !inputStarted }">
+  <section ref="panel" class="console-component" :class="{ 'desktop-window': desktop, 'console-waiting': !inputStarted }">
     <StatusBar :title="title" :mode="toolsEnabled ? 'online' : 'offline'" :status="toolsEnabled ? '' : '確認OFF'" :connected="toolsOnline" :desktop="desktop" clock-pulse />
     <div class="component-toolbar"><span :title="project">プロジェクト: {{ projectName }}</span><nav><button class="auto-connect" role="switch" :aria-checked="toolsEnabled" :title="`Tools接続確認 ${toolsEnabled ? 'ON' : 'OFF'}`" :disabled="!socketReady || toolsChanging" @click="toggleTools"><span>Tools接続確認</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button><button :disabled="!connected" title="実行中の処理へ割り込みを送信（キーボードのCtrl+Cはコピー専用）" @click="interrupt">Ctrl+C送信</button><button @click="clearDisplay">表示クリア</button><button v-if="!connected" @click="connect">{{ cli ? '再接続' : '再起動' }}</button></nav></div>
     <div v-if="!inputStarted" class="console-welcome"><TerminalWelcome kind="console" :icon="icon || '/development/AiDiy.png'" /></div>
