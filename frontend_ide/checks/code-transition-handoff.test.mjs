@@ -129,7 +129,7 @@ async function extensionPanel(t) {
       createOutputChannel: () => ({ appendLine() {}, clear() {}, dispose() {} }), registerWebviewViewProvider(_id, value) { provider = value; return subscription; } },
     Uri: { joinPath: (_root, path) => uri(path) }, commands: { registerCommand: () => subscription } };
   const modules = { vscode, './workspace-folder': workspaceModule.exports, './file-attachments': {},
-    './internal-auth': { internalAuthorization: () => assert.fail('この会話切替試験ではCoreへの外部接続は禁止') },
+    './extension-installation': { extensionCoreConnection: () => assert.fail('この会話切替試験ではCoreへの外部接続は禁止') },
     './input-prediction': predictionModule.exports,
     './vscode-html': { developmentHtml: () => '' },
     './code-connection': { コード選択: value => ({ provider: value.provider || '', model: value.model || '' }), CodeConnection: class { constructor() { assert.fail('外部接続は禁止'); } } },
