@@ -724,7 +724,7 @@ NavigatorはまずAIの返答全体をJSONとして解析します。前後に�
 
 おすすめプロンプトは一覧の上から最初の達成率100%未満の項目1つだけを対象にします。schemaVersion 3の `nextItemId` をAIが返し、APIと画面で対象IDを照合します。「評価」で達成率が変わった場合は新しい値から対象を選び直します。未評価0%の項目も順番に含めます。全項目100%・項目なしでは `nextItemId:null, nextPrompt:""` とし、追加作業を生成せずコピーも表示しません。全体目標は背景説明として含め、作業の依頼は対象1項目に限定します。対象IDのない旧記録は推測補完せず再作成します。ID・順序・達成率の整合性は検証できますが、自由文が意味的に対象以外の作業を含まないことの完全な機械判定はしません。
 
-おすすめプロンプトの見出し右の「CODE/LIVEへ」は、他のファイル操作と同じ下書き連携ダイアログを開きます。AI生成本文をそのまま、選んだCode / Liveの既存下書きに追記し、自動送信・実行はしません。IDE内とピン留め窓では既存の連携先・利用セッション検証を使い、単独デスクトップNaviではBrowserと同じプロジェクト限定の下書き共有経路を使います。複数候補は共通ダイアログで選択し、起動していなければ案内します。単独Web版は他タブ連携を公開せずボタンを無効にします。全件完了で提案がない場合はボタンを出しません。ダイアログは開いた時点の本文を保持し、目標の結果・プロジェクト・利用世代が変われば閉じます。
+おすすめプロンプトの見出し右は、内蔵Codeの表示中は「CODEへ」となり、このNavigator専用Codeの入力欄へ直接追記します。既存の下書き受信APIで同じプロジェクト・会話・入力上限を確認し、編集中の本文を残してフォーカスします。自動航行中・ナビ実行中・準備中・受信不可では無効にし、外部Code / Liveへ自動で切り替えません。単独Web版も内蔵Codeへの転記は利用できます。Codeを非表示にすると従来の「CODE/LIVEへ」に戻り、他のファイル操作と同じ下書き連携ダイアログを開きます。AI生成本文をそのまま、選んだCode / Liveの既存下書きに追記し、自動送信・実行はしません。IDE内とピン留め窓では既存の連携先・利用セッション検証を使い、単独デスクトップNaviではBrowserと同じプロジェクト限定の下書き共有経路を使います。複数候補は共通ダイアログで選択し、起動していなければ案内します。単独Web版は他タブ連携を公開せずボタンを無効にします。全件完了で提案がない場合はボタンを出しません。ダイアログは開いた時点の本文を保持し、目標の結果・プロジェクト・利用世代・内蔵Codeの表示が変われば閉じます。
 
 通常のナビ・再評価ボタンは灰色で、初期値を含む入力あり・未実行または保存済み目標と異なる場合はナビだけ、目標が保存済み結果と同じ場合は再評価だけをCode送信ボタンと同じ青紫にします。空欄では両方灰色です。灰色は無効を意味せず、実行済みナビの再評価は編集済みでも利用できます。
 
@@ -739,7 +739,7 @@ CodeとNaviの `sending.png` は `scripts/build.mjs` が `host/media` からビ�
 
 総合評価100%未満で、保存済み目標・有効な提案・評価環境が揃うと「コピー」の隣の「自動航行」をオンにできます。許可は現在の画面内だけに保持し、履歴、再起動、再表示から復元しません。専用Codeで提案本文を実行し、依頼IDに一致する受付・成功通知を確認した後だけ、既存の読取専用経路で再評価します。100%になれば終了します。評価はAIの推定であり、品質保証ではありません。
 
-Codeのモデル・権限・承認方式・検証回数は既存設定を使い、自動承認や権限緩和へ切り替えません。Navigator評価用のAI選択とは別です。従来の「CODE/LIVEへ」は引き続き下書き追記のみで、送信しません。
+Codeのモデル・権限・承認方式・検証回数は既存設定を使い、自動承認や権限緩和へ切り替えません。Navigator評価用のAI選択とは別です。「CODEへ」「CODE/LIVEへ」はどちらも下書き追記のみで、送信しません。
 
 自動接続ONのCodeは初回の状態通知で一時的にoffline表示になるため、自動航行はオンライン接続・セッション・プロジェクトの確定を待ってから送信します。この待機中は理由を表示し、オフラインHermesへ自動で切り替えて実行しません。自動送信する提案はCode入力欄にも表示し、受付後に会話へ移します。人間の入力途中の下書きは別に保持します。Codeの受付確認は30秒、受付後の自動航行の完了監視は1時間です。Code CLI側の15分無応答タイムアウトなど、各実行経路の既存制限は変更せず、先に失敗・中断が届いた場合はその時点で停止します。監視期限超過・結果不明時の自動再送は行いません。
 
@@ -747,7 +747,7 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 各Navigatorは `/api/navigation/code?instance=navi-N&session=...` により独立Codeプロセスを持ちます。既存Code窓や他のNavigatorとは共有しません。作成・破棄と幅変更は直列化し、連続した表示切替で重複作成や実行中断を起こしません。Codeの破棄はNavigator終了・プロジェクト変更・利用セッション変更時に行います。サーバー側でも利用セッション・モード・所有窓・Originを検証します。Coreへ渡す `navigationRequestId` は任意の相関IDであり、権限を付与しません。STXと終端のID、および `navigationStatus` の成功を照合し、単なる待機状態・別依頼の出力・エラーを完了扱いにしません。
 
-関連試験は `node --test checks/navigation-autopilot*.test.mjs checks/navigation-code-*.test.* checks/navigation-popup-size.test.mjs checks/code-navigation-*.test.mjs checks/navigation-recovery.test.mjs checks/navigation-layout.test.mjs`。`npm run build` 後の `node scripts/check-navigation-autopilot.mjs` は実VueとChromium、模擬API/SSEで右側配置、単独表示、2周から100%終了、オフ後の後続禁止を確認し、`temp/navigation-autopilot-check/` に証跡を保存します。実AIの課金・ユーザープロジェクトの変更は行いません。Chromiumのローカルソケット利用が許可される環境で実行してください。実Windows/Electronでの境界・VR・最大化を含む目視確認は別途必要です。
+関連試験は `node --test checks/navigation-embedded-draft.test.mjs checks/navigation-autopilot*.test.mjs checks/navigation-code-*.test.* checks/navigation-popup-size.test.mjs checks/code-navigation-*.test.mjs checks/navigation-recovery.test.mjs checks/navigation-layout.test.mjs`。`npm run build` 後の `node scripts/check-navigation-autopilot.mjs` は実VueとChromium、模擬API/SSEで右側配置、単独表示、2周から100%終了、オフ後の後続禁止を確認し、`temp/navigation-autopilot-check/` に証跡を保存します。実AIの課金・ユーザープロジェクトの変更は行いません。Chromiumのローカルソケット利用が許可される環境で実行してください。実Windows/Electronでの境界・VR・最大化を含む目視確認は別途必要です。
 
 自動航行がオンかつ総合評価100%未満の場合だけ、埋込Codeの外枠にIDEの「自動探索」と同じシアンの周回光を表示します。長時間眺めても落ち着くよう、自動航行の枠は5秒で1周します。IDE自動探索のボタンは従来の1.6秒を維持します。Code実行中だけでなく準備・再評価中も継続し、オフ・停止・失敗・100%達成で消えます。既存の `motion-spin` を使うCSS描画だけで、タイマーやCanvasは追加しません。`prefers-reduced-motion: reduce` では動かさず固定色の枠にします。
 
@@ -759,9 +759,9 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 ### Navigator の待機演出と別窓キー
 
 ナビ／再評価ボタンは通常クリックを離した時に実行します。左ボタンを長く押しても候補は開きません。右クリックでボタンの近くに小さな待機画面メニューを表示し、候補の選択で今回の実行を開始します。通常クリックと次回以降の自動航行は従来のランダム選択です。メニューを閉じただけでは実行せず、目標も変更しません。
-- 調査・再評価中の実行ボタンは、赤い「！」の上に「調査中」「評価中」を表示する停止ボタンへ切り替える。クリック、Enter、Spaceで現在の処理を中止し、自動航行も即座にオフにする。Codeの接続や会話は保持する。
+- 調査中は左側のナビボタンを「調査中」、再評価中は右側の再評価ボタンを「評価中」と赤い「！」を表示する停止ボタンへ切り替える。実行していない側は通常のラベルのまま無効にして残す。クリック、Enter、Spaceで現在の処理を中止し、自動航行も即座にオフにする。Codeの接続や会話は保持する。
 - 中止は開始時に発行した `clientRequestId` を `POST /api/navigation` の `action: cancel` で照合する。復元済みジョブは `jobId` でも照合できる。開始応答前や遅延応答でも対象外の要求を止めず、保存済み結果を保つ。保存確定開始後は完了を待ち、中止済みと誤表示しない。中止応答を失った場合は再実行をロックしたまま状態確認し、「！」から同じIDで再試行する。
-- 中止経路は `node --test checks/navigation-cancel.test.mjs checks/navigation-cancel-ui.test.mjs checks/navigation-autopilot-ui.test.mjs checks/code-navigation-run.test.mjs` で確認する。右クリック選択と停止マークの実画面確認は `node scripts/check-navigation-scene-picker.mjs` を使用する。
+- 中止経路は `node --test checks/navigation-cancel.test.mjs checks/navigation-cancel-ui.test.mjs checks/navigation-autopilot-ui.test.mjs checks/code-navigation-run.test.mjs` で確認する。右クリック選択・実行元ボタン位置の停止マーク・実Codeへの下書き追記と非送信の実画面確認は `node scripts/check-navigation-scene-picker.mjs` を使用する。
 
 
 キーボードはEnter／Spaceで通常実行、Shift+F10／メニューキー／↓キーで候補を開き、上下／Home／Endで移動、Enter／Spaceで選択します。Escapeで元のボタンへ戻り、Tabで閉じて次の操作へ進みます。外側のクリック、スクロール、窓のblur／resize、非表示、無効化、プロジェクト／利用セッション／表示先変更でも閉じます。タッチの長押しでは選択を開きません。

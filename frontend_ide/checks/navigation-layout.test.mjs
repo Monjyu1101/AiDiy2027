@@ -90,9 +90,9 @@ test('おすすめプロンプトはAI本文をそのまま表示し機械的な
  const alert=walk(section).find(node=>hasClass(node,'navigation-copy-error'));assert.equal(attr(alert,'role'),'alert');
 });
 
-test('CODE/LIVEへは見出しのすぐ右に置き同じ窓内の共通ダイアログで選択する',()=>{
+test('転記ボタンは見出しのすぐ右で内蔵Codeの表示に応じたラベルを使う',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),row=nodes.find(node=>hasClass(node,'navigation-prompt-actions'));
- const children=elements(row);assert.equal(children[0].tag,'h2');assert.equal(children[1].children[0].content,'CODE/LIVEへ');
+ const children=elements(row);assert.equal(children[0].tag,'h2');assert.equal(children[1].children[0].content.content,'handoffLabel');assert.match(source, /codeOpen\.value\?'CODEへ':'CODE\/LIVEへ'/);
  assert.equal(children[1].props.find(p=>p.type===7&&p.name==='if').exp.content,'nextItem');
  const dialog=nodes.find(node=>node.tag==='DraftHandoffDialog');assert.ok(dialog);assert.match(source,/:insert-draft="draftActions.insertDraft"/);assert.match(source,/:load-targets="draftActions.loadTargets"/);
  assert.doesNotMatch(source,/postMessage|BroadcastChannel|localStorage/);
@@ -130,7 +130,7 @@ test('目標は4行、左の説明・目標差異・モデル3段の右に同サ
  const meta=elements(controls[0]);assert.ok(hasClass(meta[0],'navigation-input-hint'));assert.ok(hasClass(meta[1],'navigation-draft-note'));assert.ok(hasClass(meta[2],'navigation-model-line'));
  assert.equal(meta[1].props.find(p=>p.type===7&&p.name==='if').exp.content,'result&&!matchesResult');assert.equal(attr(meta[1],'role'),'status');
  assert.equal(nodes.filter(node=>hasClass(node,'navigation-draft-note')).length,1);assert.ok(!children.some(node=>hasClass(node,'navigation-draft-note')));
- const buttons=elements(controls[1]),navi=buttons.find(node=>hasClass(node,'navigation-start')),evaluate=buttons.find(node=>hasClass(node,'navigation-evaluate')),stop=buttons.find(node=>hasClass(node,'navigation-stop'));assert.ok(stop);assert.equal(stop.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop');assert.ok(hasClass(navi,'navigation-run')&&hasClass(evaluate,'navigation-run'));assert.equal(elements(navi)[0].props.find(p=>p.type===7&&p.name==='bind'&&p.arg?.content==='src').exp.content,'sendIcon');assert.equal(evaluate.children[0].content,'再評価');
+ const buttons=elements(controls[1]),navi=buttons.find(node=>hasClass(node,'navigation-start')),evaluate=buttons.find(node=>hasClass(node,'navigation-evaluate')),stop=buttons.find(node=>hasClass(node,'navigation-stop'));assert.ok(stop);assert.equal(stop.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop&&!evaluating');assert.ok(hasClass(navi,'navigation-run')&&hasClass(evaluate,'navigation-run'));assert.equal(elements(navi)[0].props.find(p=>p.type===7&&p.name==='bind'&&p.arg?.content==='src').exp.content,'sendIcon');assert.equal(evaluate.children[0].content,'再評価');
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
  assert.match(attr(evaluate,'title'),/^目標を最終実行時に戻し、保存済み明細の達成率を再評価/);
  assert.match(descriptor.template.content,/再評価では最終実行時の目標へ戻します/);
@@ -215,7 +215,7 @@ test('自動航行の停止操作はトグル1つだけで、準備・Code実行
 
 test('ナビ・再評価は通常灰色で、次の一方だけをCode入力時と同じ青紫にする',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),navi=nodes.find(node=>hasClass(node,'navigation-start')),evaluate=nodes.find(node=>hasClass(node,'navigation-evaluate'));
- assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}");
+ assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-routing':routing&&!evaluating,'is-next-action':nextNavigationAction==='navigate'}");
  assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,"{'is-next-action':nextNavigationAction==='evaluate'}");
  assert.equal(navi.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'busy||autopilot||!availability.available');assert.equal(evaluate.props.find(p=>p.type===7&&p.arg?.content==='disabled').exp.content,'!canEvaluate||autopilot');
  const css=descriptor.styles.map(style=>style.content).join('\n');
@@ -230,4 +230,20 @@ test('ナビ・再評価は通常灰色で、次の一方だけをCode入力時�
  assert.match(codeCss,/\.ai-component \.send:not\(:disabled\) \{ background: #667eea; border-color: #667eea; \}/);
  assert.match(codeCss,/\.ai-component \.send:not\(:disabled\):hover \{ background: #5a6fd8; border-color: #5a6fd8; \}/);
  assert.match(css,/\.navigation-goal-form \.navigation-run\.is-routing\{background:#667eea;color:#fff\}/);
+});
+
+test('中止ボタンは調査時にナビ側、評価時に再評価側を置き換える',()=>{
+ const row=walk(baseParse(descriptor.template.content)).find(node=>hasClass(node,'navigation-run-actions'));
+ const [stopNavigate,start,stopEvaluate,evaluate]=elements(row);
+ for(const stop of [stopNavigate,stopEvaluate])assert.ok(hasClass(stop,'navigation-stop'));
+ assert.equal(stopNavigate.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop&&!evaluating');
+ assert.equal(stopEvaluate.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop&&evaluating');
+ const condition=node=>new Function('routing','canStop','evaluating',`return ${node.props.find(p=>p.type===7&&p.name==='if').exp.content};`);
+ for(const routing of [false,true])for(const canStop of [false,true])for(const evaluating of [false,true]){
+  assert.equal(condition(stopNavigate)(routing,canStop,evaluating),routing&&canStop&&!evaluating);
+  assert.equal(condition(stopEvaluate)(routing,canStop,evaluating),routing&&canStop&&evaluating);
+ }
+ assert.ok(hasClass(start,'navigation-start'));assert.ok(start.props.some(p=>p.type===7&&p.name==='else'));
+ assert.ok(hasClass(evaluate,'navigation-evaluate'));assert.ok(evaluate.props.some(p=>p.type===7&&p.name==='else'));
+ assert.match(source,/\{\{routing&&!evaluating\?'調査中…':'ナビ'\}\}/);
 });

@@ -53,13 +53,30 @@ const overall=computed(()=>result.value?.overall);
 const checkedAt=computed(()=>{const at=result.value?.checkedAt,text=localDateTimeInput(at).replace('T',' ');return text?{text,iso:new Date(at).toISOString()}:null;});
 const nextItem=computed(()=>result.value?.items.find(item=>item.progress<100));
 const recommendedPrompt=computed(()=>result.value&&nextItem.value?result.value.nextPrompt:'');
-const draftActions=inject('fileDraftActions',null),draftRequest=ref(null);
-const canHandoff=computed(()=>!!draftActions&&!!props.project?.path&&(!props.standalone||native));
-function handoff(){
+const draftActions=inject('fileDraftActions',null),draftRequest=ref(null),handoffBusy=ref(false),handoffError=ref('');
+// 表示中はこのNavigator専用Codeだけへ渡す。準備不足でも外部Code / Liveへ戻さない。
+const embeddedDraftTarget=computed(()=>{
+ if(disposed||!codeOpen.value||!visible.value||busy.value||codeOpening.value||!codeBase.value||autopilot.value||!props.project?.path||(props.startedAt&&props.startedAt!==codeSession))return null;
+ const target=codePanel.value?.draftTarget?.();
+ return target?.kind==='code'&&target.projectPath===props.project.path&&typeof codePanel.value?.insertDraft==='function'?target:null;
+});
+const canHandoff=computed(()=>!handoffBusy.value&&(codeOpen.value?!!embeddedDraftTarget.value:!!draftActions&&!!props.project?.path&&(!props.standalone||native)));
+const handoffLabel=computed(()=>codeOpen.value?'CODEへ':'CODE/LIVEへ');
+const handoffTitle=computed(()=>codeOpen.value?(canHandoff.value?'内蔵Codeの入力欄へ追加します。送信はしません。':'内蔵Codeの準備と自動航行の停止を確認してください。'):(canHandoff.value?'Code / Liveの入力欄へ追加します。送信はしません。':'デスクトップ版、またはIDE内のNavigatorで利用できます。'));
+async function handoff(){
  if(!canHandoff.value||!recommendedPrompt.value||draftRequest.value)return;
- draftRequest.value={projectPath:props.project.path,path:'Navigator / おすすめプロンプト(案)',text:recommendedPrompt.value};
+ handoffError.value='';
+ if(!codeOpen.value){draftRequest.value={projectPath:props.project.path,path:'Navigator / おすすめプロンプト(案)',text:recommendedPrompt.value};return;}
+ const target=embeddedDraftTarget.value;if(!target)return;
+ const code=codePanel.value,text=recommendedPrompt.value,projectPath=props.project.path,session=props.startedAt;
+ handoffBusy.value=true;
+ try{
+  // 既存の受信APIが会話・プロジェクト・入力上限を再検証し、下書きの追記とフォーカスだけ行う。
+  const response=await code.insertDraft({contextId:target.contextId,projectPath,text});
+  if(!response?.ok)throw Error(response?.error||'内蔵Codeの下書きに追加できません。');
+ }catch(e){if(!disposed&&codeOpen.value&&codePanel.value===code&&props.project?.path===projectPath&&props.startedAt===session&&recommendedPrompt.value===text)handoffError.value=e.message||'内蔵Codeの下書きに追加できません。';}
+ finally{handoffBusy.value=false;}
 }
-watch(()=>[props.project?.path,props.startedAt,recommendedPrompt.value],()=>{draftRequest.value=null;});
 
 const matchesResult=computed(()=>typeof result.value?.goal==='string'&&goal.value.trim()===result.value.goal.trim());
 const canEvaluate=computed(()=>!busy.value&&availability.value.available&&typeof result.value?.goal==='string'&&!!result.value.goal.trim());
@@ -72,7 +89,8 @@ let draftInitialized=false,draftEdited=false,pendingGoal=null;
 function editGoal(){draftEdited=true;stopAutopilot('目標が編集されたため停止しました。');}
 // 応答を失った開始要求はGETで状態を確認するまで再送しない。
 const reconciling=ref(false),stopping=ref(false),activeRun=ref(null),pendingCancel=ref(null);let runSerial=0;
-const operationLabel=computed(()=>(activeRun.value?.action||job.value?.action)==='evaluate'?'評価中':'調査中');
+const evaluating=computed(()=>(activeRun.value?.action||job.value?.action)==='evaluate');
+const operationLabel=computed(()=>evaluating.value?'評価中':'調査中');
 const canStop=computed(()=>!!(activeRun.value||pendingCancel.value||job.value?.status==='running'));
 function beginRun(action){const run={action,clientRequestId:props.instance+'-'+Date.now()+'-'+(++runSerial)+'-'+Math.random().toString(36).slice(2)};activeRun.value=run;return run;}
 const sameCancelledJob=value=>!!value&&!!pendingCancel.value&&(pendingCancel.value.clientRequestId?value.clientRequestId===pendingCancel.value.clientRequestId:value.id===pendingCancel.value.jobId);
@@ -179,6 +197,7 @@ watch(recommendedPrompt,()=>{copied.value=false;copyError.value='';});
 
 // 自動航行の許可はメモリ内だけに保持し、履歴・再表示から復元しない。
 const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false),autopilot=ref(false),autopilotStatus=ref(''),autopilotPhase=ref('');
+watch(()=>[props.project?.path,props.startedAt,recommendedPrompt.value,codeOpen.value,visible.value,detached.value],()=>{draftRequest.value=null;handoffError.value='';},{flush:'sync'});
 watch(()=>[busy.value,autopilot.value,availability.value.available,visible.value,props.project?.path,props.startedAt,detached.value],()=>{sceneAction.value='';},{flush:'sync'});
 const codeToggleLabel=computed(()=>codeOpen.value?'CODE非表示':'CODE表示');
 const autopilotMessage=createNavigationMessage(text=>autopilotStatus.value=text);
@@ -334,7 +353,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <form class="navigation-goal-form" @submit.prevent="navigate()">
     <label :for="instance+'-goal'">目標<small v-if="result?.inferred&&matchesResult">（AIの推測・編集できます）</small></label>
     <textarea :id="instance+'-goal'" v-model="goal" :readonly="autopilot" maxlength="4000" rows="4" @input="editGoal" placeholder="目標を入力してください"></textarea>
-    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button v-if="routing&&canStop" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-start navigation-run" title="クリックでナビ。右クリック、またはShift+F10で待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate',$event)" :class="{'is-routing':routing,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing?'調査中…':'ナビ'}}</span></NavigationRunButton><NavigationRunButton class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate',$event)" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
+    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button v-if="routing&&canStop&&!evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-start navigation-run" title="クリックでナビ。右クリック、またはShift+F10で待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate',$event)" :class="{'is-routing':routing&&!evaluating,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing&&!evaluating?'調査中…':'ナビ'}}</span></NavigationRunButton><button v-if="routing&&canStop&&evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate',$event)" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
    </form>
   <div v-if="history" class="navigation-history" role="list"><p v-if="!historyItems.length">このフォルダにナビ履歴はありません</p><button v-for="item in historyItems" :key="item.id" :disabled="busy||autopilot" @click="selectHistory(item.id)"><time>{{new Date(item.updatedAt).toLocaleString()}}</time><span>{{item.goal}}</span></button></div>
   <div v-show="!history" class="navigation-display" :class="{running:submitting||job?.status==='running'}"><div class="navigation-content">
@@ -361,7 +380,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
      <span class="navigation-progress" :style="progressStyle(overall.progress)" role="progressbar" aria-label="総合評価" :aria-valuenow="overall.progress" :aria-valuetext="overall.progress+'%（AIの工数比率による加重評価）'" aria-valuemin="0" aria-valuemax="100"><span class="navigation-fill" aria-hidden="true"></span><span class="navigation-disclosure-arrow" aria-hidden="true"></span><span class="navigation-name">総合評価</span><strong>{{overall.progress}}<small>%</small></strong></span>
      </summary><div class="navigation-reasons"><small>AIが見積もった工数比率による総合評価。実測値ではありません。</small><p class="navigation-overall-reason">{{overall.reason}}</p></div></details><p v-if="codeDriving" class="navigation-overall-cruise-status" role="status">自動航行中</p>
     </section>
-    <section v-if="autopilot||(result&&!history)" v-show="!routing||autopilot" class="navigation-next" aria-label="プロンプト(案)"><div class="navigation-prompt-actions"><h2>プロンプト(案)</h2><button v-if="nextItem" class="navigation-handoff" :disabled="!canHandoff" :title="canHandoff?'Code / Liveの入力欄へ追加します。送信はしません。':'デスクトップ版、またはIDE内のNavigatorで利用できます。'" @click="handoff">CODE/LIVEへ</button><button v-if="nextItem" :disabled="copying" @click="copy">{{copied?'コピーしました':'コピー'}}</button><button type="button" class="navigation-autopilot-toggle" role="switch" title="Navi Cruise" aria-label="自動航行（Navi Cruise）" :aria-checked="autopilot" :disabled="!autopilot&&(!canAutopilot||!!autopilotController)" @click="toggleAutopilot"><span>自動航行</span> <span class="motion-switch" aria-hidden="true"></span><span class="navigation-autopilot-state" aria-hidden="true">{{autopilot?'オン':'オフ'}}</span></button></div><p v-if="copyError" class="navigation-copy-error" role="alert">{{copyError}}</p><p class="navigation-prompt"><span v-if="nextItem">{{recommendedPrompt}}</span><span v-else>{{result?.items.length?'全項目が100%です。おすすめの追加作業はありません。':'作業項目がないため、おすすめプロンプトはありません。'}}</span></p></section>
+    <section v-if="autopilot||(result&&!history)" v-show="!routing||autopilot" class="navigation-next" aria-label="プロンプト(案)"><div class="navigation-prompt-actions"><h2>プロンプト(案)</h2><button v-if="nextItem" class="navigation-handoff" :disabled="!canHandoff" :title="handoffTitle" @click="handoff">{{handoffLabel}}</button><button v-if="nextItem" :disabled="copying" @click="copy">{{copied?'コピーしました':'コピー'}}</button><button type="button" class="navigation-autopilot-toggle" role="switch" title="Navi Cruise" aria-label="自動航行（Navi Cruise）" :aria-checked="autopilot" :disabled="!autopilot&&(!canAutopilot||!!autopilotController)" @click="toggleAutopilot"><span>自動航行</span> <span class="motion-switch" aria-hidden="true"></span><span class="navigation-autopilot-state" aria-hidden="true">{{autopilot?'オン':'オフ'}}</span></button></div><p v-if="handoffError" class="navigation-copy-error" role="alert">{{handoffError}}</p><p v-if="copyError" class="navigation-copy-error" role="alert">{{copyError}}</p><p class="navigation-prompt"><span v-if="nextItem">{{recommendedPrompt}}</span><span v-else>{{result?.items.length?'全項目が100%です。おすすめの追加作業はありません。':'作業項目がないため、おすすめプロンプトはありません。'}}</span></p></section>
 
   <p v-if="autopilotStatus" class="navigation-autopilot-status" role="status" aria-live="polite">{{autopilotStatus}}</p>
   <aside v-show="codeOpen" class="navigation-code" :class="{driving:codeDriving}" aria-label="Navigator専用Code"><p v-if="codeOpening">Codeを準備しています…</p><CodePanel v-if="codeBase" ref="codePanel" :key="codeBase" :base="codeBase" icon="/development/AiDiy.png" embedded hide-status-bar project-notice="Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。" /></aside>
