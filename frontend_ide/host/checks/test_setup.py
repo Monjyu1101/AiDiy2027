@@ -18,6 +18,7 @@ from pathlib import Path
 import shutil
 import tempfile
 import unittest
+import warnings
 from unittest.mock import Mock, patch
 import zipfile
 
@@ -401,7 +402,132 @@ class ElectronSetupTest(unittest.TestCase):
             folder.mkdir(exist_ok=True)
             (folder / 'package.json').write_text(json.dumps({'publisher': 'aidiy', 'name': name, 'version': '0.1.0'}), encoding='utf-8')
             (self.root / 'dist').mkdir(exist_ok=True)
-            (self.root / 'dist' / f'{name}-0.1.0.vsix').write_bytes(b'vsix')
+            with zipfile.ZipFile(self.root / 'dist' / f'{name}-0.1.0.vsix', 'w') as archive:
+                archive.comment = b'fixture archive comment'
+                archive.writestr('[Content_Types].xml', '<Types/>')
+                archive.writestr('extension.vsixmanifest', '<PackageManifest/>')
+                archive.writestr('extension/package.json', (folder / 'package.json').read_bytes())
+                info = zipfile.ZipInfo('extension/dist/extension.js', (2025, 1, 2, 3, 4, 6))
+                info.compress_type = zipfile.ZIP_DEFLATED
+                info.external_attr = 0o100644 << 16
+                info.internal_attr = 1
+                info.comment = b'fixture entry comment'
+                info.extra = b'\xfe\xca\x02\x00ok'
+                archive.writestr(info, name.encode('utf-8'))
+
+    def test_staging_preserves_packages_and_records_both_origins(self):
+        self.make_extension_packages()
+        originals = {path: path.read_bytes() for path in (self.root / 'dist').glob('*.vsix')}
+        staged_paths = []
+
+        def install(command, **kwargs):
+            self.assertEqual(command[1], '--install-extension')
+            staged = Path(command[2])
+            staged_paths.append(staged)
+            source = self.root / 'dist' / staged.name
+            self.assertNotEqual(staged, source)
+            with zipfile.ZipFile(source) as original, zipfile.ZipFile(staged) as result:
+                self.assertEqual(result.comment, original.comment)
+                self.assertEqual(set(result.namelist()), set(original.namelist()) | {'extension/aidiy-installation.json'})
+                self.assertEqual(json.loads(result.read('extension/aidiy-installation.json')),
+                                 {'version': 1, 'root': str(self.root.parent.parent.resolve())})
+                for entry in original.infolist():
+                    self.assertEqual(result.read(entry.filename), original.read(entry))
+                    actual = result.getinfo(entry.filename)
+                    for field in ('date_time', 'compress_type', 'external_attr', 'internal_attr',
+                                  'comment', 'extra', 'create_system', 'create_version', 'extract_version'):
+                        self.assertEqual(getattr(actual, field), getattr(entry, field), field)
+            return True
+
+        with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
+            vscode, 'run_command', side_effect=install
+        ), patch.object(vscode, 'get_installed_extensions', side_effect=[set(), {'aidiy.aidiy-code@0.1.0', 'aidiy.aidiy-live@0.1.0'}]):
+            self.assertTrue(vscode.install_extensions('code'))
+        self.assertEqual(len(staged_paths), 2)
+        self.assertTrue(all(not path.parent.exists() for path in staged_paths))
+        for source, content in originals.items():
+            self.assertEqual(source.read_bytes(), content)
+
+    def test_staging_replaces_existing_origin_and_uses_each_checkout(self):
+        self.make_extension_packages()
+        source = self.root / 'dist' / 'aidiy-code-0.1.0.vsix'
+        with zipfile.ZipFile(source, 'a') as archive, warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            archive.writestr('extension/aidiy-installation.json', '{"root":"old"}')
+            archive.writestr('extension/aidiy-installation.json', '{"root":"older"}')
+        original = source.read_bytes()
+        for index, root in enumerate((self.project / '配置元 A', self.project / '配置元 B')):
+            target = self.project / f'staged-{index}.vsix'
+            vscode.stage_extension_package(source, target, root)
+            with zipfile.ZipFile(target) as archive:
+                self.assertEqual(archive.namelist().count('extension/aidiy-installation.json'), 1)
+                self.assertEqual(json.loads(archive.read('extension/aidiy-installation.json')),
+                                 {'version': 1, 'root': str(root.resolve())})
+        self.assertEqual(source.read_bytes(), original)
+
+    def test_invalid_live_archive_never_removes_existing_extensions(self):
+        self.make_extension_packages()
+        live = self.root / 'dist' / 'aidiy-live-0.1.0.vsix'
+        for content in (b'not a zip', b''):
+            live.write_bytes(content)
+            with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
+                vscode, 'uninstall_aidiy_extensions'
+            ) as remove, patch.object(vscode, 'run_command') as command:
+                self.assertFalse(vscode.install_extensions('code'))
+            remove.assert_not_called()
+            command.assert_not_called()
+        with zipfile.ZipFile(live, 'w') as archive:
+            archive.writestr('extension/package.json', '{}')
+        with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(vscode, 'uninstall_aidiy_extensions') as remove:
+            self.assertFalse(vscode.install_extensions('code'))
+        remove.assert_not_called()
+
+    def test_staging_failure_cleans_temp_without_removal(self):
+        self.make_extension_packages()
+        paths = []
+        real_stage = vscode.stage_extension_package
+
+        def stage(source, target, root):
+            paths.append(target)
+            if len(paths) == 2:
+                raise OSError('fixture write failure')
+            real_stage(source, target, root)
+
+        with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
+            vscode, 'stage_extension_package', side_effect=stage
+        ), patch.object(vscode, 'uninstall_aidiy_extensions') as remove:
+            self.assertFalse(vscode.install_extensions('code'))
+        remove.assert_not_called()
+        self.assertEqual(len(paths), 2)
+        self.assertTrue(all(not path.parent.exists() for path in paths))
+
+    def test_invalid_archive_entries_are_rejected_before_removal(self):
+        for invalid in ('../outside', '/absolute', 'extension\\bad', 'extension/package.json'):
+            with self.subTest(entry=invalid):
+                self.make_extension_packages()
+                live = self.root / 'dist' / 'aidiy-live-0.1.0.vsix'
+                with zipfile.ZipFile(live, 'a') as archive, warnings.catch_warnings():
+                    warnings.simplefilter('ignore', UserWarning)
+                    archive.writestr(invalid, b'fixture')
+                with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(vscode, 'uninstall_aidiy_extensions') as remove:
+                    self.assertFalse(vscode.install_extensions('code'))
+                remove.assert_not_called()
+
+    def test_failed_install_cleans_staging(self):
+        self.make_extension_packages()
+        paths = []
+
+        def fail_install(command, **kwargs):
+            paths.append(Path(command[2]))
+            self.assertTrue(paths[-1].is_file())
+            return False
+
+        with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
+            vscode, 'run_command', side_effect=fail_install
+        ), patch.object(vscode, 'get_installed_extensions', return_value=set()):
+            self.assertFalse(vscode.install_extensions('code'))
+        self.assertEqual(len(paths), 1)
+        self.assertFalse(paths[0].parent.exists())
 
     def test_aidiy_prefix_extensions_are_removed_before_both_are_installed(self):
         self.make_extension_packages()

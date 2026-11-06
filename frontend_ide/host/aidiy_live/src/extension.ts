@@ -16,9 +16,8 @@ import { developmentHtml } from '../../src/vscode-html';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { internalAuthorization } from '../../src/internal-auth';
+import { extensionCoreConnection } from '../../src/extension-installation';
 import { LiveHost, microphonePython } from './host';
-import { ローカル接続先 } from '../local-backend.cjs';
 import { ライブモデル読込, ライブモデル保存 } from '../../src/model-preferences';
 
 class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
@@ -44,7 +43,7 @@ class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
     this.view = view; this.ready = false;
     const folder = this.folder(); this.boundFolder = folder?.パス || '';
     const viewGeneration = ++this.generation;
-    const backend = ローカル接続先(this.context.extensionPath, this.folder()?.パス);
+    const { backend, authorization } = extensionCoreConnection(this.context.extensionPath, this.folder()?.パス);
     view.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media'), vscode.Uri.joinPath(this.context.extensionUri, 'dist')] };
     const resource = (path: string) => view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, path)).toString();
     const nonce = randomBytes(24).toString('hex');
@@ -65,7 +64,7 @@ class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
     }, () => microphonePython(
       vscode.workspace.getConfiguration('aidiyLive').get<string>('pythonPath', ''),
       (vscode.workspace.workspaceFolders || []).filter(folder => folder.uri.scheme === 'file').map(folder => folder.uri.fsPath)
-    ), join(this.context.extensionPath, 'dist/microphone.py'), internalAuthorization(new URL(backend), [this.context.extensionPath, this.folder()?.パス]));
+    ), join(this.context.extensionPath, 'dist/microphone.py'), authorization);
     const resources = this.viewResources = [
       view.webview.onDidReceiveMessage(message => {
         if (viewGeneration !== this.generation) return;
@@ -106,10 +105,10 @@ class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
     this.stop();
     const generation = ++this.generation;
     await this.browser?.close(); this.browser = undefined;
-    const backend = ローカル接続先(this.context.extensionPath, this.folder()?.パス);
+    const { backend, authorization } = extensionCoreConnection(this.context.extensionPath, this.folder()?.パス);
     // 配布済み Live 拡張だけで使えるブラウザ版。Code / 開発フォルダに依存しない。
     const { ライブ起動 } = await import('./server');
-    const server = await ライブ起動(this.context.extensionPath, backend, true, this.folder()?.パス || null);
+    const server = await ライブ起動(this.context.extensionPath, backend, true, this.folder()?.パス || null, {}, undefined, false, authorization);
     if (generation !== this.generation) { await server.close(); return; }
     this.browser = server;
     await vscode.env.openExternal(vscode.Uri.parse(server.url));

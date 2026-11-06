@@ -18,6 +18,7 @@ Node.js 依存関係と Electron バイナリを事前に導入して VSIX を�
     setup(choices=None) -> bool
 """
 
+import copy
 import json
 import os
 import shlex
@@ -25,7 +26,9 @@ import shutil
 import subprocess
 import sys
 import time
-from pathlib import Path
+import tempfile
+import zipfile
+from pathlib import Path, PurePosixPath
 
 if sys.platform == "win32":
     import msvcrt
@@ -301,6 +304,45 @@ def install_standalone_launcher(*, register_path: bool = True) -> bool:
     return ensure_launcher_path(launcher_dir) if register_path else True
 
 
+def stage_extension_package(source: Path, destination: Path, root: Path) -> None:
+    """配布元を変更せず、秘密を含まない配置元だけを一時 VSIX へ追加する。"""
+    marker = "extension/aidiy-installation.json"
+    payload = json.dumps({"version": 1, "root": str(root.resolve())}, ensure_ascii=False).encode("utf-8")
+    if len(payload) > 16384:
+        raise ValueError("AiDiy 配置元のパスが長すぎます。")
+    with zipfile.ZipFile(source) as original:
+        entries = original.infolist()
+        # 展開せずに検証する。破損・重複・巨大な archive は既存拡張解除の前に拒否。
+        if len(entries) > 20000 or sum(item.file_size for item in entries) > 512 * 1024 * 1024:
+            raise ValueError("VSIX のサイズが上限を超えています。")
+        names = set()
+        for item in entries:
+            name = item.filename
+            if (not name or "\\" in name or name.startswith("/")
+                    or ".." in PurePosixPath(name).parts or ":" in name or item.flag_bits & 1):
+                raise ValueError("VSIX のエントリが不正です。")
+            if name in names and name != marker:
+                raise ValueError("VSIX のエントリが重複しています。")
+            names.add(name)
+        required = {"[Content_Types].xml", "extension.vsixmanifest", "extension/package.json"}
+        if not required.issubset(names) or any(original.getinfo(name).is_dir() for name in required):
+            raise ValueError("VSIX の必須エントリがありません。")
+        if original.testzip() is not None:
+            raise ValueError("VSIX が破損しています。")
+        with zipfile.ZipFile(destination, "w") as staged:
+            staged.comment = original.comment
+            for item in entries:
+                if item.filename == marker:
+                    continue
+                # ZipInfo を引き継ぎ、日時・圧縮方式・権限・extra/comment を保持する。
+                with original.open(item) as reader, staged.open(copy.copy(item), "w") as writer:
+                    shutil.copyfileobj(reader, writer, 1024 * 1024)
+            staged.writestr(marker, payload, compress_type=zipfile.ZIP_DEFLATED)
+    with zipfile.ZipFile(destination) as staged:
+        if staged.testzip() is not None or staged.read(marker) != payload:
+            raise ValueError("配置元付き VSIX の検証に失敗しました。")
+
+
 def install_extensions(vscode_cli: str) -> bool:
     """aidiy- 拡張を除去してから Code / Live を配置し、両 ID を確認する。"""
     ok, detail = check_vscode_runtime(vscode_cli)
@@ -321,23 +363,33 @@ def install_extensions(vscode_cli: str) -> bool:
             return False
         packages.append(vsix_path)
         expected.add(f"{extension_id}@{version}".lower())
-    # 両方の配布ファイルを確認してから既存拡張を解除する。
-    removed, _ = uninstall_aidiy_extensions(
-        lambda: get_installed_extensions(vscode_cli),
-        lambda extension_id: run_command([vscode_cli, "--uninstall-extension", extension_id], cwd=FRONTEND_VSCODE_DIR),
-        print_info, print_error,
-    )
-    if not removed:
+    try:
+        with tempfile.TemporaryDirectory(prefix="aidiy-vsix-") as temporary:
+            staged = []
+            for package in packages:
+                target = Path(temporary) / package.name
+                stage_extension_package(package, target, FRONTEND_VSCODE_DIR.parent.parent)
+                staged.append(target)
+            # 両方の配置元付き VSIX を検証してから既存拡張を解除する。
+            removed, _ = uninstall_aidiy_extensions(
+                lambda: get_installed_extensions(vscode_cli),
+                lambda extension_id: run_command([vscode_cli, "--uninstall-extension", extension_id], cwd=FRONTEND_VSCODE_DIR),
+                print_info, print_error,
+            )
+            if not removed:
+                return False
+            for vsix_path in staged:
+                if not run_command([vscode_cli, "--install-extension", str(vsix_path), "--force"], cwd=FRONTEND_VSCODE_DIR):
+                    return False
+            installed = get_installed_extensions(vscode_cli, show_versions=True)
+            if installed is None or not expected.issubset(installed):
+                print_error(f"拡張機能の配置を確認できません: {', '.join(sorted(expected))}")
+                return False
+            print_success('Code / Live: VS Code 拡張を配置しました。')
+            return True
+    except (OSError, ValueError, RuntimeError, zipfile.BadZipFile, NotImplementedError) as exc:
+        print_error(f"配置元付き VSIX を準備できません: {exc}")
         return False
-    for vsix_path in packages:
-        if not run_command([vscode_cli, "--install-extension", str(vsix_path), "--force"], cwd=FRONTEND_VSCODE_DIR):
-            return False
-    installed = get_installed_extensions(vscode_cli, show_versions=True)
-    if installed is None or not expected.issubset(installed):
-        print_error(f"拡張機能の配置を確認できません: {', '.join(sorted(expected))}")
-        return False
-    print_success('Code / Live: VS Code 拡張を配置しました。')
-    return True
 
 
 def setup(choices: dict | None = None) -> bool:

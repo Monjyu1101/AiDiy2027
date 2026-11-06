@@ -45,7 +45,7 @@ test('Code 拡張: 本文上限の日本語履歴をworkspaceStateから保存�
     module: loaded, exports: loaded.exports, setTimeout, clearTimeout, console, URL,
     require(name) {
       if (name === './workspace-folder') return { usableFolder: folder => folder?.uri.scheme === 'file', folderRequired: '先にプロジェクトフォルダを開いてください' };
-      if (name === './internal-auth') return { internalAuthorization: () => () => ({}) };
+      if (name === './extension-installation') return { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => ({}) }) };
       if (name === './file-attachments') return require('../out/file-attachments.cjs');
       if (name === 'vscode') return vscode;
       if (name === './conversation-store') return store;
@@ -94,7 +94,7 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
   runInNewContext(transformSync(readFileSync('src/extension.ts','utf8'),{loader:'ts',format:'cjs'}).code,{
     exports:loaded.exports,module:loaded,require(name){
       if (name === './workspace-folder') return { usableFolder: folder => folder?.uri.scheme === 'file', folderRequired: '先にプロジェクトフォルダを開いてください' };
-      if (name === './internal-auth') return { internalAuthorization: () => () => ({}) };
+      if (name === './extension-installation') return { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => ({}) }) };
       if(name.endsWith('/vscode-html')) { const m={exports:{}}; runInNewContext(transformSync(readFileSync(require('node:path').resolve(__dirname, '../src/vscode-html.ts'),'utf8'),{loader:'ts',format:'cjs'}).code,{module:m,exports:m.exports}); return m.exports; }
       if(name==='./file-attachments') return require('../out/file-attachments.cjs');
       if(name==='vscode') return vscode;
@@ -295,7 +295,7 @@ test('Code 拡張添付: 信頼済みonlineの現scopeだけ送信、echo画像�
     constructor(_backend, receive, notify) { connection = this; this.receive = receive; this.notify = notify; }
     start() { this.notify(); } disconnect() { this.connected = false; } dispose() {} send(packet) { sent.push(packet); return true; }
   }
-  const dependencies = { './workspace-folder': { usableFolder: folder => folder?.uri.scheme === 'file', folderRequired: '先にプロジェクトフォルダを開いてください' }, './internal-auth': { internalAuthorization: () => () => ({}) }, vscode, './vscode-html': { developmentHtml: () => '' }, './file-attachments': require('../out/file-attachments.cjs'),
+  const dependencies = { './workspace-folder': { usableFolder: folder => folder?.uri.scheme === 'file', folderRequired: '先にプロジェクトフォルダを開いてください' }, './extension-installation': { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => ({}) }) }, vscode, './vscode-html': { developmentHtml: () => '' }, './file-attachments': require('../out/file-attachments.cjs'),
     './code-connection': { CodeConnection: Connection, コード選択: value => ({ provider: value.provider || '', model: value.model || '' }) },
     './input-prediction': { InputPrediction: class { sync() {} clear() {} } }, './protocol': require('../out/protocol.cjs'),
     './model-preferences': { モデル保存先: () => 'model', コードモデル読込() {}, コード設定保存先: () => 'options', 検証回数読込() {} },

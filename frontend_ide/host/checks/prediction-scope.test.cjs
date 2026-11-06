@@ -160,7 +160,7 @@ function hostMocks() {
   class Prediction { constructor(_root, context) { prediction = this; this.context = context; } sync() {} clear() {} }
   const models = { コードモデル読込: noop, コードモデル保存: value => value, モデル保存先: () => 'mock-model', コード設定保存先: () => 'mock-options', 検証回数読込: noop };
   const offline = { Hermes既定モデル: () => 'same', オフラインモデル候補: () => [{ id: 'same' }], オフラインモデル保存先: () => 'mock-offline' };
-  const common = { 'internal-auth': authFixture(), 'file-attachments': require('../out/file-attachments.cjs'), 'code-connection': { CodeConnection: Connection, コード選択: value => ({ provider: value.provider, model: value.model }) }, 'input-prediction': { InputPrediction: Prediction },
+  const common = { 'extension-installation': { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => fixtureHeaders }) }, 'internal-auth': authFixture(), 'file-attachments': require('../out/file-attachments.cjs'), 'code-connection': { CodeConnection: Connection, コード選択: value => ({ provider: value.provider, model: value.model }) }, 'input-prediction': { InputPrediction: Prediction },
     'model-preferences': models, 'conversation-store': store, 'local-backend.cjs': { ローカル接続先: () => 'http://127.0.0.1:18091' }, protocol: {}, offline };
   const deps = {};
   for (const prefix of ['./', '../../src/']) for (const [name, value] of Object.entries(common)) deps[prefix + name] = value;
@@ -185,19 +185,20 @@ for (const lockedMode of [false, true]) test(`${lockedMode ? 'IDE' : '単独版'
     assert.equal(f.prediction.context().enabled, false); assert.equal(packets.at(-1).接続プロジェクトパス, '');
   } finally { await app.close(); }
 });
-test('VS Codeの予測は表示フォルダや保存セッションではなく接続中のスコープを使う', () => {
+test('VS Codeの予測は表示フォルダや保存セッションではなく接続中のスコープを使う', async () => {
   const f = hostMocks(), subscription = { dispose() {} }, posts = [], noop = () => {};
   let provider;
   const uri = { scheme: 'file', fsPath: '/display-project', toString: () => 'file:///display-project' }, folder = { uri, name: 'display' };
   f.deps.vscode = { workspace: { isTrusted: true, workspaceFolders: [folder], getConfiguration: () => ({ get: (_key, fallback) => fallback }), getWorkspaceFolder: () => folder, onDidChangeWorkspaceFolders: () => subscription },
     window: { onDidChangeActiveTextEditor: () => subscription, createOutputChannel: () => ({ appendLine: noop, dispose: noop }), registerWebviewViewProvider: (_id, value) => { provider = value; return subscription; } }, commands: { registerCommand: () => subscription },
     Uri: { joinPath: (_uri, path) => ({ fsPath: path }) } };
+  f.deps['./workspace-folder'] = { usableFolder: folder => folder?.uri.scheme === 'file', folderRequired: '先にプロジェクトフォルダを開いてください' };
   f.deps['./vscode-html'] = { developmentHtml: () => '' }; f.deps['./runner'] = {};
   const { activate } = load('src/extension.ts', f.deps);
   activate({ extensionPath: '/unused', extensionUri: uri, subscriptions: [], workspaceState: { get: noop, update: async () => {} }, globalState: { get: noop } });
-  provider.resolveWebviewView({ webview: { asWebviewUri: uri => uri.fsPath, onDidReceiveMessage: noop, postMessage: packet => posts.push(packet) }, onDidDispose: noop, onDidChangeVisibility: noop });
+  provider.resolveWebviewView({ visible: true, webview: { asWebviewUri: uri => uri.fsPath, onDidReceiveMessage: noop, postMessage: packet => posts.push(packet) }, onDidDispose: noop, onDidChangeVisibility: noop });
   try {
-    provider.接続更新();
+    await provider.受信({ type: 'ready' });
     provider.会話.コアセッションID = 'stale-saved-session';
     assert.equal(f.prediction.context().projectPath, '/connected-project');
     assert.equal(f.prediction.context().sessionId, 'connected-session');

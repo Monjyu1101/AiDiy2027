@@ -19,11 +19,10 @@ import { join } from 'node:path';
 import { コードモデル読込, コードモデル保存, モデル保存先, コード設定保存先, 検証回数読込, 検証回数保存 } from './model-preferences';
 import { Hermes既定モデル, オフラインモデル候補, オフラインモデル保存先, オフライン実行 } from '../aidiy_code/src/offline';
 import { 起動解決 } from './runner';
-import { internalAuthorization } from './internal-auth';
+import { extensionCoreConnection } from './extension-installation';
 import { CodeConnection, コード選択 } from './code-connection';
 import { InputPrediction } from './input-prediction';
 import { validateFileUpload, fileAttachment, isDuplicateAttachment, type ChatAttachment } from './file-attachments';
-import { ローカル接続先 } from '../aidiy_live/local-backend.cjs';
 import type { Packet } from '../aidiy_live/src/protocol';
 import { streamControlOf, visibleStreamContent, type コードパケット } from './protocol';
 import { 会話保存先, 会話一覧, 会話書込, 会話削除, 会話本文上限, 履歴メッセージ長さ, type 保存履歴 } from './conversation-store';
@@ -363,17 +362,20 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     const folder = this.現在フォルダ();
     if (!this.自動接続 || !vscode.workspace.isTrusted || !folder || this.破棄済み) { this.connection?.dispose(); this.connection = undefined; this.接続フォルダ = ''; return; }
     if (this.connection && this.接続フォルダ !== folder.uri.fsPath) { this.connection.dispose(); this.connection = undefined; }
-    if (!this.connection) this.connection = new CodeConnection(
-      ローカル接続先(this.context.extensionPath, folder.uri.fsPath), packet => {
-        if (!this.オフラインジョブ) this.パケット受信(packet);
-      }, () => {
-        if (this.connection?.connected) {
-          this.会話.コアセッションID = this.connection.session;
-          this.会話.provider = this.connection.model.provider; this.会話.model = this.connection.model.model;
-          this.保存(false);
-        } else if (!this.オフラインジョブ) { this.実行中 = false; this.停止中 = false; }
-        this.通知();
-      }, undefined, undefined, internalAuthorization(new URL(ローカル接続先(this.context.extensionPath, folder.uri.fsPath)), [this.context.extensionPath, folder.uri.fsPath]));
+    if (!this.connection) {
+      const { backend, authorization } = extensionCoreConnection(this.context.extensionPath, folder.uri.fsPath);
+      this.connection = new CodeConnection(
+        backend, packet => {
+          if (!this.オフラインジョブ) this.パケット受信(packet);
+        }, () => {
+          if (this.connection?.connected) {
+            this.会話.コアセッションID = this.connection.session;
+            this.会話.provider = this.connection.model.provider; this.会話.model = this.connection.model.model;
+            this.保存(false);
+          } else if (!this.オフラインジョブ) { this.実行中 = false; this.停止中 = false; }
+          this.通知();
+        }, undefined, undefined, authorization);
+    }
     if (!force && this.接続フォルダ === folder.uri.fsPath) return;
     if (!this.会話.作業URI) this.会話.作業URI = folder.uri.toString();
     this.接続フォルダ = folder.uri.fsPath;

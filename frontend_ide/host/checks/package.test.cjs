@@ -32,7 +32,7 @@ for (const [name, relative, included] of [
     const expected = ['package.json', 'README.md', 'LICENSE', 'dist/extension.js',
       'dist/THIRD_PARTY_NOTICES.txt', 'dist/development/コード.js',
       'dist/development/.hidden/data.json', ...included];
-    const excluded = ['src/extension.ts', '.env', '.git/config', 'checks/private.test.cjs',
+    const excluded = ['aidiy-installation.json', 'src/extension.ts', '.env', '.git/config', 'checks/private.test.cjs',
       'node_modules/private/index.js', 'dist/private.txt', 'scripts/private.py'];
     for (const file of [...expected, ...excluded].filter(file => file !== 'package.json')) {
       await mkdir(dirname(join(cwd, file)), { recursive: true });
