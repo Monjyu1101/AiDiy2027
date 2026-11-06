@@ -689,6 +689,8 @@ Navigationの外枠はCodeと同じ状態バー・窓操作とプロジェクト
 
 ### Navigatorの単独起動と履歴
 
+初期サイズは `host/scripts/window-size.cjs` の幅480・ナビ高さ800を使います。Code / Liveの会話高さ600とは分けます。単独・IDE・VRは `windowBounds('navi', area)` で小画面の作業領域へ縮小し、Webパネルも高さ800を上限に表示領域へ収めます。初期寸法だけを変更し、手動サイズ、Codeオン／オフの別々のサイズ保持、VR復帰時の既存窓の寸法は上書きしません。`checks/navigation-size.test.cjs`、`checks/panel-windows.test.mjs`、`checks/navigation-code-window.test.cjs`、`checks/navigation-popup-size.test.mjs` で確認します。
+
 - `aidiy_navi [作業フォルダ | --project 作業フォルダ]` はCode同様に起動フォルダを対象にする。`--browser`、`--new-window`、`--foreground`、`--port` を共通起動処理で扱う。モデルは画面から選び、起動引数で上書きしない。
 - 単独タイトルは `AiDiy Navigator`。IDEの「＋ Navigator」からの窓は `AiDiy IDE / Navigator 1` のように実際の起動番号を表示する。
 - 「＋ 新規」は現在窓の選択を解除する。「一覧」で同一プロジェクトの過去ナビを選ぶと目標・項目・評価・モデルを復元する。評価は元の項目構成を保持し、そのナビの履歴を更新する。選択と一覧閲覧ではAIを呼ばない。

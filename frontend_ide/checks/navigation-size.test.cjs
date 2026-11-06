@@ -6,9 +6,12 @@
 const test=require('node:test');const assert=require('node:assert/strict');
 const {windowBounds,windowMinimumSize,allWindowBounds}=require('../デスクトップ/window-layout.cjs');
 const {panelBounds}=require('../デスクトップ/panel-windows.cjs');
+const size=require('../host/scripts/window-size.cjs');
 test('Navigator starts at the left center of the work area and clamps its initial DIP size',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1040},{x:-900,y:-50,width:900,height:700},{x:0,y:0,width:400,height:480},{x:100,y:-1900,width:1080,height:1880},{x:-321,y:41,width:641,height:641}]){
-  const code=windowBounds('code',area),expected=[code.width,code.height];
+  const code=windowBounds('code',area),expected=[Math.min(480,area.width-16),Math.min(800,area.height-16)];
+  assert.deepEqual([code.width,code.height],[Math.min(480,area.width-16),Math.min(600,area.height-16)]);
+  assert.deepEqual([windowBounds('live',area).width,windowBounds('live',area).height],[code.width,code.height]);
   const standalone=windowBounds('navi',area);assert.deepEqual([standalone.width,standalone.height],expected);assert.deepEqual(windowMinimumSize('navi',standalone),windowMinimumSize('code',code));assert.equal(standalone.x,area.x+8);assert.ok(Math.abs(standalone.y+standalone.height/2-area.y-area.height/2)<=.5);
   assert.deepEqual(windowBounds('navi',area,{x:area.x+200,y:area.y+100,width:800,height:600}),standalone);
   assert.deepEqual(allWindowBounds('navi',area),standalone);
@@ -19,11 +22,13 @@ test('Navigator starts at the left center of the work area and clamps its initia
  }
 });
 
-test('Navigator Web panel matches Code initial size and keeps viewport limits',()=>{
+test('Navigator Web panel uses its own initial height and keeps viewport limits',()=>{
  const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/components/開発スペース/Navigationパネル.vue'),'utf8');
  const size=require('../host/scripts/window-size.cjs');
+ assert.equal(size.ナビ高さ,800);
+ assert.equal(size.会話高さ,600);
  assert.ok(source.includes(`width:min(${size.幅}px,calc(100vw - 32px))`));
- assert.ok(source.includes(`height:min(${size.会話高さ}px,calc(100vh - var(--workspace-top,78px) - 16px))`));
+ assert.ok(source.includes(`height:min(${size.ナビ高さ}px,calc(100vh - var(--workspace-top,78px) - 16px))`));
 });
 
 test('Navigator goal starts at four rows and preserves vertical resizing',()=>{

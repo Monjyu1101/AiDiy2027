@@ -13,7 +13,7 @@ import { cliTitleName } from './src/components/コンソール/CLIタイトル.j
 import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
 import { createCliOwnerLifetime } from './aidiy_console/cli-session.mjs';
 import { projectFolder,useBrowser,electronExecutable } from './viewer/launch-options.mjs';
-import { ブラウザで開く } from './host/scripts/launch-project.mjs';
+import { ブラウザで開く, ウィンドウ } from './host/scripts/launch-project.mjs';
 import { spawnDesktop } from './デスクトップ/desktop-process.mjs';
 import projectProfiles from './デスクトップ/project-profile.cjs';
 const {projectIdentity}=projectProfiles;
@@ -88,7 +88,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  }
  await publishReady(browser);
  if(browser){
-  const opened=await ブラウザで開く(app.publicUrl,{ローカルURL:app.url});
+  const opened=await ブラウザで開く(app.publicUrl,{ローカルURL:app.url,height:kind==='navi'?ウィンドウ.ナビ高さ:undefined});
   if(values.cli&&!opened){await stop();throw Error('CLI用のConsole画面をブラウザで開けませんでした。既定ブラウザまたはElectronのセットアップを確認して、もう一度起動してください。');}
  }
  lifetime?.arm();

@@ -29,7 +29,8 @@ app.on('browser-window-created',(_,owner)=>{
   await until(()=>evaluate(first,`!!document.querySelector('textarea')`),'Navi 1 DOM');
   await until(()=>evaluate(first,`getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`),'Navi 1 visible');
   assert.deepEqual(await evaluate(owner,`navigationFlashObserver.disconnect();navigationFlash`),[],'別窓の準備中にIDE内へNavigatorを表示しない');
-  assert.ok(Math.abs(first.getBounds().width-480)<=2&&Math.abs(first.getBounds().height-600)<=2,'初期480×600 DIP（Windows丸め2px以内）');
+  const initialArea=screen.getDisplayMatching(first.getBounds()).workArea;
+  assert.ok(Math.abs(first.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(first.getBounds().height-Math.min(800,initialArea.height-16))<=2,'初期480×800 DIP、小画面は縮小（Windows丸め2px以内）');
   const area=screen.getDisplayMatching(first.getBounds()).workArea,bounds=first.getBounds();
   assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'Navigatorは作業領域の左中央');
  console.log('Navigator initial bounds',JSON.stringify(first.getBounds()));

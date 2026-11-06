@@ -129,3 +129,11 @@ test('Already-wide compact mode takes priority over a smaller remembered Code wi
  f.move({width:500});await f.change({},true);assert.equal(f.bounds.width,850);assert.equal(f.bounds.height,750);
  await f.change({},false);f.move({width:960});await f.change({},true);assert.equal(f.bounds.width,960);
 });
+
+test('New 800-high Navi keeps the initial height and subsequent manual sizes per mode',async()=>{
+ const f=fixture({bounds:{x:8,y:140,width:480,height:800}});
+ await f.change({},true);assert.deepEqual(f.bounds,{x:8,y:140,width:960,height:800});
+ f.move({width:1100,height:900});await f.change({},false);assert.equal(f.bounds.height,800);
+ f.move({height:650});await f.change({},true);assert.equal(f.bounds.height,900);
+ await f.change({},false);assert.equal(f.bounds.height,650);
+});

@@ -319,6 +319,8 @@ Avatar の Task / Team をコピーした独立版を `aidiy_task` / `aidiy_team
 
 ### Navigator
 
+初期サイズは幅480 × 高さ800です（Electronの論理ピクセル）。単独・IDEからの起動・VRで共通とし、小画面では作業領域内へ縮小します。Web表示も高さ800を上限に画面内へ収めます。手動リサイズとCodeオン／オフごとのサイズ保持は従来どおりです。
+
 `aidiy_navi [プロジェクトフォルダ]` で独立した `AiDiy Navigator` を開きます。`--browser` はWeb表示、`--new-window` は追加窓です。IDEでは「＋ Navigator」から `AiDiy IDE / Navigator 1`、`2` …を開きます。
 
 「Navigator」は作業項目を提案し、「評価」は項目構成を保って達成度と次のプロンプトを更新します。AIは明示操作時だけ読取専用で使用し、プロンプト案を自動実行しません。「＋ 新規」「一覧」でプロジェクト別の履歴を切り替えます。モデル選択は最下部のCode共通ダイアログ形式で、初期値は `aidiy_hermes / same`。状態は対象フォルダ外の `~/.aidiy/navigation` に保存します。

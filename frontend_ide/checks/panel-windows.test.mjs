@@ -179,15 +179,27 @@ test('小さな軌跡パネル: 負座標の実画面内へ収め、DPI倍率を
  }
 });
 
-test('Navigator別窓は通常・VR・小画面ともCodeと同じ初期寸法と最小寸法を使う',async()=>{
+test('Navigator別窓は通常・VR・小画面とも専用の初期高さと従来の最小寸法を使う',async()=>{
  const {windowBounds,windowMinimumSize}=await import('../デスクトップ/window-layout.cjs');
  for(const all of [false,true])for(const area of [{x:0,y:0,width:1920,height:1040},{x:-300,y:-200,width:320,height:240}]){
   const f=fixture({all,area}),request=await f.controller.prepare(f.event,f.rect,'panel-navigation');
   const {overrideBrowserWindowOptions:options}=f.controller.open(f.owner,{url:'about:blank',frameName:request.name});
   const code=windowBounds('code',area);
-  assert.deepEqual([options.width,options.height],[code.width,code.height]);
+  assert.deepEqual([options.width,options.height],[Math.min(480,area.width-16),Math.min(800,area.height-16)]);
   assert.deepEqual({minWidth:options.minWidth,minHeight:options.minHeight},windowMinimumSize('code',code));
   assert.equal(options.x,area.x+8);assert.ok(Math.abs(options.y+options.height/2-area.y-area.height/2)<=.5);
   assert.notEqual(options.resizable,false);
+ }
+});
+
+test('Navigator native and VR launch at 800 DIP without resetting a manually resized window on show',async()=>{
+ for(const all of [false,true])for(const height of [1040,700,480]){
+  const f=fixture({all,area:{x:-1280,y:350,width:1280,height}});
+  const request=await f.controller.prepare(f.event,f.rect,'panel-navigation');assert.equal(request.ok,true);
+  const details={url:'about:blank',frameName:request.name},options=f.controller.open(f.owner,details).overrideBrowserWindowOptions;
+  assert.equal(options.width,480);assert.equal(options.height,Math.min(800,height-16));
+  const child=new f.Window();f.controller.created(f.owner,child,details);await f.controller.show(f.event,request.name);
+  const manual={...child.getBounds(),width:520,height:420};child.setBounds(manual);
+  await f.controller.show(f.event,request.name);assert.deepEqual(child.getBounds(),manual);child.destroy();
  }
 });

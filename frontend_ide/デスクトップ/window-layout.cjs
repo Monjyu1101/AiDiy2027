@@ -14,7 +14,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const available={x:area.x+margin,y:area.y+margin,width:Math.max(1,area.width-margin*2),height:Math.max(1,area.height-margin*2)};
  if(kind==='ide')return available;
  if(kind==='navi'){
-  const width=Math.min(size.幅,available.width),height=Math.min(size.会話高さ,available.height);
+  const width=Math.min(size.幅,available.width),height=Math.min(size.ナビ高さ,available.height);
   return{x:available.x,y:Math.round(area.y+(area.height-height)/2),width,height};
  }
  if(kind==='task'||kind==='team'){
