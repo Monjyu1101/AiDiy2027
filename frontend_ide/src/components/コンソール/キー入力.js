@@ -6,9 +6,20 @@
 
 // falseはxtermの変換だけを止める。コピー・貼付けはブラウザーの既定動作と
 // xtermのcopy/pasteイベントへ任せ、権限付きClipboard APIや二重貼付けを避ける。
-export function consoleKeyHandler(send, { platform = globalThis.navigator?.platform || '' } = {}) {
+export function consoleKeyHandler(send, { platform = globalThis.navigator?.platform || '', terminal } = {}) {
   const isMac = ['Macintosh', 'MacIntel', 'MacPPC', 'Mac68K'].includes(platform);
-  return event => {
+  let win32InputMode = false;
+  const reset = () => { win32InputMode = false; };
+  // ConPTYの要求に従う。ブラウザーのOSでは接続先PTYの入力形式を判断できない。
+  // xterm 6が未対応の9001だけを記憶し、同じCSIに含まれる既存モードは奪わない。
+  const subscriptions = terminal ? [
+    ...['h', 'l'].map(final => terminal.parser.registerCsiHandler({ prefix: '?', final }, params => {
+      if (params.includes(9001)) win32InputMode = final === 'h';
+      return false;
+    })),
+    terminal.parser.registerEscHandler({ final: 'c' }, () => { reset(); return false; }),
+  ] : [];
+  const handle = event => {
     if (event.isComposing || event.keyCode === 229 || event.getModifierState?.('AltGraph')) return true;
     const key = event.key.toLowerCase();
     if ((event.ctrlKey || event.metaKey) && !event.altKey && (key === 'c' || key === 'v')) return false;
@@ -16,8 +27,18 @@ export function consoleKeyHandler(send, { platform = globalThis.navigator?.platf
     const modifiers = 1 + (event.shiftKey ? 1 : 0) + (event.altKey ? 2 : 0) + (event.ctrlKey ? 4 : 0);
     let data;
     if (key === 'enter' && modifiers > 1) {
-      // Alt+EnterのESC+CRは維持し、Shift/CtrlはCSI-uで区別する。
-      data = !event.ctrlKey && !event.shiftKey ? '\x1b\r' : `\x1b[13;${modifiers}u`;
+      if (win32InputMode) {
+        // WindowsのCodex等は文字列ではなくKEY_EVENT_RECORDを読む。
+        // Vk;Sc;Uc;Kd;Cs;Rc。Ctrlでも文字はCR、修飾はCsで独立して保持する。
+        const state = (event.shiftKey ? 16 : 0) | (event.altKey ? 2 : 0) | (event.ctrlKey ? 8 : 0)
+          | (event.code === 'NumpadEnter' || event.location === 3 ? 256 : 0);
+        // 一回のkeydownにdown/upを対で送る。フォーカス移動でkeyupを失っても
+        // 押下状態を残さず、keypress/keyupによる二重入力も起こさない。
+        data = `\x1b[13;28;13;1;${state};1_\x1b[13;28;13;0;${state};1_`;
+      } else {
+        // Linux/macOS等は従来どおり。未要求のPTYへWin32形式を送らない。
+        data = !event.ctrlKey && !event.shiftKey ? '\x1b\r' : `\x1b[13;${modifiers}u`;
+      }
     } else if (key === 'tab' && (event.ctrlKey || event.altKey)) {
       data = `\x1b[9;${modifiers}u`;
     } else if (modifiers > 1 && ['insert', 'pageup', 'pagedown'].includes(key)) {
@@ -50,4 +71,8 @@ export function consoleKeyHandler(send, { platform = globalThis.navigator?.platf
     }
     return true;
   };
+  handle.reset = reset;
+  handle.restore = enabled => { if (typeof enabled === 'boolean') win32InputMode = enabled; };
+  handle.dispose = () => { reset(); for (const subscription of subscriptions) subscription.dispose(); };
+  return handle;
 }

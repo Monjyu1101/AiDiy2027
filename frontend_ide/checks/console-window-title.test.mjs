@@ -21,7 +21,7 @@ function fixture({desktop=true,linked=true,title=()=>Promise.resolve('AiDiy IDE 
  const script=compileScript(descriptor,{id:'console',genDefaultAs:'component'});
  const template=compileTemplate({source:descriptor.template.content,filename:'ConsolePanel.vue',id:'console',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
  const noop=()=>{},subscription=()=>({dispose:noop});
- class Terminal{loadAddon(){}open(){}attachCustomKeyEventHandler(){}reset(){}dispose(){}onData=subscription;onKey=subscription;onResize=subscription;onCursorMove=subscription;onScroll=subscription;onRender=subscription;}
+ class Terminal{parser={registerCsiHandler:subscription,registerEscHandler:subscription};loadAddon(){}open(){}attachCustomKeyEventHandler(){}reset(){}dispose(){}onData=subscription;onKey=subscription;onResize=subscription;onCursorMove=subscription;onScroll=subscription;onRender=subscription;}
  const module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,URL,window:{aidiyWindow:{title:()=>{calls++;return title();}}},location:{href:'http://localhost/'},ResizeObserver:class{observe(){}disconnect(){}},WebSocket:class{close(){}},

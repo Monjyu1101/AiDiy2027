@@ -4,11 +4,13 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 
+import { consoleInputMode } from './input-mode.mjs';
+
 // 1つのConsole窓が1つのCLIプロセスを所有する。通信の再接続・重複startは再実行にしない。
 // 再接続猶予中は直近の出力を保持し、猶予切れまたは所有サーバー終了時にプロセスを片付ける。
 export function createCliSession(launch, project, spawnConsole, { outputLimit = 256 * 1024 } = {}) {
   let terminal, state = 'idle', output = '', exitCode, error, closing;
-  const listeners = new Set(), subscriptions = [];
+  const listeners = new Set(), subscriptions = [], inputMode = consoleInputMode();
   const emit = value => { for (const listener of listeners) listener(value); };
   const fail = message => { error = String(message); state = 'error'; emit({ type: 'error', message: error }); };
   function shutdown(reason) {
@@ -29,12 +31,12 @@ export function createCliSession(launch, project, spawnConsole, { outputLimit = 
       state = 'running';
       try {
         terminal = spawnConsole(launch.executable, launch.args, { name: 'xterm-256color', cols, rows, cwd: project, env: { ...launch.env, TERM: 'xterm-256color' } });
-        subscriptions.push(terminal.onData(data => { output = (output + data).slice(-outputLimit); emit({ type: 'data', data }); }));
+        subscriptions.push(terminal.onData(data => { inputMode.write(data); output = (output + data).slice(-outputLimit); emit({ type: 'data', data }); }));
         subscriptions.push(terminal.onExit(result => { exitCode = result.exitCode; if (state !== 'error') state = 'exited'; emit({ type: 'exit', exitCode }); }));
         if (terminal.onError) subscriptions.push(terminal.onError(fail));
       } catch (caught) { fail(caught.message); }
     },
-    snapshot: () => ({ state, output, exitCode, error }),
+    snapshot: () => ({ state, output, exitCode, error, win32InputMode: inputMode.enabled }),
     subscribe(listener) { listeners.add(listener); return { dispose: () => listeners.delete(listener) }; },
     write(data) { if (state === 'running') terminal?.write(data); },
     resize(cols, rows) { if (state === 'running') terminal?.resize(cols, rows); },

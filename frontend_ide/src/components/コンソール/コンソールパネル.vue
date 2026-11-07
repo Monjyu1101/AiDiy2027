@@ -24,7 +24,7 @@ const ghostRows = ref([]);
 const inputStarted = ref(false);
 const completionDescription = computed(() => cliCompletions[completion.value.split(' ')[0]]?.description || '');
 const projectName = computed(() => project.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || project.value);
-let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, inputFocus, completionEnabled = false, disposed = false;
+let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, inputFocus, keyInput, completionEnabled = false, disposed = false;
 function startInput() {
   if (!connected.value || inputStarted.value) return;
   inputStarted.value = true;
@@ -81,16 +81,26 @@ function connect() {
   if (disposed) return;
   inputStarted.value = false;
   socketReady.value = false; toolsChanging.value = false;
-  socket?.close(); completion.value = ''; completionEnabled = false; terminal.reset(); connected.value = false; error.value = ''; status.value = '起動中';
+  socket?.close(); completion.value = ''; completionEnabled = false; connected.value = false; error.value = ''; status.value = '起動中';
   const url = new URL(props.base + 'socket', location.href); url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   const current = socket = new WebSocket(url);
-  current.onopen = () => { if (current !== socket || disposed) return current.close(); fitTerminal(); send({ type: 'start', cols: terminal.cols, rows: terminal.rows }); };
+  current.onopen = () => {
+    if (current !== socket || disposed) return current.close();
+    // reset()だけではxtermの未解析出力が残る。旧PTYの9001要求が後から
+    // 復活しないよう、先行出力を処理してからリセットし新PTYを開始する。
+    terminal.write('', () => {
+      if (current !== socket || disposed || current.readyState !== WebSocket.OPEN) return;
+      keyInput.reset(); terminal.reset(); fitTerminal(); send({ type: 'start', cols: terminal.cols, rows: terminal.rows });
+    });
+  };
   current.onmessage = event => {
     if (current !== socket || disposed) return;
     const message = JSON.parse(event.data);
     if (message.type === 'ready') { cli.value = message.cli || null; connected.value = !cli.value || message.state === 'running'; if (cli.value) { inputStarted.value = true; nextTick(fitTerminal); } socketReady.value = true; toolsOnline.value = !!message.toolsOnline; toolsEnabled.value = !!message.toolsEnabled; completionEnabled = !!message.completion; status.value = connected.value ? '実行中' : message.state === 'error' ? 'エラー' : '終了'; project.value = message.project; shell.value = message.shell; inputFocus.request(); }
     if (message.type === 'tools') { toolsOnline.value = !!message.online; toolsEnabled.value = !!message.enabled; toolsChanging.value = false; }
     if (message.type === 'data') terminal.write(message.data, () => { if (current === socket && current.readyState === WebSocket.OPEN) { current.send(JSON.stringify({ type: 'ack', length: message.data.length })); updateCompletion(); } });
+    // CLIは同じPTYへ再接続する。切り詰めた表示履歴の解析後に最新モードを復元する。
+    if (message.type === 'keyboard-mode') terminal.write('', () => { if (current === socket && !disposed) keyInput.restore(message.win32InputMode); });
     if (message.type === 'exit') { connected.value = false; completion.value = ''; status.value = `終了 (${message.exitCode})`; terminal.writeln(`\r\n[${cli.value?.name || 'シェル'}が終了しました: ${message.exitCode}]`); }
     if (message.type === 'error') { if (cli.value) connected.value = false; error.value = message.message; status.value = 'エラー'; }
   };
@@ -104,7 +114,8 @@ onMounted(() => {
     theme: { background: '#000', foreground: '#dce6f2', cursor: '#ffffff', selectionBackground: '#365b78' } });
   fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fitTerminal();
   inputFocus = consoleInputFocus({ panel: panel.value, terminal, available: () => props.visible && connected.value });
-  terminal.attachCustomKeyEventHandler(consoleKeyHandler(data => { startInput(); sendInput(data); }));
+  keyInput = consoleKeyHandler(data => { startInput(); sendInput(data); }, { terminal });
+  terminal.attachCustomKeyEventHandler(keyInput);
   input = terminal.onData(sendInput);
   key = terminal.onKey(startInput);
   container.value.addEventListener('input', startInput, true);
@@ -116,7 +127,7 @@ onMounted(() => {
   observer = new ResizeObserver(fitTerminal); observer.observe(container.value);
   connect();
 });
-onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
+onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
 </script>
 <template>
   <section ref="panel" class="console-component" :class="{ 'desktop-window': desktop, 'console-waiting': !inputStarted }">

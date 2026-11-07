@@ -134,6 +134,7 @@ export async function startConsole(project, { spawnConsole, env = process.env, c
           };
           send({ type: 'ready', shell: cliLaunch.name, project, cli: cliInfo, completion: false, toolsOnline, toolsEnabled, state: snapshot.state });
           if (snapshot.output) sendCli({ type: 'data', data: snapshot.output });
+          send({ type: 'keyboard-mode', win32InputMode: snapshot.win32InputMode });
           if (snapshot.error) send({ type: 'error', message: snapshot.error });
           if (snapshot.exitCode !== undefined) send({ type: 'exit', exitCode: snapshot.exitCode });
           cliOutput = cliSession.subscribe(sendCli);

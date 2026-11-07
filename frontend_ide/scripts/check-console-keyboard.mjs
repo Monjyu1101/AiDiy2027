@@ -8,10 +8,40 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {mkdtempSync,readFileSync,writeFileSync,rmSync,existsSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
-import {join,resolve} from 'node:path';
-import {startDevelopment} from '../server.mjs';
+import {join,resolve,dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {createServer} from 'node:http';
+import {createHash} from 'node:crypto';
+import {build} from 'esbuild';
+import {parse,compileScript,compileStyle} from '@vue/compiler-sfc';
 const project=mkdtempSync(join(tmpdir(),'aidiy-keyboard-project-')),profile=mkdtempSync(join(tmpdir(),'aidiy-keyboard-browser-'));
-const app=await startDevelopment(project,{kind:'console'});
+// 配布物distや実際のシェルには依存せず、今回のVueソースを隔離して検証する。
+const root=fileURLToPath(new URL('..',import.meta.url));
+const bundle=await build({
+ stdin:{contents:`import {createApp} from 'vue';import Panel from './src/components/コンソール/コンソールパネル.vue';import './src/style.css';import {Terminal} from '@xterm/xterm';
+const open=Terminal.prototype.open;Terminal.prototype.open=function(...args){window.testTerminal=this;return open.apply(this,args);};
+const app=createApp(Panel,{base:'/console/'});app.mount('#app');window.dispose=()=>app.unmount();`,resolveDir:root},
+ bundle:true,write:false,outdir:project,format:'iife',
+ plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{
+  const {descriptor,errors}=parse(readFileSync(args.path,'utf8'));assert.deepEqual(errors,[]);
+  const id='data-v-'+createHash('sha256').update(args.path).digest('hex').slice(0,8);
+  const compiled=compileScript(descriptor,{id,inlineTemplate:true,genDefaultAs:'component'});
+  const css=descriptor.styles.map(style=>{const result=compileStyle({source:style.content,id,scoped:style.scoped});assert.deepEqual(result.errors,[]);return result.code;}).join('\n');
+  return{contents:compiled.content+`\ncomponent.__scopeId=${JSON.stringify(id)};export default component;const style=document.createElement('style');style.textContent=${JSON.stringify(css)};document.head.append(style);`,resolveDir:dirname(args.path)};
+ });}}],
+});
+if(process.argv.includes('--compile-only')){
+ for(const folder of [profile,project])rmSync(folder,{recursive:true,force:true});
+ console.log('PASS: Console Vue, scoped styles and keyboard mode handler compile without a production build.');process.exit(0);
+}
+const server=createServer((req,res)=>{
+ const file=req.url==='/app.js'?bundle.outputFiles.find(f=>f.path.endsWith('.js')):req.url==='/app.css'?bundle.outputFiles.find(f=>f.path.endsWith('.css')):null;
+ if(file)return res.writeHead(200,{'content-type':req.url.endsWith('.js')?'text/javascript':'text/css'}).end(file.text);
+ if(req.url==='/')return res.writeHead(200,{'content-type':'text/html'}).end('<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/app.css"><style>html,body,#app{margin:0;height:100%;background:#000}</style><div id="app"></div><script src="/app.js"></script>');
+ res.writeHead(404).end();
+});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const app={url:`http://127.0.0.1:${server.address().port}/`,close:()=>new Promise(resolve=>server.close(resolve))};
 const executable=process.env.CHROME_PATH||['/usr/bin/chromium',...[process.env.PROGRAMFILES,process.env['PROGRAMFILES(X86)'],process.env.LOCALAPPDATA].filter(Boolean).map(base=>join(base,'Google/Chrome/Application/chrome.exe'))].find(existsSync);
 const browser=spawn(executable,['--headless=new',...(process.platform==='linux'?['--no-sandbox']:[]),'--remote-debugging-port=0',`--user-data-dir=${profile}`,'about:blank'],{stdio:['ignore','ignore','inherit'],windowsHide:true});
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));let ws;
@@ -65,8 +95,35 @@ try{
  assert.deepEqual(await evaluate('inputs.splice(0)'),[]);
  await evaluate(`document.querySelector('.xterm-helper-textarea').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:229,shiftKey:true,isComposing:true,bubbles:true,cancelable:true}))`);
  assert.deepEqual(await evaluate('inputs.splice(0)'),[]);
+ await evaluate(`navigator.clipboard.writeText(${JSON.stringify('貼り付け日本語 •・·\nsecond line')})`);
+ // 実xterm parserへ分割されたConPTY要求を流す。既存モードも同時に反映する。
+ const outputData=async data=>{await evaluate(`termSocket.receive({type:'data',data:${JSON.stringify(data)}})`);await sleep(60);};
+ await outputData('\x1b[?90'); await press('Enter','Enter',13,8); assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[13;2u']);
+ await outputData('01;1;2004h');
+ await press('ArrowUp','ArrowUp',38); assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1bOA']);
+ const records=state=>`\x1b[13;28;13;1;${state};1_\x1b[13;28;13;0;${state};1_`;
+ for(const [modifiers,state] of [[8,16],[2,8],[1,2],[10,24],[9,18],[3,10],[11,26]]){
+  for(const code of ['Enter','NumpadEnter']){await press('Enter',code,13,modifiers);assert.deepEqual(await evaluate('inputs.splice(0)'),[records(state|(code==='NumpadEnter'?256:0))]);}
+ }
+ await press('Enter','Enter',13);assert.deepEqual(await evaluate('inputs.splice(0)'),['\r']);
+ await press('v','KeyV',86,2);assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[200~貼り付け日本語 •・·\rsecond line\x1b[201~']);
+ await press('c','KeyC',67,2);assert.deepEqual(await evaluate('inputs.splice(0)'),[]);
+ await evaluate(`document.querySelector('.xterm-helper-textarea').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',keyCode:229,ctrlKey:true,shiftKey:true,isComposing:true,bubbles:true,cancelable:true}))`);
+ assert.deepEqual(await evaluate('inputs.splice(0)'),[]);
+ await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='表示クリア').click()`);
+ await press('Enter','Enter',13,8);assert.deepEqual(await evaluate('inputs.splice(0)'),[records(16)],'表示クリアでは入力モードを保持する');
+ await outputData('\x1b[?9001;1;2004l');
+ await press('Enter','Enter',13,8);assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[13;2u']);
+ await press('ArrowUp','ArrowUp',38);assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[A']);
+ await outputData('\x1b[?9001h');await outputData('\x1bc');
+ await press('Enter','Enter',13,8);assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[13;2u']);
+ await outputData('\x1b[?9001h');
+ await evaluate(`termSocket.receive({type:'exit',exitCode:0});`);await sleep(30);
+ await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='再起動').click()`);await until(`document.querySelector('.console-component')?.textContent.includes('実行中')`);
+ await press('Enter','Enter',13,8);assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[13;2u'],'再接続で前のConPTYモードを継承しない');
+ await outputData('Console keyboard check passed: modified Enter / IME / clipboard / mode reset');
  const screenshot=await send('Page.captureScreenshot',{format:'png'});const output=resolve('temp/console-check');mkdirSync(output,{recursive:true});
  const stamp=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Tokyo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date()).replace(/\D/g,'');
  const screenshotPath=join(output,`${stamp}_term-keyboard.png`);writeFileSync(screenshotPath,Buffer.from(screenshot.result.data,'base64'));
- console.log('PASS: Tools labels, native Ctrl+V, bracketed paste, copy, Ctrl letters/symbols, Alt/Shift combinations, Enter/Tab/Page/Insert, arrows, function keys, IME guard. Screenshot:',screenshotPath);
+ console.log('PASS: Tools labels, native Ctrl+V, bracketed paste, copy, Ctrl letters/symbols, Alt/Shift combinations, Enter/Tab/Page/Insert, arrows, function keys, IME guard, ConPTY split/combined mode, all modified Enter/numpad pairs, disable/RIS/reconnect. Screenshot:',screenshotPath);
 }finally{ws?.close();browser.kill();await app.close();await sleep(200);for(const folder of [profile,project]){if(!folder.startsWith(join(tmpdir(),'aidiy-keyboard-')))throw Error('一時パスが不正です。');rmSync(folder,{recursive:true,force:true,maxRetries:5,retryDelay:200});}}

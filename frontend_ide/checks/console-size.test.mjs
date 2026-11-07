@@ -32,6 +32,10 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=fa
  window.aidiyWindow={title:async()=>{titleCalls++;return nativeTitle;}};
  class Terminal{
   cols=80;rows=24;options={scrollback:5000};listeners={};buffer={active:{}};
+  parserHandlers=new Map();
+  registerParser=(id,callback)=>{const key=JSON.stringify(id);this.parserHandlers.set(key,callback);return{dispose:()=>this.parserHandlers.delete(key)};};
+  parser={registerCsiHandler:this.registerParser,registerEscHandler:this.registerParser};
+  write(_data,callback){callback?.();}
   _core={_renderService:{dimensions:{css:{cell:{width:8,height:17}}},clear(){}}};
   constructor(){terminal=this;resources.terminals++;}
   open(parent){this.element={parentElement:parent};} loadAddon(addon){addon.activate(this);} attachCustomKeyEventHandler(handler){this.handleKey=handler;} reset(){} clear(){} textarea={closest:()=>null};focusCount=0;hasSelection(){return false;} focus(){this.focusCount++;doc.activeElement=this.textarea;} writeln(){} dispose(){resources.disposed++;}
@@ -144,6 +148,41 @@ test('Console入力: 修飾EnterはWebSocketへ一度だけ送信し、Ctrl+Cは
  f.state.interrupt();f.terminal.handleKey(event('Enter',{shiftKey:true}));assert.equal(f.packets.length,count);
 });
 
+
+test('Console実setup: ConPTY要求はクリアで保持し、再接続で解除・破棄で購読を解放する',async t=>{
+ const f=await fixture(t),e={type:'keydown',key:'Enter',shiftKey:true,preventDefault(){},stopPropagation(){}};
+ const enable=()=>f.terminal.parserHandlers.get(JSON.stringify({prefix:'?',final:'h'}))([9001]);
+ const check=data=>{f.terminal.handleKey(e);assert.deepEqual(f.packets.at(-1),{type:'input',data});};
+ assert.equal(f.terminal.parserHandlers.size,3);enable();check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
+ await f.state.clearDisplay();check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
+ f.state.connect();f.sockets.at(-1).onopen();f.sockets.at(-1).receive({type:'ready',project:'/fixture',shell:'bash'});
+ check('\x1b[13;2u');assert.equal(f.terminal.parserHandlers.size,3);
+ f.sockets.at(-1).receive({type:'keyboard-mode',win32InputMode:true});check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
+ f.sockets.at(-1).receive({type:'keyboard-mode',win32InputMode:false});check('\x1b[13;2u');
+ f.dispose();assert.equal(f.terminal.parserHandlers.size,0);
+});
+
+test('Console再接続: 実xtermの未解析出力を排出してから最新のPTYだけを開始する',async t=>{
+ const f=await fixture(t),{Terminal}=require('@xterm/xterm'),parserTerminal=new Terminal();
+ t.after(()=>parserTerminal.dispose());
+ // 描画用fixtureを保ちつつ、出力キューとparserは実xtermを使う。
+ parserTerminal.parser.registerCsiHandler({prefix:'?',final:'h'},params=>f.terminal.parserHandlers.get(JSON.stringify({prefix:'?',final:'h'}))?.(params)||false);
+ f.terminal.write=(data,callback)=>parserTerminal.write(data,callback);
+ f.terminal.reset=()=>parserTerminal.reset();
+ const old=f.sockets[0],before=f.packets.length;
+ old.receive({type:'data',data:'\x1b[?9001h'});
+ f.state.connect();f.sockets.at(-1).onopen();
+ f.state.connect();f.sockets.at(-1).onopen();
+ assert.equal(f.packets.length,before,'旧出力の排出前にはstartを送らない');
+ old.receive({type:'data',data:'\x1b[?9001h'}); // 古い接続からの追加出力は捨てる。
+ await new Promise(resolve=>parserTerminal.write('',resolve));
+ assert.deepEqual(f.packets.slice(before),[{type:'start',cols:41,rows:4}],'重なった再接続は最新の一つだけ開始する');
+ f.sockets.at(-1).receive({type:'ready',project:'/fixture',shell:'bash'});
+ f.terminal.handleKey({type:'keydown',key:'Enter',shiftKey:true,preventDefault(){},stopPropagation(){}});
+ assert.deepEqual(f.packets.at(-1),{type:'input',data:'\x1b[13;2u'});
+ f.state.connect();f.sockets.at(-1).onopen();const count=f.packets.length;f.dispose();
+ await new Promise(resolve=>parserTerminal.write('',resolve));assert.equal(f.packets.length,count,'破棄後の排出完了でPTYを開始しない');
+});
 
 test('Console welcome: styles target the current console kind', () => {
  const css = readFileSync(new URL('../src/components/共通表示/会話表示.css', import.meta.url), 'utf8');

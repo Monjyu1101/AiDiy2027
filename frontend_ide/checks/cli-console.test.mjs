@@ -130,3 +130,37 @@ test('CLI起動所有者: 最初の端末開始なしで期限終了、開始・
   }
   const disposed = createCliOwnerLifetime(() => stopped++, { activationGrace: 20 }); disposed.arm(); disposed.dispose(); await delay(40); assert.equal(stopped, 1);
 });
+
+
+test('CLIセッション: 出力履歴から消えたConPTYモードも分割制御・解除・RISを追跡する', async () => {
+ let data;
+ const session = createCliSession({ executable: '/fixture', args: [], env: {} }, '/fixture', () => ({
+  onData: fn => { data = fn; return subscription(); }, onExit: subscription, kill() {},
+ }), { outputLimit: 8 });
+ try {
+  session.start(80, 24);
+  data('\x1b[?90'); assert.equal(session.snapshot().win32InputMode, false);
+  data('01;2004h'); data('long output history');
+  assert.equal(session.snapshot().output, ' history'); assert.equal(session.snapshot().win32InputMode, true);
+  data('\x1b[?9001l'); data('more output history'); assert.equal(session.snapshot().win32InputMode, false);
+  data('\x9b?9001h'); assert.equal(session.snapshot().win32InputMode, true);
+  data('\x1bc'); assert.equal(session.snapshot().win32InputMode, false);
+ } finally { await session.close(); }
+});
+
+test('CLI再接続: 保持上限を超えた後もモードを履歴再送の後に復元する', async () => fixture(async project => {
+ let data, current;
+ const app = await startConsole(project, { cli: 'copilot', env: { PATH: project }, checkTools: async () => false,
+  spawnConsole: () => ({ onData: fn => { data = fn; return subscription(); }, onExit: subscription, resize() {}, kill() {} }) });
+ try {
+  current = await connect(app.url); current.start(); await until(() => current.messages.some(message => message.type === 'ready'));
+  const closed = once(current.ws, 'close'); current.ws.close(); await closed;
+  data('\x1b[?9001h'); data('x'.repeat(300000));
+  current = await connect(app.url); current.start(); await until(() => current.messages.some(message => message.type === 'keyboard-mode'));
+  const outputIndex = current.messages.findIndex(message => message.type === 'data');
+  const modeIndex = current.messages.findIndex(message => message.type === 'keyboard-mode');
+  assert.ok(outputIndex >= 0 && modeIndex > outputIndex);
+  assert.equal(current.messages[outputIndex].data.includes('9001'), false);
+  assert.equal(current.messages[modeIndex].win32InputMode, true);
+ } finally { current?.ws.terminate(); await app.close(); }
+}));
