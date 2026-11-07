@@ -515,7 +515,9 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     const entry = this.履歴.find(item => item.id === id && item.作業URI === this.現在フォルダ()?.uri.toString());
     if (!entry) return;
     this.会話ID = entry.id;
-    this.会話 = { ...entry, メッセージ: [...entry.メッセージ] };
+    // 履歴の会話本文だけを開く。モデルは今の選択を保ち、履歴に残っていたモデルへは切り替えない。
+    const { provider, model, モデル選択済み } = this.会話;
+    this.会話 = { ...entry, メッセージ: [...entry.メッセージ], provider, model, モデル選択済み };
     this.添付 = undefined; this.進捗 = [];
     this.保存(false); this.接続更新(true); this.通知();
   }

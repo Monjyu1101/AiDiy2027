@@ -7,6 +7,7 @@ const assert=require('node:assert/strict');
 const {app,BrowserWindow,screen}=require('electron');
 const {mkdirSync,writeFileSync}=require('node:fs');
 const {join}=require('node:path');
+const {checkNavigationDimensions}=require('./navigation-dimensions-probe.cjs');
 const {holdUnmoved,holdMove,shortClick,checkNativeControls,probeBackground}=require('./window-move-probe.cjs');
 app.setPath('appData',process.env.AIDIY_TEST_PROFILE);
 const showInactive=BrowserWindow.prototype.showInactive;
@@ -20,15 +21,17 @@ app.on('browser-window-created',(_,window)=>{if(running)return;running=true;wind
  await until(()=>evaluate(window,`!!document.querySelector('.navigation-panel.standalone textarea')`),'Navigation');
  assert.equal(window.getTitle(),'AiDiy Navigator');
  const initialArea=screen.getDisplayMatching(window.getBounds()).workArea;
-  assert.ok(Math.abs(window.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(window.getBounds().height-Math.min(800,initialArea.height-16))<=2,'初期480×800 DIP、小画面は縮小（Windows丸め2px以内）');
+  assert.ok(Math.abs(window.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(window.getBounds().height-Math.min(800,initialArea.height-16))<=2,'初期480×800 DIP、小画面は縮小（Windows丸め2 DIP以内）');
  const bounds=window.getBounds(),area=screen.getDisplayMatching(bounds).workArea;
  assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'単独Navigatorは作業領域の左中央');
  console.log('Navigator initial bounds',JSON.stringify(window.getBounds()));
  assert.equal(await evaluate(window,`document.title`),'AiDiy Navigator');
  assert.ok(await evaluate(window,`document.querySelector('.navigation-project').textContent.includes('プロジェクト:')`));
  assert.equal(await evaluate(window,`(()=>{const outer=getComputedStyle(document.querySelector('.development-app.navi')),inner=getComputedStyle(document.querySelector('.navigation-panel.standalone'));return ['Left','Right','Top','Bottom'].every(side=>{const size=parseFloat(outer['border'+side+'Width']);return size>0&&size<=1&&parseFloat(inner['border'+side+'Width'])===0;});})()`),true);
- const bar=await evaluate(window,`(()=>{const h=document.querySelector('.panel-brand'),a=h.querySelector('.window-actions');return {height:h.getBoundingClientRect().height,display:getComputedStyle(h).display,right:h.getBoundingClientRect().right-a.getBoundingClientRect().right}})()`);
- assert.equal(bar.height,31);assert.equal(bar.display,'grid');assert.ok(bar.right<=4);console.log('Titlebar',JSON.stringify(bar));
+ await checkNavigationDimensions(window,'standalone');
+ if(process.env.AIDIY_TEST_NAVIGATION_DIMENSIONS_ONLY==='1'){
+  process.send?.({testPassed:true,scope:'navigation dimensions and titlebar only',results:['standalone native Navigator: initial bounds, DPI, DOM titlebar and controls'],skipped:['window dragging','shared model dialog']});app.exit(0);return;
+ }
  const out=join(__dirname,'../../temp/navigation-titlebar-check');mkdirSync(out,{recursive:true});window.webContents.setBackgroundThrottling(false);await until(()=>evaluate(window,`!document.documentElement.classList.contains('desktop-opening')`),'opening complete');await new Promise(r=>setTimeout(r,22000));writeFileSync(join(out,'standalone.png'),(await window.webContents.capturePage()).toPNG());
  const moveResults=[];
  for(const ending of ['release','escape'])moveResults.push(await holdMove(window,window.webContents,'.navigation-display','Navigator背景_'+ending,ending));

@@ -6,13 +6,15 @@
 
 // 模擬AIと実ブラウザで複数Naviの入力・結果・モデル・終了の独立を確認する。
 // ルートから node frontend_ide/scripts/check-navigation.mjs。CHROME_PATHでブラウザを指定可能。
+// --step-4 は画面からの作成・再評価と保存内容の整合確認だけを実行する。
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
+import { createNavigationScreenRecord } from './navigation-step4-check.mjs';
 import { createCoreConnection } from '../viewer/core-connection.mjs';
 import { startDevelopment } from '../server.mjs';
 
@@ -23,6 +25,8 @@ if (!chromePath) throw Error('Chrome / Edge が見つかりません。CHROME_PA
 const temporary = mkdtempSync(join(tmpdir(), 'aidiy-connection-check-'));
 const project = join(temporary, 'project'); mkdirSync(project);
 writeFileSync(join(project, 'README.md'), '# 接続表示の検証\n', 'utf8');
+const step4=process.argv.includes('--step-4');
+const record=createNavigationScreenRecord({name:'check-navigation',temporary,project,stateRoot:join(temporary,'navigation-state')});
 const calls = [], replies = new Set(); let healthy = true;
 const core = createServer((req, res) => {
   assert.equal(req.url, '/aidiy_code_agents/ping'); assert.equal(req.method, 'GET');
@@ -38,7 +42,8 @@ const core = createServer((req, res) => {
 await new Promise(done => core.listen(0, '127.0.0.1', done));
 const connection = createCoreConnection(project, { target: `http://127.0.0.1:${core.address().port}` });
 let aiCalls=0,failNext=false;
-const app = await startDevelopment(project, { connection, navigationOptions:{stateRoot:join(temporary,'navigation-state'),providerList:async()=>({providers:['aidiy_hermes'],notice:''}),runAgent:async({prompt})=>{
+const app = await startDevelopment(project, { connection, navigationOptions:{defaultModel:async()=>({provider:'aidiy_hermes',model:'auto'}),stateRoot:join(temporary,'navigation-state'),providerList:async()=>({providers:['aidiy_hermes'],notice:''}),runAgent:async({prompt})=>{
+ if(step4)return record.respond(prompt);
  aiCalls++;if(failNext){failNext=false;await new Promise(r=>setTimeout(r,800));throw Error('表示試験の失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));
  shape.items=[{id:'one',name:'検索画面の入力を整える',progress:65,reason:'入力欄を確認。空入力の検証を次に行います。'},{id:'two',name:'操作ガイドを整える',progress:20,reason:'既存の章に追記する方針です。'}];shape.schemaVersion=3;shape.nextItemId='one';shape.items.forEach((item,index)=>{item.weight=[80,20][index];item.weightReason='表示試験用の作業量見積もり';});shape.overall={progress:56,reason:'作業量に基づく加重評価の模擬結果'};shape.nextPrompt='検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。';
  await new Promise(r=>setTimeout(r,1000));return {content:JSON.stringify(shape)};
@@ -75,13 +80,16 @@ try {
   await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
   await evaluate(`aidiyIDE.setAutoSpin(false);window.testNavi=[];const originalOpen=window.open;window.open=(...args)=>{const child=originalOpen.apply(window,args);testNavi.push(child);return child;};document.querySelector('.navigation-launch').click()`);
   const child=(index,expression)=>evaluate(`testNavi[${index}].eval(${JSON.stringify(expression)})`);
+  record.bind({evaluate,child,app,port,target,errors,getAiCalls:()=>aiCalls});
   await until(()=>evaluate(`!!testNavi[0]?.document.querySelector('textarea')`),'Navi 1');
+  await until(()=>child(0,`!!document.querySelector('.navigation-start:not(:disabled)')`),'Navi 1 実行可能');
+  if(step4){await record.run();}else{
   assert.equal(await child(0,`document.querySelector('textarea').rows`),4);
   assert.equal(await child(0,`(async()=>{const mark=document.querySelector('.mark-escape'),rect=mark.getBoundingClientRect(),offset=()=>parseFloat(mark.style.transform.match(/-?[0-9.]+/)[0]),wait=()=>new Promise(resolve=>setTimeout(resolve,50));mark.dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse',clientX:rect.left+1,clientY:rect.top+rect.height/2}));for(let i=0;i<40&&offset()<2;i++)await wait();const moved=offset();document.dispatchEvent(new PointerEvent('pointermove',{pointerType:'mouse',clientX:-2000,clientY:-2000}));for(let i=0;i<40&&offset()>=moved;i++)await wait();const returning=offset();return moved>=2&&returning>=0&&returning<moved&&!!mark.querySelector('.welcome-mark img');})()`),true);
   await child(0,`(()=>{const t=document.querySelector('textarea');t.value='検索画面を整える';t.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.navigation-start').click();})()`);
   await until(()=>child(0,`!!document.querySelector('.navigation-display.running')`),'nav busy');
   assert.equal(await child(0,`document.querySelector('.terminal-welcome h1').textContent`),'FINDING YOUR ROUTE');
-  assert.equal(await child(0,`(()=>{const button=document.querySelector('.navigation-start'),label=button.querySelector('.navigation-button-label'),a=button.getBoundingClientRect(),b=label.getBoundingClientRect();return label.textContent==='調査中…'&&getComputedStyle(label).whiteSpace==='nowrap'&&getComputedStyle(label).color==='rgb(255, 255, 255)'&&b.left>=a.left&&b.right<=a.right;})()`),true);
+  assert.equal(await child(0,`(()=>{const button=document.querySelector('.navigation-stop');return !!button&&!button.disabled&&button.querySelector('.navigation-stop-label')?.textContent==='調査中'&&!document.querySelector('.navigation-start');})()`),true);
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-display'),'::before').top`),'2px');
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-display'),'::after').bottom`),'2px');
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-form-foot')).marginTop`),'3px');
@@ -194,10 +202,14 @@ try {
   mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/standalone.png'),Buffer.from(capture.result.data,'base64'));
   assert.deepEqual(errors,[]);console.log(JSON.stringify({pass:true,ai:'mock only',aiCalls,checks:['two popup windows','independent model/result/evaluation','Explorer unchanged','close isolation']}));
 
+  }
+} catch(error) {
+  await record.capture('failure',error);throw error;
 } finally {
-  socket?.close(); const exited = once(chrome, 'exit'); chrome.kill(); await exited;
+  socket?.close(); if(chrome.exitCode===null&&chrome.signalCode===null){const exited = once(chrome, 'exit'); chrome.kill(); await exited;}
   await standalone?.close();await app.close(); connection.close(); for (const timer of replies) clearTimeout(timer);
   core.closeAllConnections(); await new Promise(done => core.close(done));
+  if(!resolve(temporary).startsWith(resolve(tmpdir())+sep))throw Error('一時保存先が不正です。');
   rmSync(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 

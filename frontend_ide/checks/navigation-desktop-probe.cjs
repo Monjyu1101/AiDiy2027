@@ -7,6 +7,7 @@ const assert=require('node:assert/strict');
 const {app,BrowserWindow,screen}=require('electron');
 const {mkdirSync,writeFileSync}=require('node:fs');
 const {join}=require('node:path');
+const {checkNavigationDimensions}=require('./navigation-dimensions-probe.cjs');
 const {holdUnmoved,holdMove,shortClick,checkNativeControls,probeBackground}=require('./window-move-probe.cjs');
 app.setPath('appData',process.env.AIDIY_TEST_PROFILE);
 const showInactive=BrowserWindow.prototype.showInactive;
@@ -30,18 +31,23 @@ app.on('browser-window-created',(_,owner)=>{
   await until(()=>evaluate(first,`getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`),'Navi 1 visible');
   assert.deepEqual(await evaluate(owner,`navigationFlashObserver.disconnect();navigationFlash`),[],'別窓の準備中にIDE内へNavigatorを表示しない');
   const initialArea=screen.getDisplayMatching(first.getBounds()).workArea;
-  assert.ok(Math.abs(first.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(first.getBounds().height-Math.min(800,initialArea.height-16))<=2,'初期480×800 DIP、小画面は縮小（Windows丸め2px以内）');
+  assert.ok(Math.abs(first.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(first.getBounds().height-Math.min(800,initialArea.height-16))<=2,'初期480×800 DIP、小画面は縮小（Windows丸め2 DIP以内）');
   const area=screen.getDisplayMatching(first.getBounds()).workArea,bounds=first.getBounds();
   assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'Navigatorは作業領域の左中央');
  console.log('Navigator initial bounds',JSON.stringify(first.getBounds()));
-  first.setSize(540,640);
-  await evaluate(first,`(()=>{const t=document.querySelector('textarea');t.value='第一の目標';t.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  await checkNavigationDimensions(first,'desktop-1');
+  if(process.env.AIDIY_TEST_NAVIGATION_DIMENSIONS_ONLY!=='1'){
+   first.setSize(540,640);
+   await evaluate(first,`(()=>{const t=document.querySelector('textarea');t.value='第一の目標';t.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  }
   await evaluate(owner,`document.querySelector('.navigation-launch').click()`);
   await until(()=>children().length===2,'Navi 2');const second=children().find(w=>w!==first);assert.equal(first.getTitle(),'AiDiy IDE / Navigator 1');assert.equal(second.getTitle(),'AiDiy IDE / Navigator 2');
   await until(()=>evaluate(second,`!!document.querySelector('textarea')`),'Navi 2 DOM');
   await until(()=>evaluate(second,`getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`),'Navi 2 visible');
- const bar=await evaluate(second,`(()=>{const h=document.querySelector('.panel-brand'),a=h.querySelector('.window-actions');return {height:h.getBoundingClientRect().height,display:getComputedStyle(h).display,right:h.getBoundingClientRect().right-a.getBoundingClientRect().right}})()`);
- assert.equal(bar.height,31);assert.equal(bar.display,'grid');assert.ok(bar.right<=4);console.log('Titlebar',JSON.stringify(bar));
+  await checkNavigationDimensions(second,'desktop-2');
+  if(process.env.AIDIY_TEST_NAVIGATION_DIMENSIONS_ONLY==='1'){
+   process.send?.({testPassed:true,scope:'navigation dimensions and titlebar only',results:['two native Navigator windows: initial bounds, DPI, DOM titlebar and controls'],skipped:['goal/model isolation','VR return','closing one preserves the other']});app.exit(0);return;
+  }
   assert.equal(await evaluate(second,`document.querySelector('textarea').value.startsWith('最近更新したファイル')`),true);
   await evaluate(second,`(()=>{const t=document.querySelector('textarea');t.value='第二の目標';t.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.navigation-model-line button').click();})()`);
   assert.ok(await evaluate(second,`document.querySelector('.model-dialog').open`));

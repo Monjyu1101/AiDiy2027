@@ -6,7 +6,7 @@ import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navi
 // https://github.com/monjyu1101/AiDiy2027
 // 開発目標のナビゲーション。既存CLI読取専用境界を使い、実作業は開始しない。
 import {readFile, readdir, realpath, stat, writeFile, rename, mkdir, rm} from 'node:fs/promises';
-import {join, relative, isAbsolute, sep} from 'node:path';
+import {join, dirname, relative, isAbsolute, sep} from 'node:path';
 import {randomUUID,createHash} from 'node:crypto';
 import {homedir} from 'node:os';
 import {fileURLToPath} from 'node:url';
@@ -86,7 +86,7 @@ export async function navigationDefaultModel(file=fileURLToPath(new URL('../../_
  try{const config=JSON.parse((await readFile(file,'utf8')).replace(/^\uFEFF/,''));model=config.CODE_AIDIY_HERMES_MODEL||'auto';}catch{}
  try{return validateNavigationModel({provider:'aidiy_hermes',model});}catch{return {provider:'aidiy_hermes',model:'auto'};}
 }
-export function createNavigation(project,{state,defaultModel=navigationDefaultModel,runAgent=runNavigationAgent,availability=runAgent===runNavigationAgent?navigationAvailability:async()=>({available:true,reason:''}),providerList=navigationProviders,waitMs=300000,now=Date.now,scan=scanTree,stateRoot=join(homedir(),'.aidiy','navigation'),instance='default'}={}){
+export function createNavigation(project,{state,defaultModel=navigationDefaultModel,runAgent=runNavigationAgent,availability=runAgent===runNavigationAgent?navigationAvailability:async()=>({available:true,reason:''}),providerList=navigationProviders,waitMs=300000,now=Date.now,scan=scanTree,stateRoot=join(homedir(),'.aidiy','navigation'),instance='default',modelFile=join(dirname(stateRoot),'aidiy_navi_model.json')}={}){
  if(!/^[a-zA-Z0-9_-]{1,80}$/.test(instance))throw Error('Navigator IDが不正です。');
  let job=null,closed=false,starting=null;
  const cancelledRequests=new Set();
@@ -100,11 +100,17 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
  async function atomicJSON(file,data){const temporary=file+'.'+randomUUID()+'.tmp';try{await writeFile(temporary,JSON.stringify(data,null,2),{encoding:'utf8',flag:'wx'});await replaceState(temporary,file);}finally{await rm(temporary,{force:true});}}
  async function historyRead(id){if(!validId(id))throw Error('Navigator履歴IDが不正です。');const dir=await historyDirectory(),file=await realpath(join(dir,id+'.json'));if(!within(dir,file)||(await stat(file)).size>1024*1024)throw Error('Navigator履歴が不正です。');return restored(JSON.parse(await readFile(file,'utf8')));}
  async function list(){active();const dir=await historyDirectory(),items=[];for(const name of await readdir(dir)){if(!name.endsWith('.json')||!validId(name.slice(0,-5)))continue;try{const item=await historyRead(name.slice(0,-5));items.push({id:item.navigationId,goal:item.goal,updatedAt:item.updatedAt});}catch{}}return items.sort((a,b)=>b.updatedAt-a.updatedAt);}
- async function select(id){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後に履歴を選択してください。');const result=await historyRead(id);if(result.selection)await saveModel(result.selection);await atomicJSON(join(await directory(),'latest.json'),result);job=null;return get();}
+ async function select(id){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後に履歴を選択してください。');const result=await historyRead(id);await atomicJSON(join(await directory(),'latest.json'),result);job=null;return get();}
  async function fresh(){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後に新規作成してください。');await rm(join(await directory(),'latest.json'),{force:true});job=null;return get();}
- const modelFile=async()=>join(await directory(),'model.json');
- async function readModel(){try{return validateNavigationModel(JSON.parse(await readFile(await modelFile(),'utf8')));}catch{return validateNavigationModel(await defaultModel());}}
- async function saveModel(value){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後にモデルを変更してください。');const model=validateNavigationModel(value);await mkdir(stateRoot,{recursive:true,mode:0o700});const target=await modelFile(),temp=target+'.'+randomUUID()+'.tmp';try{await writeFile(temp,JSON.stringify(model,null,2),{encoding:'utf8',mode:0o600,flag:'wx'});await replaceState(temp,target);}finally{await rm(temp,{force:true});}return model;}
+ // 最後に確定したモデルは、Code / Liveと同じく ~/.aidiy/aidiy_navi_model.json（プロジェクト・窓に共通）へ保存する。次に開く窓はその値で始まる。
+ // 開いている窓は、最初に読んだ値か自分で確定した値を保持し、他の窓の確定では変わらない。開いた時点で保存済みの値がなければ既定値を使い、保存ファイルを再読込しない。
+ let selected=null,openedWithoutSaved=false;
+ async function readModel(){
+  if(selected)return selected;
+  if(!openedWithoutSaved){try{return selected=validateNavigationModel(JSON.parse(await readFile(modelFile,'utf8')));}catch{openedWithoutSaved=true;}}
+  return validateNavigationModel(await defaultModel());
+ }
+ async function saveModel(value){active();if(starting||job&&current(job)&&job.status==='running')throw Error('解析完了後にモデルを変更してください。');const model=validateNavigationModel(value);await mkdir(dirname(modelFile),{recursive:true,mode:0o700});const temp=modelFile+'.'+randomUUID()+'.tmp';try{await writeFile(temp,JSON.stringify(model,null,2)+'\n',{encoding:'utf8',mode:0o600,flag:'wx'});await replaceState(temp,modelFile);}finally{await rm(temp,{force:true});}selected=model;return model;}
  const active=()=>{if(closed||!state().active)throw Error('IDEの利用を開始してください。');};
  const current=j=>!closed&&state().active&&state().startedAt===j.session&&job===j;
  async function read(){

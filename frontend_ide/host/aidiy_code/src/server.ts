@@ -364,12 +364,14 @@ export async function 単独起動(project: string, backend?: string, initialMod
           if (initialModel.lockedMode && entry.実行モード !== (initialModel.offline ? 'offline' : 'online')) {
             reply(409, {error:'この会話は別の利用モードで開いてください。'}); return;
           }
-          // 履歴のモデルはその会話だけへ復元し、モード別の最終手動選択は維持する。
+          // 履歴の会話本文だけを開く。モデルは今の選択を保ち、履歴に残っていたモデルへは切り替えない（モードが変わる場合はそのモードの最終選択）。
+          const modeChanged = state.実行モード !== entry.実行モード;
           state.実行モード = entry.実行モード;
           if (state.実行モード === 'offline') state.自動接続 = false;
           state.会話ID = entry.id; state.メッセージ = [...entry.メッセージ]; state.セッションID = entry.セッションID;
           state.HermesセッションID = entry.HermesセッションID;
-          state.provider = entry.provider; state.model = entry.model; state.進捗 = []; reconnect(); notify();
+          if (modeChanged) Object.assign(state, modeModels[state.実行モード]);
+          state.進捗 = []; reconnect(); notify();
         } else if (type === 'deleteHistory') {
           const entry = history.find(item => item.id === data.id);
           if (!entry) { reply(404, {error:'会話がありません。'}); return; }

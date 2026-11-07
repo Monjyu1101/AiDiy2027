@@ -14,6 +14,10 @@ import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import NaviCruise from './ナビ航行.vue';
 import NaviFireworks from './ナビ花火.vue';
+import NaviFighter from './ナビ戦闘機.vue';
+import NaviClock from './ナビ時計.vue';
+import NaviMaze from './ナビ迷路.vue';
+import NaviRequest from './ナビ依頼文.vue';
 import NaviScenery from './ナビ風景.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
 import NavigationSceneMenu from './ナビ画面メニュー.vue';
@@ -23,7 +27,7 @@ import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue'
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
 import {localDateTimeInput} from '../ファイル閲覧/ファイル日時.js';
 const props=defineProps({standalone:Boolean,startedAt:Number,allDisplays:Boolean,project:Object,instance:{type:String,required:true}});
-const emit=defineEmits(['closed']);
+const emit=defineEmits(['closed','opened']);
 const normalTitle=computed(()=>props.standalone?'AiDiy Navigator':'AiDiy IDE / Navigator '+props.instance.slice(5));
 const title=computed(()=>autopilot.value?normalTitle.value.replace('Navigator','Navigation Cruise'):normalTitle.value);
 const native=!!window.aidiyWindow;
@@ -123,7 +127,7 @@ async function refresh(){
 }
 async function open(){
  visible.value=true;request=new AbortController();void refresh();await nextTick();
- if(!props.standalone){try{await pin();}finally{openingWindow.value=false;}}
+ if(!props.standalone){try{await pin();}finally{openingWindow.value=false;emit('opened');}}
 }
 onMounted(open);
 async function pin(){
@@ -198,7 +202,8 @@ watch(recommendedPrompt,()=>{copied.value=false;copyError.value='';});
 // 自動航行の許可はメモリ内だけに保持し、履歴・再表示から復元しない。
 const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false),autopilot=ref(false),autopilotStatus=ref(''),autopilotPhase=ref('');
 watch(()=>[props.project?.path,props.startedAt,recommendedPrompt.value,codeOpen.value,visible.value,detached.value],()=>{draftRequest.value=null;handoffError.value='';},{flush:'sync'});
-watch(()=>[busy.value,autopilot.value,availability.value.available,visible.value,props.project?.path,props.startedAt,detached.value],()=>{sceneAction.value='';},{flush:'sync'});
+// 配列を返す1つのゲッターは、依存が書き換わるたびに発火する。周期更新が availability へ同じ値の新オブジェクトを代入しても選択を閉じないよう、配列で渡して各値が変わったときだけ発火させる。
+watch([busy,autopilot,()=>availability.value.available,visible,()=>props.project?.path,()=>props.startedAt,detached],()=>{sceneAction.value='';},{flush:'sync'});
 const codeToggleLabel=computed(()=>codeOpen.value?'CODE非表示':'CODE表示');
 const autopilotMessage=createNavigationMessage(text=>autopilotStatus.value=text);
 let codeSession,codePromise,autopilotController,visibilityTimer,codeGeneration=0;
@@ -360,7 +365,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviFighter v-else-if="!cruiseFailed&&cruiseKind==='fighter'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||!['fighter','clock','maze','request'].includes(cruiseKind)" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>
@@ -436,8 +441,9 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-goal-form textarea,.navigation-model-picker input,.navigation-model-picker select{background:#000}
 .navigation-window{border:1px solid var(--aidiy-titlebar-background);box-sizing:border-box}
 .navigation-window .navigation-panel{border:0}
-.navigation-window .panel-window-title .panel-brand{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
-.navigation-panel .panel-brand strong,.navigation-window .panel-brand strong{font-size:14px}
+/* Viewer別窓と同様、接続表示と操作列の幅を先に確保し、長いタイトルは中央で省略する。 */
+.navigation-panel>.panel-brand,.navigation-window .panel-window-title .panel-brand{grid-template-columns:auto minmax(0,1fr) auto}
+.navigation-panel .panel-brand strong,.navigation-window .panel-brand strong{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 </style>
 
 <style>

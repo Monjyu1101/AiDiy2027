@@ -5,14 +5,16 @@
 // https://github.com/monjyu1101/AiDiy2027
 
 // 模擬AIと実ブラウザで複数Naviの入力・結果・モデル・終了の独立を確認する。
-// ルートから node frontend_ide/scripts/check-navigation.mjs。CHROME_PATHでブラウザを指定可能。
+// ルートから node frontend_ide/scripts/check-navigation-progress.mjs。CHROME_PATHでブラウザを指定可能。
+// --step-4 は画面からの作成・再評価と保存内容の整合確認だけを実行する。
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
+import { createNavigationScreenRecord } from './navigation-step4-check.mjs';
 import { createCoreConnection } from '../viewer/core-connection.mjs';
 import { startDevelopment } from '../server.mjs';
 
@@ -23,6 +25,8 @@ if (!chromePath) throw Error('Chrome / Edge が見つかりません。CHROME_PA
 const temporary = mkdtempSync(join(tmpdir(), 'aidiy-connection-check-'));
 const project = join(temporary, 'project'); mkdirSync(project);
 writeFileSync(join(project, 'README.md'), '# 接続表示の検証\n', 'utf8');
+const step4=process.argv.includes('--step-4');
+const record=createNavigationScreenRecord({name:'check-navigation-progress',temporary,project,stateRoot:join(temporary,'navigation-state'),progress:true});
 const calls = [], replies = new Set(); let healthy = true;
 const core = createServer((req, res) => {
   assert.equal(req.url, '/aidiy_code_agents/ping'); assert.equal(req.method, 'GET');
@@ -39,6 +43,7 @@ await new Promise(done => core.listen(0, '127.0.0.1', done));
 const connection = createCoreConnection(project, { target: `http://127.0.0.1:${core.address().port}` });
 let aiCalls=0,dependencyReady=true,failNext=false,holdNext=false,releaseHeld;
 const app = await startDevelopment(project, { connection, navigationOptions:{defaultModel:async()=>({provider:"aidiy_hermes",model:"same"}),availability:async()=>({available:dependencyReady,reason:dependencyReady?'':'試験依存が停止しています'}),stateRoot:join(temporary,'navigation-state'),runAgent:async({prompt})=>{
+ if(step4)return record.respond(prompt);
  aiCalls++;if(holdNext){holdNext=false;await new Promise(resolve=>releaseHeld=resolve);}if(failNext){failNext=false;throw Error('試験用の応答失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));
  shape.items=[{id:'one',name:'検索画面の入力を整える',progress:0,reason:'入力欄を確認。空入力の検証を次に行います。'},{id:'two',name:'操作ガイドを整える',progress:50,reason:'既存の章に追記する方針です。'}];shape.items.push({id:'three',name:'長い項目名でも縮小窓で折り返して読めることを確認する',progress:100,reason:'表示確認用の模擬結果です。'});shape.schemaVersion=3;shape.nextItemId='one';shape.items.forEach((item,index)=>{item.weight=[60,30,10][index];item.weightReason='表示試験用の作業量見積もり';});shape.overall={progress:25,reason:'作業量に基づく加重評価の模擬結果'};shape.nextPrompt='検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。';
  await new Promise(r=>setTimeout(r,300));return {content:JSON.stringify(shape)};
@@ -76,16 +81,19 @@ try {
   await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
   await evaluate(`aidiyIDE.setAutoSpin(false);window.testNavi=[];const originalOpen=window.open;window.open=(...args)=>{const child=originalOpen.apply(window,args);testNavi.push(child);return child;};document.querySelector('.navigation-launch').click()`);
   const child=(index,expression)=>evaluate(`testNavi[${index}].eval(${JSON.stringify(expression)})`);
+  record.bind({evaluate,child,app,port,target,errors,getAiCalls:()=>aiCalls});
   await until(()=>evaluate(`!!testNavi[0]?.document.querySelector('textarea')`),'Navi 1');
+  await until(()=>child(0,`!!document.querySelector('.navigation-start:not(:disabled)')`),'Navi 1 実行可能');
+  if(step4){await record.run();}else{
   await child(0,`(()=>{const t=document.querySelector('textarea');t.value='検索画面を整える';t.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.navigation-start').click();})()`);
-  await until(()=>child(0,`document.querySelectorAll('.navigation-progress').length===3`),'Navi 1 result');
+  await until(()=>child(0,`document.querySelectorAll('.navigation-items .navigation-progress').length===3`),'Navi 1 result');
   assert.equal(aiCalls,1);
   dependencyReady=false;
   await until(()=>child(0,`document.querySelector('.navigation-start').disabled&&document.querySelector('.navigation-evaluate').disabled&&document.querySelector('.navigation-unavailable')?.textContent.includes('停止')`),'依存停止表示');
-  assert.equal(await child(0,`document.querySelectorAll('.navigation-progress').length`),3);
+  assert.equal(await child(0,`document.querySelectorAll('.navigation-items .navigation-progress').length`),3);
   dependencyReady=true;
   await until(()=>child(0,`!document.querySelector('.navigation-start').disabled&&!document.querySelector('.navigation-evaluate').disabled`),'依存復帰');
-  const barStyles=await child(0,`[...document.querySelectorAll('.navigation-progress')].map(el=>({value:el.getAttribute('aria-valuenow'),width:el.style.getPropertyValue('--progress-width'),color:el.style.getPropertyValue('--progress-fill'),label:el.textContent}))`);
+  const barStyles=await child(0,`[...document.querySelectorAll('.navigation-items .navigation-progress')].map(el=>({value:el.getAttribute('aria-valuenow'),width:el.style.getPropertyValue('--progress-width'),color:el.style.getPropertyValue('--progress-fill'),label:el.textContent}))`);
   assert.deepEqual(barStyles.map(x=>x.value),['0','50','100']);assert.deepEqual(barStyles.map(x=>x.width),['0%','50%','100%']);assert.equal(new Set(barStyles.map(x=>x.color)).size,3);
   const targets=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
   const navTarget=targets.find(t=>t.title==='AiDiy IDE / Navigator 1');assert.ok(navTarget);
@@ -96,14 +104,14 @@ try {
   const navCapture=await captureSend('Page.captureScreenshot',{format:'jpeg',quality:32});
   mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/Navigator_bars.jpg'),Buffer.from(navCapture.result.data,'base64'));captureSocket.close();
   await child(0,`document.querySelector('.navigation-panel').style.width='320px'`);
-  assert.equal(await child(0,`[...document.querySelectorAll('.navigation-progress')].every(e=>e.scrollWidth<=e.clientWidth)`),true);
+  assert.equal(await child(0,`[...document.querySelectorAll('.navigation-items .navigation-progress')].every(e=>e.scrollWidth<=e.clientWidth)`),true);
 
   await evaluate(`document.querySelector('.navigation-launch').click()`);
   await until(()=>evaluate(`!!testNavi[1]?.document.querySelector('textarea')`),'Navi 2');
   assert.equal(await child(1,`document.querySelector('textarea').value`),'');
   assert.ok(await child(0,`document.body.textContent.includes('AiDiy IDE / Navigator 1')`));
   assert.ok(await child(1,`document.body.textContent.includes('AiDiy IDE / Navigator 2')`));
-  assert.equal(await child(1,`document.querySelectorAll('.navigation-progress').length`),0);
+  assert.equal(await child(1,`document.querySelectorAll('.navigation-items .navigation-progress').length`),0);
   await child(1,`document.querySelector('.navigation-model-line button').click()`);
   await child(1,`(()=>{const input=document.querySelector('.navigation-model-choice');input.value='auto';input.dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('.navigation-model-picker').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
   await until(()=>child(1,`document.querySelector('.navigation-model-line>span').textContent.includes('auto')`),'モデル保存');
@@ -116,7 +124,7 @@ try {
   await child(0,`document.querySelector('.navigation-history>button').click()`);
   await until(()=>child(0,`!document.querySelector('.navigation-history')`),'history selected');
   assert.equal(aiCalls,2);
-  assert.equal(await child(1,`document.querySelectorAll('.navigation-progress').length`),0);
+  assert.equal(await child(1,`document.querySelectorAll('.navigation-items .navigation-progress').length`),0);
   assert.equal(await evaluate(`document.querySelectorAll('.navigation-toggle').length`),0);
   await evaluate(`document.querySelector('.explorer-toggle').click()`);
   assert.equal(await evaluate(`document.querySelector('.space-view').classList.contains('navigation-open')`),false);
@@ -127,7 +135,7 @@ try {
   await setGoal('変更後の目標');failNext=true;await child(0,`document.querySelector('.navigation-start').click()`);
   await until(()=>child(0,`document.body.textContent.includes('試験用の応答失敗')`),'失敗表示');
   assert.equal(await child(0,`document.querySelector('.navigation-evaluate').disabled`),true);
-  assert.equal(await child(0,`document.querySelectorAll('.navigation-progress').length`),3);
+  assert.equal(await child(0,`document.querySelectorAll('.navigation-items .navigation-progress').length`),3);
   await child(0,`document.querySelector('.navigation-start').click()`);
   await until(()=>child(0,`!document.querySelector('.navigation-evaluate').disabled`),'新目標成功');
   holdNext=true;await setGoal('処理中の目標');await child(0,`document.querySelector('.navigation-start').click()`);await until(()=>!!releaseHeld,'実行開始');
@@ -163,10 +171,14 @@ try {
   mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/standalone.png'),Buffer.from(capture.result.data,'base64'));
   assert.deepEqual(errors,[]);console.log(JSON.stringify({pass:true,ai:'mock only',aiCalls,checks:['two popup windows','independent model/result/evaluation','Explorer unchanged','close isolation','editable during running','changed/restored/empty draft','failure and retry','history sync']}));
 
+  }
+} catch(error) {
+  await record.capture('failure',error);throw error;
 } finally {
-  socket?.close(); const exited = once(chrome, 'exit'); chrome.kill(); await exited;
+  socket?.close(); if(chrome.exitCode===null&&chrome.signalCode===null){const exited = once(chrome, 'exit'); chrome.kill(); await exited;}
   await standalone?.close();await app.close(); connection.close(); for (const timer of replies) clearTimeout(timer);
   core.closeAllConnections(); await new Promise(done => core.close(done));
+  if(!resolve(temporary).startsWith(resolve(tmpdir())+sep))throw Error('一時保存先が不正です。');
   rmSync(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
 }
 

@@ -24,7 +24,7 @@ function fixture(t){
  return {api,requests,props,randoms:()=>randoms};
 }
 test('5候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
- const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面']);
+ const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面','時計','迷路','依頼文','戦闘機']);
  f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
  f.api.sceneAction.value='';assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
 });
@@ -48,6 +48,22 @@ for(const field of ['busy','unavailable','autopilot','hidden','project','session
  if(field==='detached')f.api.detached.value=true;
  assert.equal(f.api.sceneAction.value,'');const before=f.requests.length;f.api.runWithScene('water');assert.equal(f.requests.length,before);
 });
+test('周期更新が同じ値を再代入しても、開いた選択を閉じず候補から実行できる',t=>{
+ const f=fixture(t);f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');
+ // refresh() は5秒ごと（実行中は2秒ごと）に、値が同じでも新しい availability オブジェクトを代入する。
+ for(let i=0;i<3;i++)f.api.availability.value={available:true,reason:''};
+ f.props.project={path:'/fixture'};f.props.startedAt=1;
+ assert.equal(f.api.sceneAction.value,'evaluate');
+ f.api.runWithScene('aquarium');assert.equal(f.requests.length,1);assert.equal(f.api.cruiseKind.value,'aquarium');
+});
 test('不正な候補や実行不可の再評価は送信しない',t=>{
  const f=fixture(t);f.api.chooseScene('evaluate');f.api.runWithScene('unknown');assert.equal(f.requests.length,0);f.api.result.value=null;f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'');
+});
+
+test('右クリックメニュー: 戦闘機（ランダム選択に含めない画面）は一番下で、1pxのヘアラインで区切る',async()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ画面メニュー.vue',import.meta.url),'utf8');
+ assert.match(source,/<div v-if="!NAVIGATION_RANDOM_SCENES\.includes\(scene\)" class="navigation-scene-separator" role="separator"/);
+ assert.match(source,/\.navigation-scene-separator\{height:1px;/);
+ assert.equal(NAVIGATION_SCENES.at(-1),'fighter');
+ assert.deepEqual(NAVIGATION_SCENES.filter(scene=>scene==='fighter'),['fighter']);
 });

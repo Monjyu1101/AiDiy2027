@@ -278,7 +278,8 @@ test('Code: 古い履歴からのモード切替で最終手動モデルを上�
       await waitState({type:'new'},p=>p.会話ID!==original.会話ID && (mode==='offline' || p.接続済み));
       assert.equal((await post(app,{type:'model',...latest})).status,200);
       await waitState({メッセージ識別:'input_text',メッセージ内容:'新しいモデルの会話'},p=>!p.実行中 && p.メッセージ.length>0);
-      await waitState({type:'selectHistory',id:original.会話ID},p=>p.会話ID===original.会話ID && (mode==='offline' || p.接続済み));
+      const opened = await waitState({type:'selectHistory',id:original.会話ID},p=>p.会話ID===original.会話ID && (mode==='offline' || p.接続済み));
+      assert.deepEqual({provider:opened.provider,model:opened.model},latest,'履歴を開いても今のモデルを保つ（履歴のモデルへ切り替えない）');
       await waitState({type:'selectHistory',id:original.会話ID},p=>p.会話ID===original.会話ID && (mode==='offline' || p.接続済み));
       const fresh = await waitState({type:'new'},p=>p.会話ID!==original.会話ID && (mode==='offline' || p.接続済み));
       assert.deepEqual({provider:fresh.provider,model:fresh.model},latest);
