@@ -232,7 +232,7 @@ Windowsで画面を持たない子プロセスは、Pythonでは `CREATE_NO_WIND
 
 AvatarのGUI起動は `electron/dev-start.cjs` がVite・TypeScript監視・Electron監視を直接管理する。npm/concurrentlyの入れ子のシェルを避ける。開発用の `npm run dev` も同じ入口を使う。
 
-回帰試験は `node scripts/checks/Electron表示統合確認.cjs`。Pythonの実子プロセス、GUIバイナリ、各Electron画面と関連パネルを順に確認し、実施ごとのフォルダへログと結果を保存する。`AIDIY_ELECTRON_AUDIT_DIR` で保存先を指定できる。
+回帰試験は `node frontend_ide/checks/Electron表示統合確認.cjs`。Pythonの実子プロセス、GUIバイナリ、各Electron画面と関連パネルを順に確認し、実施ごとのフォルダへログと結果を保存する。`AIDIY_ELECTRON_AUDIT_DIR` で保存先を指定できる。
 
 試験用のクリック透過や1%不透明度を、共通ズームの `isAiDiyOpeningCanvas` が付いた窓へ適用しない。Windowsでは白い面になる条件がある。`capturePage`の透明な画像だけを根拠にせず、`Electron透明表示目視.cjs` とComputer UseでOS上の表示も確認する。目視用スクリプトへは、起動中IDEのURLを `AIDIY_PREVIEW_URL` で渡す。読み込み表示が消え、出航準備中を抜け、Canvasに星が描画されてから撮影する。撮影対象を前面に出し、別窓の重なりも確認する。ズーム途中を静止する試験なので、750msの時間測定には使わない。
 

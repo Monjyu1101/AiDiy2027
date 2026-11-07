@@ -11,10 +11,10 @@ import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発�
 test('既存の航行・花火を残して3種類を均等な範囲で選ぶ',()=>{
  assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ride','fireworks','aquarium','kaleidoscope','water','clock','maze','request']);
  assert.deepEqual([.01,.13,.26,.39,.52,.64,.77,.90].map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
- // 戦闘機は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
- assert.deepEqual(NAVIGATION_SCENES,[...NAVIGATION_RANDOM_SCENES,'fighter']);
- for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'fighter');
- assert.notEqual(pickNavigationScene(()=>1),'fighter');
+ // 夜間飛行は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
+ assert.deepEqual(NAVIGATION_SCENES,[...NAVIGATION_RANDOM_SCENES,'nightflight']);
+ for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'nightflight');
+ assert.notEqual(pickNavigationScene(()=>1),'nightflight');
 });
 test('波紋点は毎回異なる位置から広がり、寿命と上限で片付ける',()=>{
  let n=0;const ripples=createRipples(()=>((n++%10)/10));
@@ -71,19 +71,19 @@ test('3演出と既存2演出・NavigatorのVue script/templateをコンパイ�
  }
 });
 
-test('戦闘機: コックピット視点だけで機体は描かず、花火・HUD・キー操作を持ち、画面の3行ターミナル表示は出さない',async()=>{
+test('夜間飛行: コックピット視点だけで機体は描かず、花火・HUD・キー操作を持ち、画面の3行ターミナル表示は出さない',async()=>{
  const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);
  const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
- const script=compileScript(descriptor,{id:'fighter',genDefaultAs:'component'});
+ const script=compileScript(descriptor,{id:'nightflight',genDefaultAs:'component'});
  transformSync(script.content,{format:'esm'}); // 構文エラーがないこと（WebGLの描画は実機で確認）
  assert.doesNotMatch(source,/new THREE\.(ExtrudeGeometry|CylinderGeometry)\(/,'機体の外観は描かない');
  assert.doesNotMatch(source,/dblclick|toggleView|chase/i,'視点の切り替えは持たない');
  for(const word of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','drawCanopy','drawHud','unsupported'])assert.ok(source.includes(word),word);
  const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/<NaviFighter v-else-if="!cruiseFailed&&cruiseKind==='fighter'"/);
- assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|!\['fighter','clock','maze','request'\]\.includes\(cruiseKind\)" kind="navi" :routing="true" \/>/); // 3行表示は戦闘機・時計・迷路・依頼文では出さない
+ assert.match(panel,/<NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'"/);
+ assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|!\['nightflight','clock','maze','request'\]\.includes\(cruiseKind\)" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行・時計・迷路・依頼文では出さない
 });
 
 test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さない）。数字は文字のマスクで、見えないカラーピッカーがランダムに動いて虹色に移り変わり、日付と「:」は色を変えない（3行ターミナル表示・下線は出さない）',async()=>{
@@ -129,8 +129,8 @@ test('迷路: 暗い3D空間で、生成（6種）→解法（5種）の経過�
  assert.match(panel,/<NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'"/);
 });
 
-test('戦闘機: 傾いている間は傾いた側（曲がる先）へ花火を多く打ち、墜落はきりもみ回転し、ときどき低空へ降りて地面が見える',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 傾いている間は傾いた側（曲がる先）へ花火を多く打ち、墜落はきりもみ回転し、ときどき低空へ降りて地面が見える',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  for(const word of ['predictPath','bankSide','st.spin','st.dive','diveWait'])assert.ok(source.includes(word),word);
  assert.match(source,/bank && Math\.random\(\) < \.9\) sideToggle = bank/,'傾いている間は9割が傾いた側から');
  assert.match(source,/banking \? \.9 : \.6/,'傾いている間は打ち上げ数を増やす');
@@ -138,8 +138,8 @@ test('戦闘機: 傾いている間は傾いた側（曲がる先）へ花火を
  assert.match(source,/FLY_ABOVE \* \(1 - \.5 \* st\.dive\)/,'ときどき低空へ降りる');
 });
 
-test('戦闘機: 墜落中はターゲットマーカーを出さず、ダメージは自動回復せず、燃料は少ない状態から約5分で尽きて墜落する',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 墜落中はターゲットマーカーを出さず、ダメージは自動回復せず、燃料は少ない状態から約5分で尽きて墜落する',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/for \(const b of S\.crashState \? \[\] : S\.targets\)/,'墜落中はマーカーを出さない');
  assert.doesNotMatch(source,/st\.hp = Math\.min\(100, st\.hp \+/,'ダメージは自動回復しない');
  assert.match(source,/const FUEL_START = \.3, FUEL_SECONDS = 300;/,'燃料は30%から巡航で300秒');
@@ -148,8 +148,8 @@ test('戦闘機: 墜落中はターゲットマーカーを出さず、ダメー
  assert.match(source,/\['FUEL', panel\.fuel\]/,'燃料計は実際の燃料を出す（リカバリー中は手順に合わせて満たす）');
 });
 
-test('戦闘機: 墜落後は真っ黒のダウン状態から、SYSTEM RECOVERYを明滅して発動し、計器類→ランプ→燃料→ダメージ→機体を水平へ→HUDを順に回復し、0秒の表示のあとテイクオフする',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 墜落後は真っ黒のダウン状態から、SYSTEM RECOVERYを明滅して発動し、計器類→ランプ→燃料→ダメージ→機体を水平へ→HUDを順に回復し、0秒の表示のあとテイクオフする',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  const block=source.match(/const RECOVERY = Object\.freeze\(\{([\s\S]*?)\}\);/)[1];
  const numbers=key=>block.match(new RegExp(key+': \\[([^\\]]+)\\]'))[1].split(',').map(Number);
  const [g0,g1]=numbers('gauges'),[l0,l1]=numbers('lamps'),[f0,f1]=numbers('fuel'),[d0,d1]=numbers('damage'),[v0,v1]=numbers('level'),hud=numbers('hud'),ready=Number(block.match(/ready: ([\d.]+)/)[1]),takeoff=Number(block.match(/takeoff: ([\d.]+)/)[1]),blackout=Number(block.match(/blackout: ([\d.]+)/)[1]);
@@ -180,8 +180,8 @@ test('戦闘機: 墜落後は真っ黒のダウン状態から、SYSTEM RECOVERY
 });
 
 
-test('戦闘機: 起動直後も、墜落後と同じシステムリカバリーを機体は正位置のままほぼ即始め、テイクオフして始まる。計器盤はダウン中も見え、各部品の表示は回復した順に点く',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 起動直後も、墜落後と同じシステムリカバリーを機体は正位置のままほぼ即始め、テイクオフして始まる。計器盤はダウン中も見え、各部品の表示は回復した順に点く',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/function boot\(\) \{[\s\S]*?st\.down = true; st\.impactAt = 0; st\.crashEnd = RECOVERY\.takeoff;[\s\S]*?st\.roll = 0; st\.pitch = 0; st\.fade = 0;/,'起動直後は正位置のダウン状態で、ほぼ即リカバリー');
  assert.match(source,/\n  boot\(\);\n/,'起動時にbootする');
  assert.match(source,/const redLevel = S\.crashState === 2 \? 0 :/,'リカバリー中は赤みを出さない');
@@ -190,8 +190,8 @@ test('戦闘機: 起動直後も、墜落後と同じシステムリカバリー
  assert.match(source,/if \(panel\.gauges\) \{ g\.globalAlpha = 1;/,'計器は回復したら明るく点く');
 });
 
-test('戦闘機: テイクオフは地面すぐ上を速度を上げながら滑走し、一定の速度で機首を上げて上昇する（森林との当たり判定はない）',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: テイクオフは地面すぐ上を速度を上げながら滑走し、一定の速度で機首を上げて上昇する（森林との当たり判定はない）',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/const ROTATE_SPEED = 60, TAKEOFF_ACCEL = 4\.5, CLIMB_RATE = 9;/);
  assert.match(source,/const RUNWAY_LENGTH = ROTATE_SPEED \* ROTATE_SPEED \/ \(2 \* TAKEOFF_ACCEL\) \+ 120;/,'滑走路の長さは滑走する距離に合わせる');
  assert.match(source,/st\.speed = 4; st\.takeoff = 1;/,'低速の滑走から始める');
@@ -204,8 +204,8 @@ test('戦闘機: テイクオフは地面すぐ上を速度を上げながら滑
  assert.ok(56/4.5>11&&56/4.5<14,'約12秒走ってから離陸する');assert.equal(60*60/(2*4.5)+120,520,'滑走路は約520（滑走の距離400＋余裕120）');
 });
 
-test('戦闘機: リカバリーの見出しだけ中央寄せ、規定高度に着くまで手順を表示し続け、その間は当たり判定なし、ダメージは従来の3倍',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: リカバリーの見出しだけ中央寄せ、規定高度に着くまで手順を表示し続け、その間は当たり判定なし、ダメージは従来の3倍',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/g\.textAlign = 'center'; g\.fillText\('SYSTEM RECOVERY', cx,/,'見出しの行だけ中央寄せ');
  assert.match(source,/if \(S\.takeoff\) drawRecoveryLog\(g, w, h, k, S, 99\);/,'規定高度まで手順を表示し続ける');
  assert.match(source,/!st\.crash && !st\.takeoff && st\.invuln <= 0/,'テイクオフ中は当たり判定なし');
@@ -213,8 +213,8 @@ test('戦闘機: リカバリーの見出しだけ中央寄せ、規定高度に
  assert.ok(Math.abs(1.65/.55-3)<1e-9&&Math.abs(.03/.01-3)<1e-9);
 });
 
-test('戦闘機: システリカバリーは全部鮮やかな緑で、見出しが一番下に出て、次の行が出るたびに、それまでの行がずり上がり、機体を立て直すタイミングで滑走路上の木を消去する',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: システリカバリーは全部鮮やかな緑で、見出しが一番下に出て、次の行が出るたびに、それまでの行がずり上がり、機体を立て直すタイミングで滑走路上の木を消去する',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.doesNotMatch(source,/RECOVERY_GREEN_DONE/,'完了した行も同じ鮮やかな緑');
  assert.match(source,/bottom = baseY - \.5 \* lineH/,'一番下の行から始まる');
  assert.match(source,/lines = \[\{header: true, at: RECOVERY\.start\}/,'最初に見出しが一番下に出る');
@@ -228,8 +228,8 @@ test('戦闘機: システリカバリーは全部鮮やかな緑で、見出し
  assert.ok(level>lamps1&&level<hud0,'計器類が点灯したあと、HUDが点く直前に消す');
 });
 
-test('戦闘機: 離陸中はがたがた揺れ（画面・HUD）、速度とともに強まり、浮いて地面から離れたらなくなる',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 離陸中はがたがた揺れ（画面・HUD）、速度とともに強まり、浮いて地面から離れたらなくなる',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/const lifted = clamp\(\(st\.y - st\.ground - 1\.6\) \/ 2\.5, 0, 1\), rattle = reduced \|\| !st\.takeoff \? 0 : \(1 - lifted\)/,'浮いたらなくなる');
  assert.match(source,/st\.takeoff === 1 \? \.35 \+ \.65 \* clamp\(st\.speed \/ ROTATE_SPEED, 0, 1\) : 1/,'滑走中は速度とともに強まる');
  assert.match(source,/Math\.sin\(time \* 33\) \* \.07/,'上下の細かい揺れ');
@@ -238,8 +238,8 @@ test('戦闘機: 離陸中はがたがた揺れ（画面・HUD）、速度とと
  assert.doesNotMatch(source,/st\.takeoff === 1 \? \.04 \+ st\.speed/,'以前の弱い震えは置き換えた');
 });
 
-test('戦闘機: 滑走路が有効な間は、滑走路の上の花火（打ち上げ・噴水・炸裂・火の粉）を消火し、新しい花火も滑走路の上には上げない',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ戦闘機.vue',import.meta.url),'utf8');
+test('夜間飛行: 滑走路が有効な間は、滑走路の上の花火（打ち上げ・噴水・炸裂・火の粉）を消火し、新しい花火も滑走路の上には上げない',()=>{
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
  assert.match(source,/const onRunway = \(x, z, margin = 0\) => \{[\s\S]*?along > -40 && along < RUNWAY_LENGTH && Math\.abs\(dx \* runway\.rx \+ dz \* runway\.rz\) < 16 \+ margin/,'滑走路の範囲の判定');
  assert.match(source,/if \(onRunway\(x, z\)\) target = 0;/,'木の消去も同じ範囲');
  assert.match(source,/if \(runway\.on\) \{   \/\/ 滑走路の上の花火を消火する[\s\S]*?shells\.splice[\s\S]*?fountains\.splice[\s\S]*?bursts\.splice/,'打ち上げ・噴水・炸裂の記録を消す');

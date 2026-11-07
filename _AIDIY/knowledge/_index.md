@@ -117,6 +117,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | backend_tools の起動・SSE・環境変数 | [`backend_tools,backend_server,運用手順.md`](./backend_tools,backend_server,運用手順.md) |
 | バックアップ保存先、旧 `.backup_local/`・`backup/` から `.aidiy_backup/` への移行、保存版との比較 | [`command_hermes,共通,MCPバックアップ検証手順.md`](./command_hermes,共通,MCPバックアップ検証手順.md) |
 | backend_tools の メディア生成 HTTP API、save_path 挙動、SSE マウント方法 | [`backend_tools,HTTP_API_save_path挙動.md`](./backend_tools,HTTP_API_save_path挙動.md) |
+| Windows のデスクトップ画面を HTTP で操作する（`aidiy_windows_control`、スクリーンショット + 座標クリック、Electron 画面、Diag の一括起動） | [`backend_tools,WindowsControl_HTTP操作手順.md`](./backend_tools,WindowsControl_HTTP操作手順.md) |
 | Markdown、BOM、ナレッジ整理 | [`共通,ナレッジ更新手順.md`](./共通,ナレッジ更新手順.md)、[`共通,UTF8BOM問題対処.md`](./共通,UTF8BOM問題対処.md) |
 | 開発環境操作、DB、Swagger、よくある問題 | [`共通,開発環境運用手順.md`](./共通,開発環境運用手順.md) |
 | GitHub issue の確認・close | [`共通,GitHubIssue運用手順.md`](./共通,GitHubIssue運用手順.md) |

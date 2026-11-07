@@ -13,8 +13,8 @@ import {pathToFileURL} from 'node:url';
 test('補助ツールは現行Task/Teamの画像と作業JSONを分離する（通信なし）', async t => {
   const root = await mkdtemp(join(tmpdir(), 'aidiy-evidence-work-'));
   t.after(() => rm(root, {recursive: true, force: true}));
-  const target = join(root, 'scripts/checks/総合テスト補助/chrome操作.mjs');
-  await mkdir(join(root, 'scripts/checks/総合テスト補助'), {recursive: true});
+  const target = join(root, 'backend_diag/checks/総合テスト補助/chrome操作.mjs');
+  await mkdir(join(root, 'backend_diag/checks/総合テスト補助'), {recursive: true});
   await copyFile(new URL('./総合テスト補助/chrome操作.mjs', import.meta.url), target);
   const previous = process.env.RUN_ID;
   process.env.RUN_ID = 'synthetic-run';
@@ -50,7 +50,7 @@ test('補助ツールは現行Task/Teamの画像と作業JSONを分離する（�
 });
 
 test('Electron統合監査の既定出力はキャッシュ、明示出力先は維持する', async () => {
-  const source = await readFile(new URL('./Electron表示統合確認.cjs', import.meta.url), 'utf8');
+  const source = await readFile(new URL('../../frontend_ide/checks/Electron表示統合確認.cjs', import.meta.url), 'utf8');
   assert.ok(source.includes("process.env.AIDIY_ELECTRON_AUDIT_DIR||'.aidiy_cache/selftest/electron/'"));
   assert.ok(!source.includes('_AIDIY/knowledge/images/'));
 });

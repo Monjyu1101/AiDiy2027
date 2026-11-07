@@ -83,7 +83,7 @@ Toolsが起動中のときは、作業の経緯や判断理由も要点を短く
 | 真偽の確率・候補選択・段階評価を共通形式で取得 | `aidiy_decisions_check`（[AI判断の利用と追加](./backend_server,backend_tools,AI判断追加手順.md)） |
 | AIタスクへ依頼を投入して非同期実行させる | `aidiy_task_agents` |
 | AIチームの要員へ依頼を投入して非同期実行させる | `aidiy_team_agents` |
-| マウス/キーボード操作、ウィンドウ制御、プロセス管理 | `aidiy_windows_control` |
+| マウス/キーボード操作、ウィンドウ制御、プロセス管理 | `aidiy_windows_control`（MCP未接続でも HTTP で使える。[HTTP操作手順](./backend_tools,WindowsControl_HTTP操作手順.md)） |
 
 次のユーザー入力予測 `aidiy_prediction_llms` はMCP非公開で、各CLIのMCP設定には追加しない。内部処理から `POST /internal/prediction_llms` を使う。必須引数・接続制限は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。
 

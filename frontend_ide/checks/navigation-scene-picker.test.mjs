@@ -24,7 +24,7 @@ function fixture(t){
  return {api,requests,props,randoms:()=>randoms};
 }
 test('5候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
- const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面','時計','迷路','依頼文','戦闘機']);
+ const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面','時計','迷路','依頼文','夜間飛行']);
  f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
  f.api.sceneAction.value='';assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
 });
@@ -60,10 +60,10 @@ test('不正な候補や実行不可の再評価は送信しない',t=>{
  const f=fixture(t);f.api.chooseScene('evaluate');f.api.runWithScene('unknown');assert.equal(f.requests.length,0);f.api.result.value=null;f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'');
 });
 
-test('右クリックメニュー: 戦闘機（ランダム選択に含めない画面）は一番下で、1pxのヘアラインで区切る',async()=>{
+test('右クリックメニュー: 夜間飛行（ランダム選択に含めない画面）は一番下で、1pxのヘアラインで区切る',async()=>{
  const source=readFileSync(new URL('../src/components/開発スペース/ナビ画面メニュー.vue',import.meta.url),'utf8');
  assert.match(source,/<div v-if="!NAVIGATION_RANDOM_SCENES\.includes\(scene\)" class="navigation-scene-separator" role="separator"/);
  assert.match(source,/\.navigation-scene-separator\{height:1px;/);
- assert.equal(NAVIGATION_SCENES.at(-1),'fighter');
- assert.deepEqual(NAVIGATION_SCENES.filter(scene=>scene==='fighter'),['fighter']);
+ assert.equal(NAVIGATION_SCENES.at(-1),'nightflight');
+ assert.deepEqual(NAVIGATION_SCENES.filter(scene=>scene==='nightflight'),['nightflight']);
 });

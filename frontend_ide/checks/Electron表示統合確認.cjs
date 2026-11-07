@@ -25,7 +25,7 @@ const jobs=[
  ['10-discord-contract',['--test','frontend_channels/discord/checks/desktop.test.ts']],
  ['11-app-mini',['backend_diag/checks/app-launch-browser.mjs']],
  ['12-ide-browser',['frontend_ide/scripts/check-browser.mjs']],
- ['13-transparent-opening',['scripts/checks/Electron表示開始試験.cjs'],{AIDIY_TEST_OUTPUT:join(output,'共通-Electron表示')},require(resolve('frontend_ide/host/node_modules/electron'))],
+ ['13-transparent-opening',['frontend_ide/checks/Electron表示開始試験.cjs'],{AIDIY_TEST_OUTPUT:join(output,'共通-Electron表示')},require(resolve('frontend_ide/host/node_modules/electron'))],
 ];
 const results=[];const save=()=>writeFileSync(join(output,'result.json'),JSON.stringify({date:new Date().toISOString(),os:process.platform,scope:'既存アプリを止めず隔離プロファイルで順に実行。AI・Discord投稿なし。OS設定による省略分岐の除去後の回帰試験。',results,passed:results.length===jobs.length&&results.every(r=>r.exitCode===0)},null,2)+'\n');
 (async()=>{

@@ -14,8 +14,8 @@ import {pathToFileURL} from 'node:url';
 test('証跡画像は内容順の名前を使い、再撮影は掲載番号を指定して同名へ更新する', async t => {
   const root = await mkdtemp(join(tmpdir(), 'aidiy-evidence-name-'));
   t.after(() => rm(root, {recursive: true, force: true}));
-  const script = join(root, 'scripts/checks/実画面試験記録.mjs');
-  await mkdir(join(root, 'scripts/checks'), {recursive: true});
+  const script = join(root, 'backend_diag/checks/実画面試験記録.mjs');
+  await mkdir(join(root, 'backend_diag/checks'), {recursive: true});
   await copyFile(new URL('./実画面試験記録.mjs', import.meta.url), script);
   const {createEvidenceRecorder} = await import(pathToFileURL(script).href);
   const bytes = Buffer.from('89504e470d0a1a0a00000000', 'hex');
@@ -42,8 +42,8 @@ test('証跡画像は内容順の名前を使い、再撮影は掲載番号を�
 async function fixture(t) {
   const root = await mkdtemp(join(tmpdir(), 'aidiy-evidence-race-'));
   t.after(() => rm(root, {recursive: true, force: true}));
-  const script = join(root, 'scripts/checks/実画面試験記録.mjs');
-  await mkdir(join(root, 'scripts/checks'), {recursive: true});
+  const script = join(root, 'backend_diag/checks/実画面試験記録.mjs');
+  await mkdir(join(root, 'backend_diag/checks'), {recursive: true});
   await copyFile(new URL('./実画面試験記録.mjs', import.meta.url), script);
   const {createEvidenceRecorder} = await import(pathToFileURL(script).href);
   const folder = join(root, 'docs/セルフテスト、操作ガイド/images/セルフテスト,aidiy_diag,システム起動編');

@@ -4,7 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
-// ナビ調査中の待ち時間の表示「戦闘機」。コックピットからの視点だけで、夜の森林の上を無限に飛び続ける（機体の外観は描かない）。
+// ナビ調査中の待ち時間の表示「夜間飛行」。コックピットからの視点だけで、夜の森林の上を無限に飛び続ける（機体の外観は描かない）。
 // 左右の地上から花火が打ち上がり、飛行コースを横切る火花の中を突っ切る。機体は少し傾いて、その分だけ曲がる。
 // ←→（A/D）で傾けて旋回、押していなければランダムに傾く。↑↓（W/S）で加減速（↑・押し続けでアフターバーナー）、Spaceで横転。
 // キャノピーの上枠・計器盤・HUD（青系の控えめな色。ピッチ梯子・方位・速度・高度・バンク・レーダー・ロックオン枠）を重ねる。
@@ -740,16 +740,16 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-fighter" :class="{ready}" tabindex="0" role="img" aria-label="ナビ調査中の遊び場。戦闘機のコックピットから、夜の森林の上を左右から上がる花火と火花の中を突っ切って飛び続けます。左右キーで傾けて旋回、上下キーで加減速、Spaceで横転します。">
-    <canvas ref="canvas" class="navigation-fighter-world"></canvas>
-    <canvas ref="hud" class="navigation-fighter-hud" aria-hidden="true"></canvas>
-    <small v-if="ready" class="navigation-fighter-hint" aria-hidden="true">←→で傾けて旋回 / ↑↓で加減速 / Spaceで横転</small>
+  <div ref="stage" class="navigation-nightflight" :class="{ready}" tabindex="0" role="img" aria-label="ナビ調査中の遊び場。夜間飛行のコックピットから、夜の森林の上を左右から上がる花火と火花の中を突っ切って飛び続けます。左右キーで傾けて旋回、上下キーで加減速、Spaceで横転します。">
+    <canvas ref="canvas" class="navigation-nightflight-world"></canvas>
+    <canvas ref="hud" class="navigation-nightflight-hud" aria-hidden="true"></canvas>
+    <small v-if="ready" class="navigation-nightflight-hint" aria-hidden="true">←→で傾けて旋回 / ↑↓で加減速 / Spaceで横転</small>
   </div>
 </template>
 <style>
-.navigation-fighter{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
-.navigation-fighter canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
-.navigation-fighter-hud{pointer-events:none}
-.navigation-fighter:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
-.navigation-fighter-hint{position:absolute;left:0;right:0;bottom:3px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000;opacity:.8}
+.navigation-nightflight{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
+.navigation-nightflight canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.navigation-nightflight-hud{pointer-events:none}
+.navigation-nightflight:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
+.navigation-nightflight-hint{position:absolute;left:0;right:0;bottom:3px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000;opacity:.8}
 </style>

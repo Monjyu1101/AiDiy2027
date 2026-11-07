@@ -1,5 +1,5 @@
 // 盤面200セル・NEXT16セルを描画したCSS配置の回帰。ゲーム実行・外部通信なし。
-// ルートから node scripts/checks/Xテトリス表示.mjs
+// ルートから node frontend_web/checks/Xテトリス表示.mjs
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';

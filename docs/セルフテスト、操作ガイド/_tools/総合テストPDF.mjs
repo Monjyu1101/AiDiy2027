@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 完了した総合テストのMarkdownを、画像・折りたたみ欄を含むPDFにする。
-// node scripts/checks/総合テストPDF.mjs <docs/セルフテスト、操作ガイド内のmd名> ...
+// node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs <docs/セルフテスト、操作ガイド内のmd名> ...
 // PDFは元のMarkdownと同じフォルダへ、拡張子だけを.pdfに替えて保存する。
 import {readFile,mkdir,writeFile,access} from 'node:fs/promises';
 import {resolve,join,basename,dirname,sep} from 'node:path';

@@ -19,7 +19,7 @@ onBeforeUnmount(()=>binding?.dispose());
  <div ref="menu" class="navigation-scene-picker selection-popup" role="menu" :aria-label="(action==='evaluate'?'再評価':'ナビ')+'の待機画面'" data-aidiy-no-window-move @contextmenu.prevent.stop @click.stop>
   <p>{{action==='evaluate'?'再評価':'ナビ'}}の待機画面</p>
   <template v-for="scene in NAVIGATION_SCENES" :key="scene">
-   <!-- 戦闘機（ランダム選択に含めない画面）は、メニューの一番下にヘアラインで区切る。 -->
+   <!-- 夜間飛行（ランダム選択に含めない画面）は、メニューの一番下にヘアラインで区切る。 -->
    <div v-if="!NAVIGATION_RANDOM_SCENES.includes(scene)" class="navigation-scene-separator" role="separator" aria-hidden="true"></div>
    <button type="button" role="menuitem" tabindex="-1" :data-scene="scene" @click="select(scene)">{{NAVIGATION_SCENE_LABELS[scene]}}</button>
   </template>

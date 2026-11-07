@@ -7,8 +7,8 @@
  * Web・Avatar・独立Task/Team総合テスト用の aidiy_chrome_devtools（Tools 8095 の HTTP API）呼び出し補助。
  * Diagの一括起動でToolsが待受中であることが前提。認証情報は画像・ログへ出さない。
  *
- * CLI:   node scripts/checks/総合テスト補助/chrome操作.mjs <method> '<json>'
- *        node scripts/checks/総合テスト補助/chrome操作.mjs prepare        … 最大化＋1920x945
+ * CLI:   node backend_diag/checks/総合テスト補助/chrome操作.mjs <method> '<json>'
+ *        node backend_diag/checks/総合テスト補助/chrome操作.mjs prepare        … 最大化＋1920x945
  * import: RUN_ID / BOOK / TAB を環境変数で指定し、call・js・shot・record を使う。
  */
 import { createHash } from 'node:crypto';
