@@ -101,7 +101,7 @@ try{
  await outputData('\x1b[?90'); await press('Enter','Enter',13,8); assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1b[13;2u']);
  await outputData('01;1;2004h');
  await press('ArrowUp','ArrowUp',38); assert.deepEqual(await evaluate('inputs.splice(0)'),['\x1bOA']);
- const records=state=>`\x1b[13;28;13;1;${state};1_\x1b[13;28;13;0;${state};1_`;
+ const records=state=>`\x1b[13;28;${state&8?10:13};1;${state};1_\x1b[13;28;${state&8?10:13};0;${state};1_`;
  for(const [modifiers,state] of [[8,16],[2,8],[1,2],[10,24],[9,18],[3,10],[11,26]]){
   for(const code of ['Enter','NumpadEnter']){await press('Enter',code,13,modifiers);assert.deepEqual(await evaluate('inputs.splice(0)'),[records(state|(code==='NumpadEnter'?256:0))]);}
  }

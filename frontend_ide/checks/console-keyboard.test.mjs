@@ -38,7 +38,21 @@ function modeFixture(platform = 'Win32') {
   ris() { return handlers.get(JSON.stringify({ final: 'c' }))(); },
  };
 }
-const enterRecords = state => `\x1b[13;28;13;1;${state};1_\x1b[13;28;13;0;${state};1_`;
+const enterRecords = state => `\x1b[13;28;${state & 8 ? 10 : 13};1;${state};1_\x1b[13;28;${state & 8 ? 10 : 13};0;${state};1_`;
+test('Console Win32文字入力: Ctrl+EnterのLFとAlt+EnterのCRを修飾情報と同時に保持する', () => {
+ const f = modeFixture(); f.mode(true);
+ for (const [extra, character, state] of [
+  [{ ctrlKey: true }, 10, 8], [{ ctrlKey: true, shiftKey: true }, 10, 24],
+  [{ ctrlKey: true, altKey: true }, 10, 10], [{ ctrlKey: true, altKey: true, shiftKey: true }, 10, 26],
+  [{ altKey: true }, 13, 2], [{ altKey: true, shiftKey: true }, 13, 18], [{ shiftKey: true }, 13, 16],
+ ]) {
+  f.handle(event('Enter', extra));
+  const records = [...f.sent.pop().matchAll(/\x1b\[([\d;]+)_/g)].map(match => match[1].split(';').map(Number));
+  // ネイティブAPIはVK/Cs、文字ストリームの読み手はUcを使う。両方を検証する。
+  assert.deepEqual(records, [[13, 28, character, 1, state, 1], [13, 28, character, 0, state, 1]]);
+ }
+ f.handle.dispose();
+});
 test('Console ConPTY: 要求された時だけ全7組の修飾EnterをWin32 down/upで一度送る', () => {
  for (const platform of ['Win32', 'MacIntel', 'Linux x86_64']) {
   const f = modeFixture(platform);

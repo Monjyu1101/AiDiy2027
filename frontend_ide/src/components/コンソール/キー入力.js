@@ -29,12 +29,15 @@ export function consoleKeyHandler(send, { platform = globalThis.navigator?.platf
     if (key === 'enter' && modifiers > 1) {
       if (win32InputMode) {
         // WindowsのCodex等は文字列ではなくKEY_EVENT_RECORDを読む。
-        // Vk;Sc;Uc;Kd;Cs;Rc。Ctrlでも文字はCR、修飾はCsで独立して保持する。
+        // Vk;Sc;Uc;Kd;Cs;Rc。Ucも実キー入力に合わせ、Ctrl+EnterはLFにする。
+        // Node/libuv等の文字ストリーム入力はUcを読む。CR固定ではCtrlを失う。
+        // VK_RETURNとCsは残すため、Codex等のネイティブ入力もEnter＋修飾を読める。
+        const character = event.ctrlKey ? 10 : 13;
         const state = (event.shiftKey ? 16 : 0) | (event.altKey ? 2 : 0) | (event.ctrlKey ? 8 : 0)
           | (event.code === 'NumpadEnter' || event.location === 3 ? 256 : 0);
         // 一回のkeydownにdown/upを対で送る。フォーカス移動でkeyupを失っても
         // 押下状態を残さず、keypress/keyupによる二重入力も起こさない。
-        data = `\x1b[13;28;13;1;${state};1_\x1b[13;28;13;0;${state};1_`;
+        data = `\x1b[13;28;${character};1;${state};1_\x1b[13;28;${character};0;${state};1_`;
       } else {
         // Linux/macOS等は従来どおり。未要求のPTYへWin32形式を送らない。
         data = !event.ctrlKey && !event.shiftKey ? '\x1b\r' : `\x1b[13;${modifiers}u`;

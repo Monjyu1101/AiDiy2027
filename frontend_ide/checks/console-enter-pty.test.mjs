@@ -50,11 +50,11 @@ test('Console Unix実PTY: 既存のCSI-u/Alt+Enterを改変せずCLIまで送る
  assert.ok(output.includes('INPUT_HEX_' + Buffer.from(expected).toString('hex')));
 });
 
-test('Console Windows実ConPTY: 修飾EnterをConsoleKeyInfoのEnterと全7組のModifiersへ戻す', { skip: process.platform !== 'win32', timeout: 20000 }, async () => {
+test('Console Windows実ConPTY: 修飾EnterのKeyCharと全7組のModifiersを保持する', { skip: process.platform !== 'win32', timeout: 20000 }, async () => {
  // 実Codexやユーザープロファイルは起動しない。Windowsのネイティブ入力APIで確認する。
  const shell = join(process.env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe');
- const command = `[Console]::WriteLine('INPUT_READY'); for ($i=0; $i -lt 7; $i++) { $k=[Console]::ReadKey($true); [Console]::WriteLine('INPUT_KEY_'+[int]$k.Key+'_'+[int]$k.Modifiers) }`;
- const expected = modifiers.map(extra => 'INPUT_KEY_13_' + ((extra.shiftKey ? 2 : 0) | (extra.altKey ? 1 : 0) | (extra.ctrlKey ? 4 : 0)));
+ const command = `[Console]::WriteLine('INPUT_READY'); for ($i=0; $i -lt 7; $i++) { $k=[Console]::ReadKey($true); [Console]::WriteLine('INPUT_KEY_'+[int]$k.Key+'_'+[int]$k.Modifiers+'_'+[int]$k.KeyChar) }`;
+ const expected = modifiers.map(extra => 'INPUT_KEY_13_' + ((extra.shiftKey ? 2 : 0) | (extra.altKey ? 1 : 0) | (extra.ctrlKey ? 4 : 0)) + '_' + (extra.ctrlKey ? 10 : 13));
  const output = await probe(shell, ['-NoLogo', '-NoProfile', '-Command', command], (terminal, output) => {
   assert.match(output, /\x1b\[\?9001h/, 'ConPTYがwin32-input-modeを要求すること');
   let enable;
@@ -66,5 +66,5 @@ test('Console Windows実ConPTY: 修飾EnterをConsoleKeyInfoのEnterと全7組�
   for (const extra of modifiers) enter(handle, extra);
   handle.dispose();
  }, output => expected.every(line => output.includes(line)));
- assert.deepEqual([...output.matchAll(/INPUT_KEY_13_(\d+)/g)].map(match => Number(match[1])), [2, 1, 3, 4, 6, 5, 7]);
+ assert.deepEqual([...output.matchAll(/INPUT_KEY_13_\d+_\d+/g)].map(match => match[0]), expected);
 });
