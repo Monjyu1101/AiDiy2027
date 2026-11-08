@@ -30,22 +30,27 @@ try{
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(r.error,undefined);assert.equal(r.result?.exceptionDetails,undefined,JSON.stringify(r.result?.exceptionDetails));return r.result.result.value;};
  const viewport=async(width,height)=>{await send('Emulation.setDeviceMetricsOverride',{width,height,screenWidth:1920,screenHeight:1080,deviceScaleFactor:1,mobile:false});await sleep(100);};
  const capture=async name=>{const r=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name+'.png'),Buffer.from(r.result.data,'base64'));};
- await send('Runtime.enable');await send('Page.enable');await viewport(480,800);await send('Page.navigate',{url:app.url});
+ await send('Runtime.enable');await send('Page.enable');await viewport(480,900);await send('Page.navigate',{url:app.url});
  await until(()=>evaluate(`!!document.querySelector('.navigation-panel.standalone textarea')`),'standalone');
- const layout=()=>evaluate(`(()=>{const p=document.querySelector('.navigation-panel'),r=p.getBoundingClientRect(),t=document.querySelector('textarea').getBoundingClientRect();return {height:r.height,bottom:r.bottom,width:r.width,viewport:innerHeight,goalBottom:t.bottom,overflow:document.documentElement.scrollWidth>innerWidth};})()`);
- const normal=await layout();assert.ok(Math.abs(normal.height-800)<=2);assert.equal(normal.overflow,false);await capture('standalone-480x800');
+ const layout=()=>evaluate(`(()=>{const p=document.querySelector('.navigation-panel'),r=p.getBoundingClientRect(),t=document.querySelector('textarea').getBoundingClientRect();return {top:r.top,height:r.height,bottom:r.bottom,width:r.width,viewport:innerHeight,goalBottom:t.bottom,overflow:document.documentElement.scrollWidth>innerWidth};})()`);
+ const normal=await layout();assert.ok(Math.abs(normal.height-900)<=2);assert.equal(normal.overflow,false);await capture('standalone-480x900');
  await viewport(384,464);const small=await layout();assert.ok(small.bottom<=464&&small.goalBottom<=464);assert.equal(small.overflow,false);await capture('standalone-small-384x464');
- await viewport(540,650);assert.ok((await layout()).bottom<=650);await viewport(480,800);assert.ok(Math.abs((await layout()).height-800)<=2);
+ await viewport(540,650);assert.ok((await layout()).bottom<=650);await viewport(480,900);assert.ok(Math.abs((await layout()).height-900)<=2);
  ide=await startDevelopment(project,{kind:'ide',navigationOptions});await viewport(1280,1000);await send('Page.navigate',{url:ide.url});
  await until(()=>evaluate(`!![...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用')`),'IDE start');
  await evaluate(`[...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用').click()`);await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
  // Popup blocking exercises the inline fallback; its measured bounds also supply real popup features.
  await evaluate(`aidiyIDE.setAutoSpin(false);window.heightFeatures=[];window.open=(url,name,features)=>{heightFeatures.push(features);return null;};document.querySelector('.navigation-launch').click()`);
  await until(()=>evaluate(`heightFeatures.length===1&&!!document.querySelector('.navigation-panel')`),'inline Navigator');
- const inline=await layout();assert.equal(inline.height,800);assert.ok(inline.bottom<=1000);assert.ok(await evaluate(`heightFeatures[0].includes('height=800')`));await capture('ide-inline-800');
- await viewport(640,600);const inlineSmall=await layout();assert.ok(inlineSmall.height<800&&inlineSmall.bottom<=600);await capture('ide-inline-small');
+ const inline=await layout();assert.equal(inline.height,900);assert.ok(inline.bottom<=1000);assert.ok(await evaluate(`heightFeatures[0].includes('height=900')`));await capture('ide-inline-900');
+ await viewport(640,600);const inlineSmall=await layout();assert.ok(inlineSmall.height<900&&inlineSmall.bottom<=600);await capture('ide-inline-small');
+ await evaluate(`document.querySelector('.navigation-panel').style.setProperty('--workspace-top','140px')`);
+ const lowerTop=await layout();assert.equal(lowerTop.top,140);assert.equal(lowerTop.height,444);assert.equal(lowerTop.bottom,584);await capture('ide-inline-lower-top');
+ await evaluate(`document.querySelector('.navigation-panel').style.removeProperty('--workspace-top')`);
+ await viewport(1280,1000);assert.equal((await layout()).height,900);
+
  assert.deepEqual(errors,[]);
- const result={pass:true,ai:'not invoked',checks:['standalone 480x800','small screen 384x464','manual viewport resize and return','IDE inline 800','browser popup initial height features','small IDE viewport'],normal,small,inline,inlineSmall};
+ const result={pass:true,ai:'not invoked',checks:['standalone 480x900','small screen 384x464','manual viewport resize and return','IDE inline 900','browser popup initial height features','small IDE viewport','IDE top offset and 16px bottom margin','IDE viewport resize and return'],normal,small,inline,inlineSmall,lowerTop};
  writeFileSync(join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{
  socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}await ide?.close();await app.close();removeMockDirectory(temporary);

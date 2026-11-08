@@ -89,8 +89,8 @@ test('複数Navigatorを窓ごとに復元し、新規窓へ古い位置を流�
  assert.equal(b.window.getBounds().x,700);assert.equal(f.timers.size,0);
 });
 
-test('Navigator VR placement preserves both the new 800 height and a manually chosen height',async()=>{
- for(const height of [800,650]){
+test('Navigator VR placement preserves both the new 900 height and a manually chosen height',async()=>{
+ for(const height of [900,800,650]){
   const f=fixture(),child=f.add('panel-navigation',100,100);
   child.window.setBounds({x:100,y:100,width:480,height});f.manager.remember(f.owner);
   child.window.setBounds({x:250,y:200,width:600,height});await f.finish(f.manager.restore(f.owner));

@@ -14,10 +14,13 @@ function createBrowserElementLink({contents,record,BrowserWindow,screen,availabl
  const overlay=action=>{const next=queue.then(action);queue=next.catch(()=>{});return next;};
  function key(event,input){if(active&&input.type==='keyDown'&&input.key==='Escape'){event.preventDefault();void stop();}}
  async function stop(keepSelection=false){
-  active=false;inspecting=false;generation++;sequence++;pendingHover=undefined;selecting=false;
+  active=false;inspecting=false;const run=++generation;sequence++;pendingHover=undefined;selecting=false;
   if(!keepSelection)selected=undefined;
   panel?.close();panel=undefined;onChange();
-  await overlay(async()=>{if(debug?.isAttached()&&!contents.isDestroyed()){await command('Overlay.setInspectMode',{mode:'none'});await command('Overlay.hideHighlight');}}).catch(()=>{});
+  // Chromiumはmode:noneでもhighlightConfigを検証する。省略すると選択とクリック抑止が残る。
+  await overlay(async()=>{if(debug?.isAttached()&&!contents.isDestroyed()){await command('Overlay.setInspectMode',{mode:'none',highlightConfig:{}});await command('Overlay.hideHighlight');}}).catch(()=>{
+   if(!disposed&&generation===run&&!contents.isDestroyed()&&!record.window.isDestroyed())onError('要素連携を解除できませんでした。ページを再読み込みしてください。');
+  });
  }
  async function read(node,run){
   const group='aidiy-element-'+run+'-'+randomUUID();

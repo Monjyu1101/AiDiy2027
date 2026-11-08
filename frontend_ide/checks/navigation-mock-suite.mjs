@@ -13,7 +13,7 @@ const cases=[
  ['check-navigation','模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示'],
  ['check-navigation-progress','0/50/100%表示、依存停止復帰、目標編集と再評価、失敗再試行、履歴、実行中編集、2窓・単独表示'],
  ['check-navigation-guide','初期・履歴・モデル画面、空目標の禁止、模擬Toolsの停止復帰、Codeとのタイトル寸法一致。AI呼出しゼロ'],
- ['check-navigation-height','単独480x800、小画面384x464、リサイズ復帰、IDE内800pxと縮小、ポップアップ初期寸法。AI呼出しゼロ'],
+ ['check-navigation-height','単独480x900、小画面384x464、リサイズ復帰、IDE内900pxと縮小、ポップアップ初期寸法。AI呼出しゼロ'],
  ['check-navigation-autopilot','次の操作の強調、右側Code、模擬2周100%終了、表示/非表示で停止、エラー停止と明示再開、デスクトップAPI模擬、再評価の保存目標復元、単独Code'],
  ['check-navigation-scene-picker','押下/右クリック/キー/タッチ、現行9候補と全選択、非送信転記、中止、狭幅、別Document、破棄'],
  ['check-navigation-scenery','3種Canvas、黒地、魚/餌/気泡/波紋/ホバー、Space/repeat/入力、別Document移動復帰と破棄']

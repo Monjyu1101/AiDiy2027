@@ -251,11 +251,11 @@ Browserの画面は `src/components/ブラウザ/ブラウザパネル.vue`、We
 
 ### Browserの要素連携
 
-通常操作欄とF11ヘッダーは「要素連携 → AI解析」の順です。要素連携はAI解析とは独立し、`デスクトップ/ブラウザ要素連携.cjs` が既存のページ用CDP接続で `Overlay.setInspectMode` を開始します。マウスを重ねると要素を強調し、`ブラウザ要素パネル.cjs` の専用非特権ポップアップへHTMLと計算済みCSSを表示します。クリックはページのリンク・送信処理へ渡さず、選択した要素を既存Code / Live下書きダイアログへ渡します。連携先と内容を確認して「下書きへ追加」を押し、AIへの送信はCode / Live側で行います。既存の下書きは保持します。
+通常操作欄とF11ヘッダーは「AI解析 → 撮影 → Code / Liveへ → 要素連携」の順です。要素連携はAI解析とは独立し、`デスクトップ/ブラウザ要素連携.cjs` が既存のページ用CDP接続で `Overlay.setInspectMode` を開始します。マウスを重ねると要素を強調し、`ブラウザ要素パネル.cjs` の専用非特権ポップアップへHTMLと計算済みCSSを表示します。クリックはページのリンク・送信処理へ渡さず、選択した要素を既存Code / Live下書きダイアログへ渡します。連携先と内容を確認して「下書きへ追加」を押し、AIへの送信はCode / Live側で行います。既存の下書きは保持します。
 
 取得するのは表示中DOMで、元のVue / TSソースとの対応は保証しません。選択ID、session / tab_id、クエリ・フラグメント・認証部を除いたURL、セレクター、タグ、許可した属性、位置・サイズ（CSS px）、表示文、HTML、計算済みCSSを扱います。撮影画像・Cookie・Storage・入力値は取得しません。HTMLは16,000文字・160ノード・深さ8までで、上限を超えた場合は省略を明記します。script / style / iframe本文、入力値、編集可能領域、非表示の枝、data属性・イベント属性等を除外します。代表的な秘密値もマスクしますが、任意の文章から機密情報を完全には検出できないため、連携内容を下書きダイアログで再確認します。
 
-Esc、ボタン再押下、ポップアップの×、ページ遷移・再読込、切断、最小化、終了で解除します。古いホバー結果・選択IDは新しい選択やページへ流用しません。F11ヘッダーから開始しても、連携ダイアログは本体で開きます。共有CDPをdetachしたり、他の利用者向けにDOMドメインをdisableしたりしません。外部ページへpreloadやIPCを追加せず、読み取りは隔離worldで行い、ポップアップにはtextContentで表示します。別プロセスのiframe等を解決できない場合は理由を表示して選び直します。
+Esc、ボタン再押下、ポップアップの×、ページ遷移・再読込、切断、最小化、終了で解除します。解除の `Overlay.setInspectMode` には `mode: 'none'` と `highlightConfig: {}` の両方を渡します。Chromiumは解除時も設定を検証するため、省略すると選択とクリック抑止が残ります。古いホバー結果・選択IDは新しい選択やページへ流用しません。F11ヘッダーから開始しても、連携ダイアログは本体で開きます。共有CDPをdetachしたり、他の利用者向けにDOMドメインをdisableしたりしません。外部ページへpreloadやIPCを追加せず、読み取りは隔離worldで行い、ポップアップにはtextContentで表示します。別プロセスのiframe等を解決できない場合は理由を表示して選び直します。
 
 単体検証は `node --test frontend_ide/checks/browser-element*.test.mjs`。実Chromium検証は `node frontend_ide/scripts/check-browser-element.mjs` で、隔離ページにおけるホバー、機密除外、クリック抑止、内容表示、Esc・遷移・切断を確認し、`frontend_ide/temp/browser-element-check/` に画像を保存します。外部サイトや実AIは使いません。環境がChromiumのソケットを禁止する場合は実画面未実施として扱ってください。実Electronのポップアップ位置・前後関係、狭幅、F11、OSごとのキー入力、Code / Live実窓の下書き保持は別途確認が必要です。
 
@@ -762,7 +762,7 @@ Navigationの外枠はCodeと同じ状態バー・窓操作とプロジェクト
 
 ### Navigatorの単独起動と履歴
 
-初期サイズは `host/scripts/window-size.cjs` の幅480・ナビ高さ800を使います。Code / Liveの会話高さ600とは分けます。単独・IDE・VRは `windowBounds('navi', area)` で小画面の作業領域へ縮小し、Webパネルも高さ800を上限に表示領域へ収めます。初期寸法だけを変更し、手動サイズ、Codeオン／オフの別々のサイズ保持、VR復帰時の既存窓の寸法は上書きしません。`checks/navigation-size.test.cjs`、`checks/panel-windows.test.mjs`、`checks/navigation-code-window.test.cjs`、`checks/navigation-popup-size.test.mjs` で確認します。
+初期サイズは `host/scripts/window-size.cjs` の幅480・ナビ高さ900を使います。Code / Liveの会話高さ600とは分けます。単独・IDE・VRは `windowBounds('navi', area)` で小画面の作業領域へ縮小し、Webパネルも高さ900を上限に、上部バーと下端16pxの余白を除く表示領域へ収めます。初期寸法だけを変更し、手動サイズ、Codeオン／オフの別々のサイズ保持、VR復帰時の既存窓の寸法は上書きしません。`checks/navigation-size.test.cjs`、`checks/panel-windows.test.mjs`、`checks/navigation-code-window.test.cjs`、`checks/navigation-popup-size.test.mjs` で確認します。
 
 - `aidiy_navi [作業フォルダ | --project 作業フォルダ]` はCode同様に起動フォルダを対象にする。`--browser`、`--new-window`、`--foreground`、`--port` を共通起動処理で扱う。モデルは画面から選び、起動引数で上書きしない。
 - IDEのアプリ選択（別窓・パネル・VRの3か所）は `Console`、`Navigator`、`Code` … の順。Navigatorも他のアプリと同じく、押すと `launching==="navigation"` で全ボタンを無効にして「起動中…」を出し、`Navigationパネル.vue` が窓を開き終えて `opened` を出すと解除する（`closed`、または10秒で解除）。順序と表示は `checks/folder-pages.test.mjs` が確認する。

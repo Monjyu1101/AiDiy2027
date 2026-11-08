@@ -14,6 +14,18 @@ function fixture({kind='navi',bounds={x:8,y:192,width:480,height:600},area={x:0,
  const change=createNavigationCodeWindow({trustedEvent:()=>source,panelTarget:(owner,name)=>children.get(name)?.owner===owner?children.get(name):null,readState:()=>reads?reads():Promise.resolve(state),sessionKey:s=>`${s.mode}:${s.startedAt}`,screen:{getDisplayMatching:()=>({workArea:area})}});
  return{record,children,state,change,win,get bounds(){return current;},get sets(){return sets;},move:value=>{current={...current,...value};},source:value=>{source=value;},read:value=>{reads=value;},max:value=>{if(value&&!maximized)normal={...current};maximized=value;},full:value=>{if(value&&!fullscreen)normal={...current};fullscreen=value;}};
 }
+test('The 900 DIP initial height still preserves manual sizes when Code toggles',async()=>{
+ const area={x:0,y:0,width:1920,height:1080};
+ const bounds=require('../デスクトップ/window-layout.cjs').windowBounds('navi',area),f=fixture({bounds,area});
+ assert.equal(f.bounds.height,900);
+ await f.change({},true);assert.equal(f.bounds.height,900);
+ f.move({height:800});await f.change({},false);assert.equal(f.bounds.height,900);
+ f.move({height:650});await f.change({},true);assert.equal(f.bounds.height,800);
+ area.height=700;await f.change({},false);assert.equal(f.bounds.height,650);
+ await f.change({},true);assert.equal(f.bounds.height,684);
+ area.height=1080;await f.change({},false);assert.equal(f.bounds.height,650);
+ await f.change({},true);assert.equal(f.bounds.height,800);
+});
 test('Navi grows to the right once, then restores original dimensions after movement',async()=>{
  const f=fixture();assert.equal((await f.change({},true)).ok,true);
  assert.deepEqual(f.bounds,{x:8,y:192,width:960,height:600});

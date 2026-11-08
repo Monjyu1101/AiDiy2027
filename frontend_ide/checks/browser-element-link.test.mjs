@@ -12,10 +12,14 @@ import {browserElementText} from '../デスクトップ/ブラウザ要素情報
 const value={tag:'button',selector:'#save',attributes:{id:'save'},rect:{x:10,y:20,width:80,height:30},html:'<button id="save">保存</button>',css:{color:'rgb(0, 0, 0)'},text:'保存',url:'https://example.test/page',notice:'表示中DOM。入力値は除外。'};
 const flush=async()=>{for(let n=0;n<70;n++)await Promise.resolve();};
 function fixture(){
- let attached=false,url='https://example.test/page',available=true,picked=0,shown=0,closed=0;
+ let attached=false,url='https://example.test/page',available=true,picked=0,shown=0,closed=0,inspectMode='none',highlighted=false,panelOptions;
  const calls=[],updates=[],errors=[],pending=[];
  const debug=Object.assign(new EventEmitter(),{isAttached:()=>attached,attach(){attached=true;},sendCommand:async(method,params)=>{
   calls.push({method,params});
+  if(method==='Overlay.setInspectMode'&&f.failStop&&params.mode==='none')throw Error('fixture cleanup failure');
+  // Chromiumと同じく、noneでもhighlightConfigが無い要求は失敗させる。
+  if(method==='Overlay.setInspectMode'){if(!params.highlightConfig)throw Error('Internal error: highlight configuration parameter is missing');if(f.holdInspect)await new Promise(resolve=>pending.push(resolve));inspectMode=params.mode;highlighted=inspectMode!=='none';}
+  if(method==='Overlay.hideHighlight')highlighted=false;
   if(method==='Page.getFrameTree')return {frameTree:{frame:{id:'frame'}}};
   if(method==='Page.createIsolatedWorld')return {executionContextId:9};
   if(method==='DOM.resolveNode')return {object:{objectId:String(params.nodeId||params.backendNodeId)}};
@@ -23,8 +27,8 @@ function fixture(){
   return {};
  }});
  const contents=Object.assign(new EventEmitter(),{debugger:debug,isDestroyed:()=>false,getURL:()=>url,focus(){}}),window=Object.assign(new EventEmitter(),{isDestroyed:()=>false,webContents:new EventEmitter()});
- const picker=createBrowserElementLink({contents,record:{window},available:()=>available,onChange(){},onSelected(){picked++;},onError:error=>errors.push(error),panelFactory:()=>({open(){shown++;},close(){closed++;},update:value=>updates.push(value)})});
- const f={picker,debug,contents,window,calls,updates,errors,pending,hold:false,get picked(){return picked;},get shown(){return shown;},get closed(){return closed;},disconnect(){available=false;return picker.stop();},navigate(target=url){url=target;contents.emit('did-start-navigation',{},url,false,true);},message(method,params){debug.emit('message',{},method,params);}};return f;
+ const picker=createBrowserElementLink({contents,record:{window},available:()=>available,onChange(){},onSelected(){picked++;},onError:error=>errors.push(error),panelFactory:options=>{panelOptions=options;return{open(){shown++;},close(){closed++;},update:value=>updates.push(value)};}});
+ const f={picker,debug,contents,window,calls,updates,errors,pending,hold:false,get inspectMode(){return inspectMode;},get highlighted(){return highlighted;},get panelOptions(){return panelOptions;},get picked(){return picked;},get shown(){return shown;},get closed(){return closed;},disconnect(){available=false;return picker.stop();},navigate(target=url){url=target;contents.emit('did-start-navigation',{},url,false,true);},message(method,params){debug.emit('message',{},method,params);}};return f;
 }
 test('要素連携: ホバー、クリックの確定、main保持内容の下書き、解除と再選択',async()=>{
  const f=fixture();await f.picker.start();assert.equal(f.picker.active,true);assert.equal(f.shown,1);
@@ -49,7 +53,30 @@ test('要素連携: 連続ホバーは並列収集せず最新要素だけ表示
 });
 test('要素連携: 標準ボタンの順序、限定IPC、既存の通常下書きを維持',()=>{
  const vue=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8'),desktop=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
- assert.ok(vue.indexOf('class="browser-element-link"')<vue.indexOf('class="browser-analysis"'));
+ const order=['browser-analysis','browser-capture','browser-handoff','browser-element-link'].map(name=>vue.indexOf('class="'+name+'"'));assert.ok(order.every((at,index)=>at>=0&&(!index||at>order[index-1])));
  assert.match(vue,/要素連携/);assert.match(vue,/onBrowserElementSelected/);assert.match(vue,/element===true\?'element-draft':'draft'/);assert.match(desktop,/elementId===undefined\?'draft':'element-draft'/);assert.match(desktop,/text:draft.request.text/);
  assert.match(browserElementText(value),/HTML:\n<button/);
+});
+
+for(const focus of ['page','host','popup','cdp'])test(`要素連携: ${focus}からのEscでCDP選択・強調を解除し再開始できる`,async()=>{
+ const f=fixture();
+ for(let cycle=0;cycle<2;cycle++){
+  await f.picker.start();assert.equal(f.inspectMode,'searchForNode');
+  const event={prevented:false,preventDefault(){this.prevented=true;}},input={type:'keyDown',key:'Escape'};
+  if(focus==='cdp')f.message('Overlay.inspectModeCanceled',{});
+  else if(focus==='popup')f.panelOptions.onKey(event,input);
+  else (focus==='page'?f.contents:f.window.webContents).emit('before-input-event',event,input);
+  await flush();assert.equal(f.picker.active,false);assert.equal(f.inspectMode,'none','UIだけでなくCDPの選択モードも解除する');assert.equal(f.highlighted,false);assert.equal(f.closed,cycle+1);assert.equal(event.prevented,focus!=='cdp');
+  f.message('Overlay.nodeHighlightRequested',{nodeId:1});f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();assert.equal(f.updates.length,0);assert.equal(f.picked,0);
+ }
+ assert.deepEqual(f.errors,[]);f.picker.dispose();
+});
+test('要素連携: 開始コマンド待機中のEscと直後の再開始は解除を追い越さない',async()=>{
+ const f=fixture();f.holdInspect=true;const starting=f.picker.start();await flush();assert.equal(f.pending.length,1);
+ f.picker.key({preventDefault(){}},{type:'keyDown',key:'Escape'});f.holdInspect=false;const restarting=f.picker.start();f.pending.shift()();await starting;await restarting;
+ assert.deepEqual(f.calls.filter(c=>c.method==='Overlay.setInspectMode').map(c=>c.params.mode),['searchForNode','none','searchForNode']);assert.equal(f.inspectMode,'searchForNode');
+ await f.picker.stop();assert.equal(f.inspectMode,'none');assert.equal(f.highlighted,false);f.picker.dispose();
+});
+test('要素連携: 解除のCDP失敗を握り潰さず利用者へ通知する',async()=>{
+ const f=fixture();await f.picker.start();f.failStop=true;await f.picker.stop();assert.match(f.errors.at(-1),/要素連携を解除できませんでした/);f.picker.dispose();
 });

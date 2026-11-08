@@ -59,11 +59,24 @@ try{
  assert.equal(await page.evaluate('window.clicks'),0,'選択クリックがページの保存処理を実行しない');assert.equal(picker.active,false);
  const draft=picker.request('/project',{session:'aidiy_browser fixture',tabId:'fixture'});assert.match(draft.text,/#save/);assert.match(draft.text,/保存/);assert.ok(!draft.text.includes('page-secret'));
  contents.emit('did-start-navigation',{},origin+'/',false,true);await sleep(80);assert.throws(()=>picker.request('/project',{session:'s',tabId:'t'}));
- await picker.start();let prevented=false;picker.key({preventDefault(){prevented=true;}},{type:'keyDown',key:'Escape'});await sleep(80);assert.equal(prevented,true);assert.equal(picker.active,false);
- // 解除後は同じボタンが通常どおり操作できる。
- await page.send('Input.dispatchMouseEvent',{type:'mousePressed',x:save.x,y:save.y,button:'left',clickCount:1});await page.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:save.x,y:save.y,button:'left',clickCount:1});assert.equal(await page.evaluate('window.clicks'),1);
+ // 実CDPのEscape（本文・入力フォーカス）とElectron購読の模擬経路を分けて確認する。
+ let clicks=0;
+ for(const focus of ['body','input','electron-event']){
+  await picker.start();
+  if(focus==='electron-event'){
+   let prevented=false;contents.emit('before-input-event',{preventDefault(){prevented=true;}},{type:'keyDown',key:'Escape'});assert.equal(prevented,true);
+  }else{
+   await page.evaluate(focus==='input'?`document.querySelector('input[type="text"]').focus()`:`document.activeElement.blur()`);
+   await page.send('Input.dispatchKeyEvent',{type:'rawKeyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+   await page.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  }
+  await until(()=>!picker.active,'Esc '+focus);await sleep(80);
+  // UIの解除だけで合格にせず、選択overlayのクリック抑止も消えたことを確認する。
+  await move(save.x,save.y);await page.send('Input.dispatchMouseEvent',{type:'mousePressed',x:save.x,y:save.y,button:'left',clickCount:1});await page.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:save.x,y:save.y,button:'left',clickCount:1});assert.equal(await page.evaluate('window.clicks'),++clicks,focus+' restores normal clicks');assert.equal(selected,1,'解除後のクリックで下書きを再選択しない');
+ }
+ writeFileSync(new URL('03-after-escape.png',output),Buffer.from((await page.send('Page.captureScreenshot')).data,'base64'));
  await picker.start();available=false;await picker.stop();assert.equal(picker.active,false);assert.throws(()=>picker.request('/project',{session:'s',tabId:'t'}));
- assert.deepEqual(failure,[]);assert.ok(panelUpdate.includes('textContent'));writeFileSync(new URL('result.json',output),JSON.stringify({passed:true,checks:['CDP hover','isolated DOM and computed CSS','private inputs omitted','URL tokens omitted','native panel HTML and safe text rendering','click consumed','draft identity','navigation invalidation','Esc','normal click after cancel','disconnect'],nativeElectron:false},null,2));
+ assert.deepEqual(failure,[]);assert.ok(panelUpdate.includes('textContent'));writeFileSync(new URL('result.json',output),JSON.stringify({passed:true,checks:['CDP hover','isolated DOM and computed CSS','private inputs omitted','URL tokens omitted','native panel HTML and safe text rendering','click consumed','draft identity','navigation invalidation','CDP Escape on body and input','simulated Electron Escape event','normal click after each cancel','disconnect'],nativeElectron:false},null,2));
  console.log('PASS: real Chromium element inspection, source panel, redaction, click suppression, draft, Esc/navigation/disconnect. Screenshots: '+output.pathname);
 }finally{
  picker?.dispose();for(const socket of sockets)socket.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await sleep(100);rmSync(temporary,{recursive:true,force:true});

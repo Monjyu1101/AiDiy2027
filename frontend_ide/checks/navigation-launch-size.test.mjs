@@ -41,10 +41,10 @@ function fixture(opened, browser = true, desktopFailure = false) {
   return { launch: module.exports.launch, messages, process, stats: () => ({ closed, armed, disposed, openCalls, options, desktopEnv, desktopArgs, browserOptions }) };
 }
 
-test('Navigator browser app launch requests 800 while Code and Live retain their default height',async()=>{
+test('Navigator browser app launch requests 900 while Code and Live retain their default height',async()=>{
  for(const kind of ['navi','code','live']){
   const f=fixture(true);await f.launch(kind,['--browser','--foreground']);
-  assert.equal(f.stats().browserOptions.height,kind==='navi'?800:undefined);
+  assert.equal(f.stats().browserOptions.height,kind==='navi'?900:undefined);
   assert.equal(f.stats().options.kind,kind);assert.equal(f.messages[0].launchReady,true);
   f.process.emit('SIGTERM');await Promise.resolve();assert.equal(f.stats().closed,1);
  }
