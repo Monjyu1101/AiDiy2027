@@ -5,7 +5,6 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { app, BrowserWindow, desktopCapturer, ipcMain, screen, session, Menu, type IpcMainInvokeEvent } from 'electron'
 import { readdir } from 'node:fs/promises'
-import { mkdirSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -17,10 +16,10 @@ const APP_USER_MODEL_ID = 'AiDiy.frontend_avatar'
 const AVATAR_ICON_PATH = path.resolve(__dirname, '../public/icons/AiDiy_avatar.png')
 if (process.platform === 'darwin') app.setName('AiDiy Avatar')
 // Avatar は選択プロジェクトを持たず、配置元だけにプロファイルを保存する。
-const { programDataDirectory } = require(path.join(__dirname, '../../frontend_ide/host/scripts/project-storage.cjs'))
+const { programDataDirectory, preparePrivateDirectory } = require(path.join(__dirname, '../../frontend_ide/host/scripts/project-storage.cjs'))
 const avatarProjectRoot = path.resolve(__dirname, '../..')
-const avatarProfile = path.join(programDataDirectory(avatarProjectRoot, 'aidiy_avatar', avatarProjectRoot), 'electron')
-mkdirSync(avatarProfile, { recursive: true, mode: 0o700 })
+const avatarProfile = programDataDirectory(avatarProjectRoot, 'aidiy_avatar', avatarProjectRoot, ['electron'])
+preparePrivateDirectory(avatarProfile)
 app.setPath('userData', avatarProfile)
 app.setPath('sessionData', avatarProfile)
 // aidiy_code / aidiy_live / aidiy_discord と共通の初回演出（透明キャンバスの中で中央から拡大してから表示する）。

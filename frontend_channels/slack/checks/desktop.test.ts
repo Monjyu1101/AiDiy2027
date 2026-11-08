@@ -77,6 +77,7 @@ async function desktop(platform = 'win32', owned = true, project: string | undef
       if (name === '../../../frontend_ide/デスクトップ/最前面ピン.cjs') return createRequire(import.meta.url)(name);
       if (name === '../../../frontend_ide/host/scripts/single-instance.cjs') return { 起動ロック: async () => owned ? { close: async () => {} } : null };
       // 3本共通のウィンドウ大きさ・初回演出は実物を使う。
+      if (name.endsWith('/project-storage.cjs')) return { ...createRequire(import.meta.url)(name), preparePrivateDirectory() {} };
       if (name.startsWith('../../../frontend_ide/host/scripts/')) return createRequire(import.meta.url)(name);
       if (name === 'node:url') return url;
       if (name === 'node:fs') return { mkdirSync() {}, writeFileSync(file: string, value: string) { files.set(file, JSON.parse(value)); } };

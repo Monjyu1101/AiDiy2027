@@ -15,8 +15,9 @@ export function hasAlwaysExcludedDirectory(path, directory = false) {
   if (typeof path !== 'string') return false;
   const parts = path.split(/[\\/]/);
   const folders = (directory ? parts : parts.slice(0, -1)).map(part=>part.replace(/[. ]+$/, '').toLowerCase());
-  // プロジェクトへ移したElectron/ブラウザprofileにはcookie等が入る。汎用ファイルAPIとAI解析から隠す。
+  // profileのcookieやConsole履歴の入力済み秘密を汎用ファイルAPI・AI解析から隠す。
   const profile = folders.some((part,index)=>part==='_aidiy' && /^aidiy_[a-z][a-z0-9_]*$/.test(folders[index+1]||'')
     && ['electron','browser-profile'].includes(folders[index+2]));
-  return profile || folders.some(alwaysExcludedDirectory);
+  const consoleHistory = folders.some((part,index)=>part==='_aidiy' && folders[index+1]==='aidiy_console');
+  return profile || consoleHistory || folders.some(alwaysExcludedDirectory);
 }

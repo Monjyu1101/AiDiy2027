@@ -6,8 +6,7 @@
 'use strict';
 const {app,BrowserWindow,session,ipcMain,dialog,Menu,screen,shell}=require('electron');
 const path=require('node:path');
-const {mkdirSync}=require('node:fs');
-const {programDataDirectory}=require('../../frontend_ide/host/scripts/project-storage.cjs');
+const {programDataDirectory,preparePrivateDirectory}=require('../../frontend_ide/host/scripts/project-storage.cjs');
 const {アイコンメニューを作成}=require('./アイコンメニュー.cjs');
 const {拡大表示}=require('../../frontend_ide/host/scripts/window-opening.cjs');
 const {ミニ表示を作成,ミニ高さは有効,ミニ幅}=require('./ミニ表示.cjs');
@@ -25,8 +24,8 @@ if(process.platform==='darwin')app.setName(アプリ名);
 // 単体ファイル起動では既定の Electron プロファイルが Avatar と重なり、
 // 相互に別インスタンスと誤認する。排他ロック・キャッシュを Diag 専用にする。
 const projectRoot=path.resolve(__dirname,'../..');
-const profile=path.join(programDataDirectory(projectRoot,'aidiy_diag',projectRoot),'electron');
-mkdirSync(profile,{recursive:true,mode:0o700});
+const profile=programDataDirectory(projectRoot,'aidiy_diag',projectRoot,['electron']);
+preparePrivateDirectory(profile);
 app.setPath('userData',profile);
 app.setPath('sessionData',profile);
 let window, failed=false,終了確認;

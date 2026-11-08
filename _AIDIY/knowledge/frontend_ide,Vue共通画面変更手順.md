@@ -165,7 +165,7 @@ AI検索を選んでいる間はファイルツリー・ルート行・最終更
 
 検索履歴は `ファイル機能/ai-search-history.mjs` がプロジェクト内 `_AIDIY/aidiy_ide/file_searches/<依頼ID>.json` に保存します。保存先の作成・境界確認は `ファイル機能/ide-data.mjs` の `ideDataFolder` に共通化しています。`/api/ai-search/history` のGETで一覧、`?id=`付きGETで理由と軌跡、DELETEで確認済みの1件を削除します。既存のHost / Origin・利用開始チェックを共用します。保存先の各段階で実パス境界を検証し、原子的な一時ファイル→renameで保存します。削除はIDだけの削除済み記録に置換し、元のtempから復活させません。旧保存先と旧temp結果は読み込みません。履歴読込ではパス形式・理由・routeの整合を検証し、現在は存在しない対象も検索当時の情報として残します。
 
-`AISearchPanel` は履歴の取得・選択・削除確認を担当します。初期復元は現在の検索方式・閲覧軌跡を変更せず、明示選択だけがAI検索軌跡に切り替えます。`FileExplorer.acceptAI` は結果を受け取り、位置移動なしでmarksとrouteを更新します。新規検索開始・部品破棄では古い履歴応答を無効化してください。履歴の取得失敗と空一覧を区別し、既存のマークを消さず再読込を案内します。テストでは別プロジェクト分離、再起動、旧結果の移行、削除後の再取込防止、異なるマークへの切替、削除取消・確定、履歴切替で視点が動かないことを確認します。
+`AISearchPanel` は履歴の取得・選択・削除確認を担当します。初期復元は現在の検索方式・閲覧軌跡を変更せず、明示選択だけがAI検索軌跡に切り替えます。`FileExplorer.acceptAI` は結果を受け取り、位置移動なしでmarksとrouteを更新します。新規検索開始・部品破棄では古い履歴応答を無効化してください。履歴の取得失敗と空一覧を区別し、既存のマークを消さず再読込を案内します。テストでは別プロジェクト分離、再起動、旧結果を取り込まないこと、削除後の再取込防止、異なるマークへの切替、削除取消・確定、履歴切替で視点が動かないことを確認します。
 
 ## 更新履歴の比較を変更するとき
 
@@ -224,6 +224,8 @@ Code / Live / IDEの接続バーは `状態バー.vue` のclockPulseを有効に
 Electronの初期配置は `デスクトップ/window-layout.cjs` で画面のworkAreaから計算します。IDEは余白付きの大きな画面、Code / Liveは左右に配置し、IDE連携でも同じディスプレイの隅を基準にし、Codeの2枚目以降だけslotに従ってずらします。詳細は [初期ウィンドウ配置](./frontend_ide,初期ウィンドウ配置.md) を参照します。連携窓のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」で、単独版のタイトルと区別します。既存窓の再表示では最小化を解除して前面に出すだけにします。単独Code / Liveは種別ごとのsingle-instance lock、IDEは同じプロジェクトごとのlockを使い、Consoleは複数起動を許可します。IDEのCode子窓は複数起動でき、それぞれ独立したサーバー・会話を持ちます。Live子窓だけ親セッションと初期化中のPromiseで重複を防ぎ、起動中は＋Liveを隠します。子窓の状態はメインプロセスから取得し、閉じたときにボタンを戻します。`checks/window-layout.test.mjs` と `scripts/check-windows.mjs` で画面外にはみ出さない配置・連打・前面復帰・終了連携を確認します。
 
 IDEのプロジェクト識別は `デスクトップ/project-profile.cjs` に集約します。`launch.mjs` が `--project` / 位置引数 / 起動フォルダを先に解決し、実パスを `AIDIY_DEVELOPMENT_PROJECT` でElectronへ渡します。`desktop.cjs` はロック取得前に実プロジェクトの `_AIDIY/aidiy_ide/electron/` を `userData` と `sessionData` に指定します。Code / Liveを含む各アプリも同じく `aidiy_<pg>/electron/` で分離します。同名の別フォルダは共有せず、相対表記・リンクは同じ実体に揃えます。Windowsでは大小文字・区切り・長いパス表記を統一し、ファイルIDも加えて大小文字を区別する別実体を混同しません。ファイルAPIへ渡す実パスの大小文字は変えません。サーバーは従来どおり自動ポート・個別所有を維持し、他プロジェクトの終了・再起動に巻き込まないでください。旧プロファイルから認証・保存情報をコピーしません。`node --test frontend_ide/checks/project-instance.test.mjs` は模擬Electronと実ローカルHTTPで、重複時の前面化、別プロジェクトの子窓・キャッシュ・接続・ポート・終了の分離、起動引数、同時起動を確認します。実ElectronでのOSロックと前面化は別途確認が必要です。
+
+Consoleのシェル履歴とElectron・専用ブラウザのprofileは、`host/scripts/project-storage.cjs` が専用保存先直下に `*` を含む `.gitignore` を作り、外部Gitプロジェクトでも自動生成物を除外します。利用者のルート `.gitignore`・`.git/info/exclude`・共有Git設定は変更しません。専用 `.gitignore` が既にあれば上書きせず、コメントと空行を除いた規則が `*` だけでなければ停止します。`_AIDIY` から `electron`・`browser-profile`・`fixed`・`standalone` を含む保存先各階層のsymlinkと、専用 `.gitignore` のsymlinkを拒否します。既にGit追跡済みのファイルや `git add -f` は `.gitignore` では保護できません。回帰確認は `node --test frontend_ide/checks/private-storage.test.mjs` です。
 
 WindowsでElectronのGUI本体をspawnするときは `windowsHide: false` にします。`true` では初回の画面表示が隠され、URLだけ出て再実行するまで窓が見えない場合があります。バックグラウンドの補助プロセスとは区別し、初回起動時の可視状態を `scripts/check-single-instance.mjs` でも確認します。
 

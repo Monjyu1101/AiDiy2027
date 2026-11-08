@@ -10,6 +10,7 @@
 
 """読み取り専用のフォルダ状態。IDEと同じ除外規則を使い、内容は読み込まない。"""
 import hashlib
+from fnmatch import fnmatchcase
 import json
 import os
 import stat
@@ -31,8 +32,10 @@ def フォルダ許可(名前, 相対, フィルター):
         return False
     if フィルター != "backup":
         return True
+    parts = 相対.strip("/").split("/")
     return (名前 not in 規則["backupDirectories"] and not 名前.startswith(".")
-            and not any("/" + p + "/" in "/" + 相対.strip("/") + "/" for p in 規則["backupPaths"]))
+            and not any(fnmatchcase(f"{parent}/{child}", pattern)
+                        for parent, child in zip(parts, parts[1:]) for pattern in 規則["backupPaths"]))
 
 
 def ファイル許可(名前, フィルター):

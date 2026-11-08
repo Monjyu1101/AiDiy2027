@@ -86,7 +86,7 @@
 
 - Microsoft Officeが文書と同じフォルダに作る `~$` 始まりの一時ロックファイルは、全階層でバックアップの件数・最新時刻・全件保存・差分保存から除外する。IDEのバックアップ対象フィルターと `.gitignore` も同じ条件にする。通常の `.docx` / `.xlsx` / `.pptx` と、`~` だけで始まる通常ファイルは対象に残す。Office使用中のロック自体は削除しない。
 
-- `_AIDIY/aidiy_code/` と `_AIDIY/aidiy_ide/` の会話・検索・解析記録は、全階層でバックアップと件数判定から除外する。IDEのバックアップ対象フィルターと `.gitignore` にも同じ除外を反映する。`_AIDIY/knowledge/`、`frontend_ide/aidiy_code/` などのソース、似た名前のフォルダは対象に残す。
+- `_AIDIY` 直下の `aidiy_` で始まるフォルダは、全階層でバックアップ・件数判定・ローカルGit記録から除外する。IDEのバックアップ対象フィルターONと `.gitignore` の `**/_AIDIY/aidiy_*/` も同じ条件で、未知の `aidiy_custom/` や `aidiy_ide_extra/` を含む。`_AIDIY/knowledge/`、直下の `histories/`、`frontend_ide/aidiy_code/` などのソース、`_AIDIY/aidiy_note.md` のような通常ファイルはこの条件では除外しない。
 
 - 保存処理は、除外後の全対象ファイル数が100,000件以上になると走査中にキャンセルする（差分コピー件数ではない）。`backend_server/AIコア/AIバックアップ.py` の `_バックアップキャンセル件数` が判定値で、対象パスと検出件数を ERROR ログへ出力する。コピーや保存先フォルダ作成は行わず、MCP / HTTP の保存結果は `ok: false` と `error` を返す。
 - `backup_get_before_after` は各ファイルを最大512 KiBまで読み、超過時は `truncated: true` を返す（`BackupCheck.MAX_CONTENT_BYTES`）。`backup_diff_stats` も同じ読み取り範囲から集計し、切り詰めの情報を返さないため、大きいファイルの全体一致判定には使わない

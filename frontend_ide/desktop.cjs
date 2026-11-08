@@ -5,8 +5,8 @@
 // https://github.com/monjyu1101/AiDiy2027
 const {app,BrowserWindow,WebContentsView,ipcMain,shell,clipboard,session,screen,dialog,Menu}=require('electron');
 const {join,resolve}=require('node:path');
-const {projectRoot,programDataDirectory}=require('./host/scripts/project-storage.cjs');
-const {mkdirSync,mkdtempSync,rmSync}=require('node:fs');
+const {projectRoot,programDataDirectory,preparePrivateDirectory}=require('./host/scripts/project-storage.cjs');
+const {mkdtempSync,rmSync}=require('node:fs');
 const {projectProfile}=require('./デスクトップ/project-profile.cjs');
 const {taskTeamProfile}=require('./デスクトップ/タスクチーム起動.cjs');
 const projectFixed=process.env.AIDIY_DEVELOPMENT_PROJECT_FIXED==='1';
@@ -17,8 +17,8 @@ const appName=`AiDiy ${kind==='navi'?'Navigator':kind==='ide'?'IDE':kind==='code
 app.setName(process.platform==='darwin'?appName:`aidiy_${kind}`);
 // ランチャーが引数を解決したプロジェクトで、ロック取得より先にIDEのプロファイルを分ける。
 const project=projectRoot(process.env.AIDIY_DEVELOPMENT_PROJECT??'',resolve(__dirname,'..'));
-const profile=kind==='ide'?projectProfile(undefined,project):['task','team'].includes(kind)?taskTeamProfile(undefined,kind,project,projectFixed):join(programDataDirectory(project,`aidiy_${kind}`),'electron');
-mkdirSync(profile,{recursive:true,mode:0o700});
+const profile=kind==='ide'?projectProfile(undefined,project):['task','team'].includes(kind)?taskTeamProfile(undefined,kind,project,projectFixed):programDataDirectory(project,`aidiy_${kind}`,undefined,['electron']);
+preparePrivateDirectory(profile);
 app.setPath('userData',profile);
 app.setPath('sessionData',profile);
 const independent=kind==='console'||kind==='browser'||!['live','task','team'].includes(kind)&&process.env.AIDIY_DEVELOPMENT_NEW_WINDOW==='1';

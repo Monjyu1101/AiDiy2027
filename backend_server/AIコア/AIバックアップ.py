@@ -12,6 +12,7 @@ import os
 import shutil
 import ctypes
 import time
+from fnmatch import fnmatchcase
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from typing import Optional, Tuple, List, TypedDict
@@ -47,22 +48,16 @@ _バックアップ除外フォルダ = (
     ".yarn",
 )
 
-# _AIDIY の作業記録だけを除外する。同名のソースフォルダは対象に残す。
+# .gitignore の **/_AIDIY/aidiy_*/ と同じ条件。未知のアプリも除外し、外側の同名ソースは残す。
 _バックアップ除外フォルダ組 = {
-    ("_AIDIY", "aidiy_avatar"),
-    ("_AIDIY", "aidiy_browser"),
-    ("_AIDIY", "aidiy_code"),
-    ("_AIDIY", "aidiy_console"),
-    ("_AIDIY", "aidiy_diag"),
-    ("_AIDIY", "aidiy_discord"),
-    ("_AIDIY", "aidiy_hermes"),
-    ("_AIDIY", "aidiy_ide"),
-    ("_AIDIY", "aidiy_live"),
-    ("_AIDIY", "aidiy_navi"),
-    ("_AIDIY", "aidiy_slack"),
-    ("_AIDIY", "aidiy_task"),
-    ("_AIDIY", "aidiy_team"),
+    ("_AIDIY", "aidiy_*"),
 }
+
+
+def _バックアップ除外フォルダ判定(parent: str, child: str) -> bool:
+    return any(fnmatchcase(parent, parent_pattern) and fnmatchcase(child, child_pattern)
+               for parent_pattern, child_pattern in _バックアップ除外フォルダ組)
+
 
 _バックアップ除外ファイル = (
     ".DS_Store",
@@ -183,14 +178,14 @@ def _全ファイルスキャン(ベースパス: str, 最大件数: Optional[in
         # 除外は選択したプロジェクトの内側だけに適用する。
         # 親が temp/log 等でも、明示された作業フォルダを丸ごと除外しない。
         root_parts = os.path.relpath(root, workspace_root).split(os.sep)
-        if any(pair in _バックアップ除外フォルダ組 for pair in zip(root_parts, root_parts[1:])):
+        if any(_バックアップ除外フォルダ判定(*pair) for pair in zip(root_parts, root_parts[1:])):
             dirs[:] = []
             continue
         # ディレクトリ名の完全一致で除外（サブストリング一致は "dialog" → "log" のような誤除外を招く）
         dirs[:] = [
             d for d in dirs
             if d not in _除外フォルダセット and not d.startswith(".")
-            and (root_parts[-1], d) not in _バックアップ除外フォルダ組
+            and not _バックアップ除外フォルダ判定(root_parts[-1], d)
         ]
         for file_name in file_names:
             # Office の一時ロックファイルは、件数判定・差分判定・コピーのすべてから除外する。

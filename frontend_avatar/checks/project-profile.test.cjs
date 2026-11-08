@@ -8,7 +8,7 @@ const {readFileSync}=require('node:fs');
 const path=require('node:path'),vm=require('node:vm');
 const source=readFileSync(path.join(__dirname,'../electron/main.ts'),'utf8');
 // Startup profile code is ordinary JavaScript; run it before any display/IPC setup.
-const start=source.indexOf('const { programDataDirectory }');
+const start=source.indexOf('const { programDataDirectory, preparePrivateDirectory }');
 const end=source.indexOf("app.setPath('sessionData', avatarProfile)")+"app.setPath('sessionData', avatarProfile)".length;
 test('Avatar profile stays under its installation root, without consulting home or cwd',()=>{
  assert.ok(start>=0&&end>start);
@@ -17,7 +17,7 @@ test('Avatar profile stays under its installation root, without consulting home 
   const calls=[],created=[];
   vm.runInNewContext(source.slice(start,end),{
    __dirname:path.join(root,'frontend_avatar','dist-electron'),path,
-   require:id=>{assert.equal(id,path.join(root,'frontend_ide/host/scripts/project-storage.cjs'));return {programDataDirectory:(project,program,base)=>{assert.equal(project,root);assert.equal(base,root);assert.equal(program,'aidiy_avatar');return path.join(project,'_AIDIY',program);}};},
+   require:id=>{assert.equal(id,path.join(root,'frontend_ide/host/scripts/project-storage.cjs'));return {programDataDirectory:(project,program,base,children)=>{assert.equal(project,root);assert.equal(base,root);assert.equal(program,'aidiy_avatar');return path.join(project,'_AIDIY',program,...children);},preparePrivateDirectory:folder=>created.push(folder)};},
    mkdirSync:(folder,options)=>{assert.equal(options.recursive,true);created.push(folder);},
    app:{getPath(){throw Error('home lookup forbidden');},setPath:(name,value)=>calls.push([name,value])},
   });

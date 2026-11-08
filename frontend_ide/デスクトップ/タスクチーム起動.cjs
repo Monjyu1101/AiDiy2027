@@ -3,11 +3,10 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-const {join}=require('node:path');
 const {programDataDirectory}=require('../host/scripts/project-storage.cjs');
 const {projectIdentity}=require('./project-profile.cjs');
 function taskTeamProfile(appData,kind,project,fixed=false){
  if(!['task','team'].includes(kind))throw Error('Task / Team を指定してください。');
- return join(programDataDirectory(projectIdentity(project).path,`aidiy_${kind}`),'electron',fixed?'fixed':'standalone');
+ return programDataDirectory(projectIdentity(project).path,`aidiy_${kind}`,undefined,['electron',fixed?'fixed':'standalone']);
 }
 module.exports={taskTeamProfile};

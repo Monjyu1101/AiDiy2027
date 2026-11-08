@@ -55,19 +55,7 @@
     "npm-shrinkwrap.json"
   ],
   "backupPaths": [
-    "_AIDIY/aidiy_avatar",
-    "_AIDIY/aidiy_browser",
-    "_AIDIY/aidiy_code",
-    "_AIDIY/aidiy_console",
-    "_AIDIY/aidiy_diag",
-    "_AIDIY/aidiy_discord",
-    "_AIDIY/aidiy_hermes",
-    "_AIDIY/aidiy_ide",
-    "_AIDIY/aidiy_live",
-    "_AIDIY/aidiy_navi",
-    "_AIDIY/aidiy_slack",
-    "_AIDIY/aidiy_task",
-    "_AIDIY/aidiy_team"
+    "_AIDIY/aidiy_*"
   ],
   "backupExtensions": [
     ".pyc",

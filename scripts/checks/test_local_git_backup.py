@@ -168,6 +168,20 @@ class LocalBackupTests(unittest.TestCase):
         with patch("scripts.local_git_backup.shutil.which",return_value=None):
             self.assertEqual(self.snapshot()[0], "skipped")
 
+    def test_aidiy_wildcard_excludes_directories_not_regular_files(self):
+        excluded = {'_AIDIY/aidiy_custom/record.md', 'nested/_AIDIY/aidiy_ide_extra/record.md',
+                    '_AIDIY/aidiy_/record.md'}
+        included = {'_AIDIY/knowledge/guide.md', '_AIDIY/histories/entry.md', '_AIDIY/aidiy_note.md',
+                    '_AIDIY/knowledge/aidiy_custom/guide.md', 'frontend_ide/aidiy_custom/source.py'}
+        for relative in included | excluded:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('合成検証データ', encoding='utf-8')
+        # .gitignoreなしでも、ネイティブバックアップから受け取る除外条件が働く。
+        state, _ = commit_local_backup(self.root, sorted(included | excluded), excluded_pairs={('_AIDIY', 'aidiy_*')})
+        self.assertEqual(state, 'created')
+        self.assertEqual(set(self.git('ls-files').stdout.splitlines()), included)
+
     def test_wrong_pointer_and_regular_repository_untouched(self):
         before=(self.meta/"HEAD").read_bytes()
         (self.root/".git").write_text("gitdir: ../other\n")

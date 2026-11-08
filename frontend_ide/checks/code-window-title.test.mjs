@@ -48,7 +48,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const modules={
   electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
   'node:path':{join:(...parts)=>parts.join('/'),resolve:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
-  './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program)=>`/project/_AIDIY/${program}`},
+  './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program,_root,children=[])=>['/project/_AIDIY',program,...children].join('/'),preparePrivateDirectory(){}},
   './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},
   './デスクトップ/navigation-code-window.cjs':navigationCodeWindowModule,
   './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:()=>({}),windowMinimumSize:()=>({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},

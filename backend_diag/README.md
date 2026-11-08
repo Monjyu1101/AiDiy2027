@@ -350,7 +350,7 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 
 全体 `_setup.py` は Git / Node.js の前提確認後、共通セットアップ（AI CLI 導入の待機を含む）→ Diag ランチャー配置・Electron準備 → local の順で実行します。共通や local が未選択ならその段階だけをスキップします。前提ツールの導入は auto 選択時も従来どおり確認付きです。単体 `python backend_diag/_setup.py` は Node.js / npm の準備後に使います。Codespaces / Linux GUI なしでは Electron / npm の準備を省略しますが、ブラウザ版のサーバーに必要な Node.js の実行可否は確認します。版数だけの警告は継続し、未導入・実行不能・timeout はセットアップ失敗です。明示的なランチャー再登録だけの経路（ルートの `--launchers-only`）は依存導入・実行確認を行いません。
 
-全 OS 共通でランチャーは AiDiy 本体の `_AIDIY/aidiy_<pg>/bin/` に配置します。登録だけを修復する場合は `python3 _setup.py --launchers-only`（Windows は `python`）を実行してください。依存導入・ビルド・サービス起動はしません。PATH はセットアップ自身と子プロセスだけに反映されます。別ターミナルではフルパスか表示されたシェル限定の PATH 設定を使います。cleanup は新しいプロジェクト内ランチャーだけを解除します。
+全 OS 共通で、Hermes 以外のランチャーは AiDiy 本体の `_AIDIY/aidiy_<pg>/bin/` に配置します。登録だけを修復する場合は `python3 _setup.py --launchers-only`（Windows は `python`）を実行してください。依存導入・ビルド・サービス起動はしません。プロジェクト内ランチャーの PATH はセットアップ自身と子プロセスだけに反映されます。別ターミナルではフルパスか表示されたシェル限定の PATH 設定を使います。cleanup は新しいプロジェクト内ランチャーだけを解除します。Hermes は従来どおり `~/.local/bin` に配置し、シェルプロファイルまたは Windows のユーザー PATH に永続登録します。Hermes の cleanup では共有 bin が空になった場合だけ、自動追加した PATH 登録を解除します。
 
 通常setupは同梱のVue配布物を勝手に再ビルドしません。起動時の既存manifest検証で欠損・不一致を検出した場合は成功扱いにせず、同じ版の配布物の取得、または本書のUIビルド手順を案内します。headless診断には画面の配布物を要求しません。
 
@@ -487,7 +487,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - Antigravity (`agy`): `--dangerously-skip-permissions`。[公式CLI利用方法](https://antigravity.google/docs/cli/using)
 - Grok: `--yolo`。[xAI公式参考](https://docs.x.ai/build/cli/reference)
 - OpenCode: `--auto`。[公式TUI参考](https://opencode.ai/docs/cli/#tui)、[自動承認の範囲](https://opencode.ai/docs/permissions/#auto-mode)
-- AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたは AiDiy 本体の `_AIDIY/aidiy_hermes/bin` に配置済みのランチャーが対象です。
+- AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたはユーザーの `~/.local/bin` に配置済みのランチャーが対象です。
 
 組織の禁止・denyルール・初回の信頼確認・ログインなど、CLI側で保持する制約は解除しません。古いCLIが固定フラグに未対応ならConsoleにそのエラーを表示し、勝手に別フラグや通常モードへ切り替えません。Windowsのnpm `.cmd` は文字列としてシェル実行せず、許可したパッケージの安全な `bin` を検証してNodeから引数配列で開きます。任意のコマンド・モデル・実行ファイル・シェル本文はDiag APIへ渡せません。
 

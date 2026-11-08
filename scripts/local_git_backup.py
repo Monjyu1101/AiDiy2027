@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import importlib.util
 from contextlib import contextmanager
+from fnmatch import fnmatchcase
 from pathlib import Path
 import shutil
 import stat
@@ -150,7 +151,11 @@ def commit_local_backup(base_dir, files, *, excluded_dirs=(), excluded_files=(),
                 continue
             if any(part in dirs for part in path.parts[:-1]) or path.name in names or path.name.startswith(".env.") or path.name.endswith(suffixes):
                 continue
-            if any(pair in excluded_pairs for pair in zip(path.parts, path.parts[1:])):
+            # バックアップ元と同じディレクトリパターン。末尾の通常ファイル名は判定しない。
+            folder_parts = path.parts[:-1]
+            if any(fnmatchcase(parent, parent_pattern) and fnmatchcase(child, child_pattern)
+                   for parent, child in zip(folder_parts, folder_parts[1:])
+                   for parent_pattern, child_pattern in excluded_pairs):
                 continue
             actual = root / path
             if any(p.is_symlink() or getattr(p, "is_junction", lambda: False)() for p in (actual, *list(actual.parents)[:len(path.parts)-1])) or not actual.is_file():

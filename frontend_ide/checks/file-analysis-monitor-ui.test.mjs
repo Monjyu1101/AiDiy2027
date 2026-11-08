@@ -93,3 +93,28 @@ test('指示保護: 初回GET失敗後でも編集した入力は保存し、PUT
  await f.mount();f.state.instruction.value='取得失敗後に編集した指示';await f.state.close();assert.equal(f.emitted.length,0);assert.match(f.state.closeError.value,/save failed/);assert.equal(f.state.instruction.value,'取得失敗後に編集した指示');assert.equal(saved,'保存指示');
  await f.state.close();assert.equal(saved,'取得失敗後に編集した指示');assert.equal(puts,2);assert.deepEqual(f.emitted,['close']);assert.equal(f.timers.size,0);
 });
+
+test('監視UI: 閉じる保存待ちでpollが発火しても、保存失敗後は監視を再開して完了結果を表示する',async t=>{
+ const save=deferred();let response={instruction:'保存指示',job:waiting,result:null};
+ const f=fixture(t,(_url,options)=>options.method==='PUT'?save.promise:response);await f.mount();
+ const closing=f.state.close();await flush();assert.equal(f.state.saving.value,true);
+ await f.tick();assert.equal(f.timers.size,0);assert.equal(f.calls.filter(x=>x.method==='GET').length,1);
+ save.reject(Error('temporary write failure'));await closing;await f.state.keepEditing();
+ assert.equal(f.state.busy.value,true);assert.equal(f.timers.size,1);assert.deepEqual(f.emitted,[]);
+ response={...response,job:complete,result:{content:'保存待ちの間に完成した解析結果'}};await f.tick();
+ assert.equal(f.state.record.value.content,response.result.content);assert.equal(f.state.busy.value,false);assert.equal(f.timers.size,0);
+});
+
+test('指示保護: 初回読込の再試行も保存失敗後に再開し、編集中の指示を保持する',async t=>{
+ const save=deferred();let gets=0;
+ const f=fixture(t,(_url,options)=>{if(options.method==='PUT')return save.promise;if(++gets===1)throw Error('temporary read failure');return{instruction:'保存指示',job:waiting,result:{content:'前回結果'}};});
+ await f.mount();f.state.instruction.value='編集中の指示';const closing=f.state.close();await flush();await f.tick();
+ save.reject(Error('temporary write failure'));await closing;assert.equal(f.timers.size,1);await f.tick();
+ assert.equal(f.state.instruction.value,'編集中の指示');assert.equal(f.state.record.value.content,'前回結果');assert.equal(f.state.error.value,'');assert.equal(f.timers.size,1);
+});
+
+test('監視UI: 保存待ち中に画面を破棄した場合は、遅い保存失敗でも監視を再開しない',async t=>{
+ const save=deferred(),f=fixture(t,(_url,options)=>options.method==='PUT'?save.promise:{instruction:'保存指示',job:waiting,result:null});await f.mount();
+ const closing=f.state.close();await flush();f.dispose();save.reject(Error('late write failure'));await closing;
+ assert.equal(f.timers.size,0);assert.deepEqual(f.emitted,[]);
+});

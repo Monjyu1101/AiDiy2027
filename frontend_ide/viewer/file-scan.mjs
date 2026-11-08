@@ -19,10 +19,12 @@ const MAX_FILES = 30000;
 // 従来の一覧条件をJSONにまとめ、Pythonの状態APIと共有する（Python自体は呼ばない）。
 const BACKUP_EXCLUDED_DIRS = new Set(rules.backupDirectories);
 const BACKUP_EXCLUDED_FILES = new Set(rules.backupFiles);
-const BACKUP_EXCLUDED_PATHS = new Set(rules.backupPaths);
+// .gitignore の **/_AIDIY/aidiy_*/ と同じディレクトリ条件。* は名前内だけに一致する。
+const BACKUP_EXCLUDED_PATHS = rules.backupPaths.map(pattern => new RegExp(`^${pattern.split('*')
+  .map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[^/]*')}$`));
 const backupPathAllowed = path => {
   const parts = resolve(path).split(sep);
-  return !parts.some((part, index) => BACKUP_EXCLUDED_PATHS.has(`${part}/${parts[index + 1]}`));
+  return !parts.some((part, index) => BACKUP_EXCLUDED_PATHS.some(pattern => pattern.test(`${part}/${parts[index + 1]}`)));
 };
 const BACKUP_EXCLUDED_EXTENSIONS = rules.backupExtensions;
 const WINDOWS_RESERVED = new Set(['con', 'prn', 'aux', 'nul', 'null',

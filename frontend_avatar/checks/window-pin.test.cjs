@@ -94,7 +94,7 @@ function mainFixture() {
     __dirname: path.join(project, 'dist-electron'), exports: {}, console, URL,
     process: { platform: 'win32', env: {} },
     require: id => id === 'node:fs' ? { ...fs, mkdirSync() {} } : id === 'electron' ? electron
-      : id.endsWith('window-opening.cjs') ? { 拡大表示: async (_Constructor, window, options) => {
+      : id.endsWith('project-storage.cjs') ? {...load(id),preparePrivateDirectory(){}} : id.endsWith('window-opening.cjs') ? { 拡大表示: async (_Constructor, window, options) => {
         if (window.isDestroyed() || !options.canShow()) return false;
         window.show(); return true;
       } }

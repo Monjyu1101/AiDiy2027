@@ -106,15 +106,15 @@ python _setup.py
 python frontend_ide/host/_setup.py
 ```
 
-`frontend_ide/host/_setup.py` は `npm install`、`npm update`、Electron の準備、`npm run package` による Code / Live の VSIX 生成、`code --install-extension --force` を順に実行し、最後に両拡張の ID とバージョンを再取得して配置を確認する。VS Code CLI が見つからない場合は単独画面だけをコンパイルする。最後に `~/.local/bin/aidiy_code.cmd`（Windows）または `~/.local/bin/aidiy_code`（macOS / Linux）を作り、`aidiy_code/launch.mjs` を絶対パスで呼び出す。`code` が PATH に無い場合は、稼働中の Codespaces / IDE Container / Remote SSH の Remote CLI と VS Code の標準配置先も探索する。単にファイルが存在するだけでなく、`--version` に成功した CLI だけを使う。
+`frontend_ide/host/_setup.py` は `npm install`、`npm update`、Electron の準備、`npm run package` による Code / Live の VSIX 生成、`code --install-extension --force` を順に実行し、最後に両拡張の ID とバージョンを再取得して配置を確認する。VS Code CLI が見つからない場合は単独画面だけをコンパイルする。最後に AiDiy 本体の `_AIDIY/aidiy_code/bin/aidiy_code.cmd`（Windows）または `_AIDIY/aidiy_code/bin/aidiy_code`（macOS / Linux）を作り、`aidiy_code/launch.mjs` を絶対パスで呼び出す。`code` が PATH に無い場合は、稼働中の Codespaces / IDE Container / Remote SSH の Remote CLI と VS Code の標準配置先も探索する。単にファイルが存在するだけでなく、`--version` に成功した CLI だけを使う。
 
-同時に `aidiy_live` のランチャーも作り、`aidiy_live/launch.mjs` を呼び出す。ランチャーだけの更新は `python frontend_ide/host/_setup.py --launchers-only` を使う。この作業コピーから配置した旧名 `aidiy_vscode` は新しいランチャーの配置後に解除する。生成済み VSIX だけを配置する場合は `python frontend_ide/host/_setup.py --extensions-only` を使う。通常セットアップと `--extensions-only` は両 VSIX の存在を確認してから、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去し、除去を確認した後に Code / Live を配置する。旧 `aidiy-vscode` も同じ判定で対象になる。表示名は `AiDiy Code` / `AiDiy Live`、内部モジュール名・起動コマンドは `aidiy_code` / `aidiy_live` とする。拡張パッケージ名は `aidiy-code` / `aidiy-live`、拡張 ID は `aidiy.aidiy-code` / `aidiy.aidiy-live` とする。
+同時に AiDiy 本体の `_AIDIY/aidiy_live/bin/` に `aidiy_live` のランチャーも作り、`aidiy_live/launch.mjs` を呼び出す。ランチャーだけの更新は `python frontend_ide/host/_setup.py --launchers-only` を使う。旧名 `aidiy_vscode` を含むホーム配下の旧ランチャーは移行・削除しない。生成済み VSIX だけを配置する場合は `python frontend_ide/host/_setup.py --extensions-only` を使う。通常セットアップと `--extensions-only` は両 VSIX の存在を確認してから、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去し、除去を確認した後に Code / Live を配置する。旧 `aidiy-vscode` も同じ判定で対象になる。表示名は `AiDiy Code` / `AiDiy Live`、内部モジュール名・起動コマンドは `aidiy_code` / `aidiy_live` とする。拡張パッケージ名は `aidiy-code` / `aidiy-live`、拡張 ID は `aidiy.aidiy-code` / `aidiy.aidiy-live` とする。
 
 片方だけを無効にする場合は VS Code の拡張一覧で対象の歯車から「無効にする」または「無効にする（ワークスペース）」を選択する。必要に応じてウィンドウを再読み込みする。
 
 Electron は VSIX 生成・単独画面コンパイルより前に `scripts/_setup_electron.py` の共通処理で準備する。配置済みの実行ファイル・`version`・`path.txt` を照合し、未配置なら Avatar の同じバージョンのバイナリ、`.aidiy_cache/electron/` の共有 ZIP の順に再利用する。まだ取得されていない場合だけ Python で GitHub から取得する。npm の install / update / rebuild では Electron の自動取得をスキップし、同じ取得を繰り返さない。Electron を準備できない場合はセットアップを失敗扱いにする。詳細は [`共通,開発環境運用手順.md`](./共通,開発環境運用手順.md) の「Electron の共通セットアップ」を参照する。
 
-単独画面は作業フォルダで `aidiy_code`、または `aidiy_code "C:\work\project"` のように明示して起動する。前者は起動時のカレントフォルダを使用する。`~/.local/bin` は Hermes のランチャーと共通なので PATH に含める。Windows の `.cmd` と macOS / Linux のシェルランチャーは、どちらも `aidiy_code/launch.mjs` を直接呼ぶ。`launch-extension-dev.ps1` は Windows で Code / Live の両方を `--extensionDevelopmentPath` に指定した VS Code 拡張の開発ホストを起動する。
+単独画面は作業フォルダで `aidiy_code`、または `aidiy_code "C:\work\project"` のように明示して起動する。前者は起動時のカレントフォルダを使用する。フルパスか、セットアップが表示する現在のシェル限定の PATH 設定でプロジェクト内ランチャーを使う。Hermes の `~/.local/bin` とは別の保存先で、Code / Live のセットアップはシェル設定・レジストリを変更しない。Windows の `.cmd` と macOS / Linux のシェルランチャーは、どちらも `aidiy_code/launch.mjs` を直接呼ぶ。`launch-extension-dev.ps1` は Windows で Code / Live の両方を `--extensionDevelopmentPath` に指定した VS Code 拡張の開発ホストを起動する。
 
 配置は拡張機能ファイルを更新するだけで、VS Code 本体や AiDiy の常駐サービスを停止しない。すでに VS Code が起動している場合、変更の反映にはウィンドウ再読み込みが必要になる。
 
@@ -252,7 +252,7 @@ python -m unittest discover -s checks -p "test_*.py"
 - Windows の AiDiy `.cmd` をシェルなしで解決できる。
 - packet が開始、進捗、終了または中断、正式回答の順になる。
 - Code の両init前・切断中のHermes実行と検証0固定、オンライン／オフライン別のモデル保存・再起動後の復元、Hermes実行中の再接続と完了後のオンライン復帰、10秒間隔の再接続、自動接続OFFによる予約済み再試行の中止と新規・履歴復帰からの接続抑止、ONへの復帰と起動時ON、遅延イベント無視、モデルAPIのNG、破棄を確認する。接続済みで送信・停止・履歴復帰・CLI別モデル候補が動く。
-- VS Code 側で旧 `workspaceState` の単一会話・履歴を、作業フォルダの `_AIDIY/aidiy_code/histories/` へ移行でき、作業フォルダ（プロジェクト）ごとに履歴が分かれる。単独起動版を再起動しても同じプロジェクトの履歴が残る（`checks/conversation-store.test.cjs`、`checks/aidiy_code.test.cjs` の再起動確認）。最終選択モデルが再起動後と新規会話へ引き継がれる。
+- VS Code 側の会話・履歴は作業フォルダの `_AIDIY/aidiy_code/histories/` に保存し、作業フォルダ（プロジェクト）ごとに分ける。旧 `workspaceState` の単一会話・履歴は読み込まず、自動移行しない。単独起動版を再起動しても同じプロジェクトの履歴が残る（`checks/conversation-store.test.cjs`、`checks/aidiy_code.test.cjs` の再起動確認）。最終選択モデルが同じプロジェクトの再起動後と新規会話へ引き継がれる。
 - `dist/aidiy-code-<version>.vsix` と `dist/aidiy-live-<version>.vsix` が生成され、それぞれのファイルだけを含む。
 - Live のセッション・音声パケット・WebSocket 中継・モデル API・切断・Origin 拒否を模擬バックエンドで確認できる。VS Code / 単独画面の両方で会話表示と末尾追従が動き、単独画面では起動時のモデル指定で1回だけ自動接続する。拡張ではタブを切り替えても接続を保持し、非表示中はマイクを止める。
 
@@ -301,11 +301,11 @@ Live のブラウザ版は通常の `--browser` と Electron 失敗時の自動�
 python frontend_ide/host/_cleanup.py
 ```
 
-ルートの `python _cleanup.py` でも、`command_hermes` の次に `frontend_ide/host` を選択できる。拡張名が `aidiy-` で始まる配置済み拡張（`publisher.aidiy-*`）をすべて解除し、拡張一覧に対象が残っていないことを確認してから、`~/.local/bin` の Code / Live ランチャー（旧名 `aidiy_vscode` を含む）、`node_modules`、`dist`、`aidiy_live/dist`、`out`、`frontend_ide/host` 直下の `*.vsix`、Python cache を削除する。セットアップとクリーンアップの対象判定・解除確認は `frontend_ide/host/scripts/vscode_extensions.py` で共有する。解除が失敗した場合はランチャー・生成物を削除しない。
+ルートの `python _cleanup.py` でも、`command_hermes` の次に `frontend_ide/host` を選択できる。拡張名が `aidiy-` で始まる配置済み拡張（`publisher.aidiy-*`）をすべて解除し、拡張一覧に対象が残っていないことを確認してから、AiDiy 本体の `_AIDIY/aidiy_code/bin/` / `_AIDIY/aidiy_live/bin/` に配置した当該作業コピーのランチャー、`node_modules`、`dist`、`aidiy_live/dist`、`out`、`frontend_ide/host` 直下の `*.vsix`、Python cache を削除する。ホーム配下の旧ランチャーと旧名 `aidiy_vscode` は変更・削除しない。セットアップとクリーンアップの対象判定・解除確認は `frontend_ide/host/scripts/vscode_extensions.py` で共有する。解除が失敗した場合はランチャー・生成物を削除しない。
 
 cleanup は VS Code 本体を終了しない。起動中の拡張ホストには再読み込みまで旧コードが残る場合があるため、解除を画面へ反映するときだけ利用者が VS Code のウィンドウを再読み込みする。CLI が利用できない、解除後も拡張が残る、生成物を削除できない場合は失敗として終了する。
 
-削除前に、この作業コピーの Code / Live 単独実行サーバー、Electron、専用 Chrome / Edge を強制終了する。ルートの cleanup では常駐サービス停止と同じ段階で実行し、フォルダ単独の cleanup でも生成物削除前に実行する。判定と終了確認は `frontend_ide/host/scripts/standalone_processes.py` が担当する。専用ブラウザは `out/aidiy_code/browser-profile` / `out/aidiy_live/browser-profile` の完全一致で判定し、通常のブラウザは終了しない。`out` 内のキャッシュで WinError 32 が出る場合は、親サーバー終了後にも専用ブラウザが残っている可能性がある。終了確認後の一時的なファイル共有違反は短時間の再試行で吸収する。
+削除前に、この作業コピーの Code / Live 単独実行サーバーと Electron を強制終了する。ルートの cleanup では常駐サービス停止と同じ段階で実行し、フォルダ単独の cleanup でも生成物削除前に実行する。判定と終了確認は `frontend_ide/host/scripts/standalone_processes.py` が担当する。旧版が残した専用 Chrome / Edge は `out/aidiy_code/browser-profile` / `out/aidiy_live/browser-profile` の完全一致で判定する。現行の Code / Live の `--browser` は専用 profile を指定せず、通常のブラウザは終了しない。旧 `out` 内のキャッシュで WinError 32 が出る場合は、親サーバー終了後にも旧版の専用ブラウザが残っている可能性がある。終了確認後の一時的なファイル共有違反は短時間の再試行で吸収する。
 
 ## 問題の切り分け
 

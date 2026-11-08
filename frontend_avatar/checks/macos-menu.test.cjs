@@ -20,7 +20,7 @@ async function fixture(platform){
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){menu=value;}};
  const electron={app,Menu,session:{defaultSession:{setDisplayMediaRequestHandler(){throw stop;}}}};
  vm.runInNewContext(readFileSync(filename,'utf8'),{__dirname:path.dirname(filename),exports:{},process:{platform,env:{}},console,URL,
-  require:id=>id==='node:fs'?{mkdirSync(){}}:id==='electron'?electron:id.endsWith('window-opening.cjs')?{拡大表示:async()=>true}:load(id)});
+  require:id=>id==='node:fs'?{mkdirSync(){}}:id==='electron'?electron:id.endsWith('project-storage.cjs') ? {...load(id),preparePrivateDirectory(){}} : id.endsWith('window-opening.cjs')?{拡大表示:async()=>true}:load(id)});
  await assert.rejects(ready(),error=>error===stop);
  return{app,menu,icon,appIds,quits:()=>quit};
 }

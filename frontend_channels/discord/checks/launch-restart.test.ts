@@ -35,7 +35,7 @@ async function 起動実行(options: { argv: string[]; electron: boolean; ready:
   const directories: string[] = [], logs: string[] = [], reads: string[] = [], removed: string[] = [], profiles: string[] = [];
   let clock = 0, probes = 0, exitCode: number | undefined;
   await runInNewContext(`(async () => { ${source} })()`, {
-    moduleUrl, dirname, join, programDataDirectory: (project: string, name: string) => join(project, '_AIDIY', name), fileURLToPath: 区切り, pathToFileURL, URL, parseArgs,
+    moduleUrl, dirname, join, programDataDirectory: (project: string, name: string, _root: string, children: string[] = []) => join(project, '_AIDIY', name, ...children), preparePrivateDirectory: (folder: string) => folder, fileURLToPath: 区切り, pathToFileURL, URL, parseArgs,
     プロジェクト引数書式: '[作業フォルダ]', プロジェクトフォルダ決定: () => '/project', ブラウザ自動判定: () => false,
     ブラウザ版表示: async (url: string, value: { profile: string }) => { opened.push(url); profiles.push(value.profile); return true; },
     ブラウザ版へ切替: (error: Error) => { warnings.push(error.message); }, ウィンドウ: { パネル高さ: 414 },

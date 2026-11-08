@@ -17,7 +17,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { parseArgs } from 'node:util';
-import { programDataDirectory } from '../../../frontend_ide/host/scripts/project-storage.cjs';
+import { programDataDirectory, preparePrivateDirectory } from '../../../frontend_ide/host/scripts/project-storage.cjs';
 import { プロジェクト引数書式, プロジェクトフォルダ決定, ブラウザ自動判定, ブラウザ版表示, ブラウザ版へ切替, ウィンドウ } from '../../../frontend_ide/host/scripts/launch-project.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -49,11 +49,12 @@ const requestedBrowser = !!options.browser || ブラウザ自動判定();
 // 起動ログ・完了通知だけを配置先リポジトリのtempへ分離する。
 const temporary = join(root, '..', '..', 'temp', 'aidiy_slack');
 const logs = join(temporary, 'logs'), runtime = join(temporary, 'runtime');
-// ブラウザ版の保存済みprofileは移動せず、従来の場所を引き続き使う。
-const browserProfile = join(programDataDirectory(projectRoot, 'aidiy_slack', join(root, '../..')), 'browser-profile');
+// ブラウザ版 profile も起動プロジェクトごとに分離する。
+const browserProfile = programDataDirectory(projectRoot, 'aidiy_slack', join(root, '../..'), ['browser-profile']);
 
 // パネルを起動し、終了コードを返す。開けなければ理由を例外で返す。
 async function パネル起動(browser) {
+  if (browser) preparePrivateDirectory(browserProfile);
   let executable = process.execPath;
   if (!browser) {
     const setupMessage = `専用ウィンドウにはセットアップ済みの Electron が必要です。python "${join(root, '_setup.py')}" を実行してください。`;

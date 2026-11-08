@@ -79,7 +79,8 @@ async function close() {
     catch(e){closeError.value=e.message;return;}
     finally{
       saving.value=false;
-      if(closeError.value){await nextTick();keepEditingButton.value?.focus();}
+      // 保存待ち中に発火したpollはload()で終了するため、失敗後は監視を再開する。
+      if(closeError.value){monitor();await nextTick();keepEditingButton.value?.focus();}
     }
   }
   finishClose();

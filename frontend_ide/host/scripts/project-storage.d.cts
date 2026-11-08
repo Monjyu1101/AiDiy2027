@@ -4,4 +4,5 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 export function projectRoot(project: string, aidiyRoot?: string): string;
-export function programDataDirectory(project: string, programName: string, aidiyRoot?: string): string;
+export function programDataDirectory(project: string, programName: string, aidiyRoot?: string, children?: string[]): string;
+export function preparePrivateDirectory(directory: string): string;

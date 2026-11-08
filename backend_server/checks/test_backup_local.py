@@ -12,6 +12,7 @@ import logging
 import os
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 from types import ModuleType
 import unittest
@@ -71,6 +72,46 @@ class BackupLocalTest(unittest.TestCase):
         target = Path(result['バックアップ先'])
         actual = sorted(p.relative_to(target).as_posix() for p in target.rglob('*') if p.is_file())
         self.assertEqual(actual, ['_AIDIY/backend_core/README.md', 'main.txt', 'nested/internal_auth.example.json'])
+
+    def test_aidiy_runtime_directories_match_git_in_scan_and_saved_snapshot(self):
+        apps = ('avatar', 'browser', 'code', 'console', 'diag', 'discord', 'hermes',
+                'ide', 'live', 'navi', 'slack', 'task', 'team')
+        names = [f'aidiy_{app}' for app in apps] + ['aidiy_custom', 'aidiy_ide_extra', 'aidiy_', 'aidiy_新機能', 'aidiy_with space']
+        excluded = {f'{prefix}_AIDIY/{name}/record.md' for name in names for prefix in ('', 'nested/')}
+        excluded |= {'_AIDIY/aidiy_custom/electron/profile.json', '_AIDIY/aidiy_custom/browser-profile/profile.json'}
+        included = {'_AIDIY/knowledge/guide.md', '_AIDIY/histories/entry.md', '_AIDIY/custom/note.md',
+                    '_AIDIY/aidiy-custom/note.md', '_AIDIY/AIDIY_custom/note.md', '_aidiy/aidiy_custom/note.md',
+                    '_AIDIY/knowledge/aidiy_custom/note.md', '_AIDIY/subdir/aidiy_custom/note.md',
+                    '_AIDIY/aidiy_note.md', 'nested/_AIDIY/aidiy_note.md', 'frontend_ide/aidiy_custom/source.py'}
+        for relative in included | excluded:
+            self.write(relative)
+        self.write('.gitignore', (ROOT / '.gitignore').read_text(encoding='utf-8'))
+        def git(*args):
+            return subprocess.run(['git', '-C', str(self.root), *args], capture_output=True)
+        self.assertEqual(git('init', '--template=').returncode, 0)
+        self.assertEqual(git('config', 'core.ignorecase', 'false').returncode, 0)
+        for relative in included | excluded:
+            self.assertEqual(git('check-ignore', '--no-index', '-q', '--', relative).returncode,
+                             0 if relative in excluded else 1, relative)
+        expected = included | {'.gitignore'}
+        native = self.native._全ファイルスキャン(str(self.root))
+        status = folder_status.状態走査(self.root)
+        self.assertEqual({item['パス'] for item in native}, expected)
+        self.assertEqual({item['パス'] for item in status['ファイル一覧']}, expected)
+        self.assertFalse(status['不完全'])
+        result = self.saver.run()
+        self.assertTrue(result['ok'])
+        target = Path(result['バックアップ先'])
+        self.assertEqual({p.relative_to(target).as_posix() for p in target.rglob('*') if p.is_file()}, expected)
+        for folder in ('_AIDIY/aidiy_custom', 'nested/_AIDIY/aidiy_', '_AIDIY/aidiy_ide_extra'):
+            with self.assertRaises(ValueError):
+                folder_status.状態走査(self.root, folder)
+            self.assertFalse(folder_status.状態走査(self.root, folder, フィルター='')['不完全'])
+        # 新しい未知アプリの記録だけが変わっても、差分へ混入しない。
+        self.write('_AIDIY/aidiy_future/histories/new.md', mtime=1_800_000_020)
+        self.assertEqual(self.saver.diff_scan()['count'], 0)
+        self.write('_AIDIY/knowledge/guide.md', '更新したHowTo', mtime=1_800_000_020)
+        self.assertEqual(self.saver.diff_scan()['差分ファイル'], ['_AIDIY/knowledge/guide.md'])
 
     def test_first_save_uses_new_store_and_keeps_ordinary_backup_sources(self):
         self.write("main.txt", "first\n")
@@ -166,7 +207,7 @@ class BackupLocalTest(unittest.TestCase):
             folder_status.状態走査(self.root, ".aidiy_backup")
 
     def test_exclusion_is_relative_to_selected_project(self):
-        for ancestor in ("temp", "log", "_AIDIY/aidiy_code"):
+        for ancestor in ("temp", "log", "_AIDIY/aidiy_code", "_AIDIY/aidiy_custom"):
             with self.subTest(ancestor=ancestor):
                 project = self.root / ancestor / "project"
                 self.write(f"{ancestor}/project/main.txt")

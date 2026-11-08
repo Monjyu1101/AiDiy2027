@@ -25,7 +25,7 @@ function projectIdentity(project,{platform=process.platform,realpath=realpathSyn
 }
 
 function projectProfile(appData,project,options){
- return path.join(programDataDirectory(projectIdentity(project,options).path,'aidiy_ide'),'electron');
+ return programDataDirectory(projectIdentity(project,options).path,'aidiy_ide',undefined,['electron']);
 }
 
 module.exports={projectIdentity,projectProfile};

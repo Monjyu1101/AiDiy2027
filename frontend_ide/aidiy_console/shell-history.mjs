@@ -11,8 +11,7 @@ import storage from '../host/scripts/project-storage.cjs';
 // HOME は外部 CLI の認証用に維持する。Console 所有の履歴と初期化だけを分離する。
 export async function shellHistory(project, env = process.env, platform = process.platform) {
   const root = project ? resolve(project) : fileURLToPath(new URL('../../', import.meta.url));
-  const directory = storage.programDataDirectory(root, 'aidiy_console');
-  await mkdir(directory, { recursive: true });
+  const directory = storage.preparePrivateDirectory(storage.programDataDirectory(root, 'aidiy_console'));
   const shell = platform === 'win32'
     ? join(env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe')
     : env.SHELL || '/bin/sh';
