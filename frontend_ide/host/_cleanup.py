@@ -32,7 +32,7 @@ THIS_DIR = Path(__file__).resolve().parent
 FRONTEND_VSCODE_DIR = THIS_DIR
 
 sys.path.insert(0, str(THIS_DIR.parent.parent / "scripts"))
-from _setup_path import remove_launcher_path
+from _setup_path import launcher_directory, remove_launcher_path
 
 sys.path.insert(0, str(THIS_DIR / "scripts"))
 from vscode_extensions import aidiy_extension_ids, uninstall_aidiy_extensions
@@ -324,7 +324,7 @@ def cleanup_app(module: str, *, report: bool = True) -> bool:
         return False
     cleanup_ok = extension_ok
     for launcher_name in (f'aidiy_{module}.cmd', f'aidiy_{module}'):
-        launcher_path = Path.home() / ".local" / "bin" / launcher_name
+        launcher_path = launcher_directory(f'aidiy_{module}') / launcher_name
         if launcher_path.is_file():
             if remove_file(launcher_path, f"{launcher_path.name} ({label})"):
                 deleted_count += 1
@@ -368,10 +368,6 @@ def cleanup_shared(*, report: bool = True) -> bool:
     if not extension_ok or not stop_standalone_processes():
         return False
     ok = True
-    for name in ('aidiy_vscode.cmd', 'aidiy_vscode'):
-        path = Path.home() / '.local' / 'bin' / name
-        if path.is_file() and not remove_file(path, f'{name} (旧版ランチャー)'):
-            ok = False
     for name in ('node_modules', 'dist', 'aidiy_live/dist', 'out', '__pycache__', 'scripts/__pycache__', '.pytest_cache'):
         path = FRONTEND_VSCODE_DIR / name
         existed = path.is_dir()

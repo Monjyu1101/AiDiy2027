@@ -18,7 +18,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { extensionCoreConnection } from '../../src/extension-installation';
 import { LiveHost, microphonePython } from './host';
-import { ライブモデル読込, ライブモデル保存 } from '../../src/model-preferences';
+import { ライブモデル読込, ライブモデル保存, モデル保存先 } from '../../src/model-preferences';
 
 class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
   private host?: LiveHost;
@@ -47,7 +47,7 @@ class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
     view.webview.options = { enableScripts: true, localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media'), vscode.Uri.joinPath(this.context.extensionUri, 'dist')] };
     const resource = (path: string) => view.webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, path)).toString();
     const nonce = randomBytes(24).toString('hex');
-    view.webview.html = developmentHtml(resource, view.webview.cspSource, nonce, { kind: 'live', live: { host: true, backend, captureUrl: resource('media/capture.js'), 作業フォルダ: this.folder(), 保存モデル設定: ライブモデル読込() } });
+    view.webview.html = developmentHtml(resource, view.webview.cspSource, nonce, { kind: 'live', live: { host: true, backend, captureUrl: resource('media/capture.js'), 作業フォルダ: this.folder(), 保存モデル設定: folder ? ライブモデル読込(モデル保存先('live', folder.パス)) : undefined } });
     const pending: { message: unknown; size: number }[] = [];
     let pendingSize = 0;
     const host = this.host = new LiveHost(backend, message => {
@@ -80,7 +80,7 @@ class LiveView implements vscode.WebviewViewProvider, vscode.Disposable {
         if (message?.type === 'ui-ready') this.ready = true;
         else if (message?.type === 'save-model' && Number.isSafeInteger(message.id) && message.id > 0) {
           try {
-            ライブモデル保存(message.settings);
+            ライブモデル保存(message.settings, モデル保存先('live', folder!.パス));
             void view.webview.postMessage({ type: 'reply', id: message.id, value: { ok: true } });
           } catch (error) {
             void view.webview.postMessage({ type: 'reply', id: message.id, error: error instanceof Error ? error.message : String(error) });

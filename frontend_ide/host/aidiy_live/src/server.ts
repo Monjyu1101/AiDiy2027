@@ -15,7 +15,7 @@ import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import { randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import type { Socket } from 'node:net';
 import { ライブモデル読込, ライブモデル保存, モデル保存先 } from '../../src/model-preferences';
 import { ローカル接続先 } from '../local-backend.cjs';
@@ -24,7 +24,9 @@ import { 接続元許可 } from '../../src/forwarded-origin';
 import { catppuccinAsset } from '../../../src/components/ファイル閲覧/ファイルアイコン.js';
 
 // ホスト固有の接続をここに閉じ込める。会話・音声・UI はブラウザ側で共用する。
-export async function ライブ起動(root: string, backend?: string, packaged = false, projectPath: string | null = process.cwd(), モデル設定: Record<string, string> = {}, modelFile = モデル保存先('live'), 自動接続 = false, authorization?: InternalAuthorization) {
+export async function ライブ起動(root: string, backend?: string, packaged = false, projectPath: string | null = process.cwd(), モデル設定: Record<string, string> = {}, modelFile?: string, 自動接続 = false, authorization?: InternalAuthorization) {
+  if (projectPath === '') projectPath = resolve(root, '../..');
+  modelFile ??= projectPath ? モデル保存先('live', projectPath) : undefined;
   const 作業フォルダ = projectPath ? { 名前: basename(projectPath) || projectPath, パス: projectPath } : null;
   const target = new URL(backend || ローカル接続先(root, projectPath));
   if (!['http:', 'https:'].includes(target.protocol) || target.username || target.password || target.pathname !== '/' || target.search || target.hash) {
@@ -70,7 +72,7 @@ export async function ライブ起動(root: string, backend?: string, packaged =
     }
     if (path === 'config' && req.method === 'GET') {
       res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ backend: target.origin, 作業フォルダ, 保存モデル設定: ライブモデル読込(modelFile),
+      res.end(JSON.stringify({ backend: target.origin, 作業フォルダ, 保存モデル設定: modelFile ? ライブモデル読込(modelFile) : undefined,
         自動接続,
         ...(Object.keys(モデル設定).length ? { モデル設定 } : {}) })); return;
     }
@@ -109,6 +111,7 @@ export async function ライブ起動(root: string, backend?: string, packaged =
       const body = Buffer.concat(chunks);
       if (saveModel) {
         try {
+          if (!modelFile) throw new Error('作業フォルダを選択してください。');
           ライブモデル保存(JSON.parse(body.toString('utf8')), modelFile);
           res.writeHead(200, { 'Content-Type': 'application/json' }).end(JSON.stringify({ ok: true }));
         } catch (error) {

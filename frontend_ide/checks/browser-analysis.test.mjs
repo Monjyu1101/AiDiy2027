@@ -24,7 +24,7 @@ test('Browser解析: 概要と構造化行を一緒に保存し、URL・プロ�
  assert.equal((await service.get('http://localhost:3000/other')).result,null);
  const restarted=createBrowserAnalysis(root,options),separate=createBrowserAnalysis(other,options);t.after(()=>{restarted.close();separate.close();});
  assert.deepEqual((await restarted.get(url)).result,value.result);assert.equal((await separate.get(url)).result,null);
- const failed=await service.start(url);await finish(root,service,failed,{...result(failed),summary:''});assert.equal((await service.get(url)).job.status,'invalid');assert.equal((await service.get(url)).result.id,job.id);
+ const failed=await service.start(url);await finish(root,service,failed,{...result(failed),summary:''});assert.equal((await service.get(url)).job.status,'waiting');assert.equal((await service.get(url)).result.id,job.id);
 });
 test('Browser解析: 同時連打と5件上限を守る',async t=>{
  const root=await fixture(t),service=createBrowserAnalysis(root,options);t.after(()=>service.close());
@@ -33,11 +33,11 @@ test('Browser解析: 同時連打と5件上限を守る',async t=>{
  await assert.rejects(()=>service.start(url+'overflow'),/5件/);
 });
 test('Browser解析: 不正JSON・依頼違い・重複・巨大結果は前回を上書きしない',async t=>{
- const root=await fixture(t),service=createBrowserAnalysis(root,options);t.after(()=>service.close());const initial=await service.start(url);await finish(root,service,initial);
+ const root=await fixture(t),service=createBrowserAnalysis(root,options);t.after(()=>service.close());const initial=await service.start(url);await finish(root,service,initial);const job=await service.start(url);
  for(const change of [{requestId:'old'},{url:url+'other'},{summary:''},{files:[...result(initial).files,...result(initial).files]},{files:[{role:'',path:'src/form.html',summary:'説明'}]},{summary:'x'.repeat(200001)},{files:Array(101).fill(result(initial).files[0])}]){
-  const job=await service.start(url);const data=await finish(root,service,job,{...result(job),...change});assert.equal(data.job.status,'invalid');assert.equal(data.result.id,initial.id);
+  const data=await finish(root,service,job,{...result(job),...change});assert.equal(data.job.status,'waiting');assert.equal(data.result.id,initial.id);
  }
- const job=await service.start(url);await writeFile(join(root,job.resultPath),'{');assert.equal((await service.get(url)).job.status,'invalid');await finish(root,service,job);assert.equal((await service.get(url)).job.status,'complete');
+ await writeFile(join(root,job.resultPath),'{');assert.equal((await service.get(url)).job.status,'waiting');await finish(root,service,job);assert.equal((await service.get(url)).job.status,'complete');
 });
 test('Browser解析: 絶対パス・秘密ファイル・除外・外部リンクを拒否',async t=>{
  const root=await fixture(t),outside=await fixture(t),job={id:'id',url};await symlink(outside,join(root,'linked'),process.platform==='win32'?'junction':'dir');
@@ -60,7 +60,7 @@ test('Browser解析: 内部pollで保存、失敗通知、timeoutでabort',async
  const root=await fixture(t);const service=createBrowserAnalysis(root,{...options,pollMs:5,runAgent:async({prompt})=>{
   const spec=JSON.parse(prompt.split('形式: ')[1].split('\n')[0]),path=prompt.match(/結果は (temp\/[^ ]+)\.tmp に/)[1];await writeFile(join(root,path+'.tmp'),JSON.stringify({...spec,files:[],summary:'対応するソースなし'}));await rename(join(root,path+'.tmp'),join(root,path));
  }});t.after(()=>service.close());await service.start(url);
- let stored;for(let n=0;n<100&&!stored;n++){await new Promise(r=>setTimeout(r,10));const names=await readdir(join(root,'_AIDIY/aidiy_ide/browser_analyses')).catch(()=>[]);const name=names.find(n=>n.endsWith('.json'));if(name)stored=JSON.parse(await readFile(join(root,'_AIDIY/aidiy_ide/browser_analyses',name),'utf8'));}assert.equal(stored.summary,'対応するソースなし');
+ let stored;for(let n=0;n<100&&!stored;n++){await new Promise(r=>setTimeout(r,10));const names=await readdir(join(root,'_AIDIY/aidiy_browser/browser_analyses')).catch(()=>[]);const name=names.find(n=>n.endsWith('.json'));if(name)stored=JSON.parse(await readFile(join(root,'_AIDIY/aidiy_browser/browser_analyses',name),'utf8'));}assert.equal(stored.summary,'対応するソースなし');
  let clock=0,signal;const timed=createBrowserAnalysis(root,{...options,now:()=>clock,waitMs:20,runAgent:args=>{signal=args.signal;return new Promise(()=>{});}});t.after(()=>timed.close());await timed.start(url+'timeout');clock=21;assert.equal((await timed.get(url+'timeout')).job.status,'timeout');assert.equal(signal.aborted,true);
  const failed=createBrowserAnalysis(root,{...options,runAgent:async()=>{throw Error('offline');}});t.after(()=>failed.close());await failed.start(url+'failed');await new Promise(r=>setTimeout(r,20));assert.equal((await failed.get(url+'failed')).job.status,'failed');
 });

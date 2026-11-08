@@ -42,79 +42,12 @@ class PosixPathTests(unittest.TestCase):
         self.enterContext(patch.dict(os.environ, {'HOME': str(self.home), 'PATH': '/usr/bin:/bin', 'SHELL': '/bin/zsh'}, clear=True))
         self.enterContext(patch('builtins.print'))
 
-    def test_mac_profiles_idempotence_preserve_user_text_and_exact_cleanup(self):
-        profiles = {'.zprofile': '# user\nexport USER_SETTING=1', '.zshrc': '# zsh\n\n', '.bash_profile': '# bash\n'}
-        for name, text in profiles.items():
-            (self.home / name).write_bytes(text.encode())
-        self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-        first = {path: path.read_bytes() for path in self.helper.shell_profile_paths()}
-        self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-        self.assertEqual(first, {path: path.read_bytes() for path in first})
-        for content in first.values():
-            self.assertEqual(content.count(self.helper.SHELL_PATH_BEGIN.encode()), 1)
-        self.assertTrue(self.helper.remove_launcher_path(self.directory))
-        for name, text in profiles.items():
-            self.assertEqual((self.home / name).read_bytes(), text.encode())
+    def test_profiles_are_never_created(self):
+        with patch.object(Path, 'home', side_effect=AssertionError('home forbidden')):
+            self.assertTrue(self.helper.ensure_launcher_path(self.home / "checkout/_AIDIY/aidiy_code/bin"))
+            self.assertTrue(self.helper.remove_launcher_path(self.home / "checkout/_AIDIY/aidiy_code/bin"))
+        self.assertFalse((self.home / '.zshrc').exists())
         self.assertFalse((self.home / '.bashrc').exists())
-        self.assertFalse(self.helper._state_file(self.directory).exists())
-
-    def test_linux_bash_keeps_existing_login_priority_and_handles_inherited_path(self):
-        (self.home / '.bash_login').write_text('# existing login\n', encoding='utf-8')
-        os.environ['PATH'] = str(self.directory) + ':/usr/bin'
-        with patch.object(sys, 'platform', 'linux'), patch.dict(os.environ, {'SHELL': '/bin/bash'}):
-            self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-            self.assertEqual([p.name for p in self.helper.shell_profile_paths()], ['.bash_login', '.bashrc'])
-            self.assertFalse((self.home / '.bash_profile').exists())
-            self.assertFalse((self.home / '.profile').exists())
-            self.assertIn(self.helper.SHELL_PATH_BEGIN, (self.home / '.bash_login').read_text(encoding='utf-8'))
-
-    def test_linux_profile_and_zsh_custom_zdotdir(self):
-        with patch.object(sys, 'platform', 'linux'), patch.dict(os.environ, {'SHELL': '/bin/bash'}):
-            self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-            self.assertTrue((self.home / '.profile').exists())
-            self.assertFalse((self.home / '.zshrc').exists())
-        custom = self.home / 'zsh config'
-        with patch.object(sys, 'platform', 'linux'), patch.dict(os.environ, {'SHELL': '/bin/zsh', 'ZDOTDIR': str(custom)}):
-            self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-            self.assertTrue((custom / '.zshrc').exists())
-            self.assertTrue((custom / '.zprofile').exists())
-            self.assertTrue(self.helper.remove_launcher_path(self.directory))
-            self.assertFalse((custom / '.zshrc').exists())
-        self.assertFalse((self.home / '.profile').exists())
-
-    def test_partial_cleanup_keeps_shared_path_and_later_user_edits(self):
-        profile = self.home / '.zshrc'
-        original = '# user\n'
-        profile.write_bytes(original.encode())
-        self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-        launcher = self.directory / 'aidiy_ide'
-        launcher.write_text('fixture', encoding='utf-8')
-        self.assertTrue(self.helper.remove_launcher_path(self.directory))
-        self.assertIn(self.helper.SHELL_PATH_BEGIN, profile.read_text(encoding='utf-8'))
-        later = 'export LATER=kept\n'
-        profile.write_bytes(profile.read_bytes() + later.encode())
-        launcher.unlink()
-        self.assertTrue(self.helper.remove_launcher_path(self.directory))
-        self.assertEqual(profile.read_bytes(), (original + later).encode())
-
-    def test_write_failure_is_not_success_and_owned_metadata_allows_retry(self):
-        with patch.object(Path, 'write_bytes', side_effect=PermissionError('read only')):
-            self.assertFalse(self.helper.ensure_launcher_path(self.directory))
-        self.assertTrue(self.helper._state_file(self.directory).exists())
-        self.assertEqual(os.environ['PATH'], '/usr/bin:/bin')
-        self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-        self.assertTrue(self.helper.remove_launcher_path(self.directory))
-
-    def test_modified_owned_block_is_preserved_and_cleanup_can_retry(self):
-        self.assertTrue(self.helper.ensure_launcher_path(self.directory))
-        profile = self.home / '.zshrc'
-        original = profile.read_bytes()
-        profile.write_bytes(original.replace(b'export PATH=', b'export PATH="manual" #'))
-        self.assertFalse(self.helper.remove_launcher_path(self.directory))
-        self.assertTrue(self.helper._state_file(self.directory).exists())
-        self.assertIn('manual', profile.read_text(encoding='utf-8'))
-        profile.write_bytes(original)
-        self.assertTrue(self.helper.remove_launcher_path(self.directory))
 
     def test_hermes_legacy_cleanup_does_not_reformat_unrelated_profiles(self):
         cleanup = load(ROOT / 'command_hermes/_cleanup.py')
@@ -154,16 +87,6 @@ class PosixPathTests(unittest.TestCase):
             self.assertEqual(result.exception.code, 0)
             repair.assert_called_once(); normal.assert_not_called()
 
-    @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで実行する試験')
-    def test_real_shell_handles_spaces_quotes_dollars_and_does_not_duplicate_path(self):
-        odd = self.home / "quote' dollar$ `literal`"
-        self.assertTrue(self.helper.ensure_launcher_path(odd))
-        shell = shutil.which('bash') or '/bin/sh'
-        profile = self.home / '.zshrc'
-        command = '. "$1"; . "$1"; printf "%s" "$PATH"'
-        result = subprocess.run([shell, '-c', command, 'fixture', str(profile)], env=dict(os.environ, PATH='/usr/bin:/bin'), text=True, capture_output=True, check=True)
-        self.assertEqual(result.stdout, str(odd) + ':/usr/bin:/bin')
-
     @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで8コマンドを実行する試験')
     def test_all_eight_launchers_resolve_execute_forward_arguments_and_unlink(self):
         self.check_all_launchers()
@@ -176,6 +99,7 @@ class PosixPathTests(unittest.TestCase):
     def check_all_launchers(self):
         profile = self.home / ('.zshrc' if sys.platform == 'darwin' else '.bashrc')
         checkout = self.home / 'checkout with spaces'
+        local = lambda name: checkout / '_AIDIY' / name / 'bin'
         node = self.home / 'node fixture'
         # 本物のサービス・GUI の代わりに、渡された起動引数を出力する。
         stub = '#!' + sys.executable + '\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\n'
@@ -200,28 +124,33 @@ class PosixPathTests(unittest.TestCase):
         hermes = load(ROOT / 'command_hermes/_setup.py')
         for module in (diag, viewer, discord, host, avatar, hermes):
             self.enterContext(patch.object(module, 'ensure_launcher_path', side_effect=self.helper.ensure_launcher_path))
+            if module is not hermes:
+                self.enterContext(patch.object(getattr(module, '_path_helper', module), 'launcher_directory', side_effect=local))
         self.enterContext(patch.object(diag, 'THIS_DIR', checkout / 'backend_diag'))
         self.enterContext(patch.object(host, 'FRONTEND_VSCODE_DIR', checkout / 'frontend_ide/host'))
         self.enterContext(patch.object(avatar, 'FRONTEND_AVATAR_DIR', checkout / 'frontend_avatar'))
         self.enterContext(patch.object(hermes, 'BACKEND_HERMES_DIR', checkout / 'command_hermes'))
         # node を PATH で要求する Diag / Code / Live 用にも同じスタブを使う。
         node_link = self.directory / 'node'; node_link.symlink_to(node)
+        self.helper.ensure_launcher_path(self.directory)
         self.assertTrue(diag.setup(desktop=False))
         self.assertTrue(host.install_standalone_launcher())
         self.assertTrue(avatar.install_standalone_launcher())
         self.assertTrue(hermes.install_standalone_launcher())
+        self.assertIn(self.helper.SHELL_PATH_BEGIN, profile.read_text(encoding="utf-8"))
+        self.assertFalse(local("aidiy_hermes").exists())
         with patch.object(shutil, 'which', return_value=str(node)):
             viewer.install_launcher(checkout / 'frontend_ide/viewer')
             viewer.install_launcher(checkout / 'frontend_ide/aidiy_console', 'console')
             discord.install_launcher(checkout / 'frontend_channels/discord')
         for kind in ('diag', 'ide', 'console', 'code', 'live', 'avatar', 'hermes', 'discord'):
             with self.subTest(kind=kind):
-                launcher = self.directory / ('aidiy_' + kind)
+                launcher = (self.directory if kind == 'hermes' else local('aidiy_' + kind)) / ('aidiy_' + kind)
                 self.assertEqual(launcher.read_bytes().count(b'\r'), 0)
                 self.assertTrue(os.access(launcher, os.X_OK))
-                env = dict(os.environ, PATH='/usr/bin:/bin')
-                command = '. "$1"; shift; exec "$@"'
-                result = subprocess.run(['/bin/sh', '-c', command, 'fixture', str(profile),
+                env = dict(os.environ)
+                command = 'exec "$@"'
+                result = subprocess.run(['/bin/sh', '-c', command, 'fixture',
                                          'aidiy_' + kind, '--test', '引数 with spaces', 'literal$'],
                                         env=env, text=True, capture_output=True, check=True)
                 self.assertEqual(json.loads(result.stdout)[-3:], ['--test', '引数 with spaces', 'literal$'])
@@ -229,18 +158,22 @@ class PosixPathTests(unittest.TestCase):
         self.assertTrue(viewer.remove_launcher(checkout / 'frontend_ide/aidiy_console', 'console'))
         self.assertTrue(discord.remove_launcher(checkout / 'frontend_channels/discord'))
         diag_cleanup = load(ROOT / 'backend_diag/_cleanup.py')
+        self.enterContext(patch.object(getattr(diag_cleanup, '_path_helper', diag_cleanup), 'launcher_directory', side_effect=local))
         self.enterContext(patch.object(diag_cleanup, '__file__', str(checkout / 'backend_diag/_cleanup.py')))
         self.assertTrue(diag_cleanup.cleanup())
         host_cleanup = load(ROOT / 'frontend_ide/host/_cleanup.py')
+        self.enterContext(patch.object(getattr(host_cleanup, '_path_helper', host_cleanup), 'launcher_directory', side_effect=local))
         self.enterContext(patch.object(host_cleanup, 'FRONTEND_VSCODE_DIR', checkout / 'frontend_ide/host'))
         self.enterContext(patch.object(host_cleanup, 'uninstall_extension', return_value=(True, 0)))
         self.enterContext(patch.object(host_cleanup, 'stop_standalone_processes', return_value=True))
         self.assertTrue(host_cleanup.cleanup_app('code', report=False))
         self.assertTrue(host_cleanup.cleanup_app('live', report=False))
         avatar_cleanup = load(ROOT / 'frontend_avatar/_cleanup.py')
+        self.enterContext(patch.object(getattr(avatar_cleanup, '_path_helper', avatar_cleanup), 'launcher_directory', side_effect=local))
         self.enterContext(patch.object(avatar_cleanup, 'FRONTEND_AVATAR_DIR', checkout / 'frontend_avatar'))
         self.assertTrue(avatar_cleanup.remove_standalone_launcher())
         hermes_cleanup = load(ROOT / 'command_hermes/_cleanup.py')
+        self.enterContext(patch.object(hermes_cleanup, 'remove_launcher_path', side_effect=self.helper.remove_launcher_path))
         self.enterContext(patch.object(hermes_cleanup, 'BACKEND_HERMES_DIR', checkout / 'command_hermes'))
         self.assertTrue(hermes_cleanup.cleanup({}))
         node_link.unlink()

@@ -28,7 +28,7 @@ const flush = async () => { for (let i = 0; i < 8; i++) await new Promise(resolv
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'aidiy-offline-catalog-'));
   const project = join(root, 'project'), extensionPath = join(root, 'installation', 'frontend_ide', 'host');
-  const home = join(root, 'home'), modelFile = join(home, '.aidiy', 'aidiy_code_model.json');
+  const home = join(root, 'home'), modelFile = join(project, '_AIDIY', 'aidiy_code', 'aidiy_code_model.json');
   mkdirSync(project, { recursive: true }); mkdirSync(extensionPath, { recursive: true });
   mkdirSync(dirname(modelFile), { recursive: true }); writeFileSync(modelFile, onlinePreference);
   const catalogFile = join(project, '_AIDIY', 'aidiy_diag', 'code_models_info.json');

@@ -61,7 +61,7 @@ Vite 8.3.4 の Rolldown 進捗表示は、日本語パスを表示幅で切り�
 
 ## 変更先の選び方
 
-`viewer/_start.py` を共用する IDE / Console / Task / Team / Browser の起動ログは、配置先リポジトリの `temp/aidiy_<kind>/logs/<UUID>.log` に保存する。閲覧プロジェクトやカレントディレクトリから保存先を決めず、旧 `viewer/out/` のログは移行・削除・退避先利用しない。ElectronのuserData・profile・会話履歴の保存先は変更しない。`python -B -m unittest discover -s frontend_ide/viewer/checks -p test_start.py` で5種類の保存先・別起動のログ分離・旧ログ保持・保存失敗時の非起動を確認する。
+`viewer/_start.py` を共用する IDE / Console / Task / Team / Browser の起動ログは、配置先リポジトリの `temp/aidiy_<kind>/logs/<UUID>.log` に保存する。閲覧プロジェクトやカレントディレクトリから保存先を決めず、旧 `viewer/out/` のログは移行・削除・退避先利用しない。ElectronのuserData・profile・会話履歴は選択プロジェクトの `_AIDIY/aidiy_<pg>/` に保存する。`python -B -m unittest discover -s frontend_ide/viewer/checks -p test_start.py` で5種類の保存先・別起動のログ分離・旧ログ保持・保存失敗時の非起動を確認する。
 
 Mac のアプリ名とメニューは `desktop.cjs` と `host/scripts/MacOS-Menu.cjs` で扱います。Console / Code / Live / IDE の単独起動・IDE子窓・ピン留め・ブラウザ窓は同じアプリメニューを使います。⌘Q / アプリメニューの「閉じる」は親窓の既存 close を通し、⌘W はフォーカス中の窓だけを閉じます。Mac のシステム Dock「終了」も IDE の利用中確認を通します。親との切断時の回収は `forcedQuit` で確認待ちにしません。編集キーは native role に任せ、Console の選択コピーやシェルへの Ctrl+C を main のキー処理で奪わないでください。`node --test checks/code-window-title.test.mjs host/checks/mac-menu.test.cjs` は各起動種別・終了確認と親子窓の寿命を確認します。
 
@@ -77,7 +77,7 @@ IDEのオンライン利用では、`viewer/core-connection.mjs` がConsoleと�
 
 非表示のIDEはCanvas描画と毎フレームの配置取得を止め、再表示時は1つの描画ループだけを再開します。Web版のLiveを隠す時は、会話・下書き・接続を保持したまま `AudioCloud.setVisible(false)` で描画を停止し、StatusBarのclock-pulseも止めます。画面全体の非表示とパネルの非表示は別々に扱い、Canvasが0サイズの間も描かず、表示・サイズ復帰でRAFを1本だけ再開します。20秒の接続pingは変更しません。`checks/live-visibility.test.mjs` は実LivePanel・AudioCloud・StatusBarでこの寿命を検証します。接続バーは未接続の黒表示・画面非表示では50msの更新を止め、表示復帰時に現在時刻へ揃えます。Canvasのラベル幅は文字・フォントごとに保持し、階層再構築・サイズ変更・フォント読込時に破棄します。上記テストの呼出し回数は処理削減の確認用で、実機のCPU使用率を測定した値ではありません。画面の見た目・OSごとのCPU/GPU負荷は実画面検証で別途確認してください。
 
-Codeのオフラインモデル候補は `same`（変更なし）を使い、選択時はHermesへ `--model` / `--provider` を付けずに呼び出します。オンラインの `auto`（AI判断）とは区別します。オフラインの選択値は `~/.aidiy/aidiy_code_model_offline.json` に保存します。
+Codeのオフラインモデル候補は `same`（変更なし）を使い、選択時はHermesへ `--model` / `--provider` を付けずに呼び出します。オンラインの `auto`（AI判断）とは区別します。オフラインの選択値は `_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存します。
 
 エクスプローラーは `ファイル一覧.vue` 一部品にまとめます。入力はtree/root/selected/current/startedAt/open、出力はupdate:open/select/clear/marksです。検索マークはイベントで宇宙へ伝え、エクスプローラーからCanvas内部を書き換えないでください。利用開始時刻が変わると時刻検索を初期化します。
 
@@ -163,7 +163,7 @@ AI検索を選んでいる間はファイルツリー・ルート行・最終更
 
 `checks/ai-search.test.mjs` で期限・遅れた結果・不正結果・リンク・セッション・API・航路を検証し、`scripts/check-ai-search.mjs` で結果到着時にワープしないこと、マーク、切替、順番に閲覧、再検索時の古い結果抑制を撮影します。`scripts/check-ai-search-live.mjs` は実エージェントを使うため明示実行専用です。
 
-検索履歴は `ファイル機能/ai-search-history.mjs` がプロジェクト内 `_AIDIY/aidiy_ide/file_searches/<依頼ID>.json` に保存します。保存先の作成・境界確認・旧版 `.aidiy/ai-search/` からの移行は `ファイル機能/ide-data.mjs` の `ideDataFolder` に共通化しています。`/api/ai-search/history` のGETで一覧、`?id=`付きGETで理由と軌跡、DELETEで確認済みの1件を削除します。既存のHost / Origin・利用開始チェックを共用します。保存先の各段階で実パス境界を検証し、原子的な一時ファイル→renameで保存します。削除はIDだけの削除済み記録に置換し、元のtempから復活させません。初回一覧時に旧版の依頼付き結果を取り込みます。履歴読込ではパス形式・理由・routeの整合を検証し、現在は存在しない対象も検索当時の情報として残します。
+検索履歴は `ファイル機能/ai-search-history.mjs` がプロジェクト内 `_AIDIY/aidiy_ide/file_searches/<依頼ID>.json` に保存します。保存先の作成・境界確認は `ファイル機能/ide-data.mjs` の `ideDataFolder` に共通化しています。`/api/ai-search/history` のGETで一覧、`?id=`付きGETで理由と軌跡、DELETEで確認済みの1件を削除します。既存のHost / Origin・利用開始チェックを共用します。保存先の各段階で実パス境界を検証し、原子的な一時ファイル→renameで保存します。削除はIDだけの削除済み記録に置換し、元のtempから復活させません。旧保存先と旧temp結果は読み込みません。履歴読込ではパス形式・理由・routeの整合を検証し、現在は存在しない対象も検索当時の情報として残します。
 
 `AISearchPanel` は履歴の取得・選択・削除確認を担当します。初期復元は現在の検索方式・閲覧軌跡を変更せず、明示選択だけがAI検索軌跡に切り替えます。`FileExplorer.acceptAI` は結果を受け取り、位置移動なしでmarksとrouteを更新します。新規検索開始・部品破棄では古い履歴応答を無効化してください。履歴の取得失敗と空一覧を区別し、既存のマークを消さず再読込を案内します。テストでは別プロジェクト分離、再起動、旧結果の移行、削除後の再取込防止、異なるマークへの切替、削除取消・確定、履歴切替で視点が動かないことを確認します。
 
@@ -181,15 +181,27 @@ APIとパス境界は `checks/file-history.test.mjs`、共通読込の失敗と�
 
 `ファイルビューア.vue` の「AI解析」ボタンから、`App.vue` が保持する `ファイル解析ダイアログ.vue` を開きます。対象のプロジェクトとファイルを固定し、ビューアの3分の条件付き自動終了でもダイアログを消さない構成です。初回指示は画像類とソース類を分け、保存済み指示があれば必ず優先します。Markdown本文はHTMLを無効化し、外部画像を読み込みません。
 
-`ファイル機能/file-analysis.mjs` は `/api/file-analysis` のGET（復元・結果確認）、PUT（指示保存）、POST（解析依頼）を担当します。既存の `runSearchAgent` を使い、対象と指示を含む依頼ID付きJSONをtempへ出力させます。ブラウザを閉じてもサーバー側が最大5分間確認し、最新の成功結果を `_AIDIY/aidiy_ide/file_analyses/<相対パスのSHA256>.json` に保存します（`ideDataFolder` を共用し、旧版 `.aidiy/file-analysis/` は初回に移します）。前回指示・本文・日時・対象の更新日時とサイズを保持し、失敗時に成功結果を消さないでください。保存先の実パス境界を確認し、ファイル別の書込キューと一時ファイルからのrenameで指示保存・結果到着の競合を防ぎます。
+`ファイル機能/file-analysis.mjs` は `/api/file-analysis` のGET（復元・結果確認）、PUT（指示保存）、POST（解析依頼）を担当します。既存の `runSearchAgent` を使い、対象と指示を含む依頼ID付きJSONをtempへ出力させます。ブラウザを閉じてもサーバー側が最大5分間確認し、最新の成功結果を `_AIDIY/aidiy_ide/file_analyses/<相対パスのSHA256>.json` に保存します（`ideDataFolder` を共用し、旧保存先は読み込みません）。前回指示・本文・日時・対象の更新日時とサイズを保持し、失敗時に成功結果を消さないでください。保存先の実パス境界を確認し、ファイル別の書込キューと一時ファイルからのrenameで指示保存・結果到着の競合を防ぎます。
 
-解析結果の `displayUrls` は `{url,label}` の配列、`displayUrlReason` は根拠・未確認事項またはURLを特定できない理由です。`viewer/表示URL.mjs` をサーバー・画面・Browserで共用し、HTTP(S)の絶対URLだけを最大20件に正規化します。認証情報・秘密クエリ・未解決の動的パラメーターなどは除外し、URL部分の不正で正常な解析本文を失わないようにします。旧記録の欠落フィールドは空として扱います。
+ページ関連候補（`isPageSource`）は、内容・関連ソース検索・URL調査をそれぞれ含む独立した3件を同時に実行します。`.py`等は1件です。各実行に固有の依頼ID・結果JSON・AbortControllerを割り当て、3件の原本を同じファイル記録の `run.attempts[].result` に別々に保存します。表示用の合成は永続化せず、GET時に `ファイル解析結果.mjs` で生成します。生のHTTP成功ではなく、依頼ID・対象・指示・非空本文・サイズ・パス境界を検証したファイルを成功条件にします。1件の成功後も他の実行を続け、各原本は初回検証後に上書きしません。表示はURL→概要→関連ソースの順で、URLと関連先の重複を統合しつつ解析番号別の根拠をすべて保持します。各解析の本文原本も開けます。新しい依頼と前回の成功結果は混ぜず、新規成功がない間だけ前回結果を表示します。不正JSONでも他の実行や修正が続いていれば監視を続けます。同一ファイルの二重開始を拒否し、同時5ファイル（ページ候補は最大15実行）の上限を維持します。過去の非ページ判定だけで本数を減らすと、呼び出し元追加を見落とすため、そのキャッシュは使いません。
 
-`server.mjs` の `/api/preview` はHTML / Vueの保存URLがある場合に `{kind:'analysis',routes,stale,reason}` を返し、無い場合は従来の表示へ進みます。ファイルビューアはコード表示でも画面URLを示し、複数URLの選択を表示切替後も保持します。解析ダイアログを閉じると同じ対象のURLだけを再取得します。遅い応答・別ファイル・破棄後の結果を表示しないでください。解析URLがIDEと同じoriginを指すiframeには `allow-same-origin` を付けません。
+監視期限・利用終了時だけ、未終了のHTTP実行の停止を要求します。Toolsの `/run` は切断を検知して所有CLIを終了しますが、画面には確認前の「停止済み」ではなく「停止要求済み（終了未確認）」と表示します。結果が先にそろっても `monitoring` が真ならHTTP終了応答・期限の監視を続け、二重開始を拒否します。既存APIはPIDやheartbeatを返さないため、監視表示は接続・設定確認、実行応答待ち、応答受信、結果検証の状態です。HTTP 200の `status:NG` や利用不可を失敗として識別し、実行成功後の履歴保存だけが失敗した場合も、結果ファイルが有効なら採用します。
+
+解析の実行・監視・結果保存はIDEサーバーが所有します。ダイアログを閉じる、別ソースを開く、画面を再読込する操作では中断せず、同じファイルの再表示時に進行中の実行と前回結果を取得します。画面の一時的な取得失敗は自動再試行し、保存済み指示や編集中の入力を既定文で上書きしません。初回取得に失敗した状態で未変更の既定文のまま閉じる場合はPUTを送らず、保存済み指示を保持します。編集した入力は保存対象とし、保存失敗時は入力を残して再試行できます。利用終了・IDEサーバー終了では停止を要求します。サーバー終了後の実行継続やプロセス監視の復元は行いませんが、保存済み成功結果と各実行の成否は再起動後も閲覧できます。実行中だった記録は中断と表示し、動作中と偽って表示しません。
+
+解析結果の `displayUrls` は `{url,label,reason?}` の配列（reasonは画面ごとの参照経路・設定と行番号）、`displayUrlReason` は根拠・未確認事項またはURLを特定できない理由です。`viewer/表示URL.mjs` をサーバー・画面・Browserで共用し、HTTP(S)の絶対URLだけを1原本につき最大20件（3件の合成表示は最大60件）に正規化します。認証情報・秘密クエリ・未解決の動的パラメーターなどは除外し、URL部分の不正で正常な解析本文を失わないようにします。旧記録の欠落フィールドは空として扱います。
+
+`viewer/表示URL.mjs` の `isPageSource` を全経路で共用します。HTML / Vue / JS・TS（JSX・TSX、MJS・CJS・MTS・CTSを含む）/ Svelte / Astroは調査候補であり、拡張子だけでページの有無を決めません。宣言ファイル（.d.ts等）・画像・文書などからURLを探索しません。ページ関連と確認できた場合は逆import・再export・HTML script参照から利用画面までたどり、共有部品の複数ルート・alias・base・hash/history方式を確認して各URLと根拠を保存します。未解決ID・host/port・別アプリの設定は推測せず、探索範囲と省略を明記します。
+
+ページに関係ない.py・CRUD・API・CLI・サーバー専用JS等は、対象を直接呼び出す/importする元と、対象が直接呼び出す/importする先の1次レベルだけを調べます。祖父（元のさらに元）・孫（先のさらに先）への再帰探索や、CRUD→API→画面のURL探索はしません。本文は「関連ソース（1次レベル）」に呼び出し元・呼び出し先、参照種別・関数・相対パス・行番号を分けます。分類不明も1次に留めます。`relatedSourceScope` はpage（画面まで）/ direct（1次）/ none（内容のみ）で保存・表示し、旧結果で欠けている場合は範囲を断定しません。direct / none結果のURLは採用しません。
+
+`server.mjs` の `/api/preview` はページ関連ソースの保存URLがある場合に `{kind:'analysis',routes,stale,reason}` を返し、無い場合はHTML / Vueだけ従来表示へ進み、JS等はコードのまま保持して起動ボタンを出しません。ファイルビューアはコード表示でも画面URLを示し、複数URLの選択を表示切替後も保持します。解析ダイアログを閉じると同じ対象のURLだけを再取得します。遅い応答・別ファイル・破棄後の結果を表示しないでください。解析URLがIDEと同じoriginを指すiframeには `allow-same-origin` を付けません。
 
 Browserの既存起動APIには省略可能な表示URLを追加します。Webはクリック中に空窓を予約し、元ファイルとtools接続を確認してから遷移します。Electronは信頼済み送信元・プロジェクト実パス・利用セッション・接続を再検査します。URLを開くのは明示操作時だけで、解析はサーバー起動・通信による到達性確認を行いません。
 
 表示URLの回帰確認は `node --test frontend_ide/checks/file-analysis.test.mjs frontend_ide/checks/display-urls.test.mjs frontend_ide/checks/preview-actions.test.mjs frontend_ide/checks/browser-display-url.test.mjs`。実Vueのコード／表示切替・複数画面・保存結果・破棄は `node frontend_ide/scripts/check-display-urls.mjs` の隔離ハーネスで確認します。実AIによるURL推定の正しさや実プロジェクトのログイン・サーバー稼働は、この模擬試験の合格に含めません。
+
+`checks/file-analysis-parallel.test.mjs` は3並列・部分失敗・原本保存・重複と根拠の合成・遅延結果・同時POST・背景保存・停止要求・実行API契約を、`checks/file-analysis-monitor-ui.test.mjs` は再表示・取得失敗からの復帰・指示保護・連打・遅い応答を実Vueで確認します。
 
 `checks/file-analysis.test.mjs` は再起動・プロジェクト分離・更新判定・失敗時保持・遅延結果・保存競合・パス境界・APIを確認します。`scripts/check-file-analysis.mjs` は模擬エージェントによる実画面の指示復元・結果表示・ソース/画像の指示切替・縦横配置を確認します。配信更新時はVue bundleの再生成とIDEサーバーの再起動が必要です。
 
@@ -211,7 +223,7 @@ Code / Live / IDEの接続バーは `状態バー.vue` のclockPulseを有効に
 
 Electronの初期配置は `デスクトップ/window-layout.cjs` で画面のworkAreaから計算します。IDEは余白付きの大きな画面、Code / Liveは左右に配置し、IDE連携でも同じディスプレイの隅を基準にし、Codeの2枚目以降だけslotに従ってずらします。詳細は [初期ウィンドウ配置](./frontend_ide,初期ウィンドウ配置.md) を参照します。連携窓のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」で、単独版のタイトルと区別します。既存窓の再表示では最小化を解除して前面に出すだけにします。単独Code / Liveは種別ごとのsingle-instance lock、IDEは同じプロジェクトごとのlockを使い、Consoleは複数起動を許可します。IDEのCode子窓は複数起動でき、それぞれ独立したサーバー・会話を持ちます。Live子窓だけ親セッションと初期化中のPromiseで重複を防ぎ、起動中は＋Liveを隠します。子窓の状態はメインプロセスから取得し、閉じたときにボタンを戻します。`checks/window-layout.test.mjs` と `scripts/check-windows.mjs` で画面外にはみ出さない配置・連打・前面復帰・終了連携を確認します。
 
-IDEのプロジェクト識別は `デスクトップ/project-profile.cjs` に集約します。`launch.mjs` が `--project` / 位置引数 / 起動フォルダを先に解決し、実パスを `AIDIY_DEVELOPMENT_PROJECT` でElectronへ渡します。`desktop.cjs` はロック取得前に実パスのSHA-256を使って `userData` と `sessionData` をプロジェクト別に分けます。同名の別フォルダは共有せず、相対表記・リンクは同じ実体に揃えます。Windowsでは大小文字・区切り・長いパス表記を統一し、ファイルIDも加えて大小文字を区別する別実体を混同しません。ファイルAPIへ渡す実パスの大小文字は変えません。サーバーは従来どおり自動ポート・個別所有を維持し、他プロジェクトの終了・再起動に巻き込まないでください。旧プロファイルから認証・保存情報をコピーしません。`node --test frontend_ide/checks/project-instance.test.mjs` は模擬Electronと実ローカルHTTPで、重複時の前面化、別プロジェクトの子窓・キャッシュ・接続・ポート・終了の分離、起動引数、同時起動を確認します。実ElectronでのOSロックと前面化は別途確認が必要です。
+IDEのプロジェクト識別は `デスクトップ/project-profile.cjs` に集約します。`launch.mjs` が `--project` / 位置引数 / 起動フォルダを先に解決し、実パスを `AIDIY_DEVELOPMENT_PROJECT` でElectronへ渡します。`desktop.cjs` はロック取得前に実プロジェクトの `_AIDIY/aidiy_ide/electron/` を `userData` と `sessionData` に指定します。Code / Liveを含む各アプリも同じく `aidiy_<pg>/electron/` で分離します。同名の別フォルダは共有せず、相対表記・リンクは同じ実体に揃えます。Windowsでは大小文字・区切り・長いパス表記を統一し、ファイルIDも加えて大小文字を区別する別実体を混同しません。ファイルAPIへ渡す実パスの大小文字は変えません。サーバーは従来どおり自動ポート・個別所有を維持し、他プロジェクトの終了・再起動に巻き込まないでください。旧プロファイルから認証・保存情報をコピーしません。`node --test frontend_ide/checks/project-instance.test.mjs` は模擬Electronと実ローカルHTTPで、重複時の前面化、別プロジェクトの子窓・キャッシュ・接続・ポート・終了の分離、起動引数、同時起動を確認します。実ElectronでのOSロックと前面化は別途確認が必要です。
 
 WindowsでElectronのGUI本体をspawnするときは `windowsHide: false` にします。`true` では初回の画面表示が隠され、URLだけ出て再実行するまで窓が見えない場合があります。バックグラウンドの補助プロセスとは区別し、初回起動時の可視状態を `scripts/check-single-instance.mjs` でも確認します。
 
@@ -219,9 +231,31 @@ WindowsでElectronのGUI本体をspawnするときは `windowsHide: false` に�
 
 ## BrowserパネルとMCP接続
 
+Browser AI解析の実行はプロジェクト内のURL別ジョブとしてサーバーが保持します。「バックグラウンドで続ける」またはダイアログを閉じて別ページへ移動しても処理を取り消しません。表示URLが変わった場合は古いダイアログだけを閉じます。元URLへ戻ると、そのページのボタンを「AI解析中…」「AI解析済」「AI解析 要確認」に復元し、クリックで進行状況・保存結果を表示します。複数ページは独立し、同じURLの同時依頼は重複させません。query・hashを含む正規化済みURLとプロジェクトをキーにします。
+
+通常操作欄とF11ヘッダーは、表示中ページの状態だけをGETの `status=1` で確認します。待機中だけ2秒間隔、確認中の一時失敗は10秒間隔で再確認し、ページ変更・ダイアログ表示・非表示操作欄・破棄時はGET購読を解除します。定期応答には解析本文・ソース一覧・依頼プロンプトを載せません。古いURL・セッション・破棄後の応答は適用しません。失敗や期限切れで前回の成功結果を消さない構成です。実行中の不正JSON・未完成の結果は待機状態のまま内部監視で再確認し、正常化した結果だけを保存します。エージェント終了後も不正なら失敗を確定して再解析を許可します。期限は結果の読取や画面のGETとは独立したタイマーでも監視し、期限切れでは未完了の実行要求にAbortを送り、遅い結果は採用しません。
+
+単独Browserのアプリ終了、起動元IDEの終了・利用終了では、処理の継続を保証しません。利用セッションが変わったジョブには中断を要求し、遅い結果を保存しません。完了済み結果は再起動後も同じURLから取得できますが、未完了ジョブを自動で再実行しません。検証は `checks/browser-analysis-recovery.test.mjs`、`checks/browser-analysis-background.test.mjs`、`checks/browser-analysis-status.test.mjs`、`checks/browser-analysis-ui.test.mjs`。実画面確認用の `scripts/check-browser-analysis.mjs` はページ移動・復帰時の表示も扱います。
+
+Browserの「AI解析」は「表示中のURL」と「関連ソース」だけを表示します。ソース側の解析・表示URL候補とは別です。表示URL・タイトルから、現在のプロジェクト内のソース・router・サーバー設定・import関係を読み取り探索し、実在する関連ファイルを保存します。独立した概要欄は表示せず、既存のsummaryは補足記録として保存互換性を維持します。外部ページへのアクセスや操作、ソース変更は行いません。外部サイトなどで対応を確認できないときは関連ソースを空にし、理由を示します。
+
+関連ソースのクリック連携は、IDEから起動したBrowser（タイトルが `AiDiy IDE / Browser N`）だけです。起動元IDE・プロジェクト・利用セッション・現在の解析結果を照合してファイルビューアへ表示します。単独Browserは一覧を表示するだけで、IDEを自動選択・自動接続しません。AI解析を開くときに既存のloopback・トークン付き共有基盤で同じ実パスのIDEの起動状態だけを確認し、起動中なら「IDEのBrowserから開くとビューアー連携できる」と案内します。IDEが未利用・オフライン・tools未接続なら先にオンライン利用とtools接続が必要な旨を表示します。Code / Liveの起動は検出の条件にしません。別プロジェクト・終了済みIDEは案内対象外です。検出失敗は解析を妨げず、起動中と断定しません。状態を再確認する場合は解析ダイアログを開き直します。
+
+案内表示の確認は `node --test frontend_ide/checks/browser-viewer-guidance.test.mjs frontend_ide/checks/browser-analysis-ui.test.mjs frontend_ide/checks/browser-analysis-source.test.mjs frontend_ide/checks/browser-draft.test.mjs` と `node frontend_ide/scripts/check-browser-analysis.mjs`。隔離した模擬APIと実Vueを使い、未解析時・未連携・同じIDE起動中・IDE未利用の表示、非連携時にソース選択を送らないこと、遅い検出中のページ変更・閉鎖を確認します。実Electronの窓間フォーカス・実AIの探索精度は別途確認してください。
+
 Electronで選択HTMLをBrowserへ渡すときの例外は `viewer/登録HTMLルート.mjs` に集約します。作業ルートの `frontend_web/public/` 配下だけを対象に、`src/router/*.ts` の `createStaticAliasRoute` と、登録Vue画面の `frameSrc`（`baseUrl` にHTMLの相対パスを足す形式） を使うiframeを照合します。登録に一致したHTMLだけ、`vite.config.ts` の `PORT_WEB`（既定8090）の対応ルートを開きます。ソースを実行して判定しません。未登録HTML・他フォルダ・コメントアウトされた登録は通常のfile URLです。Webサーバー停止中は理由を表示し、file表示へ暗黙に戻しません。ルート側の認証は通常どおり適用します。判定の検証は `node --test frontend_ide/checks/registered-html.test.mjs`、Electronでの通常HTMLとの切り替えは `node frontend_ide/scripts/check-browser.mjs` で確認します。
 
 Browserの画面は `src/components/ブラウザ/ブラウザパネル.vue`、WebContentsViewは `デスクトップ/ブラウザ.cjs`、CDP中継は `デスクトップ/ブラウザCDP.cjs` が所有します。通常画面・VRの「Browser」とHTML/HTMの「ブラウザ」ボタンから起動します。既存のコード・表示プレビューは維持します。Web起動では新しいタブを開くため、クリック内で空タブを予約してからtools接続とプレビューURLを確認します。
+
+### Browserの要素連携
+
+通常操作欄とF11ヘッダーは「要素連携 → AI解析」の順です。要素連携はAI解析とは独立し、`デスクトップ/ブラウザ要素連携.cjs` が既存のページ用CDP接続で `Overlay.setInspectMode` を開始します。マウスを重ねると要素を強調し、`ブラウザ要素パネル.cjs` の専用非特権ポップアップへHTMLと計算済みCSSを表示します。クリックはページのリンク・送信処理へ渡さず、選択した要素を既存Code / Live下書きダイアログへ渡します。連携先と内容を確認して「下書きへ追加」を押し、AIへの送信はCode / Live側で行います。既存の下書きは保持します。
+
+取得するのは表示中DOMで、元のVue / TSソースとの対応は保証しません。選択ID、session / tab_id、クエリ・フラグメント・認証部を除いたURL、セレクター、タグ、許可した属性、位置・サイズ（CSS px）、表示文、HTML、計算済みCSSを扱います。撮影画像・Cookie・Storage・入力値は取得しません。HTMLは16,000文字・160ノード・深さ8までで、上限を超えた場合は省略を明記します。script / style / iframe本文、入力値、編集可能領域、非表示の枝、data属性・イベント属性等を除外します。代表的な秘密値もマスクしますが、任意の文章から機密情報を完全には検出できないため、連携内容を下書きダイアログで再確認します。
+
+Esc、ボタン再押下、ポップアップの×、ページ遷移・再読込、切断、最小化、終了で解除します。古いホバー結果・選択IDは新しい選択やページへ流用しません。F11ヘッダーから開始しても、連携ダイアログは本体で開きます。共有CDPをdetachしたり、他の利用者向けにDOMドメインをdisableしたりしません。外部ページへpreloadやIPCを追加せず、読み取りは隔離worldで行い、ポップアップにはtextContentで表示します。別プロセスのiframe等を解決できない場合は理由を表示して選び直します。
+
+単体検証は `node --test frontend_ide/checks/browser-element*.test.mjs`。実Chromium検証は `node frontend_ide/scripts/check-browser-element.mjs` で、隔離ページにおけるホバー、機密除外、クリック抑止、内容表示、Esc・遷移・切断を確認し、`frontend_ide/temp/browser-element-check/` に画像を保存します。外部サイトや実AIは使いません。環境がChromiumのソケットを禁止する場合は実画面未実施として扱ってください。実Electronのポップアップ位置・前後関係、狭幅、F11、OSごとのキー入力、Code / Live実窓の下書き保持は別途確認が必要です。
 
 全画面の上端ホバーパネルは単独BrowserとIDE所属Browserで共用します。幅は800 DIPを上限とし、狭い画面では既存の左右余白内へ収めます。rendererは固定幅を重ねずnative窓の100%に合わせます。高倍率などで640 CSS px以下になるとタイトル・接続操作・窓操作を別行へ折り返し、ResizeObserverで増えた高さをnative窓へ返します。背景は不透明度10%の淡いシアン、文字は青系で、OSのacrylic/vibrancyや面全体のぼかしは使いません。配色・操作は後述の「Browserの日本語URL表示」に集約します。手動のWeb画面撮影と下書きへの連携は独立した機能として維持します。移動位置はパネルを表示している間だけ維持し、一度収納したら次の表示は現在の画面上端中央へ戻します。F11で入り直した時も同じ位置へ戻します。通常窓の復帰位置やWeb本文のスクロールは変更しません。mainの状態スナップショットには取得順の `stateRevision` を付け、Vueは古い操作応答・通知を無視します。全画面終了の通知を遅い応答で上書きすると通常の操作欄が隠れるため、この順序判定を外さないでください。`checks/browser-fullscreen-state.test.mjs`、`checks/browser-header-style.test.mjs`、`checks/browser-integration-regressions.test.mjs` で遅延応答・F11連打・ヘッダー読込中の終了・移動位置を確認します。ネイティブの透過合成と実際のキー操作は実機で別途確認します。
 
@@ -702,7 +736,7 @@ Taskの帯/文字は `#0F5C3A` / `#7DD3FC`、Teamはその反転（4.82:1）。C
 
 開発目標のNavigationは `src/components/開発スペース/Navigationパネル.vue`、APIと結果検証は `ファイル機能/navigation.mjs` が所有します。IDEの起動欄で「Console」の手前にある「Navigator」から、独立した作業窓を追加します。Explorerのバーガーや上下分割とは連動しません。既存の `createPanelWindow` を使い、Electronでは独立窓、Webではポップアップで開きます。複数窓は起動順のID（navi-1等）ごとに目標・結果・評価・モデル・実行状態を分離します。VRでは既存の独立窓の配置・ピン動作に従い、移行/復帰で窓を増やさず、入力と結果を保持します。パネル表示だけではAIを実行しません。
 
-「ナビ」「再評価」の明示操作、または自動航行でCodeが成功した後の再評価で、`navigation_readonly.py` から既存CodeAgentsの選択済みモデルを使い、`AI実行オプション.読取専用予測()` を固定して目標とプロジェクト調査を依頼します。通常HTTP runや変更可能な経路へフォールバックしません。モデルには読取専用ツール境界が適用され、会話継続・履歴保存・出力ファイル保存は無効です。読取専用に未対応の設定では失敗として表示します。実作業の開始ではありません。Toolsのオンライン表示に関係なく、ローカル実行依存が利用できれば送信できます（後述の実行経路を参照）。依頼ID・目標・最大50項目・一意ID・整数0〜100の達成度・根拠・次のプロンプト案を検証し、成功結果を `~/.aidiy/navigation/<プロジェクト実パスのSHA-256>/<窓ID>/latest.json` に原子的に保存します。AIはJSONを返答するだけで、アプリが検証後に専用状態へ保存します。対象プロジェクトに結果ファイルを作成しません。達成度はAI推定であり、人による検証済みの意味ではありません。無効な結果・期限切れ・利用セッション変更を成功扱いせず、前回の正常結果を維持します。表示はテキスト補間に限定し、AIのHTMLやコードを実行しません。
+「ナビ」「再評価」の明示操作、または自動航行でCodeが成功した後の再評価で、`navigation_readonly.py` から既存CodeAgentsの選択済みモデルを使い、`AI実行オプション.読取専用予測()` を固定して目標とプロジェクト調査を依頼します。通常HTTP runや変更可能な経路へフォールバックしません。モデルには読取専用ツール境界が適用され、会話継続・履歴保存・出力ファイル保存は無効です。読取専用に未対応の設定では失敗として表示します。実作業の開始ではありません。Toolsのオンライン表示に関係なく、ローカル実行依存が利用できれば送信できます（後述の実行経路を参照）。依頼ID・目標・最大50項目・一意ID・整数0〜100の達成度・根拠・次のプロンプト案を検証し、成功結果を `_AIDIY/aidiy_navi/navigation/<プロジェクト実パスのSHA-256>/<窓ID>/latest.json` に原子的に保存します。AIはJSONを返答するだけで、アプリが検証後に専用状態へ保存します。対象プロジェクトに結果ファイルを作成しません。達成度はAI推定であり、人による検証済みの意味ではありません。無効な結果・期限切れ・利用セッション変更を成功扱いせず、前回の正常結果を維持します。表示はテキスト補間に限定し、AIのHTMLやコードを実行しません。
 
 Codex / Copilot / Hermesは共通の通常システム指示を使い、Navi固有の制限文を追加しません。読み取り専用の強制は実行オプションと各方式の制限に任せます。WindowsのCodexではMXC優先を使い、専用ファイルの読取と作成拒否を確認しました。MXC非対応環境は別途検証が必要です。
 
@@ -719,7 +753,7 @@ Navigationはパネル表示・VR移行だけではAIを呼びません。「Nav
 「評価」は保存済みの目標と項目を対象にします。項目ID・名前・順序・数を変えた回答は拒否し、達成率・根拠・次のプロンプト案だけを更新します。入力欄の目標変更を項目に反映する場合は「Navigator」を使います。ナビ・再評価だけではプロンプト案を送信しません。明示的に「自動航行」をオンにした場合は、後述の専用Codeによる実行と読取専用再評価を繰り返します。
 
 
-モデル選択は左側カラムの入力説明の下から行い、初期値は `aidiy_hermes` とCode共通の `CODE_AIDIY_HERMES_MODEL`（省略時auto）です。読取専用対応の `aidiy_hermes` / `codex_cli` / `copilot_cli` / `claude_cli` / `grok_cli`、`same` / `auto` または設定済みのモデル名を選択します。Code本体の選択値を上書きせず、`~/.aidiy/aidiy_navi_model.json` へ、画面で確定した最後の選択を保存します。形式・検証→専用一時JSON→原子的rename・ファイルmode 0600はCodeの `aidiy_code_model.json` と同じです。プロジェクト・窓に共通の1ファイルで、Code・Liveの保存ファイルは変更しません。新しく開く窓はこの値で始まります。開いている窓どうしは共有せず、各窓は最初に読んだ値か自分で確定した値を保持して、他の窓の確定では変わりません（開いた時点で保存値がなければ既定値のまま、保存ファイルを再読込しません）。旧形式の窓別 `model.json` は読みません。成功結果と履歴は従来どおり窓・プロジェクトごとに復元します。ナビ・評価の開始時に選択を固定します。実行中のモデル保存は拒否します。Hermesは既存読取専用アダプターのツール許可リスト、Codex/Copilotは既存の各CLI制約を再利用します。Claude CLIは `--restricted` / `--safe-mode` / `--strict-mcp-config` と読み取りツールのみの `--tools` を使います。Grok CLIは `--tools read_file,grep,list_dir` とMCP・委譲の除外、`--sandbox read-only` を使います。CLIが引数を受け付けなければ失敗します。CLIの管理者設定やGrokのユーザー設定のフックはCLIの仕様に従います。Grokのsandboxは環境によって適用されない場合があり、WindowsでOSレベルの書込禁止を保証するものではありません。未対応の実行方式へ自動フォールバックしません。通常ランタイムの認証・診断キャッシュまで禁止するOS全体の隔離とは区別してください。
+モデル選択は左側カラムの入力説明の下から行い、初期値は `aidiy_hermes` とCode共通の `CODE_AIDIY_HERMES_MODEL`（省略時auto）です。読取専用対応の `aidiy_hermes` / `codex_cli` / `copilot_cli` / `claude_cli` / `grok_cli`、`same` / `auto` または設定済みのモデル名を選択します。Code本体の選択値を上書きせず、`_AIDIY/aidiy_navi/aidiy_navi_model.json` へ、画面で確定した最後の選択を保存します。形式・検証→専用一時JSON→原子的rename・ファイルmode 0600はCodeの `aidiy_code_model.json` と同じです。プロジェクト・窓に共通の1ファイルで、Code・Liveの保存ファイルは変更しません。新しく開く窓はこの値で始まります。開いている窓どうしは共有せず、各窓は最初に読んだ値か自分で確定した値を保持して、他の窓の確定では変わりません（開いた時点で保存値がなければ既定値のまま、保存ファイルを再読込しません）。旧形式の窓別 `model.json` は読みません。成功結果と履歴は従来どおり窓・プロジェクトごとに復元します。ナビ・評価の開始時に選択を固定します。実行中のモデル保存は拒否します。Hermesは既存読取専用アダプターのツール許可リスト、Codex/Copilotは既存の各CLI制約を再利用します。Claude CLIは `--restricted` / `--safe-mode` / `--strict-mcp-config` と読み取りツールのみの `--tools` を使います。Grok CLIは `--tools read_file,grep,list_dir` とMCP・委譲の除外、`--sandbox read-only` を使います。CLIが引数を受け付けなければ失敗します。CLIの管理者設定やGrokのユーザー設定のフックはCLIの仕様に従います。Grokのsandboxは環境によって適用されない場合があり、WindowsでOSレベルの書込禁止を保証するものではありません。未対応の実行方式へ自動フォールバックしません。通常ランタイムの認証・診断キャッシュまで禁止するOS全体の隔離とは区別してください。
 
 Navigationの外枠はCodeと同じ状態バー・窓操作とプロジェクト表示を使います。入力説明の下のモデルボタンは共通ダイアログを開き、Diagが生成するread-only専用の `navi_models_info.json` に含まれるコードAI、same/auto、モデル候補、任意のモデルIDを選択します。Diagの書出し時に未導入のCLIとHermesの実行環境がない方式を除き、読取専用非対応のHermes外部CLI候補も除外します。選択肢はCodeの合成一覧と同じ順序で、保存済み一覧を使い、導入状態をリアルタイムに再判定しません。認証・利用枠は一覧だけでは確認できません。許可するAI方式は既存read-only対応の5方式に限定し、選択を他のNaviやCodeへ反映しません。
 
@@ -732,7 +766,7 @@ Navigationの外枠はCodeと同じ状態バー・窓操作とプロジェクト
 - IDEのアプリ選択（別窓・パネル・VRの3か所）は `Console`、`Navigator`、`Code` … の順。Navigatorも他のアプリと同じく、押すと `launching==="navigation"` で全ボタンを無効にして「起動中…」を出し、`Navigationパネル.vue` が窓を開き終えて `opened` を出すと解除する（`closed`、または10秒で解除）。順序と表示は `checks/folder-pages.test.mjs` が確認する。
 - 単独タイトルは `AiDiy Navigator`。IDEの「Navigator」からの窓は `AiDiy IDE / Navigator 1` のように実際の起動番号を表示する。
 - 「＋ 新規」は現在窓の選択を解除する。「一覧」で同一プロジェクトの過去ナビを選ぶと目標・項目・評価を復元する。モデルは今の選択を保ち、履歴に残っていたモデルへ切り替えず `aidiy_navi_model.json` も更新しない（Codeの履歴選択も同じで、会話本文だけを開く）。評価は元の項目構成を保持し、そのナビの履歴を更新する。選択と一覧閲覧ではAIを呼ばない。
-- 保存先は対象プロジェクト外の `~/.aidiy/navigation/<プロジェクト実パスのSHA256>/`。窓別の `navi-N/`（単独は `standalone-navi-N/`）に現在状態（モデルの選択は含めず、前項の `~/.aidiy/aidiy_navi_model.json` に保存）、`history/` にナビ単位のJSONを保存する。プロジェクトの内容は変更しない。
+- 保存先は対象プロジェクト外の `_AIDIY/aidiy_navi/navigation/<プロジェクト実パスのSHA256>/`。窓別の `navi-N/`（単独は `standalone-navi-N/`）に現在状態（モデルの選択は含めず、前項の `_AIDIY/aidiy_navi/aidiy_navi_model.json` に保存）、`history/` にナビ単位のJSONを保存する。プロジェクトの内容は変更しない。
 - 単独の複数プロセスは一時領域のPID付き予約で状態番号を分離し、終了後に最小空き番号を再利用する。履歴は同一プロジェクト内で共有するが、各窓の選択・入力・処理は独立する。
 - Hermesの読取専用実行はユーザー文脈設定を読み込まない。`same` は保存済みOpenAI OAuthモデルを明示値へ解決して渡す。解決できない場合はローカルモデルへ推測で接続せず失敗にする。その他の対応モデルは明示選択する。
 

@@ -669,3 +669,15 @@ test('Code 添付API: body受信中に同sessionへ再接続した旧HTTP要求�
     assert.equal(backend.sockets.flatMap(socket => socket.sent).filter(packet => packet.メッセージ識別 === 'input_file').length, 1);
   } finally { for (const request of pending) request.destroy(); await stream.close(); await app.close(); }
 });
+
+test('Code既定保存先: プロジェクトごとのモデルと検証回数を読み、home設定を使わない', async t => {
+  const backend = require('./fake-core.cjs').core(); backend.install(t);
+  for (const [index, model] of ['project-a-model', 'project-b-model'].entries()) {
+    const project = offlineFixture(), folder = join(project,'_AIDIY','aidiy_code');mkdirSync(folder,{recursive:true});
+    writeFileSync(join(folder,'aidiy_code_model.json'),JSON.stringify({provider:'codex_cli',model}));
+    writeFileSync(join(folder,'aidiy_code_options.json'),JSON.stringify({検証回数:index+1}));
+    const app = await start(project,'http://127.0.0.1:18091',{},undefined), stream = await connect(app);
+    try { const state = await stream.wait(packet=>packet.type==='state'&&packet.接続済み);assert.equal(state.model,model);assert.equal(state.検証回数,index+1); }
+    finally { await stream.close();await app.close(); }
+  }
+});

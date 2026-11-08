@@ -25,12 +25,11 @@ import { InputPrediction } from './input-prediction';
 import { validateFileUpload, fileAttachment, isDuplicateAttachment, type ChatAttachment } from './file-attachments';
 import type { Packet } from '../aidiy_live/src/protocol';
 import { streamControlOf, visibleStreamContent, type コードパケット } from './protocol';
-import { 会話保存先, 会話一覧, 会話書込, 会話削除, 会話本文上限, 履歴メッセージ長さ, type 保存履歴 } from './conversation-store';
+import { 会話保存先, 会話選択読込, 会話選択保存, 会話一覧, 会話書込, 会話削除, 会話本文上限, 履歴メッセージ長さ, type 保存履歴 } from './conversation-store';
 
 interface メッセージ { 種別: 'user' | 'assistant' | 'error'; 本文: string; 添付?: ChatAttachment }
 interface 会話 { メッセージ: メッセージ[]; 作業URI: string; コアセッションID?: string; HermesセッションID?: string; provider: string; model: string; モデル選択済み?: boolean }
 interface 保存会話 extends 会話 { id: string; 更新日時: number; 初回依頼?: string }
-interface 会話履歴 { 現在ID: string; 一覧: 保存会話[] }
 interface 添付 { 名前: string; 本文: string }
 
 // 会話履歴はプロジェクトの _AIDIY/aidiy_code/histories/ に保存し、単独起動版・開発スペースとも共用する（共通形へ変換）。
@@ -56,18 +55,20 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
   private 停止中 = false;
   private モデル反映中 = false;
   private 進捗: string[] = [];
-  private 保存待ち: PromiseLike<void> = Promise.resolve();
   private 破棄済み = false;
   private 会話ID: string = randomUUID();
   private 履歴: 保存会話[] = [];
-  /** 旧版が workspaceState に残した履歴のうち、今開いていないフォルダの分（開いた時に移す）。 */
-  private 旧履歴: 保存会話[] = [];
   private readonly 書込待ち = new Map<string, 保存会話>();
   private 書込タイマー?: ReturnType<typeof setTimeout>;
   private 最終モデル: { provider: string; model: string };
   private オフラインモデル: { provider: string; model: string };
-  private readonly オフライン保存先 = オフラインモデル保存先(モデル保存先('code'));
-  private readonly 設定保存先 = コード設定保存先(モデル保存先('code'));
+  private 設定プロジェクト = '';
+  private get モデルファイル(): string {
+    const folder = this.会話 ? this.現在フォルダ() : this.選択フォルダ();
+    return folder ? モデル保存先('code', folder.uri.fsPath) : '';
+  }
+  private get オフライン保存先() { return this.モデルファイル ? オフラインモデル保存先(this.モデルファイル) : ''; }
+  private get 設定保存先() { return this.モデルファイル ? コード設定保存先(this.モデルファイル) : ''; }
   /** 最後に選んだオンラインの検証回数。未保存なら0回。 */
   private 検証回数 = 0;
   // 起動時の候補を固定せず、現在の会話のフォルダから診断結果を読み直す。
@@ -97,24 +98,17 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
       ? offlineSaved.model : offlineModels.some(item => item.id === defaultModel) ? defaultModel : 'same';
     this.オフラインモデル = { provider: 'aidiy_hermes', model: offlineModel };
     this.検証回数 = 検証回数読込(this.設定保存先) ?? 0;
-    const old = context.workspaceState.get<会話>('会話');
-    const saved = context.workspaceState.get<会話履歴>('会話履歴');
-    this.旧履歴 = Array.isArray(saved?.一覧) ? saved.一覧.filter(item => typeof item?.id === 'string' && Array.isArray(item.メッセージ) && typeof item.作業URI === 'string') : [];
     this.履歴読込();
-    const selected = this.履歴.find(item => item.id === saved?.現在ID);
-    this.最終モデル = コードモデル読込() ?? context.globalState.get<{ provider: string; model: string }>('最終モデル')
-      ?? (selected?.モデル選択済み ? { provider: selected.provider, model: selected.model }
-      : old?.モデル選択済み ? { provider: old.provider, model: old.model }
-        : { provider: config.get('provider', ''), model: config.get('model', '') });
+    const currentFolder = this.選択フォルダ(), currentId = currentFolder ? 会話選択読込(会話保存先(currentFolder.uri.fsPath)) : undefined;
+    const selected = this.履歴.find(item => item.id === currentId && item.作業URI === currentFolder?.uri.toString());
+    this.最終モデル = コードモデル読込(this.モデルファイル) ?? { provider: config.get('provider', ''), model: config.get('model', '') };
     if (selected) {
       this.会話ID = selected.id;
       this.会話 = { ...selected, メッセージ: [...selected.メッセージ] };
-    } else if (!saved && old && (old.メッセージ.length || old.コアセッションID)) {
-      this.会話 = old;
-      this.保存();
     } else {
       this.会話 = { メッセージ: [], 作業URI: '', ...this.最終モデル, モデル選択済み: true };
     }
+    this.設定プロジェクト = this.現在フォルダ()?.uri.fsPath ?? '';
     this.最終モデル = コード選択(this.最終モデル);
     Object.assign(this.会話, コード選択(this.会話));
     const 作業更新 = (editor: vscode.TextEditor | undefined) => {
@@ -189,18 +183,13 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
   private フォルダパス(作業URI: string): string | undefined {
     return this.フォルダ一覧().find(item => item.uri.toString() === 作業URI)?.uri.fsPath;
   }
-  /** 開いているフォルダごとに _AIDIY/aidiy_code/histories/ から読む。旧版の workspaceState の履歴は、そのフォルダへ移す。 */
+  /** 開いているフォルダごとに _AIDIY/aidiy_code/histories/ から読む。旧保存先は読まず、移行しない。 */
   private 履歴読込(): void {
     const 一覧: 保存会話[] = [];
     for (const folder of this.フォルダ一覧()) {
       const uri = folder.uri.toString();
       try {
         const list = 会話一覧(会話保存先(folder.uri.fsPath));
-        const ids = new Set(list.map(item => item.id));
-        for (const item of this.旧履歴.filter(entry => entry.作業URI === uri && !ids.has(entry.id))) {
-          会話書込(会話保存先(folder.uri.fsPath, true)!, 履歴へ(item)); list.push(履歴へ(item)); ids.add(item.id);
-        }
-        this.旧履歴 = this.旧履歴.filter(entry => entry.作業URI !== uri);
         一覧.push(...list.map(item => 会話へ(item, uri)));
       } catch (error) { this.ログ.appendLine(`会話履歴を読み込めません (${folder.name}): ${String(error)}`); }
     }
@@ -217,7 +206,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     this.書込待ち.clear();
   }
   private 保存(更新日時を変更 = true): void {
-    // 大量の会話による workspaceState 肥大化を防ぐ。AIコアの履歴はコアセッションIDで継続する。
+    // 本文の保存サイズを抑える。AIコアの履歴はコアセッションIDで継続する。
     let サイズ = 0;
     const messages = this.会話.メッセージ.slice(-60).reverse().filter(item => (サイズ += 履歴メッセージ長さ(item)) <= 会話本文上限).reverse();
     this.会話.メッセージ = messages;
@@ -230,11 +219,9 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
       this.書込待ち.set(snapshot.id, snapshot);
       this.書込タイマー ??= setTimeout(() => this.書込実行(), 500);
     }
-    // workspaceState には今の会話IDと、まだ移していない旧版の履歴だけを残す
-    const snapshot: 会話履歴 = { 現在ID: this.会話ID, 一覧: this.旧履歴 };
-    this.保存待ち = this.保存待ち.then(() => this.context.workspaceState.update('会話履歴', snapshot)).then(undefined, error => {
-      this.ログ.appendLine(`会話を保存できません: ${String(error)}`);
-    });
+    const path = this.現在フォルダ()?.uri.fsPath;
+    if (path) try { 会話選択保存(会話保存先(path, true), this.会話ID); }
+    catch (error) { this.ログ.appendLine(`会話の選択を保存できません: ${String(error)}`); }
   }
   private エラー(error: unknown): void {
     const text = error instanceof Error ? error.message : String(error);
@@ -358,7 +345,21 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     }
   }
 
+  private プロジェクト設定更新(): void {
+    const folder = this.現在フォルダ(), project = folder?.uri.fsPath ?? '';
+    if (project === this.設定プロジェクト) return;
+    this.設定プロジェクト = project;
+    const config = vscode.workspace.getConfiguration('aidiyHermes', folder?.uri);
+    this.最終モデル = コード選択(コードモデル読込(this.モデルファイル) ?? { provider: config.get('provider', ''), model: config.get('model', '') });
+    const candidates = this.オフライン候補, saved = コードモデル読込(this.オフライン保存先);
+    const defaultModel = project ? Hermes既定モデル(this.context.extensionPath, project) : 'same';
+    this.オフラインモデル = { provider: 'aidiy_hermes', model: saved?.provider === 'aidiy_hermes' && candidates.some(item => item.id === saved.model)
+      ? saved.model : candidates.some(item => item.id === defaultModel) ? defaultModel : 'same' };
+    this.検証回数 = 検証回数読込(this.設定保存先) ?? 0;
+    Object.assign(this.会話, this.最終モデル);
+  }
   private 接続更新(force = false): void {
+    this.プロジェクト設定更新();
     const folder = this.現在フォルダ();
     if (!this.自動接続 || !vscode.workspace.isTrusted || !folder || this.破棄済み) { this.connection?.dispose(); this.connection = undefined; this.接続フォルダ = ''; return; }
     if (this.connection && this.接続フォルダ !== folder.uri.fsPath) { this.connection.dispose(); this.connection = undefined; }
@@ -456,11 +457,10 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     const selected = コード選択({ provider: selectedProvider, model: selectedModel });
     await this.connection.setModel(selected);
     if (!this.操作可能() || this.現在フォルダ()?.uri.fsPath !== projectPath || this.connection !== connection) return;
-    const persisted = コードモデル保存(selected);
+    const persisted = コードモデル保存(selected, this.モデルファイル);
     this.会話.provider = persisted.provider; this.会話.model = persisted.model;
     this.会話.モデル選択済み = true;
     this.最終モデル = { provider: this.会話.provider, model: this.会話.model };
-    void this.context.globalState.update('最終モデル', this.最終モデル).then(undefined, error => this.ログ.appendLine(`モデルを保存できません: ${String(error)}`));
     this.保存(false); this.通知();
   }
 

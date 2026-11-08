@@ -22,11 +22,11 @@ function fixture({appPath=path.join(__dirname,'..'),entryFilename=filename,cwd=p
   static getAllWindows(){return windows.filter(window=>!window.dead);}
  }
  const context={__dirname:path.dirname(entryFilename),exports:{},console,process:{platform:'win32',env:{},cwd:()=>cwd},URL,
-  require:id=>id==='electron'?{BrowserWindow:Window,app:{getAppPath:()=>appPath,requestSingleInstanceLock:()=>true,whenReady:()=>({then(){}}),on(){}},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:0,width:1920,height:1080}})}}
+  require:id=>id==='node:fs'?{mkdirSync(){}}:id==='electron'?{BrowserWindow:Window,app:{setPath(){},getAppPath:()=>appPath,requestSingleInstanceLock:()=>true,whenReady:()=>({then(){}}),on(){}},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:0,width:1920,height:1080}})}}
   :id.endsWith('window-opening.cjs')?{拡大表示:async(_Constructor,window,options)=>{assert.equal(window.visible,false);openings.push(window);await gate;if(window.dead||!options.canShow())return false;window.show();return true;}}
   :id.endsWith('長押し窓移動.cjs')?{attachNativeWindowMove(){}}
   // 移設fixtureでもアイコン以外の共通UI依存は既存の試験用環境を使用する。
-  :id.endsWith('最前面ピン.cjs')?load('../../frontend_ide/デスクトップ/最前面ピン.cjs'):load(id)};
+  :id.endsWith('project-storage.cjs')?load('../../frontend_ide/host/scripts/project-storage.cjs'):id.endsWith('最前面ピン.cjs')?load('../../frontend_ide/デスクトップ/最前面ピン.cjs'):load(id)};
  vm.runInNewContext(readFileSync(entryFilename,'utf8')+'\nglobalThis.probe={createLoginWindow,createCoreWindow,createPanelWindow,setPanelVisibility,openSettingsWindow,ウィンドウ表示,ウィンドウ非表示};',context);
  return{...context.probe,windows,openings,flush:()=>new Promise(resolve=>setImmediate(resolve)),hold(){let release;gate=new Promise(resolve=>release=resolve);return release;}};
 }

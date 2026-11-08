@@ -13,6 +13,7 @@ import * as viewerIdle from '../src/components/ファイル閲覧/閲覧待機.j
 import * as references from '../src/components/ファイル閲覧/ファイル参照.js';
 import * as actions from '../src/components/ファイル閲覧/ファイル操作.js';
 import * as browserLaunch from '../src/components/ブラウザ/起動.js';
+import * as displayUrls from '../viewer/表示URL.mjs';
 import * as mediaTypes from '../viewer/media-types.mjs';
 
 const require = createRequire(import.meta.url), vue = require('vue');
@@ -70,7 +71,7 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
     setTimeout: (callback, delay) => { const id = ++sequence; timers.set(id, { callback, delay }); return id; }, clearTimeout: id => timers.delete(id),
     require: id => id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
       : id === '../ファイル閲覧/ファイル操作.js' ? { ...actions, copyBrowserText: async text => { copies.push(text); await browserCopy(text); } }
-        : id === '../ブラウザ/起動.js' ? browser : id === '../../../viewer/media-types.mjs' ? mediaTypes : id === '../ファイル閲覧/コード表示.js' ? { loadMonaco: async () => null, monacoLanguage: () => 'text' } : assert.fail(`Unexpected import ${id}`),
+        : id === '../ブラウザ/起動.js' ? browser : id === '../../../viewer/表示URL.mjs' ? displayUrls : id === '../../../viewer/media-types.mjs' ? mediaTypes : id === '../ファイル閲覧/コード表示.js' ? { loadMonaco: async () => null, monacoLanguage: () => 'text' } : assert.fail(`Unexpected import ${id}`),
   });
   const component = module.exports, setup = component.setup;
   component.setup = (props, context) => { state = setup(props, context); return state; };
@@ -205,4 +206,26 @@ test('プレビュー実Vue: 音声・動画は案内と「ブラウザ」ボタ
   // 音声・動画・HTML 以外は「ブラウザ」ボタンを出さない。
   const other = await viewer(t, { file: { name: 'a.bin', path: 'a.bin' }, fileData: { kind: 'binary', size: 10 } });
   assert.equal(other.find('viewer-browser'), undefined); assert.match(other.text(), /この形式はプレビューできません/);
+});
+
+
+test('ソース→画面URL実Vue: JS/TS共通部品の複数画面を独立選択し、理由と選択URLを表示・Browserへ渡す',async t=>{
+ const routes=[{path:'画面',url:'http://localhost:3456/list',reason:'List.vue:4 → shared.js'},{path:'画面',url:'http://localhost:3456/detail',reason:'Detail.vue:7 → shared.js'}],opened=[];
+ const instances=[];
+ for(const name of ['shared.js','shared.tsx','shared.svelte']){
+  const f=await viewer(t,{file:{name,path:'src/'+name},previewData:{kind:'analysis',routes,reason:'到達性は未確認'},browser:{openBrowser:async(...args)=>{opened.push([args[0],args[3],args[4]]);return{ok:true};}}});instances.push(f);
+  assert.equal(f.state.mode.value,'code');assert.match(f.text(),/List.vue:4/);assert.match(f.text(),/到達性は未確認/);assert.ok(f.find('viewer-mode'));assert.match(f.text(),/http:\/\/localhost:3456\/detail/);
+  f.state.routeIndex.value=1;await flush();await f.click('viewer-analysis-page');assert.deepEqual(opened.at(-1),['src/'+name,routes[1].url,true]);
+  f.state.setMode('view');await flush();assert.equal(f.find('viewer-preview').props.src,routes[1].url);assert.match(f.text(),/Detail.vue:7/);
+  await f.state.refresh();await flush();assert.equal(f.state.routeIndex.value,1);
+ }
+ instances[0].state.routeIndex.value=0;await flush();assert.equal(instances[1].state.routeIndex.value,1);
+});
+
+test('ソース→画面URL実Vue: URLなしJSはコードだけを保ち、次ファイルと遅い応答のURLを混同しない',async t=>{
+ const pending=deferred();let calls=0;
+ const f=await viewer(t,{file:{name:'shared.js',path:'shared.js'},previewFetch:()=>++calls===1?pending.promise:Promise.resolve({ok:true,json:async()=>({kind:'analysis',routes:[],error:'画面なし'})})});
+ assert.equal(f.find('viewer-browser'),undefined);assert.equal(f.find('viewer-mode'),undefined);
+ f.props.file={name:'server.js',path:'server.js'};await flush();pending.resolve({ok:true,json:async()=>({kind:'analysis',routes:[{url:'http://localhost:3456/old'}]})});await flush();
+ assert.equal(f.state.mode.value,'code');assert.match(f.text(),/本文は消えません/);assert.equal(f.find('viewer-analysis-page'),undefined);assert.equal(f.find('viewer-browser'),undefined);assert.equal(f.find('viewer-mode'),undefined);assert.equal(f.find('viewer-preview'),undefined);
 });

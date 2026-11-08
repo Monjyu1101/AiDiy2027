@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
+import * as displayUrls from '../viewer/表示URL.mjs';
 import * as viewerIdle from '../src/components/ファイル閲覧/閲覧待機.js';
 import * as fileReference from '../src/components/ファイル閲覧/ファイル参照.js';
 import * as fileActions from '../src/components/ファイル閲覧/ファイル操作.js';
@@ -25,7 +26,7 @@ function component(name,{props={},modules={},globals={},provided={}}={}){
     module,window,AbortController,AbortSignal,URLSearchParams,Response,Date,
     localStorage:{getItem:()=>null,setItem(){}},getComputedStyle:()=>({getPropertyValue:()=>10}),
     setTimeout:()=>0,clearTimeout(){},
-    require:id=>id==='../ファイル閲覧/閲覧待機.js'?viewerIdle:id==='vue'?{...vue,inject:(key,fallback)=>provided[key]??fallback,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)}:id==='../ファイル閲覧/ファイル操作.js'?fileActions:id==='../ファイル閲覧/エクスプローラー操作.js'?explorerActions:modules[id]||{},
+    require:id=>id==='../../../viewer/表示URL.mjs'?displayUrls:id==='../ファイル閲覧/閲覧待機.js'?viewerIdle:id==='vue'?{...vue,inject:(key,fallback)=>provided[key]??fallback,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)}:id==='../ファイル閲覧/ファイル操作.js'?fileActions:id==='../ファイル閲覧/エクスプローラー操作.js'?explorerActions:modules[id]||{},
     ...globals,
   });
   const scope=vue.effectScope(),reactive=vue.reactive(props);

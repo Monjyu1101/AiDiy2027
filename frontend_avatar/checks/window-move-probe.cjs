@@ -36,7 +36,7 @@ app.whenReady().then(async()=>{
  try{
   const filename=path.resolve(__dirname,'../dist-electron/main.js'),load=createRequire(filename);
   const context={__dirname:path.dirname(filename),exports:{},console,process,URL,setTimeout,clearTimeout,
-   require:id=>id==='electron'?{...electron,BrowserWindow:TestWindow,app:{getAppPath:()=>path.resolve(__dirname,'..'),requestSingleInstanceLock:()=>true,whenReady:()=>({then(){}}),on(){},setName(){}}}:id.endsWith('window-opening.cjs')?{拡大表示:async(Constructor,window,options)=>{assert.equal(window.isVisible(),false);openings.push(window);const before=window.getBounds();const result=await load(id).拡大表示(Constructor,window,options);assert.deepEqual(window.getBounds(),before);return result;}}:load(id)};
+   require:id=>id==='node:fs'?{mkdirSync(){}}:id==='electron'?{...electron,BrowserWindow:TestWindow,app:{setPath(){},getAppPath:()=>path.resolve(__dirname,'..'),requestSingleInstanceLock:()=>true,whenReady:()=>({then(){}}),on(){},setName(){}}}:id.endsWith('window-opening.cjs')?{拡大表示:async(Constructor,window,options)=>{assert.equal(window.isVisible(),false);openings.push(window);const before=window.getBounds();const result=await load(id).拡大表示(Constructor,window,options);assert.deepEqual(window.getBounds(),before);return result;}}:load(id)};
   vm.runInNewContext(readFileSync(filename,'utf8')+'\nglobalThis.probe={createBaseWindow,openSettingsWindow,ウィンドウ表示,LOGIN_BOUNDS,CORE_BOUNDS,PANEL_BOUNDS,windowRoles};',context);
   const f=context.probe,results=[];
   const roles=[['login',f.LOGIN_BOUNDS],['core',f.CORE_BOUNDS],...Object.entries(f.PANEL_BOUNDS),['settings']];

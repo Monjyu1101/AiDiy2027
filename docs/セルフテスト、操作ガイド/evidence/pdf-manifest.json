@@ -102,16 +102,11 @@
     {
       "file": "セルフテスト,aidiy_ide,操作編.pdf",
       "pages": 31,
-      "sha256": "4898dfb2a97a2a5deaee1e9481012dd8d9cce94d627700f42c5667d3a43f8323",
-      "source_sha256": "e1454da7d05db70893808f676c288206e072af6f57b743d05c73e1c980d797aa",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ30,31を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。",
-      "pending_source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
-      "pending_update": {
-        "status": "PDF再生成待ち",
-        "scope": "IDE本文の「AiDiy検索」「AiDiy検索軌跡」を「AI検索」「AI検索軌跡」に統一し、掲載画像が旧表記を含む旨を追記。既存PDFと画像、過去の実機判定は未変更。",
-        "reason": "既存PDFの記録された生成元から本文には既存差分があり、今回の表記統一も追加されています。今回は画面表記とMarkdownを更新し、IDE PDFの再生成・再目視確認は未実施です。"
-      }
+      "sha256": "b5cd6a242f0f9f086d8f2c47604d230ccf985f5d55cd4e1f0d25fb32e1f7298f",
+      "source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
+      "review": "2026-11-08: 現行Markdownから再生成。本文252ブロック・画像24点・相対リンク11件が一致。実機再試験ではない。",
+      "alignment_review": "2026-11-08: 全31ページを描画し縮小一覧、重点ページ1,13,31を拡大目視。欠け・重なりなし。詳細はevidence/IDE資料整合/PDF機械照合.json。",
+      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
     },
     {
       "file": "セルフテスト,aidiy_live,操作編.pdf",
@@ -180,10 +175,11 @@
     {
       "file": "セルフテスト,共通,確認結果.pdf",
       "pages": 17,
-      "sha256": "af7e8631b4706cd031e84eff227a05ba78764e5184ee2b6c8ae155b53a2d3f4d",
-      "source_sha256": "bf418d002d39bf8fc0c7673c794ae83318bb8267f78b3f0da922498f272844e7",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ1,2,3,4,5,6,7,10,11,12,13,14を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "sha256": "0337a910373a4077f4b75851a498fcfe152c0af4e611db6a5d545ca0c5d72eda",
+      "source_sha256": "3b31240e7e1fe04441dc1b3038fab2308db5048dcc74a4eaad126c420035fcae",
+      "review": "2026-11-08: 現行Markdownから再生成。本文324ブロック・画像0点・相対リンク37件が一致。実機再試験ではない。",
+      "alignment_review": "2026-11-08: 全17ページを描画し縮小一覧、重点ページ1,15を拡大目視。欠け・重なりなし。詳細はevidence/IDE資料整合/PDF機械照合.json。",
+      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
     },
     {
       "file": "セルフテスト,aidiy_navi,操作編.pdf",
@@ -195,7 +191,7 @@
       "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
     }
   ],
-  "visual_review": "今回のNavigator全40ページは再生成後に目視確認。他22冊の既存検証は変更しない。全冊の今回の目視や新しい実機PASSを示さない。Navigatorはstep-10、他冊子はalignment_recordを参照。",
+  "visual_review": "2026-11-08: IDE全31ページと共通確認結果全17ページは再生成後に全ページ縮小表示と重点5ページ拡大を確認。Navigator全40ページの既存検証は維持。他20冊の今回の全ページ目視や新しい実機PASSを示さない。詳細はalignment_recordとevidence/IDE資料整合/PDF機械照合.json。",
   "alignment_evidence": "evidence/document-alignment.json",
   "prior_visual_review": "2026-11-03: 全22冊の追記を描画して目視確認。PDFテキスト抽出の日本語判定は使用せず、実表示で確認。",
   "alignment_record": "evidence/document-alignment.json"

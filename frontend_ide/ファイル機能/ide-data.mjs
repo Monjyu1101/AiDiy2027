@@ -3,7 +3,9 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-import { mkdir, readdir, realpath, rename, rmdir, stat } from 'node:fs/promises';
+import { mkdir, realpath } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+import storage from '../host/scripts/project-storage.cjs';
 import { join, relative, isAbsolute, sep } from 'node:path';
 
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
@@ -11,28 +13,14 @@ const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!b
 /**
  * IDE がプロジェクト内に残す記録の保存先 `_AIDIY/aidiy_ide/<name>/` を用意する。
  * 各段階の実パスがプロジェクト内であることを確かめる（リンクで外へ書き出さない）。
- * 旧版の保存先 `.aidiy/<legacy>/` があれば、同名の記録がない分だけ移し、空になった旧フォルダを消す。
+ * 旧保存先の読込・移行・フォールバックは行わない。
  */
-export async function ideDataFolder(project,name,{legacy,label='記録'}={}) {
-  const root=await realpath(project);let folder=root;
-  for(const part of ['_AIDIY','aidiy_ide',name]) {
+export async function ideDataFolder(project,name,{program='aidiy_ide',label='記録'}={}) {
+  const root=await realpath(storage.projectRoot(project,fileURLToPath(new URL('../../',import.meta.url))));
+  storage.programDataDirectory(root,program);let folder=root;
+  for(const part of ['_AIDIY',program,name]) {
     folder=join(folder,part);await mkdir(folder,{recursive:true});
     if(!within(root,await realpath(folder)))throw Error(`${label}の保存先がプロジェクト外を参照しています。`);
   }
-  if(legacy)await moveLegacy(root,folder,legacy).catch(()=>{});
   return folder;
-}
-
-async function moveLegacy(root,folder,legacy) {
-  const parent=join(root,'.aidiy'),old=join(parent,legacy);
-  const info=await stat(old).catch(()=>null);
-  if(!info?.isDirectory()||!within(root,await realpath(old)))return;
-  for(const entry of await readdir(old,{withFileTypes:true})) {
-    if(!entry.isFile()||!entry.name.endsWith('.json'))continue;
-    if(await stat(join(folder,entry.name)).catch(()=>null))continue;
-    await rename(join(old,entry.name),join(folder,entry.name)).catch(()=>{});
-  }
-  // 中身が残っていれば消さない（rmdir は空のフォルダだけを消す）
-  await rmdir(old).catch(()=>{});
-  await rmdir(parent).catch(()=>{});
 }

@@ -11,6 +11,7 @@
  */
 
 import { Slackパネル } from './パネル操作';
+import { パネル設定保存先, パネルプロジェクト } from './パネル設定';
 import { 設定エラー, 設定読込 } from '../接続/接続設定';
 
 // Electron 版（panel-worker.ts）とブラウザ版（web-server.ts）で共通の、パネル操作と通知の中継。
@@ -19,7 +20,7 @@ export type パネル通知 = Record<string, unknown> & { type: 'state' | 'activ
 
 export function パネルサービス(send: (data: パネル通知) => void, project = process.env.AIDIY_SLACK_PROJECT) {
   // aidiy_code / aidiy_live と同じく、起動入口で決めたプロジェクトフォルダをコードの作業フォルダにする。
-  const panel = new Slackパネル(state => send({ type: 'state', state }), () => ({ ...設定読込(), ...(project ? { folder: project } : {}) }));
+  const panel = new Slackパネル(state => send({ type: 'state', state }), () => ({ ...設定読込(), folder: パネルプロジェクト(project) }), undefined, パネル設定保存先(project));
   panel.発言 = activity => send({ type: 'activity', activity });
   const timer = setInterval(() => panel.接続確認(), 1000);
   async function 要求(action: unknown, value: unknown): Promise<{ result?: unknown; error?: string }> {

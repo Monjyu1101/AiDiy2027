@@ -30,7 +30,7 @@ test('standalone config, API, model persistence and no file mutation API',async(
   assert.equal((await fetch(endpoint(a),{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({provider:'aidiy_hermes',model:'openai_oauth/test'})})).status,200);
   assert.equal((await(await fetch(endpoint(a))).json()).selection.model,'openai_oauth/test');
   assert.equal((await(await fetch(endpoint(b))).json()).selection.model,'auto'); // bは確定前に開いた窓。他の窓の確定では変わらない
-  // 最後に確定した値は、Code / Liveと同じ形式で ~/.aidiy 相当の aidiy_navi_model.json（ここでは states の1つ上）へ保存される。窓別の model.json は作らない。
+  // 最後に確定した値は、Code / Liveと同じ形式で プロジェクトの _AIDIY/aidiy_navi/ 相当の aidiy_navi_model.json（ここでは states の1つ上）へ保存される。窓別の model.json は作らない。
   assert.deepEqual(JSON.parse(await readFile(join(root,'aidiy_navi_model.json'),'utf8')),{provider:'aidiy_hermes',model:'openai_oauth/test'});
   assert.equal(JSON.stringify(await readdir(join(root,'states'),{recursive:true})).includes('model.json'),false);
   // 次に開く窓（c）は最後の選択値で始まる。

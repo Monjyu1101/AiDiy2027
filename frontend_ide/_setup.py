@@ -53,7 +53,8 @@ def register_launchers(host, *, continue_on_error=False):
                ('Code / Live', lambda: host.install_standalone_launcher(register_path=False))]
     for kind, folder in (('ide', 'viewer'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser')):
         actions.append((kind, lambda kind=kind, folder=folder: launcher.install_launcher(ROOT / folder, kind, register_path=False)))
-    actions.append(('PATH', lambda: launcher.ensure_launcher_path(launcher.launcher_path().parent)))
+    for kind in ('navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser'):
+        actions.append(('PATH ' + kind, lambda kind=kind: launcher.ensure_launcher_path(launcher.launcher_path(kind).parent)))
     for label, action in actions:
         try:
             if action() is not False:

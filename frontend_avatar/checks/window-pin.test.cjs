@@ -78,6 +78,7 @@ function mainFixture() {
   const app = new EventEmitter();
   Object.assign(app, {
     getAppPath: () => project,
+    setPath() {},
     setAppUserModelId() {},
     requestSingleInstanceLock: () => true,
     quit() { this.quitCalls = (this.quitCalls || 0) + 1; },
@@ -92,7 +93,7 @@ function mainFixture() {
   const context = {
     __dirname: path.join(project, 'dist-electron'), exports: {}, console, URL,
     process: { platform: 'win32', env: {} },
-    require: id => id === 'electron' ? electron
+    require: id => id === 'node:fs' ? { ...fs, mkdirSync() {} } : id === 'electron' ? electron
       : id.endsWith('window-opening.cjs') ? { 拡大表示: async (_Constructor, window, options) => {
         if (window.isDestroyed() || !options.canShow()) return false;
         window.show(); return true;

@@ -66,7 +66,9 @@ class BestEffortTests(unittest.TestCase):
     def test_launcher_failure_does_not_skip_remaining(self):
         m=load('frontend_ide/_setup.py');launcher=Mock();launcher.install_launcher.side_effect=OSError('fixture');host=Mock();host.install_standalone_launcher.return_value=False
         with patch.object(m,'load_setup_module',return_value=launcher):
-            self.assertFalse(m.register_launchers(host,continue_on_error=True));self.assertEqual(launcher.install_launcher.call_count,6);launcher.ensure_launcher_path.assert_called_once()
+            self.assertFalse(m.register_launchers(host,continue_on_error=True));self.assertEqual(launcher.install_launcher.call_count,6)
+            self.assertEqual(launcher.ensure_launcher_path.call_count,8)
+            self.assertEqual([call.args[0] for call in launcher.launcher_path.call_args_list], ['navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser'])
             self.assertEqual([call.args[1] for call in launcher.install_launcher.call_args_list], ['navi', 'console', 'ide', 'task', 'team', 'browser'])
             host.install_standalone_launcher.assert_called_once_with(register_path=False)
 

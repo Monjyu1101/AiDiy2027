@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-import {normalizeDisplayUrls} from '../../../viewer/表示URL.mjs';
+import {normalizeDisplayUrls,isPageSource} from '../../../viewer/表示URL.mjs';
 
 function displayAddress(value){
  const url=typeof value==='string'&&normalizeDisplayUrls([{url:value}])[0]?.url;
@@ -17,10 +17,10 @@ function previewAddress(value){
 }
 function validSource(path){
  return typeof path==='string'&&path.length>0&&path.length<=4096&&!/[\\:\x00-\x1f\x7f]/.test(path)
-  &&path.split('/').every(part=>part&&part!=='.'&&part!=='..')&&/\.(html?|vue)$/i.test(path);
+  &&path.split('/').every(part=>part&&part!=='.'&&part!=='..')&&isPageSource(path);
 }
-export async function openBrowser(path,displayId,win=window,displayUrl=''){
- if(win.aidiyWindow?.openBrowser)return win.aidiyWindow.openBrowser(path,displayId,displayUrl);
+export async function openBrowser(path,displayId,win=window,displayUrl='',reuseSingleBrowser=false){
+ if(win.aidiyWindow?.openBrowser)return win.aidiyWindow.openBrowser(path,displayId,displayUrl,reuseSingleBrowser);
  // クリック中に予約し、非同期のプレビュー準備後もpopup blockerに阻まれないようにする。
  const popup=win.open('about:blank','_blank');
  if(!popup)return{ok:false,error:'ブラウザのポップアップを許可してください。'};
@@ -33,7 +33,7 @@ export async function openBrowser(path,displayId,win=window,displayUrl=''){
   await connected();
   let target='https://www.google.com/';
   if(displayUrl!==''){
-   if(!validSource(path))throw Error('表示URLはプロジェクト内のHTML / Vueファイルで利用できます。');
+   if(!validSource(path))throw Error('表示URLはプロジェクト内のページ関連ソースで利用できます。');
    target=displayAddress(displayUrl);
    // 任意URLを使う場合も、元ファイルの存在とプロジェクト境界をサーバーで確認する。
    const source=await win.fetch('/api/file?'+new URLSearchParams({path}),{cache:'no-store'});

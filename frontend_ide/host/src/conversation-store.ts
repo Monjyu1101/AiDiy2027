@@ -11,7 +11,7 @@
  */
 
 import { mkdirSync, readFileSync, readdirSync, realpathSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, relative, sep } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { fileAttachment, type ChatAttachment } from './file-attachments';
 
@@ -102,4 +102,18 @@ export function 会話書込(folder: string, entry: 保存履歴): void {
 
 export function 会話削除(folder: string | undefined, id: string): void {
   if (folder && validId(id)) rmSync(join(folder, `${id}.json`), { force: true });
+}
+
+
+/** 選択中の会話IDも同じプロジェクトに保存し、VS Codeのユーザー領域へ書かない。 */
+export function 会話選択読込(folder: string | undefined): string | undefined {
+  if (!folder) return;
+  try { const id = JSON.parse(readFileSync(join(dirname(folder), 'current.json'), 'utf8')).id; return validId(id) ? id : undefined; }
+  catch { return undefined; }
+}
+export function 会話選択保存(folder: string | undefined, id: string): void {
+  if (!folder || !validId(id)) return;
+  const file = join(dirname(folder), 'current.json'), temp = `${file}.${randomUUID()}.tmp`;
+  try { writeFileSync(temp, JSON.stringify({ id }), { encoding: 'utf8', flag: 'wx', mode: 0o600 }); renameSync(temp, file); }
+  finally { rmSync(temp, { force: true }); }
 }

@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
 import {EventEmitter} from 'node:events';
 import vm from 'node:vm';
+import * as analysisTools from '../src/components/ブラウザ/ブラウザ解析状態.js';
 import {parse,compileScript} from '@vue/compiler-sfc';
 import * as vue from 'vue';
 import {transformSync} from 'esbuild';
@@ -40,7 +41,7 @@ for(const headerOnly of [false,true])test(`Browserすりガラス: ${headerOnly?
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,console,requestAnimationFrame:()=>1,cancelAnimationFrame(){},ResizeObserver:class{observe(){}disconnect(){}},document:{documentElement:{classList:{add:value=>classes.add(value),remove:value=>classes.delete(value)}}},
   window:{aidiyWindow:{onBrowserChanged:()=>()=>{},browserAction:async(name,value)=>{actions.push([name,value]);return name==='capture'?{ok:true,message:'撮影しました。'}:{ok:true,url:'about:blank',fullscreen:headerOnly,available:true};},onBrowserHeaderFrame(fn){frameHandler=fn;return()=>{frameStops++;};},onBrowserHeaderGlass(){glassSubscriptions++;return()=>{};}}},
-  require:id=>id==='./URL表示.js'?addressTools:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
+  require:id=>id==='./ブラウザ解析状態.js'?analysisTools:id==='./URL表示.js'?addressTools:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
  });
  const state=module.exports.setup({headerOnly},{expose(){}});mounted.forEach(fn=>fn());await Promise.resolve();
  assert.equal(glassSubscriptions,0);assert.equal(classes.has('browser-header-document'),headerOnly);

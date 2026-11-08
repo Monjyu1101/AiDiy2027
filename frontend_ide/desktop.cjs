@@ -4,7 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {app,BrowserWindow,WebContentsView,ipcMain,shell,clipboard,session,screen,dialog,Menu}=require('electron');
-const {join}=require('node:path');
+const {join,resolve}=require('node:path');
+const {projectRoot,programDataDirectory}=require('./host/scripts/project-storage.cjs');
 const {mkdirSync,mkdtempSync,rmSync}=require('node:fs');
 const {projectProfile}=require('./デスクトップ/project-profile.cjs');
 const {taskTeamProfile}=require('./デスクトップ/タスクチーム起動.cjs');
@@ -15,13 +16,14 @@ const cliConsoleWindow=kind==='console'&&process.env.AIDIY_DEVELOPMENT_CLI_WINDO
 const appName=`AiDiy ${kind==='navi'?'Navigator':kind==='ide'?'IDE':kind==='code'?'Code':kind==='live'?'Live':kind==='task'?'Task':kind==='team'?'Team':kind==='browser'?'Browser':'Console'}`;
 app.setName(process.platform==='darwin'?appName:`aidiy_${kind}`);
 // ランチャーが引数を解決したプロジェクトで、ロック取得より先にIDEのプロファイルを分ける。
-const profile=kind==='ide'?projectProfile(app.getPath('appData'),process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd()):[ 'task','team'].includes(kind)?taskTeamProfile(app.getPath('appData'),kind,process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd(),projectFixed):join(app.getPath('appData'),`aidiy_${kind}_vue`);
-if(['ide','task','team'].includes(kind))mkdirSync(profile,{recursive:true});
+const project=projectRoot(process.env.AIDIY_DEVELOPMENT_PROJECT??'',resolve(__dirname,'..'));
+const profile=kind==='ide'?projectProfile(undefined,project):['task','team'].includes(kind)?taskTeamProfile(undefined,kind,project,projectFixed):join(programDataDirectory(project,`aidiy_${kind}`),'electron');
+mkdirSync(profile,{recursive:true,mode:0o700});
 app.setPath('userData',profile);
-if(kind==='ide')app.setPath('sessionData',profile);
+app.setPath('sessionData',profile);
 const independent=kind==='console'||kind==='browser'||!['live','task','team'].includes(kind)&&process.env.AIDIY_DEVELOPMENT_NEW_WINDOW==='1';
 if(independent){
- const temporaryProfile=mkdtempSync(join(app.getPath('temp'),`aidiy-${kind}-profile-`));
+ const temporaryProfile=mkdtempSync(join(profile,'window-'));
  app.setPath('userData',temporaryProfile);
  app.setPath('sessionData',temporaryProfile);
  app.on('quit',()=>{try{rmSync(temporaryProfile,{recursive:true,force:true,maxRetries:2,retryDelay:100});}catch{}});
@@ -30,7 +32,7 @@ const {windowBounds,windowMinimumSize,allWindowBounds}=require('./デスクト�
 const {createTaskWindows,taskWindowBounds}=require('./デスクトップ/task-windows.cjs');
 const {reserveConsoleSlot}=require('./デスクトップ/console-window-slot.cjs');
 const {拡大表示}=require('./host/scripts/window-opening.cjs');
-// IDEは同じプロジェクトだけ既存窓へ戻す。Code / Liveは種別ごと、Consoleは複数起動する。
+// 同じプログラム・プロジェクトだけ既存窓へ戻す。Console / Browserは複数起動する。
 if(!independent&&!app.requestSingleInstanceLock()){
  if(process.send)process.send({existingWindow:true},()=>app.exit(0));else app.exit(0);
  return;
@@ -91,11 +93,12 @@ const allDisplays=createAllDisplays({screen,trustedEvent,panels:vrPanels,syncChi
  for(const record of windows.values())if((record===owner||record.owner===owner)&&!record.window.isDestroyed())windowPins.setLocked(record.window,locked||(record.kind==='browser'&&record.window.isFullScreen()));
  vrPanelStacking.refresh(owner);
 }});
-const {createBrowserViews,browserFileTarget,browserOpenable,HOME}=require('./デスクトップ/ブラウザ.cjs');
+const {createBrowserViews,browserFileTarget,browserOpenable,browserStartupURL,HOME}=require('./デスクトップ/ブラウザ.cjs');
 const {saveBrowserCapture}=require('./デスクトップ/ブラウザ撮影.cjs');
 const {validPreviewPath}=require('./デスクトップ/native-preview-actions.cjs');
-const {createBrowserSourceSelection}=require('./デスクトップ/ブラウザ解析連携.cjs');
+const {createBrowserSourceSelection,createBrowserAnalysisContext}=require('./デスクトップ/ブラウザ解析連携.cjs');
 const selectBrowserSource=createBrowserSourceSelection({trustedEvent,readState,sessionKey:state=>sessionKey(state),connected:state=>browserConnected(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
+const browserAnalysisContext=createBrowserAnalysisContext({trustedEvent,context:record=>browserViews?.analysisContext(record),discover:async record=>(await sharedDrafts()).viewerStatus(record),isQuitting:()=>quitting});
 let browserViews;
 const browserBridges=new WeakMap();
 let standaloneBrowserBridge;
@@ -214,6 +217,8 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
  contents.on('page-title-updated',event=>{event.preventDefault();window.setTitle(kind==='navi'?navigationWindowTitle(record,title):title);});
  // 窓番号は全体で一意、重ね位置は選択した画面ごとに数える。
  const record={window,kind,...(kind==='navi'?{navigationNormalTitle:title}:{}),url:base,viewerPath,server,owner,linkKey,slot,displayId,displaySlot,taskView,taskController:taskOptions?.controller||taskWindows,taskPayload:taskOptions?.payload,revision:0,pending:new Map()};windows.set(contents,record);
+ let browserReady;
+ if(kind==='browser')record.browserReady=new Promise(resolve=>{browserReady=resolve;});
  // 起動元・寿命はrecord.ownerで管理し、OS上は独立したパネルのままピンを設定する。
  registerWindowPin(record);
  attachWindowMove(record);
@@ -240,7 +245,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
   });
  }
  const monitor=kind==='ide'?setInterval(()=>void checkChildren(record),400):kind==='browser'&&!owner?setInterval(()=>void checkStandaloneBrowser(record),400):undefined;monitor?.unref();
- window.once('closed',()=>{if(kind==='task')record.taskController.closed(record);clearInterval(monitor);draftRouter.invalidate(record);nativePreviewActions.invalidate(record);closeChildren(record);windows.delete(contents);if(kind==='browser'&&!owner&&!standaloneBrowsers().length){const pending=standaloneBrowserBridge;standaloneBrowserBridge=undefined;void pending?.then(bridge=>bridge.close(),()=>{});}closeServer(server);if(kind==='viewer'&&owner&&!owner.window.isDestroyed())owner.window.webContents.send('development:viewer-closed',viewerPath);});
+ window.once('closed',()=>{browserReady?.(false);if(kind==='task')record.taskController.closed(record);clearInterval(monitor);draftRouter.invalidate(record);nativePreviewActions.invalidate(record);closeChildren(record);windows.delete(contents);if(kind==='browser'&&!owner&&!standaloneBrowsers().length){const pending=standaloneBrowserBridge;standaloneBrowserBridge=undefined;void pending?.then(bridge=>bridge.close(),()=>{});}closeServer(server);if(kind==='viewer'&&owner&&!owner.window.isDestroyed())owner.window.webContents.send('development:viewer-closed',viewerPath);});
  contents.on('did-start-navigation',(_event,_url,isInPlace,isMainFrame)=>{if(isMainFrame){nativePreviewActions.invalidate(record);if(!isInPlace)draftRouter.invalidate(record);}});
  contents.on('render-process-gone',()=>{draftRouter.invalidate(record);nativePreviewActions.invalidate(record);});
  contents.on('will-navigate',(event,target)=>{if(target.split('#')[0]!==base)event.preventDefault();});
@@ -256,6 +261,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
     },
     captureImage:({png})=>saveBrowserCapture(process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd(),png),trustedEvent,projectRoot:process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd()});
    const bridge=await (owner?ensureBrowserBridge(record):ensureStandaloneBrowserBridge());
+   if(!owner&&browserTarget===undefined)browserTarget=await browserStartupURL();
    const current=await readState(owner||record);
    if(window.isDestroyed()||owner&&(owner.window.isDestroyed()||owner.revision!==ownerRevision||sessionKey(current)!==linkKey||!browserConnected(current)))throw Error('tools接続中のみBrowserを起動できます。');
    // Browser番号はCDPの排他レジストリと共通。複数IDEでも衝突せず、閉じた最小番号を再利用する。
@@ -264,6 +270,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
     if(displayId===undefined&&!anchor)window.setBounds(windowBounds(kind,area,ownerBounds,record.slot));
    }
    record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,browserConnected(current));attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,browserConnected(current));
+   browserReady(true);
   }
   await window.loadURL(url);
   if(!window.isDestroyed()){
@@ -310,13 +317,14 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:all-displays',(event,action)=>allDisplays.handle(event,action));
  ipcMain.handle('development:browser-action',async(event,action,value)=>{
   const record=trustedEvent(event);
-  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','draft-dialog','analysis-dialog','header-size','header-pin-state','header-toggle-pin'].includes(action)){
+  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-dialog','analysis-dialog','header-size','header-pin-state','header-toggle-pin'].includes(action)){
    try{if(!browserConnected(await readState(record.owner||record)))return{ok:false,error:'tools接続中のみBrowserを操作できます。'};}catch{return{ok:false,error:'toolsの接続を確認できません。'};}
   }
+  if(action==='analysis-context')return browserAnalysisContext(event);
   if(action==='analysis-select-source')return selectBrowserSource(event,value);
   return browserViews?.action(event,action,value)||{ok:false,error:'ブラウザが起動していません。'};
  });
- ipcMain.handle('development:open-browser',async(event,path,displayId,displayUrl='')=>{
+ ipcMain.handle('development:open-browser',async(event,path,displayId,displayUrl='',reuseSingleBrowser=false)=>{
   const source=trustedEvent(event),owner=source?.kind==='viewer'?source.owner:source;
   if(!owner||owner.kind!=='ide'||owner.owner||!['ide','viewer'].includes(source.kind))return{ok:false,error:'IDEから開いてください。'};
   const revision=owner.revision;
@@ -334,6 +342,22 @@ app.whenReady().then(async()=>{
    }
    const current=await readState(owner);
    if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!browserConnected(current))throw Error('IDEの利用状態が変わりました。');
+   if(reuseSingleBrowser===true&&displayUrl!==''){
+    const singleBrowser=()=>{
+     const matches=[...windows.values()].filter(record=>record.kind==='browser'&&record.owner===owner&&record.linkKey===key&&!record.window.isDestroyed());
+     return matches.length===1?matches[0]:null;
+    };
+    let existing;
+    // AI解析のURLだけ、同じIDEに1枚あるBrowserを使う。準備中の窓も待ち、二重起動しない。
+    while((existing=singleBrowser())){
+     const ready=await existing.browserReady,current=await readState(owner);
+     if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!browserConnected(current))throw Error('IDEの利用状態が変わりました。');
+     if(singleBrowser()!==existing)continue;
+     if(!ready)throw Error('Browserを起動できませんでした。もう一度開いてください。');
+     browserViews.setAvailable(existing,true);await browserViews.navigate(existing,target);focusWindow(existing.window);
+     return{ok:true,reused:true};
+    }
+   }
    await createWindow('browser',owner.url+'#browser',undefined,owner,key,undefined,displayId,target);
    return{ok:true};
   }catch(error){return{ok:false,error:error.message};}
@@ -347,7 +371,7 @@ app.whenReady().then(async()=>{
   const source=trustedEvent(event);
   if(source?.kind==='navi'){try{return await(await sharedDrafts()).insert(source,value);}catch(error){return{ok:false,error:error.message};}}
   if(source?.kind!=='browser')return draftRouter.insert(source,value);
-  try{const draft=await browserViews.action(event,'draft');if(!draft.ok)return draft;return await(await sharedDrafts()).insert(source,{...value,text:draft.request.text});}catch(error){return{ok:false,error:error.message};}
+  try{const elementId=value?.browserElementId;if(elementId!==undefined&&(typeof elementId!=='string'||elementId.length>128))throw Error('要素の指定が不正です。');const draft=await browserViews.action(event,elementId===undefined?'draft':'element-draft',elementId);if(!draft.ok)return draft;return await(await sharedDrafts()).insert(source,{...value,text:draft.request.text});}catch(error){return{ok:false,error:error.message};}
  });
  ipcMain.on('development:draft-result',(event,value)=>draftRouter.acknowledge(trustedEvent(event),value));
  ipcMain.handle('development:end-session',async event=>{
@@ -430,4 +454,6 @@ app.whenReady().then(async()=>{
   try{return await opening;}finally{if(record.pending.get(pendingKey)===opening)record.pending.delete(pendingKey);}
  });
  await createWindow(kind,kind==='task'?url+'#task-view=request':kind==='browser'?url+'#browser':url);if(kind==='task')await taskWindows.start();process.send?.({windowShown:true});
+ // Code / Liveが未起動でも、同じプロジェクトのIDEがあることだけをBrowserへ知らせる。
+ if(kind==='ide')void sharedDrafts().catch(()=>{});
 }).catch(error=>{console.error(error);app.quit();});

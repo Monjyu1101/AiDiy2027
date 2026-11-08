@@ -73,15 +73,14 @@ test('コードは aidiy_hermes 固定。未保存時は共通設定のモデル
   } finally { await f.panel.終了(); f.done(); }
 });
 
-test('旧形式の保存（aidiy_slack_code_model.json）は1回だけ新しい1ファイルへ移して削除する', async () => {
+test('旧形式の保存は読み込まず、移行・削除もしない', async () => {
   const f = 準備();
   try {
     const legacy = join(f.folder, 'aidiy_slack_code_model.json');
     writeFileSync(legacy, JSON.stringify({ provider: 'codex-cli', model: 'gpt-x' }));
-    const initial = await f.panel.初期情報();
-    assert.equal(initial.firstRun, false); assert.equal(initial.code.model, 'codex_cli/gpt-x');
-    assert.equal(existsSync(legacy), false);
-    assert.deepEqual(JSON.parse(readFileSync(join(f.folder, 'aidiy_slack.json'), 'utf8')), { code_name: 'aidiy_hermes', code_model: 'codex_cli/gpt-x' });
+    assert.equal((await f.panel.初期情報()).firstRun, true);
+    assert.equal(existsSync(legacy), true);
+    assert.equal(existsSync(join(f.folder, 'aidiy_slack.json')), false);
   } finally { await f.panel.終了(); f.done(); }
 });
 
@@ -119,13 +118,13 @@ test('起動時の自動接続は保存済みの設定があるときだけ行�
   } finally { await f.panel.終了(); f.done(); }
 });
 
-test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes で書き足す。未対応の値では接続しない', async () => {
+test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
   const f = 準備();
   try {
     const file = join(f.folder, 'aidiy_slack.json');
     writeFileSync(file, JSON.stringify({ code_model: 'same' }));
     assert.deepEqual((await f.panel.初期情報()).code, { cli: 'aidiy_hermes', model: 'same' });
-    assert.equal(JSON.parse(readFileSync(file, 'utf8')).code_name, 'aidiy_hermes', '読込時に code_name を書き足す');
+    assert.equal(JSON.parse(readFileSync(file, 'utf8')).code_name, undefined, '読込時に保存内容を書き換えない');
     writeFileSync(file, JSON.stringify({ code_name: 'other_harness', code_model: 'same' }));
     await f.panel.開始();
     assert.equal(f.states.at(-1)?.phase, 'error'); assert.match(f.states.at(-1)?.message ?? '', /other_harness には未対応/); assert.equal(f.bots.length, 0);

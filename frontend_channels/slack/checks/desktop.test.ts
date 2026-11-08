@@ -21,7 +21,7 @@ import * as url from 'node:url';
 import { runInNewContext } from 'node:vm';
 import { createRequire } from 'node:module';
 
-async function desktop(platform = 'win32', owned = true) {
+async function desktop(platform = 'win32', owned = true, project: string | undefined = undefined) {
   const file = fileURLToPath(new URL('../panel/desktop.cjs', import.meta.url));
   const timers = new Map<number, { at: number; callback: () => void }>();
   const files = new Map<string, any>(), requests: any[] = [], kills: any[] = [], states: any[] = [], moves: any[] = [], dialogs: any[] = [];
@@ -35,7 +35,7 @@ async function desktop(platform = 'win32', owned = true) {
   });
   const app = Object.assign(new EventEmitter(), {
     name: '', menu: [] as any[], dock: {menu: [] as any[], icon: '', setMenu(value: any[]) {this.menu = value;}, setIcon(value: string) {this.icon = value;}},
-    setName(name: string) {this.name = name;}, setPath() {}, setAppUserModelId() {}, getPath: () => '/tmp', whenReady: async () => {},
+    paths: new Map<string, string>(), setName(name: string) {this.name = name;}, setPath(name: string, value: string) { this.paths.set(name, value); }, setAppUserModelId() {}, getPath: () => { throw new Error('ユーザーホームは参照しない'); }, whenReady: async () => {},
     requestSingleInstanceLock() { locked = true; return true; },
     quit() {
       let prevented = false;
@@ -68,7 +68,7 @@ async function desktop(platform = 'win32', owned = true) {
   }
   runInNewContext(readFileSync(file, 'utf8'), {
     __dirname: dirname(file), console, Date: { now: () => clock },
-    process: { platform, pid: 999, env: { AIDIY_SLACK_READY: '/first-ready' }, kill: (...args: any[]) => { kills.push(args); } },
+    process: { platform, pid: 999, env: { AIDIY_SLACK_READY: '/first-ready', AIDIY_SLACK_PROJECT: project }, kill: (...args: any[]) => { kills.push(args); } },
     setTimeout(callback: () => void, ms: number) { const id = ++sequence; timers.set(id, { at: clock + ms, callback }); return id; },
     clearTimeout(id: number) { timers.delete(id); },
     require(name: string) {
@@ -79,7 +79,7 @@ async function desktop(platform = 'win32', owned = true) {
       // 3本共通のウィンドウ大きさ・初回演出は実物を使う。
       if (name.startsWith('../../../frontend_ide/host/scripts/')) return createRequire(import.meta.url)(name);
       if (name === 'node:url') return url;
-      if (name === 'node:fs') return { writeFileSync(file: string, value: string) { files.set(file, JSON.parse(value)); } };
+      if (name === 'node:fs') return { mkdirSync() {}, writeFileSync(file: string, value: string) { files.set(file, JSON.parse(value)); } };
       if (name === 'node:child_process') return { fork: () => worker, spawn: (...args: any[]) => {
         kills.push(args); return Object.assign(new EventEmitter(), { kill() {} });
       } };
@@ -210,4 +210,14 @@ test('接続中の終了は確認し、キャンセルなら続ける。切断�
   idle.window.close(); await idle.flush();
   assert.equal(idle.dialogs.length, 0); assert.equal(idle.requests.filter(item => item.action === 'shutdown').length, 1);
   idle.exitWorker(0); await idle.flush(); assert.equal(idle.exited(), true);
+});
+
+ test('Electronの保存先は起動プロジェクト内で、空・未指定はAiDiyルートになる', async () => {
+  const aidiyRoot = fileURLToPath(new URL('../../../', import.meta.url));
+  for (const project of [undefined, '', '/tmp/channel-project-A', '/tmp/channel-project-B']) {
+    const f = await desktop('linux', true, project);
+    const expected = path.join(project || aidiyRoot, '_AIDIY', 'aidiy_slack', 'electron');
+    assert.equal(f.app.paths.get('userData'), expected);
+    assert.equal(f.app.paths.get('sessionData'), expected);
+  }
 });

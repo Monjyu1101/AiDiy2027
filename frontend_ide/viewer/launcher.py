@@ -26,7 +26,7 @@ launcher_owned_by = _path_helper.launcher_owned_by
 
 
 def launcher_path(kind: str = 'ide') -> Path:
-    return Path.home() / '.local' / 'bin' / (f'aidiy_{kind}.cmd' if sys.platform == 'win32' else f'aidiy_{kind}')
+    return _path_helper.launcher_directory(f'aidiy_{kind}') / (f'aidiy_{kind}.cmd' if sys.platform == 'win32' else f'aidiy_{kind}')
 
 
 def install_launcher(root: Path, kind: str = 'ide', *, register_path: bool = True) -> None:

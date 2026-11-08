@@ -21,15 +21,19 @@
 import { spawn } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
 import { delimiter, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import storage from './project-storage.cjs';
 import ウィンドウ from './window-size.cjs';
 
 export const プロジェクト引数書式 = '[作業フォルダ | --project 作業フォルダ]';
 
 /** 位置引数または --project からプロジェクトフォルダを決め、存在しない場合は例外にする。 */
 export function プロジェクトフォルダ決定(positionals = [], project, cwd = process.cwd()) {
-  if (project !== undefined && !project.trim()) throw new Error('--project に値を指定してください。');
   if (positionals.length + (project === undefined ? 0 : 1) > 1) throw new Error('作業フォルダは1つだけ指定してください。');
-  const folder = resolve(cwd, project ?? positionals[0] ?? '.');
+  const selected = project ?? positionals[0];
+  const folder = selected !== undefined && !selected.trim()
+    ? storage.projectRoot('', fileURLToPath(new URL('../../../', import.meta.url)))
+    : resolve(cwd, selected ?? '.');
   if (!existsSync(folder) || !statSync(folder).isDirectory()) throw new Error(`作業フォルダがありません: ${folder}`);
   return folder;
 }

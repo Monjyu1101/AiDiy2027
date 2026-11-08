@@ -35,7 +35,7 @@ async function 起動実行(options: { argv: string[]; electron: boolean; ready:
   const directories: string[] = [], logs: string[] = [], reads: string[] = [], removed: string[] = [], profiles: string[] = [];
   let clock = 0, probes = 0, exitCode: number | undefined;
   await runInNewContext(`(async () => { ${source} })()`, {
-    moduleUrl, dirname, join, fileURLToPath: 区切り, pathToFileURL, URL, parseArgs,
+    moduleUrl, dirname, join, programDataDirectory: (project: string, name: string) => join(project, '_AIDIY', name), fileURLToPath: 区切り, pathToFileURL, URL, parseArgs,
     プロジェクト引数書式: '[作業フォルダ]', プロジェクトフォルダ決定: () => '/project', ブラウザ自動判定: () => false,
     ブラウザ版表示: async (url: string, value: { profile: string }) => { opened.push(url); profiles.push(value.profile); return true; },
     ブラウザ版へ切替: (error: Error) => { warnings.push(error.message); }, ウィンドウ: { パネル高さ: 414 },
@@ -113,7 +113,7 @@ test('既存ブラウザ版を検出したら、別の画面を開かず成功�
   assert.deepEqual(result.errors, []);
 });
 
-test('Electron / Web のログ・readyだけを配置先tempへ分け、browser-profileは従来位置を維持する', async () => {
+test('Electron / Web のログ・readyは配置先temp、browser-profileは起動プロジェクトに分離する', async () => {
   const frontend = 区切り(new URL('..', new URL('../panel/launch.mjs', import.meta.url)));
   const temporary = join(frontend, '..', '..', 'temp', 'aidiy_slack');
   for (const browser of [false, true]) {
@@ -125,7 +125,7 @@ test('Electron / Web のログ・readyだけを配置先tempへ分け、browser-
     assert.equal(result.spawned[0].options.env.AIDIY_SLACK_READY, ready);
     assert.equal(result.spawned[0].options.env.AIDIY_SLACK_PROJECT, '/project', '閲覧プロジェクトの選択は変えない');
     assert.deepEqual(result.reads, [ready]);
-    assert.deepEqual(result.profiles, browser ? [join(frontend, 'out', 'aidiy_slack', 'browser-profile')] : []);
+    assert.deepEqual(result.profiles, browser ? [join('/project', '_AIDIY', 'aidiy_slack', 'browser-profile')] : []);
     assert.deepEqual(result.removed, [], '旧ログや保存profileの移動・削除をしない');
     assert.deepEqual(result.errors, []);
   }

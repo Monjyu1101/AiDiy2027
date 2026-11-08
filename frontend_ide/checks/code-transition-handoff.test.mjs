@@ -135,7 +135,7 @@ async function extensionPanel(t) {
     './code-connection': { コード選択: value => ({ provider: value.provider || '', model: value.model || '' }), CodeConnection: class { constructor() { assert.fail('外部接続は禁止'); } } },
     './model-preferences': { モデル保存先: () => 'model.json', オフラインモデル保存先: () => 'offline.json', コードモデル読込() {}, コード設定保存先: () => 'options.json', 検証回数読込: () => 0 },
     '../aidiy_code/src/offline': { オフラインモデル候補: () => [{ id: 'same' }], Hermes既定モデル: () => 'same', オフラインモデル保存先: () => 'offline.json' },
-    './conversation-store': { 会話保存先: path => path, 会話一覧: path => path === projectPath ? ['first', 'second'].map((id, i) => ({ id, 更新日時: i + 1, 初回依頼: i ? '次の会話' : '最初の会話', メッセージ: [], provider: '', model: '', 実行モード: 'online' })) : [], 会話書込() {}, 会話削除() {}, 会話本文上限: 4e6, 履歴メッセージ長さ: item => item.本文.length },
+    './conversation-store': { 会話選択読込:()=> 'first', 会話選択保存(){}, 会話保存先: path => path, 会話一覧: path => path === projectPath ? ['first', 'second'].map((id, i) => ({ id, 更新日時: i + 1, 初回依頼: i ? '次の会話' : '最初の会話', メッセージ: [], provider: '', model: '', 実行モード: 'online' })) : [], 会話書込() {}, 会話削除() {}, 会話本文上限: 4e6, 履歴メッセージ長さ: item => item.本文.length },
     './runner': {}, './protocol': {}, '../aidiy_live/local-backend.cjs': {},
   };
   const module = { exports: {} };

@@ -118,8 +118,12 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  view.webContents.loadURL=originalLoad;
  await control.action(event,'navigate',HOME);
  assert.equal((await control.action(event,'state')).error,'');
+ await control.navigate(record,'https://example.com/reused');assert.equal(view.webContents.url,'https://example.com/reused');
+ await assert.rejects(control.navigate(record,record.url),/このURL/,'再利用もIDEのAPIオリジンへ移動させない');
+ control.setAvailable(record,false);await assert.rejects(control.navigate(record,HOME),/このURL/);control.setAvailable(record,true);
  const hostContents=window.webContents;Object.defineProperty(window,'webContents',{get(){throw Error('Object has been destroyed');}});
  assert.doesNotThrow(()=>window.emit('closed'));assert.equal(hostContents.listenerCount('before-input-event'),0);assert.equal(view.webContents.listenerCount('before-input-event'),0);
+ assert.throws(()=>control.navigate(record,HOME),/終了/);
  assert.deepEqual(view.webContents.closed,{waitForBeforeUnload:false});assert.equal((await control.action(event,'state')).ok,false);
 });
 

@@ -26,7 +26,7 @@ launcher_owned_by = _path_helper.launcher_owned_by
 
 
 def launcher_path() -> Path:
-    return Path.home() / '.local' / 'bin' / ('aidiy_slack.cmd' if sys.platform == 'win32' else 'aidiy_slack')
+    return _path_helper.launcher_directory('aidiy_slack') / ('aidiy_slack.cmd' if sys.platform == 'win32' else 'aidiy_slack')
 
 
 def install_launcher(root: Path) -> None:

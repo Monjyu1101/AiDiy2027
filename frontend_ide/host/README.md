@@ -8,7 +8,7 @@
 
 拡張バージョンは当面 `0.1.0` に固定します。
 
-入力欄の「検証ループ」は0〜3回を選択できます（初期値0回）。オフラインの間は0回に固定し、オンラインへ戻ると直前に選んでいた回数に戻ります。最後に選んだ回数は `~/.aidiy/aidiy_code_options.json` に保存し、次回の起動でも使います（モデルと同じく単独起動版と VS Code 拡張で共通）。0回はバックアップ・検証なし、1〜3回は指定回数を上限にバックアップと検証・修正を実行します。差分がなくなれば途中で終了します。単独起動版とVS Code拡張で共通です。
+入力欄の「検証ループ」は0〜3回を選択できます（初期値0回）。オフラインの間は0回に固定し、オンラインへ戻ると直前に選んでいた回数に戻ります。最後に選んだ回数は `_AIDIY/aidiy_code/aidiy_code_options.json` に保存し、次回の起動でも使います（モデルと同じく単独起動版と VS Code 拡張で共通）。0回はバックアップ・検証なし、1〜3回は指定回数を上限にバックアップと検証・修正を実行します。差分がなくなれば途中で終了します。単独起動版とVS Code拡張で共通です。
 
 単独起動版 `aidiy_code` とVS Code拡張は未接続中も文字入力で送信でき、自動的に `aidiy_hermes` を直接実行します（検証0回固定）。接続済みと未接続の選択モデルは別々に保存し、接続状態に合わせて表示と実行モデルを切り替えます。`aidiy_code --offline` で直接起動することもできます。詳しくは [単独起動版README](./aidiy_code/README.md) を参照してください。
 
@@ -22,11 +22,11 @@ Node.js 22.12 以降と npm が必要です。IDE群全体を使う場合は文�
 2. AiDiy ルートの `python _setup.py` で、**IDE群（Navigator / Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
 3. 単独画面は `aidiy_code` を実行します。拡張モードは VS Code でフォルダを開き、コマンドパレットから **AiDiy Code: チャットを開く**を実行します。
 
-セットアップは依存関係と Electron バイナリの事前導入、単独起動コマンドの作成と、VS Code CLIがある場合は VSIX を生成・配置します。必要版（`^1.106.0`）を満たさない場合や版数を読めない場合は警告して継続し、明示的な `--extensions-only` も実際のCLI結果に従います。CLI未導入では単独画面だけを準備します。`aidiy_code` のランチャーは `aidiy_hermes` と同じ `~/.local/bin` に配置します（Windows は `.cmd`）。このフォルダが PATH にない場合は追加してください。ランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。この作業コピーから配置した旧名 `aidiy_vscode` は解除します。手動で VSIX を配置する場合は、拡張機能画面の `…` → **VSIX からのインストール**で、`dist/aidiy-code-0.1.0.vsix` を選びます。解除と生成物削除は `python frontend_ide/host/_cleanup.py`、またはルートの `python _cleanup.py` から実行できます。
+セットアップは依存関係と Electron バイナリの事前導入、単独起動コマンドの作成と、VS Code CLIがある場合は VSIX を生成・配置します。必要版（`^1.106.0`）を満たさない場合や版数を読めない場合は警告して継続し、明示的な `--extensions-only` も実際のCLI結果に従います。CLI未導入では単独画面だけを準備します。Code / Live のランチャーは AiDiy 本体の `_AIDIY/aidiy_code/bin` / `_AIDIY/aidiy_live/bin` に配置します（Windows は `.cmd`）。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使います。ホーム・シェル設定・レジストリは変更しません。ランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。既存のホーム配下ランチャーは移行・削除しません。手動で VSIX を配置する場合は、拡張機能画面の `…` → **VSIX からのインストール**で、`dist/aidiy-code-0.1.0.vsix` を選びます。解除と生成物削除は `python frontend_ide/host/_cleanup.py`、またはルートの `python _cleanup.py` から実行できます。
 
 既定では右側のセカンダリサイドバーに表示されます。VS Code の配置を変更している場合は、ビューの移動操作で配置を調整できます。
 
-未接続時の実行と「対話 CLI」の Hermes は PATH と `~/.local/bin` から探索します。AiDiy の `_setup.py` が生成した Windows の `.cmd` に対応します。見つからない場合は、拡張の設定で **Cli Path** に `aidiy_hermes.cmd` または `cli_main.py` の絶対パスを指定してください。Python を直接指定する場合は **Python Path** を使用します（空欄では `cli_main.py` に隣接する `.venv`）。CLI 本体・Python・API 認証情報は VSIX に含めません。
+未接続時の実行と「対話 CLI」の Hermes は従来どおり PATH とユーザーの `~/.local/bin` から探索します。AiDiy の `_setup.py` が生成した Windows の `.cmd` に対応します。見つからない場合は、拡張の設定で **Cli Path** に `aidiy_hermes.cmd` または `cli_main.py` の絶対パスを指定してください。Python を直接指定する場合は **Python Path** を使用します（空欄では `cli_main.py` に隣接する `.venv`）。CLI 本体・Python・API 認証情報は VSIX に含めません。
 
 ## 操作
 
@@ -75,11 +75,11 @@ VS Code 拡張として試す場合は、次の手順を使います。
 オフラインのHermes候補も合成ファイルの `aidiy_hermes.models` を使い、`same` を追加します。合成ファイルがない場合は `same` だけを表示します。診断でファイルを生成・更新した後は、モデル選択を開き直すと再起動なしで反映されます。選択を確定するときも最新の候補を確認します。`claude_cli/same` / `codex_cli/same` / `copilot_cli/same` は各CLIのモデルを維持して呼び出します。
 - **接続状態**: 単独版はタイトル左側に `未接続` / `接続中` / `接続済み` を表示します。接続済みはモデル設定と入力・コード出力の初期化完了を示します。拡張・単独版とも、自動接続ONでは通信切断・接続失敗時も10秒ごとに再接続を試みます。未接続中はHermesで送信できます。接続復帰時のHermes実行は完了まで維持し、次の送信からAIコアを使います。単独版の `--offline` は自動接続OFFで起動します。この場合、ONへの切り替えは新しいオンライン会話を開始します。
 
-未接続時のコードAIは `aidiy_hermes` 固定です。モデルは診断の候補と `same` を使い、`~/.aidiy/aidiy_code_model_offline.json` に保存します。次回起動時もこの保存値を復元し、未保存なら `AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL`（候補外なら `same`）を使います。オンライン用の保存値は変更しません。表示形式は両方とも `NAME - MODEL` です。
+未接続時のコードAIは `aidiy_hermes` 固定です。モデルは診断の候補と `same` を使い、`_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存します。次回起動時もこの保存値を復元し、未保存なら `AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL`（候補外なら `same`）を使います。オンライン用の保存値は変更しません。表示形式は両方とも `NAME - MODEL` です。
 
 VS Codeで作業フォルダを開いていなくても、未接続用のモデルは選択・保存できます。送信には実行先のフォルダが必要です。「ファイル」→「フォルダーを開く」で作業対象を開くと、AIコアが未接続でも文字入力で送信が有効になります。
 
-画面で確定したコードAIとモデルは `~/.aidiy/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.1-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。旧設定の `openai_oauth` と `gpt-6.1-sol` は Hermes の組み合わせモデルへ移行し、`copilot-cli` 等の旧名も読み替えます。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
+画面で確定したコードAIとモデルは `_AIDIY/aidiy_code/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.1-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。旧設定の `openai_oauth` と `gpt-6.1-sol` は Hermes の組み合わせモデルへ移行し、`copilot-cli` 等の旧名も読み替えます。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
 
 接続先は Live と共通の解決処理で `127.0.0.1` と `_config/AiDiy_key.json` の `PORT_CORE`（未配置時8091）を使います。Core は拡張ホストまたは単独サーバーと同じ環境で起動してください。
 - **実行ログ**: stdout / stderr の実行状況を出力パネルで確認します。

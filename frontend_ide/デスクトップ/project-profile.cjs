@@ -6,6 +6,7 @@
 const {createHash}=require('node:crypto');
 const {realpathSync,statSync}=require('node:fs');
 const path=require('node:path');
+const {programDataDirectory}=require('../host/scripts/project-storage.cjs');
 
 // プロジェクト名ではなく実フォルダの完全パスで区別する。リンク・相対表記は同じ実体へ揃える。
 function projectIdentity(project,{platform=process.platform,realpath=realpathSync.native,stat=statSync}={}){
@@ -24,7 +25,7 @@ function projectIdentity(project,{platform=process.platform,realpath=realpathSyn
 }
 
 function projectProfile(appData,project,options){
- return path.join(appData,'aidiy_ide_vue','projects',projectIdentity(project,options).key);
+ return path.join(programDataDirectory(projectIdentity(project,options).path,'aidiy_ide'),'electron');
 }
 
 module.exports={projectIdentity,projectProfile};

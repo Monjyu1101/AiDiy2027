@@ -45,7 +45,7 @@ export class Slackパネル {
   constructor(private changed: (state: パネル状態) => void,
     private readConfig = 設定読込,
     private createBot: (config: Slack設定) => Bot = config => new SlackBot(config),
-    private settingsFile = パネル設定保存先,
+    private settingsFile = パネル設定保存先(),
     private validateCLI = (config: Slack設定) => { 起動解決(config.cli, config.python, config.folder); },
     private timeoutMs = 40_000,
     private readAPI = モデル情報取得) {}

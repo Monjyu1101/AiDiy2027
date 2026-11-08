@@ -44,6 +44,7 @@ onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
     <h3>Code / Live の下書きへ追加</h3>
     <p class="draft-source">{{ request.path }}{{ request.selection?'（選択範囲）':'' }}</p>
     <p>起動中の連携先の入力欄へ追加します。既存の下書きを残し、送信はその画面で行います。</p>
+    <details v-if="request.browserElementId" class="draft-element-preview" open><summary>選択した要素の連携内容</summary><p>表示文章に個人情報が残る場合があります。内容を確認してから追加してください。</p><pre>{{request.text}}</pre></details>
     <div class="draft-target-row">
       <label v-if="targets.length>1||(targets.length===1&&!selected)">連携先<select v-model="selected" :disabled="busy" aria-label="下書きの連携先" @change="error='' "><option disabled value="">連携先を選択してください</option><option v-for="item in targets" :key="item.id" :value="item.id">{{ item.label }}</option></select></label>
       <span v-else>連携先: {{ targets[0]?.label || '未選択' }}</span>
@@ -62,6 +63,7 @@ onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
   </ModalDialog>
 </template>
 <style scoped>
+.draft-element-preview{margin:12px 0}.draft-element-preview pre{max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;padding:8px;border:1px solid #375067}.draft-element-preview p{font-size:12px}
 .draft-target-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .draft-target-row label{display:flex;align-items:center;gap:8px;min-width:0;flex:1;flex-wrap:wrap}
 .draft-target-row select{min-width:0;max-width:100%;flex:1}

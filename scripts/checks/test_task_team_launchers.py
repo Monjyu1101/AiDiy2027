@@ -23,7 +23,7 @@ class Launchers(unittest.TestCase):
         for platform in ('win32', 'linux', 'darwin'):
             for kind in ('task', 'team'):
                 with self.subTest(platform=platform, kind=kind), tempfile.TemporaryDirectory() as home:
-                    with patch.object(Path, 'home', return_value=Path(home)), patch.object(launcher.sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='/usr/bin/node'), patch.object(launcher, 'ensure_launcher_path', return_value=True), patch.object(Path, 'chmod', autospec=True) as chmod:
+                    with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(home) / '_AIDIY' / name / 'bin'), patch.object(launcher.sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='/usr/bin/node'), patch.object(launcher, 'ensure_launcher_path', return_value=True), patch.object(Path, 'chmod', autospec=True) as chmod:
                         launcher.install_launcher(ROOT / 'frontend_ide' / ('aidiy_' + kind), kind)
                         path=launcher.launcher_path(kind)
                         self.assertIn('aidiy_' + kind, path.read_text())

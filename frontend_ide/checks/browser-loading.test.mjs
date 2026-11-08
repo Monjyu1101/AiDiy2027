@@ -16,7 +16,7 @@ assert.deepEqual(compiled.errors,[]);
 const module={exports:{}};
 vm.runInNewContext(transformSync(compiled.code,{format:'cjs'}).code,{module,exports:module.exports,require:()=>({...vue,resolveComponent:name=>name})});
 function label(page){
- const context={page,headerOnly:false,headerOffset:0,windowTitle:'Browser',standalone:false,headerWindowApi:undefined,capturing:false,handing:false,captureMessage:'',address:'',error:'',draftRequest:null,transition(){},capture(){},handoff(){},action(){},navigate(){}};
+ const context={page,analysisStatus:{status:'idle'},openingAnalysis:false,analysisContext:null,headerOnly:false,headerOffset:0,windowTitle:'Browser',standalone:false,headerWindowApi:undefined,capturing:false,handing:false,captureMessage:'',address:'',error:'',draftRequest:null,transition(){},capture(){},handoff(){},action(){},navigate(){}};
  const root=module.exports.render(context,[]);
  function find(v){if(v?.type==='p'&&v.props?.role==='status'&&String(v.props.class).includes('browser-page-title'))return v;for(const c of Array.isArray(v?.children)?v.children:[]){const result=find(c);if(result)return result;}}
  return find(root);

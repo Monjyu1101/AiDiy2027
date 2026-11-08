@@ -35,7 +35,7 @@ FRONTEND_AVATAR_DIR = THIS_DIR
 FRONTEND_AVATAR_BUILD_DIRS = ["dist", "dist-electron"]
 
 sys.path.insert(0, str(THIS_DIR.parent / "scripts"))
-from _setup_path import remove_launcher_path, launcher_owned_by
+from _setup_path import launcher_directory, remove_launcher_path, launcher_owned_by
 
 AUTO_MODE = False
 
@@ -177,7 +177,7 @@ def cleanup_common_python_caches(target_dir: Path, label: str) -> tuple[int, boo
 # ============================================================
 def remove_standalone_launcher() -> bool:
     """この作業コピーの Avatar ランチャーだけを解除する。"""
-    directory = Path.home() / '.local' / 'bin'
+    directory = launcher_directory('aidiy_avatar')
     # 現行の launch.mjs と、旧形式の _start.py 登録の両方を解除対象にする。
     scripts = [str(FRONTEND_AVATAR_DIR.resolve() / name) for name in ('launch.mjs', '_start.py')]
     try:

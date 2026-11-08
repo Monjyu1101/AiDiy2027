@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import * as analysisTools from '../src/components/ブラウザ/ブラウザ解析状態.js';
 import * as addressTools from '../src/components/ブラウザ/URL表示.js';
 import browser from '../デスクトップ/ブラウザ.cjs';
 const {displayBrowserURL,browserAddressTarget}=addressTools;
@@ -41,7 +42,7 @@ function fixture(){
  const module={exports:{}},snapshot=()=>({ok:true,url:raw,available:true,back:true,forward:true});
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,requestAnimationFrame:()=>1,cancelAnimationFrame:()=>{},ResizeObserver:class{observe(){}disconnect(){}},window:{aidiyWindow:{onBrowserChanged(fn){listener=fn;return()=>{listener=null;};},async browserAction(name,value){calls.push([name,value]);if(name==='navigate')raw=browser.browserURL(value);return snapshot();}}},
-  require:id=>id==='./URL表示.js'?addressTools:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
+  require:id=>id==='./ブラウザ解析状態.js'?analysisTools:id==='./URL表示.js'?addressTools:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
  });
  const state=module.exports.setup({},{expose(){}}),render=()=>module.exports.render({},[],{},vue.proxyRefs(state),{},{});
  for(const fn of mounted)fn();

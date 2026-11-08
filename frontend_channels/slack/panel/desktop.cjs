@@ -14,7 +14,8 @@ const { app, BrowserWindow, ipcMain, screen, Menu, dialog } = require('electron'
 const { fork, spawn } = require('node:child_process');
 const { join } = require('node:path');
 const { pathToFileURL } = require('node:url');
-const { writeFileSync } = require('node:fs');
+const { mkdirSync, writeFileSync } = require('node:fs');
+const { programDataDirectory } = require('../../../frontend_ide/host/scripts/project-storage.cjs');
 const size = require('../../../frontend_ide/host/scripts/window-size.cjs');
 const { 拡大表示 } = require('../../../frontend_ide/host/scripts/window-opening.cjs');
 const { attachNativeWindowMove } = require('../../../frontend_ide/デスクトップ/長押し窓移動.cjs');
@@ -24,7 +25,10 @@ const { 起動ロック } = require('../../../frontend_ide/host/scripts/single-i
 const root = join(__dirname, '..');
 const page = pathToFileURL(join(__dirname, 'index.html')).href;
 app.setName(process.platform === 'darwin' ? 'AiDiy Slack' : 'aidiy_slack');
-app.setPath('userData', join(app.getPath('appData'), 'aidiy_slack'));
+const userData = join(programDataDirectory(process.env.AIDIY_SLACK_PROJECT ?? '', 'aidiy_slack', join(root, '../..')), 'electron');
+mkdirSync(userData, { recursive: true, mode: 0o700 });
+app.setPath('userData', userData);
+app.setPath('sessionData', userData);
 if (process.platform === 'win32') app.setAppUserModelId('AiDiy.aidiy_slack');
 let window, worker, quitting = false, shutdownComplete = false, shutdown;
 // 接続中の終了だけ確認する（Slack / Discord 共通）。phase は worker から届く最新の接続状態。

@@ -49,8 +49,19 @@ _バックアップ除外フォルダ = (
 
 # _AIDIY の作業記録だけを除外する。同名のソースフォルダは対象に残す。
 _バックアップ除外フォルダ組 = {
+    ("_AIDIY", "aidiy_avatar"),
+    ("_AIDIY", "aidiy_browser"),
     ("_AIDIY", "aidiy_code"),
+    ("_AIDIY", "aidiy_console"),
+    ("_AIDIY", "aidiy_diag"),
+    ("_AIDIY", "aidiy_discord"),
+    ("_AIDIY", "aidiy_hermes"),
     ("_AIDIY", "aidiy_ide"),
+    ("_AIDIY", "aidiy_live"),
+    ("_AIDIY", "aidiy_navi"),
+    ("_AIDIY", "aidiy_slack"),
+    ("_AIDIY", "aidiy_task"),
+    ("_AIDIY", "aidiy_team"),
 }
 
 _バックアップ除外ファイル = (

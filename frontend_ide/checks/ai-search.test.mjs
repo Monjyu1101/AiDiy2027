@@ -123,13 +123,13 @@ test('AI検索履歴: 複数保存・再起動・別プロジェクト分離・�
   await assert.rejects(()=>service.history.remove('../outside'));
 });
 
-test('AI検索履歴: 旧版のtemp結果を依頼文と照合して移行',async t=>{
+test('AI検索履歴: 旧版のtemp結果は読込・自動移行しない',async t=>{
   const root=await fixture(t),options={state:()=>({active:true,startedAt:1}),runAgent:()=>new Promise(()=>{})};
   const old=createAISearch(root,options),job=await old.start('既存の認証検索');
   await writeFile(join(root,job.path),JSON.stringify(result(job)));old.close();
   const service=createAISearch(root,options);t.after(()=>service.close());
-  assert.equal((await service.history.list())[0].id,job.id);
-  await service.history.remove(job.id);service.close();
+  assert.deepEqual(await service.history.list(),[]);
+  await assert.rejects(()=>service.history.get(job.id));service.close();
   const restarted=createAISearch(root,options);t.after(()=>restarted.close());
   assert.deepEqual(await restarted.history.list(),[],'tempに元JSONが残っていても削除済み履歴は復活させない');
 });

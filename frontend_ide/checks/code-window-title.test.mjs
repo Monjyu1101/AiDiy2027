@@ -22,7 +22,7 @@ import macMenuModule from '../host/scripts/MacOS-Menu.cjs';
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
 async function desktopFixture({platform='win32',kind='ide',active=true,response=1,env={}}={}){
- const reserved=new Set();
+ const reserved=new Set();let sharedStarts=0;
  const handlers=new Map(),state={active,mode:'online',startedAt:10,project:{path:'/project'}},created=[],dialogs=[];
  class Window extends EventEmitter{
   constructor(options){super();created.push(this);this.options=options;this.title=options.title;this.bounds=options;this.webContents=new EventEmitter();this.webContents.mainFrame={url:''};this.webContents.setWindowOpenHandler=()=>{};this.webContents.executeJavaScript=async()=>{};this.messages=[];this.webContents.send=(...args)=>this.messages.push(args);}
@@ -47,7 +47,8 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){app.menu=value;}};
  const modules={
   electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
-  'node:path':{join:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
+  'node:path':{join:(...parts)=>parts.join('/'),resolve:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
+  './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program)=>`/project/_AIDIY/${program}`},
   './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},
   './デスクトップ/navigation-code-window.cjs':navigationCodeWindowModule,
   './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:()=>({}),windowMinimumSize:()=>({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},
@@ -56,12 +57,12 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   './デスクトップ/task-windows.cjs':taskWindowsModule,
   './デスクトップ/draft-router.cjs':routerModule,'./デスクトップ/desktop-session.cjs':{readDevelopmentState:async()=>structuredClone(state)},
   // タイトル・寿命の試験から実共有サーバーや画像保存を起動しない。
-  './デスクトップ/下書き共有.cjs':{createSharedDraftBridge:()=>assert.fail('タイトル試験ではプロセス間の下書き共有を起動しない')},
+  './デスクトップ/下書き共有.cjs':{createSharedDraftBridge:async()=>{sharedStarts++;return{close:async()=>{},viewerStatus:async()=>({ideRunning:false,viewerAvailable:false})};}},
   './デスクトップ/ブラウザ撮影.cjs':{saveBrowserCapture:()=>assert.fail('タイトル試験ではBrowser撮影を実行しない')},
   './デスクトップ/native-preview-actions.cjs':{createNativePreviewActions:()=>({invalidate(){}})},
   './デスクトップ/panel-windows.cjs':panelModule,'./デスクトップ/code-drag.cjs':codeDragModule,
   './デスクトップ/ブラウザ.cjs':browserModule,
-  './デスクトップ/ブラウザ解析連携.cjs':{createBrowserSourceSelection:()=>async()=>assert.fail('タイトル試験ではBrowser解析ソースの選択を実行しない')},
+  './デスクトップ/ブラウザ解析連携.cjs':{createBrowserAnalysisContext:()=>async()=>assert.fail('タイトル試験ではBrowser解析を開かない'),createBrowserSourceSelection:()=>async()=>assert.fail('タイトル試験ではBrowser解析ソースの選択を実行しない')},
   './デスクトップ/長押し窓移動.cjs':nativeMoveModule,
   './デスクトップ/最前面ピン.cjs':pinModule,
   './デスクトップ/VRパネル配置.cjs':placementModule,
@@ -72,7 +73,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const proc=new EventEmitter();Object.assign(proc,{platform,env:{AIDIY_DEVELOPMENT_URL:'http://127.0.0.1:1234/',AIDIY_DEVELOPMENT_KIND:kind,...env},cwd:()=>'/project'});
  const api=vm.runInNewContext(`(()=>{${source}\nreturn {createWindow,windows,draftRouter};})()`,{require:id=>{if(!(id in modules))throw Error(id);return modules[id];},process:proc,__dirname:'/fixture',console,setInterval:()=>({unref(){}}),clearInterval(){}});
  await tick();const owner=[...api.windows.values()][0];
- return{...api,app,proc,dialogs,owner,handlers,event:record=>({sender:record.window.webContents,senderFrame:record.window.webContents.mainFrame}),
+ return{...api,app,proc,dialogs,owner,handlers,sharedStarts:()=>sharedStarts,event:record=>({sender:record.window.webContents,senderFrame:record.window.webContents.mainFrame}),
   async code(){const window=await api.createWindow('code','http://127.0.0.1:5678/',undefined,owner,'online:10');const record=api.windows.get(window.webContents);api.draftRouter.register(record,{kind:'code',contextId:`context-${record.slot}`,projectPath:'/project',label:'Code'});return record;}};
 }
 
@@ -274,4 +275,9 @@ test('Navigator native Cruise title survives page updates and restores without c
   assert.equal((await other.handlers.get('development:navigation-cruise')(other.event(other.owner),true)).ok,false);
   assert.equal(other.owner.window.getTitle(),normal);other.owner.window.destroy();
  }
+});
+
+test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開始し、単独Codeは従来どおり遅延する',async()=>{
+ const ide=await desktopFixture({kind:'ide',active:false});assert.equal(ide.windows.size,1);assert.equal(ide.sharedStarts(),1);
+ const code=await desktopFixture({kind:'code'});assert.equal(code.sharedStarts(),0);
 });

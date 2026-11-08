@@ -58,7 +58,7 @@ def setup(choices=None, *, desktop=True):
     print_header('Diag セットアップ')
     print_info(f'作業ディレクトリ: {THIS_DIR}')
     print_info('対象: Node.js / Electron / Vue 3')
-    directory = Path.home() / '.local' / 'bin'
+    directory = _path_helper.launcher_directory('aidiy_diag')
     launcher = directory / ('aidiy_diag.cmd' if sys.platform == 'win32' else 'aidiy_diag')
     try:
         directory.mkdir(parents=True, exist_ok=True)

@@ -46,7 +46,7 @@ export class Discordパネル {
   constructor(private changed: (state: パネル状態) => void,
     private readConfig = 設定読込,
     private createBot: (config: Discord設定) => Bot = config => new DiscordBot(config),
-    private settingsFile = パネル設定保存先,
+    private settingsFile = パネル設定保存先(),
     private validateCLI = (config: Discord設定) => { 起動解決(config.cli, config.python, config.folder); },
     private timeoutMs = 40_000,
     private readCatalog = ライブ候補読込,

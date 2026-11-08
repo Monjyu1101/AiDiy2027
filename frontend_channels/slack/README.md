@@ -20,7 +20,7 @@ Electron のタイトルバーは「ー □ 📌 ×」で最小化・最大化�
 python frontend_channels/slack/_setup.py
 ```
 
-`npm ci --include=dev`（lockfile がない場合は `npm install --include=dev`）→ `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `~/.local/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。
+`npm ci --include=dev`（lockfile がない場合は `npm install --include=dev`）→ `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `_AIDIY/aidiy_slack/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。
 
 ## プロキシが必要なネットワーク
 
@@ -68,7 +68,7 @@ aidiy_slack
 
 Diag の Slack ボタン、ルート `_start.py` で Slack を Yes にした場合も同じパネルを開いて自動接続します。全体の終了後もパネルは継続し、停止はパネルの「×」か `_cleanup.py` で行います。パネルを重ねて起動すると既存の画面を表示します。
 
-モデルの選択は `~/.aidiy/aidiy_slack.json` の1ファイルに、コードの実行環境（`code_name`、現在は `aidiy_hermes` 固定。将来の別ハーネス用）とモデル（`code_model`）として保存します。このファイルがあれば起動時に自動接続します。旧形式の `aidiy_slack_code_model.json` は、初回の読込で1回だけ移して削除します。起動ログは配置先リポジトリの `temp/aidiy_slack/logs/`、起動完了通知は `temp/aidiy_slack/runtime/` に保存します。
+モデルの選択は `プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json` の1ファイルに、コードの実行環境（`code_name`、現在は `aidiy_hermes` 固定。将来の別ハーネス用）とモデル（`code_model`）として保存します。このファイルがあれば起動時に自動接続します。旧設定の読込や自動移行は行いません。起動ログは配置先リポジトリの `temp/aidiy_slack/logs/`、起動完了通知は `temp/aidiy_slack/runtime/` に保存します。
 
 画面を使わずに Bot だけを前面で動かす場合は、`frontend_channels/slack` で `npm run bot` を実行します（Ctrl+C で停止）。
 
@@ -127,3 +127,6 @@ Core 再起動中のモデル取得は、認証ファイルの一時欠落や 40
 先頭の1文字が `!` または `！` の投稿はコマンドです。`!help` / `!status` / `!stop` / `!new` / `!chat 本文` が使え、旧 `!aidiy new` 形式は未登録コマンドとして help を返します。Bot メンションは通常チャットの宛先として扱い、操作コマンドは実行しません。空の `!` や未登録のコマンドには help を返し、AI へ転送しません。先頭に空白がある場合や文中の `!` は通常の会話です。記号の直後の空白は許可します。
 
 Bot インスタンス起動後の最初の確定返信にだけ使い方を付けます（スレッドごとではありません）。「考えています…」は仮表示なので対象外です。最初が help なら重複させず、送信に失敗した場合は次の返信で再試行します。通信の回復だけではリセットせず、Bot を作り直す起動でリセットします。
+
+起動プロジェクトが空文字の場合は AiDiy の配置先ルートを使います。Electron の設定・セッションも `プロジェクト/_AIDIY/aidiy_slack/electron/` に保存し、ユーザーホームを使いません。
+ブラウザ版のプロファイルは `プロジェクト/_AIDIY/aidiy_slack/browser-profile/` に保存します。

@@ -148,9 +148,9 @@ Code / Live は全体起動の個別選択のほか、VS Code のコマンドパ
 
 `frontend_channels/` は外部接続チャンネル群の親ディレクトリです。`discord/` と `slack/` は同じ階層の独立モジュールで、将来のチャンネルもここへ追加します。構成と共通方針は [Channels README](./frontend_channels/README.md) を参照してください。
 
-`frontend_channels/discord` は `_config/AiDiy_key.json` の `discord_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`~/.aidiy/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
+`frontend_channels/discord` は `_config/AiDiy_key.json` の `discord_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`_AIDIY/aidiy_discord/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
 
-`frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `~/.aidiy/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
+`frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `_AIDIY/aidiy_slack/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
 
 Navigator はセットアップ後に `aidiy_navi` で単独起動するか、IDE の「＋ Navigator」から開きます。全体 `_start.py` の自動起動対象ではありません。使い方は [frontend_ide/README.md](./frontend_ide/README.md) を参照してください。
 

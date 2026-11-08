@@ -83,7 +83,7 @@ def 初期モデル設定生成(app_conf) -> dict:
         "DECISION_GEMINI_MODEL": app_conf.json.get("DECISION_GEMINI_MODEL", "auto"),
         "DECISION_FREEAI_MODEL": app_conf.json.get("DECISION_FREEAI_MODEL", "auto"),
         # CodeAI設定
-        "CODE_AI1_NAME": app_conf.json.get("CODE_AI1_NAME", "codex_cli"),
+        "CODE_AI1_NAME": app_conf.json.get("CODE_AI1_NAME", "aidiy_hermes"),
         "CODE_AI1_MODEL": app_conf.json.get("CODE_AI1_MODEL", "auto"),
         "CODE_AI2_NAME": app_conf.json.get("CODE_AI2_NAME", "copilot_cli"),
         "CODE_AI2_MODEL": app_conf.json.get("CODE_AI2_MODEL", "auto"),

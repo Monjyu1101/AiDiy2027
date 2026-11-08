@@ -23,6 +23,7 @@ import * as fileActions from '../src/components/ファイル閲覧/ファイル�
 import * as explorerDrag from '../src/components/ファイル閲覧/エクスプローラードラッグ.js';
 import * as explorerActions from '../src/components/ファイル閲覧/エクスプローラー操作.js';
 import * as browserLaunch from '../src/components/ブラウザ/起動.js';
+import * as displayUrls from '../viewer/表示URL.mjs';
 import * as mediaTypes from '../viewer/media-types.mjs';
 import * as routeExpansion from '../src/components/ファイル閲覧/軌跡パネル展開.js';
 import * as panelWindows from '../src/components/ファイル閲覧/パネル別窓.js';
@@ -104,6 +105,7 @@ async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', act
     '../ファイル閲覧/エクスプローラー操作.js': explorerActions, './エクスプローラー操作.js': explorerActions,
     '../ブラウザ/起動.js': browserLaunch,
     '../../../viewer/media-types.mjs': mediaTypes,
+    '../../../viewer/表示URL.mjs': displayUrls,
     '../ファイル閲覧/閲覧待機.js':viewerIdle,
     '../ファイル閲覧/軌跡パネル展開.js':routeExpansion,'../ファイル閲覧/パネル別窓.js':panelWindowFactory?{...panelWindows,createPanelWindow:panelWindowFactory}:panelWindows,
     './ファイル日時.js': fileDates,

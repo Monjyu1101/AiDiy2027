@@ -2,7 +2,7 @@
 
 Node.js 標準モジュールの診断・起動管理サーバーと Electron / Web 表示です。AIコアや DB が未設定でも診断画面を起動できます。起動管理は明示操作時だけ Python の既存起動基盤を使用します。
 
-- `起動/desktop.mjs` / `起動/electron-main.cjs`: 既存共有セットアップで用意した Electron を通常表示に使います。ブラウザ・Codespaces は Node.js のみです。
+- `起動/desktop.mjs` / `起動/electron-main.cjs`: 既存共有セットアップで用意した Electron を通常表示に使います。ブラウザ・Codespaces は Node.js のみです。Electron のプロファイルは配置元 `_AIDIY/aidiy_diag/electron/` に保存し、ユーザーホーム・旧保存先へのフォールバックは行いません。
 - `diag_main.mjs`: ループバック HTTP、起動単位の認証、ブラウザ起動。
 - `起動/サービス管理.mjs` / `ui/src/components/起動/`: 起動対象の保存、機能別コンソール、順次再起動と停止。起動順・既定値はルートと共通の `scripts/起動対象.json`、各 `_start.py` の Diag 経路は `scripts/_diag_start.py` が担当します。
 - `モデル情報/models_info.mjs`: プロバイダ別モデル情報とchat / live / code / prediction / decisionsの合成JSON。取得モデルから `models` を生成し、API の詳細情報も保持。PredictionのAPI方式はDecisionsと同じ認証済み低コスト候補を使い、OpenAI API区分を `openai_decisions` から `openai_chat` に置き換えます。予測JSONに `openai_decisions` は含めません。CLI方式は合成Code候補から `auto` / `same` と未対応のHermes外部CLI経路を除いて追加します。Diagは候補を書き出すだけで、予測処理は `backend_tools` の内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）が担います。Grok / backend_local の固定候補、Copilot／OpenCodeの候補補完、OAuth取得失敗時の未検証候補を管理。Antigravity候補は `モデル情報/antigravity_models.mjs` が `agy models` から取得します。本体・クライアントは合成JSONを読みます。Chat / Liveの合成候補が空の場合は共通設定から未検証候補を補います。

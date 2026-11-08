@@ -34,14 +34,19 @@ export async function toolsTarget(project) {
   return 'http://127.0.0.1:8095/aidiy_code_agents/';
 }
 
-export async function runSearchAgent({project,prompt,signal}) {
+export async function runSearchAgent({project,prompt,signal,onState=()=>{}}) {
   const target=await toolsTarget(project);
   const post=async(method,body,timeout)=>{
     const response=await fetch(target+method,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.any([signal,AbortSignal.timeout(timeout)])});
     if(!response.ok)throw Error(`エージェント接続エラー（HTTP ${response.status}）`);
-    const result=await response.json();if(result.error||result.ok===false)throw Error('エージェントの実行を確認できませんでした。');return result;
+    const result=await response.json();if(result.error||result.ok===false||result.available===false||(result.status==='NG'&&result.execution_status!=='OK')||result.execution_status==='NOT_STARTED')throw Error('エージェントの実行を確認できませんでした。');
+    if(result.status==='NG'&&result.execution_status==='OK')onState('history_warning');
+    return result;
   };
+  onState('configuring');
   await post('config',{project_path:project},10_000);
+  // 実プロセスのPID/heartbeat APIはないため「実行中」ではなく要求の応答待ちを通知する。
+  onState('requested');
   return post('run',{project_path:project,prompt,resume:false,ai_name:'auto',ai_model:'auto',code_plan:'off',code_verify:'off',self_check_loop:0,timeout_sec:300},310_000);
 }
 

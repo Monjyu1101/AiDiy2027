@@ -22,7 +22,8 @@ test('起動したフォルダを採用し、明示指定と不正な引数を�
   assert.equal(projectFolder([], undefined, codeRoot), projectFolder(['web'], undefined, root));
   assert.equal(projectFolder([], codeRoot, root), projectFolder([], undefined, codeRoot));
   assert.throws(() => projectFolder(['web'], root), /1つ/);
-  assert.throws(() => projectFolder([], '  '), /値/);
+  assert.equal(projectFolder([], ''), new URL('../../../', import.meta.url).pathname.replace(/\/$/, ''));
+  assert.equal(projectFolder([''], undefined), projectFolder([], ''));
   assert.throws(() => projectFolder(['not-existing-aidiy-folder'], undefined, root), /ありません/);
 });
 

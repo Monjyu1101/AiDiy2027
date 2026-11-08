@@ -37,4 +37,16 @@ function createBrowserSourceSelection({trustedEvent,readState,sessionKey,connect
   finally{pending.delete(source);}
  };
 }
-module.exports={createBrowserSourceSelection};
+// 未連携Browserには起動案内だけを返す。検出したIDEを所有者・送信先にしない。
+function createBrowserAnalysisContext({trustedEvent,context,discover,isQuitting=()=>false}){
+ return async function analysisContext(event){
+  const record=trustedEvent(event),initial=record?.kind==='browser'?context(record):null;
+  if(!initial||isQuitting())return{ok:false,error:'解析対象を取得できません。'};
+  if(initial.canSelectSource)return{ok:true,context:initial};
+  let status={};try{status=await discover(record);}catch{/* 検出失敗は解析を妨げず、起動中とは表示しない。 */}
+  const latest=context(record);
+  if(isQuitting()||trustedEvent(event)!==record||!latest||latest.url!==initial.url||latest.projectPath!==initial.projectPath||latest.canSelectSource!==initial.canSelectSource)return{ok:false,error:'Browserの表示ページや利用状態が変わりました。もう一度開いてください。'};
+  return{ok:true,context:{...latest,ideRunning:status.ideRunning===true,viewerAvailable:status.viewerAvailable===true}};
+ };
+}
+module.exports={createBrowserSourceSelection,createBrowserAnalysisContext};

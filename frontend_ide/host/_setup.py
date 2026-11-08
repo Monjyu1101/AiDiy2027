@@ -42,7 +42,7 @@ FRONTEND_COMMAND = "npm"
 sys.path.insert(0, str(THIS_DIR.parent.parent / "scripts"))
 from _setup_electron import setup_dependencies
 from _runtime_requirements import check_project_node_runtime, check_vscode_runtime
-from _setup_path import ensure_launcher_path, windows_launcher_command, launcher_owner_comment
+from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment
 
 sys.path.insert(0, str(THIS_DIR / "scripts"))
 from vscode_extensions import uninstall_aidiy_extensions
@@ -270,15 +270,15 @@ def get_installed_extensions(vscode_cli: str, show_versions: bool = False) -> se
 
 def install_standalone_launcher(*, register_path: bool = True) -> bool:
     """aidiy_code / aidiy_live の単独起動コマンドを配置する。"""
-    launcher_dir = Path.home() / ".local" / "bin"
     scripts = {name: FRONTEND_VSCODE_DIR / name / "launch.mjs" for name in ("aidiy_code", "aidiy_live")}
     for script_path in scripts.values():
         if not script_path.is_file():
             print_error(f"起動スクリプトが見つかりません: {script_path}")
             return False
     try:
-        launcher_dir.mkdir(parents=True, exist_ok=True)
         for name, script_path in scripts.items():
+            launcher_dir = launcher_directory(name)
+            launcher_dir.mkdir(parents=True, exist_ok=True)
             launcher_path = launcher_dir / (f"{name}.cmd" if sys.platform == "win32" else name)
             if sys.platform == "win32":
                 content = ("@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
@@ -291,17 +291,12 @@ def install_standalone_launcher(*, register_path: bool = True) -> bool:
             if sys.platform != "win32":
                 launcher_path.chmod(0o755)
             print_success(f"{launcher_path.name} を登録しました: {launcher_path}")
-        # この配置先から作った旧名だけを解除する。他の作業コピーのランチャーは残す。
-        old_script = FRONTEND_VSCODE_DIR / "scripts" / "launch-standalone.mjs"
-        for name in ("aidiy_vscode.cmd", "aidiy_vscode"):
-            legacy = launcher_dir / name
-            if legacy.is_file() and str(old_script) in legacy.read_text(encoding="utf-8"):
-                legacy.unlink()
-                print_info(f"旧コマンドを解除しました: {legacy}")
+            if register_path and not ensure_launcher_path(launcher_dir):
+                return False
     except OSError as exc:
         print_error(f"aidiy_code / aidiy_live を登録できません: {launcher_dir} ({exc})")
         return False
-    return ensure_launcher_path(launcher_dir) if register_path else True
+    return True
 
 
 def stage_extension_package(source: Path, destination: Path, root: Path) -> None:

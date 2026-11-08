@@ -6,7 +6,6 @@
 import {spawn,execFile} from 'node:child_process';
 import {stat,realpath,readdir,mkdir,open,readFile} from 'node:fs/promises';
 import {join,dirname,isAbsolute,resolve} from 'node:path';
-import {homedir} from 'node:os';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
 import {readConfig,configured} from '../runtime/model_probe.mjs';
@@ -77,7 +76,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
   try{const path=await realpath(value);if(!(await stat(path)).isDirectory())throw Error();return path;}catch{throw fail('フォルダが見つからないか、アクセスできません。');}
  }
  async function folders(value){
-  const path=await folder(value||homedir());
+  const path=await folder(value||root);
   try{return {フォルダ:path,親:dirname(path),子フォルダ:(await readdir(path,{withFileTypes:true})).filter(item=>item.isDirectory()).map(item=>({名前:item.name,パス:join(path,item.name)})).sort((a,b)=>a.名前.localeCompare(b.名前,'ja'))};}
   catch{throw fail('このフォルダの一覧を取得できません。');}
  }

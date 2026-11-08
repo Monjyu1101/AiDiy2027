@@ -10,9 +10,10 @@ import StatusBar from '../共通表示/状態バー.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import BrowserAnalysisDialog from '../../dialog/ブラウザ解析ダイアログ.vue';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
+import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
-let stop=()=>{},stopFrame=()=>{},stopDraft=()=>{},stopAnalysis=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisLayer=false;
+let stop=()=>{},stopFrame=()=>{},stopDraft=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisLayer=false,analysisNavigation=0;
 const headerOffset=ref(0),windowTitle=ref('');
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
@@ -20,37 +21,47 @@ const headerWindowApi=props.headerOnly?{
  togglePin:()=>window.aidiyWindow.browserAction('header-toggle-pin'),
  onPinChanged:callback=>window.aidiyWindow.onBrowserChanged(value=>callback({pinned:!!value.headerPinned,locked:false})),
 }:undefined;
-const draftRequest=ref(null),handing=ref(false),analysisContext=ref(null),openingAnalysis=ref(false);
+const draftRequest=ref(null),handing=ref(false),analysisContext=ref(null),openingAnalysis=ref(false),analysisStatus=ref({status:'idle'});
+const analysisMonitor=createBrowserAnalysisStatus({
+ read:async(url,signal)=>{const response=await fetch('/api/browser-analysis?'+new URLSearchParams({url,status:'1'}),{cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(12000)])});const value=await response.json();if(!response.ok)throw Error(value.error||'解析状況を確認できません。');return value;},
+ changed:value=>{if(!disposed)analysisStatus.value=value;},
+});
+function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.available===true&&visible&&!analysisContext.value,page.value.session||'');}
 async function openAnalysis(){
  if(props.headerOnly){await action('open-analysis');return;}
  if(openingAnalysis.value||analysisContext.value||draftRequest.value||handing.value)return;
- openingAnalysis.value=true;
+ openingAnalysis.value=true;const navigation=analysisNavigation;
  try{
   const result=await window.aidiyWindow.browserAction('analysis-context');
-  if(disposed)return;if(!result?.ok||!result.context)throw Error(result?.error||'解析対象を取得できません。');
+  if(disposed||navigation!==analysisNavigation)return;if(!result?.ok||!result.context)throw Error(result?.error||'解析対象を取得できません。');
   analysisLayer=true;
   const hidden=await window.aidiyWindow.browserAction('analysis-dialog',true);
   if(disposed){restoreAnalysis();return;}if(!hidden?.ok)throw Error(hidden?.error||'解析画面を開けません。');
-  analysisContext.value=result.context;error.value='';
+  if(navigation!==analysisNavigation||page.value.url&&browserAnalysisPageKey(page.value.url)!==browserAnalysisPageKey(result.context.url)){restoreAnalysis();return;}
+  analysisContext.value=result.context;monitorAnalysis();error.value='';
  }catch(e){if(analysisLayer)restoreAnalysis();if(!disposed)error.value=e.message;}finally{if(!disposed)openingAnalysis.value=false;}
 }
 function restoreAnalysis(){analysisLayer=false;void window.aidiyWindow.browserAction('analysis-dialog',false).catch(()=>{});}
-function closeAnalysis(){analysisContext.value=null;restoreAnalysis();}
+function closeAnalysis(){analysisContext.value=null;restoreAnalysis();monitorAnalysis();}
 
-async function handoff(){
+async function handoff(element=false){
  if(props.headerOnly){await action('open-draft');return;}
  if(handing.value||openingAnalysis.value||analysisContext.value)return;handing.value=true;
- try{const result=await window.aidiyWindow.browserAction('draft');if(!result.ok)throw Error(result.error);await window.aidiyWindow.browserAction('draft-dialog',true);draftRequest.value=result.request;}
+ try{const result=await window.aidiyWindow.browserAction(element===true?'element-draft':'draft');if(!result.ok)throw Error(result.error);await window.aidiyWindow.browserAction('draft-dialog',true);draftRequest.value=result.request;}
  catch(e){error.value=e.message;}finally{handing.value=false;}
 }
-function closeDraft(){draftRequest.value=null;void window.aidiyWindow.browserAction('draft-dialog',false);}
+function closeDraft(){if(draftRequest.value?.browserElementId)void window.aidiyWindow.browserAction('element-stop');draftRequest.value=null;void window.aidiyWindow.browserAction('draft-dialog',false);}
 const loadDraftTargets=()=>window.aidiyWindow.draftTargets();
-const insertDraft=request=>window.aidiyWindow.insertDraft(request);
+const insertDraft=request=>window.aidiyWindow.insertDraft({...request,...(draftRequest.value?.browserElementId?{browserElementId:draftRequest.value.browserElementId}:{})});
 function update(value){
  if(disposed||!value)return;
  // F11の通知より遅く届いた操作応答で、通常表示を古い全画面状態へ戻さない。
  if(Number.isFinite(value.stateRevision)){if(value.stateRevision<stateRevision)return;stateRevision=value.stateRevision;}
+ if(browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
+ const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
  page.value=value;if(value.capturePath)captureMessage.value=value.capturePath;if(!editing)address.value=displayBrowserURL(value.url);
+ if(analysisContext.value&&browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(analysisContext.value.url))closeAnalysis();
+ monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
 async function action(name,value){
  const result=await window.aidiyWindow.browserAction(name,value).catch(e=>({ok:false,error:e.message}));
@@ -73,16 +84,16 @@ onMounted(()=>{
  void Promise.resolve().then(()=>window.aidiyWindow?.title?.()).then(title=>{if(!disposed&&typeof title==='string'&&title.trim())windowTitle.value=title;}).catch(()=>{});
  stop=window.aidiyWindow.onBrowserChanged(update);void action('state');
  if(props.headerOnly){document.documentElement.classList.add('browser-header-document');stopFrame=window.aidiyWindow.onBrowserHeaderFrame?.(value=>{headerOffset.value=value;})||(()=>{});}
- else {stopDraft=window.aidiyWindow.onBrowserOpenDraft?.(()=>{void handoff();})||(()=>{});stopAnalysis=window.aidiyWindow.onBrowserOpenAnalysis?.(()=>{void openAnalysis();})||(()=>{});}
+ else {stopElement=window.aidiyWindow.onBrowserElementSelected?.(()=>{void handoff(true);})||(()=>{});stopDraft=window.aidiyWindow.onBrowserOpenDraft?.(()=>{void handoff();})||(()=>{});stopAnalysis=window.aidiyWindow.onBrowserOpenAnalysis?.(()=>{void openAnalysis();})||(()=>{});}
  observer=new ResizeObserver(resize);if(surface.value)observer.observe(surface.value);if(chrome.value)observer.observe(chrome.value);resize();
 });
-onBeforeUnmount(()=>{disposed=true;stop();stopFrame();stopDraft();stopAnalysis();if(analysisLayer)restoreAnalysis();if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
+onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopDraft();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(analysisLayer)restoreAnalysis();if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
 </script>
 <template>
  <main class="development-app browser-panel desktop-window" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
   <div ref="chrome" class="browser-chrome panel-window-title" data-aidiy-window-move-handle @transitionrun="transition">
   <StatusBar :title="windowTitle||(standalone?'AiDiy Browser':'AiDiy IDE / Browser')" :connected="page.available===true" :status="page.available===false?'tools未接続':page.loading?'読み込み中':'ブラウザ'" desktop :clock-pulse="false" :window-api="headerWindowApi" :pin-title="headerOnly?(page.headerPinned?'ヘッダーの常時表示を解除':'ヘッダーを常時表示'):undefined">
-   <template #connection-tools><button type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available" title="画面の概要と関連ソースをAIで解析" @click="openAnalysis">{{openingAnalysis?'準備中…':'AI解析'}}</button><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷 撮影'}}</button><button type="button" class="browser-handoff" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">Code / Liveへ</button><span v-if="captureMessage" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></template>
+   <template #connection-tools><button type="button" class="browser-element-link" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素連携中（Esc）':'要素連携'}}</button><button type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{openingAnalysis?'準備中…':analysisStatus.status==='waiting'?'AI解析中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷 撮影'}}</button><button type="button" class="browser-handoff" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">Code / Liveへ</button><span v-if="captureMessage" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></template>
    <template #window-tools>
     <span class="browser-window-sizes">
      <button type="button" title="Web表示領域を1920×945にしてパネルを拡大（画面外へはみ出しても縮小しません）" @click="action('size','fhd')">FHD</button>
@@ -110,7 +121,8 @@ onBeforeUnmount(()=>{disposed=true;stop();stopFrame();stopDraft();stopAnalysis()
 <style scoped>
 .browser-panel{container:browser-panel / inline-size;height:100vh;display:flex;flex-direction:column;background:#000;color:#dce6f4}
 .browser-chrome{flex:none;background:#000;z-index:1}
-.browser-analysis,.browser-capture,.browser-handoff{margin-left:7px;padding:0 6px;height:24px;font-size:11px;white-space:nowrap;-webkit-app-region:no-drag}
+.browser-element-link,.browser-analysis,.browser-capture,.browser-handoff{margin-left:7px;padding:0 6px;height:24px;font-size:11px;white-space:nowrap;-webkit-app-region:no-drag}
+.browser-element-link[aria-pressed="true"]{color:#80eaff;border-color:#5ed9ff;background:#123f52}
 .browser-capture-status{margin-left:5px;white-space:nowrap;font-size:10px;color:#9edfff}
 .development-app.browser-panel.browser-fullscreen{border:0;position:relative}
 .browser-fullscreen:not(.browser-header-only) .browser-chrome{display:none}

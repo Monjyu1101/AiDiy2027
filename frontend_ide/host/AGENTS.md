@@ -66,7 +66,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `src/runner.ts` | 対話CLI・Discord・Slack用のCLI解決と実行 |
 | `src/protocol.ts` | AIコード互換 packet と開始・進捗・終了・回答の変換 |
 | `src/stream-control.ts` | STX / ETX / CAN 制御コードの判定と表示用除去 |
-| `src/model-preferences.ts` | Code / Live の最終手動モデルを `~/.aidiy/aidiy_*_model.json` へ読込・保存（Live bundle にも内包） |
+| `src/model-preferences.ts` | Code / Live の最終手動モデルを `_AIDIY/aidiy_<pg>/aidiy_<pg>_model.json` へ読込・保存（Live bundle にも内包） |
 | `src/vscode-html.ts` | Webview に frontend_ide の Vue 画面（`dist/development`）を読み込む HTML |
 | `aidiy_code/src/server.ts` | IDE / 単独起動の Vue 画面が使う localhost HTTP / SSE の API サーバー（画面は返さない） |
 | `media/` | 拡張アイコンと、Vue 画面へ同梱する送信・停止ボタン画像 |
@@ -99,9 +99,9 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 - Code は input／1、Live は input／0／audio のソケットを使う。
 - Code のコードAIとモデルはAIコアのモデル情報APIから取得し、接続中のセッションへ反映する。
 - Code は通信切断時に約10秒間隔で再接続する。明示的な切断・破棄は再試行を止める。
-- Code の会話履歴は作業フォルダ別に管理し、AIコアのセッションIDで再開する。保存先はプロジェクトの `_AIDIY/aidiy_code/histories/<会話ID>.json`（`src/conversation-store.ts`）で、拡張・単独起動版・開発スペースが同じ形式で共用する。応答の途中経過ごとに書かないよう0.5秒まとめて書き、終了時に書き出す。拡張の旧 `workspaceState` 履歴は開いたフォルダへ移し、テストは一時フォルダへ書く（作業フォルダの `_AIDIY` に書かない）。旧Hermesの表示履歴は保持するが、CLIセッションIDをコアへ渡さない。
+- Code の会話履歴は作業フォルダ別に管理し、AIコアのセッションIDで再開する。保存先はプロジェクトの `_AIDIY/aidiy_code/histories/<会話ID>.json`（`src/conversation-store.ts`）で、拡張・単独起動版・開発スペースが同じ形式で共用する。応答の途中経過ごとに書かないよう0.5秒まとめて書き、終了時に書き出す。旧 `workspaceState` 履歴は読み込まず、選択中の会話IDも同じプロジェクトに保存する。テストは一時フォルダへ書く（作業フォルダの `_AIDIY` に書かない）。旧Hermesの表示履歴は保持するが、CLIセッションIDをコアへ渡さない。
 - 未接続時の手動送信は `aidiy_hermes` を直接実行し、検証ループは0回に固定する。オンラインと未接続のセッション・モデルは分けて保持する。
-- 最終手動モデルはオンライン用 `~/.aidiy/aidiy_code_model.json`、未接続用 `~/.aidiy/aidiy_code_model_offline.json` に保存し、拡張・単独画面で共用する。
+- 最終手動モデルはオンライン用 `_AIDIY/aidiy_code/aidiy_code_model.json`、未接続用 `_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存し、拡張・単独画面で共用する。
 - `src/runner.ts` と `src/protocol.ts` は引き続き Discord・Slack の直接CLI実行と対話CLIを支える。
 
 ## セキュリティ境界

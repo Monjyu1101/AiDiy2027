@@ -9,10 +9,20 @@ const {relative,isAbsolute,sep,resolve,basename}=require('node:path');
 const {previewFile}=require('./native-preview-actions.cjs');
 const {createBrowserSizing}=require('./ブラウザ表示領域.cjs');
 const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
+const {createBrowserElementLink}=require('./ブラウザ要素連携.cjs');
+// 単独Browserの初期表示だけを選ぶ。検索・ホームや明示されたURLは変更しない。
+async function browserStartupURL(request=fetch){
+ const target='http://127.0.0.1:8090/';
+ try{
+  const response=await request(target,{method:'HEAD',cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(1500)});
+  if(response.ok||(response.status>=300&&response.status<400))return target;
+ }catch{}
+ return HOME;
+}
 function browserFileURL(root,path){return pathToFileURL(previewFile(root,path).full).href;}
-// Browser で開けるのは HTML と音声・動画。
+// 直接開くのはHTMLと音声・動画。ページ関連ソースは確認した表示URLが必要。
 async function browserOpenable(path,displayUrl=''){
- if(displayUrl!=='')return /\.(html?|vue)$/i.test(path)&&!!await browserDisplayURL(displayUrl);
+ if(displayUrl!==''){const {isPageSource}=await import('../viewer/表示URL.mjs');return isPageSource(path)&&!!await browserDisplayURL(displayUrl);}
  const {MEDIA_PATTERN}=await import('../viewer/media-types.mjs');
  return /\.html?$/i.test(path)||MEDIA_PATTERN.test(path);
 }
@@ -27,7 +37,8 @@ async function browserDisplayURL(value){
 async function browserFileTarget(root,path,displayUrl=''){
  const fileURL=browserFileURL(root,path);
  if(displayUrl!==''){
-  if(!/\.(html?|vue)$/i.test(path))throw Error('表示URLはHTML / Vueファイルで利用できます。');
+  const {isPageSource}=await import('../viewer/表示URL.mjs');
+  if(!isPageSource(path))throw Error('表示URLはページ関連ソースで利用できます。');
   return browserDisplayURL(displayUrl);
  }
  const [{registeredHTMLURL,publicMediaURL},{MEDIA_PATTERN}]=await Promise.all([import('../viewer/登録HTMLルート.mjs'),import('../viewer/media-types.mjs')]);
@@ -67,9 +78,10 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   const contents=view.webContents,entry={view,error:'',rect:null,run:0,available,pendingTarget:available?null:target};entries.set(record,entry);
   record.window.contentView.addChildView(view);view.setVisible(false);
   let stateRevision=0;
-  const snapshot=()=>({stateRevision:++stateRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'toolsとの接続が切れています。再接続後に操作できます。'});
+  const snapshot=()=>({stateRevision:++stateRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'toolsとの接続が切れています。再接続後に操作できます。'});
   const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
+  entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
   const sizing=createBrowserSizing({window:record.window,view,screen});entry.sizing=sizing;
   const toggleFullscreen=()=>sizing.toggleFullscreen();
   entry.toggleFullscreen=toggleFullscreen;
@@ -95,6 +107,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    entry.layout?.();notify();
   }
   function fullscreenKey(event,key){
+   entry.elementLink.key(event,key);
    // ホスト側はVR解除の購読が先。同じF11で解除済みでも、消費した入力は再処理しない。
    if(event.defaultPrevented||key.type!=='keyDown'||key.key!=='F11'||key.control||key.alt||key.shift||key.meta)return;
    // 専用ヘッダーにはIDEのキー購読がないため、同じVR解除をmainへ委ねる。
@@ -106,6 +119,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   for(const page of [hostContents,contents])page.on('before-input-event',fullscreenKey);
   entry.navigate=async value=>{
    const url=browserURL(value);if(!entry.available||!allowed(url))throw Error('このURLはブラウザパネルでは開けません。');
+   void entry.elementLink.stop();
    const run=++entry.run;entry.error='';
    // 読み込み完了を待たず窓を表示する。失敗は同じパネルの操作欄へ通知する。
    void contents.loadURL(url).catch(error=>{if(run===entry.run&&!contents.isDestroyed()&&error.code!=='ERR_ABORTED'){entry.error='ページを読み込めませんでした。URLや接続を確認して再読み込みしてください。';notify();}});
@@ -122,7 +136,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   }
   entry.layout=layout;
   record.window.on('enter-full-screen',fullscreenChanged);record.window.on('leave-full-screen',fullscreenChanged);
-  record.window.once('closed',()=>{sizing.dispose();clearInterval(pointerTimer);entry.header.close();for(const page of [hostContents,contents])page.removeListener('before-input-event',fullscreenKey);entries.delete(record);if(!contents.isDestroyed())contents.close({waitForBeforeUnload:false});});
+  record.window.once('closed',()=>{entry.elementLink.dispose();sizing.dispose();clearInterval(pointerTimer);entry.header.close();for(const page of [hostContents,contents])page.removeListener('before-input-event',fullscreenKey);entries.delete(record);if(!contents.isDestroyed())contents.close({waitForBeforeUnload:false});});
   if(available)void entry.navigate(target).catch(error=>{entry.error=error.message;notify();});
   return contents;
  }
@@ -131,7 +145,11 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   if(!entry)return{ok:false,error:'ブラウザパネルから操作してください。'};
   const contents=entry.view.webContents;
   try{
-   if(name==='navigate')await entry.navigate(value);
+   if(['back','forward','reload','stop','open-analysis','open-draft','capture'].includes(name))await entry.elementLink.stop();
+   if(name==='element-toggle'){if(entry.dialogOpen)throw Error('ダイアログを閉じてから要素連携を開始してください。');entry.error='';await entry.elementLink.start();}
+   else if(name==='element-stop')await entry.elementLink.stop();
+   else if(name==='element-draft')return{ok:true,request:entry.elementLink.request(projectRoot,{session:record.browserSession,tabId:record.browserTabId},value)};
+   else if(name==='navigate')await entry.navigate(value);
    else if(name==='home')await entry.navigate(HOME);
    else if(name==='back'){if(contents.navigationHistory.canGoBack())contents.navigationHistory.goBack();}
    else if(name==='forward'){if(contents.navigationHistory.canGoForward())contents.navigationHistory.goForward();}
@@ -142,6 +160,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    }
    else if(name==='draft')return{ok:true,request:browserDraftRequest(projectRoot,contents.getURL(),entry.capture,now(),{session:record.browserSession,tabId:record.browserTabId})};
    else if(name==='draft-dialog'||name==='analysis-dialog'){
+    if(value===true)await entry.elementLink.stop(name==='draft-dialog');
     entry[name==='draft-dialog'?'draftDialogOpen':'analysisDialogOpen']=value===true;
     entry.dialogOpen=!!(entry.draftDialogOpen||entry.analysisDialogOpen);entry.layout();entry.pointer();
    }
@@ -178,7 +197,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    return{ok:true,...entry.snapshot()};
   }catch(error){return{ok:false,error:error.message};}
  }
- function setAvailable(owner,available){for(const [record,entry]of entries)if((record===owner||record.owner===owner)&&entry.available!==available){entry.available=available;if(!available)entry.view.webContents.stop();else if(entry.pendingTarget!==null){const target=entry.pendingTarget;entry.pendingTarget=null;void entry.navigate(target).catch(error=>{entry.error=error.message;entry.notify();});}entry.layout();entry.notify();}}
+ function setAvailable(owner,available){for(const [record,entry]of entries)if((record===owner||record.owner===owner)&&entry.available!==available){entry.available=available;if(!available){void entry.elementLink.stop();entry.view.webContents.stop();}else if(entry.pendingTarget!==null){const target=entry.pendingTarget;entry.pendingTarget=null;void entry.navigate(target).catch(error=>{entry.error=error.message;entry.notify();});}entry.layout();entry.notify();}}
  function trustedHeader(event){
   const record=headers.get(event.sender),frame=event.senderFrame;
   return record&&!record.window.isDestroyed()&&frame===event.sender.mainFrame&&frame?.url===record.url+'#browser-header'?record:null;
@@ -187,6 +206,11 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   const entry=entries.get(record);if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())return null;
   return{url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
  }
- return{attach,action,setAvailable,trustedHeader,analysisContext,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
+ function navigate(record,value){
+  const entry=entries.get(record);
+  if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())throw Error('Browserが終了しています。もう一度開いてください。');
+  return entry.navigate(value);
+ }
+ return{attach,action,navigate,setAvailable,trustedHeader,analysisContext,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
 }
-module.exports={HOME,browserDisplayURL,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};
+module.exports={HOME,browserStartupURL,browserDisplayURL,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};

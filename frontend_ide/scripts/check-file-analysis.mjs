@@ -35,7 +35,7 @@ let finishAnalysis,calls=0;
 const app = await startDevelopment(project,{fileAnalysisOptions:{pollMs:50,runAgent:async({prompt})=>{
   calls++;await new Promise(resolve=>{finishAnalysis=resolve;});
   const spec=JSON.parse(prompt.split('形式: ')[1].split('\n')[0]),target=prompt.match(/結果は (temp\/[^ ]+)\.tmp に/)[1];
-  writeFileSync(join(project,target),JSON.stringify({...spec,content:'# 機能概要\nこれは検証用の解析結果です。\n\n## 主な役割\n- 入力ファイルの内容を表示します。\n- 実行入口は `main` です。\n\n<script>window.analysisInjected=true</script>\n![外部画像](https://example.invalid/image.png)'}));
+  writeFileSync(join(project,target),JSON.stringify({...spec,summary:undefined,content:'# 機能概要\nこれは検証用の解析結果です。\n\n## 主な役割\n- 入力ファイルの内容を表示します。\n- 実行入口は `main` です。\n\n<script>window.analysisInjected=true</script>\n![外部画像](https://example.invalid/image.png)'}));
 }}});
 const url = app.url;
 const chromePath = [

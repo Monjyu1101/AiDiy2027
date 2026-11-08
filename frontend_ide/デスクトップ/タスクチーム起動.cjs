@@ -4,9 +4,10 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {join}=require('node:path');
+const {programDataDirectory}=require('../host/scripts/project-storage.cjs');
 const {projectIdentity}=require('./project-profile.cjs');
 function taskTeamProfile(appData,kind,project,fixed=false){
  if(!['task','team'].includes(kind))throw Error('Task / Team を指定してください。');
- return join(appData,`aidiy_${kind}_vue`,'projects',projectIdentity(project).key,fixed?'fixed':'standalone');
+ return join(programDataDirectory(projectIdentity(project).path,`aidiy_${kind}`),'electron',fixed?'fixed':'standalone');
 }
 module.exports={taskTeamProfile};

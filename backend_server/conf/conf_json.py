@@ -113,7 +113,7 @@ class conf_json:
         # CodeAI設定
         'CODE_BASE_PATH': '../',
         'CODE_PERMISSIONS': 'auto',
-        'CODE_AI1_NAME': 'codex_cli',
+        'CODE_AI1_NAME': 'aidiy_hermes',
         'CODE_AI1_MODEL': 'auto',
         'CODE_AI2_NAME': 'copilot_cli',
         'CODE_AI2_MODEL': 'auto',

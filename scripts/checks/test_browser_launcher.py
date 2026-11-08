@@ -29,7 +29,7 @@ class BrowserLauncherTests(unittest.TestCase):
         launcher = load(ROOT / 'frontend_ide/viewer/launcher.py')
         for platform in ('win32', 'linux', 'darwin'):
             with self.subTest(platform=platform), tempfile.TemporaryDirectory() as tmp:
-                with patch.object(Path, 'home', return_value=Path(tmp)), patch.object(launcher.sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='/node path/node'), patch.object(launcher, 'ensure_launcher_path', return_value=True), patch.object(launcher, 'remove_launcher_path', return_value=True):
+                with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(launcher.sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='/node path/node'), patch.object(launcher, 'ensure_launcher_path', return_value=True), patch.object(launcher, 'remove_launcher_path', return_value=True):
                     launcher.install_launcher(BROWSER, 'browser')
                     target = launcher.launcher_path('browser')
                     content = target.read_text(encoding='utf-8')

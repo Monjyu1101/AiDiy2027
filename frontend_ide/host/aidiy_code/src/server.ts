@@ -27,9 +27,10 @@ import { オフライン実行, オフラインモデル候補, オフライン�
 import type { Packet } from '../../aidiy_live/src/protocol';
 
 // 単独画面と拡張で AIコア接続・メッセージ形式・描画を共用する。
-export async function 単独起動(project: string, backend?: string, initialModel: { provider?: string; model?: string; offline?: boolean; lockedMode?: boolean; keepAlive?: boolean } = {}, modelFile = モデル保存先('code'), runOffline = オフライン実行, historyFolder?: string, authorization?: InternalAuthorization, createSocket?: ConstructorParameters<typeof CodeConnection>[3]) {
+export async function 単独起動(project: string, backend?: string, initialModel: { provider?: string; model?: string; offline?: boolean; lockedMode?: boolean; keepAlive?: boolean } = {}, modelFile?: string, runOffline = オフライン実行, historyFolder?: string, authorization?: InternalAuthorization, createSocket?: ConstructorParameters<typeof CodeConnection>[3]) {
   const root = resolve(__dirname, '../..');
-  const folder = resolve(project);
+  const folder = project.trim() ? resolve(project) : resolve(root, '../..');
+  modelFile ??= モデル保存先('code', folder);
   if (!statSync(folder).isDirectory()) throw new Error('作業フォルダがありません。');
   const savedModel = コードモデル読込(modelFile);
   const defaultModel = { provider: 'aidiy_hermes', model: Hermes既定モデル(root, folder) };
@@ -423,7 +424,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
 }
 
 if (require.main === module) {
-  const project = process.argv[2] || process.cwd();
+  const project = process.argv[2] ?? process.cwd();
   void 単独起動(project, undefined, process.argv[4] ? JSON.parse(process.argv[4]) : {}).then(app => {
     if (process.argv[3]) writeFileSync(process.argv[3], JSON.stringify({url:app.url, publicUrl:app.publicUrl, pid:process.pid}), 'utf8');
     else console.log(`AiDiy Code: ${app.url}`);

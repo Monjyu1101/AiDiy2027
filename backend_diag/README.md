@@ -128,7 +128,7 @@ Copilot CLI が導入済みで取得候補が空なら、`COPILOT_FALLBACK_MODEL
 
 プロバイダ別ファイルの書込後に、同じ保存先の全プロバイダ別ファイルを読み、`chat_models_info.json` / `live_models_info.json` / `code_models_info.json` も生成します。chat / live の合成時は FreeAI を先頭に並べます。code は Claude / OpenAI 系を前、`antigravity_cli` を最後に並べます。合成ファイルのルートは `gemini_chat` / `gemini_live` / `codex_cli` などの区分名で、それぞれ `{models}` だけを持ちます。詳細配列や診断の説明はプロバイダ別ファイルに残します。同じ区分名・モデルIDはマージし、表示名が重複するときは日付の新しいものを優先します（実日付は `yyyy/mm/dd` より優先）。個別テスト後の書込でも、他プロバイダの保存済み候補を合成に含めます。
 
-`python backend_diag/_setup.py` または全体の `python _setup.py` で `~/.local/bin` にランチャーを作成します。全体セットアップのDiagは `[y]` の表示だけで選択入力はありません。Windows は `aidiy_diag.cmd` で、このフォルダをユーザー PATH に重複なく自動登録します。ターミナルや VS Code を開き直して使ってください。クリーンアップはこの作業コピーのランチャーを解除し、共有フォルダが空になった場合だけ自動追加した PATH 登録も解除します。既存の PATH 登録や他ツールが使う登録は保持します。`backend_diag/aidiy_diag` / `backend_diag/aidiy_diag.cmd` からも直接起動できます。
+`python backend_diag/_setup.py` または全体の `python _setup.py` で、AiDiy 本体の `_AIDIY/aidiy_diag/bin` にランチャーを作成します（Windows は `aidiy_diag.cmd`）。全体セットアップのDiagは `[y]` の表示だけで選択入力はありません。シェルプロファイル・レジストリは変更しません。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使ってください。既存のホーム配下ランチャーは移行・削除しません。`backend_diag/aidiy_diag` / `backend_diag/aidiy_diag.cmd` からも直接起動できます。
 
 Electron の初回表示は Code / Live / Console / IDE / Discord / Slack と共通の `frontend_ide/host/scripts/window-opening.cjs` を使います。中央55%から750msで拡大し、描画を待ってから本画面を表示、内容を450msでフェード表示します。実ウィンドウを連続リサイズしないため、Windowsの未描画の白い縁を避けます。ブラウザ版・headlessには適用しません。`desktop-opening` 中は内容を隠し、演出完了後に起動済みを通知します。共通演出の仕様を変更する場合は共有する各アプリへの影響を確認してください。`node --test backend_diag/checks/desktop.check.mjs` で読込・演出・表示通知の順序、演出中の終了・描画失敗と既存IPCの安全境界を確認できます。実OSでの拡大・DPI・最前面表示は別途目視確認が必要です。
 
@@ -350,7 +350,7 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 
 全体 `_setup.py` は Git / Node.js の前提確認後、共通セットアップ（AI CLI 導入の待機を含む）→ Diag ランチャー配置・Electron準備 → local の順で実行します。共通や local が未選択ならその段階だけをスキップします。前提ツールの導入は auto 選択時も従来どおり確認付きです。単体 `python backend_diag/_setup.py` は Node.js / npm の準備後に使います。Codespaces / Linux GUI なしでは Electron / npm の準備を省略しますが、ブラウザ版のサーバーに必要な Node.js の実行可否は確認します。版数だけの警告は継続し、未導入・実行不能・timeout はセットアップ失敗です。明示的なランチャー再登録だけの経路（ルートの `--launchers-only`）は依存導入・実行確認を行いません。
 
-macOS / Linux でも `~/.local/bin` のランチャーを zsh / bash の設定へ自動登録します。既にセットアップ済みでコマンドが見つからない場合は、プロジェクトルートで `python3 _setup.py --launchers-only` を実行してから新しいターミナルを開いてください。現在のターミナルで使う場合は `export PATH="$HOME/.local/bin:$PATH"` で反映できます。この修復は登録対象アプリのランチャー・PATH 登録だけを行い、依存導入・ビルド・サービス起動はしません。クリーンアップでは登録したランチャーを解除し、共有 bin が空になった場合に自動追記分の PATH 設定も解除します。
+全 OS 共通でランチャーは AiDiy 本体の `_AIDIY/aidiy_<pg>/bin/` に配置します。登録だけを修復する場合は `python3 _setup.py --launchers-only`（Windows は `python`）を実行してください。依存導入・ビルド・サービス起動はしません。PATH はセットアップ自身と子プロセスだけに反映されます。別ターミナルではフルパスか表示されたシェル限定の PATH 設定を使います。cleanup は新しいプロジェクト内ランチャーだけを解除します。
 
 通常setupは同梱のVue配布物を勝手に再ビルドしません。起動時の既存manifest検証で欠損・不一致を検出した場合は成功扱いにせず、同じ版の配布物の取得、または本書のUIビルド手順を案内します。headless診断には画面の配布物を要求しません。
 
@@ -487,7 +487,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - Antigravity (`agy`): `--dangerously-skip-permissions`。[公式CLI利用方法](https://antigravity.google/docs/cli/using)
 - Grok: `--yolo`。[xAI公式参考](https://docs.x.ai/build/cli/reference)
 - OpenCode: `--auto`。[公式TUI参考](https://opencode.ai/docs/cli/#tui)、[自動承認の範囲](https://opencode.ai/docs/permissions/#auto-mode)
-- AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたは `~/.local/bin` に配置済みのランチャーが対象です。
+- AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたは AiDiy 本体の `_AIDIY/aidiy_hermes/bin` に配置済みのランチャーが対象です。
 
 組織の禁止・denyルール・初回の信頼確認・ログインなど、CLI側で保持する制約は解除しません。古いCLIが固定フラグに未対応ならConsoleにそのエラーを表示し、勝手に別フラグや通常モードへ切り替えません。Windowsのnpm `.cmd` は文字列としてシェル実行せず、許可したパッケージの安全な `bin` を検証してNodeから引数配列で開きます。任意のコマンド・モデル・実行ファイル・シェル本文はDiag APIへ渡せません。
 

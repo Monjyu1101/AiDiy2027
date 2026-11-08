@@ -14,5 +14,9 @@ export const alwaysExcludedDirectory = name => typeof name === 'string'
 export function hasAlwaysExcludedDirectory(path, directory = false) {
   if (typeof path !== 'string') return false;
   const parts = path.split(/[\\/]/);
-  return (directory ? parts : parts.slice(0, -1)).some(alwaysExcludedDirectory);
+  const folders = (directory ? parts : parts.slice(0, -1)).map(part=>part.replace(/[. ]+$/, '').toLowerCase());
+  // プロジェクトへ移したElectron/ブラウザprofileにはcookie等が入る。汎用ファイルAPIとAI解析から隠す。
+  const profile = folders.some((part,index)=>part==='_aidiy' && /^aidiy_[a-z][a-z0-9_]*$/.test(folders[index+1]||'')
+    && ['electron','browser-profile'].includes(folders[index+2]));
+  return profile || folders.some(alwaysExcludedDirectory);
 }

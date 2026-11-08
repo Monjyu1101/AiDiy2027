@@ -25,6 +25,12 @@ async function createSharedDraftBridge({directory,records,router,readState,sessi
    const chunks=[];let bytes=0;for await(const chunk of req){bytes+=chunk.length;if(bytes>20*1024*1024)throw Error('要求が大きすぎます。');chunks.push(chunk);}
    const text=Buffer.concat(chunks).toString('utf8');
    const data=JSON.parse(text);if(typeof data.projectPath!=='string')throw Error('プロジェクトが不正です。');
+   if(req.url===`/${token}/viewer-status`){
+    const states=await Promise.all(owners().filter(owner=>owner.kind==='ide').map(async owner=>{
+     try{const value=await readState(owner);return !owner.window.isDestroyed()&&same(data.projectPath,value.project?.path)?value:null;}catch{return null;}
+    }));
+    reply({ok:true,ideRunning:states.some(Boolean),viewerAvailable:states.some(value=>value?.active&&value.mode==='online'&&value.connected===true)});return;
+   }
    const groups=await local(data.projectPath);
    if(req.url===`/${token}/list`){reply({ok:true,targets:groups.flatMap(({list})=>list.targets.map(t=>({...t,targetSessionKey:list.sessionKey})))});return;}
    if(req.url===`/${token}/insert`){
@@ -39,24 +45,36 @@ async function createSharedDraftBridge({directory,records,router,readState,sessi
  await mkdir(directory,{recursive:true});const file=join(directory,`${process.pid}-${token}.json`);
  await writeFile(file,JSON.stringify({pid:process.pid,port,token}),{flag:'wx',mode:0o600});
  const request=async(peer,method,body)=>{
-  const response=await fetch(`http://127.0.0.1:${peer.port}/${peer.token}/${method}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(method==='list'?1500:6000)});
+  const response=await fetch(`http://127.0.0.1:${peer.port}/${peer.token}/${method}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),redirect:'error',signal:AbortSignal.timeout(method==='insert'?6000:1500)});
   const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'連携先に接続できません。');return result;
  };
- async function state(source){const value=await readState(source.owner||source);if(source.window.isDestroyed()||!value.active)throw Error('Browserの利用が終了しました。');return value;}
- return{
-  async list(source){
-   const current=await state(source),targets=[];
-   const files=(await readdir(directory)).filter(n=>/^\d+-[\da-f-]+\.json$/.test(n)).slice(0,128);
-   await Promise.all(files.map(async name=>{try{
+ async function peers(visit){
+  const files=(await readdir(directory)).filter(n=>/^\d+-[\da-f-]+\.json$/.test(n)).slice(0,128);
+  return Promise.all(files.map(async name=>{try{
     const peer=JSON.parse(await readFile(join(directory,name),'utf8'));
     if(!Number.isInteger(peer.port)||peer.port<1||peer.port>65535||!/^[-\da-f]{36}$/.test(peer.token))return;
     if(!Number.isSafeInteger(peer.pid)||peer.pid<=0)return;
     try{process.kill(peer.pid,0);}catch(error){if(error.code==='ESRCH')await unlink(join(directory,name)).catch(()=>{});return;}
+    return await visit(peer);
+   }catch{/* 終了済み・応答しないプロセスは候補にしない。 */}}));
+ }
+ async function state(source){const value=await readState(source.owner||source);if(source.window.isDestroyed()||!value.active)throw Error('Browserの利用が終了しました。');return value;}
+ return{
+  async list(source){
+   const current=await state(source),targets=[];
+   await peers(async peer=>{
     const list=await request(peer,'list',{projectPath:current.project.path});
     for(const target of list.targets){routes.set(target.id,{peer,target,projectPath:current.project.path});targets.push(target);}
-   }catch{/* 終了済み・応答しないプロセスは候補にしない。 */}}));
+   });
    if(routes.size>256){const keep=new Set(targets.map(t=>t.id));for(const id of routes.keys())if(!keep.has(id))routes.delete(id);}
    return{ok:true,sessionKey:sessionKey(current),projectPath:current.project.path,mode:current.mode,targets,frontmostTargetId:targets.length===1?targets[0].id:''};
+  },
+  async viewerStatus(source){
+   const current=await state(source);
+   const values=await peers(peer=>request(peer,'viewer-status',{projectPath:current.project.path}));
+   const latest=await state(source);
+   if(sessionKey(latest)!==sessionKey(current)||!same(latest.project.path,current.project.path))throw Error('Browserの利用状態が変わりました。');
+   return{ideRunning:values.some(value=>value?.ideRunning===true),viewerAvailable:values.some(value=>value?.viewerAvailable===true)};
   },
   async insert(source,data){
    const current=await state(source),route=routes.get(data?.targetId);

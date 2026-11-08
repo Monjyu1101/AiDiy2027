@@ -71,6 +71,11 @@ test('folder browser returns real directories and parent without file contents',
  const f=await fixture(t);await mkdir(join(f.project,'子フォルダ'));await writeFile(join(f.project,'file.txt'),'not returned');
  const data=await f.manager.folders(f.project);assert.equal(data.フォルダ,f.project);assert.equal(data.親,f.root);assert.deepEqual(data.子フォルダ,[{名前:'子フォルダ',パス:join(f.project,'子フォルダ')}]);
 });
+test('empty folder browser starts at the AiDiy root, without home fallback',async t=>{
+ const f=await fixture(t);
+ for(const value of ['',undefined])assert.equal((await f.manager.folders(value)).フォルダ,await realpath(f.root));
+ await assert.rejects(f.manager.folders('relative'),{status:400});
+});
 test('real task lookup can run without starting any app',async()=>{const tasks=await タスク一覧();assert.ok(Array.isArray(tasks));assert.ok(tasks.every(item=>Number.isInteger(item.pid)&&typeof item.command==='string'));});
 test('authenticated API rejects arbitrary commands/methods/oversized payloads',async t=>{
  const f=await fixture(t),server=createServer({token:'fixture',appLauncher:f.manager,modelTrials:{close(){}},startManager:{close(){}}});

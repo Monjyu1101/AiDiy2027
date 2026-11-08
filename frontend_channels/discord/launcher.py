@@ -26,7 +26,7 @@ launcher_owned_by = _path_helper.launcher_owned_by
 
 
 def launcher_path() -> Path:
-    return Path.home() / '.local' / 'bin' / ('aidiy_discord.cmd' if sys.platform == 'win32' else 'aidiy_discord')
+    return _path_helper.launcher_directory('aidiy_discord') / ('aidiy_discord.cmd' if sys.platform == 'win32' else 'aidiy_discord')
 
 
 def install_launcher(root: Path) -> None:

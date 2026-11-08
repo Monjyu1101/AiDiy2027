@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""ランチャーのユーザー PATH 登録と、自動追加した登録の解除。"""
+"""プロジェクト内ランチャーの PATH 管理と、Hermes の既存共有 bin 登録。"""
 import base64
 import json
 import ntpath
@@ -37,6 +37,49 @@ def launcher_owned_by(content, script):
     return launcher_owner_comment(script) in owners if owners else str(script) in content
 
 
+
+def launcher_directory(program, project=None):
+    """アプリ別ランチャーの配置先。空のプロジェクトは AiDiy 本体。"""
+    if not isinstance(program, str) or not program.startswith('aidiy_') or not program.replace('_', '').isalnum():
+        raise ValueError('ランチャーのプログラム名が不正です。')
+    root = Path(project).absolute() if project else Path(__file__).resolve().parents[1]
+    directory = root
+    for part in ('_AIDIY', program, 'bin'):
+        directory = directory / part
+        if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
+            raise ValueError(f'ランチャー保存先が通常フォルダではありません: {directory}')
+    return directory
+
+
+def ensure_launcher_path(directory):
+    """プロジェクト配置はプロセス限定。明示された .local/bin だけ従来の登録。"""
+    directory = Path(directory).absolute()
+    if directory.name == "bin" and directory.parent.name == ".local":
+        return _ensure_shared_launcher_path(directory)
+    current = os.environ.get('PATH', '')
+    if str(directory) not in current.split(os.pathsep):
+        os.environ['PATH'] = str(directory) + (os.pathsep + current if current else '')
+    print(f'ランチャー配置先: {directory}（フルパスで起動できます）')
+    if sys.platform == 'win32':
+        quoted = str(directory).replace("'", "''")
+        print(f"現在の PowerShell だけで使う場合: $env:PATH = '{quoted};' + $env:PATH")
+    else:
+        print(f'現在のシェルだけで使う場合: export PATH={shlex.quote(str(directory))}:"$PATH"')
+    return True
+
+
+def remove_launcher_path(directory=None):
+    """明示された .local/bin は従来どおり解除し、それ以外はプロセス限定。"""
+    if directory is not None:
+        directory = Path(directory).absolute()
+        if directory.name == "bin" and directory.parent.name == ".local":
+            return _remove_shared_launcher_path(directory)
+        directory = str(directory)
+        os.environ['PATH'] = os.pathsep.join(entry for entry in os.environ.get('PATH', '').split(os.pathsep) if entry != directory)
+    return True
+
+
+# Hermes が明示的に指定する共有 .local/bin 用。既存の登録・解除手順を維持する。
 def _normalize(value):
     return ntpath.normcase(ntpath.normpath(ntpath.expandvars(value.strip().strip('"'))))
 
@@ -190,7 +233,7 @@ def _notify_environment_change():
         print('環境変数の更新通知が届きませんでした。反映されない場合はサインインし直してください。')
 
 
-def ensure_launcher_path(directory):
+def _ensure_shared_launcher_path(directory):
     """Windows のユーザー PATH または zsh / bash の設定へ登録する。"""
     directory = Path(directory).expanduser().absolute()
     if sys.platform != 'win32':
@@ -245,9 +288,8 @@ def ensure_launcher_path(directory):
     return True
 
 
-def remove_launcher_path(directory=None):
+def _remove_shared_launcher_path(directory):
     """共有 bin が空になったときだけ、セットアップが追加した PATH を解除する。"""
-    directory = directory or Path.home() / '.local' / 'bin'
     directory = Path(directory).expanduser().absolute()
     if sys.platform != 'win32':
         return _remove_posix_path(directory)
@@ -301,5 +343,3 @@ def remove_launcher_path(directory=None):
     except (OSError, ValueError) as exc:
         print(f'PATH 登録の解除に失敗しました: {exc}')
         return False
-
-

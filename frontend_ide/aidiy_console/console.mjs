@@ -5,13 +5,14 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { createServer } from 'node:http';
 import { randomBytes } from 'node:crypto';
-import { basename, join } from 'node:path';
+import { basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer, WebSocket } from 'ws';
 import { cliCompletions } from '../src/components/コンソール/コマンド補完.js';
 import { toolsTarget } from '../ファイル機能/ai-search.mjs';
 import { resolveCliLaunch, validateCliOptions } from './cli-launch.mjs';
 import { createCliSession } from './cli-session.mjs';
+import { shellHistory } from './shell-history.mjs';
 
 // IDEのパネル中継だけが接続する、ランダムパス付きのローカル端末。
 // シェル・開始フォルダはサーバー側で決め、ブラウザから指定させない。
@@ -28,13 +29,13 @@ export async function startConsole(project, { spawnConsole, env = process.env, c
   spawnConsole ??= (await import('./console-process.mjs')).spawnConsole;
   const cliSession = cliLaunch ? createCliSession(cliLaunch, project, spawnConsole) : undefined;
   const cliInfo = cliLaunch ? { id: cliLaunch.id, name: cliLaunch.name, mode: cliLaunch.mode, autoApprove: cliLaunch.autoApprove } : undefined;
-  const shell = process.platform === 'win32'
-    ? join(env.SystemRoot || 'C:\\Windows', 'System32/WindowsPowerShell/v1.0/powershell.exe')
-    : env.SHELL || '/bin/sh';
+  const history = cliLaunch ? undefined : await shellHistory(project, env);
+  const shell = history?.shell || cliLaunch.executable;
+  if (history) project = history.project;
   const completionScript = fileURLToPath(new URL('./powershell-init.ps1', import.meta.url)).replaceAll("'", "''");
   const cliOptionsJson = JSON.stringify(Object.fromEntries(Object.entries(cliCompletions).map(([name, item]) => [name, item.options]))).replaceAll("'", "''");
   const args = process.platform === 'win32'
-    ? ['-NoLogo', '-NoExit', '-Command', `. '${completionScript}' -CliOptionsJson '${cliOptionsJson}'`] : [];
+    ? ['-NoLogo', '-NoProfile', '-NoExit', '-Command', `. '${completionScript}' -CliOptionsJson '${cliOptionsJson}'`] : history?.args || [];
   const prefix = `/${randomBytes(24).toString('hex')}/`;
   const sessions = new Set(), stopping = new Set(), cliClients = new Set();
   let cliDisconnectTimer, cliActivated = false, cliAbandoned = false;
@@ -142,7 +143,7 @@ export async function startConsole(project, { spawnConsole, env = process.env, c
         } else if (message.type === 'start' && !terminal) {
           size(); clearTimeout(initializing);
           terminal = spawnConsole(shell, args, { name: 'xterm-256color', cols: message.cols, rows: message.rows,
-            cwd: project, env: { ...env, TERM: 'xterm-256color' } });
+            cwd: project, env: { ...history.env, TERM: 'xterm-256color' } });
           output = terminal.onData(data => {
             unacknowledged += data.length;
             if (unacknowledged > 128 * 1024) terminal.pause();

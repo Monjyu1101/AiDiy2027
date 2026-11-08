@@ -1,0 +1,654 @@
+{
+  "at": "2026-11-08T16:12:06+00:00",
+  "status": "完了（資料整合のみ。新しい実機PASSではない）",
+  "baseCommit": "c4f03368d15b5489a40a7713caa44c13822b45a1",
+  "scope": {
+    "booklets": 2,
+    "functionalTestsRerun": false,
+    "productCodeChanged": false,
+    "newScreenshotsCaptured": false,
+    "externalAiRequests": 0
+  },
+  "renderer": "WeasyPrint 70.0 / Noto Sans CJK JP",
+  "method": "標準の総合テストPDF.mjsのmarkdown-it設定・CSS・図グループ化規則を適用し、ローカルファイルのみから再生成。pypdfでfile: URIのみをPDF所在フォルダ基準の相対URIへ変換。変換前後のページ内容ストリームとMediaBoxは不変。本文はNFKC・既知の異体字・空白等を正規化して比較し、画像は白背景合成RGBで完全一致を確認。レイアウトは全ページ縮小表示と重点ページ拡大で別途確認。",
+  "files": [
+    {
+      "file": "セルフテスト,aidiy_ide,操作編.pdf",
+      "source": "セルフテスト,aidiy_ide,操作編.md",
+      "source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
+      "pdf_sha256": "b5cd6a242f0f9f086d8f2c47604d230ccf985f5d55cd4e1f0d25fb32e1f7298f",
+      "pages": 31,
+      "images": [
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_101_3D基本画面.png",
+          "sha256": "d1b32866113cde17f5e9eb23fab136d996519679f9c3a8d8884e431009d21649",
+          "alt": "図101 3D基本画面",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 2,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_102_2D基本画面.png",
+          "sha256": "e1b928df8151aaef26cafff61483c970f780ce38597bcdfc6b8c7cfb08b8a2fa",
+          "alt": "図102 2D基本画面",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 3,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_103_VRで閲覧と検索.png",
+          "sha256": "68e23efcd3c93b4270b89df2102a573eca65a07179736c759634df33aa8428c5",
+          "alt": "図103 VRで閲覧と検索",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 4,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_104_VRでCodeとLiveとConsole.png",
+          "sha256": "4018e6b19dfedc9c20ef9151e11b7d7ce06f81c50fa0251740953b1520c00ffe",
+          "alt": "図104 VRでCodeとLiveとConsole",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 4,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_201_エクスプローラー独立窓.png",
+          "sha256": "38b07af4b18239bb0bc2380612b3711012beb90864c968a339fe489adbec55f0",
+          "alt": "図201 エクスプローラー独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 5,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_202_時刻検索.png",
+          "sha256": "492435be1251ae8d10b83963924dc53b2201756cab87c9d896e72839ba3dcc82",
+          "alt": "図202 時刻検索",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 7,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_203_grep検索.png",
+          "sha256": "69d3a10c7dc5e506261ee00e28dc262748fe9b966e23523e5dbe339d43cede44",
+          "alt": "図203 grep検索",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 8,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.png",
+          "sha256": "22431055935c11e4630e09b2ccd6dd5b7bb1720876a58641f9ea875b3b2c0a6f",
+          "alt": "図204 AiDiy検索",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 9,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_205_検索履歴.png",
+          "sha256": "acc72a7579ad10895687456a5f8586f5834796faf4663cb80719c083bd927398",
+          "alt": "図205 検索履歴",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 10,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_206_ファイル操作メニュー.png",
+          "sha256": "f541a52b199542b8851290512d71f2ce6d4e4c0bdc1d933f459f4b38527c0a76",
+          "alt": "図206 ファイル操作メニュー",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 11,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_207_複数チェック.png",
+          "sha256": "5690fec2627888cf6ad17d25a135118d4a52e7e2982b77573f20c1c0a2e45a0b",
+          "alt": "図207 複数チェック",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 13,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_208_一括操作メニュー.png",
+          "sha256": "6500bf0491665024c2e47de8741b75c27fbf52475d6cea6ca85e850bc1807dce",
+          "alt": "図208 一括操作メニュー",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 14,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_209_一括削除確認.png",
+          "sha256": "b1477c9678d48810f0149bf88e195b94c7a56cd27112616b1f31d906473d4845",
+          "alt": "図209 一括削除確認",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 15,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_301_ビューア独立窓.png",
+          "sha256": "03bb4903269ebbd22698bda62f1b569a2de98799d4ad7dc33e1bfa0e618822cb",
+          "alt": "図301 ビューア独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 16,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_302_比較表示独立窓.png",
+          "sha256": "9d5f913b3a136ade7e93818b4504413b2db5efb9309e9bd0602b7db332824e94",
+          "alt": "図302 比較表示独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 18,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_303_閲覧軌跡.png",
+          "sha256": "b9bb8eea09445a56545d72c94fb53af3cea3e5f73872c73f1a8466ba88d6b259",
+          "alt": "図303 閲覧軌跡",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 19,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_304_検索軌跡.png",
+          "sha256": "aa3a83f6385210fa22500baeb4bd0c52a236e553da28f99e90ce19f9d5e14354",
+          "alt": "図304 検索軌跡",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 20,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_305_AiDiy検索軌跡.png",
+          "sha256": "4d271f91d3ab44c23350a7e56f910e2536f3cb415e041def4830641fa0704b77",
+          "alt": "図305 AiDiy検索軌跡",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 21,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_306_Console独立窓.png",
+          "sha256": "6e905c9a8ec5345aedbc70e87f8218b9a8391cc0bfecfe01432b83bdc9f9830a",
+          "alt": "図306 Console独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 21,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_307_Code独立窓.png",
+          "sha256": "58d661d817df75ec379508e443eb246c1beffc41753b45d63e5b8e3f502fe70d",
+          "alt": "図307 Code独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 22,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_308_Live独立窓.png",
+          "sha256": "fa024776d7ce1380fe918cfcefdfbb0c587095f2fbd8091a7f771af314b22574",
+          "alt": "図308 Live独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 24,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_309_Browser独立窓.png",
+          "sha256": "5b50758022d4ba5d9d2ed48a0efce1708b700a8b89447d2bd61fdf1c648a0bc6",
+          "alt": "図309 Browser独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 25,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_310_Word独立窓.png",
+          "sha256": "36f48a76c73d51abc3327d67f8e8a4d0f6472d267fac9fbfbdc8e40999b8aeca",
+          "alt": "図310 Word独立窓",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 26,
+          "matched": true
+        },
+        {
+          "path": "images/セルフテスト,aidiy_ide,操作編/IDE_401_終了確認.png",
+          "sha256": "ecc3e1f0de3fb7ed88f7e5659d31dbbdb7bf13029ad386459f476426335178a7",
+          "alt": "図401 終了確認",
+          "kind": "raster",
+          "exactPixels": true,
+          "minimumRgbRms": 0,
+          "page": 27,
+          "matched": true
+        }
+      ],
+      "localPdfLinks": [
+        {
+          "uri": "セルフテスト,共通,確認結果.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,システム起動編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,ランチャー編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_code,操作編.md",
+          "targetExists": true,
+          "page": 25
+        },
+        {
+          "uri": "セルフテスト,aidiy_live,操作編.md",
+          "targetExists": true,
+          "page": 25
+        },
+        {
+          "uri": "セルフテスト,aidiy_console,操作編.md",
+          "targetExists": true,
+          "page": 25
+        },
+        {
+          "uri": "セルフテスト,aidiy_browser,操作編.md",
+          "targetExists": true,
+          "page": 25
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,システム起動編.md",
+          "targetExists": true,
+          "page": 26
+        },
+        {
+          "uri": "evidence/_work_records/selftest-20261102/office-view-results.json",
+          "targetExists": true,
+          "page": 31
+        },
+        {
+          "uri": "evidence/_work_records/selftest-20261102/explorer-file-results.json",
+          "targetExists": true,
+          "page": 31
+        },
+        {
+          "uri": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_ide,操作編/IDE_204_AiDiy検索.json",
+          "targetExists": true,
+          "page": 31
+        }
+      ],
+      "body": {
+        "blocks": 252,
+        "matchedBlocks": 252,
+        "unmatchedBlocks": 0
+      },
+      "sourceReferenceChecks": {
+        "links": 11,
+        "images": 24,
+        "missing": 0,
+        "anchorMismatches": 0,
+        "figureNumberMismatches": 0
+      },
+      "visualReviewPages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31
+      ],
+      "visualReviewDetailPages": [
+        1,
+        13,
+        31
+      ],
+      "displayContentRegenerated": true,
+      "unchangedPageStreamsVsAvailableBaseline": [],
+      "availableBaselineCommit": "c4f03368d15b5489a40a7713caa44c13822b45a1",
+      "verificationRecord": "evidence/IDE資料整合/PDF機械照合.json",
+      "pageNumbersVerified": true,
+      "visualReview": {
+        "allPagesRendered": true,
+        "allPagesContactSheetReviewed": true,
+        "detailPagesReviewed": [
+          1,
+          13,
+          31
+        ],
+        "findings": "No clipping, overlap, broken table rows or missing images observed."
+      },
+      "postprocessContentStreamsUnchanged": true,
+      "postprocessMediaBoxesUnchanged": true
+    },
+    {
+      "file": "セルフテスト,共通,確認結果.pdf",
+      "source": "セルフテスト,共通,確認結果.md",
+      "source_sha256": "3b31240e7e1fe04441dc1b3038fab2308db5048dcc74a4eaad126c420035fcae",
+      "pdf_sha256": "0337a910373a4077f4b75851a498fcfe152c0af4e611db6a5d545ca0c5d72eda",
+      "pages": 17,
+      "images": [],
+      "localPdfLinks": [
+        {
+          "uri": "../../_AIDIY/knowledge/_index.md#セルフテスト資料の使い方",
+          "targetExists": true,
+          "page": 1,
+          "targetAnchorExists": true
+        },
+        {
+          "uri": "セルフテスト,aidiy_navi,操作編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "_index.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "evidence/pdf-manifest.json",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "evidence/document-alignment.json",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,環境確認編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_browser,操作編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_console,操作編.md",
+          "targetExists": true,
+          "page": 1
+        },
+        {
+          "uri": "セルフテスト,aidiy_discord,操作編.md",
+          "targetExists": true,
+          "page": 2
+        },
+        {
+          "uri": "セルフテスト,aidiy_slack,操作編.md",
+          "targetExists": true,
+          "page": 2
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,AIモデル・Tools編.md",
+          "targetExists": true,
+          "page": 2
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,設定再起動編.md",
+          "targetExists": true,
+          "page": 2
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,システム起動編.md",
+          "targetExists": true,
+          "page": 3
+        },
+        {
+          "uri": "../../_AIDIY/knowledge/セルフテスト,_説明資料の書き方.md",
+          "targetExists": true,
+          "page": 3
+        },
+        {
+          "uri": "セルフテスト,aidiy_code,操作編.md",
+          "targetExists": true,
+          "page": 4
+        },
+        {
+          "uri": "セルフテスト,aidiy_live,操作編.md",
+          "targetExists": true,
+          "page": 4
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,システム起動編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,環境確認編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,AIモデル・Tools編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,設定再起動編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,ランチャー編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_ide,操作編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_browser,操作編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_task,操作編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_team,操作編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_avatar,Electron実行編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_avatar,Web実行編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,frontend_web,AiDiy編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,frontend_web,配車管理編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,frontend_web,生産・在庫管理編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,backend_tools,主要メソッド編.md",
+          "targetExists": true,
+          "page": 8
+        },
+        {
+          "uri": "セルフテスト,aidiy_ide,操作編.md#通常のai検索と参照照合",
+          "targetExists": true,
+          "page": 15,
+          "targetAnchorExists": true
+        },
+        {
+          "uri": "セルフテスト,aidiy_browser,操作編.md#画像なしurlの両宛先確認",
+          "targetExists": true,
+          "page": 15,
+          "targetAnchorExists": true
+        },
+        {
+          "uri": "セルフテスト,aidiy_task,操作編.md",
+          "targetExists": true,
+          "page": 15
+        },
+        {
+          "uri": "セルフテスト,aidiy_task,操作編.md",
+          "targetExists": true,
+          "page": 15
+        },
+        {
+          "uri": "セルフテスト,aidiy_browser,操作編.md#非空下書きの保持確認",
+          "targetExists": true,
+          "page": 15,
+          "targetAnchorExists": true
+        },
+        {
+          "uri": "セルフテスト,aidiy_diag,ランチャー編.md",
+          "targetExists": true,
+          "page": 15
+        }
+      ],
+      "body": {
+        "blocks": 324,
+        "matchedBlocks": 324,
+        "unmatchedBlocks": 0
+      },
+      "sourceReferenceChecks": {
+        "links": 37,
+        "images": 0,
+        "missing": 0,
+        "anchorMismatches": 0,
+        "figureNumberMismatches": 0
+      },
+      "visualReviewPages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17
+      ],
+      "visualReviewDetailPages": [
+        1,
+        15
+      ],
+      "displayContentRegenerated": true,
+      "unchangedPageStreamsVsAvailableBaseline": [],
+      "availableBaselineCommit": "c4f03368d15b5489a40a7713caa44c13822b45a1",
+      "verificationRecord": "evidence/IDE資料整合/PDF機械照合.json",
+      "pageNumbersVerified": true,
+      "visualReview": {
+        "allPagesRendered": true,
+        "allPagesContactSheetReviewed": true,
+        "detailPagesReviewed": [
+          1,
+          15
+        ],
+        "findings": "No clipping, overlap, broken table rows or missing images observed."
+      },
+      "postprocessContentStreamsUnchanged": true,
+      "postprocessMediaBoxesUnchanged": true
+    }
+  ],
+  "unconfirmed": [
+    "PDFビューア別の相対リンク手動クリック動作。格納URI・参照先の存在・Markdownアンカーは確認済み。",
+    "外部URLの到達性とリンク先の最新内容。",
+    "実アプリ操作と実AIの再試験。既存画像の再撮影は行わず、撮影時の旧表記を維持。"
+  ],
+  "summary": {
+    "pages": 48,
+    "bodyBlocks": 576,
+    "unmatchedBodyBlocks": 0,
+    "imageReferences": 24,
+    "localPdfLinks": 48,
+    "missingReferences": 0,
+    "anchorMismatches": 0,
+    "fileUriAnnotations": 0
+  }
+}

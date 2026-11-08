@@ -120,13 +120,15 @@ test('IDE同時起動: 最初の画面作成を待っている間も同じプロ
  assert.equal(first.windows[0].visible,true);assert.equal(first.windows[0].focused,true);
 });
 
-test('Code / Liveの種別ごとの既存窓再利用を維持する',async t=>{
+test('Code / Liveの設定と窓をプロジェクト別に分離する',async t=>{
  const {root,one,two}=folders(t),locks=new Map(),appData=join(root,'profiles');mkdirSync(appData);
  for(const kind of ['code','live']){
   const first=desktop({project:one,kind,appData,locks});await first.ready();t.after(()=>first.app.quit());
   const second=desktop({project:two,kind,appData,locks});await second.ready();
-  assert.equal(second.windows.length,0);assert.equal(second.messages[0].existingWindow,true);
-  assert.equal(first.paths.userData,join(appData,`aidiy_${kind}_vue`));
+  assert.equal(second.windows.length,1);t.after(()=>second.app.quit());
+  assert.equal(first.paths.userData,join(one,'_AIDIY',`aidiy_${kind}`,'electron'));
+  assert.equal(second.paths.userData,join(two,'_AIDIY',`aidiy_${kind}`,'electron'));
+  assert.equal(second.paths.sessionData,second.paths.userData);
  }
 });
 

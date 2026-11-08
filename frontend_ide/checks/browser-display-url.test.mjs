@@ -16,17 +16,18 @@ import {openBrowser} from '../src/components/ブラウザ/起動.js';
 const badURLs=['javascript:alert(1)','file:///tmp/a.html','data:text/html,hi','//example.com/a','/screen','example.com','https://u:p@example.com','https://example.com/\npath',null,{},'https://example.com/\x7f'];
 const target='http://localhost:8090/画面?view=1#part';
 const normalized=new URL(target).href;
-test('保存した表示URL: ElectronはHTML/Vueだけを許可し、ファイル境界とURLを検証する',async t=>{
+test('保存した表示URL: Electronはページ関連ソースだけにURLを許可し、ファイル境界とURLを検証する',async t=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-display-url-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
- for(const path of ['a.html','a.vue','a.txt','a.mp3'])writeFileSync(join(root,path),'test');
- for(const path of ['a.html','a.vue'])assert.equal(await browser.browserFileTarget(root,path,target),normalized);
+ for(const path of ['a.html','a.vue','a.js','a.tsx','a.svelte','a.d.ts','a.txt','a.mp3'])writeFileSync(join(root,path),'test');
+ for(const path of ['a.html','a.vue','a.js','a.tsx','a.svelte'])assert.equal(await browser.browserFileTarget(root,path,target),normalized);
  assert.equal(await browser.browserFileTarget(root,'a.html'),pathToFileURL(join(root,'a.html')).href);
- for(const path of ['a.txt','a.mp3','missing.vue','../a.html','/a.html'])await assert.rejects(browser.browserFileTarget(root,path,target));
+ for(const path of ['a.txt','a.mp3','a.d.ts','missing.vue','../a.html','/a.html'])await assert.rejects(browser.browserFileTarget(root,path,target));
  symlinkSync(join(tmpdir(),'outside.vue'),join(root,'link.vue'));
  await assert.rejects(browser.browserFileTarget(root,'link.vue',target));
  for(const value of badURLs)await assert.rejects(browser.browserFileTarget(root,'a.vue',value));
  assert.equal(await browser.browserOpenable('a.vue',target),true);
  assert.equal(await browser.browserOpenable('a.vue'),false);
+ for(const path of ['a.js','a.tsx','a.svelte']){assert.equal(await browser.browserOpenable(path),false);assert.equal(await browser.browserOpenable(path,target),true);}
  assert.equal(await browser.browserOpenable('a.mp3',target),false);
 });
 function fixture({online=true,source=true,preview={url:'https://example.com/default'},disconnect=false}={}){
@@ -47,7 +48,18 @@ test('保存した表示URL: Webはクリック中の空窓予約後に元ファ
  assert.deepEqual(f.navigation,[normalized]);assert.ok(f.calls.some(([,url])=>url.startsWith('/api/file?')));
  assert.ok(!f.calls.some(([,url])=>url.startsWith('/api/preview?')));
  const args=[];const desktop={aidiyWindow:{openBrowser:(...value)=>{args.push(value);return{ok:true};}}};
- assert.equal((await openBrowser('a.vue',7,desktop,target)).ok,true);assert.deepEqual(args,[['a.vue',7,target]]);
+ assert.equal((await openBrowser('a.vue',7,desktop,target)).ok,true);assert.deepEqual(args,[['a.vue',7,target,false]]);
+ assert.equal((await openBrowser('a.vue',undefined,desktop,target,true)).ok,true);assert.deepEqual(args[1],['a.vue',undefined,target,true]);
+});
+
+test('AI解析の表示URL: preloadは限定IPCへ再利用指定を渡し、従来呼出しは新規起動のまま',async()=>{
+ let api;const calls=[];
+ vm.runInNewContext(readFileSync(new URL('../デスクトップ/preload.cjs',import.meta.url),'utf8'),{
+  require:()=>({contextBridge:{exposeInMainWorld:(name,value)=>{assert.equal(name,'aidiyWindow');api=value;}},ipcRenderer:{invoke:async(...args)=>{calls.push(args);return{ok:true};}}})
+ });
+ assert.equal((await api.openBrowser('a.vue',undefined,target,true)).ok,true);
+ assert.equal((await api.openBrowser('a.vue',undefined,target)).ok,true);
+ assert.deepEqual(calls,[['development:open-browser','a.vue',undefined,target,true],['development:open-browser','a.vue',undefined,target,false]]);
 });
 test('保存した表示URL: 不正入力・対象外ファイル・ファイル消失・オフラインでは遷移せず予約窓を閉じる',async()=>{
  for(const [path,url,options] of [...badURLs.map(url=>['a.html',url,{}]),...['a.mp3','../a.vue','/a.vue','a.txt',undefined].map(path=>[path,target,{}]),['a.vue',target,{source:false}],['a.vue',target,{online:false}],['a.vue',target,{disconnect:true}]]){
@@ -93,4 +105,12 @@ test('表示URL IPC: 信頼済みIDE・元の画面ID・接続再確認を保ち
  assert.equal((await handler({},'a.vue',7,target)).ok,false);
  source=null;assert.equal((await handler({},'a.vue',undefined,target)).ok,false);
  assert.equal(created.length,0);
+});
+
+
+test('ソース→画面URL: WebはJS/TS等の選択URLを維持し、宣言ファイルを除外する',async()=>{
+ for(const ext of ['js','mjs','cjs','ts','mts','cts','jsx','tsx','svelte','astro']){
+  const f=fixture();assert.equal((await openBrowser('src/shared.'+ext,undefined,f.win,target)).ok,true,ext);assert.deepEqual(f.navigation,[normalized]);
+ }
+ const f=fixture();assert.equal((await openBrowser('types.d.ts',undefined,f.win,target)).ok,false);assert.deepEqual(f.navigation,[]);
 });

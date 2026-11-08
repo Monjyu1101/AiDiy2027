@@ -106,19 +106,19 @@ class CleanupProcessesTest(unittest.TestCase):
         for module, other in (('code', 'live'), ('live', 'code')):
             with self.subTest(module=module), tempfile.TemporaryDirectory() as folder:
                 root = Path(folder).resolve()
-                for name in ('node_modules', 'dist/aidiy_code', 'dist/aidiy_live', 'out/aidiy_code', 'out/aidiy_live', 'aidiy_live/dist', '.local/bin'):
+                for name in ('node_modules', 'dist/aidiy_code', 'dist/aidiy_live', 'out/aidiy_code', 'out/aidiy_live', 'aidiy_live/dist', '_AIDIY/aidiy_code/bin', '_AIDIY/aidiy_live/bin'):
                     (root / name).mkdir(parents=True, exist_ok=True)
                 for name in ('code', 'live'):
-                    (root / '.local/bin' / f'aidiy_{name}.cmd').write_text('test', encoding='utf-8')
-                with patch.object(cleanup, 'FRONTEND_VSCODE_DIR', root), patch.object(cleanup.Path, 'home', return_value=root), patch.object(
+                    (root / '_AIDIY' / f'aidiy_{name}' / 'bin' / f'aidiy_{name}.cmd').write_text('test', encoding='utf-8')
+                with patch.object(cleanup, 'FRONTEND_VSCODE_DIR', root), patch.object(cleanup, 'launcher_directory', side_effect=lambda name: root / '_AIDIY' / name / 'bin'), patch.object(
                     cleanup, 'uninstall_extension', return_value=(True, 1)
                 ) as extension, patch.object(cleanup, 'stop_standalone_processes', return_value=True) as stop:
                     self.assertTrue(cleanup.cleanup_app(module))
                 extension.assert_called_once_with(module)
                 stop.assert_called_once_with(module)
-                self.assertFalse((root / '.local/bin' / f'aidiy_{module}.cmd').exists())
+                self.assertFalse((root / '_AIDIY' / f'aidiy_{module}' / 'bin' / f'aidiy_{module}.cmd').exists())
                 self.assertFalse((root / f'dist/aidiy_{module}').exists())
-                self.assertTrue((root / '.local/bin' / f'aidiy_{other}.cmd').exists())
+                self.assertTrue((root / '_AIDIY' / f'aidiy_{other}' / 'bin' / f'aidiy_{other}.cmd').exists())
                 self.assertTrue((root / f'dist/aidiy_{other}').exists())
                 self.assertTrue((root / 'node_modules').exists())
 

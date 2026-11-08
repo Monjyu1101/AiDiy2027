@@ -39,7 +39,7 @@ FRONTEND_COMMAND = "npm"
 sys.path.insert(0, str(THIS_DIR.parent / "scripts"))
 from _setup_electron import setup_dependencies
 from _runtime_requirements import check_project_node_runtime
-from _setup_path import ensure_launcher_path, windows_launcher_command, launcher_owner_comment
+from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment
 
 AUTO_MODE = False
 
@@ -158,7 +158,7 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
     if not script_path.is_file():
         print_error(f"起動スクリプトが見つかりません: {script_path}")
         return False
-    launcher_dir = launcher_dir or Path.home() / ".local" / "bin"
+    launcher_dir = launcher_dir or launcher_directory('aidiy_avatar')
     launcher_path = launcher_dir / ("aidiy_avatar.cmd" if sys.platform == "win32" else "aidiy_avatar")
     try:
         launcher_dir.mkdir(parents=True, exist_ok=True)

@@ -5,6 +5,10 @@
 // https://github.com/monjyu1101/AiDiy2027
 
 // Nodeと画面で共用する。URLの検査だけを行い、通信・到達性確認は行わない。
+// 拡張子は調査候補の判定だけ。ページとの関連は解析で確認し、JS等を直接配信しない。
+export function isPageSource(path) {
+  return typeof path==='string'&&/\.(html?|vue|[cm]?[jt]s|[jt]sx|svelte|astro)$/i.test(path)&&! /\.d\.[cm]?ts$/i.test(path);
+}
 const controls=/[\u0000-\u001f\u007f-\u009f]/u;
 const secretKey=/(?:token|password|passwd|secret|credential|authorization|api[-_]?key|access[-_]?key|signature|^sig$|^key$|^auth$|^code$|session)/i;
 function displayUrl(value) {
@@ -33,8 +37,9 @@ function displayUrl(value) {
   }catch{return null;}
 }
 
-export function normalizeDisplayUrls(value) {
+export function normalizeDisplayUrls(value,{limit=20}={}) {
   if(!Array.isArray(value))return [];
+  limit=Number.isInteger(limit)?Math.max(1,Math.min(60,limit)):20;
   const urls=[],seen=new Set();
   for(const item of value) {
     if(!item||typeof item!=='object')continue;
@@ -42,8 +47,9 @@ export function normalizeDisplayUrls(value) {
     if(!url||seen.has(url))continue;
     seen.add(url);
     const label=typeof item.label==='string'?item.label.replace(/[\u0000-\u001f\u007f-\u009f]/gu,' ').trim().slice(0,200):'';
-    urls.push({url,label});
-    if(urls.length===20)break;
+    const reason=normalizeDisplayUrlReason(item.reason);
+    urls.push({url,label,...(reason?{reason}:{})});
+    if(urls.length===limit)break;
   }
   return urls;
 }

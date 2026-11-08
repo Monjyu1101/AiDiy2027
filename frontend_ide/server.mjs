@@ -17,7 +17,7 @@ import { createNavigationSound } from './ファイル機能/navigation-sound.mjs
 import { createAISearch } from './ファイル機能/ai-search.mjs';
 import { createFileAnalysis } from './ファイル機能/file-analysis.mjs';
 import { createBrowserAnalysis } from './ファイル機能/browser-analysis.mjs';
-import { normalizeDisplayUrls } from './viewer/表示URL.mjs';
+import { normalizeDisplayUrls, isPageSource } from './viewer/表示URL.mjs';
 import { startConsole } from './aidiy_console/console.mjs';
 import { cliTitleName } from './src/components/コンソール/CLIタイトル.js';
 import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
@@ -28,6 +28,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  if(!['code','live','ide','console','task','team','browser','navi'].includes(kind))throw Error('アプリはcode / live / ide / console / task / team / browser / naviから指定してください。');
  validateCliOptions(kind,{cli,cliAutoApprove,provider,model});
  const cliLaunch=cli?await resolveCliLaunch(cli,{autoApprove:cliAutoApprove,env}):undefined;
+ project=require('./host/scripts/project-storage.cjs').projectRoot(project,fileURLToPath(new URL('../',import.meta.url)));
  const taskTeam=['task','team'].includes(kind);
  if(projectFixed){if(!taskTeam)throw Error('プロジェクト固定はTask / Team専用です。');project=require('./デスクトップ/project-profile.cjs').projectIdentity(project).path;}
  const taskTeamProxy=taskTeam?createTaskTeamProxy(root,project,{projectFixed}):undefined;
@@ -69,12 +70,13 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
    if(['ide','navi'].includes(kind)&&await navigation.handle(req,res,url))return true;
    if(kind==='ide'&&await aiSearch.handle(req,res,url))return true;
    if(['ide','browser'].includes(kind)&&await browserAnalysis.handle(req,res,url))return true;
-   // 保存した画面URLを優先する。未解析・URL不明の場合は従来のHTML/Vue表示へ進む。
-   if(kind==='ide'&&req.method==='GET'&&url.pathname==='/api/preview'&&/\.(html?|vue)$/i.test(url.searchParams.get('path')||'')){
+   // 保存した画面URLを優先する。HTML/Vueは未解析・URL不明なら従来表示、JS等は根拠のある保存URLだけを使う。
+   if(kind==='ide'&&req.method==='GET'&&url.pathname==='/api/preview'&&isPageSource(url.searchParams.get('path'))){
     try{
      const saved=await fileAnalysis.get(url.searchParams.get('path'));
-     const routes=normalizeDisplayUrls(saved.result?.displayUrls).map(item=>({path:item.label||item.url,url:item.url}));
+     const routes=normalizeDisplayUrls(saved.result?.displayUrls,{limit:60}).map(item=>({path:item.label||item.url,url:item.url,...(item.reason?{reason:item.reason}:{})}));
      if(routes.length){res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify({kind:'analysis',routes,stale:saved.stale,reason:saved.result.displayUrlReason||''}));return true;}
+     if(!/\.(html?|vue)$/i.test(saved.path)){res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify({kind:'analysis',routes:[],error:saved.result?.displayUrlReason||'表示URLがありません。AI解析で、このソースを使用する画面を調べてください。'}));return true;}
     }catch{/* 解析記録が読めなくても、従来のファイル検証・表示は維持する。 */}
    }
    if(kind==='ide'&&await fileAnalysis.handle(req,res,url))return true;

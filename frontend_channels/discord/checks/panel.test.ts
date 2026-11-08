@@ -233,29 +233,26 @@ test('起動時の自動接続は保存済みの設定があるときだけ行�
   } finally { f.cleanup(); }
 });
 
-test('旧形式の3ファイル（機能・Live・コード）は1回だけ aidiy_discord.json へ移して削除する', async () => {
+test('旧形式の3ファイルは読み込まず、移行・削除もしない', async () => {
   const f = fixture();
   try {
-    const old = (name: string) => join(dirname(f.file), name);
-    writeFileSync(old('aidiy_discord_features.json'), JSON.stringify({ live: true, code: true }));
-    writeFileSync(old('aidiy_discord_model.json'), JSON.stringify(selection));
-    writeFileSync(old('aidiy_discord_code_model.json'), JSON.stringify({ provider: 'openai_oauth', model: 'gpt-6.1-sol' }));
+    const names = ['aidiy_discord_features.json', 'aidiy_discord_model.json', 'aidiy_discord_code_model.json'];
+    for (const name of names) writeFileSync(join(dirname(f.file), name), JSON.stringify({ live: true, model: 'old' }));
     const panel = f.panel(), initial = await panel.初期情報();
-    assert.equal(initial.firstRun, false); assert.deepEqual(initial.features, { live: true, code: true });
-    assert.equal(initial.code.model, 'openai_oauth/gpt-6.1-sol');
-    assert.deepEqual(JSON.parse(readFileSync(f.file, 'utf8')), { live: true, live_models: selection, code_name: 'aidiy_hermes', code_model: 'openai_oauth/gpt-6.1-sol' });
-    for (const name of ['aidiy_discord_features.json', 'aidiy_discord_model.json', 'aidiy_discord_code_model.json']) assert.equal(existsSync(old(name)), false, name);
+    assert.equal(initial.firstRun, true); assert.deepEqual(initial.features, { live: false, code: true });
+    assert.equal(existsSync(f.file), false);
+    for (const name of names) assert.equal(existsSync(join(dirname(f.file), name)), true);
     await panel.終了();
   } finally { f.cleanup(); }
 });
 
-test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes で書き足す。未対応の値では接続しない', async () => {
+test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
   const f = fixture();
   try {
     writeFileSync(f.file, JSON.stringify({ live: false, live_models: {}, code_model: 'same' }));
     const panel = f.panel();
     assert.deepEqual((await panel.初期情報()).code, { cli: 'aidiy_hermes', model: 'same' });
-    assert.equal(JSON.parse(readFileSync(f.file, 'utf8')).code_name, 'aidiy_hermes', '読込時に code_name を書き足す');
+    assert.equal(JSON.parse(readFileSync(f.file, 'utf8')).code_name, undefined, '読込時に保存内容を書き換えない');
     writeFileSync(f.file, JSON.stringify({ live: false, live_models: {}, code_name: 'other_harness', code_model: 'same' }));
     await panel.開始();
     assert.equal(panel.状態.phase, 'error'); assert.match(panel.状態.message, /other_harness には未対応/); assert.deepEqual(f.counts(), [0, 0]);

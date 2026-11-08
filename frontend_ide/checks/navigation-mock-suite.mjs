@@ -32,7 +32,7 @@ source['frontend_ide/server.mjs']={sha256:hash(join(root,'frontend_ide/server.mj
 for(const p of ['frontend_ide/package.json','frontend_ide/package-lock.json','frontend_ide/node_modules/vue/package.json','frontend_ide/node_modules/@vue/compiler-sfc/package.json','frontend_ide/node_modules/esbuild/package.json','frontend_ide/node_modules/ws/package.json'])source[p]={sha256:hash(join(root,p)),version:p.includes('node_modules')?JSON.parse(readFileSync(join(root,p),'utf8')).version:undefined};
 const distribution=snapshot(['frontend_ide/dist','frontend_ide/host/dist/aidiy_code']);
 writeFileSync(join(run,'versions.json'),JSON.stringify({source,distribution},null,2));
-const shared=[join(root,'_config/AiDiy_key.json'),join(os.homedir(),'.aidiy/aidiy_navi_model.json')];
+const shared=[join(root,'_config/AiDiy_key.json'),join(root,'_AIDIY/aidiy_navi/aidiy_navi_model.json')];
 const protectedBefore=shared.map(p=>existsSync(p)?hash(p):null);
 const chrome=process.env.CHROME_PATH||[process.env.PROGRAMFILES,process.env['PROGRAMFILES(X86)']].filter(Boolean).map(p=>join(p,'Google/Chrome/Application/chrome.exe')).find(existsSync);
 if(!chrome)throw Error('CHROME_PATHが必要です。');

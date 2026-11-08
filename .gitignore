@@ -152,8 +152,9 @@ Thumbs.db
 
 # Project specific directories
 # Code / IDE がプロジェクト内に保存する会話・検索・解析の実行記録。
-**/_AIDIY/aidiy_code/
-**/_AIDIY/aidiy_ide/
+**/_AIDIY/aidiy_*/
+# 旧保存先も公開しない。読込・自動移行はしない。
+.aidiy/
 # 環境診断（aidiy_diag）の出力。インストール状況・モデル情報は PC ごとの個別環境データ。
 **/_AIDIY/aidiy_diag/
 _cache/

@@ -10,24 +10,33 @@
  * -------------------------------------------------------------------------
  */
 
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { homedir } from 'node:os';
+import { createRequire } from 'node:module';
+import { プロジェクトルート } from '../接続/接続設定';
 import { dirname, join } from 'node:path';
-import { Hermesモデル検証, 旧コードモデル変換, コード名検証, 既定コード名 } from '../コード/Hermesモデル';
+import { Hermesモデル検証, コード名検証, 既定コード名 } from '../コード/Hermesモデル';
 
-// パネルの保存は1ファイル（~/.aidiy/aidiy_slack.json）。このファイルがあれば起動時に自動接続する。
+// パネルの保存は1ファイル（プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json）。このファイルがあれば起動時に自動接続する。
 // Discord 版の aidiy_discord.json と同じ作りで、Slack は音声会話を持たないため code_name / code_model だけを持つ。
-export const パネル設定保存先 = join(homedir(), '.aidiy', 'aidiy_slack.json');
+const { programDataDirectory, projectRoot } = createRequire(import.meta.url)('../../../../frontend_ide/host/scripts/project-storage.cjs') as {
+  programDataDirectory: (project: string, programName: string, aidiyRoot: string) => string;
+  projectRoot: (project: string, aidiyRoot: string) => string;
+};
+export function パネルプロジェクト(project = process.env.AIDIY_SLACK_PROJECT ?? ''): string {
+  return projectRoot(project, プロジェクトルート);
+}
+export function パネル設定保存先(project = process.env.AIDIY_SLACK_PROJECT ?? ''): string {
+  return join(programDataDirectory(project, 'aidiy_slack', プロジェクトルート), 'aidiy_slack.json');
+}
 export type パネル設定 = { code_name: string; code_model: string };
-const 旧ファイル = (file: string) => [join(dirname(file), 'aidiy_slack_code_model.json')];
 
 function 検証(value: unknown): パネル設定 {
   const data = value as { code_name?: unknown; code_model?: unknown } | null;
   return { code_name: コード名検証(data?.code_name), code_model: Hermesモデル検証(data?.code_model) };
 }
 
-export function パネル設定保存(value: unknown, file = パネル設定保存先): パネル設定 {
+export function パネル設定保存(value: unknown, file = パネル設定保存先()): パネル設定 {
   const settings = 検証(value);
   mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
   const temporary = `${file}.${randomUUID()}.tmp`;
@@ -38,18 +47,8 @@ export function パネル設定保存(value: unknown, file = パネル設定保�
   return settings;
 }
 
-/** 保存済みの設定。未保存（初回）・破損時は undefined。旧形式のファイルは1回だけ移して削除する。 */
-export function パネル設定読込(既定モデル: string, file = パネル設定保存先): パネル設定 | undefined {
-  try {
-    const data = JSON.parse(readFileSync(file, 'utf8')), settings = 検証(data);
-    // code_name のない保存は、読んだ時点で code_name 付きに書き直す。
-    return data?.code_name === undefined ? パネル設定保存(settings, file) : settings;
-  } catch { /* 旧形式を確認する。 */ }
-  const [code] = 旧ファイル(file);
-  if (!existsSync(code)) return undefined;
-  let old: unknown;
-  try { old = JSON.parse(readFileSync(code, 'utf8')); } catch { old = undefined; }
-  const settings = パネル設定保存({ code_name: 既定コード名, code_model: 旧コードモデル変換(old, 既定モデル) }, file);
-  rmSync(code, { force: true });
-  return settings;
+/** 保存済みの設定。未保存・破損時は undefined。旧保存先は読まず、移行しない。 */
+export function パネル設定読込(_既定モデル: string, file = パネル設定保存先()): パネル設定 | undefined {
+  try { return 検証(JSON.parse(readFileSync(file, 'utf8'))); }
+  catch { return undefined; }
 }

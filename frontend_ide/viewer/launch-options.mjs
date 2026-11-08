@@ -9,13 +9,7 @@ import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 
-export function projectFolder(positionals, project, cwd = process.cwd()) {
-  if (project !== undefined && !project.trim()) throw new Error('--project に値を指定してください。');
-  if (positionals.length + (project === undefined ? 0 : 1) > 1) throw new Error('作業フォルダは1つだけ指定してください。');
-  const root = resolve(cwd, project ?? positionals[0] ?? '.');
-  if (!existsSync(root) || !statSync(root).isDirectory()) throw new Error(`作業フォルダがありません: ${root}`);
-  return root;
-}
+export { プロジェクトフォルダ決定 as projectFolder } from '../host/scripts/launch-project.mjs';
 
 export function useBrowser(env = process.env, platform = process.platform) {
   return env.CODESPACES === 'true' || (platform === 'linux' && !env.DISPLAY && !env.WAYLAND_DISPLAY);

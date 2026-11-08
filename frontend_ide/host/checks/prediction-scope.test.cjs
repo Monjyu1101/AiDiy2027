@@ -161,7 +161,7 @@ function hostMocks() {
   const models = { コードモデル読込: noop, コードモデル保存: value => value, モデル保存先: () => 'mock-model', コード設定保存先: () => 'mock-options', 検証回数読込: noop };
   const offline = { Hermes既定モデル: () => 'same', オフラインモデル候補: () => [{ id: 'same' }], オフラインモデル保存先: () => 'mock-offline' };
   const common = { 'extension-installation': { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => fixtureHeaders }) }, 'internal-auth': authFixture(), 'file-attachments': require('../out/file-attachments.cjs'), 'code-connection': { CodeConnection: Connection, コード選択: value => ({ provider: value.provider, model: value.model }) }, 'input-prediction': { InputPrediction: Prediction },
-    'model-preferences': models, 'conversation-store': store, 'local-backend.cjs': { ローカル接続先: () => 'http://127.0.0.1:18091' }, protocol: {}, offline };
+    'model-preferences': models, 'conversation-store': { ...store, 会話選択読込:()=>undefined, 会話選択保存:()=>{} }, 'local-backend.cjs': { ローカル接続先: () => 'http://127.0.0.1:18091' }, protocol: {}, offline };
   const deps = {};
   for (const prefix of ['./', '../../src/']) for (const [name, value] of Object.entries(common)) deps[prefix + name] = value;
   deps['../aidiy_live/local-backend.cjs'] = deps['../../aidiy_live/local-backend.cjs'] = common['local-backend.cjs'];

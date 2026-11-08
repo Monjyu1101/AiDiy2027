@@ -367,12 +367,12 @@ class ElectronSetupTest(unittest.TestCase):
                 legacy = launchers / ('aidiy_vscode.cmd' if platform_name == 'win32' else 'aidiy_vscode')
                 legacy.write_text(str(self.root / 'scripts' / 'launch-standalone.mjs'), encoding='utf-8')
                 with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
-                    vscode.Path, 'home', return_value=home
+                    vscode, 'launcher_directory', side_effect=lambda name: home / '_AIDIY' / name / 'bin'
                 ), patch.object(vscode.sys, 'platform', platform_name):
                     self.assertTrue(vscode.install_standalone_launcher())
-                self.assertFalse(legacy.exists())
+                self.assertTrue(legacy.exists())
                 for name in ('aidiy_code', 'aidiy_live'):
-                    launcher = launchers / (f'{name}.cmd' if platform_name == 'win32' else name)
+                    launcher = home / '_AIDIY' / name / 'bin' / (f'{name}.cmd' if platform_name == 'win32' else name)
                     self.assertIn(str(self.root / name / 'launch.mjs'), launcher.read_text(encoding='utf-8'))
                     if platform_name == 'win32':
                         content = launcher.read_bytes()
@@ -392,7 +392,7 @@ class ElectronSetupTest(unittest.TestCase):
         legacy = launchers / 'aidiy_vscode.cmd'
         legacy.write_text('node other-checkout/launch-standalone.mjs', encoding='utf-8')
         with patch.object(vscode, 'FRONTEND_VSCODE_DIR', self.root), patch.object(
-            vscode.Path, 'home', return_value=home
+            vscode, 'launcher_directory', side_effect=lambda name: home / '_AIDIY' / name / 'bin'
         ), patch.object(vscode.sys, 'platform', 'win32'):
             self.assertTrue(vscode.install_standalone_launcher())
         self.assertEqual(legacy.read_text(encoding='utf-8'), 'node other-checkout/launch-standalone.mjs')

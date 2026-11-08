@@ -310,7 +310,7 @@ frontend_avatar は Electron デスクトップアプリと通常 Web ブラウ�
 - Live は接続時に作業フォルダを `CODE_BASE_PATH` として渡し、LiveAI とコードエージェントの回答（`output_request`）を表示する。
 - 単独起動版は Electron のフレームレスウィンドウ、または `--browser` でブラウザを使う。
 - VS Code 拡張・単独起動版はそのまま維持し、さらに開発スペース（AiDiy IDE、`aidiy_ide`）の部品としても動作する。Electron 版 IDE は「＋ Code」「＋ Live」で同じプロジェクト・利用モード・セッションの別ウィンドウを開き、Web 版は画面内タブで使う。同じ部品が3つの場所で動くことで、IDE 開発への応用を広げる。
-- Code / Live とも最後に手動選択したモデルを `~/.aidiy/aidiy_code_model.json` / `aidiy_live_model.json` に保存し、拡張と単独起動版で共用する。
+- Code / Live とも最後に手動選択したモデルを `_AIDIY/aidiy_code/aidiy_code_model.json` / `aidiy_live_model.json` に保存し、拡張と単独起動版で共用する。
 - Windows デスクトップ版 VS Code を主対象とし、VS Code 1.106 以降を前提とする。
 
 詳細は `frontend_ide/host/AGENTS.md` を参照してください。

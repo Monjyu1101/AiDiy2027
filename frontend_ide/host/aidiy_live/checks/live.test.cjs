@@ -428,3 +428,17 @@ test('Live添付: 単独の実loopback中継で128k超のinput_fileとCore echo�
   assert.equal(echo.メッセージ識別, 'input_file'); assert.equal(generated.メッセージ識別, 'output_file');
   for (const item of [echo, generated]) { assert.equal(item.セッションID, 'files-session'); assert.equal(item.チャンネル, '0'); assert.match(item.サムネイル画像, /^iVBOR/); }
 });
+
+test('Live既定保存先: 同じプロジェクトのみモデルを復元し、別プロジェクトとは共有しない', async () => {
+  const one=mkdtempSync(join(preferences,'project-a-')),two=mkdtempSync(join(preferences,'project-b-'));
+  const selected={LIVE_AI_NAME:'openai_live',LIVE_OPENAI_MODEL:'project-model',LIVE_OPENAI_VOICE:'marin'};
+  let live=await start(root,undefined,false,one,{},undefined);
+  try { const response=await fetch(new URL('model',live.url),{method:'POST',headers:{Origin:new URL(live.url).origin,'Content-Type':'application/json'},body:JSON.stringify(selected)});assert.equal(response.status,200); }
+  finally { await live.close(); }
+  assert.deepEqual(JSON.parse(readFileSync(join(one,'_AIDIY','aidiy_live','aidiy_live_model.json'),'utf8')),selected);
+  for(const project of [two,one]) {
+    live=await start(root,undefined,false,project,{},undefined);
+    try { const config=await (await fetch(new URL('config',live.url))).json();assert.deepEqual(config.保存モデル設定,project===one?selected:undefined); }
+    finally { await live.close(); }
+  }
+});

@@ -20,7 +20,7 @@ Code は `aidiy_hermes` CLI を直接起動します。接続情報はプロジ�
 | `src/接続/コマンド処理.ts` | コマンド解析、利用許可、ts 比較、本文の復元・エスケープ・分割 | 同名 |
 | `src/接続/Bot接続.ts` | 定期取得（`conversations.history` / `replies`）、スレッド返信、パネルへの発言通知 | 同名（Discord はイベント受信） |
 | `src/モデル情報/モデル情報.ts` | AIコアのモデル情報APIからコード候補を取得（Live 候補は扱わない） | 同名 |
-| `src/接続パネル/パネル設定.ts` | `~/.aidiy/aidiy_slack.json`（`code_name` / `code_model`）の検証・原子的保存・旧形式からの移行 | 同名（Discord は Live の項目も持つ） |
+| `src/接続パネル/パネル設定.ts` | `プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json`（`code_name` / `code_model`）の検証・原子的保存・プロジェクト別保存 | 同名（Discord は Live の項目も持つ） |
 | `src/コード/コード会話.ts` | スレッドごとの Hermes 会話継続、停止 | 同名 |
 | `src/コード/Hermesモデル.ts` | aidiy_hermes のモデル文字列の検証・候補・Hermes 引数への変換、`code_name` の既定と対応一覧 | 同名（内容も同一） |
 | `src/共通連携/IDE連携.ts` | `frontend_ide/host` の CLI 実行・接続元許可の直接共有 | 同名 |
@@ -34,7 +34,7 @@ Code は `aidiy_hermes` CLI を直接起動します。接続情報はプロジ�
 - Discord 版と同じく `frontend_ide/host` の実装を共有し、Discord 側（`frontend_channels/discord/src`・`panel`）の部品は読み込まない（`checks/layout.test.ts` で確認）。
 - `aidiy_slack` は画面中央上部に小さなパネルを開き、前回のモデルで自動接続する（`--no-connect` で未接続）。初回（`aidiy_slack.json` が未保存）は自動接続せずモデル設定画面から始める（`パネル操作.ts` の `設定済み` / `自動開始`、起動時の要求は `auto-start`。Discord 版と同じ）。切断・接続失敗ではモデル選択の画面に戻る。起動引数は `aidiy_discord` と同じ（`--project` / `--browser` / `--check` / `--connect` / `--no-connect` / `--wait` / `--help`）。
 - 画面下部は aidiy_code と同じ「モデル ▾」と `AI - モデル` の表示。接続中に押すと設定を開き、「適用して再接続」で切断・保存・再接続する。
-- モデルの選択は `~/.aidiy/aidiy_slack.json`（`code_name` / `code_model`）の1ファイルに保存する（旧 `aidiy_slack_code_model.json` は初回に移して削除）。`code_name` は将来の別スタンドアロンハーネス用で、現在は `aidiy_hermes` だけを実行する（ない保存は読込時に書き足し、未対応の値では接続しない）。コードは aidiy_hermes 固定で、引数への変換は `src/コード/Hermesモデル.ts`（Discord 版と同一）。未保存時の初期表示は `CODE_AIDIY_HERMES_MODEL`。接続中に閉じると `panel/desktop.cjs` が終了を確認し、切断中はそのまま終了する。単一起動ロックは 18096（Discord は 18095）。起動ログは配置先リポジトリの `temp/aidiy_slack/`。
+- モデルの選択は `プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json`（`code_name` / `code_model`）の1ファイルに保存する（旧設定へのフォールバック・自動移行なし）。`code_name` は将来の別スタンドアロンハーネス用で、現在は `aidiy_hermes` だけを実行する（ない保存は読込時に既定値として扱い、未対応の値では接続しない）。コードは aidiy_hermes 固定で、引数への変換は `src/コード/Hermesモデル.ts`（Discord 版と同一）。未保存時の初期表示は `CODE_AIDIY_HERMES_MODEL`。接続中に閉じると `panel/desktop.cjs` が終了を確認し、切断中はそのまま終了する。単一起動ロックは 18096（Discord は 18095）。起動ログは配置先リポジトリの `temp/aidiy_slack/`。
 - パネルの回答者名は「AiDiy」、投稿者名は「あなた」（`users:read` 権限を求めない）。
 - 設定値や Slack API のエラーオブジェクト全体をログに出さない。案内には Slack のエラーコードだけを使う。
 - Vue 画面は事前コンパイル済み `panel/view.js` を同梱し、`scripts/verify-panel.mjs` でソースと配布物の一致を確認する。

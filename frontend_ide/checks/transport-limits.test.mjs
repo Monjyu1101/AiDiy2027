@@ -89,7 +89,7 @@ test('TaskTeam HTTP proxy: 20MiBは完全転送し、20MiB+1は上流を呼ば�
 for (const [name, path, start, end, returned] of [
   ['Code', '../host/aidiy_code/src/server.ts', "req.setEncoding('utf8');", '// IDE埋め込み時', 'data'],
   ['Live', '../host/aidiy_live/src/server.ts', 'const chunks: Buffer[] = [];', 'if (saveModel)', "JSON.parse(body.toString('utf8'))"],
-  ['共有下書き', '../デスクトップ/下書き共有.cjs', 'const chunks=[];', 'const groups=await local', 'data'],
+  ['共有下書き', '../デスクトップ/下書き共有.cjs', 'const chunks=[];', 'if(req.url===`/${token}/viewer-status`)', 'data'],
 ]) test(`${name} HTTP body reader: UTF-8 bytesで20MiB境界とchunk分割を扱う`, async () => {
   const text = source(path), from = text.indexOf(start), to = text.indexOf(end, from);
   assert.ok(from >= 0 && to > from, '実装ブロックが見つかる');

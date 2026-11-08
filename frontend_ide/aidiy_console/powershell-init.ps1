@@ -13,6 +13,7 @@ $AiDiyUtf8 = New-Object System.Text.UTF8Encoding($false)
 [Console]::OutputEncoding = $AiDiyUtf8
 $global:OutputEncoding = $AiDiyUtf8
 Import-Module PSReadLine -ErrorAction Stop
+Set-PSReadLineOption -HistorySavePath $env:HISTFILE
 $global:AiDiyCliOptions = @{}
 ($CliOptionsJson | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $global:AiDiyCliOptions[$_.Name] = $_.Value }
 $global:AiDiyOriginalTabHandler = Get-PSReadLineKeyHandler -Bound | Where-Object { $_.Key -eq 'Tab' } | Select-Object -First 1

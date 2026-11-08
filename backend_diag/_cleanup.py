@@ -69,7 +69,7 @@ def cleanup(choices=None):
         if not cleanup_dependencies(Path(__file__).resolve().parent):
             return False
         for name in ('aidiy_diag', 'aidiy_diag.cmd'):
-            launcher = Path.home() / '.local' / 'bin' / name
+            launcher = _path_helper.launcher_directory('aidiy_diag') / name
             if launcher.is_file() and marker in launcher.read_text(encoding='utf-8'):
                 launcher.unlink()
                 print(f'診断ランチャーを解除しました: {launcher}')

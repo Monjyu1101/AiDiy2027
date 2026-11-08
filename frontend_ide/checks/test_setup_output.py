@@ -36,7 +36,7 @@ class SetupOutputTests(unittest.TestCase):
                 def path_notice(_):
                     print('PATH 登録済み。')
                     return True
-                with patch.object(Path, 'home', return_value=Path(tmp)), patch.object(sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(launcher, 'ensure_launcher_path', side_effect=path_notice) as ensure, patch.object(host, 'ensure_launcher_path') as host_ensure, contextlib.redirect_stdout(output):
+                with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(host, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(launcher, 'ensure_launcher_path', side_effect=path_notice) as ensure, patch.object(host, 'ensure_launcher_path') as host_ensure, contextlib.redirect_stdout(output):
                     self.assertTrue(setup.register_launchers(host))
                 names = ['navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser']
                 suffix = '.cmd' if platform == 'win32' else ''
@@ -44,9 +44,9 @@ class SetupOutputTests(unittest.TestCase):
                 self.assertEqual(len(lines), 8)
                 for name, line in zip(names, lines):
                     self.assertIn(f'aidiy_{name}{suffix} を登録しました:', line)
-                    self.assertTrue((Path(tmp) / '.local/bin' / f'aidiy_{name}{suffix}').is_file())
-                self.assertEqual(output.getvalue().count('PATH 登録済み。'), 1)
-                ensure.assert_called_once()
+                    self.assertTrue((Path(tmp) / '_AIDIY' / f'aidiy_{name}' / 'bin' / f'aidiy_{name}{suffix}').is_file())
+                self.assertEqual(output.getvalue().count('PATH 登録済み。'), 8)
+                self.assertEqual(ensure.call_count, 8)
                 host_ensure.assert_not_called()
 
     def test_child_setups_defer_registration_and_aligned_success(self):
@@ -100,15 +100,15 @@ class SetupOutputTests(unittest.TestCase):
 
     def test_single_launcher_keeps_path_notice_and_suffix(self):
         launcher = load('frontend_ide/viewer/launcher.py')
-        with tempfile.TemporaryDirectory() as tmp, patch.object(Path, 'home', return_value=Path(tmp)), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(launcher, 'ensure_launcher_path', return_value=True) as ensure, contextlib.redirect_stdout(io.StringIO()):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(launcher, 'ensure_launcher_path', return_value=True) as ensure, contextlib.redirect_stdout(io.StringIO()):
             launcher.install_launcher(ROOT / 'frontend_ide/aidiy_console', 'console')
-            ensure.assert_called_once()
+            self.assertEqual(ensure.call_count, 1)
 
     def test_single_host_setup_keeps_path_registration(self):
         host = load('frontend_ide/host/_setup.py')
-        with tempfile.TemporaryDirectory() as tmp, patch.object(Path, 'home', return_value=Path(tmp)), patch.object(host, 'ensure_launcher_path', return_value=True) as ensure, contextlib.redirect_stdout(io.StringIO()):
+        with tempfile.TemporaryDirectory() as tmp, patch.object(host, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(host, 'ensure_launcher_path', return_value=True) as ensure, contextlib.redirect_stdout(io.StringIO()):
             self.assertTrue(host.install_standalone_launcher())
-            ensure.assert_called_once()
+            self.assertEqual(ensure.call_count, 2)
 
     def test_root_twelve_app_colons_align(self):
         root = load('_setup.py')

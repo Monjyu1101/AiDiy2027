@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {normalizeDisplayUrls,normalizeDisplayUrlReason} from '../viewer/表示URL.mjs';
+import {normalizeDisplayUrls,normalizeDisplayUrlReason,isPageSource} from '../viewer/表示URL.mjs';
 
 test('表示URL: HTTP(S)・日本語・hashルートを許可し正規化・重複除去する',()=>{
  const value=normalizeDisplayUrls([{url:'HTTP://LOCALHOST:80',label:' ホーム '},{url:'http://localhost/'},{url:'https://example.test:443/a/../b'},{url:'http://[::1]:8090/#/一覧?page=2',label:'一覧'}]);
@@ -32,4 +32,15 @@ test('表示URL: 件数・ラベル・理由の上限と不正型を扱う',()=>
 test('表示URL: エンコードした文字%を残し、二重エンコードした制御文字は拒否する',()=>{
  assert.deepEqual(normalizeDisplayUrls([{url:'https://example.com/100%25.html'}]),[{url:'https://example.com/100%25.html',label:''}]);
  for(const url of ['https://example.com/%250a%25','https://example.com/%0a%','https://example.com/%ff%0a'])assert.deepEqual(normalizeDisplayUrls([{url}]),[]);
+});
+
+
+test('ページ関連ソース: 共通の拡張子判定は候補に限定し、宣言・画像・設定等を対象外にする',()=>{
+ for(const path of ['a.htm','a.HTML','a.vue','a.js','a.mjs','a.cjs','a.ts','a.mts','a.cts','a.jsx','a.tsx','a.svelte','a.astro'])assert.equal(isPageSource(path),true,path);
+ for(const path of [undefined,null,{},'a.json','a.png','a.css','a.py','a.d.ts','a.d.mts','a.D.CTS','a.js.map','a.vue.txt'])assert.equal(isPageSource(path),false,String(path));
+});
+
+test('表示URL: 複数画面ごとの根拠・query/hash差を維持し、旧形式の読出しは変えない',()=>{
+ const result=normalizeDisplayUrls([{url:'https://example.test/app?view=list',label:'画面',reason:' router.ts:10 → List.vue:4 → shared.js '},{url:'https://example.test/app?view=detail#tab',label:'画面',reason:'x'.repeat(2001)},{url:'https://example.test/app?view=list',reason:'duplicate'},{url:'https://example.test/legacy',reason:{bad:true}}]);
+ assert.equal(result.length,3);assert.equal(result[0].reason,'router.ts:10 → List.vue:4 → shared.js');assert.equal(result[1].reason.length,2000);assert.deepEqual(result[2],{url:'https://example.test/legacy',label:''});
 });

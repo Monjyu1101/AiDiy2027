@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import * as analysisTools from '../src/components/ブラウザ/ブラウザ解析状態.js';
 import * as addressTools from '../src/components/ブラウザ/URL表示.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
@@ -25,7 +26,7 @@ function fixture({standalone=false,headerOnly=false,title=()=>Promise.resolve('A
  };
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,window:{aidiyWindow:api},requestAnimationFrame:()=>1,cancelAnimationFrame(){},ResizeObserver:class{observe(){}disconnect(){}},document:{documentElement:{classList:{add(){},remove(){}}}},
-  require:id=>id==='./URL表示.js'?addressTools:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
+  require:id=>id==='./ブラウザ解析状態.js'?analysisTools:id==='./URL表示.js'?addressTools:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
  });
  const props={standalone,headerOnly},scope=vue.effectScope(),state=scope.run(()=>module.exports.setup(props,{expose(){}}));
  const render=()=>module.exports.render({},[],props,vue.proxyRefs(state),{},{});

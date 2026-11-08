@@ -76,14 +76,14 @@ test('Live のタブ切り替え: 同じ接続を保持し、会話と切断通�
   try {
     const settings = { LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'saved-model', LIVE_FREEAI_VOICE: 'Zephyr' };
     receive({ type: 'save-model', id: 90, settings });
-    assert.deepEqual(JSON.parse(readFileSync(join(home, '.aidiy/aidiy_live_model.json'), 'utf8')), settings);
+    assert.deepEqual(JSON.parse(readFileSync(join(home, '_AIDIY/aidiy_live/aidiy_live_model.json'), 'utf8')), settings);
     assert.equal(packets.at(-1).id, 90); assert.equal(packets.at(-1).value.ok, true);
     provider.resolveWebviewView(view);
     const boot = JSON.parse(view.webview.html.match(/id="development-config"[^>]*>(.*?)<\/script>/)[1]);
     assert.deepEqual(boot.live.保存モデル設定, settings);
     receive({ type: 'save-model', id: 91, settings: { ...settings, LIVE_AI_NAME: 'unknown' } });
     assert.ok(packets.at(-1).error);
-    assert.deepEqual(JSON.parse(readFileSync(join(home, '.aidiy/aidiy_live_model.json'), 'utf8')), settings);
+    assert.deepEqual(JSON.parse(readFileSync(join(home, '_AIDIY/aidiy_live/aidiy_live_model.json'), 'utf8')), settings);
     for (const [index, channel] of ['input', '0', 'audio'].entries()) {
       const id = index + 1;
       receive({ type: 'socket-open', id }); sockets[index].onopen();
@@ -122,7 +122,7 @@ test('Live のタブ切り替え: 同じ接続を保持し、会話と切断通�
     receive({ type: 'save-model', id: 202, settings: { ...settings, LIVE_AI_NAME: 'gemini_live' } });
     assert.equal(sockets.length, oldSockets);
     assert.match(packets.at(-1).error, /フォルダ/);
-    assert.deepEqual(JSON.parse(readFileSync(join(home, '.aidiy/aidiy_live_model.json'), 'utf8')), settings);
+    assert.deepEqual(JSON.parse(readFileSync(join(home, '_AIDIY/aidiy_live/aidiy_live_model.json'), 'utf8')), settings);
     const empty = JSON.parse(view.webview.html.match(/id="development-config"[^>]*>(.*?)<\/script>/)[1]);
     assert.equal(empty.live.作業フォルダ, null);
     vscode.workspace.workspaceFolders = [{ name: 'second', uri: resource(extensionPath) }]; folderChanged();

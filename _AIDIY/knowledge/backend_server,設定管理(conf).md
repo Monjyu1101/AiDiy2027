@@ -88,6 +88,14 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 
 `openrt_free` のモデル設定は `CHAT_OPENRT_FREE_MODEL`（初期値 `auto`）で独立して保持する。候補は `chat_models_info.json` の `openrt_free` 区分、API キーは通常の `openrt_key_id` を共用する。初期値補正・候補欠落時の選択は他のChat方式と共通とし、無料専用の実行制限は設けない。共通設定へ補正値を書き戻さない。
 
+### Code の新規共通設定
+
+新規 `AiDiy_key.json` の Code 既定選択は `CODE_AI1_NAME: aidiy_hermes` / `CODE_AI1_MODEL: auto`。Code の「共通設定」はこのペアを参照します。`CODE_AIDIY_HERMES_MODEL` も `auto` のままです。CODE_AI2〜6、Task / Team の初期値は変更しません。
+
+既存JSONの保存済み方式・モデルは置換せず、不足キーだけを通常の補完で追加します。最後の手動選択を保存した `aidiy_code_model.json` も変更しません。セッション初期化の不足キー用フォールバックも同じペアに合わせますが、候補による実行時補正の仕様は変えず、共通設定への移行・書き戻しは追加しません。
+
+回帰確認はリポジトリルートで `python -B -X utf8 -m unittest discover -s backend_server/checks -p test_code_common_defaults.py -v`。一時JSONで新規作成・既存値保持・不足キー補完・再読込時の非書換を確認し、セッション初期値生成も外部接続なしで検証します。
+
 ### `:cloud` サフィックスの扱い
 
 `CHAT_OLLAMA_MODEL` または `OLLAMA_MODEL` の `:cloud` サフィックスは除去しない。ローカル Ollama daemon が cloud ルーティングを処理するため、設定ファイルと取得値を同じ値に保つ。
