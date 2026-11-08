@@ -48,7 +48,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 | 冊子・本文 | PDF | 役割 | 対象実行形態 |
 |---|---|---|---|
-| [aidiy_navi ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.pdf) | 開発目標・作業項目・推定達成率・次の提案 | 単独／IDE・Web、読み取り専用 |
+| [aidiy_navi ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.pdf) | 開発目標・作業項目・推定達成率・次の提案 | 単独／IDE・Web。評価は読み取り専用、自動航行オン時はCodeが変更 |
 | [aidiy_console ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_console,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_console,操作編.pdf) | CLIを開く入口とConsole画面 | 単独Electron（CLI個別操作はHermes編等） |
 | [aidiy_hermes ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.pdf) | ヘルプ・状態確認とCLI会話 | CLI。Electronアプリではありません |
 | [aidiy_code ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_code,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_code,操作編.pdf) | コード支援チャットの起動・入力・応答 | 単独Electron／--browser／VS Code拡張 |

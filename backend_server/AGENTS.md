@@ -70,15 +70,16 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `apps_main.py` | 業務アプリサーバー |
 | `database.py` | SQLite 接続、Session、Base |
 | `deps.py` | 認証 dependency |
-| `auth.py` | JWT 生成・検証 |
+| `auth.py` / `auth_keyring.py` | 通常 JWT の生成・検証、Core の通常 / 内部認証鍵の永続化・更新 |
+| `internal_auth.py` | IDE などの内部連携用トークンの発行・検証 |
 | `log_config.py` | ログ設定 |
 | `conf/` | 設定管理、モデル一覧、JSON 設定 |
 | `core_models/` | C系 / A系 SQLAlchemy model |
 | `apps_models/` | M系 / T系 SQLAlchemy model |
 | `core_schema/` | C系 / A系 Pydantic schema |
-| `apps_schema/` | M系 / T系 / S系 Pydantic schema |
+| `apps_schema/` | M系 / T系 Pydantic schema（S系の要求 schema は各 Router 内で定義） |
 | `core_crud/` | C系 / A系 CRUD |
-| `apps_crud/` | M系 / T系 / S系 CRUD |
+| `apps_crud/` | M系 / T系 CRUD、初期データ、共通 helper（S系の DB 操作は各 Router 内で行い、監査 helper を共用） |
 | `core_router/` | Core API / V系 / AIコア |
 | `apps_router/` | Apps API / V系 / S系 |
 | `AIコア/` | AI provider、WebSocket、Code CLI 連携 |
@@ -94,6 +95,7 @@ Core:
 - `C権限`
 - `C利用者`
 - `C採番`
+- `V権限`、`V利用者`、`V採番`
 - `A会話履歴`
 - `auth`
 - `files`
@@ -103,7 +105,7 @@ Apps:
 
 - `M配車区分`、`M車両`、`M商品`、`M商品分類`、`M取引先分類`、`M取引先`、`M生産区分`、`M生産工程`、`M商品構成`
 - `T配車`、`T生産`、`T商品入庫`、`T商品出庫`、`T商品棚卸`
-- `V*`
+- 上記業務データに対応する `V*`（C系の `V権限` / `V利用者` / `V採番` は Core）
 - `S配車_*`、`S生産_*`
 
 ## DB と初期化
@@ -121,9 +123,15 @@ DB ファイルは `_data/AiDiy/database.db` です。
 |----------|------|
 | `conf_path` | 実行パス解決、外部エージェントプロジェクト探索 |
 | `conf_json` | `AiDiy_key.json` の読み書き、不足キー補完、即時保存 |
-| `conf_models` | AI モデル一覧管理、provider API からの取得とキャッシュ |
+| `conf_models` | `_AIDIY/aidiy_diag/` の合成モデル・音声一覧 JSON と MCP 設定の読み取り。外部 API / CLI での候補取得や設定ファイルへの書き戻しは行わない |
 
 詳細は `_AIDIY/knowledge/backend_server,設定管理(conf).md` を参照してください。
+
+## 認証
+
+通常のログインは JWT を使い、`deps.get_現在利用者` が DB の利用者を取得します。
+`auth_keyring.CoreKeyring` が通常用と内部連携用の別々の署名鍵を永続管理し、Core 起動時に有効な鍵を再利用して定期更新します。Apps は鍵の生成・更新をせず、検証側として利用します。
+IDE 内部連携のトークンは通常利用者とは別のサービス主体として扱い、DB の `admin` へ置き換えません。
 
 ## AI コア
 
@@ -135,7 +143,7 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 - `AIストリーミング処理`
 - `AI音声処理`
 - `AIチャット*`（`gemini` / `local` / `ollama` / `openrt_chat` / `openrt_free` / `openai` / `openai_oauth`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
-- `AI判断*`（`openai_decisions` / `openai_jsonchat`。共通の真偽確率・選択・段階評価）
+- `AI判断*`（`openai_decisions` / `openai_oauth` / `freeai_chat` / `gemini_chat`。`openai_jsonchat` は `openai_oauth` の別名。共通の真偽確率・選択・段階評価）
 - `AIライブ*`（`gemini` / `openai`。`freeai_live` は `AIライブ_gemini.py` が扱う）
 - `AIコード*`（`AIコード_cli.py`、`AIコード_claude.py`）
 - `AI内部ツール`

@@ -23,8 +23,8 @@ function fixture(t){
  t.after(()=>scope.stop());api.visible.value=true;api.availability.value={available:true};api.result.value=saved;api.goal.value='編集中の目標';
  return {api,requests,props,randoms:()=>randoms};
 }
-test('5候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
- const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['航行','花火','アクアリウム','万華鏡','水面','時計','迷路','依頼文','夜間飛行']);
+test('9候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
+ const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES.map(id=>NAVIGATION_SCENE_LABELS[id]),['羽衣ライディング','花火','アクアリウム','万華鏡','水面','時計','迷路','依頼文','夜間飛行']);
  f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
  f.api.sceneAction.value='';assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
 });

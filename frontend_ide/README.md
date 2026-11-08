@@ -9,7 +9,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 
 - Vue 3はプロジェクトのnpm依存です。グローバルのVue CLIは不要です。共有画面・依存物の復旧は `python frontend_ide/_setup.py` を使います。
 - VS Codeは **Code / Liveの拡張配置時だけ** 必要です（`^1.106.0`）。CLI未導入では通常setupは単独画面だけを準備します。版数不足・版数不明は警告して従来の配置処理へ進み、`--extensions-only` も実際のCLI結果に従います。
-- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Code / Live / Console / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
+- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navigator / Console / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
 - cleanupにはNode.js・Electron・VS Codeの最低版チェックを追加しません。Code / Liveの拡張解除は従来どおりVS Code CLIで確認し、確認不能なら生成物を残して失敗を報告します。依存を直す前にcleanupする必要はありません。
 
 ## ソースの配置
@@ -143,13 +143,13 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 ## 起動
 
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
-セットアップ済みなら、表示したいフォルダで `aidiy_console`、`aidiy_code`、`aidiy_live`、`aidiy_ide` を実行します。これらと `aidiy_navi` は共通のVue画面を起動します。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
+セットアップ済みなら、表示したいフォルダで `aidiy_navi`、`aidiy_console`、`aidiy_code`、`aidiy_live`、`aidiy_ide`、`aidiy_task`、`aidiy_team`、`aidiy_browser` を実行します。8種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
-PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（console / code / liveも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--browser`、`--no-open`、`--port <番号>`、`--strict-port` に対応します。ポートの既定は0（自動割り当て）。Electronを使えない環境とCodespacesはWebで開きます。Codeの `--offline` はHermesを直接使用します。Liveの `--connect` は初回だけ接続します。
+PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browserも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` はHermesを直接使用します。Liveの `--connect` は初回だけ接続します。
 
 Electron版IDEの二重起動防止は同じプロジェクトだけに適用します。同じフォルダで再実行すると、起動済みのIDEを最小化から戻して前面に表示します。別のプロジェクトは同時に開け、それぞれのIDE・子窓・利用セッションは独立します。相対パス・リンクなどで同じ実フォルダを指定した場合も既存窓を再利用します。単独Code / Liveの種別ごとの再利用と、Consoleの複数起動は従来どおりです。
 
-IDEは画面の「AiDiy接続利用」「オフライン利用」で手動開始します。利用開始後にコアとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、コア復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインではLiveの起動ボタン・タブを表示しません。
+IDEは画面の「AiDiy接続利用」「オフライン利用」で手動開始します。利用開始後にtoolsとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、tools復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインではLiveの起動ボタン・タブを表示しません。
 
 宇宙表示の自動飛行は彗星のような楕円軌道を進み、船首は現在フォルダの中心を向きます。最遠点ごとに全方向から軌道を選び、フォルダがあれば2回に1回その銀河内を通過します。再開時は現在地で進路へ向き直ってから前進します。ファイル選択中・フォルダ移動中は停止し、手動操作後は最後の操作から1分停止します。ドラッグだけは例外として中心星を軸に球をつかむように回り込みます。視点が傾いたり上下反転していても、手前側の星は左ドラッグで左、上ドラッグで上へ動き、中心星の位置と周回距離は保ちます。移動後の位置・向きを宇宙船の現在地として扱います。スペースキーで自動飛行の有効・無効を切り替えられます。
 
@@ -294,13 +294,13 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - 同じ Electron 確認で、タイトルバーの最大化／元のサイズへの復元も実ウィンドウで検証します。
 - 音声・バックエンドの回帰確認: `frontend_ide/host` の `npm test` / `npm run live:test`、`frontend_ide/viewer` の `npm test`。
 
-全体のsetup・cleanupは「IDE群(Console / Code / Live / IDE)」を一括選択します。startは同じIDE群の中でConsole → Code → Live → IDEを個別に選び、その後にDiscord・Slackを選びます。セットアップで稼働中の画面を停止しません。cleanupはConsole → Code → Live → IDE → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
+全体のsetup・cleanupはNavigator / Console / Code / Live / IDE / Task / Team / Browserをまとめて扱います。全体startはDiagを使わない場合、Task / Team（既定OFF）やConsole / Code / Live / IDEを個別に選択できます。Navigator / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはNavigator → Console → Code → Live → IDE → Task → Team → Browser → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
 
 ## ウィンドウ配置
 
-Electron版は現在の画面の作業領域（タスクバーを除く）に合わせ、IDEを余白付きで大きく開きます。Code / Live は幅480 × 高さ600（最小360 × 480、Electronの論理ピクセル）です。寸法は `host/scripts/window-size.cjs` を共用し、収まらない小画面だけ縮小します。単独版は画面上端から8px、Codeを左端から8px、Liveを右端から8pxに開きます。IDEから開くCode / LiveはIDEの左右端から24px内側に置き、上端をどちらもIDEから36px下へずらし、Code / Liveの上端と高さを揃えます。IDE配下のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」です。移動済みの窓を再選択しても配置を戻しません。
+Electron版は現在の画面の作業領域（タスクバーを除く）に合わせ、IDEを余白付きで大きく開きます。Code / Live は幅480 × 高さ600（最小360 × 480、Electronの論理ピクセル）です。寸法は `host/scripts/window-size.cjs` を共用し、収まらない小画面だけ縮小します。単独版は画面上端から8px、Codeを左端から8px、Liveを右端から8pxに開きます。IDEから開くCode / Liveも同じディスプレイの左上 / 右上へ配置し、Codeの追加窓は24px刻みでずらします。VRの各画面メニューではCodeが右上、Liveが左上です。IDE配下のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」です。移動済みの窓を再選択しても配置を戻しません。
 
-Code / Live / IDEの単独版は種類ごとに二重起動を防ぎ、起動済みの窓を復元して前面に出します。Consoleは単独版も複数起動できます。IDEから開いたCode / Liveは常に最前面に表示します。IDE連携の「＋Code」は依頼ごとに別窓を開き、2窓目以降を少しずらして配置します。「＋Live」はオンライン時だけ利用でき、初期化中も含めて1窓に制限します。Live起動後はボタンを隠し、閉じると再表示します。IDEの明示終了に連動して子窓を終了します。
+Code / Liveの単独版は種類ごと、IDEは同じプロジェクトごとに二重起動を防ぎ、起動済みの窓を復元して前面に出します。Consoleは単独版も複数起動できます。IDEから開いたCode / Liveは最前面ピンが初期ONで、VR中以外はOFFへ切り替えられます。IDE連携の「＋Code」は依頼ごとに別窓を開き、2窓目以降を少しずらして配置します。「＋Live」はオンライン時だけ利用でき、初期化中も含めて1窓に制限します。Live起動後はボタンを隠し、閉じると再表示します。IDEの明示終了に連動して子窓を終了します。
 
 ## 利用条件
 
@@ -314,7 +314,7 @@ https://github.com/monjyu1101/AiDiy2027
 
 ## Task / Team の独立起動
 
-Avatar の Task / Team をコピーした独立版を `aidiy_task` / `aidiy_team` で起動できます。元Avatarの機能はそのまま残ります。IDE群のsetupで両コマンドを登録します。TaskのElectron版は要求・フロー図・明細の3窓で、各窓右上から閉じた他画面を再表示できます。3画面をすべて閉じるとTaskアプリを終了します。Core（既定8091）と共通Task / Teamサーバー（既定8093）を別途起動してログインしてください。`--browser` も利用可能です。シアンの状態バーはTask / Teamポートの疎通に連動します。詳しくは `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+Avatar から移設した独立版を `aidiy_task` / `aidiy_team` で起動できます。Web / Avatar内の旧Task / Team画面・入口は撤去済みです。IDE群のsetupで両コマンドを登録します。TaskのElectron版は要求・フロー図・明細の3窓で、各窓右上から閉じた他画面を再表示できます。3画面をすべて閉じるとTaskアプリを終了します。Core（既定8091）と共通Task / Teamサーバー（既定8093）を別途起動してログインしてください。`--browser` も利用可能です。シアンの状態バーはTask / Teamポートの疎通に連動します。詳しくは `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
 
 
 ### Navigator
@@ -323,4 +323,10 @@ Avatar の Task / Team をコピーした独立版を `aidiy_task` / `aidiy_team
 
 `aidiy_navi [プロジェクトフォルダ]` で独立した `AiDiy Navigator` を開きます。`--browser` はWeb表示、`--new-window` は追加窓です。IDEでは「＋ Navigator」から `AiDiy IDE / Navigator 1`、`2` …を開きます。
 
-「Navigator」は作業項目を提案し、「評価」は項目構成を保って達成度と次のプロンプトを更新します。AIは明示操作時だけ読取専用で使用し、プロンプト案を自動実行しません。「＋ 新規」「一覧」でプロジェクト別の履歴を切り替えます。モデル選択は最下部のCode共通ダイアログ形式で、初期値は `aidiy_hermes / same`。状態は対象フォルダ外の `~/.aidiy/navigation` に保存します。
+「ナビ」は目標と作業項目を提案し、「再評価」は項目構成を保って達成度と次のプロンプトを更新します。この調査・評価は読取専用で、達成度はAIの推定です。「＋ 新規」「一覧」でプロジェクト別の履歴を切り替え、状態は対象フォルダ外の `~/.aidiy/navigation` に保存します。モデルは入力欄下の「モデル」から選び、最後の手動選択を `~/.aidiy/aidiy_navi_model.json` に保存します。未保存時は `aidiy_hermes` と共通設定の `CODE_AIDIY_HERMES_MODEL`（未指定時auto）を使います。
+
+「自動航行（Navi Cruise）」を明示的にオンにすると、Navigator専用の埋込Codeへ提案を送り、成功後の読取専用再評価と次の実行を繰り返します。Codeは通常のコード実行なのでファイルを変更できます。総合評価100%、3回続けて項目の最高達成率が改善しない場合、失敗・切断・対象変更などで停止します。オフは実行中の依頼へ停止を要求しますが、変更済みファイルを元に戻しません。「CODEへ」「CODE/LIVEへ」は下書きの追記だけで、自動航行とは別です。詳細と検証手順は [Vue共通画面変更手順](../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
+
+### Navigatorの羽衣ライディング
+
+待機画面の「羽衣ライディング」は `src/components/開発スペース/ナビ羽衣ライディング.vue` です。「ナビ」「再評価」の右クリックメニューから選べます。撮影補助・選択処理のキーは従来どおり `ride` を使います。Codeへの実行指示を繰り返す「自動航行（Navi Cruise）」とは別の待機演出です。

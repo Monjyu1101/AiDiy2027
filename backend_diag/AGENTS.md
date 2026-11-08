@@ -5,9 +5,9 @@ Node.js 標準モジュールの診断・起動管理サーバーと Electron / 
 - `起動/desktop.mjs` / `起動/electron-main.cjs`: 既存共有セットアップで用意した Electron を通常表示に使います。ブラウザ・Codespaces は Node.js のみです。
 - `diag_main.mjs`: ループバック HTTP、起動単位の認証、ブラウザ起動。
 - `起動/サービス管理.mjs` / `ui/src/components/起動/`: 起動対象の保存、機能別コンソール、順次再起動と停止。起動順・既定値はルートと共通の `scripts/起動対象.json`、各 `_start.py` の Diag 経路は `scripts/_diag_start.py` が担当します。
-- `モデル情報/models_info.mjs`: プロバイダ別モデル情報とchat / live / code / prediction / decisionsの合成JSON。取得モデルから `models` を生成し、API の詳細情報も保持。PredictionはDecisionsと同じ認証済み低コスト候補を使い、OpenAI API区分を `openai_decisions` から `openai_chat` に置き換えます。予測JSONに `openai_decisions` は含めません。Diagは候補を書き出すだけで、予測処理は `backend_tools` の内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）が担います。Grok / backend_local の固定候補と、Copilot／OpenCode導入済み・合成候補なし時の固定8モデルを管理。本体・クライアントは合成JSONを読み、`_config` 上のモデル設定ファイルには依存しません。
+- `モデル情報/models_info.mjs`: プロバイダ別モデル情報とchat / live / code / prediction / decisionsの合成JSON。取得モデルから `models` を生成し、API の詳細情報も保持。PredictionのAPI方式はDecisionsと同じ認証済み低コスト候補を使い、OpenAI API区分を `openai_decisions` から `openai_chat` に置き換えます。予測JSONに `openai_decisions` は含めません。CLI方式は合成Code候補から `auto` / `same` と未対応のHermes外部CLI経路を除いて追加します。Diagは候補を書き出すだけで、予測処理は `backend_tools` の内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）が担います。Grok / backend_local の固定候補、Copilot／OpenCodeの候補補完、OAuth取得失敗時の未検証候補を管理。Antigravity候補は `モデル情報/antigravity_models.mjs` が `agy models` から取得します。本体・クライアントは合成JSONを読みます。Chat / Liveの合成候補が空の場合は共通設定から未検証候補を補います。
 - `モデル情報/voices_info.mjs`: Gemini / FreeAI / OpenAIの固定音声候補。取得・認証状態にかかわらず3区分の `live_voices_info.json` を生成します。候補の存在は認証成功を意味しません。
-- `診断/headless.mjs`: `--headless` の全診断と、画面の書込と共通の保存形式。画面・待受なしで最速実行し、`_AIDIY/aidiy_diag/*.json` へ成功時だけ保存します（導入状況の `install_info.json` とプロバイダ別・用途別のモデル情報）。
+- `診断/headless.mjs`: `--headless` の全診断と、画面の書込と共通の保存形式。画面・待受なしで最速実行し、`_AIDIY/aidiy_diag/*.json` へファイルごとに一時ファイルから置き換えて保存します（導入状況の `install_info.json` とプロバイダ別・用途別のモデル情報）。全ファイルを一括で巻き戻す処理ではありません。
 - `診断/catalog.json`: リポジトリの利用箇所から整理した外部プログラムの登録情報。
 - `診断/probes.mjs`: 固定引数での存在・バージョン確認。任意コマンド API は設けません。
 - `導入管理/導入管理.mjs`: 明示操作専用の固定 npm / Windows WinGet / Antigravity / Grok Build 導入・再導入・削除。導入元の照合、項目単位の排他（別項目は並行実行）、期限・中止・コンソールを管理し、終了後は個別確認と共通の probe・結果反映を使います。

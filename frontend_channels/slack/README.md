@@ -20,7 +20,7 @@ Electron のタイトルバーは「ー □ 📌 ×」で最小化・最大化�
 python frontend_channels/slack/_setup.py
 ```
 
-`npm ci` → `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `~/.local/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。
+`npm ci --include=dev`（lockfile がない場合は `npm install --include=dev`）→ `npm run update:electron` → `npm run build:panel` → `npm run check:panel` → Electron 本体の配置 → `~/.local/bin/aidiy_slack`（Windows は `.cmd`）の登録、の順に Discord 版と同じ手順で導入します。Electron 本体は他のフロントエンドの配置・共有 ZIP を再利用します。ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。
 
 ## プロキシが必要なネットワーク
 

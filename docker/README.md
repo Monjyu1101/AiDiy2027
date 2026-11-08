@@ -1,11 +1,17 @@
 # Docker環境ガイド
 
+現行の `Dockerfile` / `docker-compose.yml` / `start.sh` / `nginx.conf` に対応する、Core・Apps・Web の構成です。ローカルの全体起動と同じサービス一式ではありません。詳細は [Docker構成](../_AIDIY/knowledge/backend_server,frontend_web,Docker構成.md) を参照してください。
+
 ## 🚀 起動
 
-```bash
+以下の `.bat` は Windows のコマンドプロンプト用です。Docker Desktop が稼働し、スクリプトが呼ぶ `docker-compose` コマンドを利用できる必要があります。PowerShell では `.\docker_1build.bat` のように実行します。
+
+```cmd
 cd docker
-docker_1build.bat    # 初回のみ（5-10分）
-docker_2start.bat    # 起動（約10秒）
+rem 初回・ソース更新後のイメージ再構築
+docker_1build.bat
+rem 起動
+docker_2start.bat
 ```
 
 ## 🌐 アクセス
@@ -22,7 +28,7 @@ https://localhost/
 
 **ログイン:**
 - ユーザー名: `admin`
-- パスワード: （README.mdを確認）
+- パスワード: [ルートREADMEの初期ユーザー案内](../README.md)を確認。既存DBでは変更済みの認証情報を使用します。
 
 ## 📚 API
 
@@ -34,21 +40,27 @@ http://127.0.0.1:8098/docs  # Apps API (M系, T系, V系, S系)
 ## この構成に含まれないサービス
 
 - `backend_tools`（`8095`、MCP は Windows 20 / Linux・macOS 19 サーバー、Windows Control は Windows のみ: `aidiy_chrome_devtools` / `aidiy_desktop_capture` / `aidiy_sqlite` / `aidiy_postgres` / `aidiy_logs` / `aidiy_code_check` / `aidiy_backup` / `aidiy_image_generation` / `aidiy_movie_generation` / `aidiy_speech_to_text` / `aidiy_text_to_speech` / `aidiy_obs_studio_control` / `aidiy_ffmpeg_control` / `aidiy_notification_sounds` / `aidiy_code_agents` / `aidiy_chat_llms` / `aidiy_decisions_check` / `aidiy_task_agents` / `aidiy_team_agents` / `aidiy_windows_control`）は、この Docker ガイドの構成には含めていません。ブラウザ自動操作などの MCP は、通常のローカル開発手順で `backend_tools` を別途扱う前提です。
-- `backend_taskteam`（`8093`、AIタスク実行 + AIチーム）と `backend_local`（`8096`、ローカル LLM）も未起動です。nginx にも `/task` / `/team` のプロキシがないため、**AIタスク画面とAIチーム画面はこの Docker 構成では動作しません**。
+- `backend_taskteam`（`8093`、AIタスク実行 + AIチーム）と `backend_local`（`8096`、ローカル LLM）も含みません。Task / Team は `frontend_ide` の独立アプリであり、この構成にその画面・バックエンドはありません。
+- Diag、Avatar、IDEの単独アプリ、Channels、Hermes CLIもイメージには含めません。nginx のAPI転送は `/core/`・`/apps/`・`/ws/` で、`/mcp/`・`/task/`・`/team/` は未定義です。
 
 ## 🔧 基本操作
 
-```bash
-docker_2start.bat    # 起動
-docker_3stop.bat     # 停止
-docker_4delete.bat   # 完全削除
+`docker_4delete.bat` はこの構成の削除に加えて、Docker 全体の未使用資源を整理します。他プロジェクトもある環境では、下の削除範囲を確認してから使ってください。
+
+```cmd
+rem 起動
+docker_2start.bat
+rem 停止
+docker_3stop.bat
+rem コンテナ・イメージ等の削除（データベースは保持）
+docker_4delete.bat
 ```
 
 ## 🗑️ 削除方法
 
 ### パターン1: コンテナ停止のみ（データ保持）
 
-```bash
+```cmd
 docker_3stop.bat
 ```
 
@@ -56,9 +68,9 @@ docker_3stop.bat
 - イメージ・データベース・SSL証明書は保持
 - 次回は`docker_2start.bat`で再起動可能
 
-### パターン2: コンテナとイメージ削除
+### パターン2: コンテナ・イメージ等の削除
 
-```bash
+```cmd
 docker_4delete.bat
 ```
 
@@ -68,17 +80,19 @@ docker_4delete.bat
 - データベース（`../_data`）は保持
 - 次回は`docker_1build.bat`から再構築
 
+現行スクリプトは `aidiy2027*` / `docker-aidiy2027*` / `nginx` イメージの削除を試み、`docker system prune -f`・`docker volume prune -f`・`docker network prune -f` も実行します。**他プロジェクトの停止済みコンテナや未使用資源も対象になり得ます。** `docker_frontend-dist` の削除も試みます。出力の一部を隠しているため、完了表示だけで全削除を判断せず Docker の状態を確認してください。
+
 ### パターン3: 完全削除（データベースも削除）
 
-```bash
-# 1. コンテナとイメージを削除
+```cmd
+rem 1. コンテナとイメージを削除
 docker_4delete.bat
 
-# 2. データベースを削除
+rem 2. データベースを削除
 cd ..
 rmdir /s /q _data
 
-# 3. 一時ファイルを削除
+rem 3. 一時ファイルを削除
 rmdir /s /q temp
 ```
 
@@ -111,46 +125,50 @@ docker_1build.bat
 
 ### HTTPSでアクセスできない
 
-```bash
-docker ps                # コンテナ確認
-docker logs aidiy2027    # ログ確認
-docker_3stop.bat         # 停止
-docker_2start.bat        # 再起動
+```cmd
+rem コンテナ確認
+docker ps
+rem ログ確認
+docker logs aidiy2027
+rem 停止
+docker_3stop.bat
+rem 再起動
+docker_2start.bat
 ```
 
 ### ポートが使用中
 
 ```cmd
-# ポート確認（この構成が使うのは 80 / 443 / 8091 / 8098）
+rem ポート確認（この構成が使うのは 80 / 443 / 8091 / 8098）
 netstat -ano | findstr :443
 netstat -ano | findstr :8091
 
-# ローカル起動を停止してから再実行
+rem ローカル起動を停止してから再実行
 docker_2start.bat
 ```
 
 ### イメージビルドエラー
 
-```bash
-# 完全クリーンアップ
+```cmd
+rem 完全クリーンアップ
 docker_4delete.bat
-docker system prune -a -f
+rem 他プロジェクトの未使用イメージまで削除する prune -a は通常の再ビルドには不要
 
-# 再ビルド
+rem 再ビルド
 docker_1build.bat
 ```
 
 ### データベースエラー
 
-```bash
-# 停止
+```cmd
+rem 停止
 docker_3stop.bat
 
-# データベース削除
+rem データベースを退避（既存データを使わず新規作成する場合のみ）
 cd ..
 move _data\AiDiy\database.db _data\AiDiy\database.db.backup
 
-# 再起動（新規DB自動作成）
+rem 再起動（新規DB自動作成）
 cd docker
 docker_2start.bat
 ```
@@ -177,6 +195,9 @@ docker_2start.bat
 - `../temp`: ログ・作業ファイル
 - `../_data`: SQLiteデータベース
 - `./ssl`: SSL証明書
+- `../_config`: 共通設定をコンテナへ読み取り専用でマウント。必要な設定はホスト側で用意し、コンテナ内からの設定書込はできません。
+- `../_icons`: 共通アイコン
+- `frontend-dist`: ビルド済み Web を nginx と共有する名前付きボリューム。Compose の `aidiy-data` は宣言のみで、DB は上記 `_data` のバインドマウントを使います。
 
 **コンテナ名:**
 - `aidiy2027`: メインアプリケーション

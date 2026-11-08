@@ -4,7 +4,7 @@
 
 ## 前提
 
-- `backend_server`（`8091` / `8098`）が起動していること
+- AIコアの利用には `backend_server` の Core（`8091`）が起動していること。Apps（`8098`）への開発用プロキシも定義されていますが、Avatar の REST client は Core を使用します。
 - Task / Team は独立アプリ `aidiy_task` / `aidiy_team` を使用します。Avatar 内には画面・起動メニューを持ちません。
 - Claude 系のブラウザ自動操作まで使う場合は `backend_tools`（`8095`）も起動していること
 
@@ -41,9 +41,9 @@ http://127.0.0.1:8092
 
 ## 接続先
 
-- Core API / WebSocket: `http://127.0.0.1:8091` / `ws://127.0.0.1:8091/core/ws/AIコア`
-- Apps API: `http://127.0.0.1:8098`
-- Backend MCP（Windows は19、Linux / macOS は18サーバー）: `http://127.0.0.1:8095/`（一覧）、`http://127.0.0.1:8095/{mcp_name}/sse`（SSE 接続）
+- 開発時は `http://127.0.0.1:8092` の `/core/*` と `/core/ws/AIコア` を Vite が Core `8091` へ転送します。`/apps/*` は Apps `8098` へ転送します。
+- 配布版の REST は既定で `http://127.0.0.1:8091`。WebSocket は HTTP(S) 表示時に同じ公開元の `/core/ws/AIコア`、`file:` 表示時に `ws://127.0.0.1:8091/core/ws/AIコア` を使います。`VITE_CORE_BASE_URL` / `VITE_CORE_WS_URL` で変更できます（`src/api/config.ts`）。
+- Backend MCP（Windows は20、Linux / macOS は19サーバー）: `http://127.0.0.1:8095/`（一覧）、`http://127.0.0.1:8095/{mcp_name}/sse`（SSE 接続）
 
 ## 補足コマンド
 

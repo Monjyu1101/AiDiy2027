@@ -1,6 +1,6 @@
 # AiDiy Code
 
-現行画面は `frontend_ide` のVue共通部品です。既存の起動コマンドと拡張IDを維持します。共通画面の変更・起動手順は `frontend_ide/README.md` を参照してください。以下には共通基盤と従来実装の説明も含まれます。
+現行画面は `frontend_ide` のVue共通部品です。既存の起動コマンドと拡張IDを維持します。共通画面の変更・起動手順は [frontend_ide README](../README.md) を参照してください。本書は現行のCode拡張・通信基盤と単独起動の補足です。
 
 **AiDiy Code** は `aidiy_live` と同じローカル AIコアに接続し、`AIコード.vue` と同じ Code CLI を選択して、プロジェクトのコード調査・編集を支援する独立した VS Code 拡張です。同じチャット画面を使うスタンドアロンも提供します。さらに開発スペース（宇宙をテーマにした IDE 開発環境、`aidiy_ide`）の部品としても動作し、IDE の「＋ Code」から同じプロジェクトで呼び出せます。
 
@@ -19,7 +19,7 @@
 Node.js 22.12 以降と npm が必要です。IDE群全体を使う場合は文書ビューアも満たす 22.13 以降を使用してください。Vue 3・Electronはプロジェクト依存として導入し、グローバルVue CLIやグローバルElectronは要求しません。
 
 1. AiDiy の Core サーバーを起動し、使用する Code CLI の認証を用意します。拡張モードを使う場合は VS Code **1.106 以降**も必要です。
-2. AiDiy ルートの `python _setup.py` で、**IDE群（Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
+2. AiDiy ルートの `python _setup.py` で、**IDE群（Navigator / Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
 3. 単独画面は `aidiy_code` を実行します。拡張モードは VS Code でフォルダを開き、コマンドパレットから **AiDiy Code: チャットを開く**を実行します。
 
 セットアップは依存関係と Electron バイナリの事前導入、単独起動コマンドの作成と、VS Code CLIがある場合は VSIX を生成・配置します。必要版（`^1.106.0`）を満たさない場合や版数を読めない場合は警告して継続し、明示的な `--extensions-only` も実際のCLI結果に従います。CLI未導入では単独画面だけを準備します。`aidiy_code` のランチャーは `aidiy_hermes` と同じ `~/.local/bin` に配置します（Windows は `.cmd`）。このフォルダが PATH にない場合は追加してください。ランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。この作業コピーから配置した旧名 `aidiy_vscode` は解除します。手動で VSIX を配置する場合は、拡張機能画面の `…` → **VSIX からのインストール**で、`dist/aidiy-code-0.1.0.vsix` を選びます。解除と生成物削除は `python frontend_ide/host/_cleanup.py`、またはルートの `python _cleanup.py` から実行できます。
@@ -32,7 +32,7 @@ Node.js 22.12 以降と npm が必要です。IDE群全体を使う場合は文�
 
 ### チャット単独ウィンドウで使う
 
-セットアップ後は、作業対象フォルダで次を実行します（Node.js と起動済みの AIコアが必要です）。
+セットアップ後は、作業対象フォルダで次を実行します（Node.jsとセットアップ済みの共通画面が必要です。AIコア接続時はCore、未接続時の実行はHermesを使います）。
 
 ```powershell
 aidiy_code
@@ -42,7 +42,9 @@ aidiy_code
 
 単独画面は Electron のフレームレスウィンドウで開き、起動時のカレントフォルダを作業対象にします。AiDiy ロゴのあるヘッダーをドラッグして移動でき、右上のボタンで最小化・最大化／復元・終了を操作できます。ウィンドウの端でサイズを変更できます。モデル選択・送信・進捗表示・停止・新規会話・会話履歴の選択と削除は VS Code 拡張と共通です。会話履歴は作業フォルダの `_AIDIY/aidiy_code/histories/` に1会話1ファイルで保存し、次回の起動や VS Code 拡張・開発スペースの Code 部品とも共用します。専用ウィンドウを閉じると実行中のコード処理へ停止要求を送り、接続と単独サーバーを終了します。VS Code の選択コード添付は拡張モードで利用してください。
 
-既定ブラウザで開く場合は `aidiy_code --browser`（フォルダ指定も併用可能）を使います。Windows は Chrome / Edge のアプリウィンドウ、macOS / Linux は既定のブラウザで開きます。このモードはブラウザのウィンドウ枠を使用し、タブ／ウィンドウを閉じて60秒後（初回は120秒後、Codespaces では初回接続まで終了しない）にサーバーを停止します。GitHub Codespaces（`CODESPACES=true`）と画面のない Linux（`DISPLAY` / `WAYLAND_DISPLAY` なし）では、`--browser` を省略してもブラウザ版で開きます。ブラウザは VS Code / Codespaces が設定する `$BROWSER` を優先して手元の PC で開き、Codespaces ではポート転送先の URL（`https://<名前>-<ポート>.app.github.dev/…`）を使います。開けない場合は URL を表示します。判定と起動は `frontend_ide/host/scripts/launch-project.mjs`、接続元の許可は `frontend_ide/host/src/forwarded-origin.ts` で aidiy_code / aidiy_live / aidiy_discord / aidiy_slack 共通です。4本（aidiy_code / aidiy_live / aidiy_discord / aidiy_slack）の起動規則は `frontend_ide/host/scripts/launch-project.mjs` の冒頭に一覧し、そこで共通化しています。Electron の専用ウィンドウを開けない場合（未セットアップ・起動失敗）は、理由を表示してブラウザ版に切り替えます。ブラウザ版のサーバーは、画面を閉じて60秒（初回は120秒、Codespaces では初回接続まで終了しない）で終了します。Electron バイナリは `python frontend_ide/host/_setup.py` で事前に取得・確認します。Avatar と共通のセットアップ処理で、同じバージョンの配置済みバイナリや `.aidiy_cache/electron/` の保存済み ZIP を再利用します。未取得の場合だけ Python で GitHub から取得します。起動時にはダウンロードせず、未準備の場合はセットアップの再実行を案内してブラウザ版で開きます。`npm ci` だけではバイナリが取得されない場合があります。Electron は VSIX には含めません。
+ブラウザで開く場合は `aidiy_code --browser`（フォルダ指定も併用可能）を使います。現行の単独起動は `frontend_ide/launch.mjs` と `server.mjs` が所有し、CodeのAPIサーバーは `keepAlive:true` で共通サーバーに従います。ブラウザのタブを閉じるだけでは共通サーバーは終了しないため、起動したターミナルのCtrl+Cで終了してください。旧API単体起動の60秒アイドル終了とは異なります。
+
+Codespacesと画面のないLinuxはWebで開き、`$BROWSER` とポート転送を使います。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動では失敗を報告します。起動時にElectronをダウンロードしません。`python frontend_ide/host/_setup.py` で事前に準備し、共通画面・起動の詳細は [frontend_ide README](../README.md) を参照してください。
 
 VS Code 拡張として試す場合は、次の手順を使います。
 
@@ -116,12 +118,14 @@ AiDiy を移動・削除した場合や記録が壊れた場合、別の checkou
 ## 対応範囲
 
 - Windows デスクトップ版 VS Code での利用を想定しています。Linux/macOS のプロセス起動分岐もありますが、実機検証対象は Windows です。
-- Web 版 VS Code と仮想ワークスペースは対象外です。Remote SSH / WSL は未対応です。
+- `extensionKind: workspace` のためRemote SSH / WSL / Codespacesでは接続先のNode.js拡張ホストで動作します。接続先にAiDiyとCLIを準備してください。仮想ワークスペースと、リモート拡張ホストのないWeb版VS Codeは対象外です。
 - CLI のツール実行・承認設定に従います。拡張から `--yolo` を付けません。
 - チャット入力はワンショットの要求文です。TUI のスラッシュコマンドや対話承認画面は「対話 CLI」で利用してください。
-- 差分の適用ボタン、画像添付は初版には含みません。
+- 手動の差分適用ボタンはありません。AIコア接続中・待機中は画像を含むファイルを入力欄へドロップして送信できます（1件4MiB・一度に10件まで）。未接続時のHermes直接実行ではファイルドロップを受け付けません。
 
 ## 開発・配布
+
+以下は依存準備とVSIX配布物を更新する場合の手順です。日常の文書確認だけでビルド・配布を実行する必要はありません。
 
 ```powershell
 Set-Location frontend_ide/host

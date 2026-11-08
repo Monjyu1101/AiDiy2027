@@ -1154,7 +1154,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
             <span>🧠 自己改善機構 — 使うほど育つ</span>
             <span>claude / copilot / codex / antigravity / grok / opencode / hermes CLI</span>
             <span>🔌 MCP Hub — Windows 20 / Linux・macOS 19 — browser / capture / sqlite / postgres / logs / check / backup / image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows</span>
-            <span>🤖 AIタスク自動実行 — AI分解 × 自由なタスクフロー × クリティカルパス実行</span>
+            <span>🤖 AIタスク自動実行 — AI分解 × 条件分岐・合流 × 並行実行</span>
             <span>🌌 8 つのアプリ — Navigator / Console / Code / Live / IDE / Task / Team / Browser</span>
         </div>
         <div class="typing-text" id="typing-text"></div>
@@ -1178,9 +1178,9 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <span class="feature-icon">🖥️</span>
                 <h3 class="feature-title">マルチサーバー構成</h3>
                 <p class="feature-description">
-                    core 8091 / apps 8098 / mcp 8095 /<br>
-                    local 8096 / task 8093 の 5 サーバーを分離。<br>
-                    AI 系・業務系・自己検証系を Vite Proxy で透過的にまとめます。
+                    core 8091 / apps 8098 / tools 8095 /<br>
+                    local 8096 / taskteam 8093 の 5 サーバーを分離。<br>
+                    通常 Web は core・apps・tools へプロキシ接続し、Task / Team は独立アプリから利用します。
                 </p>
             </div>
             <div class="feature-card animate-on-scroll">
@@ -1198,15 +1198,15 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <p class="feature-description">
                     チャット・画像・音声・6 画面コード支援を<br>
                     WebSocket で一体化。<br>
-                    Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma を切替。
+                    OpenAI API / OAuth・Gemini / FreeAI・OpenRouter・Ollama・ローカル Gemma を切替。
                 </p>
             </div>
             <div class="feature-card animate-on-scroll">
                 <span class="feature-icon">🧠</span>
                 <h3 class="feature-title">自己改善機構</h3>
                 <p class="feature-description">
-                    修正完了後に <code style="color:#00ffff">_AIDIY/knowledge/</code> へ<br>
-                    知見を自動整理。次回の同種修正で再利用し、<br>
+                    AIコアの Code Agent が変更を伴う処理を完了すると、<br>
+                    <code style="color:#00ffff">_AIDIY/knowledge/</code> へ知見整理を依頼。次回の同種修正で再利用し、<br>
                     <strong>使うほどに育つ</strong>テンプレート。
                 </p>
             </div>
@@ -1215,8 +1215,8 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <h3 class="feature-title">AIタスク自動実行 — 自由なタスクフロー<span class="fx-new-badge">NEW</span></h3>
                 <p class="feature-description">
                     要求を AI が明細タスクへ自動分解。<br>
-                    カンバンでも垂直流れ作業だけでもない、水平並行分岐を<br>
-                    先行SEQ で自由に定義し、クリティカルパスのフロー図で可視化・実行。
+                    並行処理と if の Y / N 分岐・or 合流を<br>
+                    先行SEQ で定義し、クリティカルパスを示すフロー図で確認。
                 </p>
             </div>
             <div class="feature-card animate-on-scroll">
@@ -1253,17 +1253,17 @@ https://github.com/monjyu1101/AiDiy2027 -->
     <!-- Current Numbers（数値的根拠） -->
     <section class="section">
         <h2 class="section-title animate-on-scroll">Current Numbers</h2>
-        <p class="section-subtitle animate-on-scroll">数値で見る AiDiy — AGENTS.md の実構成をそのまま可視化。</p>
+        <p class="section-subtitle animate-on-scroll">数値で見る AiDiy — 現行の起動構成と AI 接続方式。</p>
         <div class="tech-stats">
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="5">0</span>
                 <span class="stat-label">常駐サーバー</span>
-                <span class="stat-sub">core 8091 / apps 8098 / tools 8095 / local 8096 / task 8093</span>
+                <span class="stat-sub">core 8091 / apps 8098 / tools 8095 / local 8096 / taskteam 8093</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="6">0</span>
-                <span class="stat-label">対話 AI 系統</span>
-                <span class="stat-sub">Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma / OpenAI Realtime</span>
+                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-label">チャット AI 接続方式</span>
+                <span class="stat-sub">OpenAI API / OAuth、Gemini / FreeAI、OpenRouter Chat / Free、Ollama、ローカル Gemma</span>
             </div>
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="7">0</span>
@@ -1287,7 +1287,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
             </div>
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="8">0</span>
-                <span class="stat-label">独立アプリ</span>
+                <span class="stat-label">frontend_ide の独立アプリ</span>
                 <span class="stat-sub">Navigator / Console / Code / Live / IDE / Task / Team / Browser。Code / Live は VS Code 拡張でも利用</span>
             </div>
             <div class="stat-item animate-on-scroll">
@@ -1387,13 +1387,13 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔌 MCP サーバー (統合)</h3>
-                <p>FastAPI + SSE で 20 個の MCP サーバーをポート 8095 に同居。AI エージェントのブラウザ操作・画面キャプチャ・DB 観測・ログ監視・型チェック・画像/動画生成・音声認識/合成・OBS 制御・ffmpeg 実行・通知音再生・コードエージェント実行・チャット LLM 実行・AI判断・AIタスク非同期投入・AIチーム依頼投入・Windows デスクトップ操作制御を一手に提供。SSE / Streamable HTTP / stdio gateway（mcp_stdio.py）の 3 トランスポートに加え、HTTP POST（FastAPI /docs）を同一ポートで提供。詳細は下の MCP Hub セクションへ。</p>
-                <div class="meta-tags"><span>tools_main.py:8095</span><span>SSE × 20</span><span>HTTP POST</span><span>stdio gateway</span></div>
+                <p>FastAPI に Windows は 20 個、Linux / macOS は 19 個の MCP サーバーをポート 8095 で同居。AI エージェントのブラウザ操作・画面キャプチャ・DB 観測・ログ監視・型チェック・画像/動画生成・音声認識/合成・OBS 制御・ffmpeg 実行・通知音再生・コードエージェント実行・チャット LLM 実行・AI判断・AIタスク非同期投入・AIチーム依頼投入・Windows デスクトップ操作制御を一手に提供。SSE / Streamable HTTP / stdio gateway（mcp_stdio.py）の 3 トランスポートに加え、HTTP POST（FastAPI /docs）を同一ポートで提供。詳細は下の MCP Hub セクションへ。</p>
+                <div class="meta-tags"><span>tools_main.py:8095</span><span>Windows 20 / その他 19</span><span>HTTP POST</span><span>stdio gateway</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🤖 backend_taskteam (AIタスク・AIチーム)<span class="fx-new-badge">NEW</span></h3>
-                <p>AIタスク要求の自動分解・Code CLI 実行と、複数AIエージェントのチーム活動を同一サーバーで管理。タスクは先行SEQ（複数指定可）で水平の並行分岐を含む自由なフローを定義し、依存が満たされた明細から自動実行する。単独アプリ aidiy_task / aidiy_team から操作（通常Webのメニューには含めません）。</p>
-                <div class="meta-tags"><span>taskteam_main.py:8093</span><span>/task + /team</span><span>クリティカルパス実行</span><span>Code CLI 実行</span></div>
+                <p>AIタスク要求の自動分解・Code CLI 実行と、複数AIエージェントのチーム活動を同一サーバーで管理。タスクは先行SEQ（複数指定可）で並行処理と条件分岐・合流を定義し、依存条件を満たした明細から自動実行する。単独アプリ aidiy_task / aidiy_team から操作（通常Webのメニューには含めません）。</p>
+                <div class="meta-tags"><span>taskteam_main.py:8093</span><span>/task + /team</span><span>依存条件に沿って実行</span><span>Code CLI 実行</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧠 backend_local (ローカル LLM)</h3>
@@ -1442,7 +1442,7 @@ Key:   利用者名</pre>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🚀 POST 中心 API</h4>
-                <p>全 CRUD を POST で統一。一貫したレスポンス形式</p>
+                <p>業務 CRUD は POST 中心。一貫したレスポンス形式</p>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🔄 Reboot 機構</h4>
@@ -1505,7 +1505,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔁 AI Flow</h3>
-                <p>マイク・テキスト・画像・コード操作 → REST + WebSocket + Vite Proxy → チャットは Gemini / FreeAI / OpenRouter / Ollama / ローカル Gemma、音声は Gemini Live / OpenAI Realtime、コードは 8 種の Code AI を用途ごとに切替 → チャット・音声応答・コード表示・アバター演出。</p>
+                <p>マイク・テキスト・画像・コード操作 → REST + WebSocket + Vite Proxy → チャットは OpenAI API / OAuth・Gemini / FreeAI・OpenRouter・Ollama・ローカル Gemma、音声は Gemini Live / OpenAI Realtime、コードは 8 種の Code AI を用途ごとに切替 → チャット・音声応答・コード表示・アバター演出。</p>
                 <div class="meta-tags"><span>Input</span><span>Transport</span><span>AI Core</span><span>Output</span></div>
             </div>
         </div>
@@ -1528,8 +1528,8 @@ Key:   利用者名</pre>
                     OpenAI 互換 API 経由でオープンモデルを利用。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
-                    ローカル: <code>ollama list</code> から自動取得<br>
-                    クラウド: API キー設定で 8 ヶ月以内のモデル一覧<br>
+                    モデル候補: Diag で取得・保存した一覧を使用<br>
+                    ローカル / クラウドの接続先と認証を設定<br>
                     <strong>画像添付・ストリーミング・履歴管理</strong> 完備
                 </div>
             </div>
@@ -1552,12 +1552,12 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧩 要求の AI 分解</h3>
-                <p>要求を「準備開始」で仮登録すると、起動監視が AI を呼んで開始行・処理行・終了行の明細へ分解し本登録する。分解は 2 段構えで、第 1 段が対象プロジェクトを読んで内容を組み立て、第 2 段が既定形式の JSON を書き出す。</p>
+                <p>要求を「準備開始」で仮登録すると、起動監視が AI を呼んで開始・処理・条件分岐・合流・終了の明細へ分解し本登録する。分解は 2 段構えで、第 1 段が対象プロジェクトを読んで内容を組み立て、第 2 段が既定形式の JSON を書き出す。</p>
                 <div class="meta-tags"><span>sub_init.py</span><span>2 段構え</span><span>TK+8桁 採番</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🕸️ 自由なタスクフロー（DAG）</h3>
-                <p>カンバンの固定列でも垂直の流れ作業でもなく、先行SEQ（カンマ区切りで複数指定可）による DAG。先行明細が全完了した明細を実行可能とし、依存を満たしたものから並行起動する。フロー図は最長経路をクリティカルパスとして配置。</p>
+                <p>先行SEQ（カンマ区切りで複数指定可）による DAG。通常明細は先行の全完了を待ち、if の判定に応じて 2=Y / 2=N のように枝を選びます。or 合流は先行のいずれかの完了で進み、実行可能な明細を並行起動。フロー図は最長経路をクリティカルパスとして配置。</p>
                 <div class="meta-tags"><span>先行SEQ</span><span>並行分岐</span><span>クリティカルパス</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1635,7 +1635,7 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">💻 AiDiy Code — コード支援</h3>
-                <p>AIコード画面と同じ Code CLI・モデルを選び、AIコア経由でコードの調査・編集を依頼。AIコアに未接続なら aidiy_hermes の直接実行に自動で切り替えます。「検証ループ」0〜3 回で、バックアップ → 検証 → 修正を差分がなくなるまで繰り返します。</p>
+                <p>AIコード画面と同じ Code CLI・モデルを選び、AIコア経由でコードの調査・編集を依頼。AIコアに未接続なら aidiy_hermes の直接実行に自動で切り替えます。オンライン時は「検証」を 1〜3 回に設定してバックアップ・検証・必要な修正を実行。0 回とオフライン時はこの検証ループを行いません。</p>
                 <div class="meta-tags"><span>aidiy.aidiy-code</span><span>オンライン ⇄ オフライン</span><span>検証ループ 0〜3</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1686,7 +1686,7 @@ Key:   利用者名</pre>
                 <p class="feature-description">
                     Electron のフレームレスウィンドウを基本に、<br>
                     ブラウザ版・GitHub Codespaces にも対応。<br>
-                    AIコアが止まっても作業を保ち、復帰時に再接続します。
+                    tools 接続が切れても作業セッションと子窓を保ち、復帰時に再接続します。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     AIコアなしでも Console と Code（Hermes 直接実行）を利用。<br>
@@ -1704,8 +1704,8 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧭 Navigator — 次の一歩を考える</h3>
-                <p>開発目標と作業項目、推定達成率、次に AI へ渡すプロンプト案を確認する読み取り専用の案内画面。「ナビ」で作業項目を提案し、「評価」で達成度と次の提案を更新します。提案を自動実行せず、人が確認して次の作業を選びます。</p>
-                <div class="meta-tags"><span>aidiy_navi</span><span>単独 / IDE から起動</span><span>読み取り専用</span></div>
+                <p>開発目標・作業項目・推定達成率・プロンプト案を表示。「ナビ」と「再評価」は読み取り専用で、手動の受け渡しは Code / Live の入力欄への追加までです。自動航行を明示的にオンにすると、内蔵の専用 Code が提案を実行し、完了後に再評価します。ファイル変更を伴い、達成率 100% または 3 回連続で改善なしなら終了。非表示・終了でも停止し、再開にはオン操作が必要です。</p>
+                <div class="meta-tags"><span>aidiy_navi</span><span>単独 / IDE から起動</span><span>ナビ・再評価は読取専用</span><span>自動航行は明示オン</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">⌨️ Console — 端末をそばに</h3>
@@ -1714,7 +1714,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔀 Task — 要求を実行フローへ</h3>
-                <p>要求を AI が明細タスクへ分解し、依存関係のある処理をフロー図で確認。並行分岐を含む実行、進捗の追跡、検証、定期実行を専用画面で扱います。</p>
+                <p>要求を AI が明細タスクへ分解し、依存関係のある処理をフロー図で確認。並行処理・条件分岐・合流、進捗の追跡、検証、定期実行を専用画面で扱います。</p>
                 <div class="meta-tags"><span>aidiy_task</span><span>DAG</span><span>定期タスク</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1770,7 +1770,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔑 モデルと外部連携</h3>
-                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。認証情報の確認と AI の試行を分けて、何が利用できるかを調べます。</p>
+                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。モデル一覧を取得・保存し、Chat / Live / Code / Hermes などがその一覧を利用します。認証情報の確認と AI の試行は分けて扱います。</p>
                 <div class="meta-tags"><span>モデル情報</span><span>外部連携</span><span>AI 試行</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1793,8 +1793,8 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🤖 AIAgent コア</h3>
-                <p>OpenAI SDK 経由で Ollama（OpenAI 互換 API）と通信するエージェント中核クラス。既定 90 イテレーションのツール呼び出しループ（AiDiy から呼ぶときは CODE_MAX_TURNS で上書き）、割り込み機構（スレッドセーフ）、思考コールバック・ツール進捗コールバックを標準装備。</p>
-                <div class="meta-tags"><span>max_turns=90</span><span>thread-safe interrupt</span><span>callback chain</span></div>
+                <p>複数の API / OAuth プロバイダーへ接続するエージェント中核クラス。CLI の既定は最大 500 イテレーションで、設定や呼び出し引数で変更できます。割り込み機構、思考コールバック・ツール進捗コールバックを備えます。</p>
+                <div class="meta-tags"><span>CLI max_turns=500</span><span>thread-safe interrupt</span><span>callback chain</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔧 ツールシステム</h3>
@@ -1813,8 +1813,8 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔌 マルチプロバイダ対応</h3>
-                <p>API provider: ollama / openai / openrt_chat / openrt_free / gemini / freeai / claude。CLI bridge: claude_cli / codex_cli / antigravity_cli / copilot_cli。既定は ollama。AiDiy_key.json から API キーを自動解決。</p>
-                <div class="meta-tags"><span>6 API providers</span><span>4 CLI bridges</span><span>AiDiy_key.json</span></div>
+                <p>OpenAI・Claude・Gemini / FreeAI・OpenRouter・Ollama・ローカル Gemma の API に加え、OpenAI / xAI の OAuth と外部 CLI に対応。CLI は Claude Code / Codex / Antigravity / Copilot / OpenCode / Grok。初期モデルは OpenAI OAuth 系で、API 設定と OAuth 認証ストアを分けて扱います。</p>
+                <div class="meta-tags"><span>API / OAuth</span><span>6 CLI bridges</span><span>AiDiy_key.json</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧩 プラグイン + スキルシステム</h3>
@@ -1832,8 +1832,8 @@ Key:   利用者名</pre>
                     backend_server/AIコア/AIコード_cli.py が subprocess で起動。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
-                    <code>aidiy_hermes -Q -z "指示"</code> の形式で<br>
-                    ワンショット実行。会話履歴は AiDiy 側が保持。<br>
+                    <code>aidiy_hermes -Q --oneshot-stdin</code> の形式で<br>
+                    UTF-8 標準入力から指示を渡してワンショット実行。会話履歴は AiDiy 側が保持。<br>
                     AiDiy Code のオフライン利用でも直接実行されます。
                 </div>
             </div>
@@ -1841,10 +1841,10 @@ Key:   利用者名</pre>
                 <span class="feature-icon">📂</span>
                 <h3 class="feature-title">主要ディレクトリ構成</h3>
                 <p class="feature-description">
-                    <code style="color:#00ffff">core/</code> — エージェント・コンテキスト・表示<br>
+                    <code style="color:#00ffff">core/</code> — agent loop・プロンプト・コンテキスト<br>
                     <code style="color:#00ffff">tools/</code> — 60+ ツール実装<br>
-                    <code style="color:#00ffff">base/</code> — 定数・ツールセット・モデル解決<br>
-                    <code style="color:#00ffff">hermes_cli/</code> — TUI・スラッシュコマンド
+                    <code style="color:#00ffff">base/</code> — run_agent・定数・ツールセット<br>
+                    <code style="color:#00ffff">cli_main.py / hermes_cli/</code> — TUI・認証・モデル選択
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     元の Hermes Agent をベースに、Windows 対応・<br>
@@ -1863,9 +1863,9 @@ Key:   利用者名</pre>
                 <span class="feature-icon">🧠</span>
                 <h3 class="feature-title">_AIDIY/knowledge/ 知見フォルダ</h3>
                 <p class="feature-description">
-                    コードエージェントは修正が完了するたびに、<br>
+                    AIコアの Code Agent は変更ファイルがあり、処理が正常終了した場合に、<br>
                     プロジェクト専用の <code style="color:#00ffff">_AIDIY/knowledge/</code> フォルダへ<br>
-                    知見を自動整理します。
+                    知見を整理する追加の AI 実行を行います。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     次回の同種修正では <code>_AIDIY/knowledge/_index.md</code> を参照し、<br>
@@ -1878,7 +1878,7 @@ Key:   利用者名</pre>
                 <h3 class="feature-title">運用フロー</h3>
                 <p class="feature-description">
                     修正前に <code style="color:#00ffff">_index.md</code> と<br>
-                    <code style="color:#00ffff">_最終変更.md</code> を参照。<br>
+                    関連するテーマ別メモを参照。<br>
                     修正完了後にテーマ別メモへ追記・索引更新。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
@@ -1917,12 +1917,12 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">📜 aidiy_logs</h3>
-                <p>backend_server（core/apps/mcp）のログを tail、正規表現 grep、ERROR/Traceback 抽出（前後 2 行の文脈付き）。変更直後の回帰検知に。</p>
+                <p>backend_server（core/apps）と backend_tools（mcp）のログを tail、正規表現 grep、ERROR/Traceback 抽出（前後 2 行の文脈付き）。変更直後の回帰検知に。</p>
                 <div class="meta-tags"><span>tail</span><span>grep</span><span>error context</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">✅ aidiy_code_check</h3>
-                <p>Python 構文（py_compile）・ruff lint・TypeScript 型チェック（npm run type-check）を subprocess で実行。副作用なしの検査系だけ。</p>
+                <p>Python 構文（py_compile）・ruff lint・TypeScript 型チェック（npm run type-check）を subprocess で実行。構文・lint・型の検査をまとめて実行。</p>
                 <div class="meta-tags"><span>py_compile</span><span>ruff</span><span>tsc</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1932,7 +1932,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🎨 aidiy_image_generation</h3>
-                <p>OpenAI（gpt-image / DALL-E 3）と Google Gemini / FreeAI を切替可能な AI 画像生成。プロンプトから PNG を取得し、temp/output へ自動保存。参照画像によるバリエーションも対応。</p>
+                <p>OpenAI（GPT Image / DALL-E 3）・Gemini / FreeAI と、Codex / Antigravity / Grok CLI に対応する AI 画像生成。プロンプトや参照画像から生成し、backend_server/temp/output へ保存します。auto は Codex を優先し、利用可否に応じて別方式へ切り替えます。</p>
                 <div class="meta-tags"><span>OpenAI</span><span>Gemini</span><span>FreeAI</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -2007,7 +2007,7 @@ Key:   利用者名</pre>
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     edit → observe → verify → backup<br>
-                    MCP 20 サーバーの連携で、修正の影響範囲を<br>
+                    MCP サーバー群の連携で、修正の影響範囲を<br>
                     <strong>AI が自分で確認</strong>してから報告します。<br>
                     SSE / Streamable HTTP / stdio と HTTP POSTでどの CLI からでも利用可。<br>
                     バックアップ保存→チェックのサイクルも内蔵。
@@ -2063,7 +2063,7 @@ Key:   利用者名</pre>
                 <p>日本語識別子の設計思想はそのまま、他言語ネイティブの業務命名へ拡張可能。</p>
             </div>
             <div class="expansion-item animate-on-scroll">
-                <h4>🧪 OSS テンプレート化</h4>
+                <h4>🧪 公開テンプレートの拡充</h4>
                 <p>非商用ライセンスのもと、コミュニティが業務テンプレートを共有・進化させる土台。</p>
             </div>
             <div class="expansion-item animate-on-scroll">

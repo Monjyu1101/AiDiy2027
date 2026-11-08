@@ -46,7 +46,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 - template の component tag は ASCII にする。
 - 日本語 component は import して `<component :is="...">` で扱う。
 - UI framework / CSS framework は使わず、既存 CSS と共有コンポーネントへ合わせる。
-- API は `/core/*`、`/apps/*` を Vite proxy 経由で呼ぶ。
+- 開発時の API は `/core/*` → Core 8091、`/apps/*` → Apps 8098 を Vite proxy 経由で呼ぶ。`/mcp/*` は先頭の `/mcp` を除いて Tools 8095 へ転送する（`vite.config.ts`）。
 - ビルドや type-check の実行判断は `開発環境運用手順.md` を確認する。
 - TypeScript は strict mode 無効の設定で運用しているが、既存型定義を使い、不要な `any` の拡大は避ける。
 
@@ -94,7 +94,7 @@ qTubler は `_share/qTublerFrame.vue` を中心にした独自テーブルです
 
 JWT token と user は `frontend_web` では `localStorage` に保存します。
 401 は Axios response interceptor でログアウト処理へ流します。
-認証延長対象は `認証延長ルール.md` を参照してください。
+認証延長対象は [JWT認証フロー](../_AIDIY/knowledge/backend_server,frontend_web,frontend_avatar,JWT認証フロー.md) と `src/api/client.ts` を参照してください。
 
 Task / Team は `frontend_ide` の独立アプリ `aidiy_task` / `aidiy_team` で操作し、この Web UI に画面・メニュー・API プロキシは持たせません。
 

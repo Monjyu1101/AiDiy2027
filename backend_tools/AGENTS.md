@@ -33,8 +33,8 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `aidiy_logs` | `backend_server` / `backend_tools` のログ観測 |
 | `aidiy_code_check` | Python 構文、ruff、TypeScript 型チェック |
 | `aidiy_backup` | 差分バックアップ保存 / 確認（HTTP は `save` / `check` に分岐） |
-| `aidiy_image_generation` | AI 画像生成（OpenAI gpt-image / DALL-E、Gemini、FreeAI、Codex CLI、Antigravity CLI） |
-| `aidiy_movie_generation` | AI 動画生成（Google Gemini Veo、MP4 保存、base64 返却なし） |
+| `aidiy_image_generation` | AI 画像生成（OpenAI gpt-image / DALL-E、Gemini、FreeAI、Codex CLI、Antigravity CLI、Grok CLI）。Grok は明示指定時に使用 |
+| `aidiy_movie_generation` | AI 動画生成（Gemini / FreeAI の Veo、MP4 保存、base64 返却なし） |
 | `aidiy_speech_to_text` | 音声認識（speech_recognition、OpenAI Whisper） |
 | `aidiy_text_to_speech` | テキスト音声合成（Edge / OpenAI / Gemini / FreeAI、MP3 出力） |
 | `aidiy_obs_studio_control` | OBS Studio WebSocket 制御（配信、録画、シーン、ソース、音声） |
@@ -42,7 +42,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `aidiy_notification_sounds` | 通知音のローカル再生（scene 別の開始 / 終了 / 注意音、`tts` シーンは text_to_speech で読み上げ合成） |
 | `aidiy_code_agents` | AI コードエージェント実行（CodeAI CLI 経由） |
 | `aidiy_chat_llms` | AI チャット LLM 実行（AIチャット.py 系 ChatAI 経由 / `aidiy_code_agents` 互換 IF） |
-| `aidiy_decisions_check` | AI判断（Decisions API / OAuth Responses JSON Schema）の共通インターフェース |
+| `aidiy_decisions_check` | AI判断（OpenAI Decisions API / OAuth Responses JSON Schema / FreeAI・Gemini JSON Chat）の共通インターフェース |
 | `aidiy_task_agents` | backend_taskteam の `/task` API への AIタスク非同期投入。`submit`の`task_id`は通常省略し、外部IDを引き継ぐ場合だけ指定。`project_path` / `ai_name` / `ai_model_plan` / `ai_model_do` / `ai_model_check` も通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
 | `aidiy_team_agents` | backend_taskteam の `/team` API への AIチーム依頼投入。`submit`は`Aチーム依頼`を準備開始で登録し、依頼IDは統合サーバーが自動採番。`project_path` / `team_ai_*` / `task_ai_*` は通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
 | `aidiy_windows_control` | Windows でのみ公開するデスクトップ操作制御（マウス/キーボード、ウィンドウ、プロセス、クリップボード、UI Automation 要素操作） |
@@ -55,6 +55,8 @@ OpenAI SDK / Ollama クライアントの `base_url` に `http://127.0.0.1:8095/
 |-----------------|----------------|
 | チャット補完（OpenAI 標準） | `POST /aidiy_chat_completions/v1/chat/completions` |
 | モデル一覧（ai_name 一覧） | `GET /aidiy_chat_completions/v1/models` |
+
+`aidiy_chat_llms` は `use_tools=true` のとき MCP 呼び出しをサーバー側で繰り返します。`aidiy_chat_completions` は低レベルの互換 API で、`tool_calls` をクライアントへ返します。後者の `stream=true` は生成完了後の全文を 1 チャンクで送る SSE で、トークン単位の逐次配信ではありません。
 
 次のユーザー入力予測 `aidiy_prediction_llms` は、同じプロジェクトの直近2時間・最新最大10ターンを参照し、MCP には公開しません。Live 試行と同じ直接loopback限定の内部REST `POST /internal/prediction_llms` だけを提供し、OpenAPI・MCP一覧・各CLI設定には追加しません。
 
@@ -81,8 +83,8 @@ OpenAI SDK / Ollama クライアントの `base_url` に `http://127.0.0.1:8095/
 | `tools_proc/log_tailer.py` | ログ tail / error 抽出 |
 | `tools_proc/code_checker.py` | 構文 / 型チェック |
 | `tools_proc/backup.py` | 差分バックアップ保存 / 確認 |
-| `tools_proc/image_generation.py` | 画像生成（OpenAI / Gemini / FreeAI / Codex CLI / Antigravity CLI） |
-| `tools_proc/movie_generation.py` | 動画生成（Google Gemini Veo） |
+| `tools_proc/image_generation.py` | 画像生成（OpenAI / Gemini / FreeAI / Codex CLI / Antigravity CLI / Grok CLI） |
+| `tools_proc/movie_generation.py` | 動画生成（Gemini / FreeAI の Veo） |
 | `tools_proc/speech_to_text.py` | 音声認識（speech_recognition / Whisper） |
 | `tools_proc/text_to_speech.py` | テキスト音声合成（Edge / OpenAI / Gemini / FreeAI） |
 | `tools_proc/obs_studio_control.py` | OBS Studio WebSocket 制御 |
@@ -94,6 +96,8 @@ OpenAI SDK / Ollama クライアントの `base_url` に `http://127.0.0.1:8095/
 | `tools_proc/decisions_check.py` / `tools_proc/tools_decisions.py` | backend_serverのAI判断への接続、MCP / HTTP公開 |
 | `tools_proc/task_agents.py` / `tools_proc/tools_task_agents.py` | backend_taskteam の `/task` API への AIタスク投入 |
 | `tools_proc/team_agents.py` / `tools_proc/tools_team_agents.py` | backend_taskteam の `/team` API への AIチーム依頼投入 |
+| `tools_proc/taskteam_auth.py` | TaskTeam API 向け内部認証。資格情報は要求ごとに読み、loopback のみに送る |
+| `tools_proc/tools_settings.py` / `tools_proc/tools_management.py` | `_config/AiDiy_tools.json` の非秘密設定、認証付き管理 API、利用可否の制御 |
 | `tools_proc/windows_control.py` / `tools_proc/tools_windows_control.py` | Windows デスクトップ操作制御（マウス/キーボード/ウィンドウ/プロセス/クリップボード/UI Automation） |
 
 ## アーキテクチャ
@@ -124,6 +128,12 @@ Chrome は `ChromeSessionRegistry` がセッションごとに `ChromeManager` �
 
 通常の Tools 起動は `127.0.0.1` のみに待ち受けます。これは bind 制限であり、独自の host 指定やポート転送・リバースプロキシによる再公開までは防ぎません。管理 API の既存認証は維持します。
 SQLite / PostgreSQL は read-only 中心で扱い、書き込みが必要な場合もまずアプリ API で再現できないか確認します。
+
+### Tools 設定と管理 API
+
+`_config/AiDiy_tools.json` でツールごとの有効 / 無効と、音声・画像・動画生成の既定値を管理します。
+`POST /management/enabled` と `POST /management/defaults` は Bearer トークンを Core の `/core/auth/現在利用者` で検証し、実行時設定を更新します。`write=true` の場合は設定 JSON にも保存します。
+無効または未導入のツールも MCP の登録・一覧・接続は維持し、実行時に `service_status="out_of_service"` を返します。
 
 ## 実装時の入口
 

@@ -12,7 +12,7 @@ Electron のタイトルバーは「ー □ 📌 ×」で最小化・最大化�
 
 ## 導入
 
-- Node.js 22.12 以降（この作業環境では 24.18 で検証）。
+- Node.js 22.12 以降（`package.json` の `engines.node`）。
 - `command_hermes` をセットアップし、使う Provider を認証しておきます。
 - ライブを使う場合は `backend_server` の Core と LiveAI の設定が必要です。
 - `frontend_ide/host` のソースを同じプロジェクトに保持します。VS Code 本体、拡張の導入、VSIX 生成は不要です。
@@ -25,7 +25,7 @@ python frontend_channels/discord/_setup.py
 
 setupとPython起動入口は `package.json` のNode.js要件を確認します。Vue 3・Electron・パネル生成用ツールは `npm ci --include=dev` でプロジェクトに導入し、グローバルVue CLI・Electronは不要です。Electron本体がない場合も既存のWeb起動へ切り替えられますが、Node.jsの版数不足・版数不明だけなら警告して継続します。Node.jsの実行失敗やDiscord設定の不備はエラーのままです。専用ウィンドウの復旧は上記 `_setup.py` を使います。
 
-ルート `_setup.py` の「フロントエンド(Discord)」からも導入できます。セットアップは既定 Yes（`[y]/n`）で、Electron の事前配置と `~/.local/bin/aidiy_discord`（Windows は `.cmd`）の登録も行います。ルート `_start.py` の Discord 起動は既定 No（`[n]/y`）で、Yes を選ぶとパネルを開いて自動接続します。
+ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。セットアップは既定 Yes（`[y]/n`）で、Electron の事前配置と `~/.local/bin/aidiy_discord`（Windows は `.cmd`）の登録も行います。ルート `_start.py` の Discord 起動は既定 No（`[n]/y`）で、Yes を選ぶとパネルを開いて自動接続します。
 
 フォルダ移動前に登録した `aidiy_discord` は旧絶対パスを含むため、移動後にルート `_setup.py` の `b`（build: Node.js系の再ビルド）または上記のセットアップで再登録してください。既存の `node_modules` はフォルダごと移動して再利用でき、Git管理には追加しません。
 
@@ -92,7 +92,7 @@ Discord 専用設定はこの5項目だけです。すべて必須で、ID は�
 | `LIVE_AI_NAME`、`LIVE_*_MODEL`、`LIVE_*_VOICE` | 初回の LiveAI、モデル、音声。手動選択後は前回の選択を優先 |
 | `PORT_CORE` | ローカル AIコアの接続先ポート |
 | `CODE_BASE_PATH` | Code / Live 共通の作業フォルダ。相対パスは `backend_server` 基準 |
-| `CODE_AIDIY_HERMES_MODEL` | Hermes のモデル。`openai_oauth/gpt-6.1-sol` を使用 |
+| `CODE_AIDIY_HERMES_MODEL` | Hermes の初期モデル。未設定時は `auto`。パネル保存済みの選択を優先 |
 | `CODE_MAX_TURNS` | Hermes の最大実行ターン数 |
 
 Hermes と Python は VS Code と同じ起動探索で自動解決します。OpenAI OAuth の指定は CLI の provider と model に分けて渡し、認証エラー時に別 provider へ切り替えません。CLI の無応答タイムアウトは15分です。
@@ -123,7 +123,7 @@ aidiy_discord
 
 パネルの選択は `~/.aidiy/aidiy_discord.json` の1ファイルに、音声会話の ON/OFF（`live`、未保存時は OFF）、Live のモデル・音声（`live_models`）、コードの実行環境（`code_name`、現在は `aidiy_hermes` 固定。将来の別ハーネス用）とモデル（`code_model`）をまとめて保存します。このファイルがあれば起動時に自動接続します。旧形式の `aidiy_discord_features.json` / `aidiy_discord_model.json` / `aidiy_discord_code_model.json` は、初回の読込で1回だけ移して削除します。未保存・破損時は共通 `LIVE_*` / `CODE_AIDIY_HERMES_MODEL` を使います。API キー・トークン・ID はモデル保存ファイルには含めません。
 
-`cd frontend_channels/discord` 後の `npm start`、`python frontend_channels/discord/_start.py` でも同じパネルが開きます。`aidiy_discord --check` / `npm run config:check` は設定と Hermes の実行パスだけを確認し、Discord には接続しません。Code だけなら Core は不要で、Live を利用する場合はルート `_start.py` などで Core を起動してください。Core 停止中は保存済み・共通設定のモデルを表示します。起動ログは配置先リポジトリの `temp/aidiy_discord/logs/`（`<UUID>.stdout.log` / `.stderr.log`）、起動完了通知は `temp/aidiy_discord/runtime/`（`<UUID>.ready.json`）に保存します。旧ログの移行・削除・旧保存先への退避は行いません。ブラウザ版の `frontend_channels/discord/out/aidiy_discord/browser-profile` に保存します。Electron のユーザー設定は従来のままです。
+`frontend_channels/discord` での `npm start`、またはプロジェクトルートでの `python frontend_channels/discord/_start.py` でも同じパネルが開きます。`aidiy_discord --check` / `npm run config:check` は設定と Hermes の実行パスだけを確認し、Discord には接続しません。Code だけなら Core は不要で、Live を利用する場合はルート `_start.py` などで Core を起動してください。Core 停止中は保存済み・共通設定のモデルを表示します。起動ログは配置先リポジトリの `temp/aidiy_discord/logs/`（`<UUID>.stdout.log` / `.stderr.log`）、起動完了通知は `temp/aidiy_discord/runtime/`（`<UUID>.ready.json`）に保存します。旧ログの移行・削除・旧保存先への退避は行いません。ブラウザ版の `frontend_channels/discord/out/aidiy_discord/browser-profile` に保存します。Electron のユーザー設定は従来のままです。
 
 ### ブラウザ版（Codespaces など）
 
@@ -131,7 +131,7 @@ aidiy_discord
 
 ## クリーンアップ
 
-ルート `python _cleanup.py` の Discord 項目は既定 Yes です。削除前にこの作業コピーの Bot を子孫プロセスごと停止し、終了できない場合は削除を中止します。Discord の削除を選ばない場合でも、全体 cleanup の開始時には他サービスと同じく Bot を停止します。
+ルート `python _cleanup.py` の Channels(Discord / Slack) 項目は既定 Yes で、両チャンネルをまとめて選択します。削除前にこの作業コピーの Bot を子孫プロセスごと停止し、終了できない場合は削除を中止します。Channels の削除を選ばない場合でも、全体 cleanup の開始時には他サービスと同じく Bot を停止します。
 
 削除対象は `frontend_channels/discord` 内の `node_modules`、生成物、temp、Python キャッシュと、この作業コピーを指す `aidiy_discord` ランチャーです。ソース、`package-lock.json`、共通 `_config/AiDiy_key.json`、前回のモデル・機能の選択は残ります。単独 cleanup は `python frontend_channels/discord/_cleanup.py` です。
 
@@ -163,7 +163,7 @@ Live は指定ユーザーが指定ボイスチャンネルへ入室すると自
 
 Electron とブラウザ版は同じ Vue 3 画面を使います。`panel/components/接続/接続パネル.vue` が画面、`機能切替.vue` が共通トグル、`panel/components/接続/パネル状態.js` が接続状態・モデル選択・コード・ライブの状態管理、`panel/components/ライブ/音声表示.js` が描画を担当します。画面内部は「接続状態」「コードモデル」「ライブAI」「ライブモデル」「音声」「ウィンドウ操作」などの日本語で追えます。IPC、`LIVE_*`、保存済み JSON のキーは互換性のため変更しません。
 
-`panel/view.js` は事前コンパイルした配布物としてリポジトリへ同梱します。通常起動・セットアップにビルドや CDN 接続は不要です。`index.html`、`view.js`、`visualizer.js`、`style.css` の公開 URL、Electron preload と WebSocket の API は維持しています。`visualizer.js` は互換 URL のための小さな入口で、描画本体は Vue バンドルに含まれます。
+`panel/view.js` は事前コンパイルした配布物としてリポジトリへ同梱します。通常起動ではビルドや CDN 接続は不要です。セットアップは `npm ci --include=dev`、Electron 更新、`build:panel`、`check:panel` を実行して配布物を揃えます。`index.html`、`view.js`、`visualizer.js`、`style.css` の公開 URL、Electron preload と WebSocket の API は維持しています。`visualizer.js` は互換 URL のための小さな入口で、描画本体は Vue バンドルに含まれます。
 
 画面ソース・依存関係を変更して配布物を更新する場合だけ、次を実行します。
 

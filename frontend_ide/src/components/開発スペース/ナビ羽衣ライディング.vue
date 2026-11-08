@@ -4,7 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
-// ナビ調査中の待ち時間を遊べる表示にする。真っ黒な宇宙に透明な格子が浮かび、光るバイクが走る。
+// 羽衣ライディング：ナビ調査中の待ち時間を遊べる表示にする。真っ黒な宇宙に透明な格子が浮かび、光るバイクが走る。
 // バイクの背後には羽衣のような縦帯が長く伸びていく。ランダムに走るうち自分の帯へ戻ってきて、突っ切ると帯が光って火花が散る。
 // ハンドルは0°（直進）から±15°まで、一定時間ごとに1°ずつ切れる。←→（A/D）を押している間はその方向へ、
 // 押していなければ一定時間ごとにランダムに切る。ハンドル角に応じて車体も最大±15°傾く。↑↓（W/S）で加減速、押し続けると加速。
@@ -281,7 +281,7 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-cruise" :class="{ ready }" tabindex="0" role="img" aria-label="ナビ調査中の遊び場。光るバイクが走り、背後に帯が伸びます。左右キーでハンドル、上下キーで加減速、押し続けると加速します。">
+  <div ref="stage" class="navigation-cruise" :class="{ ready }" tabindex="0" role="img" aria-label="羽衣ライディング。ナビ調査中の遊び場。光るバイクが走り、背後に帯が伸びます。左右キーでハンドル、上下キーで加減速、押し続けると加速します。">
     <canvas ref="canvas"></canvas>
     <small v-if="ready" class="navigation-cruise-hint" aria-hidden="true">←→でハンドル / ↑↓で加減速 / 押し続けて加速 / 自分の帯を突っ切ろう / ダブルクリックで帯を消去</small>
   </div>

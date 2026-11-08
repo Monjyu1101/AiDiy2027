@@ -60,9 +60,10 @@ Windows では Git for Windows（Git Bash）が必須です。見つからない
 ## Provider 概要
 
 provider は API provider と CLI bridge の両方を扱います。`hermes_cli/providers.py` に 42 の provider
-overlay と 89 のエイリアスがあり、`--provider` / config / 環境変数 / `auto` の優先順位で解決します。
+overlay と 87 のエイリアスがあり、`--provider` / config / 環境変数 / `auto` の優先順位で解決します。
 これとは別に `cli_main.py` が `_config/AiDiy_key.json` 由来の AiDiy provider 一覧（`/model` ピッカー）
-と外部 CLI ディスパッチを持ちます。
+と外部 CLI ディスパッチを持ちます。ピッカーのモデル候補は
+`_AIDIY/aidiy_diag/hermes_models_info.json` を `hermes_cli/aidiy_model_catalog.py` 経由で読み込みます。
 
 詳細な一覧と選択ロジックは `_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md` を参照してください。
 
@@ -91,12 +92,16 @@ upstream のレイアウトを次の 3 点だけ読み替えています。
 | `skills/`、`optional-skills/` | skill 資産 |
 | `optional-mcps/` | MCP サーバーカタログ（65 件の manifest、既定は無効）。`hermes_cli/mcp_catalog.py` が実行時に読む |
 | `locales/`、`assets/`、`scripts/`、`native/` | i18n カタログ、静的資産、bootstrap スクリプト |
+| `checks/` | AiDiy 固有のモデル候補・通信サイズ上限・削除制御の回帰検証 |
 | `temp/` | 一時状態 |
 
 ## AiDiy 連携
 
 `aidiy_hermes` は `backend_server/AIコア/AIコード_cli.py` から subprocess で起動されます。
-モデル設定は `CODE_AIDIY_HERMES_MODEL` を使い、モデル一覧は `backend_server/conf/conf_model.py` 側で動的生成します。
+モデル設定は `CODE_AIDIY_HERMES_MODEL` を使います。AI コードパネルのモデル一覧は
+`backend_server/conf/conf_model.py` が `_AIDIY/aidiy_diag/code_models_info.json` を読み、
+画面操作用の `auto` / `same` を追加して返します。ここでは外部 API / CLI から候補を取得しません。
+Hermes 自身の `/model` ピッカーは、前述の Hermes 専用一覧を読みます。
 
 主な連携箇所:
 
@@ -134,7 +139,7 @@ upstream のレイアウトを次の 3 点だけ読み替えています。
 | `pyproject.toml` | upstream の core 依存 + AiDiy 追加分（anthropic / google-genai / fal-client / mcp / windows-curses） |
 
 `ui-tui/`、`web/`、`website/`、`evals/`、`tests/`、`mcp-research-data/`、`datagen-config-examples/`、
-`docker/`、`nix/` は upstream から同梱しません（いずれも実行時に参照されません）。AiDiy 固有の `tests/` は別に持ち、標準入力と共用認証ストアの連携を検証します。
+`docker/`、`nix/` は upstream から同梱しません（いずれも実行時に参照されません）。AiDiy 固有の回帰検証は `checks/` に置きます。
 upstream ルートの `setup.py` は wheel ビルド用のガードなので `base/` へは置きません。
 
 ### バンドル資産の実行時配置

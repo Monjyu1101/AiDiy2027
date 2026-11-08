@@ -31,6 +31,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 - DB: `_data/AiDiy/database.db` を `backend_server` と共有。
 - API prefix: `/task` と `/team`。両方とも同じプロセス・同じ OpenAPI に載る。
 - ヘルスチェック: `GET /`、`GET /health`。
+- 認証: `/task/*`、`/team/*`、`POST /task_check_okng` は Bearer トークンが必要。root / health は認証不要。
 - MCP 連携: `backend_tools` の `aidiy_code_agents`、`aidiy_task_agents`、`aidiy_team_agents`。
 
 ## 統合アプリ構成
@@ -47,6 +48,8 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 Task と Team の旧 `app.py` / `routes.py` / `runtime.py` は統合先へ持ち込みません。root / health、lifespan、再起動監視は `taskteam_proc/` に一元化し、二重初期化や同名 route の衝突を防ぎます。
 
+通常画面のトークンは `taskteam_proc/api_auth.py` が Core の `/core/auth/現在利用者` で検証します。Task / Team サブプロセスと Tools からの内部呼び出しは TaskTeam 専用トークンを使い、IDE 連携起動は Core の内部認証を使います。本文の利用者IDを通常利用者の認証代わりには扱いません。
+
 ## 統合 lifespan
 
 `taskteam_proc/runtime.py` の単一 lifespan が、Task と Team の初期化およびバックグラウンド処理をまとめて管理します。
@@ -56,7 +59,7 @@ Task と Team の旧 `app.py` / `routes.py` / `runtime.py` は統合先へ持ち
 1. Team の作業・経験・PDCA テーブルを初期化する。
 2. 初期要員と初期目標を投入する。
 3. 起動前の会話をクリアし、自動作業設定と作業ループをオフへ戻す。
-4. Task テーブルを初期化する。
+4. Task テーブルを初期化し、要求が空の場合は実行有効=0の監視用ひな形タスクを投入する。
 5. Task の残存 PID を整理し、停止中に期限到来した実行条件を次周期へ送る。
 6. Team の残存 PID、生成中経験、未完了作業を整理する。
 7. 次の5つの asyncio task を開始する。
@@ -70,6 +73,7 @@ Task と Team の旧 `app.py` / `routes.py` / `runtime.py` は統合先へ持ち
 | Team 状態監視 | 10秒 | 毎分ゲートでタイムアウト、経験、PDCA、会話を確認 |
 
 停止時は5つの task をすべて cancel し、`CancelledError` を回収してから終了します。
+内部認証の永続鍵・トークン管理は、この worker lifespan の前後で開始・停止します。
 Team テーブルを Task より先に初期化するのは、Task の起動時クリーンアップが `Aチーム依頼` / `Aチーム作業` / `Aチーム状況` を参照・更新するためです。
 
 ## 再起動
@@ -89,7 +93,7 @@ backend_taskteam/temp/reboot_taskteam.txt
 1. `Aタスク要求`を`準備開始`で仮登録する。
 2. Task 起動監視が要求を`準備中`へ進め、`task_sub/sub_init.py`を起動する。
 3. AI が要求を明細へ分解し、開始行・処理行・終了行を本登録する。
-4. `先行SEQ`がすべて完了した明細を実行可能とし、依存を満たした明細を並行起動する。
+4. `先行SEQ`の依存条件を満たした明細を並行起動する。通常は全先行の完了、`or`は選択された先行のいずれか1本の完了を条件とする。
 5. `task_sub/sub_start.py`、`sub_do.py`、`sub_if.py`、`sub_or.py`、`sub_end.py`が結果を API へ反映する。
 6. 終了明細が完了すると要求を完了へ進める。チーム依頼由来の場合は経験生成まで Team 側と連動する。
 
@@ -119,7 +123,7 @@ AI の分解 JSON にも `明細SEQ` の直後のキーとして出させます�
 （`tasks_watcher._タイプ別サブプロセス`）。以前はタイトル文字列（「開始」「終了」）で分けていましたが、
 `if` / `or` はタイトルが自由なため判定できず、タイプ基準へ切り替えました。タイプは登録・更新時に `明細タイプ()` で確定し、旧 DB の列追加や保存値の起動時補正は行いません。
 
-明細の依存関係はカンバン固定列ではなく、`先行SEQ`（カンマ区切りで複数指定可）による DAG です。実行可能判定は先行明細の全完了を条件とし、フロントエンドのフロー図は最長経路をクリティカルパスとして配置します。
+明細の依存関係はカンバン固定列ではなく、`先行SEQ`（カンマ区切りで複数指定可）による DAG です。フロントエンドのフロー図は最長経路をクリティカルパスとして配置します。
 
 同時実行数は `tasks_watcher.明細並行上限`（既定3）で制御します。先行SEQ を満たした明細は、同一タスク内でもこの上限まで同時に起動します（フロー図の分岐どおりに並行実行するため）。タスクをまたぐ並行に制限はありません。通知音などの軽量明細は code agent を使わないため上限の対象外で、依存が許せば常に同時起動します。上限を 1 にすると、タスク単位の直列実行になります。
 
@@ -127,7 +131,7 @@ AI の分解 JSON にも `明細SEQ` の直後のキーとして出させます�
 
 | サブプロセス | 対象 | 動作 |
 |--------------|------|------|
-| `task_sub/sub_init.py` | 要求の準備 | 2段構え。第1ステップは対象プロジェクトフォルダで AI に分解させ、応答本文へ JSON 文字列を返させる（書き込みなし）。第2ステップは AiDiy ルート（`"../"`）で `temp/output/<タスクID>.json` へ書き出させる |
+| `task_sub/sub_init.py` | 要求の準備 | 2段構え。第1ステップは対象プロジェクトフォルダで AI に分解させ、応答本文へ JSON 文字列を返させる（書き込みなし）。第2ステップは AiDiy ルート（`"../"`）で `temp/output/` の作業用 JSON へ書き出させ、検証後に `<タスクID>.json` へ置き換えて本登録する |
 | `task_sub/sub_start.py` | 開始明細 | AI を使わず、`aidiy_backup` MCP でプロジェクトの差分バックアップを取り、要求内容を応答内容へコピーして`開始完了`にする |
 | `task_sub/sub_do.py` | 処理明細 | 1ステップだけを `aidiy_code_agents` へ依頼する。`操作検証`ありの明細は AI が `/task_check_okng` へ報告した状態を確認し、書き込みなし・エラーのいずれかなら検証結果を踏まえて最大2回自動リトライする。再試行時は実行有効フラグと実行中PIDも復元する |
 | `task_sub/sub_if.py` | 分岐明細 | 要求内容の条件を AI に Y / N で判定させ、応答内容へ `Y: 理由` を書き込む。判定だけでファイル操作は行わせない |
@@ -156,7 +160,7 @@ AI の分解 JSON にも `明細SEQ` の直後のキーとして出させます�
 | `POST /task/タスク要求/一覧` / `取得` / `最大更新日時` / `新規既定値` | 要求の参照、ポーリング、新規入力の既定値取得 |
 | `POST /task/タスク要求/AI登録` / `登録` / `更新登録` / `本登録` | 仮登録、再分解、AI分解結果の確定 |
 | `POST /task/タスク要求/実行有効切替` / `AI失敗` | 実行可否と分解失敗の反映 |
-| `POST /task/タスク要求/停止検査` / `停止復旧` | 停止理由の機械判定と、AI判断による再開・再分解・強制再開 |
+| `POST /task/タスク要求/停止検査` / `停止復旧` | 停止理由の機械判定と、診断・指定モードに基づく再開・再分解・強制再開（復旧 API 自体は AI を呼ばない） |
 | `POST /task/タスク実行条件/取得` | 要求に紐づく起動条件の取得 |
 | `POST /task/タスク明細/一覧` / `最大更新日時` | 明細の参照とポーリング |
 | `POST /task/タスク明細/更新登録` / `実行有効切替` / `全消去` | 明細の編集・実行可否・削除 |
@@ -165,7 +169,8 @@ AI の分解 JSON にも `明細SEQ` の直後のキーとして出させます�
 
 新規タスクIDは `C採番`（採番ID=`Aタスク要求`、初期値1000）による `TK` + 8桁連番です。API からタスクIDを省略した場合は自動採番し、プロジェクトや `TASK_AI_*` の未指定値は同じ利用者の更新最終レコード、なければ共通設定から補完します。
 
-Task の無進捗タイムアウトは、`準備中`の要求が10分、それ以外の要求が60分です。実行中明細は `予測分数×2`、未見積りを含む最低10分で判定します。
+Task 状態監視による無進捗タイムアウトは、`準備中`の要求が30分、それ以外の要求が60分です。実行中明細は `予測分数×2`、未見積りを含む最低10分で判定します。
+ただし現行の `停止検査` / `停止復旧` が使う `tasks_db` の診断は、`準備中`を10分でタイムアウトと判定します。状態監視の自動停止とは閾値が異なります。
 
 `停止検査` は人間向けの `停止理由` に加え、AI が分岐に使える `状態コード`、`推奨操作`、
 `通常復旧可能`、`強制復旧必要` を返します。主な状態コードは `REQUEST_ERROR`、
@@ -241,7 +246,7 @@ Task の無進捗タイムアウトは、`準備中`の要求が10分、それ�
 
 ### 単発会話の2モード
 
-`team_proc/team_chat.py` は `backend_tools` へ依存せず、`aidiy_code_agents` の HTTP API を毎回呼びます。会話履歴や CodeAgent インスタンスは Team 側に保持しません。モードは2つです。
+`team_proc/team_chat.py` は `backend_tools` の Python モジュールを import せず、`aidiy_code_agents` の HTTP API を毎回呼びます。会話履歴や CodeAgent インスタンスは Team 側に保持しません。モードは2つです。
 
 | モード | 使う処理 | 権限 / タイムアウト |
 |--------|----------|---------------------|
@@ -259,7 +264,7 @@ Task と Team の全 DB モジュールはプロジェクトルートの `_data/
 - `CODE_BASE_PATH`。
 - `TASK_AI_NAME` / `TASK_AI_MODEL_plan` / `TASK_AI_MODEL_do` / `TASK_AI_MODEL_check`。
 - `TEAM_AI_NAME` / `TEAM_AI_MODEL_plan` / `TEAM_AI_MODEL_do` / `TEAM_AI_MODEL_check`。
-- `PORT_TASKTEAM`。現行値は `8093`。
+- `PORT_TASKTEAM`。frontend_ide の接続先解決で参照する。サーバーの `taskteam_main.py` / `_start.py` と内部ワーカーの接続先は現行実装では `8093` 固定。
 
 Task が AI へ渡すプロンプトの定型部は `_config/AiDiy_task__context.json` に外だししています。
 無ければ `task_sub/sub_context.py` が初回実行時にひな形を書き出し、あればその内容を使います
@@ -348,10 +353,11 @@ Task ID と Team 依頼IDが同じ文字列になる連携があるため、Task
 | `taskteam_proc/app.py` | 単一 FastAPI app の生成と全 router 登録 |
 | `taskteam_proc/routes.py` | 統合 root / health |
 | `taskteam_proc/runtime.py` | 統合 lifespan、5つの非同期処理、再起動監視 |
+| `taskteam_proc/api_auth.py` / `taskteam_proc/internal_auth.py` / `taskteam_proc/internal_client.py` | 通常画面・内部連携の認証、TaskTeam 専用鍵とトークンの永続管理、サブプロセスの内部 HTTP クライアント |
 | `task_proc/tasks_api.py` | `/task/*` API |
 | `task_proc/tasks_db.py` | `Aタスク*` と連携する `Aチーム*` の DB 操作 |
 | `task_proc/tasks_watcher.py` | Task の起動・状態監視とサブプロセス起動 |
-| `task_sub/` | 要求分解（`sub_init.py`）、開始（`sub_start.py`）、処理（`sub_do.py`）、終了（`sub_end.py`）の各 Task サブプロセス |
+| `task_sub/` | 要求分解（`sub_init.py`）、開始（`sub_start.py`）、処理（`sub_do.py`）、分岐（`sub_if.py`）、合流（`sub_or.py`）、終了（`sub_end.py`）の各 Task サブプロセス |
 | `task_sub/sub_context.py` | Task の定型コンテキスト（plan / do / check）の読込 |
 | `team_proc/team_context.py` | Team の定型コンテキスト（用途別6ファイル）の読込 |
 | `team_proc/team_api.py` | `/team/*` API |
@@ -374,8 +380,9 @@ Task ID と Team 依頼IDが同じ文字列になる連携があるため、Task
 
 ## フロントエンドと MCP からの利用
 
-- `frontend_web` と `frontend_avatar` の Vite proxy は `/task/*` と `/team/*` をともに `http://127.0.0.1:8093` へ転送します。
-- Avatar の `taskClient` と `teamClient` は責務別に分けますが、Electron 本番の base URL は両方 8093 です。
+- 操作画面は `frontend_ide` の単独アプリ `aidiy_task` / `aidiy_team` と IDE 連携起動版です。共通 Vue 画面は `frontend_ide/src/components/タスクチーム/` にあります。
+- `frontend_ide/タスクチーム/api-proxy.mjs` が `/taskteam-api/task/*` / `/taskteam-api/team/*` を同じ TaskTeam サーバーへ転送します。共通の `taskClient` / `teamClient` はこの proxy を使います。
+- 現行の `frontend_web` / `frontend_avatar` の Vite proxy に `/task` / `/team` はありません。
 - `backend_tools/tools_proc/task_agents.py` と `team_agents.py` も同じ 8093 の統合サーバーへ接続します。
 - Team のサブプロセスが Task API を呼ぶ場合も、`/team` と `/task` の両方を 8093 で使用します。
 

@@ -4,7 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
-// ナビ調査中の待ち時間を遊べる表示にする（ナビ航行と並ぶもう一つの表示。どちらを出すかはナビごとにランダム）。
+// ナビ調査中の待ち時間を遊べる表示にする（ナビ羽衣ライディングと並ぶもう一つの表示。どちらを出すかはナビごとにランダム）。
 // 真っ黒な夜空に花火が上がり続ける。スペースキーを押し下げている間は力を貯め、離すと大玉を打ち上げる。それ以外はランダムに上がる。
 // 視点は常に花火の中心を見たまま自動航行し、花火の中心を焦点にしたランダムな楕円軌道を飛ぶ。
 // 軌道は打ち上げの円の中を突っ切り、中心に近いほど速く、火花の真ん中を通過していく。

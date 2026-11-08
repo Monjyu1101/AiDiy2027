@@ -1,5 +1,5 @@
 import {createApp, h} from 'vue';
-import NaviCruise from '@s/ナビ航行.vue';
+import NaviHagoromoRiding from '@s/ナビ羽衣ライディング.vue';
 import NaviFireworks from '@s/ナビ花火.vue';
 import NaviNightFlight from '@s/ナビ夜間飛行.vue';
 import NaviClock from '@s/ナビ時計.vue';
@@ -11,7 +11,7 @@ const sample = '今回の目標は、READMEに記されたTask AとTask Bの進�
 const pick = () => {
   const o = {};
   switch (scene) {
-    case 'ride': return h(NaviCruise, o);
+    case 'ride': return h(NaviHagoromoRiding, o);
     case 'fireworks': return h(NaviFireworks, o);
     case 'nightflight': return h(NaviNightFlight, o);
     case 'clock': return h(NaviClock, o);

@@ -278,7 +278,7 @@ const ICON_DATA = [
   // ===== 開発ツール =====
   {
     name: 'VS Code',
-    iconUrl: 'icons/vscode.svg',
+    iconUrl: 'https://code.visualstudio.com/assets/branding/code-stable.png',
     linkUrl: 'https://code.visualstudio.com',
     category: 'Development Tool',
   },
@@ -286,13 +286,13 @@ const ICON_DATA = [
   // ===== コミュニケーション =====
   {
     name: 'Discord',
-    iconUrl: 'icons/discord.svg',
+    iconUrl: 'https://cdn.prod.website-files.com/6257adef93867e50d84d30e2/66e3d80db9971f10a9757c99_Symbol.svg',
     linkUrl: 'https://discord.com',
     category: 'Communication',
   },
   {
     name: 'Slack',
-    iconUrl: 'icons/slack.svg',
+    iconUrl: 'https://a.slack-edge.com/1f40066/marketing/img/nav/logo.svg',
     linkUrl: 'https://slack.com',
     category: 'Communication',
   },
@@ -309,6 +309,92 @@ const ICON_DATA = [
     iconUrl: 'https://cdn.simpleicons.org/postgresql',
     linkUrl: 'https://www.postgresql.org',
     category: 'Database',
+  },
+
+  // ===== 実装で使用する追加プロダクト・ライブラリ =====
+  {
+    name: 'Google Chrome',
+    iconUrl: 'https://www.google.com/chrome/static/images/chrome-logo-m100.svg',
+    linkUrl: 'https://www.google.com/chrome/',
+    category: 'Browser',
+  },
+  {
+    name: 'nginx',
+    iconUrl: 'https://nginx.org/img/nginx_logo.svg',
+    linkUrl: 'https://nginx.org/',
+    category: 'Infrastructure',
+  },
+  {
+    name: 'Google Maps',
+    iconUrl: 'https://www.gstatic.com/marketing-cms/assets/images/81/e4/1bdb808b40a28cc70ac24bf5e6fa/google-maps-favicon.png=s180',
+    linkUrl: 'https://www.google.com/maps/about/',
+    category: 'Service',
+  },
+  {
+    name: 'Mermaid',
+    iconUrl: 'https://mermaid.js.org/favicon.ico',
+    linkUrl: 'https://mermaid.js.org/',
+    category: 'Framework',
+  },
+  {
+    name: 'xterm.js',
+    iconUrl: 'https://xtermjs.org/images/favicon.png',
+    linkUrl: 'https://xtermjs.org/',
+    category: 'Framework',
+  },
+  {
+    name: 'Git',
+    iconUrl: 'https://git-scm.com/images/logos/downloads/Git-Icon-1788C.svg',
+    linkUrl: 'https://git-scm.com/',
+    category: 'Development Tool',
+  },
+  {
+    name: 'Wikipedia',
+    iconUrl: 'https://www.wikipedia.org/portal/wikipedia.org/assets/img/Wikipedia-logo-v2@2x.png',
+    linkUrl: 'https://www.wikipedia.org/',
+    category: 'Service',
+  },
+  {
+    name: 'uv',
+    iconUrl: 'https://docs.astral.sh/uv/assets/logo-letter.svg',
+    linkUrl: 'https://docs.astral.sh/uv/',
+    category: 'Development Tool',
+  },
+  {
+    name: 'npm',
+    iconUrl: 'https://docs.npmjs.com/icons/icon-192x192.png?v=c2963dcad859b2b320d26051c38197fe',
+    linkUrl: 'https://docs.npmjs.com/',
+    category: 'Development Tool',
+  },
+  {
+    name: 'Docker',
+    iconUrl: 'https://www.docker.com/app/uploads/2024/02/cropped-docker-logo-favicon-192x192.png',
+    linkUrl: 'https://www.docker.com/',
+    category: 'Infrastructure',
+  },
+  {
+    name: 'PyTorch',
+    iconUrl: 'https://pytorch.org/wp-content/uploads/2024/10/cropped-favicon-192x192.webp',
+    linkUrl: 'https://pytorch.org/',
+    category: 'Framework',
+  },
+  {
+    name: 'Transformers',
+    iconUrl: 'https://huggingface.co/datasets/huggingface/documentation-images/raw/main/transformers-logo-light.svg',
+    linkUrl: 'https://huggingface.co/docs/transformers/index',
+    category: 'Framework',
+  },
+  {
+    name: 'jQuery',
+    iconUrl: 'https://jquery.com/wp-content/themes/jquery.com/i/favicon.ico',
+    linkUrl: 'https://jquery.com/',
+    category: 'Framework',
+  },
+  {
+    name: 'Day.js',
+    iconUrl: 'https://day.js.org/img/logo.png',
+    linkUrl: 'https://day.js.org/',
+    category: 'Framework',
   },
 ]
 

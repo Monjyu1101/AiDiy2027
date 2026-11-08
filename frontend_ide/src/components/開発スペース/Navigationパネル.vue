@@ -12,7 +12,7 @@ import {createNavigationPopupSizer} from './Navigation窓サイズ.js';
 import {createNavigationMessage} from './Navigationメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
-import NaviCruise from './ナビ航行.vue';
+import NaviHagoromoRiding from './ナビ羽衣ライディング.vue';
 import NaviFireworks from './ナビ花火.vue';
 import NaviNightFlight from './ナビ夜間飛行.vue';
 import NaviClock from './ナビ時計.vue';
@@ -379,7 +379,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||cruiseKind!=='nightflight'" kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviHagoromoRiding v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||cruiseKind!=='nightflight'" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>

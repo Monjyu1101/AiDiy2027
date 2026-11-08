@@ -185,7 +185,14 @@
       "sha256": "3a857db9a254f8ed5a28f9186ea1f14ae559e95f5bfbb9cbec0ed73d5f4321b8",
       "source_sha256": "7ceca831d71cb46f08fc1373c368d00577658d1413b68edbc2c2c3736883b6ed",
       "review": "step-10: 全40ページを画像化して目視確認。本文214ブロック・画像36参照のピクセル一致、本文63参照・PDF相対リンク30件を照合。未確認範囲と過去失敗の原因判定不能を維持。",
-      "alignment_review": "2026-11-07: step-10の40ページPDF・本文ハッシュを維持し、本文と参照先を再照合。"
+      "alignment_review": "2026-11-07: step-10の40ページPDF・本文ハッシュを維持し、本文と参照先を再照合。",
+      "pending_source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
+      "pending_update": {
+        "status": "PDF再生成待ち",
+        "scope": "待機画面名を羽衣ライディングへ変更し、図701の画像名と本文参照を更新。図710は旧表示名を含む画像であることを注記。過去の実機判定は維持。",
+        "reason": "クラウド実行環境でChromiumの起動がsocket() failed: Operation not permittedとなり、通常実行と承認付き実行の両方で停止。既存PDFは未変更、今回のPDF生成・目視確認は未実施。",
+        "command": "node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs 'セルフテスト,aidiy_navi,操作編.md'"
+      }
     }
   ],
   "visual_review": "資料整合：生成11冊の変更ページとTools全12ページを目視。Navigator全40ページの既存確認はstep-10を維持。全冊全ページの今回の目視や新しい実機PASSを示さない。詳細はalignment_record。",

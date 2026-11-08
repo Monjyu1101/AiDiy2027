@@ -23,11 +23,11 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 `frontend_ide/host` は Code / Live の2つの独立した VS Code 拡張とスタンドアロンを提供します。Code（`aidiy.aidiy-code`）と Live（`aidiy.aidiy-live`）は既存 AIコアへ接続します。Code は `AIコード.vue` と同じ Code CLI・モデルを選択します。拡張 ID、ビュー、設定、配布物を分け、片方を無効にしても他方が動作する構成です。
 
-通常の VS Code 拡張モードに加え、同じ Webview と AIコア接続層を使う `aidiy_code/` のスタンドアロンを持ちます。コード版の表示名は `AiDiy Code`、ライブ会話版の表示名は `AiDiy Live` です。
+通常の VS Code 拡張モードに加え、同じVue画面と接続層を使う単独起動を持ちます。`aidiy_code/launch.mjs` と `aidiy_live/launch.mjs` は `frontend_ide/launch.mjs` への互換入口です。コード版の表示名は `AiDiy Code`、ライブ会話版の表示名は `AiDiy Live` です。
 
 さらに Code / Live は、開発スペース（宇宙をテーマにした IDE 開発環境、AiDiy IDE）の部品としても動作します。IDE から同じプロジェクト・利用モード・セッションで呼び出され、VS Code 拡張・単独起動版とあわせて3つの使い方を持ちます。
 
-`aidiy_live/` は Live 拡張とスタンドアロンの共通画面・音声処理を持ちます。拡張ホスト側で REST / WebSocket と Windows マイクを扱い、Webview へ渡します。マイク補助は Python 標準ライブラリだけを使います。利用・検証方法は [`aidiy_live/README.md`](./aidiy_live/README.md) を参照してください。
+`aidiy_live/` は Live 拡張と単独起動で共用する通信・音声処理を持ちます。画面は `frontend_ide/src/components/ライブ/` が所有します。拡張ホスト側で REST / WebSocket と Windows マイクを扱い、Webview へ渡します。マイク補助は Python 標準ライブラリだけを使います。利用・検証方法は [`aidiy_live/README.md`](./aidiy_live/README.md) を参照してください。
 
 `frontend_channels/discord`（`aidiy_discord`）と `frontend_channels/slack`（`aidiy_slack`）は、本フォルダの `src/runner.ts`、`src/protocol.ts`、`src/forwarded-origin.ts`（Discord は `aidiy_live/src/protocol.ts` と `aidiy_live/src/model-catalog.ts` も）と、`scripts/` の起動規則（`launch-project.mjs`・`single-instance.cjs`・`window-size.cjs`・`window-opening.cjs`）をビルドせず直接読み込み、同じ Code / Live を利用します。コードは aidiy_hermes 固定で、モデルの保存とモデル候補は各アプリ側（`aidiy_discord.json` / `aidiy_slack.json`、AIコアのモデル情報API）で扱います。
 
@@ -90,7 +90,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 画面は VS Code の Webview・単独起動・IDE とも frontend_ide の Vue 画面だけです。単独起動・IDE では `aidiy_code/src/server.ts` が VS Code API の代わりに HTTP / SSE の API を提供し、接続層を共用します。
 
-AiDiy IDE はCode / Liveの単独サーバーと画面を同一公開元への中継で埋め込みます。Codeの `lockedMode` 起動オプションは、IDEの利用モードを維持し、サーバー寿命を親のIDEに委ねます。未指定の単独版の動作は従来どおりです。
+AiDiy IDE はCode / Liveの単独サーバーと画面を同一公開元への中継で埋め込みます。Codeの `lockedMode` 起動オプションは、IDEまたはNavigatorの利用モードを維持します。共通起動は `keepAlive:true` でAPIサーバーの寿命を親の `frontend_ide/server.mjs` に委ねます。Navigatorは窓ごとの専用Codeを使い、自動航行の要求・結果を `navigationRequestId` で照合します。
 
 Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）で、音声処理は `aidiy_live/src/audio.ts`・`visualizer.ts` を共用します。VS Code 拡張では `host.ts`（拡張ホスト）が AIコアの WebSocket、モデル情報 API、Windows マイク（`microphone.py`）を扱い、Webview へ中継します。単独起動では `src/server.ts` の localhost 中継が同じ役割を担います。接続時は input / 0 / audio の 3 本の WebSocket を開き、`connect` パケットで作業フォルダ（`CODE_BASE_PATH`）と選択したモデル設定を渡します。
 
@@ -100,7 +100,8 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 - Code のコードAIとモデルはAIコアのモデル情報APIから取得し、接続中のセッションへ反映する。
 - Code は通信切断時に約10秒間隔で再接続する。明示的な切断・破棄は再試行を止める。
 - Code の会話履歴は作業フォルダ別に管理し、AIコアのセッションIDで再開する。保存先はプロジェクトの `_AIDIY/aidiy_code/histories/<会話ID>.json`（`src/conversation-store.ts`）で、拡張・単独起動版・開発スペースが同じ形式で共用する。応答の途中経過ごとに書かないよう0.5秒まとめて書き、終了時に書き出す。拡張の旧 `workspaceState` 履歴は開いたフォルダへ移し、テストは一時フォルダへ書く（作業フォルダの `_AIDIY` に書かない）。旧Hermesの表示履歴は保持するが、CLIセッションIDをコアへ渡さない。
-- 最終手動モデルは `~/.aidiy/aidiy_code_model.json` で拡張・単独画面共通に保存する。
+- 未接続時の手動送信は `aidiy_hermes` を直接実行し、検証ループは0回に固定する。オンラインと未接続のセッション・モデルは分けて保持する。
+- 最終手動モデルはオンライン用 `~/.aidiy/aidiy_code_model.json`、未接続用 `~/.aidiy/aidiy_code_model_offline.json` に保存し、拡張・単独画面で共用する。
 - `src/runner.ts` と `src/protocol.ts` は引き続き Discord・Slack の直接CLI実行と対話CLIを支える。
 
 ## セキュリティ境界
@@ -109,7 +110,7 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 - 回答内リンクは `http` / `https` だけを外部ブラウザで開く。
 - 選択コードは 80,000 文字、要求本文は 200,000 文字、回答表示は 2,000,000 文字を上限とする。
 - 単独起動のサーバー（Code / Live）は `127.0.0.1` のランダムポートとランダム path で待ち受け、Host / Origin / Content-Type を検証する。
-- Live の中継（拡張ホスト・単独サーバー）は `/core/ws/AIコア` とモデル情報の取得 / 設定 API だけを通し、REST の要求本文は 64KB までに制限する。拡張ホストが同時に開く WebSocket は 3 本までとする。
+- Live の中継（拡張ホスト・単独サーバー）は `/core/ws/AIコア` とモデル情報の取得 / 設定 API だけを通し、RESTの要求本文は20MiBまでに制限する。拡張ホストが同時に開く WebSocket は 3 本までとする。
 - 専用ウィンドウは Node integration を無効、context isolation と sandbox を有効にする。Live のマイク許可は専用画面のメインフレームの音声入力だけに限定する。
 - 停止時は Windows では `taskkill /T /F`、その他では process group へ signal を送り、子孫プロセスも終了対象にする。
 
@@ -127,4 +128,4 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 
 ## Vue共通画面
 
-現行のConsole / Code / Live / IDE / Task / Team / Browserの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は7種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+現行のNavigator / Console / Code / Live / IDE / Task / Team / Browserの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は8種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。

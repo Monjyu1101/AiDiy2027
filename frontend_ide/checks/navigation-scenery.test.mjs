@@ -5,16 +5,31 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
+import {readFileSync,existsSync} from 'node:fs';
 import {NAVIGATION_SCENES,NAVIGATION_RANDOM_SCENES,pickNavigationScene,createRipples} from '../src/components/開発スペース/ナビ風景.js';
 import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発スペース/ナビ入力.js';
-test('既存の航行・花火を残して3種類を均等な範囲で選ぶ',()=>{
+test('羽衣ライディング・花火を含む8種類を均等な範囲で選ぶ',()=>{
  assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ride','fireworks','aquarium','kaleidoscope','water','clock','maze','request']);
  assert.deepEqual([.01,.13,.26,.39,.52,.64,.77,.90].map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
  // 夜間飛行は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
  assert.deepEqual(NAVIGATION_SCENES,[...NAVIGATION_RANDOM_SCENES,'nightflight']);
  for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'nightflight');
  assert.notEqual(pickNavigationScene(()=>1),'nightflight');
+});
+test('羽衣ライディングは正式名の部品を使い、rideキー・描画・操作の互換性を保つ',()=>{
+ const component='../src/components/開発スペース/ナビ羽衣ライディング.vue';
+ const scene=readFileSync(new URL(component,import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const preview=readFileSync(new URL('./ナビ待機画面撮影/main.js',import.meta.url),'utf8');
+ assert.equal(existsSync(new URL('../src/components/開発スペース/ナビ航行.vue',import.meta.url)),false);
+ assert.match(panel,/import NaviHagoromoRiding from '\.\/ナビ羽衣ライディング\.vue'/);
+ assert.match(panel,/<NaviHagoromoRiding v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true"/);
+ assert.match(preview,/import NaviHagoromoRiding from '@s\/ナビ羽衣ライディング\.vue'/);
+ assert.match(preview,/case 'ride': return h\(NaviHagoromoRiding, o\)/);
+ assert.match(scene,/class="navigation-cruise"/);
+ assert.match(scene,/aria-label="羽衣ライディング。/);
+ for(const input of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','dblclick'])assert.ok(scene.includes(input),input);
+ assert.match(scene,/defineEmits\(\['unsupported'\]\)/);
 });
 test('波紋点は毎回異なる位置から広がり、寿命と上限で片付ける',()=>{
  let n=0;const ripples=createRipples(()=>((n++%10)/10));
@@ -55,7 +70,7 @@ test('新演出は黒背景、Spaceの長押し重複を除き、所有窓の描
  assert.match(source,/event\.repeat/);assert.match(source,/navigationKeyActive\(event,el,hover\)/);
  assert.match(source,/ctx\.fillStyle='#000'/);assert.match(source,/frameOwner=el\.ownerDocument\.defaultView/);
  assert.match(source,/cancelAnimationFrame\(raf\);unbind\(\)/);
- for(const name of ['ナビ航行.vue','ナビ花火.vue']){
+ for(const name of ['ナビ羽衣ライディング.vue','ナビ花火.vue']){
   const existing=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8');
   assert.match(existing,/bindNavigationKeys\(el/);assert.match(existing,/unbindKeys\(\)/);assert.doesNotMatch(existing,/instanceof Element|document\.addEventListener\('key/);
  }
@@ -63,7 +78,7 @@ test('新演出は黒背景、Spaceの長押し重複を除き、所有窓の描
 
 test('3演出と既存2演出・NavigatorのVue script/templateをコンパイルする',async()=>{
  const {parse,compileScript,compileTemplate}=await import('@vue/compiler-sfc');
- for(const name of ['ナビ風景.vue','ナビ航行.vue','ナビ花火.vue','Navigationパネル.vue']){
+ for(const name of ['ナビ風景.vue','ナビ羽衣ライディング.vue','ナビ花火.vue','Navigationパネル.vue']){
   const source=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8');
   const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
   assert.ok(compileScript(descriptor,{id:name}));

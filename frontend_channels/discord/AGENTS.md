@@ -35,7 +35,7 @@ Code は `aidiy_hermes` CLI を直接起動し、Live は既存 AIコアの WebS
 
 ## 基本方針
 
-- Bot トークン、サーバー・チャンネル・ユーザー ID は `AiDiy_key.json` の `DISCORD_*` を参照する。
+- Bot トークン、サーバー・チャンネル・ユーザー ID は `AiDiy_key.json` の `discord_*` を参照する。
 - `discord_allowed_user_id`、`discord_text_channel_id`、`discord_voice_channel_id` はそれぞれ単一の文字列で指定し、利用者1人・テキスト1チャンネル・ボイス1チャンネルに限定する。
 - Discord 専用設定は接続情報の5項目だけとし、Live は `LIVE_*`、接続先は `PORT_CORE`、Code / Live の作業フォルダは `CODE_BASE_PATH`、Hermes は `CODE_AIDIY_HERMES_MODEL` と `CODE_MAX_TURNS` を共用する。
 - `frontend_ide/host/src/runner.ts`、`src/protocol.ts`、`aidiy_live/src/protocol.ts` を再利用し、CLI 実行・通信仕様を複製しない。

@@ -162,6 +162,8 @@ _cache/
 # docs に集約したセルフテスト証拠は、追加分も含めて収録する。
 !/docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/
 !/docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/**
+# 実画面試験の保存領域に混入する GPU キャッシュは証拠に含めない。
+/docs/セルフテスト、操作ガイド/evidence/**/LocalLow/Intel/ShaderCache/
 
 _controls/
 _datas/

@@ -80,8 +80,8 @@ try {
   await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
   await evaluate(`aidiyIDE.setAutoSpin(false);window.testNavi=[];const originalOpen=window.open;window.open=(...args)=>{const child=originalOpen.apply(window,args);testNavi.push(child);return child;};document.querySelector('.navigation-launch').click()`);
   const child=(index,expression)=>evaluate(`testNavi[${index}].eval(${JSON.stringify(expression)})`);
-  // 枠と文字の試験は航行を明示選択し、ランダムな演出種別に依存させない。
-  const runRide=async selector=>{await child(0,`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}))`);await until(()=>child(0,`!!document.querySelector('[data-scene=ride]')`),'航行を選択');await child(0,`document.querySelector('[data-scene=ride]').click()`);};
+  // 枠と文字の試験は羽衣ライディングを明示選択し、ランダムな演出種別に依存させない。
+  const runRide=async selector=>{await child(0,`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}))`);await until(()=>child(0,`!!document.querySelector('[data-scene=ride]')`),'羽衣ライディングを選択');await child(0,`document.querySelector('[data-scene=ride]').click()`);};
   record.bind({evaluate,child,app,port,target,errors,getAiCalls:()=>aiCalls});
   await until(()=>evaluate(`!!testNavi[0]?.document.querySelector('textarea')`),'Navi 1');
   await until(()=>child(0,`!!document.querySelector('.navigation-start:not(:disabled)')`),'Navi 1 実行可能');

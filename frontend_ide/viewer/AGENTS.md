@@ -2,13 +2,13 @@
 
 ## 本書の目的
 
-このファイルは `frontend_ide/viewer`（表示名 **AiDiy IDE**）の構成、設計方針、決定の経緯、今後の候補を AI エージェント向けにまとめたメモです。
+このファイルは `frontend_ide/viewer`（表示名 **AiDiy IDE**）の構成、設計方針、主要な実装入口を示す概要ドキュメントです。
 利用方法と操作は [`README.md`](./README.md) に置きます。
 
 ## 位置付け
 
 - 現行実装では、画面は `frontend_ide/src/`、このフォルダはファイルAPI・文書表示・互換起動入口を所有する。
-- Code / Live と同じ AiDiy の正式なサブシステムとして、ルートの `_setup.py` / `_start.py` / `_cleanup.py` に「IDE群(Console / Code / Live / IDE / Task / Team / Browser)」として組み込み済み。ルートの概要・構成表にも掲載する。VS Code 拡張とは独立して動作する。
+- Code / Live と同じ AiDiy の正式なサブシステムとして、ルートの `_setup.py` / `_start.py` / `_cleanup.py` にIDE群（Navigator / Console / Code / Live / IDE / Task / Team / Browser）の一部として組み込み済み。ルートの概要・構成表にも掲載する。VS Code 拡張とは独立して動作する。
 - **独立性を保つ。** ビューアは他サブシステムの `node_modules` を借りない。Code / Live パネルは例外として、ユーザー指定により既存単独版のビルド成果物・画面を再利用する。Monaco と文書表示ライブラリ（docx-preview / SheetJS / PptxViewJS / PDF.js など）は自前の `package.json` で導入する。Monaco がない場合は行番号付きの簡易コード表示になる。
 - **利用方法を手動で選ぶ。** 初期画面は Live と同じターミナル演出。「AiDiy接続利用」はConsoleと同じtoolsポートのpingで稼働を確認して開始し、シアンバーを明滅させる。初回接続失敗は手動で再試行する。利用開始後のtools停止では作業セッション・ファイルAPI・Code子窓を維持し、同じ起点のまま再接続する。明示的な利用終了で初期状態へ戻す。「オフライン利用」はコアに接続せず閲覧でき、バーを赤で明滅させる。ファイルAPIは利用開始後だけ有効にする。
 - 呼び名は「space ファイルビューア」。見た目は宇宙、役割はファイルビューア。IDE 全体（Code / Live を含む）のコンセプト名は **開発スペース（宇宙をテーマにした IDE 開発環境）**。
@@ -42,15 +42,15 @@
 - **パネル類は角丸なし（スクエア）。** `border-radius` は 0。円形は種類の点と読み込みリングだけ。
 - 凡例は出さない（種類での絞り込みもなし）。銀河の名前は `名前 (ファイル数)` の1行だけ。更新があれば金色でゆっくり明滅し、件数の行は出さない。
 - **エクスプローラーは左側の VS Code 風ツリー。左上の ☰ / Ctrl+B で開閉する。** 見た目は `frontend_web` の `AIファイル.vue` の階層表示（フォルダ先・名前順、▸/▾、📁/📂、右に更新日時）に合わせ、ファイルには宇宙と同じ種類色の点を付ける。起点以降の更新は金色、フォルダは「更新 N」。宇宙側の選択と双方向に連動する。
-- **右側はファイル選択時だけビューアを表示する。** フォルダ一覧は左のエクスプローラーに集約し、右の一覧・履歴タブは置かない。星・一覧のファイル選択でズームし、空白クリック・✕ / Esc で解除して選択前の階層・視点へ戻る。宇宙の中心・パンくずは表示中のパネルの間に揃え、ビューアを閉じた時は右端まで使う。
-- **ファイルの操作性を優先する。** 演出は操作の邪魔をしない範囲に留める。フォルダ・ファイルは名前由来の固定3D配置とし、戻る入口は中心に置く。自動回転は初期停止。件数の増減で既存の座標を変えない。
+- **右側はファイル選択時だけビューアを表示する。** フォルダ一覧は左のエクスプローラーに集約し、右の一覧・履歴タブは置かない。星・一覧のファイル選択でズームし、空白クリック・✕ / Esc で解除して現在の階層・船体位置・船首方向を保つ。宇宙の中心・パンくずは表示中のパネルの間に揃え、ビューアを閉じた時は右端まで使う。
+- **ファイルの操作性を優先する。** 演出は操作の邪魔をしない範囲に留める。フォルダ・ファイルは名前由来の固定3D配置とし、戻る入口は中心に置く。自動探索は初期ONで、手動操作後の1分間と手動ファイル表示中は自動飛行を止める。件数の増減で既存の座標を変えない。
 - 画面の変更は共通Vue画面の手順に沿って確認する。
 
 ## 技術スタック
 
-- Node.js 24（`node:http` / `node:fs/promises`、グローバル `WebSocket` / `fetch`）。
+- Node.js 22.13以降（`package.json` の `engines.node`。`node:http` / `node:fs/promises`、グローバル `WebSocket` / `fetch`）。
 - XYZ座標と視点回転を透視投影して Canvas 2D へ描画（WebGL・外部ライブラリなし）。合成は `lighter`（光）と `source-over`（惑星・文字）を使い分ける。
-- 通常は Electron の専用ウィンドウ。起動したフォルダをプロジェクトにする。Codespaces・画面のない Linux・Electron 起動失敗時は同じ画面を Web で開き、`--browser` でも明示できる。
+- 通常は Electron の専用ウィンドウ。起動したフォルダをプロジェクトにする。Codespaces・画面のないLinuxは同じ画面をWebで開き、`--browser` でも明示できる。Electron起動失敗時のWeb切り替えは共通 `launch.mjs` の前景起動時だけで、分離起動は失敗を報告する。
 - ファイルビューアは Monaco Editor（`monaco-editor` 0.56 の `min/`、AMD 版）。設定は `frontend_web` の `AIファイル.vue` に合わせる（読み取り専用・ミニマップ・折りたたみ・折り返し・文字 12px）。テーマは `vs-dark` を元に背景だけ宇宙に合わせた `aidiy-space`。現行の画面側実装は `frontend_ide/src/` にあり、旧 `web/app.js` は使用しない。
 - Word / Excel / PowerPoint / PDF は独立した iframe 内の読み取り専用ビューアで表示する。Office Viewer 拡張そのものではなく、同拡張で採用・紹介する表示ライブラリを利用する。構成・対応形式・制限・検証方法は [`frontend_ide,文書ビューア.md`](../../_AIDIY/knowledge/frontend_ide,文書ビューア.md) を参照する。
 
@@ -61,10 +61,12 @@
 | `package.json` | Monaco・文書表示ライブラリの依存と構文チェック・自動テスト |
 | `_setup.py` / `_start.py` / `_cleanup.py` | ルートから呼ばれる「フロントエンド(IDE)」のセットアップ・起動・クリーンアップ（単独実行も可） |
 | `launcher.py` | `aidiy_ide` の PATH ランチャー（`~/.local/bin/aidiy_ide.cmd`）の登録・解除 |
-| `launch.mjs` / `launch-options.mjs` | 引数（作業フォルダ・`--project`・`--browser`・`--port`・`--strict-port`・`--no-open`）、サーバー起動、Electron / Web 切り替えと終了処理 |
+| `launch.mjs` / `launch-options.mjs` | `launch.mjs` は `../launch.mjs` へ委譲する互換入口。`launch-options.mjs` は作業フォルダ・転送先URL・Electron / Web判定を共通提供 |
 | `core-connection.mjs` | 配置先の `PORT_TOOLS` による稼働確認、Code / Live用の `PORT_CORE` 解決、手動開始、初期画面と接続／オフラインの状態バー |
 | `panels.mjs` | Code / Live の遅延起動・同一公開元中継。オフライン時はCodeだけ |
 | `server.mjs` | `127.0.0.1` だけで待ち受け。ツリー（`/api/galaxy`）、ファイルの中身（`/api/file`・`/api/raw`・`/api/document`）、表示の準備（`/api/preview`）、Monaco（`/monaco/`）・文書表示資産（`/office-vendor/`）、`web/` の文書ビューア・ライセンス表示を配信。画面本体（`/`）は `frontend_ide/server.mjs` が Vue 画面を返す |
+| `file-scan.mjs` | フォルダ走査、フィルター、件数・時間制限と共有走査管理 |
+| `markdown-preview.mjs` | Markdownの読み取り専用HTML表示 |
 | `preview.mjs` | HTML の「表示」用の別オリジン静的サーバー。最初の要求で起動し、`server.mjs` の close で停止。ファイルは書き出さない |
 | `vue-preview.mjs` | `.vue` の「表示」。`frontend_web` の Vite 開発サーバーが起動中の時だけ、その部品を使う画面（ルート）を返す |
 | `media-types.mjs` | 「ブラウザ」で再生する音声・動画の拡張子（mp3 / wav / ogg / oga / opus / flac / aac / m4a / mp4 / m4v / webm / mov）。Vue 画面・IDE サーバー・Electron で共用 |
@@ -76,7 +78,7 @@
 ### server.mjs
 
 - ツリー形式は `{ n: 名前, d: [子フォルダ], f: [[名前, サイズ, 更新ms]] }`。
-- `IGNORED`（`node_modules` / `.git` / `dist` / `out` / `build` / `__pycache__` / `.venv` / `venv` / `_cache` など）は走査しない。上限 30000 ファイルで打ち切り、`truncated` を返す。
+- 走査は `file-scan.mjs`、常時除外は `../ファイル機能/フォルダ除外規則.mjs` と共通JSONを使う。通常は最大30,000ファイル、バックアップ用フィルター時は100,000ファイル。ディレクトリ数・項目数・深さ・時間にも上限を設け、打ち切りは `truncated` と理由を返す。
 - 単独起動・全体起動ともポートは固定せず、OS が空きポートを自動割り当てする。明示的な `--port` 指定時だけその番号を優先し、`--strict-port` 併用時は競合で失敗する。
 - 接続状態は当該 IDE サーバーの画面間で共有する。オンライン確認はConsoleと同じtoolsのpingを使い、IDE 自体ではAI会話・音声セッションを生成しない。接続先・画面・確認方法は README の「AiDiyへの接続」を参照する。
 - `/api/preview?path=` は「表示」の準備。`.html` は `preview.mjs` の URL を返す。静的サーバーは IDE と別ポート（別オリジン）で、URL に起動ごとの token を含め、Host を `127.0.0.1` / `localhost` に限る。HTML には `CSP: sandbox allow-scripts …` を付け、画面側の iframe も `allow-same-origin` なしの sandbox にして、ページのスクリプトを IDE のファイル API から隔離する。`_config`・隠しファイル（`.` 始まり）・鍵らしいファイル・`node_modules`・`.venv`・`.aidiy_backup` は配らない。`/…` 始まりの参照は Referer のページの `public` を根に解決し、Range に対応する。
@@ -87,7 +89,7 @@
 
 ### 全体起動での扱い
 
-- IDE群のsetup / cleanupは Console → Code → Live → IDE → Task → Team → Browser。全体startではIDEは既定で起動せず、Task / Team / Browser は独立コマンドから起動する。
+- IDE群のsetup / cleanupは Navigator → Console → Code → Live → IDE → Task → Team → Browser。全体startではIDEは既定OFF。Diagを使わない場合はTask / Teamも既定OFFの個別選択で起動できる。Navigator / Browserは独立コマンドやDiagから起動する。
 - 全体起動ではリポジトリ直下を空きポートで独立起動し、ログをファイルへ保存する。親の終了後も継続し、自動再起動はしない。
 - 全体起動の起動前整理・終了・リブートでは IDE とその子孫を停止しない。cleanup 時だけ `kill_ports()` でこの配置先の実行入口を照合して停止する。ポート番号による停止は行わない。
 
@@ -105,4 +107,4 @@
 
 ## Vue共通画面
 
-現行のConsole / Code / Live / IDE / Task / Team / Browserの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は7種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+現行のNavigator / Console / Code / Live / IDE / Task / Team / Browserの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は8種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。

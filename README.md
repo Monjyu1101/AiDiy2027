@@ -39,7 +39,7 @@
 - フロントエンド VS Code: Node.js + Vue 3 共通画面 + TypeScript + VS Code Extension API + Electron（AiDiy (Code) / AiDiy (Live) の 2 拡張と単独起動版。さらに開発スペース `aidiy_ide` の部品としても動作、常駐なし）
 - フロントエンド Slack: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript（HTTPS定期取得によるHermesチャット、音声なし）
 - フロントエンド Discord: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript + discord.js（Hermes チャット / AIコア Live 音声接続、任意起動の Bot）
-- フロントエンド Navigator: `aidiy_navi` で開く読み取り専用の開発案内画面。目標・作業項目・推定達成率・次のプロンプトを表示し、提案を自動実行しません
+- フロントエンド Navigator: `aidiy_navi` で開く開発案内画面。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、完了後に再評価します
 - フロントエンド IDE（開発スペース）: Node.js + Vue 3 + Canvas 2D + Monaco Editor + Electron（宇宙をテーマにした IDE 開発環境。Code / Live を部品として組み込んだ `aidiy_ide`、ポート自動割り当て）
 - 常駐バックエンドは **5 サーバー構成**
   - `core_main.py` : `8091`
@@ -57,10 +57,10 @@
 - **開発スペース（宇宙をテーマにした IDE 開発環境）** — プロジェクトを宇宙に見立て、フォルダは銀河、ファイルは星・惑星として浮かびます。目指すのは「ソースをほぼ触らない IDE」。宇宙で全体を眺め、エクスプローラーで辿り、読み取り専用のビューアで中身を読み、変更は Code（コード支援）と Live（音声会話）に頼んで AI に任せます。起点日時より後に AI が更新したファイルは明滅し、どこが変わったかをひと目で見つけられます。Code / Live は単独起動・VS Code 拡張のまま使え、さらに開発スペースの部品として IDE の中から同じプロジェクトで呼び出せるため、IDE 開発への応用が広がります。`aidiy_ide` で起動します
 - **マルチ Code CLI 対応** — `claude_sdk` / `claude_cli` / `copilot_cli` / `codex_cli` / `antigravity_cli` / `grok_cli` / `opencode_cli` / `aidiy_hermes` を切り替えて、`code1`〜`code6` の6コードパネルで同時並走
 - **AIタスク自動実行** — 要求を登録すると AI が明細タスクへ分解し、`backend_taskteam` が Code CLI で実行。カンバン方式でも垂直の流れ作業だけでもなく、先行SEQ（複数指定可）で水平の並行分岐を含む**自由なタスクフロー**を定義でき、**クリティカルパス**基準のフロー図で可視化・実行（単独アプリ aidiy_task から操作）
-- **自己改善機構** — コードエージェントが修正完了後に `_AIDIY/knowledge/` へ知見を自動整理し、使うほど修正精度が上がる
+- **自己改善機構** — コードエージェントが修正後に変更を検出した場合、`_AIDIY/knowledge/` への知見整理を続け、次の作業で参照できるようにする
 - **日本語ネイティブ** — テーブル名・API・コンポーネント名まで日本語で統一
 - **AI 音声対話コーディング** — Avatar に話しかけながらコードを書き進められる
-- **VS Code 拡張** — AiDiy (Code) はセカンダリサイドバーから `aidiy_hermes` を直接操作し、選択コード添付、モデル選択、会話継続、停止、実行ログを利用。AiDiy (Live) は AIコアへ接続し、作業フォルダを共有した音声・文字のライブ会話を利用。どちらも `aidiy_code` / `aidiy_live` で単独ウィンドウ起動が可能。さらに開発スペース（`aidiy_ide`）の部品としても動作し、IDE の「＋ Code」「＋ Live」から同じプロジェクトの Code / Live を開けます
+- **VS Code 拡張** — AiDiy (Code) はセカンダリサイドバーから AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` を直接実行します。選択コード添付、モデル選択、会話継続、停止、実行ログを利用できます。AiDiy (Live) は AIコアへ接続し、作業フォルダを共有した音声・文字のライブ会話を利用。どちらも `aidiy_code` / `aidiy_live` で単独ウィンドウ起動が可能。さらに開発スペース（`aidiy_ide`）の部品としても動作し、IDE の「＋ Code」「＋ Live」から同じプロジェクトの Code / Live を開けます
 
 ---
 
@@ -98,18 +98,21 @@ python _setup.py
 
 `_setup.py` は対話形式で以下を実施します。
 
-1. 共通の Python / npm ツール確認
-2. `backend_local` の `uv sync --upgrade`
-3. `backend_tools` の `uv sync --upgrade`、必要に応じて MCP 設定ファイル書き込み（Claude / Gemini 向け）
-4. `backend_server` の `uv sync --upgrade`
-5. `backend_taskteam` の `uv sync --upgrade`
-6. `frontend_web` の `npm install`
-7. `frontend_avatar` の `npm install`、必要に応じて Electron バイナリの補完
-8. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
-9. `frontend_ide` の共通Vue依存、Navigator / Console / Code / Live / IDE / Task / Team / Browserのセットアップ、ランチャー登録、Code / LiveのVS Code拡張配置
-10. Channels(Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
+1. 共通の Python / npm ツール確認と、選択したグローバルツールの導入・更新
+2. Diag の診断 UI・Electron・`aidiy_diag` ランチャーの準備（通常セットアップでは必須）
+3. `backend_local` の `uv sync --upgrade`、選択した場合だけモデルの事前ダウンロード
+4. `backend_tools` の依存導入、選択した場合だけ各クライアントのグローバル MCP 設定への書き込み
+5. `backend_server` の `uv sync --upgrade`
+6. `backend_taskteam` の `uv sync --upgrade`
+7. `frontend_web` の `npm install` と `npm update`
+8. `frontend_avatar` の依存・Electron・ランチャーの準備
+9. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
+10. `frontend_ide` の共通 Vue 依存、Navigator / Console / Code / Live / IDE / Task / Team / Browser のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
+11. Channels(Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
-Diagを選択した場合は診断UI・Electron・ランチャーを準備し（診断UIの開発用依存 `@vue/compiler-sfc` などは `backend_diag/ui` で `npm ci` するため、画面のビルドと検証をそのまま実行できます）、最後にheadless診断で導入状況とモデル情報を書き込みます。外部連携の認証試験はheadless対象外です。
+最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `backend_diag/ui` で `npm ci` により導入します。
+
+依存導入はモジュールごとに異なり、Web・Code / Live などの `npm update` は宣言範囲内で依存を更新します。`package-lock.json` が変わる場合があるため、セットアップ前後の差分も確認してください。ランチャーだけの修復は `python _setup.py --launchers-only` です。
 
 補足:
 
@@ -128,26 +131,24 @@ Diagを選択した場合は診断UI・Electron・ランチャーを準備し（
 python _start.py
 ```
 
-`_start.py` は**対話形式**です。起動時に以下を確認します。
+`_start.py` は**対話形式**です。最初に「Diagを開始しますか？」を確認します（既定 Yes）。Yes では `aidiy_diag --auto` の画面へ起動管理を渡し、保存済みの起動設定を使って起動します。元の `_start.py` は終了するため、その後の操作は Diag のシステム起動画面で行います。
 
-- バックエンド(local) を起動するか（デフォルト No）
-- tools を起動するか
-- バックエンド(core, apps) を起動するか
-- バックエンド(task,team) を起動するか
-- フロントエンド(Web) を起動するか
-- フロントエンド(Avatar) を起動するか
-- フロントエンド(IDE) を起動するか（デフォルト No、ポート自動割り当て）
-- フロントエンド(Discord) を起動するか（デフォルト No）
-- フロントエンド(Slack) を起動するか（デフォルト No）
+Diag を No にした場合は、以下を個別に選びます。
 
-その後、選択したサービスを順に起動し、必要なポートの既存プロセスも自動で整理します。
+- バックエンド local（既定 No）、tools、core / apps、task / team
+- Web（既定 Yes）、Avatar（既定 No）
+- Task / Team の各単独画面（既定 No）
+- Console / Code / Live / IDE の各単独画面（既定 No、ポート自動割り当て）
+- Discord / Slack（既定 No）
+
+Diag の選択にかかわらず、この配置先の既存プロセスを照合して停止対象を整理します。Diag を使う場合はその後に画面を開き、使わない場合は選択したサービスを順に起動します。Code / IDE / Discord / Slack は通常の全体停止対象から除外されます。既定値は `scripts/起動対象.json` と `_start.py` の `collect_startup_choices()` を参照してください。
 
 `command_hermes` は **常駐サーバーではないため `_start.py` の起動対象外** です。セットアップ後は、AIコードパネルから `aidiy_hermes` として呼び出すか、必要時に手動で起動します。
-`frontend_ide/host` も常駐サービスではありません。セットアップ後は VS Code のコマンドパレットから **AiDiy (Code): チャットを開く** / **AiDiy (Live): ライブ会話を開く**を実行します。単独ウィンドウは作業フォルダで `aidiy_code` / `aidiy_live`を実行します。Live は `backend_server`（8091）の起動が必要です。
+Code / Live は全体起動の個別選択のほか、VS Code のコマンドパレットの **AiDiy Code: チャットを開く** / **AiDiy Live: ライブ会話を開く**、または `aidiy_code` / `aidiy_live` で起動できます。Code のオンライン利用と Live は `backend_server`（8091）が必要です。Code は AIコア未接続時に Hermes を直接実行でき、選んだ AI サービスの認証・通信は別途必要です。
 
 `frontend_channels/` は外部接続チャンネル群の親ディレクトリです。`discord/` と `slack/` は同じ階層の独立モジュールで、将来のチャンネルもここへ追加します。構成と共通方針は [Channels README](./frontend_channels/README.md) を参照してください。
 
-`frontend_channels/discord` は `_config/AiDiy_key.json` の `DISCORD_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`~/.aidiy/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
+`frontend_channels/discord` は `_config/AiDiy_key.json` の `discord_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`~/.aidiy/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
 
 `frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `~/.aidiy/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
 
@@ -155,7 +156,9 @@ Navigator はセットアップ後に `aidiy_navi` で単独起動するか、ID
 
 ### 個別起動
 
-```bash
+各例はリポジトリ直下から別々に実行します。以下は Windows の PowerShell 用です。Linux / macOS では `.venv/Scripts/python.exe` を `.venv/bin/python` に置き換え、bash で実行してください。
+
+```powershell
 # バックエンド Local（OpenAI 互換 Gemma、必要時のみ）
 cd backend_local
 .venv/Scripts/python.exe -m uvicorn local_main:app --reload --host 127.0.0.1 --port 8096 --ws-max-size 20971520
@@ -227,11 +230,11 @@ MCP は Windows で20、Linux / macOS で19サーバー（Windows Control は Wi
 
 ## 3. 停止
 
-全体起動の起動前整理・Ctrl+C・リブートでは Code / IDE / Discord / Slack は継続します。IDE は自動再起動せず、cleanup 時に停止します。
+全体起動の通常停止では Code / IDE / Discord / Slack は継続します。IDE は自動再起動せず、cleanup 時に停止します。
 
 ### `_start.py` で起動した場合
 
-ターミナルで `Ctrl+C` を押してください。
+Diag を No にしてターミナルで起動管理している場合は `Ctrl+C` を押してください。Diag を選んだ場合は、Diag のシステム起動画面から停止します。
 
 ### 手動で止めたい場合
 
@@ -293,7 +296,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 - Claude 系のブラウザ自動操作を使う場合は `backend_tools` も起動してください。
 - `_start.py` 起動時のバックエンドは `uvicorn --reload` なしです。コード変更を即反映したい場合は個別起動か reboot 機構を使います。
 - `command_hermes` は `_start.py` では起動しません。`python _setup.py` で導入し、`aidiy_hermes` または `command_hermes\cli_main.py` を必要時に実行します。
-- `frontend_ide/host` は `_start.py` の対象ではありません。拡張の設定や対応範囲は Code が `frontend_ide/host/README.md`、Live が `frontend_ide/host/aidiy_live/README.md` を参照してください。
+- Code / Live の単独画面は `_start.py` の個別起動対象です。VS Code 拡張自体は VS Code から開きます。拡張の設定や対応範囲は Code が `frontend_ide/host/README.md`、Live が `frontend_ide/host/aidiy_live/README.md` を参照してください。
 - Web フロントの AI 画面ルートは **`/AiDiy`** です。
 - Avatar は Electron と Web の両モードがあります。Web モードでは認証情報を `sessionStorage` に保持します。
 - DB ファイルは通常 `_data/AiDiy/database.db` にあります。

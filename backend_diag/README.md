@@ -27,6 +27,11 @@ Electron の依存物は引き続き `backend_diag/node_modules/`、停止要求
 | モデル一覧 | モデル一覧取得 | 一括取得 | `ui/src/components/モデル一覧/` |
 | 外部連携 | 外部連携確認 | 状況確認（テストできる行を順次確認）・書込 | `ui/src/components/外部連携/` |
 | 設定モデル | モデル動作確認 | 動作確認（全行を順次確認） | `ui/src/components/設定モデル/` |
+| AIモデル | AIモデルを試す | 候補・入力を選んで個別／一括試行 | `ui/src/components/AIモデル/` |
+| 設定再起動 | 設定再起動 | Coreログイン・設定書込・再起動 | `ui/src/components/AI設定/` |
+| Tools | Tools管理 | Coreログイン・個別／一括試験 | `ui/src/components/Tools/` |
+| システム起動 | システム起動 | 起動対象の保存・起動・停止 | `ui/src/components/起動/` |
+| アプリ起動 | アプリ起動 | プロジェクト選択・アプリ／CLI起動 | `ui/src/components/アプリ起動/` |
 
 外部連携は見出し行の「状況確認」（テストできる行を上から順に）と各行の「テスト」で、読み取り専用の認証確認を明示操作時だけ行います（下記「外部連携の認証確認」）。「書込」は直前の確認結果を `_AIDIY/aidiy_diag/integration_info.json` へ保存します。キー未設定・設定読込不可の行は確認せず、未実施と理由を表示します。設定モデルは見出し行の「再読込」と各行の「テスト」も使用できます。
 
@@ -50,7 +55,7 @@ aidiy_diag --auto           # 画面を開き、保存済みの起動設定で�
 
 `--auto` は表示系の指定（`--browser` / `--foreground` など）と併用できます。画面表示と並行して、システム起動タブの「一括起動」と同じ処理を1回だけ実行します。各機能の環境確認と、Tools 起動前の headless 診断もこの中で行います。直前の停止でポート解放が遅れている間は最大約10秒待って再試行し、それでも稼働中・未確認の機能が残る場合は起動せず、理由をシステム起動タブの通知に表示します。選択した全機能の起動が正常完了すると、最後に「アプリ起動」タブを表示します。途中でタブ・表示モード・コンソールなどを操作した場合は、その選択を優先します。失敗・中断・手動起動では自動でタブを切り替えず、ミニ・アイコン表示も強制解除しません。起動後は、Tools が稼働していればアプリ起動・ランチャーからそのまま各アプリを開けます。
 
-`--headless` は Electron・ブラウザ・HTTP 待受を使わず、全診断をコマンドラインで最速実行します（全項目を同時に確認し、結果は一覧順に表示）。全診断はインストール状況とモデル情報です。インストール状況は `_AIDIY/aidiy_diag/install_info.json`（状態・パス・バージョン・説明と集計）へ、モデル情報はテストできるプロバイダごとに `_AIDIY/aidiy_diag/<プロバイダ>_models_info.json` へ保存します。保存は一時ファイルからの置き換えで行い、例外・Ctrl+C・書込失敗など実行に失敗した場合は既存ファイルを更新しません。項目ごとの `未検出` / `ERR` などは診断結果として保存します。終了コードは成功 0、失敗 1、中断 130 です。`--headless` は他の引数と併用できません。
+`--headless` は Electron・ブラウザ・HTTP 待受を使わず、全診断をコマンドラインで最速実行します（全項目を同時に確認し、結果は一覧順に表示）。全診断はインストール状況とモデル情報です。インストール状況は `_AIDIY/aidiy_diag/install_info.json`（状態・パス・バージョン・説明と集計）へ、モデル情報はテストできるプロバイダごとに `_AIDIY/aidiy_diag/<プロバイダ>_models_info.json` へ保存します。保存はファイルごとに一時ファイルから置き換えます。確認中の例外・中断ではその確認結果を保存しませんが、先に保存済みの手順やモデルファイルは巻き戻しません。複数ファイルの書込途中で失敗した場合は新旧が混在し得るため、原因を解消して再実行してください。項目ごとの `未検出` / `ERR` などは診断結果として保存します。終了コードは成功 0、失敗 1、中断 130 です。`--headless` は他の引数と併用できません。
 
 画面では「状況確認」で全項目が「確認中」で回り、確認が終わった項目から結果へ切り替わります（確認中は固定の `GET api/診断/進捗` で完了済みの結果だけを読みます。引数は受け付けません）。応答後は上から順に選択が追従し、最後に1項目目を表示します。確認が終わると「書込」が押せるようになり、このサーバーが直前に確認した結果を `--headless` と同じ形式で `_AIDIY/aidiy_diag/install_info.json` へ保存します（画面から値は送りません）。タブ欄の「全テスト」は、状況確認→書込のあと、一括取得→モデル情報の書込、外部連携の状況確認→書込まで続けて実行します。
 
@@ -98,38 +103,38 @@ Ollama の「導入・更新」は、導入済みなら公式の `winget upgrade
 
 ### モデル情報ファイル（`<プロバイダ>_models_info.json`）
 
-キー設定画面の「書込」（一括取得の後に押せます）・「全テスト」・`--headless` で、gemini / freeai / claude / openai / openai_oauth / grok / openrt_chat / ollama / local のうちテストしたものを 1 ファイルずつ保存します。用途の分け方は本体の `get_chat_models` / `get_live_models` / `get_code_models` に合わせています。
+モデル一覧画面の「書込」（一括取得の後に押せます）・「全テスト」・`--headless` で、gemini / freeai / claude / openai / openai_oauth / grok / openrt_chat / ollama / local のうちテストしたものを 1 ファイルずつ保存します。用途の分け方は本体の `get_chat_models` / `get_live_models` / `get_code_models` に合わせています。
 
 保存形式は `形式: 2` です。選択候補は用途にかかわらず「区分名 → `{models}`」で取得できます。例: `chat.gemini_chat.models`、`code.claude_sdk.models`、`live.gemini_live.models`。区分名以下は各プログラムへそのまま渡せるよう `models` だけを持ちます。取得元などの説明や詳細情報はその外側に置きます。旧形式のファイルは次回の「書込」または `--headless` で置き換わります。
 
 - `chat`: API から取得し本体と同じ条件で絞り込んだ一覧。`モデル` は作成日・トークン数・モダリティ付きの詳細配列として残します。選択候補は `gemini_chat` など本体の区分名をキーにした要素の `models` に置き、「モデルID: YYYY/MM/DD - モデルID」の一覧（作成日が無いものは `yyyy/mm/dd`、backend_local は固定候補の表示名）にします。詳細・選択候補とも作成日の新しい順です。Claude / Grok は本体に chat の選択区分がないため詳細だけを残し、CLI の選択候補は `code` に置きます。
 - `live`（gemini / freeai / openai）: API で取得した live 対応モデル（Gemini は `bidiGenerateContent` 対応、OpenAI は `realtime`）から、`gemini_live` などの区分名をキーにした要素の `models` を直接生成します。Gemini / FreeAI はモデルIDに `native-audio` または `live` を含み、`transcribe` または `translate` を含むものを除外し、モデルIDの文字列降順で並べます。OpenAI は `whisper` または `translate` を含むものを除外し、作成日の新しい順です。表示名は「YYYY/MM/DD - モデルID」で、日付は API / OpenRouter の作成日 → モデル名の日付 → `yyyy/mm/dd` の順に採用します。設定ファイル由来のボイス・設定案・差分は保存しません。
-- `code`: `claude_sdk` / `claude_cli` は Claude、`antigravity_cli` は Gemini、`codex_cli` は各ファイルの OpenAI API / OpenAI OAuth、`opencode_cli` は Ollama の取得モデルから `models` を生成します。`codex_cli` は `realtime` を含むモデルを除外し、同じ系列（`sol` / `luna` / `pro` など）は数値として比較した最新バージョンだけを残します。例: `gpt-6.1-sol` があれば `gpt-5.6-sol` は除外します。`-900k` などの別仕様は独立した系列として扱います。`aidiy_hermes` も OpenAI OAuth の取得モデルを使い、モデルIDに `openai_oauth/` を付けます。合成の `aidiy_hermes.models` には、導入済みCLIの `xx/same`（CLI のモデルを維持して呼び出す選択肢）を追加します（下記）。Claude SDK / CLI はモデルIDから `haiku`・`sonnet`・`opus`・`fable` などの名前を抽出してキーに使い、同名は最新の1件へまとめます。表示名は「YYYY/MM/DD - バージョン付きモデルID」とし、最新バージョンを残します。`copilot_cli` は Claude / OpenAI / OpenAI OAuth のファイルに出力し、Claude は系列ごとの最新モデルをバージョン付きIDのキーで保存し、数字間の `-` を `.` に変換します（キー・表示名とも `claude-haiku-5.5` など）。OpenAI / OpenAI OAuth は `codex_cli` と同じ候補で保存します。詳細配列には元のモデルIDを保持します。作成日・並び順は chat と共通です。
-- 固定候補は Grok（`grok_cli`）と backend_local（`local_chat`）だけです。aidiy_diag が管理し、本体は合成JSONから読みます。それ以外は取得に失敗した場合に候補を空にし、状態・説明・警告を残します。
+- `code`: `claude_sdk` / `claude_cli` は Claude、`codex_cli` は OpenAI API / OpenAI OAuth の取得モデルから `models` を生成します。プロバイダ別 Ollama ファイルにも `opencode_cli` を持ちますが、合成版の OpenCode は Codex 用候補を元にします。Antigravity は Gemini API ではなく、導入済みの `agy models` の一覧を使い、取得できなければ `auto` / `same` だけを残します。`codex_cli` は `realtime` を含むモデルを除外し、同じ系列（`sol` / `luna` / `pro` など）は数値として比較した最新バージョンだけを残します。例: `gpt-6.1-sol` があれば `gpt-5.6-sol` は除外します。`-900k` は Hermes の OAuth 専用別名として扱い、合成版の Codex / Copilot 候補からは除外します。`aidiy_hermes` も OpenAI OAuth の取得モデルを使い、モデルIDに `openai_oauth/` を付けます。合成の `aidiy_hermes.models` には、導入済みCLIの `xx/same`（CLI のモデルを維持して呼び出す選択肢）を追加します（下記）。Claude SDK / CLI はモデルIDから `haiku`・`sonnet`・`opus`・`fable` などの名前を抽出してキーに使い、同名は最新の1件へまとめます。表示名は「YYYY/MM/DD - バージョン付きモデルID」とし、最新バージョンを残します。`copilot_cli` は Claude / OpenAI / OpenAI OAuth のファイルに出力し、Claude は系列ごとの最新モデルをバージョン付きIDのキーで保存し、数字間の `-` を `.` に変換します（キー・表示名とも `claude-haiku-5.5` など）。OpenAI / OpenAI OAuth は `codex_cli` と同じ候補で保存します。詳細配列には元のモデルIDを保持します。作成日・並び順は chat と共通です。
+- Grok（`grok_cli`）と backend_local（`local_chat`）の固定候補は Diag が管理します。取得失敗時の OAuth、合成時の Copilot / OpenCode、候補が空の場合の共通設定由来の補完もあります。未検証候補を認証・生成の成功と扱わないでください（下記「空候補の仮補完」）。
 
 `openrt_free` は同じ OpenRouter キーを使う追加の Chat 区分です。既存の `openrt_chat` は変えず、認証済みの取得結果から、`pricing.prompt` / `pricing.completion` と記載された追加料金がすべて明示的に 0、かつ出力がテキストのみの会話モデルを抽出します。不明な料金・非空の条件付き料金・画像／音声出力・専用の安全判定モデルは除き、`:free` の名前だけでは無料と判定しません。API のモデルIDを変更せず、既存の日付条件（Google / OpenAI / Anthropic / xAI は240日、Perplexity は365日、その他は90日）と新しい順を使います。
 
 OpenRouter のプロバイダ別ファイルは `openrt_chat_models_info.json`（旧 `openrt_models_info.json`、旧名の読み込みは行いません）と `openrt_free_models_info.json` の2つです。価格・出力・対応パラメータは `openrt_chat_models_info.json` の `chat.モデル` に `pricing` / `output_modalities` / `supported_parameters` として残し、`openrt_free_models_info.json` には無料と判定した行の詳細を同じ形式で保存します。選択候補は `openrt_free_models_info.json` の `chat.openrt_free.models` と `chat_models_info.json` の `openrt_free.models`、Hermes対応候補は `hermes_models_info.json` の `openrt_free.models` に保存します。キー変更・削除・認証失敗後は以前の候補を合成しません。反映するには Diag を再起動して公開情報を取り直し、OpenRouter 行の「テスト」→「書込」を実行します。設定モデル試行は他の区分と同じ処理で `CHAT_OPENRT_FREE_MODEL` を参照します。料金の絞り込みは一覧生成時に行い、実行時は通常の OpenRouter モデルと同じ処理を使います。
 
-Gemini / FreeAI はモデルIDに `lyria` を含むものを詳細・chat・live・code すべての出力対象から除外します。`antigravity_cli` もこの絞り込み後の候補から生成します。
+Gemini / FreeAI はモデルIDに `lyria` を含むものを詳細・chat・live・code の出力対象から除外します。`antigravity_cli` の合成候補は独立した CLI 一覧を使います。
 
-モデル情報の生成・保存は `_config` 上のモデル設定ファイルに依存しません。API 接続用のキー・ログイン情報の読み取りは従来どおりです。保存するのは、このサーバーが直前に取得した結果と Grok / local の固定候補だけで、画面から値は送りません。
+用途別のモデル設定ファイルは使わず、Diag の取得・合成規則を正本とします。API 接続用のキー・ログイン情報の読み取りは従来どおりです。保存値はサーバーで保持する確認結果・固定候補・合成規則から作り、画面から候補一覧そのものは送りません。空候補の補完には共通設定の `CHAT_*` / `LIVE_*` も使用します。
 
 プロバイダ別ファイルへ `xx/same` は挿入しません（旧表記 `xx/auto` が残っていても合成時に除外します）。合成の `code_models_info.json` は導入済みCLIの区分だけを出力します（`claude_sdk` もClaude CLIの導入が必要）。`aidiy_hermes.models` だけは特別に、導入済みCLIの `xx/same` をCopilot → Claude → Codex → Antigravity → Grok → OpenCodeの順で先頭へ追加し、その後に取得したモデルを並べます。導入判定はインストール診断と同じ探索先での実行ファイルの存在確認です。
 
-音声候補は `live_voices_info.json` に `{gemini_live: {voices: {...}}, freeai_live: {voices: {...}}, openai_live: {voices: {...}}}` の形式で保存します。固定定義は `モデル情報/voices_info.mjs` で管理します。キーの確認成功と現在の設定状態に合わせて出力し、未設定・確認失敗のプロバイダは含めません。FreeAIの声はGeminiと同じ定義です。個別更新では他の有効な確認済み候補を保持し、キーが無効化された場合は除外します。
+音声候補は `live_voices_info.json` に `{gemini_live: {voices: {...}}, freeai_live: {voices: {...}}, openai_live: {voices: {...}}}` の形式で保存します。固定定義は `モデル情報/voices_info.mjs` で管理します。認証・取得状態によらず FreeAI / Gemini / OpenAI の3区分を常に出力します。FreeAIの声はGeminiと同じ定義です。音声候補の存在は認証や音声生成の成功を意味しません。
 
-Copilot単独契約向けの例外として、Copilot CLIが導入済みで合成後の `copilot_cli.models` が空の場合だけ、指定のClaude / GPT固定8モデルを指定順・指定日付で補います。取得候補が1件でもあれば補わず、プロバイダ別ファイルへは固定8モデルを保存しません。
+Copilot CLI が導入済みで取得候補が空なら、`COPILOT_FALLBACK_MODELS` の固定8モデルを補います。取得候補があっても Claude 系が1件もなければ Claude 4系統を追加します。OpenCode は Codex 用候補が空の場合に同じ固定8モデルを使います。これらは合成時の補完で、プロバイダ別ファイルへ取得結果として保存しません。
 
 プロバイダ別ファイルの書込後に、同じ保存先の全プロバイダ別ファイルを読み、`chat_models_info.json` / `live_models_info.json` / `code_models_info.json` も生成します。chat / live の合成時は FreeAI を先頭に並べます。code は Claude / OpenAI 系を前、`antigravity_cli` を最後に並べます。合成ファイルのルートは `gemini_chat` / `gemini_live` / `codex_cli` などの区分名で、それぞれ `{models}` だけを持ちます。詳細配列や診断の説明はプロバイダ別ファイルに残します。同じ区分名・モデルIDはマージし、表示名が重複するときは日付の新しいものを優先します（実日付は `yyyy/mm/dd` より優先）。個別テスト後の書込でも、他プロバイダの保存済み候補を合成に含めます。
 
 `python backend_diag/_setup.py` または全体の `python _setup.py` で `~/.local/bin` にランチャーを作成します。全体セットアップのDiagは `[y]` の表示だけで選択入力はありません。Windows は `aidiy_diag.cmd` で、このフォルダをユーザー PATH に重複なく自動登録します。ターミナルや VS Code を開き直して使ってください。クリーンアップはこの作業コピーのランチャーを解除し、共有フォルダが空になった場合だけ自動追加した PATH 登録も解除します。既存の PATH 登録や他ツールが使う登録は保持します。`backend_diag/aidiy_diag` / `backend_diag/aidiy_diag.cmd` からも直接起動できます。
 
-Electron の初回表示は Code / Live / Console / IDE / Discord / Slack と共通の `frontend_ide/host/scripts/window-opening.cjs` を使います。中央55%から750msで拡大し、描画を待ってから本画面を表示、内容を450msでフェード表示します。実ウィンドウを連続リサイズしないため、Windowsの未描画の白い縁を避けます。ブラウザ版・headlessには適用しません。`desktop-opening` 中は内容を隠し、演出完了後に起動済みを通知します。共通演出の仕様を変更する場合は6種類への影響を確認してください。`node --test backend_diag/checks/desktop.check.mjs` で読込・演出・表示通知の順序、演出中の終了・描画失敗と既存IPCの安全境界を確認できます。実OSでの拡大・DPI・最前面表示は別途目視確認が必要です。
+Electron の初回表示は Code / Live / Console / IDE / Discord / Slack と共通の `frontend_ide/host/scripts/window-opening.cjs` を使います。中央55%から750msで拡大し、描画を待ってから本画面を表示、内容を450msでフェード表示します。実ウィンドウを連続リサイズしないため、Windowsの未描画の白い縁を避けます。ブラウザ版・headlessには適用しません。`desktop-opening` 中は内容を隠し、演出完了後に起動済みを通知します。共通演出の仕様を変更する場合は共有する各アプリへの影響を確認してください。`node --test backend_diag/checks/desktop.check.mjs` で読込・演出・表示通知の順序、演出中の終了・描画失敗と既存IPCの安全境界を確認できます。実OSでの拡大・DPI・最前面表示は別途目視確認が必要です。
 
 上部は Console と同じ高さのタイトルバー・ウィンドウ操作・接続バーです。シアンバーは `frontend_ide/src/components/共通表示/シアンバー.css` を共有し、Web / Code / Live と同じ正弦波（4.5秒周期、黒→シアン→黒）で明滅します。透明度の `ease-in-out` へ戻さず、標本化したRGB値を `linear` で補間します。共有CSSも配布UIの整合性検証に含みます。シアンの接続バーはWindowsのアニメーション設定がOFF（`prefers-reduced-motion: reduce`）でも明滅を維持します。ブラウザ確認ではreduce / no-preferenceの両条件で、時間経過による色の変化を検査します。シアンの線は Tools の接続成功、黒は未接続を示します（Tools の確認は常に有効で、ON/OFF・再確認の操作はありません）。診断自体の接続とは別です。Tools は `_config/AiDiy_key.json` の `PORT_TOOLS`（省略時8095）に対して、固定 loopback の `/aidiy_code_agents/ping` だけを10秒間隔で確認します。キー・モデル・エージェントの実行は行いません。切断・画面破棄で確認を停止します。
 
-「導入状況」「モデル一覧」「外部連携」「設定モデル」の Vue タブです。導入状況・モデル一覧・外部連携は保存済みの前回結果があれば初期表示し、なければ未確認です。各パネルの実行ボタン左側に「前回実行日時」を表示します。導入状況パネル右上の「状況確認」で検出・更新します。タブ欄右の「全テスト」は、導入状況・モデル一覧・外部連携をそれぞれ確認して書き込みます（前述）。左側でカテゴリを開閉し、項目を選ぶと右側でパス・バージョン・利用機能・参照ソースを表示します。
+Vue タブの全体構成は前述の表を参照してください。導入状況・モデル一覧・外部連携は保存済みの前回結果があれば初期表示し、なければ未確認です。各パネルの実行ボタン左側に「前回実行日時」を表示します。導入状況パネル右上の「状況確認」で検出・更新します。タブ欄右の「全テスト」は、導入状況・モデル一覧・外部連携をそれぞれ確認して書き込みます（前述）。左側でカテゴリを開閉し、項目を選ぶと右側でパス・バージョン・利用機能・参照ソースを表示します。
 
 保存結果の読込は `診断/前回結果.mjs` に集約します。`install_info.json`、プロバイダ別 `*_models_info.json`、`integration_info.json` の結果・確認日時を表示に使います。通常の確認・一括取得ではファイルを自動保存せず、headless または確認後の「書込」（全テスト内の書込を含む）で保存します。未保存で再起動すると、最後に保存した結果へ戻ります。読込だけでは外部APIを再試験せず、保存結果を今回の認証証跡や書込可能な新規結果として扱いません。欠損・不正なJSONは読み飛ばします。
 
@@ -171,13 +176,13 @@ Windows では、Tools の事前 headless 診断や各機能の環境確認・�
 
 ランチャーでは Discord / Slack は各先頭キー（`discord_bot_token` / `slack_bot_token`）が設定済みの場合だけ表示します。既存の設定済み判定を使い、空欄・空白のみ・`<` で始まる仮設定は非表示です。ID類や接続成功は表示条件にせず、キー値を画面へ返しません。Chrome・VS Code・各CLIも、既存の実行ファイル探索で利用可能と確認できた項目だけを表示します。Chrome と AiDiy Browser は別の項目です。未導入・未設定を調べる導入状況／外部連携の診断画面は引き続き表示します。
 
-各アプリの既存アイコンを同梱し、通常画面のカードとミニ表示の起動ボタンで表示します。ミニの「○ / ○ 稼働中」の集計行は表示しません。ミニの起動ボタンはアイコンのみとし、重複する機能名の文字を表示しません。名称はマウスを重ねると確認できます。ミニ表示は通常画面で選択したプロジェクトを共用します。プロジェクト未選択時は英語の案内「SELECT YOUR PROJECT ▸▸ READY FOR LAUNCH」を赤い電光掲示板風（黒い格子線で縦12マスのドット文字）で右端から左端へ15秒かけて流し（titleは「プロジェクト選択してね」）、6種類すべての起動ボタンを無効にします。通常画面のプロジェクト欄も、未選択時は赤い枠と赤いフォルダ選択ボタンで選択を促します。稼働中のサービスは、ミニでは項目全体、通常画面ではタブの下線を緑で非線形に明滅させます。周期は約4.5秒で、項目ごとに4.32〜4.68秒とわずかにずらし、表示のたびに小さな揺らぎと開始位置（0〜周期）を乱数で加えて、そろわず同じ模様も繰り返さないようにします。明るさはタイトルバーのシアン帯と同じ |sin(πt)| の非線形で変化させ、ポート確認が未確認（タイムアウト）のときは直前の表示を保ちます。ミニのサービスを押すと、通常画面のシステム起動タブでその機能を選んだ状態に戻ります。「□」で通常表示へ戻り、アプリ起動タブでフォルダを選ぶと、ミニ表示のボタンも有効になります。ミニ表示からの起動も同じ重複確認・非同期起動を使い、定時監視は増やしません。起動ボタンをクリックして起動要求を受け付けると、アイコンの枠を光が一周します（受付の表示で、起動完了は表しません）。光は IDE の自動探索と同じ conic-gradient の彗星状（暗い尾→シアン→白い先頭、発光付き）で、真下から時計回りに約0.9秒で一周し、加速しながら真下へ戻って消えます。シアンバーと同じく、Windows のアニメーション設定が OFF でも省略しません。
+各アプリの既存アイコンを同梱し、通常画面のカードとミニ表示の起動ボタンで表示します。ミニの「○ / ○ 稼働中」の集計行は表示しません。ミニの起動ボタンはアイコンのみとし、重複する機能名の文字を表示しません。名称はマウスを重ねると確認できます。ミニ表示は通常画面で選択したプロジェクトを共用します。プロジェクト未選択時は英語の案内「SELECT YOUR PROJECT ▸▸ READY FOR LAUNCH」を赤い電光掲示板風（黒い格子線で縦12マスのドット文字）で右端から左端へ15秒かけて流し（titleは「プロジェクト選択してね」）、プロジェクトを必要とするアプリ・CLIの起動ボタンを無効にします（Chromeはプロジェクト不要）。通常画面のプロジェクト欄も、未選択時は赤い枠と赤いフォルダ選択ボタンで選択を促します。稼働中のサービスは、ミニでは項目全体、通常画面ではタブの下線を緑で非線形に明滅させます。周期は約4.5秒で、項目ごとに4.32〜4.68秒とわずかにずらし、表示のたびに小さな揺らぎと開始位置（0〜周期）を乱数で加えて、そろわず同じ模様も繰り返さないようにします。明るさはタイトルバーのシアン帯と同じ |sin(πt)| の非線形で変化させ、ポート確認が未確認（タイムアウト）のときは直前の表示を保ちます。ミニのサービスを押すと、通常画面のシステム起動タブでその機能を選んだ状態に戻ります。「□」で通常表示へ戻り、アプリ起動タブでフォルダを選ぶと、ミニ表示のボタンも有効になります。ミニ表示からの起動も同じ重複確認・非同期起動を使い、定時監視は増やしません。起動ボタンをクリックして起動要求を受け付けると、アイコンの枠を光が一周します（受付の表示で、起動完了は表しません）。光は IDE の自動探索と同じ conic-gradient の彗星状（暗い尾→シアン→白い先頭、発光付き）で、真下から時計回りに約0.9秒で一周し、加速しながら真下へ戻って消えます。シアンバーと同じく、Windows のアニメーション設定が OFF でも省略しません。
 
-上部の「フォルダ選択」でプロジェクトフォルダを指定し、Avatar / IDE / Console / Code / Live / Discord / Slack を個別に開きます。未選択では全アプリの起動ボタンが無効です。Electron は OS のフォルダ選択、ブラウザ版は診断サーバー側のフォルダ一覧を使います。選択したフォルダはタブを移動しても保持し、ページを開き直すと `_config/AiDiy_key.json` の `CODE_BASE_PATH` を初期値にコピーします。`../` も含め、設定された文字列をそのまま表示します。未設定・読込不可の場合は未選択のままです。相対パスは起動時だけ AIコアと同じ `backend_server/` 基準の絶対パスへ解決します（`../` は AiDiy のルート）。空欄・不正なパスから起動先を補完しません。画面内で選択・解除した後は定期更新や再接続で上書きしません。設定ファイルへの書込みやアプリの自動起動は行わず、起動時の実在フォルダ確認は維持します。
+上部の「フォルダ選択」でプロジェクトフォルダを指定し、Avatar / Task / Team / IDE / Navigator / Console / Code / Live / Discord / Slack / aidiy_browser を個別に開きます。Chrome はプロジェクト不要で、Tools と Web の稼働時に開けます。Task / Team はバックエンドの利用可否、aidiy_browser は Tools の稼働も確認します。Electron は OS のフォルダ選択、ブラウザ版は診断サーバー側のフォルダ一覧を使います。選択したフォルダはタブを移動しても保持し、ページを開き直すと `_config/AiDiy_key.json` の `CODE_BASE_PATH` を初期値にコピーします。`../` も含め、設定された文字列をそのまま表示します。未設定・読込不可の場合は未選択のままです。相対パスは起動時だけ AIコアと同じ `backend_server/` 基準の絶対パスへ解決します（`../` は AiDiy のルート）。空欄・不正なパスから起動先を補完しません。画面内で選択・解除した後は定期更新や再接続で上書きしません。設定ファイルへの書込みやアプリの自動起動は行わず、起動時の実在フォルダ確認は維持します。
 
-Avatar は AiDiy 本体のパスから起動します。他の5種類は、選択したフォルダを作業パスとして既存ランチャーへ渡します。別プロセスとして非同期に起動するため、Diag の終了やシステム起動タブの停止でこれらのアプリは停止しません。各アプリの画面から終了してください。起動要求を受け付けたことと、アプリの表示完了は区別します。表示されない場合はカードの「起動ログの保存先」に表示するファイル（`temp/aidiy_diag/アプリ起動/`）を確認してください。
+Avatar は AiDiy 本体のパスから起動します。Chrome を除く他のアプリは、選択したフォルダを作業パスとして既存ランチャーへ渡します。別プロセスとして非同期に起動するため、Diag の終了やシステム起動タブの停止でこれらのアプリは停止しません。各アプリの画面から終了してください。起動要求を受け付けたことと、アプリの表示完了は区別します。表示されない場合はカードの「起動ログの保存先」に表示するファイル（`temp/aidiy_diag/アプリ起動/`）を確認してください。
 
-Avatar・Live・Discord・Slack は、ボタンを押した時だけ OS の実行中タスクを確認します。起動済みなら追加起動しません。確認に失敗した場合も追加起動せず案内します。アプリの状態を定期監視しません。IDE・Console・Code は同じプロジェクトでも別の画面を開けます。Diag の IDE / Code 起動では `--new-window` を使い、通常の `aidiy_ide` / `aidiy_code` の既存窓を再利用する動作は維持します。Live / Discord / Avatar の既存ランチャーの排他も維持します。
+Avatar・Live・Discord・Slack は、ボタンを押した時だけ OS の実行中タスクを確認します。起動済みなら追加起動しません。確認に失敗した場合も追加起動せず案内します。アプリの状態を定期監視しません。Task・Team・IDE・Navigator・Console・Code・aidiy_browser は同じプロジェクトでも `--new-window` で別の画面を開けます。通常の `aidiy_ide` / `aidiy_code` の既存窓を再利用する動作は維持します。Live / Discord / Avatar の既存ランチャーの排他も維持します。
 
 全テスト・headless・初期画面表示ではアプリを起動しません。検証は `node --test backend_diag/checks/app-launch.check.mjs backend_diag/checks/desktop.check.mjs frontend_ide/checks/project-instance.test.mjs`、実ブラウザの画面確認は `node backend_diag/checks/app-launch-browser.mjs` です。アプリを実際に起動せず、合成タスク・合成プロセスで起動先、重複防止、定時監視なし、画面幅、フォルダ選択を確認します。終了独立性のテストのみ無害な Node.js プロセスを起動し、必ずテスト内で回収します。
 
@@ -194,14 +199,14 @@ node backend_diag/diag_main.mjs --browser --no-open --port 8097
 ## 認証と安全範囲
 
 - 起動ごとに一時認証キーを作成し、API は Bearer 認証を必須とします。認証 URL は他人に共有しないでください。
-- キーはブラウザのメモリ内だけに保持し、URL fragment は読込直後に履歴から除去します。再読込時は認証 URL を開き直してください。認証キーをファイル・Storage・アクセスログには保存しません。
+- 認証成功後のキーは同じタブ・公開元・パスの `sessionStorage` に保持し、再読込に使います。URL fragment は読込直後に履歴から除去します。401 ではキーを破棄し、サーバー再起動後は新しい認証 URL が必要です。永続的な `localStorage`・ファイル・アクセスログには保存しません。
 - 診断 API は登録済み項目 ID 以外の引数・任意パス・任意コマンドを受け付けません。一括は4 並列、個別は1項目、バージョン確認は各15秒、出力16 KiB上限です。Diag起動前のNode.js確認、サービス起動用Pythonの確認、全体・Web・Avatar起動前のnpm確認も各15秒です。結果には抽出したバージョン番号だけを表示し、生のコマンド出力は表示しません。
 - 子プロセスには秘密を含み得る環境変数を渡さず、HOME・作業ディレクトリを一時領域に隔離します。POSIX ではプロセスグループ、Windows では直接起動したプロセスを停止します。Windows で子孫プロセスまでの停止は保証しません。固定の version 引数でも、PATH 上の実行ファイル自体の信頼性や全副作用を保証するサンドボックスではありません。信頼できる環境で使ってください。
 - バージョン確認の NG / ERR は、サーバー側の標準エラーへ `[aidiy-diag:probe]` の JSON として出します。項目 ID・固定の version 引数・失敗分類・OS エラーコード・終了コード・シグナルだけを含め、生の子プロセス出力、フルパス、設定・環境変数・キー値は出しません。起動時の OS エラーコードは画面にも表示します。モデル API の通信エラー本文はログに出しません。
 - 通常のデスクトップ起動では、NG / ERR と Electron 異常終了の安全な分類を `backend_diag/.desktop-errors.log` に保存します（書込み可能な場合、最大64 KiB、次の追記で容量超過分をリセット）。認証URL・キー・生stderrは保存しません。`aidiy_diag --foreground` では従来どおりターミナルの標準エラーも確認できます。
 - GUI、内部ランチャー、安全な version 引数が確認できないものは存在確認のみです。Windows の `.cmd` / `.bat` / `.ps1` はシェル実行しません。npm / npx は既知の隣接 `node_modules/npm/bin/npm-cli.js` / `npx-cli.js` が確認できる場合だけ、Node から固定 `--version` で確認します。対応する実体がない shim は ERR とし、その他のラッパーは存在確認に限定します。
 - PATH と登録済みの標準パス・プロジェクト内配置を検出対象とし、API キー・設定 JSON・環境変数の値は表示しません。個別設定による独自パスや venv 内のみにある実行ファイルは、PATH に載っていなければ検出されない場合があります。
-- 判定は未確認・未検出・OK・NG・ERR の 5 種類です。OK に含める存在確認は起動試験ではありません。判定の定義は末尾の「状態インジケーター」を参照してください。
+- 導入状況の判定は未確認・未検出・OK・注意・NG・ERR の6種類です。OK に含める存在確認は起動試験ではありません。判定の定義は末尾の「状態インジケーター」を参照してください。
 - Python / npm のライブラリ依存と外部プログラムは別です。この初期機能は外部プログラムを対象とします。
 
 ## 終了・解除
@@ -325,15 +330,16 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 旧静的調査の抽出候補 246 件から 227 件を除き、現在の確認対象を 19 件に絞っています。AiDiy 起動コマンド群、Hermes 本体・専用プラグイン・スキル・補助依存、macOS 音声再生（afplay）、GStreamer、Edge、Brave、OS 補助・シェル・開発・導入・配置用の補助ツール（Git / pip 等）は診断カタログに含めません。任意項目を再表示するチェックもありません。
 実際のプログラムや機能を削除する変更ではありません。共通依存は非 Hermes の利用根拠で保持し、Hermes 専用の探索パスも除外します。
 対象ソース・設定 3,333 件の調査履歴・マニフェストは保持します。調査範囲と今回の診断対象は異なり、除外内容は 診断/coverage.json の catalogSelection に記録しています。
-モデル一覧と外部連携は上部の独立タブです。「設定モデル」は Tools 接続中だけ表示します。
+モデル一覧と外部連携は上部の独立タブです。「設定モデル」と「AIモデル」は Tools 接続中だけ操作できます。
 
 ## 状態インジケーター
 
-項目一覧・詳細は同じ5種類の状態バッジで表示します。上部の状態凡例行・状態フィルター・検索欄は置きません。
+導入状況の項目一覧・詳細は同じ6種類の状態バッジで表示します。上部の状態凡例行・状態フィルター・検索欄は置きません。
 - 未確認（黒）: 未実施。OS 対象外の場合も未確認とし、詳細に対象外の理由を表示します。
 - 未検出（黄）: 登録した探索先に見つかりません。
 - OK（緑）: 存在確認、または固定バージョンコマンドの正常終了。存在のみ・版未取得の場合は詳細で区別します。認証や実機能の動作保証ではありません。
-- NG（赤）: バージョンコマンドの非ゼロ終了、または確認した最低バージョン要件の不足。検出対象とは別の仮想環境まで否定しません。
+- 注意（黄）: 最低バージョン要件の不足や、検出バージョンへのセキュリティ警告。別の仮想環境や機能全体の利用可否は未判定です。
+- NG（赤）: バージョンコマンドの非ゼロ終了。
 - ERR（赤）: 起動・探索例外、タイムアウト、出力上限等により確認できません。
 
 確認中は進行メッセージを表示し、別の判定状態にはしません。色に加えて必ず状態名も表示します。モデル一覧・設定モデルの「未実施」は「未検出」と同じ黄色、「未確認」は黒系です。各画面は共通バッジの鮮やかな黄・緑・赤・青を使い、文字とのコントラスト比4.5:1以上を維持します。
@@ -452,19 +458,19 @@ Chat/Live/Codeと判断結果は共有しない。MCPの初期化・セッショ
 
 ## AIモデルの手動試行
 
-「AIモデル」はChat / Live / Decision / Codeの4画面です。初期値はconfigのCHAT・LIVE・DECISION各設定とCODE1を使います。Decisionの方式autoはモデルもautoとしてTools側で解決します。入力の「おはよう」とDecisionのpoliteness / high・medium・lowは `モデル試行/defaults.mjs` を既存設定モデル試行と共用し、手動画面では自由に編集できます。
+「AIモデル」はChat / Live / Prediction / Decision / Codeの5種類です。初期値はconfigのCHAT・LIVE・PREDICTION・DECISION各設定とCODE1を使います。Decisionの方式autoはモデルもautoとしてTools側で解決します。入力の「おはよう」とDecisionのpoliteness / high・medium・lowは `モデル試行/defaults.mjs` を既存設定モデル試行と共用し、手動画面では自由に編集できます。
 
-候補は `_AIDIY/aidiy_diag/{chat,live,decisions,code}_models_info.json` と `live_voices_info.json` の保存済み内容だけです。画面初期読込・再読込は認証付きローカルDiag APIを使い、外部モデル取得は行いません。プロバイダ変更は画面内で候補を連動し、一覧外の設定保持値を未確認として残します。候補の存在は認証・モデル利用成功の保証ではありません。選択や入力をconfigへ書き戻しません。
+候補は `_AIDIY/aidiy_diag/{chat,live,prediction,decisions,code}_models_info.json` と `live_voices_info.json` の保存済み内容だけです。画面初期読込・再読込は認証付きローカルDiag APIを使い、外部モデル取得は行いません。プロバイダ変更は画面内で候補を連動し、一覧外の設定保持値を未確認として残します。候補の存在は認証・モデル利用成功の保証ではありません。選択や入力をconfigへ書き戻しません。
 
-試行はTools接続中の明示操作だけです。既存 `モデル試行/trials.mjs` のMCP初期化・呼出し・セッション終了、逐次実行ロック、設定変更検知、期限、音声保存を共用します。Chatは `chat_llms_run`、Codeは `code_agents_run`、Decisionは `decisions_check` をHTTP MCPで呼び、Liveだけは既存 `/internal/live_model_check` へ明示した方式・モデル・音声・入力を渡します。Liveの接続後15秒待機・送信後最大60秒待機とアダプター終了処理は共通です。空JSONの従来Live試行は従来のconfigと固定挨拶を使います。
+試行はTools接続中の明示操作だけです。既存 `モデル試行/trials.mjs` のMCP初期化・呼出し・セッション終了、逐次実行ロック、設定変更検知、期限、音声保存を共用します。Chatは `chat_llms_run`、Codeは `code_agents_run`、Decisionは `decisions_check` をHTTP MCPで呼び、Liveは既存 `/internal/live_model_check` へ明示した方式・モデル・音声・入力を渡し、PredictionはChat試行成功後に内部REST `/internal/prediction_llms` を使います。Liveの接続後15秒待機・送信後最大60秒待機とアダプター終了処理は共通です。空JSONの従来Live試行は従来のconfigと固定挨拶を使います。
 
-AIモデルタブのタイトルバー「一括試行」は4画面の入力を開始時に固定し、Chat→Live→Decision→Codeを1実行として順に呼びます。NG・行タイムアウトでも次へ進みます。連打は抑止し、入力変更・実行中の画面移動・Tools切断で中止して古い結果を破棄します。全診断・headless・起動ではAI試行しません。設定モデルの15項目試行とAIモデルの4種試行は別の操作です。
+AIモデルタブのタイトルバー「一括試行」は5種類の入力を開始時に固定し、Chat→Live→Prediction→Decision→Codeを1実行として順に呼びます。NG・行タイムアウトでも次へ進みます。連打は抑止し、入力変更・実行中の画面移動・Tools切断で中止して古い結果を破棄します。全診断・headless・起動ではAI試行しません。設定モデルの16項目試行とAIモデルの5種試行は別の操作です。
 
 Decisionは1問ずつpredicate / choice / scoreを選び、質問名・質問文と、必要な選択肢／段階（2〜32件、重複不可）を編集します。戻り値全体はJSONを読めればインデント付き、読めなければ元文字列を安全なテキストとして表示します。表示できることと回答スキーマの成功判定は別です。既知の秘密値は伏せます。
 
 Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付き音声APIからBlobを自動取得してネイティブプレーヤーで再生できる状態にします。自動再生しません。AIモデル・設定モデルとも、完了後のタブ移動では再生だけを停止し、結果と取得済み音声を保持します。再実行・設定再読込・切断・終了ではObject URLを解放します。通常は音声再読込の操作を求めず、取得・再生失敗時だけ「音声取得を再試行」を表示します。短い音声・音声なしは明示します。
 
-検証は実AIを使わず、`checks/manual-models.check.mjs`、`ui/src/components/AIモデル/checks/manual-state.check.mjs` を使います。`DIAG_TEST_PYTHON` をTools依存環境のPythonへ設定すると `checks/model-trials-sdk.check.mjs` が実MCP SDKと合成AIで経路・Liveの15秒待機を確認します。`checks/manual-models-browser.mjs` は既存Chrome/Edgeの隔離プロファイルで4画面・幅1280/720/390・合成音声再生・破棄・一括試行・非JSON表示を確認します。UI変更後は依頼に応じて `backend_diag/ui` のビルドと `node backend_diag/ui/verify.mjs` で配布物を同期します。
+検証は実AIを使わず、`checks/manual-models.check.mjs`、`ui/src/components/AIモデル/checks/manual-state.check.mjs` を使います。`DIAG_TEST_PYTHON` をTools依存環境のPythonへ設定すると `checks/model-trials-sdk.check.mjs` が実MCP SDKと合成AIで経路・Liveの15秒待機を確認します。`checks/manual-models-browser.mjs` は既存Chrome/Edgeの隔離プロファイルで画面・幅1280/720/390・合成音声再生・破棄・一括試行・非JSON表示を確認します。UI変更後は依頼に応じて `backend_diag/ui` のビルドと `node backend_diag/ui/verify.mjs` で配布物を同期します。
 
 
 ## ミニ表示からCLIを開く

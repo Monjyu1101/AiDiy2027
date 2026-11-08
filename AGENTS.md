@@ -39,7 +39,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 |--------------|------|
 | [_AIDIY.md](./_AIDIY.md) | AI エージェント向け最小入口 |
 | [CLAUDE.md](./CLAUDE.md) | `_AIDIY.md` と同一内容の最小入口（Claude Code 向け） |
-| [backend_diag/AGENTS.md](./backend_diag/AGENTS.md) | Node.js 標準モジュールによる読み取り専用環境診断・ブラウザ起動 |
+| [backend_diag/AGENTS.md](./backend_diag/AGENTS.md) | Node.js による環境診断・設定・起動管理と Vue / Electron 画面 |
 | [backend_server/AGENTS.md](./backend_server/AGENTS.md) | FastAPI + SQLAlchemy + SQLite の実装詳細 |
 | [command_hermes/AGENTS.md](./command_hermes/AGENTS.md) | `aidiy_hermes` CLI 基盤の実装詳細 |
 | [backend_tools/AGENTS.md](./backend_tools/AGENTS.md) | MCP サーバー群の実装詳細 |
@@ -47,7 +47,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md) | AIタスク実行・定期タスク・複数AIエージェントのチーム活動を統合した FastAPI サーバーの実装詳細 |
 | [frontend_web/AGENTS.md](./frontend_web/AGENTS.md) | Vue 3 + Vite + TypeScript の Web UI 実装詳細 |
 | [frontend_avatar/AGENTS.md](./frontend_avatar/AGENTS.md) | Electron/Web デュアルモード Avatar の実装詳細 |
-| [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) | Navigator / Console / Code / Live / IDE の共通 Vue 画面と単独起動の実装詳細 |
+| [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) | Navigator / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面と単独起動の実装詳細 |
 | [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) | VS Code 拡張 AiDiy (Code) / AiDiy (Live) と単独起動版の実装詳細 |
 | [frontend_channels/AGENTS.md](./frontend_channels/AGENTS.md) | 外部接続チャンネル群の構成・共通方針 |
 | [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) | Discord Bot の Hermes チャット / AIコア Live 音声接続の実装詳細 |
@@ -99,8 +99,8 @@ AiDiy は 5 つの常駐サーバーと 1 つの on-demand CLI 基盤で構成�
 
 | コンポーネント | 役割 | 主なポート |
 |----------------|------|------------|
-| `backend_diag/diag_main.mjs` | 外部プログラムの導入状態を確認する任意起動の診断 UI / API（`aidiy_diag`） | 自動割り当て・loopback |
-| `backend_server/core_main.py` | C系、A系、認証、AIコア | 8091 |
+| `backend_diag/diag_main.mjs` | 導入状態の診断、設定・導入操作、サービス起動管理を行う UI / API（`aidiy_diag`） | 自動割り当て・loopback |
+| `backend_server/core_main.py` | C系と対応するV系、A系、認証、AIコア | 8091 |
 | `backend_server/apps_main.py` | M系、T系、V系、S系 | 8098 |
 | `backend_tools/tools_main.py` | MCP サーバー群 | 8095 |
 | `backend_local/local_main.py` | ローカル LLM（OpenAI 互換 Gemma 推論） | 8096 |
@@ -111,7 +111,7 @@ AiDiy は 5 つの常駐サーバーと 1 つの on-demand CLI 基盤で構成�
 | `frontend_ide/host` | AIコアへ接続するコード支援の AiDiy (Code) と、音声会話の AiDiy (Live) の VS Code 拡張 / 単独起動版 | 常駐なし |
 | `frontend_channels/discord` | Discord のテキストチャンネルを `aidiy_hermes`、ボイスチャンネルを AIコア Live へ接続する任意起動の Bot | 待受ポートなし |
 | `frontend_channels/slack` | Slack の専用チャンネルを `aidiy_hermes` へ接続する任意起動の Bot（Discord 版の双子、HTTPS 定期取得） | 待受ポートなし |
-| `frontend_ide` | Navigator / Console / Code / Live / IDE の共通 Vue 画面・単独起動。`viewer/` はファイルAPI・Office表示 | 自動割り当て |
+| `frontend_ide` | Navigator / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面・単独起動。`viewer/` はファイルAPI・Office表示 | 自動割り当て |
 
 `core_main.py`、`apps_main.py`、`taskteam_main.py` は同じ SQLite DB を共有します。`taskteam_main.py` は `Aタスク*` と `Aチーム*` を同一プロセスで管理します。
 frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分けます。Task / Team は frontend_ide の単独アプリで操作し、`/task/*` と `/team/*` は同じ 8093 へ接続します。
@@ -120,7 +120,7 @@ frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振�
 
 | ディレクトリ | 内容 |
 |--------------|------|
-| `backend_diag/` | Node.js のみで起動する環境診断。カテゴリ別一覧と詳細、認証付き読み取り専用チェック |
+| `backend_diag/` | Node.js の環境診断 API と Vue / Electron 画面。診断に加え、認証付きの明示操作で導入・設定・サービス起動管理を行う |
 | `backend_server/` | FastAPI サーバー、SQLAlchemy モデル、CRUD、Router、AIコア |
 | `command_hermes/` | `aidiy_hermes` CLI |
 | `backend_tools/` | Windows では 20 個、Linux / macOS では 19 個の MCP（Chrome DevTools、Desktop Capture、SQLite、PostgreSQL、Logs、Code Check、Backup、Image / Movie Generation、Speech-to-Text、Text-to-Speech、OBS Studio Control、FFmpeg Control、Notification Sounds、Code Agents、Chat LLM、Decisions Check、Task Agents、Team Agents、Windows 限定の Windows Control）と OpenAI / Ollama 互換 Chat Completions |
@@ -128,7 +128,7 @@ frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振�
 | `backend_taskteam/` | AIタスク実行 + 定期タスクと複数AIエージェントのチーム活動を統合した FastAPI サーバー（`/task/*`、`/team/*`、各監視ループ） |
 | `frontend_web/` | Vue 3 + Vite + TypeScript の Web UI |
 | `frontend_avatar/` | Electron/Web 対応の AI Avatar UI |
-| `frontend_ide/` | Navigator / Console / Code / Live / IDEのVue共通画面と単独起動。`host/` にVS Code拡張・Code / Live通信、`viewer/` にファイルAPI・Office表示を統合 |
+| `frontend_ide/` | Navigator / Console / Code / Live / IDE / Task / Team / Browser の Vue 共通画面と単独起動。`host/` にVS Code拡張・Code / Live通信、`viewer/` にファイルAPI・Office表示を統合 |
 | `frontend_channels/` | 外部接続チャンネル群の親ディレクトリ。`discord/` と `slack/` を対等な子モジュールとして配置し、将来のチャンネルも同じ階層に追加する。親には共通の `AGENTS.md`・`README.md`・`LICENSE` を置く |
 | `frontend_channels/discord/` | `frontend_ide/host` の CLI / Live 接続処理を共有する Discord Bot。接続情報は `_config/AiDiy_key.json` の `discord_*` |
 | `frontend_channels/slack/` | Discord と双子の Slack Bot。接続情報は共通設定の `slack_*`、音声なし |
@@ -317,7 +317,7 @@ frontend_avatar は Electron デスクトップアプリと通常 Web ブラウ�
 
 ## Navigator 概要
 
-Navigator は `frontend_ide` が所有する読み取り専用の開発案内画面です。`aidiy_navi` で単独起動するか、IDE の「＋ Navigator」から開きます。目標・作業項目・推定達成率・次のプロンプトを表示し、提案を自動実行しません。全体 start の自動起動対象ではありません。
+Navigator は `frontend_ide` が所有する開発案内画面です。`aidiy_navi` で単独起動するか、IDE の「＋ Navigator」から開きます。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code が提案を実行してファイルを変更し、完了後に再評価します。自動航行の許可は保存せず、再表示時はオフです。全体 start の個別自動起動対象ではありません。
 
 ## frontend_ide / viewer 概要
 
@@ -326,7 +326,7 @@ AiDiy IDE の中心となる画面は `frontend_ide/src/components/開発スペ�
 - フォルダを銀河、ファイルを星・惑星として1階層ずつ表示する。
 - 左上のバーガーボタンで左側のエクスプローラーを開閉し、右側でコード・画像・フォルダ内容を表示する。
 - ビューアは読み取り専用。起点日時以降の更新を明滅・金色表示で可視化する。
-- Node.js、Vue 3、Canvas 描画、Monaco Editor で構成する。Navigator / Console / Code / Live / IDE の画面と依存物は `frontend_ide` で共有する。
+- Node.js、Vue 3、Canvas 描画、Monaco Editor で構成する。Navigator / Console / Code / Live / IDE / Task / Team / Browser の画面と依存物は `frontend_ide` で共有する。
 - 全体のセットアップ・起動・クリーンアップに組み込み済み。単独起動コマンドは `aidiy_ide`、ポートは固定せず自動割り当て。
 
 画面の詳細は [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md)、ファイルAPI・Office表示は [frontend_ide/viewer/AGENTS.md](./frontend_ide/viewer/AGENTS.md) を参照してください。
@@ -351,8 +351,8 @@ AiDiy IDE の中心となる画面は `frontend_ide/src/components/開発スペ�
 | `aidiy_logs` | backend_server / backend_tools ログ確認 |
 | `aidiy_code_check` | Python 構文 / ruff / TypeScript 型チェック |
 | `aidiy_backup` | 差分バックアップ保存 / 確認（HTTP は `save` / `check` に分岐） |
-| `aidiy_image_generation` | AI 画像生成（OpenAI / Gemini / FreeAI / Codex CLI / Antigravity CLI） |
-| `aidiy_movie_generation` | AI 動画生成（Google Gemini Veo） |
+| `aidiy_image_generation` | AI 画像生成（OpenAI / Gemini / FreeAI / Codex CLI / Antigravity CLI / Grok CLI） |
+| `aidiy_movie_generation` | AI 動画生成（Gemini / FreeAI の Veo） |
 | `aidiy_speech_to_text` | 音声認識（speech_recognition / OpenAI Whisper） |
 | `aidiy_text_to_speech` | テキスト音声合成（Edge / OpenAI / Gemini / FreeAI） |
 | `aidiy_obs_studio_control` | OBS Studio WebSocket 制御（配信、録画、シーン、ソース、音声） |
@@ -360,7 +360,7 @@ AiDiy IDE の中心となる画面は `frontend_ide/src/components/開発スペ�
 | `aidiy_notification_sounds` | 通知音のローカル再生（scene 別の開始 / 終了 / 注意音、`tts` シーンは読み上げ合成） |
 | `aidiy_code_agents` | AI コードエージェント実行（AIコード / CodeAI CLI 経由） |
 | `aidiy_chat_llms` | AIチャット の ChatAI を MCP ツールとして公開（`aidiy_chat_completions` の OpenAI / Ollama 互換エンドポイントの実体） |
-| `aidiy_decisions_check` | AI判断（Decisions API / OAuth Responses JSON Schema）の共通インターフェース |
+| `aidiy_decisions_check` | AI判断（OpenAI Decisions / OpenAI OAuth / Gemini Chat / FreeAI Chat）の共通インターフェース |
 | `aidiy_task_agents` | backend_taskteam の AIタスク要求への非同期投入（`submit`）と進捗確認（`get_request_status` / `get_detail_status`） |
 | `aidiy_team_agents` | backend_taskteam の Aチーム依頼への非同期投入（`submit`）と進捗確認（`get_work_status` / `get_work_list` / `get_member_list`） |
 | `aidiy_windows_control` | Windows でのみ公開するデスクトップ操作制御（マウス/キーボード、ウィンドウ、プロセス、クリップボード、UI Automation 要素操作） |
@@ -386,7 +386,7 @@ MCP の使い分けと設定は `_AIDIY/knowledge/backend_server,backend_tools,M
 - Channels 共通: `frontend_channels/AGENTS.md`
 - Discord: `frontend_channels/discord/AGENTS.md`
 - Slack: `frontend_channels/slack/AGENTS.md`
-- Navigator / Console / Code / Live / IDE 共通画面: `frontend_ide/AGENTS.md`
+- Navigator / Console / Code / Live / IDE / Task / Team / Browser 共通画面: `frontend_ide/AGENTS.md`
 - ファイルAPI・Office表示: `frontend_ide/viewer/AGENTS.md`
 
 docs と実装が食い違う場合は、現行実装を確認したうえで「現行実装では」と明記します。

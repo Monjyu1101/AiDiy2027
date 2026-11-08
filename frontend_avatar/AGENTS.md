@@ -51,6 +51,8 @@ Electron 版は BrowserWindow の role を main process で管理します。
 
 | パス | 役割 |
 |------|------|
+| `launch.mjs` | `aidiy_avatar` の独立起動。Vite renderer と Electron を管理 |
+| `electron/dev-start.cjs` | `npm run dev` の Vite・TypeScript 監視・Electron 起動 |
 | `electron/main.ts` | BrowserWindow、IPC、パネル制御 |
 | `electron/preload.ts` | renderer へ `desktopApi` を公開 |
 | `src/AiDiy.vue` | 認証、接続、role / panel 状態、Web layout の中心 |
@@ -80,7 +82,7 @@ Web では単一ページ内でコアのパネルを表示します。Task / Tea
 
 ## 状態同期
 
-Electron / Web 間の状態同期は BroadcastChannel `avatar-desktop-sync` を使います。
+同じ公開元・ブラウザの保存領域を共有する画面間の状態同期には BroadcastChannel `avatar-desktop-sync` を使います。Electron と通常ブラウザの間を中継する仕組みではありません。
 パネル表示状態、セッション、必要な snapshot は `src/AiDiy.vue` を中心に構築します。
 
 `frontend_web` と異なり、Vue Router / Pinia 中心の構成ではありません。

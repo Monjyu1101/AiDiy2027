@@ -2389,33 +2389,9 @@
       "bytes": 0,
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-scenery/LocalLow/Intel/ShaderCache/31ebcefff49519d22ff6c29242e1e625b17b39fcb77f0ce2d258968e672b6026": {
-      "bytes": 26,
-      "sha256": "63c3098a384bb7cdebfa0e09b9382b7fae7167dc3aa493c7e10d15fbf96d3ba5"
-    },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-scenery/LocalLow/Intel/ShaderCache/c1de9e6b910c7e688fb1462954f15d4b2f834882e839627aceb68826769a2f83": {
-      "bytes": 47406,
-      "sha256": "6a2b6053985d197e1a8b62b1d3271dc9e194d68e768d37b2e876a50830afa685"
-    },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-scene-picker/LocalLow/Intel/ShaderCache/31ebcefff49519d22ff6c29242e1e625b17b39fcb77f0ce2d258968e672b6026": {
-      "bytes": 26,
-      "sha256": "63c3098a384bb7cdebfa0e09b9382b7fae7167dc3aa493c7e10d15fbf96d3ba5"
-    },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-scene-picker/LocalLow/Intel/ShaderCache/c1de9e6b910c7e688fb1462954f15d4b2f834882e839627aceb68826769a2f83": {
-      "bytes": 39680,
-      "sha256": "6065bdef4671afa73a04982287b69852c1d6ef1dd842b9129e531ebb99d773dd"
-    },
     "runs/2026-11-07T13-46-08-056Z/check-navigation-progress/diagnostics/check-navigation-progress/failure/snapshot.json": {
       "bytes": 917,
       "sha256": "43c11a5e86a96053d5c71735ee4f72336d86c27142c0f283b6c7c28081b6891e"
-    },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-autopilot/LocalLow/Intel/ShaderCache/31ebcefff49519d22ff6c29242e1e625b17b39fcb77f0ce2d258968e672b6026": {
-      "bytes": 26,
-      "sha256": "63c3098a384bb7cdebfa0e09b9382b7fae7167dc3aa493c7e10d15fbf96d3ba5"
-    },
-    "runs/2026-11-07T13-46-08-056Z/check-navigation-autopilot/LocalLow/Intel/ShaderCache/c1de9e6b910c7e688fb1462954f15d4b2f834882e839627aceb68826769a2f83": {
-      "bytes": 47406,
-      "sha256": "b0ec806e2118ce7425846408e40fa8086262dd7e074144a90977503796300a2a"
     },
     "runs/2026-11-07T13-46-08-056Z/check-navigation/diagnostics/check-navigation/failure/snapshot.json": {
       "bytes": 900,
