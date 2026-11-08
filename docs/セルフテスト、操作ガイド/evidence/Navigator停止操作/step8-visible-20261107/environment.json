@@ -1,0 +1,47 @@
+{
+  "project": "<専用一時領域>/Navi停止試験",
+  "stateRoot": "<専用一時領域>\\navigation-state",
+  "url": "http://127.0.0.1:50721/",
+  "pid": 18336,
+  "initial": {
+    "schemaVersion": 3,
+    "requestId": "8ff3005a-fde7-4158-bb16-1f83a7dafe81",
+    "navigationId": "8ff3005a-fde7-4158-bb16-1f83a7dafe81",
+    "goal": "専用READMEの確認と手動承認待ちの確認",
+    "inferred": false,
+    "items": [
+      {
+        "id": "read",
+        "name": "READMEの確認",
+        "progress": 0,
+        "weight": 50,
+        "reason": "試験開始時点では報告前です。",
+        "weightReason": "停止操作用の固定試験項目の半分です。"
+      },
+      {
+        "id": "approval",
+        "name": "利用者による別途の手動承認",
+        "progress": 0,
+        "weight": 50,
+        "reason": "手動承認は未実施です。承認ファイルがない限り0%です。",
+        "weightReason": "100%自動停止を除外する固定の未完了項目です。"
+      }
+    ],
+    "overall": {
+      "progress": 0,
+      "reason": "試験開始前です。"
+    },
+    "nextItemId": "read",
+    "nextPrompt": "今回の目標は専用READMEの確認です。今回の作業は作業フォルダ直下のREADME.mdだけを読み、その内容を短く報告することです。ファイルの変更・作成はせず、上位フォルダや他のプロジェクトは参照しないでください。手動承認は行わず、この1回の報告で終了してください。",
+    "selection": {
+      "provider": "codex_cli",
+      "model": "gpt-6.1-sol"
+    },
+    "createdAt": 1794052440379,
+    "updatedAt": 1794052440379,
+    "checkedAt": 1794052440379
+  },
+  "sourceHash": "c1fe8437cfb5083f85df842dd49771ff7b1f6f68f65601e4f8929151b02e46c0",
+  "bundleHash": "aa61cc15281350e02d66b0fc8d1f79eec846b8ec167294c0fcadd95fda1b8e77",
+  "before": "dae2810d5b5243279a998705cc9f2a25ff87eb03b204762b889728f73bb256bc"
+}

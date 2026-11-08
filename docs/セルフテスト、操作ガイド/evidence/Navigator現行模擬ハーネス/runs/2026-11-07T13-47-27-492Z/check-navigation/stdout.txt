@@ -1,0 +1,2 @@
+STAGE: ブラウザ起動
+{"mockApplication":"ide","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-zKD5ET\\0\\temporary\\aidiy-connection-check-UgBClH\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-zKD5ET\\0\\temporary\\aidiy-connection-check-UgBClH\\aidiy_navi_model.json"}

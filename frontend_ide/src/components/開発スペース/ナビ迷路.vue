@@ -38,7 +38,7 @@ onMounted(() => {
   try { renderer = new THREE.WebGLRenderer({canvas: canvas.value, antialias: true, powerPreference: 'low-power'}); }
   catch { emit('unsupported'); return; }
   ready.value = true;
-  const el = stage.value, reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const el = stage.value, reduced = false;
   renderer.setClearColor(0x04060c, 1);
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;   // 壁が通路へ落とす影で立体感を出す
   const scene = new THREE.Scene();

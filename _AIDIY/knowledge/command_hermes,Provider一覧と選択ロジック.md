@@ -111,6 +111,10 @@ Hermesの `/model` は `hermes_models_info.json` の各CLI区分から候補・�
 
 OpenAI OAuthは専用一覧の `openai_oauth.models` を読みます。生成時にCode一覧の `aidiy_hermes.models` から `openai_oauth/` の候補だけを取り、実行IDから接頭辞を外して従来の表示名を保持します。専用一覧がまだ存在しない旧環境では、CLIとOpenAI OAuthだけ従来のCode一覧へ互換退避します。専用一覧が存在して破損している場合や区分がない場合は、旧候補を復活させません。ファイルは候補を開くたびに読み、実行中に更新された一覧も再表示時に反映します。Diagが生成するHermesのCLI経路も `xx/same` に統一し、バックエンドからHermesを呼ぶ際はモデル引数を省略します。
 
+`-900k` はHermesのOpenAI OAuth経路だけで解決する別名です。`codex_cli` / `copilot_cli` へそのまま渡すと無効になるため、Diagは取得結果からの候補生成と保存済みプロバイダ一覧の再合成の両方で除外します。OpenCodeへ写すCodex候補も除外後のものを使います。Hermes自身の `openai_oauth/` 候補は維持します。
+
+保存済み一覧に混入している場合は、ルートから `node backend_diag/checks/repair-cli-context-aliases.mjs` を実行すると、該当CLI区分の別名だけを修復できます。API取得、認証・設定・保存済みモデル選択の変更、Core／Apps再起動は行いません。候補画面を開き直して通常のモデルを選び直します。起動中のDiagが古い生成処理を保持している場合は、次回Diag起動時にコード修正が反映されます。
+
 検証は `models-info.check.mjs` / `hermes-info.check.mjs`（backend_diag/checks）と `test_aidiy_model_catalog.py`（command_hermes/checks）で行います。実キーによる接続、TUI操作、設定保存・次回起動の全体確認は実環境で別途行います。
 
 `antigravity-cli` は本体の `antigravity_cli` と同じ引数規則を使います。初回は `-p <prompt>`、継続時はその後ろに `-c` を付け、`--add-dir <cwd>` と `--print-timeout 20m` を指定します。`CODE_PERMISSIONS` が `none` 以外なら `--dangerously-skip-permissions` も指定します。Windowsでは `%USERPROFILE%\AppData\Local\agy\bin\agy.exe` を優先し、`DETACHED_PROCESS` で親コンソールから切り離します。

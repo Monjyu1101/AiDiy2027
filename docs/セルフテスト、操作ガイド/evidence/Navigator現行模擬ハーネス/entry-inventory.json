@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-07T13:44:59.998270+00:00",
+  "candidates": [
+    {
+      "path": "frontend_ide/scripts/check-navigation-autopilot.mjs",
+      "sha256": "75794e1f86c0fc5de69aebb17b2f838d2a086d48e5625e0b898ee8e9c00a7ed1"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-desktop.mjs",
+      "sha256": "516f57499fa5ad1fc8b8f88b717fb28c34ef9bc46fa1d4851f4e418e7412f5bd"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-goal.mjs",
+      "sha256": "0ea390078f4aeacf48525a25e7ec055ce3a7851619c026b25edbf2cdf90ec966"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-guide.mjs",
+      "sha256": "5609d15c322cb817c82d9fabc4dfa5030c5bb01de728edcff1b1a5380f35a733"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-height.mjs",
+      "sha256": "12d72f51d10b60f30e4709a6811111204a1f41c7fe6055102f176746fea5dd59"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-progress.mjs",
+      "sha256": "4e595a6dee64a87e5be76158541c343b1fd09e9ffb9f408b43bd187cd1d8f93e"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-project.mjs",
+      "sha256": "5211a8809f7e5e4a779c3e9462d77dc6dcc85b7468f8875d062442afaad0600d"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-real.mjs",
+      "sha256": "dd4730b1768501e0981a8393005d98b5c160bc05f836931754dac917bcfdb2f1"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-scene-picker.mjs",
+      "sha256": "c2fb720432ca86c9cf35ac3ac2cb1449e21b87f1d7a0f8c504add80154808230"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation-scenery.mjs",
+      "sha256": "14c532aa042ea3d594474aebc79a1c374a38ca50b1e2e4509db18f80827fc62c"
+    },
+    {
+      "path": "frontend_ide/scripts/check-navigation.mjs",
+      "sha256": "50bf1e5741a1ef9bcd66f221c4c5fd0bfb6a32aac9436db264c7dd534baf9601"
+    }
+  ]
+}

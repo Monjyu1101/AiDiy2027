@@ -1,0 +1,77 @@
+{
+  "name": "check-navigation-scene-picker",
+  "expected": "押下/右クリック/キー/タッチ、現行9候補と全選択、非送信転記、中止、狭幅、別Document、破棄",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-scene-picker.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\profile",
+    "APPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\localappdata",
+    "TMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\temporary",
+    "TEMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T13:48:30.496Z",
+  "endedAt": "2026-11-07T13:48:45.025Z",
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "status": "FAIL",
+  "lastStage": "STAGE: Chromium",
+  "blocked": [],
+  "loadedAssets": [],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T13:48:31.127Z",
+      "event": "spawn",
+      "executable": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "args": [
+        "--service=0.27.7",
+        "--ping"
+      ],
+      "pid": 18244
+    },
+    {
+      "at": "2026-11-07T13:48:33.367Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--no-sandbox",
+        "--enable-unsafe-swiftshader",
+        "--remote-debugging-port=0",
+        "--window-size=720,800",
+        "--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\temporary\\navi-picker-AdRhk7",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"
+      ],
+      "pid": 7184
+    },
+    {
+      "at": "2026-11-07T13:48:44.785Z",
+      "event": "childExit",
+      "pid": 7184,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

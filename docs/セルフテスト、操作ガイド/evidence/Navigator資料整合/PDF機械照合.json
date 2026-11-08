@@ -1,0 +1,408 @@
+{
+  "at": "2026-11-07T12:44:27.189656+00:00",
+  "pages": 40,
+  "localPdfLinks": [
+    {
+      "page": 1,
+      "target": "evidence/Navigator資料整合/step-10.json",
+      "exists": true
+    },
+    {
+      "page": 3,
+      "target": "セルフテスト,aidiy_diag,ランチャー編.md",
+      "exists": true
+    },
+    {
+      "page": 11,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_301_ナビ評価.json",
+      "exists": true
+    },
+    {
+      "page": 11,
+      "target": "evidence/Navigator資料整合/図版.json",
+      "exists": true
+    },
+    {
+      "page": 16,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_302_実プロジェクト分析.json",
+      "exists": true
+    },
+    {
+      "page": 35,
+      "target": "evidence/Navigator停止操作/step-8.json",
+      "exists": true
+    },
+    {
+      "page": 35,
+      "target": "evidence/Navigator停止操作/step-8.json",
+      "exists": true
+    },
+    {
+      "page": 35,
+      "target": "evidence/Navigator停止操作/step8-visible-20261107/electron.jsonl",
+      "exists": true
+    },
+    {
+      "page": 35,
+      "target": "evidence/Navigator停止操作/Code非表示試験/electron.jsonl",
+      "exists": true
+    },
+    {
+      "page": 36,
+      "target": "evidence/Navigator停止操作/step-8.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_101_起動導線.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_301_ナビ評価.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_601_達成率表示.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_701_実装確認.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/Navigator停止操作/step-8.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/Navigator停止操作/step-8.json",
+      "exists": true
+    },
+    {
+      "page": 38,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_202_初期サイズ.json",
+      "exists": true
+    },
+    {
+      "page": 39,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_701_実装確認.json",
+      "exists": true
+    },
+    {
+      "page": 39,
+      "target": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_301_ナビ評価.json",
+      "exists": true
+    },
+    {
+      "page": 39,
+      "target": "evidence/Navigator資料整合/欠落参照.json",
+      "exists": true
+    },
+    {
+      "page": 39,
+      "target": "evidence/Navigator失敗切分け/step-9.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/現行ハーネス照合/heading.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/現行ハーネス照合/heading.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/Hermes限定確認/events.jsonl",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/Hermes限定確認/python.jsonl",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/Hermes限定確認/hermes-result.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator失敗切分け/期限処理.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator資料整合/欠落参照.json",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "セルフテスト,aidiy_navi,操作編.pdf",
+      "exists": true
+    },
+    {
+      "page": 40,
+      "target": "evidence/Navigator資料整合/step-10.json",
+      "exists": true
+    }
+  ],
+  "convertedLinks": 30,
+  "allLinkTargetsExist": true,
+  "rendering": "pypdfium2/PDFium、全ページ1.55倍PNG。Popplerは未導入のため既存PDFiumを利用。",
+  "renderedPages": 40,
+  "pagesChangedAfterFinalCommandCorrection": [
+    6
+  ],
+  "textComparison": {
+    "method": "生成HTMLのp/li/td/th/h1/h2/h3/figcaption/preを、最終PDF抽出文字とNFKC・空白除去で照合。フッターを除外。 PDF抽出時の同形部首3種（⻑/⻩/⻘）は長/黄/青に対応付け、実際の紙面も確認。",
+    "checkedBlocks": 214,
+    "missingBlocks": [],
+    "extractionGlyphVariants": {
+      "⻑": "長",
+      "⻩": "黄",
+      "⻘": "青"
+    },
+    "allBlocksMatched": true
+  },
+  "imageComparison": {
+    "method": "本文参照PNGとPDF埋込画像のRGBピクセルハッシュ・寸法を照合。",
+    "checkedImages": 36,
+    "results": [
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_101_Diag起動.png",
+        "pixelMatchPages": [
+          2
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_104_IDE起動メニュー広い.png",
+        "pixelMatchPages": [
+          3
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_105_IDE起動メニュー狭い.png",
+        "pixelMatchPages": [
+          4
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_106_IDE起動メニュー下向き.png",
+        "pixelMatchPages": [
+          5
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_103_IDE複数窓.png",
+        "pixelMatchPages": [
+          6
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_201_単独起動画面.png",
+        "pixelMatchPages": [
+          7
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_202_長押し移動.png",
+        "pixelMatchPages": [
+          8
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_203_VR表示.png",
+        "pixelMatchPages": [
+          9
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_204_VR復帰後.png",
+        "pixelMatchPages": [
+          9
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_205_IDE別窓タイトル.png",
+        "pixelMatchPages": [
+          10
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_301_目標入力.png",
+        "pixelMatchPages": [
+          11
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_302_ナビ実行中.png",
+        "pixelMatchPages": [
+          12
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_303_ナビ結果.png",
+        "pixelMatchPages": [
+          13
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_304_理由と総合評価.png",
+        "pixelMatchPages": [
+          14
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_801_処理の中止.png",
+        "pixelMatchPages": [
+          15
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_401_履歴一覧.png",
+        "pixelMatchPages": [
+          17
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_402_履歴の復元.png",
+        "pixelMatchPages": [
+          18,
+          20
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_501_モデル選択.png",
+        "pixelMatchPages": [
+          19
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_601_達成率表示.png",
+        "pixelMatchPages": [
+          18,
+          20
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_710_待機画面メニュー.png",
+        "pixelMatchPages": [
+          21
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_航行.png",
+        "pixelMatchPages": [
+          22
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_702_待機画面_花火.png",
+        "pixelMatchPages": [
+          23
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_703_待機画面_アクアリウム.png",
+        "pixelMatchPages": [
+          24
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_704_待機画面_万華鏡.png",
+        "pixelMatchPages": [
+          25
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_705_待機画面_水面.png",
+        "pixelMatchPages": [
+          26
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_706_待機画面_時計.png",
+        "pixelMatchPages": [
+          27
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_707_待機画面_迷路.png",
+        "pixelMatchPages": [
+          28
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_708_待機画面_依頼文.png",
+        "pixelMatchPages": [
+          29
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_709_待機画面_夜間飛行.png",
+        "pixelMatchPages": [
+          30
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_711_夜間飛行_本体.png",
+        "pixelMatchPages": [
+          31
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_802_CODE_LIVEへ.png",
+        "pixelMatchPages": [
+          32
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_901_自動航行オン.png",
+        "pixelMatchPages": [
+          33
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_902_自動航行オフ.png",
+        "pixelMatchPages": [
+          34
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_903_自動航行の自動停止.png",
+        "pixelMatchPages": [
+          35
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_906_Code表示_完了後もオフ.png",
+        "pixelMatchPages": [
+          36
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_909_Code非表示_完了後もオフ.png",
+        "pixelMatchPages": [
+          37
+        ]
+      }
+    ],
+    "unmatched": 0
+  },
+  "pageBoundaryCheck": {
+    "charactersOutsidePages": []
+  },
+  "pdfTextCharacters": 14916,
+  "pdfReadWarnings": {
+    "producer": "Chromium/Skia PDF",
+    "observed": "生成直後のPDFをpypdfで読み込む際、trailerのobject count補正警告。pdfplumberでは一部font descriptorのFontBBox不足警告。",
+    "handling": "リンク相対化後のPDFを再読込し、全40ページのPDFium描画・文字照合・画像照合・ページ境界検証が完了。目視でも欠け・重なりなし。警告自体を機能合否へ転用しない。"
+  }
+}

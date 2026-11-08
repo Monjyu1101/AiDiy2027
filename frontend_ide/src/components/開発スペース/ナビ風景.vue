@@ -96,7 +96,7 @@ onMounted(() => {
     const dt=last?Math.min(.05,(now-last)/1000):0;last=now;
     const doc=el.ownerDocument, owner=doc.defaultView, rect=el.getBoundingClientRect();
     if(!doc.hidden&&rect.width>0&&rect.height>0){
-      const reduced=owner.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const reduced=false;
       const pace=reduced?.15:1;
       time+=dt*pace;ripples.step(dt*pace);nextDrop-=dt*pace;nextHoverDrop-=dt*pace;
       if(waterPointerPending&&nextHoverDrop<=0){

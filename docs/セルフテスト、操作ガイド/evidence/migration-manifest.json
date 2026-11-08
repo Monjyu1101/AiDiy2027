@@ -1,5 +1,5 @@
 {
-  "scope": "Current canonical guides, images and evidence only",
+  "scope": "資料移設時の22冊のスナップショット。current_filesのハッシュは移設時点の記録であり、現在の23冊の登録値ではありません。現行値はpdf_manifestとdocument-alignment.jsonを参照してください。",
   "pdf_count": 22,
   "pdf_manifest": "evidence/pdf-manifest.json",
   "publication_review": "evidence/publication-review.json",

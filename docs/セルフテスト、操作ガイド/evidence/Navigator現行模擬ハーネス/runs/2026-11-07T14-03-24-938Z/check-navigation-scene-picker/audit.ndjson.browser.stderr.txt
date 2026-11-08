@@ -1,0 +1,4 @@
+[31172:27132:1107/230504.670:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[31172:27132:1107/230504.675:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+
+DevTools listening on ws://127.0.0.1:55979/devtools/browser/836e7961-608e-4d58-a8f4-d85a6afe5524

@@ -1,0 +1,9 @@
+file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-scene-picker.mjs:54
+async function until(check,label){mockStage(label);for(let n=0;n<150;n++){if(await check())return;await sleep(50);}throw Error('Timeout: '+label);}
+                                                                                                                         ^
+
+Error: Timeout: stop request
+    at until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-scene-picker.mjs:54:122)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-scene-picker.mjs:92:3
+
+Node.js v24.22.1

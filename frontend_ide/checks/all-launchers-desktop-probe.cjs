@@ -60,7 +60,7 @@ app.on('browser-window-created',(_,owner)=>{
    };
    for(const display of displays){
     await capture(display,'available');
-    assert.deepEqual(await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].map(b=>b.textContent.trim())`),['＋ Console','＋ Code','＋ Live','＋ Browser']);
+    assert.deepEqual(await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].map(b=>b.textContent.trim())`),['Console','Code','Live','Browser']);
     for(const kind of ['console','code','live']){
      const before=new Set(BrowserWindow.getAllWindows().map(w=>w.id));
      await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].find(b=>b.textContent.includes('${kind[0].toUpperCase()+kind.slice(1)}')).click()`);
@@ -78,7 +78,7 @@ app.on('browser-window-created',(_,owner)=>{
      }
      child.close();
      await evaluate(owner,`document.querySelector('${selector(display)}').dispatchEvent(new MouseEvent('mouseenter'))`);
-     if(kind==='live')await until(()=>evaluate(owner,`[...document.querySelectorAll('${selector(display)} button')].some(b=>b.textContent==='＋ Live')`),'Live終了後の再表示');
+     if(kind==='live')await until(()=>evaluate(owner,`[...document.querySelectorAll('${selector(display)} button')].some(b=>b.textContent==='Live')`),'Live終了後の再表示');
     }
     await evaluate(owner,`document.querySelector('${selector(display)} .all-restore-button').click()`);
     await until(()=>evaluate(owner,`!document.querySelector('.all-restore-zone')&&!document.querySelector('.all-transition')`),'どの画面からでもALL解除');

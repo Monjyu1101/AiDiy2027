@@ -1,0 +1,5 @@
+{"at":"2026-11-07T13:50:20.832Z","event":"listen","port":60911}
+{"at":"2026-11-07T13:50:20.843Z","event":"listen","port":60912}
+{"at":"2026-11-07T13:50:20.863Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-WkXRVL\\3\\temporary\\aidiy-navi-height-9yd2MI\\browser","--window-size=1920,1080","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":17740,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:50:21.278Z","event":"childExit","pid":17740,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:50:21.314Z","event":"exit","code":1}

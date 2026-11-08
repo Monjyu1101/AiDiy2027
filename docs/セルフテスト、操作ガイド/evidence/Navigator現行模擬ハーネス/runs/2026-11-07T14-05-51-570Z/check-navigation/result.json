@@ -1,0 +1,131 @@
+{
+  "name": "check-navigation",
+  "expected": "模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\profile",
+    "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\localappdata",
+    "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\temporary",
+    "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T14:05:52.212Z",
+  "endedAt": "2026-11-07T14:06:05.807Z",
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "status": "PASS",
+  "lastStage": "STAGE: standalone model dialog",
+  "blocked": [],
+  "loadedAssets": [
+    {
+      "at": "2026-11-07T14:05:53.361Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 596,
+      "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+    },
+    {
+      "at": "2026-11-07T14:05:53.404Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:05:53.415Z",
+      "event": "loadedAsset",
+      "path": "/development/app.js",
+      "status": 200,
+      "bytes": 1514914,
+      "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+    },
+    {
+      "at": "2026-11-07T14:05:54.680Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:05:57.495Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:06:04.849Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 596,
+      "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+    },
+    {
+      "at": "2026-11-07T14:06:04.864Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:06:04.869Z",
+      "event": "loadedAsset",
+      "path": "/development/app.js",
+      "status": 200,
+      "bytes": 1514914,
+      "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+    }
+  ],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T14:05:52.516Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--remote-debugging-port=0",
+        "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\0\\temporary\\aidiy-connection-check-eqIOuj\\browser",
+        "--window-size=1280,800",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+      ],
+      "pid": 14032,
+      "browserUsesExplicitIsolatedProfile": true
+    },
+    {
+      "at": "2026-11-07T14:06:05.659Z",
+      "event": "childExit",
+      "pid": 14032,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

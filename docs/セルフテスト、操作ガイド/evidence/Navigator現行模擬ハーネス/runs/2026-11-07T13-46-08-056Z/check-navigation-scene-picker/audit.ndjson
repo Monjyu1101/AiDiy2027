@@ -1,0 +1,5 @@
+{"at":"2026-11-07T13:48:31.127Z","event":"spawn","executable":"C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe","args":["--service=0.27.7","--ping"],"pid":18244}
+{"at":"2026-11-07T13:48:33.356Z","event":"listen","port":51483}
+{"at":"2026-11-07T13:48:33.367Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--no-sandbox","--enable-unsafe-swiftshader","--remote-debugging-port=0","--window-size=720,800","--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scene-picker\\temporary\\navi-picker-AdRhk7","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"],"pid":7184}
+{"at":"2026-11-07T13:48:44.785Z","event":"childExit","pid":7184,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:48:44.995Z","event":"exit","code":1}

@@ -1,0 +1,10 @@
+{"at":"2026-11-07T11:56:34.932Z","kind":"request","requestId":"11216.10","path":"/api/navigation","method":"GET"}
+{"at":"2026-11-07T11:56:35.456Z","kind":"screen","title":"AiDiy Navigator","codeVisible":false,"routing":false,"status":"","overall":"","tasks":[],"error":""}
+{"at":"2026-11-07T11:56:35.563Z","kind":"response","requestId":"11216.10","status":200}
+{"at":"2026-11-07T11:56:35.568Z","kind":"navigation-response","requestId":"11216.10","job":null,"resultRequestId":"08b95a05-1e14-4c6f-a5ee-effeb2c0f95f","progress":0}
+{"at":"2026-11-07T11:56:35.727Z","kind":"screen","title":"AiDiy Navigator","on":"false","disabled":false,"codeVisible":false,"routing":false,"status":"","overall":"総合評価\n0%","tasks":[],"error":""}
+{"at":"2026-11-07T11:56:36.861Z","kind":"window-closed"}
+{"at":"2026-11-07T11:56:40.568Z","kind":"request","requestId":"11216.12","path":"/api/navigation","method":"GET"}
+{"at":"2026-11-07T11:56:40.766Z","kind":"response","requestId":"11216.12","status":200}
+{"at":"2026-11-07T11:56:40.767Z","kind":"navigation-response","requestId":"11216.12","job":null,"resultRequestId":"08b95a05-1e14-4c6f-a5ee-effeb2c0f95f","progress":0}
+{"at":"2026-11-07T11:56:41.419Z","kind":"window-closed"}

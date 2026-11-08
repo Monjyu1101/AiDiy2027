@@ -50,7 +50,7 @@ onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
       <button :disabled="busy" @click="refresh(true)">最前面を再選択</button>
     </div>
     <p v-if="target&&targets.length===1&&snapshot.frontmostTargetId!==target.id" class="draft-target-note">連携先は1件です。最前面は未確認ですが、この連携先を選択しています。</p>
-    <p v-if="!targets.length&&!busy&&!error">{{emptyHint||'起動中のCode / Liveがありません。IDEの「＋ Code」または「＋ Live」から起動してください。'}}</p>
+    <p v-if="!targets.length&&!busy&&!error">{{emptyHint||'起動中のCode / Liveがありません。IDEの起動メニューの「Code」または「Live」から起動してください。'}}</p>
     <p v-if="target&&request.text.length>target.maxLength" class="error">選択範囲が連携先の入力上限を超えています。範囲を短くしてください。</p>
     <p v-if="error" class="error" role="alert">{{ error }}</p>
     <p v-if="busy" role="status">確認中…</p>

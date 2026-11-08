@@ -27,12 +27,12 @@ app.on('browser-window-created',(_event,dev)=>{
   assert.equal((await evaluate(dev,`window.aidiyWindow.openApp('code')`)).ok,false);
   await evaluate(dev,`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='オフライン利用').click()`);
   await until(async()=>await evaluate(dev,`!!document.querySelector('.ai-launchers')`));
-  assert.deepEqual(await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).map(b=>b.textContent)`),['＋ Console','＋ Code','＋ Browser']);
+  assert.deepEqual(await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).map(b=>b.textContent)`),['Console','Code','Browser']);
   assert.equal(await evaluate(dev,`!!document.querySelector('.ai-popup')`),false);
   assert.equal((await evaluate(dev,`window.aidiyWindow.openApp('live')`)).ok,false);
   assert.equal((await evaluate(dev,`window.aidiyWindow.openApp('bad')`)).ok,false);
-  // 実際の「＋ Code」ボタンから起動する。
-  await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).find(button=>button.textContent==='＋ Code').click()`);
+  // 実際の「Code」ボタンから起動する。
+  await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).find(button=>button.textContent==='Code').click()`);
   await until(()=>applicationWindows().length===2);
   let code=applicationWindows().find(window=>window!==dev);
   await until(async()=>await evaluate(code,`!!document.querySelector('[data-component=CodePanel] .connection-bar.offline')`));
@@ -91,7 +91,7 @@ app.on('browser-window-created',(_event,dev)=>{
   const closedLiveUrl=live.webContents.getURL();
   live.close();await until(()=>live.isDestroyed());
   await until(async()=>await evaluate(dev,`document.querySelectorAll('.ai-launchers button').length===4`));
-  await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).find(button=>button.textContent==='＋ Live').click()`);
+  await evaluate(dev,`Array.from(document.querySelectorAll('.ai-launchers button')).find(button=>button.textContent==='Live').click()`);
   await until(()=>applicationWindows().length===2);
   live=applicationWindows().find(window=>window!==dev);
   await until(async()=>await evaluate(live,`!!document.querySelector('[data-component=LivePanel]')`));

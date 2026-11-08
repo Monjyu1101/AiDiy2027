@@ -1,0 +1,9 @@
+file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-height.mjs:23
+async function until(check,label){mockStage(label);for(let i=0;i<300;i++){if(await check())return;await sleep(100);}throw Error('待機タイムアウト: '+label);}
+                                                                                                                          ^
+
+Error: 待機タイムアウト: standalone
+    at until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-height.mjs:23:123)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-height.mjs:34:2
+
+Node.js v24.22.1

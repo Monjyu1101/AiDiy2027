@@ -1,0 +1,65 @@
+{
+  "name": "check-navigation",
+  "expected": "模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\profile",
+    "APPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\localappdata",
+    "TMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\temporary",
+    "TEMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T13:46:08.382Z",
+  "endedAt": "2026-11-07T13:46:38.981Z",
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "status": "FAIL",
+  "lastStage": "STAGE: ブラウザ起動",
+  "blocked": [],
+  "loadedAssets": [],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T13:46:08.715Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--remote-debugging-port=0",
+        "--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation\\temporary\\aidiy-connection-check-OAv9ES\\browser",
+        "--window-size=1280,800",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"
+      ],
+      "pid": 17956
+    },
+    {
+      "at": "2026-11-07T13:46:38.863Z",
+      "event": "childExit",
+      "pid": 17956,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

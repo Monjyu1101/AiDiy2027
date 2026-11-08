@@ -1,0 +1,18 @@
+{
+  "stage": "failure",
+  "timestamp": "2026-11-07T13:47:58.266Z",
+  "error": {
+    "message": "待機タイムアウト: ブラウザ起動",
+    "stack": "Error: 待機タイムアウト: ブラウザ起動\n    at until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:54:168)\n    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:59:12"
+  },
+  "mockCalls": [],
+  "agentInvocations": 0,
+  "projectHashes": {
+    "README.md": "12106907ead7cc65a6df288323d8cc61c17ee7a708a906b2ed41ef3ccd96fce1"
+  },
+  "apiError": "Cannot read properties of undefined (reading 'app')",
+  "networkError": "Cannot read properties of undefined (reading 'evaluate')",
+  "domError": "Cannot read properties of undefined (reading 'evaluate')",
+  "saved": [],
+  "screenshotError": "Cannot read properties of undefined (reading 'port')"
+}

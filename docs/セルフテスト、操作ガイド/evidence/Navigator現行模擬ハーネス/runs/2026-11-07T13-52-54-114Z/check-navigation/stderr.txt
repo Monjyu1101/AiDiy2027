@@ -1,0 +1,90 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":47,"scriptId":"105","stackTrace":{"callFrames":[{"functionName":"eval","scriptId":"105","url":"","lineNumber":0,"columnNumber":47},{"functionName":"","scriptId":"104","url":"","lineNumber":0,"columnNumber":12}]},"exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'disabled')\n    at eval (eval at <anonymous> (:1:13), <anonymous>:1:48)\n    at eval (<anonymous>)\n    at <anonymous>:1:13","objectId":"1265460666977644669.2.2"}}
++ actual - expected
+
++ {
++   columnNumber: 47,
++   exception: {
++     className: 'TypeError',
++     description: "TypeError: Cannot read properties of null (reading 'disabled')\n" +
++       '    at eval (eval at <anonymous> (:1:13), <anonymous>:1:48)\n' +
++       '    at eval (<anonymous>)\n' +
++       '    at <anonymous>:1:13',
++     objectId: '1265460666977644669.2.2',
++     subtype: 'error',
++     type: 'object'
++   },
++   exceptionId: 1,
++   lineNumber: 0,
++   scriptId: '105',
++   stackTrace: {
++     callFrames: [
++       {
++         columnNumber: 47,
++         functionName: 'eval',
++         lineNumber: 0,
++         scriptId: '105',
++         url: ''
++       },
++       {
++         columnNumber: 12,
++         functionName: '',
++         lineNumber: 0,
++         scriptId: '104',
++         url: ''
++       }
++     ]
++   },
++   text: 'Uncaught'
++ }
+- undefined
+
+    at evaluate (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:71:12)
+    at async until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:54:119)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:154:3 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    exceptionId: 1,
+    text: 'Uncaught',
+    lineNumber: 0,
+    columnNumber: 47,
+    scriptId: '105',
+    stackTrace: {
+      callFrames: [
+        {
+          functionName: 'eval',
+          scriptId: '105',
+          url: '',
+          lineNumber: 0,
+          columnNumber: 47
+        },
+        {
+          functionName: '',
+          scriptId: '104',
+          url: '',
+          lineNumber: 0,
+          columnNumber: 12
+        }
+      ]
+    },
+    exception: {
+      type: 'object',
+      subtype: 'error',
+      className: 'TypeError',
+      description: "TypeError: Cannot read properties of null (reading 'disabled')\n" +
+        '    at eval (eval at <anonymous> (:1:13), <anonymous>:1:48)\n' +
+        '    at eval (<anonymous>)\n' +
+        '    at <anonymous>:1:13',
+      objectId: '1265460666977644669.2.2'
+    }
+  },
+  expected: undefined,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

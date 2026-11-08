@@ -7,23 +7,23 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {existsSync,mkdirSync,mkdtempSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
+import {existsSync,mkdirSync,mkdtempSync,readFileSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
-import {startDevelopment} from '../server.mjs';
+import {startMockDevelopment as startDevelopment,mockOutput,mockStage,removeMockDirectory,readMockDebugPort} from '../checks/navigation-mock-support.mjs';
 const chromePath=process.env.CHROME_PATH||['/usr/bin/chromium','/usr/bin/google-chrome','/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(existsSync);
 if(!chromePath)throw Error('CHROME_PATHにChrome / Edgeの実行パスを指定してください。');
-const temporary=mkdtempSync(join(tmpdir(),'aidiy-navi-height-')),project=join(temporary,'project'),output=resolve('temp/navigation-height-check');
+const temporary=mkdtempSync(join(tmpdir(),'aidiy-navi-height-')),project=join(temporary,'project'),output=mockOutput('temp/navigation-height-check');
 mkdirSync(project);mkdirSync(output,{recursive:true});writeFileSync(join(project,'README.md'),'# Navigator initial height fixture\n');
 const navigationOptions={stateRoot:join(temporary,'navigation-state'),runAgent:()=>{throw Error('No AI request is permitted in this layout test');}};
 const app=await startDevelopment(project,{kind:'navi',offline:true,navigationOptions});let ide,socket;
 const chrome=spawn(chromePath,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${join(temporary,'browser')}`,'--window-size=1920,1080',...(process.platform==='linux'?['--no-sandbox']:[]),'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
 let chromeError='';chrome.stderr.on('data',chunk=>{chromeError+=chunk;});
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
-async function until(check,label){for(let i=0;i<300;i++){if(await check())return;await sleep(100);}throw Error('待機タイムアウト: '+label);}
+async function until(check,label){mockStage(label);for(let i=0;i<300;i++){if(await check())return;await sleep(100);}throw Error('待機タイムアウト: '+label);}
 try{
  const activePort=join(temporary,'browser','DevToolsActivePort');await until(()=>{if(chrome.exitCode!==null||chrome.signalCode!==null)throw Error('Browser stopped: '+chromeError);return existsSync(activePort);},'browser');
- const port=readFileSync(activePort,'utf8').split('\n')[0],target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(item=>item.type==='page');
+ let port;await until(()=>(port=readMockDebugPort(activePort)),'debug port readable');const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(item=>item.type==='page');
  socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');let id=0;const pending=new Map(),errors=[];
  socket.addEventListener('message',event=>{const m=JSON.parse(event.data);if(pending.has(m.id)){pending.get(m.id)(m);pending.delete(m.id);}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.text);});
  const send=(method,params={})=>new Promise((done,reject)=>{const timer=setTimeout(()=>reject(Error('CDP timeout: '+method)),30000);pending.set(++id,value=>{clearTimeout(timer);done(value);});socket.send(JSON.stringify({id,method,params}));});
@@ -48,5 +48,5 @@ try{
  const result={pass:true,ai:'not invoked',checks:['standalone 480x800','small screen 384x464','manual viewport resize and return','IDE inline 800','browser popup initial height features','small IDE viewport'],normal,small,inline,inlineSmall};
  writeFileSync(join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 }finally{
- socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}await ide?.close();await app.close();rmSync(temporary,{recursive:true,force:true,maxRetries:5,retryDelay:200});
+ socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}await ide?.close();await app.close();removeMockDirectory(temporary);
 }

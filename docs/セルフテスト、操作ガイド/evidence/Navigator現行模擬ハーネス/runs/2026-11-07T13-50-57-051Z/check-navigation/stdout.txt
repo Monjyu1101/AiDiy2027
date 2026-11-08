@@ -1,0 +1,7 @@
+STAGE: ブラウザ起動
+STAGE: 開始
+STAGE: IDE
+STAGE: Navi 1
+STAGE: Navi 1 実行可能
+STAGE: nav busy
+{"mockApplication":"ide","mockCalls":1,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\0\\temporary\\aidiy-connection-check-nUl5vf\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\0\\temporary\\aidiy-connection-check-nUl5vf\\aidiy_navi_model.json"}

@@ -83,7 +83,7 @@ test('夜間飛行: コックピット視点だけで機体は描かず、花火
  for(const word of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','drawCanopy','drawHud','unsupported'])assert.ok(source.includes(word),word);
  const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
  assert.match(panel,/<NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'"/);
- assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|!\['nightflight','clock','maze','request'\]\.includes\(cruiseKind\)" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行・時計・迷路・依頼文では出さない
+ assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|cruiseKind!=='nightflight'" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行以外のすべての演出で出す
 });
 
 test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さない）。数字は文字のマスクで、見えないカラーピッカーがランダムに動いて虹色に移り変わり、日付と「:」は色を変えない（3行ターミナル表示・下線は出さない）',async()=>{

@@ -1,0 +1,23 @@
+
+DevTools listening on ws://127.0.0.1:52699/devtools/browser/303a2b24-8034-436b-90a8-2ad9aacf40ad
+[22368:21244:1107/225132.547:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[22368:21244:1107/225132.547:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'CODE' !== 'CODE表示'
+
+    at checkCodeFrame (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:59:10)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:87:2 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 'CODE',
+  expected: 'CODE表示',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

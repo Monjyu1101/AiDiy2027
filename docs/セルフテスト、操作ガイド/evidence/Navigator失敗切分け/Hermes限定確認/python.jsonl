@@ -1,0 +1,13 @@
+{"at": "2026-11-07T12:20:48.994004+00:00", "kind": "python-entry", "pid": 19968}
+{"at": "2026-11-07T12:20:49.269000+00:00", "kind": "navigation-readonly-imported"}
+{"at": "2026-11-07T12:20:49.269415+00:00", "kind": "codeagents-start", "provider": "aidiy_hermes", "model": "auto", "timeoutSec": 280, "readonly": true}
+{"at": "2026-11-07T12:20:49.278838+00:00", "kind": "auto-model-selection-start"}
+{"at": "2026-11-07T12:20:55.914329+00:00", "kind": "auto-model-selection-return", "selected": true}
+{"at": "2026-11-07T12:20:55.915301+00:00", "kind": "cli-stream-start", "idleTimeoutSec": 280}
+{"at": "2026-11-07T12:20:55.915645+00:00", "kind": "cli-spawn-start", "role": "hermes-readonly-cli"}
+{"at": "2026-11-07T12:20:55.927242+00:00", "kind": "cli-spawned", "role": "hermes-readonly-cli", "pid": 18080}
+{"at": "2026-11-07T12:22:03.518679+00:00", "kind": "cli-exit", "role": "hermes-readonly-cli", "pid": 18080, "code": 0}
+{"at": "2026-11-07T12:22:03.520091+00:00", "kind": "cli-stream-return", "hasResult": true, "errorMarker": false, "timeoutMarker": false}
+{"at": "2026-11-07T12:22:03.520687+00:00", "kind": "codeagents-return", "status": "OK", "resultLength": 1647, "selectedModel": "openai_oauth/gpt-6.1-sol"}
+{"at": "2026-11-07T12:22:03.521050+00:00", "kind": "navigation-readonly-return", "contentLength": 1647}
+{"at": "2026-11-07T12:22:03.521883+00:00", "kind": "python-success", "elapsedSec": 74.528}

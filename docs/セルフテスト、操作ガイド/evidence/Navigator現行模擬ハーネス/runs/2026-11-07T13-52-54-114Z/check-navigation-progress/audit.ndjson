@@ -1,0 +1,11 @@
+{"at":"2026-11-07T13:52:59.795Z","event":"listen","port":59628}
+{"at":"2026-11-07T13:52:59.804Z","event":"listen","port":59629}
+{"at":"2026-11-07T13:52:59.816Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary\\aidiy-connection-check-slGSt8\\browser","--window-size=1280,800","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":18448,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:53:00.630Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:53:00.639Z","event":"browserNavigation","response":{"id":4,"result":{"frameId":"924E42ED70674E1E493D2456F0A717EB","loaderId":"1B0A146BA54B77EB122DA686A27E60EE","isDownload":false}}}
+{"at":"2026-11-07T13:53:00.662Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:53:00.666Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:53:01.370Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:53:14.069Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:53:14.565Z","event":"childExit","pid":18448,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:53:14.662Z","event":"exit","code":1}

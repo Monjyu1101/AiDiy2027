@@ -1,0 +1,23 @@
+{"at":"2026-11-07T13:55:19.289Z","event":"listen","port":62931}
+{"at":"2026-11-07T13:55:19.303Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--no-sandbox","--remote-debugging-port=0","--window-size=1000,700","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-Ew3DnA\\4\\temporary\\navi-auto-ui-7MU4jU\\browser","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":16984,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:55:20.232Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:20.240Z","event":"browserNavigation","response":{"id":3,"result":{"frameId":"9C7A35A992E4C471CEE84EEB68163BED","loaderId":"5E2AB334C7EAB63CDFBBD7FAB32583A2","isDownload":false}}}
+{"at":"2026-11-07T13:55:20.263Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:20.269Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:21.636Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:21.645Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:21.650Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:21.915Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:21.923Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:21.928Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:26.485Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:26.499Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:26.507Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:28.800Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:28.812Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:28.821Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:32.466Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:32.487Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:32.494Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:47.574Z","event":"childExit","pid":16984,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:55:47.714Z","event":"exit","code":1}

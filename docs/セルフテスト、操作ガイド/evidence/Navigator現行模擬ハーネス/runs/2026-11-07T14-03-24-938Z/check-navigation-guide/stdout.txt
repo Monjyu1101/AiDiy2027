@@ -1,0 +1,7 @@
+STAGE: ブラウザ起動
+STAGE: debug port readable
+STAGE: standalone
+STAGE: welcome image
+STAGE: empty goal
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-AXbGSK\\2\\temporary\\aidiy-connection-check-8L5xgD\\guide-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-AXbGSK\\2\\temporary\\aidiy-connection-check-8L5xgD\\aidiy_navi_model.json"}
+{"mockApplication":"ide","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-AXbGSK\\2\\temporary\\aidiy-connection-check-8L5xgD\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-AXbGSK\\2\\temporary\\aidiy-connection-check-8L5xgD\\aidiy_navi_model.json"}

@@ -32,7 +32,7 @@ export function mountPanelTitle(host, child, owner, title, kind, { restore, titl
   const returnButton = () => restore && !state.hideClose ? h('button', { type: 'button', class: 'panel-return', title: '閉じて本体へ戻す', 'aria-label': title + 'を閉じて本体へ戻す', onClick: restore }, [h('span', { class: 'close-icon', 'aria-hidden': 'true' })]) : null;
   const app = createApp({ render: () => kind === 'panel-routes'
     ? h('span', { class: 'route-pin-tools' }, [h(WindowActions, { windowApi, windowContext: child, pinOnly: true }), returnButton()])
-    : h(StatusBar, { title: displayTitle ? displayTitle() : kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }, titleTools ? { 'window-tools': titleTools } : undefined) });
+    : h(StatusBar, { title: displayTitle ? displayTitle() : kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }, titleTools ? { 'connection-tools': titleTools } : undefined) });
   app.mount(container);
   return () => { observer.disconnect(); app.unmount(); container.remove(); };
 }

@@ -4,7 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 評価は読取専用のまま。明示的な開始だけが専用Codeへの実行を許可する。
-export async function runNavigationAutopilot({initial,runCode,evaluate,isCurrent,signal,report=()=>{}}){
+// evaluated は再評価が終わるたびに、その総合達成率を渡す（100%到達の回、3回改善なしで止まる回も含む）。
+export async function runNavigationAutopilot({initial,runCode,evaluate,isCurrent,signal,report=()=>{},evaluated=()=>{}}){
  const check=()=>{if(signal.aborted||!isCurrent())throw Error('自動航行を停止しました。');};
  let result=initial,round=0,stalled=0;
  const best=new Map((initial?.items||[]).map(item=>[item.id,item.progress]));
@@ -19,6 +20,7 @@ export async function runNavigationAutopilot({initial,runCode,evaluate,isCurrent
   report({phase:'evaluate',round,text:`${round}回目: 読取専用で再評価中…`});
   const updated=await evaluate(signal);check();
   if(updated?.navigationId!==initial.navigationId||updated?.goal!==initial.goal||updated?.items?.length!==initial.items.length||updated.items.some((item,index)=>item.id!==initial.items[index].id||item.name!==initial.items[index].name))throw Error('対象のナビ記録が変わったため停止しました。');
+  evaluated({round,progress:updated.overall?.progress});
   let improved=false;
   for(const item of updated.items){if(item.progress>(best.get(item.id)??0)){best.set(item.id,item.progress);improved=true;}}
   stalled=improved?0:stalled+1;result=updated;

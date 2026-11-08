@@ -1,0 +1,16 @@
+STAGE: ブラウザ起動
+STAGE: debug port readable
+STAGE: standalone
+STAGE: welcome image
+STAGE: empty goal
+STAGE: Tools online
+STAGE: Tools offline
+STAGE: Tools recovered
+STAGE: history
+STAGE: model
+STAGE: Code comparison
+{"sameDPI":true,"naviTitle":{"height":31,"font":"14px"},"codeTitle":{"height":31,"font":"14px"}}
+{"pass":true,"externalAIRequests":0,"viewport":[500,600],"output":"C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-59-19-525Z\\check-navigation-guide\\output"}
+{"mockApplication":"code","mockCalls":0,"projectUnchanged":true}
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-rztu8X\\2\\temporary\\aidiy-connection-check-5kVsNW\\guide-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-rztu8X\\2\\temporary\\aidiy-connection-check-5kVsNW\\aidiy_navi_model.json"}
+{"mockApplication":"ide","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-rztu8X\\2\\temporary\\aidiy-connection-check-5kVsNW\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-rztu8X\\2\\temporary\\aidiy-connection-check-5kVsNW\\aidiy_navi_model.json"}

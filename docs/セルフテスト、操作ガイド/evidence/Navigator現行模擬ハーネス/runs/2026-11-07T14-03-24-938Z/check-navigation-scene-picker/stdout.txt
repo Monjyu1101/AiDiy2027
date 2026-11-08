@@ -1,0 +1,94 @@
+STAGE: Chromium
+STAGE: buttons
+STAGE: embedded draft ready
+STAGE: draft appended
+STAGE: hidden label
+STAGE: reshown draft ready
+STAGE: untrusted blocks draft
+STAGE: trusted draft restored
+STAGE: buttons
+STAGE: release
+STAGE: buttons
+STAGE: right click menu
+STAGE: cancel
+STAGE: normal click after cancel
+STAGE: buttons
+STAGE: release
+STAGE: buttons
+STAGE: right click menu
+STAGE: cancel
+STAGE: normal click after cancel
+STAGE: buttons
+STAGE: cancel click
+STAGE: stop marker
+STAGE: stop request
+STAGE: stop complete
+STAGE: buttons
+STAGE: cancel Enter
+STAGE: stop marker
+STAGE: stop request
+STAGE: stop complete
+STAGE: buttons
+STAGE: cancel Space
+STAGE: stop marker
+STAGE: stop request
+STAGE: stop complete
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected ride
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected fireworks
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected aquarium
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected kaleidoscope
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected water
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected clock
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected maze
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected request
+STAGE: buttons
+STAGE: scene menu
+STAGE: scene run
+STAGE: selected nightflight
+STAGE: buttons
+STAGE: outside menu
+STAGE: outside dismiss
+STAGE: blur menu
+STAGE: blur dismiss
+STAGE: project menu
+STAGE: project dismiss
+STAGE: buttons
+STAGE: Shift F10 menu
+STAGE: keyboard selection
+STAGE: buttons
+STAGE: Space release
+STAGE: buttons
+STAGE: buttons
+STAGE: Code layout
+STAGE: scrolled Code menu
+STAGE: buttons
+STAGE: detached context menu
+STAGE: detached Escape
+STAGE: detached reopen
+STAGE: detached run
+STAGE: buttons
+PASS: real Vue normal/held clicks, compact right-click menus, all 9 selected scenes, outside/Escape/blur/project/unmount dismissal, keyboard, touch without hold picker, cross-document menus, embedded Code draft append without sending, persistent drafts across hide/show, research/evaluation labels and active-button click/Enter/Space cancellation. Screenshots: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T14-03-24-938Z\check-navigation-scene-picker\output

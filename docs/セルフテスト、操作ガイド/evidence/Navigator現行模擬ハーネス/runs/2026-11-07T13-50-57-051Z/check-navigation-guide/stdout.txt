@@ -1,0 +1,10 @@
+STAGE: ブラウザ起動
+STAGE: debug port readable
+STAGE: standalone
+STAGE: welcome image
+STAGE: empty goal
+STAGE: Tools online
+STAGE: Tools offline
+STAGE: Tools recovered
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\2\\temporary\\aidiy-connection-check-iMEBle\\guide-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\2\\temporary\\aidiy-connection-check-iMEBle\\aidiy_navi_model.json"}
+{"mockApplication":"ide","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\2\\temporary\\aidiy-connection-check-iMEBle\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\2\\temporary\\aidiy-connection-check-iMEBle\\aidiy_navi_model.json"}

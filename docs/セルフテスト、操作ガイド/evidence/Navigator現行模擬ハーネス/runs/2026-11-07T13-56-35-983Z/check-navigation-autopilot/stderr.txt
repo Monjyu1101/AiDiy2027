@@ -1,0 +1,76 @@
+[16340:25704:1107/225637.118:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[16340:25704:1107/225637.119:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+
+DevTools listening on ws://127.0.0.1:63742/devtools/browser/e7e204ed-173b-49b4-aade-b8a391317c24
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"id":221,"result":{"result":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'disabled')\n    at <anonymous>:1:132","objectId":"-4194328615724901082.8.1"},"exceptionDetails":{"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":131,"scriptId":"54","stackTrace":{"callFrames":[{"functionName":"","scriptId":"54","url":"","lineNumber":0,"columnNumber":131}]},"exception":{"type":"object","subtype":"error","className":"TypeError","description":"TypeError: Cannot read properties of null (reading 'disabled')\n    at <anonymous>:1:132","objectId":"-4194328615724901082.8.2"}}}}
++ actual - expected
+
++ {
++   columnNumber: 131,
++   exception: {
++     className: 'TypeError',
++     description: "TypeError: Cannot read properties of null (reading 'disabled')\n" +
++       '    at <anonymous>:1:132',
++     objectId: '-4194328615724901082.8.2',
++     subtype: 'error',
++     type: 'object'
++   },
++   exceptionId: 1,
++   lineNumber: 0,
++   scriptId: '54',
++   stackTrace: {
++     callFrames: [
++       {
++         columnNumber: 131,
++         functionName: '',
++         lineNumber: 0,
++         scriptId: '54',
++         url: ''
++       }
++     ]
++   },
++   text: 'Uncaught'
++ }
+- undefined
+
+    at evaluate (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:55:152)
+    at async until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:49:104)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:155:2 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    exceptionId: 1,
+    text: 'Uncaught',
+    lineNumber: 0,
+    columnNumber: 131,
+    scriptId: '54',
+    stackTrace: {
+      callFrames: [
+        {
+          functionName: '',
+          scriptId: '54',
+          url: '',
+          lineNumber: 0,
+          columnNumber: 131
+        }
+      ]
+    },
+    exception: {
+      type: 'object',
+      subtype: 'error',
+      className: 'TypeError',
+      description: "TypeError: Cannot read properties of null (reading 'disabled')\n" +
+        '    at <anonymous>:1:132',
+      objectId: '-4194328615724901082.8.2'
+    }
+  },
+  expected: undefined,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

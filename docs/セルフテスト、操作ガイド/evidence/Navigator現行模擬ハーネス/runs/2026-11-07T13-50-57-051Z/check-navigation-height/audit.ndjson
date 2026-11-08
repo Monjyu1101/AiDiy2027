@@ -1,0 +1,15 @@
+{"at":"2026-11-07T13:51:27.076Z","event":"listen","port":55103}
+{"at":"2026-11-07T13:51:27.083Z","event":"listen","port":55104}
+{"at":"2026-11-07T13:51:27.098Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\3\\temporary\\aidiy-navi-height-AlKhEB\\browser","--window-size=1920,1080","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":19076,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:51:28.983Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:51:28.986Z","event":"browserNavigation","response":{"id":4,"result":{"frameId":"3F0568A50CED219A6A5CE3F1F559A62F","loaderId":"79833065E64114E220E64BE72980F125","isDownload":false}}}
+{"at":"2026-11-07T13:51:29.006Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:51:29.012Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:51:30.366Z","event":"listen","port":62300}
+{"at":"2026-11-07T13:51:30.368Z","event":"listen","port":62301}
+{"at":"2026-11-07T13:51:30.494Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:51:30.497Z","event":"browserNavigation","response":{"id":18,"result":{"frameId":"3F0568A50CED219A6A5CE3F1F559A62F","loaderId":"8649FB5047C76223A1894B531DA57B5D","isDownload":false}}}
+{"at":"2026-11-07T13:51:30.507Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:51:30.512Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:51:31.774Z","event":"childExit","pid":19076,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:51:31.861Z","event":"exit","code":0}

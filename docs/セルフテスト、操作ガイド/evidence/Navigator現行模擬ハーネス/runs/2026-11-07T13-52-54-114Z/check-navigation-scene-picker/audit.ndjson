@@ -1,0 +1,19 @@
+{"at":"2026-11-07T13:54:27.622Z","event":"spawn","executable":"C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe","args":["--service=0.27.7","--ping"],"pid":29916,"browserUsesExplicitIsolatedProfile":false}
+{"at":"2026-11-07T13:54:28.450Z","event":"listen","port":59160}
+{"at":"2026-11-07T13:54:28.459Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--no-sandbox","--enable-unsafe-swiftshader","--remote-debugging-port=0","--window-size=720,800","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\temporary\\navi-picker-Bcv2p3","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":20648,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:54:29.401Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:29.476Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:30.442Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:30.466Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:31.334Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:31.356Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:31.701Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:31.723Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:32.586Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:32.659Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:33.059Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:33.102Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:33.670Z","event":"loadedAsset","path":"/","status":200,"bytes":56287,"sha256":"18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"}
+{"at":"2026-11-07T13:54:33.704Z","event":"loadedAsset","path":"/app.js","status":200,"bytes":2261179,"sha256":"415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"}
+{"at":"2026-11-07T13:54:43.669Z","event":"childExit","pid":20648,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:54:43.910Z","event":"exit","code":1}

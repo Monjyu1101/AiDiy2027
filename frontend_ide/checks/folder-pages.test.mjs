@@ -317,13 +317,18 @@ test('部品境界/配置: プロジェクト右に3D/2D、右端にConsole/Code
   const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
   assert.ok(app.indexOf('class="ide-project-name"') < app.indexOf('class="ide-view-modes"'));
   assert.ok(app.indexOf('class="ide-view-modes"') < app.indexOf('class="ide-toolbar-right"'));
-  assert.match(app, /class="ide-toolbar-right">\s*<nav[^>]+class="ai-launchers"/);
-  // アプリ選択は Console、Navigator の順（別窓・パネル・VR の3か所とも）。Navigator も他と同じく起動中は全ボタンを無効にして「起動中…」を出す。
-  for (const nav of [/<nav v-if="state.active&&desktop" class="ai-launchers"[^\n]*<\/nav>/, /<nav v-else-if="state.active" class="ai-launchers"[^\n]*<\/nav>/, /<div class="all-launchers">[\s\S]*?<\/div>/]) {
-    const block = app.match(nav)?.[0] ?? ''; assert.ok(block, String(nav));
-    assert.ok(block.indexOf('Console') >= 0 && block.indexOf('Console') < block.indexOf('＋ Navigator'), 'Console が Navigator より前');
-    assert.match(block, /class="navigation-launch" :disabled="!!launching(\|\|allBusy)?"[^>]*>\{\{ launching==='navigation'\?'起動中…':'＋ Navigator' \}\}/);
+  assert.match(app, /class="ide-toolbar-right">\s*<LaunchMenu/);
+  // 起動項目は Console、Navigator の順（別窓・パネル・VR の3か所とも）。項目名に「＋」は付けず、Navigator も起動中は全ボタンを無効にして「起動中…」を出す。
+  for (const name of ['desktopLaunchItems', 'panelLaunchItems']) {
+    const block = app.match(new RegExp(String.raw`const ${name}=computed\(\(\)=>\[[\s\S]*?\n\]\);`))?.[0] ?? ''; assert.ok(block, name);
+    assert.ok(block.indexOf("'Console'") >= 0 && block.indexOf("'Console'") < block.indexOf("'Navigator'"), 'Console が Navigator より前');
+    assert.match(block, /class:'navigation-launch',text:launchText\('navigation','Navigator'\),disabled:!!launching\.value/);
+    assert.doesNotMatch(block, /＋/);
   }
+  const vr = app.match(/<div class="all-launchers">[\s\S]*?<\/div>/)?.[0] ?? ''; assert.ok(vr);
+  assert.ok(vr.indexOf("'Console'") >= 0 && vr.indexOf("'Console'") < vr.indexOf("'Navigator'"), 'Console が Navigator より前');
+  assert.match(vr, /class="navigation-launch" :disabled="!!launching\|\|allBusy"[^>]*>\{\{ launching==='navigation'\?'起動中…':'Navigator' \}\}/);
+  assert.doesNotMatch(vr, /＋/);
   assert.match(app, /@opened="navigationOpened"/);
   assert.match(readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue', import.meta.url), 'utf8'), /openingWindow\.value=false;emit\('opened'\)/);
   assert.match(app, /<SpaceView\b[^>]*:key="[^"\n]+" :started-at="state.startedAt" :view-mode="viewMode"/);

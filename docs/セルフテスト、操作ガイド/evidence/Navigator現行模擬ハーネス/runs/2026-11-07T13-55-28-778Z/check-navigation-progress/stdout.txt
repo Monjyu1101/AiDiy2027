@@ -1,0 +1,27 @@
+STAGE: ブラウザ起動
+STAGE: debug port readable
+STAGE: 開始
+STAGE: IDE
+STAGE: Navi 1
+STAGE: Navi 1 実行可能
+STAGE: Navi 1 result
+STAGE: 依存停止表示
+STAGE: 依存復帰
+STAGE: Navi 2
+STAGE: model ready
+STAGE: モデル保存
+STAGE: 評価完了
+STAGE: history list
+STAGE: history selected
+STAGE: 失敗表示
+STAGE: 新目標成功
+STAGE: 実行開始
+STAGE: 実行完了
+STAGE: 更新履歴
+STAGE: 履歴の目標と同期
+STAGE: Navi 1 close
+STAGE: standalone Navigation
+STAGE: standalone model dialog
+{"pass":true,"ai":"mock only","aiCalls":5,"checks":["two popup windows","independent model/result/evaluation","Explorer unchanged","close isolation","editable during running","changed/restored/empty draft","failure and retry","history sync"]}
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-49MQIO\\1\\temporary\\aidiy-connection-check-htrqKi\\standalone-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-49MQIO\\1\\temporary\\aidiy-connection-check-htrqKi\\aidiy_navi_model.json"}
+{"mockApplication":"ide","mockCalls":5,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-49MQIO\\1\\temporary\\aidiy-connection-check-htrqKi\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-49MQIO\\1\\temporary\\aidiy-connection-check-htrqKi\\aidiy_navi_model.json"}

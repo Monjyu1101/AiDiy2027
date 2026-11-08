@@ -345,7 +345,7 @@ onMounted(() => {
   const el = stage.value, hudCanvas = hud.value, hudCtx = hudCanvas.getContext('2d');
   if (!hudCtx) { renderer.dispose(); emit('unsupported'); return; }
   ready.value = true;
-  const reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced = false;
   renderer.setClearColor(0x03060e, 1);
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x0a1226, .0068);

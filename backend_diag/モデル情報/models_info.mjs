@@ -34,6 +34,9 @@ export async function installedCodeClis({loadEntries = catalog, resolve = resolv
 // Hermes / OpenCode は渡す値（プロバイダ/モデル）をそのまま表示名にも使う。先頭の日付・仮設定表示は残す。
 export const routeLabel = (id, label) => `${/^(.*?) - /.exec(label)?.[1] ?? 'yyyy/mm/dd'} - ${id}`;
 const routeModels = models => Object.fromEntries(Object.entries(models).map(([id, label]) => [id, routeLabel(id, label)]));
+// -900k はHermesのOAuth実行時にだけ解決する別名。ネイティブCLIへは渡さない。
+const hermesContextAlias = id => /-900k$/i.test(id);
+export const withoutHermesContextAliases = models => Object.fromEntries(Object.entries(models).filter(([id]) => !hermesContextAlias(id)));
 
 export function openCodeModels(models) {
   return Object.fromEntries(Object.entries(models).map(([id, label]) => {
@@ -43,6 +46,9 @@ export function openCodeModels(models) {
 }
 
 function availableCodeModels(code, installedClis) {
+  // 未更新のプロバイダ別ファイルを再合成するときも、旧候補を復活させない。
+  code = Object.fromEntries(Object.entries(code).map(([key, entry]) => [key,
+    ['codex_cli','copilot_cli'].includes(key) ? {...entry,models:withoutHermesContextAliases(entry.models)} : entry]));
   const filtered = Object.fromEntries(Object.entries(code).filter(([key]) => key === 'aidiy_hermes'
     || installedClis[key === 'claude_sdk' ? 'claude_cli' : key] === true));
   // OpenCodeはCodex用の候補を共有。空の場合の規定値と導入判定はCopilotと同じ方式。
@@ -138,7 +144,7 @@ const claudeLabels = (rows, {versioned = false} = {}) => {
   }
   return models;
 };
-// Codex は同じ接尾辞（sol / luna / pro / sol-900k など）の最新バージョンだけを残す。
+// Codex は同じ接尾辞（sol / luna / pro など）の最新バージョンだけを残す。
 const latestCodexModels = rows => {
   const versionOf = id => /^gpt-(\d+(?:\.\d+)*)(.*)$/.exec(id);
   const compare = (a, b) => {
@@ -149,7 +155,7 @@ const latestCodexModels = rows => {
     }
     return 0;
   };
-  const candidates = rows.filter(row => !row.model_id.includes('realtime'));
+  const candidates = rows.filter(row => !row.model_id.includes('realtime') && !hermesContextAlias(row.model_id));
   const latest = new Map();
   for (const row of candidates) {
     const match = versionOf(row.model_id);

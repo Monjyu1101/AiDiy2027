@@ -1,0 +1,14 @@
+node:fs:483
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: EBUSY: resource busy or locked, open 'C:\Users\admin\AppData\Local\Temp\navi-suite-WkXRVL\3\temporary\aidiy-navi-height-9yd2MI\browser\DevToolsActivePort'
+    at readFileSync (node:fs:483:20)
+    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-height.mjs:26:13 {
+  errno: -4082,
+  code: 'EBUSY',
+  syscall: 'open',
+  path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-WkXRVL\\3\\temporary\\aidiy-navi-height-9yd2MI\\browser\\DevToolsActivePort'
+}
+
+Node.js v24.22.1

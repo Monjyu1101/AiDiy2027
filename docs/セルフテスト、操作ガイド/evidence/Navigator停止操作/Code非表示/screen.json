@@ -1,0 +1,11 @@
+{
+  "title": "AiDiy Navigator",
+  "on": "false",
+  "disabled": false,
+  "codeVisible": false,
+  "routing": false,
+  "status": "",
+  "overall": "総合評価\n0%",
+  "tasks": [],
+  "error": ""
+}

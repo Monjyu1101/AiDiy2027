@@ -1,0 +1,9 @@
+STAGE: browser
+STAGE: debug port readable
+STAGE: standalone
+STAGE: IDE start
+STAGE: IDE
+STAGE: inline Navigator
+{"pass":true,"ai":"not invoked","checks":["standalone 480x800","small screen 384x464","manual viewport resize and return","IDE inline 800","browser popup initial height features","small IDE viewport"],"normal":{"height":798,"bottom":799,"width":478,"viewport":800,"goalBottom":197,"overflow":false},"small":{"height":462,"bottom":463,"width":382,"viewport":464,"goalBottom":197,"overflow":false},"inline":{"height":800,"bottom":878,"width":480,"viewport":1000,"goalBottom":287,"overflow":false},"inlineSmall":{"height":506,"bottom":584,"width":480,"viewport":600,"goalBottom":287,"overflow":false}}
+{"mockApplication":"ide","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-MHUUA1\\3\\temporary\\aidiy-navi-height-pL6uAT\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-MHUUA1\\3\\temporary\\aidiy-navi-height-pL6uAT\\aidiy_navi_model.json"}
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-MHUUA1\\3\\temporary\\aidiy-navi-height-pL6uAT\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-MHUUA1\\3\\temporary\\aidiy-navi-height-pL6uAT\\aidiy_navi_model.json"}

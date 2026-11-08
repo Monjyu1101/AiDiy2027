@@ -1,0 +1,65 @@
+{
+  "name": "check-navigation-height",
+  "expected": "単独480x800、小画面384x464、リサイズ復帰、IDE内800pxと縮小、ポップアップ初期寸法。AI呼出しゼロ",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-height.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+    "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\profile",
+    "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\localappdata",
+    "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\temporary",
+    "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-48-35-910Z\\check-navigation-height\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-48-35-910Z\\check-navigation-height\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-48-35-910Z\\check-navigation-height\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T13:48:36.366Z",
+  "endedAt": "2026-11-07T13:49:10.996Z",
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "status": "FAIL",
+  "lastStage": "STAGE: browser",
+  "blocked": [],
+  "loadedAssets": [],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T13:48:36.839Z",
+      "event": "spawn",
+      "executable": "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+      "args": [
+        "--headless=new",
+        "--remote-debugging-port=0",
+        "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\temporary\\aidiy-navi-height-D8oTia\\browser",
+        "--window-size=1920,1080",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"
+      ],
+      "pid": 32124
+    },
+    {
+      "at": "2026-11-07T13:49:10.861Z",
+      "event": "childExit",
+      "pid": 32124,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

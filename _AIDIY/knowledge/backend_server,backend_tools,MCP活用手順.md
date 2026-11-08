@@ -24,7 +24,7 @@
 
 ## IDEのBrowserパネル・単独Browserを操作するとき
 
-Electron版IDEをtoolsへ接続し、「＋ Browser」を開いてから、`aidiy_chrome_devtools` の各操作に `session="aidiy_ide"` を指定します。`list_tabs` でBrowserのIDを取得し、`navigate`、`click`、`type_text`、`eval_js`、`screenshot` へ `tab_id` を渡します。複数IDEを起動した場合はパネルに表示された `aidiy_ide-2` 以降の名前を使います。
+Electron版IDEをtoolsへ接続し、「Browser」を開いてから、`aidiy_chrome_devtools` の各操作に `session="aidiy_ide"` を指定します。`list_tabs` でBrowserのIDを取得し、`navigate`、`click`、`type_text`、`eval_js`、`screenshot` へ `tab_id` を渡します。複数IDEを起動した場合はパネルに表示された `aidiy_ide-2` 以降の名前を使います。
 
 このセッションはIDE所有のBrowser専用です。`new_tab` は同じIDEの別Browserパネルを開き、`close_session` はBrowserパネルだけを閉じます。IDE本体やCode・Consoleは閉じません。未起動時に別Chromeを自動起動せず、tools切断中は操作を拒否します。接続先はIDEが `backend_tools/temp/_ide_browser_sessions/` へ自動登録するため、通常のChrome用ポート設定は不要です。Web版のブラウザタブはこの登録の対象外です。
 

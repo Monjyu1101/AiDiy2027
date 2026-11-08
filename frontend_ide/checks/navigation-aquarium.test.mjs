@@ -180,7 +180,7 @@ test('アクアリウム実Vue: 非表示中は進めず、終了時に餌・購
   f.dispose();assert.equal(f.frames.size,0);assert.equal(f.timers.size,0);assert.equal(a.food.length,0);assert.equal(a.fish.length,0);assert.equal(a.bubbles.length,0);
   f.dispatch('click');f.dispatch('pointermove');a.step(.05,400,320);assert.equal(a.food.length,0);assert.equal(a.bubbles.length,0);
 });
-test('アクアリウム実Vue: 表示位置から気泡を描画し、縮小動作ではゆっくり上昇する',()=>{
+test('アクアリウム実Vue: 表示位置から気泡を描画し、OS設定にかかわらず同じ速さで上昇する',()=>{
   const regular=fixture(),reduced=fixture();reduced.owner.matchMedia=()=>({matches:true});
   try{
     for(const f of [regular,reduced]){
@@ -189,7 +189,7 @@ test('アクアリウム実Vue: 表示位置から気泡を描画し、縮小動
       assert.ok(f.drawnBubbles[0].alpha>0&&f.drawnBubbles[0].alpha<1);assert.equal(f.ctx.globalAlpha,1);
       f.frame(200);
     }
-    assert.ok(regular.drawnBubbles[0].y<reduced.drawnBubbles[0].y);assert.ok(reduced.drawnBubbles[0].y<240);
+    assert.equal(regular.drawnBubbles[0].y,reduced.drawnBubbles[0].y);assert.ok(reduced.drawnBubbles[0].y<240);
   }finally{regular.dispose();reduced.dispose();}
 });
 test('アクアリウム実Vue: 動きを減らす設定や非表示でも食後の実時間15秒を延ばさない',()=>{

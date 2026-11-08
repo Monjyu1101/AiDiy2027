@@ -13,6 +13,7 @@ import { basename,join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { reserveNavigationSlot } from './ファイル機能/navigation-slot.mjs';
 import { createNavigationInstances } from './ファイル機能/navigation.mjs';
+import { createNavigationSound } from './ファイル機能/navigation-sound.mjs';
 import { createAISearch } from './ファイル機能/ai-search.mjs';
 import { createFileAnalysis } from './ファイル機能/file-analysis.mjs';
 import { startConsole } from './aidiy_console/console.mjs';
@@ -39,13 +40,14 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  const aiSearch=createAISearch(project,{...aiSearchOptions,state:connection.state});
  let navigationSlot, panels;
  const navigation=createNavigationInstances(project,{...navigationOptions,instancePrefix:kind==='navi'?'standalone-':'',state:connection.state});
+ const navigationSound=createNavigationSound(project,{...navigationOptions?.sound,state:connection.state});
  const fileAnalysis=createFileAnalysis(project,{...fileAnalysisOptions,state:connection.state});
  const fileHistory=createFileHistory(project,{state:connection.state});
  const app=await startServer(project,port,{strict,env,connection,explorerOptions,
   requestHandler:async(req,res,url)=>{
    // Browser単独画面にはプロジェクト操作・Console/AI起動APIを公開しない。
    if(kind==='browser'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/connection'){res.writeHead(url.pathname.startsWith('/api/connection/')?405:404).end();return true;}
-   if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/navigation/code','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
+   if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/navigation/code','/api/navigation/sound','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
    if (['ide','navi'].includes(kind) && url.pathname === '/api/navigation/code') {
     const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
     const instance=url.searchParams.get('instance'), snapshot=connection.state();
@@ -60,6 +62,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
     return true;
    }
    if(taskTeamProxy && await taskTeamProxy.handle(req,res,url))return true;
+   if(['ide','navi'].includes(kind)&&await navigationSound.handle(req,res,url))return true;
    if(['ide','navi'].includes(kind)&&await navigation.handle(req,res,url))return true;
    if(kind==='ide'&&await aiSearch.handle(req,res,url))return true;
    if(kind==='ide'&&await fileAnalysis.handle(req,res,url))return true;

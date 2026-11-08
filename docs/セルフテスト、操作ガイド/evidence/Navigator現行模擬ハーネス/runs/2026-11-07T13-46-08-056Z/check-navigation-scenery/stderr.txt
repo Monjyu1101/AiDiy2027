@@ -1,0 +1,33 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Chromium起動: 
+DevTools remote debugging requires a non-default data directory. Specify this using --user-data-dir.
+[16920:20452:1107/224846.562:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[16920:20452:1107/224846.562:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+[16920:15200:1107/224849.621:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_1409372946\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224849.634:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://mail.google.com/mail/installwebapp?usp=chrome_default from install source 1 failed to install with reason 6
+[16920:15200:1107/224849.913:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_702441921\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224849.922:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://docs.google.com/document/installwebapp?usp=chrome_default from install source 1 failed to install with reason 6
+[16920:15200:1107/224850.281:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_1800772491\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224850.288:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://drive.google.com/drive/installwebapp?usp=chrome_default from install source 1 failed to install with reason 6
+[16920:15200:1107/224850.585:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_1996119261\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224850.590:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://docs.google.com/spreadsheets/installwebapp?usp=chrome_default from install source 1 failed to install with reason 6
+[16920:12740:1107/224850.927:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_593425743\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224850.932:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://docs.google.com/presentation/installwebapp?usp=chrome_default from install source 1 failed to install with reason 6
+[16920:12740:1107/224851.254:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_1325811363\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224851.260:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://www.youtube.com/s/notifications/manifest/cr_install.html from install source 1 failed to install with reason 6
+[16920:12740:1107/224851.437:ERROR:chrome\browser\web_applications\web_app_icon_manager.cc:123] Could not create directory: C:\Users\admin\Desktop\AiDiy2027_dev\docs\セルフテスト、操作ガイド\evidence\Navigator現行模擬ハーネス\runs\2026-11-07T13-46-08-056Z\check-navigation-scenery\temporary\navi-scenery-0umXnI\Default\Web Applications\Temp\scoped_dir16920_1383929787\Trusted Icons\Icons Monochrome
+[16920:7592:1107/224851.443:ERROR:chrome\browser\web_applications\externally_managed_app_manager.cc:680] https://chat.google.com/download?usp=chrome_default from install source 1 failed to install with reason 6
+
+    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-scenery.mjs:40:9 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

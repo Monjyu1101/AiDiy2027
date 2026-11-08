@@ -1,0 +1,4 @@
+{"at":"2026-11-07T13:48:15.200Z","event":"listen","port":64546}
+{"at":"2026-11-07T13:48:15.214Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--no-sandbox","--remote-debugging-port=0","--window-size=1000,700","--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-autopilot\\temporary\\navi-auto-ui-tDwEBw\\browser","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"],"pid":13100}
+{"at":"2026-11-07T13:48:30.394Z","event":"childExit","pid":13100,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:48:30.475Z","event":"exit","code":1}

@@ -103,6 +103,18 @@ const routing=computed(()=>stopping.value||!!pendingCancel.value||submitting.val
 // 選択は今回の実行だけに適用する。通常操作・自動航行は従来どおりランダム。
 const sceneAction=ref(''),sceneRequest=ref(null);let nextScene='';
 watch(routing,value=>{if(value){cruiseKind.value=nextScene||pickNavigationScene();nextScene='';cruiseFailed.value=false;}},{flush:'sync'});
+// 終了通知音。種別名だけを渡し、再生はIDEサーバー経由で backend_tools の通知音部品が行う。未起動でも画面は止めない。
+// 通知音のオン・オフ（初期値オン）。この画面だけの設定で、保存はしない。
+const soundOn=ref(true);
+function notifySound(kind){if(!soundOn.value)return;try{void fetch('/api/navigation/sound',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind}),keepalive:true}).catch(()=>{});}catch{/* 再生できなくても操作は続ける。 */}}
+// 評価の終了音は、総合評価が100%なら「完了」（ポーン1回）、100%未満なら「注意」。失敗も「注意」、利用者の中止は鳴らさない。
+const evaluationSound=progress=>progress===100?'完了':'注意';
+// 通常の調査・再評価は、実行中を見ていた依頼の終了だけ鳴らす。自動航行の再評価は航行側で鳴らす。
+const autopilotRequests=new Set();
+watch(()=>[job.value?.id,job.value?.status,job.value?.clientRequestId],([id,status,clientRequestId],previous=[])=>{
+ if(!id||id!==previous[0]||previous[1]!=='running'||autopilotRequests.has(clientRequestId))return;
+ if(status==='complete')notifySound(evaluationSound(result.value?.overall?.progress));else if(status==='failed')notifySound('注意');
+});
 function chooseScene(action,request={}){
  if(!visible.value||busy.value||autopilot.value||!availability.value.available||(action==='evaluate'&&!canEvaluate.value))return;
  sceneRequest.value=request;sceneAction.value=action;
@@ -204,7 +216,7 @@ const codeOpen=ref(false),codeBase=ref(''),codePanel=ref(),codeOpening=ref(false
 watch(()=>[props.project?.path,props.startedAt,recommendedPrompt.value,codeOpen.value,visible.value,detached.value],()=>{draftRequest.value=null;handoffError.value='';},{flush:'sync'});
 // 配列を返す1つのゲッターは、依存が書き換わるたびに発火する。周期更新が availability へ同じ値の新オブジェクトを代入しても選択を閉じないよう、配列で渡して各値が変わったときだけ発火させる。
 watch([busy,autopilot,()=>availability.value.available,visible,()=>props.project?.path,()=>props.startedAt,detached],()=>{sceneAction.value='';},{flush:'sync'});
-const codeToggleLabel=computed(()=>codeOpen.value?'CODE非表示':'CODE表示');
+const codeToggleLabel=computed(()=>codeOpen.value?'CODE非表示':'CODE');
 const autopilotMessage=createNavigationMessage(text=>autopilotStatus.value=text);
 let codeSession,codePromise,autopilotController,visibilityTimer,codeGeneration=0;
 let codeQueue=Promise.resolve(),codeReleaseUncertain=false;
@@ -287,7 +299,7 @@ function shown(){
 }
 async function evaluateForAutopilot(signal){
  if(!matchesResult.value||!availability.value.available||busy.value)throw Error('現在のナビを再評価できないため停止しました。');
- const generation=++version,run=beginRun('evaluate');clearTimeout(timer);submitting.value=true;error.value='';
+ const generation=++version,run=beginRun('evaluate');autopilotRequests.add(run.clientRequestId);if(autopilotRequests.size>64)autopilotRequests.delete(autopilotRequests.values().next().value);clearTimeout(timer);submitting.value=true;error.value='';
  try{
   const started=await api('POST',{goal:result.value.goal,action:'evaluate',clientRequestId:run.clientRequestId},signal);
   if(signal.aborted||generation!==version)throw Error('自動航行を停止しました。');
@@ -336,9 +348,11 @@ async function toggleAutopilot(){
   }
   const message=await runNavigationAutopilot({initial,signal:controller.signal,isCurrent:current,
    runCode:(text,signal)=>codePanel.value.runNavigationPrompt({text,projectPath,signal}),evaluate:evaluateForAutopilot,
-   report:({phase,text})=>{autopilotPhase.value=phase;autopilotMessage.show(text);}});
+   report:({phase,text})=>{autopilotPhase.value=phase;autopilotMessage.show(text);},
+   evaluated:({progress})=>notifySound(evaluationSound(progress))});
+  // 自動航行の通知音: 再評価ごとに 100%=完了・100%未満=注意。100%で終わるときは、その評価の完了音で済ませて重ねない。止まったときは 注意。
   if(autopilot.value)autopilotMessage.show(message);
- }catch(e){if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
+ }catch(e){if(!disposed)notifySound('注意');if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
  finally{doc?.removeEventListener?.('visibilitychange',hidden);owner?.removeEventListener?.('pagehide',leaving);autopilot.value=false;autopilotController=null;autopilotPhase.value='';}
 }
 watch(()=>props.project?.path,()=>{stopAutopilot('プロジェクトが変わったため停止しました。');void releaseCode();codeOpen.value=false;});
@@ -352,20 +366,20 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 <template>
  <section ref="panel" v-show="visible" class="navigation-panel" :class="{detached,standalone,'has-code':codeOpen}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navigator" @click.capture="autopilotMessage.dismiss" @keydown.capture="autopilotMessage.dismiss" @wheel.capture.passive="autopilotMessage.dismiss" @touchmove.capture.passive="autopilotMessage.dismiss">
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="draftActions.loadTargets" :insert-draft="draftActions.insertDraft" :launch-target="standalone?undefined:draftActions.launchTarget" :empty-hint="standalone?'同じプロジェクトで aidiy_code または aidiy_live を起動してください。':undefined" @close="draftRequest=null" />
-  <StatusBar v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #window-tools><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template><template v-if="!native" #connection-tools><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
+  <StatusBar v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #connection-tools><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
   <header class="navigation-local-header" v-else-if="!detached||!native"><span class="navigation-emblem" aria-hidden="true">◇</span><strong>{{title}}</strong><span class="navigation-header-space"></span><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button><button v-if="!detached" aria-label="Navigatorを別窓にピン留め" title="別窓にピン留め" @click="pin">📌</button><button aria-label="Navigatorを閉じる" @click="close">×</button></header>
   <div class="component-toolbar navigation-project"><span :title="project?.path">プロジェクト: {{project?.name || project?.path}}</span><nav><small>評価は読取専用</small><button :disabled="busy||autopilot" @click="selectHistory()">＋ 新規</button><button :disabled="busy||autopilot" :aria-expanded="history" @click="toggleHistory">{{history?'戻る':'一覧'}}</button></nav></div>
    <form class="navigation-goal-form" @submit.prevent="navigate()">
     <label :for="instance+'-goal'">目標<small v-if="result?.inferred&&matchesResult">（AIの推測・編集できます）</small></label>
     <textarea :id="instance+'-goal'" v-model="goal" :readonly="autopilot" maxlength="4000" rows="4" @input="editGoal" placeholder="目標を入力してください"></textarea>
-    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button v-if="routing&&canStop&&!evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-start navigation-run" title="クリックでナビ。右クリック、またはShift+F10で待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate',$event)" :class="{'is-routing':routing&&!evaluating,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing&&!evaluating?'調査中…':'ナビ'}}</span></NavigationRunButton><button v-if="routing&&canStop&&evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate',$event)" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
+    <div class="navigation-form-foot"><div class="navigation-input-meta"><small class="navigation-input-hint">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><p v-if="result&&!matchesResult" class="navigation-draft-note" role="status">入力が保存済みの目標と異なります。再評価では最終実行時の目標へ戻します。</p><div class="navigation-model-line composer-meta"><button type="button" :disabled="busy||autopilot" :aria-expanded="modelOpen" @click="chooseModel"><span class="model-caption">モデル</span> ▾</button><span class="model-label" :title="selection.provider+' / '+selection.model">{{selection.provider}} / {{selection.model}}</span></div></div><div class="navigation-run-actions"><button type="button" class="navigation-sound-toggle" role="switch" :aria-checked="soundOn" :aria-label="soundOn?'通知音をオフにする':'通知音をオンにする'" :title="soundOn?'通知音: オン（クリックでオフ）':'通知音: オフ（クリックでオン）'" @click="soundOn=!soundOn"><span class="navigation-sound-label">通知音</span><span class="navigation-sound-switch"><span class="navigation-sound-track" aria-hidden="true"><span class="navigation-sound-knob"></span></span><span class="navigation-sound-state">{{soundOn?'オン':'オフ'}}</span></span></button><button v-if="routing&&canStop&&!evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-start navigation-run" title="クリックでナビ。右クリック、またはShift+F10で待機画面を選択" :aria-expanded="sceneAction==='navigate'" @run="navigate()" @choose="chooseScene('navigate',$event)" :class="{'is-routing':routing&&!evaluating,'is-next-action':nextNavigationAction==='navigate'}" :disabled="busy||autopilot||!availability.available"><img :src="sendIcon" alt="" /><span class="navigation-button-label">{{routing&&!evaluating?'調査中…':'ナビ'}}</span></NavigationRunButton><button v-if="routing&&canStop&&evaluating" type="button" class="navigation-stop navigation-run" :disabled="stopping" :aria-label="operationLabel+'の処理を中止'" :title="stopping?'中止を確認しています':'クリックで処理を中止し、自動航行もオフにします'" data-aidiy-no-window-move @click="cancelNavigation"><span class="navigation-stop-label">{{stopping?'中止中':operationLabel}}</span><img :src="stopIcon" alt="" /></button><NavigationRunButton v-else class="navigation-evaluate navigation-run" :aria-expanded="sceneAction==='evaluate'" @choose="chooseScene('evaluate',$event)" :class="{'is-next-action':nextNavigationAction==='evaluate'}" :disabled="!canEvaluate||autopilot" title="目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択" @run="navigate('evaluate')">再評価</NavigationRunButton></div></div>
    </form>
   <div v-if="history" class="navigation-history" role="list"><p v-if="!historyItems.length">このフォルダにナビ履歴はありません</p><button v-for="item in historyItems" :key="item.id" :disabled="busy||autopilot" @click="selectHistory(item.id)"><time>{{new Date(item.updatedAt).toLocaleString()}}</time><span>{{item.goal}}</span></button></div>
   <div v-show="!history" class="navigation-display" :class="{running:submitting||job?.status==='running'}"><div class="navigation-content">
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||!['nightflight','clock','maze','request'].includes(cruiseKind)" kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviCruise v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||cruiseKind!=='nightflight'" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>
@@ -442,7 +456,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-window{border:1px solid var(--aidiy-titlebar-background);box-sizing:border-box}
 .navigation-window .navigation-panel{border:0}
 /* Viewer別窓と同様、接続表示と操作列の幅を先に確保し、長いタイトルは中央で省略する。 */
-.navigation-panel>.panel-brand,.navigation-window .panel-window-title .panel-brand{grid-template-columns:auto minmax(0,1fr) auto}
+/* タイトルは左右の内容幅によらず中央。狭いときだけ中央の文字を省略する。 */.navigation-panel>.panel-brand,.navigation-window .panel-window-title .panel-brand{grid-template-columns:minmax(auto,1fr) minmax(0,auto) minmax(auto,1fr)}
 .navigation-panel .panel-brand strong,.navigation-window .panel-brand strong{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis}
 </style>
 
@@ -481,26 +495,34 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-code{grid-column:2!important;grid-row:2/8;width:auto;box-sizing:border-box;border-left:1px solid var(--aidiy-titlebar-background,#395069);display:flex;flex-direction:column;min-width:0;background:#000;overflow:hidden}
 .navigation-code .code-project-notice{flex:none;margin:0;padding:5px 8px;line-height:1.5;color:#b3c5d8;font-size:10px}.navigation-code>.code-component{flex:1;min-height:0;min-width:0}
 .navigation-autopilot-status{flex:none;margin:0;padding:6px 12px;color:#b9e8df;font-size:11px;overflow-wrap:anywhere}
-.navigation-autopilot-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:0}
+.navigation-autopilot-toggle{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;border-radius:0;background:#fff;color:#000}.navigation-autopilot-toggle:not(:disabled):hover{background:#e8edf2}
 .navigation-autopilot-toggle .motion-switch{flex:none;border-radius:0}.navigation-autopilot-toggle .motion-switch:after{border-radius:50%}
 .navigation-autopilot-state{min-width:2em;text-align:center}
-.navigation-autopilot-toggle[aria-checked="true"]{border-color:#7de2cf;background:#144d42;color:#fff}
+.navigation-autopilot-toggle[aria-checked="true"]{border-color:#0f766e;background:#fff;color:#000}.navigation-autopilot-toggle[aria-checked="true"]:not(:disabled):hover{background:#e8edf2}
 .navigation-autopilot-toggle[aria-checked="true"] .motion-switch{border-color:#6bcbcc;background:#183638}
 .navigation-autopilot-toggle[aria-checked="true"] .motion-switch:after{background:#85e9e9;transform:translateX(14px)}
-@media(prefers-reduced-motion:reduce){.navigation-autopilot-toggle .motion-switch:after{transition:none}}
 .navigation-prompt-actions .navigation-autopilot-toggle{margin-left:0}.navigation-project nav{flex-wrap:wrap;justify-content:flex-end}
 @media(max-width:650px){.navigation-panel.has-code{grid-template-columns:minmax(220px,1fr) minmax(240px,1fr);overflow-x:auto}}
 </style>
 
 <style>
-.navigation-code-toggle,.window-actions .navigation-code-toggle{flex:none;width:auto;min-width:62px;font-size:10px;padding:2px 6px;border:1px solid #8b9baa;border-radius:0;white-space:nowrap}.navigation-code-toggle[aria-checked="true"]{border-color:#7de2cf}.navigation-code-toggle:disabled{opacity:.6;cursor:not-allowed}
+.navigation-code-toggle,.window-actions .navigation-code-toggle{flex:none;width:auto;min-width:62px;font-size:10px;padding:2px 6px;border:1px solid #8b9baa;border-radius:0;white-space:nowrap}.connection-label .navigation-code-toggle{flex:none;width:auto;min-width:44px;margin-left:8px;font-size:10px;line-height:1.2;padding:2px 6px;border:1px solid #8b9baa;border-radius:0;white-space:nowrap}.connection-label .navigation-code-toggle[aria-checked="true"],.navigation-code-toggle[aria-checked="true"]{border-color:#7de2cf}.navigation-code-toggle:disabled{opacity:.6;cursor:not-allowed}
+.navigation-sound-toggle{align-self:end;flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:3px;box-sizing:border-box;width:auto;padding:0;border:0;border-radius:0;background:transparent;color:#e5edf8;font-size:10px;line-height:12px;white-space:nowrap;cursor:pointer}
+.navigation-sound-label{color:#a9b8cc}
+.navigation-sound-switch{display:flex;align-items:center;gap:4px;height:10px}
+.navigation-sound-track{position:relative;flex:none;width:20px;height:10px;box-sizing:border-box;border:1px solid #566077;border-radius:0;background:#1b2230}
+.navigation-sound-knob{position:absolute;top:1px;left:1px;width:6px;height:6px;border-radius:50%;background:#8897b1}
+.navigation-sound-toggle[aria-checked="true"] .navigation-sound-track{border-color:#6bcbcc;background:#183638}
+.navigation-sound-toggle[aria-checked="true"] .navigation-sound-knob{background:#85e9e9;transform:translateX(10px)}
+.navigation-sound-state{min-width:20px;line-height:10px;text-align:left}
+.navigation-sound-toggle[aria-checked="false"] .navigation-sound-state{color:#a9b8cc}
+.navigation-sound-toggle:focus-visible{outline:1px solid #7de2cf;outline-offset:2px}
 </style>
 
 <style>
-/* IDEの自動探索と同じ光色で、長時間の自動航行は5秒でゆっくり一周する。Codeと総合評価の外枠だけを描き、本文操作は覆わない。 */
+/* IDEの自動探索と同じ光色で、長時間の自動航行は5秒でゆっくり一周する（OSの視覚効果設定にかかわらず常に動かす）。Codeと総合評価の外枠だけを描き、本文操作は覆わない。 */
 .navigation-code{border:2px solid var(--aidiy-titlebar-background,#395069)}
 .navigation-code.driving,.navigation-panel>.navigation-overall.driving{border-color:transparent;background:linear-gradient(#000,#000) padding-box,conic-gradient(from var(--motion-spin),#2c5a5c 0deg,#2c5a5c 200deg,#85e9e9 300deg,#e8ffff 340deg,#2c5a5c 360deg) border-box;box-shadow:0 0 10px #85e9e940;animation:motion-spin 5s linear infinite}
-@media(prefers-reduced-motion:reduce){.navigation-code.driving,.navigation-panel>.navigation-overall.driving{animation:none;border-color:#85e9e9;background:#000;box-shadow:none}}
 </style>
 
 <style>

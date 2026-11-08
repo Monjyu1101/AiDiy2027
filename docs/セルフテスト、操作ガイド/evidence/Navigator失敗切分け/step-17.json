@@ -1,0 +1,67 @@
+{
+  "step": "step-17",
+  "title": "Navigatorの過去の模擬7失敗の扱い確定",
+  "at": "2026-11-08T05:42:29+09:00",
+  "caseId": "HIST-MOCK-REPORTED-7",
+  "scope": "対象1のみ。過去に模擬8本中7本失敗と報告された件の管理上の扱い。",
+  "status": "解消済み",
+  "statusMeaning": "利用者の明示指示に基づく管理上の解消済み・過去事象の調査終了。技術的解消確認を意味しない。",
+  "handlingConfirmed": true,
+  "administrativeClosure": "CLOSED_BY_EXPLICIT_USER_INSTRUCTION",
+  "userDecision": {
+    "source": "今回の利用者依頼",
+    "quote": "Navigatorの過去の模擬7失敗の扱い確認。解消済みに修正",
+    "explicitTargetDecision": true,
+    "interpretation": "対象1の管理上の解消済みへの変更指示として適用。従来案Bを選択済みと推測した記録ではない。新しい原記録の提供や技術的解消の証拠としては扱わない。"
+  },
+  "technicalAssessment": {
+    "resolution": "UNDETERMINED_MISSING_ORIGINAL",
+    "historicalCause": "未特定",
+    "historicalFixToRerunMapping": "なし",
+    "historicalAllPass": false,
+    "technicalResolutionVerified": false,
+    "resolvedIndividualFailures": 0,
+    "newOriginalProvidedInCurrentRequest": false,
+    "missingInformation": [
+      "元8本の識別一覧と成功1本・失敗7本の識別",
+      "当時のソース・配布物・fixtureの版",
+      "実行コマンド・引数・OS・ブラウザ・環境条件",
+      "各実行の期待結果・失敗箇所・標準出力・標準エラー・終了値",
+      "各失敗と対応修正・同条件再確認を結ぶ記録"
+    ],
+    "externalOriginalAvailability": "未確認。恒久的な回収不能とは断定しない。"
+  },
+  "basis": [
+    "今回の利用者の対象を指定した明示指示",
+    "step-13.jsonの対象1の欠落条件・技術的評価・再開条件",
+    "step-13-search.jsonの既存探索結果と限界",
+    "step-13-判断資料.txtの対象別の判断条件"
+  ],
+  "notUsedAsHistoricalResolutionEvidence": [
+    "現行模擬7本の成功と関連158件成功",
+    "証跡605ファイルと対象7スクリプトのハッシュ一致との過去報告",
+    "本数の一致、現行ソース差分、別条件のHermes成功"
+  ],
+  "preservationAndReopen": {
+    "reportedFailureAndMissingConditionsRetained": true,
+    "ordinaryInvestigationClosed": true,
+    "onOriginalArrival": "当時の実行を識別できる原記録が届けば該当範囲を再開する。出所・実行識別・版・条件を確認し、秘密・認証値・私的情報は収集・転載しない。",
+    "technicalResolutionCondition": "各失敗と対応修正・同条件再確認の期待結果・出力・終了値が結び付いた範囲だけ技術的解消を評価する。現存7本を本数の一致だけで割り当てない。"
+  },
+  "otherTarget": {
+    "caseId": "HIST-HERMES-AUTO-TIMEOUT",
+    "changed": false,
+    "administrativeClosure": "PENDING_USER_DECISION"
+  },
+  "workBoundary": {
+    "broadSearchRepeated": false,
+    "mockTestsRepeated": false,
+    "hashRecheckRepeated": false,
+    "newRealAIRequests": 0,
+    "productOrTestCodeChanged": false,
+    "systemRestarted": false,
+    "historicalSearchEvidenceChanged": false,
+    "bookMarkdownOrPdfChanged": false
+  },
+  "bookBoundary": "操作編の過去失敗の原因判定不能という技術的説明は維持する。今回変更したのは証跡台帳の管理上の扱いのみで、本文・PDFの技術判定は変更しない。"
+}

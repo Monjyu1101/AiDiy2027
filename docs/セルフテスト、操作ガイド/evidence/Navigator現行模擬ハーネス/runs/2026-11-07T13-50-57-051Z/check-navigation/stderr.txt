@@ -1,0 +1,16 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+Error: ENOENT: no such file or directory, open 'C:\Users\admin\Desktop\AiDiy2027_dev\temp\navigation-ui-check\route.png'
+    at Object.openSync (node:fs:621:18)
+    at writeFileSync (node:fs:2496:35)
+    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation.mjs:103:70
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\temp\\navigation-ui-check\\route.png'
+}
+
+Node.js v24.22.1

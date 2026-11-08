@@ -1,0 +1,11 @@
+{
+  "title": "AiDiy Navigation Cruise",
+  "on": "true",
+  "disabled": false,
+  "codeVisible": true,
+  "routing": false,
+  "status": "Codeのオンライン接続・セッション確定を待っています…",
+  "overall": "総合評価\n0%\n\n自動航行中",
+  "tasks": [],
+  "error": ""
+}

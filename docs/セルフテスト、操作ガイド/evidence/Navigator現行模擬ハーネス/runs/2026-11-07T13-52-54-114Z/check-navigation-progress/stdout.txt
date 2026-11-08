@@ -1,0 +1,14 @@
+STAGE: ブラウザ起動
+STAGE: debug port readable
+STAGE: 開始
+STAGE: IDE
+STAGE: Navi 1
+STAGE: Navi 1 実行可能
+STAGE: Navi 1 result
+STAGE: 依存停止表示
+STAGE: 依存復帰
+STAGE: Navi 2
+STAGE: model ready
+STAGE: モデル保存
+STAGE: 評価完了
+{"mockApplication":"ide","mockCalls":2,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary\\aidiy-connection-check-slGSt8\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary\\aidiy-connection-check-slGSt8\\aidiy_navi_model.json"}

@@ -1,0 +1,11 @@
+{
+  "title": "AiDiy Navigator",
+  "on": "false",
+  "disabled": true,
+  "codeVisible": false,
+  "routing": true,
+  "status": "",
+  "overall": "総合評価0%AIが見積もった工数比率による総合評価。実測値ではありません。試験開始前です。",
+  "tasks": [],
+  "error": ""
+}

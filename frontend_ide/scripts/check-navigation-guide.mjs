@@ -10,11 +10,11 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createCoreConnection } from '../viewer/core-connection.mjs';
-import { startDevelopment } from '../server.mjs';
+import {startMockDevelopment as startDevelopment,mockOutput,mockStage,removeMockDirectory} from '../checks/navigation-mock-support.mjs';
 
 const chromePath = process.env.CHROME_PATH || [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA]
   .filter(Boolean).flatMap(base => ['Google/Chrome/Application/chrome.exe', 'Microsoft/Edge/Application/msedge.exe'].map(tail => join(base, tail))).find(existsSync)
@@ -46,7 +46,7 @@ const app = await startDevelopment(project, { connection, navigationOptions:{ava
 const chrome = spawn(chromePath, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${join(temporary, 'browser')}`,
   '--window-size=1280,800', ...(process.platform === 'linux' ? ['--no-sandbox'] : []), 'about:blank'], { stdio: 'ignore', windowsHide: true });
 const sleep = ms => new Promise(done => setTimeout(done, ms));
-async function until(check, label) { const end = Date.now() + 30000; while (Date.now() < end) { if (await check()) return; await sleep(100); } throw Error(`待機タイムアウト: ${label}`); }
+async function until(check, label) { mockStage(label); const end = Date.now() + 30000; while (Date.now() < end) { if (await check()) return; await sleep(100); } throw Error(`待機タイムアウト: ${label}`); }
 let socket,standalone,code;
 try {
   const activePort = join(temporary, 'browser', 'DevToolsActivePort');
@@ -74,9 +74,10 @@ try {
   await send('Emulation.setDeviceMetricsOverride',{width:500,height:600,deviceScaleFactor:1,mobile:false});
   await send('Page.navigate',{url:standalone.url});
   await until(()=>evaluate(`!!document.querySelector('.navigation-panel.standalone textarea')`),'standalone');
-  const out=resolve('temp/navigation-guide-current');mkdirSync(out,{recursive:true});
+  const out=mockOutput('temp/navigation-guide-current');mkdirSync(out,{recursive:true});
   const capture=async name=>{await sleep(250);const result=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(out,name+'.png'),Buffer.from(result.result.data,'base64'));};
   await until(()=>evaluate(`!!document.querySelector('.terminal-welcome .welcome-mark img')?.naturalWidth`),'welcome image');
+  await until(()=>evaluate(`!!document.querySelector('.navigation-start:not(:disabled)')`),'standalone ready');
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('.welcome-mark'),'::before').borderTopStyle`),'solid');
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('.welcome-mark'),'::after').borderTopStyle`),'solid');
   assert.ok(await evaluate(`document.querySelector('textarea').value.startsWith('最近更新したファイル')`));
@@ -92,7 +93,7 @@ try {
   healthy=true;await connection.check();
   await until(()=>evaluate(`document.querySelector('.connection-bar').classList.contains('online')`),'Tools recovered');
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('.navigation-panel')).backgroundColor`),'rgb(0, 0, 0)');
-  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.navigation-panel')).borderTopWidth`),'1px');
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.navigation-panel')).borderTopWidth`),'0px');
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('.model-caption')).backgroundColor`),'rgb(255, 255, 255)');
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('.model-caption')).color`),'rgb(0, 0, 0)');
   const naviTitle=await evaluate(`(()=>{const h=document.querySelector('.panel-brand');return {height:h.getBoundingClientRect().height,font:getComputedStyle(h.querySelector('strong')).fontSize}})()`);
@@ -113,5 +114,5 @@ try {
   socket?.close(); const exited = once(chrome, 'exit'); chrome.kill(); await exited;
   await code?.close();await standalone?.close();await app.close(); connection.close(); for (const timer of replies) clearTimeout(timer);
   core.closeAllConnections(); await new Promise(done => core.close(done));
-  rmSync(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  removeMockDirectory(temporary);
 }

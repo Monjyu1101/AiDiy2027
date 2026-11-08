@@ -1,0 +1,16 @@
+{
+  "at": "2026-11-07T12:24:54.066Z",
+  "scope": "現行ハーネスの見出し完全一致1箇所だけ。過去8本の復元ではない。",
+  "source": "frontend_ide/scripts/check-navigation.mjs",
+  "legacyExpected": "タスク",
+  "actual": "タスク (2026-11-07 21:24:52)",
+  "legacyAssertionPass": false,
+  "currentAssertionPass": true,
+  "currentHeadingIncludesDate": true,
+  "classification": "旧期待値と現行仕様の不整合。見出しの日時形式を検証するよう限定修正。",
+  "mockAgentCalls": 1,
+  "externalAIRequests": 0,
+  "isolatedState": true,
+  "loadedBundleHash": "7874b547e39044269e60cb5755a6fc3f069182e43746335a8e64291b70b782f7",
+  "assertionVerifiedFromSource": true
+}

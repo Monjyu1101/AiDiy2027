@@ -1,0 +1,242 @@
+{
+  "at": "2026-11-07T12:26:34.124498+00:00",
+  "scope": "step-9だけ。step-8は再実行なし。",
+  "verdict": "調査結果の判定を完了。過去2件は証拠不足で原因判定不能のまま保持。全失敗の解消を意味しない。",
+  "search": {
+    "roots": [
+      "docs/セルフテスト、操作ガイド/evidence",
+      ".aidiy_cache",
+      "tmp",
+      "temp",
+      "_AIDIY/histories",
+      "frontend_ide/scripts",
+      "frontend_ide/checks"
+    ],
+    "fileInventoryCount": 696,
+    "missingExpectedDirectory": "docs/セルフテスト、操作ガイド/evidence/_work_records/selftest-20261106",
+    "expectedDirectoryExists": false,
+    "localGitDirectory": ".git_local",
+    "localGitCommits": [
+      "e4d8a57d17b0f13c2415f9dfd4eaa48111491468",
+      "fe9151f45103c427db4f8d35f17858f3dc46f69b"
+    ],
+    "gitTreesContainExpectedDirectory": false,
+    "gitFsckUnreachableObjects": 0,
+    "otherRecordsChecked": [
+      "docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編",
+      "_AIDIY/histories（最新は20261104.md）",
+      "temp/aidiy_diagのnavi起動ログ",
+      "backend_server/temp/logs",
+      "backend_tools/temp/logs",
+      "OS一時領域のAiDiyナビ試験名フォルダ（ブラウザprofileを除外）"
+    ],
+    "result": "当該8本の名前・実行結果、当時のHermes段階ログは発見できない。Nov3の実装確認等は別日時の結果。Nov6のバックエンドログなし（現在はNov7の19〜21時台）。OS一時領域の非profile試験フォルダにはNov4用READMEのみ。",
+    "excluded": [
+      ".aidiy_backup（プロジェクト方針で参照対象外）",
+      "認証・設定値、DB、ブラウザprofile、他アプリの私的会話",
+      "利用者窓の操作、共有サービスの停止・再起動"
+    ]
+  },
+  "historicalMockHarness": {
+    "reportedCount": 8,
+    "reportedSuccesses": 1,
+    "reportedFailures": 7,
+    "individualVerdict": "判定不能（原記録欠落）",
+    "unrecoverable": [
+      "8本の実行一覧と成功1本の名前",
+      "実行コマンド・引数・OS・ブラウザ・環境変数",
+      "当時のソース/配布bundle/fixtureの版",
+      "各本の期待結果・標準出力・標準エラー・終了コード・画像",
+      "失敗したアサーションまたは待機段階"
+    ],
+    "currentRelatedScriptInventory": [
+      {
+        "path": "frontend_ide/scripts/check-navigation-autopilot.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "75794e1f86c0fc5de69aebb17b2f838d2a086d48e5625e0b898ee8e9c00a7ed1"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-desktop.mjs",
+        "currentMode": "条件により実AI（寸法限定モードでは禁止）",
+        "sha256": "516f57499fa5ad1fc8b8f88b717fb28c34ef9bc46fa1d4851f4e418e7412f5bd"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-goal.mjs",
+        "currentMode": "実AI呼出しあり",
+        "sha256": "0ea390078f4aeacf48525a25e7ec055ce3a7851619c026b25edbf2cdf90ec966"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-guide.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "5609d15c322cb817c82d9fabc4dfa5030c5bb01de728edcff1b1a5380f35a733"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-height.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "12d72f51d10b60f30e4709a6811111204a1f41c7fe6055102f176746fea5dd59"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-progress.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "4e595a6dee64a87e5be76158541c343b1fd09e9ffb9f408b43bd187cd1d8f93e"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-project.mjs",
+        "currentMode": "実AI呼出しあり",
+        "sha256": "5211a8809f7e5e4a779c3e9462d77dc6dcc85b7468f8875d062442afaad0600d"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-real.mjs",
+        "currentMode": "実AI呼出しあり",
+        "sha256": "dd4730b1768501e0981a8393005d98b5c160bc05f836931754dac917bcfdb2f1"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-scene-picker.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "c2fb720432ca86c9cf35ac3ac2cb1449e21b87f1d7a0f8c504add80154808230"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation-scenery.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "14c532aa042ea3d594474aebc79a1c374a38ca50b1e2e4509db18f80827fc62c"
+      },
+      {
+        "path": "frontend_ide/scripts/check-navigation.mjs",
+        "currentMode": "模擬/表示確認用（元の8本への対応付けは不明）",
+        "sha256": "50bf1e5741a1ef9bcd66f221c4c5fd0bfb6a32aac9436db264c7dd534baf9601"
+      }
+    ],
+    "note": "候補スクリプトには実AIを呼ぶものもあり、現存する名前から元の「模擬8本」を推定して確定しない。"
+  },
+  "currentHarnessFinding": {
+    "classification": "試験期待値の旧仕様との不整合",
+    "evidence": "現行ハーネス照合/heading.json",
+    "observed": "タスク (2026-11-07 21:24:52)",
+    "legacyExpected": "タスク",
+    "limitedFix": "check-navigation.mjsの見出し1箇所を日時付き形式の検証へ変更。check-navigation-autopilot.mjsの既存日時検証とnavigation-layout.test.mjsを参考にした。",
+    "targetedCheckPassed": true,
+    "wholeLegacyHarnessRerun": false,
+    "historicalSevenFailuresMapped": false,
+    "assertionVerifiedFromSource": true
+  },
+  "historicalHermes": {
+    "selection": "aidiy_hermes / auto",
+    "reportedFailure": "5分以内に結果を確認できませんでした",
+    "verdict": "原因・停止段階は判定不能（原記録欠落）",
+    "unrecoverable": [
+      "受付HTTP応答と要求/ジョブID",
+      "元の目標・対象フォルダ・選択後の実モデル",
+      "Python開始とモデル選択・CLI起動の日時/PID",
+      "CLIの最後の出力時刻、標準出力・標準エラー、終了コード",
+      "期限到達時のabort/子孫終了・終了後PID確認"
+    ],
+    "notProofOfResolution": [
+      "Codexによる成功",
+      "別日時のHermes成功",
+      "300秒と280秒の設定差だけ"
+    ]
+  },
+  "currentHermes": {
+    "evidenceDirectory": "Hermes限定確認",
+    "applicationRequests": 1,
+    "selection": "aidiy_hermes / auto",
+    "selectedModel": "openai_oauth/gpt-6.1-sol",
+    "acceptedAt": "2026-11-07T12:20:48.650Z",
+    "completedAt": "2026-11-07T12:22:04.614Z",
+    "elapsedSec": 75.964,
+    "status": "complete",
+    "cliExitCode": 0,
+    "resultProgress": 50,
+    "readmeUnchanged": true,
+    "recordedOwnedPids": [
+      26096,
+      19968,
+      18080
+    ],
+    "recordedPidsAbsentAfterExit": true,
+    "observationEntry": "navigation-failure-hermes.pyから製品navigation_readonly.run/CodeAgents/CodeAI/command_hermes prediction_main.pyを使用。段階/PIDのみを追加観測。",
+    "limits": "HTTP/APIとCLI実行経路の限定確認。元の実機操作・入力条件の再現ではない。元の標準入口はstderrを破棄し例外を汎用化するため、過去の詳細は現行通常ログから復元できない。",
+    "pidVerificationLimit": "試験終了直後に記録PIDの不在を確認。PIDは後に再利用され得るため、現在の同番号プロセスを所有プロセスと判断しない。"
+  },
+  "timeouts": {
+    "navigator": "AI実行待ち全体の300秒期限。準備・走査後のexecuteで開始するPromise.raceが、期限到達時にAbortController.abortを呼ぶ。",
+    "pythonAdapter": "timeout_sec=280をCodeAgentsからCodeAIへ渡す。",
+    "codeCli": "280秒は_subprocess実行のlast_output_time基準の無出力時間。stdout/stderrの出力で更新。autoのモデル選択はその監視開始前。",
+    "conclusion": "20秒の単純な余裕ではない。外側期限失敗と内側CLI終了は別段階。過去失敗の原因とは断定不可。",
+    "isolatedEvidence": "期限処理.json",
+    "observations": [
+      {
+        "case": "silent-timeout",
+        "timeoutSec": 0.2,
+        "elapsedSec": 1.127,
+        "timeoutResult": true,
+        "ownedPids": [
+          28056,
+          29020,
+          30300
+        ],
+        "ownedProcessesAliveAfter": [],
+        "currentProcessCleared": true,
+        "externalAIRequests": 0
+      },
+      {
+        "case": "continuous-output",
+        "timeoutSec": 0.6,
+        "elapsedSec": 2.833,
+        "timeoutResult": false,
+        "ownedPids": [
+          4048,
+          7696,
+          32284
+        ],
+        "ownedProcessesAliveAfter": [],
+        "currentProcessCleared": true,
+        "externalAIRequests": 0
+      }
+    ]
+  },
+  "validation": [
+    {
+      "command": "node --test --test-name-pattern='期限でabort' frontend_ide/checks/navigation.test.mjs",
+      "passed": 1,
+      "failed": 0
+    },
+    {
+      "command": "backend_tools/.venv/Scripts/python.exe -B -m unittest discover -s frontend_ide/checks -p test_navigation_readonly.py",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "command": "node --test --test-name-pattern='共通の確認日時' frontend_ide/checks/navigation-layout.test.mjs",
+      "passed": 1,
+      "failed": 0
+    }
+  ],
+  "productCodeChanged": false,
+  "testHarnessChanged": [
+    "frontend_ide/scripts/check-navigation.mjs（見出し1箇所のみ）"
+  ],
+  "externalHermesNavigationRequests": 1,
+  "coreAppsRestarted": false,
+  "sourceReferences": [
+    "frontend_ide/ファイル機能/navigation.mjs:createNavigation/execute",
+    "frontend_ide/ファイル機能/navigation-agent.mjs:runNavigationAgent",
+    "frontend_ide/ファイル機能/navigation_readonly.py:run",
+    "backend_tools/tools_proc/code_agents.py:run_async",
+    "backend_server/AIコア/AIコード_cli.py:実行/_予測Hermesコマンド/_subprocess実行",
+    "backend_tools/tools_proc/process_lifetime.py",
+    "command_hermes/prediction_main.py:main",
+    "backend_tools/tools_proc/prediction_privacy.py"
+  ],
+  "documentVerification": {
+    "pdfPages": 45,
+    "step9Pages": [
+      43,
+      44,
+      45
+    ],
+    "newEvidenceLinksExist": true,
+    "pdfLocalLinksMadeRelative": 23,
+    "visualReview": "更新した43〜45ページをPNGで確認。日本語・表・改ページ・リンクを確認。"
+  }
+}

@@ -22,7 +22,8 @@ const SKIP_RECENT = 45;       // 直近の帯（約13マス）は交差判定か
 const BAND_HEIGHT = 3.8;      // 羽衣の高さ
 const CELL = 2;               // 格子の1マス
 const GRID_SIZE = 240;        // 格子の一辺（バイクに追従して無限に見せる）
-const ROWS = 3;               // 帯の縦方向の頂点数（下端・中ほど・上端）
+const BAND_OPACITY = [1, 1, .65, .28, .08]; // 帯の不透明度（高さの下端・25%・50%・75%・上端）
+const ROWS = BAND_OPACITY.length;
 const SPARKS = 96;
 const MAX_STEER = 15;         // ハンドル角の上限（度）。車体の傾斜上限も同じ角度
 const KEY_TICK = .08;         // キー操作中にハンドルを1°動かす間隔（秒）
@@ -48,7 +49,7 @@ onMounted(() => {
     emit('unsupported'); return;
   }
   ready.value = true;
-  const reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced = false;
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
   renderer.setClearColor(0x000000, 1);
   const scene = new THREE.Scene();
@@ -76,14 +77,14 @@ onMounted(() => {
   const glow = new THREE.Sprite(glowMat); glow.scale.set(3.2, 3.2, 1); glow.position.y = .7;
   lean.add(body, nose, rider, rearWheel, frontPivot, glow); scene.add(ship);
 
-  // 羽衣の帯：サンプルごとに縦ROWS点。古いほど暗くなり、加算合成で光らせる。
+  // 羽衣の帯：サンプルごとに縦ROWS点。頂点色のアルファで背景を透かす。
   const bandGeo = new THREE.BufferGeometry();
   bandGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * ROWS * 3), 3));
-  bandGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * ROWS * 3), 3));
+  bandGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TRAIL_MAX * ROWS * 4), 4));
   const idx = [];
   for (let i = 0; i < TRAIL_MAX - 1; i++) for (let r = 0; r < ROWS - 1; r++) { const a = i * ROWS + r, b = a + ROWS; idx.push(a, a + 1, b, a + 1, b + 1, b); }
   bandGeo.setIndex(idx); bandGeo.setDrawRange(0, 0);
-  const bandMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false });
+  const bandMat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, depthWrite: false });
   const band = new THREE.Mesh(bandGeo, bandMat); band.frustumCulled = false; scene.add(band);
   const bandPos = bandGeo.attributes.position, bandCol = bandGeo.attributes.color;
 
@@ -122,10 +123,12 @@ onMounted(() => {
       const hh = BAND_HEIGHT * (1 + .1 * Math.sin(n * .08 + time * 1.6)) * (1 + g * .3), boost = 1 + g * 2.6;
       tmp.setHSL(sh[i], 1, .55);
       for (let r = 0; r < ROWS; r++) {
-        const u = r / (ROWS - 1), o = (n * ROWS + r) * 3, lat = sway * u * u * (1 + g * .8);
-        pa[o] = sx[i] + px * lat; pa[o + 1] = hh * u; pa[o + 2] = sz[i] + pz * lat;
-        const lum = fade * boost * (r === 0 ? 1 : r === 1 ? .38 : .05);
-        ca[o] = tmp.r * lum; ca[o + 1] = tmp.g * lum; ca[o + 2] = tmp.b * lum;
+        const u = r / (ROWS - 1), vertex = n * ROWS + r, lat = sway * u * u * (1 + g * .8);
+        const p = vertex * 3, c = vertex * 4;
+        pa[p] = sx[i] + px * lat; pa[p + 1] = hh * u; pa[p + 2] = sz[i] + pz * lat;
+        ca[c] = tmp.r * boost; ca[c + 1] = tmp.g * boost; ca[c + 2] = tmp.b * boost;
+        // 古い帯ほどさらに透ける。
+        ca[c + 3] = fade * BAND_OPACITY[r];
       }
     }
     bandPos.needsUpdate = true; bandCol.needsUpdate = true; bandGeo.setDrawRange(0, (count - 1) * (ROWS - 1) * 6);

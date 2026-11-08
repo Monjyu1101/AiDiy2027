@@ -33,7 +33,7 @@ test('タイトルのCode切替は表示・非表示とも四角い枠を持ち�
  const shared=css.match(/\.navigation-code-toggle,\.window-actions \.navigation-code-toggle\{([^}]+)\}/)?.[1];assert.ok(shared);
  assert.match(shared,/(?:^|;)border:1px solid #[\da-f]{6}(?:;|$)/i);assert.match(shared,/(?:^|;)border-radius:0(?:;|$)/);
  assert.match(css,/\.navigation-code-toggle\[aria-checked="true"\]\{border-color:#7de2cf\}/);
- const toggles=walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-code-toggle'));assert.equal(toggles.length,3);
+ const toggles=walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-code-toggle'));assert.equal(toggles.length,2);
  for(const toggle of toggles){assert.equal(toggle.tag,'button');assert.equal(attr(toggle,'role'),'switch');assert.equal(toggle.props.find(p=>p.type===7&&p.arg?.content==='aria-checked').exp.content,'codeOpen');assert.equal(toggle.props.find(p=>p.type===7&&p.name==='on'&&p.arg?.content==='click').exp.content,'toggleCode');}
 });
 
@@ -160,7 +160,7 @@ test('自動航行中の総合評価は周回枠と枠内下部中央の状態�
  assert.equal(overall.props.find(p=>p.type===7&&p.arg?.content==='class').exp.content,'{driving:codeDriving}');
  const [details,status]=elements(overall);assert.equal(details.tag,'details');assert.equal(hasClass(status,'navigation-overall-cruise-status'),true);assert.equal(status.props.find(p=>p.type===7&&p.name==='if').exp.content,'codeDriving');assert.equal(status.children[0].content,'自動航行中');assert.equal(attr(status,'role'),'status');
  assert.match(source,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 5s linear infinite/);
- assert.match(source,/@media\(prefers-reduced-motion:reduce\)\{[^}]*navigation-overall\.driving\{animation:none/);
+ assert.doesNotMatch(source,/prefers-reduced-motion/);
  assert.match(source,/\.navigation-overall-cruise-status\{flex:none;[^}]*text-align:center/);
  assert.match(source,/\.navigation-panel>\.navigation-overall\.driving\{[^}]*border-radius:0/);
  assert.match(source,/:aria-valuenow="overall.progress"/);assert.equal(elements(details)[0].tag,'summary');
@@ -169,7 +169,7 @@ test('自動航行中の総合評価は周回枠と枠内下部中央の状態�
 
 test('単独・IDE・別窓タイトルは共通のCode操作ラベルと読み上げ名を使う',()=>{
  const toggles=walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-code-toggle'));
- assert.equal(toggles.length,3);
+ assert.equal(toggles.length,2);
  for(const button of toggles){
   assert.equal(button.props.find(p=>p.type===7&&p.arg?.content==='aria-label').exp.content,'codeToggleLabel');
   assert.equal(button.children.find(child=>child.type===5).content.content,'codeToggleLabel');
@@ -195,7 +195,7 @@ test('自動航行のトグルはスクエアの共通レールでつまみ位�
  assert.match(css,/\.navigation-autopilot-toggle\{[^}]*display:inline-flex;[^}]*align-items:center;[^}]*border-radius:0/);
  assert.match(shared,/\.motion-switch\{width:28px;height:14px/);assert.match(shared,/\.motion-switch:after\{[^}]*left:2px;[^}]*width:8px;height:8px/);
  assert.match(css,/\.navigation-autopilot-toggle\[aria-checked="true"\] \.motion-switch:after\{[^}]*transform:translateX\(14px\)/);
- assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\.navigation-autopilot-toggle \.motion-switch:after\{transition:none\}\}/);
+ assert.doesNotMatch(css,/prefers-reduced-motion/);
 });
 
 
@@ -234,7 +234,8 @@ test('ナビ・再評価は通常灰色で、次の一方だけをCode入力時�
 
 test('中止ボタンは調査時にナビ側、評価時に再評価側を置き換える',()=>{
  const row=walk(baseParse(descriptor.template.content)).find(node=>hasClass(node,'navigation-run-actions'));
- const [stopNavigate,start,stopEvaluate,evaluate]=elements(row);
+ const [sound,stopNavigate,start,stopEvaluate,evaluate]=elements(row);
+ assert.ok(hasClass(sound,'navigation-sound-toggle')); // 通知音のトグルは、ボタンのすぐ左（行の先頭）に置く
  for(const stop of [stopNavigate,stopEvaluate])assert.ok(hasClass(stop,'navigation-stop'));
  assert.equal(stopNavigate.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop&&!evaluating');
  assert.equal(stopEvaluate.props.find(p=>p.type===7&&p.name==='if').exp.content,'routing&&canStop&&evaluating');

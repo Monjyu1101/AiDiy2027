@@ -1,0 +1,17 @@
+{"at":"2026-11-07T13:55:29.426Z","event":"listen","port":52487}
+{"at":"2026-11-07T13:55:29.436Z","event":"listen","port":52488}
+{"at":"2026-11-07T13:55:29.449Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-49MQIO\\1\\temporary\\aidiy-connection-check-htrqKi\\browser","--window-size=1280,800","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"],"pid":17764,"browserUsesExplicitIsolatedProfile":true}
+{"at":"2026-11-07T13:55:30.443Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:30.462Z","event":"browserNavigation","response":{"id":4,"result":{"frameId":"2DE8CA1D269E0D8873DA7EB8918455D8","loaderId":"80985E97A840CE8B39778A21EBAB182D","isDownload":false}}}
+{"at":"2026-11-07T13:55:30.480Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:30.492Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:31.552Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:42.704Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:55.519Z","event":"listen","port":57447}
+{"at":"2026-11-07T13:55:55.525Z","event":"listen","port":57449}
+{"at":"2026-11-07T13:55:55.555Z","event":"loadedAsset","path":"/","status":200,"bytes":596,"sha256":"e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"}
+{"at":"2026-11-07T13:55:55.558Z","event":"browserNavigation","response":{"id":233,"result":{"frameId":"2DE8CA1D269E0D8873DA7EB8918455D8","loaderId":"05A447C9555D8BA97556F2F99543CA06","isDownload":false}}}
+{"at":"2026-11-07T13:55:55.574Z","event":"loadedAsset","path":"/development/app.css","status":200,"bytes":118076,"sha256":"c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"}
+{"at":"2026-11-07T13:55:55.578Z","event":"loadedAsset","path":"/development/app.js","status":200,"bytes":1514914,"sha256":"045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"}
+{"at":"2026-11-07T13:55:56.184Z","event":"childExit","pid":17764,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:55:56.341Z","event":"exit","code":0}

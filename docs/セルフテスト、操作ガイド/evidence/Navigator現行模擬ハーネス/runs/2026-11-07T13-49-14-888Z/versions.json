@@ -1,0 +1,2093 @@
+{
+  "source": {
+    "frontend_ide/src/App.vue": {
+      "sha256": "ae80e052d72d3e24d8844546f254172ba1fa8755999b72a58a67ff2a748200c2",
+      "bytes": 23564
+    },
+    "frontend_ide/src/components/コンソール/CLIタイトル.js": {
+      "sha256": "f873bdc41a9e02c825978c959b4dcd370a7ede4142c60f584f36deb322924062",
+      "bytes": 513
+    },
+    "frontend_ide/src/components/コンソール/キー入力.js": {
+      "sha256": "8f1c340593be137c0b4187f8bebee74df7610ae2129fb32d63e077fc9ead9fb2",
+      "bytes": 4956
+    },
+    "frontend_ide/src/components/コンソール/コマンド補完.js": {
+      "sha256": "7322708b0e6ab1a565482c491ecee585eaf6bedc006ee95add6e7b8700882393",
+      "bytes": 2117
+    },
+    "frontend_ide/src/components/コンソール/コンソールパネル.vue": {
+      "sha256": "22b24b5740693bafdc3c9a263123b84c1756854f3e6a7f06122563e5e2ec2df6",
+      "bytes": 14196
+    },
+    "frontend_ide/src/components/コンソール/入力フォーカス.js": {
+      "sha256": "a8997735a1d6a62069f0f6565c6efe33858e5ce42a39a05d79a2d5cce71a9233",
+      "bytes": 3950
+    },
+    "frontend_ide/src/components/コンソール/逃げるマーク.vue": {
+      "sha256": "586f49290b40774cc2f8f49f5fabedad2b1f44b4f35e73da44e1800f0f6c4777",
+      "bytes": 4476
+    },
+    "frontend_ide/src/components/コンソール/進捗表示.vue": {
+      "sha256": "b5c4771fdea55ac397ba580860f1e1c808fe6710214781880390d875685f1ada",
+      "bytes": 2506
+    },
+    "frontend_ide/src/components/コンソール/開始表示.vue": {
+      "sha256": "bdd86439dbfcc20d2ecf9e56861f5f1ef3abb1265b36929b5312ba35f8a91a95",
+      "bytes": 1986
+    },
+    "frontend_ide/src/components/コード/コードパネル.vue": {
+      "sha256": "9b06e3d9ae95ff9ebbd7dc71aec612bc42ca7c82b87b378eda881d5ea15918f3",
+      "bytes": 44907
+    },
+    "frontend_ide/src/components/コード/コード通信.js": {
+      "sha256": "5f98ac2f20f3ef7e80f6c749b2af715cc2bb27af5c715951157a0405fcb1962a",
+      "bytes": 4774
+    },
+    "frontend_ide/src/components/コード/会話到着演出.js": {
+      "sha256": "b252adf43c0968e1e15357255d3cb4f843201ec5865b7355e8f9d04588a0190b",
+      "bytes": 5041
+    },
+    "frontend_ide/src/components/タスクチーム/api/client.ts": {
+      "sha256": "c1be024a0c921e659bcdc10faa1c521a370acb334f82551689731bf4c2b85b0f",
+      "bytes": 1703
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/AIタスク.vue": {
+      "sha256": "7454b28344ee6f7cccaf9ce06a1f9a55943d315120552b55cedc14b154f420f4",
+      "bytes": 5176
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/components/AIタスク_フロー図.vue": {
+      "sha256": "bceddcb0da2bfffed2fd0938fde98fbc3ba3ac0344e76513e8992c60ede889a6",
+      "bytes": 14704
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/components/AIタスク_明細一覧.vue": {
+      "sha256": "853f65beeb30e54c4fdf1a4cf1a8d8c436386a1751306c5bed60bacc4a5e90d1",
+      "bytes": 17983
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/components/AIタスク_要求一覧.vue": {
+      "sha256": "dd75fef612e5bc7e210dd97e2e5f0701f3d225832b77bfaf778ad369d24d0830",
+      "bytes": 22320
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/dialog/AIタスク_応答内容.vue": {
+      "sha256": "042fc938f6ab24b741cc0af26e831a7f7e5316dfd92f1f57ba8fe7692edeb621",
+      "bytes": 4547
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/dialog/AIタスク_明細編集.vue": {
+      "sha256": "dc05a77433984598e9dc4c6ea3d3bca083218694e7e26f032c1adb5e2f3059b1",
+      "bytes": 18490
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/dialog/AIタスク_要求編集.vue": {
+      "sha256": "f8d20c285b2e6eb1d670af9b6755ceb61a420644f27f50cd324a1b6f5e86ff5a",
+      "bytes": 38775
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/windows/AIタスク_フローウィンドウ.vue": {
+      "sha256": "a694e8aa1f2557d92935e437f7fa3c05aa8ff930aaaa26e12a583fbe1dd9465e",
+      "bytes": 3035
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/windows/AIタスク_明細ウィンドウ.vue": {
+      "sha256": "85207898cfb8828ee0a0c3d3431c03e5978b7423e8d4756911d202c866201708",
+      "bytes": 2813
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/windows/AIタスク_編集ウィンドウ.vue": {
+      "sha256": "4194f3224683472e8d2e13804b7203eeff2d3fbd2068fbc747d14ca7da59aa18",
+      "bytes": 3260
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIタスク/windows/AIタスク_要求ウィンドウ.vue": {
+      "sha256": "e3ec0bcef985fb40f9518bb8a5d50559a9ca934b6e3b99b9d0aeb6b8809a811e",
+      "bytes": 3749
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム.vue": {
+      "sha256": "152922f8675ac00b78a6a50ae876c8e266a532b5c64157e83db04465e6a8e96f",
+      "bytes": 13211
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC制御.ts": {
+      "sha256": "da0a90acd901594a0b86cae6fba769fbda9af36db5b7aa714d095c730530616c",
+      "bytes": 3507
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_うさぎ.ts": {
+      "sha256": "4260494e8f82bf084f77a91b4e4165a9d0e6eb8a1f2a3fc0dad3517a7f2a0dda",
+      "bytes": 23439
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_うさぎ穴.ts": {
+      "sha256": "c8b6d13057f4b19121e247e980b26f2eb0c9961dc178ef3aaba18d0a434f11db",
+      "bytes": 5336
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_イヌ.ts": {
+      "sha256": "67349036c94e6b9a32485a57f90957c43811d3e9e8fcb7a52156eed97567d4e3",
+      "bytes": 1885
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_カモ.ts": {
+      "sha256": "057bc3d5c0d31ff34e92c608a8a78df9b111c1be7b676e52a5896d19ee3978f9",
+      "bytes": 20547
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_ネコ.ts": {
+      "sha256": "f52bbf13c4f31f108e14ef05ebeb8f2d836b1137bca3b26c745f3eafa804cb46",
+      "bytes": 1963
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_蝶.ts": {
+      "sha256": "34254f938853dfc8a05204f2b9354be5a744b354759c1b0fa3899caff784ac59",
+      "bytes": 3142
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_雲.ts": {
+      "sha256": "69fd1f741e933f7b1fe314a6cb8883293455bc80124ee2f9f10358dc860ba142",
+      "bytes": 3330
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_飛行船.ts": {
+      "sha256": "ea28d061a4c39ca4f44e97364ecf5257d98755818122c02e8ecf42a5390edae9",
+      "bytes": 12014
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC動作_馬.ts": {
+      "sha256": "ef71f4815b0d9bb60475d8bd573a56aac85676b480788989fb563b5f46f8b77c",
+      "bytes": 14653
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC四足.ts": {
+      "sha256": "38b1b2eb8131fb5e7646074e17ca06aa15e3b65c136a6095e0a5f7a870fa8895",
+      "bytes": 20544
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_NPC型.ts": {
+      "sha256": "c3aaee5719a5148941a969bda6298998fbd608ea451b00726ca60f4baae46048",
+      "bytes": 6073
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_型.ts": {
+      "sha256": "843af12a7941d4759568e6515db7eeb9e7cc68416a08513b7ce9eb2e4a33ee9b",
+      "bytes": 5960
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_共通.ts": {
+      "sha256": "fb5300c49a1e7311b24c38ca7184508c377f3eb0772453bde610060068151b40",
+      "bytes": 11149
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_地面.ts": {
+      "sha256": "6277174a1ac28dda41edee78ba230eb8b0218ae5ea86ecf7562614f37243e40c",
+      "bytes": 14736
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_建物.ts": {
+      "sha256": "12efdc1fe364897350d8ad1b751139419b5abc656549e92293abea4510e8b554",
+      "bytes": 25289
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_植物.ts": {
+      "sha256": "b76f4ace731ca95d717280e4237d162665d5296c8f12217fd52bd29198d8ee30",
+      "bytes": 16699
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_水面.ts": {
+      "sha256": "ad70d4174e47089919649dba5be7c93ad6798b1ca4bffebaa1a64151d44df8de",
+      "bytes": 6590
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/AIチーム_造形_要員.ts": {
+      "sha256": "13b14fa6f078689b01c1904a10e267917b5a85f849c0178ff9f9945544b337c5",
+      "bytes": 10331
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_会話状況.vue": {
+      "sha256": "eb0a4411eef2a38d0b70d5e68bd59485f820d89183893f545deb26450a679c38",
+      "bytes": 11769
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_作業状況.vue": {
+      "sha256": "f5c659356a0a6ff090179940dce0f1a3f1cf28c35cb15d685503c8a2a84b1627",
+      "bytes": 14615
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_依頼状況.vue": {
+      "sha256": "eee11e614e81c1b4510cba0c07b1427ffaaf7edb5577e229d6bcf6b2796d1df1",
+      "bytes": 15264
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_空間表示.vue": {
+      "sha256": "c187e81135e4e28f1b954fdeb84f97cff715f319a541b703419ceacd6560394f",
+      "bytes": 97837
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_経験状況.vue": {
+      "sha256": "ab2bccbdc138decf792b44efb3a68103fb24017806a0356a0506f8c7bfe1170c",
+      "bytes": 14162
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/components/AIチーム_要員状況.vue": {
+      "sha256": "d15682e25f35b5936905107639c8dc9b2965eea03e0fdb65fe277cf97d17e654",
+      "bytes": 19364
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/dialog/AIチーム_会話要求.vue": {
+      "sha256": "02295dda3c980e4f0d55480d9b179a1246b693d7cc6f8751fd56643f1fb2839f",
+      "bytes": 20448
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/dialog/AIチーム_依頼編集.vue": {
+      "sha256": "45676072b4118197cb1241d00bc588446bfd90c25317488ce5f804ccb68ef78b",
+      "bytes": 26442
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/dialog/AIチーム_応答内容.vue": {
+      "sha256": "d76878ec78c4ad147968b04d6aa0ee223596531d962133238062cff672f495c6",
+      "bytes": 5220
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/dialog/AIチーム_目標編集.vue": {
+      "sha256": "ccb96a27d40e89193ab8f6ded8b20cb1f711e67f0c03db5b486f69e916d646a0",
+      "bytes": 43192
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/dialog/AIチーム_要員召喚.vue": {
+      "sha256": "ff87dc57123e9e81443f68e075888b2c7ab4ee0f6f7d4b816dec8e2dd155bf73",
+      "bytes": 6680
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/use自由配置パネル.ts": {
+      "sha256": "4581e6f791bed54997aa237fc51f6ae91297b6dc2aa735c134304497d669c9d9",
+      "bytes": 5710
+    },
+    "frontend_ide/src/components/タスクチーム/components/AIチーム/use表示連動ポーリング.ts": {
+      "sha256": "f6e54a790455e6cfecba44a15e5315ed1b045218ec3a0e8791e56fe8dc45482c",
+      "bytes": 2173
+    },
+    "frontend_ide/src/components/タスクチーム/components/再読込ボタン.vue": {
+      "sha256": "54dc8b05b5010563015ddeb22a352c03f191be0d6c67355d8b223c72f468a706",
+      "bytes": 2179
+    },
+    "frontend_ide/src/components/タスクチーム/env.d.ts": {
+      "sha256": "907fbe649e7abc722d652d0bc23b59d0ede0888350d51433a4e71d3053495e6c",
+      "bytes": 365
+    },
+    "frontend_ide/src/components/タスクチーム/task-session.js": {
+      "sha256": "4114e21311036074cbc30caaa863249e1245d5772d5da8baa11ce289d67b746b",
+      "bytes": 2838
+    },
+    "frontend_ide/src/components/タスクチーム/task-windows.ts": {
+      "sha256": "8b6541ad81d7b08b4e0f3f28450a665bf2da0b1c704f1f4e51a1bba4abb063dc",
+      "bytes": 757
+    },
+    "frontend_ide/src/components/タスクチーム/types.ts": {
+      "sha256": "5018d0aaefda68f7eee7fc43eaa8e8e74f063f188d5bf209f4c01677d7c3a607",
+      "bytes": 438
+    },
+    "frontend_ide/src/components/タスクチーム/utils/qAlert.ts": {
+      "sha256": "f42f4915f540a21d972619031cad04ea9a07936ab5919714e816e647b19d27e6",
+      "bytes": 3811
+    },
+    "frontend_ide/src/components/タスクチーム/_share/qAlert.vue": {
+      "sha256": "be967b97ea051950e6b1ef3ebeb445299bde65f1c54c78c7dc02d6e8615038be",
+      "bytes": 3798
+    },
+    "frontend_ide/src/components/タスクチーム/_share/qBooleanCheckbox.vue": {
+      "sha256": "28e7c26fed0271ccc4e68468a1b390c14aa1b072f33881f7a533bd48a142de16",
+      "bytes": 1662
+    },
+    "frontend_ide/src/components/タスクチーム/_share/qMessage.vue": {
+      "sha256": "e3488b3c7f61e672ed915f5fa42f51f9f06e03665b024fbae247b154f84f366e",
+      "bytes": 2654
+    },
+    "frontend_ide/src/components/タスクチーム/_share/qTublerFrame.vue": {
+      "sha256": "d6b673b47c3cc797374574f0a4877a55d56cf8c13f13bf7d13884a8f794c6083",
+      "bytes": 10412
+    },
+    "frontend_ide/src/components/タスクチーム/タスクチームパネル.vue": {
+      "sha256": "e7aadfe72fa0ac48f23315bbccfe47da31c07fd96e0814df001d4fd39664838a",
+      "bytes": 15872
+    },
+    "frontend_ide/src/components/タスクチーム/起動.js": {
+      "sha256": "441205d6d300d2d1f5e1e90b07aa9e2d44d7e9a26f40a6c179eb58a4a2d6d5f2",
+      "bytes": 1057
+    },
+    "frontend_ide/src/components/ファイル検索/AI検索パネル.vue": {
+      "sha256": "e0ec81eeced879f0dd00a7b9bef5a62909d59b3a83e9759fd6d5548542c4cd0a",
+      "bytes": 9098
+    },
+    "frontend_ide/src/components/ファイル閲覧/エクスプローラードラッグ.js": {
+      "sha256": "9fb52c17b86445785f57f8df55c78a78b6cb5936595151911d57971e161da7de",
+      "bytes": 3583
+    },
+    "frontend_ide/src/components/ファイル閲覧/エクスプローラー操作.js": {
+      "sha256": "85061cc9d8394c7245a5de9d0aa953b520a2eafc9c92da4c2103303694d268e3",
+      "bytes": 17826
+    },
+    "frontend_ide/src/components/ファイル閲覧/エクスプローラー操作表示.vue": {
+      "sha256": "9ee755f997f224e3d4d23dd6c115292f01e4c33f87308d57005332a541cd6430",
+      "bytes": 10188
+    },
+    "frontend_ide/src/components/ファイル閲覧/コード表示.js": {
+      "sha256": "08e51acc6ca32670b3126edf498a7374f1821ca0e77771c536a6a8543576cd21",
+      "bytes": 3552
+    },
+    "frontend_ide/src/components/ファイル閲覧/パネル別窓.js": {
+      "sha256": "c915c75ed12e20ed38f68d52723e8ab7d4a5d34bacb14641a29abd6cc763a3ec",
+      "bytes": 11537
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイルアイコン.d.ts": {
+      "sha256": "90aefe4a766078d122fcd58ee25543d5fb61149d5afcb22e9e52bbace5eca24b",
+      "bytes": 571
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイルアイコン.js": {
+      "sha256": "ca1b6de8632c951c73010a79a1409af8e42af1aac1935a35d94f1bae1bc94785",
+      "bytes": 4671
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイルビューア.vue": {
+      "sha256": "65cd025f8934ef576e6a923b260936f5677add084c72bad0bbbbb7c355f587b8",
+      "bytes": 18760
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue": {
+      "sha256": "b0182f179c316338ca727782c0fc78f71b6b80e2616492d9c4d9eaeb510c4cb6",
+      "bytes": 51382
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイル参照.js": {
+      "sha256": "ca4da206d6fac3cc0b64e638e0aa1df118366f8f0b4953d1e184ca68d7218f03",
+      "bytes": 2264
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイル操作.js": {
+      "sha256": "6a375fc12d05f327abbe87f0e506dd4bdce22523f57cca63d47f0a8636de45a7",
+      "bytes": 2683
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイル日時.js": {
+      "sha256": "1a3a156d19044e0e4c85e0031d317f2ff6a72f637cc23f26736e33f6315496cd",
+      "bytes": 4321
+    },
+    "frontend_ide/src/components/ファイル閲覧/ファイル種別アイコン.vue": {
+      "sha256": "d3c12362ec9d1a55580fc2c4af85ed52ff9fe539601b9a3139ff0d8d0043c05f",
+      "bytes": 1047
+    },
+    "frontend_ide/src/components/ファイル閲覧/フォルダページ.vue": {
+      "sha256": "417679f2bb512e83eda2e3047412e8df1dee0b223b01a1cf3bab200a25d4067a",
+      "bytes": 25562
+    },
+    "frontend_ide/src/components/ファイル閲覧/フォルダページ構成.js": {
+      "sha256": "b46f1f3e37e70bbfeb4f21f92e1417b6a47fb4e029afd0cbd2fd3711090692bf",
+      "bytes": 4634
+    },
+    "frontend_ide/src/components/ファイル閲覧/フォルダ監視.js": {
+      "sha256": "617e07911f1868344b6fef03b5fc4c8937068454f39b30b8cb03b55804bd6aa5",
+      "bytes": 2943
+    },
+    "frontend_ide/src/components/ファイル閲覧/別窓タイトル.js": {
+      "sha256": "a40f7dcb0dc5aaca4d816f77395748fbc509dba713988dfea5620309406f0e9e",
+      "bytes": 3034
+    },
+    "frontend_ide/src/components/ファイル閲覧/更新の目印.js": {
+      "sha256": "5378e2e3283ed2ddde03d4c9da84601f72377cf6b3086f297f29abf1eebda46d",
+      "bytes": 2786
+    },
+    "frontend_ide/src/components/ファイル閲覧/最新ファイル.js": {
+      "sha256": "fa6c626b66b856609b8eb332583519368ead2e244cb06efdaf7b21b6a881c371",
+      "bytes": 3280
+    },
+    "frontend_ide/src/components/ファイル閲覧/走査警告.js": {
+      "sha256": "f6d6a2b02b31ec6f1b18e5c58fb6e651f69065354b9e66c2349da51cf1369529",
+      "bytes": 855
+    },
+    "frontend_ide/src/components/ファイル閲覧/軌跡パネル展開.js": {
+      "sha256": "31cfde645a9e616f29fdb4871f2a4e389cd4357e0269521c3de8b9e64836ccda",
+      "bytes": 2301
+    },
+    "frontend_ide/src/components/ファイル閲覧/閲覧ウィンドウ.vue": {
+      "sha256": "19ef98c98d3e0139b428b259f24f6c579e6e0a7b246723b48cbb32d531576824",
+      "bytes": 2973
+    },
+    "frontend_ide/src/components/ファイル閲覧/閲覧セッション.vue": {
+      "sha256": "b719f8694f1b22fd48a264f5ecba3afa9a267b12f315968b9922f432d8004d3f",
+      "bytes": 3017
+    },
+    "frontend_ide/src/components/ファイル閲覧/閲覧待機.js": {
+      "sha256": "82f07677f131dadae2fbff2d6431596057b163cf87500fa989c1ddc53be90545",
+      "bytes": 2644
+    },
+    "frontend_ide/src/components/ブラウザ/URL表示.js": {
+      "sha256": "4fe3613ef3094eb5f84c76be7b7d1e3226ff81fe839bd22426720030532eace4",
+      "bytes": 1624
+    },
+    "frontend_ide/src/components/ブラウザ/ブラウザパネル.vue": {
+      "sha256": "26bd2ca8ae7b671d0ccbf51e931df24454b06f5543aaa0cb431842af9f167576",
+      "bytes": 13771
+    },
+    "frontend_ide/src/components/ブラウザ/起動.js": {
+      "sha256": "a003f7026dcca3b8f1e12a916e365717ac8e8ab81c146d0a5a01a3fd3196e46a",
+      "bytes": 1554
+    },
+    "frontend_ide/src/components/ライブ/ライブパネル.vue": {
+      "sha256": "c384f79a70a1cf72018451855da73d019e73faadea6aaa255e44af1ea16a84c3",
+      "bytes": 28657
+    },
+    "frontend_ide/src/components/ライブ/ライブ通信.ts": {
+      "sha256": "30f35b1af442faa2e727097ebd4aa3b57e91121f58c5dd07f117f45691210fa4",
+      "bytes": 9992
+    },
+    "frontend_ide/src/components/下書き連携/下書き受け渡し.js": {
+      "sha256": "d3c33ed53d497794df16e02b229321813dbd20a10371eff418d67cce4297d7d6",
+      "bytes": 4356
+    },
+    "frontend_ide/src/components/下書き連携/連携先登録.js": {
+      "sha256": "9de3f4d0a4640b752beb2c0cd7143b36ceee32a779a98edff6e49206372aef22",
+      "bytes": 1838
+    },
+    "frontend_ide/src/components/共通表示/シアンバー.css": {
+      "sha256": "9460542c585071a3553ed982b63096fd9ff503cfcc7b8e3ff2e408b07db5ecc6",
+      "bytes": 1566
+    },
+    "frontend_ide/src/components/共通表示/タイトルバー配色.css": {
+      "sha256": "2db8e0939940c909cef612f261ed896e7ad22855c32d6707c09112d111799adc",
+      "bytes": 629
+    },
+    "frontend_ide/src/components/共通表示/会話表示.css": {
+      "sha256": "80f02469646dfb8ebf06308ef9a63963bd04faa6f58d3f7be19a2e4e5a278eb1",
+      "bytes": 32837
+    },
+    "frontend_ide/src/components/共通表示/再読込ボタン.vue": {
+      "sha256": "faa5ff01a5bf8dbc308809d15f9182a4fff5aedf10f9ecedfded7e0a5f329565",
+      "bytes": 2317
+    },
+    "frontend_ide/src/components/共通表示/接続状態.js": {
+      "sha256": "8849dbd96063979e341f7ad4d5e0b71b7240a9ae867959a36f3c2306eb352ece",
+      "bytes": 836
+    },
+    "frontend_ide/src/components/共通表示/状態バー.vue": {
+      "sha256": "6f40837518dad275621b884582ba1f58801fe246195b8cc8e2d1582f2c18b206",
+      "bytes": 2717
+    },
+    "frontend_ide/src/components/共通表示/窓操作.js": {
+      "sha256": "6aecbe3ef29a3a61acd33b8131d7bb9b6cfdac5721a3151bde1109dba291b30d",
+      "bytes": 3140
+    },
+    "frontend_ide/src/components/共通表示/窓操作.vue": {
+      "sha256": "f48a905b4d8de2c0cad6685589499ff3c4e6c2f4b05dcbecf1a9aa3276094ce8",
+      "bytes": 3845
+    },
+    "frontend_ide/src/components/共通表示/起動メニュー.vue": {
+      "sha256": "0f12c8ee69e7cdcc3cf29c779c5fab6ea79a95fb547f662993253073805fa9bb",
+      "bytes": 2871
+    },
+    "frontend_ide/src/components/共通表示/長押し窓移動.js": {
+      "sha256": "453dcda900e6bf9bd579d40ce5695eb0d0c79b67918c2d3eb10142ae6201f38a",
+      "bytes": 6794
+    },
+    "frontend_ide/src/components/添付ファイル/チャット添付.vue": {
+      "sha256": "b57219647d956fb321b090d7f5ebca7f1a883245ff348fab5cdff255397d1f2b",
+      "bytes": 2681
+    },
+    "frontend_ide/src/components/添付ファイル/ファイル送信.js": {
+      "sha256": "f5d5cdcfecf8c6f12bec6bccea9f93525ebcd6c45402d1c6704b316db0bef515",
+      "bytes": 1869
+    },
+    "frontend_ide/src/components/開発スペース/Navigationパネル.vue": {
+      "sha256": "6c0f355086c7f99c9a61a47d7a4184e35b703ddbc4b8f0cfe438ec5b83e7094d",
+      "bytes": 63339
+    },
+    "frontend_ide/src/components/開発スペース/Navigationメッセージ.js": {
+      "sha256": "f84f71ca526a33ab557f5c726472398cae076fffd1812fc142f15ede2e28fb4f",
+      "bytes": 1536
+    },
+    "frontend_ide/src/components/開発スペース/Navigation既定値.js": {
+      "sha256": "fd149c9a9adbb625eef5fe5eaaf69dd9083a372ae331518a3644c7a7666cb293",
+      "bytes": 584
+    },
+    "frontend_ide/src/components/開発スペース/Navigation窓サイズ.js": {
+      "sha256": "d9eace7c601dd2324e1efd5f195bea3579f8f2ab56eb28dc7e460cd75e71f1bf",
+      "bytes": 3115
+    },
+    "frontend_ide/src/components/開発スペース/Navigation自動運転.js": {
+      "sha256": "d138e8f6f230a1d96e3323ab164621327ca77ab09216b4d1b3a711f436679826",
+      "bytes": 2696
+    },
+    "frontend_ide/src/components/開発スペース/ナビボタン入力.js": {
+      "sha256": "664fbb3f0308bb7602f59765b9d1dd25d42a4fe15c0e95593738fc2c0dc7292d",
+      "bytes": 1878
+    },
+    "frontend_ide/src/components/開発スペース/ナビ万華鏡.js": {
+      "sha256": "a11540cd267eb7f5a28705e595e11461823c556c7b5dee302a89cd8ea0220d10",
+      "bytes": 2292
+    },
+    "frontend_ide/src/components/開発スペース/ナビ依頼文.js": {
+      "sha256": "4967575872c14c9e562732248e7529b2f9d4298a4493bf768187cb19512524c8",
+      "bytes": 4233
+    },
+    "frontend_ide/src/components/開発スペース/ナビ依頼文.vue": {
+      "sha256": "2293d699aa61a82c3897c9d8f7cbe2c5d3f542ffd3de61c60876fe2befc95643",
+      "bytes": 7593
+    },
+    "frontend_ide/src/components/開発スペース/ナビ入力.js": {
+      "sha256": "26e1eeb3f731b6749e2bad3d74c715bb18450594b53f8fe023f17dd4f4e58ac4",
+      "bytes": 1955
+    },
+    "frontend_ide/src/components/開発スペース/ナビ夜間飛行.vue": {
+      "sha256": "1d165d4c30c359f1221b6ee49c025c01dd25cb6a49a657b90a20dd3fda98e97e",
+      "bytes": 60773
+    },
+    "frontend_ide/src/components/開発スペース/ナビ実行ボタン.vue": {
+      "sha256": "64e630947749b7acf4887c3d63e062354da212dbfab50b137b7473ea104940a9",
+      "bytes": 1004
+    },
+    "frontend_ide/src/components/開発スペース/ナビ時計.vue": {
+      "sha256": "b2717cb55bf1fe0c58c2a804279e5497fc2e96bf39b888038be10627f711fa0a",
+      "bytes": 8153
+    },
+    "frontend_ide/src/components/開発スペース/ナビ水槽.js": {
+      "sha256": "b0a93ff007cebc5fec526dc5712c804cf86c6c127017031c0533e31261adeac6",
+      "bytes": 4755
+    },
+    "frontend_ide/src/components/開発スペース/ナビ画面メニュー.js": {
+      "sha256": "73a05b5d963d119e43f1ad0d52e5c3fa22399ca6e08141d242fa8351c6b04931",
+      "bytes": 3233
+    },
+    "frontend_ide/src/components/開発スペース/ナビ画面メニュー.vue": {
+      "sha256": "cbe4d6a5327795303e8bd62a1d3a7e77101ab2dcb7bb3e3f722bffe8b07d541a",
+      "bytes": 2598
+    },
+    "frontend_ide/src/components/開発スペース/ナビ航行.vue": {
+      "sha256": "6101e60fdf0648213d83f605ed9e8e446beed6075890967e388f84e7fdab48e0",
+      "bytes": 20173
+    },
+    "frontend_ide/src/components/開発スペース/ナビ花火.vue": {
+      "sha256": "9e262eafc8cd4677d70bbd2f4818a9adad9ab7e8f3285cb703069828a09b0031",
+      "bytes": 20415
+    },
+    "frontend_ide/src/components/開発スペース/ナビ迷路.js": {
+      "sha256": "3812a41823f463272699924de2a7efce85757e73bc9b162382b9db333804a7d6",
+      "bytes": 17156
+    },
+    "frontend_ide/src/components/開発スペース/ナビ迷路.vue": {
+      "sha256": "52399feb99cea9b373527df05358f7c498b704653a0d8e3d7a65a292fff99c57",
+      "bytes": 22492
+    },
+    "frontend_ide/src/components/開発スペース/ナビ風景.js": {
+      "sha256": "d315bc2c8b1e4d4e733df1998fa5dd9e2e2eee521be7129cb1cc6b158b4b5fb8",
+      "bytes": 1834
+    },
+    "frontend_ide/src/components/開発スペース/ナビ風景.vue": {
+      "sha256": "14001a23889bb37821226a07e712c47f3db40e6fb0f626ecccc7713e11929eb7",
+      "bytes": 7989
+    },
+    "frontend_ide/src/components/開発スペース/ワープ視点.js": {
+      "sha256": "bbd6f8207d1429eaec0fb153a00f684297e2d7bfdf70f9ab2d3a7375d051f9ea",
+      "bytes": 6950
+    },
+    "frontend_ide/src/components/開発スペース/宇宙キャンバス.vue": {
+      "sha256": "9f45087f123a653026214d0c85d70a916412f7e0bdbdb39f5365392bfb28fb17",
+      "bytes": 1346
+    },
+    "frontend_ide/src/components/開発スペース/宇宙描画.js": {
+      "sha256": "5762aabc50f6552631787305c9e8293546853074e0844ed3877bcb24a546bd6b",
+      "bytes": 92832
+    },
+    "frontend_ide/src/components/開発スペース/文字幅キャッシュ.js": {
+      "sha256": "9fa88f7d439033e53480f3c57336943f170c772b4da8bd9c8d29064c368fdfd0",
+      "bytes": 819
+    },
+    "frontend_ide/src/components/開発スペース/検索経路.js": {
+      "sha256": "ae9dfc4b1c1ed8ef2df11eeab24dc47f580053324fb906aba69edfde005ab46f",
+      "bytes": 1765
+    },
+    "frontend_ide/src/components/開発スペース/経路記録.js": {
+      "sha256": "936e145041dc8fb6fe143cd4c74a0041cd63aa74914179d4e9e3065454def3d9",
+      "bytes": 2390
+    },
+    "frontend_ide/src/components/開発スペース/自動周回.js": {
+      "sha256": "ed5b0370daf1cf6bb1dcfa14c2c261d34b9be22906300536292cf9183603b996",
+      "bytes": 14515
+    },
+    "frontend_ide/src/components/開発スペース/軌跡ツリー.js": {
+      "sha256": "7025b2550a678fd48c7be57c5545748ea85bee781bc697446df68efbad0fd019",
+      "bytes": 3922
+    },
+    "frontend_ide/src/components/開発スペース/軌道案内.js": {
+      "sha256": "234f2699c110c02069672d65dffcab9747b3cb7e7763c651482d303d6478d21b",
+      "bytes": 779
+    },
+    "frontend_ide/src/components/開発スペース/開発スペース.vue": {
+      "sha256": "f4b3a7ca96b132c3c5b28a5f5d6a0a40434b2ce7a4dcd9bea8ea88bb3f9615e5",
+      "bytes": 18766
+    },
+    "frontend_ide/src/dialog/ファイル履歴ダイアログ.vue": {
+      "sha256": "ed1cabecd3459b82f6a2273d56eaa71087300e6178a21def12363790e712ba4f",
+      "bytes": 7988
+    },
+    "frontend_ide/src/dialog/ファイル解析ダイアログ.vue": {
+      "sha256": "97ce0015ab1e68d5aaae02571b632128c471e04179df678fc80056562515c4fa",
+      "bytes": 7821
+    },
+    "frontend_ide/src/dialog/下書き連携ダイアログ.vue": {
+      "sha256": "bf8210dc5b9132d01a225ec8982ef6ae8b1ee30271e94fd289d1886eb6f12c85",
+      "bytes": 5367
+    },
+    "frontend_ide/src/dialog/共通ダイアログ.vue": {
+      "sha256": "b329b13118f2f7a21fbaefefc06c2a5f7355b05f61acb74406d21bf854b7d63c",
+      "bytes": 713
+    },
+    "frontend_ide/src/main.js": {
+      "sha256": "fbb5e6ba8e8a0ca5e2945542df60ae72ba51b695e5753584272f38ddf7e5cf9e",
+      "bytes": 1661
+    },
+    "frontend_ide/src/style.css": {
+      "sha256": "119c6dc3fdeaeae00a6d0cf400dda417284ba02596f9e79ff488943ba1662737",
+      "bytes": 56106
+    },
+    "frontend_ide/scripts/build.mjs": {
+      "sha256": "7d065d5a1850d635d058b1803e5b713219605edf91f34c96125dd2209a16690f",
+      "bytes": 6103
+    },
+    "frontend_ide/scripts/capture.mjs": {
+      "sha256": "e37cc17566946ae5bb05524e78a3047e302be0388ac3cdffec73f294aaa36198",
+      "bytes": 7805
+    },
+    "frontend_ide/scripts/check-2d-motion.mjs": {
+      "sha256": "a67d977ab1d70d93b543a0cc3dc718cfd244513d1c06d93805cc0558ae2c61cb",
+      "bytes": 17352
+    },
+    "frontend_ide/scripts/check-ai-search-live.mjs": {
+      "sha256": "53f41e19b8e11ea751f47dd549d7fa0afb8aba24ca648219494a8312cb3cdeb2",
+      "bytes": 2221
+    },
+    "frontend_ide/scripts/check-ai-search.mjs": {
+      "sha256": "8c2b88f7f6af5fe19d3aad71bcfd04a1780ebbcebba45493ba0b6c29347dea53",
+      "bytes": 25289
+    },
+    "frontend_ide/scripts/check-all-displays.mjs": {
+      "sha256": "743314fbd1116619179f13a71345abc5f1e8915d347fd1991635ad2b2588e5f4",
+      "bytes": 2915
+    },
+    "frontend_ide/scripts/check-autodrive.mjs": {
+      "sha256": "34801fab97f196feb86e9d9a7183eace90a0a2ae47534e5cd5e1b378dc9a4874",
+      "bytes": 32674
+    },
+    "frontend_ide/scripts/check-browser-standalone.mjs": {
+      "sha256": "4ec42f823e656b877f7f84a938f43c0bd5a192954478ceeaf2eb9adb500f9b61",
+      "bytes": 4950
+    },
+    "frontend_ide/scripts/check-browser-window.mjs": {
+      "sha256": "eb2445114bc3a1059de825580edf476368304dda8c328b79818e453cb4e49e3f",
+      "bytes": 1157
+    },
+    "frontend_ide/scripts/check-browser.mjs": {
+      "sha256": "b62992990bee957c871be5f8944c7e7d614715a5693946b40efaae2d71cee64d",
+      "bytes": 4170
+    },
+    "frontend_ide/scripts/check-chat-effects.mjs": {
+      "sha256": "ac202354cf37ce75a531426bd3296496eeb1e190a475a1f8460549df16b333e8",
+      "bytes": 20139
+    },
+    "frontend_ide/scripts/check-code-drag-desktop.mjs": {
+      "sha256": "478d3fee107bf90224ece404a69137fe5c7e53bf2bdd380cee90b7419cef9d26",
+      "bytes": 1407
+    },
+    "frontend_ide/scripts/check-code-drag.mjs": {
+      "sha256": "022caa06cfa83eafedfea68a2ca51cbd18d89b5f7a19046635d75aa5d3275410",
+      "bytes": 12237
+    },
+    "frontend_ide/scripts/check-compare-pins.mjs": {
+      "sha256": "52cea662f64d2e2acbd89fcfc659f6f73f0d4408a94ee61355c2b3c6d465f1c0",
+      "bytes": 13016
+    },
+    "frontend_ide/scripts/check-connection.mjs": {
+      "sha256": "561db742572eb4bb59193523b3b56320c0fe6ba029e26db255e549e70675abe7",
+      "bytes": 8017
+    },
+    "frontend_ide/scripts/check-console-desktop.mjs": {
+      "sha256": "e4717f927fbf2db493db4a45926700caf3024557782cba2a25e14f3bbc7ea6fb",
+      "bytes": 1984
+    },
+    "frontend_ide/scripts/check-console-focus.mjs": {
+      "sha256": "41cc8221c906980b125e55b22907b4e4a2493db255c1bb25fa278ae5101064d5",
+      "bytes": 14904
+    },
+    "frontend_ide/scripts/check-console-keyboard.mjs": {
+      "sha256": "7041ad62a693d2ecad4a2b87eedd17fc2076a22ac8d0f99a1bcd6aa60246248c",
+      "bytes": 14318
+    },
+    "frontend_ide/scripts/check-console.mjs": {
+      "sha256": "1982f67d3cb391dc561e0dcd2dfcbb2d749a94c4b5a116eb8e42463d04b71f7a",
+      "bytes": 11240
+    },
+    "frontend_ide/scripts/check-core-stop.mjs": {
+      "sha256": "e3a3d26ad70cba4893614832722c3f6e9b25da7e57b7706fed3ebe1f1590b660",
+      "bytes": 2901
+    },
+    "frontend_ide/scripts/check-electron.mjs": {
+      "sha256": "d27c8cc56e1937d2185a05848d3a0792efe4747085ecde1e7bb96110b2117b53",
+      "bytes": 2154
+    },
+    "frontend_ide/scripts/check-explorer-component.mjs": {
+      "sha256": "f53d85e78c5cc7ca282f7b1fe016bef1a7a6e539bd56bccb7697c668dee6e7b1",
+      "bytes": 7799
+    },
+    "frontend_ide/scripts/check-explorer-menu.mjs": {
+      "sha256": "9e548c10ce40ec39dc68e4dfd9131bc302949892473ad5fa2d2d71ae89270534",
+      "bytes": 10541
+    },
+    "frontend_ide/scripts/check-explorer-multi.mjs": {
+      "sha256": "30c31359f75fb0cc810d2a8cc1946c5f9e31f8748dfe662d5ba58eb0073a3969",
+      "bytes": 13305
+    },
+    "frontend_ide/scripts/check-explorer-time.mjs": {
+      "sha256": "21913bc06e6ddd9f0fb781a5fac54eca1532f5c17176b9320fc833dece289c53",
+      "bytes": 11459
+    },
+    "frontend_ide/scripts/check-file-analysis.mjs": {
+      "sha256": "f2a5e34107aa04374de049edebf4bd2bc236f51fdac2b18a92bb3c1ddffbcbcb",
+      "bytes": 18701
+    },
+    "frontend_ide/scripts/check-file-history.mjs": {
+      "sha256": "42ba5a409d216ccc6175e17e84852697dcd47fbdf22630d83722c00ad82aa5f8",
+      "bytes": 12062
+    },
+    "frontend_ide/scripts/check-folder-cards.mjs": {
+      "sha256": "88fe7ecee63e6824d76ac74b594ac7d09255b06873cad6577e018328f04b3580",
+      "bytes": 8360
+    },
+    "frontend_ide/scripts/check-folder-monitor.mjs": {
+      "sha256": "cbadf4355e1f0dce4e7f3d35a11969ac5a16b41c97ea51ccde6be11cae1d9077",
+      "bytes": 24703
+    },
+    "frontend_ide/scripts/check-glass-panels.mjs": {
+      "sha256": "4638c266b43fbe0700fef743ad963097fd44cc7094ef2d529fe4c56c76ec314e",
+      "bytes": 11113
+    },
+    "frontend_ide/scripts/check-host.mjs": {
+      "sha256": "afcbf9c5e6d9b4c1b41748976dad62f99bc7919339757b70af06c3bd0c8255a1",
+      "bytes": 27910
+    },
+    "frontend_ide/scripts/check-ide-pin-order.mjs": {
+      "sha256": "db5ef11ae52d3284961b30ef6ac66564686015283b1a983742a04673077238a1",
+      "bytes": 1303
+    },
+    "frontend_ide/scripts/check-launcher.mjs": {
+      "sha256": "7149b6ce018886065a9f92f5cb30b9b12f51250ff382c96896a18d924f36e404",
+      "bytes": 7171
+    },
+    "frontend_ide/scripts/check-markdown.mjs": {
+      "sha256": "76b25091bfb05d3aa9e64252a2a136192377b7ae47562d9f34d29a48542982ab",
+      "bytes": 8554
+    },
+    "frontend_ide/scripts/check-model-catalog.mjs": {
+      "sha256": "54624929122f6f6c37e65194bfbba3bd0a80589f6de8bb822ebc34e609d23f7e",
+      "bytes": 5848
+    },
+    "frontend_ide/scripts/check-module-move.mjs": {
+      "sha256": "a0c5844549fa4d5cbc2c587177c95cefedd3af5fd5317c0d65be246210a0cdfb",
+      "bytes": 1816
+    },
+    "frontend_ide/scripts/check-navigation-autopilot.mjs": {
+      "sha256": "7cafca4eed52c3313dd5ebd1e37cfe42278d19bb1196c73f118e236d079bc9e4",
+      "bytes": 24123
+    },
+    "frontend_ide/scripts/check-navigation-desktop.mjs": {
+      "sha256": "516f57499fa5ad1fc8b8f88b717fb28c34ef9bc46fa1d4851f4e418e7412f5bd",
+      "bytes": 2888
+    },
+    "frontend_ide/scripts/check-navigation-goal.mjs": {
+      "sha256": "0ea390078f4aeacf48525a25e7ec055ce3a7851619c026b25edbf2cdf90ec966",
+      "bytes": 9728
+    },
+    "frontend_ide/scripts/check-navigation-guide.mjs": {
+      "sha256": "572986aa691391160a45a7c5e78a9c97c285648b1ba5df2bb393906c91eb06e1",
+      "bytes": 10888
+    },
+    "frontend_ide/scripts/check-navigation-height.mjs": {
+      "sha256": "149393f9ed8862ae778a35159dc4fe1452a72a572d171cff19cc56c9c65032f5",
+      "bytes": 6768
+    },
+    "frontend_ide/scripts/check-navigation-progress.mjs": {
+      "sha256": "6e878bd8b957df29b5d1c74246442dff7327d0ba7383f33f6bead7d29030b431",
+      "bytes": 18095
+    },
+    "frontend_ide/scripts/check-navigation-project.mjs": {
+      "sha256": "5211a8809f7e5e4a779c3e9462d77dc6dcc85b7468f8875d062442afaad0600d",
+      "bytes": 9521
+    },
+    "frontend_ide/scripts/check-navigation-real.mjs": {
+      "sha256": "dd4730b1768501e0981a8393005d98b5c160bc05f836931754dac917bcfdb2f1",
+      "bytes": 10926
+    },
+    "frontend_ide/scripts/check-navigation-scene-picker.mjs": {
+      "sha256": "59c371b07085dad3142d20c28ce8c287bcca7dd9e1a05a067411f68f9fb8f0cd",
+      "bytes": 21200
+    },
+    "frontend_ide/scripts/check-navigation-scenery.mjs": {
+      "sha256": "8ffc615d3d25b9951ace13a659bdd58e8fac1a640c305f3a4a627b60d152e0bc",
+      "bytes": 13255
+    },
+    "frontend_ide/scripts/check-navigation.mjs": {
+      "sha256": "9e63f6a26903b733f49318f19f1af2f33f6a5fd2a70e6d552d9a831619b81553",
+      "bytes": 24323
+    },
+    "frontend_ide/scripts/check-office.mjs": {
+      "sha256": "2668a2f5aaa835352bbd9fddd4bd72f5872fedbc88e13f942c99a919128baae0",
+      "bytes": 13474
+    },
+    "frontend_ide/scripts/check-orbit.mjs": {
+      "sha256": "72b07367fba33f27589388bb09d2e9fb5fb4a995bca1421ac3a94e68a8d61717",
+      "bytes": 11858
+    },
+    "frontend_ide/scripts/check-panel-controls.mjs": {
+      "sha256": "8257914e69b2f061e1353bb4958f1a7605f47ba3336142e789c1edfd9dddcf19",
+      "bytes": 7323
+    },
+    "frontend_ide/scripts/check-panel-desktop.mjs": {
+      "sha256": "8d213ea5b7944871f88446a816bf4449044b9dcc994e9ea9b216c536c22d1b24",
+      "bytes": 2218
+    },
+    "frontend_ide/scripts/check-panel-pins.mjs": {
+      "sha256": "89012a94c91a13ae9343a5a3b25872d5d318088e558d138ddfe4f3d475ded2ee",
+      "bytes": 16214
+    },
+    "frontend_ide/scripts/check-preview.mjs": {
+      "sha256": "cda937c40af29293148d75120ea134c12a11944798bc751e35ab05772fc80af8",
+      "bytes": 14245
+    },
+    "frontend_ide/scripts/check-route-expansion.mjs": {
+      "sha256": "d5af991040073686377ee0ec074eea4013a4bd43889202c7ef09570c16c4dd24",
+      "bytes": 17831
+    },
+    "frontend_ide/scripts/check-route-pins.mjs": {
+      "sha256": "c84dd998f7ba9e70bfb33c962a353069069b7c5464efd72771ada9deb28332fe",
+      "bytes": 13205
+    },
+    "frontend_ide/scripts/check-single-instance.mjs": {
+      "sha256": "8e4bf8aae0ad40419aaab830f96b85537938518d3a27761c5f4bc524efa3876e",
+      "bytes": 1506
+    },
+    "frontend_ide/scripts/check-task-desktop.mjs": {
+      "sha256": "999b19d723e2473d9112eafdbc0eb25a24065a8556ded1db5eaef91b3ab7d911",
+      "bytes": 1714
+    },
+    "frontend_ide/scripts/check-update-marks.mjs": {
+      "sha256": "8ff2dbc739b705434b7bd6e9c6427befc80964a2765e6d51d358f62294529a5b",
+      "bytes": 9357
+    },
+    "frontend_ide/scripts/check-warp.mjs": {
+      "sha256": "2d5318b34ecbce501e2b4f064a4939b594bd6a7e04d5859d70d9ae3d66ed4660",
+      "bytes": 27763
+    },
+    "frontend_ide/scripts/check-windows.mjs": {
+      "sha256": "2133c6413af0ccc168e2221584ba375aecedaac386bced47eaaf8c0fea1a15ae",
+      "bytes": 2095
+    },
+    "frontend_ide/scripts/icon-notices.mjs": {
+      "sha256": "debb6f566259bf19dfd12557eb13f84efdf210a897684966d18ae09b049b16c9",
+      "bytes": 887
+    },
+    "frontend_ide/scripts/navigation-step4-check.mjs": {
+      "sha256": "2ae82d6f4eaa8e2a92e9a203a84c8c069c0a3b1e97390e2ef9355fc48e88208a",
+      "bytes": 13527
+    },
+    "frontend_ide/checks/ai-search.test.mjs": {
+      "sha256": "3790dd4c55849207c63caccfd04464478aa2cdd39495ce6e623c399358c3c505",
+      "bytes": 10085
+    },
+    "frontend_ide/checks/all-displays-desktop-probe.cjs": {
+      "sha256": "a88c155179e24e324f4e684a83eac52312a7a801bfdd2e9041fceaca699e1bd8",
+      "bytes": 35931
+    },
+    "frontend_ide/checks/all-displays.test.mjs": {
+      "sha256": "9f78d99f86e6998b8191c129b285286f55d35d72df1570d146a54e05648a213d",
+      "bytes": 10535
+    },
+    "frontend_ide/checks/all-launchers-desktop-probe.cjs": {
+      "sha256": "a24b9e5688553ff99512f2db7440a23f90a4fbd8b9aa065067ae25028d1c5e5e",
+      "bytes": 8369
+    },
+    "frontend_ide/checks/auto-orbit.test.mjs": {
+      "sha256": "dbb3fea982464ad6846357a746bdd649c4bbd0c28aae57a0508c6233a10c8a1d",
+      "bytes": 21132
+    },
+    "frontend_ide/checks/browser-address.test.mjs": {
+      "sha256": "543219d4aacbc509088d55287c4aaa84f093da31796677aec0f5e80cbd325f40",
+      "bytes": 5880
+    },
+    "frontend_ide/checks/browser-cdp-errors-fixture.cjs": {
+      "sha256": "72329f073f06b8e5415bdcc562f77eb015ef58dfa263cc04ced12f29776d6b1b",
+      "bytes": 2324
+    },
+    "frontend_ide/checks/browser-cdp.test.mjs": {
+      "sha256": "3ee9942a9dfe69640784f66c3daaab39d7b90b429e14811fce370122b7ae083f",
+      "bytes": 12047
+    },
+    "frontend_ide/checks/browser-desktop-probe.cjs": {
+      "sha256": "e863738f75c25c165ee5b3c8ec983523df63c9b2a6794a802511679423a8cc64",
+      "bytes": 15580
+    },
+    "frontend_ide/checks/browser-draft.test.mjs": {
+      "sha256": "254f7dcd79db0edf1947376eb11fa6c9ec975ae0c9946bc6ec310d38a073b4f5",
+      "bytes": 8670
+    },
+    "frontend_ide/checks/browser-fullscreen-state.test.mjs": {
+      "sha256": "2f844e2362674e1a1fbea36485622f4877b1e27974aaa5c2cd48cb1a7b8b70e0",
+      "bytes": 4162
+    },
+    "frontend_ide/checks/browser-glass-native.test.mjs": {
+      "sha256": "ec490cf26f14eac087c01f0990bd256862516410ba36099192dbe805041c11e3",
+      "bytes": 7763
+    },
+    "frontend_ide/checks/browser-glass-renderer.test.mjs": {
+      "sha256": "d3308672419bb6d747e52fe7fb26d48b7c3f8f2b3f8d8183844ad901dc183b54",
+      "bytes": 4235
+    },
+    "frontend_ide/checks/browser-header-style.test.mjs": {
+      "sha256": "2244b8c4b57c2895f7dca423a8e953a685d4c524a9ba395f0f19b049bdcbfeee",
+      "bytes": 4652
+    },
+    "frontend_ide/checks/browser-integration-regressions.test.mjs": {
+      "sha256": "08e2eaa52849b3fdb93c90a7064aaf2fb97c3822cf80010a1a2271d483dc5295",
+      "bytes": 23004
+    },
+    "frontend_ide/checks/browser-loading.test.mjs": {
+      "sha256": "c95bac9374bc91b85cff0ce90fa2207d3a869a451a52b7ed55d59a4142aaf55c",
+      "bytes": 2361
+    },
+    "frontend_ide/checks/browser-new-tab-fixture.cjs": {
+      "sha256": "2fa8b595bcf8cb8d9c99576b336211c9c232307152b99980950e2f0e2bfd9fcf",
+      "bytes": 2286
+    },
+    "frontend_ide/checks/browser-size-motion.test.mjs": {
+      "sha256": "f4eb3b006c6e0298c40528bd2592ad1778332f812359dec5c4b0a9c5b98a4210",
+      "bytes": 10260
+    },
+    "frontend_ide/checks/browser-viewport.test.mjs": {
+      "sha256": "9c1b4febf20530caa34fcfe92ea71304f9e045f96b0fa1301298bc7943986aa2",
+      "bytes": 11294
+    },
+    "frontend_ide/checks/browser-window-probe.cjs": {
+      "sha256": "067a7282fc197ffb3f004dfe1a7e7d352027cb11b3783b508995ca962ac69257",
+      "bytes": 18486
+    },
+    "frontend_ide/checks/browser-window-title.test.mjs": {
+      "sha256": "9afde5c450100333a0e45c2f7386d2042bd7f33abd20118d232052baebc712e6",
+      "bytes": 5578
+    },
+    "frontend_ide/checks/browser.test.mjs": {
+      "sha256": "9bf5be4d8e36d4a0d7e30572a4e279c6755cd33960b2c96a28c92c1625c9f5c3",
+      "bytes": 13367
+    },
+    "frontend_ide/checks/chat-attachments.test.mjs": {
+      "sha256": "942ff63ca3d40c98da07b811da0b8d52fb70234d67b9061a93f91625fe3edf32",
+      "bytes": 10472
+    },
+    "frontend_ide/checks/cli-console.test.mjs": {
+      "sha256": "04af1d256f63c2537c4e8fa87aa75a62bf3111cc748a5f85d4a278e582344d9a",
+      "bytes": 12138
+    },
+    "frontend_ide/checks/cli-launch.test.mjs": {
+      "sha256": "0f1d6bc28133c98a08fd804267f97bfe2e7aa63f884fb3d47c0972b2e3e0b5f8",
+      "bytes": 13179
+    },
+    "frontend_ide/checks/cli-owner-launch.test.mjs": {
+      "sha256": "5c3ac348576549a719a26f00d35f2762c04c958fc577f1d523b6acb8f2f62420",
+      "bytes": 6792
+    },
+    "frontend_ide/checks/cli-parallel-lifecycle.test.mjs": {
+      "sha256": "36e257c34965988898f726d5fc9aca06e25083a51e47864b41592a1342eddeaa",
+      "bytes": 17699
+    },
+    "frontend_ide/checks/code-drag-desktop-probe.cjs": {
+      "sha256": "3931942a8ac9dc938eca87c4d25e3d4325ba659cc9d775961ad321d8fc6cfc7d",
+      "bytes": 2801
+    },
+    "frontend_ide/checks/code-drag.test.mjs": {
+      "sha256": "4b96e435449ec9817224da3feaec8352e9bee2dd6cf0a1a9b49fb9dee9dad7a8",
+      "bytes": 17652
+    },
+    "frontend_ide/checks/code-file-attachments.test.mjs": {
+      "sha256": "78b908e46653f80088e851801442cc61b5e77358d8e47e6d2610b45ba3641b67",
+      "bytes": 11370
+    },
+    "frontend_ide/checks/code-model-picker.test.mjs": {
+      "sha256": "2ae841352d348fd4b0685deaacc10737ca34270687e405dff84555ebcd32a3de",
+      "bytes": 9221
+    },
+    "frontend_ide/checks/code-navigation-run.test.mjs": {
+      "sha256": "cf85062d3528e644e32e41952e7b9d3fecdf856c06fcc99e1a6b82b0ae7ac89c",
+      "bytes": 27808
+    },
+    "frontend_ide/checks/code-navigation-server.test.mjs": {
+      "sha256": "69286038cc3a6923e7cc2522940ed53b4f1f3939e426051a179568c07f121db9",
+      "bytes": 12235
+    },
+    "frontend_ide/checks/code-notification-ownership.test.mjs": {
+      "sha256": "c4e873994c18dceb72264b77c0fa4b2678743cbdc3b27b4dd8aef9cdc3f88de5",
+      "bytes": 10055
+    },
+    "frontend_ide/checks/code-progress-motion.test.mjs": {
+      "sha256": "60a779a80fa9739df8b914126e710ed146a285988e2a4e15f23512eb08970d68",
+      "bytes": 9338
+    },
+    "frontend_ide/checks/code-transition-handoff.test.mjs": {
+      "sha256": "82afb6b1571fa8d39ac24b1acc4544cab4e09af810cb1c947f66845b6ec03a8a",
+      "bytes": 30451
+    },
+    "frontend_ide/checks/code-window-title.test.mjs": {
+      "sha256": "3b1d4f9a3a0e8e2bca83b0be9f6956bba921342dfdb430c5f1f772b14158335f",
+      "bytes": 23146
+    },
+    "frontend_ide/checks/component-paths.mjs": {
+      "sha256": "e703387b44ab15494cecdadd9f2d6f994a8cdb20c5ccf4c6e3e0c612463375b8",
+      "bytes": 2273
+    },
+    "frontend_ide/checks/connection-bar-size.test.mjs": {
+      "sha256": "10a0bddb2a66501bac7bdd8762189a74d9b1d99d127af888a4c2f0aa443551bc",
+      "bytes": 1866
+    },
+    "frontend_ide/checks/console-child.cjs": {
+      "sha256": "77658f7cd1ea584f573b7da3ac74174d17f3c7b3ef64c57eea787f771d1679ab",
+      "bytes": 718
+    },
+    "frontend_ide/checks/console-desktop-probe.cjs": {
+      "sha256": "1bbc41ae9a5adba502d8eb0be51218d8a855b1f5b87893bb8237ce465818a795",
+      "bytes": 7052
+    },
+    "frontend_ide/checks/console-encoding.test.mjs": {
+      "sha256": "d4f8e1f1ca045972156e8ca4da2373fcd35de5a593ad2ed838b415bd88e47d29",
+      "bytes": 7116
+    },
+    "frontend_ide/checks/console-enter-pty.test.mjs": {
+      "sha256": "8f486a525da02dfc3f4949315d7d9bb0e285dcf00b73291b1ec3f556f7f63708",
+      "bytes": 4379
+    },
+    "frontend_ide/checks/console-focus.test.mjs": {
+      "sha256": "b589b7088e69da43eefc330e877c9e8b9942f9ac4c0eb0cb90d960857785c419",
+      "bytes": 6938
+    },
+    "frontend_ide/checks/console-icon-title.test.mjs": {
+      "sha256": "c0d1a704905504f6d9f2783af1eff41432487964ac08de5a4ee30a32f6ab090a",
+      "bytes": 1383
+    },
+    "frontend_ide/checks/console-keyboard.test.mjs": {
+      "sha256": "000b0e7122abff501df9a64f0e738625bb54d98d18af69c9305d3d4c389c4e35",
+      "bytes": 15627
+    },
+    "frontend_ide/checks/console-size.test.mjs": {
+      "sha256": "73f21a0d4c8d0ccf71e269cf2592826475f7db73fa576b67945cf756d4529e58",
+      "bytes": 18952
+    },
+    "frontend_ide/checks/console-window-title.test.mjs": {
+      "sha256": "32e634df54199d3ba1ab55b876ae3c12ad85bb65fe31f97ca3279b6f6e14c986",
+      "bytes": 5043
+    },
+    "frontend_ide/checks/console.test.mjs": {
+      "sha256": "c7b38b6b68835a40edccb5723787b2f35194da8348ecfc95f5ccf2bc6f8caccd",
+      "bytes": 11207
+    },
+    "frontend_ide/checks/core-stop-probe.cjs": {
+      "sha256": "dd7d8b24e49713f7769f49f7a22834a44d073f6eca23355b429f089f2c1eeef4",
+      "bytes": 7512
+    },
+    "frontend_ide/checks/desktop-probe.cjs": {
+      "sha256": "edb5f9ca06bea42412bb081d68ff9d125382877bd43f7f5ad1861835fbefa2b7",
+      "bytes": 5597
+    },
+    "frontend_ide/checks/desktop-process.test.mjs": {
+      "sha256": "083416380d5710dce4e07ece129a2f8f9652cc34bb6e62371bcfdb5758df8ad1",
+      "bytes": 2300
+    },
+    "frontend_ide/checks/desktop-session.test.mjs": {
+      "sha256": "1b000c83366c1ecba500657e08f7775c4d1e51c1eaf81cf67f9d29a09b6bdd00",
+      "bytes": 10373
+    },
+    "frontend_ide/checks/draft-handoff.test.mjs": {
+      "sha256": "7c9431ea0345b54f59612b57583ce5dff6347f271853c11bf1efc89b9dd847b3",
+      "bytes": 14436
+    },
+    "frontend_ide/checks/draft-target-registry.test.mjs": {
+      "sha256": "51f3149616a4b7560822ff49682dc61d09c3b8a52310db78d08957774937f29a",
+      "bytes": 2344
+    },
+    "frontend_ide/checks/draft-target-selection.test.mjs": {
+      "sha256": "3d5c6acf3774ed161aac487f5d0e4510810a2a0ef07d2493f5c284ec3ba21677",
+      "bytes": 15283
+    },
+    "frontend_ide/checks/Electron表示統合確認.cjs": {
+      "sha256": "3d33ef0ecfc6722638fbf28e64a73a64d546246d12771cf2df9e2b0939653708",
+      "bytes": 4157
+    },
+    "frontend_ide/checks/Electron表示開始試験.cjs": {
+      "sha256": "ef794870c0ab7d1d41f95f88d0e2127ee68194fa948012ead0e483444c5755ab",
+      "bytes": 5570
+    },
+    "frontend_ide/checks/Electron透明表示目視.cjs": {
+      "sha256": "3fe515f60beae5b5927a201853a12e7878daa533f52dc6bb6db3680503f59fd1",
+      "bytes": 4014
+    },
+    "frontend_ide/checks/embedded-pin-size.test.mjs": {
+      "sha256": "c6f08c98d0c8e583a8ee8f2b4263d50f1162c0fd2c56024cb8c7f9419daf81ce",
+      "bytes": 1720
+    },
+    "frontend_ide/checks/explorer-actions.test.mjs": {
+      "sha256": "139231646dee8b4655d2baee8ff0dd78a3a94045a3e032838547c5769233121c",
+      "bytes": 16758
+    },
+    "frontend_ide/checks/explorer-component-desktop.cjs": {
+      "sha256": "8d90c5265d2fddd4f75c2e79738fed469cac0cbcffb750cc6e8eff718ccf3e41",
+      "bytes": 13453
+    },
+    "frontend_ide/checks/explorer-drag.test.mjs": {
+      "sha256": "745c4405ffabafec82fff53454371a37dcb74f0a2d16fd0782bbd9a5112b586f",
+      "bytes": 5932
+    },
+    "frontend_ide/checks/explorer-files.test.mjs": {
+      "sha256": "b4c216871a2b68baf12a9bed15c87d3163265b0ef995c59c3856500d400202c5",
+      "bytes": 26225
+    },
+    "frontend_ide/checks/explorer-navigation.test.mjs": {
+      "sha256": "7e4a41233be1915f97e5d282dcfe844cc2bcd530bb0ccff7dddfb8390be23300",
+      "bytes": 25703
+    },
+    "frontend_ide/checks/file-actions.test.mjs": {
+      "sha256": "2314db8cd43303ce921310ae4861720f9b7e1a6be30400748165db17e33f1026",
+      "bytes": 4583
+    },
+    "frontend_ide/checks/file-analysis.test.mjs": {
+      "sha256": "999aa07741746132593ea1b253d73bfe55aebca35f858297406e35d1cf3312ae",
+      "bytes": 6470
+    },
+    "frontend_ide/checks/file-dates.test.mjs": {
+      "sha256": "e99f1b45889312e982668035ca275e16664f05d2c8178863cfedcb8676419e03",
+      "bytes": 4899
+    },
+    "frontend_ide/checks/file-history.test.mjs": {
+      "sha256": "aa433aecb162068f5467914ce0d73729e7dc5ae780bbb0fa074220678def56a7",
+      "bytes": 7540
+    },
+    "frontend_ide/checks/file-icons.test.mjs": {
+      "sha256": "3bac2beb4d8d37e4f13b876f96de395a3aebd286b78143b4042d381c96dc8e72",
+      "bytes": 12935
+    },
+    "frontend_ide/checks/file-reference.test.mjs": {
+      "sha256": "4edd1856def671c442babeb7935d60f5d0e3cc1cae9dd174c0dbb5093795112a",
+      "bytes": 2063
+    },
+    "frontend_ide/checks/folder-monitor.test.mjs": {
+      "sha256": "82ac9101c784ac3d9b9fa96cc6be4cba20338bc297cdf1fd8fa29ec2b10ab170",
+      "bytes": 4556
+    },
+    "frontend_ide/checks/folder-pages.test.mjs": {
+      "sha256": "189011d7983781dbc3fb9cb665057a6291c0b6ef9cbb6581aa520d8d869fb817",
+      "bytes": 75868
+    },
+    "frontend_ide/checks/host-fixture.js": {
+      "sha256": "5e803f458c5a1df790a6809f29d1015d7c7348582eea393033db9ff42caabdaf",
+      "bytes": 4316
+    },
+    "frontend_ide/checks/ide-center-move-probe.cjs": {
+      "sha256": "569de5a3e11b33226b8728273ec4d33a8b4bb8d1310e083bed4b167fd6c533c2",
+      "bytes": 6760
+    },
+    "frontend_ide/checks/ide-pin-order-desktop.cjs": {
+      "sha256": "bc474c787b94e16c927c52b3ce6250fef9669ab633ed908c712a927de5173d35",
+      "bytes": 4642
+    },
+    "frontend_ide/checks/launcher-preload.cjs": {
+      "sha256": "dbd5f1edf3332e638b8987c652aa519f823e0015139a0079bd7eebfa90c6ef17",
+      "bytes": 2668
+    },
+    "frontend_ide/checks/live-file-attachments.test.mjs": {
+      "sha256": "82863190d0218abb9628b1e0bd0df92fb47db1d66109088d2154ca34e22ce1f8",
+      "bytes": 15835
+    },
+    "frontend_ide/checks/live-model-picker.test.mjs": {
+      "sha256": "2b6b6c27ef55228fda44bf4159c57b6407abd98b6d0476c1c32c8fe17c2037e5",
+      "bytes": 21053
+    },
+    "frontend_ide/checks/live-visibility.test.mjs": {
+      "sha256": "3e7df4aef493b10679f402c1cd67f23691ef4912de41c6ea2c774aed6709b915",
+      "bytes": 14677
+    },
+    "frontend_ide/checks/local-cmd-launchers.test.mjs": {
+      "sha256": "baf8f7b0cc4ee4c4da3ce2acbef0f0ba077dc14d4b65ad9381a986d3645b3404",
+      "bytes": 1811
+    },
+    "frontend_ide/checks/manual-drag.test.mjs": {
+      "sha256": "f46b1db4e4a17eb31e7127702b4d27c511958c66c69d2a3f7f43dbc19b50ed69",
+      "bytes": 8232
+    },
+    "frontend_ide/checks/markdown-pdf.test.mjs": {
+      "sha256": "7acf07e6a9c07727fa2bdb4be5bf646cd3de9453f2db047c45b49b0559340d46",
+      "bytes": 7891
+    },
+    "frontend_ide/checks/markdown-preview.test.mjs": {
+      "sha256": "906efe2ed7e2bf5408f4f7a1e8f2cc2bfb6d22c27a5acfde04b4cc374acc47a0",
+      "bytes": 5433
+    },
+    "frontend_ide/checks/module-layout.test.mjs": {
+      "sha256": "5878fa37ed756d2326ced5d1e5461e8763f802c9805feba3606d24b642ce8100",
+      "bytes": 5388
+    },
+    "frontend_ide/checks/module-move-desktop-probe.cjs": {
+      "sha256": "1abdb3e87dceeae78743e96b9614feabcca7ed1727f2a37efead8c66ee018e96",
+      "bytes": 8758
+    },
+    "frontend_ide/checks/monaco.test.mjs": {
+      "sha256": "1db80acaac6b7b221dda15585754bfc28831a0e32df80d23e8b5821bb342d9ae",
+      "bytes": 2971
+    },
+    "frontend_ide/checks/monitoring.test.mjs": {
+      "sha256": "775335d7ec613ec8f92dc142026b4db1afd9160650d34cc8af6222d2a0a85172",
+      "bytes": 17518
+    },
+    "frontend_ide/checks/native-input-desktop.cjs": {
+      "sha256": "40258e3fe114dda388c1ebf7d8a070c4af64796e3b270992bb7b231e116a9fad",
+      "bytes": 6606
+    },
+    "frontend_ide/checks/native-preview-actions.test.mjs": {
+      "sha256": "75eada40059919e363c303f7e69cfed0ad3ded0d086f46c0d8c0f10796562d80",
+      "bytes": 22255
+    },
+    "frontend_ide/checks/native-window-move.test.mjs": {
+      "sha256": "2b5b8470196a5b99ea777a0472a1580ea5a7c42bf3ab3ee88c0570cd447ffd44",
+      "bytes": 28489
+    },
+    "frontend_ide/checks/navigation-aquarium.test.mjs": {
+      "sha256": "4eeba7fa2cf1ad9eb386227bc3657667eda662049cc749f0df7145100c77649a",
+      "bytes": 17475
+    },
+    "frontend_ide/checks/navigation-autopilot-ui.test.mjs": {
+      "sha256": "8b6a129978ba84d92f35ea5962aeeb7681ab729ccd6c309c83a74a06af2e76e5",
+      "bytes": 17570
+    },
+    "frontend_ide/checks/navigation-autopilot.test.mjs": {
+      "sha256": "e5e8ebc9c95e7131bb33e4c0eef3ab837bde3ea55c704260318d0597894f315d",
+      "bytes": 3899
+    },
+    "frontend_ide/checks/navigation-button-input.test.mjs": {
+      "sha256": "a66becef2d3b5337a9eda78d4c045ae627826e30d4224eb02ee08fe555e0f3f4",
+      "bytes": 5769
+    },
+    "frontend_ide/checks/navigation-cancel-ui.test.mjs": {
+      "sha256": "9fe3a95c797a9e6252f138b7961dcc5052d90dd3d6503eb8fe8b3df0830a56d3",
+      "bytes": 9538
+    },
+    "frontend_ide/checks/navigation-cancel.test.mjs": {
+      "sha256": "97bc4fadb757fd72ee2d9d663d3cfc10c9ac5b0dc0798df0bcba545acf49aea8",
+      "bytes": 9161
+    },
+    "frontend_ide/checks/navigation-code-host.test.mjs": {
+      "sha256": "0f8b4360636b56c11d990b44cbea5aa16a9cedfee383137de984488daf9e08e2",
+      "bytes": 4993
+    },
+    "frontend_ide/checks/navigation-code-window.test.cjs": {
+      "sha256": "0b46d3bf1ae823556d1c00b6060db1a2576c870900241eb89622aadda0ee853b",
+      "bytes": 10666
+    },
+    "frontend_ide/checks/navigation-cruise-title.test.cjs": {
+      "sha256": "6c05f1805b0d4aa04574d22251cd358c56c2246afaa94da2609e2c807022fa52",
+      "bytes": 4090
+    },
+    "frontend_ide/checks/navigation-desktop-probe.cjs": {
+      "sha256": "3602fc98c853fd95f8355002769103ed1804ff9b1b60a2ef1fac4ec119f7fdf7",
+      "bytes": 8179
+    },
+    "frontend_ide/checks/navigation-dimensions-probe.cjs": {
+      "sha256": "b76ec72d83b65fb53eadacc034de0a24f322820cc5e300e632c483bfaa0a7730",
+      "bytes": 8785
+    },
+    "frontend_ide/checks/navigation-draft.test.mjs": {
+      "sha256": "b19abc6f4001f7218dc55b0032c262ac4b250029d459003b401b0f95636546fe",
+      "bytes": 3978
+    },
+    "frontend_ide/checks/navigation-embedded-draft.test.mjs": {
+      "sha256": "33c10a1f05c056b8a438c76503e8d129fbb2030bc419ea2d103ada841952abe8",
+      "bytes": 10392
+    },
+    "frontend_ide/checks/navigation-failure-audit.mjs": {
+      "sha256": "b2a0e33b261293c2caf72b6ff0a40b4d1877a2abd4e07fcf1cd78e4cb09c94a1",
+      "bytes": 5718
+    },
+    "frontend_ide/checks/navigation-failure-hermes.py": {
+      "sha256": "2496901bb07db8192a51ca320c3afa08b9ca0f367d015de5c5be490e39183e0e",
+      "bytes": 4321
+    },
+    "frontend_ide/checks/navigation-guide-capture.mjs": {
+      "sha256": "bc60455e53c3869274127b80330445cfea3f059dd520cb8f2331c8d3f32262d3",
+      "bytes": 6710
+    },
+    "frontend_ide/checks/navigation-harness-audit.mjs": {
+      "sha256": "4ee4ac3be8a2a3160e0aff8a4ba117c736f68a6063067097ea52ea640d1ac16b",
+      "bytes": 5055
+    },
+    "frontend_ide/checks/navigation-kaleidoscope.test.mjs": {
+      "sha256": "c9e705393853b931afdb3f601550edd32b6d1f56dc79f73c245f00646bfb09ed",
+      "bytes": 6462
+    },
+    "frontend_ide/checks/navigation-launch-size.test.mjs": {
+      "sha256": "3df7d1cf6f039b179014b9360989b65af118f665fc2ddd2b79a17fc0b20db6d9",
+      "bytes": 4016
+    },
+    "frontend_ide/checks/navigation-layout.test.mjs": {
+      "sha256": "b8c5106e0546574d46a312edec1c662da322769d8ba0f087aacee6dc7152dedd",
+      "bytes": 23108
+    },
+    "frontend_ide/checks/navigation-maze.test.mjs": {
+      "sha256": "f94fce7c952f11d289af045e429356e064c2d32659c3b3bd3e286da27ec0b5a3",
+      "bytes": 6477
+    },
+    "frontend_ide/checks/navigation-message.test.mjs": {
+      "sha256": "97e3fa73fddeb957f417224d9a5c706f280ce6a4df7c8d55a630454d4b857893",
+      "bytes": 4230
+    },
+    "frontend_ide/checks/navigation-mock-observer.mjs": {
+      "sha256": "37c7f172740a39c074d0f695ac76f7e88e01cc294f274473afa90a33a4435cc1",
+      "bytes": 3425
+    },
+    "frontend_ide/checks/navigation-mock-suite.mjs": {
+      "sha256": "349b987263cb1f9101814c45ece902f04afd4a7d9c5df61bdacd31dec1c4e401",
+      "bytes": 8627
+    },
+    "frontend_ide/checks/navigation-mock-support.mjs": {
+      "sha256": "a988b20ea9b5d5cc835a51b463427af4035fcad4c1dff83505ec4730b7327799",
+      "bytes": 2679
+    },
+    "frontend_ide/checks/navigation-parity.test.mjs": {
+      "sha256": "7ca01f832ef7084290d1a511df4d8be93f5d15f598c5e3786ab42395a158ffdd",
+      "bytes": 70756
+    },
+    "frontend_ide/checks/navigation-popup-size.test.mjs": {
+      "sha256": "f9d23ff3d5f30e3793f92a71d7f9c928ba17044d5bb3f2834d1b95fd78dcfd9d",
+      "bytes": 4380
+    },
+    "frontend_ide/checks/navigation-recovery.test.mjs": {
+      "sha256": "d1d65a4f1c5bb3aaadb3c59032f180abec5a565f8e35a6684a745d2c7b78c7fe",
+      "bytes": 27831
+    },
+    "frontend_ide/checks/navigation-request.test.mjs": {
+      "sha256": "4d1ebe19e6a2a18fd1c795b8c34cd81c51c17246db7ddbf1a61a7624c6b643f6",
+      "bytes": 6010
+    },
+    "frontend_ide/checks/navigation-scene-menu.test.mjs": {
+      "sha256": "d95e94c1a01d54d96274d97537ec53d2d541da246bcf0f032f87599a9e49fba2",
+      "bytes": 7389
+    },
+    "frontend_ide/checks/navigation-scene-picker.test.mjs": {
+      "sha256": "ec3484a3461093bb9dfb76b4885c317c96071ee6dddf550ae342868d6066106f",
+      "bytes": 6498
+    },
+    "frontend_ide/checks/navigation-scenery.test.mjs": {
+      "sha256": "ea845feae674f0165de557fb5604bec28d491c57485c9814c87152325ff053aa",
+      "bytes": 25209
+    },
+    "frontend_ide/checks/navigation-size.test.cjs": {
+      "sha256": "c20af1b66c230b5ca0adaa53b770c9a90398230c589a89106222d2dab7b7a01d",
+      "bytes": 3722
+    },
+    "frontend_ide/checks/navigation-standalone-probe.cjs": {
+      "sha256": "f59f312b17fc00dcd7df45777e28810c6a5fb0a49460f7592776602bee733e6f",
+      "bytes": 6187
+    },
+    "frontend_ide/checks/navigation-standalone.test.mjs": {
+      "sha256": "2e7f719479946a3a9021265d29b17106b7b791655570352fca23d321b5b6b99e",
+      "bytes": 3905
+    },
+    "frontend_ide/checks/navigation-stop-electron.cjs": {
+      "sha256": "81f7c8d6486f19b329f2f01f8d3ceaa7e5e7c7869780c99b39a0bf3e781910c2",
+      "bytes": 4933
+    },
+    "frontend_ide/checks/navigation-stop-real.mjs": {
+      "sha256": "4a1d203c25b83fa96a50af45fa97c6659a4c8a1bd2f20d0bc235f863bfd4ce9d",
+      "bytes": 5323
+    },
+    "frontend_ide/checks/navigation-timeout-audit.py": {
+      "sha256": "82248a17455624b098f844d50c7611575ca0b1e67914bcec446e97a2409668c0",
+      "bytes": 2943
+    },
+    "frontend_ide/checks/navigation.test.mjs": {
+      "sha256": "45a7deff0df5492735e4816242f01b38940cc684c8cea64730a2255640e29741",
+      "bytes": 44849
+    },
+    "frontend_ide/checks/orbit-guide.test.mjs": {
+      "sha256": "5f05a4d348038068cd21b79c9b176efb03ec2604771ce5c2487673f2d88d8f4d",
+      "bytes": 1065
+    },
+    "frontend_ide/checks/orbit-route-probe.mjs": {
+      "sha256": "ce98b36bd0b7fd9b41af6140179d92105306b0239992e467cdac7b08ae1433ac",
+      "bytes": 2105
+    },
+    "frontend_ide/checks/panel-controls-desktop.cjs": {
+      "sha256": "d993385803879d683e724d9126a33d15023ab23d56df9415e1ce2294b1bb8272",
+      "bytes": 24348
+    },
+    "frontend_ide/checks/panel-desktop-probe.cjs": {
+      "sha256": "bf903ca59708f2ef50f1f9285341317a8561a097eaca5099c0996f79581870b3",
+      "bytes": 22783
+    },
+    "frontend_ide/checks/panel-hold-drag-desktop.cjs": {
+      "sha256": "1f2c346c3689c2892900ec4b342b40ba278538e67206e94a543c2c4c36aba0b2",
+      "bytes": 12188
+    },
+    "frontend_ide/checks/panel-lifecycle.test.mjs": {
+      "sha256": "d661f6c961dfa656e0caa8e68b29c7975bd11dc34d1df01dde4eb7bb3b686ced",
+      "bytes": 8217
+    },
+    "frontend_ide/checks/panel-perimeter.test.mjs": {
+      "sha256": "60504353fe148ab1ee3973042b1b01a7db80c15de779cc510c95954fb70cebb0",
+      "bytes": 1297
+    },
+    "frontend_ide/checks/panel-recovery.test.mjs": {
+      "sha256": "65ed80bf259677ae60be59f14828d2982373addb5c19c3e038406af45efe8f82",
+      "bytes": 21371
+    },
+    "frontend_ide/checks/panel-windows.test.mjs": {
+      "sha256": "70c8429769cb496a678159d01dde39192f3fc27b68feb52f720db1d1f1d21b8f",
+      "bytes": 17833
+    },
+    "frontend_ide/checks/preview-actions.test.mjs": {
+      "sha256": "5b0b9cd6de2f3780ee64d9f0a1f0498709ab08374b432b77e0d564dcf7433ed9",
+      "bytes": 12758
+    },
+    "frontend_ide/checks/project-instance.test.mjs": {
+      "sha256": "e81ae61702cad53c445c3933392f5fb147b20fba921fcceea08bea1ff168031d",
+      "bytes": 14152
+    },
+    "frontend_ide/checks/registered-html.test.mjs": {
+      "sha256": "a7d2cbb0d5f2851d0c1f51398561328c839f9adcfef0bcc50e7cb4fd11a874b0",
+      "bytes": 5584
+    },
+    "frontend_ide/checks/route-expansion.test.mjs": {
+      "sha256": "18eec64c966692d165414177114bf95c3f77af286a0dc4f5dedb3083878e0d2b",
+      "bytes": 3939
+    },
+    "frontend_ide/checks/route-records.test.mjs": {
+      "sha256": "7fdd8a85853bfd8f80608c257cba87e0b3b8867c6c286591c6de5546c4545ac1",
+      "bytes": 5365
+    },
+    "frontend_ide/checks/route-tree.test.mjs": {
+      "sha256": "56cb36d62b047df380fd597223de4dda4b62e04e5c6958012db3716cf8ebbfda",
+      "bytes": 3763
+    },
+    "frontend_ide/checks/runtime.test.mjs": {
+      "sha256": "d5362c8b2def3403a911cd7515d9c321b5cdd9a6faddebb50108e1fa348c84ee",
+      "bytes": 7250
+    },
+    "frontend_ide/checks/search-route-records.test.mjs": {
+      "sha256": "11a96ebcbc63daad7e4f3f1df69380e8cac69a4c634602070342c234b457adfd",
+      "bytes": 4726
+    },
+    "frontend_ide/checks/single-instance-probe.cjs": {
+      "sha256": "cb0a280618fb8d3a63fe00b0c544242447f5dccc7eca97ab715f4f8c51cd72a1",
+      "bytes": 2467
+    },
+    "frontend_ide/checks/space-mode.test.mjs": {
+      "sha256": "2f986ae45528e2b6de0537bcd4d0611c71da28bae5998091ad2de664b3167aea",
+      "bytes": 47536
+    },
+    "frontend_ide/checks/standalone-browser-desktop.test.mjs": {
+      "sha256": "06d2f2fba8c8b3eed0f1c3ea1a4d79a19d48be2a9139a132621c57ae20be7d27",
+      "bytes": 17092
+    },
+    "frontend_ide/checks/standalone-browser-server.test.mjs": {
+      "sha256": "36dd78c71c8ccd3afc85e43ba46294b88af24535a2909bb4de693a637b8e4c6b",
+      "bytes": 3475
+    },
+    "frontend_ide/checks/star-depth.test.mjs": {
+      "sha256": "625945848fe53f83ddd0e2f7cb517dcd780861435a87f970dccadae9d03a0ea7",
+      "bytes": 35172
+    },
+    "frontend_ide/checks/task-desktop-probe.cjs": {
+      "sha256": "7868db531bbd57d1ed9415bc403cf90fbc59bf537d5cc21d9d0edec85000f495",
+      "bytes": 6098
+    },
+    "frontend_ide/checks/task-login-feedback.test.mjs": {
+      "sha256": "31edce303eb472c8170a68765740c8854a097dd4841756bb10cfde941f72bec6",
+      "bytes": 3010
+    },
+    "frontend_ide/checks/task-session.test.mjs": {
+      "sha256": "cab9e34368f5655124435146bb05c8af87c39e96e7f91c54f198385dda2298d9",
+      "bytes": 4909
+    },
+    "frontend_ide/checks/task-team-icons.test.mjs": {
+      "sha256": "4439d88315c544c0727cdb5ee862911bc249fae4ec98edb653eae06ff23c1b4f",
+      "bytes": 1750
+    },
+    "frontend_ide/checks/task-team-launchers.test.mjs": {
+      "sha256": "ee31ae3017f166041585b80bcdd6634ec9b776e080266f54168925579ee22cea",
+      "bytes": 2534
+    },
+    "frontend_ide/checks/task-windows.test.mjs": {
+      "sha256": "985bbe69bb45752e49da69d076d568d1aaf37913c29abe155ed499d961a8eaf6",
+      "bytes": 8130
+    },
+    "frontend_ide/checks/taskteam-auth-expiry.test.mjs": {
+      "sha256": "b9cc2b393952f6d59a9ff74a75230a233bc4bf07720b693afc1730456382f47a",
+      "bytes": 3025
+    },
+    "frontend_ide/checks/taskteam-project.test.mjs": {
+      "sha256": "4e9ef8e5d832384c3854d0d536f679e1355ecda0aa0e2b45a1c1b3bd0c953c5a",
+      "bytes": 3647
+    },
+    "frontend_ide/checks/taskteam-proxy.test.mjs": {
+      "sha256": "2825a083f2cc4f786ecf1f586c2bc56e49d0690571599118087d622894c3273a",
+      "bytes": 7121
+    },
+    "frontend_ide/checks/taskteam-root.test.mjs": {
+      "sha256": "81ec02e33580fd64f4ebf6f5af4e0a817f2f201e0dca3b579f75819df81f3171",
+      "bytes": 10668
+    },
+    "frontend_ide/checks/taskteam-server.test.mjs": {
+      "sha256": "9cc53c6ecce5b263ba96c987dcfeb73c69f786bbbbe2a21383d61d6faab58e09",
+      "bytes": 1568
+    },
+    "frontend_ide/checks/taskteam-ui.test.mjs": {
+      "sha256": "c91c76defbc8effb8a3bb99af614c39d333575bbdbbc401dae0cf29689e2bb70",
+      "bytes": 6016
+    },
+    "frontend_ide/checks/test_browser_cdp_errors.py": {
+      "sha256": "e61b2e11967191349d73cb66678baab241e2447a6817d7dbd92e92b3860444d7",
+      "bytes": 14311
+    },
+    "frontend_ide/checks/test_browser_new_tab.py": {
+      "sha256": "9a138813c58182fd9cfdbe3f52c96b99bddcd1b8b4b930942b3bf23e35daac55",
+      "bytes": 12399
+    },
+    "frontend_ide/checks/test_browser_sessions.py": {
+      "sha256": "af2f6f8d774a4a38dfaba75a9d4de94e9c7521d3295ae1926410224a5e9cf6e6",
+      "bytes": 12429
+    },
+    "frontend_ide/checks/test_lifecycle.py": {
+      "sha256": "ac8052f2e1a9bf17434c9ea9e21c395d3df2a3a7d1ebdcf439af4e47da65a679",
+      "bytes": 8348
+    },
+    "frontend_ide/checks/test_navigation_readonly.py": {
+      "sha256": "b9d62611f5b57a118f9dcfcafea681184faf062202064ffceaf1fc8c74c7fad1",
+      "bytes": 7296
+    },
+    "frontend_ide/checks/test_runtime_requirements.py": {
+      "sha256": "787ac26821e74f9299607b93d6a8f14c6e178d351e914b3beb6b14e9f8542dbc",
+      "bytes": 12824
+    },
+    "frontend_ide/checks/test_setup_best_effort.py": {
+      "sha256": "f70824a1bc6633158c7e535eb296dcab161ad348a9010693ae27f2220b16e3b8",
+      "bytes": 6835
+    },
+    "frontend_ide/checks/test_setup_output.py": {
+      "sha256": "6ca2c7e6e676852ace5621bd590252cffb2741571180118617180e75d2420449",
+      "bytes": 7551
+    },
+    "frontend_ide/checks/titlebar-theme.test.mjs": {
+      "sha256": "f2408551bd8c7ea926aa0b26e42b4b605b0ff7ec32b4853ce59d8fb2715d0a62",
+      "bytes": 9642
+    },
+    "frontend_ide/checks/transport-limits.test.mjs": {
+      "sha256": "5f34ce4d3ef28c7c517b0498de180a16569e30a1ff5489363ad8bd08ccb33405",
+      "bytes": 8080
+    },
+    "frontend_ide/checks/update-marks.test.mjs": {
+      "sha256": "29f433ec3ae0feb1d9e7681f236226e7ffaa14958d288d185635a2620f91fe21",
+      "bytes": 3280
+    },
+    "frontend_ide/checks/viewer-idle.test.mjs": {
+      "sha256": "a4372f94d2d9a7c2efaf1f931927533f0a78cb5e15669d43d4554fbf702e4119",
+      "bytes": 6690
+    },
+    "frontend_ide/checks/vr-panel-placement-probe.cjs": {
+      "sha256": "9540f3a410961d94ce50edcd74c46d078fa56ec0a5cf3f592ab33c19717c6ad5",
+      "bytes": 5163
+    },
+    "frontend_ide/checks/vr-panel-placement.test.mjs": {
+      "sha256": "c0d8feb2908e9c641c95fd6c0375a0b9c6594dacabaed55daa16e02ea2f092d0",
+      "bytes": 7558
+    },
+    "frontend_ide/checks/vr-panel-stacking-desktop.cjs": {
+      "sha256": "730ff13bef3f9e0dd4deeb428c12d94bd6787ad5b6ac2b91043851c6c4262d23",
+      "bytes": 6407
+    },
+    "frontend_ide/checks/vr-panel-stacking.test.mjs": {
+      "sha256": "3efb9e446f3e55693e75571aeb6c39771c5c21c100c263eb0627dbb140ee3ae7",
+      "bytes": 7013
+    },
+    "frontend_ide/checks/warp-camera.test.mjs": {
+      "sha256": "8b2e773beb68acb3ff631897c94c29fe626625d65917fdc4af4b9063f75f26e6",
+      "bytes": 7523
+    },
+    "frontend_ide/checks/warp-framing.test.mjs": {
+      "sha256": "37ca3d632e0d02713c73ae8dbca6b98c6a74cc4a9d14a4c48107de5945faa9a5",
+      "bytes": 11634
+    },
+    "frontend_ide/checks/window-layout.test.mjs": {
+      "sha256": "2d2ef45a341ddd172dc392979efdf1f7e00c8ad3cee8fac5f6ab6b2cc3de30e0",
+      "bytes": 13626
+    },
+    "frontend_ide/checks/window-move-probe.cjs": {
+      "sha256": "d1b97ee5c2d7369d884a66ed0891ec0a171eba84de37c87f795c0813df38e1ad",
+      "bytes": 13894
+    },
+    "frontend_ide/checks/window-opening.test.mjs": {
+      "sha256": "7d0ba6905cb631537f72e077cb648ba0fd1273c9550d0bc4d1adb607617d93dd",
+      "bytes": 4150
+    },
+    "frontend_ide/checks/window-pin-desktop.cjs": {
+      "sha256": "d92cf1691bbc22ddd7db774d1a78ce9152feaef000e492d824a5a4188938647c",
+      "bytes": 17396
+    },
+    "frontend_ide/checks/window-pin-renderer.browser.mjs": {
+      "sha256": "c599b2412036163aeef7c7f0487c85473194fb7dda91fe57444df7ce0983acb0",
+      "bytes": 15076
+    },
+    "frontend_ide/checks/window-pin-renderer.test.mjs": {
+      "sha256": "fd1bd27f25ad26f84ce385783d3f504bedf753684ba7baa3409091f795a49263",
+      "bytes": 10947
+    },
+    "frontend_ide/checks/window-pin.test.mjs": {
+      "sha256": "4cc17b50784e363b52ea61f2683b43df46b6e63a44c3d45273afc597ad09e675",
+      "bytes": 9698
+    },
+    "frontend_ide/checks/windows-probe.cjs": {
+      "sha256": "70a75ec42e04a5af8e673c56e7bc93015beebadae7a6923ad084b6d5cb72f49a",
+      "bytes": 12459
+    },
+    "frontend_ide/checks/workflow-components.test.mjs": {
+      "sha256": "43f93c153b296e0fee14720986409739cf64ab612e03d196bb93813829923e3d",
+      "bytes": 16598
+    },
+    "frontend_ide/checks/ナビ待機画面撮影/build.mjs": {
+      "sha256": "c624d91c724ff7df3fe70f8372a37c1169dd9eec289915699cabea0534aae335",
+      "bytes": 1447
+    },
+    "frontend_ide/checks/ナビ待機画面撮影/index.html": {
+      "sha256": "ca65857dad1e08e5e6ee45cedc61f153fdd1fc5b0a59ccecb270265283fa189d",
+      "bytes": 452
+    },
+    "frontend_ide/checks/ナビ待機画面撮影/main.js": {
+      "sha256": "02949ffff1f194757547ce7c0a5e82a2c961ebde4deb260a62549fbef0bf27c1",
+      "bytes": 1384
+    },
+    "frontend_ide/checks/ナビ待機画面撮影/shoot.py": {
+      "sha256": "52b18aa29e6e170c4fc0f526e651bf6057124c0295ce5c56102beda453d77f5a",
+      "bytes": 2159
+    },
+    "frontend_ide/checks/ナビ待機画面撮影/show.cjs": {
+      "sha256": "16a4fb9f234f5e95d2a8690e0cf4d75e2e1c8d497d4ec8cc1e9bfc132ca1a56a",
+      "bytes": 1099
+    },
+    "frontend_ide/ファイル機能/ai-search-history.mjs": {
+      "sha256": "bc0cecd35cef024f891572bd45f2357b6d85347acf534de6261ad78f68b4a554",
+      "bytes": 4911
+    },
+    "frontend_ide/ファイル機能/ai-search.mjs": {
+      "sha256": "13dfd843c03d5c599386d88e8d28937f2a15bc90ba4c0e4bda07a6584f40143c",
+      "bytes": 12321
+    },
+    "frontend_ide/ファイル機能/explorer-files.mjs": {
+      "sha256": "89cba6683967527ec8fa29a2a027e60fa29e50e2bdc70b14f6d32b82cc18c71b",
+      "bytes": 23642
+    },
+    "frontend_ide/ファイル機能/explorer-native.mjs": {
+      "sha256": "f4580f26b1197d48b9681591961be3c588fdafcb667e832a15d1948aac82ffc9",
+      "bytes": 3099
+    },
+    "frontend_ide/ファイル機能/explorer-windows.ps1": {
+      "sha256": "9c654043dbe52279f32eb65af525f7c854c3566cdf935e91670916adbd663723",
+      "bytes": 7595
+    },
+    "frontend_ide/ファイル機能/file-analysis.mjs": {
+      "sha256": "2a675f03bbec9d47cf58fa556f47980751254725ec01d265892e9b305106dbba",
+      "bytes": 11230
+    },
+    "frontend_ide/ファイル機能/file-history.mjs": {
+      "sha256": "3ab76d10382454a235172621bbdd2dc385abd5f5d8829b78651c1979238e8ea8",
+      "bytes": 6530
+    },
+    "frontend_ide/ファイル機能/ide-data.mjs": {
+      "sha256": "4d9e4ab277b6bbb07c921ed190c145fe22b215e31b119cd2442f8902add2d666",
+      "bytes": 2132
+    },
+    "frontend_ide/ファイル機能/MarkdownPDF-worker.cjs": {
+      "sha256": "59ffefa53411613f3542ce9e51e165360e3a4630be7046a9426bcf8971383dd5",
+      "bytes": 3000
+    },
+    "frontend_ide/ファイル機能/MarkdownPDF.mjs": {
+      "sha256": "eb445e5084c61a33937671d5ea5b6abd9d0dd148072d38b29450a686bb3268d2",
+      "bytes": 3118
+    },
+    "frontend_ide/ファイル機能/navigation-agent.mjs": {
+      "sha256": "a4fb27828a0650a0a0bbf131f4303bbae6530e2034295921bee30f4fcf8858a0",
+      "bytes": 3863
+    },
+    "frontend_ide/ファイル機能/navigation-slot.mjs": {
+      "sha256": "2396b6f0344dde10d02fc23dae45fe5bfe367604e6e3a29033e98325d418ee80",
+      "bytes": 1524
+    },
+    "frontend_ide/ファイル機能/navigation.mjs": {
+      "sha256": "5fdf0505c0a9767700111a6ceed4e09a55f4c8391b73456ee765cc0ce6487186",
+      "bytes": 31225
+    },
+    "frontend_ide/ファイル機能/navigation_readonly.py": {
+      "sha256": "cd844737c46efb25a99c8d2505a69332adf24b5701f611020b1906f44aa45ef8",
+      "bytes": 5326
+    },
+    "frontend_ide/ファイル機能/フォルダ除外規則.mjs": {
+      "sha256": "e05a04986d5b963c75330136f7912b8d99381b882df69861d9af85b995920fc1",
+      "bytes": 1140
+    },
+    "frontend_ide/ファイル機能/内部認証ファイル.mjs": {
+      "sha256": "9ef2c118c1c56371b3a33d24bd3c5365a971aed06b9616acfdfbdcf1dd63065d",
+      "bytes": 872
+    },
+    "frontend_ide/viewer/checks/always-excluded-files.test.mjs": {
+      "sha256": "30e980268a9f1f4f13699666efcc574131391b3c6b1a491c30735421504c3117",
+      "bytes": 7005
+    },
+    "frontend_ide/viewer/checks/backup-filter.test.mjs": {
+      "sha256": "c88ff69bb45f10ef83f89486e1eafcc2bcac25c380422f9357dc658182b26341",
+      "bytes": 4568
+    },
+    "frontend_ide/viewer/checks/connection.test.mjs": {
+      "sha256": "c4243dfb8546ffc3cfb9f065121a289771621b64944ed807f2cd81ec91c0f632",
+      "bytes": 10042
+    },
+    "frontend_ide/viewer/checks/file-scan.test.mjs": {
+      "sha256": "fa05512378125879bd292ad4da5e542a6a78234ea0ceea08ae170a200bb76119",
+      "bytes": 13170
+    },
+    "frontend_ide/viewer/checks/fixtures.mjs": {
+      "sha256": "661d58f0f86671a74a11b22fceec3c673c419e35fbf0b044e7125d14966de73c",
+      "bytes": 4566
+    },
+    "frontend_ide/viewer/checks/folder-state.test.mjs": {
+      "sha256": "ef6f233fbc928ef8d19f4a3311b39674d3e9c1cfac7f03dfbfabe6a1f0330c70",
+      "bytes": 5228
+    },
+    "frontend_ide/viewer/checks/grep.test.mjs": {
+      "sha256": "53ba4da4990abaf545e8ebc33dc870bcd5b8a4b8f2127ab4d3dd781796f321c8",
+      "bytes": 14863
+    },
+    "frontend_ide/viewer/checks/internal-credential-files.test.mjs": {
+      "sha256": "f6c5daf1be16f15d02bef89765fc051bf2c07c995b6190bcfd784647d257ea04",
+      "bytes": 8296
+    },
+    "frontend_ide/viewer/checks/latest.test.mjs": {
+      "sha256": "20ee4e9a8c8a783e41b9cf6bcb4825e779cd4e79af602d6968cf55eb074b9108",
+      "bytes": 6248
+    },
+    "frontend_ide/viewer/checks/launch.test.mjs": {
+      "sha256": "e83e57d24d2eba8d0d7bb48871da4e1d2e5493e48a98d3b29fd4ec1596ff6f40",
+      "bytes": 4942
+    },
+    "frontend_ide/viewer/checks/layout.test.mjs": {
+      "sha256": "e77aa814ae0b9f0678145f09e572ab7835cd6ff2e1c0a381620442b5b0a20870",
+      "bytes": 4372
+    },
+    "frontend_ide/viewer/checks/office-pagination.test.mjs": {
+      "sha256": "ffd2b2e24a725200eba629c796d12bedae5620fcc7dfca5474ae5aa3952853fb",
+      "bytes": 36655
+    },
+    "frontend_ide/viewer/checks/office.test.mjs": {
+      "sha256": "e5b7e5b066b72bef9dccbe023094b2c0a58b5af48710073f87903e472f1d3b72",
+      "bytes": 5143
+    },
+    "frontend_ide/viewer/checks/panels.test.mjs": {
+      "sha256": "0c646d013384289d572d189fb61c717c73b8399e97927a5b25934568beda7866",
+      "bytes": 7997
+    },
+    "frontend_ide/viewer/checks/preview.test.mjs": {
+      "sha256": "ed12a295da157391c7950fff6c5e45cca733f32bd9a1a8a954c996b6804ca80a",
+      "bytes": 10885
+    },
+    "frontend_ide/viewer/checks/vue-preview.test.mjs": {
+      "sha256": "84867a38429ef99770fa642b68527c821e739f15819145edf40bb7a67d5aceca",
+      "bytes": 1923
+    },
+    "frontend_ide/viewer/checks/warp.test.mjs": {
+      "sha256": "a4ecd3cef73fa337640dcfe7c66d755d2f6e8c512ecb2c794ffcfb808f6bfab4",
+      "bytes": 1369
+    },
+    "frontend_ide/viewer/core-connection.mjs": {
+      "sha256": "1558d48570d3f3999a91af96964e05935f69351bd55340d0c525b6e9cf6b8fa4",
+      "bytes": 5299
+    },
+    "frontend_ide/viewer/file-scan.mjs": {
+      "sha256": "98793e374b2baaa74829c8ed49467a1f83e8fcd0d72bcc2d6444f3c161de85f0",
+      "bytes": 14282
+    },
+    "frontend_ide/viewer/launch-options.mjs": {
+      "sha256": "f55f4d0c55d3d29a99ee011d34c68a97ce7d6c01cbfe0915bb7da505bee80c16",
+      "bytes": 2503
+    },
+    "frontend_ide/viewer/launch.mjs": {
+      "sha256": "88c2c038d338145346b1aac3a55b746bf82882fcc2b24039a13baa702a01d0a0",
+      "bytes": 513
+    },
+    "frontend_ide/viewer/markdown-preview.mjs": {
+      "sha256": "497f15b0f01312053b44bfd941189b95ec1b89744c087534531820d10bc642e0",
+      "bytes": 3301
+    },
+    "frontend_ide/viewer/media-types.mjs": {
+      "sha256": "1bc44fbaee804b465a9b89eceb80e08b3ca806f59f8fcb3d6fbe165116e3a5ef",
+      "bytes": 526
+    },
+    "frontend_ide/viewer/panels.mjs": {
+      "sha256": "290e4c8359603e9267601b200e16104698c1c969a7e8b1c8ec315e7622ec93b1",
+      "bytes": 7455
+    },
+    "frontend_ide/viewer/preview.mjs": {
+      "sha256": "278c014c0f6db9a14c5b4f1223d2faf9aef2c143066e6d69e9b9b35074708dc1",
+      "bytes": 13351
+    },
+    "frontend_ide/viewer/scripts/licenses.mjs": {
+      "sha256": "544cf06c9dbd0efff59b57aba9814f8ca9e6c5f6e8baef2f42468248cd4dfaff",
+      "bytes": 8639
+    },
+    "frontend_ide/viewer/scripts/setup-electron.mjs": {
+      "sha256": "75776f95b284cd6ef1c262a18972be64aeb1fb771c80e1a35c7b1849704da37d",
+      "bytes": 1089
+    },
+    "frontend_ide/viewer/scripts/shot.mjs": {
+      "sha256": "71c908be1575ec22bd8ef773cea33518089c772ef6b4a40d72e0a8eaa222f957",
+      "bytes": 4297
+    },
+    "frontend_ide/viewer/server.mjs": {
+      "sha256": "68566d4212b402870d4010adaa34767b353f36bb3dc426ff33582dd5ef039451",
+      "bytes": 30385
+    },
+    "frontend_ide/viewer/vue-preview.mjs": {
+      "sha256": "23a9d852550f365bd671dabe16ebb9a1978443df97d3ae67f019199fee2137b3",
+      "bytes": 6247
+    },
+    "frontend_ide/viewer/web/layout.js": {
+      "sha256": "d4b92356f035bf11ca1ef4c3c2fc297c2eb725948947b1b2b68788c4abdf1838",
+      "bytes": 3285
+    },
+    "frontend_ide/viewer/web/office.js": {
+      "sha256": "06ad9e6923ce7e658f69f8dcf92cdda537662ff5fdbe480f5902d009964b21d2",
+      "bytes": 19473
+    },
+    "frontend_ide/viewer/登録HTMLルート.mjs": {
+      "sha256": "c581577523a1b339f4d92a76f1ced8559f92925402f0a4bdff7665e928aeffee",
+      "bytes": 4005
+    },
+    "frontend_ide/host/src/arrival-effect.ts": {
+      "sha256": "20bc6c92583e6e715425b82d735b5fbea77a79af090cb2403e413f52d01227a9",
+      "bytes": 8796
+    },
+    "frontend_ide/host/src/code-connection.ts": {
+      "sha256": "50b3dc5613b381e627e5d2bafbda056c7c2cebc316dc249c9d77e0610454615d",
+      "bytes": 14723
+    },
+    "frontend_ide/host/src/conversation-store.ts": {
+      "sha256": "159d0e0ce9ef5d855899cb8cd5492072afefc9b525769666c4cd024209fb57a3",
+      "bytes": 6932
+    },
+    "frontend_ide/host/src/extension-installation.ts": {
+      "sha256": "7fd3fa7b29f4f2f17d34905e1a92ec0386cdf43cfb6ce64c57232f0dae996db7",
+      "bytes": 3660
+    },
+    "frontend_ide/host/src/extension.ts": {
+      "sha256": "b180164ec43e6de0d3bcc84b4e2558a3afacc2c0a43d0fcd893ad31c9bc1da68",
+      "bytes": 40483
+    },
+    "frontend_ide/host/src/file-attachments.ts": {
+      "sha256": "adef5ed6a0c919a4ba4fa9e0feb3238635a6da0c9e36626539517382a02b4518",
+      "bytes": 5365
+    },
+    "frontend_ide/host/src/forwarded-origin.ts": {
+      "sha256": "8b8ff7c8253891462e3d6cacd4f5d26ab25f41a115e061a58cda86d79a921723",
+      "bytes": 2689
+    },
+    "frontend_ide/host/src/input-prediction.ts": {
+      "sha256": "374f3049a281c6999b74f9882edd2747c4cae50e3b4911992f7175516cbc48ff",
+      "bytes": 4279
+    },
+    "frontend_ide/host/src/internal-auth.ts": {
+      "sha256": "ee891072f7a92e4f5fe7dcba7edb854fc085cb284688215a070c4694f27b1742",
+      "bytes": 3694
+    },
+    "frontend_ide/host/src/model-preferences.ts": {
+      "sha256": "c5aa187edf4887bc5469c9eeabf438d37cd2e95459597524a41d06e7371de430",
+      "bytes": 4445
+    },
+    "frontend_ide/host/src/protocol.ts": {
+      "sha256": "b75bb841e7cceddc6310918048aa7d51a595eee914d8d26c73ff6f11b3f867d3",
+      "bytes": 3281
+    },
+    "frontend_ide/host/src/runner.ts": {
+      "sha256": "2490ef4fbd669031bf1d14dc84a20438429b6a6d44879e872f5e56267c8c070e",
+      "bytes": 8801
+    },
+    "frontend_ide/host/src/stream-control.ts": {
+      "sha256": "c9f7325bc215aa5131a0b78a3e85e18bc4a523eb18f43e643820e04d3ef3758a",
+      "bytes": 1175
+    },
+    "frontend_ide/host/src/vscode-html.ts": {
+      "sha256": "28c587191ea11a39cdbed99306d9fe7cd88053d53b1e37c60d65d0aa2137ca36",
+      "bytes": 1538
+    },
+    "frontend_ide/host/src/workspace-folder.ts": {
+      "sha256": "ac0aad41a886020040a4556e595bf319782fefbfe99b5b90670acc78a2d71ad3",
+      "bytes": 757
+    },
+    "frontend_ide/server.mjs": {
+      "sha256": "709f9ed2e08e0242e3347bc1a668269b63bfdbc51858ba52167d4267160d0156"
+    }
+  },
+  "distribution": {
+    "frontend_ide/dist/abort.png": {
+      "sha256": "2e3106a1439446408da9466c4a806db9abdd6567190baf7b4fd625d7d882c9bf",
+      "bytes": 3648
+    },
+    "frontend_ide/dist/AiDiy.png": {
+      "sha256": "3b580e91b8e91a2accd55675c07f2b2b8c3c9cf85677da804ef6b74ae8267042",
+      "bytes": 556558
+    },
+    "frontend_ide/dist/AiDiy_browser.png": {
+      "sha256": "bf8f70f6bb136557049451e2e858d7c00efd8abd82e1ef9f09db05152ac71d91",
+      "bytes": 27981
+    },
+    "frontend_ide/dist/AiDiy_code.png": {
+      "sha256": "06525687b104a3260e64c2237a6bc047f88ef3225b24df7303031d66d30a61dd",
+      "bytes": 402986
+    },
+    "frontend_ide/dist/AiDiy_console.png": {
+      "sha256": "7305a5dbede16ffdd7fee201eea23901f76b90baa0ed29fa493063e083f5c58d",
+      "bytes": 403903
+    },
+    "frontend_ide/dist/AiDiy_ide.png": {
+      "sha256": "2609b612293124a6f04242584c18d410e550f4a4f0231622625f1ffe319033b6",
+      "bytes": 398787
+    },
+    "frontend_ide/dist/AiDiy_live.png": {
+      "sha256": "eb3314af9acd56c8d4ee3a5afadcfa2e294fdd3d3d68a2e2127c11515af358e0",
+      "bytes": 399414
+    },
+    "frontend_ide/dist/AiDiy_navi.png": {
+      "sha256": "70dba25a02c926ff4662ff4d6117efe9cd81b930c947f2433df97907d113bb9b",
+      "bytes": 463247
+    },
+    "frontend_ide/dist/AiDiy_task.png": {
+      "sha256": "475021d6aadc61e3d08419957b1f1582ef8aaade19ca5685779798fe6b9cc4ba",
+      "bytes": 399492
+    },
+    "frontend_ide/dist/AiDiy_team.png": {
+      "sha256": "b5445b554f50b2c8becbfad687e264c206c8bebb5c2a6d4c70dd18c4be10b593",
+      "bytes": 396657
+    },
+    "frontend_ide/dist/app.css": {
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07",
+      "bytes": 118076
+    },
+    "frontend_ide/dist/app.js": {
+      "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622",
+      "bytes": 1514914
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/LICENSE": {
+      "sha256": "dab37945e3097e43c74c08437196152a50f8d5d5e1d0335f469b203e183e21b8",
+      "bytes": 1095
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/manifest.json": {
+      "sha256": "fd859ce16eed7ebb6d322ddc0dfd41ee039576ec2c6fffbd72c42a520d2f0d99",
+      "bytes": 4147
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/MARKDOWN_LICENSE": {
+      "sha256": "b3176f1575302b32e69fcbe2c1e1d854daee3cfad0ba7fdf389b19a97241e3fe",
+      "bytes": 7005
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/3d.svg": {
+      "sha256": "c5a05831b03a835f2f4dc599604be0fa2c656fb54a4b0e1d702a566cfc47a858",
+      "bytes": 472
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/audio.svg": {
+      "sha256": "ea5f81039860cf0fc6106d4bdf32263d38d703451ff4b7b047d14fd08241a109",
+      "bytes": 402
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/batch.svg": {
+      "sha256": "ace83d4d135a23bfa1a6e1bc5b0ac1e98d490cb92bce905316b25912a19f027e",
+      "bytes": 409
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/binary.svg": {
+      "sha256": "44818daf7c19968a1c5a50b813a98aba3aadb69f4cdcb9b0ee12f32ed2eea45f",
+      "bytes": 466
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/config.svg": {
+      "sha256": "32912c2c585628d5fd64b1dc25c50258ce26b9465d566b39fce46847b4b9d712",
+      "bytes": 333
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/csv.svg": {
+      "sha256": "28044e40ac4b4488f4ec1de4cb9994e70093c1e14922147b291d25ab2d0d16c6",
+      "bytes": 351
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/database.svg": {
+      "sha256": "7bc5559489ed13edcfd9a577e5aa286351b1746af22ef7e3469e265b212db711",
+      "bytes": 421
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/env.svg": {
+      "sha256": "dd5f868afdc3e0254520e95dee1d0db7eec18b806cb33eee48fce0223ad93fc2",
+      "bytes": 385
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/font.svg": {
+      "sha256": "acc713568c27044ce2a4b5ab97049cb2c244849f336db0b8793e2e16b0907f7c",
+      "bytes": 230
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/image.svg": {
+      "sha256": "317cd66a1f979181efbc1bc78691209c99b772967b8c73d7da9a82b86b880756",
+      "bytes": 545
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/json.svg": {
+      "sha256": "33b3396f7f4d7e56f12b394509219b14752d6db58190efd02f711c34a2f8fc25",
+      "bytes": 468
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/license.svg": {
+      "sha256": "05ee1a480f8820601ed24455894db8f62bf88a7b2b4399ecacf99f423943a034",
+      "bytes": 306
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/lock.svg": {
+      "sha256": "f07ff3a5e12bc9a4f9a7b7ad69b712a9e9fc524852cac53f8b3fd9ab3be0591c",
+      "bytes": 469
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/markdown.svg": {
+      "sha256": "f4d2b356a5ce2fad063df6944da812e9d10b8b2c16a1610f6d225c14fb8f68fd",
+      "bytes": 359
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/readme.svg": {
+      "sha256": "7cefd684f5665b3f9439e2c8e682e5c41d70b58d97cdc3615a0baa9d30c434e9",
+      "bytes": 318
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/text.svg": {
+      "sha256": "a0371d48e3693862452524ff01a9a542f93ef45989535afd529fe0c6af4fa9ed",
+      "bytes": 323
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/video.svg": {
+      "sha256": "eabc396b2a8e70478023957b4be0a0b45a506e55493228e7d7fe16e51e4c5fdc",
+      "bytes": 363
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/xml.svg": {
+      "sha256": "5f54e891db95f210f304bdd4fb503a4d44d68ce1ced6269bf3ec7cc0bddd63ab",
+      "bytes": 240
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/zip.svg": {
+      "sha256": "3f8c338bfc762ff508bd1b504e682dc771eac287a12c943e4e2ab726b85800c7",
+      "bytes": 336
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/_file.svg": {
+      "sha256": "96501f8a63e73632a782bd127c27299de3f1e8a59a2bdb7989cf2605350ea6c4",
+      "bytes": 272
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/_folder.svg": {
+      "sha256": "9dd6d64bce489ce7e970f9c938a9d019d9d50f69bce91d2e95b4155e171f2a96",
+      "bytes": 290
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/mocha/_folder_open.svg": {
+      "sha256": "e35c231ead1f595565426cbf84e464ff38573d8dcffcb117b58ac289f368d45a",
+      "bytes": 312
+    },
+    "frontend_ide/dist/assets/catppuccin_icons/SOURCE.md": {
+      "sha256": "bda602259cca890e2124ec235599e32d3ad4ad3d05ca00aa76157c26486ac5ef",
+      "bytes": 2723
+    },
+    "frontend_ide/dist/index.html": {
+      "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49",
+      "bytes": 596
+    },
+    "frontend_ide/dist/LICENSE": {
+      "sha256": "befd9917eaf1bb4a0080d8e459f132613a53bb07e4a7baab924dfbaecfb91ff5",
+      "bytes": 1925
+    },
+    "frontend_ide/dist/microphone.png": {
+      "sha256": "a8641cb1bd3aedb8c4a89e30e85251aee938f702f6d7e43291d46485129aec87",
+      "bytes": 1085
+    },
+    "frontend_ide/dist/sending.png": {
+      "sha256": "d3b1e61317976360f1ca9c00f7a9375cf16f67c8ece0ca40a3294f62f4cd4f2f",
+      "bytes": 1341
+    },
+    "frontend_ide/dist/speaker.png": {
+      "sha256": "4827f676abf65903b12651e75775e9d4197535f34201bfa9e068186ebfa770ae",
+      "bytes": 1413
+    },
+    "frontend_ide/dist/taskteam.css": {
+      "sha256": "971d5d17546d86a3109246bfa647822133035bf20ffb311bd20d871b1e00d457",
+      "bytes": 163019
+    },
+    "frontend_ide/dist/taskteam.html": {
+      "sha256": "5eaeace7e3fa53d5d272712f36f75cc80e442f336ee6b66c91206e7550bf1cc6",
+      "bytes": 606
+    },
+    "frontend_ide/dist/taskteam.js": {
+      "sha256": "4fd277d8a8110d6db128c473b53d302e02f69aed9c42e50fb7debc79641ddcb6",
+      "bytes": 4353100
+    },
+    "frontend_ide/dist/THIRD_PARTY_NOTICES.txt": {
+      "sha256": "7eea2d8f1eacd86495947985a7751193603a1b3eff1f5e017f541c4cd9a7a04b",
+      "bytes": 214875
+    },
+    "frontend_ide/host/dist/aidiy_code/server.cjs": {
+      "sha256": "7a5191538a13e746e4f1a62c8888aaeb07b1bcf0a3d907a3983831e04c97bd4a",
+      "bytes": 1176807
+    }
+  }
+}

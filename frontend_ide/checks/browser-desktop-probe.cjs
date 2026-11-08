@@ -33,12 +33,12 @@ app.on('browser-window-created',(_,owner)=>{
    await evaluate(owner,`[...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用').click()`);
    await until(()=>evaluate(owner,`!!window.aidiyIDE`),'利用開始');
    assert.equal((await evaluate(owner,`aidiyWindow.openBrowser()`)).ok,false,'オフラインはBrowser起動不可');
-   assert.equal(await evaluate(owner,`[...document.querySelectorAll('.ai-launchers button')].find(b=>b.textContent==='＋ Browser').disabled`),true);
+   assert.equal(await evaluate(owner,`[...document.querySelectorAll('.ai-launchers button')].find(b=>b.textContent==='Browser').disabled`),true);
    await evaluate(owner,`[...document.querySelectorAll('.ide-toolbar-right button')].find(b=>b.textContent==='終了').click()`);
    await until(()=>evaluate(owner,`[...document.querySelectorAll('button')].some(b=>b.textContent==='AiDiy接続利用'&&!b.disabled)`),'利用終了');
    await evaluate(owner,`[...document.querySelectorAll('button')].find(b=>b.textContent==='AiDiy接続利用').click()`);
-   await until(()=>evaluate(owner,`[...document.querySelectorAll('.ai-launchers button')].some(b=>b.textContent==='＋ Browser'&&!b.disabled)`),'tools接続');
-   await evaluate(owner,`aidiyIDE.setAutoSpin(false);[...document.querySelectorAll('.ai-launchers button')].find(b=>b.textContent==='＋ Browser').click()`);
+   await until(()=>evaluate(owner,`[...document.querySelectorAll('.ai-launchers button')].some(b=>b.textContent==='Browser'&&!b.disabled)`),'tools接続');
+   await evaluate(owner,`aidiyIDE.setAutoSpin(false);[...document.querySelectorAll('.ai-launchers button')].find(b=>b.textContent==='Browser').click()`);
    await until(()=>browsers().length===1&&browsers()[0].isVisible(),'Googleブラウザ起動');
    const google=browsers()[0],googlePage=guest(google);
    await until(()=>googlePage.getURL().startsWith('https://www.google.')&&!googlePage.isLoading(),'Google読み込み');
@@ -114,8 +114,8 @@ app.on('browser-window-created',(_,owner)=>{
    const displayIds=[];
    for(const display of screen.getAllDisplays()){
     const before=new Set(browsers());
-    await until(()=>evaluate(owner,`[...document.querySelectorAll('.all-restore-zone[data-display-id="${display.id}"] .all-launchers button')].some(b=>b.textContent==='＋ Browser'&&!b.disabled)`),'VR Browser起動ボタン');
-    await evaluate(owner,`[...document.querySelectorAll('.all-restore-zone[data-display-id="${display.id}"] .all-launchers button')].find(b=>b.textContent==='＋ Browser').click()`);
+    await until(()=>evaluate(owner,`[...document.querySelectorAll('.all-restore-zone[data-display-id="${display.id}"] .all-launchers button')].some(b=>b.textContent==='Browser'&&!b.disabled)`),'VR Browser起動ボタン');
+    await evaluate(owner,`[...document.querySelectorAll('.all-restore-zone[data-display-id="${display.id}"] .all-launchers button')].find(b=>b.textContent==='Browser').click()`);
     let child;await until(()=>{child=browsers().find(w=>!before.has(w));return child?.isVisible();},'選択画面Browser');
     const b=child.getBounds(),area=display.workArea;assert.ok(b.x>=area.x-3&&b.y>=area.y-3&&b.x+b.width<=area.x+area.width+3&&b.y+b.height<=area.y+area.height+3,JSON.stringify({b,area}));
     await until(()=>guest(child).getURL().startsWith('https://www.google.')&&!guest(child).isLoading(),'VR Browser本文');

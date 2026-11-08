@@ -1,0 +1,24 @@
+
+DevTools listening on ws://127.0.0.1:64500/devtools/browser/dd5332e4-8415-42c2-b918-a0e815ab11bd
+[8020:26936:1107/225359.371:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[8020:26936:1107/225359.372:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+[8020:26936:1107/225418.175:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225418.376:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225418.783:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225419.388:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225420.202:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225421.218:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225422.220:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225423.237:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225424.251:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225425.265:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+[8020:26936:1107/225426.265:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 18456: アクセスが拒否されました。 (0x5)
+file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:49
+async function until(check,label){mockStage(label);const end=Date.now()+15000;while(Date.now()<end){if(await check())return;await sleep(50);}throw Error('Timeout: '+label);}
+                                                                                                                                                   ^
+
+Error: Timeout: desktop title
+    at until (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:49:148)
+    at async file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-autopilot.mjs:142:28
+
+Node.js v24.22.1

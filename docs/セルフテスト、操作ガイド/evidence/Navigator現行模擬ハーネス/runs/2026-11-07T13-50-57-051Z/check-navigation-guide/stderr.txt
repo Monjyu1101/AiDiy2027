@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+'0px' !== '1px'
+
+    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-guide.mjs:95:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: '0px',
+  expected: '1px',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

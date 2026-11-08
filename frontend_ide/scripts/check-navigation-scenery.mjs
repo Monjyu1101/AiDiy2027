@@ -4,7 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 模擬画面のみ。AI、業務API、配布用サーバーを起動しない。
-import {readFileSync,mkdtempSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {mockOutput,mockStage,removeMockDirectory,readMockDebugPort} from '../checks/navigation-mock-support.mjs';
+import {readFileSync,mkdtempSync,mkdirSync,writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -17,7 +18,7 @@ import {parse,compileScript} from '@vue/compiler-sfc';
 import WebSocket from 'ws';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const temporary=mkdtempSync(join(tmpdir(),'navi-scenery-'));
-const output=join(root,'temp/navigation-scenery-check');mkdirSync(output,{recursive:true});
+const output=mockOutput(join(root,'temp/navigation-scenery-check'));mkdirSync(output,{recursive:true});
 const result=await build({stdin:{contents:`import {createApp,h} from 'vue';import Scene from './src/components/開発スペース/ナビ風景.vue';
 const apps=[];for(const kind of ['aquarium','kaleidoscope','water']){const box=document.createElement('section');box.id=kind;document.body.append(box);const app=createApp({render:()=>h(Scene,{kind})});app.mount(box);apps.push(app);}window.dispose=()=>apps.forEach(app=>app.unmount());`,resolveDir:root},bundle:true,write:false,format:'iife',plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{
  const {descriptor}=parse(readFileSync(args.path,'utf8'));
@@ -25,7 +26,7 @@ const apps=[];for(const kind of ['aquarium','kaleidoscope','water']){const box=d
  return {contents:compiled.content+`\nconst style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.content).join('\n'))};document.head.append(style);`,resolveDir:dirname(args.path)};
 });}}]});
 if(process.argv.includes('--compile-only')){
- rmSync(temporary,{recursive:true,force:true});
+ removeMockDirectory(temporary);
  console.log('PASS: three scenery Vue components compile (browser not run)');process.exit(0);
 }
 const html=`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#000;color:white;font-family:sans-serif;display:flex;flex-wrap:wrap}section{position:relative;width:400px;height:320px;border:1px solid #263845}input{position:fixed;top:330px;left:10px}iframe{width:420px;height:350px;border:0}</style><input aria-label="目標" value="入力を維持"><script src="/app.js"></script>`;
@@ -35,7 +36,7 @@ const chrome=spawn(process.env.CHROME_PATH||'/usr/bin/chromium',['--headless=new
 let browserErrors='';chrome.stderr.on('data',data=>{browserErrors+=String(data);});
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));let socket;
 try{
- let port;for(let i=0;i<200;i++){try{port=readFileSync(join(temporary,'DevToolsActivePort'),'utf8').split('\n')[0];break;}catch{await sleep(50);}}
+ let port;for(let i=0;i<200;i++){port=readMockDebugPort(join(temporary,'DevToolsActivePort'));if(port)break;await sleep(50);}
  assert.ok(port,'Chromium起動: '+browserErrors);
  const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');
  let id=0;const pending=new Map(),errors=[];socket.on('message',value=>{const data=JSON.parse(value);if(data.id){pending.get(data.id)?.(data);pending.delete(data.id);}if(data.method==='Runtime.exceptionThrown')errors.push(data.params);});
@@ -85,7 +86,7 @@ try{
  assert.equal(await evaluate(`(()=>{const e=document.querySelector('.navigation-water');e.focus();const key=new KeyboardEvent('keydown',{code:'Space',repeat:true,bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),false);
  const screenshot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'three-scenes.png'),Buffer.from(screenshot.result.data,'base64'));
  // 同一オリジンの別Documentへ実DOMを移動し、フォーカスと所有窓のキーを検証。
- await evaluate(`(()=>{const frame=document.createElement('iframe');document.body.append(frame);const doc=frame.contentDocument;for(const style of document.querySelectorAll('style'))doc.head.append(style.cloneNode(true));const section=document.querySelector('#water');doc.body.append(section);section.querySelector('[tabindex]').focus();window.testFrame=frame;})()`);await sleep(300);
+ await evaluate(`(async()=>{const frame=document.createElement('iframe');const loaded=new Promise(done=>frame.addEventListener('load',done,{once:true}));document.body.append(frame);await loaded;const doc=frame.contentDocument;for(const style of document.querySelectorAll('style'))doc.head.append(style.cloneNode(true));const section=document.querySelector('#water');doc.body.append(section);section.querySelector('[tabindex]').focus();window.testFrame=frame;})()`);await sleep(300);
  assert.equal(await evaluate(`(()=>{const doc=testFrame.contentDocument,e=doc.querySelector('.navigation-water');const key=new testFrame.contentWindow.KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),true);
  assert.equal(await evaluate(`(()=>{const doc=testFrame.contentDocument,e=doc.createElement('div');e.contentEditable='plaintext-only';doc.body.append(e);e.focus();const key=new testFrame.contentWindow.KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),false);
  await evaluate(`(()=>{const doc=testFrame.contentDocument,section=document.querySelector('#aquarium');doc.body.append(section);const el=section.querySelector('.navigation-aquarium'),r=el.getBoundingClientRect();el.dispatchEvent(new testFrame.contentWindow.PointerEvent('pointerenter',{clientX:r.left+r.width*.27,clientY:r.top+r.height*.8,pointerType:'mouse'}));el.dispatchEvent(new testFrame.contentWindow.MouseEvent('click',{button:0,clientX:r.left+r.width*.27,clientY:r.top+r.height*.8}));})()`);await sleep(100);
@@ -95,4 +96,4 @@ try{
  assert.equal(await evaluate(`(()=>{const e=document.querySelector('.navigation-water'),key=new KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),true);
  await evaluate('dispose()');await sleep(100);assert.equal(await evaluate('document.querySelectorAll("canvas").length'),0);assert.deepEqual(errors,[]);
  console.log('PASS: three black scenes render; hover bubbles rise and stop spawning on leave, fish flee, food drops from the surface, kaleidoscope and water follow hover; Space, repeat, editable input, cross-document move/restore, and unmount; screenshots: '+output);
-}finally{socket?.close();chrome.kill();await new Promise(resolve=>server.close(resolve));await sleep(200);rmSync(temporary,{recursive:true,force:true});}
+}finally{socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}await new Promise(resolve=>server.close(resolve));await sleep(200);removeMockDirectory(temporary);}

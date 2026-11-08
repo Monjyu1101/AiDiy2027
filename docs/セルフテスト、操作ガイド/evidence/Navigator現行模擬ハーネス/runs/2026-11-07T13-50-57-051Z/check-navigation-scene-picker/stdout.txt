@@ -1,0 +1,12 @@
+STAGE: Chromium
+STAGE: buttons
+STAGE: embedded draft ready
+STAGE: draft appended
+STAGE: hidden label
+STAGE: reshown draft ready
+STAGE: untrusted blocks draft
+STAGE: trusted draft restored
+STAGE: buttons
+STAGE: release
+STAGE: buttons
+STAGE: right click menu

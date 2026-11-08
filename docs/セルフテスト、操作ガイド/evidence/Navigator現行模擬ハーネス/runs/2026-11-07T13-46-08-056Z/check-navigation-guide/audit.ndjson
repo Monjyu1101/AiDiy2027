@@ -1,0 +1,5 @@
+{"at":"2026-11-07T13:47:09.985Z","event":"listen","port":50600}
+{"at":"2026-11-07T13:47:09.996Z","event":"listen","port":50601}
+{"at":"2026-11-07T13:47:10.008Z","event":"spawn","executable":"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navigator現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-guide\\temporary\\aidiy-connection-check-SWkiql\\browser","--window-size=1280,800","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"],"pid":20436}
+{"at":"2026-11-07T13:47:40.237Z","event":"childExit","pid":20436,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:47:40.348Z","event":"exit","code":1}

@@ -1,0 +1,13 @@
+STAGE: ブラウザ起動
+STAGE: 開始
+STAGE: IDE
+STAGE: Navi 1
+STAGE: Navi 1 実行可能
+STAGE: nav busy
+STAGE: Navi 1 result
+STAGE: Navi 2
+STAGE: モデル方式の確認
+STAGE: モデル保存
+STAGE: evaluate busy
+STAGE: 評価完了
+{"mockApplication":"ide","mockCalls":2,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\temporary\\aidiy-connection-check-5mWXSV\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\temporary\\aidiy-connection-check-5mWXSV\\aidiy_navi_model.json"}

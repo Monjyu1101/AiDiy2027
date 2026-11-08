@@ -1,0 +1,11 @@
+{
+  "title": "AiDiy Navigator",
+  "on": "false",
+  "disabled": false,
+  "codeVisible": false,
+  "routing": false,
+  "status": "自動航行をオフにしました。実行中のCodeには停止を要求しました。",
+  "overall": "総合評価\n50%",
+  "tasks": [],
+  "error": ""
+}

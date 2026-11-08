@@ -1,0 +1,26 @@
+STAGE: chrome
+STAGE: debug port readable
+STAGE: toggle
+STAGE: autopilot toggle position
+STAGE: default goal
+STAGE: saved goal restored
+STAGE: embedded Code
+STAGE: Code send enabled
+STAGE: embedded AiDiy image loaded
+STAGE: hide Code
+STAGE: hide active Code
+STAGE: autopilot complete
+STAGE: reload
+STAGE: running
+STAGE: autopilot toggle position
+STAGE: visible Code stop
+STAGE: running again
+STAGE: hidden Code stop
+STAGE: failure scenario ready
+STAGE: failure reported
+STAGE: manual restart after Code failure
+STAGE: desktop title
+STAGE: desktop embedded Code
+STAGE: desktop hide Code
+STAGE: reevaluation ready
+STAGE: reevaluation restores saved goal

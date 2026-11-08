@@ -1,0 +1,196 @@
+{
+  "stage": "failure",
+  "timestamp": "2026-11-07T13:51:13.836Z",
+  "error": {
+    "message": "ENOENT: no such file or directory, open 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\temp\\navigation-ui-check\\Navigator_bars.jpg'",
+    "stack": "Error: ENOENT: no such file or directory, open 'C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\temp\\navigation-ui-check\\Navigator_bars.jpg'\n    at Object.openSync (node:fs:621:18)\n    at writeFileSync (node:fs:2496:35)\n    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-progress.mjs:105:70\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+  },
+  "mockCalls": [],
+  "agentInvocations": 1,
+  "projectHashes": {
+    "README.md": "12106907ead7cc65a6df288323d8cc61c17ee7a708a906b2ed41ef3ccd96fce1"
+  },
+  "api": {
+    "status": 200,
+    "data": {
+      "result": {
+        "schemaVersion": 3,
+        "requestId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "goal": "検索画面を整える",
+        "inferred": false,
+        "items": [
+          {
+            "id": "one",
+            "name": "検索画面の入力を整える",
+            "progress": 0,
+            "reason": "入力欄を確認。空入力の検証を次に行います。",
+            "weight": 60,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "two",
+            "name": "操作ガイドを整える",
+            "progress": 50,
+            "reason": "既存の章に追記する方針です。",
+            "weight": 30,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "three",
+            "name": "長い項目名でも縮小窓で折り返して読めることを確認する",
+            "progress": 100,
+            "reason": "表示確認用の模擬結果です。",
+            "weight": 10,
+            "weightReason": "表示試験用の作業量見積もり"
+          }
+        ],
+        "overall": {
+          "progress": 25,
+          "reason": "作業量に基づく加重評価の模擬結果"
+        },
+        "nextItemId": "one",
+        "nextPrompt": "検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。",
+        "createdAt": 1794059463144,
+        "navigationId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "updatedAt": 1794059463144,
+        "checkedAt": 1794059463144,
+        "selection": {
+          "provider": "aidiy_hermes",
+          "model": "same"
+        }
+      },
+      "job": {
+        "id": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "action": "navigate",
+        "clientRequestId": "navi-1-1794059462819-1-bq119fe2b5r",
+        "goal": "検索画面を整える",
+        "status": "complete",
+        "message": "Navigatorを更新しました。",
+        "deadline": 1794059762829
+      },
+      "selection": {
+        "provider": "aidiy_hermes",
+        "model": "same"
+      },
+      "availability": {
+        "available": true,
+        "reason": ""
+      }
+    }
+  },
+  "network": [],
+  "windows": [
+    {
+      "closed": false,
+      "title": "AiDiy IDE / Navigator 1",
+      "text": "◇\nAiDiy IDE / Navigator 1\nCODE\n×\nプロジェクト: project\n評価は読取専用\n＋ 新規\n一覧\n目標\nナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。\nモデル ▾\naidiy_hermes / same\nナビ\n再評価\nタスク (2026-11-07 22:51:03)\n検索画面の入力を整える\n0%\n操作ガイドを整える\n50%\n長い項目名でも縮小窓で折り返して読めることを確認する\n100%\n達成度はAIの推定です。根拠と実際の状態を確認してください。\n総合評価\n25%\nプロンプト(案)\nCODE/LIVEへ\nコピー\n自動航行\nオフ\n\n検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。",
+      "html": "<html><head><title>AiDiy IDE / Navigator 1</title><base href=\"http://127.0.0.1:52418/\"><link rel=\"stylesheet\" href=\"/development/app.css\"></head><body><main class=\"development-app navigation-window\"><section class=\"navigation-panel detached\" aria-label=\"Navigator\" style=\"\"><!--v-if--><header class=\"navigation-local-header\"><span class=\"navigation-emblem\" aria-hidden=\"true\">◇</span><strong>AiDiy IDE / Navigator 1</strong><span class=\"navigation-header-space\"></span><button type=\"button\" class=\"navigation-code-toggle\" role=\"switch\" aria-label=\"CODE\" aria-checked=\"false\">CODE</button><!--v-if--><button aria-label=\"Navigatorを閉じる\">×</button></header><div class=\"component-toolbar navigation-project\"><span title=\"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-gnz0tl\\1\\temporary\\aidiy-connection-check-D6vo8g\\project\">プロジェクト: project</span><nav><small>評価は読取専用</small><button>＋ 新規</button><button aria-expanded=\"false\">一覧</button></nav></div><form class=\"navigation-goal-form\"><label for=\"navi-1-goal\">目標<!--v-if--></label><textarea id=\"navi-1-goal\" maxlength=\"4000\" rows=\"4\" placeholder=\"目標を入力してください\"></textarea><div class=\"navigation-form-foot\"><div class=\"navigation-input-meta\"><small class=\"navigation-input-hint\">ナビ・再評価は読取専用です。自動航行オンではCodeがファイルを変更します。</small><!--v-if--><div class=\"navigation-model-line composer-meta\"><button type=\"button\" aria-expanded=\"false\"><span class=\"model-caption\">モデル</span> ▾</button><span class=\"model-label\" title=\"aidiy_hermes / same\">aidiy_hermes / same</span></div></div><div class=\"navigation-run-actions\"><button type=\"button\" aria-haspopup=\"menu\" aria-keyshortcuts=\"Shift+F10 ContextMenu ArrowDown\" class=\"navigation-start navigation-run\" title=\"クリックでナビ。右クリック、またはShift+F10で待機画面を選択\" aria-expanded=\"false\"><img src=\"http://127.0.0.1:52418/development/sending.png\" alt=\"\"><span class=\"navigation-button-label\">ナビ</span></button><button type=\"button\" aria-haspopup=\"menu\" aria-keyshortcuts=\"Shift+F10 ContextMenu ArrowDown\" class=\"navigation-evaluate navigation-run is-next-action\" aria-expanded=\"false\" title=\"目標を最終実行時に戻し、保存済み明細の達成率を再評価。右クリック、またはShift+F10で待機画面を選択\">再評価</button></div></div></form><!--v-if--><div class=\"navigation-display\"><div class=\"navigation-content\"><!--v-if--><!--v-if--><!--v-if--><h2 class=\"navigation-task-heading\">タスク<time class=\"navigation-checked-at\" datetime=\"2026-11-07T13:51:03.144Z\" title=\"AI評価結果の確定日時（表示端末の時刻）\"> (2026-11-07 22:51:03)</time></h2><!--v-if--><ol class=\"navigation-items\"><li><details class=\"navigation-disclosure\"><summary><span class=\"navigation-progress\" role=\"progressbar\" aria-label=\"検索画面の入力を整える\" aria-valuenow=\"0\" aria-valuetext=\"0%（AIの推定）\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"--progress-width: 0%; --progress-fill: hsl(0 65% 28%); --progress-accent: hsl(0 65% 72%);\"><span class=\"navigation-fill\" aria-hidden=\"true\"></span><span class=\"navigation-disclosure-arrow\" aria-hidden=\"true\"></span><span class=\"navigation-name\">検索画面の入力を整える</span><strong>0<small>%</small></strong></span></summary><div class=\"navigation-reasons\"><p>入力欄を確認。空入力の検証を次に行います。</p><div class=\"navigation-effort\"><strong>工数比率 60%</strong><span>表示試験用の作業量見積もり</span></div></div></details></li><li><details class=\"navigation-disclosure\"><summary><span class=\"navigation-progress\" role=\"progressbar\" aria-label=\"操作ガイドを整える\" aria-valuenow=\"50\" aria-valuetext=\"50%（AIの推定）\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"--progress-width: 50%; --progress-fill: hsl(60 65% 28%); --progress-accent: hsl(60 65% 72%);\"><span class=\"navigation-fill\" aria-hidden=\"true\"></span><span class=\"navigation-disclosure-arrow\" aria-hidden=\"true\"></span><span class=\"navigation-name\">操作ガイドを整える</span><strong>50<small>%</small></strong></span></summary><div class=\"navigation-reasons\"><p>既存の章に追記する方針です。</p><div class=\"navigation-effort\"><strong>工数比率 30%</strong><span>表示試験用の作業量見積もり</span></div></div></details></li><li><details class=\"navigation-disclosure\"><summary><span class=\"navigation-progress\" role=\"progressbar\" aria-label=\"長い項目名でも縮小窓で折り返して読めることを確認する\" aria-valuenow=\"100\" aria-valuetext=\"100%（AIの推定）\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"--progress-width: 100%; --progress-fill: hsl(120 65% 28%); --progress-accent: hsl(120 65% 72%);\"><span class=\"navigation-fill\" aria-hidden=\"true\"></span><span class=\"navigation-disclosure-arrow\" aria-hidden=\"true\"></span><span class=\"navigation-name\">長い項目名でも縮小窓で折り返して読めることを確認する</span><strong>100<small>%</small></strong></span></summary><div class=\"navigation-reasons\"><p>表示確認用の模擬結果です。</p><div class=\"navigation-effort\"><strong>工数比率 10%</strong><span>表示試験用の作業量見積もり</span></div></div></details></li></ol><small class=\"navigation-estimate-note\">達成度はAIの推定です。根拠と実際の状態を確認してください。</small></div></div><section class=\"navigation-overall\" aria-label=\"総合評価の詳細\"><details class=\"navigation-disclosure\"><summary><span class=\"navigation-progress\" role=\"progressbar\" aria-label=\"総合評価\" aria-valuenow=\"25\" aria-valuetext=\"25%（AIの工数比率による加重評価）\" aria-valuemin=\"0\" aria-valuemax=\"100\" style=\"--progress-width: 25%; --progress-fill: hsl(30 65% 28%); --progress-accent: hsl(30 65% 72%);\"><span class=\"navigation-fill\" aria-hidden=\"true\"></span><span class=\"navigation-disclosure-arrow\" aria-hidden=\"true\"></span><span class=\"navigation-name\">総合評価</span><strong>25<small>%</small></strong></span></summary><div class=\"navigation-reasons\"><small>AIが見積もった工数比率による総合評価。実測値ではありません。</small><p class=\"navigation-overall-reason\">作業量に基づく加重評価の模擬結果</p></div></details><!--v-if--></section><section class=\"navigation-next\" aria-label=\"プロンプト(案)\"><div class=\"navigation-prompt-actions\"><h2>プロンプト(案)</h2><button class=\"navigation-handoff\" title=\"Code / Liveの入力欄へ追加します。送信はしません。\">CODE/LIVEへ</button><button>コピー</button><button type=\"button\" class=\"navigation-autopilot-toggle\" role=\"switch\" title=\"Navi Cruise\" aria-label=\"自動航行（Navi Cruise）\" aria-checked=\"false\"><span>自動航行</span> <span class=\"motion-switch\" aria-hidden=\"true\"></span><span class=\"navigation-autopilot-state\" aria-hidden=\"true\">オフ</span></button></div><!--v-if--><!--v-if--><p class=\"navigation-prompt\"><span>検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。</span></p></section><!--v-if--><aside class=\"navigation-code\" aria-label=\"Navigator専用Code\" style=\"display: none;\"><!--v-if--><!--v-if--></aside><!--v-if--><!--v-if--><!--v-if--></section></main></body></html>",
+      "errors": [],
+      "legacyMark": false,
+      "itemBars": 3,
+      "allBars": 4,
+      "network": []
+    }
+  ],
+  "browserErrors": [],
+  "saved": [
+    {
+      "path": "e11534f3c7e77aa80a59b170f06c67a813e0012ec4a3a2bc2aea88f214a95a01\\history\\1485a39a-7e09-4735-8db9-e41b85a60cd2.json",
+      "data": {
+        "schemaVersion": 3,
+        "requestId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "goal": "検索画面を整える",
+        "inferred": false,
+        "items": [
+          {
+            "id": "one",
+            "name": "検索画面の入力を整える",
+            "progress": 0,
+            "reason": "入力欄を確認。空入力の検証を次に行います。",
+            "weight": 60,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "two",
+            "name": "操作ガイドを整える",
+            "progress": 50,
+            "reason": "既存の章に追記する方針です。",
+            "weight": 30,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "three",
+            "name": "長い項目名でも縮小窓で折り返して読めることを確認する",
+            "progress": 100,
+            "reason": "表示確認用の模擬結果です。",
+            "weight": 10,
+            "weightReason": "表示試験用の作業量見積もり"
+          }
+        ],
+        "overall": {
+          "progress": 25,
+          "reason": "作業量に基づく加重評価の模擬結果"
+        },
+        "nextItemId": "one",
+        "nextPrompt": "検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。",
+        "createdAt": 1794059463144,
+        "updatedAt": 1794059463144,
+        "checkedAt": 1794059463144,
+        "navigationId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "selection": {
+          "provider": "aidiy_hermes",
+          "model": "same"
+        }
+      }
+    },
+    {
+      "path": "e11534f3c7e77aa80a59b170f06c67a813e0012ec4a3a2bc2aea88f214a95a01\\navi-1\\latest.json",
+      "data": {
+        "schemaVersion": 3,
+        "requestId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "goal": "検索画面を整える",
+        "inferred": false,
+        "items": [
+          {
+            "id": "one",
+            "name": "検索画面の入力を整える",
+            "progress": 0,
+            "reason": "入力欄を確認。空入力の検証を次に行います。",
+            "weight": 60,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "two",
+            "name": "操作ガイドを整える",
+            "progress": 50,
+            "reason": "既存の章に追記する方針です。",
+            "weight": 30,
+            "weightReason": "表示試験用の作業量見積もり"
+          },
+          {
+            "id": "three",
+            "name": "長い項目名でも縮小窓で折り返して読めることを確認する",
+            "progress": 100,
+            "reason": "表示確認用の模擬結果です。",
+            "weight": 10,
+            "weightReason": "表示試験用の作業量見積もり"
+          }
+        ],
+        "overall": {
+          "progress": 25,
+          "reason": "作業量に基づく加重評価の模擬結果"
+        },
+        "nextItemId": "one",
+        "nextPrompt": "検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。",
+        "createdAt": 1794059463144,
+        "updatedAt": 1794059463144,
+        "checkedAt": 1794059463144,
+        "navigationId": "1485a39a-7e09-4735-8db9-e41b85a60cd2",
+        "selection": {
+          "provider": "aidiy_hermes",
+          "model": "same"
+        }
+      }
+    }
+  ]
+}

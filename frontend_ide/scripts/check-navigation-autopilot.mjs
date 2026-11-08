@@ -4,15 +4,16 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 実VueとChromiumで確認。AI・利用者ファイルには触れずAPIとCode通知だけを模擬する。
+import {mockOutput,mockStage,removeMockDirectory,readMockDebugPort} from '../checks/navigation-mock-support.mjs';
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtempSync,existsSync,readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
+import {mkdtempSync,existsSync,readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-const root=fileURLToPath(new URL('../',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'navi-auto-ui-')),out=join(root,'../temp/navigation-autopilot-check');mkdirSync(out,{recursive:true});
+const root=fileURLToPath(new URL('../',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'navi-auto-ui-')),out=mockOutput(join(root,'../temp/navigation-autopilot-check'));mkdirSync(out,{recursive:true});
 const calls=[],streams=new Set();let evaluations=0,hold=false,failNext=false,runTimer,job=null,appKind='navi';
 const makeResult=progress=>({schemaVersion:3,requestId:job?.id||'initial',navigationId:'navigation-ui-test',checkedAt:Date.UTC(2026,10,5,0,evaluations,0),goal:'安全な自動航行の画面を確認する',items:[{id:'work',name:'動作と表示を確認する',progress,reason:'模擬APIによる試験です。',weight:100,weightReason:'今回の対象はこの項目です。'}],overall:{progress,reason:'実AIの評価ではなく試験用の値です。'},nextItemId:progress===100?null:'work',nextPrompt:progress===100?'':'今回の目標は安全な自動航行です。\n今回の作業では画面と停止操作を確認してください。'});
 let result=makeResult(20),codeState={type:'state',navigationRunSupported:true,メッセージ:[],履歴:[],進捗:[],信頼済み:true,自動接続:true,接続済み:true,画面接続済み:true,実行モード:'online',作業フォルダ:{パス:'/fixture',名前:'fixture'},接続プロジェクトパス:'/fixture',会話ID:'conversation',セッションID:'session',接続世代:1,実行中:false,停止中:false,provider:'fixture',model:'mock'};
@@ -45,17 +46,17 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const chrome=spawn(process.env.CHROME_PATH||'/usr/bin/chromium',['--headless=new','--no-sandbox','--remote-debugging-port=0','--window-size=1000,700','--user-data-dir='+join(temporary,'browser'),'about:blank'],{stdio:['ignore','ignore','pipe']});
 chrome.stderr.on('data',data=>{if(!String(data).includes('dbus'))process.stderr.write(data);});
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
-async function until(check,label){const end=Date.now()+15000;while(Date.now()<end){if(await check())return;await sleep(50);}throw Error('Timeout: '+label);}
+async function until(check,label){mockStage(label);const end=Date.now()+15000;while(Date.now()<end){if(await check())return;await sleep(50);}throw Error('Timeout: '+label);}
 let socket;
 try{
- await until(()=>existsSync(join(temporary,'browser/DevToolsActivePort')),'chrome');const port=readFileSync(join(temporary,'browser/DevToolsActivePort'),'utf8').split('\n')[0];const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(x=>x.type==='page');socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');
+ await until(()=>existsSync(join(temporary,'browser/DevToolsActivePort')),'chrome');let port;await until(()=>(port=readMockDebugPort(join(temporary,'browser/DevToolsActivePort'))),'debug port readable');const target=(await(await fetch('http://127.0.0.1:'+port+'/json/list')).json()).find(x=>x.type==='page');socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');
  let id=0;const pending=new Map(),errors=[];socket.addEventListener('message',event=>{const data=JSON.parse(event.data);if(data.id){pending.get(data.id)?.(data);pending.delete(data.id);}if(data.method==='Runtime.exceptionThrown')errors.push(data.params.exceptionDetails);});
  const send=(method,params={})=>new Promise(done=>{pending.set(++id,done);socket.send(JSON.stringify({id,method,params}));});
  const evaluate=async expression=>{const data=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true,userGesture:true});assert.equal(data.result?.exceptionDetails,undefined,JSON.stringify(data));return data.result?.result?.value;};
  const click=text=>evaluate(`[...document.querySelectorAll('button')].find(x=>x.textContent.trim()===${JSON.stringify(text)}).click()`);
  const checkCodeFrame=async(checked,desktop=false)=>{
-  const frame=await evaluate(`(()=>{const button=document.querySelector('.navigation-code-toggle'),style=getComputedStyle(button);return {label:button.textContent.trim(),ariaLabel:button.getAttribute('aria-label'),checked:button.getAttribute('aria-checked'),desktop:!!button.closest('.window-actions'),widths:[style.borderTopWidth,style.borderRightWidth,style.borderBottomWidth,style.borderLeftWidth],styles:[style.borderTopStyle,style.borderRightStyle,style.borderBottomStyle,style.borderLeftStyle],radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],color:style.borderTopColor}})()`);
-  assert.equal(frame.label,checked?'CODE非表示':'CODE表示');assert.equal(frame.ariaLabel,frame.label);assert.equal(frame.checked,String(checked));assert.equal(frame.desktop,desktop);assert.deepEqual(frame.widths,['1px','1px','1px','1px']);assert.deepEqual(frame.styles,['solid','solid','solid','solid']);assert.deepEqual(frame.radii,['0px','0px','0px','0px']);assert.equal(frame.color,checked?'rgb(125, 226, 207)':'rgb(139, 155, 170)');
+  const frame=await evaluate(`(()=>{const button=document.querySelector('.navigation-code-toggle'),style=getComputedStyle(button);return {label:button.textContent.trim(),ariaLabel:button.getAttribute('aria-label'),checked:button.getAttribute('aria-checked'),desktop:!!button.closest('.panel-brand.desktop'),widths:[style.borderTopWidth,style.borderRightWidth,style.borderBottomWidth,style.borderLeftWidth],styles:[style.borderTopStyle,style.borderRightStyle,style.borderBottomStyle,style.borderLeftStyle],radii:[style.borderTopLeftRadius,style.borderTopRightRadius,style.borderBottomLeftRadius,style.borderBottomRightRadius],color:style.borderTopColor}})()`);
+  assert.equal(frame.label,checked?'CODE非表示':'CODE');assert.equal(frame.ariaLabel,frame.label);assert.equal(frame.checked,String(checked));assert.equal(frame.desktop,desktop);assert.deepEqual(frame.widths,['1px','1px','1px','1px']);assert.deepEqual(frame.styles,['solid','solid','solid','solid']);assert.deepEqual(frame.radii,['0px','0px','0px','0px']);assert.equal(frame.color,checked?'rgb(125, 226, 207)':'rgb(139, 155, 170)');
  };
  const checkAutopilotToggle=async active=>{
   await until(()=>evaluate(`(()=>{const button=document.querySelector('.navigation-autopilot-toggle'),track=button?.querySelector('.motion-switch');return !!track&&getComputedStyle(track,'::after').transform===${JSON.stringify(active?'matrix(1, 0, 0, 1, 14, 0)':'none')}})()`),'autopilot toggle position');
@@ -103,7 +104,7 @@ try{
   assert.equal(await evaluate(`getComputedStyle(document.querySelector('${selector}')).backgroundColor`),selector==='.navigation-start'?'rgb(128, 128, 128)':'rgb(90, 111, 216)');
  }
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:0,y:0});
- assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
+ assert.equal(calls.length,0,'opening Navigator must not launch Code');await click('CODE');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'embedded Code');assert.equal(calls.filter(x=>x==='input_text').length,0,'manual open does not execute');
  await checkCodeFrame(true);
  await checkEmbeddedHeader(false);
  await evaluate(`(()=>{const input=document.querySelector('.navigation-code .code-component textarea');input.value='入力時の配色を確認するだけ';input.dispatchEvent(new Event('input',{bubbles:true}));})()`);
@@ -117,7 +118,7 @@ try{
  writeFileSync(join(out,'embedded-code.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide Code');
  await click('自動航行 オフ');await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'hide active Code');await until(()=>evaluate(`document.querySelector('.navigation-autopilot-status')?.textContent.includes('100%')`),'autopilot complete');assert.equal(evaluations,2);assert.equal(calls.filter(x=>x==='input_text').length,2);assert.equal(await evaluate(`document.querySelector('.navigation-autopilot-toggle').getAttribute('aria-checked')`),'false');
- assert.equal(calls.filter(x=>x==='POST Code').length,1,'hiding and resuming must reuse the same Code');await click('CODE表示');assert.equal(calls.filter(x=>x==='input_text').length,2,'showing completed Code must not submit');
+ assert.equal(calls.filter(x=>x==='POST Code').length,1,'hiding and resuming must reuse the same Code');await click('CODE');assert.equal(calls.filter(x=>x==='input_text').length,2,'showing completed Code must not submit');
  assert.equal(await evaluate(`document.querySelector('.navigation-task-heading time').dateTime`),'2026-11-05T00:02:00.000Z');
  writeFileSync(join(out,'completed.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  // Reload restores only the record, never the permission to execute. Stop before completion.
@@ -136,11 +137,11 @@ try{
  assert.equal(calls.filter(x=>x==='input_text').length,beforeFailure+2,'explicit restart sends a new request');
  assert.equal(evaluations,beforeEvaluations+1);await checkEmbeddedHeader(false);
  writeFileSync(join(out,'code-error-recovered.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- // Electronの窓APIだけを模擬し、実際のタイトル用slotと共通CSSの組合せでも両状態を確認する。
+ // Electronの窓APIだけを模擬し、実際の接続表示の右側slotと共通CSSの組合せでも両状態を確認する。
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`window.aidiyWindow={navigationCode:async()=>({ok:true}),pinState:async()=>({pinned:false,locked:false})};`});
- await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.window-actions .navigation-code-toggle')`),'desktop title');await checkCodeFrame(false,true);
+ await send('Page.reload');await until(()=>evaluate(`!!document.querySelector('.panel-brand.desktop .connection-label .navigation-code-toggle')&&!!document.querySelector('.window-actions')&&!document.querySelector('.window-actions .navigation-code-toggle')`),'desktop title');await checkCodeFrame(false,true);
  writeFileSync(join(out,'title-code-hidden.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
- const sent=calls.filter(x=>x==='input_text').length;await click('CODE表示');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'desktop embedded Code');await checkCodeFrame(true,true);
+ const sent=calls.filter(x=>x==='input_text').length;await click('CODE');await until(()=>evaluate(`!!document.querySelector('.code-component textarea')`),'desktop embedded Code');await checkCodeFrame(true,true);
  await checkEmbeddedHeader(false);
  writeFileSync(join(out,'title-code-visible.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  await click('CODE非表示');await until(()=>evaluate(`getComputedStyle(document.querySelector('.navigation-code')).display==='none'`),'desktop hide Code');await checkCodeFrame(false,true);assert.equal(calls.filter(x=>x==='input_text').length,sent,'title visibility toggle must not submit');
@@ -151,7 +152,7 @@ try{
  await editGoal('誤って変更した別の目標');await checkNextAction('navigate');
  assert.equal(await evaluate(`document.querySelector('.navigation-evaluate').disabled`),false);
  await click('再評価');
- await until(()=>evaluate(`document.querySelector('.navigation-goal-form textarea').value===${JSON.stringify(savedGoal)}&&!document.querySelector('.navigation-evaluate').disabled`),'reevaluation restores saved goal');
+ await until(()=>evaluate(`document.querySelector('.navigation-goal-form textarea').value===${JSON.stringify(savedGoal)}&&document.querySelector('.navigation-evaluate')?.disabled===false`),'reevaluation restores saved goal');
  assert.equal(evaluations,beforeReevaluation+1);await checkNextAction('evaluate');await capture('reevaluation-restored-goal');
  await editGoal('');await checkNextAction('');assert.equal(await evaluate(`document.querySelector('.navigation-evaluate').disabled`),false,'保存済み結果があれば空欄でも再評価できる');
  // 共通Codeは変更せず、単独版のタイトル・接続バー・入力操作も維持する。
@@ -160,4 +161,4 @@ try{
  assert.equal(await evaluate(`!!document.querySelector('.code-component>.connection-bar')&&!!document.querySelector('.code-component .auto-connect')`),true);
  writeFileSync(join(out,'standalone-code-title.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));
  assert.deepEqual(errors,[]);writeFileSync(join(out,'result.json'),JSON.stringify({passed:true,geometry,calls,evaluations,errors},null,2));console.log(JSON.stringify({passed:true,geometry,calls,evaluations}));
-}finally{clearTimeout(runTimer);socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}for(const res of streams)res.end();server.closeAllConnections();await new Promise(done=>server.close(done));rmSync(temporary,{recursive:true,force:true,maxRetries:5,retryDelay:100});}
+}finally{clearTimeout(runTimer);socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}for(const res of streams)res.end();server.closeAllConnections();await new Promise(done=>server.close(done));removeMockDirectory(temporary);}

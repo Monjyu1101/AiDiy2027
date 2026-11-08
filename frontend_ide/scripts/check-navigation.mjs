@@ -11,12 +11,12 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:http';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { createNavigationScreenRecord } from './navigation-step4-check.mjs';
 import { createCoreConnection } from '../viewer/core-connection.mjs';
-import { startDevelopment } from '../server.mjs';
+import {startMockDevelopment as startDevelopment,mockOutput,mockStage,removeMockDirectory} from '../checks/navigation-mock-support.mjs';
 
 const chromePath = process.env.CHROME_PATH || [process.env.PROGRAMFILES, process.env['PROGRAMFILES(X86)'], process.env.LOCALAPPDATA]
   .filter(Boolean).flatMap(base => ['Google/Chrome/Application/chrome.exe', 'Microsoft/Edge/Application/msedge.exe'].map(tail => join(base, tail))).find(existsSync)
@@ -51,7 +51,7 @@ const app = await startDevelopment(project, { connection, navigationOptions:{def
 const chrome = spawn(chromePath, ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${join(temporary, 'browser')}`,
   '--window-size=1280,800', ...(process.platform === 'linux' ? ['--no-sandbox'] : []), 'about:blank'], { stdio: 'ignore', windowsHide: true });
 const sleep = ms => new Promise(done => setTimeout(done, ms));
-async function until(check, label) { const end = Date.now() + 30000; while (Date.now() < end) { if (await check()) return; await sleep(100); } throw Error(`待機タイムアウト: ${label}`); }
+async function until(check, label) { mockStage(label); const end = Date.now() + 30000; while (Date.now() < end) { if (await check()) return; await sleep(100); } throw Error(`待機タイムアウト: ${label}`); }
 let socket,standalone;
 try {
   const activePort = join(temporary, 'browser', 'DevToolsActivePort');
@@ -80,13 +80,16 @@ try {
   await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
   await evaluate(`aidiyIDE.setAutoSpin(false);window.testNavi=[];const originalOpen=window.open;window.open=(...args)=>{const child=originalOpen.apply(window,args);testNavi.push(child);return child;};document.querySelector('.navigation-launch').click()`);
   const child=(index,expression)=>evaluate(`testNavi[${index}].eval(${JSON.stringify(expression)})`);
+  // 枠と文字の試験は航行を明示選択し、ランダムな演出種別に依存させない。
+  const runRide=async selector=>{await child(0,`document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new MouseEvent('contextmenu',{button:2,bubbles:true,cancelable:true}))`);await until(()=>child(0,`!!document.querySelector('[data-scene=ride]')`),'航行を選択');await child(0,`document.querySelector('[data-scene=ride]').click()`);};
   record.bind({evaluate,child,app,port,target,errors,getAiCalls:()=>aiCalls});
   await until(()=>evaluate(`!!testNavi[0]?.document.querySelector('textarea')`),'Navi 1');
   await until(()=>child(0,`!!document.querySelector('.navigation-start:not(:disabled)')`),'Navi 1 実行可能');
   if(step4){await record.run();}else{
   assert.equal(await child(0,`document.querySelector('textarea').rows`),4);
   assert.equal(await child(0,`(async()=>{const mark=document.querySelector('.mark-escape'),rect=mark.getBoundingClientRect(),offset=()=>parseFloat(mark.style.transform.match(/-?[0-9.]+/)[0]),wait=()=>new Promise(resolve=>setTimeout(resolve,50));mark.dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse',clientX:rect.left+1,clientY:rect.top+rect.height/2}));for(let i=0;i<40&&offset()<2;i++)await wait();const moved=offset();document.dispatchEvent(new PointerEvent('pointermove',{pointerType:'mouse',clientX:-2000,clientY:-2000}));for(let i=0;i<40&&offset()>=moved;i++)await wait();const returning=offset();return moved>=2&&returning>=0&&returning<moved&&!!mark.querySelector('.welcome-mark img');})()`),true);
-  await child(0,`(()=>{const t=document.querySelector('textarea');t.value='検索画面を整える';t.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.navigation-start').click();})()`);
+  await child(0,`(()=>{const t=document.querySelector('textarea');t.value='検索画面を整える';t.dispatchEvent(new Event('input',{bubbles:true}));})()`);
+  await runRide('.navigation-start');
   await until(()=>child(0,`!!document.querySelector('.navigation-display.running')`),'nav busy');
   assert.equal(await child(0,`document.querySelector('.terminal-welcome h1').textContent`),'FINDING YOUR ROUTE');
   assert.equal(await child(0,`(()=>{const button=document.querySelector('.navigation-stop');return !!button&&!button.disabled&&button.querySelector('.navigation-stop-label')?.textContent==='調査中'&&!document.querySelector('.navigation-start');})()`),true);
@@ -100,10 +103,10 @@ try {
   const popupCapture=new Promise(resolve=>popupSocket.addEventListener('message',event=>{const response=JSON.parse(event.data);if(response.id===1)resolve(response); }));
   popupSocket.send(JSON.stringify({id:1,method:'Page.captureScreenshot',params:{format:'png'}}));
   const routeCapture=await popupCapture;popupSocket.close();
-  mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/route.png'),Buffer.from(routeCapture.result.data,'base64'));
+  mkdirSync(mockOutput('temp/navigation-ui-check'),{recursive:true});writeFileSync(join(mockOutput('temp/navigation-ui-check'),'route.png'),Buffer.from(routeCapture.result.data,'base64'));
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-display'),'::before').animationName`),'prompt-reflect');
   await until(()=>child(0,`document.querySelectorAll('.navigation-items .navigation-progress').length===2`),'Navi 1 result');
-  assert.equal(await child(0,`document.querySelector('.navigation-task-heading').textContent`),'タスク');
+  assert.match(await child(0,`document.querySelector('.navigation-task-heading').textContent`),/^タスク \(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\)$/);
   assert.equal(await child(0,`document.querySelector('.navigation-content').textContent.includes('Navigatorを更新しました')`),false);
   assert.equal(await child(0,`(()=>{const content=document.querySelector('.navigation-content'),items=content.querySelector('.navigation-items'),note=content.querySelector('.navigation-estimate-note');return !content.querySelector('.navigation-result-heading')&&items.nextElementSibling===note&&note.textContent.includes('達成度はAIの推定');})()`),true);
   assert.equal(await child(0,`document.querySelector('.navigation-overall [role="progressbar"]').getAttribute('aria-valuenow')`),'56');
@@ -140,18 +143,18 @@ try {
   const modelSocket=new WebSocket(modelTarget.webSocketDebuggerUrl);await once(modelSocket,'open');
   const modelCapture=new Promise(resolve=>modelSocket.addEventListener('message',event=>{const response=JSON.parse(event.data);if(response.id===1)resolve(response);}));
   modelSocket.send(JSON.stringify({id:1,method:'Page.captureScreenshot',params:{format:'png'}}));
-  writeFileSync(resolve('temp/navigation-ui-check/models.png'),Buffer.from((await modelCapture).result.data,'base64'));modelSocket.close();
+  writeFileSync(join(mockOutput('temp/navigation-ui-check'),'models.png'),Buffer.from((await modelCapture).result.data,'base64'));modelSocket.close();
   await child(1,`(()=>{const input=document.querySelector('.navigation-model-choice');input.value='auto';input.dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('.navigation-model-picker').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));})()`);
   await until(()=>child(1,`document.querySelector('.navigation-model-line>span').textContent.includes('auto')`),'モデル保存');
   assert.ok(await child(0,`document.querySelector('.navigation-model-line>span').textContent.includes('aidiy_hermes')`));
-  await child(0,`document.querySelector('.navigation-evaluate').click()`);
+  await runRide('.navigation-evaluate');
   await until(()=>child(0,`!!document.querySelector('.navigation-display.running')`),'evaluate busy');
   assert.equal(await child(0,`document.querySelector('.terminal-welcome h1').textContent`),'FINDING YOUR ROUTE');
   assert.equal(await child(0,`document.querySelectorAll('.navigation-items').length`),0);
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-overall')).display`),'none');
   assert.equal(await child(0,`getComputedStyle(document.querySelector('.navigation-next')).display`),'none');
   assert.equal(await child(1,`!!document.querySelector('.navigation-display.running')`),false);
-  await until(()=>child(0,`!document.querySelector('.navigation-evaluate').disabled`),'評価完了');
+  await until(()=>child(0,`document.querySelector('.navigation-evaluate')?.disabled===false`),'評価完了');
   assert.equal(aiCalls,2);
   assert.equal(await child(0,`!!document.querySelector('.navigation-display.running')`),false);
   assert.equal(await child(1,`!!document.querySelector('.navigation-display.running')`),false);
@@ -172,7 +175,7 @@ try {
   const failureSocket=new WebSocket(popupTarget.webSocketDebuggerUrl);await once(failureSocket,'open');
   const failureCapture=new Promise(resolve=>failureSocket.addEventListener('message',event=>{const response=JSON.parse(event.data);if(response.id===1)resolve(response);}));
   failureSocket.send(JSON.stringify({id:1,method:'Page.captureScreenshot',params:{format:'png'}}));
-  writeFileSync(resolve('temp/navigation-ui-check/failure.png'),Buffer.from((await failureCapture).result.data,'base64'));failureSocket.close();
+  writeFileSync(join(mockOutput('temp/navigation-ui-check'),'failure.png'),Buffer.from((await failureCapture).result.data,'base64'));failureSocket.close();
   await child(0,`[...document.querySelectorAll('dialog[open]')].find(d=>d.textContent.includes('ナビの実行に失敗しました')).querySelector('button').click()`);
   await new Promise(resolve=>setTimeout(resolve,2200));
   assert.equal(await child(0,`!![...document.querySelectorAll('dialog[open]')].find(d=>d.textContent.includes('ナビの実行に失敗しました'))`),false);
@@ -192,14 +195,14 @@ try {
   const goalLayout=await evaluate(`(()=>{const t=document.querySelector('.navigation-panel.standalone textarea'),s=getComputedStyle(t);return {height:t.getBoundingClientRect().height,resize:s.resize,maxHeight:s.maxHeight};})()`);
   assert.ok(goalLayout.height>48&&goalLayout.height<=120);assert.equal(goalLayout.resize,'vertical');assert.equal(goalLayout.maxHeight,'120px');
   const inputCapture=await send('Page.captureScreenshot',{format:'png'});
-  mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/three-row-input.png'),Buffer.from(inputCapture.result.data,'base64'));
+  mkdirSync(mockOutput('temp/navigation-ui-check'),{recursive:true});writeFileSync(join(mockOutput('temp/navigation-ui-check'),'three-row-input.png'),Buffer.from(inputCapture.result.data,'base64'));
   assert.ok(await evaluate(`document.body.textContent.includes('AiDiy Navigator')`));
   assert.ok(await evaluate(`document.querySelector('.navigation-project').textContent.includes('project')`));
   await evaluate(`document.querySelector('.navigation-model-line button').click()`);
   await until(()=>evaluate(`!!document.querySelector('.navigation-model-picker')`),'standalone model dialog');
   assert.ok(await evaluate(`document.querySelector('.navigation-model-picker').textContent.includes('same')`));
   const capture=await send('Page.captureScreenshot',{format:'png'});
-  mkdirSync(resolve('temp/navigation-ui-check'),{recursive:true});writeFileSync(resolve('temp/navigation-ui-check/standalone.png'),Buffer.from(capture.result.data,'base64'));
+  mkdirSync(mockOutput('temp/navigation-ui-check'),{recursive:true});writeFileSync(join(mockOutput('temp/navigation-ui-check'),'standalone.png'),Buffer.from(capture.result.data,'base64'));
   assert.deepEqual(errors,[]);console.log(JSON.stringify({pass:true,ai:'mock only',aiCalls,checks:['two popup windows','independent model/result/evaluation','Explorer unchanged','close isolation']}));
 
   }
@@ -210,6 +213,6 @@ try {
   await standalone?.close();await app.close(); connection.close(); for (const timer of replies) clearTimeout(timer);
   core.closeAllConnections(); await new Promise(done => core.close(done));
   if(!resolve(temporary).startsWith(resolve(tmpdir())+sep))throw Error('一時保存先が不正です。');
-  rmSync(temporary, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  removeMockDirectory(temporary);
 }
 

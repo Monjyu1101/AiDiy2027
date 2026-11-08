@@ -1,0 +1,6 @@
+{"at":"2026-11-07T11:50:51.251Z","kind":"screen","title":"AiDiy Navigator","codeVisible":false,"routing":false,"status":"","overall":"","tasks":[],"error":""}
+{"at":"2026-11-07T11:50:51.331Z","kind":"screen","title":"AiDiy Navigator","on":"false","disabled":false,"codeVisible":false,"routing":false,"status":"","overall":"総合評価\n0%","tasks":[],"error":""}
+{"at":"2026-11-07T11:50:52.537Z","kind":"window-closed"}
+{"at":"2026-11-07T11:51:47.439Z","kind":"request","requestId":"31448.31","path":"/api/navigation","action":"evaluate","clientRequestId":"navi-1-1794052307385-1-a5bqytyuryt"}
+{"at":"2026-11-07T11:51:47.614Z","kind":"screen","title":"AiDiy Navigator","on":"false","disabled":true,"codeVisible":false,"routing":true,"status":"","overall":"総合評価0%AIが見積もった工数比率による総合評価。実測値ではありません。試験開始前です。","tasks":[],"error":""}
+{"at":"2026-11-07T11:52:05.677Z","kind":"window-closed"}

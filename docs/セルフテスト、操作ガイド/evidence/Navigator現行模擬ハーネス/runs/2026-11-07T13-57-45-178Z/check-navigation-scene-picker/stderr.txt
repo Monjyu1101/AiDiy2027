@@ -1,0 +1,14 @@
+node:fs:1282
+  return binding.rmSync(getValidatedPath(path), opts.maxRetries, opts.recursive, opts.retryDelay);
+                 ^
+
+Error: EPERM, Permission denied: 'C:\Users\admin\AppData\Local\Temp\navi-suite-JOanXr\5\temporary\navi-picker-UWwpy8'
+    at rmSync (node:fs:1282:18)
+    at file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/scripts/check-navigation-scene-picker.mjs:110:181 {
+  errno: 1,
+  code: 'EPERM',
+  path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-JOanXr\\5\\temporary\\navi-picker-UWwpy8',
+  syscall: 'rm'
+}
+
+Node.js v24.22.1

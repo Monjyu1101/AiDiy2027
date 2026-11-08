@@ -48,7 +48,7 @@ onMounted(() => {
     emit('unsupported'); return;
   }
   ready.value = true;
-  const reduced = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const reduced = false;
   const pixelRatio = Math.min(globalThis.devicePixelRatio || 1, 2);
   renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 1);

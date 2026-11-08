@@ -1,0 +1,5 @@
+{"at":"2026-11-07T13:48:36.789Z","event":"listen","port":50184}
+{"at":"2026-11-07T13:48:36.810Z","event":"listen","port":50190}
+{"at":"2026-11-07T13:48:36.839Z","event":"spawn","executable":"C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe","args":["--headless=new","--remote-debugging-port=0","--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-2AosrT\\3\\temporary\\aidiy-navi-height-D8oTia\\browser","--window-size=1920,1080","about:blank","--disable-background-networking","--disable-component-update","--disable-sync","--no-first-run","--no-default-browser-check","--proxy-server=http://127.0.0.1:9","--proxy-bypass-list=127.0.0.1;localhost","--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"],"pid":32124}
+{"at":"2026-11-07T13:49:10.861Z","event":"childExit","pid":32124,"code":null,"signal":"SIGTERM"}
+{"at":"2026-11-07T13:49:10.971Z","event":"exit","code":1}

@@ -1,0 +1,3 @@
+STAGE: browser
+STAGE: standalone
+{"mockApplication":"navi","mockCalls":0,"projectUnchanged":true,"stateRoot":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-QgjZaw\\3\\temporary\\aidiy-navi-height-4OlBN0\\navigation-state","modelFile":"C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-QgjZaw\\3\\temporary\\aidiy-navi-height-4OlBN0\\aidiy_navi_model.json"}

@@ -12,6 +12,7 @@ import LivePanel from './components/ライブ/ライブパネル.vue';
 import NavigationPanel from './components/開発スペース/Navigationパネル.vue';
 import SpaceView from './components/開発スペース/開発スペース.vue';
 import StatusBar from './components/共通表示/状態バー.vue';
+import LaunchMenu from './components/共通表示/起動メニュー.vue';
 import TerminalWelcome from './components/コンソール/開始表示.vue';
 import ViewerWindow from './components/ファイル閲覧/閲覧ウィンドウ.vue';
 import BrowserPanel from './components/ブラウザ/ブラウザパネル.vue';
@@ -103,6 +104,23 @@ function navigationOpened(){clearTimeout(navigationTimer);if(launching.value==='
 function openNavigation(){if(!state.value.active||launching.value)return;launching.value='navigation';clearTimeout(navigationTimer);navigationTimer=setTimeout(navigationOpened,10000);navigationWindows.value.push('navi-'+(++nextNavigation));}
 function closeNavigation(id){navigationWindows.value=navigationWindows.value.filter(value=>value!==id);navigationOpened();}
 const launching=ref('');
+// 起動メニューの項目。名前に「＋」は付けない。広いときは横並び、狭いときは「＋」から開く下向きメニュー（共通表示/起動メニュー.vue）。
+const launchText=(kind,name)=>launching.value===kind?'起動中…':name;
+const desktopLaunchItems=computed(()=>[
+  {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
+  {key:'navigation',class:'navigation-launch',text:launchText('navigation','Navigator'),disabled:!!launching.value,run:openNavigation},
+  {key:'code',text:launchText('code','Code'),title:'コード支援を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('code')},
+  ...(state.value.mode==='online'&&!liveOpen.value?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')}]:[]),
+  {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'tools接続中のみ起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
+  ...(state.value.mode==='online'?['task','team'].map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[])
+]);
+const panelLaunchItems=computed(()=>[
+  {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
+  {key:'navigation',class:'navigation-launch',text:launchText('navigation','Navigator'),disabled:!!launching.value,run:openNavigation},
+  {key:'code',text:'Code',pressed:panelOpen.value&&tab.value==='code',run:()=>openPanel('code')},
+  ...(state.value.mode==='online'?[{key:'live',text:'Live',pressed:panelOpen.value&&tab.value==='live',run:()=>openPanel('live')}]:[]),
+  {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブでGoogle検索を開く':'tools接続中のみ起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')}
+]);
 async function openWindow(kind,displayId){
   if(kind==='browser'&&!browserAvailable.value){error.value='tools接続中のみBrowserを起動できます。';return{ok:false,error:error.value};}
   if(launching.value)return;launching.value=kind;error.value='';
@@ -200,8 +218,8 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
             <nav v-if="state.active" class="ide-view-modes" aria-label="ファイルの表示モード"><button :aria-pressed="viewMode==='3d'" @click="viewMode='3d'">3D</button><button :aria-pressed="viewMode==='2d'" @click="viewMode='2d'">2D</button></nav>
           </div>
           <div class="ide-toolbar-right">
-            <nav v-if="state.active&&desktop" class="ai-launchers" aria-label="別ウィンドウを開く"><button :disabled="!!launching" title="ターミナルを別ウィンドウで開く" @click="openWindow('console')">{{ launching==='console'?'起動中…':'＋ Console' }}</button><button class="navigation-launch" :disabled="!!launching" @click="openNavigation">{{ launching==='navigation'?'起動中…':'＋ Navigator' }}</button><button :disabled="!!launching" title="コード支援を別ウィンドウで開く" @click="openWindow('code')">{{ launching==='code'?'起動中…':'＋ Code' }}</button><button v-if="state.mode==='online'&&!liveOpen" :disabled="!!launching" title="音声会話を別ウィンドウで開く" @click="openWindow('live')">{{ launching==='live'?'起動中…':'＋ Live' }}</button><button :disabled="!!launching||!browserAvailable" :title="browserAvailable?'ブラウザを別ウィンドウで開く':'tools接続中のみ起動できます'" @click="openWindow('browser')">{{ launching==='browser'?'起動中…':'＋ Browser' }}</button><button v-for="type in ['task','team']" :key="type" v-show="state.mode==='online'" :disabled="!!launching" :title="'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く'" @click="openWindow(type)">{{ launching===type?'起動中…':'＋ '+type.toUpperCase() }}</button></nav>
-            <nav v-else-if="state.active" class="ai-launchers" aria-label="パネルを開く"><button :aria-pressed="panelOpen&&tab==='console'" @click="openPanel('console')">Console</button><button class="navigation-launch" :disabled="!!launching" @click="openNavigation">{{ launching==='navigation'?'起動中…':'＋ Navigator' }}</button><button :aria-pressed="panelOpen&&tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" :aria-pressed="panelOpen&&tab==='live'" @click="openPanel('live')">Live</button><button :disabled="!browserAvailable||!!launching" @click="openWindow('browser')" :title="browserAvailable?'新しいブラウザタブでGoogle検索を開く':'tools接続中のみ起動できます'">＋ Browser</button></nav>
+            <LaunchMenu v-if="state.active&&desktop" label="別ウィンドウを開く" :items="desktopLaunchItems" />
+            <LaunchMenu v-else-if="state.active" label="パネルを開く" :items="panelLaunchItems" />
             <nav><template v-if="!state.active"><button :disabled="pending" @click="start('connect')">AiDiy接続利用</button><button :disabled="pending" @click="start('offline')">オフライン利用</button></template><button v-else :disabled="pending" @click="start('disconnect')">{{ desktop?'終了':'利用終了' }}</button></nav>
           </div>
         </div>
@@ -209,12 +227,12 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
       <template v-if="allDisplayState.active"><nav v-for="toolbar in allToolbars" :key="toolbar.displayId" class="all-restore-zone" :data-display-id="toolbar.displayId" :style="allRestoreStyle(toolbar)" aria-label="この画面のVR操作" @mouseenter="status" @focusin="status">
         <button class="all-restore-button" :disabled="allBusy" aria-label="VRモードを終了して元の表示に戻す" title="VRモードを終了" @click="toggleAllDisplays"><span class="all-restore-icon" aria-hidden="true"></span></button>
         <div class="all-launchers">
-          <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'＋ Console' }}</button>
-          <button class="navigation-launch" :disabled="!!launching||allBusy" @click="openNavigation">{{ launching==='navigation'?'起動中…':'＋ Navigator' }}</button>
-          <button :disabled="!!launching||allBusy" title="この画面の右上にコード支援を開く" @click="openWindow('code',toolbar.displayId)">{{ launching==='code'?'起動中…':'＋ Code' }}</button>
-          <button v-if="state.mode==='online'&&!liveOpen" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'＋ Live' }}</button>
-          <button v-for="type in ['task','team']" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':'＋ '+type.toUpperCase() }}</button>
-          <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'tools接続中のみ起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'＋ Browser' }}</button>
+          <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'Console' }}</button>
+          <button class="navigation-launch" :disabled="!!launching||allBusy" @click="openNavigation">{{ launching==='navigation'?'起動中…':'Navigator' }}</button>
+          <button :disabled="!!launching||allBusy" title="この画面の右上にコード支援を開く" @click="openWindow('code',toolbar.displayId)">{{ launching==='code'?'起動中…':'Code' }}</button>
+          <button v-if="state.mode==='online'&&!liveOpen" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'Live' }}</button>
+          <button v-for="type in ['task','team']" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':type.toUpperCase() }}</button>
+          <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'tools接続中のみ起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'Browser' }}</button>
         </div>
       </nav></template>
       <div v-if="allBusy" class="all-transition" role="status" aria-live="polite"><p>{{ allMessage }}</p></div>

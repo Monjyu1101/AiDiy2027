@@ -1,0 +1,7 @@
+[16152:15252:1107/230151.882:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\dngcpimnedloihjnnfngkgjoidhnaolf.
+[16152:15252:1107/230151.882:ERROR:chrome\browser\extensions\external_registry_loader_win.cc:147] Missing value path for key Software\Google\Chrome\Extensions\fcoeoabgfenejglbffodgkkbkcdhcgfn.
+
+DevTools listening on ws://127.0.0.1:53475/devtools/browser/c2e3dd29-de71-43c3-ab34-eec024ff2897
+[16152:17960:1107/230210.796:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 24760: アクセスが拒否されました。 (0x5)
+[16152:17960:1107/230211.011:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 24760: アクセスが拒否されました。 (0x5)
+[16152:17960:1107/230211.417:ERROR:chrome\updater\ipc\update_service_dialer_win.cc:77] Failed to open named pipe server process 24760: アクセスが拒否されました。 (0x5)

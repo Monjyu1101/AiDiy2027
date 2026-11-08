@@ -1,0 +1,11 @@
+{"at":"2026-11-07T11:43:47.102Z","kind":"screen","title":"AiDiy Navigator","codeVisible":false,"routing":false,"status":"","overall":"","tasks":[],"error":""}
+{"at":"2026-11-07T11:43:47.230Z","kind":"screen","title":"AiDiy Navigator","on":"false","disabled":false,"codeVisible":false,"routing":false,"status":"","overall":"総合評価\n0%","tasks":[],"error":""}
+{"at":"2026-11-07T11:43:47.482Z","kind":"screen","title":"","codeVisible":false,"routing":false,"status":"","overall":"","tasks":[],"error":""}
+{"at":"2026-11-07T11:43:48.386Z","kind":"window-closed"}
+{"at":"2026-11-07T11:44:34.025Z","kind":"window-closed"}
+{"at":"2026-11-07T11:44:36.255Z","kind":"screen","title":"AiDiy Navigator","codeVisible":false,"routing":false,"status":"","overall":"","tasks":[],"error":""}
+{"at":"2026-11-07T11:44:36.957Z","kind":"screen","title":"AiDiy Navigator","on":"false","disabled":false,"codeVisible":false,"routing":false,"status":"","overall":"総合評価\n0%","tasks":[],"error":""}
+{"at":"2026-11-07T11:44:37.705Z","kind":"window-closed"}
+{"at":"2026-11-07T11:45:03.358Z","kind":"request","requestId":"9040.22","path":"/api/navigation/code"}
+{"at":"2026-11-07T11:45:03.519Z","kind":"screen","title":"AiDiy Navigation Cruise","on":"true","disabled":false,"codeVisible":true,"routing":false,"status":"Codeの状態通知を待っています…","overall":"総合評価\n0%\n\n自動航行中","tasks":[],"error":""}
+{"at":"2026-11-07T11:45:03.781Z","kind":"screen","title":"AiDiy Navigation Cruise","on":"true","disabled":false,"codeVisible":true,"routing":false,"status":"Codeのオンライン接続・セッション確定を待っています…","overall":"総合評価\n0%\n\n自動航行中","tasks":[],"error":""}
