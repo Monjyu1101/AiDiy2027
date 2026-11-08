@@ -93,7 +93,7 @@
 .space-motion-toggle.driving{border:1px solid transparent;background:linear-gradient(#080c1af2,#080c1af2) padding-box,conic-gradient(from var(--motion-spin),#2c5a5c 0deg,#2c5a5c 200deg,#85e9e9 300deg,#e8ffff 340deg,#2c5a5c 360deg) border-box;box-shadow:0 0 10px #85e9e940;animation:motion-spin 1.6s linear infinite}
 
 
-/* AiDiy検索と閲覧軌跡の切替。操作はエクスプローラーの右側へ寄せる。 */
+/* AI検索と閲覧軌跡の切替。操作はエクスプローラーの右側へ寄せる。 */
 .explorer-routes{position:fixed;top:var(--workspace-top);left:calc(24px + var(--explorer-width));z-index:41;display:flex;gap:4px;flex-wrap:wrap;width:var(--route-width);background:#070b17ed;padding:5px;border:1px solid #29334c}
 .explorer-routes button{font-size:11px;padding:5px 8px}.explorer-routes button[aria-pressed=true]{color:#a7f6ff;border-color:#6bcbcc;background:#113039}
 .ai-search-panel textarea{display:block;box-sizing:border-box;width:100%;resize:vertical;min-height:45px;font:11px/1.5 var(--mono);margin:5px 0}
@@ -351,3 +351,7 @@
 .development-app .viewer-close:hover{color:#ff8e9e}
 
 .explorer-row-check{flex:none;width:14px;height:14px;margin:0 2px;accent-color:#7dd3fc;cursor:pointer}.explorer-checked-status{display:flex;align-items:center;gap:5px;margin:0;padding:5px 8px;font-size:11px;color:#7dd3fc;border-bottom:1px solid #29334c}.explorer-checked-status button{margin-left:auto}
+
+/* AI解析で保存した画面URL。長いURLでもパネル幅を広げない。 */
+.viewer-display-url{font:var(--file-font-size,11px) var(--mono);color:#a5bdd9;overflow-wrap:anywhere;margin:0 0 6px}
+.analysis-display-urls{border:1px solid #293b54;padding:10px;margin:10px 0}.analysis-display-urls h4{margin:0 0 8px}.analysis-display-url{display:flex;align-items:center;gap:8px;margin:6px 0}.analysis-display-url>span{flex:1;min-width:0;overflow-wrap:anywhere}.analysis-display-url small{display:block;font-family:var(--mono);color:#a5bdd9}.analysis-display-url button{flex:none}.analysis-display-urls p{color:#a5bdd9;margin:6px 0;font-size:11px}

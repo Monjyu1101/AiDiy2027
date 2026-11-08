@@ -20,7 +20,7 @@ async function fixture(t){
 }
 const result=job=>({requestId:job.id,query:job.query,files:[{path:'main.ts',reason:'入口'},{path:'src/login.ts',reason:'認証処理'}],route:['main.ts','src/login.ts']});
 
-test('AiDiy検索: 依頼専用ファイル、未完成・5分期限・遅れて完成した結果・利用終了',async t=>{
+test('AI検索: 依頼専用ファイル、未完成・5分期限・遅れて完成した結果・利用終了',async t=>{
   const root=await fixture(t);let clock=Date.now(),session=1;
   const calls=[];const service=createAISearch(root,{state:()=>({active:session!==null,startedAt:session}),now:()=>clock,runAgent:args=>{calls.push(args);return new Promise(()=>{});}});
   t.after(()=>service.close());
@@ -37,7 +37,7 @@ test('AiDiy検索: 依頼専用ファイル、未完成・5分期限・遅れて
   session=null;await assert.rejects(()=>service.start('認証'),/利用/);
 });
 
-test('AiDiy検索: 不正JSON・古い依頼・不正パス・関連順・空結果を検証',async t=>{
+test('AI検索: 不正JSON・古い依頼・不正パス・関連順・空結果を検証',async t=>{
   const root=await fixture(t),job={id:'abc',query:'認証'};
   for(const path of ['../outside','C:/Windows/file','/absolute','src/../main.ts','src\\login.ts','missing.ts','src']){
     await assert.rejects(()=>validateSearchResult(root,{...result(job),files:[{path,reason:'理由'}],route:[path]},job));
@@ -52,7 +52,7 @@ test('AiDiy検索: 不正JSON・古い依頼・不正パス・関連順・空結
   await writeFile(join(root,request.path),JSON.stringify(result(request)));assert.equal((await service.check(request.id)).status,'complete');
 });
 
-test('AiDiy検索: プロジェクト外を指すtempと結果内のリンクを拒否',async t=>{
+test('AI検索: プロジェクト外を指すtempと結果内のリンクを拒否',async t=>{
   const root=await fixture(t),outside=await fixture(t);
   await symlink(outside,join(root,'temp'),process.platform==='win32'?'junction':'dir');
   const service=createAISearch(root,{state:()=>({active:true,startedAt:1}),runAgent:async()=>{throw Error('呼ばれない');}});
@@ -62,7 +62,7 @@ test('AiDiy検索: プロジェクト外を指すtempと結果内のリンクを
   await assert.rejects(()=>validateSearchResult(root,{...result(job),files:[{path:'linked/main.ts',reason:'理由'}],route:['linked/main.ts']},job),/確認できません/);
 });
 
-test('AiDiy検索タイトル: 生成タイトルの保存・再読込と旧結果の互換',async t=>{
+test('AI検索タイトル: 生成タイトルの保存・再読込と旧結果の互換',async t=>{
   const root=await fixture(t),options={state:()=>({active:true,startedAt:1}),runAgent:()=>new Promise(()=>{})};
   const service=createAISearch(root,options);t.after(()=>service.close());
   const job=await service.start('バックエンドの認証に関係するプログラムを検索して');
@@ -84,7 +84,7 @@ test('AI軌跡: 各階層の入口から関連ファイル・親フォルダへ�
   assert.deepEqual(aiRouteTargets(route,['other'],world),[]);
 });
 
-test('AiDiy検索API: 利用開始・同一オリジン・エージェント起動・結果受取',async t=>{
+test('AI検索API: 利用開始・同一オリジン・エージェント起動・結果受取',async t=>{
   const root=await fixture(t);let prompt;
   const app=await startDevelopment(root,{aiSearchOptions:{runAgent:async args=>{prompt=args.prompt;}}});t.after(()=>app.close());
   const post=body=>fetch(app.url+'api/ai-search',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
@@ -101,7 +101,7 @@ test('AiDiy検索API: 利用開始・同一オリジン・エージェント起�
   assert.deepEqual((await fetch(historyURL).then(r=>r.json())).entries,[]);
 });
 
-test('AiDiy検索履歴: 複数保存・再起動・別プロジェクト分離・削除後の再取込防止',async t=>{
+test('AI検索履歴: 複数保存・再起動・別プロジェクト分離・削除後の再取込防止',async t=>{
   const root=await fixture(t),other=await fixture(t);
   const options={state:()=>({active:true,startedAt:1}),runAgent:()=>new Promise(()=>{})};
   let service=createAISearch(root,options);t.after(()=>service.close());
@@ -123,7 +123,7 @@ test('AiDiy検索履歴: 複数保存・再起動・別プロジェクト分離�
   await assert.rejects(()=>service.history.remove('../outside'));
 });
 
-test('AiDiy検索履歴: 旧版のtemp結果を依頼文と照合して移行',async t=>{
+test('AI検索履歴: 旧版のtemp結果を依頼文と照合して移行',async t=>{
   const root=await fixture(t),options={state:()=>({active:true,startedAt:1}),runAgent:()=>new Promise(()=>{})};
   const old=createAISearch(root,options),job=await old.start('既存の認証検索');
   await writeFile(join(root,job.path),JSON.stringify(result(job)));old.close();

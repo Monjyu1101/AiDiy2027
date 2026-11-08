@@ -8,7 +8,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 // -------------------------------------------------------------------------
 
-// AiDiy解析の指示復元・結果保存・ダイアログを実画面で検証する。
+// AI解析の指示復元・結果保存・ダイアログを実画面で検証する。
 // ルートから node frontend_ide/scripts/check-file-analysis.mjs。オフラインだけを使いAI接続はしない。
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -123,17 +123,17 @@ try {
   }
   const preview=()=>evaluate(`document.querySelector('.viewer-popup')?.textContent||''`);
   await until(`document.querySelector('.viewer-popup')?.textContent.includes('first.txt')`,'起動ファイルを表示');
-  await evaluate(`window.aidiyIDE.setAutoSpin(false);document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`window.aidiyIDE.setAutoSpin(false);document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('.file-analysis-dialog[open] textarea')&&!document.querySelector('.file-analysis-dialog textarea').disabled`,'解析ダイアログを開く');
   assert.match(await evaluate(`document.querySelector('#file-analysis-instruction').value`),/機能概要/);assert.equal(calls,0,'開くだけではエージェントを実行しない');
-  await evaluate(`const input=document.querySelector('#file-analysis-instruction');input.value='機能概要と処理の流れを説明してください';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AiDiy解析を閉じる"]').click()`);
+  await evaluate(`const input=document.querySelector('#file-analysis-instruction');input.value='機能概要と処理の流れを説明してください';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AI解析を閉じる"]').click()`);
   await until(`!document.querySelector('.file-analysis-dialog')`,'指示を保存して閉じる');
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('#file-analysis-instruction')?.value==='機能概要と処理の流れを説明してください'`,'前回指示を復元');
   // 保存失敗時は入力を残し、編集継続・明示破棄・保存再試行を選べる。
   const savesBeforeFailure=await evaluate(`analysisSaveCalls.length`);
-  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='保存せずに破棄する指示';input.dispatchEvent(new Event('input',{bubbles:true}));analysisSaveError=true;const close=document.querySelector('[aria-label="AiDiy解析を閉じる"]');close.click();close.click();}`);
-  await until(`!!document.querySelector('.analysis-save-error')&&!document.querySelector('[aria-label="AiDiy解析を閉じる"]').disabled`,'保存失敗時に閉じ方を選べる');
+  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='保存せずに破棄する指示';input.dispatchEvent(new Event('input',{bubbles:true}));analysisSaveError=true;const close=document.querySelector('[aria-label="AI解析を閉じる"]');close.click();close.click();}`);
+  await until(`!!document.querySelector('.analysis-save-error')&&!document.querySelector('[aria-label="AI解析を閉じる"]').disabled`,'保存失敗時に閉じ方を選べる');
   assert.equal(await evaluate(`analysisSaveCalls.length`),savesBeforeFailure+1,'保存中の連打では重複保存しない');
   assert.equal(await evaluate(`!!document.querySelector('.file-analysis-dialog[open]')`),true);
   assert.equal(await evaluate(`document.querySelector('#file-analysis-instruction').value`),'保存せずに破棄する指示');
@@ -153,26 +153,26 @@ try {
   await until(`!document.querySelector('.file-analysis-dialog')`,'保存できなくても明示破棄で閉じられる');
   assert.equal(await evaluate(`analysisSaveCalls.length`),savesBeforeFailure+2,'破棄で保存を再実行しない');
   assert.equal((await fetch(url+'api/file-analysis?path=first.txt').then(r=>r.json())).instruction,'機能概要と処理の流れを説明してください','破棄は前回保存した指示を上書きしない');
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('#file-analysis-instruction')?.value==='機能概要と処理の流れを説明してください'`,'破棄後は保存済みの指示を復元');
-  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='機能概要と処理の流れを説明してください（保存を再試行）';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AiDiy解析を閉じる"]').click();}`);
+  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='機能概要と処理の流れを説明してください（保存を再試行）';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AI解析を閉じる"]').click();}`);
   await until(`!!document.querySelector('.analysis-save-error')`,'再試行する指示の保存失敗を表示');
   await evaluate(`analysisSaveError=false;[...document.querySelectorAll('.analysis-save-error button')].find(b=>b.textContent==='保存して閉じる').click()`);
   await until(`!document.querySelector('.file-analysis-dialog')`,'保存の再試行が成功したら閉じる');
   assert.equal(await evaluate(`analysisSaveCalls.length`),savesBeforeFailure+4);
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('#file-analysis-instruction')?.value==='機能概要と処理の流れを説明してください（保存を再試行）'`,'再試行で保存した指示を復元');
   assert.equal(calls,0,'閉じる操作の失敗や再試行でエージェントを実行しない');
   await capture('01-analysis-instruction.png');
   await evaluate(`[...document.querySelectorAll('.file-analysis-dialog button')].find(b=>b.textContent==='解析を実行').click()`);
   await until(`document.querySelector('.file-analysis-dialog').textContent.includes('解析中…')`,'AI解析を依頼');
   assert.equal(calls,1);
-  await evaluate(`document.querySelector('[aria-label="AiDiy解析を閉じる"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析を閉じる"]').click()`);
   await until(`!document.querySelector('.file-analysis-dialog')`,'実行中もダイアログを閉じられる');
   finishAnalysis();
   let record;for(let i=0;i<100;i++){record=await fetch(url+'api/file-analysis?path=first.txt').then(r=>r.json());if(record.result)break;await sleep(50);}
   assert.match(record.result.content,/検証用/);
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('.analysis-result')?.textContent.includes('検証用')`,'保存済みの結果を表示');
   assert.equal(await evaluate(`window.analysisInjected===true`),false);assert.equal(await evaluate(`document.querySelectorAll('.analysis-result img').length`),0);
   await evaluate(`window.aidiyIDE.clear()`);
@@ -182,17 +182,17 @@ try {
   const bounds=await evaluate(`(()=>{const d=document.querySelector('.file-analysis-dialog'),r=d.getBoundingClientRect();return {left:r.left,right:r.right,bottom:r.bottom,width:innerWidth,height:innerHeight,scroll:d.scrollWidth,client:d.clientWidth}})()`);
   assert.ok(bounds.left>=0&&bounds.right<=bounds.width&&bounds.bottom<=bounds.height&&bounds.scroll<=bounds.client,'縦表示でもダイアログが画面内に収まる');
   await capture('03-analysis-portrait.png');
-  await evaluate(`document.querySelector('[aria-label="AiDiy解析を閉じる"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析を閉じる"]').click()`);
   await until(`!document.querySelector('.file-analysis-dialog')`,'解析を閉じる');
   await evaluate(`void window.aidiyIDE.goTo({path:'picture.svg',type:'file'})`);
   await until(`document.querySelector('.viewer-popup')?.textContent.includes('picture.svg')`,'画像ファイルを開く');
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('#file-analysis-instruction')&&!document.querySelector('#file-analysis-instruction').disabled`,'画像用の指示を読み込む');
   assert.match(await evaluate(`document.querySelector('#file-analysis-instruction').value`),/この画像.*構図・配色/);
   await capture('04-image-instruction.png');
-  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='画像内の文字を読み取ってください';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AiDiy解析を閉じる"]').click();}`);
+  await evaluate(`{const input=document.querySelector('#file-analysis-instruction');input.value='画像内の文字を読み取ってください';input.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[aria-label="AI解析を閉じる"]').click();}`);
   await until(`!document.querySelector('.file-analysis-dialog')`,'画像の指示を保存');
-  await evaluate(`document.querySelector('[aria-label="AiDiy分析"]').click()`);
+  await evaluate(`document.querySelector('[aria-label="AI解析"]').click()`);
   await until(`document.querySelector('#file-analysis-instruction')?.value==='画像内の文字を読み取ってください'`,'画像でも前回指示を優先して復元');
   assert.equal(calls,1,'画像を開くだけでは解析しない');
   assert.deepEqual(errors,[]);console.log('FILE ANALYSIS PASS: ソースと画像の指示例・前回指示優先・保存失敗時の入力保持・×とEsc・編集継続・明示破棄・保存再試行・明示実行・閉じた後の保存・結果復元・HTML無効化・ビューア独立・縦表示');

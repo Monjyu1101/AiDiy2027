@@ -50,7 +50,7 @@ test('Vue機能配置: 四画面と共通部品は日本語の担当フォルダ
   const featureEntries = await readdir(new URL('src/components/', root), { withFileTypes: true });
   assert.deepEqual(featureEntries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort(),
     ['コード', 'ライブ', 'コンソール', '開発スペース', 'ファイル閲覧', 'ファイル検索', 'ブラウザ', '下書き連携', '共通表示', 'タスクチーム', '添付ファイル'].sort());
-  assert.deepEqual((await readdir(new URL('src/dialog/', root))).sort(), ['ファイル解析ダイアログ.vue', 'ファイル履歴ダイアログ.vue', '下書き連携ダイアログ.vue', '共通ダイアログ.vue'].sort());
+  assert.deepEqual((await readdir(new URL('src/dialog/', root))).sort(), ['ファイル解析ダイアログ.vue','ブラウザ解析ダイアログ.vue', 'ファイル履歴ダイアログ.vue', '下書き連携ダイアログ.vue', '共通ダイアログ.vue'].sort());
   const app = await readFile(new URL('src/App.vue', root), 'utf8');
   for (const name of ['CodePanel', 'LivePanel', 'ConsolePanel', 'SpaceView', 'StatusBar', 'DraftHandoffDialog']) {
     assert.ok(app.includes(`'./${componentPaths[name]}'`), name);

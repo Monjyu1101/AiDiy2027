@@ -82,7 +82,7 @@ try{
  await child.evaluate(`document.querySelector('[data-route-path="src/file-00.txt"]').click()`);await main.until(`aidiyIDE.selected?.path==='src/file-00.txt'`);
  // AiDiy履歴のみ固定結果。AI依頼POSTは禁止。
  await main.evaluate(`window.nativeFetch=window.fetch;window.aiPosts=0;window.fetch=(input,options)=>{if(String(input).startsWith('/api/ai-search')){if(options?.method==='POST'){aiPosts++;throw Error('AIは禁止');}const result=String(input).includes('id=')?{id:'fixture',query:'確認用',title:'2件の関連ファイル',files:[{path:'README.txt',reason:'入口'},{path:'src/sample.txt',reason:'詳細'}],route:['README.txt','src/sample.txt']}:{entries:[{id:'fixture',query:'確認用',title:'確認用',createdAt:Date.now(),count:2}]};return Promise.resolve(new Response(JSON.stringify(result)));}return nativeFetch(input,options);};`);
- await child.evaluate(`Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AiDiy検索軌跡').click()`);
+ await child.evaluate(`Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AI検索軌跡').click()`);
  await main.evaluate(`document.querySelector('.ai-history-header button').click()`);await main.until(`!!document.querySelector('.ai-history-open')`);await main.evaluate(`document.querySelector('.ai-history-open').click()`);
  await child.until(`document.querySelector('.ai-route-title')?.textContent==='2件の関連ファイル'`);
  await child.evaluate(`document.querySelector('[data-route-path="src/sample.txt"]').click()`);await main.until(`aidiyIDE.selected?.path==='src/sample.txt'`);
@@ -92,17 +92,17 @@ try{
  await main.evaluate(`document.querySelector('[aria-label="軌跡バーを別ウィンドウで開く"]').click()`);await main.until(`!document.querySelector('.explorer-routes')`);
  target=(await targets()).find(t=>t.title==='AiDiy IDE / 軌跡');child=await connect(target);await child.until(`!!document.querySelector('.route-tree')`);
  await child.send('Page.close');await main.until(`getComputedStyle(routeNode).display==='none'&&!!document.querySelector('[aria-label="軌跡バーを開く"]')`);
- await main.evaluate(`document.querySelector('[aria-label="軌跡バーを開く"]').click();Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AiDiy検索軌跡').click()`);
+ await main.evaluate(`document.querySelector('[aria-label="軌跡バーを開く"]').click();Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AI検索軌跡').click()`);
  await main.until(`!!document.querySelector('[data-route-path="src/sample.txt"]')`);
  await main.evaluate(`Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='閲覧軌跡').click()`);await main.until(`!!document.querySelector('[aria-label="閲覧軌跡をクリア"]')`);
  assert.ok(await main.evaluate(`document.querySelectorAll('[data-route-point]').length>=3`));
  await main.evaluate(`document.querySelector('[aria-label="軌跡バーを別ウィンドウで開く"]').click()`);await main.until(`!document.querySelector('.explorer-routes')`);
  child=await connect((await targets()).find(t=>t.title==='AiDiy IDE / 軌跡'));await child.until(`!!document.querySelector('[aria-label="閲覧軌跡をクリア"]')`);
  await child.evaluate(`document.querySelector('[aria-label="閲覧軌跡をクリア"]').click()`);await child.until(`document.querySelector('[aria-label="閲覧軌跡をクリア"]').disabled`);
- await child.evaluate(`Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AiDiy検索軌跡').click()`);await child.until(`!!document.querySelector('[data-route-path="README.txt"]')`);
+ await child.evaluate(`Array.from(document.querySelectorAll('.route-choice')).find(b=>b.textContent==='AI検索軌跡').click()`);await child.until(`!!document.querySelector('[data-route-path="README.txt"]')`);
  await child.send('Emulation.setEmulatedMedia',{features:[{name:'prefers-reduced-motion',value:'reduce'}]});assert.equal(await child.evaluate(`getComputedStyle(document.querySelector('main')).animationName`),'panel-fade-in');
  await main.send('Page.close');await sleep(600);assert.equal((await targets()).filter(t=>t.title==='AiDiy IDE / 軌跡').length,0);assert.deepEqual(errors,[]);
- const result={ok:true,size,shots,errors,operations:['3分類と実ツリーを同一DOMで移動','blocked popup保持','連打1窓','reload保持','閲覧/grep/AiDiy検索から実ジャンプ','AI外部送信なし','本体へ戻す','Xで折畳みと記録保持','閲覧クリアは他分類を保持','Webfade/OS設定による省略なし','親終了cleanup']};writeFileSync(join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
+ const result={ok:true,size,shots,errors,operations:['3分類と実ツリーを同一DOMで移動','blocked popup保持','連打1窓','reload保持','閲覧/grep/AI検索から実ジャンプ','AI外部送信なし','本体へ戻す','Xで折畳みと記録保持','閲覧クリアは他分類を保持','Webfade/OS設定による省略なし','親終了cleanup']};writeFileSync(join(output,'result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));
 }finally{
  for(const ws of sockets)ws.close();chrome.kill();await app.close();await sleep(300);
  for(const folder of [project,profile]){if(!resolve(folder).startsWith(resolve(tmpdir())+sep))throw Error('一時パスが不正です');try{rmSync(folder,{recursive:true,force:true});}catch{}}

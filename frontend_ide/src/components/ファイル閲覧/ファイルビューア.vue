@@ -40,15 +40,26 @@ const mediaFile=computed(()=>MEDIA_PATTERN.test(props.file?.name||''));
 const previewKind=computed(()=>/\.(md|markdown)$/i.test(props.file?.name||'')?'markdown':/\.html?$/i.test(props.file?.name||'')?'html':/\.svg$/i.test(props.file?.name||'')?'svg':/\.vue$/i.test(props.file?.name||'')?'vue':'');
 const modeKey=kind=>`aidiy-ide-preview-mode:${kind}`;
 const readMode=kind=>{try{const saved=localStorage.getItem(modeKey(kind));if(saved==='view'||saved==='code')return saved;}catch{}return ['svg','markdown'].includes(kind)?'view':'code';};
-const mode=ref(previewKind.value?readMode(previewKind.value):'code'),preview=ref(),routeIndex=ref(0);
+const mode=ref(previewKind.value?readMode(previewKind.value):'code'),preview=ref(),routeIndex=ref(0),previewLoading=ref(false);
 let previewRun=0;
 async function loadPreview(){
-  const run=++previewRun;preview.value=null;
+  if(!props.file||!previewKind.value)return;
+  const run=++previewRun,selected=previewUrl.value;preview.value=null;previewLoading.value=true;
   try{const response=await fetch('/api/preview?'+new URLSearchParams({path:props.file.path}),{cache:'no-store'});if(!response.ok)throw Error(await response.text());const value=await response.json();if(run===previewRun)preview.value=value;}
   catch(e){if(run===previewRun)preview.value={error:e.message};}
+  finally{if(run===previewRun){routeIndex.value=Math.max(0,preview.value?.routes?.findIndex(route=>route.url===selected)??0);previewLoading.value=false;}}
 }
 function setMode(next){mode.value=next;try{localStorage.setItem(modeKey(previewKind.value),next);}catch{}if(next==='view')void loadPreview();}
-const previewUrl=computed(()=>preview.value?.url||preview.value?.routes?.[routeIndex.value]?.url||'');
+const previewUrl=computed(()=>preview.value?.routes?.[routeIndex.value]?.url||preview.value?.url||'');
+const screenPreview=computed(()=>['analysis','vue'].includes(preview.value?.kind));
+const browserFile=computed(()=>['html','vue'].includes(previewKind.value)||mediaFile.value);
+const previewSandbox=computed(()=>{
+  if(previewKind.value==='markdown')return 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
+  const flags='allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads';
+  // AIのURLがIDE自身を指しても、埋め込み文書に親と同じ権限を与えない。
+  if(preview.value?.kind==='analysis'&&new URL(previewUrl.value).origin===window.location.origin)return flags;
+  return flags+' allow-same-origin'+(screenPreview.value?'':' allow-pointer-lock');
+});
 const params=value=>new URLSearchParams(value).toString();
 function disposeEditor(){scrollSubscription?.dispose();scrollSubscription=null;const previous=editor;editor=undefined;const model=previous?.getModel();previous?.dispose();model?.dispose();}
 async function checkHistory(file,run,signal){
@@ -84,9 +95,13 @@ async function load(file){
     }
   }catch(e){if(run===revision)error.value=e.message;}
 }
-watch(()=>props.file,file=>{previewRun++;stamp.value=Date.now();routeIndex.value=0;preview.value=null;mode.value=file?.line?'code':previewKind.value?readMode(previewKind.value):'code';void load(file);if(mode.value==='view')void loadPreview();},{immediate:true});
+watch(()=>[props.file,props.root],([file])=>{previewRun++;previewLoading.value=false;stamp.value=Date.now();routeIndex.value=0;preview.value=null;mode.value=file?.line?'code':previewKind.value?readMode(previewKind.value):'code';void load(file);if(mode.value==='view'||['html','vue'].includes(previewKind.value))void loadPreview();},{immediate:true});
 // 画像・Office文書は URL の v を変えて読み直させる。テキストは Monaco を作り直す。表示中のページは iframe を作り直す。
-async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([load(props.file),mode.value==='view'?loadPreview():null]);}finally{reloading.value=false;}}
+async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([load(props.file),mode.value==='view'||['html','vue'].includes(previewKind.value)?loadPreview():null]);}finally{reloading.value=false;}}
+function analyze(){
+  const file=props.file,root=props.root,run=revision;
+  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root)void loadPreview();});
+}
 const fullPath=computed(()=>fullFilePath(props.root||'',props.file?.path||''));
 function resetActions(){actionRevision++;clearTimeout(copyTimer);copied.value=false;actionBusy.value='';actionError.value='';}
 watch(()=>[props.file,props.root],resetActions,{flush:'sync'});
@@ -112,9 +127,12 @@ async function openFile(){
   finally{if(run===actionRevision)actionBusy.value='';}
 }
 async function browse(){
-  if(actionBusy.value||(previewKind.value!=='html'&&!mediaFile.value))return;
+  if(actionBusy.value||previewLoading.value||!browserFile.value)return;
   const run=++actionRevision;actionBusy.value='browser';actionError.value='';
-  try{const result=await openBrowser(props.file.path);if(!result?.ok)throw Error(result?.error||'ブラウザを開けませんでした。');}
+  try{
+    if(previewKind.value==='vue'&&!previewUrl.value)throw Error(preview.value?.error||'表示URLがありません。AI解析で画面URLを調べてください。');
+    const result=await openBrowser(props.file.path,undefined,window,screenPreview.value?previewUrl.value:'');if(!result?.ok)throw Error(result?.error||'ブラウザを開けませんでした。');
+  }
   catch(e){if(run===actionRevision)actionError.value=e.message;}
   finally{if(run===actionRevision)actionBusy.value='';}
 }
@@ -141,9 +159,9 @@ defineExpose({moved:bindActivityWindow});
 <template>
   <aside ref="viewer" :class="pinned?'viewer-pinned':'viewer-popup'" data-component="FileViewer" @pointerdown.capture="activity" @pointermove.capture="pointerActivity" @click.capture="activity" @keydown.capture="activity" @wheel.capture.passive="activity" @touchstart.capture.passive="activity" @touchmove.capture.passive="activity" @scroll.capture.passive="activity" @change.capture="activity" @load.capture="bindFrame"><header><span :title="file.path">{{ file.name }}</span>
       <span v-if="previewKind" class="viewer-mode" role="group" aria-label="表示の切り替え"><button :aria-pressed="mode==='code'" @click="setMode('code')">コード</button><button :aria-pressed="mode==='view'" @click="setMode('view')">{{ previewKind==='markdown'?'プレビュー':'表示' }}</button></span>
-      <button v-if="previewKind==='html'||mediaFile" class="viewer-browser" :disabled="!!actionBusy||!browserAvailable" :title="browserAvailable?'ブラウザで開く':'tools接続中のみ起動できます'" @click="browse">{{ actionBusy==='browser'?'起動中…':'ブラウザ' }}</button>
+      <button v-if="browserFile" class="viewer-browser" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'ブラウザで開く':'tools接続中のみ起動できます'" @click="browse">{{ actionBusy==='browser'?'起動中…':'ブラウザ' }}</button>
       <button v-if="hasHistory&&openHistory" class="viewer-history" @click="openHistory(file,root)">更新履歴</button>
-      <button v-if="openAnalysis" class="viewer-analysis" title="AiDiy分析" aria-label="AiDiy分析" @click="openAnalysis(file,root)"><img :src="'/development/AiDiy.png'" alt="">AiDiy分析</button>
+      <button v-if="openAnalysis" class="viewer-analysis" title="AI解析" aria-label="AI解析" @click="analyze"><img :src="'/development/AiDiy.png'" alt="">AI解析</button>
       <button v-if="openDraft" class="viewer-handoff" :disabled="!root" title="このファイルまたは選択範囲を起動中のCode / Liveの下書きへ追加" @pointerdown.prevent @click="handoff">Code / Liveへ</button>
       <!-- 右端は ↺ 📌 × の順。ページ内の📌で別ウィンドウを開く。 -->
       <RefreshButton class="viewer-refresh" title="最新の内容に更新" aria-label="最新の内容に更新" :disabled="reloading" :busy="reloading" @click="refresh" /><button v-if="!pinned" class="viewer-pin panel-detach-pin" :aria-pressed="false" :disabled="pinBusy" title="別ウィンドウで開く" aria-label="ファイルを別ウィンドウで開く" @click="emit('pin',file)"><span aria-hidden="true">📌</span></button><button v-if="!pinned" class="viewer-close" aria-label="プレビューを閉じる" @click="emit('close')"><span class="close-icon" aria-hidden="true"></span></button></header>
@@ -152,6 +170,12 @@ defineExpose({moved:bindActivityWindow});
     <p v-if="file.unlisted" class="input-hint">現在の一覧に含まれない検索結果を直接表示しています。</p>
     <p v-if="jumpNote" class="input-hint" role="status">{{ jumpNote }}</p>
     <p v-if="historyError" class="input-hint">{{ historyError }}</p>
+    <template v-if="screenPreview&&previewUrl">
+      <label v-if="preview.routes?.length>1" class="viewer-route">画面 <select v-model.number="routeIndex"><option v-for="(route,i) in preview.routes" :key="route.url" :value="i">{{ route.path }}</option></select></label>
+      <p class="viewer-display-url">{{ preview.kind==='analysis'?'AI解析の表示URL':'表示URL' }}: {{ previewUrl }}</p>
+      <p v-if="preview.stale" class="viewer-preview-note">解析後にファイルが更新されています。URLが合わない場合は再解析してください。</p>
+      <p v-if="mode==='view'" class="viewer-preview-note">画面にはサーバーの起動やログインが必要な場合があります。埋め込み表示できない場合は「ブラウザ」で開いてください。</p>
+    </template>
     <p v-if="error" class="error">{{ error }}</p><p v-else-if="!data">読み込み中…</p>
     <div v-else class="viewer-content"><iframe v-if="data.kind==='office'&&!data.tooLarge" :key="file.path+stamp" :src="'/office.html?'+params({path:file.path,format:data.format,v:`${file.mtime}-${stamp}`})" sandbox="allow-scripts allow-same-origin" :title="file.name+' ビューア'"></iframe>
       <img v-else-if="data.kind==='image'&&!data.tooLarge" :src="'/api/raw?'+params({path:file.path,v:stamp})" :alt="file.name">
@@ -161,9 +185,7 @@ defineExpose({moved:bindActivityWindow});
           <p v-if="!preview" class="viewer-preview-note">表示を準備しています…</p>
           <p v-else-if="preview.error" class="viewer-preview-note">{{ preview.error }}</p>
           <template v-else>
-            <label v-if="preview.routes?.length>1" class="viewer-route">画面 <select v-model.number="routeIndex"><option v-for="(route,i) in preview.routes" :key="route.path" :value="i">{{ route.path }}</option></select></label>
-            <p v-if="previewKind==='vue'" class="viewer-preview-note">frontend_web の開発サーバーで、この部品を使う画面 {{ preview.routes[routeIndex]?.path }} を表示しています（ログイン画面が出たらログインしてください）。</p>
-            <iframe :key="previewUrl+stamp" class="viewer-preview" :src="previewUrl" :sandbox="previewKind==='markdown'?'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox':previewKind==='vue'?'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads':'allow-scripts allow-same-origin allow-forms allow-modals allow-popups allow-downloads allow-pointer-lock'" allow="autoplay; fullscreen" :title="file.name+' の表示'"></iframe>
+            <iframe v-if="previewUrl" :key="previewUrl+stamp" class="viewer-preview" :src="previewUrl" :sandbox="previewSandbox" allow="autoplay; fullscreen" :title="file.name+' の表示'"></iframe>
           </template>
         </template>
         <div v-show="mode!=='view'" class="viewer-code"><p v-if="data.truncated" class="input-hint">先頭の一部を表示しています。</p><pre v-if="fallback" ref="fallbackHost"><template v-if="fallbackParts">{{ fallbackParts.before }}<mark ref="fallbackMatch">{{ fallbackParts.match }}</mark>{{ fallbackParts.after }}</template><template v-else>{{ data.text }}</template></pre><div v-else ref="host" class="monaco-host"></div></div>

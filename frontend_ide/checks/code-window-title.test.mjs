@@ -61,6 +61,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   './デスクトップ/native-preview-actions.cjs':{createNativePreviewActions:()=>({invalidate(){}})},
   './デスクトップ/panel-windows.cjs':panelModule,'./デスクトップ/code-drag.cjs':codeDragModule,
   './デスクトップ/ブラウザ.cjs':browserModule,
+  './デスクトップ/ブラウザ解析連携.cjs':{createBrowserSourceSelection:()=>async()=>assert.fail('タイトル試験ではBrowser解析ソースの選択を実行しない')},
   './デスクトップ/長押し窓移動.cjs':nativeMoveModule,
   './デスクトップ/最前面ピン.cjs':pinModule,
   './デスクトップ/VRパネル配置.cjs':placementModule,

@@ -190,7 +190,7 @@ async function run() {
   assert.equal(await evaluate(routes.window, `document.querySelectorAll('.route-controls .window-pin').length`), 1);
   assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='drag' && !document.querySelector('.route-drag-handle')`), true);
   assert.equal(await evaluate(routes.window, `document.querySelector('.route-window-actions')===document.querySelector('.route-controls').lastElementChild`), true);
-  assert.deepEqual(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].map(n=>n.textContent)`), ['閲覧軌跡', '検索軌跡', 'AiDiy検索軌跡']);
+  assert.deepEqual(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].map(n=>n.textContent)`), ['閲覧軌跡', '検索軌跡', 'AI検索軌跡']);
   result.routeGeometry = await evaluate(routes.window, `(()=>{const n=document.querySelector('.route-controls'),r=n.getBoundingClientRect();return{width:r.width,height:r.height,scrollWidth:n.scrollWidth,clientWidth:n.clientWidth,buttons:[...n.querySelectorAll('button')].map(b=>({text:b.textContent,left:b.getBoundingClientRect().left,width:b.getBoundingClientRect().width,top:b.getBoundingClientRect().top,bottom:b.getBoundingClientRect().bottom}))};})()`);
   assert.ok(result.routeGeometry.scrollWidth <= result.routeGeometry.clientWidth, 'Native route bar fits 360px without horizontal scrolling');
   assert.ok(result.routeGeometry.height <= 40, 'Native route controls stay in the original compact-height row');

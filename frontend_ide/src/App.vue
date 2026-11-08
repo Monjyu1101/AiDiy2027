@@ -32,7 +32,8 @@ provide('fileDraftActions',{loadTargets:loadDraftTargets,insertDraft:insertFileD
 provide('registerPinnedViewer',opened=>{if(opened&&state.value.active)pinnedViewers.set(opened,{sessionKey:session,projectPath:state.value.project?.path});});
 provide('openFileHistory',(file,root)=>{history.value={file:{path:file.path,name:file.name},root};});
 // ビューアの3分消去やファイル切替から独立して、解析対象を保持する。
-provide('openFileAnalysis',(file,root)=>{analysis.value={file:{path:file.path,name:file.name},root};});
+provide('openFileAnalysis',(file,root,onClose)=>{analysis.value={file:{path:file.path,name:file.name},root,onClose};});
+function closeFileAnalysis(){const previous=analysis.value;analysis.value=null;previous?.onClose?.();}
 const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
@@ -205,7 +206,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
 </script>
 <template>
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
-  <FileAnalysisDialog v-if="analysis" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" @close="analysis=null" />
+  <FileAnalysisDialog v-if="analysis" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" @close="closeFileAnalysis" />
   <FileHistoryDialog v-if="history" :key="history.root+'|'+history.file.path" :file="history.file" :root="history.root" @close="history=null" />
   <BrowserPanel v-if="browserPanel" :standalone="config.kind==='browser'" :header-only="browserHeader" />
   <ViewerWindow v-else-if="viewerPath" :path="viewerPath" :desktop="desktop" />

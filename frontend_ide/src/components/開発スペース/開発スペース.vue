@@ -117,7 +117,7 @@ async function selectExplorer(entry){
 }
 function change(value){if('scan'in value){scan.value=value.scan;selected.value=value.selected;trail.value=value.trail;focus.value=value.focus;updateMarks.value=value.updateMarks||{levels:{},flashes:{}};viewHistory.value=value.journal||[];viewVoyages.value=value.voyages||{};}if('autoSpin'in value)autoSpin.value=value.autoSpin;if('driving'in value)driving.value=value.driving;if('orbitPhase'in value)orbitPhase.value=value.orbitPhase;if('explorationStatus'in value)explorationStatus.value=value.explorationStatus;loading.value=value.loading;if('error'in value)error.value=value.error||'';}
 // VRの手動補正は閲覧・階層移動で戻さず、通常画面の自動配置とは分けて保持する。
-const centerOffset={x:0,y:0};let centerGesture=null,unsubscribeCenter;
+const centerOffset={x:0,y:0};let centerGesture=null,unsubscribeCenter,unsubscribeBrowserSource;
 function moveCenter({id,phase,x,y}){
   if(!props.allDisplays)return;
   if(phase==='start'){centerGesture={id,...centerOffset};engine?.interact();}
@@ -183,6 +183,10 @@ function pageLayout(){
 }
 onMounted(async()=>{
   unsubscribeCenter=window.aidiyWindow?.onSpaceCenterMove?.(moveCenter);
+  unsubscribeBrowserSource=window.aidiyWindow?.onBrowserSelectSource?.(value=>{
+    if(disposed||value?.startedAt!==props.startedAt||value.projectPath!==scan.value?.root||typeof value.path!=='string')return;
+    void selectExplorer({path:value.path,type:'file',source:'browser-analysis'}).catch(e=>{if(!disposed)error.value=e.message;});
+  });
   folderMonitor = createFolderMonitor({ apply: (context,result) => engine?.applyFolderSnapshot(context,result) ?? false, report: message => { monitorMessage.value=message; } });
   document.addEventListener('visibilitychange',syncFolderMonitor);syncFolderMonitor();
   window.addEventListener('message',documentKey);window.addEventListener('keydown',pageKey);window.addEventListener('resize',pageLayout);
@@ -190,7 +194,7 @@ onMounted(async()=>{
   const routes=root.value?.querySelector('.explorer-routes');
   if(routes&&typeof ResizeObserver!=='undefined'){pageLayoutObserver=new ResizeObserver(pageLayout);pageLayoutObserver.observe(routes);}
 });
-onBeforeUnmount(()=>{disposed=true;unsubscribeCenter?.();viewerRefs.clear();folderMonitor?.close();document.removeEventListener('visibilitychange',syncFolderMonitor);pageLayoutObserver?.disconnect();if(window.aidiyIDE===engine)delete window.aidiyIDE;window.removeEventListener('message',documentKey);window.removeEventListener('keydown',pageKey);window.removeEventListener('resize',pageLayout);});
+onBeforeUnmount(()=>{disposed=true;unsubscribeCenter?.();unsubscribeBrowserSource?.();viewerRefs.clear();folderMonitor?.close();document.removeEventListener('visibilitychange',syncFolderMonitor);pageLayoutObserver?.disconnect();if(window.aidiyIDE===engine)delete window.aidiyIDE;window.removeEventListener('message',documentKey);window.removeEventListener('keydown',pageKey);window.removeEventListener('resize',pageLayout);});
 </script>
 <template>
   <section ref="root" class="space-view" :class="{'explorer-open':open&&!explorerDetached,viewing:!!selected,'mode-2d':viewMode==='2d'}" data-component="SpaceView" @pointerdown.capture="navigationActivity" @keydown.capture="navigationActivity">

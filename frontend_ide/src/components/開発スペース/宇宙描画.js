@@ -1353,7 +1353,7 @@ async function goTo(entry, {automatic=false, valid=()=>true} = {}) {
   const stale = () => disposed || run !== navigationSequence || forFilter !== fileFilter || !valid();
   const exists = () => { const node=nodeAt(level);return node && (!isFile || node.f.some(file=>file[0]===parts.at(-1))); };
   // クリックを先に予約し、読み直し中の別選択・フィルター切替・終了で必ず失効させる。
-  // 最終更新・grepは表示ツリーにない新規ファイルも、同じ手動経路から開く。
+  // 最終更新・grep・Browser解析は、同じ手動経路で一覧を更新してから選択する。
   if(!automatic){cancelScheduledFollow();++followSequence;following=false;activeFollowPath=null;}
   stopTravel();
   if (entry.source === 'latest' || !exists()) {
@@ -1367,7 +1367,8 @@ async function goTo(entry, {automatic=false, valid=()=>true} = {}) {
   }
   if(stale())return false;
   if(!exists()) {
-    if(!automatic && isFile && entry.source==='grep') {
+    // Browser解析もmain側で実在・プロジェクト境界を検証済み。読み取り専用ビューアへ渡す。
+    if(!automatic && isFile && ['grep','browser-analysis'].includes(entry.source)) {
       if (viewMode === '2d' && nodeAt(level)) enterFolderDirect(level);
       tracking=null;focus=null;
       selectBody({path:entry.path,name:parts.at(-1),size:entry.size||0,mtime:entry.mtime,unlisted:true},{zoom:false});

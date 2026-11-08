@@ -34,13 +34,15 @@ const hasClass = (node, name) => String(node.props?.class || '').split(/\s+/).in
 const textOf = node => [node.text || '', ...(node.children || []).map(textOf)].join('');
 
 // Vueの実テンプレートをメモリ上にマウントする。OSアプリ・ブラウザは起動しない。
-async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false, root = 'C:\\作業 フォルダ', file = { name: '日本語 & #.txt', path: '資料/日本語 & #.txt' }, fileData = { kind: 'text', text: '本文は消えません', size: 24 }, browser = browserLaunch } = {}) {
+async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false, root = 'C:\\作業 フォルダ', file = { name: '日本語 & #.txt', path: '資料/日本語 & #.txt' }, fileData = { kind: 'text', text: '本文は消えません', size: 24 }, browser = browserLaunch, previewData = {}, previewFetch, openAnalysis } = {}) {
   const window = new EventTarget(); window.aidiyWindow = desktop;
+  window.location={origin:'http://127.0.0.1:9000'};
   const timers = new Map(), warnings = [], copies = [];
   let sequence = 0, state;
   function node(type, text = '') {
     return { type, tagName: type.toUpperCase(), text, props: {}, children: [], style: {},
-      scrollIntoView() {}, querySelector: () => null };
+      scrollIntoView() {}, querySelector: () => null,addEventListener(){},removeEventListener(){},
+      get options(){return this.children.filter(child=>child.type==='option');} };
   }
   const renderer = vue.createRenderer({
     createElement: node, createText: text => node('text', text), createComment: text => node('comment', text),
@@ -62,9 +64,9 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
   assert.deepEqual(template.errors, []);
   const module = { exports: {} };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
-    module, window, console, AbortController, URLSearchParams, Date,
+    module, window, console, AbortController, URLSearchParams, URL, Date,
     localStorage: { getItem: () => null },
-    fetch: async () => ({ ok: true, json: async () => fileData }),
+    fetch: async url => url.startsWith('/api/preview?')&&previewFetch ? previewFetch(url) : ({ ok: true, json: async () => url.startsWith('/api/preview?')?previewData:fileData }),
     setTimeout: (callback, delay) => { const id = ++sequence; timers.set(id, { callback, delay }); return id; }, clearTimeout: id => timers.delete(id),
     require: id => id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
       : id === '../ファイル閲覧/ファイル操作.js' ? { ...actions, copyBrowserText: async text => { copies.push(text); await browserCopy(text); } }
@@ -75,6 +77,8 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
   const props = vue.reactive({ root, pinned, file });
   const container = node('root');
   const app = renderer.createApp({ render: () => vue.h(component, props) });
+  app.provide('browserAvailable',true);
+  if(openAnalysis)app.provide('openFileAnalysis',openAnalysis);
   app.config.warnHandler = message => warnings.push(message);
   app.mount(container); await flush();
   let disposed = false;
@@ -93,6 +97,38 @@ test('プレビュー実Vue: Webではアプリボタンを描画せず、全パ
   assert.match(f.text(), /コピーしました/); assert.match(f.text(), /本文は消えません/);
   assert.equal([...f.timers.values()][0].delay, 1500);
   [...f.timers.values()][0].callback(); await flush(); assert.doesNotMatch(f.text(), /コピーしました/);
+});
+
+test('表示URL実Vue: コードのままURLを確認し、選択した画面だけ表示・ブラウザへ渡す',async t=>{
+ const urls=['http://localhost:8090/first','http://localhost:8090/second'],opened=[];
+ const f=await viewer(t,{file:{name:'Page.vue',path:'src/Page.vue'},previewData:{kind:'analysis',routes:urls.map((url,i)=>({path:'画面'+i,url})),stale:true},browser:{openBrowser:async(...args)=>{opened.push([args[0],args[3]]);return{ok:true};}}});
+ assert.equal(f.state.mode.value,'code');assert.equal(f.find('viewer-preview'),undefined);assert.match(f.text(),/AI解析の表示URL/);assert.match(f.text(),/更新されています/);assert.deepEqual(opened,[]);
+ f.state.routeIndex.value=1;await flush();await f.click('viewer-browser');assert.deepEqual(opened,[['src/Page.vue',urls[1]]]);
+ f.state.setMode('view');await flush();assert.equal(f.state.routeIndex.value,1);assert.equal(f.find('viewer-preview').props.src,urls[1]);assert.match(f.find('viewer-preview').props.sandbox,/allow-same-origin/);
+ f.state.setMode('code');await flush();assert.equal(f.find('viewer-preview'),undefined);assert.match(f.text(),/本文は消えません/);
+});
+
+test('表示URL実Vue: 古い取得結果・解析ダイアログの遅いcloseを新しいファイルへ反映しない',async t=>{
+ const pending=deferred();let close,requests=0;
+ const f=await viewer(t,{file:{name:'old.vue',path:'old.vue'},previewFetch:()=>{requests++;return requests===1?pending.promise:Promise.resolve({ok:true,json:async()=>({kind:'analysis',routes:[{path:'次',url:'http://localhost:3000/new'}]})});},openAnalysis:(_file,_root,onClose)=>{close=onClose;}});
+ assert.equal(f.find('viewer-browser').props.disabled,true);await f.click('viewer-analysis');
+ f.props.file={name:'new.vue',path:'new.vue'};await flush();const count=requests;close();await flush();assert.equal(requests,count);
+ pending.resolve({ok:true,json:async()=>({kind:'analysis',routes:[{path:'古い',url:'http://localhost:3000/old'}]})});await flush();assert.equal(f.state.previewUrl.value,'http://localhost:3000/new');
+ f.dispose();assert.equal(f.state.actionBusy.value,'');
+});
+
+test('表示URL実Vue: 解析ダイアログを閉じると再取得し、IDEと同じoriginの画面は隔離する',async t=>{
+ let close,requests=0;
+ const f=await viewer(t,{file:{name:'a.html',path:'a.html'},previewFetch:async()=>{requests++;return{ok:true,json:async()=>({kind:'analysis',routes:[{path:'画面',url:'http://127.0.0.1:9000/screen'}]})};},openAnalysis:(_file,_root,onClose)=>{close=onClose;}});
+ await f.click('viewer-analysis');const before=requests;close();await flush();assert.equal(requests,before+1);
+ f.state.setMode('view');await flush();assert.doesNotMatch(f.find('viewer-preview').props.sandbox,/allow-same-origin/);
+});
+
+test('表示URL実Vue: URL未検出のVueは理由を示し、HTMLは従来のブラウザ起動を保つ',async t=>{
+ const opened=[],browser={openBrowser:async(...args)=>{opened.push([args[0],args[3]]);return{ok:true};}};
+ const f=await viewer(t,{file:{name:'a.vue',path:'a.vue'},previewData:{kind:'vue',error:'この部品のルートが見つかりません。'},browser});
+ await f.click('viewer-browser');await flush();assert.match(f.text(),/ルートが見つかりません/);assert.deepEqual(opened,[]);
+ const html=await viewer(t,{file:{name:'a.html',path:'a.html'},previewData:{kind:'html',url:'http://localhost:4567/p/temporary/a.html'},browser});await html.click('viewer-browser');assert.deepEqual(opened,[['a.html','']]);
 });
 
 test('プレビュー実Vue: 通常・ピン留めともElectron APIを優先し、表示だけではコピーも起動もしない', async t => {

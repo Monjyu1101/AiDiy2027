@@ -13,6 +13,8 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import * as draftHandoff from '../src/components/下書き連携/下書き受け渡し.js';
+import * as displayUrls from '../viewer/表示URL.mjs';
+import * as browserLaunch from '../src/components/ブラウザ/起動.js';
 const require=createRequire(import.meta.url);
 const vue=require('vue'),{parse,compileScript}=require('@vue/compiler-sfc'),{transformSync,buildSync}=require('esbuild');
 const MarkdownIt=require('markdown-it');
@@ -32,8 +34,10 @@ function setupComponent(name,{props={},modules={},globals={}}={}) {
     requestAnimationFrame:()=>0,cancelAnimationFrame(){},
     ResizeObserver:class {observe(){}disconnect(){}},
     require(id){
-      if(id==='vue')return {...vue,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)};
+      if(id==='vue')return {...vue,inject:(_key,fallback)=>fallback,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)};
       if(id==='markdown-it')return MarkdownIt;
+      if(id==='../../viewer/表示URL.mjs')return displayUrls;
+      if(id==='../components/ブラウザ/起動.js')return browserLaunch;
       if(id==='../../../host/src/file-attachments')return {fileAttachment:()=>undefined};
       if(id==='../添付ファイル/ファイル送信.js')return {readDroppedFiles:async()=>0};
       if(id==='../添付ファイル/チャット添付.vue')return {};

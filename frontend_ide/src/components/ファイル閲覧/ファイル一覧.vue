@@ -185,7 +185,7 @@ watch(viewedFiles,entries=>{
 },{immediate:true});
 const routePaths=computed(()=>routeMode.value==='ai'?aiRoute.value:routeMode.value==='search'?searchRoute.value:viewRoute.value);
 const searchRouteLabel=computed(()=>searchKind.value==='grep'?'検索軌跡':'時刻軌跡');
-const routeLabel=computed(()=>routeMode.value==='ai'?'AiDiy検索軌跡':routeMode.value==='search'?searchRouteLabel.value:'閲覧軌跡');
+const routeLabel=computed(()=>routeMode.value==='ai'?'AI検索軌跡':routeMode.value==='search'?searchRouteLabel.value:'閲覧軌跡');
 const routeRows=computed(()=>routeTreeRows(routeMode.value==='view'?viewTreeRecords(props.viewVoyages,viewRoute.value,props.viewHistory.filter(entry=>entry?.type==='dir').map(entry=>entry.path))
   :routeMode.value==='search'?searchRoute.value.map(path=>({from:null,to:'f:'+path}))
   :aiResult.value?.routeRecords||searchRouteRecords(aiRoute.value)));
@@ -236,7 +236,7 @@ const searchResults = computed(() => {
   walk(tree.value);
   return result.sort((a, b) => b.mtime - a.mtime || a.path.localeCompare(b.path, 'ja', { numeric: true }));
 });
-const searchResultsLabel = computed(() => mode.value === 'ai' ? 'AiDiy検索' : mode.value === 'grep' ? 'grep検索' : '時刻検索');
+const searchResultsLabel = computed(() => mode.value === 'ai' ? 'AI検索' : mode.value === 'grep' ? 'grep検索' : '時刻検索');
 function selectSearchResult(result) {
   if (result.source === 'grep') selectMatch(result);
   else select({ type: 'file', ...result });
@@ -441,7 +441,7 @@ defineExpose({reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
     <button v-if="routeClosed&&!routeDetached" class="route-restore-toggle burger-button" :class="{'explorer-open':open&&!detached,'explorer-detached':detached&&!preparingAll}" aria-label="軌跡バーを開く" title="軌跡バー" :aria-expanded="false" @click="openRoutes"><span class="burger burger-v" aria-hidden="true"><i></i><i></i></span></button>
     <div ref="routeElement" v-show="!routeClosed" class="explorer-routes" :class="{'explorer-collapsed':!open||(detached&&!preparingAll),'explorer-detached':detached&&!preparingAll}" role="group" aria-label="軌跡表示" @keydown.esc.stop.prevent="routeListOpen=false">
       <div class="route-controls" :data-aidiy-window-move-handle="routeDetached&&nativePanels?'':undefined"><button v-if="!allDisplays||routeDetached" class="burger-button route-burger" :aria-label="routeDetached&&nativePanels?'軌跡ウィンドウを移動':'軌跡バーを閉じる'" :title="routeDetached&&nativePanels?'ドラッグして移動':'軌跡バーを閉じる'" @click="routeDetached&&nativePanels?undefined:closeRoutes()"><span class="burger burger-v" aria-hidden="true"><i></i><i></i></span></button>
-      <button v-for="[value,label] in [['view','閲覧軌跡'],['search',searchRouteLabel],['ai','AiDiy検索軌跡']]" :key="value" class="route-choice" :title="label" :aria-pressed="routeMode===value" :aria-expanded="routeMode===value&&routeListOpen" aria-controls="route-file-list" @click="chooseRoute(value)">{{ label }}</button>
+      <button v-for="[value,label] in [['view','閲覧軌跡'],['search',searchRouteLabel],['ai','AI検索軌跡']]" :key="value" class="route-choice" :title="label" :aria-pressed="routeMode===value" :aria-expanded="routeMode===value&&routeListOpen" aria-controls="route-file-list" @click="chooseRoute(value)">{{ label }}</button>
       <button title="プロジェクトルートへ" @click="select({type:'dir',path:''})">ルート</button><button :aria-label="routeMode==='ai'?'前の関連ファイル':routeMode==='search'?'前の検索ファイル':'前の閲覧ファイル'" :disabled="!routeSteps.length||routeIndex===0" @click="stepRoute(-1)">&lt;</button><button :aria-label="routeMode==='ai'?'次の関連ファイル':routeMode==='search'?'次の検索ファイル':'次の閲覧ファイル'" :disabled="!routeSteps.length||routeIndex===routeSteps.length-1" @click="stepRoute(1)">&gt;</button>
       <button v-if="(!routeDetached||!nativePanels)&&(!allDisplays||!routeDetached)" class="route-detach panel-detach-pin" :class="{'pin-active':routeDetached}" :aria-pressed="routeDetached" :aria-label="routeDetached?'軌跡バーを本体へ戻す':'軌跡バーを別ウィンドウで開く'" :title="routeDetached?'本体へ戻す':'小さな別ウィンドウで開く'" @click="routeDetached?routeWindow.restore():pinRoutes()"><span aria-hidden="true">📌</span></button>
       </div>
@@ -452,7 +452,7 @@ defineExpose({reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
         <p class="route-list-heading"><span>{{ routeLabel }} · {{ routePaths.length }}件</span><button v-if="routeMode==='view'" type="button" class="route-list-clear" aria-label="閲覧軌跡をクリア" :disabled="!viewedFiles.length" @click="emit('clear-view-history')">クリア</button></p>
         <p v-if="routeRows.length" class="route-tree-origin">{{ routeMode==='search'?'検索結果（並列の候補）':'記録された出発点と分岐' }}</p>
         <ul v-if="routeRows.length" class="route-tree" :aria-label="routeLabel+'のツリー'"><li v-for="row in routeRows" :key="row.key" :data-route-point="row.point" :data-route-parent="row.parent" :data-route-depth="row.depth" :class="{'route-reference':row.reference}" :style="{'--route-depth':row.depth}"><button :data-route-path="row.path" :aria-current="row.path===selected?'true':undefined" :title="routeMode==='ai'?aiFiles.get(row.path):row.path" @click="selectRoutePoint(row)"><span>{{ row.path || '/' }}{{ row.origin?'（出発元）':row.type==='dir'?'（到着）':'' }}{{ row.reference?' ↩（参照）':'' }}</span><small v-if="routeMode==='ai'">{{ aiFiles.get(row.path) }}</small><small v-else-if="routeMode==='view'">{{ viewedAt(row.path) }}</small></button></li></ul>
-        <p v-else>{{ routeMode==='ai'?'AiDiy検索の結果を選ぶと、ここに表示します。':routeMode==='search'?searchRouteLabel+'はありません。検索結果があると、ここに表示します。':'ファイルを開くと、ここに表示します。' }}</p>
+        <p v-else>{{ routeMode==='ai'?'AI検索の結果を選ぶと、ここに表示します。':routeMode==='search'?searchRouteLabel+'はありません。検索結果があると、ここに表示します。':'ファイルを開くと、ここに表示します。' }}</p>
       </section>
       </div>
     </div>
@@ -465,7 +465,7 @@ defineExpose({reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
       </header>
       <p v-if="treeWarning" class="scan-warning" role="status">{{ treeWarning }}</p>
       <section class="explorer-search"><small>表示中: {{ current || tree?.n }}</small>
-        <fieldset><legend class="sr-only">検索方法</legend><label><input v-model="mode" type="radio" value="since">時刻検索</label><label><input v-model="mode" type="radio" value="grep">grep検索</label><label><input v-model="mode" type="radio" value="ai">AiDiy検索</label></fieldset>
+        <fieldset><legend class="sr-only">検索方法</legend><label><input v-model="mode" type="radio" value="since">時刻検索</label><label><input v-model="mode" type="radio" value="grep">grep検索</label><label><input v-model="mode" type="radio" value="ai">AI検索</label></fieldset>
         <div v-if="mode==='since'" class="time-search"><label>開始 <input type="datetime-local" step="1" :value="dateInput" :aria-invalid="!!dateError" :aria-describedby="dateError?'time-search-error':undefined" @change="chooseDate($event.target)"></label><label>終了 <input type="datetime-local" step="1" :value="endDateInput" :aria-invalid="!!dateError" aria-describedby="time-search-hint time-search-error" @change="chooseDate($event.target,true)"></label><small id="time-search-hint">終了は省略できます（開始以降）。</small><p id="time-search-error" v-show="dateError" role="alert">{{ dateError }}</p><div class="since-presets"><button v-for="[value,label] in timeSearchPresets" :key="value" :aria-pressed="preset===value" @click="choose(value)">{{ label }}</button></div></div>
         <form v-else-if="mode==='grep'" @submit.prevent>
           <label class="grep-query">ファイル内容<input v-model="query" type="search" maxlength="256" placeholder="検索する文字列"></label>

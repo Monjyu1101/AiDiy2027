@@ -8,7 +8,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 // -------------------------------------------------------------------------
 
-// AiDiy検索の画面とファイル受取を模擬エージェントで検証する。
+// AI検索の画面とファイル受取を模擬エージェントで検証する。
 // ルートから node frontend_ide/scripts/check-ai-search.mjs。オフラインだけを使いAI接続はしない。
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -152,7 +152,7 @@ try {
   await preset('15分');
   await evaluate(`document.querySelector('input[value=ai]').click()`);
   const treeVisible=()=>evaluate(`document.querySelector('[role=tree]').getClientRects().length>0`);
-  assert.equal(await treeVisible(),true,'AiDiy検索でもファイルツリーを表示する');
+  assert.equal(await treeVisible(),true,'AI検索でもファイルツリーを表示する');
   assert.notEqual(await evaluate(`getComputedStyle(document.querySelector('.explorer-search')).maxHeight`),'none','検索操作はツリーの領域を残す');
   for(const mode of ['since','grep']){
     await evaluate(`document.querySelector('input[value=${mode}]').click()`);
@@ -184,14 +184,14 @@ try {
   await capture('nn-ai-search-results.png');
   await evaluate(`[...document.querySelectorAll('.explorer-routes button')].find(b=>b.textContent==='閲覧軌跡').click()`);
   assert.equal(await evaluate('window.aidiyIDE.routeState.mode'),'view');
-  await evaluate(`[...document.querySelectorAll('.explorer-routes button')].find(b=>b.textContent==='AiDiy検索軌跡').click()`);
+  await evaluate(`[...document.querySelectorAll('.explorer-routes button')].find(b=>b.textContent==='AI検索軌跡').click()`);
   assert.equal(await evaluate(`document.querySelector('.ai-route-title').textContent`),'認証処理の関連ファイル');
   await evaluate(`document.querySelector('[aria-label="次の関連ファイル"]').click()`);
   await until(`document.querySelector('.viewer-popup')?.textContent.includes('main.ts')`,'順番にファイルを開く');
   await evaluate(`document.querySelector('[aria-label="エクスプローラーを閉じる"]').click()`);
   assert.equal(await evaluate(`!!document.querySelector('.explorer-routes.explorer-collapsed')`),true);
   await evaluate(`document.querySelector('[data-route-path="src/login.ts"]').click()`);
-  await until(`document.querySelector('.viewer-session')?.dataset.viewerPath==='src/login.ts'`,'AiDiy検索軌跡の一覧からワープ');
+  await until(`document.querySelector('.viewer-session')?.dataset.viewerPath==='src/login.ts'`,'AI検索軌跡の一覧からワープ');
   await evaluate(`[...document.querySelectorAll('.route-choice')].find(b=>b.textContent==='閲覧軌跡').click()`);
   assert.deepEqual(await evaluate(`[...document.querySelectorAll('[data-route-point^="f:"]>[data-route-path]')].map(b=>b.dataset.routePath)`),['main.ts','src/login.ts']);
   await evaluate(`document.querySelector('[data-route-path="main.ts"]').click()`);
@@ -199,7 +199,7 @@ try {
   assert.deepEqual(await evaluate(`[...document.querySelectorAll('[data-route-point^="f:"]>[data-route-path]')].map(b=>b.dataset.routePath)`),['main.ts','src/login.ts'],'再訪で一覧の順序を動かさない');
   assert.equal(await evaluate(`document.querySelector('[aria-label="前の閲覧ファイル"]').disabled`),false);
   await capture('nn-route-view-list.png');
-  await evaluate(`[...document.querySelectorAll('.route-choice')].find(b=>b.textContent==='AiDiy検索軌跡').click()`);
+  await evaluate(`[...document.querySelectorAll('.route-choice')].find(b=>b.textContent==='AI検索軌跡').click()`);
   await capture('nn-route-ai-list.png');
   await evaluate(`document.querySelector('.explorer-toggle').click()`);
   await submit('期限切れの確認');const second=await waitRequest(2);clock+=300001;
@@ -208,7 +208,7 @@ try {
   assert.match(await evaluate(`document.querySelector('.ai-search-panel').textContent`),/エージェントを実行/);
   await capture('nn-ai-search-timeout.png');
   writeFileSync(join(project,outputFor(second)),JSON.stringify(dataFor(second)));
-  await evaluate(`[...document.querySelectorAll('.ai-search-panel button')].find(b=>b.title==='AiDiy検索の結果を再確認').click()`);
+  await evaluate(`[...document.querySelectorAll('.ai-search-panel button')].find(b=>b.title==='AI検索の結果を再確認').click()`);
   await until(`document.querySelector('.ai-search-panel').textContent.includes('2件の関連ファイル')`,'遅れた結果の再確認');
   // 続けて依頼し、古い結果が新しい依頼へ混ざらないことを確認する。
   await submit('古い検索');const third=await waitRequest(3);
@@ -232,7 +232,7 @@ try {
   await send('Page.reload');
   for(let i=0;i<100&&!await evaluate(`!!window.aidiyIDE?.world`);i++)await sleep(50);
   await evaluate(`window.aidiyIDE.setAutoSpin(false);document.querySelector('.explorer-toggle').click()`);
-  await evaluate(`[...document.querySelectorAll('.explorer-routes button')].find(b=>b.textContent==='AiDiy検索軌跡').click()`);
+  await evaluate(`[...document.querySelectorAll('.explorer-routes button')].find(b=>b.textContent==='AI検索軌跡').click()`);
   await until(`window.aidiyIDE.routeState.paths.length===2`,'選択履歴を復元');
   assert.equal(await evaluate(`document.querySelector('.ai-route-title').textContent`),'認証処理の関連ファイル','再読込でも選択タイトルを復元');
   assert.deepEqual(await evaluate('window.aidiyIDE.routeState.paths'),['main.ts','src/login.ts'],'再読込でも前回のAI結果を保持');

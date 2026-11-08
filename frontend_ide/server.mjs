@@ -16,13 +16,15 @@ import { createNavigationInstances } from './ファイル機能/navigation.mjs';
 import { createNavigationSound } from './ファイル機能/navigation-sound.mjs';
 import { createAISearch } from './ファイル機能/ai-search.mjs';
 import { createFileAnalysis } from './ファイル機能/file-analysis.mjs';
+import { createBrowserAnalysis } from './ファイル機能/browser-analysis.mjs';
+import { normalizeDisplayUrls } from './viewer/表示URL.mjs';
 import { startConsole } from './aidiy_console/console.mjs';
 import { cliTitleName } from './src/components/コンソール/CLIタイトル.js';
 import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
 import { createFileHistory } from './ファイル機能/file-history.mjs';
 import { catppuccinAsset } from './src/components/ファイル閲覧/ファイルアイコン.js';
 const require=createRequire(import.meta.url),root=fileURLToPath(new URL('.',import.meta.url)),vscodeRoot=fileURLToPath(new URL('./host/',import.meta.url));
-export async function startDevelopment(project,{kind='ide',linked=false,projectFixed=false,port=0,strict=false,offline=false,provider,model,cli,cliAutoApprove=false,onCliStarted,onCliAbandoned,autoConnect=false,env=process.env,connection,aiSearchOptions,navigationOptions,fileAnalysisOptions,explorerOptions}={}){
+export async function startDevelopment(project,{kind='ide',linked=false,projectFixed=false,port=0,strict=false,offline=false,provider,model,cli,cliAutoApprove=false,onCliStarted,onCliAbandoned,autoConnect=false,env=process.env,connection,aiSearchOptions,navigationOptions,fileAnalysisOptions,browserAnalysisOptions,explorerOptions}={}){
  if(!['code','live','ide','console','task','team','browser','navi'].includes(kind))throw Error('アプリはcode / live / ide / console / task / team / browser / naviから指定してください。');
  validateCliOptions(kind,{cli,cliAutoApprove,provider,model});
  const cliLaunch=cli?await resolveCliLaunch(cli,{autoApprove:cliAutoApprove,env}):undefined;
@@ -42,11 +44,12 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  const navigation=createNavigationInstances(project,{...navigationOptions,instancePrefix:kind==='navi'?'standalone-':'',state:connection.state});
  const navigationSound=createNavigationSound(project,{...navigationOptions?.sound,state:connection.state});
  const fileAnalysis=createFileAnalysis(project,{...fileAnalysisOptions,state:connection.state});
+ const browserAnalysis=createBrowserAnalysis(project,{...browserAnalysisOptions,state:connection.state});
  const fileHistory=createFileHistory(project,{state:connection.state});
  const app=await startServer(project,port,{strict,env,connection,explorerOptions,
   requestHandler:async(req,res,url)=>{
-   // Browser単独画面にはプロジェクト操作・Console/AI起動APIを公開しない。
-   if(kind==='browser'&&url.pathname.startsWith('/api/')&&url.pathname!=='/api/connection'){res.writeHead(url.pathname.startsWith('/api/connection/')?405:404).end();return true;}
+   // Browser単独画面にはページ解析だけを公開し、一般のプロジェクト操作・Console APIは公開しない。
+   if(kind==='browser'&&url.pathname.startsWith('/api/')&&!['/api/connection','/api/browser-analysis'].includes(url.pathname)){res.writeHead(url.pathname.startsWith('/api/connection/')?405:404).end();return true;}
    if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/navigation/code','/api/navigation/sound','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
    if (['ide','navi'].includes(kind) && url.pathname === '/api/navigation/code') {
     const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
@@ -65,6 +68,15 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
    if(['ide','navi'].includes(kind)&&await navigationSound.handle(req,res,url))return true;
    if(['ide','navi'].includes(kind)&&await navigation.handle(req,res,url))return true;
    if(kind==='ide'&&await aiSearch.handle(req,res,url))return true;
+   if(['ide','browser'].includes(kind)&&await browserAnalysis.handle(req,res,url))return true;
+   // 保存した画面URLを優先する。未解析・URL不明の場合は従来のHTML/Vue表示へ進む。
+   if(kind==='ide'&&req.method==='GET'&&url.pathname==='/api/preview'&&/\.(html?|vue)$/i.test(url.searchParams.get('path')||'')){
+    try{
+     const saved=await fileAnalysis.get(url.searchParams.get('path'));
+     const routes=normalizeDisplayUrls(saved.result?.displayUrls).map(item=>({path:item.label||item.url,url:item.url}));
+     if(routes.length){res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify({kind:'analysis',routes,stale:saved.stale,reason:saved.result.displayUrlReason||''}));return true;}
+    }catch{/* 解析記録が読めなくても、従来のファイル検証・表示は維持する。 */}
+   }
    if(kind==='ide'&&await fileAnalysis.handle(req,res,url))return true;
    if(kind==='ide'&&await fileHistory.handle(req,res,url))return true;
    if(url.pathname==='/development/config'){
@@ -87,7 +99,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
   }))
  });
  if(kind==='navi'){try{navigationSlot=await reserveNavigationSlot(project);}catch(error){await app.close();throw error;}}
- app.server.once('close',()=>{void navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();});
- const close=app.close;app.close=async()=>{await navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();await close();};
+ app.server.once('close',()=>{void navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();});
+ const close=app.close;app.close=async()=>{await navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();await close();};
  return app;
 }

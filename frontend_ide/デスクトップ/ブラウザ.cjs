@@ -5,19 +5,31 @@
 // https://github.com/monjyu1101/AiDiy2027
 const HOME='https://www.google.com/';
 const {pathToFileURL,fileURLToPath}=require('node:url');
-const {relative,isAbsolute,sep,resolve}=require('node:path');
+const {relative,isAbsolute,sep,resolve,basename}=require('node:path');
 const {previewFile}=require('./native-preview-actions.cjs');
 const {createBrowserSizing}=require('./ブラウザ表示領域.cjs');
 const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
 function browserFileURL(root,path){return pathToFileURL(previewFile(root,path).full).href;}
 // Browser で開けるのは HTML と音声・動画。
-async function browserOpenable(path){
+async function browserOpenable(path,displayUrl=''){
+ if(displayUrl!=='')return /\.(html?|vue)$/i.test(path)&&!!await browserDisplayURL(displayUrl);
  const {MEDIA_PATTERN}=await import('../viewer/media-types.mjs');
  return /\.html?$/i.test(path)||MEDIA_PATTERN.test(path);
 }
+// 保存された表示URLはアドレス欄の検索語・file URLとは別に厳密に検証する。
+async function browserDisplayURL(value){
+ const {normalizeDisplayUrls}=await import('../viewer/表示URL.mjs');
+ const url=typeof value==='string'&&normalizeDisplayUrls([{url:value}])[0]?.url;
+ if(!url)throw Error('表示URLには認証情報を含まない http / https のURLを指定してください。');
+ return url;
+}
 // AiDiy 保守中の登録HTML・public の音声・動画は正式なリンク、それ以外は file:// で開く。
-async function browserFileTarget(root,path){
+async function browserFileTarget(root,path,displayUrl=''){
  const fileURL=browserFileURL(root,path);
+ if(displayUrl!==''){
+  if(!/\.(html?|vue)$/i.test(path))throw Error('表示URLはHTML / Vueファイルで利用できます。');
+  return browserDisplayURL(displayUrl);
+ }
  const [{registeredHTMLURL,publicMediaURL},{MEDIA_PATTERN}]=await Promise.all([import('../viewer/登録HTMLルート.mjs'),import('../viewer/media-types.mjs')]);
  if(MEDIA_PATTERN.test(path))return await publicMediaURL(root,path)||fileURL;
  return await registeredHTMLURL(root,path)||fileURL;
@@ -129,7 +141,12 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     ++entry.run;entry.error='';contents.stop();
    }
    else if(name==='draft')return{ok:true,request:browserDraftRequest(projectRoot,contents.getURL(),entry.capture,now(),{session:record.browserSession,tabId:record.browserTabId})};
-   else if(name==='draft-dialog'){entry.dialogOpen=value===true;entry.layout();entry.pointer();}
+   else if(name==='draft-dialog'||name==='analysis-dialog'){
+    entry[name==='draft-dialog'?'draftDialogOpen':'analysisDialogOpen']=value===true;
+    entry.dialogOpen=!!(entry.draftDialogOpen||entry.analysisDialogOpen);entry.layout();entry.pointer();
+   }
+   else if(name==='analysis-context')return{ok:true,context:analysisContext(record)};
+   else if(name==='open-analysis'){record.window.webContents.send('development:browser-open-analysis');}
    else if(name==='open-draft'){record.window.webContents.send('development:browser-open-draft');}
    else if(name==='header-size'){
     if(headers.get(event.sender)!==record||!Number.isFinite(value)||value<1||value>1000)throw Error('パネルの高さが不正です。');
@@ -166,6 +183,10 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   const record=headers.get(event.sender),frame=event.senderFrame;
   return record&&!record.window.isDestroyed()&&frame===event.sender.mainFrame&&frame?.url===record.url+'#browser-header'?record:null;
  }
- return{attach,action,setAvailable,trustedHeader,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
+ function analysisContext(record){
+  const entry=entries.get(record);if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())return null;
+  return{url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
+ }
+ return{attach,action,setAvailable,trustedHeader,analysisContext,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
 }
-module.exports={HOME,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};
+module.exports={HOME,browserDisplayURL,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};

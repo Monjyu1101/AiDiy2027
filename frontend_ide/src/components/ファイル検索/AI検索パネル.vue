@@ -86,10 +86,10 @@ onMounted(()=>loadHistory(true));
 onBeforeUnmount(()=>{stop();++historyRun;historyController?.abort();});
 </script>
 <template>
-  <section class="ai-search-panel" aria-label="AiDiy検索">
-    <div class="ai-history-header"><strong>AiDiy検索</strong><button type="button" :aria-expanded="showHistory" @click="showHistory=!showHistory;deleting=null;if(showHistory)loadHistory()">{{ showHistory?'検索へ戻る':`履歴 (${history.length})` }}</button></div>
-    <p v-if="historyError" role="alert">{{ historyError }} <RefreshButton :disabled="historyBusy" :busy="historyBusy" title="AiDiy検索履歴を再読込" @click="loadHistory()">再読込</RefreshButton></p>
-    <section v-if="showHistory" class="ai-search-history" aria-label="このプロジェクトのAiDiy検索履歴">
+  <section class="ai-search-panel" aria-label="AI検索">
+    <div class="ai-history-header"><strong>AI検索</strong><button type="button" :aria-expanded="showHistory" @click="showHistory=!showHistory;deleting=null;if(showHistory)loadHistory()">{{ showHistory?'検索へ戻る':`履歴 (${history.length})` }}</button></div>
+    <p v-if="historyError" role="alert">{{ historyError }} <RefreshButton :disabled="historyBusy" :busy="historyBusy" title="AI検索履歴を再読込" @click="loadHistory()">再読込</RefreshButton></p>
+    <section v-if="showHistory" class="ai-search-history" aria-label="このプロジェクトのAI検索履歴">
       <p v-if="historyBusy" role="status">履歴を読み込んでいます…</p>
       <p v-else-if="!history.length">このプロジェクトに検索履歴はありません。</p>
       <div v-for="entry in history" :key="entry.id" class="ai-history-row" :class="{active:selectedId===entry.id}">
@@ -101,16 +101,16 @@ onBeforeUnmount(()=>{stop();++historyRun;historyController?.abort();});
     <div v-show="!showHistory">
     <form @submit.prevent="search">
       <label>関連するファイルを探す<textarea v-model="query" maxlength="2000" rows="2" placeholder="例: 認証機能に関わるファイル" /></label>
-      <button type="submit" :disabled="!query.trim()">{{ busy?'新しく検索':'AiDiy検索を依頼' }}</button>
+      <button type="submit" :disabled="!query.trim()">{{ busy?'新しく検索':'AI検索を依頼' }}</button>
     </form>
     <p class="ai-search-help">AIエージェントに依頼し、最大5分間、結果ファイルを確認します。</p>
     <p v-if="message" role="status">{{ message }}</p>
     <template v-if="job">
       <p class="ai-result-path">{{ job.path }}</p>
-      <p v-if="!busy&&job.status!=='complete'">エージェントの実行状況をご確認ください。未実行の場合は、依頼文を使ってエージェントを実行してください。前回のAiDiy検索軌跡は保持します。</p>
-      <div class="ai-search-actions"><button type="button" @click="copy">依頼文をコピー</button><RefreshButton :disabled="busy" :busy="busy" title="AiDiy検索の結果を再確認" @click="recheck">結果を再確認</RefreshButton></div>
+      <p v-if="!busy&&job.status!=='complete'">エージェントの実行状況をご確認ください。未実行の場合は、依頼文を使ってエージェントを実行してください。前回のAI検索軌跡は保持します。</p>
+      <div class="ai-search-actions"><button type="button" @click="copy">依頼文をコピー</button><RefreshButton :disabled="busy" :busy="busy" title="AI検索の結果を再確認" @click="recheck">結果を再確認</RefreshButton></div>
       <p v-if="copyMessage" role="status">{{ copyMessage }}</p>
-      <details><summary>依頼文</summary><textarea readonly :value="job.prompt" rows="5" aria-label="AiDiy検索の依頼文" /></details>
+      <details><summary>依頼文</summary><textarea readonly :value="job.prompt" rows="5" aria-label="AI検索の依頼文" /></details>
     </template>
     </div>
   </section>

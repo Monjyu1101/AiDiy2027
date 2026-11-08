@@ -343,3 +343,17 @@ test('共通検索一覧: AIの理由・一覧外候補を保ち、空結果と�
     assert.match(h.state.status.value,/検索失敗/);assert.equal(h.state.searchResults.value.length,0);assert.equal(h.state.searchResultsOpen.value,false);
   }finally{h.dispose();}
 });
+
+test('Browser解析: フィルター外・走査上限外のファイルを読み取り専用選択へ渡し、一覧更新でも維持する',async t=>{
+  for(const truncated of [false,true]){
+    const h=space(t,async()=>reply(scan(['old.js'],{truncated})));
+    try{
+      await h.engine.refresh(1);const before={...h.engine.cam};
+      assert.equal(await h.engine.goTo({type:'file',path:'hidden/page.html',source:'browser-analysis'}),true);
+      assert.equal(h.selected().path,'hidden/page.html');assert.equal(h.selected().unlisted,true);assert.deepEqual(h.engine.cam,before);
+      await h.engine.refresh();assert.equal(h.selected().path,'hidden/page.html');
+      assert.equal(await h.engine.goTo({type:'file',path:'missing.js',source:'browser-analysis'},{automatic:true}),false,'自動追跡へは例外を広げない');
+      assert.equal(await h.engine.goTo({type:'file',path:'missing.js',source:'other'}),false,'任意のsourceへは例外を広げない');
+    }finally{h.dispose();}
+  }
+});

@@ -13,14 +13,14 @@
   },
   "summary": {
     "pages": 411,
-    "bodyBlocks": 3450,
+    "bodyBlocks": 3451,
     "unmatchedBodyBlocks": 0,
     "imageReferences": 318,
-    "localPdfLinks": 233,
+    "localPdfLinks": 232,
     "missingReferences": 0,
-    "regeneratedPdfs": 11,
+    "regeneratedPdfs": 12,
     "annotationOnlyPdfs": 11,
-    "navigatorPdfPreserved": true
+    "navigatorPdfPreserved": false
   },
   "extractionProvenance": {
     "previousCache": "以前の抽出ファイルには入力ハッシュとの結び付けがなかったため、そのまま完了根拠にはしない。",
@@ -153,7 +153,7 @@
     "svgCheck": "ToolsのSVG説明図7点はPDFのベクター図として、120ラベルの文字内容と全12ページの表示を照合。実機証跡とは区別。"
   },
   "visualReview": {
-    "method": "生成し直した11冊の変更ページとTools全12ページの日本語・表・画像・図番号・欠け・重なりを目視。変更のないページは内容ストリーム・本文・画像照合を根拠とし、全411ページを今回目視したとは扱わない。",
+    "method": "生成し直した11冊の変更ページとTools全12ページの日本語・表・画像・図番号・欠け・重なりを目視。変更のないページは内容ストリーム・本文・画像照合を根拠とし、全411ページを今回目視したとは扱わない。 Navigatorは後続のPDF再生成後に全40ページを目視確認。詳細はnavigatorPdfRegenerationとstep-10。",
     "booklets": [
       {
         "file": "セルフテスト,aidiy_browser,操作編.pdf",
@@ -334,6 +334,55 @@
           12
         ],
         "reason": "SVG説明図7点の本文との対応確認"
+      },
+      {
+        "file": "セルフテスト,aidiy_navi,操作編.pdf",
+        "beforePages": 40,
+        "pages": 40,
+        "visualPages": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40
+        ],
+        "record": "evidence/Navigator資料整合/step-10.json",
+        "scope": "今回の再生成後に全ページを目視確認。他冊子の既存検証は変更しない。"
       }
     ],
     "result": "確認した表示範囲に欠け・重なりなし"
@@ -358,8 +407,8 @@
   ],
   "navigator": {
     "record": "evidence/Navigator資料整合/step-10.json",
-    "markdownUnchanged": true,
-    "pdfUnchanged": true,
+    "markdownUnchanged": false,
+    "pdfUnchanged": false,
     "pages": 40,
     "relatedSources": [
       {
@@ -403,7 +452,12 @@
         "matchesStep10": true
       }
     ],
-    "historicalVisualReview": "全40ページの目視はstep-10の記録を参照。今回の8ソース照合は読み取り専用のハッシュ確認で、機能試験や過去失敗の追加調査ではない。"
+    "historicalVisualReview": "旧PDFの全40ページ目視は既存step-10の履歴。現行PDFは再生成後に全40ページを目視済み。relatedSourcesは既存の読み取り専用ハッシュ照合記録で、今回の再検証ではない。",
+    "currentValidation": "evidence/Navigator資料整合/step-10.json",
+    "pdfRegeneration": {
+      "record": "evidence/Navigator資料整合/step-10.json",
+      "at": "2026-11-08T10:14:37.681142+00:00"
+    }
   },
   "preservedConditions": [
     "各冊の実機・自動／隔離・過去結果・説明図を区別し、既存のPASS／NG／未実施／未確認条件を維持。",
@@ -3384,7 +3438,13 @@
         27,
         28,
         29
-      ]
+      ],
+      "pending_source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
+      "pending_update": {
+        "status": "PDF再生成待ち",
+        "scope": "IDE本文の「AiDiy検索」「AiDiy検索軌跡」を「AI検索」「AI検索軌跡」に統一し、掲載画像が旧表記を含む旨を追記。既存PDFと画像、過去の実機判定は未変更。",
+        "reason": "既存PDFの記録された生成元から本文には既存差分があり、今回の表記統一も追加されています。今回は画面表記とMarkdownを更新し、IDE PDFの再生成・再目視確認は未実施です。"
+      }
     },
     {
       "file": "セルフテスト,aidiy_live,操作編.pdf",
@@ -5358,16 +5418,16 @@
       "file": "セルフテスト,aidiy_navi,操作編.pdf",
       "source": "セルフテスト,aidiy_navi,操作編.md",
       "pages": 40,
-      "source_sha256": "7ceca831d71cb46f08fc1373c368d00577658d1413b68edbc2c2c3736883b6ed",
-      "pdf_sha256": "3a857db9a254f8ed5a28f9186ea1f14ae559e95f5bfbb9cbec0ed73d5f4321b8",
+      "source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
+      "pdf_sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
       "registeredAtStart": {
         "source_sha256": "7ceca831d71cb46f08fc1373c368d00577658d1413b68edbc2c2c3736883b6ed",
         "pdf_sha256": "3a857db9a254f8ed5a28f9186ea1f14ae559e95f5bfbb9cbec0ed73d5f4321b8",
         "pages": 40
       },
       "body": {
-        "blocks": 212,
-        "matchedBlocks": 212,
+        "blocks": 213,
+        "matchedBlocks": 213,
         "unmatchedBlocks": 0
       },
       "images": [
@@ -5572,9 +5632,9 @@
           "matched": true
         },
         {
-          "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_航行.png",
+          "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_羽衣ライディング.png",
           "sha256": "040dd29b61027503c65b6a8fdf7e465b1fb67b14082ce78caa2c2722e3565cf5",
-          "alt": "図701 航行",
+          "alt": "図701 羽衣ライディング",
           "kind": "raster",
           "exactPixels": true,
           "minimumRgbRms": 0,
@@ -5764,11 +5824,6 @@
           "page": 35
         },
         {
-          "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-          "targetExists": true,
-          "page": 35
-        },
-        {
           "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step8-visible-20261107/electron.jsonl",
           "targetExists": true,
           "page": 35
@@ -5891,8 +5946,68 @@
         "anchorMismatches": 0,
         "figureNumberMismatches": 0
       },
-      "visualReviewPages": [],
-      "displayContentRegenerated": false
+      "visualReviewPages": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        26,
+        27,
+        28,
+        29,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
+        38,
+        39,
+        40
+      ],
+      "displayContentRegenerated": true,
+      "pdfRegeneration": {
+        "record": "evidence/Navigator資料整合/step-10.json",
+        "at": "2026-11-08T10:14:37.681142+00:00"
+      }
     }
-  ]
+  ],
+  "navigatorPdfRegeneration": {
+    "at": "2026-11-08T10:14:37.681142+00:00",
+    "scope": "公開commit ad1df214d309bdf515a1af8f30e7a956918a1475の現行MarkdownからNavigator PDFのみ再生成。本文・画像・製品コード・既存の試験判定は変更しない。",
+    "renderer": "WeasyPrint 70.0 / Noto Sans CJK JP",
+    "method": "既存の総合テストPDF.mjsのmarkdown-it設定・CSS・図のグループ化規則を適用。A4・余白・見出し・画像上限を維持し、PDFエンジンに合わせて日本語フォント・ページフッター・ol開始番号を設定。ローカルファイルのみを読み込み、pypdfでリンクを相対化。",
+    "browserLimitation": "このクラウド環境のChromiumはsocket() failed: Operation not permittedで起動不可。既存のWindows向け標準生成スクリプトは未変更。",
+    "source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
+    "pdf_sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
+    "pages": 40,
+    "functionalTestsRerun": false,
+    "externalAiRequests": 0,
+    "newScreenshotsCaptured": false,
+    "sourceReviewRerun": false,
+    "historicalScreenshotNote": "図710は撮影時の旧表示名「航行」を含む。本文の注記と現行名称を併記し、過去の画面を改変しない。"
+  }
 }

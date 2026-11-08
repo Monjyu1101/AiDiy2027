@@ -46,12 +46,13 @@ const textOf = node => [node.text || '', ...(node.children || []).map(textOf)].j
 
 // 実際のSFCテンプレートのイベント/propsで全体を接続する。エンジンや選択処理は置き換えない。
 // 描画先だけをメモリ内にし、AI結果は確定済みの通知、Monacoは簡易表示へ置き換える。
-async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', actualAI = false, panelWindowFactory } = {}) {
+async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', actualAI = false, panelWindowFactory, windowApi } = {}) {
   const old = new Map(), frames = new Map(), timers = new Map(), intervals = new Map(), storage = new Map();
   const requests = [], warnings = [], states = new Map(), props = new Map(), components = new Map();
   const window = new EventTarget(), document = new EventTarget(), location = { hash, origin: 'http://localhost' };
   let clock = 0, id = 0, engine, navigation, emitAI, beginAI;
   document.hidden = false;
+  if(windowApi)window.aidiyWindow=windowApi;
   const context = new Proxy({ font: '', createRadialGradient: () => ({ addColorStop() {} }), measureText: text => ({ width: text.length * 6 }) }, { get: (object, key) => key in object ? object[key] : () => {} });
   function node(type, text = '') {
     const element = new EventTarget();
@@ -546,7 +547,7 @@ test('閲覧軌跡クリア: 開いた見出しだけに表示し、現在位置
   const saved=JSON.parse(localStorage.getItem('aidiy_ide:/project'));
   assert.deepEqual(saved.voyages,before.voyages);assert.deepEqual(saved.voyageCurrent,before.voyageCurrent);
   assert.equal(h.find(n=>n.props?.['aria-label']==='閲覧軌跡をクリア').props.disabled,true);
-  await h.click(n=>n.text==='AiDiy検索軌跡');assert.equal(h.find(n=>n.props?.['aria-label']==='閲覧軌跡をクリア'),undefined);
+  await h.click(n=>n.text==='AI検索軌跡');assert.equal(h.find(n=>n.props?.['aria-label']==='閲覧軌跡をクリア'),undefined);
   assert.deepEqual([...h.states.get('FileExplorer').aiRoute.value],['root.js','src/main.js']);
   await h.click(n=>n.text==='閲覧軌跡');await h.click(n=>n.text==='閲覧軌跡');assert.equal(h.find(n=>n.props?.['aria-label']==='閲覧軌跡をクリア'),undefined);
  }finally{h.dispose();}
@@ -581,7 +582,7 @@ test('軌跡3分類: 起点/grep開始・結果・失敗・再検索・空結果
   let pending=deferred();next=pending.promise;const running=ex.grep();await flush();assert.equal(h.engine.routeState.mode,'search');
   pending.resolve(reply({paths:['src/main.js','other/second.js'],matches:[],checked:4,skipped:0}));await running;await flush();
   assert.deepEqual([...ex.routePaths.value],['src/main.js','other/second.js']);
-  await h.click(n=>n.text==='AiDiy検索軌跡');assert.equal(ex.routeRows.value.length,0);assert.equal(h.engine.routeState.mode,'ai');
+  await h.click(n=>n.text==='AI検索軌跡');assert.equal(ex.routeRows.value.length,0);assert.equal(h.engine.routeState.mode,'ai');
   h.beginAI();await flush();assert.equal(ex.routeMode.value,'ai');
   h.emitAI({query:'AI',route:['root.js','src/nested/deep.js'],files:[],routeRecords:[{from:null,to:'f:root.js'},{from:'f:root.js',to:'f:src/nested/deep.js'}]});await flush();
   assert.deepEqual(ex.routeRows.value.map(row=>[row.path,row.parent]),[['root.js',null],['src/nested/deep.js','f:root.js']]);
@@ -592,7 +593,7 @@ test('軌跡3分類: 起点/grep開始・結果・失敗・再検索・空結果
   next=reply({paths:[],matches:[],checked:4,skipped:0});await ex.grep();await flush();assert.equal(ex.routeRows.value.length,0);
   await h.click(n=>n.text==='閲覧軌跡');assert.deepEqual([...ex.routePaths.value],['root.js']);
   assert.deepEqual(JSON.parse(localStorage.getItem('aidiy_ide:/project')),saved,'分類切替と検索だけでは閲覧記録や経路を追加しない');
-  await h.click(n=>n.text==='AiDiy検索軌跡');assert.deepEqual([...ex.aiRoute.value],['root.js','src/nested/deep.js']);
+  await h.click(n=>n.text==='AI検索軌跡');assert.deepEqual([...ex.aiRoute.value],['root.js','src/nested/deep.js']);
  }finally{h.dispose();}
 });
 
@@ -610,7 +611,7 @@ test('閲覧ツリーの実部品: 再訪・分岐・ポイント移動・クリ
   await h.click(n=>n.text==='検索軌跡');await h.click(n=>n.props?.['data-route-path']==='other/second.js');selected(h,'other/second.js');
   await h.click(n=>n.text==='閲覧軌跡');await h.click(n=>n.props?.['aria-label']==='閲覧軌跡をクリア');assert.equal(ex.routeRows.value.length,0);
   await h.click(n=>n.text==='検索軌跡');assert.deepEqual([...ex.routePaths.value],['root.js','other/second.js']);
-  await h.click(n=>n.text==='AiDiy検索軌跡');assert.deepEqual([...ex.routePaths.value],['src/nested/deep.js']);
+  await h.click(n=>n.text==='AI検索軌跡');assert.deepEqual([...ex.routePaths.value],['src/nested/deep.js']);
  }finally{h.dispose();}
 });
 
@@ -912,4 +913,21 @@ test('Explorer中央日時: 秒・終了省略・入力エラーのbindingを本
       end.props.onChange({ target: { value: '' } }); await flush(); assert.equal(dates()[1].props['aria-invalid'], false);
     }
   } finally { h.dispose(); }
+});
+
+
+test('Browser解析: 元IDEの選択通知は同じセッション・プロジェクトだけをビューアへ渡し、購読を破棄する',async t=>{
+  let listener,unsubscribed=false;
+  const h=await workspace(t,{windowApi:{onBrowserSelectSource:callback=>{listener=callback;return()=>{unsubscribed=true;listener=null;};}}});
+  try{
+    assert.equal(typeof listener,'function');
+    const count=h.navigation.mock.calls.length;
+    for(const value of [{path:'src/main.js',startedAt:2,projectPath:'/project'},{path:'src/main.js',startedAt:1,projectPath:'/other'}]){listener(value);await flush();}
+    assert.equal(h.navigation.mock.calls.length,count,'別セッション・別プロジェクトは無視する');
+    listener({path:'hidden/page.html',startedAt:1,projectPath:'/project'});await flush();
+    assert.equal(h.navigation.mock.calls.at(-1).arguments[0].source,'browser-analysis');
+    assert.equal(h.props.get('FileViewer').file.path,'hidden/page.html');assert.equal(h.props.get('FileViewer').file.unlisted,true);
+    assert.ok(h.requests.some(value=>value.url.startsWith('/api/file?')&&value.url.includes('hidden%2Fpage.html')),'通常のファイルAPIで閲覧する');
+  }finally{h.dispose();}
+  assert.equal(unsubscribed,true);
 });

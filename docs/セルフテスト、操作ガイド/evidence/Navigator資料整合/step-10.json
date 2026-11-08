@@ -1,6 +1,6 @@
 {
-  "at": "2026-11-07T12:46:30.462979+00:00",
-  "status": "完了（資料整合のstep-10のみ。機能全条件の合格ではない）",
+  "at": "2026-11-08T10:14:37.681142+00:00",
+  "status": "完了（資料整合と現行本文からのPDF再生成のみ。機能全条件の合格ではない）",
   "scope": {
     "functionalTestsRerun": false,
     "historicalFailureInvestigationAdded": false,
@@ -9,31 +9,30 @@
     "existingUserWindowsOperated": false,
     "sharedServicesChanged": false,
     "productCodeChanged": false,
-    "captureOnly": "現行Vueの説明図5枚を既存step-8結果から隔離表示。API・CLI・実AI・保存を使わず、外部通信を遮断。製品distは変更せず一時bundleを使用。"
+    "captureOnly": "既存の説明図5枚と実機画像を維持。今回のPDF再生成では新しい撮影・API・CLI・実AI送信・製品変更は行わない。"
   },
   "baselineRecord": "着手時.json",
   "finalFiles": {
     "markdown": {
       "path": "docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.md",
-      "sha256": "7ceca831d71cb46f08fc1373c368d00577658d1413b68edbc2c2c3736883b6ed"
+      "sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37"
     },
     "pdf": {
       "path": "docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.pdf",
-      "sha256": "3a857db9a254f8ed5a28f9186ea1f14ae559e95f5bfbb9cbec0ed73d5f4321b8",
+      "sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
       "pages": 40
     }
   },
   "reproduction": {
     "captureScript": "frontend_ide/checks/navigation-guide-capture.mjs",
-    "pdfGeneration": "node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs セルフテスト,aidiy_navi,操作編.md",
+    "pdfGeneration": "Windows標準: node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs セルフテスト,aidiy_navi,操作編.md。今回のクラウド生成はpdfRegenerationを参照。",
     "pdfPostprocess": "pypdfで/A /URIのfile: URLをPDF所在フォルダ基準の相対URIへ変換。表示内容は維持。",
     "validationTools": [
       "pypdf",
-      "pdfplumber",
-      "pypdfium2/PDFium",
+      "PyMuPDF",
       "Pillow"
     ],
-    "validationMethod": "最終生成HTMLの本文214ブロックをPDF抽出文字と照合。本文PNG36参照をPDF埋込画像のRGBピクセルハッシュ・寸法と照合。全40ページを1.55倍PNGへ描画し、全ページの目視と境界検証を実施。"
+    "validationMethod": "最終生成HTMLの本文213ブロック、原本PNG36参照の寸法・RGBピクセル、Markdown63参照、PDF相対リンク29注釈（20種類の参照先）を照合。全40ページを描画して目視・ページ境界検証。"
   },
   "references": {
     "markdownCount": 63,
@@ -165,7 +164,7 @@
         "image": true
       },
       {
-        "target": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_航行.png",
+        "target": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_羽衣ライディング.png",
         "exists": true,
         "image": true
       },
@@ -355,192 +354,183 @@
         "image": false
       }
     ],
-    "pdfLinkAnnotationCount": 30,
+    "pdfLinkAnnotationCount": 29,
     "pdfLinks": [
       {
         "page": 1,
         "uri": "evidence/Navigator%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/step-10.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 3,
         "uri": "%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_diag,%E3%83%A9%E3%83%B3%E3%83%81%E3%83%A3%E3%83%BC%E7%B7%A8.md",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 11,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 11,
         "uri": "evidence/Navigator%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E5%9B%B3%E7%89%88.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 16,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_302_%E5%AE%9F%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E5%88%86%E6%9E%90.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 35,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-        "relative": true,
-        "targetExists": true
-      },
-      {
-        "page": 35,
-        "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 35,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step8-visible-20261107/electron.jsonl",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 35,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/Code%E9%9D%9E%E8%A1%A8%E7%A4%BA%E8%A9%A6%E9%A8%93/electron.jsonl",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 36,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_101_%E8%B5%B7%E5%8B%95%E5%B0%8E%E7%B7%9A.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_601_%E9%81%94%E6%88%90%E7%8E%87%E8%A1%A8%E7%A4%BA.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_701_%E5%AE%9F%E8%A3%85%E7%A2%BA%E8%AA%8D.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/Navigator%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 38,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_202_%E5%88%9D%E6%9C%9F%E3%82%B5%E3%82%A4%E3%82%BA.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 39,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_701_%E5%AE%9F%E8%A3%85%E7%A2%BA%E8%AA%8D.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 39,
         "uri": "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 39,
         "uri": "evidence/Navigator%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E6%AC%A0%E8%90%BD%E5%8F%82%E7%85%A7.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 39,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/step-9.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E7%8F%BE%E8%A1%8C%E3%83%8F%E3%83%BC%E3%83%8D%E3%82%B9%E7%85%A7%E5%90%88/heading.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E7%8F%BE%E8%A1%8C%E3%83%8F%E3%83%BC%E3%83%8D%E3%82%B9%E7%85%A7%E5%90%88/heading.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/events.jsonl",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/python.jsonl",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/hermes-result.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E6%9C%9F%E9%99%90%E5%87%A6%E7%90%86.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E6%AC%A0%E8%90%BD%E5%8F%82%E7%85%A7.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8.pdf",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       },
       {
         "page": 40,
         "uri": "evidence/Navigator%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/step-10.json",
-        "relative": true,
-        "targetExists": true
+        "targetExists": true,
+        "relative": true
       }
-    ],
-    "originalMissingCount": 2,
-    "originalEvidenceRestored": false,
-    "missingGuidance": "欠落参照.json"
+    ]
   },
   "images": {
     "count": 36,
@@ -626,7 +616,7 @@
         "sha256": "6e2f191c019afcb6772fc2a3bf314106d5a04a9f45f6d0fae7cb827368483dbc"
       },
       {
-        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_航行.png",
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_羽衣ライディング.png",
         "sha256": "040dd29b61027503c65b6a8fdf7e465b1fb67b14082ce78caa2c2722e3565cf5"
       },
       {
@@ -743,11 +733,13 @@
         "path": "frontend_ide/src/components/共通表示/会話表示.css",
         "sha256": "80f02469646dfb8ebf06308ef9a63963bd04faa6f58d3f7be19a2e4e5a278eb1"
       }
-    ]
+    ],
+    "reviewedAt": "2026-11-07T12:46:30.462979+00:00",
+    "scopeNote": "既存のソース照合記録を維持。今回のPDF再生成で機能試験やソース照合は再実行していない。"
   },
   "pdfValidation": {
     "detail": "PDF機械照合.json",
-    "textBlocks": 214,
+    "textBlocks": 213,
     "missingTextBlocks": 0,
     "imageReferences": 36,
     "unmatchedImageReferences": 0,
@@ -795,29 +787,14 @@
         39,
         40
       ],
-      "method": "全ページのコンタクトシートと変更箇所の原寸ページPNGを確認。最後のWindows起動例修正後に全ページ再描画・ピクセル比較し、変化は6ページのみ。6ページを再目視した。",
-      "detailedPages": [
-        1,
-        6,
-        11,
-        12,
-        13,
-        14,
-        15,
-        35,
-        36,
-        37,
-        38,
-        39,
-        40
-      ],
+      "method": "最終PDFの全40ページをPyMuPDFで1.5倍PNGへ描画し、全ページを目視確認。番号付きリストの開始番号を修正後、全ページを再描画。変更のあった11〜14ページを再目視し、1〜10ページは描画ピクセルの不変を確認。",
       "checks": [
-        "日本語・表・見出し・図番号・画像の欠けと重なりなし",
-        "総合評価と各章・step-8/9の判定が一致",
-        "説明図と実機証拠を混同しない表示",
-        "原証拠欠落・未確認範囲を本文とPDFで維持"
+        "日本語・表・見出し・図番号・ページ番号の欠けや重なりなし",
+        "全36画像の比率・配置を維持し、PDF内画像のRGBピクセルは原本と一致",
+        "羽衣ライディングの本文・図701と図710の旧画面名注記を確認",
+        "未確認範囲・過去失敗の原因判定不能を維持"
       ],
-      "result": "OK（文書表示と対応の確認）"
+      "result": "OK（文書表示と対応の確認。新しい機能試験の合格ではない）"
     }
   },
   "preservedVerdicts": {
@@ -843,8 +820,23 @@
   "manifestUpdate": {
     "path": "evidence/pdf-manifest.json",
     "updatedOnly": "Navigatorエントリーと登録済みページ数の集計。他冊子の内容・ハッシュ・目視結果は今回未検証。",
-    "previousNaviPages": 12,
+    "previousNaviPages": 40,
     "naviPages": 40
   },
-  "cleanup": "採用画像と正式証拠だけを維持し、この作業の一時bundle・HTML・ページPNG・コンタクトシートを削除。"
+  "cleanup": "今回の一時HTML・ページPNG・補助スクリプトは正式資料に含めない。既存のMarkdown・画像・製品コード・Windows向け標準生成スクリプトは未変更。",
+  "pdfRegeneration": {
+    "at": "2026-11-08T10:14:37.681142+00:00",
+    "scope": "公開commit ad1df214d309bdf515a1af8f30e7a956918a1475の現行MarkdownからNavigator PDFのみ再生成。本文・画像・製品コード・既存の試験判定は変更しない。",
+    "renderer": "WeasyPrint 70.0 / Noto Sans CJK JP",
+    "method": "既存の総合テストPDF.mjsのmarkdown-it設定・CSS・図のグループ化規則を適用。A4・余白・見出し・画像上限を維持し、PDFエンジンに合わせて日本語フォント・ページフッター・ol開始番号を設定。ローカルファイルのみを読み込み、pypdfでリンクを相対化。",
+    "browserLimitation": "このクラウド環境のChromiumはsocket() failed: Operation not permittedで起動不可。既存のWindows向け標準生成スクリプトは未変更。",
+    "source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
+    "pdf_sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
+    "pages": 40,
+    "functionalTestsRerun": false,
+    "externalAiRequests": 0,
+    "newScreenshotsCaptured": false,
+    "sourceReviewRerun": false,
+    "historicalScreenshotNote": "図710は撮影時の旧表示名「航行」を含む。本文の注記と現行名称を併記し、過去の画面を改変しない。"
+  }
 }

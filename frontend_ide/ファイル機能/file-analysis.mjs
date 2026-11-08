@@ -10,6 +10,7 @@ import { runSearchAgent, validSearchPath } from './ai-search.mjs';
 import { ideDataFolder } from './ide-data.mjs';
 import { hasAlwaysExcludedDirectory } from './フォルダ除外規則.mjs';
 import { isInternalCredentialPath } from './内部認証ファイル.mjs';
+import { normalizeDisplayUrls, normalizeDisplayUrlReason } from '../viewer/表示URL.mjs';
 
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
 const validInstruction=value=>typeof value==='string'&&value.length<=4000;
@@ -35,6 +36,7 @@ export function createFileAnalysis(project,{state,runAgent=runSearchAgent,now=Da
       if(!within(folder,full)||(await stat(full)).size>1100000)throw Error('解析記録を読み取れません。');
       const record=JSON.parse(await readFile(full,'utf8'));
       if(record.path!==path||!validInstruction(record.instruction)||record.result&&(typeof record.result.content!=='string'||record.result.content.length>200000))throw Error('解析記録の形式が不正です。');
+      if(record.result)record.result={...record.result,displayUrls:normalizeDisplayUrls(record.result.displayUrls),displayUrlReason:normalizeDisplayUrlReason(record.result.displayUrlReason)};
       return record;
     }catch(error){if(error.code==='ENOENT')return {path,instruction:'',result:null};throw error;}
   }
@@ -66,7 +68,7 @@ export function createFileAnalysis(project,{state,runAgent=runSearchAgent,now=Da
         const data=JSON.parse((await readFile(full,'utf8')).replace(/^\uFEFF/,''));
         if(data.requestId!==job.id||data.path!==job.path||data.instruction!==job.instruction||typeof data.content!=='string'||!data.content.trim()||data.content.length>200000)throw Error('解析結果の依頼ID・対象ファイル・指示・本文を確認してください。');
         if(!current(job))return;
-        await update(job.path,record=>({...record,result:{id:job.id,instruction:job.instruction,content:data.content,createdAt:now(),source:job.source}}));
+        await update(job.path,record=>({...record,result:{id:job.id,instruction:job.instruction,content:data.content,displayUrls:normalizeDisplayUrls(data.displayUrls),displayUrlReason:normalizeDisplayUrlReason(data.displayUrlReason),createdAt:now(),source:job.source}}));
         job.status='complete';job.message='解析結果を保存しました。';
       }catch(error){
         if(error.code!=='ENOENT'){job.status='invalid';job.message=error instanceof SyntaxError?'解析結果JSONが未完成です。結果を再確認してください。':error.message;}
@@ -99,13 +101,15 @@ export function createFileAnalysis(project,{state,runAgent=runSearchAgent,now=Da
     jobs.set(path,job);
     try {
       const temp=join(file.root,'temp');await mkdir(temp,{recursive:true});if(!within(file.root,await realpath(temp)))throw Error('tempがプロジェクト外を参照しています。');
-      job.prompt=`プロジェクト内の指定ファイルを読み取り解析してください。ソース・設定の変更、インストール、他エージェントへの委譲は行わないでください。
+      job.prompt=`プロジェクト内の指定ファイルを読み取り解析してください。ソース・設定の変更、サーバー起動、インストール、他エージェントへの委譲は行わないでください。
 プロジェクトルート: ${file.root}
 対象ファイル（ルート相対）: ${JSON.stringify(path)}
 ユーザーの解析指示: ${JSON.stringify(job.instruction)}
 ユーザーの解析指示を優先し、対象の内容と必要な参照先を確認して日本語で説明してください。ソースの説明には根拠となる関数名や行番号を、画像の説明には実際に確認できた視覚情報を示してください。確認できないことは推測と明記し、秘密情報を出力しないでください。読めない形式なら読み取れない範囲を説明し、内容を創作しないでください。
+内容の解析とあわせて、このファイルの画面をブラウザで表示できるURLも調べてください。HTML / Vueなどはソース、import関係、routerのルート定義、サーバーのポート設定、base / public設定を読み、対象の画面に対応する実際のURLと根拠を確認してください。AiDiy以外のプロジェクトでも、そのプロジェクトの設定に従ってください。サーバーは起動せず、到達性を未確認の場合はその旨をdisplayUrlReasonに記載してください。
+displayUrlsはurlとlabelという文字列フィールドを持つオブジェクトの配列です。表示URLは根拠のあるHTTP(S)の絶対URLだけをdisplayUrlsに最大20件、各4096文字以内で保存し、labelには画面名（200文字以内）を入れてください。認証情報、トークン、秘密のクエリや署名を含むURLは保存・出力しないでください。動的ルートのIDやホスト・ポートを推測したり、:id / {id}などのプレースホルダーを含むURLを作らないでください。URLを特定できない場合、画面を持たないファイルの場合はdisplayUrlsを空配列とし、displayUrlReasonに理由を日本語で2000文字以内で記載してください。根拠となる設定やルートと未確認事項もdisplayUrlReasonに簡潔に記載してください。
 結果は ${job.resultPath}.tmp にUTF-8 JSONで書き、完成後に ${job.resultPath} へリネームしてください。この2ファイル以外は作成・変更しないでください。
-形式: ${JSON.stringify({requestId:id,path,instruction:job.instruction,content:'解析内容（日本語Markdown）'})}
+形式: ${JSON.stringify({requestId:id,path,instruction:job.instruction,content:'解析内容（日本語Markdown）',displayUrls:[],displayUrlReason:'表示URLの根拠・未確認事項、または特定できない理由'})}
 contentは空でない20万文字以内のMarkdownです。5分以内を目安に、必ず結果ファイルへ保存してください。`;
       await update(path,record=>({...record,instruction:job.instruction}));
       if(!current(job))throw Error('利用が終了しました。');

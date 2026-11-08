@@ -7,12 +7,32 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm,symlink,readFile,readdir,rename} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
+import {createHash} from 'node:crypto';
 import {join,resolve,sep} from 'node:path';
 import {createFileAnalysis} from '../ファイル機能/file-analysis.mjs';
 import {startDevelopment} from '../server.mjs';
 async function fixture(t){const root=await mkdtemp(join(tmpdir(),'aidiy-analysis-'));t.after(()=>{assert.ok(resolve(root).startsWith(resolve(tmpdir())+sep));return rm(root,{recursive:true,force:true});});await writeFile(join(root,'main.js'),'export const hello=1;');await writeFile(join(root,'other.js'),'other');return root;}
 const options={state:()=>({active:true,startedAt:1}),runAgent:()=>new Promise(()=>{}),pollMs:100000};
 const result=(job,instruction='概要')=>({requestId:job.id,path:job.path,instruction,content:'# 機能概要\n入口の処理です。'});
+
+test('表示URL API: 保存したHTML/Vue画面を優先し、旧結果・不正URL・利用終了は従来の検証を通る',async t=>{
+ const root=await fixture(t);for(const name of ['page.html','Page.vue'])await writeFile(join(root,name),'<h1>screen</h1>');
+ const app=await startDevelopment(root,{fileAnalysisOptions:options});t.after(()=>app.close());
+ assert.equal((await fetch(app.url+'api/preview?path=page.html')).status,503);
+ await fetch(app.url+'api/connection/offline',{method:'POST'});
+ for(const path of ['page.html','Page.vue']){
+  const job=await fetch(app.url+'api/file-analysis',{method:'POST',body:JSON.stringify({path,instruction:'概要'})}).then(r=>r.json());
+  await writeFile(join(root,job.resultPath),JSON.stringify({...result(job),displayUrls:[{label:'一覧',url:'http://localhost:3000/list'},{label:'詳細',url:'http://localhost:3000/detail'},{url:'javascript:alert(1)'}],displayUrlReason:'router定義で確認。起動状態は未確認。'}));
+  const preview=await fetch(app.url+'api/preview?'+new URLSearchParams({path})).then(r=>r.json());
+  assert.equal(preview.kind,'analysis');assert.equal(preview.routes.length,2);assert.equal(preview.routes[1].url,'http://localhost:3000/detail');assert.match(preview.reason,/未確認/);assert.equal(preview.stale,false);
+  await writeFile(join(root,path),'<h1>updated screen</h1>');assert.equal((await fetch(app.url+'api/preview?'+new URLSearchParams({path})).then(r=>r.json())).stale,true);
+ }
+ assert.equal((await fetch(app.url+'api/preview?path=page.html',{headers:{origin:'https://foreign.invalid'}})).status,403);
+ const outside=await fetch(app.url+'api/preview?path=../page.html').then(r=>r.json());assert.ok(outside.error);assert.equal(outside.routes,undefined);assert.equal(outside.url,undefined);
+ const next=await fetch(app.url+'api/file-analysis',{method:'POST',body:JSON.stringify({path:'page.html',instruction:'概要'})}).then(r=>r.json());
+ await writeFile(join(root,next.resultPath),JSON.stringify({...result(next),displayUrls:[{url:'file:///private'}]}));
+ const fallback=await fetch(app.url+'api/preview?path=page.html').then(r=>r.json());assert.equal(fallback.kind,'html');assert.match(fallback.url,/^http:\/\/127\.0\.0\.1:\d+\/p\//);
+});
 
 test('ファイル解析: 指示・結果の永続化、ファイル/プロジェクト分離、変更検出、失敗時の前回結果保持',async t=>{
  const root=await fixture(t),other=await fixture(t);let clock=Date.now();const service=createFileAnalysis(root,{...options,now:()=>clock});t.after(()=>service.close());
@@ -58,4 +78,41 @@ test('ファイル解析API: 利用状態と同一オリジン、GET/PUT/POST',a
  const put=await fetch(url,{method:'PUT',body:JSON.stringify({path:'main.js',instruction:'処理を説明'})});assert.equal(put.status,200);
  assert.equal((await fetch(url+'?path=main.js').then(r=>r.json())).instruction,'処理を説明');
  const job=await fetch(url,{method:'POST',body:JSON.stringify({path:'main.js',instruction:'概要'})}).then(r=>r.json());assert.equal(job.status,'waiting');
+});
+
+
+test('ファイル解析: 表示URLを本文と保存し、再起動・指示変更・失敗後も保持する',async t=>{
+ const root=await fixture(t),service=createFileAnalysis(root,options);t.after(()=>service.close());
+ const job=await service.start('main.js','概要');
+ assert.match(job.prompt,/router/);assert.match(job.prompt,/displayUrls/);assert.match(job.prompt,/サーバー起動/);assert.match(job.prompt,/推測したり/);
+ const displayUrls=[{url:'https://example.test:443/app',label:'画面'}];
+ await writeFile(join(root,job.resultPath),JSON.stringify({...result(job),displayUrls,displayUrlReason:'routerとbase設定で確認。到達性は未確認。'}));
+ const completed=await service.get('main.js');assert.equal(completed.job.status,'complete');
+ assert.deepEqual(completed.result.displayUrls,[{url:'https://example.test/app',label:'画面'}]);
+ const folder=join(root,'_AIDIY','aidiy_ide','file_analyses');const name=(await readdir(folder)).find(x=>x.endsWith('.json'));
+ assert.deepEqual(JSON.parse(await readFile(join(folder,name),'utf8')).result.displayUrls,completed.result.displayUrls);
+ const restarted=createFileAnalysis(root,options);t.after(()=>restarted.close());
+ assert.deepEqual((await restarted.get('main.js')).result,completed.result);
+ await restarted.save('main.js','次回の指示');assert.deepEqual((await restarted.get('main.js')).result,completed.result);
+ const second=await restarted.start('main.js','再解析');await writeFile(join(root,second.resultPath),JSON.stringify({...result(second,'再解析'),content:''}));
+ const failed=await restarted.get('main.js');assert.equal(failed.job.status,'invalid');assert.deepEqual(failed.result,completed.result);
+});
+
+test('ファイル解析: URLメタデータの不正は除外し有効な本文を保存する',async t=>{
+ const root=await fixture(t),service=createFileAnalysis(root,options);t.after(()=>service.close());
+ for(const displayUrls of [{url:'https://example.test'},[null,{url:'javascript:alert(1)'},{url:'https://user:pass@example.test'},{url:'https://example.test/?token=fake'},{url:'https://example.test/page',label:'画面'}]]){
+  const job=await service.start('main.js','概要');await writeFile(join(root,job.resultPath),JSON.stringify({...result(job),displayUrls,displayUrlReason:{invalid:true}}));
+  const saved=await service.get('main.js');assert.equal(saved.job.status,'complete');assert.match(saved.result.content,/入口/);
+  assert.deepEqual(saved.result.displayUrls,Array.isArray(displayUrls)?[{url:'https://example.test/page',label:'画面'}]:[]);assert.equal(saved.result.displayUrlReason,'');
+ }
+});
+
+test('ファイル解析: 旧保存結果は空の表示URLとして読み出し、不正な保存URLも取り除く',async t=>{
+ const root=await fixture(t),folder=join(root,'_AIDIY','aidiy_ide','file_analyses');await mkdir(folder,{recursive:true});
+ const target=join(folder,createHash('sha256').update('main.js').digest('hex')+'.json');
+ const legacy={path:'main.js',instruction:'概要',result:{id:'legacy',content:'以前の解析'}};
+ await writeFile(target,JSON.stringify(legacy));const service=createFileAnalysis(root,options);t.after(()=>service.close());
+ const read=await service.get('main.js');assert.equal(read.result.content,'以前の解析');assert.deepEqual(read.result.displayUrls,[]);assert.equal(read.result.displayUrlReason,'');
+ await writeFile(target,JSON.stringify({...legacy,result:{...legacy.result,displayUrls:[{url:'file:///tmp/test'},{url:'https://example.test'}],displayUrlReason:'根拠'}}));
+ const sanitized=await service.get('main.js');assert.deepEqual(sanitized.result.displayUrls,[{url:'https://example.test/',label:''}]);assert.equal(sanitized.result.displayUrlReason,'根拠');
 });

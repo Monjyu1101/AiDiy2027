@@ -94,6 +94,8 @@ const allDisplays=createAllDisplays({screen,trustedEvent,panels:vrPanels,syncChi
 const {createBrowserViews,browserFileTarget,browserOpenable,HOME}=require('./デスクトップ/ブラウザ.cjs');
 const {saveBrowserCapture}=require('./デスクトップ/ブラウザ撮影.cjs');
 const {validPreviewPath}=require('./デスクトップ/native-preview-actions.cjs');
+const {createBrowserSourceSelection}=require('./デスクトップ/ブラウザ解析連携.cjs');
+const selectBrowserSource=createBrowserSourceSelection({trustedEvent,readState,sessionKey:state=>sessionKey(state),connected:state=>browserConnected(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
 let browserViews;
 const browserBridges=new WeakMap();
 let standaloneBrowserBridge;
@@ -308,17 +310,18 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:all-displays',(event,action)=>allDisplays.handle(event,action));
  ipcMain.handle('development:browser-action',async(event,action,value)=>{
   const record=trustedEvent(event);
-  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','draft-dialog','header-size','header-pin-state','header-toggle-pin'].includes(action)){
+  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','draft-dialog','analysis-dialog','header-size','header-pin-state','header-toggle-pin'].includes(action)){
    try{if(!browserConnected(await readState(record.owner||record)))return{ok:false,error:'tools接続中のみBrowserを操作できます。'};}catch{return{ok:false,error:'toolsの接続を確認できません。'};}
   }
+  if(action==='analysis-select-source')return selectBrowserSource(event,value);
   return browserViews?.action(event,action,value)||{ok:false,error:'ブラウザが起動していません。'};
  });
- ipcMain.handle('development:open-browser',async(event,path,displayId)=>{
+ ipcMain.handle('development:open-browser',async(event,path,displayId,displayUrl='')=>{
   const source=trustedEvent(event),owner=source?.kind==='viewer'?source.owner:source;
   if(!owner||owner.kind!=='ide'||owner.owner||!['ide','viewer'].includes(source.kind))return{ok:false,error:'IDEから開いてください。'};
-  if(path!==undefined&&(!validPreviewPath(path)||!await browserOpenable(path)))return{ok:false,error:'HTML / HTM・音声・動画ファイルを選んでください。'};
   const revision=owner.revision;
   try{
+   if((displayUrl!==''&&path===undefined)||(path!==undefined&&(!validPreviewPath(path)||!await browserOpenable(path,displayUrl))))throw Error('HTML / Vue・音声・動画ファイルを選んでください。');
    if(displayId!==undefined&&source!==owner)throw Error('画面の選択はIDE本体から行ってください。');
    selectedAllDisplay(owner,displayId);
    const state=await readState(owner),key=sessionKey(state);
@@ -327,7 +330,7 @@ app.whenReady().then(async()=>{
    if(!browserConnected(state))throw Error('tools接続中のみBrowserを起動できます。');
    let target=HOME;
    if(path!==undefined){
-    target=await browserFileTarget(state.project.path,path);
+    target=await browserFileTarget(state.project.path,path,displayUrl);
    }
    const current=await readState(owner);
    if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!browserConnected(current))throw Error('IDEの利用状態が変わりました。');

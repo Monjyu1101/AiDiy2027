@@ -105,7 +105,13 @@
       "sha256": "4898dfb2a97a2a5deaee1e9481012dd8d9cce94d627700f42c5667d3a43f8323",
       "source_sha256": "e1454da7d05db70893808f676c288206e072af6f57b743d05c73e1c980d797aa",
       "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ30,31を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。",
+      "pending_source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
+      "pending_update": {
+        "status": "PDF再生成待ち",
+        "scope": "IDE本文の「AiDiy検索」「AiDiy検索軌跡」を「AI検索」「AI検索軌跡」に統一し、掲載画像が旧表記を含む旨を追記。既存PDFと画像、過去の実機判定は未変更。",
+        "reason": "既存PDFの記録された生成元から本文には既存差分があり、今回の表記統一も追加されています。今回は画面表記とMarkdownを更新し、IDE PDFの再生成・再目視確認は未実施です。"
+      }
     },
     {
       "file": "セルフテスト,aidiy_live,操作編.pdf",
@@ -182,20 +188,14 @@
     {
       "file": "セルフテスト,aidiy_navi,操作編.pdf",
       "pages": 40,
-      "sha256": "3a857db9a254f8ed5a28f9186ea1f14ae559e95f5bfbb9cbec0ed73d5f4321b8",
-      "source_sha256": "7ceca831d71cb46f08fc1373c368d00577658d1413b68edbc2c2c3736883b6ed",
-      "review": "step-10: 全40ページを画像化して目視確認。本文214ブロック・画像36参照のピクセル一致、本文63参照・PDF相対リンク30件を照合。未確認範囲と過去失敗の原因判定不能を維持。",
-      "alignment_review": "2026-11-07: step-10の40ページPDF・本文ハッシュを維持し、本文と参照先を再照合。",
-      "pending_source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
-      "pending_update": {
-        "status": "PDF再生成待ち",
-        "scope": "待機画面名を羽衣ライディングへ変更し、図701の画像名と本文参照を更新。図710は旧表示名を含む画像であることを注記。過去の実機判定は維持。",
-        "reason": "クラウド実行環境でChromiumの起動がsocket() failed: Operation not permittedとなり、通常実行と承認付き実行の両方で停止。既存PDFは未変更、今回のPDF生成・目視確認は未実施。",
-        "command": "node docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs 'セルフテスト,aidiy_navi,操作編.md'"
-      }
+      "sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
+      "source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
+      "review": "全40ページを描画して目視確認。本文213ブロック・画像36参照のピクセル一致、本文63参照・PDF相対リンク29注釈（20種類）を照合。過去の実機判定と未確認範囲を維持。",
+      "alignment_review": "現行Markdownの羽衣ライディングへの改名・説明・図710の旧名注記をPDFへ反映。step-10とPDF機械照合を更新。",
+      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
     }
   ],
-  "visual_review": "資料整合：生成11冊の変更ページとTools全12ページを目視。Navigator全40ページの既存確認はstep-10を維持。全冊全ページの今回の目視や新しい実機PASSを示さない。詳細はalignment_record。",
+  "visual_review": "今回のNavigator全40ページは再生成後に目視確認。他22冊の既存検証は変更しない。全冊の今回の目視や新しい実機PASSを示さない。Navigatorはstep-10、他冊子はalignment_recordを参照。",
   "alignment_evidence": "evidence/document-alignment.json",
   "prior_visual_review": "2026-11-03: 全22冊の追記を描画して目視確認。PDFテキスト抽出の日本語判定は使用せず、実表示で確認。",
   "alignment_record": "evidence/document-alignment.json"
