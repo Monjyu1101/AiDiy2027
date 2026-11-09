@@ -52,9 +52,11 @@ try{
  await page.send('Input.dispatchMouseEvent',{type:'mousePressed',x:save.x,y:save.y,button:'left',clickCount:1});await page.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:save.x,y:save.y,button:'left',clickCount:1});await until(()=>selected===1,'selection');
  assert.equal(await page.evaluate('window.clicks'),0,'選択クリックがページの保存処理を実行しない');assert.equal(picker.active,false);assert.equal(await page.evaluate('document.querySelector("[data-aidiy-element-tooltip]")'),null);
  const draft=picker.request('/project',{session:'aidiy_browser fixture',tabId:'fixture'});assert.match(draft.text,/#save/);assert.match(draft.text,/保存/);assert.ok(!draft.text.includes('page-secret'));
+ // 確定通知だけでなく、選択後に検査Overlayが通常のマウス入力を妨げないことを確認する。
+ await move(save.x,save.y);await page.send('Input.dispatchMouseEvent',{type:'mousePressed',x:save.x,y:save.y,button:'left',clickCount:1});await page.send('Input.dispatchMouseEvent',{type:'mouseReleased',x:save.x,y:save.y,button:'left',clickCount:1});assert.equal(await page.evaluate('window.clicks'),1,'確定後に通常クリックへ戻る');assert.equal(selected,1,'確定後は再選択しない');
  contents.emit('did-start-navigation',{},origin+'/',false,true);await sleep(80);assert.throws(()=>picker.request('/project',{session:'s',tabId:'t'}));
  // 実CDPのEscape（本文・入力フォーカス）とElectron購読の模擬経路を分けて確認する。
- let clicks=0;
+ let clicks=1;
  for(const focus of ['body','input','electron-event']){
   await picker.start();
   if(focus==='electron-event'){
@@ -70,7 +72,7 @@ try{
  }
  writeFileSync(new URL('03-after-escape.png',output),Buffer.from((await page.send('Page.captureScreenshot')).data,'base64'));
  await picker.start();available=false;await picker.stop();assert.equal(picker.active,false);assert.throws(()=>picker.request('/project',{session:'s',tabId:'t'}));
- assert.deepEqual(failure,[]);assert.ok(panelUpdate.includes('textContent'));writeFileSync(new URL('result.json',output),JSON.stringify({passed:true,checks:['CDP hover','isolated DOM and computed CSS','private inputs omitted','URL tokens omitted','inline tooltip heading and safe text rendering; no extra window','click consumed','draft identity','navigation invalidation','CDP Escape on body and input','simulated Electron Escape event','normal click after each cancel','disconnect'],nativeElectron:false},null,2));
+ assert.deepEqual(failure,[]);assert.ok(panelUpdate.includes('textContent'));writeFileSync(new URL('result.json',output),JSON.stringify({passed:true,checks:['CDP hover','isolated DOM and computed CSS','private inputs omitted','URL tokens omitted','inline tooltip heading and safe text rendering; no extra window','click consumed','normal mouse click after selection','draft identity','navigation invalidation','CDP Escape on body and input','simulated Electron Escape event','normal click after each cancel','disconnect'],nativeElectron:false},null,2));
  console.log('PASS: real Chromium element inspection, inline tooltip, redaction, click suppression, draft, Esc/navigation/disconnect. Screenshots: '+output.pathname);
 }finally{
  picker?.dispose();for(const socket of sockets)socket.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}server.closeAllConnections();await new Promise(resolve=>server.close(resolve));await sleep(100);rmSync(temporary,{recursive:true,force:true});

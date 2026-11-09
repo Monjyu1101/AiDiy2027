@@ -8,7 +8,7 @@ const {collectBrowserElement,browserElementText}=require('./ブラウザ要素�
 const {createBrowserElementPanel}=require('./ブラウザ要素パネル.cjs');
 // 既存CDP接続を共有し、detachやDOM.disableは呼ばない。Overlayはmainの選択操作だけが使う。
 function createBrowserElementLink({contents,record,available,onChange,onSelected,onError,panelFactory=createBrowserElementPanel}){
- const hostContents=record.window.webContents,debug=contents.debugger;let active=false,inspecting=false,disposed=false,generation=0,sequence=0,selected,panel,reading=false,pendingHover,selecting=false,queue=Promise.resolve();
+ const hostContents=record.window.webContents,debug=contents.debugger;let active=false,inspecting=false,overlayEnabled=false,disposed=false,generation=0,sequence=0,selected,panel,reading=false,pendingHover,selecting=false,queue=Promise.resolve();
  const current=run=>!disposed&&active&&generation===run&&available()&&!contents.isDestroyed()&&!record.window.isDestroyed();
  const command=(method,params={})=>debug.sendCommand(method,params);
  const overlay=action=>{const next=queue.then(action);queue=next.catch(()=>{});return next;};
@@ -18,10 +18,19 @@ function createBrowserElementLink({contents,record,available,onChange,onSelected
   if(!keepSelection)selected=undefined;
   const closing=panel?.close();panel=undefined;onChange();
   // Chromiumはmode:noneでもhighlightConfigを検証する。省略すると選択とクリック抑止が残る。
-  await overlay(async()=>{if(debug?.isAttached()&&!contents.isDestroyed()){await command('Overlay.setInspectMode',{mode:'none',highlightConfig:{}});await command('Overlay.hideHighlight');}}).catch(()=>{
+  const stopped=await overlay(async()=>{
+   if(!debug?.isAttached()||contents.isDestroyed()){overlayEnabled=false;return true;}
+   if(!overlayEnabled)return true;
+   // 検査用Overlayの入力面も破棄してから下書き窓を開く。共有CDP / DOMは維持する。
+   try{await command('Overlay.setInspectMode',{mode:'none',highlightConfig:{}});await command('Overlay.hideHighlight');}
+   finally{await command('Overlay.disable');overlayEnabled=false;}
+   return true;
+  }).catch(()=>{
+   if(generation===run)selected=undefined;
    if(!disposed&&generation===run&&!contents.isDestroyed()&&!record.window.isDestroyed())onError('要素連携を解除できませんでした。ページを再読み込みしてください。');
+   return false;
   });
-  await closing;
+  await closing;return stopped;
  }
  async function read(node,run){
   const group='aidiy-element-'+run+'-'+randomUUID();
@@ -53,8 +62,8 @@ function createBrowserElementLink({contents,record,available,onChange,onSelected
   try{
    const value=await read({backendNodeId},run);if(!value||!current(run))return;
    const choice=selected={id:randomUUID(),url:contents.getURL(),value};
-   await stop(true);
-   if(!disposed&&selected===choice&&available())onSelected();
+   const stopped=await stop(true);
+   if(stopped&&!disposed&&selected===choice&&available())onSelected();
   }catch{if(current(run)){await stop();onError('この要素を取得できませんでした。要素連携をもう一度押して、別の要素を選んでください。');}}
  }
  function message(_event,method,params){
@@ -73,11 +82,11 @@ function createBrowserElementLink({contents,record,available,onChange,onSelected
    await command('DOM.enable');if(!current(run))return;
    // DOM.enableだけではfrontendのdocument IDが未登録で、ホバーのnodeHighlightRequestedが届かない。
    await command('DOM.getDocument',{depth:0});if(!current(run))return;
-   await command('Overlay.enable');
-   if(!current(run))return;
    panel=panelFactory({contents,onClose:()=>void stop()});await panel.open();
    await overlay(async()=>{
     if(!current(run))return;
+    // 直前の解除完了後に有効化し、連続した取消・再開始でdisableに追い越されない。
+    await command('Overlay.enable');overlayEnabled=true;if(!current(run))return;
     // 最初のホバーは開始応答より先に届く場合がある。受信を先に有効にして取りこぼさない。
     inspecting=true;
     await command('Overlay.setInspectMode',{mode:'searchForNode',highlightConfig:{showInfo:false,showStyles:false,contentColor:{r:50,g:180,b:245,a:.15},borderColor:{r:30,g:220,b:255,a:.9}}});

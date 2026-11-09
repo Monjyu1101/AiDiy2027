@@ -320,6 +320,6 @@ for(const fullscreen of [false,true])for(const focus of fullscreen?['host','page
    assert.equal(f.press(source,{key:'Escape'}).count,1);await flush();
    assert.equal(f.inspectMode,'none');assert.equal(f.popup,undefined,'要素選択中のElectronダイアログを作らない');assert.equal((await f.browser.action({record:f.record},'state')).elementPicking,false);assert.equal(f.record.window.isFullScreen(),fullscreen,'EscではF11状態を変えない');
   }
-  assert.ok(f.commands.some(c=>c.method==='Overlay.hideHighlight'));assert.ok(!f.commands.some(c=>/disable|detach/i.test(c.method)),'共有CDPとDOMを維持する');
+  assert.ok(f.commands.some(c=>c.method==='Overlay.hideHighlight'));assert.ok(f.commands.some(c=>c.method==='Overlay.disable'));assert.ok(!f.commands.some(c=>/^(DOM\.disable|.*detach)$/i.test(c.method)),'共有CDPとDOMを維持する');
  }finally{f.close();}
 });

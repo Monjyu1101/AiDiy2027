@@ -711,6 +711,8 @@ Electron・Web・VS Code の共通画面はタイトル背景と同じグレー 
 
 `ブラウザ解析ダイアログ.vue` が結果を一覧表示します。`デスクトップ/ブラウザ解析連携.cjs` はソースクリック時に保存済み結果ID・一覧所属・現在URL・起動元IDEセッションを再確認し、IDEへ通知します。`開発スペース.vue` は通知を既存 `selectExplorer` へ渡し、ファイルビューアで開きます。単独起動ではソースクリックを無効にします。解析画面は `デスクトップ/ブラウザ解析窓.cjs` が管理するBrowserの子ウィンドウで開き、native本文と全画面ヘッダーの表示・寸法を変えません。連続操作は同じ解析窓を前面に戻し、開いた時点の解析対象を保持します。親窓の終了・読込失敗で子窓とIPC権限を片付けます。解析窓のIPCは対象取得・閉鎖・関連ソース選択だけを許可します。通常のCode / Live連携と要素連携も `デスクトップ/ブラウザ補助窓.cjs` の専用子窓を使い、背景のWeb本文を表示したまま宛先を選びます。
 
+要素選択を確定したら、`Overlay.setInspectMode(mode:none)`・`Overlay.hideHighlight` に加えて `Overlay.disable` の完了を待ち、検査用の入力面を破棄してから連携先の子窓を開きます。終了に失敗した場合は選択を破棄してエラーを表示し、下書き窓を開きません。共有のCDP接続とDOMは解除しません。Overlayの再有効化も同じキューに入れ、取消直後の再開始を古い終了処理で無効化しないようにします。`checks/browser-element-link.test.mjs` は終了待ち・終了失敗・取消後の再開始を、`scripts/check-browser-element.mjs` は確定後の通常クリック復帰を確認します。後者は実Chromiumであり、Electron子窓のヒットテストとは別です。実機では通常窓・F11の両方で項目を選び、マウスで「キャンセル」、再選択後に「下書きへ追加」を押し、終了・一度だけ追記・自動送信なしを確認してください。
+
 再検証は `checks/browser-analysis.test.mjs`、`checks/browser-analysis-source.test.mjs`、`checks/browser-analysis-ui.test.mjs`、`checks/browser-analysis-window.test.mjs` と既存 `checks/browser-*.test.mjs`。画面ハーネス `scripts/check-browser-analysis.mjs` は実Vueと模擬APIを使い、`--compile-only` なら配布ビルドやブラウザーを起動しません。実AIや実Electronでの動作確認とは区別してください。
 
 ## Browserの日本語URL表示

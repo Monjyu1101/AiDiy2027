@@ -12,14 +12,16 @@ import {browserElementText} from '../デスクトップ/ブラウザ要素情報
 const value={tag:'button',selector:'#save',attributes:{id:'save'},rect:{x:10,y:20,width:80,height:30},html:'<button id="save">保存</button>',css:{color:'rgb(0, 0, 0)'},text:'保存',url:'https://example.test/page',notice:'表示中DOM。入力値は除外。'};
 const flush=async()=>{for(let n=0;n<70;n++)await Promise.resolve();};
 function fixture(){
- let attached=false,url='https://example.test/page',available=true,picked=0,shown=0,closed=0,inspectMode='none',highlighted=false,documentRequested=false,panelOptions;
+ let attached=false,url='https://example.test/page',available=true,picked=0,shown=0,closed=0,inspectMode='none',highlighted=false,overlayEnabled=false,documentRequested=false,panelOptions;
  const calls=[],updates=[],errors=[],pending=[];
  const debug=Object.assign(new EventEmitter(),{isAttached:()=>attached,attach(){attached=true;},sendCommand:async(method,params)=>{
   calls.push({method,params});
   if(method==='DOM.getDocument'){if(f.failDocument)throw Error('fixture document failure');if(f.holdDocument)await new Promise(resolve=>pending.push(resolve));documentRequested=true;return {root:{nodeId:1}};}
+  if(method==='Overlay.enable')overlayEnabled=true;
+  if(method==='Overlay.disable'){if(f.holdDisable)await new Promise(resolve=>pending.push(resolve));if(f.failDisable)throw Error('fixture disable failure');overlayEnabled=false;inspectMode='none';highlighted=false;}
   if(method==='Overlay.setInspectMode'&&f.failStop&&params.mode==='none')throw Error('fixture cleanup failure');
   // Chromiumと同じく、noneでもhighlightConfigが無い要求は失敗させる。
-  if(method==='Overlay.setInspectMode'){if(!params.highlightConfig)throw Error('Internal error: highlight configuration parameter is missing');if(params.mode==='searchForNode'&&documentRequested&&f.hoverOnInspect)debug.emit('message',{},'Overlay.nodeHighlightRequested',{nodeId:f.hoverOnInspect});if(f.holdInspect)await new Promise(resolve=>pending.push(resolve));inspectMode=params.mode;highlighted=inspectMode!=='none';}
+  if(method==='Overlay.setInspectMode'){if(!overlayEnabled)throw Error('Overlay is not enabled');if(!params.highlightConfig)throw Error('Internal error: highlight configuration parameter is missing');if(params.mode==='searchForNode'&&documentRequested&&f.hoverOnInspect)debug.emit('message',{},'Overlay.nodeHighlightRequested',{nodeId:f.hoverOnInspect});if(f.holdInspect)await new Promise(resolve=>pending.push(resolve));inspectMode=params.mode;highlighted=inspectMode!=='none';}
   if(method==='Overlay.hideHighlight')highlighted=false;
   if(method==='Page.getFrameTree')return {frameTree:{frame:{id:'frame'}}};
   if(method==='Page.createIsolatedWorld')return {executionContextId:9};
@@ -29,7 +31,7 @@ function fixture(){
  }});
  const contents=Object.assign(new EventEmitter(),{debugger:debug,isDestroyed:()=>false,getURL:()=>url,focus(){}}),window=Object.assign(new EventEmitter(),{isDestroyed:()=>false,webContents:new EventEmitter()});
  const picker=createBrowserElementLink({contents,record:{window},available:()=>available,onChange(){},onSelected(){picked++;},onError:error=>errors.push(error),panelFactory:options=>{panelOptions=options;return{open(){shown++;},close(){closed++;},update:value=>updates.push(value)};}});
- const f={picker,debug,contents,window,calls,updates,errors,pending,hold:false,values:{},hover(nodeId){if(documentRequested&&inspectMode==='searchForNode')debug.emit('message',{},'Overlay.nodeHighlightRequested',{nodeId});},get inspectMode(){return inspectMode;},get highlighted(){return highlighted;},get panelOptions(){return panelOptions;},get picked(){return picked;},get shown(){return shown;},get closed(){return closed;},disconnect(){available=false;return picker.stop();},navigate(target=url){documentRequested=false;url=target;contents.emit('did-start-navigation',{},url,false,true);},message(method,params){debug.emit('message',{},method,params);}};return f;
+ const f={picker,debug,contents,window,calls,updates,errors,pending,hold:false,values:{},hover(nodeId){if(documentRequested&&inspectMode==='searchForNode')debug.emit('message',{},'Overlay.nodeHighlightRequested',{nodeId});},get overlayEnabled(){return overlayEnabled;},get inspectMode(){return inspectMode;},get highlighted(){return highlighted;},get panelOptions(){return panelOptions;},get picked(){return picked;},get shown(){return shown;},get closed(){return closed;},disconnect(){available=false;return picker.stop();},navigate(target=url){documentRequested=false;url=target;contents.emit('did-start-navigation',{},url,false,true);},message(method,params){debug.emit('message',{},method,params);}};return f;
 }
 test('要素連携: ホバー、クリックの確定、main保持内容の下書き、解除と再選択',async()=>{
  const f=fixture();await f.picker.start();assert.equal(f.picker.active,true);assert.equal(f.shown,1);
@@ -39,7 +41,7 @@ test('要素連携: ホバー、クリックの確定、main保持内容の下�
  assert.throws(()=>f.picker.request('/project',{session:'s',tabId:'t'},'偽のID'));
  await f.picker.stop();assert.throws(()=>f.picker.request('/project',{session:'s',tabId:'t'}));
  await f.picker.start();await f.picker.start();assert.equal(f.picker.active,false);assert.equal(f.shown,2);
- assert.ok(!f.calls.some(c=>/disable|detach/i.test(c.method)),'共有CDPは切断しない');f.picker.dispose();
+ assert.ok(!f.calls.some(c=>/^(DOM\.disable|.*detach)$/i.test(c.method)),'共有CDP / DOMは切断しない');f.picker.dispose();
  assert.equal(f.debug.listenerCount('message'),0);assert.equal(f.contents.listenerCount('before-input-event'),0);
 });
 test('要素連携: Esc、同じURLへの再読込、切断、終了で待機中の古い結果を破棄',async()=>{
@@ -66,7 +68,7 @@ for(const focus of ['page','host','cdp'])test(`要素連携: ${focus}からのEs
   const event={prevented:false,preventDefault(){this.prevented=true;}},input={type:'keyDown',key:'Escape'};
   if(focus==='cdp')f.message('Overlay.inspectModeCanceled',{});
   else (focus==='page'?f.contents:f.window.webContents).emit('before-input-event',event,input);
-  await flush();assert.equal(f.picker.active,false);assert.equal(f.inspectMode,'none','UIだけでなくCDPの選択モードも解除する');assert.equal(f.highlighted,false);assert.equal(f.closed,cycle+1);assert.equal(event.prevented,focus!=='cdp');
+  await flush();assert.equal(f.picker.active,false);assert.equal(f.inspectMode,'none','UIだけでなくCDPの選択モードも解除する');assert.equal(f.highlighted,false);assert.equal(f.overlayEnabled,false,'Overlayの入力面も終了する');assert.equal(f.closed,cycle+1);assert.equal(event.prevented,focus!=='cdp');
   f.message('Overlay.nodeHighlightRequested',{nodeId:1});f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();assert.equal(f.updates.length,0);assert.equal(f.picked,0);
  }
  assert.deepEqual(f.errors,[]);f.picker.dispose();
@@ -118,4 +120,30 @@ test('要素連携: document登録中の取消や登録失敗で固定の説明�
  const failed=fixture();failed.failDocument=true;
  await assert.rejects(failed.picker.start(),/fixture document failure/);
  assert.equal(failed.picker.active,false);assert.equal(failed.shown,0);failed.picker.dispose();
+});
+
+
+test('要素連携: Overlayの入力面を破棄し終わるまで下書き窓を開かない',async()=>{
+ const f=fixture();await f.picker.start();f.holdDisable=true;
+ f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();
+ assert.equal(f.pending.length,1);assert.equal(f.picked,0,'mode:noneだけでは次の窓へ進めない');assert.equal(f.overlayEnabled,true);
+ f.holdDisable=false;f.pending.shift()();await flush();
+ assert.equal(f.overlayEnabled,false);assert.equal(f.picked,1);assert.ok(f.picker.request('/project',{session:'s',tabId:'t'}).browserElementId);
+ assert.deepEqual(f.calls.filter(c=>c.method.startsWith('Overlay.')).map(c=>c.method),['Overlay.enable','Overlay.setInspectMode','Overlay.setInspectMode','Overlay.hideHighlight','Overlay.disable']);f.picker.dispose();
+});
+
+for(const failure of ['failStop','failDisable'])test(`要素連携: ${failure}でもOverlay終了を試み、失敗した選択の下書き窓を開かない`,async()=>{
+ const f=fixture();await f.picker.start();f[failure]=true;
+ f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();
+ assert.ok(f.calls.some(c=>c.method==='Overlay.disable'));assert.equal(f.picked,0);assert.throws(()=>f.picker.request('/project',{session:'s',tabId:'t'}));assert.match(f.errors.at(-1),/要素連携を解除できませんでした/);
+ f[failure]=false;await f.picker.start();f.message('Overlay.inspectNodeRequested',{backendNodeId:2});await flush();assert.equal(f.picked,1);assert.equal(f.overlayEnabled,false);f.picker.dispose();
+});
+
+test('要素連携: Overlay終了待ちの取消・再開始では古い選択を通知せず、終了後に再有効化する',async()=>{
+ const f=fixture();await f.picker.start();f.holdDisable=true;f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();
+ assert.equal(f.pending.length,1);const cancel=f.picker.stop();const restarting=f.picker.start();await flush();assert.equal(f.calls.filter(c=>c.method==='Overlay.enable').length,1);
+ f.holdDisable=false;f.pending.shift()();await cancel;await restarting;await flush();
+ assert.equal(f.picked,0);assert.equal(f.inspectMode,'searchForNode');assert.equal(f.overlayEnabled,true);assert.throws(()=>f.picker.request('/project',{session:'s',tabId:'t'}));
+ const methods=f.calls.map(c=>c.method);assert.ok(methods.lastIndexOf('Overlay.enable')>methods.indexOf('Overlay.disable'));
+ f.message('Overlay.inspectNodeRequested',{backendNodeId:2});await flush();assert.equal(f.picked,1);assert.equal(f.overlayEnabled,false);f.picker.dispose();
 });
