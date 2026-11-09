@@ -9,6 +9,8 @@ import {notifyBrowserAnalysisChanged} from '../components/ブラウザ/ブラウ
 const props=defineProps({context:{type:Object,required:true},nativeWindow:Boolean});
 const emit=defineEmits(['close']);
 const dialog=ref(),loading=ref(true),starting=ref(false),error=ref(''),sourceError=ref(''),opening=ref(''),result=ref(null),job=ref(null);
+const sourceName=path=>path.split('/').at(-1);
+const sourceFolder=path=>path.includes('/')?path.slice(0,path.lastIndexOf('/')+1):'';
 const busy=computed(()=>job.value?.status==='waiting');
 const controller=new AbortController();let timer,closed=false,revision=0;
 async function request(method='GET'){
@@ -71,7 +73,15 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
    <template v-else-if="result">
     <div class="browser-analysis-result-title"><h3>関連ソース</h3><time>{{ new Date(result.createdAt).toLocaleString('ja-JP') }}</time></div>
     <p v-if="busy">前回の解析結果を表示しています。</p>
-    <div v-if="result.files?.length" class="browser-analysis-sources"><table><thead><tr><th scope="col">役割</th><th scope="col">関連ソース</th><th scope="col">概要</th></tr></thead><tbody><tr v-for="file in result.files" :key="file.path"><td>{{ file.role }}</td><td><button v-if="context.canSelectSource" class="browser-analysis-source" :disabled="!!opening" :title="file.path+' をIDEで表示'" @click="selectSource(file)">{{ file.path }}{{ opening===file.path?'（選択中…）':'' }}</button><span v-else>{{ file.path }}</span></td><td>{{ file.summary }}</td></tr></tbody></table></div>
+    <div v-if="result.files?.length" class="browser-analysis-sources" role="region" aria-label="関連ソースの表（縦横にスクロールできます）" tabindex="0">
+     <table><thead><tr><th scope="col">役割</th><th scope="col">関連ソース</th><th scope="col">概要</th></tr></thead>
+      <tbody><tr v-for="file in result.files" :key="file.path">
+       <td class="browser-analysis-role">{{ file.role }}</td>
+       <td><button v-if="context.canSelectSource" class="browser-analysis-source" :disabled="!!opening" :title="file.path+' をIDEで表示'" :aria-label="file.path+' をIDEで表示'" @click="selectSource(file)"><strong>{{ sourceName(file.path) }}</strong><small v-if="sourceFolder(file.path)">{{ sourceFolder(file.path) }}</small><span v-if="opening===file.path">選択中…</span></button><span v-else class="browser-analysis-source-path" :title="file.path"><strong>{{ sourceName(file.path) }}</strong><small v-if="sourceFolder(file.path)">{{ sourceFolder(file.path) }}</small></span></td>
+       <td class="browser-analysis-source-summary">{{ file.summary }}</td>
+      </tr></tbody>
+     </table>
+    </div>
     <p v-else>このプロジェクト内の関連ソースは確認できませんでした。</p>
     <p v-if="sourceError" class="error" role="alert">{{ sourceError }}</p>
    </template>
@@ -80,11 +90,23 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
  </Teleport>
 </template>
 <style scoped>
-.browser-analysis-dialog{width:min(1000px,92vw);max-height:86vh;box-sizing:border-box;overflow:auto;padding:12px;background:#101824;color:#dce6f4;border:1px solid #49627d;border-radius:7px;font-size:13px;box-shadow:0 16px 60px #0009}
+.browser-analysis-dialog{width:min(1000px,92vw);max-height:86vh;box-sizing:border-box;overflow:auto;padding:12px;background:#101824;color:#dce6f4;border:1px solid #49627d;border-radius:0;font-size:13px;box-shadow:0 16px 60px #0009}
 .browser-analysis-dialog::backdrop{background:#0009}.browser-analysis-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;margin:0;padding:0;flex:none}.browser-analysis-dialog h2{margin:0;font-size:14px;line-height:20px}.browser-analysis-dialog header button{width:24px;height:24px;padding:0;flex:none;display:grid;place-items:center}
-.browser-analysis-target{margin-top:8px;padding:12px;background:#0b121d;border:1px solid #2a3a50;border-radius:4px}.browser-analysis-target p{margin:8px 0}.browser-analysis-target small{display:block;color:#9cafc5;overflow-wrap:anywhere}.browser-analysis-url{overflow-wrap:anywhere;color:#a8d8fb}
-.browser-analysis-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}.browser-analysis-actions span,.browser-analysis-hint{font-size:12px;color:#aabbd0}.browser-analysis-result-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.browser-analysis-result-title time{font-size:11px;color:#aabbd0}
-.browser-analysis-sources{overflow:auto;border:1px solid #2a3a50}.browser-analysis-sources table{border-collapse:collapse;width:100%;table-layout:fixed}.browser-analysis-sources th,.browser-analysis-sources td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid #2a3a50;overflow-wrap:anywhere;white-space:pre-wrap}.browser-analysis-sources th{background:#182638}.browser-analysis-sources th:first-child{width:14%}.browser-analysis-sources th:nth-child(2){width:43%}.browser-analysis-sources tr:last-child td{border-bottom:0}.browser-analysis-source{border:0;background:none;color:#9edfff;padding:0;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer;font:inherit;text-decoration:underline}.browser-analysis-source:hover{color:#fff}.browser-analysis-source:disabled{opacity:.65;cursor:wait}.browser-analysis-dialog textarea{box-sizing:border-box;width:100%;background:#080f1b;color:#dce6f4;margin-top:8px}.browser-analysis-dialog details{margin-top:10px}
+.browser-analysis-target{margin-top:8px;padding:12px;background:#0b121d;border:1px solid #2a3a50;border-radius:0}.browser-analysis-target p{margin:8px 0}.browser-analysis-target small{display:block;color:#9cafc5;overflow-wrap:anywhere}.browser-analysis-url{overflow-wrap:anywhere;color:#a8d8fb}
+.browser-analysis-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}.browser-analysis-actions span,.browser-analysis-hint{font-size:12px;color:#aabbd0}.browser-analysis-result-title{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:16px 0 10px}.browser-analysis-result-title h3{margin:0}.browser-analysis-result-title time{font-size:11px;color:#aabbd0}
+.browser-analysis-sources{overflow:auto;max-width:100%;max-height:min(65vh,720px);border:1px solid #49627d;scrollbar-color:#61758e #101824;scrollbar-width:auto;overscroll-behavior-x:contain}
+.browser-analysis-sources:focus-visible{outline:2px solid #9edfff;outline-offset:2px}
+.browser-analysis-sources table{border-collapse:separate;border-spacing:0;width:100%;min-width:680px;table-layout:fixed;font-size:13px;line-height:1.7}
+.browser-analysis-sources th,.browser-analysis-sources td{text-align:left;vertical-align:top;padding:12px;border-right:1px solid #35465c;border-bottom:1px solid #35465c;overflow-wrap:anywhere;word-break:normal;white-space:pre-wrap}
+.browser-analysis-sources th{position:sticky;top:0;z-index:1;background:#21334a;color:#f0f6ff;font-weight:700;box-shadow:0 1px 0 #61758e}
+.browser-analysis-sources th:first-child{width:7em}.browser-analysis-sources th:nth-child(2){width:32%}
+.browser-analysis-sources td{background:#0b121d}.browser-analysis-sources tbody tr:nth-child(even) td{background:#142033}.browser-analysis-sources tbody tr:hover td,.browser-analysis-sources tbody tr:focus-within td{background:#1d3047}
+.browser-analysis-sources tr>:last-child{border-right:0}.browser-analysis-sources tr:last-child td{border-bottom:0}.browser-analysis-role{color:#bed5f0}
+.browser-analysis-source{display:block;width:100%;border:0;background:none;color:#9edfff;padding:0;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer;font:inherit}
+.browser-analysis-source strong{text-decoration:underline;text-underline-offset:3px}.browser-analysis-source strong,.browser-analysis-source-path strong{display:block;font-weight:600}
+.browser-analysis-source small,.browser-analysis-source-path small{display:block;margin-top:4px;font-size:12px;line-height:1.6;color:#adbed3;overflow-wrap:anywhere}
+.browser-analysis-source:hover{color:#fff}.browser-analysis-source:focus-visible{outline:2px solid #9edfff;outline-offset:4px}.browser-analysis-source:disabled{opacity:.65;cursor:wait}
+.browser-analysis-dialog textarea{box-sizing:border-box;width:100%;background:#080f1b;color:#dce6f4;margin-top:8px}.browser-analysis-dialog details{margin-top:10px}
 .browser-analysis-dialog.browser-analysis-native{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
 .browser-analysis-native>header{-webkit-app-region:drag}.browser-analysis-native>header button{-webkit-app-region:no-drag}
 </style>

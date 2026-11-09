@@ -123,3 +123,11 @@ test('監視UI: 保存待ち中に画面を破棄した場合は、遅い保存�
 test('監視UI: POST応答が不明でもビューアへ再確認を通知し、受理済み解析を見落とさない',async t=>{
  const f=fixture(t,(_url,options)=>{if(options.method==='POST')throw Error('response lost');return{instruction:'概要',job:null,result:null};});await f.mount();await f.state.analyze();assert.deepEqual(f.notifications,[['Screen.vue','/project']]);assert.match(f.state.error.value,/response lost/);assert.equal(f.timers.size,1);
 });
+
+test('解析の表: 概要・保存原本はキーボード操作できる独立スクロール領域を持ち、列揃えと安全なMarkdownを維持する',async t=>{
+ const content='| 名前 | 件数 |\n| :--- | ---: |\n| <script>alert(1)</script> | 12 |\n\n![画像](https://example.test/track.png)\n\n[資料](https://example.test/docs)';
+ const f=fixture(t,()=>({result:{content,summaries:[{analyses:[1],content}],analyses:[{id:'a',index:1,result:{content}}]}}));await f.mount();
+ for(const html of [f.state.rendered.value,f.state.summaries.value[0].html,f.state.analyses.value[0].html]){
+  assert.match(html,/<div class="analysis-table-scroll" role="region" aria-label="[^"]+" tabindex="0"><table>/);assert.match(html,/<th style="text-align:right" scope="col">/);assert.match(html,/<td style="text-align:right">12<\/td>/);assert.match(html,/<\/table><\/div>/);assert.doesNotMatch(html,/<script>|<img\b/);assert.match(html,/target="_blank" rel="noopener noreferrer"/);
+ }
+});

@@ -717,6 +717,14 @@ Browserの下書き子窓でドラッグできるのは見出しだけです。�
 
 再検証は `checks/browser-analysis.test.mjs`、`checks/browser-analysis-source.test.mjs`、`checks/browser-analysis-ui.test.mjs`、`checks/browser-analysis-window.test.mjs` と既存 `checks/browser-*.test.mjs`。画面ハーネス `scripts/check-browser-analysis.mjs` は実Vueと模擬APIを使い、`--compile-only` なら配布ビルドやブラウザーを起動しません。実AIや実Electronでの動作確認とは区別してください。
 
+## AI解析結果の表の表示・検証
+
+ファイル解析のMarkdown表は `ファイル解析ダイアログ.vue` のrendererで `.analysis-table-scroll` に包みます。表要素そのものは `display:table` とし、見出しを固定できる縦横スクロールは外側へ持たせます。概要・合成概要・保存原本に同じ表示を使い、Markdownの列揃え、HTML無効化、画像の文字化、安全な外部リンクを維持します。
+
+Browserの関連ソース表も表内スクロール・固定見出し・交互の行背景を使います。狭幅では列を潰さず横スクロールし、概要列の幅を優先します。ソース欄はファイル名とフォルダを分けて表示し、ツールチップ・アクセシブル名・IDEへの通知には元の全パスを保持します。パネルは角丸なしです。
+
+`checks/analysis-table-style.test.mjs` はVue変換後のCSSを確認します。実画面は `node frontend_ide/scripts/check-analysis-tables.mjs` で、実Vueと模擬APIを使い、1200px／390px、表内だけの横スクロール、固定見出し、列揃え、保存原本、IDE連携／単独表示、閉じる・再表示・破棄を確認します。撮影は `frontend_ide/temp/analysis-tables-check/` に日本時間の日時・連番付きで保存します。`--compile-only` はブラウザーを起動せず、両ダイアログとscoped CSSのコンパイルだけを確認します。実AI・Electron実窓・配布buildとは別の検証です。
+
 ## Browserの日本語URL表示
 
 「Code / Liveへ」は、実際の `session` と送信元の `tab_id` を先頭に付け、表示中URLを同じプロジェクトの下書きへ追加します。IDE配下はBrowser窓ごとの `aidiy_ide N` と同じNのタイトル、単独Browserは起動中固定の `aidiy_browser <UUID>` とタイトル `AiDiy Browser` を使います。空白を含むsession名をそのままMCPへ渡します。単独版の複数窓とIDE番号再利用後の誤操作を避けるため、`tab_id` も併記します。名前の割当とtab IDは `ブラウザCDP.cjs` が所有し、下書きはフォーカス中の窓ではなく送信元レコードから作成します。撮影後60秒以内だけ、画像の絶対パスも添えます。`デスクトップ/ブラウザ.cjs` が撮影時刻と直近画像を保持し、追加直前にも再判定します。単独Code／Liveと別IDEの候補は `デスクトップ/下書き共有.cjs` のloopback・トークン付き共有口から探し、実際の配送と受信ACKは既存の `draft-router.cjs` を使います。別プロジェクト・古い会話へ渡さず、AIの送信ボタンは自動で押しません。下書き連携はBrowserを親とする専用子窓で開き、WebContentsViewは表示・寸法を維持します。F11の操作ヘッダーだけは子窓表示中に収納します。同じ種類の連携を連続操作した場合は同じ子窓を前面へ戻し、要素連携から通常の「Code / Liveへ」へ切り替えた場合は内容を流用せず子窓を作り直します。ページ遷移・再読込・切断・最小化・親窓終了では子窓を閉じます。追加時にも現在のページ・セッション・選択IDを照合し、古い対象を転送しません。専用試験・画面・PDFは[Browser操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_browser,操作編.md)を参照してください。同書のBR-404にある本文を隠す動作は旧版の実機確認結果で、現在の子窓表示の確認結果とは区別します。

@@ -26,6 +26,10 @@ const markdown=new MarkdownIt({html:false,linkify:false,breaks:true});
 markdown.renderer.rules.image=(tokens,index)=>markdown.utils.escapeHtml(tokens[index].content||'画像');
 const linkOpen=markdown.renderer.rules.link_open||((tokens,index,options,env,self)=>self.renderToken(tokens,index,options));
 markdown.renderer.rules.link_open=(tokens,index,options,env,self)=>{tokens[index].attrSet('target','_blank');tokens[index].attrSet('rel','noopener noreferrer');return linkOpen(tokens,index,options,env,self);};
+// 表だけをスクロールさせ、見出しと本文の対応を狭い解析窓でも保つ。
+markdown.renderer.rules.table_open=()=>'<div class="analysis-table-scroll" role="region" aria-label="解析結果の表（縦横にスクロールできます）" tabindex="0"><table>\n';
+markdown.renderer.rules.table_close=()=>'</table></div>\n';
+markdown.renderer.rules.th_open=(tokens,index,options,env,self)=>{tokens[index].attrSet('scope','col');return self.renderToken(tokens,index,options);};
 const rendered=computed(()=>markdown.render(record.value?.content||''));
 const summaries=computed(()=>(record.value?.summaries||[]).map(item=>({...item,html:markdown.render(item.content||'')})));
 const analyses=computed(()=>(record.value?.analyses||[]).map(item=>({...item,html:markdown.render(item.result?.content||'')})));

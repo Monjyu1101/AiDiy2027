@@ -157,3 +157,10 @@ test('Browser analysis request: late request failure still rechecks the server w
  panel.listeners.changed({url:'https://example.test/other',available:true});panel.reply({url:'https://example.test/other',job:null});await flush();const count=panel.requests.length;
  starting=dialog.state.analyze();dialog.reply({status:'waiting'});await starting;assert.equal(panel.requests.length,count);assert.equal(panel.state.analysisStatus.value.status,'idle');
 });
+
+test('Browser解析の表: ファイル名とフォルダを分けても選択先・全パス・表示専用モードを保つ',async()=>{
+ const f=fixture();f.reply({result:saved,job:null});await flush();
+ const rendered=nodes(f.render()),region=rendered.find(n=>n.props?.class==='browser-analysis-sources'),button=rendered.find(n=>n.props?.class==='browser-analysis-source');
+ assert.equal(region.props.role,'region');assert.equal(region.props.tabindex,'0');assert.equal(button.props['aria-label'],saved.files[0].path+' をIDEで表示');assert.equal(f.state.sourceName(saved.files[0].path),'xxx.html');assert.equal(f.state.sourceFolder(saved.files[0].path),'server/src/html/');assert.equal(f.state.sourceName('index.html'),'index.html');assert.equal(f.state.sourceFolder('index.html'),'');
+ assert.equal(rendered.filter(n=>n.type==='th').every(n=>n.props.scope==='col'),true);f.dispose();
+});
