@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファイル解析状態.js';
 import * as displayUrls from '../viewer/表示URL.mjs';
 import {composeFileAnalysis} from '../ファイル機能/ファイル解析結果.mjs';
 const require=createRequire(import.meta.url),vue=require('vue'),MarkdownIt=require('markdown-it');
@@ -20,19 +21,19 @@ const complete={...waiting,status:'complete',winner:'attempt-2',attempts:waiting
 function fixture(t,fetcher){
  const filename=fileURLToPath(new URL('../src/dialog/ファイル解析ダイアログ.vue',import.meta.url)),{descriptor}=parse(readFileSync(filename,'utf8'),{filename});
  const script=compileScript(descriptor,{id:'analysis-monitor',genDefaultAs:'component'}),template=compileTemplate({source:descriptor.template.content,filename,id:'analysis-monitor',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
- const module={exports:{}},mounted=[],unmounted=[],timers=new Map(),calls=[],emitted=[];let sequence=0;
+ const module={exports:{}},mounted=[],unmounted=[],timers=new Map(),calls=[],emitted=[],notifications=[];let sequence=0;
  const window={location:{origin:'http://localhost'},aidiyWindow:{openBrowser:async()=>({ok:true})}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,window,console,AbortController,AbortSignal,URLSearchParams,Date,
   fetch:async(url,options)=>{calls.push({url,...options});return{ok:true,json:async()=>fetcher(url,options)};},
   setTimeout:(fn,ms)=>{const id=++sequence;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),
-  require:id=>id==='vue'?{...vue,inject:(_key,fallback)=>fallback,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn),withDirectives:node=>node}:id==='markdown-it'?MarkdownIt:id.endsWith('/浮動ダイアログ.js')?{openFloatingDialog:()=>()=>{}}:id.endsWith('/表示URL.mjs')?displayUrls:{openBrowser:async()=>({ok:true})},
+  require:id=>id.endsWith('/ファイル解析状態.js')?{...fileAnalysisStatus,notifyFileAnalysisChanged:(...args)=>notifications.push(args)}:id==='vue'?{...vue,inject:(_key,fallback)=>fallback,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn),withDirectives:node=>node}:id==='markdown-it'?MarkdownIt:id.endsWith('/浮動ダイアログ.js')?{openFloatingDialog:()=>()=>{}}:id.endsWith('/表示URL.mjs')?displayUrls:{openBrowser:async()=>({ok:true})},
  });
  const props={file:{name:'Screen.vue',path:'Screen.vue'},root:'/project'},scope=vue.effectScope();
  const state=scope.run(()=>module.exports.setup(props,{emit:name=>emitted.push(name),expose(){}}));state.dialog.value={showModal(){},close(){}};
  let disposed=false;const dispose=()=>{if(disposed)return;disposed=true;unmounted.forEach(fn=>fn());scope.stop();};t.after(dispose);
  const render=()=>module.exports.render({},[],props,vue.proxyRefs(state),{},{});
- return{state,calls,timers,emitted,dispose,render,async mount(){mounted.forEach(fn=>fn());await flush();},async tick(){const [id,timer]=timers.entries().next().value||[];assert.ok(timer);timers.delete(id);await timer.fn();await flush();}};
+ return{state,calls,timers,emitted,notifications,dispose,render,async mount(){mounted.forEach(fn=>fn());await flush();},async tick(){const [id,timer]=timers.entries().next().value||[];assert.ok(timer);timers.delete(id);await timer.fn();await flush();}};
 }
 const nodes=(node,all=[])=>{if(!node||typeof node!=='object')return all;all.push(node);if(Array.isArray(node.children))node.children.forEach(x=>nodes(x,all));return all;};
 
@@ -56,7 +57,7 @@ test('監視UI: 再解析POST中の再確認・連打は二重送信や保存中
  const post=deferred();let phase='old';const f=fixture(t,(_url,options)=>options.method==='POST'?post.promise:{instruction:'保存指示',job:phase==='old'?{...waiting,status:'failed'}:waiting,result:null});await f.mount();
  const running=f.state.analyze();await flush();assert.equal(f.state.saving.value,true);const before=f.calls.length;await f.state.load();await f.state.analyze();assert.equal(f.calls.length,before);
  const recheck=nodes(f.render()).find(x=>x.type==='button'&&x.children==='結果を再確認');assert.equal(recheck.props.disabled,true);
- phase='new';post.resolve({...waiting,id:'new-job'});await running;await flush();assert.equal(f.state.saving.value,false);assert.equal(f.state.job.value.id,'new-job');assert.equal(f.timers.size,1);
+ phase='new';post.resolve({...waiting,id:'new-job'});await running;await flush();assert.equal(f.state.saving.value,false);assert.equal(f.state.job.value.id,'new-job');assert.equal(f.timers.size,1);assert.deepEqual(f.notifications,[['Screen.vue','/project']]);
 });
 
 test('監視UI: 古いGETや閉鎖後のPOST結果を新しいジョブ・破棄済み画面へ戻さない',async t=>{
@@ -117,4 +118,8 @@ test('監視UI: 保存待ち中に画面を破棄した場合は、遅い保存�
  const save=deferred(),f=fixture(t,(_url,options)=>options.method==='PUT'?save.promise:{instruction:'保存指示',job:waiting,result:null});await f.mount();
  const closing=f.state.close();await flush();f.dispose();save.reject(Error('late write failure'));await closing;
  assert.equal(f.timers.size,0);assert.deepEqual(f.emitted,[]);
+});
+
+test('監視UI: POST応答が不明でもビューアへ再確認を通知し、受理済み解析を見落とさない',async t=>{
+ const f=fixture(t,(_url,options)=>{if(options.method==='POST')throw Error('response lost');return{instruction:'概要',job:null,result:null};});await f.mount();await f.state.analyze();assert.deepEqual(f.notifications,[['Screen.vue','/project']]);assert.match(f.state.error.value,/response lost/);assert.equal(f.timers.size,1);
 });

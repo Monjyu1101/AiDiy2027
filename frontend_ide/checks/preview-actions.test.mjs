@@ -13,6 +13,7 @@ import * as viewerIdle from '../src/components/ファイル閲覧/閲覧待機.j
 import * as references from '../src/components/ファイル閲覧/ファイル参照.js';
 import * as actions from '../src/components/ファイル閲覧/ファイル操作.js';
 import * as browserLaunch from '../src/components/ブラウザ/起動.js';
+import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファイル解析状態.js';
 import * as displayUrls from '../viewer/表示URL.mjs';
 import * as mediaTypes from '../viewer/media-types.mjs';
 
@@ -35,10 +36,10 @@ const hasClass = (node, name) => String(node.props?.class || '').split(/\s+/).in
 const textOf = node => [node.text || '', ...(node.children || []).map(textOf)].join('');
 
 // Vueの実テンプレートをメモリ上にマウントする。OSアプリ・ブラウザは起動しない。
-async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false, root = 'C:\\作業 フォルダ', file = { name: '日本語 & #.txt', path: '資料/日本語 & #.txt' }, fileData = { kind: 'text', text: '本文は消えません', size: 24 }, browser = browserLaunch, previewData = {}, previewFetch, openAnalysis } = {}) {
+async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false, root = 'C:\\作業 フォルダ', file = { name: '日本語 & #.txt', path: '資料/日本語 & #.txt' }, fileData = { kind: 'text', text: '本文は消えません', size: 24 }, browser = browserLaunch, previewData = {}, previewFetch, openAnalysis, analysisFetch, channelFactory = () => null } = {}) {
   const window = new EventTarget(); window.aidiyWindow = desktop;
   window.location={origin:'http://127.0.0.1:9000'};
-  const timers = new Map(), warnings = [], copies = [];
+  const timers = new Map(), warnings = [], copies = [], analysisCalls = [];
   let sequence = 0, state;
   function node(type, text = '') {
     return { type, tagName: type.toUpperCase(), text, props: {}, children: [], style: {},
@@ -65,11 +66,11 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
   assert.deepEqual(template.errors, []);
   const module = { exports: {} };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
-    module, window, console, AbortController, URLSearchParams, URL, Date,
+    module, window, console, AbortController, AbortSignal, URLSearchParams, URL, Date,
     localStorage: { getItem: () => null },
-    fetch: async url => url.startsWith('/api/preview?')&&previewFetch ? previewFetch(url) : ({ ok: true, json: async () => url.startsWith('/api/preview?')?previewData:fileData }),
+    fetch: async (url,options) => url.startsWith('/api/file-analysis?')?(analysisCalls.push({url,...options}),analysisFetch?analysisFetch(url,options):{ok:true,json:async()=>({path:new URLSearchParams(url.split('?')[1]).get('path'),job:null,result:null})}):url.startsWith('/api/preview?')&&previewFetch ? previewFetch(url) : ({ ok: true, json: async () => url.startsWith('/api/preview?')?previewData:fileData }),
     setTimeout: (callback, delay) => { const id = ++sequence; timers.set(id, { callback, delay }); return id; }, clearTimeout: id => timers.delete(id),
-    require: id => id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
+    require: id => id.endsWith('/ファイル解析状態.js')?{...fileAnalysisStatus,createFileAnalysisStatus:options=>fileAnalysisStatus.createFileAnalysisStatus({...options,channelFactory,setTimer:(callback,delay)=>{const id=++sequence;timers.set(id,{callback,delay});return id;},clearTimer:id=>timers.delete(id)})}:id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
       : id === '../ファイル閲覧/ファイル操作.js' ? { ...actions, copyBrowserText: async text => { copies.push(text); await browserCopy(text); } }
         : id === '../ブラウザ/起動.js' ? browser : id === '../../../viewer/表示URL.mjs' ? displayUrls : id === '../../../viewer/media-types.mjs' ? mediaTypes : id === '../ファイル閲覧/コード表示.js' ? { loadMonaco: async () => null, monacoLanguage: () => 'text' } : assert.fail(`Unexpected import ${id}`),
   });
@@ -86,7 +87,7 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
   const dispose = () => { if (!disposed) { disposed = true; app.unmount(); } };
   t.after(() => { dispose(); assert.deepEqual(warnings, []); });
   const find = name => walk(container, item => hasClass(item, name));
-  return { props, state, timers, copies, find, dispose, text: () => textOf(container),
+  return { props, state, timers, copies, analysisCalls, find, dispose, text: () => textOf(container),
     click(name) { const target = find(name); assert.ok(target); return target.props.onClick(); } };
 }
 
@@ -228,4 +229,29 @@ test('ソース→画面URL実Vue: URLなしJSはコードだけを保ち、次�
  assert.equal(f.find('viewer-browser'),undefined);assert.equal(f.find('viewer-mode'),undefined);
  f.props.file={name:'server.js',path:'server.js'};await flush();pending.resolve({ok:true,json:async()=>({kind:'analysis',routes:[{url:'http://localhost:3456/old'}]})});await flush();
  assert.equal(f.state.mode.value,'code');assert.match(f.text(),/本文は消えません/);assert.equal(f.find('viewer-analysis-page'),undefined);assert.equal(f.find('viewer-browser'),undefined);assert.equal(f.find('viewer-mode'),undefined);assert.equal(f.find('viewer-preview'),undefined);
+});
+
+test('解析状態実Vue: 通常・ピン留めのボタンは依頼通知で即座に同期し、途中保存中も解析中を維持する',async t=>{
+ const channels=new Set(),channelFactory=()=>{const channel={postMessage(data){for(const other of channels)if(other!==channel)other.onmessage?.({data});},close(){channels.delete(channel);}};channels.add(channel);return channel;};
+ let response={path:'src/a.vue',job:null,result:null};const opened=[];
+ const config={file:{path:'src/a.vue',name:'a.vue'},root:'/project',openAnalysis:(...args)=>opened.push(args),analysisFetch:async()=>({ok:true,json:async()=>response}),channelFactory};
+ const embedded=await viewer(t,config),pinned=await viewer(t,{...config,pinned:true});assert.equal(embedded.find('viewer-analysis').text,'AI解析');assert.equal(pinned.find('viewer-analysis').text,'AI解析');for(const f of [embedded,pinned])assert.equal(new URLSearchParams(f.analysisCalls[0].url.split('?')[1]).get('status'),'1');
+ response={...response,job:{id:'new-job',status:'waiting',monitoring:true}};fileAnalysisStatus.notifyFileAnalysisChanged('src/a.vue','/project',channelFactory);await flush();
+ for(const f of [embedded,pinned]){assert.equal(f.find('viewer-analysis').text,'AI解析中…');assert.equal(f.find('viewer-analysis').props['aria-label'],'AI解析中…');await f.click('viewer-analysis');assert.equal(f.find('viewer-analysis').props.disabled,undefined);assert.match(f.text(),/本文は消えません/);}
+ assert.equal(opened.length,2);response={...response,job:{status:'complete',monitoring:true},result:{id:'saved'}};await embedded.state.analysisMonitor.refresh();await flush();assert.equal(embedded.find('viewer-analysis').text,'AI解析中…');
+ response={...response,job:{status:'complete',monitoring:false}};fileAnalysisStatus.notifyFileAnalysisChanged('src/a.vue','/project',channelFactory);await flush();for(const f of [embedded,pinned]){assert.equal(f.find('viewer-analysis').text,'AI解析済');assert.equal(f.timers.size,0);f.dispose();}assert.equal(channels.size,0);
+});
+
+test('解析状態実Vue: 別ファイルへ移動・復帰しても対象だけを表示し、遅い取得と閉じるを無視する',async t=>{
+ const pending=deferred();let count=0,close;
+ const f=await viewer(t,{file:{path:'a.vue',name:'a.vue'},openAnalysis:(_file,_root,onClose)=>{close=onClose;},analysisFetch:async url=>{const path=new URLSearchParams(url.split('?')[1]).get('path');return ++count===1?pending.promise:{ok:true,json:async()=>({path,job:path==='a.vue'?{status:'waiting'}:null,result:null})};}});
+ await f.click('viewer-analysis');f.props.file={path:'b.py',name:'b.py'};await flush();assert.equal(f.analysisCalls[0].signal.aborted,true);assert.equal(f.find('viewer-analysis').text,'AI解析');const calls=count;close();await flush();assert.equal(count,calls);
+ pending.resolve({ok:true,json:async()=>({path:'a.vue',job:{status:'waiting'}})});await flush();assert.equal(f.find('viewer-analysis').text,'AI解析');
+ f.props.file={path:'a.vue',name:'a.vue'};await flush();assert.equal(f.find('viewer-analysis').text,'AI解析中…');assert.equal(f.timers.size,1);f.dispose();assert.equal(f.timers.size,0);assert.equal(f.analysisCalls.at(-1).signal.aborted,true);
+});
+
+test('解析状態実Vue: 通信失敗時に確定表示せず再確認し、再解析失敗は過去結果と区別する',async t=>{
+ let response={ok:false,json:async()=>({error:'通信エラー'})};const f=await viewer(t,{openAnalysis:()=>{},analysisFetch:async()=>response});assert.equal(f.find('viewer-analysis').text,'AI解析');assert.match(f.find('viewer-analysis').props.title,/確認できません/);assert.equal(f.timers.size,1);
+ const path=f.props.file.path;response={ok:true,json:async()=>({path,job:{status:'timeout'},result:{id:'previous'}})};await f.state.analysisMonitor.refresh();await flush();assert.equal(f.find('viewer-analysis').text,'AI解析 要確認');assert.equal(f.timers.size,0);
+ response={ok:true,json:async()=>({path,job:{status:'waiting'},result:{id:'previous'}})};await f.state.refresh();await flush();assert.equal(f.find('viewer-analysis').text,'AI解析中…');assert.equal(f.analysisCalls.length,3);
 });

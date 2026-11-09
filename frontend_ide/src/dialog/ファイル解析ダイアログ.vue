@@ -8,6 +8,7 @@ import {ref,computed,inject,onMounted,onBeforeUnmount,nextTick} from 'vue';
 import MarkdownIt from 'markdown-it';
 import {openFloatingDialog} from '../components/共通表示/浮動ダイアログ.js';
 import {normalizeDisplayUrls,isPageSource} from '../../viewer/表示URL.mjs';
+import {fileAnalysisBusy,notifyFileAnalysisChanged} from '../components/ファイル閲覧/ファイル解析状態.js';
 import {openBrowser} from '../components/ブラウザ/起動.js';
 const props=defineProps({file:Object,root:String,sourceElement:Object});
 const emit=defineEmits(['close']);
@@ -20,7 +21,7 @@ const screenFile=computed(()=>isPageSource(props.file.name));
 const example=/\.(png|jpe?g|gif|webp|svg|bmp|ico|avif|tiff?|heic|heif)$/i.test(props.file.name)
   ?'この画像を確認し、描かれている内容、構図・配色、画像内の文字、想定される用途を日本語で説明してください。実際に読み取れる情報と推測を区別し、確認できない部分は明記してください。画像や関連ファイルの変更は不要です。'
   :'このファイルの機能概要を日本語で説明してください。主な役割、主要な関数・処理の流れ、入出力、依存先や呼び出し元、読む際の注意点を整理し、根拠となる関数名や行番号も示してください。ソースの変更は不要です。';
-const instruction=ref(example),busy=computed(()=>job.value?.status==='waiting'||!!job.value?.monitoring);
+const instruction=ref(example),busy=computed(()=>fileAnalysisBusy(job.value));
 const markdown=new MarkdownIt({html:false,linkify:false,breaks:true});
 markdown.renderer.rules.image=(tokens,index)=>markdown.utils.escapeHtml(tokens[index].content||'画像');
 const linkOpen=markdown.renderer.rules.link_open||((tokens,index,options,env,self)=>self.renderToken(tokens,index,options));
@@ -60,8 +61,8 @@ async function analyze() {
   if(closed||loading.value||busy.value||saving.value||!instruction.value.trim())return;
   clearTimeout(timer);const run=++loadRevision;
   saving.value=true;error.value='';
-  try{const value=await request('POST',{path:props.file.path,instruction:instruction.value});if(closed||run!==loadRevision)return;job.value=value;monitor(500);}
-  catch(e){if(!closed&&run===loadRevision){error.value=e.message;monitor();}}
+  try{const value=await request('POST',{path:props.file.path,instruction:instruction.value});notifyFileAnalysisChanged(props.file.path,props.root);if(closed||run!==loadRevision)return;job.value=value;monitor(500);}
+  catch(e){notifyFileAnalysisChanged(props.file.path,props.root);if(!closed&&run===loadRevision){error.value=e.message;monitor();}}
   finally{if(!closed)saving.value=false;}
 }
 async function browse(url){

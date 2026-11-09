@@ -9,6 +9,7 @@ import { ref, computed, inject, watch, nextTick, onMounted, onBeforeUnmount } fr
 import { loadMonaco, monacoLanguage } from '../ファイル閲覧/コード表示.js';
 import { searchReference, fileDraftReference } from '../ファイル閲覧/ファイル参照.js';
 import { copyBrowserText, fullFilePath } from '../ファイル閲覧/ファイル操作.js';
+import {createFileAnalysisStatus} from '../ファイル閲覧/ファイル解析状態.js';
 import {createViewerActivity} from '../ファイル閲覧/閲覧待機.js';
 import {openBrowser} from '../ブラウザ/起動.js';
 import {isPageSource} from '../../../viewer/表示URL.mjs';
@@ -17,6 +18,14 @@ const browserAvailable=inject('browserAvailable',false);
 // pinned: 右側のプレビューではなく、ピン留めした独立ウィンドウの中身として全面に表示する
 const props=defineProps({file:Object,root:String,pinned:Boolean,pinBusy:Boolean});const emit=defineEmits(['close','pin','activity']);
 const openAnalysis=inject('openFileAnalysis',null),openDraft=inject('openFileDraft',null);
+const analysisStatus=ref({status:'idle'});
+const analysisMonitor=createFileAnalysisStatus({
+  read:async(path,signal)=>{const response=await fetch('/api/file-analysis?'+new URLSearchParams({path,status:'1'}),{signal:AbortSignal.any([signal,AbortSignal.timeout(12000)]),cache:'no-store'});const value=await response.json();if(!response.ok)throw Error(value.error||'解析状況を取得できません。');return value;},
+  changed:value=>{analysisStatus.value=value;},
+});
+const analysisLabel=computed(()=>analysisStatus.value.status==='waiting'?'AI解析中…':analysisStatus.value.status==='complete'?'AI解析済':analysisStatus.value.status==='failed'?'AI解析 要確認':'AI解析');
+const analysisTitle=computed(()=>analysisStatus.value.message||(analysisStatus.value.status==='waiting'?'このファイルをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.value.stale?'解析後にファイルが更新されています。クリックで解析内容を確認':analysisStatus.value.status==='complete'?'このファイルの解析結果を表示':'AI解析'));
+watch(()=>[props.file?.path,props.root],([path,root])=>analysisMonitor.setFile(path,root,!!openAnalysis),{immediate:true,flush:'sync'});
 const openHistory=inject('openFileHistory',null),hasHistory=ref(false),historyError=ref('');
 const data=ref(),error=ref(''),host=ref(),fallback=ref(false),copied=ref(false),stamp=ref(Date.now()),reloading=ref(false);
 const actionError=ref(''),actionBusy=ref(''),canOpenFile=typeof window.aidiyWindow?.openFile==='function';
@@ -98,10 +107,10 @@ async function load(file){
 }
 watch(()=>[props.file,props.root],([file])=>{previewRun++;previewLoading.value=false;stamp.value=Date.now();routeIndex.value=0;preview.value=null;mode.value=file?.line?'code':previewKind.value?readMode(previewKind.value):'code';void load(file);if(mode.value==='view'||isPageSource(file?.name))void loadPreview();},{immediate:true});
 // 画像・Office文書は URL の v を変えて読み直させる。テキストは Monaco を作り直す。表示中のページは iframe を作り直す。
-async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([load(props.file),mode.value==='view'||isPageSource(props.file?.name)?loadPreview():null]);}finally{reloading.value=false;}}
+async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([analysisMonitor.refresh(),load(props.file),mode.value==='view'||isPageSource(props.file?.name)?loadPreview():null]);}finally{reloading.value=false;}}
 function analyze(){
   const file=props.file,root=props.root,run=revision;
-  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root)void loadPreview();},viewer.value);
+  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root){void analysisMonitor.refresh();void loadPreview();}},viewer.value);
 }
 const fullPath=computed(()=>fullFilePath(props.root||'',props.file?.path||''));
 function resetActions(){actionRevision++;clearTimeout(copyTimer);copied.value=false;actionBusy.value='';actionError.value='';}
@@ -156,7 +165,7 @@ function handoff(){
   try{const selection=selectedReference();openDraft({projectPath:props.root,path:props.file.path,name:props.file.name,text:fileDraftReference(props.file,selection),selection:!!selection},viewer.value);}
   catch(e){error.value=e.message;}
 }
-onBeforeUnmount(()=>{userActivity.dispose();resetActions();revision++;previewRun++;controller?.abort();disposeEditor();frameCleanup?.();activityWindow?.removeEventListener('message',frameActivity);activityWindow=null;});
+onBeforeUnmount(()=>{analysisMonitor.dispose();userActivity.dispose();resetActions();revision++;previewRun++;controller?.abort();disposeEditor();frameCleanup?.();activityWindow?.removeEventListener('message',frameActivity);activityWindow=null;});
 defineExpose({moved:bindActivityWindow});
 </script>
 <template>
@@ -165,7 +174,7 @@ defineExpose({moved:bindActivityWindow});
       <button v-if="browserFile" class="viewer-browser" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'ブラウザで開く':'tools接続中のみ起動できます'" @click="browse">{{ actionBusy==='browser'?'起動中…':'ブラウザ' }}</button>
       <button v-if="preview?.kind==='analysis'&&previewUrl" class="viewer-analysis-page" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'AI解析のURLをブラウザで表示':'tools接続中のみ起動できます'" @click="browse(true)">{{ actionBusy==='analysis-browser'?'起動中…':'AI推定ページ' }}</button>
       <button v-if="hasHistory&&openHistory" class="viewer-history" @click="openHistory(file,root)">更新履歴</button>
-      <button v-if="openAnalysis" class="viewer-analysis" title="AI解析" aria-label="AI解析" @click="analyze">AI解析</button>
+      <button v-if="openAnalysis" class="viewer-analysis" :title="analysisTitle" :aria-label="analysisLabel" aria-live="polite" @click="analyze">{{ analysisLabel }}</button>
       <button v-if="openDraft" class="viewer-handoff" :disabled="!root" title="このファイルまたは選択範囲を起動中のCode / Liveの下書きへ追加" @pointerdown.prevent @click="handoff">Code / Liveへ</button>
       <!-- 右端は ↺ 📌 × の順。ページ内の📌で別ウィンドウを開く。 -->
       <RefreshButton class="viewer-refresh" title="最新の内容に更新" aria-label="最新の内容に更新" :disabled="reloading" :busy="reloading" @click="refresh" /><button v-if="!pinned" class="viewer-pin panel-detach-pin" :aria-pressed="false" :disabled="pinBusy" title="別ウィンドウで開く" aria-label="ファイルを別ウィンドウで開く" @click="emit('pin',file)"><span aria-hidden="true">📌</span></button><button v-if="!pinned" class="viewer-close" aria-label="プレビューを閉じる" @click="emit('close')"><span class="close-icon" aria-hidden="true"></span></button></header>

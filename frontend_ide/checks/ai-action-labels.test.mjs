@@ -37,8 +37,9 @@ test('AI操作の表示: ボタン・見出し・説明とアクセシブル名�
   assert.ok(explorer.includes("['ai','AI検索軌跡']"));
   assert.ok(explorer.includes('value="ai">AI検索</label>'));
   const viewer = read('components/ファイル閲覧/ファイルビューア.vue');
-  assert.ok(viewer.includes('title="AI解析" aria-label="AI解析"'));
-  assert.match(viewer, /class="viewer-analysis"[^>]*>AI解析<\/button>/);
+  assert.ok(viewer.includes(':title="analysisTitle" :aria-label="analysisLabel"'));
+  for(const label of ['AI解析中…','AI解析済','AI解析 要確認','AI解析'])assert.ok(viewer.includes(label));
+  assert.match(viewer, /class="viewer-analysis"[^>]*>\{\{ analysisLabel \}\}<\/button>/);
   assert.doesNotMatch(viewer.match(/<button[^>]*class="viewer-analysis"[^>]*>[\s\S]*?<\/button>/)?.[0] || '', /<img\b/);
   const dialog = read('dialog/ファイル解析ダイアログ.vue');
   assert.ok(dialog.includes('<h2 id="file-analysis-title">AI解析</h2>'));

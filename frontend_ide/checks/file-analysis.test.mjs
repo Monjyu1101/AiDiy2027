@@ -159,3 +159,15 @@ test('非ページの関連探索: Python/CRUDとサーバーJSは直接の呼�
   const restarted=createFileAnalysis(root,options);t.after(()=>restarted.close());assert.equal((await restarted.get(path)).result.relatedSourceScope,'direct');assert.deepEqual((await restarted.get(path)).result.displayUrls,[]);
  }
 });
+
+test('ファイル解析状態API: 軽量GETは本文・指示・全原本を返さず、保存後の実行監視も区別する',async t=>{
+ const root=await fixture(t),app=await startDevelopment(root,{fileAnalysisOptions:{parallelRuns:1,runAgent:()=>new Promise(()=>{}),pollMs:100000}});t.after(()=>app.close());const url=app.url+'api/file-analysis',statusURL=url+'?'+new URLSearchParams({path:'main.js',status:'1'});
+ assert.equal((await fetch(statusURL)).status,503);await fetch(app.url+'api/connection/offline',{method:'POST'});
+ const empty=await fetch(statusURL).then(r=>r.json());assert.deepEqual(empty,{path:'main.js',stale:false,result:null,job:null});
+ const job=await fetch(url,{method:'POST',body:JSON.stringify({path:'main.js',instruction:'概要'})}).then(r=>r.json());
+ const waiting=await fetch(statusURL).then(r=>r.json());assert.deepEqual(Object.keys(waiting).sort(),['job','path','result','stale']);assert.deepEqual(Object.keys(waiting.job).sort(),['id','message','monitoring','path','status']);assert.equal(waiting.job.id,job.id);assert.equal(waiting.job.status,'waiting');assert.equal(waiting.job.monitoring,true);
+ await writeFile(join(root,job.resultPath),JSON.stringify(result(job)));
+ const complete=await fetch(statusURL).then(r=>r.json());assert.equal(complete.job.status,'complete');assert.equal(complete.job.monitoring,true,'結果保存後も実行応答を監視している');assert.deepEqual(Object.keys(complete.result).sort(),['createdAt','id','path']);
+ const full=await fetch(url+'?path=main.js').then(r=>r.json());assert.match(full.result.content,/入口/);assert.equal(full.instruction,'概要');assert.ok(full.job.prompt);assert.ok(full.job.attempts.length);
+ assert.equal((await fetch(statusURL,{headers:{origin:'https://foreign.invalid'}})).status,403);assert.equal((await fetch(url+'?path=../main.js&status=1')).status,400);
+});

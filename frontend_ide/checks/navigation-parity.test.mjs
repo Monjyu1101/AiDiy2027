@@ -24,6 +24,7 @@ import * as fileActions from '../src/components/ファイル閲覧/ファイル�
 import * as explorerDrag from '../src/components/ファイル閲覧/エクスプローラードラッグ.js';
 import * as explorerActions from '../src/components/ファイル閲覧/エクスプローラー操作.js';
 import * as browserLaunch from '../src/components/ブラウザ/起動.js';
+import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファイル解析状態.js';
 import * as displayUrls from '../viewer/表示URL.mjs';
 import * as mediaTypes from '../viewer/media-types.mjs';
 import * as routeExpansion from '../src/components/ファイル閲覧/軌跡パネル展開.js';
@@ -102,6 +103,7 @@ async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', act
   }
   t.mock.method(performance, 'now', () => clock);
   const moduleMap = {
+    '../ファイル閲覧/ファイル解析状態.js':fileAnalysisStatus,
     '../共通表示/浮動ダイアログ.js': floatingDialog,
     './エクスプローラードラッグ.js': explorerDrag,
     '../ファイル閲覧/エクスプローラー操作.js': explorerActions, './エクスプローラー操作.js': explorerActions,

@@ -13,6 +13,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import * as draftHandoff from '../src/components/下書き連携/下書き受け渡し.js';
+import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファイル解析状態.js';
 import * as displayUrls from '../viewer/表示URL.mjs';
 import * as browserLaunch from '../src/components/ブラウザ/起動.js';
 const require=createRequire(import.meta.url);
@@ -35,6 +36,7 @@ function setupComponent(name,{props={},modules={},globals={}}={}) {
     ResizeObserver:class {observe(){}disconnect(){}},
     require(id){
       if(id==='vue')return {...vue,inject:(_key,fallback)=>fallback,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)};
+      if(id.endsWith('/ファイル解析状態.js'))return fileAnalysisStatus;
       if(id==='markdown-it')return MarkdownIt;
       if(id.endsWith('/浮動ダイアログ.js'))return {openFloatingDialog:()=>()=>{}};
       if(id==='../../viewer/表示URL.mjs')return displayUrls;

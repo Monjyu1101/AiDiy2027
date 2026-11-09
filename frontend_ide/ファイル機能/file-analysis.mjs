@@ -151,13 +151,16 @@ export function createFileAnalysis(project,{state,runAgent=runSearchAgent,now=Da
     }).finally(()=>{job.checking=null;});
     return job.checking;
   }
-  async function get(path) {
+  async function get(path,{statusOnly=false}={}) {
     active();const file=await source(path),job=jobs.get(path);
     if(job&&current(job))await check(job);
     const record=await read(path),result=composeFileAnalysis(record.run)||composeFileAnalysis(record.previousRun)||record.result,previous=result?.source;
     const {run,previousRun,...base}=record;
     const storedJob=run?describe({...run,path,monitoring:false,status:run.status==='waiting'||run.monitoring?'interrupted':run.status,message:run.status==='waiting'||run.monitoring?'前回の実行監視は終了しています。保存済みの結果を表示します。必要なら再解析してください。':run.message}):null;
-    return {...base,result,stale:!!previous&&(previous.mtime!==file.mtime||previous.size!==file.size),job:job&&current(job)?describe(job):storedJob};
+    const value={...base,result,stale:!!previous&&(previous.mtime!==file.mtime||previous.size!==file.size),job:job&&current(job)?describe(job):storedJob};
+    // ビューアのボタン監視では、解析本文・全原本・依頼文を定期転送しない。
+    if(statusOnly)return{path,stale:value.stale,result:result?{id:result.id,path,createdAt:result.createdAt}:null,job:value.job?{id:value.job.id,path,status:value.job.status,monitoring:value.job.monitoring,message:value.job.message}:null};
+    return value;
   }
   async function save(path,instruction) {
     active();if(!validInstruction(instruction))throw Error('解析指示は4000文字以内で指定してください。');
@@ -218,7 +221,7 @@ export function createFileAnalysis(project,{state,runAgent=runSearchAgent,now=Da
       const send=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
       if(!state().active){send(503,{error:'利用を開始してください。'});return true;}
       try {
-        if(req.method==='GET')send(200,await get(url.searchParams.get('path')));
+        if(req.method==='GET')send(200,await get(url.searchParams.get('path'),{statusOnly:url.searchParams.get('status')==='1'}));
         else if(['POST','PUT'].includes(req.method)){
           const chunks=[];let bytes=0;for await(const chunk of req){bytes+=chunk.length;if(bytes>20*1024*1024)throw Error('解析指示が長すぎます。');chunks.push(chunk);}
           const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));

@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファイル解析状態.js';
 import {openBrowser} from '../src/components/ブラウザ/起動.js';
 import {normalizeDisplayUrls,isPageSource} from '../viewer/表示URL.mjs';
 import {MEDIA_PATTERN} from '../viewer/media-types.mjs';
@@ -24,7 +25,7 @@ function fixture(type,{available=true,reply=async()=>({ok:true})}={}){
  const win={aidiyWindow:{openBrowser:async(...args)=>{calls.push(args);return reply();}},location:{origin:'http://127.0.0.1:12345/'}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,window:win,localStorage:{getItem:()=>null},AbortController,AbortSignal,URL,URLSearchParams,setTimeout,clearTimeout,
-  require:id=>id==='vue'?{...vue,watch(){},inject:key=>key==='browserAvailable'?available:null,onMounted(){},onBeforeUnmount:fn=>unmount.push(fn),withDirectives:node=>node}
+  require:id=>id.endsWith('/ファイル解析状態.js')?fileAnalysisStatus:id==='vue'?{...vue,watch(){},inject:key=>key==='browserAvailable'?available:null,onMounted(){},onBeforeUnmount:fn=>unmount.push(fn),withDirectives:node=>node}
    :id==='markdown-it'?MarkdownIt:id.endsWith('/起動.js')?{openBrowser}:id.endsWith('/表示URL.mjs')?{normalizeDisplayUrls,isPageSource}:id.endsWith('/media-types.mjs')?{MEDIA_PATTERN}
    :id.endsWith('/閲覧待機.js')?{createViewerActivity:()=>({handle(){},scroll(){},dispose(){}})}:id.endsWith('/ファイル操作.js')?{fullFilePath:()=>'/project/Screen.vue'}:{},
  });

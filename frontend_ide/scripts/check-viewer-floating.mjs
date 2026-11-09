@@ -36,8 +36,8 @@ const server=createServer(async(req,res)=>{
  if(req.url.startsWith('/api/file-analysis')){
   let data='';for await(const chunk of req)data+=chunk;requests.push({method:req.method,body:data&&JSON.parse(data)});
   if(req.method==='PUT'&&saveFails)return res.writeHead(503,{'content-type':'application/json'}).end(JSON.stringify({error:'保存失敗テスト'}));
-  if(req.method==='POST'){job={id:'fixture-job',status:'waiting',message:'模擬解析中'};return json(job);}
-  return json({instruction:'保存済みの分析指示',result:null,job});
+  if(req.method==='POST'){job={id:'fixture-job',path:JSON.parse(data).path,status:'waiting',monitoring:true,message:'模擬解析中'};return json(job);}
+  return json({path:new URL(req.url,'http://localhost').searchParams.get('path'),instruction:'保存済みの分析指示',result:job?.status==='complete'?{id:job.id,createdAt:1,content:'模擬解析結果'}:null,job});
  }
  if(req.url==='/app.js')return res.writeHead(200,{'content-type':'application/javascript'}).end(bundle.outputFiles[0].text);
  if(req.url==='/')return res.writeHead(200,{'content-type':'text/html'}).end(html);
@@ -73,15 +73,15 @@ try{
  await click('.viewer-analysis');await until(()=>evaluate(`document.querySelector('#file-analysis-instruction')?.disabled===false`),'analysis');
  assert.equal(await evaluate(`document.querySelector('.file-analysis-dialog').matches(':modal')`),false);assert.equal(await evaluate(`document.elementFromPoint(innerWidth-80,180).closest('.viewer-pinned')!==null`),true);
  await screenshot('02-analysis-file-visible');
- await click('.analysis-actions button');await until(()=>job?.status==='waiting','background analysis');
- await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'close while running');assert.equal(job.status,'waiting');assert.ok(requests.every(r=>r.method!=='DELETE'));
+ await click('.analysis-actions button');await until(()=>job?.status==='waiting','background analysis');await until(()=>evaluate(`document.querySelector('.viewer-analysis').textContent==='AI解析中…'`),'viewer analysis running');await screenshot('05-viewer-analysis-running');
+ await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'close while running');assert.equal(job.status,'waiting');assert.equal(await evaluate(`document.querySelector('.viewer-analysis').textContent`),'AI解析中…');assert.ok(requests.every(r=>r.method!=='DELETE'));
  await click('.viewer-analysis');await until(()=>evaluate(`document.querySelector('.analysis-actions button')?.textContent==='解析中…'`),'reopen running');
  saveFails=true;await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!!document.querySelector('.analysis-save-error')`),'save failure');assert.equal(await evaluate(`document.querySelector('#file-analysis-instruction').value`),'保存済みの分析指示');
  await screenshot('03-save-failure-preserves-file');saveFails=false;await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'save retry');
  // 小さな窓でもタイトルと閉じる操作を画面内へ戻す。
  await send('Emulation.setDeviceMetricsOverride',{width:480,height:420,deviceScaleFactor:1,mobile:false});await click('.viewer-analysis');await until(()=>evaluate(`!!document.querySelector('.file-analysis-dialog[open]')`),'small analysis');
  assert.equal(await evaluate(`(()=>{const r=document.querySelector('.file-analysis-dialog').getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})()`),true);
- await screenshot('04-small-window');await evaluate('window.dispose()');assert.equal(await evaluate(`document.querySelectorAll('dialog').length`),0);assert.deepEqual(errors,[]);
- writeFileSync(join(output,'result.json'),JSON.stringify({passed:true,realVueApp:true,realChromium:true,nativeElectron:false,checks:['file remains visible and interactive','no modal/backdrop','drag','draft insert once','reopen/Escape','AI close keeps backend job','saved instruction failure/retry','small window','unmount cleanup']},null,2));
+ await screenshot('04-small-window');await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'small analysis closed');job={...job,status:'complete',message:'結果保存済み・実行応答監視中'};await sleep(2200);assert.equal(await evaluate(`document.querySelector('.viewer-analysis').textContent`),'AI解析中…');job={...job,monitoring:false,message:'結果保存済み'};await until(()=>evaluate(`document.querySelector('.viewer-analysis').textContent==='AI解析済'`),'viewer completed');await screenshot('06-viewer-analysis-completed');assert.equal(requests.filter(request=>request.method==='POST').length,1);await evaluate('window.dispose()');assert.equal(await evaluate(`document.querySelectorAll('dialog').length`),0);assert.deepEqual(errors,[]);
+ writeFileSync(join(output,'result.json'),JSON.stringify({passed:true,realVueApp:true,realChromium:true,nativeElectron:false,checks:['file remains visible and interactive','no modal/backdrop','drag','draft insert once','reopen/Escape','AI close keeps backend job','viewer progress notification','viewer continues monitoring after partial completion','viewer completed state','saved instruction failure/retry','small window','unmount cleanup']},null,2));
  console.log('PASS: Viewer floating draft and AI analysis, screenshots: '+output);
 }finally{socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const ended=once(chrome,'exit');chrome.kill();await ended;}server.closeAllConnections();await new Promise(resolve=>server.close(resolve));rmSync(temporary,{recursive:true,force:true});}
