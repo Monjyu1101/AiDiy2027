@@ -113,7 +113,7 @@ function browserVR({initialPin=false,standalone=false,deferHeaderLoad=false}={})
  }
  let page,view;
  class View{
-  constructor(){view=this;page=this.webContents=Object.assign(new EventEmitter(),{debugger:debug,focus(){},loadURL:async()=>{},getURL:()=>'',getTitle:()=>'',isLoading:()=>false,isDestroyed:()=>false,stop(){},close(){},setWindowOpenHandler(){},navigationHistory:{canGoBack:()=>false,canGoForward:()=>false}});}
+  constructor(){view=this;page=this.webContents=Object.assign(new EventEmitter(),{debugger:debug,executeJavaScriptInIsolatedWorld:async()=>true,focus(){},loadURL:async()=>{},getURL:()=>'',getTitle:()=>'',isLoading:()=>false,isDestroyed:()=>false,stop(){},close(){},setWindowOpenHandler(){},navigationHistory:{canGoBack:()=>false,canGoForward:()=>false}});}
   setVisible(value){this.visible=value;}setBounds(value){this.bounds=value;}
  }
  const display={bounds:{x:0,y:0,width:1920,height:1080},workArea:{x:0,y:0,width:1920,height:1040}};
@@ -307,8 +307,8 @@ for(const initialPin of [false,true])test(`単独Browserピン: 初期${initialP
  }finally{f.close();}
 });
 
-// 実mainの通常窓・本文・F11ヘッダー・要素パネルの購読を通す。OS入力の試験ではない。
-for(const fullscreen of [false,true])for(const focus of fullscreen?['host','page','header','popup']:['host','page','popup'])test(`要素連携Esc配線: ${fullscreen?'F11':'通常'}/${focus}から選択を解除する`,async t=>{
+// 実mainの通常窓・本文・F11ヘッダーの購読を通す。説明はページ内で別窓を作らない。OS入力の試験ではない。
+for(const fullscreen of [false,true])for(const focus of fullscreen?['host','page','header']:['host','page'])test(`要素連携Esc配線: ${fullscreen?'F11':'通常'}/${focus}から選択を解除する`,async t=>{
  t.mock.timers.enable({apis:['setInterval','Date']});
  const f=browserVR({standalone:true}),flush=async()=>{for(let i=0;i<50;i++)await Promise.resolve();};
  try{
@@ -316,9 +316,9 @@ for(const fullscreen of [false,true])for(const focus of fullscreen?['host','page
   if(fullscreen){f.press(f.host);f.movePointer({x:500,y:1});t.mock.timers.tick(240);await flush();}
   for(let cycle=0;cycle<2;cycle++){
    const result=await f.browser.action({record:f.record},'element-toggle');assert.equal(result.ok,true);assert.equal(result.elementPicking,true);assert.equal(f.inspectMode,'searchForNode');
-   const source=focus==='header'?f.header.webContents:focus==='popup'?f.popup.webContents:f[focus];
+   const source=focus==='header'?f.header.webContents:f[focus];
    assert.equal(f.press(source,{key:'Escape'}).count,1);await flush();
-   assert.equal(f.inspectMode,'none');assert.equal(f.popup.isDestroyed(),true);assert.equal((await f.browser.action({record:f.record},'state')).elementPicking,false);assert.equal(f.record.window.isFullScreen(),fullscreen,'EscではF11状態を変えない');
+   assert.equal(f.inspectMode,'none');assert.equal(f.popup,undefined,'要素選択中のElectronダイアログを作らない');assert.equal((await f.browser.action({record:f.record},'state')).elementPicking,false);assert.equal(f.record.window.isFullScreen(),fullscreen,'EscではF11状態を変えない');
   }
   assert.ok(f.commands.some(c=>c.method==='Overlay.hideHighlight'));assert.ok(!f.commands.some(c=>/disable|detach/i.test(c.method)),'共有CDPとDOMを維持する');
  }finally{f.close();}

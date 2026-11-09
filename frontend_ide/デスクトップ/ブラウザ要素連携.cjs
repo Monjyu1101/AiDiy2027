@@ -7,7 +7,7 @@ const {randomUUID}=require('node:crypto');
 const {collectBrowserElement,browserElementText}=require('./ブラウザ要素情報.cjs');
 const {createBrowserElementPanel}=require('./ブラウザ要素パネル.cjs');
 // 既存CDP接続を共有し、detachやDOM.disableは呼ばない。Overlayはmainの選択操作だけが使う。
-function createBrowserElementLink({contents,record,BrowserWindow,screen,available,onChange,onSelected,onError,panelFactory=createBrowserElementPanel}){
+function createBrowserElementLink({contents,record,available,onChange,onSelected,onError,panelFactory=createBrowserElementPanel}){
  const hostContents=record.window.webContents,debug=contents.debugger;let active=false,inspecting=false,disposed=false,generation=0,sequence=0,selected,panel,reading=false,pendingHover,selecting=false,queue=Promise.resolve();
  const current=run=>!disposed&&active&&generation===run&&available()&&!contents.isDestroyed()&&!record.window.isDestroyed();
  const command=(method,params={})=>debug.sendCommand(method,params);
@@ -16,11 +16,12 @@ function createBrowserElementLink({contents,record,BrowserWindow,screen,availabl
  async function stop(keepSelection=false){
   active=false;inspecting=false;const run=++generation;sequence++;pendingHover=undefined;selecting=false;
   if(!keepSelection)selected=undefined;
-  panel?.close();panel=undefined;onChange();
+  const closing=panel?.close();panel=undefined;onChange();
   // Chromiumはmode:noneでもhighlightConfigを検証する。省略すると選択とクリック抑止が残る。
   await overlay(async()=>{if(debug?.isAttached()&&!contents.isDestroyed()){await command('Overlay.setInspectMode',{mode:'none',highlightConfig:{}});await command('Overlay.hideHighlight');}}).catch(()=>{
    if(!disposed&&generation===run&&!contents.isDestroyed()&&!record.window.isDestroyed())onError('要素連携を解除できませんでした。ページを再読み込みしてください。');
   });
+  await closing;
  }
  async function read(node,run){
   const group='aidiy-element-'+run+'-'+randomUUID();
@@ -71,8 +72,8 @@ function createBrowserElementLink({contents,record,BrowserWindow,screen,availabl
    if(!debug.isAttached())debug.attach('1.3');
    await command('DOM.enable');await command('Overlay.enable');
    if(!current(run))return;
-   panel=panelFactory({BrowserWindow,screen,record,onClose:()=>void stop(),onKey:key});panel.open();
-   await overlay(async()=>{if(current(run))await command('Overlay.setInspectMode',{mode:'searchForNode',highlightConfig:{showInfo:true,showStyles:false,contentColor:{r:50,g:180,b:245,a:.15},borderColor:{r:30,g:220,b:255,a:.9}}});});
+   panel=panelFactory({contents,onClose:()=>void stop()});await panel.open();
+   await overlay(async()=>{if(current(run))await command('Overlay.setInspectMode',{mode:'searchForNode',highlightConfig:{showInfo:false,showStyles:false,contentColor:{r:50,g:180,b:245,a:.15},borderColor:{r:30,g:220,b:255,a:.9}}});});
    if(current(run)){inspecting=true;contents.focus?.();}
   }catch(error){if(current(run)){await stop();throw Error('要素連携を開始できません。'+error.message);}}
  }

@@ -58,13 +58,12 @@ test('要素連携: 標準ボタンの順序、限定IPC、既存の通常下書
  assert.match(browserElementText(value),/HTML:\n<button/);
 });
 
-for(const focus of ['page','host','popup','cdp'])test(`要素連携: ${focus}からのEscでCDP選択・強調を解除し再開始できる`,async()=>{
+for(const focus of ['page','host','cdp'])test(`要素連携: ${focus}からのEscでCDP選択・強調を解除し再開始できる`,async()=>{
  const f=fixture();
  for(let cycle=0;cycle<2;cycle++){
   await f.picker.start();assert.equal(f.inspectMode,'searchForNode');
   const event={prevented:false,preventDefault(){this.prevented=true;}},input={type:'keyDown',key:'Escape'};
   if(focus==='cdp')f.message('Overlay.inspectModeCanceled',{});
-  else if(focus==='popup')f.panelOptions.onKey(event,input);
   else (focus==='page'?f.contents:f.window.webContents).emit('before-input-event',event,input);
   await flush();assert.equal(f.picker.active,false);assert.equal(f.inspectMode,'none','UIだけでなくCDPの選択モードも解除する');assert.equal(f.highlighted,false);assert.equal(f.closed,cycle+1);assert.equal(event.prevented,focus!=='cdp');
   f.message('Overlay.nodeHighlightRequested',{nodeId:1});f.message('Overlay.inspectNodeRequested',{backendNodeId:1});await flush();assert.equal(f.updates.length,0);assert.equal(f.picked,0);

@@ -25,7 +25,7 @@ function fixture(fullscreen=false){
   return{};
  }});
  class View{
-  constructor(){view=this;this.visibility=[];this.webContents=Object.assign(new EventEmitter(),{debugger:debug,url:'',getURL(){return this.url;},getTitle:()=> '入力画面',isLoading:()=>false,isDestroyed:()=>false,navigationHistory:{canGoBack:()=>false,canGoForward:()=>false},loadURL:async function(url){this.url=url;},setWindowOpenHandler(){},close(){},stop(){},focus(){}});}
+  constructor(){view=this;this.visibility=[];this.webContents=Object.assign(new EventEmitter(),{debugger:debug,executeJavaScriptInIsolatedWorld:async()=>true,url:'',getURL(){return this.url;},getTitle:()=> '入力画面',isLoading:()=>false,isDestroyed:()=>false,navigationHistory:{canGoBack:()=>false,canGoForward:()=>false},loadURL:async function(url){this.url=url;},setWindowOpenHandler(){},close(){},stop(){},focus(){}});}
   setVisible(value){this.visible=value;this.visibility.push(value);}setBounds(value){this.bounds=value;}
  }
  class Window extends EventEmitter{

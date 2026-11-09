@@ -6,7 +6,7 @@
 // CDPの隔離worldでDOM要素に対して実行する。外側の変数、入力値、Cookie、Storageを参照しない。
 function collectBrowserElement(){
  const element=this?.nodeType===1?this:this?.parentElement;
- if(!element)throw Error('表示要素を取得できません。');
+ if(!element||element.getAttribute?.('data-aidiy-element-tooltip')==='true')throw Error('表示要素を取得できません。');
  const doc=element.ownerDocument,win=doc.defaultView;
  const clean=value=>String(value||'').replace(/(?:Bearer\s+)[\w.+\/-]+/gi,'Bearer [非表示]').replace(/\beyJ[\w-]+\.[\w-]+\.[\w-]+\b/g,'[非表示]').replace(/\b(?:sk-|gh[pousr]_|github_pat_)[\w-]{12,}\b/g,'[非表示]').replace(/(["']?(?:password|passwd|secret|token|api[-_]?key|authorization)["']?\s*[=:]\s*)(?:"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[^\s<"']+)/gi,'$1[非表示]');
  const limited=(value,size)=>clean(value).slice(0,size);
