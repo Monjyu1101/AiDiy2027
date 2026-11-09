@@ -35,7 +35,7 @@ app.whenReady().then(async()=>{
   const record={kind:'browser',window:win,url:server.url};
   const windowPins=createWindowPins();windowPins.register(win);
   let pointer={x:-9999,y:-9999};
-  const control=createBrowserViews({BrowserWindow,WebContentsView,session,screen:{getDisplayMatching:r=>screen.getDisplayMatching(r),getCursorScreenPoint:()=>pointer},windowPins,captureImage:async({png})=>{captureResult=await saveBrowserCapture(captureRoot,png);return captureResult;},trustedEvent:event=>event.sender===win.webContents?record:control.trustedHeader(event),projectRoot:captureRoot,now:()=>clock});
+  const control=createBrowserViews({BrowserWindow,WebContentsView,session,screen:{getDisplayMatching:r=>screen.getDisplayMatching(r),getCursorScreenPoint:()=>pointer},windowPins,captureImage:async({png})=>{captureResult=await saveBrowserCapture(captureRoot,png);return captureResult;},trustedEvent:event=>event.sender===win.webContents?record:control.trustedHeader(event)||control.trustedDraft(event),projectRoot:captureRoot,now:()=>clock});
   const cdp=await createBrowserCDP({directory:join(captureRoot,'cdp-registry'),sessionPrefix:process.env.AIDIY_BROWSER_SESSION_KIND==='ide'?'aidiy_ide':'aidiy_browser',canUse:async()=>true,allowedURL:control.allowedURL,openPanel:async()=>{throw Error('試験では追加窓を開きません。');}});
   record.browserSession=cdp.name;
   const page=control.attach(record,pathToFileURL(join(captureRoot,'index.html')).href,true);cdp.add(record,page);
@@ -63,8 +63,8 @@ app.whenReady().then(async()=>{
   async function shot(name){
    if(!selftest)return;
    if(name==='Browser_401_連携先選択'){
-    const r=await win.webContents.executeJavaScript(`(()=>{const r=document.querySelector('dialog').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})()`),zoom=win.webContents.getZoomFactor();
-    const image=await win.webContents.capturePage({x:Math.floor(r.x*zoom),y:Math.floor(r.y*zoom),width:Math.ceil(r.width*zoom),height:Math.ceil(r.height*zoom)},{stayHidden:true,stayAwake:true});
+    const child=draftWindow();assert.ok(child);const r=await child.webContents.executeJavaScript(`(()=>{const r=document.querySelector('dialog').getBoundingClientRect();return{x:r.x,y:r.y,width:r.width,height:r.height}})()`),zoom=child.webContents.getZoomFactor();
+    const image=await child.webContents.capturePage({x:Math.floor(r.x*zoom),y:Math.floor(r.y*zoom),width:Math.ceil(r.width*zoom),height:Math.ceil(r.height*zoom)},{stayHidden:true,stayAwake:true});
     writeFileSync(join(output,name+'.png'),image.toPNG());return;
    }
    const top=win.isAlwaysOnTop();win.setAlwaysOnTop(true);win.setTitle('AiDiy Browser セルフテスト');win.moveTop();await delay(200);
@@ -72,6 +72,8 @@ app.whenReady().then(async()=>{
    finally{win.setAlwaysOnTop(top);}
   }
   const evaluate=code=>win.webContents.executeJavaScript(code,true);
+  const draftWindow=()=>BrowserWindow.getAllWindows().find(window=>!window.isDestroyed()&&window.webContents.getURL()===record.url+'#browser-draft');
+  const evaluateDraft=code=>draftWindow()?.webContents.executeJavaScript(code,true);
   const pageMetrics=()=>page.executeJavaScript(`({width:innerWidth,height:innerHeight,dpr:devicePixelRatio})`);
   async function until(check){for(let i=0;i<60;i++){if(await check())return;await delay(50);}throw Error('画面遷移が完了しません。');}
   for(let i=0;i<100;i++){if(await evaluate(`document.querySelectorAll('.browser-window-sizes button').length===3`))break;await delay(100);}
@@ -105,11 +107,11 @@ app.whenReady().then(async()=>{
    for(const kind of ['code','live']){
     if(kind==='live')clock+=60001;
     await evaluate(`document.querySelector('.browser-handoff').click()`);
-    await until(()=>evaluate(`!!document.querySelector('.draft-target-row select')`));
-    assert.equal(win.contentView.children.find(v=>v.webContents===page).getVisible(),false);
-    await evaluate(`{const select=document.querySelector('.draft-target-row select');select.value=[...select.options].find(o=>o.textContent.startsWith('${kind==='code'?'Code':'Live'}')).value;select.dispatchEvent(new Event('change',{bubbles:true}));}`);
-    await delay(50);if(kind==='code')await shot('Browser_401_連携先選択');await evaluate(`[...document.querySelectorAll('button')].find(b=>b.textContent==='下書きへ追加').click()`);
-    await until(()=>evaluate(`!document.querySelector('.draft-target-row')`));
+    await until(()=>evaluateDraft(`!!document.querySelector('.draft-target-row select')`));
+    assert.equal(win.contentView.children.find(v=>v.webContents===page).getVisible(),true);
+    await evaluateDraft(`{const select=document.querySelector('.draft-target-row select');select.value=[...select.options].find(o=>o.textContent.startsWith('${kind==='code'?'Code':'Live'}')).value;select.dispatchEvent(new Event('change',{bubbles:true}));}`);
+    await delay(50);if(kind==='code')await shot('Browser_401_連携先選択');await evaluateDraft(`[...document.querySelectorAll('button')].find(b=>b.textContent==='下書きへ追加').click()`);
+    await until(()=>!draftWindow());
     const text=await targets.find(t=>t.kind===kind).window.webContents.executeJavaScript(`document.querySelector('textarea').value`);
     assert.ok(text.startsWith(`既存の下書き\n\nsession: ${record.browserSession}\ntab_id: ${record.browserTabId}\nfile:`));assert.equal(text.includes(captureResult.path.split('/').at(-1)),kind==='code');
     console.log(JSON.stringify({handoff:kind,imageAttached:kind==='code',draft:text}));

@@ -7,12 +7,11 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import RefreshButton from '../共通表示/再読込ボタン.vue';
 import {ref,onMounted,onBeforeUnmount} from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
-import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
-let stop=()=>{},stopFrame=()=>{},stopDraft=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0;
+let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0;
 const headerOffset=ref(0),windowTitle=ref('');
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
@@ -20,14 +19,14 @@ const headerWindowApi=props.headerOnly?{
  togglePin:()=>window.aidiyWindow.browserAction('header-toggle-pin'),
  onPinChanged:callback=>window.aidiyWindow.onBrowserChanged(value=>callback({pinned:!!value.headerPinned,locked:false})),
 }:undefined;
-const draftRequest=ref(null),handing=ref(false),openingAnalysis=ref(false),analysisStatus=ref({status:'idle'});
+const handing=ref(false),openingAnalysis=ref(false),analysisStatus=ref({status:'idle'});
 const analysisMonitor=createBrowserAnalysisStatus({
  read:async(url,signal)=>{const response=await fetch('/api/browser-analysis?'+new URLSearchParams({url,status:'1'}),{cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(12000)])});const value=await response.json();if(!response.ok)throw Error(value.error||'解析状況を確認できません。');return value;},
  changed:value=>{if(!disposed)analysisStatus.value=value;},
 });
 function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.available===true&&visible,page.value.session||'');}
 async function openAnalysis(){
- if(openingAnalysis.value||draftRequest.value||handing.value)return;
+ if(openingAnalysis.value||handing.value)return;
  openingAnalysis.value=true;const navigation=analysisNavigation;
  try{
   const result=await window.aidiyWindow.browserAction('open-analysis');
@@ -36,14 +35,10 @@ async function openAnalysis(){
 }
 
 async function handoff(element=false){
- if(props.headerOnly){await action('open-draft');return;}
- if(handing.value||openingAnalysis.value)return;handing.value=true;
- try{const result=await window.aidiyWindow.browserAction(element===true?'element-draft':'draft');if(!result.ok)throw Error(result.error);await window.aidiyWindow.browserAction('draft-dialog',true);draftRequest.value=result.request;}
- catch(e){error.value=e.message;}finally{handing.value=false;}
+ if(handing.value||openingAnalysis.value)return;handing.value=true;const navigation=analysisNavigation;
+ try{const result=await window.aidiyWindow.browserAction('open-draft',element===true);if(!disposed&&navigation===analysisNavigation){if(!result?.ok)throw Error(result?.error||'連携先を開けません。');error.value='';}}
+ catch(e){if(!disposed&&navigation===analysisNavigation)error.value=e.message;}finally{if(!disposed)handing.value=false;}
 }
-function closeDraft(){if(draftRequest.value?.browserElementId)void window.aidiyWindow.browserAction('element-stop');draftRequest.value=null;void window.aidiyWindow.browserAction('draft-dialog',false);}
-const loadDraftTargets=()=>window.aidiyWindow.draftTargets();
-const insertDraft=request=>window.aidiyWindow.insertDraft({...request,...(draftRequest.value?.browserElementId?{browserElementId:draftRequest.value.browserElementId}:{})});
 function update(value){
  if(disposed||!value)return;
  // F11の通知より遅く届いた操作応答で、通常表示を古い全画面状態へ戻さない。
@@ -74,10 +69,10 @@ onMounted(()=>{
  void Promise.resolve().then(()=>window.aidiyWindow?.title?.()).then(title=>{if(!disposed&&typeof title==='string'&&title.trim())windowTitle.value=title;}).catch(()=>{});
  stop=window.aidiyWindow.onBrowserChanged(update);void action('state');
  if(props.headerOnly){document.documentElement.classList.add('browser-header-document');stopFrame=window.aidiyWindow.onBrowserHeaderFrame?.(value=>{headerOffset.value=value;})||(()=>{});}
- else {stopElement=window.aidiyWindow.onBrowserElementSelected?.(()=>{void handoff(true);})||(()=>{});stopDraft=window.aidiyWindow.onBrowserOpenDraft?.(()=>{void handoff();})||(()=>{});stopAnalysis=window.aidiyWindow.onBrowserOpenAnalysis?.(()=>{void openAnalysis();})||(()=>{});}
+ else {stopElement=window.aidiyWindow.onBrowserElementSelected?.(()=>{void handoff(true);})||(()=>{});stopAnalysis=window.aidiyWindow.onBrowserOpenAnalysis?.(()=>{void openAnalysis();})||(()=>{});}
  observer=new ResizeObserver(resize);if(surface.value)observer.observe(surface.value);if(chrome.value)observer.observe(chrome.value);resize();
 });
-onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopDraft();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
+onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
 </script>
 <template>
  <main class="development-app browser-panel desktop-window" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
@@ -104,7 +99,6 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
   <p v-if="error||page.error" class="error browser-error" role="status">{{ error||page.error }}</p>
   </div>
   <div v-if="!headerOnly" ref="surface" class="browser-surface"></div>
-  <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="loadDraftTargets" :insert-draft="insertDraft" empty-hint="同じプロジェクトで aidiy_code または aidiy_live を起動してください。" @close="closeDraft" />
  </main>
 </template>
 <style scoped>

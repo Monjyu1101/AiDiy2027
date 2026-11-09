@@ -175,7 +175,7 @@ function trustedEvent(event){
  const record=windows.get(event.sender)||browserViews?.trustedHeader(event),frame=event.senderFrame;
  return record&&!record.window.isDestroyed()&&frame&&frame===event.sender.mainFrame&&typeof frame.url==='string'&&frame.url.split('#')[0]===record.url?record:null;
 }
-function trustedBrowserEvent(event){return trustedEvent(event)||browserViews?.trustedAnalysis(event);}
+function trustedBrowserEvent(event){return trustedEvent(event)||browserViews?.trustedAnalysis(event)||browserViews?.trustedDraft?.(event);}
 function audioAllowed(contents,permission,details){
  const record=windows.get(contents);
  return !!record&&record.kind==='live'&&permission==='media'&&details?.isMainFrame===true&&details.requestingUrl?.split('#')[0]===record.url;
@@ -317,9 +317,10 @@ app.whenReady().then(async()=>{
  });
  ipcMain.handle('development:all-displays',(event,action)=>allDisplays.handle(event,action));
  ipcMain.handle('development:browser-action',async(event,action,value)=>{
+  if(browserViews?.isDraftSender?.(event.sender)&&!['draft-window-context','draft-window-close'].includes(action))return{ok:false,error:'連携先選択ウィンドウでは利用できない操作です。'};
   if(browserViews?.isAnalysisSender(event.sender)&&!['analysis-window-context','analysis-window-close','analysis-select-source'].includes(action))return{ok:false,error:'解析ウィンドウでは利用できない操作です。'};
   const record=trustedBrowserEvent(event);
-  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-dialog','analysis-window-context','analysis-window-close','header-size','header-pin-state','header-toggle-pin'].includes(action)){
+  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-window-close','analysis-window-context','analysis-window-close','header-size','header-pin-state','header-toggle-pin'].includes(action)){
    try{if(!browserConnected(await readState(record.owner||record)))return{ok:false,error:'tools接続中のみBrowserを操作できます。'};}catch{return{ok:false,error:'toolsの接続を確認できません。'};}
   }
   if(action==='analysis-window-context'){if(!browserViews?.isAnalysisSender(event.sender))return{ok:false,error:'解析ウィンドウから操作してください。'};return browserAnalysisContext(event);}
@@ -369,12 +370,20 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:copy-file-path',(event,path)=>nativePreviewActions.copyFilePath(event,path));
  ipcMain.handle('development:open-file',(event,path)=>nativePreviewActions.openFile(event,path));
  ipcMain.handle('development:open-folder',(event,path)=>nativePreviewActions.openFolder(event,path));
- ipcMain.handle('development:draft-targets',async event=>{const source=trustedEvent(event);try{return ['browser','navi'].includes(source?.kind)?await(await sharedDrafts()).list(source):await draftRouter.list(source);}catch(error){return{ok:false,error:error.message};}});
+ ipcMain.handle('development:draft-targets',async event=>{const source=trustedEvent(event)||browserViews?.trustedDraft?.(event);try{return ['browser','navi'].includes(source?.kind)?await(await sharedDrafts()).list(source):await draftRouter.list(source);}catch(error){return{ok:false,error:error.message};}});
  ipcMain.handle('development:draft-insert',async(event,value)=>{
-  const source=trustedEvent(event);
+  const source=trustedEvent(event)||browserViews?.trustedDraft?.(event);
   if(source?.kind==='navi'){try{return await(await sharedDrafts()).insert(source,value);}catch(error){return{ok:false,error:error.message};}}
   if(source?.kind!=='browser')return draftRouter.insert(source,value);
-  try{const elementId=value?.browserElementId;if(elementId!==undefined&&(typeof elementId!=='string'||elementId.length>128))throw Error('要素の指定が不正です。');const draft=await browserViews.action(event,elementId===undefined?'draft':'element-draft',elementId);if(!draft.ok)return draft;return await(await sharedDrafts()).insert(source,{...value,text:draft.request.text});}catch(error){return{ok:false,error:error.message};}
+  try{
+   const child=browserViews?.isDraftSender?.(event.sender),elementId=child?browserViews.draftWindowRequest(event).browserElementId:value?.browserElementId;
+   if(elementId!==undefined&&(typeof elementId!=='string'||elementId.length>128))throw Error('要素の指定が不正です。');
+   const draft=await browserViews.action(event,elementId===undefined?'draft':'element-draft',elementId);if(!draft.ok)return draft;
+   const bridge=await sharedDrafts();
+   // 読込中に閉じた子窓や遷移前の要素から、遅れて下書きを追加しない。
+   if(child)browserViews.draftWindowRequest(event);
+   return await bridge.insert(source,{...value,browserElementId:elementId,text:draft.request.text});
+  }catch(error){return{ok:false,error:error.message};}
  });
  ipcMain.on('development:draft-result',(event,value)=>draftRouter.acknowledge(trustedEvent(event),value));
  ipcMain.handle('development:end-session',async event=>{

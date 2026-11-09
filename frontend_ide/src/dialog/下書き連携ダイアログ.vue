@@ -6,7 +6,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import ModalDialog from './共通ダイアログ.vue';
-const props=defineProps({request:Object,loadTargets:Function,insertDraft:Function,launchTarget:Function,emptyHint:String});
+const props=defineProps({request:Object,loadTargets:Function,insertDraft:Function,launchTarget:Function,emptyHint:String,nativeWindow:Boolean});
 const emit=defineEmits(['close']);
 const snapshot=ref(null),selected=ref(''),busy=ref(false),error=ref('');
 let generation=0,disposed=false;
@@ -40,7 +40,7 @@ async function launch(kind){
 onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
 </script>
 <template>
-  <ModalDialog label="Code / Live の下書きへ追加" :locked="busy" @close="emit('close')">
+  <ModalDialog :class="{'draft-native-window':nativeWindow}" label="Code / Live の下書きへ追加" :locked="busy" @close="emit('close')">
     <h3>Code / Live の下書きへ追加</h3>
     <p class="draft-source">{{ request.path }}{{ request.selection?'（選択範囲）':'' }}</p>
     <p>起動中の連携先の入力欄へ追加します。既存の下書きを残し、送信はその画面で行います。</p>
@@ -63,6 +63,8 @@ onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
   </ModalDialog>
 </template>
 <style scoped>
+.model-dialog.draft-native-window{box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0;overflow:auto}
+.draft-native-window>h3{-webkit-app-region:drag;margin-top:0}
 .draft-element-preview{margin:12px 0}.draft-element-preview pre{max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;padding:8px;border:1px solid #375067}.draft-element-preview p{font-size:12px}
 .draft-target-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .draft-target-row label{display:flex;align-items:center;gap:8px;min-width:0;flex:1;flex-wrap:wrap}

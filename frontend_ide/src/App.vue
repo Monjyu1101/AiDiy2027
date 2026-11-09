@@ -17,6 +17,7 @@ import TerminalWelcome from './components/コンソール/開始表示.vue';
 import ViewerWindow from './components/ファイル閲覧/閲覧ウィンドウ.vue';
 import BrowserPanel from './components/ブラウザ/ブラウザパネル.vue';
 import BrowserAnalysisWindow from './components/ブラウザ/ブラウザ解析ウィンドウ.vue';
+import BrowserDraftWindow from './components/ブラウザ/ブラウザ下書きウィンドウ.vue';
 import {openBrowser} from './components/ブラウザ/起動.js';
 import FileAnalysisDialog from './dialog/ファイル解析ダイアログ.vue';
 import FileHistoryDialog from './dialog/ファイル履歴ダイアログ.vue';
@@ -39,8 +40,9 @@ const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
 const browserHeader=location.hash==='#browser-header';
+const browserDraft=location.hash==='#browser-draft'&&!!window.aidiyWindow;
 const browserAnalysis=location.hash==='#browser-analysis'&&!!window.aidiyWindow;
-const browserPanel=(config.kind==='browser'||config.kind==='ide'&&(location.hash==='#browser'||browserHeader||browserAnalysis))&&!!window.aidiyWindow;
+const browserPanel=(config.kind==='browser'||config.kind==='ide'&&(location.hash==='#browser'||browserHeader||browserAnalysis||browserDraft))&&!!window.aidiyWindow;
 const state=ref({active:false}),base=reactive({console:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
 const statusError=ref('');
 const error=ref(''),pending=ref(false),panelOpen=ref(false),tab=ref('code'),liveOpen=ref(false),viewMode=ref('3d');
@@ -193,7 +195,7 @@ const draftLink={
   async launch(sender,kind,request){const linked=verifyPinned(sender,request);await confirmDraftSession(request,linked.sessionKey);verifyPinned(sender,request);return launchDraftTarget(kind,{...request,sessionKey:linked.sessionKey});},
 };
 onMounted(async()=>{
-  if(browserAnalysis)return;
+  if(browserAnalysis||browserDraft)return;
   stopWindowMove=installWindowMove({kind:browserPanel?'browser':viewerPath?'viewer':config.kind,host:config.host});
   if(config.kind==='ide'&&desktop&&!viewerPath&&!browserPanel){
     stopAllDisplays=window.aidiyWindow.onAllDisplaysChanged?.(updateAllDisplays)||(()=>{});
@@ -211,7 +213,8 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
   <FileAnalysisDialog v-if="analysis" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" @close="closeFileAnalysis" />
   <FileHistoryDialog v-if="history" :key="history.root+'|'+history.file.path" :file="history.file" :root="history.root" @close="history=null" />
-  <BrowserAnalysisWindow v-if="browserAnalysis" />
+  <BrowserDraftWindow v-if="browserDraft" />
+  <BrowserAnalysisWindow v-else-if="browserAnalysis" />
   <BrowserPanel v-else-if="browserPanel" :standalone="config.kind==='browser'" :header-only="browserHeader" />
   <ViewerWindow v-else-if="viewerPath" :path="viewerPath" :desktop="desktop" />
   <div v-else class="development-app" :class="[config.kind,{'vscode-host':config.host,'desktop-window':desktop,'all-displays':allDisplayState.active}]" :data-app="config.kind">

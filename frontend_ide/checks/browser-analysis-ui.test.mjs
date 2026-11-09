@@ -80,9 +80,9 @@ test('Browser analysis dialog: IDE guidance is shown before results and never en
  }
 });
 
-test('Browser analysis dialog: background button closes only the view and reopening the original URL restores waiting/result',async t=>{
+test('Browser analysis dialog: closing automatically continues analysis without a background button; reopening restores waiting/result',async t=>{
  const pending=fixture();t.after(()=>pending.dispose());pending.reply({url:context.url,result:null,job:{id:'background',url:context.url,status:'waiting'}});await flush();
- const button=nodes(pending.render()).find(n=>n.props?.class==='browser-analysis-background');assert.ok(button);button.props.onClick();assert.equal(pending.emitted.at(-1)[0],'close');assert.equal(pending.timers.size,0);assert.ok(pending.requests.every(r=>r.init.method==='GET'));
+ assert.ok(!nodes(pending.render()).some(n=>n.props?.class==='browser-analysis-background'));const button=nodes(pending.render()).find(n=>n.props?.['aria-label']==='Browser AI解析を閉じる');assert.ok(button);button.props.onClick();assert.equal(pending.emitted.at(-1)[0],'close');assert.equal(pending.timers.size,0);assert.ok(pending.requests.every(r=>r.init.method==='GET'));
  const other=fixture('dialog',{context:{...context,url:'https://example.test/other'}});t.after(()=>other.dispose());other.reply({url:'https://example.test/other',result:null,job:null});await flush();assert.equal(other.state.busy.value,false);assert.equal(other.state.result.value,null);
  const waiting=fixture();t.after(()=>waiting.dispose());waiting.reply({url:context.url,result:null,job:{id:'background',status:'waiting'}});await flush();assert.equal(waiting.state.busy.value,true);assert.equal(waiting.requests.length,1);
  const finished=fixture();t.after(()=>finished.dispose());finished.reply({url:context.url,result:saved,job:{id:'background',status:'complete'}});await flush();assert.equal(finished.state.result.value.id,saved.id);assert.equal(finished.state.busy.value,false);assert.equal(finished.requests.length,1);

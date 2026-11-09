@@ -60,7 +60,7 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
      <p v-if="context.ideRunning" class="browser-analysis-hint browser-analysis-viewer-available" role="status">同じプロジェクトのIDEが起動中です。{{ context.viewerAvailable?'IDEの「Browser」からこのURLを開くと、ビューアー連携できます。':'IDEでオンライン利用を開始し、tools接続後に「Browser」からこのURLを開くと、ビューアー連携できます。' }}</p>
      <p v-else class="browser-analysis-hint">ビューアー連携するには、同じプロジェクトのIDEでオンライン利用を開始し、IDEの「Browser」から開いてください。</p>
     </template>
-    <div class="browser-analysis-actions"><button :disabled="loading||starting||busy" @click="analyze">{{ starting?'依頼中…':busy?'解析中…':result?'再解析':'解析を実行' }}</button><button v-if="busy" type="button" class="browser-analysis-background" @click="close">バックグラウンドで続ける</button><span>最大5分間、結果を確認します。別ページへ移動しても解析を続け、結果はこのURLに保存します。</span></div>
+    <div class="browser-analysis-actions"><button :disabled="loading||starting||busy" @click="analyze">{{ starting?'依頼中…':busy?'解析中…':result?'再解析':'解析を実行' }}</button><span>最大5分間、結果を確認します。別ページへ移動しても解析を続け、結果はこのURLに保存します。</span></div>
     <p v-if="busy" class="browser-analysis-hint">閉じて別のページを閲覧できます。元のURLに戻り「AI解析」を開くと、進行状況・結果を確認できます。</p>
     <p v-if="job" role="status">{{ job.message||(busy?'解析結果を待っています…':'') }}</p>
     <div v-if="job&&!busy&&job.status!=='complete'"><button @click="load">結果を再確認</button><details><summary>エージェントへの依頼文</summary><textarea readonly :value="job.prompt" rows="5" aria-label="Browser解析エージェントへの依頼文" /></details></div>

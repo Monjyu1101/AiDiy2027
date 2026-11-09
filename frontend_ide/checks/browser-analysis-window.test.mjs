@@ -70,13 +70,13 @@ test('native page remains visible with the same bounds during analysis, includin
  assert.equal((await browser.action(host,'analysis-window-close')).ok,false);
  assert.equal((await browser.action(child,'analysis-window-close')).ok,true);assert.equal(view.visible,true);
  await browser.action(host,'open-analysis');browser.setAvailable(f.record,false);assert.equal(view.visible,false);browser.setAvailable(f.record,true);assert.equal(view.visible,true);
- await browser.action(host,'draft-dialog',true);assert.equal(view.visible,false);await browser.action(host,'draft-dialog',false);assert.equal(view.visible,true);
+ assert.equal((await browser.action(host,'draft-dialog',true)).ok,false);assert.equal(view.visible,true);
  f.parent.emit('closed');assert.equal(f.windows.at(-1).destroyed,true);
 });
 test('analysis IPC is narrowly routed and title styling does not change shared headers',()=>{
  const desktop=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  assert.match(desktop,/isAnalysisSender\(event.sender\).*analysis-window-context.*analysis-window-close.*analysis-select-source/);
- assert.match(desktop,/function trustedBrowserEvent\(event\)\{return trustedEvent\(event\)\|\|browserViews\?\.trustedAnalysis\(event\);\}/);
+ assert.match(desktop,/function trustedBrowserEvent\(event\)\{return trustedEvent\(event\)\|\|browserViews\?\.trustedAnalysis\(event\)\|\|browserViews\?\.trustedDraft\?\.\(event\);\}/);
  const source=readFileSync(new URL('../src/dialog/ブラウザ解析ダイアログ.vue',import.meta.url),'utf8');
  assert.match(source,/\.browser-analysis-dialog header\{[^}]*min-height:26px;[^}]*padding:0/);
  assert.match(source,/\.browser-analysis-dialog header button\{width:24px;height:24px;padding:0/);

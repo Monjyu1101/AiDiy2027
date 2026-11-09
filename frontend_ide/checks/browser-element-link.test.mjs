@@ -54,7 +54,7 @@ test('要素連携: 連続ホバーは並列収集せず最新要素だけ表示
 test('要素連携: 標準ボタンの順序、限定IPC、既存の通常下書きを維持',()=>{
  const vue=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8'),desktop=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const order=['browser-analysis','browser-capture','browser-handoff','browser-element-link'].map(name=>vue.indexOf('class="'+name+'"'));assert.ok(order.every((at,index)=>at>=0&&(!index||at>order[index-1])));
- assert.match(vue,/要素連携/);assert.match(vue,/onBrowserElementSelected/);assert.match(vue,/element===true\?'element-draft':'draft'/);assert.match(desktop,/elementId===undefined\?'draft':'element-draft'/);assert.match(desktop,/text:draft.request.text/);
+ assert.match(vue,/要素連携/);assert.match(vue,/onBrowserElementSelected/);assert.match(vue,/browserAction\('open-draft',element===true\)/);assert.match(desktop,/elementId===undefined\?'draft':'element-draft'/);assert.match(desktop,/text:draft.request.text/);
  assert.match(browserElementText(value),/HTML:\n<button/);
 });
 
