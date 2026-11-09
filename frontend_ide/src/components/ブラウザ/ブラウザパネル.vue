@@ -45,7 +45,9 @@ function update(value){
  if(Number.isFinite(value.stateRevision)){if(value.stateRevision<stateRevision)return;stateRevision=value.stateRevision;}
  if(browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
  const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
- page.value=value;if(value.capturePath)captureMessage.value=value.capturePath;if(!editing)address.value=displayBrowserURL(value.url);
+ // 再撮影中・失敗後に、同じ保存パスの状態通知で古い成功表示を戻さない。
+ const captureChanged=value.capturePath!==page.value.capturePath;
+ page.value=value;if(!capturing.value&&captureChanged)captureMessage.value=value.capturePath||'';if(!editing)address.value=displayBrowserURL(value.url);
  monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
 async function action(name,value){
@@ -55,12 +57,14 @@ async function action(name,value){
 }
 function navigate(){editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
 async function capture(){
- if(capturing.value)return;capturing.value=true;captureMessage.value='';
+ if(disposed||capturing.value)return;capturing.value=true;captureMessage.value='';
  try{
   const result=await window.aidiyWindow.browserAction('capture');
+  if(disposed)return;
   if(!result?.ok)throw Error(result?.error||'撮影できませんでした。');
-  captureMessage.value=result.message||'撮影しました。';error.value='';
- }catch(e){error.value=e.message;}finally{capturing.value=false;}
+  if(typeof result.path!=='string'||!result.path.trim())throw Error('撮影画像の保存を確認できませんでした。');
+  captureMessage.value=result.message||result.path;error.value='';
+ }catch(e){if(!disposed){captureMessage.value='';error.value=e.message;}}finally{if(!disposed)capturing.value=false;}
 }
 function resize(){const rect=surface.value?.getBoundingClientRect(),viewport=rect?document.documentElement.getBoundingClientRect():null;chromeHeight.value=chrome.value?.getBoundingClientRect().height||100;if(props.headerOnly)void window.aidiyWindow.browserAction('header-size',chromeHeight.value).catch(()=>{});else if(rect)void window.aidiyWindow.browserAction('bounds',{left:rect.left,top:rect.top,width:rect.width,height:rect.height,chromeHeight:chromeHeight.value,viewportWidth:viewport.width,viewportHeight:viewport.height,fullscreen:!!page.value.fullscreen,measuredAt:performance.timeOrigin+performance.now()}).catch(()=>{});}
 function transition(){cancelAnimationFrame(frame);const end=performance.now()+260;function step(){resize();if(!disposed&&performance.now()<end)frame=requestAnimationFrame(step);}step();}
@@ -78,7 +82,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
  <main class="development-app browser-panel desktop-window" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
   <div ref="chrome" class="browser-chrome panel-window-title" data-aidiy-window-move-handle @transitionrun="transition">
   <StatusBar :title="windowTitle||(standalone?'AiDiy Browser':'AiDiy IDE / Browser')" :connected="page.available===true" :status="page.available===false?'tools未接続':page.loading?'読み込み中':'ブラウザ'" desktop :clock-pulse="false" :window-api="headerWindowApi" :pin-title="headerOnly?(page.headerPinned?'ヘッダーの常時表示を解除':'ヘッダーを常時表示'):undefined">
-   <template #connection-tools><button type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{openingAnalysis?'準備中…':analysisStatus.status==='waiting'?'AI解析中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷 撮影'}}</button><button type="button" class="browser-handoff" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">Code / Liveへ</button><button type="button" class="browser-element-link" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素連携中（Esc）':'要素連携'}}</button><span v-if="captureMessage" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></template>
+   <template #connection-tools><button type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{openingAnalysis?'準備中…':analysisStatus.status==='waiting'?'AI解析中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><span class="browser-capture-tools"><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷 撮影'}}</button><span v-if="captureMessage&&!capturing" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></span><button type="button" class="browser-handoff" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">Code / Liveへ</button><button type="button" class="browser-element-link" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素連携中（Esc）':'要素連携'}}</button></template>
    <template #window-tools>
     <span class="browser-window-sizes">
      <button type="button" title="Web表示領域を1920×945にしてパネルを拡大（画面外へはみ出しても縮小しません）" @click="action('size','fhd')">FHD</button>
@@ -106,6 +110,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-chrome{flex:none;background:#000;z-index:1}
 .browser-element-link,.browser-analysis,.browser-capture,.browser-handoff{margin-left:7px;padding:0 6px;height:24px;font-size:11px;white-space:nowrap;-webkit-app-region:no-drag}
 .browser-element-link[aria-pressed="true"]{color:#80eaff;border-color:#5ed9ff;background:#123f52}
+.browser-capture-tools{display:inline-flex;align-items:center;flex:none;white-space:nowrap}
 .browser-capture-status{margin-left:5px;white-space:nowrap;font-size:10px;color:#9edfff}
 .development-app.browser-panel.browser-fullscreen{border:0;position:relative}
 .browser-fullscreen:not(.browser-header-only) .browser-chrome{display:none}

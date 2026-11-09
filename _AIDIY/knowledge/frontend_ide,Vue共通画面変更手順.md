@@ -249,6 +249,12 @@ Electronで選択HTMLをBrowserへ渡すときの例外は `viewer/登録HTMLル
 
 Browserの画面は `src/components/ブラウザ/ブラウザパネル.vue`、WebContentsViewは `デスクトップ/ブラウザ.cjs`、CDP中継は `デスクトップ/ブラウザCDP.cjs` が所有します。通常画面・VRの「Browser」とHTML/HTMの「ブラウザ」ボタンから起動します。既存のコード・表示プレビューは維持します。Web起動では新しいタブを開くため、クリック内で空タブを予約してからtools接続とプレビューURLを確認します。
 
+### Browserの撮影結果表示
+
+通常窓とF11ヘッダーは、撮影ボタンと「保存済み」を同じ折り返し単位にして隣接表示します。撮影IPCの成功と保存パスを確認してから表示し、保存先はツールチップに残します。再撮影中・失敗・保存パスのない応答では表示せず、以前と同じ保存パスの状態通知でも成功表示を戻しません。別rendererで完了した新しい保存パスは状態通知から反映します。
+
+`node --test frontend_ide/checks/browser-capture-ui.test.mjs` は成功・失敗・連打・古い状態通知・再試行・破棄を通常窓とF11ヘッダーで確認します。`node frontend_ide/scripts/check-browser-capture.mjs` は実Vue・模擬IPCを使い、幅1200px / 520pxでボタンとの隣接・撮影中・保存成功・失敗・再試行を確認し、`frontend_ide/temp/browser-capture-check/` に画像を保存します。配布buildと実プロジェクトへの保存は行いません。Chromiumを起動できる環境が必要です。`--compile-only` は画面コンパイルだけを確認します。
+
 ### Browserの要素連携
 
 通常操作欄とF11ヘッダーは「AI解析 → 撮影 → Code / Liveへ → 要素連携」の順です。要素連携はAI解析とは独立し、`デスクトップ/ブラウザ要素連携.cjs` が既存のページ用CDP接続で `Overlay.setInspectMode` を開始します。マウスを重ねると要素を強調し、`ブラウザ要素パネル.cjs` の専用非特権ポップアップへHTMLと計算済みCSSを表示します。クリックはページのリンク・送信処理へ渡さず、選択した要素を既存Code / Live下書きダイアログへ渡します。連携先と内容を確認して「下書きへ追加」を押し、AIへの送信はCode / Live側で行います。既存の下書きは保持します。

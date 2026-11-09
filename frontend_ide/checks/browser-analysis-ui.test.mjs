@@ -102,7 +102,7 @@ for(const headerOnly of [false,true])test(`Browser analysis button: ${headerOnly
  // 統合回帰: 背景解析の状態表示と要素連携の操作を通常窓・F11ヘッダーの両方に残す。
  f.state.page.value={...f.state.page.value,elementPicking:true};
  const tools=nodes(f.render()).find(n=>n.children?.['connection-tools']).children['connection-tools']();
- assert.deepEqual(Array.from(tools.filter(n=>n.type==='button'),n=>n.props.class),['browser-analysis','browser-capture','browser-handoff','browser-element-link'],'通常窓・F11で要素連携はCode / Liveへの直後');
+ assert.deepEqual(Array.from(nodes({children:tools}).filter(n=>n.type==='button'),n=>n.props.class),['browser-analysis','browser-capture','browser-handoff','browser-element-link'],'通常窓・F11で要素連携はCode / Liveへの直後');
  const element=tools.find(n=>n.props?.class==='browser-element-link');assert.ok(element);assert.equal(element.props['aria-pressed'],true);assert.equal(element.children,'要素連携中（Esc）');assert.equal(label(),'AI解析中…');
  let pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'complete'}});await pending;assert.equal(label(),'AI解析済');
  pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'failed',message:'解析結果を確認してください。'}});await pending;assert.equal(label(),'AI解析 要確認');
