@@ -11,6 +11,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 //       →④答え合わせ（壁を通らない・つながっている・最短か）を出し、2秒後に壁が崩れて次の迷路へ。無限に繰り返す。
 // 描いている間は盤面（迷路）がゆっくり回転し続ける（カメラは動かさず、盤面を回すので光の当たり方も変わる）。
 // 操作：ドラッグで回転、ホイールで拡大縮小、Spaceで今の迷路を終えて次へ。
+// 迷路の進行が実時間で10分止まった場合は、描画ループとは独立した監視で別の生成アルゴリズムへ進む。
 import {ref, onMounted, onBeforeUnmount} from 'vue';
 import * as THREE from 'three';
 import {navigationKeyActive, bindNavigationKeys} from './ナビ入力.js';
@@ -31,6 +32,7 @@ const HEIGHT = [WALL_HEIGHT, .06, .2, .12, .24, .42, .08];
 // 暗く落ち着いた色（光らせすぎない）。
 const COLOR = [0x4f68a0, 0x18253d, 0x3a6288, 0x9a8240, 0x5fb8a2, 0x2a3650, 0x434d66].map(value => new THREE.Color(value));
 const FLASH_COLOR = new THREE.Color(0x5b9ac0), FLASH_TIME = .7;
+const STALL_TIMEOUT_MS = 10 * 60 * 1000;
 const BUILD_TIME = 1.5, CHECK_TIME = 1.2, CLEAR_TIME = .8, CRUMBLE_TIME = .3;   // 答え合わせの表示1.2秒＋崩れる0.8秒＝2秒で次へ
 
 onMounted(() => {
@@ -81,6 +83,7 @@ onMounted(() => {
   let yOff = new Float32Array(0), yVel = new Float32Array(0), wait = new Float32Array(0), crumbleT = new Float32Array(0);
   const active = new Set(), dummy = new THREE.Object3D(), tmpColor = new THREE.Color();
   let phase = 'build', phaseTime = 0, playhead = 0, ops = [], rate = 1, algorithm = null, solver = null, lastAlgorithm = '', lastSolver = '', start = 0, goal = 0, solved = null, routeOps = [], collapsing = false;
+  let progressRevision = 0, renderedRevision = -1, lastProgressAt = performance.now(), lastHead = '';
   const position = i => [(i % M) - (M - 1) / 2, Math.floor(i / M) - (M - 1) / 2];
 
   function spawnDebris(i, count) {
@@ -112,7 +115,7 @@ onMounted(() => {
   function setBlock(i, next, pulse = true) {
     const previous = state[i];
     if (previous === next) return;
-    state[i] = next; active.add(i);
+    state[i] = next; active.add(i); progressRevision++;
     if (next === WALL) { h[i] = HEIGHT[WALL]; yOff[i] = -(WALL_HEIGHT + .06); yVel[i] = 0; wait[i] = 0; crumbleT[i] = 0; }   // 壁は下から生える
     else if (previous === WALL) { crumbleT[i] = CRUMBLE_TIME; spawnDebris(i, 5); }                              // 壁が揺れて砕け、破片が飛ぶ
     if (pulse) { flash[i] = FLASH_TIME; if (next === PATH || next === EXPLORED || next === ROUTE) h[i] = Math.max(h[i], .3); }
@@ -151,11 +154,15 @@ onMounted(() => {
   }
   function moveHead(i, color, light) {
     if (i === undefined || i === null) return;
+    const head = `${i}:${color}:${light}`;
+    if (head !== lastHead) { lastHead = head; progressRevision++; }
     const [x, z] = position(i); glow.position.set(x, .7, z); glow.visible = true; glow.material.color.setHex(color);
     headLight.position.set(x, 1.6, z); headLight.intensity = light; headLight.color.setHex(color);
   }
 
   function startRound() {
+    // 前の盤面が沈み切る前に次へ進むため、古い添字を新しい小さな格子へ持ち越さない。
+    active.clear(); applied = 0; lastHead = ''; progressRevision++; renderedRevision = -1; lastProgressAt = performance.now();
     algorithm = pickDifferent(MAZE_ALGORITHMS, lastAlgorithm); lastAlgorithm = algorithm.id;
     const cells = 8 + Math.floor(Math.random() * (MAX_CELLS - 7));
     maze = buildMaze(cells, algorithm.id); M = mazeSize(cells);
@@ -188,7 +195,7 @@ onMounted(() => {
     return applied >= list.length;
   }
   let applied = 0, explored = 0;
-  function enter(next) { phase = next; phaseTime = 0; playhead = 0; applied = 0; }
+  function enter(next) { progressRevision++; phase = next; phaseTime = 0; playhead = 0; applied = 0; }
 
   function stepPhase(dt) {
     phaseTime += dt;
@@ -237,7 +244,7 @@ onMounted(() => {
   el.addEventListener('pointerdown', onDown); el.addEventListener('pointermove', onMove); el.addEventListener('pointerup', onUp); el.addEventListener('pointercancel', onUp);
   el.addEventListener('wheel', onWheel, {passive: false}); el.addEventListener('pointerenter', onEnter); el.addEventListener('pointerleave', onLeave);
 
-  let raf = 0, frameOwner, disposed = false, last = 0, width = 0, height = 0, labelTimer = 0;
+  let raf = 0, frameOwner, disposed = false, last = 0, width = 0, height = 0;
   function frame(nowMs) {
     if (disposed) return;
     // 描画は約30fpsに抑える（ゆっくりした動きなので十分で、CPU使用率を下げる）。
@@ -254,15 +261,25 @@ onMounted(() => {
       board.rotation.y = view.az;   // 盤面を回す
       camera.position.set(0, Math.sin(view.el) * distance, Math.cos(view.el) * distance);
       camera.lookAt(0, .2, 0); renderer.render(scene, camera);
+      // 回転・光・破片だけの変化は進行に数えず、迷路・注目点・段階が描画できた時だけ更新する。
+      if (renderedRevision !== progressRevision) { renderedRevision = progressRevision; lastProgressAt = performance.now(); }
     }
     schedule();
   }
   function schedule() { frameOwner = el.ownerDocument.defaultView; raf = frameOwner.requestAnimationFrame(frame); }
   const unbindKeys = bindNavigationKeys(el, {keydown: onKeyDown, blur: () => { hover = false; dragging = null; }, moved: () => { if (raf) { frameOwner?.cancelAnimationFrame(raf); last = 0; schedule(); } }});
   startRound(); schedule();
+  const watchdogTimer = setInterval(() => {
+    if (disposed || el.ownerDocument.hidden) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0 || performance.now() - lastProgressAt < STALL_TIMEOUT_MS) return;
+    // RAFが例外などで止まっていても復帰できる。前回と違うアルゴリズムを選び直す。
+    frameOwner?.cancelAnimationFrame(raf); last = 0;
+    startRound(); schedule();
+  }, 1000);
 
   cleanup = () => {
-    disposed = true; frameOwner?.cancelAnimationFrame(raf); unbindKeys(); clearTimeout(labelTimer);
+    disposed = true; frameOwner?.cancelAnimationFrame(raf); unbindKeys(); clearInterval(watchdogTimer);
     el.removeEventListener('pointerdown', onDown); el.removeEventListener('pointermove', onMove); el.removeEventListener('pointerup', onUp); el.removeEventListener('pointercancel', onUp);
     el.removeEventListener('wheel', onWheel); el.removeEventListener('pointerenter', onEnter); el.removeEventListener('pointerleave', onLeave);
     blocks.dispose(); debris.dispose(); for (const item of disposables) item.dispose();

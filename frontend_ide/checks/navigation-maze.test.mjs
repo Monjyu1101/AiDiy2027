@@ -73,3 +73,20 @@ test('迷路の見せ方: 作り方のロジックに合う方（通路を掘る
  while(stack.length){const i=stack.pop();for(const [dx,dy] of [[0,-1],[1,0],[0,1],[-1,0]]){const x=(i%M)+dx,y=Math.floor(i/M)+dy,n=y*M+x;if(x>=0&&y>=0&&x<M&&y<M&&!grid[n]&&!seen.has(n)){seen.add(n);stack.push(n);}}}
  for(let i=0;i<M*M;i++)if(!grid[i])assert.ok(seen.has(i),'壁が外周につながっている');
 });
+
+
+test('Wilson法: 実表示の8〜14セルで仮経路を消し終え、画面の再生結果が完成した迷路と一致する',()=>{
+ for(let cells=8;cells<=14;cells++)for(const seed of [1,7,42,99]){
+  const maze=buildMaze(cells,'wilson',seeded(seed)),display=initialGrid(cells,maze.init);
+  let temporary=0,erased=0;
+  for(const [code,index] of maze.ops){
+   assert.ok(index>=0&&index<display.length);
+   if(code==='c')display[index]=1;
+   else if(code==='t'){display[index]=2;temporary++;}
+   else if(code==='u'){display[index]=0;erased++;}
+  }
+  assert.ok(temporary>0&&erased>0);assert.deepEqual(display,maze.grid,`Wilson ${cells} seed=${seed}`);
+  const start=blockOf(cells,0,0),goal=blockOf(cells,cells-1,cells-1),route=solveMaze(maze.grid,cells,'bfs',start,goal).route;
+  assert.equal(verifyRoute(maze.grid,cells,route,start,goal).valid,true);
+ }
+});
