@@ -55,6 +55,10 @@ Electron版のIDE配下Browserは、窓ごとに `aidiy_chrome_devtools` の `se
 
 `aidiy_browser [作業フォルダ]` または `node frontend_ide/launch.mjs --app browser --project <作業フォルダ>` で、IDEと同じBrowser画面を単独起動します。AiDiyアイコン・URL/検索欄・履歴操作を共有します。Electron専用で、未導入・起動失敗時に通常Webへ切り替えません。`--foreground` / `--wait` で終了待機できます。
 
+単独起動時に表示先が未指定なら `http://127.0.0.1:8090/` を1.5秒以内で確認し、frontend_webが応答すればそのページ、未起動・無応答・エラーならGoogleを開きます。明示したURLやIDEから開くBrowserの表示先は変更しません。通常のURL欄とF11の上端ヘッダーは、クリック・Tabでフォーカスが入ると現在のURLを全選択します。フォーカス済みの再クリックでは部分編集できます。日本語で始まる語など、アドレスではない入力はGoogle検索にし、IMEの変換確定Enterだけでは移動しません。確定後にもう一度Enterを押すか「開く」で移動します。
+
+URL欄の検証は `node --test checks/browser-address.test.mjs checks/browser-startup.test.mjs checks/standalone-browser-desktop.test.mjs`。実VueとChromiumでの隔離確認は `node scripts/check-browser-address.mjs`（`CHROME_PATH` で実行ファイルを指定可能、`--compile-only` はブラウザー不要）を使います。実ページ・IPCは模擬し、外部サイトへ接続せず、通常欄とF11ヘッダーの全選択・再編集・IMEイベント・検索・URL入力を検証して `temp/browser-address-check/` に画像を保存します。OSの日本語IMEと実Electronでの確認は別途必要です。
+
 セットアップは既存の `python frontend_ide/_setup.py`、コマンドだけの登録修復は `python _setup.py --launchers-only` を使います。全体startの自動起動対象には追加しません。Diagの「アプリ起動」でプロジェクトを選び、`aidiy_browser` を押しても開けます。
 
 単独起動のタイトルは **AiDiy Browser** で、番号やUUIDは付けません。tools接続中は `aidiy_chrome_devtools` に `session="aidiy_browser <UUID>"` を指定して操作します。UUIDは起動ごとのランダム値で、同じ起動中は窓の追加や繰り返しの連携でも変わりません。本文上部のsession表示にある空白を含めた名前をそのまま指定します。IDEの `aidiy_ide N` や通常Chromeの `default` セッションと分離し、起動ごとに一時プロファイルを使います。単独版の `new_tab` は同じUUIDのsessionへ窓を追加し、`close_session` はその起動プロセスのBrowser全窓だけを閉じます。最後の窓を閉じると専用ブリッジと配信サーバーも終了します。tools切断中は操作を止め、復帰を待ちます。

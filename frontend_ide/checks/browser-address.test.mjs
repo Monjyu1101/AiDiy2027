@@ -33,6 +33,19 @@ test('Browser URL表示: ASCII・authority・不正UTF8・制御/不可視/紛�
  assert.equal(displayBrowserURL(undefined),'');
  assert.equal(displayBrowserURL('https://example.test/%25E6%25BC%25A2'),'https://example.test/%25E6%25BC%25A2');
 });
+test('Browser URL入力: 日本語で始まる語と通常の検索語はGoogle、アドレスはそのまま開く',()=>{
+ for(const query of ['日本語','かな カタカナ','日本語.example','検索: 今日の天気','東京/京都','AiDiy Browser','　日本語 検索　']){
+  assert.equal(browser.browserURL(query),browser.HOME+'search?q='+encodeURIComponent(query.trim()),query);
+ }
+ for(const [input,target] of [
+  ['127.0.0.1:8090','http://127.0.0.1:8090/'],['localhost:8090/','http://localhost:8090/'],
+  ['example.com/検索?q=東京','https://example.com/'+encodeURIComponent('検索')+'?q='+encodeURIComponent('東京')],
+  ['https://日本語.jp/資料',new URL('https://日本語.jp/資料').href],
+  ['http://127.0.0.1:8090/画面',new URL('http://127.0.0.1:8090/画面').href],
+  ['about:blank','about:blank'],['file:///tmp/資料.html',new URL('file:///tmp/資料.html').href],
+ ])assert.equal(browser.browserURL(input),target,input);
+ for(const input of ['javascript:alert(1)','data:text/html,検索','https://user:password@example.com'])assert.throws(()=>browser.browserURL(input));
+});
 const flush=async()=>{for(let i=0;i<10;i++)await Promise.resolve();};
 function fixture(){
  const mounted=[],unmounted=[],calls=[];let listener,raw=encoded;
@@ -63,4 +76,29 @@ test('Browser実コンポーネント: 状態/履歴/再読込/編集保護/Ente
   input().props.onFocus();input().props.onBlur();f.notify(encoded+'#next');assert.equal(f.state.address.value,readable+'#next');
  }finally{f.dispose();}
  const before=f.state.address.value;f.state.update({url:'https://changed.test/'});assert.equal(f.state.address.value,before);
+});
+test('Browser実コンポーネント: フォーカス全選択と日本語IME確定Enterの保護',async()=>{
+ const f=fixture();try{
+  await flush();const form=()=>f.render().children[0].children.find(node=>node.type==='form');
+  const input=()=>form().children.find(node=>node.type==='input');
+  let selections=0;const focus={target:{select(){selections++;}}};
+  input().props.onFocus(focus);assert.equal(selections,1);
+  input().props.onCompositionstart();
+  input().props['onUpdate:modelValue']('日本語 検索');
+  let prevented=0;
+  input().props.onKeydown({key:'Enter',preventDefault(){prevented++;}});
+  form().props.onSubmit({preventDefault(){}});await flush();
+  assert.equal(prevented,1);assert.equal(f.calls.filter(([name])=>name==='navigate').length,0);
+  input().props.onCompositionend();
+  for(const flags of [{isComposing:true},{keyCode:229}])input().props.onKeydown({key:'Enter',...flags,preventDefault(){prevented++;}});
+  assert.equal(prevented,3,'ブラウザー側のIME判定・確定キーも送信しない');
+  input().props.onKeydown({key:'Enter',preventDefault(){prevented++;}});assert.equal(prevented,3,'通常Enterはフォーム送信へ進む');
+  form().props.onSubmit({preventDefault(){}});await flush();
+  assert.deepEqual(f.calls.filter(([name])=>name==='navigate'),[['navigate','日本語 検索']]);
+  assert.equal(f.state.page.value.url,browser.HOME+'search?q='+encodeURIComponent('日本語 検索'));
+  input().props.onBlur();input().props.onFocus(focus);assert.equal(selections,2,'再フォーカスでも全選択する');
+  input().props.onCompositionstart();input().props.onBlur();input().props.onFocus(focus);
+  input().props['onUpdate:modelValue']('127.0.0.1:8090');form().props.onSubmit({preventDefault(){}});await flush();
+  assert.equal(f.state.page.value.url,'http://127.0.0.1:8090/','IME入力の中断後も通常入力を開ける');
+ }finally{f.dispose();}
 });

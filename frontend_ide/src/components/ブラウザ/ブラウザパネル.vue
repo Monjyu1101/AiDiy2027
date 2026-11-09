@@ -12,6 +12,7 @@ import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
+let composingAddress=false;
 const headerOffset=ref(0),windowTitle=ref('');
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
@@ -58,7 +59,13 @@ async function action(name,value){
  if(disposed)return;if(!result?.ok){error.value=result?.error||'ブラウザを操作できません。';return;}
  error.value='';update(result);
 }
-function navigate(){editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
+function focusAddress(event){editing=true;event?.target?.select();}
+function blurAddress(){editing=false;composingAddress=false;}
+function addressKeydown(event){
+ // IMEの確定Enterをフォーム送信へ流さない。変換後の次のEnterで開く。
+ if(event.key==='Enter'&&(composingAddress||event.isComposing||event.keyCode===229))event.preventDefault();
+}
+function navigate(){if(composingAddress)return;editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
 async function capture(){
  if(disposed||capturing.value)return;capturing.value=true;captureMessage.value='';const navigation=captureNavigation;
  try{
@@ -99,7 +106,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
    <button type="button" aria-label="進む" title="進む" :disabled="!page.available||!page.forward" @click="action('forward')">→</button>
    <RefreshButton :disabled="!page.available" :stop="page.loading" :aria-label="page.loading?'読み込みを停止':'再読み込み'" :title="page.loading?'読み込みを停止':'再読み込み'" @click="action(page.loading?'stop':'reload')" />
    <button type="button" :disabled="!page.available" title="Google検索" aria-label="Google検索" @click="action('home')">⌂</button>
-   <input v-model="address" :disabled="!page.available" aria-label="URLまたは検索語" placeholder="URLまたはGoogleで検索" spellcheck="false" @focus="editing=true" @blur="editing=false">
+   <input v-model="address" :disabled="!page.available" aria-label="URLまたは検索語" placeholder="URLまたはGoogleで検索" spellcheck="false" @focus="focusAddress" @blur="blurAddress" @compositionstart="composingAddress=true" @compositionend="composingAddress=false" @keydown="addressKeydown">
    <button type="submit" :disabled="!page.available">開く</button>
   </form>
   <p class="browser-page-title" :class="{'browser-loading':page.loading&&!page.error}" :title="page.title" role="status" :aria-busy="page.loading&&!page.error">{{ page.loading&&!page.error?'Loading…':page.title||'Browser' }}<span v-if="page.session"> · session={{ page.session }}</span></p>
