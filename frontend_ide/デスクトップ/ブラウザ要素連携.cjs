@@ -70,11 +70,19 @@ function createBrowserElementLink({contents,record,available,onChange,onSelected
   active=true;selected=undefined;const run=++generation;onChange();
   try{
    if(!debug.isAttached())debug.attach('1.3');
-   await command('DOM.enable');await command('Overlay.enable');
+   await command('DOM.enable');if(!current(run))return;
+   // DOM.enableだけではfrontendのdocument IDが未登録で、ホバーのnodeHighlightRequestedが届かない。
+   await command('DOM.getDocument',{depth:0});if(!current(run))return;
+   await command('Overlay.enable');
    if(!current(run))return;
    panel=panelFactory({contents,onClose:()=>void stop()});await panel.open();
-   await overlay(async()=>{if(current(run))await command('Overlay.setInspectMode',{mode:'searchForNode',highlightConfig:{showInfo:false,showStyles:false,contentColor:{r:50,g:180,b:245,a:.15},borderColor:{r:30,g:220,b:255,a:.9}}});});
-   if(current(run)){inspecting=true;contents.focus?.();}
+   await overlay(async()=>{
+    if(!current(run))return;
+    // 最初のホバーは開始応答より先に届く場合がある。受信を先に有効にして取りこぼさない。
+    inspecting=true;
+    await command('Overlay.setInspectMode',{mode:'searchForNode',highlightConfig:{showInfo:false,showStyles:false,contentColor:{r:50,g:180,b:245,a:.15},borderColor:{r:30,g:220,b:255,a:.9}}});
+   });
+   if(current(run))contents.focus?.();
   }catch(error){if(current(run)){await stop();throw Error('要素連携を開始できません。'+error.message);}}
  }
  function request(projectRoot,source,id){

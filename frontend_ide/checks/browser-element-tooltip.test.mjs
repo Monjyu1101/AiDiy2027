@@ -42,3 +42,19 @@ test('要素説明: 描画開始失敗を通知し、破棄したページへ遅
 test('要素説明: 説明枠そのものを選択情報に混ぜない',()=>{
  assert.throws(()=>collectBrowserElement.call({nodeType:1,getAttribute:()=> 'true'}),/表示要素/);
 });
+
+test('要素説明: マウスが渡るたびに本文と対象の近くの位置を更新し、画面端では内側へ収める',()=>{
+ const f=fixture();f.run('open');const host=f.host(),section=host.shadow.children[0];
+ const targets=[
+  {...value,selector:'button#first',html:'<button id="first">一つ目</button>',rect:{x:100,y:100,width:100,height:30},left:'100px',top:'138px'},
+  {...value,selector:'button#second',html:'<button id="second">二つ目</button>',rect:{x:560,y:430,width:200,height:40},left:'428px',top:'262px'},
+  {...value,selector:'a#third',html:'<a id="third">三つ目</a>',rect:{x:20,y:30,width:80,height:30},left:'20px',top:'68px'},
+ ];
+ for(const target of targets){
+  f.run('update','one',target);
+  assert.equal(section.children[0].textContent,'項目選択中　esc=キャンセル');
+  assert.equal(section.children[1].textContent,target.selector);assert.equal(section.children[3].textContent,target.html);
+  assert.equal(host.properties.left.value,target.left);assert.equal(host.properties.top.value,target.top);
+ }
+ f.run('close');assert.equal(f.listeners.size,0);
+});
