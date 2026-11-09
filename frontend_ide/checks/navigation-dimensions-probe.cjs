@@ -48,7 +48,7 @@ async function checkNavigationDimensions(window,label){
  for(let attempt=0;;attempt++){
   const ready=await contents.executeJavaScript(`!!document.querySelector('.panel-brand .window-actions')&&!document.documentElement.classList.contains('desktop-opening')&&getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`);
   if(ready&&window.isVisible()&&window.getOpacity()===1)break;
-  assert.ok(attempt<300,'Navigator寸法測定の表示待機');
+  assert.ok(attempt<300,'Navi寸法測定の表示待機');
   await new Promise(done=>setTimeout(done,100));
  }
  const dom=await contents.executeJavaScript(`(()=>{
@@ -94,7 +94,7 @@ async function checkNavigationDimensions(window,label){
   titleHeightDip:dom.titlebar.height*zoom,titleHeightPhysicalPx:dom.titlebar.height*zoom*display.scaleFactor,
   captureSize:capture.getSize(),checks};
  writeFileSync(join(output,label+'.json'),JSON.stringify(result,null,2)+'\n');
- console.log('Navigator dimensions',JSON.stringify(result));
+ console.log('Navi dimensions',JSON.stringify(result));
  for(const check of checks)assert.ok(check.pass,JSON.stringify(check));
  return result;
 }

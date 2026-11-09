@@ -8,10 +8,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {ref,computed,watch,effectScope,reactive} from 'vue';
-import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
-import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
+import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
 import {NAVIGATION_SCENES,NAVIGATION_SCENE_LABELS} from '../src/components/開発スペース/ナビ風景.js';
-const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
+const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 const saved={schemaVersion:3,navigationId:'saved',goal:'保存済み目標',overall:{progress:20},items:[{id:'first',progress:20}],nextItemId:'first',nextPrompt:'次の作業'};
 function fixture(t){
  const scope=effectScope(),requests=[],props=reactive({instance:'navi-1',project:{path:'/fixture'},startedAt:1});let randoms=0;

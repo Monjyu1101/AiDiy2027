@@ -41,7 +41,7 @@ async function fixture(t, offline = false, connecting = false) {
   return { core, jobs, app, packets, wait, post, request, state, output: () => core.sockets.findLast(s => s.channel === '1') };
 }
 const terminal = p => p.type === 'navigationRunResult' && p.status !== 'accepted';
-test('Code server: 自動接続の一時offline表示中はNavigatorの送信を拒否しHermesへ迂回しない', async t => {
+test('Code server: 自動接続の一時offline表示中はNaviの送信を拒否しHermesへ迂回しない', async t => {
   const f = await fixture(t, false, true);
   const state = await f.wait(p => p.type === 'state' && !p.接続済み && !!p.接続エラー);
   assert.equal(state.自動接続, true);assert.equal(state.実行モード, 'offline');

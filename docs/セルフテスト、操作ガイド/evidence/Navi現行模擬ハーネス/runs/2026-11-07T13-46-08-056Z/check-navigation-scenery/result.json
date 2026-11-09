@@ -1,0 +1,76 @@
+{
+  "name": "check-navigation-scenery",
+  "expected": "3種Canvas、黒地、魚/餌/気泡/波紋/ホバー、Space/repeat/入力、別Document移動復帰と破棄",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-scenery.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\profile",
+    "APPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\localappdata",
+    "TMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\temporary",
+    "TEMP": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T13:48:45.038Z",
+  "endedAt": "2026-11-07T13:48:59.178Z",
+  "exitCode": 1,
+  "signal": null,
+  "timedOut": false,
+  "status": "FAIL",
+  "lastStage": null,
+  "blocked": [],
+  "loadedAssets": [],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T13:48:45.934Z",
+      "event": "spawn",
+      "executable": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "args": [
+        "--service=0.27.7",
+        "--ping"
+      ],
+      "pid": 16804
+    },
+    {
+      "at": "2026-11-07T13:48:46.173Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--no-sandbox",
+        "--remote-debugging-port=0",
+        "--window-size=1240,760",
+        "--user-data-dir=C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-46-08-056Z\\check-navigation-scenery\\temporary\\navi-scenery-0umXnI",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE localhost"
+      ],
+      "pid": 16920
+    },
+    {
+      "at": "2026-11-07T13:48:58.960Z",
+      "event": "childExit",
+      "pid": 16920,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

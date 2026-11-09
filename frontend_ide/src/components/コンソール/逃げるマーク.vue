@@ -5,7 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 // AiDiy マーク（welcome-mark）。マウスが近づくほど加速して左右へ逃げ、離れたらホームポジションへ戻る。
-// Code / Live / Console / IDE / Navigator / Task・Team ログインで共通利用する（VS Code 拡張も同じバンドル）。
+// Code / Live / Console / IDE / Navi / Task・Team ログインで共通利用する（VS Code 拡張も同じバンドル）。
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 defineProps({ icon: String });
 const escapeOffset = ref(0);

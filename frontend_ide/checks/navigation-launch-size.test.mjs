@@ -41,7 +41,7 @@ function fixture(opened, browser = true, desktopFailure = false) {
   return { launch: module.exports.launch, messages, process, stats: () => ({ closed, armed, disposed, openCalls, options, desktopEnv, desktopArgs, browserOptions }) };
 }
 
-test('Navigator, Code and Live browser app launches use the shared 900 height',async()=>{
+test('Navi, Code and Live browser app launches use the shared 900 height',async()=>{
  for(const kind of ['navi','code','live']){
   const f=fixture(true);await f.launch(kind,['--browser','--foreground']);
   assert.equal(f.stats().browserOptions.height ?? size.会話高さ,900);

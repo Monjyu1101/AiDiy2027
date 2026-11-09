@@ -1,0 +1,115 @@
+{
+  "name": "check-navigation-guide",
+  "expected": "初期・履歴・モデル画面、空目標の禁止、模擬Toolsの停止復帰、Codeとのタイトル寸法一致。AI呼出しゼロ",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-guide.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\profile",
+    "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\localappdata",
+    "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\temporary",
+    "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation-guide\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation-guide\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-05-51-570Z\\check-navigation-guide\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T14:06:34.200Z",
+  "endedAt": "2026-11-07T14:07:11.537Z",
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "status": "PASS",
+  "lastStage": "STAGE: Code comparison",
+  "blocked": [],
+  "loadedAssets": [
+    {
+      "at": "2026-11-07T14:06:35.514Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 596,
+      "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+    },
+    {
+      "at": "2026-11-07T14:06:35.544Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:06:35.551Z",
+      "event": "loadedAsset",
+      "path": "/development/app.js",
+      "status": 200,
+      "bytes": 1514914,
+      "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+    },
+    {
+      "at": "2026-11-07T14:07:09.528Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 596,
+      "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+    },
+    {
+      "at": "2026-11-07T14:07:09.544Z",
+      "event": "loadedAsset",
+      "path": "/development/app.css",
+      "status": 200,
+      "bytes": 118076,
+      "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+    },
+    {
+      "at": "2026-11-07T14:07:09.549Z",
+      "event": "loadedAsset",
+      "path": "/development/app.js",
+      "status": 200,
+      "bytes": 1514914,
+      "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+    }
+  ],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T14:06:34.496Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--remote-debugging-port=0",
+        "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-StowJl\\2\\temporary\\aidiy-connection-check-v6P7bz\\browser",
+        "--window-size=1280,800",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+      ],
+      "pid": 180,
+      "browserUsesExplicitIsolatedProfile": true
+    },
+    {
+      "at": "2026-11-07T14:07:11.415Z",
+      "event": "childExit",
+      "pid": 180,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

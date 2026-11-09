@@ -139,9 +139,9 @@ test('configured ../ and relative folders resolve against backend_server for val
  await assert.rejects(f.manager.launch('code','../'),{status:400});
 });
 
-test('Navigator is before Console and launches only selected project in a separate window',async t=>{
+test('Navi is before Console and launches only selected project in a separate window',async t=>{
  const {起動項目を整列,アプリアイコン}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');const f=await fixture(t);
- const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='console'));assert.equal(items.find(x=>x.id==='navi').名前,'Navigator');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
+ const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='console'));assert.equal(items.find(x=>x.id==='navi').名前,'Navi');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
  await f.manager.launch('navi',f.project);assert.deepEqual(f.calls[0].args,[join(f.root,'frontend_ide','launch.mjs'),'--app','navi','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.cwd,f.project);
 });
 

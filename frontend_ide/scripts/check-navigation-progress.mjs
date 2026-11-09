@@ -7,7 +7,7 @@
 // 模擬AIと実ブラウザで複数Naviの入力・結果・モデル・終了の独立を確認する。
 // ルートから node frontend_ide/scripts/check-navigation-progress.mjs。CHROME_PATHでブラウザを指定可能。
 // --step-4 は画面からの作成・再評価と保存内容の整合確認だけを実行する。
-import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navigation既定値.js';
+import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navi既定値.js';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
@@ -97,7 +97,7 @@ try {
   const barStyles=await child(0,`[...document.querySelectorAll('.navigation-items .navigation-progress')].map(el=>({value:el.getAttribute('aria-valuenow'),width:el.style.getPropertyValue('--progress-width'),color:el.style.getPropertyValue('--progress-fill'),label:el.textContent}))`);
   assert.deepEqual(barStyles.map(x=>x.value),['0','50','100']);assert.deepEqual(barStyles.map(x=>x.width),['0%','50%','100%']);assert.equal(new Set(barStyles.map(x=>x.color)).size,3);
   const targets=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-  const navTarget=targets.find(t=>t.title==='AiDiy IDE / Navigator 1');assert.ok(navTarget);
+  const navTarget=targets.find(t=>t.title==='AiDiy IDE / Navi 1');assert.ok(navTarget);
   const captureSocket=new WebSocket(navTarget.webSocketDebuggerUrl);await once(captureSocket,'open');
   let captureId=0;const captureSend=(method,params={})=>new Promise(done=>{const id=++captureId;const handler=event=>{const data=JSON.parse(event.data);if(data.id===id){captureSocket.removeEventListener('message',handler);done(data);}};captureSocket.addEventListener('message',handler);captureSocket.send(JSON.stringify({id,method,params}));});
   await captureSend('Emulation.setDeviceMetricsOverride',{width:500,height:600,deviceScaleFactor:1,mobile:false});
@@ -110,8 +110,8 @@ try {
   await evaluate(`document.querySelector('.navigation-launch').click()`);
   await until(()=>evaluate(`!!testNavi[1]?.document.querySelector('textarea')`),'Navi 2');
   assert.equal(await child(1,`document.querySelector('textarea').value`),DEFAULT_NAVIGATION_GOAL);
-  assert.ok(await child(0,`document.body.textContent.includes('AiDiy IDE / Navigator 1')`));
-  assert.ok(await child(1,`document.body.textContent.includes('AiDiy IDE / Navigator 2')`));
+  assert.ok(await child(0,`document.body.textContent.includes('AiDiy IDE / Navi 1')`));
+  assert.ok(await child(1,`document.body.textContent.includes('AiDiy IDE / Navi 2')`));
   assert.equal(await child(1,`document.querySelectorAll('.navigation-items .navigation-progress').length`),0);
   await child(1,`document.querySelector('.navigation-model-line button').click()`);
   await until(()=>child(1,`!!document.querySelector('.navigation-model-picker button[type=submit]:not(:disabled)')`),'model ready');
@@ -158,14 +158,14 @@ try {
   assert.equal(await child(0,`document.querySelectorAll('.terminal-welcome').length`),0);
   assert.equal(await child(1,`document.querySelectorAll('.terminal-welcome').length`),1);
   assert.equal(await child(1,`document.querySelectorAll('.terminal-welcome .welcome-mark').length`),1);
-  await child(0,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
+  await child(0,`document.querySelector('[aria-label="Naviを閉じる"]').click()`);
   await until(()=>evaluate(`testNavi[0].closed`),'Navi 1 close');
   assert.equal(await child(1,`document.querySelector('textarea').value`),DEFAULT_NAVIGATION_GOAL);
-  await child(1,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
+  await child(1,`document.querySelector('[aria-label="Naviを閉じる"]').click()`);
   standalone=await startDevelopment(project,{kind:'navi',navigationOptions:{defaultModel:async()=>({provider:"aidiy_hermes",model:"same"}),availability:async()=>({available:dependencyReady,reason:dependencyReady?'':'試験依存が停止しています'}),stateRoot:join(temporary,'standalone-state'),runAgent:()=>{throw Error('No standalone AI expected');}}});
   await send('Page.navigate',{url:standalone.url});
-  await until(()=>evaluate(`!!document.querySelector('.navigation-panel.standalone textarea')`),'standalone Navigation');
-  assert.ok(await evaluate(`document.body.textContent.includes('AiDiy Navigator')`));
+  await until(()=>evaluate(`!!document.querySelector('.navigation-panel.standalone textarea')`),'standalone Navi');
+  assert.ok(await evaluate(`document.body.textContent.includes('AiDiy Navi')`));
   assert.ok(await evaluate(`document.querySelector('.navigation-project').textContent.includes('project')`));
   await evaluate(`document.querySelector('.navigation-model-line button').click()`);
   await until(()=>evaluate(`!!document.querySelector('.navigation-model-picker')`),'standalone model dialog');

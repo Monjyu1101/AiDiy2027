@@ -101,10 +101,10 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.navigation-toggle').length`),0);
   await evaluate(`document.querySelector('.explorer-toggle').click()`);
   assert.equal(await evaluate(`document.querySelector('.space-view').classList.contains('navigation-open')`),false);
-  await child(0,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
+  await child(0,`document.querySelector('[aria-label="Naviを閉じる"]').click()`);
   await until(()=>evaluate(`testNavi[0].closed`),'Navi 1 close');
   assert.equal(await child(1,`document.querySelector('textarea').value`),'');
-  await child(1,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
+  await child(1,`document.querySelector('[aria-label="Naviを閉じる"]').click()`);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({pass:true,ai:'real readonly Hermes',aiCalls,checks:['two popup windows','independent model/result/evaluation','Explorer unchanged','close isolation']}));
 
 } finally {

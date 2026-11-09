@@ -146,7 +146,7 @@ function confirmsConversationChange(packet) {
   if (change.projectPath && change.projectPath !== packet.作業フォルダ?.パス && !(props.host && change.type === 'new')) return false;
   return change.type === 'selectHistory' ? packet.会話ID === change.id : packet.会話ID !== change.previousId;
 }
-// Navigator の自動送信は専用の相関IDで確認する。idle や本文だけを成功扱いしない。
+// Navi の自動送信は専用の相関IDで確認する。idle や本文だけを成功扱いしない。
 const navigationScope = snapshot => JSON.stringify([snapshot.作業フォルダ?.パス, snapshot.接続プロジェクトパス, snapshot.会話ID,
   snapshot.セッションID || snapshot.コアセッションID, snapshot.接続世代, snapshot.実行モード, snapshot.自動接続 !== false, snapshot.provider, snapshot.model]);
 function navigationReadiness(projectPath) {
@@ -162,7 +162,7 @@ function navigationReadiness(projectPath) {
   const unsupported = !!state.会話ID && state.navigationRunSupported !== true;
   return { ready: !!ready, projectPath: path || '', running: navigationRunning.value, fatal: navigationBlocked || unsupported,
     reason: navigationBlocked ? '前の実行結果を確認できません。Codeを開き直して確認してください。'
-      : unsupported ? 'Code実行サーバーが自動航行に未対応です。セットアップで更新し、Navigatorを開き直してください。'
+      : unsupported ? 'Code実行サーバーが自動航行に未対応です。セットアップで更新し、Naviを開き直してください。'
       : !state.会話ID ? 'Codeの状態通知を待っています…'
       : !connectionReady ? state.接続エラー ? `Codeの接続待ち: ${state.接続エラー}` : 'Codeのオンライン接続・セッション確定を待っています…'
       : ready ? '' : 'Codeの接続・プロジェクト・実行状態を確認してください。' };
@@ -190,7 +190,7 @@ function finishNavigation(failure, cancel = false) {
   } else run.resolve({ requestId: run.id, status: 'succeeded' });
 }
 function runNavigationPrompt({ text, projectPath, signal } = {}) {
-  if (signal?.aborted) return Promise.reject(new Error('Navigatorの自動実行は停止しました。'));
+  if (signal?.aborted) return Promise.reject(new Error('Naviの自動実行は停止しました。'));
   if (typeof text !== 'string' || !text.trim() || text.length > 200000)
     return Promise.reject(new Error('Codeへの依頼が空か長すぎます。'));
   if (typeof projectPath !== 'string' || !projectPath || !navigationReadiness(projectPath).ready)
@@ -200,7 +200,7 @@ function runNavigationPrompt({ text, projectPath, signal } = {}) {
     const run = { id: crypto.randomUUID(), scope: navigationScope(state), accepted: false, signal, resolve, reject };
     navigationRun = run; navigationRunning.value = true; navigationPrompt.value = text;
     arrivals.reserve(input.value, text, state.メッセージ.length);
-    run.abort = () => { if (navigationRun === run) finishNavigation(new Error('Navigatorの自動実行を停止しました。'), true); };
+    run.abort = () => { if (navigationRun === run) finishNavigation(new Error('Naviの自動実行を停止しました。'), true); };
     signal?.addEventListener('abort', run.abort, { once: true });
     // 受付確認は30秒。受付後の自動航行の完了監視だけを1時間にし、Code側の実行制限は変更しない。
     run.timer = setTimeout(() => { if (navigationRun === run) finishNavigation(new Error('Codeの受付を確認できません。実行状態を確認してください。'), true); }, 30000);

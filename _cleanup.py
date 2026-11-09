@@ -229,7 +229,7 @@ SERVICE_CLEANUP_TARGETS = (
         "フロントエンド(Avatar)",
         ("フロントエンド(Avatar)",),
     ),
-    ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navigator)", ("フロントエンド(navi)",)),
+    ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navi)", ("フロントエンド(navi)", "フロントエンド(Navigator)")),
     ("ide", "frontend_ide/aidiy_console", "フロントエンド(console)", ("フロントエンド(console)",)),
     ("ide", "frontend_ide/viewer", "フロントエンド(IDE)", ("フロントエンド(IDE)",)),
     ("channels", "frontend_channels/discord", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
@@ -707,7 +707,7 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
                         f"  {BACKEND_HERMES_PATH}/{env_name} を削除しますか？", default="y",
                     )
 
-    choices["ide"] = ask_yes_no("IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)をクリーンアップしますか？", default="y")
+    choices["ide"] = ask_yes_no("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)をクリーンアップしますか？", default="y")
     choices["channels"] = ask_yes_no("Channels(Discord / Slack)をクリーンアップしますか？", default="y")
 
     return choices
@@ -812,9 +812,9 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
     print()
     if choices.get("ide"):
         if not _run_folder_cleanup("frontend_ide", choices):
-            cleanup_errors.append("IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)")
+            cleanup_errors.append("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)")
     else:
-        print_info("IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)のクリーンアップをスキップしました")
+        print_info("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)のクリーンアップをスキップしました")
 
     print()
     cleanup_errors.extend(cleanup_channels(choices))
@@ -870,7 +870,7 @@ def main():
     print_info("  6. フロントエンド(Web)")
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
-    print_info("  9. IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser)")
+    print_info("  9. IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)")
     print_info(" 10. Channels(Discord / Slack)")
     print_info(f" 11. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()

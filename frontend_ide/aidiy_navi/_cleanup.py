@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""Navigatorを停止し、この配置先のランチャーを解除する。共有依存は残す。"""
+"""Naviを停止し、この配置先のランチャーを解除する。共有依存は残す。"""
 import importlib.util
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
@@ -22,5 +22,5 @@ def cleanup(choices=None, *, report=True):
         load('aidiy_navi_cleanup_start', ROOT / '_start.py').kill_ports()
         return load('aidiy_navi_cleanup_launcher', ROOT.parent / 'viewer/launcher.py').remove_launcher(ROOT, 'navi')
     except Exception as error:
-        print(f'[NG] Navigatorの解除に失敗しました: {error}')
+        print(f'[NG] Naviの解除に失敗しました: {error}')
         return False

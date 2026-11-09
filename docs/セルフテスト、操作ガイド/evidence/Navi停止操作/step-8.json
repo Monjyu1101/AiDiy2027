@@ -1,0 +1,128 @@
+{
+  "scope": "step-8 再評価中の自動航行オフだけ",
+  "platform": "Windows / Electron",
+  "provider": "codex_cli",
+  "model": "gpt-6.1-sol",
+  "verdict": "PASS",
+  "cases": [
+    {
+      "condition": "Code表示",
+      "verdict": "PASS",
+      "evidenceDirectory": "step8-visible-20261107",
+      "connectedAt": "2026-11-07T11:54:26.273Z",
+      "codeRequestId": "24a4e78e-9ba8-42c3-837f-fa760f00e867",
+      "codeAcceptedAt": "2026-11-07T11:54:26.471Z",
+      "codeReportedAt": "2026-11-07T11:54:54.070Z",
+      "codeSucceededAt": "2026-11-07T11:54:54.072Z",
+      "evaluationRequestedAt": "2026-11-07T11:54:54.073Z",
+      "evaluationJobId": "39f9986d-719d-47d3-8300-8af3acd12871",
+      "evaluationStartedAt": "2026-11-07T11:54:54.683Z",
+      "evaluationAcceptedRunningAt": "2026-11-07T11:54:54.695Z",
+      "offObservedAt": "2026-11-07T11:55:03.764Z",
+      "switchAriaChecked": "false",
+      "codeVisibleAtOff": true,
+      "evaluationReturnedAt": "2026-11-07T11:55:46.526Z",
+      "evaluationSignalAbortedAtReturn": false,
+      "evaluationCompleteResponseAt": "2026-11-07T11:55:48.618Z",
+      "evaluationFinalProgress": 50,
+      "nextPromptStillAvailable": true,
+      "closedAt": "2026-11-07T11:56:17.747Z",
+      "observedSecondsAfterComplete": 29.129,
+      "codeInputRequestsTotal": 1,
+      "codeInputRequestsAfterOff": 0,
+      "cancelRequests": 0,
+      "httpRequestAbortedEvents": 0,
+      "httpAbortConclusion": "オフ時の通信中断イベントは未観測。再評価POSTは既に受付済み。",
+      "serverJobConclusion": "オフ後も継続してcomplete。サーバー側中止は要求していない。",
+      "readmeUnchanged": true,
+      "sourceHash": "c1fe8437cfb5083f85df842dd49771ff7b1f6f68f65601e4f8929151b02e46c0",
+      "bundleHashAtLaunch": "aa61cc15281350e02d66b0fc8d1f79eec846b8ec167294c0fcadd95fda1b8e77",
+      "currentBundleHashAtEvidenceReview": "72a399652f553d96768fd6e97ef7a13fd075ec63624fcd5d966ea7df1b7f1806",
+      "bundleIdentityLimitation": "配布bundleは別経路で更新されており起動時の値と現在値は異なる。試験窓はリロードせず操作。読込済みJS本文のハッシュは未採取。Navigationパネル.vueのソースハッシュは両試験と照合時で同一。",
+      "images": {},
+      "observerLimitations": [
+        "screenのtasks配列は旧セレクターのため空。項目の数値は評価JSON・画面画像で照合。",
+        "画像名末尾code/evaluatingは待機画面の有無。オン・オフはelectron.jsonlのscreen.onで判定。",
+        "evaluation-abortは窓終了時の11:56:17.740Zに発生。11:55:46.526Zの返答・complete後の後片付けであり、実行中の中止ではない。"
+      ]
+    },
+    {
+      "condition": "Code非表示",
+      "verdict": "PASS",
+      "evidenceDirectory": "Code非表示試験",
+      "connectedAt": "2026-11-07T11:58:24.325Z",
+      "codeRequestId": "1954ef7c-1e26-40fd-a636-20c1354e4794",
+      "codeAcceptedAt": "2026-11-07T11:58:24.543Z",
+      "codeReportedAt": "2026-11-07T11:58:45.383Z",
+      "codeSucceededAt": "2026-11-07T11:58:45.385Z",
+      "evaluationRequestedAt": "2026-11-07T11:58:45.386Z",
+      "evaluationJobId": "490d0af5-7d00-4e33-b49e-34edef4976a3",
+      "evaluationStartedAt": "2026-11-07T11:58:45.650Z",
+      "evaluationAcceptedRunningAt": "2026-11-07T11:58:45.661Z",
+      "offObservedAt": "2026-11-07T11:59:20.543Z",
+      "switchAriaChecked": "false",
+      "codeVisibleAtOff": false,
+      "evaluationReturnedAt": "2026-11-07T11:59:23.150Z",
+      "evaluationSignalAbortedAtReturn": false,
+      "evaluationCompleteResponseAt": "2026-11-07T11:59:24.827Z",
+      "evaluationFinalProgress": 50,
+      "nextPromptStillAvailable": true,
+      "closedAt": "2026-11-07T11:59:51.492Z",
+      "observedSecondsAfterComplete": 26.665,
+      "codeInputRequestsTotal": 1,
+      "codeInputRequestsAfterOff": 0,
+      "cancelRequests": 0,
+      "httpRequestAbortedEvents": 0,
+      "httpAbortConclusion": "オフ時の通信中断イベントは未観測。再評価POSTは既に受付済み。",
+      "serverJobConclusion": "オフ後も継続してcomplete。サーバー側中止は要求していない。",
+      "readmeUnchanged": true,
+      "sourceHash": "c1fe8437cfb5083f85df842dd49771ff7b1f6f68f65601e4f8929151b02e46c0",
+      "bundleHashAtLaunch": "f7c628db42e7f28ae640c415762838c8bf12c0acfbdff28b5a73c9cff3df1e02",
+      "currentBundleHashAtEvidenceReview": "72a399652f553d96768fd6e97ef7a13fd075ec63624fcd5d966ea7df1b7f1806",
+      "bundleIdentityLimitation": "配布bundleは別経路で更新されており起動時の値と現在値は異なる。試験窓はリロードせず操作。読込済みJS本文のハッシュは未採取。Navigationパネル.vueのソースハッシュは両試験と照合時で同一。",
+      "images": {},
+      "observerLimitations": [
+        "screenのtasks配列は旧セレクターのため空。項目の数値は評価JSON・画面画像で照合。",
+        "画像名末尾code/evaluatingは待機画面の有無。オン・オフはelectron.jsonlのscreen.onで判定。"
+      ]
+    }
+  ],
+  "regression": {
+    "command": "node --test frontend_ide/checks/navigation-autopilot-ui.test.mjs",
+    "passed": 22,
+    "failed": 0,
+    "realDeviceEvidence": false
+  },
+  "productCodeChanged": false,
+  "sharedServicesRestarted": false,
+  "privacy": "今回生成したJSON/JSONLの専用一時領域の絶対パスを別名化。認証ヘッダー・トークン・SSE本文全体は記録しない。採用画像は試験窓だけ。",
+  "excludedAttempts": [
+    {
+      "directory": "step8-20261107",
+      "reason": "自動航行外の再評価中に窓が閉じ、停止試験は不成立。"
+    },
+    {
+      "directory": "Code非表示",
+      "reason": "オン操作前に窓が閉じ、停止試験は未実施。"
+    },
+    {
+      "directory": ".",
+      "reason": "既存の11:45までの記録は接続待ちまで。今回の実機合格の根拠に含めない。"
+    }
+  ],
+  "documentVerification": {
+    "pdfPages": 44,
+    "allPagesRenderedAndVisuallyReviewed": true,
+    "changedPagesReviewedAtFullResolution": [
+      1,
+      37,
+      38,
+      39,
+      40
+    ],
+    "newEvidenceLinksExist": true,
+    "newJsonRecordsAbsolutePathsAndTokenPatternsAbsent": true,
+    "pdfLocalLinksMadeRelative": 15,
+    "notes": "PDFのリンク注釈から絶対パスを除去。本文・画像の配置は変更なし。"
+  }
+}

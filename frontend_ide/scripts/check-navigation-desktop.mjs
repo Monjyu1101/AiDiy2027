@@ -23,7 +23,7 @@ const server=await startDevelopment(project,{kind,...(dimensionsOnly?{offline:tr
 try{
  const env={...process.env,AIDIY_DEVELOPMENT_URL:server.url,AIDIY_DEVELOPMENT_KIND:kind,AIDIY_DEVELOPMENT_PROJECT:project,AIDIY_TEST_PROFILE:profile};delete env.ELECTRON_RUN_AS_NODE;
  const child=spawn(process.env.ELECTRON_PATH||electronExecutable(),[fileURLToPath(new URL(kind==='navi'?'../checks/navigation-standalone-probe.cjs':'../checks/navigation-desktop-probe.cjs',import.meta.url))],{env,windowsHide:true,stdio:['ignore','inherit','inherit','ipc']});
- let result;child.on('message',value=>{if(value.testPassed)result=value;});const [code]=await once(child,'exit');if(code!==0||!result)throw Error(`Navigation失敗: ${code}`);if(agentCalls)throw Error(`寸法試験のAI呼び出し試行: ${agentCalls}`);console.log(JSON.stringify({...result,...(dimensionsOnly?{agentCalls}:{} )},null,2));
+ let result;child.on('message',value=>{if(value.testPassed)result=value;});const [code]=await once(child,'exit');if(code!==0||!result)throw Error(`Navi失敗: ${code}`);if(agentCalls)throw Error(`寸法試験のAI呼び出し試行: ${agentCalls}`);console.log(JSON.stringify({...result,...(dimensionsOnly?{agentCalls}:{} )},null,2));
 }finally{
  await server.close();
  for(const folder of [profile,project]){if(!resolve(folder).startsWith(resolve(tmpdir())+sep))throw Error('一時パスが不正です');rmSync(folder,{recursive:true,force:true,maxRetries:5,retryDelay:200});}

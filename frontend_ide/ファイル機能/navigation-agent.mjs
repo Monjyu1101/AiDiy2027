@@ -21,7 +21,7 @@ export async function runNavigationAgent({project,prompt,signal,selection}){
   child.stdout.on('data',chunk=>{size+=chunk.length;if(size>1024*1024){oversize=true;child.kill();}else chunks.push(chunk);});
   child.on('error',reject);child.stdin.on('error',()=>{});
   child.on('close',code=>{
-   if(oversize)return reject(Error('Navigationの回答が大きすぎます。'));
+   if(oversize)return reject(Error('Naviの回答が大きすぎます。'));
    try{const result=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(code!==0||result.error||typeof result.content!=='string')throw Error(result.error||'読取専用AIの回答を確認できません。');resolve(result);}
    catch(e){reject(e instanceof SyntaxError?Error('読取専用AIの応答形式を確認できません。'):e);}
   });
@@ -31,7 +31,7 @@ export async function runNavigationAgent({project,prompt,signal,selection}){
 
 // 常駐Tools/Coreへの接続は要求しない。ローカル実行依存だけを確認する。
 export async function navigationAvailability(selection){
- try{await access(join(root,'backend_tools','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Navigator用のPython環境が見つかりません。セットアップ後に再確認してください。'};}
+ try{await access(join(root,'backend_tools','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Navi用のPython環境が見つかりません。セットアップ後に再確認してください。'};}
  if(selection.provider==='aidiy_hermes'){
   try{await access(join(root,'command_hermes','prediction_main.py'));await access(join(root,'command_hermes','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Hermesの実行環境が見つかりません。セットアップ後に再確認してください。'};}
  }else{

@@ -13,7 +13,7 @@ function panelBounds(rect,owner,screen,kind='explorer'){
  if(!rect||!['left','top','width','height'].every(key=>Number.isFinite(rect[key]))||rect.width<=0||rect.height<=0)return null;
  const origin=owner.window.getContentBounds(),zoom=owner.window.webContents.getZoomFactor();
  const desired={x:Math.round(origin.x+rect.left*zoom),y:Math.round(origin.y+rect.top*zoom),width:Math.round(Math.max(300,rect.width)*zoom),height:Math.round(Math.max(kind==='panel-routes'?40:320,rect.height)*zoom)};
- // NavigatorはDIPで初期480×800を指定。表示後の手動リサイズは変更しない。
+ // NaviはDIPで初期480×800を指定。表示後の手動リサイズは変更しない。
  if(kind==='panel-navigation'){desired.width=size.幅;desired.height=size.ナビ高さ;}
  // 別画面へまたがるパネルは、そのパネルが最も重なるディスプレイを選ぶ。
  const area=screen.getDisplayMatching(desired).workArea,margin=8;

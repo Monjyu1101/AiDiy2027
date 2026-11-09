@@ -7,11 +7,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
-import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
+import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
 import {ref,computed,toRaw} from 'vue';
-import {runNavigationAutopilot} from '../src/components/開発スペース/Navigation自動運転.js';
-const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
+import {runNavigationAutopilot} from '../src/components/開発スペース/Navi自動運転.js';
+const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 const makeResult=(progress,requestId='initial')=>({schemaVersion:3,navigationId:'test-nav',requestId,goal:'goal',items:[{id:'work',name:'task',progress}],overall:{progress},nextItemId:progress<100?'work':null,nextPrompt:progress<100?'execute task':''});
 const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
@@ -28,7 +28,7 @@ function fixture(handler,props={}){
  api.visible.value=true;api.panel.value={style:{},ownerDocument:{visibilityState:'visible'}};api.result.value=state;api.goal.value='goal';api.availability.value={available:true};
  return {api,calls,resizes,sounds,watchers,timers};
 }
-test('Vue handlers open only on demand, run two rounds, stop at100 and retain hidden Code until Navigator release',async()=>{
+test('Vue handlers open only on demand, run two rounds, stop at100 and retain hidden Code until Navi release',async()=>{
  const f=fixture(),prompts=[];f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:async request=>prompts.push(request.text)};
  assert.equal(f.calls.length,0);await f.api.toggleAutopilot();await flush();assert.deepEqual(prompts,['execute task','execute task']);assert.equal(f.api.autopilot.value,false);assert.match(f.api.autopilotStatus.value,/100%/);assert.equal(f.api.result.value.overall.progress,100);
  assert.deepEqual(f.sounds,['注意','完了']); // 評価50%=注意、評価100%=完了（100%で終わるときに完了音を重ねない）
@@ -68,12 +68,12 @@ test('hiding during Code launch still mounts one session and continues navigatio
  const run=f.api.toggleAutopilot();await flush();f.api.toggleCode();await flush();finish(reply({url:'/panels/code/navi-1/retained/'}));await run;assert.equal(f.api.codeOpen.value,false);assert.equal(f.api.codeBase.value,'/panels/code/navi-1/retained/');assert.equal(count,2);assert.equal(f.api.result.value.overall.progress,100);assert.equal(f.calls.filter(x=>x.method==='DELETE').length,0);
 });
 test('Code toggle lives in title slots and embedded Code does not control the owner OS window',()=>{
- const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const full=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  assert.match(full,/<template #connection-tools><button[^>]+class="navigation-code-toggle"/);assert.match(full,/titleTools:.*navigation-code-toggle/);assert.doesNotMatch(full,/:disabled="autopilot" @click="toggleCode"/);assert.match(full,/<aside v-show="codeOpen"/);assert.doesNotMatch(full,/@click="stopAutopilot/);assert.doesNotMatch(full,/:base="codeBase"[^>]*:desktop=/);
 });
 
-test('Navigator右側はCode見出し・空のタイトル行・重複する停止ボタンを出さない',()=>{
- const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+test('Navi右側はCode見出し・空のタイトル行・重複する停止ボタンを出さない',()=>{
+ const full=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  const aside=full.match(/<aside v-show="codeOpen"[\s\S]*?<\/aside>/)?.[0];
  assert.ok(aside);assert.doesNotMatch(aside,/<strong>Code<\/strong>/);
  assert.doesNotMatch(aside,/<header|自動航行をオフ/);
@@ -84,7 +84,7 @@ test('Code orbit light is enabled only while autopilot is on and total is below1
  const f=fixture();assert.equal(f.api.codeDriving.value,false);f.api.autopilot.value=true;assert.equal(f.api.codeDriving.value,true);f.api.result.value=makeResult(100);assert.equal(f.api.codeDriving.value,false);f.api.result.value=makeResult(50);assert.equal(f.api.codeDriving.value,true);f.api.stopAutopilot();assert.equal(f.api.codeDriving.value,false);
 });
 test('Code and overall light share a calm five-second orbit without slowing IDE exploration',()=>{
- const full=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');const shared=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ const full=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');const shared=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
  assert.match(full,/:class="\{driving:codeDriving\}"/);assert.match(full,/\.navigation-code\.driving,\.navigation-panel>\.navigation-overall\.driving\{[^}]*animation:motion-spin 5s linear infinite/);assert.match(shared,/\.space-motion-toggle\.driving\{[^}]*animation:motion-spin 1\.6s linear infinite/);assert.match(shared,/@keyframes motion-spin/);assert.doesNotMatch(full,/prefers-reduced-motion/);assert.doesNotMatch(full,/requestAnimationFrame/);
 });
 
@@ -94,12 +94,12 @@ test('opening Code with autopilot OFF never inserts or submits the suggested pro
  f.api.toggleCode();await flush();assert.deepEqual(automated,[]);
 });
 
-test('active standalone title retains AiDiy and restores the original Navigator title',()=>{
- const f=fixture();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy Navigation Cruise');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navigation Cruise');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy Navigator');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navigator');
+test('active standalone title retains AiDiy and restores the original Navi title',()=>{
+ const f=fixture();assert.equal(f.api.title.value,'AiDiy Navi');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy Navi Cruise');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navi Cruise');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy Navi');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy Navi');
 });
 
-for(const allDisplays of [false,true])test(`IDE Navigator retains AiDiy IDE and its window number during Cruise (VR=${allDisplays})`,()=>{
- const f=fixture(undefined,{standalone:false,instance:'navi-7',allDisplays});assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy IDE / Navigation Cruise 7');f.api.detached.value=true;f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navigation Cruise 7');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy IDE / Navigator 7');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navigator 7');
+for(const allDisplays of [false,true])test(`IDE Navi retains AiDiy IDE and its window number during Cruise (VR=${allDisplays})`,()=>{
+ const f=fixture(undefined,{standalone:false,instance:'navi-7',allDisplays});assert.equal(f.api.title.value,'AiDiy IDE / Navi 7');f.api.autopilot.value=true;assert.equal(f.api.title.value,'AiDiy IDE / Navi Cruise 7');f.api.detached.value=true;f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navi Cruise 7');f.api.stopAutopilot();assert.equal(f.api.title.value,'AiDiy IDE / Navi 7');f.api.syncCruiseTitle();assert.equal(f.api.panel.value.ownerDocument.title,'AiDiy IDE / Navi 7');
 });
 
 test('starting cruise from a previously hidden Code reopens the existing session',async()=>{

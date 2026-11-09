@@ -1,0 +1,3544 @@
+{
+  "at": "2026-11-07T14:20:17.592079+00:00",
+  "scope": "step-9の探索結果を引き継ぎ、公開試験資料・既知の一時資料・ローカルGit追加4履歴を照合。探索の終了は失敗の解消ではない。",
+  "step9Search": {
+    "roots": [
+      "docs/セルフテスト、操作ガイド/evidence",
+      ".aidiy_cache",
+      "tmp",
+      "temp",
+      "_AIDIY/histories",
+      "frontend_ide/scripts",
+      "frontend_ide/checks"
+    ],
+    "fileInventoryCount": 696,
+    "missingExpectedDirectory": "docs/セルフテスト、操作ガイド/evidence/_work_records/selftest-20261106",
+    "expectedDirectoryExists": false,
+    "localGitDirectory": ".git_local",
+    "localGitCommits": [
+      "e4d8a57d17b0f13c2415f9dfd4eaa48111491468",
+      "fe9151f45103c427db4f8d35f17858f3dc46f69b"
+    ],
+    "gitTreesContainExpectedDirectory": false,
+    "gitFsckUnreachableObjects": 0,
+    "otherRecordsChecked": [
+      "docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編",
+      "_AIDIY/histories（最新は20261104.md）",
+      "temp/aidiy_diagのnavi起動ログ",
+      "backend_server/temp/logs",
+      "backend_tools/temp/logs",
+      "OS一時領域のAiDiyナビ試験名フォルダ（ブラウザprofileを除外）"
+    ],
+    "result": "当該8本の名前・実行結果、当時のHermes段階ログは発見できない。Nov3の実装確認等は別日時の結果。Nov6のバックエンドログなし（現在はNov7の19〜21時台）。OS一時領域の非profile試験フォルダにはNov4用READMEのみ。",
+    "excluded": [
+      ".aidiy_backup（プロジェクト方針で参照対象外）",
+      "認証・設定値、DB、ブラウザprofile、他アプリの私的会話",
+      "利用者窓の操作、共有サービスの停止・再起動"
+    ]
+  },
+  "expectedOriginalDirectoryExists": false,
+  "localGit": {
+    "knownStep9Commits": [
+      "e4d8a57d17b0f13c2415f9dfd4eaa48111491468",
+      "fe9151f45103c427db4f8d35f17858f3dc46f69b"
+    ],
+    "allCurrentCommits": [
+      "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+      "550373c43d995f7857fe70d6d61864503f6e49de",
+      "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+      "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+      "e4d8a57d17b0f13c2415f9dfd4eaa48111491468",
+      "fe9151f45103c427db4f8d35f17858f3dc46f69b"
+    ],
+    "additionalCommits": [
+      "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+      "550373c43d995f7857fe70d6d61864503f6e49de",
+      "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+      "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6"
+    ],
+    "additionalTrees": [
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "expectedOriginalDirectoryEntries": [],
+        "originalDateNamedCandidates": [],
+        "scopedTrackedFileCount": 1151,
+        "changedScopedPathCount": 598,
+        "matchedChangedPublicRecords": [
+          {
+            "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.md.json",
+            "gitBlob": "11856dedf7428b0832ca6102d4659f60cbbb74fc",
+            "classification": "参照・資料整合・既存失敗報告。原実行一覧や段階ログの回収ではない。"
+          },
+          {
+            "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.pdf.txt",
+            "gitBlob": "0758d7ed06606ec8f23643b704f8c02ebd2ffc3b",
+            "classification": "参照・資料整合・既存失敗報告。原実行一覧や段階ログの回収ではない。"
+          }
+        ]
+      },
+      {
+        "commit": "550373c43d995f7857fe70d6d61864503f6e49de",
+        "expectedOriginalDirectoryEntries": [],
+        "originalDateNamedCandidates": [],
+        "scopedTrackedFileCount": 674,
+        "changedScopedPathCount": 58,
+        "matchedChangedPublicRecords": [
+          {
+            "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/欠落参照.json",
+            "gitBlob": "a12e3925a024b4adf753456f99d3be0459cf8abb",
+            "classification": "参照・資料整合・既存失敗報告。原実行一覧や段階ログの回収ではない。"
+          }
+        ]
+      },
+      {
+        "commit": "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+        "expectedOriginalDirectoryEntries": [],
+        "originalDateNamedCandidates": [],
+        "scopedTrackedFileCount": 617,
+        "changedScopedPathCount": 6,
+        "matchedChangedPublicRecords": [
+          {
+            "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/着手時.json",
+            "gitBlob": "facfa04627023896eb199ac8fbb8553651c49aa4",
+            "classification": "参照・資料整合・既存失敗報告。原実行一覧や段階ログの回収ではない。"
+          }
+        ]
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "expectedOriginalDirectoryEntries": [],
+        "originalDateNamedCandidates": [],
+        "scopedTrackedFileCount": 611,
+        "changedScopedPathCount": 115,
+        "matchedChangedPublicRecords": [
+          {
+            "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/step-9.json",
+            "gitBlob": "56af215655337e339e7843ddaed98f6aba4b40a3",
+            "classification": "参照・資料整合・既存失敗報告。原実行一覧や段階ログの回収ではない。"
+          }
+        ]
+      }
+    ],
+    "inspectedChangedPublicBlobs": [
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/PDF機械照合.json",
+        "gitBlob": "adcc84f38779291dc0d1b0b20c38836f06e3aea9",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/step-10.json",
+        "gitBlob": "b3ce01322d2d8a29a481347585cf84c3b0fb7f25",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/図版.json",
+        "gitBlob": "8df02865b20deb510567f509d7d50c448a953c13",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/migration-manifest.json",
+        "gitBlob": "da3bcef69e6b085d6386afcee974092d2b899e36",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/pdf-manifest.json",
+        "gitBlob": "f53609ac0a2a88bcc7e1ac2e476882ccfd353467",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/comparison.json",
+        "gitBlob": "650b5902012aca1d9153c5517c39bc6d03c97bf0",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/deep-comparison.json",
+        "gitBlob": "93ce772ce6639c3a1cd499ace0e1ec43288a3fb5",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/deep-progress.txt",
+        "gitBlob": "c2f8492a0175fc02e1d9eb0b9a4d12899b380807",
+        "keywordMatched": false,
+        "encoding": "UTF-16 BOM"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/final-content-progress.txt",
+        "gitBlob": "513defa05695dce4a8d0ac853a4aff2d529fb93a",
+        "keywordMatched": false,
+        "encoding": "UTF-16 BOM"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/final-content.json",
+        "gitBlob": "fe43e642d2e3ffb5134b761ed4deea6efcad614e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/image-comparison.json",
+        "gitBlob": "dd510c1a7e958638589529d5b047d8cf922eed48",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/image-progress.txt",
+        "gitBlob": "2d36825fae47c90a494b59972e90b763a7116f63",
+        "keywordMatched": false,
+        "encoding": "UTF-16 BOM"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/link-update.json",
+        "gitBlob": "766f3b5026029aa81f1380e8aa6673ba2dc8c6aa",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/pdf-links.json",
+        "gitBlob": "3576b87198ac6311498a3e631bb93ffa1b9ede9f",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/progress.txt",
+        "gitBlob": "c6231730602ed35a547b03ade3392f2b7cf9473e",
+        "keywordMatched": false,
+        "encoding": "UTF-16 BOM"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/reference-check.json",
+        "gitBlob": "dc84bb98ff09919529a7264f96ce60eb52a8aad9",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/render-comparison.json",
+        "gitBlob": "d44df3a484323768eba4c7f9247c299a9aa8ae43",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/render-progress.txt",
+        "gitBlob": "cd4480f4ad40ba0442bdb9db1e2134e58481d02f",
+        "keywordMatched": false,
+        "encoding": "UTF-16 BOM"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/update-plan.json",
+        "gitBlob": "8d72c07d31b206e300aa504dacc9691989d0ee8c",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_avatar,Electron実行編.md.json",
+        "gitBlob": "6b3d1c465432ac89c2e36abfdaf2bfe3ca4b99a2",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_avatar,Electron実行編.pdf.txt",
+        "gitBlob": "d9579cc4499a1483be11909ce837625b421ccb5d",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_avatar,Web実行編.md.json",
+        "gitBlob": "8ba74364fdbaaeb0de01b422fe67911087c254e1",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_avatar,Web実行編.pdf.txt",
+        "gitBlob": "25f442524332787092a49829a4925b92138fc698",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_browser,操作編.md.json",
+        "gitBlob": "450b05054378787e5e58f530c407b362b9e03e3a",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_browser,操作編.pdf.txt",
+        "gitBlob": "0bd15732818eb24141dfc72c52fa48d2932e23af",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_code,操作編.md.json",
+        "gitBlob": "ea439441ec5a169f6ac0f918bc216031881f3e77",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_code,操作編.pdf.txt",
+        "gitBlob": "b08d3a30f8d78d94bbb123769011f5e51ee48bff",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_console,操作編.md.json",
+        "gitBlob": "c4e1d3c1a9a820459bc9d509c76659e995944b5b",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_console,操作編.pdf.txt",
+        "gitBlob": "95fc4970755956918d8b41451604d14b0bb84a95",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,AIモデル・Tools編.md.json",
+        "gitBlob": "82698c667322411fdcc7a719fa7e4146de2634bf",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,AIモデル・Tools編.pdf.txt",
+        "gitBlob": "dc466fb179284e28b77a67a6dc2d67bd5431ac77",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,システム起動編.md.json",
+        "gitBlob": "7a1dad1d02ba7d51011bd74614ead844df57a02f",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,システム起動編.pdf.txt",
+        "gitBlob": "9285f18c120c83e231e351c867a0889da409ec6c",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,ランチャー編.md.json",
+        "gitBlob": "c7ab9dfa54c2fa199b9740263f48d0b6297f08d4",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,ランチャー編.pdf.txt",
+        "gitBlob": "82c301389ba66ce4cebe20079d0c353af515947e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,環境確認編.md.json",
+        "gitBlob": "c6995582d7775d8b1222e7e809971155a1d8f07e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,環境確認編.pdf.txt",
+        "gitBlob": "88652da05f42f03b5b84f08e795737ba5b419a65",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,設定再起動編.md.json",
+        "gitBlob": "900ddf692b8f9affa896fd2a368f70c4b77c4445",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_diag,設定再起動編.pdf.txt",
+        "gitBlob": "d0f8cd1e4eaa9f9d50997f3003c44318235b1119",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_discord,操作編.md.json",
+        "gitBlob": "2fb2fdfc4e9577cddd03d388c17ed3c7dd7fbaa4",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_discord,操作編.pdf.txt",
+        "gitBlob": "6f1780976f22c497c580e6c9d5896da7603463e0",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_hermes,操作編.md.json",
+        "gitBlob": "a22bb0e28685eae0b0f3e1fee156e703552362f2",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_hermes,操作編.pdf.txt",
+        "gitBlob": "61d2d2980003fe726dc706feaf402aa52040089e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_ide,操作編.md.json",
+        "gitBlob": "d2df4d7ce02a97b8847ca81b34d5f268a7ab4f75",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_ide,操作編.pdf.txt",
+        "gitBlob": "b083a0dd7c1b9dffa5839e4eec8ee88d1382d537",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_live,操作編.md.json",
+        "gitBlob": "2e8373d12b1e2e124954a730b3231835474eba3b",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_live,操作編.pdf.txt",
+        "gitBlob": "af03f738a77f4314adfb0d041dc617a12bc543aa",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.md.json",
+        "gitBlob": "11856dedf7428b0832ca6102d4659f60cbbb74fc",
+        "keywordMatched": true,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.pdf.txt",
+        "gitBlob": "0758d7ed06606ec8f23643b704f8c02ebd2ffc3b",
+        "keywordMatched": true,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_slack,操作編.md.json",
+        "gitBlob": "8c0fa0a300dd727eaa04c9daa8a45cde3f2f34b3",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_slack,操作編.pdf.txt",
+        "gitBlob": "a418ce207afce5bf826736f713ac964b4c85c7f6",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_task,操作編.md.json",
+        "gitBlob": "3e8ae19110b2ba855f9de2eac4d196e418adc2ea",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_task,操作編.pdf.txt",
+        "gitBlob": "1c6ed2eb96a6499094188d7a74c39f820b8885fa",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_team,操作編.md.json",
+        "gitBlob": "a028225f6d72cdda6609ec793816a7b4c3904b94",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,aidiy_team,操作編.pdf.txt",
+        "gitBlob": "cfef94d4fd664ce53e112c4d632b32ddc9d6caa7",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,backend_tools,主要メソッド編.md.json",
+        "gitBlob": "ab7d88904bee1216de807ef689c593f3053f3379",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,backend_tools,主要メソッド編.pdf.txt",
+        "gitBlob": "d9486a8e8ee8b95a95e430c320c49fe576953fac",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,AiDiy編.md.json",
+        "gitBlob": "616516859981f4e91197f19d9ea3c65d0c930071",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,AiDiy編.pdf.txt",
+        "gitBlob": "4c1eb6c4fd72721a9ce7939e08c446c5689974ec",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,生産・在庫管理編.md.json",
+        "gitBlob": "38a7bc09cf5f54a5994927918052b8fa56f6d8b4",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,生産・在庫管理編.pdf.txt",
+        "gitBlob": "add484f2308920d5a7aec642dd621b721fa88266",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,配車管理編.md.json",
+        "gitBlob": "5f52f0f26f36858659ae69a7f8db36d8ce5da30b",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,frontend_web,配車管理編.pdf.txt",
+        "gitBlob": "4f7ca298c1e4ea1de8aceee5941825e249dd74ed",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,共通,確認結果.md.json",
+        "gitBlob": "37c7844abea26b6cc4b0dd8cfc0c1845022a346d",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+        "path": "tmp/guide-alignment/セルフテスト,共通,確認結果.pdf.txt",
+        "gitBlob": "10eaba1beda8c509c75686b24386a3e1c5ab912e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "550373c43d995f7857fe70d6d61864503f6e49de",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/PDF機械照合.json",
+        "gitBlob": "175a551cde070453db4f34a16e13e1bb8b7bd3ca",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "550373c43d995f7857fe70d6d61864503f6e49de",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/step-10.json",
+        "gitBlob": "9f439dd1164008d23a0b8529e1a1e8d25ae495c6",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "550373c43d995f7857fe70d6d61864503f6e49de",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/図版.json",
+        "gitBlob": "eef1ea9180e3ffc82ab4ea0625231403ba88beee",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "550373c43d995f7857fe70d6d61864503f6e49de",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/欠落参照.json",
+        "gitBlob": "a12e3925a024b4adf753456f99d3be0459cf8abb",
+        "keywordMatched": true,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/着手時.json",
+        "gitBlob": "facfa04627023896eb199ac8fbb8553651c49aa4",
+        "keywordMatched": true,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示/environment.json",
+        "gitBlob": "657de3c49c6b7bb60cd3e8c8bf1d7a7388ec3e67",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示/screen.json",
+        "gitBlob": "244b6263485400601af82fece07558df1b2aea30",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/environment.json",
+        "gitBlob": "ea8c9d529555696798bb8ce91e245977b45500f2",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/evaluation-1.json",
+        "gitBlob": "d3141eadbf88f0385993ed87eb0c66463e7dec6d",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/screen.json",
+        "gitBlob": "8bcf13f9174b53125f441988b55b482b7a041fd8",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/environment.json",
+        "gitBlob": "af4928b3e47a6bbcb1f20d4b5609455280a2fcf2",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/screen.json",
+        "gitBlob": "6e92d00d6094653e40866674d8ade9158c2da8b9",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step-8.json",
+        "gitBlob": "146e129d8a31c5e5b83665afc15a126f4e6980ba",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-20261107/environment.json",
+        "gitBlob": "f72dd0256d7beb7833cf3be7cdf5f55d8842c454",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-20261107/screen.json",
+        "gitBlob": "9a73e880feb5f770556ad44a18e095d61a456e4e",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/environment.json",
+        "gitBlob": "34776ff78c62d3a2220cbd348c395dc90c3e5491",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/evaluation-1.json",
+        "gitBlob": "5603350529f9adfe5031650052d85546f42096d8",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/screen.json",
+        "gitBlob": "276ee6199207f59cf053f811b248587f2c46b3c8",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/Hermes限定確認/hermes-result.json",
+        "gitBlob": "bdb30b0e8ffa316ec5c0030184cd59c8dad7cdbc",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/step-9.json",
+        "gitBlob": "56af215655337e339e7843ddaed98f6aba4b40a3",
+        "keywordMatched": true,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/期限処理.json",
+        "gitBlob": "4b772f5b24bda5c528b7e3752970a1e3ef23d25b",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      },
+      {
+        "commit": "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+        "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/現行ハーネス照合/heading.json",
+        "gitBlob": "28fbeaf0155d8687cba06ffc0f05861a0a728f76",
+        "keywordMatched": false,
+        "encoding": "UTF-8"
+      }
+    ],
+    "commands": [
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "rev-list",
+          "--all"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "-r",
+          "--name-only",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "diff-tree",
+          "--no-commit-id",
+          "--name-only",
+          "-r",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/PDF機械照合.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "adcc84f38779291dc0d1b0b20c38836f06e3aea9"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/step-10.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "b3ce01322d2d8a29a481347585cf84c3b0fb7f25"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/図版.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "8df02865b20deb510567f509d7d50c448a953c13"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/migration-manifest.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "da3bcef69e6b085d6386afcee974092d2b899e36"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/pdf-manifest.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "f53609ac0a2a88bcc7e1ac2e476882ccfd353467"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/comparison.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "650b5902012aca1d9153c5517c39bc6d03c97bf0"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/deep-comparison.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "93ce772ce6639c3a1cd499ace0e1ec43288a3fb5"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/deep-progress.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "c2f8492a0175fc02e1d9eb0b9a4d12899b380807"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/final-content-progress.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "513defa05695dce4a8d0ac853a4aff2d529fb93a"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/final-content.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "fe43e642d2e3ffb5134b761ed4deea6efcad614e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/image-comparison.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "dd510c1a7e958638589529d5b047d8cf922eed48"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/image-progress.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "2d36825fae47c90a494b59972e90b763a7116f63"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/link-update.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "766f3b5026029aa81f1380e8aa6673ba2dc8c6aa"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/pdf-links.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "3576b87198ac6311498a3e631bb93ffa1b9ede9f"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/progress.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "c6231730602ed35a547b03ade3392f2b7cf9473e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/reference-check.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "dc84bb98ff09919529a7264f96ce60eb52a8aad9"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/render-comparison.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d44df3a484323768eba4c7f9247c299a9aa8ae43"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/render-progress.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "cd4480f4ad40ba0442bdb9db1e2134e58481d02f"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/update-plan.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "8d72c07d31b206e300aa504dacc9691989d0ee8c"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_avatar,Electron実行編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "6b3d1c465432ac89c2e36abfdaf2bfe3ca4b99a2"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_avatar,Electron実行編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d9579cc4499a1483be11909ce837625b421ccb5d"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_avatar,Web実行編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "8ba74364fdbaaeb0de01b422fe67911087c254e1"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_avatar,Web実行編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "25f442524332787092a49829a4925b92138fc698"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_browser,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "450b05054378787e5e58f530c407b362b9e03e3a"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_browser,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "0bd15732818eb24141dfc72c52fa48d2932e23af"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_code,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "ea439441ec5a169f6ac0f918bc216031881f3e77"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_code,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "b08d3a30f8d78d94bbb123769011f5e51ee48bff"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_console,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "c4e1d3c1a9a820459bc9d509c76659e995944b5b"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_console,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "95fc4970755956918d8b41451604d14b0bb84a95"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,AIモデル・Tools編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "82698c667322411fdcc7a719fa7e4146de2634bf"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,AIモデル・Tools編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "dc466fb179284e28b77a67a6dc2d67bd5431ac77"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,システム起動編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "7a1dad1d02ba7d51011bd74614ead844df57a02f"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,システム起動編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "9285f18c120c83e231e351c867a0889da409ec6c"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,ランチャー編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "c7ab9dfa54c2fa199b9740263f48d0b6297f08d4"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,ランチャー編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "82c301389ba66ce4cebe20079d0c353af515947e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,環境確認編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "c6995582d7775d8b1222e7e809971155a1d8f07e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,環境確認編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "88652da05f42f03b5b84f08e795737ba5b419a65"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,設定再起動編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "900ddf692b8f9affa896fd2a368f70c4b77c4445"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_diag,設定再起動編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d0f8cd1e4eaa9f9d50997f3003c44318235b1119"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_discord,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "2fb2fdfc4e9577cddd03d388c17ed3c7dd7fbaa4"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_discord,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "6f1780976f22c497c580e6c9d5896da7603463e0"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_hermes,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "a22bb0e28685eae0b0f3e1fee156e703552362f2"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_hermes,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "61d2d2980003fe726dc706feaf402aa52040089e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_ide,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d2df4d7ce02a97b8847ca81b34d5f268a7ab4f75"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_ide,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "b083a0dd7c1b9dffa5839e4eec8ee88d1382d537"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_live,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "2e8373d12b1e2e124954a730b3231835474eba3b"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_live,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "af03f738a77f4314adfb0d041dc617a12bc543aa"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "11856dedf7428b0832ca6102d4659f60cbbb74fc"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "0758d7ed06606ec8f23643b704f8c02ebd2ffc3b"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_slack,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "8c0fa0a300dd727eaa04c9daa8a45cde3f2f34b3"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_slack,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "a418ce207afce5bf826736f713ac964b4c85c7f6"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_task,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "3e8ae19110b2ba855f9de2eac4d196e418adc2ea"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_task,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "1c6ed2eb96a6499094188d7a74c39f820b8885fa"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_team,操作編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "a028225f6d72cdda6609ec793816a7b4c3904b94"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,aidiy_team,操作編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "cfef94d4fd664ce53e112c4d632b32ddc9d6caa7"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,backend_tools,主要メソッド編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "ab7d88904bee1216de807ef689c593f3053f3379"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,backend_tools,主要メソッド編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d9486a8e8ee8b95a95e430c320c49fe576953fac"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,AiDiy編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "616516859981f4e91197f19d9ea3c65d0c930071"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,AiDiy編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "4c1eb6c4fd72721a9ce7939e08c446c5689974ec"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,生産・在庫管理編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "38a7bc09cf5f54a5994927918052b8fa56f6d8b4"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,生産・在庫管理編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "add484f2308920d5a7aec642dd621b721fa88266"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,配車管理編.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "5f52f0f26f36858659ae69a7f8db36d8ce5da30b"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,frontend_web,配車管理編.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "4f7ca298c1e4ea1de8aceee5941825e249dd74ed"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,共通,確認結果.md.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "37c7844abea26b6cc4b0dd8cfc0c1845022a346d"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "5bcaf4c67d3cfe661c796a2bfa1d3caaec64b29e",
+          "--",
+          "tmp/guide-alignment/セルフテスト,共通,確認結果.pdf.txt"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "10eaba1beda8c509c75686b24386a3e1c5ab912e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "-r",
+          "--name-only",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "diff-tree",
+          "--no-commit-id",
+          "--name-only",
+          "-r",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/PDF機械照合.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "175a551cde070453db4f34a16e13e1bb8b7bd3ca"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/step-10.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "9f439dd1164008d23a0b8529e1a1e8d25ae495c6"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/図版.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "eef1ea9180e3ffc82ab4ea0625231403ba88beee"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "550373c43d995f7857fe70d6d61864503f6e49de",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/欠落参照.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "a12e3925a024b4adf753456f99d3be0459cf8abb"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "-r",
+          "--name-only",
+          "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "diff-tree",
+          "--no-commit-id",
+          "--name-only",
+          "-r",
+          "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "6589b3105e1d5e91f571cbbc833ed418d3063f2e",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/着手時.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "facfa04627023896eb199ac8fbb8553651c49aa4"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "-r",
+          "--name-only",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "diff-tree",
+          "--no-commit-id",
+          "--name-only",
+          "-r",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence",
+          "_AIDIY/histories",
+          "tmp",
+          "temp",
+          ".aidiy_cache",
+          "frontend_ide/scripts",
+          "frontend_ide/checks"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示/environment.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "657de3c49c6b7bb60cd3e8c8bf1d7a7388ec3e67"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示/screen.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "244b6263485400601af82fece07558df1b2aea30"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/environment.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "ea8c9d529555696798bb8ce91e245977b45500f2"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/evaluation-1.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "d3141eadbf88f0385993ed87eb0c66463e7dec6d"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/Code非表示試験/screen.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "8bcf13f9174b53125f441988b55b482b7a041fd8"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/environment.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "af4928b3e47a6bbcb1f20d4b5609455280a2fcf2"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/screen.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "6e92d00d6094653e40866674d8ade9158c2da8b9"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step-8.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "146e129d8a31c5e5b83665afc15a126f4e6980ba"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-20261107/environment.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "f72dd0256d7beb7833cf3be7cdf5f55d8842c454"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-20261107/screen.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "9a73e880feb5f770556ad44a18e095d61a456e4e"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/environment.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "34776ff78c62d3a2220cbd348c395dc90c3e5491"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/evaluation-1.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "5603350529f9adfe5031650052d85546f42096d8"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi停止操作/step8-visible-20261107/screen.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "276ee6199207f59cf053f811b248587f2c46b3c8"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/Hermes限定確認/hermes-result.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "bdb30b0e8ffa316ec5c0030184cd59c8dad7cdbc"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/step-9.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "56af215655337e339e7843ddaed98f6aba4b40a3"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/期限処理.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "4b772f5b24bda5c528b7e3752970a1e3ef23d25b"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "ls-tree",
+          "1c27ce264e19dcbe8f14697ea3a87a5a8f63d7f6",
+          "--",
+          "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/現行ハーネス照合/heading.json"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "-c",
+          "core.quotePath=false",
+          "cat-file",
+          "blob",
+          "28fbeaf0155d8687cba06ffc0f05861a0a728f76"
+        ],
+        "exitCode": 0,
+        "stderr": ""
+      },
+      {
+        "command": [
+          "git",
+          "--git-dir=.git_local",
+          "--work-tree=.",
+          "fsck",
+          "--full",
+          "--unreachable",
+          "--no-reflogs"
+        ],
+        "exitCode": 0,
+        "stdout": "",
+        "stderr": ""
+      }
+    ],
+    "unreachableObjectSearchRepeated": true,
+    "note": "到達可能な追加4履歴と、追加履歴がある現在の未参照オブジェクトを確認。step-9既存探索と区別。",
+    "unreachableOrDanglingObjectCount": 0
+  },
+  "currentPublicMatches": [
+    {
+      "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/欠落参照.json",
+      "sha256": "8fa8a39d96e58a6cefcc2e5bc09d5a882302447cf8e405b15ca8c274dec7749c",
+      "bytes": 1624
+    },
+    {
+      "path": "docs/セルフテスト、操作ガイド/evidence/Navi資料整合/着手時.json",
+      "sha256": "41227b1361e5ecea984a0a753e8e30d195de6885c8ded57168c7615a6727c827",
+      "bytes": 8989
+    },
+    {
+      "path": "docs/セルフテスト、操作ガイド/evidence/Navi失敗切分け/step-9.json",
+      "sha256": "a58363dadc7e7c9cd4f054595bd864ada9a1da528318ee69cab93238f0b59d1e",
+      "bytes": 10826
+    },
+    {
+      "path": "docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/selftest/セルフテスト,aidiy_navi,操作編/Navigator_302_実プロジェクト分析.json",
+      "sha256": "d3e6e1106e8ec49d8b14121d4d75d4e57482389fbbc5d0fe76ddb6c0174230c6",
+      "bytes": 21428
+    }
+  ],
+  "temporaryOrHistoryMatches": [
+    {
+      "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.md.json",
+      "sha256": "99c3f94094a9c836896b8d045d069467d802e906c1a50b820aca20de74c7e04b",
+      "bytes": 91886
+    },
+    {
+      "path": "tmp/guide-alignment/セルフテスト,aidiy_navi,操作編.pdf.txt",
+      "sha256": "000346532cc5ab91874eea361eb1996ba963d0c2973f2b955c7e9803c590f5a0",
+      "bytes": 38201
+    }
+  ],
+  "scannedSelectedCurrentTextFiles": 392,
+  "searchPattern": "selftest-20261106|模擬.{0,5}8本|8本中7|5分以内に結果を確認できませんでした|Navigator過去失敗|step-13",
+  "currentSearchRoots": [
+    "docs/セルフテスト、操作ガイド/evidence",
+    ".aidiy_cache",
+    "tmp",
+    "temp",
+    "_AIDIY/histories"
+  ],
+  "currentExcludedDirectories": [
+    ".aidiy_backup",
+    "LocalLow",
+    "Navi現行模擬ハーネス",
+    "browser",
+    "chrome-profile",
+    "node_modules",
+    "profile"
+  ],
+  "encodingHandling": "UTF-8指定。過去の生成txtでUTF-16 BOMを検知した場合のみUTF-16で読む。",
+  "privacyExclusions": [
+    "認証/共通設定の内容",
+    "DB",
+    "利用者の私的会話・ブラウザprofile",
+    "方針上対象外の.aidiy_backup",
+    "外部アカウント・外部保管物"
+  ],
+  "inheritedNotRepeated": [
+    "backend_server/temp/logs・backend_tools/temp/logsの原失敗ログ探索",
+    "OS一時領域の非profileナビ試験フォルダ確認"
+  ],
+  "limitations": "外部保管物や当時の実行者が持つ未提供記録の有無は未確認。全世界からの回収不能は主張しない。今回の内容検索は記載した文字列と公開資料範囲に限定。新しい試験は実行しない。",
+  "newHistoricalOriginalRecovered": false,
+  "completedAt": "2026-11-07T14:21:41.272961+00:00"
+}

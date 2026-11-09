@@ -4,7 +4,7 @@
 
 AiDiy の **開発スペース**（宇宙をテーマにした IDE 開発環境）の中心となる、作業フォルダを宇宙の見た目で眺めて操作するファイルビューアです。Code / Live とともに、AiDiy の正式なサブシステムを構成します。
 目指すのは「ソースをほぼ触らない IDE」です。宇宙で全体を眺め、エクスプローラーで辿り、ビューアで読み、変更は Code / Live を通じて AI に任せます。
-ルートのsetup / cleanupではIDE群（Navigator / Console / Code / Live / IDE / Task / Team / Browser）として扱います。全体startはDiagを使わない場合にIDEを個別選択できます（既定OFF）。
+ルートのsetup / cleanupではIDE群（Navi / Console / Code / Live / IDE / Task / Team / Browser）として扱います。全体startはDiagを使わない場合にIDEを個別選択できます（既定OFF）。
 起動時は Live と同じターミナル演出の初期画面を表示します。「AiDiy接続利用」または「オフライン利用」を手動で選んで宇宙表示を開始します。
 
 見た目は宇宙のテーマですが、画面の文字は「フォルダ」「ファイル」など一般的な名前で表示します。

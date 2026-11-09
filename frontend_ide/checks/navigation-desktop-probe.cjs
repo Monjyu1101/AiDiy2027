@@ -25,28 +25,28 @@ app.on('browser-window-created',(_,owner)=>{
   await evaluate(owner,`[...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用').click()`);
   await until(()=>evaluate(owner,`!!window.aidiyIDE`),'IDE');
   await evaluate(owner,`aidiyIDE.setAutoSpin(false);window.navigationFlash=[];window.navigationFlashObserver=new MutationObserver(()=>{for(const n of document.querySelectorAll('.navigation-panel'))if(getComputedStyle(n).visibility!=='hidden'&&getComputedStyle(n).display!=='none')navigationFlash.push('visible');});navigationFlashObserver.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});document.querySelector('.navigation-launch').click()`);
-  const children=()=>BrowserWindow.getAllWindows().filter(w=>w!==owner&&!w.isDestroyed()&&w.getTitle().includes('Navigator '));
+  const children=()=>BrowserWindow.getAllWindows().filter(w=>w!==owner&&!w.isDestroyed()&&w.getTitle().includes('Navi '));
   await until(()=>children().length===1,'Navi 1');const first=children()[0];
   await until(()=>evaluate(first,`!!document.querySelector('textarea')`),'Navi 1 DOM');
   await until(()=>evaluate(first,`getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`),'Navi 1 visible');
-  assert.deepEqual(await evaluate(owner,`navigationFlashObserver.disconnect();navigationFlash`),[],'別窓の準備中にIDE内へNavigatorを表示しない');
+  assert.deepEqual(await evaluate(owner,`navigationFlashObserver.disconnect();navigationFlash`),[],'別窓の準備中にIDE内へNaviを表示しない');
   const initialArea=screen.getDisplayMatching(first.getBounds()).workArea;
   assert.ok(Math.abs(first.getBounds().width-Math.min(480,initialArea.width-16))<=2&&Math.abs(first.getBounds().height-Math.min(900,initialArea.height-16))<=2,'初期480×900 DIP、小画面は縮小（Windows丸め2 DIP以内）');
   const area=screen.getDisplayMatching(first.getBounds()).workArea,bounds=first.getBounds();
-  assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'Navigatorは作業領域の左中央');
- console.log('Navigator initial bounds',JSON.stringify(first.getBounds()));
+  assert.ok(Math.abs(bounds.x-area.x-8)<=2&&Math.abs(bounds.y+bounds.height/2-area.y-area.height/2)<=2,'Naviは作業領域の左中央');
+ console.log('Navi initial bounds',JSON.stringify(first.getBounds()));
   await checkNavigationDimensions(first,'desktop-1');
   if(process.env.AIDIY_TEST_NAVIGATION_DIMENSIONS_ONLY!=='1'){
    first.setSize(540,640);
    await evaluate(first,`(()=>{const t=document.querySelector('textarea');t.value='第一の目標';t.dispatchEvent(new Event('input',{bubbles:true}));})()`);
   }
   await evaluate(owner,`document.querySelector('.navigation-launch').click()`);
-  await until(()=>children().length===2,'Navi 2');const second=children().find(w=>w!==first);assert.equal(first.getTitle(),'AiDiy IDE / Navigator 1');assert.equal(second.getTitle(),'AiDiy IDE / Navigator 2');
+  await until(()=>children().length===2,'Navi 2');const second=children().find(w=>w!==first);assert.equal(first.getTitle(),'AiDiy IDE / Navi 1');assert.equal(second.getTitle(),'AiDiy IDE / Navi 2');
   await until(()=>evaluate(second,`!!document.querySelector('textarea')`),'Navi 2 DOM');
   await until(()=>evaluate(second,`getComputedStyle(document.querySelector('.navigation-panel')).visibility==='visible'`),'Navi 2 visible');
   await checkNavigationDimensions(second,'desktop-2');
   if(process.env.AIDIY_TEST_NAVIGATION_DIMENSIONS_ONLY==='1'){
-   process.send?.({testPassed:true,scope:'navigation dimensions and titlebar only',results:['two native Navigator windows: initial bounds, DPI, DOM titlebar and controls'],skipped:['goal/model isolation','VR return','closing one preserves the other']});app.exit(0);return;
+   process.send?.({testPassed:true,scope:'navigation dimensions and titlebar only',results:['two native Navi windows: initial bounds, DPI, DOM titlebar and controls'],skipped:['goal/model isolation','VR return','closing one preserves the other']});app.exit(0);return;
   }
   assert.equal(await evaluate(second,`document.querySelector('textarea').value.startsWith('最近更新したファイル')`),true);
   await evaluate(second,`(()=>{const t=document.querySelector('textarea');t.value='第二の目標';t.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.navigation-model-line button').click();})()`);
@@ -75,4 +75,4 @@ app.on('browser-window-created',(_,owner)=>{
   process.send?.({testPassed:true,results:['two independent native Navi windows','goal/model isolation','VR return preserves both windows','closing one preserves the other','no Explorer split/burger']});app.exit(0);
  }catch(e){console.error(e);console.error(await evaluate(owner,'document.body.innerText').catch(()=>''));app.exit(1);}});
 });
-setTimeout(()=>{console.error('Navigation期限');app.exit(1);},100000).unref();require('../desktop.cjs');
+setTimeout(()=>{console.error('Navi期限');app.exit(1);},100000).unref();require('../desktop.cjs');

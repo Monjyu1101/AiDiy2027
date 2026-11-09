@@ -60,7 +60,7 @@ test('Code/Live設定と検証回数はproject別、home APIと旧設定に依�
  assert.equal(model.コードモデル読込(fileB),undefined);
 });
 
-test('Navigatorのモデル・履歴はプロジェクト内で分離し、別窓は同一プロジェクトだけ共有する',async t=>{
+test('Naviのモデル・履歴はプロジェクト内で分離し、別窓は同一プロジェクトだけ共有する',async t=>{
  const root=await fixture(t),a=join(root,'a'),b=join(root,'b');await mkdir(a);await mkdir(b);
  const options={state:()=>({active:true,startedAt:1}),defaultModel:async()=>({provider:'aidiy_hermes',model:'auto'}),runAgent:()=>{throw Error('AI実行禁止');}};
  const one=createNavigation(a,options),two=createNavigation(b,options);t.after(()=>{one.close();two.close();});

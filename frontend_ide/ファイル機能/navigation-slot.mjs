@@ -22,5 +22,5 @@ export async function reserveNavigationSlot(project,{root=join(tmpdir(),'aidiy-n
   await handle.writeFile(JSON.stringify({pid:process.pid}));await handle.close();let released=false;
   return {instance:'navi-'+number,async close(){if(released)return;released=true;await unlink(file).catch(()=>{});}};
  }
- throw Error('Navigationの作業番号を確保できません。');
+ throw Error('Naviの作業番号を確保できません。');
 }

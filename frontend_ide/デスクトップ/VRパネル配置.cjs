@@ -10,7 +10,7 @@ const {setWindowBounds}=require('./全画面横断.cjs');
 function createVRPanelPlacement({windows,screen,isActive,feedback=showWindowMoveFeedback,setBounds=setWindowBounds,now=()=>performance.now(),setTimer=setTimeout,clearTimer=clearTimeout,duration=650}){
  const positions=new WeakMap(),flights=new Map(),kinds=['explorer','panel-routes','panel-navigation'];
  const children=owner=>[...windows.values()].filter(child=>child.owner===owner&&kinds.includes(child.kind)&&child.shown&&!child.window.isDestroyed());
- // 単独パネルは再生成後も種類のキーを共有。複数Navigatorは窓ごとに保持する。
+ // 単独パネルは再生成後も種類のキーを共有。複数Naviは窓ごとに保持する。
  const key=child=>child.kind==='panel-navigation'?child.window:child.kind;
  function cancel(owner){
   const flight=flights.get(owner);if(!flight)return;

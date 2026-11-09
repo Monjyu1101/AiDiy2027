@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""Navigatorの独立起動・環境確認・この配置先だけの停止。"""
+"""Naviの独立起動・環境確認・この配置先だけの停止。"""
 import importlib.util
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
@@ -16,7 +16,7 @@ def check_environment():
     ok, detail = shared.check_node_environment()
     if not ok:
         return False, detail
-    return ((True, 'Vue Navigator') if (ROOT.parent / 'dist/app.js').is_file()
+    return ((True, 'Vue Navi') if (ROOT.parent / 'dist/app.js').is_file()
             else (False, f'Vue画面が未準備です。python "{ROOT.parent / "_setup.py"}" を実行してください。'))
 
 def start(open_window=None):

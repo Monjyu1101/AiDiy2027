@@ -19,7 +19,7 @@ test('羽衣ライディング・花火を含む8種類を均等な範囲で選�
 test('羽衣ライディングは正式名の部品を使い、rideキー・描画・操作の互換性を保つ',()=>{
  const component='../src/components/開発スペース/ナビ羽衣ライディング.vue';
  const scene=readFileSync(new URL(component,import.meta.url),'utf8');
- const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  const preview=readFileSync(new URL('./ナビ待機画面撮影/main.js',import.meta.url),'utf8');
  assert.equal(existsSync(new URL('../src/components/開発スペース/ナビ航行.vue',import.meta.url)),false);
  assert.match(panel,/import NaviHagoromoRiding from '\.\/ナビ羽衣ライディング\.vue'/);
@@ -76,9 +76,9 @@ test('新演出は黒背景、Spaceの長押し重複を除き、所有窓の描
  }
 });
 
-test('3演出と既存2演出・NavigatorのVue script/templateをコンパイルする',async()=>{
+test('3演出と既存2演出・NaviのVue script/templateをコンパイルする',async()=>{
  const {parse,compileScript,compileTemplate}=await import('@vue/compiler-sfc');
- for(const name of ['ナビ風景.vue','ナビ羽衣ライディング.vue','ナビ花火.vue','Navigationパネル.vue']){
+ for(const name of ['ナビ風景.vue','ナビ羽衣ライディング.vue','ナビ花火.vue','Naviパネル.vue']){
   const source=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8');
   const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
   assert.ok(compileScript(descriptor,{id:name}));
@@ -96,7 +96,7 @@ test('夜間飛行: コックピット視点だけで機体は描かず、花火
  assert.doesNotMatch(source,/new THREE\.(ExtrudeGeometry|CylinderGeometry)\(/,'機体の外観は描かない');
  assert.doesNotMatch(source,/dblclick|toggleView|chase/i,'視点の切り替えは持たない');
  for(const word of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','drawCanopy','drawHud','unsupported'])assert.ok(source.includes(word),word);
- const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  assert.match(panel,/<NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'"/);
  assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|cruiseKind!=='nightflight'" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行以外のすべての演出で出す
 });
@@ -117,7 +117,7 @@ test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さ
  assert.match(source,/if \(clock\[i\] === ':'\) ctx\.fillText\(':'/,'「:」は固定色で別に描く');
  assert.match(source,/if \(clock\[i\] !== ':'\) maskCtx\.fillText/,'数字だけをマスクにする');
  assert.match(source,/const STATIC = \[/,'日付と「:」は固定色');
- const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  assert.match(panel,/<NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'"/);
 });
 
@@ -140,7 +140,7 @@ test('迷路: 暗い3D空間で、生成（6種）→解法（5種）の経過�
  assert.match(source,/rnd\(14, 18\)/);assert.match(source,/rnd\(8, 11\)/);
  assert.match(source,/board\.rotation\.y = view\.az/,'盤面をゆっくり回す');
  assert.match(source,/view\.az \+= step \* \.16/,'回転は常に続く');
- const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  assert.match(panel,/<NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'"/);
 });
 

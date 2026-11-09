@@ -75,7 +75,7 @@ test('IDE終了・新しい管理インスタンス・別IDEでは位置を引�
  f.manager.forget(f.owner);await f.manager.restore(f.owner);assert.deepEqual(f.events,[]);
 });
 
-test('複数Navigatorを窓ごとに復元し、新規窓へ古い位置を流用しない',async()=>{
+test('複数Naviを窓ごとに復元し、新規窓へ古い位置を流用しない',async()=>{
  const f=fixture(),a=f.add('panel-navigation',100,100),b=f.add('panel-navigation',700,200);
  f.manager.remember(f.owner);
  a.window.setBounds({...a.window.getBounds(),x:20,y:20});b.window.setBounds({...b.window.getBounds(),x:30,y:30});
@@ -89,7 +89,7 @@ test('複数Navigatorを窓ごとに復元し、新規窓へ古い位置を流�
  assert.equal(b.window.getBounds().x,700);assert.equal(f.timers.size,0);
 });
 
-test('Navigator VR placement preserves both the new 900 height and a manually chosen height',async()=>{
+test('Navi VR placement preserves both the new 900 height and a manually chosen height',async()=>{
  for(const height of [900,800,650]){
   const f=fixture(),child=f.add('panel-navigation',100,100);
   child.window.setBounds({x:100,y:100,width:480,height});f.manager.remember(f.owner);

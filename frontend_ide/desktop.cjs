@@ -13,7 +13,7 @@ const projectFixed=process.env.AIDIY_DEVELOPMENT_PROJECT_FIXED==='1';
 const url=process.env.AIDIY_DEVELOPMENT_URL,kind=process.env.AIDIY_DEVELOPMENT_KIND;
 if(!url||!/^http:\/\/127\.0\.0\.1:\d+\/$/.test(url)||!['code','live','ide','console','task','team','browser','navi'].includes(kind))throw Error('起動元が不正です。');
 const cliConsoleWindow=kind==='console'&&process.env.AIDIY_DEVELOPMENT_CLI_WINDOW==='1';
-const appName=`AiDiy ${kind==='navi'?'Navigator':kind==='ide'?'IDE':kind==='code'?'Code':kind==='live'?'Live':kind==='task'?'Task':kind==='team'?'Team':kind==='browser'?'Browser':'Console'}`;
+const appName=`AiDiy ${kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?'Code':kind==='live'?'Live':kind==='task'?'Task':kind==='team'?'Team':kind==='browser'?'Browser':'Console'}`;
 app.setName(process.platform==='darwin'?appName:`aidiy_${kind}`);
 // ランチャーが引数を解決したプロジェクトで、ロック取得より先にIDEのプロファイルを分ける。
 const project=projectRoot(process.env.AIDIY_DEVELOPMENT_PROJECT??'',resolve(__dirname,'..'));
@@ -206,7 +206,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
   bounds=display?allWindowBounds(kind,display.workArea,displaySlot):(anchor&&owner?panelBounds(anchor,owner,screen):null)||windowBounds(kind,area,ownerBounds,slot,cliConsoleWindow&&!owner);
  }catch(error){placement?.close();throw error;}
  if(kind==='task')bounds=taskWindowBounds(taskView,area);
- const baseTitle=['task','team'].includes(kind)?`AiDiy ${(owner||projectFixed)?'IDE / ':''}${kind.toUpperCase()}`:kind==='browser'?(owner?`AiDiy IDE / Browser ${slot+1}`:'AiDiy Browser'):kind==='viewer'?`AiDiy IDE / Viewer - ${viewerPath.split('/').at(-1)}`:`AiDiy ${owner?'IDE / ':''}${kind==='navi'?'Navigator':kind==='ide'?'IDE':kind==='code'?`Code${owner?' '+(slot+1):''}`:kind==='console'?`Console${owner?' '+(slot+1):''}`:kind==='task'?'Task':kind==='team'?'Team':'Live'}`;
+ const baseTitle=['task','team'].includes(kind)?`AiDiy ${(owner||projectFixed)?'IDE / ':''}${kind.toUpperCase()}`:kind==='browser'?(owner?`AiDiy IDE / Browser ${slot+1}`:'AiDiy Browser'):kind==='viewer'?`AiDiy IDE / Viewer - ${viewerPath.split('/').at(-1)}`:`AiDiy ${owner?'IDE / ':''}${kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?`Code${owner?' '+(slot+1):''}`:kind==='console'?`Console${owner?' '+(slot+1):''}`:kind==='task'?'Task':kind==='team'?'Team':'Live'}`;
  let window;
  let title=baseTitle+(kind==='console'&&!owner&&cliConsoleWindow&&process.env.AIDIY_DEVELOPMENT_CLI_NAME?' / '+process.env.AIDIY_DEVELOPMENT_CLI_NAME:'');
  try{window=new BrowserWindow({title,...bounds,...(kind==='task'?{minWidth:bounds.minWidth,minHeight:bounds.minHeight}:windowMinimumSize(kind,bounds)),show:false,frame:false,roundedCorners:false,...(kind==='browser'?{enableLargerThanScreen:true}:{}),backgroundColor:'#000',autoHideMenuBar:true,icon:kind==='browser'&&!owner?join(__dirname,'public','AiDiy.png'):join(__dirname,'public',`AiDiy_${['navi','code','live','console','task','team'].includes(kind)?kind:'ide'}.png`),webPreferences:{preload:join(__dirname,'デスクトップ/preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false,autoplayPolicy:'no-user-gesture-required'}});}catch(error){placement?.close();throw error;}

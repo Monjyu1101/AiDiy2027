@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {runNavigationAutopilot,navigationWait} from '../src/components/開発スペース/Navigation自動運転.js';
+import {runNavigationAutopilot,navigationWait} from '../src/components/開発スペース/Navi自動運転.js';
 const result=progress=>({navigationId:'nav',goal:'goal',items:[{id:'step',name:'work',progress}],overall:{progress},nextItemId:progress<100?'step':null,nextPrompt:progress<100?'Work on step':'',requestId:String(progress)});
 function fixture(initial=result(0)){
  const controller=new AbortController(),calls=[];let current=true;

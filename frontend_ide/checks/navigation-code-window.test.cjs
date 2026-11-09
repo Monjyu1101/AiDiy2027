@@ -41,7 +41,7 @@ test('Navi stays within the matching display work area, including negative origi
  await small.change({},true);assert.deepEqual(small.bounds,{x:8,y:8,width:624,height:464});
  await small.change({},false);assert.equal(small.bounds.width,480);assert.equal(small.bounds.height,464);
 });
-test('Only the named Navigator belonging to the current IDE session can expand',async()=>{
+test('Only the named Navi belonging to the current IDE session can expand',async()=>{
  const f=fixture({kind:'ide'}),n=fixture();n.record.kind='panel-navigation';n.record.owner=f.record;n.record.ownerRevision=1;n.record.linkKey='online:4';
  f.children.set('navi-a',n.record);
  assert.equal((await f.change({},true)).ok,false);
@@ -57,7 +57,7 @@ test('Newer close request wins while state lookup for opening is pending',async(
  pending[1](f.state);assert.equal((await close).ok,true);
  pending[0](f.state);assert.equal((await open).ok,false);assert.equal(f.sets,0);
 });
-test('Maximized Navigator uses its existing viewport and stale/inactive calls never resize',async()=>{
+test('Maximized Navi uses its existing viewport and stale/inactive calls never resize',async()=>{
  const f=fixture();f.max(true);await f.change({},true);assert.equal(f.sets,0);
  f.max(false);f.state.active=false;assert.equal((await f.change({},true)).ok,false);assert.equal(f.sets,0);
  assert.equal((await f.change({},'true')).ok,false);

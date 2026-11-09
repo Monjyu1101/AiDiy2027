@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-// 実Vue・実Navigation APIを通すstep-4。AI応答だけを合成し、Codeは開かない。
+// 実Vue・実Navi APIを通すstep-4。AI応答だけを合成し、Codeは開かない。
 import assert from 'node:assert/strict';
 import {once} from 'node:events';
 import {createHash} from 'node:crypto';
@@ -24,8 +24,8 @@ function projectHashes(project){
 }
 async function screenshot(port,targetId){
  const targets=await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
- const target=targets.find(item=>item.id!==targetId&&item.type==='page'&&item.title.includes('Navigator'));
- if(!target)throw Error('Navigatorの撮影対象がありません。');
+ const target=targets.find(item=>item.id!==targetId&&item.type==='page'&&item.title.includes('Navi'));
+ if(!target)throw Error('Naviの撮影対象がありません。');
  const socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');
  try{
   const response=await new Promise((done,reject)=>{
@@ -114,7 +114,7 @@ export function createNavigationScreenRecord({name,temporary,project,stateRoot,p
    async function waitResult(previous){
     await until(async()=>{
      const api=await readAPI();assert.equal(api.status,200);
-     if(api.data.job?.status==='failed')throw Error('Navigation API失敗: '+api.data.job.message);
+     if(api.data.job?.status==='failed')throw Error('Navi API失敗: '+api.data.job.message);
      if(api.data.job?.status!=='complete'||api.data.result?.requestId===previous)return false;
      const display=await ui();return !display.running&&display.items.length===(progress?3:2)&&display.overall===api.data.result.overall.progress;
     },previous?'再評価の保存と画面反映':'ナビ作成の保存と画面反映');

@@ -14,7 +14,7 @@ import {startMockDevelopment as startDevelopment,mockOutput,mockStage,removeMock
 const chromePath=process.env.CHROME_PATH||['/usr/bin/chromium','/usr/bin/google-chrome','/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(existsSync);
 if(!chromePath)throw Error('CHROME_PATHにChrome / Edgeの実行パスを指定してください。');
 const temporary=mkdtempSync(join(tmpdir(),'aidiy-navi-height-')),project=join(temporary,'project'),output=mockOutput('temp/navigation-height-check');
-mkdirSync(project);mkdirSync(output,{recursive:true});writeFileSync(join(project,'README.md'),'# Navigator initial height fixture\n');
+mkdirSync(project);mkdirSync(output,{recursive:true});writeFileSync(join(project,'README.md'),'# Navi initial height fixture\n');
 const navigationOptions={stateRoot:join(temporary,'navigation-state'),runAgent:()=>{throw Error('No AI request is permitted in this layout test');}};
 const app=await startDevelopment(project,{kind:'navi',offline:true,navigationOptions});let ide,socket;
 const chrome=spawn(chromePath,['--headless=new','--remote-debugging-port=0',`--user-data-dir=${join(temporary,'browser')}`,'--window-size=1920,1080',...(process.platform==='linux'?['--no-sandbox']:[]),'about:blank'],{stdio:['ignore','ignore','pipe'],windowsHide:true});
@@ -41,7 +41,7 @@ try{
  await evaluate(`[...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用').click()`);await until(()=>evaluate(`!!window.aidiyIDE`),'IDE');
  // Popup blocking exercises the inline fallback; its measured bounds also supply real popup features.
  await evaluate(`aidiyIDE.setAutoSpin(false);window.heightFeatures=[];window.open=(url,name,features)=>{heightFeatures.push(features);return null;};document.querySelector('.navigation-launch').click()`);
- await until(()=>evaluate(`heightFeatures.length===1&&!!document.querySelector('.navigation-panel')`),'inline Navigator');
+ await until(()=>evaluate(`heightFeatures.length===1&&!!document.querySelector('.navigation-panel')`),'inline Navi');
  const inline=await layout();assert.equal(inline.height,900);assert.ok(inline.bottom<=1000);assert.ok(await evaluate(`heightFeatures[0].includes('height=900')`));await capture('ide-inline-900');
  await viewport(640,600);const inlineSmall=await layout();assert.ok(inlineSmall.height<900&&inlineSmall.bottom<=600);await capture('ide-inline-small');
  await evaluate(`document.querySelector('.navigation-panel').style.setProperty('--workspace-top','140px')`);

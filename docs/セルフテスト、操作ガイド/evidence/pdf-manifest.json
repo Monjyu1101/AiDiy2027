@@ -1,6 +1,6 @@
 {
   "count": 23,
-  "pages": 411,
+  "pages": 398,
   "generation": "docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs",
   "files": [
     {
@@ -101,20 +101,21 @@
     },
     {
       "file": "セルフテスト,aidiy_ide,操作編.pdf",
-      "pages": 31,
-      "sha256": "b5cd6a242f0f9f086d8f2c47604d230ccf985f5d55cd4e1f0d25fb32e1f7298f",
-      "source_sha256": "4dc14b330d9f7ed29b301f6f4891d41785f35b20bd4239d874c6a2d409bc7e85",
-      "review": "2026-11-08: 現行Markdownから再生成。本文252ブロック・画像24点・相対リンク11件が一致。実機再試験ではない。",
-      "alignment_review": "2026-11-08: 全31ページを描画し縮小一覧、重点ページ1,13,31を拡大目視。欠け・重なりなし。詳細はevidence/IDE資料整合/PDF機械照合.json。",
-      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
+      "pages": 30,
+      "sha256": "7c6754121fe36c4690e5080430702ffbb4acad2f20b59c53403b08f9e2a9fb1a",
+      "source_sha256": "6c0445815beac1cde4929c7173f2b0b466c648a1771802da4e51aa23ac79ad06",
+      "review": "2026-11-09: 現行Markdownと23点の画像から再生成。3D・2D・VRと前回更新のAI検索3図はPDF内で掲載元PNGと一致。相対リンク11件を確認。",
+      "alignment_review": "2026-11-09: 全30ページを描画し、縮小一覧と差し替え図の掲載ページを目視確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_live,操作編.pdf",
       "pages": 17,
-      "sha256": "5396b97280508191094795c8b93b8bfe63c1cbcc3a5ffb3f7b8ca8f5a7baa712",
-      "source_sha256": "37dd21d6d0039c0eac179dee1540821b1d7f8d7e1a8c900f1a77a63d1834ac10",
-      "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ1,10,14を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
-      "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+      "sha256": "88b9c91f345afc73bfef7ccc15b5148d4c260af4d3588708e83cde6be7a40355",
+      "source_sha256": "87b44e9325f8ff45cf0e3372568cd32337f148306ade4eecb72e8c36bf5c5906",
+      "review": "2026-11-09: 現行Markdownから再生成。掲載画像8点、相対リンク15件を照合。",
+      "alignment_review": "2026-11-09: 全17ページを描画し、全体一覧と更新した図のページを目視確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_slack,操作編.pdf",
@@ -150,11 +151,12 @@
     },
     {
       "file": "セルフテスト,frontend_web,AiDiy編.pdf",
-      "pages": 19,
-      "sha256": "e496589eb7a5b2c1da66adf0888f77ddded250b379540289b9ec21f657823514",
-      "source_sha256": "bfa13c29e5674ffba2ac6913e790d47471b8db4661d37f9fca931765bc6bfc34",
-      "review": "資料整合：本文・画像・参照先を機械照合。PDFのページ内容ストリームを維持し、注釈リンクを相対化。全ページ目視の再実施・実機再試験はしていない。",
-      "alignment_review": "2026-11-07: リンク注釈のみ相対化。元PDFの本文ストリーム・画像資源・用紙寸法を維持。"
+      "pages": 18,
+      "sha256": "89ec5d4d6e875ff5a167f89d31d2300c3f820ac5787bbc2f80f3dd950beb82ef",
+      "source_sha256": "c192951868b5094f56493c40ef9e18b75024ebfaa3cf9cfd0b57adadc02fb85d",
+      "review": "2026-11-09: 現行Markdownから再生成。掲載画像17点、相対リンク9件を照合。",
+      "alignment_review": "2026-11-09: 全18ページを描画し、全体一覧と更新した図のページを目視確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,frontend_web,生産・在庫管理編.pdf",
@@ -175,20 +177,20 @@
     {
       "file": "セルフテスト,共通,確認結果.pdf",
       "pages": 17,
-      "sha256": "0337a910373a4077f4b75851a498fcfe152c0af4e611db6a5d545ca0c5d72eda",
-      "source_sha256": "3b31240e7e1fe04441dc1b3038fab2308db5048dcc74a4eaad126c420035fcae",
-      "review": "2026-11-08: 現行Markdownから再生成。本文324ブロック・画像0点・相対リンク37件が一致。実機再試験ではない。",
-      "alignment_review": "2026-11-08: 全17ページを描画し縮小一覧、重点ページ1,15を拡大目視。欠け・重なりなし。詳細はevidence/IDE資料整合/PDF機械照合.json。",
-      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
+      "sha256": "e96378427bddbedce088471da3c099975827a03722fab7a8356d8ce4eb5a7d84",
+      "source_sha256": "2da904305ac51bae9f28df2a14967695976ceedda2daf2d3f8fe77816fd7664e",
+      "review": "2026-11-09: 現行Markdownから再生成。掲載画像0点、相対リンク37件を照合。",
+      "alignment_review": "2026-11-09: 全17ページを描画し、全体一覧と更新した図のページを目視確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
       "file": "セルフテスト,aidiy_navi,操作編.pdf",
-      "pages": 40,
-      "sha256": "873fd7863dbbddf42efd519f4d41651426b6df59d15ae0bfcb27aa9515707de3",
-      "source_sha256": "2bf42501d371935e7bf52bbb66daa985eeb78315bcde242c28d2d7320db63a37",
-      "review": "全40ページを描画して目視確認。本文213ブロック・画像36参照のピクセル一致、本文63参照・PDF相対リンク29注釈（20種類）を照合。過去の実機判定と未確認範囲を維持。",
-      "alignment_review": "現行Markdownの羽衣ライディングへの改名・説明・図710の旧名注記をPDFへ反映。step-10とPDF機械照合を更新。",
-      "generation": "WeasyPrint 70.0 / Noto Sans CJK JP"
+      "pages": 29,
+      "sha256": "5afb0d6d9ad64eb3a05a153e012c9caf774a5be473d3df9ab9f0367cdb19297c",
+      "source_sha256": "4fce04e65ea0d25707323caed4193c03cb30c1372d459928efdb0290066c5136",
+      "review": "2026-11-09: 現行Markdownから再生成。掲載画像25点、相対リンク31件を照合。",
+      "alignment_review": "2026-11-09: 全29ページを描画し、全体一覧と更新した図のページを目視確認。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     }
   ],
   "visual_review": "2026-11-08: IDE全31ページと共通確認結果全17ページは再生成後に全ページ縮小表示と重点5ページ拡大を確認。Navigator全40ページの既存検証は維持。他20冊の今回の全ページ目視や新しい実機PASSを示さない。詳細はalignment_recordとevidence/IDE資料整合/PDF機械照合.json。",

@@ -1,6 +1,6 @@
 # AiDiy IDE（Vue）
 
-Navigator / Console / Code / Live / IDE / Task / Team / Browser の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は8種類です。
+Navi / Console / Code / Live / IDE / Task / Team / Browser の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は8種類です。
 
 
 ## 導入・起動の要件
@@ -9,7 +9,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 
 - Vue 3はプロジェクトのnpm依存です。グローバルのVue CLIは不要です。共有画面・依存物の復旧は `python frontend_ide/_setup.py` を使います。
 - VS Codeは **Code / Liveの拡張配置時だけ** 必要です（`^1.106.0`）。CLI未導入では通常setupは単独画面だけを準備します。版数不足・版数不明は警告して従来の配置処理へ進み、`--extensions-only` も実際のCLI結果に従います。
-- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navigator / Console / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
+- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navi / Console / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
 - cleanupにはNode.js・Electron・VS Codeの最低版チェックを追加しません。Code / Liveの拡張解除は従来どおりVS Code CLIで確認し、確認不能なら生成物を残して失敗を報告します。依存を直す前にcleanupする必要はありません。
 
 ## ソースの配置
@@ -304,7 +304,7 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - 同じ Electron 確認で、タイトルバーの最大化／元のサイズへの復元も実ウィンドウで検証します。
 - 音声・バックエンドの回帰確認: `frontend_ide/host` の `npm test` / `npm run live:test`、`frontend_ide/viewer` の `npm test`。
 
-全体のsetup・cleanupはNavigator / Console / Code / Live / IDE / Task / Team / Browserをまとめて扱います。全体startはDiagを使わない場合、Task / Team（既定OFF）やConsole / Code / Live / IDEを個別に選択できます。Navigator / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはNavigator → Console → Code → Live → IDE → Task → Team → Browser → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
+全体のsetup・cleanupはNavi / Console / Code / Live / IDE / Task / Team / Browserをまとめて扱います。全体startはDiagを使わない場合、Task / Team（既定OFF）やConsole / Code / Live / IDEを個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはNavi → Console → Code → Live → IDE → Task → Team → Browser → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
 
 ## ウィンドウ配置
 
@@ -327,17 +327,17 @@ https://github.com/monjyu1101/AiDiy2027
 Avatar から移設した独立版を `aidiy_task` / `aidiy_team` で起動できます。Web / Avatar内の旧Task / Team画面・入口は撤去済みです。IDE群のsetupで両コマンドを登録します。TaskのElectron版は要求・フロー図・明細の3窓で、各窓右上から閉じた他画面を再表示できます。3画面をすべて閉じるとTaskアプリを終了します。Core（既定8091）と共通Task / Teamサーバー（既定8093）を別途起動してログインしてください。`--browser` も利用可能です。シアンの状態バーはTask / Teamポートの疎通に連動します。詳しくは `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
 
 
-### Navigator
+### Navi
 
 初期サイズは幅480 × 高さ800です（Electronの論理ピクセル）。単独・IDEからの起動・VRで共通とし、小画面では作業領域内へ縮小します。Web表示も高さ800を上限に画面内へ収めます。手動リサイズとCodeオン／オフごとのサイズ保持は従来どおりです。
 
-`aidiy_navi [プロジェクトフォルダ]` で独立した `AiDiy Navigator` を開きます。`--browser` はWeb表示、`--new-window` は追加窓です。IDEでは「＋ Navigator」から `AiDiy IDE / Navigator 1`、`2` …を開きます。
+`aidiy_navi [プロジェクトフォルダ]` で独立した `AiDiy Navi` を開きます。`--browser` はWeb表示、`--new-window` は追加窓です。IDEでは「＋ Navi」から `AiDiy IDE / Navi 1`、`2` …を開きます。
 
 「ナビ」は目標と作業項目を提案し、「再評価」は項目構成を保って達成度と次のプロンプトを更新します。この調査・評価は読取専用で、達成度はAIの推定です。「＋ 新規」「一覧」でプロジェクト別の履歴を切り替え、状態はプロジェクト内の `_AIDIY/aidiy_navi/navigation/` に保存します。モデルは入力欄下の「モデル」から選び、最後の手動選択を `_AIDIY/aidiy_navi/aidiy_navi_model.json` に保存します。未保存時は `aidiy_hermes` と共通設定の `CODE_AIDIY_HERMES_MODEL`（未指定時auto）を使います。
 
-「自動航行（Navi Cruise）」を明示的にオンにすると、Navigator専用の埋込Codeへ提案を送り、成功後の読取専用再評価と次の実行を繰り返します。Codeは通常のコード実行なのでファイルを変更できます。総合評価100%、3回続けて項目の最高達成率が改善しない場合、失敗・切断・対象変更などで停止します。オフは実行中の依頼へ停止を要求しますが、変更済みファイルを元に戻しません。「CODEへ」「CODE/LIVEへ」は下書きの追記だけで、自動航行とは別です。詳細と検証手順は [Vue共通画面変更手順](../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
+「自動航行（Navi Cruise）」を明示的にオンにすると、Navi専用の埋込Codeへ提案を送り、成功後の読取専用再評価と次の実行を繰り返します。Codeは通常のコード実行なのでファイルを変更できます。総合評価100%、3回続けて項目の最高達成率が改善しない場合、失敗・切断・対象変更などで停止します。オフは実行中の依頼へ停止を要求しますが、変更済みファイルを元に戻しません。「CODEへ」「CODE/LIVEへ」は下書きの追記だけで、自動航行とは別です。詳細と検証手順は [Vue共通画面変更手順](../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
 
-### Navigatorの羽衣ライディング
+### Naviの羽衣ライディング
 
 待機画面の「羽衣ライディング」は `src/components/開発スペース/ナビ羽衣ライディング.vue` です。「ナビ」「再評価」の右クリックメニューから選べます。撮影補助・選択処理のキーは従来どおり `ride` を使います。Codeへの実行指示を繰り返す「自動航行（Navi Cruise）」とは別の待機演出です。
 
@@ -358,7 +358,7 @@ AiDiy自身のモデル設定・画面状態・履歴は、選択プロジェク
 
 - Code: `aidiy_code_model.json`、`aidiy_code_model_offline.json`、`aidiy_code_options.json`、`histories/`。
 - Live: `aidiy_live_model.json`。
-- Navigator: `aidiy_navi_model.json` と `navigation/`。別プロジェクトとは共有しません。
+- Navi: `aidiy_navi_model.json` と `navigation/`。別プロジェクトとは共有しません。
 - IDE: `file_searches/` と `file_analyses/`。
 - Browser: `browser_analyses/`。IDEからのページ解析も同じ保存先です。
 - Discord / Slack: 各プログラム名のJSONと `electron/`・`browser-profile/`。

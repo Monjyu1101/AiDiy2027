@@ -21,7 +21,7 @@ AiDiy は、日本語を第一言語とするフルスタック業務システ�
 - Frontend VS Code: VS Code 拡張 2 種（AIコアの各 Code CLI を選択し、未接続時は Hermes を直接実行する AiDiy (Code)、AIコアへ接続する音声会話の AiDiy (Live)）と単独起動版（常駐なし）。どちらも開発スペース（`aidiy_ide`）の部品としても動作。
 - Frontend Discord: Hermes チャットと AIコア Live 音声会話をつなぐ任意起動の Discord Bot（接続パネル付き）。
 - Frontend Slack: HTTPS の定期取得で Hermes チャットへ接続する任意起動の Slack Bot（音声なし）。Discord 版と双子の接続パネルで、両方をそろえて保守する。
-- Frontend Navigator: `aidiy_navi` の開発案内。ナビ・再評価は読み取り専用。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、再評価を繰り返す。IDE の「＋ Navigator」からも開ける。
+- Frontend Navi: `aidiy_navi` の開発案内。ナビ・再評価は読み取り専用。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、再評価を繰り返す。IDE の「＋ Navi」からも開ける。
 - Frontend IDE: 開発スペース（宇宙をテーマにした IDE 開発環境）。宇宙表示・左側エクスプローラー・読み取り専用ビューアの AiDiy IDE。Code / Live を部品として呼び出せる（ポート自動割り当て、全体のセットアップ・起動・クリーンアップに組み込み済み）。
 - AI コア: チャット、音声、画像、ファイル、code1〜code6 のコード支援パネル。
 - AIタスク: 要求を AI が明細へ分解し Code CLI で自動実行する画面と実行基盤。

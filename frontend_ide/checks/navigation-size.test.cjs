@@ -7,7 +7,7 @@ const test=require('node:test');const assert=require('node:assert/strict');
 const {windowBounds,windowMinimumSize,allWindowBounds}=require('../デスクトップ/window-layout.cjs');
 const {panelBounds}=require('../デスクトップ/panel-windows.cjs');
 const size=require('../host/scripts/window-size.cjs');
-test('Navigator starts at the left center of the work area and clamps its initial DIP size',()=>{
+test('Navi starts at the left center of the work area and clamps its initial DIP size',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1040},{x:50,y:80,width:1200,height:916},{x:-1200,y:80,width:1200,height:915},{x:-900,y:-50,width:900,height:700},{x:0,y:0,width:400,height:480},{x:100,y:-1900,width:1080,height:1880},{x:-321,y:41,width:641,height:641}]){
   const code=windowBounds('code',area),expected=[Math.min(480,area.width-16),Math.min(900,area.height-16)];
   assert.deepEqual([code.width,code.height],[Math.min(480,area.width-16),Math.min(900,area.height-16)]);
@@ -23,8 +23,8 @@ test('Navigator starts at the left center of the work area and clamps its initia
  }
 });
 
-test('Navigator Web panel uses its own initial height and keeps viewport limits',()=>{
- const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/components/開発スペース/Navigationパネル.vue'),'utf8');
+test('Navi Web panel uses its own initial height and keeps viewport limits',()=>{
+ const source=require('node:fs').readFileSync(require('node:path').join(__dirname,'../src/components/開発スペース/Naviパネル.vue'),'utf8');
  const size=require('../host/scripts/window-size.cjs');
  assert.equal(size.ナビ高さ,900);
  assert.equal(size.会話高さ,900);
@@ -32,17 +32,17 @@ test('Navigator Web panel uses its own initial height and keeps viewport limits'
  assert.ok(source.includes(`height:min(${size.ナビ高さ}px,calc(100vh - var(--workspace-top,78px) - 16px))`));
 });
 
-test('Navigator goal starts at four rows and preserves vertical resizing',()=>{
+test('Navi goal starts at four rows and preserves vertical resizing',()=>{
  const {readFileSync}=require('node:fs');
  const {join}=require('node:path');
- const source=readFileSync(join(__dirname,'../src/components/開発スペース/Navigationパネル.vue'),'utf8');
+ const source=readFileSync(join(__dirname,'../src/components/開発スペース/Naviパネル.vue'),'utf8');
  assert.match(source,/<textarea[^>]*v-model="goal"[^>]*rows="4"[^>]*@input="editGoal"/);
  assert.match(source,/\.navigation-goal-form textarea\{[^}]*resize:vertical;[^}]*min-height:48px;max-height:120px[;}]/);
 });
 
-test('Navigator prompt sits outside the scrolling items after the overall evaluation',()=>{
+test('Navi prompt sits outside the scrolling items after the overall evaluation',()=>{
  const {readFileSync}=require('node:fs');const {join}=require('node:path');
- const source=readFileSync(join(__dirname,'../src/components/開発スペース/Navigationパネル.vue'),'utf8');
+ const source=readFileSync(join(__dirname,'../src/components/開発スペース/Naviパネル.vue'),'utf8');
  assert.ok(source.indexOf('class="navigation-display"')<source.indexOf('class="navigation-overall"'));
  assert.ok(source.indexOf('class="navigation-overall"')<source.indexOf('class="navigation-next"'));
  assert.match(source,/\.navigation-panel>\.navigation-next\{flex:none;/);

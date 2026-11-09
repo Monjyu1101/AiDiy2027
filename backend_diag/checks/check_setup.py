@@ -109,7 +109,7 @@ class RootIntegrationTests(unittest.TestCase):
             '3. Tools','4. Core / Apps',
             '5. Task / Team','6. Web',
             '7. Avatar','8. Hermes',
-            '9. Navigator / Console / Code / Live / IDE / Task / Team','10. Discord','11. Slack',
+            '9. Navi / Console / Code / Live / IDE / Task / Team','10. Discord','11. Slack',
         ])
     def test_cleanup_auto_includes_diag_first(self):
         module=self.root_module('_cleanup');calls=[];original=module.ask_yes_no

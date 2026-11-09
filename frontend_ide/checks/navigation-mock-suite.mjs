@@ -8,7 +8,7 @@ import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import os from 'node:os';
 const root=fileURLToPath(new URL('../../',import.meta.url));
-const evidence=join(root,'docs/セルフテスト、操作ガイド/evidence/Navigator現行模擬ハーネス');mkdirSync(evidence,{recursive:true});
+const evidence=join(root,'docs/セルフテスト、操作ガイド/evidence/Navi現行模擬ハーネス');mkdirSync(evidence,{recursive:true});
 const cases=[
  ['check-navigation','模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示'],
  ['check-navigation-progress','0/50/100%表示、依存停止復帰、目標編集と再評価、失敗再試行、履歴、実行中編集、2窓・単独表示'],

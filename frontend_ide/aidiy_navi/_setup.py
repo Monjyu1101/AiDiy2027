@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""Navigatorのランチャーを登録する。共有依存はIDE群のセットアップで導入する。"""
+"""Naviのランチャーを登録する。共有依存はIDE群のセットアップで導入する。"""
 import importlib.util
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent

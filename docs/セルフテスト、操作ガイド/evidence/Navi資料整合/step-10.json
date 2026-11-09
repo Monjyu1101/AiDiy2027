@@ -1,0 +1,373 @@
+{
+  "at": "2026-11-09T20:41:00+09:00",
+  "scope": "現行Naviの操作ガイド。実画面の起動・モデル・待機画面、ブラウザ版の2窓、隔離表示の結果・履歴・連携・自動航行を掲載。",
+  "finalFiles": {
+    "file": "セルフテスト,aidiy_navi,操作編.pdf",
+    "source": "セルフテスト,aidiy_navi,操作編.md",
+    "pages": 29,
+    "source_sha256": "4fce04e65ea0d25707323caed4193c03cb30c1372d459928efdb0290066c5136",
+    "pdf_sha256": "5afb0d6d9ad64eb3a05a153e012c9caf774a5be473d3df9ab9f0367cdb19297c",
+    "imageReferences": 25,
+    "verifiedRelativeLinks": 31,
+    "updatedImages": [
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_101_Diag起動.png",
+        "alt": "図101 Naviの単独起動画面",
+        "sha256": "d9cae494cb7d3f76e566dcf5d37a3af1bb7fc2d5667654daadfda1bdb1ed66e6",
+        "pages": [
+          2
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_104_IDE起動メニュー広い.png",
+        "alt": "図104 IDEの起動メニュー（広いとき）",
+        "sha256": "9a54d542212caef2ee2ca29cc9d5b53795ac67d36623f66d9cc9961369abc6a5",
+        "pages": [
+          3
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_106_IDE起動メニュー下向き.png",
+        "alt": "図106 起動メニューを開いたところ",
+        "sha256": "aa192c5ef4dfc5426d65f9f64294cabfb1fead72a9fda56d275bcdb6eef5241d",
+        "pages": [
+          4
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_103_IDE複数窓.png",
+        "alt": "図103 ブラウザ版IDEで開いたNaviの2窓",
+        "sha256": "65d6b507ef5c42a4ce17a29462ae7b00f6d4f92194db2a2dd2be3caa6ccb3c19",
+        "pages": [
+          4
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_301_目標入力.png",
+        "alt": "図301 現行部品での目標入力の表示例",
+        "sha256": "20ec43b0ad44b765e43decb2ea2ccd04b0440c77e4d51d0c92ee291b84f18228",
+        "pages": [
+          6
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_302_ナビ実行中.png",
+        "alt": "図302 調査中の表示例（処理は実行していません）",
+        "sha256": "3b1b50e21c2a86fb283d3481df087712022dbb7f51c34bf8ba61184b222002ee",
+        "pages": [
+          7
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_303_ナビ結果.png",
+        "alt": "図303 既存結果を現行部品で表示した例",
+        "sha256": "f5293e1c740144b65ace64bfed44aee3f486987d1ccee245e09abd7757471ead",
+        "pages": [
+          8
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_304_理由と総合評価.png",
+        "alt": "図304 理由と総合評価の展開例",
+        "sha256": "7b5314c41e4d002f9e14e485739b9e650a0739c21eb075de563110a8251aa5ff",
+        "pages": [
+          9
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_801_処理の中止.png",
+        "alt": "図801 中止通知の表示例（中止操作は再試験していません）",
+        "sha256": "f4bcd675d0e1189cdf94d2332dce287a20275883a2b4df20aeb997c3b95da5fe",
+        "pages": [
+          10
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_401_履歴一覧.png",
+        "alt": "図401 保存済み結果を使った履歴一覧の表示例",
+        "sha256": "2ae378f24d4655a6eb43168b9d09ac8b795e52d6704c4a0a70327a1c7ae67110",
+        "pages": [
+          12
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_501_モデル選択.png",
+        "alt": "図501 モデル選択（コードAIの候補）",
+        "sha256": "871f6a422a1dd27cdf6d317e574c021739592da041b87f453176b7abbbd20bbc",
+        "pages": [
+          13
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_710_待機画面メニュー.png",
+        "alt": "図710 待機画面の選択メニュー",
+        "sha256": "df5bc4ba0c30fc32309750b648714f670491d2ce1391c3e2aa4adcdfa5a4df09",
+        "pages": [
+          14
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_802_CODE_LIVEへ.png",
+        "alt": "図802 CODE/LIVEへ（連携先なし）",
+        "sha256": "d23655a537cb5ed9c2bafea27c45655861cdd136dc545d4397a41b7fd2c51abc",
+        "pages": [
+          24
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_901_自動航行オン.png",
+        "alt": "図901 自動航行オン（隔離試験の表示例）",
+        "sha256": "7b13cd94afca1e47f73208cdce9a10c2e25d2b4c9f0c1b5fe45101df3abe0973",
+        "pages": [
+          25
+        ]
+      },
+      {
+        "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_902_自動航行オフ.png",
+        "alt": "図902 自動航行をオフにしたところ（隔離試験の表示例）",
+        "sha256": "34a5d1a5f1aee6ea6c54ec734e928c26586ba9b062917a3aa1b58602b2e12bcc",
+        "pages": [
+          25
+        ]
+      }
+    ]
+  },
+  "localPdfLinks": [
+    "evidence/Navi%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/step-10.json",
+    "%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_diag,%E3%83%A9%E3%83%B3%E3%83%81%E3%83%A3%E3%83%BC%E7%B7%A8.md",
+    "%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_ide,%E6%93%8D%E4%BD%9C%E7%B7%A8.md",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
+    "evidence/Navi%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E5%9B%B3%E7%89%88.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_302_%E5%AE%9F%E3%83%97%E3%83%AD%E3%82%B8%E3%82%A7%E3%82%AF%E3%83%88%E5%88%86%E6%9E%90.json",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step8-visible-20261107/electron.jsonl",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/Code%E9%9D%9E%E8%A1%A8%E7%A4%BA%E8%A9%A6%E9%A8%93/electron.jsonl",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_101_%E8%B5%B7%E5%8B%95%E5%B0%8E%E7%B7%9A.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_601_%E9%81%94%E6%88%90%E7%8E%87%E8%A1%A8%E7%A4%BA.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_701_%E5%AE%9F%E8%A3%85%E7%A2%BA%E8%AA%8D.json",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
+    "evidence/Navi%E5%81%9C%E6%AD%A2%E6%93%8D%E4%BD%9C/step-8.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_202_%E5%88%9D%E6%9C%9F%E3%82%B5%E3%82%A4%E3%82%BA.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_701_%E5%AE%9F%E8%A3%85%E7%A2%BA%E8%AA%8D.json",
+    "evidence/.aidiy_cache/selftest/%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8/Navigator_301_%E3%83%8A%E3%83%93%E8%A9%95%E4%BE%A1.json",
+    "evidence/Navi%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E6%AC%A0%E8%90%BD%E5%8F%82%E7%85%A7.json",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/step-9.json",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E7%8F%BE%E8%A1%8C%E3%83%8F%E3%83%BC%E3%83%8D%E3%82%B9%E7%85%A7%E5%90%88/heading.json",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E7%8F%BE%E8%A1%8C%E3%83%8F%E3%83%BC%E3%83%8D%E3%82%B9%E7%85%A7%E5%90%88/heading.json",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/events.jsonl",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/python.jsonl",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/Hermes%E9%99%90%E5%AE%9A%E7%A2%BA%E8%AA%8D/hermes-result.json",
+    "evidence/Navi%E5%A4%B1%E6%95%97%E5%88%87%E5%88%86%E3%81%91/%E6%9C%9F%E9%99%90%E5%87%A6%E7%90%86.json",
+    "evidence/Navi%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/%E6%AC%A0%E8%90%BD%E5%8F%82%E7%85%A7.json",
+    "%E3%82%BB%E3%83%AB%E3%83%95%E3%83%86%E3%82%B9%E3%83%88,aidiy_navi,%E6%93%8D%E4%BD%9C%E7%B7%A8.pdf",
+    "evidence/Navi%E8%B3%87%E6%96%99%E6%95%B4%E5%90%88/step-10.json"
+  ],
+  "images": [
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_101_Diag起動.png",
+      "alt": "図101 Naviの単独起動画面",
+      "sha256": "d9cae494cb7d3f76e566dcf5d37a3af1bb7fc2d5667654daadfda1bdb1ed66e6",
+      "pages": [
+        2
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_104_IDE起動メニュー広い.png",
+      "alt": "図104 IDEの起動メニュー（広いとき）",
+      "sha256": "9a54d542212caef2ee2ca29cc9d5b53795ac67d36623f66d9cc9961369abc6a5",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_105_IDE起動メニュー狭い.png",
+      "alt": "図105 IDEの起動メニュー（狭いとき）",
+      "sha256": "81011eded10bdf3fd598947837f79248a11499be2aa7d895109a9a83558f2eae",
+      "pages": [
+        3
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_106_IDE起動メニュー下向き.png",
+      "alt": "図106 起動メニューを開いたところ",
+      "sha256": "aa192c5ef4dfc5426d65f9f64294cabfb1fead72a9fda56d275bcdb6eef5241d",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_103_IDE複数窓.png",
+      "alt": "図103 ブラウザ版IDEで開いたNaviの2窓",
+      "sha256": "65d6b507ef5c42a4ce17a29462ae7b00f6d4f92194db2a2dd2be3caa6ccb3c19",
+      "pages": [
+        4
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_301_目標入力.png",
+      "alt": "図301 現行部品での目標入力の表示例",
+      "sha256": "20ec43b0ad44b765e43decb2ea2ccd04b0440c77e4d51d0c92ee291b84f18228",
+      "pages": [
+        6
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_302_ナビ実行中.png",
+      "alt": "図302 調査中の表示例（処理は実行していません）",
+      "sha256": "3b1b50e21c2a86fb283d3481df087712022dbb7f51c34bf8ba61184b222002ee",
+      "pages": [
+        7
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_303_ナビ結果.png",
+      "alt": "図303 既存結果を現行部品で表示した例",
+      "sha256": "f5293e1c740144b65ace64bfed44aee3f486987d1ccee245e09abd7757471ead",
+      "pages": [
+        8
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_304_理由と総合評価.png",
+      "alt": "図304 理由と総合評価の展開例",
+      "sha256": "7b5314c41e4d002f9e14e485739b9e650a0739c21eb075de563110a8251aa5ff",
+      "pages": [
+        9
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_801_処理の中止.png",
+      "alt": "図801 中止通知の表示例（中止操作は再試験していません）",
+      "sha256": "f4bcd675d0e1189cdf94d2332dce287a20275883a2b4df20aeb997c3b95da5fe",
+      "pages": [
+        10
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_401_履歴一覧.png",
+      "alt": "図401 保存済み結果を使った履歴一覧の表示例",
+      "sha256": "2ae378f24d4655a6eb43168b9d09ac8b795e52d6704c4a0a70327a1c7ae67110",
+      "pages": [
+        12
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_501_モデル選択.png",
+      "alt": "図501 モデル選択（コードAIの候補）",
+      "sha256": "871f6a422a1dd27cdf6d317e574c021739592da041b87f453176b7abbbd20bbc",
+      "pages": [
+        13
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_710_待機画面メニュー.png",
+      "alt": "図710 待機画面の選択メニュー",
+      "sha256": "df5bc4ba0c30fc32309750b648714f670491d2ce1391c3e2aa4adcdfa5a4df09",
+      "pages": [
+        14
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_701_待機画面_羽衣ライディング.png",
+      "alt": "図701 羽衣ライディング",
+      "sha256": "040dd29b61027503c65b6a8fdf7e465b1fb67b14082ce78caa2c2722e3565cf5",
+      "pages": [
+        15
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_702_待機画面_花火.png",
+      "alt": "図702 花火",
+      "sha256": "dec46da9ae68a81ee46081b51e8c785956f8b19572b30a5edb665bcd20925517",
+      "pages": [
+        16
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_703_待機画面_アクアリウム.png",
+      "alt": "図703 アクアリウム",
+      "sha256": "76b30c6f11b19c3c74494683c5faa6894e5024826d5e80c6a0daac70ad5f93a5",
+      "pages": [
+        17
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_704_待機画面_万華鏡.png",
+      "alt": "図704 万華鏡",
+      "sha256": "2da7fde815d852d21d0d6d956526a2862918dfbd7c1f152293bb4a587d1acbfb",
+      "pages": [
+        18
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_705_待機画面_水面.png",
+      "alt": "図705 水面",
+      "sha256": "ad3aaecce74d1d8edcf45d10f1571389c8e7e9b3114bc04ef3f7a58040957a19",
+      "pages": [
+        19
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_706_待機画面_時計.png",
+      "alt": "図706 時計",
+      "sha256": "1a12053213a18c1a936a244d88ddd050b2d67936dbfa1be9ba0e6ff4240a9a85",
+      "pages": [
+        20
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_707_待機画面_迷路.png",
+      "alt": "図707 迷路",
+      "sha256": "c914247839c737df0c5ea15199e8f5673e1738b0c9f20ae580862dd28e5ff944",
+      "pages": [
+        21
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_708_待機画面_依頼文.png",
+      "alt": "図708 依頼文",
+      "sha256": "2d307a25ebf367d69193806e7795ee8a2afb3c72f7dfe998f8f366165178e5a1",
+      "pages": [
+        22
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_709_待機画面_夜間飛行.png",
+      "alt": "図709 夜間飛行",
+      "sha256": "c5572ff328e1d51a6f323132cf6c3059f493c123734c018d0081a24b8b5456dc",
+      "pages": [
+        23
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_802_CODE_LIVEへ.png",
+      "alt": "図802 CODE/LIVEへ（連携先なし）",
+      "sha256": "d23655a537cb5ed9c2bafea27c45655861cdd136dc545d4397a41b7fd2c51abc",
+      "pages": [
+        24
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_901_自動航行オン.png",
+      "alt": "図901 自動航行オン（隔離試験の表示例）",
+      "sha256": "7b13cd94afca1e47f73208cdce9a10c2e25d2b4c9f0c1b5fe45101df3abe0973",
+      "pages": [
+        25
+      ]
+    },
+    {
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_902_自動航行オフ.png",
+      "alt": "図902 自動航行をオフにしたところ（隔離試験の表示例）",
+      "sha256": "34a5d1a5f1aee6ea6c54ec734e928c26586ba9b062917a3aa1b58602b2e12bcc",
+      "pages": [
+        25
+      ]
+    }
+  ],
+  "layout": "全29ページを描画し、縮小一覧と差し替え図の掲載ページを目視確認。",
+  "externalAiRequests": 0,
+  "coreAppsRestarted": false
+}

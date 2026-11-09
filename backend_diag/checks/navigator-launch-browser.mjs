@@ -72,7 +72,7 @@ try{
  assert.equal(await evaluate(`(()=>{const ids=[...document.querySelectorAll('.app-launch-card[data-app]')].map(x=>x.dataset.app);return ids.indexOf('navi')+1===ids.indexOf('console');})()`),true);
  await capture('navigator-launcher');
  assert.equal(appCalls.length,0);assert.deepEqual(errors,[]);
- console.log('Navigator: mini/full icon 512px, before Console, no app/service launch PASS');
+ console.log('Navi: mini/full icon 512px, before Console, no app/service launch PASS');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

@@ -85,7 +85,6 @@
     "screenshots": "500x600 isolated browser; no external AI",
     "guideImages": [
       "Navigator_101_Diag起動.png",
-      "Navigator_201_単独起動画面.png",
       "Navigator_401_履歴一覧.png",
       "Navigator_501_モデル選択.png"
     ],

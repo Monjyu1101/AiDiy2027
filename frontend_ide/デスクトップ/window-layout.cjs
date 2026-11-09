@@ -52,7 +52,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const y=available.y+offset;
  return{x:Math.round(Math.max(available.x,Math.min(x,available.x+available.width-width))),y:Math.round(Math.max(available.y,Math.min(y,available.y+available.height-height))),width,height};
 }
-// ALLの選択画面でもConsoleを左下、Navigatorを左中央へ。Codeは右上、Liveは左上へ置く。
+// ALLの選択画面でもConsoleを左下、Naviを左中央へ。Codeは右上、Liveは左上へ置く。
 function allWindowBounds(kind,area,slot=0){
  const bounds=windowBounds(kind,area,area,slot);
  if(kind==='code'||kind==='live')bounds.x=area.x+area.width-(bounds.x-area.x)-bounds.width;

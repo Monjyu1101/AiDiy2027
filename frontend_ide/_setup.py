@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""Navigator / Console / Code / Live / IDE / Task / Team / Browserの依存・拡張・ランチャーをまとめて準備する。"""
+"""Navi / Console / Code / Live / IDE / Task / Team / Browserの依存・拡張・ランチャーをまとめて準備する。"""
 import importlib.util
 import shutil
 import subprocess
@@ -28,7 +28,7 @@ def prepare(*, continue_on_error=False):
         print("[NG] npm が見つかりません。対応する Node.js と同梱の npm を導入してください。")
         return False
     try:
-        reuse = frontend_dependency_guard(ROOT, 'Navigator / Console / Code / Live / IDE / Task / Team / Browser 共通UI', desktop=False, **({'continue_on_error': True} if continue_on_error else {}))
+        reuse = frontend_dependency_guard(ROOT, 'Navi / Console / Code / Live / IDE / Task / Team / Browser 共通UI', desktop=False, **({'continue_on_error': True} if continue_on_error else {}))
         if reuse is not None:
             return reuse
         subprocess.run([npm, 'ci', '--include=dev', '--no-fund', '--no-audit'], cwd=ROOT, check=True)
@@ -48,7 +48,7 @@ def register_launchers(host, *, continue_on_error=False):
     launcher = load_setup_module('frontend_ide/viewer/launcher.py')
     print("\n起動コマンドの登録:")
     failures = []
-    actions = [('Navigator', lambda: launcher.install_launcher(ROOT / 'aidiy_navi', 'navi', register_path=False)),
+    actions = [('Navi', lambda: launcher.install_launcher(ROOT / 'aidiy_navi', 'navi', register_path=False)),
                ('Console', lambda: launcher.install_launcher(ROOT / 'aidiy_console', 'console', register_path=False)),
                ('Code / Live', lambda: host.install_standalone_launcher(register_path=False))]
     for kind, folder in (('ide', 'viewer'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser')):
@@ -74,7 +74,7 @@ def setup(choices=None):
     if choices is not None and choices.get("ide") is False:
         return True
     print("\n" + "=" * 60)
-    print("Navigator / Console / Code / Live / IDE / Task / Team / Browser セットアップ")
+    print("Navi / Console / Code / Live / IDE / Task / Team / Browser セットアップ")
     print("=" * 60 + "\n")
     print("対象: Node.js / Vue 3 / Vite / TypeScript / Electron / VS Code / VSIX")
     choices = choices if choices is not None else {}
@@ -108,11 +108,11 @@ def setup(choices=None):
     if len(warnings) > warning_count:
         print("[WARN] IDE 系セットアップは Electron コピーの警告付きで完了しました。")
         return True
-    print("Navigator / Console / Code / Live / IDE / Task / Team / Browser セットアップ完了")
-    names = ('Navigator', 'Console', 'Code', 'Live', 'IDE', 'Task', 'Team', 'Browser')
+    print("Navi / Console / Code / Live / IDE / Task / Team / Browser セットアップ完了")
+    names = ('Navi', 'Console', 'Code', 'Live', 'IDE', 'Task', 'Team', 'Browser')
     width = max(map(len, names))
     for name in names:
-        print(f"{name:<{width}} 起動: aidiy_{'navi' if name == 'Navigator' else name.lower()}")
+        print(f"{name:<{width}} 起動: aidiy_{'navi' if name == 'Navi' else name.lower()}")
     return True
 
 if __name__ == '__main__':

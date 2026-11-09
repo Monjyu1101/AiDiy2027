@@ -1,4 +1,4 @@
-"""Navigator停止の所属判定と事前停止を模擬検証。実プロセスは操作しない。"""
+"""Navi停止の所属判定と事前停止を模擬検証。実プロセスは操作しない。"""
 import importlib.util
 from pathlib import Path
 import sys

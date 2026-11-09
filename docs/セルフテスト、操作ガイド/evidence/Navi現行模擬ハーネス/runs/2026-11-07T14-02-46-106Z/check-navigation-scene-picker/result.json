@@ -1,0 +1,464 @@
+{
+  "name": "check-navigation-scene-picker",
+  "expected": "押下/右クリック/キー/タッチ、現行9候補と全選択、非送信転記、中止、狭幅、別Document、破棄",
+  "command": "C:\\Program Files\\nodejs\\node.exe",
+  "args": [
+    "--import",
+    "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-scene-picker.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "environment": {
+    "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\profile",
+    "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\profile",
+    "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\appdata",
+    "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\localappdata",
+    "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\temporary",
+    "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\temporary",
+    "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-02-46-106Z\\check-navigation-scene-picker\\output",
+    "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-02-46-106Z\\check-navigation-scene-picker\\diagnostics",
+    "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T14-02-46-106Z\\check-navigation-scene-picker\\audit.ndjson",
+    "NODE_OPTIONS": "removed"
+  },
+  "startedAt": "2026-11-07T14:02:46.661Z",
+  "endedAt": "2026-11-07T14:03:00.921Z",
+  "exitCode": 0,
+  "signal": null,
+  "timedOut": false,
+  "status": "PASS",
+  "lastStage": "STAGE: buttons",
+  "blocked": [],
+  "loadedAssets": [
+    {
+      "at": "2026-11-07T14:02:48.803Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:48.844Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:49.841Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:49.875Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:50.804Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:51.040Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:51.350Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:51.411Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:52.291Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:52.344Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:52.633Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:52.691Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:53.056Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:53.088Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:53.620Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:53.647Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:54.235Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:54.320Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:54.635Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:54.668Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:54.964Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:54.999Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:55.401Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:55.441Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:55.641Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:55.664Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:55.827Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:55.851Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:56.040Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:56.073Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:56.386Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:56.409Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:56.651Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:56.714Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:57.297Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:57.320Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:57.496Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:57.521Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:57.726Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:57.791Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:58.068Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:58.112Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:58.993Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:59.014Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:59.489Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:59.514Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    },
+    {
+      "at": "2026-11-07T14:02:59.689Z",
+      "event": "loadedAsset",
+      "path": "/",
+      "status": 200,
+      "bytes": 56287,
+      "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+    },
+    {
+      "at": "2026-11-07T14:02:59.711Z",
+      "event": "loadedAsset",
+      "path": "/app.js",
+      "status": 200,
+      "bytes": 2261179,
+      "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+    }
+  ],
+  "childProcesses": [
+    {
+      "at": "2026-11-07T14:02:47.115Z",
+      "event": "spawn",
+      "executable": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+      "args": [
+        "--service=0.27.7",
+        "--ping"
+      ],
+      "pid": 13380,
+      "browserUsesExplicitIsolatedProfile": false
+    },
+    {
+      "at": "2026-11-07T14:02:48.035Z",
+      "event": "spawn",
+      "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+      "args": [
+        "--headless=new",
+        "--no-sandbox",
+        "--enable-unsafe-swiftshader",
+        "--remote-debugging-port=0",
+        "--window-size=720,800",
+        "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-0AyzAK\\5\\temporary\\navi-picker-vqfi2m",
+        "about:blank",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--proxy-server=http://127.0.0.1:9",
+        "--proxy-bypass-list=127.0.0.1;localhost",
+        "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+      ],
+      "pid": 14688,
+      "browserUsesExplicitIsolatedProfile": true
+    },
+    {
+      "at": "2026-11-07T14:03:00.552Z",
+      "event": "childExit",
+      "pid": 14688,
+      "code": null,
+      "signal": "SIGTERM"
+    }
+  ],
+  "stdout": "stdout.txt",
+  "stderr": "stderr.txt"
+}

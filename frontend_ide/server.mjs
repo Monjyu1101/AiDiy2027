@@ -57,7 +57,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
     const instance=url.searchParams.get('instance'), snapshot=connection.state();
     req.resume();
     if (!['POST','DELETE'].includes(req.method)) { reply(405,{error:'POST / DELETE required'});return true; }
-    if (!instance || !/^navi-[1-9][0-9]{0,5}$/.test(instance) || (kind==='navi' && instance!==navigationSlot?.instance)) { reply(400,{error:'Navigator IDが不正です。'});return true; }
+    if (!instance || !/^navi-[1-9][0-9]{0,5}$/.test(instance) || (kind==='navi' && instance!==navigationSlot?.instance)) { reply(400,{error:'Navi IDが不正です。'});return true; }
     if (!snapshot.active || url.searchParams.get('session')!==String(snapshot.startedAt)) { reply(409,{error:'利用セッションが変わりました。'});return true; }
     try {
      if (req.method==='DELETE') { await panels.release('code',instance);reply(200,{}); }

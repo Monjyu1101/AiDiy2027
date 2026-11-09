@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 const size=require('../host/scripts/window-size.cjs');
 
-// Navigator自身を右へ広げる。IDE本体や別Navigatorの寸法は変更しない。
+// Navi自身を右へ広げる。IDE本体や別Naviの寸法は変更しない。
 function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionKey,screen,isQuitting=()=>false}){
  const saved=new WeakMap(),requests=new WeakMap();
  return async function navigationCode(event,expanded,name){
@@ -13,15 +13,15 @@ function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionK
   const record=name===undefined?source:panelTarget(source,name);
   if(typeof expanded!=='boolean'||!source||!record||!['navi','panel-navigation'].includes(record.kind)||
    (record.kind==='panel-navigation'&&(record.owner!==source||source.kind!=='ide'))||
-   (record.kind==='navi'&&record!==source))return{ok:false,error:'Navigatorの表示範囲を変更できません。'};
+   (record.kind==='navi'&&record!==source))return{ok:false,error:'Naviの表示範囲を変更できません。'};
   const owner=record.owner||record,revision=owner.revision,token={};requests.set(record,token);
   const valid=()=>!isQuitting()&&!record.window.isDestroyed()&&!owner.window.isDestroyed()&&trustedEvent(event)===source&&owner.revision===revision&&requests.get(record)===token&&(!record.owner||record.ownerRevision===revision);
   try{
    const state=await readState(owner);
-   if(!valid()||!state.active||(record.owner&&record.linkKey!==sessionKey(state)))throw Error('Navigatorの利用状態が変わりました。');
+   if(!valid()||!state.active||(record.owner&&record.linkKey!==sessionKey(state)))throw Error('Naviの利用状態が変わりました。');
    if(owner.vrPanelMoving)throw Error('VRパネルの移動が終わってから開いてください。');
-   const {createNavigationSizeMemory,fitNavigationBounds}=await import('../src/components/開発スペース/Navigation窓サイズ.js');
-   if(!valid())throw Error('Navigatorの利用状態が変わりました。');
+   const {createNavigationSizeMemory,fitNavigationBounds}=await import('../src/components/開発スペース/Navi窓サイズ.js');
+   if(!valid())throw Error('Naviの利用状態が変わりました。');
    if(owner.vrPanelMoving)throw Error('VRパネルの移動が終わってから開いてください。');
    const win=record.window;
    let entry=saved.get(record);if(!entry){entry={memory:createNavigationSizeMemory(size.幅*2),keepMaximized:false};saved.set(record,entry);}
@@ -44,13 +44,13 @@ function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionK
   }catch(error){return{ok:false,error:error.message};}
  };
 }
-const CRUISE_TITLE='Navigation Cruise';
-function navigationWindowTitle(record,fallback){const title=record.navigationNormalTitle||fallback;return record.navigationCruise?title.replace('Navigator',CRUISE_TITLE):title;}
-// DOMをIDEから移したNavigatorにも、通常の番号付きタイトルを保持する。
+const CRUISE_TITLE='Navi Cruise';
+function navigationWindowTitle(record,fallback){const title=record.navigationNormalTitle||fallback;return record.navigationCruise?title.replace('Navi',CRUISE_TITLE):title;}
+// DOMをIDEから移したNaviにも、通常の番号付きタイトルを保持する。
 function registerNavigationCruiseTitle(record){
  if(record.kind!=='panel-navigation')return;
  record.window.webContents.on('page-title-updated',(event,title)=>{
-  if(!record.navigationNormalTitle&&/^AiDiy IDE \/ Navigator [1-9][0-9]*$/.test(title))record.navigationNormalTitle=title;
+  if(!record.navigationNormalTitle&&/^AiDiy IDE \/ Navi [1-9][0-9]*$/.test(title))record.navigationNormalTitle=title;
   const next=navigationWindowTitle(record);
   if(next){event.preventDefault();record.window.setTitle(next);}
  });
@@ -61,17 +61,17 @@ function createNavigationCruiseWindow({trustedEvent,panelTarget,readState,sessio
   const source=trustedEvent(event),record=name===undefined?source:panelTarget(source,name);
   if(typeof active!=='boolean'||!source||!record||!['navi','panel-navigation'].includes(record.kind)||
    (record.kind==='panel-navigation'&&(record.owner!==source||source.kind!=='ide'))||
-   (record.kind==='navi'&&record!==source))return{ok:false,error:'Navigatorのタイトルを変更できません。'};
+   (record.kind==='navi'&&record!==source))return{ok:false,error:'Naviのタイトルを変更できません。'};
   const owner=record.owner||record,revision=owner.revision,token={};requests.set(record,token);
   try{
    const state=await readState(owner);
    if(isQuitting()||record.window.isDestroyed()||owner.window.isDestroyed()||trustedEvent(event)!==source||owner.revision!==revision||requests.get(record)!==token||!state.active||
-    (record.owner&&(record.ownerRevision!==revision||record.linkKey!==sessionKey(state))))throw Error('Navigatorの利用状態が変わりました。');
+    (record.owner&&(record.ownerRevision!==revision||record.linkKey!==sessionKey(state))))throw Error('Naviの利用状態が変わりました。');
    if(!record.navigationNormalTitle){
     const title=record.window.getTitle();
-    if(record.kind==='navi')record.navigationNormalTitle='AiDiy Navigator';
-    else if(/^AiDiy IDE \/ Navigator [1-9][0-9]*$/.test(title))record.navigationNormalTitle=title;
-    else throw Error('Navigatorの通常タイトルを確認できません。');
+    if(record.kind==='navi')record.navigationNormalTitle='AiDiy Navi';
+    else if(/^AiDiy IDE \/ Navi [1-9][0-9]*$/.test(title))record.navigationNormalTitle=title;
+    else throw Error('Naviの通常タイトルを確認できません。');
    }
    record.navigationCruise=active;
    const title=navigationWindowTitle(record);record.window.setTitle(title);

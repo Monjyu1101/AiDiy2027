@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-09T11:32:22.725Z",
+  "kind": "現行Vueによる説明用表示。機能試験・実AI送信・実機操作の新規証拠ではない。",
+  "resultSource": "evidence/Navi停止操作/step8-visible-20261107/evaluation-1.json",
+  "unchangedAiResult": true,
+  "source": {
+    "path": "frontend_ide/src/components/開発スペース/Naviパネル.vue",
+    "sha256": "e23f8d630eb7ced53fd8a501b7297d31f9b01f9e5c99c3401cb15f2b83e62e4b"
+  },
+  "network": "file以外を遮断。API/CLI/共有サービス/利用者窓への操作なし。",
+  "limits": "調査中・中止通知は撮影用状態。再評価の前後比較はしていない。接続表示は実サービス状態を示さない。",
+  "shots": [
+    {
+      "state": "input",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_301_目標入力.png",
+      "sha256": "20ec43b0ad44b765e43decb2ea2ccd04b0440c77e4d51d0c92ee291b84f18228"
+    },
+    {
+      "state": "running",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_302_ナビ実行中.png",
+      "sha256": "3b1b50e21c2a86fb283d3481df087712022dbb7f51c34bf8ba61184b222002ee"
+    },
+    {
+      "state": "result",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_303_ナビ結果.png",
+      "sha256": "f5293e1c740144b65ace64bfed44aee3f486987d1ccee245e09abd7757471ead"
+    },
+    {
+      "state": "expanded",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_304_理由と総合評価.png",
+      "sha256": "7b5314c41e4d002f9e14e485739b9e650a0739c21eb075de563110a8251aa5ff"
+    },
+    {
+      "state": "history",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_401_履歴一覧.png",
+      "sha256": "2ae378f24d4655a6eb43168b9d09ac8b795e52d6704c4a0a70327a1c7ae67110"
+    },
+    {
+      "state": "cancelled",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_801_処理の中止.png",
+      "sha256": "f4bcd675d0e1189cdf94d2332dce287a20275883a2b4df20aeb997c3b95da5fe"
+    },
+    {
+      "state": "handoff",
+      "path": "images/セルフテスト,aidiy_navi,操作編/Navigator_802_CODE_LIVEへ.png",
+      "sha256": "d23655a537cb5ed9c2bafea27c45655861cdd136dc545d4397a41b7fd2c51abc"
+    }
+  ]
+}

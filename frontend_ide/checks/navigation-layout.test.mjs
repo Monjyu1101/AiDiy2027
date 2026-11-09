@@ -8,9 +8,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {parse,compileTemplate} from '@vue/compiler-sfc';
 import {baseParse} from '@vue/compiler-dom';
-const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
 const {descriptor,errors}=parse(source);
-const compiled=compileTemplate({source:descriptor.template.content,filename:'Navigationパネル.vue',id:'navi-layout'});
+const compiled=compileTemplate({source:descriptor.template.content,filename:'Naviパネル.vue',id:'navi-layout'});
 const attr=(node,name)=>node.props?.find(prop=>prop.type===6&&prop.name===name)?.value?.content;
 const hasClass=(node,name)=>attr(node,'class')?.split(' ').includes(name);
 const elements=node=>(node.children||[]).filter(child=>child.type===1);
@@ -37,17 +37,17 @@ test('タイトルのCode切替は表示・非表示とも四角い枠を持ち�
  for(const toggle of toggles){assert.equal(toggle.tag,'button');assert.equal(attr(toggle,'role'),'switch');assert.equal(toggle.props.find(p=>p.type===7&&p.arg?.content==='aria-checked').exp.content,'codeOpen');assert.equal(toggle.props.find(p=>p.type===7&&p.name==='on'&&p.arg?.content==='click').exp.content,'toggleCode');}
 });
 
-test('Navigator専用Codeは重複タイトルと接続線だけを省略し、共通AiDiy画像を指定する',()=>{
+test('Navi専用Codeは重複タイトルと接続線だけを省略し、共通AiDiy画像を指定する',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),code=nodes.find(node=>node.tag==='CodePanel');assert.ok(code);
  assert.equal(attr(code,'icon'),'/development/AiDiy.png');assert.ok(code.props.some(prop=>prop.type===6&&prop.name==='hide-status-bar'));
  const aside=nodes.find(node=>hasClass(node,'navigation-code'));assert.equal(elements(aside).some(node=>node.tag==='header'||node.tag==='button'),false);
 });
 
-test('Navigatorの制御説明は専用Codeだけへ指定し、従来の上部説明を重複させない',()=>{
+test('Naviの制御説明は専用Codeだけへ指定し、従来の上部説明を重複させない',()=>{
  const nodes=walk(baseParse(descriptor.template.content)),aside=nodes.find(node=>hasClass(node,'navigation-code')),code=walk(aside).find(node=>node.tag==='CodePanel');
- assert.equal(attr(code,'project-notice'),'Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。');
- assert.equal(elements(aside).some(node=>node.tag==='small'),false);assert.doesNotMatch(source,/このNavigator専用です。/);
- assert.equal((source.match(/Navigator制御下です。/g)||[]).length,1);
+ assert.equal(attr(code,'project-notice'),'Navi制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。');
+ assert.equal(elements(aside).some(node=>node.tag==='small'),false);assert.doesNotMatch(source,/このNavi専用です。/);
+ assert.equal((source.match(/Navi制御下です。/g)||[]).length,1);
 });
 
 test('共通の確認日時をタスク見出しに1つだけ表示し、各行や不明日時を捏造しない',()=>{

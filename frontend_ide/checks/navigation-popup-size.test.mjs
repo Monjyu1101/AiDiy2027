@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
+import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
 function fixture(width=480){
  const calls=[],win={screenX:8,screenY:192,outerWidth:width,outerHeight:600,screen:{availLeft:0,availTop:0,availWidth:1920,availHeight:1080},resizeTo(width,height){calls.push({width,height});this.outerWidth=width;this.outerHeight=height;},moveTo(x,y){this.screenX=x;this.screenY=y;}};
  return{win,calls,resize:createNavigationPopupSizer({settle:async()=>{}})};

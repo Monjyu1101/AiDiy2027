@@ -79,6 +79,6 @@ test('Web内実行の例外をAppのブラウザー版タブだけに明示し�
  const app=baseParse(parse(readFileSync(new URL('../src/App.vue',import.meta.url),'utf8')).descriptor.template.content),nodes=walk(app),codes=nodes.filter(node=>node.tag==='CodePanel');assert.equal(codes.length,2);
  const web=codes.find(node=>attr(node,'page-notifications'));assert.ok(web);const aside=nodes.find(node=>node.tag==='aside'&&walk(node).includes(web));assert.equal(aside.props.find(prop=>prop.type===7&&prop.name==='if').exp.content,'!desktop');
  const other=codes.find(node=>node!==web);assert.equal(attr(other,'page-notifications'),undefined);
- const navi=baseParse(parse(readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8')).descriptor.template.content);for(const code of walk(navi).filter(node=>node.tag==='CodePanel'))assert.equal(attr(code,'page-notifications'),undefined);
+ const navi=baseParse(parse(readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8')).descriptor.template.content);for(const code of walk(navi).filter(node=>node.tag==='CodePanel'))assert.equal(attr(code,'page-notifications'),undefined);
  const css=readFileSync(new URL('../src/components/共通表示/会話表示.css',import.meta.url),'utf8'),layout=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');assert.match(layout,/\.ai-component\{[^}]*position:relative;overflow:hidden/);assert.match(css,/\.answer-popup\.answer-popup-local \{ position: absolute; width: min\(560px, calc\(100% - 16px\)\)/);
 });

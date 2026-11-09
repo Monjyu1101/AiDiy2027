@@ -1,0 +1,1017 @@
+{
+  "at": "2026-11-07T13:52:54.351Z",
+  "scope": "現行模擬7本の予定全工程。過去8本の再現・原因調査・解消判定ではない。",
+  "platform": "win32",
+  "os": "10.0.26300",
+  "node": "v24.22.1",
+  "chrome": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+  "invocation": [
+    "C:\\Program Files\\nodejs\\node.exe",
+    "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\checks\\navigation-mock-suite.mjs"
+  ],
+  "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+  "runDirectory": "runs\\2026-11-07T13-52-54-114Z",
+  "plan": [
+    {
+      "name": "check-navigation",
+      "expected": "模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示"
+    },
+    {
+      "name": "check-navigation-progress",
+      "expected": "0/50/100%表示、依存停止復帰、目標編集と再評価、失敗再試行、履歴、実行中編集、2窓・単独表示"
+    },
+    {
+      "name": "check-navigation-guide",
+      "expected": "初期・履歴・モデル画面、空目標の禁止、模擬Toolsの停止復帰、Codeとのタイトル寸法一致。AI呼出しゼロ"
+    },
+    {
+      "name": "check-navigation-height",
+      "expected": "単独480x800、小画面384x464、リサイズ復帰、IDE内800pxと縮小、ポップアップ初期寸法。AI呼出しゼロ"
+    },
+    {
+      "name": "check-navigation-autopilot",
+      "expected": "次の操作の強調、右側Code、模擬2周100%終了、表示/非表示で停止、エラー停止と明示再開、デスクトップAPI模擬、再評価の保存目標復元、単独Code"
+    },
+    {
+      "name": "check-navigation-scene-picker",
+      "expected": "押下/右クリック/キー/タッチ、現行9候補と全選択、非送信転記、中止、狭幅、別Document、破棄"
+    },
+    {
+      "name": "check-navigation-scenery",
+      "expected": "3種Canvas、黒地、魚/餌/気泡/波紋/ホバー、Space/repeat/入力、別Document移動復帰と破棄"
+    }
+  ],
+  "excluded": [
+    {
+      "name": "check-navigation-desktop",
+      "status": "NOT_RUN",
+      "reason": "通常工程は実AI。寸法限定だけの成功を通し成功に数えない。"
+    },
+    {
+      "name": "check-navigation-goal",
+      "status": "NOT_RUN",
+      "reason": "実AI呼出しあり"
+    },
+    {
+      "name": "check-navigation-project",
+      "status": "NOT_RUN",
+      "reason": "実AI呼出しあり"
+    },
+    {
+      "name": "check-navigation-real",
+      "status": "NOT_RUN",
+      "reason": "実AI呼出しあり"
+    }
+  ],
+  "results": [
+    {
+      "name": "check-navigation",
+      "expected": "模擬作成・再評価、2窓のモデル/結果/終了の独立、失敗表示、処理中終了、単独表示",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:52:54.359Z",
+      "endedAt": "2026-11-07T13:52:59.493Z",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "FAIL",
+      "lastStage": "STAGE: 評価完了",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:52:55.259Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:52:55.296Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:52:55.300Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:52:56.162Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:52:58.661Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:52:54.640Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--remote-debugging-port=0",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\0\\temporary\\aidiy-connection-check-5mWXSV\\browser",
+            "--window-size=1280,800",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 9824,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:52:59.401Z",
+          "event": "childExit",
+          "pid": 9824,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-progress",
+      "expected": "0/50/100%表示、依存停止復帰、目標編集と再評価、失敗再試行、履歴、実行中編集、2窓・単独表示",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-progress.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-progress\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-progress\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-progress\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:52:59.497Z",
+      "endedAt": "2026-11-07T13:53:14.679Z",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "FAIL",
+      "lastStage": "STAGE: 評価完了",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:53:00.630Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:53:00.662Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:00.666Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:53:01.370Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:14.069Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:52:59.816Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--remote-debugging-port=0",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\1\\temporary\\aidiy-connection-check-slGSt8\\browser",
+            "--window-size=1280,800",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 18448,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:53:14.565Z",
+          "event": "childExit",
+          "pid": 18448,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-guide",
+      "expected": "初期・履歴・モデル画面、空目標の禁止、模擬Toolsの停止復帰、Codeとのタイトル寸法一致。AI呼出しゼロ",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-guide.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-guide\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-guide\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-guide\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:53:14.682Z",
+      "endedAt": "2026-11-07T13:53:52.833Z",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "PASS",
+      "lastStage": "STAGE: Code comparison",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:53:15.747Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:53:15.774Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:15.779Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:53:49.830Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:53:49.844Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:49.852Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:53:14.959Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--remote-debugging-port=0",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\2\\temporary\\aidiy-connection-check-DLqg4E\\browser",
+            "--window-size=1280,800",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 26600,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:53:51.930Z",
+          "event": "childExit",
+          "pid": 26600,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-height",
+      "expected": "単独480x800、小画面384x464、リサイズ復帰、IDE内800pxと縮小、ポップアップ初期寸法。AI呼出しゼロ",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-height.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-height\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-height\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-height\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:53:52.838Z",
+      "endedAt": "2026-11-07T13:53:58.571Z",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "PASS",
+      "lastStage": "STAGE: inline Navigator",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:53:54.309Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:53:54.341Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:54.356Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:53:56.149Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:53:56.171Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:53:56.175Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:53:53.331Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--remote-debugging-port=0",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\3\\temporary\\aidiy-navi-height-3PBpSA\\browser",
+            "--window-size=1920,1080",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 20448,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:53:58.428Z",
+          "event": "childExit",
+          "pid": 20448,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-autopilot",
+      "expected": "次の操作の強調、右側Code、模擬2周100%終了、表示/非表示で停止、エラー停止と明示再開、デスクトップAPI模擬、再評価の保存目標復元、単独Code",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-autopilot.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-autopilot\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-autopilot\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-autopilot\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:53:58.576Z",
+      "endedAt": "2026-11-07T13:54:27.197Z",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "FAIL",
+      "lastStage": "STAGE: desktop title",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:53:59.975Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:00.019Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:00.026Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:54:01.591Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:01.609Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:01.615Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:54:01.902Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:01.919Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:01.923Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:54:06.611Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:06.627Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:06.633Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:54:08.962Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:08.974Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:08.978Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        },
+        {
+          "at": "2026-11-07T13:54:11.931Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 596,
+          "sha256": "e96c1b8c2c3571a68762875fdc813f0c9e41927ca210cce243c0b994cd6fba49"
+        },
+        {
+          "at": "2026-11-07T13:54:11.944Z",
+          "event": "loadedAsset",
+          "path": "/development/app.css",
+          "status": 200,
+          "bytes": 118076,
+          "sha256": "c6f73b49f3dd8ee5343f1a67856041a007b0ae48dfbb6106cc4eaed2b6115f07"
+        },
+        {
+          "at": "2026-11-07T13:54:11.949Z",
+          "event": "loadedAsset",
+          "path": "/development/app.js",
+          "status": 200,
+          "bytes": 1514914,
+          "sha256": "045641b5ff0e558c904122e92acb11f88b729095b02c37f84427a10659bce622"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:53:58.992Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--no-sandbox",
+            "--remote-debugging-port=0",
+            "--window-size=1000,700",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\4\\temporary\\navi-auto-ui-8E17kC\\browser",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 8020,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:54:27.064Z",
+          "event": "childExit",
+          "pid": 8020,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-scene-picker",
+      "expected": "押下/右クリック/キー/タッチ、現行9候補と全選択、非送信転記、中止、狭幅、別Document、破棄",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-scene-picker.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scene-picker\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scene-picker\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scene-picker\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:54:27.200Z",
+      "endedAt": "2026-11-07T13:54:43.929Z",
+      "exitCode": 1,
+      "signal": null,
+      "timedOut": false,
+      "status": "FAIL",
+      "lastStage": "STAGE: stop request",
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:54:29.401Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:29.476Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:30.442Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:30.466Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:31.334Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:31.356Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:31.701Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:31.723Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:32.586Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:32.659Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:33.059Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:33.102Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        },
+        {
+          "at": "2026-11-07T13:54:33.670Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 56287,
+          "sha256": "18883768770e2ef2260c0fb36bff99bc98babe96586c742407add69f421f5300"
+        },
+        {
+          "at": "2026-11-07T13:54:33.704Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 2261179,
+          "sha256": "415132dc7f74ba85ec9e2155505fe2394031f78924adb3c85c63a6ad4e294115"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:54:27.622Z",
+          "event": "spawn",
+          "executable": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+          "args": [
+            "--service=0.27.7",
+            "--ping"
+          ],
+          "pid": 29916,
+          "browserUsesExplicitIsolatedProfile": false
+        },
+        {
+          "at": "2026-11-07T13:54:28.459Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--no-sandbox",
+            "--enable-unsafe-swiftshader",
+            "--remote-debugging-port=0",
+            "--window-size=720,800",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\5\\temporary\\navi-picker-Bcv2p3",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 20648,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:54:43.669Z",
+          "event": "childExit",
+          "pid": 20648,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    },
+    {
+      "name": "check-navigation-scenery",
+      "expected": "3種Canvas、黒地、魚/餌/気泡/波紋/ホバー、Space/repeat/入力、別Document移動復帰と破棄",
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "--import",
+        "file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_ide/checks/navigation-mock-observer.mjs",
+        "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\scripts\\check-navigation-scenery.mjs"
+      ],
+      "cwd": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\",
+      "environment": {
+        "CHROME_PATH": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+        "HOME": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\profile",
+        "USERPROFILE": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\profile",
+        "APPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\appdata",
+        "LOCALAPPDATA": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\localappdata",
+        "TMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\temporary",
+        "TEMP": "C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\temporary",
+        "AIDIY_NAVIGATION_MOCK_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scenery\\output",
+        "AIDIY_TEST_NAVIGATION_STEP4_OUTPUT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scenery\\diagnostics",
+        "AIDIY_NAVIGATION_MOCK_AUDIT": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\docs\\セルフテスト、操作ガイド\\evidence\\Navi現行模擬ハーネス\\runs\\2026-11-07T13-52-54-114Z\\check-navigation-scenery\\audit.ndjson",
+        "NODE_OPTIONS": "removed"
+      },
+      "startedAt": "2026-11-07T13:54:43.938Z",
+      "endedAt": "2026-11-07T13:54:51.691Z",
+      "exitCode": 0,
+      "signal": null,
+      "timedOut": false,
+      "status": "PASS",
+      "lastStage": null,
+      "blocked": [],
+      "loadedAssets": [
+        {
+          "at": "2026-11-07T13:54:45.580Z",
+          "event": "loadedAsset",
+          "path": "/",
+          "status": 200,
+          "bytes": 385,
+          "sha256": "65b6219d3a9f4098425b651aeedaa2063120202568ee88fa36f08d0d55d4d43f"
+        },
+        {
+          "at": "2026-11-07T13:54:45.618Z",
+          "event": "loadedAsset",
+          "path": "/app.js",
+          "status": 200,
+          "bytes": 284022,
+          "sha256": "d0a26827805a1ee6789cee5ccae28debef21f66f01352ee8485de422f7d86e7b"
+        }
+      ],
+      "childProcesses": [
+        {
+          "at": "2026-11-07T13:54:44.490Z",
+          "event": "spawn",
+          "executable": "C:\\Users\\admin\\Desktop\\AiDiy2027_dev\\frontend_ide\\node_modules\\@esbuild\\win32-x64\\esbuild.exe",
+          "args": [
+            "--service=0.27.7",
+            "--ping"
+          ],
+          "pid": 27444,
+          "browserUsesExplicitIsolatedProfile": false
+        },
+        {
+          "at": "2026-11-07T13:54:44.674Z",
+          "event": "spawn",
+          "executable": "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+          "args": [
+            "--headless=new",
+            "--no-sandbox",
+            "--remote-debugging-port=0",
+            "--window-size=1240,760",
+            "--user-data-dir=C:\\Users\\admin\\AppData\\Local\\Temp\\navi-suite-I6SfJm\\6\\temporary\\navi-scenery-YEHnc4",
+            "about:blank",
+            "--disable-background-networking",
+            "--disable-component-update",
+            "--disable-sync",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--proxy-server=http://127.0.0.1:9",
+            "--proxy-bypass-list=127.0.0.1;localhost",
+            "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost"
+          ],
+          "pid": 26912,
+          "browserUsesExplicitIsolatedProfile": true
+        },
+        {
+          "at": "2026-11-07T13:54:51.424Z",
+          "event": "childExit",
+          "pid": 26912,
+          "code": null,
+          "signal": "SIGTERM"
+        }
+      ],
+      "stdout": "stdout.txt",
+      "stderr": "stderr.txt"
+    }
+  ],
+  "sharedConfigurationUnchanged": true,
+  "allSevenExecuted": true,
+  "verdict": "INCOMPLETE_OR_FAIL",
+  "externalAIRequests": 0,
+  "coreAppsRestarted": false,
+  "existingUserWindowsOperated": false
+}

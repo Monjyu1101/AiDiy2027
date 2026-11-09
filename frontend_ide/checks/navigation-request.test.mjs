@@ -56,6 +56,6 @@ test('依頼文の画面: ニコニコ動画のように左右から流し、依
  transformSync(compileScript(descriptor,{id:'request',genDefaultAs:'component'}).content,{format:'esm'});
  for(const word of ['requestSegments','pickFlight','props.text','strokeText','WebGLRenderer','CanvasTexture','unsupported','spawn(far)'])assert.ok(source.includes(word),word);
  assert.doesNotMatch(source,/strokeText\(c\.text/,'毎フレーム文字を描き直さない（断片ごとに1度だけテクスチャにする）');
- const panel=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
  assert.match(panel,/<NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt\|\|goal"/,'依頼文はプロンプト案（無いときだけ目標）');
 });

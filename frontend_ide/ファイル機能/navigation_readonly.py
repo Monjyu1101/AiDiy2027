@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 # -*- coding: utf-8 -*-
-"""Navigation専用アダプター。既存CLI読取専用境界を使い、通常実行へfallbackしない。"""
+"""Navi専用アダプター。既存CLI読取専用境界を使い、通常実行へfallbackしない。"""
 import asyncio
 import contextlib
 import json
@@ -84,7 +84,7 @@ if __name__ == "__main__":
     try:
         payload = sys.stdin.buffer.read(1048577)
         if len(payload) > 1048576:
-            raise ValueError("Navigation request too large")
+            raise ValueError("Navi request too large")
         request = json.loads(payload.decode("utf-8"))
         # 通常ログへ目標・回答を記録しない。stdoutはアダプターのJSONだけ。
         with contextlib.redirect_stdout(sys.stderr):

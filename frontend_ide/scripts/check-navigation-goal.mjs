@@ -25,7 +25,7 @@ const chromePath = process.env.CHROME_PATH || [process.env.PROGRAMFILES, process
 if (!chromePath) throw Error('Chrome / Edge が見つかりません。CHROME_PATH を指定してください。');
 const temporary = mkdtempSync(join(tmpdir(), 'aidiy-connection-check-'));
 const project=resolve('..');
-const sourceNames=['frontend_ide/ファイル機能/navigation.mjs','frontend_ide/ファイル機能/navigation-agent.mjs','frontend_ide/ファイル機能/navigation_readonly.py','frontend_ide/src/components/開発スペース/Navigationパネル.vue','frontend_ide/desktop.cjs','frontend_ide/server.mjs'];
+const sourceNames=['frontend_ide/ファイル機能/navigation.mjs','frontend_ide/ファイル機能/navigation-agent.mjs','frontend_ide/ファイル機能/navigation_readonly.py','frontend_ide/src/components/開発スペース/Naviパネル.vue','frontend_ide/desktop.cjs','frontend_ide/server.mjs'];
 const snapshot=()=>Object.fromEntries(sourceNames.map(name=>[name,createHash('sha256').update(readFileSync(join(project,name))).digest('hex')]));let before;
 const evidence=resolve('temp/navigation-goal-check');mkdirSync(evidence,{recursive:true});const actual=[];
 const calls = [], replies = new Set(); let healthy = true;
@@ -83,7 +83,7 @@ try {
   const results=[];
   for(const [index,goal] of ['Navi機能追加'].entries()){
    await evaluate(`document.querySelector('.navigation-launch').click()`);
-   await until(()=>evaluate(`!!testNavi[${index}]?.document.querySelector('textarea')`),'Navigator window');
+   await until(()=>evaluate(`!!testNavi[${index}]?.document.querySelector('textarea')`),'Navi window');
    await child(index,`(()=>{const t=document.querySelector('textarea');t.value=${JSON.stringify(goal)};t.dispatchEvent(new Event('input',{bubbles:true}));})()`);
    await until(()=>child(index,`!document.querySelector('.navigation-start').disabled`),'実行準備');
    await child(index,`fetch('/api/navigation?instance=navi-${index+1}',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({provider:'aidiy_hermes',model:'same'})}).then(r=>r.json())`);
@@ -91,13 +91,13 @@ try {
    await until(()=>child(index,`fetch('/api/navigation?instance=navi-${index+1}').then(r=>r.json()).then(d=>!!d.job&&d.job.status!=='running')`),'AI結果');
    const data=await child(index,`fetch('/api/navigation?instance=navi-${index+1}').then(r=>r.json())`);
    results.push({input:goal,mode:goal?'explicit':'default',data});writeFileSync(join(evidence,'result.json'),JSON.stringify({results,aiCalls,actual:actual.map(({content,...rest})=>rest),before,after:snapshot()},null,2));
-   console.log(JSON.stringify({stage:'Navigator completed',mode:goal?'explicit':'default',status:data.job.status,message:data.job.message,items:data.result?.items?.length}));
+   console.log(JSON.stringify({stage:'Navi completed',mode:goal?'explicit':'default',status:data.job.status,message:data.job.message,items:data.result?.items?.length}));
    await until(()=>child(index,`!document.querySelector('.navigation-start').disabled`),'UI反映');
-   const targets=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();const target=targets.find(t=>t.title===`AiDiy IDE / Navigator ${index+1}`);
+   const targets=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json();const target=targets.find(t=>t.title===`AiDiy IDE / Navi ${index+1}`);
    const ws=new WebSocket(target.webSocketDebuggerUrl);await once(ws,'open');let n=0;const cmd=(method,params={})=>new Promise(done=>{const id=++n;const f=e=>{const d=JSON.parse(e.data);if(d.id===id){ws.removeEventListener('message',f);done(d);}};ws.addEventListener('message',f);ws.send(JSON.stringify({id,method,params}));});
    await cmd('Emulation.setDeviceMetricsOverride',{width:500,height:600,deviceScaleFactor:1,mobile:false});await sleep(300);
    const capture=await cmd('Page.captureScreenshot',{format:'png'});writeFileSync(join(evidence,(goal?'explicit':'default')+'.png'),Buffer.from(capture.result.data,'base64'));ws.close();
-   await child(index,`document.querySelector('[aria-label="Navigatorを閉じる"]').click()`);
+   await child(index,`document.querySelector('[aria-label="Naviを閉じる"]').click()`);
   }
   assert.equal(aiCalls,1);assert.deepEqual(snapshot(),before);assert.deepEqual(errors,[]);console.log(JSON.stringify({finished:true,aiCalls,sourceFilesUnchanged:true,statuses:results.map(x=>x.data.job.status)}));
 

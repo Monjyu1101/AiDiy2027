@@ -39,7 +39,7 @@
 - フロントエンド VS Code: Node.js + Vue 3 共通画面 + TypeScript + VS Code Extension API + Electron（AiDiy (Code) / AiDiy (Live) の 2 拡張と単独起動版。さらに開発スペース `aidiy_ide` の部品としても動作、常駐なし）
 - フロントエンド Slack: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript（HTTPS定期取得によるHermesチャット、音声なし）
 - フロントエンド Discord: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript + discord.js（Hermes チャット / AIコア Live 音声接続、任意起動の Bot）
-- フロントエンド Navigator: `aidiy_navi` で開く開発案内画面。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、完了後に再評価します
+- フロントエンド Navi: `aidiy_navi` で開く開発案内画面。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、完了後に再評価します
 - フロントエンド IDE（開発スペース）: Node.js + Vue 3 + Canvas 2D + Monaco Editor + Electron（宇宙をテーマにした IDE 開発環境。Code / Live を部品として組み込んだ `aidiy_ide`、ポート自動割り当て）
 - 常駐バックエンドは **5 サーバー構成**
   - `core_main.py` : `8091`
@@ -107,7 +107,7 @@ python _setup.py
 7. `frontend_web` の `npm install` と `npm update`
 8. `frontend_avatar` の依存・Electron・ランチャーの準備
 9. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
-10. `frontend_ide` の共通 Vue 依存、Navigator / Console / Code / Live / IDE / Task / Team / Browser のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
+10. `frontend_ide` の共通 Vue 依存、Navi / Console / Code / Live / IDE / Task / Team / Browser のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
 11. Channels(Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
 最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `backend_diag/ui` で `npm ci` により導入します。
@@ -152,7 +152,7 @@ Code / Live は全体起動の個別選択のほか、VS Code のコマンドパ
 
 `frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `_AIDIY/aidiy_slack/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
 
-Navigator はセットアップ後に `aidiy_navi` で単独起動するか、IDE の「＋ Navigator」から開きます。全体 `_start.py` の自動起動対象ではありません。使い方は [frontend_ide/README.md](./frontend_ide/README.md) を参照してください。
+Navi はセットアップ後に `aidiy_navi` で単独起動するか、IDE の「＋ Navi」から開きます。全体 `_start.py` の自動起動対象ではありません。使い方は [frontend_ide/README.md](./frontend_ide/README.md) を参照してください。
 
 ### 個別起動
 
@@ -314,7 +314,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 7. [frontend_web/AGENTS.md](./frontend_web/AGENTS.md)
 8. [frontend_avatar/AGENTS.md](./frontend_avatar/AGENTS.md)
 9. [backend_diag/AGENTS.md](./backend_diag/AGENTS.md) — Diag の診断・Vue 画面
-10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — Navigator / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面
+10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面
 11. [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) — Code / Live の拡張ホスト・通信
 12. [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) — Discord の接続・Vue パネル
 13. [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md) — Slack の接続・Vue パネル（Discord の双子）

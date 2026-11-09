@@ -110,8 +110,8 @@ class IDEGroupTest(unittest.TestCase):
         ), patch.object(group.shutil, 'rmtree'):
             self.assertTrue(group.cleanup({'ide': True}))
         lines = output.getvalue().splitlines()
-        self.assertEqual([line for line in lines if line.endswith('のクリーンアップ')], ['IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ'])
-        self.assertEqual([line for line in lines if 'クリーンアップ完了' in line], ['[OK] IDE群(Navigator / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ完了'])
+        self.assertEqual([line for line in lines if line.endswith('のクリーンアップ')], ['IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ'])
+        self.assertEqual([line for line in lines if 'クリーンアップ完了' in line], ['[OK] IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ完了'])
 
 if __name__ == '__main__':
     unittest.main()

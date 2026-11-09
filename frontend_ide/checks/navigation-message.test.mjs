@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {parse,compileTemplate} from '@vue/compiler-sfc';
-import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
 
 function fixture(){
  const timers=new Map(),writes=[];let id=0;
@@ -40,8 +40,8 @@ test('破棄後のタイマー・遅延通知は画面を書き換えない',()=
  f.dispose();assert.equal(f.timers.size,0);late();f.show('遅延通知');f.dismiss({type:'click'});f.flush();assert.deepEqual(f.writes,['元の通知']);
 });
 test('Naviの通知処理はcaptureで先に記録し、停止操作を通知欄に重複させない',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8');
- const {descriptor}=parse(source);assert.deepEqual(compileTemplate({source:descriptor.template.content,filename:'Navigationパネル.vue',id:'navigation-message'}).errors,[]);
+ const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
+ const {descriptor}=parse(source);assert.deepEqual(compileTemplate({source:descriptor.template.content,filename:'Naviパネル.vue',id:'navigation-message'}).errors,[]);
  for(const event of ['click.capture','keydown.capture','wheel.capture.passive','touchmove.capture.passive'])assert.ok(source.includes(`@${event}="autopilotMessage.dismiss"`));
  assert.match(source,/v-if="autopilotStatus" class="navigation-autopilot-status"/);
  assert.doesNotMatch(source,/@click="stopAutopilot\(\)"/);

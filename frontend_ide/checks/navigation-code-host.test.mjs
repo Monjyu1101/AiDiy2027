@@ -11,7 +11,7 @@ import {join} from 'node:path';
 import {createPanels} from '../viewer/panels.mjs';
 import {startDevelopment} from '../server.mjs';
 
-test('Navigator Code is isolated from normal Code and every other instance',async()=>{
+test('Navi Code is isolated from normal Code and every other instance',async()=>{
  let state={active:true,mode:'offline',startedAt:1};const starts=[],closed=[];
  const panels=createPanels('.',()=>state,async(kind,folder,snapshot,{instance})=>{
   starts.push(instance);return {url:`http://127.0.0.1:12345/token-${starts.length}/`,close:async()=>closed.push(instance)};
@@ -29,7 +29,7 @@ test('Navigator Code is isolated from normal Code and every other instance',asyn
  }finally{await panels.close();}
 });
 
-test('releasing pending Navigator Code cannot resurrect it or close a replacement',async()=>{
+test('releasing pending Navi Code cannot resurrect it or close a replacement',async()=>{
  const launches=[],closed=[];
  const panels=createPanels('.',()=>({active:true,mode:'online',startedAt:1}),()=>new Promise(done=>launches.push(done)));
  const a=panels.open('code','navi-1');const rejection=assert.rejects(a);
@@ -40,7 +40,7 @@ test('releasing pending Navigator Code cannot resurrect it or close a replacemen
  await panels.close();assert.deepEqual(closed,['old','new']);
 });
 
-for(const kind of ['ide','navi'])test(`${kind} Navigator Code endpoint enforces instance/session/origin and preserves Code mode guard`,async()=>{
+for(const kind of ['ide','navi'])test(`${kind} Navi Code endpoint enforces instance/session/origin and preserves Code mode guard`,async()=>{
  const root=await mkdtemp(join(tmpdir(),'navi-code-host-'));let app;
  let snapshot={active:true,mode:'offline',startedAt:42,connected:false,project:{name:'fixture',path:root}};
  const connection={state:()=>snapshot,offline:()=>snapshot,connect:async()=>snapshot,close(){snapshot={...snapshot,active:false};}};

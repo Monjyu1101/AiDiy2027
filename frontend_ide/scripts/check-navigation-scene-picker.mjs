@@ -18,13 +18,13 @@ import {parse,compileScript} from '@vue/compiler-sfc';
 import WebSocket from 'ws';
 const root=fileURLToPath(new URL('..',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'navi-picker-'));
 const output=mockOutput(join(root,'temp/navigation-scene-picker-check'));mkdirSync(output,{recursive:true});
-const bundle=await build({stdin:{contents:`import {createApp,h,ref} from 'vue';import Panel from './src/components/開発スペース/Navigationパネル.vue';
+const bundle=await build({stdin:{contents:`import {createApp,h,ref} from 'vue';import Panel from './src/components/開発スペース/Naviパネル.vue';
 const project=ref({path:'/fixture',name:'fixture'});window.changeProject=()=>project.value={path:'/changed',name:'changed'};const app=createApp({render:()=>h(Panel,{standalone:true,instance:'navi-1',startedAt:1,project:project.value})});app.mount('#app');window.dispose=()=>app.unmount();`,resolveDir:root},bundle:true,write:false,format:'iife',plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{
  const {descriptor}=parse(readFileSync(args.path,'utf8'));
  const compiled=compileScript(descriptor,{id:'picker',inlineTemplate:true});
  return {contents:compiled.content+`\n{const style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.content).join('\n'))};document.head.append(style);}`,resolveDir:dirname(args.path)};
 });}}]});
-if(process.argv.includes('--compile-only')){removeMockDirectory(temporary);console.log('PASS: Navigator and context-menu Vue components compile in the isolated browser harness.');process.exit(0);}
+if(process.argv.includes('--compile-only')){removeMockDirectory(temporary);console.log('PASS: Navi and context-menu Vue components compile in the isolated browser harness.');process.exit(0);}
 const css=readFileSync(join(root,'src/style.css'),'utf8');
 const html=`<!doctype html><meta charset="utf-8"><style>${css}\nhtml,body,#app{margin:0;width:100%;height:100%;background:#000;color:#e5edf8}</style><div id="app"></div><script src="/app.js"></script>`;
 const result={schemaVersion:3,navigationId:'fixture',requestId:'initial',goal:'保存済みの目標',checkedAt:Date.now(),items:[{id:'first',name:'作業項目',progress:20,reason:'検証用の根拠',weight:100,weightReason:'検証用'}],overall:{progress:20,reason:'検証用の根拠'},nextItemId:'first',nextPrompt:'次の作業'};

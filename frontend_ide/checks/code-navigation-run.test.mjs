@@ -52,7 +52,7 @@ test('Code通知: Web IDEタブの明示指定以外は単独・子窓・VS Code
     const f = fixture(host, options);try { assert.equal(f.notificationHost(row), options.pageNotifications ? body : root); } finally { f.dispose(); }
   }
 });
-test('Navigator Code: 初回の一時offline表示・接続失敗・未確定sessionでは送らず、オンライン確定後に1回だけ送る', async () => {
+test('Navi Code: 初回の一時offline表示・接続失敗・未確定sessionでは送らず、オンライン確定後に1回だけ送る', async () => {
   const f = fixture();try {
     for (const connecting of [true, false]) {
       f.state({ 自動接続: true, 接続済み: false, 接続中: connecting, 実行モード: 'offline', セッションID: undefined, 接続プロジェクトパス: '', provider: 'aidiy_hermes', model: 'same' });
@@ -66,7 +66,7 @@ test('Navigator Code: 初回の一時offline表示・接続失敗・未確定ses
     assert.equal(f.exposed.navigationReadiness('/project').ready, true);
   } finally { f.dispose(); }
 });
-test('Navigator Code: 明示オフラインは維持し、自動入力は人間の下書きを変更しない', async () => {
+test('Navi Code: 明示オフラインは維持し、自動入力は人間の下書きを変更しない', async () => {
   const f = fixture();try {
     f.state({ 自動接続: false, 接続済み: false, 実行モード: 'offline', セッションID: undefined, 接続プロジェクトパス: '' });f.data.prompt.value = '人間の下書き';
     const pending = run(f);assert.equal(f.data.displayedPrompt.value, '次の作業');assert.equal(f.data.prompt.value, '人間の下書き');
@@ -74,7 +74,7 @@ test('Navigator Code: 明示オフラインは維持し、自動入力は人間�
     result(f, 'succeeded');await pending;assert.equal(f.calls.filter(p => p.type === 'input_text').length, 1);
   } finally { f.dispose(); }
 });
-test('Navigator Code: 完了監視だけ1時間、Codeの15分無応答失敗は直ちに停止し再評価・再送しない', async () => {
+test('Navi Code: 完了監視だけ1時間、Codeの15分無応答失敗は直ちに停止し再評価・再送しない', async () => {
   for (const backendFailure of [false, true]) {
     const f = fixture();try {
       const pending = run(f), rejected = assert.rejects(pending);assert.deepEqual([...f.timerDelays.values()], [30000]);result(f, 'accepted');assert.deepEqual([...f.timerDelays.values()], [3600000]);
@@ -86,7 +86,7 @@ test('Navigator Code: 完了監視だけ1時間、Codeの15分無応答失敗は
   }
   const cli=readFileSync(new URL('../../backend_server/AIコア/AIコード_cli.py',import.meta.url),'utf8');assert.match(cli,/タイムアウト秒数: int = 900/);assert.match(cli,/time\.monotonic\(\) - last_output_time > timeout/);
 });
-test('Navigator Code: ID一致の受付と成功だけで完了、idle・別ID・重複送信は無効', async () => {
+test('Navi Code: ID一致の受付と成功だけで完了、idle・別ID・重複送信は無効', async () => {
   const f = fixture(); try {
     f.data.prompt.value = '手動の下書き';
     assert.equal(f.exposed.navigationReadiness('/project').ready, true);
@@ -106,7 +106,7 @@ test('Navigator Code: ID一致の受付と成功だけで完了、idle・別ID�
     assert.equal(f.timers.size, 0);
   } finally { f.dispose(); }
 });
-test('Navigator Code: 事前中止・別project・非対応・実行中には一切送信しない', async () => {
+test('Navi Code: 事前中止・別project・非対応・実行中には一切送信しない', async () => {
   const f = fixture(); try {
     const controller = new AbortController(); controller.abort(); await assert.rejects(run(f, controller.signal));
     await assert.rejects(f.exposed.runNavigationPrompt({ text: '依頼', projectPath: '/other' }));
@@ -115,7 +115,7 @@ test('Navigator Code: 事前中止・別project・非対応・実行中には一
     assert.equal(f.calls.length, 0);
   } finally { f.dispose(); }
 });
-test('Navigator Code: 中止・切断・scope変更・timeout・破棄・失敗は元のIDを停止し再送禁止', async () => {
+test('Navi Code: 中止・切断・scope変更・timeout・破棄・失敗は元のIDを停止し再送禁止', async () => {
   for (const action of ['abort', 'disconnect', 'session', 'project', 'conversation', 'epoch', 'model', 'mode', 'trust', 'stop', 'timeout', 'dispose', 'failed', 'success-before-accept']) {
     const f = fixture(), controller = new AbortController();
     const pending = run(f, controller.signal), rejected = assert.rejects(pending);
@@ -141,7 +141,7 @@ test('Navigator Code: 中止・切断・scope変更・timeout・破棄・失敗�
     if (action !== 'dispose') f.dispose();
   }
 });
-test('Navigator Code: HTTP結果不明でも再送せず、受付後の実行期限も停止する', async () => {
+test('Navi Code: HTTP結果不明でも再送せず、受付後の実行期限も停止する', async () => {
   for (const mode of ['send-failed', 'execution-timeout']) {
     const f = fixture(); try {
       if (mode === 'send-failed') f.setSend(async message => { f.calls.push(message); if (message.type === 'input_text') throw Error('応答喪失'); });
@@ -152,7 +152,7 @@ test('Navigator Code: HTTP結果不明でも再送せず、受付後の実行期
   }
 });
 
-for (const status of ['failed', 'cancelled']) test(`Navigator Code: 確定した${status}後は手動オンで新しいIDを送れる`, async () => {
+for (const status of ['failed', 'cancelled']) test(`Navi Code: 確定した${status}後は手動オンで新しいIDを送れる`, async () => {
   const f = fixture(); try {
     const first = run(f), rejected = assert.rejects(first), oldId = f.calls[0].navigationRequestId;
     result(f, 'accepted'); f.state({ 実行中: true });
@@ -171,7 +171,7 @@ for (const status of ['failed', 'cancelled']) test(`Navigator Code: 確定した
   } finally { f.dispose(); }
 });
 
-test('Navigator Code: エラー途中通知後は結果不明・別IDで解除せず、同じIDの実終了で再開できる', async () => {
+test('Navi Code: エラー途中通知後は結果不明・別IDで解除せず、同じIDの実終了で再開できる', async () => {
   const f = fixture(); try {
     f.setSend(async message => { f.calls.push(structuredClone(message)); return { ok: true, navigationPending: true }; });
     const first = run(f), rejected = assert.rejects(first), id = f.calls[0].navigationRequestId;
@@ -190,7 +190,7 @@ test('Navigator Code: エラー途中通知後は結果不明・別IDで解除�
   } finally { f.dispose(); }
 });
 
-test('Navigator Code: 確定終了後の旧停止HTTP応答は再開した実行のロックを解除しない', async () => {
+test('Navi Code: 確定終了後の旧停止HTTP応答は再開した実行のロックを解除しない', async () => {
   for (const lateFailure of [false, true]) {
     const f = fixture(); try {
       const cancellations = [];
@@ -219,7 +219,7 @@ function nodeOf(node, predicate) {
 }
 const element = (f, predicate) => nodeOf(f.render(), predicate);
 test('Codeの指定説明はプロジェクト表示の直下に1つだけ置き、通常Codeには出さない', () => {
-  const notice='Navigator制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。';
+  const notice='Navi制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。';
   for (const options of [{}, { embedded:true, projectNotice:notice }]) {
     const f=fixture(false,options);try {
       const children=f.render().children,toolbar=children.findIndex(node=>node.props?.class==='component-toolbar'),notes=children.filter(node=>node.props?.class==='code-project-notice');
@@ -227,7 +227,7 @@ test('Codeの指定説明はプロジェクト表示の直下に1つだけ置き
     } finally { f.dispose(); }
   }
 });
-test('Navigator埋込だけタイトルと接続バーを省略し、空会話へAiDiyアイコンを渡す', () => {
+test('Navi埋込だけタイトルと接続バーを省略し、空会話へAiDiyアイコンを渡す', () => {
   const f = fixture(false, { embedded: true, hideStatusBar: true, icon: '/development/AiDiy.png' });
   try {
     assert.equal(element(f, node => node.type?.name === 'StatusBar'), undefined);
@@ -252,7 +252,7 @@ async function humanSend(f, text) {
   element(f, node => node?.type === 'form').props.onSubmit({ preventDefault() {} }); await flush();
   const request = f.calls.at(-1);
   assert.equal(request.type, 'input_text'); assert.equal(request.メッセージ内容, text);
-  assert.equal('navigationRequestId' in request, false, '人間の送信をNavigator要求に変えない');
+  assert.equal('navigationRequestId' in request, false, '人間の送信をNavi要求に変えない');
   f.packet({ type: 'accepted' }); f.state({ 実行中: false }); await flush();
 }
 async function humanModel(f) {

@@ -11,8 +11,8 @@
  */
 
 'use strict';
-// Navigator / Code / Live / Discord・Slack の専用ウィンドウとブラウザ版（アプリ表示）の大きさ。
-// 幅は aidiy_code 基準。高さはNavigator・会話画面・設定パネルで分ける。
+// Navi / Code / Live / Discord・Slack の専用ウィンドウとブラウザ版（アプリ表示）の大きさ。
+// 幅は aidiy_code 基準。高さはNavi・会話画面・設定パネルで分ける。
 // 各 desktop.cjs と launch-project.mjs はここの値だけを使い、個別に数値を書かない。
 module.exports = Object.freeze({
   幅: 480,

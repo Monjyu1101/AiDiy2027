@@ -19,7 +19,7 @@
 Node.js 22.12 以降と npm が必要です。IDE群全体を使う場合は文書ビューアも満たす 22.13 以降を使用してください。Vue 3・Electronはプロジェクト依存として導入し、グローバルVue CLIやグローバルElectronは要求しません。
 
 1. AiDiy の Core サーバーを起動し、使用する Code CLI の認証を用意します。拡張モードを使う場合は VS Code **1.106 以降**も必要です。
-2. AiDiy ルートの `python _setup.py` で、**IDE群（Navigator / Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
+2. AiDiy ルートの `python _setup.py` で、**IDE群（Navi / Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
 3. 単独画面は `aidiy_code` を実行します。拡張モードは VS Code でフォルダを開き、コマンドパレットから **AiDiy Code: チャットを開く**を実行します。
 
 セットアップは依存関係と Electron バイナリの事前導入、単独起動コマンドの作成と、VS Code CLIがある場合は VSIX を生成・配置します。必要版（`^1.106.0`）を満たさない場合や版数を読めない場合は警告して継続し、明示的な `--extensions-only` も実際のCLI結果に従います。CLI未導入では単独画面だけを準備します。Code / Live のランチャーは AiDiy 本体の `_AIDIY/aidiy_code/bin` / `_AIDIY/aidiy_live/bin` に配置します（Windows は `.cmd`）。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使います。ホーム・シェル設定・レジストリは変更しません。ランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。既存のホーム配下ランチャーは移行・削除しません。手動で VSIX を配置する場合は、拡張機能画面の `…` → **VSIX からのインストール**で、`dist/aidiy-code-0.1.0.vsix` を選びます。解除と生成物削除は `python frontend_ide/host/_cleanup.py`、またはルートの `python _cleanup.py` から実行できます。

@@ -89,7 +89,7 @@ async function panel(t, { host = false, desktop = false } = {}) {
     disconnect: () => events.onerror(), reply: (index = 0, status = 200) => requests[index].resolve(new Response(JSON.stringify(status === 200 ? { ok: true } : { error: '会話がありません。' }), { status })) };
 }
 
-test('Navigator実Vue・実transport: 接続待ちから入力欄へ提案を表示し、確定sessionで一度だけHTTP送信する', async t => {
+test('Navi実Vue・実transport: 接続待ちから入力欄へ提案を表示し、確定sessionで一度だけHTTP送信する', async t => {
   const f = await panel(t), base = { ...initial(), navigationRunSupported: true, 自動接続: true, 接続世代: 1 };
   f.packet({ ...base, 接続済み: false, 接続中: true, 実行モード: 'offline', 接続プロジェクトパス: '', セッションID: '' });await flush();
   assert.equal(f.exposed.navigationReadiness('/project').ready, false);await assert.rejects(f.exposed.runNavigationPrompt({ text: '最初の提案', projectPath: '/project' }));assert.equal(f.sent.length, 0);

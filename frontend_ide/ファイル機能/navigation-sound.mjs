@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-// Navigatorの終了通知音。backend_tools の aidiy_notification_sounds で固定音だけを鳴らす。
+// Naviの終了通知音。backend_tools の aidiy_notification_sounds で固定音だけを鳴らす。
 // 画面からは種別名だけを受け取り、通知種別・scene・任意文字列（tts）は渡させない。
 import {toolsTarget} from './ai-search.mjs';
 

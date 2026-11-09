@@ -1,4 +1,4 @@
-import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navigation既定値.js';
+import {DEFAULT_NAVIGATION_GOAL} from '../src/components/開発スペース/Navi既定値.js';
 // COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
 // Licensed under "AiDiy 公開利用ライセンス v1.1".
 // Commercial use requires prior written consent from all copyright holders.
@@ -124,7 +124,7 @@ test('履歴を選んでも今のモデルと保存ファイルは変わらな�
  assert.deepEqual(JSON.parse(await readFile(join(dirname(stateRoot),'aidiy_navi_model.json'),'utf8')),{provider:'codex_cli',model:'gpt-6.1-sol'});
 });
 
-test('Navigation履歴: 新規/一覧/選択/評価と別窓・別プロジェクトの分離',async t=>{
+test('Navi履歴: 新規/一覧/選択/評価と別窓・別プロジェクトの分離',async t=>{
  let calls=0;const {service,root,state,stateRoot}=await fixture(t,async({prompt},root)=>{calls++;return respond(prompt,root);});
  await service.start('目標A');const first=(await finish(service)).result;
  await service.fresh();assert.equal((await service.get()).result,null);assert.equal((await service.list()).length,1);
@@ -376,7 +376,7 @@ test('推測目標の再評価も保存目標を固定し、目標の再推測�
   prompts.push(prompt);const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
   return {content:JSON.stringify(prompts.length===1?valid(shape.requestId,'保存された仮の目標'):shape)};
  });
- await assert.rejects(service.start('未実行','evaluate'),/先にNavigator/);assert.equal(prompts.length,0);
+ await assert.rejects(service.start('未実行','evaluate'),/先にNavi/);assert.equal(prompts.length,0);
  await service.start(DEFAULT_NAVIGATION_GOAL);const saved=(await finish(service)).result;
  await service.start('誤入力の新しい目標','evaluate');const result=await finish(service);
  assert.equal(result.job.status,'complete',result.job.message);assert.equal(result.result.goal,saved.goal);assert.deepEqual(result.result.items,saved.items);

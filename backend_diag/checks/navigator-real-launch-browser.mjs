@@ -75,9 +75,9 @@ try{
  await evaluate(`document.querySelector('.app-folder-dialog input').value=${JSON.stringify(project)};document.querySelector('.app-folder-dialog input').dispatchEvent(new Event('input',{bubbles:true}))`);
  await click('移動');await sleep(300);await click('このフォルダを選択');
  await until(`!document.querySelector('[data-app="navi"] .app-launch-button').disabled`);
- await click('Navigator を起動');await sleep(5000);
+ await click('Navi を起動');await sleep(5000);
  await capture('navigator-launch-requested');assert.deepEqual(errors,[]);
- console.log('Navigator: mini/full icon 512px, before Console, real Navigator launch requested; verify native window separately');
+ console.log('Navi: mini/full icon 512px, before Console, real Navi launch requested; verify native window separately');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

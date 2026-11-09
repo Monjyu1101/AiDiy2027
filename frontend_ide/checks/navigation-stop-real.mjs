@@ -31,7 +31,7 @@ const server=await startDevelopment(project,{kind:'navi',provider:selection.prov
  const aborted=()=>log('evaluation-abort',{call});args.signal.addEventListener('abort',aborted,{once:true});
  try{const answer=await runNavigationAgent(args);log('evaluation-return',{call,aborted:args.signal.aborted});writeFileSync(join(output,'evaluation-'+call+'.json'),JSON.stringify(answer,null,2));return answer;}catch(e){log('evaluation-error',{call,message:e.message});throw e;}finally{args.signal.removeEventListener('abort',aborted);}
 }}});
-const meta={project,stateRoot,url:server.url,pid:process.pid,initial,sourceHash:createHash('sha256').update(readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url))).digest('hex'),bundleHash:createHash('sha256').update(readFileSync(new URL('../dist/app.js',import.meta.url))).digest('hex'),before};
+const meta={project,stateRoot,url:server.url,pid:process.pid,initial,sourceHash:createHash('sha256').update(readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url))).digest('hex'),bundleHash:createHash('sha256').update(readFileSync(new URL('../dist/app.js',import.meta.url))).digest('hex'),before};
 writeFileSync(join(output,'environment.json'),JSON.stringify(meta,null,2));
 const env={...process.env,AIDIY_DEVELOPMENT_URL:server.url,AIDIY_DEVELOPMENT_KIND:'navi',AIDIY_DEVELOPMENT_PROJECT:project,AIDIY_DEVELOPMENT_NEW_WINDOW:'1',AIDIY_STOP_EVIDENCE:output};delete env.ELECTRON_RUN_AS_NODE;
 const child=spawn(electronExecutable(),[fileURLToPath(new URL('./navigation-stop-electron.cjs',import.meta.url))],{cwd:project,env,windowsHide:false,stdio:['ignore','ignore','ignore','ipc']});

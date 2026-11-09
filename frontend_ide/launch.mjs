@@ -19,7 +19,7 @@ import projectProfiles from './デスクトップ/project-profile.cjs';
 const {projectIdentity}=projectProfiles;
 // サーバーとElectronは別のNodeプロセスに所有させ、表示完了後に呼出元へ戻る。
 async function launchDetached(defaultKind,args){
- const label=defaultKind==='navi'?'Navigator':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='console'?'Console':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
+ const label=defaultKind==='navi'?'Navi':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='console'?'Console':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
  const child=spawn(process.execPath,[fileURLToPath(import.meta.url),'--app',defaultKind,'--foreground',...args],{cwd:process.cwd(),env:{...process.env,AIDIY_LAUNCHER_CHILD:'1'},detached:true,windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});
  try{
   const result=await new Promise((done,reject)=>{
@@ -70,7 +70,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const ready={url:app.url,publicUrl:app.publicUrl,pid:process.pid,kind,project};
  const publishReady=async(browser=false)=>{
   try{if(values['ready-file'])writeFileSync(resolve(values['ready-file']),JSON.stringify(ready),'utf8');}catch(error){await stop();throw error;}
-  const label=kind==='navi'?'Navigator':kind==='ide'?'IDE':kind[0].toUpperCase()+kind.slice(1);
+  const label=kind==='navi'?'Navi':kind==='ide'?'IDE':kind[0].toUpperCase()+kind.slice(1);
   console.log(browser?`AiDiy ${label}: ${app.publicUrl}`:`AiDiy ${label}を起動しました。`);
   if(browser&&kind!=='code')console.log(`プロジェクト: ${project}`);
  };

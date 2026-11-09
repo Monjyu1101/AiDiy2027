@@ -77,7 +77,7 @@ try{
  await until(`!document.querySelector('[data-app="navi"] .app-launch-button').disabled`);
  await click('アイコン化');await until(`document.querySelector('.micro-core')`);await evaluate(`document.querySelector('.micro-core').click()`);await sleep(2500);await send('Emulation.setDeviceMetricsOverride',{width:600,height:600,deviceScaleFactor:1,mobile:false});
  await capture('navigator-diag-orbit');console.log(await evaluate(`JSON.stringify({count:document.querySelectorAll('.micro-app').length,rings:[...document.querySelectorAll('.micro-app-orbit')].map(e=>e.style.getPropertyValue('--radius'))})`));assert.deepEqual(errors,[]);
- console.log('Navigator: mini/full icon 512px, before Console, real Navigator launch requested; verify native window separately');
+ console.log('Navi: mini/full icon 512px, before Console, real Navi launch requested; verify native window separately');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

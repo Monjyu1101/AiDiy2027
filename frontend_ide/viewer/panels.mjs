@@ -44,7 +44,7 @@ export function createPanels(project, state, launchPanel = launch) {
   async function open(kind, instance = '') {
     sync();
     if (disposed || !permitted(kind)) throw new Error('この利用モードでは開けません。');
-    if (instance && (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance))) throw new Error('Navigator IDが不正です。');
+    if (instance && (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance))) throw new Error('Navi IDが不正です。');
     const id = instance ? `${kind}:${instance}` : kind;
     if (!entries.has(id)) {
       const run = generation;
@@ -62,7 +62,7 @@ export function createPanels(project, state, launchPanel = launch) {
   }
   async function release(kind, instance) {
     sync();
-    if (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance)) throw new Error('Navigator IDが不正です。');
+    if (kind !== 'code' || !/^navi-[1-9][0-9]{0,5}$/.test(instance)) throw new Error('Navi IDが不正です。');
     const id = `${kind}:${instance}`, pending = entries.get(id);
     if (!pending) return;
     entries.delete(id);

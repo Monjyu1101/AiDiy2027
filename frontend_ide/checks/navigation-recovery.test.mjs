@@ -7,11 +7,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {createNavigationPopupSizer} from '../src/components/開発スペース/Navigation窓サイズ.js';
-import {createNavigationMessage} from '../src/components/開発スペース/Navigationメッセージ.js';
+import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
+import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
 import {ref,computed} from 'vue';
 import {localDateTimeInput} from '../src/components/ファイル閲覧/ファイル日時.js';
-const source=readFileSync(new URL('../src/components/開発スペース/Navigationパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
+const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 function fixture({props={},draftActions=null,native=false}={}){
  const calls=[],requests=[],pending=[],timers=new Map();let serial=0;
  const api=vm.runInNewContext(source+`;({navigate,refresh,selectHistory,goal,editGoal,canEvaluate,recommendedPrompt,nextItem,copy,copied,copying,copyError,panel,busy,job,error,visible,availability,result,overall,checkedAt,nextNavigationAction,history,autopilot,submitting,reconciling,savingModel,toolsState,handoff,canHandoff,draftRequest})`,{

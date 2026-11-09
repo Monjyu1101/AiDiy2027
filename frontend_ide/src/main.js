@@ -13,7 +13,7 @@ snapBurgerLines();addEventListener('resize',snapBurgerLines);
 async function main(){
   const embedded=document.getElementById('development-config');
   const config=embedded?JSON.parse(embedded.textContent):await fetch('/development/config').then(r=>{if(!r.ok)throw Error('起動設定を取得できません。');return r.json();});
-  document.title = `AiDiy ${config.linked ? 'IDE / ' : ''}${{code:'Code',live:'Live',ide:'IDE',console:'Console',browser:'Browser',navi:'Navigator'}[config.kind]}${config.kind==='console'&&config.cliName?' / '+config.cliName:''}`;
+  document.title = `AiDiy ${config.linked ? 'IDE / ' : ''}${{code:'Code',live:'Live',ide:'IDE',console:'Console',browser:'Browser',navi:'Navi'}[config.kind]}${config.kind==='console'&&config.cliName?' / '+config.cliName:''}`;
   createApp(App,{config}).provide('catppuccinIconBase',config.iconAssets||'/development/assets/catppuccin_icons/').mount('#app');
 }
 void main().catch(error=>{document.getElementById('app').textContent=error.message;});
