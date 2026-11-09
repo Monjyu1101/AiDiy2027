@@ -24,6 +24,7 @@ test('ALL選択画面: 負座標・縦画面・狭い画面でもConsole左下�
   assert.equal(consoleWindow.x,area.x+8);assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
   assert.equal(code.x+code.width,area.x+area.width-8);assert.equal(code.y,area.y+8);
   assert.equal(live.x,area.x+8);assert.equal(live.y,area.y+8);
+  assert.equal(code.height,Math.min(900,area.height-16));assert.equal(live.height,code.height);
   for(const kind of ['console','code','live'])for(let slot=0;slot<12;slot++){
    const b=allWindowBounds(kind,area,slot);
    assert.ok(b.x>=area.x&&b.y>=area.y&&b.x+b.width<=area.x+area.width&&b.y+b.height<=area.y+area.height);
@@ -49,7 +50,7 @@ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,hei
   for(const owner of [undefined,ide,{x:area.x-150,y:area.y-100,width:900,height:800}]){
    const code=windowBounds('code',area,owner),live=windowBounds('live',area,owner);
    assert.equal(code.width,480);assert.equal(live.width,480);
-   assert.equal(code.height,Math.min(600,area.height-16));assert.equal(live.height,code.height);
+   assert.equal(code.height,Math.min(900,area.height-16));assert.equal(live.height,code.height);
    assert.equal(code.x,area.x+8);assert.equal(live.x,area.x+area.width-480-8);assert.equal(code.y,area.y+8);assert.equal(live.y,code.y);
    for(const b of [ide,code,live,windowBounds('console',area,owner),windowBounds('console',area,owner,3)]){
     assert.ok(b.x>=area.x&&b.y>=area.y);
@@ -118,14 +119,13 @@ test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を�
 
 });
 
-
 test('IDE連携Codeだけ2枚目以降を24pxずらし、親窓の移動や寸法に依存しない',()=>{
  const area={x:-1600,y:40,width:1600,height:1000},owner={x:-1450,y:200,width:800,height:700};
  const first=windowBounds('code',area,owner);
  assert.deepEqual(first,windowBounds('code',area));
  for(let slot=1;slot<20;slot++){
   const offset=((slot-1)%5+1)*24,bounds=windowBounds('code',area,owner,slot);
-  assert.equal(bounds.x,first.x+offset);assert.equal(bounds.y,first.y+offset);
+  assert.equal(bounds.x,first.x+offset);assert.equal(bounds.y,Math.min(first.y+offset,area.y+area.height-first.height-8));
   assert.deepEqual(bounds,windowBounds('code',area,{x:900,y:800,width:600,height:600},slot));
   assert.deepEqual(windowBounds('code',area,undefined,slot),first);
   assert.deepEqual(windowBounds('live',area,owner,slot),windowBounds('live',area));
@@ -172,5 +172,18 @@ test('Electron生成: 親IDE側の画面を選び、Code番号・閉鎖後のslo
  const navi=await create('navi');assert.deepEqual(navi.bounds,windowBounds('navi',secondary));
  const manual={x:-750,y:100,width:500,height:700};
  vm.runInNewContext(source.slice(source.indexOf('function focusWindow(window){'),source.indexOf("app.on('second-instance'"))+';globalThis.focus=focusWindow;',context);
- for(const window of [first,navi,consoleWindow]){window.setBounds(manual);context.focus(window);assert.deepEqual(window.bounds,manual);}
+ for(const window of [first,live,navi,consoleWindow]){window.setBounds(manual);context.focus(window);assert.deepEqual(window.bounds,manual);}
+});
+
+test('Code / Liveは900 DIPを初期高さとし、余白込みで収まらない時だけ縮小する',()=>{
+ for(const height of [1040,917,916,915,768,480,240]){
+  const area={x:-1280,y:-300,width:1280,height};
+  for(const kind of ['code','live'])for(const owner of [undefined,windowBounds('ide',area)])for(let slot=0;slot<12;slot++){
+   const b=windowBounds(kind,area,owner,slot),minimum=windowMinimumSize(kind,b);
+   assert.equal(b.height,Math.min(900,height-16));assert.equal(b.width,480);
+   assert.ok(b.x>=area.x+8&&b.x+b.width<=area.x+area.width-8);
+   assert.ok(b.y>=area.y+8&&b.y+b.height<=area.y+height-8);
+   assert.equal(minimum.minHeight,Math.min(480,b.height));
+  }
+ }
 });

@@ -41,11 +41,31 @@ function fixture(opened, browser = true, desktopFailure = false) {
   return { launch: module.exports.launch, messages, process, stats: () => ({ closed, armed, disposed, openCalls, options, desktopEnv, desktopArgs, browserOptions }) };
 }
 
-test('Navigator browser app launch requests 900 while Code and Live retain their default height',async()=>{
+test('Navigator, Code and Live browser app launches use the shared 900 height',async()=>{
  for(const kind of ['navi','code','live']){
   const f=fixture(true);await f.launch(kind,['--browser','--foreground']);
-  assert.equal(f.stats().browserOptions.height,kind==='navi'?900:undefined);
+  assert.equal(f.stats().browserOptions.height ?? size.会話高さ,900);
   assert.equal(f.stats().options.kind,kind);assert.equal(f.messages[0].launchReady,true);
   f.process.emit('SIGTERM');await Promise.resolve();assert.equal(f.stats().closed,1);
  }
+});
+
+test('Windowsブラウザのアプリ起動は480×900、明示した設定パネルの高さは維持する',async()=>{
+ const calls=[],module={exports:{}};
+ const process={platform:'win32',env:{PROGRAMFILES:'C:/Program Files'}};
+ const modules={
+  'node:child_process':{spawn(command,args){calls.push({command,args});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;}},
+  'node:fs':{existsSync:()=>true,statSync:()=>({isDirectory:()=>true})},'node:path':path,'node:url':url,
+  './project-storage.cjs':{},'./window-size.cjs':size,
+ };
+ const source=readFileSync(new URL('../host/scripts/launch-project.mjs',import.meta.url),'utf8');
+ vm.runInNewContext(transformSync(source,{format:'cjs',define:{'import.meta.url':JSON.stringify(new URL('../host/scripts/launch-project.mjs',import.meta.url).href)}}).code,
+  {module,exports:module.exports,process,URL,console,require:id=>{assert.ok(id in modules,id);return modules[id];}});
+ const open=module.exports.ブラウザで開く;
+ for(const options of [undefined,{height:undefined},{height:size.ナビ高さ}]){
+  assert.equal(await open('http://127.0.0.1:9999/',options),true);
+  assert.ok(calls.at(-1).args.includes('--window-size=480,900'));
+ }
+ assert.equal(await open('http://127.0.0.1:9999/',{height:size.パネル高さ}),true);
+ assert.ok(calls.at(-1).args.includes('--window-size=480,414'));
 });
