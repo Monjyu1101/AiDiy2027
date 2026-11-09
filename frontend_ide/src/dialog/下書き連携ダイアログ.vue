@@ -64,8 +64,8 @@ onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
   </ModalDialog>
 </template>
 <style scoped>
-:global(.model-dialog.draft-native-window){box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0;overflow:auto}
-:global(.draft-native-window)>h3{-webkit-app-region:drag;margin-top:0}
+:global(.model-dialog.draft-native-window){box-sizing:border-box;width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0;overflow:auto;-webkit-app-region:no-drag}
+:global(.draft-native-window>h3){-webkit-app-region:drag;margin-top:0}
 .draft-element-preview{margin:12px 0}.draft-element-preview pre{max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;padding:8px;border:1px solid #375067}.draft-element-preview p{font-size:12px}
 .draft-target-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .draft-target-row label{display:flex;align-items:center;gap:8px;min-width:0;flex:1;flex-wrap:wrap}
