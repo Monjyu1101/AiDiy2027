@@ -9,12 +9,15 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import layout from '../デスクトップ/window-layout.cjs';
 const {windowBounds,windowMinimumSize,allWindowBounds}=layout;
-test('CLI付きConsoleは800×600で左下に置き、小画面では作業領域へ収める',()=>{
- for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:0,width:640,height:480}]){
-  for(const slot of [0,1,4]){
+test('CLI付きConsoleは800×600で下端中央に置き、小画面では作業領域へ収める',()=>{
+ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:-900,width:1024,height:728},{x:-1080,y:-300,width:1080,height:1880},{x:120,y:50,width:640,height:640},{x:0,y:0,width:640,height:480},{x:40,y:-240,width:240,height:240},{x:-1537,y:37,width:1537,height:865}]){
+  for(const slot of [0,1,4,127]){
    const b=windowBounds('console',area,undefined,slot,true);
    assert.equal(b.width,Math.min(800,area.width-16));assert.equal(b.height,Math.min(600,area.height-16));
-   assert.equal(b.x,area.x+8);assert.equal(b.y+b.height,area.y+area.height-8);
+   assert.equal(b.x,Math.round(area.x+(area.width-b.width)/2));
+   assert.equal(b.y+b.height,area.y+area.height-8);
+   assert.ok(b.x>=area.x+8&&b.y>=area.y+8);
+   assert.ok(b.x+b.width<=area.x+area.width-8&&b.y+b.height<=area.y+area.height-8);
   }
  }
 });
@@ -114,7 +117,12 @@ test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を�
  for(const parent of [undefined,owner]){
   const window=await context.create('console','http://127.0.0.1:1234/',undefined,parent,'offline:1');
   assert.deepEqual(window.bounds,windowBounds('console',area,parent?.window.getBounds(),0,!parent));
-  assert.equal(window.bounds.x,area.x+8);assert.equal(window.bounds.y+window.bounds.height,area.y+area.height-8);
+  if(parent){
+   assert.equal(window.bounds.x,area.x+8);assert.equal(window.bounds.y+window.bounds.height,area.y+area.height-8);
+  }else{
+   assert.equal(window.bounds.x,Math.round(area.x+(area.width-window.bounds.width)/2));
+   assert.equal(window.bounds.y+window.bounds.height,area.y+area.height-8);
+  }
  }
 
 });

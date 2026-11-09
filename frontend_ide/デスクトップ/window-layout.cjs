@@ -28,7 +28,8 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='console'){
   if(cli){
    const width=Math.min(800,available.width),height=Math.min(600,available.height);
-   return{x:available.x,y:available.y+available.height-height,width,height};
+   // CLI専用窓は通常Consoleの左下・段違い配置と分け、下端中央から表示する。
+   return{x:Math.round(area.x+(area.width-width)/2),y:available.y+available.height-height,width,height};
   }
   const width=Math.min(Math.round(area.width*2/3),available.width),height=Math.min(Math.round(area.height/(area.width>area.height?3:4)),available.height);
   const originX=available.x,originY=available.y+available.height-height;

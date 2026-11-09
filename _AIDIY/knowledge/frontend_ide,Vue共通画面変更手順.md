@@ -678,7 +678,7 @@ VR中は `--vr-viewer-top:192px`・`--vr-viewer-bottom:48px` を確保し、最�
 
 ## CLI起動時のConsole窓
 
-`launch.mjs --app console --cli <ID>` はCLI起動専用の指定をElectronへ渡し、`デスクトップ/window-layout.cjs` で作業領域の左下（端から8px）の約800×600pxに配置します。小さい画面では作業領域内に縮めます。通常のConsoleとIDEから開く子Consoleは従来の配置を使います。確認は `node --test frontend_ide/checks/window-layout.test.mjs`、実窓はDPIの丸めによる数px差を含め左下配置を確認します。
+`launch.mjs --app console --cli <ID>` はCLI起動専用の指定をElectronへ渡し、`デスクトップ/window-layout.cjs` で作業領域の下端（端から8px）・横中央の約800×600pxに配置します。小さい画面では作業領域内に縮め、複数起動でも同じ下端中央から表示します。通常のConsoleとIDEから開く子Consoleは従来の左下・段違い配置を使います。確認は `node --test frontend_ide/checks/window-layout.test.mjs frontend_ide/checks/cli-owner-launch.test.mjs`、実窓はDPIの丸めによる数px差を含め下端中央の配置を確認します。
 
 ## VR中のExplorer・軌跡バーの重なり順
 
