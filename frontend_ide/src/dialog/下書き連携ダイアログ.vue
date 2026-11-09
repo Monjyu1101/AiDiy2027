@@ -4,9 +4,9 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import ModalDialog from './共通ダイアログ.vue';
-const props=defineProps({request:Object,loadTargets:Function,insertDraft:Function,launchTarget:Function,emptyHint:String,nativeWindow:Boolean});
+const props=defineProps({request:Object,loadTargets:Function,insertDraft:Function,launchTarget:Function,emptyHint:String,nativeWindow:Boolean,modeless:Boolean});
 const emit=defineEmits(['close']);
 const snapshot=ref(null),selected=ref(''),busy=ref(false),error=ref('');
 let generation=0,disposed=false;
@@ -37,11 +37,12 @@ async function launch(kind){
   finally{busy.value=false;}
   if(!disposed&&!error.value)await refresh();
 }
+watch(()=>props.request,()=>{generation++;snapshot.value=null;selected.value='';busy.value=false;void refresh(true);});
 onMounted(()=>refresh(true));onBeforeUnmount(()=>{disposed=true;generation++;});
 </script>
 <template>
-  <ModalDialog :class="{'draft-native-window':nativeWindow}" label="Code / Live の下書きへ追加" :locked="busy" @close="emit('close')">
-    <h3>Code / Live の下書きへ追加</h3>
+  <ModalDialog :class="{'draft-native-window':nativeWindow}" :modeless="modeless" :source-element="request.sourceElement" label="Code / Live の下書きへ追加" :locked="busy" @close="emit('close')">
+    <h3 data-dialog-drag>Code / Live の下書きへ追加</h3>
     <p class="draft-source">{{ request.path }}{{ request.selection?'（選択範囲）':'' }}</p>
     <p>起動中の連携先の入力欄へ追加します。既存の下書きを残し、送信はその画面で行います。</p>
     <details v-if="request.browserElementId" class="draft-element-preview" open><summary>選択した要素の連携内容</summary><p>表示文章に個人情報が残る場合があります。内容を確認してから追加してください。</p><pre>{{request.text}}</pre></details>

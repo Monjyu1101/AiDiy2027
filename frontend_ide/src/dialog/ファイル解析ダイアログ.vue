@@ -6,9 +6,10 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,inject,onMounted,onBeforeUnmount,nextTick} from 'vue';
 import MarkdownIt from 'markdown-it';
+import {openFloatingDialog} from '../components/共通表示/浮動ダイアログ.js';
 import {normalizeDisplayUrls,isPageSource} from '../../viewer/表示URL.mjs';
 import {openBrowser} from '../components/ブラウザ/起動.js';
-const props=defineProps({file:Object,root:String});
+const props=defineProps({file:Object,root:String,sourceElement:Object});
 const emit=defineEmits(['close']);
 const dialog=ref(),input=ref(),loading=ref(true),saving=ref(false),error=ref(''),record=ref(null),job=ref(null),stale=ref(false);
 const closeError=ref(''),keepEditingButton=ref();
@@ -93,14 +94,16 @@ function finishClose() {
 async function keepEditing() {
   closeError.value='';await nextTick();input.value?.focus();
 }
+defineExpose({close,focus:()=>input.value?.focus()});
 const when=value=>new Date(value).toLocaleString('ja-JP');
-onMounted(()=>{dialog.value.showModal();void load(true);});
-onBeforeUnmount(()=>{closed=true;loadRevision++;clearTimeout(timer);controller.abort();dialog.value?.close();});
+let stopFloating=()=>{};
+onMounted(()=>{stopFloating=openFloatingDialog(dialog.value,{sourceElement:props.sourceElement,onCancel:close});void load(true);});
+onBeforeUnmount(()=>{stopFloating();closed=true;loadRevision++;clearTimeout(timer);controller.abort();dialog.value?.close();});
 </script>
 <template>
-  <Teleport to="body">
-    <dialog ref="dialog" class="file-analysis-dialog" aria-labelledby="file-analysis-title" @keydown.stop @cancel.prevent="close">
-      <header><h2 id="file-analysis-title">AI解析</h2><button aria-label="AI解析を閉じる" :disabled="saving" @click="close"><span class="close-icon" aria-hidden="true"></span></button></header>
+  <Teleport :to="sourceElement?.ownerDocument?.body || 'body'">
+    <dialog ref="dialog" class="file-analysis-dialog floating-dialog" data-aidiy-no-window-move aria-labelledby="file-analysis-title" @keydown.stop @cancel.prevent="close">
+      <header data-dialog-drag><h2 id="file-analysis-title">AI解析</h2><button aria-label="AI解析を閉じる" :disabled="saving" @click="close"><span class="close-icon" aria-hidden="true"></span></button></header>
       <p class="analysis-path" :title="root">{{ file.path }}</p>
       <section class="analysis-instruction">
         <label for="file-analysis-instruction">概要の分析指示（テキスト）</label>

@@ -157,3 +157,20 @@ test('初期表示: 1件は名前を表示して選択、複数の最前面不�
  try{await flush();assert.equal(single.state.selected.value,'only');assert.equal(single.state.error.value,'');assert.match(textOf(single.root),/連携先: code only/);assert.doesNotMatch(textOf(single.root),/最前面は未確認/);assert.equal(empty.state.selected.value,'');assert.equal(empty.state.error.value,'');assert.match(textOf(empty.root),/起動中のCode \/ Liveがありません/);assert.equal(single.inserted.length+empty.inserted.length,0);}
  finally{single.dispose();empty.dispose();}
 });
+
+test('Viewerの非モーダル解析: 別ファイルは保存成功後だけ切り替え、保存失敗・利用終了では指示を保持する',async()=>{
+ const provided=new Map();
+ const component=compile('../src/App.vue',{scriptOnly:true,vueApi:{...vue,onMounted(){},onBeforeUnmount(){},provide:(key,value)=>provided.set(key,value)},modules:{'./components/下書き連携/連携先登録.js':{createDraftTargetRegistry}},globals:{window:{},location:{hash:'',origin:'http://localhost'}}});
+ const scope=vue.effectScope(),s=scope.run(()=>component.setup({config:{kind:'ide'}},{expose(){}}));
+ const source={ownerDocument:{body:{}}},file=path=>({path,name:path}),open=provided.get('openFileAnalysis');let focus=0,closed=0;
+ try{
+  provided.get('openFileDraft')({path:'a.txt',projectPath:'/project',text:'ref'},source);assert.equal(s.draftRequest.value.sourceElement.ownerDocument.body!==undefined,true);
+  await open(file('a.txt'),'/project',()=>closed++,source);assert.equal(s.analysis.value.file.path,'a.txt');
+  s.analysisPanel.value={focus:()=>focus++,close:async()=>{}};
+  await open(file('a.txt'),'/project',()=>{},source);assert.equal(focus,1);
+  await open(file('b.txt'),'/project',()=>{},source);assert.equal(s.analysis.value.file.path,'a.txt','保存できなければ元の解析を残す');assert.equal(closed,0);
+  s.analysisPanel.value={close:async()=>s.closeFileAnalysis()};await open(file('b.txt'),'/project',()=>{},source);assert.equal(s.analysis.value.file.path,'b.txt');assert.equal(closed,1);
+  let finish;s.analysisPanel.value={close:()=>new Promise(resolve=>{finish=resolve})};const pending=open(file('c.txt'),'/project',()=>{},source);
+  s.update({active:true,mode:'online',startedAt:2,project:{path:'/new'}});finish();await pending;assert.equal(s.analysis.value,null,'利用セッション変更後に古い解析を開き直さない');
+ }finally{scope.stop();}
+});

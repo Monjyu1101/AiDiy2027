@@ -355,3 +355,9 @@
 /* AI解析で保存した画面URL。長いURLでもパネル幅を広げない。 */
 .viewer-display-url{font:var(--file-font-size,11px) var(--mono);color:#a5bdd9;overflow-wrap:anywhere;margin:0 0 6px}
 .analysis-display-urls{border:1px solid #293b54;padding:10px;margin:10px 0}.analysis-display-urls h4{margin:0 0 8px}.analysis-display-url{display:flex;align-items:center;gap:8px;margin:6px 0}.analysis-display-url>span{flex:1;min-width:0;overflow-wrap:anywhere}.analysis-display-url small{display:block;font-family:var(--mono);color:#a5bdd9}.analysis-display-url button{flex:none}.analysis-display-urls p{color:#a5bdd9;margin:6px 0;font-size:11px}
+
+/* ファイル参照中の連携・解析は背景を暗くしない移動可能な非モーダル。 */
+.floating-dialog{position:fixed;inset:auto;margin:0;z-index:120;box-sizing:border-box;max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);box-shadow:0 8px 30px #0007}
+.floating-dialog [data-dialog-drag]{cursor:move;touch-action:none;user-select:none}
+.model-dialog.floating-dialog{width:min(480px,calc(100vw - 32px))}
+.file-analysis-dialog.floating-dialog{width:min(660px,calc(100vw - 32px));height:min(740px,calc(100dvh - 100px));min-height:min(280px,calc(100dvh - 16px));resize:both}

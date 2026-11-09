@@ -478,6 +478,14 @@ FileExplorerは検索明細をrouteイベントの `records` として送り、S
 確認コマンドは `node --test frontend_ide/checks/route-records.test.mjs frontend_ide/checks/search-route-records.test.mjs frontend_ide/checks/star-depth.test.mjs frontend_ide/checks/space-mode.test.mjs` です。同一点・往復・分岐・旧データ・保存再開・40件超・途中点削除・2D/3Dのフォルダ記録・検索結果の返却/保存/再読込・旧検索履歴の補完・Explorer通知からengineへの明細受渡を確認します。Explorer通知の検証は実ソースの通知コールバックを実行しますが、Vue全体のマウント検証ではありません。これらはCanvas/APIを置き換えた実エンジン検証で、実ブラウザーの描画品質やElectron保存容量は別途確認が必要です。
 
 
+## ファイル表示を残した下書き連携・AI解析
+
+ファイルビューアから開く下書き連携とAI解析は、`共通表示/浮動ダイアログ.js` の `show()` で開きます。背景を暗くするbackdropや背景の操作禁止を作らず、見出しをドラッグして位置を変更できます。AI解析は右下から大きさも変えられます。通常の確認ダイアログとBrowserの専用子窓内は従来のモーダル表示を維持します。
+
+呼出し元のViewer要素の `ownerDocument` へ表示し、ピン留めされた別窓から操作した場合もその窓内に出します。下書きは再度ボタンを押した時点のファイル・選択範囲で候補を取得し直し、古い応答は取り込みません。解析表示中に別ファイルのAI解析を押した場合は、現在の指示の保存・閉鎖が成功してから切り替えます。保存失敗時は元の入力を保持します。解析画面を閉じてもサーバー側ジョブは自動継続し、継続専用ボタンは不要です。
+
+`checks/floating-dialog.test.mjs`、`checks/draft-target-selection.test.mjs`、`checks/file-analysis-monitor-ui.test.mjs` で配置・移動・Esc・縮小・購読解除・保存保護・背景解析継続を確認します。`node frontend_ide/scripts/check-viewer-floating.mjs --compile-only` は実App・Viewer・両ダイアログの隔離コンパイルを確認し、引数なしは模擬APIとChromiumで実画面を確認します。後者はローカルソケットを利用できる環境が必要です。配布buildや実AIは起動しません。
+
 ## 下書き連携先の再選択とCode番号
 
 IDE連携CodeのOSタイトルは、既存の窓配置番号 `record.slot + 1` から `AiDiy IDE / Code n` とします。連携先一覧も同じslotを使い、別の連番を採番しません。`デスクトップ/preload.cjs` の限定した `title()` は、信頼済みの送信元自身のOSタイトルだけを返し、`コードパネル.vue` の見出しへ反映します。単独Codeのタイトルは従来どおりです。窓を閉じてslotが再利用されても、受け渡しの窓IDと会話IDは別に照合します。

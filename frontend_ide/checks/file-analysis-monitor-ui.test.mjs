@@ -26,7 +26,7 @@ function fixture(t,fetcher){
   module,window,console,AbortController,AbortSignal,URLSearchParams,Date,
   fetch:async(url,options)=>{calls.push({url,...options});return{ok:true,json:async()=>fetcher(url,options)};},
   setTimeout:(fn,ms)=>{const id=++sequence;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id),
-  require:id=>id==='vue'?{...vue,inject:(_key,fallback)=>fallback,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn),withDirectives:node=>node}:id==='markdown-it'?MarkdownIt:id.endsWith('/表示URL.mjs')?displayUrls:{openBrowser:async()=>({ok:true})},
+  require:id=>id==='vue'?{...vue,inject:(_key,fallback)=>fallback,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn),withDirectives:node=>node}:id==='markdown-it'?MarkdownIt:id.endsWith('/浮動ダイアログ.js')?{openFloatingDialog:()=>()=>{}}:id.endsWith('/表示URL.mjs')?displayUrls:{openBrowser:async()=>({ok:true})},
  });
  const props={file:{name:'Screen.vue',path:'Screen.vue'},root:'/project'},scope=vue.effectScope();
  const state=scope.run(()=>module.exports.setup(props,{emit:name=>emitted.push(name),expose(){}}));state.dialog.value={showModal(){},close(){}};

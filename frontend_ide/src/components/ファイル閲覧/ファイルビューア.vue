@@ -101,7 +101,7 @@ watch(()=>[props.file,props.root],([file])=>{previewRun++;previewLoading.value=f
 async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([load(props.file),mode.value==='view'||isPageSource(props.file?.name)?loadPreview():null]);}finally{reloading.value=false;}}
 function analyze(){
   const file=props.file,root=props.root,run=revision;
-  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root)void loadPreview();});
+  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root)void loadPreview();},viewer.value);
 }
 const fullPath=computed(()=>fullFilePath(props.root||'',props.file?.path||''));
 function resetActions(){actionRevision++;clearTimeout(copyTimer);copied.value=false;actionBusy.value='';actionError.value='';}
@@ -153,7 +153,7 @@ function selectedReference(){
 }
 function handoff(){
   if(!openDraft||!props.root)return;
-  try{const selection=selectedReference();openDraft({projectPath:props.root,path:props.file.path,name:props.file.name,text:fileDraftReference(props.file,selection),selection:!!selection});}
+  try{const selection=selectedReference();openDraft({projectPath:props.root,path:props.file.path,name:props.file.name,text:fileDraftReference(props.file,selection),selection:!!selection},viewer.value);}
   catch(e){error.value=e.message;}
 }
 onBeforeUnmount(()=>{userActivity.dispose();resetActions();revision++;previewRun++;controller?.abort();disposeEditor();frameCleanup?.();activityWindow?.removeEventListener('message',frameActivity);activityWindow=null;});

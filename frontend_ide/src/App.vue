@@ -24,17 +24,24 @@ import FileHistoryDialog from './dialog/ファイル履歴ダイアログ.vue';
 import DraftHandoffDialog from './dialog/下書き連携ダイアログ.vue';
 import { validConnectionState } from './components/共通表示/接続状態.js';
 import { createDraftTargetRegistry } from './components/下書き連携/連携先登録.js';
-const analysis=ref(null);
+const analysis=ref(null),analysisPanel=ref();
 const history=ref(null),draftRequest=ref(null),codePanel=ref(),livePanel=ref();
 const draftRegistry=createDraftTargetRegistry(),pinnedViewers=new Map();
 let lastDraftKind='';
-provide('openFileDraft',request=>{draftRequest.value=request;});
+provide('openFileDraft',(request,sourceElement)=>{draftRequest.value={...request,sourceElement};});
 // Explorerの別窓にも、同じ連携先確認・下書き追加処理を提供する。
 provide('fileDraftActions',{loadTargets:loadDraftTargets,insertDraft:insertFileDraft,launchTarget:launchDraftTarget});
 provide('registerPinnedViewer',opened=>{if(opened&&state.value.active)pinnedViewers.set(opened,{sessionKey:session,projectPath:state.value.project?.path});});
 provide('openFileHistory',(file,root)=>{history.value={file:{path:file.path,name:file.name},root};});
 // ビューアの3分消去やファイル切替から独立して、解析対象を保持する。
-provide('openFileAnalysis',(file,root,onClose)=>{analysis.value={file:{path:file.path,name:file.name},root,onClose};});
+provide('openFileAnalysis',async(file,root,onClose,sourceElement)=>{
+  if(analysis.value){
+    if(analysis.value.file.path===file.path&&analysis.value.root===root){analysisPanel.value?.focus();return;}
+    const own=session;await analysisPanel.value?.close();
+    if(analysis.value||own!==session)return; // 保存失敗・保存待ちなら編集中の指示を保持する。
+  }
+  analysis.value={file:{path:file.path,name:file.name},root,onClose,sourceElement};
+});
 function closeFileAnalysis(){const previous=analysis.value;analysis.value=null;previous?.onClose?.();}
 const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
@@ -210,8 +217,8 @@ onMounted(async()=>{
 onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++;lifetime.abort();clearInterval(timer);pinnedViewers.clear();if(window.aidiyDraftLink===draftLink)delete window.aidiyDraftLink;});
 </script>
 <template>
-  <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
-  <FileAnalysisDialog v-if="analysis" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" @close="closeFileAnalysis" />
+  <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :modeless="!!draftRequest.sourceElement" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
+  <FileAnalysisDialog v-if="analysis" ref="analysisPanel" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" :source-element="analysis.sourceElement" @close="closeFileAnalysis" />
   <FileHistoryDialog v-if="history" :key="history.root+'|'+history.file.path" :file="history.file" :root="history.root" @close="history=null" />
   <BrowserDraftWindow v-if="browserDraft" />
   <BrowserAnalysisWindow v-else-if="browserAnalysis" />

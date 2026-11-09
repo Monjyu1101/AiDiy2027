@@ -36,6 +36,7 @@ function setupComponent(name,{props={},modules={},globals={}}={}) {
     require(id){
       if(id==='vue')return {...vue,inject:(_key,fallback)=>fallback,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)};
       if(id==='markdown-it')return MarkdownIt;
+      if(id.endsWith('/浮動ダイアログ.js'))return {openFloatingDialog:()=>()=>{}};
       if(id==='../../viewer/表示URL.mjs')return displayUrls;
       if(id==='../components/ブラウザ/起動.js')return browserLaunch;
       if(id==='../../../host/src/file-attachments')return {fileAttachment:()=>undefined};
