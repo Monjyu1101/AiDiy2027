@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 // Copilot の既存定義を共有し、OAuth の仮候補を別のモデル名で複製しない。
 export const COPILOT_FALLBACK_MODELS = Object.freeze({
-  'claude-fable-5.1':'2026/08/28 - claude-fable-5.1',
+  'claude-fable-5.2':'2026/08/28 - claude-fable-5.2',
   'claude-opus-5.5':'2026/09/21 - claude-opus-5.5',
   'claude-sonnet-5.5':'2026/09/28 - claude-sonnet-5.5',
   'claude-haiku-5.5':'2026/10/07 - claude-haiku-5.5',

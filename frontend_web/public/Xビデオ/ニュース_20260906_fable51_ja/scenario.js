@@ -100,7 +100,7 @@ window.SCENARIO = {
       "source_summary": "Fable 5.1とMythos 5.1は同一の基盤モデルだが、安全策の水準と提供経路が異なる。Fableは一般提供、Mythosは検証プログラム経由の審査済み組織向け。",
       "factual_bullets": [
         "Fable 5.1とMythos 5.1は同一の基盤モデル",
-        "Fable 5.1のClaude APIモデルIDはclaude-fable-5-1",
+        "Fable 5.1のClaude APIモデルIDはclaude-fable-5-2",
         "Fable 5.1はAWS、Google Cloud、Microsoft Azureを含む全プラットフォームで一般提供",
         "Mythos 5.1は検証プログラムを通じた審査済み組織向け"
       ],
@@ -123,7 +123,7 @@ window.SCENARIO = {
           "speaker": "male",
           "expression": "neutral",
           "telop_text": "Fable 5.1は一般提供され、主要クラウドを含む全プラットフォームで利用できます。",
-          "naration_text": "広く利用できる側がFable 5.1です。Anthropic公式発表では一般提供とされ、Amazon Web Services、Google Cloud、Microsoft Azureを含む全プラットフォームから利用できます。Claude APIで指定するモデルIDは、claude-fable-5-1です。開発者がAPIの設定を行うときは、表示名ではなくこのIDを使う点が実務上のポイントです。ただし、個々のアカウントの上限や地域条件は利用時の公式案内を確認してください。",
+          "naration_text": "広く利用できる側がFable 5.1です。Anthropic公式発表では一般提供とされ、Amazon Web Services、Google Cloud、Microsoft Azureを含む全プラットフォームから利用できます。Claude APIで指定するモデルIDは、claude-fable-5-2です。開発者がAPIの設定を行うときは、表示名ではなくこのIDを使う点が実務上のポイントです。ただし、個々のアカウントの上限や地域条件は利用時の公式案内を確認してください。",
           "audio": "audio/dlg_001_02_male.mp3",
           "duration_sec": 28.944
         },

@@ -68,7 +68,7 @@ test('Copilot installed fallback also retains versioned Claude candidates when o
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-copilot-fallback-'));
  const load=async()=>JSON.parse(await readFile(path.join(directory,'code_models_info.json'),'utf8'));
  const expected={
-  'claude-fable-5.1':'2026/08/28 - claude-fable-5.1',
+  'claude-fable-5.2':'2026/08/28 - claude-fable-5.2',
   'claude-opus-5.5':'2026/09/21 - claude-opus-5.5',
   'claude-sonnet-5.5':'2026/09/28 - claude-sonnet-5.5',
   'claude-haiku-5.5':'2026/10/07 - claude-haiku-5.5',
@@ -405,7 +405,7 @@ test('Copilot keeps fetched latest versioned Claude families, then restores fixe
  const openai=ok({モデル詳細:[{model_id:'gpt-6-luna',作成日:'2026/09/15'}]});
  const rows=[
   {model_id:'claude-haiku-5',作成日:'2026/06/01'},
-  {model_id:'claude-fable-5-1',作成日:'2026/08/28'},
+  {model_id:'claude-fable-5-2',作成日:'2026/08/28'},
   {model_id:'claude-opus-5',作成日:'2026/07/24'},
   {model_id:'claude-sonnet-5-5',作成日:'2026/09/28'},
   {model_id:'claude-haiku-5-5',作成日:'2026/10/07'},
@@ -415,12 +415,12 @@ test('Copilot keeps fetched latest versioned Claude families, then restores fixe
   const options={directory,installedClis:{copilot_cli:true,opencode_cli:true}};
   await writeModelsInfo(providers,{claude:ok({モデル詳細:rows}),openai},options);
   const fetched=await load();
-  assert.deepEqual(Object.keys(fetched.copilot_cli.models),['claude-haiku-5.5','claude-sonnet-5.5','claude-opus-5.5','claude-fable-5.1','gpt-6-luna']);
+  assert.deepEqual(Object.keys(fetched.copilot_cli.models),['claude-haiku-5.5','claude-sonnet-5.5','claude-opus-5.5','claude-fable-5.2','gpt-6-luna']);
   assert.equal(fetched.copilot_cli.models['claude-haiku-5.5'],'2026/10/07 - claude-haiku-5.5');
   assert.deepEqual(fetched.opencode_cli.models,{'openai/gpt-6-luna':'2026/09/15 - openai/gpt-6-luna'});
   await writeModelsInfo(providers,{claude:ok({状態:'NG',モデル:[],モデル詳細:[]}),openai},options);
   const failed=await load();
-  assert.deepEqual(Object.keys(failed.copilot_cli.models),['gpt-6-luna','claude-fable-5.1','claude-opus-5.5','claude-sonnet-5.5','claude-haiku-5.5']);
+  assert.deepEqual(Object.keys(failed.copilot_cli.models),['gpt-6-luna','claude-fable-5.2','claude-opus-5.5','claude-sonnet-5.5','claude-haiku-5.5']);
   assert.equal(failed.copilot_cli.models['gpt-6-luna'],'2026/09/15 - gpt-6-luna');
   assert.deepEqual(failed.opencode_cli,fetched.opencode_cli);
   const source=JSON.parse(await readFile(path.join(directory,'claude_models_info.json'),'utf8'));
