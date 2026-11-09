@@ -11,7 +11,7 @@ import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
-let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0;
+let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
 const headerOffset=ref(0),windowTitle=ref('');
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
@@ -47,7 +47,10 @@ function update(value){
  const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
  // 再撮影中・失敗後に、同じ保存パスの状態通知で古い成功表示を戻さない。
  const captureChanged=value.capturePath!==page.value.capturePath;
- page.value=value;if(!capturing.value&&captureChanged)captureMessage.value=value.capturePath||'';if(!editing)address.value=displayBrowserURL(value.url);
+ const pageChangedForCapture=value.url!==page.value.url||value.session!==page.value.session||value.navigationRevision!==page.value.navigationRevision;
+ const initialPage=!page.value.url;
+ if(pageChangedForCapture){if(!initialPage)captureNavigation++;captureMessage.value='';}
+ page.value=value;if(!capturing.value&&captureChanged&&(!pageChangedForCapture||initialPage))captureMessage.value=value.capturePath||'';if(!editing)address.value=displayBrowserURL(value.url);
  monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
 async function action(name,value){
@@ -57,14 +60,14 @@ async function action(name,value){
 }
 function navigate(){editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
 async function capture(){
- if(disposed||capturing.value)return;capturing.value=true;captureMessage.value='';
+ if(disposed||capturing.value)return;capturing.value=true;captureMessage.value='';const navigation=captureNavigation;
  try{
   const result=await window.aidiyWindow.browserAction('capture');
-  if(disposed)return;
+  if(disposed||navigation!==captureNavigation)return;
   if(!result?.ok)throw Error(result?.error||'撮影できませんでした。');
   if(typeof result.path!=='string'||!result.path.trim())throw Error('撮影画像の保存を確認できませんでした。');
   captureMessage.value=result.message||result.path;error.value='';
- }catch(e){if(!disposed){captureMessage.value='';error.value=e.message;}}finally{if(!disposed)capturing.value=false;}
+ }catch(e){if(!disposed&&navigation===captureNavigation){captureMessage.value='';error.value=e.message;}}finally{if(!disposed)capturing.value=false;}
 }
 function resize(){const rect=surface.value?.getBoundingClientRect(),viewport=rect?document.documentElement.getBoundingClientRect():null;chromeHeight.value=chrome.value?.getBoundingClientRect().height||100;if(props.headerOnly)void window.aidiyWindow.browserAction('header-size',chromeHeight.value).catch(()=>{});else if(rect)void window.aidiyWindow.browserAction('bounds',{left:rect.left,top:rect.top,width:rect.width,height:rect.height,chromeHeight:chromeHeight.value,viewportWidth:viewport.width,viewportHeight:viewport.height,fullscreen:!!page.value.fullscreen,measuredAt:performance.timeOrigin+performance.now()}).catch(()=>{});}
 function transition(){cancelAnimationFrame(frame);const end=performance.now()+260;function step(){resize();if(!disposed&&performance.now()<end)frame=requestAnimationFrame(step);}step();}

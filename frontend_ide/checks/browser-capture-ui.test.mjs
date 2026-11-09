@@ -15,7 +15,7 @@ const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();};
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};};
 function fixture(headerOnly=false){
  const mounted=[],unmounted=[],calls=[],listeners={},pending=[];
- const initial={url:'https://example.test/',available:true,capturePath:''};
+ const initial={url:'https://example.test/',available:true,capturePath:'',stateRevision:0,navigationRevision:0};
  const {descriptor}=parse(readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8'));
  const script=compileScript(descriptor,{id:'capture-ui',genDefaultAs:'component'}),template=compileTemplate({source:descriptor.template.content,filename:'Browser.vue',id:'capture-ui',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
  const api={onBrowserChanged:fn=>{listeners.changed=fn;return()=>delete listeners.changed;},browserAction:async(name,value)=>{calls.push({name,value});if(name==='capture'){const request=deferred();pending.push(request);return request.promise;}return{ok:true,...initial};}};
@@ -49,6 +49,32 @@ for(const headerOnly of [false,true]){
   const retry=f.state.capture();f.pending.at(-1).resolve({ok:true,path:'temp/input/retry.png'});await retry;assert.equal(f.status().props.title,'temp/input/retry.png');assert.equal(f.state.error.value,'');
   f.changed({capturePath:'temp/input/retry.png'});assert.ok(f.status());f.changed({capturePath:''});assert.equal(f.status(),undefined,'mainが保存情報を破棄したら消す');
  });
+ test(`Browser撮影UI: ${headerOnly?'F11ヘッダー':'通常窓'}は移動・戻る・進む・クエリ・ハッシュ変更で保存表示を消す`,async t=>{
+  const f=fixture(headerOnly);t.after(()=>f.dispose());await flush();
+  for(const url of ['https://example.test/next','https://example.test/','https://example.test/next','https://example.test/next?item=2','https://example.test/next?item=2#detail']){
+   const saving=f.state.capture();f.pending.at(-1).resolve({ok:true,path:'temp/input/before.png'});await saving;assert.ok(f.status());
+   f.changed({url,capturePath:'temp/input/before.png'});assert.equal(f.status(),undefined,'古いパスが通知に残っていてもページ移動で消す');
+   f.changed({url,capturePath:'temp/input/before.png',fullscreen:!headerOnly});assert.equal(f.status(),undefined,'F11切替で復活しない');
+  }
+  const retry=f.state.capture();f.pending.at(-1).resolve({ok:true,path:'temp/input/new-page.png'});await retry;assert.ok(f.status(),'移動先の再撮影は表示する');
+ });
+ for(const response of ['success','failure','rejection'])test(`Browser撮影UI: ${headerOnly?'F11ヘッダー':'通常窓'}は移動して戻った後の遅い${response}を無視する`,async t=>{
+  const f=fixture(headerOnly);t.after(()=>f.dispose());await flush();const saving=f.state.capture();
+  f.changed({url:'https://example.test/next',navigationRevision:1});f.changed({navigationRevision:2});
+  f.state.error.value='現在のページのエラー';
+  if(response==='rejection')f.pending[0].reject(Error('古い撮影エラー'));else f.pending[0].resolve(response==='success'?{ok:true,path:'temp/input/stale.png'}:{ok:false,error:'古い撮影エラー'});
+  await saving;assert.equal(f.status(),undefined);assert.equal(f.state.error.value,'現在のページのエラー');assert.equal(f.state.capturing.value,false);
+ });
+ test(`Browser撮影UI: ${headerOnly?'F11ヘッダー':'通常窓'}はURL確定前の遷移通知でもリセットする`,async t=>{
+  const f=fixture(headerOnly);t.after(()=>f.dispose());await flush();f.changed({capturePath:'temp/input/before.png',navigationRevision:0});
+  const saving=f.state.capture();f.pending[0].resolve({ok:true,path:'temp/input/before.png'});await saving;assert.ok(f.status());
+  f.changed({navigationRevision:1});assert.equal(f.status(),undefined);
+ });
+ test(`Browser撮影UI: ${headerOnly?'F11ヘッダー':'通常窓'}の初回状態で現在ページの保存を復元する`,async t=>{
+  const f=fixture(headerOnly);t.after(()=>f.dispose());f.changed({capturePath:'temp/input/current.png',stateRevision:2,navigationRevision:3});await flush();assert.ok(f.status());
+  f.changed({stateRevision:1,navigationRevision:2});assert.ok(f.status(),'古い状態応答を無視する');
+ });
+
 }
 test('Browser撮影UI: 破棄後の撮影応答で成功表示を変更しない',async()=>{
  const f=fixture();await flush();const saving=f.state.capture();f.dispose();f.pending[0].resolve({ok:true,path:'temp/input/late.png'});await saving;assert.equal(f.state.captureMessage.value,'');assert.equal(f.state.error.value,'');assert.equal(f.pending.length,1);await f.state.capture();assert.equal(f.pending.length,1);

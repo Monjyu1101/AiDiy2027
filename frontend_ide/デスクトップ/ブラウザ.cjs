@@ -79,10 +79,10 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
   const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}});
-  const contents=view.webContents,entry={view,error:'',rect:null,run:0,available,pendingTarget:available?null:target};entries.set(record,entry);
+  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,pendingTarget:available?null:target};entries.set(record,entry);
   record.window.contentView.addChildView(view);view.setVisible(false);
   let stateRevision=0;
-  const snapshot=()=>({stateRevision:++stateRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'toolsとの接続が切れています。再接続後に操作できます。'});
+  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'toolsとの接続が切れています。再接続後に操作できます。'});
   const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
   entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
@@ -133,8 +133,12 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   contents.on('will-navigate',guard);contents.on('will-redirect',guard);contents.on('will-frame-navigate',guard);
   contents.on('will-attach-webview',event=>event.preventDefault());
   contents.setWindowOpenHandler(({url})=>{void entry.navigate(url).catch(error=>{entry.error=error.message;notify();});return{action:'deny'};});
-  for(const name of ['did-navigate','did-navigate-in-page','did-start-loading','did-stop-loading','page-title-updated'])contents.on(name,notify);
-  contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false)draftWindows.close(record);});
+  // URLが同じページへ戻っても、移動前の撮影結果や遅い保存完了を持ち越さない。
+  const resetCapture=()=>{entry.navigationRevision++;entry.capture=undefined;notify();};
+  for(const name of ['did-start-loading','did-stop-loading','page-title-updated'])contents.on(name,notify);
+  contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false){draftWindows.close(record);resetCapture();}});
+  contents.on('did-navigate',resetCapture);
+  contents.on('did-navigate-in-page',(_event,_url,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
   record.window.on('minimize',()=>draftWindows.close(record));
   contents.on('render-process-gone',()=>{draftWindows.close(record);entry.error='ページの表示が停止しました。再読み込みしてください。';notify();});
   function layout(){
@@ -190,10 +194,11 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     if(!captureImage)throw Error('画像の送信先が設定されていません。');
     entry.capturing=true;
     try{
-     const at=now(),url=contents.getURL(),image=await contents.capturePage();
-     if(contents.isDestroyed()||record.window.isDestroyed()||!entry.available||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
+     const at=now(),url=contents.getURL(),navigation=entry.navigationRevision,image=await contents.capturePage();
+     if(contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
      if(image.isEmpty())throw Error('Web画面を撮影できませんでした。');
      const result=await captureImage({record,png:image.toPNG(),size:image.getSize()});
+     if(contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
      entry.capture={path:result.path,at};entry.notify();
      return{ok:true,...entry.snapshot(),...result};
     }finally{entry.capturing=false;}
