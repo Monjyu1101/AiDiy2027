@@ -27,7 +27,7 @@ test('session changes and window destruction during response prevent source sele
 test('realpath boundaries reject symlinks out of project even if listed',async t=>{const f=await fixture(t);await symlink(tmpdir(),join(f.root,'escape'));f.result.files=[{path:'escape/not-a-file'}];assert.equal((await f.select({url:'https://example.test/page',id:'job-1',path:'escape/not-a-file'})).ok,false);assert.equal(f.sent.length,0);});
 test('credential and excluded paths rejected even if listed',async t=>{const f=await fixture(t);await mkdir(join(f.root,'node_modules'));await writeFile(join(f.root,'node_modules/hidden.js'),'');f.result.files=[{path:'node_modules/hidden.js'}];assert.equal((await f.select({url:'https://example.test/page',id:'job-1',path:'node_modules/hidden.js'})).ok,false);});
 
-test('Browser context uses native page and dialog layers remain independent',async t=>{
+test('Browser context uses native page and draft dialog retains its existing visibility behavior',async t=>{
  const {EventEmitter}=await import('node:events');const {createBrowserViews}=createRequire(import.meta.url)('../デスクトップ/ブラウザ.cjs');let view;
  class View{constructor(){view=this;this.webContents=Object.assign(new EventEmitter(),{url:'',getURL(){return this.url;},getTitle:()=> '実際の画面',isLoading:()=>false,isDestroyed:()=>false,navigationHistory:{canGoBack:()=>false,canGoForward:()=>false},loadURL:async function(url){this.url=url;},setWindowOpenHandler(){},close(){}});}setVisible(value){this.visible=value;}setBounds(){}}
  const sent=[],window=Object.assign(new EventEmitter(),{isDestroyed:()=>false,isFullScreen:()=>false,getContentBounds:()=>({x:0,y:0,width:800,height:600}),contentView:{addChildView(){}},webContents:Object.assign(new EventEmitter(),{send:(...args)=>sent.push(args)})});
@@ -36,9 +36,7 @@ test('Browser context uses native page and dialog layers remain independent',asy
  browser.attach(record,'https://example.test/page');t.after(()=>window.emit('closed'));
  assert.deepEqual((await browser.action({record},'analysis-context',{url:'https://forged.test/'})).context,{url:'https://example.test/page',title:'実際の画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true});
  assert.equal((await browser.action({record:{kind:'browser'}},'analysis-context')).ok,false);
- await browser.action({record},'open-analysis');assert.deepEqual(sent.at(-1),['development:browser-open-analysis']);
- assert.equal((await browser.action({record},'analysis-dialog',true)).ok,true);assert.equal(view.visible,false);
- await browser.action({record},'draft-dialog',true);await browser.action({record},'analysis-dialog',false);assert.equal(view.visible,false);
+ await browser.action({record},'draft-dialog',true);assert.equal(view.visible,false);
  await browser.action({record},'draft-dialog',false);assert.equal(view.visible,true);
  delete record.owner;assert.equal((await browser.action({record},'analysis-context')).context.canSelectSource,false);
 });

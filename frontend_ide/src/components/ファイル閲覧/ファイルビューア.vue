@@ -165,7 +165,7 @@ defineExpose({moved:bindActivityWindow});
       <button v-if="browserFile" class="viewer-browser" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'ブラウザで開く':'tools接続中のみ起動できます'" @click="browse">{{ actionBusy==='browser'?'起動中…':'ブラウザ' }}</button>
       <button v-if="preview?.kind==='analysis'&&previewUrl" class="viewer-analysis-page" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'AI解析のURLをブラウザで表示':'tools接続中のみ起動できます'" @click="browse(true)">{{ actionBusy==='analysis-browser'?'起動中…':'AI推定ページ' }}</button>
       <button v-if="hasHistory&&openHistory" class="viewer-history" @click="openHistory(file,root)">更新履歴</button>
-      <button v-if="openAnalysis" class="viewer-analysis" title="AI解析" aria-label="AI解析" @click="analyze"><img :src="'/development/AiDiy.png'" alt="">AI解析</button>
+      <button v-if="openAnalysis" class="viewer-analysis" title="AI解析" aria-label="AI解析" @click="analyze">AI解析</button>
       <button v-if="openDraft" class="viewer-handoff" :disabled="!root" title="このファイルまたは選択範囲を起動中のCode / Liveの下書きへ追加" @pointerdown.prevent @click="handoff">Code / Liveへ</button>
       <!-- 右端は ↺ 📌 × の順。ページ内の📌で別ウィンドウを開く。 -->
       <RefreshButton class="viewer-refresh" title="最新の内容に更新" aria-label="最新の内容に更新" :disabled="reloading" :busy="reloading" @click="refresh" /><button v-if="!pinned" class="viewer-pin panel-detach-pin" :aria-pressed="false" :disabled="pinBusy" title="別ウィンドウで開く" aria-label="ファイルを別ウィンドウで開く" @click="emit('pin',file)"><span aria-hidden="true">📌</span></button><button v-if="!pinned" class="viewer-close" aria-label="プレビューを閉じる" @click="emit('close')"><span class="close-icon" aria-hidden="true"></span></button></header>

@@ -100,11 +100,12 @@ onBeforeUnmount(()=>{closed=true;loadRevision++;clearTimeout(timer);controller.a
 <template>
   <Teleport to="body">
     <dialog ref="dialog" class="file-analysis-dialog" aria-labelledby="file-analysis-title" @keydown.stop @cancel.prevent="close">
-      <header><img :src="'/development/AiDiy.png'" alt=""><h2 id="file-analysis-title">AI解析</h2><button aria-label="AI解析を閉じる" :disabled="saving" @click="close"><span class="close-icon" aria-hidden="true"></span></button></header>
+      <header><h2 id="file-analysis-title">AI解析</h2><button aria-label="AI解析を閉じる" :disabled="saving" @click="close"><span class="close-icon" aria-hidden="true"></span></button></header>
       <p class="analysis-path" :title="root">{{ file.path }}</p>
       <section class="analysis-instruction">
-        <label for="file-analysis-instruction">AIへの解析指示</label>
-        <textarea id="file-analysis-instruction" ref="input" v-model="instruction" :disabled="loading||saving" maxlength="4000" rows="5" autofocus />
+        <label for="file-analysis-instruction">概要の分析指示（テキスト）</label>
+        <p id="file-analysis-instruction-help" class="analysis-help">この入力は概要（summary・content内の内容説明）の分析指示です。表示URLや関連ソースの調査と探索範囲、指定JSON形式での回答・保存は、別の定型文で依頼します。</p>
+        <textarea id="file-analysis-instruction" aria-describedby="file-analysis-instruction-help" ref="input" v-model="instruction" :disabled="loading||saving" maxlength="4000" rows="5" autofocus />
         <div class="analysis-actions"><button :disabled="loading||saving||busy||!instruction.trim()" @click="analyze">{{ busy?'解析中…':saving?'保存中…':'解析を実行' }}</button><button :disabled="loading||saving" @click="instruction=example">指示例に戻す</button><span>指示と結果は、このプロジェクト・ファイルごとに保存します。</span></div>
         <p class="analysis-help">ページ関連の候補は、関連ソース探索を含む解析を3並列で実行し、3件の結果を個別に保存します。完成した分からURL・概要・関連ソースの順に合成して表示し、残りの実行も続けます。最大5分間、実行要求と結果ファイルを監視します。ページ関連ソース（HTML・Vue・JS/TSなど）は、利用される複数画面のURLと根拠も調べ、一緒に保存します。画面に関係しない.py・CRUDなどは、直接の呼び出し元・呼び出し先だけを調べ、祖父・孫には広げません。この画面を閉じて別ソースへ移っても、IDEサーバーが動いている間は継続します。次に開くと進行状況または保存済み結果を表示します。</p>
         <p v-if="job" role="status">{{ job.message || (busy?'解析を依頼しました。結果を待っています…':'') }}</p>
@@ -142,7 +143,7 @@ onBeforeUnmount(()=>{closed=true;loadRevision++;clearTimeout(timer);controller.a
             <ul><li v-for="item in record.relatedSources||[]" :key="item.path"><strong>{{ item.path }}</strong><ul><li v-for="(evidence,index) in item.evidence||[]" :key="index">解析{{ evidence.analysis }} · {{ relationLabel(evidence.relation) }}{{ evidence.line?' · '+evidence.line+'行':'' }}: {{ evidence.reason }}</li></ul></li></ul>
             <p v-if="!record.relatedSources?.length">確認できた関連ソースの記録はありません。個別の解析本文も確認してください。</p>
           </section>
-          <details><summary>この結果の解析指示</summary><p class="analysis-original-instruction">{{ record.instruction }}</p></details>
+          <details><summary>この結果の概要の分析指示</summary><p class="analysis-original-instruction">{{ record.instruction }}</p></details>
           <details v-for="item in analyses" :key="item.id" class="analysis-individual"><summary>解析{{ item.index }}の保存原本</summary><article class="analysis-result" v-html="item.html" /></details>
         </template>
         <p v-else>このファイルの解析記録はまだありません。上の指示で解析を実行できます。</p>

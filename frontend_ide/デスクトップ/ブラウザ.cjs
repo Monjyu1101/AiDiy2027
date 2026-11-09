@@ -9,6 +9,7 @@ const {relative,isAbsolute,sep,resolve,basename}=require('node:path');
 const {previewFile}=require('./native-preview-actions.cjs');
 const {createBrowserSizing}=require('./ブラウザ表示領域.cjs');
 const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
+const {createBrowserAnalysisWindows}=require('./ブラウザ解析窓.cjs');
 const {createBrowserElementLink}=require('./ブラウザ要素連携.cjs');
 // 単独Browserの初期表示だけを選ぶ。検索・ホームや明示されたURLは変更しない。
 async function browserStartupURL(request=fetch){
@@ -62,6 +63,7 @@ function browserDraftRequest(projectRoot,url,capture,now=Date.now(),source){
 }
 function createBrowserViews({BrowserWindow,WebContentsView,session,screen,windowPins,isVRActive=()=>false,leaveVR,captureImage,trustedEvent,projectRoot,now=Date.now}){
  const entries=new Map(),headers=new Map(),blockedOrigins=new Set();
+ const analysisWindows=createBrowserAnalysisWindows({BrowserWindow,screen,context:analysisContext});
  const localFileAllowed=url=>{try{const path=relative(projectRoot,fileURLToPath(url)).split(sep).join('/');browserFileURL(projectRoot,path);return true;}catch{return false;}};
  const isolated=session.fromPartition('aidiy-browser');
  isolated.setPermissionRequestHandler((_contents,_permission,callback)=>callback(false));
@@ -159,13 +161,14 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     ++entry.run;entry.error='';contents.stop();
    }
    else if(name==='draft')return{ok:true,request:browserDraftRequest(projectRoot,contents.getURL(),entry.capture,now(),{session:record.browserSession,tabId:record.browserTabId})};
-   else if(name==='draft-dialog'||name==='analysis-dialog'){
-    if(value===true)await entry.elementLink.stop(name==='draft-dialog');
-    entry[name==='draft-dialog'?'draftDialogOpen':'analysisDialogOpen']=value===true;
-    entry.dialogOpen=!!(entry.draftDialogOpen||entry.analysisDialogOpen);entry.layout();entry.pointer();
+   else if(name==='draft-dialog'){
+    if(value===true)await entry.elementLink.stop(true);
+    entry.dialogOpen=value===true;entry.layout();entry.pointer();
    }
    else if(name==='analysis-context')return{ok:true,context:analysisContext(record)};
-   else if(name==='open-analysis'){record.window.webContents.send('development:browser-open-analysis');}
+   else if(name==='open-analysis'){await entry.elementLink.stop(false);await analysisWindows.open(record);}
+   else if(name==='analysis-window-context'){const context=analysisWindows.context(event);return context?{ok:true,context}:{ok:false,error:'解析ウィンドウから操作してください。'};}
+   else if(name==='analysis-window-close'){if(!analysisWindows.trusted(event))throw Error('解析ウィンドウから操作してください。');analysisWindows.close(record);return{ok:true};}
    else if(name==='open-draft'){record.window.webContents.send('development:browser-open-draft');}
    else if(name==='header-size'){
     if(headers.get(event.sender)!==record||!Number.isFinite(value)||value<1||value>1000)throw Error('パネルの高さが不正です。');
@@ -211,6 +214,6 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())throw Error('Browserが終了しています。もう一度開いてください。');
   return entry.navigate(value);
  }
- return{attach,action,navigate,setAvailable,trustedHeader,analysisContext,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
+ return{attach,action,navigate,setAvailable,trustedHeader,trustedAnalysis:analysisWindows.trusted,isAnalysisSender:analysisWindows.hasSender,analysisContext,analysisWindowContext:analysisWindows.context,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
 }
 module.exports={HOME,browserStartupURL,browserDisplayURL,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};

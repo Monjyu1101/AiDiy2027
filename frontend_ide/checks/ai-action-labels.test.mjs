@@ -38,10 +38,15 @@ test('AI操作の表示: ボタン・見出し・説明とアクセシブル名�
   assert.ok(explorer.includes('value="ai">AI検索</label>'));
   const viewer = read('components/ファイル閲覧/ファイルビューア.vue');
   assert.ok(viewer.includes('title="AI解析" aria-label="AI解析"'));
-  assert.match(viewer, /class="viewer-analysis"[^\n]*>AI解析<\/button>/);
+  assert.match(viewer, /class="viewer-analysis"[^>]*>AI解析<\/button>/);
+  assert.doesNotMatch(viewer.match(/<button[^>]*class="viewer-analysis"[^>]*>[\s\S]*?<\/button>/)?.[0] || '', /<img\b/);
   const dialog = read('dialog/ファイル解析ダイアログ.vue');
   assert.ok(dialog.includes('<h2 id="file-analysis-title">AI解析</h2>'));
   assert.ok(dialog.includes('aria-label="AI解析を閉じる"'));
+  assert.doesNotMatch(dialog.match(/<header>[\s\S]*?<\/header>/)?.[0] || '', /<img\b/);
+  assert.ok(dialog.includes('<label for="file-analysis-instruction">概要の分析指示（テキスト）</label>'));
+  assert.ok(dialog.includes('aria-describedby="file-analysis-instruction-help"'));
+  assert.ok(dialog.includes('表示URLや関連ソースの調査と探索範囲、指定JSON形式での回答・保存は、別の定型文で依頼します。'));
   // 表示だけを変更し、API・保存キー・識別子を変更しない。
   assert.ok(search.includes("'/api/ai-search'"));
   assert.ok(search.includes('aidiy_ide:ai-history-selected:'));

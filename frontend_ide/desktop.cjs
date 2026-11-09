@@ -97,8 +97,8 @@ const {createBrowserViews,browserFileTarget,browserOpenable,browserStartupURL,HO
 const {saveBrowserCapture}=require('./デスクトップ/ブラウザ撮影.cjs');
 const {validPreviewPath}=require('./デスクトップ/native-preview-actions.cjs');
 const {createBrowserSourceSelection,createBrowserAnalysisContext}=require('./デスクトップ/ブラウザ解析連携.cjs');
-const selectBrowserSource=createBrowserSourceSelection({trustedEvent,readState,sessionKey:state=>sessionKey(state),connected:state=>browserConnected(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
-const browserAnalysisContext=createBrowserAnalysisContext({trustedEvent,context:record=>browserViews?.analysisContext(record),discover:async record=>(await sharedDrafts()).viewerStatus(record),isQuitting:()=>quitting});
+const selectBrowserSource=createBrowserSourceSelection({trustedEvent:trustedBrowserEvent,readState,sessionKey:state=>sessionKey(state),connected:state=>browserConnected(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
+const browserAnalysisContext=createBrowserAnalysisContext({trustedEvent:trustedBrowserEvent,context:(record,event)=>browserViews?.isAnalysisSender(event.sender)?browserViews.analysisWindowContext(event):browserViews?.analysisContext(record),discover:async record=>(await sharedDrafts()).viewerStatus(record),isQuitting:()=>quitting});
 let browserViews;
 const browserBridges=new WeakMap();
 let standaloneBrowserBridge;
@@ -175,6 +175,7 @@ function trustedEvent(event){
  const record=windows.get(event.sender)||browserViews?.trustedHeader(event),frame=event.senderFrame;
  return record&&!record.window.isDestroyed()&&frame&&frame===event.sender.mainFrame&&typeof frame.url==='string'&&frame.url.split('#')[0]===record.url?record:null;
 }
+function trustedBrowserEvent(event){return trustedEvent(event)||browserViews?.trustedAnalysis(event);}
 function audioAllowed(contents,permission,details){
  const record=windows.get(contents);
  return !!record&&record.kind==='live'&&permission==='media'&&details?.isMainFrame===true&&details.requestingUrl?.split('#')[0]===record.url;
@@ -259,7 +260,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
      const owner=record.owner||record;
      try{allDisplays.leave(owner);}catch(error){owner.window.webContents.send('development:all-displays-changed',{...allDisplays.state(owner),error:error.message});}
     },
-    captureImage:({png})=>saveBrowserCapture(process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd(),png),trustedEvent,projectRoot:process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd()});
+    captureImage:({png})=>saveBrowserCapture(process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd(),png),trustedEvent:trustedBrowserEvent,projectRoot:process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd()});
    const bridge=await (owner?ensureBrowserBridge(record):ensureStandaloneBrowserBridge());
    if(!owner&&browserTarget===undefined)browserTarget=await browserStartupURL();
    const current=await readState(owner||record);
@@ -316,10 +317,12 @@ app.whenReady().then(async()=>{
  });
  ipcMain.handle('development:all-displays',(event,action)=>allDisplays.handle(event,action));
  ipcMain.handle('development:browser-action',async(event,action,value)=>{
-  const record=trustedEvent(event);
-  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-dialog','analysis-dialog','header-size','header-pin-state','header-toggle-pin'].includes(action)){
+  if(browserViews?.isAnalysisSender(event.sender)&&!['analysis-window-context','analysis-window-close','analysis-select-source'].includes(action))return{ok:false,error:'解析ウィンドウでは利用できない操作です。'};
+  const record=trustedBrowserEvent(event);
+  if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-dialog','analysis-window-context','analysis-window-close','header-size','header-pin-state','header-toggle-pin'].includes(action)){
    try{if(!browserConnected(await readState(record.owner||record)))return{ok:false,error:'tools接続中のみBrowserを操作できます。'};}catch{return{ok:false,error:'toolsの接続を確認できません。'};}
   }
+  if(action==='analysis-window-context'){if(!browserViews?.isAnalysisSender(event.sender))return{ok:false,error:'解析ウィンドウから操作してください。'};return browserAnalysisContext(event);}
   if(action==='analysis-context')return browserAnalysisContext(event);
   if(action==='analysis-select-source')return selectBrowserSource(event,value);
   return browserViews?.action(event,action,value)||{ok:false,error:'ブラウザが起動していません。'};

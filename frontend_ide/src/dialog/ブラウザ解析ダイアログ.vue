@@ -5,7 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,onMounted,onBeforeUnmount} from 'vue';
-const props=defineProps({context:{type:Object,required:true}});
+const props=defineProps({context:{type:Object,required:true},nativeWindow:Boolean});
 const emit=defineEmits(['close']);
 const dialog=ref(),loading=ref(true),starting=ref(false),error=ref(''),sourceError=ref(''),opening=ref(''),result=ref(null),job=ref(null);
 const busy=computed(()=>job.value?.status==='waiting');
@@ -48,7 +48,7 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
 </script>
 <template>
  <Teleport to="body">
-  <dialog ref="dialog" class="browser-analysis-dialog" aria-labelledby="browser-analysis-title" @keydown.stop @cancel.prevent="close">
+  <dialog ref="dialog" class="browser-analysis-dialog" :class="{'browser-analysis-native':nativeWindow}" aria-labelledby="browser-analysis-title" @keydown.stop @cancel.prevent="close">
    <header><h2 id="browser-analysis-title">Browser AI解析</h2><button aria-label="Browser AI解析を閉じる" :disabled="starting" @click="close"><span class="close-icon" aria-hidden="true"></span></button></header>
    <section class="browser-analysis-target" aria-label="解析対象">
     <h3>表示中のURL</h3><strong>{{ context.title||'表示中のページ' }}</strong><p class="browser-analysis-url">{{ context.url }}</p>
@@ -79,9 +79,11 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
  </Teleport>
 </template>
 <style scoped>
-.browser-analysis-dialog{width:min(1000px,92vw);max-height:86vh;box-sizing:border-box;overflow:auto;padding:20px;background:#101824;color:#dce6f4;border:1px solid #49627d;border-radius:7px;font-size:13px;box-shadow:0 16px 60px #0009}
-.browser-analysis-dialog::backdrop{background:#0009}.browser-analysis-dialog header{display:flex;align-items:center;justify-content:space-between;gap:16px}.browser-analysis-dialog h2{margin:0;font-size:18px}.browser-analysis-dialog header button{width:30px;height:30px;display:grid;place-items:center}
-.browser-analysis-target{margin-top:16px;padding:12px;background:#0b121d;border:1px solid #2a3a50;border-radius:4px}.browser-analysis-target p{margin:8px 0}.browser-analysis-target small{display:block;color:#9cafc5;overflow-wrap:anywhere}.browser-analysis-url{overflow-wrap:anywhere;color:#a8d8fb}
+.browser-analysis-dialog{width:min(1000px,92vw);max-height:86vh;box-sizing:border-box;overflow:auto;padding:12px;background:#101824;color:#dce6f4;border:1px solid #49627d;border-radius:7px;font-size:13px;box-shadow:0 16px 60px #0009}
+.browser-analysis-dialog::backdrop{background:#0009}.browser-analysis-dialog header{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;margin:0;padding:0;flex:none}.browser-analysis-dialog h2{margin:0;font-size:14px;line-height:20px}.browser-analysis-dialog header button{width:24px;height:24px;padding:0;flex:none;display:grid;place-items:center}
+.browser-analysis-target{margin-top:8px;padding:12px;background:#0b121d;border:1px solid #2a3a50;border-radius:4px}.browser-analysis-target p{margin:8px 0}.browser-analysis-target small{display:block;color:#9cafc5;overflow-wrap:anywhere}.browser-analysis-url{overflow-wrap:anywhere;color:#a8d8fb}
 .browser-analysis-actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}.browser-analysis-actions span,.browser-analysis-hint{font-size:12px;color:#aabbd0}.browser-analysis-result-title{display:flex;align-items:center;justify-content:space-between;gap:12px}.browser-analysis-result-title time{font-size:11px;color:#aabbd0}
 .browser-analysis-sources{overflow:auto;border:1px solid #2a3a50}.browser-analysis-sources table{border-collapse:collapse;width:100%;table-layout:fixed}.browser-analysis-sources th,.browser-analysis-sources td{text-align:left;vertical-align:top;padding:10px;border-bottom:1px solid #2a3a50;overflow-wrap:anywhere;white-space:pre-wrap}.browser-analysis-sources th{background:#182638}.browser-analysis-sources th:first-child{width:14%}.browser-analysis-sources th:nth-child(2){width:43%}.browser-analysis-sources tr:last-child td{border-bottom:0}.browser-analysis-source{border:0;background:none;color:#9edfff;padding:0;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere;cursor:pointer;font:inherit;text-decoration:underline}.browser-analysis-source:hover{color:#fff}.browser-analysis-source:disabled{opacity:.65;cursor:wait}.browser-analysis-dialog textarea{box-sizing:border-box;width:100%;background:#080f1b;color:#dce6f4;margin-top:8px}.browser-analysis-dialog details{margin-top:10px}
+.browser-analysis-dialog.browser-analysis-native{width:100%;max-width:none;height:100dvh;max-height:none;margin:0;border-radius:0}
+.browser-analysis-native>header{-webkit-app-region:drag}.browser-analysis-native>header button{-webkit-app-region:no-drag}
 </style>

@@ -8,12 +8,11 @@ import RefreshButton from '../共通表示/再読込ボタン.vue';
 import {ref,onMounted,onBeforeUnmount} from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
-import BrowserAnalysisDialog from '../../dialog/ブラウザ解析ダイアログ.vue';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
-let stop=()=>{},stopFrame=()=>{},stopDraft=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisLayer=false,analysisNavigation=0;
+let stop=()=>{},stopFrame=()=>{},stopDraft=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0;
 const headerOffset=ref(0),windowTitle=ref('');
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
@@ -21,32 +20,24 @@ const headerWindowApi=props.headerOnly?{
  togglePin:()=>window.aidiyWindow.browserAction('header-toggle-pin'),
  onPinChanged:callback=>window.aidiyWindow.onBrowserChanged(value=>callback({pinned:!!value.headerPinned,locked:false})),
 }:undefined;
-const draftRequest=ref(null),handing=ref(false),analysisContext=ref(null),openingAnalysis=ref(false),analysisStatus=ref({status:'idle'});
+const draftRequest=ref(null),handing=ref(false),openingAnalysis=ref(false),analysisStatus=ref({status:'idle'});
 const analysisMonitor=createBrowserAnalysisStatus({
  read:async(url,signal)=>{const response=await fetch('/api/browser-analysis?'+new URLSearchParams({url,status:'1'}),{cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(12000)])});const value=await response.json();if(!response.ok)throw Error(value.error||'解析状況を確認できません。');return value;},
  changed:value=>{if(!disposed)analysisStatus.value=value;},
 });
-function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.available===true&&visible&&!analysisContext.value,page.value.session||'');}
+function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.available===true&&visible,page.value.session||'');}
 async function openAnalysis(){
- if(props.headerOnly){await action('open-analysis');return;}
- if(openingAnalysis.value||analysisContext.value||draftRequest.value||handing.value)return;
+ if(openingAnalysis.value||draftRequest.value||handing.value)return;
  openingAnalysis.value=true;const navigation=analysisNavigation;
  try{
-  const result=await window.aidiyWindow.browserAction('analysis-context');
-  if(disposed||navigation!==analysisNavigation)return;if(!result?.ok||!result.context)throw Error(result?.error||'解析対象を取得できません。');
-  analysisLayer=true;
-  const hidden=await window.aidiyWindow.browserAction('analysis-dialog',true);
-  if(disposed){restoreAnalysis();return;}if(!hidden?.ok)throw Error(hidden?.error||'解析画面を開けません。');
-  if(navigation!==analysisNavigation||page.value.url&&browserAnalysisPageKey(page.value.url)!==browserAnalysisPageKey(result.context.url)){restoreAnalysis();return;}
-  analysisContext.value=result.context;monitorAnalysis();error.value='';
- }catch(e){if(analysisLayer)restoreAnalysis();if(!disposed)error.value=e.message;}finally{if(!disposed)openingAnalysis.value=false;}
+  const result=await window.aidiyWindow.browserAction('open-analysis');
+  if(disposed||navigation!==analysisNavigation)return;if(!result?.ok)throw Error(result?.error||'解析画面を開けません。');error.value='';
+ }catch(e){if(!disposed&&navigation===analysisNavigation)error.value=e.message;}finally{if(!disposed)openingAnalysis.value=false;}
 }
-function restoreAnalysis(){analysisLayer=false;void window.aidiyWindow.browserAction('analysis-dialog',false).catch(()=>{});}
-function closeAnalysis(){analysisContext.value=null;restoreAnalysis();monitorAnalysis();}
 
 async function handoff(element=false){
  if(props.headerOnly){await action('open-draft');return;}
- if(handing.value||openingAnalysis.value||analysisContext.value)return;handing.value=true;
+ if(handing.value||openingAnalysis.value)return;handing.value=true;
  try{const result=await window.aidiyWindow.browserAction(element===true?'element-draft':'draft');if(!result.ok)throw Error(result.error);await window.aidiyWindow.browserAction('draft-dialog',true);draftRequest.value=result.request;}
  catch(e){error.value=e.message;}finally{handing.value=false;}
 }
@@ -60,7 +51,6 @@ function update(value){
  if(browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
  const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
  page.value=value;if(value.capturePath)captureMessage.value=value.capturePath;if(!editing)address.value=displayBrowserURL(value.url);
- if(analysisContext.value&&browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(analysisContext.value.url))closeAnalysis();
  monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
 async function action(name,value){
@@ -87,7 +77,7 @@ onMounted(()=>{
  else {stopElement=window.aidiyWindow.onBrowserElementSelected?.(()=>{void handoff(true);})||(()=>{});stopDraft=window.aidiyWindow.onBrowserOpenDraft?.(()=>{void handoff();})||(()=>{});stopAnalysis=window.aidiyWindow.onBrowserOpenAnalysis?.(()=>{void openAnalysis();})||(()=>{});}
  observer=new ResizeObserver(resize);if(surface.value)observer.observe(surface.value);if(chrome.value)observer.observe(chrome.value);resize();
 });
-onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopDraft();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(analysisLayer)restoreAnalysis();if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
+onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopDraft();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
 </script>
 <template>
  <main class="development-app browser-panel desktop-window" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
@@ -114,7 +104,6 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
   <p v-if="error||page.error" class="error browser-error" role="status">{{ error||page.error }}</p>
   </div>
   <div v-if="!headerOnly" ref="surface" class="browser-surface"></div>
-  <BrowserAnalysisDialog v-if="analysisContext" :context="analysisContext" @close="closeAnalysis" />
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="loadDraftTargets" :insert-draft="insertDraft" empty-hint="同じプロジェクトで aidiy_code または aidiy_live を起動してください。" @close="closeDraft" />
  </main>
 </template>
