@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {browserAnalysisPageKey,createBrowserAnalysisStatus} from '../src/components/ブラウザ/ブラウザ解析状態.js';
+import {browserAnalysisPageKey,createBrowserAnalysisStatus,notifyBrowserAnalysisChanged} from '../src/components/ブラウザ/ブラウザ解析状態.js';
 const a='http://localhost:8090/form?mode=one#/page',b='http://localhost:8090/form?mode=two#/page';
 const flush=async()=>{for(let n=0;n<15;n++)await Promise.resolve();};
 function fixture(){
@@ -39,4 +39,22 @@ test('Browser解析状態: URLのquery/hashを別対象として保持し、秘�
  assert.equal(browserAnalysisPageKey('file:///tmp/%e6%bc%a2%20%25.html'),'file:///tmp/%E6%BC%A2%20%25.html');
  for(const url of ['about:blank','javascript:alert(1)','https://example.test/?token=secret','https://u:p@example.test/','file://foreign/tmp/a.html','file:///tmp/a.html?token=secret'])assert.equal(browserAnalysisPageKey(url),'');
  const f=fixture();f.monitor.setPage('about:blank');assert.equal(f.requests.length,0);f.monitor.dispose();
+});
+
+test('Browser解析状態: 元ページへ戻った最初の取得失敗も再試行して処理中を復元する',async()=>{
+ const f=fixture();f.monitor.setPage(a);f.reply({url:a,job:{status:'waiting'}});await flush();
+ f.monitor.setPage(b);f.reply({url:b,job:null});await flush();f.monitor.setPage(a);f.requests.at(-1).reject(Error('network'));await flush();
+ assert.equal(f.last.status,'unavailable');assert.equal([...f.timers.values()][0].delay,10000);
+ f.tick();f.reply({url:a,job:{id:'still-running',status:'waiting'}});await flush();assert.equal(f.last.status,'waiting');assert.equal(f.last.jobId,'still-running');f.monitor.dispose();
+});
+
+test('Browser解析状態: URL通知は非同期でも届き、別ページ・非表示・破棄後には照会しない',async t=>{
+ const name='browser-analysis-'+crypto.randomUUID(),factory=()=>new BroadcastChannel(name),updates=[],requests=[];
+ let status='idle';const monitor=createBrowserAnalysisStatus({channelFactory:factory,read:async url=>{requests.push(url);return{url,job:status==='waiting'?{status}:null};},changed:value=>updates.push(value)});t.after(()=>monitor.dispose());
+ const until=async check=>{for(let n=0;n<100;n++){if(check())return;await new Promise(resolve=>setTimeout(resolve,5));}assert.fail('解析状態通知が届きません。');};
+ monitor.setPage(a);await flush();assert.equal(requests.length,1);
+ status='waiting';notifyBrowserAnalysisChanged(a,factory);await until(()=>updates.at(-1)?.status==='waiting');assert.equal(requests.length,2);
+ notifyBrowserAnalysisChanged(b,factory);notifyBrowserAnalysisChanged('https://example.test/?token=secret',factory);await new Promise(resolve=>setTimeout(resolve,20));assert.equal(requests.length,2);
+ monitor.setPage(a,false);notifyBrowserAnalysisChanged(a,factory);await new Promise(resolve=>setTimeout(resolve,20));assert.equal(requests.length,2);
+ monitor.dispose();notifyBrowserAnalysisChanged(a,factory);await new Promise(resolve=>setTimeout(resolve,20));assert.equal(requests.length,2);
 });

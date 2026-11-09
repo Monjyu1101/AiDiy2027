@@ -16,8 +16,17 @@ const flush=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
 const context={url:'https://example.test/page',title:'入力画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true};
 const saved={id:'result-1',createdAt:12345,summary:'# 概要\n入力フォーム\n<script>alert(1)</script>',files:[{role:'html',path:'server/src/html/xxx.html',summary:'入力フォーム'}]};
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};};
+function channelFixture(){
+ const channels=new Set(),sent=[];
+ return{sent,channels,open:name=>{
+  const channel={name,onmessage:null,postMessage:data=>{sent.push(data);for(const other of channels)if(other!==channel&&other.name===name)other.onmessage?.({data});},close:()=>channels.delete(channel)};
+  channels.add(channel);return channel;
+ }};
+}
 function fixture(type='dialog',props={context},options={}){
  const mounted=[],unmounted=[],emitted=[],requests=[],calls=[],timers=new Map(),listeners={};let next=1;
+ const channels=options.channels||channelFixture(),setTimer=fn=>{const id=next++;timers.set(id,fn);return id;},clearTimer=id=>timers.delete(id);
+ const statusTools={...analysisTools,createBrowserAnalysisStatus:options=>analysisTools.createBrowserAnalysisStatus({...options,channelFactory:channels.open,setTimer,clearTimer}),notifyBrowserAnalysisChanged:url=>analysisTools.notifyBrowserAnalysisChanged(url,channels.open)};
  const file=type==='dialog'?'../src/dialog/ブラウザ解析ダイアログ.vue':type==='window'?'../src/components/ブラウザ/ブラウザ解析ウィンドウ.vue':'../src/components/ブラウザ/ブラウザパネル.vue';
  const {descriptor}=parse(readFileSync(new URL(file,import.meta.url),'utf8'));
  const script=compileScript(descriptor,{id:'analysis-ui',genDefaultAs:'component'}),template=compileTemplate({source:descriptor.template.content,filename:file,id:'analysis-ui',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
@@ -26,7 +35,7 @@ function fixture(type='dialog',props={context},options={}){
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{module,console,URLSearchParams,AbortController,AbortSignal,Date,
   fetch:(url,init)=>{const pending=deferred();requests.push({url,init,...pending});return pending.promise;},setTimeout:fn=>{const id=next++;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
   window:{aidiyWindow:api},document:{documentElement:{classList:{add(){},remove(){}}}},requestAnimationFrame:()=>1,cancelAnimationFrame(){},ResizeObserver:class{observe(){}disconnect(){}},
-  require:id=>id==='./ブラウザ解析状態.js'?analysisTools:id==='./URL表示.js'?addresses:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
+  require:id=>id.endsWith('/ブラウザ解析状態.js')?statusTools:id==='./URL表示.js'?addresses:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
  });
  const state=module.exports.setup(props,{expose(){},emit:(...args)=>emitted.push(args)});
  if(type==='dialog')state.dialog.value={showModal(){},close(){}};
@@ -98,12 +107,12 @@ test('Browser panel: native analysis stays independent while page changes restor
 for(const headerOnly of [false,true])test(`Browser analysis button: ${headerOnly?'F11 header':'normal panel'} shows waiting/completion/failure for its current URL`,async t=>{
  const f=fixture('panel',{headerOnly});t.after(()=>f.dispose());await flush();
  const label=()=>{const bar=nodes(f.render()).find(n=>n.children?.['connection-tools']);return bar.children['connection-tools']().find(n=>n.props?.class==='browser-analysis').children;};
- f.reply({url:context.url,job:{status:'waiting'}});await flush();assert.equal(label(),'AI解析中…');
+ f.reply({url:context.url,job:{status:'waiting'}});await flush();assert.equal(label(),'解析中…');
  // 統合回帰: 背景解析の状態表示と要素連携の操作を通常窓・F11ヘッダーの両方に残す。
  f.state.page.value={...f.state.page.value,elementPicking:true};
  const tools=nodes(f.render()).find(n=>n.children?.['connection-tools']).children['connection-tools']();
  assert.deepEqual(Array.from(nodes({children:tools}).filter(n=>n.type==='button'),n=>n.props.class),['browser-analysis','browser-capture','browser-handoff','browser-element-link'],'通常窓・F11で要素連携はCode / Liveへの直後');
- const element=tools.find(n=>n.props?.class==='browser-element-link');assert.ok(element);assert.equal(element.props['aria-pressed'],true);assert.equal(element.children,'要素連携中（Esc）');assert.equal(label(),'AI解析中…');
+ const element=tools.find(n=>n.props?.class==='browser-element-link');assert.ok(element);assert.equal(element.props['aria-pressed'],true);assert.equal(element.children,'要素連携中（Esc）');assert.equal(label(),'解析中…');
  let pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'complete'}});await pending;assert.equal(label(),'AI解析済');
  pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'failed',message:'解析結果を確認してください。'}});await pending;assert.equal(label(),'AI解析 要確認');
 });
@@ -120,4 +129,31 @@ test('Browser panel: A to B to A while native opening does not apply an obsolete
  opened.resolve({ok:true});await opening;
  assert.equal(f.state.error.value,'現在の通知');assert.equal(f.state.openingAnalysis.value,false);assert.equal(f.calls.filter(c=>c.name==='open-analysis').length,1);
  assert.equal(f.calls.some(c=>c.name==='analysis-dialog'||c.name==='analysis-window-close'),false);
+});
+
+for(const headerOnly of [false,true])test(`Browser analysis request: ${headerOnly?'F11 header':'normal panel'} updates from idle/completed and restores waiting after A→B→A`,async t=>{
+ const channels=channelFixture(),panel=fixture('panel',{headerOnly},{channels});t.after(()=>panel.dispose());await flush();
+ const label=()=>nodes(panel.render()).find(n=>n.children?.['connection-tools']).children['connection-tools']().find(n=>n.props?.class==='browser-analysis').children;
+ panel.reply({url:context.url,result:null,job:null});await flush();assert.equal(label(),'AI解析');assert.equal(panel.timers.size,0);
+ const dialog=fixture('dialog',{context},{channels});t.after(()=>dialog.dispose());dialog.reply({result:null,job:null});await flush();
+ let starting=dialog.state.analyze();dialog.reply({id:'job-a',url:context.url,status:'waiting'});await starting;
+ assert.equal(panel.requests.length,2,'accepted POST immediately rechecks the already idle parent');
+ panel.reply({url:context.url,job:{id:'job-a',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
+ dialog.state.close();assert.equal(panel.timers.size,1,'closing the child does not cancel server polling');
+ panel.listeners.changed({url:'https://example.test/other',available:true});panel.reply({url:'https://example.test/other',job:null});await flush();assert.equal(label(),'AI解析');
+ panel.listeners.changed({url:context.url,available:true});panel.reply({url:context.url,job:{id:'job-a',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
+ panel.tick();panel.reply({url:context.url,result:{id:'result-a',url:context.url},job:{status:'complete'}});await flush();assert.equal(label(),'AI解析済');assert.equal(panel.timers.size,0);
+ const again=fixture('dialog',{context},{channels});t.after(()=>again.dispose());again.reply({result:saved,job:{status:'complete'}});await flush();starting=again.state.analyze();again.reply({id:'job-new',url:context.url,status:'waiting'});await starting;
+ panel.reply({url:context.url,result:saved,job:{id:'job-new',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
+ assert.equal(channels.sent.length,2);assert.ok(channels.sent.every(data=>Object.keys(data).join(',')==='url'),'notifications never carry result contents');
+ assert.ok(panel.requests.every(request=>!request.init.method||request.init.method==='GET'));
+ panel.dispose();assert.equal(channels.channels.size,0);
+});
+test('Browser analysis request: late request failure still rechecks the server without marking another page busy',async t=>{
+ const channels=channelFixture(),panel=fixture('panel',{}, {channels});t.after(()=>panel.dispose());await flush();panel.reply({url:context.url,job:null});await flush();
+ const dialog=fixture('dialog',{context},{channels});t.after(()=>dialog.dispose());dialog.reply({result:null,job:null});await flush();
+ let starting=dialog.state.analyze();dialog.requests.at(-1).reject(Error('response lost'));await starting;assert.equal(panel.requests.length,2);
+ panel.reply({url:context.url,job:{id:'accepted',status:'waiting'}});await flush();assert.equal(panel.state.analysisStatus.value.status,'waiting');
+ panel.listeners.changed({url:'https://example.test/other',available:true});panel.reply({url:'https://example.test/other',job:null});await flush();const count=panel.requests.length;
+ starting=dialog.state.analyze();dialog.reply({status:'waiting'});await starting;assert.equal(panel.requests.length,count);assert.equal(panel.state.analysisStatus.value.status,'idle');
 });

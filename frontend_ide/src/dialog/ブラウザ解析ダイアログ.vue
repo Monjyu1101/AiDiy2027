@@ -5,6 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,onMounted,onBeforeUnmount} from 'vue';
+import {notifyBrowserAnalysisChanged} from '../components/ブラウザ/ブラウザ解析状態.js';
 const props=defineProps({context:{type:Object,required:true},nativeWindow:Boolean});
 const emit=defineEmits(['close']);
 const dialog=ref(),loading=ref(true),starting=ref(false),error=ref(''),sourceError=ref(''),opening=ref(''),result=ref(null),job=ref(null);
@@ -31,7 +32,7 @@ async function analyze(){
   const value=await request('POST');if(closed)return;
   job.value=value;timer=setTimeout(()=>load(),500);
  }catch(e){if(!closed)error.value=e.message;}
- finally{if(!closed)starting.value=false;}
+ finally{notifyBrowserAnalysisChanged(props.context.url);if(!closed)starting.value=false;}
 }
 async function selectSource(file){
  if(closed||opening.value||!props.context.canSelectSource||!result.value)return;
