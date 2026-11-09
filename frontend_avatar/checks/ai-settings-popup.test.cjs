@@ -69,7 +69,7 @@ function fixture(project) {
       Object.assign(el, {options, multiple: false});
       Object.defineProperty(el, 'selectedIndex', {get: () => options.findIndex(o => o.selected), set: index => options.forEach((o, i) => o.selected = i === index)});
       vue.vModelSelect.created(el, {value: '', modifiers: {}}, node);
-      vue.vModelSelect.mounted(el, {value: ''});
+      vue.vModelSelect.mounted(el, {value: '', modifiers: {}});
       el.addEventListener('change', event => {for (const fn of [node.props.onChange].flat().filter(Boolean)) fn(event);});
       el.selectedIndex = options.findIndex(o => o._value === value);assert.notEqual(el.selectedIndex, -1, `${id}: ${value}`);
       el.dispatchEvent(new Event('change'));await flush();

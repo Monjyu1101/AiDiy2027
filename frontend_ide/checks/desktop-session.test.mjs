@@ -42,7 +42,7 @@ test('Electron子窓監視: 通信断・不明は保持し、確定終了とセ�
  const body=source.slice(source.indexOf('async function checkChildren(owner){'),source.indexOf('function trustedEvent(event){'));
  const owner={window:{isDestroyed:()=>false}},child={owner,linkKey:'online:10'},windows=new Map([['child',child]]);
  let result=valid,error,closed=0;
- const context={browserViews:null,windows,readState:async()=>{if(error)throw error;return validateDevelopmentState(result);},sessionKey:state=>state.active?`${state.mode}:${state.startedAt}`:'',closeChildren:()=>closed++};
+ const context={avatarLauncher:{active:()=>false},browserViews:null,windows,readState:async()=>{if(error)throw error;return validateDevelopmentState(result);},sessionKey:state=>state.active?`${state.mode}:${state.startedAt}`:'',closeChildren:()=>closed++};
  vm.runInNewContext(body+';globalThis.check=checkChildren;',context);
  error=Error('temporary');await context.check(owner);assert.equal(closed,0);assert.equal(owner.checking,false);
  error=null;result={};await context.check(owner);assert.equal(closed,0);
@@ -56,7 +56,7 @@ test('Electron子窓監視: 取得待ち中に利用を終了し直したら古�
  const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const body=source.slice(source.indexOf('async function checkChildren(owner){'),source.indexOf('function trustedEvent(event){'));
  const owner={window:{isDestroyed:()=>false},revision:1},windows=new Map([['child',{owner,linkKey:'online:10'}]]);let resolve,closed=0;
- const context={browserViews:null,windows,readState:()=>new Promise(done=>{resolve=done;}),sessionKey:()=>'',closeChildren:()=>closed++};vm.runInNewContext(body+';globalThis.check=checkChildren;',context);
+ const context={avatarLauncher:{active:()=>false},browserViews:null,windows,readState:()=>new Promise(done=>{resolve=done;}),sessionKey:()=>'',closeChildren:()=>closed++};vm.runInNewContext(body+';globalThis.check=checkChildren;',context);
  const waiting=context.check(owner);owner.revision++;resolve({active:false});await waiting;
  assert.equal(closed,0);assert.equal(owner.checking,false);
 });
@@ -79,13 +79,14 @@ function launchFixture(){
   .replace("const {startDevelopment}=await import('./server.mjs');","const {startDevelopment}=testServer;");
  const windows=new Map(),state={...valid,project:{...valid.project}},starts=[],created=[],focused=[],closed=[];let launch,hold;
  const owner={kind:'ide',window:{isDestroyed:()=>false},revision:0,pending:new Map()},viewer={kind:'viewer',owner,linkKey:'online:10',window:{isDestroyed:()=>false}};
- const context={createTaskWindows:taskModule.createTaskWindows,selectedAllDisplay:()=>null,ipcMain:{handle:(_name,handler)=>{launch=handler;}},windows,quitting:false,trustedEvent:event=>event.record,
+ const avatar={active:false,calls:[],open:async(record,path)=>{avatar.active=true;avatar.calls.push(path);await hold;return{ok:true};}};
+ const context={avatarLauncher:{active:()=>avatar.active,open:avatar.open},voiceActive:record=>avatar.active||record.pending.has('live')||[...windows.values()].some(child=>child.owner===record&&child.kind==='live'),createTaskWindows:taskModule.createTaskWindows,selectedAllDisplay:()=>null,ipcMain:{handle:(_name,handler)=>{launch=handler;}},windows,quitting:false,trustedEvent:event=>event.record,
   readState:async()=>structuredClone(state),sessionKey:value=>value.active?`${value.mode}:${value.startedAt}`:'',
   focusWindow:window=>focused.push(window),closeServer:server=>{if(server)closed.push(server);},
   testServer:{startDevelopment:async(path,options)=>{starts.push({path,options});await hold;return{url:'http://127.0.0.1:1234/'};}},
   createWindow:async(...args)=>{created.push(args);const window={isDestroyed:()=>false};windows.set(window,{window,kind:args[0],owner:args[3],linkKey:args[4],taskView:args[8]?.view,taskController:args[8]?.controller});return window;}};
  vm.runInNewContext(body,context);
- return{launch,state,owner,viewer,windows,starts,created,focused,closed,hold:promise=>{hold=promise;}};
+ return{launch,state,owner,viewer,windows,starts,created,focused,closed,avatar,hold:promise=>{hold=promise;}};
 }
 
 test('Electron明示起動: 同じセッションのピン留めからだけCode/Live/Consoleを開ける',async()=>{
@@ -119,4 +120,34 @@ test('IDE TASK/TEAM: concurrent launch reuses owner session, fixed project and p
   assert.equal((await f.launch({record:f.owner},kind)).reused,true);
   assert.equal(f.created.length,1);assert.equal(f.focused.length,1);
  }
+});
+
+
+test('IDE Avatar: プロジェクトを渡し、Liveとの同時起動・別窓からの連打を拒否する',async()=>{
+ for(const first of ['live','avatar']){
+  let release;const f=launchFixture();f.hold(new Promise(resolve=>release=resolve));
+  const opening=f.launch({record:f.owner},first);await new Promise(resolve=>setImmediate(resolve));
+  assert.equal((await f.launch({record:f.viewer},first==='live'?'avatar':'live')).ok,false);
+  if(first==='avatar')assert.equal((await f.launch({record:f.owner},'avatar')).ok,false);
+  release();assert.equal((await opening).ok,true);
+  assert.equal((await f.launch({record:f.owner},first==='live'?'avatar':'live')).ok,false);
+  if(first==='avatar'){assert.deepEqual(f.avatar.calls,['/fixture']);assert.equal(f.starts.length,0);f.avatar.active=false;assert.equal((await f.launch({record:f.owner},'live')).ok,true);}
+ }
+});
+
+test('IDE Avatar: offline / 未開始 / 信頼できない画面からは起動しない',async()=>{
+ for(const change of [f=>{f.state.mode='offline';},f=>{f.state.active=false;},f=>{f.owner.kind='code';},f=>{f.owner.window.isDestroyed=()=>true;}]){
+  const f=launchFixture();change(f);assert.equal((await f.launch({record:f.owner},'avatar')).ok,false);assert.deepEqual(f.avatar.calls,[]);
+ }
+});
+
+test('AvatarだけのIDE子監視: 一時障害は保持し、セッション切替と終了で閉じる',async()=>{
+ const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
+ const body=source.slice(source.indexOf('async function checkChildren(owner){'),source.indexOf('function trustedEvent(event){'));
+ const owner={window:{isDestroyed:()=>false},avatarKey:'online:10'};let state=valid,closed=0,error;
+ const context={avatarLauncher:{active:()=>true},browserViews:null,windows:new Map(),readState:async()=>{if(error)throw error;return state;},sessionKey:state=>state.active?`${state.mode}:${state.startedAt}`:'',closeChildren:()=>closed++};
+ vm.runInNewContext(body+';globalThis.check=checkChildren;',context);
+ await context.check(owner);assert.equal(closed,0);error=Error('temporary');await context.check(owner);assert.equal(closed,0);
+ error=null;state={...valid,startedAt:11};await context.check(owner);assert.equal(closed,1);
+ state={active:false};await context.check(owner);assert.equal(closed,2);
 });

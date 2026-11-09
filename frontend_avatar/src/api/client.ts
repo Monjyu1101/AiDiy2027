@@ -23,6 +23,7 @@ function createApiClient(baseURL: string): AxiosInstance {
   })
 
   client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
+    if (window.desktopApi?.avatarAlone) return config
     const token = authStorage.getItem('token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
@@ -33,7 +34,7 @@ function createApiClient(baseURL: string): AxiosInstance {
   client.interceptors.response.use(
     (response) => response,
     (error) => {
-      if (error?.response?.status === 401) {
+      if (!window.desktopApi?.avatarAlone && error?.response?.status === 401) {
         authStorage.removeItem('token')
         authStorage.removeItem('user')
         authStorage.removeItem('avatar_session_id')

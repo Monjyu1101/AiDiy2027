@@ -55,6 +55,9 @@ type コードパネル参照型 = {
 }
 
 const isElectron = !!window.desktopApi
+// 単独Avatarはmainが認証を管理する。Webのqueryではこのモードに入れない。
+const 単独Avatar = window.desktopApi?.avatarAlone === true
+const 単独プロジェクト = 単独Avatar ? window.desktopApi?.projectPath || '' : ''
 const 認証Storage = isElectron ? localStorage : sessionStorage
 const PANEL_KEYS: PanelKey[] = ['chat', 'file', 'image', 'code1', 'code2', 'code3', 'code4', 'code5', 'code6']
 const WEB_CORE_PATH = '/AiDiy'
@@ -123,6 +126,7 @@ function パネル状態生成(): Record<PanelKey, boolean> {
 }
 
 function フォールバックロール解決(): WindowRole {
+  if (単独Avatar) return 'core'
   if (Web新規開始URL判定()) {
     return 'login'
   }
@@ -154,14 +158,14 @@ function 保存利用者読込(): AuthUser | null {
 }
 
 const ウィンドウロール = ref<WindowRole>(フォールバックロール解決())
-const 認証トークン = ref(認証Storage.getItem('token') || '')
-const 利用者 = ref<AuthUser | null>(保存利用者読込())
+const 認証トークン = ref(単独Avatar ? '' : 認証Storage.getItem('token') || '')
+const 利用者 = ref<AuthUser | null>(単独Avatar ? null : 保存利用者読込())
 const 認証読込中 = ref(true)
 const 認証処理中 = ref(false)
 const 認証エラー = ref('')
 const コア処理中 = ref(false)
 const コアエラー = ref('')
-const セッションID = ref(URLセッションID取得() || 認証Storage.getItem('avatar_session_id') || '')
+const セッションID = ref(単独Avatar ? '' : URLセッションID取得() || 認証Storage.getItem('avatar_session_id') || '')
 const 入力ウェルカム情報 = ref('')
 const 入力ウェルカム本文 = ref('')
 const メッセージ一覧 = ref<ChatMessage[]>([])
@@ -354,7 +358,7 @@ function コードAI名(channel: コードチャンネル): string {
   }
 }
 
-const 認証済み = computed(() => Boolean(認証トークン.value && 利用者.value))
+const 認証済み = computed(() => 単独Avatar || Boolean(認証トークン.value && 利用者.value))
 const コアウィンドウ = computed(() => ウィンドウロール.value === 'core')
 const ログインウィンドウ = computed(() => ウィンドウロール.value === 'login')
 const 設定ウィンドウ = computed(() => ウィンドウロール.value === 'settings')
@@ -436,6 +440,7 @@ let ウィンドウ表示リスナー解除: (() => void) | null = null
 let スナップショット再試行タイマー: ReturnType<typeof setInterval> | null = null
 
 function ストレージ認証同期(options: { syncError?: boolean } = {}) {
+  if (単独Avatar) return
   認証トークン.value = 認証Storage.getItem('token') || ''
   利用者.value = 認証トークン.value ? 保存利用者読込() : null
 
@@ -483,6 +488,7 @@ function スナップショット再試行停止() {
 }
 
 function パネル状態更新(states?: Record<PanelKey, boolean>) {
+  if (単独Avatar) { パネル表示状態.value = パネル状態生成(); return }
   パネル表示状態.value = {
     ...パネル状態生成(),
     ...(states || {}),
@@ -515,6 +521,7 @@ function スナップショット構築(): SharedSnapshot {
 }
 
 function スナップショット送信() {
+  if (単独Avatar) return
   if (!デスクトップチャンネル || !コアウィンドウ.value) return
   デスクトップチャンネル.postMessage({ type: 'snapshot', snapshot: スナップショット構築() })
 }
@@ -522,6 +529,8 @@ function スナップショット送信() {
 function デスクトップチャンネルメッセージ処理(event: MessageEvent) {
   const payload = event.data
   if (!payload || typeof payload !== 'object') return
+  // 単独版では設定窓との再起動通知だけを受け取り、会話や子パネル操作を中継しない。
+  if (単独Avatar && payload.type !== 'settings-saved') return
 
   if (コアウィンドウ.value) {
     if (payload.type === 'request-snapshot') {
@@ -550,6 +559,8 @@ function デスクトップチャンネルメッセージ処理(event: MessageEv
     }
 
     if (payload.type === 'settings-saved') {
+      // 全設定リセットは共通既定プロジェクトへ戻るため、新しい会話で起動時の場所を再確定する。
+      if (単独Avatar && payload.resetSession === true) セッションID.value = ''
       再起動待機秒数.value = typeof payload.waitSeconds === 'number' ? payload.waitSeconds : 30
       再起動カウントダウン表示.value = true
       return
@@ -652,7 +663,22 @@ function コア状態リセット() {
   チャットモード.value = 'live'
 }
 
+let コア接続世代 = 0
+let 単独再接続タイマー: ReturnType<typeof setTimeout> | null = null
+let 終了中 = false
+
+function 単独再接続予約() {
+  if (!単独Avatar || 終了中 || 単独再接続タイマー || !コアウィンドウ.value) return
+  単独再接続タイマー = setTimeout(() => {
+    単独再接続タイマー = null
+    void コア初期化(セッションID.value)
+  }, 5000)
+}
+
 function コア切断() {
+  コア接続世代++
+  if (単独再接続タイマー) clearTimeout(単独再接続タイマー)
+  単独再接続タイマー = null
   コアソケット.value?.disconnect()
   入力ソケット.value?.disconnect()
   コアソケット.value = null
@@ -661,6 +687,18 @@ function コア切断() {
 }
 
 function 認証クリア(message = '') {
+  if (単独Avatar) {
+    if (message) {
+      コア切断()
+      コアエラー.value = 'ローカルCoreの内部認証を確認できません。Coreの起動状態を確認してください。'
+      単独再接続予約()
+    } else {
+      終了中 = true
+      コア切断()
+      void window.desktopApi?.closeCurrentWindow?.()
+    }
+    return
+  }
   認証トークン.value = ''
   利用者.value = null
   認証処理中.value = false
@@ -699,7 +737,7 @@ function 初期化処理(message: Record<string, any>) {
   const settings = payload.モデル設定 ?? {}
 
   モデル設定.value = {
-    CODE_BASE_PATH: settings.CODE_BASE_PATH || '',
+    CODE_BASE_PATH: 単独プロジェクト || settings.CODE_BASE_PATH || '',
     CHAT_AI_NAME: settings.CHAT_AI_NAME || '',
     LIVE_AI_NAME: settings.LIVE_AI_NAME || '',
     CODE_AI1_NAME: settings.CODE_AI1_NAME || '',
@@ -721,7 +759,7 @@ function 初期化処理(message: Record<string, any>) {
 
   初期スピーカー有効.value = buttons.スピーカー ?? true
   初期マイク有効.value = buttons.マイク ?? false
-  チャットモード.value = (String(buttons.チャットモード || 'live').toLowerCase() as チャットモード型) || 'live'
+  チャットモード.value = 単独Avatar ? 'live' : (String(buttons.チャットモード || 'live').toLowerCase() as チャットモード型) || 'live'
   音声状態シード.value += 1
 
   const nextStates = {
@@ -736,6 +774,8 @@ function 初期化処理(message: Record<string, any>) {
     code6: Boolean(buttons.エージェント6),
   }
 
+  if (単独Avatar) { パネル状態更新(); return }
+
   // Electronパネルウィンドウを目的の状態に合わせて開閉
   window.desktopApi?.applyPanelStates?.(nextStates).then((states) => {
     パネル状態更新(states)
@@ -745,29 +785,38 @@ function 初期化処理(message: Record<string, any>) {
 }
 
 async function コア初期化(preferredSessionId = '') {
-  if (!利用者.value) return
+  if ((!単独Avatar && !利用者.value) || 終了中) return
 
   コア切断()
+  const 接続世代 = コア接続世代
+  const 接続取消済み = () => 終了中 || 接続世代 !== コア接続世代
+  let 接続失敗 = false
   コア処理中.value = true
   コアエラー.value = ''
 
   const sessionHint = preferredSessionId || セッションID.value || ''
 
   try {
-    // Web版と同様: REST APIでセッションを初期化してIDを取得
+    if (単独Avatar) await 現在利用者取得()
+    if (接続取消済み()) return
     let resolvedSessionId = sessionHint
-    try {
-      const initRes = await apiClient.post('/core/AIコア/初期化', { セッションID: sessionHint })
-      if (initRes.data.status === 'OK' && initRes.data.data?.セッションID) {
-        resolvedSessionId = initRes.data.data.セッションID
+    // 単独版は最初のWS接続でプロジェクトを確定する。
+    // 従来のREST初期化は共通CODE_BASE_PATHでセッションを作るため使用しない。
+    if (!単独Avatar) {
+      try {
+        const initRes = await apiClient.post('/core/AIコア/初期化', { セッションID: sessionHint })
+        if (initRes.data.status === 'OK' && initRes.data.data?.セッションID) {
+          resolvedSessionId = initRes.data.data.セッションID
+        }
+      } catch {
+        // REST失敗時はヒントをそのまま使用（WebSocket側で生成される）
       }
-    } catch {
-      // REST失敗時はヒントをそのまま使用（WebSocket側で生成される）
     }
 
+    if (接続取消済み()) return
     // coreチャンネルを先に接続（init・制御メッセージ・welcome を一括受信）
     const wsUrl = createWebSocketUrl('/core/ws/AIコア')
-    const nextCoreSocket = new AIWebSocket(wsUrl, resolvedSessionId, 'core')
+    const nextCoreSocket = new AIWebSocket(wsUrl, resolvedSessionId, 'core', 単独プロジェクト)
     ソケット状態バインド(nextCoreSocket, 入力接続済み)
     nextCoreSocket.on('init', 初期化処理)
     nextCoreSocket.on('error', (message) => {
@@ -791,14 +840,15 @@ async function コア初期化(preferredSessionId = '') {
       if (text) コアViewRef.value?.字幕追加(text)
     })
 
-    const nextSessionId = await nextCoreSocket.connect()
-    セッションID.value = nextSessionId
-    認証Storage.setItem('avatar_session_id', nextSessionId)
-    WebURL同期(nextSessionId)
     コアソケット.value = nextCoreSocket
+    const nextSessionId = await nextCoreSocket.connect()
+    if (接続取消済み()) { nextCoreSocket.disconnect(); return }
+    セッションID.value = nextSessionId
+    if (!単独Avatar) 認証Storage.setItem('avatar_session_id', nextSessionId)
+    WebURL同期(nextSessionId)
 
     // core で確認したプロジェクトを input に引き継ぐ。入力拒否は画面へ通知する。
-    const nextInputSocket = new AIWebSocket(wsUrl, nextSessionId, 'input', モデル設定.value.CODE_BASE_PATH)
+    const nextInputSocket = new AIWebSocket(wsUrl, nextSessionId, 'input', 単独プロジェクト || モデル設定.value.CODE_BASE_PATH)
     nextInputSocket.on('error', (message) => {
       コアエラー.value = String(message.メッセージ内容 || message.error || 'AIコア入力エラー')
     })
@@ -809,10 +859,15 @@ async function コア初期化(preferredSessionId = '') {
     入力ソケット.value = nextInputSocket
     スナップショット送信()
   } catch (error) {
-    コアエラー.value = error instanceof Error ? error.message : 'AIコアへ接続できませんでした。'
+    if (接続取消済み()) return
+    接続失敗 = true
     コア切断()
+    コアエラー.value = 単独Avatar
+      ? 'ローカルCoreに接続できません。Coreの起動状態と内部認証を確認してください。自動で再接続します。'
+      : error instanceof Error ? error.message : 'AIコアへ接続できませんでした。'
+    単独再接続予約()
   } finally {
-    コア処理中.value = false
+    if (接続世代 === コア接続世代 || 接続失敗) コア処理中.value = false
   }
 }
 
@@ -844,7 +899,7 @@ async function 操作状態同期() {
 }
 
 async function 現在利用者取得() {
-  if (!認証トークン.value) return
+  if (!単独Avatar && !認証トークン.value) return
 
   const response = await apiClient.post('/core/auth/現在利用者')
   if (response.data.status !== 'OK') {
@@ -852,7 +907,7 @@ async function 現在利用者取得() {
   }
 
   利用者.value = response.data.data
-  認証Storage.setItem('user', JSON.stringify(利用者.value))
+  if (!単独Avatar) 認証Storage.setItem('user', JSON.stringify(利用者.value))
 }
 
 async function ログイン送信(payload: { 利用者ID: string; パスワード: string }) {
@@ -893,6 +948,7 @@ async function ログイン送信(payload: { 利用者ID: string; パスワー�
 }
 
 async function パネル切替(panel: PanelKey) {
+  if (単独Avatar) return
   if (!isElectron) {
     if (Web右ペイン対象(panel)) {
       右アクティブタブ.value = panel
@@ -918,6 +974,7 @@ async function パネル切替(panel: PanelKey) {
 }
 
 async function パネル有効化(panel: PanelKey) {
+  if (単独Avatar) return
   if (!isElectron) {
     if (Web右ペイン対象(panel)) {
       if (右アクティブタブ.value !== panel) {
@@ -1001,10 +1058,10 @@ function 設定ウィンドウを閉じる() {
   }
 }
 
-async function 設定保存完了通知(waitSeconds: number = 30) {
+async function 設定保存完了通知(waitSeconds: number = 30, resetSession = false) {
   if (isElectron) {
     void window.desktopApi?.closeSettingsWindow?.()
-    デスクトップチャンネル?.postMessage({ type: 'settings-saved', waitSeconds })
+    デスクトップチャンネル?.postMessage({ type: 'settings-saved', waitSeconds, resetSession })
   } else {
     Web設定表示.value = false
     再起動待機秒数.value = waitSeconds
@@ -1213,7 +1270,7 @@ onMounted(async () => {
     ウィンドウロール.value = 'login'
   }
 
-  デスクトップチャンネル = new BroadcastChannel('avatar-desktop-sync')
+  デスクトップチャンネル = new BroadcastChannel(単独Avatar ? 'avatar-alone-settings-sync' : 'avatar-desktop-sync')
   デスクトップチャンネル.addEventListener('message', デスクトップチャンネルメッセージ処理)
 
   await ウィンドウロール検出()
@@ -1249,6 +1306,12 @@ onMounted(async () => {
     return
   }
 
+  if (単独Avatar) {
+    await コア初期化()
+    認証読込中.value = false
+    return
+  }
+
   await パネル状態再読込()
   ストレージ認証同期({ syncError: true })
 
@@ -1278,6 +1341,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  終了中 = true
   window.removeEventListener('auth-expired', 認証期限切れ処理)
   window.removeEventListener('storage', ストレージ変更処理)
   パネル状態リスナー解除?.()
@@ -1566,6 +1630,8 @@ onBeforeUnmount(() => {
       :initial-speaker-enabled="初期スピーカー有効"
       :audio-state-seed="音声状態シード"
       :panel-visibility="パネル表示状態"
+      :standalone="単独Avatar"
+      :show-user-label="!単独Avatar"
       :core-busy="コア処理中"
       :core-error="コアエラー"
       @toggle-panel="パネル切替"
@@ -1587,8 +1653,9 @@ onBeforeUnmount(() => {
           :key="設定キー"
           :is-open="true"
           :session-id="設定SessionID"
+          :fixed-project-path="単独プロジェクト"
           @close="設定ウィンドウを閉じる"
-          @saved="(s: number) => 設定保存完了通知(s)"
+          @saved="(s: number, resetSession?: boolean) => 設定保存完了通知(s, resetSession)"
         />
       </component>
     </div>
@@ -1721,8 +1788,9 @@ onBeforeUnmount(() => {
       :key="設定キー"
       :is-open="Web設定表示"
       :session-id="設定SessionID"
+          :fixed-project-path="単独プロジェクト"
       @close="設定ウィンドウを閉じる"
-      @saved="(s: number) => 設定保存完了通知(s)"
+      @saved="(s: number, resetSession?: boolean) => 設定保存完了通知(s, resetSession)"
     />
   </main>
 </template>

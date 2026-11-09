@@ -20,8 +20,21 @@ const compile = source => ts.transpileModule(source, {
 }).outputText;
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
-function mainFixture() {
-  const windows = [], handlers = new Map();
+function transportFixture() {
+  const exports = {};
+  vm.runInNewContext(compile(fs.readFileSync(path.join(project, 'electron/alone-transport.ts'), 'utf8')), {
+    exports, URL, require: id => id === 'node:fs' ? {
+      readFileSync(file) {
+        assert.ok(file.endsWith('/_config/AiDiy_key.json'), 'fixture must never read real credentials');
+        return JSON.stringify({ PORT_CORE: 18091 });
+      },
+    } : load(id),
+  });
+  return exports;
+}
+
+function mainFixture(alone = false) {
+  const windows = [], handlers = new Map(), syncHandlers = new Map(), networkHooks = {};
   let ready;
   class Window extends EventEmitter {
     constructor(options) {
@@ -35,7 +48,10 @@ function mainFixture() {
       this.focusCalls = 0;
       const messages = [];
       this.webContents = Object.assign(new EventEmitter(), {
+        id: this.id,
         mainFrame: {},
+        getURL: () => this.url,
+        setWindowOpenHandler: handler => { this.openHandler = handler; },
         isLoading: () => false,
         isDestroyed: () => this.isDestroyed(),
         messages,
@@ -43,6 +59,7 @@ function mainFixture() {
       });
     }
     async loadURL(url) {
+      this.url = url; this.webContents.mainFrame.url = url;
       this.role = new URL(url).searchParams.get('role');
       queueMicrotask(() => { this.emit('ready-to-show'); this.webContents.emit('did-finish-load'); });
     }
@@ -86,14 +103,15 @@ function mainFixture() {
   });
   const electron = {
     app, BrowserWindow: Window,
-    ipcMain: { handle: (channel, handler) => handlers.set(channel, handler) },
+    ipcMain: { handle: (channel, handler) => handlers.set(channel, handler), on: (channel, handler) => syncHandlers.set(channel, handler) },
     screen: { getPrimaryDisplay: () => ({ workArea: { x: 0, y: 0, width: 1920, height: 1080 } }) },
-    session: { defaultSession: { setDisplayMediaRequestHandler() {} } },
+    session: { defaultSession: { setDisplayMediaRequestHandler() {}, webRequest: Object.fromEntries(['onBeforeSendHeaders','onHeadersReceived','onCompleted','onErrorOccurred'].map(name => [name, fn => networkHooks[name] = fn])) } },
   };
   const context = {
     __dirname: path.join(project, 'dist-electron'), exports: {}, console, URL,
-    process: { platform: 'win32', env: {} },
-    require: id => id === 'node:fs' ? { ...fs, mkdirSync() {} } : id === 'electron' ? electron
+    process: { platform: 'win32', env: alone ? { AIDIY_AVATAR_ALONE: '1', AIDIY_AVATAR_PROJECT: '/fixture/selected', VITE_DEV_SERVER_URL: 'http://127.0.0.1:19092/' } : {} },
+    require: id => id === 'node:fs' ? { ...fs, mkdirSync() {}, realpathSync: value => value, statSync: () => ({ isDirectory: () => true }) } : id === 'electron' ? electron
+      : id === './alone-transport' ? transportFixture()
       : id.endsWith('project-storage.cjs') ? {...load(id),preparePrivateDirectory(){}} : id.endsWith('window-opening.cjs') ? { 拡大表示: async (_Constructor, window, options) => {
         if (window.isDestroyed() || !options.canShow()) return false;
         window.show(); return true;
@@ -104,7 +122,7 @@ function mainFixture() {
   vm.runInNewContext(compile(source) + '\nglobalThis.probe = {createLoginWindow,createCoreWindow,createPanelWindow,setPanelVisibility,openSettingsWindow,openCoreWindow,openLoginWindow,ウィンドウ表示,windowPins};', context);
   ready();
   const event = window => ({ sender: window.webContents, senderFrame: window.webContents.mainFrame });
-  return { ...context.probe, windows, Window, event, app, handlers,
+  return { ...context.probe, windows, Window, event, app, handlers, syncHandlers, networkHooks,
     invoke: (channel, window, ...args) => handlers.get(channel)(event(window), ...args),
     raw: (channel, event) => handlers.get(channel)(event),
   };
@@ -199,6 +217,7 @@ test('ピンとタイトル操作は所有main frameだけを許可し、ロッ�
 
 test('preloadは引数なしの本人用ピンAPIと解除可能な状態購読だけを公開する', async () => {
   const ipcRenderer = new EventEmitter(), calls = [];
+  ipcRenderer.sendSync = channel => { assert.equal(channel, 'avatar:metadata'); return { avatarAlone: false, projectPath: '', coreBaseUrl: '' }; };
   ipcRenderer.invoke = async (...args) => { calls.push(args); return { pinned: false, locked: false }; };
   let api;
   vm.runInNewContext(compile(fs.readFileSync(path.join(project, 'electron/preload.ts'), 'utf8')), {
@@ -301,4 +320,54 @@ test('独立アプリへ移したTask/TeamのIPCは登録せず、残ったAvata
   const preload = fs.readFileSync(path.join(project, 'electron/preload.ts'), 'utf8');
   const declarations = fs.readFileSync(path.join(project, 'src/env.d.ts'), 'utf8');
   for (const source of [preload, declarations]) assert.doesNotMatch(source, /toggleTaskWindows|toggleTeamWindow|closeTeamWindow|openTaskDialogWindow|getTaskDialogPayload|onTaskDialogPayload/);
+});
+
+
+test('Alone main/preload: core and settings only, safe synchronous metadata and secured lifecycle', async () => {
+  const f = mainFixture(true);
+  await flush();
+  assert.deepEqual(f.windows.map(window => window.role), ['core']);
+  const core = f.windows[0];
+  const ipcRenderer = new EventEmitter();
+  ipcRenderer.sendSync = channel => {
+    const event = f.event(core);
+    f.syncHandlers.get(channel)(event);
+    return event.returnValue;
+  };
+  ipcRenderer.invoke = (channel, ...args) => f.invoke(channel, core, ...args);
+  let api;
+  vm.runInNewContext(compile(fs.readFileSync(path.join(project, 'electron/preload.ts'), 'utf8')), {
+    exports: {}, process: { versions: {} },
+    require: () => ({ ipcRenderer, contextBridge: { exposeInMainWorld(_name, value) { api = value; } } }),
+  });
+  assert.equal(api.avatarAlone, true);
+  assert.equal(api.projectPath, '/fixture/selected');
+  assert.equal(api.coreBaseUrl, 'http://127.0.0.1:18091');
+  assert.doesNotMatch(JSON.stringify(api), /access_token|Authorization|Bearer/);
+  await assert.rejects(api.togglePanel('chat'));
+  await assert.rejects(api.applyPanelStates({ chat: true }));
+  await api.openLoginWindow();
+  assert.deepEqual(f.windows.map(window => window.role), ['core']);
+  await api.openSettingsWindow('fixture-session');
+  await flush();
+  assert.deepEqual(f.windows.map(window => window.role), ['core', 'settings']);
+  const settings = f.windows[1];
+  assert.ok(settings.webContents.messages.some(message => message[0] === 'settings:session-id' && message[1] === 'fixture-session'));
+  for (const window of f.windows) {
+    assert.equal(window.options.webPreferences.webSecurity, true);
+    assert.equal(window.openHandler().action, 'deny');
+    for (const name of ['will-navigate', 'will-frame-navigate', 'will-redirect', 'will-attach-webview']) {
+      let prevented = false;
+      window.webContents.emit(name, { preventDefault() { prevented = true; } });
+      assert.equal(prevented, true, name);
+    }
+    const event = f.event(window); f.syncHandlers.get('avatar:metadata')(event);
+    assert.equal(event.returnValue.avatarAlone, true);
+  }
+  const invalid = { sender: core.webContents, senderFrame: {} };
+  f.syncHandlers.get('avatar:metadata')(invalid);
+  assert.equal(invalid.returnValue.avatarAlone, false);
+  const before = f.windows.length;
+  f.raw('settings:open', invalid); assert.equal(f.windows.length, before);
+  core.close(); assert.equal(f.app.quitCalls, 1, 'core close quits even with settings open');
 });

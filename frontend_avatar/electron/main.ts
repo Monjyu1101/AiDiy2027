@@ -4,6 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import { app, BrowserWindow, desktopCapturer, ipcMain, screen, session, Menu, type IpcMainInvokeEvent } from 'electron'
+import { realpathSync, statSync } from 'node:fs'
+import { installAloneTransport, readInternalAuthorization, configuredCoreBaseUrl } from './alone-transport'
 import { readdir } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
@@ -18,7 +20,12 @@ if (process.platform === 'darwin') app.setName('AiDiy Avatar')
 // Avatar は選択プロジェクトを持たず、配置元だけにプロファイルを保存する。
 const { programDataDirectory, preparePrivateDirectory } = require(path.join(__dirname, '../../frontend_ide/host/scripts/project-storage.cjs'))
 const avatarProjectRoot = path.resolve(__dirname, '../..')
-const avatarProfile = programDataDirectory(avatarProjectRoot, 'aidiy_avatar', avatarProjectRoot, ['electron'])
+const avatarAlone = process.env.AIDIY_AVATAR_ALONE === '1'
+if (avatarAlone && process.env.AIDIY_AVATAR_PROJECT && !path.isAbsolute(process.env.AIDIY_AVATAR_PROJECT)) throw new Error('絶対パスでプロジェクトを指定してください。')
+const projectPath = avatarAlone ? realpathSync(process.env.AIDIY_AVATAR_PROJECT || avatarProjectRoot) : ''
+if (avatarAlone && (!path.isAbsolute(projectPath) || !statSync(projectPath).isDirectory())) throw new Error('プロジェクトフォルダが不正です。')
+const coreBaseUrl = avatarAlone ? configuredCoreBaseUrl(avatarProjectRoot) : ''
+const avatarProfile = programDataDirectory(avatarAlone ? projectPath : avatarProjectRoot, avatarAlone ? 'aidiy_avatar_alone' : 'aidiy_avatar', avatarProjectRoot, ['electron'])
 preparePrivateDirectory(avatarProfile)
 app.setPath('userData', avatarProfile)
 app.setPath('sessionData', avatarProfile)
@@ -266,6 +273,26 @@ function getRendererUrl(role: WindowRole): string {
   return url.toString()
 }
 
+// 認証対象は main が登録した二つの画面に限定する。iframe / 任意ページは含まない。
+const aloneWindows = new Map<number, { window: BrowserWindow; url: string }>()
+function trustedAloneContents(id: number): boolean {
+  const entry = aloneWindows.get(id)
+  return Boolean(entry && !entry.window.isDestroyed() && entry.window.webContents.getURL() === entry.url)
+}
+function secureAloneWindow(window: BrowserWindow, role: WindowRole) {
+  if (!avatarAlone) return
+  if (role !== 'core' && role !== 'settings') throw new Error('単独 Avatar の画面種別が不正です。')
+  const url = getRendererUrl(role)
+  aloneWindows.set(window.webContents.id, { window, url })
+  window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
+  window.webContents.on('will-navigate', event => event.preventDefault())
+  window.webContents.on('will-frame-navigate', event => event.preventDefault())
+  window.webContents.on('will-redirect', event => event.preventDefault())
+  window.webContents.on('will-attach-webview', event => event.preventDefault())
+  const id = window.webContents.id
+  window.on('closed', () => aloneWindows.delete(id))
+}
+
 function createBaseWindow(bounds: BoundsPreset, role: WindowRole, show = true): BrowserWindow {
   const window = new BrowserWindow({
     width: bounds.width,
@@ -286,12 +313,13 @@ function createBaseWindow(bounds: BoundsPreset, role: WindowRole, show = true): 
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      webSecurity: false,
+      webSecurity: avatarAlone,
       backgroundThrottling: false,
     },
   })
 
   windowRoles.set(window.id, role)
+  secureAloneWindow(window, role)
   // ログイン画面は他の窓に隠れないよう、最前面ピンONで表示を始める。
   windowPins.register(window, { pinned: role === 'login' })
   attachNativeWindowMove(window, screen, 'avatar')
@@ -464,6 +492,7 @@ function applyPrimaryMode(window: BrowserWindow, mode: WindowMode) {
 }
 
 function createPanelWindow(panel: PanelKey) {
+  if (avatarAlone) throw new Error('単独 Avatar では子パネルを開けません。')
   const existing = panelWindows.get(panel)
   if (existing && !existing.isDestroyed()) {
     setPanelVisibility(panel, panelStates[panel])
@@ -490,12 +519,14 @@ function createPanelWindow(panel: PanelKey) {
 }
 
 function ensureAllPanelWindows() {
+  if (avatarAlone) return
   ;(Object.keys(panelStates) as PanelKey[]).forEach((panel) => {
     createPanelWindow(panel)
   })
 }
 
 function createLoginWindow(show = true) {
+  if (avatarAlone) return createCoreWindow(show)
   if (loginWindow && !loginWindow.isDestroyed()) {
     applyPrimaryMode(loginWindow, 'login')
     if (loginWindow.isMinimized()) {
@@ -562,6 +593,7 @@ async function openCoreWindow(sourceWindow?: BrowserWindow | null) {
 }
 
 async function openLoginWindow(sourceWindow?: BrowserWindow | null) {
+  if (avatarAlone) return openCoreWindow(sourceWindow)
   closeAllPanelWindows()
   const nextLoginWindow = createLoginWindow(false)
   await waitForReady(nextLoginWindow)
@@ -609,12 +641,13 @@ function openSettingsWindow(sessionId: string) {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
-      webSecurity: false,
+      webSecurity: avatarAlone,
       backgroundThrottling: false,
     },
   })
 
   windowRoles.set(settingsWindow.id, 'settings')
+  secureAloneWindow(settingsWindow, 'settings')
   windowPins.register(settingsWindow)
   attachNativeWindowMove(settingsWindow, screen, 'avatar')
   windowMinSizes.set(settingsWindow.id, { minWidth: SETTINGS_BOUNDS.minWidth, minHeight: SETTINGS_BOUNDS.minHeight })
@@ -650,6 +683,7 @@ function openSettingsWindow(sessionId: string) {
 function currentControlWindow(event: IpcMainInvokeEvent): BrowserWindow | null {
   const window = BrowserWindow.fromWebContents(event.sender)
   if (!window || window.isDestroyed() || !windowRoles.has(window.id)) return null
+  if (avatarAlone && !trustedAloneContents(event.sender.id)) return null
   if (window.webContents !== event.sender || event.senderFrame !== window.webContents.mainFrame) return null
   return window
 }
@@ -669,6 +703,19 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(async () => {
+  if (avatarAlone) installAloneTransport(session.defaultSession, coreBaseUrl,
+    details => {
+      if (details.webContentsId === undefined) return false
+      const entry = aloneWindows.get(details.webContentsId)
+      return Boolean(entry && trustedAloneContents(details.webContentsId)
+        && details.frame === entry.window.webContents.mainFrame)
+    }, () => readInternalAuthorization(coreBaseUrl, avatarProjectRoot))
+  ipcMain.on('avatar:metadata', event => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    const valid = window && windowRoles.has(window.id) && event.senderFrame === event.sender.mainFrame
+      && (!avatarAlone || aloneWindows.get(event.sender.id)?.url === event.senderFrame.url)
+    event.returnValue = valid ? { avatarAlone, projectPath, coreBaseUrl } : { avatarAlone: false, projectPath: '', coreBaseUrl: '' }
+  })
   if (process.platform === 'darwin') {
     const { Macメニューを設定 } = require(path.join(__dirname, '../../frontend_ide/host/scripts/MacOS-Menu.cjs'))
     Macメニューを設定({ app, Menu, 名前: 'AiDiy Avatar', 閉じる: () => app.quit(), icon: AVATAR_ICON_PATH, platform: process.platform })
@@ -822,6 +869,7 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.handle('panel:apply-states', async (_event, states: Record<PanelKey, boolean>) => {
+    if (avatarAlone) throw new Error('単独 Avatar では子パネルを操作できません。')
     await Promise.all((Object.keys(states) as PanelKey[]).map(async (panel) => {
       createPanelWindow(panel)
       await setPanelVisibility(panel, Boolean(states[panel]))
@@ -831,7 +879,8 @@ app.whenReady().then(async () => {
 
   ipcMain.handle('panel:get-states', () => ({ ...panelStates }))
 
-  ipcMain.handle('settings:open', (_event, sessionId: string) => {
+  ipcMain.handle('settings:open', (event, sessionId: string) => {
+    if (avatarAlone && !currentControlWindow(event)) return
     openSettingsWindow(sessionId)
   })
 

@@ -173,3 +173,38 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - WebSocket 接続、チャット送信、コード送信が通る。
 - DevTools Console に `desktopApi` 未定義エラーがない。
 - `npm run type-check` が通る。
+
+## Avatar単独版ランチャー
+
+`frontend_avatar/_setup.py` の既存ランチャー登録で、`aidiy_avatar` と一緒に `aidiy_avatar_alone` を登録します。setup / start の案内項目は増やしません。
+
+- `aidiy_avatar_alone --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
+- IDE は `node frontend_avatar/launch.mjs --alone --project <絶対フォルダー> --foreground` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
+- 画面表示完了時だけ `{launchReady:true}` を返します。重複起動は `{launchReady:true,existingWindow:true}`、起動失敗は `{launchError:メッセージ}` または非0終了です。ready後のIPC切断は終了要求ではありません。
+- foregroundプロセスはElectron終了まで残ります。POSIXではSIGTERM、IDEのWindows終了時は所有PIDへのtaskkill /TでElectronとrendererを回収します。既存ウィンドウの重複起動ではrendererを追加起動しません。
+- 単独版のrendererはloopbackの空きポートとVite `avatar-alone` modeを使い、`--strictPort` で別ポートへ逃げません。通常版の8092は変更しません。
+- `AIDIY_AVATAR_ALONE=1` と検証済み `AIDIY_AVATAR_PROJECT` をElectronへ渡します。接続先や内部認証情報はrendererの起動引数に含めません。
+- cleanupは同じ配置元を指す両ランチャーだけを解除します。別配置元のランチャーは残します。
+
+実サービス・認証情報を使わない確認:
+
+```sh
+node --test frontend_avatar/checks/launch.test.mjs
+python -m unittest discover -s frontend_avatar/checks -p 'test_*py'
+```
+
+### 単独版とIDEの確認ポイント
+
+- IDEの＋メニューは `Console → Browser → Navi → Code → Live → Avatar → TASK → TEAM`。IDEからLiveまたはAvatarを起動中は、起動待ちを含め両方を隠し、終了後に戻します。AvatarはElectron版IDEで利用します。
+- コアと設定窓だけを作成し、0〜6・ファイル・イメージの表示操作をUIとIPCの両方で抑止します。マイク、スピーカー、アバター表示選択、設定は維持します。
+- 通常Avatarの8092・ログイン認証・Web版は変更しません。単独版は配置元Coreの内部Bearerをmain processだけで読み、登録済みのmain frameからの必要なREST/WS要求に限定して付けます。ブラウザの保存領域、URL、preload、IPC、同期データに秘密を渡しません。
+- 選択プロジェクトは最初のWS接続で確定します。共通設定のプロジェクトでセッションを作る従来のREST初期化を先に呼ばないでください。設定のフォルダー変更は固定し、全設定リセット後だけ新しい会話で起動時のプロジェクトを再確定します。
+- Core停止中や内部認証更新中はログイン窓へ戻らず再接続します。アプリを閉じた後は遅延応答から再接続しません。
+
+```sh
+node --test frontend_avatar/checks/*.test.cjs frontend_avatar/checks/*.test.mjs
+node --test frontend_ide/checks/avatar-menu.test.mjs frontend_ide/checks/avatar-launch.test.cjs frontend_ide/checks/desktop-session.test.mjs
+cd frontend_avatar && npm run type-check
+```
+
+実機ではマイク入力・音声応答・VRM表示、設定変更後の再接続、IDE終了時の子プロセス回収を確認してください。自動試験の合格だけで音声デバイスや外部AIまで確認済みとは扱いません。

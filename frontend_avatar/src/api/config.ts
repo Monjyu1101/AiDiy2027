@@ -13,6 +13,7 @@ import type { ModelSettings } from '@/types'
 const PORT_CORE = 8091
 
 function resolveHttpBaseUrl(): string {
+  if (window.desktopApi?.avatarAlone) return window.desktopApi.coreBaseUrl
   if (import.meta.env.VITE_CORE_BASE_URL) {
     return import.meta.env.VITE_CORE_BASE_URL
   }
@@ -25,6 +26,7 @@ function resolveHttpBaseUrl(): string {
 }
 
 function resolveWebSocketEndpoint(): string {
+  if (window.desktopApi?.avatarAlone) return window.desktopApi.coreBaseUrl.replace(/^http:/, 'ws:') + '/core/ws/AIコア'
   if (import.meta.env.VITE_CORE_WS_URL) {
     return import.meta.env.VITE_CORE_WS_URL
   }

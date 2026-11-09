@@ -91,7 +91,7 @@ async function status(){
     if(!validConnectionState(data))throw Error();
     if(disposed||run!==revision||own!==session)return;statusError.value='';update(data);const confirmed=session;
     if(desktop){
-      try{const children=await window.aidiyWindow.childWindows();if(!disposed&&run===revision&&session===confirmed)liveOpen.value=!!children?.live;}
+      try{const children=await window.aidiyWindow.childWindows();if(!disposed&&run===revision&&session===confirmed)liveOpen.value=!!(children?.live||children?.avatar);}
       catch{if(!disposed&&run===revision&&session===confirmed)statusError.value='子ウィンドウの状態を確認できません。次の確認で再試行します。';}
     }
   }catch{if(!disposed&&run===revision&&session===own)statusError.value='サーバーの状態を確認できません。作業を保持して再試行します。';}
@@ -120,23 +120,23 @@ const launching=ref('');
 const launchText=(kind,name)=>launching.value===kind?'起動中…':name;
 const desktopLaunchItems=computed(()=>[
   {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
+  {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'tools接続中のみ起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
   {key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation},
   {key:'code',text:launchText('code','Code'),title:'コード支援を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('code')},
-  ...(state.value.mode==='online'&&!liveOpen.value?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')}]:[]),
-  {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'tools接続中のみ起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
+  ...(state.value.mode==='online'&&!liveOpen.value&&!['live','avatar'].includes(launching.value)?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')},{key:'avatar',text:launchText('avatar','Avatar'),title:'アバター音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('avatar')}]:[]),
   ...(state.value.mode==='online'?['task','team'].map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[])
 ]);
 const panelLaunchItems=computed(()=>[
   {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
+  {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブでGoogle検索を開く':'tools接続中のみ起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')},
   {key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation},
   {key:'code',text:'Code',pressed:panelOpen.value&&tab.value==='code',run:()=>openPanel('code')},
   ...(state.value.mode==='online'?[{key:'live',text:'Live',pressed:panelOpen.value&&tab.value==='live',run:()=>openPanel('live')}]:[]),
-  {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブでGoogle検索を開く':'tools接続中のみ起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')}
 ]);
 async function openWindow(kind,displayId){
   if(kind==='browser'&&!browserAvailable.value){error.value='tools接続中のみBrowserを起動できます。';return{ok:false,error:error.value};}
   if(launching.value)return;launching.value=kind;error.value='';
-  try{const result=kind==='browser'?await openBrowser(undefined,displayId):await window.aidiyWindow.openApp(kind,displayId);if(!result?.ok)throw Error(result?.error||'画面を開けません。');if(kind==='live')liveOpen.value=true;return result;}
+  try{const result=kind==='browser'?await openBrowser(undefined,displayId):await window.aidiyWindow.openApp(kind,displayId);if(!result?.ok)throw Error(result?.error||'画面を開けません。');if(kind==='live'||kind==='avatar')liveOpen.value=true;return result;}
   catch(e){error.value=e.message;return{ok:false,error:e.message};}finally{launching.value='';}
 }
 const opening={};
@@ -243,11 +243,12 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
         <button class="all-restore-button" :disabled="allBusy" aria-label="VRモードを終了して元の表示に戻す" title="VRモードを終了" @click="toggleAllDisplays"><span class="all-restore-icon" aria-hidden="true"></span></button>
         <div class="all-launchers">
           <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'Console' }}</button>
+          <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'tools接続中のみ起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'Browser' }}</button>
           <button class="navigation-launch" :disabled="!!launching||allBusy" @click="openNavigation">{{ launching==='navigation'?'起動中…':'Navi' }}</button>
           <button :disabled="!!launching||allBusy" title="この画面の右上にコード支援を開く" @click="openWindow('code',toolbar.displayId)">{{ launching==='code'?'起動中…':'Code' }}</button>
-          <button v-if="state.mode==='online'&&!liveOpen" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'Live' }}</button>
+          <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'Live' }}</button>
+          <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="アバター音声会話を別ウィンドウで開く" @click="openWindow('avatar',toolbar.displayId)">{{ launching==='avatar'?'起動中…':'Avatar' }}</button>
           <button v-for="type in ['task','team']" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':type.toUpperCase() }}</button>
-          <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'tools接続中のみ起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'Browser' }}</button>
         </div>
       </nav></template>
       <div v-if="allBusy" class="all-transition" role="status" aria-live="polite"><p>{{ allMessage }}</p></div>

@@ -38,6 +38,9 @@ if(!independent&&!app.requestSingleInstanceLock()){
  return;
 }
 const windows=new Map(),closing=new Set(),closedServers=new WeakSet();
+const {createAvatarLauncher}=require('./デスクトップ/Avatar起動.cjs');
+const avatarLauncher=createAvatarLauncher();
+const voiceActive=owner=>avatarLauncher.active(owner)||owner.pending?.has('live')||owner.pending?.has('avatar')||[...windows.values()].some(child=>child.owner===owner&&child.kind==='live'&&!child.window.isDestroyed());
 const taskWindows=createTaskWindows({authenticated:projectFixed,owns:record=>!record.owner,records:windows,trustedEvent,focusWindow,isQuitting:()=>quitting,onLastClosed:()=>app.quit(),createWindow:(view,payload)=>createWindow('task',url+'#task-view='+view,undefined,undefined,undefined,undefined,undefined,undefined,{view,payload})});
 const {createWindowPins}=require('./デスクトップ/最前面ピン.cjs');
 const windowPins=createWindowPins({onChanged(window,state){
@@ -158,17 +161,17 @@ function closeServer(server){
 const sessionKey=state=>state.active?`${state.mode}:${state.startedAt}`:'';
 async function readState(record){return readDevelopmentState(record);}
 function closeChildren(owner){
- owner.revision++;draftRouter.invalidate(owner);
+ owner.revision++;draftRouter.invalidate(owner);avatarLauncher.close(owner);
  for(const child of [...windows.values()])if(child.owner===owner&&!child.window.isDestroyed())child.window.destroy();
 }
 async function checkChildren(owner){
- if(owner.checking||owner.window.isDestroyed()||![...windows.values()].some(child=>child.owner===owner))return;
+ if(owner.checking||owner.window.isDestroyed()||(!avatarLauncher.active(owner)&&![...windows.values()].some(child=>child.owner===owner)))return;
  owner.checking=true;const revision=owner.revision;
  try{
   const state=await readState(owner);
   if(owner.window.isDestroyed()||owner.revision!==revision)return;
   browserViews?.setAvailable(owner,browserConnected(state));
-  if(!sessionKey(state)||[...windows.values()].some(child=>child.owner===owner&&child.linkKey!==sessionKey(state)))closeChildren(owner);
+  if(!sessionKey(state)||(avatarLauncher.active(owner)&&owner.avatarKey!==sessionKey(state))||[...windows.values()].some(child=>child.owner===owner&&child.linkKey!==sessionKey(state)))closeChildren(owner);
  }catch{ /* 一時的な通信断・不正応答は終了の根拠にせず、次回の監視で再確認する。 */ }finally{owner.checking=false;}
 }
 function trustedEvent(event){
@@ -392,11 +395,11 @@ app.whenReady().then(async()=>{
  });
  ipcMain.handle('development:child-windows',event=>{
   const owner=trustedEvent(event);
-  return{live:!!owner&&owner.kind==='ide'&&[...windows.values()].some(child=>child.owner===owner&&child.kind==='live'&&!child.window.isDestroyed())};
+  return{live:!!owner&&owner.kind==='ide'&&!!voiceActive(owner),avatar:!!owner&&owner.kind==='ide'&&avatarLauncher.active(owner)};
  });
  ipcMain.handle('development:open-app',async(event,type,displayId)=>{
   const source=trustedEvent(event),record=source?.kind==='viewer'?source.owner:source;
-  if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['code','live','console','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
+  if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['code','live','avatar','console','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
   // ピン留めからの明示起動も、元のIDEと同じ利用セッションだけに限定する。
   const revision=record.revision;let state;
   try{
@@ -404,9 +407,16 @@ app.whenReady().then(async()=>{
    selectedAllDisplay(record,displayId);
    state=await readState(record);
    if(quitting||trustedEvent(event)!==source||source.window.isDestroyed()||record.window.isDestroyed()||record.revision!==revision||!state.active||!state.project?.path||(source!==record&&source.linkKey!==sessionKey(state)))throw Error('IDEの利用状態が変わりました。');
-   if(['live','task','team'].includes(type)&&state.mode!=='online')throw Error('Live / TASK / TEAMはAiDiy接続利用で開けます。');
+   if(['live','avatar','task','team'].includes(type)&&state.mode!=='online')throw Error('Live / Avatar / TASK / TEAMはAiDiy接続利用で開けます。');
   }catch(error){return{ok:false,error:error.message};}
-  // Codeは依頼ごとに別窓。Liveだけ初期化中も共有して1窓にする。
+  // LiveとAvatarは起動途中も相互排他。別IDEや単独Liveには影響しない。
+  if((type==='avatar'&&voiceActive(record))||(type==='live'&&(avatarLauncher.active(record)||record.pending.has('avatar'))))return{ok:false,error:'Live / Avatarはすでに起動中です。'};
+  if(type==='avatar'){
+   record.avatarKey=sessionKey(state);
+   const opening=avatarLauncher.open(record,state.project.path);record.pending.set(type,opening);
+   try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
+  }
+  // Codeは依頼ごとに別窓。Task / Teamは初期化中も共有する。
   if(['live','task','team'].includes(type)&&record.pending.has(type))return record.pending.get(type);
   const opening=(async()=>{
    let child;

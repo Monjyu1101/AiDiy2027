@@ -181,7 +181,7 @@ def remove_standalone_launcher() -> bool:
     # 現行の launch.mjs と、旧形式の _start.py 登録の両方を解除対象にする。
     scripts = [str(FRONTEND_AVATAR_DIR.resolve() / name) for name in ('launch.mjs', '_start.py')]
     try:
-        for name in ('aidiy_avatar.cmd', 'aidiy_avatar'):
+        for name in ('aidiy_avatar.cmd', 'aidiy_avatar', 'aidiy_avatar_alone.cmd', 'aidiy_avatar_alone'):
             launcher = directory / name
             if launcher.is_file() and any(launcher_owned_by(launcher.read_text(encoding='utf-8'), script) for script in scripts):
                 launcher.unlink()

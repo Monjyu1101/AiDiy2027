@@ -43,6 +43,7 @@ const props = defineProps<{
   coreBusy: boolean;
   coreError: string;
   showUserLabel?: boolean;
+  standalone?: boolean;
   titleStatusSource?: 'core' | 'input';
 }>()
 
@@ -261,6 +262,7 @@ function ポインター確認停止() {
 }
 
 function パネル切替要求(panel: PanelKey) {
+  if (props.standalone) return
   emit('togglePanel', panel)
 }
 
@@ -629,6 +631,7 @@ defineExpose({ 字幕追加 })
         >
           <img src="/icons/speaker.png" alt="スピーカー" />
         </button>
+        <template v-if="!props.standalone">
         <button
           class="floating-icon file-icon"
           :class="{ inactive: !panelVisibility.file, active: panelVisibility.file }"
@@ -718,6 +721,7 @@ defineExpose({ 字幕追加 })
         >
           6
         </button>
+        </template>
         <button
           class="floating-icon config-icon"
           :disabled="!inputConnected"

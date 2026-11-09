@@ -19,6 +19,7 @@ function 認証Storage取得(): Storage {
 }
 
 function 入力系認証トークン更新(message: WebSocketMessage): void {
+  if (window.desktopApi?.avatarAlone) return
   const メッセージ識別 = String(message.メッセージ識別 || message.type || '')
   if (!認証延長対象メッセージ識別.has(メッセージ識別) || 認証トークン更新中) return
 
@@ -114,6 +115,7 @@ export class AIWebSocket implements IWebSocketClient {
     if (event.key === null || (event.key === 'token' && !event.newValue)) this.disconnect()
   }
   private 認証確認(): string {
+    if (window.desktopApi?.avatarAlone) return ''
     try { return ログイントークン取得().token } catch (error) {
       this.disconnect()
       window.dispatchEvent(new Event('auth-expired'))
@@ -124,6 +126,7 @@ export class AIWebSocket implements IWebSocketClient {
     try { this.認証確認(); return true } catch { return false }
   }
   private 認証期限監視(): void {
+    if (window.desktopApi?.avatarAlone) return
     if (!this.認証利用可能()) return
     const remaining = ログイントークン取得().expires - Date.now()
     this.認証期限タイマー = window.setTimeout(() => this.認証期限監視(), Math.min(remaining, 2147483647))
@@ -140,15 +143,19 @@ export class AIWebSocket implements IWebSocketClient {
     this.disconnect()
     const token = this.認証確認()
     this.intentionallyClosed = false
-    window.addEventListener('auth-cleared', this.認証切断)
-    window.addEventListener('storage', this.認証変更)
+    if (!window.desktopApi?.avatarAlone) {
+      window.addEventListener('auth-cleared', this.認証切断)
+      window.addEventListener('storage', this.認証変更)
+    }
     this.認証期限監視()
 
     return new Promise<string>((resolve, reject) => {
       let socket: WebSocket
       try {
         // JWT は URL・connect packet・ログへ入れず、upgrade 時だけ提示する。
-        socket = new WebSocket(this.url, ['aidiy-auth', `bearer.${token}`])
+        socket = window.desktopApi?.avatarAlone
+          ? new WebSocket(this.url)
+          : new WebSocket(this.url, ['aidiy-auth', `bearer.${token}`])
       } catch {
         this.disconnect()
         reject(new Error('WebSocket connection error'))
@@ -166,6 +173,12 @@ export class AIWebSocket implements IWebSocketClient {
       const timeoutId = window.setTimeout(() => {
         fail(new Error('WebSocket initialization timeout'))
         this.disconnect()
+        if (window.desktopApi?.avatarAlone) {
+          this.intentionallyClosed = false
+          this.reconnectTimer = window.setTimeout(() => {
+            if (!this.intentionallyClosed) void this.connect().catch(() => undefined)
+          }, this.maxReconnectDelayMs)
+        }
       }, 30000)
       this.接続取消 = () => {
         window.clearTimeout(timeoutId)
@@ -243,7 +256,7 @@ export class AIWebSocket implements IWebSocketClient {
 
         // 4000: サーバーが同じセッション・チャンネルの新しい接続へ置き換えた。
         // 再接続すると新しい接続を閉じ返し、互いに置き換え合う繰り返しになるため再接続しない。
-        if ([4000, 1008, 4401, 4403].includes(event.code)) {
+        if ((window.desktopApi?.avatarAlone ? [4000] : [4000, 1008, 4401, 4403]).includes(event.code)) {
           this.disconnect()
           return
         }

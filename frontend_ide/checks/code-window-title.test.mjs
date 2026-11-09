@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+import avatarModule from '../デスクトップ/Avatar起動.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -47,6 +48,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){app.menu=value;}};
  const modules={
   electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
+  './デスクトップ/Avatar起動.cjs':avatarModule,
   'node:path':{join:(...parts)=>parts.join('/'),resolve:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
   './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program,_root,children=[])=>['/project/_AIDIY',program,...children].join('/'),preparePrivateDirectory(){}},
   './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},

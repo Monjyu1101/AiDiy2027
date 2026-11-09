@@ -38,6 +38,9 @@ declare global {
 
   interface Window {
     desktopApi?: {
+      readonly avatarAlone: boolean
+      readonly projectPath: string
+      readonly coreBaseUrl: string
       versions: {
         chrome: string
         electron: string

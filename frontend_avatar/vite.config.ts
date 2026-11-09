@@ -11,7 +11,7 @@ const PORT_CORE = 8091
 const PORT_AVATAR = 8092
 const PORT_APPS = 8098
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   clearScreen: false,
   plugins: [vue()],
   optimizeDeps: {
@@ -31,7 +31,8 @@ export default defineConfig({
     host: '127.0.0.1',
     port: PORT_AVATAR,
     strictPort: true,
-    proxy: {
+    // 内部認証版のrendererは資材配信だけ。通常ブラウザへCoreを代理公開しない。
+    proxy: mode === 'avatar-alone' ? undefined : {
       '/core': {
         target: `http://127.0.0.1:${PORT_CORE}`,
         changeOrigin: true,
@@ -44,4 +45,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

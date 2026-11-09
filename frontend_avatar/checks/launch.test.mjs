@@ -85,3 +85,68 @@ test('親ランチャーのタイムアウトでは子プロセスツリーを�
   await assert.rejects(launchDetached({ launch: () => child, timeout: 10, stop: async target => { stopped = target; } }), /タイムアウト/);
   assert.equal(stopped, child);
 });
+
+test('単独版は正規化プロジェクト・専用loopbackポート・非公開認証モードを伝達する', async () => {
+  const f = fixture();
+  const running = runAvatar({ ...f.options, alone: true, project: '.', allocatePort: async () => 43210 });
+  await flush();
+  const env = f.calls[0].options.env;
+  assert.equal(env.AIDIY_AVATAR_ALONE, '1');
+  assert.equal(env.AIDIY_AVATAR_PROJECT, process.cwd());
+  assert.equal(env.VITE_DEV_SERVER_URL, 'http://127.0.0.1:43210');
+  assert.equal(env.ELECTRON_RUN_AS_NODE, undefined);
+  assert.deepEqual(f.calls[1].args, ['vite', '--mode', 'avatar-alone', '--host', '127.0.0.1', '--port', '43210', '--strictPort']);
+  assert.equal(f.notices[0].url, env.VITE_DEV_SERVER_URL);
+  f.calls[0].child.emit('exit', 0);
+  assert.equal(await running, 0);
+  assert.ok(f.stopped.includes(2));
+});
+test('単独版も占有ポート・重複・表示前失敗を成功にしない', async () => {
+  const conflict = fixture({ occupied: true });
+  await assert.rejects(runAvatar({ ...conflict.options, alone: true, project: '.', allocatePort: async () => 43210 }), /43210が別のプロセス/);
+  assert.deepEqual(conflict.notices, []);
+  const duplicate = fixture({ duplicate: true });
+  assert.equal(await runAvatar({ ...duplicate.options, alone: true, project: '.', allocatePort: async () => 43211 }), 0);
+  assert.equal(duplicate.calls.length, 1);
+  assert.deepEqual(duplicate.notices, [{ existingWindow: true }]);
+});
+test('引数はcwd基準で検証し存在しないフォルダーや不完全な指定を拒否する', async () => {
+  const { parseOptions } = await import('../launch.mjs');
+  assert.equal(parseOptions(['--alone']).project, process.cwd());
+  assert.equal(parseOptions(['--alone', '--project', '.', '--foreground']).foreground, true);
+  for (const args of [['--project', '.'], ['--alone', '--project'], ['--alone', '--project', '/missing-avatar-project'], ['--unknown']]) {
+    assert.throws(() => parseOptions(args));
+  }
+});
+test('切り離し後にも単独版と空白を含むプロジェクト引数を維持する', async () => {
+  let invocation;
+  const child = Object.assign(new EventEmitter(), { connected: true, disconnect() { this.connected = false; }, unref() {} });
+  const result = await launchDetached({ alone: true, project: '/tmp/project with spaces', log() {}, launch(command, args, options) {
+    invocation = { args, options };
+    queueMicrotask(() => child.emit('message', { launchReady: true, url: 'http://127.0.0.1:43210' }));
+    return child;
+  } });
+  assert.deepEqual(invocation.args.slice(1), ['--foreground', '--alone', '--project', '/tmp/project with spaces']);
+  assert.equal(invocation.options.env.AIDIY_LAUNCHER_CHILD, '1');
+  assert.equal(result.launchReady, true);
+  assert.equal(child.connected, false);
+});
+test('renderer起動だけではreadyを返さず、Electron表示完了を待つ', async () => {
+  const f = fixture();
+  const originalLaunch = f.options.launch;
+  f.options.launch = (...args) => { const child = originalLaunch(...args); child.send = () => {}; return child; };
+  const running = runAvatar(f.options);
+  await flush();
+  assert.equal(f.calls.length, 2);
+  assert.deepEqual(f.notices, []);
+  f.calls[0].child.emit('message', { avatarShown: true });
+  assert.equal(f.notices.length, 1);
+  f.calls[0].child.emit('exit', 0);
+  assert.equal(await running, 0);
+});
+test('ポート確保失敗・プロジェクト不正では子プロセスを作らない', async () => {
+  const f = fixture();
+  await assert.rejects(runAvatar({ ...f.options, alone: true, project: '.', allocatePort: async () => { throw Error('port allocation failed'); } }), /allocation/);
+  await assert.rejects(runAvatar({ ...f.options, alone: true, project: '/missing-avatar-project' }), /フォルダー/);
+  assert.deepEqual(f.calls, []);
+});

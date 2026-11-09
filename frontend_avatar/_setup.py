@@ -159,25 +159,28 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
         print_error(f"起動スクリプトが見つかりません: {script_path}")
         return False
     launcher_dir = launcher_dir or launcher_directory('aidiy_avatar')
-    launcher_path = launcher_dir / ("aidiy_avatar.cmd" if sys.platform == "win32" else "aidiy_avatar")
     try:
         launcher_dir.mkdir(parents=True, exist_ok=True)
-        if sys.platform == "win32":
-            content = (
-                "@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
-                + launcher_owner_comment(script_path) + "\n"
-                + windows_launcher_command([node, str(script_path)])
-                + "\nexit /b %ERRORLEVEL%\n"
-            )
-            launcher_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
-        else:
-            content = f'#!/usr/bin/env sh\nexec {shlex.quote(node)} {shlex.quote(str(script_path))} "$@"\n'
-            launcher_path.write_text(content, encoding="utf-8")
-            launcher_path.chmod(0o755)
+        for name, extra in (("aidiy_avatar", []), ("aidiy_avatar_alone", ["--alone"])):
+            launcher_path = launcher_dir / (name + ".cmd" if sys.platform == "win32" else name)
+            command = [node, str(script_path), *extra]
+            if sys.platform == "win32":
+                content = (
+                    "@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
+                    + launcher_owner_comment(script_path) + "\n"
+                    + windows_launcher_command(command)
+                    + "\nexit /b %ERRORLEVEL%\n"
+                )
+                launcher_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
+            else:
+                content = '#!/usr/bin/env sh\nexec ' + ' '.join(shlex.quote(arg) for arg in command) + ' "$@"\n'
+                launcher_path.write_text(content, encoding="utf-8")
+                launcher_path.chmod(0o755)
+            if name == "aidiy_avatar":
+                print_success(f"aidiy_avatar を登録しました: {launcher_path}")
     except OSError as exc:
-        print_error(f"aidiy_avatar を登録できません: {launcher_path} ({exc})")
+        print_error(f"Avatar を登録できません: {launcher_path} ({exc})")
         return False
-    print_success(f"aidiy_avatar を登録しました: {launcher_path}")
     return ensure_launcher_path(launcher_dir)
 
 

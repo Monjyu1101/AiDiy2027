@@ -19,11 +19,12 @@ import { qAlert, qConfirm } from '@/utils/qAlert'
 const props = defineProps<{
   isOpen: boolean
   sessionId: string
+  fixedProjectPath?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'saved', waitSeconds: number): void
+  (e: 'saved', waitSeconds: number, resetSession?: boolean): void
 }>()
 
 const loading = ref(false)
@@ -217,6 +218,7 @@ function normalizeCodeBasePath(path: string) {
 }
 
 async function handleBrowseCodeBasePath() {
+  if (props.fixedProjectPath) return
   browsingCodeBase.value = true
   errorMessage.value = ''
 
@@ -283,7 +285,7 @@ async function loadConfig() {
     selections.codeAi4 = chooseAvailable(currentSettings.value.CODE_AI4_NAME, codeAiOptions.value)
     selections.codeAi5 = chooseAvailable(currentSettings.value.CODE_AI5_NAME, codeAiOptions.value)
     selections.codeAi6 = chooseAvailable(currentSettings.value.CODE_AI6_NAME, codeAiOptions.value)
-    selections.codeBasePath = currentSettings.value.CODE_BASE_PATH || Object.keys(codeBaseOptions.value || {})[0] || ''
+    selections.codeBasePath = props.fixedProjectPath || currentSettings.value.CODE_BASE_PATH || Object.keys(codeBaseOptions.value || {})[0] || ''
     selections.codePermissions = currentSettings.value.CODE_PERMISSIONS || 'auto'
     selections.taskAi = chooseAvailable(currentSettings.value.TASK_AI_NAME || 'codex_cli', codeAiOptions.value)
     selections.teamAi = chooseAvailable(currentSettings.value.TEAM_AI_NAME || 'codex_cli', codeAiOptions.value)
@@ -354,7 +356,7 @@ function buildFormSettings() {
   nextSettings.TEAM_AI_MODEL_do = selections.teamModelDo
   nextSettings.TEAM_AI_MODEL_check = selections.teamModelCheck
 
-  const normalizedCodeBasePath = normalizeCodeBasePath(selections.codeBasePath)
+  const normalizedCodeBasePath = normalizeCodeBasePath(props.fixedProjectPath || selections.codeBasePath)
   if (normalizedCodeBasePath) {
     nextSettings.CODE_BASE_PATH = normalizedCodeBasePath
   }
@@ -474,7 +476,7 @@ async function handleResetReboot() {
     }
 
     rebootWaitSeconds.value = 60
-    emit('saved', 60)
+    emit('saved', 60, Boolean(props.fixedProjectPath))
   } catch (error: any) {
     errorMessage.value = `リセット再起動エラー: ${error?.response?.data?.message || error?.message || error}`
   } finally {
@@ -696,7 +698,7 @@ onMounted(() => {
             <div class="config-panel-section">
               <div class="config-panel-section-header">Code AI Setting</div>
               <div class="config-panel-code-base-field">
-                <div v-if="codeBaseOptionsList.length > 0" class="config-panel-field">
+                <div v-if="!props.fixedProjectPath && codeBaseOptionsList.length > 0" class="config-panel-field">
                   <label class="config-panel-label" for="config-code-base-path">CODE_BASE_PATH:</label>
                   <div class="config-panel-control">
                     <select
@@ -729,6 +731,8 @@ onMounted(() => {
                     <input
                       id="config-code-base-path-input"
                       v-model.trim="selections.codeBasePath"
+                      :readonly="!!props.fixedProjectPath"
+                      :title="props.fixedProjectPath ? '起動時のプロジェクトに固定されています' : undefined"
                       type="text"
                       class="config-panel-input"
                       placeholder="../ または C:/project/"
@@ -736,7 +740,7 @@ onMounted(() => {
                     <button
                       type="button"
                       class="config-panel-browse"
-                      :disabled="loading || browsingCodeBase"
+                      :disabled="!!props.fixedProjectPath || loading || browsingCodeBase"
                       @click="handleBrowseCodeBasePath"
                     >
                       参照

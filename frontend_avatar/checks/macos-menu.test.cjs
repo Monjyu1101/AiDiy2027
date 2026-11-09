@@ -18,7 +18,7 @@ async function fixture(platform){
  Object.assign(app,{setName(value){app.name=value;},setAppUserModelId(value){appIds.push(value);},setPath(){},getAppPath:()=>path.dirname(filename),requestSingleInstanceLock:()=>true,whenReady:()=>({then(callback){ready=callback;}}),quit(){quit++;},dock:{setMenu(value){app.dock.menu=value;},setIcon(value){icon=value;}}});
  const stop=new Error('fixture: stop before display/media initialization');
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){menu=value;}};
- const electron={app,Menu,session:{defaultSession:{setDisplayMediaRequestHandler(){throw stop;}}}};
+ const electron={app,Menu,ipcMain:{on(){}},session:{defaultSession:{setDisplayMediaRequestHandler(){throw stop;}}}};
  vm.runInNewContext(readFileSync(filename,'utf8'),{__dirname:path.dirname(filename),exports:{},process:{platform,env:{}},console,URL,
   require:id=>id==='node:fs'?{mkdirSync(){}}:id==='electron'?electron:id.endsWith('project-storage.cjs') ? {...load(id),preparePrivateDirectory(){}} : id.endsWith('window-opening.cjs')?{拡大表示:async()=>true}:load(id)});
  await assert.rejects(ready(),error=>error===stop);
