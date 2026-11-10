@@ -7,11 +7,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import manager from '../デスクトップ/task-windows.cjs';
 const {createTaskWindows,taskWindowBounds,copyPayload}=manager;
-function fixture(){
+function fixture(authenticated=false){
  const records=new Map();let created=0,focused=0,ended=0,gate,controller;const messages=[];
  const make=(kind='task',view='request',payload)=>{const window={dead:false,webContents:{send:(...v)=>messages.push(v)},isDestroyed(){return this.dead;},destroy(){this.dead=true;records.delete(this);controller?.closed(record);}};const record={window,kind,taskView:view,taskPayload:payload};records.set(window,record);return record;};
  const root=make();
- controller=createTaskWindows({records,trustedEvent:e=>e?.record,focusWindow:()=>focused++,onLastClosed:()=>ended++,createWindow:async(view,payload)=>{created++;const r=make('task',view,payload);if(gate)await gate;return r.window;}});
+ controller=createTaskWindows({authenticated,records,trustedEvent:e=>e?.record,focusWindow:()=>focused++,onLastClosed:()=>ended++,createWindow:async(view,payload)=>{created++;const r=make('task',view,payload);if(gate)await gate;return r.window;}});
  const call=(action,payload,record=root)=>controller.handle({record},action,payload);
  const login=()=>controller.session({record:root},'set',{token:'test-token',expectedRevision:0});
  return{records,root,make,controller,call,login,messages,get created(){return created;},get focused(){return focused;},get ended(){return ended;},gate(promise){gate=promise;}};
@@ -96,4 +96,14 @@ test('Task stale logout cannot clear newer login token',async()=>{
  const stale=await f.controller.session(event,'set',{token:'',expectedRevision:0});
  assert.equal(stale.ok,false);assert.equal(stale.token,'newer');assert.equal(stale.revision,1);
  assert.equal((await f.controller.session(event,'get')).token,'newer');
+});
+
+// IDEの配置復元は主画面の認証を流用し、残す窓を先に開く。
+test('Task layout restores flow/detail without leaving request or ending the shared service',async()=>{
+ const f=fixture(true);
+ assert.equal((await f.controller.restoreViews(['flow','detail'])).ok,true);
+ assert.deepEqual([...f.records.values()].map(r=>r.taskView).sort(),['detail','flow']);assert.equal(f.ended,0);
+ assert.equal((await f.controller.restoreViews(['flow','detail'])).ok,true);assert.equal(f.created,2);
+ assert.equal((await f.controller.restoreViews(['dialog'])).ok,false);
+ assert.equal((await fixture().controller.restoreViews(['flow'])).ok,false);
 });

@@ -6,6 +6,16 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('aidiyWindow',{
  nativeWindowMove:true,
+ layout:action=>ipcRenderer.invoke('development:layout',action),
+ onLayoutRequest:callback=>{
+  if(typeof callback!=='function')return()=>{};
+  const listener=async(_event,request)=>{
+   if(!request||typeof request.requestId!=='string'||request.requestId.length>100||!['capture','restore'].includes(request.action))return;
+   try{const result=await callback({action:request.action,payload:request.payload});ipcRenderer.send('development:layout-result',{requestId:request.requestId,ok:true,result});}
+   catch(error){ipcRenderer.send('development:layout-result',{requestId:request.requestId,ok:false,error:String(error?.message||error).slice(0,500)});}
+  };
+  ipcRenderer.on('development:layout-request',listener);return()=>ipcRenderer.removeListener('development:layout-request',listener);
+ },
  taskWindows:(action,payload)=>ipcRenderer.invoke('development:task-windows',action,payload),
  taskSession:(action,value)=>ipcRenderer.invoke('development:task-session',action,value),
  onTaskSession:callback=>{if(typeof callback!=='function')return()=>{};const listener=(_event,value)=>callback(value);ipcRenderer.on('development:task-session',listener);return()=>ipcRenderer.removeListener('development:task-session',listener);},

@@ -182,6 +182,13 @@ function existing() {
   else done();
 }
 function primary() {
+  // 呼出元Nodeだけが問い合わせる。現在のDiag窓がある画面を選び、パネル位置は返さない。
+  process.on('message',message=>{
+    if(message?.type!=='diag-launch-display'||typeof message.requestId!=='string'||!/^[a-f0-9-]{36}$/.test(message.requestId)||!process.connected)return;
+    let workArea=null;
+    if(window&&!window.isDestroyed())try{workArea=screen.getDisplayMatching(window.getBounds()).workArea;}catch{}
+    try{process.send({type:'diag-launch-display',requestId:message.requestId,workArea},()=>{});}catch{}
+  });
   app.on('second-instance',()=>{
     if(!window || window.isDestroyed())return;
     if(window.isMinimized())window.restore();

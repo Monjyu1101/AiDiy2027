@@ -30,6 +30,8 @@ if(independent){
  app.on('quit',()=>{try{rmSync(temporaryProfile,{recursive:true,force:true,maxRetries:2,retryDelay:100});}catch{}});
 }
 const {windowBounds,windowMinimumSize,allWindowBounds}=require('./デスクトップ/window-layout.cjs');
+const {起動画面を読む}=require('./デスクトップ/起動画面.cjs');
+const launchDisplayArea=kind==='cpu'?起動画面を読む(process.env.AIDIY_DEVELOPMENT_DISPLAY_AREA):null;
 const {createTaskWindows,taskWindowBounds}=require('./デスクトップ/task-windows.cjs');
 const {reserveConsoleSlot}=require('./デスクトップ/console-window-slot.cjs');
 const {拡大表示}=require('./host/scripts/window-opening.cjs');
@@ -63,7 +65,7 @@ const sharedDrafts=()=>sharedDraftBridge??=createSharedDraftBridge({directory:jo
 app.on('quit',()=>{void sharedDraftBridge?.then(bridge=>bridge.close(),()=>{});});
 const {createNativePreviewActions}=require('./デスクトップ/native-preview-actions.cjs');
 const nativePreviewActions=createNativePreviewActions({records:windows,trustedEvent,readState,sessionKey:state=>sessionKey(state),clipboard,shell,dialog,isQuitting:()=>quitting});
-let quitting=false,forcedQuit=false;
+let quitting=false,forcedQuit=false,layoutManager;
 function closeApplication(){
  if(kind==='task'){
   const peers=[...windows.values()].filter(record=>record.kind==='task'&&['request','flow','detail'].includes(record.taskView)&&!record.window.isDestroyed());
@@ -162,7 +164,7 @@ function closeServer(server){
 const sessionKey=state=>state.active?`${state.mode}:${state.startedAt}`:'';
 async function readState(record){return readDevelopmentState(record);}
 function closeChildren(owner){
- owner.revision++;draftRouter.invalidate(owner);avatarLauncher.close(owner);
+ owner.revision++;layoutManager?.invalidate(owner);draftRouter.invalidate(owner);avatarLauncher.close(owner);
  for(const child of [...windows.values()])if(child.owner===owner&&!child.window.isDestroyed())child.window.destroy();
 }
 async function checkChildren(owner){
@@ -197,7 +199,8 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
  const viewerPath=kind==='viewer'&&hash.startsWith('viewer=')?decodeURIComponent(hash.slice('viewer='.length)):'';
  const taskView=kind==='task'?(taskOptions?.view||'request'):undefined;
  const ownerBounds=owner?.window.getBounds();
- const area=(ownerBounds?screen.getDisplayMatching(ownerBounds):kind==='cpu'?screen.getPrimaryDisplay():screen.getDisplayNearestPoint(screen.getCursorScreenPoint())).workArea;
+ // CPUはDiagが渡した画面、未指定なら従来の主画面。IDE子窓は親の画面を優先する。
+ const area=(ownerBounds?screen.getDisplayMatching(ownerBounds):kind==='cpu'?(launchDisplayArea?screen.getDisplayMatching(launchDisplayArea):screen.getPrimaryDisplay()):screen.getDisplayNearestPoint(screen.getCursorScreenPoint())).workArea;
  const used=new Set([...windows.values()].filter(item=>item.owner===owner&&item.kind===kind&&!item.window.isDestroyed()).map(item=>item.slot));
  const ownerRevision=owner?.revision;
  const placement=kind==='console'?await reserveConsoleSlot():null;
@@ -412,7 +415,7 @@ app.whenReady().then(async()=>{
   単一起動部品.forEach((type,index)=>{if(occupied[index]||owner.pending.has(type))running.add(type);});
   return{live:!!voiceActive(owner),avatar:avatarLauncher.active(owner),runningApps:[...running]};
  });
- ipcMain.handle('development:open-app',async(event,type,displayId)=>{
+ async function openApp(event,type,displayId){
   const source=trustedEvent(event),record=source?.kind==='viewer'?source.owner:source;
   if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['cpu','code','live','avatar','console','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
   // ピン留めからの明示起動も、元のIDEと同じ利用セッションだけに限定する。
@@ -472,7 +475,36 @@ app.whenReady().then(async()=>{
   })();
   if(['cpu','live','task','team'].includes(type))record.pending.set(type,opening);
   try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
- });
+ }
+ ipcMain.handle('development:open-app',openApp);
+ const {createLayoutManager}=require('./デスクトップ/配置保存.cjs');
+ layoutManager=createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,isQuitting:()=>quitting,
+  async openNative(event,panels){
+   const owner=trustedEvent(event),panel=panels[0],before=new Set(windows.values());
+   const state=await readState(owner),key=sessionKey(state),revision=owner.revision;
+   const valid=()=>!quitting&&trustedEvent(event)===owner&&!owner.window.isDestroyed()&&owner.revision===revision;
+   const created=()=>[...windows.values()].filter(record=>record.owner===owner&&!before.has(record)&&!record.window.isDestroyed());
+   try{
+   if(!valid()||!state.active||state.mode!=='online')throw Error('IDEの利用状態が変わりました。');
+   if(panel.kind==='browser')await createWindow('browser',owner.url+'#browser',undefined,owner,key,undefined,undefined,HOME);
+   else if(panel.kind==='viewer')await createWindow('viewer',owner.url+'#viewer='+encodeURIComponent(panel.path),undefined,owner,key);
+   else{
+    const result=await openApp(event,panel.kind);
+    if(!result?.ok||result.alreadyRunning||result.reused)throw Error(result?.error||'別の起動中アプリがあるため復元できません。');
+   }
+   const current=await readState(owner);
+   if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project?.path)throw Error('IDEの利用状態が変わりました。');
+   if(panel.kind==='task'){
+    const controller=created().find(record=>record.kind==='task')?.taskController;
+    if(!controller)throw Error('TASKの起動状態を確認できません。');
+    const result=await controller.restoreViews(panels.map(item=>item.view));if(!result.ok)throw Error(result.error);
+    return panels.map(item=>created().find(record=>record.kind==='task'&&record.taskView===item.view));
+   }
+   return created();
+   }catch(error){for(const record of created())record.window.destroy();throw error;}
+  }});
+ ipcMain.handle('development:layout',(event,action)=>layoutManager.handle(event,action));
+ ipcMain.on('development:layout-result',(event,value)=>layoutManager.reply(event,value));
  ipcMain.handle('development:code-move-begin',event=>codeDrag.begin(event));
  ipcMain.handle('development:code-move',(event,token)=>codeDrag.move(event,token));
  ipcMain.handle('development:code-move-end',(event,token)=>codeDrag.end(event,token));

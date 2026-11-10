@@ -156,12 +156,13 @@ test('Electron生成: 親IDE側の画面を選び、Code番号・閉鎖後のslo
  const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const body=source.slice(source.indexOf('function selectedAllDisplay(owner,displayId){'),source.indexOf("process.on('disconnect'"));
  const primary={x:0,y:0,width:1920,height:1040},secondary={x:-1080,y:-200,width:1080,height:1880},windows=new Map(),matched=[];
+ let cursorArea=primary;
  class Window{
   constructor(options){this.options=options;this.closed=[];this.webContents={on(){},setWindowOpenHandler(){},async executeJavaScript(){}};}
   once(name,fn){if(name==='closed')this.closed.push(fn);} on(){} setBounds(bounds){this.bounds=bounds;} getBounds(){return this.bounds;} setAlwaysOnTop(){} isDestroyed(){return !!this.destroyed;} async loadURL(){}
   destroy(){this.destroyed=true;for(const fn of this.closed)fn();} isMinimized(){return true;} restore(){} show(){} focus(){}
  }
- const context={taskWindows:{},cliConsoleWindow:false,allDisplays:{register(){}},BrowserWindow:Window,windows,windowBounds,windowMinimumSize,screen:{getDisplayMatching:bounds=>{matched.push(bounds);return{workArea:secondary};},getDisplayNearestPoint:()=>({workArea:primary}),getCursorScreenPoint:()=>({x:100,y:100})},reserveConsoleSlot:async()=>({slot:0,close(){}}),quitting:false,join:(...parts)=>parts.join('/'),__dirname:'/fixture',拡大表示:async()=>true,setInterval:()=>({unref(){}}),clearInterval(){},draftRouter:{invalidate(){}},nativePreviewActions:{invalidate(){}},closeChildren(){},closeServer(){}};
+ const context={launchDisplayArea:null,taskWindows:{},cliConsoleWindow:false,allDisplays:{register(){}},BrowserWindow:Window,windows,windowBounds,windowMinimumSize,screen:{getPrimaryDisplay:()=>({workArea:primary}),getDisplayMatching:bounds=>{matched.push(bounds);return{workArea:bounds.x<0?secondary:primary};},getDisplayNearestPoint:()=>({workArea:cursorArea}),getCursorScreenPoint:()=>({x:cursorArea.x+20,y:cursorArea.y+20})},reserveConsoleSlot:async()=>({slot:0,close(){}}),quitting:false,join:(...parts)=>parts.join('/'),__dirname:'/fixture',拡大表示:async()=>true,setInterval:()=>({unref(){}}),clearInterval(){},draftRouter:{invalidate(){}},nativePreviewActions:{invalidate(){}},closeChildren(){},closeServer(){},setWindowBounds:(window,bounds)=>window.setBounds(bounds)};
  context.registerWindowPin=()=>{};context.attachWindowMove=()=>{};
  vm.runInNewContext(body+';globalThis.create=createWindow;',context);
  const owner={window:{getBounds:()=>({x:-900,y:150,width:700,height:800}),isDestroyed:()=>false},revision:0};
@@ -178,9 +179,21 @@ test('Electron生成: 親IDE側の画面を選び、Code番号・閉鎖後のslo
  assert.ok(matched.length>=6);assert.deepEqual(matched[0],owner.window.getBounds());
  const standalone=await context.create('code','http://127.0.0.1:1234/');assert.deepEqual(standalone.bounds,windowBounds('code',primary));
  const navi=await create('navi');assert.deepEqual(navi.bounds,windowBounds('navi',secondary));
+ const cpu=await create('cpu');assert.deepEqual(cpu.bounds,windowBounds('cpu',secondary),'IDE子CPUはカーソルではなく親IDEの画面');
+ // Diagの画面を受け取ると、ポインターが別画面へ移ってもその画面内の定位置を使う。
+ for(const area of [secondary,primary]){
+  context.launchDisplayArea=area;cursorArea=area===primary?secondary:primary;
+  const standaloneCpu=await context.create('cpu','http://127.0.0.1:1234/');
+  assert.deepEqual(standaloneCpu.bounds,windowBounds('cpu',area));
+  const standaloneIde=await context.create('ide','http://127.0.0.1:1234/');
+  assert.deepEqual(standaloneIde.bounds,windowBounds('ide',cursorArea),'IDEの既存画面選択は変更しない');
+  assert.deepEqual((await create('cpu')).bounds,windowBounds('cpu',secondary),'親IDEの画面を起動元指定より優先する');
+ }
+ context.launchDisplayArea=null;cursorArea=secondary;
+ assert.deepEqual((await context.create('cpu','http://127.0.0.1:1234/')).bounds,windowBounds('cpu',primary),'Diag指定なしの単独CPUは従来の主画面');
  const manual={x:-750,y:100,width:500,height:700};
  vm.runInNewContext(source.slice(source.indexOf('function focusWindow(window){'),source.indexOf("app.on('second-instance'"))+';globalThis.focus=focusWindow;',context);
- for(const window of [first,live,navi,consoleWindow]){window.setBounds(manual);context.focus(window);assert.deepEqual(window.bounds,manual);}
+ for(const window of [first,live,navi,consoleWindow,cpu]){window.setBounds(manual);context.focus(window);assert.deepEqual(window.bounds,manual);}
 });
 
 test('Code / Liveは900 DIPを初期高さとし、余白込みで収まらない時だけ縮小する',()=>{

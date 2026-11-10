@@ -57,7 +57,16 @@ function createTaskWindows({records,trustedEvent,createWindow,focusWindow,onLast
   }
   return{ok:true,...session()};
  }
- return{closed,start:()=>open('request'),async session(event,action,value){try{source(event);if(action==='get')return{ok:true,...session()};if(action!=='set')throw Error('Task認証操作が不正です。');return await setSession(event,value);}catch(error){return{ok:false,error:error.message,...session()};}},async handle(event,action,payload){
+ // 配置復元専用。残す主画面を先に開き、最後の主画面を閉じてサービスを終了させない。
+ async function restoreViews(selected){
+  if(!authenticated||!token||!Array.isArray(selected)||!selected.length||selected.some(view=>!views.has(view)))return{ok:false,error:'TASKの復元対象が不正です。'};
+  const generation=revision;
+  for(const view of new Set(selected)){const result=await open(view);if(!result.ok)return result;}
+  if(generation!==revision||ending||isQuitting())return{ok:false,error:'TASKの利用状態が変わりました。'};
+  for(const record of live())if(views.has(record.taskView)&&!selected.includes(record.taskView))record.window.destroy();
+  return{ok:true};
+ }
+ return{closed,restoreViews,start:()=>open('request'),async session(event,action,value){try{source(event);if(action==='get')return{ok:true,...session()};if(action!=='set')throw Error('Task認証操作が不正です。');return await setSession(event,value);}catch(error){return{ok:false,error:error.message,...session()};}},async handle(event,action,payload){
   try{
    const record=source(event);
    if(action==='state')return{ok:true,views:live().filter(r=>views.has(r.taskView)).map(r=>r.taskView)};

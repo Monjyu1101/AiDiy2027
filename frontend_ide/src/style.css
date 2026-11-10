@@ -424,3 +424,8 @@
 97.5%{background-color:color-mix(in srgb,var(--connection-color) 7.8459%,#000)}
 100%{background-color:color-mix(in srgb,var(--connection-color) 0.0000%,#000)}
 }
+
+/* 配置操作はアプリ起動ボタンと分け、短い文字を矢印の上に重ねる。 */
+.ide-heading .ai-launchers button.layout-launch{padding:1px 8px;min-width:32px;color:#a7f6ff;border-color:#6bcbcc;background:#132e35}
+.layout-launch-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:10px;gap:0}
+.layout-launch-arrow{font-size:14px;line-height:13px}

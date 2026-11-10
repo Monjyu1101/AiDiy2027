@@ -31,7 +31,7 @@ function pin(){
 }
 function close(){windowPanel?.close();emit('close');}
 onBeforeUnmount(()=>{disposed=true;idle.dispose();windowPanel?.close();history.value=null;});
-defineExpose({focus:()=>windowPanel?.focus()||false,pin});
+defineExpose({focus:()=>windowPanel?.focus()||false,pin,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:''})});
 </script>
 <template>
   <div ref="panel" class="viewer-session" :class="{detached}" :data-viewer-path="file.path">

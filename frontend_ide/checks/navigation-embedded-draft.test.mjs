@@ -22,7 +22,7 @@ async function fixture(t,{standalone=true,native=false,actions=true}={}){
  const receiver=createDraftReceiver({kind:'code',project:()=>receiverState.path,scope:()=>receiverState.session,ready:()=>receiverState.ready,draft:()=>receiverState.draft,setDraft:value=>{receiverState.draft=value;},focus:()=>{focus++;},uuid:()=>`context-${++identity}`});receiver.mount();
  const api=scope.run(()=>vm.runInNewContext(source+`;codeSession=1;({setCodeSession:value=>{codeSession=value;},handoff,handoffLabel,handoffTitle,canHandoff,handoffBusy,handoffError,draftRequest,codeOpen,codeOpening,codePanel,codeBase,autopilot,result,goal,visible,detached,submitting,toolsState})`,{
   ref,computed,watch,nextTick,createNavigationPopupSizer,createNavigationMessage,
-  inject:()=>actions?{}:null,onMounted(){},onBeforeUnmount(){},defineProps:()=>props,defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},pickNavigationScene:()=> 'ride',
+  inject:()=>actions?{}:null,onMounted(){},onBeforeUnmount(){},defineExpose(){},defineProps:()=>props,defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},pickNavigationScene:()=> 'ride',
   fetch:async(url,options={})=>{requests.push({url,...options});return {ok:true,json:async()=>({})};},
  }));
  t.after(()=>{scope.stop();receiver.dispose();});

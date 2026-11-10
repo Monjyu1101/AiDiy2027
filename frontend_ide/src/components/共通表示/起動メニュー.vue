@@ -31,12 +31,12 @@ onBeforeUnmount(() => {
     <template v-if="compact">
       <button type="button" class="launch-plus" aria-haspopup="menu" :aria-expanded="open" title="起動メニュー" @click="open = !open"><span class="plus-mark" aria-hidden="true"></span></button>
       <div v-if="open" class="launch-popup" role="menu">
-        <button v-for="item in items" :key="item.key" type="button" role="menuitem" :class="item.class" :disabled="item.disabled" :title="item.title" :aria-pressed="item.pressed" @click="run(item)">{{ item.text }}</button>
+        <button v-for="item in items" :key="item.key" type="button" role="menuitem" :class="item.class" :disabled="item.disabled" :title="item.title" :aria-label="item.ariaLabel" :aria-pressed="item.pressed" @click="run(item)"><span v-if="item.shortLabel" class="layout-launch-mark" aria-hidden="true"><span>{{ item.shortLabel }}</span><span class="layout-launch-arrow">{{ item.arrow }}</span></span><template v-else>{{ item.text }}</template></button>
       </div>
     </template>
     <template v-else>
       <span class="plus-mark" aria-hidden="true"></span>
-      <button v-for="item in items" :key="item.key" type="button" :class="item.class" :disabled="item.disabled" :title="item.title" :aria-pressed="item.pressed" @click="run(item)">{{ item.text }}</button>
+      <button v-for="item in items" :key="item.key" type="button" :class="item.class" :disabled="item.disabled" :title="item.title" :aria-label="item.ariaLabel" :aria-pressed="item.pressed" @click="run(item)"><span v-if="item.shortLabel" class="layout-launch-mark" aria-hidden="true"><span>{{ item.shortLabel }}</span><span class="layout-launch-arrow">{{ item.arrow }}</span></span><template v-else>{{ item.text }}</template></button>
     </template>
   </nav>
 </template>

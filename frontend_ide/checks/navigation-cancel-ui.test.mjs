@@ -20,7 +20,7 @@ function fixture(){
  const requests=[],timers=new Map(),unmount=[];let serial=0;
  const api=vm.runInNewContext(source+`;request=new AbortController();({navigate,cancelNavigation,refresh,toggleAutopilot,evaluating,operationLabel,canStop,activeRun,pendingCancel,stopping,reconciling,submitting,job,result,goal,error,availability,visible,panel,autopilot,autopilotStatus,codePanel,failureDialog,busy,routing})`,{
   ref,computed,createNavigationPopupSizer,createNavigationMessage,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('stopped');},
-  inject:()=>null,watch(){},onMounted(){},onBeforeUnmount:fn=>unmount.push(fn),nextTick:async()=>{},defineProps:()=>({instance:'navi-1',project:{path:'/project'},startedAt:1}),defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'保存目標',AbortController,AbortSignal,
+  inject:()=>null,watch(){},onMounted(){},onBeforeUnmount:fn=>unmount.push(fn),nextTick:async()=>{},defineExpose(){},defineProps:()=>({instance:'navi-1',project:{path:'/project'},startedAt:1}),defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'保存目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),clearInterval(){},
   fetch:(url,options={})=>new Promise((resolve,reject)=>requests.push({url,...options,data:options.body?JSON.parse(options.body):null,resolve,reject})),
  });

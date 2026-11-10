@@ -15,10 +15,10 @@ import {createAppLauncher,アプリタスク,タスク一覧} from '../起動/�
 import {createServer} from '../diag_main.mjs';
 import draftBridge from '../../frontend_ide/デスクトップ/下書き共有.cjs';
 
-async function fixture(t){
+async function fixture(t,{getLaunchDisplay}={}){
  const root=await mkdtemp(join(tmpdir(),'diag-app-test-')),project=join(root,'日本語 空白 project');await mkdir(project);
  t.after(()=>rm(root,{recursive:true,force:true,maxRetries:5,retryDelay:100}));
- const calls=[],manager=createAppLauncher({chromeInstalled:async()=>true,root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),pythonCommand:'fixture-python',tasks:async()=>[],appSlotInUse:async()=>false,linkedLiveRunning:async()=>false,spawnFn(command,args,options){
+ const calls=[],manager=createAppLauncher({getLaunchDisplay,chromeInstalled:async()=>true,root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),pythonCommand:'fixture-python',tasks:async()=>[],appSlotInUse:async()=>false,linkedLiveRunning:async()=>false,spawnFn(command,args,options){
   const child=new EventEmitter();child.unref=()=>{child.unreferenced=true;};calls.push({command,args,options,child});queueMicrotask(()=>child.emit('spawn'));return child;
  }});
  return {root,project:await realpath(project),manager,calls};
@@ -194,4 +194,23 @@ test('CPU launches without Core/Tools and has a fixed first-party icon',async t=
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
  await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project]);assert.equal(f.calls[0].options.shell,false);
  const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.equal(ids.indexOf('slack')+1,ids.indexOf('cpu'));
+});
+
+test('CPUだけにDiagの実画面を渡し、既存の環境指定を持ち越さない',async t=>{
+ const area={x:-1920,y:40,width:1920,height:1040};let reads=0;
+ const f=await fixture(t,{getLaunchDisplay:async()=>{reads++;return area;}});
+ const key='AIDIY_DEVELOPMENT_DISPLAY_AREA',old=process.env[key];process.env[key]='stale';
+ try{
+  await f.manager.launch('cpu',f.project);assert.equal(reads,1);assert.deepEqual(JSON.parse(f.calls.at(-1).options.env[key]),area);
+  await f.manager.launch('ide',f.project);assert.equal(reads,1);assert.equal(f.calls.at(-1).options.env[key],undefined);
+  const browser=await fixture(t);await browser.manager.launch('cpu',browser.project);assert.equal(browser.calls.at(-1).options.env[key],undefined);
+ }finally{if(old===undefined)delete process.env[key];else process.env[key]=old;}
+});
+
+test('Diagの画面読取失敗はCPU起動を止め、再試行できる',async t=>{
+ let fail=true;const f=await fixture(t,{getLaunchDisplay:async()=>{if(fail)throw Error('private');return{x:0,y:0,width:1920,height:1040};}});
+ await assert.rejects(f.manager.launch('cpu',f.project),{status:503});assert.equal(f.calls.length,0);
+ fail=false;await f.manager.launch('cpu',f.project);assert.equal(f.calls.length,1);
+ const invalid=await fixture(t,{getLaunchDisplay:async()=>({x:0,y:0,width:0,height:1040})});
+ await assert.rejects(invalid.manager.launch('cpu',invalid.project),{status:503});assert.equal(invalid.calls.length,0);
 });

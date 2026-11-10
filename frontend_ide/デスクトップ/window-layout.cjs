@@ -16,9 +16,9 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='ide')return available;
  if(kind==='cpu'){
   const width=Math.min(240,available.width),height=Math.min(160,available.height);
-  // 右下にあるミニ表示の想定高さ270 DIPと、窓間の8 DIPを空ける。
+  // Diagミニの固定高さ190 DIPと窓間の8 DIPを空け、右端を揃える。
   const x=available.x+available.width-width;
-  const y=Math.max(available.y,available.y+available.height-height-270-8);
+  const y=Math.max(available.y,available.y+available.height-height-190-8);
   return{x,y,width,height};
  }
  if(kind==='navi'){

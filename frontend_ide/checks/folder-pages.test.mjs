@@ -317,10 +317,10 @@ test('部品境界/配置: プロジェクト右に3D/2D、右端にConsole/Code
   const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
   assert.ok(app.indexOf('class="ide-project-name"') < app.indexOf('class="ide-view-modes"'));
   assert.ok(app.indexOf('class="ide-view-modes"') < app.indexOf('class="ide-toolbar-right"'));
-  assert.match(app, /class="ide-toolbar-right">\s*<LaunchMenu/);
+  assert.match(app, /class="ide-toolbar-right"[^>]*>\s*<LaunchMenu/);
   // 起動項目は Console、Navi の順（別窓・パネル・VR の3か所とも）。項目名に「＋」は付けず、Navi も起動中は全ボタンを無効にして「起動中…」を出す。
   for (const name of ['desktopLaunchItems', 'panelLaunchItems']) {
-    const block = app.match(new RegExp(String.raw`const ${name}=computed\(\(\)=>\[[\s\S]*?\n\]\);`))?.[0] ?? ''; assert.ok(block, name);
+    const block = app.match(new RegExp(String.raw`const ${name}=computed\(\(\)=>\[[\s\S]*?\n\](?:\.map\([^\n]+\))?\);`))?.[0] ?? ''; assert.ok(block, name);
     assert.ok(block.indexOf("'Console'") >= 0 && block.indexOf("'Console'") < block.indexOf("'Navi'"), 'Console が Navi より前');
     assert.match(block, /class:'navigation-launch',text:launchText\('navigation','Navi'\),disabled:!!launching\.value/);
     assert.doesNotMatch(block, /＋/);

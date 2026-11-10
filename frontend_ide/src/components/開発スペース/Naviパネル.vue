@@ -141,7 +141,9 @@ async function open(){
  visible.value=true;request=new AbortController();void refresh();await nextTick();
  if(!props.standalone){try{await pin();}finally{openingWindow.value=false;emit('opened');}}
 }
-onMounted(open);
+let layoutOpening;
+onMounted(()=>{layoutOpening=open();});
+defineExpose({layoutReady:()=>layoutOpening,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:''})});
 async function pin(){
  await nextTick();
  windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:()=>h('button',{type:'button',class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});

@@ -199,3 +199,20 @@ test('IDE所有起動では終了までIPCの監視を維持し、通常終了�
   await running;
   assert.equal(owner.listenerCount('disconnect'), 0);
 });
+test('IDE layout IPC relays only owned ready allowlisted geometry and removes listeners on exit', async () => {
+  const f = fixture(), owner = Object.assign(new EventEmitter(), { connected: true });
+  const replies = []; owner.send = message => replies.push(message);
+  const running = runAvatar({ ...f.options, alone: true, project: process.cwd(), allocatePort: async () => 19876, owner });
+  await flush();
+  const desktop = f.calls[0].child, requests = [];
+  desktop.send = message => requests.push(message);
+  owner.emit('message', { avatarLayout: { id: 1, action: 'execute', command: 'bad' } });
+  owner.emit('message', { avatarLayout: { id: 2, action: 'restore', snapshot: { windows: [{ role: 'core', bounds: {} }] } } });
+  assert.equal(requests.length, 0);
+  owner.emit('message', { avatarLayout: { id: 3, action: 'capture', token: 'secret' } });
+  assert.deepEqual(requests[0], { avatarLayout: { id: 3, action: 'capture' } });
+  desktop.emit('message', { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], token: 'secret' }, session: 'secret' } });
+  assert.deepEqual(replies[0], { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [] } } });
+  desktop.emit('exit', 0); await running;
+  assert.equal(owner.listenerCount('message'), 0);
+});

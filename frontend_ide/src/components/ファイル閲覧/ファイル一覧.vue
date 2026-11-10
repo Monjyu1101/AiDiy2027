@@ -432,7 +432,14 @@ watch(()=>props.filter,clearSearch);
 watch(mode,clearSearch);
 watch([mode,since,until,matches,aiResult],emitMarks,{immediate:true});
 onBeforeUnmount(()=>{treeDrag.dispose();fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
-defineExpose({reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
+function captureLayout(){return{explorerName:detached.value?panel.value?.ownerDocument.defaultView?.name:'',routesName:routeDetached.value?routeElement.value?.ownerDocument.defaultView?.name:''};}
+async function restoreLayout(saved){
+  const panels=[];
+  if(saved.explorerName){emit('update:open',true);await nextTick();if(!await pinExplorer())throw Error(pinError.value||'エクスプローラーを復元できません。');panels.push({previousName:saved.explorerName,name:captureLayout().explorerName});}
+  if(saved.routesName){routeClosed.value=false;await nextTick();if(!await pinRoutes())throw Error(pinError.value||'軌跡バーを復元できません。');panels.push({previousName:saved.routesName,name:captureLayout().routesName});}
+  return panels;
+}
+defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
 </script>
 <template>
   <div class="explorer-component" data-component="FileExplorer">

@@ -15,6 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
+const { sanitizeSnapshot } = require('./electron/IDE窓配置.cjs');
 export const PORT_AVATAR = 8092;
 const RENDERER_URL = `http://127.0.0.1:${PORT_AVATAR}`;
 
@@ -143,6 +144,7 @@ export async function runAvatar({
   const url = `http://127.0.0.1:${port}`;
   build();
   let renderer, desktop, stopping, ending = false, timer;
+  let layoutRelay;
   const shutdown = () => {
     ending = true;
     clearTimeout(timer);
@@ -160,6 +162,18 @@ export async function runAvatar({
     desktop = spawnOwned(launch, electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     const code = await new Promise((done, reject) => {
       let primary = false, shown = false, existing = false;
+      // 所有IPCだけを中継し、汎用コマンドや既存の単独窓へは転送しない。
+      if (owner && alone) {
+        layoutRelay = message => {
+          const request = message?.avatarLayout;
+          if (ending || existing || !shown || !desktop.connected || !Number.isSafeInteger(request?.id)) return;
+          if (request.action !== 'capture' && request.action !== 'restore') return;
+          const snapshot = request.action === 'restore' ? sanitizeSnapshot(request.snapshot) : null;
+          if (request.action === 'restore' && !snapshot) return;
+          desktop.send({ avatarLayout: { id: request.id, action: request.action, ...(snapshot ? { snapshot } : {}) } }, () => {});
+        };
+        owner.on('message', layoutRelay);
+      }
       const fail = error => { if (!ending) reject(error); };
       const prepareRenderer = async () => {
         if (await isOpen(port)) throw Error(`${port}が別のプロセスに使用されています。使用中のサーバーを停止してからAvatarを起動してください。`);
@@ -174,6 +188,11 @@ export async function runAvatar({
       timer = setTimeout(() => fail(Error('Avatarの画面表示がタイムアウトしました。')), timeout);
       desktop.on('message', message => {
         if (ending) return;
+        const result = message?.avatarLayoutResult;
+        if (owner?.connected && alone && shown && !existing && Number.isSafeInteger(result?.id)) {
+          owner.send({ avatarLayoutResult: { id: result.id, ok: result.ok === true, ...(result.snapshot ? { snapshot: sanitizeSnapshot(result.snapshot) } : {}) } }, () => {});
+          return;
+        }
         if (message?.avatarExisting && !existing) {
           existing = true;
           clearTimeout(timer);
@@ -204,6 +223,7 @@ export async function runAvatar({
   } finally {
     for (const signal of signals) process.removeListener(signal, interrupted);
     owner?.removeListener('disconnect', interrupted);
+    if (layoutRelay) owner?.removeListener('message', layoutRelay);
   }
 }
 

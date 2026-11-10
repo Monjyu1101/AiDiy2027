@@ -122,6 +122,49 @@ const windowMinSizes = new Map<number, { minWidth: number; minHeight: number }>(
 const 表示処理 = new WeakMap<BrowserWindow, Promise<boolean>>()
 const 表示希望 = new WeakMap<BrowserWindow, boolean>()
 
+// IDEから起動されたプロセスの専用IPC。rendererの公開APIには追加しない。
+const { createLayoutController, sanitizeSnapshot: sanitizeIdeLayout } = require(path.join(__dirname, '../electron/IDE窓配置.cjs'))
+const ideLayout = createLayoutController({
+  windows: () => BrowserWindow.getAllWindows(),
+  roleOf: (window: BrowserWindow) => windowRoles.get(window.id),
+  screen,
+  initialBoundsOf: (window: BrowserWindow) => {
+    const role = windowRoles.get(window.id)
+    const bounds = role === 'core' ? CORE_BOUNDS : PANEL_BOUNDS[role as PanelKey]
+    if (!bounds) return window.getBounds()
+    const position = role === 'core'
+      ? getBottomRightPosition(bounds.width, bounds.height, { right: 24, bottom: 0 })
+      : getPanelInitialPosition(role as PanelKey, bounds.width, bounds.height)
+    return { ...position, width: bounds.width, height: bounds.height }
+  },
+})
+if (avatarAlone && process.env.AIDIY_AVATAR_IDE_OWNED === '1' && process.env.AIDIY_AVATAR_MANAGED === '1' && process.connected) {
+  process.on('message', async (message: any) => {
+    const request = message?.avatarLayout
+    if (!Number.isSafeInteger(request?.id) || !app.isReady() || !process.connected) return
+    if (request.action === 'capture') process.send?.({ avatarLayoutResult: { id: request.id, ok: true, snapshot: ideLayout.capture() } })
+    else if (request.action === 'restore') {
+      const snapshot = sanitizeIdeLayout(request.snapshot)
+      let ok = !!snapshot
+      try {
+        if (snapshot) {
+          // 主窓は起動済み。保存した表示パネルだけを作り、読込後に配置する。
+          for (const item of snapshot.windows) {
+            if (item.role !== 'core') await waitForReady(createPanelWindow(item.role as PanelKey))
+          }
+          ok = ideLayout.restore(snapshot)
+          for (const item of snapshot.windows) {
+            if (item.role !== 'core') await setPanelVisibility(item.role as PanelKey, true)
+            const window = getWindowByRole(item.role)
+            if (!window || window.isDestroyed() || !window.isVisible()) ok = false
+          }
+        }
+      } catch { ok = false }
+      if (process.connected) process.send?.({ avatarLayoutResult: { id: request.id, ok } })
+    }
+  })
+}
+
 function getWorkArea() {
   return screen.getPrimaryDisplay().workArea
 }
@@ -383,6 +426,7 @@ async function ウィンドウ表示(window: BrowserWindow, background = '#000',
     await waitForReady(window)
     const allowed = () => 表示希望.get(window) === true && canShow()
     if (window.isDestroyed() || !allowed()) return false
+    ideLayout.apply(window)
     if (window.isVisible()) { window.show(); window.focus(); return true }
     return 拡大表示(BrowserWindow, window, { background, canShow: allowed })
   })()

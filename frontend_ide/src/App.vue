@@ -61,7 +61,7 @@ const error=ref(''),pending=ref(false),panelOpen=ref(false),tab=ref('code'),live
 let stopWindowMove=()=>{};
 const desktop=!!window.aidiyWindow;let timer,disposed=false,revision=0,polling=false,session='';
 const allDisplayState=ref({active:false}),allBusy=ref(false),allMessage=ref(''),spaceView=ref();
-const canEnterAll=computed(()=>desktop&&state.value.active&&viewMode.value==='3d');
+const canEnterAll=computed(()=>desktop&&state.value.active&&viewMode.value==='3d'&&!layoutBusy.value);
 const browserAvailable=computed(()=>state.value.active);
 provide('browserAvailable',browserAvailable);
 let stopAllDisplays=()=>{},allUpdate=0;
@@ -73,7 +73,7 @@ function updateAllDisplays(value){
   if(value.error)error.value=value.error;
 }
 async function toggleAllDisplays(){
-  if(allBusy.value||!desktop)return;
+  if(allBusy.value||layoutBusy.value||!desktop)return;
   const entering=!allDisplayState.value.active,space=spaceView.value,own=session;
   if(entering&&!canEnterAll.value)return;
   allBusy.value=true;allMessage.value=entering?'VR空間へ移行中…':'VRモードを終了しています…';error.value='';
@@ -106,7 +106,7 @@ async function status(){
       catch{if(!disposed&&run===revision&&session===confirmed)statusError.value='子ウィンドウの状態を確認できません。次の確認で再試行します。';}
     }
   }catch{if(!disposed&&run===revision&&session===own)statusError.value='サーバーの状態を確認できません。作業を保持して再試行します。';}
-  finally{polling=false;}
+  finally{polling=false;void refreshLayout();}
 }
 function update(data){
   if(disposed)return;
@@ -119,18 +119,55 @@ async function start(action){
   if(pending.value)return;pending.value=true;revision++;error.value='';statusError.value='';
   if(action==='disconnect')update({active:false});
   try{if(action==='disconnect'&&desktop)await window.aidiyWindow.endSession();const response=await fetch('/api/connection/'+action,{method:'POST',signal:AbortSignal.timeout(7000)});if(!response.ok)throw Error(await response.text());update(await response.json());}
-  catch(e){error.value=e.message;}finally{pending.value=false;}
+  catch(e){error.value=e.message;}finally{pending.value=false;void refreshLayout();}
 }
-const navigationWindows=ref([]);let nextNavigation=0;
+const navigationWindows=ref([]),navigationRefs=new Map();let nextNavigation=0;
 // Navi も他のアプリと同じく、起動中は全ボタンを無効にして「起動中…」を出す（窓が開いたら解除。万一に備え10秒で解除）。
 let navigationTimer;
-function navigationOpened(){clearTimeout(navigationTimer);if(launching.value==='navigation')launching.value='';}
+function navigationOpened(){clearTimeout(navigationTimer);if(launching.value==='navigation')launching.value='';void refreshLayout();}
 function openNavigation(){if(!state.value.active||launching.value)return;launching.value='navigation';clearTimeout(navigationTimer);navigationTimer=setTimeout(navigationOpened,10000);navigationWindows.value.push('navi-'+(++nextNavigation));}
 function closeNavigation(id){navigationWindows.value=navigationWindows.value.filter(value=>value!==id);navigationOpened();}
 const launching=ref('');
 // 起動メニューの項目。名前に「＋」は付けない。広いときは横並び、狭いときは「＋」から開く下向きメニュー（共通表示/起動メニュー.vue）。
 const launchText=(kind,name)=>launching.value===kind?'起動中…':name;
+// 配置はオンラインのIDE本体だけで扱う。保存中・復元中の重複操作を防ぐ。
+const layoutState=ref({count:0,saved:false}),layoutBusy=ref(false);
+const layoutAvailable=computed(()=>desktop&&state.value.active&&state.value.mode==='online'&&!!window.aidiyWindow.layout);
+let stopLayout=()=>{};
+async function refreshLayout(){
+  if(!layoutAvailable.value||disposed)return;
+  const own=session;
+  try{const value=await window.aidiyWindow.layout('state');if(!disposed&&own===session&&value?.ok)layoutState.value=value;}catch{}
+}
+async function runLayout(action){
+  if(!layoutAvailable.value||layoutBusy.value||launching.value||allBusy.value||allDisplayState.value.active)return;
+  layoutBusy.value=true;error.value='';const own=session;
+  try{const result=await window.aidiyWindow.layout(action);if(disposed||own!==session)return;if(!result?.ok)throw Error(result?.error||'配置を操作できません。');await status();}
+  catch(e){if(!disposed&&own===session)error.value=e.message;}
+  finally{layoutBusy.value=false;if(!disposed&&own===session)await refreshLayout();}
+}
+function layoutItem(action){return{key:'layout-'+action,class:'layout-launch',ariaLabel:action==='save'?'Save':'Load',shortLabel:action==='save'?'Sv':'Ld',arrow:action==='save'?'⬆︎':'⬇︎',text:layoutBusy.value?'処理中…':action==='save'?'Save':'Load',title:action==='save'?'現在のIDEとパネルの配置を保存':'保存したIDEとパネルの配置を復元',disabled:layoutBusy.value||!!launching.value||allBusy.value||action==='load'&&!layoutState.value.saved,run:()=>runLayout(action)};}
+async function layoutRequest(request){
+  if(!layoutAvailable.value)throw Error('配置はAiDiy接続利用中のIDEで操作してください。');
+  if(request.action==='capture')return{version:1,viewMode:viewMode.value,navigation:[...navigationRefs.values()].map(panel=>panel.captureLayout()).filter(item=>item.name),space:spaceView.value?.captureLayout()};
+  if(request.action!=='restore'||request.payload?.version!==1)throw Error('保存した配置の形式を確認してください。');
+  const own=session,snapshot=request.payload,panels=[];
+  viewMode.value=snapshot.viewMode==='2d'?'2d':'3d';
+  await nextTick();
+  panels.push(...await spaceView.value.restoreLayout(snapshot.space||{}));
+  if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
+  for(const saved of snapshot.navigation||[]){
+    if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
+    const id='navi-'+(++nextNavigation);navigationWindows.value.push(id);await nextTick();
+    const panel=navigationRefs.get(id);await panel.layoutReady();
+    if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
+    const current=panel.captureLayout();if(!current.name)throw Error('Naviを復元できません。');
+    panels.push({previousName:saved.name,name:current.name});
+  }
+  return{panels};
+}
 const desktopLaunchItems=computed(()=>[
+  ...(layoutAvailable.value&&layoutState.value.count>=3?[layoutItem('save')]:[]),
   {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
   {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'利用開始後に起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
@@ -138,7 +175,8 @@ const desktopLaunchItems=computed(()=>[
   ...(state.value.mode==='online'&&!liveOpen.value&&!['live','avatar'].includes(launching.value)?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')},{key:'avatar',text:launchText('avatar','Avatar'),title:'アバター音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('avatar')}]:[]),
   ...(state.value.mode==='online'?['task','team'].filter(type=>!runningApps.value.includes(type)).map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[]),
   ...(!runningApps.value.includes('cpu')?[{key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu}]:[]),
-]);
+  ...(layoutAvailable.value&&layoutState.value.count===0&&layoutState.value.saved?[layoutItem('load')]:[]),
+].map(item=>({...item,disabled:item.disabled||layoutBusy.value})));
 const panelLaunchItems=computed(()=>[
   {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
   {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブで http://127.0.0.1:8090/ を開く':'利用開始後に起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')},
@@ -160,7 +198,7 @@ async function openWindow(kind,displayId){
     }
     return result;
   }
-  catch(e){error.value=e.message;return{ok:false,error:e.message};}finally{launching.value='';}
+  catch(e){error.value=e.message;return{ok:false,error:e.message};}finally{launching.value='';void refreshLayout();}
 }
 const opening={};
 async function openPanel(kind){
@@ -228,6 +266,7 @@ onMounted(async()=>{
   if(browserAnalysis||browserDraft)return;
   stopWindowMove=installWindowMove({kind:cpuWindow?'cpu':browserPanel?'browser':viewerPath?'viewer':config.kind,host:config.host});
   if(config.kind==='ide'&&desktop&&!viewerPath&&!browserPanel&&!cpuWindow){
+    stopLayout=window.aidiyWindow.onLayoutRequest?.(layoutRequest)||(()=>{});
     stopAllDisplays=window.aidiyWindow.onAllDisplaysChanged?.(updateAllDisplays)||(()=>{});
     const version=allUpdate;
     void window.aidiyWindow.allDisplays?.('state').then(value=>{if(version===allUpdate)updateAllDisplays(value);}).catch(()=>{});
@@ -237,7 +276,7 @@ onMounted(async()=>{
   if(config.kind==='ide'){await status();if(!disposed)timer=setInterval(status,10000);}
   else if(config.kind!=='navi'&&!base[config.kind])await openPanel(config.kind);
 });
-onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++;lifetime.abort();clearInterval(timer);pinnedViewers.clear();if(window.aidiyDraftLink===draftLink)delete window.aidiyDraftLink;});
+onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=true;revision++;lifetime.abort();clearInterval(timer);pinnedViewers.clear();if(window.aidiyDraftLink===draftLink)delete window.aidiyDraftLink;});
 </script>
 <template>
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :modeless="!!draftRequest.sourceElement" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
@@ -256,14 +295,14 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
             <span class="ide-project-name" :title="state.project?.path">プロジェクト: {{ state.project?.name }}</span>
             <nav v-if="state.active" class="ide-view-modes" aria-label="ファイルの表示モード"><button :aria-pressed="viewMode==='3d'" @click="viewMode='3d'">3D</button><button :aria-pressed="viewMode==='2d'" @click="viewMode='2d'">2D</button></nav>
           </div>
-          <div class="ide-toolbar-right" @mouseenter="status" @focusin="status">
+          <div class="ide-toolbar-right" @mouseenter="status();refreshLayout()" @focusin="status();refreshLayout()">
             <LaunchMenu v-if="state.active&&desktop" label="別ウィンドウを開く" :items="desktopLaunchItems" />
             <LaunchMenu v-else-if="state.active" label="パネルを開く" :items="panelLaunchItems" />
             <nav v-if="state.active"><button :disabled="pending" @click="start('disconnect')">{{ desktop?'終了':'利用終了' }}</button></nav>
           </div>
         </div>
       </div>
-      <template v-if="allDisplayState.active"><nav v-for="toolbar in allToolbars" :key="toolbar.displayId" class="all-restore-zone" :data-display-id="toolbar.displayId" :style="allRestoreStyle(toolbar)" aria-label="この画面のVR操作" @mouseenter="status" @focusin="status">
+      <template v-if="allDisplayState.active"><nav v-for="toolbar in allToolbars" :key="toolbar.displayId" class="all-restore-zone" :data-display-id="toolbar.displayId" :style="allRestoreStyle(toolbar)" aria-label="この画面のVR操作" @mouseenter="status();refreshLayout()" @focusin="status();refreshLayout()">
         <button class="all-restore-button" :disabled="allBusy" aria-label="VRモードを終了して元の表示に戻す" title="VRモードを終了" @click="toggleAllDisplays"><span class="all-restore-icon" aria-hidden="true"></span></button>
         <div class="all-launchers">
           <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'Console' }}</button>
@@ -286,7 +325,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
         </template>
       </TerminalWelcome>
       <template v-else>
-        <NavigationPanel v-for="id in navigationWindows" :key="id" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
+        <NavigationPanel v-for="id in navigationWindows" :key="id" :ref="value=>value?navigationRefs.set(id,value):navigationRefs.delete(id)" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
         <CpuPanel v-if="cpuOpen" floating @close="cpuOpen=false" />
         <SpaceView ref="spaceView" :key="`${state.mode}:${state.startedAt}:${state.project?.path||''}`" :started-at="state.startedAt" :view-mode="viewMode" :all-displays="allDisplayState.active" />
         <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='console'" @click="openPanel('console')">Console</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>

@@ -8,7 +8,30 @@ import {constants} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
+import {randomUUID} from 'node:crypto';
 import {recordDesktopFailure} from './desktop-log.mjs';
+import launchDisplay from '../../frontend_ide/デスクトップ/起動画面.cjs';
+// CPU起動時だけ既存の親子IPCでDiagの画面を読む。renderer/APIに座標入力は追加しない。
+export function readDesktopDisplay(child,timeout=1500){
+  if(!child)return Promise.resolve(undefined); // Web版にはネイティブDiag窓がない。
+  return new Promise((resolve,reject)=>{
+    const requestId=randomUUID();let finished=false;
+    const finish=(error,area)=>{
+      if(finished)return;finished=true;clearTimeout(timer);
+      child.off('message',message);child.off('disconnect',closed);child.off('exit',closed);child.off('error',closed);
+      error?reject(Error('Diagの表示画面を確認できませんでした。もう一度起動してください。')):resolve(area);
+    };
+    const closed=()=>finish(true);
+    const message=value=>{
+      if(value?.type!=='diag-launch-display'||value.requestId!==requestId)return;
+      const area=launchDisplay.起動画面を読む(value.workArea);finish(!area,area);
+    };
+    const timer=setTimeout(closed,timeout);
+    if(!child.connected||child.diagClosing){closed();return;}
+    child.on('message',message);child.once('disconnect',closed);child.once('exit',closed);child.once('error',closed);
+    try{child.send({type:'diag-launch-display',requestId},error=>{if(error)closed();});}catch{closed();}
+  });
+}
 export function browserMode(options, env=process.env, platform=process.platform) {
   return options.browser || options.noOpen || env.CODESPACES==='true' || env.CI==='true' || (platform==='linux' && !env.DISPLAY && !env.WAYLAND_DISPLAY);
 }

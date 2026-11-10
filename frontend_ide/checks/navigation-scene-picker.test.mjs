@@ -17,7 +17,7 @@ function fixture(t){
  const scope=effectScope(),requests=[],props=reactive({instance:'navi-1',project:{path:'/fixture'},startedAt:1});let randoms=0;
  const api=scope.run(()=>vm.runInNewContext(source+`;({navigate,chooseScene,runWithScene,sceneAction,cruiseKind,cruiseFailed,goal,result,availability,submitting,job,autopilot,visible,detached,sceneRequest})`,{
   ref,computed,watch,createNavigationPopupSizer,createNavigationMessage,NAVIGATION_SCENES,NAVIGATION_SCENE_LABELS,pickNavigationScene:()=>{randoms++;return 'ride';},
-  inject:()=>null,onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>props,defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},
+  inject:()=>null,onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineExpose(){},defineProps:()=>props,defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},
   fetch:(url,options)=>{requests.push({url,...options});return new Promise(()=>{});},
  }));
  t.after(()=>scope.stop());api.visible.value=true;api.availability.value={available:true};api.result.value=saved;api.goal.value='編集中の目標';

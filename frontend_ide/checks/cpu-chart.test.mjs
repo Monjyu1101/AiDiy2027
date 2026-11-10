@@ -7,7 +7,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chartSeries,placeLabels,chartRight,labelRight,labelMaxWidth,labelGap} from '../src/components/システム監視/使用率グラフ.js';
 import {createRequire} from 'node:module';
-const {windowBounds,windowMinimumSize}=createRequire(import.meta.url)('../デスクトップ/window-layout.cjs');
+import {ミニ寸法} from '../../backend_diag/起動/ミニ表示.cjs';
+import {初期右下位置} from '../../backend_diag/起動/表示切替位置.cjs';
+const {windowBounds,windowMinimumSize,allWindowBounds}=createRequire(import.meta.url)('../デスクトップ/window-layout.cjs');
 test('unknown samples create gaps instead of zero load',()=>{
  const [cpu,gpu,ram]=chartSeries([{cpu:40,gpu:null,ram:55},{cpu:null,gpu:null,ram:56},{cpu:60,gpu:null,ram:57}]);
  assert.equal(cpu.line.match(/M/g).length,2);assert.equal(gpu.value,null);assert.equal(gpu.line,'');assert.equal(ram.value,57);assert.match(cpu.area,/Z/);
@@ -30,12 +32,20 @@ test('CPU initial dimensions are 240 by 160 with readable minimum size',()=>{
  assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:240,minHeight:150});
 });
 
-test('CPU uses a fixed offset from the work area bottom right and fits small displays',()=>{
- for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040}]){
-  const b=windowBounds('cpu',area);
-  assert.equal(b.x+b.width,area.x+area.width-8);
-  assert.equal(area.y+area.height-(b.y+b.height),8+270+8);
+test('CPU aligns with the actual fixed Diag mini bounds with an 8 DIP gap',()=>{
+ for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040},{x:-1080,y:-1920,width:1080,height:1880},{x:80,y:40,width:800,height:374}]){
+  const mini=初期右下位置(area,ミニ寸法,8);
+  for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:area.x+100,y:area.y+80,width:640,height:480}),allWindowBounds('cpu',area)]){
+   assert.equal(b.width,240);assert.equal(b.height,160);
+   assert.equal(b.x+b.width,area.x+area.width-8);
+   assert.equal(b.x+b.width,mini.x+mini.width);
+   assert.equal(mini.y-(b.y+b.height),8);
+   assert.ok(b.y>=area.y+8);
+  }
  }
+});
+
+test('CPU stays within small displays when there is not enough room above Diag mini',()=>{
  for(const area of [{x:0,y:0,width:280,height:180},{x:-300,y:-200,width:180,height:120}]){
   const b=windowBounds('cpu',area);assert.equal(b.y,area.y+8);
   assert.ok(b.x>=area.x&&b.x+b.width<=area.x+area.width);

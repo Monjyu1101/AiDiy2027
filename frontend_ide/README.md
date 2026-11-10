@@ -377,3 +377,16 @@ Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/`
 `aidiy_cpu`、`node frontend_ide/aidiy_cpu/launch.mjs`、Diagの「CPU」から単独起動できます。Core / Toolsの起動は不要です。`aidiy_cpu --browser` はWeb表示、`--no-open` はサーバーだけを起動します。setup / cleanupは他のIDE群と同じ入口に含まれ、全体 `_start.py` のCPU選択は既定OFFです。
 
 IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。Windowsでは標準のGPU Engineカウンターを優先し、対応するIntel/AMDの内蔵GPUも計測します。プロセス別の同一エンジン使用率を合計し、全GPUのエンジン最大値を表示します。WDDM 2.x対応ドライバーが必要です。取得できない場合とWindows以外ではNVIDIAの `nvidia-smi` を使い、複数台は最大値を表示します。未対応・未導入・取得失敗は0%ではなく「GPU 未取得」です。
+
+## IDEの配置をSave / Loadする（Electron・AiDiy接続利用）
+
+AiDiy接続利用中、保存された配置があり、IDE以外のパネルをまだ開いていない時だけ、＋メニューの右端に **Ld ↓（Load）** が表示されます。IDE以外のパネルを3つ以上開くと、左端へ **Sv ↑（Save）** が表示されます。1〜2パネルの時はどちらも表示しません。SaveはIDE自身と、そのIDEから開いているパネルの種類・表示位置・大きさをプロジェクト別に保存します。保存された配置がない時はLoadを表示しません。
+
+Loadはパネルをすべて閉じた状態で使用します。Console・Browser・Navi・Code・LiveまたはAvatar・Task・Team・CPU、別窓にしたExplorer・軌跡・Viewerを再度開き、保存した配置へ戻します。復元時の画面領域からはみ出す窓は、IDE自身も含めて通常の初期位置で表示します。外したモニターの座標を画面端へ押し込むことはしません。
+
+- 保存先は選択プロジェクトの `_AIDIY/aidiy_ide/window-layout.json` です。専用フォルダの生成データとしてGit対象から除外します。
+- 会話・認証情報・Consoleの実行コマンド・Naviの自動航行は保存・再実行しません。Browserは通常の初期ページで開きます。Taskの編集中ダイアログ、解析・設定等の一時ダイアログは対象外です。
+- 別のIDEや単独起動中の窓は移動しません。Task・Team・CPUの起動枠が使用中等で一部を開けない場合は、復元できた窓を残して理由を表示します。
+- VR中は保存・復元しません。VRを終了してから操作してください。Web版はOSウィンドウ位置を扱えないため、この操作を表示しません。
+
+確認: `node --test checks/layout-save.test.cjs checks/layout-renderer.test.mjs checks/task-windows.test.mjs checks/avatar-launch.test.cjs`。画面外判定、複数画面、保存先分離、不正データ、連打、利用終了時の中断、Task主画面の復元を確認します。実際のOSによるウィンドウ位置・DPI・別画面への移動は実Electronでの確認も必要です。

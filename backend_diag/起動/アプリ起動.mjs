@@ -15,6 +15,7 @@ import {catalog as programCatalog,resolveProgram} from '../診断/probes.mjs';
 import {createPortStatusChecker} from './ポート状態.mjs';
 import {createWebBrowserOpener} from './Webブラウザ.mjs';
 import {createTaskTeamStatus} from './TaskTeam接続.mjs';
+import launchDisplay from '../../frontend_ide/デスクトップ/起動画面.cjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
@@ -38,7 +39,7 @@ export function アプリタスク(id,{command=''}){
 export async function isChromeInstalled({resolveFn=resolveProgram}={}){
  try{return Boolean(await resolveFn((await programCatalog()).find(item=>item.id==='chrome')));}catch{return false;}
 }
-export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,appSlotInUse=起動枠の使用中,linkedLiveRunning=draftBridge.linkedLiveRunning,node=process.execPath,pythonCommand,taskTeamStatus,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn})}={}){
+export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,appSlotInUse=起動枠の使用中,linkedLiveRunning=draftBridge.linkedLiveRunning,node=process.execPath,pythonCommand,taskTeamStatus,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),getLaunchDisplay=async()=>undefined}={}){
  const pending=new Set();
  const slackEntry=join(root,'frontend_channels','slack','panel','launch.mjs');
  async function slackAvailability(){try{if((await stat(slackEntry)).isFile())return {利用可能:true,無効理由:'',無効表示:''};}catch{}return {利用可能:false,無効理由:'Slack の起動ファイルが見つかりません。セットアップを確認してください。',無効表示:'未導入'};}
@@ -106,6 +107,16 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
    else args=[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',path,...(app.単一起動?[]:['--new-window'])];
    const env={...process.env,PYTHONIOENCODING:'utf-8',PYTHONUNBUFFERED:'1'};
    for(const key of Object.keys(env))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH|AIDIY_(?:DIAG_LAUNCHER_CHILD|LAUNCHER_CHILD|DIAG_SETTINGS|DIAG_RUN))$/i.test(key))delete env[key];
+   // 前の起動から画面指定を引き継がず、今回のCPUだけにDiagの実画面を渡す。
+   for(const key of Object.keys(env))if(/^AIDIY_DEVELOPMENT_DISPLAY_AREA$/i.test(key))delete env[key];
+   if(id==='cpu'){
+    let display;try{display=await getLaunchDisplay();}catch{throw fail('Diagの表示画面を確認できませんでした。もう一度起動してください。',503);}
+    if(display!==undefined){
+     const area=launchDisplay.起動画面を読む(display);
+     if(!area)throw fail('Diagの表示画面を確認できませんでした。もう一度起動してください。',503);
+     env.AIDIY_DEVELOPMENT_DISPLAY_AREA=JSON.stringify(area);
+    }
+   }
    const logs=join(root,'temp','aidiy_diag','アプリ起動');await mkdir(logs,{recursive:true});
    const logPath=join(logs,`${id}-${randomUUID()}.log`),output=await open(logPath,'a',0o600);
    let child;

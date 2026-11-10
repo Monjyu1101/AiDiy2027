@@ -31,7 +31,7 @@ test('開始ボタンは大きな操作領域・狭幅の縦並び・低い画�
  assert.match(css,/\.ide-start-actions button:focus-visible\{outline:2px/);
 });
 function menuFixture(mode='offline',active=true,connected=false){
- const context={cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
+ const context={ref:value=>({value}),desktop:false,window:{},cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
  vm.runInNewContext(app.slice(app.indexOf('const browserAvailable='),app.indexOf("provide('browserAvailable'"))+app.slice(app.indexOf('const launchText='),app.indexOf('async function openWindow'))+';globalThis.desktopItems=desktopLaunchItems;globalThis.webItems=panelLaunchItems;globalThis.available=browserAvailable;',context);return context;
 }
 test('オフラインメニューはCPU・Console・Browser・CodeだけでBrowserは接続なしでも有効',()=>{
@@ -48,10 +48,10 @@ test('オフラインメニューはCPU・Console・Browser・CodeだけでBrows
  assert.match(app,/<button v-if="state.mode==='online'" class="navigation-launch"/);
 });
 function startFixture(desktop=false){
- let resolve;const calls=[],updates=[];
- const context={pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>updates.push(state),fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
+ let resolve;const calls=[],updates=[];let layoutRefreshes=0;
+ const context={pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,refreshLayout:()=>{layoutRefreshes++;},window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>updates.push(state),fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
  vm.runInNewContext(app.slice(app.indexOf('async function start(action)'),app.indexOf('const navigationWindows='))+';globalThis.run=start;',context);
- return{context,calls,updates,respond:response=>resolve(response)};
+ return{context,calls,updates,get layoutRefreshes(){return layoutRefreshes;},respond:response=>resolve(response)};
 }
 test('開始連打は1回だけ送り、応答待ちは両ボタン無効、失敗後に再試行できる',async()=>{
  const f=startFixture();const pending=f.context.run('connect');
@@ -67,4 +67,11 @@ test('終了時は子窓を終了して初期画面へ戻し、接続を再開�
  f.respond({ok:true,json:async()=>({active:false})});await ending;
  const restarting=f.context.run('connect');f.respond({ok:true,json:async()=>({active:true,mode:'online'})});await restarting;
  assert.equal(f.updates.at(-1).mode,'online');assert.equal(f.context.pending.value,false);
+});
+
+test('接続開始応答の直後に配置状態を取得し、Load表示を定期確認まで待たせない',async()=>{
+ const f=startFixture(true);const starting=f.context.run('connect');
+ assert.equal(f.layoutRefreshes,0);
+ f.respond({ok:true,json:async()=>({active:true,mode:'online'})});await starting;
+ assert.equal(f.context.pending.value,false);assert.equal(f.layoutRefreshes,1);
 });

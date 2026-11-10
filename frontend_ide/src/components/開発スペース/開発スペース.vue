@@ -49,7 +49,31 @@ async function prepareAll(){
     if(disposed)throw Error('開発スペースが閉じられました。');
   }finally{preparingAll=false;if(!disposed)engine?.setAutoSpin(resume);}
 }
-defineExpose({prepareAll});
+function captureLayout(){
+  return{explorer:explorer.value?.captureLayout(),viewers:viewerSessions.value.filter(entry=>entry.detached).map(entry=>({name:viewerRefs.get(entry.file.path)?.captureLayout().name,file:{path:entry.file.path,name:entry.file.name,type:'file'}})).filter(entry=>entry.name)};
+}
+async function restoreLayout(saved){
+  // 通常アプリだけの配置は、ファイル走査の終了を待たず復元を完了する。
+  if(!saved.explorer?.explorerName&&!saved.explorer?.routesName&&!saved.viewers?.length)return[];
+  // 走査が完了するまで待ち、正しいプロジェクトのファイルAPIを使う。
+  const deadline=Date.now()+15000;
+  while(!scan.value?.root&&!disposed&&Date.now()<deadline)await new Promise(resolve=>setTimeout(resolve,50));
+  if(disposed||!scan.value?.root)throw Error('ファイル一覧の準備が完了していません。');
+  const panels=await explorer.value.restoreLayout(saved.explorer||{});
+  for(const item of saved.viewers||[]){
+    if(disposed)throw Error('開発スペースが閉じられました。');
+    if(!item.name||typeof item.file?.path!=='string')continue;
+    let entry=viewerSessions.value.find(entry=>entry.file.path===item.file.path);
+    if(entry)entry.pinning=true;
+    else{entry={file:{path:item.file.path,name:item.file.name||item.file.path.split('/').pop(),type:'file'},detached:false,pinning:true};viewerSessions.value.push(entry);}
+    await nextTick();
+    const viewer=viewerRefs.get(entry.file.path);
+    if(!await viewer?.pin())throw Error('ビューアを復元できません。');
+    panels.push({previousName:item.name,name:viewer.captureLayout().name});
+  }
+  return panels;
+}
+defineExpose({prepareAll,captureLayout,restoreLayout});
 watch(selected,file=>{
   viewerSessions.value=viewerSessions.value.filter(entry=>entry.detached||entry.pinning||entry.file.path===file?.path);
   if(!file)return;

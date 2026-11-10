@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url';
 import { catalog, scan, probe, cancelProbes } from './診断/probes.mjs';
 import {getToolsStatus} from './診断/tools_status.mjs';
 import {createModelTrials,PREDICTION_ROW_TIMEOUT_MS} from './モデル試行/trials.mjs';
-import {browserMode,desktopBinary,openDesktop,closeDesktop} from './起動/desktop.mjs';
+import {browserMode,desktopBinary,openDesktop,closeDesktop,readDesktopDisplay} from './起動/desktop.mjs';
 import {createPublicModelCache} from './モデル情報/public_models.mjs';
 import {getKeyStatus,testKey,KEY_PROVIDERS,INTEGRATION_PROBES,cancelKeyProbes} from './モデル情報/key_status.mjs';
 import {verify as verifyUi} from './ui/verify.mjs';
@@ -85,8 +85,8 @@ export function parseArgs(args) {
   if (options.headless && args.some(arg=>arg!=='--headless' && arg!=='--help' && arg!=='-h')) throw new Error('--headless は単独で指定してください。');
   return options;
 }
-export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
-  appLauncher ??= createAppLauncher({portStatusFn,webBrowserOpenFn});
+export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,getLaunchDisplay,cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
+  appLauncher ??= createAppLauncher({portStatusFn,webBrowserOpenFn,getLaunchDisplay});
   let results = [], busy = false, writing = false, scanStarted = null, scanFinished = null, modelResults = {}, modelWriting = false, progress = [], integrationResults = {}, integrationWriting = false;
   const individualProbes = new Set(), keyBusy = new Set(), keyProgress = new Map();
   const hasBody = req => req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0');
@@ -415,12 +415,13 @@ export async function main(args=process.argv.slice(2)) {
   catch {throw startupError('CATALOG');}
   const publicCache=createPublicModelCache();
   const startManager=createStartManager();
-  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,previousResults:createPreviousResults()});
+  let desktop;
+  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,previousResults:createPreviousResults(),getLaunchDisplay:()=>readDesktopDisplay(desktop)});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(options.port,'127.0.0.1',resolve);});
   // 公開一覧だけを起動時に取得。キー設定や他 provider の API は自動で呼ばない。
   void publicCache.refresh();
   const url=publicUrl(server.address().port,options.prefix)+'#token='+token;
-  let stopWatching=()=>{}, desktop, closed=false, ready=false, existing=false;
+  let stopWatching=()=>{}, closed=false, ready=false, existing=false;
   const onRelease=message=>{if(message?.type==='diag-launch-release' && ready)process.off('disconnect',close);};
   const close=()=>{
     if(closed)return;closed=true;
