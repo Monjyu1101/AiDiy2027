@@ -33,7 +33,7 @@ onMounted(()=>{document.addEventListener('visibilitychange',visibility);void pol
 onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document.removeEventListener('visibilitychange',visibility);});
 </script>
 <template>
- <section class="cpu-panel" :class="{'cpu-floating':floating}" aria-label="CPU GPU RAM 使用率" tabindex="0">
+ <section class="cpu-panel" :class="{'cpu-floating':floating}" aria-label="CPU GPU RAM 使用率" tabindex="0" data-aidiy-window-move-surface>
   <header class="cpu-title" :class="{desktop}">
    <strong>{{ standalone?'AiDiy CPU':'AiDiy IDE / CPU' }}</strong>
    <WindowActions v-if="desktop" />
@@ -54,12 +54,12 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
     </g>
    </svg>
   </div>
-  <footer class="cpu-caption"><span>{{ error||'ホスト全体 · 約1秒更新' }}</span><span v-if="series[1].value===null" title="NVIDIA nvidia-smi未対応・未導入、または取得に失敗しています">GPU 未取得</span><span v-else>GPU 最大負荷</span></footer>
+  <footer class="cpu-caption"><span>{{ error||'ホスト全体 · 約1秒更新' }}</span><span v-if="series[1].value===null" title="Windows GPU Engineカウンター／NVIDIA nvidia-smiが未対応・未導入、または取得に失敗しています">GPU 未取得</span><span v-else>GPU 最大負荷</span></footer>
  </section>
 </template>
 <style>
 .cpu-panel{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;background:#000;color:#d9e5ec;overflow:hidden}
-.cpu-floating{position:absolute;right:max(18px,calc(25% - 120px));bottom:min(152px,max(18px,calc(100% - 178px)));width:min(240px,calc(100% - 36px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 36px));min-height:150px;max-width:calc(100% - 36px);max-height:calc(100% - 36px)}
+.cpu-floating{position:absolute;right:18px;bottom:min(378px,max(18px,calc(100% - 178px)));width:min(240px,calc(100% - 36px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 36px));min-height:150px;max-width:calc(100% - 36px);max-height:calc(100% - 36px)}
 /* CPU専用の小さいタイトル。接続表示・接続バー・その監視処理は持たない。 */
 .cpu-title{position:absolute;left:0;right:0;top:0;z-index:1;opacity:0;pointer-events:none;height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px;background:#30343a;color:white}
 .cpu-panel:hover>.cpu-title,.cpu-panel:focus-within>.cpu-title{opacity:1;pointer-events:auto}

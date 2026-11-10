@@ -15,9 +15,10 @@ test('File背景と非モーダル比較だけを許可し、子入力と別モ�
  const allowed=(node,popups=[])=>vm.runInNewContext(`(${nativeMove.backgroundMoveTarget.toString()})(10,20)`,{document:{elementFromPoint:()=>node,querySelector:()=>null,querySelectorAll:()=>popups},getComputedStyle:()=>({visibility:'visible'})});
  const file=element(['section.file-container[data-aidiy-window-move-surface]','[tabindex]:not([tabindex="-1"])']);
  const compare=element(['section.file-history-dialog.history-embedded[data-aidiy-window-move-surface]']);
- for(const surface of [file,compare]){
+ const cpu=element(['section.cpu-panel[data-aidiy-window-move-surface]','[tabindex]:not([tabindex="-1"])']);
+ for(const surface of [file,compare,cpu]){
   const popups=surface===compare?[compare]:[];
-  assert.equal(allowed(element(['div'],surface),popups),true);
+  for(const tag of ['div','svg','path','text','footer'])assert.equal(allowed(element([tag],surface),popups),true);
   for(const control of ['input','button','select','.monaco-editor','[tabindex]:not([tabindex="-1"])','[data-aidiy-no-window-move]'])assert.equal(allowed(element([control],surface),popups),false,control);
   assert.equal(allowed(surface,[...popups,element(['[role="dialog"]'])]),false,'別のモーダルは保護');
  }
@@ -232,7 +233,7 @@ test('隔離world APIが使えない場合でも取り付け・再読込を失�
  const f=fixture();delete f.contents.executeJavaScriptInIsolatedWorld;assert.doesNotThrow(()=>f.contents.emit('dom-ready'));f.emit('mouseDown');await f.advance();f.emit('mouseUp');assert.deepEqual(f.calls,[]);assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown','mouseUp']);f.dispose();
 });
 
-for (const kind of ['task','team']) {
+for (const kind of ['cpu','task','team']) {
  test(`${kind}: 実共有controllerで500ms移動し、解放・再操作・取消時に回収する`,async()=>{
   for (const view of kind==='task'?['request','flow','detail','dialog']:['combined']) {
    const f=fixture(kind,undefined,undefined,true);f.record.taskView=view;

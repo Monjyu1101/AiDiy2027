@@ -9,6 +9,7 @@ const path=require('node:path');
 const {programDataDirectory,preparePrivateDirectory}=require('../../frontend_ide/host/scripts/project-storage.cjs');
 const {アイコンメニューを作成}=require('./アイコンメニュー.cjs');
 const {拡大表示}=require('../../frontend_ide/host/scripts/window-opening.cjs');
+const {trackDiagMiniBounds}=require('../../frontend_ide/デスクトップ/Diagミニ位置.cjs');
 const {ミニ表示を作成,ミニ高さは有効,ミニ幅}=require('./ミニ表示.cjs');
 const {マイクロ表示を作成,閉じた幅}=require('./マイクロ表示.cjs');
 const {画面サイズ演出を作成}=require('./サイズ切替.cjs');
@@ -69,6 +70,7 @@ async function start(value) {
   const displayPosition=表示切替基準を作成(screen);
   const mini=ミニ表示を作成(sizingWindow,{screen,位置:displayPosition});
   const micro=マイクロ表示を作成(sizingWindow,{screen,位置:displayPosition,pins:{setLocked:(_target,value)=>pins.setLocked(window,value),state:()=>pins.state(window)}});
+  trackDiagMiniBounds(window,()=>mini.active&&!micro.active);
   window.once('closed',()=>sizeEffect.中止());
   let firstLoad=true,opening=false,pendingMiniHeight,pendingMicroHeight,displaySwitch=false,displayOrigin;
   let maximizeOperation;

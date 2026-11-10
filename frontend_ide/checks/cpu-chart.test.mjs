@@ -30,15 +30,23 @@ test('CPU initial dimensions are 240 by 160 with readable minimum size',()=>{
  assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:240,minHeight:150});
 });
 
-test('CPU sits in lower-right quarter above the Diag mini initial height, clipped to work area',()=>{
+test('CPU sits in right edge above the Diag mini reserved height, clipped to work area',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040}]){
   const b=windowBounds('cpu',area);
-  assert.equal(b.x+b.width/2,area.x+area.width*.75);
-  assert.equal(area.y+area.height-(b.y+b.height),8+134+8);
+  assert.equal(b.x+b.width,area.x+area.width-8);
+  assert.equal(area.y+area.height-(b.y+b.height),8+360+8);
  }
  for(const area of [{x:0,y:0,width:280,height:180},{x:-300,y:-200,width:180,height:120}]){
   const b=windowBounds('cpu',area);assert.equal(b.y,area.y+8);
   assert.ok(b.x>=area.x&&b.x+b.width<=area.x+area.width);
   assert.ok(b.y+b.height<=area.y+area.height);
  }
+});
+
+test('CPU uses actual Diag mini top on the same screen and ignores a different display',()=>{
+ const area={x:-1920,y:40,width:1920,height:1040};
+ const diag={x:-368,y:780,width:360,height:292};
+ const b=windowBounds('cpu',area,null,0,false,diag);
+ assert.equal(b.x,-248);assert.equal(b.y,612);
+ assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:100}).y,windowBounds('cpu',area,null,0,false,null).y);
 });

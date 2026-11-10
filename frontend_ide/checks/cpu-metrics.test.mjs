@@ -5,11 +5,11 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createSystemMetrics, parseGpuUtilization } from '../aidiy_cpu/metrics.mjs';
+import { createSystemMetrics, parseGpuUtilization, parseWindowsGpuUtilization } from '../aidiy_cpu/metrics.mjs';
 function fixture(options = {}) {
   let time = 0, busy = 100, idle = 100, calls = 0;
   const system = { cpus: () => [{ times: { user: busy, idle } }, { times: { user: busy, idle } }], totalmem: () => 1000, freemem: () => 250 };
-  const metrics = createSystemMetrics({ system, now: () => time, run: async () => { calls++; return { stdout: '20\n65\n' }; }, ...options });
+  const metrics = createSystemMetrics({ system, platform: 'linux', now: () => time, run: async () => { calls++; return { stdout: '20\n65\n' }; }, ...options });
   return { metrics, system, get calls() { return calls; }, tick(ms = 1000, work = 25, rest = 75) { time += ms; busy += work; idle += rest; } };
 }
 test('CPUは区間差分、RAMはホスト使用率、GPUは複数デバイスの最大値', async () => {
@@ -46,4 +46,33 @@ test('終了時は進行中の取得を中止し、結果と再取得を拒否�
   const f = fixture({ run: (_file, _args, options) => { signal = options.signal; return new Promise(resolve => { release = resolve; }); } });
   const pending = f.metrics.sample(); f.metrics.close(); assert.equal(signal.aborted, true); release({ stdout: '40' });
   await assert.rejects(pending, /終了/); await assert.rejects(f.metrics.sample(), /終了/);
+});
+
+const engine=(pid,eng,value,luid='0x00000000_0x0000abcd',phys=0)=>({Name:`pid_${pid}_luid_${luid}_phys_${phys}_eng_${eng}_engtype_3D`,UtilizationPercentage:value});
+test('Windows内蔵GPU: プロセス別を同じエンジンだけ合計し、複数エンジンとGPUは最大',()=>{
+ assert.equal(parseWindowsGpuUtilization(JSON.stringify([engine(1,0,20),engine(2,0,'35'),engine(1,1,40)])),55);
+ assert.equal(parseWindowsGpuUtilization(JSON.stringify([engine(1,0,20),engine(1,0,70,'0x00000000_0x0000ffff')])),70);
+ assert.equal(parseWindowsGpuUtilization(JSON.stringify([engine(1,0,20),engine(1,0,70,undefined,1)])),70);
+ assert.equal(parseWindowsGpuUtilization(JSON.stringify([engine(1,0,80),engine(2,0,40)])),100);
+ assert.equal(parseWindowsGpuUtilization(JSON.stringify(engine(1,0,0))),0);
+ for(const data of ['', '[]', 'null', '{}', 'no counters', JSON.stringify(engine(1,0,null)),JSON.stringify(engine(1,0,-1)),JSON.stringify(engine(1,0,101)),JSON.stringify({...engine(1,0,10),Name:'_Total'})])assert.equal(parseWindowsGpuUtilization(data),null,data);
+});
+test('Windowsは標準CIMを優先し、成功時はnvidia-smiを起動しない',async()=>{
+ const calls=[];const f=fixture({platform:'win32',run:async(...args)=>{calls.push(args);return{stdout:JSON.stringify([engine(1,0,35)])};}});
+ f.tick();assert.equal((await f.metrics.sample()).gpu,35);assert.equal(calls.length,1);
+ assert.equal(calls[0][0],'powershell.exe');assert.ok(calls[0][1].includes('-NoProfile'));assert.ok(calls[0][1].includes('-NonInteractive'));
+ assert.match(calls[0][1].at(-1),/Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine/);
+ assert.equal(calls[0][2].shell,false);assert.equal(calls[0][2].windowsHide,true);assert.equal(calls[0][2].timeout,2000);f.metrics.close();
+});
+test('Windowsカウンター失敗はNVIDIAへフォールバックし、30秒後に内蔵GPU計測へ復帰',async()=>{
+ let calls=[],fail=true;const f=fixture({platform:'win32',run:async(file)=>{calls.push(file);if(file==='powershell.exe'){if(fail)throw Error('unsupported');return{stdout:JSON.stringify(engine(1,0,0))};}return{stdout:'30'};}});
+ f.tick();assert.equal((await f.metrics.sample()).gpu,30);assert.deepEqual(calls,['powershell.exe','nvidia-smi']);
+ f.tick();await f.metrics.sample();assert.deepEqual(calls,['powershell.exe','nvidia-smi','nvidia-smi']);
+ fail=false;f.tick(30000);assert.equal((await f.metrics.sample()).gpu,0);assert.equal(calls.at(-1),'powershell.exe');f.metrics.close();
+});
+test('Windowsの両取得失敗はnull、終了時はCIMも中止しNVIDIAを追加起動しない',async()=>{
+ const f=fixture({platform:'win32',run:async()=>{throw Error('denied');}});f.tick();assert.equal((await f.metrics.sample()).gpu,null);f.metrics.close();
+ let release,signal,calls=0;const g=fixture({platform:'win32',run:(_f,_a,o)=>{calls++;signal=o.signal;return new Promise(r=>release=r);}});
+ const pending=g.metrics.sample();g.metrics.close();assert.equal(signal.aborted,true);release({stdout:'[]'});
+ await assert.rejects(pending,/終了/);assert.equal(calls,1);
 });

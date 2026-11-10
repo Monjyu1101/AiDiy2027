@@ -58,7 +58,7 @@ test('CPU uses a compact dedicated title with window controls and no connection 
 
 test('compact title overlays only on hover or keyboard focus, preserving graph size',()=>{
  const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/tabindex="0"/);
+ assert.match(panel,/tabindex="0" data-aidiy-window-move-surface/);
  assert.match(panel,/\.cpu-title\{position:absolute;[^}]*opacity:0;pointer-events:none/);
  assert.match(panel,/\.cpu-panel:hover>\.cpu-title,\.cpu-panel:focus-within>\.cpu-title\{opacity:1;pointer-events:auto\}/);
 });

@@ -4,23 +4,25 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // ElectronのworkArea（タスクバーを除いた論理座標）に収める。
+const {readDiagMiniBounds}=require('./Diagミニ位置.cjs');
 const size=require('../host/scripts/window-size.cjs');
 // Consoleは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
 function windowMinimumSize(kind,bounds){
  if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(150,bounds.height)};
  return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='console'?180:size.会話最小高さ,bounds.height)};
 }
-function windowBounds(kind,area,owner,slot=0,cli=false){
+function windowBounds(kind,area,owner,slot=0,cli=false,diagMini=kind==='cpu'?readDiagMiniBounds():null){
  const margin=kind==='ide'?Math.min(32,Math.max(12,Math.round(Math.min(area.width,area.height)*.025))):8;
  const available={x:area.x+margin,y:area.y+margin,width:Math.max(1,area.width-margin*2),height:Math.max(1,area.height-margin*2)};
  if(kind==='ide')return available;
  if(kind==='cpu'){
   const width=Math.min(240,available.width),height=Math.min(160,available.height);
-  // 右下の1/4領域へ。Diagミニの初期高さ134px（backend_diag/起動/ミニ表示.cjs）
-  // と8pxの間隔を下に残す。実際のDiag高さは内容により変わるため初期値を基準にする。
-  const x=area.x+area.width*.75-width/2;
-  const y=available.y+available.height-height-134-8;
-  return{x:Math.round(Math.max(available.x,Math.min(x,available.x+available.width-width))),y:Math.max(available.y,y),width,height};
+  // 右端に揃え、同じ画面で起動中のDiagミニの実際の上端より8px上へ。
+  // 未起動時は可変ミニの最大360px分を予約し、初回計測後の伸長にも重ねない。
+  const sameDisplay=diagMini&&diagMini.x<area.x+area.width&&diagMini.x+diagMini.width>area.x&&diagMini.y<area.y+area.height&&diagMini.y+diagMini.height>area.y;
+  const x=available.x+available.width-width;
+  const y=sameDisplay?diagMini.y-height-8:available.y+available.height-height-360-8;
+  return{x,y:Math.round(Math.max(available.y,Math.min(y,available.y+available.height-height))),width,height};
  }
  if(kind==='navi'){
   const width=Math.min(size.幅,available.width),height=Math.min(size.ナビ高さ,available.height);

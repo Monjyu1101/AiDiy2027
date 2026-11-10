@@ -32,13 +32,15 @@ function backgroundMoveTarget(x,y){
   // 別窓Explorerの一覧はキーボード操作用のtabindexを持つ。例外はこのUL自身だけ。
   const list=node.matches?.('ul[role="tree"][data-aidiy-window-move-list]');
   const fileSurface=node.matches?.('section.file-container[data-aidiy-window-move-surface]');
-  if(!list&&!fileSurface&&!routeHandle&&!naviHandle&&node.matches?.('[tabindex]:not([tabindex="-1"])'))return false;
+  // CPUのtabindexはタイトルのキーボード表示用。画面自身だけ移動面にする。
+  const cpuSurface=node.matches?.('section.cpu-panel[data-aidiy-window-move-surface]');
+  if(!list&&!fileSurface&&!cpuSurface&&!routeHandle&&!naviHandle&&node.matches?.('[tabindex]:not([tabindex="-1"])'))return false;
   if(list){
    const rect=node.getBoundingClientRect();
    if(node.clientWidth>0&&node.offsetWidth>node.clientWidth+2&&(x>=rect.left+node.clientLeft+node.clientWidth||x<rect.left+node.clientLeft))return false;
    if(node.clientHeight>0&&node.offsetHeight>node.clientHeight+2&&y>=rect.top+node.clientTop+node.clientHeight)return false;
   }
-  if(routeHandle||naviHandle||list||fileSurface||node.matches?.('[data-aidiy-window-move-handle]'))handle=true;
+  if(routeHandle||naviHandle||list||fileSurface||cpuSurface||node.matches?.('[data-aidiy-window-move-handle]'))handle=true;
  }
  // mousedown捕捉時は既に閉じたselectにもfocusが残る。専用の移動面だけ初回から扱う。
  // 展開中popupと移動面内の操作部品は上で除外済み。一般背景の保護は変えない。
