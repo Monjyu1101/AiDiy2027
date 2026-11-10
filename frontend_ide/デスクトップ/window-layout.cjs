@@ -20,7 +20,8 @@ function windowBounds(kind,area,owner,slot=0,cli=false,diagMini=kind==='cpu'?rea
   // 右端に揃え、同じ画面で起動中のDiagミニの実際の上端より8px上へ。
   // 未起動時は可変ミニの最大360px分を予約し、初回計測後の伸長にも重ねない。
   const sameDisplay=diagMini&&diagMini.x<area.x+area.width&&diagMini.x+diagMini.width>area.x&&diagMini.y<area.y+area.height&&diagMini.y+diagMini.height>area.y;
-  const x=available.x+available.width-width;
+  const right=sameDisplay?diagMini.x+diagMini.width:available.x+available.width;
+  const x=Math.max(available.x,Math.min(right-width,available.x+available.width-width));
   const y=sameDisplay?diagMini.y-height-8:available.y+available.height-height-360-8;
   return{x,y:Math.round(Math.max(available.y,Math.min(y,available.y+available.height-height))),width,height};
  }

@@ -40,7 +40,7 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
    <button v-else-if="floating" class="cpu-close" aria-label="使用率画面を閉じる" @click="emit('close')">×</button>
   </header>
   <div class="cpu-chart">
-   <svg viewBox="0 0 276 110" preserveAspectRatio="none" role="img" aria-label="直近60回の使用率。CPUとGPUは面、RAMは折線。縦軸0から100パーセント">
+   <svg viewBox="0 0 264 100" preserveAspectRatio="none" role="img" aria-label="直近60回の使用率。CPUとGPUは面、RAMは折線。縦軸0から100パーセント">
     <g class="cpu-grid"><path v-for="y in [10,31,52,73,94]" :key="y" :d="`M22 ${y}H192`" /></g>
     <g class="cpu-axis"><text x="19" y="13">100</text><text x="19" y="55">50</text><text x="19" y="97">0</text></g>
     <g v-for="item in series" :key="item.key" :style="{color:item.color}">
@@ -50,16 +50,15 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
     <g v-for="item in labels" :key="item.key" :style="{color:item.color}" class="cpu-label">
      <path v-if="item.value!==null" :d="`M192 ${item.y}L201 ${item.labelY}`" stroke="currentColor" fill="none" stroke-opacity=".55" />
      <circle v-if="item.value!==null" cx="192" :cy="item.y" r="2.5" fill="currentColor" />
-     <text x="204" :y="item.labelY+4" fill="currentColor">{{ item.key.toUpperCase() }} {{ item.value===null?'—':Math.round(item.value)+'%' }}</text>
+     <text x="262" text-anchor="end" :y="item.labelY+4" fill="currentColor">{{ item.key.toUpperCase() }} {{ item.value===null?'—':Math.round(item.value)+'%' }}</text>
     </g>
    </svg>
   </div>
-  <footer class="cpu-caption"><span>{{ error||'ホスト全体 · 約1秒更新' }}</span><span v-if="series[1].value===null" title="Windows GPU Engineカウンター／NVIDIA nvidia-smiが未対応・未導入、または取得に失敗しています">GPU 未取得</span><span v-else>GPU 最大負荷</span></footer>
  </section>
 </template>
 <style>
 .cpu-panel{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;background:#000;color:#d9e5ec;overflow:hidden}
-.cpu-floating{position:absolute;right:18px;bottom:min(378px,max(18px,calc(100% - 178px)));width:min(240px,calc(100% - 36px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 36px));min-height:150px;max-width:calc(100% - 36px);max-height:calc(100% - 36px)}
+.cpu-floating{position:absolute;right:8px;bottom:min(376px,max(8px,calc(100% - 168px)));width:min(240px,calc(100% - 16px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 16px));min-height:150px;max-width:calc(100% - 16px);max-height:calc(100% - 16px)}
 /* CPU専用の小さいタイトル。接続表示・接続バー・その監視処理は持たない。 */
 .cpu-title{position:absolute;left:0;right:0;top:0;z-index:1;opacity:0;pointer-events:none;height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px;background:#30343a;color:white}
 .cpu-panel:hover>.cpu-title,.cpu-panel:focus-within>.cpu-title{opacity:1;pointer-events:auto}
@@ -67,8 +66,8 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
 .cpu-title strong{font-size:11px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .cpu-title button{-webkit-app-region:no-drag}
 .cpu-title .window-actions button{width:24px;height:22px;padding:0}
-.cpu-chart{flex:1;min-height:0;padding:2px 4px 0}.cpu-chart svg{width:100%;height:100%;overflow:visible}
+.cpu-chart{flex:1;min-height:0;padding:2px 2px 0}.cpu-chart svg{width:100%;height:100%;overflow:visible}
 .cpu-grid path{stroke:#1c2930;stroke-width:1;vector-effect:non-scaling-stroke}.cpu-axis{fill:#6d7e87;font:10px monospace;text-anchor:end}
-.cpu-label{font:11px ui-monospace,monospace;font-weight:600}.cpu-caption{display:flex;justify-content:space-between;gap:4px;padding:2px 6px 4px;color:#7c929e;font-size:10px;white-space:nowrap}
+.cpu-label{font:11px ui-monospace,monospace;font-weight:600}
 .cpu-close{margin-left:4px;line-height:20px;padding:0 4px;background:none;border:0;color:white;font-size:20px;cursor:pointer;-webkit-app-region:no-drag}
 </style>

@@ -50,8 +50,8 @@ async function start(value) {
   let url;try{url=validUrl(value);}catch{fail('URL');return;}
   await app.whenReady();
   const initialMini=await checkPort(8095)===true;
-  // 通常表示は中央ではなく、ミニ（作業領域の左上角）より少し内側の左上から表示を始める。
-  const area=screen.getPrimaryDisplay().workArea,通常表示の余白=48;
+  // 通常表示もミニと同じく、主画面の作業領域の右下角から8 DIP内側で表示を始める。
+  const area=screen.getPrimaryDisplay().workArea,通常表示の余白=8;
   if(failed||!process.connected)return;
   // 非永続 session。preload は固定ウィンドウ操作だけ公開し、Node・任意IPCは公開しない。
   const isolated=session.fromPartition('aidiy-diag-'+process.pid,{cache:false});

@@ -50,3 +50,10 @@ test('CPU uses actual Diag mini top on the same screen and ignores a different d
  assert.equal(b.x,-248);assert.equal(b.y,612);
  assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:100}).y,windowBounds('cpu',area,null,0,false,null).y);
 });
+
+test('CPU aligns its right edge with the actual Diag mini, clamped to the display',()=>{
+ const area={x:0,y:0,width:1920,height:1080};
+ const diag={x:1500,y:780,width:360,height:292};
+ assert.equal(windowBounds('cpu',area,null,0,false,diag).x,1620);
+ assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:1800}).x,1672);
+});

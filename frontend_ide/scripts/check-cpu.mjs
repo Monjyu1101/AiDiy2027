@@ -44,8 +44,8 @@ try{
  await evaluate("document.querySelector('.cpu-panel').focus()");
  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
  assert.equal(await evaluate("document.querySelector('.connection-bar')"),null);
- await evaluate('gpuMissing=true');await sleep(100);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),false);assert.match(await evaluate('document.body.textContent'),/GPU 未取得/);
- await evaluate('failed=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/再試行中/);assert.match(await evaluate('document.body.textContent'),/CPU —/);
+ await evaluate('gpuMissing=true');await sleep(100);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),false);assert.equal(await evaluate("document.querySelector('.cpu-caption')"),null);
+ await evaluate('failed=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/CPU —/);
  await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),true);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);const before=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),before);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))`);await sleep(100);assert.ok(await evaluate('calls')>before);

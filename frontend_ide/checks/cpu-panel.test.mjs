@@ -62,3 +62,11 @@ test('compact title overlays only on hover or keyboard focus, preserving graph s
  assert.match(panel,/\.cpu-title\{position:absolute;[^}]*opacity:0;pointer-events:none/);
  assert.match(panel,/\.cpu-panel:hover>\.cpu-title,\.cpu-panel:focus-within>\.cpu-title\{opacity:1;pointer-events:auto\}/);
 });
+
+test('CPU is graph-only with compact percent margin and Diag-sized right inset',()=>{
+ const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
+ assert.doesNotMatch(panel,/<footer|cpu-caption|GPU 未取得|GPU 最大負荷|ホスト全体 ·/);
+ assert.match(panel,/viewBox="0 0 264 100"/);
+ assert.match(panel,/<text x="262" text-anchor="end"/);
+ assert.match(panel,/right:8px;bottom:/);
+});
