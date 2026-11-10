@@ -13,7 +13,7 @@ import * as addresses from '../src/components/ブラウザ/URL表示.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const flush=async()=>{for(let i=0;i<15;i++)await Promise.resolve();};
-const context={url:'https://example.test/page',title:'入力画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true};
+const context={url:'https://example.test/page',title:'入力画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true,connected:true};
 const saved={id:'result-1',createdAt:12345,summary:'# 概要\n入力フォーム\n<script>alert(1)</script>',files:[{role:'html',path:'server/src/html/xxx.html',summary:'入力フォーム'}]};
 const deferred=()=>{let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return{promise,resolve,reject};};
 function channelFixture(){
@@ -30,7 +30,7 @@ function fixture(type='dialog',props={context},options={}){
  const file=type==='dialog'?'../src/dialog/ブラウザ解析ダイアログ.vue':type==='window'?'../src/components/ブラウザ/ブラウザ解析ウィンドウ.vue':'../src/components/ブラウザ/ブラウザパネル.vue';
  const {descriptor}=parse(readFileSync(new URL(file,import.meta.url),'utf8'));
  const script=compileScript(descriptor,{id:'analysis-ui',genDefaultAs:'component'}),template=compileTemplate({source:descriptor.template.content,filename:file,id:'analysis-ui',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
- const api={browserAction:async(name,value)=>{calls.push({name,value});if(options.action)return options.action(name,value);return name==='analysis-context'||name==='analysis-window-context'?{ok:true,context}:{ok:true,url:context.url,available:true};},onBrowserChanged:fn=>{listeners.changed=fn;return()=>delete listeners.changed;},onBrowserOpenAnalysis:fn=>{listeners.analysis=fn;return()=>delete listeners.analysis;}};
+ const api={browserAction:async(name,value)=>{calls.push({name,value});if(options.action)return options.action(name,value);return name==='analysis-context'||name==='analysis-window-context'?{ok:true,context}:{ok:true,url:context.url,available:true,connected:true};},onBrowserChanged:fn=>{listeners.changed=fn;return()=>delete listeners.changed;},onBrowserOpenAnalysis:fn=>{listeners.analysis=fn;return()=>delete listeners.analysis;}};
  const module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{module,console,URLSearchParams,AbortController,AbortSignal,Date,
   fetch:(url,init)=>{const pending=deferred();requests.push({url,init,...pending});return pending.promise;},setTimeout:fn=>{const id=next++;timers.set(id,fn);return id;},clearTimeout:id=>timers.delete(id),
@@ -64,13 +64,13 @@ test('Browser analysis dialog: close and unmount cancel polling and ignore late 
  const reopened=fixture();reopened.reply({result:saved,job:{status:'waiting'}});await flush();assert.equal(reopened.timers.size,1);reopened.tick();reopened.dispose();reopened.reply({result:{...saved,id:'late'},job:{status:'complete'}});await flush();assert.equal(reopened.state.result.value.id,saved.id);assert.equal(reopened.timers.size,0);
 });
 test('Browser panel: requests native analysis without hiding page; duplicate opens and header route are guarded',async()=>{
- const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,available:true}});await flush();
+ const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,available:true,connected:true}});await flush();
  const first=f.state.openAnalysis();await f.state.openAnalysis();assert.equal(f.calls.filter(c=>c.name==='open-analysis').length,1);opened.resolve({ok:true});await first;
  assert.equal(f.calls.some(c=>c.name==='analysis-dialog'),false);f.dispose();
  const header=fixture('panel',{headerOnly:true});await flush();await header.state.openAnalysis();assert.ok(header.calls.some(c=>c.name==='open-analysis'));header.dispose();
 });
 test('Browser panel: late native opening response after disposal does not alter state',async()=>{
- const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true}});await flush();
+ const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,available:true,connected:true}});await flush();
  const opening=f.state.openAnalysis();f.dispose();opened.resolve({ok:false,error:'late'});await opening;assert.equal(f.state.error.value,'');assert.equal(f.calls.some(c=>c.name==='analysis-dialog'),false);
 });
 test('Browser analysis window: loads frozen native context and closes only analysis child',async()=>{
@@ -83,7 +83,7 @@ test('Browser analysis dialog: IDE guidance is shown before results and never en
   const f=fixture('dialog',{context:{...context,canSelectSource:false,ideRunning:running,viewerAvailable:ready}});
   f.reply({result:null,job:null});await flush();
   const rendered=nodes(f.render()),hint=rendered.find(n=>n.props?.class==='browser-analysis-hint browser-analysis-viewer-available');
-  assert.equal(!!hint,running);if(hint)assert.match(String(hint.children),ready?/IDEの「Browser」から/:/tools接続後/);
+  assert.equal(!!hint,running);if(hint)assert.match(String(hint.children),ready?/IDEの「Browser」から/:/利用を開始/);
   assert.equal(rendered.filter(n=>n.props?.class==='browser-analysis-source').length,0);
   f.state.result.value=saved;await f.state.selectSource(saved.files[0]);assert.equal(f.calls.length,0);f.dispose();
  }
@@ -100,8 +100,8 @@ test('Browser panel: native analysis stays independent while page changes restor
  const f=fixture('panel',{});t.after(()=>f.dispose());await flush();assert.ok(f.requests[0].url.includes('status=1'));
  f.reply({url:context.url,result:null,job:{url:context.url,status:'waiting'}});await flush();assert.equal(f.state.analysisStatus.value.status,'waiting');
  await f.state.openAnalysis();assert.ok(f.calls.some(c=>c.name==='open-analysis'));assert.equal(f.state.analysisStatus.value.status,'waiting','native child does not interrupt parent status polling');
- const other='https://example.test/other';f.listeners.changed({url:other,available:true,session:'tab'});await flush();assert.equal(f.calls.some(c=>c.name==='analysis-window-close'||c.name==='analysis-dialog'),false);const old=f.requests.length-1;
- f.listeners.changed({url:context.url,available:true,session:'tab'});await flush();const current=f.requests.length-1;assert.ok(current>old);assert.equal(f.requests[old].init.signal.aborted,true);
+ const other='https://example.test/other';f.listeners.changed({url:other,available:true,connected:true,session:'tab'});await flush();assert.equal(f.calls.some(c=>c.name==='analysis-window-close'||c.name==='analysis-dialog'),false);const old=f.requests.length-1;
+ f.listeners.changed({url:context.url,available:true,connected:true,session:'tab'});await flush();const current=f.requests.length-1;assert.ok(current>old);assert.equal(f.requests[old].init.signal.aborted,true);
  f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'complete'}},current);await flush();f.reply({url:other,job:{status:'waiting'}},old);await flush();assert.equal(f.state.analysisStatus.value.status,'complete');assert.equal(f.state.analysisStatus.value.resultId,saved.id);assert.ok(f.requests.every(r=>!r.init.method||r.init.method==='GET'));
 });
 for(const headerOnly of [false,true])test(`Browser analysis button: ${headerOnly?'F11 header':'normal panel'} shows waiting/completion/failure for its current URL`,async t=>{
@@ -117,15 +117,15 @@ for(const headerOnly of [false,true])test(`Browser analysis button: ${headerOnly
  pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'failed',message:'解析結果を確認してください。'}});await pending;assert.equal(label(),'AI解析 要確認');
 });
 test('Browser panel: navigation during native window preparation ignores the stale response without hiding or closing the page',async t=>{
- const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,url:context.url,available:true}});t.after(()=>f.dispose());await flush();
- const opening=f.state.openAnalysis();await flush();f.listeners.changed({url:'https://example.test/new',available:true});f.state.error.value='現在のページの通知';
+ const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,url:context.url,available:true,connected:true}});t.after(()=>f.dispose());await flush();
+ const opening=f.state.openAnalysis();await flush();f.listeners.changed({url:'https://example.test/new',available:true,connected:true});f.state.error.value='現在のページの通知';
  opened.resolve({ok:false,error:'古い画面のエラー'});await opening;
  assert.equal(f.state.error.value,'現在のページの通知');assert.equal(f.state.openingAnalysis.value,false);
  assert.equal(f.calls.some(c=>c.name==='analysis-dialog'||c.name==='analysis-window-close'),false);
 });
 test('Browser panel: A to B to A while native opening does not apply an obsolete response',async t=>{
- const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,url:context.url,available:true}});t.after(()=>f.dispose());await flush();
- const opening=f.state.openAnalysis();await flush();f.listeners.changed({url:'https://example.test/new',available:true});f.listeners.changed({url:context.url,available:true});f.state.error.value='現在の通知';
+ const opened=deferred(),f=fixture('panel',{}, {action:async name=>name==='open-analysis'?opened.promise:{ok:true,url:context.url,available:true,connected:true}});t.after(()=>f.dispose());await flush();
+ const opening=f.state.openAnalysis();await flush();f.listeners.changed({url:'https://example.test/new',available:true,connected:true});f.listeners.changed({url:context.url,available:true,connected:true});f.state.error.value='現在の通知';
  opened.resolve({ok:true});await opening;
  assert.equal(f.state.error.value,'現在の通知');assert.equal(f.state.openingAnalysis.value,false);assert.equal(f.calls.filter(c=>c.name==='open-analysis').length,1);
  assert.equal(f.calls.some(c=>c.name==='analysis-dialog'||c.name==='analysis-window-close'),false);
@@ -140,8 +140,8 @@ for(const headerOnly of [false,true])test(`Browser analysis request: ${headerOnl
  assert.equal(panel.requests.length,2,'accepted POST immediately rechecks the already idle parent');
  panel.reply({url:context.url,job:{id:'job-a',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
  dialog.state.close();assert.equal(panel.timers.size,1,'closing the child does not cancel server polling');
- panel.listeners.changed({url:'https://example.test/other',available:true});panel.reply({url:'https://example.test/other',job:null});await flush();assert.equal(label(),'AI解析');
- panel.listeners.changed({url:context.url,available:true});panel.reply({url:context.url,job:{id:'job-a',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
+ panel.listeners.changed({url:'https://example.test/other',available:true,connected:true});panel.reply({url:'https://example.test/other',job:null});await flush();assert.equal(label(),'AI解析');
+ panel.listeners.changed({url:context.url,available:true,connected:true});panel.reply({url:context.url,job:{id:'job-a',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
  panel.tick();panel.reply({url:context.url,result:{id:'result-a',url:context.url},job:{status:'complete'}});await flush();assert.equal(label(),'AI解析済');assert.equal(panel.timers.size,0);
  const again=fixture('dialog',{context},{channels});t.after(()=>again.dispose());again.reply({result:saved,job:{status:'complete'}});await flush();starting=again.state.analyze();again.reply({id:'job-new',url:context.url,status:'waiting'});await starting;
  panel.reply({url:context.url,result:saved,job:{id:'job-new',status:'waiting'}});await flush();assert.equal(label(),'解析中…');
@@ -154,7 +154,7 @@ test('Browser analysis request: late request failure still rechecks the server w
  const dialog=fixture('dialog',{context},{channels});t.after(()=>dialog.dispose());dialog.reply({result:null,job:null});await flush();
  let starting=dialog.state.analyze();dialog.requests.at(-1).reject(Error('response lost'));await starting;assert.equal(panel.requests.length,2);
  panel.reply({url:context.url,job:{id:'accepted',status:'waiting'}});await flush();assert.equal(panel.state.analysisStatus.value.status,'waiting');
- panel.listeners.changed({url:'https://example.test/other',available:true});panel.reply({url:'https://example.test/other',job:null});await flush();const count=panel.requests.length;
+ panel.listeners.changed({url:'https://example.test/other',available:true,connected:true});panel.reply({url:'https://example.test/other',job:null});await flush();const count=panel.requests.length;
  starting=dialog.state.analyze();dialog.reply({status:'waiting'});await starting;assert.equal(panel.requests.length,count);assert.equal(panel.state.analysisStatus.value.status,'idle');
 });
 
@@ -163,4 +163,37 @@ test('Browser解析の表: ファイル名とフォルダを分けても選択�
  const rendered=nodes(f.render()),region=rendered.find(n=>n.props?.class==='browser-analysis-sources'),button=rendered.find(n=>n.props?.class==='browser-analysis-source');
  assert.equal(region.props.role,'region');assert.equal(region.props.tabindex,'0');assert.equal(button.props['aria-label'],saved.files[0].path+' をIDEで表示');assert.equal(f.state.sourceName(saved.files[0].path),'xxx.html');assert.equal(f.state.sourceFolder(saved.files[0].path),'server/src/html/');assert.equal(f.state.sourceName('index.html'),'index.html');assert.equal(f.state.sourceFolder('index.html'),'');
  assert.equal(rendered.filter(n=>n.type==='th').every(n=>n.props.scope==='col'),true);f.dispose();
+});
+
+for(const headerOnly of [false,true])test(`Browser offline: ${headerOnly?'header':'panel'} retains ordinary controls but disables AI`,async t=>{
+ const f=fixture('panel',{headerOnly});t.after(()=>f.dispose());await flush();
+ f.listeners.changed({url:context.url,available:true,connected:false,back:true,forward:true});
+ const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
+ assert.equal(bar.props.connected,false);assert.match(bar.props.status,/AI解析不可/);
+ const buttons=nodes({children:bar.children['connection-tools']()}).filter(n=>n.type==='button');
+ assert.equal(buttons.find(n=>n.props.class==='browser-analysis').props.disabled,true);
+ for(const name of ['browser-capture','browser-handoff','browser-element-link'])assert.equal(!!buttons.find(n=>n.props.class===name).props.disabled,false);
+ assert.equal(rendered.find(n=>n.type==='input').props.disabled,false);
+ const before=f.calls.length;await f.state.openAnalysis();assert.equal(f.calls.length,before);
+ f.listeners.changed({url:context.url,available:false,connected:false});
+ assert.equal(nodes(f.render()).find(n=>n.type==='input').props.disabled,true);
+ f.listeners.changed({url:context.url,available:true,connected:true});await f.state.openAnalysis();assert.equal(f.calls.at(-1).name,'open-analysis');
+});
+test('Browser analysis offline: preserves saved results and source navigation, rejects AI until reconnect',async t=>{
+ const props={context:{...context,connected:false}},f=fixture('dialog',props);t.after(()=>f.dispose());
+ f.reply({result:saved,job:null});await flush();await f.state.analyze();assert.equal(f.requests.length,1);
+ assert.equal(f.state.result.value.id,saved.id);await f.state.selectSource(saved.files[0]);assert.equal(f.calls.at(-1).name,'analysis-select-source');
+ const actions=nodes(f.render()).find(n=>n.props?.class==='browser-analysis-actions');assert.equal(nodes(actions).find(n=>n.type==='button').props.disabled,true);
+ props.context={...props.context,connected:true};const request=f.state.analyze();assert.equal(f.requests.length,2);f.reply({status:'waiting'});await request;
+ assert.equal(f.state.result.value.id,saved.id);
+});
+test('Browser analysis connection: stale initial reads cannot override notifications; polling recovers and disposal cancels',async()=>{
+ const f=fixture('window',{});await flush();assert.equal(f.requests[0].url,'/api/connection');
+ f.listeners.changed({available:true,connected:false});f.reply({active:true,mode:'online',connected:true},0);await flush();
+ assert.equal(f.state.context.value.connected,false,'newer offline event wins over initial read');
+ f.tick();f.reply({active:true,mode:'online',connected:true});await flush();assert.equal(f.state.context.value.connected,true);
+ f.listeners.changed({available:false,connected:true});assert.equal(f.state.context.value.connected,false,'inactive session is never AI-ready');
+ f.tick();f.listeners.changed({available:true,connected:true});f.reply({active:true,mode:'offline',connected:false});await flush();assert.equal(f.state.context.value.connected,true,'newer online event wins over stale poll');
+ const target=f.state.context.value.url;f.listeners.changed({url:'https://example.test/new',available:true,connected:false});assert.equal(f.state.context.value.url,target,'analysis target stays frozen across navigation');
+ f.tick();const pending=f.requests.at(-1);f.dispose();assert.equal(pending.init.signal.aborted,true);f.reply({active:true,mode:'online',connected:true});await flush();assert.equal(f.state.context.value.connected,false);assert.equal(f.timers.size,0);
 });

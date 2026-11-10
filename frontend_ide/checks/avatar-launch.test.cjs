@@ -13,7 +13,7 @@ function fixture(options={}){
 test('Avatar launcher: project arguments, IPC readiness and lifetime are independent',async()=>{
  const f=fixture(),opening=f.launcher.open(f.owner,'/日本語 project');
  assert.equal(f.launcher.active(f.owner),true);assert.equal((await f.launcher.open(f.owner,'/other')).ok,false);assert.equal(f.children.length,1);
- const [exe,args,options]=f.calls[0];assert.equal(exe,'/electron');assert.deepEqual(args.slice(1),['--alone','--project','/日本語 project','--foreground']);assert.match(args[0],/frontend_avatar[/\\]launch.mjs$/);
+ const [exe,args,options]=f.calls[0];assert.equal(exe,'/electron');assert.deepEqual(args.slice(1),['--alone','--project','/日本語 project','--foreground','--initial-pinned']);assert.match(args[0],/frontend_avatar[/\\]launch.mjs$/);
  assert.equal(options.cwd,'/日本語 project');assert.equal(options.env.ELECTRON_RUN_AS_NODE,'1');assert.equal(options.env.AIDIY_LAUNCHER_CHILD,'1');assert.equal(options.stdio[3],'ipc');
  f.children[0].emit('message',{launchReady:true});assert.equal((await opening).ok,true);assert.equal(f.launcher.active(f.owner),true);
  f.children[0].emit('disconnect');assert.equal(f.launcher.active(f.owner),true);

@@ -21,6 +21,8 @@ if (process.platform === 'darwin') app.setName('AiDiy Avatar')
 const { programDataDirectory, preparePrivateDirectory } = require(path.join(__dirname, '../../frontend_ide/host/scripts/project-storage.cjs'))
 const avatarProjectRoot = path.resolve(__dirname, '../..')
 const avatarAlone = process.env.AIDIY_AVATAR_ALONE === '1'
+// 起動時に作るコアだけに適用。再表示やピン解除を上書きしない。
+let initialCorePinned = process.env.AIDIY_AVATAR_INITIAL_PINNED === '1'
 if (avatarAlone && process.env.AIDIY_AVATAR_PROJECT && !path.isAbsolute(process.env.AIDIY_AVATAR_PROJECT)) throw new Error('絶対パスでプロジェクトを指定してください。')
 const projectPath = avatarAlone ? realpathSync(process.env.AIDIY_AVATAR_PROJECT || avatarProjectRoot) : ''
 if (avatarAlone && (!path.isAbsolute(projectPath) || !statSync(projectPath).isDirectory())) throw new Error('プロジェクトフォルダが不正です。')
@@ -321,7 +323,8 @@ function createBaseWindow(bounds: BoundsPreset, role: WindowRole, show = true): 
   windowRoles.set(window.id, role)
   secureAloneWindow(window, role)
   // ログイン画面は他の窓に隠れないよう、最前面ピンONで表示を始める。
-  windowPins.register(window, { pinned: role === 'login' })
+  windowPins.register(window, { pinned: role === 'login' || (role === 'core' && initialCorePinned) })
+  if (role === 'core') initialCorePinned = false
   attachNativeWindowMove(window, screen, 'avatar')
 
   // min サイズを独自管理し、ロード後に再適用（Electron Windowsバグ対策）

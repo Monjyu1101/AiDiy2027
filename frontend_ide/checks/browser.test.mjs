@@ -16,9 +16,9 @@ import layout from '../デスクトップ/window-layout.cjs';
 import pins from '../デスクトップ/最前面ピン.cjs';
 import {openBrowser} from '../src/components/ブラウザ/起動.js';
 const {HOME,browserURL,createBrowserViews}=browser;
-test('Browser: Google既定、検索語・URL・開発サーバーの解決、実行スキーム拒否',()=>{
+test('Browser: ローカル既定、検索語・URL・開発サーバーの解決、実行スキーム拒否',()=>{
  assert.equal(browserURL(''),HOME);
- assert.equal(browserURL('宇宙 IDE'),HOME+'search?q='+encodeURIComponent('宇宙 IDE'));
+ assert.equal(browserURL('宇宙 IDE'),'https://www.google.com/ai?q='+encodeURIComponent('宇宙 IDE'));
  assert.equal(browserURL('example.com/a'),'https://example.com/a');
  assert.equal(browserURL('example.com:8080/a'),'https://example.com:8080/a');
  assert.equal(browserURL('localhost:8090/'),'http://localhost:8090/');
@@ -60,6 +60,12 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  control.setAvailable(record,true);assert.equal(view.webContents.url,HOME);
  assert.equal((await control.action(event,'draft')).request.text,'session: aidiy_ide 2\ntab_id: sender-tab\n'+HOME);
  assert.equal((await control.action({record:{...record}},'draft')).ok,false,'他レコードでは送信元を解決しない');
+ control.setAvailable(record,true,false);
+ assert.equal((await control.action(event,'state')).connected,false);
+ assert.equal((await control.action(event,'navigate','https://example.test/offline')).ok,true);
+ assert.equal((await control.action(event,'draft')).ok,true);
+ assert.equal((await control.action(event,'open-analysis')).ok,false);
+ await control.navigate(record,HOME);
  control.setAvailable(record,false);assert.equal(view.webContents.stops,1);control.setAvailable(record,true);assert.equal(view.webContents.url,HOME);
  assert.equal(view.options.webPreferences.sandbox,true);assert.equal(view.options.webPreferences.nodeIntegration,false);assert.equal(view.options.webPreferences.preload,undefined);
  assert.equal(isolated.check(),false);isolated.request(null,'media',allowed=>assert.equal(allowed,false));

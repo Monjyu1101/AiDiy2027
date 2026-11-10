@@ -58,7 +58,7 @@ app.on('browser-window-created',(_event,ide)=>{
    // 「終了」は全子窓を閉じ、IDE本体とサーバーは起動画面のまま残す。
    await evaluate(ide,`document.querySelector('.component-toolbar nav button').click()`);
    await until(async()=>!(await state()).active&&children.every(window=>window.isDestroyed()));
-   await until(async()=>await evaluate(ide,`Array.from(document.querySelectorAll('.component-toolbar button')).some(b=>b.textContent==='AiDiy接続利用'&&!b.disabled)`));
+   await until(async()=>await evaluate(ide,`Array.from(document.querySelectorAll('.ide-start-actions button')).some(b=>b.textContent==='AiDiy接続利用'&&!b.disabled)`));
    assert.equal(ide.isDestroyed(),false);assert.equal(confirmationCount,0);
    assert.equal((await state()).startedAt,null);
    assert.equal((await fetch(process.env.AIDIY_DEVELOPMENT_URL)).status,200);

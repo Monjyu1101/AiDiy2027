@@ -28,7 +28,7 @@ async function load(){
  finally{if(!closed&&current===revision)loading.value=false;}
 }
 async function analyze(){
- if(closed||loading.value||starting.value||busy.value)return;
+ if(closed||props.context.connected!==true||loading.value||starting.value||busy.value)return;
  clearTimeout(timer);++revision;starting.value=true;error.value='';
  try{
   const value=await request('POST');if(closed)return;
@@ -60,10 +60,11 @@ onBeforeUnmount(()=>{closed=true;++revision;clearTimeout(timer);controller.abort
     <p v-if="context.canSelectSource" class="browser-analysis-hint">IDE連携中です。ソース欄をクリックすると、起動元のIDEのファイルビューアに表示します。</p>
     <template v-else>
      <p class="browser-analysis-hint">IDE未連携です。関連ソースは表示のみで、IDEのファイルは開きません。</p>
-     <p v-if="context.ideRunning" class="browser-analysis-hint browser-analysis-viewer-available" role="status">同じプロジェクトのIDEが起動中です。{{ context.viewerAvailable?'IDEの「Browser」からこのURLを開くと、ビューアー連携できます。':'IDEでオンライン利用を開始し、tools接続後に「Browser」からこのURLを開くと、ビューアー連携できます。' }}</p>
-     <p v-else class="browser-analysis-hint">ビューアー連携するには、同じプロジェクトのIDEでオンライン利用を開始し、IDEの「Browser」から開いてください。</p>
+     <p v-if="context.ideRunning" class="browser-analysis-hint browser-analysis-viewer-available" role="status">同じプロジェクトのIDEが起動中です。{{ context.viewerAvailable?'IDEの「Browser」からこのURLを開くと、ビューアー連携できます。':'IDEで利用を開始し、「Browser」からこのURLを開くと、ビューアー連携できます。' }}</p>
+     <p v-else class="browser-analysis-hint">ビューアー連携するには、同じプロジェクトのIDEで利用を開始し、IDEの「Browser」から開いてください。</p>
     </template>
-    <div class="browser-analysis-actions"><button :disabled="loading||starting||busy" @click="analyze">{{ starting?'依頼中…':busy?'解析中…':result?'再解析':'解析を実行' }}</button><span>最大5分間、結果を確認します。別ページへ移動しても解析を続け、結果はこのURLに保存します。</span></div>
+    <div class="browser-analysis-actions"><button :disabled="context.connected!==true||loading||starting||busy" @click="analyze">{{ starting?'依頼中…':busy?'解析中…':result?'再解析':'解析を実行' }}</button><span>最大5分間、結果を確認します。別ページへ移動しても解析を続け、結果はこのURLに保存します。</span></div>
+    <p v-if="context.connected!==true" class="browser-analysis-hint" role="status">tools未接続のため、新しいAI解析は実行できません。保存済みの結果は引き続き確認できます。</p>
     <p v-if="busy" class="browser-analysis-hint">閉じて別のページを閲覧できます。元のURLに戻り「AI解析」を開くと、進行状況・結果を確認できます。</p>
     <p v-if="job" role="status">{{ job.message||(busy?'解析結果を待っています…':'') }}</p>
     <div v-if="job&&!busy&&job.status!=='complete'"><button @click="load">結果を再確認</button><details><summary>エージェントへの依頼文</summary><textarea readonly :value="job.prompt" rows="5" aria-label="Browser解析エージェントへの依頼文" /></details></div>

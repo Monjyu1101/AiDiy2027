@@ -150,3 +150,32 @@ test('ポート確保失敗・プロジェクト不正では子プロセスを�
   await assert.rejects(runAvatar({ ...f.options, alone: true, project: '/missing-avatar-project' }), /フォルダー/);
   assert.deepEqual(f.calls, []);
 });
+
+
+test('初期ピンは明示引数だけをElectronへ渡し親環境から漏らさない', async () => {
+  const old = process.env.AIDIY_AVATAR_INITIAL_PINNED;
+  process.env.AIDIY_AVATAR_INITIAL_PINNED = '1';
+  try {
+    const { parseOptions } = await import('../launch.mjs');
+    assert.equal(parseOptions([]).initialPinned, false);
+    assert.equal(parseOptions(['--initial-pinned']).initialPinned, true);
+    for (const initialPinned of [false, true]) {
+      const f = fixture(), running = runAvatar({ ...f.options, initialPinned });
+      await flush();
+      assert.equal(f.calls[0].options.env.AIDIY_AVATAR_INITIAL_PINNED, initialPinned ? '1' : undefined);
+      f.calls[0].child.emit('exit', 0);
+      assert.equal(await running, 0);
+    }
+    let args;
+    const child = Object.assign(new EventEmitter(), { connected: false, unref() {} });
+    await launchDetached({ initialPinned: true, log() {}, launch(_command, values) {
+      args = values;
+      queueMicrotask(() => child.emit('message', { launchReady: true }));
+      return child;
+    } });
+    assert.ok(args.includes('--initial-pinned'));
+  } finally {
+    if (old === undefined) delete process.env.AIDIY_AVATAR_INITIAL_PINNED;
+    else process.env.AIDIY_AVATAR_INITIAL_PINNED = old;
+  }
+});

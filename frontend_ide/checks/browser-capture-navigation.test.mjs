@@ -22,7 +22,7 @@ function fixture(){
  control.attach(record,'https://example.test/');
  const action=name=>control.action({record},name);
  const save=async()=>{const result=action('capture');await flush();images.at(-1).resolve(image);await flush();writes.at(-1).resolve({path:'temp/input/browser.png'});return result;};
- return{page,window,record,sent,writes,images,action,save,close:()=>window.emit('closed')};
+ return{control,page,window,record,sent,writes,images,action,save,close:()=>window.emit('closed')};
 }
 for(const kind of ['navigation','history','query','hash','reload'])test('Browser撮影: '+kind+'で保存を破棄し下書きにも古い画像を添付しない',async t=>{
  const f=fixture();t.after(f.close);assert.equal((await f.save()).ok,true);assert.equal((await f.action('state')).capturePath,'temp/input/browser.png');
@@ -45,4 +45,10 @@ for(const phase of ['capture','save'])for(const returned of [false,true])test(`B
  if(phase==='capture')f.images[0].resolve(image);else f.writes[0].resolve({path:'temp/input/stale.png'});
  const response=await result;assert.equal(response.ok,false);assert.match(response.error,/ページや接続が変わりました/);assert.equal((await f.action('state')).capturePath,'');assert.ok(f.sent.every(value=>!value.capturePath));
  assert.equal(f.writes.length,phase==='save'?1:0);assert.equal((await f.save()).ok,true,'失効した撮影後も再試行できる');
+});
+
+test('Browser offline can capture and carry the saved image into a draft',async t=>{
+ const f=fixture();t.after(f.close);f.control.setAvailable(f.record,true,false);
+ assert.equal((await f.save()).ok,true);assert.match((await f.action('draft')).request.text,/browser.png/);
+ assert.equal((await f.action('open-analysis')).ok,false);
 });

@@ -25,7 +25,7 @@ let server,browser,ws;
 try{
  const bundle=await build({
   stdin:{contents:`import {createApp} from 'vue';import Panel from './src/components/ブラウザ/ブラウザパネル.vue';import './src/style.css';
-const headerOnly=location.search==='?header';let state={ok:true,url:${JSON.stringify(initial)},available:true,back:true,forward:true,headerVisible:true,fullscreen:headerOnly};
+const headerOnly=location.search==='?header';let state={ok:true,url:${JSON.stringify(initial)},available:true,connected:true,back:true,forward:true,headerVisible:true,fullscreen:headerOnly};
 window.navigationCalls=[];let listener;
 window.notifyURL=url=>{state={...state,url};listener?.(state);};
 window.aidiyWindow={title:async()=>'AiDiy Browser',pinState:async()=>({pinned:false}),onPinChanged:()=>()=>{},onBrowserHeaderFrame:()=>()=>{},onBrowserChanged:fn=>{listener=fn;return()=>{listener=null;};},async browserAction(name,value){if(name==='navigate'){navigationCalls.push(value);const response=await fetch('/target',{method:'POST',body:JSON.stringify({value})});state={...state,...await response.json()};}return {...state};}};
@@ -86,7 +86,7 @@ const app=createApp(Panel,{standalone:true,headerOnly});app.mount('#app');window
    assert.equal(await evaluate(`(()=>{const e=new KeyboardEvent('keydown',{key:'Enter',keyCode:229,isComposing:true,bubbles:true,cancelable:true});${input}.dispatchEvent(e);return e.defaultPrevented;})()`),true);
    await evaluate(`document.querySelector('form').requestSubmit()`);assert.equal(await evaluate('navigationCalls.length'),0,'変換途中の送信を抑止');
    await send('Input.insertText',{text:'日本語 検索'});assert.equal(await evaluate(`${input}.value`),'日本語 検索','選択URLを日本語で置換');
-   await key('Enter','Enter',13);await until('navigationCalls.length===1');await until(`${input}.value.includes('google.com/search')`);
+   await key('Enter','Enter',13);await until('navigationCalls.length===1');await until(`${input}.value.includes('google.com/ai')`);
    assert.equal(await evaluate('navigationCalls[0]'),'日本語 検索');
    await evaluate(`document.querySelector('[aria-label="Google検索"]').focus()`);await key('Tab','Tab',9);assert.equal(await selected(),true,'Tab移動でも全選択');
    await send('Input.insertText',{text:'127.0.0.1:8090'});await key('Enter','Enter',13);await until(`${input}.value==='http://127.0.0.1:8090/'`);

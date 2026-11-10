@@ -20,10 +20,11 @@ const RENDERER_URL = `http://127.0.0.1:${PORT_AVATAR}`;
 
 // 呼出元の cwd を、切り離す前に既存ディレクトリへ正規化する。
 export function parseOptions(args, cwd = process.cwd()) {
-  let alone = false, foreground = false, project;
+  let alone = false, foreground = false, initialPinned = false, project;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--alone') alone = true;
     else if (args[i] === '--foreground') foreground = true;
+    else if (args[i] === '--initial-pinned') initialPinned = true;
     else if (args[i] === '--project' && args[i + 1] && !args[i + 1].startsWith('--')) {
       if (project !== undefined) throw Error('--project は1回だけ指定してください。');
       project = args[++i];
@@ -36,7 +37,7 @@ export function parseOptions(args, cwd = process.cwd()) {
       if (!statSync(project).isDirectory()) throw Error('not directory');
     } catch { throw Error('プロジェクトには存在するフォルダーを指定してください。'); }
   }
-  return { alone, foreground, project };
+  return { alone, foreground, initialPinned, project };
 }
 
 export function availablePort() {
@@ -97,11 +98,14 @@ export async function stopTree(child) {
   });
 }
 
-function electronEnv({ alone, project }, url) {
+function electronEnv({ alone, project, initialPinned }, url) {
   const env = { ...process.env, VITE_DEV_SERVER_URL: url, AIDIY_AVATAR_MANAGED: '1' };
   delete env.AIDIY_AVATAR_ALONE;
   delete env.AIDIY_AVATAR_PROJECT;
   delete env.AIDIY_AVATAR_CORE_URL;
+  // 親の初期ピン指定は継承せず、今回の明示引数だけを使う。
+  delete env.AIDIY_AVATAR_INITIAL_PINNED;
+  if (initialPinned) env.AIDIY_AVATAR_INITIAL_PINNED = '1';
   if (alone) { env.AIDIY_AVATAR_ALONE = '1'; env.AIDIY_AVATAR_PROJECT = project; }
   delete env.ELECTRON_RUN_AS_NODE;
   return env;
@@ -109,7 +113,7 @@ function electronEnv({ alone, project }, url) {
 
 // 前面プロセス本体。renderer と Electron を起動し、表示完了を ready で知らせ、Electron 終了まで所有する。
 export async function runAvatar({
-  alone = false, project, allocatePort = availablePort,
+  alone = false, initialPinned = false, project, allocatePort = availablePort,
   launch = spawn, isOpen = portOpen, build = buildMain, stop = stopTree, ready = () => {},
   electron = require('electron'), vite = join(dirname(require.resolve('vite/package.json')), 'bin', 'vite.js'), timeout = 90000,
 } = {}) {
@@ -127,7 +131,7 @@ export async function runAvatar({
   for (const signal of signals) process.once(signal, interrupted);
   try {
     // 単一起動の所有者を先に確定する。ポート占有だけを起動済みとは判定しない。
-    desktop = launch(electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+    desktop = launch(electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     const code = await new Promise((done, reject) => {
       let primary = false, shown = false, existing = false;
       const fail = error => { if (!ending) reject(error); };
@@ -177,8 +181,8 @@ export async function runAvatar({
 }
 
 // 呼出元から切り離した子プロセスを起動し、表示完了の通知を受けたら戻る。
-export async function launchDetached({ alone = false, project, launch = spawn, stop = stopTree, timeout = 120000, log = console.log } = {}) {
-  const child = launch(process.execPath, [fileURLToPath(import.meta.url), '--foreground', ...(alone ? ['--alone', '--project', project] : [])], {
+export async function launchDetached({ alone = false, initialPinned = false, project, launch = spawn, stop = stopTree, timeout = 120000, log = console.log } = {}) {
+  const child = launch(process.execPath, [fileURLToPath(import.meta.url), '--foreground', ...(initialPinned ? ['--initial-pinned'] : []), ...(alone ? ['--alone', '--project', project] : [])], {
     cwd: root, env: { ...process.env, AIDIY_LAUNCHER_CHILD: '1' }, detached: true, windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
   });
   try {

@@ -28,10 +28,10 @@ export async function openBrowser(path,displayId,win=window,displayUrl='',reuseS
  try{
   const connected=async()=>{
    const status=await win.fetch('/api/connection',{cache:'no-store'}),state=await status.json();
-   if(!status.ok||!state.active||state.mode!=='online'||state.connected!==true)throw Error('tools接続中のみBrowserを起動できます。');
+   if(!status.ok||!state.active)throw Error('利用を開始してください。');
   };
   await connected();
-  let target='https://www.google.com/';
+  let target='http://127.0.0.1:8090/';
   if(displayUrl!==''){
    if(!validSource(path))throw Error('表示URLはプロジェクト内のページ関連ソースで利用できます。');
    target=displayAddress(displayUrl);

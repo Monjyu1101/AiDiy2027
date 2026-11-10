@@ -12,7 +12,7 @@ import {createCoreConnection} from '../viewer/core-connection.mjs';
 const project=fileURLToPath(new URL('../',import.meta.url));
 
 test('BrowserはElectron専用でありWebフォールバック・AI/CLI起動を受け付けない',async()=>{
- for(const flags of [['--browser'],['--no-open'],['--serve'],['--offline'],['--connect'],['--provider','openai'],['--model','auto'],['--cli','codex'],['--cli-auto-approve']])await assert.rejects(launch('browser',flags),/Electron専用/);
+ for(const flags of [['--browser'],['--no-open'],['--serve'],['--connect'],['--provider','openai'],['--model','auto'],['--cli','codex'],['--cli-auto-approve']])await assert.rejects(launch('browser',flags),/Electron専用/);
 });
 
 test('Browserは起動時にtools未接続でも同じセッションを保ち再接続する',async t=>{
@@ -50,4 +50,10 @@ test('Browser配信は共通画面と接続状態を使い、他アプリの開�
  for(const path of ['/api/galaxy','/api/file?path=package.json','/api/explorer'])assert.equal((await get(path)).status,404);
  for(const kind of ['code','live','console'])assert.notEqual((await fetch(new URL('/api/panels/'+kind,app.url),{method:'POST'})).status,200);
  await app.close();assert.ok(closed>=1);
+});
+
+test('Browser --offline starts an active session without checking tools',async t=>{
+ let checks=0;const state={active:true,connected:false,mode:'offline',startedAt:1,project:{path:project}};
+ const app=await startDevelopment(project,{kind:'browser',offline:true,connection:{state:()=>state,connect:async()=>{checks++;},offline:()=>state,close(){}}});t.after(()=>app.close());
+ assert.equal(checks,0);assert.equal((await fetch(new URL('/api/connection',app.url)).then(r=>r.json())).active,true);
 });

@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const {setWindowBounds}=require('../../frontend_ide/デスクトップ/全画面横断.cjs');
-const {表示切替基準を作成}=require('./表示切替位置.cjs');
+const {表示切替基準を作成,初期右下位置}=require('./表示切替位置.cjs');
 
 // 7列384pxからアイコン枠＋間隔1列分（約54px）を減らした6列幅。
 const ミニ幅=330,初期ミニ高さ=134,最小ミニ高さ=80,最大ミニ高さ=360,ミニの余白=8;
@@ -20,7 +20,7 @@ function ミニ表示を作成(window,{screen,位置=表示切替基準を作成
    const origin=window.getBounds();
    return 位置.計算(origin,enabled?{width:ミニ幅,height:最大ミニ高さ}:original?.bounds||origin);
   },
-  set(enabled,{topLeft=false,origin}={}){
+  set(enabled,{initial=false,origin}={}){
    if(typeof enabled!=='boolean'||!window||window.isDestroyed())return false;
    if(enabled===!!original)return true;
    origin=origin||window.getBounds();
@@ -29,10 +29,10 @@ function ミニ表示を作成(window,{screen,位置=表示切替基準を作成
     if(original.maximized)window.unmaximize();
     window.setMinimumSize(ミニ幅,初期ミニ高さ);
     window.setMaximizable(false);
-    // 初期ミニは作業領域の左上角から数px内側に置く。
-    const area=topLeft?screen.getPrimaryDisplay().workArea:null;
+    // 初期ミニだけ作業領域の右下角から8 DIP内側に置く。
+    const area=initial?screen.getPrimaryDisplay().workArea:null;
     const target=位置.計算(origin,{width:ミニ幅,height:初期ミニ高さ});
-    setWindowBounds(window,{...target,...(area?{x:area.x+ミニの余白,y:area.y+ミニの余白}:{})});
+    setWindowBounds(window,area?初期右下位置(area,target,ミニの余白):target);
     if(area)位置.解除();
    }else{
     const saved=original;original=undefined;

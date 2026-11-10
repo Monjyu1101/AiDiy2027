@@ -199,7 +199,7 @@ APIとパス境界は `checks/file-history.test.mjs`、共通読込の失敗と�
 
 `server.mjs` の `/api/preview` はページ関連ソースの保存URLがある場合に `{kind:'analysis',routes,stale,reason}` を返し、無い場合はHTML / Vueだけ従来表示へ進み、JS等はコードのまま保持して起動ボタンを出しません。ファイルビューアはコード表示でも画面URLを示し、複数URLの選択を表示切替後も保持します。解析ダイアログを閉じると同じ対象のURLだけを再取得します。遅い応答・別ファイル・破棄後の結果を表示しないでください。解析URLがIDEと同じoriginを指すiframeには `allow-same-origin` を付けません。
 
-Browserの既存起動APIには省略可能な表示URLを追加します。Webはクリック中に空窓を予約し、元ファイルとtools接続を確認してから遷移します。Electronは信頼済み送信元・プロジェクト実パス・利用セッション・接続を再検査します。URLを開くのは明示操作時だけで、解析はサーバー起動・通信による到達性確認を行いません。
+Browserの既存起動APIには省略可能な表示URLを追加します。Webはクリック中に空窓を予約し、元ファイルと利用開始状態を確認してから遷移します。Electronは信頼済み送信元・プロジェクト実パス・利用セッションを再検査します。URLを開くのは明示操作時だけで、解析はサーバー起動・通信による到達性確認を行いません。
 
 表示URLの回帰確認は `node --test frontend_ide/checks/file-analysis.test.mjs frontend_ide/checks/display-urls.test.mjs frontend_ide/checks/preview-actions.test.mjs frontend_ide/checks/browser-display-url.test.mjs`。実Vueのコード／表示切替・複数画面・保存結果・破棄は `node frontend_ide/scripts/check-display-urls.mjs` の隔離ハーネスで確認します。実AIによるURL推定の正しさや実プロジェクトのログイン・サーバー稼働は、この模擬試験の合格に含めません。
 
@@ -249,7 +249,7 @@ Browserの「AI解析」は「表示中のURL」と「関連ソース」だけ�
 
 Electronで選択HTMLをBrowserへ渡すときの例外は `viewer/登録HTMLルート.mjs` に集約します。作業ルートの `frontend_web/public/` 配下だけを対象に、`src/router/*.ts` の `createStaticAliasRoute` と、登録Vue画面の `frameSrc`（`baseUrl` にHTMLの相対パスを足す形式） を使うiframeを照合します。登録に一致したHTMLだけ、`vite.config.ts` の `PORT_WEB`（既定8090）の対応ルートを開きます。ソースを実行して判定しません。未登録HTML・他フォルダ・コメントアウトされた登録は通常のfile URLです。Webサーバー停止中は理由を表示し、file表示へ暗黙に戻しません。ルート側の認証は通常どおり適用します。判定の検証は `node --test frontend_ide/checks/registered-html.test.mjs`、Electronでの通常HTMLとの切り替えは `node frontend_ide/scripts/check-browser.mjs` で確認します。
 
-Browserの画面は `src/components/ブラウザ/ブラウザパネル.vue`、WebContentsViewは `デスクトップ/ブラウザ.cjs`、CDP中継は `デスクトップ/ブラウザCDP.cjs` が所有します。通常画面・VRの「Browser」とHTML/HTMの「ブラウザ」ボタンから起動します。既存のコード・表示プレビューは維持します。Web起動では新しいタブを開くため、クリック内で空タブを予約してからtools接続とプレビューURLを確認します。
+Browserの画面は `src/components/ブラウザ/ブラウザパネル.vue`、WebContentsViewは `デスクトップ/ブラウザ.cjs`、CDP中継は `デスクトップ/ブラウザCDP.cjs` が所有します。通常画面・VRの「Browser」とHTML/HTMの「ブラウザ」ボタンから起動します。既存のコード・表示プレビューは維持します。Web起動では新しいタブを開くため、クリック内で空タブを予約してから利用開始状態とプレビューURLを確認します。
 
 ### Browserの撮影結果表示
 
@@ -271,7 +271,7 @@ Esc、ボタン再押下、要素の選択完了、ページ遷移・再読込�
 
 全画面の上端ホバーパネルは単独BrowserとIDE所属Browserで共用します。幅は800 DIPを上限とし、狭い画面では既存の左右余白内へ収めます。rendererは固定幅を重ねずnative窓の100%に合わせます。高倍率などで640 CSS px以下になるとタイトル・接続操作・窓操作を別行へ折り返し、ResizeObserverで増えた高さをnative窓へ返します。背景は不透明度10%の淡いシアン、文字は青系で、OSのacrylic/vibrancyや面全体のぼかしは使いません。配色・操作は後述の「Browserの日本語URL表示」に集約します。手動のWeb画面撮影と下書きへの連携は独立した機能として維持します。移動位置はパネルを表示している間だけ維持し、一度収納したら次の表示は現在の画面上端中央へ戻します。F11で入り直した時も同じ位置へ戻します。通常窓の復帰位置やWeb本文のスクロールは変更しません。mainの状態スナップショットには取得順の `stateRevision` を付け、Vueは古い操作応答・通知を無視します。全画面終了の通知を遅い応答で上書きすると通常の操作欄が隠れるため、この順序判定を外さないでください。`checks/browser-fullscreen-state.test.mjs`、`checks/browser-header-style.test.mjs`、`checks/browser-integration-regressions.test.mjs` で遅延応答・F11連打・ヘッダー読込中の終了・移動位置を確認します。ネイティブの透過合成と実際のキー操作は実機で別途確認します。
 
-BrowserはIDEの `active && mode==='online' && connected` を起動前・非同期準備後に照合します。tools切断時は既存ページを保持したまま非表示にして操作を停止し、再接続時に戻します。接続判定の取得元は既存のIDE接続状態です。Electronのファイル選択では `previewFile()` で実パスとプロジェクト境界を確認し、`pathToFileURL()` による絶対パスのfile URLをBrowserへ渡します。アドレス欄・履歴・MCPのURLもfile URLです。日本語・空白・`#`・`%`を含む名前を手動連結せず、相対画像・CSS・リンクはファイル位置を基準に読み込みます。Browserのfile要求とMCPの遷移先はプロジェクト内の実ファイルに限定します。通常Web起動と既存の「表示」プレビューは `/api/preview` の専用配信URLを引き続き使います。外部ページはpreloadなし・Nodeなし・sandbox有効の別WebContentsで、IDEのAPIオリジンへの要求は拒否します。
+BrowserはIDEの `active` と所有者・利用セッションを起動前・非同期準備後に照合します。tools切断時もページ表示・移動・履歴・再読み込み・撮影・要素選択・下書き・保存済み解析からのソース表示を維持します。新しいAI解析とCDP/MCPだけは `active && mode==='online' && connected` を必要とします。通常欄・F11ヘッダーの接続バーは実際のtools接続状態を表示します。解析子窓は保存結果と対象URLを保持して接続通知・定期確認を購読し、未接続中の新規依頼を止め、古い初回応答で接続状態を上書きしません。単独版の `--offline` は疎通確認なしで利用開始し、通常起動の初回tools接続失敗では同じセッションで再接続します。ホームと初期URLは `http://127.0.0.1:8090/`、検索語は `https://www.google.com/ai?q=` にUTF-8で符号化して渡します。明示URLの扱いは変更しません。Electronのファイル選択では `previewFile()` で実パスとプロジェクト境界を確認し、`pathToFileURL()` による絶対パスのfile URLをBrowserへ渡します。アドレス欄・履歴・MCPのURLもfile URLです。日本語・空白・`#`・`%`を含む名前を手動連結せず、相対画像・CSS・リンクはファイル位置を基準に読み込みます。Browserのfile要求とMCPの遷移先はプロジェクト内の実ファイルに限定します。通常Web起動と既存の「表示」プレビューは `/api/preview` の専用配信URLを引き続き使います。外部ページはpreloadなし・Nodeなし・sandbox有効の別WebContentsで、IDEのAPIオリジンへの要求は拒否します。
 
 IDE配下のMCP sessionはBrowser窓ごとの `aidiy_ide N` です。`backend_tools/temp/_ide_browser_sessions/` の排他的な登録で全IDEから見た最小の空き正整数を確保し、窓の終了で解放します。1・2・3から2を閉じて追加すれば2を再利用します。`record.slot=N-1` とタイトル **AiDiy IDE / Browser N** を同じ番号へ揃え、別の表示用番号を採番しません。Codeの番号はIDEごとですが、MCP session名は全IDE共通なのでBrowserの採番だけはIDEをまたいで一意にします。起動元・作業セッション・寿命はCodeと同様に `record.owner` / `linkKey` で管理し、IDEの利用終了・所有IDE終了では所属Browser全窓を回収します。MCPの `close_session` / `delete_session` は指定したBrowserだけを閉じ、他BrowserやIDEプロセスを終了しません。
 

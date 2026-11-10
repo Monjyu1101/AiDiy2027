@@ -74,19 +74,19 @@ test('Windows EOF stdin no longer exits; IPC starts a secure Electron window',as
  f.proc.emit('disconnect');assert.equal(f.app.quitting,true);
 });
 
-test('Tools 8095 open starts mini at primary work-area top-left before show, while closed/unknown use normal',async()=>{
+test('Tools 8095 open starts mini at primary work-area bottom-right before show, while closed/unknown use normal',async()=>{
  for(const toolsOpen of [true,false,null]){
   const f=await mainFixture({toolsOpen,opening:window=>{
-   if(toolsOpen===true){assert.equal(window.bounds.width,330);assert.equal(window.bounds.height,134);assert.equal(window.bounds.x,8);assert.equal(window.bounds.y,36);assert.equal(window.top,false);}
+   if(toolsOpen===true){assert.equal(window.bounds.width,330);assert.equal(window.bounds.height,134);assert.equal(window.bounds.x,1582);assert.equal(window.bounds.y,938);assert.equal(window.top,false);}
    else assert.equal(window.bounds,undefined);
    window.show();return true;
   }});
   f.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));
   assert.equal(JSON.stringify(f.options.webPreferences.additionalArguments),JSON.stringify(toolsOpen===true?['--aidiy-diag-initial-mini']:[]));
-  // 通常表示はミニの左上角より48px内側から始める。
-  assert.equal(f.options.x,48);assert.equal(f.options.y,76);
+  // 通常表示は右下から48 DIP内側で始める。
+  assert.equal(f.options.x,1072);assert.equal(f.options.y,432);
   assert.equal(f.win.shown,true);assert.equal(f.sent.at(-1).type,'diag-shown');
-  if(toolsOpen===true){const event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};f.handlers['diag:window'](event,'startMini',false);assert.equal(f.win.bounds.width,800);assert.equal(f.win.bounds.x,8);assert.equal(f.win.top,false);}
+  if(toolsOpen===true){const event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};f.handlers['diag:window'](event,'startMini',false);assert.equal(f.win.bounds.width,800);assert.equal(f.win.bounds.x,1112);assert.equal(f.win.top,false);}
  }
 });
 test('initial mini accepts renderer height during loading and later reload restores the normal window',async()=>{
@@ -94,13 +94,13 @@ test('initial mini accepts renderer height during loading and later reload resto
  const f=await mainFixture({toolsOpen:true,load:()=>new Promise(resolve=>loaded=resolve)});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
- assert.deepEqual(f.win.getBounds(),{x:8,y:36,width:330,height:134});assert.equal(f.openings.length,0);
+ assert.deepEqual(f.win.getBounds(),{x:1582,y:938,width:330,height:134});assert.equal(f.openings.length,0);
  assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);
  assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.bounds.height,186);
  loaded();await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.win.bounds.height,186,'loadURL完了後に初回の測定高さを上書きしない');assert.equal(f.openings.length,1);assert.equal(f.win.shown,true);
  f.win.webContents.emit('did-start-loading');
- assert.deepEqual(f.win.getBounds(),{x:8,y:36,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
+ assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  assert.equal(control(event,'resizeMini',200),false);assert.equal(f.win.bounds.height,600);
  f.win.webContents.emit('did-start-loading');assert.equal(f.win.bounds.height,600,'初回ミニを再読込で復活させない');
 });
@@ -120,7 +120,7 @@ test('mini height stays stable during opening and applies only the latest valid 
  for(const height of [186,200,186]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,134);}
  assert.equal(control(event,'resizeMini',361),false);assert.equal(control(event,'resizeMini','200'),false);assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);
  finish(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.bounds.height,186);assert.deepEqual(f.win.minimum,[330,186]);
- control(event,'startMini',false);assert.deepEqual(f.win.getBounds(),{x:8,y:36,width:800,height:600});
+ control(event,'startMini',false);assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});
 });
 test('leaving mini during opening discards a queued height rather than changing normal bounds',async()=>{
  for(const exit of ['restore','reload']){
@@ -131,7 +131,7 @@ test('leaving mini during opening discards a queued height rather than changing 
   assert.equal(control(event,'resizeMini',200),true);
   if(exit==='restore')control(event,'startMini',false);else f.win.webContents.emit('did-start-loading');
   assert.equal(control(event,'resizeMini',186),false);
-  finish(true);await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.win.getBounds(),{x:8,y:36,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
+  finish(true);await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  }
 });
 test('Mac has a minimal named menu and Dock close keeps the running-process confirmation',async()=>{

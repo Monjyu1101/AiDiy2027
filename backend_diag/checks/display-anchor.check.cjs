@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {表示切替位置,角判定距離}=require('../起動/表示切替位置.cjs');
+const {初期右下位置,表示切替位置,角判定距離}=require('../起動/表示切替位置.cjs');
 const area={x:0,y:28,width:1920,height:1012};
 const screen={getDisplayMatching:()=>({workArea:area,scaleFactor:1.25})};
 const size={width:330,height:186};
@@ -56,4 +56,11 @@ test('画面情報なしは左肩維持、アイコンだけの画面内補正�
  const origin={x:-10,y:10,width:800,height:600};
  for(const missing of [undefined,{}, {getDisplayMatching:()=>({workArea:{x:0,y:0}})}])assert.deepEqual(表示切替位置(origin,size,missing),{x:-10,y:10,...size});
  assert.deepEqual(表示切替位置(origin,size,screen,{画面内:true}),{x:0,y:28,...size});
+});
+
+ test('初期右下位置は作業領域の原点とDIPを使い、小画面で左上を保つ',()=>{
+ for(const area of [{x:0,y:28,width:1920,height:1052},{x:-1920,y:-1040,width:1920,height:1040}])for(const margin of [8,48]){
+  const size={width:330,height:134};assert.deepEqual(初期右下位置(area,size,margin),{x:area.x+area.width-size.width-margin,y:area.y+area.height-size.height-margin,...size});
+ }
+ assert.deepEqual(初期右下位置({x:-500,y:32,width:400,height:300},{width:800,height:600},48),{x:-500,y:32,width:800,height:600});
 });

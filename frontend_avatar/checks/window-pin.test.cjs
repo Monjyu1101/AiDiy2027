@@ -33,7 +33,7 @@ function transportFixture() {
   return exports;
 }
 
-function mainFixture(alone = false) {
+function mainFixture(alone = false, initialPinned = false) {
   const windows = [], handlers = new Map(), syncHandlers = new Map(), networkHooks = {};
   let ready;
   class Window extends EventEmitter {
@@ -109,7 +109,7 @@ function mainFixture(alone = false) {
   };
   const context = {
     __dirname: path.join(project, 'dist-electron'), exports: {}, console, URL,
-    process: { platform: 'win32', env: alone ? { AIDIY_AVATAR_ALONE: '1', AIDIY_AVATAR_PROJECT: '/fixture/selected', VITE_DEV_SERVER_URL: 'http://127.0.0.1:19092/' } : {} },
+    process: { platform: 'win32', env: { AIDIY_AVATAR_INITIAL_PINNED: initialPinned ? '1' : undefined, ...(alone ? { AIDIY_AVATAR_ALONE: '1', AIDIY_AVATAR_PROJECT: '/fixture/selected', VITE_DEV_SERVER_URL: 'http://127.0.0.1:19092/' } : {}) } },
     require: id => id === 'node:fs' ? { ...fs, mkdirSync() {}, realpathSync: value => value, statSync: () => ({ isDirectory: () => true }) } : id === 'electron' ? electron
       : id === './alone-transport' ? transportFixture()
       : id.endsWith('project-storage.cjs') ? {...load(id),preparePrivateDirectory(){}} : id.endsWith('window-opening.cjs') ? { 拡大表示: async (_Constructor, window, options) => {
@@ -370,4 +370,28 @@ test('Alone main/preload: core and settings only, safe synchronous metadata and 
   const before = f.windows.length;
   f.raw('settings:open', invalid); assert.equal(f.windows.length, before);
   core.close(); assert.equal(f.app.quitCalls, 1, 'core close quits even with settings open');
+});
+
+
+test('IDE起動の初回コアだけピンON、単独はOFF、解除後の再表示・再生成では戻さない', async () => {
+  for (const initialPinned of [false, true]) {
+    const f = mainFixture(true, initialPinned);
+    await flush();
+    const core = f.windows[0];
+    assert.equal(core.pinned, initialPinned);
+    if (initialPinned) f.invoke('window:toggle-pin', core);
+    assert.equal(core.pinned, false);
+    f.createCoreWindow();
+    await f.openCoreWindow();
+    await f.openLoginWindow();
+    await f.ウィンドウ表示(core);
+    assert.equal(core.pinned, false);
+    f.app.emit('second-instance');
+    assert.equal(core.pinned, false, '再起動要求でピンを上書きしない');
+    f.openSettingsWindow('fixture');
+    await flush();
+    assert.equal(f.windows[1].pinned, false);
+    core.close();
+    assert.equal(f.createCoreWindow(false).pinned, false);
+  }
 });

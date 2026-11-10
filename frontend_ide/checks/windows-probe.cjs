@@ -73,7 +73,7 @@ app.on('browser-window-created',(_event,dev)=>{
   // rendererの通知がなくても、IDEのセッション終了をメイン側が検知する。
   await fetch(process.env.AIDIY_DEVELOPMENT_URL+'api/connection/disconnect',{method:'POST'});
   await until(()=>code.isDestroyed());
-  await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.component-toolbar button')).some(b=>b.textContent==='AiDiy接続利用')`));
+  await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.ide-start-actions button')).some(b=>b.textContent==='AiDiy接続利用')`));
   await evaluate(dev,`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='AiDiy接続利用').click()`);
   await until(async()=>await evaluate(dev,`document.querySelectorAll('.ai-launchers button').length===4`));
   const liveResults=await evaluate(dev,`Promise.all(Array.from({length:5},()=>window.aidiyWindow.openApp('live')))`);
@@ -121,7 +121,7 @@ app.on('browser-window-created',(_event,dev)=>{
   await fetch(process.env.AIDIY_DEVELOPMENT_URL+'api/connection/disconnect',{method:'POST'});
   await until(()=>live.isDestroyed());
   await until(async()=>{try{await fetch(liveUrl);return false;}catch{return true;}});
-  await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.component-toolbar button')).some(b=>b.textContent==='オフライン利用')`));
+  await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.ide-start-actions button')).some(b=>b.textContent==='オフライン利用')`));
   await evaluate(dev,`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='オフライン利用').click()`);
   await until(async()=>await evaluate(dev,`!!document.querySelector('.ai-launchers')`));
   assert.equal((await evaluate(dev,`window.aidiyWindow.openApp('code')`)).ok,true);
@@ -140,7 +140,7 @@ app.on('browser-window-created',(_event,dev)=>{
   else{
    await evaluate(dev,`Array.from(document.querySelectorAll('.component-toolbar button')).find(b=>b.textContent==='終了').click();true`);
    await until(()=>children.every(window=>window.isDestroyed()));
-   await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.component-toolbar button')).some(b=>b.textContent==='AiDiy接続利用'&&!b.disabled)`));
+   await until(async()=>await evaluate(dev,`Array.from(document.querySelectorAll('.ide-start-actions button')).some(b=>b.textContent==='AiDiy接続利用'&&!b.disabled)`));
    assert.equal(dev.isDestroyed(),false);dev.close();
   }
  }catch(error){console.error(error);app.exit(1);}

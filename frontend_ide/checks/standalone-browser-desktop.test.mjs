@@ -22,7 +22,7 @@ const {projectIdentity,projectProfile}=profiles;
 const require=createRequire(import.meta.url),desktopPath=fileURLToPath(new URL('../desktop.cjs',import.meta.url));
 const desktopRequire=createRequire(desktopPath),desktopSource=readFileSync(desktopPath,'utf8');
 
-function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,startupURL=async()=>'https://www.google.com/'}){
+function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,startupURL=async()=>browser.HOME}){
  const app=new EventEmitter(),process=new EventEmitter(),windows=[],messages=[],paths={appData,temp:appData},order=[],startupRequests=[],navigation=[];
  const ipcMain=new EventEmitter(),handlers=new Map();ipcMain.handle=(name,handler)=>handlers.set(name,handler);
  let ready=Promise.resolve(),connected=true,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page){pages.push({record,page});},close(){bridgeClosed++;}};
@@ -50,7 +50,7 @@ function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',a
  const area={x:0,y:0,width:1920,height:1080};
  const electron={app,BrowserWindow:Window,ipcMain,shell:{},dialog:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:Object.assign(new EventEmitter(),{getCursorScreenPoint:()=>({x:0,y:0}),getDisplayNearestPoint:()=>({workArea:area}),getDisplayMatching:()=>({workArea:area})})};
  const load=name=>name==='electron'?electron:name==='./host/scripts/window-opening.cjs'?{拡大表示:async(_type,window)=>{window.show();window.focus();return true;}}
-  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode:'online',connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target)=>{const page=Object.assign(new EventEmitter(),{isDestroyed:()=>record.window.isDestroyed(),url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});record.window.once('closed',()=>page.emit('destroyed'));return page;},navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value)=>availability.push({record,value}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
+  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode:'online',connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target)=>{const page=Object.assign(new EventEmitter(),{isDestroyed:()=>record.window.isDestroyed(),url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});record.window.once('closed',()=>page.emit('destroyed'));return page;},navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value,connected)=>availability.push({record,value,connected}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
  const api=vm.runInNewContext(`(function(require,__dirname,process){${desktopSource}\nreturn{createWindow,records:windows,checkChildren,checkStandaloneBrowser};})`,{console,setInterval,clearInterval,URL})(load,dirname(desktopPath),process);
  return{...api,app,process,windows,messages,paths,order,pages,startupRequests,navigation,availability,bridges,setConnected(value){connected=value;},setActive(value){active=value;},setStartedAt(value){startedAt=value;},get bridgeOptions(){return bridgeOptions;},get bridgeClosed(){return bridgeClosed;},ready:()=>ready,request:(name,window,...args)=>handlers.get(name)({sender:window.webContents,senderFrame:window.webContents.mainFrame},...args)};
 }
@@ -70,7 +70,10 @@ test('Standalone Browser: 専用プロファイル、共有CDP、最終窓終了
  a.setConnected(false);assert.equal(await a.bridgeOptions.canUse(),false);
  assert.equal((await a.request('development:browser-action',a.windows[0],'size','portrait')).ok,true);
  assert.equal((await a.request('development:browser-action',a.windows[0],'fullscreen')).ok,true);
- assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,false);
+ assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,true);
+ for(const action of ['back','forward','reload','stop','capture','element-toggle','draft','open-draft'])assert.equal((await a.request('development:browser-action',a.windows[0],action)).ok,true,action);
+ assert.equal((await a.request('development:browser-action',a.windows[0],'open-analysis')).ok,false);
+ a.setActive(false);assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,false);a.setActive(true);
  await assert.rejects(a.bridgeOptions.openPanel('https://example.com/'),/tools/);
  a.setConnected(true);assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,true);
  a.windows[0].destroy();await new Promise(resolve=>setImmediate(resolve));assert.equal(a.bridgeClosed,0);assert.equal(await a.bridgeOptions.canUse(),true);
@@ -80,7 +83,7 @@ test('Standalone Browser: 専用プロファイル、共有CDP、最終窓終了
 
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 
-for(const running of [true,false])test(`Standalone Browser: frontend_web${running?'起動中は8090':'未起動はGoogle'}、明示URLとIDE起動は維持`,async t=>{
+for(const running of [true,false])test(`Standalone Browser: frontend_web${running?'起動中は8090':'未起動でも8090'}、明示URLとIDE起動は維持`,async t=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-browser-startup-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  const startupURL=()=>browser.browserStartupURL(async()=>{if(!running)throw Error('ECONNREFUSED');return{ok:true,status:200};});
  const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL});await a.ready();
@@ -107,7 +110,7 @@ test('Standalone Browser: 初期URL確認中のTools切断を確認後の状態�
  const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL:()=>new Promise(resolve=>{finish=resolve;})});
  t.after(()=>a.app.quit());await settle();assert.equal(typeof finish,'function');
  a.setConnected(false);finish('http://127.0.0.1:8090/');await a.ready();
- assert.equal(a.availability.at(-1).value,false);
+ assert.equal(a.availability.at(-1).value,true);assert.equal(a.availability.at(-1).connected,false);
  assert.equal(a.pages[0].page.getURL(),'http://127.0.0.1:8090/');
  assert.equal(a.startupRequests.length,1);
 });
@@ -120,7 +123,7 @@ test('Standalone Browser: 初期URL確認中に閉じた窓へ遅い結果を適
  const pending=a.createWindow('browser','http://127.0.0.1:12345/#browser');
  await settle();assert.equal(typeof finish,'function');
  const window=a.windows.at(-1);window.destroy();finish('http://127.0.0.1:8090/');
- await assert.rejects(pending,/tools/);
+ await assert.rejects(pending,/利用/);
  assert.equal(a.pages.length,0);
  assert.equal(a.records.has(window.webContents),false);
  assert.equal(a.bridgeClosed,1);
@@ -149,8 +152,8 @@ test('AI解析の表示URL: 同じIDEのBrowserが0枚なら起動、1枚なら�
  children()[1].window.destroy();children()[1].window.destroy();assert.equal(children().length,1);
  assert.equal((await open(next)).reused,true);assert.equal(children()[0],original);
  const before=a.navigation.length;
- a.setConnected(false);assert.equal((await open(first)).ok,false);assert.equal(a.navigation.length,before);assert.equal(children().length,1);
- a.setConnected(true);assert.equal((await open('javascript:alert(1)')).ok,false);assert.equal(a.navigation.length,before);
+ a.setConnected(false);assert.equal((await open(first)).ok,true);assert.equal(a.navigation.length,before+1);assert.equal(children().length,1);
+ a.setConnected(true);assert.equal((await open('javascript:alert(1)')).ok,false);assert.equal(a.navigation.length,before+1);
 });
 
 test('AI解析の表示URL: 他IDE・単独Browser・旧セッションの窓を数えず変更しない',async t=>{
@@ -180,12 +183,12 @@ test('AI解析の表示URL: 同時要求で準備中の1枚を待ち、待機中
  const [first,second]=await Promise.all([open('https://example.test/1'),open('https://example.test/2')]);
  assert.equal(first.ok,true);assert.equal(second.reused,true);assert.equal(children().length,1);
  assert.equal(a.pages[0].page.getURL(),'https://example.test/2');
- for(const change of ['disconnect','session','owner']){
+ for(const change of ['inactive','session','owner']){
   const record=children()[0];let finish;record.browserReady=new Promise(resolve=>{finish=resolve;});
   const count=a.navigation.length,request=open('https://example.test/stale');await settle();
-  if(change==='disconnect')a.setConnected(false);else if(change==='session')a.setStartedAt(2);else owner.revision++;
+  if(change==='inactive')a.setActive(false);else if(change==='session')a.setStartedAt(2);else owner.revision++;
   finish(true);assert.equal((await request).ok,false);assert.equal(a.navigation.length,count);
-  a.setConnected(true);a.setStartedAt(1);
+  a.setActive(true);a.setConnected(true);a.setStartedAt(1);
  }
  let finish;const record=children()[0];record.browserReady=new Promise(resolve=>{finish=resolve;});
  const pending=open('https://example.test/multiple');await settle();

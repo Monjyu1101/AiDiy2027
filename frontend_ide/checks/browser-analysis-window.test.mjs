@@ -16,7 +16,7 @@ function fixture(){
  const windows=[];let nextLoad=Promise.resolve(),target={url:'https://example.test/form',title:'入力画面'};
  const parent=Object.assign(new EventEmitter(),{isDestroyed:()=>false,isFullScreen:()=>false,getBounds:()=>({x:20,y:30,width:1200,height:800}),getContentBounds:()=>({x:20,y:30,width:1200,height:800}),webContents:Object.assign(new EventEmitter(),{getZoomFactor:()=>1.25,send(){}}),contentView:{addChildView(){}}});
  class Window extends EventEmitter{
-  constructor(options){super();this.options=options;this.destroyed=false;this.shown=0;this.focused=0;this.load=nextLoad;windows.push(this);this.webContents=Object.assign(new EventEmitter(),{mainFrame:{url:''},setZoomFactor:value=>{this.zoom=value;},setWindowOpenHandler:handler=>{this.newWindow=handler;}});}
+  constructor(options){super();this.options=options;this.destroyed=false;this.shown=0;this.focused=0;this.load=nextLoad;windows.push(this);this.webContents=Object.assign(new EventEmitter(),{mainFrame:{url:''},send(){},setZoomFactor:value=>{this.zoom=value;},setWindowOpenHandler:handler=>{this.newWindow=handler;}});}
   loadURL(url){this.url=url;return this.load.then(()=>{this.webContents.mainFrame.url=url;});}
   isDestroyed(){return this.destroyed;}
   show(){this.shown++;}

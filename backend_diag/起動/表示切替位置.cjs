@@ -7,6 +7,10 @@
 
 // Electron の座標・寸法・作業領域はすべて DIP。倍率を重ねて適用しない。
 const 角判定距離=96;
+// 初回だけ作業領域の右下へ配置する。小さい画面でも左上の操作領域は隠さない。
+function 初期右下位置(area,size,margin){
+ return {x:Math.max(area.x,area.x+area.width-size.width-margin),y:Math.max(area.y,area.y+area.height-size.height-margin),width:size.width,height:size.height};
+}
 function 角を選ぶ(origin,area){
  if(!area)return null;
  const left=origin.x-area.x,top=origin.y-area.y,right=area.x+area.width-origin.x-origin.width,bottom=area.y+area.height-origin.y-origin.height;
@@ -54,4 +58,4 @@ function 表示切替基準を作成(screen){
   解除(){reference=input=actual=area=undefined;},
  };
 }
-module.exports={表示切替位置,表示切替基準を作成,角判定距離};
+module.exports={初期右下位置,表示切替位置,表示切替基準を作成,角判定距離};

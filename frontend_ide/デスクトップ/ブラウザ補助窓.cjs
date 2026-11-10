@@ -34,6 +34,6 @@ function createBrowserChildWindows({BrowserWindow,screen,context,title,hash,maxW
   entry.ready=Promise.resolve().then(()=>window.loadURL(url)).then(()=>{if(!window.isDestroyed()&&!parent.isDestroyed()){window.show();window.focus();}}).catch(error=>{if(!window.isDestroyed())window.destroy();throw error;});
   await entry.ready;
  }
- return{open,close,isOpen:record=>entries.has(record),trusted,hasSender:sender=>senders.has(sender),context:event=>trusted(event)?senders.get(event.sender).context:null};
+ return{open,close,notify(record,channel,value){const entry=entries.get(record);if(entry&&!entry.window.isDestroyed())entry.window.webContents.send(channel,value);},isOpen:record=>entries.has(record),trusted,hasSender:sender=>senders.has(sender),context:event=>trusted(event)?senders.get(event.sender).context:null};
 }
 module.exports={createBrowserChildWindows};

@@ -30,13 +30,13 @@ test('保存した表示URL: Electronはページ関連ソースだけにURLを�
  for(const path of ['a.js','a.tsx','a.svelte']){assert.equal(await browser.browserOpenable(path),false);assert.equal(await browser.browserOpenable(path,target),true);}
  assert.equal(await browser.browserOpenable('a.mp3',target),false);
 });
-function fixture({online=true,source=true,preview={url:'https://example.com/default'},disconnect=false}={}){
+function fixture({online=true,source=true,preview={url:'https://example.com/default'},disconnect=false,active=true}={}){
  const calls=[],navigation=[];
  const popup={opener:{},closed:false,location:{replace(url){navigation.push(url);}},close(){this.closed=true;}};
  let statuses=0;
  const win={open(url){calls.push(['open',url]);return popup;},async fetch(url){
   calls.push(['fetch',url]);
-  if(url==='/api/connection')return{ok:true,json:async()=>({active:true,mode:online?'online':'offline',connected:online&&!(disconnect&&++statuses>1)})};
+  if(url==='/api/connection')return{ok:true,json:async()=>({active,mode:online?'online':'offline',connected:online&&!(disconnect&&++statuses>1)})};
   if(url.startsWith('/api/file?'))return{ok:source};
   return{ok:true,json:async()=>preview};
  }};
@@ -61,8 +61,8 @@ test('AI解析の表示URL: preloadは限定IPCへ再利用指定を渡し、従
  assert.equal((await api.openBrowser('a.vue',undefined,target)).ok,true);
  assert.deepEqual(calls,[['development:open-browser','a.vue',undefined,target,true],['development:open-browser','a.vue',undefined,target,false]]);
 });
-test('保存した表示URL: 不正入力・対象外ファイル・ファイル消失・オフラインでは遷移せず予約窓を閉じる',async()=>{
- for(const [path,url,options] of [...badURLs.map(url=>['a.html',url,{}]),...['a.mp3','../a.vue','/a.vue','a.txt',undefined].map(path=>[path,target,{}]),['a.vue',target,{source:false}],['a.vue',target,{online:false}],['a.vue',target,{disconnect:true}]]){
+test('保存した表示URL: 不正入力・対象外ファイル・ファイル消失・利用終了では遷移せず予約窓を閉じる',async()=>{
+ for(const [path,url,options] of [...badURLs.map(url=>['a.html',url,{}]),...['a.mp3','../a.vue','/a.vue','a.txt',undefined].map(path=>[path,target,{}]),['a.vue',target,{source:false}],['a.vue',target,{active:false}]]){
   const f=fixture(options);assert.equal((await openBrowser(path,undefined,f.win,url)).ok,false,`${path} ${url}`);
   assert.deepEqual(f.navigation,[]);assert.equal(f.popup.closed,true);
  }
@@ -99,8 +99,8 @@ test('表示URL IPC: 信頼済みIDE・元の画面ID・接続再確認を保ち
  assert.equal(created[0][6],7);assert.equal(created[0][7],normalized);assert.equal(selected[0],7);
  created.length=0;
  for(const invalid of badURLs)assert.equal((await handler({},'a.vue',undefined,invalid)).ok,false);
- offline=true;assert.equal((await handler({},'a.vue',undefined,target)).ok,false);offline=false;
- disconnect=true;status=0;assert.equal((await handler({},'a.vue',undefined,target)).ok,false);disconnect=false;
+ offline=true;assert.equal((await handler({},'a.vue',undefined,target)).ok,true);offline=false;created.length=0;
+ disconnect=true;status=0;assert.equal((await handler({},'a.vue',undefined,target)).ok,true);disconnect=false;created.length=0;
  source={kind:'viewer',owner,window:owner.window,linkKey:'session'};
  assert.equal((await handler({},'a.vue',7,target)).ok,false);
  source=null;assert.equal((await handler({},'a.vue',undefined,target)).ok,false);
@@ -114,3 +114,5 @@ test('ソース→画面URL: WebはJS/TS等の選択URLを維持し、宣言フ�
  }
  const f=fixture();assert.equal((await openBrowser('types.d.ts',undefined,f.win,target)).ok,false);assert.deepEqual(f.navigation,[]);
 });
+
+test('Web Browser opens saved URL offline and through tools loss',async()=>{for(const options of [{online:false},{disconnect:true}]){const f=fixture(options);assert.equal((await openBrowser('a.vue',undefined,f.win,target)).ok,true);assert.deepEqual(f.navigation,[normalized]);}});

@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {previewFile,validPreviewPath}=require('./native-preview-actions.cjs');
-function createBrowserSourceSelection({trustedEvent,readState,sessionKey,connected,context,focusWindow,isQuitting=()=>false,fetcher=fetch}){
+function createBrowserSourceSelection({trustedEvent,readState,sessionKey,context,focusWindow,isQuitting=()=>false,fetcher=fetch}){
  const pending=new WeakSet();
  return async function select(event,value){
   const source=trustedEvent(event),owner=source?.owner;
@@ -13,7 +13,7 @@ function createBrowserSourceSelection({trustedEvent,readState,sessionKey,connect
   if(pending.has(source))return{ok:false,error:'ファイルを選択中です。'};
   const revision=owner.revision;
   const current=()=>!isQuitting()&&trustedEvent(event)===source&&!source.window.isDestroyed()&&!owner.window.isDestroyed()&&source.owner===owner&&owner.revision===revision&&context(source)?.url===value.url;
-  const active=state=>current()&&state?.active&&connected(state)&&typeof state.project?.path==='string'&&source.linkKey===sessionKey(state);
+  const active=state=>current()&&state?.active&&typeof state.project?.path==='string'&&source.linkKey===sessionKey(state);
   pending.add(source);
   try{
    const state=await readState(owner);if(!active(state))throw Error('IDEの利用状態や表示ページが変わりました。');

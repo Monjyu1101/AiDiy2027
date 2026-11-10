@@ -35,7 +35,7 @@ test('Browser URL表示: ASCII・authority・不正UTF8・制御/不可視/紛�
 });
 test('Browser URL入力: 日本語で始まる語と通常の検索語はGoogle、アドレスはそのまま開く',()=>{
  for(const query of ['日本語','かな カタカナ','日本語.example','検索: 今日の天気','東京/京都','AiDiy Browser','　日本語 検索　']){
-  assert.equal(browser.browserURL(query),browser.HOME+'search?q='+encodeURIComponent(query.trim()),query);
+  assert.equal(browser.browserURL(query),'https://www.google.com/ai?q='+encodeURIComponent(query.trim()),query);
  }
  for(const [input,target] of [
   ['127.0.0.1:8090','http://127.0.0.1:8090/'],['localhost:8090/','http://localhost:8090/'],
@@ -95,7 +95,7 @@ test('Browser実コンポーネント: フォーカス全選択と日本語IME�
   input().props.onKeydown({key:'Enter',preventDefault(){prevented++;}});assert.equal(prevented,3,'通常Enterはフォーム送信へ進む');
   form().props.onSubmit({preventDefault(){}});await flush();
   assert.deepEqual(f.calls.filter(([name])=>name==='navigate'),[['navigate','日本語 検索']]);
-  assert.equal(f.state.page.value.url,browser.HOME+'search?q='+encodeURIComponent('日本語 検索'));
+  assert.equal(f.state.page.value.url,'https://www.google.com/ai?q='+encodeURIComponent('日本語 検索'));
   input().props.onBlur();input().props.onFocus(focus);assert.equal(selections,2,'再フォーカスでも全選択する');
   input().props.onCompositionstart();input().props.onBlur();input().props.onFocus(focus);
   input().props['onUpdate:modelValue']('127.0.0.1:8090');form().props.onSubmit({preventDefault(){}});await flush();

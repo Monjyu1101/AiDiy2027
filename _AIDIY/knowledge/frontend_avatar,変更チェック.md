@@ -179,7 +179,8 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 `frontend_avatar/_setup.py` の既存ランチャー登録で、`aidiy_avatar` と一緒に `aidiy_avatar_alone` を登録します。setup / start の案内項目は増やしません。
 
 - `aidiy_avatar_alone --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
-- IDE は `node frontend_avatar/launch.mjs --alone --project <絶対フォルダー> --foreground` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
+- IDE は `node frontend_avatar/launch.mjs --alone --project <絶対フォルダー> --foreground --initial-pinned` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
+- `--initial-pinned` は最初に作るコア窓だけをピンONにします。通常の単独起動はOFFで、親環境の初期ピン値は継承しません。利用者が解除した後の再表示や既存インスタンスの再利用では上書きしません。`node --test frontend_avatar/checks/launch.test.mjs frontend_avatar/checks/window-pin.test.cjs frontend_ide/checks/avatar-launch.test.cjs` で確認します。
 - 画面表示完了時だけ `{launchReady:true}` を返します。重複起動は `{launchReady:true,existingWindow:true}`、起動失敗は `{launchError:メッセージ}` または非0終了です。ready後のIPC切断は終了要求ではありません。
 - foregroundプロセスはElectron終了まで残ります。POSIXではSIGTERM、IDEのWindows終了時は所有PIDへのtaskkill /TでElectronとrendererを回収します。既存ウィンドウの重複起動ではrendererを追加起動しません。
 - 単独版のrendererはloopbackの空きポートとVite `avatar-alone` modeを使い、`--strictPort` で別ポートへ逃げません。通常版の8092は変更しません。

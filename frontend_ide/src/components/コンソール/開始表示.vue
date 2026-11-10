@@ -24,5 +24,6 @@ const lines = {
     <p class="welcome-eyebrow"><span class="welcome-type"><span class="welcome-text">{{ lines[routing && kind === 'navi' ? 'route' : kind][0] }}</span></span></p>
     <h1><span class="welcome-type"><span class="welcome-text">{{ lines[routing && kind === 'navi' ? 'route' : kind][1] }}</span></span></h1>
     <p class="welcome-caption"><span class="welcome-type"><span class="welcome-text">{{ lines[routing && kind === 'navi' ? 'route' : kind][2] }}</span></span></p>
+    <slot name="actions" />
   </div>
 </template>

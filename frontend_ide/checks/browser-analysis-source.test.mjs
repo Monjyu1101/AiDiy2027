@@ -34,9 +34,11 @@ test('Browser context uses native page and no longer accepts the page-hiding dra
  const record={kind:'browser',window,url:'http://127.0.0.1:12345/',owner:{kind:'ide',window:{isDestroyed:()=>false}}};
  const browser=createBrowserViews({WebContentsView:View,projectRoot:'/tmp/project',session:{fromPartition:()=>({setPermissionRequestHandler(){},setPermissionCheckHandler(){},webRequest:{onBeforeRequest(){}}})},trustedEvent:event=>event.record});
  browser.attach(record,'https://example.test/page');t.after(()=>window.emit('closed'));
- assert.deepEqual((await browser.action({record},'analysis-context',{url:'https://forged.test/'})).context,{url:'https://example.test/page',title:'実際の画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true});
+ assert.deepEqual((await browser.action({record},'analysis-context',{url:'https://forged.test/'})).context,{connected:true,available:true,url:'https://example.test/page',title:'実際の画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true});
  assert.equal((await browser.action({record:{kind:'browser'}},'analysis-context')).ok,false);
  await browser.action({record},'bounds',{left:0,top:100,width:800,height:500,viewportWidth:800,viewportHeight:600});
  assert.equal(view.visible,true);assert.equal((await browser.action({record},'draft-dialog',true)).ok,false);assert.equal(view.visible,true);
  delete record.owner;assert.equal((await browser.action({record},'analysis-context')).context.canSelectSource,false);
 });
+
+test('saved source remains selectable with tools offline',async t=>{const f=await fixture(t);f.setState({active:true,connected:false,mode:'online',startedAt:10,project:{path:f.root}});assert.equal((await f.select()).ok,true);f.setState({active:false,connected:false,mode:'online',startedAt:10,project:{path:f.root}});assert.equal((await f.select()).ok,false);});

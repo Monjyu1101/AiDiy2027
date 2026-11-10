@@ -52,7 +52,7 @@ for(const fullscreen of [false,true])for(const elementMode of [false,true])test(
  assert.equal((await f.browser.action(f.host,'draft-window-close')).ok,false);assert.equal((await f.browser.action(event,'draft-window-close')).ok,true);assert.equal(f.view.visible,true);assert.deepEqual(f.view.bounds,bounds);assert.equal(f.browser.trustedDraft(event),null);
  if(elementMode)assert.equal((await f.browser.action(f.host,'element-draft')).ok,false,'取消後は古い選択IDを捨てる');
 });
-test('Browser下書き: 遷移・再読込・接続喪失・最小化・終了で旧窓と選択を破棄し再開できる',async t=>{
+test('Browser下書き: 遷移・再読込・利用終了・最小化・終了で旧窓と選択を破棄し再開できる',async t=>{
  for(const cancel of [f=>f.view.webContents.emit('did-start-navigation',{},'https://other.test/',false,true),f=>f.browser.action(f.host,'reload'),f=>f.browser.setAvailable(f.record,false),f=>f.parent.emit('minimize'),f=>f.parent.emit('closed')]){
   const f=fixture();t.after(()=>f.dispose());f.view.webContents.reload=()=>{};await f.select();await f.browser.action(f.host,'open-draft',true);const w=f.windows.at(-1),event=f.event();await cancel(f);await flush();assert.equal(w.destroyed,true);assert.equal(f.browser.trustedDraft(event),null);assert.throws(()=>f.browser.draftWindowRequest(event));
  }
@@ -97,4 +97,14 @@ test('Browser下書き実IPC: renderer本文・選択IDを採用せず、閉じ�
 test('Browser下書き: 要素ダイアログを開いたまま通常連携を押すと古い要素を流用しない',async t=>{
  const f=fixture();t.after(()=>f.dispose());await f.select();await f.browser.action(f.host,'open-draft',true);const old=f.event(),oldWindow=f.windows.at(-1);
  await f.browser.action(f.host,'open-draft',false);assert.equal(oldWindow.destroyed,true);assert.equal(f.browser.trustedDraft(old),null);assert.equal(f.browser.draftWindowRequest(f.event()).browserElementId,undefined);assert.equal((await f.browser.action(f.host,'element-draft')).ok,false);
+});
+
+test('Browser offline keeps element selection and page/element drafts available',async t=>{
+ const f=fixture();t.after(()=>f.dispose());f.browser.setAvailable(f.record,true,false);
+ assert.equal((await f.browser.action(f.host,'state')).connected,false);
+ await f.select();assert.equal((await f.browser.action(f.host,'open-draft',true)).ok,true);
+ assert.equal((await f.browser.action(f.event(),'draft-window-context')).ok,true);
+ assert.equal((await f.browser.action(f.event(),'draft-window-close')).ok,true);
+ assert.equal((await f.browser.action(f.host,'open-draft',false)).ok,true);
+ assert.equal((await f.browser.action(f.event(),'draft-window-context')).ok,true);
 });

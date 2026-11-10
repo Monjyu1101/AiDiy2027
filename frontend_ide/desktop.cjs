@@ -100,7 +100,7 @@ const {createBrowserViews,browserFileTarget,browserOpenable,browserStartupURL,HO
 const {saveBrowserCapture}=require('./デスクトップ/ブラウザ撮影.cjs');
 const {validPreviewPath}=require('./デスクトップ/native-preview-actions.cjs');
 const {createBrowserSourceSelection,createBrowserAnalysisContext}=require('./デスクトップ/ブラウザ解析連携.cjs');
-const selectBrowserSource=createBrowserSourceSelection({trustedEvent:trustedBrowserEvent,readState,sessionKey:state=>sessionKey(state),connected:state=>browserConnected(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
+const selectBrowserSource=createBrowserSourceSelection({trustedEvent:trustedBrowserEvent,readState,sessionKey:state=>sessionKey(state),context:record=>browserViews?.analysisContext(record),focusWindow,isQuitting:()=>quitting});
 const browserAnalysisContext=createBrowserAnalysisContext({trustedEvent:trustedBrowserEvent,context:(record,event)=>browserViews?.isAnalysisSender(event.sender)?browserViews.analysisWindowContext(event):browserViews?.analysisContext(record),discover:async record=>(await sharedDrafts()).viewerStatus(record),isQuitting:()=>quitting});
 let browserViews;
 const browserBridges=new WeakMap();
@@ -124,7 +124,7 @@ async function ensureStandaloneBrowserBridge(){
 }
 async function checkStandaloneBrowser(record){
  if(record.checking||record.window.isDestroyed())return;record.checking=true;
- try{browserViews?.setAvailable(record,browserConnected(await readState(record)));}
+ try{const state=await readState(record);browserViews?.setAvailable(record,state.active,browserConnected(state));}
  catch{browserViews?.setAvailable(record,false);}
  finally{record.checking=false;}
 }
@@ -170,7 +170,7 @@ async function checkChildren(owner){
  try{
   const state=await readState(owner);
   if(owner.window.isDestroyed()||owner.revision!==revision)return;
-  browserViews?.setAvailable(owner,browserConnected(state));
+  browserViews?.setAvailable(owner,state.active,browserConnected(state));
   if(!sessionKey(state)||(avatarLauncher.active(owner)&&owner.avatarKey!==sessionKey(state))||[...windows.values()].some(child=>child.owner===owner&&child.linkKey!==sessionKey(state)))closeChildren(owner);
  }catch{ /* 一時的な通信断・不正応答は終了の根拠にせず、次回の監視で再確認する。 */ }finally{owner.checking=false;}
 }
@@ -267,13 +267,13 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
    const bridge=await (owner?ensureBrowserBridge(record):ensureStandaloneBrowserBridge());
    if(!owner&&browserTarget===undefined)browserTarget=await browserStartupURL();
    const current=await readState(owner||record);
-   if(window.isDestroyed()||owner&&(owner.window.isDestroyed()||owner.revision!==ownerRevision||sessionKey(current)!==linkKey||!browserConnected(current)))throw Error('tools接続中のみBrowserを起動できます。');
+   if(window.isDestroyed()||owner&&(owner.window.isDestroyed()||owner.revision!==ownerRevision||sessionKey(current)!==linkKey||!current.active))throw Error('利用を開始してください。');
    // Browser番号はCDPの排他レジストリと共通。複数IDEでも衝突せず、閉じた最小番号を再利用する。
    if(owner){
     record.slot=Number(bridge.name.slice('aidiy_ide '.length))-1;title=`AiDiy IDE / Browser ${record.slot+1}`;window.setTitle(title);
     if(displayId===undefined&&!anchor)window.setBounds(windowBounds(kind,area,ownerBounds,record.slot));
    }
-   record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,browserConnected(current));attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,browserConnected(current));
+   record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,current.active,browserConnected(current));attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,current.active,browserConnected(current));
    browserReady(true);
   }
   await window.loadURL(url);
@@ -324,7 +324,7 @@ app.whenReady().then(async()=>{
   if(browserViews?.isAnalysisSender(event.sender)&&!['analysis-window-context','analysis-window-close','analysis-select-source'].includes(action))return{ok:false,error:'解析ウィンドウでは利用できない操作です。'};
   const record=trustedBrowserEvent(event);
   if(record?.kind==='browser'&&!['bounds','state','size','fullscreen','element-stop','draft-window-close','analysis-window-context','analysis-window-close','header-size','header-pin-state','header-toggle-pin'].includes(action)){
-   try{if(!browserConnected(await readState(record.owner||record)))return{ok:false,error:'tools接続中のみBrowserを操作できます。'};}catch{return{ok:false,error:'toolsの接続を確認できません。'};}
+   try{const state=await readState(record.owner||record);if(!state.active||(record.owner&&record.linkKey!==sessionKey(state)))return{ok:false,error:'利用を開始してください。'};if(action==='open-analysis'&&!browserConnected(state))return{ok:false,error:'tools接続中のみ解析できます。'};}catch{return{ok:false,error:'利用状態を確認できません。'};}
   }
   if(action==='analysis-window-context'){if(!browserViews?.isAnalysisSender(event.sender))return{ok:false,error:'解析ウィンドウから操作してください。'};return browserAnalysisContext(event);}
   if(action==='analysis-context')return browserAnalysisContext(event);
@@ -342,13 +342,13 @@ app.whenReady().then(async()=>{
    const state=await readState(owner),key=sessionKey(state);
    const valid=()=>!quitting&&!owner.window.isDestroyed()&&!source.window.isDestroyed()&&trustedEvent(event)===source&&owner.revision===revision;
    if(!valid()||!key||!state.project?.path||(source!==owner&&source.linkKey!==key))throw Error('IDEの利用を開始してください。');
-   if(!browserConnected(state))throw Error('tools接続中のみBrowserを起動できます。');
+   if(!state.active)throw Error('利用を開始してください。');
    let target=HOME;
    if(path!==undefined){
     target=await browserFileTarget(state.project.path,path,displayUrl);
    }
    const current=await readState(owner);
-   if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!browserConnected(current))throw Error('IDEの利用状態が変わりました。');
+   if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!current.active)throw Error('IDEの利用状態が変わりました。');
    if(reuseSingleBrowser===true&&displayUrl!==''){
     const singleBrowser=()=>{
      const matches=[...windows.values()].filter(record=>record.kind==='browser'&&record.owner===owner&&record.linkKey===key&&!record.window.isDestroyed());
@@ -358,10 +358,10 @@ app.whenReady().then(async()=>{
     // AI解析のURLだけ、同じIDEに1枚あるBrowserを使う。準備中の窓も待ち、二重起動しない。
     while((existing=singleBrowser())){
      const ready=await existing.browserReady,current=await readState(owner);
-     if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!browserConnected(current))throw Error('IDEの利用状態が変わりました。');
+     if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!current.active)throw Error('IDEの利用状態が変わりました。');
      if(singleBrowser()!==existing)continue;
      if(!ready)throw Error('Browserを起動できませんでした。もう一度開いてください。');
-     browserViews.setAvailable(existing,true);await browserViews.navigate(existing,target);focusWindow(existing.window);
+     browserViews.setAvailable(existing,current.active,browserConnected(current));await browserViews.navigate(existing,target);focusWindow(existing.window);
      return{ok:true,reused:true};
     }
    }

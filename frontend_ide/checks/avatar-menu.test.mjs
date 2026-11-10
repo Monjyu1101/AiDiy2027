@@ -19,7 +19,7 @@ test('IDEメニュー: Console → Browser と Live → Avatar、起動中は両
  for(const kind of ['live','avatar']){f.launching.value=kind;assert.ok(!keys().includes('live'));assert.ok(!keys().includes('avatar'));}f.launching.value='';
  f.liveOpen.value=true;assert.deepEqual(keys(),['console','browser','navigation','code','task','team']);
  f.liveOpen.value=false;assert.ok(keys().includes('live'));assert.ok(keys().includes('avatar'));
- f.state.value.mode='offline';assert.deepEqual(keys(),['console','browser','navigation','code']);
+ f.state.value.mode='offline';assert.deepEqual(keys(),['console','browser','code']);
 });
 test('Web IDEはプロセス起動のAvatarを表示せず、既存Liveタブと順序を保つ',()=>{
  const f=fixture();assert.deepEqual(Array.from(f.web.value,x=>x.key),['console','browser','navigation','code','live']);

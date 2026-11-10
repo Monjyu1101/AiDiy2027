@@ -35,8 +35,8 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  const backend=coreTarget(root,project);
  const standalone={active:true,mode:offline?'offline':'online',connected:false,startedAt:Date.now(),backend,project:{name:basename(project),path:project}};
  connection??=['ide','browser','navi'].includes(kind)?createCoreConnection(project,{keepActive:kind!=='ide'}):{state:()=>standalone,close(){standalone.active=false;},connect:async()=>standalone,disconnect:()=>standalone,offline:()=>standalone};
- if(kind==='browser'||kind==='navi'&&!offline)void connection.connect();
- if(kind==='navi'&&offline)connection.offline();
+ if(['browser','navi'].includes(kind)&&!offline)void connection.connect();
+ if(['browser','navi'].includes(kind)&&offline)connection.offline();
  const files={'/':[taskTeam?'taskteam.html':'index.html','text/html; charset=utf-8'],'/development/app.js':['app.js','text/javascript; charset=utf-8'],'/development/app.css':['app.css','text/css; charset=utf-8'],'/development/AiDiy.png':['AiDiy.png','image/png'],'/development/sending.png':['sending.png','image/png'],'/development/abort.png':['abort.png','image/png'],'/development/speaker.png':['speaker.png','image/png'],'/development/microphone.png':['microphone.png','image/png'],'/development/THIRD_PARTY_NOTICES.txt':['THIRD_PARTY_NOTICES.txt','text/plain; charset=utf-8'],'/development/LICENSE':['LICENSE','text/plain; charset=utf-8']};
  files['/development/taskteam.js']=['taskteam.js','text/javascript; charset=utf-8'];
  files['/development/taskteam.css']=['taskteam.css','text/css; charset=utf-8'];

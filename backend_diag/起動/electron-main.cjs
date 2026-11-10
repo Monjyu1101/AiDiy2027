@@ -13,7 +13,7 @@ const {ミニ表示を作成,ミニ高さは有効,ミニ幅}=require('./ミニ�
 const {マイクロ表示を作成,閉じた幅}=require('./マイクロ表示.cjs');
 const {画面サイズ演出を作成}=require('./サイズ切替.cjs');
 const {通常窓サイズを作成}=require('./通常窓サイズ.cjs');
-const {表示切替基準を作成}=require('./表示切替位置.cjs');
+const {表示切替基準を作成,初期右下位置}=require('./表示切替位置.cjs');
 const {標準タイトル操作を取り付け}=require('./標準タイトル操作.cjs');
 const {checkPort}=require('./ポート接続.cjs');
 const {attachNativeWindowMove}=require('../../frontend_ide/デスクトップ/長押し窓移動.cjs');
@@ -59,7 +59,7 @@ async function start(value) {
   isolated.webRequest.onBeforeRequest((details,callback)=>{
     try {const target=new URL(details.url);callback({cancel:target.origin!==url.origin});} catch {callback({cancel:true});}
   });
-  window=new BrowserWindow({x:area.x+通常表示の余白,y:area.y+通常表示の余白,width:800,height:600,title:'AiDiy Diag',icon:path.join(__dirname,'../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
+  window=new BrowserWindow({...初期右下位置(area,{width:800,height:600},通常表示の余白),title:'AiDiy Diag',icon:path.join(__dirname,'../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   window.setMenuBarVisibility(false);
   pins.register(window);
   終了確認=終了確認を作成({window,状態取得:()=>起動状態を読む(url.href),確認:(parent,options)=>dialog.showMessageBox(parent,options)});
@@ -91,7 +91,7 @@ async function start(value) {
     最大化取消();
     // 初回の描画より先にミニ状態にし、初期表示の高さ通知を取りこぼさない。
     // 再読込時は従来どおり通常表示へ戻す。
-    sizeEffect.中止();displaySwitch=false;displayOrigin=undefined;micro.set(false);pendingMicroHeight=undefined;pendingMiniHeight=undefined;mini.set(firstLoad&&initialMini,{topLeft:true});firstLoad=false;
+    sizeEffect.中止();displaySwitch=false;displayOrigin=undefined;micro.set(false);pendingMicroHeight=undefined;pendingMiniHeight=undefined;mini.set(firstLoad&&initialMini,{initial:true});firstLoad=false;
   });
   const iconMenu=アイコンメニューを作成(window);
   let selectingFolder=false;

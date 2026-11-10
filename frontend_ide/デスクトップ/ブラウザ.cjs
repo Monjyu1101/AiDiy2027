@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-const HOME='https://www.google.com/';
+const HOME='http://127.0.0.1:8090/';
 const {pathToFileURL,fileURLToPath}=require('node:url');
 const {relative,isAbsolute,sep,resolve,basename}=require('node:path');
 const {previewFile}=require('./native-preview-actions.cjs');
@@ -12,15 +12,8 @@ const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
 const {createBrowserAnalysisWindows}=require('./ブラウザ解析窓.cjs');
 const {createBrowserChildWindows}=require('./ブラウザ補助窓.cjs');
 const {createBrowserElementLink}=require('./ブラウザ要素連携.cjs');
-// 単独Browserの初期表示だけを選ぶ。検索・ホームや明示されたURLは変更しない。
-async function browserStartupURL(request=fetch){
- const target='http://127.0.0.1:8090/';
- try{
-  const response=await request(target,{method:'HEAD',cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(1500)});
-  if(response.ok||(response.status>=300&&response.status<400))return target;
- }catch{}
- return HOME;
-}
+// 起動時もホームもローカルWebを開く。未起動の場合はページ内の再読み込みで復帰する。
+async function browserStartupURL(){return HOME;}
 function browserFileURL(root,path){return pathToFileURL(previewFile(root,path).full).href;}
 // 直接開くのはHTMLと音声・動画。ページ関連ソースは確認した表示URLが必要。
 async function browserOpenable(path,displayUrl=''){
@@ -53,7 +46,7 @@ function browserURL(value){
  if(isAbsolute(text))return pathToFileURL(text).href;
  if(/^file:/i.test(text)){const url=new URL(text);fileURLToPath(url);return url.href;}
  if(/^[a-z][a-z\d+.-]*:/i.test(text)&&!/^https?:/i.test(text)&&! /^(localhost|[\w-]+(?:\.[\w-]+)+):\d+(?:[/?#]|$)/i.test(text))throw Error('http / https のURLを指定してください。');
- const address=/^https?:\/\//i.test(text)?text:/^(localhost(?::\d+)?|\[[\da-f:]+\]|[\w-]+(?:\.[\w-]+)+)(?::\d+)?(?:[/?#]|$)/i.test(text)&&! /\s/.test(text)?(/^(localhost|127\.)/i.test(text)?'http://':'https://')+text:HOME+'search?q='+encodeURIComponent(text);
+ const address=/^https?:\/\//i.test(text)?text:/^(localhost(?::\d+)?|\[[\da-f:]+\]|[\w-]+(?:\.[\w-]+)+)(?::\d+)?(?:[/?#]|$)/i.test(text)&&! /\s/.test(text)?(/^(localhost|127\.)/i.test(text)?'http://':'https://')+text:'https://www.google.com/ai?q='+encodeURIComponent(text);
  const url=new URL(address);if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('このURLは開けません。');return url.href;
 }
 function browserDraftRequest(projectRoot,url,capture,now=Date.now(),source){
@@ -75,15 +68,15 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   callback({cancel:blocked});
  });
  const allowed=url=>{if(url==='about:blank')return true;try{const parsed=new URL(url);if(parsed.protocol==='file:')return localFileAllowed(parsed);return ['http:','https:'].includes(parsed.protocol)&&!parsed.username&&!parsed.password&&!blockedOrigins.has(parsed.origin);}catch{return false;}};
- function attach(record,target=HOME,available=true){
+ function attach(record,target=HOME,available=true,connected=available){
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
   const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}});
-  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,pendingTarget:available?null:target};entries.set(record,entry);
+  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,connected,pendingTarget:available?null:target};entries.set(record,entry);
   record.window.contentView.addChildView(view);view.setVisible(false);
   let stateRevision=0;
-  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'toolsとの接続が切れています。再接続後に操作できます。'});
-  const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);}};
+  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'});
+  const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
   entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
   const sizing=createBrowserSizing({window:record.window,view,screen});entry.sizing=sizing;
@@ -155,6 +148,8 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   if(!entry)return{ok:false,error:'ブラウザパネルから操作してください。'};
   const contents=entry.view.webContents;
   try{
+   if(!entry.available&&!['state','bounds','size','fullscreen','element-stop','draft-window-close','analysis-window-close','analysis-window-context','header-size','header-pin-state','header-toggle-pin'].includes(name))throw Error('利用を開始してください。');
+   if(name==='open-analysis'&&!entry.connected)throw Error('tools接続中のみ解析できます。');
    if(['back','forward','reload','stop','open-analysis','capture','element-stop'].includes(name)){draftWindows.close(record);await entry.elementLink.stop();}
    if(name==='element-toggle'){if(draftWindows.isOpen(record))throw Error('ダイアログを閉じてから要素連携を開始してください。');entry.error='';await entry.elementLink.start();}
    else if(name==='element-stop')await entry.elementLink.stop();
@@ -189,7 +184,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     return{pinned:!!entry.headerPinned,locked:false};
    }
    else if(name==='capture'){
-    if(!entry.available)throw Error('tools接続中のみ撮影できます。');
+    if(!entry.available)throw Error('利用を開始してください。');
     if(entry.capturing)throw Error('撮影中です。しばらくお待ちください。');
     if(!captureImage)throw Error('画像の送信先が設定されていません。');
     entry.capturing=true;
@@ -211,7 +206,20 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    return{ok:true,...entry.snapshot()};
   }catch(error){return{ok:false,error:error.message};}
  }
- function setAvailable(owner,available){for(const [record,entry]of entries)if((record===owner||record.owner===owner)&&entry.available!==available){entry.available=available;if(!available){draftWindows.close(record);void entry.elementLink.stop();entry.view.webContents.stop();}else if(entry.pendingTarget!==null){const target=entry.pendingTarget;entry.pendingTarget=null;void entry.navigate(target).catch(error=>{entry.error=error.message;entry.notify();});}entry.layout();entry.notify();}}
+ function setAvailable(owner,available,connected=available){
+  for(const [record,entry]of entries){
+   if(record!==owner&&record.owner!==owner)continue;
+   const changed=entry.available!==available,connectionChanged=entry.connected!==connected;
+   entry.connected=connected;
+   if(changed){
+    entry.available=available;
+    if(!available){draftWindows.close(record);void entry.elementLink.stop();entry.view.webContents.stop();}
+    else if(entry.pendingTarget!==null){const target=entry.pendingTarget;entry.pendingTarget=null;void entry.navigate(target).catch(error=>{entry.error=error.message;entry.notify();});}
+    entry.layout();
+   }
+   if(changed||connectionChanged)entry.notify();
+  }
+ }
  function trustedHeader(event){
   const record=headers.get(event.sender),frame=event.senderFrame;
   return record&&!record.window.isDestroyed()&&frame===event.sender.mainFrame&&frame?.url===record.url+'#browser-header'?record:null;
@@ -221,7 +229,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   return entry.elementLink.request(projectRoot,{session:record.browserSession,tabId:record.browserTabId},id);
  }
  function draftRequest(record,element=false){
-  const entry=entries.get(record);if(!entry?.available||record.window.isDestroyed()||entry.view.webContents.isDestroyed())throw Error('tools接続中のみ連携できます。');
+  const entry=entries.get(record);if(!entry?.available||record.window.isDestroyed()||entry.view.webContents.isDestroyed())throw Error('利用を開始してください。');
   if(element)return elementRequest(record);
   return browserDraftRequest(projectRoot,entry.view.webContents.getURL(),entry.capture,now(),{session:record.browserSession,tabId:record.browserTabId});
  }
@@ -234,7 +242,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
  }
  function analysisContext(record){
   const entry=entries.get(record);if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())return null;
-  return{url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
+  return{connected:entry.connected,available:entry.available,url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
  }
  function navigate(record,value){
   const entry=entries.get(record);

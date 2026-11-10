@@ -8,6 +8,7 @@
 const assert=require('node:assert/strict');
 const {writeFileSync}=require('node:fs');
 const {app,BrowserWindow,screen}=require('electron');
+const {初期右下位置,表示切替位置}=require('../起動/表示切替位置.cjs');
 const {holdMove,checkNativeControls,probeBackground}=require('../../frontend_ide/checks/window-move-probe.cjs');
 app.setPath('appData',process.env.DIAG_TEST_PROFILE);
 app.setPath('userData',process.env.DIAG_TEST_PROFILE);
@@ -55,7 +56,7 @@ app.on('browser-window-created',(_event,window)=>{
     const current=window.getBounds();if(height===null||Math.abs(current.height-height)>2)return false;
     bounds=current;expectedHeight=height;return true;
    });
-   near(bounds,{x:area.x+8,y:area.y+8,width:330,height:expectedHeight});assert.equal(window.isAlwaysOnTop(),false);
+   near(bounds,初期右下位置(area,{width:330,height:expectedHeight},8));assert.equal(window.isAlwaysOnTop(),false);
    const layout=await window.webContents.executeJavaScript(`(()=>{const v=document.querySelector('.start-mini');return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,miniScroll:v.scrollHeight,miniClient:v.clientHeight,rect:v.getBoundingClientRect().toJSON()};})()`);
    console.log(JSON.stringify({miniLayout:layout}));
    assert.ok(layout.scrollWidth<=layout.width,JSON.stringify(layout));assert.ok(layout.miniScroll<=layout.miniClient,JSON.stringify(layout));
@@ -75,7 +76,7 @@ app.on('browser-window-created',(_event,window)=>{
    await window.webContents.executeJavaScript("document.querySelector('.mini-restore').click()");
    try{await until(()=>Math.abs(window.getBounds().width-original.width)<=2&&window.webContents.executeJavaScript("!document.querySelector('.start-mini')"));}
    catch(error){throw Error(JSON.stringify({bounds:window.getBounds(),original,ui:await window.webContents.executeJavaScript("({mini:!!document.querySelector('.start-mini'),message:document.querySelector('#message')?.textContent})")}),{cause:error});}
-   assert.equal(window.isAlwaysOnTop(),true);near(window.getNormalBounds(),{...original,x:restoreOrigin.x,y:restoreOrigin.y});
+   assert.equal(window.isAlwaysOnTop(),true);near(window.getNormalBounds(),表示切替位置(restoreOrigin,original,screen));
    await window.webContents.executeJavaScript("document.querySelector('.window-pin').click()");
    await until(()=>!window.isAlwaysOnTop()&&window.webContents.executeJavaScript("document.querySelector('.window-pin').getAttribute('aria-pressed')==='false'"));
    const normalControls=await checkNativeControls(window,window.webContents,'Diag通常');

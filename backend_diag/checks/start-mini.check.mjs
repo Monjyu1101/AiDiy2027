@@ -25,11 +25,11 @@ test('最大化からミニにした後も、現在のフォーム左肩から�
  const window=fakeWindow(true),controller=miniWindow.ミニ表示を作成(window);controller.set(true);assert.equal(window.maximized,false);window.bounds.x=260;window.bounds.y=180;controller.set(false);assert.equal(window.maximized,false);assert.deepEqual(window.bounds,{x:260,y:180,width:1160,height:820});
 });
 
-test('startup mini preserves pin and restores normal size at its current form origin',()=>{
+test('startup mini preserves pin and bottom-right margin through resize and restore',()=>{
  for(const top of [true,false]){
-  const window=fakeWindow();window.top=top;const original=structuredClone(window.bounds),controller=miniWindow.ミニ表示を作成(window,{screen:{getPrimaryDisplay:()=>({workArea:{x:-1920,y:32}})}});
-  controller.set(true,{topLeft:true});assert.deepEqual(window.bounds,{x:-1912,y:40,width:330,height:134});assert.equal(window.top,top);
-  controller.set(false);assert.deepEqual(window.bounds,{...original,x:-1912,y:40});assert.equal(window.top,top);
+  const window=fakeWindow();window.top=top;const original=structuredClone(window.bounds),controller=miniWindow.ミニ表示を作成(window,{screen:{getPrimaryDisplay:()=>({workArea:{x:-1920,y:32,width:1920,height:1080}}),getDisplayMatching:()=>({workArea:{x:-1920,y:32,width:1920,height:1080}})}});
+  controller.set(true,{initial:true});assert.deepEqual(window.bounds,{x:-338,y:970,width:330,height:134});assert.equal(window.top,top);
+  controller.resize(200);assert.deepEqual(window.bounds,{x:-338,y:904,width:330,height:200});controller.set(false);assert.deepEqual(window.bounds,{...original,x:-1168,y:284});assert.equal(window.top,top);
  }
 });
 
