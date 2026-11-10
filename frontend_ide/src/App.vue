@@ -49,6 +49,7 @@ const { config }=defineProps({config:Object});
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
 const cpuWindow=config.kind==='cpu'||config.kind==='ide'&&location.hash==='#cpu';
 const cpuOpen=ref(false);
+const runningApps=ref([]);
 function openCpu(){if(desktop)return openWindow('cpu');cpuOpen.value=true;}
 const browserHeader=location.hash==='#browser-header';
 const browserDraft=location.hash==='#browser-draft'&&!!window.aidiyWindow;
@@ -94,8 +95,14 @@ async function status(){
     // 一時的なHTTP失敗・壊れた応答は利用終了の証拠ではない。子パネルやPTYを破棄しない。
     if(!validConnectionState(data))throw Error();
     if(disposed||run!==revision||own!==session)return;statusError.value='';update(data);const confirmed=session;
-    if(desktop){
-      try{const children=await window.aidiyWindow.childWindows();if(!disposed&&run===revision&&session===confirmed)liveOpen.value=!!(children?.live||children?.avatar);}
+    if(desktop&&data.active){
+      try{
+        const children=await window.aidiyWindow.childWindows();
+        if(!disposed&&run===revision&&session===confirmed){
+          liveOpen.value=!!(children?.live||children?.avatar);
+          runningApps.value=children?.runningApps||[];
+        }
+      }
       catch{if(!disposed&&run===revision&&session===confirmed)statusError.value='子ウィンドウの状態を確認できません。次の確認で再試行します。';}
     }
   }catch{if(!disposed&&run===revision&&session===own)statusError.value='サーバーの状態を確認できません。作業を保持して再試行します。';}
@@ -104,6 +111,7 @@ async function status(){
 function update(data){
   if(disposed)return;
   const next=data.active?`${data.mode}:${data.startedAt}:${data.project?.path||''}`:'';
+  if(next!==session)runningApps.value=[];
   if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.console='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
   state.value=data;error.value=data.message||'';
 }
@@ -128,8 +136,8 @@ const desktopLaunchItems=computed(()=>[
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
   {key:'code',text:launchText('code','Code'),title:'コード支援を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('code')},
   ...(state.value.mode==='online'&&!liveOpen.value&&!['live','avatar'].includes(launching.value)?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')},{key:'avatar',text:launchText('avatar','Avatar'),title:'アバター音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('avatar')}]:[]),
-  ...(state.value.mode==='online'?['task','team'].map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[]),
-  {key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu},
+  ...(state.value.mode==='online'?['task','team'].filter(type=>!runningApps.value.includes(type)).map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[]),
+  ...(!runningApps.value.includes('cpu')?[{key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu}]:[]),
 ]);
 const panelLaunchItems=computed(()=>[
   {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
@@ -137,12 +145,21 @@ const panelLaunchItems=computed(()=>[
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
   {key:'code',text:'Code',pressed:panelOpen.value&&tab.value==='code',run:()=>openPanel('code')},
   ...(state.value.mode==='online'?[{key:'live',text:'Live',pressed:panelOpen.value&&tab.value==='live',run:()=>openPanel('live')}]:[]),
-  {key:'cpu',text:'CPU',pressed:cpuOpen.value,run:openCpu},
+  ...(!cpuOpen.value?[{key:'cpu',text:'CPU',run:openCpu}]:[]),
 ]);
 async function openWindow(kind,displayId){
   if(kind==='browser'&&!browserAvailable.value){error.value='利用開始後にBrowserを起動できます。';return{ok:false,error:error.value};}
   if(launching.value)return;launching.value=kind;error.value='';
-  try{const result=kind==='browser'?await openBrowser(undefined,displayId):await window.aidiyWindow.openApp(kind,displayId);if(!result?.ok)throw Error(result?.error||'画面を開けません。');if(kind==='live'||kind==='avatar')liveOpen.value=true;return result;}
+  try{
+    const own=session;
+    const result=kind==='browser'?await openBrowser(undefined,displayId):await window.aidiyWindow.openApp(kind,displayId);
+    if(!result?.ok)throw Error(result?.error||'画面を開けません。');
+    if(!disposed&&own===session){
+      if(kind==='live'||kind==='avatar')liveOpen.value=true;
+      if(['task','team','cpu'].includes(kind)&&!runningApps.value.includes(kind))runningApps.value=[...runningApps.value,kind];
+    }
+    return result;
+  }
   catch(e){error.value=e.message;return{ok:false,error:e.message};}finally{launching.value='';}
 }
 const opening={};
@@ -239,7 +256,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
             <span class="ide-project-name" :title="state.project?.path">プロジェクト: {{ state.project?.name }}</span>
             <nav v-if="state.active" class="ide-view-modes" aria-label="ファイルの表示モード"><button :aria-pressed="viewMode==='3d'" @click="viewMode='3d'">3D</button><button :aria-pressed="viewMode==='2d'" @click="viewMode='2d'">2D</button></nav>
           </div>
-          <div class="ide-toolbar-right">
+          <div class="ide-toolbar-right" @mouseenter="status" @focusin="status">
             <LaunchMenu v-if="state.active&&desktop" label="別ウィンドウを開く" :items="desktopLaunchItems" />
             <LaunchMenu v-else-if="state.active" label="パネルを開く" :items="panelLaunchItems" />
             <nav v-if="state.active"><button :disabled="pending" @click="start('disconnect')">{{ desktop?'終了':'利用終了' }}</button></nav>
@@ -255,8 +272,8 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
           <button :disabled="!!launching||allBusy" title="この画面の右上にコード支援を開く" @click="openWindow('code',toolbar.displayId)">{{ launching==='code'?'起動中…':'Code' }}</button>
           <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'Live' }}</button>
           <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="アバター音声会話を別ウィンドウで開く" @click="openWindow('avatar',toolbar.displayId)">{{ launching==='avatar'?'起動中…':'Avatar' }}</button>
-          <button v-for="type in ['task','team']" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':type.toUpperCase() }}</button>
-          <button :disabled="!!launching||allBusy" @click="openWindow('cpu',toolbar.displayId)">CPU</button>
+          <button v-for="type in ['task','team'].filter(type=>!runningApps.includes(type))" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':type.toUpperCase() }}</button>
+          <button v-if="!runningApps.includes('cpu')" :disabled="!!launching||allBusy" @click="openWindow('cpu',toolbar.displayId)">CPU</button>
         </div>
       </nav></template>
       <div v-if="allBusy" class="all-transition" role="status" aria-live="polite"><p>{{ allMessage }}</p></div>

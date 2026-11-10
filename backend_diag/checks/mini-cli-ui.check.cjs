@@ -31,7 +31,7 @@ test('通常のCLIアイコンは確認なしで起動し、未導入は非表�
  }finally{ui.app.unmount();}
 });
 function compile(name,{globals={},modules={},inline=true}={}){
- modules={'./起動モーション.mjs':dependency('components/アプリ起動/起動モーション.mjs'),...modules};
+ modules={'./起動モーション.mjs':dependency('components/アプリ起動/起動モーション.mjs'),'./ミニアイコン列.vue':component('components/アプリ起動/ミニアイコン列.vue'),...modules};
  const {descriptor}=parse(source(name),{filename:name});const compiled=compileScript(descriptor,{id:name,inlineTemplate:inline,genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(compiled.content+'\nmodule.exports=component;',{format:'cjs'}).code,{module,exports:module.exports,URLSearchParams,AbortController,ResizeObserver:class{observe(){}disconnect(){}},...globals,require:id=>id==='vue'?vue:modules[id]||{}});return module.exports;
 }
@@ -224,7 +224,7 @@ test('アイコンは上段AiDiy7種（CPUを含む）＋Hermes、下段外部CL
   hermes().props.onClick();pending[3].reject(Error('Hermes の起動に失敗しました'));await flush();assert.equal(prompts,0);assert.equal(launches.length,4);assert.doesNotMatch(text(upper.root)+text(lower.root),/Hermes の起動に失敗しました/);assert.equal(state.通知.value,'Hermes の起動に失敗しました');assert.equal(hermes().props.disabled,false);
   state.項目.value=state.項目.value.filter(item=>item.id!=='aidiy_hermes');await flush();assert.equal(upperButtons().length,7);assert.equal(lowerButtons().length,6);assert.equal(hermes(),undefined);
  }finally{upper.app.unmount();lower.app.unmount();}
- const css=source('components/起動/起動ミニ.css');assert.match(css,/\.mini-app-buttons\{display:grid;grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);assert.match(css,/\.mini-cli-buttons\{display:flex;flex-wrap:wrap;justify-content:center;gap:2px\}/);assert.match(css,/\.mini-cli-buttons \.mini-cli-button\{flex:0 0 calc\(\(100% - 12px\)\/7\)/);assert.match(css,/\.mini-services\{display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);assert.match(css,/\.mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/\.mini-icon-frame img\{[^}]*width:36px;height:36px;object-fit:contain/);
+ const css=source('components/起動/起動ミニ.css');assert.match(css,/\.mini-icon-track\{display:flex;justify-content:center;gap:2px;overflow:clip/);assert.match(css,/\.mini-icon-track\[data-overflow\]\{justify-content:flex-start/);assert.match(css,/\.mini-app-buttons \.mini-app-button,\.mini-cli-buttons \.mini-cli-button\{flex:0 0 48px\}/);assert.match(css,/\.mini-services\{flex:none;display:grid;grid-template-columns:repeat\(6,minmax\(0,1fr\)\)/);assert.match(css,/\.mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/\.mini-icon-frame img\{[^}]*width:36px;height:36px;object-fit:contain/);
 });
 
 test('実App認証: URLを消した後の再読込・手入力・401をセッションへ反映する',async()=>{

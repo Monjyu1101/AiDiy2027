@@ -13,11 +13,12 @@ import {join} from 'node:path';
 import {spawn} from 'node:child_process';
 import {createAppLauncher,アプリタスク,タスク一覧} from '../起動/アプリ起動.mjs';
 import {createServer} from '../diag_main.mjs';
+import draftBridge from '../../frontend_ide/デスクトップ/下書き共有.cjs';
 
 async function fixture(t){
  const root=await mkdtemp(join(tmpdir(),'diag-app-test-')),project=join(root,'日本語 空白 project');await mkdir(project);
  t.after(()=>rm(root,{recursive:true,force:true,maxRetries:5,retryDelay:100}));
- const calls=[],manager=createAppLauncher({chromeInstalled:async()=>true,root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),pythonCommand:'fixture-python',tasks:async()=>[],spawnFn(command,args,options){
+ const calls=[],manager=createAppLauncher({chromeInstalled:async()=>true,root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),pythonCommand:'fixture-python',tasks:async()=>[],appSlotInUse:async()=>false,linkedLiveRunning:async()=>false,spawnFn(command,args,options){
   const child=new EventEmitter();child.unref=()=>{child.unreferenced=true;};calls.push({command,args,options,child});queueMicrotask(()=>child.emit('spawn'));return child;
  }});
  return {root,project:await realpath(project),manager,calls};
@@ -38,18 +39,18 @@ test('project argument/cwd remain exact; Avatar retains app base; detached logs 
   assert.equal(call.options.detached,true);assert.equal(call.options.shell,false);assert.equal(call.options.windowsHide,true);assert.equal(call.options.stdio[0],'ignore');assert.equal(call.options.stdio.includes('ipc'),false);assert.equal(call.child.unreferenced,true);
   if(id==='discord')assert.equal(call.args[0],join(f.root,'frontend_channels','discord','panel','launch.mjs'));
   if(id==='avatar'){assert.equal(call.command,process.execPath);assert.equal(call.args.at(-1),join(f.root,'frontend_avatar','launch.mjs'));}
-  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['cpu','ide','console','code'].includes(id));}
+  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['ide','console','code'].includes(id));}
  }
  assert.equal(f.calls.length,7);
 });
 test('singleton checks run only on click, block existing tasks, permit IDE/Console/Code repeats and serialize races',async t=>{
  const f=await fixture(t);let reads=0,calls=0,release;
  const tasks=[{command:'python "C:/AiDiy/frontend_avatar/_start.py"'},{command:'electron "C:/AiDiy/frontend_ide/desktop.cjs" --app live'},{command:'node "/a/frontend_channels/discord/src/web-server.ts"'}];
- const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),tasks:async()=>{reads++;return tasks;},spawnFn(){calls++;throw Error();}});
+ const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),linkedLiveRunning:async()=>false,tasks:async()=>{reads++;return tasks;},spawnFn(){calls++;throw Error();}});
  manager.catalog();assert.equal(reads,0);
  for(const id of ['avatar','live','discord'])assert.equal((await manager.launch(id,f.project)).起動済み,true);
  assert.equal(calls,0);assert.equal(reads,3);
- const racing=createAppLauncher({chromeInstalled:async()=>true,tasks:()=>new Promise(resolve=>{release=resolve;})});
+ const racing=createAppLauncher({chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,tasks:()=>new Promise(resolve=>{release=resolve;})});
  const one=racing.launch('live',f.project);while(!release)await new Promise(resolve=>setImmediate(resolve));
  await assert.rejects(racing.launch('live',f.project),{status:409});release(tasks);await one;
  for(const id of ['ide','console','code']){await f.manager.launch(id,f.project);await f.manager.launch(id,f.project);}
@@ -61,9 +62,48 @@ test('Windows/macOS/Linux task entries and legacy Live match without matching ot
  for(const command of ['electron /work/frontend_channels/discord/panel/desktop.cjs','node --import /loader.mjs /work/frontend_channels/discord/src/web-server.ts'])assert.equal(アプリタスク('discord',{command}),true,command);
  for(const command of ['electron /work/frontend_ide/desktop.cjs --app code','node --test /work/frontend_ide/host/aidiy_live/launch.mjs','node -e "frontend_avatar/_start.py"','editor /work/project.txt'])for(const id of ['avatar','live','discord'])assert.equal(アプリタスク(id,{command}),false,command);
 });
+test('Task / Team / CPUはIDE側の起動枠または単独版を見つけたらDiagから追加起動しない',async t=>{
+ const f=await fixture(t);
+ for(const id of ['task','team','cpu']){
+  for(const occupied of [true,false]){
+   const manager=createAppLauncher({root:f.root,taskTeamStatus:async()=>({利用可能:true}),appSlotInUse:async()=>occupied,
+    tasks:async()=>{assert.equal(occupied,false);return[{command:`electron "${join(f.root,'frontend_ide','desktop.cjs')}" --app ${id}`}];},spawnFn:()=>assert.fail('起動済みのアプリを生成した')});
+   assert.equal((await manager.launch(id,f.project)).起動済み,true);
+  }
+ }
+});
+test('DiagはAvatarとLiveを独立に判定し、IDE連携Liveも稼働中として扱う',async t=>{
+ const f=await fixture(t),directory=join(f.root,'links'),window={isDestroyed:()=>false};
+ const owner={kind:'ide',window,pending:new Map()},records=new Map([['ide',owner]]);
+ const bridge=await draftBridge.createSharedDraftBridge({directory,records});
+ let avatar=false,soloLive=false;const launched=[];
+ const manager=createAppLauncher({root:f.root,linkedLiveRunning:()=>draftBridge.linkedLiveRunning(directory),
+  tasks:async()=>[
+   ...(avatar?[{command:'node /work/frontend_avatar/launch.mjs'}]:[]),
+   ...(soloLive?[{command:'electron /work/frontend_ide/desktop.cjs --app live'}]:[]),
+  ],
+  spawnFn(_command,args){
+   launched.push(args.includes('--app')?'live':'avatar');
+   const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;
+  }});
+ try{
+  avatar=true;
+  assert.equal((await manager.launch('avatar',f.project)).起動済み,true);
+  assert.equal((await manager.launch('live',f.project)).受付,true);
+  avatar=false;owner.pending.set('live',true);
+  assert.equal((await manager.launch('live',f.project)).起動済み,true);
+  owner.pending.delete('live');records.set('live',{kind:'live',owner,window});
+  assert.equal((await manager.launch('live',f.project)).起動済み,true);
+  assert.equal((await manager.launch('avatar',f.project)).受付,true);
+  records.delete('live');soloLive=true;
+  assert.equal((await manager.launch('live',f.project)).起動済み,true);
+  soloLive=false;assert.equal((await manager.launch('live',f.project)).受付,true);
+  assert.deepEqual(launched,['live','avatar','live']);
+ }finally{await bridge.close();}
+});
 test('task lookup failure fails closed and releases pending state',async t=>{
  const f=await fixture(t);let reads=0;
- const m=createAppLauncher({chromeInstalled:async()=>true,tasks:async()=>{reads++;throw Error('private process data');}});
+ const m=createAppLauncher({chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,tasks:async()=>{reads++;throw Error('private process data');}});
  for(let i=0;i<2;i++)await assert.rejects(m.launch('live',f.project),error=>error.status===503&&!error.message.includes('private'));
  assert.equal(reads,2);
 });
@@ -152,6 +192,6 @@ test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
 
 test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
- await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.shell,false);
+ await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project]);assert.equal(f.calls[0].options.shell,false);
  const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.equal(ids.indexOf('slack')+1,ids.indexOf('cpu'));
 });

@@ -13,6 +13,10 @@ const {holdMove,checkNativeControls,probeBackground}=require('../../frontend_ide
 app.setPath('appData',process.env.DIAG_TEST_PROFILE);
 app.setPath('userData',process.env.DIAG_TEST_PROFILE);
 app.setPath('sessionData',process.env.DIAG_TEST_PROFILE);
+const storage=require('../../frontend_ide/host/scripts/project-storage.cjs');
+const programDataDirectory=storage.programDataDirectory;
+storage.programDataDirectory=(project,name,root,children)=>
+ programDataDirectory(name==='aidiy_diag'?process.env.DIAG_TEST_PROFILE:project,name,root,children);
 // 描画時間は通常起動と同じGPU設定で測定する。
 let checks=0;
 require('../起動/ポート接続.cjs').checkPort=async port=>{checks++;assert.equal(port,8095);return true;};
@@ -49,18 +53,12 @@ app.on('browser-window-created',(_event,window)=>{
    assert.equal(await window.webContents.executeJavaScript('window.aidiyWindow.initialMini'),true);
    assert.equal(await window.webContents.executeJavaScript("document.querySelector('#app-project-folder').value"),'');
    await sleep(650);
-   // 検出されたCLIやエラーの有無に合わせ、内容の自然な高さが窓へ反映されるまで待つ。
-   let bounds,expectedHeight;
-   await until(async()=>{
-    const height=await window.webContents.executeJavaScript(`(()=>{const nodes=['.mini-content','.panel-brand','.connection-bar'].map(selector=>document.querySelector(selector));if(nodes.some(node=>!node))return null;const frame=getComputedStyle(document.querySelector('#app'));const raw=nodes.reduce((sum,node)=>sum+node.getBoundingClientRect().height,0)+parseFloat(frame.borderTopWidth)+parseFloat(frame.borderBottomWidth);return Number.isFinite(raw)&&raw>0?Math.max(80,Math.min(360,Math.ceil(raw))):null;})()`);
-    const current=window.getBounds();if(height===null||Math.abs(current.height-height)>2)return false;
-    bounds=current;expectedHeight=height;return true;
-   });
-   near(bounds,初期右下位置(area,{width:360,height:expectedHeight},8));assert.equal(window.isAlwaysOnTop(),false);
+   const bounds=window.getBounds();
+   near(bounds,初期右下位置(area,{width:360,height:190},8));assert.equal(window.isAlwaysOnTop(),false);
    const layout=await window.webContents.executeJavaScript(`(()=>{const v=document.querySelector('.start-mini');return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,miniScroll:v.scrollHeight,miniClient:v.clientHeight,rect:v.getBoundingClientRect().toJSON()};})()`);
    console.log(JSON.stringify({miniLayout:layout}));
    assert.ok(layout.scrollWidth<=layout.width,JSON.stringify(layout));assert.ok(layout.miniScroll<=layout.miniClient,JSON.stringify(layout));
-   assert.equal(await window.webContents.executeJavaScript(`[...document.querySelectorAll('.mini-cli-button')].every(b=>{const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})`),true,'全外部アイコンがミニ画面内に収まる');
+   assert.equal(await window.webContents.executeJavaScript(`[...document.querySelectorAll('.mini-cli-buttons .mini-icon-track')].every(track=>{const r=track.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&getComputedStyle(track).overflowX==='clip';})`),true,'外部アイコンの表示範囲がミニ画面内に収まる');
    assert.equal(await window.webContents.executeJavaScript("document.querySelector('.window-pin').getAttribute('aria-pressed')"),'false');
    await window.webContents.executeJavaScript("document.querySelector('.window-pin').click()");
    try{await until(()=>window.isAlwaysOnTop()&&window.webContents.executeJavaScript("document.querySelector('.window-pin').getAttribute('aria-pressed')==='true'"));}catch(error){throw Error(JSON.stringify({top:window.isAlwaysOnTop(),state:await window.webContents.executeJavaScript("({button:document.querySelector('.window-pin').outerHTML})")}),{cause:error});}
@@ -82,18 +80,19 @@ app.on('browser-window-created',(_event,window)=>{
    const normalControls=await checkNativeControls(window,window.webContents,'Diag通常');
    const normalMove=await holdMove(window,window.webContents,await probeBackground(window.webContents),'Diag通常背景','escape');
    const movedNormal=window.getNormalBounds();
+   const restoredNormal=表示切替位置(movedNormal,movedNormal,screen);
    await window.webContents.executeJavaScript("document.querySelector('#move-probe-background')?.remove();document.querySelector('.title-mini-switch').click()");
    await until(()=>window.webContents.executeJavaScript("!!document.querySelector('.start-mini')&&!document.querySelector('.mini-restore').disabled"));
    assert.ok(Math.abs(window.getBounds().width-360)<=2);
    await window.webContents.executeJavaScript("document.querySelector('.mini-restore').click()");
    await until(()=>window.webContents.executeJavaScript("!document.querySelector('.start-mini')&&!document.querySelector('.title-mini-switch').disabled"));
-   near(window.getNormalBounds(),movedNormal);
+   near(window.getNormalBounds(),restoredNormal);
    await until(()=>BrowserWindow.getAllWindows().every(candidate=>!candidate.isAiDiyResizeCanvas));
    await window.webContents.executeJavaScript('window.aidiyWindow.maximize()');assert.equal(await window.webContents.executeJavaScript('window.aidiyWindow.isMaximized()'),true);near(window.getBounds(),screen.getDisplayMatching(window.getBounds()).workArea);
-   await window.webContents.executeJavaScript('window.aidiyWindow.maximize()');assert.equal(await window.webContents.executeJavaScript('window.aidiyWindow.isMaximized()'),false);near(window.getBounds(),movedNormal);
+   await window.webContents.executeJavaScript('window.aidiyWindow.maximize()');assert.equal(await window.webContents.executeJavaScript('window.aidiyWindow.isMaximized()'),false);near(window.getBounds(),restoredNormal);
    const resizeMeasurements=await Promise.all(resizeChecks);assert.equal(resizeMeasurements.length,5);
    assert.ok(BrowserWindow.getAllWindows().every(candidate=>!candidate.isAiDiyResizeCanvas));
-   process.send({testPassed:true,bounds,expectedHeight,initialPin:false,pinRoundTrip:true,restored:true,openingMeasurement,resizeMeasurements,miniMove,normalMove,miniControls,normalControls,shot:process.env.DIAG_TEST_SHOT},()=>process.disconnect());
+   process.send({testPassed:true,bounds,expectedHeight:190,initialPin:false,pinRoundTrip:true,restored:true,openingMeasurement,resizeMeasurements,miniMove,normalMove,miniControls,normalControls,shot:process.env.DIAG_TEST_SHOT},()=>process.disconnect());
   }catch(error){console.error(error);app.exit(1);}
  });
 });

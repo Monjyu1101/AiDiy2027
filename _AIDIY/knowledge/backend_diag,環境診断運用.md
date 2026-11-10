@@ -79,7 +79,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 - 専用窓の終了確認は `起動/終了確認.cjs` と Electron の `close` イベントで扱う。タイトルバー・OS の閉じる・ミニ表示に共通で、renderer の表示タブやポーリング済み状態には依存させない。固定 loopback の認証付き `api/起動` を3秒以内に再取得し、`終了時停止あり` が true のときだけ停止の確認を表示する。この値は順次起動の実行中または未終了の管理子プロセスがある間 true とし、起動処理の完了後も稼働中なら true のまま。状態取得失敗時も確認し、既定と Escape はキャンセルとする。連打中は同じ確認を共有する。親サーバーの切断は既存の自動終了を継続する。検証は `close-confirm.check.cjs` と `desktop.check.mjs` で、未起動・稼働中・キャンセル・承認・二重操作・状態取得失敗・認証・外部 redirect の非追従を確認する。
 - Mac のアプリ名とメニューは `起動/MacOS-Menu.cjs` から全7アプリ共通の `frontend_ide/host/scripts/MacOS-Menu.cjs` を使う。`electron-main.cjs` が ready 前に `app.setName('AiDiy 診断')`、ウィンドウと終了確認の作成後に最小メニューと Dock のアイコンを設定する。独自メニューの閉じる・⌘Q / ⌘W は `window.close()` を呼び、確認を飛ばす `app.exit()` は呼ばない。編集メニューを表示せず、非表示の native role と `acceleratorWorksWhenHidden` でコピー・貼付・選択・元に戻す等を維持する。`before-input-event` でキー入力を横取りしない。Windows / Linux へは適用しない。`desktop.check.mjs` で終了キャンセル・承認と編集メニュー構成を確認する。`app.setName` は OS 側の Dock 名を変更しない。Dock 名の変更にはアプリバンドルの名称・Info.plist 等の配布設定が必要で、[Electron 公式のパッケージ化手順](https://www.electronjs.org/docs/latest/tutorial/application-distribution)を参照する。
 - 順次起動の表示追従は `api/起動` の `起動表示: {対象, 実行ID}` を使う。サーバーは各機能の再起動開始前に実行IDを更新し、完了・失敗後も最後の対象を保持する。UI は未反映の実行IDだけでタブを選択し、同じ対象の再起動にも対応する。通知文の解析や状態配列の先頭検索で対象を推測しない。定期取得のたびに選択を上書きせず、手動で別タブを見た場合は次の開始まで維持する。ミニ表示を解除せず、表示追従から起動・停止 API を呼ばない。単体確認は `start-follow.check.mjs`、実画面は `start-browser.mjs` で6機能の準備完了を順に保留・解放し、途中の自動表示と手動選択の保持を確認する。
-- 起動画面のミニ表示は `ui/src/components/起動/起動ミニパネル.vue`、切替状態は `ui/src/components/ウィンドウ/起動ミニ表示.mjs`、専用窓の寸法管理は `起動/ミニ表示.cjs` が担当する。上部の条件を満たすアプリ、利用可能なCLIのアイコンと名称帯、下部の6機能の状態を幅360px・内容に追従する高さで表示し、通常表示では現在の左上座標と保存した通常寸法へ戻し、自動で再最大化しない。ミニ中はログの取得を止め、管理状態とポート開放状態を約5秒ごとに取得する。画面切替は起動・停止 API を呼ばない。どのタブからでもミニに入り、復帰は元タブを保持する。切断や画面再読込では通常の窓寸法を復元する。切替IPCは主フレームからの真偽値だけを受け付ける。高さ専用IPCはミニ中だけ80〜360pxの整数を受け付け、幅と位置の指定は公開しない。`ウィンドウ/ミニ高さ.mjs` が自然な内容高と共通タイトル31px・接続線3pxを測り、同値を再送せず、通常表示への復帰で監視を破棄する。検証は `start-mini.check.mjs` と既存 `desktop.check.mjs`、実ブラウザの `start-browser.mjs` で行う。
+- 起動画面のミニ表示は `ui/src/components/起動/起動ミニパネル.vue`、切替状態は `ui/src/components/ウィンドウ/起動ミニ表示.mjs`、専用窓の寸法管理は `起動/ミニ表示.cjs` が担当する。上部の条件を満たすアプリ、利用可能なCLIのアイコンと名称帯、下部の6機能の状態を初期寸法360×190 DIPで表示し、通常表示では現在の左上座標と保存した通常寸法へ戻し、自動で再最大化しない。ミニ中はログの取得を止め、管理状態とポート開放状態を約5秒ごとに取得する。画面切替は起動・停止 API を呼ばない。どのタブからでもミニに入り、復帰は元タブを保持する。切断や画面再読込では通常の窓寸法を復元する。切替IPCは主フレームからの真偽値だけを受け付ける。旧画面との互換用の高さIPCはミニ中だけ80〜360の整数を受理する。窓寸法は `起動/ミニ表示.cjs` が初期表示と切替時に決め、アイコン件数の変更では更新しない。検証は `start-mini.check.mjs` と既存 `desktop.check.mjs`、実ブラウザの `start-browser.mjs` で行う。
 - ミニのサーバー表示は管理プロセスの状態に依存させず、認証付き `GET /api/起動/ポート` と `起動/ポート状態.mjs` を使う。`scripts/起動対象.json` の管理対象6機能のポートだけを127.0.0.1へ並列TCP接続し、1接続500msで打ち切る。任意のホスト・ポート・入力は受け付けず、HTTP本文や認証情報を送らない。開放は緑、未開放・確認不可は灰色。tooltipにポート番号と状態を出す。確認不可を過去の開放結果で補わない。
 - `ui/src/components/起動/起動状態.mjs` は通常表示の更新を800ms、ミニ表示は5秒に分ける。ミニ退出・切断でタイマーと取得中のリクエストを破棄する。管理状態は終了確認・コンソール・停止の所有権に引き続き使い、外部 `_start.py` のサーバーを検出しても所有・停止対象へ加えない。アプリ起動のAvatar / Live / Discordの二重起動確認は押下時だけのまま。
 - ポートの検証は `checks/port-status.check.mjs` の無害なTCP待受で開放・終了・再開、無送信、タイムアウト・キャンセル・固定対象・認証を確認する。`checks/start-mini.check.mjs` は5秒の更新間隔・退出時の停止・未管理サーバーの検出を確認する。`checks/start-browser.mjs` は管理状態とポート状態を独立して変化させ、5秒ごとの色の更新とログ取得停止を実画面で確認する。
@@ -102,7 +102,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 - モジュール移動時は import、`import.meta.url`、Electron の package main / preload、fixture の差し替え先を追従させます。Electron の依存物・安全ログ・停止要求は従来の `backend_diag/` 基準、永続的な診断・モデル情報JSONは `_AIDIY/aidiy_diag/` に維持します。一時用途のアプリ/CLI起動ログは `temp/aidiy_diag/アプリ起動/`、サービス監視の実行ID JSON・OSロック・置換用一時ファイルは `temp/aidiy_diag/起動/` を使います。旧場所の自動移動・削除・フォールバックは行いません。更新前の Diag と管理サービスは終了してから起動し直し、稼働中のロック・実行IDは手動削除しません。停止API・cleanupの対象は変更せず、`backend_diag/.stop-request` の位置も維持します。
 - `node --test backend_diag/checks/*.check.mjs backend_diag/checks/*.check.cjs` の layout / bundled-models / launcher / startup / headless テストでパスと起動の回帰を確認します。UI・runtime を変更しない配置変更では配布物を無用に再生成せず、`node backend_diag/ui/verify.mjs` で一致を確認します。
 
-ミニ表示の外部アイコンは6列相当の幅で折り返します。7個以上で1列に固定すると、中央寄せの両端が窓の外へ出るため、`.mini-cli-buttons` の `flex-wrap:wrap` を維持します。高さは内容とタイトル・接続線・外周枠から測り、横方向にはスクロールを作りません。`node backend_diag/checks/initial-mini-desktop.mjs` は実Electronの端数DPI、全外部アイコンの画面内配置、縦スクロール残り、最前面の切替、通常表示への復帰と操作領域を検証します。CLIの導入状態は読み取り、アプリは実起動しません。
+ミニ表示はアプリと外部CLIを1行ずつ表示します。収まる行は中央揃えで、あふれる行は左端から始めて右から左へ循環します。行を左右にドラッグして表示位置を変えられます。`node backend_diag/checks/initial-mini-desktop.mjs` は実Electronの端数DPI、初期の窓寸法と外部アイコンの横方向の収まり、最前面の切替、通常表示への復帰と操作領域を検証します。CLIの導入状態は読み取り、アプリは実起動しません。
 
 ## ソース調査の基準
 
@@ -224,7 +224,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 
 ## アプリ起動
 
-- ミニのアプリ列と外部CLI列は7個幅。パネル幅360px、アイコン36px、ボタン高42px、間隔2px。下段CLIの端数は中央揃え。サービス状態の6列、通常画面72px、マイクロ40pxの画像寸法は維持し、高さは内容測定に追従する。
+- ミニの初期幅は360 DIP。アプリと外部CLIは幅48px・高さ42pxのボタンを2px間隔で並べ、アイコンは36px。初期幅では各行に7個分の枠を確保し、Electronで幅を広げると表示できる数が増える。初期高さ190 DIPはタイトル・接続線・外枠36、アイコン2行84、2区画の余白と案内33.2、状態列36の合計を切り上げた値。サービス状態の6列は下部に表示する。
 
 - CPUはIDEの直後に表示し、`aidiy_cpu` の独立計測画面を開く。Core / Toolsの稼働を条件にしない。選択したプロジェクトを既存の固定起動経路へ渡し、Diag終了後も継続する。アイコン原本は `frontend_ide/aidiy_cpu/AiDiy_cpu.svg` / `.png`、濃緑帯の白いCPU文字。通常・ミニ・マイクロはDiag内のPNGコピーを使用する。
 
@@ -233,7 +233,8 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - 画面は `ui/src/components/アプリ起動/`、固定起動対象・タスク確認・プロセス生成は `起動/アプリ起動.mjs`、認証付き API は `/api/アプリ起動` と `/api/アプリ起動/{開始,フォルダ}`。システム起動の管理・停止・終了確認に参加させない。
 - Chrome以外の起動には存在する絶対パスのフォルダが必要。Avatarにも選択を必須とするが、Avatar自体のcwdはAiDiy本体にする。他のアプリは選択したパスを `cwd` と `--project` の単一引数へ渡す。Chromeはプロジェクト不要で、Tools経由でWebを開く。シェル文字列や任意コマンド・引数は受け付けない。共有設定の `CODE_BASE_PATH` を書き換えない。
 - Electron の `selectProject` は主ウィンドウの主フレームだけが呼べる固定フォルダダイアログ。Web はサーバー側フォルダだけを列挙する。手動選択は画面内だけで保持し、再読込時は共通設定の初期値を読み直す。
-- Avatar / Live / Discord / Slack だけ、押下後に PowerShell CIM（Windows）または ps（macOS / Linux）でタスクを1回取得し、既知の実行入口と照合する。タスク内容は画面へ返さない。確認失敗時は起動しない。起動直前の同時クリックを排除し、各アプリ既存の排他も残す。起動後のタイマー・状態監視・PID保存による後日停止を追加しない。
+- Avatar / Live / Discord / Slack / Task / Team / CPU は、押下時に既知の実行入口と照合し、起動済みなら通知する。Task / Team / CPU は IDE 内の窓と単独 Electron 版が共有するループバックの起動枠も確認する。起動枠はアプリごとに TCP 18437〜18439 を使い、窓の終了時に解放する。Task は要求・フロー図・明細のすべてが閉じた時に解放する。タスク内容はサーバー内で扱い、画面には判定結果を返す。
+- Diag は Avatar と Live の稼働を個別に判定し、同種の起動済み通知を返す。Live は IDE が所有する窓と起動処理中の状態も既存のループバック連携から確認する。IDE 内の Live / Avatar はペアで相互排他を維持する。
 - 起動は `detached: true` / 標準入力 EOF / ログファイル出力 / `unref()`。aidiy_diag と IPC で所有関係を結ばない。ログは `temp/aidiy_diag/アプリ起動/` に起動ごとに分ける。画面の通知は「起動要求」とし、表示成功として扱わない。
 - IDE / Code は既存 `frontend_ide/launch.mjs --new-window` から一時プロファイルで別窓を開く。通常起動の既存窓再利用や Live の排他は変えない。Console は従来から複数起動を許可する。一時プロファイルはアプリ終了時に回収する。
 - 検証は `checks/app-launch.check.mjs`（実フォルダ・パス・タスク判定・認証・入力制限・aidiy_diag終了後の無害な子プロセス継続）、`checks/desktop.check.mjs`（フォルダ選択の限定IPC）、`frontend_ide/checks/project-instance.test.mjs`（通常起動と複数窓）。`checks/app-launch-browser.mjs` は合成プロセスで390/1280pxの実画面、フォルダ必須、押下時だけの確認、起動先、定時監視がないことを確認する。
@@ -278,7 +279,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - `ui/src/components/アプリ起動/CLI状態.mjs` と `ミニCLI起動.vue` が確認・利用可能項目・名称帯を管理する。プロジェクトは既存アプリ状態を共有する。Hermes・外部CLIは起動中も追加起動でき、要求ごとの処理中状態を管理する。確認ダイアログ・他アプリの起動・フォルダ選択は重ねない。ミニ表示時と再接続時は存在確認だけで、CLI・ログイン・導入を実行しない。
 - `起動/CLI起動.mjs` は固定ID・絶対プロジェクト・自動承認指定だけを受け付け、固定 `frontend_ide/launch.mjs --app console --cli <ID> --cli-auto-approve` へ渡す。ミニの明示クリックは確認ダイアログなしで従来の起動指定を送り、成功後の説明を表示しない。エラー・処理中の状態は通常画面で確認できるまま保持し、ミニには表示しない。同じCLI・プロジェクトでもクリックごとに別のConsole窓を開く。モデル・コマンド文字列を受け付けず、実行ファイルの探索と引数は `frontend_ide/aidiy_console/cli-launch.mjs` を共有する。公式フラグ・出典・古いCLIでの失敗時の扱いは backend_diag/README.md の「ミニ表示からCLIを開く」を参照する。
 - 起動通知はIPCでConsole窓の準備完了を待つ。CLI自身の起動結果はConsoleに表示する。同じDiagで同じCLI・正規化済みプロジェクトでも並行起動し、既存窓へ戻らない。Consoleごとに動的ポート・端末セッション・起動ログを分ける。1つの窓の起動失敗・終了では他の窓のCLIやサーバーを止めない。ブラウザの最後の有効な端末接続が切れて30秒戻らない場合と、表示後30秒以内に初回端末接続が始まらない場合はその窓のCLIと所有サーバーだけを終了する。Diag終了とConsole終了は連動させない。Avatar・Live・Discord・Slackの単一起動制限は維持する。
-- タイトル欄はdrag、ボタンはno-dragを維持する。ミニは幅360pxで高さは表示内容に追従する。外部CLIのSVG・PNG・出典・ライセンスは `ui/src/components/アプリ起動/CLIアイコン/` に保持する。AiDiy系は各所有moduleが正本を持ち、DiagはローカルPNGコピーだけを使う（[共通手順](./共通,アイコン原本と配布.md)）。CopilotはGitHub Octicons、Codex / Claude CodeはLobeHub、Grok / OpenCodeは公式配布元の実素材。Hermesは既存AiDiy画像、AgyはAntigravity公式サイトの山形マーク。画像はSVGで作ってPNG化し、生成スクリプトは常設しない。外部CLIのSVGとPNG派生物、HermesのPNG、出典・ライセンス全文 `LICENSE_ICONS.md` をstaticへ配布する。Hermesの正本は `command_hermes/assets/`、Diagでは保守時にコピーしたPNGだけを表示する。通常build/verifyでは他moduleのassetを読まない。アプリアイコンも画像内の名称を使い、HTMLの名前は重ねない。上段は利用可能なアプリ（Chrome以外）＋Hermesを7列で並べ、下段は導入済み外部CLIと利用可能なChromeを表示する。外部CLIもChromeもなければ下段と余白を出さず、更新ボタンも置かない。ミニの画像は名称帯込みの36px枠・36px表示（縦横比維持）、稼働インジケーター6件は1行。変更後はUIビルドとmanifest照合を行う。
+- タイトル欄はdrag、ボタンはno-dragを維持する。ミニは初期寸法360×190 DIPで開く。外部CLIのSVG・PNG・出典・ライセンスは `ui/src/components/アプリ起動/CLIアイコン/` に保持する。AiDiy系は各所有moduleが正本を持ち、DiagはローカルPNGコピーだけを使う（[共通手順](./共通,アイコン原本と配布.md)）。CopilotはGitHub Octicons、Codex / Claude CodeはLobeHub、Grok / OpenCodeは公式配布元の実素材。Hermesは既存AiDiy画像、AgyはAntigravity公式サイトの山形マーク。画像はSVGで作ってPNG化し、生成スクリプトは常設しない。外部CLIのSVGとPNG派生物、HermesのPNG、出典・ライセンス全文 `LICENSE_ICONS.md` をstaticへ配布する。Hermesの正本は `command_hermes/assets/`、Diagでは保守時にコピーしたPNGだけを表示する。通常build/verifyでは他moduleのassetを読まない。アプリアイコンも画像内の名称を使い、HTMLの名前は重ねない。上段は利用可能なアプリ（Chrome以外）＋Hermes、下段は導入済み外部CLIと利用可能なChromeを1行ずつ表示する。外部CLIもChromeもなければ下段と余白を出さず、更新ボタンも置かない。ミニの画像は名称帯込みの36px枠・36px表示（縦横比維持）、稼働インジケーター6件は1行。変更後はUIビルドとmanifest照合を行う。
 - 回帰確認: `node --test backend_diag/checks/{cli-launch,cli-launch-state,mini-cli-ui,start-mini}.check.*` と frontend_ide のCLI/端末テスト（`cli-parallel-lifecycle.test.mjs`を含む）。全タブ復帰・ミニの確認なし起動と成功説明の非表示・連続／同時起動・個別終了・切断・起動失敗・日本語と記号付きパス・モデル引数なし・再接続での再実行なしをfixtureで確認する。実CLI自動作業や有料APIを回帰テストに使わない。
 
 
@@ -295,7 +296,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - 中央を普通にドラッグして移動できます（移動4pxでクリックと区別、長押し不要）。ダブルクリックでランチャー表示へ戻り、途中の通常画面は見せずに切り替えます。Escは展開中なら収納、収納中なら通常画面へ戻ります。
 - アイコン化中は無条件で最前面に固定します。解除時は元のピン状態へ戻ります。透明部分は背後へクリックを通します。Web版ではOSの最前面・クリック透過・窓寸法変更は対象外です。
 
-表示切替の位置計算は `backend_diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、ミニの実測高さとアイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test backend_diag/checks/display-anchor.check.cjs backend_diag/checks/start-mini.check.mjs backend_diag/checks/micro-window.check.mjs backend_diag/checks/desktop.check.mjs backend_diag/checks/size-transition.check.cjs` で確認します。
+表示切替の位置計算は `backend_diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、アイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test backend_diag/checks/display-anchor.check.cjs backend_diag/checks/start-mini.check.mjs backend_diag/checks/micro-window.check.mjs backend_diag/checks/desktop.check.mjs backend_diag/checks/size-transition.check.cjs` で確認します。
 
 実装上、Windowsのアイコン表示は専用の最前面レベルを設定し、表示切替完了時にも実際の最前面状態を確認します。解除時は共通ピンの選択へ戻します。ドラッグの起点はメインプロセスのマウス押下で記録し、IPC到着前にポインターが動いた場合も最初の移動量を保持します。素早い解放時も最後の位置を反映して終了します。
 - アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くConsoleは作業領域中央に約800×600pxで表示します。
@@ -369,7 +370,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 
 アプリ候補は `起動/アプリ起動.mjs` の avatar / task / team / ide / navi / console / code / live / discord / slack / chrome / browser の12種です。Discord / SlackはBot tokenの設定有無、Chromeは実行ファイルの有無でカタログへの掲載を判定します。Bot tokenの設定は接続成功を意味しません。標準のアプリ起動画面はこのカタログの全項目を表示し、起動条件を満たさない項目を薄く表示します。ミニランチャー・アイコン展開・その右クリック一覧は、バックエンドや導入状態により起動できない項目を表示対象から外します。処理中の一時的な操作禁止やフォルダ未選択だけで並びを変えないよう、表示対象の判定とボタンの押下可否を分けます。
 
-Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表示になります。Core停止だけではオフライン利用できるIDE・Console・Code・Live等を隠しません。サービス復帰後は元の順序へ戻し、円周配置とミニ表示の高さも件数に追従させます。
+Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表示になります。Core停止だけではオフライン利用できるIDE・Console・Code・Live等を隠しません。サービス復帰後は元の順序へ戻し、円周配置とミニ表示の各行を件数に合わせて更新します。
 
 ## アイコンメニュー
 

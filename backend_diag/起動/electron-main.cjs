@@ -9,8 +9,7 @@ const path=require('node:path');
 const {programDataDirectory,preparePrivateDirectory}=require('../../frontend_ide/host/scripts/project-storage.cjs');
 const {アイコンメニューを作成}=require('./アイコンメニュー.cjs');
 const {拡大表示}=require('../../frontend_ide/host/scripts/window-opening.cjs');
-const {trackDiagMiniBounds}=require('../../frontend_ide/デスクトップ/Diagミニ位置.cjs');
-const {ミニ表示を作成,ミニ高さは有効,ミニ幅}=require('./ミニ表示.cjs');
+const {ミニ表示を作成,ミニ高さは有効,ミニ寸法}=require('./ミニ表示.cjs');
 const {マイクロ表示を作成,閉じた幅}=require('./マイクロ表示.cjs');
 const {画面サイズ演出を作成}=require('./サイズ切替.cjs');
 const {通常窓サイズを作成}=require('./通常窓サイズ.cjs');
@@ -70,9 +69,8 @@ async function start(value) {
   const displayPosition=表示切替基準を作成(screen);
   const mini=ミニ表示を作成(sizingWindow,{screen,位置:displayPosition});
   const micro=マイクロ表示を作成(sizingWindow,{screen,位置:displayPosition,pins:{setLocked:(_target,value)=>pins.setLocked(window,value),state:()=>pins.state(window)}});
-  trackDiagMiniBounds(window,()=>mini.active&&!micro.active);
   window.once('closed',()=>sizeEffect.中止());
-  let firstLoad=true,opening=false,pendingMiniHeight,pendingMicroHeight,displaySwitch=false,displayOrigin;
+  let firstLoad=true,opening=false,pendingMicroHeight,displaySwitch=false,displayOrigin;
   let maximizeOperation;
   function 最大化取消(){if(maximizeOperation){maximizeOperation=undefined;sizeEffect.中止();}titleControls.cancel();}
   window.once('closed',()=>最大化取消());
@@ -91,9 +89,8 @@ async function start(value) {
   attachNativeWindowMove(sizingWindow,screen,'diag');
   window.webContents.on('did-start-loading',()=>{
     最大化取消();
-    // 初回の描画より先にミニ状態にし、初期表示の高さ通知を取りこぼさない。
-    // 再読込時は従来どおり通常表示へ戻す。
-    sizeEffect.中止();displaySwitch=false;displayOrigin=undefined;micro.set(false);pendingMicroHeight=undefined;pendingMiniHeight=undefined;mini.set(firstLoad&&initialMini,{initial:true});firstLoad=false;
+    // 初回の描画前に窓の寸法を決め、再読込時は通常表示へ戻す。
+    sizeEffect.中止();displaySwitch=false;displayOrigin=undefined;micro.set(false);pendingMicroHeight=undefined;mini.set(firstLoad&&initialMini,{initial:true});firstLoad=false;
   });
   const iconMenu=アイコンメニューを作成(window);
   let selectingFolder=false;
@@ -109,7 +106,7 @@ async function start(value) {
       if(!['normal','mini','micro'].includes(value)||opening||displaySwitch||sizeEffect.active)return false;
       displayOrigin=window.getBounds();
       const base=micro.normalBounds||mini.normalBounds||window.getNormalBounds();
-      const target=displayPosition.計算(displayOrigin,value==='micro'?{width:閉じた幅,height:閉じた幅}:value==='mini'?{width:ミニ幅,height:360}:base,{画面内:value==='micro'});
+      const target=displayPosition.計算(displayOrigin,value==='micro'?{width:閉じた幅,height:閉じた幅}:value==='mini'?ミニ寸法:base,{画面内:value==='micro'});
       pendingMicroHeight=undefined;displaySwitch=true;
       return sizeEffect.準備(target).then(ready=>{if(!ready)displaySwitch=false;return ready;});
     }
@@ -119,7 +116,6 @@ async function start(value) {
         // アイコン化専用の最前面層を演出の完了後にも適用する。
         micro.最前面維持();
         displaySwitch=false;displayOrigin=undefined;pendingMicroHeight=undefined;
-        if(pendingMiniHeight!==undefined){mini.resize(pendingMiniHeight);pendingMiniHeight=undefined;}
       });
     }
     if(action==='selectProject'){
@@ -129,7 +125,6 @@ async function start(value) {
     if(action==='startMini'){
       最大化取消();
       if(typeof value!=='boolean'||micro.active)return false;
-      if(value===false)pendingMiniHeight=undefined;
       if(!displaySwitch&&!opening&&window.isVisible()&&value!==mini.active)return sizeEffect.準備(mini.演出範囲(value)).then(ready=>ready&&mini.set(value));
       return mini.set(value,{origin:displayOrigin});
     }
@@ -149,13 +144,9 @@ async function start(value) {
     if(action==='beginMicroMove')return micro.beginMove();
     if(action==='moveMicro')return typeof value==='string'&&micro.move(value);
     if(action==='endMicroMove'){if(typeof value==='string')micro.endMove(value);return false;}
-    if(action==='finishMini')return displaySwitch?true:sizeEffect.完了().finally(()=>{if(pendingMiniHeight!==undefined){mini.resize(pendingMiniHeight);pendingMiniHeight=undefined;}});
-    if(action==='resizeMini'){
-      // 表示開始・切替準備の撮影中は元寸法を保持し、最新の測定値を失わない。
-      // 透明化後のmini初期測定は通常どおり適用し、完成画像へ反映する。
-      if((opening||sizeEffect.preparing)&&mini.active){if(!ミニ高さは有効(value))return false;pendingMiniHeight=value;return true;}
-      const accepted=mini.resize(value);if(accepted)pendingMiniHeight=undefined;return accepted;
-    }
+    if(action==='finishMini')return displaySwitch?true:sizeEffect.完了();
+    // 旧画面の高さ通知はミニ中だけ受理し、窓の寸法は維持する。
+    if(action==='resizeMini')return mini.active&&ミニ高さは有効(value);
     if(action==='isMaximized')return sizingWindow.isMaximized();
     if(action==='getPinState')return pins.state(window);
     if(action==='togglePin')return pins.toggle(window);
@@ -181,7 +172,6 @@ async function start(value) {
   opening=true;
   const shown=await 拡大表示(BrowserWindow,window,{background:'#080b10'});opening=false;
   if(!shown || failed)return;
-  if(pendingMiniHeight!==undefined){mini.resize(pendingMiniHeight);pendingMiniHeight=undefined;}
   await window.webContents.executeJavaScript("document.documentElement.classList.remove('desktop-opening')");
   if(!failed && !window.isDestroyed() && process.connected)process.send({type:'diag-shown'},error=>{if(error)fail('IPC');});
 }

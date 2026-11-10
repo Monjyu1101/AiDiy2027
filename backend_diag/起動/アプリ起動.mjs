@@ -8,6 +8,8 @@ import {stat,realpath,readdir,mkdir,open,readFile} from 'node:fs/promises';
 import {join,dirname,isAbsolute,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {randomUUID} from 'node:crypto';
+import appProcesses from '../../scripts/アプリプロセス.cjs';
+import draftBridge from '../../frontend_ide/デスクトップ/下書き共有.cjs';
 import {readConfig,configured} from '../runtime/model_probe.mjs';
 import {catalog as programCatalog,resolveProgram} from '../診断/probes.mjs';
 import {createPortStatusChecker} from './ポート状態.mjs';
@@ -16,19 +18,11 @@ import {createTaskTeamStatus} from './TaskTeam接続.mjs';
 
 const ROOT=fileURLToPath(new URL('../../',import.meta.url));
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
-export const アプリ一覧=Object.freeze(['avatar','task','team','ide','cpu','navi','console','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',ide:'IDE',cpu:'CPU',navi:'Navi',console:'Console',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:['avatar','live','discord','slack'].includes(id)})));
+const {単一起動部品,単独起動中の部品,起動枠の使用中}=appProcesses;
+export const アプリ一覧=Object.freeze(['avatar','task','team','ide','cpu','navi','console','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',ide:'IDE',cpu:'CPU',navi:'Navi',console:'Console',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:[...単一起動部品,'avatar','live','discord','slack'].includes(id)})));
 const execute=(command,args,options={})=>new Promise((resolve,reject)=>execFile(command,args,{encoding:'utf8',windowsHide:true,timeout:10000,maxBuffer:8*1024*1024,...options},(error,stdout)=>error?reject(error):resolve(stdout)));
 
-// 明示起動時だけ取得する。タスクのコマンドラインや一覧を画面・ログへ返さない。
-export async function タスク一覧(platform=process.platform){
- if(platform==='win32'){
-  const script="$ErrorActionPreference='Stop';[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); @(Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(node|electron|python(?:w|3(?:\\.\\d+)?)?)\\.exe$' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress";
-  const values=JSON.parse((await execute('powershell.exe',['-NoProfile','-NonInteractive','-Command',script])).trim()||'[]');
-  return (Array.isArray(values)?values:[values]).map(item=>({pid:item.ProcessId,command:item.CommandLine||''}));
- }
- const output=await execute('ps',['-ax','-o','pid=,args=']);
- return output.split('\n').flatMap(line=>{const match=line.match(/^\s*(\d+)\s+(.+)$/);return match?[{pid:Number(match[1]),command:match[2]}]:[];});
-}
+export const {タスク一覧}=appProcesses;
 export function アプリタスク(id,{command=''}){
  const text=command.replaceAll('\\','/');
  // 実行入口に限定。引用された文章やテストの検索語を起動済みと誤認しない。
@@ -44,7 +38,7 @@ export function アプリタスク(id,{command=''}){
 export async function isChromeInstalled({resolveFn=resolveProgram}={}){
  try{return Boolean(await resolveFn((await programCatalog()).find(item=>item.id==='chrome')));}catch{return false;}
 }
-export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,node=process.execPath,pythonCommand,taskTeamStatus,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn})}={}){
+export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,appSlotInUse=起動枠の使用中,linkedLiveRunning=draftBridge.linkedLiveRunning,node=process.execPath,pythonCommand,taskTeamStatus,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn})}={}){
  const pending=new Set();
  const slackEntry=join(root,'frontend_channels','slack','panel','launch.mjs');
  async function slackAvailability(){try{if((await stat(slackEntry)).isFile())return {利用可能:true,無効理由:'',無効表示:''};}catch{}return {利用可能:false,無効理由:'Slack の起動ファイルが見つかりません。セットアップを確認してください。',無効表示:'未導入'};}
@@ -97,14 +91,19 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
    if(id==='browser'){const state=await browserAvailability();if(!state.利用可能)throw fail(state.無効理由,409);}
    if(taskTeam(id)){const state=await availability();if(state.利用可能!==true)throw fail(state.無効理由||'Task / Team バックエンドを起動してください。',409);}
    if(app.単一起動){
-    let running;try{running=(await tasks()).some(task=>アプリタスク(id,task));}catch{throw fail('起動中のタスクを確認できませんでした。もう一度お試しください。',503);}
+    let running;
+    try{
+     running=単一起動部品.includes(id)
+      ?await appSlotInUse(id)||(await 単独起動中の部品(join(root,'frontend_ide'),tasks)).has(id)
+      :(id==='live'&&await linkedLiveRunning())||(await tasks()).some(task=>アプリタスク(id,task));
+    }catch{throw fail('起動中のタスクを確認できませんでした。もう一度お試しください。',503);}
     if(running)return {起動済み:true,通知:`${app.名前} は起動済みです。`};
    }
    let command=node,args,cwd=path;
    if(id==='avatar'){args=[join(root,'frontend_avatar','launch.mjs')];cwd=root;}
    else if(id==='discord')args=[join(root,'frontend_channels','discord','panel','launch.mjs'),'--project',path];
    else if(id==='slack')args=[slackEntry,'--project',path];
-   else args=[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',path,...(id==='live'?[]:['--new-window'])];
+   else args=[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',path,...(app.単一起動?[]:['--new-window'])];
    const env={...process.env,PYTHONIOENCODING:'utf-8',PYTHONUNBUFFERED:'1'};
    for(const key of Object.keys(env))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH|AIDIY_(?:DIAG_LAUNCHER_CHILD|LAUNCHER_CHILD|DIAG_SETTINGS|DIAG_RUN))$/i.test(key))delete env[key];
    const logs=join(root,'temp','aidiy_diag','アプリ起動');await mkdir(logs,{recursive:true});

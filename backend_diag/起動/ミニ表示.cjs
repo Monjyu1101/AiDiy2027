@@ -7,9 +7,11 @@
 const {setWindowBounds}=require('../../frontend_ide/デスクトップ/全画面横断.cjs');
 const {表示切替基準を作成,初期右下位置}=require('./表示切替位置.cjs');
 
-// 7列の36pxアイコンを収める小型幅。高さは従来どおり内容測定に追従する。
-const ミニ幅=360,初期ミニ高さ=134,最小ミニ高さ=80,最大ミニ高さ=360,ミニの余白=8;
-const ミニ高さは有効=height=>Number.isInteger(height)&&height>=最小ミニ高さ&&height<=最大ミニ高さ;
+const ミニ幅=360,ミニの余白=8;
+// タイトル・接続線・外枠、アイコン2行、2区画の余白と案内、状態列。
+const ミニ高さ=Math.ceil((31+3+2)+2*42+(6+6+19.2+2)+(30+6));
+const ミニ寸法={width:ミニ幅,height:ミニ高さ};
+const ミニ高さは有効=height=>Number.isInteger(height)&&height>=80&&height<=360;
 // 通常時の寸法を保持し、四隅付近以外の表示切替では現在の左肩を引き継ぐ。
 function ミニ表示を作成(window,{screen,位置=表示切替基準を作成(screen)}={}){
  let original;
@@ -18,7 +20,7 @@ function ミニ表示を作成(window,{screen,位置=表示切替基準を作成
   get normalBounds(){return original?.bounds;},
   演出範囲(enabled){
    const origin=window.getBounds();
-   return 位置.計算(origin,enabled?{width:ミニ幅,height:最大ミニ高さ}:original?.bounds||origin);
+   return 位置.計算(origin,enabled?ミニ寸法:original?.bounds||origin);
   },
   set(enabled,{initial=false,origin}={}){
    if(typeof enabled!=='boolean'||!window||window.isDestroyed())return false;
@@ -27,11 +29,11 @@ function ミニ表示を作成(window,{screen,位置=表示切替基準を作成
    if(enabled){
     original={bounds:window.getNormalBounds(),minimum:window.getMinimumSize(),maximized:window.isMaximized(),maximizable:window.isMaximizable()};
     if(original.maximized)window.unmaximize();
-    window.setMinimumSize(ミニ幅,初期ミニ高さ);
+    window.setMinimumSize(ミニ幅,ミニ高さ);
     window.setMaximizable(false);
     // 初期ミニだけ作業領域の右下角から8 DIP内側に置く。
     const area=initial?screen.getPrimaryDisplay().workArea:null;
-    const target=位置.計算(origin,{width:ミニ幅,height:初期ミニ高さ});
+    const target=位置.計算(origin,ミニ寸法);
     setWindowBounds(window,area?初期右下位置(area,target,ミニの余白):target);
     if(area)位置.解除();
    }else{
@@ -45,16 +47,6 @@ function ミニ表示を作成(window,{screen,位置=表示切替基準を作成
    位置.記録(window.getBounds());
    return true;
   },
-  resize(height){
-   if(!original||!window||window.isDestroyed()||!ミニ高さは有効(height))return false;
-   const bounds=window.getBounds();
-   if(bounds.width===ミニ幅&&bounds.height===height)return true;
-   // 縮小時は以前の最小高さに阻まれない順序にし、測定後も基準点を保つ。
-   window.setMinimumSize(ミニ幅,height);
-   setWindowBounds(window,位置.計算(bounds,{width:ミニ幅,height}));
-   位置.記録(window.getBounds());
-   return true;
-  },
  };
 }
-module.exports={ミニ表示を作成,ミニ高さは有効,ミニ幅};
+module.exports={ミニ表示を作成,ミニ高さは有効,ミニ寸法};

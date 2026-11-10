@@ -17,6 +17,7 @@ import {createAppLauncher} from '../起動/アプリ起動.mjs';
 
 const root=mkdtempSync(join(tmpdir(),'diag-start-fixture-'));mkdirSync(join(root,'scripts'));
 writeFileSync(join(root,'scripts','起動対象.json'),readFileSync(new URL('../../scripts/起動対象.json',import.meta.url)));
+mkdirSync(join(root,'_config'));writeFileSync(join(root,'_config','AiDiy_key.json'),JSON.stringify({discord_bot_token:'fixture-discord-token'}));
 const calls=[],children=[];
 const manager=createStartManager({root,python:'fixture-python',spawnFn(_command,args){
  const child=new EventEmitter();child.pid=500000+children.length;child.stdin=new PassThrough();child.stdout=new PassThrough();child.stderr=new PassThrough();child.closed=false;
@@ -26,9 +27,9 @@ const manager=createStartManager({root,python:'fixture-python',spawnFn(_command,
  return child;
 }});
 const project=join(root,'日本語 空白 project');mkdirSync(project);mkdirSync(join(project,'subfolder'));
-let taskChecks=0;const appCalls=[],appLauncher=createAppLauncher({root,pythonCommand:'fixture-python',taskTeamStatus:async()=>({利用可能:false,無効理由:'試験用バックエンド停止'}),portStatusFn:async()=>portStatusFn(),tasks:async()=>{taskChecks++;return [{command:'node /fixture/frontend_ide/launch.mjs --app live'}];},spawnFn(command,args,options){appCalls.push({command,args,cwd:options.cwd});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;}});
+let taskChecks=0;const appCalls=[],appLauncher=createAppLauncher({root,pythonCommand:'fixture-python',chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,taskTeamStatus:async()=>({利用可能:false,無効理由:'試験用バックエンド停止'}),portStatusFn:async()=>portStatusFn(),tasks:async()=>{taskChecks++;return [{command:'node /fixture/frontend_ide/launch.mjs --app live'}];},spawnFn(command,args,options){appCalls.push({command,args,cwd:options.cwd});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;}});
 const portCatalog=JSON.parse(readFileSync(new URL('../../scripts/起動対象.json',import.meta.url),'utf8')).filter(item=>item.起動管理!==false);
-const openPorts=new Set(['core']);const portSamples=[];
+const openPorts=new Set(['core','tools','web']);const portSamples=[];
 const portStatusFn=async()=>{portSamples.push(Date.now());return {対象:portCatalog.map(({id,名前,ポート})=>({id,名前,ポート,開放:openPorts.has(id)}))};};
 const server=createServer({vscodeLauncher:{catalog:async()=>({id:'vscode',名前:'VS Code',種類:'editor',利用可能:false}),launch(){throw Error('Editor execution is forbidden in this fixture');}},cliLauncher:{catalog:async()=>({対象:[]}),launch(){throw Error('CLI execution is forbidden in this fixture');}},token:'app-browser-fixture',prefix:'/proxy/8097/',startManager:manager,portStatusFn,appLauncher,
  entries:[{id:'node',name:'Node.js',menuGroup:'ベース',commands:['node']}],
@@ -56,7 +57,7 @@ try{
  async function capture(name){const response=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name+'.png'),Buffer.from(response.result.data,'base64'));}
  async function fitMiniViewport(){
   const height=await evaluate(`2+Math.ceil(['.mini-content','.panel-brand','.connection-bar'].reduce((sum,selector)=>sum+document.querySelector(selector).getBoundingClientRect().height,0))`);
-  assert.ok(height>=80&&height<=360);await send('Emulation.setDeviceMetricsOverride',{width:360,height,deviceScaleFactor:1,mobile:false});
+  assert.equal(height,190);await send('Emulation.setDeviceMetricsOverride',{width:360,height,deviceScaleFactor:1,mobile:false});
  }
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setFocusEmulationEnabled',{enabled:true});await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
@@ -90,9 +91,9 @@ try{
   await until(`!document.querySelector('.start-mini')&&document.querySelector('nav.tabs button.active').textContent==='アプリ起動'`);
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  }
- await until(`document.querySelectorAll('.app-launch-card[data-app]').length===10`);
+ await until(`document.querySelectorAll('.app-launch-card[data-app]').length===12`);
  assert.equal(await evaluate(`document.querySelector('#run').getClientRects().length`),0);
- assert.equal(await evaluate(`[...document.querySelectorAll('.app-launch-button')].every(button=>button.disabled)`),true);
+ assert.deepEqual(await evaluate(`[...document.querySelectorAll('.app-launch-button:not(:disabled)')].map(button=>button.closest('[data-app]').dataset.app)`),['chrome']);
  assert.equal(appCalls.length,0);assert.equal(taskChecks,0);
  await capture('app-no-project');
  await click('フォルダ選択');await until(`document.querySelector('.app-folder-dialog')`);
@@ -101,7 +102,7 @@ try{
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')&&getComputedStyle(document.querySelector('#app-project-folder')).animationName`),'app-project-alert','未選択の欄は赤で促す');
  await click('このフォルダを選択');await until(`document.querySelector('#app-project-folder').value===${JSON.stringify(project)}`);
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),false);
- assert.equal(await evaluate(`[...document.querySelectorAll('.app-launch-button')].filter(button=>!button.disabled).length===6`),true);
+ assert.equal(await evaluate(`document.querySelectorAll('.app-launch-button:not(:disabled)').length`),10);
  await sleep(900);assert.equal(taskChecks,0,'フォルダ選択・表示・待機ではアプリの稼働中確認をしない');
  for(const name of ['Avatar','IDE','Console','Code','Live','Discord']){
   await click(`${name} を起動`);await until(`![...document.querySelectorAll('.app-launch-state')].some(state=>state.textContent==='起動確認中…')`);
@@ -124,7 +125,7 @@ try{
  await until(`document.querySelector('nav.tabs button.active').textContent==='システム起動'&&!document.querySelector('.start-mini')`);
  await click('システム起動');await click('ランチャー表示');await until(`document.querySelectorAll('.mini-app-button').length===9&&document.querySelectorAll('.mini-cli-button[data-app=chrome]').length===1`);
  await fitMiniViewport();
- assert.equal(await evaluate(`[...document.querySelectorAll('.mini-app-button')].filter(button=>!button.disabled).length===6`),true);
+ assert.equal(await evaluate(`document.querySelectorAll('.mini-app-button:not(:disabled)').length`),9);
  await evaluate(`document.querySelector('.mini-app-button[data-app="live"]').click()`);
  await until(`!document.querySelector('.mini-app-button[data-app="live"]').disabled&&document.querySelector('.mini-app-message').textContent===${JSON.stringify(project)}`);
  assert.equal(await evaluate(`document.querySelector('.mini-app-message').textContent.includes('起動済み')`),false);
@@ -141,11 +142,11 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:390,height:780,deviceScaleFactor:1,mobile:true});await sleep(150);await capture('app-mobile');
  assert.equal(await evaluate(`document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight`),false);
  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.app-launch-list')).overflowY`),'auto');
- await click('解除');assert.equal(await evaluate(`[...document.querySelectorAll('.app-launch-button')].every(button=>button.disabled)`),true);
+ await click('解除');assert.deepEqual(await evaluate(`[...document.querySelectorAll('.app-launch-button:not(:disabled)')].map(button=>button.closest('[data-app]').dataset.app)`),['chrome']);
  await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);await click('アプリ起動');
  assert.equal(await evaluate(`document.querySelector('#app-project-folder').value`),'','再起動・再読込では毎回フォルダ未選択');
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),true);
- assert.deepEqual(errors,[]);console.log('アプリ起動: 10アイコン（利用条件による無効4件）・ミニ幅360px/内容高・電光掲示板のクリック/Enter/Space・未選択時の赤字と不活性・選択後の起動/排他・待機中の起動再発行なし・390/1280px OK');
+ assert.deepEqual(errors,[]);console.log('アプリ起動: ミニ360×190・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

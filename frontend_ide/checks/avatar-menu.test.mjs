@@ -9,7 +9,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const source=readFileSync(new URL('../src/App.vue',import.meta.url),'utf8');
 function fixture(){
- const context={cpuOpen:{value:false},openCpu(){},computed:fn=>({get value(){return fn();}}),launching:{value:''},state:{value:{mode:'online'}},liveOpen:{value:false},browserAvailable:{value:true},panelOpen:{value:false},tab:{value:'code'},openNavigation(){},openWindow(){},openPanel(){}};
+ const context={cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),launching:{value:''},state:{value:{mode:'online'}},liveOpen:{value:false},browserAvailable:{value:true},panelOpen:{value:false},tab:{value:'code'},openNavigation(){},openWindow(){},openPanel(){}};
  vm.runInNewContext(source.slice(source.indexOf('const launchText='),source.indexOf('async function openWindow'))+';globalThis.desktop=desktopLaunchItems;globalThis.web=panelLaunchItems;',context);return context;
 }
 test('IDEメニュー: Console → Browser と Live → Avatar、起動中は両方を除き終了後復元',()=>{
@@ -30,18 +30,20 @@ test('VR起動列もConsole直後Browser、Live直後Avatar、CPUは最後',()=>
  const labels=Array.from(toolbar.matchAll(/@click="(openWindow\('([^']+)'|openNavigation)/g),m=>m[2]||'navigation');
  assert.deepEqual(labels,['console','browser','navigation','code','live','avatar','cpu']);
  assert.ok(toolbar.indexOf("openWindow(type,toolbar.displayId)") < toolbar.indexOf("openWindow('cpu',toolbar.displayId)"));
+ assert.ok(toolbar.includes("['task','team'].filter(type=>!runningApps.includes(type))"));
+ assert.ok(toolbar.includes("v-if=\"!runningApps.includes('cpu')\""));
  assert.match(toolbar,/v-if="state.mode==='online'&&!liveOpen[^"]*"[^\n]+openWindow\('avatar'/);
 });
 
-test('CPUはオンライン・オフライン・起動中・Live利用中でもメニュー末尾で動作を保持',()=>{
+test('起動中のTask / Team / CPUだけメニューから外し、終了後に戻す',()=>{
  const f=fixture();
- for(const mode of ['online','offline'])for(const launching of ['','code','live','avatar'])for(const live of [false,true]){
-  f.state.value.mode=mode;f.launching.value=launching;f.liveOpen.value=live;
-  for(const items of [f.desktop.value,f.web.value]){
-   assert.equal(items.at(-1).key,'cpu');assert.equal(items.filter(item=>item.key==='cpu').length,1);
-   assert.equal(items.at(-1).run,f.openCpu);
-  }
-  assert.equal(f.desktop.value.at(-1).disabled,!!launching);
+ const keys=()=>Array.from(f.desktop.value,item=>item.key);
+ for(const kind of ['task','team','cpu']){
+  const initial=keys();
+  f.runningApps.value=[kind];assert.deepEqual(keys(),initial.filter(key=>key!==kind));
+  f.runningApps.value=[];assert.deepEqual(keys(),initial);
  }
- f.cpuOpen.value=true;assert.equal(f.web.value.at(-1).pressed,true);
+ f.state.value.mode='offline';f.runningApps.value=['cpu'];assert.deepEqual(keys(),['console','browser','code']);
+ f.cpuOpen.value=true;assert.ok(!f.web.value.some(item=>item.key==='cpu'));
+ f.cpuOpen.value=false;assert.equal(f.web.value.at(-1).run,f.openCpu);
 });

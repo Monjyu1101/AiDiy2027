@@ -6,9 +6,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {resolve,join} from 'node:path';
 import vm from 'node:vm';
 import sessionModule from '../デスクトップ/desktop-session.cjs';
 import taskModule from '../デスクトップ/task-windows.cjs';
+import appProcesses from '../../scripts/アプリプロセス.cjs';
 const {validateDevelopmentState,readDevelopmentState}=sessionModule;
 const valid={active:true,mode:'online',startedAt:10,project:{path:'/fixture'}};
 
@@ -73,7 +75,7 @@ test('Electron IPC: 同じメインフレーム・正確なURLだけを信用し
  frame.url=record.url;record.window.isDestroyed=()=>true;assert.equal(context.trust({sender,senderFrame:frame}),null);
 });
 
-function launchFixture(){
+function launchFixture(running=new Set(),occupied=new Set()){
  const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const body=source.slice(source.indexOf(" ipcMain.handle('development:open-app'"),source.indexOf(" ipcMain.handle('development:code-move-begin'"))
   .replace("const {startDevelopment}=await import('./server.mjs');","const {startDevelopment}=testServer;");
@@ -81,10 +83,11 @@ function launchFixture(){
  const owner={kind:'ide',window:{isDestroyed:()=>false},revision:0,pending:new Map()},viewer={kind:'viewer',owner,linkKey:'online:10',window:{isDestroyed:()=>false}};
  const avatar={active:false,calls:[],open:async(record,path)=>{avatar.active=true;avatar.calls.push(path);await hold;return{ok:true};}};
  const context={avatarLauncher:{active:()=>avatar.active,open:avatar.open},voiceActive:record=>avatar.active||record.pending.has('live')||[...windows.values()].some(child=>child.owner===record&&child.kind==='live'),createTaskWindows:taskModule.createTaskWindows,selectedAllDisplay:()=>null,ipcMain:{handle:(_name,handler)=>{launch=handler;}},windows,quitting:false,trustedEvent:event=>event.record,
+  __dirname:'/fixture',単一起動部品:appProcesses.単一起動部品,単独起動中の部品:async()=>running,起動枠を確保:async type=>occupied.has(type)?null:()=>{},
   readState:async()=>structuredClone(state),sessionKey:value=>value.active?`${value.mode}:${value.startedAt}`:'',
   focusWindow:window=>focused.push(window),closeServer:server=>{if(server)closed.push(server);},
   testServer:{startDevelopment:async(path,options)=>{starts.push({path,options});await hold;return{url:'http://127.0.0.1:1234/'};}},
-  createWindow:async(...args)=>{created.push(args);const window={isDestroyed:()=>false};windows.set(window,{window,kind:args[0],owner:args[3],linkKey:args[4],taskView:args[8]?.view,taskController:args[8]?.controller});return window;}};
+  createWindow:async(...args)=>{created.push(args);const window={isDestroyed:()=>false,once(){}};windows.set(window,{window,kind:args[0],owner:args[3],linkKey:args[4],taskView:args[8]?.view,taskController:args[8]?.controller});return window;}};
  vm.runInNewContext(body,context);
  return{launch,state,owner,viewer,windows,starts,created,focused,closed,avatar,hold:promise=>{hold=promise;}};
 }
@@ -120,6 +123,29 @@ test('IDE TASK/TEAM: concurrent launch reuses owner session, fixed project and p
   assert.equal((await f.launch({record:f.owner},kind)).reused,true);
   assert.equal(f.created.length,1);assert.equal(f.focused.length,1);
  }
+});
+
+test('Task / Team / CPUの単独版または別プロセスの起動枠がある場合はIDEから追加起動しない',async()=>{
+ const ids=new Set(appProcesses.単一起動部品);
+ for(const f of [launchFixture(ids),launchFixture(new Set(),ids)]){
+  for(const kind of ids){
+   const result=await f.launch({record:f.owner},kind);
+   assert.equal(result.ok,true);assert.equal(result.alreadyRunning,true);
+  }
+  assert.equal(f.starts.length,0);assert.equal(f.created.length,0);
+ }
+});
+
+test('単独版の判定は配置元のElectron起動入口と対象アプリを照合する',async()=>{
+ const root=resolve('test fixture [AiDiy]','frontend_ide'),entry=join(root,'desktop.cjs');
+ const rows=[
+  {command:`electron "${entry}" --app task`},
+  {command:`electron "${entry}" --app=cpu`},
+  {command:`electron "${entry}" --app ide`},
+  {command:`electron "${entry}.old" --app team`},
+  {command:`node --test "${entry}" --app team`},
+ ];
+ assert.deepEqual(await appProcesses.単独起動中の部品(root,async()=>rows),new Set(['task','cpu']));
 });
 
 

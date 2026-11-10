@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {chartSeries,placeLabels,chartRight,labelRight} from '../src/components/システム監視/使用率グラフ.js';
-const source=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\n/gm,'');
+const source=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\r?\n/gm,'');
 function fixture(){
  let mount,unmount,id=0,calls=0,fetcher=async()=>({ok:true,json:async()=>({timestamp:1,cpu:35,gpu:null,ram:62})});
  const timers=new Map(),events=new Map(),document={hidden:false,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
@@ -67,6 +67,6 @@ test('CPU is graph-only with compact percent margin and Diag-sized right inset',
  const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
  assert.doesNotMatch(panel,/<footer|cpu-caption|GPU 未取得|GPU 最大負荷|ホスト全体 ·/);
  assert.match(panel,/viewBox="0 0 264 100"/);
- assert.match(panel,/<text :x="labelRight" text-anchor="end"/);
+ assert.match(panel,/<text :x="labelRight-labelMaxWidth\/2" :y="item\.labelY\+\.5" text-anchor="middle" dominant-baseline="central"/);
  assert.match(panel,/right:8px;bottom:/);
 });

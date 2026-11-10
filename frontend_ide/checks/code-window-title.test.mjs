@@ -47,8 +47,10 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  }
  const app=new EventEmitter();Object.assign(app,{setName(name){this.name=name;},getPath:()=>'/tmp',setPath(){},requestSingleInstanceLock:()=>true,whenReady:()=>Promise.resolve(),quit(){const event={preventDefault(){this.prevented=true;}};app.emit('before-quit',event);if(!event.prevented)app.quitComplete=true;},dock:{setMenu(value){this.menu=value;},setIcon(value){this.icon=value;}}});
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){app.menu=value;}};
+ const appSlots=new Set();
  const modules={
-  electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
+  electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
+  '../scripts/アプリプロセス.cjs':{単一起動部品:['task','team','cpu'],単独起動中の部品:async()=>new Set(),起動枠の使用中:async type=>appSlots.has(type),起動枠を確保:async type=>{if(appSlots.has(type))return null;appSlots.add(type);return()=>appSlots.delete(type);}},
   './デスクトップ/Avatar起動.cjs':avatarModule,
   'node:path':{join:(...parts)=>parts.join('/'),resolve:(...parts)=>parts.join('/')},'node:fs':{mkdirSync(){},mkdtempSync:()=>'/tmp/console-fixture',rmSync(){}},
   './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program,_root,children=[])=>['/project/_AIDIY',program,...children].join('/'),preparePrivateDirectory(){}},
@@ -70,7 +72,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   './デスクトップ/最前面ピン.cjs':pinModule,
   './デスクトップ/VRパネル配置.cjs':placementModule,
   './デスクトップ/VRパネル前面.cjs':stackingModule,
-  './デスクトップ/全画面横断.cjs':{createAllDisplays:({syncChildren})=>{let active=false;return{register(){},attachExitKey:()=>()=>{},leave:()=>false,isActive:()=>active,handle(event,action){if(action==='toggle')active=!active;const owner=[...api.windows.values()].find(record=>record.window.webContents===event.sender);syncChildren(owner);return{ok:true,active};}};}},
+  './デスクトップ/全画面横断.cjs':{setWindowBounds:(window,bounds)=>window.setBounds(bounds),createAllDisplays:({syncChildren})=>{let active=false;return{register(){},attachExitKey:()=>()=>{},leave:()=>false,isActive:()=>active,handle(event,action){if(action==='toggle')active=!active;const owner=[...api.windows.values()].find(record=>record.window.webContents===event.sender);syncChildren(owner);return{ok:true,active};}};}},
  };
  const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const proc=new EventEmitter();Object.assign(proc,{platform,env:{AIDIY_DEVELOPMENT_URL:'http://127.0.0.1:1234/',AIDIY_DEVELOPMENT_KIND:kind,...env},cwd:()=>'/project'});
@@ -289,10 +291,13 @@ test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開
  const f=await desktopFixture(),open=f.handlers.get('development:open-app');
  const [a,b]=await Promise.all([open(f.event(f.owner),'cpu'),open(f.event(f.owner),'cpu')]);assert.equal(a.ok,true);assert.equal(b.ok,true);
  const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.options.width,240);assert.equal(cpu[0].window.options.height,160);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
+ const status=f.handlers.get('development:child-windows');
+ assert.ok((await status(f.event(f.owner))).runningApps.includes('cpu'));
  assert.equal((await open(f.event(f.owner),'cpu')).reused,true);
  const action=command=>f.handlers.get('development:window')(f.event(cpu[0]),command);
  const pinned=action('pin-state').pinned;assert.equal(action('toggle-pin').pinned,!pinned);assert.equal(action('toggle-pin').pinned,pinned);
  await f.handlers.get('development:end-session')(f.event(f.owner));assert.equal(cpu[0].window.isDestroyed(),true);
+ assert.ok(!(await status(f.event(f.owner))).runningApps.includes('cpu'));
  });
 
 

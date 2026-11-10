@@ -30,32 +30,17 @@ test('CPU initial dimensions are 240 by 160 with readable minimum size',()=>{
  assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:240,minHeight:150});
 });
 
-test('CPU sits in right edge above the Diag mini reserved height, clipped to work area',()=>{
+test('CPU uses a fixed offset from the work area bottom right and fits small displays',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040}]){
   const b=windowBounds('cpu',area);
   assert.equal(b.x+b.width,area.x+area.width-8);
-  assert.equal(area.y+area.height-(b.y+b.height),8+360+8);
+  assert.equal(area.y+area.height-(b.y+b.height),8+270+8);
  }
  for(const area of [{x:0,y:0,width:280,height:180},{x:-300,y:-200,width:180,height:120}]){
   const b=windowBounds('cpu',area);assert.equal(b.y,area.y+8);
   assert.ok(b.x>=area.x&&b.x+b.width<=area.x+area.width);
   assert.ok(b.y+b.height<=area.y+area.height);
  }
-});
-
-test('CPU uses actual Diag mini top on the same screen and ignores a different display',()=>{
- const area={x:-1920,y:40,width:1920,height:1040};
- const diag={x:-368,y:780,width:360,height:292};
- const b=windowBounds('cpu',area,null,0,false,diag);
- assert.equal(b.x,-248);assert.equal(b.y,612);
- assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:100}).y,windowBounds('cpu',area,null,0,false,null).y);
-});
-
-test('CPU aligns its right edge with the actual Diag mini, clamped to the display',()=>{
- const area={x:0,y:0,width:1920,height:1080};
- const diag={x:1500,y:780,width:360,height:292};
- assert.equal(windowBounds('cpu',area,null,0,false,diag).x,1620);
- assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:1800}).x,1672);
 });
 
 test('graph expands only into spare space, leaving labels outside at every viewport size',()=>{
@@ -85,7 +70,7 @@ test('label column and graph do not overlap, including 100 percent and unavailab
     const text=item.key.toUpperCase()+' '+(item.value===null?'—':Math.round(item.value)+'%');
     const textWidth=text.length*6.6;
     assert.ok(textWidth<=labelMaxWidth);
-    assert.ok((labelRight-textWidth-chartRight)*sx>=labelGap*sx);
+    assert.ok((labelRight-(labelMaxWidth+textWidth)/2-chartRight)*sx>=labelGap*sx);
     assert.ok(labelRight*sx<width);
    }
    for(let i=1;i<labels.length;i++)assert.ok((labels[i].labelY-labels[i-1].labelY)*sy>11*sy);

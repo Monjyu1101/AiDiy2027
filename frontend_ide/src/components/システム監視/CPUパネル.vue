@@ -6,7 +6,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,onMounted,onBeforeUnmount} from 'vue';
 import WindowActions from '../共通表示/窓操作.vue';
-import {chartSeries,placeLabels,chartRight,labelRight} from './使用率グラフ.js';
+import {chartSeries,placeLabels,chartRight,labelRight,labelMaxWidth} from './使用率グラフ.js';
 defineProps({desktop:Boolean,floating:Boolean,standalone:Boolean});
 const emit=defineEmits(['close']);
 const samples=ref([]),error=ref(''),ready=ref(false);
@@ -50,7 +50,8 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
     <g v-for="item in labels" :key="item.key" :style="{color:item.color}" class="cpu-label">
      <path v-if="item.value!==null" :d="`M${chartRight} ${item.y}L${chartRight+4} ${item.labelY}`" stroke="currentColor" fill="none" stroke-opacity=".55" />
      <circle v-if="item.value!==null" :cx="chartRight" :cy="item.y" r="2.5" fill="currentColor" />
-     <text :x="labelRight" text-anchor="end" :textLength="(item.value===null?5:5+String(Math.round(item.value)).length)*6.6" lengthAdjust="spacingAndGlyphs" :y="item.labelY+4" fill="currentColor">{{ item.key.toUpperCase() }} {{ item.value===null?'—':Math.round(item.value)+'%' }}</text>
+     <rect :x="labelRight-labelMaxWidth-2" :y="item.labelY-6" :width="labelMaxWidth+4" height="13" fill="currentColor" />
+     <text :x="labelRight-labelMaxWidth/2" :y="item.labelY+.5" text-anchor="middle" dominant-baseline="central" :textLength="(item.value===null?5:5+String(Math.round(item.value)).length)*6.6" lengthAdjust="spacingAndGlyphs" fill="#000">{{ item.key.toUpperCase() }} {{ item.value===null?'—':Math.round(item.value)+'%' }}</text>
     </g>
    </svg>
   </div>

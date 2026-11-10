@@ -16,6 +16,7 @@ import {build} from 'esbuild';
 import {parse,compileScript} from '@vue/compiler-sfc';
 import WebSocket from 'ws';
 const root=fileURLToPath(new URL('..',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'cpu-check-'));
+assert.equal(dirname(temporary),tmpdir());
 const output=join(root,'temp/cpu-check');mkdirSync(output,{recursive:true});
 const plugin={name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{const {descriptor}=parse(readFileSync(args.path,'utf8'));const compiled=compileScript(descriptor,{id:args.path,inlineTemplate:true});return{contents:compiled.content+`\nconst style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.content).join('\n'))};document.head.append(style);`,resolveDir:dirname(args.path)};});}};
 const result=await build({stdin:{contents:`import {createApp,h} from 'vue';import Cpu from './src/components/システム監視/CPUパネル.vue';
@@ -38,6 +39,15 @@ try{
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});assert.equal(r.result?.exceptionDetails,undefined,JSON.stringify(r));return r.result.result.value;};
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:240,height:160,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1600);
  assert.equal(await evaluate('document.querySelectorAll(".cpu-label text").length'),3);assert.equal(await evaluate('document.querySelectorAll("path[fill-opacity]").length'),2);
+ assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label')].every(label=>{
+  const badge=label.querySelector('rect'),text=label.querySelector('text');
+  return getComputedStyle(badge).fill===getComputedStyle(label).color&&getComputedStyle(text).fill==='rgb(0, 0, 0)';
+ })`),true);
+ assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label')].every(label=>{
+  const badge=label.querySelector('rect').getBBox(),text=label.querySelector('text').getBBox();
+  return Math.abs((text.x+text.width/2)-(badge.x+badge.width/2))<1&&
+   Math.abs((text.y+text.height/2)-(badge.y+badge.height/2))<1;
+ })`),true);
  const shot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-gpu-ram.png'),Buffer.from(shot.result.data,'base64'));
  await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:239,y:159});
  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
@@ -52,4 +62,4 @@ try{
  await send('Emulation.setDeviceMetricsOverride',{width:240,height:150,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),240);
  const small=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-small.png'),Buffer.from(small.result.data,'base64'));
  await evaluate('dispose()');const stopped=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),stopped);assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS CPU render, GPU unavailable, request failure/recovery, hidden/resume, small size and disposal');
-}finally{socket?.close();chrome.kill();server.close();await sleep(200);rmSync(temporary,{recursive:true,force:true});}
+}finally{socket?.close();chrome.kill();server.close();await sleep(200);rmSync(temporary,{recursive:true,force:true,maxRetries:10,retryDelay:150});}

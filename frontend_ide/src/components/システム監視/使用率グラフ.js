@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const percent=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=100?value:null;
-// 最長の「CPU 100%」用54単位と6単位の間隔を右寄せラベルの前に予約する。
+// 最長の「CPU 100%」用54単位と6単位の間隔を右側のラベル列に予約する。
 export const labelRight=262,labelMaxWidth=54,labelGap=6;
 export const chartRight=labelRight-labelMaxWidth-labelGap;
 export function chartSeries(samples){

@@ -31,7 +31,7 @@ async function launchDetached(defaultKind,args){
    child.on('message',message);child.once('exit',exit);child.once('error',failure);
   });
   if(child.connected)child.disconnect();child.unref();
-  console.log(result.existingWindow?`起動済みの${label}画面を前面に表示しました。`:`AiDiy ${label}を起動しました。`);
+  console.log(result.alreadyRunning?`AiDiy ${label}はすでに起動中です。`:result.existingWindow?`起動済みの${label}画面を前面に表示しました。`:`AiDiy ${label}を起動しました。`);
   return result;
  }catch(error){if(child.connected)child.disconnect();child.kill();throw error;}
 }
@@ -84,7 +84,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
    let executable;try{executable=electronExecutable();}catch{executable=electronExecutable(new URL('./host/package.json',import.meta.url));}
    desktop=spawnDesktop(executable,[fileURLToPath(new URL('./desktop.cjs',import.meta.url)),'--app',kind],{cwd:project,env,background:launcherChild});
    const shown=await new Promise((done,reject)=>{const timer=setTimeout(()=>reject(Error('Electronの表示がタイムアウトしました。')),20000);desktop.once('error',error=>{clearTimeout(timer);reject(error);});desktop.once('exit',code=>{clearTimeout(timer);reject(Error(`Electron終了: ${code}`));});desktop.on('message',message=>{if(message?.windowShown===true||message?.existingWindow===true){clearTimeout(timer);done(message);}});});
-   if(shown.existingWindow){await stop();notifyReady({existingWindow:true});console.log('起動済みの画面を前面に表示しました。');return;}
+   if(shown.existingWindow){await stop();notifyReady({existingWindow:true,alreadyRunning:shown.alreadyRunning});console.log(shown.alreadyRunning?'このアプリはすでに起動中です。':'起動済みの画面を前面に表示しました。');return;}
    desktop.once('exit',code=>{if(code)process.exitCode=code;void stop();});
   }catch(error){if(launcherChild||kind==='browser'){if(desktop?.connected)desktop.disconnect();desktop?.kill();await stop();throw error;}console.warn(error.message+' Web版へ切り替えます。');if(desktop?.connected)desktop.disconnect();desktop?.kill();desktop=undefined;browser=true;}
  }

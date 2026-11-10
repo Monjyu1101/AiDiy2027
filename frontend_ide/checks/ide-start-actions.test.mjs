@@ -31,13 +31,13 @@ test('開始ボタンは大きな操作領域・狭幅の縦並び・低い画�
  assert.match(css,/\.ide-start-actions button:focus-visible\{outline:2px/);
 });
 function menuFixture(mode='offline',active=true,connected=false){
- const context={cpuOpen:{value:false},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
+ const context={cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
  vm.runInNewContext(app.slice(app.indexOf('const browserAvailable='),app.indexOf("provide('browserAvailable'"))+app.slice(app.indexOf('const launchText='),app.indexOf('async function openWindow'))+';globalThis.desktopItems=desktopLaunchItems;globalThis.webItems=panelLaunchItems;globalThis.available=browserAvailable;',context);return context;
 }
 test('オフラインメニューはCPU・Console・Browser・CodeだけでBrowserは接続なしでも有効',()=>{
  for(const mode of ['offline','online']){
   const f=menuFixture(mode);
-  const expected=mode==='offline'?['cpu','console','browser','code']:['cpu','console','browser','navigation','code','live','avatar','task','team'];
+  const expected=mode==='offline'?['console','browser','code','cpu']:['console','browser','navigation','code','live','avatar','task','team','cpu'];
   assert.deepEqual(Array.from(f.desktopItems.value,x=>x.key),expected);
   if(mode==='offline')assert.deepEqual(Array.from(f.webItems.value,x=>x.key),expected);
   assert.equal(f.available.value,true);

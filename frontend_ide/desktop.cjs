@@ -5,6 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 const {app,BrowserWindow,WebContentsView,ipcMain,shell,clipboard,session,screen,dialog,Menu}=require('electron');
 const {join,resolve}=require('node:path');
+const {単一起動部品,単独起動中の部品,起動枠を確保,起動枠の使用中}=require('../scripts/アプリプロセス.cjs');
 const {projectRoot,programDataDirectory,preparePrivateDirectory}=require('./host/scripts/project-storage.cjs');
 const {mkdtempSync,rmSync}=require('node:fs');
 const {projectProfile}=require('./デスクトップ/project-profile.cjs');
@@ -85,7 +86,7 @@ function attachWindowMove(record,contents){
  const stopExit=allDisplays.attachExitKey(record,contents);
  return()=>{stopExit();stopMove();};
 }
-const {createAllDisplays}=require('./デスクトップ/全画面横断.cjs');
+const {createAllDisplays,setWindowBounds}=require('./デスクトップ/全画面横断.cjs');
 const {createVRPanelPlacement}=require('./デスクトップ/VRパネル配置.cjs');
 const {createVRPanelStacking}=require('./デスクトップ/VRパネル前面.cjs');
 const vrPanelStacking=createVRPanelStacking({windows,isActive:owner=>allDisplays.isActive(owner),isPinned:record=>windowPins.state(record.window).pinned});
@@ -196,7 +197,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
  const viewerPath=kind==='viewer'&&hash.startsWith('viewer=')?decodeURIComponent(hash.slice('viewer='.length)):'';
  const taskView=kind==='task'?(taskOptions?.view||'request'):undefined;
  const ownerBounds=owner?.window.getBounds();
- const area=(ownerBounds?screen.getDisplayMatching(ownerBounds):screen.getDisplayNearestPoint(screen.getCursorScreenPoint())).workArea;
+ const area=(ownerBounds?screen.getDisplayMatching(ownerBounds):kind==='cpu'?screen.getPrimaryDisplay():screen.getDisplayNearestPoint(screen.getCursorScreenPoint())).workArea;
  const used=new Set([...windows.values()].filter(item=>item.owner===owner&&item.kind===kind&&!item.window.isDestroyed()).map(item=>item.slot));
  const ownerRevision=owner?.revision;
  const placement=kind==='console'?await reserveConsoleSlot():null;
@@ -216,7 +217,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
  window.once('closed',()=>placement?.close());
  // autoplayPolicy: ビューアの「表示」で開いた HTML（ナレーション付きの動画ページなど）の音声を、クリックなしで再生できるようにする。
  // Windowsのフレームレス窓も、外枠の論理座標を明示してDPI差を補正する。
- window.setBounds(bounds);
+ if(kind==='cpu')setWindowBounds(window,bounds);else window.setBounds(bounds);
  const contents=window.webContents;
  contents.on('page-title-updated',event=>{event.preventDefault();window.setTitle(kind==='navi'?navigationWindowTitle(record,title):title);});
  // 窓番号は全体で一意、重ね位置は選択した画面ごとに数える。
@@ -298,6 +299,14 @@ app.on('before-quit',event=>{
  void Promise.allSettled([...closing]).finally(()=>app.quit());
 });
 app.whenReady().then(async()=>{
+ if(!independent&&単一起動部品.includes(kind)){
+  const release=await 起動枠を確保(kind);
+  if(!release){
+   if(process.send)process.send({existingWindow:true,alreadyRunning:true},()=>app.exit(0));else app.exit(0);
+   return;
+  }
+  app.once('quit',release);
+ }
  if(process.platform==='darwin')require('./host/scripts/MacOS-Menu.cjs').Macメニューを設定({app,Menu,名前:appName,閉じる:closeApplication,icon:join(__dirname,'public',kind==='browser'?'AiDiy.png':`AiDiy_${kind}.png`),platform:process.platform});
  // 同一Electronプロセスの複数窓を識別し、Liveのメインフレームだけ音声入力を許可する。
  session.defaultSession.setPermissionCheckHandler((contents,permission,origin,details)=>{
@@ -393,9 +402,15 @@ app.whenReady().then(async()=>{
   const record=trustedEvent(event);if(!record||record.kind!=='ide')return;
   closeChildren(record);await Promise.allSettled([...closing]);
  });
- ipcMain.handle('development:child-windows',event=>{
+ ipcMain.handle('development:child-windows',async event=>{
   const owner=trustedEvent(event);
-  return{live:!!owner&&owner.kind==='ide'&&!!voiceActive(owner),avatar:!!owner&&owner.kind==='ide'&&avatarLauncher.active(owner)};
+  if(owner?.kind!=='ide')return{live:false,avatar:false,runningApps:[]};
+  const [running,occupied]=await Promise.all([
+   単独起動中の部品(__dirname),
+   Promise.all(単一起動部品.map(起動枠の使用中)),
+  ]);
+  単一起動部品.forEach((type,index)=>{if(occupied[index]||owner.pending.has(type))running.add(type);});
+  return{live:!!voiceActive(owner),avatar:avatarLauncher.active(owner),runningApps:[...running]};
  });
  ipcMain.handle('development:open-app',async(event,type,displayId)=>{
   const source=trustedEvent(event),record=source?.kind==='viewer'?source.owner:source;
@@ -419,12 +434,23 @@ app.whenReady().then(async()=>{
   // Codeは依頼ごとに別窓。CPU / Task / Teamは初期化中も共有する。
   if(['cpu','live','task','team'].includes(type)&&record.pending.has(type))return record.pending.get(type);
   const opening=(async()=>{
-   let child;
+   let child,release;
    try{
     const key=sessionKey(state);
     const existing=[...windows.values()].find(item=>item.owner===record&&item.kind===type&&item.linkKey===key&&!item.window.isDestroyed());
     if(['cpu','live','task','team'].includes(type)&&existing){focusWindow(existing.window);return{ok:true,reused:true};}
-    if(type==='cpu'){await createWindow('cpu',record.url+'#cpu',undefined,record,key,undefined,displayId);return{ok:true};}
+    if(単一起動部品.includes(type)){
+     const running=await 単独起動中の部品(__dirname).catch(()=>{throw Error('起動中のアプリを確認できません。もう一度お試しください。');});
+     if(running.has(type))return{ok:true,alreadyRunning:true};
+     release=await 起動枠を確保(type);
+     if(!release)return{ok:true,alreadyRunning:true};
+     if(quitting||trustedEvent(event)!==source||record.revision!==revision||record.window.isDestroyed())throw Error('IDEの利用状態が変わりました。');
+    }
+    if(type==='cpu'){
+     const window=await createWindow('cpu',record.url+'#cpu',undefined,record,key,undefined,displayId);
+     if(window.isDestroyed())release();else window.once('closed',release);
+     return{ok:true};
+    }
     const {startDevelopment}=await import('./server.mjs');
     child=await startDevelopment(state.project.path,{kind:type,offline:state.mode==='offline',linked:true,projectFixed:['task','team'].includes(type)});
     const current=await readState(record);
@@ -433,13 +459,16 @@ app.whenReady().then(async()=>{
      const service=child;
      const controller=createTaskWindows({authenticated:true,records:windows,trustedEvent,focusWindow,isQuitting:()=>quitting||record.window.isDestroyed()||record.revision!==revision,
       owns:item=>item.taskController===controller,
-      onLastClosed:()=>closeServer(service),
+      onLastClosed:()=>{release();closeServer(service);},
       createWindow:(view,payload)=>createWindow('task',service.url+'#task-view='+view,undefined,record,key,undefined,displayId,undefined,{view,payload,controller})});
      const result=await controller.start();if(!result.ok)throw Error(result.error);
-    }else await createWindow(type,child.url,child,record,key,undefined,displayId);
+    }else{
+     const window=await createWindow(type,child.url,child,record,key,undefined,displayId);
+     if(release){if(window.isDestroyed())release();else window.once('closed',release);}
+    }
     child=undefined;
     return{ok:true};
-   }catch(error){closeServer(child);return{ok:false,error:error.message};}
+   }catch(error){release?.();closeServer(child);return{ok:false,error:error.message};}
   })();
   if(['cpu','live','task','team'].includes(type))record.pending.set(type,opening);
   try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}

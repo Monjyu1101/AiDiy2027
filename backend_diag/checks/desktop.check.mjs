@@ -26,7 +26,7 @@ function childFixture(){const child=new EventEmitter();child.stderr=new EventEmi
 async function mainFixture({sizeEffects=resizeEffect,opening,load,toolsOpen=false,primary=true,workArea={x:0,y:28,width:1920,height:1052},platform='win32',startStatus={終了時停止あり:false},confirmClose=async()=>({response:1}),selectFolder=async()=>({canceled:true,filePaths:[]})}={}){
  const source=await readFile(new URL('../起動/electron-main.cjs',import.meta.url),'utf8');
  const moves=[],iconMenus=[],directories=[];
- const profile=path.join('/fixture/project','_AIDIY','aidiy_diag','electron');
+ const profile=path.posix.join('/fixture/project','_AIDIY','aidiy_diag','electron');
  const stdin=Readable.from([]),proc=new EventEmitter(),app=new EventEmitter(),policy={},sent=[],exits=[],handlers={},scripts=[],openings=[],dialogs=[];
  Object.assign(proc,{stdin,pid:42,platform,connected:true,send:(message,callback)=>{sent.push(message);callback?.();}});
  let options,win,loaded;app.whenReady=async()=>{};
@@ -38,7 +38,7 @@ async function mainFixture({sizeEffects=resizeEffect,opening,load,toolsOpen=fals
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(menu){app.menu=menu;}};
  const session={fromPartition(name){assert.ok(!name.startsWith('persist:'));return {setPermissionRequestHandler(fn){policy.permission=fn;},setPermissionCheckHandler(fn){policy.check=fn;},webRequest:{onBeforeRequest(fn){policy.request=fn;}}};}};
  class Window extends EventEmitter {constructor(value){super();options=value;win=this;this.webContents=new EventEmitter();this.webContents.mainFrame={};this.webContents.isDestroyed=()=>false;this.webContents.send=(channel,state)=>{this.pinMessage={channel,state};};this.webContents.executeJavaScript=async script=>{scripts.push(script);};this.webContents.setWindowOpenHandler=fn=>{policy.window=fn;};}isDestroyed(){return !!this.destroyed;}isVisible(){return false;}isMinimized(){return !!this.minimized;}isMaximized(){return !!this.maximized;}maximize(){this.maximized=true;}unmaximize(){this.maximized=false;}minimize(){this.minimized=true;}close(){const event={preventDefault(){this.prevented=true;}};this.emit('close',event);if(!event.prevented)this.closed=true;}getBounds(){return {...this.getNormalBounds()};}getNormalBounds(){return this.bounds||{x:150,y:100,width:options.width,height:options.height};}getMinimumSize(){return this.minimum||[420,320];}isResizable(){return this.resizable!==false;}setResizable(value){this.resizable=value;}setIgnoreMouseEvents(){}isMaximizable(){return true;}setMinimumSize(...value){this.minimum=value;}setMaximizable(value){this.maximizable=value;}setBounds(value){this.bounds=value;}isAlwaysOnTop(){return !!this.top;}setAlwaysOnTop(value){this.top=value;}setMenuBarVisibility(){}show(){this.shown=true;}async loadURL(value){loaded=value;this.webContents.emit('did-start-loading');await load?.();}}
- vm.runInNewContext(source,{__dirname:'/fixture/project/backend_diag/起動',require:id=>id==='../../frontend_ide/デスクトップ/Diagミニ位置.cjs'?{trackDiagMiniBounds(){}}:id==='node:path'?path:id==='node:fs'?{mkdirSync:(folder,options)=>{assert.equal(options.recursive,true);directories.push(folder);}}:id==='../../frontend_ide/host/scripts/project-storage.cjs'?{programDataDirectory:(project,program,root,children)=>{assert.equal(project,'/fixture/project');assert.equal(root,project);assert.equal(program,'aidiy_diag');return path.join(project,'_AIDIY',program,...children);},preparePrivateDirectory:folder=>directories.push(folder)}:id==='../ui/src/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./表示切替位置.cjs'?displayPosition:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea}),getDisplayMatching:()=>({workArea})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
+ vm.runInNewContext(source,{__dirname:'/fixture/project/backend_diag/起動',require:id=>id==='node:path'?path.posix:id==='node:fs'?{mkdirSync:(folder,options)=>{assert.equal(options.recursive,true);directories.push(folder);}}:id==='../../frontend_ide/host/scripts/project-storage.cjs'?{programDataDirectory:(project,program,root,children)=>{assert.equal(project,'/fixture/project');assert.equal(root,project);assert.equal(program,'aidiy_diag');return path.posix.join(project,'_AIDIY',program,...children);},preparePrivateDirectory:folder=>directories.push(folder)}:id==='../ui/src/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./表示切替位置.cjs'?displayPosition:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea}),getDisplayMatching:()=>({workArea})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
  return {stdin,proc,app,policy,sent,exits,handlers,scripts,openings,dialogs,moves,iconMenus,get options(){return options;},get win(){return win;},get loaded(){return loaded;}};
 }
 test('desktop default; explicit browser, Codespaces, headless remain Node-only',()=>{
@@ -48,7 +48,7 @@ test('desktop default; explicit browser, Codespaces, headless remain Node-only',
 test('Diag separates its profile from Avatar before locking on every OS',async()=>{
  for(const platform of ['win32','darwin','linux']){
   const f=await mainFixture({platform});
-  assert.equal(f.app.userData,path.join('/fixture/project','_AIDIY','aidiy_diag','electron'));
+  assert.equal(f.app.userData,path.posix.join('/fixture/project','_AIDIY','aidiy_diag','electron'));
   assert.equal(f.app.sessionData,f.app.userData);
   assert.notEqual(path.basename(f.app.userData),'Electron');
  }
@@ -77,7 +77,7 @@ test('Windows EOF stdin no longer exits; IPC starts a secure Electron window',as
 test('Tools 8095 open starts mini at primary work-area bottom-right before show, while closed/unknown use normal',async()=>{
  for(const toolsOpen of [true,false,null]){
   const f=await mainFixture({toolsOpen,opening:window=>{
-   if(toolsOpen===true){assert.equal(window.bounds.width,360);assert.equal(window.bounds.height,134);assert.equal(window.bounds.x,1552);assert.equal(window.bounds.y,938);assert.equal(window.top,false);}
+   if(toolsOpen===true){assert.equal(window.bounds.width,360);assert.equal(window.bounds.height,190);assert.equal(window.bounds.x,1552);assert.equal(window.bounds.y,882);assert.equal(window.top,false);}
    else assert.equal(window.bounds,undefined);
    window.show();return true;
   }});
@@ -99,16 +99,16 @@ test('normal startup respects offset work areas and keeps controls visible on sm
   assert.equal(f.win.shown,true);
  }
 });
-test('initial mini accepts renderer height during loading and later reload restores the normal window',async()=>{
+test('initial mini uses its fixed height during loading and later reload restores the normal window',async()=>{
  let loaded;
  const f=await mainFixture({toolsOpen:true,load:()=>new Promise(resolve=>loaded=resolve)});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
- assert.deepEqual(f.win.getBounds(),{x:1552,y:938,width:360,height:134});assert.equal(f.openings.length,0);
+ assert.deepEqual(f.win.getBounds(),{x:1552,y:882,width:360,height:190});assert.equal(f.openings.length,0);
  assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);
- assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.bounds.height,186);
+ assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.bounds.height,190);
  loaded();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.win.bounds.height,186,'loadURL完了後に初回の測定高さを上書きしない');assert.equal(f.openings.length,1);assert.equal(f.win.shown,true);
+ assert.equal(f.win.bounds.height,190,'loadURL完了後も初期高さを保つ');assert.equal(f.openings.length,1);assert.equal(f.win.shown,true);
  f.win.webContents.emit('did-start-loading');
  assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  assert.equal(control(event,'resizeMini',200),false);assert.equal(f.win.bounds.height,600);
@@ -122,17 +122,17 @@ test('normal startup ignores measured mini heights before and after loading',asy
  assert.equal(control(event,'resizeMini',186),false);assert.equal(f.win.bounds,undefined);
  loaded();await new Promise(resolve=>setImmediate(resolve));assert.equal(control(event,'resizeMini',186),false);assert.equal(f.win.bounds,undefined);
 });
-test('mini height stays stable during opening and applies only the latest valid main-frame measurement',async()=>{
+test('mini height stays fixed before and after opening',async()=>{
  let finish;
  const f=await mainFixture({toolsOpen:true,opening:()=>new Promise(resolve=>finish=resolve)});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
- for(const height of [186,200,186]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,134);}
+ for(const height of [186,200,186]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,190);}
  assert.equal(control(event,'resizeMini',361),false);assert.equal(control(event,'resizeMini','200'),false);assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);
- finish(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.bounds.height,186);assert.deepEqual(f.win.minimum,[360,186]);
+ finish(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.bounds.height,190);assert.deepEqual(f.win.minimum,[360,190]);
  control(event,'startMini',false);assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});
 });
-test('leaving mini during opening discards a queued height rather than changing normal bounds',async()=>{
+test('leaving mini during opening restores normal bounds',async()=>{
  for(const exit of ['restore','reload']){
   let finish;
   const f=await mainFixture({toolsOpen:true,opening:()=>new Promise(resolve=>finish=resolve)});
@@ -228,7 +228,7 @@ test('mixed-case Windows Node bootstrap environment cannot change Electron mode'
 
 test('frameless controls are fixed, main-frame-only and preserve sandbox',async()=>{
  const f=await mainFixture();f.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));
- assert.equal(f.options.frame,false);assert.equal(f.options.webPreferences.preload,path.join('/fixture/project/backend_diag/起動','preload.cjs'));
+ assert.equal(f.options.frame,false);assert.equal(f.options.webPreferences.preload,path.posix.join('/fixture/project/backend_diag/起動','preload.cjs'));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
  control({...event,senderFrame:{}},'close');assert.equal(f.win.closed,undefined);
  control({...event,sender:{}},'close');assert.equal(f.win.closed,undefined);
@@ -254,8 +254,8 @@ test('native mini height IPC stays main-frame-only, bounded and cannot resize no
  const original=f.win.getBounds();assert.equal(control(event,'resizeMini',134),false);assert.deepEqual(f.win.getBounds(),original);
  assert.equal(control(event,'startMini',true),true);
  for(const height of [undefined,null,false,true,'134',{},[],NaN,Infinity,-Infinity,0,79,361,134.5])assert.equal(control(event,'resizeMini',height),false);
- assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);assert.equal(f.win.bounds.height,134);
- for(const height of [134,186,200,134]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,height);assert.equal(f.win.bounds.width,360);assert.equal(control(event,'startMini',true),true);}
+ assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);assert.equal(f.win.bounds.height,190);
+ for(const height of [134,186,200,134]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,190);assert.equal(f.win.bounds.width,360);assert.equal(control(event,'startMini',true),true);}
  assert.equal(control(event,'startMini',false),true);assert.deepEqual(f.win.getBounds(),original);assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  assert.equal(control(event,'resizeMini',186),false);assert.deepEqual(f.win.getBounds(),original);
 });
@@ -390,17 +390,17 @@ test('全表示経路は準備完了前にnative寸法を変更せず、遅れ�
    if(source==='micro')control(event,'startMicro',false);
    if(source==='mini'||target==='mini')await control(event,'startMini',target==='mini');
    if(target==='micro')control(event,'startMicro',true);
-   if(target==='mini'){assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.getBounds().height,186);}
+   if(target==='mini'){assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.getBounds().height,190);}
    await control(event,'finishDisplay');
   }
   assert.ok(changes.length>0);assert.equal(effect.active,false);
-  if(target==='mini')assert.equal(f.win.getBounds().height,186,'最新の完成高さを古い予約値で戻さない');
+  if(target==='mini')assert.equal(f.win.getBounds().height,190,'切替完了後も初期高さを保つ');
   if(target==='micro'){assert.equal(f.win.getBounds().height,290);control(event,'startMicro',false);}
  }
 });
 
 test('標準・ミニ・アイコンの全6方向で開始位置から基準を決め、演出と実測後も維持',async()=>{
- const sizes={normal:{width:800,height:600},mini:{width:360,height:186},micro:{width:128,height:138}};
+ const sizes={normal:{width:800,height:600},mini:{width:360,height:190},micro:{width:128,height:138}};
  for(const corner of [null,'top-left','top-right','bottom-left','bottom-right'])for(const source of Object.keys(sizes))for(const target of Object.keys(sizes)){
   if(source===target)continue;
   let planned;
