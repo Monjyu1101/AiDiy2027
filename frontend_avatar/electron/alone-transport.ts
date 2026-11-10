@@ -47,6 +47,7 @@ export function allowedCoreRequest(base: string, raw: string, method: string, re
     if (resourceType === 'webSocket') return url.origin === base.replace(/^http:/, 'ws:') && pathname === '/core/ws/AIコア'
     if (url.origin !== base || resourceType !== 'xhr') return false
     return ['POST', 'OPTIONS'].includes(method) && [
+      '/core/files/内容取得', '/core/files/内容更新',
       '/core/auth/現在利用者', '/core/AIコア/モデル情報/取得', '/core/AIコア/モデル情報/設定',
     ].includes(pathname)
   } catch { return false }

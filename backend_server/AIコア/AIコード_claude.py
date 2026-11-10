@@ -51,6 +51,19 @@ def _load_mcp_servers() -> Dict[str, dict]:
         return {}
 
 
+async def _実行監視待機(execution_task, monitor_task):
+    """親要求の切断・取消時にも、SDK実行と監視の両方を終了まで回収する。"""
+    tasks = (execution_task, monitor_task)
+    try:
+        done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+        return done
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+
+
 class CodeAI:
     """
     Claude Agent SDK統合クラス（履歴管理 + SDK resume混合実装）
@@ -570,14 +583,7 @@ class CodeAI:
                 monitor_task = asyncio.create_task(_timeout_monitor())
                 execution_task = asyncio.create_task(_chat_execution())
                 
-                done, pending = await asyncio.wait([execution_task, monitor_task], return_when=asyncio.FIRST_COMPLETED)
-                
-                for task in pending:
-                    task.cancel()
-                    try:
-                        await task
-                    except asyncio.CancelledError:
-                        pass
+                done = await _実行監視待機(execution_task, monitor_task)
                 
                 for task in done:
                     if task == monitor_task:

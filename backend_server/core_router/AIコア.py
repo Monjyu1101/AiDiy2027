@@ -16,6 +16,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Request, HTTPExce
 from internal_api_auth import (authenticate, require_session_owner, require_session_settings,
                                require_manager_owner, bind_session_owner)
 from starlette.websockets import WebSocketState
+from internal_file_access import resolve_session_file, session_temp_directory
 from pydantic import BaseModel
 from typing import Dict, Optional
 import uuid
@@ -1389,15 +1390,21 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                             要求日時分数 = _要求日時分数取得(受信データ, デフォルト値=60)
 
                             # tempフォルダのファイル一覧（要求日時で絞込）
-                            tempパス = os.path.join(バックエンドディレクトリ, "temp")
+                            tempパス = (session_temp_directory(セッション, バックエンドディレクトリ)
+                                       if principal.kind == "internal" else os.path.join(バックエンドディレクトリ, "temp"))
                             全ファイルリスト = []
                             if os.path.exists(tempパス):
                                 for root, dirs, files in os.walk(tempパス):
-                                    dirs[:] = [d for d in dirs if d not in ["logs"]]
+                                    dirs[:] = [d for d in dirs if d not in ["logs"] and (principal.kind != "internal" or not os.path.islink(os.path.join(root, d)))]
                                     for file in files:
                                         if file.endswith(".log"):
                                             continue
                                         full_path = os.path.join(root, file)
+                                        if principal.kind == "internal":
+                                            try:
+                                                resolve_session_file(AIセッション管理, セッションID, principal, full_path)
+                                            except HTTPException:
+                                                continue
                                         try:
                                             mtime = os.path.getmtime(full_path)
                                             更新日時 = datetime.fromtimestamp(mtime).strftime("%Y/%m/%d %H:%M:%S")
@@ -1447,6 +1454,8 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                                     else:
                                         _絶対パス = os.path.abspath(os.path.join(バックエンドディレクトリ, セッション.選択パス))
 
+                                    if principal.kind == "internal":
+                                        _絶対パス = resolve_session_file(AIセッション管理, セッションID, principal, セッション.選択パス)
                                     if os.path.exists(_絶対パス):
                                         _lp = getattr(セッション, "live_processor", None)
                                         if セッション.voice_enabled and _lp and getattr(getattr(_lp, "AIインスタンス", None), "is_alive", False):
@@ -1875,12 +1884,14 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                         if not image_bytes:
                             continue
                         try:
-                            保存ディレクトリ = os.path.join(バックエンドディレクトリ, "temp", "input")
+                            保存ディレクトリ = (session_temp_directory(セッション, バックエンドディレクトリ, create_input=True)
+                                              if principal.kind == "internal" else os.path.join(バックエンドディレクトリ, "temp", "input"))
                             os.makedirs(保存ディレクトリ, exist_ok=True)
                             タイムスタンプ = datetime.now().strftime("%Y%m%d.%H%M%S")
-                            保存ファイル名 = f"{タイムスタンプ}.image.png"
+                            保存ファイル名 = (f"{タイムスタンプ}.{uuid.uuid4().hex}.image.png"
+                                            if principal.kind == "internal" else f"{タイムスタンプ}.image.png")
                             保存パス = os.path.join(保存ディレクトリ, 保存ファイル名)
-                            with open(保存パス, "wb") as f:
+                            with open(保存パス, "xb" if principal.kind == "internal" else "wb") as f:
                                 f.write(image_bytes)
                             logger.info(f"画像保存完了 ({セッションID}): {保存パス}")
                         except Exception as e:

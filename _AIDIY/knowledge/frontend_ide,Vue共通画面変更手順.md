@@ -219,7 +219,9 @@ Browserの既存起動APIには省略可能な表示URLを追加します。Web�
 
 ## 起動・終了
 
-Code / Live / IDEの接続バーは `状態バー.vue` のclockPulseを有効にし、Webの `_TopBar.vue` と同じ `round(255 * abs(sin(2πt / 9)))` を実時刻から50msごとに計算します。明滅は4.5秒周期で、接続時はシアン、Codeの自動接続OFF・IDEのオフライン時は赤、未接続時は黒です。CSSのopacityアニメーションを重ねず、背景色だけを変えます。
+Code / Live / IDE / Browserの接続バーは `状態バー.vue` のclockPulseを有効にし、Webの `_TopBar.vue` と同じ `round(255 * abs(sin(2πt / 9)))` を実時刻から50msごとに計算します。明滅は4.5秒周期で、接続試行ON（オンライン）では接続済みがシアン、未接続・再接続待ちが純赤（#ff0000）です。Codeの自動接続OFF・IDEのオフライン時は静的な黒で、50msタイマーも停止します。Task / Teamは明示的に `mode="online"` を渡し、未接続も赤脈動にします。Liveだけは `connected || busy` の間をonlineとし、接続成立はシアン、実際の接続・再接続試行中だけ赤、初期待機・手動切断後・失敗して試行終了後は静的黒にします。Liveの予期しない切断後は自動再試行せず、接続ボタンで再開します。モデル変更の再接続失敗は会話・下書きを保持したまま黒へ戻します。CSSのopacityアニメーションを重ねず、背景色だけを変えます。 CSS経路も4.5秒のsin近似を使い、負のanimation-delayで実時刻の位相を揃えます。接続色シアンのまま、切断色は純赤にします。Discord / Slackの切断色（赤橙）とは区別します。
+
+接続バーの回帰確認は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/checks/live-visibility.test.mjs`。`node frontend_ide/scripts/check-connection-bar.mjs` は隔離Chromiumでシアン・赤の時間変化、OFF黒の固定、connectedが残ったOFF、反復切替、CSS側の表示を確認し、`frontend_ide/temp/connection-bar-check/` に撮影します。`--compile-only` は配布物を作らず実VueとAppのコンパイルだけ確認します。
 
 ポートは自動割り当てです。aidiy_code / aidiy_live / aidiy_ideからVue版を起動します。旧aidiy_devの互換起動はありません。cleanupのプロセス照合は起動スクリプトの完全一致とアプリ種別で行い、IDE群の解除が成功してから共通Vue生成物を削除します。
 
@@ -321,7 +323,7 @@ VR中の復帰・起動メニューは全ディスプレイの作業領域の右
 
 ## Code / Live の操作・遅延応答を確認するとき
 
-`node frontend_ide/scripts/check-host.mjs` は模擬ホストを実ブラウザから操作し、`nn-audit-*.png` を保存します。履歴の新しい順・更新日時・削除の取消と確定、モデルの自動／既定／直接指定、オフラインのDiagモデル候補、検証回数の送信・オンライン復帰を確認します。自動接続ONで未接続のバーは黒、接続済みはシアン、手動OFFは赤です。実行モードのHermesフォールバックと、自動接続スイッチの表示判定を混同しないでください。
+`node frontend_ide/scripts/check-host.mjs` は模擬ホストを実ブラウザから操作し、`nn-audit-*.png` を保存します。履歴の新しい順・更新日時・削除の取消と確定、モデルの自動／既定／直接指定、オフラインのDiagモデル候補、検証回数の送信・オンライン復帰を確認します。自動接続ONで未接続のバーは赤脈動、接続済みはシアン脈動、手動OFFは静的な黒です。実行モードのHermesフォールバックと、自動接続スイッチの表示判定を混同しないでください。
 
 Liveは接続時のスピーカーON、モデル変更時の音声設定引継ぎ、接続途中のフォルダ変更、モデル保存待ちの停止を確認します。遅れて届いたAPI・保存結果は、開始時のgenerationと一致するときだけ適用してください。モデル変更の再接続では履歴とスピーカーを保持してマイクをOFF、新しい会話ではモデル・音声・スピーカー・マイク設定を引き継ぎます。
 
@@ -357,7 +359,7 @@ Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMini
 
 ConsoleのElectron窓は作業領域の幅2/3・高さは横長で1/3、縦長・正方形で1/4として画面左下に端から8px空けて開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Consoleはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/console-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
 
-プロジェクトバーの「Tools接続確認」はCodeの `auto-connect` トグルを共用します。既定ON、WebSocketの `tools-check` で切り替え、`tools` 応答の `enabled` / `online` で画面を同期します。OFFは疎通の定期実行を止め、シアン表示を解除して赤いバーにします。ONへ戻すと即時に疎通確認を再開します。シェルの再起動は行わず、端末の再起動でも同じサーバー内の選択を維持します。確認中にOFFへ変わった場合の古い応答は世代番号で無視してください。
+プロジェクトバーの「Tools接続確認」はCodeの `auto-connect` トグルを共用します。既定ON、WebSocketの `tools-check` で切り替え、`tools` 応答の `enabled` / `online` で画面を同期します。OFFは疎通の定期実行を止め、シアン表示を解除して静的な黒いバーにします。ONへ戻すと即時に疎通確認を再開します。シェルの再起動は行わず、端末の再起動でも同じサーバー内の選択を維持します。確認中にOFFへ変わった場合の古い応答は世代番号で無視してください。
 
 キー変換は `src/components/コンソール/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs` と `node frontend_ide/scripts/check-console-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
 

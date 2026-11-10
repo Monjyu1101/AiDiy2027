@@ -57,3 +57,14 @@ test('Browser --offline starts an active session without checking tools',async t
  const app=await startDevelopment(project,{kind:'browser',offline:true,connection:{state:()=>state,connect:async()=>{checks++;},offline:()=>state,close(){}}});t.after(()=>app.close());
  assert.equal(checks,0);assert.equal((await fetch(new URL('/api/connection',app.url)).then(r=>r.json())).active,true);
 });
+
+
+test('Browser --offline はToolsが復旧しても監視・再接続を開始しない',async t=>{
+ let calls=0;
+ const connection=createCoreConnection(project,{keepActive:true,target:'http://127.0.0.1:8095',fetcher:async()=>{calls++;return{ok:true,json:async()=>({status:'ok',name:'aidiy_code_agents'})};}});
+ const app=await startDevelopment(project,{kind:'browser',offline:true,connection});t.after(()=>app.close());
+ await connection.check();
+ const state=await fetch(new URL('/api/connection',app.url)).then(r=>r.json());
+ assert.equal(calls,0);assert.equal(state.mode,'offline');assert.equal(state.wanted,false);assert.equal(state.connected,false);assert.equal(state.active,true);
+ for(const action of ['connect','offline','disconnect'])assert.equal((await fetch(new URL('/api/connection/'+action,app.url),{method:'POST'})).status,405);
+});

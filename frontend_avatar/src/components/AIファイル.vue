@@ -406,7 +406,7 @@ const ファイルクリック = async (ファイル名: string, isBackup: boole
   選択ファイルパス.value = パス
 
   try {
-    const res = await apiClient.post('/core/files/内容取得', { ファイル名: パス })
+    const res = await apiClient.post('/core/files/内容取得', { ファイル名: パス, セッションID: プロパティ.セッションID })
     if (res.data.status !== 'OK') {
       ファイル内容エラー.value = res.data.message ?? 'エラー'
       return
@@ -440,6 +440,7 @@ const ファイル保存 = async () => {
     const 内容 = monacoエディタ.getValue()
     const res = await apiClient.post('/core/files/内容更新', {
       ファイル名: 選択ファイルパス.value,
+      セッションID: プロパティ.セッションID,
       内容,
     })
     if (res.data.status !== 'OK') {
@@ -454,7 +455,7 @@ const ファイル保存 = async () => {
         セッションID: プロパティ.セッションID,
         チャンネル: 'file',
         メッセージ識別: 'files_save',
-        メッセージ内容: { ファイル名: 選択ファイルパス.value },
+        メッセージ内容: { ファイル名: 選択ファイルパス.value, セッションID: プロパティ.セッションID },
       })
       バックアップリスト要求(true)
       void テンプリスト要求(true)
@@ -467,7 +468,7 @@ const ファイル保存 = async () => {
 }
 
 const ダウンロードデータ取得 = async (): Promise<{ 配列バッファ: ArrayBuffer; ファイル名: string }> => {
-  const res = await apiClient.post('/core/files/内容取得', { ファイル名: 選択ファイルパス.value })
+  const res = await apiClient.post('/core/files/内容取得', { ファイル名: 選択ファイルパス.value, セッションID: プロパティ.セッションID })
   if (res.data.status !== 'OK') throw new Error(res.data.message ?? 'ダウンロード失敗')
   const base64 = res.data.data.base64_data as string
   const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
@@ -550,6 +551,7 @@ const ファイル保存先選択 = async () => {
 // ===================== WebSocket =====================
 
 const 認証トークン更新 = async () => {
+  if (window.desktopApi?.avatarAlone) return
   const requestToken = 認証Storage.getItem('token')
   if (!requestToken || トークン更新中) return
 
@@ -712,7 +714,7 @@ const テンプリスト受信処理 = async (受信データ: any) => {
 const 出力ソケット接続 = async () => {
   if (!プロパティ.セッションID) return
   出力ソケット切断()
-  出力WebSocket.value = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, 'file')
+  出力WebSocket.value = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, 'file', window.desktopApi?.avatarAlone ? window.desktopApi.projectPath : '')
   fileSocketStateUnsubscribe = 出力WebSocket.value.onStateChange(() => {
     出力接続済み.value = Boolean(出力WebSocket.value?.isConnected())
   })

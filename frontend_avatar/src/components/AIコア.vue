@@ -262,7 +262,6 @@ function ポインター確認停止() {
 }
 
 function パネル切替要求(panel: PanelKey) {
-  if (props.standalone) return
   emit('togglePanel', panel)
 }
 
@@ -631,7 +630,7 @@ defineExpose({ 字幕追加 })
         >
           <img src="/icons/speaker.png" alt="スピーカー" />
         </button>
-        <template v-if="!props.standalone">
+        <template>
         <button
           class="floating-icon file-icon"
           :class="{ inactive: !panelVisibility.file, active: panelVisibility.file }"

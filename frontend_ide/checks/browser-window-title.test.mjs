@@ -32,7 +32,7 @@ function fixture({standalone=false,headerOnly=false,title=()=>Promise.resolve('A
  const render=()=>module.exports.render({},[],props,vue.proxyRefs(state),{},{});
  const chrome=()=>render().children[0];
  for(const fn of mounted)fn();
- return{state,calls,render,chrome,heading:()=>chrome().children[0].props.title,notify:value=>listener?.(value),dispose(){if(disposed)return;disposed=true;for(const fn of unmounted)fn();scope.stop();}};
+ return{state,calls,render,chrome,heading:()=>chrome().children.find(node=>node.props?.mode==='online' && 'title' in node.props).props.title,notify:value=>listener?.(value),dispose(){if(disposed)return;disposed=true;for(const fn of unmounted)fn();scope.stop();}};
 }
 
 for(const standalone of [false,true])for(const headerOnly of [false,true])test(`Browser見出し: ${standalone?'単独':'IDE番号'}/${headerOnly?'全画面ヘッダー':'通常表示'}はmainのタイトルをそのまま使う`,async()=>{

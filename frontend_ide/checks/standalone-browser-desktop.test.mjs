@@ -22,10 +22,10 @@ const {projectIdentity,projectProfile}=profiles;
 const require=createRequire(import.meta.url),desktopPath=fileURLToPath(new URL('../desktop.cjs',import.meta.url));
 const desktopRequire=createRequire(desktopPath),desktopSource=readFileSync(desktopPath,'utf8');
 
-function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,startupURL=async()=>browser.HOME}){
+function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,mode='online',initialConnected=true,startupURL=async()=>browser.HOME}){
  const app=new EventEmitter(),process=new EventEmitter(),windows=[],messages=[],paths={appData,temp:appData},order=[],startupRequests=[],navigation=[];
  const ipcMain=new EventEmitter(),handlers=new Map();ipcMain.handle=(name,handler)=>handlers.set(name,handler);
- let ready=Promise.resolve(),connected=true,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page){pages.push({record,page});},close(){bridgeClosed++;}};
+ let ready=Promise.resolve(),connected=initialConnected,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page){pages.push({record,page});},close(){bridgeClosed++;}};
  app.getPath=name=>paths[name];app.setPath=(name,path)=>{paths[name]=path;order.push(name);};app.setName=()=>{};
  app.requestSingleInstanceLock=()=>{
   order.push('lock');const existing=locks.get(paths.userData);
@@ -50,7 +50,7 @@ function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',a
  const area={x:0,y:0,width:1920,height:1080};
  const electron={app,BrowserWindow:Window,ipcMain,shell:{},dialog:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:Object.assign(new EventEmitter(),{getCursorScreenPoint:()=>({x:0,y:0}),getDisplayNearestPoint:()=>({workArea:area}),getDisplayMatching:()=>({workArea:area})})};
  const load=name=>name==='electron'?electron:name==='./host/scripts/window-opening.cjs'?{拡大表示:async(_type,window)=>{window.show();window.focus();return true;}}
-  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode:'online',connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target)=>{const page=Object.assign(new EventEmitter(),{isDestroyed:()=>record.window.isDestroyed(),url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});record.window.once('closed',()=>page.emit('destroyed'));return page;},navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value,connected)=>availability.push({record,value,connected}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
+  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode,connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target)=>{const page=Object.assign(new EventEmitter(),{isDestroyed:()=>record.window.isDestroyed(),url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});record.window.once('closed',()=>page.emit('destroyed'));return page;},navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value,connected,mode)=>availability.push({record,value,connected,mode}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
  const api=vm.runInNewContext(`(function(require,__dirname,process){${desktopSource}\nreturn{createWindow,records:windows,checkChildren,checkStandaloneBrowser};})`,{console,setInterval,clearInterval,URL})(load,dirname(desktopPath),process);
  return{...api,app,process,windows,messages,paths,order,pages,startupRequests,navigation,availability,bridges,setConnected(value){connected=value;},setActive(value){active=value;},setStartedAt(value){startedAt=value;},get bridgeOptions(){return bridgeOptions;},get bridgeClosed(){return bridgeClosed;},ready:()=>ready,request:(name,window,...args)=>handlers.get(name)({sender:window.webContents,senderFrame:window.webContents.mainFrame},...args)};
 }
@@ -283,4 +283,19 @@ test('Standalone Browser: 実bridgeのUUIDはプロセス間で分離し生存�
  assert.equal(second.window.isDestroyed(),true);assert.equal(other.window.isDestroyed(),false);
  await assert.rejects(fetch(endpoint+'/json/list'));
  assert.equal((await bridgeRequest(otherEndpoint,'/json/list')).value[0].id,other.browserTabId);
+});
+
+for(const mode of ['online','offline'])test(`Browser起動モード${mode}: Tools無しからのMCP復帰可否と表示モードを分離`,async t=>{
+ const root=mkdtempSync(join(tmpdir(),'aidiy-browser-mode-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),mode,initialConnected:false});await a.ready();t.after(()=>a.app.quit());
+ const record=[...a.records.values()][0];
+ assert.equal(await a.bridgeOptions.canUse(),false);
+ assert.equal(a.availability.at(-1).mode,mode);
+ a.setConnected(true);await a.checkStandaloneBrowser(record);
+ assert.equal(await a.bridgeOptions.canUse(),mode==='online');
+ assert.equal(a.availability.at(-1).connected,mode==='online');
+ assert.equal(a.availability.at(-1).mode,mode);
+ assert.equal((await a.request('development:browser-action',record.window,'navigate','https://example.test/')).ok,true);
+ a.setConnected(false);await a.checkStandaloneBrowser(record);assert.equal(await a.bridgeOptions.canUse(),false);
+ assert.equal(a.availability.at(-1).mode,mode);
 });

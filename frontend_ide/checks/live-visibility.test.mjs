@@ -131,6 +131,7 @@ async function livePanel(t, { visible = true, host = true, ...options } = {}) {
 
 test('Live: 実テンプレートの可視状態で接続バーの50ms更新だけを止め、20秒の接続pingを保つ', async t => {
   const fixture = await livePanel(t, { host: false });
+  assert.equal(fixture.statusProps().mode, 'offline', 'Liveの初期待機は静的黒');
   await fixture.state.connect();
   const { descriptor } = parse(readFileSync(new URL('../src/components/共通表示/状態バー.vue', import.meta.url), 'utf8'));
   const script = compileScript(descriptor, { id: 'StatusBar', genDefaultAs: 'component' });

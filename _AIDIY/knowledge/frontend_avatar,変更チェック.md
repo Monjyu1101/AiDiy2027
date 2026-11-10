@@ -181,8 +181,8 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - `aidiy_avatar_alone --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
 - IDE は `node frontend_avatar/launch.mjs --alone --project <絶対フォルダー> --foreground --initial-pinned` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
 - `--initial-pinned` は最初に作るコア窓だけをピンONにします。通常の単独起動はOFFで、親環境の初期ピン値は継承しません。利用者が解除した後の再表示や既存インスタンスの再利用では上書きしません。`node --test frontend_avatar/checks/launch.test.mjs frontend_avatar/checks/window-pin.test.cjs frontend_ide/checks/avatar-launch.test.cjs` で確認します。
-- 画面表示完了時だけ `{launchReady:true}` を返します。重複起動は `{launchReady:true,existingWindow:true}`、起動失敗は `{launchError:メッセージ}` または非0終了です。ready後のIPC切断は終了要求ではありません。
-- foregroundプロセスはElectron終了まで残ります。POSIXではSIGTERM、IDEのWindows終了時は所有PIDへのtaskkill /TでElectronとrendererを回収します。既存ウィンドウの重複起動ではrendererを追加起動しません。
+- 画面表示完了時だけ `{launchReady:true}` を返します。重複起動は `{launchReady:true,existingWindow:true}`、起動失敗は `{launchError:メッセージ}` または非0終了です。通常の切り離し起動ではready後にIPCを切断します。IDE所有起動は `AIDIY_AVATAR_IDE_OWNED=1` を付けてIPCを維持し、IDE切断を終了要求として扱います。
+- foregroundプロセスはElectron終了まで残ります。POSIXでは分離して作った所有プロセスグループをSIGTERM・必要時SIGKILL、IDEのWindows終了時は所有PIDへのtaskkill /TでElectron・rendererと子孫を回収します。Avatar本体の終了時も同じ回収処理を通ります。既存ウィンドウの重複起動ではrendererを追加起動しません。
 - 単独版のrendererはloopbackの空きポートとVite `avatar-alone` modeを使い、`--strictPort` で別ポートへ逃げません。通常版の8092は変更しません。
 - `AIDIY_AVATAR_ALONE=1` と検証済み `AIDIY_AVATAR_PROJECT` をElectronへ渡します。接続先や内部認証情報はrendererの起動引数に含めません。
 - cleanupは同じ配置元を指す両ランチャーだけを解除します。別配置元のランチャーは残します。
@@ -197,7 +197,11 @@ python -m unittest discover -s frontend_avatar/checks -p 'test_*py'
 ### 単独版とIDEの確認ポイント
 
 - IDEの＋メニューは `Console → Browser → Navi → Code → Live → Avatar → TASK → TEAM`。IDEからLiveまたはAvatarを起動中は、起動待ちを含め両方を隠し、終了後に戻します。AvatarはElectron版IDEで利用します。
-- コアと設定窓だけを作成し、0〜6・ファイル・イメージの表示操作をUIとIPCの両方で抑止します。マイク、スピーカー、アバター表示選択、設定は維持します。
+- 単独版はコア・設定・Chat（0番）・Code1〜6・File・Capture（イメージ）の窓を許可します。各パネルはコアのセッション・選択プロジェクト・接続状態を同期し、再接続時も同じプロジェクトを維持します。マイク、スピーカー、アバター表示選択、設定は維持します。
+- Fileの内容取得・上書き保存はセッションIDを送り、内部認証では所有セッションのプロジェクト配下の通常ファイルだけを許可します。プロジェクト外、リンク、内部認証ファイルを拒否します。通常ログイン版のファイル経路は変更しません。単独版の右側temp一覧とCapture画像の保存先は選択プロジェクトの `temp/` と `temp/input/` です。
+- Captureの画面・ウィンドウ選択は従来の明示操作を維持します。OSの画面収録権限は自動付与しません。実機では初回許可、取消、再選択、Core再接続、Fileの表示・上書き・ダウンロード、IDE終了・Avatar本体終了時の全子窓終了を確認してください。
+- 別に起動済みのAvatarを再利用した場合、そのAvatarの所有権は取得せず、IDE終了で停止しません。無関係な独立アプリや共有Coreサーバーは停止しません。
+- Code1〜6の実行権限は従来のCode許可設定に従います。プロジェクト固定と内部認証はOSサンドボックスを追加する機能ではありません。
 - 通常Avatarの8092・ログイン認証・Web版は変更しません。単独版は配置元Coreの内部Bearerをmain processだけで読み、登録済みのmain frameからの必要なREST/WS要求に限定して付けます。ブラウザの保存領域、URL、preload、IPC、同期データに秘密を渡しません。
 - 選択プロジェクトは最初のWS接続で確定します。共通設定のプロジェクトでセッションを作る従来のREST初期化を先に呼ばないでください。設定のフォルダー変更は固定し、全設定リセット後だけ新しい会話で起動時のプロジェクトを再確定します。
 - Core停止中や内部認証更新中はログイン窓へ戻らず再接続します。アプリを閉じた後は遅延応答から再接続しません。

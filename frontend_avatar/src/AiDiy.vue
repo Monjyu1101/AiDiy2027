@@ -488,7 +488,6 @@ function スナップショット再試行停止() {
 }
 
 function パネル状態更新(states?: Record<PanelKey, boolean>) {
-  if (単独Avatar) { パネル表示状態.value = パネル状態生成(); return }
   パネル表示状態.value = {
     ...パネル状態生成(),
     ...(states || {}),
@@ -521,7 +520,6 @@ function スナップショット構築(): SharedSnapshot {
 }
 
 function スナップショット送信() {
-  if (単独Avatar) return
   if (!デスクトップチャンネル || !コアウィンドウ.value) return
   デスクトップチャンネル.postMessage({ type: 'snapshot', snapshot: スナップショット構築() })
 }
@@ -529,8 +527,8 @@ function スナップショット送信() {
 function デスクトップチャンネルメッセージ処理(event: MessageEvent) {
   const payload = event.data
   if (!payload || typeof payload !== 'object') return
-  // 単独版では設定窓との再起動通知だけを受け取り、会話や子パネル操作を中継しない。
-  if (単独Avatar && payload.type !== 'settings-saved') return
+  // プロジェクト別プロファイル・一時origin内の 各パネルと設定だけを同期する。
+  if (単独Avatar && !['settings-saved', 'request-snapshot', 'snapshot', 'send-input-payload', 'reboot-reconnect', 'send-message', 'set-chat-mode', 'chat-state'].includes(payload.type)) return
 
   if (コアウィンドウ.value) {
     if (payload.type === 'request-snapshot') {
@@ -660,7 +658,7 @@ function コア状態リセット() {
   初期スピーカー有効.value = true
   音声状態シード.value = 0
   モデル設定.value = defaultModelSettings()
-  チャットモード.value = 'live'
+  if (!単独Avatar) チャットモード.value = 'live'
 }
 
 let コア接続世代 = 0
@@ -759,7 +757,7 @@ function 初期化処理(message: Record<string, any>) {
 
   初期スピーカー有効.value = buttons.スピーカー ?? true
   初期マイク有効.value = buttons.マイク ?? false
-  チャットモード.value = 単独Avatar ? 'live' : (String(buttons.チャットモード || 'live').toLowerCase() as チャットモード型) || 'live'
+  チャットモード.value = 単独Avatar ? チャットモード.value : (String(buttons.チャットモード || 'live').toLowerCase() as チャットモード型) || 'live'
   音声状態シード.value += 1
 
   const nextStates = {
@@ -774,7 +772,7 @@ function 初期化処理(message: Record<string, any>) {
     code6: Boolean(buttons.エージェント6),
   }
 
-  if (単独Avatar) { パネル状態更新(); return }
+  if (単独Avatar) { void パネル状態再読込().then(スナップショット送信); return }
 
   // Electronパネルウィンドウを目的の状態に合わせて開閉
   window.desktopApi?.applyPanelStates?.(nextStates).then((states) => {
@@ -948,7 +946,6 @@ async function ログイン送信(payload: { 利用者ID: string; パスワー�
 }
 
 async function パネル切替(panel: PanelKey) {
-  if (単独Avatar) return
   if (!isElectron) {
     if (Web右ペイン対象(panel)) {
       右アクティブタブ.value = panel
@@ -974,7 +971,6 @@ async function パネル切替(panel: PanelKey) {
 }
 
 async function パネル有効化(panel: PanelKey) {
-  if (単独Avatar) return
   if (!isElectron) {
     if (Web右ペイン対象(panel)) {
       if (右アクティブタブ.value !== panel) {
@@ -1282,12 +1278,14 @@ onMounted(async () => {
   ウィンドウ表示リスナー解除 = window.desktopApi?.onWindowShown?.(() => {
     ストレージ認証同期({ syncError: ログインウィンドウ.value })
     if (現在パネルキー.value) {
+      void パネル状態再読込()
       スナップショット要求()
       スナップショット再試行開始()
     }
   }) || null
 
   if (現在パネルキー.value) {
+    await パネル状態再読込()
     認証読込中.value = false
     スナップショット要求()
     スナップショット再試行開始()

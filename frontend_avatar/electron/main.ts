@@ -275,7 +275,7 @@ function getRendererUrl(role: WindowRole): string {
   return url.toString()
 }
 
-// 認証対象は main が登録した二つの画面に限定する。iframe / 任意ページは含まない。
+// 認証対象は main が登録した画面に限定する。iframe / 任意ページは含まない。
 const aloneWindows = new Map<number, { window: BrowserWindow; url: string }>()
 function trustedAloneContents(id: number): boolean {
   const entry = aloneWindows.get(id)
@@ -283,7 +283,7 @@ function trustedAloneContents(id: number): boolean {
 }
 function secureAloneWindow(window: BrowserWindow, role: WindowRole) {
   if (!avatarAlone) return
-  if (role !== 'core' && role !== 'settings') throw new Error('単独 Avatar の画面種別が不正です。')
+  if (role !== 'core' && role !== 'settings' && !Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, role)) throw new Error('単独 Avatar の画面種別が不正です。')
   const url = getRendererUrl(role)
   aloneWindows.set(window.webContents.id, { window, url })
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }))
@@ -495,7 +495,7 @@ function applyPrimaryMode(window: BrowserWindow, mode: WindowMode) {
 }
 
 function createPanelWindow(panel: PanelKey) {
-  if (avatarAlone) throw new Error('単独 Avatar では子パネルを開けません。')
+  if (!Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, panel)) throw new Error('許可されていないパネルです。')
   const existing = panelWindows.get(panel)
   if (existing && !existing.isDestroyed()) {
     setPanelVisibility(panel, panelStates[panel])
@@ -729,6 +729,9 @@ app.whenReady().then(async () => {
 
   session.defaultSession.setDisplayMediaRequestHandler(
     async (_request, callback) => {
+      if (avatarAlone && !Array.from(aloneWindows.values()).some(entry =>
+        !entry.window.isDestroyed() && _request.frame === entry.window.webContents.mainFrame
+        && trustedAloneContents(entry.window.webContents.id))) { callback({}); return }
       const sourceId = selectedDisplaySourceId
       selectedDisplaySourceId = null
       if (!sourceId) {
@@ -801,7 +804,7 @@ app.whenReady().then(async () => {
     const window = currentControlWindow(event)
     if (!window) return
     const role = windowRoles.get(window.id)
-    if (role && role !== 'login' && role !== 'core' && role !== 'settings') {
+    if (role && role !== 'login' && role !== 'core' && role !== 'settings' && !Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, role)) {
       setPanelVisibility(role as PanelKey, false)
       return
     }
@@ -865,14 +868,16 @@ app.whenReady().then(async () => {
     return interactive
   })
 
-  ipcMain.handle('panel:toggle', async (_event, panel: PanelKey) => {
+  ipcMain.handle('panel:toggle', async (event, panel: PanelKey) => {
+    if (avatarAlone && !currentControlWindow(event)) throw new Error('画面を確認できません。')
     createPanelWindow(panel)
     await setPanelVisibility(panel, !panelStates[panel])
     return { ...panelStates }
   })
 
-  ipcMain.handle('panel:apply-states', async (_event, states: Record<PanelKey, boolean>) => {
-    if (avatarAlone) throw new Error('単独 Avatar では子パネルを操作できません。')
+  ipcMain.handle('panel:apply-states', async (event, states: Record<PanelKey, boolean>) => {
+    if (avatarAlone && !currentControlWindow(event)) throw new Error('画面を確認できません。')
+    if (!states || typeof states !== 'object' || Object.keys(states).some(panel => !Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, panel))) throw new Error('パネル状態が不正です。')
     await Promise.all((Object.keys(states) as PanelKey[]).map(async (panel) => {
       createPanelWindow(panel)
       await setPanelVisibility(panel, Boolean(states[panel]))
@@ -894,11 +899,15 @@ app.whenReady().then(async () => {
     }
   })
 
-  ipcMain.handle('desktop:list-sources', async () => listDisplaySources())
+  ipcMain.handle('desktop:list-sources', async (event) => {
+    if (avatarAlone && !currentControlWindow(event)) return []
+    return listDisplaySources()
+  })
 
   ipcMain.handle('desktop:list-vrma-files', async (_event, folderName: string) => listVrmaFiles(folderName))
 
-  ipcMain.handle('desktop:set-source', (_event, sourceId: string | null) => {
+  ipcMain.handle('desktop:set-source', (event, sourceId: string | null) => {
+    if (avatarAlone && !currentControlWindow(event)) return null
     selectedDisplaySourceId = sourceId
     return selectedDisplaySourceId
   })

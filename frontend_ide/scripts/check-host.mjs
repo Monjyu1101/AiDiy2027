@@ -116,13 +116,14 @@ try {
   assert.equal(await evaluate(`fixtureMessages.findLast(m=>m.type==='deleteHistory').id`),'fixture-code');
   await evaluate(`fixtureNotify({type:'showConversation'})`);await sleep(30);
   assert.equal(await evaluate(`document.querySelector('.history-list')===null`),true);
-  // オンライン自動接続の未接続は黒、手動OFFは赤。連打も抑止する。
+  // オンライン自動接続の未接続は赤脈動、手動OFFは静的黒。連打も抑止する。
   await evaluate(`Object.assign(fixtureState,{自動接続:true,接続済み:false,実行モード:'offline',オフライン対応:true});fixtureNotify({...fixtureState})`);await sleep(40);
-  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.connection-bar')).backgroundColor`),'rgb(0, 0, 0)');
+  assert.equal(await evaluate(`document.querySelector('.connection-bar').classList.contains('disconnected')`),true);
   await evaluate(`document.querySelector('.auto-connect').click();document.querySelector('.auto-connect').click()`);await sleep(30);
   assert.equal(await evaluate(`fixtureMessages.filter(m=>m.type==='autoConnect').length`),1);
   await evaluate(`fixtureState.自動接続=false;fixtureNotify({...fixtureState})`);await sleep(40);
   assert.equal(await evaluate(`document.querySelector('.connection-bar').classList.contains('offline')`),true);
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.connection-bar')).backgroundColor`),'rgb(0, 0, 0)');
   await evaluate(`Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='モデル ▾').click()`);await sleep(100);
   assert.equal(await evaluate(`document.querySelector('.model-dialog select').disabled`),true);
   assert.deepEqual(await evaluate(`[...document.querySelectorAll('.model-dialog select')[1].options].map(o=>o.value)`),['auto']);

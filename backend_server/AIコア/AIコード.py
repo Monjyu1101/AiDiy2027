@@ -404,12 +404,17 @@ class CodeAgent:
     async def 終了(self) -> None:
         """コード処理ワーカーを終了"""
         self.is_alive = False
-        if self.worker_task and not self.worker_task.done():
-            self.worker_task.cancel()
-            try:
-                await self.worker_task
-            except asyncio.CancelledError:
-                pass
+        try:
+            if self.worker_task and not self.worker_task.done():
+                self.worker_task.cancel()
+                try:
+                    await self.worker_task
+                except asyncio.CancelledError:
+                    pass
+        finally:
+            # cancel_run は再開可能な中断。終了時は再開せず所有AIも閉じる。
+            if self.AIインスタンス and hasattr(self.AIインスタンス, "終了"):
+                await self.AIインスタンス.終了()
         logger.debug(f"[CodeAgent] チャンネル{self.チャンネル} 終了")
 
     async def 接続時welcome送信(self) -> None:

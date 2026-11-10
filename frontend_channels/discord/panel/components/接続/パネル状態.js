@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------------
  */
 
-import { computed, reactive, watchEffect, nextTick } from 'vue';
+import { computed, reactive, watch, watchEffect, nextTick } from 'vue';
 import { 音声表示 } from '../ライブ/音声表示.js';
 
 // IPC / 設定 JSON の英語キーは外部契約。画面内の状態名は各アプリと同じ日本語に揃える。
@@ -58,6 +58,19 @@ export function パネル状態作成(api) {
       ? [...画面.コードモデル候補, { id: 画面.コードモデル, label: 画面.コードモデル }] : 画面.コードモデル候補),
     async ウィンドウ操作(action) { try { if (action === 'close') await 保存待ち; await api.window(action); } catch { 案内表示('ウィンドウを操作できませんでした。', true); } },
   });
+  // 起動時・接続色変更時・表示復帰時に共通バーの絶対時刻へ位相を合わせる。
+  function 脈動同期() {
+    if (終了済み || document.hidden) return;
+    const bar = document.getElementById('activity-bar');
+    if (!bar) return;
+    // 同じ色のまま復帰しても過去のアニメーション経過時間を二重加算しない。
+    bar.style.animation = 'none';
+    void bar.offsetWidth;
+    bar.style.removeProperty('animation');
+    bar.style.animationDelay = `${-(Date.now() % 4500)}ms`;
+  }
+  const 脈動監視解除 = watch(() => 画面.接続状態.phase === 'connected', () => { void nextTick(脈動同期); }, { immediate: true });
+  document.addEventListener('visibilitychange', 脈動同期);
   const 監視解除 = watchEffect(() => {
     document.body.classList.toggle('connected', 画面.接続状態.phase === 'connected');
     document.body.classList.toggle('live-view', 画面.ライブ画面);
@@ -241,7 +254,8 @@ export function パネル状態作成(api) {
     終了済み = true; 候補世代++;
     if (画面.モニター) void api.monitor(false).catch(() => {});
     発言消去(); モニター停止(); 描画?.dispose();
-    for (const cancel of 解除) cancel(); 監視解除();
+    for (const cancel of 解除) cancel(); 監視解除(); 脈動監視解除();
+    document.removeEventListener('visibilitychange', 脈動同期);
     document.body.classList.remove('connected', 'live-view', 'live-off', 'settings-open');
   }
   return 画面;

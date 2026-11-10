@@ -68,14 +68,14 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   callback({cancel:blocked});
  });
  const allowed=url=>{if(url==='about:blank')return true;try{const parsed=new URL(url);if(parsed.protocol==='file:')return localFileAllowed(parsed);return ['http:','https:'].includes(parsed.protocol)&&!parsed.username&&!parsed.password&&!blockedOrigins.has(parsed.origin);}catch{return false;}};
- function attach(record,target=HOME,available=true,connected=available){
+ function attach(record,target=HOME,available=true,connected=available,mode='online'){
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
   const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}});
-  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,connected,pendingTarget:available?null:target};entries.set(record,entry);
+  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,connected,mode,pendingTarget:available?null:target};entries.set(record,entry);
   record.window.contentView.addChildView(view);view.setVisible(false);
   let stateRevision=0;
-  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'});
+  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'});
   const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
   entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
@@ -206,10 +206,11 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    return{ok:true,...entry.snapshot()};
   }catch(error){return{ok:false,error:error.message};}
  }
- function setAvailable(owner,available,connected=available){
+ function setAvailable(owner,available,connected=available,mode){
   for(const [record,entry]of entries){
    if(record!==owner&&record.owner!==owner)continue;
-   const changed=entry.available!==available,connectionChanged=entry.connected!==connected;
+   const changed=entry.available!==available,connectionChanged=entry.connected!==connected||(mode!==undefined&&entry.mode!==mode);
+   if(mode!==undefined)entry.mode=mode;
    entry.connected=connected;
    if(changed){
     entry.available=available;

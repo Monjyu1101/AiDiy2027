@@ -85,17 +85,38 @@ export function buildMain({ run = spawnSync } = {}) {
   return true;
 }
 
-export async function stopTree(child) {
-  if (!child?.pid || child.exitCode !== null || child.signalCode) return;
-  if (process.platform === 'win32') await new Promise(done => execFile('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 8000 }, () => done()));
-  else child.kill('SIGTERM');
-  if (child.exitCode !== null || child.signalCode) return;
-  // taskkillの完了とNodeがexitを受け取る時点には差がある。終了通知まで待つ。
-  await new Promise((done, reject) => {
-    const finished = () => { clearTimeout(timer); done(); };
-    const timer = setTimeout(() => { child.off('exit', finished); reject(Error(`Avatarの子プロセスを終了できませんでした（PID: ${child.pid}）。`)); }, 5000);
+// POSIXでは自分が分離して作ったプロセスグループだけを停止する。
+const ownedGroups = new WeakSet();
+export function spawnOwned(launch, command, args, options) {
+  const grouped = process.platform !== 'win32';
+  const child = launch(command, args, { ...options, detached: grouped });
+  if (grouped) ownedGroups.add(child);
+  return child;
+}
+export async function stopTree(child, grace = 1500) {
+  if (!child?.pid) return;
+  const grouped = ownedGroups.has(child);
+  const exited = () => child.exitCode !== null || !!child.signalCode;
+  if (!grouped && exited()) return;
+  const signal = name => {
+    try { if (grouped) process.kill(-child.pid, name); else child.kill(name); }
+    catch (error) { if (error.code !== 'ESRCH') throw error; }
+  };
+  const waitExit = milliseconds => new Promise(done => {
+    if (exited()) { done(true); return; }
+    const finished = () => { clearTimeout(timer); done(true); };
+    const timer = setTimeout(() => { child.off('exit', finished); done(false); }, milliseconds);
     child.once('exit', finished);
   });
+  if (process.platform === 'win32') await new Promise(done => execFile('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: 8000 }, () => done()));
+  else {
+    signal('SIGTERM');
+    await waitExit(grace);
+    // 親が先に終了しても、同じ所有グループに残った孫プロセスを回収する。
+    if (grouped || !exited()) signal('SIGKILL');
+  }
+  if (!await waitExit(5000)) throw Error(`Avatarの子プロセスを終了できませんでした（PID: ${child.pid}）。`);
+  ownedGroups.delete(child);
 }
 
 function electronEnv({ alone, project, initialPinned }, url) {
@@ -113,7 +134,7 @@ function electronEnv({ alone, project, initialPinned }, url) {
 
 // 前面プロセス本体。renderer と Electron を起動し、表示完了を ready で知らせ、Electron 終了まで所有する。
 export async function runAvatar({
-  alone = false, initialPinned = false, project, allocatePort = availablePort,
+  alone = false, initialPinned = false, project, owner = null, allocatePort = availablePort,
   launch = spawn, isOpen = portOpen, build = buildMain, stop = stopTree, ready = () => {},
   electron = require('electron'), vite = join(dirname(require.resolve('vite/package.json')), 'bin', 'vite.js'), timeout = 90000,
 } = {}) {
@@ -125,20 +146,25 @@ export async function runAvatar({
   const shutdown = () => {
     ending = true;
     clearTimeout(timer);
-    return stopping ??= Promise.all([stop(desktop), stop(renderer)]);
+    return stopping ??= Promise.allSettled([stop(desktop), stop(renderer)]).then(results => {
+      const failed = results.find(result => result.status === 'rejected');
+      if (failed) throw failed.reason;
+    });
   };
-  const signals = ['SIGINT', 'SIGTERM'], interrupted = () => void shutdown().then(() => process.exit(0));
+  const signals = ['SIGINT', 'SIGTERM'], interrupted = () => void shutdown().then(() => process.exit(0), error => { console.error(error.message); process.exit(1); });
+  if (owner) owner.once('disconnect', interrupted);
   for (const signal of signals) process.once(signal, interrupted);
   try {
+    if (owner && !owner.connected) throw Error('IDEとの接続が終了しました。');
     // 単一起動の所有者を先に確定する。ポート占有だけを起動済みとは判定しない。
-    desktop = launch(electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+    desktop = spawnOwned(launch, electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     const code = await new Promise((done, reject) => {
       let primary = false, shown = false, existing = false;
       const fail = error => { if (!ending) reject(error); };
       const prepareRenderer = async () => {
         if (await isOpen(port)) throw Error(`${port}が別のプロセスに使用されています。使用中のサーバーを停止してからAvatarを起動してください。`);
         if (ending) return;
-        renderer = launch(process.execPath, alone ? [vite, '--mode', 'avatar-alone', '--host', '127.0.0.1', '--port', String(port), '--strictPort'] : [vite], { cwd: root, windowsHide: true, stdio: 'ignore' });
+        renderer = spawnOwned(launch, process.execPath, alone ? [vite, '--mode', 'avatar-alone', '--host', '127.0.0.1', '--port', String(port), '--strictPort'] : [vite], { cwd: root, windowsHide: true, stdio: 'ignore' });
         let rendererExited = false;
         renderer.once('error', error => { rendererExited = true; fail(error); });
         renderer.once('exit', code => { rendererExited = true; fail(Error(`Avatarの画面サーバーが終了しました（終了コード: ${code}）。`)); });
@@ -177,13 +203,14 @@ export async function runAvatar({
     throw error;
   } finally {
     for (const signal of signals) process.removeListener(signal, interrupted);
+    owner?.removeListener('disconnect', interrupted);
   }
 }
 
 // 呼出元から切り離した子プロセスを起動し、表示完了の通知を受けたら戻る。
 export async function launchDetached({ alone = false, initialPinned = false, project, launch = spawn, stop = stopTree, timeout = 120000, log = console.log } = {}) {
   const child = launch(process.execPath, [fileURLToPath(import.meta.url), '--foreground', ...(initialPinned ? ['--initial-pinned'] : []), ...(alone ? ['--alone', '--project', project] : [])], {
-    cwd: root, env: { ...process.env, AIDIY_LAUNCHER_CHILD: '1' }, detached: true, windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+    cwd: root, env: { ...process.env, AIDIY_LAUNCHER_CHILD: '1', AIDIY_AVATAR_IDE_OWNED: '' }, detached: true, windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
   });
   try {
     const result = await new Promise((done, reject) => {
@@ -213,15 +240,18 @@ export async function main(args = process.argv.slice(2)) {
   const options = parseOptions(args);
   if (!options.foreground) { await launchDetached(options); return; }
   const child = process.env.AIDIY_LAUNCHER_CHILD === '1' && !!process.send;
+  const owned = child && process.env.AIDIY_AVATAR_IDE_OWNED === '1';
   const ready = message => {
-    if (child) { process.send?.({ launchReady: true, ...message }); process.disconnect?.(); }
+    if (child && process.connected) { process.send?.({ launchReady: true, ...message }); if (!owned) process.disconnect?.(); }
     else console.log(message.existingWindow ? '起動済みのAvatar画面を前面に表示しました。' : `AiDiy Avatarを起動しました（${message.url ?? RENDERER_URL}/）。`);
   };
   try {
-    process.exitCode = await runAvatar({ ...options, ready });
+    process.exitCode = await runAvatar({ ...options, ready, owner: owned ? process : null });
   } catch (error) {
     if (child && process.connected) process.send({ launchError: error.message });
     throw error;
+  } finally {
+    if (owned && process.connected) process.disconnect();
   }
 }
 

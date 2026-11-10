@@ -48,3 +48,12 @@ test('Browserすりガラス: 800 DIPを高倍率や狭い画面で表示して�
  assert.match(source,/if\(chrome.value\)observer.observe\(chrome.value\)/,'折返し後の高さを再測定する');
  assert.match(source,/browserAction\('header-size',chromeHeight.value\)/,'renderer高さをnative窓へ返す');
 });
+
+
+test('Browser孤立利用: スタンドアロン表示を既存文字色の細い枠で囲む',()=>{
+ const {descriptor}=parse(readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8'));
+ const style=compileStyle({source:descriptor.styles[0].content,id:'data-v-browser-header',scoped:true});assert.deepEqual(style.errors,[]);
+ const rule=style.rawResult.root.nodes.find(node=>node.type==='rule'&&node.selector.startsWith('.browser-isolated-label'));
+ const values=Object.fromEntries(rule.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+ assert.equal(values.border,'1px solid currentColor');assert.equal(values['white-space'],'nowrap');
+});

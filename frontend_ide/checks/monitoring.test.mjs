@@ -19,7 +19,7 @@ const require=createRequire(import.meta.url);
 const vue=require('vue'),{parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const flush=async()=>{for(let n=0;n<12;n++)await Promise.resolve();};
 
-function component(name,{props={},windowAPI,hash='',fetcher=async()=>({ok:true,json:async()=>({active:true})})}={}){
+function component(name,{props={},windowAPI,hash='',clock=Date,fetcher=async()=>({ok:true,json:async()=>({active:true})})}={}){
   const {descriptor}=parse(readFileSync(new URL(`../src/${name}.vue`,import.meta.url),'utf8'));
   const script=compileScript(descriptor,{id:name,genDefaultAs:'component'});
   const {code}=transformSync(`${script.content}\nmodule.exports=component;`,{format:'cjs'});
@@ -27,7 +27,7 @@ function component(name,{props={},windowAPI,hash='',fetcher=async()=>({ok:true,j
   document.hidden=false;window.document=document;if(windowAPI)window.aidiyWindow=windowAPI;let id=0;
   const module={exports:{}};
   vm.runInNewContext(code,{
-    module,document,window,fetch:fetcher,AbortSignal,AbortController,Date,location:{hash},
+    module,document,window,fetch:fetcher,AbortSignal,AbortController,Date:clock,location:{hash},
     setInterval:(callback,ms)=>{timers.set(++id,{callback,ms});return id;},clearInterval:key=>timers.delete(key),
     require:id=>id==='vue'?{...vue,provide(){},onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)}:id.endsWith('/接続状態.js')?{validConnectionState}:id==='./components/下書き連携/連携先登録.js'?{createDraftTargetRegistry}:id==='./components/共通表示/長押し窓移動.js'?{installWindowMove:options=>{moveInstalls.push(options);return installWindowMove({...options,win:window});}}:{},
   });
@@ -95,16 +95,29 @@ test('Console: toolsの初回確認は即時、既定10秒、遅い確認は重�
   t.mock.timers.tick(30000);assert.equal(calls,3);
 });
 
-test('接続バー: 未接続・非表示は20Hzタイマー0個、表示復帰は時刻同期して1個だけ再開',async()=>{
+test('接続バー: ONは接続中シアン・切断中赤、OFFは黒でタイマー停止、復帰・破棄で漏れない',async()=>{
   const fixture=component('components/共通表示/状態バー',{props:{clockPulse:true,connected:false,mode:'online'}});
-  await fixture.mount();assert.equal(fixture.timers.size,0);
-  fixture.props.connected=true;await vue.nextTick();assert.equal(fixture.timers.size,1);assert.equal([...fixture.timers.values()][0].ms,50);
-  fixture.document.hidden=true;fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,0);
-  fixture.document.hidden=false;fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,1);
-  fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,1);
-  fixture.props.connected=false;await vue.nextTick();assert.equal(fixture.timers.size,0);
-  fixture.props.mode='offline';await vue.nextTick();assert.equal(fixture.timers.size,1);
-  fixture.dispose();assert.equal(fixture.timers.size,0);
+  const color=()=>fixture.state.pulseStyle.value.backgroundColor;
+  const assertColor=expected=>{fixture.state.pulseLevel.value=128;assert.equal(color(),expected);};
+  try{
+    await fixture.mount();assert.equal(fixture.timers.size,1);assert.equal([...fixture.timers.values()][0].ms,50);
+    assertColor('rgb(128, 0, 0)');
+    fixture.props.connected=true;await vue.nextTick();assert.equal(fixture.timers.size,1);assertColor('rgb(0, 128, 128)');
+    fixture.document.hidden=true;fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,0);
+    fixture.document.hidden=false;fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,1);
+    fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,1);
+    fixture.props.connected=false;await vue.nextTick();assert.equal(fixture.timers.size,1);assertColor('rgb(128, 0, 0)');
+    for(let n=0;n<3;n++){
+      fixture.props.mode='offline';await vue.nextTick();assert.equal(fixture.timers.size,0);assertColor('rgb(0, 0, 0)');
+      fixture.props.connected=true;await vue.nextTick();assert.equal(fixture.timers.size,0);assertColor('rgb(0, 0, 0)');
+      fixture.props.mode='online';await vue.nextTick();assert.equal(fixture.timers.size,1);assertColor('rgb(0, 128, 128)');
+      fixture.props.connected=false;await vue.nextTick();assertColor('rgb(128, 0, 0)');
+    }
+    fixture.props.clockPulse=false;await vue.nextTick();assert.equal(fixture.timers.size,0);assert.match(fixture.state.pulseStyle.value.animationDelay,/^-?\d+ms$/);
+    fixture.props.clockPulse=true;await vue.nextTick();assert.equal(fixture.timers.size,1);
+    fixture.props.mode=undefined;await vue.nextTick();assert.equal(fixture.timers.size,0);assertColor('rgb(0, 0, 0)');
+  }finally{fixture.dispose();}
+  assert.equal(fixture.timers.size,0);
   fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.timers.size,0);
 });
 
@@ -210,4 +223,16 @@ test('Webピン留め: 連携確認の途中で送信元が閉じた場合は追
     delayed=true;const pending=state.draftLink.insert(source,request);source.closed=true;release({ok:true,json:async()=>active});
     await assert.rejects(pending,/ピン留め元/);assert.equal(insertions,0);
   }finally{fixture.dispose();}
+});
+
+test('接続バー: 純赤の頂点・中間色とCSS経路の絶対時刻位相を揃える',async()=>{
+ let now=1125;
+ const fixture=component('components/共通表示/状態バー',{props:{clockPulse:true,connected:false,mode:'online'},clock:{now:()=>now}});
+ try{
+  await fixture.mount();assert.equal(fixture.state.pulseStyle.value.backgroundColor,'rgb(180, 0, 0)');
+  now=2250;[...fixture.timers.values()][0].callback();assert.equal(fixture.state.pulseStyle.value.backgroundColor,'rgb(255, 0, 0)');
+  fixture.props.clockPulse=false;await vue.nextTick();assert.equal(fixture.state.pulseStyle.value.animationDelay,'-2250ms');
+  now=7000;fixture.document.dispatchEvent(new Event('visibilitychange'));assert.equal(fixture.state.pulseStyle.value.animationDelay,'-2250ms','継続中のCSS時間へ新delayを二重加算しない');
+  fixture.props.mode='offline';await vue.nextTick();fixture.props.mode='online';await vue.nextTick();assert.equal(fixture.state.pulseStyle.value.animationDelay,'-2500ms','停止からの再開だけ位相を再設定');
+ }finally{fixture.dispose();}
 });

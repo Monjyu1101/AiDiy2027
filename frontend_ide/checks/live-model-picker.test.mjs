@@ -68,15 +68,15 @@ function contents(node) {
 }
 
 // 実SFCと実カタログ検証を通す。通信・保存・音声デバイス・描画だけを隔離する。
-async function fixture(t, { host = false, settings = initialSettings, folder = { 名前: 'fixture', パス: '/fixture' } } = {}) {
+async function fixture(t, { host = false, autoConnect = false, connectError = '', settings = initialSettings, folder = { 名前: 'fixture', パス: '/fixture' } } = {}) {
   const noop = () => {}, mounted = [], unmounted = [], module = { exports: {} };
   const calls = { api: [], saves: [], connects: [], packets: [], disconnects: 0, audioStarts: 0, audioCloses: 0 };
-  const controls = { catalog: clone(catalog), apiError: '', saveError: '', saveGate: null, connectGate: null };
+  const controls = { catalog: clone(catalog), apiError: '', saveError: '', saveGate: null, connectGate: null, connectError, lost: null };
   const intervals = new Map(), frames = new Map(); let timerId = 0, frameId = 0;
   let saved = clone(settings), sessionSettings = clone(settings);
   class Environment {
     host = host; socketUrl = ''; captureUrl = '';
-    async context() { return { 作業フォルダ: folder, 保存モデル設定: clone(saved) }; }
+    async context() { return { 作業フォルダ: folder, 保存モデル設定: clone(saved), 自動接続: autoConnect }; }
     openFolder() { calls.openFolder = (calls.openFolder || 0) + 1; }
     async api(path, body) {
       calls.api.push({ path, body: clone(body) });
@@ -93,9 +93,11 @@ async function fixture(t, { host = false, settings = initialSettings, folder = {
   }
   class Connection {
     session = '';
+    constructor(_url, _receive, lost) { controls.lost = lost; }
     async connect(options) {
       calls.connects.push(clone(options));
       if (controls.connectGate) await controls.connectGate;
+      if (controls.connectError) throw Error(controls.connectError);
       sessionSettings = { ...initialSettings, ...clone(options.modelSettings) };
       this.session = `session-${calls.connects.length}`;
     }
@@ -227,6 +229,7 @@ for (const host of [false, true]) {
     const selected = { LIVE_AI_NAME: 'openai_live', LIVE_OPENAI_MODEL: 'openai-second', LIVE_OPENAI_VOICE: 'shimmer' };
     assert.deepEqual(f.calls.saves, [selected]); assert.equal(f.calls.connects.length, 2);
     assert.deepEqual(f.calls.connects.at(-1), { codeBasePath: '/fixture', modelSettings: selected });
+    assert.equal(f.render().children[0].props.mode,'online'); assert.equal(f.render().children[0].props.connected,false);
     assert.equal(f.calls.disconnects, 1); assert.equal(f.data.mic.value, false); assert.equal(f.data.changing.value, true);
     assert.equal(f.apply().props.disabled, true); assert.equal(f.dialog().props.locked, true);
     assert.ok(f.selectNodes().every(node => node.props.disabled));
@@ -305,4 +308,38 @@ test('Live: 保存中は二重適用を止め、保存失敗なら元の接続�
   assert.equal(f.data.picker.value, true); assert.equal(f.data.modelSaving.value, false);
   assert.equal(f.calls.connects.length, 1); assert.equal(f.calls.disconnects, 0);
   assert.deepEqual(clone(f.data.settings.value), before); assert.deepEqual(clone(f.data.preferred.value), initialSettings);
+});
+
+
+for (const host of [false,true]) test(`Live接続バー: 待機黒→試行赤→成立シアン、手動切断/喪失/失敗後は黒 (${host?'VS Code':'単独'})`,async t=>{
+ const f=await fixture(t,{host});const bar=()=>f.render().children[0].props;
+ const check=(mode,connected)=>{assert.equal(bar().mode,mode);assert.equal(bar().connected,connected);};
+ check('offline',false);assert.equal(f.data.welcomeVisible.value,true);
+ let release;f.controls.connectGate=new Promise(resolve=>release=resolve);
+ const pending=f.data.connect();await flush();check('online',false);
+ await f.data.connect();assert.equal(f.calls.connects.length,1,'試行連打を重複させない');
+ release();await pending;check('online',true);
+ f.data.disconnect();check('offline',false);assert.equal(f.data.welcomeVisible.value,true);
+ f.controls.connectGate=null;await f.data.connect();check('online',true);
+ const count=f.calls.connects.length;f.controls.lost();await flush();check('offline',false);assert.equal(f.data.welcomeVisible.value,true);assert.equal(f.calls.connects.length,count,'喪失後に自動再試行はしない');
+ f.controls.connectError='接続失敗';const failed=f.data.connect();await flush();await failed;check('offline',false);assert.match(f.data.error.value,/接続失敗/);
+ f.controls.connectError='';f.controls.connectGate=new Promise(resolve=>release=resolve);
+ const stale=f.data.connect();await flush();check('online',false);f.data.disconnect();check('offline',false);release();await stale;check('offline',false);
+});
+
+test('Live接続バー: 起動時自動接続の成功はシアン、失敗して試行終了したら黒',async t=>{
+ const success=await fixture(t,{autoConnect:true});assert.equal(success.calls.connects.length,1);assert.equal(success.render().children[0].props.mode,'online');assert.equal(success.data.connected.value,true);
+ const failed=await fixture(t,{autoConnect:true,connectError:'自動接続失敗'});assert.equal(failed.calls.connects.length,1);assert.equal(failed.render().children[0].props.mode,'offline');assert.equal(failed.data.connected.value,false);
+});
+
+test('Live接続バー: モデル変更の再接続試行中だけ赤、失敗後黒でも会話・下書きを保持',async t=>{
+ const f=await fixture(t);await f.data.connect();
+ f.data.messages.value=[{id:'keep',role:'user',type:'input_text',text:'残す会話'}];f.data.prompt.value='残す下書き';
+ await f.open();await f.choose(0,'openai_live');await f.choose(1,'openai-second');await f.choose(2,'shimmer');
+ let reject;f.controls.connectGate=new Promise((_resolve,fail)=>reject=fail);
+ const pending=f.apply().props.onClick();await flush();
+ assert.equal(f.render().children[0].props.mode,'online');assert.equal(f.data.connected.value,false);assert.equal(f.data.changing.value,true);
+ reject(Error('再接続失敗'));await pending;await flush();
+ assert.equal(f.render().children[0].props.mode,'offline');assert.equal(f.data.connected.value,false);assert.equal(f.data.busy.value,false);assert.equal(f.data.changing.value,false);
+ assert.equal(f.data.messages.value[0].text,'残す会話');assert.equal(f.data.prompt.value,'残す下書き');assert.match(f.data.error.value,/再接続失敗/);assert.equal(f.intervals.size,0);
 });

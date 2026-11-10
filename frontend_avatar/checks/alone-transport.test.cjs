@@ -11,6 +11,11 @@ const { allowedCoreRequest, installAloneTransport, readInternalAuthorization } =
 const base = 'http://127.0.0.1:18091', rest = base + '/core/AIコア/モデル情報/取得'
 test('internal transport restricts exact origin, routes, resource and credentials', () => {
   assert.equal(allowedCoreRequest(base, rest, 'POST', 'xhr'), true)
+  for (const route of ['内容取得', '内容更新']) {
+    assert.equal(allowedCoreRequest(base, base + '/core/files/' + route, 'POST', 'xhr'), true)
+    assert.equal(allowedCoreRequest(base, base + '/core/files/' + route, 'GET', 'xhr'), false)
+  }
+  assert.equal(allowedCoreRequest(base, base + '/core/files/削除', 'POST', 'xhr'), false)
   assert.equal(allowedCoreRequest(base, base.replace('http:', 'ws:') + '/core/ws/AIコア', 'GET', 'webSocket'), true)
   for (const url of [rest + '?token=x', rest.replace('127.0.0.1', 'localhost'), rest.replace('18091', '18092'), base + '/core/auth/ログイン', base + '/core/AIコア/初期化', base + '/core/AIコア/フォルダ参照', 'https://example.com/core/AIコア/モデル情報/取得']) {
     assert.equal(allowedCoreRequest(base, url, 'POST', 'xhr'), false)

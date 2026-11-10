@@ -323,7 +323,7 @@ test('独立アプリへ移したTask/TeamのIPCは登録せず、残ったAvata
 });
 
 
-test('Alone main/preload: core and settings only, safe synchronous metadata and secured lifecycle', async () => {
+test('Alone main/preload: all panels and settings, safe synchronous metadata and secured lifecycle', async () => {
   const f = mainFixture(true);
   await flush();
   assert.deepEqual(f.windows.map(window => window.role), ['core']);
@@ -344,8 +344,8 @@ test('Alone main/preload: core and settings only, safe synchronous metadata and 
   assert.equal(api.projectPath, '/fixture/selected');
   assert.equal(api.coreBaseUrl, 'http://127.0.0.1:18091');
   assert.doesNotMatch(JSON.stringify(api), /access_token|Authorization|Bearer/);
-  await assert.rejects(api.togglePanel('chat'));
-  await assert.rejects(api.applyPanelStates({ chat: true }));
+  await assert.rejects(api.togglePanel('unknown'));
+  await assert.rejects(api.applyPanelStates({ invalid: true }));
   await api.openLoginWindow();
   assert.deepEqual(f.windows.map(window => window.role), ['core']);
   await api.openSettingsWindow('fixture-session');
@@ -353,6 +353,22 @@ test('Alone main/preload: core and settings only, safe synchronous metadata and 
   assert.deepEqual(f.windows.map(window => window.role), ['core', 'settings']);
   const settings = f.windows[1];
   assert.ok(settings.webContents.messages.some(message => message[0] === 'settings:session-id' && message[1] === 'fixture-session'));
+  await api.togglePanel('file');await api.togglePanel('image');await flush();
+  assert.deepEqual(f.windows.map(window => window.role), ['core', 'settings', 'file', 'image']);
+  assert.equal(f.windows[2].isVisible(), true);assert.equal(f.windows[3].isVisible(), true);
+  await api.togglePanel('file');assert.equal(f.windows[2].isVisible(), false);
+  await api.togglePanel('file');assert.equal(f.windows.length, 4);
+  for (let n = 1; n <= 6; n++) await api.togglePanel('code' + n);
+  await api.togglePanel('chat');await flush();
+  assert.equal(f.windows.length, 11);
+  for (const role of ['chat', 'file', 'image', 'code1', 'code2', 'code3', 'code4', 'code5', 'code6']) {
+    const panel = f.windows.find(window => window.role === role);assert.equal(panel.isVisible(), true);
+    await api.applyPanelStates({ [role]: false });assert.equal(panel.isVisible(), false);
+    await api.applyPanelStates({ [role]: true });assert.equal(panel.isVisible(), true);
+  }
+  await assert.rejects(api.togglePanel('toString'));
+  await assert.rejects(f.raw('panel:toggle', { sender: core.webContents, senderFrame: {} }, 'file'));
+
   for (const window of f.windows) {
     assert.equal(window.options.webPreferences.webSecurity, true);
     assert.equal(window.openHandler().action, 'deny');
@@ -368,6 +384,7 @@ test('Alone main/preload: core and settings only, safe synchronous metadata and 
   f.syncHandlers.get('avatar:metadata')(invalid);
   assert.equal(invalid.returnValue.avatarAlone, false);
   const before = f.windows.length;
+  await assert.rejects(f.raw('panel:apply-states', invalid, { code1: true }));
   f.raw('settings:open', invalid); assert.equal(f.windows.length, before);
   core.close(); assert.equal(f.app.quitCalls, 1, 'core close quits even with settings open');
 });

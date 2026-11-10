@@ -114,7 +114,7 @@ const ファイル内容ダイアログ閉じる = () => {
 const ファイル内容表示を開く = async (ファイル名: string) => {
   if (!ファイル内容表示対象(ファイル名)) return
   try {
-    const response = await apiClient.post('/core/files/内容取得', { ファイル名 })
+    const response = await apiClient.post('/core/files/内容取得', { ファイル名, セッションID: プロパティ.セッションID })
     if (response?.data?.status !== 'OK') return
     const base64_data = response?.data?.data?.base64_data
     if (typeof base64_data !== 'string' || !base64_data) return
@@ -478,7 +478,7 @@ async function 出力ソケット接続() {
   const チャンネル = プロパティ.チャンネル ?? '0'
   出力WebSocket.value?.disconnect()
   チャットリセット()
-  const nextSocket = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, チャンネル)
+  const nextSocket = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, チャンネル, window.desktopApi?.avatarAlone ? window.desktopApi.projectPath : '')
   // 接続待ちのソケットも先に保持し、待機中に再度呼ばれた場合は確実に閉じる。
   // （待機後に保持すると旧ソケットが残り、同じチャンネルへ2本つながってサーバー側で押し合いになる）
   出力WebSocket.value = nextSocket

@@ -262,9 +262,7 @@
 .window-maximize { width: 10px; height: 10px; border: 1px solid currentColor; }
 .window-maximized .window-maximize { box-shadow: 2px -2px 0 -1px var(--surface), 2px -2px 0 0 currentColor; }
 .connection-label i.online { background: var(--terminal); }
-.connection-bar.online { animation: cyan-bar-breathe 4.5s linear infinite; }
-.connection-bar.offline { animation: red-bar-breathe 4.5s linear infinite; }
-@keyframes red-bar-breathe { 0%, 100% { background-color: #000; } 50% { background-color: #ff0000; } }
+/* 接続バーの色・時刻同期した脈動は共通style.css / 状態バー.vueを使用する。 */
 @keyframes cyan-breathe { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 
 

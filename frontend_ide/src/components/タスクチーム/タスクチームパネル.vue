@@ -131,7 +131,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
 </script>
 <template>
   <main class="taskteam-shell" :data-app="config.kind">
-    <StatusBar :title="title" :connected="connected" :busy="checking" :desktop="desktop" :clock-pulse="true" :status="`Task / Team :${port} ${connected ? '接続済み' : '未接続'}`" />
+    <StatusBar mode="online" :title="title" :connected="connected" :busy="checking" :desktop="desktop" :clock-pulse="true" :status="`Task / Team :${port} ${connected ? '接続済み' : '未接続'}`" />
     <div class="component-toolbar"><span>{{ user ? `${user.利用者名 || user.利用者ID} (${user.利用者ID})` : '利用者認証' }}</span><nav><template v-if="user && taskView !== 'combined' && taskView !== 'dialog'"><button v-for="view in (['request','flow','detail'] as const).filter(view => view !== taskView && !openViews.includes(view))" :key="view" @click="openTaskWindows(view)">{{ {request:'要求',flow:'フロー図',detail:'明細'}[view] }}</button></template><button v-if="user && !config.projectFixed" @click="logout()">ログアウト</button></nav></div>
     <p v-if="config.projectFixed" class="fixed-project">IDE連携・プロジェクト固定: {{ config.fixedProject }}（変更不可）</p>
     <p v-if="restoring" class="taskteam-message" role="status">認証を確認しています…</p>

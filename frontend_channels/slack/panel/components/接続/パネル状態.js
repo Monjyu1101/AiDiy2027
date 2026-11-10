@@ -10,7 +10,7 @@
  * -------------------------------------------------------------------------
  */
 
-import { computed, reactive, watchEffect, nextTick } from 'vue';
+import { computed, reactive, watch, watchEffect, nextTick } from 'vue';
 
 // Discord 版のパネル状態から音声会話（Live）・モニターを除いたもの。IPC の英語キーは外部契約。
 const 状態名 = { idle: '未接続', connecting: '接続中', connected: '接続済み', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
@@ -43,6 +43,19 @@ export function パネル状態作成(api) {
     async ウィンドウ操作(action) { try { if (action === 'close') await 保存待ち; await api.window(action); } catch { 案内表示('ウィンドウを操作できませんでした。', true); } },
   });
   // CSS は Discord 版と共通の body クラス（live-view = 接続後のステージ表示）を使う。
+  // 起動時・接続色変更時・表示復帰時に共通バーの絶対時刻へ位相を合わせる。
+  function 脈動同期() {
+    if (終了済み || document.hidden) return;
+    const bar = document.getElementById('activity-bar');
+    if (!bar) return;
+    // 同じ色のまま復帰しても過去のアニメーション経過時間を二重加算しない。
+    bar.style.animation = 'none';
+    void bar.offsetWidth;
+    bar.style.removeProperty('animation');
+    bar.style.animationDelay = `${-(Date.now() % 4500)}ms`;
+  }
+  const 脈動監視解除 = watch(() => 画面.接続状態.phase === 'connected', () => { void nextTick(脈動同期); }, { immediate: true });
+  document.addEventListener('visibilitychange', 脈動同期);
   const 監視解除 = watchEffect(() => {
     document.body.classList.toggle('connected', 画面.接続状態.phase === 'connected');
     document.body.classList.toggle('live-view', 画面.接続画面);
@@ -159,7 +172,8 @@ export function パネル状態作成(api) {
     if (終了済み) return;
     終了済み = true; 候補世代++;
     発言消去();
-    for (const cancel of 解除) cancel(); 監視解除();
+    for (const cancel of 解除) cancel(); 監視解除(); 脈動監視解除();
+    document.removeEventListener('visibilitychange', 脈動同期);
     document.body.classList.remove('connected', 'live-view', 'settings-open');
   }
   return 画面;

@@ -20,6 +20,15 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
  const 一括停止中=ref(false);
  const 稼働あり=computed(()=>起動中.value||項目.value.some(item=>item.管理中||!['未起動','停止済み','エラー'].includes(item.状態))||ポート項目.value.some(item=>item.開放===true));
  const 設定起動可能=computed(()=>!更新失敗.value&&!稼働あり.value&&項目.value.length>0&&項目.value.every(item=>ポート項目.value.some(port=>port.id===item.id&&port.開放===false)));
+ // 接続バーはTools単体ではなく、起動チェックと全サーバーの現在のポート状態で判定する。
+ const サーバー表示状態=computed(()=>{
+  if(更新失敗.value||!項目.value.length)return 'unknown';
+  const states=項目.value.map(item=>ポート項目.value.find(port=>port.id===item.id)?.開放);
+  if(states.some(value=>typeof value!=='boolean'))return 'unknown';
+  if(states.every(value=>value===false))return 'offline';
+  const targets=項目.value.filter(item=>item.設定?.起動対象===true);
+  return targets.length>0&&targets.every(item=>ポート項目.value.some(port=>port.id===item.id&&port.開放===true))?'online':'disconnected';
+ });
  const Core利用可能=computed(()=>!更新失敗.value&&ポート項目.value.some(item=>item.id==='core'&&item.開放===true));
  const ブラウザ起動中=ref(false),ブラウザ通知=ref('');
  const ブラウザ起動可能=computed(()=>!更新失敗.value&&['tools','web'].every(id=>ポート項目.value.some(item=>item.id===id&&item.開放===true)));
@@ -35,8 +44,9 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
    const awaitingRun=一括進捗.value?.実行ID.startsWith('request-');
    if(!pendingBatch&&(!awaitingRun||(incoming&&incoming.実行ID!==requestPreviousRun)))一括進捗.value=incoming;
    lastServerRun=incoming?.実行ID||'';
-   const ports=await api('api/起動/ポート','GET',controller.signal);if(revision!==version||operation!==localRun)return;更新失敗.value=false;
-   if(ports)ポート項目.value=ports.対象||[];
+   const ports=await api('api/起動/ポート','GET',controller.signal);if(revision!==version||operation!==localRun)return;
+   if(!Array.isArray(data?.対象))throw Error('サーバー状態を取得できませんでした。');
+   更新失敗.value=false;ポート項目.value=Array.isArray(ports?.対象)?ports.対象:[];
    項目.value=data.対象.map(item=>保存中.value?{...item,設定:項目.value.find(old=>old.id===item.id)?.設定||item.設定}:item);
    起動中.value=data.実行中;一括停止中.value=Boolean(data.一括停止中);if(data.通知)通知.value=['done','cancelled'].includes(incoming?.状態)&&data.通知===incoming.通知?'':data.通知;
    // 起動・ポート取得が成功した現在の応答だけを使う。手動受付中や前回の完了は流用しない。
@@ -90,5 +100,5 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
   catch(error){ブラウザ通知.value=error.message;}finally{ブラウザ起動中.value=false;}
  }
  function 終了(){表示(false);}
- return {Core利用可能,進捗表示,進捗を閉じる,自動起動完了,項目,ポート項目,停止警告対象,選択,選択対象,読込中,保存中,処理中,起動中,一括停止中,稼働あり,設定起動可能,一括操作,通知,保存表示,更新失敗,コンソール,表示,設定変更,再起動,停止,終了,ブラウザ起動中,ブラウザ通知,ブラウザ起動可能,ブラウザで開く};
+ return {サーバー表示状態,Core利用可能,進捗表示,進捗を閉じる,自動起動完了,項目,ポート項目,停止警告対象,選択,選択対象,読込中,保存中,処理中,起動中,一括停止中,稼働あり,設定起動可能,一括操作,通知,保存表示,更新失敗,コンソール,表示,設定変更,再起動,停止,終了,ブラウザ起動中,ブラウザ通知,ブラウザ起動可能,ブラウザで開く};
 }

@@ -62,6 +62,13 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  assert.equal((await control.action({record:{...record}},'draft')).ok,false,'他レコードでは送信元を解決しない');
  control.setAvailable(record,true,false);
  assert.equal((await control.action(event,'state')).connected,false);
+ assert.equal((await control.action(event,'state')).mode,'online','Tools喪失は復帰待ちのonlineモード');
+ control.setAvailable(record,true,false,'offline');
+ assert.equal((await control.action(event,'state')).mode,'offline');
+ control.setAvailable(record,true,false);
+ assert.equal((await control.action(event,'state')).mode,'offline','一時エラーで孤立モードを上書きしない');
+ control.setAvailable(record,true,false,'online');
+ assert.equal((await control.action(event,'state')).mode,'online');
  assert.equal((await control.action(event,'navigate','https://example.test/offline')).ok,true);
  assert.equal((await control.action(event,'draft')).ok,true);
  assert.equal((await control.action(event,'open-analysis')).ok,false);

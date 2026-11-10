@@ -9,16 +9,18 @@ import WindowActions from './窓操作.vue';
 const props = defineProps({ title: String, status: String, mode: String, connected: Boolean, busy: Boolean, active: Boolean, desktop: Boolean, clockPulse: Boolean, windowApi: Object, windowContext: Object, allowAll: Boolean, allDisplays: Boolean, allBusy: Boolean, hideClose: Boolean, pinTitle: String });
 const emit = defineEmits(['toggle-all']);
 const pulseLevel = ref(0);
+const pulseDelay = ref(0);
 let pulseTimer;
+let cssRunning = false;
 // Webのタイトル下線と同じ時刻・式・50ms更新。絶対値なので明滅は4.5秒周期。
 function updatePulse(){pulseLevel.value=Math.round(255*Math.abs(Math.sin(((Date.now()/1000)%9)/9*Math.PI*2)));}
-// 黒い未接続バー・非表示の画面では20回/秒のVue更新を止め、復帰時に現在時刻へ揃える。
-function syncPulse(){clearInterval(pulseTimer);pulseTimer=undefined;if(props.clockPulse&&!document.hidden&&(props.mode==='offline'||props.connected)){updatePulse();pulseTimer=setInterval(updatePulse,50);}}
+// 接続試行OFF・非表示では20回/秒のVue更新を止め、復帰時に現在時刻へ揃える。
+function syncPulse(){const cssActive=!props.clockPulse&&props.mode!=='offline'&&(props.mode==='online'||props.connected);if(cssActive&&!cssRunning)pulseDelay.value=-(Date.now()%4500);cssRunning=cssActive;clearInterval(pulseTimer);pulseTimer=undefined;if(props.clockPulse&&!document.hidden&&props.mode!=='offline'&&(props.mode==='online'||props.connected)){updatePulse();pulseTimer=setInterval(updatePulse,50);}}
 watch(()=>[props.clockPulse,props.mode,props.connected],syncPulse);
 const pulseStyle = computed(()=>props.clockPulse?{
-  backgroundColor:props.mode==='offline'?`rgb(${pulseLevel.value}, 0, 0)`:props.connected?`rgb(0, ${pulseLevel.value}, ${pulseLevel.value})`:'rgb(0, 0, 0)',
+  backgroundColor:props.mode==='offline'?'rgb(0, 0, 0)':props.connected?`rgb(0, ${pulseLevel.value}, ${pulseLevel.value})`:props.mode==='online'?`rgb(${pulseLevel.value}, 0, 0)`:'rgb(0, 0, 0)',
   animation:'none',opacity:1,
-}:undefined);
+}:{animationDelay:`${pulseDelay.value}ms`});
 onMounted(() => { document.addEventListener('visibilitychange',syncPulse);syncPulse(); });
 onBeforeUnmount(() => {document.removeEventListener('visibilitychange',syncPulse);clearInterval(pulseTimer);});
 </script>
@@ -28,5 +30,5 @@ onBeforeUnmount(() => {document.removeEventListener('visibilitychange',syncPulse
     <strong>{{ title }}</strong>
     <WindowActions v-if="desktop" :window-api="windowApi" :window-context="windowContext" :allow-all="allowAll" :all-displays="allDisplays" :all-busy="allBusy" :hide-close="hideClose" :pin-title="pinTitle" @toggle-all="emit('toggle-all')"><slot name="window-tools"></slot></WindowActions>
   </header>
-  <div class="connection-bar" :class="{ online: connected && mode !== 'offline', offline: mode === 'offline' }" :style="pulseStyle"></div>
+  <div class="connection-bar" :class="{ online: connected && mode !== 'offline', offline: mode === 'offline', disconnected: mode === 'online' && !connected }" :style="pulseStyle"></div>
 </template>

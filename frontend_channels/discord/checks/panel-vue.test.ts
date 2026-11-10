@@ -354,3 +354,46 @@ test('初回起動は自動接続せず、モデル設定画面に案内を出�
     assert.equal(saved.get('live-toggle').getAttribute('aria-checked'), 'true', '保存済みの選択はそのまま表示する');
   } finally { await saved.dispose(); }
 });
+
+
+test('discord の接続バーは接続成立時だけ緑表示のクラスを付ける', async () => {
+  const f = fixture();
+  try {
+    await flush();
+    for (const phase of ['idle', 'connecting', 'connected', 'reconnecting', 'connected', 'stopping', 'idle', 'error', 'connected']) {
+      await f.emit('State', { phase });
+      assert.equal(f.window.document.body.classList.contains('connected'), phase === 'connected', phase);
+    }
+  } finally { await f.dispose(); }
+});
+
+
+test('接続バーは起動・接続色変更・表示復帰で絶対時刻へ脈動を同期し、終了時に解除する', async () => {
+  const f = fixture();
+  const originalNow = f.window.Date.now;
+  let now = 1234, disposed = false;
+  f.window.Date.now = () => now;
+  try {
+    await flush();
+    const bar = f.get('activity-bar');
+    assert.equal(bar.style.animationDelay, '-1234ms');
+    let restarts = 0;
+    Object.defineProperty(bar, 'offsetWidth', { configurable: true, get: () => { restarts++; return 300; } });
+    now = 4567; await f.emit('State', { phase: 'connected' });
+    assert.equal(bar.style.animationDelay, '-67ms');assert.equal(restarts, 1);
+    now = 5678; await f.emit('State', { phase: 'reconnecting' });
+    assert.equal(bar.style.animationDelay, '-1178ms');assert.equal(restarts, 2);
+    now = 6789; await f.emit('State', { phase: 'error' });
+    assert.equal(bar.style.animationDelay, '-1178ms', '同じ接続色のままなら再開しない');
+    Object.defineProperty(f.window.document, 'hidden', { configurable: true, value: true });
+    f.window.document.dispatchEvent(new f.window.Event('visibilitychange'));
+    assert.equal(restarts, 2, '非表示中は再描画しない');
+    now = 9876;Object.defineProperty(f.window.document, 'hidden', { configurable: true, value: false });
+    f.window.document.dispatchEvent(new f.window.Event('visibilitychange'));
+    assert.equal(bar.style.animationDelay, '-876ms');assert.equal(restarts, 3);
+    assert.equal(bar.style.animation, '', '脈動は配布CSSへ戻す');
+    await f.dispose();disposed = true;
+    now = 10001;f.window.document.dispatchEvent(new f.window.Event('visibilitychange'));
+    assert.equal(restarts, 3, '終了後のイベントを解除する');
+  } finally { f.window.Date.now = originalNow; if (!disposed) await f.dispose(); }
+});

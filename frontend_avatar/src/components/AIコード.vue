@@ -474,7 +474,7 @@ async function 出力ソケット接続() {
     出力WebSocket.value = null
     出力状態購読解除 = null
   }
-  const socket = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, プロパティ.チャンネル)
+  const socket = new AIWebSocket(AI_WS_ENDPOINT, プロパティ.セッションID, プロパティ.チャンネル, window.desktopApi?.avatarAlone ? window.desktopApi.projectPath : '')
   出力WebSocket.value = socket
   出力状態購読解除 = socket.onStateChange((connected) => {
     出力接続済み.value = connected
@@ -639,7 +639,7 @@ function メッセージ貼り付け可能(message: 行データ) {
 async function ファイル内容表示を開く(fileName: string) {
   if (!ファイル内容表示対象(fileName)) return
   try {
-    const response = await apiClient.post('/core/files/内容取得', { ファイル名: fileName })
+    const response = await apiClient.post('/core/files/内容取得', { ファイル名: fileName, セッションID: プロパティ.セッションID })
     if (response?.data?.status !== 'OK') return
     const base64_data = response?.data?.data?.base64_data
     if (typeof base64_data !== 'string' || !base64_data) return

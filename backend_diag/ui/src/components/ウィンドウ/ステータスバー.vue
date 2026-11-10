@@ -5,7 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,onMounted,onBeforeUnmount} from 'vue';
-const props=defineProps({online:Boolean,enabled:Boolean,checking:Boolean,connected:Boolean,compact:Boolean,switching:Boolean,microAvailable:Boolean});
+const props=defineProps({serverState:String,connected:Boolean,compact:Boolean,switching:Boolean,microAvailable:Boolean});
 defineEmits(['restore','mini','micro']);
 const customNormalTitle=ref(false);
 const desktop=ref(false),maximized=ref(false),pin=ref({pinned:false,locked:false}),pinBusy=ref(false);
@@ -35,5 +35,5 @@ onBeforeUnmount(()=>{disposed=true;unsubscribePin?.();window.removeEventListener
   <template v-if="desktop"><button class="window-pin" :class="{pinned:pin.pinned}" :aria-pressed="pin.pinned" :disabled="pin.locked||pinBusy" :title="pinTitle" :aria-label="pinTitle" @click="togglePin"><span aria-hidden="true">📌</span></button><button @click="action('close')" title="閉じる" aria-label="終了">×</button></template>
  </span>
 </header>
-<div class="connection-bar" :class="{online:online&&enabled&&connected,offline:!enabled}" aria-hidden="true"></div>
+<div class="connection-bar" :class="{online:connected&&serverState==='online',offline:connected&&serverState==='offline',disconnected:!connected||!['online','offline'].includes(serverState)}" aria-hidden="true"></div>
 </template>

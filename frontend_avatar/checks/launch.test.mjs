@@ -179,3 +179,23 @@ test('初期ピンは明示引数だけをElectronへ渡し親環境から漏ら
     else process.env.AIDIY_AVATAR_INITIAL_PINNED = old;
   }
 });
+
+
+test('既にIDEとのIPCが切れている場合は子プロセスを起動しない', async () => {
+  const f = fixture(), owner = Object.assign(new EventEmitter(), { connected: false });
+  await assert.rejects(runAvatar({ ...f.options, owner }), /IDEとの接続/);
+  assert.equal(f.calls.length, 0);
+  assert.equal(owner.listenerCount('disconnect'), 0);
+});
+
+test('IDE所有起動では終了までIPCの監視を維持し、通常終了で解除する', async () => {
+  const f = fixture(), owner = Object.assign(new EventEmitter(), { connected: true });
+  const running = runAvatar({ ...f.options, owner });
+  await flush();
+  assert.equal(owner.listenerCount('disconnect'), 1);
+  assert.equal(f.calls[0].options.detached, process.platform !== 'win32');
+  assert.equal(f.calls[1].options.detached, process.platform !== 'win32');
+  f.calls[0].child.emit('exit', 0);
+  await running;
+  assert.equal(owner.listenerCount('disconnect'), 0);
+});

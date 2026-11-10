@@ -388,3 +388,9 @@ Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表�
 Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後の画面をぼかす。macOSはvibrancy（menu）を指定する。文字とアイコンは不透明のまま、濃紺の背景だけ半透明にする。未対応環境は従来の濃紺パネル。Windows実機で表示確認済み、macOS実機は未検証。
 
 左上の見出しは「AiDiy ランチャー」とし、Aマークは表示しない。
+
+## 接続バーの色と脈動
+
+通常・ミニの接続バーは起動タブの「起動対象」チェックと、Local・Tools・Core・Apps・Task/Team・Webの既存ポート監視で判定します。全サーバー停止なら黒で停止します。1つ以上稼働していて、チェック対象が1件以上あり全て稼働ならシアン、対象に停止がある場合は赤（#ff0000）です。チェック外の停止はシアンを妨げず、チェック外だけの稼働でも全停止とは扱いません。対象が空で稼働あり、未取得・ポート不明・取得エラー・Diag切断は赤とし、全稼働や全停止を誤表示しません。定期取得中は直前の成功結果を維持し、チェック変更・保存失敗の巻き戻しにも追従します。シアンと赤は黒から4.5秒周期で脈動します。Tools固有の接続状態は機能の利用可否に引き続き使用し、バー判定とは分離します。
+
+確認は `checks/server-status-bar.check.mjs`、`statusbar.check.cjs`、`start-bulk-state.check.mjs`、`tools-ui.check.mjs`、`tools-status.check.mjs` と、UIビルド・manifest照合を使います。

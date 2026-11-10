@@ -54,6 +54,7 @@ function harness({ alone = true, role = 'core', authFailure = false, holdAuth = 
       return this.sessionId || 'new-session';
     }
     updateState(state) { this.sent.push(state); }
+    send(message) { this.sent.push(message); }
     disconnect() { this.closed = true;this.connected = false;this.state?.(false); }
   }
   const userResponse = { data: { status: 'OK', data: { 利用者ID: 'internal-fixture', 利用者名: '内部接続' } } };
@@ -79,7 +80,7 @@ function harness({ alone = true, role = 'core', authFailure = false, holdAuth = 
     runRetry: async () => { const [id, pending] = [...timers].find(([, v]) => v.delay === 5000);timers.delete(id);pending.fn();for (let i = 0; i < 10; i++) await Promise.resolve();await vue.nextTick(); },
   };
 }
-test('単独Avatarはログイン保存に触れずCore/inputを指定プロジェクトで接続し子パネルを開かない', async () => {
+test('単独Avatarはログイン保存に触れずCore/inputを指定プロジェクトで接続し全パネルを開く', async () => {
   const f = harness();
   try {
     await f.mount();
@@ -92,11 +93,13 @@ test('単独Avatarはログイン保存に触れずCore/inputを指定プロジ�
     assert.equal(f.data.モデル設定.value.CODE_BASE_PATH, '/fixture/project A');
     assert.equal(f.data.チャットモード.value, 'live');
     assert.ok(Object.values(f.data.パネル表示状態.value).every(v => v === false));
-    await f.data.パネル切替('code1');await f.data.パネル有効化('chat');
-    assert.equal(f.panelCalls, 0);
-    assert.equal(f.broadcasts.length, 0);
+    await f.data.パネル切替('code1');await f.data.パネル有効化('code2');
+    assert.equal(f.panelCalls, 2);
+    assert.ok(f.broadcasts.some(message => message.type === 'snapshot'));
+    await f.data.パネル切替('file');await f.data.パネル切替('image');
+    assert.equal(f.panelCalls, 4);
     f.data.デスクトップチャンネルメッセージ処理({ data: { type: 'set-chat-mode', mode: 'code2' } });
-    assert.equal(f.data.チャットモード.value, 'live');
+    assert.equal(f.data.チャットモード.value, 'code2');
     f.data.デスクトップチャンネルメッセージ処理({ data: { type: 'settings-saved', waitSeconds: 1 } });
     assert.equal(f.data.再起動カウントダウン表示.value, true);
     await f.data.再起動後再接続();
@@ -134,7 +137,7 @@ function walk(node, result = []) {
   if (node && typeof node === 'object') { result.push(node);for (const child of Array.isArray(node.children) ? node.children : []) walk(child, result); }
   return result;
 }
-test('実Vue renderで単独版はマイク・スピーカー・設定だけ、通常版は0〜6等を保持', () => {
+test('実Vue renderで単独版はマイク・スピーカー・全パネルと設定、通常版は0〜6等を保持', () => {
   class Audio { constructor() { return new Proxy(this, { get: () => () => {} }); } }
   const component = load('components/AIコア.vue', { window: { desktopApi: {} }, setTimeout, clearTimeout },
     { '@/components/AIコア_音声処理': { AudioController: Audio }, '@/api/websocket': { AIWebSocket: class {} } }, { onMounted() {}, onBeforeUnmount() {} });
@@ -146,10 +149,10 @@ test('実Vue renderで単独版はマイク・スピーカー・設定だけ、�
     return walk(root.children.default()).filter(n => n.type === 'button').map(n => n.props?.title);
   };
   try {
-    assert.deepEqual(renderTitles().filter(Boolean), ['マイク', 'スピーカー', 'モデル設定']);
+    assert.deepEqual(renderTitles().filter(Boolean), ['マイク', 'スピーカー', 'ファイル', 'チャット', 'コード1', 'イメージ', 'コード2', 'コード3', 'コード4', 'コード5', 'コード6', 'モデル設定']);
     props.standalone = false;
     const titles = renderTitles();for (const title of ['チャット', 'ファイル', 'イメージ', 'コード1', 'コード6']) assert.ok(titles.includes(title), title);
-    props.standalone = true;assert.deepEqual(renderTitles().filter(Boolean), ['マイク', 'スピーカー', 'モデル設定']);
+    props.standalone = true;assert.deepEqual(renderTitles().filter(Boolean), ['マイク', 'スピーカー', 'ファイル', 'チャット', 'コード1', 'イメージ', 'コード2', 'コード3', 'コード4', 'コード5', 'コード6', 'モデル設定']);
   } finally { scope.stop(); }
 });
 test('単独設定はプロジェクトを固定し、リセット後だけ新しい会話で起動パスを再確定する', async () => {
@@ -187,4 +190,142 @@ test('単独設定はプロジェクトを固定し、リセット後だけ新�
     await f.data.再起動後再接続();
     assert.equal(f.sockets[2].sessionId, '');assert.equal(f.sockets[2].project, '/fixture/project A');
   } finally { f.stop(); }
+});
+
+test('単独File窓はコアを再生成せずsnapshotから同じセッションとプロジェクトを受け取る', async () => {
+  const f = harness({ role: 'file' });
+  try {
+    await f.mount();assert.equal(f.sockets.length, 0);
+    assert.ok(f.broadcasts.some(message => message.type === 'request-snapshot'));
+    f.data.デスクトップチャンネルメッセージ処理({ data: { type: 'snapshot', snapshot: { セッションID: 'selected-session', モデル設定: { CODE_BASE_PATH: '/fixture/project A' }, 入力接続済み: true } } });
+    assert.equal(f.data.表示セッションID.value, 'selected-session');
+    assert.equal(f.data.表示モデル設定.value.CODE_BASE_PATH, '/fixture/project A');
+    f.data.パネル状態更新({ file: true, image: true, chat: true, code1: true });
+    assert.equal(f.data.パネル表示状態.value.file, true);assert.equal(f.data.パネル表示状態.value.image, true);
+    assert.equal(f.data.パネル表示状態.value.chat, true);assert.equal(f.data.パネル表示状態.value.code1, true);
+    f.data.デスクトップチャンネルメッセージ処理({ data: { type: 'reboot-reconnect' } });
+    assert.equal(f.data.パネル再接続キー.value, 1);
+  } finally { f.stop(); }
+});
+
+test('Captureは同じCore/inputへ画像を中継し、別のChat/Codeを起動しない', async () => {
+  const panel = harness({ role: 'image' }), core = harness();
+  try {
+    await core.mount();await panel.mount();
+    panel.data.デスクトップチャンネルメッセージ処理({ data: { type: 'snapshot', snapshot: {
+      セッションID: 'new-session', モデル設定: { CODE_BASE_PATH: '/fixture/project A' }, 入力接続済み: true,
+    } } });
+    panel.data.イメージ送信処理({ text: '', mimeType: 'image/png', base64: 'fixture-image' });
+    const relay = panel.broadcasts.find(message => message.type === 'send-input-payload');
+    assert.equal(relay.message.プロジェクトパス, '/fixture/project A');
+    core.data.デスクトップチャンネルメッセージ処理({ data: relay });
+    const image = core.sockets[1].sent.find(message => message.メッセージ識別 === 'input_image');
+    assert.equal(image.セッションID, 'new-session');assert.equal(image.ファイル名, 'fixture-image');
+    assert.equal(image.プロジェクトパス, '/fixture/project A');
+    assert.equal(panel.sockets.length, 0);assert.equal(core.sockets.length, 2);
+  } finally { panel.stop();core.stop(); }
+});
+
+test('単独Chatは0番を選択プロジェクトで接続し、送信・プレビュー・再接続を維持する', async () => {
+  const sockets = [], emitted = [], calls = [], dispose = [];
+  class ChatSocket {
+    constructor(url, sessionId, channel, project) { Object.assign(this, { url, sessionId, channel, project });sockets.push(this); }
+    on() {}off() {}onStateChange(fn) { this.state = fn; }
+    async connect() { this.state(true);return this.sessionId; }
+    disconnect() { this.closed = true;this.state?.(false); }
+  }
+  const props = vue.reactive({ セッションID: 'selected-session', chatMode: 'live', active: true, 入力接続済み: true });
+  const component = load('components/AIチャット.vue', {
+    window: { desktopApi: { avatarAlone: true, projectPath: '/fixture/project A' }, addEventListener() {}, removeEventListener() {} },
+    setTimeout, clearTimeout, setInterval, clearInterval,
+  }, { '@/api/websocket': { AIWebSocket: ChatSocket }, '@/api/config': { AI_WS_ENDPOINT: 'ws://fixture/core' },
+    '@/api/client': { default: { post: async (url, body) => { calls.push({ url, body });return { data: { status: 'OK', data: { base64_data: 'fixture' } } }; } } },
+  }, { onMounted() {}, onBeforeUnmount: fn => dispose.push(fn) });
+  const scope = vue.effectScope();
+  const data = scope.run(() => component.setup(props, { expose() {}, emit: (...args) => emitted.push(args) }));
+  try {
+    await data.出力ソケット接続();
+    assert.equal(sockets[0].channel, '0');assert.equal(sockets[0].project, '/fixture/project A');
+    assert.equal(sockets[0].sessionId, 'selected-session');
+    data.入力テキスト.value = 'こんにちは';data.メッセージ送信();
+    const message = emitted.find(e => e[0] === 'send-input-payload')[1];
+    assert.equal(message.チャンネル, '0');assert.equal(message.送信モード, 'Live');
+    await data.ファイル内容表示を開く('temp/input/fixture.png');
+    assert.equal(calls[0].body.セッションID, 'selected-session');
+    props.セッションID = 'reconnected-session';await vue.nextTick();await Promise.resolve();
+    assert.equal(sockets[0].closed, true);assert.equal(sockets[1].sessionId, 'reconnected-session');
+    assert.equal(sockets[1].project, '/fixture/project A');
+  } finally { dispose.forEach(fn => fn());scope.stop(); }
+  assert.equal(sockets[1].closed, true);
+});
+
+test('単独Chatのモード・接続状態・0番送信をCoreへ中継し再接続後も維持する', async () => {
+  const panel = harness({ role: 'chat' }), core = harness();
+  try {
+    await core.mount();await panel.mount();
+    await core.data.パネル切替('chat');assert.equal(core.panelCalls, 1);
+    panel.data.デスクトップチャンネルメッセージ処理({ data: { type: 'snapshot', snapshot: {
+      セッションID: 'new-session', モデル設定: { CODE_BASE_PATH: '/fixture/project A' }, 入力接続済み: true,
+    } } });
+    panel.data.チャットモード更新('chat');panel.data.チャット状態中継(true);
+    panel.data.ウィンドウから入力ペイロード送信({ チャンネル: '0', 送信モード: 'Chat', メッセージ識別: 'input_text', メッセージ内容: 'fixture' });
+    for (const relay of panel.broadcasts) core.data.デスクトップチャンネルメッセージ処理({ data: relay });
+    assert.equal(core.data.チャットモード.value, 'chat');assert.equal(core.data.チャット接続済み.value, true);
+    const message = core.sockets[1].sent.find(m => m.メッセージ識別 === 'input_text');
+    assert.equal(message.セッションID, 'new-session');assert.equal(message.プロジェクトパス, '/fixture/project A');
+    assert.equal(panel.sockets.length, 0);
+    await core.data.再起動後再接続();assert.equal(core.data.チャットモード.value, 'chat');
+  } finally { panel.stop();core.stop(); }
+});
+
+for (const channel of ['1', '2', '3', '4', '5', '6']) test(`単独Code${channel}: プロジェクト・セッション付き接続/送信/添付表示/破棄`, async () => {
+  const sockets = [], emitted = [], calls = [], dispose = [];
+  class Socket {
+    constructor(url, sessionId, number, project) { Object.assign(this, { sessionId, number, project });sockets.push(this); }
+    on() {}off() {}onStateChange(fn) { this.state = fn;return () => {}; }
+    async connect() { this.state(true);return this.sessionId; }
+    disconnect() { this.closed = true;this.state?.(false); }
+  }
+  const props = vue.reactive({ セッションID: 'selected-session', チャンネル: channel, active: true, codeAi: 'fixture', 入力接続済み: true });
+  const component = load('components/AIコード.vue', {
+    window: { desktopApi: { avatarAlone: true, projectPath: '/fixture/project A' }, addEventListener() {}, removeEventListener() {} }, setTimeout, clearTimeout, setInterval, clearInterval,
+  }, { '@/api/websocket': { AIWebSocket: Socket }, '@/api/config': { AI_WS_ENDPOINT: 'ws://fixture/core' },
+    '@/api/client': { default: { post: async (url, body) => { calls.push({ url, body });return { data: { status: 'OK', data: { base64_data: 'fixture' } } }; } } },
+  }, { onMounted() {}, onBeforeUnmount: fn => dispose.push(fn) });
+  const scope = vue.effectScope();
+  const data = scope.run(() => component.setup(props, { expose() {}, emit: (...args) => emitted.push(args) }));
+  try {
+    await data.出力ソケット接続();
+    assert.equal(sockets[0].number, channel);assert.equal(sockets[0].project, '/fixture/project A');
+    assert.equal(sockets[0].sessionId, 'selected-session');
+    data.入力テキスト.value = 'fixture';data.メッセージ送信();
+    assert.equal(emitted.find(e => e[0] === 'submit')[2], channel);
+    await data.ファイル内容表示を開く('hello.txt');assert.equal(calls[0].body.セッションID, 'selected-session');
+    props.セッションID = 'reconnected-session';await vue.nextTick();await Promise.resolve();
+    assert.equal(sockets[0].closed, true);assert.equal(sockets[1].sessionId, 'reconnected-session');
+    assert.equal(sockets[1].project, '/fixture/project A');
+  } finally { dispose.forEach(fn => fn());scope.stop(); }
+  assert.equal(sockets[1].closed, true);
+});
+
+test('全Code窓は送信と取消を同じCoreへ中継し、新規セッションを勝手に作らない', async () => {
+  const core = harness();await core.mount();
+  try {
+    for (const channel of ['1', '2', '3', '4', '5', '6']) {
+      const panel = harness({ role: 'code' + channel });
+      try {
+        await panel.mount();await core.data.パネル切替('code' + channel);
+        panel.data.デスクトップチャンネルメッセージ処理({ data: { type: 'snapshot', snapshot: {
+          セッションID: 'new-session', モデル設定: { CODE_BASE_PATH: '/fixture/project A' }, 入力接続済み: true,
+        } } });
+        panel.data.コード送信処理('fixture', channel, 2);panel.data.コードキャンセル処理(channel);
+        for (const relay of panel.broadcasts) core.data.デスクトップチャンネルメッセージ処理({ data: relay });
+        const message = core.sockets[1].sent.find(m => m.チャンネル === channel && m.メッセージ識別 === 'input_text');
+        assert.equal(message.セッションID, 'new-session');assert.equal(message.プロジェクトパス, '/fixture/project A');
+        assert.equal(message.self_check_loop, 2);
+        assert.ok(core.sockets[1].sent.some(m => m.チャンネル === channel && m.メッセージ識別 === 'cancel_run'));
+        assert.equal(panel.sockets.length, 0);
+      } finally { panel.stop(); }
+    }
+  } finally { core.stop(); }
 });

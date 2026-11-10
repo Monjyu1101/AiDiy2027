@@ -124,7 +124,7 @@ async function ensureStandaloneBrowserBridge(){
 }
 async function checkStandaloneBrowser(record){
  if(record.checking||record.window.isDestroyed())return;record.checking=true;
- try{const state=await readState(record);browserViews?.setAvailable(record,state.active,browserConnected(state));}
+ try{const state=await readState(record);browserViews?.setAvailable(record,state.active,browserConnected(state),state.mode);}
  catch{browserViews?.setAvailable(record,false);}
  finally{record.checking=false;}
 }
@@ -170,7 +170,7 @@ async function checkChildren(owner){
  try{
   const state=await readState(owner);
   if(owner.window.isDestroyed()||owner.revision!==revision)return;
-  browserViews?.setAvailable(owner,state.active,browserConnected(state));
+  browserViews?.setAvailable(owner,state.active,browserConnected(state),state.mode);
   if(!sessionKey(state)||(avatarLauncher.active(owner)&&owner.avatarKey!==sessionKey(state))||[...windows.values()].some(child=>child.owner===owner&&child.linkKey!==sessionKey(state)))closeChildren(owner);
  }catch{ /* 一時的な通信断・不正応答は終了の根拠にせず、次回の監視で再確認する。 */ }finally{owner.checking=false;}
 }
@@ -273,7 +273,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
     record.slot=Number(bridge.name.slice('aidiy_ide '.length))-1;title=`AiDiy IDE / Browser ${record.slot+1}`;window.setTitle(title);
     if(displayId===undefined&&!anchor)window.setBounds(windowBounds(kind,area,ownerBounds,record.slot));
    }
-   record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,current.active,browserConnected(current));attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,current.active,browserConnected(current));
+   record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,current.active,browserConnected(current),current.mode);attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,current.active,browserConnected(current),current.mode);
    browserReady(true);
   }
   await window.loadURL(url);
@@ -361,7 +361,7 @@ app.whenReady().then(async()=>{
      if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project.path||!current.active)throw Error('IDEの利用状態が変わりました。');
      if(singleBrowser()!==existing)continue;
      if(!ready)throw Error('Browserを起動できませんでした。もう一度開いてください。');
-     browserViews.setAvailable(existing,current.active,browserConnected(current));await browserViews.navigate(existing,target);focusWindow(existing.window);
+     browserViews.setAvailable(existing,current.active,browserConnected(current),current.mode);await browserViews.navigate(existing,target);focusWindow(existing.window);
      return{ok:true,reused:true};
     }
    }

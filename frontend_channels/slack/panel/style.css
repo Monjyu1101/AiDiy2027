@@ -13,36 +13,59 @@
 @import "./titlebar.css";
 
 :root{color-scheme:dark;font-family:"Yu Gothic UI","Meiryo",sans-serif;color:#edf0f8;background:#000;font-size:12px}
-#activity-bar { height: 2px; box-sizing: content-box; border-top: 1px solid #242424; background: #000; pointer-events: none; }
-body.connected #activity-bar { background: #00ffff; animation: cyan-bar-breathe 4.5s linear infinite; }
+#activity-bar { height: 2px; box-sizing: content-box; border-top: 1px solid #242424; background: #ff4500; animation: orange-bar-breathe 4.5s linear infinite; pointer-events: none; }
+body.connected #activity-bar { background: #00ff00; animation: green-bar-breathe 4.5s linear infinite; }
 /* aidiy_live と同じ |sin(2πt / 9)| を、4.5秒の明滅周期に沿って標本化する。 */
-@keyframes cyan-bar-breathe {
+@keyframes green-bar-breathe {
   0%, 100% { background-color: rgb(0, 0, 0); }
-  2.5%, 97.5% { background-color: rgb(0, 20, 20); }
-  5%, 95% { background-color: rgb(0, 40, 40); }
-  7.5%, 92.5% { background-color: rgb(0, 60, 60); }
-  10%, 90% { background-color: rgb(0, 79, 79); }
-  12.5%, 87.5% { background-color: rgb(0, 98, 98); }
-  15%, 85% { background-color: rgb(0, 116, 116); }
-  17.5%, 82.5% { background-color: rgb(0, 133, 133); }
-  20%, 80% { background-color: rgb(0, 150, 150); }
-  22.5%, 77.5% { background-color: rgb(0, 166, 166); }
-  25%, 75% { background-color: rgb(0, 180, 180); }
-  27.5%, 72.5% { background-color: rgb(0, 194, 194); }
-  30%, 70% { background-color: rgb(0, 206, 206); }
-  32.5%, 67.5% { background-color: rgb(0, 217, 217); }
-  35%, 65% { background-color: rgb(0, 227, 227); }
-  37.5%, 62.5% { background-color: rgb(0, 236, 236); }
-  40%, 60% { background-color: rgb(0, 243, 243); }
-  42.5%, 57.5% { background-color: rgb(0, 248, 248); }
-  45%, 55% { background-color: rgb(0, 252, 252); }
-  47.5%, 52.5% { background-color: rgb(0, 254, 254); }
-  50% { background-color: rgb(0, 255, 255); }
+  2.5%, 97.5% { background-color: rgb(0, 20, 0); }
+  5%, 95% { background-color: rgb(0, 40, 0); }
+  7.5%, 92.5% { background-color: rgb(0, 60, 0); }
+  10%, 90% { background-color: rgb(0, 79, 0); }
+  12.5%, 87.5% { background-color: rgb(0, 98, 0); }
+  15%, 85% { background-color: rgb(0, 116, 0); }
+  17.5%, 82.5% { background-color: rgb(0, 133, 0); }
+  20%, 80% { background-color: rgb(0, 150, 0); }
+  22.5%, 77.5% { background-color: rgb(0, 166, 0); }
+  25%, 75% { background-color: rgb(0, 180, 0); }
+  27.5%, 72.5% { background-color: rgb(0, 194, 0); }
+  30%, 70% { background-color: rgb(0, 206, 0); }
+  32.5%, 67.5% { background-color: rgb(0, 217, 0); }
+  35%, 65% { background-color: rgb(0, 227, 0); }
+  37.5%, 62.5% { background-color: rgb(0, 236, 0); }
+  40%, 60% { background-color: rgb(0, 243, 0); }
+  42.5%, 57.5% { background-color: rgb(0, 248, 0); }
+  45%, 55% { background-color: rgb(0, 252, 0); }
+  47.5%, 52.5% { background-color: rgb(0, 254, 0); }
+  50% { background-color: rgb(0, 255, 0); }
+}
+@keyframes orange-bar-breathe {
+  0%, 100% { background-color: rgb(0, 0, 0); }
+  2.5%, 97.5% { background-color: rgb(20, 5, 0); }
+  5%, 95% { background-color: rgb(40, 11, 0); }
+  7.5%, 92.5% { background-color: rgb(60, 16, 0); }
+  10%, 90% { background-color: rgb(79, 21, 0); }
+  12.5%, 87.5% { background-color: rgb(98, 27, 0); }
+  15%, 85% { background-color: rgb(116, 31, 0); }
+  17.5%, 82.5% { background-color: rgb(133, 36, 0); }
+  20%, 80% { background-color: rgb(150, 41, 0); }
+  22.5%, 77.5% { background-color: rgb(166, 45, 0); }
+  25%, 75% { background-color: rgb(180, 49, 0); }
+  27.5%, 72.5% { background-color: rgb(194, 52, 0); }
+  30%, 70% { background-color: rgb(206, 56, 0); }
+  32.5%, 67.5% { background-color: rgb(217, 59, 0); }
+  35%, 65% { background-color: rgb(227, 61, 0); }
+  37.5%, 62.5% { background-color: rgb(236, 64, 0); }
+  40%, 60% { background-color: rgb(243, 66, 0); }
+  42.5%, 57.5% { background-color: rgb(248, 67, 0); }
+  45%, 55% { background-color: rgb(252, 68, 0); }
+  47.5%, 52.5% { background-color: rgb(254, 69, 0); }
+  50% { background-color: rgb(255, 69, 0); }
 }
 *{box-sizing:border-box}body{transition:opacity .45s ease-out;margin:0;background:#000;border:1px solid var(--aidiy-panel-border);height:100vh;display:flex;flex-direction:column;overflow:hidden}header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;min-height:31px;padding:1px 2px;gap:8px;font-family:"Segoe UI","Yu Gothic UI",sans-serif;color:var(--aidiy-titlebar-foreground);line-height:1.65;background:var(--aidiy-titlebar-background);border-bottom:1px solid #242424;-webkit-app-region:drag;user-select:none}
 .brand{grid-column:2;display:flex;align-items:center;justify-content:center;gap:7px;font-size:14px;letter-spacing:-.5px}.window-actions{grid-column:3;justify-self:end;display:flex;gap:2px}button,select,input{-webkit-app-region:no-drag;font:inherit}button{cursor:pointer}.window-actions button{border:0;background:none;color:var(--aidiy-titlebar-secondary);font-size:18px;width:28px;height:28px;padding:0}.window-actions button:hover{background:color-mix(in srgb,#667eea 8%,#000)}#close:hover{color:#fff;background:#cc415714}
 main{flex:1;min-height:0;overflow:auto;padding:17px 18px 12px}.section-label{font-size:13px;font-weight:600;margin-bottom:12px;display:flex;gap:8px;align-items:center}.section-label>span{font-size:9px;letter-spacing:1px;color:#a8b9ff;border:1px solid #405283;border-radius:3px;padding:1px 5px}
-.row{display:flex;align-items:center;gap:8px;margin:9px 0}label{width:50px;flex-shrink:0;color:#aeb7ce;font-size:11px}select,input{min-width:0;border:1px solid #353e53;background:#1b202c;color:#e9ecf5;border-radius:5px;padding:6px 8px;height:32px}select:focus,input:focus,button:focus-visible{outline:2px solid #8d9fff;outline-offset:1px}#code-model{flex:1;font-size:12px}.fixed-value{flex:1;min-width:0;height:32px;display:flex;align-items:center;padding:0 8px;border:1px solid #2c3342;border-radius:5px;background:#10141c;color:#c9d2e3;font-size:12px}.code-section{margin:0 0 10px}.section-label small{font-weight:400;font-size:10px;color:#7d89a4}.code-last{margin-bottom:16px}#status{grid-column:1;justify-self:start;font-size:10px;display:flex;align-items:center;gap:5px;min-width:0;margin-left:6px;color:var(--aidiy-titlebar-secondary);font-family:"Yu Gothic UI","Meiryo",sans-serif;line-height:1.3}#status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#dot{display:block;border-radius:50%;width:5px;height:5px;flex-shrink:0;background:#9aa7b8}#dot[data-phase=connected]{background:#00ff00}#dot[data-phase=error]{background:#ff8e9e}#dot[data-phase=connecting],#dot[data-phase=reconnecting],#dot[data-phase=stopping]{background:#00ffff;box-shadow:0 0 0 3px #00ffff15,0 0 10px #00ffff60}:disabled{opacity:.6;cursor:default}.hint{font-size:11px;color:#adb6cb;margin:13px 0 0}.note{font-size:10px;color:#7d89a4;margin:5px 0 0;line-height:1.5}.note.error{color:#f4aaa8}
+.row{display:flex;align-items:center;gap:8px;margin:9px 0}label{width:50px;flex-shrink:0;color:#aeb7ce;font-size:11px}select,input{min-width:0;border:1px solid #353e53;background:#1b202c;color:#e9ecf5;border-radius:5px;padding:6px 8px;height:32px}select:focus,input:focus,button:focus-visible{outline:2px solid #8d9fff;outline-offset:1px}#code-model{flex:1;font-size:12px}.fixed-value{flex:1;min-width:0;height:32px;display:flex;align-items:center;padding:0 8px;border:1px solid #2c3342;border-radius:5px;background:#10141c;color:#c9d2e3;font-size:12px}.code-section{margin:0 0 10px}.section-label small{font-weight:400;font-size:10px;color:#7d89a4}.code-last{margin-bottom:16px}#status{grid-column:1;justify-self:start;font-size:10px;display:flex;align-items:center;gap:5px;min-width:0;margin-left:6px;color:var(--aidiy-titlebar-secondary);font-family:"Yu Gothic UI","Meiryo",sans-serif;line-height:1.3}#status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#dot{display:block;border-radius:50%;width:5px;height:5px;flex-shrink:0;background:#ff4500}#dot[data-phase=connected]{background:#00ff00}#dot[data-phase=error]{background:#ff4500}#dot[data-phase=connecting],#dot[data-phase=reconnecting],#dot[data-phase=stopping]{background:#ff4500;box-shadow:0 0 0 3px #ff450015,0 0 10px #ff450060}:disabled{opacity:.6;cursor:default}.hint{font-size:11px;color:#adb6cb;margin:13px 0 0}.note{font-size:10px;color:#7d89a4;margin:5px 0 0;line-height:1.5}.note.error{color:#f4aaa8}
 
 #error-detail{display:block;width:100%;height:130px;margin-top:10px;resize:vertical;border:1px solid #70434a;border-radius:5px;padding:8px;background:#171b23;color:#f4aaa8;font:11px/1.6 Consolas,"Yu Gothic UI",monospace;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}#error-detail[hidden]{display:none}
 

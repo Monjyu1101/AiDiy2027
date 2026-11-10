@@ -4,11 +4,26 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const test=require('node:test');const assert=require('node:assert/strict');const {render,source}=require('./ui-components.cjs');
-test('Console-like status bar distinguishes Tools and diagnostic connection without browser window controls',async()=>{
- for(const [props,text,bar] of [[{connected:true,enabled:true,online:true},'Tools 接続中','online'],[{connected:true,enabled:true},'Tools 未接続',''],[{connected:true,enabled:false},'Tools 確認OFF','offline'],[{connected:false,enabled:true,online:true},'診断 未接続','']]){
-  const html=await render('components/ウィンドウ/ステータスバー.vue',props);assert.ok(html.includes('AiDiy Diag'));assert.ok(html.includes(`connection-bar ${bar}`)||html.includes('connection-bar"'));assert.ok(!html.includes('aria-label="終了"'));
+test('サーバー表示状態が全停止なら黒、対象全稼働ならシアン、不足・不明なら赤',async()=>{
+ for(const connected of [false,true])for(const serverState of ['online','offline','disconnected','unknown',undefined])for(const compact of [false,true]){
+  const props={connected,serverState,compact};
+  const html=await render('components/ウィンドウ/ステータスバー.vue',props);
+  const classes=html.match(/class="connection-bar([^"]*)"/)[1].trim().split(/\s+/);
+  const expected=connected&&['online','offline'].includes(serverState)?serverState:'disconnected';
+  assert.deepEqual(classes,[expected],JSON.stringify(props));
+  assert.ok(!html.includes('aria-label="終了"'));
  }
  const css=source('style.css');assert.match(css,/-webkit-app-region:drag/);assert.match(css,/-webkit-app-region:no-drag/);assert.doesNotMatch(css,/prefers-reduced-motion/);
+ assert.match(css,/\.connection-bar\.online\{background:cyan;animation:cyan-bar-breathe 4\.5s linear infinite\}/);
+ assert.match(css,/\.connection-bar\.disconnected\{background:#ff0000;animation:disconnected-bar-breathe 4\.5s linear infinite\}/);
+ assert.match(css,/\.connection-bar\.offline\{background:#000;animation:none\}/);
+ const pulse=source('components/共通表示/シアンバー.css');
+ const cyan=pulse.split('@keyframes cyan-bar-breathe {')[1].split('@keyframes')[0];
+ const red=pulse.split('@keyframes disconnected-bar-breathe {')[1];
+ const samples=text=>[...text.matchAll(/([\d.,% ]+)\{ background-color: rgb\((\d+), (\d+), (\d+)\); \}/g)];
+ const c=samples(cyan),r=samples(red);assert.equal(c.length,21);assert.equal(r.length,21);
+ for(let i=0;i<c.length;i++){assert.equal(r[i][1],c[i][1]);assert.equal(+r[i][2],+c[i][3]);assert.equal(+r[i][3],0);assert.equal(+r[i][4],0);}
+ assert.match(red,/50% \{ background-color: rgb\(255, 0, 0\)/);
 });
 test('mini restore lives in the titlebar in browser mode too',async()=>{
  const compact=await render('components/ウィンドウ/ステータスバー.vue',{compact:true,connected:true,enabled:true});
