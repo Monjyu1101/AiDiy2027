@@ -113,7 +113,7 @@ class NodeRefreshTests(unittest.TestCase):
         modules = {
             "backend_diag": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_avatar": SimpleNamespace(install_standalone_launcher=Mock(return_value=True)),
-            "frontend_ide/host": SimpleNamespace(setup_assets=Mock(return_value=True)),
+            "frontend_ide/host": SimpleNamespace(setup_assets=Mock(return_value=True), install_standalone_launcher=Mock(return_value=True)),
             "frontend_ide/viewer": SimpleNamespace(install_launcher=Mock(return_value=None)),
             "frontend_ide/aidiy_navi": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_console": SimpleNamespace(setup=Mock(return_value=True)),
@@ -156,9 +156,21 @@ class NodeRefreshTests(unittest.TestCase):
         self.assertEqual(prepare.call_count, 12)
         modules["backend_diag"].setup.assert_called_with(desktop=False)
         self.assertEqual(modules["frontend_ide/host"].setup_assets.call_count, 2)
-        modules["frontend_ide/host"].setup_assets.assert_called_with("npm")
+        modules["frontend_ide/host"].setup_assets.assert_called_with("npm", choices={"_defer_ide_launchers": True})
         self.assertEqual(modules["frontend_channels/discord"].install_launcher.call_count, 2)
         self.assertEqual(modules["frontend_channels/slack"].install_launcher.call_count, 2)
+
+    def test_refresh_registers_apps_in_canonical_order_after_assets(self):
+        _, _, modules = self.fixture()
+        events = []
+        host = modules['frontend_ide/host']
+        host.setup_assets.side_effect = lambda *args, **kwargs: events.append('assets') or True
+        host.install_standalone_launcher.side_effect = lambda: events.extend(['code', 'live']) or True
+        modules['frontend_ide/viewer'].install_launcher.side_effect = lambda *args: events.append('ide') or True
+        for kind in ('console', 'browser', 'navi', 'task', 'team', 'cpu'):
+            modules['frontend_ide/aidiy_' + kind].setup.side_effect = lambda kind=kind: events.append(kind) or True
+        self.assertEqual(setup.setup_node_refresh(), [])
+        self.assertEqual(events, ['assets', 'ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'])
 
     def test_browser_environment_skips_electron_binary_but_builds(self):
         run, prepare, _ = self.fixture(desktop=False)

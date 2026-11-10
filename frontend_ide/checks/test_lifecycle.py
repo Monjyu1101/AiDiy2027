@@ -32,7 +32,7 @@ class IDEGroupTest(unittest.TestCase):
 
     def test_setup_and_cleanup_have_one_group_choice(self):
         for module, method in ((setup, 'collect_setup_choices'), (cleanup, 'collect_cleanup_choices')):
-            group_label = 'Console / Code / Live / IDE' if module is setup else 'IDE群'
+            group_label = 'IDE / Console / Browser / Navi / Code / Live' if module is setup else 'IDE群'
             with self.subTest(method=method), tempfile.TemporaryDirectory() as tmp, patch.object(
                 module, 'ask_start_mode', return_value=(True, False)
             ), patch.object(module, 'ask_yes_no', side_effect=lambda prompt, default='n': group_label in prompt) as ask:
@@ -60,8 +60,8 @@ class IDEGroupTest(unittest.TestCase):
         load_child.assert_not_called()
 
     def test_group_cleanup_preserves_shared_ui_if_a_child_fails(self):
-        for failed in ('navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser', 'shared'):
-            children = {name: Mock() for name in ('aidiy_navi', 'aidiy_console', 'host', 'viewer', 'aidiy_task', 'aidiy_team', 'aidiy_browser')}
+        for failed in ('navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser', 'cpu', 'shared'):
+            children = {name: Mock() for name in ('aidiy_navi', 'aidiy_console', 'host', 'viewer', 'aidiy_task', 'aidiy_team', 'aidiy_browser', 'aidiy_cpu')}
             children['aidiy_navi'].cleanup.return_value = failed != 'navi'
             children['aidiy_console'].cleanup.return_value = failed != 'console'
             children['host'].cleanup_app.side_effect = lambda name, **kwargs: name != failed
@@ -70,9 +70,10 @@ class IDEGroupTest(unittest.TestCase):
             children['aidiy_task'].cleanup.return_value = failed != 'task'
             children['aidiy_team'].cleanup.return_value = failed != 'team'
             children['aidiy_browser'].cleanup.return_value = failed != 'browser'
+            children['aidiy_cpu'].cleanup.return_value = failed != 'cpu'
             with self.subTest(failed=failed), patch.object(group, '_load_cleanup', side_effect=children.__getitem__) as load_child, patch.object(group.shutil, 'rmtree') as remove:
                 self.assertFalse(group.cleanup({'ide': True}))
-                self.assertEqual([c.args[0] for c in load_child.call_args_list], ['aidiy_navi', 'aidiy_console', 'host', 'viewer', 'aidiy_task', 'aidiy_team', 'aidiy_browser'])
+                self.assertEqual([c.args[0] for c in load_child.call_args_list], ['viewer', 'aidiy_console', 'aidiy_browser', 'aidiy_navi', 'host', 'aidiy_task', 'aidiy_team', 'aidiy_cpu'])
                 self.assertEqual([c.args[0] for c in children['host'].cleanup_app.call_args_list], ['code', 'live'])
                 if failed != 'shared':
                     children['host'].cleanup_shared.assert_not_called()
@@ -93,7 +94,7 @@ class IDEGroupTest(unittest.TestCase):
                 return Mock(cleanup=Mock(side_effect=lambda choices, **kwargs: order.append(name.removeprefix('aidiy_') if name.startswith('aidiy_') else 'ide') or True))
             with patch.object(group, 'ROOT', root), patch.object(group, '_load_cleanup', side_effect=child):
                 self.assertTrue(group.cleanup({'ide': True}))
-            self.assertEqual(order, ['navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser', 'shared'])
+            self.assertEqual(order, ['ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu', 'shared'])
             self.assertTrue((root / 'src/keep.txt').is_file())
             self.assertEqual(sorted(p.name for p in root.iterdir()), ['src'])
 
@@ -101,7 +102,7 @@ class IDEGroupTest(unittest.TestCase):
         host = load('ide_group_host_report_test', ROOT / 'frontend_ide/host/_cleanup.py')
         viewer = load('ide_group_viewer_report_test', ROOT / 'frontend_ide/viewer/_cleanup.py')
         output = io.StringIO()
-        with contextlib.redirect_stdout(output), patch.object(group, '_load_cleanup', side_effect={'aidiy_navi': Mock(cleanup=Mock(return_value=True)), 'aidiy_console': Mock(cleanup=Mock(return_value=True)), 'aidiy_task': Mock(cleanup=Mock(return_value=True)), 'aidiy_team': Mock(cleanup=Mock(return_value=True)), 'aidiy_browser': Mock(cleanup=Mock(return_value=True)), 'host': host, 'viewer': viewer}.__getitem__), patch.object(
+        with contextlib.redirect_stdout(output), patch.object(group, '_load_cleanup', side_effect={'aidiy_navi': Mock(cleanup=Mock(return_value=True)), 'aidiy_console': Mock(cleanup=Mock(return_value=True)), 'aidiy_task': Mock(cleanup=Mock(return_value=True)), 'aidiy_team': Mock(cleanup=Mock(return_value=True)), 'aidiy_browser': Mock(cleanup=Mock(return_value=True)), 'aidiy_cpu': Mock(cleanup=Mock(return_value=True)), 'host': host, 'viewer': viewer}.__getitem__), patch.object(
             host, 'uninstall_extension', return_value=(True, 0)
         ), patch.object(host, 'stop_standalone_processes', return_value=True), patch.object(host, 'remove_file', return_value=True), patch.object(
             host, 'remove_directory', return_value=True
@@ -110,8 +111,8 @@ class IDEGroupTest(unittest.TestCase):
         ), patch.object(group.shutil, 'rmtree'):
             self.assertTrue(group.cleanup({'ide': True}))
         lines = output.getvalue().splitlines()
-        self.assertEqual([line for line in lines if line.endswith('のクリーンアップ')], ['IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ'])
-        self.assertEqual([line for line in lines if 'クリーンアップ完了' in line], ['[OK] IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser) のクリーンアップ完了'])
+        self.assertEqual([line for line in lines if line.endswith('のクリーンアップ')], ['IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU) のクリーンアップ'])
+        self.assertEqual([line for line in lines if 'クリーンアップ完了' in line], ['[OK] IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU) のクリーンアップ完了'])
 
 if __name__ == '__main__':
     unittest.main()

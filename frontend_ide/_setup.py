@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""Navi / Console / Code / Live / IDE / Task / Team / Browser / CPUの依存・拡張・ランチャーをまとめて準備する。"""
+"""IDE / Console / Browser / Navi / Code / Live / Task / Team / CPUの依存・拡張・ランチャーをまとめて準備する。"""
 import importlib.util
 import shutil
 import subprocess
@@ -28,7 +28,7 @@ def prepare(*, continue_on_error=False):
         print("[NG] npm が見つかりません。対応する Node.js と同梱の npm を導入してください。")
         return False
     try:
-        reuse = frontend_dependency_guard(ROOT, 'Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU 共通UI', desktop=False, **({'continue_on_error': True} if continue_on_error else {}))
+        reuse = frontend_dependency_guard(ROOT, 'IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU 共通UI', desktop=False, **({'continue_on_error': True} if continue_on_error else {}))
         if reuse is not None:
             return reuse
         subprocess.run([npm, 'ci', '--include=dev', '--no-fund', '--no-audit'], cwd=ROOT, check=True)
@@ -48,12 +48,13 @@ def register_launchers(host, *, continue_on_error=False):
     launcher = load_setup_module('frontend_ide/viewer/launcher.py')
     print("\n起動コマンドの登録:")
     failures = []
-    actions = [('Navi', lambda: launcher.install_launcher(ROOT / 'aidiy_navi', 'navi', register_path=False)),
-               ('Console', lambda: launcher.install_launcher(ROOT / 'aidiy_console', 'console', register_path=False)),
-               ('Code / Live', lambda: host.install_standalone_launcher(register_path=False))]
-    for kind, folder in (('ide', 'viewer'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('cpu', 'aidiy_cpu')):
+    actions = []
+    for kind, folder in (('ide', 'viewer'), ('console', 'aidiy_console'), ('browser', 'aidiy_browser'), ('navi', 'aidiy_navi')):
         actions.append((kind, lambda kind=kind, folder=folder: launcher.install_launcher(ROOT / folder, kind, register_path=False)))
-    for kind in ('navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser', 'cpu'):
+    actions.append(('Code / Live', lambda: host.install_standalone_launcher(register_path=False)))
+    for kind in ('task', 'team', 'cpu'):
+        actions.append((kind, lambda kind=kind: launcher.install_launcher(ROOT / ('aidiy_' + kind), kind, register_path=False)))
+    for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'):
         actions.append(('PATH ' + kind, lambda kind=kind: launcher.ensure_launcher_path(launcher.launcher_path(kind).parent)))
     for label, action in actions:
         try:
@@ -74,7 +75,7 @@ def setup(choices=None):
     if choices is not None and choices.get("ide") is False:
         return True
     print("\n" + "=" * 60)
-    print("Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU セットアップ")
+    print("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU セットアップ")
     print("=" * 60 + "\n")
     print("対象: Node.js / Vue 3 / Vite / TypeScript / Electron / VS Code / VSIX")
     choices = choices if choices is not None else {}
@@ -85,7 +86,7 @@ def setup(choices=None):
     host = None
     continue_on_error = bool(choices and choices.get("continue_on_error"))
     failed = False
-    for name in ('frontend_ide/aidiy_navi', 'frontend_ide/aidiy_console', 'frontend_ide/host', 'frontend_ide/viewer', 'frontend_ide/aidiy_task', 'frontend_ide/aidiy_team', 'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_cpu'):
+    for name in ('frontend_ide/viewer', 'frontend_ide/aidiy_console', 'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi', 'frontend_ide/host', 'frontend_ide/aidiy_task', 'frontend_ide/aidiy_team', 'frontend_ide/aidiy_cpu'):
         module = load_setup_module(name + '/_setup.py')
         if name == 'frontend_ide/host':
             host = module
@@ -108,8 +109,8 @@ def setup(choices=None):
     if len(warnings) > warning_count:
         print("[WARN] IDE 系セットアップは Electron コピーの警告付きで完了しました。")
         return True
-    print("Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU セットアップ完了")
-    names = ('Navi', 'Console', 'Code', 'Live', 'IDE', 'Task', 'Team', 'Browser', 'CPU')
+    print("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU セットアップ完了")
+    names = ('IDE', 'Console', 'Browser', 'Navi', 'Code', 'Live', 'Task', 'Team', 'CPU')
     width = max(map(len, names))
     for name in names:
         print(f"{name:<{width}} 起動: aidiy_{'navi' if name == 'Navi' else name.lower()}")

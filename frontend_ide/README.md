@@ -1,6 +1,6 @@
 # AiDiy IDE（Vue）
 
-Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
+IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
 
 
 ## 導入・起動の要件
@@ -147,7 +147,7 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 ## 起動
 
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
-セットアップ済みなら、表示したいフォルダで `aidiy_navi`、`aidiy_console`、`aidiy_code`、`aidiy_live`、`aidiy_ide`、`aidiy_task`、`aidiy_team`、`aidiy_browser` を実行します。8種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
+セットアップ済みなら、表示したいフォルダで `aidiy_ide`、`aidiy_console`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
 PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browserも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` はHermesを直接使用します。Liveの `--connect` は初回だけ接続します。
 
@@ -308,7 +308,7 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - 同じ Electron 確認で、タイトルバーの最大化／元のサイズへの復元も実ウィンドウで検証します。
 - 音声・バックエンドの回帰確認: `frontend_ide/host` の `npm test` / `npm run live:test`、`frontend_ide/viewer` の `npm test`。
 
-全体のsetup・cleanupはNavi / Console / Code / Live / IDE / Task / Team / Browserをまとめて扱います。全体startはDiagを使わない場合、Task / Team（既定OFF）やConsole / Code / Live / IDEを個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはNavi → Console → Code → Live → IDE → Task → Team → Browser → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
+全体のsetup・cleanupはIDE / Console / Browser / Navi / Code / Live / Task / Team / CPUをまとめて扱います。全体startはDiagを使わない場合、IDE / Console / Code / LiveやTask / Team / CPU（既定OFF）を個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはIDE → Console → Browser → Navi → Code → Live → Task → Team → CPU → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
 
 ## ウィンドウ配置
 

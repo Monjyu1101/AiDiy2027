@@ -26,7 +26,7 @@ def load(path):
 
 
 class SetupOutputTests(unittest.TestCase):
-    def test_all_seven_registered_together_and_path_once(self):
+    def test_all_nine_registered_together_and_path_once(self):
         for platform in ('win32', 'linux', 'darwin'):
             with self.subTest(platform=platform), tempfile.TemporaryDirectory() as tmp:
                 setup = load('frontend_ide/_setup.py')
@@ -38,15 +38,15 @@ class SetupOutputTests(unittest.TestCase):
                     return True
                 with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(host, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(launcher, 'ensure_launcher_path', side_effect=path_notice) as ensure, patch.object(host, 'ensure_launcher_path') as host_ensure, contextlib.redirect_stdout(output):
                     self.assertTrue(setup.register_launchers(host))
-                names = ['navi', 'console', 'code', 'live', 'ide', 'task', 'team', 'browser']
+                names = ['ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu']
                 suffix = '.cmd' if platform == 'win32' else ''
                 lines = [line for line in output.getvalue().splitlines() if 'を登録しました:' in line]
-                self.assertEqual(len(lines), 8)
+                self.assertEqual(len(lines), 9)
                 for name, line in zip(names, lines):
                     self.assertIn(f'aidiy_{name}{suffix} を登録しました:', line)
                     self.assertTrue((Path(tmp) / '_AIDIY' / f'aidiy_{name}' / 'bin' / f'aidiy_{name}{suffix}').is_file())
-                self.assertEqual(output.getvalue().count('PATH 登録済み。'), 8)
-                self.assertEqual(ensure.call_count, 8)
+                self.assertEqual(output.getvalue().count('PATH 登録済み。'), 9)
+                self.assertEqual(ensure.call_count, 9)
                 host_ensure.assert_not_called()
 
     def test_child_setups_defer_registration_and_aligned_success(self):
@@ -59,12 +59,15 @@ class SetupOutputTests(unittest.TestCase):
         output = io.StringIO()
         with patch.object(setup, 'load_setup_module', side_effect=child), patch.object(setup, 'register_launchers', return_value=True) as register, contextlib.redirect_stdout(output):
             self.assertTrue(setup.setup())
-        self.assertEqual(len(children), 7)
+        self.assertEqual(len(children), 8)
         for child in children:
             self.assertTrue(child.setup.call_args.args[0]['_defer_ide_launchers'])
-        register.assert_called_once_with(children[2])
+        register.assert_called_once_with(children[4])
         lines = [line for line in output.getvalue().splitlines() if ' 起動:' in line]
-        self.assertEqual(len(lines), 8)
+        self.assertEqual(len(lines), 9)
+        expected = [f'aidiy_{kind}' for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
+        commands = [line.split('起動: ')[1].split()[0] for line in lines]
+        self.assertEqual([command for command in commands if command in expected], expected)
         self.assertEqual(len({line.index(':') for line in lines}), 1)
 
     def test_child_or_registration_failure_has_no_completion_summary(self):
@@ -79,12 +82,12 @@ class SetupOutputTests(unittest.TestCase):
                 register.assert_not_called()
 
     def test_registration_stops_on_first_failure_and_path_failure_propagates(self):
-        for fail_at in (0, 1, 2, 3, 4, 5, 'path'):
+        for fail_at in (0, 1, 2, 3, 4, 5, 6, 7, 'path'):
             setup = load('frontend_ide/_setup.py')
             launcher = SimpleNamespace(install_launcher=Mock(), launcher_path=Mock(return_value=Path('/fake/bin/aidiy_ide')), ensure_launcher_path=Mock(return_value=fail_at != 'path'))
-            host = SimpleNamespace(install_standalone_launcher=Mock(return_value=fail_at != 1))
-            if isinstance(fail_at, int) and fail_at != 1:
-                call_index = {0: 0, 2: 1, 3: 2, 4: 3, 5: 4}[fail_at]
+            host = SimpleNamespace(install_standalone_launcher=Mock(return_value=fail_at != 4))
+            if isinstance(fail_at, int) and fail_at != 4:
+                call_index = {0: 0, 1: 1, 2: 2, 3: 3, 5: 4, 6: 5, 7: 6}[fail_at]
                 launcher.install_launcher.side_effect = [None] * call_index + [OSError('fixture failure')]
             with patch.object(setup, 'load_setup_module', return_value=launcher), contextlib.redirect_stdout(io.StringIO()):
                 self.assertFalse(setup.register_launchers(host))
@@ -92,7 +95,7 @@ class SetupOutputTests(unittest.TestCase):
                 launcher.ensure_launcher_path.assert_not_called()
 
     def test_command_only_children_obey_deferred_mode(self):
-        for kind in ('navi', 'console', 'task', 'team', 'browser'):
+        for kind in ('navi', 'console', 'task', 'team', 'browser', 'cpu'):
             module = load(f'frontend_ide/aidiy_{kind}/_setup.py')
             with patch.object(module.importlib.util, 'spec_from_file_location') as loader:
                 self.assertTrue(module.setup({'_defer_ide_launchers': True}))
@@ -110,17 +113,20 @@ class SetupOutputTests(unittest.TestCase):
             self.assertTrue(host.install_standalone_launcher())
             self.assertEqual(ensure.call_count, 2)
 
-    def test_root_twelve_app_colons_align(self):
+    def test_root_fourteen_app_colons_align(self):
         root = load('_setup.py')
         output = io.StringIO()
         with patch.object(root, 'print_info', side_effect=print), contextlib.redirect_stdout(output):
             root.print_app_launch_commands()
         lines = output.getvalue().splitlines()
-        self.assertEqual(len(lines), 13)
+        self.assertEqual(len(lines), 14)
+        expected = [f'aidiy_{kind}' for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
+        commands = [line.split('起動: ')[1].split()[0] for line in lines]
+        self.assertEqual([command for command in commands if command in expected], expected)
         self.assertEqual(len({line.index(':') for line in lines}), 1)
-        self.assertIn('Console  起動: aidiy_console', output.getvalue())
-        self.assertIn('Browser  起動: aidiy_browser', output.getvalue())
-        self.assertIn('Discord  起動: aidiy_discord', output.getvalue())
+        self.assertIn('Console起動: aidiy_console', output.getvalue())
+        self.assertIn('Browser起動: aidiy_browser', output.getvalue())
+        self.assertIn('Discord起動: aidiy_discord', output.getvalue())
 
 
 if __name__ == '__main__':

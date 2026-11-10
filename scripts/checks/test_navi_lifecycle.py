@@ -27,18 +27,18 @@ class NaviLifecycle(unittest.TestCase):
                 return SimpleNamespace(cleanup=run, cleanup_app=lambda *a, **k: True, cleanup_shared=lambda **k: True)
             with patch.object(cleanup, '_load_cleanup', side_effect=child), patch.object(Path, 'exists', return_value=True), patch.object(cleanup.shutil, 'rmtree') as remove:
                 self.assertEqual(cleanup.cleanup({'ide': True}), success)
-            self.assertEqual(calls[:2], ['aidiy_navi', 'aidiy_console'])
+            self.assertEqual(calls[:4], ['viewer', 'aidiy_console', 'aidiy_browser', 'aidiy_navi'])
             self.assertEqual(calls.count('aidiy_navi'), 1)
             self.assertEqual(remove.call_count, 3 if success else 0)
 
-    def test_setup_registers_navi_before_console_without_launching(self):
+    def test_setup_registers_navi_after_browser_without_launching(self):
         setup = load('navi_shared_setup', 'frontend_ide/_setup.py')
         launcher = SimpleNamespace(install_launcher=Mock(return_value=True), ensure_launcher_path=Mock(return_value=True), launcher_path=Mock(return_value=ROOT / 'fixture/bin'))
         host = SimpleNamespace(install_standalone_launcher=Mock(return_value=True))
         with patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(setup.subprocess, 'run', side_effect=AssertionError('no installation')), patch.object(setup.subprocess, 'Popen', side_effect=AssertionError('no launch')):
             self.assertTrue(setup.register_launchers(host))
         kinds = [call.args[1] for call in launcher.install_launcher.call_args_list]
-        self.assertEqual(kinds[:2], ['navi', 'console'])
+        self.assertEqual(kinds[:4], ['ide', 'console', 'browser', 'navi'])
         self.assertEqual(kinds.count('navi'), 1)
         self.assertNotIn('aidiy_navi', (ROOT / 'scripts/起動対象.json').read_text(encoding='utf-8'))
         for icon in ('frontend_ide/public/AiDiy_navi.png', 'backend_diag/static/AiDiy_navi.png'):

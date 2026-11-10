@@ -39,8 +39,8 @@ class TaskTeamStartTests(unittest.TestCase):
                     choices = module.collect_startup_choices()
                 labels = [call.args[0] for call in prompt.call_args_list]
                 i = next(i for i, label in enumerate(labels) if 'Avatar' in label)
-                self.assertIn('aidiy_task', labels[i + 1])
-                self.assertIn('aidiy_team', labels[i + 2])
+                self.assertEqual([label.strip().split(':')[0].strip() for label in labels[i + 1:i + 8]],
+                                 ['IDE', 'Console', 'Code', 'Live', 'aidiy_task', 'aidiy_team', 'CPU'])
                 self.assertEqual(choices[-2:], (task, team))
 
     def test_enter_and_n_do_not_enable_optional_windows(self):
@@ -71,12 +71,38 @@ class TaskTeamStartTests(unittest.TestCase):
         for task, team in ((False, False), (True, False), (False, True), (True, True)):
             with self.subTest(task=task, team=team), patch.object(module, 'start_service', return_value=True) as start, patch.object(module, 'wait_for_services_quiet'), patch.object(module, 'ensure_optional_service_ready', return_value=True), redirect_stdout(io.StringIO()):
                 flags = module.start_initial_services(False, False, False, True, True, False, {}, {}, 'npm', task_enabled=task, team_enabled=team, console_enabled=True)
-            expected = ['バックエンド(task,team)', 'フロントエンド(Avatar)']
+            expected = ['バックエンド(task,team)', 'フロントエンド(Avatar)', 'フロントエンド(console)']
             expected += [f'フロントエンド({kind})' for kind, enabled in (('task', task), ('team', team)) if enabled]
-            expected += ['フロントエンド(console)']
             self.assertEqual([call.args[0] for call in start.call_args_list], expected)
             self.assertFalse(flags['フロントエンド(task)'])
             self.assertFalse(flags['フロントエンド(team)'])
+
+    def test_all_ide_windows_use_canonical_start_order(self):
+        module = load()
+        with patch.object(module, 'start_service', return_value=True) as start, patch.object(module, 'wait_for_services_quiet'), redirect_stdout(io.StringIO()):
+            flags = module.start_initial_services(False, False, False, False, False, False, {}, {}, 'npm',
+                dev_enabled=True, console_enabled=True, code_enabled=True, live_enabled=True,
+                task_enabled=True, team_enabled=True, cpu_enabled=True)
+        expected = [f'フロントエンド({kind})' for kind in ('IDE', 'console', 'code', 'live', 'task', 'team', 'cpu')]
+        self.assertEqual([call.args[0] for call in start.call_args_list], expected)
+        self.assertTrue(all(flags[name] is False for name in expected))
+
+    def test_environment_checks_use_canonical_order(self):
+        module = load()
+        checked = []
+        def checker(name):
+            checked.append(name)
+            return True, 'ready'
+        modules = {name: Mock() for name in ('DEV', 'CONSOLE', 'VSCODE', 'TASK', 'TEAM', 'CPU')}
+        for name, kind in (('DEV', 'IDE'), ('CONSOLE', 'console'), ('TASK', 'task'), ('TEAM', 'team'), ('CPU', 'cpu')):
+            modules[name].check_environment.side_effect = lambda kind=kind: checker(kind)
+        modules['VSCODE'].check_environment.side_effect = checker
+        with patch.multiple(module, **modules), patch.object(module, 'get_npm_command', return_value='npm'), redirect_stdout(io.StringIO()):
+            ok, _ = module.validate_initial_environment(False, False, False, False, False, False,
+                dev_enabled=True, console_enabled=True, code_enabled=True, live_enabled=True,
+                task_enabled=True, team_enabled=True, cpu_enabled=True)
+        self.assertTrue(ok)
+        self.assertEqual(checked, ['IDE', 'console', 'code', 'live', 'task', 'team', 'cpu'])
 
     def test_environment_checks_only_selected_windows(self):
         module = load()

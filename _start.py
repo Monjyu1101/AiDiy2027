@@ -520,13 +520,14 @@ def collect_startup_choices() -> tuple[bool, ...]:
     print("フロントエンド")
     web_enabled           = prompt_choice("  Web       : 起動しますか?", default_yes=STARTUP_DEFAULTS['web'])
     avatar_enabled        = prompt_choice("  Avatar    : 起動しますか?", default_yes=STARTUP_DEFAULTS['avatar'])
-    task_enabled          = prompt_choice("  aidiy_task: 起動しますか?", default_yes=False)
-    team_enabled          = prompt_choice("  aidiy_team: 起動しますか?", default_yes=False)
     print("フロントエンド(IDE)")
-    console_enabled         = prompt_choice("  Console      : 起動しますか?", default_yes=STARTUP_DEFAULTS['console'])
+    dev_enabled           = prompt_choice("  IDE       : 起動しますか?", default_yes=STARTUP_DEFAULTS['ide'])
+    console_enabled       = prompt_choice("  Console   : 起動しますか?", default_yes=STARTUP_DEFAULTS['console'])
+    # Browser / Navi は従来どおり独立コマンド・Diagから手動起動する。
     code_enabled          = prompt_choice("  Code      : 起動しますか?", default_yes=STARTUP_DEFAULTS['code'])
     live_enabled          = prompt_choice("  Live      : 起動しますか?", default_yes=STARTUP_DEFAULTS['live'])
-    dev_enabled           = prompt_choice("  IDE       : 起動しますか?", default_yes=STARTUP_DEFAULTS['ide'])
+    task_enabled          = prompt_choice("  aidiy_task: 起動しますか?", default_yes=False)
+    team_enabled          = prompt_choice("  aidiy_team: 起動しますか?", default_yes=False)
     CPU_ENABLED = prompt_choice("  CPU       : 起動しますか?", default_yes=False)
     print("フロントエンド(その他)")
     discord_enabled       = prompt_choice("  Discord   : 起動しますか?", default_yes=STARTUP_DEFAULTS['discord'])
@@ -752,15 +753,6 @@ def validate_initial_environment(
             print_info(f'  対応例: python "{BASE_DIR / "frontend_avatar" / "_setup.py"}"')
             has_error = True
 
-    for label, module, enabled in (("task", TASK, task_enabled), ("team", TEAM, team_enabled), ("cpu", CPU, cpu_enabled)):
-        if enabled:
-            ok, detail = module.check_environment()
-            if ok:
-                print_success(f"フロントエンド({label}): OK ({detail})")
-            else:
-                print_error(f"フロントエンド({label}): 未準備 ({detail})")
-                has_error = True
-
     if diag_enabled:
         print_header("バックエンド(Diag)")
         ok, detail = DIAG.check_environment()
@@ -769,8 +761,15 @@ def validate_initial_environment(
         else:
             print_error(f"バックエンド(Diag): 未準備 ({detail})")
             has_error = True
-    if console_enabled or code_enabled or live_enabled or dev_enabled:
-        print_header("IDE群(Console / Code / Live / IDE)")
+    if dev_enabled or console_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
+        print_header("IDE群(IDE / Console / Code / Live / Task / Team / CPU)")
+    if dev_enabled:
+        ok, detail = DEV.check_environment()
+        if ok:
+            print_success(f"フロントエンド(IDE): OK ({detail})")
+        else:
+            print_error(f"フロントエンド(IDE): 未準備 ({detail})")
+            has_error = True
     if console_enabled:
         ok, detail = CONSOLE.check_environment()
         if ok:
@@ -787,13 +786,15 @@ def validate_initial_environment(
                 print_error(f"フロントエンド({module}): 未準備 ({detail})")
                 has_error = True
 
-    if dev_enabled:
-        ok, detail = DEV.check_environment()
-        if ok:
-            print_success(f"フロントエンド(IDE): OK ({detail})")
-        else:
-            print_error(f"フロントエンド(IDE): 未準備 ({detail})")
-            has_error = True
+    for label, module, enabled in (("task", TASK, task_enabled), ("team", TEAM, team_enabled), ("cpu", CPU, cpu_enabled)):
+        if enabled:
+            ok, detail = module.check_environment()
+            if ok:
+                print_success(f"フロントエンド({label}): OK ({detail})")
+            else:
+                print_error(f"フロントエンド({label}): 未準備 ({detail})")
+                has_error = True
+
     if discord_enabled:
         ok, detail = DISCORD.check_environment()
         if ok:
@@ -941,14 +942,14 @@ def start_initial_services(
         "フロントエンド(Web)": web_enabled,
         "フロントエンド(Avatar)": False,
         # 手動で閉じた単独ウィンドウ・パネルは自動で開き直さない。
-        "フロントエンド(task)": False,
-        "フロントエンド(team)": False,
-        "フロントエンド(cpu)": False,
         "バックエンド(Diag)": False,
+        "フロントエンド(IDE)": False,
         "フロントエンド(console)": False,
         "フロントエンド(code)": False,
         "フロントエンド(live)": False,
-        "フロントエンド(IDE)": False,
+        "フロントエンド(task)": False,
+        "フロントエンド(team)": False,
+        "フロントエンド(cpu)": False,
         "フロントエンド(Discord)": False,
         "フロントエンド(Slack)": False,
     }
@@ -991,31 +992,21 @@ def start_initial_services(
         start_service("フロントエンド(Avatar)", processes, last_output_times, npm_command)
         wait_for_services_quiet(last_output_times, ["フロントエンド(Avatar)"], label="フロントエンド(Avatar)")
 
-    for label, enabled in (("task", task_enabled), ("team", team_enabled), ("cpu", cpu_enabled)):
-        if enabled:
-            name = f"フロントエンド({label})"
-            print_header(f"{name} 起動")
-            if start_service(name, processes, last_output_times, npm_command):
-                wait_for_services_quiet(last_output_times, [name], label=name)
-
     if diag_enabled:
         print_header("バックエンド(Diag) 起動")
         if start_service("バックエンド(Diag)", processes, last_output_times, npm_command):
             wait_for_services_quiet(last_output_times, ["バックエンド(Diag)"], label="バックエンド(Diag)")
 
-    if console_enabled or code_enabled or live_enabled or dev_enabled:
-        print_header("IDE群(Console / Code / Live / IDE)")
-    for module, enabled in (("console", console_enabled), ("code", code_enabled), ("live", live_enabled)):
+    if dev_enabled or console_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
+        print_header("IDE群(IDE / Console / Code / Live / Task / Team / CPU)")
+    for module, enabled in (("IDE", dev_enabled), ("console", console_enabled),
+                            ("code", code_enabled), ("live", live_enabled),
+                            ("task", task_enabled), ("team", team_enabled), ("cpu", cpu_enabled)):
         if enabled:
             name = f"フロントエンド({module})"
             print_header(f"{name} 起動" + ("・自動接続" if module == "live" else ""))
             if start_service(name, processes, last_output_times, npm_command):
                 wait_for_services_quiet(last_output_times, [name], label=name)
-
-    if dev_enabled:
-        print_header("フロントエンド(IDE) 起動")
-        if start_service("フロントエンド(IDE)", processes, last_output_times, npm_command):
-            wait_for_services_quiet(last_output_times, ["フロントエンド(IDE)"], label="フロントエンド(IDE)")
 
     if discord_enabled:
         print_header("フロントエンド(Discord) パネル起動・自動接続")

@@ -153,5 +153,5 @@ test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
 test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
  await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.shell,false);
- const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列(catalog.対象).map(x=>x.id);assert.equal(ids.indexOf('ide')+1,ids.indexOf('cpu'));
+ const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.equal(ids.indexOf('slack')+1,ids.indexOf('cpu'));
 });

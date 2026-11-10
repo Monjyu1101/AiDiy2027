@@ -363,7 +363,7 @@ const fileActions=createExplorerActions({root:()=>props.root||'',document:()=>pa
   openFile:typeof window.aidiyWindow?.openFile==='function'?path=>window.aidiyWindow.openFile(path):null,
   openFolder:typeof window.aidiyWindow?.openFolder==='function'?path=>window.aidiyWindow.openFolder(path):null,
   openDraft:draftActions?request=>{draftRequest.value=request;}:null,
-  focus:()=>treeElement.value?.focus(),edit:row=>{cursor.value=row.path;reveal(row.path);},
+  focus:()=>treeElement.value?.focus({preventScroll:true}),edit:row=>{cursor.value=row.path;reveal(row.path);},
   refresh:async()=>{if(multipleChecked.value)throw Error('複数チェックを解除すると一覧取得を再開します。');if(props.reload)await props.reload();},
   changed:async(result,isCurrent)=>{
     const navigation=fileNavigationVersion;

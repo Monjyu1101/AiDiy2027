@@ -5,7 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import { computed } from 'vue';
-import { containsPath } from './エクスプローラー操作.js';
+import { containsPath, compactExplorerName } from './エクスプローラー操作.js';
 const props = defineProps({ actions: Object });
 const state = props.actions.state;
 const bulk=action=>!!props.actions.batchTargets?.(action)?.length||(action==='paste'&&(state.clipboard?.items?.length||0)>1);
@@ -45,7 +45,7 @@ function dialogKey(event) {
 </script>
 <template>
   <div v-if="state.menu" class="explorer-context-menu selection-popup" role="menu" aria-label="ファイル操作" data-aidiy-no-window-move :style="{left:state.menu.x+'px',top:state.menu.y+'px'}" @contextmenu.prevent.stop @keydown.stop="menuKey" @click.stop>
-    <p class="menu-target" :title="state.menu.target.path">{{ state.menu.target.name || 'ルートフォルダ' }}<template v-if="state.menu.checked?.length>1"> · ☑ {{ state.menu.checked.length }}件</template></p>
+    <p class="menu-target" :title="state.menu.target.path">{{ compactExplorerName(state.menu.target.name || 'ルートフォルダ') }}<template v-if="state.menu.checked?.length>1"> · ☑ {{ state.menu.checked.length }}件</template></p>
     <button v-for="[action,label,shortcut,enabled,title] in menuItems" :key="action" role="menuitem" :data-action="action" :title="title" :disabled="!enabled||state.busy" @click="actions.action(action)"><span><strong v-if="bulk(action)" class="bulk-prefix">☑︎全てを </strong>{{ label }}</span><small>{{ shortcut }}</small></button>
     <p class="menu-help">貼り付け・新規作成先: {{ state.menu.directory || 'ルート' }}<br>同名コピーは別名で作成します。</p>
     <p v-if="!actions.canOpenFile" class="menu-help">アプリで開く: デスクトップ版で利用できます。</p>
@@ -75,8 +75,8 @@ function dialogKey(event) {
 </template>
 <style scoped>
 .bulk-prefix{font-weight:700}.dialog-path{white-space:pre-line}
-.explorer-context-menu{position:absolute;z-index:110;box-sizing:border-box;width:min(250px,calc(100% - 12px));max-height:calc(100% - 12px);overflow:auto;background:#000;border:1px solid #65748e;box-shadow:0 8px 24px #000b;padding:4px;color:#e5eaf4}
-.explorer-context-menu button{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:0;padding:7px 8px;background:transparent;font-size:12px;min-height:30px}
+.explorer-context-menu{position:absolute;z-index:110;box-sizing:border-box;width:min(220px,calc(100% - 12px));max-height:calc(100% - 12px);overflow:auto;background:#000;border:1px solid #65748e;box-shadow:0 8px 24px #000b;padding:4px;color:#e5eaf4}
+.explorer-context-menu button{display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;border:0;padding:7px 6px;background:transparent;font-size:12px;min-height:30px}
 .explorer-context-menu button:hover:not(:disabled),.explorer-context-menu button:focus-visible{background:#28405b;outline:1px solid #8de6eb}.explorer-context-menu button:disabled{opacity:.4;cursor:not-allowed}.explorer-context-menu small{color:#96abc8;font-size:10px;white-space:nowrap}
 .menu-target,.menu-help{margin:3px;padding:4px;font-size:11px;overflow-wrap:anywhere}.menu-target{border-bottom:1px solid #344258;font-weight:bold}.menu-help{border-top:1px solid #344258;color:#aebdd1;font-size:10px}
 .explorer-dialog-overlay{position:absolute;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:10px;background:#030814c9;overflow:auto}.explorer-action-dialog{box-sizing:border-box;width:100%;max-width:380px;max-height:100%;overflow:auto;background:#000;border:1px solid #65748e;padding:14px;font-size:12px;line-height:1.6;color:#e5eaf4}.explorer-action-dialog p{margin:8px 0}.dialog-path{overflow-wrap:anywhere;color:#b1d9f9}.explorer-action-dialog input,.explorer-action-dialog textarea{display:block;box-sizing:border-box;width:100%;margin:5px 0;background:#080e1b;color:#fff;border:1px solid #718ba9;padding:7px;font-size:13px}.explorer-action-dialog textarea{height:100px}.dialog-buttons{display:flex;justify-content:flex-end;gap:8px;margin-top:12px}.dialog-buttons .danger{border-color:#dd7e82;color:#ffbdc1}.operation-error{color:#ffb4b9;overflow-wrap:anywhere}.explorer-operation-status{display:flex;align-items:start;gap:6px;border-top:1px solid #344258;padding:7px;color:#b1d9f9;font-size:11px;line-height:1.5;flex-shrink:0;max-height:100px;overflow:auto}.explorer-operation-status span{flex:1;overflow-wrap:anywhere}.explorer-operation-status.error{color:#ffb4b9}

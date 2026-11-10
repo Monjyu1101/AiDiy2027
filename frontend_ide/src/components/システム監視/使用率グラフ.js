@@ -11,18 +11,18 @@ export function chartSeries(samples){
   for(let i=0;i<recent.length;i++){
    const value=percent(recent[i][key]);
    if(value===null){if(points.length)segments.push(points);points=[];continue;}
-   points.push([350-(recent.length-1-i)*322/59,160-value*1.44]);
+   points.push([192-(recent.length-1-i)*170/59,94-value*.84]);
   }
   if(points.length)segments.push(points);
   const path=points=>points.map(([x,y],i)=>`${i?'L':'M'}${x.toFixed(2)} ${y.toFixed(2)}`).join('');
   const value=percent(recent.at(-1)?.[key]);
-  return {key,color,value,y:value===null?160:160-value*1.44,line:segments.map(path).join(''),area:segments.map(p=>`${path(p)}L${p.at(-1)[0]} 160L${p[0][0]} 160Z`).join('')};
+  return {key,color,value,y:value===null?94:94-value*.84,line:segments.map(path).join(''),area:segments.map(p=>`${path(p)}L${p.at(-1)[0]} 94L${p[0][0]} 94Z`).join('')};
  });
 }
 // 最新点に追従させつつ、同じ使用率のラベルだけ上下へ離す。
 export function placeLabels(series){
- const sorted=series.map((item,i)=>({...item,labelY:item.value===null?128+i*16:item.y})).sort((a,b)=>a.labelY-b.labelY);
- for(let i=0;i<sorted.length;i++)sorted[i].labelY=Math.max(20,sorted[i].labelY,i?sorted[i-1].labelY+18:20);
- for(let i=sorted.length-1;i>=0;i--)sorted[i].labelY=Math.min(156,sorted[i].labelY,i<sorted.length-1?sorted[i+1].labelY-18:156);
+ const sorted=series.map((item,i)=>({...item,labelY:item.value===null?60+i*14:item.y})).sort((a,b)=>a.labelY-b.labelY);
+ for(let i=0;i<sorted.length;i++)sorted[i].labelY=Math.max(14,sorted[i].labelY,i?sorted[i-1].labelY+14:14);
+ for(let i=sorted.length-1;i>=0;i--)sorted[i].labelY=Math.min(92,sorted[i].labelY,i<sorted.length-1?sorted[i+1].labelY-14:92);
  return sorted;
 }

@@ -71,11 +71,12 @@ class PosixPathTests(unittest.TestCase):
         with patch.object(root, '_load_folder_module', side_effect=folder), patch.object(root.subprocess, 'run') as process:
             self.assertEqual(root.setup_launchers_only(), ['Diag'])
             process.assert_not_called()
-        self.assertEqual(events, ['backend_diag', 'frontend_avatar', 'command_hermes', 'frontend_ide/aidiy_navi',
-                                  'frontend_ide/aidiy_console',
-                                  'frontend_ide/host', 'frontend_ide/viewer', 'frontend_ide/aidiy_task',
-                                  'frontend_ide/aidiy_team', 'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_cpu', 'frontend_channels/discord',
-                                  'frontend_channels/slack'])
+        self.assertEqual(events, ['backend_diag', 'frontend_avatar', 'command_hermes',
+                                  'frontend_ide/viewer', 'frontend_ide/aidiy_console',
+                                  'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi',
+                                  'frontend_ide/host', 'frontend_ide/aidiy_task',
+                                  'frontend_ide/aidiy_team', 'frontend_ide/aidiy_cpu',
+                                  'frontend_channels/discord', 'frontend_channels/slack'])
 
     def test_root_repair_flag_does_not_enter_normal_setup(self):
         root = load(ROOT / '_setup.py')

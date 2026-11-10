@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+import layoutModule from '../デスクトップ/window-layout.cjs';
 import avatarModule from '../デスクトップ/Avatar起動.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,7 +54,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program,_root,children=[])=>['/project/_AIDIY',program,...children].join('/'),preparePrivateDirectory(){}},
   './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},
   './デスクトップ/navigation-code-window.cjs':navigationCodeWindowModule,
-  './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:()=>({}),windowMinimumSize:()=>({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},
+  './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:(kind,...args)=>kind==='cpu'?layoutModule.windowBounds(kind,...args):({}),windowMinimumSize:(kind,...args)=>kind==='cpu'?layoutModule.windowMinimumSize(kind,...args):({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},
   './host/scripts/window-opening.cjs':{拡大表示:async(_Window,window)=>{window.focus();return true;}},
   './host/scripts/MacOS-Menu.cjs':macMenuModule,
   './デスクトップ/task-windows.cjs':taskWindowsModule,
@@ -287,8 +288,10 @@ test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開
  test('CPU uses one IDE-owned small window and closes with the session',async()=>{
  const f=await desktopFixture(),open=f.handlers.get('development:open-app');
  const [a,b]=await Promise.all([open(f.event(f.owner),'cpu'),open(f.event(f.owner),'cpu')]);assert.equal(a.ok,true);assert.equal(b.ok,true);
- const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
+ const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.options.width,240);assert.equal(cpu[0].window.options.height,160);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
  assert.equal((await open(f.event(f.owner),'cpu')).reused,true);
+ const action=command=>f.handlers.get('development:window')(f.event(cpu[0]),command);
+ const pinned=action('pin-state').pinned;assert.equal(action('toggle-pin').pinned,!pinned);assert.equal(action('toggle-pin').pinned,pinned);
  await f.handlers.get('development:end-session')(f.event(f.owner));assert.equal(cpu[0].window.isDestroyed(),true);
  });
 
@@ -296,7 +299,7 @@ test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開
 test('standalone CPU has its own name, icon, small bounds and no IDE owner',async()=>{
  for(const platform of ['win32','darwin']){
   const f=await desktopFixture({kind:'cpu',platform}),r=f.owner;
-  assert.equal(r.window.title,'AiDiy CPU');assert.equal(r.owner,undefined);assert.match(r.window.options.icon,/AiDiy_cpu.png$/);
+  assert.equal(r.window.title,'AiDiy CPU');assert.equal(r.window.options.width,240);assert.equal(r.window.options.height,160);assert.equal(r.owner,undefined);assert.match(r.window.options.icon,/AiDiy_cpu.png$/);
   assert.equal(f.app.name,platform==='darwin'?'AiDiy CPU':'aidiy_cpu');r.window.destroy();
  }
 });

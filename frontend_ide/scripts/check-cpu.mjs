@@ -36,15 +36,20 @@ try{
  let id=0;const pending=new Map(),errors=[];socket.on('message',value=>{const d=JSON.parse(value);if(d.id){pending.get(d.id)?.(d);pending.delete(d.id);}if(d.method==='Runtime.exceptionThrown')errors.push(d.params);});
  const send=(method,params={})=>new Promise(r=>{pending.set(++id,r);socket.send(JSON.stringify({id,method,params}));});
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});assert.equal(r.result?.exceptionDetails,undefined,JSON.stringify(r));return r.result.result.value;};
- await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:460,height:260,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1600);
+ await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:240,height:160,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1600);
  assert.equal(await evaluate('document.querySelectorAll(".cpu-label text").length'),3);assert.equal(await evaluate('document.querySelectorAll("path[fill-opacity]").length'),2);
  const shot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-gpu-ram.png'),Buffer.from(shot.result.data,'base64'));
- await evaluate('gpuMissing=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/GPU —/);assert.match(await evaluate('document.body.textContent'),/GPU 未取得/);
+ await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:239,y:159});
+ assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
+ await evaluate("document.querySelector('.cpu-panel').focus()");
+ assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
+ assert.equal(await evaluate("document.querySelector('.connection-bar')"),null);
+ await evaluate('gpuMissing=true');await sleep(100);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),false);assert.match(await evaluate('document.body.textContent'),/GPU 未取得/);
  await evaluate('failed=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/再試行中/);assert.match(await evaluate('document.body.textContent'),/CPU —/);
- await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);
+ await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),true);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);const before=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),before);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))`);await sleep(100);assert.ok(await evaluate('calls')>before);
- await send('Emulation.setDeviceMetricsOverride',{width:300,height:180,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),300);
+ await send('Emulation.setDeviceMetricsOverride',{width:240,height:150,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),240);
  const small=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-small.png'),Buffer.from(small.result.data,'base64'));
  await evaluate('dispose()');const stopped=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),stopped);assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS CPU render, GPU unavailable, request failure/recovery, hidden/resume, small size and disposal');
 }finally{socket?.close();chrome.kill();server.close();await sleep(200);rmSync(temporary,{recursive:true,force:true});}

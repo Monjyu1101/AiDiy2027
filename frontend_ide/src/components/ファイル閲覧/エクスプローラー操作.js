@@ -7,6 +7,13 @@ import { reactive, nextTick } from 'vue';
 import { fullFilePath, copyBrowserText } from './ファイル操作.js';
 import { fileDraftReference } from './ファイル参照.js';
 
+// 表示だけを短縮し、操作対象のパス・名前は変更しない。
+const menuNameSegments = new Intl.Segmenter('ja', { granularity: 'grapheme' });
+export function compactExplorerName(name) {
+  const parts = Array.from(menuNameSegments.segment(name), item => item.segment);
+  return parts.length <= 16 ? name : parts.slice(0, 8).join('') + '…' + parts.slice(-7).join('');
+}
+
 export const parentPath = path => path.split('/').slice(0, -1).join('/');
 export const containsPath = (base, path) => path === base || path.startsWith(base + '/');
 export const renamedPath = (path, before, after) => containsPath(before, path) ? after + path.slice(before.length) : path;
@@ -35,9 +42,16 @@ export function createExplorerActions({ root, document: ownerDocument, checked =
     if (state.busy || state.dialog || state.rename) return;
     closeMenu(); clearMessage();
     const run = epoch, target = { ...activeRow(row) }, rectangle = panel.getBoundingClientRect();
-    const x = (event?.clientX || rectangle.left + 18) - rectangle.left;
+    const x = (event?.clientX ?? rectangle.left + 18) - rectangle.left;
+    // ポインターから12px離して右へ。収まらなければメニュー全体を左へ回す。
+    // 両側とも狭い場合だけパネル内へ収める（CSS側もパネル幅に合わせて縮む）。
+    const menuLeft = width => Math.max(6, Math.min(
+      x + 12 + width <= rectangle.width - 6 ? x + 12 : x - 12 - width,
+      rectangle.width - width - 6,
+    ));
     const y = (event?.clientY || rectangle.top + 50) - rectangle.top;
-    state.menu = { target, checked:checked().map(row=>({...row})), directory: directory(target), x: Math.max(6, Math.min(x, rectangle.width - 250)), y: Math.max(6, y) };
+    state.menu = { target, checked:checked().map(row=>({...row})), directory: directory(target), x: menuLeft(Math.min(220, Math.max(0, rectangle.width - 12))), y: Math.max(6, y) };
+    const openedMenu = state.menu;
     const document = panel.ownerDocument, view = document.defaultView;
     const outside = event => { if (!event.target.closest?.('.explorer-context-menu')) closeMenu(); };
     const escape = event => { if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); closeMenu(true); } };
@@ -48,7 +62,13 @@ export function createExplorerActions({ root, document: ownerDocument, checked =
     cleanup = () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('keydown', escape, true); document.removeEventListener('scroll', scroll, true); view?.removeEventListener('blur', resize); view?.removeEventListener('resize', resize); };
     await nextTick();
     const menu = panel.querySelector('.explorer-context-menu');
-    if (!disposed && run === epoch && menu && state.menu) { state.menu.y = Math.max(6, Math.min(y, rectangle.height - menu.offsetHeight - 6)); menu.querySelector('button:not(:disabled)')?.focus(); }
+    if (disposed || run !== epoch || !menu || state.menu !== openedMenu) return;
+    openedMenu.x = menuLeft(menu.offsetWidth);
+    openedMenu.y = Math.max(6, Math.min(y, rectangle.height - menu.offsetHeight - 6));
+    // 補正前の画面外メニューへfocusすると、親パネルまで自動スクロールしてしまう。
+    // Vueの位置反映を待ち、フォーカスだけを移す。連続右クリック・取消も再確認する。
+    await nextTick();
+    if (!disposed && run === epoch && state.menu === openedMenu) menu.querySelector('button:not(:disabled)')?.focus({ preventScroll: true });
   }
   async function beginRename(row) {
     if (!row?.path || state.busy) return;
