@@ -1,6 +1,6 @@
 # frontend_ide 実装概要
 
-Navi / Console / Code / Live / IDE / Task / Team / Browser は AiDiy の正式なサブシステムであり、本フォルダが8種類のVue 3画面を所有する。VS Code拡張はCode / Liveだけ、単独起動は8種類。Task / Team はAvatarから移設した独立版で、専用bundleと独立した認証・ウィンドウを使う。Web／Avatar内の旧Task／Team画面・入口は撤去済み。
+Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU は AiDiy の正式なサブシステムであり、本フォルダが9種類のVue 3画面を所有する。VS Code拡張はCode / Liveだけ、単独起動は9種類。Task / Team はAvatarから移設した独立版で、専用bundleと独立した認証・ウィンドウを使う。Web／Avatar内の旧Task／Team画面・入口は撤去済み。
 
 全体のコンセプトは **開発スペース（宇宙をテーマにした IDE 開発環境）**。プロジェクトを宇宙（フォルダ＝銀河、ファイル＝星・惑星）として見せ、人はソースをほぼ触らずに「眺める・辿る・読む・頼む」で開発する。本文の編集は Code / Live を通じて AI に任せ、ビューアは読み取り専用を保つ。エクスプローラーでは明示操作によるコピー・名前変更・新規作成・確認付きのゴミ箱移動を提供する。Code / Live は単独起動・VS Code 拡張を維持したまま、開発スペースの部品としても動作させる（3つの使い方を壊さない）。説明文では見た目を宇宙、画面の文字は「フォルダ」「ファイル」など一般名で書く。
 
@@ -15,6 +15,8 @@ Navi / Console / Code / Live / IDE / Task / Team / Browser は AiDiy の正式�
 - 実装変更は画面を撮影して確認する。手順はREADMEと `_AIDIY/knowledge/` に記載する。
 
 - Consoleは `コンソールパネル.vue`（xterm.js）と `aidiy_console/console.mjs`（WebSocket）を使い、`aidiy_console/console-process.mjs` / `aidiy_console/console-worker.mjs` が端末ごとのPTYとプロセス終了を管理する。端末は通常のシェル権限を持ち、ファイルビューアだけが読み取り専用。ConsoleにはVS Code拡張を作らない。
-- setup / cleanup の表示・処理順は Navi → Console → Code → Live → IDE → Task → Team → Browser。全体startの自動起動対象は従来どおりで、Navi / Browser は独立コマンドやDiagから手動起動し、Task / Team はそれに加えて全体startの個別選択（既定OFF）でも起動できる。共有依存物は各アプリの停止・解除後に片付ける。
+- setup / cleanup の表示・処理順は Navi → Console → Code → Live → IDE → Task → Team → Browser → CPU。全体startの自動起動対象は従来どおりで、Navi / Browser は独立コマンドやDiagから手動起動し、Task / Team はそれに加えて全体startの個別選択（既定OFF）でも起動できる。共有依存物は各アプリの停止・解除後に片付ける。
 
 - Navi は独立した開発案内画面。目標・作業項目・推定達成率・次のプロンプトの作成と再評価は読み取り専用。明示的に自動航行をオンにした場合だけ、右側に埋め込んだ専用Codeへ提案を送り、成功後に再評価する。Codeはファイル変更を伴う通常実行で、総合評価100%・3回連続の改善なし・失敗・対象変更などで停止する。停止要求は変更済みファイルの取り消しではない。単独起動は `aidiy_navi`、IDEでは「＋ Navi」から複数窓を開く。
+
+- CPUは `aidiy_cpu` で単独起動できる小型のホスト使用率画面。IDE子窓と同じVue部品・計測APIを使い、Core / Toolsへの接続を必要としない。単独サーバーは計測と状態読込だけを公開し、ファイル操作・AI・Console起動は許可しない。DiagのCPUアイコンと全体startの個別選択（既定OFF）からも起動する。

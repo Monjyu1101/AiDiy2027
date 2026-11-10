@@ -59,11 +59,11 @@ test('ミニの内容を自然な高さで計測し、2段アイコン・案内�
  assert.deepEqual(d('.mini-cli-message'),{});
  const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
  assert.equal(chrome,34);assert.ok(chrome+appHeight+cliHeight+statuses<=360);
- assert.equal(d('#app>.panel.start-mini')['max-width'],'330px');assert.equal(d('#app>.panel.start-mini')['overflow-y'],'auto');assert.equal(d('#app>.panel.start-mini')['overflow-x'],'hidden');
- assert.equal(d('.mini-app-buttons')['grid-template-columns'],'repeat(6,minmax(0,1fr))');
+ assert.equal(d('#app>.panel.start-mini')['max-width'],'360px');assert.equal(d('#app>.panel.start-mini')['overflow-y'],'auto');assert.equal(d('#app>.panel.start-mini')['overflow-x'],'hidden');
+ assert.equal(d('.mini-app-buttons')['grid-template-columns'],'repeat(7,minmax(0,1fr))');
  assert.equal(d('.mini-cli-buttons').display,'flex');assert.equal(d('.mini-cli-buttons')['justify-content'],'center');
- assert.equal(d('.mini-cli-buttons')['flex-wrap'],'wrap','6個を超える外部アイコンは次の段へ送り、両端を隠さない');
- assert.equal(d('.mini-cli-buttons .mini-cli-button').flex,'0 0 calc((100% - 10px)/6)','Copilotを含むCLIの外枠をAiDiyと同じ6列の幅に揃える');
+ assert.equal(d('.mini-cli-buttons')['flex-wrap'],'wrap','7個を超える外部アイコンは次の段へ送り、両端を隠さない');
+ assert.equal(d('.mini-cli-buttons .mini-cli-button').flex,'0 0 calc((100% - 12px)/7)','Copilotを含むCLIの外枠をAiDiyと同じ7列の幅に揃える');
  assert.equal(d('#app>.panel.start-mini').flex,'0 1 auto');assert.equal(d('.mini-content>*').flex,'none');
  assert.equal(d('.mini-services')['grid-template-columns'],'repeat(6,minmax(0,1fr))');
 });
@@ -123,4 +123,13 @@ test('Windows標準タイトルだけ独自操作へ切り替え、ミニnative 
  assert.ok(title.includes(':data-aidiy-no-window-move="desktop&&customNormalTitle&&!compact?'));
  assert.equal(declarations(normal,'.panel-brand.desktop')['-webkit-app-region'],'drag');
  const css=source('style.css');assert.match(css,/\.panel-brand\.desktop\[data-aidiy-standard-title\][^{}]*\{[^}]*-webkit-app-region:no-drag/);
+});
+
+test('ミニ7列は360pxで36px画像と操作余白を保持し、通常/マイクロの寸法は変えない',()=>{
+ const css=source('components/起動/起動ミニ.css');
+ assert.match(css,/max-width:360px/);assert.match(css,/mini-app-buttons\{display:grid;grid-template-columns:repeat\(7,/);
+ assert.match(css,/mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/start-mini \.launch-frame-36\{width:36px;height:36px/);
+ const cell=(360-8-12)/7;assert.ok(cell>=36+6);assert.equal(42-36,6);
+ assert.match(source('components/アプリ起動/アプリ起動.css'),/width:72px;height:72px/);
+ assert.match(source('components/アプリ起動/マイクロランチャー.vue'),/width="40" height="40"/);
 });

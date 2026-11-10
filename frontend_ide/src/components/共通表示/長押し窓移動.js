@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const controls='input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable="false"]),[role="button"],[role="slider"],[role="textbox"],[draggable="true"],.scrollbar,.slider';
-const movableKinds=new Set(['code','live','navi','console','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
+const movableKinds=new Set(['cpu','code','live','navi','console','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
 // ピン留めは所有元の限定APIを渡す。iframeにも同じ窓のAPIだけを使う。
 export function installWindowMove({kind,host=false,win=window,api=win.aidiyWindow}){
  if(!movableKinds.has(kind)||host||api?.nativeWindowMove||!api?.beginWindowMove||!api?.moveWindow||!api?.endWindowMove)return()=>{};

@@ -6,6 +6,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import { ref, reactive, computed, provide, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { installWindowMove } from './components/共通表示/長押し窓移動.js';
+import CpuPanel from './components/システム監視/CPUパネル.vue';
 import CodePanel from './components/コード/コードパネル.vue';
 import ConsolePanel from './components/コンソール/コンソールパネル.vue';
 import LivePanel from './components/ライブ/ライブパネル.vue';
@@ -46,6 +47,9 @@ function closeFileAnalysis(){const previous=analysis.value;analysis.value=null;p
 const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
+const cpuWindow=config.kind==='cpu'||config.kind==='ide'&&location.hash==='#cpu';
+const cpuOpen=ref(false);
+function openCpu(){if(desktop)return openWindow('cpu');cpuOpen.value=true;}
 const browserHeader=location.hash==='#browser-header';
 const browserDraft=location.hash==='#browser-draft'&&!!window.aidiyWindow;
 const browserAnalysis=location.hash==='#browser-analysis'&&!!window.aidiyWindow;
@@ -100,7 +104,7 @@ async function status(){
 function update(data){
   if(disposed)return;
   const next=data.active?`${data.mode}:${data.startedAt}:${data.project?.path||''}`:'';
-  if(next!==session){navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.console='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
+  if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.console='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
   state.value=data;error.value=data.message||'';
 }
 async function start(action){
@@ -119,6 +123,7 @@ const launching=ref('');
 // 起動メニューの項目。名前に「＋」は付けない。広いときは横並び、狭いときは「＋」から開く下向きメニュー（共通表示/起動メニュー.vue）。
 const launchText=(kind,name)=>launching.value===kind?'起動中…':name;
 const desktopLaunchItems=computed(()=>[
+  {key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu},
   {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
   {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'利用開始後に起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
@@ -127,6 +132,7 @@ const desktopLaunchItems=computed(()=>[
   ...(state.value.mode==='online'?['task','team'].map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[])
 ]);
 const panelLaunchItems=computed(()=>[
+  {key:'cpu',text:'CPU',pressed:cpuOpen.value,run:openCpu},
   {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
   {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブで http://127.0.0.1:8090/ を開く':'利用開始後に起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
@@ -203,14 +209,14 @@ const draftLink={
 };
 onMounted(async()=>{
   if(browserAnalysis||browserDraft)return;
-  stopWindowMove=installWindowMove({kind:browserPanel?'browser':viewerPath?'viewer':config.kind,host:config.host});
-  if(config.kind==='ide'&&desktop&&!viewerPath&&!browserPanel){
+  stopWindowMove=installWindowMove({kind:cpuWindow?'cpu':browserPanel?'browser':viewerPath?'viewer':config.kind,host:config.host});
+  if(config.kind==='ide'&&desktop&&!viewerPath&&!browserPanel&&!cpuWindow){
     stopAllDisplays=window.aidiyWindow.onAllDisplaysChanged?.(updateAllDisplays)||(()=>{});
     const version=allUpdate;
     void window.aidiyWindow.allDisplays?.('state').then(value=>{if(version===allUpdate)updateAllDisplays(value);}).catch(()=>{});
   }
   if(config.kind==='ide'&&!desktop&&!viewerPath)window.aidiyDraftLink=draftLink;
-  if(config.host||viewerPath||browserPanel)return;
+  if(config.host||viewerPath||browserPanel||cpuWindow)return;
   if(config.kind==='ide'){await status();if(!disposed)timer=setInterval(status,10000);}
   else if(config.kind!=='navi'&&!base[config.kind])await openPanel(config.kind);
 });
@@ -220,7 +226,8 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :modeless="!!draftRequest.sourceElement" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
   <FileAnalysisDialog v-if="analysis" ref="analysisPanel" :key="analysis.root+'|'+analysis.file.path" :file="analysis.file" :root="analysis.root" :source-element="analysis.sourceElement" @close="closeFileAnalysis" />
   <FileHistoryDialog v-if="history" :key="history.root+'|'+history.file.path" :file="history.file" :root="history.root" @close="history=null" />
-  <BrowserDraftWindow v-if="browserDraft" />
+  <CpuPanel v-if="cpuWindow" :desktop="desktop" :standalone="config.kind==='cpu'" />
+  <BrowserDraftWindow v-else-if="browserDraft" />
   <BrowserAnalysisWindow v-else-if="browserAnalysis" />
   <BrowserPanel v-else-if="browserPanel" :standalone="config.kind==='browser'" :header-only="browserHeader" />
   <ViewerWindow v-else-if="viewerPath" :path="viewerPath" :desktop="desktop" />
@@ -242,6 +249,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
       <template v-if="allDisplayState.active"><nav v-for="toolbar in allToolbars" :key="toolbar.displayId" class="all-restore-zone" :data-display-id="toolbar.displayId" :style="allRestoreStyle(toolbar)" aria-label="この画面のVR操作" @mouseenter="status" @focusin="status">
         <button class="all-restore-button" :disabled="allBusy" aria-label="VRモードを終了して元の表示に戻す" title="VRモードを終了" @click="toggleAllDisplays"><span class="all-restore-icon" aria-hidden="true"></span></button>
         <div class="all-launchers">
+          <button :disabled="!!launching||allBusy" @click="openWindow('cpu',toolbar.displayId)">CPU</button>
           <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'Console' }}</button>
           <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'利用開始後に起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'Browser' }}</button>
           <button v-if="state.mode==='online'" class="navigation-launch" :disabled="!!launching||allBusy" @click="openNavigation">{{ launching==='navigation'?'起動中…':'Navi' }}</button>
@@ -262,6 +270,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();disposed=true;revision++
       </TerminalWelcome>
       <template v-else>
         <NavigationPanel v-for="id in navigationWindows" :key="id" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
+        <CpuPanel v-if="cpuOpen" floating @close="cpuOpen=false" />
         <SpaceView ref="spaceView" :key="`${state.mode}:${state.startedAt}:${state.project?.path||''}`" :started-at="state.startedAt" :view-mode="viewMode" :all-displays="allDisplayState.active" />
         <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='console'" @click="openPanel('console')">Console</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>
           <CodePanel ref="codePanel" v-if="base.code" v-show="tab==='code'" :key="base.code" :base="base.code" :icon="config.icon" embedded page-notifications />

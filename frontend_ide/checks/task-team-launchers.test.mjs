@@ -14,7 +14,7 @@ for(const kind of ['task','team']){
  test(`${kind}: independent launcher, desktop identity and setup registration`,()=>{
   assert.match(text(`../aidiy_${kind}/launch.mjs`),new RegExp(`launch\\('${kind}'\\)`));
   assert.match(text(`../aidiy_${kind}.cmd`),new RegExp(`aidiy_${kind}\\\\launch.mjs`));
-  assert.match(text('../launch.mjs'),/\['code','live','ide','console','task','team','browser','navi'\]\.includes\(kind\)/);
+  assert.match(text('../launch.mjs'),/\['code','live','ide','console','task','team','browser','navi','cpu'\]\.includes\(kind\)/);
   assert.match(text('../desktop.cjs'),/`aidiy_\$\{kind\}`/);
   assert.ok(text('../desktop.cjs').includes(`kind==='${kind}'?'${kind[0].toUpperCase()+kind.slice(1)}'`));
   assert.ok(text('../_setup.py').includes(`frontend_ide/aidiy_${kind}`));

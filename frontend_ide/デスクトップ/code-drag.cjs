@@ -10,7 +10,7 @@ function createCodeDrag({trustedEvent,screen,resolvePanel=()=>null,isCenterMove=
  const localEvents=new WeakMap();
  const localStarts=new WeakMap();
  const sizes=new WeakMap();
- const movableKinds=new Set(['ide','code','live','navi','console','task','team','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation','diag','avatar','discord','slack']);
+ const movableKinds=new Set(['cpu','ide','code','live','navi','console','task','team','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation','diag','avatar','discord','slack']);
  const centerMode=record=>record.kind==='ide'&&isCenterMove(record);
  function notifyCenter(record,drag,phase,x=0,y=0){if(!record.window.webContents.isDestroyed())record.window.webContents.send('development:space-center-move',{id:drag.token,phase,x,y});}
  function target(event,name){const source=localEvents.get(event)||trustedEvent(event);return name===undefined?source:source?.kind==='ide'&&typeof name==='string'?resolvePanel(source,name):null;}

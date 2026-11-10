@@ -7,12 +7,17 @@
 const size=require('../host/scripts/window-size.cjs');
 // Consoleは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
 function windowMinimumSize(kind,bounds){
+ if(kind==='cpu')return{minWidth:Math.min(300,bounds.width),minHeight:Math.min(180,bounds.height)};
  return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='console'?180:size.会話最小高さ,bounds.height)};
 }
 function windowBounds(kind,area,owner,slot=0,cli=false){
  const margin=kind==='ide'?Math.min(32,Math.max(12,Math.round(Math.min(area.width,area.height)*.025))):8;
  const available={x:area.x+margin,y:area.y+margin,width:Math.max(1,area.width-margin*2),height:Math.max(1,area.height-margin*2)};
  if(kind==='ide')return available;
+ if(kind==='cpu'){
+  const width=Math.min(460,available.width),height=Math.min(260,available.height);
+  return{x:available.x+available.width-width,y:available.y+available.height-height,width,height};
+ }
  if(kind==='navi'){
   const width=Math.min(size.幅,available.width),height=Math.min(size.ナビ高さ,available.height);
   return{x:available.x,y:Math.round(area.y+(area.height-height)/2),width,height};

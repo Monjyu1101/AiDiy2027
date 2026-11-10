@@ -26,7 +26,7 @@ await copyFile(path.join(root,'src/components/アプリ起動/アプリアイコ
 await copyFile(path.join(root,'src/components/アプリ起動/アイコン/AiDiy.png'),path.join(root,'../static/AiDiy.png'));
 // Diag 内の配布コピーだけでビルドする。他 module の画像・CSSを読まない。
 await copyFile(path.join(root,'../icons/AiDiy_diag.png'),path.join(root,'src/components/アプリ起動/アイコン/AiDiy_diag.png'));
-for(const id of ['avatar','ide','navi','console','code','live','task','team','browser','discord','slack','diag'])await copyFile(path.join(root,'src/components/アプリ起動/アイコン',`AiDiy_${id}.png`),path.join(root,'../static',`AiDiy_${id}.png`));
+for(const id of ['avatar','ide','cpu','navi','console','code','live','task','team','browser','discord','slack','diag'])await copyFile(path.join(root,'src/components/アプリ起動/アイコン',`AiDiy_${id}.png`),path.join(root,'../static',`AiDiy_${id}.png`));
 for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','vscode'])await copyFile(path.join(root,'src/components/アプリ起動/CLIアイコン',`${id}.png`),path.join(root,'../static',`CLI_${id}.png`));
 for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])await copyFile(path.join(root,'src/components/アプリ起動/CLIアイコン',`${id}.svg`),path.join(root,'../static',`CLI_${id}.svg`));
 await copyFile(path.join(root,'src/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md'),path.join(root,'../static/LICENSE_ICONS.md'));

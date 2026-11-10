@@ -19,7 +19,7 @@ import projectProfiles from './デスクトップ/project-profile.cjs';
 const {projectIdentity}=projectProfiles;
 // サーバーとElectronは別のNodeプロセスに所有させ、表示完了後に呼出元へ戻る。
 async function launchDetached(defaultKind,args){
- const label=defaultKind==='navi'?'Navi':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='console'?'Console':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
+ const label=defaultKind==='cpu'?'CPU':defaultKind==='navi'?'Navi':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='console'?'Console':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
  const child=spawn(process.execPath,[fileURLToPath(import.meta.url),'--app',defaultKind,'--foreground',...args],{cwd:process.cwd(),env:{...process.env,AIDIY_LAUNCHER_CHILD:'1'},detached:true,windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});
  try{
   const result=await new Promise((done,reject)=>{
@@ -39,9 +39,11 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const {values,positionals}=parseArgs({args,allowPositionals:true,options:{app:{type:'string'},project:{type:'string'},'project-fixed':{type:'boolean'},provider:{type:'string'},model:{type:'string'},cli:{type:'string'},'cli-auto-approve':{type:'boolean'},port:{type:'string'},'strict-port':{type:'boolean'},browser:{type:'boolean'},'no-open':{type:'boolean'},offline:{type:'boolean'},connect:{type:'boolean'},foreground:{type:'boolean'},serve:{type:'boolean'},wait:{type:'boolean'},'ready-file':{type:'string'},'new-window':{type:'boolean'},help:{type:'boolean'}}});
  const kind=values.app||defaultKind;
  if(values['project-fixed']&&!['task','team'].includes(kind))throw Error('--project-fixed はTask / Team専用です。');
- if(!['code','live','ide','console','task','team','browser','navi'].includes(kind))throw Error('--app はcode / live / ide / console / task / team / browser / naviから指定してください。');
+ if(!['code','live','ide','console','task','team','browser','navi','cpu'].includes(kind))throw Error('--app はcode / live / ide / console / task / team / browser / navi / cpuから指定してください。');
+ if(values.help&&kind==='cpu'){console.log('aidiy_cpu [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('CPU / GPU / RAMの使用率を小型画面で表示します。Core / Toolsへの接続は不要です。');return;}
  if(values.help&&kind==='browser'){console.log('aidiy_browser [作業フォルダ | --project 作業フォルダ] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('IDE共通のBrowserをElectronで単独起動します。tools接続時にchrome_devtoolsから操作できます。Web版への切り替えは行いません。');return;}
  if(values.help){console.log(`aidiy_${kind} [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port]${['task','team','navi'].includes(kind)?'':' [--provider 名前] [--model モデル]'}${['code','browser'].includes(kind)?' [--offline]':''}${kind==='live'?'':' [--new-window]'}${kind==='console'?' [--cli 名前] [--cli-auto-approve]':''} [--foreground | --wait]`);console.log('起動フォルダをプロジェクトにしてElectronで開きます。Codespaces等ではWeb版。ポートは自動割り当て。');console.log('単独ウィンドウの表示後はプロンプトへ戻ります。--foreground / --wait で終了まで待機します。');return;}
+ if(kind==='cpu'&&['connect','offline','provider','model','cli','cli-auto-approve'].some(name=>values[name]!==undefined))throw Error('CPUはシステム計測専用です。接続・AIモデル・CLIオプションは利用できません。');
  if(kind==='browser'&&['browser','no-open','serve','connect','provider','model','cli','cli-auto-approve'].some(name=>values[name]!==undefined))throw Error('BrowserはElectron専用です。Web起動・AIモデル・CLIのオプションは利用できません。');
  if(['task','team','navi'].includes(kind)&&['provider','model','offline','connect'].some(name=>values[name]!==undefined))throw Error('Task / Team のモデル・接続設定は画面内で指定してください（--provider / --model / --offline / --connect は利用できません）。');
  validateCliOptions(kind,{cli:values.cli,cliAutoApprove:values['cli-auto-approve'],provider:values.provider,model:values.model});
@@ -70,7 +72,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const ready={url:app.url,publicUrl:app.publicUrl,pid:process.pid,kind,project};
  const publishReady=async(browser=false)=>{
   try{if(values['ready-file'])writeFileSync(resolve(values['ready-file']),JSON.stringify(ready),'utf8');}catch(error){await stop();throw error;}
-  const label=kind==='navi'?'Navi':kind==='ide'?'IDE':kind[0].toUpperCase()+kind.slice(1);
+  const label=kind==='cpu'?'CPU':kind==='navi'?'Navi':kind==='ide'?'IDE':kind[0].toUpperCase()+kind.slice(1);
   console.log(browser?`AiDiy ${label}: ${app.publicUrl}`:`AiDiy ${label}を起動しました。`);
   if(browser&&kind!=='code')console.log(`プロジェクト: ${project}`);
  };

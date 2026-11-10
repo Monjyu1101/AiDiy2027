@@ -135,6 +135,18 @@
     "起動管理": false
   },
   {
+    "id": "cpu",
+    "名前": "CPU",
+    "区分": "IDE",
+    "フォルダ": "frontend_ide/aidiy_cpu",
+    "監視名": "フロントエンド(cpu)",
+    "初期設定": {
+      "起動対象": false,
+      "自動再起動": false
+    },
+    "起動管理": false
+  },
+  {
     "id": "discord",
     "名前": "Discord",
     "区分": "その他",

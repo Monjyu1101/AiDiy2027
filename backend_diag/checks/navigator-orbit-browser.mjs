@@ -56,7 +56,7 @@ try{
  async function capture(name){const response=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name+'.png'),Buffer.from(response.result.data,'base64'));}
  async function fitMiniViewport(){
   const height=await evaluate(`2+Math.ceil(['.mini-content','.panel-brand','.connection-bar'].reduce((sum,selector)=>sum+document.querySelector(selector).getBoundingClientRect().height,0))`);
-  assert.ok(height>=80&&height<=360);await send('Emulation.setDeviceMetricsOverride',{width:330,height,deviceScaleFactor:1,mobile:false});
+  assert.ok(height>=80&&height<=360);await send('Emulation.setDeviceMetricsOverride',{width:360,height,deviceScaleFactor:1,mobile:false});
  }
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setFocusEmulationEnabled',{enabled:true});await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});

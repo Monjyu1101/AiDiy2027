@@ -16,7 +16,8 @@
     "task": "node launch.mjs --app task",
     "team": "node launch.mjs --app team",
     "browser": "node launch.mjs --app browser",
-    "navi": "node launch.mjs --app navi"
+    "navi": "node launch.mjs --app navi",
+    "cpu": "node launch.mjs --app cpu"
   },
   "dependencies": {
     "@xterm/addon-fit": "0.11.0",

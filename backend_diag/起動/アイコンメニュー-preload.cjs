@@ -7,7 +7,7 @@
 const {ipcRenderer}=require('electron');
 ipcRenderer.on('diag:icon-menu-items',(_event,items)=>{
  const list=document.querySelector('.app-list');list.replaceChildren();
- const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:console','app:code','app:live','app:browser','cli:aidiy_hermes','app:discord','app:slack']);
+ const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:cpu','app:console','app:code','app:live','app:browser','cli:aidiy_hermes','app:discord','app:slack']);
  const columns=[document.createElement('div'),document.createElement('div')];
  for(const [index,column] of columns.entries()){column.className='app-column';column.setAttribute('role','group');column.setAttribute('aria-label',index===0?'AiDiy':'外部ツール');const title=document.createElement('div');title.className='column-title';title.textContent=index===0?'AiDiy':'外部ツール';column.append(title);list.append(column);}
 

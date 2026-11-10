@@ -150,6 +150,7 @@ MANAGED_SERVICE_NAMES = frozenset({
     "フロントエンド(Avatar)",
     "フロントエンド(task)",
     "フロントエンド(team)",
+    "フロントエンド(cpu)",
     "フロントエンド(code)",
     "フロントエンド(live)",
     "フロントエンド(Discord)",
@@ -157,9 +158,10 @@ MANAGED_SERVICE_NAMES = frozenset({
 })
 
 # フォルダ別 _start.py モジュール（_init_modules で設定）
-LOCAL = TOOLS = SERVER = TASKTEAM = WEB = AVATAR = VSCODE = DISCORD = SLACK = DEV = CONSOLE = DIAG = TASK = TEAM = None
-# collect_startup_choices で設定する Slack の起動選択。
+LOCAL = TOOLS = SERVER = TASKTEAM = WEB = AVATAR = VSCODE = DISCORD = SLACK = DEV = CONSOLE = DIAG = TASK = TEAM = CPU = None
+# collect_startup_choices の既存tupleを変えずに保持する、Slack / CPUの起動選択。
 SLACK_ENABLED = False
+CPU_ENABLED = False
 
 
 def _load_folder_module(folder: str):
@@ -189,7 +191,7 @@ def _remove_folder_import_cache(folder: str) -> None:
 
 
 def _init_modules() -> None:
-    global LOCAL, TOOLS, SERVER, TASKTEAM, WEB, AVATAR, VSCODE, DISCORD, SLACK, DEV, CONSOLE, DIAG, TASK, TEAM
+    global LOCAL, TOOLS, SERVER, TASKTEAM, WEB, AVATAR, VSCODE, DISCORD, SLACK, DEV, CONSOLE, DIAG, TASK, TEAM, CPU
     DIAG = _load_folder_module("backend_diag")
     LOCAL = _load_folder_module("backend_local")
     TOOLS = _load_folder_module("backend_tools")
@@ -199,6 +201,7 @@ def _init_modules() -> None:
     AVATAR = _load_folder_module("frontend_avatar")
     TASK = _load_folder_module("frontend_ide/aidiy_task")
     TEAM = _load_folder_module("frontend_ide/aidiy_team")
+    CPU = _load_folder_module("frontend_ide/aidiy_cpu")
     CONSOLE = _load_folder_module("frontend_ide/aidiy_console")
     VSCODE = _load_folder_module("frontend_ide/host")
     DEV = _load_folder_module("frontend_ide/viewer")
@@ -500,6 +503,8 @@ def prompt_choice(question: str, default_yes: bool) -> bool:
 
 
 def collect_startup_choices() -> tuple[bool, ...]:
+    global CPU_ENABLED
+    CPU_ENABLED = False
     print_header("起動条件の確認")
     print_info("外部チャンネル: Discord / Slack")
     print("診断")
@@ -522,6 +527,7 @@ def collect_startup_choices() -> tuple[bool, ...]:
     code_enabled          = prompt_choice("  Code      : 起動しますか?", default_yes=STARTUP_DEFAULTS['code'])
     live_enabled          = prompt_choice("  Live      : 起動しますか?", default_yes=STARTUP_DEFAULTS['live'])
     dev_enabled           = prompt_choice("  IDE       : 起動しますか?", default_yes=STARTUP_DEFAULTS['ide'])
+    CPU_ENABLED = prompt_choice("  CPU       : 起動しますか?", default_yes=False)
     print("フロントエンド(その他)")
     discord_enabled       = prompt_choice("  Discord   : 起動しますか?", default_yes=STARTUP_DEFAULTS['discord'])
     # 既存の選択結果の並びを変えないよう、Slack はモジュール変数で main へ渡す。
@@ -586,7 +592,7 @@ def stop_processes(processes: dict[str, subprocess.Popen[bytes]], *, keep_standa
                           if f"フロントエンド({module})" in processes]
     discord_was_running = not keep_standalone and "フロントエンド(Discord)" in processes
     slack_was_running = not keep_standalone and "フロントエンド(Slack)" in processes
-    task_windows = [module for label, module in (("task", TASK), ("team", TEAM))
+    task_windows = [module for label, module in (("task", TASK), ("team", TEAM), ("cpu", CPU))
                     if f"フロントエンド({label})" in processes and module is not None]
     console_was_running = "フロントエンド(console)" in processes
     dev_was_running = not keep_standalone and "フロントエンド(IDE)" in processes
@@ -679,6 +685,7 @@ def validate_initial_environment(
     task_enabled: bool = False,
     team_enabled: bool = False,
     slack_enabled: bool = False,
+    cpu_enabled: bool = False,
 ) -> tuple[bool, str | None]:
     print_header("環境確認")
     has_error = False
@@ -745,7 +752,7 @@ def validate_initial_environment(
             print_info(f'  対応例: python "{BASE_DIR / "frontend_avatar" / "_setup.py"}"')
             has_error = True
 
-    for label, module, enabled in (("task", TASK, task_enabled), ("team", TEAM, team_enabled)):
+    for label, module, enabled in (("task", TASK, task_enabled), ("team", TEAM, team_enabled), ("cpu", CPU, cpu_enabled)):
         if enabled:
             ok, detail = module.check_environment()
             if ok:
@@ -877,6 +884,8 @@ def start_service(
             process = TASK.start()
         elif name == "フロントエンド(team)":
             process = TEAM.start()
+        elif name == "フロントエンド(cpu)":
+            process = CPU.start()
         elif name == "フロントエンド(console)":
             process = CONSOLE.start()
         elif name == "フロントエンド(code)":
@@ -921,6 +930,7 @@ def start_initial_services(
     task_enabled: bool = False,
     team_enabled: bool = False,
     slack_enabled: bool = False,
+    cpu_enabled: bool = False,
 ) -> dict[str, bool]:
     selected_flags = {
         "バックエンド(local)": start_backend_local_enabled,
@@ -933,6 +943,7 @@ def start_initial_services(
         # 手動で閉じた単独ウィンドウ・パネルは自動で開き直さない。
         "フロントエンド(task)": False,
         "フロントエンド(team)": False,
+        "フロントエンド(cpu)": False,
         "バックエンド(Diag)": False,
         "フロントエンド(console)": False,
         "フロントエンド(code)": False,
@@ -980,7 +991,7 @@ def start_initial_services(
         start_service("フロントエンド(Avatar)", processes, last_output_times, npm_command)
         wait_for_services_quiet(last_output_times, ["フロントエンド(Avatar)"], label="フロントエンド(Avatar)")
 
-    for label, enabled in (("task", task_enabled), ("team", team_enabled)):
+    for label, enabled in (("task", task_enabled), ("team", team_enabled), ("cpu", cpu_enabled)):
         if enabled:
             name = f"フロントエンド({label})"
             print_header(f"{name} 起動")
@@ -1143,6 +1154,7 @@ def main() -> None:
         team_enabled,
     ) = collect_startup_choices()
     slack_enabled = SLACK_ENABLED and not diag_enabled
+    cpu_enabled = CPU_ENABLED and not diag_enabled
 
     # 開始承認後に一度だけ停止する。各サービスの起動直前には重ねて停止しない。
     if stop_all_tasks("AiDiy プロセスの停止（Code / IDE / Discord / Slack は継続）") is False:
@@ -1164,6 +1176,7 @@ def main() -> None:
         team_enabled=team_enabled,
         discord_enabled=discord_enabled,
         slack_enabled=slack_enabled,
+        cpu_enabled=cpu_enabled,
         diag_enabled=diag_enabled,
         console_enabled=console_enabled,
         code_enabled=code_enabled,
@@ -1198,6 +1211,7 @@ def main() -> None:
                 npm_command=npm_command,
                 discord_enabled=discord_enabled,
                 slack_enabled=slack_enabled,
+                cpu_enabled=cpu_enabled,
                 diag_enabled=diag_enabled,
                 console_enabled=console_enabled,
                 code_enabled=code_enabled,

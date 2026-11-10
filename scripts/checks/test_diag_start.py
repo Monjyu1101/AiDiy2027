@@ -262,9 +262,10 @@ print(module.get_npm_command(),flush=True)
             values = root.collect_startup_choices()
         self.assertEqual(values, (False, True, True, True, True, False, False, False, False, False, False, False, False, False))
         # Slack は結果の並びを変えず、Discord の直後に尋ねてモジュール変数へ保持する。
-        self.assertEqual(prompt.call_count, 15)
+        self.assertEqual(prompt.call_count, 16)
         self.assertIn('Slack', prompt.call_args_list[-1].args[0])
         self.assertIs(root.SLACK_ENABLED, False)
+        self.assertIs(root.CPU_ENABLED, False)
 
     def test_diag_children_cannot_consume_console_control_input(self):
         for folder in ('backend_local', 'backend_tools', 'backend_server', 'backend_taskteam', 'frontend_web'):

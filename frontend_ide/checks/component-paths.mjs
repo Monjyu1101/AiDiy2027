@@ -5,6 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 // 実Vue部品の論理名と機能別ソースの対応（テスト専用）。
 export const componentPaths = {
+  "CpuPanel": "components/システム監視/CPUパネル.vue",
   "RefreshButton": "components/共通表示/再読込ボタン.vue",
   "CodePanel": "components/コード/コードパネル.vue",
   "LivePanel": "components/ライブ/ライブパネル.vue",

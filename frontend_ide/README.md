@@ -1,6 +1,6 @@
 # AiDiy IDE（Vue）
 
-Navi / Console / Code / Live / IDE / Task / Team / Browser の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は8種類です。
+Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
 
 
 ## 導入・起動の要件
@@ -371,3 +371,9 @@ AiDiy自身のモデル設定・画面状態・履歴は、選択プロジェク
 旧ホーム設定、旧プロジェクト `.aidiy/`、旧検索temp結果からの読込・自動移行・フォールバックはしません。旧ファイルは変更・削除しません。AiDiy本体では新規の各保存先をGit管理から除外します。バックアップでも各保存先を除外し、Electron/ブラウザprofileは汎用ビューア・検索・解析からも除外します。Consoleのシェル履歴とElectron・専用ブラウザprofileには専用 `.gitignore` を作るため、外部Gitプロジェクトでも生成物を除外します。利用者のGit設定は変更せず、既存の専用除外規則が不十分なら上書きせず停止します。既にGit追跡済みのファイルや `git add -f` は保護できません。外部CLIの認証保存先は各ツールの管理であり、自動移行しません。
 
 Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/` に保存します。bash / zsh / sh / PowerShell のユーザープロファイルは読み込まず、そこで追加する PATH・alias・関数は使用できません。HOME と外部 CLI の認証情報は変更しません。未対応シェルはホームへ保存せずエラーを返します。
+
+## CPU / GPU / RAM使用率
+
+`aidiy_cpu`、`node frontend_ide/aidiy_cpu/launch.mjs`、Diagの「CPU」から単独起動できます。Core / Toolsの起動は不要です。`aidiy_cpu --browser` はWeb表示、`--no-open` はサーバーだけを起動します。setup / cleanupは他のIDE群と同じ入口に含まれ、全体 `_start.py` のCPU選択は既定OFFです。
+
+IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。GPUはNVIDIAの `nvidia-smi` に対応し、複数台は最大値を表示します。未対応・未導入・取得失敗は0%ではなく「GPU 未取得」です。

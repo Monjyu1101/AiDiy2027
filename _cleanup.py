@@ -231,6 +231,7 @@ SERVICE_CLEANUP_TARGETS = (
     ),
     ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navi)", ("フロントエンド(navi)", "フロントエンド(Navigator)")),
     ("ide", "frontend_ide/aidiy_console", "フロントエンド(console)", ("フロントエンド(console)",)),
+    ("ide", "frontend_ide/aidiy_cpu", "フロントエンド(cpu)", ("フロントエンド(cpu)",)),
     ("ide", "frontend_ide/viewer", "フロントエンド(IDE)", ("フロントエンド(IDE)",)),
     ("channels", "frontend_channels/discord", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
     ("channels", "frontend_channels/slack", "フロントエンド(Slack)", ("フロントエンド(Slack)",)),
@@ -321,7 +322,7 @@ def stop_all_services(
         run_stop("Diag", lambda: _load_folder_module("backend_diag").stop_processes())
 
     for _choice_key, folder, description, _service_names in SERVICE_CLEANUP_TARGETS:
-        if folder in ("frontend_ide/aidiy_console", "frontend_ide/viewer", *CHANNEL_FOLDERS):
+        if folder in ("frontend_ide/aidiy_console", "frontend_ide/aidiy_cpu", "frontend_ide/viewer", *CHANNEL_FOLDERS):
             continue
         print_info(f"{description} の既存プロセスを停止します")
         run_stop(description, lambda folder=folder: _load_folder_start_module(folder).kill_ports())
@@ -331,6 +332,8 @@ def stop_all_services(
     else:
         print_info("フロントエンド(console) の既存プロセスを停止します")
         run_stop("Console の単独実行", lambda: _load_folder_start_module("frontend_ide/aidiy_console").kill_ports())
+    print_info("フロントエンド(cpu) の既存プロセスを停止します")
+    run_stop("CPU の単独実行", lambda: _load_folder_start_module("frontend_ide/aidiy_cpu").kill_ports())
     if keep_code:
         # aidiy_live は通常 core 無しに動作できないため、core と一緒に止めてよい。
         print_info("フロントエンド(Code / Live) aidiy_code は継続します")
@@ -707,7 +710,7 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
                         f"  {BACKEND_HERMES_PATH}/{env_name} を削除しますか？", default="y",
                     )
 
-    choices["ide"] = ask_yes_no("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)をクリーンアップしますか？", default="y")
+    choices["ide"] = ask_yes_no("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU)をクリーンアップしますか？", default="y")
     choices["channels"] = ask_yes_no("Channels(Discord / Slack)をクリーンアップしますか？", default="y")
 
     return choices
@@ -812,9 +815,9 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
     print()
     if choices.get("ide"):
         if not _run_folder_cleanup("frontend_ide", choices):
-            cleanup_errors.append("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)")
+            cleanup_errors.append("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU)")
     else:
-        print_info("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)のクリーンアップをスキップしました")
+        print_info("IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU)のクリーンアップをスキップしました")
 
     print()
     cleanup_errors.extend(cleanup_channels(choices))
@@ -870,7 +873,7 @@ def main():
     print_info("  6. フロントエンド(Web)")
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
-    print_info("  9. IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser)")
+    print_info("  9. IDE群(Navi / Console / Code / Live / IDE / Task / Team / Browser / CPU)")
     print_info(" 10. Channels(Discord / Slack)")
     print_info(f" 11. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()

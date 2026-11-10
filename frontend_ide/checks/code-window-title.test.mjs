@@ -36,7 +36,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   getParentWindow(){return this.parent||null;}
   setTitle(title){this.title=title;}
   getTitle(){return this.title;}
-  async loadURL(url){this.webContents.mainFrame.url=url.split('#')[0];}
+  async loadURL(url){this.loadedURL=url;this.webContents.mainFrame.url=url.split('#')[0];}
   destroy(){this.destroyed=true;this.emit('closed');}
   close(){const event={preventDefault(){this.prevented=true;}};this.emit('close',event);if(!event.prevented){this.destroy();if(created.every(window=>window.destroyed))app.emit('window-all-closed');}}
   isMinimized(){return false;}
@@ -282,4 +282,21 @@ test('Navi native Cruise title survives page updates and restores without changi
 test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開始し、単独Codeは従来どおり遅延する',async()=>{
  const ide=await desktopFixture({kind:'ide',active:false});assert.equal(ide.windows.size,1);assert.equal(ide.sharedStarts(),1);
  const code=await desktopFixture({kind:'code'});assert.equal(code.sharedStarts(),0);
+});
+
+ test('CPU uses one IDE-owned small window and closes with the session',async()=>{
+ const f=await desktopFixture(),open=f.handlers.get('development:open-app');
+ const [a,b]=await Promise.all([open(f.event(f.owner),'cpu'),open(f.event(f.owner),'cpu')]);assert.equal(a.ok,true);assert.equal(b.ok,true);
+ const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
+ assert.equal((await open(f.event(f.owner),'cpu')).reused,true);
+ await f.handlers.get('development:end-session')(f.event(f.owner));assert.equal(cpu[0].window.isDestroyed(),true);
+ });
+
+
+test('standalone CPU has its own name, icon, small bounds and no IDE owner',async()=>{
+ for(const platform of ['win32','darwin']){
+  const f=await desktopFixture({kind:'cpu',platform}),r=f.owner;
+  assert.equal(r.window.title,'AiDiy CPU');assert.equal(r.owner,undefined);assert.match(r.window.options.icon,/AiDiy_cpu.png$/);
+  assert.equal(f.app.name,platform==='darwin'?'AiDiy CPU':'aidiy_cpu');r.window.destroy();
+ }
 });

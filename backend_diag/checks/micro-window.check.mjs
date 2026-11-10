@@ -104,7 +104,7 @@ test('端数DPIの寸法差を補正し、上中央の反復収納と別画面�
 
 test('アイコン化と通常復帰は切替開始時のフォーム左肩を引き継ぐ',()=>{
  const {w,control}=fixture(),normal=w.getBounds();
- control.set(true,{origin:{x:600,y:350,width:330,height:188}});
+ control.set(true,{origin:{x:600,y:350,width:360,height:188}});
  assert.deepEqual(w.bounds,{x:600,y:350,width:128,height:128});
  w.bounds.x=720;w.bounds.y=400;control.set(false);assert.deepEqual(w.bounds,{...normal,x:720,y:400});
 });

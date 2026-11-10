@@ -25,22 +25,22 @@ async function fixture(t){
 test('unconfigured channel apps hidden; missing/relative/file/unknown inputs never launch or check tasks',async t=>{
  const f=await fixture(t);let reads=0;
  const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),tasks:async()=>{reads++;return [];}});
- assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','ide','navi','console','code','live','chrome','browser']);
- for(const id of ['avatar','ide','console','code','live','discord'])for(const path of ['',undefined,'relative',join(f.root,'missing')])await assert.rejects(manager.launch(id,path),{status:400});
+ assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','ide','cpu','navi','console','code','live','chrome','browser']);
+ for(const id of ['cpu','avatar','ide','console','code','live','discord'])for(const path of ['',undefined,'relative',join(f.root,'missing')])await assert.rejects(manager.launch(id,path),{status:400});
  await writeFile(join(f.root,'file'),'x');await assert.rejects(manager.launch('avatar',join(f.root,'file')),{status:400});
  await assert.rejects(manager.launch('arbitrary-command',f.project),{status:400});assert.equal(reads,0);
 });
 test('project argument/cwd remain exact; Avatar retains app base; detached logs and no IPC ownership',async t=>{
  const f=await fixture(t);
- for(const id of ['avatar','ide','console','code','live','discord']){
+ for(const id of ['cpu','avatar','ide','console','code','live','discord']){
   assert.equal((await f.manager.launch(id,f.project)).受付,true);
   const call=f.calls.at(-1);assert.equal(call.options.cwd,id==='avatar'?f.root:f.project);
   assert.equal(call.options.detached,true);assert.equal(call.options.shell,false);assert.equal(call.options.windowsHide,true);assert.equal(call.options.stdio[0],'ignore');assert.equal(call.options.stdio.includes('ipc'),false);assert.equal(call.child.unreferenced,true);
   if(id==='discord')assert.equal(call.args[0],join(f.root,'frontend_channels','discord','panel','launch.mjs'));
   if(id==='avatar'){assert.equal(call.command,process.execPath);assert.equal(call.args.at(-1),join(f.root,'frontend_avatar','launch.mjs'));}
-  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['ide','console','code'].includes(id));}
+  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['cpu','ide','console','code'].includes(id));}
  }
- assert.equal(f.calls.length,6);
+ assert.equal(f.calls.length,7);
 });
 test('singleton checks run only on click, block existing tasks, permit IDE/Console/Code repeats and serialize races',async t=>{
  const f=await fixture(t);let reads=0,calls=0,release;
@@ -83,7 +83,7 @@ test('authenticated API rejects arbitrary commands/methods/oversized payloads',a
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  assert.equal((await fetch(base+'api/アプリ起動')).status,401);
  assert.equal((await fetch(base+'api/アプリ起動',{headers})).status,200);
- for(const id of ['avatar','ide','console','code','live','discord']){
+ for(const id of ['cpu','avatar','ide','console','code','live','discord']){
   const response=await fetch(base+`AiDiy_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
   assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../ui/src/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));
  }
@@ -148,4 +148,10 @@ test('Navi is before Console and launches only selected project in a separate wi
 test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
  for(const command of ['node /repo/frontend_channels/discord/panel/launch.mjs','node C:\\repo\\frontend_channels\\discord\\src\\web-server.ts'])assert.equal(アプリタスク('discord',{command}),true,command);
  for(const command of ['node /repo/frontend_channels/slack/panel/launch.mjs','node /repo/frontend_channels/panel/launch.mjs','node /repo/frontend_channels/discord-other/panel/launch.mjs'])assert.equal(アプリタスク('discord',{command}),false,command);
+});
+
+test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
+ const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
+ await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.shell,false);
+ const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列(catalog.対象).map(x=>x.id);assert.equal(ids.indexOf('ide')+1,ids.indexOf('cpu'));
 });

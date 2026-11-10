@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-const movableKinds=new Set(['ide','code','live','navi','console','task','team','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation','diag','avatar','discord','slack']);
+const movableKinds=new Set(['cpu','ide','code','live','navi','console','task','team','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation','diag','avatar','discord','slack']);
 const {showWindowMoveFeedback}=require('./窓移動表示.cjs');
 const {createCodeDrag}=require('./code-drag.cjs');
 const {randomUUID}=require('node:crypto');

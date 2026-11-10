@@ -121,7 +121,7 @@ try{
  const desktop=await evaluate(`(()=>{const consoleView=document.querySelector('.start-console');return {page:document.documentElement.scrollHeight>innerHeight,height:consoleView.clientHeight,overflow:getComputedStyle(consoleView).overflowY}})()`);
  assert.equal(desktop.page,false);assert.ok(desktop.height>200,JSON.stringify(desktop));assert.equal(desktop.overflow,'auto');
  await click('ランチャー表示');await until(`document.querySelector('.start-mini')`);
- await send('Emulation.setDeviceMetricsOverride',{width:330,height:248,deviceScaleFactor:1,mobile:false});await sleep(100);await capture('start-mini');
+ await send('Emulation.setDeviceMetricsOverride',{width:360,height:248,deviceScaleFactor:1,mobile:false});await sleep(100);await capture('start-mini');
  assert.equal(await evaluate(`document.querySelectorAll('.mini-service').length`),6);
  assert.equal(await evaluate(`document.querySelector('nav.tabs').getClientRects().length`),0);
  assert.equal(await evaluate(`document.querySelector('footer').getClientRects().length`),0);
@@ -188,7 +188,7 @@ try{
  await click('強制停止');await until(`document.querySelector('#run').textContent==='一括起動'&&!document.querySelector('#run').disabled`);
  assert.deepEqual(stopCalls,['web','taskteam','apps','core','tools','local']);assert.ok(children.every(child=>child.closed));
  assert.equal(openPorts.size,0);await capture('start-all-stopped');
- assert.deepEqual(errors,[]);console.log('起動画面: 起動タブの追従・新着ログの最下部表示・手動選択保持・コピーと停止・ミニ表示・330/390/1280px表示 OK');
+ assert.deepEqual(errors,[]);console.log('起動画面: 起動タブの追従・新着ログの最下部表示・手動選択保持・コピーと停止・ミニ表示・360/390/1280px表示 OK');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

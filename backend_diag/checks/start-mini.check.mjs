@@ -18,7 +18,7 @@ function fakeWindow(maximized=false){
 }
 test('mini window has fixed width and compact fallback height, restoring original bounds and minimum',()=>{
  const window=fakeWindow(),controller=miniWindow.ミニ表示を作成(window),original=structuredClone(window.bounds);
- assert.equal(controller.set(true),true);assert.equal(controller.active,true);assert.deepEqual(window.bounds,{...original,width:330,height:134});assert.deepEqual(window.minimum,[330,134]);assert.equal(window.maximizable,false);
+ assert.equal(controller.set(true),true);assert.equal(controller.active,true);assert.deepEqual(window.bounds,{...original,width:360,height:134});assert.deepEqual(window.minimum,[360,134]);assert.equal(window.maximizable,false);
  controller.set(true);controller.set(false);assert.deepEqual(window.bounds,original);assert.deepEqual(window.minimum,[420,320]);assert.equal(window.maximizable,true);assert.equal(controller.active,false);
 });
 test('最大化からミニにした後も、現在のフォーム左肩から通常寸法へ戻る',()=>{
@@ -28,8 +28,8 @@ test('最大化からミニにした後も、現在のフォーム左肩から�
 test('startup mini preserves pin and bottom-right margin through resize and restore',()=>{
  for(const top of [true,false]){
   const window=fakeWindow();window.top=top;const original=structuredClone(window.bounds),controller=miniWindow.ミニ表示を作成(window,{screen:{getPrimaryDisplay:()=>({workArea:{x:-1920,y:32,width:1920,height:1080}}),getDisplayMatching:()=>({workArea:{x:-1920,y:32,width:1920,height:1080}})}});
-  controller.set(true,{initial:true});assert.deepEqual(window.bounds,{x:-338,y:970,width:330,height:134});assert.equal(window.top,top);
-  controller.resize(200);assert.deepEqual(window.bounds,{x:-338,y:904,width:330,height:200});controller.set(false);assert.deepEqual(window.bounds,{...original,x:-1168,y:284});assert.equal(window.top,top);
+  controller.set(true,{initial:true});assert.deepEqual(window.bounds,{x:-368,y:970,width:360,height:134});assert.equal(window.top,top);
+  controller.resize(200);assert.deepEqual(window.bounds,{x:-368,y:904,width:360,height:200});controller.set(false);assert.deepEqual(window.bounds,{...original,x:-1168,y:284});assert.equal(window.top,top);
  }
 });
 
@@ -43,7 +43,7 @@ test('mini height follows zero CLI, CLI, error and zero CLI without losing saved
   for(const height of [134,186,200,134]){
    const before=window.resizes,minimumBefore=window.minimumChanges;
    const previous=window.bounds.height;
-   assert.equal(controller.resize(height),true);assert.deepEqual(window.bounds,{x:-400,y:20,width:330,height});assert.deepEqual(window.minimum,[330,height]);
+   assert.equal(controller.resize(height),true);assert.deepEqual(window.bounds,{x:-400,y:20,width:360,height});assert.deepEqual(window.minimum,[360,height]);
    assert.equal(window.resizes,before+(previous===height?0:1));assert.equal(window.minimumChanges,minimumBefore+(previous===height?0:1));
    assert.equal(controller.set(true),true);assert.equal(controller.resize(height),true);assert.equal(window.resizes,before+(previous===height?0:1),'同じ高さで再度リサイズしない');
   }
@@ -59,7 +59,7 @@ test('mini resizing accepts only bounded integer heights on a live active mini w
  controller.set(true);const mini=window.getBounds(),before=window.resizes;
  for(const height of [undefined,null,false,true,'134',{},[],[134],NaN,Infinity,-Infinity,0,79,361,134.5,Number.MAX_SAFE_INTEGER])assert.equal(controller.resize(height),false);
  assert.deepEqual(window.bounds,mini);assert.equal(window.resizes,before);
- for(const height of [80,360,80]){assert.equal(controller.resize(height),true);assert.equal(window.bounds.height,height);assert.deepEqual(window.minimum,[330,height]);}
+ for(const height of [80,360,80]){assert.equal(controller.resize(height),true);assert.equal(window.bounds.height,height);assert.deepEqual(window.minimum,[360,height]);}
  window.destroyed=true;assert.equal(controller.resize(134),false);assert.equal(window.bounds.height,80);
 });
 
@@ -108,7 +108,7 @@ test('右下ミニは高さの増減と通常復帰で余白を保ち、移動�
  controller.set(true);
  for(const height of [134,186,80,360,134]){
   controller.resize(height);
-  assert.deepEqual(window.bounds,{x:-350,y:-32-height,width:330,height});
+  assert.deepEqual(window.bounds,{x:-380,y:-32-height,width:360,height});
  }
  assert.deepEqual(controller.演出範囲(false),original);
  controller.set(false);assert.deepEqual(window.bounds,original);
@@ -120,12 +120,12 @@ test('右下ミニは高さの増減と通常復帰で余白を保ち、移動�
 test('低い画面で上下余白が同じ高さまで広げても、下基準を失わない',()=>{
  const window=fakeWindow(),screen={getDisplayMatching:()=>({workArea:{x:0,y:0,width:800,height:400}})};
  const controller=miniWindow.ミニ表示を作成(window,{screen});controller.set(true);
- window.bounds={x:450,y:246,width:330,height:134};
- controller.resize(360);assert.deepEqual(window.bounds,{x:450,y:20,width:330,height:360});
- controller.resize(134);assert.deepEqual(window.bounds,{x:450,y:246,width:330,height:134});
+ window.bounds={x:420,y:246,width:360,height:134};
+ controller.resize(360);assert.deepEqual(window.bounds,{x:420,y:20,width:360,height:360});
+ controller.resize(134);assert.deepEqual(window.bounds,{x:420,y:246,width:360,height:134});
  // 通常寸法が画面より大きくても、続くミニ復帰は元の角と余白を使う。
  controller.set(false);assert.deepEqual(window.bounds,{x:0,y:0,width:1160,height:820});
- controller.set(true);assert.deepEqual(window.bounds,{x:450,y:246,width:330,height:134});
+ controller.set(true);assert.deepEqual(window.bounds,{x:420,y:246,width:360,height:134});
  // ユーザー移動があれば、保持していた下基準を引き継がない。
  window.bounds.y=20;controller.resize(360);controller.resize(134);assert.equal(window.bounds.y,20);
 });

@@ -41,7 +41,7 @@ app.on('browser-window-created',(_event,window)=>{
    assert.deepEqual(window.getBounds(),before);return{...timing,bounds:before,boundsStable:true};
   })();openingCheck.catch(()=>{});return;
  }
- owner=window;let original;const nativeSetBounds=window.setBounds.bind(window);window.setBounds=(bounds,...args)=>{if(!original&&bounds.width===330)original=window.getNormalBounds();return nativeSetBounds(bounds,...args);};
+ owner=window;let original;const nativeSetBounds=window.setBounds.bind(window);window.setBounds=(bounds,...args)=>{if(!original&&bounds.width===360)original=window.getNormalBounds();return nativeSetBounds(bounds,...args);};
  window.webContents.once('did-finish-load',async()=>{
   try{
    await until(()=>window.isVisible()&&window.webContents.executeJavaScript("!!document.querySelector('.start-mini .mini-app-button')&&!document.documentElement.classList.contains('desktop-opening')"));
@@ -56,7 +56,7 @@ app.on('browser-window-created',(_event,window)=>{
     const current=window.getBounds();if(height===null||Math.abs(current.height-height)>2)return false;
     bounds=current;expectedHeight=height;return true;
    });
-   near(bounds,初期右下位置(area,{width:330,height:expectedHeight},8));assert.equal(window.isAlwaysOnTop(),false);
+   near(bounds,初期右下位置(area,{width:360,height:expectedHeight},8));assert.equal(window.isAlwaysOnTop(),false);
    const layout=await window.webContents.executeJavaScript(`(()=>{const v=document.querySelector('.start-mini');return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,miniScroll:v.scrollHeight,miniClient:v.clientHeight,rect:v.getBoundingClientRect().toJSON()};})()`);
    console.log(JSON.stringify({miniLayout:layout}));
    assert.ok(layout.scrollWidth<=layout.width,JSON.stringify(layout));assert.ok(layout.miniScroll<=layout.miniClient,JSON.stringify(layout));
@@ -84,7 +84,7 @@ app.on('browser-window-created',(_event,window)=>{
    const movedNormal=window.getNormalBounds();
    await window.webContents.executeJavaScript("document.querySelector('#move-probe-background')?.remove();document.querySelector('.title-mini-switch').click()");
    await until(()=>window.webContents.executeJavaScript("!!document.querySelector('.start-mini')&&!document.querySelector('.mini-restore').disabled"));
-   assert.ok(Math.abs(window.getBounds().width-330)<=2);
+   assert.ok(Math.abs(window.getBounds().width-360)<=2);
    await window.webContents.executeJavaScript("document.querySelector('.mini-restore').click()");
    await until(()=>window.webContents.executeJavaScript("!document.querySelector('.start-mini')&&!document.querySelector('.title-mini-switch').disabled"));
    near(window.getNormalBounds(),movedNormal);

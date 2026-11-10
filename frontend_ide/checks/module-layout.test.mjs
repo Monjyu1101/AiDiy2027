@@ -10,7 +10,7 @@ const root = new URL('../', import.meta.url);
 
 test('モジュール配置: 公開入口を維持し、内部処理は担当フォルダから読み込む', async () => {
   for (const entry of ['launch.mjs', 'server.mjs', 'desktop.cjs', '_setup.py', '_cleanup.py',
-    'aidiy_console/launch.mjs', 'aidiy_code/launch.mjs', 'aidiy_live/launch.mjs', 'aidiy_ide/launch.mjs']) {
+    'aidiy_cpu/launch.mjs', 'aidiy_console/launch.mjs', 'aidiy_code/launch.mjs', 'aidiy_live/launch.mjs', 'aidiy_ide/launch.mjs']) {
     await access(new URL(entry, root));
   }
   const modules = {
@@ -49,10 +49,10 @@ test('Vue機能配置: 四画面と共通部品は日本語の担当フォルダ
   assert.deepEqual(entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort(), ['components', 'dialog']);
   const featureEntries = await readdir(new URL('src/components/', root), { withFileTypes: true });
   assert.deepEqual(featureEntries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort(),
-    ['コード', 'ライブ', 'コンソール', '開発スペース', 'ファイル閲覧', 'ファイル検索', 'ブラウザ', '下書き連携', '共通表示', 'タスクチーム', '添付ファイル'].sort());
+    ['システム監視', 'コード', 'ライブ', 'コンソール', '開発スペース', 'ファイル閲覧', 'ファイル検索', 'ブラウザ', '下書き連携', '共通表示', 'タスクチーム', '添付ファイル'].sort());
   assert.deepEqual((await readdir(new URL('src/dialog/', root))).sort(), ['ファイル解析ダイアログ.vue','ブラウザ解析ダイアログ.vue', 'ファイル履歴ダイアログ.vue', '下書き連携ダイアログ.vue', '共通ダイアログ.vue'].sort());
   const app = await readFile(new URL('src/App.vue', root), 'utf8');
-  for (const name of ['CodePanel', 'LivePanel', 'ConsolePanel', 'SpaceView', 'StatusBar', 'DraftHandoffDialog']) {
+  for (const name of ['CpuPanel', 'CodePanel', 'LivePanel', 'ConsolePanel', 'SpaceView', 'StatusBar', 'DraftHandoffDialog']) {
     assert.ok(app.includes(`'./${componentPaths[name]}'`), name);
   }
   for (const path of Object.values(componentPaths)) await access(new URL(`src/${path}`, root));

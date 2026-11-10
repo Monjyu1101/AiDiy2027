@@ -13,7 +13,7 @@ const props=defineProps({state:Object,cliState:Object,online:Boolean,visible:Boo
 const folderInput=ref();
 watch(()=>!!props.state.一覧.value,async value=>{if(value){await nextTick();folderInput.value?.focus();}});
 watch(()=>props.online&&props.visible,value=>{if(value){void props.state.読込();void props.cliState?.読込();}},{immediate:true});
-const descriptions={avatar:'AIコアのアバター画面を開きます。',task:'タスク要求・フロー図・明細を開きます。',team:'チーム活動画面を開きます。',ide:'プロジェクトの開発スペースを開きます。',console:'プロジェクトでターミナルを開きます。',code:'プロジェクトのコード支援画面を開きます。',live:'プロジェクトのライブ会話画面を開きます。',discord:'プロジェクトのDiscord接続パネルを開きます。',slack:'プロジェクトのSlack接続パネルを開きます。',chrome:'システム起動の「手動で開く」と同じChromeで http://localhost:8090/ を開きます。',browser:'IDE内のBrowserを単独ウィンドウで開きます（chrome_devtools対応）。'};
+const descriptions={cpu:'CPU / GPU / RAMの使用率を小型ウィンドウで表示します。',avatar:'AIコアのアバター画面を開きます。',task:'タスク要求・フロー図・明細を開きます。',team:'チーム活動画面を開きます。',ide:'プロジェクトの開発スペースを開きます。',console:'プロジェクトでターミナルを開きます。',code:'プロジェクトのコード支援画面を開きます。',live:'プロジェクトのライブ会話画面を開きます。',discord:'プロジェクトのDiscord接続パネルを開きます。',slack:'プロジェクトのSlack接続パネルを開きます。',chrome:'システム起動の「手動で開く」と同じChromeで http://localhost:8090/ を開きます。',browser:'IDE内のBrowserを単独ウィンドウで開きます（chrome_devtools対応）。'};
 const 起動一覧=computed(()=>起動項目を整列([...props.state.項目.value.map(item=>({...item,kind:'app'})),...(props.cliState?.項目?.value||[]).map(item=>({...item,kind:'cli'}))]));
 const CLI名=item=>item.名前;
 const CLI禁止=item=>item.利用可能!==true||!props.online||!props.state.フォルダ.value||!!props.state.処理中.value&&!props.state.処理中.value.startsWith('cli:')||props.state.選択中.value;

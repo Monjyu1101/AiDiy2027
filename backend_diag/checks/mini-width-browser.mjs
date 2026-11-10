@@ -21,21 +21,21 @@ try{
  async function until(expression){for(let i=0;i<140;i++){if(await evaluate(expression))return;await sleep(50);}assert.fail(expression);}
 
  const css=readFileSync(new URL('../static/style.css',import.meta.url),'utf8');
- const buttons=(kind,n)=>Array.from({length:n},(_,i)=>`<button class="mini-${kind}-button"><span class="mini-icon-frame"><img width="40" height="40" alt="${i}"></span></button>`).join('');
+ const buttons=(kind,n)=>Array.from({length:n},(_,i)=>`<button class="mini-${kind}-button"><span class="mini-icon-frame"><img width="36" height="36" alt="${i}"></span></button>`).join('');
  const title=`<header class="panel-brand desktop compact"><div class="launcher-selector"><button>アイコン化</button></div><strong>AiDiy ランチャー</strong><span class="window-actions">${['−','□','📌','×'].map(x=>`<button>${x}</button>`).join('')}</span></header><div class="connection-bar online"></div>`;
  const html=`<style>${css}</style><div id="app">${title}<section class="panel start-mini"><div class="mini-content"><div class="mini-app-launch"><div class="mini-app-buttons">${buttons('app',11)}</div><button class="mini-project-link mini-app-message required">SELECT YOUR PROJECT</button></div><div class="mini-cli-launch"><div class="mini-cli-buttons">${buttons('cli',8)}</div></div><div class="mini-services">${['Tools','Core','Apps','Task/Team','Web','Local'].map(x=>`<button class="mini-service"><span class="mini-name">${x}</span></button>`).join('')}</div></div></section></div>`;
  for(const scale of [1,1.25,1.5]){
-  await send('Emulation.setDeviceMetricsOverride',{width:330,height:360,deviceScaleFactor:scale,mobile:false});
+  await send('Emulation.setDeviceMetricsOverride',{width:360,height:360,deviceScaleFactor:scale,mobile:false});
   await send('Page.setDocumentContent',{frameId:(await send('Page.getFrameTree')).result.frameTree.frame.id,html});
   const result=await evaluate(`(()=>{
    const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom}};
    const apps=[...document.querySelectorAll('.mini-app-button')].map(rect),cli=[...document.querySelectorAll('.mini-cli-button')].map(rect);
-   return {apps,cli,overflow:document.documentElement.scrollWidth>innerWidth,height:document.querySelector('#app').scrollHeight,title:[...document.querySelector('.panel-brand').children].map(rect),hits:[...document.querySelectorAll('button')].every(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.right<=330&&r.bottom<=360&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}),icons:[...document.querySelectorAll('.mini-icon-frame')].every(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.x>=p.x&&r.right<=p.right&&r.bottom<=p.bottom})};
+   return {apps,cli,overflow:document.documentElement.scrollWidth>innerWidth,height:document.querySelector('#app').scrollHeight,title:[...document.querySelector('.panel-brand').children].map(rect),hits:[...document.querySelectorAll('button')].every(e=>{const r=e.getBoundingClientRect();return r.x>=0&&r.right<=360&&r.bottom<=360&&e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}),icons:[...document.querySelectorAll('.mini-icon-frame')].every(e=>{const r=e.getBoundingClientRect(),p=e.parentElement.getBoundingClientRect();return r.x>=p.x&&r.right<=p.right&&r.bottom<=p.bottom})};
   })()`);
   assert.equal(result.overflow,false);assert.equal(result.hits,true);assert.equal(result.icons,true);
-  assert.equal(result.apps.filter(r=>r.y===result.apps[0].y).length,6);
-  assert.equal(result.cli.filter(r=>r.y===result.cli[0].y).length,6);
+  assert.equal(result.apps.filter(r=>r.y===result.apps[0].y).length,7);
+  assert.equal(result.cli.filter(r=>r.y===result.cli[0].y).length,7);
   assert.ok(result.title[0].right<=result.title[1].x&&result.title[1].right<=result.title[2].x);
-  assert.ok(result.height<=360);console.log(JSON.stringify({scale,width:330,height:result.height,appWidth:result.apps[0].w,cliWidth:result.cli[0].w,clickTargets:'OK'}));
+  assert.ok(result.height<=360);console.log(JSON.stringify({scale,width:360,height:result.height,appWidth:result.apps[0].w,cliWidth:result.cli[0].w,clickTargets:'OK'}));
  }
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

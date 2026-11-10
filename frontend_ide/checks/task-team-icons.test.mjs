@@ -23,5 +23,5 @@ test('Task and Team use the common AiDiy artwork and fixed colored title bands',
 });
 test('standalone Task and Team select their own public icon',async()=>{
  const desktop=await readFile(new URL('desktop.cjs',root),'utf8');
- assert.match(desktop,/\['navi','code','live','console','task','team'\]\.includes\(kind\)/);
+ assert.match(desktop,/\['cpu','navi','code','live','console','task','team'\]\.includes\(kind\)/);
 });

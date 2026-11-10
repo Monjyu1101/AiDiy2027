@@ -128,4 +128,4 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 
 ## Vue共通画面
 
-現行のNavi / Console / Code / Live / IDE / Task / Team / Browserの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は8種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
+現行のNavi / Console / Code / Live / IDE / Task / Team / Browser / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。

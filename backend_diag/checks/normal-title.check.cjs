@@ -59,7 +59,7 @@ test('special display, fullscreen, unfocused, non-Windows and excluded target ca
 });
 test('maximized standard to mini cancels title gesture and retains original normal dimensions on return',async()=>{
  const f=fixture();f.sizing.maximize();f.point({x:-1000,y:45});f.emit('mouseDown');await flush();f.controller.cancel();f.enable(false);
- const mini=ミニ表示を作成(f.sizing,{screen:f.screen});mini.set(true);f.point({x:300,y:400});f.emit('mouseMove');await flush();assert.equal(f.bounds.width,330);
+ const mini=ミニ表示を作成(f.sizing,{screen:f.screen});mini.set(true);f.point({x:300,y:400});f.emit('mouseMove');await flush();assert.equal(f.bounds.width,360);
  mini.set(false);f.enable(true);assert.equal(f.bounds.width,800);assert.equal(f.bounds.height,600);f.controller.dispose();
 });
 test('isolated title target rejects controls/popups/outside and accepts only standard header background',()=>{

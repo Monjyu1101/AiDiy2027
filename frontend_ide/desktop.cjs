@@ -11,9 +11,9 @@ const {projectProfile}=require('./デスクトップ/project-profile.cjs');
 const {taskTeamProfile}=require('./デスクトップ/タスクチーム起動.cjs');
 const projectFixed=process.env.AIDIY_DEVELOPMENT_PROJECT_FIXED==='1';
 const url=process.env.AIDIY_DEVELOPMENT_URL,kind=process.env.AIDIY_DEVELOPMENT_KIND;
-if(!url||!/^http:\/\/127\.0\.0\.1:\d+\/$/.test(url)||!['code','live','ide','console','task','team','browser','navi'].includes(kind))throw Error('起動元が不正です。');
+if(!url||!/^http:\/\/127\.0\.0\.1:\d+\/$/.test(url)||!['code','live','ide','console','task','team','browser','navi','cpu'].includes(kind))throw Error('起動元が不正です。');
 const cliConsoleWindow=kind==='console'&&process.env.AIDIY_DEVELOPMENT_CLI_WINDOW==='1';
-const appName=`AiDiy ${kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?'Code':kind==='live'?'Live':kind==='task'?'Task':kind==='team'?'Team':kind==='browser'?'Browser':'Console'}`;
+const appName=`AiDiy ${kind==='cpu'?'CPU':kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?'Code':kind==='live'?'Live':kind==='task'?'Task':kind==='team'?'Team':kind==='browser'?'Browser':'Console'}`;
 app.setName(process.platform==='darwin'?appName:`aidiy_${kind}`);
 // ランチャーが引数を解決したプロジェクトで、ロック取得より先にIDEのプロファイルを分ける。
 const project=projectRoot(process.env.AIDIY_DEVELOPMENT_PROJECT??'',resolve(__dirname,'..'));
@@ -209,10 +209,10 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
   bounds=display?allWindowBounds(kind,display.workArea,displaySlot):(anchor&&owner?panelBounds(anchor,owner,screen):null)||windowBounds(kind,area,ownerBounds,slot,cliConsoleWindow&&!owner);
  }catch(error){placement?.close();throw error;}
  if(kind==='task')bounds=taskWindowBounds(taskView,area);
- const baseTitle=['task','team'].includes(kind)?`AiDiy ${(owner||projectFixed)?'IDE / ':''}${kind.toUpperCase()}`:kind==='browser'?(owner?`AiDiy IDE / Browser ${slot+1}`:'AiDiy Browser'):kind==='viewer'?`AiDiy IDE / Viewer - ${viewerPath.split('/').at(-1)}`:`AiDiy ${owner?'IDE / ':''}${kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?`Code${owner?' '+(slot+1):''}`:kind==='console'?`Console${owner?' '+(slot+1):''}`:kind==='task'?'Task':kind==='team'?'Team':'Live'}`;
+ const baseTitle=['task','team'].includes(kind)?`AiDiy ${(owner||projectFixed)?'IDE / ':''}${kind.toUpperCase()}`:kind==='browser'?(owner?`AiDiy IDE / Browser ${slot+1}`:'AiDiy Browser'):kind==='viewer'?`AiDiy IDE / Viewer - ${viewerPath.split('/').at(-1)}`:`AiDiy ${owner?'IDE / ':''}${kind==='cpu'?'CPU':kind==='navi'?'Navi':kind==='ide'?'IDE':kind==='code'?`Code${owner?' '+(slot+1):''}`:kind==='console'?`Console${owner?' '+(slot+1):''}`:kind==='task'?'Task':kind==='team'?'Team':'Live'}`;
  let window;
  let title=baseTitle+(kind==='console'&&!owner&&cliConsoleWindow&&process.env.AIDIY_DEVELOPMENT_CLI_NAME?' / '+process.env.AIDIY_DEVELOPMENT_CLI_NAME:'');
- try{window=new BrowserWindow({title,...bounds,...(kind==='task'?{minWidth:bounds.minWidth,minHeight:bounds.minHeight}:windowMinimumSize(kind,bounds)),show:false,frame:false,roundedCorners:false,...(kind==='browser'?{enableLargerThanScreen:true}:{}),backgroundColor:'#000',autoHideMenuBar:true,icon:kind==='browser'&&!owner?join(__dirname,'public','AiDiy.png'):join(__dirname,'public',`AiDiy_${['navi','code','live','console','task','team'].includes(kind)?kind:'ide'}.png`),webPreferences:{preload:join(__dirname,'デスクトップ/preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false,autoplayPolicy:'no-user-gesture-required'}});}catch(error){placement?.close();throw error;}
+ try{window=new BrowserWindow({title,...bounds,...(kind==='task'?{minWidth:bounds.minWidth,minHeight:bounds.minHeight}:windowMinimumSize(kind,bounds)),show:false,frame:false,roundedCorners:false,...(kind==='browser'?{enableLargerThanScreen:true}:{}),backgroundColor:'#000',autoHideMenuBar:true,icon:kind==='browser'&&!owner?join(__dirname,'public','AiDiy.png'):join(__dirname,'public',`AiDiy_${['cpu','navi','code','live','console','task','team'].includes(kind)?kind:'ide'}.png`),webPreferences:{preload:join(__dirname,'デスクトップ/preload.cjs'),sandbox:true,contextIsolation:true,nodeIntegration:false,autoplayPolicy:'no-user-gesture-required'}});}catch(error){placement?.close();throw error;}
  window.once('closed',()=>placement?.close());
  // autoplayPolicy: ビューアの「表示」で開いた HTML（ナレーション付きの動画ページなど）の音声を、クリックなしで再生できるようにする。
  // Windowsのフレームレス窓も、外枠の論理座標を明示してDPI差を補正する。
@@ -399,7 +399,7 @@ app.whenReady().then(async()=>{
  });
  ipcMain.handle('development:open-app',async(event,type,displayId)=>{
   const source=trustedEvent(event),record=source?.kind==='viewer'?source.owner:source;
-  if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['code','live','avatar','console','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
+  if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['cpu','code','live','avatar','console','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
   // ピン留めからの明示起動も、元のIDEと同じ利用セッションだけに限定する。
   const revision=record.revision;let state;
   try{
@@ -416,14 +416,15 @@ app.whenReady().then(async()=>{
    const opening=avatarLauncher.open(record,state.project.path);record.pending.set(type,opening);
    try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
   }
-  // Codeは依頼ごとに別窓。Task / Teamは初期化中も共有する。
-  if(['live','task','team'].includes(type)&&record.pending.has(type))return record.pending.get(type);
+  // Codeは依頼ごとに別窓。CPU / Task / Teamは初期化中も共有する。
+  if(['cpu','live','task','team'].includes(type)&&record.pending.has(type))return record.pending.get(type);
   const opening=(async()=>{
    let child;
    try{
     const key=sessionKey(state);
     const existing=[...windows.values()].find(item=>item.owner===record&&item.kind===type&&item.linkKey===key&&!item.window.isDestroyed());
-    if(['live','task','team'].includes(type)&&existing){focusWindow(existing.window);return{ok:true,reused:true};}
+    if(['cpu','live','task','team'].includes(type)&&existing){focusWindow(existing.window);return{ok:true,reused:true};}
+    if(type==='cpu'){await createWindow('cpu',record.url+'#cpu',undefined,record,key,undefined,displayId);return{ok:true};}
     const {startDevelopment}=await import('./server.mjs');
     child=await startDevelopment(state.project.path,{kind:type,offline:state.mode==='offline',linked:true,projectFixed:['task','team'].includes(type)});
     const current=await readState(record);
@@ -440,7 +441,7 @@ app.whenReady().then(async()=>{
     return{ok:true};
    }catch(error){closeServer(child);return{ok:false,error:error.message};}
   })();
-  if(['live','task','team'].includes(type))record.pending.set(type,opening);
+  if(['cpu','live','task','team'].includes(type))record.pending.set(type,opening);
   try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
  });
  ipcMain.handle('development:code-move-begin',event=>codeDrag.begin(event));

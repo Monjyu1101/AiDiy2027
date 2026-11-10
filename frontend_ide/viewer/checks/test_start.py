@@ -67,7 +67,7 @@ class StartTests(unittest.TestCase):
         process.poll.return_value = None
         try:
             with patch.object(dev, 'THIS_DIR', module), patch.object(dev, 'node_command', return_value='node'), patch.object(dev.subprocess, 'Popen', return_value=process) as launch:
-                for kind in ('ide', 'console', 'task', 'team', 'browser'):
+                for kind in ('ide', 'console', 'task', 'team', 'browser', 'cpu'):
                     with self.subTest(kind=kind):
                         previous = module / 'out' / f'aidiy_{kind}' / 'previous.log'
                         previous.parent.mkdir(parents=True)

@@ -128,7 +128,7 @@ class LauncherIntegrationTests(unittest.TestCase):
             def local(name):
                 return Path(directory) / '_AIDIY' / name / 'bin'
             with patch.object(viewer._path_helper, 'launcher_directory', side_effect=local), patch.object(host, 'launcher_directory', side_effect=local), patch.object(viewer.shutil, 'which', return_value='/usr/bin/node'):
-                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('console', 'aidiy_console'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser')]:
+                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('console', 'aidiy_console'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('cpu', 'aidiy_cpu')]:
                     root = ROOT / 'frontend_ide' / folder
                     viewer.install_launcher(root, kind)
                     self.assertTrue(viewer.launcher_path(kind).is_file())

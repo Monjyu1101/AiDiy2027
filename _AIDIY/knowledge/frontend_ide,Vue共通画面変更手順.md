@@ -913,3 +913,13 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 `ナビ入力.js` はDOMの現在の `ownerDocument` にキーを登録し、別窓化・復帰で購読先を切り替えます。realmが異なるため `instanceof Element` は使いません。input、textarea、select、contenteditable（空属性／plaintext-onlyを含む）、標準ボタン等とIME入力を奪わず、blur／移動時に押下状態を解除します。破棄時はキー購読・移動検知タイマー・描画を解除します。
 
 単体検証は `node --test frontend_ide/checks/navigation-scenery.test.mjs frontend_ide/checks/navigation-aquarium.test.mjs frontend_ide/checks/navigation-kaleidoscope.test.mjs`。実描画確認は `node frontend_ide/scripts/check-navigation-scenery.mjs` を使います。ブラウザーを使わないコンパイル確認は `--compile-only` を付けます。これは配布用buildや本番アプリを起動せずVue部品を一時的に束ねる隔離ハーネスです。3種類の描画、黒地、魚の回避、ホバー気泡の上昇・追従・離脱、水面からの餌投入、ホバー地点の波紋、Space、repeat、入力欄、別Documentへの移動・復帰、破棄をChromiumで検証し、画像を `frontend_ide/temp/navigation-scenery-check/` に保存します。ローカルソケットを許可されたChromium環境が必要です。Electronの実別窓・実画面の目視確認は別途行ってください。
+
+## IDEのCPU / GPU / RAM小型画面（aidiy_cpu）
+
+利用開始後の「CPU」で開く。ElectronはIDE所有の460×260の子窓で、重複起動は既存窓を前面へ出し、利用終了時に閉じる。Webは画面右下の小型パネル。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルが重なる時だけ上下に離す。
+
+`aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。CPUは全論理コアの時間差分、RAMはOSの総メモリに対する使用率、GPUは `nvidia-smi` の利用率（複数台は最大値）。NVIDIA以外・コマンド未導入・取得失敗はnullとし、「GPU 未取得」と表示する。ブラウザが動くPCやIDEプロセスだけの使用率ではない。約1秒ごとに最大60回分を保持し、取得不能区間は線をつながない。非表示中は取得を止め、復帰時は履歴をクリアし、終了時は進行中の要求とタイマーを解除する。
+
+APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず1.5秒・16KiBで制限する。GPU未対応時は30秒おきに再確認し、重複要求はまとめる。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。外部ライブラリは追加しない。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
+
+確認: `node --test frontend_ide/checks/cpu-*.test.mjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。実ElectronとGPU実機での確認は別途必要。

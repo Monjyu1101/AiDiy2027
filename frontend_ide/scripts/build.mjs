@@ -22,7 +22,7 @@ async function ビルド実行(options) {
 }
 const root=fileURLToPath(new URL('../',import.meta.url));
 // 正本は同じ frontend_ide module の各 aidiy_*。他 module の素材は参照しない。
-for(const id of ['navi','console','code','live','ide','task','team','browser']){
+for(const id of ['navi','console','code','live','ide','task','team','browser','cpu']){
  await cp(join(root,`aidiy_${id}/AiDiy_${id}.png`),join(root,'public',`AiDiy_${id}.png`));
  await rm(join(root,'dist',`AiDiy_${id}.svg`),{force:true});
 }

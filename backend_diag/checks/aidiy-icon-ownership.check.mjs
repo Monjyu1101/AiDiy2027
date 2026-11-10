@@ -9,10 +9,10 @@ import {readFile} from 'node:fs/promises';
 import {アプリアイコン} from '../ui/src/components/アプリ起動/アプリアイコン.mjs';
 import {createHandler} from '../diag_main.mjs';
 const root=new URL('../',import.meta.url),bytes=name=>readFile(new URL(name,root));
-const icons=[...['navi','console','code','live','ide','task','team','browser','avatar','diag','discord','slack'].map(id=>({id,source:`アイコン/AiDiy_${id}.png`,file:`AiDiy_${id}.png`})),{id:'aidiy_hermes',source:'CLIアイコン/aidiy_hermes.png',file:'CLI_aidiy_hermes.png'}];
+const icons=[...['cpu','navi','console','code','live','ide','task','team','browser','avatar','diag','discord','slack'].map(id=>({id,source:`アイコン/AiDiy_${id}.png`,file:`AiDiy_${id}.png`})),{id:'aidiy_hermes',source:'CLIアイコン/aidiy_hermes.png',file:'CLI_aidiy_hermes.png'}];
 
-test('AiDiy 13 種は Diag 内の PNG コピーだけで配布を検証できる',async()=>{
- assert.equal(icons.length,13);assert.equal(new Set(icons.map(icon=>icon.id)).size,13);
+test('AiDiy 14 種は Diag 内の PNG コピーだけで配布を検証できる',async()=>{
+ assert.equal(icons.length,14);assert.equal(new Set(icons.map(icon=>icon.id)).size,14);
  for(const icon of icons){
   const png=await bytes('ui/src/components/アプリ起動/'+icon.source);
   assert.equal(png.subarray(1,4).toString(),'PNG');assert.ok(png.readUInt32BE(16)>0);assert.ok(png.readUInt32BE(20)>0);

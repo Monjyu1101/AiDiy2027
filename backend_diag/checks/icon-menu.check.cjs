@@ -57,7 +57,7 @@ test('メニューpreloadはSlackをAiDiy列へ置き、disabledと安全な理�
 });
 
 test('native右クリックのAiDiy系は配布済ローカルPNGを使い旧SVG名を参照しない',()=>{
- const f=fixture(),ids=['browser','task','team','discord','slack'];f.menu.close();
+ const f=fixture(),ids=['cpu','browser','task','team','discord','slack'];f.menu.close();
  f.menu.open([...ids.map(id=>({key:'app:'+id,label:id})),{key:'cli:aidiy_hermes',label:'Hermes'}],()=>{});
  f.latest().webContents.emit('did-finish-load');
  const expected=[...ids.map(id=>'AiDiy_'+id+'.png'),'CLI_aidiy_hermes.png'];assert.deepEqual(f.imagePaths.map(p=>path.basename(p)),expected);
