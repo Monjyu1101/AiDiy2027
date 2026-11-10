@@ -112,9 +112,9 @@ test('単独版も占有ポート・重複・表示前失敗を成功にしな�
 });
 test('引数はcwd基準で検証し存在しないフォルダーや不完全な指定を拒否する', async () => {
   const { parseOptions } = await import('../launch.mjs');
-  assert.equal(parseOptions(['--alone']).project, process.cwd());
-  assert.equal(parseOptions(['--alone', '--project', '.', '--foreground']).foreground, true);
-  for (const args of [['--project', '.'], ['--alone', '--project'], ['--alone', '--project', '/missing-avatar-project'], ['--unknown']]) {
+  assert.equal(parseOptions(['--internal-auth']).project, process.cwd());
+  assert.equal(parseOptions(['--internal-auth', '--project', '.', '--foreground']).foreground, true);
+  for (const args of [['--alone'], ['--project', '.'], ['--internal-auth', '--project'], ['--internal-auth', '--project', '/missing-avatar-project'], ['--unknown']]) {
     assert.throws(() => parseOptions(args));
   }
 });
@@ -126,7 +126,7 @@ test('切り離し後にも単独版と空白を含むプロジェクト引数�
     queueMicrotask(() => child.emit('message', { launchReady: true, url: 'http://127.0.0.1:43210' }));
     return child;
   } });
-  assert.deepEqual(invocation.args.slice(1), ['--foreground', '--alone', '--project', '/tmp/project with spaces']);
+  assert.deepEqual(invocation.args.slice(1), ['--foreground', '--internal-auth', '--project', '/tmp/project with spaces']);
   assert.equal(invocation.options.env.AIDIY_LAUNCHER_CHILD, '1');
   assert.equal(result.launchReady, true);
   assert.equal(child.connected, false);

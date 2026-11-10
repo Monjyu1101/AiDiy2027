@@ -28,15 +28,15 @@ test('Avatar profile stays under its installation root, without consulting home 
  }
 });
 test('Alone profile is isolated by canonical project and program before instance lock',()=>{
- for(const project of ['/fixture/project-a','/fixture/project-b']){
+ for(const project of ['/fixture/project-a','/fixture/project-b','/fixture/aidiy']){
   const root='/fixture/aidiy', calls=[];
   vm.runInNewContext(source.slice(start,end),{
    __dirname:path.join(root,'frontend_avatar','dist-electron'),path,
    process:{env:{AIDIY_AVATAR_ALONE:'1',AIDIY_AVATAR_PROJECT:project}},
    realpathSync:value=>value,statSync:()=>({isDirectory:()=>true}),configuredCoreBaseUrl:base=>{assert.equal(base,root);return 'http://127.0.0.1:18091';},
-   require:()=>({programDataDirectory:(selected,program,base,children)=>{assert.equal(selected,project);assert.equal(program,'aidiy_avatar_alone');assert.equal(base,root);return path.join(selected,'_AIDIY',program,...children);},preparePrivateDirectory:()=>{}}),
+   require:()=>({programDataDirectory:(selected,program,base,children)=>{assert.equal(selected,project);assert.equal(program,'aidiy_avatar');assert.equal(base,root);return path.join(selected,'_AIDIY',program,...children);},preparePrivateDirectory:()=>{}}),
    app:{setPath:(name,value)=>calls.push([name,value])},
   });
-  assert.equal(calls[0][1],path.join(project,'_AIDIY','aidiy_avatar_alone','electron'));
+  assert.equal(calls[0][1],path.join(project,'_AIDIY','aidiy_avatar','electron','internal'));
  }
 });

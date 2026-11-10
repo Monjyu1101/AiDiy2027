@@ -174,18 +174,19 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - DevTools Console に `desktopApi` 未定義エラーがない。
 - `npm run type-check` が通る。
 
-## Avatar単独版ランチャー
+## Avatar共通ランチャー
 
-`frontend_avatar/_setup.py` の既存ランチャー登録で、`aidiy_avatar` と一緒に `aidiy_avatar_alone` を登録します。setup / start の案内項目は増やしません。
+公開コマンドは `aidiy_avatar` に統一します。旧 `aidiy_avatar_alone` は登録せず、setupでこの配置元の旧ランチャーだけ除去します。他の配置元・所有元不明のランチャーや旧プロファイルは削除しません。
 
-- `aidiy_avatar_alone --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
-- IDE は `node frontend_avatar/launch.mjs --alone --project <絶対フォルダー> --foreground --initial-pinned` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
+- `aidiy_avatar --internal-auth --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
+- IDE は `node frontend_avatar/launch.mjs --internal-auth --project <絶対フォルダー> --foreground --initial-pinned` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
 - `--initial-pinned` は最初に作るコア窓だけをピンONにします。通常の単独起動はOFFで、親環境の初期ピン値は継承しません。利用者が解除した後の再表示や既存インスタンスの再利用では上書きしません。`node --test frontend_avatar/checks/launch.test.mjs frontend_avatar/checks/window-pin.test.cjs frontend_ide/checks/avatar-launch.test.cjs` で確認します。
 - 画面表示完了時だけ `{launchReady:true}` を返します。重複起動は `{launchReady:true,existingWindow:true}`、起動失敗は `{launchError:メッセージ}` または非0終了です。通常の切り離し起動ではready後にIPCを切断します。IDE所有起動は `AIDIY_AVATAR_IDE_OWNED=1` を付けてIPCを維持し、IDE切断を終了要求として扱います。
 - foregroundプロセスはElectron終了まで残ります。POSIXでは分離して作った所有プロセスグループをSIGTERM・必要時SIGKILL、IDEのWindows終了時は所有PIDへのtaskkill /TでElectron・rendererと子孫を回収します。Avatar本体の終了時も同じ回収処理を通ります。既存ウィンドウの重複起動ではrendererを追加起動しません。
 - 単独版のrendererはloopbackの空きポートとVite `avatar-alone` modeを使い、`--strictPort` で別ポートへ逃げません。通常版の8092は変更しません。
 - `AIDIY_AVATAR_ALONE=1` と検証済み `AIDIY_AVATAR_PROJECT` をElectronへ渡します。接続先や内部認証情報はrendererの起動引数に含めません。
-- cleanupは同じ配置元を指す両ランチャーだけを解除します。別配置元のランチャーは残します。
+- 通常の `aidiy_avatar` はログイン認証と8092のWeb公開を維持します。IDEは同じ入口を内部認証オプション付きで呼び出します。内部認証プロファイルは選択プロジェクトの `_AIDIY/aidiy_avatar/electron/internal` に置き、通常版のプロファイルと隔離します。
+- cleanupは同じ配置元の現行ランチャーと残存する旧ランチャーだけを解除します。別配置元のランチャーは残します。
 
 実サービス・認証情報を使わない確認:
 

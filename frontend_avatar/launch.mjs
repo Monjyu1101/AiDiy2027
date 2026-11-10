@@ -22,7 +22,7 @@ const RENDERER_URL = `http://127.0.0.1:${PORT_AVATAR}`;
 export function parseOptions(args, cwd = process.cwd()) {
   let alone = false, foreground = false, initialPinned = false, project;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--alone') alone = true;
+    if (args[i] === '--internal-auth') alone = true;
     else if (args[i] === '--foreground') foreground = true;
     else if (args[i] === '--initial-pinned') initialPinned = true;
     else if (args[i] === '--project' && args[i + 1] && !args[i + 1].startsWith('--')) {
@@ -30,7 +30,7 @@ export function parseOptions(args, cwd = process.cwd()) {
       project = args[++i];
     } else throw Error(`不明または不完全な引数: ${args[i]}`);
   }
-  if (project !== undefined && !alone) throw Error('--project は --alone と組み合わせてください。');
+  if (project !== undefined && !alone) throw Error('--project は --internal-auth と組み合わせてください。');
   if (alone) {
     try {
       project = realpathSync(resolve(cwd, project ?? '.'));
@@ -138,7 +138,7 @@ export async function runAvatar({
   launch = spawn, isOpen = portOpen, build = buildMain, stop = stopTree, ready = () => {},
   electron = require('electron'), vite = join(dirname(require.resolve('vite/package.json')), 'bin', 'vite.js'), timeout = 90000,
 } = {}) {
-  if (alone) project = parseOptions(['--alone', '--project', project ?? process.cwd()]).project;
+  if (alone) project = parseOptions(['--internal-auth', '--project', project ?? process.cwd()]).project;
   const port = alone ? await allocatePort() : PORT_AVATAR;
   const url = `http://127.0.0.1:${port}`;
   build();
@@ -209,7 +209,7 @@ export async function runAvatar({
 
 // 呼出元から切り離した子プロセスを起動し、表示完了の通知を受けたら戻る。
 export async function launchDetached({ alone = false, initialPinned = false, project, launch = spawn, stop = stopTree, timeout = 120000, log = console.log } = {}) {
-  const child = launch(process.execPath, [fileURLToPath(import.meta.url), '--foreground', ...(initialPinned ? ['--initial-pinned'] : []), ...(alone ? ['--alone', '--project', project] : [])], {
+  const child = launch(process.execPath, [fileURLToPath(import.meta.url), '--foreground', ...(initialPinned ? ['--initial-pinned'] : []), ...(alone ? ['--internal-auth', '--project', project] : [])], {
     cwd: root, env: { ...process.env, AIDIY_LAUNCHER_CHILD: '1', AIDIY_AVATAR_IDE_OWNED: '' }, detached: true, windowsHide: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
   });
   try {
@@ -234,7 +234,7 @@ export async function launchDetached({ alone = false, initialPinned = false, pro
 
 export async function main(args = process.argv.slice(2)) {
   if (args.includes('--help') || args.includes('-h')) {
-    console.log(`aidiy_avatar [--foreground]\naidiy_avatar_alone [--project <folder>] [--foreground]\n  Electron版Avatarを独立プロセスで起動し、すぐ戻ります。ログイン画面を閉じるとWeb版（${RENDERER_URL}/）も停止します。`);
+    console.log(`aidiy_avatar [--foreground]\naidiy_avatar --internal-auth [--project <folder>] [--foreground]\n  Electron版Avatarを独立プロセスで起動し、すぐ戻ります。通常起動はログイン認証とWeb版（${RENDERER_URL}/）を使います。\n  --internal-auth はローカルCoreの内部認証で指定プロジェクトを開きます。`);
     return;
   }
   const options = parseOptions(args);

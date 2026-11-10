@@ -27,7 +27,7 @@ if (avatarAlone && process.env.AIDIY_AVATAR_PROJECT && !path.isAbsolute(process.
 const projectPath = avatarAlone ? realpathSync(process.env.AIDIY_AVATAR_PROJECT || avatarProjectRoot) : ''
 if (avatarAlone && (!path.isAbsolute(projectPath) || !statSync(projectPath).isDirectory())) throw new Error('プロジェクトフォルダが不正です。')
 const coreBaseUrl = avatarAlone ? configuredCoreBaseUrl(avatarProjectRoot) : ''
-const avatarProfile = programDataDirectory(avatarAlone ? projectPath : avatarProjectRoot, avatarAlone ? 'aidiy_avatar_alone' : 'aidiy_avatar', avatarProjectRoot, ['electron'])
+const avatarProfile = programDataDirectory(avatarAlone ? projectPath : avatarProjectRoot, 'aidiy_avatar', avatarProjectRoot, avatarAlone ? ['electron', 'internal'] : ['electron'])
 preparePrivateDirectory(avatarProfile)
 app.setPath('userData', avatarProfile)
 app.setPath('sessionData', avatarProfile)

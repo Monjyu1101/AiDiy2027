@@ -22,7 +22,7 @@ function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,en
  function open(owner,project){
   if(active(owner))return Promise.resolve({ok:false,error:'Live / Avatarはすでに起動中です。'});
   let child;
-  try{child=spawnProcess(executable,[join(__dirname,'../../frontend_avatar/launch.mjs'),'--alone','--project',project,'--foreground','--initial-pinned'],{cwd:project,env:{...environment,ELECTRON_RUN_AS_NODE:'1',AIDIY_LAUNCHER_CHILD:'1',AIDIY_AVATAR_IDE_OWNED:'1'},windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});}
+  try{child=spawnProcess(executable,[join(__dirname,'../../frontend_avatar/launch.mjs'),'--internal-auth','--project',project,'--foreground','--initial-pinned'],{cwd:project,env:{...environment,ELECTRON_RUN_AS_NODE:'1',AIDIY_LAUNCHER_CHILD:'1',AIDIY_AVATAR_IDE_OWNED:'1'},windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});}
   catch(error){return Promise.resolve({ok:false,error:error.message});}
   return new Promise(resolve=>{
    let settled=false;

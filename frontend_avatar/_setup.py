@@ -39,7 +39,7 @@ FRONTEND_COMMAND = "npm"
 sys.path.insert(0, str(THIS_DIR.parent / "scripts"))
 from _setup_electron import setup_dependencies
 from _runtime_requirements import check_project_node_runtime
-from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment
+from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment, launcher_owned_by
 
 AUTO_MODE = False
 
@@ -161,25 +161,28 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
     launcher_dir = launcher_dir or launcher_directory('aidiy_avatar')
     try:
         launcher_dir.mkdir(parents=True, exist_ok=True)
-        for name, extra in (("aidiy_avatar", []), ("aidiy_avatar_alone", ["--alone"])):
-            launcher_path = launcher_dir / (name + ".cmd" if sys.platform == "win32" else name)
-            command = [node, str(script_path), *extra]
-            if sys.platform == "win32":
-                content = (
-                    "@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
-                    + launcher_owner_comment(script_path) + "\n"
-                    + windows_launcher_command(command)
-                    + "\nexit /b %ERRORLEVEL%\n"
-                )
-                launcher_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
-            else:
-                content = '#!/usr/bin/env sh\nexec ' + ' '.join(shlex.quote(arg) for arg in command) + ' "$@"\n'
-                launcher_path.write_text(content, encoding="utf-8")
-                launcher_path.chmod(0o755)
-            if name == "aidiy_avatar":
-                print_success(f"aidiy_avatar を登録しました: {launcher_path}")
+        # 廃止した旧コマンドは、この配置元が登録したものだけ除去する。
+        for name in ('aidiy_avatar_alone', 'aidiy_avatar_alone.cmd'):
+            legacy = launcher_dir / name
+            if legacy.is_file() and launcher_owned_by(legacy.read_text(encoding='utf-8'), str(script_path)):
+                legacy.unlink()
+        launcher_path = launcher_dir / ("aidiy_avatar.cmd" if sys.platform == "win32" else "aidiy_avatar")
+        command = [node, str(script_path)]
+        if sys.platform == "win32":
+            content = (
+                "@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
+                + launcher_owner_comment(script_path) + "\n"
+                + windows_launcher_command(command)
+                + "\nexit /b %ERRORLEVEL%\n"
+            )
+            launcher_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
+        else:
+            content = '#!/usr/bin/env sh\nexec ' + ' '.join(shlex.quote(arg) for arg in command) + ' "$@"\n'
+            launcher_path.write_text(content, encoding="utf-8")
+            launcher_path.chmod(0o755)
+        print_success(f"aidiy_avatar を登録しました: {launcher_path}")
     except OSError as exc:
-        print_error(f"Avatar を登録できません: {launcher_path} ({exc})")
+        print_error(f"Avatar を登録できません: {launcher_dir} ({exc})")
         return False
     return ensure_launcher_path(launcher_dir)
 
