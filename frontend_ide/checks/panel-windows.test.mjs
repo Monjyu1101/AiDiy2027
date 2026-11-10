@@ -169,11 +169,11 @@ test('VR中に作成する全別窓はON固定、軌跡の最小化・最大化�
  }
 });
 
-test('小さな軌跡パネル: 負座標の実画面内へ収め、DPI倍率を二重適用しない',()=>{
+test('Viewerパネル: 負座標の実画面内へ収め、DPI倍率を二重適用しない',()=>{
  const screens=[{x:-1600,y:200,width:1500,height:860},{x:0,y:0,width:1920,height:1040}];
  for(const zoom of [.8,1,1.5,2]){
   const owner={window:{getContentBounds:()=>({x:-1500,y:220}),webContents:{getZoomFactor:()=>zoom}}};
-  const result=panelBounds({left:1400,top:800,width:420,height:360},owner,{getDisplayMatching:()=>({workArea:screens[0]})});
+  const result=panelBounds({left:1400,top:800,width:420,height:360},owner,{getDisplayMatching:()=>({workArea:screens[0]})},'panel-viewer');
   assert.ok(result.x>=-1600&&result.x+result.width<=-100);assert.ok(result.y>=200&&result.y+result.height<=1060);
   assert.equal(result.width,420*zoom);assert.equal(result.height,360*zoom);
  }
@@ -203,3 +203,22 @@ test('Navi native and VR launch at 900 DIP without resetting a manually resized 
   await f.controller.show(f.event,request.name);assert.deepEqual(child.getBounds(),manual);child.destroy();
  }
 });
+
+test('Explorer連携別窓は通常・ALLとも900 DIPを基準に画面内へ収め、手動リサイズを保持する',async()=>{
+  for(const all of [false,true])for(const height of [1200,916,900,700,240])for(const zoom of [.8,1,1.25,2]){
+   const area={x:-1280,y:-350,width:1280,height},f=fixture({all,area});
+   f.owner.window.webContents.getZoomFactor=()=>zoom;
+   for(let cycle=0;cycle<2;cycle++){
+    const request=await f.controller.prepare(f.event,f.rect,'explorer');assert.equal(request.ok,true);
+    const details={url:'about:blank',frameName:request.name},options=f.controller.open(f.owner,details).overrideBrowserWindowOptions;
+    assert.equal(options.height,Math.min(900,height-16));
+    assert.ok(options.y>=area.y+8&&options.y+options.height<=area.y+height-8);
+    assert.equal(options.width,all?340:Math.round(f.rect.width*zoom));
+    assert.ok(options.minHeight<=options.height);assert.ok(options.minWidth<=options.width);
+    const child=new f.Window();f.controller.created(f.owner,child,details);await f.controller.show(f.event,request.name);
+    assert.equal(child.getBounds().height,options.height);
+    const manual={...child.getBounds(),height:180};child.setBounds(manual);
+    await f.controller.show(f.event,request.name);assert.deepEqual(child.getBounds(),manual);child.destroy();
+   }
+  }
+ });

@@ -6,6 +6,8 @@
 // 実Vue DOMを実BrowserWindowへ移す。IPCはfixture所有窓だけへ限定し、外部通信は拒否する。
 const { app, BrowserWindow, ipcMain, nativeImage } = require('electron');
 const assert = require('node:assert/strict');
+const {panelBounds}=require('../デスクトップ/panel-windows.cjs');
+const explorerArea={x:0,y:0,width:1920,height:Number(process.env.AIDIY_PANEL_CONTROLS_SCREEN_HEIGHT)||1040};
 const fs = require('node:fs');
 const path = require('node:path');
 const output = process.env.AIDIY_PANEL_CONTROLS_OUTPUT;
@@ -64,7 +66,7 @@ function installIPC() {
   ipcMain.handle('panel-fixture:prepare', (event, rect, kind) => {
     ownSender(event); assert.ok(['explorer', 'panel-routes'].includes(kind));
     const name = 'panel-controls-' + ++sequence;
-    records.set(name, { name, kind, width: kind === 'panel-routes' ? 360 : 420, height: kind === 'panel-routes' ? Math.ceil(rect.height) : 780, pinned: true, locked });
+    records.set(name, { name, kind, width: kind === 'panel-routes' ? 360 : 420, height: kind === 'panel-routes' ? Math.ceil(rect.height) : panelBounds(rect,{window:owner},{getDisplayMatching:()=>({workArea:explorerArea})}).height, pinned: true, locked });
     return { ok: true, name };
   });
   ipcMain.handle('panel-fixture:show', async (event, name) => {
@@ -153,6 +155,9 @@ async function run() {
 
   await click(owner, '.explorer-detach');
   let explorer = await detached('explorer'); await pinState(explorer, true);
+  assert.equal(explorer.height,Math.min(900,explorerArea.height-16));
+  assert.equal(await evaluate(explorer.window,'innerHeight'),explorer.height);
+  result.checks.push(`Explorer renderer uses production initial height: ${explorer.height}px for work area ${explorerArea.height}px`);
   assert.equal(await evaluate(explorer.window, `document.querySelector('.explorer-panel>ul[role=tree]').hasAttribute('data-aidiy-window-move-list')`), true);
   assert.equal(await evaluate(owner, 'fixture.saved.explorer.ownerDocument!==document'), true);
   assert.equal(await evaluate(owner, `!!document.querySelector('.explorer-toggle')`),false,'Detached Explorer leaves no burger in owner');

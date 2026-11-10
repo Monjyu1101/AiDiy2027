@@ -307,6 +307,8 @@ Windowsのフレームレス窓には細いOS外枠が残るため、`全画面�
 
 VRへの移行ではExplorerと軌跡を順に自動ピン留めします。ファイルビューアーとソース比較は自動で別窓にせず、中心星の右128pxから、最大幅640px・高さ720pxのIDE内パネルに表示します。表示領域より大きい場合は縮めます。ファイル選択のたびにIDE内の閲覧を差し替え、選択やパネル開閉で宇宙の中心を補正しません。明示的な📌でだけ別窓化し、既にピン留めした同じファイルはその窓へフォーカスします。
 
+Explorerをピン留めでElectron別窓にする場合、通常・ALL/VRとも初期高さは900 DIPです。操作対象の画面の作業領域から上下8pxずつを除いた高さに収め、画面端では位置も補正します。元のパネルの高さや表示zoomは初期高さに掛けません。小画面では最小高さも実際の初期高さ以下にし、表示後の手動リサイズは再表示で戻しません。`checks/panel-windows.test.mjs` で画面高さ・zoom・負座標・再生成を検証します。画面撮影は `node frontend_ide/scripts/check-panel-controls.mjs`、小画面の描画は `AIDIY_PANEL_CONTROLS_SCREEN_HEIGHT=700` を付けて確認します（隔離画面の作業領域模擬であり実OS配置の確認とは別）。
+
 Explorerと軌跡のVR位置は `デスクトップ/VRパネル配置.cjs` がIDE本体ごとにメモリー内で保持します。VR終了時、親窓を通常サイズへ戻す前に両別窓のDIP座標を記憶します。次回はピン留め・VR展開後、Web側の元表示の消去描画を待ってから、Explorer→軌跡の順に各650msで前回位置へ移動し、その間は共通の四方向マーカーと「VR空間へ移行中…」を表示します。初回・同位置では移動演出を省略します。移動先を示す操作のため、装飾のアニメーション抑制とは独立して移動とマーカーを表示します。サイズは保存せず現在の寸法を保ち、画面構成変更時は作業領域へ収めます。移行中断時は通過点を保存せず、タイマーとマーカーを解除します。永続設定には書き込まず、IDE終了で忘れます。検証は `node --test frontend_ide/checks/vr-panel-placement.test.mjs frontend_ide/checks/all-displays.test.mjs frontend_ide/checks/code-drag.test.mjs`、実窓は `AIDIY_ALL_PANEL_POSITION_ONLY=1` を指定して `node frontend_ide/scripts/check-all-displays.mjs` を実行します。実窓を移動してVRを3回往復し、位置復元・移動中のマーカー・寸法維持を確認、`temp/all-displays-check/panel-position-result.json` と画像へ保存します。
 
 VR中は再オープン用の入口が隠れるため、Explorerの別窓タイトルの×と内部の閉じる☰、軌跡バーの×を非表示にします。VR解除では両方の別窓を閉じ、本体でも非表示にします。DOM・閲覧履歴・検索状態は保持し、通常画面の「☰」「軌跡」から再表示できます。`ファイル一覧.vue` でVR状態の解除を監視し、既存のdismiss処理でDOMを回収してから閉じます。ビューアーなど他の別窓はそのまま維持します。
