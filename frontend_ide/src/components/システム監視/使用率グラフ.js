@@ -4,6 +4,9 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const percent=value=>typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=100?value:null;
+// 最長の「CPU 100%」用54単位と6単位の間隔を右寄せラベルの前に予約する。
+export const labelRight=262,labelMaxWidth=54,labelGap=6;
+export const chartRight=labelRight-labelMaxWidth-labelGap;
 export function chartSeries(samples){
  const recent=samples.slice(-60);
  return [['cpu','#68dbaa'],['gpu','#a69cff'],['ram','#55c8f5']].map(([key,color])=>{
@@ -11,7 +14,7 @@ export function chartSeries(samples){
   for(let i=0;i<recent.length;i++){
    const value=percent(recent[i][key]);
    if(value===null){if(points.length)segments.push(points);points=[];continue;}
-   points.push([192-(recent.length-1-i)*170/59,94-value*.84]);
+   points.push([chartRight-(recent.length-1-i)*(chartRight-22)/59,94-value*.84]);
   }
   if(points.length)segments.push(points);
   const path=points=>points.map(([x,y],i)=>`${i?'L':'M'}${x.toFixed(2)} ${y.toFixed(2)}`).join('');

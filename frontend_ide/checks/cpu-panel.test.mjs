@@ -7,12 +7,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import {chartSeries,placeLabels} from '../src/components/システム監視/使用率グラフ.js';
+import {chartSeries,placeLabels,chartRight,labelRight} from '../src/components/システム監視/使用率グラフ.js';
 const source=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\n/gm,'');
 function fixture(){
  let mount,unmount,id=0,calls=0,fetcher=async()=>({ok:true,json:async()=>({timestamp:1,cpu:35,gpu:null,ram:62})});
  const timers=new Map(),events=new Map(),document={hidden:false,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
- const context={ref:value=>({value}),computed:fn=>({get value(){return fn();}}),chartSeries,placeLabels,defineProps(){},defineEmits:()=>()=>{},onMounted:fn=>mount=fn,onBeforeUnmount:fn=>unmount=fn,document,AbortController,Date,fetch:(...args)=>{calls++;return fetcher(...args);},setTimeout:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
+ const context={ref:value=>({value}),computed:fn=>({get value(){return fn();}}),chartSeries,placeLabels,chartRight,labelRight,defineProps(){},defineEmits:()=>()=>{},onMounted:fn=>mount=fn,onBeforeUnmount:fn=>unmount=fn,document,AbortController,Date,fetch:(...args)=>{calls++;return fetcher(...args);},setTimeout:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
  vm.runInNewContext(source+';globalThis.state={samples,error,ready,series,labels};globalThis.poll=poll;',context);
  return {context,timers,events,document,mount:()=>mount(),unmount:()=>unmount(),setFetch:fn=>fetcher=fn,calls:()=>calls,async hidden(value){document.hidden=value;events.get('visibilitychange')();await tick();}};
 }
@@ -67,6 +67,6 @@ test('CPU is graph-only with compact percent margin and Diag-sized right inset',
  const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
  assert.doesNotMatch(panel,/<footer|cpu-caption|GPU 未取得|GPU 最大負荷|ホスト全体 ·/);
  assert.match(panel,/viewBox="0 0 264 100"/);
- assert.match(panel,/<text x="262" text-anchor="end"/);
+ assert.match(panel,/<text :x="labelRight" text-anchor="end"/);
  assert.match(panel,/right:8px;bottom:/);
 });

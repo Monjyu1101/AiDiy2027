@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {chartSeries,placeLabels} from '../src/components/システム監視/使用率グラフ.js';
+import {chartSeries,placeLabels,chartRight,labelRight,labelMaxWidth,labelGap} from '../src/components/システム監視/使用率グラフ.js';
 import {createRequire} from 'node:module';
 const {windowBounds,windowMinimumSize}=createRequire(import.meta.url)('../デスクトップ/window-layout.cjs');
 test('unknown samples create gaps instead of zero load',()=>{
@@ -17,7 +17,7 @@ test('values must be finite percentages and history is bounded',()=>{
  const cpu=chartSeries(Array.from({length:100},()=>({cpu:0})))[0];assert.equal(cpu.value,0);assert.equal(cpu.line.match(/L/g).length,59);assert.match(cpu.line,/^M22.00/);
 });
 test('labels stay at newest point and separate ties within graph',()=>{
- const series=chartSeries([{cpu:50,gpu:50,ram:50}]);for(const item of series)assert.match(item.line,/M192.00 52.00/);
+ const series=chartSeries([{cpu:50,gpu:50,ram:50}]);for(const item of series)assert.match(item.line,/M202.00 52.00/);
  for(const value of [0,50,100,null]){const labels=placeLabels(chartSeries([{cpu:value,gpu:value,ram:value}]));assert.ok(labels[0].labelY>=14);assert.ok(labels[2].labelY<=92);assert.ok(labels[1].labelY-labels[0].labelY>=14);assert.ok(labels[2].labelY-labels[1].labelY>=14);}
 });
 test('small CPU window fits work area including small/negative displays',()=>{
@@ -56,4 +56,40 @@ test('CPU aligns its right edge with the actual Diag mini, clamped to the displa
  const diag={x:1500,y:780,width:360,height:292};
  assert.equal(windowBounds('cpu',area,null,0,false,diag).x,1620);
  assert.equal(windowBounds('cpu',area,null,0,false,{...diag,x:1800}).x,1672);
+});
+
+test('graph expands only into spare space, leaving labels outside at every viewport size',()=>{
+ const samples=Array.from({length:60},(_,i)=>({cpu:i,gpu:i===30?null:100-i,ram:50}));
+ for(const item of chartSeries(samples)){
+  const points=[...item.line.matchAll(/[ML]([0-9.]+) ([0-9.]+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
+  assert.equal(points[0][0],22);assert.equal(points.at(-1)[0],chartRight);
+  for(const [width,height] of [[240,160],[240,150],[480,300],[180,120]]){
+   const scaleX=(width-4)/264,scaleY=(height-2)/100;
+   assert.equal(points.at(-1)[0]*scaleX,chartRight*scaleX);
+   assert.ok(points.every(([x,y])=>x*scaleX>=0&&x*scaleX<width&&y*scaleY>=0&&y*scaleY<height));
+   assert.ok((points.at(-1)[0]-points[0][0])*scaleX>170*scaleX,'previous reserved label column is now graph');
+  }
+ }
+ assert.equal(chartSeries(samples)[1].line.match(/M/g).length,2);
+ assert.equal(chartSeries([...samples,{cpu:0,gpu:null,ram:100}])[1].value,null);
+});
+
+test('label column and graph do not overlap, including 100 percent and unavailable GPU',()=>{
+ assert.equal(chartRight,202);assert.equal(labelRight,262);assert.ok(chartRight>192);
+ for(const value of [0,9,10,99,100,null]){
+  const all=chartSeries([{cpu:value,gpu:value,ram:value}]);
+  const labels=placeLabels(all.filter(item=>item.key!=='gpu'||item.value!==null));
+  for(const [width,height] of [[240,160],[240,150],[480,300],[180,120]]){
+   const sx=(width-4)/264,sy=(height-2)/100;
+   for(const item of labels){
+    const text=item.key.toUpperCase()+' '+(item.value===null?'—':Math.round(item.value)+'%');
+    const textWidth=text.length*6.6;
+    assert.ok(textWidth<=labelMaxWidth);
+    assert.ok((labelRight-textWidth-chartRight)*sx>=labelGap*sx);
+    assert.ok(labelRight*sx<width);
+   }
+   for(let i=1;i<labels.length;i++)assert.ok((labels[i].labelY-labels[i-1].labelY)*sy>11*sy);
+  }
+  if(value===null)assert.equal(labels.some(item=>item.key==='gpu'),false);
+ }
 });
