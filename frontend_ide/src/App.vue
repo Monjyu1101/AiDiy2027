@@ -167,7 +167,7 @@ async function layoutRequest(request){
   return{panels};
 }
 const desktopLaunchItems=computed(()=>[
-  ...(layoutAvailable.value&&layoutState.value.count>=3?[layoutItem('save')]:[]),
+  ...(layoutAvailable.value&&layoutState.value.count===0&&layoutState.value.saved?[layoutItem('load')]:[]),
   {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
   {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'利用開始後に起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
@@ -175,7 +175,7 @@ const desktopLaunchItems=computed(()=>[
   ...(state.value.mode==='online'&&!liveOpen.value&&!['live','avatar'].includes(launching.value)?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')},{key:'avatar',text:launchText('avatar','Avatar'),title:'アバター音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('avatar')}]:[]),
   ...(state.value.mode==='online'?['task','team'].filter(type=>!runningApps.value.includes(type)).map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[]),
   ...(!runningApps.value.includes('cpu')?[{key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu}]:[]),
-  ...(layoutAvailable.value&&layoutState.value.count===0&&layoutState.value.saved?[layoutItem('load')]:[]),
+  ...(layoutAvailable.value&&layoutState.value.count>=3?[layoutItem('save')]:[]),
 ].map(item=>({...item,disabled:item.disabled||layoutBusy.value})));
 const panelLaunchItems=computed(()=>[
   {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},

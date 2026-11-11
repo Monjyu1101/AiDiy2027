@@ -16,15 +16,15 @@ function fixture(){
   const api=context.api;api.update({active:true,mode:'online',startedAt:1,project:{path:'/project'}});
   return{api,calls,context};
 }
-test('online menu: saved layout only at zero windows, Save first only at three or more windows',()=>{
+test('online menu: Load first only with a saved layout at zero windows, Save last only at three or more windows',()=>{
   const {api}=fixture(),layoutItems=()=>api.desktopLaunchItems.value.filter(item=>item.key.startsWith('layout-'));
   assert.equal(layoutItems().length,0,'no saved file hides Load');
   api.layoutState.value={count:0,saved:true};
-  const load=api.desktopLaunchItems.value.at(-1);
+  const load=api.desktopLaunchItems.value[0];
   assert.equal(load.text,'Load');assert.equal(load.shortLabel,'Ld');assert.equal(load.arrow,'⬇︎');assert.equal(load.ariaLabel,'Load');assert.equal(load.disabled,false);
   for(const count of [1,2]){api.layoutState.value={count,saved:true};assert.equal(layoutItems().length,0);}
   for(const count of [3,4]){
-    api.layoutState.value={count,saved:true};const save=api.desktopLaunchItems.value[0];
+    api.layoutState.value={count,saved:true};const save=api.desktopLaunchItems.value.at(-1);
     assert.equal(save.text,'Save');assert.equal(save.shortLabel,'Sv');assert.equal(save.arrow,'⬆︎');assert.equal(save.ariaLabel,'Save');
     assert.ok(!api.desktopLaunchItems.value.some(item=>item.text==='Load'));
   }

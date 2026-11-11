@@ -48,13 +48,13 @@ try{
  await send('Runtime.enable');await width(1440);await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await until(()=>evaluate(`!!document.querySelector('.ai-launchers')`),'menu');
  assert.ok(!(await labels()).includes('Load'));await screenshot('00-no-saved-layout');
  await evaluate(`fixture.saved=true;refreshFixture()`);await until(async()=> (await labels()).includes('Load'),'Load');
- assert.equal((await labels()).at(-1),'Load');await screenshot('01-online-empty-load-right');
- await evaluate(`[...document.querySelectorAll('.ai-launchers button')].find(b=>b.getAttribute('aria-label')==='Load').click()`);await until(async()=> (await labels())[0]==='Save','restored');await screenshot('02-restored-save-left');
+ assert.equal((await labels())[0],'Load');await screenshot('01-online-empty-load-left');
+ await evaluate(`[...document.querySelectorAll('.ai-launchers button')].find(b=>b.getAttribute('aria-label')==='Load').click()`);await until(async()=> (await labels()).at(-1)==='Save','restored');await screenshot('02-restored-save-right');
  await evaluate(`[...document.querySelectorAll('.ai-launchers button')].find(b=>b.getAttribute('aria-label')==='Save').click()`);await until(()=>evaluate('!!fixture.snapshot'),'capture');assert.equal(await evaluate('fixture.snapshot.version'),1);
  for(const count of [1,2]){await evaluate(`fixture.count=${count};refreshFixture()`);await until(async()=>!(await labels()).some(v=>v==='Save'||v==='Load'),'one/two panels');await screenshot('02-count-'+count+'-no-layout-actions');}
- await evaluate(`fixture.count=3;refreshFixture()`);await until(async()=> (await labels())[0]==='Save','three panels');
- await width(700);await sleep(100);await evaluate(`document.querySelector('.launch-plus').click()`);assert.equal((await labels())[0],'Save');await screenshot('03-compact-save-first');
- await evaluate(`document.querySelector('.launch-plus').click();fixture.count=0;refreshFixture()`);await sleep(100);await evaluate(`document.querySelector('.launch-plus').click()`);assert.equal((await labels()).at(-1),'Load');await screenshot('04-compact-load-last');
+ await evaluate(`fixture.count=3;refreshFixture()`);await until(async()=> (await labels()).at(-1)==='Save','three panels');
+ await width(700);await sleep(100);await evaluate(`document.querySelector('.launch-plus').click()`);assert.equal((await labels()).at(-1),'Save');await screenshot('03-compact-save-last');
+ await evaluate(`document.querySelector('.launch-plus').click();fixture.count=0;refreshFixture()`);await sleep(100);await evaluate(`document.querySelector('.launch-plus').click()`);assert.equal((await labels())[0],'Load');await screenshot('04-compact-load-first');
  await evaluate(`fixture.mode='offline';refreshFixture()`);await until(async()=>!(await labels()).some(v=>v==='Save'||v==='Load'),'offline');await screenshot('05-offline-no-layout');
  assert.deepEqual(errors,[]);console.log('PASS: 5 Vue components compile; real App menu ordering, compact popup, online-only, Load→Save restore and capture verified. Screenshots: '+output);
 }finally{socket?.close();chrome.kill('SIGTERM');await new Promise(resolve=>server.close(resolve));await sleep(200);rmSync(temporary,{recursive:true,force:true});}
