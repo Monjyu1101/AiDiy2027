@@ -12,7 +12,7 @@ export function ナビアクアリウム3D状態を作成(random = Math.random, 
   const fish = Array.from({length:24}, (_, i) => ({
     x:(random()-.5)*width*.85, y:-2.5+random()*6, z:-2.6+random()*5.2,
     vx:(i%2?1:-1)*(.45+random()*.4), vy:0, vz:0,
-    phase:random()*Math.PI*2, size:(.65+random()*.5)*.85, species:i%3, foodReadyAt:0,
+    phase:random()*Math.PI*2, size:(.65+random()*.5)*.5, species:i%3, foodReadyAt:0,
   }));
   const food = [], bubbles = [];
   return {

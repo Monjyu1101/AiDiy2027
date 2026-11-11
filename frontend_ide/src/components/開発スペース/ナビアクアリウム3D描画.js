@@ -169,7 +169,8 @@ export function ナビアクアリウム3D描画を作成(canvas, model) {
         const shine=mesh(sphere,shineMat,group);shine.position.set(.425,.09,side*.177);shine.scale.setScalar(.014);
         const pf=fin([[0,0],[-.3,-.24],[-.38,.025]],mat,group);pf.position.set(.1,-.05,side*.17);pf.rotation.y=side*.65;pectorals.push(pf);
       }
-      group.scale.setScalar(f.size);
+      // 元の全長の半分を基準に、目・ひれも一緒に細身のメダカ型へ揃える。
+      group.scale.set(f.size,f.size*.5,f.size*.65);
       return {group,tail,dorsal,pectorals};
     });
     const quaternion=new THREE.Quaternion(),orientation=new THREE.Euler(0,0,0,'YXZ');

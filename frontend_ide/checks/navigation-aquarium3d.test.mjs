@@ -4,12 +4,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ナビアクアリウム3D状態を作成} from '../src/components/開発スペース/ナビアクアリウム3D状態.js';
 
-test('3D水槽: 魚の大小差と3種類・24匹を保ち、サイズを15%小さくする',()=>{
+test('3D水槽: 魚の大小差と3種類・24匹を保ち、元サイズの半分にする',()=>{
   for(const sample of [0,.5,1]){
     const a=ナビアクアリウム3D状態を作成(()=>sample);
     assert.equal(a.fish.length,24);
     assert.deepEqual([...new Set(a.fish.map(f=>f.species))],[0,1,2]);
-    assert.ok(a.fish.every(f=>Math.abs(f.size-(.65+sample*.5)*.85)<1e-12));
+    assert.ok(a.fish.every(f=>Math.abs(f.size-(.65+sample*.5)*.5)<1e-12));
     a.clear();
   }
 });

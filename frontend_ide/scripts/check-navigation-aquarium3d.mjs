@@ -21,7 +21,7 @@ const temporary=mkdtempSync(join(tmpdir(),'navi-scenery-'));
 const output=mockOutput(join(root,'temp/navigation-aquarium3d-check'));mkdirSync(output,{recursive:true});
 const result=await build({stdin:{contents:`import {createApp,h,ref} from 'vue';import Aquarium from './src/components/開発スペース/ナビアクアリウム3D.vue';
 window.unsupportedCount=0;const shown=ref(true),app=createApp({render:()=>shown.value?h(Aquarium,{onUnsupported:()=>{window.unsupportedCount++;shown.value=false}}):null});app.mount('#app');window.hide=()=>shown.value=false;window.show=()=>shown.value=true;window.dispose=()=>app.unmount();`,resolveDir:root},bundle:true,write:false,format:'iife',plugins:[{name:'vue',setup(build){
- build.onLoad({filter:/ナビアクアリウム3D描画\.js$/},args=>({contents:readFileSync(args.path,'utf8').replace('return {resize,render,dispose:release,','globalThis.ナビアクアリウム3D検証={renderer,scene,camera};return {resize,render,dispose:release,'),resolveDir:dirname(args.path)}));
+ build.onLoad({filter:/ナビアクアリウム3D描画\.js$/},args=>({contents:readFileSync(args.path,'utf8').replace('return {resize,render,dispose:release,','globalThis.ナビアクアリウム3D検証={renderer,scene,camera,fishMeshes};return {resize,render,dispose:release,'),resolveDir:dirname(args.path)}));
  build.onLoad({filter:/\.vue$/},args=>{
  const {descriptor}=parse(readFileSync(args.path,'utf8'));
  const compiled=compileScript(descriptor,{id:'aquarium3d',inlineTemplate:true});
@@ -50,6 +50,11 @@ try{
  await wait('!!document.querySelector(".ナビアクアリウム3D.ready")','WebGL ready');
  assert.equal(await evaluate('ナビアクアリウム3D検証.renderer.info.programs.every(p=>p.diagnostics?.runnable!==false)'),true,'shaders compile');
  assert.equal(await evaluate('ナビアクアリウム3D状態.fish.length'),24);
+ // 全長は初期サイズの半分、体高・厚みはさらに絞り、全パーツを同じ比率にする。
+ assert.equal(await evaluate(`ナビアクアリウム3D検証.fishMeshes.every(({group},i)=>{
+   const size=ナビアクアリウム3D状態.fish[i].size;
+   return size>=.325&&size<=.575&&group.scale.x===size&&group.scale.y===size*.5&&group.scale.z===size*.65;
+ })`),true,'half-size slender fish including eyes and fins');
  await capture('aquarium3d-wide');
  console.log('RENDER',await evaluate('JSON.stringify({calls:ナビアクアリウム3D検証.renderer.info.render.calls,triangles:ナビアクアリウム3D検証.renderer.info.render.triangles,geometries:ナビアクアリウム3D検証.renderer.info.memory.geometries})'));
  // 実入力から水面に4粒。深いクリックでも水面から落ちる。
