@@ -920,34 +920,36 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 利用開始後の「CPU」で開く。ElectronはIDE所有の360×160の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUは画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
 
-`aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。WindowsではAvatarのeyesと共通の `aidiy_cpu/windows-native-cpu.cjs` を使い、`SWbemRefresher` で `Win32_PerfFormattedData_Counters_ProcessorInformation` の `_Total` を継続取得する。単発CIMではなく更新器を使い、初回の基準だけの値を捨てる。標準性能カウンターは1秒以上の間隔で採り、表示・GPU待ちとは独立した固定予定を維持する。API・eyesの500ms読込は採取を追加せず、最新の測定済み値を返す。
+`aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。全OSでAvatar eyesと共通の `aidiy_cpu/systeminformation-cpu.cjs` を使い、利用側が自分のpackageの `systeminformation` から `getLoad: () => si.currentLoad()` を渡す。IDEとAvatarの両packageで5.33.19を固定し、単独起動でも相手のnode_modulesに依存しない。1本の単調時計による1秒予定だけがライブラリを呼び、HTTPや500ms IPCは最新値を読む。重複実行しない。
 
-指標は起動時に固定する。Windows 10〜11 23H2（build 10240〜22631）は従来Task Managerと同じProcessor Utility、新しい版・不明な版はProcessor Timeを既定とする。24H2以降のTask Managerの変更は段階配信なので、OS buildだけで完全一致を保証しない。選択指標が欠損しても、別指標・Node os.cpus・大きい方の値で埋めない。初回準備中はnullとしてCPUラベルを隠し、失敗時は未取得を表示して再試行する。取得済み0%は有効。Utilityが100を超える場合は生値を診断に残し、画面だけ100%に収める。
+`load.currentLoad` をそのまま表示する。採取間隔・コア数・表示周期で再除算せず、大きい方の別指標を選ばない。ライブラリは初回に基準を採り500ms後の差分を返すため、初回の有効結果から表示する。未取得・失敗・不正値はnull、実測0%は有効。長い休止後はライブラリの基準が古いため、再開時の最初の結果だけ捨て、次の1秒計測から再表示する。
 
-他OSは `os-cpu-monitor.mjs` で全論理CPU累積時間を約500msごとに読み、`100 * (1 - idle差分 / total差分)` を計算する。コア数や表示周期で再除算せず、最新値を次標本まで保持する。CPU画面は約1秒更新で平均化しない。eyesは500ms読込・12スロット約6秒平均を色と数値に使い、未取得スロットは平均から除外する。Windowsの実採取が1秒でも、取得済み百分率を半分にしない。CPU数変更・長い休止後は基準を取り直す。GPU/RAMは独立して更新する。
+CPU画面は約1秒更新で平均化しない。eyesは500ms読込・12スロット約6秒平均を色と数値に使い、未取得スロットは平均から除外する。500msに70%なら70%として扱う。CPUのPowerShell/WMIプロセスは起動しない。GPU/RAMは独立して更新する。
 
-RAMはOSの総メモリに対する使用率。ブラウザが動くPCやIDEプロセスだけの使用率ではない。APIの `cpuSource` は `windows-processor-utility` / `windows-processor-time` / `os-times` / `warming-up` / `unavailable`。`cpuDetails` は `osTimes`、`cpuStatus`、論理CPU数、`sampleIntervalMs`（実際の差分窓）、`cpuSampleAgeMs`（最新標本の経過時間）、`rawIdleDeltaMs` / `rawTotalDeltaMs` / `rawBusyDeltaMs`（累積時間の生差分）、OS・Node/libuvの版を含む。`runtime` はロード済み実装の固定 `collectorId`、PID、サンプラー作成時刻、実行ファイル・ソース位置、Node/uv/Electron版を保持する。起動後のディスク再hashを稼働版として報告しない。WindowsはTime / Utility / Idleの生値、選択指標、実測間隔、providerのtimestamp文字列と応答sequenceを診断に残す。Node累積差分は非Windowsのみで、Windows値へ混ぜない。取得→JSON→VueのCPU系列・浮動数値に採取済み百分率がそのまま届くことを `cpu-panel.test.mjs` で検証する。
+systeminformation 5.33.19のWindows実装は `os.cpus()` の累積時間差分で、sysからirqを控除して二重計上を補正する。初回は500ms、以後200ms未満の呼出しはライブラリ内部cacheとなる。Utilityを取得する実装ではないため、Task Managerとの一致を保証しない。仕様根拠は導入済み `node_modules/systeminformation/lib/cpu.js` の `getLoad` / `currentLoad`。独自WMI経路で未取得となる問題と、Time/Utilityの指標差は分けて検証する。
+
+RAMはOSの総メモリに対する使用率。ブラウザやIDEプロセスだけではない。現行APIの `cpuSource` は `systeminformation-current-load` / `warming-up` / `unavailable`。`cpuDetails.systemInformation` にライブラリ版、採用値、idle比率と生差分を残す。`sampleIntervalMs` は結果間の観測時間（初回は呼出しから結果まで）で、ライブラリ内部の厳密な標本時刻ではない。`cpuSampleAgeMs` は最新結果の経過時間。`runtime` はロード済み実装の固定collectorId、PID、作成時刻、実行元、Node/uv/Electron/systeminformation版を保持する。ディスクの再hashを稼働版としない。旧Time/Utility/os-times診断キーは互換のため残し、現行SI値で埋めない。取得→JSON→Vueに百分率がそのまま届くことを `cpu-panel.test.mjs` で検証する。
 
 WindowsのGPUは `aidiy_cpu/windows-gpu.mjs` の標準CIM `Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine` を優先する。GPUクラスが未提供・空・不正の場合は `Get-Counter` のPDH標準カウンターへ切り替える（WDDM 2.x対応のIntel/AMD/NVIDIA）。両経路とも3Dに限定し、同一物理エンジンのプロセス別利用率を合計して、全GPUの3Dエンジン最大値を表示する。動画デコード・Compute等の専用エンジンは含めない。一部の不正値・終了済みプロセスのカウンターを除外し、正常な他の値は維持する。Get-CounterはPerflibの英語009とCurrentLanguageのIDを照合して現地語名を選び、2標本中の最後の有効値/新規値だけを使う。レジストリーは参照のみで変更しない。
 
 どちらのWindows経路も取得不能の場合と他OSは `nvidia-smi` のGPU全体利用率（複数台は最大値）へフォールバックする。すべて未対応・未導入・取得失敗ならnullとし、GPUの線と浮動ラベルを隠す。実測0%は保持する。約1秒ごとに最大60回分を保持し、取得不能区間は線をつながない。GPUは取得中も直前の値を使って非同期に更新し、CPU/RAMのHTTP応答を待たせない。初回はGPU値が届くまで数秒かかる場合があり、30秒以上古い値と全経路失敗後の値は表示しない。非表示中は新規要求を止め、復帰時は履歴をクリアし、終了時は進行中の要求・GPUコマンド・タイマーを解除する。
 
-APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのGPU固定照会は8秒・512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。外部ライブラリは追加しない。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
+APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのGPU固定照会は8秒・512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。CPU用の追加依存はsysteminformation 5.33.19。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
 
 確認: `node --test frontend_ide/checks/cpu*.test.mjs frontend_ide/checks/cpu*.test.cjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CPU更新器の暖機/再使用・GPU CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
 
 
 ### 計測アプリ自身のCPU負荷を抑える
 
-WindowsのCPUは各アプリで `windows-native-cpu.cjs` のPowerShellを1本再利用する。GPUは `windows-process.mjs` の別プロセス1本を再利用し、PowerShell/.NETを毎回起動し直さない。CPUとGPUの待機・失敗は独立させる。標準入力は固定識別子のみで、入力文字列をコマンド実行しない。GPU用は要求駆動で、無通信10秒で終了する。
+CPUは各アプリのsysteminformation currentLoadを1秒周期で呼び、CPU専用PowerShellは起動しない。GPUは既存 `windows-process.mjs` のプロセス1本を再利用し、PowerShell/.NETを毎回起動し直さない。CPUとGPUの待機・失敗は独立させる。標準入力は固定識別子のみで、入力文字列をコマンド実行しない。GPU用は要求駆動で、無通信10秒で終了する。
 
 CPU定周期計測は利用側のreadが届く間だけ有効。最後のreadから3秒で予約と進行要求を中止し、プロセスと古い標本を解放する。同じIDEに複数のCPU窓がある場合、他窓のGETが続けば採取を維持する。表示再開後は基準を取り直し、長い休止期間の平均を現在値にしない。サーバー終了・Avatar終了時はCPUのタイマーと進行要求を解放する。
 
-CPU画面は単調時計の1秒予定時刻に沿って最新標本を読む。HTTP/IPC要求は追加のCPU差分計算をせず、複数窓が読んでも採取窓を変えない。CPU画面で2標本の平均や最大値を取らない。短いピークが表示時刻の間に終了した場合、そのピークを必ず表示するものではない。短区間の70%も70%であり、1秒表示に合わせて縮小しない。標準カウンターの最低採取間隔は精度の要件であって、取得後の率を換算する根拠ではない。
+CPU画面は単調時計の1秒予定時刻に沿って最新標本を読む。HTTP/IPC要求は追加のCPU差分計算をせず、複数窓が読んでも採取窓を変えない。CPU画面で2標本の平均や最大値を取らない。短いピークが表示時刻の間に終了した場合、そのピークを必ず表示するものではない。短区間の70%も70%であり、1秒表示に合わせて縮小しない。ライブラリが返した百分率を、計測秒数から換算し直さない。
 
-応答期限・出力上限・中止・終了・不正応答では該当PowerShellを解放する。CPU失敗は30秒休止して同じ指標を再試行し、別指標へ切り替えない。GPUの30秒再試行・nvidia-smi代替は維持する。Get-Counterは2標本を採るため約1秒の待機が残るが、CPU/RAMのAPI応答はブロックしない。
+応答期限・出力上限・中止・終了・不正応答では該当PowerShellを解放する。CPU失敗は次の1秒予定で同じcurrentLoadを再試行し、別指標へ切り替えない。応答が5秒で戻らない場合は古い値をnullにするが、SIに中止APIがないため、その要求が完了するまでは新しい要求を重ねない。遅れて戻った応答は採用しない。GPUの30秒再試行・nvidia-smi代替は維持する。Get-Counterは2標本を採るため約1秒の待機が残るが、CPU/RAMのAPI応答はブロックしない。
 
-`cpu-native-counter.test.cjs` は共通Windows実装のOS選択、連続採取、0%、失敗・停止・再開と固定指標を確認する。`cpu-os-monitor.test.mjs` は非Windowsの500ms周期と不正差分・CPU数変更を確認する。`cpu-metrics.test.mjs` はGPU待機からの独立と、Windows失敗でNode値へ戻らないことを確認する。Avatar側はWindows/非WindowsのIPC、null・0・復帰、12スロット平均・色維持、終了処理を検証する。起動回数削減をCPU使用率削減率として扱わず、実負荷は同じWindows機・作業条件で比較する。Linux模擬試験だけではWindowsの精度を確定できない。
+`cpu-systeminformation.test.cjs` は共有監視の1秒予定、重複抑止、0%、失敗・停止・再開と百分率維持を確認する。`cpu-metrics.test.mjs` はGPU待機からの独立とSI値のAPI直結を確認する。Avatar側はライブラリ呼出し、null・0・復帰、12スロット平均・色維持、終了処理を検証する。旧native/os monitor試験は過去の診断経路の互換確認であり、現行本番がそれを採用する証拠としない。実負荷・Windowsの数値精度は同じ実機・作業条件で比較する。Linux模擬試験だけでは確定できない。
 
 ### CPUの値が低い・他の表示と一致しないとき
 
@@ -965,10 +967,10 @@ schema 2では次を別欄に保存する。
 
 - `samples`: 現在のソースの新規サンプラー。`--url http://127.0.0.1:ポート/` を指定した場合だけ、その既存サーバーのAPI値になる。
 - `runningServers`: Windowsでこのcheckoutの絶対パス `frontend_ide/launch.mjs --app cpu|ide` を実行するPIDだけを調べ、そのPIDの127.0.0.1 Listenポートから `/development/config` を確認した既存サーバー。全ポート走査はしない。複数候補は別々に記録する。相対パス起動や未対応OSは自動発見できない場合があり、その時はURLを指定する。取得できない場合を「現在の画面を検証済み」と扱わない。
-- `runtimeComparison`: システムNodeとインストール済みAvatar Electronへ同じ固定probeを並行起動し、共通時刻から500ms×24回の累積時間差分と12点平均を採る。これは旧os.cpus方式の比較で、現行Windows eyesの継続カウンターとは別指標。各実行ファイル・Node/uv/Electron版・起動遅れを記録する。既存eyesのIPCや画面そのものを読んだ結果ではなく、その実表示値の証明として扱わない。Electronが見つからない場合もNode側の結果は残す。
+- `runtimeComparison`: システムNodeとインストール済みAvatar Electronへ同じ固定probeを並行起動し、共通時刻から500ms×24回の累積時間差分と12点平均を採る。これは旧os.cpus方式の比較で、現行eyesのsysteminformationとは別指標。各実行ファイル・Node/uv/Electron版・起動遅れを記録する。既存eyesのIPCや画面そのものを読んだ結果ではなく、その実表示値の証明として扱わない。Electronが見つからない場合もNode側の結果は残す。
 - `reference`: `Processor Information` のTime / Utility / Idleを同じ継続PDHクエリーで採り、WMI更新器も同時に比較する。単発CIMはその後に実行し、先行する遅延で比較時間がずれないようにする。
 
-現在のAPIはロード済み固定IDとPIDを返す。自動発見PIDとAPIのPIDが違う応答は `server-pid-changed`、旧APIでruntimeが無い場合は `legacy-runtime-unavailable` とし、版確認成功と取り違えない。`collectorSha256` は診断側のディスク上6ファイルをLF正規化した指紋であり、`collectorHashScope` にその範囲を明示する。実行中サーバーのコードはファイル更新だけでは置換されない。IDEのCPU子窓はIDEサーバーを共有するため、修正適用時は作業保存後にIDE本体を再起動する。ただし不具合の診断採取前に再起動すると問題の状態が消えることがあるので、まず現状を採る。
+現在のAPIはロード済み固定IDとPIDを返す。自動発見PIDとAPIのPIDが違う応答は `server-pid-changed`、旧APIでruntimeが無い場合は `legacy-runtime-unavailable` とし、版確認成功と取り違えない。`collectorSha256` は診断側のディスク上7ファイルをLF正規化した指紋であり、`collectorHashScope` にその範囲を明示する。実行中サーバーのコードはファイル更新だけでは置換されない。IDEのCPU子窓はIDEサーバーを共有するため、修正適用時は作業保存後にIDE本体を再起動する。ただし不具合の診断採取前に再起動すると問題の状態が消えることがあるので、まず現状を採る。
 
 対象サーバーの探索を終えてから全比較を開始し、探索待ちだけでprobeと実画面の採取期間が離れないようにする。本体・既存サーバー・probeの時刻と採取窓を見て、実際に重なった標本だけを比較する。`overlap.referenceSamplesWithinProductionWindow` と各サーバーの `referenceSamplesWithinWindow` が0ならWindows参照との同時比較とはしない。これらはAPI応答timestampの範囲だけを確認する粗い指標で、非0だけでは採取窓の一致を保証しない。標本の経過時間と生差分の実測窓も確認する。生差分から `100 * (1 - rawIdleDeltaMs / rawTotalDeltaMs)` を再計算できるか、論理CPU数×実測時間と累積時間の進み方が大幅に違わないかを確認する。表示値・生カウンター入力・実行元の違いを分け、周期比や推測の固定倍率で補正しない。
 

@@ -19,23 +19,24 @@ const mainSource = fs.readFileSync(path.join(project, 'electron/main.ts'), 'utf8
 const compile = source => ts.transpileModule(source, { reportDiagnostics: true, compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, esModuleInterop: true } });
 const copy = value => JSON.parse(JSON.stringify(value));
 
-function mainFixture({ platform = 'win32', values = [], snapshots = [], createFailure = false } = {}) {
+function mainFixture({ platform = 'win32', values = [], createFailure = false } = {}) {
   const ast = ts.createSourceFile('main.ts', mainSource, ts.ScriptTarget.Latest, true);
-  const functions = new Set(['readCpuTimes', 'closeSystemCpuMonitor', 'getSystemCpuUsagePercent']);
-  const variables = new Set(['previousCpuTimes', 'windowsCpuMonitor']);
+  const functions = new Set(['closeSystemCpuMonitor', 'getSystemCpuUsagePercent']);
+  const variables = new Set(['systemCpuMonitor']);
   const selected = ast.statements.filter(node => ts.isFunctionDeclaration(node) && functions.has(node.name?.text)
     || ts.isVariableStatement(node) && node.declarationList.declarations.some(item => variables.has(item.name.getText(ast)))
-    || ts.isTypeAliasDeclaration(node) && node.name.text === 'WindowsCpuMonitor');
+    || ts.isTypeAliasDeclaration(node) && node.name.text === 'SystemCpuMonitor');
   const quit = mainSource.match(/app\.on\('before-quit',[^\n]+/)[0];
-  let created = 0, closed = 0, reads = 0, cpuReads = 0, quitHandler;
-  const os = { cpus() { cpuReads++; const next = snapshots.shift(); if (next instanceof Error) throw next; return next; } };
+  let created = 0, closed = 0, reads = 0, siReads = 0, getLoad, quitHandler;
+  const si = { async currentLoad() { siReads++; return { currentLoad: 67.25 }; } };
   const context = {
-    process: { platform }, path, os, __dirname: path.join(project, 'dist-electron'),
+    process: { platform }, path, __dirname: path.join(project, 'dist-electron'),
     app: { on(event, callback) { assert.equal(event, 'before-quit'); quitHandler = callback; } },
     require(id) {
-      assert.equal(id, path.resolve(project, '../frontend_ide/aidiy_cpu/windows-native-cpu.cjs'));
-      return { createWindowsCpuMonitor(options) {
-        assert.equal(options.system, os); created++;
+      if (id === 'systeminformation') return si;
+      assert.equal(id, path.resolve(project, '../frontend_ide/aidiy_cpu/systeminformation-cpu.cjs'));
+      return { createSystemInformationCpuMonitor(options) {
+        assert.equal(typeof options.getLoad, 'function'); getLoad = options.getLoad; created++;
         if (createFailure) throw Error('cannot create');
         return { read() { reads++; const value = values.shift(); if (value instanceof Error) throw value; return value; }, close() { closed++; } };
       } };
@@ -44,48 +45,52 @@ function mainFixture({ platform = 'win32', values = [], snapshots = [], createFa
   const code = compile(`let isQuitting = false;\n${selected.map(node => node.getText(ast)).join('\n')}\n${quit}\nglobalThis.api = {read: getSystemCpuUsagePercent, close: closeSystemCpuMonitor};`);
   assert.deepEqual(code.diagnostics, []);
   vm.runInNewContext(code.outputText, context);
-  return { ...context.api, quit: () => quitHandler(), counts: () => ({ created, closed, reads, cpuReads }) };
+  return { ...context.api, load: () => getLoad(), quit: () => quitHandler(), counts: () => ({ created, closed, reads, siReads }) };
 }
 
-test('Windowsは共有monitorを1回作り、取得済み率をIPC周期で割らず0%も保持する', () => {
-  const fixture = mainFixture({ values: [null, { cpu: 70 }, { cpu: 70 }, { cpu: 0 }, { cpu: 100 }] });
+for (const platform of ['win32', 'linux', 'darwin']) test(`${platform}: SI共有monitorを1回作り、取得済み率をIPC周期で割らず0%も保持する`, () => {
+  const fixture = mainFixture({ platform, values: [null, { cpu: 70 }, { cpu: 70 }, { cpu: 0 }, { cpu: 100 }] });
   assert.equal(fixture.read(), null); assert.equal(fixture.read(), 70); assert.equal(fixture.read(), 70);
   assert.equal(fixture.read(), 0); assert.equal(fixture.read(), 100);
-  assert.deepEqual(fixture.counts(), { created: 1, closed: 0, reads: 5, cpuReads: 0 });
+  assert.deepEqual(fixture.counts(), { created: 1, closed: 0, reads: 5, siReads: 0 });
 });
 
-test('Windowsの未取得・不正値を0やos.cpusへ置き換えない', () => {
+test('全OSの未取得・不正値を0や別の計測経路へ置き換えない', () => {
   const values = [null, undefined, { cpu: null }, { cpu: '50' }, { cpu: NaN }, { cpu: Infinity }, { cpu: -1 }, { cpu: 101 }];
   const fixture = mainFixture({ values: [...values] });
   for (const _ of values) assert.equal(fixture.read(), null);
-  assert.equal(fixture.counts().cpuReads, 0);
+  assert.equal(fixture.counts().siReads, 0);
+  assert.doesNotMatch(mainSource, /os\.cpus\(|windows-native-cpu|windowsCpuMonitor|readCpuTimes/);
 });
 
-test('Windows読込例外は解放してnullを返し、後の要求で復帰する', () => {
+test('SI読込例外は解放してnullを返し、後の要求で復帰する', () => {
   const fixture = mainFixture({ values: [{ cpu: 80 }, Error('failed'), null, { cpu: 60 }] });
   assert.equal(fixture.read(), 80); assert.equal(fixture.read(), null); assert.equal(fixture.read(), null); assert.equal(fixture.read(), 60);
-  assert.deepEqual(fixture.counts(), { created: 2, closed: 1, reads: 4, cpuReads: 0 });
-  const unavailable = mainFixture({ createFailure: true }); assert.equal(unavailable.read(), null); assert.equal(unavailable.counts().cpuReads, 0);
+  assert.deepEqual(fixture.counts(), { created: 2, closed: 1, reads: 4, siReads: 0 });
+  const unavailable = mainFixture({ createFailure: true }); assert.equal(unavailable.read(), null); assert.equal(unavailable.counts().siReads, 0);
 });
 
 test('before-quitで共有monitorを閉じ、その後のIPCで作り直さない', () => {
   const fixture = mainFixture({ values: [{ cpu: 20 }] });
   assert.equal(fixture.read(), 20); fixture.quit(); fixture.quit(); assert.equal(fixture.read(), null);
-  assert.deepEqual(fixture.counts(), { created: 1, closed: 1, reads: 1, cpuReads: 0 });
+  assert.deepEqual(fixture.counts(), { created: 1, closed: 1, reads: 1, siReads: 0 });
 });
 
-const cpu = (user, idle) => ({ times: { user, nice: 0, sys: 0, idle, irq: 0 } });
-test('非Windowsは全CPU累積時間の差分式を維持し、初回だけnullにする', () => {
-  for (const platform of ['linux', 'darwin']) {
-    const fixture = mainFixture({ platform, snapshots: [[cpu(100, 900), cpu(200, 800)], [cpu(450, 1050), cpu(550, 950)]] });
-    assert.equal(fixture.read(), null); assert.equal(fixture.read(), 70); assert.equal(fixture.counts().created, 0);
-  }
+test('Avatar自身のSI currentLoad()を関数として注入し、IPCが直接追加採取しない', async () => {
+  const fixture = mainFixture({ values: [null] });
+  assert.equal(fixture.read(), null); assert.equal(fixture.counts().siReads, 0);
+  assert.deepEqual(await fixture.load(), { currentLoad: 67.25 }); assert.equal(fixture.counts().siReads, 1);
+  assert.match(mainSource, /require\('systeminformation'\)/);
+  assert.doesNotMatch(mainSource, /frontend_ide[^\n]*node_modules/);
 });
 
-test('非Windowsの0%は有効、取得失敗・不正差分はnullで基準を取り直す', () => {
-  const fixture = mainFixture({ platform: 'linux', snapshots: [[cpu(100, 900)], [cpu(100, 1400)], Error('cpus unavailable'), [cpu(200, 1800)], [cpu(700, 1800)], [cpu(NaN, 1800)], [cpu(800, 2000)], [cpu(800, 2000)]] });
-  assert.equal(fixture.read(), null); assert.equal(fixture.read(), 0); assert.equal(fixture.read(), null); assert.equal(fixture.read(), null);
-  assert.equal(fixture.read(), 100); assert.equal(fixture.read(), null); assert.equal(fixture.read(), null); assert.equal(fixture.read(), null);
+test('Avatar単独セットアップにSIの正確な依存版と公式tarballが記録されている', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(project, 'package.json'), 'utf8'));
+  const lock = JSON.parse(fs.readFileSync(path.join(project, 'package-lock.json'), 'utf8'));
+  assert.equal(pkg.dependencies.systeminformation, '5.33.19');
+  assert.equal(lock.packages[''].dependencies.systeminformation, '5.33.19');
+  assert.equal(lock.packages['node_modules/systeminformation'].version, '5.33.19');
+  assert.equal(lock.packages['node_modules/systeminformation'].resolved, 'https://registry.npmjs.org/systeminformation/-/systeminformation-5.33.19.tgz');
 });
 
 test('CPU IPCの実配線・preload・renderer型がnumber|nullで一致する', () => {

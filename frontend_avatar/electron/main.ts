@@ -7,7 +7,6 @@ import { app, BrowserWindow, desktopCapturer, ipcMain, screen, session, Menu, ty
 import { realpathSync, statSync } from 'node:fs'
 import { installAloneTransport, readInternalAuthorization, configuredCoreBaseUrl } from './alone-transport'
 import { readdir } from 'node:fs/promises'
-import os from 'node:os'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
 
@@ -116,9 +115,8 @@ let settingsWindow: BrowserWindow | null = null
 const panelWindows = new Map<PanelKey, BrowserWindow>()
 const windowRoles = new Map<number, WindowRole>()
 let selectedDisplaySourceId: string | null = null
-let previousCpuTimes: { idle: number; total: number } | null = null
-type WindowsCpuMonitor = { read: () => { cpu: number } | null; close: () => void }
-let windowsCpuMonitor: WindowsCpuMonitor | null = null
+type SystemCpuMonitor = { read: () => { cpu: number } | null; close: () => void }
+let systemCpuMonitor: SystemCpuMonitor | null = null
 // Electronのバグ回避: getMinimumSize()が初期サイズを返す場合があるため独自管理
 const windowMinSizes = new Map<number, { minWidth: number; minHeight: number }>()
 const 表示処理 = new WeakMap<BrowserWindow, Promise<boolean>>()
@@ -171,59 +169,29 @@ function getWorkArea() {
   return screen.getPrimaryDisplay().workArea
 }
 
-function readCpuTimes() {
-  return os.cpus().reduce((summary, cpu) => {
-    const idle = cpu.times.idle
-    const total = Object.values(cpu.times).reduce((sum, value) => sum + value, 0)
-    return {
-      idle: summary.idle + idle,
-      total: summary.total + total,
-    }
-  }, { idle: 0, total: 0 })
-}
-
 function closeSystemCpuMonitor() {
-  try { windowsCpuMonitor?.close() } catch { /* 終了処理は計測失敗で妨げない。 */ }
-  windowsCpuMonitor = null
-  previousCpuTimes = null
+  try { systemCpuMonitor?.close() } catch { /* 終了処理は計測失敗で妨げない。 */ }
+  systemCpuMonitor = null
 }
 
 function getSystemCpuUsagePercent(): number | null {
   if (isQuitting) return null
-  if (process.platform === 'win32') {
-    try {
-      // CPU画面と同じWindows継続カウンターを使う。IPC周期で率を割り直さない。
-      // __dirnameはelectron/でもdist-electron/でも同じ共有ファイルへ解決する。
-      if (!windowsCpuMonitor) {
-        const { createWindowsCpuMonitor } = require(path.join(__dirname, '../../frontend_ide/aidiy_cpu/windows-native-cpu.cjs')) as {
-          createWindowsCpuMonitor: (options: { system: typeof os }) => WindowsCpuMonitor
-        }
-        windowsCpuMonitor = createWindowsCpuMonitor({ system: os })
+  try {
+    // 全OSでcurrentLoad()を使う。Avatar自身の依存を共有monitorへ注入する。
+    // 1秒の採取はmonitor側、500ms IPCは最新の率を読み、周期比で割り直さない。
+    if (!systemCpuMonitor) {
+      const si = require('systeminformation') as typeof import('systeminformation')
+      const { createSystemInformationCpuMonitor } = require(path.join(__dirname, '../../frontend_ide/aidiy_cpu/systeminformation-cpu.cjs')) as {
+        createSystemInformationCpuMonitor: (options: { getLoad: () => Promise<{ currentLoad: number }> }) => SystemCpuMonitor
       }
-      const usage = windowsCpuMonitor.read()?.cpu
-      return typeof usage === 'number' && Number.isFinite(usage) && usage >= 0 && usage <= 100 ? usage : null
-    } catch {
-      closeSystemCpuMonitor()
-      return null
+      systemCpuMonitor = createSystemInformationCpuMonitor({ getLoad: () => si.currentLoad() })
     }
-  }
-
-  let current: { idle: number; total: number }
-  try { current = readCpuTimes() } catch { previousCpuTimes = null; return null }
-  if (!Number.isFinite(current.idle) || !Number.isFinite(current.total) || current.idle < 0 || current.total <= 0 || current.idle > current.total) {
-    previousCpuTimes = null
+    const usage = systemCpuMonitor.read()?.cpu
+    return typeof usage === 'number' && Number.isFinite(usage) && usage >= 0 && usage <= 100 ? usage : null
+  } catch {
+    closeSystemCpuMonitor()
     return null
   }
-  if (!previousCpuTimes) {
-    previousCpuTimes = current
-    return null
-  }
-
-  const idleDelta = current.idle - previousCpuTimes.idle
-  const totalDelta = current.total - previousCpuTimes.total
-  previousCpuTimes = current
-  if (totalDelta <= 0 || idleDelta < 0 || idleDelta > totalDelta) return null
-  return Math.min(100, Math.max(0, (1 - (idleDelta / totalDelta)) * 100))
 }
 
 function getBottomRightPosition(

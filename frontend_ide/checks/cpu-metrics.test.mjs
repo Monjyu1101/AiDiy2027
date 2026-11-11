@@ -179,14 +179,14 @@ test('CPU準備中は値を作らず、取得失敗は別状態、成功した0%
 
 test('CPU診断には起動時固定の計測ID・PID・実行元を保持し、ディスクの後読みを稼働版としない',async()=>{
  const f=fixture();const first=await f.metrics.sample();const runtime=first.cpuDetails.runtime;
- assert.equal(runtime.collectorId,'system-cpu-fixed-source-v2');assert.equal(runtime.pid,process.pid);assert.equal(runtime.startedAt,0);
+ assert.equal(runtime.collectorId,'systeminformation-current-load-v3');assert.equal(runtime.pid,process.pid);assert.equal(runtime.startedAt,0);
  assert.equal(runtime.executable,process.execPath);assert.equal(runtime.node,process.versions.node);assert.equal(runtime.uv,process.versions.uv);
  assert.match(runtime.sourceFile,/[\\/]aidiy_cpu[\\/]metrics\.mjs$/);assert.ok(Object.isFrozen(runtime));
  f.tick();const next=await f.metrics.sample();assert.equal(next.cpuDetails.runtime,runtime);f.metrics.close();
 });
 
 
-test('Windows指標をAPIへ渡し、Utility失敗でもTimeやos-timesの低い値へ切り替えない',async()=>{
+test('旧native監視を注入してもAPIで別のCPU値へ再計算しない',async()=>{
  let time=0,status='warming-up',record=null;
  const system={release:()=> '10.0.22631',cpus:()=>[{times:{user:time*.05,idle:time*.95}}],totalmem:()=>1000,freemem:()=>250};
  const metrics=createSystemMetrics({system,platform:'win32',now:()=>time,run:async()=>({stdout:'[]'}),cpuMetrics:{read:()=>record,status:()=>status,close(){}}});
@@ -194,7 +194,24 @@ test('Windows指標をAPIへ渡し、Utility失敗でもTimeやos-timesの低い
  status='available';record={cpu:100,source:'windows-processor-utility',measuredAt:time,sampleIntervalMs:1000,windowsProcessorTime:5,windowsProcessorUtility:105,windowsProcessorIdle:95,windowsTimestampSys100Ns:'134126748005123456',sequence:1,windowsPreferredMetric:'utility'};
  let sample=await metrics.sample();assert.equal(sample.cpu,100);assert.equal(sample.cpuSource,'windows-processor-utility');assert.equal(sample.cpuDetails.osTimes,null);
  assert.equal(sample.cpuDetails.windowsProcessorTime,5);assert.equal(sample.cpuDetails.windowsProcessorUtility,105);assert.equal(sample.cpuDetails.windowsProcessorIdle,95);assert.equal(sample.cpuDetails.windowsTimestampSys100Ns,'134126748005123456');assert.equal(sample.cpuDetails.windowsSequence,1);
- time=1000;record=null;status='unavailable';sample=await metrics.sample();assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'unavailable');assert.equal(sample.cpuDetails.windowsCpuStatus,'unavailable');
+ time=1000;record=null;status='unavailable';sample=await metrics.sample();assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'unavailable');assert.equal(sample.cpuDetails.windowsCpuStatus,null);
  time=2000;status='available';record={cpu:0,source:'windows-processor-utility',measuredAt:time,sampleIntervalMs:1000,windowsProcessorTime:5,windowsProcessorUtility:0,windowsPreferredMetric:'utility'};
  sample=await metrics.sample();assert.equal(sample.cpu,0);assert.equal(sample.cpuSource,'windows-processor-utility');metrics.close();
+});
+
+for (const platform of ['win32','linux','darwin']) test(`${platform}: systeminformationの値をそのままAPIへ渡しGPU/旧カウンターと混ぜない`,async()=>{
+ let time=0,record=null,state='warming-up';
+ const metrics=createSystemMetrics({platform,now:()=>time,cpuMetrics:{read:()=>record,status:()=>state,close(){},diagnostics:()=>({lastError:null})},
+  system:{release:()=> '10.0.22631',totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:3,PercentProcessorUtility:100},gpu:[]})})});
+ assert.equal((await metrics.sample()).cpu,null);
+ for(const value of [5,70,100,0]){
+  time+=1000;state='available';record={cpu:value,source:'systeminformation-current-load',measuredAt:time,sampleIntervalMs:500,
+   logicalCpuCount:14,currentLoadIdle:100-value,rawCurrentLoad:value*10,rawCurrentLoadIdle:(100-value)*10};
+  const data=await metrics.sample();assert.equal(data.cpu,value);assert.equal(data.cpuSource,'systeminformation-current-load');
+  assert.equal(data.cpuDetails.osTimes,null);assert.equal(data.cpuDetails.windowsProcessorUtility,null);assert.equal(data.cpuDetails.windowsCpuStatus,null);
+  assert.equal(data.cpuDetails.systemInformation.currentLoad,value);assert.equal(data.cpuDetails.systemInformation.rawCurrentLoad,value*10);
+  assert.equal(data.cpuDetails.systemInformation.version,'5.33.19');assert.equal(data.cpuDetails.runtime.systeminformation,'5.33.19');
+  assert.equal(data.cpuDetails.sampleIntervalMs,500);
+ }
+ time+=1000;record=null;state='unavailable';assert.equal((await metrics.sample()).cpu,null);metrics.close();
 });

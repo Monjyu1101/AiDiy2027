@@ -100,10 +100,10 @@ IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の We
 - Electron では renderer だけでウィンドウ外カーソルを追えないため、main process 側で `screen.getCursorScreenPoint()` と対象 `BrowserWindow.getBounds()` を返す。
 - `window:get-pointer-snapshot` の `role` / `bounds` / `mouse` / `insideWindow` とステージの矩形からローカル座標へ変換する。CPU使用率は `system:get-cpu-usage` で取得する。
 - Web ではステージ内の `pointermove` を使う。画面外は追えない前提にする。
-- WindowsのCPUは、CPU画面と共有する `frontend_ide/aidiy_cpu/windows-native-cpu.cjs` の継続カウンターを使う。`main.ts` は最初のIPCで遅延作成し、`read()?.cpu` をそのまま返す。Windows 10〜11 23H2の既知buildはProcessor Utility、それ以外はProcessor Timeを起動時に選び、失敗時に別指標や `os.cpus()` へ切り替えない。OS更新の段階展開や採取窓の差があるため、Task Managerとの完全一致は保証しない。
-- Windowsは共有モジュールが常駐PowerShellのSWbemRefresherで約1秒ごとに採取し、500ms IPCは最新値を読むだけ。採取済み百分率を500ms/1秒などの周期比やコア数で割り直さない。無通信3秒で採取を停止し、Avatar終了時も `close()` で解放する。再開・初回の暖機、失敗、未取得は `null`、実測0%は有効な数値として返す。
-- 非WindowsのElectronは従来の全論理CPUの累積時間差分 `100 * (1 - idle差分 / total差分)` を維持する。初回・取得失敗・不正差分は0%ではなく `null`。通常WebにはOS計測IPCを追加しない。
-- xeyesは500ms間隔、12枠（約6秒）の平均と色変化を維持する。Windowsの1秒標本を2回読む場合も縮小せず同じ率として扱う。欠損は `null` の枠として進めて平均から除外し、最新枠が未取得なら数値を「—」、棒を空白にする。目の色は直前の状態を保ち、復帰時は直近12枠の有効値平均へ戻る。6秒以上前の値を欠損期間の後まで平均に残さない。
+- ElectronのCPUは全OSで `systeminformation@5.33.19` の `currentLoad()` を使う。Avatar自身のpackage依存から読み、`getLoad: () => si.currentLoad()` をCPU画面と共有する `frontend_ide/aidiy_cpu/systeminformation-cpu.cjs` へ渡す。IDEのnode_modulesへは依存しない。main processは最初のIPCでmonitorを遅延作成し、`read()?.cpu` をそのまま返す。
+- 採取は約1秒周期、500ms IPCは最新値の読込だけ。SIの初回呼出しは内部で約500msの基準更新・差分採取を行うため、返された `currentLoad` を有効値として使う。採取済み百分率を500ms/1秒などの周期比やコア数で割り直さない。暖機・失敗・未取得は `null`、実測0%は有効な数値。Avatar終了時は `close()` で解放する。
+- 独自のWindows Time/Utility選択や非Windows `os.cpus()` 差分処理へは切り替えない。SI自身は内部でOSカウンターを読むので、この方式への変更だけでTask Managerとの一致や実機の精度を確定しない。通常WebにはOS計測IPCを追加しない。
+- xeyesは500ms間隔、12枠（約6秒）の平均と色変化を維持する。1秒標本を2回読む場合も縮小せず同じ率として扱う。欠損は `null` の枠として進めて平均から除外し、最新枠が未取得なら数値を「—」、棒を空白にする。目の色は直前の状態を保ち、復帰時は直近12枠の有効値平均へ戻る。6秒以上前の値を欠損期間の後まで平均に残さない。
 - IPC要求は重複させず、画面破棄後に届いた結果を反映しない。破棄中の初期化完了からintervalを再開しない。
 - CPUグラフとオプションは `controlsVisible` が true のときだけ出す。目の色変化・充血表現は `cpuColorEnabled` で制御し、`controlsVisible=false` でも有効になり得る。目線追従とは分離する。
 - `v-if` と `v-for` を同一要素に書かず、必要なら `<template v-if>` でラップする。

@@ -6,19 +6,21 @@
 import * as os from 'node:os';
 import { performance } from 'node:perf_hooks';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import si from 'systeminformation';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
 import { windowsSystemMetricsCommand } from './windows-cpu.mjs';
 import { createWindowsMetricsProcess } from './windows-process.mjs';
-import { createOsCpuMonitor } from './os-cpu-monitor.mjs';
-import windowsNativeCpu from './windows-native-cpu.cjs';
-const { createWindowsCpuMonitor, preferredWindowsCpuMetric } = windowsNativeCpu;
+import systemInformationCpu from './systeminformation-cpu.cjs';
+const { createSystemInformationCpuMonitor } = systemInformationCpu;
+const systemInformationVersion = createRequire(import.meta.url)('systeminformation/package.json').version;
 export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
 
 // 読込済みの実装を識別する固定ID。診断時のディスク再hashを稼働版と取り違えない。
-const CPU_COLLECTOR_ID = 'system-cpu-fixed-source-v2';
+const CPU_COLLECTOR_ID = 'systeminformation-current-load-v3';
 const percent = value => Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : null;
 
 // 複数GPUでは最も使用率の高いデバイスを表示する。未対応値を0%に変換しない。
@@ -34,11 +36,10 @@ export function parseGpuUtilization(stdout) {
 export function createSystemMetrics({ system = os, run = execute, now = Date.now, monotonicNow = now === Date.now ? () => performance.now() : now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics, cpuMetrics } = {}) {
   const runtime = Object.freeze({ collectorId: CPU_COLLECTOR_ID, pid: process.pid, startedAt: now(),
     executable: process.execPath, sourceFile: fileURLToPath(import.meta.url),
-    node: process.versions.node, uv: process.versions.uv, electron: process.versions.electron ?? null, arch: process.arch });
+    node: process.versions.node, uv: process.versions.uv, electron: process.versions.electron ?? null, arch: process.arch, systeminformation: systemInformationVersion });
   const osRelease = typeof system.release === 'function' ? system.release() : null;
-  // Windowsはeyesと共通の継続カウンター。他OSはos.cpus差分。失敗で指標を切り替えない。
-  const cpuMonitor = cpuMetrics ?? (platform === 'win32' ? createWindowsCpuMonitor({ system, now, monotonicNow })
-    : createOsCpuMonitor({ system, now, monotonicNow }));
+  // 全OSでユーザー指定のsi.currentLoadを1秒周期で呼ぶ。GPU/画面要求から独立。
+  const cpuMonitor = cpuMetrics ?? createSystemInformationCpuMonitor({ getLoad: () => si.currentLoad(), now, monotonicNow });
   let cpuRecord = null, cpuMonitorStatus = null, cachedAt = -Infinity;
   const windowsProcess = windowsMetrics ?? (platform === 'win32' && run === execute ? createWindowsMetricsProcess() : null);
   let cached, pending, externalPending, closed = false, gpu = null, externalCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
@@ -105,10 +106,17 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
       windowsProcessorTime: cpuRecord?.windowsProcessorTime ?? null, windowsProcessorUtility: cpuRecord?.windowsProcessorUtility ?? null,
       windowsProcessorIdle: cpuRecord?.windowsProcessorIdle ?? null,
       windowsTimestampSys100Ns: cpuRecord?.windowsTimestampSys100Ns ?? null, windowsSequence: cpuRecord?.sequence ?? null,
-      windowsPreferredMetric: platform === 'win32' ? (cpuRecord?.windowsPreferredMetric ?? preferredWindowsCpuMetric(osRelease)) : null,
+      windowsPreferredMetric: cpuRecord?.windowsPreferredMetric ?? null,
       windowsSampleIntervalMs: cpuSource.startsWith('windows-') ? cpuRecord.sampleIntervalMs : null,
       windowsSampleAgeMs: cpuSource.startsWith('windows-') ? Math.max(0, timestamp - cpuRecord.measuredAt) : null,
-      windowsCpuStatus: platform === 'win32' ? cpuMonitorStatus : null,
+      windowsCpuStatus: cpuSource.startsWith('windows-') ? cpuMonitorStatus : null,
+      systemInformation: cpuSource === 'systeminformation-current-load' ? Object.freeze({
+        version: systemInformationVersion, currentLoad: cpuRecord.cpu, currentLoadIdle: cpuRecord.currentLoadIdle ?? null,
+        rawCurrentLoad: cpuRecord.rawCurrentLoad ?? null, rawCurrentLoadIdle: cpuRecord.rawCurrentLoadIdle ?? null,
+        rawCurrentLoadUser: cpuRecord.rawCurrentLoadUser ?? null, rawCurrentLoadSystem: cpuRecord.rawCurrentLoadSystem ?? null,
+        rawCurrentLoadIrq: cpuRecord.rawCurrentLoadIrq ?? null,
+      }) : null,
+      cpuError: cpuMonitor.diagnostics?.().lastError ?? null,
     });
     if (closed) throw Error('システム計測は終了しました。');
     cachedAt = monotonicNow();

@@ -92,9 +92,9 @@ export function localMetricsUrl(value){
 }
 export function selectSample(data){
  if(!data||typeof data!=='object'||!Number.isFinite(data.timestamp))return{error:'invalid-metrics-response'};
- const keys=['osTimes','rawIdleDeltaMs','rawTotalDeltaMs','rawBusyDeltaMs','windowsProcessorTime','windowsProcessorUtility','windowsProcessorIdle','windowsTimestampSys100Ns','windowsSequence','logicalCpuCount','sampleIntervalMs','cpuSampleAgeMs','cpuStatus','windowsSampleAgeMs','windowsSampleIntervalMs','windowsPreferredMetric','windowsCpuStatus','platform','osRelease','nodeVersion','libuvVersion'];
+ const keys=['osTimes','rawIdleDeltaMs','rawTotalDeltaMs','rawBusyDeltaMs','windowsProcessorTime','windowsProcessorUtility','windowsProcessorIdle','windowsTimestampSys100Ns','windowsSequence','logicalCpuCount','sampleIntervalMs','cpuSampleAgeMs','cpuStatus','windowsSampleAgeMs','windowsSampleIntervalMs','windowsPreferredMetric','windowsCpuStatus','platform','osRelease','nodeVersion','libuvVersion','systemInformation','cpuError'];
  const runtime=data.cpuDetails?.runtime;
- const safeRuntime=runtime&&typeof runtime==='object'?Object.fromEntries(['collectorId','pid','startedAt','executable','sourceFile','node','uv','electron','arch'].map(key=>[key,['pid','startedAt'].includes(key)?(Number.isFinite(runtime[key])?runtime[key]:null):(typeof runtime[key]==='string'?runtime[key].slice(0,4096):null)])):null;
+ const safeRuntime=runtime&&typeof runtime==='object'?Object.fromEntries(['collectorId','pid','startedAt','executable','sourceFile','node','uv','electron','arch','systeminformation'].map(key=>[key,['pid','startedAt'].includes(key)?(Number.isFinite(runtime[key])?runtime[key]:null):(typeof runtime[key]==='string'?runtime[key].slice(0,4096):null)])):null;
  return{timestamp:data.timestamp,cpu:data.cpu??null,cpuSource:data.cpuSource??'missing-in-response',details:{...Object.fromEntries(keys.map(key=>[key,data.cpuDetails?.[key]??null])),runtime:safeRuntime}};
 }
 // URLはloopbackに限定し、リダイレクトと巨大応答を受け入れない。
@@ -167,7 +167,7 @@ async function main(args){
  localMetricsUrl(args[1]);
  console.log('CPUを約30秒（探索が遅い場合は約45秒）比較します。問題のCPU画面とeyesを開いたまま、通常の作業を続けてください。設定変更・負荷試験・外部送信は行いません。');
  const report=await collectCpuDiagnostics({url:args[1],compareRuntimes:()=>collectRuntimeComparison(),discoverServers:()=>discoverCpuServers()});
- report.collectorSourceFiles=['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs','aidiy_cpu/windows-process.mjs','aidiy_cpu/windows-gpu.mjs','aidiy_cpu/os-cpu-monitor.mjs','aidiy_cpu/windows-native-cpu.cjs'];
+ report.collectorSourceFiles=['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs','aidiy_cpu/windows-process.mjs','aidiy_cpu/windows-gpu.mjs','aidiy_cpu/os-cpu-monitor.mjs','aidiy_cpu/windows-native-cpu.cjs','aidiy_cpu/systeminformation-cpu.cjs'];
  const sources=await Promise.all(report.collectorSourceFiles.map(file=>readFile(resolve(root,file),'utf8')));
  report.collectorSha256=collectorFingerprint(sources);
  report.collectorHashFormat='utf8-lf';
@@ -176,7 +176,7 @@ async function main(args){
  await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(report,null,2)+'\n','utf8');
  console.log('診断結果: '+output);
  console.log(`起動中CPU/IDEサーバー: ${report.runningServers.servers.length}件（${report.runningServers.status}）。新規サンプラーとは別欄へ保存しました。`);
- console.log('Node/Electron比較は旧os.cpus方式の新規probeです。現行Windows eyesの継続カウンターや実表示値を直接読み取ったものではありません。');
+ console.log('Node/Electron比較は旧os.cpus方式の新規probeです。現行eyesのsysteminformationや実表示値を直接読み取ったものではありません。');
  console.log('CPU Time・Utility・Idleは別々に記録しています。ディスクの指紋は稼働サーバーの版を証明しません。');
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href)main(process.argv.slice(2)).catch(error=>{console.error(error.message);process.exitCode=1;});

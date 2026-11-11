@@ -42,7 +42,7 @@ function publicSnapshot(value) {
 }
 
 // 既存eyesを読まず、旧os.cpus方式を別ランタイムで比較する読み取り専用probe。
-// 現行Windows eyesは継続WMIカウンターなので、このprobeの数値はeyesの実測値ではない。
+// 現行eyesはsysteminformationを使うため、このprobeの数値はeyesの実測値ではない。
 export async function sampleRuntimeCpu({ targetStartAt = Date.now(), intervalMs = 500, sampleCount = 24,
   system = os, now = Date.now, monotonicNow = () => performance.now(), sleep = defaultSleep, runtime = runtimeInfo() } = {}) {
   checkSamplingOptions(targetStartAt, intervalMs, sampleCount);
