@@ -7,6 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {createSystemMetrics} from '../aidiy_cpu/metrics.mjs';
 import {chartSeries,placeLabels,chartRight,labelRight} from '../src/components/システム監視/使用率グラフ.js';
 const source=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\r?\n/gm,'');
 function fixture(){
@@ -69,4 +70,20 @@ test('CPU is graph-only with compact percent margin and Diag-sized right inset',
  assert.match(panel,/viewBox="0 0 264 100"/);
  assert.match(panel,/<text :x="labelRight-labelMaxWidth\/2" :y="item\.labelY\+\.5" text-anchor="middle" dominant-baseline="central"/);
  assert.match(panel,/right:8px;bottom:/);
+});
+
+
+test('Windows取得値はJSON応答からVueのCPUグラフ・浮動数値まで縮小せず届く',async()=>{
+ let now=0,busy=100,idle=100;
+ const metrics=createSystemMetrics({platform:'win32',now:()=>now,system:{cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:64,PercentProcessorUtility:92},gpu:[{Name:'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D',UtilizationPercentage:40}]})})});
+ const f=fixture();
+ try{
+  await metrics.sample();await tick();now+=1000;busy+=3;idle+=97;
+  const api=JSON.parse(JSON.stringify(await metrics.sample()));
+  assert.equal(api.cpu,64);assert.ok(Math.abs(api.cpuDetails.osTimes-3)<1e-8);
+  f.setFetch(async()=>({ok:true,json:async()=>api}));await f.context.poll();
+  const cpu=f.context.state.series.value.find(item=>item.key==='cpu');
+  const label=f.context.state.labels.value.find(item=>item.key==='cpu');
+  assert.equal(cpu.value,64);assert.equal(label.value,64);assert.equal('CPU '+Math.round(label.value)+'%','CPU 64%');assert.equal(cpu.y,94-64*.84);
+ }finally{metrics.close();f.unmount();}
 });

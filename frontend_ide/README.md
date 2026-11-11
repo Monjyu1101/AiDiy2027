@@ -376,7 +376,7 @@ Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/`
 
 `aidiy_cpu`、`node frontend_ide/aidiy_cpu/launch.mjs`、Diagの「CPU」から単独起動できます。Core / Toolsの起動は不要です。`aidiy_cpu --browser` はWeb表示、`--no-open` はサーバーだけを起動します。setup / cleanupは他のIDE群と同じ入口に含まれ、全体 `_start.py` のCPU選択は既定OFFです。
 
-IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。WindowsではGPU Engineの3D使用率を計測します。CIMが使えないIntel/AMD環境では `Get-Counter` の標準カウンターへ切り替え、OS言語に応じたカウンター名を使います。プロセス別の同一エンジン使用率を合計し、全GPUの3Dエンジン最大値を表示します。動画再生・計算専用エンジンの負荷は3D値に含めません。WDDM 2.x対応ドライバーが必要です。両方取得できない場合とWindows以外ではNVIDIAの `nvidia-smi` のGPU全体使用率を使い、複数台は最大値を表示します。GPU取得は非同期でCPU/RAM表示を止めず、初回の数秒間や未対応・未導入・取得失敗時はGPUの線と浮動ラベルを表示しません。正常な0%は表示します。
+IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。CPUはWindowsでは標準の全CPU `PercentProcessorTime` を優先し、未取得時・他OSでは全論理CPUの稼働時間差分を使います。周波数補正の `PercentProcessorUtility` は別指標として診断情報に残し、表示値の倍率補正には使いません。長い非表示からの復帰直後は古い期間平均を出さず、次の計測を待ちます。WindowsではGPU Engineの3D使用率を計測します。CIMが使えないIntel/AMD環境では `Get-Counter` の標準カウンターへ切り替え、OS言語に応じたカウンター名を使います。プロセス別の同一エンジン使用率を合計し、全GPUの3Dエンジン最大値を表示します。動画再生・計算専用エンジンの負荷は3D値に含めません。WDDM 2.x対応ドライバーが必要です。両方取得できない場合とWindows以外ではNVIDIAの `nvidia-smi` のGPU全体使用率を使い、複数台は最大値を表示します。GPU取得は非同期でCPU/RAM表示を止めず、初回の数秒間や未対応・未導入・取得失敗時はGPUの線と浮動ラベルを表示しません。正常な0%は表示します。
 
 ## IDEの配置をSave / Loadする（Electron・AiDiy接続利用）
 
