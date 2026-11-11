@@ -142,3 +142,61 @@ test('Save keeps the Browser URL and the Navi Code switch, and Load passes the U
  assert.deepEqual(validate(f.written[0]),f.written[0]);
  assert.throws(()=>validate({...snapshot(),panels:[{kind:'browser',bounds:rect,url:5}]}));
 });
+
+
+test('Browser Load allows exactly 10px at each horizontal edge while keeping its header visible',()=>{
+ const f=fixture();
+ for(const target of [
+  {x:-10,y:0,width:1940,height:1200},
+  {x:-10,y:980,width:900,height:1200},
+  {x:1030,y:0,width:900,height:1200},
+ ]){
+  const browser=f.add('browser');
+  assert.equal(applyPlacement(browser,{bounds:target},f.screen),true);
+  assert.deepEqual(browser.window.getBounds(),target);
+ }
+ for(const target of [
+  {x:-11,y:0,width:1940,height:1200},
+  {x:-10,y:0,width:1941,height:1200},
+  {x:-10,y:-1,width:1940,height:1200},
+  {x:-10,y:981,width:1940,height:1200},
+  {x:4000,y:0,width:900,height:1200},
+  {x:0,y:0,width:20,height:1200},
+  {x:0,y:0,width:900,height:99},
+ ]){
+  const browser=f.add('browser');
+  assert.equal(applyPlacement(browser,{bounds:target,maximized:true},f.screen),false);
+  assert.deepEqual(browser.window.getBounds(),initial);
+  assert.equal(browser.window.isMaximized(),false);
+ }
+ for(const kind of ['code','live','console','cpu','task','team','viewer','explorer','panel-navigation']){
+  const panel=f.add(kind);
+  assert.equal(applyPlacement(panel,{bounds:{x:-1,y:0,width:900,height:600}},f.screen),false,kind);
+  assert.deepEqual(panel.window.getBounds(),initial);
+ }
+});
+
+test('Browser header coverage preserves adjacent negative monitors and rejects gaps or removed displays',()=>{
+ const f=fixture(),left={x:-1920,y:0,width:1920,height:1080},right={x:0,y:0,width:1920,height:1080};
+ const restore=(target,areas)=>{
+  f.screen.getAllDisplays=()=>areas.map(workArea=>({workArea}));
+  return applyPlacement(f.add('browser'),{bounds:target},f.screen);
+ };
+ assert.equal(restore({x:-1930,y:0,width:3860,height:1500},[left,right]),true);
+ assert.equal(restore({x:-1931,y:0,width:3860,height:1500},[left,right]),false);
+ assert.equal(restore({x:-200,y:0,width:400,height:1500},[left,right]),true);
+ assert.equal(restore({x:-200,y:0,width:400,height:1500},[{...left,width:1919},right]),false);
+ assert.equal(restore({x:-200,y:0,width:400,height:1500},[left,{...right,y:1}]),false);
+ assert.equal(restore({x:-1930,y:0,width:1940,height:1500},[right]),false);
+});
+
+test('Load glides Browser to accepted saved FHD bounds and keeps rejected Browser at its initial position',async()=>{
+ for(const [x,accepted] of [[-10,true],[-11,false]]){
+  const f=fixture(),target={x,y:0,width:1940,height:1200};
+  f.save({...snapshot(),panels:[{kind:'browser',bounds:target,maximized:false}]});
+  assert.equal((await f.run('load')).ok,true);
+  const browser=[...f.windows.values()].find(record=>record.kind==='browser');
+  assert.deepEqual(browser.window.getBounds(),accepted?target:initial);
+  assert.equal(!!browser.window.moves?.length,accepted);
+ }
+});
