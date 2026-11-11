@@ -3,8 +3,9 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-const {contextBridge,ipcRenderer}=require('electron');
+const {contextBridge,ipcRenderer,webUtils}=require('electron');
 contextBridge.exposeInMainWorld('aidiyWindow',{
+ selectedFilePath:file=>webUtils.getPathForFile(file),
  nativeWindowMove:true,
  layout:action=>ipcRenderer.invoke('development:layout',action),
  onLayoutRequest:callback=>{

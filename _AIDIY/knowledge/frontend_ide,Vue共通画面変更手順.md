@@ -990,3 +990,14 @@ schema 2では次を別欄に保存する。
 Windowsの生CPU時間APIが高負荷を過小表示する[PresentMonの修正例](https://github.com/GameTechDev/PresentMon/pull/167)があるが、同じ症状だけで同じ原因とは断定しない。また旧 `Processor` と `Processor Information` は別のカウンターで、hybrid CPUでは[Idle取得にも機種差の報告](https://github.com/netdata/netdata/issues/23482)がある。診断値の大きい方や `100 - Idle` を未検証の代替値として自動採用しない。
 
 資料: [旧Task ManagerのProcessor Utility](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/cpu-usage-exceeds-100)、[PDHの2標本・1秒以上の採取要件](https://learn.microsoft.com/en-us/windows/win32/perfctrs/collecting-performance-data)、[WMI更新器](https://learn.microsoft.com/en-us/windows/win32/wmisdk/refreshing-wmi-data-in-scripts)、[Task ManagerのCPU指標変更](https://support.microsoft.com/en-us/servicing/os/windows-11/2025/08/august-29-2025-kb5064081-os-build-26100-5074-preview)。診断の試験は `node --test frontend_ide/checks/cpu-diagnostics.test.mjs frontend_ide/checks/cpu-runtime-probe.test.mjs frontend_ide/checks/cpu-server-discovery.test.mjs`。mock通過は実機カウンター値の正しさを保証しない。
+
+
+### 別窓ビューアの参照
+
+ピン留めで別窓になったファイルビューアは、ファイル名の横に「参照」を表示する。通常の埋め込みビューアには表示しない。Electronでは選択したFileの実パスをpreloadのwebUtilsで取得し、プロジェクト内なら従来のファイルAPIで読んでエクスプローラーの選択へ反映する。プロジェクト内でもAPIの除外・権限境界は維持する。
+
+プロジェクト外のファイルは明示選択したFileだけをブラウザ内で読み、サーバーへアップロードしない。テキスト・画像・Office/PDFと音声動画を表示し、画像20MiB、文書・音声動画50MiB、テキスト先頭1MiBの上限を設ける。外部ファイルのAI解析・下書き連携・OSアプリ起動は提供しない。HTML/SVG/Markdownはコード表示とし、周辺ファイルを自動公開しない。ローカルファイルの内容更新は参照から再選択する。File URLの解放は次の選択・元ファイル切替・破棄時に行う。
+
+Webブラウザは選択したFileの完全なパスを公開しないため、プロジェクト内外を推測せずローカル表示として扱う。Office表示は同一オリジンのblob URLのみ受け付ける。
+
+検証: `node --test frontend_ide/checks/viewer-browse.test.mjs frontend_ide/checks/preview-actions.test.mjs`。画面確認は `node frontend_ide/scripts/check-viewer-floating.mjs` で、参照後の表示・キャンセル・再選択・プロジェクト内への切替も確認する。`--compile-only` は実App/Viewerのコンパイルだけを行う。

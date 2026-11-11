@@ -16,6 +16,8 @@ const documentPage = $('document-page');
 const params = new URLSearchParams(location.search);
 const path = params.get('path');
 const format = params.get('format');
+const selectedBlob = params.get('blob');
+const documentSource = selectedBlob && selectedBlob.startsWith('blob:' + location.origin + '/') ? selectedBlob : `/api/document?path=${encodeURIComponent(path)}`;
 const labels = { word: 'Word', excel: 'Excel', powerpoint: 'PowerPoint', pdf: 'PDF' };
 let page = 0, pageCount = 1, renderPage = null, busy = false, pending = false;
 let source = '', displayed = null, revision = 0, destroyed = false, resetScroll = false;
@@ -392,7 +394,7 @@ async function main() {
   if (!path || !labels[format]) throw new Error('文書の指定が正しくありません。');
   $('format-name').textContent = labels[format];
   document.title = `${path.split('/').at(-1)} - ${labels[format]}`;
-  const response = await fetch(`/api/document?path=${encodeURIComponent(path)}`, { cache: 'no-store', signal: abort.signal });
+  const response = await fetch(documentSource, { cache: 'no-store', signal: abort.signal });
   if (destroyed) return;
   if (!response.ok) throw new Error(response.status === 404 ? 'ファイルが見つかりません。' : await response.text());
   const data = await response.arrayBuffer();

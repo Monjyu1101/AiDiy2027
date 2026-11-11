@@ -50,7 +50,7 @@ async function prepareAll(){
   }finally{preparingAll=false;if(!disposed)engine?.setAutoSpin(resume);}
 }
 function captureLayout(){
-  return{explorer:explorer.value?.captureLayout(),viewers:viewerSessions.value.filter(entry=>entry.detached).map(entry=>({name:viewerRefs.get(entry.file.path)?.captureLayout().name,file:{path:entry.file.path,name:entry.file.name,type:'file'}})).filter(entry=>entry.name)};
+  return{explorer:explorer.value?.captureLayout(),viewers:viewerSessions.value.filter(entry=>entry.detached).map(entry=>{const layout=viewerRefs.get(entry.file.path)?.captureLayout(),file=layout?.file||entry.file;return{name:layout?.name,file:{path:file.path,name:file.name,type:'file'}};}).filter(entry=>entry.name)};
 }
 async function restoreLayout(saved){
   // 通常アプリだけの配置は、ファイル走査の終了を待たず復元を完了する。
@@ -75,6 +75,7 @@ async function restoreLayout(saved){
 }
 defineExpose({prepareAll,captureLayout,restoreLayout});
 watch(selected,file=>{
+  browsedSelection.value=null;
   viewerSessions.value=viewerSessions.value.filter(entry=>entry.detached||entry.pinning||entry.file.path===file?.path);
   if(!file)return;
   let entry=viewerSessions.value.find(entry=>entry.file.path===file.path);
@@ -131,6 +132,7 @@ watch([()=>props.viewMode, autoSpin, filter, refreshPaused, ()=>trail.value.join
 
 watch(()=>props.startedAt,value=>{explorerNavigation.value=null;void engine?.refresh(value);});
 // 一覧からの移動中は選んだ行を保持し、中間階層を一覧へ送り返さない。
+const browsedSelection=shallowRef(null);
 const explorerNavigation=shallowRef(null);
 async function selectExplorer(entry){
   if(preparingAll)return;
@@ -231,10 +233,10 @@ onBeforeUnmount(()=>{disposed=true;unsubscribeCenter?.();unsubscribeBrowserSourc
         <button class="space-motion-toggle" :class="{driving:autoSpin&&driving}" role="switch" aria-label="自動探索" :aria-checked="autoSpin" :title="viewMode==='2d'?'最終更新のファイルを自動で開く（手動操作中は待機）':autoSpin&&driving?'自動探索中':''" @click="engine?.setAutoSpin(!autoSpin)"><span>自動探索</span><span class="motion-switch" aria-hidden="true"></span><span aria-hidden="true">{{ autoSpin?'ON':'OFF' }}</span></button>
       </div>
     </div>
-    <FileExplorer @pause-refresh="pauseRefresh" :apply-file-change="applyFileChange" :reload="reloadExplorer" @activity="navigationActivity();engine?.interact()" ref="explorer" :all-displays="allDisplays" @detached="value=>explorerDetached=value" v-model:open="open" :view-history="viewHistory" :view-voyages="viewVoyages" :tree="scan?.tree" :scan="scan" :root="scan?.root" :selected="explorerNavigation ? (explorerNavigation.type==='file' ? explorerNavigation.path : undefined) : selected?.path" :current="explorerNavigation ? (explorerNavigation.type==='dir' ? explorerNavigation.path : explorerNavigation.path.split('/').slice(0,-1).join('/')) : trail.join('/')" :navigating="!!explorerNavigation" :started-at="startedAt" :color="name=>engine?.color(name)||'#bac7da'" @select="selectExplorer" @clear="engine?.clear()" @marks="value=>marks=value" @latest="onLatest" @freshness="onFreshness" @route="value=>route=value" @clear-view-history="engine?.clearViewHistory()" :filter="filter" />
+    <FileExplorer @pause-refresh="pauseRefresh" :apply-file-change="applyFileChange" :reload="reloadExplorer" @activity="navigationActivity();engine?.interact()" ref="explorer" :all-displays="allDisplays" @detached="value=>explorerDetached=value" v-model:open="open" :view-history="viewHistory" :view-voyages="viewVoyages" :tree="scan?.tree" :scan="scan" :root="scan?.root" :selected="browsedSelection?.path || (explorerNavigation ? (explorerNavigation.type==='file' ? explorerNavigation.path : undefined) : selected?.path)" :current="explorerNavigation ? (explorerNavigation.type==='dir' ? explorerNavigation.path : explorerNavigation.path.split('/').slice(0,-1).join('/')) : trail.join('/')" :navigating="!!explorerNavigation" :started-at="startedAt" :color="name=>engine?.color(name)||'#bac7da'" @select="selectExplorer" @clear="engine?.clear()" @marks="value=>marks=value" @latest="onLatest" @freshness="onFreshness" @route="value=>route=value" @clear-view-history="engine?.clearViewHistory()" :filter="filter" />
     <p v-if="scan?.truncated&&!open" class="space-scan-warning" role="status">{{ scanWarning(scan) }}</p>
     <button class="space-filter-toggle" role="switch" aria-label="フィルター" :aria-checked="filter" title="AiDiy のバックアップ対象のファイルだけを表示" @click="filter=!filter"><span>フィルター</span><span class="motion-switch" aria-hidden="true"></span><span aria-hidden="true">{{ filter?'ON':'OFF' }}</span></button>
-    <ViewerSession v-for="entry in viewerSessions" :key="entry.file.path" :ref="value=>value?viewerRefs.set(entry.file.path,value):viewerRefs.delete(entry.file.path)" :file="entry.file" :root="scan?.root" :auto-spin="autoSpin" @close="closeViewer(entry)" @pinning="value=>pinningViewer(entry,value)" @detached="detachedViewer(entry)" @recover="recoverViewer(entry)" />
+    <ViewerSession v-for="entry in viewerSessions" :key="entry.file.path" :ref="value=>value?viewerRefs.set(entry.file.path,value):viewerRefs.delete(entry.file.path)" :file="entry.file" :root="scan?.root" :auto-spin="autoSpin" @select="value=>browsedSelection=value" @close="closeViewer(entry)" @pinning="value=>pinningViewer(entry,value)" @detached="detachedViewer(entry)" @recover="recoverViewer(entry)" />
     <nav v-if="scan" v-show="viewMode==='3d'" class="space-breadcrumb"><button @click="engine.ascend(0)">{{ scan.tree.n }}</button><template v-for="(name,i) in trail" :key="i"><span>›</span><button @click="engine.ascend(i+1)">{{ name }}</button></template></nav>
     <div v-if="!scan&&(loading||error)" class="space-loading">{{ error||'読み込み中…' }}</div>
     <div v-else-if="error" class="space-notice" role="status"><span>{{ error }}</span><button aria-label="案内を閉じる" @click="error=''"><span class="close-icon" aria-hidden="true"></span></button></div>

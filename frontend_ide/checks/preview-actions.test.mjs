@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
+import * as selectedFiles from '../src/components/ファイル閲覧/選択ファイル.js';
 import * as viewerIdle from '../src/components/ファイル閲覧/閲覧待機.js';
 import * as references from '../src/components/ファイル閲覧/ファイル参照.js';
 import * as actions from '../src/components/ファイル閲覧/ファイル操作.js';
@@ -70,7 +71,7 @@ async function viewer(t, { desktop, browserCopy = async () => {}, pinned = false
     localStorage: { getItem: () => null },
     fetch: async (url,options) => url.startsWith('/api/file-analysis?')?(analysisCalls.push({url,...options}),analysisFetch?analysisFetch(url,options):{ok:true,json:async()=>({path:new URLSearchParams(url.split('?')[1]).get('path'),job:null,result:null})}):url.startsWith('/api/preview?')&&previewFetch ? previewFetch(url) : ({ ok: true, json: async () => url.startsWith('/api/preview?')?previewData:fileData }),
     setTimeout: (callback, delay) => { const id = ++sequence; timers.set(id, { callback, delay }); return id; }, clearTimeout: id => timers.delete(id),
-    require: id => id.endsWith('/ファイル解析状態.js')?{...fileAnalysisStatus,createFileAnalysisStatus:options=>fileAnalysisStatus.createFileAnalysisStatus({...options,channelFactory,setTimer:(callback,delay)=>{const id=++sequence;timers.set(id,{callback,delay});return id;},clearTimer:id=>timers.delete(id)})}:id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
+    require: id => id === './選択ファイル.js' ? selectedFiles : id.endsWith('/ファイル解析状態.js')?{...fileAnalysisStatus,createFileAnalysisStatus:options=>fileAnalysisStatus.createFileAnalysisStatus({...options,channelFactory,setTimer:(callback,delay)=>{const id=++sequence;timers.set(id,{callback,delay});return id;},clearTimer:id=>timers.delete(id)})}:id === '../共通表示/再読込ボタン.vue' ? refreshModule.exports : id === '../ファイル閲覧/閲覧待機.js' ? viewerIdle : id === 'vue' ? vue : id === '../ファイル閲覧/ファイル参照.js' ? references
       : id === '../ファイル閲覧/ファイル操作.js' ? { ...actions, copyBrowserText: async text => { copies.push(text); await browserCopy(text); } }
         : id === '../ブラウザ/起動.js' ? browser : id === '../../../viewer/表示URL.mjs' ? displayUrls : id === '../../../viewer/media-types.mjs' ? mediaTypes : id === '../ファイル閲覧/コード表示.js' ? { loadMonaco: async () => null, monacoLanguage: () => 'text' } : assert.fail(`Unexpected import ${id}`),
   });
@@ -254,4 +255,19 @@ test('解析状態実Vue: 通信失敗時に確定表示せず再確認し、再
  let response={ok:false,json:async()=>({error:'通信エラー'})};const f=await viewer(t,{openAnalysis:()=>{},analysisFetch:async()=>response});assert.equal(f.find('viewer-analysis').text,'AI解析');assert.match(f.find('viewer-analysis').props.title,/確認できません/);assert.equal(f.timers.size,1);
  const path=f.props.file.path;response={ok:true,json:async()=>({path,job:{status:'timeout'},result:{id:'previous'}})};await f.state.analysisMonitor.refresh();await flush();assert.equal(f.find('viewer-analysis').text,'AI解析 要確認');assert.equal(f.timers.size,0);
  response={ok:true,json:async()=>({path,job:{status:'waiting'},result:{id:'previous'}})};await f.state.refresh();await flush();assert.equal(f.find('viewer-analysis').text,'AI解析中…');assert.equal(f.analysisCalls.length,3);
+});
+
+test('参照実Vue: 別窓だけにボタン、外部テキスト・キャンセル・再選択・元ファイル変更',async t=>{
+ const inline=await viewer(t);assert.equal(inline.find('viewer-browse'),undefined);
+ const f=await viewer(t,{pinned:true});assert.ok(f.find('viewer-browse'));
+ const choose=async text=>{await f.state.selectLocal({target:{files:[new File([text],'outside.txt')],value:'selected'}});await flush();};
+ await choose('外部の本文');assert.match(f.text(),/外部の本文/);assert.equal(f.find('viewer-analysis'),undefined);
+ await f.state.selectLocal({target:{files:[],value:''}});await flush();assert.match(f.text(),/外部の本文/);
+ await choose('再選択の本文');assert.match(f.text(),/再選択の本文/);
+ f.props.file={path:'other.txt',name:'other.txt'};await flush();assert.match(f.text(),/本文は消えません/);assert.doesNotMatch(f.text(),/再選択の本文/);
+});
+test('参照実Vue: Electronのプロジェクト内パスは既存APIで読む',async t=>{
+ const f=await viewer(t,{pinned:true,root:'/project',desktop:{selectedFilePath:()=>'/project/sub/inside.txt'}});
+ await f.state.selectLocal({target:{files:[new File(['ローカル値'],'inside.txt')],value:'selected'}});await flush();
+ assert.match(f.text(),/\/project\/sub\/inside.txt/);assert.match(f.text(),/本文は消えません/);assert.doesNotMatch(f.text(),/ローカル値/);
 });

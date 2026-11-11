@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+import {projectFilePath,describeSelectedFile} from './選択ファイル.js';
 import RefreshButton from '../共通表示/再読込ボタン.vue';
 import { ref, computed, inject, watch, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import { loadMonaco, monacoLanguage } from '../ファイル閲覧/コード表示.js';
@@ -16,7 +17,30 @@ import {isPageSource} from '../../../viewer/表示URL.mjs';
 import {MEDIA_PATTERN} from '../../../viewer/media-types.mjs';
 const browserAvailable=inject('browserAvailable',false);
 // pinned: 右側のプレビューではなく、ピン留めした独立ウィンドウの中身として全面に表示する
-const props=defineProps({file:Object,root:String,pinned:Boolean,pinBusy:Boolean});const emit=defineEmits(['close','pin','activity']);
+const props=defineProps({file:Object,root:String,pinned:Boolean,pinBusy:Boolean});const emit=defineEmits(['close','pin','activity','select']);
+const chosen=ref(null),file=computed(()=>chosen.value||props.file),picker=ref(),picking=ref(false);
+let blobUrl='',pickRevision=0;
+function clearBlob(){if(blobUrl)URL.revokeObjectURL(blobUrl);blobUrl='';}
+watch(()=>props.file,()=>{pickRevision++;picking.value=false;chosen.value=null;clearBlob();});
+async function selectLocal(event){
+  const local=event.target.files?.[0];event.target.value='';if(!local)return;
+  const run=++pickRevision;picking.value=true;actionError.value='';
+  try{
+    const full=window.aidiyWindow?.selectedFilePath?.(local)||'';
+    const path=projectFilePath(props.root,full);
+    if(path){
+      const response=await fetch('/api/file?'+new URLSearchParams({path}),{cache:'no-store'});
+      if(!response.ok)throw Error('このプロジェクト内ファイルは表示できません。アクセス権や除外設定を確認してください。');
+      if(run!==pickRevision)return;
+      clearBlob();chosen.value={path,name:local.name,type:'file',mtime:local.lastModified};emit('select',chosen.value);
+    }else{
+      const description=await describeSelectedFile(local);if(run!==pickRevision)return;
+      clearBlob();if(!description.tooLarge&&['image','office','media'].includes(description.kind))blobUrl=URL.createObjectURL(local);
+      chosen.value={path:full||local.name,name:local.name,mtime:local.lastModified,local,description,url:blobUrl};emit('select',chosen.value);
+    }
+  }catch(e){if(run===pickRevision)actionError.value=e.message;}
+  finally{if(run===pickRevision)picking.value=false;}
+}
 const openAnalysis=inject('openFileAnalysis',null),openDraft=inject('openFileDraft',null);
 const analysisStatus=ref({status:'idle'});
 const analysisMonitor=createFileAnalysisStatus({
@@ -25,7 +49,7 @@ const analysisMonitor=createFileAnalysisStatus({
 });
 const analysisLabel=computed(()=>analysisStatus.value.status==='waiting'?'AI解析中…':analysisStatus.value.status==='complete'?'AI解析済':analysisStatus.value.status==='failed'?'AI解析 要確認':'AI解析');
 const analysisTitle=computed(()=>analysisStatus.value.message||(analysisStatus.value.status==='waiting'?'このファイルをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.value.stale?'解析後にファイルが更新されています。クリックで解析内容を確認':analysisStatus.value.status==='complete'?'このファイルの解析結果を表示':'AI解析'));
-watch(()=>[props.file?.path,props.root],([path,root])=>analysisMonitor.setFile(path,root,!!openAnalysis),{immediate:true,flush:'sync'});
+watch(()=>[file.value?.path,props.root],([path,root])=>analysisMonitor.setFile(path,root,!!openAnalysis&&!file.value?.local),{immediate:true,flush:'sync'});
 const openHistory=inject('openFileHistory',null),hasHistory=ref(false),historyError=ref('');
 const data=ref(),error=ref(''),host=ref(),fallback=ref(false),copied=ref(false),stamp=ref(Date.now()),reloading=ref(false);
 const actionError=ref(''),actionBusy=ref(''),canOpenFile=typeof window.aidiyWindow?.openFile==='function';
@@ -46,23 +70,23 @@ watch(()=>props.pinned,()=>nextTick(bindActivityWindow));
 // HTML / SVG / Markdown とURLを確認できたページ関連ソースはコードとプレビューを切り替える。文書は別オリジンで表示する。
 // 最後に選んだ方を種類ごとに覚える（SVG / Markdownは表示が既定）。
 // 音声・動画はビューア内で再生せず、「ブラウザ」で開いて再生する。
-const mediaFile=computed(()=>MEDIA_PATTERN.test(props.file?.name||''));
-const previewKind=computed(()=>/\.(md|markdown)$/i.test(props.file?.name||'')?'markdown':/\.html?$/i.test(props.file?.name||'')?'html':/\.svg$/i.test(props.file?.name||'')?'svg':/\.vue$/i.test(props.file?.name||'')?'vue':isPageSource(props.file?.name)?'source':'');
+const mediaFile=computed(()=>MEDIA_PATTERN.test(file.value?.name||''));
+const previewKind=computed(()=>file.value?.local?'':/\.(md|markdown)$/i.test(file.value?.name||'')?'markdown':/\.html?$/i.test(file.value?.name||'')?'html':/\.svg$/i.test(file.value?.name||'')?'svg':/\.vue$/i.test(file.value?.name||'')?'vue':isPageSource(file.value?.name)?'source':'');
 const modeKey=kind=>`aidiy-ide-preview-mode:${kind}`;
 const readMode=kind=>{if(kind==='source')return 'code';try{const saved=localStorage.getItem(modeKey(kind));if(saved==='view'||saved==='code')return saved;}catch{}return ['svg','markdown'].includes(kind)?'view':'code';};
 const mode=ref(previewKind.value?readMode(previewKind.value):'code'),preview=ref(),routeIndex=ref(0),previewLoading=ref(false);
 let previewRun=0;
 async function loadPreview(){
-  if(!props.file||!previewKind.value)return;
+  if(!file.value||!previewKind.value)return;
   const run=++previewRun,selected=previewUrl.value;preview.value=null;previewLoading.value=true;
-  try{const response=await fetch('/api/preview?'+new URLSearchParams({path:props.file.path}),{cache:'no-store'});if(!response.ok)throw Error(await response.text());const value=await response.json();if(run===previewRun)preview.value=value;}
+  try{const response=await fetch('/api/preview?'+new URLSearchParams({path:file.value.path}),{cache:'no-store'});if(!response.ok)throw Error(await response.text());const value=await response.json();if(run===previewRun)preview.value=value;}
   catch(e){if(run===previewRun)preview.value={error:e.message};}
   finally{if(run===previewRun){routeIndex.value=Math.max(0,preview.value?.routes?.findIndex(route=>route.url===selected)??0);previewLoading.value=false;if(previewKind.value==='source'&&!previewUrl.value)mode.value='code';}}
 }
 function setMode(next){mode.value=next;try{localStorage.setItem(modeKey(previewKind.value),next);}catch{}if(next==='view')void loadPreview();}
 const previewUrl=computed(()=>preview.value?.routes?.[routeIndex.value]?.url||preview.value?.url||'');
 const screenPreview=computed(()=>['analysis','vue'].includes(preview.value?.kind));
-const browserFile=computed(()=>['html','vue'].includes(previewKind.value)||mediaFile.value||(previewKind.value==='source'&&screenPreview.value&&!!previewUrl.value));
+const browserFile=computed(()=>!file.value?.local&&(['html','vue'].includes(previewKind.value)||mediaFile.value||(previewKind.value==='source'&&screenPreview.value&&!!previewUrl.value)));
 const previewSandbox=computed(()=>{
   if(previewKind.value==='markdown')return 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox';
   const flags='allow-scripts allow-forms allow-modals allow-popups allow-popups-to-escape-sandbox allow-downloads';
@@ -90,12 +114,12 @@ async function load(file){
   const run=++revision;controller?.abort();controller=new AbortController();disposeEditor();data.value=null;error.value='';fallback.value=false;hasHistory.value=false;historyError.value='';jump.value=null;jumpNote.value='';
   if(!file)return;
   try{
-    const response=await fetch('/api/file?'+new URLSearchParams({path:file.path}),{signal:controller.signal,cache:'no-store'});
-    if(!response.ok)throw Error(response.status===404?'ファイルが移動・削除されたため開けません。最新の一覧や検索を確認してください。':await response.text());const value=await response.json();if(run!==revision)return;
+    const response=file.local?null:await fetch('/api/file?'+new URLSearchParams({path:file.path}),{signal:controller.signal,cache:'no-store'});
+    if(response&&!response.ok)throw Error(response.status===404?'ファイルが移動・削除されたため開けません。最新の一覧や検索を確認してください。':await response.text());const value=file.local?file.description:await response.json();if(run!==revision)return;
     data.value=value;
     if(value.tooLarge){error.value='表示できるサイズの上限を超えています。';return;}
     if(value.kind==='text'){
-      if(openHistory)void checkHistory(file,run,controller.signal);
+      if(openHistory&&!file.local)void checkHistory(file,run,controller.signal);
       await nextTick();const monaco=await loadMonaco().catch(()=>null);if(run!==revision)return;
       if(!monaco){fallback.value=true;await revealMatch(file,run);return;}
       const fontSize=parseFloat(getComputedStyle(host.value).getPropertyValue('--file-font-size'))||10;
@@ -105,22 +129,22 @@ async function load(file){
     }
   }catch(e){if(run===revision)error.value=e.message;}
 }
-watch(()=>[props.file,props.root],([file])=>{previewRun++;previewLoading.value=false;stamp.value=Date.now();routeIndex.value=0;preview.value=null;mode.value=file?.line?'code':previewKind.value?readMode(previewKind.value):'code';void load(file);if(mode.value==='view'||isPageSource(file?.name))void loadPreview();},{immediate:true});
+watch(()=>[file.value,props.root],([file])=>{previewRun++;previewLoading.value=false;stamp.value=Date.now();routeIndex.value=0;preview.value=null;mode.value=file?.line?'code':previewKind.value?readMode(previewKind.value):'code';void load(file);if(mode.value==='view'||isPageSource(file?.name))void loadPreview();},{immediate:true});
 // 画像・Office文書は URL の v を変えて読み直させる。テキストは Monaco を作り直す。表示中のページは iframe を作り直す。
-async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([analysisMonitor.refresh(),load(props.file),mode.value==='view'||isPageSource(props.file?.name)?loadPreview():null]);}finally{reloading.value=false;}}
+async function refresh(){if(reloading.value)return;reloading.value=true;stamp.value=Date.now();try{await Promise.all([analysisMonitor.refresh(),load(file.value),mode.value==='view'||isPageSource(file.value?.name)?loadPreview():null]);}finally{reloading.value=false;}}
 function analyze(){
-  const file=props.file,root=props.root,run=revision;
-  openAnalysis?.(file,root,()=>{if(run===revision&&props.file===file&&props.root===root){void analysisMonitor.refresh();void loadPreview();}},viewer.value);
+  const selected=file.value,root=props.root,run=revision;
+  openAnalysis?.(selected,root,()=>{if(run===revision&&file.value===selected&&props.root===root){void analysisMonitor.refresh();void loadPreview();}},viewer.value);
 }
-const fullPath=computed(()=>fullFilePath(props.root||'',props.file?.path||''));
+const fullPath=computed(()=>file.value?.local?file.value.path:fullFilePath(props.root||'',file.value?.path||''));
 function resetActions(){actionRevision++;clearTimeout(copyTimer);copied.value=false;actionBusy.value='';actionError.value='';}
-watch(()=>[props.file,props.root],resetActions,{flush:'sync'});
+watch(()=>[file.value,props.root],resetActions,{flush:'sync'});
 async function copy(){
-  if(actionBusy.value||!props.file?.path)return;
-  const run=++actionRevision,path=props.file.path,text=fullPath.value;
+  if(actionBusy.value||!file.value?.path)return;
+  const run=++actionRevision,path=file.value.path,text=fullPath.value;
   clearTimeout(copyTimer);copied.value=false;actionBusy.value='copy';actionError.value='';
   try{
-    if(typeof window.aidiyWindow?.copyFilePath==='function'){
+    if(!file.value?.local&&typeof window.aidiyWindow?.copyFilePath==='function'){
       const result=await window.aidiyWindow.copyFilePath(path);
       if(!result?.ok)throw Error(result?.error||'パスをコピーできませんでした。');
     }else await copyBrowserText(text,{isCurrent:()=>run===actionRevision});
@@ -130,8 +154,8 @@ async function copy(){
   finally{if(run===actionRevision)actionBusy.value='';}
 }
 async function openFile(){
-  if(!canOpenFile||actionBusy.value||!props.file?.path)return;
-  const run=++actionRevision,path=props.file.path;clearTimeout(copyTimer);copied.value=false;actionBusy.value='open';actionError.value='';
+  if(!canOpenFile||actionBusy.value||!file.value?.path)return;
+  const run=++actionRevision,path=file.value.path;clearTimeout(copyTimer);copied.value=false;actionBusy.value='open';actionError.value='';
   try{const result=await window.aidiyWindow.openFile(path);if(!result?.ok&&!result?.cancelled)throw Error(result?.error||'関連付けられたアプリで開けませんでした。');}
   catch(e){if(run===actionRevision)actionError.value=e.message||'関連付けられたアプリで開けませんでした。';}
   finally{if(run===actionRevision)actionBusy.value='';}
@@ -143,7 +167,7 @@ async function browse(analysisPage=false){
   const run=++actionRevision;actionBusy.value=inferred?'analysis-browser':'browser';actionError.value='';
   try{
     if(['vue','source'].includes(previewKind.value)&&!previewUrl.value)throw Error(preview.value?.error||'表示URLがありません。AI解析で画面URLを調べてください。');
-    const result=await openBrowser(props.file.path,undefined,window,screenPreview.value?previewUrl.value:'',inferred);if(!result?.ok)throw Error(result?.error||'ブラウザを開けませんでした。');
+    const result=await openBrowser(file.value.path,undefined,window,screenPreview.value?previewUrl.value:'',inferred);if(!result?.ok)throw Error(result?.error||'ブラウザを開けませんでした。');
   }
   catch(e){if(run===actionRevision)actionError.value=e.message;}
   finally{if(run===actionRevision)actionBusy.value='';}
@@ -162,25 +186,25 @@ function selectedReference(){
 }
 function handoff(){
   if(!openDraft||!props.root)return;
-  try{const selection=selectedReference();openDraft({projectPath:props.root,path:props.file.path,name:props.file.name,text:fileDraftReference(props.file,selection),selection:!!selection},viewer.value);}
+  try{const selection=selectedReference();openDraft({projectPath:props.root,path:file.value.path,name:file.value.name,text:fileDraftReference(file.value,selection),selection:!!selection},viewer.value);}
   catch(e){error.value=e.message;}
 }
-onBeforeUnmount(()=>{analysisMonitor.dispose();userActivity.dispose();resetActions();revision++;previewRun++;controller?.abort();disposeEditor();frameCleanup?.();activityWindow?.removeEventListener('message',frameActivity);activityWindow=null;});
-defineExpose({moved:bindActivityWindow});
+onBeforeUnmount(()=>{pickRevision++;clearBlob();analysisMonitor.dispose();userActivity.dispose();resetActions();revision++;previewRun++;controller?.abort();disposeEditor();frameCleanup?.();activityWindow?.removeEventListener('message',frameActivity);activityWindow=null;});
+defineExpose({moved:bindActivityWindow,selectedFile:()=>file.value});
 </script>
 <template>
-  <aside ref="viewer" :class="pinned?'viewer-pinned':'viewer-popup'" data-component="FileViewer" @pointerdown.capture="activity" @pointermove.capture="pointerActivity" @click.capture="activity" @keydown.capture="activity" @wheel.capture.passive="activity" @touchstart.capture.passive="activity" @touchmove.capture.passive="activity" @scroll.capture.passive="activity" @change.capture="activity" @load.capture="bindFrame"><header><span :title="file.path">{{ file.name }}</span>
+  <aside ref="viewer" :class="pinned?'viewer-pinned':'viewer-popup'" data-component="FileViewer" @pointerdown.capture="activity" @pointermove.capture="pointerActivity" @click.capture="activity" @keydown.capture="activity" @wheel.capture.passive="activity" @touchstart.capture.passive="activity" @touchmove.capture.passive="activity" @scroll.capture.passive="activity" @change.capture="activity" @load.capture="bindFrame"><header><span :title="file.path">{{ file.name }}</span><button v-if="pinned" class="viewer-browse" :disabled="picking" @click="picker.click()">参照</button><input ref="picker" type="file" hidden @change="selectLocal">
       <span v-if="previewKind&&(previewKind!=='source'||previewUrl)" class="viewer-mode" role="group" aria-label="表示の切り替え"><button :aria-pressed="mode==='code'" @click="setMode('code')">コード</button><button :aria-pressed="mode==='view'" @click="setMode('view')">{{ previewKind==='markdown'?'プレビュー':'表示' }}</button></span>
       <button v-if="browserFile" class="viewer-browser" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'ブラウザで開く':'tools接続中のみ起動できます'" @click="browse">{{ actionBusy==='browser'?'起動中…':'ブラウザ' }}</button>
       <button v-if="preview?.kind==='analysis'&&previewUrl" class="viewer-analysis-page" :disabled="!!actionBusy||previewLoading||!browserAvailable" :title="browserAvailable?'AI解析のURLをブラウザで表示':'tools接続中のみ起動できます'" @click="browse(true)">{{ actionBusy==='analysis-browser'?'起動中…':'AI推定ページ' }}</button>
       <button v-if="hasHistory&&openHistory" class="viewer-history" @click="openHistory(file,root)">更新履歴</button>
-      <button v-if="openAnalysis" class="viewer-analysis" :title="analysisTitle" :aria-label="analysisLabel" aria-live="polite" @click="analyze">{{ analysisLabel }}</button>
-      <button v-if="openDraft" class="viewer-handoff" :disabled="!root" title="このファイルまたは選択範囲を起動中のCode / Liveの下書きへ追加" @pointerdown.prevent @click="handoff">Code / Liveへ</button>
+      <button v-if="openAnalysis&&!file.local" class="viewer-analysis" :title="analysisTitle" :aria-label="analysisLabel" aria-live="polite" @click="analyze">{{ analysisLabel }}</button>
+      <button v-if="openDraft&&!file.local" class="viewer-handoff" :disabled="!root" title="このファイルまたは選択範囲を起動中のCode / Liveの下書きへ追加" @pointerdown.prevent @click="handoff">Code / Liveへ</button>
       <!-- 右端は ↺ 📌 × の順。ページ内の📌で別ウィンドウを開く。 -->
       <RefreshButton class="viewer-refresh" title="最新の内容に更新" aria-label="最新の内容に更新" :disabled="reloading" :busy="reloading" @click="refresh" /><button v-if="!pinned" class="viewer-pin panel-detach-pin" :aria-pressed="false" :disabled="pinBusy" title="別ウィンドウで開く" aria-label="ファイルを別ウィンドウで開く" @click="emit('pin',file)"><span aria-hidden="true">📌</span></button><button v-if="!pinned" class="viewer-close" aria-label="プレビューを閉じる" @click="emit('close')"><span class="close-icon" aria-hidden="true"></span></button></header>
-    <div class="viewer-path-row"><p class="viewer-path" :title="fullPath">{{ fullPath }}</p><div class="viewer-path-actions"><button class="viewer-copy" :disabled="!!actionBusy" aria-live="polite" @click="copy">{{ copied?'コピーしました':'パスをコピー' }}</button><button v-if="canOpenFile" class="viewer-open-app" :disabled="!!actionBusy" @click="openFile">{{ actionBusy==='open'?'開いています…':'アプリで開く' }}</button></div></div><div class="viewer-meta">{{ data?.kind }} · {{ data?.size?.toLocaleString() }} B · {{ new Date(stamp).toLocaleTimeString('ja-JP') }} 読込</div>
+    <div class="viewer-path-row"><p class="viewer-path" :title="fullPath">{{ fullPath }}</p><div class="viewer-path-actions"><button class="viewer-copy" :disabled="!!actionBusy" aria-live="polite" @click="copy">{{ copied?'コピーしました':'パスをコピー' }}</button><button v-if="canOpenFile&&!file.local" class="viewer-open-app" :disabled="!!actionBusy" @click="openFile">{{ actionBusy==='open'?'開いています…':'アプリで開く' }}</button></div></div><div class="viewer-meta">{{ data?.kind }} · {{ data?.size?.toLocaleString() }} B · {{ new Date(stamp).toLocaleTimeString('ja-JP') }} 読込</div>
     <p v-if="actionError" class="error viewer-action-error" role="status">{{ actionError }}</p>
-    <p v-if="file.unlisted" class="input-hint">現在の一覧に含まれない検索結果を直接表示しています。</p>
+    <p v-if="file.local" class="input-hint">選択したローカルファイルを表示しています。再選択で内容を更新できます。</p><p v-if="file.unlisted" class="input-hint">現在の一覧に含まれない検索結果を直接表示しています。</p>
     <p v-if="jumpNote" class="input-hint" role="status">{{ jumpNote }}</p>
     <p v-if="historyError" class="input-hint">{{ historyError }}</p>
     <template v-if="screenPreview&&previewUrl">
@@ -192,8 +216,9 @@ defineExpose({moved:bindActivityWindow});
       <p v-if="mode==='view'" class="viewer-preview-note">画面にはサーバーの起動やログインが必要な場合があります。埋め込み表示できない場合は「ブラウザ」で開いてください。</p>
     </template>
     <p v-if="error" class="error">{{ error }}</p><p v-else-if="!data">読み込み中…</p>
-    <div v-else class="viewer-content"><iframe v-if="data.kind==='office'&&!data.tooLarge" :key="file.path+stamp" :src="'/office.html?'+params({path:file.path,format:data.format,v:`${file.mtime}-${stamp}`})" sandbox="allow-scripts allow-same-origin" :title="file.name+' ビューア'"></iframe>
-      <img v-else-if="data.kind==='image'&&!data.tooLarge" :src="'/api/raw?'+params({path:file.path,v:stamp})" :alt="file.name">
+    <div v-else class="viewer-content"><iframe v-if="data.kind==='office'&&!data.tooLarge" :key="file.path+stamp" :src="'/office.html?'+params({path:file.path,blob:file.url||'',format:data.format,v:`${file.mtime}-${stamp}`})" sandbox="allow-scripts allow-same-origin" :title="file.name+' ビューア'"></iframe>
+      <img v-else-if="data.kind==='image'&&!data.tooLarge" :src="file.url||'/api/raw?'+params({path:file.path,v:stamp})" :alt="file.name">
+      <video v-else-if="data.kind==='media'&&!data.tooLarge" :src="file.url" controls></video>
       <template v-else-if="data.kind==='text'">
         <!-- HTML/SVGはフォルダ構造を保った別サーバーで表示し、相対画像・CSS・SVG参照を解決する。IDEとは別オリジン。 -->
         <template v-if="mode==='view'">

@@ -81,7 +81,22 @@ try{
  // 小さな窓でもタイトルと閉じる操作を画面内へ戻す。
  await send('Emulation.setDeviceMetricsOverride',{width:480,height:420,deviceScaleFactor:1,mobile:false});await click('.viewer-analysis');await until(()=>evaluate(`!!document.querySelector('.file-analysis-dialog[open]')`),'small analysis');
  assert.equal(await evaluate(`(()=>{const r=document.querySelector('.file-analysis-dialog').getBoundingClientRect();return r.left>=0&&r.top>=0&&r.right<=innerWidth&&r.bottom<=innerHeight})()`),true);
- await screenshot('04-small-window');await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'small analysis closed');job={...job,status:'complete',message:'結果保存済み・実行応答監視中'};await sleep(2200);assert.equal(await evaluate(`document.querySelector('.viewer-analysis').textContent`),'AI解析中…');job={...job,monitoring:false,message:'結果保存済み'};await until(()=>evaluate(`document.querySelector('.viewer-analysis').textContent==='AI解析済'`),'viewer completed');await screenshot('06-viewer-analysis-completed');assert.equal(requests.filter(request=>request.method==='POST').length,1);await evaluate('window.dispose()');assert.equal(await evaluate(`document.querySelectorAll('dialog').length`),0);assert.deepEqual(errors,[]);
+ await screenshot('04-small-window');await click('[aria-label="AI解析を閉じる"]');await until(()=>evaluate(`!document.querySelector('.file-analysis-dialog')`),'small analysis closed');job={...job,status:'complete',message:'結果保存済み・実行応答監視中'};await sleep(2200);assert.equal(await evaluate(`document.querySelector('.viewer-analysis').textContent`),'AI解析中…');job={...job,monitoring:false,message:'結果保存済み'};await until(()=>evaluate(`document.querySelector('.viewer-analysis').textContent==='AI解析済'`),'viewer completed');await screenshot('06-viewer-analysis-completed');assert.equal(requests.filter(request=>request.method==='POST').length,1);
+ // 参照: 外部のFileはサーバーへ送らず表示し、キャンセル・再選択を維持する。
+ assert.equal(await evaluate(`document.querySelector('.viewer-browse').textContent`),'参照');
+ await evaluate(`window.chooseFixture=(name,text)=>{const input=document.querySelector('input[type=file]'),transfer=new DataTransfer();transfer.items.add(new File([text],name));input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));};chooseFixture('outside.txt','外部ファイルの本文');`);
+ await until(()=>evaluate(`document.querySelector('.viewer-code pre')?.textContent==='外部ファイルの本文'`),'external file');
+ assert.equal(await evaluate(`!!document.querySelector('.viewer-analysis')`),false);
+ await screenshot('07-browse-external-file');
+ await evaluate(`const input=document.querySelector('input[type=file]');input.files=new DataTransfer().files;input.dispatchEvent(new Event('change',{bubbles:true}));`);
+ assert.equal(await evaluate(`document.querySelector('.viewer-code pre').textContent`),'外部ファイルの本文');
+ await evaluate(`chooseFixture('outside.txt','再選択した本文')`);
+ await until(()=>evaluate(`document.querySelector('.viewer-code pre')?.textContent==='再選択した本文'`),'repeat selection');
+ await evaluate(`window.aidiyWindow.selectedFilePath=()=>'/fixture/sub/project.txt';chooseFixture('project.txt','local ignored')`);
+ await until(()=>evaluate(`document.querySelector('.viewer-path')?.textContent==='/fixture/sub/project.txt'`),'project file');
+ assert.equal(await evaluate(`!!document.querySelector('.viewer-analysis')`),true);
+ await screenshot('08-browse-project-file');
+ await evaluate('window.dispose()');assert.equal(await evaluate(`document.querySelectorAll('dialog').length`),0);assert.deepEqual(errors,[]);
  writeFileSync(join(output,'result.json'),JSON.stringify({passed:true,realVueApp:true,realChromium:true,nativeElectron:false,checks:['file remains visible and interactive','no modal/backdrop','drag','draft insert once','reopen/Escape','AI close keeps backend job','viewer progress notification','viewer continues monitoring after partial completion','viewer completed state','saved instruction failure/retry','small window','unmount cleanup']},null,2));
  console.log('PASS: Viewer floating draft and AI analysis, screenshots: '+output);
 }finally{socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const ended=once(chrome,'exit');chrome.kill();await ended;}server.closeAllConnections();await new Promise(resolve=>server.close(resolve));rmSync(temporary,{recursive:true,force:true});}

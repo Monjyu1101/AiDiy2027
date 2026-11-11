@@ -13,6 +13,7 @@ import vm from 'node:vm';
 import { createSpace } from '../src/components/開発スペース/宇宙描画.js';
 import { createFolderMonitor } from '../src/components/ファイル閲覧/フォルダ監視.js';
 import * as floatingDialog from '../src/components/共通表示/浮動ダイアログ.js';
+import * as selectedFiles from '../src/components/ファイル閲覧/選択ファイル.js';
 import * as viewerIdle from '../src/components/ファイル閲覧/閲覧待機.js';
 import * as routeTree from '../src/components/開発スペース/軌跡ツリー.js';
 import * as routeRecords from '../src/components/開発スペース/経路記録.js';
@@ -107,6 +108,7 @@ async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', act
     '../共通表示/浮動ダイアログ.js': floatingDialog,
     './エクスプローラードラッグ.js': explorerDrag,
     '../ファイル閲覧/エクスプローラー操作.js': explorerActions, './エクスプローラー操作.js': explorerActions,
+    './選択ファイル.js':selectedFiles,
     '../ブラウザ/起動.js': browserLaunch,
     '../../../viewer/media-types.mjs': mediaTypes,
     '../../../viewer/表示URL.mjs': displayUrls,

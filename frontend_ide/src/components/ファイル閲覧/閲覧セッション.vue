@@ -10,7 +10,7 @@ import FileHistoryDialog from '../../dialog/ファイル履歴ダイアログ.vu
 import {createPanelWindow} from '../ファイル閲覧/パネル別窓.js';
 import {createViewerIdle} from '../ファイル閲覧/閲覧待機.js';
 const props=defineProps({file:Object,root:String,autoSpin:Boolean});
-const emit=defineEmits(['close','detached','recover','activity','pinning']);
+const emit=defineEmits(['close','detached','recover','activity','pinning','select']);
 const panel=ref(),viewer=ref(),history=ref(null),detached=ref(false),pinBusy=ref(false),error=ref('');
 let windowPanel,pinRequest,disposed=false;
 const idle=createViewerIdle({close});
@@ -23,7 +23,7 @@ function pin(){
   if(disposed)return Promise.resolve(false);pinBusy.value=true;
   windowPanel??=createPanelWindow({element:()=>panel.value,
     rectangle:()=>panel.value?.querySelector('.history-embedded')||panel.value?.querySelector('.viewer-popup, .viewer-pinned'),
-    title:`Viewer - ${props.file.name}`,kind:'panel-viewer',className:'viewer-window',
+    title:`Viewer - ${props.file.name}`,displayTitle:()=>`Viewer - ${viewer.value?.selectedFile()?.name||props.file.name}`,kind:'panel-viewer',className:'viewer-window',
     changed:value=>{detached.value=value;},closed:()=>emit('close'),moved:()=>viewer.value?.moved(),
     recovered:()=>emit('recover'),report:message=>{error.value=message;}});
   pinRequest=windowPanel.pin().then(ok=>{if(ok)emit('detached');return !!ok;}).finally(()=>{pinBusy.value=false;pinRequest=undefined;});
@@ -31,11 +31,11 @@ function pin(){
 }
 function close(){windowPanel?.close();emit('close');}
 onBeforeUnmount(()=>{disposed=true;idle.dispose();windowPanel?.close();history.value=null;});
-defineExpose({focus:()=>windowPanel?.focus()||false,pin,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:''})});
+defineExpose({focus:()=>windowPanel?.focus()||false,pin,captureLayout:()=>({name:detached.value&&!viewer.value?.selectedFile()?.local?panel.value?.ownerDocument.defaultView?.name:'',file:viewer.value?.selectedFile()||props.file})});
 </script>
 <template>
   <div ref="panel" class="viewer-session" :class="{detached}" :data-viewer-path="file.path">
-    <FileViewer ref="viewer" v-show="!history" :file="file" :root="root" :pinned="detached" :pin-busy="pinBusy" @pin="pin" @close="close" @activity="idle.activity" />
+    <FileViewer ref="viewer" v-show="!history" :file="file" :root="root" :pinned="detached" :pin-busy="pinBusy" @select="value=>emit('select',value?.local?null:value)" @pin="pin" @close="close" @activity="idle.activity" />
     <FileHistoryDialog v-if="history" :key="history.root+'|'+history.file.path" :file="history.file" :root="history.root" embedded :pinned="detached" :pin-busy="pinBusy" @pin="pin" @close="history=null" @activity="idle.activity" />
     <p v-if="error" class="viewer-pin-error error" role="alert">{{ error }}</p>
   </div>
