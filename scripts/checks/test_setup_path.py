@@ -6,6 +6,8 @@
 
 """実際のユーザー PATH を変更せず、登録・解除の境界を確認する。"""
 import importlib.util
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -31,6 +33,18 @@ helper = load(ROOT / 'scripts/_setup_path.py')
 
 
 class PathTests(unittest.TestCase):
+    def test_windows_shows_cmd_and_powershell_activation_without_persisting(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {'PATH': '/existing'}), \
+                patch.object(helper.sys, 'platform', 'win32'), patch.dict('sys.modules', {'winreg': None}), \
+                patch.object(Path, 'home', side_effect=AssertionError('home forbidden')), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            target = Path(directory) / "日本語 & checkout's/_AIDIY/aidiy_cpu/bin"
+            self.assertTrue(helper.ensure_launcher_path(target))
+            self.assertIn(f'set "PATH={target};%PATH%"', output.getvalue())
+            self.assertIn(str(target).replace("'", "''") + ";' + $env:PATH", output.getvalue())
+            self.assertIn('呼出元の PATH は変更できません', output.getvalue())
+            self.assertEqual(list(Path(directory).iterdir()), [])
+
     def test_project_directory_and_empty_project(self):
         self.assertEqual(helper.launcher_directory('aidiy_console'), ROOT / '_AIDIY/aidiy_console/bin')
         self.assertEqual(helper.launcher_directory('aidiy_console', ''), ROOT / '_AIDIY/aidiy_console/bin')

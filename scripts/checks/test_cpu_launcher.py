@@ -9,6 +9,10 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import runpy
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
@@ -25,6 +29,46 @@ def load(path):
 
 
 class CPULauncherTests(unittest.TestCase):
+    def test_cpu_setup_cli_registers_in_project_on_all_platforms(self):
+        # コマンドとして直接実行する経路も確認する。setup() の単体呼出しだけでは
+        # __main__ の抜けによる「成功終了したが登録されない」を検知できない。
+        node = shutil.which('node')
+        self.assertIsNotNone(node, 'Node.js がテストに必要です。')
+        for platform in ('win32', 'linux', 'darwin'):
+            with self.subTest(platform=platform), tempfile.TemporaryDirectory() as tmp:
+                checkout = Path(tmp) / '日本語 checkout'
+                for relative in ('frontend_ide/aidiy_cpu/_setup.py',
+                                 'frontend_ide/viewer/launcher.py', 'scripts/_setup_path.py'):
+                    target = checkout / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copyfile(ROOT / relative, target)
+                entry = checkout / 'frontend_ide/aidiy_cpu/launch.mjs'
+                entry.write_text('console.log(JSON.stringify(process.argv.slice(2)));', encoding='utf-8')
+                with patch.object(sys, 'platform', platform), patch.dict(os.environ), \
+                        patch.object(shutil, 'which', return_value=node), \
+                        patch.object(Path, 'home', side_effect=AssertionError('home forbidden')), \
+                        patch.dict('sys.modules', {'winreg': None}):
+                    with self.assertRaises(SystemExit) as result:
+                        runpy.run_path(str(checkout / 'frontend_ide/aidiy_cpu/_setup.py'), run_name='__main__')
+                    self.assertEqual(result.exception.code, 0)
+                    suffix = '.cmd' if platform == 'win32' else ''
+                    launcher = checkout / f'_AIDIY/aidiy_cpu/bin/aidiy_cpu{suffix}'
+                    self.assertTrue(launcher.is_file())
+                    self.assertIn(str(entry), launcher.read_text(encoding='utf-8'))
+                    if platform == 'win32':
+                        self.assertNotIn(b'\n', launcher.read_bytes().replace(b'\r\n', b''))
+                    elif os.name != 'nt':
+                        completed = subprocess.run([str(launcher), '--help', '日本語 argument'],
+                                                   cwd=tmp, capture_output=True, text=True, check=True)
+                        self.assertEqual(json.loads(completed.stdout), ['--help', '日本語 argument'])
+
+    def test_cpu_setup_main_reports_registration_failure(self):
+        setup = load(CPU / '_setup.py')
+        with patch.object(setup, 'setup', side_effect=OSError('Node.js が見つかりません。')):
+            self.assertEqual(setup.main(), 1)
+        with patch.object(setup, 'setup', return_value=False):
+            self.assertEqual(setup.main(), 1)
+
     def test_registration_and_owned_removal_on_all_platforms(self):
         launcher = load(ROOT / 'frontend_ide/viewer/launcher.py')
         for platform in ('win32', 'linux', 'darwin'):

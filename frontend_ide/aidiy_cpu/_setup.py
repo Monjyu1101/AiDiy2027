@@ -6,6 +6,7 @@
 
 """CPUのランチャーを登録する。共有依存はIDE群のセットアップで導入する。"""
 import importlib.util
+import sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 
@@ -17,3 +18,15 @@ def setup(choices=None):
     spec.loader.exec_module(module)
     module.install_launcher(ROOT, 'cpu')
     return True
+
+
+def main():
+    try:
+        return 0 if setup() else 1
+    except (OSError, ValueError) as exc:
+        print(f'[NG] aidiy_cpu の起動コマンドを登録できません: {exc}')
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())

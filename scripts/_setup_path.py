@@ -60,7 +60,9 @@ def ensure_launcher_path(directory):
     if str(directory) not in current.split(os.pathsep):
         os.environ['PATH'] = str(directory) + (os.pathsep + current if current else '')
     print(f'ランチャー配置先: {directory}（フルパスで起動できます）')
+    print('このセットアップから呼出元の PATH は変更できません。コマンド名だけで起動する場合は、使うシェルで次を実行してください。')
     if sys.platform == 'win32':
+        print(f'現在のコマンドプロンプトだけで使う場合: set "PATH={directory};%PATH%"')
         quoted = str(directory).replace("'", "''")
         print(f"現在の PowerShell だけで使う場合: $env:PATH = '{quoted};' + $env:PATH")
     else:
