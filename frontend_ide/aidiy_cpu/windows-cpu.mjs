@@ -14,13 +14,9 @@ export function parseWindowsCpuUtilization(row) {
   return validTime === null && validUtility === null ? null : { time: validTime, utility: validUtility };
 }
 
-// Windows 10/11 23H2以前のTask Managerは周波数補正を含むUtilityを使用する。
-// 24H2以降はTimeを既定とする。更新の段階展開もあるため完全一致は保証しない。
-// 不明なOSでは従来のTimeを維持し、大きい方の採用や倍率補正は行わない。
-export function preferredWindowsCpuMetric(release) {
-  const match = /^10\.0\.(\d+)(?:\.|$)/.exec(String(release));
-  return match && Number(match[1]) >= 10240 && Number(match[1]) <= 22631 ? 'utility' : 'time';
-}
+// AvatarとIDEは同じWindows指標方針を使う。旧import先は互換のため維持する。
+import windowsNativeCpu from './windows-native-cpu.cjs';
+export const preferredWindowsCpuMetric = windowsNativeCpu.preferredWindowsCpuMetric;
 
 // 診断で単発CIMが失敗しても更新器では取得できる環境を確認したため、
 // CPUはSWbemRefresherを継続使用する。クラス/プロパティ名はOS言語に依存しない。

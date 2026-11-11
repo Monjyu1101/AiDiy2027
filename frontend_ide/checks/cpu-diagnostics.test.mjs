@@ -60,3 +60,55 @@ test('CPU診断は初回準備状態を保持し、未取得を0%へ変えない
  const sample=selectSample({timestamp:1,cpu:null,cpuSource:'warming-up',cpuDetails:{cpuStatus:'warming-up',osTimes:null}});
  assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'warming-up');assert.equal(sample.details.cpuStatus,'warming-up');assert.equal(sample.details.osTimes,null);
 });
+
+
+test('診断は生差分と稼働版metadataだけを保存し、追加項目や不正型を除外',()=>{
+ const data=selectSample({timestamp:1,cpu:70,cpuDetails:{rawIdleDeltaMs:300,rawTotalDeltaMs:1000,rawBusyDeltaMs:700,windowsTimestampSys100Ns:'134126748005123456',windowsSequence:3,runtime:{collectorId:'current',pid:12,startedAt:4,node:'24',sourceFile:{secret:'omit'},secret:'omit'}}});
+ assert.equal(data.details.rawIdleDeltaMs,300);assert.equal(data.details.rawTotalDeltaMs,1000);assert.equal(data.details.rawBusyDeltaMs,700);assert.equal(data.details.windowsTimestampSys100Ns,'134126748005123456');assert.equal(data.details.windowsSequence,3);
+ assert.equal(data.details.runtime.pid,12);assert.equal(data.details.runtime.collectorId,'current');assert.equal(data.details.runtime.sourceFile,null);assert.equal(data.details.runtime.secret,undefined);
+});
+test('Windows参照はProcessor InformationのTime/Utility/Idleを同一クエリーで分けて記録する',()=>{
+ assert.match(windowsCpuReferenceCommand,/@\(\$timePath,\$utilityPath,\$idlePath\)/);
+ assert.match(windowsCpuReferenceCommand,/% Idle Time/);assert.match(windowsCpuReferenceCommand,/idle=\$i/);
+ assert.match(windowsCpuReferenceCommand,/PercentIdleTime/);
+});
+function diagnosticFixture(extra={}){
+ let now=0;return{platform:'linux',system,now:()=>now,sleep:async ms=>{now+=ms;},makeMetrics:()=>({sample:async()=>({timestamp:now,cpu:5,cpuSource:'os-times'}),close(){}}),...extra};
+}
+test('既存サーバー・新規Node/Electronprobe・新規サンプラーを別々に保存する',async()=>{
+ let opts;opts=diagnosticFixture({discoverServers:async()=>({status:'ok',servers:[{pid:12,url:'http://127.0.0.1:12345/',kind:'cpu',project:'test',executable:'node.exe',startedAt:'time'}],errors:[]}),compareRuntimes:async()=>({mode:'separate-runtime-probes-not-existing-eyes',systemNode:{cpu:5},installedAvatarElectron:{cpu:70}}),fetcher:async(url,options)=>{
+  assert.equal(url,'http://127.0.0.1:12345/api/system-metrics');assert.equal(options.redirect,'error');
+  return{ok:true,json:async()=>({timestamp:opts.now(),cpu:90,cpuSource:'windows-processor-utility',cpuDetails:{runtime:{pid:12,collectorId:'test'}}})};
+ }});
+ const r=await collectCpuDiagnostics(opts);assert.equal(r.schema,2);assert.equal(r.samples[0].cpu,5);assert.equal(r.runtimeComparison.installedAvatarElectron.cpu,70);
+ const server=r.runningServers.servers[0];assert.ok(server.samples.length>=10);assert.equal(server.samples[0].cpu,90);assert.equal(server.samples[0].runtimeIdentity,'matched-pid');assert.equal(server.executable,'node.exe');
+});
+test('旧APIの稼働版欠損と、PIDが変わった応答を正しい現在版と扱わない',async()=>{
+ for(const pid of [null,99]){
+  let opts;opts=diagnosticFixture({discoverServers:async()=>({status:'ok',servers:[{pid:12,url:'http://127.0.0.1:12345/',kind:'cpu'}]}),fetcher:async()=>({ok:true,json:async()=>({timestamp:opts.now(),cpu:70,cpuDetails:{runtime:pid?{pid}:null}})})});
+  const r=await collectCpuDiagnostics(opts),sample=r.runningServers.servers[0].samples[0];
+  if(pid)assert.equal(sample.error,'server-pid-changed');else assert.equal(sample.runtimeIdentity,'legacy-runtime-unavailable');
+ }
+});
+test('不正な探索URLと候補PIDを破棄し、失敗しても新規サンプラーを残す',async()=>{
+ const r=await collectCpuDiagnostics(diagnosticFixture({discoverServers:async()=>({status:'ok',servers:[{pid:1,url:'https://external.test/',kind:'cpu'},{pid:-1,url:'http://127.0.0.1:12345/',kind:'cpu'}]}),compareRuntimes:async()=>{throw Error('private');},fetcher:async()=>{throw Error('must not fetch');}}));
+ assert.equal(r.runningServers.servers.length,0);assert.equal(r.samples.length,12);assert.equal(r.runtimeComparison.error,'runtime-comparison-failed');assert.doesNotMatch(JSON.stringify(r),/private/);
+});
+test('既存APIの巨大応答を打ち切り、CPU値として採用しない',async()=>{
+ let cancelled=false;const r=await collectCpuDiagnostics(diagnosticFixture({url:'http://127.0.0.1:12345/',fetcher:async()=>({ok:true,body:{getReader:()=>({read:async()=>({done:false,value:new Uint8Array(65537)}),cancel:async()=>{cancelled=true;},releaseLock(){}})}})}));
+ assert.ok(cancelled);assert.ok(r.samples.every(s=>s.error==='sample-unavailable'));
+});
+
+
+test('遅い対象探索を完了してからNode/ElectronとWindows参照を同時開始する',async()=>{
+ let now=0;const starts=[];
+ const report=await collectCpuDiagnostics({platform:'win32',system,now:()=>now,sleep:async ms=>{now+=ms;},
+  discoverServers:async()=>{now=12000;return{status:'not-found',servers:[],errors:[]};},
+  compareRuntimes:async()=>{starts.push(['runtimes',now]);return{mode:'separate-runtime-probes-not-existing-eyes'};},
+  run:async()=>{starts.push(['reference',now]);return{stdout:'{"samples":[]}'};},
+  makeMetrics:()=>({sample:async()=>({timestamp:now,cpu:5}),close(){}}),
+ });
+ assert.equal(Date.parse(report.samplingStartedAt),12000);assert.deepEqual(starts.map(s=>s[0]).sort(),['reference','runtimes']);
+ assert.ok(starts.every(s=>s[1]>=12000));assert.equal(report.samples.length,12);assert.ok(report.samples[0].timestamp>=13000);
+ assert.equal(report.overlap.basis,'response-timestamp-range-only');
+});

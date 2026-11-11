@@ -71,7 +71,8 @@ export function createOsCpuMonitor({ system = os, now = Date.now, monotonicNow =
     }
     // 既に区間内の割合なのでコア数や表示周期で再除算しない。移動平均も取らない。
     const cpu = Math.min(100, Math.max(0, 100 * (1 - idleDelta / totalDelta)));
-    latest = Object.freeze({ cpu, measuredAt: now(), sampleIntervalMs, logicalCpuCount: current.count });
+    latest = Object.freeze({ cpu, measuredAt: now(), sampleIntervalMs, logicalCpuCount: current.count,
+      rawIdleDeltaMs: idleDelta, rawTotalDeltaMs: totalDelta, rawBusyDeltaMs: totalDelta - idleDelta });
     state = 'available';
   }
   function schedule() {

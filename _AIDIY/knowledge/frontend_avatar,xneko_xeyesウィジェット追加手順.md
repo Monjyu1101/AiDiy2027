@@ -91,7 +91,7 @@ const props = withDefaults(defineProps<{ controlsVisible?: boolean }>(), {
 | 機能 | Electron | Web |
 |------|----------|-----|
 | OS カーソル位置 | `window.desktopApi?.getWindowPointerSnapshot?.(role)` | `stageRef.value?.addEventListener('pointermove', ...)` |
-| CPU 使用率 | `window.desktopApi?.getSystemCpuUsage?.()` | 0 扱い、または UI 非表示 |
+| CPU 使用率 | `window.desktopApi?.getSystemCpuUsage?.()`（`number \| null`） | 未取得として「—」表示。0%に置き換えない |
 | ファイル一覧 | IPC で実ファイル列挙 | `config.ts` などの固定配列 |
 
 IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の Web フォールバックを同じ関数内で処理する。
@@ -100,7 +100,11 @@ IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の We
 - Electron では renderer だけでウィンドウ外カーソルを追えないため、main process 側で `screen.getCursorScreenPoint()` と対象 `BrowserWindow.getBounds()` を返す。
 - `window:get-pointer-snapshot` の `role` / `bounds` / `mouse` / `insideWindow` とステージの矩形からローカル座標へ変換する。CPU使用率は `system:get-cpu-usage` で取得する。
 - Web ではステージ内の `pointermove` を使う。画面外は追えない前提にする。
-- CPU 使用率は `os.cpus()` の直前サンプルとの差分から計算するため、初回値は 0 になり得る。
+- WindowsのCPUは、CPU画面と共有する `frontend_ide/aidiy_cpu/windows-native-cpu.cjs` の継続カウンターを使う。`main.ts` は最初のIPCで遅延作成し、`read()?.cpu` をそのまま返す。Windows 10〜11 23H2の既知buildはProcessor Utility、それ以外はProcessor Timeを起動時に選び、失敗時に別指標や `os.cpus()` へ切り替えない。OS更新の段階展開や採取窓の差があるため、Task Managerとの完全一致は保証しない。
+- Windowsは共有モジュールが常駐PowerShellのSWbemRefresherで約1秒ごとに採取し、500ms IPCは最新値を読むだけ。採取済み百分率を500ms/1秒などの周期比やコア数で割り直さない。無通信3秒で採取を停止し、Avatar終了時も `close()` で解放する。再開・初回の暖機、失敗、未取得は `null`、実測0%は有効な数値として返す。
+- 非WindowsのElectronは従来の全論理CPUの累積時間差分 `100 * (1 - idle差分 / total差分)` を維持する。初回・取得失敗・不正差分は0%ではなく `null`。通常WebにはOS計測IPCを追加しない。
+- xeyesは500ms間隔、12枠（約6秒）の平均と色変化を維持する。Windowsの1秒標本を2回読む場合も縮小せず同じ率として扱う。欠損は `null` の枠として進めて平均から除外し、最新枠が未取得なら数値を「—」、棒を空白にする。目の色は直前の状態を保ち、復帰時は直近12枠の有効値平均へ戻る。6秒以上前の値を欠損期間の後まで平均に残さない。
+- IPC要求は重複させず、画面破棄後に届いた結果を反映しない。破棄中の初期化完了からintervalを再開しない。
 - CPUグラフとオプションは `controlsVisible` が true のときだけ出す。目の色変化・充血表現は `cpuColorEnabled` で制御し、`controlsVisible=false` でも有効になり得る。目線追従とは分離する。
 - `v-if` と `v-for` を同一要素に書かず、必要なら `<template v-if>` でラップする。
 
@@ -125,3 +129,5 @@ IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の We
 3. `controlsVisible=false` でオプションパネルが消えることを確認する。
 4. Electron と Web の両方で、IPC 不在時に Console エラーが出ないことを確認する。
 5. アニメーションや interval が画面切替後に残らないことを DevTools で確認する。
+
+CPUの隔離試験はリポジトリ直下で `node --test frontend_avatar/checks/xeyes-cpu.test.cjs`。実際のmain/preload/Vueを使い、Windows/非Windowsの分岐、nullと0%、欠損・復帰、12枠平均、500ms予定、終了・破棄をmockで確認する。Avatarの依存物が未配置でも、導入済みのfrontend_ideのVue/TypeScriptがあればコンパイル試験に利用する。これは本番実行時の依存解決を変更せず、通常の `npm run type-check` やWindows実機の数値・色の確認を代替しない。

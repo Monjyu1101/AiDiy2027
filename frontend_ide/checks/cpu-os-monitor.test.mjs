@@ -40,7 +40,7 @@ test('初回read前には採取せず、基準採取後の500msから最新値�
   assert.equal(f.monitor.read(), null); assert.equal(f.monitor.status(), 'warming-up'); assert.deepEqual(f.calls, [0]);
   f.advanceTo(499); assert.equal(f.monitor.read(), null); assert.equal(f.calls.length, 1);
   f.advanceTo(500); const record = f.monitor.read();
-  near(record.cpu, 40); assert.equal(record.measuredAt, f.clock.now()); assert.equal(record.sampleIntervalMs, 500);
+  near(record.cpu, 40); assert.equal(record.rawIdleDeltaMs, 1200); assert.equal(record.rawTotalDeltaMs, 2000); assert.equal(record.rawBusyDeltaMs, 800); assert.equal(record.measuredAt, f.clock.now()); assert.equal(record.sampleIntervalMs, 500);
   assert.equal(record.logicalCpuCount, 4); assert.equal(f.monitor.status(), 'available');
   f.monitor.close(); assert.equal(f.timers.size, 0);
 });

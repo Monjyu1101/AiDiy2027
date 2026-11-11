@@ -20,8 +20,8 @@ const leftEyeRef = ref<HTMLDivElement | null>(null)
 const rightEyeRef = ref<HTMLDivElement | null>(null)
 const leftPupilStyle = ref<Record<string, string>>({ transform: 'translate3d(0, 0, 0)' })
 const rightPupilStyle = ref<Record<string, string>>({ transform: 'translate3d(0, 0, 0)' })
-const cpuSamples = ref<number[]>([])
-const cpuAverage = ref(0)
+const cpuSamples = ref<Array<number | null>>([])
+const cpuAverage = ref<number | null>(null)
 const cpuColorLevel = ref(0)
 const bloodshotLineLevel = ref(0)
 const designMode = ref<'normal' | 'simple'>('normal')
@@ -37,6 +37,8 @@ let windowRole: AvatarWindowRole = 'core'
 let targetX = 0
 let targetY = 0
 let cpuTimerId: number | null = null
+let cpuLoading = false
+let disposed = false
 
 const SNAPSHOT_INTERVAL_MS = 33
 const CPU_SAMPLE_INTERVAL_MS = 500
@@ -60,10 +62,13 @@ const bloodshotTicks = Array.from({ length: 30 }, (_, index) => {
 })
 
 function updateBloodshotLevel() {
-  const samples = cpuSamples.value
-  cpuAverage.value = samples.length
-    ? samples.reduce((sum, value) => sum + value, 0) / samples.length
-    : 0
+  const samples = cpuSamples.value.filter((value): value is number => value !== null)
+  // 最新の未取得を過去の平均や0%で埋めない。色だけは直前の状態を保つ。
+  if (cpuSamples.value[cpuSamples.value.length - 1] === null || !samples.length) {
+    cpuAverage.value = null
+    return
+  }
+  cpuAverage.value = samples.reduce((sum, value) => sum + value, 0) / samples.length
   // サンプル平均が50%以下なら白、90%以上なら淡いピンクにする。
   const level = Math.min(1, Math.max(0, (cpuAverage.value - CPU_COLOR_START) / (CPU_COLOR_FULL - CPU_COLOR_START)))
   cpuColorLevel.value = level
@@ -77,15 +82,21 @@ function cpuBarColor(usage: number) {
 }
 
 async function collectCpuUsage() {
-  if (!window.desktopApi?.getSystemCpuUsage) return
+  if (cpuLoading || disposed) return
+  cpuLoading = true
+  let usage: number | null | undefined
   try {
-    const usage = await window.desktopApi.getSystemCpuUsage()
-    const nextSamples = [...cpuSamples.value, Math.min(100, Math.max(0, usage))]
-    cpuSamples.value = nextSamples.slice(-CPU_SAMPLE_LIMIT)
-    updateBloodshotLevel()
+    usage = await window.desktopApi?.getSystemCpuUsage?.()
   } catch {
-    // CPU 表示は補助演出なので、取得失敗時は現状維持する。
+    usage = null
+  } finally {
+    cpuLoading = false
   }
+  if (disposed) return
+  const sample = typeof usage === 'number' && Number.isFinite(usage) && usage >= 0 && usage <= 100 ? usage : null
+  // 500msごとの12枠（約6秒）。欠損も枠として進め、数値の平均には含めない。
+  cpuSamples.value = [...cpuSamples.value, sample].slice(-CPU_SAMPLE_LIMIT)
+  updateBloodshotLevel()
 }
 
 function eyePupilTransform(eye: HTMLDivElement, stageRect: DOMRect) {
@@ -159,6 +170,7 @@ function onAnimationFrame(timestamp: number) {
 
 onMounted(async () => {
   windowRole = await window.desktopApi?.getWindowRole?.() ?? 'core'
+  if (disposed) return
   setFallbackTarget()
   stageRef.value?.addEventListener('pointermove', handlePointerMove)
   stageRef.value?.addEventListener('pointerdown', handlePointerMove)
@@ -170,6 +182,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  disposed = true
   stageRef.value?.removeEventListener('pointermove', handlePointerMove)
   stageRef.value?.removeEventListener('pointerdown', handlePointerMove)
   if (cpuTimerId !== null) {
@@ -222,15 +235,18 @@ onBeforeUnmount(() => {
     <div v-if="props.controlsVisible" class="cpu-meter">
       <div class="cpu-meter-header">
         <span>CPU</span>
-        <strong :style="{ color: cpuBarColor(cpuAverage) }">{{ Math.round(cpuAverage) }}%</strong>
+        <strong
+          :style="{ color: cpuAverage === null ? undefined : cpuBarColor(cpuAverage) }"
+          :title="cpuAverage === null ? 'CPU使用率は未取得です' : '直近約6秒の有効な標本の平均'"
+        >{{ cpuAverage === null ? '—' : `${Math.round(cpuAverage)}%` }}</strong>
       </div>
       <div class="cpu-bars">
         <i
           v-for="(sample, index) in cpuSamples"
           :key="index"
           :style="{
-            height: `${sample}%`,
-            backgroundColor: cpuBarColor(sample),
+            height: sample === null ? '0%' : `${sample}%`,
+            backgroundColor: sample === null ? 'transparent' : cpuBarColor(sample),
           }"
         ></i>
       </div>

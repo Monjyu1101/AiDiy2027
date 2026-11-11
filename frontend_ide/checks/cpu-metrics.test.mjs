@@ -139,7 +139,7 @@ test('CPU標準値は独立検証し、欠損・不正・コア別を除外、0�
  for(const row of [null,{},nativeCpu(null),nativeCpu(-1),nativeCpu(101,null),nativeCpu(''),{...nativeCpu(80),Name:'0,0'}])assert.equal(parseWindowsCpuUtilization(row),null);
 });
 
-for (const platform of ['win32', 'linux', 'darwin']) test(`${platform}は同じ採取済みos-times値を採用し、GPU応答のTime/Utilityへ切り替えない`, async () => {
+for (const platform of ['win32', 'linux', 'darwin']) test(`${platform}は注入したCPU監視値を採用し、GPU応答のTime/Utilityへ切り替えない`, async () => {
  let native = { cpu: nativeCpu(4, 49), gpu: [engine(1, 0, 40)] };
  const f=fixture({platform,run:async()=>({stdout:platform==='win32'?JSON.stringify(native):'40'})});
  for(const row of [nativeCpu(4,49),nativeCpu(4,null),null]){
@@ -174,4 +174,27 @@ test('CPU準備中は値を作らず、取得失敗は別状態、成功した0%
  f.set(null,500,'unavailable');sample=await f.metrics.sample();assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'unavailable');
  f.set(0);sample=await f.metrics.sample();assert.equal(sample.cpu,0);assert.equal(sample.cpuSource,'os-times');
  f.set(null,500,'warming-up');sample=await f.metrics.sample();assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'warming-up');f.metrics.close();
+});
+
+
+test('CPU診断には起動時固定の計測ID・PID・実行元を保持し、ディスクの後読みを稼働版としない',async()=>{
+ const f=fixture();const first=await f.metrics.sample();const runtime=first.cpuDetails.runtime;
+ assert.equal(runtime.collectorId,'system-cpu-fixed-source-v2');assert.equal(runtime.pid,process.pid);assert.equal(runtime.startedAt,0);
+ assert.equal(runtime.executable,process.execPath);assert.equal(runtime.node,process.versions.node);assert.equal(runtime.uv,process.versions.uv);
+ assert.match(runtime.sourceFile,/[\\/]aidiy_cpu[\\/]metrics\.mjs$/);assert.ok(Object.isFrozen(runtime));
+ f.tick();const next=await f.metrics.sample();assert.equal(next.cpuDetails.runtime,runtime);f.metrics.close();
+});
+
+
+test('Windows指標をAPIへ渡し、Utility失敗でもTimeやos-timesの低い値へ切り替えない',async()=>{
+ let time=0,status='warming-up',record=null;
+ const system={release:()=> '10.0.22631',cpus:()=>[{times:{user:time*.05,idle:time*.95}}],totalmem:()=>1000,freemem:()=>250};
+ const metrics=createSystemMetrics({system,platform:'win32',now:()=>time,run:async()=>({stdout:'[]'}),cpuMetrics:{read:()=>record,status:()=>status,close(){}}});
+ assert.equal((await metrics.sample()).cpuSource,'warming-up');
+ status='available';record={cpu:100,source:'windows-processor-utility',measuredAt:time,sampleIntervalMs:1000,windowsProcessorTime:5,windowsProcessorUtility:105,windowsProcessorIdle:95,windowsTimestampSys100Ns:'134126748005123456',sequence:1,windowsPreferredMetric:'utility'};
+ let sample=await metrics.sample();assert.equal(sample.cpu,100);assert.equal(sample.cpuSource,'windows-processor-utility');assert.equal(sample.cpuDetails.osTimes,null);
+ assert.equal(sample.cpuDetails.windowsProcessorTime,5);assert.equal(sample.cpuDetails.windowsProcessorUtility,105);assert.equal(sample.cpuDetails.windowsProcessorIdle,95);assert.equal(sample.cpuDetails.windowsTimestampSys100Ns,'134126748005123456');assert.equal(sample.cpuDetails.windowsSequence,1);
+ time=1000;record=null;status='unavailable';sample=await metrics.sample();assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'unavailable');assert.equal(sample.cpuDetails.windowsCpuStatus,'unavailable');
+ time=2000;status='available';record={cpu:0,source:'windows-processor-utility',measuredAt:time,sampleIntervalMs:1000,windowsProcessorTime:5,windowsProcessorUtility:0,windowsPreferredMetric:'utility'};
+ sample=await metrics.sample();assert.equal(sample.cpu,0);assert.equal(sample.cpuSource,'windows-processor-utility');metrics.close();
 });

@@ -117,6 +117,8 @@ const panelWindows = new Map<PanelKey, BrowserWindow>()
 const windowRoles = new Map<number, WindowRole>()
 let selectedDisplaySourceId: string | null = null
 let previousCpuTimes: { idle: number; total: number } | null = null
+type WindowsCpuMonitor = { read: () => { cpu: number } | null; close: () => void }
+let windowsCpuMonitor: WindowsCpuMonitor | null = null
 // Electronのバグ回避: getMinimumSize()が初期サイズを返す場合があるため独自管理
 const windowMinSizes = new Map<number, { minWidth: number; minHeight: number }>()
 const 表示処理 = new WeakMap<BrowserWindow, Promise<boolean>>()
@@ -180,17 +182,47 @@ function readCpuTimes() {
   }, { idle: 0, total: 0 })
 }
 
-function getSystemCpuUsagePercent() {
-  const current = readCpuTimes()
+function closeSystemCpuMonitor() {
+  try { windowsCpuMonitor?.close() } catch { /* 終了処理は計測失敗で妨げない。 */ }
+  windowsCpuMonitor = null
+  previousCpuTimes = null
+}
+
+function getSystemCpuUsagePercent(): number | null {
+  if (isQuitting) return null
+  if (process.platform === 'win32') {
+    try {
+      // CPU画面と同じWindows継続カウンターを使う。IPC周期で率を割り直さない。
+      // __dirnameはelectron/でもdist-electron/でも同じ共有ファイルへ解決する。
+      if (!windowsCpuMonitor) {
+        const { createWindowsCpuMonitor } = require(path.join(__dirname, '../../frontend_ide/aidiy_cpu/windows-native-cpu.cjs')) as {
+          createWindowsCpuMonitor: (options: { system: typeof os }) => WindowsCpuMonitor
+        }
+        windowsCpuMonitor = createWindowsCpuMonitor({ system: os })
+      }
+      const usage = windowsCpuMonitor.read()?.cpu
+      return typeof usage === 'number' && Number.isFinite(usage) && usage >= 0 && usage <= 100 ? usage : null
+    } catch {
+      closeSystemCpuMonitor()
+      return null
+    }
+  }
+
+  let current: { idle: number; total: number }
+  try { current = readCpuTimes() } catch { previousCpuTimes = null; return null }
+  if (!Number.isFinite(current.idle) || !Number.isFinite(current.total) || current.idle < 0 || current.total <= 0 || current.idle > current.total) {
+    previousCpuTimes = null
+    return null
+  }
   if (!previousCpuTimes) {
     previousCpuTimes = current
-    return 0
+    return null
   }
 
   const idleDelta = current.idle - previousCpuTimes.idle
   const totalDelta = current.total - previousCpuTimes.total
   previousCpuTimes = current
-  if (totalDelta <= 0) return 0
+  if (totalDelta <= 0 || idleDelta < 0 || idleDelta > totalDelta) return null
   return Math.min(100, Math.max(0, (1 - (idleDelta / totalDelta)) * 100))
 }
 
@@ -736,7 +768,7 @@ function currentControlWindow(event: IpcMainInvokeEvent): BrowserWindow | null {
 }
 
 let isQuitting = false
-app.on('before-quit', () => { isQuitting = true })
+app.on('before-quit', () => { isQuitting = true; closeSystemCpuMonitor() })
 
 if (!app.requestSingleInstanceLock()) {
   if (process.connected) process.send?.({ avatarExisting: true }, () => app.quit())

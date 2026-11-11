@@ -66,7 +66,7 @@ declare global {
       listDisplaySources?: () => Promise<AvatarDisplaySource[]>
       listVrmaFiles?: (folderName: string) => Promise<string[]>
       setDisplaySource?: (sourceId: string | null) => Promise<string | null>
-      getSystemCpuUsage?: () => Promise<number>
+      getSystemCpuUsage?: () => Promise<number | null>
       openSettingsWindow?: (sessionId: string) => Promise<void>
       closeSettingsWindow?: () => Promise<void>
       onSettingsPrepare?: (callback: (sessionId: string) => void) => (() => void)

@@ -59,7 +59,7 @@ const api = {
   listDisplaySources: () => ipcRenderer.invoke('desktop:list-sources') as Promise<DisplaySourceInfo[]>,
   listVrmaFiles: (folderName: string) => ipcRenderer.invoke('desktop:list-vrma-files', folderName) as Promise<string[]>,
   setDisplaySource: (sourceId: string | null) => ipcRenderer.invoke('desktop:set-source', sourceId),
-  getSystemCpuUsage: () => ipcRenderer.invoke('system:get-cpu-usage') as Promise<number>,
+  getSystemCpuUsage: () => ipcRenderer.invoke('system:get-cpu-usage') as Promise<number | null>,
   openSettingsWindow: (sessionId: string) => ipcRenderer.invoke('settings:open', sessionId),
   closeSettingsWindow: () => ipcRenderer.invoke('settings:close'),
   onSettingsPrepare: (callback: (sessionId: string) => void) => {
