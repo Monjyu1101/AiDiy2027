@@ -848,7 +848,8 @@ app.whenReady().then(async () => {
     const window = currentControlWindow(event)
     if (!window) return
     const role = windowRoles.get(window.id)
-    if (role && role !== 'login' && role !== 'core' && role !== 'settings' && !Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, role)) {
+    // 子パネルは非表示にして下書きを保持する。メイン終了時の破棄とは分ける。
+    if (role && Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, role)) {
       setPanelVisibility(role as PanelKey, false)
       return
     }
