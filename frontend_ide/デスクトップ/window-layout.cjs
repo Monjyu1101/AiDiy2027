@@ -15,7 +15,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const available={x:area.x+margin,y:area.y+margin,width:Math.max(1,area.width-margin*2),height:Math.max(1,area.height-margin*2)};
  if(kind==='ide')return available;
  if(kind==='cpu'){
-  const width=Math.min(240,available.width),height=Math.min(160,available.height);
+  const width=Math.min(360,available.width),height=Math.min(160,available.height);
   // Diagミニの固定高さ190 DIPと窓間の8 DIPを空け、右端を揃える。
   const x=available.x+available.width-width;
   const y=Math.max(available.y,available.y+available.height-height-190-8);

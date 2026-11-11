@@ -918,7 +918,7 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 ## IDEのCPU / GPU / RAM小型画面（aidiy_cpu）
 
-利用開始後の「CPU」で開く。ElectronはIDE所有の240×160の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUは画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
+利用開始後の「CPU」で開く。ElectronはIDE所有の360×160の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUは画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
 
 `aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。Windows CPUは `aidiy_cpu/windows-cpu.mjs` の `SWbemRefresher` で `Win32_PerfFormattedData_Counters_ProcessorInformation` の `_Total` を継続取得する。単発 `Get-CimInstance` が失敗しても、同じPCのCOM更新器では取得できる場合がある。初回Refreshの値は採用せず、1秒後のRefreshから返す。`windows-cpu-monitor.mjs` はCPU専用PowerShellを再利用し、GPU照会とは独立した1秒周期で新標本を採る。暖機後は単調時計の予定時刻を1秒ずつ進め、完了後にさらに1秒待たない。早着したCPU専用要求は残り時間だけ待ち、前回値を新標本として返さず必ずRefreshする。Refresh処理時間は次の区間に含め、毎周期に追加しない。長い処理・休止で過ぎた予約は連発せずスキップする。CPU側の取得失敗は独立して30秒休止する。OSの停止・負荷による遅延時まで厳密な1秒を保証するものではない。
 

@@ -15,6 +15,8 @@ import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {parse,compileScript} from '@vue/compiler-sfc';
 import WebSocket from 'ws';
+import {windowBounds} from '../デスクトップ/window-layout.cjs';
+const {width:initialWidth,height:initialHeight}=windowBounds('cpu',{x:0,y:0,width:1920,height:1080});
 const root=fileURLToPath(new URL('..',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'cpu-check-'));
 assert.equal(dirname(temporary),tmpdir());
 const output=join(root,'temp/cpu-check');mkdirSync(output,{recursive:true});
@@ -37,7 +39,9 @@ try{
  let id=0;const pending=new Map(),errors=[];socket.on('message',value=>{const d=JSON.parse(value);if(d.id){pending.get(d.id)?.(d);pending.delete(d.id);}if(d.method==='Runtime.exceptionThrown')errors.push(d.params);});
  const send=(method,params={})=>new Promise(r=>{pending.set(++id,r);socket.send(JSON.stringify({id,method,params}));});
  const evaluate=async expression=>{const r=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});assert.equal(r.result?.exceptionDetails,undefined,JSON.stringify(r));return r.result.result.value;};
- await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:240,height:160,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1600);
+ await send('Runtime.enable');await send('Page.enable');await send('Emulation.setDeviceMetricsOverride',{width:initialWidth,height:initialHeight,deviceScaleFactor:1,mobile:false});await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1600);
+ assert.equal(await evaluate('document.documentElement.scrollWidth'),initialWidth);
+ assert.equal(await evaluate('document.documentElement.scrollHeight'),initialHeight);
  assert.equal(await evaluate('document.querySelectorAll(".cpu-label text").length'),3);assert.equal(await evaluate('document.querySelectorAll("path[fill-opacity]").length'),2);
  assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label')].every(label=>{
   const badge=label.querySelector('rect'),text=label.querySelector('text');
@@ -49,7 +53,7 @@ try{
    Math.abs((text.y+text.height/2)-(badge.y+badge.height/2))<1;
  })`),true);
  const shot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-gpu-ram.png'),Buffer.from(shot.result.data,'base64'));
- await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:239,y:159});
+ await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:initialWidth-1,y:initialHeight-1});
  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
  await evaluate("document.querySelector('.cpu-panel').focus()");
  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
