@@ -6,6 +6,8 @@
 import * as os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
+export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
 
 function cpuSnapshot(cpus) {
@@ -30,30 +32,45 @@ export function parseGpuUtilization(stdout) {
   return Math.max(...values);
 }
 
-// Windows標準のGPU Engineカウンター。WDDM 2.x対応のIntel/AMD/NVIDIAで利用する。
-// 同じ物理エンジンのプロセス別値を合計し、エンジン間は最大値（Task Managerと同じ考え方）。
-// エンジン同士を足すと3DとCopy等で二重計上になるため合算しない。
-export function parseWindowsGpuUtilization(stdout) {
-  let rows;try{rows=JSON.parse(String(stdout));}catch{return null;}
-  if(!Array.isArray(rows))rows=rows&&typeof rows==='object'?[rows]:[];
-  if(!rows.length)return null;
-  const engines=new Map();
-  for(const row of rows){
-    const engine=typeof row?.Name==='string'?row.Name.match(/(?:^|_)luid_(0x[0-9a-f]+_0x[0-9a-f]+)_phys_(\d+)_eng_(\d+)(?:_|$)/i):null;
-    const raw=row?.UtilizationPercentage;
-    const value=typeof raw==='number'?raw:typeof raw==='string'&&/^\d+(?:\.\d+)?$/.test(raw)?Number(raw):NaN;
-    if(!engine||!Number.isFinite(value)||value<0||value>100)return null;
-    const key=engine.slice(1).join('_').toLowerCase();engines.set(key,(engines.get(key)||0)+value);
-  }
-  return Math.min(100,Math.max(...engines.values()));
-}
-const windowsGpuCommand="$ErrorActionPreference='Stop'; @(Get-CimInstance -Namespace root/cimv2 -ClassName Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine | Select-Object Name,UtilizationPercentage) | ConvertTo-Json -Compress";
-
 // ブラウザではなくIDEサーバーが動くホスト全体を計測する。常駐タイマーは持たない。
 export function createSystemMetrics({ system = os, run = execute, now = Date.now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform } = {}) {
   let previous = cpuSnapshot(system.cpus());
-  let cached, pending, closed = false, gpu = null, gpuCheckedAt = -Infinity, windowsUnavailableUntil = -Infinity;
+  let cached, pending, gpuPending, closed = false, gpu = null, gpuCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
+  const windowsUnavailableUntil = new Map();
   const controller = new AbortController();
+  // PowerShell起動やPDHの2標本を待つ間も、CPU/RAMのHTTP応答を止めない。
+  // 要求がある間だけ1本起動し、非表示中の常駐タイマーは作らない。
+  async function measureGpu() {
+    let next = null;
+    if (platform === 'win32') {
+      for (const command of [windowsGpuCimCommand, windowsGpuCounterCommand]) {
+        if (controller.signal.aborted) return;
+        if (now() < (windowsUnavailableUntil.get(command) ?? -Infinity)) continue;
+        try {
+          const { stdout } = await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command], {
+            timeout: 5000, maxBuffer: 512 * 1024, windowsHide: true, shell: false, signal: controller.signal,
+          });
+          next = parseWindowsGpuUtilization(stdout);
+        } catch { /* 未対応の経路だけを休止し、次のWindows標準経路へ進む。 */ }
+        if (next !== null) break;
+        windowsUnavailableUntil.set(command, now() + gpuRetryInterval);
+      }
+    }
+    if (next === null && !controller.signal.aborted) {
+      try {
+        const { stdout } = await run('nvidia-smi', ['--query-gpu=utilization.gpu', '--format=csv,noheader,nounits'], {
+          timeout: 1500, maxBuffer: 16 * 1024, windowsHide: true, shell: false, signal: controller.signal,
+        });
+        next = parseGpuUtilization(stdout);
+      } catch { /* 未対応・失敗は0%ではなくnull。 */ }
+    }
+    if (!closed) { gpu = next; gpuMeasuredAt = now(); }
+  }
+  function refreshGpu(timestamp) {
+    if (gpuPending || timestamp - gpuCheckedAt < (gpu === null ? gpuRetryInterval : interval)) return;
+    gpuCheckedAt = timestamp;
+    gpuPending = measureGpu().catch(() => { if (!closed) gpu = null; }).finally(() => { gpuCheckedAt = now(); gpuPending = undefined; });
+  }
   async function measure() {
     const timestamp = now();
     const current = cpuSnapshot(system.cpus());
@@ -65,27 +82,9 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
     const memoryTotal = system.totalmem(), memoryFree = system.freemem();
     const ram = memoryTotal > 0 && memoryFree >= 0 && memoryFree <= memoryTotal
       ? percent(100 * (1 - memoryFree / memoryTotal)) : null;
-    if (timestamp - gpuCheckedAt >= (gpu === null ? gpuRetryInterval : interval)) {
-      gpuCheckedAt = timestamp;
-      gpu=null;
-      if(platform==='win32'&&timestamp>=windowsUnavailableUntil){
-        try{
-          const {stdout}=await run('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',windowsGpuCommand],{
-            timeout:2000,maxBuffer:512*1024,windowsHide:true,shell:false,signal:controller.signal,
-          });
-          gpu=parseWindowsGpuUtilization(stdout);
-        }catch{/* 未対応ドライバー・権限不足はNVIDIA専用計測へフォールバック。 */}
-        if(gpu===null)windowsUnavailableUntil=timestamp+gpuRetryInterval;
-      }
-      if(gpu===null&&!controller.signal.aborted){
-        try {
-          const { stdout } = await run('nvidia-smi', ['--query-gpu=utilization.gpu', '--format=csv,noheader,nounits'], {
-            timeout: 1500, maxBuffer: 16 * 1024, windowsHide: true, shell: false, signal: controller.signal,
-          });
-          gpu = parseGpuUtilization(stdout);
-        } catch { gpu = null; }
-      }
-    }
+    // 長い非表示から戻ったときは古いGPU値を現在値として表示しない。
+    if (timestamp - gpuMeasuredAt >= gpuRetryInterval) gpu = null;
+    refreshGpu(timestamp);
     if (closed) throw Error('システム計測は終了しました。');
     cached = Object.freeze({ timestamp, cpu, gpu, ram, gpuStatus: gpu === null ? 'unavailable' : 'available' });
     return cached;
