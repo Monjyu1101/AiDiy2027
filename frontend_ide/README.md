@@ -378,6 +378,8 @@ Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/`
 
 IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。CPUはWindowsでは標準の全CPU `PercentProcessorTime` を優先し、未取得時・他OSでは全論理CPUの稼働時間差分を使います。周波数補正の `PercentProcessorUtility` は別指標として診断情報に残し、表示値の倍率補正には使いません。長い非表示からの復帰直後は古い期間平均を出さず、次の計測を待ちます。WindowsではGPU Engineの3D使用率を計測します。CIMが使えないIntel/AMD環境では `Get-Counter` の標準カウンターへ切り替え、OS言語に応じたカウンター名を使います。プロセス別の同一エンジン使用率を合計し、全GPUの3Dエンジン最大値を表示します。動画再生・計算専用エンジンの負荷は3D値に含めません。WDDM 2.x対応ドライバーが必要です。両方取得できない場合とWindows以外ではNVIDIAの `nvidia-smi` のGPU全体使用率を使い、複数台は最大値を表示します。GPU取得は非同期でCPU/RAM表示を止めず、初回の数秒間や未対応・未導入・取得失敗時はGPUの線と浮動ラベルを表示しません。正常な0%は表示します。
 
+CPUの値が他の表示と合わない場合は、リポジトリ直下で `node frontend_ide/scripts/check-cpu-metrics.mjs` を実行すると、約15秒で比較用JSONを `frontend_ide/temp/cpu-diagnostics/` へ保存します。現在のソース・継続PDH・WMI更新器を比べる読み取り専用の診断で、表示式・設定を変更せず、負荷試験・外部送信も行いません。既存の窓のサーバーを読む指定や結果の判断は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+
 ## IDEの配置をSave / Loadする（Electron・AiDiy接続利用）
 
 AiDiy接続利用中、保存された配置があり、IDE以外のパネルをまだ開いていない時だけ、＋メニューの左端に **Ld ↓（Load）** が表示されます。IDE以外のパネルを3つ以上開くと、右端へ **Sv ↑（Save）** が表示されます。1〜2パネルの時はどちらも表示しません。SaveはIDE自身と、そのIDEから開いているパネルの種類・表示位置・大きさをプロジェクト別に保存します。保存された配置がない時はLoadを表示しません。

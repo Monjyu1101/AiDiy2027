@@ -929,3 +929,22 @@ WindowsのGPUは `aidiy_cpu/windows-gpu.mjs` の標準CIM `Win32_PerfFormattedDa
 APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのCPU/GPU同時固定照会は8秒、CPU単独照会は5秒・各512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。外部ライブラリは追加しない。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
 
 確認: `node --test frontend_ide/checks/cpu-*.test.mjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
+
+
+### CPUの値が低い・他の表示と一致しないとき
+
+倍率やコア数を推測で掛けず、同じホストで実測値を比べる。CPUのAPI値は画面で再除算していない。GPU表示が成功していてもCPUのCIMが成功したとは限らず、取得完了後に次の更新を待つため、GPUのPDH取得経路では同じCPU値が複数回表示される場合がある。
+
+読み取り専用の比較診断は、リポジトリ直下で次を実行する。
+
+```text
+node frontend_ide/scripts/check-cpu-metrics.mjs
+```
+
+約15秒で `frontend_ide/temp/cpu-diagnostics/日時.json` を保存する。設定・レジストリー・表示式を変更せず、負荷試験・外部送信は行わない。通常の作業中に実行する。結果にはOS/CPU/Nodeの版、現行サンプラーの12回の値・取得元・標本の経過時間、継続PDHクエリーのProcessor Time/Utility、SWbemRefresherの更新値、単発CIM値を含む。エラー時は参照コマンドのstderrも含むため、共有前に内容を確認する。
+
+既定では、現在のソースから別のサンプラーを起動する。すでに開いている画面が同じ版とは限らない。起動中のCPU/IDEサーバーのloopback URLが分かる場合だけ、`--url http://127.0.0.1:ポート/` を付けるとその `/api/system-metrics` を読む。外部URLやリダイレクトは許可しない。診断項目が `missing-in-response` なら旧サーバーの可能性がある。ブラウザの再読込だけではNodeサーバーのコードは更新されない。IDEから開いたCPU子窓はIDEの計測サーバーを共有するため、CPU子窓だけを開き直しても更新されない。作業を保存したうえでIDE本体を再起動する必要がある。単独aidiy_cpuはその単独サーバーの再起動でよい。
+
+Windowsの参照値は、言語別Perflib IDで名前を解決して1つのPDHクエリーを9回採取し、初回を捨てる。WMI更新器も繰り返し更新する。単発CIMと継続計測の差、TimeとUtilityの差、取得失敗・値の古さを分けて判断する。Utilityは周波数補正を含み100を超える場合があるが、大きい方を自動で正解とはしない。Task Managerの変更は段階展開であり、OS名だけで特定カウンターと完全一致するとは断定しない。
+
+資料: [PDHの2標本・1秒以上の採取要件](https://learn.microsoft.com/en-us/windows/win32/perfctrs/collecting-performance-data)、[WMI更新器](https://learn.microsoft.com/en-us/windows/win32/wmisdk/refreshing-wmi-data-in-scripts)、[Task ManagerのCPU指標変更](https://support.microsoft.com/en-us/servicing/os/windows-11/2025/08/august-29-2025-kb5064081-os-build-26100-5074-preview)。診断のmock試験は `node --test frontend_ide/checks/cpu-diagnostics.test.mjs`。mock通過は実機カウンター値の正しさを保証しない。
