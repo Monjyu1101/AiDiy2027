@@ -73,14 +73,14 @@ test('CPU is graph-only with compact percent margin and Diag-sized right inset',
 });
 
 
-for(const [release,expected] of [['10.0.26100',64],['10.0.22631',92]])test(`Windows取得値(${release})はJSONからグラフ・数値まで縮小せず届く`,async()=>{
+for(const [release,expected] of [['10.0.26100',64],['10.0.22631',92]])test(`os.cpus取得値(${release})はJSONからグラフ・数値まで縮小せず届く`,async()=>{
  let now=0,busy=100,idle=100;
- const metrics=createSystemMetrics({platform:'win32',windowsCpuMetrics:{read:()=>({cpu:{time:64,utility:92},measuredAt:now,sampleIntervalMs:1000}),close(){}},now:()=>now,system:{release:()=>release,cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:64,PercentProcessorUtility:92},gpu:[{Name:'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D',UtilizationPercentage:40}]})})});
+ const metrics=createSystemMetrics({platform:'win32',cpuMetrics:{read:()=>({cpu:expected,measuredAt:now,sampleIntervalMs:500,logicalCpuCount:1}),status:()=> 'available',close(){}},now:()=>now,system:{release:()=>release,cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:64,PercentProcessorUtility:92},gpu:[{Name:'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D',UtilizationPercentage:40}]})})});
  const f=fixture();
  try{
   await metrics.sample();await tick();now+=1000;busy+=3;idle+=97;
   const api=JSON.parse(JSON.stringify(await metrics.sample()));
-  assert.equal(api.cpu,expected);assert.ok(Math.abs(api.cpuDetails.osTimes-3)<1e-8);
+  assert.equal(api.cpu,expected);assert.equal(api.cpuDetails.osTimes,expected);
   f.setFetch(async()=>({ok:true,json:async()=>api}));await f.context.poll();
   const cpu=f.context.state.series.value.find(item=>item.key==='cpu');
   const label=f.context.state.labels.value.find(item=>item.key==='cpu');
@@ -97,7 +97,7 @@ test('CPU panelは応答時間を次の1秒に足さず、遅延後の連発を�
  f.setTime(2000);await f.context.poll();assert.equal([...f.timers.values()][0].ms,700);f.unmount();
 });
 for(const duration of [200,500])test(`CPU panelは${duration}ms採取の100%を縮小・平均化せず維持`,async()=>{
- const f=fixture();f.setFetch(async()=>({ok:true,json:async()=>({timestamp:1,cpu:100,cpuDetails:{windowsSampleIntervalMs:duration}})}));
+ const f=fixture();f.setFetch(async()=>({ok:true,json:async()=>({timestamp:1,cpu:100,cpuDetails:{sampleIntervalMs:duration}})}));
  f.mount();await tick();for(let i=0;i<3;i++){await f.context.poll();assert.equal(f.context.state.labels.value.find(item=>item.key==='cpu').value,100);}f.unmount();
 });
 
@@ -109,4 +109,14 @@ for(const failure of [false,true])test(`hide/show後の旧${failure?'失敗':'�
  assert.equal(f.context.state.samples.value.length,0);assert.equal(f.context.state.error.value,'');assert.equal([...f.timers.values()][0].ms,0);
  f.setFetch(async()=>({ok:true,json:async()=>({timestamp:2,cpu:42})}));await f.context.poll();
  assert.equal(f.context.state.samples.value.length,1);assert.equal(f.context.state.samples.value[0].cpu,42);f.unmount();
+});
+
+test('初回準備中はCPUラベルを隠し、GPU/RAMを保ち、取得済み0%と新標本は表示する',async()=>{
+ const f=fixture();const cpuLabel=()=>f.context.state.labels.value.find(item=>item.key==='cpu');
+ for(const [source,cpu,visible] of [['warming-up',null,false],['os-times',0,true],['os-times',9,true],['warming-up',null,false],['os-times',49,true]]){
+  f.setFetch(async()=>({ok:true,json:async()=>({timestamp:1,cpu,cpuSource:source,gpu:40,ram:62})}));await f.context.poll();
+  assert.equal(!!cpuLabel(),visible);if(visible)assert.equal(cpuLabel().value,cpu);
+  assert.equal(f.context.state.labels.value.find(item=>item.key==='gpu').value,40);assert.equal(f.context.state.labels.value.find(item=>item.key==='ram').value,62);
+ }
+ f.unmount();
 });

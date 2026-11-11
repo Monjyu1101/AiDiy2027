@@ -11,8 +11,9 @@ defineProps({desktop:Boolean,floating:Boolean,standalone:Boolean});
 const emit=defineEmits(['close']);
 const samples=ref([]),error=ref(''),ready=ref(false);
 const series=computed(()=>chartSeries(samples.value));
-// GPU未取得時はグラフ上の浮動ラベルを隠す。0%は正常値として表示する。
-const labels=computed(()=>placeLabels(series.value.filter(item=>item.key!=='gpu'||item.value!==null)));
+// 初回のCPU準備中とGPU未取得時はラベルを隠す。取得済み0%は表示する。
+const labels=computed(()=>placeLabels(series.value.filter(item=>
+ (item.key!=='gpu'||item.value!==null)&&(item.key!=='cpu'||samples.value.at(-1)?.cpuSource!=='warming-up'))));
 let timer,request,nextPollAt,generation=0,disposed=false;
 async function poll(){
  clearTimeout(timer);if(disposed||document.hidden||request)return;

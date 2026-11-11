@@ -136,13 +136,13 @@ test('不正識別子・開始前中止ではプロセスを起動しない', as
 
 test('metrics本体から60回取得しても起動1回、既存API値・非同期応答・終了を維持', async () => {
   const f = fixture(); let busy = 100, idle = 100;
-  const metrics = createSystemMetrics({ platform: 'win32', windowsMetrics: f.worker, windowsCpuMetrics: {read:()=>({cpu:{time:64,utility:92},measuredAt:f.now,sampleIntervalMs:1000}),close(){}}, now: () => f.now,
+  const metrics = createSystemMetrics({ platform: 'win32', windowsMetrics: f.worker, cpuMetrics: {read:()=>({cpu:64,measuredAt:f.now,sampleIntervalMs:500,logicalCpuCount:1}),status:()=> 'available',close(){}}, now: () => f.now,
     system: { cpus: () => [{ times: { user: busy, idle } }], totalmem: () => 1000, freemem: () => 250 },
     run: async () => { throw Error('NVIDIA must not be needed'); },
   });
   for (let index = 0; index < 60; index++) {
     const data = await metrics.sample();
-    if (index) { assert.equal(data.cpu, 64); assert.equal(data.gpu, 40); assert.equal(data.cpuSource, 'windows-processor-time'); assert.equal(data.cpuDetails.windowsProcessorUtility, 92); }
+    if (index) { assert.equal(data.cpu, 64); assert.equal(data.gpu, 40); assert.equal(data.cpuSource, 'os-times'); assert.equal(data.cpuDetails.windowsProcessorUtility, null); }
     else assert.equal(data.cpu, 64);
     f.child.stdout.write(reply); await settle();
     f.advance(1000); busy += 3; idle += 97;

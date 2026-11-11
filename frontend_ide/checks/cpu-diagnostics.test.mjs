@@ -55,3 +55,8 @@ test('本体の失敗標本だけでは同時比較できたと判定しない',
  const report=await collectCpuDiagnostics({platform:'win32',system,now:()=>now,sleep:async ms=>{now+=ms;},makeMetrics:()=>({sample:async()=>{throw Error('unavailable');},close(){}}),run:async()=>({stdout:JSON.stringify({samples:[{timestamp:new Date(5000).toISOString(),time:3,utility:51}]})})});
  assert.equal(report.overlap.referenceSamplesWithinProductionWindow,0);
 });
+
+test('CPU診断は初回準備状態を保持し、未取得を0%へ変えない',()=>{
+ const sample=selectSample({timestamp:1,cpu:null,cpuSource:'warming-up',cpuDetails:{cpuStatus:'warming-up',osTimes:null}});
+ assert.equal(sample.cpu,null);assert.equal(sample.cpuSource,'warming-up');assert.equal(sample.details.cpuStatus,'warming-up');assert.equal(sample.details.osTimes,null);
+});

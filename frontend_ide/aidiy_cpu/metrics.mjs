@@ -8,23 +8,12 @@ import { performance } from 'node:perf_hooks';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
-import { preferredWindowsCpuMetric, windowsSystemMetricsCommand } from './windows-cpu.mjs';
+import { windowsSystemMetricsCommand } from './windows-cpu.mjs';
 import { createWindowsMetricsProcess } from './windows-process.mjs';
-import { createWindowsCpuMonitor } from './windows-cpu-monitor.mjs';
+import { createOsCpuMonitor } from './os-cpu-monitor.mjs';
 export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
 
-function cpuSnapshot(cpus) {
-  if (!cpus.length) return null;
-  let idle = 0, total = 0;
-  for (const cpu of cpus) {
-    const times = Object.values(cpu.times);
-    if (!times.every(Number.isFinite) || !Number.isFinite(cpu.times.idle)) return null;
-    idle += cpu.times.idle;
-    total += times.reduce((sum, value) => sum + value, 0);
-  }
-  return { idle, total, count: cpus.length };
-}
 const percent = value => Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : null;
 
 // 複数GPUでは最も使用率の高いデバイスを表示する。未対応値を0%に変換しない。
@@ -37,20 +26,18 @@ export function parseGpuUtilization(stdout) {
 }
 
 // ブラウザではなくIDEサーバーが動くホスト全体を計測する。CPU周期はGPUから独立。
-export function createSystemMetrics({ system = os, run = execute, now = Date.now, monotonicNow = now === Date.now ? () => performance.now() : now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics, windowsCpuMetrics } = {}) {
+export function createSystemMetrics({ system = os, run = execute, now = Date.now, monotonicNow = now === Date.now ? () => performance.now() : now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics, cpuMetrics } = {}) {
   const osRelease = typeof system.release === 'function' ? system.release() : null;
-  const windowsPreferredMetric = preferredWindowsCpuMetric(osRelease);
-  const cpuMonitor = platform === 'win32' ? (windowsCpuMetrics === undefined ? createWindowsCpuMonitor({now}) : windowsCpuMetrics) : null;
-  let cpuRecord = null;
+  // eyesと同じos.cpus()差分を500msごとに採取。Windows指標との途中切替はしない。
+  const cpuMonitor = cpuMetrics ?? createOsCpuMonitor({ system, now, monotonicNow });
+  let cpuRecord = null, cpuMonitorStatus = null, cachedAt = -Infinity;
   const windowsProcess = windowsMetrics ?? (platform === 'win32' && run === execute ? createWindowsMetricsProcess() : null);
-  let previous = cpuSnapshot(system.cpus()), previousAt = monotonicNow();
-  let nextSampleAt = null, lastOsCpu = null, lastSampleIntervalMs = 0;
   let cached, pending, externalPending, closed = false, gpu = null, externalCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
-  let windowsCpu = null, windowsCpuMeasuredAt = -Infinity, nvidiaUnavailableUntil = -Infinity;
+  let nvidiaUnavailableUntil = -Infinity;
   const windowsGpuUnavailableUntil = new Map();
   const controller = new AbortController();
   // PowerShell起動やPDHの2標本を待つ間も、CPU/RAMのHTTP応答を止めない。
-  // GPU照会用を再利用し、CPU専用の1秒計測をGPUの待機・失敗から切り離す。
+  // GPU照会用を再利用し、CPUの0.5秒計測をGPUの待機・失敗から切り離す。
   async function measureExternalMetrics() {
     let next = null;
     async function windowsSample(gpuCommand) {
@@ -92,44 +79,25 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
     externalPending = measureExternalMetrics().catch(() => { if (!closed) { gpu = null; } }).finally(() => { externalCheckedAt = now(); externalPending = undefined; });
   }
   async function measure() {
-    const timestamp = now(), sampleAt = monotonicNow();
-    // HTTP到着の数msの揺れで1秒キャッシュが毎回延びないよう、採取予定を進める。
-    // native標本だけが先に更新された場合はNode差分の基準時刻を動かさない。
-    const due = nextSampleAt === null || sampleAt >= nextSampleAt;
-    const current = due ? cpuSnapshot(system.cpus()) : previous;
-    if (due) {
-      const total = current && previous ? current.total - previous.total : 0;
-      const idle = current && previous ? current.idle - previous.idle : 0;
-      lastSampleIntervalMs = sampleAt - previousAt;
-      lastOsCpu = lastSampleIntervalMs > 0 && lastSampleIntervalMs <= Math.max(5000, interval * 5)
-        && current && previous && current.count === previous.count && total > 0 && idle >= 0 && idle <= total
-        ? percent(100 * (1 - idle / total)) : null;
-      previous = current; previousAt = sampleAt;
-      const period = Math.max(1, interval);
-      nextSampleAt = nextSampleAt === null ? sampleAt + period
-        : nextSampleAt + (Math.floor((sampleAt - nextSampleAt) / period) + 1) * period;
-    }
-    const osCpu = lastOsCpu, sampleIntervalMs = lastSampleIntervalMs;
+    const timestamp = now();
+    const cpu = cpuRecord?.cpu ?? null;
     const memoryTotal = system.totalmem(), memoryFree = system.freemem();
     const ram = memoryTotal > 0 && memoryFree >= 0 && memoryFree <= memoryTotal
       ? percent(100 * (1 - memoryFree / memoryTotal)) : null;
     // 長い非表示から戻ったときは古いGPU値を現在値として表示しない。
     if (timestamp - gpuMeasuredAt >= gpuRetryInterval) gpu = null;
-    if (windowsCpu && timestamp - windowsCpuMeasuredAt >= 10000) {
-      windowsCpu = null;
-    }
     refreshExternalMetrics(timestamp);
-    const nativeMetric = windowsCpu?.[windowsPreferredMetric] !== null && windowsCpu?.[windowsPreferredMetric] !== undefined
-      ? windowsPreferredMetric : windowsCpu?.time !== null && windowsCpu?.time !== undefined ? 'time' : null;
-    const nativeCpu = windowsCpu?.[nativeMetric];
-    const cpu = nativeCpu !== null && nativeCpu !== undefined ? percent(nativeCpu) : osCpu;
-    const cpuSource = nativeMetric ? `windows-processor-${nativeMetric}` : osCpu !== null ? 'os-times' : 'unavailable';
+    const cpuSource = cpuMonitorStatus === 'warming-up' ? 'warming-up' : cpu !== null ? 'os-times' : 'unavailable';
     const cpuDetails = Object.freeze({
-      osTimes: osCpu, windowsProcessorTime: windowsCpu?.time ?? null, windowsProcessorUtility: windowsCpu?.utility ?? null,
-      logicalCpuCount: current?.count ?? null, sampleIntervalMs, windowsSampleIntervalMs: cpuRecord?.sampleIntervalMs ?? null, windowsSampleAgeMs: windowsCpu ? timestamp - windowsCpuMeasuredAt : null,
-      windowsPreferredMetric: platform === 'win32' ? windowsPreferredMetric : null, platform, osRelease, nodeVersion: process.versions.node, libuvVersion: process.versions.uv,
+      osTimes: cpu, logicalCpuCount: cpuRecord?.logicalCpuCount ?? null,
+      sampleIntervalMs: cpuRecord?.sampleIntervalMs ?? null, cpuSampleAgeMs: cpuRecord ? Math.max(0, timestamp - cpuRecord.measuredAt) : null,
+      cpuStatus: cpuMonitorStatus, platform, osRelease, nodeVersion: process.versions.node, libuvVersion: process.versions.uv,
+      // 旧応答との比較用。現行CPU表示はTime/Utilityを採取・採用しない。
+      windowsProcessorTime: null, windowsProcessorUtility: null, windowsPreferredMetric: null,
+      windowsSampleIntervalMs: null, windowsSampleAgeMs: null, windowsCpuStatus: null,
     });
     if (closed) throw Error('システム計測は終了しました。');
+    cachedAt = monotonicNow();
     cached = Object.freeze({ timestamp, cpu, gpu, ram, gpuStatus: gpu === null ? 'unavailable' : 'available', cpuSource, cpuDetails });
     return cached;
   }
@@ -137,11 +105,12 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
     sample() {
       if (closed) return Promise.reject(Error('システム計測は終了しました。'));
       const currentCpu = cpuMonitor?.read() ?? null;
-      if (currentCpu !== cpuRecord) {
-        cpuRecord = currentCpu; windowsCpu = currentCpu?.cpu ?? null; windowsCpuMeasuredAt = currentCpu?.measuredAt ?? -Infinity; cached = undefined;
+      const currentStatus = cpuMonitor.status();
+      if (currentCpu !== cpuRecord || currentStatus !== cpuMonitorStatus) {
+        cpuMonitorStatus = currentStatus; cpuRecord = currentCpu; cached = undefined;
       }
       if (pending) return pending;
-      if (cached && monotonicNow() < nextSampleAt) return Promise.resolve(cached);
+      if (cached && monotonicNow() - cachedAt < interval) return Promise.resolve(cached);
       pending = measure().finally(() => { pending = undefined; });
       return pending;
     },
