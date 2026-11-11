@@ -479,6 +479,7 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:open-app',openApp);
  const {createLayoutManager}=require('./デスクトップ/配置保存.cjs');
  layoutManager=createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,isQuitting:()=>quitting,
+  browserURL:record=>browserViews?.analysisContext(record)?.url,
   async openNative(event,panels){
    const owner=trustedEvent(event),panel=panels[0],before=new Set(windows.values());
    const state=await readState(owner),key=sessionKey(state),revision=owner.revision;
@@ -486,7 +487,11 @@ app.whenReady().then(async()=>{
    const created=()=>[...windows.values()].filter(record=>record.owner===owner&&!before.has(record)&&!record.window.isDestroyed());
    try{
    if(!valid()||!state.active||state.mode!=='online')throw Error('IDEの利用状態が変わりました。');
-   if(panel.kind==='browser')await createWindow('browser',owner.url+'#browser',undefined,owner,key,undefined,undefined,HOME);
+   if(panel.kind==='browser'){
+    // 保存時のURLで再開する。開けないURLの判定はBrowser側の既存の許可判定に任せる。
+    let target=HOME;try{if(['http:','https:','file:'].includes(new URL(panel.url).protocol))target=panel.url;}catch{}
+    await createWindow('browser',owner.url+'#browser',undefined,owner,key,undefined,undefined,target);
+   }
    else if(panel.kind==='viewer')await createWindow('viewer',owner.url+'#viewer='+encodeURIComponent(panel.path),undefined,owner,key);
    else{
     const result=await openApp(event,panel.kind);

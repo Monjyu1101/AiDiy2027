@@ -8,7 +8,7 @@ command, and tests:
 - :mod:`atlas` — deterministic frame extraction + atlas composition/validation.
 
 Image generation is delegated to the active reference-capable
-:class:`~agent.image_gen_provider.ImageGenProvider` (OpenAI gpt-image-2.5 or Krea);
+:class:`~agent.image_gen_provider.ImageGenProvider` (OpenAI gpt-image-2.6 or Krea);
 atlas assembly is fully deterministic so it's testable without any API calls.
 """
 

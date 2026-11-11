@@ -12,15 +12,9 @@ import {createNavigationPopupSizer} from './Navi窓サイズ.js';
 import {createNavigationMessage} from './Naviメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
-import NaviHagoromoRiding from './ナビ羽衣ライディング.vue';
-import NaviFireworks from './ナビ花火.vue';
-import NaviNightFlight from './ナビ夜間飛行.vue';
-import NaviClock from './ナビ時計.vue';
-import NaviMaze from './ナビ迷路.vue';
-import NaviRequest from './ナビ依頼文.vue';
-import NaviScenery from './ナビ風景.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
 import NavigationSceneMenu from './ナビ画面メニュー.vue';
+import {ナビ待機画面一覧} from './ナビ待機画面一覧.js';
 import {NAVIGATION_SCENES, pickNavigationScene} from './ナビ風景.js';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
 import DraftHandoffDialog from '../../dialog/下書き連携ダイアログ.vue';
@@ -35,7 +29,7 @@ const native=!!window.aidiyWindow;
 const sendIcon=computed(()=>new URL('sending.png',new URL('/development/AiDiy.png',location.href)).href);
 const stopIcon=computed(()=>new URL('abort.png',sendIcon.value).href);
 const visible=ref(false),detached=ref(false),panel=ref(),goal=ref(DEFAULT_NAVIGATION_GOAL),result=ref(null),job=ref(null),error=ref(''),submitting=ref(false),copied=ref(false),copyError=ref(''),copying=ref(false);
-const openingWindow=ref(!props.standalone),cruiseFailed=ref(false),cruiseKind=ref('ride');
+const openingWindow=ref(!props.standalone),待機画面非対応=ref(false),待機画面名=ref('ナビ羽衣ライディング3D');
 const selection=ref({provider:'aidiy_hermes',model:'same'}),modelOpen=ref(false),chosenProvider=ref('aidiy_hermes'),chosenModel=ref('same'),savingModel=ref(false),modelChoice=ref('same');
 const modelItems=ref([]),catalogBusy=ref(false),catalogNotice=ref(''),providerItems=ref([]),providerBusy=ref(false),providerNotice=ref('');let catalogVersion=0,providerVersion=0;
 const toolsState=ref({connected:false,mode:'online'});
@@ -101,8 +95,8 @@ const sameCancelledJob=value=>!!value&&!!pendingCancel.value&&(pendingCancel.val
 const busy=computed(()=>savingModel.value||stopping.value||!!pendingCancel.value||submitting.value||reconciling.value||job.value?.status==='running');
 const routing=computed(()=>stopping.value||!!pendingCancel.value||submitting.value||reconciling.value||job.value?.status==='running');
 // 選択は今回の実行だけに適用する。通常操作・自動航行は従来どおりランダム。
-const sceneAction=ref(''),sceneRequest=ref(null);let nextScene='';
-watch(routing,value=>{if(value){cruiseKind.value=nextScene||pickNavigationScene();nextScene='';cruiseFailed.value=false;}},{flush:'sync'});
+const sceneAction=ref(''),sceneRequest=ref(null);let 次回待機画面名='';
+watch(routing,value=>{if(value){待機画面名.value=次回待機画面名||pickNavigationScene();次回待機画面名='';待機画面非対応.value=false;}},{flush:'sync'});
 // 終了通知音。種別名だけを渡し、再生はIDEサーバー経由で backend_tools の通知音部品が行う。未起動でも画面は止めない。
 // 通知音のオン・オフ（初期値オン）。この画面だけの設定で、保存はしない。
 const soundOn=ref(true);
@@ -143,7 +137,9 @@ async function open(){
 }
 let layoutOpening;
 onMounted(()=>{layoutOpening=open();});
-defineExpose({layoutReady:()=>layoutOpening,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:''})});
+// 配置の保存・復元。Codeは開いていたかだけを残し、会話・自動航行は復元しない。
+async function restoreCode(){if(codeOpen.value||disposed||!visible.value)return;codeOpen.value=true;try{await ensureCode();}catch(e){autopilotMessage.show(e.message);}}
+defineExpose({layoutReady:()=>layoutOpening,restoreCode,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:'',...(codeOpen.value?{code:true}:{})})});
 async function pin(){
  await nextTick();
  windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:()=>h('button',{type:'button',class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
@@ -156,7 +152,7 @@ async function navigate(action='navigate',scene=''){
  // 再評価は現在のナビを対象にする。編集中の別目標では新規作成しない。
  if(action==='evaluate')goal.value=result.value.goal;
  if(!goal.value.trim()){error.value='開発目標を入力してください。';return;}
- nextScene=scene;sceneAction.value='';const run=beginRun(action);
+ 次回待機画面名=scene;sceneAction.value='';const run=beginRun(action);
  const submittedGoal=goal.value;draftEdited=false;submitting.value=true;error.value='';copied.value=false;const generation=++version;clearTimeout(timer);
  try{const data=await api('POST',{goal:submittedGoal,action,clientRequestId:run.clientRequestId});if(generation===version){job.value=data.job;pendingGoal={id:data.job.id,text:submittedGoal};}}
  catch(e){if(generation===version){error.value=e.message;reconciling.value=true;}}
@@ -381,7 +377,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!cruiseFailed}"><NaviHagoromoRiding v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true" /><NaviFireworks v-else-if="!cruiseFailed&&cruiseKind==='fireworks'" @unsupported="cruiseFailed=true" /><NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'" @unsupported="cruiseFailed=true" /><NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'" @unsupported="cruiseFailed=true" /><NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'" @unsupported="cruiseFailed=true" /><NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt||goal" @unsupported="cruiseFailed=true" /><NaviScenery v-else-if="!cruiseFailed&&NAVIGATION_SCENES.includes(cruiseKind)" :kind="cruiseKind" @unsupported="cruiseFailed=true" /><TerminalWelcome v-if="cruiseFailed||cruiseKind!=='nightflight'" kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!待機画面非対応}"><component v-if="!待機画面非対応" :is="ナビ待機画面一覧[待機画面名]" :key="待機画面名" v-bind="待機画面名==='ナビ依頼文3D'?{text:recommendedPrompt||goal}:{}" @unsupported="待機画面非対応=true" /><TerminalWelcome v-if="待機画面非対応||待機画面名!=='ナビ夜間飛行3D'" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>

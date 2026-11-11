@@ -1,0 +1,7 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE. */
+
+.navigation-scenery{position:absolute;inset:0;overflow:hidden;background:#000;outline:none}
+.navigation-scenery canvas{display:block;width:100%;height:100%}
+.navigation-scenery:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
+.navigation-scenery small{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000}

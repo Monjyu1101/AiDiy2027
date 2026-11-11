@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ夜間飛行3D'});
 // ナビ調査中の待ち時間の表示「夜間飛行」。コックピットからの視点だけで、夜の森林の上を無限に飛び続ける（機体の外観は描かない）。
 // 左右の地上から花火が打ち上がり、飛行コースを横切る火花の中を突っ切る。機体は少し傾いて、その分だけ曲がる。
 // ←→（A/D）で傾けて旋回、押していなければランダムに傾く。↑↓（W/S）で加減速（↑・押し続けでアフターバーナー）、Spaceで横転。
@@ -347,7 +348,7 @@ onMounted(() => {
   ready.value = true;
   const reduced = false;
   renderer.setClearColor(0x03060e, 1);
-  const scene = new THREE.Scene();
+  const scene = new THREE.Scene();scene.name='ナビ夜間飛行3D';
   scene.fog = new THREE.FogExp2(0x0a1226, .0068);
   const camera = new THREE.PerspectiveCamera(68, 1, .3, 1800);
   const disposables = [];
@@ -740,16 +741,16 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-nightflight" :class="{ready}" tabindex="0" role="img" aria-label="ナビ調査中の遊び場。夜間飛行のコックピットから、夜の森林の上を左右から上がる花火と火花の中を突っ切って飛び続けます。左右キーで傾けて旋回、上下キーで加減速、Spaceで横転します。">
+  <div ref="stage" data-scene="ナビ夜間飛行3D" class="ナビ夜間飛行3D" :class="{ready}" tabindex="0" role="img" aria-label="ナビ夜間飛行3D。ナビ調査中の遊び場。夜間飛行のコックピットから、夜の森林の上を左右から上がる花火と火花の中を突っ切って飛び続けます。左右キーで傾けて旋回、上下キーで加減速、Spaceで横転します。">
     <canvas ref="canvas" class="navigation-nightflight-world"></canvas>
     <canvas ref="hud" class="navigation-nightflight-hud" aria-hidden="true"></canvas>
     <small v-if="ready" class="navigation-nightflight-hint" aria-hidden="true">←→で傾けて旋回 / ↑↓で加減速 / Spaceで横転</small>
   </div>
 </template>
 <style>
-.navigation-nightflight{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
-.navigation-nightflight canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.ナビ夜間飛行3D{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
+.ナビ夜間飛行3D canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
 .navigation-nightflight-hud{pointer-events:none}
-.navigation-nightflight:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
+.ナビ夜間飛行3D:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
 .navigation-nightflight-hint{position:absolute;left:0;right:0;bottom:3px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000;opacity:.8}
 </style>

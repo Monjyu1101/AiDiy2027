@@ -167,7 +167,7 @@ export const MAZE_ALGORITHMS = Object.freeze([
 ]);
 
 /** 迷路を作る：{init, ops, grid, cells}。grid は操作を全部反映した最終の格子。 */
-export function buildMaze(cells, algorithmId, random = Math.random) {
+export function ナビ迷路3Dを生成(cells, algorithmId, random = Math.random) {
   const algorithm = MAZE_ALGORITHMS.find(item => item.id === algorithmId);
   if (!algorithm) throw Error('未対応の迷路生成アルゴリズムです: ' + algorithmId);
   const {init, ops} = algorithm.build(cells, random);

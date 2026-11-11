@@ -6,40 +6,45 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync,existsSync} from 'node:fs';
-import {NAVIGATION_SCENES,NAVIGATION_RANDOM_SCENES,pickNavigationScene,createRipples} from '../src/components/開発スペース/ナビ風景.js';
+import {NAVIGATION_SCENES,NAVIGATION_RANDOM_SCENES,pickNavigationScene} from '../src/components/開発スペース/ナビ風景.js';
+import {ナビ水面波紋3D状態を作成} from '../src/components/開発スペース/ナビ水面波紋3D.js';
 import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発スペース/ナビ入力.js';
 test('羽衣ライディング・花火を含む8種類を均等な範囲で選ぶ',()=>{
- assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ride','fireworks','aquarium','kaleidoscope','water','clock','maze','request']);
+ assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ万華鏡2D','ナビ水面波紋3D','ナビ時計2D','ナビ迷路3D','ナビ依頼文3D']);
  assert.deepEqual([.01,.13,.26,.39,.52,.64,.77,.90].map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
  // 夜間飛行は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
- assert.deepEqual(NAVIGATION_SCENES,[...NAVIGATION_RANDOM_SCENES,'nightflight']);
- for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'nightflight');
- assert.notEqual(pickNavigationScene(()=>1),'nightflight');
+ assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ夜間飛行3D']);
+ for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'ナビ夜間飛行3D');
+ assert.notEqual(pickNavigationScene(()=>1),'ナビ夜間飛行3D');
 });
-test('羽衣ライディングは正式名の部品を使い、rideキー・描画・操作の互換性を保つ',()=>{
- const component='../src/components/開発スペース/ナビ羽衣ライディング.vue';
- const scene=readFileSync(new URL(component,import.meta.url),'utf8');
+test('全待機画面の選択値・Vue名・登録キー・ファイル名・DOM識別名を統一し、メニューだけ接頭辞を省略する',async()=>{
+ const {parse,compileScript}=await import('@vue/compiler-sfc');
+ const registry=readFileSync(new URL('../src/components/開発スペース/ナビ待機画面一覧.js',import.meta.url),'utf8');
+ const registered=[...registry.matchAll(/import (ナビ\S+) from '\.\/(ナビ[^']+)\.vue'/g)];
+ assert.deepEqual(registered.map(m=>m[1]),NAVIGATION_SCENES);
+ for(const [,name,file]of registered){
+   assert.equal(name,file);
+   const source=readFileSync(new URL('../src/components/開発スペース/'+file+'.vue',import.meta.url),'utf8');
+   assert.ok(source.includes('data-scene="'+name+'"'));
+   const compiled=compileScript(parse(source).descriptor,{id:name});
+   assert.ok(compiled.content.includes("name:'"+name+"'"));
+ }
  const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
- const preview=readFileSync(new URL('./ナビ待機画面撮影/main.js',import.meta.url),'utf8');
- assert.equal(existsSync(new URL('../src/components/開発スペース/ナビ航行.vue',import.meta.url)),false);
- assert.match(panel,/import NaviHagoromoRiding from '\.\/ナビ羽衣ライディング\.vue'/);
- assert.match(panel,/<NaviHagoromoRiding v-if="!cruiseFailed&&cruiseKind==='ride'" @unsupported="cruiseFailed=true"/);
- assert.match(preview,/import NaviHagoromoRiding from '@s\/ナビ羽衣ライディング\.vue'/);
- assert.match(preview,/case 'ride': return h\(NaviHagoromoRiding, o\)/);
- assert.match(scene,/class="navigation-cruise"/);
- assert.match(scene,/aria-label="羽衣ライディング。/);
- for(const input of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','dblclick'])assert.ok(scene.includes(input),input);
- assert.match(scene,/defineEmits\(\['unsupported'\]\)/);
+ assert.ok(panel.includes(':is="ナビ待機画面一覧[待機画面名]"'));
+ const menu=readFileSync(new URL('../src/components/開発スペース/ナビ画面メニュー.vue',import.meta.url),'utf8');
+ assert.ok(menu.includes("{{scene.replace(/^ナビ/, '')}}"));assert.ok(menu.includes(':data-scene="scene"'));
+ assert.doesNotMatch(menu,/NAVIGATION_SCENE_LABELS/);
 });
+
 test('波紋点は毎回異なる位置から広がり、寿命と上限で片付ける',()=>{
- let n=0;const ripples=createRipples(()=>((n++%10)/10));
+ let n=0;const ripples=ナビ水面波紋3D状態を作成(()=>((n++%10)/10));
  const a=ripples.add(),b=ripples.add();assert.notEqual(a.x,b.x);assert.notEqual(a.y,b.y);
  ripples.step(1);assert.equal(a.age,1);assert.equal(b.age,1);
  for(let i=0;i<40;i++)ripples.add();assert.equal(ripples.points.length,32);
  ripples.step(8);assert.equal(ripples.points.length,0);
 });
 test('波紋点は指定したポインター位置を使い、不正な位置はランダムへ戻す',()=>{
- const ripples=createRipples(()=>.5);
+ const ripples=ナビ水面波紋3D状態を作成(()=>.5);
  assert.deepEqual(ripples.add({x:.8,y:.2}),{x:.8,y:.2,age:0});
  assert.deepEqual(ripples.add({x:-1,y:2}),{x:0,y:1,age:0});
  assert.deepEqual(ripples.add({x:NaN,y:.2}),{x:.5,y:.5,age:0});
@@ -66,20 +71,20 @@ test('DOMの別窓移動・復帰でキー購読を移し、破棄で全て解�
  stop();sync();a.dispatchEvent(new Event('keydown'));b.dispatchEvent(new Event('keydown'));assert.equal(count,3);assert.equal(cleared,true);assert.ok(blurs>=3);
 });
 test('新演出は黒背景、Spaceの長押し重複を除き、所有窓の描画を終了する',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ風景.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ水面波紋3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/event\.repeat/);assert.match(source,/navigationKeyActive\(event,el,hover\)/);
- assert.match(source,/ctx\.fillStyle='#000'/);assert.match(source,/frameOwner=el\.ownerDocument\.defaultView/);
- assert.match(source,/cancelAnimationFrame\(raf\);unbind\(\)/);
- for(const name of ['ナビ羽衣ライディング.vue','ナビ花火.vue']){
-  const existing=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8');
+ assert.match(source,/WebGLRenderer/);assert.match(source,/frameOwner=el\.ownerDocument\.defaultView/);
+ assert.match(source,/cancelAnimationFrame\(raf\)/);assert.match(source,/renderer\.dispose\(\)/);
+ for(const name of ['ナビ羽衣ライディング3D.vue','ナビ花火3D.vue']){
+  const existing=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8').replace(/\r\n/g,'\n');
   assert.match(existing,/bindNavigationKeys\(el/);assert.match(existing,/unbindKeys\(\)/);assert.doesNotMatch(existing,/instanceof Element|document\.addEventListener\('key/);
  }
 });
 
 test('3演出と既存2演出・NaviのVue script/templateをコンパイルする',async()=>{
  const {parse,compileScript,compileTemplate}=await import('@vue/compiler-sfc');
- for(const name of ['ナビ風景.vue','ナビ羽衣ライディング.vue','ナビ花火.vue','Naviパネル.vue']){
-  const source=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8');
+ for(const name of ['ナビ万華鏡2D.vue','ナビアクアリウム3D.vue','ナビ水面波紋3D.vue','ナビ羽衣ライディング3D.vue','ナビ花火3D.vue','Naviパネル.vue']){
+  const source=readFileSync(new URL('../src/components/開発スペース/'+name,import.meta.url),'utf8').replace(/\r\n/g,'\n');
   const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
   assert.ok(compileScript(descriptor,{id:name}));
   assert.deepEqual(compileTemplate({source:descriptor.template.content,filename:name,id:name}).errors,[]);
@@ -89,24 +94,24 @@ test('3演出と既存2演出・NaviのVue script/templateをコンパイルす�
 test('夜間飛行: コックピット視点だけで機体は描かず、花火・HUD・キー操作を持ち、画面の3行ターミナル表示は出さない',async()=>{
  const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);
  const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
- const script=compileScript(descriptor,{id:'nightflight',genDefaultAs:'component'});
+ const script=compileScript(descriptor,{id:'ナビ夜間飛行3D',genDefaultAs:'component'});
  transformSync(script.content,{format:'esm'}); // 構文エラーがないこと（WebGLの描画は実機で確認）
  assert.doesNotMatch(source,/new THREE\.(ExtrudeGeometry|CylinderGeometry)\(/,'機体の外観は描かない');
  assert.doesNotMatch(source,/dblclick|toggleView|chase/i,'視点の切り替えは持たない');
  for(const word of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','drawCanopy','drawHud','unsupported'])assert.ok(source.includes(word),word);
- const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/<NaviNightFlight v-else-if="!cruiseFailed&&cruiseKind==='nightflight'"/);
- assert.match(panel,/<TerminalWelcome v-if="cruiseFailed\|\|cruiseKind!=='nightflight'" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行以外のすべての演出で出す
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ assert.ok(panel.includes(':is="ナビ待機画面一覧[待機画面名]"'));
+ assert.match(panel,/<TerminalWelcome v-if="待機画面非対応\|\|待機画面名!=='ナビ夜間飛行3D'" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行以外のすべての演出で出す
 });
 
 test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さない）。数字は文字のマスクで、見えないカラーピッカーがランダムに動いて虹色に移り変わり、日付と「:」は色を変えない（3行ターミナル表示・下線は出さない）',async()=>{
  const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);
  const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ時計.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ時計2D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
- transformSync(compileScript(descriptor,{id:'clock',genDefaultAs:'component'}).content,{format:'esm'});
+ transformSync(compileScript(descriptor,{id:'ナビ時計2D',genDefaultAs:'component'}).content,{format:'esm'});
  assert.equal((source.match(/const PALETTE = \[(\[[^\]]+\],?\s*)+\]/)?.[0].match(/\[\d+, \d+, \d+\]/g)||[]).length,7,'色は7色');
  assert.match(source,/\$\{date\.getFullYear\(\)\}-\$\{pad\(date\.getMonth\(\) \+ 1\)\}-\$\{pad\(date\.getDate\(\)\)\}/,'日付は yyyy-mm-dd');
  assert.match(source,/pad\(date\.getHours\(\)\)\}:\$\{pad\(date\.getMinutes\(\)\)\}:\$\{pad\(date\.getSeconds\(\)\)/,'時刻は hh:mm:ss');
@@ -117,16 +122,16 @@ test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さ
  assert.match(source,/if \(clock\[i\] === ':'\) ctx\.fillText\(':'/,'「:」は固定色で別に描く');
  assert.match(source,/if \(clock\[i\] !== ':'\) maskCtx\.fillText/,'数字だけをマスクにする');
  assert.match(source,/const STATIC = \[/,'日付と「:」は固定色');
- const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/<NaviClock v-else-if="!cruiseFailed&&cruiseKind==='clock'"/);
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ assert.ok(panel.includes(':is="ナビ待機画面一覧[待機画面名]"'));
 });
 
 test('迷路: 暗い3D空間で、生成（6種）→解法（5種）の経過→経路表示→答え合わせ→2秒後に次へ、を繰り返す',async()=>{
  const {createRequire}=await import('node:module');const require=createRequire(import.meta.url);
  const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ迷路.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ迷路3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
- transformSync(compileScript(descriptor,{id:'maze',genDefaultAs:'component'}).content,{format:'esm'});
+ transformSync(compileScript(descriptor,{id:'ナビ迷路3D',genDefaultAs:'component'}).content,{format:'esm'});
  for(const word of ['MAZE_ALGORITHMS','MAZE_SOLVERS','verifyRoute','InstancedMesh','unsupported',"'generate'","'solve'","'route'","'check'","'clear'"])assert.ok(source.includes(word),word);
  assert.match(source,/const BUILD_TIME = [\d.]+, CHECK_TIME = 1\.2, CLEAR_TIME = \.8, CRUMBLE_TIME = \.3;/,'答え合わせ1.2秒＋崩れる0.8秒＝2秒で次へ');
  assert.match(source,/BoxGeometry\(1\.002, 1, 1\.002\)/,'ブロックの間に隙間を置かない');
@@ -140,12 +145,12 @@ test('迷路: 暗い3D空間で、生成（6種）→解法（5種）の経過�
  assert.match(source,/rnd\(14, 18\)/);assert.match(source,/rnd\(8, 11\)/);
  assert.match(source,/board\.rotation\.y = view\.az/,'盤面をゆっくり回す');
  assert.match(source,/view\.az \+= step \* \.16/,'回転は常に続く');
- const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/<NaviMaze v-else-if="!cruiseFailed&&cruiseKind==='maze'"/);
+ const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+ assert.ok(panel.includes(':is="ナビ待機画面一覧[待機画面名]"'));
 });
 
 test('夜間飛行: 傾いている間は傾いた側（曲がる先）へ花火を多く打ち、墜落はきりもみ回転し、ときどき低空へ降りて地面が見える',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  for(const word of ['predictPath','bankSide','st.spin','st.dive','diveWait'])assert.ok(source.includes(word),word);
  assert.match(source,/bank && Math\.random\(\) < \.9\) sideToggle = bank/,'傾いている間は9割が傾いた側から');
  assert.match(source,/banking \? \.9 : \.6/,'傾いている間は打ち上げ数を増やす');
@@ -154,7 +159,7 @@ test('夜間飛行: 傾いている間は傾いた側（曲がる先）へ花火
 });
 
 test('夜間飛行: 墜落中はターゲットマーカーを出さず、ダメージは自動回復せず、燃料は少ない状態から約5分で尽きて墜落する',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/for \(const b of S\.crashState \? \[\] : S\.targets\)/,'墜落中はマーカーを出さない');
  assert.doesNotMatch(source,/st\.hp = Math\.min\(100, st\.hp \+/,'ダメージは自動回復しない');
  assert.match(source,/const FUEL_START = \.3, FUEL_SECONDS = 300;/,'燃料は30%から巡航で300秒');
@@ -164,7 +169,7 @@ test('夜間飛行: 墜落中はターゲットマーカーを出さず、ダメ
 });
 
 test('夜間飛行: 墜落後は真っ黒のダウン状態から、SYSTEM RECOVERYを明滅して発動し、計器類→ランプ→燃料→ダメージ→機体を水平へ→HUDを順に回復し、0秒の表示のあとテイクオフする',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  const block=source.match(/const RECOVERY = Object\.freeze\(\{([\s\S]*?)\}\);/)[1];
  const numbers=key=>block.match(new RegExp(key+': \\[([^\\]]+)\\]'))[1].split(',').map(Number);
  const [g0,g1]=numbers('gauges'),[l0,l1]=numbers('lamps'),[f0,f1]=numbers('fuel'),[d0,d1]=numbers('damage'),[v0,v1]=numbers('level'),hud=numbers('hud'),ready=Number(block.match(/ready: ([\d.]+)/)[1]),takeoff=Number(block.match(/takeoff: ([\d.]+)/)[1]),blackout=Number(block.match(/blackout: ([\d.]+)/)[1]);
@@ -196,7 +201,7 @@ test('夜間飛行: 墜落後は真っ黒のダウン状態から、SYSTEM RECOV
 
 
 test('夜間飛行: 起動直後も、墜落後と同じシステムリカバリーを機体は正位置のままほぼ即始め、テイクオフして始まる。計器盤はダウン中も見え、各部品の表示は回復した順に点く',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/function boot\(\) \{[\s\S]*?st\.down = true; st\.impactAt = 0; st\.crashEnd = RECOVERY\.takeoff;[\s\S]*?st\.roll = 0; st\.pitch = 0; st\.fade = 0;/,'起動直後は正位置のダウン状態で、ほぼ即リカバリー');
  assert.match(source,/\n  boot\(\);\n/,'起動時にbootする');
  assert.match(source,/const redLevel = S\.crashState === 2 \? 0 :/,'リカバリー中は赤みを出さない');
@@ -206,7 +211,7 @@ test('夜間飛行: 起動直後も、墜落後と同じシステムリカバリ
 });
 
 test('夜間飛行: テイクオフは地面すぐ上を速度を上げながら滑走し、一定の速度で機首を上げて上昇する（森林との当たり判定はない）',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/const ROTATE_SPEED = 60, TAKEOFF_ACCEL = 4\.5, CLIMB_RATE = 9;/);
  assert.match(source,/const RUNWAY_LENGTH = ROTATE_SPEED \* ROTATE_SPEED \/ \(2 \* TAKEOFF_ACCEL\) \+ 120;/,'滑走路の長さは滑走する距離に合わせる');
  assert.match(source,/st\.speed = 4; st\.takeoff = 1;/,'低速の滑走から始める');
@@ -220,7 +225,7 @@ test('夜間飛行: テイクオフは地面すぐ上を速度を上げながら
 });
 
 test('夜間飛行: リカバリーの見出しだけ中央寄せ、規定高度に着くまで手順を表示し続け、その間は当たり判定なし、ダメージは従来の3倍',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/g\.textAlign = 'center'; g\.fillText\('SYSTEM RECOVERY', cx,/,'見出しの行だけ中央寄せ');
  assert.match(source,/if \(S\.takeoff\) drawRecoveryLog\(g, w, h, k, S, 99\);/,'規定高度まで手順を表示し続ける');
  assert.match(source,/!st\.crash && !st\.takeoff && st\.invuln <= 0/,'テイクオフ中は当たり判定なし');
@@ -229,7 +234,7 @@ test('夜間飛行: リカバリーの見出しだけ中央寄せ、規定高度
 });
 
 test('夜間飛行: システリカバリーは全部鮮やかな緑で、見出しが一番下に出て、次の行が出るたびに、それまでの行がずり上がり、機体を立て直すタイミングで滑走路上の木を消去する',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.doesNotMatch(source,/RECOVERY_GREEN_DONE/,'完了した行も同じ鮮やかな緑');
  assert.match(source,/bottom = baseY - \.5 \* lineH/,'一番下の行から始まる');
  assert.match(source,/lines = \[\{header: true, at: RECOVERY\.start\}/,'最初に見出しが一番下に出る');
@@ -244,7 +249,7 @@ test('夜間飛行: システリカバリーは全部鮮やかな緑で、見出
 });
 
 test('夜間飛行: 離陸中はがたがた揺れ（画面・HUD）、速度とともに強まり、浮いて地面から離れたらなくなる',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/const lifted = clamp\(\(st\.y - st\.ground - 1\.6\) \/ 2\.5, 0, 1\), rattle = reduced \|\| !st\.takeoff \? 0 : \(1 - lifted\)/,'浮いたらなくなる');
  assert.match(source,/st\.takeoff === 1 \? \.35 \+ \.65 \* clamp\(st\.speed \/ ROTATE_SPEED, 0, 1\) : 1/,'滑走中は速度とともに強まる');
  assert.match(source,/Math\.sin\(time \* 33\) \* \.07/,'上下の細かい揺れ');
@@ -254,7 +259,7 @@ test('夜間飛行: 離陸中はがたがた揺れ（画面・HUD）、速度と
 });
 
 test('夜間飛行: 滑走路が有効な間は、滑走路の上の花火（打ち上げ・噴水・炸裂・火の粉）を消火し、新しい花火も滑走路の上には上げない',()=>{
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ夜間飛行3D.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.match(source,/const onRunway = \(x, z, margin = 0\) => \{[\s\S]*?along > -40 && along < RUNWAY_LENGTH && Math\.abs\(dx \* runway\.rx \+ dz \* runway\.rz\) < 16 \+ margin/,'滑走路の範囲の判定');
  assert.match(source,/if \(onRunway\(x, z\)\) target = 0;/,'木の消去も同じ範囲');
  assert.match(source,/if \(runway\.on\) \{   \/\/ 滑走路の上の花火を消火する[\s\S]*?shells\.splice[\s\S]*?fountains\.splice[\s\S]*?bursts\.splice/,'打ち上げ・噴水・炸裂の記録を消す');

@@ -4,24 +4,11 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 通常の実行・自動航行がランダムに選ぶ待機画面。
-export const NAVIGATION_RANDOM_SCENES = Object.freeze(['ride', 'fireworks', 'aquarium', 'kaleidoscope', 'water', 'clock', 'maze', 'request']);
-// 右クリックのメニューから選べる待機画面。夜間飛行はゲーム性が強いため、ランダム選択には含めない。
-export const NAVIGATION_SCENES = Object.freeze([...NAVIGATION_RANDOM_SCENES, 'nightflight']);
-export const NAVIGATION_SCENE_LABELS = Object.freeze({ride:'羽衣ライディング',fireworks:'花火',aquarium:'アクアリウム',kaleidoscope:'万華鏡',water:'水面',clock:'時計',maze:'迷路',request:'依頼文',nightflight:'夜間飛行'});
+export const NAVIGATION_RANDOM_SCENES = Object.freeze(['ナビ羽衣ライディング3D', 'ナビ花火3D', 'ナビアクアリウム3D', 'ナビ万華鏡2D', 'ナビ水面波紋3D', 'ナビ時計2D', 'ナビ迷路3D', 'ナビ依頼文3D']);
+// メニューは描画方式で分類する。夜間飛行だけは手動選択専用。
+export const NAVIGATION_SCENE_GROUPS = Object.freeze([
+  Object.freeze({label:'2D',scenes:Object.freeze(['ナビ万華鏡2D','ナビ時計2D'])}),
+  Object.freeze({label:'3D',scenes:Object.freeze(['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ夜間飛行3D'])}),
+]);
+export const NAVIGATION_SCENES = Object.freeze(NAVIGATION_SCENE_GROUPS.flatMap(group=>group.scenes));
 export const pickNavigationScene = (random = Math.random) => NAVIGATION_RANDOM_SCENES[Math.min(NAVIGATION_RANDOM_SCENES.length - 1, Math.max(0, Math.floor(random() * NAVIGATION_RANDOM_SCENES.length)))];
-export function createRipples(random = Math.random) {
-  const points = [];
-  return {
-    points,
-    add(position) {
-      const positioned=Number.isFinite(position?.x)&&Number.isFinite(position?.y);
-      const point = {x: positioned?Math.max(0,Math.min(1,position.x)):.08+random()*.84, y: positioned?Math.max(0,Math.min(1,position.y)):.08+random()*.84, age: 0};
-      if (points.length >= 32) points.shift();
-      points.push(point); return point;
-    },
-    step(dt) {
-      for (const point of points) point.age += dt;
-      for (let i = points.length - 1; i >= 0; i--) if (points[i].age > 7) points.splice(i, 1);
-    },
-  };
-}

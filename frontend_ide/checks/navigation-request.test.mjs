@@ -7,28 +7,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
-import {requestSegments,pickFlight,COMMENT_ALPHA,COMMENT_COLORS,FLIGHT,COMMENT_PLACEHOLDER,COMMENT_MAX_LENGTH} from '../src/components/開発スペース/ナビ依頼文.js';
+import {ナビ依頼文3Dを分割,ナビ依頼文3Dの飛行を作成,COMMENT_ALPHA,COMMENT_COLORS,FLIGHT,COMMENT_PLACEHOLDER,COMMENT_MAX_LENGTH} from '../src/components/開発スペース/ナビ依頼文3D.js';
 
 test('依頼文の断片化: 改行・句点で分け、長いものは読点や文字数で刻み、空なら「調査中…」',()=>{
- assert.deepEqual(requestSegments('短い依頼'),['短い依頼']);
- assert.deepEqual(requestSegments('一行目\n二行目。三行目！'),['一行目','二行目','三行目']);   // 断片の末尾の区切り（。！など）は表示しない
+ assert.deepEqual(ナビ依頼文3Dを分割('短い依頼'),['短い依頼']);
+ assert.deepEqual(ナビ依頼文3Dを分割('一行目\n二行目。三行目！'),['一行目','二行目','三行目']);   // 断片の末尾の区切り（。！など）は表示しない
  // 先に改行・句点で細かく分け、長すぎる断片だけ読点でも分ける（短い断片は読点で分けない）
- assert.deepEqual(requestSegments('A、B。C、D\nE；F'),['A、B','C、D','E','F']);   // 末尾の「。」「；」は出さず、途中の「、」は残す
- assert.deepEqual(requestSegments('あいうえおかきくけこ、さしすせそたちつてと、なにぬねのはひふへほ。'),['あいうえおかきくけこ、さしすせそたちつてと','なにぬねのはひふへほ']);
- assert.deepEqual(requestSegments(''),[COMMENT_PLACEHOLDER]);assert.deepEqual(requestSegments('  \n \n'),[COMMENT_PLACEHOLDER]);assert.deepEqual(requestSegments(undefined),[COMMENT_PLACEHOLDER]);
+ assert.deepEqual(ナビ依頼文3Dを分割('A、B。C、D\nE；F'),['A、B','C、D','E','F']);   // 末尾の「。」「；」は出さず、途中の「、」は残す
+ assert.deepEqual(ナビ依頼文3Dを分割('あいうえおかきくけこ、さしすせそたちつてと、なにぬねのはひふへほ。'),['あいうえおかきくけこ、さしすせそたちつてと','なにぬねのはひふへほ']);
+ assert.deepEqual(ナビ依頼文3Dを分割(''),[COMMENT_PLACEHOLDER]);assert.deepEqual(ナビ依頼文3Dを分割('  \n \n'),[COMMENT_PLACEHOLDER]);assert.deepEqual(ナビ依頼文3Dを分割(undefined),[COMMENT_PLACEHOLDER]);
  const long='今回の目標は、現行のaidiy_naviのセルフテスト再実行において、実AIによるナビ作成・再評価が正しく完了し、調査対象のファイルを変更しないことを確認することです。';
- const pieces=requestSegments(long);assert.ok(pieces.length>=3);
+ const pieces=ナビ依頼文3Dを分割(long);assert.ok(pieces.length>=3);
  for(const piece of pieces)assert.ok(piece.length<=COMMENT_MAX_LENGTH&&piece.length>0,piece);
  const punctuation=/[、。，,．.！？!?；;：:]/g;   // 末尾の区切りだけを除き、文字は落とさない
  assert.equal(pieces.join('').replace(punctuation,''),long.replace(/\s+/g,' ').replace(punctuation,''));
  for(const piece of pieces)assert.doesNotMatch(piece,/[、。，,．.！？!?；;：:]$/u,'末尾の区切りは出さない');
- assert.equal(requestSegments('x'.repeat(50)).join(''),'x'.repeat(50));
+ assert.equal(ナビ依頼文3Dを分割('x'.repeat(50)).join(''),'x'.repeat(50));
 });
 
 test('コメントの決め方: 遠くから視点へ迫る3Dの飛び方を、大きさ・速さ・色・位置・横流れともランダムに決め、範囲に収める',()=>{
  const xs=new Set(),heights=new Set(),speeds=new Set(),colors=new Set(),drifts=new Set();
  for(let k=0;k<400;k++){
-  const f=pickFlight(['ab','これは少し長めのコメントです']);
+  const f=ナビ依頼文3Dの飛行を作成(['ab','これは少し長めのコメントです']);
   assert.ok(f.z<=-FLIGHT.start.min&&f.z>=-FLIGHT.start.max,'遠く（前方）から始まる');
   assert.ok(f.height>=FLIGHT.height.min&&f.height<=FLIGHT.height.max);assert.ok(f.speed>=FLIGHT.speed.min&&f.speed<=FLIGHT.speed.max);
   assert.ok(Math.abs(f.x)>=FLIGHT.clear&&Math.abs(f.x)<=FLIGHT.x,'視点の真正面は避け、左右をかすめる');assert.ok(Math.abs(f.y)<=FLIGHT.y&&Math.abs(f.vx)<=FLIGHT.drift);
@@ -38,7 +38,7 @@ test('コメントの決め方: 遠くから視点へ迫る3Dの飛び方を、�
   xs.add(Math.round(f.x));heights.add(f.height.toFixed(2));speeds.add(f.speed.toFixed(1));colors.add(f.color);drifts.add(Math.sign(f.vx));
  }
  assert.ok(xs.size>15&&heights.size>100&&speeds.size>100&&colors.size>=7&&drifts.size===2,'ばらつく（横流れは左右どちらにも）');
- const fixed=pickFlight(['x'],()=>0);assert.equal(fixed.height,FLIGHT.height.min);assert.equal(fixed.z,-FLIGHT.start.min);assert.ok(fixed.x<0);
+ const fixed=ナビ依頼文3Dの飛行を作成(['x'],()=>0);assert.equal(fixed.height,FLIGHT.height.min);assert.equal(fixed.z,-FLIGHT.start.min);assert.ok(fixed.x<0);
 });
 
 test('文字色は暗めで薄い（彩度を抑えた色で、全体も透かす）',()=>{
@@ -51,11 +51,12 @@ test('文字色は暗めで薄い（彩度を抑えた色で、全体も透か�
 
 test('依頼文の画面: ニコニコ動画のように左右から流し、依頼文をpropで受け取り、画面上の3行ターミナル表示は出さない',async()=>{
  const require=createRequire(import.meta.url),{parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
- const source=readFileSync(new URL('../src/components/開発スペース/ナビ依頼文.vue',import.meta.url),'utf8');
+ const source=readFileSync(new URL('../src/components/開発スペース/ナビ依頼文3D.vue',import.meta.url),'utf8');
  const {descriptor,errors}=parse(source);assert.deepEqual(errors,[]);
  transformSync(compileScript(descriptor,{id:'request',genDefaultAs:'component'}).content,{format:'esm'});
- for(const word of ['requestSegments','pickFlight','props.text','strokeText','WebGLRenderer','CanvasTexture','unsupported','spawn(far)'])assert.ok(source.includes(word),word);
+ for(const word of ['ナビ依頼文3Dを分割','ナビ依頼文3Dの飛行を作成','props.text','strokeText','WebGLRenderer','CanvasTexture','unsupported','spawn(far)'])assert.ok(source.includes(word),word);
  assert.doesNotMatch(source,/strokeText\(c\.text/,'毎フレーム文字を描き直さない（断片ごとに1度だけテクスチャにする）');
  const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
- assert.match(panel,/<NaviRequest v-else-if="!cruiseFailed&&cruiseKind==='request'" :text="recommendedPrompt\|\|goal"/,'依頼文はプロンプト案（無いときだけ目標）');
+ assert.ok(panel.includes(":is=\"ナビ待機画面一覧[待機画面名]\""));
+ assert.ok(panel.includes("待機画面名==='ナビ依頼文3D'?{text:recommendedPrompt||goal}:{}"),'依頼文はプロンプト案（無いときだけ目標）');
 });

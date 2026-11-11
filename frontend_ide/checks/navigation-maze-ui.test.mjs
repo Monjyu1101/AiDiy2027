@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
-import * as mazeLogic from '../src/components/開発スペース/ナビ迷路.js';
+import * as mazeLogic from '../src/components/開発スペース/ナビ迷路3D.js';
 import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発スペース/ナビ入力.js';
 
 // VueのライフサイクルとWebGL境界だけを模擬し、SFC内の実スクリプトをそのまま実行する。
@@ -50,18 +50,18 @@ function fixture() {
     constructor(...args){super(...args);meshes.push(this);}
     setColorAt(index,color){assert.ok(color,'ブロックの色が存在する');super.setColorAt(index,color);}
   }
-  const source=readFileSync(new URL('../src/components/開発スペース/ナビ迷路.vue',import.meta.url),'utf8');
+  const source=readFileSync(new URL('../src/components/開発スペース/ナビ迷路3D.vue',import.meta.url),'utf8');
   const script=source.match(/<script setup>([\s\S]*?)<\/script>/)[1]
     .replace(/import \{([^}]+)\} from '([^']+)';/g,(_,names,id)=>`const {${names}}=require('${id}');`)
     .replace(/import \* as THREE from 'three';/,"const THREE=require('three');");
   const data=vm.runInNewContext(`(()=>{${script};return {stage,canvas,labelBuild,labelSolve,labelCheck};})()`,{
-    defineEmits:()=>()=>{},
+    defineOptions(){},defineEmits:()=>()=>{},
     document:{createElement:()=>canvas},Math:Object.assign(Object.create(Math),{random:()=>random}),performance:{now:()=>clock},...timerClock,clearTimeout(){},console,
     require:id=>{
       if(id==='vue')return {ref:value=>({value}),onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)};
       if(id==='three')return {...THREE,WebGLRenderer:Renderer,InstancedMesh:Mesh};
       if(id==='./ナビ入力.js')return {navigationKeyActive,bindNavigationKeys:(element,handlers)=>bindNavigationKeys(element,handlers,timerClock)};
-      if(id==='./ナビ迷路.js')return {...mazeLogic,MAZE_ALGORITHMS:['wilson','dfs'].map(id=>mazeLogic.MAZE_ALGORITHMS.find(a=>a.id===id)),buildMaze:(cells,id)=>{const maze=mazeLogic.buildMaze(cells,id,seeded(42));rounds.push({cells,id,maze});return maze;}};
+      if(id==='./ナビ迷路3D.js')return {...mazeLogic,MAZE_ALGORITHMS:['wilson','dfs'].map(id=>mazeLogic.MAZE_ALGORITHMS.find(a=>a.id===id)),ナビ迷路3Dを生成:(cells,id)=>{const maze=mazeLogic.ナビ迷路3Dを生成(cells,id,seeded(42));rounds.push({cells,id,maze});return maze;}};
       throw Error(id);
     }
   });

@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ羽衣ライディング3D'});
 // 羽衣ライディング：ナビ調査中の待ち時間を遊べる表示にする。真っ黒な宇宙に透明な格子が浮かび、光るバイクが走る。
 // バイクの背後には羽衣のような縦帯が長く伸びていく。ランダムに走るうち自分の帯へ戻ってきて、突っ切ると帯が光って火花が散る。
 // ハンドルは0°（直進）から±15°まで、一定時間ごとに1°ずつ切れる。←→（A/D）を押している間はその方向へ、
@@ -52,7 +53,7 @@ onMounted(() => {
   const reduced = false;
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio || 1, 2));
   renderer.setClearColor(0x000000, 1);
-  const scene = new THREE.Scene();
+  const scene = new THREE.Scene();scene.name='ナビ羽衣ライディング3D';
   // 床は塗らず線だけ。遠くは黒へ溶けて、宇宙空間に格子が浮かんで見える。
   scene.fog = new THREE.FogExp2(0x000000, 0.024);
   const camera = new THREE.PerspectiveCamera(62, 1, .1, 400);
@@ -281,14 +282,14 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-cruise" :class="{ ready }" tabindex="0" role="img" aria-label="羽衣ライディング。ナビ調査中の遊び場。光るバイクが走り、背後に帯が伸びます。左右キーでハンドル、上下キーで加減速、押し続けると加速します。">
+  <div ref="stage" data-scene="ナビ羽衣ライディング3D" class="ナビ羽衣ライディング3D" :class="{ ready }" tabindex="0" role="img" aria-label="ナビ羽衣ライディング3D。ナビ調査中の遊び場。光るバイクが走り、背後に帯が伸びます。左右キーでハンドル、上下キーで加減速、押し続けると加速します。">
     <canvas ref="canvas"></canvas>
     <small v-if="ready" class="navigation-cruise-hint" aria-hidden="true">←→でハンドル / ↑↓で加減速 / 押し続けて加速 / 自分の帯を突っ切ろう / ダブルクリックで帯を消去</small>
   </div>
 </template>
 <style>
-.navigation-cruise{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
-.navigation-cruise canvas{display:block;width:100%;height:100%}
-.navigation-cruise:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
+.ナビ羽衣ライディング3D{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none;cursor:crosshair}
+.ナビ羽衣ライディング3D canvas{display:block;width:100%;height:100%}
+.ナビ羽衣ライディング3D:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
 .navigation-cruise-hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000}
 </style>

@@ -2,7 +2,7 @@
 const {app, BrowserWindow} = require('electron');
 const fs = require('node:fs'); const path = require('node:path');
 app.commandLine.appendSwitch('force-device-scale-factor', '1');
-const scene = process.argv.find(a => a.startsWith('--scene='))?.slice(8) || 'ride';
+const scene = process.argv.find(a => a.startsWith('--scene='))?.slice(8) || 'ナビ羽衣ライディング3D';
 const marker = process.argv.find(a => a.startsWith('--marker='))?.slice(9);
 app.whenReady().then(() => {
   const win = new BrowserWindow({x: 80, y: 80, width: 800, height: 600, useContentSize: true, frame: false, thickFrame: false, hasShadow: false,

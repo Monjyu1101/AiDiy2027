@@ -371,7 +371,7 @@ total = round(s, 3)  # 合計が目標以下か確認
 | 設定 | 推奨値 | 備考 |
 |------|--------|------|
 | provider | openai | 品質・安定性のバランスが良い |
-| model | gpt-image-2.5-sunburst | 現行実装の OpenAI 既定モデル。利用可能性は provider の応答で確認 |
+| model | gpt-image-2.6-sunburst | 現行実装の OpenAI 既定モデル。利用可能性は provider の応答で確認 |
 | size | 1792x1024 | 横長だが厳密な16:9ではない。モデル対応サイズを確認 |
 | quality | medium | コスト削減しつつ十分な品質 |
 | save_path | images/scene_001.png〜 | PNG 拡張子で自動保存 |
@@ -382,7 +382,7 @@ total = round(s, 3)  # 合計が目標以下か確認
 mcp__aidiy_image_generation__generate_image
   prompt: <image_prompt の内容。source_summary と factual_bullets の要点を含める>
   provider: openai
-  model: gpt-image-2.5-sunburst
+  model: gpt-image-2.6-sunburst
   size: 1792x1024
   quality: medium
   save_path: D:/path/to/images/scene_001.png
@@ -392,7 +392,7 @@ mcp__aidiy_image_generation__generate_image
 > ```
 > POST http://127.0.0.1:8095/aidiy_image_generation/generate
 > Content-Type: application/json
-> Body: { "prompt": "...", "provider": "openai", "model": "gpt-image-2.5-sunburst",
+> Body: { "prompt": "...", "provider": "openai", "model": "gpt-image-2.6-sunburst",
 >         "size": "1792x1024", "quality": "medium",
 >         "save_path": "D:/path/to/images/scene_001.png" }
 > Response: JSON（save_path 指定時はファイル情報、未指定時は data に base64 と保存先情報。失敗時は error）

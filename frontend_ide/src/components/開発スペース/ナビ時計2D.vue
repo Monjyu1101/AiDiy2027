@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ時計2D'});
 // ナビ調査中の待ち時間の表示「時計」。黒い画面の左上に日付（yyyy-mm-dd）、中央に大きく時刻「hh:mm:ss」を出す（秒の後ろのミリ秒は出さない）。
 // 時刻の数字は「文字の形のマスク」で、その裏に7色（赤・橙・黄・緑・水・青・紫）の虹色の色盤がある。
 // 色盤の中心に目に見えないカラーピッカーがあり、これがランダムにゆっくり動き回るため、数字の色が虹色に移り変わる。
@@ -112,11 +113,11 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-clock" role="img" aria-label="ナビ調査中の表示。左上に今日の日付、中央に大きく時分秒が表示され、数字の色は虹色に移り変わります。">
+  <div ref="stage" data-scene="ナビ時計2D" class="ナビ時計2D" role="img" aria-label="ナビ時計2D。ナビ調査中の表示。左上に今日の日付、中央に大きく時分秒が表示され、数字の色は虹色に移り変わります。">
     <canvas ref="canvas" aria-hidden="true"></canvas>
   </div>
 </template>
 <style>
-.navigation-clock{position:absolute;inset:0;overflow:hidden;background:#000;outline:none}
-.navigation-clock canvas{display:block;width:100%;height:100%}
+.ナビ時計2D{position:absolute;inset:0;overflow:hidden;background:#000;outline:none}
+.ナビ時計2D canvas{display:block;width:100%;height:100%}
 </style>

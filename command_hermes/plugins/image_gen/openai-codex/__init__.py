@@ -1,7 +1,7 @@
 """OpenAI image generation backend — ChatGPT/Codex OAuth variant.
 
 Identical model catalog and tier semantics to the ``openai`` image-gen plugin
-(``gpt-image-2.5-sunburst`` / ``gpt-image-2.5-flare`` at low/medium/high quality), but routes the request through
+(``gpt-image-2.6-sunburst`` / ``gpt-image-2.6-flare`` at low/medium/high quality), but routes the request through
 the Codex Responses API ``image_generation`` tool instead of the
 ``images.generate`` REST endpoint. This lets users who are already
 authenticated with Codex/ChatGPT generate images without configuring a
@@ -12,7 +12,7 @@ Selection precedence for the tier (first hit wins):
 1. ``OPENAI_IMAGE_MODEL`` env var (escape hatch for scripts / tests)
 2. ``image_gen.openai-codex.model`` in ``config.yaml``
 3. ``image_gen.model`` in ``config.yaml`` (when it's one of our tier IDs)
-4. :data:`DEFAULT_MODEL` — ``gpt-image-2.5-sunburst-medium``
+4. :data:`DEFAULT_MODEL` — ``gpt-image-2.6-sunburst-medium``
 
 Output is saved as PNG under ``$HERMES_HOME/cache/images/``. Source images for
 image-to-image/editing are sent as Responses ``input_image`` content parts.
@@ -84,47 +84,47 @@ def _summarize_error_body(body: str) -> str:
 # ---------------------------------------------------------------------------
 
 # Fallback only; each catalog entry carries its own ``api_model``.
-API_MODEL = "gpt-image-2.5-sunburst"
+API_MODEL = "gpt-image-2.6-sunburst"
 
 _MODELS: Dict[str, Dict[str, Any]] = {
-    "gpt-image-2.5-sunburst-low": {
+    "gpt-image-2.6-sunburst-low": {
         "display": "GPT Image 2.5 Sunburst (Low)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "~15s",
         "strengths": "Sunburst: editing precision; fast iteration, lowest cost",
         "quality": "low",
     },
-    "gpt-image-2.5-sunburst-medium": {
+    "gpt-image-2.6-sunburst-medium": {
         "display": "GPT Image 2.5 Sunburst (Medium)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "moderate",
         "strengths": "Sunburst: editing precision; balanced — default",
         "quality": "medium",
     },
-    "gpt-image-2.5-sunburst-high": {
+    "gpt-image-2.6-sunburst-high": {
         "display": "GPT Image 2.5 Sunburst (High)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "slow",
         "strengths": "Sunburst: editing precision; highest fidelity, strongest prompt adherence",
         "quality": "high",
     },
-    "gpt-image-2.5-flare-low": {
+    "gpt-image-2.6-flare-low": {
         "display": "GPT Image 2.5 Flare (Low)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "~15s",
         "strengths": "Flare: fastest family; fast iteration, lowest cost",
         "quality": "low",
     },
-    "gpt-image-2.5-flare-medium": {
+    "gpt-image-2.6-flare-medium": {
         "display": "GPT Image 2.5 Flare (Medium)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "moderate",
         "strengths": "Flare: fastest family; balanced",
         "quality": "medium",
     },
-    "gpt-image-2.5-flare-high": {
+    "gpt-image-2.6-flare-high": {
         "display": "GPT Image 2.5 Flare (High)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "slow",
         "strengths": "Flare: fastest family; highest fidelity, strongest prompt adherence",
         "quality": "high",
@@ -134,12 +134,12 @@ _MODELS: Dict[str, Dict[str, Any]] = {
 # Legacy tier IDs (pre-2.5) still resolve so existing config.yaml / env values
 # keep working; they are not offered in the model picker.
 _LEGACY_ALIASES: Dict[str, str] = {
-    "gpt-image-2-low": "gpt-image-2.5-sunburst-low",
-    "gpt-image-2-medium": "gpt-image-2.5-sunburst-medium",
-    "gpt-image-2-high": "gpt-image-2.5-sunburst-high",
+    "gpt-image-2-low": "gpt-image-2.6-sunburst-low",
+    "gpt-image-2-medium": "gpt-image-2.6-sunburst-medium",
+    "gpt-image-2-high": "gpt-image-2.6-sunburst-high",
 }
 
-DEFAULT_MODEL = "gpt-image-2.5-sunburst-medium"
+DEFAULT_MODEL = "gpt-image-2.6-sunburst-medium"
 
 _SIZES = {
     "landscape": "1536x1024",
@@ -159,7 +159,7 @@ _CODEX_INSTRUCTIONS = (
 
 _MAX_REFERENCE_IMAGES = 16
 _MAX_INPUT_IMAGE_BYTES = 25 * 1024 * 1024
-# gpt-image-2.5's Responses ``input_image`` accepts raster formats only. The
+# gpt-image-2.6's Responses ``input_image`` accepts raster formats only. The
 # shared magic-byte sniffer also recognizes SVG/TIFF/ICO, which the API
 # rejects server-side — gate to this allowlist so unsupported inputs fail
 # locally with a clear error instead of an opaque HTTP 400.
@@ -238,7 +238,7 @@ def _sniff_image_mime(raw: bytes) -> Optional[str]:
 
     Delegates magic-byte detection to the shared sniffer in
     ``agent.image_routing`` (single source of truth), then gates the result
-    to :data:`_ACCEPTED_INPUT_MIME` — the raster formats gpt-image-2.5's
+    to :data:`_ACCEPTED_INPUT_MIME` — the raster formats gpt-image-2.6's
     ``input_image`` actually accepts. SVG/TIFF/ICO (which the shared sniffer
     also recognizes) are rejected here so they fail locally with a clear
     error instead of an opaque server-side HTTP 400.
@@ -556,7 +556,7 @@ def _collect_image_b64(
 
 
 class OpenAICodexImageGenProvider(ImageGenProvider):
-    """gpt-image-2.5 routed through ChatGPT/Codex OAuth instead of an API key."""
+    """gpt-image-2.6 routed through ChatGPT/Codex OAuth instead of an API key."""
 
     @property
     def name(self) -> str:
@@ -594,7 +594,7 @@ class OpenAICodexImageGenProvider(ImageGenProvider):
         return {
             "name": "OpenAI (Codex auth)",
             "badge": "free",
-            "tag": "gpt-image-2.5 (sunburst / flare) via ChatGPT/Codex OAuth — no API key required; supports text and image inputs",
+            "tag": "gpt-image-2.6 (sunburst / flare) via ChatGPT/Codex OAuth — no API key required; supports text and image inputs",
             "env_vars": [],
             "post_setup_hint": (
                 "Sign in with `hermes auth codex` (or `hermes setup` → Codex) "

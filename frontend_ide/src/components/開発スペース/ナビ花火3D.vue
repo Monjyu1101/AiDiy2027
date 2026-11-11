@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ花火3D'});
 // ナビ調査中の待ち時間を遊べる表示にする（ナビ羽衣ライディングと並ぶもう一つの表示。どちらを出すかはナビごとにランダム）。
 // 真っ黒な夜空に花火が上がり続ける。スペースキーを押し下げている間は力を貯め、離すと大玉を打ち上げる。それ以外はランダムに上がる。
 // 視点は常に花火の中心を見たまま自動航行し、花火の中心を焦点にしたランダムな楕円軌道を飛ぶ。
@@ -52,7 +53,7 @@ onMounted(() => {
   const pixelRatio = Math.min(globalThis.devicePixelRatio || 1, 2);
   renderer.setPixelRatio(pixelRatio);
   renderer.setClearColor(0x000000, 1);
-  const scene = new THREE.Scene();
+  const scene = new THREE.Scene();scene.name='ナビ花火3D';
   scene.fog = new THREE.FogExp2(0x000000, .006);
   const camera = new THREE.PerspectiveCamera(62, 1, .1, 600);
 
@@ -274,16 +275,16 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-fireworks" :class="{ ready }" tabindex="0" role="img" aria-label="ナビ調査中の花火。スペースキーを押し続けて力を貯め、離すと大玉を打ち上げます。">
+  <div ref="stage" data-scene="ナビ花火3D" class="ナビ花火3D" :class="{ ready }" tabindex="0" role="img" aria-label="ナビ花火3D。ナビ調査中の花火。スペースキーを押し続けて力を貯め、離すと大玉を打ち上げます。">
     <canvas ref="canvas"></canvas>
     <div v-show="charge > 0" class="navigation-fireworks-gauge" aria-hidden="true"><i :style="{ width: charge * 100 + '%' }"></i></div>
     <small v-if="ready" class="navigation-fireworks-hint" aria-hidden="true">スペースキーを押し続けて貯め、離して大玉を打ち上げ</small>
   </div>
 </template>
 <style>
-.navigation-fireworks{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none}
-.navigation-fireworks canvas{display:block;width:100%;height:100%}
-.navigation-fireworks:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
+.ナビ花火3D{position:absolute;inset:0;overflow:hidden;background:#000;outline:none;touch-action:none}
+.ナビ花火3D canvas{display:block;width:100%;height:100%}
+.ナビ花火3D:focus-visible{box-shadow:inset 0 0 0 2px #8de8e0}
 .navigation-fireworks-hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;color:#6f95a8;font-size:10px;pointer-events:none;text-shadow:0 0 4px #000}
 .navigation-fireworks-gauge{position:absolute;left:25%;right:25%;bottom:24px;height:5px;background:#10202a;border:1px solid #2c5a6c;pointer-events:none}
 .navigation-fireworks-gauge>i{display:block;height:100%;background:linear-gradient(to right,#ffb347,#ff5ea8,#7fe8ff)}

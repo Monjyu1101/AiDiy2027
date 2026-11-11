@@ -19,20 +19,20 @@ import WebSocket from 'ws';
 const root=fileURLToPath(new URL('..',import.meta.url));
 const temporary=mkdtempSync(join(tmpdir(),'navi-scenery-'));
 const output=mockOutput(join(root,'temp/navigation-scenery-check'));mkdirSync(output,{recursive:true});
-const result=await build({stdin:{contents:`import {createApp,h} from 'vue';import Scene from './src/components/開発スペース/ナビ風景.vue';
-const apps=[];for(const kind of ['aquarium','kaleidoscope','water']){const box=document.createElement('section');box.id=kind;document.body.append(box);const app=createApp({render:()=>h(Scene,{kind})});app.mount(box);apps.push(app);}window.dispose=()=>apps.forEach(app=>app.unmount());`,resolveDir:root},bundle:true,write:false,format:'iife',plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{
- const {descriptor}=parse(readFileSync(args.path,'utf8'));
- const compiled=compileScript(descriptor,{id:'scenery',inlineTemplate:true});
- return {contents:compiled.content+`\nconst style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.content).join('\n'))};document.head.append(style);`,resolveDir:dirname(args.path)};
+const result=await build({stdin:{contents:`import {ナビ万華鏡2D描画を作成} from './src/components/開発スペース/ナビ万華鏡2D.js';window.makeKaleidoscope=ナビ万華鏡2D描画を作成;import {createApp,h} from 'vue';import Kaleidoscope from './src/components/開発スペース/ナビ万華鏡2D.vue';import Clock from './src/components/開発スペース/ナビ時計2D.vue';
+const app=createApp({render:()=>h('div',{style:'display:flex'},[h('section',{style:'position:relative;width:400px;height:320px'},[h(Kaleidoscope)]),h('section',{style:'position:relative;width:400px;height:320px'},[h(Clock)])])});app.mount('#app');window.dispose=()=>app.unmount();`,resolveDir:root},bundle:true,write:false,format:'iife',plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{
+ const {descriptor}=parse(readFileSync(args.path,'utf8')),compiled=compileScript(descriptor,{id:'scenery2d',inlineTemplate:true});
+ const instrumented=compiled.content.replace('const ナビ万華鏡2D描画=ナビ万華鏡2D描画を作成();',`const ナビ万華鏡2D描画=ナビ万華鏡2D描画を作成();globalThis.kaleidoscopeRuntime=ナビ万華鏡2D描画;globalThis.kaleidoscopeFrames=[];const originalDraw=ナビ万華鏡2D描画.draw;ナビ万華鏡2D描画.draw=(...args)=>{const at=performance.now();originalDraw(...args);kaleidoscopeFrames.push({at,time:args[3],ms:performance.now()-at});};`);
+ return {contents:instrumented+`\n{const style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.src?readFileSync(join(dirname(args.path),s.src),'utf8'):s.content).join('\n'))};document.head.append(style);}`,resolveDir:dirname(args.path)};
 });}}]});
 if(process.argv.includes('--compile-only')){
  removeMockDirectory(temporary);
- console.log('PASS: three scenery Vue components compile (browser not run)');process.exit(0);
+ console.log('PASS: 2D kaleidoscope and clock compile');process.exit(0);
 }
-const html=`<!doctype html><meta charset="utf-8"><style>body{margin:0;background:#000;color:white;font-family:sans-serif;display:flex;flex-wrap:wrap}section{position:relative;width:400px;height:320px;border:1px solid #263845}input{position:fixed;top:330px;left:10px}iframe{width:420px;height:350px;border:0}</style><input aria-label="目標" value="入力を維持"><script src="/app.js"></script>`;
+const html=`<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#000;color:white;font-family:sans-serif}#app{position:relative;width:960px;height:600px}input{position:absolute;top:610px}iframe{width:450px;height:400px;border:0}</style><div id="app"></div><input aria-label="目標" value="入力を維持"><script src="/app.js"></script>`;
 const server=createServer((req,res)=>{res.setHeader('content-type',req.url==='/app.js'?'text/javascript':'text/html');res.end(req.url==='/app.js'?result.outputFiles[0].text:html);});
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const chrome=spawn(process.env.CHROME_PATH||'/usr/bin/chromium',['--headless=new','--no-sandbox','--remote-debugging-port=0','--window-size=1240,760','--user-data-dir='+temporary,'about:blank'],{stdio:['ignore','ignore','pipe']});
+const chrome=spawn(process.env.CHROME_PATH||(process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'/usr/bin/chromium'),['--headless=new','--no-sandbox','--enable-unsafe-swiftshader','--remote-debugging-port=0','--window-size=1240,760','--user-data-dir='+temporary,'about:blank'],{stdio:['ignore','ignore','pipe']});
 let browserErrors='';chrome.stderr.on('data',data=>{browserErrors+=String(data);});
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));let socket;
 try{
@@ -43,57 +43,44 @@ try{
  const send=(method,params={})=>new Promise(resolve=>{pending.set(++id,resolve);socket.send(JSON.stringify({id,method,params}));});
  const evaluate=async expression=>{const response=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});assert.equal(response.result?.exceptionDetails,undefined,JSON.stringify(response));return response.result.result.value;};
  await send('Runtime.enable');await send('Page.enable');await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}`});await sleep(1800);
- assert.equal(await evaluate('document.querySelectorAll("canvas").length'),3);
- const pixels=await evaluate(`[...document.querySelectorAll('canvas')].map(c=>{const p=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let lit=0,black=0;for(let i=0;i<p.length;i+=4){if(p[i]+p[i+1]+p[i+2]>0)lit++;else black++;}return {lit,black};})`);
- for(const p of pixels){assert.ok(p.lit>100,JSON.stringify(p));assert.ok(p.black>1000,JSON.stringify(p));}
- // 実Canvasの描画座標を記録し、モデルの試験用公開APIを追加せずポインター連携を確認する。
- await evaluate(`(()=>{window.drawn={};for(const kind of ['aquarium','water','kaleidoscope']){
-   const ctx=document.querySelector('#'+kind+' canvas').getContext('2d'),trace={fish:[],food:[],bubbles:[],ripples:[],widths:[]};drawn[kind]=trace;
-   const clear=ctx.fillRect.bind(ctx);ctx.fillRect=(...args)=>{trace.fish=[];trace.food=[];trace.bubbles=[];trace.ripples=[];trace.widths=[];return clear(...args);};
-   const translate=ctx.translate.bind(ctx);ctx.translate=(x,y)=>{trace.fish.push({x,y});return translate(x,y);};
-   const arc=ctx.arc.bind(ctx);ctx.arc=(x,y,r,...rest)=>{trace.lastArc={x,y};if(ctx.fillStyle==='#e7b768')trace.food.push({x,y});return arc(x,y,r,...rest);};
-   const ellipse=ctx.ellipse.bind(ctx);ctx.ellipse=(x,y,...rest)=>{trace.ripples.push({x,y});return ellipse(x,y,...rest);};
-   const stroke=ctx.stroke.bind(ctx);ctx.stroke=(...args)=>{trace.widths.push(ctx.lineWidth);if(ctx.strokeStyle==='#5fadc4'&&ctx.globalAlpha<1)trace.bubbles.push(trace.lastArc);return stroke(...args);};
- }})()`);await sleep(100);
- const hover=await evaluate(`(()=>{const points=drawn.aquarium.fish,index=points.findIndex(p=>p.x>70&&p.x<330&&p.y>70&&p.y<250),p=points[index],r=document.querySelector('.navigation-aquarium').getBoundingClientRect();return {index,x:p.x+12,y:p.y,left:r.left,top:r.top};})()`);
- await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:hover.left+hover.x,y:hover.top+hover.y});await sleep(250);
- const fled=await evaluate(`drawn.aquarium.fish[${hover.index}]`);
- assert.ok(Math.hypot(fled.x-hover.x,fled.y-hover.y)>20,JSON.stringify({hover,fled}));
- assert.ok(await evaluate(`drawn.aquarium.bubbles.some(p=>Math.abs(p.x-${hover.x})<3&&p.y<${hover.y}&&p.y>${hover.y}-16)`),'ホバー地点から気泡が上昇');
- const aquariumRect=await evaluate(`(()=>{const r=document.querySelector('.navigation-aquarium').getBoundingClientRect();return {left:r.left,top:r.top,width:r.width,height:r.height};})()`);
- const feeding={x:aquariumRect.left+aquariumRect.width*.73,y:aquariumRect.top+aquariumRect.height*.9};
- await send('Input.dispatchMouseEvent',{type:'mouseMoved',...feeding});
- await send('Input.dispatchMouseEvent',{type:'mousePressed',button:'left',clickCount:1,...feeding});
- await send('Input.dispatchMouseEvent',{type:'mouseReleased',button:'left',clickCount:1,...feeding});await sleep(100);
- const pellets=await evaluate('drawn.aquarium.food');assert.equal(pellets.length,4);
- assert.ok(pellets.every(p=>Math.abs(p.x-aquariumRect.width*.73)<2&&p.y>=0&&p.y<8),JSON.stringify(pellets));
- const feedShot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'aquarium-feeding.png'),Buffer.from(feedShot.result.data,'base64'));
- await sleep(750);
- assert.ok(await evaluate(`drawn.aquarium.bubbles.some(p=>Math.abs(p.x-${aquariumRect.width*.73})<5&&p.y<${aquariumRect.height*.9}&&p.y>${aquariumRect.height*.9}-35)`),'静止中も新しいホバー位置から気泡が発生');
- const bubblesBeforeLeave=await evaluate('drawn.aquarium.bubbles.length');
- const kaleidoscopeRect=await evaluate(`(()=>{const r=document.querySelector('.navigation-kaleidoscope').getBoundingClientRect();return {left:r.left,top:r.top,width:r.width,height:r.height};})()`);
- await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:kaleidoscopeRect.left+kaleidoscopeRect.width/2+40,y:kaleidoscopeRect.top+kaleidoscopeRect.height/2});await sleep(100);
- assert.ok(await evaluate('drawn.kaleidoscope.widths.some(width=>width>1.1)'));
- assert.ok(await evaluate('drawn.kaleidoscope.widths.some(width=>width===1)'));
- await sleep(800);assert.ok(await evaluate(`drawn.aquarium.bubbles.length<=${bubblesBeforeLeave}`),'離脱後は気泡を追加しない');
- const hoverShot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'kaleidoscope-hover.png'),Buffer.from(hoverShot.result.data,'base64'));
- const waterRect=await evaluate(`(()=>{const r=document.querySelector('.navigation-water').getBoundingClientRect();return {left:r.left,top:r.top,width:r.width,height:r.height};})()`);
- await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:waterRect.left+waterRect.width*.78,y:waterRect.top+waterRect.height*.23});await sleep(200);
- assert.ok(await evaluate(`drawn.water.ripples.some(p=>Math.abs(p.x-${waterRect.width*.78})<1&&Math.abs(p.y-${waterRect.height*.23})<1)`));
- assert.ok(await evaluate('drawn.kaleidoscope.widths.every(width=>width===1)'));
- assert.equal(await evaluate(`(()=>{const e=document.querySelector('.navigation-water');e.focus();const key=new KeyboardEvent('keydown',{code:'Space',key:' ',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),true);
- assert.equal(await evaluate(`(()=>{const e=document.querySelector('input');e.focus();const key=new KeyboardEvent('keydown',{code:'Space',key:' ',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),false);
- assert.equal(await evaluate(`(()=>{const e=document.querySelector('.navigation-water');e.focus();const key=new KeyboardEvent('keydown',{code:'Space',repeat:true,bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),false);
- const screenshot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'three-scenes.png'),Buffer.from(screenshot.result.data,'base64'));
- // 同一オリジンの別Documentへ実DOMを移動し、フォーカスと所有窓のキーを検証。
- await evaluate(`(async()=>{const frame=document.createElement('iframe');const loaded=new Promise(done=>frame.addEventListener('load',done,{once:true}));document.body.append(frame);await loaded;const doc=frame.contentDocument;for(const style of document.querySelectorAll('style'))doc.head.append(style.cloneNode(true));const section=document.querySelector('#water');doc.body.append(section);section.querySelector('[tabindex]').focus();window.testFrame=frame;})()`);await sleep(300);
- assert.equal(await evaluate(`(()=>{const doc=testFrame.contentDocument,e=doc.querySelector('.navigation-water');const key=new testFrame.contentWindow.KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),true);
- assert.equal(await evaluate(`(()=>{const doc=testFrame.contentDocument,e=doc.createElement('div');e.contentEditable='plaintext-only';doc.body.append(e);e.focus();const key=new testFrame.contentWindow.KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),false);
- await evaluate(`(()=>{const doc=testFrame.contentDocument,section=document.querySelector('#aquarium');doc.body.append(section);const el=section.querySelector('.navigation-aquarium'),r=el.getBoundingClientRect();el.dispatchEvent(new testFrame.contentWindow.PointerEvent('pointerenter',{clientX:r.left+r.width*.27,clientY:r.top+r.height*.8,pointerType:'mouse'}));el.dispatchEvent(new testFrame.contentWindow.MouseEvent('click',{button:0,clientX:r.left+r.width*.27,clientY:r.top+r.height*.8}));})()`);await sleep(100);
- assert.ok(await evaluate(`drawn.aquarium.food.some(p=>Math.abs(p.x-400*.27)<2&&p.y<8)`));
- await evaluate(`document.body.append(testFrame.contentDocument.querySelector('#aquarium'))`);
- await evaluate(`document.body.append(testFrame.contentDocument.querySelector('#water'));document.querySelector('.navigation-water').focus()`);await sleep(200);
- assert.equal(await evaluate(`(()=>{const e=document.querySelector('.navigation-water'),key=new KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true});e.dispatchEvent(key);return key.defaultPrevented;})()`),true);
- await evaluate('dispose()');await sleep(100);assert.equal(await evaluate('document.querySelectorAll("canvas").length'),0);assert.deepEqual(errors,[]);
- console.log('PASS: three black scenes render; hover bubbles rise and stop spawning on leave, fish flee, food drops from the surface, kaleidoscope and water follow hover; Space, repeat, editable input, cross-document move/restore, and unmount; screenshots: '+output);
+ const wait=async(expr,label)=>{for(let n=0;n<300;n++){if(await evaluate(expr))return;await sleep(60);}throw Error('Timeout: '+label);};
+ const capture=async name=>{const shot=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name+'.png'),Buffer.from(shot.result.data,'base64'));};
+ await wait('document.querySelectorAll("#app canvas").length===2','2D scenes');
+ assert.equal(await evaluate(`[...document.querySelectorAll('#app canvas')].every(c=>{const pixels=c.getContext('2d').getImageData(0,0,c.width,c.height).data;let lit=0;for(let i=0;i<pixels.length;i+=4)if(pixels[i]+pixels[i+1]+pixels[i+2]>0)lit++;return lit>100;})`),true);
+ await capture('two-scenes-2d');
+ const initial=await evaluate(`document.querySelector('.ナビ万華鏡2D').dataset.pattern`);
+ await send('Input.dispatchMouseEvent',{type:'mouseMoved',x:240,y:160});await sleep(250);
+ await capture('kaleidoscope2d-hover');
+ for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,button:'left',clickCount:1,x:240,y:160});
+ await wait(`document.querySelector('.ナビ万華鏡2D').dataset.pattern!==${JSON.stringify(initial)}`,'click changes glass');
+ await wait('kaleidoscopeRuntime.state.transition===1','slow glass transition complete');
+ const clicked=await evaluate(`document.querySelector('.ナビ万華鏡2D').dataset.pattern`);
+ await evaluate(`document.querySelector('input').focus();document.querySelector('input').dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true}));`);
+ assert.equal(await evaluate(`document.querySelector('.ナビ万華鏡2D').dataset.pattern`),clicked,'入力中のSpaceは奪わない');
+ await evaluate(`const el=document.querySelector('.ナビ万華鏡2D');el.focus();el.dispatchEvent(new KeyboardEvent('keydown',{code:'Space',repeat:true,bubbles:true}));`);
+ assert.equal(await evaluate(`document.querySelector('.ナビ万華鏡2D').dataset.pattern`),clicked,'長押しを無視');
+ await evaluate(`document.querySelector('.ナビ万華鏡2D').dispatchEvent(new KeyboardEvent('keydown',{code:'Space',bubbles:true,cancelable:true}));`);
+ await wait(`document.querySelector('.ナビ万華鏡2D').dataset.pattern!==${JSON.stringify(clicked)}`,'Space changes glass');
+ await sleep(1000);assert.ok(await evaluate(`(()=>{const frames=kaleidoscopeFrames.slice(-20);return (frames.at(-1).time-frames[0].time)/((frames.at(-1).at-frames[0].at)/1000)<.4;})()`),'表示時計は実時間の約1/3で進む');console.log('VISIBLE_RENDER '+JSON.stringify(await evaluate(`(()=>{const frames=kaleidoscopeFrames.slice(-30);return {count:frames.length,meanDrawMs:frames.reduce((n,f)=>n+f.ms,0)/frames.length,meanIntervalMs:(frames.at(-1).at-frames[0].at)/(frames.length-1)};})()`)));
+ // 同じ実装を決まった時刻で描き、全表情・遷移・フルサイズの画像を比較する。
+ await evaluate(`window.optics=makeKaleidoscope();window.proof=document.createElement('canvas');proof.width=960;proof.height=680;proof.style.cssText='position:fixed;inset:0;width:960px;height:680px;z-index:100';document.body.append(proof);window.proofCtx=proof.getContext('2d');window.pixels=()=>proofCtx.getImageData(0,0,960,680).data;`);
+ await send('Emulation.setDeviceMetricsOverride',{width:960,height:680,deviceScaleFactor:1,mobile:false});
+ const names=[];
+ for(let n=0;n<6;n++){
+   await evaluate(`optics.draw(proofCtx,960,680,${n*9});optics.draw(proofCtx,960,680,${n*9+2.4});`);
+   names.push(await evaluate('optics.state.name'));
+   assert.ok(await evaluate(`(()=>{const data=pixels();let lit=0;for(let i=0;i<data.length;i+=4)if(data[i]+data[i+1]+data[i+2]>65)lit++;return lit/data.length*4})()`)> .25,'画面全体にガラス模様がある');
+   await capture('kaleidoscope2d-pattern-'+n);
+ }
+ assert.equal(new Set(names).size,6);
+ await evaluate(`window.before=pixels();optics.setPointer({x:.9,y:.1});for(let t=47.5;t<=48.5;t+=.1)optics.draw(proofCtx,960,680,t);`);
+ assert.ok(await evaluate(`(()=>{const after=pixels();let changed=0;for(let i=0;i<after.length;i+=4)if(Math.abs(after[i]-before[i])+Math.abs(after[i+1]-before[i+1])+Math.abs(after[i+2]-before[i+2])>35)changed++;return changed/(after.length/4);})()`)> .3,'ガラスの位置で模様そのものが組み替わる');
+ await capture('kaleidoscope2d-glass-shift');
+ const performance=await evaluate(`(()=>{const started=window.performance.now();for(let i=0;i<18;i++){optics.draw(proofCtx,960,680,48.6+i/30);proofCtx.getImageData(480,340,1,1);}return {meanFrameMs:(window.performance.now()-started)/18,patterns:6};})()`);
+ console.log('OPTICAL_RENDER '+JSON.stringify(performance));
+
+ await evaluate('optics.dispose();proof.remove()');
+ await evaluate('dispose()');assert.equal(await evaluate('document.querySelectorAll("#app canvas").length'),0);assert.deepEqual(errors,[]);
+ console.log('PASS: kaleidoscope2D: six optical patterns, mirror motion, click/Space, input/repeat exclusion, resource disposal; clock2D drawing');
+
 }finally{socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}await new Promise(resolve=>server.close(resolve));await sleep(200);removeMockDirectory(temporary);}

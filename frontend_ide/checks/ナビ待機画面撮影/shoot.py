@@ -1,7 +1,7 @@
 """ナビ待機画面を1種ずつ単体表示し、表示完了から指定秒後に aidiy_windows_control のHTTPで撮影する（Windows専用）。
 前提: Tools(8095)起動済み、build.mjs実行済み。
-使い方: python shoot.py <待ち秒> <画面名...>   例: python shoot.py 15 ride clock / python shoot.py 45 fireworks nightflight
-画面名: ride fireworks aquarium kaleidoscope water clock maze request nightflight
+使い方: python shoot.py <待ち秒> <画面名...>   例: python shoot.py 15 ナビ羽衣ライディング3D ナビ時計2D / python shoot.py 45 ナビ花火3D ナビ夜間飛行3D
+画面名: ナビ羽衣ライディング3D ナビ花火3D ナビアクアリウム3D ナビ万華鏡2D ナビ水面波紋3D ナビ時計2D ナビ迷路3D ナビ依頼文3D ナビ夜間飛行3D
 出力: temp/ナビ待機画面撮影/shots/<画面名>.png（800×600）
 """
 import json, os, subprocess, sys, time, urllib.request

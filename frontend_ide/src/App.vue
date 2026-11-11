@@ -146,7 +146,8 @@ async function runLayout(action){
   catch(e){if(!disposed&&own===session)error.value=e.message;}
   finally{layoutBusy.value=false;if(!disposed&&own===session)await refreshLayout();}
 }
-function layoutItem(action){return{key:'layout-'+action,class:'layout-launch',ariaLabel:action==='save'?'Save':'Load',shortLabel:action==='save'?'Sv':'Ld',arrow:action==='save'?'⬆︎':'⬇︎',text:layoutBusy.value?'処理中…':action==='save'?'Save':'Load',title:action==='save'?'現在のIDEとパネルの配置を保存':'保存したIDEとパネルの配置を復元',disabled:layoutBusy.value||!!launching.value||allBusy.value||action==='load'&&!layoutState.value.saved,run:()=>runLayout(action)};}
+// 文字は矢印の根元側に置く。Saveは上向き矢印の下、Loadは下向き矢印の上。
+function layoutItem(action){return{key:'layout-'+action,class:action==='save'?'layout-launch layout-save':'layout-launch',ariaLabel:action==='save'?'Save':'Load',shortLabel:action==='save'?'Sv':'Ld',arrow:action==='save'?'⬆︎':'⬇︎',text:layoutBusy.value?'処理中…':action==='save'?'Save':'Load',title:action==='save'?'現在のIDEとパネルの配置を保存':'保存したIDEとパネルの配置を復元',disabled:layoutBusy.value||!!launching.value||allBusy.value||action==='load'&&!layoutState.value.saved,run:()=>runLayout(action)};}
 async function layoutRequest(request){
   if(!layoutAvailable.value)throw Error('配置はAiDiy接続利用中のIDEで操作してください。');
   if(request.action==='capture')return{version:1,viewMode:viewMode.value,navigation:[...navigationRefs.values()].map(panel=>panel.captureLayout()).filter(item=>item.name),space:spaceView.value?.captureLayout()};
@@ -160,6 +161,7 @@ async function layoutRequest(request){
     if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
     const id='navi-'+(++nextNavigation);navigationWindows.value.push(id);await nextTick();
     const panel=navigationRefs.get(id);await panel.layoutReady();
+    if(saved.code)await panel.restoreCode?.();
     if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
     const current=panel.captureLayout();if(!current.name)throw Error('Naviを復元できません。');
     panels.push({previousName:saved.name,name:current.name});

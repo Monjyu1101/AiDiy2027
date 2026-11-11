@@ -19,8 +19,9 @@ function panelBounds(rect,owner,screen,kind='explorer'){
  // 別画面へまたがるパネルは、そのパネルが最も重なるディスプレイを選ぶ。
  const area=screen.getDisplayMatching(desired).workArea,margin=8;
  if(kind==='panel-navigation')return windowBounds('navi',area);
- // Explorerの連携別窓は初期900 DIP。元パネルの高さやzoomには依存させない。
- if(kind==='explorer')desired.height=explorerHeight;
+ // Explorer・ファイルビューアの連携別窓は初期900 DIP（作業領域に収まらない画面では下の計算で縮める）。
+ // 元パネルの高さやzoomには依存させない。
+ if(kind==='explorer'||kind==='panel-viewer')desired.height=explorerHeight;
  const width=Math.min(desired.width,Math.max(1,area.width-margin*2)),height=Math.min(desired.height,Math.max(1,area.height-margin*2));
  return {x:Math.max(area.x+margin,Math.min(desired.x,area.x+area.width-width-margin)),y:Math.max(area.y+margin,Math.min(desired.y,area.y+area.height-height-margin)),width,height};
 }

@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ迷路3D'});
 // ナビ調査中の待ち時間の表示「迷路」。暗い3D空間で、迷路ができていく過程を見せる（派手にしない、落ち着いた暗い色）。
 // 壁は下（地面の下）から生えてくる。通路を掘るときは壁が揺れて砕け、破片が飛び散って落ちる。ブロックの間に隙間は置かない。
 // 流れ：①生成アルゴリズム（深さ優先・Prim・Kruskal・Wilson・ハントアンドキル＝壁の塊から通路を掘る／再帰分割・壁伸ばし法＝何もない広場へ壁を作る、からランダム）で迷路ができていく
@@ -15,7 +16,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import {ref, onMounted, onBeforeUnmount} from 'vue';
 import * as THREE from 'three';
 import {navigationKeyActive, bindNavigationKeys} from './ナビ入力.js';
-import {MAZE_ALGORITHMS, MAZE_SOLVERS, buildMaze, solveMaze, verifyRoute, initialGrid, mazeSize, blockOf} from './ナビ迷路.js';
+import {MAZE_ALGORITHMS, MAZE_SOLVERS, ナビ迷路3Dを生成, solveMaze, verifyRoute, initialGrid, mazeSize, blockOf} from './ナビ迷路3D.js';
 const emit = defineEmits(['unsupported']);
 const stage = ref(), canvas = ref();
 const labelBuild = ref(''), labelSolve = ref(''), labelCheck = ref(''), ready = ref(false);
@@ -43,7 +44,7 @@ onMounted(() => {
   const el = stage.value, reduced = false;
   renderer.setClearColor(0x04060c, 1);
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;   // 壁が通路へ落とす影で立体感を出す
-  const scene = new THREE.Scene();
+  const scene = new THREE.Scene();scene.name='ナビ迷路3D';
   scene.fog = new THREE.FogExp2(0x04060c, .014);
   const camera = new THREE.PerspectiveCamera(52, 1, .3, 400);
   const disposables = [], track = item => { disposables.push(item); return item; };
@@ -165,7 +166,7 @@ onMounted(() => {
     active.clear(); applied = 0; lastHead = ''; progressRevision++; renderedRevision = -1; lastProgressAt = performance.now();
     algorithm = pickDifferent(MAZE_ALGORITHMS, lastAlgorithm); lastAlgorithm = algorithm.id;
     const cells = 8 + Math.floor(Math.random() * (MAX_CELLS - 7));
-    maze = buildMaze(cells, algorithm.id); M = mazeSize(cells);
+    maze = ナビ迷路3Dを生成(cells, algorithm.id); M = mazeSize(cells);
     // 入口と出口は、向かい合う角のセル
     const flipX = Math.random() < .5, flipY = Math.random() < .5;
     start = blockOf(cells, flipX ? cells - 1 : 0, flipY ? cells - 1 : 0); goal = blockOf(cells, flipX ? 0 : cells - 1, flipY ? 0 : cells - 1);
@@ -289,7 +290,7 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-maze" tabindex="0" role="img" aria-label="ナビ調査中の表示。暗い3D空間で迷路ができる過程と、その迷路を解く経過、答え合わせを見せ、2秒後に次の迷路へ進みます。ドラッグで回転、ホイールで拡大縮小、Spaceで次の迷路へ進みます。">
+  <div ref="stage" data-scene="ナビ迷路3D" class="ナビ迷路3D" tabindex="0" role="img" aria-label="ナビ迷路3D。ナビ調査中の表示。暗い3D空間で迷路ができる過程と、その迷路を解く経過、答え合わせを見せ、2秒後に次の迷路へ進みます。ドラッグで回転、ホイールで拡大縮小、Spaceで次の迷路へ進みます。">
     <canvas ref="canvas" aria-hidden="true"></canvas>
     <div v-if="ready" class="navigation-maze-labels" aria-hidden="true">
       <span>{{ labelBuild }}</span><span v-if="labelSolve">{{ labelSolve }}</span><span v-if="labelCheck" class="navigation-maze-check">{{ labelCheck }}</span>
@@ -298,9 +299,9 @@ onBeforeUnmount(() => cleanup());
   </div>
 </template>
 <style>
-.navigation-maze{position:absolute;inset:0;overflow:hidden;background:#04060c;outline:none;touch-action:none;cursor:grab}
-.navigation-maze canvas{display:block;width:100%;height:100%}
-.navigation-maze:focus-visible{box-shadow:inset 0 0 0 2px #3f5f7a}
+.ナビ迷路3D{position:absolute;inset:0;overflow:hidden;background:#04060c;outline:none;touch-action:none;cursor:grab}
+.ナビ迷路3D canvas{display:block;width:100%;height:100%}
+.ナビ迷路3D:focus-visible{box-shadow:inset 0 0 0 2px #3f5f7a}
 .navigation-maze-labels{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;gap:3px;font:11px/1.35 ui-monospace,"Cascadia Mono",Consolas,monospace;color:#93abc6;pointer-events:none;text-shadow:0 0 4px #000}
 .navigation-maze-check{color:#a8c4d8}
 .navigation-maze-hint{position:absolute;left:0;right:0;bottom:5px;text-align:center;color:#56708a;font-size:10px;pointer-events:none}

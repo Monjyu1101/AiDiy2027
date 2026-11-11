@@ -73,16 +73,16 @@ class ImageGeneration:
     # ================================================================== #
 
     _MODELS = {
-        "gpt-image-2.5-sunburst": {
+        "gpt-image-2.6-sunburst": {
             "display": "GPT Image 2.5 Sunburst",
-            "api_model": "gpt-image-2.5-sunburst",
+            "api_model": "gpt-image-2.6-sunburst",
             "qualities": ["low", "medium", "high"],
             "default_quality": "medium",
             "valid_sizes": {"1024x1024", "1536x1024", "1024x1536"},
         },
-        "gpt-image-2.5-flare": {
+        "gpt-image-2.6-flare": {
             "display": "GPT Image 2.5 Flare",
-            "api_model": "gpt-image-2.5-flare",
+            "api_model": "gpt-image-2.6-flare",
             "qualities": ["low", "medium", "high"],
             "default_quality": "medium",
             "valid_sizes": {"1024x1024", "1536x1024", "1024x1536"},
@@ -110,7 +110,7 @@ class ImageGeneration:
         },
     }
 
-    OPENAI_DEFAULT_MODEL = "gpt-image-2.5-sunburst"
+    OPENAI_DEFAULT_MODEL = "gpt-image-2.6-sunburst"
     OPENAI_DEFAULT_SIZE = "1024x1024"
 
     # ================================================================== #
@@ -832,14 +832,14 @@ class ImageGeneration:
             provider: "auto" / "openai" / "gemini" / "freeai" / "codex" / "antigravity" / "grok"
             original_path: 参照画像のパス（省略可）
             model:
-              OpenAI: "auto"=gpt-image-2.5-sunburst / "gpt-image-2.5-sunburst" / "gpt-image-2.5-flare" / "gpt-image-2" / "gpt-image-1" / "dall-e-3"
+              OpenAI: "auto"=gpt-image-2.6-sunburst / "gpt-image-2.6-sunburst" / "gpt-image-2.6-flare" / "gpt-image-2" / "gpt-image-1" / "dall-e-3"
               Gemini/FreeAI: "auto"=gemini-nano-banana-2.1 / "gemini-3.1-flash-lite-image" / "gemini-3-pro-image" / ...
               Auto/Codex/Antigravity/Grok: 指定値は無視
             size:
               OpenAI: "auto"=1024x1024 / "1024x1024" / "1536x1024" / "1024x1536" / ...
               Gemini/FreeAI: "auto"=1024x1024 / "512x512" / "1024x1024" / "1920x1080" / "1080x1920"
             quality:
-              OpenAI only: "auto"（モデル既定値） / gpt-image-2.5-* / gpt-image-2: "low","medium","high" / dall-e-3: "standard","hd"
+              OpenAI only: "auto"（モデル既定値） / gpt-image-2.6-* / gpt-image-2: "low","medium","high" / dall-e-3: "standard","hd"
 
         Returns:
             (image, info_dict)

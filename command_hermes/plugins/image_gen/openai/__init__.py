@@ -1,14 +1,14 @@
 """OpenAI image generation backend.
 
-Exposes OpenAI's ``gpt-image-2.5-sunburst`` (precision / editing, default) and
-``gpt-image-2.5-flare`` (fast, everyday) models, each at three quality tiers,
+Exposes OpenAI's ``gpt-image-2.6-sunburst`` (precision / editing, default) and
+``gpt-image-2.6-flare`` (fast, everyday) models, each at three quality tiers,
 as an :class:`ImageGenProvider` implementation. The tiers are implemented as
 virtual model IDs so the ``hermes tools`` model picker and the
 ``image_gen.model`` config key behave like any other multi-model backend:
 
-    gpt-image-2.5-{sunburst,flare}-low     fastest, good for iteration
-    gpt-image-2.5-{sunburst,flare}-medium  default tier — balanced
-    gpt-image-2.5-{sunburst,flare}-high    slowest, highest fidelity
+    gpt-image-2.6-{sunburst,flare}-low     fastest, good for iteration
+    gpt-image-2.6-{sunburst,flare}-medium  default tier — balanced
+    gpt-image-2.6-{sunburst,flare}-high    slowest, highest fidelity
 
 Each ID hits its underlying API model (``api_model``) with a
 different ``quality`` parameter. Output is base64 JSON → saved under
@@ -19,7 +19,7 @@ Selection precedence (first hit wins):
 1. ``OPENAI_IMAGE_MODEL`` env var (escape hatch for scripts / tests)
 2. ``image_gen.openai.model`` in ``config.yaml``
 3. ``image_gen.model`` in ``config.yaml`` (when it's one of our tier IDs)
-4. :data:`DEFAULT_MODEL` — ``gpt-image-2.5-sunburst-medium``
+4. :data:`DEFAULT_MODEL` — ``gpt-image-2.6-sunburst-medium``
 """
 
 from __future__ import annotations
@@ -52,47 +52,47 @@ logger = logging.getLogger(__name__)
 # ``quality`` is the knob that changes generation time and output fidelity.
 
 # Fallback only; each catalog entry carries its own ``api_model``.
-API_MODEL = "gpt-image-2.5-sunburst"
+API_MODEL = "gpt-image-2.6-sunburst"
 
 _MODELS: Dict[str, Dict[str, Any]] = {
-    "gpt-image-2.5-sunburst-low": {
+    "gpt-image-2.6-sunburst-low": {
         "display": "GPT Image 2.5 Sunburst (Low)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "~15s",
         "strengths": "Sunburst: editing precision; fast iteration, lowest cost",
         "quality": "low",
     },
-    "gpt-image-2.5-sunburst-medium": {
+    "gpt-image-2.6-sunburst-medium": {
         "display": "GPT Image 2.5 Sunburst (Medium)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "moderate",
         "strengths": "Sunburst: editing precision; balanced — default",
         "quality": "medium",
     },
-    "gpt-image-2.5-sunburst-high": {
+    "gpt-image-2.6-sunburst-high": {
         "display": "GPT Image 2.5 Sunburst (High)",
-        "api_model": "gpt-image-2.5-sunburst",
+        "api_model": "gpt-image-2.6-sunburst",
         "speed": "slow",
         "strengths": "Sunburst: editing precision; highest fidelity, strongest prompt adherence",
         "quality": "high",
     },
-    "gpt-image-2.5-flare-low": {
+    "gpt-image-2.6-flare-low": {
         "display": "GPT Image 2.5 Flare (Low)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "~15s",
         "strengths": "Flare: fastest family; fast iteration, lowest cost",
         "quality": "low",
     },
-    "gpt-image-2.5-flare-medium": {
+    "gpt-image-2.6-flare-medium": {
         "display": "GPT Image 2.5 Flare (Medium)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "moderate",
         "strengths": "Flare: fastest family; balanced",
         "quality": "medium",
     },
-    "gpt-image-2.5-flare-high": {
+    "gpt-image-2.6-flare-high": {
         "display": "GPT Image 2.5 Flare (High)",
-        "api_model": "gpt-image-2.5-flare",
+        "api_model": "gpt-image-2.6-flare",
         "speed": "slow",
         "strengths": "Flare: fastest family; highest fidelity, strongest prompt adherence",
         "quality": "high",
@@ -102,12 +102,12 @@ _MODELS: Dict[str, Dict[str, Any]] = {
 # Legacy tier IDs (pre-2.5) still resolve so existing config.yaml / env values
 # keep working; they are not offered in the model picker.
 _LEGACY_ALIASES: Dict[str, str] = {
-    "gpt-image-2-low": "gpt-image-2.5-sunburst-low",
-    "gpt-image-2-medium": "gpt-image-2.5-sunburst-medium",
-    "gpt-image-2-high": "gpt-image-2.5-sunburst-high",
+    "gpt-image-2-low": "gpt-image-2.6-sunburst-low",
+    "gpt-image-2-medium": "gpt-image-2.6-sunburst-medium",
+    "gpt-image-2-high": "gpt-image-2.6-sunburst-high",
 }
 
-DEFAULT_MODEL = "gpt-image-2.5-sunburst-medium"
+DEFAULT_MODEL = "gpt-image-2.6-sunburst-medium"
 
 _SIZES = {
     "landscape": "1536x1024",
@@ -200,7 +200,7 @@ def _load_image_bytes(ref: str) -> Tuple[bytes, str]:
 
 
 class OpenAIImageGenProvider(ImageGenProvider):
-    """OpenAI ``images.generate`` / ``images.edit`` backend — gpt-image-2.5 (sunburst / flare)."""
+    """OpenAI ``images.generate`` / ``images.edit`` backend — gpt-image-2.6 (sunburst / flare)."""
 
     @property
     def name(self) -> str:
@@ -238,7 +238,7 @@ class OpenAIImageGenProvider(ImageGenProvider):
         return {
             "name": "OpenAI",
             "badge": "paid",
-            "tag": "gpt-image-2.5 (sunburst / flare) at low/medium/high quality tiers — text-to-image & image editing",
+            "tag": "gpt-image-2.6 (sunburst / flare) at low/medium/high quality tiers — text-to-image & image editing",
             "env_vars": [
                 {
                     "key": "OPENAI_API_KEY",
@@ -249,7 +249,7 @@ class OpenAIImageGenProvider(ImageGenProvider):
         }
 
     def capabilities(self) -> Dict[str, Any]:
-        # gpt-image-2.5 supports editing via images.edit() with up to 16 source
+        # gpt-image-2.6 supports editing via images.edit() with up to 16 source
         # images.
         return {"modalities": ["text", "image"], "max_reference_images": 16}
 
@@ -305,7 +305,7 @@ class OpenAIImageGenProvider(ImageGenProvider):
             sources.append(image_url.strip())
         for ref in (normalize_reference_images(reference_image_urls) or []):
             sources.append(ref)
-        sources = sources[:16]  # gpt-image-2.5 edit caps at 16 images
+        sources = sources[:16]  # gpt-image-2.6 edit caps at 16 images
         is_edit = bool(sources)
         modality = "image" if is_edit else "text"
 
@@ -353,7 +353,7 @@ class OpenAIImageGenProvider(ImageGenProvider):
                     aspect_ratio=aspect,
                 )
         else:
-            # gpt-image-2.5 returns b64_json unconditionally and REJECTS
+            # gpt-image-2.6 returns b64_json unconditionally and REJECTS
             # ``response_format`` as an unknown parameter. Don't send it.
             payload: Dict[str, Any] = {
                 "model": meta.get("api_model", API_MODEL),
@@ -406,7 +406,7 @@ class OpenAIImageGenProvider(ImageGenProvider):
                 )
             image_ref = str(saved_path)
         elif url:
-            # Defensive — gpt-image-2.5 returns b64 today, but OpenAI's API
+            # Defensive — gpt-image-2.6 returns b64 today, but OpenAI's API
             # has previously returned URLs.  Cache the bytes locally so the
             # gateway never tries to fetch an ephemeral / signed URL after
             # it expires — same rationale as the xAI provider (#26942).

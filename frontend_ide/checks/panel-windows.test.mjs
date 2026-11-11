@@ -175,7 +175,10 @@ test('Viewerパネル: 負座標の実画面内へ収め、DPI倍率を二重適
   const owner={window:{getContentBounds:()=>({x:-1500,y:220}),webContents:{getZoomFactor:()=>zoom}}};
   const result=panelBounds({left:1400,top:800,width:420,height:360},owner,{getDisplayMatching:()=>({workArea:screens[0]})},'panel-viewer');
   assert.ok(result.x>=-1600&&result.x+result.width<=-100);assert.ok(result.y>=200&&result.y+result.height<=1060);
-  assert.equal(result.width,420*zoom);assert.equal(result.height,360*zoom);
+  assert.equal(result.width,420*zoom);
+  // 高さは元パネルやzoomによらず900 DIP。高さ860の作業領域では余白16を引いた844へ縮む。
+  assert.equal(result.height,844);
+  assert.equal(panelBounds({left:1400,top:100,width:420,height:360},owner,{getDisplayMatching:()=>({workArea:{x:-1600,y:0,width:1500,height:1400}})},'panel-viewer').height,900);
  }
 });
 

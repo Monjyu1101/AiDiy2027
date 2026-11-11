@@ -33,11 +33,11 @@ a.selection.value={provider:'codex_cli',model:'gpt-6.1-sol'};a.toolsState.value=
 a.result.value=state==='input'?null:${JSON.stringify(result)};
 a.job.value=state==='running'?{id:'display-only',status:'running',action:'navigate'}:null;
 a.history.value=state==='history';a.historyItems.value=state==='history'?[{id:'saved-example',goal:a.result.value.goal,updatedAt:a.result.value.checkedAt}]:[];
-a.cruiseKind.value='clock';if(state==='cancelled')a.autopilotMessage.show('処理を中止しました。');
+a.待機画面名.value='clock';if(state==='cancelled')a.autopilotMessage.show('処理を中止しました。');
 await nextTick();for(const d of document.querySelectorAll('details'))d.open=state==='expanded';
 };`,'utf8');
 process.env.CI='1';
-await build({root:temp,configFile:false,logLevel:'error',plugins:[{name:'guide-display-only',enforce:'pre',transform(code,id){if(id.split('?')[0].replaceAll('\\','/')===panel.replaceAll('\\','/')&&!id.includes('?'))return code.replace('</script>','window.guideApi={visible,goal,availability,selection,toolsState,result,job,history,historyItems,cruiseKind,autopilotMessage,error};\n</script>');}},vue()],resolve:{alias:{vue:join(ide,'node_modules/vue/dist/vue.runtime.esm-bundler.js')}},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:true,__VUE_PROD_DEVTOOLS__:false,__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:false},build:{outDir:join(temp,'dist'),emptyOutDir:true,minify:false,cssCodeSplit:false,lib:{entry,name:'Guide',formats:['iife'],fileName:()=> 'guide.js',cssFileName:'guide'}}});
+await build({root:temp,configFile:false,logLevel:'error',plugins:[{name:'guide-display-only',enforce:'pre',transform(code,id){if(id.split('?')[0].replaceAll('\\','/')===panel.replaceAll('\\','/')&&!id.includes('?'))return code.replace('</script>','window.guideApi={visible,goal,availability,selection,toolsState,result,job,history,historyItems,待機画面名,autopilotMessage,error};\n</script>');}},vue()],resolve:{alias:{vue:join(ide,'node_modules/vue/dist/vue.runtime.esm-bundler.js')}},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:true,__VUE_PROD_DEVTOOLS__:false,__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:false},build:{outDir:join(temp,'dist'),emptyOutDir:true,minify:false,cssCodeSplit:false,lib:{entry,name:'Guide',formats:['iife'],fileName:()=> 'guide.js',cssFileName:'guide'}}});
 const runtime=join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules');
 const {chromium}=await import(pathToFileURL(join(runtime,'playwright-core/index.mjs')));
 const browser=await chromium.launch({executablePath:join(process.env.PROGRAMFILES,'Google/Chrome/Application/chrome.exe'),headless:true});

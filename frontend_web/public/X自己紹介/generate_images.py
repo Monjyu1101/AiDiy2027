@@ -186,7 +186,7 @@ def generate_image(task: dict) -> bool:
     print(f"  生成中: {task['out']} ({task['size']}) ...", flush=True)
     try:
         response = client.images.generate(
-            model="gpt-image-2.5-sunburst",
+            model="gpt-image-2.6-sunburst",
             prompt=task["prompt"],
             size=task["size"],
             quality="medium",

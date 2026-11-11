@@ -16,11 +16,11 @@ function fixture(){
  const windows=new Map(),owner={kind:'ide',revision:0,pending:new Map()},state={active:true,mode:'online',startedAt:1,project:{path:'/project'}},written=[];
  let saved=snapshot(),manager,gate,avatar=false,captured=renderer(),restored={panels:[]},opening,readError,avatarCapture={windows:[{role:'core',bounds:rect}]},vr=false;
  const screen={getAllDisplays:()=>[{workArea:{x:0,y:0,width:1920,height:1080}}],getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1080}}),getCursorScreenPoint:()=>({x:100,y:100})};
- function window(record,rectangle=initial){const win=new EventEmitter();Object.assign(win,{rectangle:{...rectangle},isDestroyed:()=>!!win.dead,getBounds:()=>({...win.rectangle}),getNormalBounds:()=>({...win.rectangle}),isMaximized:()=>!!win.maximized,isMinimized:()=>false,unmaximize(){win.maximized=false;},maximize(){win.maximized=true;},setBounds(value){win.rectangle={...value};},destroy(){win.dead=true;windows.delete(win.webContents);win.emit('closed');},webContents:{send(channel,value){if(channel==='development:layout-request')queueMicrotask(()=>manager.reply({record:owner},{requestId:value.requestId,ok:true,result:value.action==='capture'?captured:restored}));}}});record.window=win;windows.set(win.webContents,record);return record;}
+ function window(record,rectangle=initial){const win=new EventEmitter();Object.assign(win,{rectangle:{...rectangle},isDestroyed:()=>!!win.dead,getBounds:()=>({...win.rectangle}),getNormalBounds:()=>({...win.rectangle}),isMaximized:()=>!!win.maximized,isMinimized:()=>false,unmaximize(){win.maximized=false;},maximize(){win.maximized=true;},setBounds(value){win.rectangle={...value};(win.moves||=[]).push({...value,count:windows.size});},destroy(){win.dead=true;windows.delete(win.webContents);win.emit('closed');},webContents:{send(channel,value){if(channel==='development:layout-request')queueMicrotask(()=>manager.reply({record:owner},{requestId:value.requestId,ok:true,result:value.action==='capture'?captured:restored}));}}});record.window=win;windows.set(win.webContents,record);return record;}
  window(owner);const add=(kind='code',more={})=>window({kind,owner,linkKey:'online:1',...more});
  manager=createLayoutManager({windows,screen,trustedEvent:event=>event.record,readState:async()=>structuredClone(state),sessionKey:s=>s.active?s.mode+':'+s.startedAt:'',allDisplays:{isActive:()=>vr},avatarLauncher:{active:()=>avatar,capture:async()=>avatarCapture,restore:async()=>({ok:true})},
  read:()=>{if(readError)throw readError;return structuredClone(saved);},write:(_project,value,guard)=>{guard();written.push(value);saved=structuredClone(value);},
- openNative:async(_event,panels)=>{opening=(opening||0)+1;if(gate)await gate;return panels.map(p=>add(p.kind,p.kind==='task'?{taskView:p.view}:{}));},timeout:100});
+ openNative:async(_event,panels)=>{opening=(opening||0)+1;if(gate)await gate;return panels.map(p=>add(p.kind,p.kind==='task'?{taskView:p.view}:{}));},timeout:100,stepDelay:0,moveDuration:0,browserURL:record=>record.url});
  return{manager,owner,state,windows,screen,add,fill:()=>[add(),add(),add()],written,run:action=>manager.handle({record:owner},action),save:value=>saved=value,gate:value=>gate=value,get opening(){return opening||0;},avatar:value=>avatar=value,capture:value=>captured=value,restore:value=>restored=value,readError:value=>readError=value,avatarCapture:value=>avatarCapture=value,vr:value=>vr=value};
 }
 test('screen coverage accepts negative/adjacent monitors and rejects removed screens, clipped bounds and gaps',()=>{
@@ -103,4 +103,42 @@ test('Load uses the exact existing initial IDE placement when its saved display 
  const f=fixture(),value=snapshot();value.ide={bounds:{x:-1800,y:50,width:1000,height:800},maximized:true};f.save(value);
  const expected=windowBounds('ide',f.screen.getDisplayNearestPoint(f.screen.getCursorScreenPoint()).workArea);
  assert.equal((await f.run('load')).ok,true);assert.deepEqual(f.owner.window.getBounds(),expected);assert.equal(f.owner.window.isMaximized(),false);
+});
+test('Load opens panels in the + menu order and moves them only after every panel is open',async()=>{
+ const f=fixture(),far={x:900,y:300,width:800,height:500};
+ f.save({...snapshot(),panels:[{kind:'cpu',bounds:rect,maximized:false},{kind:'code',bounds:far,maximized:false},{kind:'viewer',path:'a.txt',bounds:rect,maximized:false},{kind:'browser',bounds:rect,maximized:false},{kind:'console',bounds:rect,maximized:false}]});
+ assert.equal((await f.run('load')).ok,true);
+ const children=[...f.windows.values()].filter(record=>record.owner===f.owner);
+ assert.deepEqual(children.map(record=>record.kind),['viewer','console','browser','code','cpu']);
+ for(const child of children)assert.ok(child.window.moves.every(move=>move.count===f.windows.size),child.kind);
+ assert.deepEqual(children.find(record=>record.kind==='code').window.getBounds(),far);
+ assert.deepEqual(children.find(record=>record.kind==='cpu').window.getBounds(),rect);
+});
+test('Load moves position and size together in 20 steps, so farther windows take larger steps',async()=>{
+ const f=fixture(),far={x:860,y:270,width:880,height:750};
+ f.save({...snapshot(),ide:{bounds:far,maximized:false},panels:[{kind:'code',bounds:far,maximized:false},{kind:'console',bounds:{...initial,x:initial.x+40},maximized:false}]});
+ assert.equal((await f.run('load')).ok,true);
+ const moves=kind=>[...f.windows.values()].find(record=>record.kind===kind).window.moves;
+ for(const kind of ['ide','code']){
+  const list=moves(kind);assert.equal(list.length,20,kind);
+  assert.deepEqual({x:list[0].x,y:list[0].y,width:list[0].width,height:list[0].height},{x:100,y:80,width:500,height:655});
+  assert.deepEqual({...list[19],count:undefined},{...far,count:undefined});
+ }
+ const near=moves('console');assert.equal(near.length,20);assert.equal(near[0].x-initial.x,2);assert.equal(moves('code')[0].x-initial.x,40);
+});
+test('Save writes panels in the order Load opens them, keeping same-kind panels in opened order',async()=>{
+ const f=fixture();
+ f.add('cpu');f.add('viewer',{viewerPath:'b.txt'});f.add('code');f.add('panel-navigation',{name:'navi-1'});f.add('viewer',{viewerPath:'a.txt'});f.add('console');f.add('explorer',{name:'explorer-1'});
+ assert.equal((await f.run('save')).ok,true);
+ assert.deepEqual(f.written[0].panels.map(panel=>panel.kind),['explorer','viewer','viewer','console','panel-navigation','code','cpu']);
+ assert.deepEqual(f.written[0].panels.filter(panel=>panel.kind==='viewer').map(panel=>panel.path),['b.txt','a.txt']);
+});
+test('Save keeps the Browser URL and the Navi Code switch, and Load passes the URL back to the Browser',async()=>{
+ const f=fixture();f.add('browser',{url:'http://127.0.0.1:8090/page?x=1'});f.add('browser',{url:'about:blank'});f.add('code',{url:'http://sensitive.invalid'});
+ f.capture({version:1,viewMode:'3d',navigation:[{name:'navi-a',code:true},{name:'navi-b',code:false,goal:'secret'}],space:{explorer:{},viewers:[]}});
+ assert.equal((await f.run('save')).ok,true);
+ assert.deepEqual(f.written[0].panels.map(panel=>[panel.kind,panel.url]),[['browser','http://127.0.0.1:8090/page?x=1'],['browser',undefined],['code',undefined]]);
+ assert.deepEqual(f.written[0].renderer.navigation,[{name:'navi-a',code:true},{name:'navi-b'}]);
+ assert.deepEqual(validate(f.written[0]),f.written[0]);
+ assert.throws(()=>validate({...snapshot(),panels:[{kind:'browser',bounds:rect,url:5}]}));
 });

@@ -343,7 +343,17 @@ Avatar から移設した独立版を `aidiy_task` / `aidiy_team` で起動で�
 
 ### Naviの羽衣ライディング
 
-待機画面の「羽衣ライディング」は `src/components/開発スペース/ナビ羽衣ライディング.vue` です。「ナビ」「再評価」の右クリックメニューから選べます。撮影補助・選択処理のキーは従来どおり `ride` を使います。Codeへの実行指示を繰り返す「自動航行（Navi Cruise）」とは別の待機演出です。
+待機画面の「ナビ羽衣ライディング3D」は `src/components/開発スペース/ナビ羽衣ライディング3D.vue` です。「ナビ」「再評価」の右クリックメニューから選べます。撮影補助・選択処理も同じ正式名 `ナビ羽衣ライディング3D` を使います。Codeへの実行指示を繰り返す「自動航行（Navi Cruise）」とは別の待機演出です。
+
+待機画面は選択値・Vue名・登録キー・ファイル名・DOM識別名・Three.jsのシーン名を、同じ `ナビ〇〇2D` / `ナビ〇〇3D` に統一しています。`ナビ待機画面一覧.js` に同名のVueオブジェクトを登録し、`Naviパネル.vue` は選択値で直接参照します。右クリックメニューの項目表示では共通接頭辞「ナビ」だけを省略し、選択値は正式名のまま渡します。英語キーとの変換表はありません。状態・描画を分離する補助モジュールも正式名に `状態` / `描画` を付けます。「ナビ」「再評価」の右クリックメニューは3D（羽衣ライディング・花火・アクアリウム・水面波紋・迷路・依頼文・夜間飛行）と2D（万華鏡・時計）のグループに分かれ、2Dを上、3Dを下に表示します。夜間飛行3Dだけは手動選択専用です。
+
+`ナビアクアリウム3D.vue` は立体の魚・水草・砂底・流木・水中光を描きます。クリックで水面から餌を落とし、ポインターから気泡が上がります。魚はポインターを避け、食後15秒は餌を追いません。`ナビ水面波紋3D.vue` は水面そのものの上下動と反射光を描き、ポインター・クリック・Spaceで波紋を追加します。アクアリウム2Dと旧 `ナビ風景.vue` は削除済みです。WebGL非対応時は既存の開始表示へ戻します。
+
+`ナビ万華鏡2D.vue` は動く色ガラスを鏡面ごとに反転して描き、形・配色・鏡面数の違う6種類の模様を滑らかに切り替えます。変化の幅は保ち、動きは従来の1/3の速さです（自動切替は約27秒ごと、移行は約6.6秒）。ポインターでガラスの位置を動かすと、拡大せず鏡像全体が組み替わります。クリック／Spaceで次の模様へ進みます。
+
+状態・選択の確認は `node --test checks/navigation-aquarium3d.test.mjs checks/navigation-kaleidoscope.test.mjs checks/navigation-scenery.test.mjs checks/navigation-scene-picker.test.mjs`。画面撮影は `node scripts/check-navigation-aquarium3d.mjs`、`node scripts/check-navigation-water3d.mjs`、`node scripts/check-navigation-scenery.mjs`、`node scripts/check-navigation-scene-picker.mjs --scenery-only` を使います。画像はそれぞれ `temp/` の対応する `navigation-*-check/` に保存します。ブラウザーなしのコンパイル確認は `--compile-only` を指定します。配布物を確認するときは、明示的なビルド後に `node scripts/check-navigation-scene-picker.mjs --dist --scenery-only` でdist実体の全9画面と両メニューを検証します。
+
+
 
 ## BrowserのAI解析
 
@@ -384,9 +394,9 @@ CPUの値が他の表示と合わない場合は、問題のCPU画面とeyesを�
 
 ## IDEの配置をSave / Loadする（Electron・AiDiy接続利用）
 
-AiDiy接続利用中、保存された配置があり、IDE以外のパネルをまだ開いていない時だけ、＋メニューの左端に **Ld ↓（Load）** が表示されます。IDE以外のパネルを3つ以上開くと、右端へ **Sv ↑（Save）** が表示されます。1〜2パネルの時はどちらも表示しません。SaveはIDE自身と、そのIDEから開いているパネルの種類・表示位置・大きさをプロジェクト別に保存します。保存された配置がない時はLoadを表示しません。
+AiDiy接続利用中、保存された配置があり、IDE以外のパネルをまだ開いていない時だけ、＋メニューの左端に **Ld ↓（Load）** が表示されます。IDE以外のパネルを3つ以上開くと、右端へ **Sv ↑（Save）** が表示されます。1〜2パネルの時はどちらも表示しません。SaveはIDE自身と、そのIDEから開いているパネルの種類・表示位置・大きさをプロジェクト別に保存します。Browserは保存時に表示していたURL、NaviはCodeを開いていたかどうかも保存し、Loadで同じURL・同じ開閉状態に戻します（Naviの会話と自動航行は復元しません）。保存された配置がない時はLoadを表示しません。
 
-Loadはパネルをすべて閉じた状態で使用します。Console・Browser・Navi・Code・LiveまたはAvatar・Task・Team・CPU、別窓にしたExplorer・軌跡・Viewerを再度開き、保存した配置へ戻します。復元時の画面領域からはみ出す窓は、IDE自身も含めて通常の初期位置で表示します。外したモニターの座標を画面端へ押し込むことはしません。
+Loadはパネルをすべて閉じた状態で使用します。Console・Browser・Navi・Code・LiveまたはAvatar・Task・Team・CPU、別窓にしたExplorer・軌跡・Viewerを再度開き、保存した配置へ戻します。復元は、IDE自身を大きさを変えながら保存位置へ動かす → Explorer・軌跡を別窓へ分離 → 別窓にしていたViewerを保存時のファイルで開く → ＋メニューの項目順（Console・Browser・Navi・Code・Live / Avatar・Task・Team・CPU）に1つずつ開き終わるのを待つ → 開いた窓すべてを同時に、約3秒かけて20ステップで保存した位置と大きさへ動かす、の順に進みます。分割数が同じなので、遠い窓ほど速く動きます。復元時の画面領域からはみ出す窓は、IDE自身も含めて通常の初期位置で表示します。外したモニターの座標を画面端へ押し込むことはしません。
 
 - 保存先は選択プロジェクトの `_AIDIY/aidiy_ide/window-layout.json` です。専用フォルダの生成データとしてGit対象から除外します。
 - 会話・認証情報・Consoleの実行コマンド・Naviの自動航行は保存・再実行しません。Browserは通常の初期ページで開きます。Taskの編集中ダイアログ、解析・設定等の一時ダイアログは対象外です。

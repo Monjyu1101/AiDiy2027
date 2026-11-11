@@ -23,7 +23,7 @@ export const FLIGHT = Object.freeze({
 });
 
 /** 依頼文を、流す断片へ分ける。先に改行・句点（。！？；）で細かく区切り、長すぎる断片は読点（、，：）でも分け、それでも長ければ文字数で刻む。空なら「調査中…」だけ。 */
-export function requestSegments(text, maxLength = COMMENT_MAX_LENGTH) {
+export function ナビ依頼文3Dを分割(text, maxLength = COMMENT_MAX_LENGTH) {
   const result = [];
   // 断片の末尾の区切り（、。！？など）は表示しない。
   const push = piece => { const clean = piece.replace(/\s+/g, ' ').trim().replace(/[、。，,．.！？!?；;：:]+$/u, '').trim(); if (clean) result.push(clean); };
@@ -47,7 +47,7 @@ export function requestSegments(text, maxLength = COMMENT_MAX_LENGTH) {
 const between = (range, random) => range.min + random() * (range.max - range.min);
 
 /** コメントを1つ決める：{text, color, height, speed, x, y, z, vx}。遠く（z=-start）から、視点の左右をかすめて背後へ通り過ぎる。 */
-export function pickFlight(segments, random = Math.random) {
+export function ナビ依頼文3Dの飛行を作成(segments, random = Math.random) {
   let x = (random() * 2 - 1) * FLIGHT.x;
   if (Math.abs(x) < FLIGHT.clear) x = (x < 0 ? -1 : 1) * (FLIGHT.clear + random() * (FLIGHT.x - FLIGHT.clear) * .5);   // 真正面は避ける
   return {

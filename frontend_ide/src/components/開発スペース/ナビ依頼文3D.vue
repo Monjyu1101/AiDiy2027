@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+defineOptions({name:'ナビ依頼文3D'});
 // ナビ調査中の待ち時間の表示「依頼文」。作業中の依頼文（プロンプト案）を短い断片に分け、3D空間の遠くから視点（自分）へ迫り、
 // 左右をかすめて背後へ通り過ぎるコメントとして流す。視点はゆっくり揺れる。
 // 文字の大きさ・迫る速さ・文字色・位置・横への流れはコメントごとにランダム。文字は断片ごとに1度だけ絵（テクスチャ）にして、
@@ -11,7 +12,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import {ref, watch, onMounted, onBeforeUnmount} from 'vue';
 import * as THREE from 'three';
 import {bindNavigationKeys} from './ナビ入力.js';
-import {requestSegments, pickFlight, COMMENT_ALPHA, FLIGHT} from './ナビ依頼文.js';
+import {ナビ依頼文3Dを分割, ナビ依頼文3Dの飛行を作成, COMMENT_ALPHA, FLIGHT} from './ナビ依頼文3D.js';
 const props = defineProps({text: {type: String, default: ''}});
 const emit = defineEmits(['unsupported']);
 const stage = ref(), canvas = ref();
@@ -25,7 +26,7 @@ onMounted(() => {
   catch { emit('unsupported'); return; }
   const el = stage.value;
   renderer.setClearColor(BACKGROUND, 1);
-  const scene = new THREE.Scene();
+  const scene = new THREE.Scene();scene.name='ナビ依頼文3D';
   scene.fog = new THREE.Fog(BACKGROUND, 25, 150);   // 遠くのコメントは暗く、近づくほどはっきり見える
   const camera = new THREE.PerspectiveCamera(62, 1, .2, 300);
   const plane = new THREE.PlaneGeometry(1, 1);
@@ -43,16 +44,16 @@ onMounted(() => {
     const texture = new THREE.CanvasTexture(c); texture.generateMipmaps = false; texture.minFilter = THREE.LinearFilter; texture.colorSpace = THREE.SRGBColorSpace;
     item = {texture, aspect: width / height}; textures.set(text, item); return item;
   }
-  let segments = requestSegments(props.text);
+  let segments = ナビ依頼文3Dを分割(props.text);
   const prepare = () => { for (const text of segments.slice(0, 80)) textureOf(text); };   // 先に作っておき、表示中に引っかからないようにする
   prepare();
-  const stopWatch = watch(() => props.text, value => { segments = requestSegments(value); prepare(); });
+  const stopWatch = watch(() => props.text, value => { segments = ナビ依頼文3Dを分割(value); prepare(); });
 
   // コメント（板）。使い回して、作り直しを避ける。
   const pool = [], active = [];
   function spawn(farOffset = 0) {
     if (active.length >= MAX_COMMENTS) return;
-    const flight = pickFlight(segments), {texture, aspect} = textureOf(flight.text);
+    const flight = ナビ依頼文3Dの飛行を作成(segments), {texture, aspect} = textureOf(flight.text);
     let mesh = pool.pop();
     if (!mesh) { mesh = new THREE.Mesh(plane, new THREE.MeshBasicMaterial({transparent: true, depthWrite: false, opacity: COMMENT_ALPHA})); scene.add(mesh); }
     mesh.material.map = texture; mesh.material.color.set(flight.color); mesh.visible = true;
@@ -99,11 +100,11 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" class="navigation-request" role="img" aria-label="ナビ調査中の表示。作業中の依頼文が、大きさ・速さ・色をランダムに変えながら、遠くから自分へ迫って左右をかすめ、背後へ通り過ぎるように流れます。">
+  <div ref="stage" data-scene="ナビ依頼文3D" class="ナビ依頼文3D" role="img" aria-label="ナビ依頼文3D。ナビ調査中の表示。作業中の依頼文が、大きさ・速さ・色をランダムに変えながら、遠くから自分へ迫って左右をかすめ、背後へ通り過ぎるように流れます。">
     <canvas ref="canvas" aria-hidden="true"></canvas>
   </div>
 </template>
 <style>
-.navigation-request{position:absolute;inset:0;overflow:hidden;background:#05070c;outline:none}
-.navigation-request canvas{display:block;width:100%;height:100%}
+.ナビ依頼文3D{position:absolute;inset:0;overflow:hidden;background:#05070c;outline:none}
+.ナビ依頼文3D canvas{display:block;width:100%;height:100%}
 </style>

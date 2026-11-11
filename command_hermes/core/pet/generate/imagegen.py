@@ -6,7 +6,7 @@ doesn't expose: **N variants** (loop) and **reference-image grounding** (so each
 animation row stays the same character as the chosen base).
 
 Reference grounding only works on providers that support it — currently OpenAI
-``gpt-image-2.5`` (image edits) and Krea (style references). We resolve to one of
+``gpt-image-2.6`` (image edits) and Krea (style references). We resolve to one of
 those and surface a clear, actionable error otherwise rather than silently
 producing an ungrounded, drifting pet.
 """
@@ -122,7 +122,7 @@ def resolve_provider(*, require_references: bool = True, prefer: str | None = No
     raise GenerationError(
         "Pet generation needs an image backend that supports reference images. "
         "Open `hermes tools` → Image Generation and configure Nous Portal, "
-        "OpenRouter, or OpenAI (gpt-image-2.5) with an API key."
+        "OpenRouter, or OpenAI (gpt-image-2.6) with an API key."
     )
 
 
@@ -203,7 +203,7 @@ def generate(
     if reference_images and not sprite.supports_references:
         raise GenerationError(
             f"image backend '{sprite.name}' cannot use reference images; "
-            "configure OpenAI gpt-image-2.5 or Krea for pet generation"
+            "configure OpenAI gpt-image-2.6 or Krea for pet generation"
         )
 
     refs = [str(p) for p in (reference_images or [])]
@@ -212,7 +212,7 @@ def generate(
         kwargs: dict = {"aspect_ratio": aspect_ratio, **extra}
         if refs:
             # Providers disagree on the ref kwarg name: our OpenRouter/Nous
-            # backends read ``reference_images``, OpenAI's gpt-image-2.5 reads
+            # backends read ``reference_images``, OpenAI's gpt-image-2.6 reads
             # ``reference_image_urls``. Send both; each ignores the other.
             kwargs["reference_images"] = refs
             kwargs["reference_image_urls"] = refs

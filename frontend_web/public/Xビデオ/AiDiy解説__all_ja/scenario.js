@@ -304,7 +304,7 @@ window.SCENARIO = {
           "speaker": "male",
           "expression": "neutral",
           "telop_text": "画像生成パネルでは OpenAI・Gemini などのマルチベンダー AI で画像を生成できます。",
-          "naration_text": "AI コアには画像生成パネルも組み込まれています。OpenAI の gpt-image-2.5 や DALL-E 3、Google Gemini など、複数の画像生成 AI をプロバイダとして選択して利用できます。テキストプロンプトを入力するだけで対応する AI が画像を生成して表示してくれます。また AiDiy TOOL HUB の aidiy_image_generation MCP とも連携できるため、自動化パイプラインへの組み込みも可能です。",
+          "naration_text": "AI コアには画像生成パネルも組み込まれています。OpenAI の gpt-image-2.6 や DALL-E 3、Google Gemini など、複数の画像生成 AI をプロバイダとして選択して利用できます。テキストプロンプトを入力するだけで対応する AI が画像を生成して表示してくれます。また AiDiy TOOL HUB の aidiy_image_generation MCP とも連携できるため、自動化パイプラインへの組み込みも可能です。",
           "audio": "audio/dlg_004_04_male.mp3",
           "duration_sec": 23.976
         }

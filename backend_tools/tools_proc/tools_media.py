@@ -178,7 +178,7 @@ def register_image_gen_tools(mcp_ig, ig):
                       "freeai"（freeai_key_id が必要） / "openai" / "codex" / "antigravity" /
                       "grok"=grok→codex→antigravity→openai→freeai→gemini
             model:
-              OpenAI: "auto"=gpt-image-2.5-sunburst / "gpt-image-2.5-sunburst"（高精度） / "gpt-image-2.5-flare"（高速） / "gpt-image-2" / "gpt-image-1" / "dall-e-3"
+              OpenAI: "auto"=gpt-image-2.6-sunburst / "gpt-image-2.6-sunburst"（高精度） / "gpt-image-2.6-flare"（高速） / "gpt-image-2" / "gpt-image-1" / "dall-e-3"
               Gemini/FreeAI: "auto"=gemini-nano-banana-2.1 /
                              "gemini-nano-banana-2.1" / "gemini-3.1-flash-lite-image" /
                              "gemini-3-pro-image" / "gemini-3.1-flash-image-preview" /
@@ -188,7 +188,7 @@ def register_image_gen_tools(mcp_ig, ig):
               OpenAI: "auto"=1024x1024 / "1024x1024" / "1536x1024" / "1024x1536" / ...
               Gemini/FreeAI: "auto"=1024x1024 / "512x512" / "1024x1024" / "1920x1080" / "1080x1920"
             quality: OpenAI only — "auto"（モデル既定値） /
-                     gpt-image-2.5-* / gpt-image-2: "low" / "medium" / "high" /
+                     gpt-image-2.6-* / gpt-image-2: "low" / "medium" / "high" /
                      dall-e-3: "standard" / "hd"
             original_path: 参照画像のパス（省略可）
             save_path: 保存先。フォルダ指定なら yyyymmdd.hhmmss.png で保存。
@@ -437,7 +437,7 @@ def create_router(ig, mg, stt, tts) -> APIRouter:
                     "parameters": {
                         "prompt": {"type": "string", "required": True, "description": "生成プロンプト（例: 'かわいい猫の画像'）"},
                         "provider": {"type": "string", "required": False, "default": "auto", "values": ["auto", "openai", "gemini", "freeai", "codex", "antigravity", "grok"], "description": "画像生成プロバイダ。auto=AiDiy_tools.json（初期値codex→antigravity→openai→freeai→gemini）。codex=codex→antigravity→openai→freeai→gemini。openai=openai→freeai→gemini。freeai=freeai→gemini。gemini=gemini→openai。antigravity=antigravity→codex→freeai→gemini。grok=grok→codex→antigravity→openai→freeai→gemini"},
-                        "model": {"type": "string", "required": False, "default": "auto", "description": "OpenAI: gpt-image-2.5-sunburst（既定・高精度） / gpt-image-2.5-flare（高速） / gpt-image-2 / dall-e-3。Gemini/FreeAI: gemini-nano-banana-2.1（既定） / gemini-3.1-flash-lite-image / gemini-3-pro-image など。auto / codex / antigravity / grok では無視"},
+                        "model": {"type": "string", "required": False, "default": "auto", "description": "OpenAI: gpt-image-2.6-sunburst（既定・高精度） / gpt-image-2.6-flare（高速） / gpt-image-2 / dall-e-3。Gemini/FreeAI: gemini-nano-banana-2.1（既定） / gemini-3.1-flash-lite-image / gemini-3-pro-image など。auto / codex / antigravity / grok では無視"},
                         "size": {"type": "string", "required": False, "default": "auto", "description": "解像度。例: '1024x1024' / '1920x1080' / '1080x1920'"},
                         "quality": {"type": "string", "required": False, "default": "auto", "description": "OpenAI only: low / medium / high / standard / hd"},
                         "original_path": {"type": "string", "required": False, "description": "編集元画像の絶対パス（image-to-image 時）"},
