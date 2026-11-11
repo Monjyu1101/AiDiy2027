@@ -67,7 +67,7 @@ export function runInstallCommand({executable,args,cwd,env,signal,onData=noop,on
     const check=()=>{
       if(done||!parentClosed)return;
       if(treeGone()){finish(closeCode,processError);return;}
-      clearTimeout(treeTimer);treeTimer=setTimeout(check,100);
+      clearTimeout(treeTimer);treeTimer=setTimeout(check,1000);
     };
     const kill=force=>{
       if(!child?.pid)return;

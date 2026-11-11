@@ -461,3 +461,12 @@ test('同じ導入先でも、ロックの範囲が違えば並行取得でき�
   await first();await second();
   await (await acquireInstallLock(prefix,{directory,scope:'@openai/codex'}))();
 });
+
+test('残留子孫の定期確認は1秒周期、親close直後は即時に確認する',async t=>{
+  t.mock.timers.enable({apis:['setTimeout']});
+  const child=syntheticProcess();let alive=true,checks=0,resolved=false;
+  const promise=runInstallCommand({env:{},spawnFn:()=>child,isTreeRunning:()=>{checks++;return alive;}}).then(value=>{resolved=true;return value;});
+  child.emit('close',0);assert.equal(checks,1);assert.equal(resolved,false);
+  t.mock.timers.tick(999);assert.equal(checks,1);alive=false;
+  t.mock.timers.tick(1);assert.equal(checks,2);assert.equal((await promise).code,0);assert.equal(resolved,true);
+});

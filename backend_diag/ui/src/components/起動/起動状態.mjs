@@ -4,8 +4,9 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import {ref,computed,watch} from 'vue';
+import {受信間隔を作成} from './受信間隔.mjs';
 
-export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearTimeout}){
+export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearTimeout,now=()=>performance.now()}){
  const 項目=ref([]),選択=ref(''),読込中=ref(false),保存中=ref(false),処理中=ref(false),起動中=ref(false),通知=ref(''),保存表示=ref('');
  const 更新失敗=ref(false);
  const 一括進捗=ref(null),閉じた進捗=ref(''),自動起動完了=ref(null);
@@ -33,8 +34,29 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
  const ブラウザ起動中=ref(false),ブラウザ通知=ref('');
  const ブラウザ起動可能=computed(()=>!更新失敗.value&&['tools','web'].every(id=>ポート項目.value.some(item=>item.id===id&&item.開放===true)));
  const ログ=ref({}),位置=new Map();let visible=false,logsVisible=true,timer,controller,version=0,最後の起動表示='';
+ const 受信間隔=受信間隔を作成({now});let logTimer,logController,logVersion=0;
  const 選択対象=computed(()=>項目.value.find(item=>item.id===選択.value));
  const コンソール=computed(()=>ログ.value[選択.value]||'コンソールのログは、起動後にここへ表示されます。\n');
+ function ログ停止(){logVersion++;clearTimer(logTimer);logTimer=undefined;logController?.abort();logController=undefined;}
+ async function ログ更新(){
+  logTimer=undefined;
+  const id=選択.value;if(!visible||!logsVisible||!id||logController)return;
+  const revision=logVersion,operation=localRun;const request=new AbortController();logController=request;
+  // 初回表示からの猶予は対象ごと。空の成功応答や別の対象の受信では延長しない。
+  受信間隔.間隔(id);
+  try{
+   const tail=await api('api/起動/ログ','POST',request.signal,'json',{対象:id,位置:位置.get(id)||0});
+   if(revision!==logVersion||operation!==localRun)return;
+   if(tail.ログ||tail.切替){
+    const text=((tail.切替?'':ログ.value[id]||'')+(tail.ログ||'')).slice(-120000);
+    if(text!==ログ.value[id])ログ.value={...ログ.value,[id]:text};
+    if(tail.ログ)受信間隔.受信(id);
+   }
+   位置.set(id,tail.位置);
+  }catch(error){if(error.name!=='AbortError'&&revision===logVersion&&operation===localRun)通知.value=error.message;}
+  finally{if(revision===logVersion){logController=undefined;if(visible&&logsVisible)logTimer=setTimer(ログ更新,受信間隔.間隔(id));}}
+ }
+ function ログ開始(){if(visible&&logsVisible&&!更新失敗.value&&!logController&&logTimer===undefined)void ログ更新();}
  async function refresh(){
   if(!visible)return;const revision=version,operation=localRun;controller=new AbortController();
   try{
@@ -46,8 +68,10 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
    lastServerRun=incoming?.実行ID||'';
    const ports=await api('api/起動/ポート','GET',controller.signal);if(revision!==version||operation!==localRun)return;
    if(!Array.isArray(data?.対象))throw Error('サーバー状態を取得できませんでした。');
-   更新失敗.value=false;ポート項目.value=Array.isArray(ports?.対象)?ports.対象:[];
-   項目.value=data.対象.map(item=>保存中.value?{...item,設定:項目.value.find(old=>old.id===item.id)?.設定||item.設定}:item);
+   更新失敗.value=false;const nextPorts=Array.isArray(ports?.対象)?ports.対象:[];
+   if(JSON.stringify(nextPorts)!==JSON.stringify(ポート項目.value))ポート項目.value=nextPorts;
+   const nextItems=data.対象.map(item=>保存中.value?{...item,設定:項目.value.find(old=>old.id===item.id)?.設定||item.設定}:item);
+   if(JSON.stringify(nextItems)!==JSON.stringify(項目.value))項目.value=nextItems;
    起動中.value=data.実行中;一括停止中.value=Boolean(data.一括停止中);if(data.通知)通知.value=['done','cancelled'].includes(incoming?.状態)&&data.通知===incoming.通知?'':data.通知;
    // 起動・ポート取得が成功した現在の応答だけを使う。手動受付中や前回の完了は流用しない。
    // 完了直後に終了した場合も表示を奪わないよう、実際に起動した対象の現状を確認する。
@@ -59,14 +83,12 @@ export function 起動状態を作成({api,setTimer=setTimeout,clearTimer=clearT
     最後の起動表示=follow.実行ID;選択.value=follow.対象;
    }
    if(!選択.value&&項目.value.length)選択.value=項目.value[0].id;
-   const id=選択.value;if(id&&logsVisible){const tail=await api('api/起動/ログ','POST',controller.signal,'json',{対象:id,位置:位置.get(id)||0});if(revision!==version||operation!==localRun)return;
-    ログ.value={...ログ.value,[id]:((tail.切替?'':ログ.value[id]||'')+tail.ログ).slice(-120000)};位置.set(id,tail.位置);
-   }
-  }catch(error){if(error.name!=='AbortError'&&revision===version&&operation===localRun){通知.value=error.message;更新失敗.value=true;}}
-  finally{if(revision===version){読込中.value=false;controller=undefined;if(visible)timer=setTimer(refresh,logsVisible||一括進捗.value?.状態==='running'?800:5000);}}
+   ログ開始();
+  }catch(error){if(error.name!=='AbortError'&&revision===version&&operation===localRun){通知.value=error.message;更新失敗.value=true;ログ停止();}}
+  finally{if(revision===version){読込中.value=false;controller=undefined;if(visible)timer=setTimer(refresh,logsVisible||一括進捗.value?.状態==='running'?1000:5000);}}
  }
- function 表示(value,logs=true){if(!value){lifecycle++;pendingBatch=false;処理中.value=false;一括進捗.value=null;自動起動完了.value=null;ポート項目.value=[];}visible=value;logsVisible=logs;version++;clearTimer(timer);controller?.abort();if(value){読込中.value=!項目.value.length;void refresh();}}
- watch(選択,()=>{if(visible){version++;clearTimer(timer);controller?.abort();void refresh();}});
+ function 表示(value,logs=true){if(!value){lifecycle++;pendingBatch=false;処理中.value=false;一括進捗.value=null;自動起動完了.value=null;ポート項目.value=[];}visible=value;logsVisible=logs;version++;clearTimer(timer);controller?.abort();ログ停止();if(value){読込中.value=!項目.value.length;void refresh();}}
+ watch(選択,()=>{ログ停止();ログ開始();},{flush:'sync'});
  async function 設定変更(id,key,value){
   if(保存中.value)return;const item=項目.value.find(item=>item.id===id);if(!item)return;
   const old={...item.設定};item.設定={...old,[key]:value};保存中.value=true;保存表示.value='保存中…';

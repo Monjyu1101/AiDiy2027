@@ -24,6 +24,8 @@ TARGETS = [item for item in json.loads((ROOT / 'scripts/起動対象.json').read
            if item.get('起動管理', True)]
 # 実行ID・OSロックは永続診断結果と分け、リポジトリ直下の一時領域へ置く。
 RUNTIME = ROOT / 'temp/aidiy_diag/起動'
+# 管理監視は1秒単位。Event.wait により停止要求は周期を待たずに解除する。
+MANAGEMENT_INTERVAL = 1.0
 
 
 def load_module(name, path):
@@ -77,7 +79,7 @@ def service_lock(path, stopped):
                     fcntl.flock(stream, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 break
             except OSError:
-                if stopped.wait(.2) or time.monotonic() >= deadline:
+                if stopped.wait(MANAGEMENT_INTERVAL) or time.monotonic() >= deadline:
                     raise RuntimeError('前の起動処理を終了できませんでした。')
         try:
             yield
@@ -95,6 +97,7 @@ def pipe_output(process, console):
     decoder = codecs.getincrementaldecoder('utf-8')(errors='replace')
     # BufferedReader.read(size) は size 分たまるまで待つ。短い進捗・停止理由も
     # 子プロセスの終了を待たずに表示する。
+    # OS のブロッキング読取なので無出力時は起床しない。表示監視用の定期タイマーは不要。
     read = getattr(process.stdout, 'read1', process.stdout.read)
     try:
         while True:
@@ -105,6 +108,23 @@ def pipe_output(process, console):
         console.write(decoder.decode(b'', final=True))
     except (OSError, ValueError):
         pass
+
+
+def watch_revision(revision, run_id, stopped):
+    """実行IDの置換は最大1周期後に検知する。制御入力による停止は待機を即時解除。"""
+    while not stopped.wait(MANAGEMENT_INTERVAL):
+        try:
+            if run_id and json.loads(revision.read_text(encoding='utf-8')).get('run') != run_id:
+                stopped.set()
+        except (OSError, ValueError, AttributeError):
+            stopped.set()
+
+
+def wait_for_exit(process, stopped):
+    """出力読取とは独立した終了・自動再起動監視。停止イベントは即時に返す。"""
+    while not stopped.is_set() and process.poll() is None:
+        if stopped.wait(MANAGEMENT_INTERVAL):
+            break
 
 
 def terminate(process):
@@ -220,7 +240,7 @@ def wait_for_web(process, port, stopped, *, seconds=20, max_wait=90):
             stable_since = None
         if now >= deadline:
             raise RuntimeError('Web の HTTP 応答が安定しないため、画面を開かず起動を中止しました。')
-        stopped.wait(.5)
+        stopped.wait(MANAGEMENT_INTERVAL)
     return False
 
 
@@ -269,17 +289,9 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
         finally:
             stopped.set()  # Diag 終了・接続喪失でも起動したプロセスを回収する。
 
-    def watch_revision():
-        while not stopped.wait(.25):
-            try:
-                if run_id and json.loads(revision.read_text(encoding='utf-8')).get('run') != run_id:
-                    stopped.set()
-            except (OSError, ValueError, AttributeError):
-                stopped.set()
-
     threading.Thread(target=commands, daemon=True).start()
     if run_id:
-        threading.Thread(target=watch_revision, daemon=True).start()
+        threading.Thread(target=watch_revision, args=(revision, run_id, stopped), daemon=True).start()
     for sig in (signal.SIGINT, signal.SIGTERM):
         signal.signal(sig, lambda *_: stopped.set())
     os.environ['AIDIY_DIAG_CONSOLE'] = '1'
@@ -314,8 +326,7 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
                     process = start_headless(node)
                     output = threading.Thread(target=pipe_output, args=(process, console), daemon=True)
                     output.start()
-                    while process.poll() is None and not stopped.wait(.1):
-                        pass
+                    wait_for_exit(process, stopped)
                     if stopped.is_set():
                         return
                     output.join(timeout=2)
@@ -332,7 +343,7 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
                 deadline = time.monotonic() + (180 if kind == 'tools' else 90)
                 while not stopped.is_set() and process.poll() is None:
                     if not target.get('ポート'):
-                        if stopped.wait(1):
+                        if stopped.wait(MANAGEMENT_INTERVAL):
                             break
                         if process.poll() is None:
                             break
@@ -343,7 +354,7 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
                         except OSError:
                             if time.monotonic() >= deadline:
                                 raise RuntimeError('起動の待受確認がタイムアウトしました。')
-                            stopped.wait(.2)
+                            stopped.wait(MANAGEMENT_INTERVAL)
                 if stopped.is_set():
                     break
                 if process.poll() is not None:
@@ -352,8 +363,7 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
                     break
                 console.event('ready', state='稼働中')
                 print('起動しました。停止ボタンから Ctrl+C を送信できます。ログの Ctrl+C はコピーです。')
-                while process.poll() is None and not stopped.wait(.2):
-                    pass
+                wait_for_exit(process, stopped)
                 if stopped.is_set():
                     break
                 if output:

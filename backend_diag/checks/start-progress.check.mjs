@@ -24,7 +24,7 @@ function fixture(t){
 }
 test('auto progress is visible off-tab without log polling, and completion disappears immediately until next run',async t=>{
  const f=fixture(t);f.data.実行中=true;f.data.一括進捗=progress('auto');await f.refresh();
- assert.equal(f.state.進捗表示.value.実行ID,'auto');assert.equal(f.calls.includes('api/起動/ログ'),false);assert.equal(f.timers.at(-1).ms,800);
+ assert.equal(f.state.進捗表示.value.実行ID,'auto');assert.equal(f.calls.includes('api/起動/ログ'),false);assert.equal(f.timers.at(-1).ms,1000);
  f.state.進捗を閉じる();assert.ok(f.state.進捗表示.value,'進行中は閉じない');
  f.data.実行中=false;f.data.一括進捗=progress('auto','start','done','起動処理が完了しました。');await f.refresh();
  assert.equal(f.state.進捗表示.value,null);await f.refresh();assert.equal(f.state.進捗表示.value,null);

@@ -69,6 +69,69 @@ class StartTests(unittest.TestCase):
             reader.join(timeout=5)
             child.stdout.close()
 
+    def test_revision_replacement_is_checked_after_one_second_and_stop_skips_io(self):
+        module = load(ROOT / 'scripts/_diag_start.py')
+        for value in ('{"run":"replacement"}', 'invalid json'):
+            with self.subTest(value=value):
+                revision = Mock()
+                revision.read_text.return_value = value
+                stopped = Mock()
+                stopped.wait.side_effect = [False, True]
+                module.watch_revision(revision, 'original', stopped)
+                self.assertEqual(stopped.wait.call_args_list[0].args, (1.0,))
+                revision.read_text.assert_called_once_with(encoding='utf-8')
+                stopped.set.assert_called_once_with()
+        revision = Mock()
+        stopped = threading.Event()
+        stopped.set()
+        module.watch_revision(revision, 'original', stopped)
+        revision.read_text.assert_not_called()
+
+    def test_process_management_checks_once_per_second_until_exit(self):
+        module = load(ROOT / 'scripts/_diag_start.py')
+        child = Mock()
+        child.poll.side_effect = [None, None, 0]
+        stopped = Mock()
+        stopped.is_set.return_value = False
+        stopped.wait.return_value = False
+        module.wait_for_exit(child, stopped)
+        self.assertEqual([call.args for call in stopped.wait.call_args_list], [(1.0,), (1.0,)])
+        self.assertEqual(child.poll.call_count, 3)
+
+    def test_process_wait_is_interruptible_and_independent_per_instance(self):
+        module = load(ROOT / 'scripts/_diag_start.py')
+        first_stop, second_stop = threading.Event(), threading.Event()
+        entered = threading.Event()
+        first = Mock()
+        first.poll.side_effect = lambda: (entered.set() or None)
+        second = Mock()
+        second.poll.return_value = None
+        thread = threading.Thread(target=module.wait_for_exit, args=(first, first_stop), daemon=True)
+        other = threading.Thread(target=module.wait_for_exit, args=(second, second_stop), daemon=True)
+        thread.start(); other.start()
+        try:
+            self.assertTrue(entered.wait(2))
+            first_stop.set()
+            thread.join(timeout=.5)
+            self.assertFalse(thread.is_alive(), '停止は1秒タイマーの満了を待たない')
+            self.assertTrue(other.is_alive(), '別インスタンスの監視は停止しない')
+        finally:
+            first_stop.set(); second_stop.set()
+            thread.join(timeout=2); other.join(timeout=2)
+
+    def test_output_preserves_split_utf8_and_final_tail_without_timers(self):
+        module = load(ROOT / 'scripts/_diag_start.py')
+        data = '進捗\n末尾'.encode('utf-8')
+        chunks = [data[:1], data[1:7], data[7:], b'']
+        stream = Mock()
+        stream.read1.side_effect = chunks
+        output = io.StringIO()
+        with patch.object(module.time, 'sleep') as sleep:
+            module.pipe_output(SimpleNamespace(stdout=stream), output)
+        self.assertEqual(output.getvalue(), '進捗\n末尾')
+        stream.read.assert_not_called()
+        sleep.assert_not_called()
+
     @unittest.skipUnless(os.name == 'nt', 'Windows の補助コマンド非表示')
     def test_auxiliary_commands_are_hidden_and_module_api_is_restored(self):
         module = load(ROOT / 'scripts/_diag_start.py')
@@ -282,8 +345,8 @@ print(module.get_npm_command(),flush=True)
         opener = Mock()
         opener.open.side_effect = [nullcontext(SimpleNamespace(status=status)) for status in (200, 200, 503, 200, 200, 200)]
         with patch.object(module.urllib.request, 'build_opener', return_value=opener), patch.object(module.time, 'monotonic', side_effect=lambda: clock[0]), patch('builtins.print'):
-            self.assertTrue(module.wait_for_web(SimpleNamespace(poll=lambda: None), 12345, stopped, seconds=1))
-        self.assertEqual(clock[0], 2.5)
+            self.assertTrue(module.wait_for_web(SimpleNamespace(poll=lambda: None), 12345, stopped, seconds=2))
+        self.assertEqual(clock[0], 5)
         self.assertEqual(opener.open.call_count, 6)
 
     def test_web_wait_can_stop_and_rejects_dead_process_or_unhealthy_timeout(self):

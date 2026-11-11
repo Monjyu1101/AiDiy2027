@@ -45,7 +45,7 @@ test('only checked closed ports pulse red while another service runs, and recove
 });
 
 test('設定再起動はCoreのポート確認成功時だけ有効、タブ変更で落とさず停止・失敗・切断で無効',async t=>{
- let opened=false,failed=false;let poll;const state=起動状態を作成({setTimer:f=>(poll=f,1),clearTimer(){},api:async route=>{
+ let opened=false,failed=false;let poll;const state=起動状態を作成({setTimer:(f,ms)=>{if(ms===1000||ms===5000)poll=f;return 1;},clearTimer(){},api:async route=>{
   if(route==='api/起動')return {対象:[{id:'core',設定:{},状態:'未起動'}],実行中:false};
   if(route==='api/起動/ポート'){if(failed)throw Error('offline');return {対象:[{id:'core',開放:opened}]};}
   return {ログ:'',位置:0};
