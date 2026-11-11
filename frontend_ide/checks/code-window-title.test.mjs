@@ -312,3 +312,16 @@ test('standalone CPU has its own name, icon, small bounds and no IDE owner',asyn
   assert.equal(f.app.name,platform==='darwin'?'AiDiy CPU':'aidiy_cpu');r.window.destroy();
  }
 });
+
+test('standalone Navi keeps its own window icon on Windows/Linux and Dock icon on macOS',async()=>{
+ const png=readFileSync(new URL('../public/AiDiy_navi.png',import.meta.url));
+ assert.deepEqual(png,readFileSync(new URL('../aidiy_navi/AiDiy_navi.png',import.meta.url)));
+ assert.equal(png.readUInt32BE(16),512);assert.equal(png.readUInt32BE(20),512);
+ for(const platform of ['win32','linux','darwin']){
+  const f=await desktopFixture({platform,kind:'navi'});
+  assert.equal(f.owner.window.options.icon,'/fixture/public/AiDiy_navi.png');
+  assert.equal(f.owner.window.getTitle(),'AiDiy Navi');
+  if(platform==='darwin')assert.equal(f.app.dock.icon,'/fixture/public/AiDiy_navi.png');
+  f.owner.window.destroy();
+ }
+});

@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {randomUUID}=require('node:crypto');
+const {join}=require('node:path');
 const {windowBounds,windowMinimumSize}=require('./window-layout.cjs');
 const size=require('../host/scripts/window-size.cjs');
 const explorerHeight=900;
@@ -70,7 +71,9 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   if(!request||request.used||details.url!=='about:blank'||details.frameName!==request.name||Date.now()>request.expires||request.revision!==owner.revision||isQuitting())return null;
   request.used=true;
   const route=request.kind==='panel-routes';
-  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:request.kind==='panel-navigation'?windowMinimumSize('navi',request.bounds):request.kind==='explorer'?{minWidth:Math.min(300,request.bounds.width),minHeight:Math.min(320,request.bounds.height)}:{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#080c1a',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
+  // window.open経由の別窓は本体のiconを継承しないため、所有モジュール内の配布画像を指定する。
+  const icon=join(__dirname,'../public',request.kind==='panel-navigation'?'AiDiy_navi.png':'AiDiy_ide.png');
+  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,icon,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:request.kind==='panel-navigation'?windowMinimumSize('navi',request.bounds):request.kind==='explorer'?{minWidth:Math.min(300,request.bounds.width),minHeight:Math.min(320,request.bounds.height)}:{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#080c1a',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
  }
  function created(owner,window,details){
   const request=requests.get(owner);requests.delete(owner);

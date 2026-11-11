@@ -6,6 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
+import {readFileSync} from 'node:fs';
+import {fileURLToPath} from 'node:url';
 import native from '../デスクトップ/panel-windows.cjs';
 import pinModule from '../デスクトップ/最前面ピン.cjs';
 import {popupFeatures,fadePanel} from '../src/components/ファイル閲覧/パネル別窓.js';
@@ -225,3 +227,17 @@ test('Explorer連携別窓は通常・ALLとも900 DIPを基準に画面内へ�
    }
   }
  });
+
+for(const [kind,icon] of [['explorer','ide'],['panel-viewer','ide'],['panel-routes','ide'],['panel-navigation','navi']])test(`${kind}: 初回・閉じて再表示とも所有元のアイコンを指定する`,async()=>{
+ const f=fixture();
+ for(let attempt=0;attempt<2;attempt++){
+  const request=await f.controller.prepare(f.event,f.rect,kind);assert.equal(request.ok,true);
+  const details={url:'about:blank',frameName:request.name};
+  const result=f.controller.open(f.owner,details);assert.equal(result.action,'allow');
+  const expected=fileURLToPath(new URL(`../public/AiDiy_${icon}.png`,import.meta.url));
+  assert.equal(result.overrideBrowserWindowOptions.icon,expected);
+  assert.deepEqual(readFileSync(expected),readFileSync(new URL(`../aidiy_${icon}/AiDiy_${icon}.png`,import.meta.url)));
+  assert.equal(f.controller.open(f.owner,details),null,'再利用は拒否したまま');
+  const child=new f.Window();f.controller.created(f.owner,child,details);child.destroy();
+ }
+});
