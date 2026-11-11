@@ -58,13 +58,19 @@ try{
  await evaluate(fixture.text);
  const state=()=>evaluate(`[...document.querySelectorAll('.mini-icon-track')].map(track=>{
   const rect=track.getBoundingClientRect(),buttons=[...track.children].map(el=>el.getBoundingClientRect());
-  return {left:rect.left,y:rect.y+rect.height/2,width:rect.width,
+  return {left:rect.left,y:rect.y+rect.height/2,width:rect.width,right:rect.right,frame:track.parentElement.getBoundingClientRect().toJSON(),
    overflow:track.hasAttribute('data-overflow'),positions:buttons.map(button=>button.left-rect.left),
    centered:Math.abs(buttons[0].left-rect.left-(rect.right-buttons.at(-1).right))<1,
    visible:buttons.filter(button=>button.left>=rect.left-.1&&button.right<=rect.right+.1).length,
    oneRow:buttons.every(button=>button.top===buttons[0].top)};
  })`);
  const stopMotion=()=>evaluate(`document.querySelectorAll('.mini-icon-track').forEach(track=>track.dispatchEvent(new PointerEvent('pointerenter')))`);
+ const assertFullWidth=async()=>{
+  for(const row of await state()){
+   assert.ok(Math.abs(row.left-row.frame.left)<.1,'アイコン列は親の左端から表示する');
+   assert.ok(Math.abs(row.right-row.frame.right)<.1,'アイコン列は端数幅を切り捨てず親の右端まで表示する');
+  }
+ };
  const assertHeight=async()=>assert.deepEqual(await evaluate(`[
   innerHeight,document.querySelector('.start-mini').clientHeight,
   document.querySelector('.mini-launch-scroll').scrollHeight-document.querySelector('.mini-launch-scroll').clientHeight,
@@ -79,6 +85,11 @@ try{
   assert.equal(row.positions[0],0);assert.equal(row.visible,7);assert.equal(row.oneRow,true);
  }
  await assertHeight();
+ await setWidth(400);
+ await until(`document.querySelector('.mini-app-buttons').clientWidth===390`);
+ await assertFullWidth();
+ await setWidth(miniWidth);
+ await until(`document.querySelector('.mini-app-buttons').clientWidth===350`);
  await evaluate(`document.querySelector('.mini-icon-track').dispatchEvent(new PointerEvent('pointerleave'))`);
  await until(`document.querySelector('.mini-icon-track').children[1].getBoundingClientRect().left-document.querySelector('.mini-icon-track').getBoundingClientRect().left<46`);
  await stopMotion();
@@ -98,7 +109,8 @@ try{
  assert.equal(await evaluate('fixture.clicks.length'),1);
  for(const scale of [1,1.25,1.5,1.875]){
   await setWidth(410,scale);
-  await until(`document.querySelector('.mini-icon-track').clientWidth===398`);
+  await until(`document.querySelector('.mini-icon-track').clientWidth===400`);
+  await assertFullWidth();
   assert.ok((await state()).every(row=>row.overflow&&row.oneRow));
   await setWidth(460,scale);
   await until(`document.querySelectorAll('.mini-icon-track[data-overflow]').length===0`);

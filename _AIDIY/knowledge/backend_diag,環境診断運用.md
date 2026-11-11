@@ -102,7 +102,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 - モジュール移動時は import、`import.meta.url`、Electron の package main / preload、fixture の差し替え先を追従させます。Electron の依存物・安全ログ・停止要求は従来の `backend_diag/` 基準、永続的な診断・モデル情報JSONは `_AIDIY/aidiy_diag/` に維持します。一時用途のアプリ/CLI起動ログは `temp/aidiy_diag/アプリ起動/`、サービス監視の実行ID JSON・OSロック・置換用一時ファイルは `temp/aidiy_diag/起動/` を使います。旧場所の自動移動・削除・フォールバックは行いません。更新前の Diag と管理サービスは終了してから起動し直し、稼働中のロック・実行IDは手動削除しません。停止API・cleanupの対象は変更せず、`backend_diag/.stop-request` の位置も維持します。
 - `node --test backend_diag/checks/*.check.mjs backend_diag/checks/*.check.cjs` の layout / bundled-models / launcher / startup / headless テストでパスと起動の回帰を確認します。UI・runtime を変更しない配置変更では配布物を無用に再生成せず、`node backend_diag/ui/verify.mjs` で一致を確認します。
 
-ミニ表示はアプリと外部CLIを1行ずつ表示します。収まる行は中央揃えで、あふれる行は左端から始めて右から左へ循環します。行を左右にドラッグして表示位置を変えられます。`node backend_diag/checks/initial-mini-desktop.mjs` は実Electronの端数DPI、初期の窓寸法と外部アイコンの横方向の収まり、最前面の切替、通常表示への復帰と操作領域を検証します。CLIの導入状態は読み取り、アプリは実起動しません。
+ミニ表示はアプリと外部CLIを1行ずつ表示します。収まる行は中央揃えで、あふれる行は左端から始めて右から左へ循環します。表示幅はアイコン単位に切り捨てず、行の右端まで使います。少数のアイコンがわずかにはみ出す場合も、循環の折り返しを画面外に確保し、ボタンやTab順を複製しません。行を左右にドラッグして表示位置を変えられます。`node --test backend_diag/checks/mini-icon-track.check.cjs` は端数幅・両方向の折り返し・項目増減・停止再開を実Vueソースと合成寸法で確認し、`node backend_diag/checks/mini-width-browser.mjs` は配布CSSと実ブラウザで左右端・幅変更・ドラッグを確認します。`node backend_diag/checks/initial-mini-desktop.mjs` は実Electronの端数DPI、初期の窓寸法と外部アイコンの横方向の収まり、最前面の切替、通常表示への復帰と操作領域を検証します。CLIの導入状態は読み取り、アプリは実起動しません。
 
 ## ソース調査の基準
 

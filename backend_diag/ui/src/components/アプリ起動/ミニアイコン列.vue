@@ -43,12 +43,11 @@ function 寸法を更新(){
  const gap=parseFloat(getComputedStyle(row).columnGap)||0;
  const 幅=枠.value.clientWidth;
  間隔=(ボタン[0]?.offsetWidth||0)+gap;
- 周期=ボタン.length*間隔;
+ // 表示幅は親の右端まで使う。ボタンが少ない場合も、折り返しは両端の外で行う。
+ 周期=Math.max(ボタン.length*間隔,幅+間隔);
  const 列数=間隔&&Math.floor((幅+gap)/間隔);
  はみ出す=幅>0&&ボタン.length>列数;
  row.toggleAttribute('data-overflow',はみ出す);
- // 端の余り幅を除くと、一周させるボタンが反対側で見切れる瞬間を作らずに済む。
- row.style.width=はみ出す&&列数?`${列数*間隔-gap}px`:'';
  if(はみ出す)配置();
  else{
   位置=0;
