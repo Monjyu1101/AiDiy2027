@@ -14,10 +14,14 @@ const {outputFiles:[fixture]}=await build({
  stdin:{resolveDir:fileURLToPath(new URL('../ui/',import.meta.url)),contents:`
  import {createApp,h,ref,nextTick} from 'vue';
  import Row from './src/components/アプリ起動/ミニアイコン列.vue';
+ import {起動モーション} from './src/components/アプリ起動/起動モーション.mjs';
  const counts=ref([5,6]),clicks=[];
  window.fixture={counts:async(app,cli)=>{counts.value=[app,cli];await nextTick();},clicks};
  const icons=(kind,count)=>h(Row,{class:'mini-'+kind+'-buttons'},()=>Array.from({length:count},(_,i)=>
-  h('button',{class:'mini-'+kind+'-button',key:i,onClick:()=>clicks.push(i)},h('span',{class:'mini-icon-frame'},String(i)))));
+  h('button',{class:'mini-'+kind+'-button',key:i,onClick:event=>{clicks.push(i);起動モーション(event)();}},
+   h('span',{class:'mini-icon-frame'},h('span',{class:'launch-frame launch-frame-36'},[
+    h('span',String(i)),h('span',{class:'launch-trace'}),
+   ])))));
  createApp({render:()=>[
   h('header',{class:'panel-brand desktop compact'},h('strong','AiDiy ランチャー')),
   h('div',{class:'connection-bar online'}),
@@ -107,6 +111,14 @@ try{
  assert.deepEqual(await evaluate('fixture.clicks'),[]);
  await mouse('mouseMoved',x,0);await mouse('mousePressed',x,1);await mouse('mouseReleased',x,0);
  assert.equal(await evaluate('fixture.clicks.length'),1);
+ await until(`document.querySelectorAll('.launch-active').length===1`);
+ const paused=(await state()).map(row=>row.positions);
+ await evaluate(`document.querySelectorAll('.mini-icon-track').forEach(track=>track.dispatchEvent(new PointerEvent('pointerleave')))`);
+ await sleep(250);
+ assert.deepEqual((await state()).map(row=>row.positions),paused,'光の演出中は上下2列ともポインターを離しても流れない');
+ await until(`!document.querySelector('.launch-active')`);
+ await until(`document.querySelector('.mini-icon-track').children[1].getBoundingClientRect().left-document.querySelector('.mini-icon-track').getBoundingClientRect().left!==${paused[0][1]}`);
+ await stopMotion();
  for(const scale of [1,1.25,1.5,1.875]){
   await setWidth(410,scale);
   await until(`document.querySelector('.mini-icon-track').clientWidth===400`);
@@ -118,5 +130,5 @@ try{
   await assertHeight();
  }
  assert.deepEqual(errors,[]);
- console.log('ミニ表示: 360×190、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、幅変更と倍率を確認。');
+ console.log('ミニ表示: 360×190、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

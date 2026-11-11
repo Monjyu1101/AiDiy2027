@@ -10,7 +10,7 @@ const 枠=ref(null),列=ref(null);
 const 一周=(位置,長さ)=>((位置%長さ)+長さ)%長さ;
 let ボタン=[],間隔=0,周期=0,位置=0,はみ出す=false;
 let frame=0,前回=0,hover=false,focus=false,操作,クリックを止める=false;
-let resizeObserver,mutationObserver;
+let resizeObserver,mutationObserver,launchObserver,起動演出中=false;
 
 function 配置(){
  for(const [index,button] of ボタン.entries()){
@@ -30,7 +30,7 @@ function 進める(now){
  再生を更新();
 }
 function 再生を更新(){
- if(はみ出す&&!hover&&!focus&&!操作){
+ if(はみ出す&&!hover&&!focus&&!操作&&!起動演出中){
   if(!frame)frame=requestAnimationFrame(進める);
  }else{
   if(frame)cancelAnimationFrame(frame);
@@ -103,10 +103,17 @@ onMounted(()=>{
  resizeObserver.observe(枠.value);
  mutationObserver=new MutationObserver(寸法を更新);
  mutationObserver.observe(列.value,{childList:true});
+ // 上下どちらの列で受付の光が回っていても、自動送りを止める。
+ // 実際の演出状態を見るため、連打・同時起動・取消・ボタン削除にも追従する。
+ const launchRoot=枠.value.closest('.mini-content')||列.value;
+ const 演出を確認=()=>{起動演出中=!!launchRoot.querySelector('.launch-frame.launch-active');再生を更新();};
+ launchObserver=new MutationObserver(演出を確認);
+ launchObserver.observe(launchRoot,{subtree:true,childList:true,attributes:true,attributeFilter:['class']});
+ 演出を確認();
  寸法を更新();
 });
 onBeforeUnmount(()=>{
- resizeObserver?.disconnect();mutationObserver?.disconnect();
+ resizeObserver?.disconnect();mutationObserver?.disconnect();launchObserver?.disconnect();
  if(frame)cancelAnimationFrame(frame);
 });
 </script>

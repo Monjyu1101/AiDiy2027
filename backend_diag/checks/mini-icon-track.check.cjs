@@ -10,31 +10,43 @@ const filename=require('node:path').join(__dirname,'../ui/src/components/アプ�
 const {descriptor}=parse(fs.readFileSync(filename,'utf8'),{filename});
 const code=transformSync(compileScript(descriptor,{id:filename,genDefaultAs:'component'}).content+'\nmodule.exports=component;',{format:'cjs'}).code;
 
-function fixture(width,count){
+function launchPanel(){
+ return {rows:new Set(),observers:new Set(),
+  querySelector(){return [...this.rows].flatMap(row=>row.children).find(button=>button.active)||null;},
+  notify(){for(const observer of this.observers)if(!observer.disconnected)observer.callback();}};
+}
+function fixture(width,count,{panel=launchPanel()}={}){
  let mount,unmount,resize,mutation,frame=0;
  const frames=new Map(),observers=[],module={exports:{}};
- const observer=callback=>({observe(){},disconnect(){this.disconnected=true;},callback});
+ const observer=callback=>({observe(target,options){this.options=options;if(target===panel)panel.observers.add(this);else mutation=callback;},disconnect(){this.disconnected=true;panel.observers.delete(this);},callback});
  vm.runInNewContext(code,{module,exports:module.exports,
   require:()=>({ref:value=>({value}),onMounted:fn=>mount=fn,onBeforeUnmount:fn=>unmount=fn}),
   ResizeObserver:function(fn){resize=fn;const value=observer(fn);observers.push(value);return value;},
-  MutationObserver:function(fn){mutation=fn;const value=observer(fn);observers.push(value);return value;},
+  MutationObserver:function(fn){const value=observer(fn);observers.push(value);return value;},
   getComputedStyle:()=>({columnGap:'2px'}),
   requestAnimationFrame:fn=>{frames.set(++frame,fn);return frame;},cancelAnimationFrame:id=>frames.delete(id),
  });
  const state=module.exports.setup({}, {expose(){}}),attributes=new Set();
- const outer={clientWidth:width,getBoundingClientRect(){return {left:0,right:this.clientWidth,width:this.clientWidth};}};
+ const outer={clientWidth:width,closest:()=>panel,getBoundingClientRect(){return {left:0,right:this.clientWidth,width:this.clientWidth};}};
  const row={children:[],style:{width:''},toggleAttribute(name,value){if(value)attributes.add(name);else attributes.delete(name);},
   contains:node=>row.children.includes(node),getBoundingClientRect(){return {left:0,right:parseFloat(this.style.width)||outer.clientWidth};}};
- const buttons=n=>Array.from({length:n},(_,i)=>({offsetWidth:48,style:{transform:''},matches:()=>true,getBoundingClientRect(){
+ const buttons=n=>Array.from({length:n},(_,i)=>{
+  const button={offsetWidth:48,style:{transform:''},matches:()=>true,disabled:false,active:false,runs:[],getBoundingClientRect(){
   const left=i*50+(parseFloat(this.style.transform.replace('translateX(',''))||0);return {left,right:left+48};
- }}));
- row.children=buttons(count);state.枠.value=outer;state.列.value=row;mount();
+  }};
+  const icon={parentElement:{classList:{add(){button.active=true;panel.notify();},remove(){button.active=false;panel.notify();}}},animate(){
+   let finish,cancel;const finished=new Promise((resolve,reject)=>{finish=resolve;cancel=reject;});
+   const animation={finished,finish,cancel};button.runs.push(animation);return animation;
+  }};
+  button.querySelector=()=>icon;return button;
+ });
+ row.children=buttons(count);panel.rows.add(row);state.枠.value=outer;state.列.value=row;mount();
  const positions=()=>row.children.map(button=>button.getBoundingClientRect().left);
  const pointer=distance=>({pointerId:1,button:0,isPrimary:true,clientX:100+distance,target:row});
  return {state,row,outer,frames,observers,positions,overflow:()=>attributes.has('data-overflow'),
-  resize(value){outer.clientWidth=value;resize();},count(value){row.children=buttons(value);mutation();},
+  resize(value){outer.clientWidth=value;resize();},count(value){row.children=buttons(value);mutation();panel.notify();},
   start(){state.押す(pointer(0));},drag(distance){state.動かす(pointer(distance));},end(){state.離す(pointer(0));},
-  tick(now){const [id,fn]=frames.entries().next().value;frames.delete(id);fn(now);},close:()=>unmount()};
+  tick(now){const [id,fn]=frames.entries().next().value;frames.delete(id);fn(now);},close(){unmount();panel.rows.delete(row);panel.notify();}};
 }
 
 test('ミニの両アイコン列は端数幅も右端まで使い、ボタンを複製しない',()=>{
@@ -102,5 +114,73 @@ test('自動送り・ホバー停止・ドラッグ後のクリック抑止を�
   f.state.クリック(event);assert.equal(prevented,1);assert.equal(stopped,1);
   f.state.クリック(event);assert.equal(prevented,1);
   f.start();f.drag(2);f.end();f.state.クリック(event);assert.equal(prevented,1);
+ }finally{f.close();}
+});
+
+test('起動モーション中は上下2列を止め、最後の光が消えてから同じ位置で再開する',async()=>{
+ const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
+ const panel=launchPanel(),upper=fixture(350,9,{panel}),lower=fixture(350,8,{panel});
+ try{
+  upper.tick(100);upper.tick(150);lower.tick(100);lower.tick(150);
+  const positions=[upper.positions(),lower.positions()],button=upper.row.children[2],other=lower.row.children[3];
+  const start=起動モーション({currentTarget:button});start();
+  assert.equal(upper.frames.size,0);assert.equal(lower.frames.size,0);
+  upper.state.ホバー(false);lower.state.ホバー(false);
+  assert.equal(upper.frames.size,0);assert.equal(lower.frames.size,0,'ポインターを離しても光の間は停止する');
+  start();await Promise.resolve();assert.equal(upper.frames.size,0,'前の演出取消で早く再開しない');
+  起動モーション({currentTarget:other})();button.runs.at(-1).finish();await Promise.resolve();
+  assert.equal(upper.frames.size,0);assert.equal(lower.frames.size,0,'別のアイコンの光が続く間も停止する');
+  other.runs.at(-1).finish();await Promise.resolve();
+  assert.equal(upper.frames.size,1);assert.equal(lower.frames.size,1);
+  upper.tick(5000);lower.tick(5000);assert.deepEqual([upper.positions(),lower.positions()],positions,'停止中の経過時間で位置を飛ばさない');
+  upper.tick(5050);assert.ok(Math.abs(upper.positions()[0]-positions[0][0]+1.4)<.01);
+  for(const observer of panel.observers)assert.deepEqual([...observer.options.attributeFilter],['class'],'毎フレーム変わるstyle属性を監視しない');
+ }finally{upper.close();lower.close();}
+});
+
+test('演出の終了・取消後もホバー、フォーカス、非表示による停止を保つ',async()=>{
+ const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');const f=fixture(350,9);
+ try{
+  const button=f.row.children[2],start=起動モーション({currentTarget:button});
+  start();f.state.ホバー(true);button.runs.at(-1).finish();await Promise.resolve();
+  assert.equal(f.frames.size,0);f.state.ホバー(false);assert.equal(f.frames.size,1);
+  start();f.state.フォーカス({target:button});button.runs.at(-1).cancel();await Promise.resolve();
+  assert.equal(f.frames.size,0);f.state.フォーカス解除({relatedTarget:null});assert.equal(f.frames.size,1);
+  start();f.resize(0);button.runs.at(-1).finish();await Promise.resolve();
+  assert.equal(f.frames.size,0);f.resize(350);assert.equal(f.frames.size,1);
+  start();f.resize(0);f.resize(350);assert.equal(f.frames.size,0,'表示を戻しても演出終了までは停止');
+  button.runs.at(-1).finish();await Promise.resolve();assert.equal(f.frames.size,1);
+ }finally{f.close();}
+});
+
+test('演出中ボタンの削除・ミニ解除で監視と停止を残さず、演出中の再マウントも停止する',async()=>{
+ const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
+ const panel=launchPanel(),upper=fixture(350,9,{panel});let lower;
+ try{
+  const button=upper.row.children[2];起動モーション({currentTarget:button})();
+  lower=fixture(350,9,{panel});assert.equal(lower.frames.size,0);
+  upper.count(9);assert.equal(upper.frames.size,1);assert.equal(lower.frames.size,1,'消えたボタンの演出を待ち続けない');
+  const next=upper.row.children[2];起動モーション({currentTarget:next})();assert.equal(lower.frames.size,0);
+  upper.close();assert.equal(upper.frames.size,0);assert.equal(lower.frames.size,1);
+  next.runs.at(-1).finish();button.runs.at(-1).finish();await Promise.resolve();
+  assert.equal(upper.frames.size,0,'遅い終了通知で破棄済みの列を再開しない');
+  assert.ok(upper.observers.every(observer=>observer.disconnected));
+ }finally{upper.close();lower?.close();}
+ assert.equal(panel.observers.size,0);
+});
+
+test('起動失敗でも光の終了まで止め、未受付や演出非対応なら停止しない',async()=>{
+ const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
+ const {アプリ状態を作成}=await import('../ui/src/components/アプリ起動/アプリ状態.mjs');const f=fixture(350,9);
+ try{
+  const button=f.row.children[2],state=アプリ状態を作成({api:async()=>{throw Error('fixture launch failure');}});
+  const options={開始時:起動モーション({currentTarget:button})};
+  await state.起動('code',options);assert.equal(f.frames.size,1);assert.equal(button.runs.length,0);
+  state.フォルダ.value='/fixture/project';await state.起動('code',options);
+  assert.equal(button.runs.length,1);assert.equal(f.frames.size,0,'API応答ではなく光の状態に合わせる');
+  button.runs[0].finish();await Promise.resolve();assert.equal(f.frames.size,1);
+  button.disabled=true;起動モーション({currentTarget:button})();assert.equal(f.frames.size,1);
+  button.disabled=false;button.querySelector=()=>({animate(){throw Error('unsupported animation');}});
+  起動モーション({currentTarget:button})();assert.equal(f.frames.size,1);
  }finally{f.close();}
 });
