@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSystemMetrics, parseGpuUtilization, parseWindowsGpuUtilization } from '../aidiy_cpu/metrics.mjs';
-import { parseWindowsCpuUtilization } from '../aidiy_cpu/windows-cpu.mjs';
+import { parseWindowsCpuUtilization, preferredWindowsCpuMetric } from '../aidiy_cpu/windows-cpu.mjs';
 function fixture(options = {}) {
   let time = 0, busy = 100, idle = 100, calls = 0;
   const system = { cpus: () => [{ times: { user: busy, idle } }, { times: { user: busy, idle } }], totalmem: () => 1000, freemem: () => 250 };
@@ -147,7 +147,7 @@ test('Windows全CPUは標準Processor Timeを使い、Node値とUtilityを比較
 test('CPU標準値の欠損・不正・コア別だけの値は採用せず、0%とUtility>100%を区別',()=>{
  assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(0,150)),{time:0,utility:150});
  assert.deepEqual(parseWindowsCpuUtilization([nativeCpu('55','90')]),{time:55,utility:90});
- for(const row of [null,{},nativeCpu(null),nativeCpu(-1),nativeCpu(101),nativeCpu(''),{...nativeCpu(80),Name:'0,0'}])assert.equal(parseWindowsCpuUtilization(row),null);
+ for(const row of [null,{},nativeCpu(null),nativeCpu(-1),nativeCpu(101,null),nativeCpu(''),{...nativeCpu(80),Name:'0,0'}])assert.equal(parseWindowsCpuUtilization(row),null);
 });
 test('Windows CPU失敗でもGPUを保ち、CPUはNode計算に戻る',async()=>{
  let failed=false;
@@ -191,4 +191,36 @@ test('非表示後にWindows CPUが古くなってもGPU失敗用30秒待機へ�
  await f.metrics.sample();await settle();const initial=calls;
  f.tick(12000);assert.equal((await f.metrics.sample()).cpu,null);await settle();assert.equal(calls,initial+1);
  f.tick();assert.equal((await f.metrics.sample()).cpu,70);f.metrics.close();
+});
+
+
+test('23H2以前はUtility、24H2以降と不明OSはTimeを既定とし、大小比較で選ばない',()=>{
+ for(const release of ['10.0.10240','10.0.19045','10.0.22000','10.0.22631','10.0.22631.7652'])assert.equal(preferredWindowsCpuMetric(release),'utility');
+ for(const release of [null,'unknown','6.1.7601','10.0.25398','10.0.26100','10.0.26200','11.0.1'])assert.equal(preferredWindowsCpuMetric(release),'time');
+ assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(null,'51')),{time:null,utility:51});
+ assert.deepEqual(parseWindowsCpuUtilization(nativeCpu('3',null)),{time:3,utility:null});
+ assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(-1,20)),{time:null,utility:20});
+});
+for(const [release,time,utility,expected,metric] of [
+ ['10.0.22631',3,51,51,'utility'],['10.0.22631',80,20,20,'utility'],['10.0.22631',3,0,0,'utility'],
+ ['10.0.22631',3,150,100,'utility'],['10.0.22631',null,51,51,'utility'],['10.0.22631',3,null,3,'time'],
+ ['10.0.26100',3,51,3,'time'],['10.0.26100',80,20,80,'time'],
+])test(`CPU指標の選択 ${release}, Time=${time}, Utility=${utility}`,async()=>{
+ const f=fixture({platform:'win32',run:async()=>nativeSample(nativeCpu(time,utility),[engine(1,0,40)])});
+ // releaseを持つ実機相当のsystemを作り、起動時にOSを判断する。
+ f.metrics.close();
+ const system={...f.system,release:()=>release};
+ const metrics=createSystemMetrics({system,platform:'win32',now:()=>1000,run:async()=>nativeSample(nativeCpu(time,utility),[engine(1,0,40)]),interval:0});
+ await metrics.sample();await settle();const data=await metrics.sample();
+ assert.equal(data.cpu,expected);assert.equal(data.cpuSource,`windows-processor-${metric}`);
+ assert.equal(data.cpuDetails.windowsProcessorUtility,utility);assert.equal(data.cpuDetails.windowsProcessorTime,time);
+ assert.equal(data.cpuDetails.windowsPreferredMetric,preferredWindowsCpuMetric(release));metrics.close();
+});
+
+test('新しいWindowsでTimeが無効ならUtilityへ勝手に切り替えずNode差分へ戻る',async()=>{
+ let timestamp=0,busy=100,idle=100;
+ const system={release:()=> '10.0.26100',cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250};
+ const metrics=createSystemMetrics({platform:'win32',system,now:()=>timestamp,run:async()=>nativeSample(nativeCpu(null,51),[engine(1,0,40)])});
+ await metrics.sample();await settle();timestamp=1000;busy+=9;idle+=91;
+ const data=await metrics.sample();assert.ok(Math.abs(data.cpu-9)<1e-8);assert.equal(data.cpuSource,'os-times');assert.equal(data.cpuDetails.windowsProcessorUtility,51);metrics.close();
 });

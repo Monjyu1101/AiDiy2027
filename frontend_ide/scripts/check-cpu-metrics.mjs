@@ -31,9 +31,6 @@ function Cpu-Row($row,[bool]$com=$false) {
   }
   [PSCustomObject]@{time=$row.PercentProcessorTime;utility=$row.PercentProcessorUtility;timestampSys100Ns=[string]$row.Timestamp_Sys100NS}
 }
-$single=$null
-try { $single=Cpu-Row (Get-CimInstance -Namespace root/cimv2 -ClassName Win32_PerfFormattedData_Counters_ProcessorInformation -Filter "Name='_Total'" -OperationTimeoutSec 3 | Select-Object -First 1) }
-catch { $errors+=('cim:'+ $_.Exception.HResult) }
 $refresher=$null;$refreshable=$null
 try {
   $locator=New-Object -ComObject WbemScripting.SWbemLocator
@@ -73,6 +70,9 @@ $samples=@(Get-Counter -Counter @($timePath,$utilityPath) -SampleInterval 1 -Max
   }
   [PSCustomObject]@{timestamp=$set.Timestamp.ToUniversalTime().ToString('o');time=$t;utility=$u;refresher=$warm;statuses=@($statuses)}
 } | Select-Object -Skip 1)
+$single=$null
+try { $single=Cpu-Row (Get-CimInstance -Namespace root/cimv2 -ClassName Win32_PerfFormattedData_Counters_ProcessorInformation -Filter "Name='_Total'" -OperationTimeoutSec 3 | Select-Object -First 1) }
+catch { $errors+=('cim:'+ $_.Exception.HResult) }
 $build=$null
 try{$v=Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion';$build=[PSCustomObject]@{build=$v.CurrentBuildNumber;revision=$v.UBR;displayVersion=$v.DisplayVersion}}catch{}
 ConvertTo-Json -InputObject ([PSCustomObject]@{singleCim=$single;samples=@($samples);errors=@($errors);counterErrors=@($counterErrors | ForEach-Object {$_.FullyQualifiedErrorId} | Select-Object -Unique);windows=$build;powershell=$PSVersionTable.PSVersion.ToString()}) -Depth 6 -Compress
@@ -86,16 +86,17 @@ export function localMetricsUrl(value){
 }
 export function selectSample(data){
  if(!data||typeof data!=='object'||!Number.isFinite(data.timestamp))return{error:'invalid-metrics-response'};
- const keys=['osTimes','windowsProcessorTime','windowsProcessorUtility','logicalCpuCount','sampleIntervalMs','windowsSampleAgeMs','platform','osRelease','nodeVersion','libuvVersion'];
+ const keys=['osTimes','windowsProcessorTime','windowsProcessorUtility','logicalCpuCount','sampleIntervalMs','windowsSampleAgeMs','windowsPreferredMetric','platform','osRelease','nodeVersion','libuvVersion'];
  return{timestamp:data.timestamp,cpu:data.cpu??null,cpuSource:data.cpuSource??'missing-in-response',details:Object.fromEntries(keys.map(key=>[key,data.cpuDetails?.[key]??null]))};
 }
 export async function collectCpuDiagnostics({url,platform=process.platform,system=os,run=execute,makeMetrics=createSystemMetrics,fetcher=fetch,sleep=ms=>new Promise(r=>setTimeout(r,ms)),now=Date.now}={}){
  const endpoint=localMetricsUrl(url);
  const report={schema:1,startedAt:new Date(now()).toISOString(),mode:endpoint?'existing-local-server':'new-local-sampler',platform,nodeVersion:process.versions.node,libuvVersion:process.versions.uv,osRelease:system.release(),logicalCpuCount:system.cpus().length,cpuModel:system.cpus()[0]?.model??null,samples:[],reference:null};
- const reference=platform==='win32'?run('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',windowsCpuReferenceCommand],{timeout:25000,maxBuffer:512*1024,windowsHide:true,shell:false}).then(({stdout})=>{try{return JSON.parse(String(stdout).replace(/^\uFEFF/,'').trim());}catch{return{error:'invalid-reference-json'};}}).catch(error=>({error:'reference-command-failed',code:error.code??null,killed:!!error.killed,stderr:String(error.stderr??'').slice(0,4000)})):Promise.resolve({error:'windows-reference-not-run'});
+ let referenceDone=false;
+ const reference=(platform==='win32'?run('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-Command',windowsCpuReferenceCommand],{timeout:25000,maxBuffer:512*1024,windowsHide:true,shell:false}).then(({stdout})=>{try{return JSON.parse(String(stdout).replace(/^\uFEFF/,'').trim());}catch{return{error:'invalid-reference-json'};}}).catch(error=>({error:'reference-command-failed',code:error.code??null,killed:!!error.killed,stderr:String(error.stderr??'').slice(0,4000)})):Promise.resolve({error:'windows-reference-not-run'})).finally(()=>{referenceDone=true;});
  const metrics=endpoint?null:makeMetrics();
  try{
-  for(let i=0;i<12;i++){
+  for(let i=0;i<30&&(i<12||!referenceDone);i++){
     await sleep(1000);
     try{
       let data;
@@ -106,18 +107,27 @@ export async function collectCpuDiagnostics({url,platform=process.platform,syste
   }
  }finally{metrics?.close();}
  report.reference=await reference;
+ const referenceTimes=(report.reference?.samples??[]).map(sample=>Date.parse(sample.timestamp)).filter(Number.isFinite);
+ const productionTimes=report.samples.filter(sample=>!sample.error&&Number.isFinite(sample.cpu)).map(sample=>sample.timestamp).filter(Number.isFinite);
+ report.overlap={referenceSamplesWithinProductionWindow:referenceTimes.filter(t=>t>=Math.min(...productionTimes)&&t<=Math.max(...productionTimes)).length};
  report.finishedAt=new Date(now()).toISOString();
  return report;
 }
 
+export function collectorFingerprint(sources){
+ const hash=createHash('sha256');for(const source of sources)hash.update(source.replace(/\r\n/g,'\n'));return hash.digest('hex');
+}
+
 async function main(args){
- if(args.includes('--help')){console.log('node frontend_ide/scripts/check-cpu-metrics.mjs [--url http://127.0.0.1:ポート/]\n約15秒の読み取り専用診断。既定では現在のソースを別に計測し、--url 指定時だけ起動中の画面サーバーを読みます。結果は frontend_ide/temp/cpu-diagnostics/ へ保存します。設定変更・負荷試験・外部送信は行いません。');return;}
+ if(args.includes('--help')){console.log('node frontend_ide/scripts/check-cpu-metrics.mjs [--url http://127.0.0.1:ポート/]\n約15〜30秒の読み取り専用診断。既定では現在のソースを別に計測し、--url 指定時だけ起動中の画面サーバーを読みます。結果は frontend_ide/temp/cpu-diagnostics/ へ保存します。設定変更・負荷試験・外部送信は行いません。');return;}
  if(args.length!==0&&!(args.length===2&&args[0]==='--url'))throw Error('--help で使い方を確認してください。');
  localMetricsUrl(args[1]);
- console.log('CPUを約15秒比較します。通常の作業を続けてください。設定変更や外部送信は行いません。');
+ console.log('CPUを約15〜30秒比較します。通常の作業を続けてください。設定変更や外部送信は行いません。');
  const report=await collectCpuDiagnostics({url:args[1]});
- const hash=createHash('sha256');for(const file of ['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs'])hash.update(await readFile(resolve(root,file)));
- report.collectorSha256=hash.digest('hex');
+ report.collectorSourceFiles=['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs','aidiy_cpu/windows-process.mjs','aidiy_cpu/windows-gpu.mjs'];
+ const sources=await Promise.all(report.collectorSourceFiles.map(file=>readFile(resolve(root,file),'utf8')));
+ report.collectorSha256=collectorFingerprint(sources);
+ report.collectorHashFormat='utf8-lf';
  const output=resolve(root,'temp/cpu-diagnostics',report.startedAt.replace(/[:.]/g,'-')+'.json');
  await mkdir(dirname(output),{recursive:true});await writeFile(output,JSON.stringify(report,null,2)+'\n','utf8');
  console.log('診断結果: '+output);

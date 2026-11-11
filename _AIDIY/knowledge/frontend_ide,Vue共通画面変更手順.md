@@ -920,7 +920,11 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 利用開始後の「CPU」で開く。ElectronはIDE所有の240×160の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUは画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
 
-`aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。CPUはWindowsでは `aidiy_cpu/windows-cpu.mjs` のCIM `Win32_PerfFormattedData_Counters_ProcessorInformation` の `_Total.PercentProcessorTime` を優先する。GPU取得と同じPowerShell起動内でCPUを取得し、失敗境界は分ける。GPUが未対応でもCPUの取得を30秒間止めず、CPUだけの照会を続ける。CPU側の取得失敗は独立して30秒休止し、Node.jsの全論理コアの時間差分へ戻す。他OSも同じ時間差分の合計から稼働時間の割合を計算し、コア数で再び割らない。10秒以上古いWindows値と、5秒（更新間隔を変更した場合はその5倍を下限）を超える休止全体のNode平均は現在値として使わない。RAMはOSの総メモリに対する使用率。ブラウザが動くPCやIDEプロセスだけの使用率ではない。CPUの値が別のモニターと異なる場合は、同じホスト・更新間隔・全CPUの指標かを確認する。周波数補正や一部コアの使用率とは直接比較しない。APIの `cpuSource` は `windows-processor-time` / `os-times` / `unavailable`。`cpuDetails` はNode計算値、WindowsのProcessor TimeとProcessor Utility、論理CPU数、実測間隔、Windows標本の経過時間、OS・Node/libuvの版を含む。Utilityは比較情報のみで、Timeとの最大値選択や周波数による倍率補正はしない。取得→JSON→VueのCPU系列・浮動数値に同じ百分率が届くことを `cpu-panel.test.mjs` で検証する。
+`aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。Windows CPUは `aidiy_cpu/windows-cpu.mjs` の `SWbemRefresher` で `Win32_PerfFormattedData_Counters_ProcessorInformation` の `_Total` を継続取得する。単発 `Get-CimInstance` が失敗しても、同じPCのCOM更新器では取得できる場合がある。初回Refreshの値は採用せず、1秒後のRefreshから返す。1秒未満の追加要求では直近標本を再利用する。CPU/GPUは同じPowerShellプロセスを使い、失敗境界を分ける。GPUが未対応でもCPUだけの照会を続け、CPU側の取得失敗は独立して30秒休止する。
+
+CPUの既定指標はWindows 10〜Windows 11 23H2（`10.0.10240`〜`10.0.22631`）では、旧Task Managerが使う周波数補正込みの `PercentProcessorUtility`。新しい版・不明な版では `PercentProcessorTime` を維持する。24H2以降のTask Managerの更新は段階配信のため、OS buildだけで完全一致は保証しない。TimeとUtilityを独立に検証し、0%を有効値として保つ。選択した指標が欠損ならTime、Timeも欠損ならNode.jsの全論理CPU時間差分へ戻す。大きい方を選ぶ処理やコア数・クロックの倍率補正はしない。Utilityが100を超えた場合も生値は保存し、画面に渡す値だけ0〜100に収める。
+
+他OSも全論理CPUの時間差分の合計から稼働時間の割合を計算し、コア数で再び割らない。10秒以上古いWindows値と、5秒（更新間隔を変更した場合はその5倍を下限）を超える休止全体のNode平均は現在値として使わない。RAMはOSの総メモリに対する使用率。ブラウザが動くPCやIDEプロセスだけの使用率ではない。APIの `cpuSource` は `windows-processor-utility` / `windows-processor-time` / `os-times` / `unavailable`。`cpuDetails` はNode計算値、WindowsのTime/Utility、`windowsPreferredMetric`、論理CPU数、実測間隔、Windows標本の経過時間、OS・Node/libuvの版を含む。取得→JSON→VueのCPU系列・浮動数値に選択した百分率が届くことを `cpu-panel.test.mjs` で検証する。
 
 WindowsのGPUは `aidiy_cpu/windows-gpu.mjs` の標準CIM `Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine` を優先する。GPUクラスが未提供・空・不正の場合は `Get-Counter` のPDH標準カウンターへ切り替える（WDDM 2.x対応のIntel/AMD/NVIDIA）。両経路とも3Dに限定し、同一物理エンジンのプロセス別利用率を合計して、全GPUの3Dエンジン最大値を表示する。動画デコード・Compute等の専用エンジンは含めない。一部の不正値・終了済みプロセスのカウンターを除外し、正常な他の値は維持する。Get-CounterはPerflibの英語009とCurrentLanguageのIDを照合して現地語名を選び、2標本中の最後の有効値/新規値だけを使う。レジストリーは参照のみで変更しない。
 
@@ -928,20 +932,20 @@ WindowsのGPUは `aidiy_cpu/windows-gpu.mjs` の標準CIM `Win32_PerfFormattedDa
 
 APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのCPU/GPU同時固定照会は8秒、CPU単独照会は5秒・各512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。外部ライブラリは追加しない。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
 
-確認: `node --test frontend_ide/checks/cpu-*.test.mjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
+確認: `node --test frontend_ide/checks/cpu-*.test.mjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CPU更新器の暖機/再使用・GPU CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
 
 
 ### 計測アプリ自身のCPU負荷を抑える
 
-Windowsでは `aidiy_cpu/windows-process.mjs` がPowerShellを計測中だけ1本再利用する。約1秒ごとの画面更新と既存CPU/GPUのカウンター・集約式は変えず、PowerShell/.NETの毎回起動をなくす。標準入力には固定の識別子だけを送り、要求が来るまでブロッキング読取で待つ。入力文字列をコマンドとして実行しない。最後の取得完了から10秒間要求がなければプロセスを終了し、表示復帰後の要求で再作成する。非表示中の定期照会は追加しない。
+Windowsでは `aidiy_cpu/windows-process.mjs` がPowerShellを計測中だけ1本再利用する。約1秒ごとの画面更新を保ち、PowerShell/.NETの毎回起動をなくす。CPU更新器もこのプロセス内で保持し、GPUのカウンター・集約式は変えない。標準入力には固定の識別子だけを送り、要求が来るまでブロッキング読取で待つ。入力文字列をコマンドとして実行しない。最後の取得完了から10秒間要求がなければプロセスを終了し、表示復帰後の要求で再作成する。非表示中の定期照会は追加しない。
 
-応答期限・512KiBの出力上限・中止・終了・不正応答ではプロセスを解放する。CPUとGPUの失敗・30秒再試行、NodeのCPU代替値、nvidia-smiの代替取得は維持する。Get-Counter経路は従来どおり2標本を取得するため、約1秒の標本待ちは残る。PowerShellの寿命を延ばす変更であり、CIMをSWbemRefresherへ置き換える変更ではない。
+応答期限・512KiBの出力上限・中止・終了・不正応答ではプロセスを解放する。CPUとGPUの失敗・30秒再試行、NodeのCPU代替値、nvidia-smiの代替取得は維持する。Get-Counter経路は従来どおり2標本を取得するため、約1秒の標本待ちは残る。CPUの初回更新器の暖機も約1秒必要。API応答はその待機をブロックしない。
 
-`node --test frontend_ide/checks/cpu-windows-process.test.mjs` は1秒ごと60回の要求を1起動で処理すること、固定識別子、出力の分割、期限・中止・異常終了、非表示相当の無通信と復帰、遅れた旧プロセスのイベント、終了後の解放を確認する。WindowsではPowerShell本体でCIM・現地語Get-Counter・CPUのみ・GPUのみ・GPU失敗後の復帰を同じプロセス内で試験する。起動回数の削減をCPU使用率の削減率として扱わない。実際の負荷は同じWindows機で、起動直後を除いて同じ作業・画面表示条件を維持し、aidiy_cpu本体と子PowerShellを合わせて変更前後のCPU時間を比較する。Linuxのmockや描画確認だけではWindowsのCPU削減率・カウンター精度を確定できない。
+`node --test frontend_ide/checks/cpu-windows-process.test.mjs` は1秒ごと60回の要求を1起動で処理すること、固定識別子、出力の分割、期限・中止・異常終了、非表示相当の無通信と復帰、遅れた旧プロセスのイベント、終了後の解放を確認する。WindowsではPowerShell本体でCPU更新器・GPU CIM・現地語Get-Counter・CPUのみ・GPUのみ・GPU失敗後の復帰を同じプロセス内で試験する。起動回数の削減をCPU使用率の削減率として扱わない。実際の負荷は同じWindows機で、起動直後を除いて同じ作業・画面表示条件を維持し、aidiy_cpu本体と子PowerShellを合わせて変更前後のCPU時間を比較する。Linuxのmockや描画確認だけではWindowsのCPU削減率・カウンター精度を確定できない。
 
 ### CPUの値が低い・他の表示と一致しないとき
 
-倍率やコア数を推測で掛けず、同じホストで実測値を比べる。CPUのAPI値は画面で再除算していない。GPU表示が成功していてもCPUのCIMが成功したとは限らず、取得完了後に次の更新を待つため、GPUのPDH取得経路では同じCPU値が複数回表示される場合がある。
+倍率やコア数を推測で掛けず、同じホストで実測値を比べる。CPUのAPI値は画面で再除算していない。GPU表示が成功していてもCPUの取得が成功したとは限らず、取得完了後に次の更新を待つため、GPUのPDH取得経路では同じCPU値が複数回表示される場合がある。
 
 読み取り専用の比較診断は、リポジトリ直下で次を実行する。
 
@@ -949,10 +953,10 @@ Windowsでは `aidiy_cpu/windows-process.mjs` がPowerShellを計測中だけ1�
 node frontend_ide/scripts/check-cpu-metrics.mjs
 ```
 
-約15秒で `frontend_ide/temp/cpu-diagnostics/日時.json` を保存する。設定・レジストリー・表示式を変更せず、負荷試験・外部送信は行わない。通常の作業中に実行する。結果にはOS/CPU/Nodeの版、現行サンプラーの12回の値・取得元・標本の経過時間、継続PDHクエリーのProcessor Time/Utility、SWbemRefresherの更新値、単発CIM値を含む。エラー時は参照コマンドのstderrも含むため、共有前に内容を確認する。
+約15〜30秒で `frontend_ide/temp/cpu-diagnostics/日時.json` を保存する。設定・レジストリー・表示式を変更せず、負荷試験・外部送信は行わない。通常の作業中に実行する。結果にはOS/CPU/Nodeの版、現行サンプラーの12〜30回の値・取得元・標本の経過時間、継続PDHクエリーのProcessor Time/Utility、SWbemRefresherの更新値、単発CIM値を含む。エラー時は参照コマンドのstderrも含むため、共有前に内容を確認する。
 
 既定では、現在のソースから別のサンプラーを起動する。すでに開いている画面が同じ版とは限らない。起動中のCPU/IDEサーバーのloopback URLが分かる場合だけ、`--url http://127.0.0.1:ポート/` を付けるとその `/api/system-metrics` を読む。外部URLやリダイレクトは許可しない。診断項目が `missing-in-response` なら旧サーバーの可能性がある。ブラウザの再読込だけではNodeサーバーのコードは更新されない。IDEから開いたCPU子窓はIDEの計測サーバーを共有するため、CPU子窓だけを開き直しても更新されない。作業を保存したうえでIDE本体を再起動する必要がある。単独aidiy_cpuはその単独サーバーの再起動でよい。
 
-Windowsの参照値は、言語別Perflib IDで名前を解決して1つのPDHクエリーを9回採取し、初回を捨てる。WMI更新器も繰り返し更新する。単発CIMと継続計測の差、TimeとUtilityの差、取得失敗・値の古さを分けて判断する。Utilityは周波数補正を含み100を超える場合があるが、大きい方を自動で正解とはしない。Task Managerの変更は段階展開であり、OS名だけで特定カウンターと完全一致するとは断定しない。
+Windowsの参照値は、言語別Perflib IDで名前を解決して1つのPDHクエリーを9回採取し、初回を捨てる。WMI更新器も繰り返し更新する。単発CIM検査は連続計測の後で行い、その遅延で比較期間がずれないようにする。本体側も参照完了まで（最大30回）採取し、`overlap.referenceSamplesWithinProductionWindow` に本体の有効CPU値の採取範囲と時刻が重なった参照標本数を残す。0なら同時比較として扱わない。ソース指紋はCPU/GPU計測の4ファイルをLFにそろえて算出するため、WindowsのCRLFに影響されない。単発CIMと継続計測の差、TimeとUtilityの差、取得失敗・値の古さを分けて判断する。Utilityは周波数補正を含み100を超える場合があるが、大きい方を自動で正解とはしない。Task Managerの変更は段階展開であり、OS名だけで特定カウンターと完全一致するとは断定しない。
 
-資料: [PDHの2標本・1秒以上の採取要件](https://learn.microsoft.com/en-us/windows/win32/perfctrs/collecting-performance-data)、[WMI更新器](https://learn.microsoft.com/en-us/windows/win32/wmisdk/refreshing-wmi-data-in-scripts)、[Task ManagerのCPU指標変更](https://support.microsoft.com/en-us/servicing/os/windows-11/2025/08/august-29-2025-kb5064081-os-build-26100-5074-preview)。診断のmock試験は `node --test frontend_ide/checks/cpu-diagnostics.test.mjs`。mock通過は実機カウンター値の正しさを保証しない。
+資料: [旧Task ManagerのProcessor Utility](https://learn.microsoft.com/en-us/troubleshoot/windows-client/performance/cpu-usage-exceeds-100)、[PDHの2標本・1秒以上の採取要件](https://learn.microsoft.com/en-us/windows/win32/perfctrs/collecting-performance-data)、[WMI更新器](https://learn.microsoft.com/en-us/windows/win32/wmisdk/refreshing-wmi-data-in-scripts)、[Task ManagerのCPU指標変更](https://support.microsoft.com/en-us/servicing/os/windows-11/2025/08/august-29-2025-kb5064081-os-build-26100-5074-preview)。診断のmock試験は `node --test frontend_ide/checks/cpu-diagnostics.test.mjs`。mock通過は実機カウンター値の正しさを保証しない。

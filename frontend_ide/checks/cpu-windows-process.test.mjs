@@ -10,6 +10,7 @@ import { PassThrough } from 'node:stream';
 import { spawn } from 'node:child_process';
 import { createWindowsMetricsProcess, windowsMetricsProcessCommand } from '../aidiy_cpu/windows-process.mjs';
 import { windowsGpuCimCommand, windowsGpuCounterCommand } from '../aidiy_cpu/windows-gpu.mjs';
+import { mockCpuRefresher } from './cpu-windows-fixture.mjs';
 import { createSystemMetrics } from '../aidiy_cpu/metrics.mjs';
 
 const value = { cpu: { Name: '_Total', PercentProcessorTime: 64, PercentProcessorUtility: 92 }, gpu: [{ Name: 'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D', UtilizationPercentage: 40 }] };
@@ -47,6 +48,7 @@ test('固定スクリプトは入力をコマンド化せず、ブロッキン�
   assert.match(windowsMetricsProcessCommand, /switch -Exact \(\$request\)/);
   assert.match(windowsMetricsProcessCommand, /default \{ exit 1 \}/);
   assert.doesNotMatch(windowsMetricsProcessCommand, /Invoke-Expression|ScriptBlock\]::Create|Start-Sleep/);
+  assert.equal((windowsMetricsProcessCommand.match(/function Read-AidiyCpu/g) ?? []).length,1);
   assert.ok(Buffer.from(windowsMetricsProcessCommand, 'utf16le').toString('base64').length < 30000);
 });
 
@@ -166,9 +168,9 @@ test('Windows実行: 同一PowerShellでCPU/GPUの固定照会を切替え、最
   let starts = 0;
   const worker = createWindowsMetricsProcess({ spawn(file, args, opts) {
     starts++;
-    const mock = `$script:gpuCalls = 0
+    const mock = mockCpuRefresher() + `$script:gpuCalls = 0
     function Get-CimInstance { param($Namespace,$ClassName,$Filter,$Property,$OperationTimeoutSec)
-      if ($ClassName -eq 'Win32_PerfFormattedData_Counters_ProcessorInformation') { [PSCustomObject]@{Name='_Total';PercentProcessorTime=64;PercentProcessorUtility=92} }
+      if ($ClassName -eq 'Win32_PerfFormattedData_Counters_ProcessorInformation') { throw 'CPU must not use CIM' }
       else {
         $script:gpuCalls++; if ($script:gpuCalls -eq 1) { throw 'First GPU query fails' }
         [PSCustomObject]@{Name='${value.gpu[0].Name}';UtilizationPercentage=40}

@@ -5,14 +5,15 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { spawn as spawnProcess } from 'node:child_process';
 import { windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
-import { windowsSystemMetricsCommand } from './windows-cpu.mjs';
+import { windowsSystemMetricsCommand, windowsCpuSamplerCommand } from './windows-cpu.mjs';
 
 // 照会のたびにPowerShell/.NET/CIMを起動し直さない。標準入力は固定の識別子だけ。
-// 値の取得には既存の固定コマンドを再利用し、計測の意味と失敗境界を変えない。
+// GPU固定コマンドとCPU更新器を1回定義し、CPU/GPUの失敗境界を分ける。
 export const windowsMetricsProcessCommand = String.raw`
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
+` + windowsCpuSamplerCommand + String.raw`
 $cimQuery = {
 ` + windowsGpuCimCommand + String.raw`
 }
@@ -20,7 +21,7 @@ $counterQuery = {
 ` + windowsGpuCounterCommand + String.raw`
 }
 $withCpu = {
-` + windowsSystemMetricsCommand('& $gpuQuery') + String.raw`
+` + windowsSystemMetricsCommand('& $gpuQuery', true, false) + String.raw`
 }
 $withoutCpu = {
 ` + windowsSystemMetricsCommand('& $gpuQuery', false) + String.raw`

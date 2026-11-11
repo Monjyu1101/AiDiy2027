@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {windowsGpuCimCommand,windowsGpuCounterCommand,parseWindowsGpuUtilization} from '../aidiy_cpu/windows-gpu.mjs';
-import {windowsSystemMetricsCommand,parseWindowsCpuUtilization} from '../aidiy_cpu/windows-cpu.mjs';
+import {windowsSystemMetricsCommand,parseWindowsCpuUtilization,windowsCpuSamplerCommand} from '../aidiy_cpu/windows-cpu.mjs';
+import {mockCpuRefresher} from './cpu-windows-fixture.mjs';
 const execute=promisify(execFile);
 
 test('Windowsの固定コマンドは3D限定、現地語ID照合、2番目の有効サンプルを使う',()=>{
@@ -57,21 +58,17 @@ ${windowsGpuCimCommand}`;
 });
 
 
-test('Windows標準CPUは全CPU Processor Timeを別失敗境界で取得し、GPU休止中はCPUのみ照会',()=>{
+test('Windows CPUは言語非依存の継続更新器を使い、GPU休止中はCPUのみ照会',()=>{
  const both=windowsSystemMetricsCommand(windowsGpuCimCommand),cpu=windowsSystemMetricsCommand(),gpu=windowsSystemMetricsCommand(windowsGpuCimCommand,false);
- assert.match(both,/Win32_PerfFormattedData_Counters_ProcessorInformation/);assert.match(both,/-Filter "Name='_Total'"/);
- assert.match(both,/PercentProcessorTime,PercentProcessorUtility/);assert.match(both,/@\{ cpu = \$cpu; gpu = @\(\$gpu\) \}/);
+ assert.match(both,/Win32_PerfFormattedData_Counters_ProcessorInformation/);assert.match(both,/Properties_\.Item\('Name'\)\.Value -eq '_Total'/);
+ assert.match(both,/Properties_\.Item\('PercentProcessorTime'\)/);assert.match(both,/Properties_\.Item\('PercentProcessorUtility'\)/);assert.doesNotMatch(cpu,/Get-CimInstance/);assert.match(both,/@\{ cpu = \$cpu; gpu = @\(\$gpu\) \}/);
  assert.doesNotMatch(cpu,/GPUEngine|Get-Counter/);assert.doesNotMatch(gpu,/Win32_PerfFormattedData_Counters_ProcessorInformation/);
 });
 for(const failure of ['none','gpu','cpu'])test(`PowerShell実行: CPU/GPUのJSONと独立した失敗 (${failure})`,{skip:process.platform!=='win32'},async()=>{
- const script=`
+ const script=mockCpuRefresher({failure:failure==='cpu'})+`
 function Get-CimInstance {
  param($Namespace,$ClassName,$Filter,$Property,$OperationTimeoutSec)
- if ($ClassName -eq 'Win32_PerfFormattedData_Counters_ProcessorInformation') {
-  if ('${failure}' -eq 'cpu') { throw 'CPU class unavailable' }
-  if ($Filter -ne "Name='_Total'") { throw 'CPU must be total' }
-  return [PSCustomObject]@{ Name='_Total'; PercentProcessorTime=64; PercentProcessorUtility=92 }
- }
+ if ($ClassName -eq 'Win32_PerfFormattedData_Counters_ProcessorInformation') { throw 'CPU must not use CIM' }
  if ('${failure}' -eq 'gpu') { throw 'GPU class unavailable' }
  [PSCustomObject]@{ Name='${name}'; UtilizationPercentage=40 }
  [PSCustomObject]@{ Name='${name.replace('pid_1','pid_2')}'; UtilizationPercentage=10 }
@@ -80,4 +77,19 @@ ${windowsSystemMetricsCommand(windowsGpuCimCommand)}`;
  const {stdout}=await execute('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{timeout:10000,windowsHide:true,shell:false});
  const data=JSON.parse(stdout.trim());assert.equal(parseWindowsCpuUtilization(data.cpu)?.time??null,failure==='cpu'?null:64);
  assert.equal(parseWindowsGpuUtilization(JSON.stringify(data.gpu)),failure==='gpu'?null:50);
+});
+
+
+test('PowerShell実行: 初回暖機・同じ更新器の再使用・短い区間の再使用・再更新',{skip:process.platform!=='win32'},async()=>{
+ const script=mockCpuRefresher({time:3,utility:51})+windowsCpuSamplerCommand+`
+ $first=Read-AidiyCpu
+ $immediate=Read-AidiyCpu
+ $before=$script:refreshCount
+ [Threading.Thread]::Sleep(1010)
+ $next=Read-AidiyCpu
+ ConvertTo-Json -InputObject ([PSCustomObject]@{first=$first;immediate=$immediate;next=$next;before=$before;after=$script:refreshCount;creates=$script:refresherCreates}) -Compress
+ `;
+ const {stdout}=await execute('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{timeout:10000,windowsHide:true,shell:false});
+ const data=JSON.parse(stdout);assert.equal(data.first.PercentProcessorUtility,51);assert.deepEqual(data.immediate,data.first);assert.deepEqual(data.next,data.first);
+ assert.equal(data.before,2);assert.equal(data.after,3);assert.equal(data.creates,1);
 });

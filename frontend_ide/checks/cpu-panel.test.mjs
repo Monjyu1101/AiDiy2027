@@ -73,17 +73,17 @@ test('CPU is graph-only with compact percent margin and Diag-sized right inset',
 });
 
 
-test('Windows取得値はJSON応答からVueのCPUグラフ・浮動数値まで縮小せず届く',async()=>{
+for(const [release,expected] of [['10.0.26100',64],['10.0.22631',92]])test(`Windows取得値(${release})はJSONからグラフ・数値まで縮小せず届く`,async()=>{
  let now=0,busy=100,idle=100;
- const metrics=createSystemMetrics({platform:'win32',now:()=>now,system:{cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:64,PercentProcessorUtility:92},gpu:[{Name:'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D',UtilizationPercentage:40}]})})});
+ const metrics=createSystemMetrics({platform:'win32',now:()=>now,system:{release:()=>release,cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250},run:async()=>({stdout:JSON.stringify({cpu:{Name:'_Total',PercentProcessorTime:64,PercentProcessorUtility:92},gpu:[{Name:'pid_1_luid_0x00000000_0x0000abcd_phys_0_eng_0_engtype_3D',UtilizationPercentage:40}]})})});
  const f=fixture();
  try{
   await metrics.sample();await tick();now+=1000;busy+=3;idle+=97;
   const api=JSON.parse(JSON.stringify(await metrics.sample()));
-  assert.equal(api.cpu,64);assert.ok(Math.abs(api.cpuDetails.osTimes-3)<1e-8);
+  assert.equal(api.cpu,expected);assert.ok(Math.abs(api.cpuDetails.osTimes-3)<1e-8);
   f.setFetch(async()=>({ok:true,json:async()=>api}));await f.context.poll();
   const cpu=f.context.state.series.value.find(item=>item.key==='cpu');
   const label=f.context.state.labels.value.find(item=>item.key==='cpu');
-  assert.equal(cpu.value,64);assert.equal(label.value,64);assert.equal('CPU '+Math.round(label.value)+'%','CPU 64%');assert.equal(cpu.y,94-64*.84);
+  assert.equal(cpu.value,expected);assert.equal(label.value,expected);assert.equal('CPU '+Math.round(label.value)+'%',`CPU ${expected}%`);assert.equal(cpu.y,94-expected*.84);
  }finally{metrics.close();f.unmount();}
 });

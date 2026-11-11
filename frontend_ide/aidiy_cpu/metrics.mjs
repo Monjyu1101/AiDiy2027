@@ -7,7 +7,7 @@ import * as os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
-import { parseWindowsCpuUtilization, windowsSystemMetricsCommand } from './windows-cpu.mjs';
+import { parseWindowsCpuUtilization, preferredWindowsCpuMetric, windowsSystemMetricsCommand } from './windows-cpu.mjs';
 import { createWindowsMetricsProcess } from './windows-process.mjs';
 export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
@@ -36,6 +36,8 @@ export function parseGpuUtilization(stdout) {
 
 // ブラウザではなくIDEサーバーが動くホスト全体を計測する。常駐タイマーは持たない。
 export function createSystemMetrics({ system = os, run = execute, now = Date.now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics } = {}) {
+  const osRelease = typeof system.release === 'function' ? system.release() : null;
+  const windowsPreferredMetric = preferredWindowsCpuMetric(osRelease);
   const windowsProcess = windowsMetrics ?? (platform === 'win32' && run === execute ? createWindowsMetricsProcess() : null);
   let previous = cpuSnapshot(system.cpus()), previousAt = now();
   let cached, pending, externalPending, closed = false, gpu = null, externalCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
@@ -112,12 +114,15 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
       windowsCpu = null; externalCheckedAt = -Infinity;
     }
     refreshExternalMetrics(timestamp);
-    const cpu = windowsCpu?.time ?? osCpu;
-    const cpuSource = windowsCpu ? 'windows-processor-time' : osCpu !== null ? 'os-times' : 'unavailable';
+    const nativeMetric = windowsCpu?.[windowsPreferredMetric] !== null && windowsCpu?.[windowsPreferredMetric] !== undefined
+      ? windowsPreferredMetric : windowsCpu?.time !== null && windowsCpu?.time !== undefined ? 'time' : null;
+    const nativeCpu = windowsCpu?.[nativeMetric];
+    const cpu = nativeCpu !== null && nativeCpu !== undefined ? percent(nativeCpu) : osCpu;
+    const cpuSource = nativeMetric ? `windows-processor-${nativeMetric}` : osCpu !== null ? 'os-times' : 'unavailable';
     const cpuDetails = Object.freeze({
       osTimes: osCpu, windowsProcessorTime: windowsCpu?.time ?? null, windowsProcessorUtility: windowsCpu?.utility ?? null,
       logicalCpuCount: current?.count ?? null, sampleIntervalMs, windowsSampleAgeMs: windowsCpu ? timestamp - windowsCpuMeasuredAt : null,
-      platform, osRelease: typeof system.release === 'function' ? system.release() : null, nodeVersion: process.versions.node, libuvVersion: process.versions.uv,
+      windowsPreferredMetric: platform === 'win32' ? windowsPreferredMetric : null, platform, osRelease, nodeVersion: process.versions.node, libuvVersion: process.versions.uv,
     });
     if (closed) throw Error('システム計測は終了しました。');
     cached = Object.freeze({ timestamp, cpu, gpu, ram, gpuStatus: gpu === null ? 'unavailable' : 'available', cpuSource, cpuDetails });

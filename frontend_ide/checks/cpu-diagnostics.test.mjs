@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {localMetricsUrl,selectSample,collectCpuDiagnostics,windowsCpuReferenceCommand} from '../scripts/check-cpu-metrics.mjs';
+import {localMetricsUrl,selectSample,collectCpuDiagnostics,windowsCpuReferenceCommand,collectorFingerprint} from '../scripts/check-cpu-metrics.mjs';
 test('CPU診断は指定されたloopbackのmetricsだけを読み、外部URLや認証情報を拒否',()=>{
  assert.equal(localMetricsUrl(undefined),null);assert.equal(localMetricsUrl('http://127.0.0.1:12345/'),'http://127.0.0.1:12345/api/system-metrics');
  for(const url of ['https://127.0.0.1:1/','http://example.com:1/','http://127.0.0.1/','http://user:pass@127.0.0.1:1/','http://127.0.0.1:1/other','http://127.0.0.1:1/?token=secret'])assert.throws(()=>localMetricsUrl(url));
@@ -34,4 +34,24 @@ test('PDH診断は1つのクエリーで2指標を連続採取し、初回を除
  assert.match(windowsCpuReferenceCommand,/WbemScripting.SWbemRefresher/);assert.match(windowsCpuReferenceCommand,/\$refresher.Refresh\(\)/);
  assert.match(windowsCpuReferenceCommand,/CurrentLanguage/);assert.match(windowsCpuReferenceCommand,/\$c.Status -ne 0 -and \$c.Status -ne 1/);
  assert.doesNotMatch(windowsCpuReferenceCommand,/Set-ItemProperty|Set-ExecutionPolicy|Start-Process|Invoke-WebRequest/);
+});
+
+
+test('遅いWindows参照の終了まで本体も採取し、重なる標本数を明記する',async()=>{
+ let now=0,finish,closed=false;
+ const report=await collectCpuDiagnostics({platform:'win32',system,now:()=>now,sleep:async ms=>{
+  now+=ms;if(now===20000)finish({stdout:JSON.stringify({samples:[{timestamp:new Date(14000).toISOString(),time:3,utility:51},{timestamp:new Date(19000).toISOString(),time:4,utility:62}]})});
+ },makeMetrics:()=>({sample:async()=>({timestamp:now,cpu:51}),close:()=>closed=true}),run:()=>new Promise(resolve=>finish=resolve)});
+ assert.ok(report.samples.length>=20);assert.ok(report.samples.length<=30);assert.equal(closed,true);assert.equal(report.overlap.referenceSamplesWithinProductionWindow,2);
+});
+test('参照初期化前に単発CIMで待たず、指紋はWindows/Linux改行を正規化',()=>{
+ assert.ok(windowsCpuReferenceCommand.indexOf('-MaxSamples 9')<windowsCpuReferenceCommand.indexOf('Get-CimInstance'));
+ assert.equal(collectorFingerprint(['one\r\ntwo\r\n','three\r\n']),collectorFingerprint(['one\ntwo\n','three\n']));
+ assert.notEqual(collectorFingerprint(['one']),collectorFingerprint(['two']));
+});
+
+test('本体の失敗標本だけでは同時比較できたと判定しない',async()=>{
+ let now=0;
+ const report=await collectCpuDiagnostics({platform:'win32',system,now:()=>now,sleep:async ms=>{now+=ms;},makeMetrics:()=>({sample:async()=>{throw Error('unavailable');},close(){}}),run:async()=>({stdout:JSON.stringify({samples:[{timestamp:new Date(5000).toISOString(),time:3,utility:51}]})})});
+ assert.equal(report.overlap.referenceSamplesWithinProductionWindow,0);
 });
