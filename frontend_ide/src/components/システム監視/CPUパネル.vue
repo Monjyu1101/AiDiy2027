@@ -13,22 +13,31 @@ const samples=ref([]),error=ref(''),ready=ref(false);
 const series=computed(()=>chartSeries(samples.value));
 // GPU未取得時はグラフ上の浮動ラベルを隠す。0%は正常値として表示する。
 const labels=computed(()=>placeLabels(series.value.filter(item=>item.key!=='gpu'||item.value!==null)));
-let timer,request,disposed=false;
+let timer,request,nextPollAt,generation=0,disposed=false;
 async function poll(){
  clearTimeout(timer);if(disposed||document.hidden||request)return;
- const controller=new AbortController();request=controller;
+ if(nextPollAt===undefined)nextPollAt=performance.now();
+ const version=generation,controller=new AbortController();request=controller;
  const timeout=setTimeout(()=>controller.abort(),4000);
  try{
   const response=await fetch('/api/system-metrics',{cache:'no-store',signal:controller.signal});
   if(!response.ok)throw Error();const sample=await response.json();
   if(!sample||typeof sample!=='object'||!Number.isFinite(sample.timestamp))throw Error();
-  if(disposed||document.hidden)return;
+  if(disposed||document.hidden||version!==generation||controller.signal.aborted)return;
   samples.value=[...samples.value,sample].slice(-60);error.value='';ready.value=true;
  }catch{
-  if(!disposed&&!document.hidden){samples.value=[...samples.value,{timestamp:Date.now(),cpu:null,gpu:null,ram:null}].slice(-60);error.value='計測できません。再試行中';ready.value=false;}
- }finally{clearTimeout(timeout);request=undefined;if(!disposed&&!document.hidden)timer=setTimeout(poll,1000);}
+  if(!disposed&&!document.hidden&&version===generation){samples.value=[...samples.value,{timestamp:Date.now(),cpu:null,gpu:null,ram:null}].slice(-60);error.value='計測できません。再試行中';ready.value=false;}
+ }finally{
+  clearTimeout(timeout);request=undefined;
+  if(!disposed&&!document.hidden&&version!==generation){nextPollAt=undefined;timer=setTimeout(poll,0);}
+  else if(!disposed&&!document.hidden){
+   const finished=performance.now();nextPollAt=(nextPollAt??finished)+1000;
+   if(nextPollAt<finished)nextPollAt+=Math.ceil((finished-nextPollAt)/1000)*1000;
+   timer=setTimeout(poll,Math.max(0,Math.ceil(nextPollAt-finished)));
+  }
+ }
 }
-function visibility(){clearTimeout(timer);if(document.hidden)request?.abort();else{samples.value=[];void poll();}}
+function visibility(){generation++;clearTimeout(timer);nextPollAt=undefined;if(document.hidden)request?.abort();else{samples.value=[];void poll();}}
 onMounted(()=>{document.addEventListener('visibilitychange',visibility);void poll();});
 onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document.removeEventListener('visibilitychange',visibility);});
 </script>

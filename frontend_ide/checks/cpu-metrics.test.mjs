@@ -10,7 +10,7 @@ import { parseWindowsCpuUtilization, preferredWindowsCpuMetric } from '../aidiy_
 function fixture(options = {}) {
   let time = 0, busy = 100, idle = 100, calls = 0;
   const system = { cpus: () => [{ times: { user: busy, idle } }, { times: { user: busy, idle } }], totalmem: () => 1000, freemem: () => 250 };
-  const metrics = createSystemMetrics({ system, platform: 'linux', now: () => time, run: async () => { calls++; return { stdout: '20\n65\n' }; }, ...options });
+  const metrics = createSystemMetrics({ system, platform: 'linux', windowsCpuMetrics: null, now: () => time, run: async () => { calls++; return { stdout: '20\n65\n' }; }, ...options });
   return { metrics, system, get calls() { return calls; }, tick(ms = 1000, work = 25, rest = 75) { time += ms; busy += work; idle += rest; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
@@ -136,91 +136,95 @@ test('CPUは論理コア数で二重に割らず、全コア100%・4コア中1�
   f.tick();assert.equal((await f.metrics.sample()).cpu,40);f.metrics.close();
 });
 
+
 const nativeCpu=(time,utility=time)=>({Name:'_Total',PercentProcessorTime:time,PercentProcessorUtility:utility});
-const nativeSample=(cpu,gpu=[])=>({stdout:JSON.stringify({cpu,gpu})});
-test('Windows全CPUは標準Processor Timeを使い、Node値とUtilityを比較情報として保持',async()=>{
- const f=fixture({platform:'win32',run:async()=>nativeSample(nativeCpu(64,92),[engine(1,0,40)])});
- f.tick(1000,3,97);await f.metrics.sample();await settle();f.tick(1000,3,97);
- const data=await f.metrics.sample();assert.equal(data.cpu,64);assert.equal(data.cpuSource,'windows-processor-time');
- assert.ok(Math.abs(data.cpuDetails.osTimes-3)<1e-8);assert.equal(data.cpuDetails.windowsProcessorTime,64);assert.equal(data.cpuDetails.windowsProcessorUtility,92);assert.equal(data.gpu,40);f.metrics.close();
+function nativeFixture({release='10.0.26100',time=64,utility=92,run=async()=>({stdout:JSON.stringify([engine(1,0,40)])})}={}){
+ let at=0,busy=100,idle=100,record=null,closed=false;
+ const system={release:()=>release,cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250};
+ const cpu={read:()=>record,close:()=>closed=true};
+ const metrics=createSystemMetrics({system,platform:'win32',now:()=>at,run,windowsCpuMetrics:cpu});
+ const f={metrics,cpu,get closed(){return closed;},tick(ms=1000,work=3,rest=97){at+=ms;busy+=work;idle+=rest;},set(time,utility,duration=1000){record=time===null&&utility===null?null:{cpu:{time,utility},measuredAt:at,sampleIntervalMs:duration};}};
+ f.set(time,utility);return f;
+}
+test('Windows CPUは独立monitorの値を使い、Node値と両カウンターを診断情報に保持',async()=>{
+ const f=nativeFixture();f.tick();const data=await f.metrics.sample();
+ assert.equal(data.cpu,64);assert.equal(data.cpuSource,'windows-processor-time');assert.ok(Math.abs(data.cpuDetails.osTimes-3)<1e-8);
+ assert.equal(data.cpuDetails.windowsProcessorTime,64);assert.equal(data.cpuDetails.windowsProcessorUtility,92);assert.equal(data.cpuDetails.windowsSampleIntervalMs,1000);
+ f.metrics.close();assert.equal(f.closed,true);
 });
-test('CPU標準値の欠損・不正・コア別だけの値は採用せず、0%とUtility>100%を区別',()=>{
+test('CPU標準値は独立検証し、欠損・不正・コア別を除外、0とUtility>100を保持',()=>{
  assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(0,150)),{time:0,utility:150});
  assert.deepEqual(parseWindowsCpuUtilization([nativeCpu('55','90')]),{time:55,utility:90});
+ assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(null,'51')),{time:null,utility:51});
  for(const row of [null,{},nativeCpu(null),nativeCpu(-1),nativeCpu(101,null),nativeCpu(''),{...nativeCpu(80),Name:'0,0'}])assert.equal(parseWindowsCpuUtilization(row),null);
 });
-test('Windows CPU失敗でもGPUを保ち、CPUはNode計算に戻る',async()=>{
- let failed=false;
- const f=fixture({platform:'win32',run:async()=>nativeSample(failed?null:nativeCpu(80),[engine(1,0,40)])});
- await f.metrics.sample();await settle();f.tick();assert.equal((await f.metrics.sample()).cpu,80);await settle();
- failed=true;f.tick();await f.metrics.sample();await settle();f.tick();const data=await f.metrics.sample();
- assert.equal(data.cpu,25);assert.equal(data.cpuSource,'os-times');assert.equal(data.gpu,40);f.metrics.close();
+test('Windows CPUの失敗でNode差分へ戻り、GPUを失わない',async()=>{
+ const f=nativeFixture();await f.metrics.sample();await settle();f.tick();f.set(null,null);
+ const data=await f.metrics.sample();assert.ok(Math.abs(data.cpu-3)<1e-8);assert.equal(data.cpuSource,'os-times');assert.equal(data.gpu,40);f.metrics.close();
 });
-test('GPU非対応の30秒休止中もWindows CPUは更新し、失敗したNVIDIAを毎秒起動しない',async()=>{
- const calls=[];let value=30;
- const f=fixture({platform:'win32',run:async(file,args)=>{const kind=source(file,args);calls.push(kind);if(kind==='nvidia')throw Error('not installed');return nativeSample(nativeCpu(value));}});
- await f.metrics.sample();await settle();assert.deepEqual(calls,['cim','counter','nvidia']);
- value=60;f.tick();assert.equal((await f.metrics.sample()).cpu,30);await settle();assert.deepEqual(calls,['cim','counter','nvidia','cpu']);
- f.tick();const data=await f.metrics.sample();assert.equal(data.cpu,60);assert.equal(data.gpu,null);f.metrics.close();
+test('GPUの3秒待機中・失敗時もCPU新標本を毎秒表示し、CPU取得を混ぜない',async()=>{
+ let finish;const commands=[];
+ const f=nativeFixture({run:(_file,args)=>{commands.push(args.at(-1));return new Promise(r=>finish=r);}});
+ await f.metrics.sample();
+ for(let i=1;i<=3;i++){f.tick();f.set(10*i,15*i);const data=await f.metrics.sample();assert.equal(data.cpu,10*i);assert.equal(data.cpuDetails.windowsSampleAgeMs,0);assert.equal(commands.length,1);}
+ assert.doesNotMatch(commands[0],/Read-AidiyCpu|Win32_PerfFormattedData_Counters_ProcessorInformation/);
+ finish({stdout:'[]'});await settle();f.tick();f.set(100,100);assert.equal((await f.metrics.sample()).cpu,100);
+ f.metrics.close();finish?.({stdout:'[]'});await settle();
 });
-test('Windows CPUの全取得失敗はGPUと独立して30秒休止し、復旧を再確認',async()=>{
- const commands=[];let failed=true;
- const f=fixture({platform:'win32',run:async(_file,args)=>{commands.push(args.at(-1));return nativeSample(failed?null:nativeCpu(75),[engine(1,0,35)]);}});
- await f.metrics.sample();await settle();f.tick();await f.metrics.sample();await settle();
- assert.match(commands[0],/Win32_PerfFormattedData_Counters_ProcessorInformation/);assert.doesNotMatch(commands[1],/Win32_PerfFormattedData_Counters_ProcessorInformation/);
- failed=false;f.tick(30000);await f.metrics.sample();await settle();assert.match(commands.at(-1),/Win32_PerfFormattedData_Counters_ProcessorInformation/);
- f.tick();assert.equal((await f.metrics.sample()).cpu,75);f.metrics.close();
+test('CPU新標本はHTTPの1秒キャッシュ中でも取り込み、同じ標本への重複要求は共有',async()=>{
+ const f=nativeFixture();await f.metrics.sample();f.tick(200,20,0);f.set(100,100,200);
+ const a=await f.metrics.sample();assert.equal(a.cpu,100);assert.equal(a.cpuDetails.windowsSampleIntervalMs,200);
+ f.tick(500,0,50);assert.equal(await f.metrics.sample(),a);f.metrics.close();
 });
-test('長い非表示からの最初のCPU平均を現在値として出さず、次の区間で復帰',async()=>{
+for(const duration of [200,500])test(`${duration}msの100%を1秒周期に合わせて縮小せず次標本まで保持`,async()=>{
+ const f=nativeFixture({time:100,utility:100});f.set(100,100,duration);
+ for(let i=0;i<3;i++){f.tick();const data=await f.metrics.sample();assert.equal(data.cpu,100);assert.equal(data.cpuDetails.windowsSampleIntervalMs,duration);}
+ f.set(30,30,duration);f.tick();assert.equal((await f.metrics.sample()).cpu,30);f.metrics.close();
+});
+test('CPU長期休止のNode平均を現在値として出さず、次の区間で復帰',async()=>{
  const f=fixture();f.tick();assert.equal((await f.metrics.sample()).cpu,25);
  f.tick(60000,1,5999);const resumed=await f.metrics.sample();assert.equal(resumed.cpu,null);assert.equal(resumed.cpuDetails.sampleIntervalMs,60000);
  f.tick(1000,80,20);assert.equal((await f.metrics.sample()).cpu,80);f.metrics.close();
 });
-test('遅いWindows更新中に10秒を超えたCPU値は現在値として保持しない',async()=>{
- let release,slow=false;
- const f=fixture({platform:'win32',run:async()=>slow?new Promise(r=>release=r):nativeSample(nativeCpu(80),[engine(1,0,20)])});
- await f.metrics.sample();await settle();slow=true;f.tick();assert.equal((await f.metrics.sample()).cpu,80);
- f.tick(9500);const data=await f.metrics.sample();assert.equal(data.cpu,null);assert.equal(data.cpuSource,'unavailable');assert.equal(data.cpuDetails.windowsProcessorTime,null);
- release(nativeSample(nativeCpu(65),[engine(1,0,20)]));await settle();f.tick();assert.equal((await f.metrics.sample()).cpu,65);f.metrics.close();
+test('CPU monitorが停止・古い値になれば現在値から除外し、新規標本で復帰',async()=>{
+ const f=nativeFixture({time:80});await f.metrics.sample();f.tick(10000);assert.equal((await f.metrics.sample()).cpu,null);
+ f.set(65,65);f.tick();assert.equal((await f.metrics.sample()).cpu,65);f.set(null,null);f.tick();assert.equal((await f.metrics.sample()).cpuSource,'os-times');f.metrics.close();
 });
-
-
-test('非表示後にWindows CPUが古くなってもGPU失敗用30秒待機へ落とさず直ちに更新',async()=>{
- let calls=0;
- const f=fixture({platform:'win32',run:async(file)=>{calls++;if(file==='nvidia-smi')throw Error('missing');return nativeSample(nativeCpu(70));}});
- await f.metrics.sample();await settle();const initial=calls;
- f.tick(12000);assert.equal((await f.metrics.sample()).cpu,null);await settle();assert.equal(calls,initial+1);
- f.tick();assert.equal((await f.metrics.sample()).cpu,70);f.metrics.close();
-});
-
-
-test('23H2以前はUtility、24H2以降と不明OSはTimeを既定とし、大小比較で選ばない',()=>{
+test('23H2以前はUtility、新OSと不明OSはTimeを既定とし、大小比較で選ばない',()=>{
  for(const release of ['10.0.10240','10.0.19045','10.0.22000','10.0.22631','10.0.22631.7652'])assert.equal(preferredWindowsCpuMetric(release),'utility');
- for(const release of [null,'unknown','6.1.7601','10.0.25398','10.0.26100','10.0.26200','11.0.1'])assert.equal(preferredWindowsCpuMetric(release),'time');
- assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(null,'51')),{time:null,utility:51});
- assert.deepEqual(parseWindowsCpuUtilization(nativeCpu('3',null)),{time:3,utility:null});
- assert.deepEqual(parseWindowsCpuUtilization(nativeCpu(-1,20)),{time:null,utility:20});
+ for(const release of [null,'unknown','6.1.7601','10.0.25398','10.0.26100','10.0.26200'])assert.equal(preferredWindowsCpuMetric(release),'time');
 });
 for(const [release,time,utility,expected,metric] of [
  ['10.0.22631',3,51,51,'utility'],['10.0.22631',80,20,20,'utility'],['10.0.22631',3,0,0,'utility'],
  ['10.0.22631',3,150,100,'utility'],['10.0.22631',null,51,51,'utility'],['10.0.22631',3,null,3,'time'],
  ['10.0.26100',3,51,3,'time'],['10.0.26100',80,20,80,'time'],
 ])test(`CPU指標の選択 ${release}, Time=${time}, Utility=${utility}`,async()=>{
- const f=fixture({platform:'win32',run:async()=>nativeSample(nativeCpu(time,utility),[engine(1,0,40)])});
- // releaseを持つ実機相当のsystemを作り、起動時にOSを判断する。
- f.metrics.close();
- const system={...f.system,release:()=>release};
- const metrics=createSystemMetrics({system,platform:'win32',now:()=>1000,run:async()=>nativeSample(nativeCpu(time,utility),[engine(1,0,40)]),interval:0});
- await metrics.sample();await settle();const data=await metrics.sample();
- assert.equal(data.cpu,expected);assert.equal(data.cpuSource,`windows-processor-${metric}`);
- assert.equal(data.cpuDetails.windowsProcessorUtility,utility);assert.equal(data.cpuDetails.windowsProcessorTime,time);
- assert.equal(data.cpuDetails.windowsPreferredMetric,preferredWindowsCpuMetric(release));metrics.close();
+ const f=nativeFixture({release,time,utility});f.tick();const data=await f.metrics.sample();
+ assert.equal(data.cpu,expected);assert.equal(data.cpuSource,`windows-processor-${metric}`);assert.equal(data.cpuDetails.windowsProcessorUtility,utility);assert.equal(data.cpuDetails.windowsProcessorTime,time);f.metrics.close();
+});
+test('新しいWindowsでTimeが無効ならUtilityへ勝手に切り替えずNode差分へ戻る',async()=>{
+ const f=nativeFixture({time:null,utility:51});f.tick(1000,9,91);const data=await f.metrics.sample();assert.ok(Math.abs(data.cpu-9)<1e-8);assert.equal(data.cpuSource,'os-times');assert.equal(data.cpuDetails.windowsProcessorUtility,51);f.metrics.close();
 });
 
-test('新しいWindowsでTimeが無効ならUtilityへ勝手に切り替えずNode差分へ戻る',async()=>{
- let timestamp=0,busy=100,idle=100;
- const system={release:()=> '10.0.26100',cpus:()=>[{times:{user:busy,idle}}],totalmem:()=>1000,freemem:()=>250};
- const metrics=createSystemMetrics({platform:'win32',system,now:()=>timestamp,run:async()=>nativeSample(nativeCpu(null,51),[engine(1,0,40)])});
- await metrics.sample();await settle();timestamp=1000;busy+=9;idle+=91;
- const data=await metrics.sample();assert.ok(Math.abs(data.cpu-9)<1e-8);assert.equal(data.cpuSource,'os-times');assert.equal(data.cpuDetails.windowsProcessorUtility,51);metrics.close();
+
+test('HTTP到着の小さな揺れでNode代替の1秒採取を2秒へ引き延ばさない',async()=>{
+ let now=0;const system={cpus:()=>[{times:{user:now,idle:100}}],totalmem:()=>1000,freemem:()=>250};
+ const metrics=createSystemMetrics({system,platform:'linux',now:()=>now,run:async()=>({stdout:''})});
+ const times=[0,1005,2000,3003,4000,5002,6000],responses=[];
+ for(const timestamp of times){now=timestamp;responses.push(await metrics.sample());}
+ assert.deepEqual(responses.map(r=>r.timestamp),times);
+ assert.deepEqual(responses.map(r=>r.cpuDetails.sampleIntervalMs),[0,1005,995,1003,997,1002,998]);
+ for(const r of responses.slice(1))assert.equal(r.cpu,100);metrics.close();
+});
+test('native標本が途中で更新されてもNodeの採取予定・差分窓はずれない',async()=>{
+ const f=nativeFixture();await f.metrics.sample();f.tick(800,80,0);f.set(100,100,500);let data=await f.metrics.sample();
+ assert.equal(data.cpu,100);assert.equal(data.cpuDetails.sampleIntervalMs,0);
+ f.tick(200,20,0);data=await f.metrics.sample();assert.equal(data.cpuDetails.sampleIntervalMs,1000);assert.equal(data.cpuDetails.osTimes,100);f.metrics.close();
+});
+
+
+test('壁時計が戻ってもNodeの1秒採取予定と実測間隔を維持する',async()=>{
+ let wall=100000,clock=0;const system={cpus:()=>[{times:{user:clock,idle:100}}],totalmem:()=>1000,freemem:()=>250};
+ const metrics=createSystemMetrics({system,platform:'linux',now:()=>wall,monotonicNow:()=>clock,run:async()=>({stdout:''})});
+ await metrics.sample();clock=1000;wall=100;const data=await metrics.sample();assert.equal(data.timestamp,100);assert.equal(data.cpuDetails.sampleIntervalMs,1000);assert.equal(data.cpu,100);metrics.close();
 });

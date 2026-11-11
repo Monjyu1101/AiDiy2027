@@ -86,7 +86,7 @@ export function localMetricsUrl(value){
 }
 export function selectSample(data){
  if(!data||typeof data!=='object'||!Number.isFinite(data.timestamp))return{error:'invalid-metrics-response'};
- const keys=['osTimes','windowsProcessorTime','windowsProcessorUtility','logicalCpuCount','sampleIntervalMs','windowsSampleAgeMs','windowsPreferredMetric','platform','osRelease','nodeVersion','libuvVersion'];
+ const keys=['osTimes','windowsProcessorTime','windowsProcessorUtility','logicalCpuCount','sampleIntervalMs','windowsSampleAgeMs','windowsSampleIntervalMs','windowsPreferredMetric','platform','osRelease','nodeVersion','libuvVersion'];
  return{timestamp:data.timestamp,cpu:data.cpu??null,cpuSource:data.cpuSource??'missing-in-response',details:Object.fromEntries(keys.map(key=>[key,data.cpuDetails?.[key]??null]))};
 }
 export async function collectCpuDiagnostics({url,platform=process.platform,system=os,run=execute,makeMetrics=createSystemMetrics,fetcher=fetch,sleep=ms=>new Promise(r=>setTimeout(r,ms)),now=Date.now}={}){
@@ -124,7 +124,7 @@ async function main(args){
  localMetricsUrl(args[1]);
  console.log('CPUを約15〜30秒比較します。通常の作業を続けてください。設定変更や外部送信は行いません。');
  const report=await collectCpuDiagnostics({url:args[1]});
- report.collectorSourceFiles=['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs','aidiy_cpu/windows-process.mjs','aidiy_cpu/windows-gpu.mjs'];
+ report.collectorSourceFiles=['aidiy_cpu/metrics.mjs','aidiy_cpu/windows-cpu.mjs','aidiy_cpu/windows-process.mjs','aidiy_cpu/windows-gpu.mjs','aidiy_cpu/windows-cpu-monitor.mjs'];
  const sources=await Promise.all(report.collectorSourceFiles.map(file=>readFile(resolve(root,file),'utf8')));
  report.collectorSha256=collectorFingerprint(sources);
  report.collectorHashFormat='utf8-lf';

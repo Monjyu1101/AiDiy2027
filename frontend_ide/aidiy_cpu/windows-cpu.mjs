@@ -31,6 +31,7 @@ $script:cpuRefreshable = $null
 $script:cpuClock = $null
 $script:cpuSample = $null
 function Read-AidiyCpu {
+  param([switch]$Fresh)
   try {
     if ($null -eq $script:cpuRefresher) {
       $locator = New-Object -ComObject WbemScripting.SWbemLocator
@@ -42,17 +43,20 @@ function Read-AidiyCpu {
       $script:cpuSample = $null
     }
     if ($script:cpuClock.ElapsedMilliseconds -lt 1000) {
-      if ($null -ne $script:cpuSample) { return $script:cpuSample }
-      [Threading.Thread]::Sleep([int][Math]::Max(0, 1000 - $script:cpuClock.ElapsedMilliseconds))
+      if ($null -ne $script:cpuSample -and -not $Fresh) { return $script:cpuSample }
+      while ($script:cpuClock.ElapsedMilliseconds -lt 1000) {
+        [Threading.Thread]::Sleep([int][Math]::Max(1, 1000 - $script:cpuClock.ElapsedMilliseconds))
+      }
     }
-    [void]$script:cpuRefresher.Refresh()
+    $sampleIntervalMs = $script:cpuClock.ElapsedMilliseconds
     $script:cpuClock.Restart()
+    [void]$script:cpuRefresher.Refresh()
     $row = @($script:cpuRefreshable.ObjectSet | Where-Object { $_.Properties_.Item('Name').Value -eq '_Total' }) | Select-Object -First 1
     if ($null -eq $row) { throw 'CPU total is unavailable' }
     $time = $null; $utility = $null
     try { $time = $row.Properties_.Item('PercentProcessorTime').Value } catch {}
     try { $utility = $row.Properties_.Item('PercentProcessorUtility').Value } catch {}
-    $script:cpuSample = [PSCustomObject]@{ Name = '_Total'; PercentProcessorTime = $time; PercentProcessorUtility = $utility }
+    $script:cpuSample = [PSCustomObject]@{ Name = '_Total'; PercentProcessorTime = $time; PercentProcessorUtility = $utility; SampleIntervalMs = $sampleIntervalMs }
     return $script:cpuSample
   } catch {
     $script:cpuRefresher = $null; $script:cpuRefreshable = $null; $script:cpuSample = $null
@@ -62,7 +66,7 @@ function Read-AidiyCpu {
 `;
 
 // CPU/GPUの失敗は独立。常駐プロセスでは更新器の定義・状態を起動時に1回だけ作る。
-export function windowsSystemMetricsCommand(gpuCommand = '', readCpu = true, bootstrapCpu = true) {
+export function windowsSystemMetricsCommand(gpuCommand = '', readCpu = true, bootstrapCpu = true, freshCpu = false) {
   return String.raw`
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -75,7 +79,7 @@ try { $gpuJson = & {
   $gpu = ConvertFrom-Json -InputObject ($gpuJson -join [Environment]::NewLine) -ErrorAction Stop
 } catch { $gpu = @() }
 $cpu = $null
-` + (readCpu ? 'try { $cpu = Read-AidiyCpu } catch {}\n' : '') + String.raw`
+` + (readCpu ? `try { $cpu = Read-AidiyCpu${freshCpu ? ' -Fresh' : ''} } catch {}\n` : '') + String.raw`
 ConvertTo-Json -InputObject ([PSCustomObject]@{ cpu = $cpu; gpu = @($gpu) }) -Depth 4 -Compress
 `;
 }

@@ -90,6 +90,18 @@ test('PowerShell実行: 初回暖機・同じ更新器の再使用・短い区�
  ConvertTo-Json -InputObject ([PSCustomObject]@{first=$first;immediate=$immediate;next=$next;before=$before;after=$script:refreshCount;creates=$script:refresherCreates}) -Compress
  `;
  const {stdout}=await execute('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{timeout:10000,windowsHide:true,shell:false});
- const data=JSON.parse(stdout);assert.equal(data.first.PercentProcessorUtility,51);assert.deepEqual(data.immediate,data.first);assert.deepEqual(data.next,data.first);
+ const data=JSON.parse(stdout);assert.equal(data.first.PercentProcessorUtility,51);assert.deepEqual(data.immediate,data.first);assert.equal(data.next.PercentProcessorUtility,data.first.PercentProcessorUtility);assert.ok(data.next.SampleIntervalMs>=1000);
  assert.equal(data.before,2);assert.equal(data.after,3);assert.equal(data.creates,1);
+});
+
+
+test('PowerShell実行: Freshは連続要求でもキャッシュを返さず、約1秒後の新標本を返す',{skip:process.platform!=='win32'},async()=>{
+ const script=mockCpuRefresher({time:100,utility:100})+windowsCpuSamplerCommand+`
+ $first=Read-AidiyCpu -Fresh
+ $before=$script:refreshCount
+ $next=Read-AidiyCpu -Fresh
+ ConvertTo-Json -InputObject ([PSCustomObject]@{first=$first;next=$next;before=$before;after=$script:refreshCount;creates=$script:refresherCreates}) -Compress
+ `;
+ const {stdout}=await execute('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',Buffer.from(script,'utf16le').toString('base64')],{timeout:10000,windowsHide:true,shell:false});
+ const data=JSON.parse(stdout);assert.equal(data.before,2);assert.equal(data.after,3);assert.equal(data.creates,1);assert.equal(data.next.PercentProcessorTime,100);assert.ok(data.next.SampleIntervalMs>=1000);
 });

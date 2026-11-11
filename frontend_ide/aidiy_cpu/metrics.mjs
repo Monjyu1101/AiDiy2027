@@ -4,11 +4,13 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import * as os from 'node:os';
+import { performance } from 'node:perf_hooks';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
-import { parseWindowsCpuUtilization, preferredWindowsCpuMetric, windowsSystemMetricsCommand } from './windows-cpu.mjs';
+import { preferredWindowsCpuMetric, windowsSystemMetricsCommand } from './windows-cpu.mjs';
 import { createWindowsMetricsProcess } from './windows-process.mjs';
+import { createWindowsCpuMonitor } from './windows-cpu-monitor.mjs';
 export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
 
@@ -34,33 +36,31 @@ export function parseGpuUtilization(stdout) {
   return Math.max(...values);
 }
 
-// ブラウザではなくIDEサーバーが動くホスト全体を計測する。常駐タイマーは持たない。
-export function createSystemMetrics({ system = os, run = execute, now = Date.now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics } = {}) {
+// ブラウザではなくIDEサーバーが動くホスト全体を計測する。CPU周期はGPUから独立。
+export function createSystemMetrics({ system = os, run = execute, now = Date.now, monotonicNow = now === Date.now ? () => performance.now() : now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics, windowsCpuMetrics } = {}) {
   const osRelease = typeof system.release === 'function' ? system.release() : null;
   const windowsPreferredMetric = preferredWindowsCpuMetric(osRelease);
+  const cpuMonitor = platform === 'win32' ? (windowsCpuMetrics === undefined ? createWindowsCpuMonitor({now}) : windowsCpuMetrics) : null;
+  let cpuRecord = null;
   const windowsProcess = windowsMetrics ?? (platform === 'win32' && run === execute ? createWindowsMetricsProcess() : null);
-  let previous = cpuSnapshot(system.cpus()), previousAt = now();
+  let previous = cpuSnapshot(system.cpus()), previousAt = monotonicNow();
+  let nextSampleAt = null, lastOsCpu = null, lastSampleIntervalMs = 0;
   let cached, pending, externalPending, closed = false, gpu = null, externalCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
-  let windowsCpu = null, windowsCpuMeasuredAt = -Infinity, nvidiaUnavailableUntil = -Infinity, cpuUnavailableUntil = -Infinity;
+  let windowsCpu = null, windowsCpuMeasuredAt = -Infinity, nvidiaUnavailableUntil = -Infinity;
   const windowsGpuUnavailableUntil = new Map();
   const controller = new AbortController();
   // PowerShell起動やPDHの2標本を待つ間も、CPU/RAMのHTTP応答を止めない。
-  // 要求がある間だけ1本を再利用し、非表示中は追加照会せずプロセスも解放する。
+  // GPU照会用を再利用し、CPU専用の1秒計測をGPUの待機・失敗から切り離す。
   async function measureExternalMetrics() {
-    let next = null, nextCpu = null, nextCpuAt = -Infinity, windowsRan = false, cpuAttempted = false;
+    let next = null;
     async function windowsSample(gpuCommand) {
-      windowsRan = true;
-      const readCpu = now() >= cpuUnavailableUntil;
-      cpuAttempted ||= readCpu;
       try {
         const options = {
           timeout: gpuCommand ? 8000 : 5000, maxBuffer: 512 * 1024, windowsHide: true, shell: false, signal: controller.signal,
         };
-        const { stdout } = windowsProcess ? await windowsProcess.sample(gpuCommand, readCpu, options)
-          : await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', windowsSystemMetricsCommand(gpuCommand, readCpu)], options);
+        const { stdout } = windowsProcess ? await windowsProcess.sample(gpuCommand, false, options)
+          : await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', windowsSystemMetricsCommand(gpuCommand, false)], options);
         const data = JSON.parse(String(stdout).replace(/^\uFEFF/, '').trim());
-        const cpu = parseWindowsCpuUtilization(data?.cpu);
-        if (cpu) { nextCpu = cpu; nextCpuAt = now(); }
         // 従来のGPU配列も読めるようにし、CPU欠損でGPUを失わない。
         return parseWindowsGpuUtilization(JSON.stringify(Array.isArray(data) || data?.Name ? data : data?.gpu));
       } catch { return null; }
@@ -73,9 +73,6 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
         if (next !== null) break;
         windowsGpuUnavailableUntil.set(command, now() + gpuRetryInterval);
       }
-      // GPU経路の30秒休止をCPUへ適用しない。失敗したGPUは再起動しない。
-      if (!windowsRan && !controller.signal.aborted && now() >= cpuUnavailableUntil) await windowsSample();
-      if (cpuAttempted && !nextCpu) cpuUnavailableUntil = now() + gpuRetryInterval;
     }
     if (next === null && !controller.signal.aborted && now() >= nvidiaUnavailableUntil) {
       try {
@@ -86,32 +83,40 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
       } catch { /* 未対応・失敗は0%ではなくnull。 */ }
       if (next === null) nvidiaUnavailableUntil = now() + gpuRetryInterval;
     }
-    if (!closed) { gpu = next; gpuMeasuredAt = now(); windowsCpu = nextCpu; windowsCpuMeasuredAt = nextCpuAt; }
+    if (!closed) { gpu = next; gpuMeasuredAt = now(); }
   }
   function refreshExternalMetrics(timestamp) {
-    const available = gpu !== null || windowsCpu !== null;
+    const available = gpu !== null;
     if (externalPending || timestamp - externalCheckedAt < (available ? interval : gpuRetryInterval)) return;
     externalCheckedAt = timestamp;
-    externalPending = measureExternalMetrics().catch(() => { if (!closed) { gpu = null; windowsCpu = null; } }).finally(() => { externalCheckedAt = now(); externalPending = undefined; });
+    externalPending = measureExternalMetrics().catch(() => { if (!closed) { gpu = null; } }).finally(() => { externalCheckedAt = now(); externalPending = undefined; });
   }
   async function measure() {
-    const timestamp = now();
-    const current = cpuSnapshot(system.cpus());
-    const total = current && previous ? current.total - previous.total : 0;
-    const idle = current && previous ? current.idle - previous.idle : 0;
-    const sampleIntervalMs = timestamp - previousAt;
-    // 非表示などの長い休止全体の平均を、復帰直後の現在使用率として出さない。
-    const osCpu = sampleIntervalMs > 0 && sampleIntervalMs <= Math.max(5000, interval * 5)
-      && current && previous && current.count === previous.count && total > 0 && idle >= 0 && idle <= total
-      ? percent(100 * (1 - idle / total)) : null;
-    previous = current; previousAt = timestamp;
+    const timestamp = now(), sampleAt = monotonicNow();
+    // HTTP到着の数msの揺れで1秒キャッシュが毎回延びないよう、採取予定を進める。
+    // native標本だけが先に更新された場合はNode差分の基準時刻を動かさない。
+    const due = nextSampleAt === null || sampleAt >= nextSampleAt;
+    const current = due ? cpuSnapshot(system.cpus()) : previous;
+    if (due) {
+      const total = current && previous ? current.total - previous.total : 0;
+      const idle = current && previous ? current.idle - previous.idle : 0;
+      lastSampleIntervalMs = sampleAt - previousAt;
+      lastOsCpu = lastSampleIntervalMs > 0 && lastSampleIntervalMs <= Math.max(5000, interval * 5)
+        && current && previous && current.count === previous.count && total > 0 && idle >= 0 && idle <= total
+        ? percent(100 * (1 - idle / total)) : null;
+      previous = current; previousAt = sampleAt;
+      const period = Math.max(1, interval);
+      nextSampleAt = nextSampleAt === null ? sampleAt + period
+        : nextSampleAt + (Math.floor((sampleAt - nextSampleAt) / period) + 1) * period;
+    }
+    const osCpu = lastOsCpu, sampleIntervalMs = lastSampleIntervalMs;
     const memoryTotal = system.totalmem(), memoryFree = system.freemem();
     const ram = memoryTotal > 0 && memoryFree >= 0 && memoryFree <= memoryTotal
       ? percent(100 * (1 - memoryFree / memoryTotal)) : null;
     // 長い非表示から戻ったときは古いGPU値を現在値として表示しない。
     if (timestamp - gpuMeasuredAt >= gpuRetryInterval) gpu = null;
     if (windowsCpu && timestamp - windowsCpuMeasuredAt >= 10000) {
-      windowsCpu = null; externalCheckedAt = -Infinity;
+      windowsCpu = null;
     }
     refreshExternalMetrics(timestamp);
     const nativeMetric = windowsCpu?.[windowsPreferredMetric] !== null && windowsCpu?.[windowsPreferredMetric] !== undefined
@@ -121,7 +126,7 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
     const cpuSource = nativeMetric ? `windows-processor-${nativeMetric}` : osCpu !== null ? 'os-times' : 'unavailable';
     const cpuDetails = Object.freeze({
       osTimes: osCpu, windowsProcessorTime: windowsCpu?.time ?? null, windowsProcessorUtility: windowsCpu?.utility ?? null,
-      logicalCpuCount: current?.count ?? null, sampleIntervalMs, windowsSampleAgeMs: windowsCpu ? timestamp - windowsCpuMeasuredAt : null,
+      logicalCpuCount: current?.count ?? null, sampleIntervalMs, windowsSampleIntervalMs: cpuRecord?.sampleIntervalMs ?? null, windowsSampleAgeMs: windowsCpu ? timestamp - windowsCpuMeasuredAt : null,
       windowsPreferredMetric: platform === 'win32' ? windowsPreferredMetric : null, platform, osRelease, nodeVersion: process.versions.node, libuvVersion: process.versions.uv,
     });
     if (closed) throw Error('システム計測は終了しました。');
@@ -131,11 +136,15 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
   return {
     sample() {
       if (closed) return Promise.reject(Error('システム計測は終了しました。'));
+      const currentCpu = cpuMonitor?.read() ?? null;
+      if (currentCpu !== cpuRecord) {
+        cpuRecord = currentCpu; windowsCpu = currentCpu?.cpu ?? null; windowsCpuMeasuredAt = currentCpu?.measuredAt ?? -Infinity; cached = undefined;
+      }
       if (pending) return pending;
-      if (cached && now() - cached.timestamp < interval) return Promise.resolve(cached);
+      if (cached && monotonicNow() < nextSampleAt) return Promise.resolve(cached);
       pending = measure().finally(() => { pending = undefined; });
       return pending;
     },
-    close() { closed = true; controller.abort(); windowsProcess?.close(); cached = undefined; },
+    close() { closed = true; controller.abort(); cpuMonitor?.close(); windowsProcess?.close(); cached = undefined; },
   };
 }

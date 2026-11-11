@@ -23,6 +23,9 @@ $counterQuery = {
 $withCpu = {
 ` + windowsSystemMetricsCommand('& $gpuQuery', true, false) + String.raw`
 }
+$freshCpu = {
+` + windowsSystemMetricsCommand('', true, false, true) + String.raw`
+}
 $withoutCpu = {
 ` + windowsSystemMetricsCommand('& $gpuQuery', false) + String.raw`
 }
@@ -33,6 +36,7 @@ while ($null -ne ($request = [Console]::ReadLine())) {
     'cim' { $gpuQuery = $cimQuery }
     'counter' { $gpuQuery = $counterQuery }
     'cpu' {}
+    'cpu-fresh' { $sample = $freshCpu }
     'cim-gpu' { $gpuQuery = $cimQuery; $sample = $withoutCpu }
     'counter-gpu' { $gpuQuery = $counterQuery; $sample = $withoutCpu }
     default { exit 1 }
@@ -44,8 +48,8 @@ while ($null -ne ($request = [Console]::ReadLine())) {
 }
 `;
 
-const requestName = (gpuCommand, readCpu) => {
-  if (!gpuCommand && readCpu) return 'cpu';
+const requestName = (gpuCommand, readCpu, freshCpu) => {
+  if (!gpuCommand && readCpu) return freshCpu ? 'cpu-fresh' : 'cpu';
   if (gpuCommand === windowsGpuCimCommand) return readCpu ? 'cim' : 'cim-gpu';
   if (gpuCommand === windowsGpuCounterCommand) return readCpu ? 'counter' : 'counter-gpu';
   throw Error('未対応のWindows計測要求です。');
@@ -105,10 +109,10 @@ export function createWindowsMetricsProcess({ spawn = spawnProcess, idleTimeout 
     return session;
   }
   return {
-    sample(gpuCommand = '', readCpu = true, { timeout = 8000, maxBuffer = 512 * 1024, signal } = {}) {
+    sample(gpuCommand = '', readCpu = true, { timeout = 8000, maxBuffer = 512 * 1024, signal, freshCpu = false } = {}) {
       if (closed || signal?.aborted) return Promise.reject(Error('Windows計測は終了しました。'));
       let key;
-      try { key = requestName(gpuCommand, readCpu); } catch (error) { return Promise.reject(error); }
+      try { key = requestName(gpuCommand, readCpu, freshCpu); } catch (error) { return Promise.reject(error); }
       if (current?.pending) return Promise.reject(Error('Windows計測は実行中です。'));
       let session;
       try { session = current ?? start(); } catch (error) { return Promise.reject(error); }
