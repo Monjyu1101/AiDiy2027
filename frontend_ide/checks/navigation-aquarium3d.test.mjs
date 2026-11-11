@@ -4,6 +4,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ナビアクアリウム3D状態を作成} from '../src/components/開発スペース/ナビアクアリウム3D状態.js';
 
+test('3D水槽: 魚の大小差と3種類・24匹を保ち、サイズを15%小さくする',()=>{
+  for(const sample of [0,.5,1]){
+    const a=ナビアクアリウム3D状態を作成(()=>sample);
+    assert.equal(a.fish.length,24);
+    assert.deepEqual([...new Set(a.fish.map(f=>f.species))],[0,1,2]);
+    assert.ok(a.fish.every(f=>Math.abs(f.size-(.65+sample*.5)*.85)<1e-12));
+    a.clear();
+  }
+});
+
 test('3D水槽: 餌は水面から落ち、連打上限・寿命・不正入力を守る',()=>{
   const a=ナビアクアリウム3D状態を作成(()=>.5);a.fish.length=0;
   a.feed(2);assert.equal(a.food.length,4);assert.ok(a.food.every(p=>p.x===2&&p.y===4.85&&p.z===0));
