@@ -8,6 +8,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { parseWindowsGpuUtilization, windowsGpuCimCommand, windowsGpuCounterCommand } from './windows-gpu.mjs';
 import { parseWindowsCpuUtilization, windowsSystemMetricsCommand } from './windows-cpu.mjs';
+import { createWindowsMetricsProcess } from './windows-process.mjs';
 export { parseWindowsGpuUtilization } from './windows-gpu.mjs';
 const execute = promisify(execFile);
 
@@ -34,14 +35,15 @@ export function parseGpuUtilization(stdout) {
 }
 
 // ブラウザではなくIDEサーバーが動くホスト全体を計測する。常駐タイマーは持たない。
-export function createSystemMetrics({ system = os, run = execute, now = Date.now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform } = {}) {
+export function createSystemMetrics({ system = os, run = execute, now = Date.now, interval = 1000, gpuRetryInterval = 30000, platform = process.platform, windowsMetrics } = {}) {
+  const windowsProcess = windowsMetrics ?? (platform === 'win32' && run === execute ? createWindowsMetricsProcess() : null);
   let previous = cpuSnapshot(system.cpus()), previousAt = now();
   let cached, pending, externalPending, closed = false, gpu = null, externalCheckedAt = -Infinity, gpuMeasuredAt = -Infinity;
   let windowsCpu = null, windowsCpuMeasuredAt = -Infinity, nvidiaUnavailableUntil = -Infinity, cpuUnavailableUntil = -Infinity;
   const windowsGpuUnavailableUntil = new Map();
   const controller = new AbortController();
   // PowerShell起動やPDHの2標本を待つ間も、CPU/RAMのHTTP応答を止めない。
-  // 要求がある間だけ1本起動し、非表示中の常駐タイマーは作らない。
+  // 要求がある間だけ1本を再利用し、非表示中は追加照会せずプロセスも解放する。
   async function measureExternalMetrics() {
     let next = null, nextCpu = null, nextCpuAt = -Infinity, windowsRan = false, cpuAttempted = false;
     async function windowsSample(gpuCommand) {
@@ -49,9 +51,11 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
       const readCpu = now() >= cpuUnavailableUntil;
       cpuAttempted ||= readCpu;
       try {
-        const { stdout } = await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', windowsSystemMetricsCommand(gpuCommand, readCpu)], {
+        const options = {
           timeout: gpuCommand ? 8000 : 5000, maxBuffer: 512 * 1024, windowsHide: true, shell: false, signal: controller.signal,
-        });
+        };
+        const { stdout } = windowsProcess ? await windowsProcess.sample(gpuCommand, readCpu, options)
+          : await run('powershell.exe', ['-NoLogo', '-NoProfile', '-NonInteractive', '-Command', windowsSystemMetricsCommand(gpuCommand, readCpu)], options);
         const data = JSON.parse(String(stdout).replace(/^\uFEFF/, '').trim());
         const cpu = parseWindowsCpuUtilization(data?.cpu);
         if (cpu) { nextCpu = cpu; nextCpuAt = now(); }
@@ -127,6 +131,6 @@ export function createSystemMetrics({ system = os, run = execute, now = Date.now
       pending = measure().finally(() => { pending = undefined; });
       return pending;
     },
-    close() { closed = true; controller.abort(); cached = undefined; },
+    close() { closed = true; controller.abort(); windowsProcess?.close(); cached = undefined; },
   };
 }

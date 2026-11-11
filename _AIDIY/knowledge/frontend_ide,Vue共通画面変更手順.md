@@ -931,6 +931,14 @@ APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`
 確認: `node --test frontend_ide/checks/cpu-*.test.mjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
 
 
+### 計測アプリ自身のCPU負荷を抑える
+
+Windowsでは `aidiy_cpu/windows-process.mjs` がPowerShellを計測中だけ1本再利用する。約1秒ごとの画面更新と既存CPU/GPUのカウンター・集約式は変えず、PowerShell/.NETの毎回起動をなくす。標準入力には固定の識別子だけを送り、要求が来るまでブロッキング読取で待つ。入力文字列をコマンドとして実行しない。最後の取得完了から10秒間要求がなければプロセスを終了し、表示復帰後の要求で再作成する。非表示中の定期照会は追加しない。
+
+応答期限・512KiBの出力上限・中止・終了・不正応答ではプロセスを解放する。CPUとGPUの失敗・30秒再試行、NodeのCPU代替値、nvidia-smiの代替取得は維持する。Get-Counter経路は従来どおり2標本を取得するため、約1秒の標本待ちは残る。PowerShellの寿命を延ばす変更であり、CIMをSWbemRefresherへ置き換える変更ではない。
+
+`node --test frontend_ide/checks/cpu-windows-process.test.mjs` は1秒ごと60回の要求を1起動で処理すること、固定識別子、出力の分割、期限・中止・異常終了、非表示相当の無通信と復帰、遅れた旧プロセスのイベント、終了後の解放を確認する。WindowsではPowerShell本体でCIM・現地語Get-Counter・CPUのみ・GPUのみ・GPU失敗後の復帰を同じプロセス内で試験する。起動回数の削減をCPU使用率の削減率として扱わない。実際の負荷は同じWindows機で、起動直後を除いて同じ作業・画面表示条件を維持し、aidiy_cpu本体と子PowerShellを合わせて変更前後のCPU時間を比較する。Linuxのmockや描画確認だけではWindowsのCPU削減率・カウンター精度を確定できない。
+
 ### CPUの値が低い・他の表示と一致しないとき
 
 倍率やコア数を推測で掛けず、同じホストで実測値を比べる。CPUのAPI値は画面で再除算していない。GPU表示が成功していてもCPUのCIMが成功したとは限らず、取得完了後に次の更新を待つため、GPUのPDH取得経路では同じCPU値が複数回表示される場合がある。
