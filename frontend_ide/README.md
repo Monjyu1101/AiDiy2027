@@ -147,7 +147,7 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 ## 起動
 
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
-セットアップ後、表示された現在のシェル用PATH設定を実行してから、表示したいフォルダで `aidiy_ide`、`aidiy_console`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。セットアップだけでは呼出元のシェルにPATHは反映されません。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
+Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_console`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
 PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` はHermesを直接使用します。Liveの `--connect` は初回だけ接続します。
 
@@ -375,8 +375,6 @@ Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/`
 ## CPU / GPU / RAM使用率
 
 `aidiy_cpu`、`node frontend_ide/aidiy_cpu/launch.mjs`、Diagの「CPU」から単独起動できます。Core / Toolsの起動は不要です。`aidiy_cpu --browser` はWeb表示、`--no-open` はサーバーだけを起動します。setup / cleanupは他のIDE群と同じ入口に含まれ、全体 `_start.py` のCPU選択は既定OFFです。
-
-CPUのコマンド登録だけを修復する場合は `python frontend_ide/aidiy_cpu/_setup.py` を実行します。WindowsでBrowser / Consoleは起動するのにCPUだけ未認識の場合は、[開発環境運用手順](../_AIDIY/knowledge/共通,開発環境運用手順.md)の「Windows の cmd で `aidiy_cpu` だけ認識されない場合」を参照してください。CPU用のフォルダを現在のcmdのPATHに加える手順と、PATH不要の起動方法を記載しています。
 
 IDE利用中は「CPU」から同じ画面を小型子窓で開きます。CPU / GPUは面グラフ、RAMは折線、右端のCPU / GPU / RAMラベルは最新値へ追従します。約1秒更新で直近60回を保持します。計測対象はサーバーの実行ホスト全体です。CPUはAvatar eyesと同じ `os.cpus()` の全論理CPU累積時間差分を約0.5秒ごとに採り、約1秒ごとに最新標本を表示します。eyesの色と数値に使う12標本平均は適用しません。採取済み70%はそのまま70%として次の標本まで保持し、0.2秒・0.5秒などの計測区間と表示周期の比率で縮小しません。WindowsのTime/Utilityとの途中切替は行わず、OSやNodeの版によってTask Managerの値とは異なることがあります。初回・表示再開直後は差分の準備ができるまでCPU表示を隠し、取得済み0%は表示します。取得失敗時は未取得として次の周期で再試行し、別指標で値を埋めません。WindowsではGPU Engineの3D使用率を計測します。CIMが使えないIntel/AMD環境では `Get-Counter` の標準カウンターへ切り替え、OS言語に応じたカウンター名を使います。プロセス別の同一エンジン使用率を合計し、全GPUの3Dエンジン最大値を表示します。動画再生・計算専用エンジンの負荷は3D値に含めません。WDDM 2.x対応ドライバーが必要です。両方取得できない場合とWindows以外ではNVIDIAの `nvidia-smi` のGPU全体使用率を使い、複数台は最大値を表示します。GPU取得は非同期でCPU/RAM表示を止めず、初回の数秒間や未対応・未導入・取得失敗時はGPUの線と浮動ラベルを表示しません。正常な0%は表示します。
 

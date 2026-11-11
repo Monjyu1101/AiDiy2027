@@ -68,13 +68,14 @@ def cleanup(choices=None):
             return False
         if not cleanup_dependencies(Path(__file__).resolve().parent):
             return False
+        launcher_dir = _path_helper.launcher_directory('aidiy_diag')
         for name in ('aidiy_diag', 'aidiy_diag.cmd'):
-            launcher = _path_helper.launcher_directory('aidiy_diag') / name
+            launcher = launcher_dir / name
             if launcher.is_file() and marker in launcher.read_text(encoding='utf-8'):
                 launcher.unlink()
                 print(f'診断ランチャーを解除しました: {launcher}')
         print('この作業コピーの診断の終了を確認しました。')
-        return remove_launcher_path()
+        return remove_launcher_path(launcher_dir)
     except OSError as exc:
         print(f'診断ランチャーの解除に失敗しました: {exc}')
         return False

@@ -4,7 +4,7 @@
 # See LICENSE for full terms. Thank you for keeping the rules.
 # https://github.com/monjyu1101/AiDiy2027
 
-"""プロジェクト内ランチャーの PATH 管理と、Hermes の既存共有 bin 登録。"""
+"""プロジェクト内ランチャーの Windows PATH 登録と、Hermes の既存共有 bin 管理。"""
 import base64
 import json
 import ntpath
@@ -52,36 +52,35 @@ def launcher_directory(program, project=None):
 
 
 def ensure_launcher_path(directory):
-    """プロジェクト配置はプロセス限定。明示された .local/bin だけ従来の登録。"""
+    """Windows はユーザー PATH、POSIX のプロジェクト配置はプロセス限定。"""
     directory = Path(directory).absolute()
+    if sys.platform == "win32":
+        return _ensure_windows_path(directory)
     if directory.name == "bin" and directory.parent.name == ".local":
-        return _ensure_shared_launcher_path(directory)
+        return _ensure_posix_path(directory)
     current = os.environ.get('PATH', '')
     if str(directory) not in current.split(os.pathsep):
         os.environ['PATH'] = str(directory) + (os.pathsep + current if current else '')
     print(f'ランチャー配置先: {directory}（フルパスで起動できます）')
     print('このセットアップから呼出元の PATH は変更できません。コマンド名だけで起動する場合は、使うシェルで次を実行してください。')
-    if sys.platform == 'win32':
-        print(f'現在のコマンドプロンプトだけで使う場合: set "PATH={directory};%PATH%"')
-        quoted = str(directory).replace("'", "''")
-        print(f"現在の PowerShell だけで使う場合: $env:PATH = '{quoted};' + $env:PATH")
-    else:
-        print(f'現在のシェルだけで使う場合: export PATH={shlex.quote(str(directory))}:"$PATH"')
+    print(f'現在のシェルだけで使う場合: export PATH={shlex.quote(str(directory))}:"$PATH"')
     return True
 
 
 def remove_launcher_path(directory=None):
-    """明示された .local/bin は従来どおり解除し、それ以外はプロセス限定。"""
+    """Windows は自動登録分だけを解除。POSIX は既存の登録範囲を維持する。"""
     if directory is not None:
         directory = Path(directory).absolute()
+        if sys.platform == "win32":
+            return _remove_windows_path(directory)
         if directory.name == "bin" and directory.parent.name == ".local":
-            return _remove_shared_launcher_path(directory)
+            return _remove_posix_path(directory)
         directory = str(directory)
         os.environ['PATH'] = os.pathsep.join(entry for entry in os.environ.get('PATH', '').split(os.pathsep) if entry != directory)
     return True
 
 
-# Hermes が明示的に指定する共有 .local/bin 用。既存の登録・解除手順を維持する。
+# 永続 PATH の登録記録は対象 bin の親に保存する。ホーム配置は Hermes のみ。
 def _normalize(value):
     return ntpath.normcase(ntpath.normpath(ntpath.expandvars(value.strip().strip('"'))))
 
@@ -235,11 +234,9 @@ def _notify_environment_change():
         print('環境変数の更新通知が届きませんでした。反映されない場合はサインインし直してください。')
 
 
-def _ensure_shared_launcher_path(directory):
-    """Windows のユーザー PATH または zsh / bash の設定へ登録する。"""
-    directory = Path(directory).expanduser().absolute()
-    if sys.platform != 'win32':
-        return _ensure_posix_path(directory)
+def _ensure_windows_path(directory):
+    """既存のユーザー PATH を保持し、未登録の bin だけを永続登録する。"""
+    directory = Path(directory).absolute()
 
     import winreg
 
@@ -263,7 +260,7 @@ def _ensure_shared_launcher_path(directory):
             if changed:
                 separator = ';' if path and not path.endswith(';') else ''
                 updated = path + separator + str(directory)
-                # 自動追加した登録だけを cleanup で戻せるよう、ユーザー共通の場所に記録する。
+                # 自動追加した登録だけを cleanup で戻せるよう、対象 bin の親に記録する。
                 # 記録できない場合は PATH も変更しない。
                 state_file = _state_file(directory)
                 state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -290,11 +287,9 @@ def _ensure_shared_launcher_path(directory):
     return True
 
 
-def _remove_shared_launcher_path(directory):
-    """共有 bin が空になったときだけ、セットアップが追加した PATH を解除する。"""
-    directory = Path(directory).expanduser().absolute()
-    if sys.platform != 'win32':
-        return _remove_posix_path(directory)
+def _remove_windows_path(directory):
+    """bin が空になったときだけ、セットアップが追加した PATH を解除する。"""
+    directory = Path(directory).absolute()
     state_file = _state_file(directory)
     if not state_file.is_file():
         return True
@@ -330,7 +325,12 @@ def _remove_shared_launcher_path(directory):
                 entries = path.split(';')
                 if str(directory) in entries:
                     index = len(entries) - 1 - entries[::-1].index(str(directory))
-                    entries.pop(index)
+                    if state['updated_path'] == state['original_path'] + str(directory):
+                        # 元の末尾区切りを再利用した登録は、その空要素を戻す。
+                        # 複数アプリを登録順に解除しても既存の区切りを失わない。
+                        entries[index] = ''
+                    else:
+                        entries.pop(index)
                 updated = ';'.join(entries)
                 if updated != path:
                     winreg.SetValueEx(key, 'Path', 0, value_type, updated)

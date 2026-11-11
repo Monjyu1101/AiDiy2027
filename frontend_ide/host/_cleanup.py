@@ -323,8 +323,9 @@ def cleanup_app(module: str, *, report: bool = True) -> bool:
     if not stop_standalone_processes(module):
         return False
     cleanup_ok = extension_ok
+    launcher_dir = launcher_directory(f'aidiy_{module}')
     for launcher_name in (f'aidiy_{module}.cmd', f'aidiy_{module}'):
-        launcher_path = launcher_directory(f'aidiy_{module}') / launcher_name
+        launcher_path = launcher_dir / launcher_name
         if launcher_path.is_file():
             if remove_file(launcher_path, f"{launcher_path.name} ({label})"):
                 deleted_count += 1
@@ -357,7 +358,7 @@ def cleanup_app(module: str, *, report: bool = True) -> bool:
         print_success(f"{label} のクリーンアップ完了 ({deleted_count}個削除)")
     elif report:
         print_info(f"{label}: 削除対象はありませんでした")
-    return remove_launcher_path() and cleanup_ok
+    return remove_launcher_path(launcher_dir) and cleanup_ok
 
 
 def cleanup_shared(*, report: bool = True) -> bool:
