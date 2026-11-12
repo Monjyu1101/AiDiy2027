@@ -40,7 +40,7 @@ test('ブラウザー配置: 負座標画面でも範囲内、OSのdevicePixelRa
 function fixture({all=false,area={x:0,y:0,width:1920,height:1040}}={}){
  const windows=new Map();let state={active:true,mode:'offline',startedAt:1},animations=0,quitting=false;
  class Window extends EventEmitter{
-  constructor(){super();this.webContents=new EventEmitter();Object.assign(this.webContents,{executeJavaScript:async()=>{},getZoomFactor:()=>1,setWindowOpenHandler:fn=>{this.handler=fn;}});}
+  constructor(){super();this.webContents=new EventEmitter();Object.assign(this.webContents,{executeJavaScript:async()=>{},getZoomFactor:()=>this.zoom||1,setZoomFactor:value=>{this.zoom=value;},setWindowOpenHandler:fn=>{this.handler=fn;}});}
   setParentWindow(value){this.parent=value;}
   isAlwaysOnTop(){return !!this.top;}
   isDestroyed(){return !!this.dead;}destroy(){this.dead=true;this.emit('closed');}close(){this.destroy();}minimize(){this.minimized=true;}maximize(){this.maximized=true;}unmaximize(){this.maximized=false;}isMaximized(){return !!this.maximized;}setBounds(value){this.bounds=value;}setAlwaysOnTop(value){this.top=value;}getContentBounds(){return this.bounds||{x:100,y:100,width:420,height:360};}getBounds(){return this.getContentBounds();}show(){this.shown=true;}focus(){}
@@ -240,4 +240,20 @@ for(const [kind,icon] of [['explorer','ide'],['panel-viewer','ide'],['panel-rout
   assert.equal(f.controller.open(f.owner,details),null,'再利用は拒否したまま');
   const child=new f.Window();f.controller.created(f.owner,child,details);child.destroy();
  }
+});
+
+for(const zoom of [.8,1,1.25,2])test(`Explorerピン移行: zoom=${zoom}の描画倍率と元位置を保ち、nativeの端数ずれを補正`,async()=>{
+ const f=fixture({area:{x:-1600,y:-200,width:2560,height:1600}});
+ f.owner.window.webContents.getZoomFactor=()=>zoom;
+ const rect={left:16,top:78,width:380,height:650};
+ const request=await f.controller.prepare(f.event,rect,'explorer');
+ const details={url:'about:blank',frameName:request.name};
+ const options=f.controller.open(f.owner,details).overrideBrowserWindowOptions;
+ assert.equal(options.x,Math.round(100+16*zoom));assert.equal(options.y,Math.round(100+78*zoom));
+ assert.equal(options.width,Math.round(380*zoom));assert.equal(options.height,900);
+ const child=new f.Window();child.setBounds=value=>{child.bounds={...value,x:value.x+1,y:value.y-1,width:value.width+1,height:value.height+1};};
+ f.controller.created(f.owner,child,details);
+ assert.deepEqual(child.bounds,{x:options.x,y:options.y,width:options.width,height:900});
+ assert.equal(child.webContents.getZoomFactor(),zoom);
+ await f.controller.show(f.event,request.name);assert.deepEqual(child.bounds,{x:options.x,y:options.y,width:options.width,height:900});child.destroy();
 });

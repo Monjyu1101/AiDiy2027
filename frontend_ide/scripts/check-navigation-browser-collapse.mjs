@@ -22,15 +22,16 @@ const bundle = await build({
   stdin: { resolveDir: root, contents: `import {createApp,h,ref} from 'vue';
 import Navi from './src/components/開発スペース/Naviパネル.vue';
 import Browser from './src/components/ブラウザ/ブラウザパネル.vue';
+import Viewer from './src/components/ファイル閲覧/閲覧ウィンドウ.vue';
 import {mountPanelTitle} from './src/components/ファイル閲覧/別窓タイトル.js';
 const kind=location.hash.slice(1)||'navi';
-window.fetch=async()=>({ok:true,json:async()=>({result:null,job:null,connected:true,mode:'online',availability:{available:true}})});
+window.fetch=async()=>({ok:true,json:async()=>({result:null,job:null,active:true,startedAt:1,project:{path:'/tmp/project'},connected:true,mode:'online',availability:{available:true}})});
 window.aidiyWindow={title:async()=> 'AiDiy Browser',pinState:async()=>({pinned:false}),onPinChanged:()=>()=>{},onBrowserChanged:()=>()=>{},browserAction:async()=>({ok:true,url:'https://example.test/',title:'日本語ページ',available:true,connected:true}),async collapsePanel(collapsed){const el=document.querySelector('.ai-component');const height=el.getBoundingClientRect().height;el.style.height=collapsed?'31px':'700px';const animation=el.animate([{height:height+'px'},{height:collapsed?'31px':'700px'}],{duration:220});await animation.finished;return{ok:true};}};
-if(kind==='child'){
- const host=document.createElement('main');host.className='development-app navigation-window';host.style.height='700px';document.querySelector('#app').append(host);
- mountPanelTitle(host,window,window,'Navi 1','panel-navigation');
+if(['child','explorer','panel-viewer'].includes(kind)){
+ const host=document.createElement('main');host.className='development-app native-panel-window '+(kind==='child'?'navigation-window':kind==='explorer'?'explorer-window':'viewer-window');host.style.height='700px';document.querySelector('#app').append(host);
+ mountPanelTitle(host,window,window,kind==='child'?'Navi 1':'Viewer / Explorer',kind==='child'?'panel-navigation':kind);
  const textarea=document.createElement('textarea');textarea.value='別窓の入力を保持';host.append(textarea);
-}else createApp(kind==='browser'?Browser:Navi,{standalone:true,instance:'navi-check',project:{path:'/tmp/project',name:'確認プロジェクト'}}).mount('#app');
+}else createApp(kind==='viewer'?Viewer:kind==='browser'?Browser:Navi,{desktop:true,path:'sample.txt',standalone:true,instance:'navi-check',project:{path:'/tmp/project',name:'確認プロジェクト'}}).mount('#app');
 ` },
   bundle: true, write: false, format: 'iife', loader: {'.css':'empty'}, plugins: [{ name: 'vue-label-check', setup(builder) {
     builder.onLoad({ filter: /コード表示\.js$/ }, () => ({ contents: 'export const loadMonaco=async()=>null;export const monacoLanguage=()=>"plaintext";' }));
@@ -49,7 +50,7 @@ if (process.argv.includes('--compile-only')) {
 }
 mkdirSync(output, { recursive: true });
 const temporary = mkdtempSync(join(tmpdir(), 'panel-collapse-check-'));
-const css = readFileSync(join(root, 'src/style.css'), 'utf8')+'html,body,#app{height:700px}.ai-component{height:700px}';
+const css = readFileSync(join(root, 'src/style.css'), 'utf8')+readFileSync(join(root, 'src/components/共通表示/会話表示.css'), 'utf8')+'html,body,#app{height:700px}.ai-component{height:700px}';
 const server = createServer((req,res)=>res.end(`<!doctype html><meta charset="utf-8"><style>${css}</style><div id="app"></div><script>${bundle.outputFiles[0].text}</script>`));
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const chrome = spawn(process.env.CHROME_PATH || '/usr/bin/chromium', ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--remote-debugging-port=0', '--window-size=1200,850', '--user-data-dir=' + temporary, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, HOME: temporary, XDG_CONFIG_HOME: temporary, XDG_CACHE_HOME: temporary } });
@@ -68,7 +69,7 @@ try {
   const click = selector => evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
   const capture = async name => writeFileSync(join(output, name + '.png'), Buffer.from((await send('Page.captureScreenshot', { format: 'png' })).result.data, 'base64'));
   await send('Runtime.enable'); await send('Page.enable');
-  for(const kind of ['navi','browser','child']){
+  for(const kind of ['navi','browser','child','explorer','panel-viewer']){
    await send('Page.navigate',{url:`http://127.0.0.1:${server.address().port}/#${kind}`});
    await until(()=>evaluate(`!!document.querySelector('.code-panel-toggle')`),'panel');await sleep(100);
    const input=kind==='browser'?'.browser-toolbar input':'textarea';

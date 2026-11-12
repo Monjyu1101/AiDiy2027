@@ -111,3 +111,8 @@ html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:fl
 .panel-brand .code-panel-toggle{flex:none;display:grid;place-items:center;width:26px;min-width:26px;height:26px;padding:0;border:0;border-radius:0;background:transparent;color:inherit;box-shadow:none;touch-action:none;user-select:none;cursor:pointer}
 .code-panel-mark{box-sizing:border-box;display:grid;place-items:center;width:22px;height:22px;border:2px solid currentColor;border-radius:0;font-size:14px;line-height:1;pointer-events:none}
 .code-panel-toggle:hover .code-panel-mark{background:#ffffff1f}
+
+/* 折畳み時は接続線の黒地・外周の下辺も残さず、タイトルだけを描く。 */
+html:has(.diag-panel[data-collapsed="true"]),body:has(.diag-panel[data-collapsed="true"]),#app:has(.diag-panel[data-collapsed="true"]){background:transparent}
+#app:has(.diag-panel[data-collapsed="true"]){border-bottom:0}
+.diag-panel[data-collapsed="true"]>.connection-bar{display:none!important}

@@ -106,6 +106,10 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
       cleanupDocument = () => { fades.get(host)?.cancel();stopMove(); removeTitle(); target.removeEventListener('beforeunload', leaving); if (element()) element().style.visibility = ''; };
       element().style.visibility = '';
       moved();
+      // detachedのVue更新（埋込ヘッダー除去等）を表示開始前に反映する。
+      // hidden窓のrequestAnimationFrameは停止し得るため待たない。元画像はshow完了まで保持。
+      await Promise.resolve();
+      if (disposed || child !== target || target.closed || target.document !== doc) return;
       if (win.aidiyWindow?.showExplorer) {
         const result = await win.aidiyWindow.showExplorer(target.name);
         // 表示演出の途中で閉じた窓を「表示失敗」として本体へ復元しない。

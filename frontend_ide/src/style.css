@@ -430,3 +430,7 @@
 .layout-launch-mark{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;line-height:10px;gap:0}
 .layout-save .layout-launch-mark{flex-direction:column-reverse}
 .layout-launch-arrow{font-size:14px;line-height:13px}
+
+/* 独立Explorer/Viewerは本文DOMを保持したまま、接続バーも含めて隠す。 */
+.native-panel-collapsed > :not(.panel-window-title),.native-panel-collapsed .connection-bar,.viewer-window.panel-collapsed > :not(.panel-brand){display:none!important}
+.panel-window-title .panel-brand,.viewer-window > .panel-brand{min-height:31px;padding:1px 2px}

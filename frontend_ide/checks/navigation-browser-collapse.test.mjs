@@ -15,10 +15,11 @@ test('Navi単独とBrowser通常窓は共通タイトル切替、本文は破棄
  }
  const browser=read('src/components/ブラウザ/ブラウザパネル.vue');assert.match(browser,/<PanelToggle v-if="!headerOnly"/);
 });
-test('Navi別窓は対象窓名を指定し、他のパネルに切替を付けない',()=>{
+test('Navi・Explorer・Viewer別窓は対象窓名を指定して切替を付ける',()=>{
  const source=read('src/components/ファイル閲覧/別窓タイトル.js');
  assert.match(source,/collapsePanel\(value, child.name\)/);assert.match(source,/windowContext: child/);
- assert.match(source,/kind === 'panel-navigation' \? \{ leading:/);
+ assert.match(source,/collapsible \? \{ leading:/);
+ assert.match(source,/\['panel-navigation', 'explorer', 'panel-viewer'\]\.includes\(kind\)/);
  assert.match(read('src/components/開発スペース/Naviパネル.vue'),/navigation-window-collapsed > :not\(\.panel-window-title\)/);
 });
 test('Browser別Viewは接続復帰しても閉状態を維持し、表示寸法変更とは排他',()=>{

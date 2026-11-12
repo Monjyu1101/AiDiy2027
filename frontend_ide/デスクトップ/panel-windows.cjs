@@ -6,6 +6,7 @@
 const {randomUUID}=require('node:crypto');
 const {join}=require('node:path');
 const {windowBounds,windowMinimumSize}=require('./window-layout.cjs');
+const {setWindowBounds}=require('./全画面横断.cjs');
 const size=require('../host/scripts/window-size.cjs');
 const explorerHeight=900;
 const {registerNavigationCruiseTitle}=require('./navigation-code-window.cjs');
@@ -79,8 +80,11 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   const request=requests.get(owner);requests.delete(owner);
   if(!request?.used||request.name!==details.frameName||owner.window.isDestroyed()||owner.revision!==request.revision||isQuitting()){window.destroy();return;}
   // window.openのDOM連携は維持し、OSの親子関係だけ外す。所属・終了連携はrecord.ownerで管理する。
-  window.setParentWindow(null);window.setBounds(request.bounds);
+  window.setParentWindow(null);setWindowBounds(window,request.bounds);
   const contents=window.webContents;
+  // 元のCSS幅をzoomだけDIP変換して配置したため、描画も同じzoomで引き継ぐ。
+  // OSのDPI倍率はここでも重ねない。初回表示前に指定し、本文の大きさが跳ねるのを防ぐ。
+  contents.setZoomFactor(owner.window.webContents.getZoomFactor());
   const record={window,owner,kind:request.kind,url:'about:blank',linkKey:request.key,revision:0,ownerRevision:request.revision,barHeight:request.bounds.height,pending:new Map(),name:request.name};windows.set(contents,record);
   registerNavigationCruiseTitle(record);
   registerWindowPin(record);

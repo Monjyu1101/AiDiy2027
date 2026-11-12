@@ -5,9 +5,15 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,computed,onMounted,onBeforeUnmount} from 'vue';
+import CpuDisplayToggle from './CPU表示切替.vue';
 import WindowActions from '../共通表示/窓操作.vue';
 import {chartSeries,placeLabels,chartRight,labelRight,labelMaxWidth} from './使用率グラフ.js';
-defineProps({desktop:Boolean,floating:Boolean,standalone:Boolean});
+const props=defineProps({desktop:Boolean,floating:Boolean,standalone:Boolean});
+const transparent=ref(false);
+function toggleBackground(){
+ transparent.value=!transparent.value;
+ if(!props.floating)document.documentElement.classList.toggle('cpu-transparent-window',transparent.value);
+}
 const emit=defineEmits(['close']);
 const samples=ref([]),error=ref(''),ready=ref(false);
 const series=computed(()=>chartSeries(samples.value));
@@ -40,11 +46,12 @@ async function poll(){
 }
 function visibility(){generation++;clearTimeout(timer);nextPollAt=undefined;if(document.hidden)request?.abort();else{samples.value=[];void poll();}}
 onMounted(()=>{document.addEventListener('visibilitychange',visibility);void poll();});
-onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document.removeEventListener('visibilitychange',visibility);});
+onBeforeUnmount(()=>{if(!props.floating)document.documentElement.classList.remove('cpu-transparent-window');disposed=true;clearTimeout(timer);request?.abort();document.removeEventListener('visibilitychange',visibility);});
 </script>
 <template>
- <section class="cpu-panel" :class="{'cpu-floating':floating}" aria-label="CPU GPU RAM 使用率" tabindex="0" data-aidiy-window-move-surface>
+ <section class="cpu-panel" :class="{'cpu-floating':floating,'cpu-transparent':transparent}" aria-label="CPU GPU RAM 使用率" tabindex="0" data-aidiy-window-move-surface>
   <header class="cpu-title" :class="{desktop}">
+   <CpuDisplayToggle :transparent="transparent" :desktop="desktop" @toggle="toggleBackground" />
    <strong>{{ standalone?'AiDiy CPU':'AiDiy IDE / CPU' }}</strong>
    <WindowActions v-if="desktop" />
    <button v-else-if="floating" class="cpu-close" aria-label="使用率画面を閉じる" @click="emit('close')">×</button>
@@ -69,14 +76,17 @@ onBeforeUnmount(()=>{disposed=true;clearTimeout(timer);request?.abort();document
 </template>
 <style>
 .cpu-panel{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;background:#000;color:#d9e5ec;overflow:hidden}
+.cpu-panel.cpu-transparent{background:transparent;box-shadow:none;border-color:transparent}
+html.cpu-transparent-window,html.cpu-transparent-window body,html.cpu-transparent-window #app,html.cpu-transparent-window .development-app{background:transparent}
+.cpu-transparent>.cpu-title{background:transparent}
 .cpu-floating{position:absolute;right:8px;bottom:min(376px,max(8px,calc(100% - 168px)));width:min(240px,calc(100% - 16px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 16px));min-height:150px;max-width:calc(100% - 16px);max-height:calc(100% - 16px)}
 /* CPU専用の小さいタイトル。接続表示・接続バー・その監視処理は持たない。 */
-.cpu-title{position:absolute;left:0;right:0;top:0;z-index:1;opacity:0;pointer-events:none;height:22px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px;background:#30343a;color:white}
+.cpu-title{position:absolute;left:0;right:0;top:0;z-index:1;opacity:0;pointer-events:none;height:31px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px;background:#30343a;color:white}
 .cpu-panel:hover>.cpu-title,.cpu-panel:focus-within>.cpu-title{opacity:1;pointer-events:auto}
 .cpu-title.desktop{-webkit-app-region:drag}
-.cpu-title strong{font-size:11px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.cpu-title strong{flex:1;font-size:11px;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .cpu-title button{-webkit-app-region:no-drag}
-.cpu-title .window-actions button{width:24px;height:22px;padding:0}
+.cpu-title .window-actions button{width:24px;height:26px;padding:0}
 .cpu-chart{flex:1;min-height:0;padding:2px 2px 0}.cpu-chart svg{width:100%;height:100%;overflow:visible}
 .cpu-grid path{stroke:#1c2930;stroke-width:1;vector-effect:non-scaling-stroke}.cpu-axis{fill:#6d7e87;font:10px monospace;text-anchor:end}
 .cpu-label{font:11px ui-monospace,monospace;font-weight:600}

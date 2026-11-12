@@ -101,8 +101,8 @@ test('ページ内Explorer: 別ウィンドウ操作はヘッダーの右端、�
   assert.doesNotThrow(() => compileScript(descriptor, { id: 'explorer-header-check', inlineTemplate: true }));
   const header = descriptor.template.content.match(/<aside ref="panel"[^>]*>\s*(<header[^>]*>[\s\S]*?<\/header>)/)?.[1];
   assert.ok(header, 'エクスプローラーのヘッダーが存在する');
-  assert.ok(header.includes('title="全てを閉じる"'));
-  assert.ok(header.indexOf('title="全てを閉じる"') < header.indexOf('pinExplorer()'));
+  assert.ok(!header.includes('title="全てを閉じる"'));
+  assert.match(descriptor.template.content, /class="explorer-content-tools">[\s\S]*?title="全てを閉じる"[\s\S]*?explorer-refresh/);
   assert.match(header, /:aria-pressed="detached"/); assert.match(header, /<span aria-hidden="true">📌<\/span>/);
   assert.ok(header.includes('v-if="(!detached||!nativePanels)&&(!allDisplays||!detached)"'));
   assert.doesNotMatch(header, /togglePin|window-pin|↗/);

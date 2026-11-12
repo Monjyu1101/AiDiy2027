@@ -73,7 +73,7 @@ test('定期取得中は直前結果、切断後に遅い応答が来ても正�
 });
 test('通常・ミニとも起動状態をバーへ渡しTools単体に依存せず、全タブで監視する',async()=>{
  const app=await readFile(new URL('../ui/src/App.vue',import.meta.url),'utf8');
- assert.match(app,/:is="ステータスバー" :server-state="connected\?起動\.サーバー表示状態\.value:'unknown'"/);
+ assert.match(app,/:is="ステータスバー"[^>]* :server-state="connected\?起動\.サーバー表示状態\.value:'unknown'"/);
  assert.doesNotMatch(app,/:is="ステータスバー"[^>]*:online="toolsOnline"/);
  assert.match(app,/起動\.表示\(online,value==='start'&&!mini\)/);
 });

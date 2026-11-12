@@ -575,3 +575,19 @@ test('Diag title collapse animates normal/mini, preserves position and gates con
   assert.equal((await a).superseded,true);assert.equal((await b).ok,true);assert.equal(f.win.getBounds().height,height);
  }
 });
+
+test('folded normal/mini expands before switching mode and never saves 31px as normal size',async()=>{
+ for(const initialMini of [false,true])for(const target of ['mini','micro','normal']){
+  const f=await mainFixture({toolsOpen:initialMini});f.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));
+  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
+  assert.equal((await control(event,'collapsePanel',true)).ok,true);assert.equal(f.win.getBounds().height,31);
+  assert.equal((await control(event,'collapsePanel',false)).ok,true);
+  assert.equal(await control(event,'beginDisplay',target),true);
+  assert.equal(await control(event,'startMini',target==='mini'),true);
+  if(target==='micro')assert.equal(await control(event,'startMicro',true),true);
+  assert.equal(await control(event,'finishDisplay'),true);
+  if(target==='micro')assert.equal(await control(event,'startMicro',false),true);
+  if(target==='mini')assert.equal(await control(event,'startMini',false),true);
+  assert.equal(f.win.getBounds().height,600);
+ }
+});

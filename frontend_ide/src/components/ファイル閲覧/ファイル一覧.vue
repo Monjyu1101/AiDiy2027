@@ -489,15 +489,16 @@ defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.
       </div>
     </div>
     <aside ref="panel" v-show="open" class="explorer-panel" aria-label="ファイルエクスプローラー" @contextmenu.self.prevent="contextMenu($event)" @pointerdown.capture="emit('activity')">
-      <header>
-        <button v-if="!allDisplays" class="burger-button explorer-burger" aria-label="エクスプローラーを閉じる" title="エクスプローラーを閉じる" :aria-expanded="true" @click="closeExplorer"><span class="burger burger-h" aria-hidden="true"><i></i><i></i></span></button><span>エクスプローラー</span>
-        <button type="button" class="explorer-collapse" title="全てを閉じる" aria-label="全てを閉じる" :disabled="fileActionState.busy||!!fileActionState.rename" @click="cancelSinceExpansion();rootExpanded=true;expanded=new Set();save()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7V4a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v10"/><path d="M3 7h5l2 2h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><path d="M7 15h6"/></svg></button>
-        <RefreshButton class="explorer-refresh" :class="{refreshing:fileActionState.refreshing}" :busy="fileActionState.refreshing" :title="fileActionState.refreshing?'一覧を更新中…':'一覧を更新'" aria-label="一覧を更新" :disabled="multipleChecked||!reload||fileActionState.busy||!!fileActionState.rename||!!fileActionState.dialog||searching||!!draftRequest" @click="fileActions.action('refresh')" />
+      <header v-if="!(detached&&nativePanels)">
+        <button v-if="!allDisplays&&!(detached&&nativePanels)" class="burger-button explorer-burger" aria-label="エクスプローラーを閉じる" title="エクスプローラーを閉じる" :aria-expanded="true" @click="closeExplorer"><span class="burger burger-h" aria-hidden="true"><i></i><i></i></span></button><span>エクスプローラー</span>
         <button v-if="(!detached||!nativePanels)&&(!allDisplays||!detached)" class="explorer-detach panel-detach-pin" :class="{'pin-active':detached}" :aria-pressed="detached" :aria-label="detached?'本体へ戻す':'エクスプローラーを別ウィンドウで開く'" :title="detached?'本体へ戻す':'別ウィンドウで開く'" @click="detached?panelWindow.restore():pinExplorer()"><span aria-hidden="true">📌</span></button>
       </header>
       <p v-if="treeWarning" class="scan-warning" role="status">{{ treeWarning }}</p>
       <section class="explorer-search"><small>表示中: {{ current || tree?.n }}</small>
-        <fieldset><legend class="sr-only">検索方法</legend><label><input v-model="mode" type="radio" value="since">時刻検索</label><label><input v-model="mode" type="radio" value="grep">grep検索</label><label><input v-model="mode" type="radio" value="ai">AI検索</label></fieldset>
+        <div class="explorer-search-row"><fieldset><legend class="sr-only">検索方法</legend><label><input v-model="mode" type="radio" value="since">時刻検索</label><label><input v-model="mode" type="radio" value="grep">grep検索</label><label><input v-model="mode" type="radio" value="ai">AI検索</label></fieldset><div class="explorer-content-tools">
+        <button type="button" class="explorer-collapse" title="全てを閉じる" aria-label="全てを閉じる" :disabled="fileActionState.busy||!!fileActionState.rename" @click="cancelSinceExpansion();rootExpanded=true;expanded=new Set();save()"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M7 7V4a1 1 0 0 1 1-1h4l2 2h6a1 1 0 0 1 1 1v10"/><path d="M3 7h5l2 2h7a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><path d="M7 15h6"/></svg></button>
+        <RefreshButton class="explorer-refresh" :class="{refreshing:fileActionState.refreshing}" :busy="fileActionState.refreshing" :title="fileActionState.refreshing?'一覧を更新中…':'一覧を更新'" aria-label="一覧を更新" :disabled="multipleChecked||!reload||fileActionState.busy||!!fileActionState.rename||!!fileActionState.dialog||searching||!!draftRequest" @click="fileActions.action('refresh')" />
+        </div></div>
         <div v-if="mode==='since'" class="time-search"><label>開始 <input type="datetime-local" step="1" :value="dateInput" :aria-invalid="!!dateError" :aria-describedby="dateError?'time-search-error':undefined" @change="chooseDate($event.target)"></label><label>終了 <input type="datetime-local" step="1" :value="endDateInput" :aria-invalid="!!dateError" aria-describedby="time-search-hint time-search-error" @change="chooseDate($event.target,true)"></label><small id="time-search-hint">終了は省略できます（開始以降）。</small><p id="time-search-error" v-show="dateError" role="alert">{{ dateError }}</p><div class="since-presets"><button v-for="[value,label] in timeSearchPresets" :key="value" :aria-pressed="preset===value" @click="choose(value)">{{ label }}</button></div></div>
         <form v-else-if="mode==='grep'" @submit.prevent>
           <label class="grep-query">ファイル内容<input v-model="query" type="search" maxlength="256" placeholder="検索する文字列"></label>
@@ -564,4 +565,8 @@ defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.
 .search-results-content button[aria-current=true]{background:#18293c}
 .search-results-content small{display:block;white-space:pre-wrap;color:#92a5bf;line-height:1.5;margin-top:3px}
 .search-result-snippet{font-family:var(--mono)}
+</style>
+
+<style scoped>
+.explorer-search-row{display:flex;align-items:center;gap:4px;min-width:0}.explorer-search-row>fieldset{flex:1;min-width:0;flex-wrap:wrap;gap:4px}.explorer-content-tools{display:flex;align-items:center;justify-content:flex-end;gap:2px;flex:none;margin-left:auto}
 </style>

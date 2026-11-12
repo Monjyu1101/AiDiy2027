@@ -237,9 +237,11 @@ Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。�
 | Browser | 通常窓だけ。WebContentsViewは別描画なのでDOM非表示だけで済ませず、縮小開始から展開完了までViewを隠す。ページ・セッションは破棄しない。プリセット寸法変更中は折り畳みを拒否し、閉状態では測定値によるリサイズ、最大化、F11と全画面を抑止する。全画面の浮動ヘッダーにはボタンを置かない。 |
 | Navi | 単独窓とIDEのNavi別窓。別窓APIは所有元IDEから名前を解決し、現在所有するpanel-navigationだけへ転送する。他パネルへ権限を広げない。Code表示幅の変更と折り畳みを競合させない。 |
 | Task / Team | 認証前後の共通ルート。Task要求・フロー・明細・編集窓にも適用し、各窓の入力・認証を保持する。 |
-| Diag | 通常・ミニ表示。閉状態と切替中は表示モード変更を抑止する。円形アイコン表示はタイトルがないため対象外。専用preloadから送信元を検証して共有controllerを使う。UI配布物と共有ファイルのmanifestも同期する。 |
+| Diag | 通常・ミニ表示。折り畳み中もランチャー／アイコンへの明示切替を受け付け、折り畳みを解除してから対象モードへ遷移する。円形アイコン表示自体はタイトルがないため対象外。専用preloadから送信元を検証して共有controllerを使う。UI配布物と共有ファイルのmanifestも同期する。 |
+| Explorer / Viewer | IDEから切り離した別窓とピン留めViewerに共通開閉を適用。別窓は三本バーではなく□▽で開始する。Explorer別窓の重複した2行目ヘッダーは表示せず、1行目に開閉・接続状態・タイトル・窓操作を集約する。ツリーの「全てを閉じる」と更新は検索方法行の右端へ置く。選択・表示内容を破棄しない。所有元IDEの検証を維持し、埋込パネルの操作と別窓の開閉を混同しない。📌移行は元の左上位置・作業領域クランプを維持し、親zoomと共通DPI補正を引き継ぐ。Vueの別窓レイアウト反映後に表示演出を開始し、元画像は表示完了まで保持する。 |
+| CPU | ▽は通常背景、▷は背景透過。内容や窓寸法は畳まない。透明Electron窓の上で背景色だけを切り替え、計測・グラフと移動操作を保持する。 |
 
-Avatar、CPU、IDE本体、その他の独立パネルとDiscord/Slackは、この追加適用に含めない。別指示なしで一括変更しない。
+Avatar、IDE本体、その他の独立パネルとDiscord/Slackは、この追加適用に含めない。別指示なしで一括変更しない。
 
 ### 再検証
 
@@ -247,6 +249,8 @@ Avatar、CPU、IDE本体、その他の独立パネルとDiscord/Slackは、こ�
 - `frontend_ide` で `npm run taskteam:type-check`。
 - `node frontend_ide/scripts/check-panel-collapse.mjs`、`node frontend_ide/scripts/check-navigation-browser-collapse.mjs`、`node frontend_ide/scripts/check-taskteam-titlebar.mjs`。`--compile-only` は画面確認を行わない。
 - Diagの `checks/titlebar_browser.mjs` と既存 `checks/desktop.check.mjs`、ミニ/アイコン試験。画面試験は実Vueを使い、外部APIは隔離する。
+
+Diagでは折り畳み後に接続バーの色を黒くするだけでなく領域自体が消えること、ランチャー・アイコンへの移行後に内容とトグル状態が一致することを確認する。CPUでは通常／透過の往復と計測の継続を確認する。
 
 画面試験では展開→途中寸法→タイトルだけ→移動→復元、連打、拒否後の表示、入力・接続保持とシアンバー非表示を確認する。Chromiumがsocket制限等で起動できない環境ではコンパイル合格を目視合格に数えない。OSの最小寸法、最大化復元、DPIを跨ぐ移動は実Electron/実機で別途確認する。
 

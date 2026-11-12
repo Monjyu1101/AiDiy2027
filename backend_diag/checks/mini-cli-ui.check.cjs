@@ -50,9 +50,11 @@ test('実Vueタイトル欄: ミニ→最小化→最大化→ピン→終了の
 async function appState(switchMini=async()=>true,globals={}){
  const {認証セッションを作成}=await import('../ui/src/components/ウィンドウ/認証セッション.mjs');
  const 自動起動表示=await import('../ui/src/components/起動/自動起動表示.mjs');
+ const 表示切替準備=await import('../ui/src/components/ウィンドウ/表示切替準備.mjs');
  const {起動ミニ表示を作成}=await import('../ui/src/components/ウィンドウ/起動ミニ表示.mjs');const displays=[],switches=[],noop=()=>{};
  const methods={接続:noop,終了:noop,中止:noop,切断:noop,表示を離れる:noop,読込:async()=>{},一覧:vue.ref(null),実行中:vue.ref(false)};
  const modules={
+  './components/ウィンドウ/表示切替準備.mjs':表示切替準備,
   './components/ウィンドウ/認証セッション.mjs':{認証セッションを作成:options=>認証セッションを作成({...options,storage:()=>globals.sessionStorage})},
   './components/導入状況/導入状況状態.mjs':{導入状況状態を作成:()=>({一覧を反映:noop})},'./components/導入状況/導入操作状態.mjs':{導入操作状態を作成:()=>methods},
   './components/キー設定共通/キー設定状態.mjs':{キー設定状態を作成:()=>({終了:noop,resetPublic:noop,設定を破棄:noop})},'./components/ウィンドウ/Tools接続.mjs':{Tools接続を作成:()=>methods},
@@ -299,5 +301,20 @@ test('通常・ミニのVS CodeとCLIは導入済みだけ表示する',async()=
    }
    assert.equal(launches,0);
   }finally{ui.app.unmount();}
+ }
+});
+
+test('実App状態: 標準/ミニの折畳みからランチャー・アイコンへ開いた状態で遷移する',async()=>{
+ for(const initialMini of [false,true])for(const target of ['mini','micro','normal']){
+  const calls=[],window={aidiyWindow:{collapsePanel:async value=>{calls.push(['collapse',value]);return {ok:true};},beginDisplay:async mode=>{calls.push(['begin',mode]);return true;},finishDisplay:async()=>true,startMicro:async()=>true}};
+  const {scope,state}=await appState(async()=>true,{window});
+  try{
+   state.connected.value=true;state.アプリ.フォルダ.value='/fixture';await flush();
+   if(initialMini)await state.ミニ.変更(true);
+   state.パネル折畳み.value=true;state.パネル非表示.value=true;
+   assert.equal(await state.表示切替(target),true);assert.deepEqual(calls,[['collapse',false],['begin',target]]);
+   assert.equal(state.パネル折畳み.value,false);assert.equal(state.パネル非表示.value,false);assert.equal(state.パネル表示世代.value,1);
+   assert.equal(state.マイクロ表示.value,target==='micro');assert.equal(state.ミニ.表示中.value,target==='mini');
+  }finally{scope.stop();}
  }
 });

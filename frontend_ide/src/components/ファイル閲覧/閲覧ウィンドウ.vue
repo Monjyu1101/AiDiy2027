@@ -7,10 +7,12 @@ https://github.com/monjyu1101/AiDiy2027 -->
 // ピン留めしたファイルの独立ウィンドウ。宇宙パネルの外で、同じIDEのファイルAPIを使って1ファイルを表示する。
 import { ref, computed, provide, onMounted, onBeforeUnmount } from 'vue';
 import { validConnectionState } from '../共通表示/接続状態.js';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import FileViewer from '../ファイル閲覧/ファイルビューア.vue';
 const props=defineProps({path:String,desktop:Boolean});
 const state=ref({}),error=ref('');
+const panelCollapsed=ref(false),panelHidden=ref(false);
 provide('browserAvailable',computed(()=>state.value.active&&state.value.mode==='online'&&state.value.connected===true));
 const name=props.path.split('/').at(-1);
 const file={name,path:props.path,mtime:0};
@@ -34,8 +36,8 @@ onMounted(()=>{document.title=`AiDiy IDE / Viewer - ${name}`;void status();timer
 onBeforeUnmount(()=>{disposed=true;clearInterval(timer);controller.abort();});
 </script>
 <template>
-  <div class="development-app viewer-window" :class="{'desktop-window':desktop,'panel-opening':!desktop}" data-app="viewer">
-    <StatusBar :title="`Viewer - ${name}`" status="別ウィンドウ" :connected="state.connected" :mode="state.mode" :desktop="desktop" />
+  <div class="development-app viewer-window ai-component" :class="{'desktop-window':desktop,'panel-opening':!desktop,'panel-collapsed':panelHidden}" data-app="viewer">
+    <StatusBar :title="`Viewer - ${name}`" status="別ウィンドウ" :connected="state.connected" :mode="state.mode" :desktop="desktop"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template></StatusBar>
     <p v-if="state.active&&error" class="input-hint" role="status">{{ error }} 作業を保持して再試行します。</p>
     <FileViewer v-if="state.active" :file="file" :root="state.project?.path||''" pinned />
     <p v-else class="panel-loading">{{ error||'読み込み中…' }}</p>

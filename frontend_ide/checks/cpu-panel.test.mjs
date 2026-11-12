@@ -10,12 +10,12 @@ import vm from 'node:vm';
 import {createSystemMetrics} from '../aidiy_cpu/metrics.mjs';
 import {chartSeries,placeLabels,chartRight,labelRight} from '../src/components/システム監視/使用率グラフ.js';
 const source=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8').match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\r?\n/gm,'');
-function fixture(){
+function fixture(props={}){
  let now=0,mount,unmount,id=0,calls=0,fetcher=async()=>({ok:true,json:async()=>({timestamp:1,cpu:35,gpu:null,ram:62})});
- const timers=new Map(),events=new Map(),document={hidden:false,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
- const context={ref:value=>({value}),computed:fn=>({get value(){return fn();}}),chartSeries,placeLabels,chartRight,labelRight,defineProps(){},defineEmits:()=>()=>{},onMounted:fn=>mount=fn,onBeforeUnmount:fn=>unmount=fn,document,AbortController,Date,performance:{now:()=>now},fetch:(...args)=>{calls++;return fetcher(...args);},setTimeout:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
- vm.runInNewContext(source+';globalThis.state={samples,error,ready,series,labels};globalThis.poll=poll;',context);
- return {context,timers,events,document,setTime:value=>now=value,elapse:ms=>now+=ms,mount:()=>mount(),unmount:()=>unmount(),setFetch:fn=>fetcher=fn,calls:()=>calls,async hidden(value){document.hidden=value;events.get('visibilitychange')();await tick();}};
+ const timers=new Map(),events=new Map(),classes=new Set(),document={documentElement:{classList:{toggle(name,value){value?classes.add(name):classes.delete(name);},remove:name=>classes.delete(name)}},hidden:false,addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:name=>events.delete(name)};
+ const context={ref:value=>({value}),computed:fn=>({get value(){return fn();}}),chartSeries,placeLabels,chartRight,labelRight,defineProps:()=>props,defineEmits:()=>()=>{},onMounted:fn=>mount=fn,onBeforeUnmount:fn=>unmount=fn,document,AbortController,Date,performance:{now:()=>now},fetch:(...args)=>{calls++;return fetcher(...args);},setTimeout:(fn,ms)=>{timers.set(++id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)};
+ vm.runInNewContext(source+';globalThis.state={samples,error,ready,series,labels};globalThis.poll=poll;globalThis.toggleBackground=toggleBackground;globalThis.transparent=transparent;',context);
+ return {context,timers,events,document,classes,setTime:value=>now=value,elapse:ms=>now+=ms,mount:()=>mount(),unmount:()=>unmount(),setFetch:fn=>fetcher=fn,calls:()=>calls,async hidden(value){document.hidden=value;events.get('visibilitychange')();await tick();}};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
 test('CPU panel keeps 60 samples, reports unavailable and failed requests, recovers',async()=>{
@@ -53,7 +53,7 @@ test('CPU uses a compact dedicated title with window controls and no connection 
  assert.doesNotMatch(panel,/StatusBar|connection-bar|connection-label|clockPulse/);
  assert.match(panel,/<WindowActions v-if="desktop" \/>/);
  assert.match(panel,/cpu-title\.desktop\{-webkit-app-region:drag\}/);
- assert.match(panel,/\.cpu-title\{[^}]*height:22px/);
+ assert.match(panel,/\.cpu-title\{[^}]*height:31px/);
  assert.match(panel,/fetch\('\/api\/system-metrics'/);
 });
 
@@ -119,4 +119,32 @@ test('初回準備中はCPUラベルを隠し、GPU/RAMを保ち、取得済み0
   assert.equal(f.context.state.labels.value.find(item=>item.key==='gpu').value,40);assert.equal(f.context.state.labels.value.find(item=>item.key==='ram').value,62);
  }
  f.unmount();
+});
+
+for(const floating of [false,true])test(`CPU背景透過は30回切替でも履歴・計測を維持、floating=${floating}`,async()=>{
+ const f=fixture({floating});f.mount();await tick();const samples=f.context.state.samples.value;
+ for(let i=0;i<30;i++){
+  f.context.toggleBackground();assert.equal(f.context.transparent.value,true);
+  assert.equal(f.classes.has('cpu-transparent-window'),!floating);
+  f.context.toggleBackground();assert.equal(f.context.transparent.value,false);assert.equal(f.classes.size,0);
+ }
+ assert.equal(f.context.state.samples.value,samples);assert.equal(f.calls(),1);
+ f.context.toggleBackground();f.unmount();assert.equal(f.classes.size,0);assert.equal(f.timers.size,0);
+});
+test('CPU toggle uses hollow right marker and shared drag without collapsing content',()=>{
+ const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
+ const toggle=readFileSync(new URL('../src/components/システム監視/CPU表示切替.vue',import.meta.url),'utf8');
+ assert.match(toggle,/transparent\?'▷':'▽'/);assert.match(toggle,/createPanelToggleDrag/);
+ assert.match(toggle,/width:22px;height:22px;border:2px solid currentColor/);
+ assert.doesNotMatch(toggle,/usePanelCollapse|togglePanel/);
+ assert.match(panel,/cpu-panel\.cpu-transparent\{background:transparent/);
+ assert.match(panel,/html\.cpu-transparent-window/);
+ assert.doesNotMatch(panel,/v-if="!transparent"|v-show="!transparent"/);
+});
+
+test('CPU native surface alone supports renderer-controlled transparency without resizing',()=>{
+ const desktop=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
+ assert.match(desktop,/backgroundColor:'#000',\.\.\.\(kind==='cpu'\?\{transparent:true,backgroundColor:'#00000000',hasShadow:false\}:\{\}\)/);
+ const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
+ assert.doesNotMatch(panel,/setBounds|setSize|panelCollapse|setPanelCollapsed/);
 });

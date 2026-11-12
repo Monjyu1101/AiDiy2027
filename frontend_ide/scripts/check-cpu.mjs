@@ -13,14 +13,14 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import assert from 'node:assert/strict';
 import {build} from 'esbuild';
-import {parse,compileScript} from '@vue/compiler-sfc';
+import {parse,compileScript,compileStyle} from '@vue/compiler-sfc';
 import WebSocket from 'ws';
 import {windowBounds} from '../デスクトップ/window-layout.cjs';
 const {width:initialWidth,height:initialHeight}=windowBounds('cpu',{x:0,y:0,width:1920,height:1080});
 const root=fileURLToPath(new URL('..',import.meta.url)),temporary=mkdtempSync(join(tmpdir(),'cpu-check-'));
 assert.equal(dirname(temporary),tmpdir());
 const output=join(root,'temp/cpu-check');mkdirSync(output,{recursive:true});
-const plugin={name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{const {descriptor}=parse(readFileSync(args.path,'utf8'));const compiled=compileScript(descriptor,{id:args.path,inlineTemplate:true});return{contents:compiled.content+`\nconst style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>s.content).join('\n'))};document.head.append(style);`,resolveDir:dirname(args.path)};});}};
+const plugin={name:'vue',setup(build){build.onLoad({filter:/\.vue$/},args=>{const {descriptor}=parse(readFileSync(args.path,'utf8'));const id='data-v-cpu-'+Buffer.from(args.path).toString('hex').slice(-16),compiled=compileScript(descriptor,{id,inlineTemplate:true});const component=compiled.content.replace('export default','const component =')+`\ncomponent.__scopeId=${JSON.stringify(id)};export default component;`;return{contents:component+`\nconst style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s=>compileStyle({source:s.content,filename:args.path,id,scoped:s.scoped}).code).join('\n'))};document.head.append(style);`,resolveDir:dirname(args.path)};});}};
 const result=await build({stdin:{contents:`import {createApp,h} from 'vue';import Cpu from './src/components/システム監視/CPUパネル.vue';
 let count=0;window.calls=0;window.failed=false;window.gpuMissing=false;const originalTimeout=window.setTimeout,originalNow=performance.now.bind(performance);Object.defineProperty(performance,'now',{value:()=>originalNow()*50});window.setTimeout=(fn,ms,...args)=>originalTimeout(fn,ms<=1000?ms/50:ms,...args);
 window.fetch=async()=>{window.calls++;if(window.failed)throw Error('offline');count++;return{ok:true,json:async()=>({timestamp:Date.now(),cpu:28+20*Math.sin(count*.37),gpu:window.gpuMissing?null:48+38*Math.sin(count*.21),ram:65+4*Math.sin(count*.08)})};};
@@ -58,6 +58,17 @@ try{
  await evaluate("document.querySelector('.cpu-panel').focus()");
  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
  assert.equal(await evaluate("document.querySelector('.connection-bar')"),null);
+ const chart=await evaluate("document.querySelector('.cpu-chart').getBoundingClientRect().height");
+ for(let index=0;index<6;index++){
+  await evaluate("document.querySelector('.cpu-display-toggle').click()");
+  assert.equal(await evaluate("document.querySelector('.cpu-display-mark').textContent"),'▷');
+  assert.equal(await evaluate("getComputedStyle(document.documentElement).backgroundColor"),'rgba(0, 0, 0, 0)');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-panel')).backgroundColor"),'rgba(0, 0, 0, 0)');
+  assert.equal(await evaluate("document.querySelector('.cpu-chart').getBoundingClientRect().height"),chart);
+  await evaluate("document.querySelector('.cpu-display-toggle').click()");
+  assert.equal(await evaluate("document.querySelector('.cpu-display-mark').textContent"),'▽');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-panel')).backgroundColor"),'rgb(0, 0, 0)');
+ }
  await evaluate('gpuMissing=true');await sleep(100);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),false);assert.equal(await evaluate("document.querySelector('.cpu-caption')"),null);
  await evaluate('failed=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/CPU —/);
  await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),true);

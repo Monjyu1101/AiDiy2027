@@ -42,7 +42,10 @@ try {
   await capture('01-expanded');
   await click('.code-panel-toggle');await sleep(70);
   const middle=await evaluate(`document.querySelector('.diag-panel').getBoundingClientRect().height`);assert.ok(middle>31&&middle<height);
-  await sleep(250);assert.equal(await evaluate(`document.querySelector('.diag-panel').getBoundingClientRect().height`),31);await capture('02-collapsed');
+  await sleep(250);assert.equal(await evaluate(`document.querySelector('.diag-panel').getBoundingClientRect().height`),31);
+  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.connection-bar')).display`),'none');
+  for(const selector of ['html','body','#app'])assert.equal(await evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(selector)})).backgroundColor`),'rgba(0, 0, 0, 0)');
+  await capture('02-collapsed');
   await click('.code-panel-toggle');await sleep(70);
   assert.ok(await evaluate(`document.querySelector('.diag-panel').getBoundingClientRect().height>31`));await sleep(250);
   assert.equal(await evaluate(`document.querySelector('.diag-panel').getBoundingClientRect().height`),height);
