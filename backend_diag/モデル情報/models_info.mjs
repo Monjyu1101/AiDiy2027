@@ -12,7 +12,7 @@ import {readFile} from 'node:fs/promises';
 import { OUTPUT_DIRECTORY, writeResult } from '../診断/headless.mjs';
 import {catalog, resolveProgram} from '../診断/probes.mjs';
 import {currentOpenRouterProof, readConfig} from '../runtime/model_probe.mjs';
-import {openrouterFreeModel, safeRouterMetadata} from '../runtime/model_catalog.mjs';
+import {GEMINI_CHAT_MODEL_ORDER, openrouterFreeModel, safeRouterMetadata} from '../runtime/model_catalog.mjs';
 import {LIVE_VOICES_FILE, liveVoicesInfo} from './voices_info.mjs';
 import {PREDICTION_MODELS_FILE, predictionModelsInfo} from './prediction_info.mjs';
 import {DECISIONS_MODELS_FILE,decisionsModelsInfo} from './decisions_info.mjs';
@@ -107,6 +107,13 @@ const LAYOUT = Object.freeze({
 // 作成日（YYYY/MM/DD）の新しい順。日付が同じもの・日付の無いもの（OAuth・Ollama など）は元の順を保ち、日付なしは末尾。
 const dateKey = row => typeof row.作成日 === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(row.作成日) ? row.作成日 : '';
 export const newestFirst = rows => rows.map((row, index) => [row, index]).sort(([a, i], [b, j]) => dateKey(b).localeCompare(dateKey(a)) || i - j).map(([row]) => row);
+// 既知3モデルの位置だけを上位順にする。その他の候補・日付・相対順序は変えない。
+const geminiChatOrder = rows => {
+  const rank = id => GEMINI_CHAT_MODEL_ORDER.indexOf(id);
+  const ranked = rows.filter(row => rank(row.model_id) >= 0).sort((a, b) => rank(a.model_id) - rank(b.model_id));
+  let index = 0;
+  return rows.map(row => rank(row.model_id) >= 0 ? ranked[index++] : row);
+};
 // 日付は API / OpenRouter の作成日 → モデル名の日付 → yyyy/mm/dd の順。
 export function liveDate(id, apiDate) {
   if (typeof apiDate === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(apiDate)) return apiDate;
@@ -176,9 +183,10 @@ export async function modelsInfo(provider, result, {now = () => new Date()} = {}
   const labels = rows => provisional ? Object.fromEntries(rows.map(row => [row.model_id,`仮設定（未検証） - ${row.model_id}`])) : chatLabels(rows, layout);
   const gemini = provider.id === 'gemini' || provider.id === 'freeai';
   const fixedKey = provider.id === 'grok' ? 'grok_cli' : layout.chatFixed;
-  const chatModels = fixedKey
+  let chatModels = fixedKey
     ? details({モデル詳細:Object.keys(FIXED_MODELS[fixedKey].models).map(model_id => ({model_id}))})
     : (provisional || result?.状態 === 'OK') && (provider.id !== 'openrt_chat' || result.認証確認 === true) ? details(result).filter(row => !gemini || !row.model_id.includes('lyria')) : [];
+  if (gemini) chatModels = geminiChatOrder(chatModels);
   const info = {形式:2, 種類:'モデル情報', プロバイダ:provider.id, 名前:provider.名前, 保存日時:now().toISOString(), 確認日時:result?.確認日時 ?? null,
     状態:result?.状態 ?? '未実施', 説明:result?.説明 ?? '', 警告:Array.isArray(result?.警告) ? result.警告 : [],
     chat:{取得元:provisional ? OAUTH_FALLBACK_SOURCE : fixedKey ? '固定候補（aidiy_diag）' : result?.状態 === 'OK' ? 'API（本体と同じ絞り込み）' : '取得できませんでした', 件数:chatModels.length, モデル:chatModels}};

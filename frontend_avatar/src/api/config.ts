@@ -66,7 +66,7 @@ export function defaultModelSettings(): ModelSettings {
   return {
     CHAT_AI_NAME: 'freeai_chat',
     CHAT_GEMINI_MODEL: 'gemini-3.1-flash-image',
-    CHAT_FREEAI_MODEL: 'gemini-3.8-flash',
+    CHAT_FREEAI_MODEL: 'gemini-4-carbon',
     CHAT_OPENRT_MODEL: 'google/gemini-3.1-flash-image',
     CHAT_OPENRT_FREE_MODEL: 'auto',
     CHAT_OPENAI_MODEL: 'gpt-6.1-sol',

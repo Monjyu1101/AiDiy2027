@@ -5047,7 +5047,7 @@ from hermes_cli.aidiy_model_preferences import load_model_choice, save_model_cho
 # 使えるモデルは契約プランで変わるので、基本はライブ一覧の先頭を既定にする。
 _OPENAI_OAUTH_FALLBACK_MODEL = "gpt-6.1-sol"
 _openai_oauth_models_cache: Optional[List[str]] = None
-_FREEAI_DEFAULT_MODEL = "gemini-3.8-flash"
+_FREEAI_DEFAULT_MODEL = "gemini-4-carbon"
 
 
 def _normalize_aidiy_freeai_model(value: Any) -> str:

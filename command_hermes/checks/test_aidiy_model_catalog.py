@@ -148,6 +148,19 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.picker._aidiy_config.pop("freeai_key_id")
         self.assertIsNone(self.picker._get_aidiy_provider_entry("freeai", True))
 
+    def test_freeai_default_is_carbon_but_explicit_lower_tiers_are_preserved(self):
+        load = self.ns["_load_freeai_defaults"]
+        self.assertEqual(load({})["model"], "gemini-4-carbon")
+        self.assertEqual(load({"CHAT_FREEAI_MODEL": "gemini-3.5-flash"})["model"], "gemini-4-carbon")
+        for model in ["gemini-3.8-flash", "gemini-4-argon", "gemini-4-carbon", "custom-model"]:
+            with self.subTest(model=model):
+                self.assertEqual(load({"CHAT_FREEAI_MODEL": model})["model"], model)
+                self.assertEqual(load({"CHAT_FREEAI_MODEL": "gemini-4-carbon"}, model)["model"], model)
+        ids = ["gemini-4-carbon", "gemini-4-argon", "gemini-3.8-flash"]
+        self.write({provider: {model: model for model in ids} for provider in ["gemini", "freeai"]})
+        for provider in ["gemini", "freeai"]:
+            self.assertEqual([model for _, model in self.picker._get_aidiy_provider_entry(provider, True)["models"]], ids)
+
     def test_startup_identity_survives_custom_and_bare_model_change(self):
         defaults = self.ns["_load_aidiy_hermes_provider_defaults"]("freeai")
         self.assertEqual(defaults["provider"], "custom")

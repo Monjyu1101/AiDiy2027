@@ -82,6 +82,7 @@ function openrouterCatalog(body, now = /* @__PURE__ */ new Date()) {
   }
   return out;
 }
+var GEMINI_CHAT_MODEL_ORDER = Object.freeze(["gemini-4-carbon", "gemini-4-argon", "gemini-3.8-flash"]);
 function googleCatalog(models, router = {}) {
   const out = empty();
   for (const model of models) {
@@ -92,7 +93,7 @@ function googleCatalog(models, router = {}) {
   if (Object.keys(router).length) for (const id of Object.keys(out)) {
     const key = `google/${id}`;
     if (Object.hasOwn(router, key)) out[id].\u4F5C\u6210\u65E5 = router[key].\u4F5C\u6210\u65E5;
-    else if (!id.toLowerCase().includes("live")) delete out[id];
+    else if (!id.toLowerCase().includes("live") && !GEMINI_CHAT_MODEL_ORDER.includes(id)) delete out[id];
   }
   return out;
 }
@@ -264,6 +265,7 @@ function ollamaLocalCatalog(body) {
 }
 export {
   DEFAULT_CODEX_MODELS,
+  GEMINI_CHAT_MODEL_ORDER,
   GROK_CLI_MODELS,
   LOCAL_CHAT_MODELS,
   OAUTH_FALLBACK_MODELS,

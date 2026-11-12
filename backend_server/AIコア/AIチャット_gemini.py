@@ -36,7 +36,7 @@ class ChatAI:
     """
 
     def __init__(self, 親=None, セッションID: str = "", チャンネル: int = 0, 絶対パス: str = None,
-                 AI_NAME: str = "gemini", AI_MODEL: str = "gemini-2.5-flash",
+                 AI_NAME: str = "gemini", AI_MODEL: str = "gemini-4-carbon",
                  api_key: str = None, system_instruction: str = None, 実行オプション=None):
         """初期化"""
 

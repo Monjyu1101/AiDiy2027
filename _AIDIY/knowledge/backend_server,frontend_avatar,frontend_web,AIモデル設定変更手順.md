@@ -84,6 +84,14 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 - Web / Avatar / Diag の設定保存APIは無料モデルキーを保存できるが、API キーを設定画面へ返したり書き換えたりしない。
 - 回帰確認は `python -B -m unittest discover -s backend_server/checks -p test_openrt_free_settings.py -v`、`node --test frontend_avatar/checks/ai-settings-models.test.cjs backend_diag/checks/ai-settings-form.check.cjs backend_diag/checks/ai-settings-api.check.mjs`。合成JSONと模擬APIだけを使い、実設定・外部モデルへの接続は行わない。
 
+### Gemini / FreeAI のChatモデル追加
+
+- 新規設定・設定欠落時の `CHAT_FREEAI_MODEL` とHermesのFreeAI退避先は `gemini-4-carbon`。保存済みの `gemini-3.8-flash` / `gemini-4-argon` や任意モデルは置き換えない。
+- DiagはGoogle APIが返した候補だけを使い、既知3モデル間を `gemini-4-carbon` → `gemini-4-argon` → `gemini-3.8-flash` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
+- 既知3モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
+- `CHAT_GEMINI_MODEL` の画像モデル、Liveの音声モデル、低コスト用途のPrediction / Decision既定値は別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
+- 回帰確認は `node --test backend_diag/checks/model-catalog.check.mjs backend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
+
 ### Code CLIのautoによるモデル自動選択
 
 `AIコード_cli.py` は `auto` の場合、`AIコードモデル選択.py` から `aidiy_decisions_check` のHTTP `/config` と `/check` を呼ぶ。常駐toolsの起動チェックに成功した方式を利用し、OAuthが使えれば優先する。履歴と今回CLIへ送るプロンプト全体を判断材料にする。継続CLIでも保持している会話履歴を渡し、新規会話には旧履歴を混ぜない。

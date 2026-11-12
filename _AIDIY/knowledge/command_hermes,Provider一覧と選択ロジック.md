@@ -28,7 +28,7 @@
 
 確認: `test_aidiy_model_catalog.py` で候補・キー分離・起動provider識別をオフライン検証し、`aidiy_hermes` の実起動で起動選択・picker保存・次回復元・非対話実行・初期描画を確認します。
 
-AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_aidiy_hermes_defaults()` が共通設定を読みます。`CODE_AIDIY_HERMES_MODEL` は `openai_oauth/gpt-6.1-sol` に加えて `xai-oauth/grok-4.6` を受理します。対応する OAuth が認証済みなら指定 provider を使い、非対話の Code AI 起動時に未認証または認証切れなら `freeai/gemini-3.8-flash` へ退避します。`--provider openai_oauth` / `--provider xai-oauth` を明示指定した場合は OAuth 経路を維持します。CLI の `--model` / `--provider` は初期値より優先されます。
+AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_aidiy_hermes_defaults()` が共通設定を読みます。`CODE_AIDIY_HERMES_MODEL` は `openai_oauth/gpt-6.1-sol` に加えて `xai-oauth/grok-4.6` を受理します。対応する OAuth が認証済みなら指定 provider を使い、非対話の Code AI 起動時に未認証または認証切れなら `freeai/gemini-4-carbon` へ退避します。`--provider openai_oauth` / `--provider xai-oauth` を明示指定した場合は OAuth 経路を維持します。CLI の `--model` / `--provider` は初期値より優先されます。
 
 Hermes の `/model` は `_AIDIY/aidiy_diag/hermes_models_info.json` を使用します。`aidiy_diag` のモデル一覧取得・保存時に、既存の Chat / Code 合成一覧と一緒に生成されます。AIチャットパネルの `chat_models_info.json` や Code ダイアログの `code_models_info.json` の構成・絞り込みは変更しません。
 
