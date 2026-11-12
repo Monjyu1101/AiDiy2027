@@ -153,7 +153,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
    <button type="button" aria-label="戻る" title="戻る" :disabled="!page.available||!page.back" @click="action('back')">←</button>
    <button type="button" aria-label="進む" title="進む" :disabled="!page.available||!page.forward" @click="action('forward')">→</button>
    <RefreshButton :disabled="!page.available" :stop="page.loading" :aria-label="page.loading?'読み込みを停止':'再読み込み'" :title="page.loading?'読み込みを停止':'再読み込み'" @click="action(page.loading?'stop':'reload')" />
-   <button v-if="page.mode !== 'offline'" type="button" :disabled="!page.available" title="AiDiyホーム" aria-label="AiDiyホーム" @click="action('home')">⌂</button>
+   <button type="button" :disabled="!page.available" :title="page.connected===true?'AiDiyホーム（localhost:8090）':'Google AIホーム'" aria-label="ホーム" @click="action('home')">⌂</button>
    <input ref="addressInput" v-model="address" @input="rememberAddress" :disabled="!page.available" aria-label="URLまたは検索語" :placeholder="page.mode === 'offline' ? 'URLまたは検索語' : 'URLまたはGoogle AIで検索'" spellcheck="false" @focus="focusAddress" @blur="blurAddress" @compositionstart="composingAddress=true" @compositionend="composingAddress=false" @keydown="addressKeydown">
    <button type="submit" :disabled="!page.available">開く</button>
   </form>

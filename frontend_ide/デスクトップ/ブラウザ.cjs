@@ -209,7 +209,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    else if(name==='tab-select')entry.selectTab(value);
    else if(name==='tab-close')entry.closeTab(value);
    else if(name==='navigate')await entry.navigate(value);
-   else if(name==='home')await entry.navigate(HOME);
+   else if(name==='home')await entry.navigate(entry.connected?'http://localhost:8090/':'https://www.google.com/ai');
    else if(name==='back'){if(contents.navigationHistory.canGoBack())contents.navigationHistory.goBack();}
    else if(name==='forward'){if(contents.navigationHistory.canGoForward())contents.navigationHistory.goForward();}
    else if(name==='reload'){entry.error='';contents.reload();}

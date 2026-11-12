@@ -235,7 +235,7 @@ for(const standalone of [false,true])for(const headerOnly of [false,true])test(`
   const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
   const tools=nodes({children:bar.children['connection-tools']()});
   for(const name of integrations)assert.equal(tools.some(n=>n.props?.class===name),mode!=='offline',name);
-  assert.equal(rendered.some(n=>n.props?.['aria-label']==='AiDiyホーム'),mode!=='offline');
+  const home=rendered.find(n=>n.props?.['aria-label']==='ホーム');assert.ok(home);assert.equal(home.props.disabled,false);assert.equal(home.props.title,connected?'AiDiyホーム（localhost:8090）':'Google AIホーム');
   assert.equal(rendered.find(n=>n.props?.class==='browser-connection-target').props.value,'session="aidiy_browser test" ,tab_id="tab-test", title="Example"');
   assert.equal(rendered.find(n=>n.type==='input').props.disabled,false);
   for(const label of ['戻る','進む'])assert.equal(rendered.find(n=>n.props?.['aria-label']===label).props.disabled,false);

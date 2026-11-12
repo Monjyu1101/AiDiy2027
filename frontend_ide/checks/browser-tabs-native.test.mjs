@@ -93,3 +93,11 @@ test('Browser tabs: X close after collapse never accesses destroyed parent/View 
  assert.equal(f.record.openBrowserTab,undefined);
  assert.equal((await f.action('state')).ok,false);
 });
+
+test('ホームは現在の接続状態でlocalhostとGoogle AIを切り替え、選択タブだけを移動する',async t=>{
+ const f=fixture();t.after(f.close);const first=await f.action('state');await f.action('tab-new','https://second.test/');
+ for(const [mode,connected,url] of [['online',true,'http://localhost:8090/'],['online',false,'https://www.google.com/ai'],['offline',false,'https://www.google.com/ai'],['online',true,'http://localhost:8090/']]){
+  f.control.setAvailable(f.record,true,connected,mode);const result=await f.action('home');assert.equal(result.ok,true);assert.equal(result.url,url);assert.equal(f.views[0].webContents.url,first.url);
+ }
+ f.control.setAvailable(f.record,false,false);assert.equal((await f.action('home')).ok,false);
+});
