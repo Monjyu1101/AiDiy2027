@@ -23,7 +23,7 @@ const {projectIdentity,projectProfile}=profiles;
 const require=createRequire(import.meta.url),desktopPath=fileURLToPath(new URL('../desktop.cjs',import.meta.url));
 const desktopRequire=createRequire(desktopPath),desktopSource=readFileSync(desktopPath,'utf8');
 
-function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,mode='online',initialConnected=true,startupURL=async()=>browser.HOME}){
+function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,mode='online',initialConnected=true,startupURL=browser.browserStartupURL}){
  const app=new EventEmitter(),process=new EventEmitter(),windows=[],messages=[],paths={appData,temp:appData},order=[],startupRequests=[],navigation=[];
  const ipcMain=new EventEmitter(),handlers=new Map();ipcMain.handle=(name,handler)=>handlers.set(name,handler);
  let ready=Promise.resolve(),connected=initialConnected,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page,controls){pages.push({record,page,controls});},close(){bridgeClosed++;}};
@@ -51,7 +51,7 @@ function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',a
  const area={x:0,y:0,width:1920,height:1080};
  const electron={app,BrowserWindow:Window,ipcMain,shell:{},dialog:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:Object.assign(new EventEmitter(),{getCursorScreenPoint:()=>({x:0,y:0}),getDisplayNearestPoint:()=>({workArea:area}),getDisplayMatching:()=>({workArea:area})})};
  const load=name=>name==='electron'?electron:name==='./host/scripts/window-opening.cjs'?{拡大表示:async(_type,window)=>{window.show();window.focus();return true;}}
-  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode,connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target,_available,_connected,_mode,onTabCreated)=>{
+  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode,connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async connected=>{startupRequests.push(connected);return startupURL(connected);},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target,_available,_connected,_mode,onTabCreated)=>{
    const create=target=>{
     const id=randomUUID(),page=Object.assign(new EventEmitter(),{destroyed:false,isDestroyed(){return this.destroyed||record.window.isDestroyed();},url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});
     const controls={id,activate:()=>{record.browserTabId=id;},close:()=>{page.destroyed=true;page.emit('destroyed');}};
@@ -93,14 +93,15 @@ test('Standalone Browser: 専用プロファイル、共有CDP、最終窓終了
 
 const settle=()=>new Promise(resolve=>setImmediate(resolve));
 
-for(const running of [true,false])test(`Standalone Browser: frontend_web${running?'起動中は8090':'未起動でも8090'}、明示URLとIDE起動は維持`,async t=>{
+for(const running of [true,false])test(`Standalone Browser: tools接続=${running}、既定ホームと明示URLを区別`,async t=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-browser-startup-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
- const startupURL=()=>browser.browserStartupURL(async()=>{if(!running)throw Error('ECONNREFUSED');return{ok:true,status:200};});
- const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL});await a.ready();
+ const startupURL=browser.browserStartupURL;
+ const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL,initialConnected:running});await a.ready();
  const ide=desktop({project:root,appData:root,locks:new Map(),startupURL});await ide.ready();
  t.after(()=>{a.app.quit();ide.app.quit();});
- assert.equal(a.pages[0].page.getURL(),running?'http://127.0.0.1:8090/':browser.HOME);
+ assert.equal(a.pages[0].page.getURL(),running?'http://localhost:8090/':'https://www.google.com/ai');
  assert.equal(a.startupRequests.length,1);
+ a.setConnected(true);
  for(const target of ['https://example.test/selected','about:blank',browser.HOME]){
   const opened=await a.bridgeOptions.openPanel(target);
   assert.equal(a.pages.find(page=>page.controls.id===opened.tabId).page.getURL(),target);
@@ -110,25 +111,25 @@ for(const running of [true,false])test(`Standalone Browser: frontend_web${runnin
  a.setConnected(true);await a.checkStandaloneBrowser([...a.records.values()][0]);assert.equal(await a.bridgeOptions.canUse(),true);
  assert.equal(a.startupRequests.length,1,'接続の復帰で既存ページを開き直さない');
  assert.equal((await ide.request('development:open-browser',ide.windows[0])).ok,true);
- assert.equal(ide.pages[0].page.getURL(),browser.HOME);
- assert.equal(ide.startupRequests.length,0,'IDE所属Browserの起動先は変更しない');
+ assert.equal(ide.pages[0].page.getURL(),'http://localhost:8090/');
+ assert.equal(ide.startupRequests.length,1,'IDE所属Browserも接続状態から既定ホームを決める');
 });
 
 test('Standalone Browser: 初期URL確認中のTools切断を確認後の状態に反映する',async t=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-browser-startup-pending-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  let finish;
- const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL:()=>new Promise(resolve=>{finish=resolve;})});
+ const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),startupURL:connected=>finish?browser.browserStartupURL(connected):new Promise(resolve=>{finish=resolve;})});
  t.after(()=>a.app.quit());await settle();assert.equal(typeof finish,'function');
  a.setConnected(false);finish('http://127.0.0.1:8090/');await a.ready();
  assert.equal(a.availability.at(-1).value,true);assert.equal(a.availability.at(-1).connected,false);
- assert.equal(a.pages[0].page.getURL(),'http://127.0.0.1:8090/');
- assert.equal(a.startupRequests.length,1);
+ assert.equal(a.pages[0].page.getURL(),'https://www.google.com/ai');
+ assert.deepEqual(a.startupRequests,[true,false]);
 });
 
 test('Standalone Browser: 初期URL確認中に閉じた窓へ遅い結果を適用しない',async t=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-browser-startup-closed-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
  let finish;
- const a=desktop({project:root,appData:root,locks:new Map(),startupURL:()=>new Promise(resolve=>{finish=resolve;})});
+ const a=desktop({project:root,appData:root,locks:new Map(),startupURL:connected=>finish?browser.browserStartupURL(connected):new Promise(resolve=>{finish=resolve;})});
  t.after(()=>a.app.quit());await a.ready();
  const pending=a.createWindow('browser','http://127.0.0.1:12345/#browser');
  await settle();assert.equal(typeof finish,'function');
@@ -314,4 +315,12 @@ for(const mode of ['online','offline'])test(`Browser起動モード${mode}: Tool
  assert.equal((await a.request('development:browser-action',record.window,'navigate','https://example.test/')).ok,true);
  a.setConnected(false);await a.checkStandaloneBrowser(record);assert.equal(await a.bridgeOptions.canUse(),false);
  assert.equal(a.availability.at(-1).mode,mode);
+});
+
+test('Browser初期表示: online指定だけを接続扱いせず、孤立利用はconnected残値があってもGoogle AI',async t=>{
+ const root=mkdtempSync(join(tmpdir(),'aidiy-browser-initial-state-'));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ for(const [mode,initialConnected] of [['online',false],['offline',false],['offline',true]]){
+  const a=desktop({kind:'browser',project:root,appData:root,locks:new Map(),mode,initialConnected});t.after(()=>a.app.quit());await a.ready();
+  assert.equal(a.pages[0].page.getURL(),'https://www.google.com/ai');assert.deepEqual(a.startupRequests,[false]);a.app.quit();
+ }
 });

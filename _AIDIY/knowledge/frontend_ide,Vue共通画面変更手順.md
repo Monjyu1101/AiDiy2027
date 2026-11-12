@@ -719,6 +719,12 @@ Browserは1つのElectron窓に複数のタブを保持します。タブ行の�
 
 UI回帰は `checks/browser-tabs-ui.test.mjs`、実Vue/CSS確認用ハーネスは `scripts/check-browser-tabs.mjs`。モックの成功と実Electron描画の確認は区別します。
 
+BrowserのURL欄の下にはページ名・識別情報・エラーの常設行を置きません。`session="..." ,tab_id="...", title="..."` は既存タブのホバー／キーボードフォーカス時だけ、URL行内の選択コピー可能なオーバーレイに表示します。マウス離脱・Escape・タブ切替で閉じ、常設の「連携先」等のラベルは追加しません。ネイティブ本文Viewより手前に出せないDOMを本文領域へはみ出させないでください。
+
+ページ読込失敗は `デスクトップ/ブラウザ状態表示.cjs` の専用sandbox Viewを本文と同じ位置に表示します。元ページのURL・履歴・CDP IDを保持し、失敗タブの選択時だけ表示、再ナビゲーションで解除します。静的HTML・厳格CSP・外部遷移拒否を維持し、CDP一覧に状態表示Viewを登録しません。
+
+ホームは窓の初期URLです。明示URLを優先し、省略時だけ起動直前のTools実接続状態（active・online・connected=true）で `http://localhost:8090/` または `https://www.google.com/ai` を選びます。起動後は接続変化や明示URLの別タブでホームを上書きしません。新しいタブもその窓のホームを既定にし、ホーム操作は選択タブだけに適用します。
+
 ## BrowserのAI解析とIDEソース選択
 
 `ファイル機能/browser-analysis.mjs` が `GET /api/browser-analysis?url=...` と `POST /api/browser-analysis`（`{url,title}`）を所有します。Browser単独ではこのAPIと接続状態だけを公開し、一般のファイルAPI・Console起動は公開しません。実行時はTools接続と現在の利用セッションを確認します。

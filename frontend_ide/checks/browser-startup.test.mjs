@@ -6,11 +6,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import browser from '../デスクトップ/ブラウザ.cjs';
-test('Browserの既定URLはtoolsやWebサーバーの状態によらずローカル8090',async()=>{
- let calls=0;
- assert.equal(browser.HOME,'http://127.0.0.1:8090/');
- assert.equal(await browser.browserStartupURL(()=>{calls++;throw Error('offline');}),browser.HOME);
- assert.equal(calls,0,'起動をネットワーク確認で遅延させない');
+test('Browserの既定URLは実際のTools接続状態で選び、明示URLと検索は保持',async()=>{
+ assert.equal(await browser.browserStartupURL(true),'http://localhost:8090/');
+ for(const connected of [false,undefined,null,'online'])assert.equal(await browser.browserStartupURL(connected),'https://www.google.com/ai');
  assert.equal(browser.browserURL(''),browser.HOME);
  for(const query of ['宇宙','日本語 検索','hello world'])assert.equal(browser.browserURL(query),'https://www.google.com/ai?q='+encodeURIComponent(query));
  for(const url of ['http://localhost:8090/a','https://example.com/search?q=x'])assert.equal(browser.browserURL(url),url);

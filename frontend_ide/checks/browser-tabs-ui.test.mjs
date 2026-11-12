@@ -96,30 +96,47 @@ test('タブ・＋を従来の約70%の22px高に揃え、×の横ヒット領�
  assert.match(source,/\.browser-tab-new\{height:22px\}/);
 });
 
-test('Browserタイトルの状態は緑丸接続済と中空丸未接続、操作不可の説明は表示しない',()=>{
- assert.match(source,/\.browser-panel :deep\(\.connection-label>i\)\{[^}]*background:transparent;[^}]*border:1px solid currentColor/);
- assert.match(source,/\.browser-panel :deep\(\.connection-label>i.online\)\{background:#22c55e;border-color:#22c55e/);
+test('Browser接続マークは共通状態バーと同じ寸法・配色を使い、操作不可の説明は表示しない',()=>{
+ const common=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+ assert.ok(!source.includes(':deep(.connection-label>i)'));assert.ok(!source.includes(':deep(.connection-label>i.online)'));
+ assert.match(common,/\.connection-label i\{[^}]*width:5px;height:5px;[^}]*background:#667080/);
  assert.ok(!source.includes('MCP制御不可'));assert.ok(!source.includes('AI解析不可'));
 });
 
-for(const header of [false,true])test(`連携先を実値のsession/tab_id表記で手動コピーできる: header=${header}`,()=>{
+
+for(const header of [false,true])test(`tab hover/focus provides copyable metadata overlay only: header=${header}`,()=>{
  const f=fixture(header);try{
-  f.notify(snapshot(2));let input=nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');
-  assert.equal(input.props.value,'session="test" ,tab_id="a", title="a"');assert.equal(input.props.readonly,'');assert.equal(input.props.disabled,undefined);
+  f.notify(snapshot(2));assert.equal(f.state.connectionTarget.value,'');
+  f.state.infoTabId.value='b';let input=nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');
+  assert.equal(input.props.value,'session="test" ,tab_id="b", title="ページB"');assert.equal(input.props.readonly,'');
   let selected=false;input.props.onFocus({target:{select(){selected=true;}}});assert.equal(selected,true);
-  f.notify(snapshot(3,'b',{connected:false}));input=nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');assert.equal(input.props.value,'session="test" ,tab_id="b", title="b"');
-  f.notify(snapshot(3.5,'b',{title:'<script>"quoted"</script>'}));assert.equal(f.state.connectionTarget.value,'session="test" ,tab_id="b", title='+JSON.stringify('<script>"quoted"</script>'));
-  f.notify(snapshot(4,'b',{session:''}));assert.equal(nodes(f.render()).some(v=>v.props?.class==='browser-connection-target'),false);
-  f.notify(snapshot(5,'b',{session:'quoted"\\session'}));assert.equal(f.state.connectionTarget.value,'session='+JSON.stringify('quoted"\\session')+' ,tab_id="b", title="b"');
+  f.state.navigationLeave();assert.equal(f.state.connectionTarget.value,'','mouse departure closes even with input focus');
+  f.state.navigationKeydown({key:'Tab'});f.state.tabInfoFocus('a');assert.ok(f.state.connectionTarget.value);
+  f.state.navigationLeave();assert.ok(f.state.connectionTarget.value,'keyboard focus survives mouse absence');
+  f.state.navigationKeydown({key:'Escape'});assert.equal(f.state.connectionTarget.value,'');
+  f.state.tabInfoFocus('a');f.notify(snapshot(3,'b'));assert.equal(f.state.connectionTarget.value,'','tab switch closes');
+  f.state.tabInfoFocus('b');f.state.navigationBlur({currentTarget:{contains:()=>true},relatedTarget:{}});assert.ok(f.state.connectionTarget.value,'movement to overlay retains');
+  f.state.navigationBlur({currentTarget:{contains:()=>false},relatedTarget:{}});assert.equal(f.state.connectionTarget.value,'');
+  f.state.infoTabId.value='b';f.notify(snapshot(4,'b',{tabs:[tabs[0]]}));assert.equal(f.state.connectionTarget.value,'','closed tab clears');
+  f.notify(snapshot(5,'b',{pageLoadFailed:true,error:'page failed'}));assert.ok(!nodes(f.render()).some(v=>v.props?.class==='browser-operation-error'));
+  f.state.error.value='operation failed';assert.ok(nodes(f.render()).some(v=>v.props?.class==='browser-operation-error'));
  }finally{f.close();}
+ assert.ok(!source.includes('browser-page-title'));assert.ok(!source.includes('browser-connection-reveal'));assert.ok(!source.includes('focus-within'));
+ assert.match(source,/\.browser-tab-info,\.browser-operation-error\{position:absolute;bottom:0/);
 });
 
-test('連携先は同一領域のホバーまたはキーボードfocus中だけ表示しコピー中に消えない',()=>{
- for(const header of [false,true]){
-  const f=fixture(header);try{f.notify(snapshot(2,'b',{connected:false}));const group=nodes(f.render()).find(v=>v.props?.class==='browser-connection-info');
-   const controls=nodes(group);assert.ok(controls.some(v=>v.type==='button'&&v.props?.class==='browser-connection-reveal'));assert.ok(controls.some(v=>v.type==='input'&&v.props?.class==='browser-connection-target'));
-  }finally{f.close();}
- }
- assert.match(source,/\.browser-connection-target\{visibility:hidden/);
- assert.match(source,/\.browser-connection-info:hover \.browser-connection-target,\.browser-connection-info:focus-within \.browser-connection-target\{visibility:visible\}/);
+for(const header of [false,true])test(`hidden and fullscreen transitions discard metadata overlay: header=${header}`,()=>{
+ const f=fixture(header);try{
+  f.notify(snapshot(2));f.state.navigationKeydown({key:'Tab'});f.state.tabInfoFocus('a');
+  f.state.setPanelHidden(true);assert.equal(f.state.connectionTarget.value,'');
+  f.state.setPanelHidden(false);assert.equal(f.state.connectionTarget.value,'','expand does not restore old overlay');
+  f.state.tabInfoFocus('a');assert.ok(f.state.connectionTarget.value,'fresh keyboard focus still opens');
+  f.notify(snapshot(3,'a',{fullscreen:true}));assert.equal(f.state.connectionTarget.value,'');
+  f.state.tabInfoFocus('a');f.notify(snapshot(4,'a',{fullscreen:false}));assert.equal(f.state.connectionTarget.value,'','both fullscreen transitions close');
+  if(header){
+   f.state.tabInfoFocus('a');f.notify(snapshot(5,'a',{headerVisible:false}));assert.equal(f.state.connectionTarget.value,'');
+   f.notify(snapshot(6,'a',{headerVisible:true}));assert.equal(f.state.connectionTarget.value,'','header reappearance does not restore old overlay');
+   f.state.tabInfoFocus('a');assert.ok(f.state.connectionTarget.value);
+  }
+ }finally{f.close();}
 });

@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+const {createBrowserStatusView}=require('./ブラウザ状態表示.cjs');
 const {randomUUID}=require('node:crypto');
 const HOME='http://127.0.0.1:8090/';
 const {pathToFileURL,fileURLToPath}=require('node:url');
@@ -13,8 +14,9 @@ const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
 const {createBrowserAnalysisWindows}=require('./ブラウザ解析窓.cjs');
 const {createBrowserChildWindows}=require('./ブラウザ補助窓.cjs');
 const {createBrowserElementLink}=require('./ブラウザ要素連携.cjs');
-// 起動時もホームもローカルWebを開く。未起動の場合はページ内の再読み込みで復帰する。
-async function browserStartupURL(){return HOME;}
+// Tools未接続時はGoogle AI、接続中はローカルWebを初期表示する。
+const defaultBrowserURL=connected=>connected===true?'http://localhost:8090/':'https://www.google.com/ai';
+async function browserStartupURL(connected=false){return defaultBrowserURL(connected);}
 function browserFileURL(root,path){return pathToFileURL(previewFile(root,path).full).href;}
 // 直接開くのはHTMLと音声・動画。ページ関連ソースは確認した表示URLが必要。
 async function browserOpenable(path,displayUrl=''){
@@ -69,20 +71,21 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   callback({cancel:blocked});
  });
  const allowed=url=>{if(url==='about:blank')return true;try{const parsed=new URL(url);if(parsed.protocol==='file:')return localFileAllowed(parsed);return ['http:','https:'].includes(parsed.protocol)&&!parsed.username&&!parsed.password&&!blockedOrigins.has(parsed.origin);}catch{return false;}};
- function attach(record,target=HOME,available=true,connected=available,mode='online',onTabCreated=()=>{}){
+ function attach(record,target,available=true,connected=available,mode='online',onTabCreated=()=>{}){
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
-  const entry={tabs:[],active:null,navigationRevision:0,available,connected,mode,disposed:false};entries.set(record,entry);
+  const entry={homeURL:browserURL(target??defaultBrowserURL(connected)),tabs:[],active:null,navigationRevision:0,available,connected,mode,disposed:false};entries.set(record,entry);
   for(const key of ['view','error','run','capture','elementLink'])Object.defineProperty(entry,key,{get:()=>entry.active?.[key],set:value=>{if(entry.active)entry.active[key]=value;}});
   let stateRevision=0;
   const snapshot=()=>{
    const tab=entry.active,contents=tab.view.webContents;
-   return{stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,activeTabId:tab.id,tabs:entry.tabs.map(t=>({id:t.id,url:t.view.webContents.getURL()||t.target,title:t.view.webContents.getTitle(),loading:t.view.webContents.isLoading()})),url:contents.getURL()||tab.target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'};
+   return{stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,homeURL:entry.homeURL,activeTabId:tab.id,pageLoadFailed:!!tab.pageLoadFailed,tabs:entry.tabs.map(t=>({id:t.id,url:t.view.webContents.getURL()||t.target,title:t.view.webContents.getTitle(),loading:t.view.webContents.isLoading()})),url:contents.getURL()||tab.target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'};
   };
   const notify=()=>{if(!entry.disposed&&entry.active&&!record.window.isDestroyed()&&!entry.view.webContents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
   // サイズ操作は窓ごとに一つ。タブ切替後も同じ測定値を選択中Viewへ適用する。
-  const sizing=createBrowserSizing({window:record.window,view:{setBounds:bounds=>entry.view?.setBounds(bounds),get webContents(){return entry.view?.webContents;}},screen});entry.sizing=sizing;
+  const statusView=createBrowserStatusView({WebContentsView,session:isolated,window:record.window,onKey:fullscreenKey});
+  const sizing=createBrowserSizing({window:record.window,view:{setBounds:bounds=>{entry.view?.setBounds(bounds);statusView.setBounds(bounds);},get webContents(){return entry.view?.webContents;}},screen});entry.sizing=sizing;
   const toggleFullscreen=()=>{if(!entry.panelCollapsed)sizing.toggleFullscreen();};
   entry.toggleFullscreen=toggleFullscreen;
   let pointerTimer;
@@ -140,31 +143,35 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    if(entry.active===tab)selectTab(entry.tabs[index+1]?.id||entry.tabs[index-1].id);
    entry.tabs.splice(entry.tabs.indexOf(tab),1);disposeTab(tab);notify();
   }
-  function newTab(value=HOME){
+  function newTab(value=entry.homeURL){
    if(entry.disposed||record.window.isDestroyed())throw Error('Browserが終了しています。');
    if(entry.tabs.length>=32)throw Error('タブは32個まで開けます。不要なタブを閉じてください。');
    const target=browserURL(value);if(!allowed(target))throw Error('このURLはブラウザパネルでは開けません。');
    const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}}),contents=view.webContents;
-   const tab={id:entry.tabs.length===0&&record.browserTabId?record.browserTabId:randomUUID(),view,contents,target,error:'',run:0,closed:false,pendingTarget:entry.available?null:target};
+   const tab={id:entry.tabs.length===0&&record.browserTabId?record.browserTabId:randomUUID(),view,contents,target,error:'',run:0,navigationEpoch:0,closed:false,pendingTarget:entry.available?null:target};
    record.window.contentView.addChildView(view);view.setVisible(false);
    tab.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available&&entry.active===tab&&!tab.closed,onChange:notify,onSelected:()=>{if(entry.active===tab)hostContents.send('development:browser-element-selected');},onError:message=>{if(tab.error!==message){tab.error=message;notify();}}});
    tab.navigate=async value=>{
     const url=browserURL(value);if(tab.closed||!entry.available||!allowed(url))throw Error('このURLはブラウザパネルでは開けません。');
     if(entry.active===tab)closeHelpers();else void tab.elementLink.stop();
-    const run=++tab.run;tab.error='';tab.target=url;
-    void contents.loadURL(url).catch(error=>{if(!entry.disposed&&!tab.closed&&run===tab.run&&!contents.isDestroyed()&&error.code!=='ERR_ABORTED'){tab.error='ページを読み込めませんでした。URLや接続を確認して再読み込みしてください。';notify();}});
+    const run=++tab.run,navigationEpoch=tab.navigationEpoch;tab.error='';const recovering=tab.pageLoadFailed;tab.pageLoadFailed=false;tab.target=url;tab.loadingURL=url;if(recovering)entry.layout();
+    // 開始イベント以降の失敗はdid-fail-loadが担当。遅延rejectを再訪先へ適用しない。
+    void contents.loadURL(url).catch(error=>{if(!entry.disposed&&!tab.closed&&run===tab.run&&navigationEpoch===tab.navigationEpoch&&!contents.isDestroyed()&&error.code!=='ERR_ABORTED'){failPage();}});
     notify();
    };
+   function failPage(){if(entry.disposed||tab.closed||!entry.available)return;tab.pageLoadFailed=true;tab.capture=undefined;if(entry.active===tab){entry.navigationRevision++;closeHelpers();}tab.error='ページを読み込めませんでした。URLや接続を確認して再読み込みしてください。';if(entry.active===tab)entry.layout();notify();}
+   contents.on('did-redirect-navigation',(_event,url,_inPlace,isMainFrame)=>{if(isMainFrame!==false)tab.loadingURL=url;});
+   contents.on('did-fail-load',(_event,code,_description,url,isMainFrame)=>{if(isMainFrame!==false&&code!==-3&&(!tab.loadingURL||url===tab.loadingURL))failPage();});
    const guard=(event,url)=>{if(!entry.available||!allowed(url||event.url)){event.preventDefault();tab.error='このリンクはブラウザパネルでは開けません。';notify();}};
    contents.on('will-navigate',guard);contents.on('will-redirect',guard);contents.on('will-frame-navigate',guard);
    contents.on('will-attach-webview',event=>event.preventDefault());
    contents.setWindowOpenHandler(({url})=>{try{if(!entry.available)throw Error('利用を開始してください。');newTab(url);}catch(error){tab.error=error.message;notify();}return{action:'deny'};});
    const resetCapture=()=>{tab.capture=undefined;if(entry.active===tab){entry.navigationRevision++;draftWindows.close(record);analysisWindows.close(record);}notify();};
    for(const name of ['did-start-loading','did-stop-loading','page-title-updated'])contents.on(name,notify);
-   contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
+   contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false){tab.navigationEpoch++;tab.loadingURL=_url;const recovering=tab.pageLoadFailed;tab.pageLoadFailed=false;tab.error='';if(recovering&&entry.active===tab)entry.layout();resetCapture();}});
    contents.on('did-navigate',resetCapture);
    contents.on('did-navigate-in-page',(_event,_url,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
-   contents.on('render-process-gone',()=>{if(entry.active===tab)closeHelpers();tab.error='ページの表示が停止しました。再読み込みしてください。';notify();});
+   contents.on('render-process-gone',()=>{if(entry.active===tab)closeHelpers();failPage();});
    contents.on('before-input-event',fullscreenKey);
    entry.tabs.push(tab);
    onTabCreated(contents,{id:tab.id,activate:()=>selectTab(tab.id),close:()=>closeTab(tab.id)});
@@ -175,14 +182,15 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   entry.navigate=value=>entry.active.navigate(value);
   entry.newTab=newTab;entry.selectTab=selectTab;entry.closeTab=closeTab;
   function layout(){
-   sizing.layout();for(const tab of entry.tabs)tab.view.setVisible(tab===entry.active&&entry.available&&!entry.panelCollapsed);
+   sizing.layout();for(const tab of entry.tabs)tab.view.setVisible(tab===entry.active&&entry.available&&!entry.panelCollapsed&&!tab.pageLoadFailed);
+   statusView.show(!!entry.active?.pageLoadFailed&&entry.available&&!entry.panelCollapsed);
   }
   entry.layout=layout;
   record.openBrowserTab=value=>({record,tabId:newTab(value).id});
   record.window.on('minimize',()=>draftWindows.close(record));
   record.window.on('enter-full-screen',fullscreenChanged);record.window.on('leave-full-screen',fullscreenChanged);
-  record.window.once('closed',()=>{entry.disposed=true;sizing.dispose();clearInterval(pointerTimer);entry.header.close();hostContents.removeListener('before-input-event',fullscreenKey);for(const tab of entry.tabs)disposeTab(tab);entry.tabs=[];entries.delete(record);delete record.openBrowserTab;});
-  return newTab(target).view.webContents;
+  record.window.once('closed',()=>{entry.disposed=true;statusView.dispose();sizing.dispose();clearInterval(pointerTimer);entry.header.close();hostContents.removeListener('before-input-event',fullscreenKey);for(const tab of entry.tabs)disposeTab(tab);entry.tabs=[];entries.delete(record);delete record.openBrowserTab;});
+  return newTab(entry.homeURL).view.webContents;
  }
 
  async function action(event,name,value){
@@ -205,11 +213,11 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    }
    else if(name==='draft-window-context')return{ok:true,request:draftWindowRequest(event)};
    else if(name==='draft-window-close'){if(!draftWindows.trusted(event))throw Error('連携先選択ウィンドウから操作してください。');draftWindows.close(record);return{ok:true};}
-   else if(name==='tab-new')entry.newTab(value===undefined?HOME:value);
+   else if(name==='tab-new')entry.newTab(value);
    else if(name==='tab-select')entry.selectTab(value);
    else if(name==='tab-close')entry.closeTab(value);
    else if(name==='navigate')await entry.navigate(value);
-   else if(name==='home')await entry.navigate(entry.connected?'http://localhost:8090/':'https://www.google.com/ai');
+   else if(name==='home')await entry.navigate(entry.homeURL);
    else if(name==='back'){if(contents.navigationHistory.canGoBack())contents.navigationHistory.goBack();}
    else if(name==='forward'){if(contents.navigationHistory.canGoForward())contents.navigationHistory.goForward();}
    else if(name==='reload'){entry.error='';contents.reload();}
@@ -234,6 +242,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     if(!entry.available)throw Error('利用を開始してください。');
     if(entry.capturing)throw Error('撮影中です。しばらくお待ちください。');
     if(!captureImage)throw Error('画像の送信先が設定されていません。');
+    if(tab.pageLoadFailed)throw Error('ページを読み込んでから撮影してください。');
     entry.capturing=true;
     try{
      const at=now(),url=contents.getURL(),navigation=entry.navigationRevision,image=await contents.capturePage();

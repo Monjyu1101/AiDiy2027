@@ -46,6 +46,8 @@ test('Browser URL入力: 日本語で始まる語と通常の検索語はGoogle�
  ])assert.equal(browser.browserURL(input),target,input);
  for(const input of ['javascript:alert(1)','data:text/html,検索','https://user:password@example.com'])assert.throws(()=>browser.browserURL(input));
 });
+// タブ/URLを包むレイアウト階層に依存せず、実フォームを検査する。
+function findNode(node,predicate){if(!node||typeof node!=='object')return; if(predicate(node))return node;for(const child of Array.isArray(node.children)?node.children:[]){const found=findNode(child,predicate);if(found)return found;}}
 const flush=async()=>{for(let i=0;i<10;i++)await Promise.resolve();};
 function fixture(){
  const mounted=[],unmounted=[],calls=[];let listener,raw=encoded;
@@ -64,7 +66,7 @@ function fixture(){
 test('Browser実コンポーネント: 状態/履歴/再読込/編集保護/Enter/破棄',async()=>{
  const f=fixture();try{
   await flush();assert.equal(f.state.address.value,readable);assert.equal(f.state.page.value.url,encoded);
-  const form=()=>f.render().children[0].children.find(node=>node.type==='form');
+  const form=()=>findNode(f.render(),node=>node.type==='form');
   const input=()=>form().children.find(node=>node.type==='input');
   input().props.onFocus();input().props['onUpdate:modelValue']('https://example.test/編集%20後?値=漢字%2F');
   f.notify(encoded+'#changed');assert.equal(f.state.address.value,'https://example.test/編集%20後?値=漢字%2F');
@@ -79,7 +81,7 @@ test('Browser実コンポーネント: 状態/履歴/再読込/編集保護/Ente
 });
 test('Browser実コンポーネント: フォーカス全選択と日本語IME確定Enterの保護',async()=>{
  const f=fixture();try{
-  await flush();const form=()=>f.render().children[0].children.find(node=>node.type==='form');
+  await flush();const form=()=>findNode(f.render(),node=>node.type==='form');
   const input=()=>form().children.find(node=>node.type==='input');
   let selections=0;const focus={target:{select(){selections++;}}};
   input().props.onFocus(focus);assert.equal(selections,1);

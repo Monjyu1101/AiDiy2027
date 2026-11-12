@@ -15,21 +15,19 @@ const compiled=compileTemplate({source:descriptor.template.content,filename:'Bro
 assert.deepEqual(compiled.errors,[]);
 const module={exports:{}};
 vm.runInNewContext(transformSync(compiled.code,{format:'cjs'}).code,{module,exports:module.exports,require:()=>({...vue,resolveComponent:name=>name})});
-function label(page){
- const context={page,analysisStatus:{status:'idle'},openingAnalysis:false,analysisContext:null,headerOnly:false,headerOffset:0,windowTitle:'Browser',standalone:false,headerWindowApi:undefined,capturing:false,handing:false,captureMessage:'',address:'',error:'',draftRequest:null,transition(){},capture(){},handoff(){},action(){},navigate(){}};
+function labels(loading,error=''){
+ const page={tabs:[{id:'a',title:'ページ',loading}],activeTabId:'a',loading,error,available:true};
+ const context={page,tabLabel:tab=>tab.title,infoTabId:'',connectionTarget:'',analysisStatus:{status:'idle'},openingAnalysis:false,headerOnly:false,headerOffset:0,windowTitle:'Browser',standalone:false,headerWindowApi:undefined,capturing:false,handing:false,captureMessage:'',address:'',error:'',transition(){},capture(){},handoff(){},action(){},navigate(){}};
  const root=module.exports.render(context,[]);
- function find(v){if(v?.type==='p'&&v.props?.role==='status'&&String(v.props.class).includes('browser-page-title'))return v;for(const c of Array.isArray(v?.children)?v.children:[]){const result=find(c);if(result)return result;}}
- return find(root);
+ function all(v){return v&&typeof v==='object'?[v,...(Array.isArray(v.children)?v.children.flatMap(all):[])]:[];}
+ return all(root);
 }
-for(const [name,page,expected,busy]of [
- ['読込開始',{loading:true,title:'前のページ'},'Loading…',true],
- ['読込完了',{loading:false,title:'公開画像'},'公開画像',false],
- ['読込失敗',{loading:true,title:'前のページ',error:'読込失敗'},'前のページ',false],
- ['手動停止',{loading:false,title:'停止したページ'},'停止したページ',false],
- ['次のページへ移動',{loading:true,title:'次のページ'},'Loading…',true],
-])test(`Browser Loading表示: ${name}`,()=>{
- const node=label(page);assert.ok(node);
- assert.equal(node.props['aria-busy'],busy);
- assert.equal(node.props.class.includes('browser-loading'),busy);
- assert.equal(typeof node.children==='string'?node.children:node.children.map(child=>child?.children||'').join(''),expected);
+for(const loading of [true,false])test(`Browser loading stays in tab and reload control, no extra row: ${loading}`,()=>{
+ const nodes=labels(loading);
+ assert.equal(nodes.some(n=>n.props?.['aria-label']==='読み込み中'),loading);
+ assert.equal(nodes.some(n=>n.props?.['aria-label']==='読み込みを停止'),loading);
+ assert.ok(!nodes.some(n=>n.type==='p'));
+});
+test('page load failure is handled in native body, never a URL-below error row',()=>{
+ assert.ok(!labels(false,'failed').some(n=>n.type==='p'));
 });

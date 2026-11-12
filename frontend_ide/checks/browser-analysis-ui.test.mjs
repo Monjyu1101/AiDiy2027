@@ -230,13 +230,13 @@ for(const standalone of [false,true])for(const headerOnly of [false,true])test(`
  const f=fixture('panel',{standalone,headerOnly});t.after(()=>f.dispose());await flush();
  const integrations=['browser-analysis','browser-capture','browser-capture-tools','browser-capture-status','browser-handoff','browser-element-link'];
  for(const [mode,connected] of [['online',true],['offline',false],['online',false],['offline',false],['online',true]]){
-  f.listeners.changed({url:context.url,title:'Example',available:true,connected,mode,session:'aidiy_browser test',activeTabId:'tab-test',capturePath:'temp/input/test.png',elementPicking:true,back:true,forward:true});
+  f.listeners.changed({url:context.url,title:'Example',available:true,connected,mode,session:'aidiy_browser test',activeTabId:'tab-test',homeURL:'https://start.test/page',tabs:[{id:'tab-test',title:'Example',url:context.url}],capturePath:'temp/input/test.png',elementPicking:true,back:true,forward:true});
   f.state.captureMessage.value='temp/input/test.png に保存しました。';
   const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
   const tools=nodes({children:bar.children['connection-tools']()});
   for(const name of integrations)assert.equal(tools.some(n=>n.props?.class===name),mode!=='offline',name);
-  const home=rendered.find(n=>n.props?.['aria-label']==='ホーム');assert.ok(home);assert.equal(home.props.disabled,false);assert.equal(home.props.title,connected?'AiDiyホーム（localhost:8090）':'Google AIホーム');
-  assert.equal(rendered.find(n=>n.props?.class==='browser-connection-target').props.value,'session="aidiy_browser test" ,tab_id="tab-test", title="Example"');
+  const home=rendered.find(n=>n.props?.['aria-label']==='ホーム');assert.ok(home);assert.equal(home.props.disabled,false);assert.equal(home.props.title,'ホーム: https://start.test/page');
+  f.state.infoTabId.value='tab-test';assert.equal(nodes(f.render()).find(n=>n.props?.class==='browser-connection-target').props.value,'session="aidiy_browser test" ,tab_id="tab-test", title="Example"');
   assert.equal(rendered.find(n=>n.type==='input').props.disabled,false);
   for(const label of ['戻る','進む'])assert.equal(rendered.find(n=>n.props?.['aria-label']===label).props.disabled,false);
   const windowTools=nodes({children:bar.children['window-tools']()});assert.equal(windowTools.filter(n=>n.type==='button').length,3,'通常の表示サイズ・全画面操作は維持');

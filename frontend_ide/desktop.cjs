@@ -101,7 +101,7 @@ const allDisplays=createAllDisplays({screen,trustedEvent,panels:vrPanels,syncChi
  for(const record of windows.values())if((record===owner||record.owner===owner)&&!record.window.isDestroyed())windowPins.setLocked(record.window,locked||(record.kind==='browser'&&record.window.isFullScreen()));
  vrPanelStacking.refresh(owner);
 }});
-const {createBrowserViews,browserFileTarget,browserOpenable,browserStartupURL,HOME}=require('./デスクトップ/ブラウザ.cjs');
+const {createBrowserViews,browserFileTarget,browserOpenable,browserStartupURL}=require('./デスクトップ/ブラウザ.cjs');
 const {saveBrowserCapture}=require('./デスクトップ/ブラウザ撮影.cjs');
 const {validPreviewPath}=require('./デスクトップ/native-preview-actions.cjs');
 const {createBrowserSourceSelection,createBrowserAnalysisContext}=require('./デスクトップ/ブラウザ解析連携.cjs');
@@ -273,8 +273,12 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
     },
     captureImage:({png})=>saveBrowserCapture(process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd(),png),trustedEvent:trustedBrowserEvent,projectRoot:process.env.AIDIY_DEVELOPMENT_PROJECT||process.cwd()});
    const bridge=await (owner?ensureBrowserBridge(record):ensureStandaloneBrowserBridge());
-   if(!owner&&browserTarget===undefined)browserTarget=await browserStartupURL();
-   const current=await readState(owner||record);
+   let current=await readState(owner||record);
+   if(browserTarget===undefined){
+    const connected=browserConnected(current);browserTarget=await browserStartupURL(connected);
+    current=await readState(owner||record);
+    if(connected!==browserConnected(current))browserTarget=await browserStartupURL(browserConnected(current));
+   }
    if(window.isDestroyed()||owner&&(owner.window.isDestroyed()||owner.revision!==ownerRevision||sessionKey(current)!==linkKey||!current.active))throw Error('利用を開始してください。');
    // Browser番号はCDPの排他レジストリと共通。複数IDEでも衝突せず、閉じた最小番号を再利用する。
    if(owner){
@@ -359,7 +363,7 @@ app.whenReady().then(async()=>{
    const valid=()=>!quitting&&!owner.window.isDestroyed()&&!source.window.isDestroyed()&&trustedEvent(event)===source&&owner.revision===revision;
    if(!valid()||!key||!state.project?.path||(source!==owner&&source.linkKey!==key))throw Error('IDEの利用を開始してください。');
    if(!state.active)throw Error('利用を開始してください。');
-   let target=HOME;
+   let target;
    if(path!==undefined){
     target=await browserFileTarget(state.project.path,path,displayUrl);
    }
@@ -494,7 +498,7 @@ app.whenReady().then(async()=>{
    if(!valid()||!state.active||state.mode!=='online')throw Error('IDEの利用状態が変わりました。');
    if(panel.kind==='browser'){
     // 保存時のURLで再開する。開けないURLの判定はBrowser側の既存の許可判定に任せる。
-    let target=HOME;try{if(['http:','https:','file:'].includes(new URL(panel.url).protocol))target=panel.url;}catch{}
+    let target;try{if(['http:','https:','file:'].includes(new URL(panel.url).protocol))target=panel.url;}catch{}
     await createWindow('browser',owner.url+'#browser',undefined,owner,key,undefined,undefined,target);
    }
    else if(panel.kind==='viewer')await createWindow('viewer',owner.url+'#viewer='+encodeURIComponent(panel.path),undefined,owner,key);

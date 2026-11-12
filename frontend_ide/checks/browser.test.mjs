@@ -121,9 +121,10 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  let prevented=false;view.webContents.emit('will-navigate',{preventDefault(){prevented=true;}},'javascript:alert(1)');assert.equal(prevented,true);
  assert.deepEqual(view.webContents.popup({url:'https://example.com/'}),{action:'deny'});assert.equal(view.webContents.url,'https://example.com/');
  // 利用者の停止による遅延rejectは通信障害にしない。通常の読込失敗は表示する。
+ const pageView=view; // 状態表示Viewが追加されても実ページへの参照を維持する。
  let rejectNavigation;
- const originalLoad=view.webContents.loadURL;
- view.webContents.loadURL=()=>new Promise((_,reject)=>{rejectNavigation=reject;});
+ const originalLoad=pageView.webContents.loadURL;
+ pageView.webContents.loadURL=()=>new Promise((_,reject)=>{rejectNavigation=reject;});
  await control.action(event,'navigate','https://example.com/slow');
  await control.action(event,'stop');
  rejectNavigation(new Error('net::ERR_FAILED'));
@@ -133,16 +134,16 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  rejectNavigation(new Error('net::ERR_FAILED'));
  await new Promise(resolve=>setImmediate(resolve));
  assert.match((await control.action(event,'state')).error,/ページを読み込めません/,'停止していない通信失敗は表示する');
- view.webContents.loadURL=originalLoad;
+ pageView.webContents.loadURL=originalLoad;
  await control.action(event,'navigate',HOME);
  assert.equal((await control.action(event,'state')).error,'');
- await control.navigate(record,'https://example.com/reused');assert.equal(view.webContents.url,'https://example.com/reused');
+ await control.navigate(record,'https://example.com/reused');assert.equal(pageView.webContents.url,'https://example.com/reused');
  await assert.rejects(control.navigate(record,record.url),/このURL/,'再利用もIDEのAPIオリジンへ移動させない');
  control.setAvailable(record,false);await assert.rejects(control.navigate(record,HOME),/このURL/);control.setAvailable(record,true);
  const hostContents=window.webContents;Object.defineProperty(window,'webContents',{get(){throw Error('Object has been destroyed');}});
- assert.doesNotThrow(()=>window.emit('closed'));assert.equal(hostContents.listenerCount('before-input-event'),0);assert.equal(view.webContents.listenerCount('before-input-event'),0);
+ assert.doesNotThrow(()=>window.emit('closed'));assert.equal(hostContents.listenerCount('before-input-event'),0);assert.equal(pageView.webContents.listenerCount('before-input-event'),0);
  assert.throws(()=>control.navigate(record,HOME),/終了/);
- assert.deepEqual(view.webContents.closed,{waitForBeforeUnload:false});assert.equal((await control.action(event,'state')).ok,false);
+ assert.deepEqual(pageView.webContents.closed,{waitForBeforeUnload:false});assert.equal((await control.action(event,'state')).ok,false);
 });
 
 test('Browser撮影: 選択プロジェクトのtemp/inputにPNGを重複せず保存する',async t=>{

@@ -14,7 +14,16 @@ const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const panelCollapsed=ref(false),panelHidden=ref(false);
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:'',tabs:[],activeTabId:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 // 公開識別子だけを表示する。CDPの認証情報や接続URLは含めない。
-const connectionTarget=computed(()=>typeof page.value.session==='string'&&page.value.session&&typeof page.value.activeTabId==='string'&&page.value.activeTabId?`session=${JSON.stringify(page.value.session)} ,tab_id=${JSON.stringify(page.value.activeTabId)}, title=${JSON.stringify(page.value.title||'')}`:'');
+const infoTabId=ref('');
+let keyboardInput=false;
+const connectionTarget=computed(()=>{const tab=(page.value.tabs||[]).find(tab=>tab.id===infoTabId.value);return tab&&page.value.session?`session=${JSON.stringify(page.value.session)} ,tab_id=${JSON.stringify(tab.id)}, title=${JSON.stringify(tab.title||'')}`:'';});
+function closeTabInfo(){infoTabId.value='';}
+function setPanelHidden(hidden){panelHidden.value=hidden;if(hidden)closeTabInfo();}
+function navigationKeydown(event){if(['Tab','ArrowLeft','ArrowRight','Home','End'].includes(event.key))keyboardInput=true;if(event.key==='Escape'){closeTabInfo();error.value='';}}
+function tabInfoFocus(id){if(keyboardInput)infoTabId.value=id;}
+function navigationLeave(){if(!keyboardInput)closeTabInfo();}
+function navigationBlur(event){if(!event.currentTarget.contains(event.relatedTarget))closeTabInfo();}
+
 let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
 let composingAddress=false;
 const addressDrafts=new Map();
@@ -55,6 +64,8 @@ function update(value){
  if(sessionChanged){addressDrafts.clear();editing=false;composingAddress=false;}
  else if(tabChanged&&editing)rememberAddress();
  if(Array.isArray(value.tabs)){const ids=new Set(value.tabs.map(tab=>tab.id));for(const id of addressDrafts.keys())if(!ids.has(id))addressDrafts.delete(id);}
+ if(tabChanged||sessionChanged||!!value.fullscreen!==!!page.value.fullscreen||(props.headerOnly&&value.headerVisible===false))closeTabInfo();
+ if(infoTabId.value&&!(value.tabs||[]).some(tab=>tab.id===infoTabId.value))closeTabInfo();
  if(tabChanged){editing=false;composingAddress=false;error.value='';void nextTick(()=>{if(!disposed)tabList.value?.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});});}
  if(tabChanged||browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
  const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
@@ -80,7 +91,7 @@ async function tabAction(name,id,focus=false){
  const ok=await action(name,id);if(!ok||disposed)return;
  await nextTick();if(disposed)return;
  if(name==='tab-new')addressInput.value?.focus();
- else if(focus)tabList.value?.querySelector('[role=tab][aria-selected=true]')?.focus();
+ else if(focus){const keyboard=keyboardInput;keyboardInput=false;tabList.value?.querySelector('[role=tab][aria-selected=true]')?.focus();keyboardInput=keyboard;}
 }
 function tabKeydown(event,id){
  if(event.altKey||event.ctrlKey||event.metaKey||event.isComposing)return;
@@ -126,11 +137,11 @@ onMounted(()=>{
 onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
 </script>
 <template>
- <main class="development-app browser-panel desktop-window ai-component" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly,'panel-collapsed':!headerOnly&&panelHidden}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
+ <main class="development-app browser-panel desktop-window ai-component" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly,'panel-collapsed':!headerOnly&&panelHidden}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition" @keydown.capture="navigationKeydown" @pointerdown.capture="keyboardInput=false">
   <div ref="chrome" class="browser-chrome panel-window-title" data-aidiy-window-move-handle @transitionrun="transition">
   <!-- バーはMCP制御の可否。復帰待ちは赤、明示的な孤立利用だけ黒で示す。 -->
   <StatusBar :hide-connection-bar="panelHidden" :mode="page.mode === 'offline' ? 'offline' : 'online'" :title="windowTitle||(standalone?'AiDiy Browser':'AiDiy IDE / Browser')" :connected="page.connected===true" :status="page.connected===true?'接続済':'未接続'" desktop :clock-pulse="true" :window-api="headerWindowApi" :pin-title="headerOnly?(page.headerPinned?'ヘッダーの常時表示を解除':'ヘッダーを常時表示'):undefined">
-   <template #leading><PanelToggle v-if="!headerOnly" :collapsed="panelCollapsed" desktop @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template>
+   <template #leading><PanelToggle v-if="!headerOnly" :collapsed="panelCollapsed" desktop @toggle="panelCollapsed=!panelCollapsed" @hidden="setPanelHidden" /></template>
    <template #connection-tools><span v-if="page.mode === 'offline'" class="browser-isolated-label" title="Toolsへの接続を試行しない孤立利用">スタンドアロン</span><button v-if="page.mode !== 'offline'" type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available||page.connected!==true" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{analysisStatus.status==='waiting'?'解析中…':openingAnalysis?'準備中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><span v-if="page.mode !== 'offline'" class="browser-capture-tools"><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷'}}</button><span v-if="captureMessage&&!capturing" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></span><button v-if="page.mode !== 'offline'" type="button" class="browser-handoff" aria-label="Code / Liveへ下書きを追加" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">C/Lへ</button><button v-if="page.mode !== 'offline'" type="button" class="browser-element-link" :aria-label="page.elementPicking?'要素連携を終了（Escでも解除）':'要素連携を開始'" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素中':'要素'}}</button></template>
    <template #window-tools>
     <span class="browser-window-sizes">
@@ -140,9 +151,10 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
     </span>
    </template>
   </StatusBar>
+  <div class="browser-navigation" @mouseleave="navigationLeave" @focusout="navigationBlur">
   <div class="browser-tabs-row">
    <div ref="tabList" class="browser-tabs" role="tablist" aria-label="ブラウザのタブ">
-    <div v-for="tab in page.tabs||[]" :key="tab.id" class="browser-tab" :class="{'browser-tab-active':tab.id===page.activeTabId}" role="presentation">
+    <div v-for="tab in page.tabs||[]" :key="tab.id" class="browser-tab" :class="{'browser-tab-active':tab.id===page.activeTabId}" role="presentation" @mouseenter="keyboardInput=false;infoTabId=tab.id" @focusin="tabInfoFocus(tab.id)">
      <button type="button" class="browser-tab-select" role="tab" :aria-selected="tab.id===page.activeTabId" :tabindex="tab.id===page.activeTabId?0:-1" :disabled="!page.available" :title="tabLabel(tab)+(tab.url?'\n'+displayBrowserURL(tab.url):'')" @click="tabAction('tab-select',tab.id)" @keydown="tabKeydown($event,tab.id)"><span v-if="tab.loading" aria-label="読み込み中">◌ </span>{{tabLabel(tab)}}</button>
      <button type="button" class="browser-tab-close" :disabled="!page.available" :aria-label="tabLabel(tab)+' のタブを閉じる'" title="タブを閉じる" @click="tabAction('tab-close',tab.id,true)">×</button>
     </div>
@@ -153,16 +165,15 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
    <button type="button" aria-label="戻る" title="戻る" :disabled="!page.available||!page.back" @click="action('back')">←</button>
    <button type="button" aria-label="進む" title="進む" :disabled="!page.available||!page.forward" @click="action('forward')">→</button>
    <RefreshButton :disabled="!page.available" :stop="page.loading" :aria-label="page.loading?'読み込みを停止':'再読み込み'" :title="page.loading?'読み込みを停止':'再読み込み'" @click="action(page.loading?'stop':'reload')" />
-   <button type="button" :disabled="!page.available" :title="page.connected===true?'AiDiyホーム（localhost:8090）':'Google AIホーム'" aria-label="ホーム" @click="action('home')">⌂</button>
+   <button type="button" :disabled="!page.available" :title="page.homeURL?'ホーム: '+displayBrowserURL(page.homeURL):'ホーム'" aria-label="ホーム" @click="action('home')">⌂</button>
    <input ref="addressInput" v-model="address" @input="rememberAddress" :disabled="!page.available" aria-label="URLまたは検索語" :placeholder="page.mode === 'offline' ? 'URLまたは検索語' : 'URLまたはGoogle AIで検索'" spellcheck="false" @focus="focusAddress" @blur="blurAddress" @compositionstart="composingAddress=true" @compositionend="composingAddress=false" @keydown="addressKeydown">
    <button type="submit" :disabled="!page.available">開く</button>
   </form>
-  <p class="browser-page-title" :class="{'browser-loading':page.loading&&!page.error}" :title="page.title" role="status" :aria-busy="page.loading&&!page.error">{{ page.loading&&!page.error?'Loading…':page.title||'Browser' }}</p>
-  <div v-if="connectionTarget" class="browser-connection-info">
-   <button type="button" class="browser-connection-reveal" aria-label="連携先を表示。次の項目で選択してコピーできます">連携先</button>
-   <input class="browser-connection-target" :value="connectionTarget" readonly aria-label="現在のセッション・タブID・タイトル" title="選択してコピーできます" spellcheck="false" @focus="$event.target.select()">
+  <div v-if="connectionTarget" class="browser-tab-info" @keydown.esc.stop="closeTabInfo">
+   <input class="browser-connection-target" :value="connectionTarget" readonly aria-label="セッション・タブID・タイトル" title="選択してコピーできます" spellcheck="false" @focus="$event.target.select()">
   </div>
-  <p v-if="error||page.error" class="error browser-error" role="status">{{ error||page.error }}</p>
+  <div v-if="error" class="browser-operation-error" role="alert"><span>{{error}}</span><button type="button" aria-label="操作エラーを閉じる" @click="error=''">×</button></div>
+  </div>
   </div>
   <div v-if="!headerOnly" ref="surface" class="browser-surface"></div>
  </main>
@@ -195,7 +206,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-header-only .browser-chrome::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;border:2px solid rgba(56,171,202,.38);border-top-color:rgba(255,255,255,.58);border-left-color:rgba(170,240,255,.48);box-shadow:inset 0 0 0 1px rgba(255,255,255,.24)}
 .browser-header-only :deep(.connection-bar){background:rgba(132,205,214,.16);border-top-color:rgba(118,174,184,.18);animation:none}
 .browser-header-only :deep(.panel-brand.desktop){-webkit-app-region:no-drag;background:transparent}
-.browser-header-only :deep(.panel-brand strong),.browser-header-only :deep(.connection-label),.browser-header-only .browser-page-title,.browser-header-only .browser-capture-status{color:#4b8eaa}
+.browser-header-only :deep(.panel-brand strong),.browser-header-only :deep(.connection-label),.browser-header-only .browser-capture-status{color:#4b8eaa}
 .browser-header-only :deep(button),.browser-header-only :deep(.reload-control.refresh-button[type=button]){color:#4b8eaa;background:rgba(229,252,255,.10);border-color:rgba(59,122,133,.28);border-radius:0;text-shadow:0 1px 2px rgba(255,255,255,.25)}
 .browser-header-only :deep(button:hover:not(:disabled)),.browser-header-only :deep(.reload-control.refresh-button[type=button]:hover:not(:disabled)){background:rgba(195,242,246,.24);color:#377f9e}
 .browser-header-only :deep(button:focus-visible),.browser-header-only .browser-toolbar input:focus-visible{outline:2px solid #087c8c;outline-offset:1px}
@@ -205,9 +216,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-header-only .browser-error{color:#631d28;background:#ffe9efcf;text-shadow:none}
 .browser-window-sizes{display:flex;gap:4px;flex:none;-webkit-app-region:no-drag}
 .browser-window-sizes button{width:auto;min-width:42px;height:24px;padding:0 7px;font-size:11px;white-space:nowrap}
-/* 接続表示だけを簡潔にする。操作の接続制約・バーの脈動は変更しない。 */
-.browser-panel :deep(.connection-label>i){box-sizing:border-box;width:7px;height:7px;background:transparent;border:1px solid currentColor}
-.browser-panel :deep(.connection-label>i.online){background:#22c55e;border-color:#22c55e}
+/* 接続マークは共通状態バーの寸法・配色をそのまま使う。 */
 .browser-tabs-row{display:flex;align-items:stretch;gap:4px;padding:4px 9px 0;border-bottom:1px solid #2c4055;-webkit-app-region:no-drag}
 /* タブが少ない時は末尾の直後に＋。溢れる時はタブ列だけ縮め、＋を常に操作可能にする。 */
 .browser-tabs{display:flex;flex:0 1 auto;width:max-content;min-width:0;overflow-x:auto;scrollbar-width:thin}
@@ -222,14 +231,12 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-header-only .browser-tab-active{background:rgba(195,242,246,.3);border-color:#377f9e}
 .browser-toolbar{display:flex;align-items:center;gap:5px;padding:7px 9px;border-bottom:1px solid #2c4055;flex:none}
 .browser-toolbar button{padding:5px 9px;flex:none}.browser-toolbar input{flex:1;min-width:60px;background:#080f1b;color:#e2ecf8;border:1px solid #375067;border-radius:3px;padding:6px 9px;font:inherit}
-.browser-connection-info{display:flex;align-items:center;gap:5px;margin:2px 9px 4px;min-width:0;-webkit-app-region:no-drag}
-.browser-connection-reveal{flex:none;padding:2px 4px;font-size:11px;background:transparent;color:inherit;border:0}
-/* 同じ領域内ならボタンから入力へ移動しても消えない。Tabでも表示・選択可能。 */
-.browser-connection-target{visibility:hidden;display:block;flex:1;box-sizing:border-box;width:0;min-width:0;padding:2px 4px;border:1px solid #375067;background:transparent;color:inherit;font:11px monospace;user-select:text;-webkit-app-region:no-drag}
-.browser-connection-info:hover .browser-connection-target,.browser-connection-info:focus-within .browser-connection-target{visibility:visible}
-.browser-page-title{margin:0;padding:3px 10px;font-size:11px;color:#9eb4c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
-.browser-page-title.browser-loading{color:#fff;background:#17334b;font-weight:600}
-.browser-error{margin:0;padding:6px 10px;flex:none}.browser-surface{flex:1;min-height:0}
+.browser-navigation{position:relative;-webkit-app-region:no-drag}
+/* 本文はnative Viewなので、情報はURL操作列の内側だけに重ねる。高さを増やさない。 */
+.browser-tab-info,.browser-operation-error{position:absolute;bottom:0;left:9px;right:9px;height:42px;box-sizing:border-box;display:flex;align-items:center;gap:6px;z-index:3;background:#101a28;color:#dce6f4;padding:4px;box-shadow:0 0 0 1px #375067}
+.browser-connection-target{display:block;flex:1;box-sizing:border-box;width:100%;min-width:0;padding:6px 4px;border:1px solid #375067;background:#080f1b;color:inherit;font:11px monospace;user-select:text;-webkit-app-region:no-drag}
+.browser-operation-error{color:#ffd1d1;background:#431d28}.browser-operation-error span{flex:1;min-width:0;overflow:auto;max-height:100%;font-size:12px}.browser-operation-error button{flex:none}
+.browser-surface{flex:1;min-height:0}
 /* AI解析を追加した操作欄も、狭い窓では折り返してnative本文へ高さを返す。 */
 @container browser-panel (max-width:900px){
  .browser-panel:not(.browser-header-only) :deep(.panel-brand){height:auto;min-height:31px;grid-template-columns:minmax(0,1fr);padding:4px;gap:4px}
