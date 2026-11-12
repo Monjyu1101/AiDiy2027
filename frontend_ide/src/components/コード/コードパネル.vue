@@ -9,6 +9,7 @@ import MarkdownIt from 'markdown-it';
 import { codeTransport } from '../コード/コード通信.js';
 import { visibleStreamContent, streamControlOf } from '../../../host/src/stream-control';
 import StatusBar from '../共通表示/状態バー.vue';
+import PanelToggle from './パネル表示切替.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import TerminalProgress from '../コンソール/進捗表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
@@ -18,6 +19,7 @@ import ChatAttachment from '../添付ファイル/チャット添付.vue';
 import { readDroppedFiles } from '../添付ファイル/ファイル送信.js';
 const props = defineProps({ base: String, host: Boolean, icon: String, embedded: Boolean, hideStatusBar: Boolean, linked: Boolean, desktop: Boolean, pageNotifications: Boolean, projectNotice: String });
 const windowTitle = ref('');
+const panelCollapsed = ref(false);
 const state = reactive({ メッセージ: [], 履歴: [], 進捗: [], 信頼済み: false, 自動接続: true });
 const prompt = ref(''), error = ref(''), pending = ref(false), history = ref(false), picker = ref(false), catalogBusy = ref(false);
 const stopPending = ref(false);
@@ -446,8 +448,8 @@ onMounted(() => {
 onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため自動実行を停止しました。'), true); cancelPrediction(); draftReceiver.dispose(); disposed = true; revision++; fileGeneration++; arrivals.dispose(); resizeObserver?.disconnect(); transport.dispose(); });
 </script>
 <template>
-  <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
-    <StatusBar v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" clock-pulse />
+  <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop, 'panel-collapsed': panelCollapsed && !hideStatusBar && !host }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
+    <StatusBar v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" :status="state.接続中 ? '接続中' : state.接続済み ? '接続済' : '未接続'" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" /></template></StatusBar>
     <div class="component-toolbar"><span :title="state.作業フォルダ?.パス">プロジェクト: {{ state.作業フォルダ?.名前 }}</span><nav>
       <button v-if="!embedded" class="auto-connect" role="switch" :aria-checked="state.自動接続" :title="`自動接続 ${state.自動接続 ? 'ON' : 'OFF'}`" :disabled="busy || autoPending || !operable" @click="toggleAuto"><span>自動接続</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button>
       <button :disabled="busy || autoPending || !operable || (!offline && !state.接続済み) || (!state.作業フォルダ && !state.新規可能)" @click="send('new')">＋ 新規</button><button :disabled="!operable" :aria-expanded="history" @click="arrivals.reset(); history = !history">{{ history ? '戻る' : '一覧' }}</button>
@@ -498,6 +500,8 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
   </section>
 </template>
 <style scoped>
+.code-component :deep(.connection-label){display:flex;align-items:center}
+.code-component.panel-collapsed > :not(.panel-brand){display:none!important}
 .workspace-required{color:#ff6666;margin:4px 0;font-weight:600;line-height:1.5}
 .composer.file-drop-active{outline:2px dashed #8ecbff;outline-offset:-2px;border-radius:6px;background:rgba(102,126,234,.18)}
 .file-drop-hint,.file-transfer-status{margin:4px 0;font-size:12px;line-height:1.4;color:#a9b8cc;overflow-wrap:anywhere}
