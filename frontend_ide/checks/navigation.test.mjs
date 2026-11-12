@@ -30,6 +30,56 @@ async function fixture(t,run,options={}){
 }
 async function respond(prompt,root,mutate=d=>d){const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));return {content:JSON.stringify(mutate(valid(shape.requestId,shape.goal)))};}
 async function finish(service){for(let n=0;n<100;n++){const v=await service.get();if(v.job?.status!=='running')return v;await new Promise(r=>setTimeout(r,5));}throw Error('test timeout');}
+
+for(const goal of ['「検索」画面の {入力} と改行\nを確認',DEFAULT_NAVIGATION_GOAL])test('ナビ・再評価は単一の完全なJSONを依頼し、保存済み50項目を一度だけ渡す: '+goal,async t=>{
+ const prompts=[];
+ const {service,root}=await fixture(t,async({prompt})=>{
+  prompts.push(prompt);const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  if(prompts.length===1){
+   const data=targetResult(Array(50).fill(0));data.requestId=shape.requestId;data.goal=goal===DEFAULT_NAVIGATION_GOAL?'仮の開発目標':goal;
+   data.items.forEach((item,index)=>{item.name='項目 '+index;item.reason='根拠 "引用" と {括弧}\nC:\\project\\file';item.weightReason='配分理由\n'+index;});
+   data.nextPrompt='今回の目標\n対処しようとしている内容\n今回の作業';return {content:JSON.stringify(data)};
+  }
+  shape.items[0].progress=100;shape.overall={progress:2,reason:'最新の根拠で再評価'};shape.nextItemId=shape.items[1].id;shape.nextPrompt='最新の根拠による次の作業';
+  return {content:JSON.stringify(shape)};
+ });
+ await service.start(goal);const first=await finish(service);assert.equal(first.job.status,'complete',first.job.message);
+ await service.start('再評価では使わない目標','evaluate');const second=await finish(service);assert.equal(second.job.status,'complete',second.job.message);
+ for(const prompt of prompts){
+  assert.match(prompt,/完成したJSONオブジェクト1つだけ/);
+  assert.match(prompt,/回答全体をJSONとして解析し、解析できない場合は最初の「\{」から最後の「\}」まで（括弧を含む）を抽出/);
+  assert.match(prompt,/複数のJSONから1件を選ぶことはできません/);
+  assert.match(prompt,/JSON外の説明・Markdown・コードフェンスは出力しない/);
+  assert.match(prompt,/途中版・修正版・複数案を並べたりしない/);
+  assert.match(prompt,/必須キーと全項目を含む最終結果1つ/);
+  assert.match(prompt,/改行・二重引用符・バックスラッシュはJSONの規則でエスケープ/);
+  assert.match(prompt,/全項目と閉じ括弧を省略せず最後まで/);
+  assert.match(prompt,/requestIdは下の出力形式の値をそのまま/);
+  assert.match(prompt,/ファイルの作成・変更はしない/);
+  assert.equal(prompt.split('\n').filter(line=>/^(?:出力形式: )?\{"schemaVersion":3,/.test(line)).length,1);
+ }
+ const evaluation=JSON.parse(prompts[1].split('\n').at(-1).replace(/^出力形式: /,''));
+ assert.deepEqual(Object.keys(evaluation),['schemaVersion','requestId','goal','items','overall','nextItemId','nextPrompt']);
+ assert.equal(evaluation.requestId,second.job.id);assert.notEqual(evaluation.requestId,first.job.id);
+ assert.equal(prompts[1].includes(first.job.id),false);assert.equal(prompts[1].includes('保存済み: '),false);
+ for(const key of ['goal','items','overall','nextItemId','nextPrompt'])assert.deepEqual(evaluation[key],first.result[key]);
+ assert.match(prompts[1],/目標・項目ID・項目名・順序・項目数・根拠reason・工数比率weight・配分理由weightReasonを変えない/);
+ assert.match(prompts[1],/再評価で固定する保存済みの値は短縮しない/);
+ assert.equal(second.result.items.length,50);assert.equal(second.result.nextItemId,'2');assert.deepEqual(await readdir(root),[]);
+});
+
+for(const action of ['navigate','evaluate'])for(const [name,breakAnswer] of [
+ ['複数JSON',json=>json+'\n'+json],['未完成JSON',json=>json.slice(0,-1)],['完成JSONと未完成の追記',json=>json+'\n'+json.slice(0,-1)],
+])test(`${action}の${name}は失敗にし、前回結果と履歴を保持する`,async t=>{
+ let calls=0;const {service,stateRoot}=await fixture(t,async({prompt},root)=>{const answer=await respond(prompt,root);return {content:++calls===1?answer.content:breakAnswer(answer.content)};});
+ await service.start('保存する目標');const first=await finish(service);assert.equal(first.job.status,'complete',first.job.message);
+ const saved=first.result,dir=join(stateRoot,(await readdir(stateRoot))[0]),latest=join(dir,'default','latest.json'),history=join(dir,'history',saved.navigationId+'.json');
+ const latestText=await readFile(latest,'utf8'),historyText=await readFile(history,'utf8');
+ await service.start('次の目標',action);const failed=await finish(service);
+ assert.equal(failed.job.status,'failed');assert.match(failed.job.message,/単一のJSON/);assert.deepEqual(failed.result,saved);
+ assert.equal(await readFile(latest,'utf8'),latestText);assert.equal(await readFile(history,'utf8'),historyText);assert.equal((await service.list()).length,1);
+});
+
 test('通常経路1回→JSON保存→再起動読戻し、失敗時に前回成功を保持',async t=>{
  let calls=0;const {service,root,state,stateRoot}=await fixture(t,async({prompt},root)=>{calls++;return respond(prompt,root,d=>calls===1?d:{...d,items:[{...d.items[0],progress:999}]});});
  await service.start('検索画面を整える');assert.equal((await finish(service)).job.status,'complete');
