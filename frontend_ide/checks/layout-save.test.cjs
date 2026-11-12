@@ -36,6 +36,19 @@ test('offscreen saved child keeps initial placement, onscreen restores exact nor
  assert.equal(applyPlacement(child,{bounds:rect,maximized:true},f.screen),true);assert.deepEqual(child.window.getBounds(),rect);assert.equal(child.window.isMaximized(),true);
  f.owner.window.setBounds(out);applyPlacement(f.owner,{bounds:out,maximized:true},f.screen);assert.equal(onScreen(f.owner.window.getBounds(),f.screen.getAllDisplays().map(d=>d.workArea)),true);assert.notDeepEqual(f.owner.window.getBounds(),out);
 });
+test('Console restores saved size instead of replacing it with the new 600×400 default',()=>{
+ const f=fixture(),child=f.add('console');
+ const area={x:0,y:0,width:1920,height:1080};
+ const defaults=windowBounds('console',area);
+ assert.equal(defaults.width,600);assert.equal(defaults.height,400);
+ child.window.setBounds(defaults);
+ const saved={x:80,y:100,width:850,height:500};
+ assert.equal(applyPlacement(child,{bounds:saved,maximized:false},f.screen),true);
+ assert.deepEqual(child.window.getBounds(),saved);
+ child.window.setBounds(defaults);
+ assert.equal(applyPlacement(child,{bounds:{...saved,x:4000},maximized:false},f.screen),false);
+ assert.deepEqual(child.window.getBounds(),defaults);
+});
 test('project layout round trips atomically, isolates projects and does not persist unknown data',()=>{
  const root=mkdtempSync(join(tmpdir(),'aidiy-layout-'));
  try{const value=snapshot();value.token='secret';value.panels[0].url='http://sensitive.invalid';writeLayout(root,value);assert.deepEqual(readLayout(root),snapshot());assert.equal(readLayout(join(root,'other')),null);const filename=join(root,'_AIDIY/aidiy_ide/window-layout.json');assert.doesNotMatch(readFileSync(filename,'utf8'),/secret|sensitive/);assert.throws(()=>writeLayout(root,value,()=>{throw Error('session changed');}),/session changed/);assert.deepEqual(readLayout(root),snapshot());writeFileSync(filename,'broken');assert.throws(()=>readLayout(root),/読み込めません/);}finally{rmSync(root,{recursive:true,force:true});}

@@ -308,3 +308,11 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 - 軌跡バーの一覧展開は通常パネルの31px折畳とは別で、`renderer.space.explorer.routesExpanded` に保存し、位置復元後に一覧の開閉と必要な窓高を戻す。CPUの透過切替、Avatar、DiagなどIDE所有でない窓は対象に含めない。
 - 保存形式version 1は維持し、開閉情報のない旧ファイルは従来どおり展開状態で復元する（軌跡一覧は従来の閉状態）。不正な型は読込を拒否する。IDE本体のSV／LDメニューは本文にあるため、本体を展開して操作する。
 - 確認は `checks/layout-save.test.cjs`、`checks/layout-fold-renderer.test.mjs`、`checks/layout-renderer.test.mjs`、`checks/panel-collapse.test.cjs` と別窓実描画スクリプトを使用する。折畳保存→LD→再展開→再保存、名前の異なる複数別窓、旧データ、復元中の終了・連打を含める。
+
+
+### 倍率変更時の枠と基本背景（2026-11-13）
+- 表示パネルのベース背景は黒とする。外枠1pxはタイトル同色のまま維持する（黒にしない）。タイトル帯のグレー、文字・接続バーの色、折畳後のタイトル高さ端数の同色補完も維持する。
+- Browserと通常のIDE/Code/Live/Console/Navi/Task/Teamのnative背景は従来から黒。Explorer/Viewer/Navi別窓も黒へ統一する。独立Explorer/ViewerのDOMベースと軌道別窓の内容面は黒を明示し、外側の透明領域は維持する。
+- Diag・CPU・軌道別窓のnative透過は専用表示に必要なため変更しない。nativeの透明背景を黒に上書きしない。
+- 倍率の異なるWindowsモニターへ移動した際の白い1px線は原因未確定。基本背景の黒化はDWMの外枠まで黒くする保証ではない。通常の端リサイズを失う thickFrame:false は使わない。
+- 次の切り分けではWindows実機のスクリーンショットと webContents.capturePage() を比較し、OS側の枠かDOM側の枠かを確認する。クラウドのCSS・寸法回帰テストを実機確認の代わりとしない。

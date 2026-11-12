@@ -49,7 +49,7 @@ test('実際の左上タイトル操作は通常・無効とも白文字で、�
  assert.equal(declarations(mini,'.mini-app-message.required::after')['pointer-events'],'none');assert.ok(declarations(mini,'.start-mini .mini-project-link:focus-visible').outline);
 });
 
-test('ミニの初期高さはタイトル・外枠・アイコン2行・案内・状態列から計算する',()=>{
+test('ミニの初期高さ250はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
  const d=selector=>declarations(mini,selector);
  const chrome=px(declarations(normal,'.panel-brand').height)+px(declarations(normal,'.connection-bar').height);
  const app=d('.mini-app-launch'),appMessage=d('.mini-app-message.required');
@@ -60,17 +60,17 @@ test('ミニの初期高さはタイトル・外枠・アイコン2行・案内�
  const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
  const outerFrame=2*border(declarations(normal,'#app').border);
  const {height}=require('../起動/ミニ表示.cjs').ミニ寸法;
- assert.equal(chrome,34);assert.equal(height,Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
- assert.equal(px(d('#app>.panel.start-mini').height),height-chrome-outerFrame);
- assert.equal(d('#app>.panel.start-mini')['max-width'],'360px');assert.equal(d('#app>.panel.start-mini').overflow,'hidden');
+ assert.equal(chrome,34);assert.equal(height,250);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
+ assert.equal(px(d('#app>.diag-panel>.panel.start-mini').height),height-chrome-outerFrame);
+ assert.equal(d('#app>.diag-panel>.panel.start-mini')['max-width'],'400px');assert.equal(d('#app>.diag-panel>.panel.start-mini').overflow,'hidden');
  assert.equal(d('.mini-launch-scroll')['overflow-y'],'auto');
- assert.equal(d('.desktop-window #app>.panel.start-mini')['max-width'],'none');
+ assert.equal(d('.desktop-window #app>.diag-panel>.panel.start-mini')['max-width'],'none');
  assert.equal(d('.mini-icon-track').display,'flex');
  assert.equal(d('.mini-icon-track').overflow,'clip');
  assert.equal(d('.mini-icon-track')['justify-content'],'center');
  assert.equal(d('.mini-icon-track[data-overflow]')['justify-content'],'flex-start');
  assert.equal(d('.mini-app-buttons .mini-app-button,.mini-cli-buttons .mini-cli-button').flex,'0 0 48px');
- assert.equal(d('#app>.panel.start-mini').flex,'0 1 auto');assert.equal(d('.mini-services').flex,'none');
+ assert.equal(d('#app>.diag-panel>.panel.start-mini').flex,'0 1 auto');assert.equal(d('.mini-services').flex,'none');
  assert.equal(d('.mini-services')['grid-template-columns'],'repeat(6,minmax(0,1fr))');
 });
 
@@ -114,7 +114,7 @@ test('通常・ミニ・Web のタイトル行は共通の暗灰色と白寄り�
 test('起動・ミニの主面は黒を基準にし、操作階層・選択色・透明アイコン窓は維持する',()=>{
  const startup=parse(source('components/起動/起動.css')),micro=parse(source('components/アプリ起動/マイクロランチャー.css'));
  for(const selector of ['.start-panel','.start-panel .start-console'])assert.equal(declarations(startup,selector).background,'#000');
- for(const selector of ['#app:has(>.start-mini)','#app>.panel.start-mini'])assert.equal(declarations(mini,selector).background,'#000');
+ for(const selector of ['#app:has(>.diag-panel>.start-mini)','#app>.diag-panel>.panel.start-mini'])assert.equal(declarations(mini,selector).background,'#000');
  assert.equal(declarations(normal,'button,input,select').background,'#1a2c3a');
  assert.equal(declarations(normal,'.panel-heading').background,'#000');
  assert.equal(declarations(startup,'.start-targets button.active').background,'#1b2d3d');
@@ -131,11 +131,11 @@ test('Windows標準タイトルだけ独自操作へ切り替え、ミニnative 
  const css=source('style.css');assert.match(css,/\.panel-brand\.desktop\[data-aidiy-standard-title\][^{}]*\{[^}]*-webkit-app-region:no-drag/);
 });
 
-test('ミニ7列は360pxで36px画像と操作余白を保持し、通常/マイクロの寸法は変えない',()=>{
+test('ミニ7列は400pxで36px画像と操作余白を保持し、通常/マイクロの寸法は変えない',()=>{
  const css=source('components/起動/起動ミニ.css');
- assert.match(css,/max-width:360px/);assert.match(css,/\.desktop-window #app>\.panel\.start-mini\{max-width:none;flex:1 1 auto\}/);
+ assert.match(css,/max-width:400px/);assert.match(css,/\.desktop-window #app>\.diag-panel>\.panel\.start-mini\{max-width:none;flex:1 1 auto\}/);
  assert.match(css,/mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/start-mini \.launch-frame-36\{width:36px;height:36px/);
- const cell=48;assert.ok(cell>=36+6);assert.ok(7*cell+12+8+2<=360);assert.equal(42-36,6);
+ const cell=48;assert.ok(cell>=36+6);assert.ok(7*cell+12+8+2<=400);assert.equal(42-36,6);
  assert.match(source('components/アプリ起動/アプリ起動.css'),/width:72px;height:72px/);
  assert.match(source('components/アプリ起動/マイクロランチャー.vue'),/width="40" height="40"/);
 });

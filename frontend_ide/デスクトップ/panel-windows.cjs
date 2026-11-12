@@ -74,7 +74,7 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   const route=request.kind==='panel-routes';
   // window.open経由の別窓は本体のiconを継承しないため、所有モジュール内の配布画像を指定する。
   const icon=join(__dirname,'../public',request.kind==='panel-navigation'?'AiDiy_navi.png':'AiDiy_ide.png');
-  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,icon,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:request.kind==='panel-navigation'?windowMinimumSize('navi',request.bounds):request.kind==='explorer'?{minWidth:Math.min(300,request.bounds.width),minHeight:Math.min(320,request.bounds.height)}:{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#080c1a',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
+  return{action:'allow',overrideBrowserWindowOptions:{...request.bounds,icon,show:false,frame:false,roundedCorners:false,...(route?{transparent:true,resizable:false,hasShadow:false,minWidth:300,minHeight:40}:request.kind==='panel-navigation'?windowMinimumSize('navi',request.bounds):request.kind==='explorer'?{minWidth:Math.min(300,request.bounds.width),minHeight:Math.min(320,request.bounds.height)}:{minWidth:300,minHeight:320}),title:'AiDiy IDE / Explorer',backgroundColor:route?'#00000000':'#000',autoHideMenuBar:true,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false}}};
  }
  function created(owner,window,details){
   const request=requests.get(owner);requests.delete(owner);

@@ -57,7 +57,7 @@ try{
  async function capture(name){const response=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,name+'.png'),Buffer.from(response.result.data,'base64'));}
  async function fitMiniViewport(){
   const height=await evaluate(`2+Math.ceil(['.mini-content','.panel-brand','.connection-bar'].reduce((sum,selector)=>sum+document.querySelector(selector).getBoundingClientRect().height,0))`);
-  assert.equal(height,190);await send('Emulation.setDeviceMetricsOverride',{width:360,height,deviceScaleFactor:1,mobile:false});
+  assert.equal(height,250);await send('Emulation.setDeviceMetricsOverride',{width:400,height,deviceScaleFactor:1,mobile:false});
  }
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setFocusEmulationEnabled',{enabled:true});await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
@@ -146,7 +146,7 @@ try{
  await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);await click('アプリ起動');
  assert.equal(await evaluate(`document.querySelector('#app-project-folder').value`),'','再起動・再読込では毎回フォルダ未選択');
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),true);
- assert.deepEqual(errors,[]);console.log('アプリ起動: ミニ360×190・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');
+ assert.deepEqual(errors,[]);console.log('アプリ起動: ミニ400×250・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

@@ -24,6 +24,7 @@ test('CLI付きConsoleは800×600で下端中央に置き、小画面では作�
 test('ALL選択画面: 負座標・縦画面・狭い画面でもConsole左下、Code右上、Live左上',()=>{
  for(const area of [{x:-1920,y:-1080,width:1920,height:1040},{x:0,y:90,width:1080,height:1880},{x:0,y:0,width:320,height:240}]){
   const consoleWindow=allWindowBounds('console',area),code=allWindowBounds('code',area),live=allWindowBounds('live',area);
+  assert.equal(consoleWindow.width,Math.min(600,area.width-16));assert.equal(consoleWindow.height,Math.min(400,area.height-16));
   assert.equal(consoleWindow.x,area.x+8);assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
   assert.equal(code.x+code.width,area.x+area.width-8);assert.equal(code.y,area.y+8);
   assert.equal(live.x,area.x+8);assert.equal(live.y,area.y+8);
@@ -60,10 +61,11 @@ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,hei
     assert.ok(b.x+b.width<=area.x+area.width&&b.y+b.height<=area.y+area.height);
    }
    const consoleWindow=windowBounds('console',area,owner),next=windowBounds('console',area,owner,1);
-   assert.equal(consoleWindow.width,Math.round(area.width*2/3));assert.equal(consoleWindow.height,Math.round(area.height/(area.width>area.height?3:4)));
+   assert.equal(consoleWindow.width,Math.min(600,area.width-16));assert.equal(consoleWindow.height,Math.min(400,area.height-16));
    assert.equal(consoleWindow.x,area.x+8);
    assert.equal(consoleWindow.y+consoleWindow.height,area.y+area.height-8);
-   assert.equal(next.x,consoleWindow.x+28);assert.equal(next.y,consoleWindow.y-28);
+   const offset=Math.min(area.width-16-consoleWindow.width,area.height-16-consoleWindow.height)>=28?28:0;
+   assert.equal(next.x,consoleWindow.x+offset);assert.equal(next.y,consoleWindow.y-offset);
    if(area.width>1000&&owner===ide){
     assert.equal(code.x,area.x+8);assert.equal(live.x+live.width,area.x+area.width-8);
     assert.ok(code.x<live.x);assert.equal(code.y,live.y);assert.equal(code.height,live.height);
@@ -92,7 +94,7 @@ test('最小寸法: Consoleだけ高さ180、横幅・Code/Live/IDE/ビューア
   }
  }
 });
-test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を渡し、初期サイズを維持する',async()=>{
+test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を渡し、通常600×400・CLI800×600を使い分ける',async()=>{
  const source=readFileSync(new URL('../desktop.cjs',import.meta.url),'utf8');
  const body=source.slice(source.indexOf('function selectedAllDisplay(owner,displayId){'),source.indexOf("process.on('disconnect'"));
  const area={x:0,y:0,width:1920,height:1040},windows=new Map();
@@ -111,12 +113,14 @@ test('Electron生成: 単独Console・IDE子Consoleの双方へ最小寸法を�
   assert.equal(window.options.minHeight,kind==='console'?180:kind==='ide'?550:480);
   assert.equal(window.options.minWidth,kind==='ide'?400:360);
   assert.equal(window.options.height,bounds.height);assert.equal(window.options.width,bounds.width);
+  if(kind==='console'){assert.equal(window.bounds.width,600);assert.equal(window.bounds.height,400);}
   assert.equal(window.options.frame,false);assert.notEqual(window.options.resizable,false);
  }
  context.cliConsoleWindow=true;context.process={env:{}};
  for(const parent of [undefined,owner]){
   const window=await context.create('console','http://127.0.0.1:1234/',undefined,parent,'offline:1');
   assert.deepEqual(window.bounds,windowBounds('console',area,parent?.window.getBounds(),0,!parent));
+  assert.equal(window.bounds.width,parent?600:800);assert.equal(window.bounds.height,parent?400:600);
   if(parent){
    assert.equal(window.bounds.x,area.x+8);assert.equal(window.bounds.y+window.bounds.height,area.y+area.height-8);
   }else{
@@ -140,14 +144,14 @@ test('IDE連携Codeだけ2枚目以降を24pxずらし、親窓の移動や寸�
  }
 });
 
-test('狭い画面でも全窓と最小寸法を作業領域内へ収め、Consoleの1/3・1/4を引き上げない',()=>{
+test('狭い画面でも全窓と最小寸法を作業領域内へ収め、Consoleの600×400を必要な分だけ縮小する',()=>{
  for(const area of [{x:0,y:40,width:640,height:480},{x:-320,y:0,width:320,height:480},{x:0,y:-300,width:320,height:300},{x:0,y:0,width:240,height:240}]){
   for(const kind of ['code','live','console','viewer'])for(let slot=0;slot<20;slot++){
    const b=windowBounds(kind,area,windowBounds('ide',area),slot),min=windowMinimumSize(kind,b);
    assert.ok(b.x>=area.x+8&&b.y>=area.y+8);
    assert.ok(b.x+b.width<=area.x+area.width-8&&b.y+b.height<=area.y+area.height-8);
    assert.ok(min.minWidth<=b.width&&min.minHeight<=b.height);
-   if(kind==='console')assert.equal(b.height,Math.round(area.height/(area.width>area.height?3:4)));
+   if(kind==='console'){assert.equal(b.width,Math.min(600,area.width-16));assert.equal(b.height,Math.min(400,area.height-16));}
   }
  }
 });
@@ -175,7 +179,7 @@ test('Electron生成: 親IDE側の画面を選び、Code番号・閉鎖後のslo
  second.destroy();const reopened=await create('code');assert.deepEqual(reopened.bounds,second.bounds);assert.equal(reopened.options.title,second.options.title);
  const live=await create('live'),consoleWindow=await create('console');
  assert.equal(live.options.parent,undefined);assert.equal(consoleWindow.options.parent,undefined);
- assert.deepEqual(live.bounds,windowBounds('live',secondary));assert.equal(consoleWindow.bounds.height,470);
+ assert.deepEqual(live.bounds,windowBounds('live',secondary));assert.equal(consoleWindow.bounds.width,600);assert.equal(consoleWindow.bounds.height,400);
  assert.ok(matched.length>=6);assert.deepEqual(matched[0],owner.window.getBounds());
  const standalone=await context.create('code','http://127.0.0.1:1234/');assert.deepEqual(standalone.bounds,windowBounds('code',primary));
  const navi=await create('navi');assert.deepEqual(navi.bounds,windowBounds('navi',secondary));
@@ -206,5 +210,16 @@ test('Code / Liveは900 DIPを初期高さとし、余白込みで収まらな�
    assert.ok(b.y>=area.y+8&&b.y+b.height<=area.y+height-8);
    assert.equal(minimum.minHeight,Math.min(480,b.height));
   }
+ }
+});
+
+ test('CPUは400×125、Diagミニ250の上に33 DIPを空け、小画面へ収める',()=>{
+ for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:-300,width:320,height:300},{x:20,y:40,width:200,height:90}]){
+  const b=windowBounds('cpu',area);
+  assert.equal(b.width,Math.min(400,area.width-16));assert.equal(b.height,Math.min(125,area.height-16));
+  assert.equal(b.x+b.width,area.x+area.width-8);
+  assert.equal(b.y,Math.max(area.y+8,area.y+area.height-8-b.height-250-33));
+  assert.ok(b.y+b.height<=area.y+area.height-8);
+  assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:Math.min(240,b.width),minHeight:Math.min(125,b.height)});
  }
 });

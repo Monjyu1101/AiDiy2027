@@ -355,11 +355,11 @@ Codespacesの転送先からAPIを開いた場合は、既存の `forwardedOrigi
 
 ## Console（ターミナル）の変更・検証
 
-Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。最小幅360px、初期の幅2/3・高さは横長で1/3、縦長・正方形で1/4、Code / Live / IDE / ビューアの最小寸法は変えません。作業領域がさらに小さい時は初期配置の寸法を上限にします。`コンソールパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `console-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
+Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。通常Consoleの初期サイズは600×400pxとし、最小幅360pxとCode / Live / IDE / ビューアの最小寸法は変えません。CLI指定の800×600pxも維持します。作業領域がさらに小さい時は初期配置の寸法を上限にします。`コンソールパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `console-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
 
 `checks/window-layout.test.mjs` は小さい作業領域・単独/IDE子窓の最小寸法と従来の初期配置、`checks/console-size.test.mjs` は実Vue処理と実FitAddonによる1〜5行への縮小・復元・入力・表示クリア・タブ往復・再起動、`checks/console.test.mjs` は小さい行数のサーバー検証と実PTYのリサイズを確認します。これらは実描画の検証ではありません。Electronの `checks/console-desktop-probe.cjs` では360×180への縮小・入力・クリア・操作ボタン・最下行・元の大きさへの復元も撮影して確認してください。
 
-ConsoleのElectron窓は作業領域の幅2/3・高さは横長で1/3、縦長・正方形で1/4として画面左下に端から8px空けて開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Consoleはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/console-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
+通常ConsoleのElectron窓は600×400px（小画面では作業領域に収まる寸法）として画面左下に端から8px空けて開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Consoleはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/console-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
 
 プロジェクトバーの「Tools接続確認」はCodeの `auto-connect` トグルを共用します。既定ON、WebSocketの `tools-check` で切り替え、`tools` 応答の `enabled` / `online` で画面を同期します。OFFは疎通の定期実行を止め、シアン表示を解除して静的な黒いバーにします。ONへ戻すと即時に疎通確認を再開します。シェルの再起動は行わず、端末の再起動でも同じサーバー内の選択を維持します。確認中にOFFへ変わった場合の古い応答は世代番号で無視してください。
 
@@ -399,7 +399,7 @@ Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッション
 - `node --test frontend_ide/checks/console.test.mjs`: 不正接続・寸法・フロー制御、実PTYの日本語、開始フォルダ、リサイズ、Ctrl+C、シェル配下の子プロセスの終了。
 - `node frontend_ide/scripts/check-console.mjs`: 専用ブラウザで日本語入力、タブ保持、狭い画面、exit後の再起動、利用終了。WindowsのChrome / Edgeで実行します。
 - `node frontend_ide/scripts/check-console-desktop.mjs`: 専用Electronプロファイルで日本語入力、複数窓、個別終了、IDEとの終了連携。
-- `node frontend_ide/scripts/check-launcher.mjs console`: プロンプト復帰、同一プロジェクトの複数起動、幅2/3・向きに応じた高さ1/3または1/4、右上への配置、個別終了、待機指定、サーバー終了。
+- `node frontend_ide/scripts/check-launcher.mjs console`: プロンプト復帰、同一プロジェクトの複数起動、600×400（小画面では縮小）、右上への配置、個別終了、待機指定、サーバー終了。
 
 画面確認画像は `temp/console-check/` に日本時間の日時付きで保存します。画面の変更を実行中の配信へ反映する場合は共通Vueの配布ファイルを再生成し、サーバー側を変えた場合は対象アプリを再起動します。PTYの依存は `node-pty`、画面は `@xterm/xterm` / `@xterm/addon-fit`。第三者ライセンスを `scripts/build.mjs` の通知生成へ含めます。新規環境の `npm ci` でPTYのビルドが必要になるOSでは、そのOSのC++ビルド環境も用意してください。
 
@@ -951,7 +951,7 @@ Codeのモデル・権限・承認方式・検証回数は既存設定を使い�
 
 ## IDEのCPU / GPU / RAM小型画面（aidiy_cpu）
 
-利用開始後の「CPU」で開く。ElectronはIDE所有の360×160の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUは画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
+利用開始後の「CPU」で開く。ElectronはIDE所有の400×125（最小240×125）の子窓で、利用終了時に閉じる。IDEの起動メニューとVRの起動列では、Task / Team / CPUのうち単独Electron版または同じIDEの子窓が起動中の項目を隠す。IDEは利用状態の確認と一緒に稼働状況を更新し、終了を確認した項目を再表示する。WebのCPUも400×125の画面右下の小型パネルで、表示中はメニューから隠す。CPU / GPUは半透明の面、RAMは折線で、右端の最新点へラベルを追従させる。ラベルは系列色の背景と黒文字で表示し、重なる時だけ上下に離す。
 
 `aidiy_cpu/metrics.mjs` がIDEサーバーの実行ホスト全体を計測する。全OSでAvatar eyesと共通の `aidiy_cpu/systeminformation-cpu.cjs` を使い、利用側が自分のpackageの `systeminformation` から `getLoad: () => si.currentLoad()` を渡す。IDEとAvatarの両packageで5.33.19を固定し、単独起動でも相手のnode_modulesに依存しない。1本の単調時計による1秒予定だけがライブラリを呼び、HTTPや500ms IPCは最新値を読む。重複実行しない。
 

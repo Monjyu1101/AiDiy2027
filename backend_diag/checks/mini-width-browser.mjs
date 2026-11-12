@@ -22,7 +22,7 @@ const {outputFiles:[fixture]}=await build({
    h('span',{class:'mini-icon-frame'},h('span',{class:'launch-frame launch-frame-36'},[
     h('span',String(i)),h('span',{class:'launch-trace'}),
    ])))));
- createApp({render:()=>[
+ createApp({render:()=>h('div',{class:'diag-panel ai-component'},[
   h('header',{class:'panel-brand desktop compact'},h('strong','AiDiy ランチャー')),
   h('div',{class:'connection-bar online'}),
   h('section',{class:'panel start-mini'},h('div',{class:'mini-content'},[
@@ -32,7 +32,7 @@ const {outputFiles:[fixture]}=await build({
    ]),
    h('div',{class:'mini-services'},['Tools','Core','Apps','Task/Team','Web','Local'].map(name=>h('button',{class:'mini-service'},name))),
   ])),
- ]}).mount('#app');`},
+ ])}).mount('#app');`},
  bundle:true,write:false,format:'iife',define:{'process.env.NODE_ENV':'"production"'},
  plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},({path})=>{
   const {descriptor}=parse(readFileSync(path,'utf8'),{filename:path});
@@ -83,17 +83,20 @@ try{
  const fitted=await state();
  for(const row of fitted){assert.equal(row.overflow,false);assert.equal(row.centered,true);}
  await stopMotion();
+ await evaluate('fixture.counts(7,7)');
+ for(const row of await state()){assert.equal(row.visible,7);assert.equal(row.overflow,false);assert.equal(row.centered,true);}
+ await assertHeight();
  await evaluate('fixture.counts(9,9)');
  await until(`document.querySelectorAll('.mini-icon-track[data-overflow]').length===2`);
  for(const row of await state()){
   assert.equal(row.positions[0],0);assert.equal(row.visible,7);assert.equal(row.oneRow,true);
  }
  await assertHeight();
- await setWidth(400);
- await until(`document.querySelector('.mini-app-buttons').clientWidth===390`);
+ await setWidth(420);
+ await until(`document.querySelector('.mini-app-buttons').clientWidth===410`);
  await assertFullWidth();
  await setWidth(miniWidth);
- await until(`document.querySelector('.mini-app-buttons').clientWidth===350`);
+ await until(`document.querySelector('.mini-app-buttons').clientWidth===390`);
  await evaluate(`document.querySelector('.mini-icon-track').dispatchEvent(new PointerEvent('pointerleave'))`);
  await until(`document.querySelector('.mini-icon-track').children[1].getBoundingClientRect().left-document.querySelector('.mini-icon-track').getBoundingClientRect().left<46`);
  await stopMotion();
@@ -130,5 +133,5 @@ try{
   await assertHeight();
  }
  assert.deepEqual(errors,[]);
- console.log('ミニ表示: 360×190、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
+ console.log('ミニ表示: 400×250、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

@@ -7,9 +7,9 @@
 const {setWindowBounds}=require('../../frontend_ide/デスクトップ/全画面横断.cjs');
 const {表示切替基準を作成,初期右下位置}=require('./表示切替位置.cjs');
 
-const ミニ幅=360,ミニの余白=8;
-// タイトル・接続線・外枠、アイコン2行、2区画の余白と案内、状態列。
-const ミニ高さ=Math.ceil((31+3+2)+2*42+(6+6+19.2+2)+(30+6));
+const ミニ幅=400,ミニの余白=8;
+// 7アイコンを並べる幅と、案内・状態列を含めた初期寸法。
+const ミニ高さ=250;
 const ミニ寸法={width:ミニ幅,height:ミニ高さ};
 const ミニ高さは有効=height=>Number.isInteger(height)&&height>=80&&height<=360;
 // 通常時の寸法を保持し、四隅付近以外の表示切替では現在の左肩を引き継ぐ。

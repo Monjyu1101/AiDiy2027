@@ -3,10 +3,12 @@
  * Commercial use requires prior written consent from all copyright holders.
  * See LICENSE for full terms. Thank you for keeping the rules.
  * https://github.com/monjyu1101/AiDiy2027 */
-/* 初期窓190 DIPからタイトル・接続線・外枠の36を除いた高さ。 */
-#app:has(>.start-mini){background:#000}#app>.panel.start-mini{width:100%;max-width:360px;height:154px;margin-inline:auto;flex:0 1 auto;min-height:0;overflow:hidden;background:#000}
-.desktop-window #app>.panel.start-mini{max-width:none;flex:1 1 auto}
-#app>.panel.start-mini>.mini-content{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+/* 初期窓250 DIPからタイトル・接続線・外枠の36を除いた高さ。 */
+#app>.diag-panel:has(>.start-mini){display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+#app>.diag-panel:has(>.start-mini)>:not(.start-mini){flex:none}
+#app:has(>.diag-panel>.start-mini){background:#000}#app>.diag-panel>.panel.start-mini{width:100%;max-width:400px;height:214px;margin-inline:auto;flex:0 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#000}
+.desktop-window #app>.diag-panel>.panel.start-mini{max-width:none;flex:1 1 auto}
+#app>.diag-panel>.panel.start-mini>.mini-content{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 .mini-launch-scroll{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
 .mini-icon-track{display:flex;justify-content:center;gap:2px;overflow:clip;touch-action:pan-y;user-select:none}
 .mini-icon-track[data-overflow]{justify-content:flex-start;cursor:grab}

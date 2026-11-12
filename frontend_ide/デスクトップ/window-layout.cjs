@@ -7,7 +7,7 @@
 const size=require('../host/scripts/window-size.cjs');
 // Consoleは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
 function windowMinimumSize(kind,bounds){
- if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(150,bounds.height)};
+ if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(125,bounds.height)};
  return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='console'?180:size.会話最小高さ,bounds.height)};
 }
 function windowBounds(kind,area,owner,slot=0,cli=false){
@@ -15,10 +15,10 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const available={x:area.x+margin,y:area.y+margin,width:Math.max(1,area.width-margin*2),height:Math.max(1,area.height-margin*2)};
  if(kind==='ide')return available;
  if(kind==='cpu'){
-  const width=Math.min(360,available.width),height=Math.min(160,available.height);
-  // Diagミニの固定高さ190 DIPと窓間の33 DIPを空け、右端を揃える。
+  const width=Math.min(400,available.width),height=Math.min(125,available.height);
+  // Diagミニの固定高さ250 DIPと窓間の33 DIPを空け、右端を揃える。
   const x=available.x+available.width-width;
-  const y=Math.max(available.y,available.y+available.height-height-190-33);
+  const y=Math.max(available.y,available.y+available.height-height-250-33);
   return{x,y,width,height};
  }
  if(kind==='navi'){
@@ -39,7 +39,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
    // CLI専用窓は通常Consoleの左下・段違い配置と分け、下端中央から表示する。
    return{x:Math.round(area.x+(area.width-width)/2),y:available.y+available.height-height,width,height};
   }
-  const width=Math.min(Math.round(area.width*2/3),available.width),height=Math.min(Math.round(area.height/(area.width>area.height?3:4)),available.height);
+  const width=Math.min(600,available.width),height=Math.min(400,available.height);
   const originX=available.x,originY=available.y+available.height-height;
   const steps=Math.max(1,Math.floor(Math.min(available.x+available.width-width-originX,originY-available.y)/28)+1),offset=(slot%steps)*28;
   return{x:Math.round(originX+offset),y:Math.round(originY-offset),width,height};

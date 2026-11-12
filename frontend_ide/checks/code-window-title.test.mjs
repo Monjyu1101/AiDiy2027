@@ -296,7 +296,7 @@ test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開
  test('CPU uses one IDE-owned small window and closes with the session',async()=>{
  const f=await desktopFixture(),open=f.handlers.get('development:open-app');
  const [a,b]=await Promise.all([open(f.event(f.owner),'cpu'),open(f.event(f.owner),'cpu')]);assert.equal(a.ok,true);assert.equal(b.ok,true);
- const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.options.width,360);assert.equal(cpu[0].window.options.height,160);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
+ const cpu=[...f.windows.values()].filter(r=>r.kind==='cpu');assert.equal(cpu.length,1);assert.equal(cpu[0].window.title,'AiDiy IDE / CPU');assert.equal(cpu[0].owner,f.owner);assert.equal(cpu[0].window.options.width,400);assert.equal(cpu[0].window.options.height,125);assert.equal(cpu[0].window.options.minHeight,125);assert.equal(cpu[0].window.loadedURL,'http://127.0.0.1:1234/#cpu');
  const status=f.handlers.get('development:child-windows');
  assert.ok((await status(f.event(f.owner))).runningApps.includes('cpu'));
  assert.equal((await open(f.event(f.owner),'cpu')).reused,true);
@@ -310,7 +310,7 @@ test('IDE起動案内: Code/Live未起動のIDEも検出用の共有登録を開
 test('standalone CPU has its own name, icon, small bounds and no IDE owner',async()=>{
  for(const platform of ['win32','darwin']){
   const f=await desktopFixture({kind:'cpu',platform}),r=f.owner;
-  assert.equal(r.window.title,'AiDiy CPU');assert.equal(r.window.options.width,360);assert.equal(r.window.options.height,160);assert.equal(r.owner,undefined);assert.match(r.window.options.icon,/AiDiy_cpu.png$/);
+  assert.equal(r.window.title,'AiDiy CPU');assert.equal(r.window.options.width,400);assert.equal(r.window.options.height,125);assert.equal(r.window.options.minHeight,125);assert.equal(r.owner,undefined);assert.match(r.window.options.icon,/AiDiy_cpu.png$/);
   assert.equal(f.app.name,platform==='darwin'?'AiDiy CPU':'aidiy_cpu');r.window.destroy();
  }
 });

@@ -76,7 +76,13 @@ try{
  await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),true);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);const before=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),before);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))`);await sleep(100);assert.ok(await evaluate('calls')>before);
- await send('Emulation.setDeviceMetricsOverride',{width:240,height:150,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),240);
+ await send('Emulation.setDeviceMetricsOverride',{width:240,height:125,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),240);assert.equal(await evaluate('document.documentElement.scrollHeight'),125);
  const small=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-small.png'),Buffer.from(small.result.data,'base64'));
+ await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
+ await evaluate("document.querySelector('.cpu-panel').classList.add('cpu-floating')");
+ assert.deepEqual(await evaluate("(()=>{const r=document.querySelector('.cpu-panel').getBoundingClientRect();return{width:r.width,height:r.height};})()"),{width:400,height:125});
+ await send('Emulation.setDeviceMetricsOverride',{width:320,height:250,deviceScaleFactor:1,mobile:false});
+ assert.equal(await evaluate("document.querySelector('.cpu-panel').getBoundingClientRect().width"),304);
+ assert.equal(await evaluate('document.documentElement.scrollWidth'),320);
  await evaluate('dispose()');const stopped=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),stopped);assert.equal(errors.length,0,JSON.stringify(errors));console.log('PASS CPU render, GPU unavailable, request failure/recovery, hidden/resume, small size and disposal');
 }finally{socket?.close();chrome.kill();server.close();await sleep(200);rmSync(temporary,{recursive:true,force:true,maxRetries:10,retryDelay:150});}

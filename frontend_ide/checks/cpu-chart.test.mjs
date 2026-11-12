@@ -23,20 +23,20 @@ test('labels stay at newest point and separate ties within graph',()=>{
  for(const value of [0,50,100,null]){const labels=placeLabels(chartSeries([{cpu:value,gpu:value,ram:value}]));assert.ok(labels[0].labelY>=14);assert.ok(labels[2].labelY<=92);assert.ok(labels[1].labelY-labels[0].labelY>=14);assert.ok(labels[2].labelY-labels[1].labelY>=14);}
 });
 test('small CPU window fits work area including small/negative displays',()=>{
- for(const area of [{x:0,y:0,width:1920,height:1080},{x:-800,y:100,width:320,height:200}]){const b=windowBounds('cpu',area);assert.ok(b.width<=ミニ寸法.width&&b.height<=160);assert.ok(b.x>=area.x&&b.y>=area.y);assert.ok(b.x+b.width<=area.x+area.width);assert.ok(b.y+b.height<=area.y+area.height);const min=windowMinimumSize('cpu',b);assert.ok(min.minWidth<=b.width&&min.minHeight<=b.height);}
+ for(const area of [{x:0,y:0,width:1920,height:1080},{x:-800,y:100,width:320,height:200}]){const b=windowBounds('cpu',area);assert.ok(b.width<=ミニ寸法.width&&b.height<=125);assert.ok(b.x>=area.x&&b.y>=area.y);assert.ok(b.x+b.width<=area.x+area.width);assert.ok(b.y+b.height<=area.y+area.height);const min=windowMinimumSize('cpu',b);assert.ok(min.minWidth<=b.width&&min.minHeight<=b.height);}
 });
 
 test('CPU initial width matches Diag mini and keeps its height and resize minimum',()=>{
  const b=windowBounds('cpu',{x:0,y:0,width:1920,height:1080});
- assert.equal(b.width,ミニ寸法.width);assert.equal(b.width,360);assert.equal(b.height,160);
- assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:240,minHeight:150});
+ assert.equal(b.width,ミニ寸法.width);assert.equal(b.width,400);assert.equal(b.height,125);
+ assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:240,minHeight:125});
 });
 
 test('CPU aligns with the actual fixed Diag mini bounds with a 33 DIP gap',()=>{
- for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040},{x:-1080,y:-1920,width:1080,height:1880},{x:80,y:40,width:800,height:399}]){
+ for(const area of [{x:0,y:0,width:1920,height:1080},{x:-1920,y:40,width:1920,height:1040},{x:-1080,y:-1920,width:1080,height:1880},{x:80,y:40,width:800,height:424}]){
   const mini=初期右下位置(area,ミニ寸法,8);
   for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:area.x+100,y:area.y+80,width:640,height:480}),allWindowBounds('cpu',area)]){
-   assert.equal(b.width,mini.width);assert.equal(b.height,160);assert.equal(b.x,mini.x);
+   assert.equal(b.width,mini.width);assert.equal(b.height,125);assert.equal(b.x,mini.x);
    assert.equal(b.x+b.width,area.x+area.width-8);
    assert.equal(b.x+b.width,mini.x+mini.width);
    assert.equal(mini.y-(b.y+b.height),33);
@@ -46,24 +46,24 @@ test('CPU aligns with the actual fixed Diag mini bounds with a 33 DIP gap',()=>{
 });
 
 test('CPU shrinks only below Diag mini width plus the two screen margins',()=>{
- for(const width of [1920,377,376,375,360,320,240,180]){
+ for(const width of [1920,417,416,415,400,320,240,180]){
   const area={x:-1920,y:40,width,height:1040};
   for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:-1800,y:200,width:640,height:480}),allWindowBounds('cpu',area)]){
-   assert.equal(b.width,Math.min(ミニ寸法.width,width-16));assert.equal(b.height,160);
-   assert.equal(b.x+b.width,area.x+width-8);assert.equal(b.y,area.y+area.height-391);
+   assert.equal(b.width,Math.min(ミニ寸法.width,width-16));assert.equal(b.height,125);
+   assert.equal(b.x+b.width,area.x+width-8);assert.equal(b.y,area.y+area.height-416);
    assert.ok(b.x>=area.x+8);assert.equal(windowMinimumSize('cpu',b).minWidth,Math.min(240,b.width));
   }
  }
 });
 
-test('CPU moves 25 DIP higher without crossing the top margin on short displays',()=>{
+test('CPU keeps 33 DIP above the new mini without crossing the top margin on short displays',()=>{
  for(const height of [1080,400,399,398,375,374,180,120]){
   const area={x:-1920,y:-200,width:800,height};
   for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:-1800,y:-150,width:640,height:480}),allWindowBounds('cpu',area)]){
-   const previousY=Math.max(area.y+8,area.y+height-8-b.height-190-8);
+   const previousY=Math.max(area.y+8,area.y+height-8-b.height-250-8);
    assert.equal(b.y,Math.max(area.y+8,previousY-25));
    assert.ok(b.y>=area.y+8&&b.y+b.height<=area.y+height-8);
-   assert.equal(b.width,360);assert.equal(b.height,Math.min(160,height-16));
+   assert.equal(b.width,400);assert.equal(b.height,Math.min(125,height-16));
    assert.equal(b.x+b.width,area.x+area.width-8);
   }
  }

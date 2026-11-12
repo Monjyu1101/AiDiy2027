@@ -251,7 +251,7 @@
 .explorer-routes .route-file-list{position:relative;inset:auto;width:100%;height:100%;box-sizing:border-box;overflow:auto;margin:0;box-shadow:none;animation:none}
 .route-window-document,.route-window-document body,.development-app.routes-window{background:transparent!important;overflow:hidden}
 .development-app.routes-window{height:100vh}
-.routes-window .explorer-routes,.routes-window .explorer-routes.explorer-collapsed{position:relative;inset:auto;width:100%;min-width:0;max-width:none;height:auto;box-sizing:border-box;background:#080c1a;box-shadow:none}
+.routes-window .explorer-routes,.routes-window .explorer-routes.explorer-collapsed{position:relative;inset:auto;width:100%;min-width:0;max-width:none;height:auto;box-sizing:border-box;background:#000;box-shadow:none}
 .native-route-window .route-controls{-webkit-app-region:no-drag;background:#080c1a;cursor:move}
 .native-route-window .route-controls button{-webkit-app-region:no-drag}
 .route-window-actions{flex:none;margin-left:auto;background:#080c1a}
@@ -265,7 +265,7 @@
 
 
 /* 既存の独立Viewerと同じ状態バー・窓操作。本文は残りの高さに収める。 */
-.native-panel-window{display:flex;flex-direction:column}
+.native-panel-window{display:flex;flex-direction:column;background:#000}
 .panel-window-title{flex:none;min-width:0;background:#000}
 .panel-window-title .panel-brand{grid-template-columns:auto minmax(0,1fr) auto}
 .panel-window-title .panel-brand strong{min-width:0;overflow:hidden;text-overflow:ellipsis}
