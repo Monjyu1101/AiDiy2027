@@ -71,7 +71,7 @@ async function fixture(t, host = false) {
     '../添付ファイル/チャット添付.vue': Attachment,
     '../下書き連携/下書き受け渡し.js': { createDraftReceiver: () => ({ mount: noop, publish: noop, dispose: noop }) },
     '../コード/会話到着演出': { chatArrival: () => ({ reset: noop, dispose: noop, show: noop }) },
-    '../共通表示/状態バー.vue': {}, '../コンソール/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
+    '../コード/パネル表示切替.vue': {}, '../共通表示/状態バー.vue': {}, '../コンソール/開始表示.vue': {}, '../../dialog/共通ダイアログ.vue': {},
   };
   const module = { exports: {} };
   vm.runInNewContext(code, { module, URL, crypto, console, location: { href: 'http://localhost/live/' }, window: {},

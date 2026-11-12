@@ -4,15 +4,21 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
-import { onBeforeUnmount } from 'vue';
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
+import { usePanelCollapse } from '../共通表示/パネル折り畳み.js';
 import { createPanelToggleDrag } from './パネル切替ドラッグ.js';
 const props = defineProps({ collapsed: Boolean, desktop: Boolean });
-const emit = defineEmits(['toggle']);
-const drag = createPanelToggleDrag({ api: props.desktop ? window.aidiyWindow : undefined, win: window, toggle: () => emit('toggle') });
+const emit = defineEmits(['toggle', 'hidden']);
+const button = ref();
+const { panelElement, panelCollapsed, panelHidden, togglePanel } = usePanelCollapse(props);
+onMounted(() => { panelElement.value = button.value.closest('.ai-component'); });
+watch(panelCollapsed, () => emit('toggle'));
+watch(panelHidden, value => emit('hidden', value));
+const drag = createPanelToggleDrag({ api: props.desktop ? window.aidiyWindow : undefined, win: window, toggle: togglePanel });
 onBeforeUnmount(drag.dispose);
 </script>
 <template>
-  <button type="button" class="code-panel-toggle" data-aidiy-no-window-move
+  <button ref="button" type="button" class="code-panel-toggle" data-aidiy-no-window-move
     :aria-expanded="!collapsed" :aria-label="collapsed ? 'パネル内容を表示' : 'パネル内容を非表示'"
     :title="(collapsed ? 'パネル内容を表示' : 'パネル内容を非表示') + (desktop ? '（ドラッグで移動）' : '')"
     @pointerdown="drag.down" @pointermove="drag.move" @pointerup="drag.up" @pointercancel="drag.cancel" @lostpointercapture="drag.up" @click="drag.click" @dragstart.prevent>

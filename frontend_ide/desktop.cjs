@@ -80,6 +80,8 @@ const panelWindows=createPanelWindows({windows,trustedEvent,readState,sessionKey
 const {createNavigationCodeWindow,createNavigationCruiseWindow,navigationWindowTitle}=require('./デスクトップ/navigation-code-window.cjs');
 const navigationCodeWindow=createNavigationCodeWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),screen,isQuitting:()=>quitting});
 const navigationCruiseWindow=createNavigationCruiseWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),isQuitting:()=>quitting});
+const {createPanelCollapse}=require('./デスクトップ/パネル折り畳み.cjs');
+const panelCollapse=createPanelCollapse({trustedEvent});
 const {createCodeDrag}=require('./デスクトップ/code-drag.cjs');
 const codeDrag=createCodeDrag({trustedEvent,screen,resolvePanel:panelWindows.dragTarget,isCenterMove:record=>allDisplays.isActive(record)});
 const {installNativeWindowMove}=require('./デスクトップ/長押し窓移動.cjs');
@@ -510,6 +512,7 @@ app.whenReady().then(async()=>{
   }});
  ipcMain.handle('development:layout',(event,action)=>layoutManager.handle(event,action));
  ipcMain.on('development:layout-result',(event,value)=>layoutManager.reply(event,value));
+ ipcMain.handle('development:panel-collapse',(event,collapsed)=>panelCollapse(event,collapsed));
  ipcMain.handle('development:code-move-begin',event=>codeDrag.begin(event));
  ipcMain.handle('development:code-move',(event,token)=>codeDrag.move(event,token));
  ipcMain.handle('development:code-move-end',(event,token)=>codeDrag.end(event,token));

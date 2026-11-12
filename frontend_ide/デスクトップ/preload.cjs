@@ -7,6 +7,7 @@ const {contextBridge,ipcRenderer,webUtils}=require('electron');
 contextBridge.exposeInMainWorld('aidiyWindow',{
  selectedFilePath:file=>webUtils.getPathForFile(file),
  nativeWindowMove:true,
+ collapsePanel:collapsed=>ipcRenderer.invoke('development:panel-collapse',collapsed),
  layout:action=>ipcRenderer.invoke('development:layout',action),
  onLayoutRequest:callback=>{
   if(typeof callback!=='function')return()=>{};

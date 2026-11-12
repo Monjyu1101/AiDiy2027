@@ -1003,3 +1003,10 @@ Windowsの生CPU時間APIが高負荷を過小表示する[PresentMonの修正�
 Webブラウザは選択したFileの完全なパスを公開しないため、プロジェクト内外を推測せずローカル表示として扱う。Office表示は同一オリジンのblob URLのみ受け付ける。
 
 検証: `node --test frontend_ide/checks/viewer-browse.test.mjs frontend_ide/checks/preview-actions.test.mjs`。画面確認は `node frontend_ide/scripts/check-viewer-floating.mjs` で、参照後の表示・キャンセル・再選択・プロジェクト内への切替も確認する。`--compile-only` は実App/Viewerのコンパイルだけを行う。
+
+
+### Code / Live のタイトル折り畳み
+
+左端の▽/▶は共通の `パネル表示切替.vue` を使う。クリックは本文の表示切替、ドラッグは既存の窓移動IPCへ渡す。Electronは `デスクトップ/パネル折り畳み.cjs` で窓自体を約220msかけてタイトル行（31px×ズーム倍率）まで縮め、展開時に元の高さへ戻す。畳んだ後に移動した座標は維持する。最大化は一度解除して展開時に復元し、全画面とVR移動中は切替を拒否する。本文は破棄せず、縮小完了後にシアンバーとともに隠す。通信・音声・下書きは継続する。Webでは共通部品がパネルのmax-heightをアニメーションする。
+
+`node --test frontend_ide/checks/panel-collapse.test.cjs frontend_ide/checks/code-panel-toggle.test.mjs` で連打、遅延応答、終了、移動後の復元を確認する。画面確認は `node frontend_ide/scripts/check-panel-collapse.mjs`（Code/Liveのコンパイルと共通部品の実Vue/Chromium確認）、コンパイルだけなら `--compile-only` を付ける。実OSのタイトル最小寸法と最大化の復元はElectronでも確認する。

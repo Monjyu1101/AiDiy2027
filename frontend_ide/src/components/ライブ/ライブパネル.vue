@@ -11,6 +11,7 @@ import { LiveAudio } from '../../../host/aidiy_live/src/audio';
 import { AudioCloud } from '../../../host/aidiy_live/src/visualizer';
 import { ライブ選択エラー } from '../../../host/aidiy_live/src/model-catalog';
 import { microphoneError } from '../../../host/aidiy_live/src/microphone-error';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import ModalDialog from '../../dialog/共通ダイアログ.vue';
@@ -20,6 +21,7 @@ import { fileAttachment, isDuplicateAttachment } from '../../../host/src/file-at
 import { readDroppedFiles } from '../添付ファイル/ファイル送信.js';
 import ChatAttachment from '../添付ファイル/チャット添付.vue';
 const props = defineProps({ base: String, config: { default: () => ({}) }, icon: String, linked: Boolean, desktop: Boolean, visible: { type: Boolean, default: true } });
+const panelCollapsed = ref(false), panelHidden = ref(false);
 const connected = ref(false), busy = ref(false), mic = ref(false), micBusy = ref(false), speaker = ref(true), error = ref(''), prompt = ref('');
 const messages = ref([]), project = ref(null), settings = ref({}), preferred = ref({}), models = ref({}), voices = ref({});
 const picker = ref(false), provider = ref(''), model = ref(''), voice = ref('');
@@ -281,8 +283,8 @@ onMounted(async () => {
 onBeforeUnmount(() => { draftReceiver.dispose(); disposed = true; disconnect(); arrivals.dispose(); cancelAnimationFrame(scrollFrame); resizeObserver?.disconnect(); cloud?.dispose(); environment.dispose(); });
 </script>
 <template>
-  <section class="ai-component live-component" :class="{ 'desktop-window': desktop, connected, 'file-drop-active': draggingFiles }" data-component="LivePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
-    <StatusBar :mode="connected || busy ? 'online' : 'offline'" :title="linked ? 'AiDiy IDE / Live' : 'AiDiy Live'" :connected="connected" :busy="busy" :active="mic" :status="changing ? '再接続中' : connected && mic ? '会話中' : undefined" :desktop="desktop" :clock-pulse="visible !== false" />
+  <section class="ai-component live-component" :class="{ 'desktop-window': desktop, 'panel-collapsed': panelHidden, connected, 'file-drop-active': draggingFiles }" data-component="LivePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
+    <StatusBar :mode="connected || busy ? 'online' : 'offline'" :title="linked ? 'AiDiy IDE / Live' : 'AiDiy Live'" :connected="connected" :busy="busy" :active="mic" :status="changing ? '再接続中' : connected && mic ? '会話中' : undefined" :desktop="desktop" :clock-pulse="visible !== false"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span :title="project?.パス">プロジェクト: {{ project?.名前 || '未選択' }}</span><nav><button :disabled="blocked || modelLoading" @click="newChat">新しい会話</button><button class="live-connect" :class="{ awaiting: !connected && !busy && !blocked && !modelLoading }" :disabled="blocked || modelLoading" @click="connected ? disconnect() : connect()">{{ busy ? '接続中…' : connected ? '切断' : '接続' }}</button></nav></div>
     <canvas ref="canvas" class="audio-cloud"></canvas>
     <div class="audio-actions"><button class="audio-button" :disabled="!connected || blocked" :aria-pressed="connected && speaker" :aria-label="`スピーカー ${connected && speaker ? 'ON' : 'OFF'}`" @click="sound"><span class="symbol speaker-symbol" :style="{ '--symbol-image': `url('${speakerIcon}')` }"></span><strong>{{ connected && speaker ? 'ON' : 'OFF' }}</strong></button><button class="audio-button microphone" :disabled="!connected || blocked || micBusy" :aria-pressed="mic" :aria-busy="micBusy" :aria-label="micBusy ? 'マイク準備中' : `マイク ${mic ? 'ON' : 'OFF'}`" @click="microphone"><span class="symbol" :style="{ '--symbol-image': `url('${microphoneIcon}')` }"></span><strong>{{ mic ? 'ON' : 'OFF' }}</strong></button></div>
@@ -308,6 +310,7 @@ onBeforeUnmount(() => { draftReceiver.dispose(); disposed = true; disconnect(); 
 </template>
 
 <style scoped>
+.live-component.panel-collapsed > :not(.panel-brand){display:none!important}
 .workspace-required{color:#ff6666;margin:4px 0;font-weight:600;line-height:1.5}
 .live-component:has(.workspace-required) .live-connect:disabled{opacity:.4;background:transparent;color:inherit;border-color:#444}
 .composer.file-drop-active{outline:2px dashed #8ecbff;outline-offset:-2px;border-radius:6px;background:rgba(102,126,234,.18)}

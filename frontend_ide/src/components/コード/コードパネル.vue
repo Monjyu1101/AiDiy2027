@@ -19,7 +19,7 @@ import ChatAttachment from '../添付ファイル/チャット添付.vue';
 import { readDroppedFiles } from '../添付ファイル/ファイル送信.js';
 const props = defineProps({ base: String, host: Boolean, icon: String, embedded: Boolean, hideStatusBar: Boolean, linked: Boolean, desktop: Boolean, pageNotifications: Boolean, projectNotice: String });
 const windowTitle = ref('');
-const panelCollapsed = ref(false);
+const panelCollapsed = ref(false), panelHidden = ref(false);
 const state = reactive({ メッセージ: [], 履歴: [], 進捗: [], 信頼済み: false, 自動接続: true });
 const prompt = ref(''), error = ref(''), pending = ref(false), history = ref(false), picker = ref(false), catalogBusy = ref(false);
 const stopPending = ref(false);
@@ -448,8 +448,8 @@ onMounted(() => {
 onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため自動実行を停止しました。'), true); cancelPrediction(); draftReceiver.dispose(); disposed = true; revision++; fileGeneration++; arrivals.dispose(); resizeObserver?.disconnect(); transport.dispose(); });
 </script>
 <template>
-  <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop, 'panel-collapsed': panelCollapsed && !hideStatusBar && !host }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
-    <StatusBar v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" :status="state.接続中 ? '接続中' : state.接続済み ? '接続済' : '未接続'" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" /></template></StatusBar>
+  <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop, 'panel-collapsed': panelHidden && !hideStatusBar && !host }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
+    <StatusBar v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" :status="state.接続中 ? '接続中' : state.接続済み ? '接続済' : '未接続'" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span :title="state.作業フォルダ?.パス">プロジェクト: {{ state.作業フォルダ?.名前 }}</span><nav>
       <button v-if="!embedded" class="auto-connect" role="switch" :aria-checked="state.自動接続" :title="`自動接続 ${state.自動接続 ? 'ON' : 'OFF'}`" :disabled="busy || autoPending || !operable" @click="toggleAuto"><span>自動接続</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button>
       <button :disabled="busy || autoPending || !operable || (!offline && !state.接続済み) || (!state.作業フォルダ && !state.新規可能)" @click="send('new')">＋ 新規</button><button :disabled="!operable" :aria-expanded="history" @click="arrivals.reset(); history = !history">{{ history ? '戻る' : '一覧' }}</button>

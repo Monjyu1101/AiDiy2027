@@ -16,6 +16,7 @@ import taskWindowsModule from '../デスクトップ/task-windows.cjs';
 import routerModule from '../デスクトップ/draft-router.cjs';
 import panelModule from '../デスクトップ/panel-windows.cjs';
 import navigationCodeWindowModule from '../デスクトップ/navigation-code-window.cjs';
+import panelCollapseModule from '../デスクトップ/パネル折り畳み.cjs';
 import codeDragModule from '../デスクトップ/code-drag.cjs';
 import browserModule from '../デスクトップ/ブラウザ.cjs';
 import nativeMoveModule from '../デスクトップ/長押し窓移動.cjs';
@@ -60,6 +61,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
   './host/scripts/project-storage.cjs':{projectRoot:()=>'/project',programDataDirectory:(_project,program,_root,children=[])=>['/project/_AIDIY',program,...children].join('/'),preparePrivateDirectory(){}},
   './デスクトップ/タスクチーム起動.cjs':{taskTeamProfile:()=>'/tmp/test-task'},
   './デスクトップ/navigation-code-window.cjs':navigationCodeWindowModule,
+  './デスクトップ/パネル折り畳み.cjs':panelCollapseModule,
   './デスクトップ/project-profile.cjs':{projectProfile:()=>'/tmp/test'},'./デスクトップ/window-layout.cjs':{windowBounds:(kind,...args)=>kind==='cpu'?layoutModule.windowBounds(kind,...args):({}),windowMinimumSize:(kind,...args)=>kind==='cpu'?layoutModule.windowMinimumSize(kind,...args):({})},'./デスクトップ/console-window-slot.cjs':{reserveConsoleSlot:async()=>{let slot=0;while(reserved.has(slot))slot++;reserved.add(slot);return{slot,close(){reserved.delete(slot);}};}},
   './host/scripts/window-opening.cjs':{拡大表示:async(_Window,window)=>{window.focus();return true;}},
   './host/scripts/MacOS-Menu.cjs':macMenuModule,

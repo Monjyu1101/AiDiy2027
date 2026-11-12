@@ -56,3 +56,11 @@ test('Codeタイトル: 閉じている間は本文とシアンバーを隠し�
   assert.match(source, /\.code-component\.panel-collapsed > :not\(\.panel-brand\)\{display:none!important\}/);
   assert.doesNotMatch(source, /panel-collapsed[^\n]*:not\(\.connection-bar\)/);
 });
+test('LiveもCodeと同じ切替部品を使い、縮小完了後だけ本文を隠す', () => {
+  for (const name of ['コード', 'ライブ']) {
+    const source = readFileSync(new URL(`../src/components/${name}/${name}パネル.vue`, import.meta.url), 'utf8');
+    assert.match(source, /<PanelToggle[^>]*@hidden="panelHidden = \$event"/);
+    assert.match(source, /'panel-collapsed': panelHidden/);
+    assert.doesNotMatch(source, /v-if="!panelCollapsed"/);
+  }
+});
