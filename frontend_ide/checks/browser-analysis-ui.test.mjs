@@ -112,7 +112,7 @@ for(const headerOnly of [false,true])test(`Browser analysis button: ${headerOnly
  f.state.page.value={...f.state.page.value,elementPicking:true};
  const tools=nodes(f.render()).find(n=>n.children?.['connection-tools']).children['connection-tools']();
  assert.deepEqual(Array.from(nodes({children:tools}).filter(n=>n.type==='button'),n=>n.props.class),['browser-analysis','browser-capture','browser-handoff','browser-element-link'],'通常窓・F11で要素連携はCode / Liveへの直後');
- const element=tools.find(n=>n.props?.class==='browser-element-link');assert.ok(element);assert.equal(element.props['aria-pressed'],true);assert.equal(element.children,'要素連携中（Esc）');assert.equal(label(),'解析中…');
+ const element=tools.find(n=>n.props?.class==='browser-element-link');assert.ok(element);assert.equal(element.props['aria-pressed'],true);assert.equal(nodes({children:tools}).find(n=>n.props?.class==='browser-capture').children,'📷');assert.equal(nodes({children:tools}).find(n=>n.props?.class==='browser-handoff').children,'C/Lへ');assert.equal(element.children,'要素中');assert.match(element.props['aria-label'],/要素連携.*Esc/);assert.equal(label(),'解析中…');
  let pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'complete'}});await pending;assert.equal(label(),'AI解析済');
  pending=f.state.analysisMonitor.refresh();f.reply({url:context.url,result:{id:saved.id,url:context.url},job:{status:'failed',message:'解析結果を確認してください。'}});await pending;assert.equal(label(),'AI解析 要確認');
 });
@@ -169,7 +169,7 @@ for(const headerOnly of [false,true])test(`Browser offline: ${headerOnly?'header
  const f=fixture('panel',{headerOnly});t.after(()=>f.dispose());await flush();
  f.listeners.changed({url:context.url,available:true,connected:false,back:true,forward:true});
  const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
- assert.equal(bar.props.connected,false);assert.equal(bar.props.mode,'online');assert.equal(bar.props['clock-pulse'],true);assert.match(bar.props.status,/MCP制御不可/);assert.match(bar.props.status,/AI解析不可/);
+ assert.equal(bar.props.connected,false);assert.equal(bar.props.mode,'online');assert.equal(bar.props['clock-pulse'],true);assert.equal(bar.props.status,'未接続');
  const buttons=nodes({children:bar.children['connection-tools']()}).filter(n=>n.type==='button');
  assert.equal(buttons.find(n=>n.props.class==='browser-analysis').props.disabled,true);
  for(const name of ['browser-capture','browser-handoff','browser-element-link'])assert.equal(!!buttons.find(n=>n.props.class===name).props.disabled,false);
@@ -200,14 +200,14 @@ test('Browser analysis connection: stale initial reads cannot override notificat
 
 for(const standalone of [false,true])for(const headerOnly of [false,true])test(`Browser制御バー: standalone=${standalone} header=${headerOnly} の未接続・接続・切断・復帰`,async t=>{
  const f=fixture('panel',{standalone,headerOnly});t.after(()=>f.dispose());await flush();
- // Tools未起動・喪失でも通常閲覧は可能。バーだけがMCP制御不可を示す。
+ // Tools未起動・喪失でも通常閲覧は可能。タイトルは接続状態だけを示し、操作の接続制約は維持する。
  for(const connected of [false,true,false,true,false]){
   f.listeners.changed({url:context.url,available:true,connected});
   const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
   assert.equal(bar.props.mode,'online');
   assert.equal(bar.props.connected,connected);
   assert.equal(bar.props['clock-pulse'],true,'共通abs(sin)式・50ms更新・4.5秒脈動を使用する');
-  assert.equal(bar.props.status.includes('MCP制御不可'),!connected);
+  assert.equal(bar.props.status,connected?'接続済':'未接続');
   assert.equal(nodes({children:bar.children['connection-tools']()}).some(n=>n.props?.class==='browser-isolated-label'),false,'一時切断はスタンドアロンと表示しない');
   assert.equal(rendered.find(n=>n.type==='input').props.disabled,false,'切断でも手動閲覧は維持する');
  }
@@ -219,24 +219,24 @@ for(const standalone of [false,true])for(const headerOnly of [false,true])test(`
   f.listeners.changed({url:context.url,available:true,connected:false,mode});
   const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
   assert.equal(bar.props.mode,mode);assert.equal(bar.props.connected,false);
-  assert.equal(bar.props.status,mode==='offline'?'ブラウザ':'tools未接続（MCP制御不可・AI解析不可）');
+  assert.equal(bar.props.status,'未接続');
   const badge=nodes({children:bar.children['connection-tools']()}).find(n=>n.props?.class==='browser-isolated-label');
   assert.equal(!!badge,mode==='offline');if(badge)assert.equal(badge.children,'スタンドアロン');
   assert.equal(rendered.find(n=>n.type==='input').props.disabled,false);
  }
 });
 
-for(const standalone of [false,true])for(const headerOnly of [false,true])test(`Browser孤立UI: standalone=${standalone} header=${headerOnly} は連携操作・保存状態・sessionを隠す`,async t=>{
+for(const standalone of [false,true])for(const headerOnly of [false,true])test(`Browser孤立UI: standalone=${standalone} header=${headerOnly} は連携操作・保存状態を隠し、公開対象IDはコピー可能`,async t=>{
  const f=fixture('panel',{standalone,headerOnly});t.after(()=>f.dispose());await flush();
  const integrations=['browser-analysis','browser-capture','browser-capture-tools','browser-capture-status','browser-handoff','browser-element-link'];
  for(const [mode,connected] of [['online',true],['offline',false],['online',false],['offline',false],['online',true]]){
-  f.listeners.changed({url:context.url,title:'Example',available:true,connected,mode,session:'aidiy_browser test',capturePath:'temp/input/test.png',elementPicking:true,back:true,forward:true});
+  f.listeners.changed({url:context.url,title:'Example',available:true,connected,mode,session:'aidiy_browser test',activeTabId:'tab-test',capturePath:'temp/input/test.png',elementPicking:true,back:true,forward:true});
   f.state.captureMessage.value='temp/input/test.png に保存しました。';
   const rendered=nodes(f.render()),bar=rendered.find(n=>n.children?.['connection-tools']);
   const tools=nodes({children:bar.children['connection-tools']()});
   for(const name of integrations)assert.equal(tools.some(n=>n.props?.class===name),mode!=='offline',name);
   assert.equal(rendered.some(n=>n.props?.['aria-label']==='AiDiyホーム'),mode!=='offline');
-  assert.equal(rendered.some(n=>typeof n.children==='string'&&n.children.includes('session=')),mode!=='offline');
+  assert.equal(rendered.find(n=>n.props?.class==='browser-connection-target').props.value,'session="aidiy_browser test" ,tab_id="tab-test", title="Example"');
   assert.equal(rendered.find(n=>n.type==='input').props.disabled,false);
   for(const label of ['戻る','進む'])assert.equal(rendered.find(n=>n.props?.['aria-label']===label).props.disabled,false);
   const windowTools=nodes({children:bar.children['window-tools']()});assert.equal(windowTools.filter(n=>n.type==='button').length,3,'通常の表示サイズ・全画面操作は維持');

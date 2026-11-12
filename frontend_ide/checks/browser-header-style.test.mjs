@@ -38,7 +38,7 @@ test('Browser全画面ヘッダー: 薄いシアンの四角いすりガラス�
 test('Browserすりガラス: 800 DIPを高倍率や狭い画面で表示しても操作列を折り返す',()=>{
  const source=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8');
  const {descriptor}=parse(source),style=compileStyle({source:descriptor.styles[0].content,id:'browser-header-wrap',scoped:false});assert.deepEqual(style.errors,[]);
- const container=style.rawResult.root.nodes.find(node=>node.type==='atrule'&&node.name==='container'&&node.params==='browser-header (max-width:640px)');assert.ok(container);
+ const container=style.rawResult.root.nodes.find(node=>node.type==='atrule'&&node.name==='container'&&node.params==='browser-header (max-width:760px)');assert.ok(container);
  const values=selector=>Object.fromEntries(container.nodes.find(rule=>rule.selector===selector).nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
  assert.match(source,/container:browser-header \/ inline-size;width:100%/);
  assert.equal(values('.browser-header-only :deep(.panel-brand)')['grid-template-columns'],'minmax(0,1fr)');
@@ -56,4 +56,10 @@ test('Browser孤立利用: スタンドアロン表示を既存文字色の細�
  const rule=style.rawResult.root.nodes.find(node=>node.type==='rule'&&node.selector.startsWith('.browser-isolated-label'));
  const values=Object.fromEntries(rule.nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
  assert.equal(values.border,'1px solid currentColor');assert.equal(values['white-space'],'nowrap');
+});
+
+test('Browserタイトルは左右対称列で中心を維持する',()=>{
+ const source=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8');
+ assert.match(source,/\.browser-panel :deep\(\.panel-brand\)\{grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/);
+ assert.match(source,/\.browser-panel :deep\(\.panel-brand>strong\)\{[^}]*text-align:center;justify-self:center/);
 });

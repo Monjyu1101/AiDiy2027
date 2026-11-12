@@ -31,5 +31,5 @@ for(const [name,page,expected,busy]of [
  const node=label(page);assert.ok(node);
  assert.equal(node.props['aria-busy'],busy);
  assert.equal(node.props.class.includes('browser-loading'),busy);
- assert.ok(node.children.some(child=>child?.children===expected));
+ assert.equal(typeof node.children==='string'?node.children:node.children.map(child=>child?.children||'').join(''),expected);
 });

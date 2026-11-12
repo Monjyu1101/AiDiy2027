@@ -77,3 +77,49 @@ test('navigation retains failed drafts and clears successful draft even when its
   f.state.address.value='next';f.state.navigate();job=f.pending.at(-1);job.resolve(snapshot(7,'a',{url:'https://next.test/'}));await flush();assert.equal(f.state.address.value,'https://next.test/');
  }finally{f.close();}
 });
+
+test('＋は最終タブ直後、溢れる場合はタブ列だけスクロールする',()=>{
+ for(const header of [false,true]){
+  const f=fixture(header);try{f.notify(snapshot(2));const row=nodes(f.render()).find(v=>v.props?.class==='browser-tabs-row');
+   const children=row.children.filter(v=>typeof v.type==='string');assert.equal(children.length,2);assert.equal(children[0].props.role,'tablist');assert.equal(children[1].props['aria-label'],'新しいタブ');
+  }finally{f.close();}
+ }
+ assert.match(source,/\.browser-tabs\{[^}]*flex:0 1 auto;[^}]*width:max-content;[^}]*min-width:0;[^}]*overflow-x:auto/);
+ assert.match(source,/\.browser-tab\{[^}]*flex:none;[^}]*width:180px/);
+ assert.match(source,/\.browser-tab-close,\.browser-tab-new\{[^}]*flex:none/);
+});
+
+test('タブ・＋を従来の約70%の22px高に揃え、×の横ヒット領域を保つ',()=>{
+ assert.match(source,/\.browser-tab\{[^}]*height:22px;[^}]*box-sizing:border-box/);
+ assert.match(source,/\.browser-tab-select\{[^}]*padding:0 8px;line-height:20px/);
+ assert.match(source,/\.browser-tab-close,\.browser-tab-new\{[^}]*min-width:26px/);
+ assert.match(source,/\.browser-tab-new\{height:22px\}/);
+});
+
+test('Browserタイトルの状態は緑丸接続済と中空丸未接続、操作不可の説明は表示しない',()=>{
+ assert.match(source,/\.browser-panel :deep\(\.connection-label>i\)\{[^}]*background:transparent;[^}]*border:1px solid currentColor/);
+ assert.match(source,/\.browser-panel :deep\(\.connection-label>i.online\)\{background:#22c55e;border-color:#22c55e/);
+ assert.ok(!source.includes('MCP制御不可'));assert.ok(!source.includes('AI解析不可'));
+});
+
+for(const header of [false,true])test(`連携先を実値のsession/tab_id表記で手動コピーできる: header=${header}`,()=>{
+ const f=fixture(header);try{
+  f.notify(snapshot(2));let input=nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');
+  assert.equal(input.props.value,'session="test" ,tab_id="a", title="a"');assert.equal(input.props.readonly,'');assert.equal(input.props.disabled,undefined);
+  let selected=false;input.props.onFocus({target:{select(){selected=true;}}});assert.equal(selected,true);
+  f.notify(snapshot(3,'b',{connected:false}));input=nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');assert.equal(input.props.value,'session="test" ,tab_id="b", title="b"');
+  f.notify(snapshot(3.5,'b',{title:'<script>"quoted"</script>'}));assert.equal(f.state.connectionTarget.value,'session="test" ,tab_id="b", title='+JSON.stringify('<script>"quoted"</script>'));
+  f.notify(snapshot(4,'b',{session:''}));assert.equal(nodes(f.render()).some(v=>v.props?.class==='browser-connection-target'),false);
+  f.notify(snapshot(5,'b',{session:'quoted"\\session'}));assert.equal(f.state.connectionTarget.value,'session='+JSON.stringify('quoted"\\session')+' ,tab_id="b", title="b"');
+ }finally{f.close();}
+});
+
+test('連携先は同一領域のホバーまたはキーボードfocus中だけ表示しコピー中に消えない',()=>{
+ for(const header of [false,true]){
+  const f=fixture(header);try{f.notify(snapshot(2,'b',{connected:false}));const group=nodes(f.render()).find(v=>v.props?.class==='browser-connection-info');
+   const controls=nodes(group);assert.ok(controls.some(v=>v.type==='button'&&v.props?.class==='browser-connection-reveal'));assert.ok(controls.some(v=>v.type==='input'&&v.props?.class==='browser-connection-target'));
+  }finally{f.close();}
+ }
+ assert.match(source,/\.browser-connection-target\{visibility:hidden/);
+ assert.match(source,/\.browser-connection-info:hover \.browser-connection-target,\.browser-connection-info:focus-within \.browser-connection-target\{visibility:visible\}/);
+});
