@@ -16,7 +16,7 @@ import { 音声表示 } from '../ライブ/音声表示.js';
 // IPC / 設定 JSON の英語キーは外部契約。画面内の状態名は各アプリと同じ日本語に揃える。
 const ライブ設定キー = { freeai_live: ['LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE'], gemini_live: ['LIVE_GEMINI_MODEL', 'LIVE_GEMINI_VOICE'], openai_live: ['LIVE_OPENAI_MODEL', 'LIVE_OPENAI_VOICE'] };
 const AI候補 = { freeai_live: 'FreeAI Live', gemini_live: 'Gemini Live', openai_live: 'OpenAI Live' };
-const 状態名 = { idle: '未接続', connecting: '接続中', connected: '接続済み', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
+const 状態名 = { idle: '未接続', connecting: '接続中', connected: '接続済', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
 
 export function パネル状態作成(api) {
   const モデル一覧 = reactive({}), 音声一覧 = reactive({});

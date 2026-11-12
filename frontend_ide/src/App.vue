@@ -12,6 +12,7 @@ import ConsolePanel from './components/コンソール/コンソールパネル.
 import LivePanel from './components/ライブ/ライブパネル.vue';
 import NavigationPanel from './components/開発スペース/Naviパネル.vue';
 import SpaceView from './components/開発スペース/開発スペース.vue';
+import PanelToggle from './components/コード/パネル表示切替.vue';
 import StatusBar from './components/共通表示/状態バー.vue';
 import LaunchMenu from './components/共通表示/起動メニュー.vue';
 import TerminalWelcome from './components/コンソール/開始表示.vue';
@@ -58,10 +59,17 @@ const browserPanel=(config.kind==='browser'||config.kind==='ide'&&(location.hash
 const state=ref({active:false}),base=reactive({console:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
 const statusError=ref('');
 const error=ref(''),pending=ref(false),panelOpen=ref(false),tab=ref('code'),liveOpen=ref(false),viewMode=ref('3d');
+const ideToggle=ref(),ideCollapsed=ref(false),ideHidden=ref(false),ideCollapseBusy=ref(false);
+async function selectViewMode(mode){
+  if(allBusy.value||layoutBusy.value||allDisplayState.value.active||!state.value.active)return;
+  // 展開中の連続選択も最後のクリックを採用し、表示インスタンスは保持する。
+  viewMode.value=mode;
+  if(ideCollapsed.value)await ideToggle.value?.expand();
+}
 let stopWindowMove=()=>{};
 const desktop=!!window.aidiyWindow;let timer,disposed=false,revision=0,polling=false,session='';
 const allDisplayState=ref({active:false}),allBusy=ref(false),allMessage=ref(''),spaceView=ref();
-const canEnterAll=computed(()=>desktop&&state.value.active&&viewMode.value==='3d'&&!layoutBusy.value);
+const canEnterAll=computed(()=>desktop&&state.value.active&&viewMode.value==='3d'&&!layoutBusy.value&&!ideCollapsed.value&&!ideCollapseBusy.value);
 const browserAvailable=computed(()=>state.value.active);
 provide('browserAvailable',browserAvailable);
 let stopAllDisplays=()=>{},allUpdate=0;
@@ -142,7 +150,7 @@ async function refreshLayout(){
   try{const value=await window.aidiyWindow.layout('state');if(!disposed&&own===session&&value?.ok)layoutState.value=value;}catch{}
 }
 async function runLayout(action){
-  if(!layoutAvailable.value||layoutBusy.value||launching.value||allBusy.value||allDisplayState.value.active)return;
+  if(!layoutAvailable.value||ideCollapsed.value||ideCollapseBusy.value||layoutBusy.value||launching.value||allBusy.value||allDisplayState.value.active)return;
   layoutBusy.value=true;error.value='';const own=session;
   try{const result=await window.aidiyWindow.layout(action);if(disposed||own!==session)return;if(!result?.ok)throw Error(result?.error||'配置を操作できません。');await status();}
   catch(e){if(!disposed&&own===session)error.value=e.message;}
@@ -291,13 +299,12 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
   <BrowserAnalysisWindow v-else-if="browserAnalysis" />
   <BrowserPanel v-else-if="browserPanel" :standalone="config.kind==='browser'" :header-only="browserHeader" />
   <ViewerWindow v-else-if="viewerPath" :path="viewerPath" :desktop="desktop" />
-  <div v-else class="development-app" :class="[config.kind,{'vscode-host':config.host,'desktop-window':desktop,'all-displays':allDisplayState.active}]" :data-app="config.kind">
+  <div v-else class="development-app" :class="[config.kind,{'ai-component':config.kind==='ide'},{'vscode-host':config.host,'desktop-window':desktop,'all-displays':allDisplayState.active,'ide-collapsed':config.kind==='ide'&&ideHidden}]" :data-app="config.kind">
     <template v-if="config.kind==='ide'">
-      <div v-show="!allDisplayState.active" class="ide-heading"><StatusBar title="AiDiy IDE" :connected="state.connected" :mode="state.mode" :busy="state.connecting||pending" :desktop="desktop" :allow-all="canEnterAll" :all-displays="allDisplayState.active" :all-busy="allBusy" @toggle-all="toggleAllDisplays" :clock-pulse="!allDisplayState.active" />
+      <div v-show="!allDisplayState.active" class="ide-heading"><StatusBar title="AiDiy IDE" :connected="state.connected" :mode="state.mode" :busy="state.connecting||pending" :desktop="desktop" :allow-all="canEnterAll" :all-displays="allDisplayState.active" :all-busy="allBusy" @toggle-all="toggleAllDisplays" :clock-pulse="!allDisplayState.active"><template #leading><PanelToggle ref="ideToggle" :collapsed="ideCollapsed" :desktop="desktop" :disabled="allBusy||layoutBusy" @toggle="ideCollapsed=!ideCollapsed" @hidden="ideHidden=$event" @busy="ideCollapseBusy=$event" /></template><template #connection-tools><nav v-if="state.active" class="ide-view-modes" aria-label="ファイルの表示モード"><button :disabled="allBusy||layoutBusy" :aria-pressed="viewMode==='3d'" @click="selectViewMode('3d')">3D</button><button :disabled="allBusy||layoutBusy" :aria-pressed="viewMode==='2d'" @click="selectViewMode('2d')">2D</button></nav></template></StatusBar>
         <div class="component-toolbar">
           <div class="ide-project-actions">
             <span class="ide-project-name" :title="state.project?.path">プロジェクト: {{ state.project?.name }}</span>
-            <nav v-if="state.active" class="ide-view-modes" aria-label="ファイルの表示モード"><button :aria-pressed="viewMode==='3d'" @click="viewMode='3d'">3D</button><button :aria-pressed="viewMode==='2d'" @click="viewMode='2d'">2D</button></nav>
           </div>
           <div class="ide-toolbar-right" @mouseenter="status();refreshLayout()" @focusin="status();refreshLayout()">
             <LaunchMenu v-if="state.active&&desktop" label="別ウィンドウを開く" :items="desktopLaunchItems" />

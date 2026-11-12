@@ -34,11 +34,11 @@ app.on('browser-window-created',(_,owner)=>{
    console.log('Task: 実Core認証・初期メインのみ・明示操作で3窓表示 OK');
    if(process.env.AIDIY_TEST_CONNECTION_INTERRUPT==='1'){
     const allStatus=async text=>(await Promise.all(peers().map(w=>evaluate(w,`document.body.textContent.includes(${JSON.stringify(text)})`)))).every(Boolean);
-    await until(()=>allStatus('接続済み'),'3窓接続');
+    await until(()=>allStatus('接続済'),'3窓接続');
     console.log('TASK_CONNECTION_READY: TaskTeamを停止してください');
     await until(()=>allStatus('未接続'),'3窓切断',1800);
     console.log('TASK_CONNECTION_OFFLINE: TaskTeamを再起動してください');
-    await until(()=>allStatus('接続済み'),'3窓再接続',1800);
+    await until(()=>allStatus('接続済'),'3窓再接続',1800);
     console.log('Task: 3窓同時の実サービス切断・復帰 OK');
    }
    for(const name of ['request','flow','detail']){

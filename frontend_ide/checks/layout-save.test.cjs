@@ -200,3 +200,11 @@ test('Load glides Browser to accepted saved FHD bounds and keeps rejected Browse
   assert.equal(!!browser.window.moves?.length,accepted);
  }
 });
+
+test('IDE collapsed bounds cannot be saved/restored and layout work advertises its native guard',async()=>{
+ const f=fixture();f.owner.panelCollapsed=true;
+ assert.equal((await f.run('load')).ok,false);assert.equal((await f.run('save')).ok,false);assert.equal(f.opening,0);
+ assert.equal((await f.run('state')).ok,true);f.owner.panelCollapsed=false;
+ let release;f.gate(new Promise(resolve=>release=resolve));const loading=f.run('load');
+ assert.equal(f.owner.layoutBusy,true);release();assert.equal((await loading).ok,true);assert.equal(f.owner.layoutBusy,false);
+});

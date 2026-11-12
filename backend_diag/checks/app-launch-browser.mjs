@@ -62,7 +62,7 @@ try{
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setFocusEmulationEnabled',{enabled:true});await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  const url=`http://127.0.0.1:${server.address().port}/proxy/8097/#token=app-browser-fixture`;
- await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);
+ await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);
  assert.equal(await evaluate(`document.querySelector('nav.tabs button.active').textContent`),'システム起動');
  await click('ランチャー表示');await until(`document.querySelectorAll('.mini-app-button').length===9&&document.querySelectorAll('.mini-cli-button[data-app=chrome]').length===1`);
  await fitMiniViewport();
@@ -143,7 +143,7 @@ try{
  assert.equal(await evaluate(`document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight`),false);
  assert.equal(await evaluate(`getComputedStyle(document.querySelector('.app-launch-list')).overflowY`),'auto');
  await click('解除');assert.deepEqual(await evaluate(`[...document.querySelectorAll('.app-launch-button:not(:disabled)')].map(button=>button.closest('[data-app]').dataset.app)`),['chrome']);
- await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);await click('アプリ起動');
+ await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);await click('アプリ起動');
  assert.equal(await evaluate(`document.querySelector('#app-project-folder').value`),'','再起動・再読込では毎回フォルダ未選択');
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),true);
  assert.deepEqual(errors,[]);console.log('アプリ起動: ミニ360×190・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');

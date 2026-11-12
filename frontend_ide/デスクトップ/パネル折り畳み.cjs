@@ -9,7 +9,7 @@ function createPanelCollapse({trustedEvent,resolvePanel=()=>null,now=()=>perform
  const states=new WeakMap();
  return function collapse(event,collapsed,name){
   const source=trustedEvent(event),record=name===undefined?source:resolvePanel(source,name),win=record?.window;
-  if(typeof collapsed!=='boolean'||!['code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'].includes(record?.kind)||!win||win.isDestroyed()||win.isFullScreen()||record.vrPanelMoving||record.owner?.vrPanelMoving||!canCollapse(record))return Promise.resolve({ok:false});
+  if(typeof collapsed!=='boolean'||!['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'].includes(record?.kind)||!win||win.isDestroyed()||win.isFullScreen()||record.vrPanelMoving||record.owner?.vrPanelMoving||!canCollapse(record))return Promise.resolve({ok:false});
   let state=states.get(win);
   if(!state){
    if(!collapsed)return Promise.resolve({ok:true});

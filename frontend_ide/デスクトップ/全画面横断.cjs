@@ -96,6 +96,7 @@ function createAllDisplays({screen,trustedEvent,syncChildren=()=>{},platform=pro
   const record=trustedEvent(event);
   if(!record||record.kind!=='ide'||record.owner||!entries.has(record))return{ok:false,error:'IDE本体だけで使用できます。'};
   if(action==='state')return state(record);
+  if(record.panelCollapsed)return{ok:false,error:'IDEを展開してからVRモードへ切り替えてください。'};
   if(action!=='toggle')return{ok:false,error:'対応していない操作です。'};
   const entry=entries.get(record),window=record.window;
   try{

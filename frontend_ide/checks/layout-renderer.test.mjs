@@ -12,7 +12,7 @@ function fixture(){
   const source=app.match(/<script setup>([\s\S]*?)<\/script>/)[1].replace(/^import .*;\s*$/gm,'');
   const calls=[],context={ref:value=>({value}),reactive:value=>value,computed:get=>({get value(){return get();}}),provide(){},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineProps:()=>({config:{kind:'ide'}}),location:{hash:''},window:{aidiyWindow:{layout:async action=>{calls.push(action);return{ok:true,count:0,saved:true};}}},createDraftTargetRegistry:()=>({}),AbortController,AbortSignal,setTimeout,clearTimeout,setInterval,clearInterval};
   vm.createContext(context);
-  vm.runInContext(source+'\nglobalThis.api={state,layoutState,layoutBusy,desktopLaunchItems,layoutRequest,navigationRefs,navigationWindows,spaceView,update,refreshLayout,runLayout,error,canEnterAll,toggleAllDisplays};',context);
+  vm.runInContext(source+'\nglobalThis.api={state,layoutState,layoutBusy,desktopLaunchItems,layoutRequest,navigationRefs,navigationWindows,spaceView,update,refreshLayout,runLayout,error,canEnterAll,toggleAllDisplays,ideToggle,ideCollapsed,ideCollapseBusy,viewMode,selectViewMode,allBusy};',context);
   const api=context.api;api.update({active:true,mode:'online',startedAt:1,project:{path:'/project'}});
   return{api,calls,context};
 }
@@ -86,4 +86,20 @@ for(const outcome of ['rejected','throw','stale','inactive','success'])test(`VR�
  context.window.aidiyWindow.allDisplays=async()=>{calls++;if(outcome==='throw')throw Error('切替失敗');return outcome==='rejected'?{ok:false,error:'切替拒否'}:{ok:true,active:outcome==='success'};};
  await api.toggleAllDisplays();
  assert.equal(cancellations,outcome==='success'?0:1);assert.equal(calls,outcome==='stale'?0:1);
+});
+
+for(const mode of ['2d','3d'])test('IDE title expands collapsed body in '+mode,async()=>{
+ const {api}=fixture();let expands=0;api.ideCollapsed.value=true;
+ api.ideToggle.value={expand:async()=>{expands++;api.ideCollapsed.value=false;}};
+ await api.selectViewMode(mode);assert.equal(api.viewMode.value,mode);assert.equal(expands,1);
+ await api.selectViewMode(mode);assert.equal(expands,1);
+});
+test('IDE keeps last mode selection while expansion is pending and blocks VR/layout conflicts',async()=>{
+ const {api,calls}=fixture();let finish;api.ideCollapsed.value=true;
+ api.ideToggle.value={expand:()=>{api.ideCollapsed.value=false;api.ideCollapseBusy.value=true;return new Promise(resolve=>finish=()=>{api.ideCollapseBusy.value=false;resolve();});}};
+ const expanding=api.selectViewMode('2d');await api.selectViewMode('3d');assert.equal(api.viewMode.value,'3d');
+ assert.equal(api.canEnterAll.value,false);await api.runLayout('load');assert.equal(calls.length,0);
+ finish();await expanding;assert.equal(api.viewMode.value,'3d');assert.equal(api.canEnterAll.value,true);
+ api.allBusy.value=true;await api.selectViewMode('2d');assert.equal(api.viewMode.value,'3d');
+ api.allBusy.value=false;api.layoutBusy.value=true;await api.selectViewMode('2d');assert.equal(api.viewMode.value,'3d');
 });

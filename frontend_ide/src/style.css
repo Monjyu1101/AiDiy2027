@@ -434,3 +434,10 @@
 /* 独立Explorer/Viewerは本文DOMを保持したまま、接続バーも含めて隠す。 */
 .native-panel-collapsed > :not(.panel-window-title),.native-panel-collapsed .connection-bar,.viewer-window.panel-collapsed > :not(.panel-brand){display:none!important}
 .panel-window-title .panel-brand,.viewer-window > .panel-brand{min-height:31px;padding:1px 2px}
+
+/* IDE本体もDOMを維持し、展開完了まで同じ表示と接続を使う。 */
+.development-app.ide{clip-path:inset(0)}
+.development-app.ide.ide-collapsed>:not(.ide-heading),.development-app.ide.ide-collapsed>.ide-heading>:not(.panel-brand){display:none!important}
+.ide-heading .connection-label{display:flex;align-items:center;min-width:0}
+.ide-heading .ide-view-modes{margin-left:6px}
+.ide-heading .ide-view-modes button{padding:2px 5px}

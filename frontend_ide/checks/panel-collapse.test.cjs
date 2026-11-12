@@ -13,7 +13,7 @@ function fixture(kind='code',options={}){
  const step=ms=>{time+=ms;const callbacks=[...timers.values()];timers.clear();callbacks.forEach(fn=>fn());};
  return{win,record,frames,timers,step,toggle:value=>collapse(record,value),collapse};
 }
-for(const kind of ['code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': animate to title only and restore size at dragged position',async()=>{
+for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': animate to title only and restore size at dragged position',async()=>{
  const f=fixture(kind),p=f.toggle(true);f.step(100);assert.ok(f.win.bounds.height>31&&f.win.bounds.height<600);f.step(200);assert.deepEqual(await p,{ok:true});assert.equal(f.win.bounds.height,31);assert.equal(f.win.resizable,false);
  f.win.bounds.x=123;f.win.bounds.y=234;const restore=f.toggle(false);f.step(100);assert.ok(f.win.bounds.height>31&&f.win.bounds.height<600);f.step(200);await restore;
  assert.deepEqual(f.win.bounds,{x:123,y:234,width:700,height:600});assert.deepEqual(f.win.minimum,[320,200]);assert.equal(f.win.resizable,true);assert.equal(f.win.listenerCount('closed'),0);
@@ -23,7 +23,7 @@ test('reverse rapid toggles, restore maximized state, and release closed windows
  const e=f.toggle(true);f.win.destroyed=true;f.win.emit('closed');assert.equal((await e).ok,false);assert.equal(f.timers.size,0);
 });
 test('reject untrusted, other apps and full screen; restore on reload',async()=>{
- const f=fixture('ide');assert.equal((await f.toggle(true)).ok,false);assert.equal((await f.collapse({},true)).ok,false);
+ const f=fixture('unsupported');assert.equal((await f.toggle(true)).ok,false);assert.equal((await f.collapse({},true)).ok,false);
  const g=fixture();g.win.isFullScreen=()=>true;assert.equal((await g.toggle(true)).ok,false);g.win.isFullScreen=()=>false;
  const p=g.toggle(true);g.step(240);await p;g.win.webContents.emit('did-start-navigation');assert.equal(g.win.bounds.height,600);assert.equal(g.win.resizable,true);assert.equal(g.timers.size,0);
 });
@@ -53,7 +53,7 @@ test('named Navi windows require an authorized owner and resolver; unrelated nam
 
 // Windowsのフレームレス窓・端数DPIで発生するsetBounds/getBoundsの非対称を模擬する。
 // 理想的なsetBoundsモックだけでは、毎フレームの読戻しによる幅の累積を見逃す。
-for(const kind of ['code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': repeated collapse preserves width across native rounding and frame-style changes',async()=>{
+for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': repeated collapse preserves width across native rounding and frame-style changes',async()=>{
  const f=fixture(kind);f.win.getNormalBounds=()=>({...f.win.bounds});
  f.win.setBounds=v=>{f.win.bounds={...v,width:v.width+1,height:v.height+1};};
  f.win.setResizable=v=>{if(f.win.resizable!==v)f.win.bounds.width+=2;f.win.resizable=v;};
@@ -68,7 +68,7 @@ for(const kind of ['code','live','console','browser','navi','task','team','diag'
  assert.equal(f.win.bounds.width,700);assert.equal(f.win.bounds.height,600);
 });
 
-for(const kind of ['code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])for(const phase of ['collapsing','collapsed','expanding'])test(kind+': close safely while '+phase,async()=>{
+for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])for(const phase of ['collapsing','collapsed','expanding'])test(kind+': close safely while '+phase,async()=>{
  const f=fixture(kind,{onChange:record=>assert.equal(record.window.isDestroyed(),false)}),contents=f.win.webContents;
  Object.defineProperty(f.win,'webContents',{get(){if(this.destroyed)throw Error('Object has been destroyed');return contents;}});
  let pending=f.toggle(true);

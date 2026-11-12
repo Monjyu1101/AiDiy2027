@@ -26,7 +26,7 @@ onBeforeUnmount(() => {document.removeEventListener('visibilitychange',syncPulse
 </script>
 <template>
   <header class="panel-brand" :class="{ desktop }">
-    <span class="connection-label" role="status"><slot name="leading"></slot><i :class="{ online: connected, active: active || busy }"></i>{{ status || (busy ? '接続中' : connected ? '接続済み' : '未接続') }}<slot name="connection-tools"></slot></span>
+    <span class="connection-label" role="status"><slot name="leading"></slot><i :class="{ online: connected, active: active || busy }"></i>{{ status || (busy ? '接続中' : connected ? '接続済' : '未接続') }}<slot name="connection-tools"></slot></span>
     <strong>{{ title }}</strong>
     <WindowActions v-if="desktop" :window-api="windowApi" :window-context="windowContext" :allow-all="allowAll" :all-displays="allDisplays" :all-busy="allBusy" :hide-close="hideClose" :pin-title="pinTitle" @toggle-all="emit('toggle-all')"><slot name="window-tools"></slot></WindowActions>
   </header>

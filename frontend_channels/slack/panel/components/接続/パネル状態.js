@@ -13,7 +13,7 @@
 import { computed, reactive, watch, watchEffect, nextTick } from 'vue';
 
 // Discord 版のパネル状態から音声会話（Live）・モニターを除いたもの。IPC の英語キーは外部契約。
-const 状態名 = { idle: '未接続', connecting: '接続中', connected: '接続済み', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
+const 状態名 = { idle: '未接続', connecting: '接続中', connected: '接続済', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
 
 export function パネル状態作成(api) {
   let 保存待ち = Promise.resolve(), 候補世代 = 0;

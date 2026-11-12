@@ -311,11 +311,12 @@ test('IDE: 3Dが既定。2D切替で利用状態・Console/Code/Live・下書き
   } finally { h.dispose(); }
 });
 
-test('部品境界/配置: プロジェクト右に3D/2D、右端にConsole/Code/Live、共通機能はモード外', () => {
+test('部品境界/配置: タイトルに3D/2D、右端にConsole/Code/Live、共通機能はモード外', () => {
   const app = readFileSync(new URL('../src/App.vue', import.meta.url), 'utf8');
   const view = readFileSync(new URL('../src/components/開発スペース/開発スペース.vue', import.meta.url), 'utf8');
   const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
-  assert.ok(app.indexOf('class="ide-project-name"') < app.indexOf('class="ide-view-modes"'));
+  assert.match(app, /<template #connection-tools><nav[^>]*class="ide-view-modes"/);
+  assert.ok(app.indexOf('class="ide-view-modes"') < app.indexOf('class="ide-project-name"'));
   assert.ok(app.indexOf('class="ide-view-modes"') < app.indexOf('class="ide-toolbar-right"'));
   assert.match(app, /class="ide-toolbar-right"[^>]*>\s*<LaunchMenu/);
   // 起動項目は Console、Navi の順（別窓・パネル・VR の3か所とも）。項目名に「＋」は付けず、Navi も起動中は全ボタンを無効にして「起動中…」を出す。

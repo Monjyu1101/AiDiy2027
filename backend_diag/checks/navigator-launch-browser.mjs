@@ -61,7 +61,7 @@ try{
  await send('Runtime.enable');await send('Page.enable');await send('Emulation.setFocusEmulationEnabled',{enabled:true});await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  const url=`http://127.0.0.1:${server.address().port}/proxy/8097/#token=app-browser-fixture`;
- await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);
+ await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);
  assert.equal(await evaluate(`document.querySelector('nav.tabs button.active').textContent`),'システム起動');
  await click('ランチャー表示');
  await until(`document.querySelector('.mini-app-button[data-app="navi"] img')?.naturalWidth===512`);

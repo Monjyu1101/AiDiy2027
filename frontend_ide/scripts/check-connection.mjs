@@ -70,7 +70,7 @@ try {
   await until(() => evaluate(`!![...document.querySelectorAll('button')].find(button=>button.textContent==='AiDiy接続利用')`), '起動画面');
   await evaluate(`[...document.querySelectorAll('button')].find(button=>button.textContent==='AiDiy接続利用').click()`);
   const label = `document.querySelector('.ide-heading .connection-label')?.textContent.trim()`;
-  await until(async () => (await evaluate(label)) === '接続済み', '接続成立');
+  await until(async () => (await evaluate(label)) === '接続済', '接続成立');
   const startedAt = connection.state().startedAt;
   await evaluate(`window.connectionLabels=[];new MutationObserver(()=>window.connectionLabels.push(${label})).observe(document.querySelector('.ide-heading .connection-label'),{childList:true,subtree:true,characterData:true});`);
   const folder = resolve('temp/connection-check'); mkdirSync(folder, { recursive: true });
@@ -81,10 +81,10 @@ try {
   }
   await until(() => calls.length >= 2, '10秒後の定期確認');
   assert.equal(connection.state().connecting, false);
-  assert.equal(await evaluate(label), '接続済み');
+  assert.equal(await evaluate(label), '接続済');
   await capture('01_connected-checking');
   await until(async () => calls.length >= 3 && (await evaluate('window.connectionPolls.length')) >= 3, '次の10秒周期');
-  assert.equal(await evaluate(label), '接続済み');
+  assert.equal(await evaluate(label), '接続済');
   assert.deepEqual(await evaluate('window.connectionLabels'), []);
   const polls = await evaluate('window.connectionPolls');
   for (let i = 1; i < polls.length; i++) assert.ok(polls[i] - polls[i - 1] >= 9800, `状態取得が頻繁です: ${polls}`);
@@ -94,7 +94,7 @@ try {
   assert.equal(connection.state().active, true); assert.equal(connection.state().startedAt, startedAt);
   await capture('02_disconnected');
   healthy = true;
-  await until(async () => (await evaluate(label)) === '接続済み', '同じセッションで復帰');
+  await until(async () => (await evaluate(label)) === '接続済', '同じセッションで復帰');
   assert.equal(connection.state().startedAt, startedAt);
   await capture('03_reconnected'); assert.deepEqual(errors, []);
   console.log('CONNECTION PASS: 10秒周期、確認中の表示維持、切断検出、セッションを維持した再接続');

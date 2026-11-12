@@ -145,8 +145,9 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
  async function handle(event,action){
   const owner=trustedEvent(event);if(!owner||owner.kind!=='ide'||owner.owner)return{ok:false,error:'IDE本体から操作してください。'};
   if(!['state','save','load'].includes(action))return{ok:false,error:'配置の操作が不正です。'};
+  if(action!=='state'&&owner.panelCollapsed)return{ok:false,error:'IDEを展開してから配置を操作してください。'};
   if(action!=='state'&&busy.has(owner))return{ok:false,error:'配置を処理しています。完了をお待ちください。'};
-  const operation={};if(action!=='state')busy.set(owner,operation);
+  const operation={};if(action!=='state'){busy.set(owner,operation);owner.layoutBusy=true;}
   let restored=0;
   try{
    const revision=owner.revision,state=await readState(owner),key=sessionKey(state),project=state.project?.path;
@@ -217,9 +218,9 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
    await confirm();
    return failures.length?{ok:false,error:'一部のパネルを復元できませんでした。'+failures.join(' / '),count:count(owner),restored}:{ok:true,count:count(owner),restored};
   }catch(error){return{ok:false,error:error.message,count:count(owner),restored};}
-  finally{if(busy.get(owner)===operation)busy.delete(owner);}
+  finally{if(busy.get(owner)===operation){busy.delete(owner);owner.layoutBusy=false;}}
  }
- function invalidate(owner){for(const request of [...requests.values()])if(request.owner===owner)request.finish(Error('IDEの利用状態が変わりました。'));busy.delete(owner);}
+ function invalidate(owner){for(const request of [...requests.values()])if(request.owner===owner)request.finish(Error('IDEの利用状態が変わりました。'));busy.delete(owner);owner.layoutBusy=false;}
  return{handle,reply,count,invalidate};
 }
 module.exports={bounds,onScreen,placement,applyPlacement,validate,validateRenderer,readLayout,writeLayout,createLayoutManager};

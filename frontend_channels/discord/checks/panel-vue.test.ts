@@ -116,6 +116,7 @@ test('接続・再接続・切断・エラー復旧と連打の保存/起動重�
     await f.click('toggle'); assert.ok(f.calls.some(([name]) => name === 'stop'));
     gate.resolve(); await flush();
     await f.emit('State', { phase: 'connected' });
+    assert.equal(f.get('status-text').textContent, '接続済');
     assert.equal(f.get('toggle').textContent, '切断'); assert.equal(f.get('provider').disabled, true);
     assert.ok(f.window.document.body.classList.contains('connected'));
     await f.emit('State', { phase: 'reconnecting' });
@@ -363,6 +364,8 @@ test('discord の接続バーは接続成立時だけ緑表示のクラスを付
     for (const phase of ['idle', 'connecting', 'connected', 'reconnecting', 'connected', 'stopping', 'idle', 'error', 'connected']) {
       await f.emit('State', { phase });
       assert.equal(f.window.document.body.classList.contains('connected'), phase === 'connected', phase);
+      const labels = { idle: '未接続', connecting: '接続中', connected: '接続済', reconnecting: '再接続中', stopping: '切断中', error: 'エラー' };
+      assert.equal(f.get('status-text').textContent, labels[phase as keyof typeof labels], phase);
     }
   } finally { await f.dispose(); }
 });

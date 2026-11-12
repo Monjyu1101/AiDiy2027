@@ -135,3 +135,9 @@ test('VRの応答はパネル移動を待ち、終了位置は親窓を戻す前
  f.controller.leave(f.record);assert.deepEqual(remembered,displayBounds(four));finish();assert.equal((await pending).active,false,'途中解除後に古いactive状態を返さない');
  f.window.close();assert.equal(forgotten,true);
 });
+
+test('IDE cannot enter VR while collapsed or expanding',()=>{
+ const f=fixture(),bounds=f.window.getBounds();f.record.panelCollapsed=true;
+ assert.equal(f.toggle().ok,false);assert.deepEqual(f.window.getBounds(),bounds);
+ f.record.panelCollapsed=false;assert.equal(f.toggle().active,true);f.window.close();
+});

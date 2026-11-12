@@ -7,19 +7,21 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { usePanelCollapse } from '../共通表示/パネル折り畳み.js';
 import { createPanelToggleDrag } from './パネル切替ドラッグ.js';
-const props = defineProps({ collapsed: Boolean, desktop: Boolean, windowApi: Object, windowContext: Object });
-const emit = defineEmits(['toggle', 'hidden']);
+const props = defineProps({ collapsed: Boolean, disabled: Boolean, desktop: Boolean, windowApi: Object, windowContext: Object });
+const emit = defineEmits(['toggle', 'hidden', 'busy']);
 const button = ref();
-const { panelElement, panelCollapsed, panelHidden, togglePanel } = usePanelCollapse(props);
+const { panelElement, panelCollapsed, panelHidden, panelBusy, togglePanel } = usePanelCollapse(props);
 onMounted(() => { panelElement.value = button.value.closest('.ai-component'); });
 watch(panelCollapsed, () => emit('toggle'));
 watch(panelHidden, value => emit('hidden', value));
-const drag = createPanelToggleDrag({ api: props.desktop ? (props.windowApi ?? window.aidiyWindow) : undefined, win: props.windowContext ?? window, toggle: togglePanel });
+watch(panelBusy, value => emit('busy', value), { flush: 'sync' });
+defineExpose({ async expand() { if (panelCollapsed.value) await togglePanel(); return !panelCollapsed.value && !panelBusy.value; } });
+const drag = createPanelToggleDrag({ api: props.desktop ? (props.windowApi ?? window.aidiyWindow) : undefined, win: props.windowContext ?? window, toggle: () => { if (!props.disabled) return togglePanel(); } });
 onBeforeUnmount(drag.dispose);
 </script>
 <template>
   <button ref="button" type="button" class="code-panel-toggle" data-aidiy-no-window-move
-    :aria-expanded="!collapsed" :aria-label="collapsed ? 'パネル内容を表示' : 'パネル内容を非表示'"
+    :disabled="disabled" :aria-expanded="!collapsed" :aria-label="collapsed ? 'パネル内容を表示' : 'パネル内容を非表示'"
     :title="(collapsed ? 'パネル内容を表示' : 'パネル内容を非表示') + (desktop ? '（ドラッグで移動）' : '')"
     @pointerdown="drag.down" @pointermove="drag.move" @pointerup="drag.up" @pointercancel="drag.cancel" @lostpointercapture="drag.up" @click="drag.click" @dragstart.prevent>
     <span class="code-panel-mark" aria-hidden="true">{{ collapsed ? '▶' : '▽' }}</span>

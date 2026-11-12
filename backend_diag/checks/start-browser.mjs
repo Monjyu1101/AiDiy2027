@@ -59,7 +59,7 @@ try{
  await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setBlockedURLs',{urls:['https://*']});
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  const url=`http://127.0.0.1:${server.address().port}/proxy/8097/#token=start-browser-fixture`;
- await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);
+ await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);
  await until(`document.querySelector('nav.tabs button.active')?.textContent==='システム起動'&&document.querySelectorAll('.start-targets button').length===6`);
  assert.deepEqual(calls,[],'初期表示ではサービスを起動しない');
  await click('導入状況');
@@ -92,7 +92,7 @@ try{
  await until(`document.querySelector('.start-console-heading strong')?.textContent==='Local コンソール'`);
  await evaluate(`document.querySelector('.start-settings input').click()`);await until(`document.querySelector('.start-save').textContent==='設定を保存しました'`);
  assert.equal(JSON.parse(readFileSync(join(root,'_config/AiDiy_diag_start.json'),'utf8')).設定.local.起動対象,true);
- await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済み')`);await click('システム起動');await until(`document.querySelectorAll('.start-targets button').length===6`);
+ await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);await click('システム起動');await until(`document.querySelectorAll('.start-targets button').length===6`);
  await evaluate(`[...document.querySelectorAll('.start-targets button')].find(button=>button.textContent.includes('Web')).click()`);await until(`document.querySelector('.start-console-heading strong')?.textContent==='Web コンソール'`);
  assert.equal(await evaluate(`${browserOption}.checked`),false,'Web のブラウザ設定を再読込後も保持する');
  await evaluate(`[...document.querySelectorAll('.start-targets button')].find(button=>button.textContent.includes('Local')).click()`);await until(`document.querySelector('.start-settings input')?.checked`);

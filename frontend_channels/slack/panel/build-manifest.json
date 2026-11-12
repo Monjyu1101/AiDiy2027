@@ -5,7 +5,7 @@
   "panel/AiDiy_slack.png": "3ad4201ea8da4c3770bae87f7e15028fc7242abfa505a1adcfde9ce09ac35dd4",
   "panel/AiDiy_slack.svg": "176b6346a66e39c7c1fca4ce8995d7c69feb535ecf0872881f6bc0482ea1de69",
   "panel/THIRD_PARTY_NOTICES.txt": "991f108cf9b45856e7f9864d918cb66c1f6f9ab41f18dd885f0c95bf8aa10d12",
-  "panel/components/接続/パネル状態.js": "4f2506b1b478c4e8564bb04822fdf277e5e89e88bc6ed9c283c870d7c8860910",
+  "panel/components/接続/パネル状態.js": "aaa54b411ad888b674de2ff5b9581b8e292a91e01b56e50bcd0724098c4ee08d",
   "panel/components/接続/接続パネル.vue": "e3f3dcd6dddc9471f32fc88fd723545101dd04b4ddc95cd481f1c1d1bf8fa547",
   "panel/components/接続/機能切替.vue": "2d9a368fef8e11b98cff072ade805e175eeb9beb0e4c0b5f12cbba889acf975b",
   "panel/components/接続/逃げるマーク.vue": "5a1e8974766d2dcec020eb830ffd4510f286a7ce2b75118ad5dd6ad310aefa15",
@@ -13,7 +13,7 @@
   "panel/main.js": "bc9b7ea29c435bf7e1beacbb15091a0b272447e787e614509610831952b54c21",
   "panel/style.css": "766aa8f1e641688a0c031fee9774849a6ee6add8aed7073d760c01ce1f8e966e",
   "panel/titlebar.css": "5d61d68094a9ddfa5c5271a96d19808bcbb664965f88cb9b249bd07d58e1aeb0",
-  "panel/view.js": "ecb00f47a3afa6977b50e447991484095fd7ec4fbd5d8c5a29fe9c58c38774ab",
+  "panel/view.js": "df0202666081d3d3e9b5334ac74412cc3deb92fde1bf17f07dc72990fdbd4894",
   "scripts/build-panel.mjs": "9d787646a2a8207531123de3d19ad5f6c8fa8461775bdf7a89e129c2b1ee4995",
   "scripts/verify-panel.mjs": "d3057955dc7e155caf8d61f5bd4c43889c72280bf7b732b241a8c922e3b77c95"
 }
