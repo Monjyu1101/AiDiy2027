@@ -9,6 +9,10 @@ const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('aidiyWindow',Object.freeze({
  customNormalTitle:process.platform==='win32',
  initialMini:process.argv.includes('--aidiy-diag-initial-mini'),
+ collapsePanel:collapsed=>typeof collapsed==='boolean'?ipcRenderer.invoke('diag:window','collapsePanel',collapsed):Promise.resolve({ok:false}),
+ beginWindowMove:()=>ipcRenderer.invoke('diag:window','beginWindowMove'),
+ moveWindow:token=>typeof token==='string'?ipcRenderer.invoke('diag:window','moveWindow',token):Promise.resolve(false),
+ endWindowMove:token=>typeof token==='string'?ipcRenderer.invoke('diag:window','endWindowMove',token):Promise.resolve(false),
  minimize:()=>ipcRenderer.invoke('diag:window','minimize'),
  maximize:()=>ipcRenderer.invoke('diag:window','maximize'),
  isMaximized:()=>ipcRenderer.invoke('diag:window','isMaximized'),

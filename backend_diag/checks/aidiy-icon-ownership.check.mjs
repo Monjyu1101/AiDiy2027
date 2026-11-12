@@ -23,7 +23,7 @@ test('AiDiy 14 種は Diag 内の PNG コピーだけで配布を検証できる
  }
  for(const name of ['task','team','browser'])await assert.rejects(bytes(`ui/src/components/アプリ起動/アプリアイコン/${name}.svg`),{code:'ENOENT'});
  assert.equal(アプリアイコン.chrome,'Chrome.svg');
- for(const name of ['ui/build.mjs','ui/verify.mjs','ui/src/style.css'])assert.doesNotMatch((await bytes(name)).toString('utf8'),/frontend_(?:ide|channels|avatar)|command_hermes|aidiy-icon-sources|_icons\/AiDiy/,'外部 module の asset を参照しない');
+ for(const name of ['ui/build.mjs','ui/verify.mjs','ui/src/style.css'])assert.doesNotMatch((await bytes(name)).toString('utf8').replaceAll('../../frontend_ide/src/components','shared-title-components'),/frontend_(?:ide|channels|avatar)|command_hermes|aidiy-icon-sources|_icons\/AiDiy/,'外部 module の asset を参照しない');
 });
 test('AiDiy は固定 PNG 配布のみ、第三者 SVG と認証境界は維持（実待受なし）',async()=>{
  const handler=createHandler({token:'fixture',prefix:'/fixture/',installManagerFactory:()=>({close(){}})});

@@ -9,6 +9,7 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import StatusBar from '../共通表示/状態バー.vue';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import { cliTitleName } from './CLIタイトル.js';
 import { consoleKeyHandler } from './キー入力.js';
@@ -16,6 +17,7 @@ import { consoleInputFocus } from './入力フォーカス.js';
 import { consoleCompletion, cliCompletions } from '../コンソール/コマンド補完.js';
 const props = defineProps({ base: String, icon: String, desktop: Boolean, linked: Boolean, visible: { type: Boolean, default: true } });
 const windowTitle = ref(''), panel = ref(null);
+const panelCollapsed = ref(false), panelHidden = ref(false);
 const container = ref(null), connected = ref(false), status = ref('起動中'), project = ref(''), shell = ref(''), error = ref('');
 const completion = ref(''), toolsOnline = ref(false), cli = ref(null);
 const title = computed(() => (windowTitle.value || (props.linked ? 'AiDiy IDE / Console' : 'AiDiy Console')) + (cliTitleName(cli.value) ? ' / ' + cliTitleName(cli.value) : ''));
@@ -74,7 +76,7 @@ function toggleTools() {
   send({ type: 'tools-check', enabled: !toolsEnabled.value });
 }
 function fitTerminal() {
-  if (!props.visible || !container.value?.clientWidth || !container.value?.clientHeight) return;
+  if (panelCollapsed.value || !props.visible || !container.value?.clientWidth || !container.value?.clientHeight) return;
   fit?.fit();
 }
 function connect() {
@@ -108,12 +110,13 @@ function connect() {
   current.onerror = () => { if (current === socket && !disposed) error.value = '端末に接続できません。接続し直してください。'; };
 }
 watch(() => props.visible, async visible => { inputFocus?.cancel(); if (visible) { await nextTick(); if (!disposed && props.visible) { fitTerminal(); inputFocus?.request({ explicit: true }); } } });
+watch(panelCollapsed, async collapsed => { inputFocus?.cancel(); if (!collapsed) { await nextTick(); fitTerminal(); } });
 onMounted(() => {
   if (props.desktop && props.linked) void window.aidiyWindow?.title?.().then(title => { if (!disposed && typeof title === 'string') windowTitle.value = title; }).catch(() => {});
   terminal = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: 'Consolas, "Noto Sans Mono", monospace', scrollback: 5000,
     theme: { background: '#000', foreground: '#dce6f2', cursor: '#ffffff', selectionBackground: '#365b78' } });
   fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fitTerminal();
-  inputFocus = consoleInputFocus({ panel: panel.value, terminal, available: () => props.visible && connected.value });
+  inputFocus = consoleInputFocus({ panel: panel.value, terminal, available: () => !panelCollapsed.value && props.visible && connected.value });
   keyInput = consoleKeyHandler(data => { startInput(); sendInput(data); }, { terminal });
   terminal.attachCustomKeyEventHandler(keyInput);
   input = terminal.onData(sendInput);
@@ -130,8 +133,8 @@ onMounted(() => {
 onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
 </script>
 <template>
-  <section ref="panel" class="console-component" :class="{ 'desktop-window': desktop, 'console-waiting': !inputStarted }">
-    <StatusBar :title="title" :mode="toolsEnabled ? 'online' : 'offline'" :status="toolsEnabled ? '' : '確認OFF'" :connected="toolsOnline" :desktop="desktop" clock-pulse />
+  <section ref="panel" class="ai-component console-component" :class="{ 'panel-collapsed': panelHidden, 'desktop-window': desktop, 'console-waiting': !inputStarted }">
+    <StatusBar :title="title" :mode="toolsEnabled ? 'online' : 'offline'" :status="toolsEnabled ? '' : '確認OFF'" :connected="toolsOnline" :desktop="desktop" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span :title="project">プロジェクト: {{ projectName }}</span><nav><button class="auto-connect" role="switch" :aria-checked="toolsEnabled" :title="`Tools接続確認 ${toolsEnabled ? 'ON' : 'OFF'}`" :disabled="!socketReady || toolsChanging" @click="toggleTools"><span>Tools接続確認</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button><button :disabled="!connected" title="実行中の処理へ割り込みを送信（キーボードのCtrl+Cはコピー専用）" @click="interrupt">Ctrl+C送信</button><button @click="clearDisplay">表示クリア</button><button v-if="!connected" @click="connect">{{ cli ? '再接続' : '再起動' }}</button></nav></div>
     <div v-if="!inputStarted" class="console-welcome"><TerminalWelcome kind="console" :icon="icon || '/development/AiDiy.png'" /></div>
     <div class="console-screen" aria-label="ターミナル"><div ref="container" class="console-viewport"><div v-if="completion" class="console-completion" role="status" :aria-label="`${completion}（Tabで補完）`"><span v-for="(row, i) in ghostRows" :key="i" class="console-ghost-row" :style="row.style" aria-hidden="true">{{ row.text }}</span></div></div></div>
@@ -140,6 +143,7 @@ onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispos
   </section>
 </template>
 <style scoped>
+.console-component.panel-collapsed > :not(.panel-brand){display:none!important}
 .console-component{height:100%;min-height:0;min-width:0;display:flex;flex-direction:column;background:#000;color:var(--foreground);font:var(--vscode-font-size,13px)/1.65 var(--vscode-font-family,"Segoe UI","Yu Gothic UI",sans-serif);container:console-panel / size}
 .component-toolbar button{padding:2px 7px;border-color:var(--border);font-size:11px;line-height:1.4;background:transparent}
 .console-welcome{flex:1;min-height:0;overflow:auto;background:var(--surface);container-type:size}

@@ -12,7 +12,7 @@ export function usePanelCollapse(props){
   const element=panelElement.value;if(!element)return;
   const current=++revision,collapsed=!panelCollapsed.value;
   panelCollapsed.value=collapsed;panelHidden.value=false;
-  const api=props.desktop?window.aidiyWindow:undefined;
+  const api=props.desktop?(props.windowApi??window.aidiyWindow):undefined;
   if(api?.collapsePanel){
    try{const result=await api.collapsePanel(collapsed);if(current!==revision)return;if(!result?.ok){panelCollapsed.value=!collapsed;return;}panelHidden.value=collapsed;}
    catch{if(current===revision)panelCollapsed.value=!collapsed;}

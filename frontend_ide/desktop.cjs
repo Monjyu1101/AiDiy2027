@@ -81,7 +81,7 @@ const {createNavigationCodeWindow,createNavigationCruiseWindow,navigationWindowT
 const navigationCodeWindow=createNavigationCodeWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),screen,isQuitting:()=>quitting});
 const navigationCruiseWindow=createNavigationCruiseWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),isQuitting:()=>quitting});
 const {createPanelCollapse}=require('./デスクトップ/パネル折り畳み.cjs');
-const panelCollapse=createPanelCollapse({trustedEvent});
+const panelCollapse=createPanelCollapse({trustedEvent,resolvePanel:(owner,name)=>{const target=panelWindows.dragTarget(owner,name);return target?.kind==='panel-navigation'?target:null;},canCollapse:record=>record.kind!=='browser'||!!browserViews?.canCollapse(record),onChange:(record,collapsed)=>{if(record.kind==='browser')browserViews?.setPanelCollapsed(record,collapsed);}});
 const {createCodeDrag}=require('./デスクトップ/code-drag.cjs');
 const codeDrag=createCodeDrag({trustedEvent,screen,resolvePanel:panelWindows.dragTarget,isCenterMove:record=>allDisplays.isActive(record)});
 const {installNativeWindowMove}=require('./デスクトップ/長押し窓移動.cjs');
@@ -326,7 +326,7 @@ app.whenReady().then(async()=>{
  ipcMain.handle('development:window',(event,action)=>{
   const record=trustedEvent(event);if(!record)return;
   if(action==='minimize')record.window.minimize();else if(action==='close')record.window.close();
-  else if(action==='maximize'){if(record.kind==='browser'&&browserViews)return browserViews.maximize(record);if(!allDisplays.leave(record,{maximize:true})){if(record.window.isMaximized())record.window.unmaximize();else record.window.maximize();}}
+  else if(action==='maximize'){if(record.panelCollapsed)return false;if(record.kind==='browser'&&browserViews)return browserViews.maximize(record);if(!allDisplays.leave(record,{maximize:true})){if(record.window.isMaximized())record.window.unmaximize();else record.window.maximize();}}
   if(action==='title')return record.window.getTitle();
   if(action==='pin-state')return windowPins.state(record.window);
   if(action==='toggle-pin')return windowPins.toggle(record.window);
@@ -512,7 +512,7 @@ app.whenReady().then(async()=>{
   }});
  ipcMain.handle('development:layout',(event,action)=>layoutManager.handle(event,action));
  ipcMain.on('development:layout-result',(event,value)=>layoutManager.reply(event,value));
- ipcMain.handle('development:panel-collapse',(event,collapsed)=>panelCollapse(event,collapsed));
+ ipcMain.handle('development:panel-collapse',(event,collapsed,name)=>panelCollapse(event,collapsed,name));
  ipcMain.handle('development:code-move-begin',event=>codeDrag.begin(event));
  ipcMain.handle('development:code-move',(event,token)=>codeDrag.move(event,token));
  ipcMain.handle('development:code-move-end',(event,token)=>codeDrag.end(event,token));

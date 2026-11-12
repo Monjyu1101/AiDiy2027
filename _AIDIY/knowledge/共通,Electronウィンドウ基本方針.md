@@ -212,6 +212,44 @@ Task / Team も共通の500ms長押し移動に対応する。`frontend_ide/desk
 
 nativeのモデル選択ポップアップはWindows実機で、クリックで開く→別候補を選ぶ→閉じて選択値を確認するところまで検証する。通常窓・最大化、マウス・キーボードの両方を確認し、Code / Live / Discord / Diag / Avatarのモデル・音声選択を含める。headless環境でnative popup自体が表示されない場合、イベント通過やVueの選択テストの合格をWindowsのpopup実機合格として扱わない。
 
+## タイトルバーの開閉標準
+
+Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。共通部品は `frontend_ide/src/components/コード/パネル表示切替.vue`、描画側の状態管理は `共通表示/パネル折り畳み.js`、窓寸法は `frontend_ide/デスクトップ/パネル折り畳み.cjs` を再利用する。名前が「コード」でもアプリ別コピーを作らない。
+
+- 左端はIDEのバーガーと同じ22px角・2px枠。開いている時は▽、閉じている時は▶。クリック、Enter、Spaceで本文を開閉する。
+- ボタンはno-drag領域とし、押したまま4px以上動かすと既存移動IPCを開始する。背景の500ms長押し移動とは別経路。移動後のclickだけを抑止し、Esc、blur、pointercancel、遅延IPC、破棄で移動tokenを回収する。
+- Electronは窓自体を220msでタイトル行31px×zoomまで縮める。本文とシアンの接続バーは縮小完了後に隠し、展開時に再表示する。幅・移動後の座標を保持して元の高さへ戻す。連打は現在の高さから反転する。
+- DOMを破棄しない。接続、認証、入力、選択、会話、実行中処理は継続する。保存とは同じ窓の表示切替中の保持であり、終了後の折り畳み状態の永続化ではない。
+- 畳んだ間はリサイズと最大化を無効にする。元が最大化なら解除して畳み、展開完了で戻す。全画面・VRパネル移動中は切替を拒否する。終了・ページ遷移時はタイマーと一時状態を解放する。Web版はOS窓を変更せずパネルmax-heightをアニメーションする。
+
+### 幅・タイトル位置・終了処理の注意点
+
+- アニメーションの幅は開始時のDIP値で固定する。毎フレームの `getBounds().width` を次の指定幅へ戻すと、Windowsの外枠や端数DPIの読戻し差が蓄積する。既存の `setWindowBounds` で補正し、`setResizable` を元へ戻した後も保存寸法を適用する。
+- 開閉ボタンと接続表示は共通CSSで横並びにする。Codeだけへ指定するとLiveや後から追加した画面でボタンと文字が縦に積まれる。Code / Live / Console / Task / Team / Naviは31pxのタイトル行と上下余白を合わせる。UI試験でも `会話表示.css` を読み、Vueのscoped CSSを実コンパイルして比較する。
+- `closed` 後に `BrowserWindow.webContents` を再取得しない。生存中に保存した参照でリスナーを解除し、破棄済み窓への表示更新を止める。畳む途中・非表示・開く途中の各段階で閉じる試験と、開閉を30回繰り返す幅維持試験を全対象へ行う。
+
+### 適用範囲と固有の注意点
+
+| 対象 | 適用・保持・除外 |
+|---|---|
+| Code / Live | 既存基準。VS Codeのホストやタイトルなし埋込画面を窓折り畳み対象にしない。 |
+| Console | PTYと履歴を保持する。縮小中に極小行数へfitせず、展開後のResizeObserverで再fitする。 |
+| Browser | 通常窓だけ。WebContentsViewは別描画なのでDOM非表示だけで済ませず、縮小開始から展開完了までViewを隠す。ページ・セッションは破棄しない。プリセット寸法変更中は折り畳みを拒否し、閉状態では測定値によるリサイズ、最大化、F11と全画面を抑止する。全画面の浮動ヘッダーにはボタンを置かない。 |
+| Navi | 単独窓とIDEのNavi別窓。別窓APIは所有元IDEから名前を解決し、現在所有するpanel-navigationだけへ転送する。他パネルへ権限を広げない。Code表示幅の変更と折り畳みを競合させない。 |
+| Task / Team | 認証前後の共通ルート。Task要求・フロー・明細・編集窓にも適用し、各窓の入力・認証を保持する。 |
+| Diag | 通常・ミニ表示。閉状態と切替中は表示モード変更を抑止する。円形アイコン表示はタイトルがないため対象外。専用preloadから送信元を検証して共有controllerを使う。UI配布物と共有ファイルのmanifestも同期する。 |
+
+Avatar、CPU、IDE本体、その他の独立パネルとDiscord/Slackは、この追加適用に含めない。別指示なしで一括変更しない。
+
+### 再検証
+
+- `node --test frontend_ide/checks/panel-collapse.test.cjs frontend_ide/checks/code-panel-toggle.test.mjs frontend_ide/checks/console-size.test.mjs frontend_ide/checks/navigation-browser-collapse.test.mjs frontend_ide/checks/taskteam-root.test.mjs`
+- `frontend_ide` で `npm run taskteam:type-check`。
+- `node frontend_ide/scripts/check-panel-collapse.mjs`、`node frontend_ide/scripts/check-navigation-browser-collapse.mjs`、`node frontend_ide/scripts/check-taskteam-titlebar.mjs`。`--compile-only` は画面確認を行わない。
+- Diagの `checks/titlebar_browser.mjs` と既存 `checks/desktop.check.mjs`、ミニ/アイコン試験。画面試験は実Vueを使い、外部APIは隔離する。
+
+画面試験では展開→途中寸法→タイトルだけ→移動→復元、連打、拒否後の表示、入力・接続保持とシアンバー非表示を確認する。Chromiumがsocket制限等で起動できない環境ではコンパイル合格を目視合格に数えない。OSの最小寸法、最大化復元、DPIを跨ぐ移動は実Electron/実機で別途確認する。
+
 ## アプリごとの保存先と排他
 
 単体ファイルをElectronへ渡す起動では、既定のアプリ名がElectronとなり、別アプリのuserDataと排他ロックが重なる場合がある。aidiy_diagは ready・requestSingleInstanceLock より前に、appData配下の `aidiy_diag` を専用userDataへ指定する。Avatarの既存保存先は変更しない。IDE共通とDiscordの既存アプリ別保存先も維持する。全アプリのMacメニューだけを確認して、Windowsの同時起動確認を省略しない。保存先APIは [Electron公式app API](https://www.electronjs.org/docs/latest/api/app) を参照する。

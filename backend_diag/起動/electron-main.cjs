@@ -15,6 +15,8 @@ const {画面サイズ演出を作成}=require('./サイズ切替.cjs');
 const {通常窓サイズを作成}=require('./通常窓サイズ.cjs');
 const {表示切替基準を作成,初期右下位置}=require('./表示切替位置.cjs');
 const {標準タイトル操作を取り付け}=require('./標準タイトル操作.cjs');
+const {createPanelCollapse}=require('../../frontend_ide/デスクトップ/パネル折り畳み.cjs');
+const {createCodeDrag}=require('../../frontend_ide/デスクトップ/code-drag.cjs');
 const {checkPort}=require('./ポート接続.cjs');
 const {attachNativeWindowMove}=require('../../frontend_ide/デスクトップ/長押し窓移動.cjs');
 const {createWindowPins,pinLevel}=require('../../frontend_ide/デスクトップ/最前面ピン.cjs');
@@ -71,10 +73,13 @@ async function start(value) {
   const micro=マイクロ表示を作成(sizingWindow,{screen,位置:displayPosition,pins:{setLocked:(_target,value)=>pins.setLocked(window,value),state:()=>pins.state(window)}});
   window.once('closed',()=>sizeEffect.中止());
   let firstLoad=true,opening=false,pendingMicroHeight,displaySwitch=false,displayOrigin;
-  let maximizeOperation;
+  let maximizeOperation,panelCollapsed=false,panelBusy=false,panelRevision=0;
+  const panelRecord={window:sizingWindow,kind:'diag',revision:0};
+  const collapsePanel=createPanelCollapse({trustedEvent:()=>panelRecord});
+  const panelDrag=createCodeDrag({screen,trustedEvent:()=>null}).forRecord(panelRecord);
   function 最大化取消(){if(maximizeOperation){maximizeOperation=undefined;sizeEffect.中止();}titleControls.cancel();}
   window.once('closed',()=>最大化取消());
-  const 標準操作可能=()=>!mini.active&&!micro.active&&!opening&&!displaySwitch&&!sizeEffect.active;
+  const 標準操作可能=()=>!panelCollapsed&&!panelBusy&&!mini.active&&!micro.active&&!opening&&!displaySwitch&&!sizeEffect.active;
   function 最大化切替(){
     if(!標準操作可能()||window.isFullScreen?.())return false;
     titleControls.cancel();const operation={};maximizeOperation=operation;
@@ -88,7 +93,7 @@ async function start(value) {
   // 長押しも同じ疑似最大化状態を見る。標準タイトルはDOM側で対象外にする。
   attachNativeWindowMove(sizingWindow,screen,'diag');
   window.webContents.on('did-start-loading',()=>{
-    最大化取消();
+    最大化取消();panelCollapsed=false;panelBusy=false;panelRevision++;
     // 初回の描画前に窓の寸法を決め、再読込時は通常表示へ戻す。
     sizeEffect.中止();displaySwitch=false;displayOrigin=undefined;micro.set(false);pendingMicroHeight=undefined;mini.set(firstLoad&&initialMini,{initial:true});firstLoad=false;
   });
@@ -96,6 +101,15 @@ async function start(value) {
   let selectingFolder=false;
   ipcMain.handle('diag:window',(event,action,value)=>{
     if(!window || window.isDestroyed() || event.sender!==window.webContents || event.senderFrame!==window.webContents.mainFrame)return false;
+    if(action==='collapsePanel'){
+      if(typeof value!=='boolean'||micro.active||opening||displaySwitch||sizeEffect.active)return {ok:false};
+      titleControls.cancel();const revision=++panelRevision,previous=panelCollapsed;panelCollapsed=value;panelBusy=true;
+      return collapsePanel(event,value).then(result=>{if(panelRevision===revision){panelBusy=false;if(!result.ok)panelCollapsed=previous;}return result;});
+    }
+    if(action==='beginWindowMove')return !micro.active&&!opening&&!displaySwitch&&!sizeEffect.active?panelDrag.begin():null;
+    if(action==='moveWindow')return typeof value==='string'&&panelDrag.move(value);
+    if(action==='endWindowMove'){if(typeof value==='string')panelDrag.end(value);return false;}
+    if((panelCollapsed||panelBusy)&&['beginDisplay','startMini','startMicro','maximize'].includes(action))return false;
     if(action==='microMenu'){
       if(!micro.active||opening||displaySwitch||!Array.isArray(value)||value.length>32||value.some(item=>!item||typeof item.key!=='string'||!/^(app|cli):[a-z_]+$/.test(item.key)||typeof item.label!=='string'||item.label.length>100||item.enabled!==undefined&&typeof item.enabled!=='boolean'||item.reason!==undefined&&(typeof item.reason!=='string'||item.reason.length>200)))return false;
       const send=action=>{if(!window.isDestroyed())window.webContents.send('diag:micro-menu',action);};

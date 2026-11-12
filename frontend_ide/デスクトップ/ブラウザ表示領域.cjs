@@ -8,6 +8,7 @@ const PRESETS={fhd:{width:1920,height:945},portrait:{width:1080,height:1785}};
 
 // 本文の寸法と外窓の寸法を分離する。Electronの窓/ViewはDIP、hostの測定値はCSS px。
 function createBrowserSizing({window,view,screen,now=()=>performance.now(),setTimer=setTimeout,clearTimer=clearTimeout,duration=220}){
+ let panelCollapsed=false;
  let insets,request,expected,applying=false,fullscreenTransition,fullscreenTarget,waitingRestore=false,waitingMaximize=false,pendingMaximize,disposed=false,latestMeasurement=-Infinity,flight;
  function stop(){if(flight){clearTimer(flight.timer);flight=undefined;}}
  function complete(error){const pending=request?.completion;if(request)request.completion=undefined;if(pending){if(error)pending.reject(error);else pending.resolve();}}
@@ -63,7 +64,7 @@ function createBrowserSizing({window,view,screen,now=()=>performance.now(),setTi
  }
  function measure(value){
   if(!value||!['left','top','width','height'].every(key=>Number.isFinite(value[key])&&value[key]>=0&&value[key]<100000))throw Error('表示領域が不正です。');
-  if(disposed||window.isDestroyed())return false;
+  if(disposed||window.isDestroyed()||panelCollapsed)return false;
   if(Number.isFinite(value.measuredAt)&&value.measuredAt<latestMeasurement)return false;
   const fullscreen=window.isFullScreen(),zoom=window.webContents.getZoomFactor(),b=window.getContentBounds();
   if(typeof value.fullscreen==='boolean'&&value.fullscreen!==fullscreen)return false;
@@ -125,6 +126,7 @@ function createBrowserSizing({window,view,screen,now=()=>performance.now(),setTi
  const listeners={resize:resized,'will-resize':actual,'will-move':actual,close:actual,maximize:expanded,unmaximize:restored,'enter-full-screen':entered,'leave-full-screen':left};
  for(const [event,fn]of Object.entries(listeners))window.on(event,fn);
  function dispose(){disposed=true;actual();for(const [event,fn]of Object.entries(listeners))window.removeListener(event,fn);}
- return{measure,preset,maximize,toggleFullscreen,actual,layout,dispose,isSettled:()=>!flight&&!fullscreenTransition&&!waitingRestore&&!waitingMaximize&&!request?.completion};
+ function setPanelCollapsed(value){panelCollapsed=!!value;if(panelCollapsed)actual();}
+ return{setPanelCollapsed,measure,preset,maximize,toggleFullscreen,actual,layout,dispose,isSettled:()=>!flight&&!fullscreenTransition&&!waitingRestore&&!waitingMaximize&&!request?.completion};
 }
 module.exports={createBrowserSizing};

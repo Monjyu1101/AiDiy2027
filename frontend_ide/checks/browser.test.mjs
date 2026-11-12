@@ -58,6 +58,11 @@ test('Browser: ページを権限なしで分離し、IDEへの要求と別画�
  control.attach(record,HOME,false);assert.equal(view.webContents.url,'');
  assert.equal((await control.action(event,'state')).available,false);
  control.setAvailable(record,true);assert.equal(view.webContents.url,HOME);
+ assert.equal(control.canCollapse(record),true);control.setPanelCollapsed(record,true);assert.equal(view.visible,false);
+ control.setAvailable(record,true,false);control.setAvailable(record,true,true);assert.equal(view.visible,false,'接続復帰でも閉じたViewを再表示しない');
+ assert.equal((await control.action(event,'size','fhd')).ok,false);assert.equal((await control.action(event,'fullscreen')).ok,false);
+ control.setPanelCollapsed(record,false);assert.equal(view.visible,true);assert.equal(view.webContents.url,HOME,'折り畳みはページを破棄しない');
+
  assert.equal((await control.action(event,'draft')).request.text,'session: aidiy_ide 2\ntab_id: sender-tab\n'+HOME);
  assert.equal((await control.action({record:{...record}},'draft')).ok,false,'他レコードでは送信元を解決しない');
  control.setAvailable(record,true,false);

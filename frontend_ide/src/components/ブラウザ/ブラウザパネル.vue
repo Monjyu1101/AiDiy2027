@@ -7,9 +7,11 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import RefreshButton from '../共通表示/再読込ボタン.vue';
 import {ref,onMounted,onBeforeUnmount} from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
+const panelCollapsed=ref(false),panelHidden=ref(false);
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
 let composingAddress=false;
@@ -89,10 +91,11 @@ onMounted(()=>{
 onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();stopAnalysis();stopElement();if(!props.headerOnly)void window.aidiyWindow.browserAction('element-stop').catch(()=>{});if(props.headerOnly)document.documentElement.classList.remove('browser-header-document');observer?.disconnect();cancelAnimationFrame(frame);});
 </script>
 <template>
- <main class="development-app browser-panel desktop-window" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
+ <main class="development-app browser-panel desktop-window ai-component" :class="{'browser-fullscreen':page.fullscreen,'browser-header-only':headerOnly,'panel-collapsed':!headerOnly&&panelHidden}" :style="{'--header-offset':headerOffset+'px'}" data-app="browser" @transitionrun.self="transition">
   <div ref="chrome" class="browser-chrome panel-window-title" data-aidiy-window-move-handle @transitionrun="transition">
   <!-- バーはMCP制御の可否。復帰待ちは赤、明示的な孤立利用だけ黒で示す。 -->
   <StatusBar :mode="page.mode === 'offline' ? 'offline' : 'online'" :title="windowTitle||(standalone?'AiDiy Browser':'AiDiy IDE / Browser')" :connected="page.connected===true" :status="page.mode==='offline'?(page.loading?'読み込み中':'ブラウザ'):page.connected!==true?'tools未接続（MCP制御不可・AI解析不可）':page.loading?'読み込み中':'ブラウザ'" desktop :clock-pulse="true" :window-api="headerWindowApi" :pin-title="headerOnly?(page.headerPinned?'ヘッダーの常時表示を解除':'ヘッダーを常時表示'):undefined">
+   <template #leading><PanelToggle v-if="!headerOnly" :collapsed="panelCollapsed" desktop @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template>
    <template #connection-tools><span v-if="page.mode === 'offline'" class="browser-isolated-label" title="Toolsへの接続を試行しない孤立利用">スタンドアロン</span><button v-if="page.mode !== 'offline'" type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available||page.connected!==true" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{analysisStatus.status==='waiting'?'解析中…':openingAnalysis?'準備中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><span v-if="page.mode !== 'offline'" class="browser-capture-tools"><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷 撮影'}}</button><span v-if="captureMessage&&!capturing" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></span><button v-if="page.mode !== 'offline'" type="button" class="browser-handoff" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">Code / Liveへ</button><button v-if="page.mode !== 'offline'" type="button" class="browser-element-link" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素連携中（Esc）':'要素連携'}}</button></template>
    <template #window-tools>
     <span class="browser-window-sizes">
@@ -117,6 +120,15 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
  </main>
 </template>
 <style scoped>
+.browser-panel.panel-collapsed > :not(.browser-chrome),.browser-panel.panel-collapsed .browser-chrome > :not(.panel-brand){display:none!important}
+.browser-panel.panel-collapsed{min-height:0!important}
+.browser-panel.panel-collapsed :deep(.panel-brand){height:31px;min-height:31px;padding:0 9px;grid-template-columns:minmax(auto,1fr) minmax(0,auto) minmax(auto,1fr)}
+.browser-panel.panel-collapsed :deep(.connection-label),.browser-panel.panel-collapsed :deep(.window-actions){flex-wrap:nowrap}
+.browser-panel.panel-collapsed :deep(.panel-brand>.connection-label){grid-column:1;grid-row:1;white-space:nowrap;overflow:hidden;min-width:0}
+.browser-panel.panel-collapsed :deep(.panel-brand>strong){grid-column:2;grid-row:1}
+.browser-panel.panel-collapsed :deep(.panel-brand>.window-actions){grid-column:3;grid-row:1;justify-self:end}
+
+
 .browser-isolated-label{display:inline-block;margin-left:7px;padding:1px 5px;border:1px solid currentColor;border-radius:2px;font-size:10px;line-height:1.4;white-space:nowrap}
 .browser-panel{container:browser-panel / inline-size;height:100vh;display:flex;flex-direction:column;background:#000;color:#dce6f4}
 .browser-chrome{flex:none;background:#000;z-index:1}

@@ -120,7 +120,7 @@ function createPanelWindows({windows,trustedEvent,readState,sessionKey,screen,Br
   if(value==='close'){target.close();return true;}
   if(child.kind==='panel-routes')return false; // 軌跡バーには最小化・最大化を提供せず寸法を維持する。
   if(value==='minimize')target.minimize();
-  if(value==='maximize'){if(target.isMaximized())target.unmaximize();else target.maximize();}
+  if(value==='maximize'){if(child.panelCollapsed)return false;if(target.isMaximized())target.unmaximize();else target.maximize();}
   return target.isMaximized();
  }
  function dragTarget(owner,name){

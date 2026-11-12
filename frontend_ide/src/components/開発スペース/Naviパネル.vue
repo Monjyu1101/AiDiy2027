@@ -11,6 +11,7 @@ import {DEFAULT_NAVIGATION_GOAL} from './Navi既定値.js';
 import {createNavigationPopupSizer} from './Navi窓サイズ.js';
 import {createNavigationMessage} from './Naviメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import TerminalWelcome from '../コンソール/開始表示.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
 import NavigationSceneMenu from './ナビ画面メニュー.vue';
@@ -25,6 +26,7 @@ const emit=defineEmits(['closed','opened']);
 const normalTitle=computed(()=>props.standalone?'AiDiy Navi':'AiDiy IDE / Navi '+props.instance.slice(5));
 const title=computed(()=>autopilot.value?normalTitle.value.replace('Navi','Navi Cruise'):normalTitle.value);
 const native=!!window.aidiyWindow;
+const panelCollapsed=ref(false),panelHidden=ref(false);
 // Code同様、ビルド後に配布される画像を実行時URLで参照する。静的srcはViteのimport対象になる。
 const sendIcon=computed(()=>new URL('sending.png',new URL('/development/AiDiy.png',location.href)).href);
 const stopIcon=computed(()=>new URL('abort.png',sendIcon.value).href);
@@ -142,7 +144,7 @@ async function restoreCode(){if(codeOpen.value||disposed||!visible.value)return;
 defineExpose({layoutReady:()=>layoutOpening,restoreCode,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:'',...(codeOpen.value?{code:true}:{})})});
 async function pin(){
  await nextTick();
- windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:()=>h('button',{type:'button',class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
+ windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:({collapsed}={})=>h('button',{type:'button',disabled:collapsed,class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
  return windowPanel.pin();
 }
 function close(){stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();draftRequest.value=null;if(detached.value)windowPanel.dismiss();else{visible.value=false;emit('closed');}clearTimeout(timer);}
@@ -362,9 +364,9 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 
 </script>
 <template>
- <section ref="panel" v-show="visible" class="navigation-panel" :class="{detached,standalone,'has-code':codeOpen}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navi" @click.capture="autopilotMessage.dismiss" @keydown.capture="autopilotMessage.dismiss" @wheel.capture.passive="autopilotMessage.dismiss" @touchmove.capture.passive="autopilotMessage.dismiss">
+ <section ref="panel" v-show="visible" class="navigation-panel ai-component" :class="{detached,standalone,'has-code':codeOpen,'panel-collapsed':standalone&&panelHidden}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navi" @click.capture="autopilotMessage.dismiss" @keydown.capture="autopilotMessage.dismiss" @wheel.capture.passive="autopilotMessage.dismiss" @touchmove.capture.passive="autopilotMessage.dismiss">
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="draftActions.loadTargets" :insert-draft="draftActions.insertDraft" :launch-target="standalone?undefined:draftActions.launchTarget" :empty-hint="standalone?'同じプロジェクトで aidiy_code または aidiy_live を起動してください。':undefined" @close="draftRequest=null" />
-  <StatusBar v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #connection-tools><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
+  <StatusBar v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="native" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template><template #connection-tools><button type="button" class="navigation-code-toggle" :disabled="panelCollapsed" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
   <header class="navigation-local-header" v-else-if="!detached||!native"><span class="navigation-emblem" aria-hidden="true">◇</span><strong>{{title}}</strong><span class="navigation-header-space"></span><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button><button v-if="!detached" aria-label="Naviを別窓にピン留め" title="別窓にピン留め" @click="pin">📌</button><button aria-label="Naviを閉じる" @click="close">×</button></header>
   <div class="component-toolbar navigation-project"><span :title="project?.path">プロジェクト: {{project?.name || project?.path}}</span><nav><small>評価は読取専用</small><button :disabled="busy||autopilot" @click="selectHistory()">＋ 新規</button><button :disabled="busy||autopilot" :aria-expanded="history" @click="toggleHistory">{{history?'戻る':'一覧'}}</button></nav></div>
    <form class="navigation-goal-form" @submit.prevent="navigate()">
@@ -422,6 +424,10 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
  </section>
 </template>
 <style>
+.navigation-panel.panel-collapsed > :not(.panel-brand){display:none!important}
+.navigation-panel.panel-collapsed{min-height:0!important;grid-template-rows:31px!important}
+.navigation-window-collapsed > :not(.panel-window-title),.navigation-window-collapsed .connection-bar{display:none!important}
+
 .navigation-display{position:relative;display:flex;flex:1;min-height:0;--stream:#00ffff}.navigation-history{flex:1;overflow:auto;padding:12px}.navigation-history>button{display:flex;width:100%;gap:16px;padding:12px;text-align:left}.navigation-history time{flex:none;color:#98a6b8}.navigation-project nav{display:flex;align-items:center;gap:8px;margin-left:auto;}
 .navigation-panel.standalone{position:relative;inset:auto;width:100%;height:100%;max-height:none;max-width:none;border:0;border-radius:0;}
 .navigation-model-line{display:flex;align-items:center;gap:8px;font-size:11px}.navigation-model-line>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.navigation-model-picker{display:grid;gap:8px;max-height:50vh;overflow:auto}.navigation-model-picker label{display:grid;gap:4px}.navigation-model-picker select,.navigation-model-picker input{width:100%;box-sizing:border-box;font:inherit;background:#142235;color:#edf5ff;border:1px solid #47637b;padding:6px}.navigation-model-picker small{color:#b3c5d8}.navigation-model-picker>div{display:flex;gap:8px}

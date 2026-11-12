@@ -50,7 +50,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=fa
  class ResizeObserver{
   constructor(callback){this.callback=callback;observers.add(this);} observe(target){this.target=target;} disconnect(){observers.delete(this);}
  }
- const modules={'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/コマンド補完.js':completion};
+ const modules={'../コード/パネル表示切替.vue':{},'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../コンソール/開始表示.vue':{},'../コンソール/コマンド補完.js':completion};
  const script=compileScript(descriptor,{id:'ConsolePanel',genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,URL,window,WebSocket:Socket,ResizeObserver,location:{href:'http://localhost/'},
@@ -237,4 +237,11 @@ test('Console実setup: ready・窓復帰・タブ復帰と非表示/破棄の遅
  f.props.visible=false;await flush();f.props.visible=true;await flush();f.props.visible=false;await flush();f.flushFocus();assert.equal(f.terminal.focusCount,3,'newer hide cancels pending tab focus');
  f.props.visible=true;await flush();f.dispose();f.flushFocus();assert.equal(f.terminal.focusCount,3,'unmount cancels pending tab focus');
  f.window.dispatchEvent(new Event('focus'));assert.equal(f.timers.size,0);
+});
+
+ test('Console collapse preserves the PTY and skips tiny resizes until expansion',async t=>{
+ const f=await fixture(t),socket=f.sockets[0],rows=f.terminal.rows;
+ f.state.panelCollapsed.value=true;await vue.nextTick();f.resize(1);assert.equal(f.terminal.rows,rows);assert.equal(socket.readyState,1);
+ f.state.panelHidden.value=true;f.state.panelCollapsed.value=false;f.state.panelHidden.value=false;f.container.clientHeight=510;await vue.nextTick();await flush();f.resize(510);
+ assert.equal(f.terminal.rows,30);assert.equal(f.sockets.length,1);assert.equal(f.resources.disposed,0);
 });

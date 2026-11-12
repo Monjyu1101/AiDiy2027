@@ -7,14 +7,14 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import { ref, watch, onMounted, onBeforeUnmount } from 'vue';
 import { usePanelCollapse } from '../共通表示/パネル折り畳み.js';
 import { createPanelToggleDrag } from './パネル切替ドラッグ.js';
-const props = defineProps({ collapsed: Boolean, desktop: Boolean });
+const props = defineProps({ collapsed: Boolean, desktop: Boolean, windowApi: Object, windowContext: Object });
 const emit = defineEmits(['toggle', 'hidden']);
 const button = ref();
 const { panelElement, panelCollapsed, panelHidden, togglePanel } = usePanelCollapse(props);
 onMounted(() => { panelElement.value = button.value.closest('.ai-component'); });
 watch(panelCollapsed, () => emit('toggle'));
 watch(panelHidden, value => emit('hidden', value));
-const drag = createPanelToggleDrag({ api: props.desktop ? window.aidiyWindow : undefined, win: window, toggle: togglePanel });
+const drag = createPanelToggleDrag({ api: props.desktop ? (props.windowApi ?? window.aidiyWindow) : undefined, win: props.windowContext ?? window, toggle: togglePanel });
 onBeforeUnmount(drag.dispose);
 </script>
 <template>

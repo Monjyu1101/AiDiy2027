@@ -5,6 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { createApp, h, reactive } from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
+import PanelToggle from '../コード/パネル表示切替.vue';
 import WindowActions from '../共通表示/窓操作.vue';
 import { createPanelWindowApi } from '../共通表示/窓操作.js';
 
@@ -15,6 +16,14 @@ export function mountPanelTitle(host, child, owner, title, kind, { restore, titl
   if (kind === 'panel-routes') host.append(container);
   else host.prepend(container);
   const state = reactive({ connected: false, mode: '', hideClose: false });
+  const collapse = reactive({ collapsed: false });
+  const collapseApi = kind === 'panel-navigation' ? {
+    collapsePanel: value => owner.aidiyWindow.collapsePanel(value, child.name),
+    beginWindowMove: () => owner.aidiyWindow.beginWindowMove(child.name),
+    moveWindow: token => owner.aidiyWindow.moveWindow(token, child.name),
+    endWindowMove: token => owner.aidiyWindow.endWindowMove(token, child.name),
+  } : undefined;
+  if(kind === 'panel-navigation')host.classList.add('ai-component');
   const preserveDuringVR = kind === 'explorer' || kind === 'panel-routes' || kind === 'panel-navigation';
   const ide = owner.document.querySelector('.development-app.ide');
   const source = owner.document.querySelector('.development-app.ide .ide-heading > .connection-bar');
@@ -32,7 +41,7 @@ export function mountPanelTitle(host, child, owner, title, kind, { restore, titl
   const returnButton = () => restore && !state.hideClose ? h('button', { type: 'button', class: 'panel-return', title: '閉じて本体へ戻す', 'aria-label': title + 'を閉じて本体へ戻す', onClick: restore }, [h('span', { class: 'close-icon', 'aria-hidden': 'true' })]) : null;
   const app = createApp({ render: () => kind === 'panel-routes'
     ? h('span', { class: 'route-pin-tools' }, [h(WindowActions, { windowApi, windowContext: child, pinOnly: true }), returnButton()])
-    : h(StatusBar, { title: displayTitle ? displayTitle() : kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }, titleTools ? { 'connection-tools': titleTools } : undefined) });
+    : h(StatusBar, { title: displayTitle ? displayTitle() : kind === 'explorer' ? 'AiDiy IDE / Explorer' : kind === 'panel-navigation' ? 'AiDiy IDE / '+title : title, status: kind === 'panel-navigation' ? undefined : '別ウィンドウ', clockPulse: kind === 'panel-navigation', ...state, desktop: true, windowApi, windowContext: child }, { ...(titleTools ? { 'connection-tools': () => titleTools({ collapsed: collapse.collapsed }) } : {}), ...(kind === 'panel-navigation' ? { leading: () => h(PanelToggle, { collapsed: collapse.collapsed, desktop: true, windowApi: collapseApi, windowContext: child, onToggle: () => { collapse.collapsed = !collapse.collapsed; }, onHidden: value => host.classList.toggle('navigation-window-collapsed', value) }) } : {}) }) });
   app.mount(container);
-  return () => { observer.disconnect(); app.unmount(); container.remove(); };
+  return () => { observer.disconnect(); app.unmount(); container.remove(); if(kind === 'panel-navigation'){host.classList.remove('navigation-window-collapsed','ai-component');} };
 }

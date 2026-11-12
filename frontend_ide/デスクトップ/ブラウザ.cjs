@@ -80,7 +80,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   entry.snapshot=snapshot;entry.notify=notify;
   entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
   const sizing=createBrowserSizing({window:record.window,view,screen});entry.sizing=sizing;
-  const toggleFullscreen=()=>sizing.toggleFullscreen();
+  const toggleFullscreen=()=>{if(!entry.panelCollapsed)sizing.toggleFullscreen();};
   entry.toggleFullscreen=toggleFullscreen;
   let pointerTimer;
   function pointer(){
@@ -135,7 +135,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   record.window.on('minimize',()=>draftWindows.close(record));
   contents.on('render-process-gone',()=>{draftWindows.close(record);entry.error='ページの表示が停止しました。再読み込みしてください。';notify();});
   function layout(){
-   sizing.layout();view.setVisible(entry.available);
+   sizing.layout();view.setVisible(entry.available&&!entry.panelCollapsed);
   }
   entry.layout=layout;
   record.window.on('enter-full-screen',fullscreenChanged);record.window.on('leave-full-screen',fullscreenChanged);
@@ -148,6 +148,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   if(!entry)return{ok:false,error:'ブラウザパネルから操作してください。'};
   const contents=entry.view.webContents;
   try{
+   if(entry.panelCollapsed&&name==='fullscreen')throw Error('パネルを展開してから全画面表示にしてください。');
    if(!entry.available&&!['state','bounds','size','fullscreen','element-stop','draft-window-close','analysis-window-close','analysis-window-context','header-size','header-pin-state','header-toggle-pin'].includes(name))throw Error('利用を開始してください。');
    if(name==='open-analysis'&&!entry.connected)throw Error('tools接続中のみ解析できます。');
    if(['back','forward','reload','stop','open-analysis','capture','element-stop'].includes(name)){draftWindows.close(record);await entry.elementLink.stop();}
@@ -199,7 +200,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     }finally{entry.capturing=false;}
    }
    else if(name==='fullscreen')entry.toggleFullscreen();
-   else if(name==='size')await entry.sizing.preset(value);
+   else if(name==='size'){if(entry.panelCollapsed)throw Error('パネルを展開してから表示サイズを変更してください。');await entry.sizing.preset(value);}
    else if(name==='bounds'){
     entry.sizing.measure(value);entry.layout();
    }else if(name!=='state')throw Error('対応していない操作です。');
@@ -250,6 +251,14 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())throw Error('Browserが終了しています。もう一度開いてください。');
   return entry.navigate(value);
  }
- return{attach,action,navigate,setAvailable,trustedHeader,trustedAnalysis:analysisWindows.trusted,isAnalysisSender:analysisWindows.hasSender,trustedDraft:draftWindows.trusted,isDraftSender:draftWindows.hasSender,draftWindowRequest,analysisContext,analysisWindowContext:analysisWindows.context,allowedURL:allowed,maximize:record=>entries.get(record)?.sizing.maximize()};
+ function canCollapse(record){const entry=entries.get(record);return !!entry&&entry.sizing.isSettled();}
+ function setPanelCollapsed(record,collapsed){
+  const entry=entries.get(record);if(!entry)return;
+  entry.panelCollapsed=collapsed;
+  entry.sizing.setPanelCollapsed(collapsed);
+  if(collapsed){entry.header.close();void entry.elementLink.stop();}
+  if(!record.window.isDestroyed())entry.layout();
+ }
+ return{attach,action,navigate,setAvailable,canCollapse,setPanelCollapsed,trustedHeader,trustedAnalysis:analysisWindows.trusted,isAnalysisSender:analysisWindows.hasSender,trustedDraft:draftWindows.trusted,isDraftSender:draftWindows.hasSender,draftWindowRequest,analysisContext,analysisWindowContext:analysisWindows.context,allowedURL:allowed,maximize:record=>{const entry=entries.get(record);if(entry&&!entry.panelCollapsed)return entry.sizing.maximize();}};
 }
 module.exports={HOME,browserStartupURL,browserDisplayURL,browserURL,browserFileURL,browserFileTarget,browserOpenable,createBrowserViews,browserDraftRequest};

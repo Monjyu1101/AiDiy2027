@@ -15,7 +15,7 @@ function createNavigationCodeWindow({trustedEvent,panelTarget,readState,sessionK
    (record.kind==='panel-navigation'&&(record.owner!==source||source.kind!=='ide'))||
    (record.kind==='navi'&&record!==source))return{ok:false,error:'Naviの表示範囲を変更できません。'};
   const owner=record.owner||record,revision=owner.revision,token={};requests.set(record,token);
-  const valid=()=>!isQuitting()&&!record.window.isDestroyed()&&!owner.window.isDestroyed()&&trustedEvent(event)===source&&owner.revision===revision&&requests.get(record)===token&&(!record.owner||record.ownerRevision===revision);
+  const valid=()=>!record.panelCollapsed&&!isQuitting()&&!record.window.isDestroyed()&&!owner.window.isDestroyed()&&trustedEvent(event)===source&&owner.revision===revision&&requests.get(record)===token&&(!record.owner||record.ownerRevision===revision);
   try{
    const state=await readState(owner);
    if(!valid()||!state.active||(record.owner&&record.linkKey!==sessionKey(state)))throw Error('Naviの利用状態が変わりました。');

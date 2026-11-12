@@ -1005,8 +1005,6 @@ Webブラウザは選択したFileの完全なパスを公開しないため、�
 検証: `node --test frontend_ide/checks/viewer-browse.test.mjs frontend_ide/checks/preview-actions.test.mjs`。画面確認は `node frontend_ide/scripts/check-viewer-floating.mjs` で、参照後の表示・キャンセル・再選択・プロジェクト内への切替も確認する。`--compile-only` は実App/Viewerのコンパイルだけを行う。
 
 
-### Code / Live のタイトル折り畳み
+### タイトルバーの折り畳み
 
-左端の▽/▶は共通の `パネル表示切替.vue` を使う。クリックは本文の表示切替、ドラッグは既存の窓移動IPCへ渡す。Electronは `デスクトップ/パネル折り畳み.cjs` で窓自体を約220msかけてタイトル行（31px×ズーム倍率）まで縮め、展開時に元の高さへ戻す。畳んだ後に移動した座標は維持する。最大化は一度解除して展開時に復元し、全画面とVR移動中は切替を拒否する。本文は破棄せず、縮小完了後にシアンバーとともに隠す。通信・音声・下書きは継続する。Webでは共通部品がパネルのmax-heightをアニメーションする。
-
-`node --test frontend_ide/checks/panel-collapse.test.cjs frontend_ide/checks/code-panel-toggle.test.mjs` で連打、遅延応答、終了、移動後の復元を確認する。画面確認は `node frontend_ide/scripts/check-panel-collapse.mjs`（Code/Liveのコンパイルと共通部品の実Vue/Chromium確認）、コンパイルだけなら `--compile-only` を付ける。実OSのタイトル最小寸法と最大化の復元はElectronでも確認する。
+Code / Live を基準に Console / Browser / Navi / Task / Team と Diagへ適用する。仕様・例外・再検証の正本は [Electronウィンドウ基本方針](./共通,Electronウィンドウ基本方針.md#タイトルバーの開閉標準)。共通部品を再利用し、DOMを破棄せず窓自体を220msで開閉する。Avatarなど対象外への展開は別指示を待つ。

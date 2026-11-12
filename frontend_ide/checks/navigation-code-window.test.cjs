@@ -149,3 +149,23 @@ test('New 800-high Navi keeps the initial height and subsequent manual sizes per
  f.move({height:650});await f.change({},true);assert.equal(f.bounds.height,900);
  await f.change({},false);assert.equal(f.bounds.height,650);
 });
+
+test('折り畳んだNaviではCodeの寸法変更を拒否し31pxを保存しない',async()=>{
+ for(const detached of [false,true]){
+  const owner=fixture({kind:detached?'ide':'navi'}),f=detached?fixture():owner;
+  if(detached){Object.assign(f.record,{kind:'panel-navigation',owner:owner.record,ownerRevision:1,linkKey:'online:4'});owner.children.set('navi-collapse',f.record);}
+  const name=detached?'navi-collapse':undefined;
+  const normal={...f.bounds};f.record.panelCollapsed=true;f.move({height:31});
+  assert.equal((await owner.change({},true,name)).ok,false);assert.equal(f.sets,0);assert.equal(f.bounds.height,31);
+  f.record.panelCollapsed=false;f.move(normal);
+  assert.equal((await owner.change({},true,name)).ok,true);assert.equal(f.bounds.height,normal.height);
+  assert.equal((await owner.change({},false,name)).ok,true);assert.deepEqual(f.bounds,normal);
+ }
+});
+test('Naviの非同期状態読込中に折り畳んでも、遅いCode要求は窓寸法を上書きしない',async()=>{
+ const f=fixture();let release;f.read(()=>new Promise(resolve=>{release=resolve;}));
+ const pending=f.change({},true);f.record.panelCollapsed=true;f.move({height:31});release(f.state);
+ assert.equal((await pending).ok,false);assert.equal(f.sets,0);assert.equal(f.bounds.height,31);
+ f.record.panelCollapsed=false;f.move({height:600});f.read(null);
+ assert.equal((await f.change({},true)).ok,true);assert.equal(f.bounds.height,600);
+});

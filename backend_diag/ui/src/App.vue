@@ -30,6 +30,7 @@ import 起動ミニパネル from './components/起動/起動ミニパネル.vue
 import マイクロランチャー from './components/アプリ起動/マイクロランチャー.vue';
 import {起動ミニ表示を作成} from './components/ウィンドウ/起動ミニ表示.mjs';
 import {認証セッションを作成} from './components/ウィンドウ/認証セッション.mjs';
+const パネル折畳み=ref(false),パネル非表示=ref(false);
 const 認証セッション=認証セッションを作成({location});
 const tab=ref('start'), key=ref(認証セッション.初期キー), input=ref('');
 if(location.hash) history.replaceState(null,'',location.pathname+location.search);
@@ -52,7 +53,7 @@ const マイクロ表示=ref(false),マイクロ切替中=ref(false);
 const ミニ表示=computed(()=>ミニ.表示中.value||マイクロ表示.value);
 async function 表示切替(mode){
  自動起動表示.利用者操作();
- if(マイクロ切替中.value||ミニ.切替中.value)return false;
+ if(パネル折畳み.value||マイクロ切替中.value||ミニ.切替中.value)return false;
  if(mode==='micro'&&(!connected.value||!アプリ.フォルダ.value))return false;
  マイクロ切替中.value=true;
  let transition=false;
@@ -100,7 +101,8 @@ async function changeTab(value){if(['settings','tools'].includes(value)&&(!conne
 onMounted(()=>{if(key.value)connect();});
 </script>
 <template>
-<component v-if="!マイクロ表示" :is="ステータスバー" :server-state="connected?起動.サーバー表示状態.value:'unknown'" :connected="connected" :compact="ミニ表示" :micro-available="!!アプリ.フォルダ.value" :switching="ミニ.切替中.value||マイクロ切替中" @mini="表示切替('mini')" @micro="表示切替('micro')" @restore="表示切替('normal')"/>
+<div class="diag-panel ai-component" :class="{'diag-panel-hidden':パネル非表示}" :data-collapsed="パネル折畳み">
+<component v-if="!マイクロ表示" :is="ステータスバー" :server-state="connected?起動.サーバー表示状態.value:'unknown'" :connected="connected" :compact="ミニ表示" :micro-available="!!アプリ.フォルダ.value" :collapsed="パネル折畳み" :hidden="パネル非表示" @toggle="パネル折畳み=!パネル折畳み" @hidden="パネル非表示=$event" :switching="パネル折畳み||ミニ.切替中.value||マイクロ切替中" @mini="表示切替('mini')" @micro="表示切替('micro')" @restore="表示切替('normal')"/>
 <component v-if="マイクロ表示" :is="マイクロランチャー" :app-state="アプリ" :cli-state="CLI" :state="起動" :online="connected" :switching="マイクロ切替中" @restore="表示切替('normal')" @mini="表示切替('mini')" @select="コンソールへ戻る"/>
 <nav class="tabs" @pointerdown.capture="自動起動表示.利用者操作" @keydown.capture="自動起動表示.利用者操作" v-show="!ミニ表示" aria-label="診断の種類"><button class="tab-headless" :aria-pressed="tab==='install'" :class="{active:tab==='install'}" @click="changeTab('install')">導入状況</button><button class="tab-headless" :aria-pressed="tab==='keys'" :class="{active:tab==='keys'}" @click="changeTab('keys')">モデル一覧</button><button class="tab-headless" :aria-pressed="tab==='integrations'" :class="{active:tab==='integrations'}" @click="changeTab('integrations')">外部連携</button><button class="tab-model" :aria-pressed="tab==='trials'" :class="{active:tab==='trials'}" :disabled="!connected || !toolsOnline" title="Tools 接続時に利用できます" @click="changeTab('trials')">設定モデル</button><button class="tab-model" :aria-pressed="tab==='manual'" :class="{active:tab==='manual'}" :disabled="!connected || !toolsOnline" @click="changeTab('manual')">AIモデル</button><button class="tab-settings" :aria-pressed="tab==='settings'" :class="{active:tab==='settings'}" :disabled="!connected || !起動.Core利用可能.value" title="Core 起動中のみ利用できます" @click="changeTab('settings')">設定再起動</button><button class="tab-tools" :aria-pressed="tab==='tools'" :class="{active:tab==='tools'}" :disabled="!connected || !起動.Core利用可能.value || !toolsOnline" title="Core と Tools の起動・Coreログインが必要です" @click="changeTab('tools')">Tools</button><button class="tab-launch" :aria-pressed="tab==='start'" :class="{active:tab==='start'}" @click="changeTab('start')">システム起動</button><button class="tab-launch" :aria-pressed="tab==='apps'" :class="{active:tab==='apps'}" @click="changeTab('apps')">アプリ起動</button><button id="run" class="run-all" :class="{'force-stop':tab==='start'&&起動.稼働あり.value}" v-show="tab!=='apps'&&tab!=='settings'&&tab!=='tools'" :disabled="tab==='start'?(!connected||起動.読込中.value||起動.保存中.value||起動.処理中.value||起動.一括停止中.value||(!起動.稼働あり.value&&!起動.設定起動可能.value)):!connected || 操作中 || 全診断中 || 確認中 || Boolean(個別確認中) || keyBusy || Boolean(keyTesting) || 書込中 || latestBusy || modelWriteBusy || integrationBusy || integrationWriteBusy || (tab==='manual' && (!toolsOnline || 手動.実行中.value || 手動.読込中.value || !手動.一覧.value))" @click="tab==='start'?起動.一括操作():tab==='manual'?手動.開始(true):全診断()" :title="tab==='start'?(起動.稼働あり.value?'稼働中の機能をタブの逆順に停止します':'選択した機能をタブの順に起動します'):tab==='manual'?'Chat→Live→Prediction→Decision→Codeを順に試行します':'導入状況・モデル一覧・外部連携を順に確認し、結果を書き込みます'">{{tab==='start'?(起動.一括停止中.value?'強制停止中…':起動.処理中.value&&起動.進捗表示.value?.状態==='running'?(起動.進捗表示.value.種別==='stop'?'強制停止中…':'一括起動中…'):起動.稼働あり.value?'強制停止':'一括起動'):tab==='manual'?(手動.実行中.value?'実行中…':'一括試行'):確認中 || 個別確認中 || integrationBusy ? '確認中…' : 書込中 || modelWriteBusy || integrationWriteBusy ? '書込中…' : latestBusy ? '取得中…' : '全テスト'}}</button></nav>
 <component v-if="connected&&!ミニ表示" :is="一括進捗表示" :state="起動"/>
@@ -117,4 +119,5 @@ onMounted(()=>{if(key.value)connect();});
 <Toolsパネル v-if="connected" v-show="tab==='tools'&&!ミニ表示" :api="api" :connected="connected" :core-online="起動.Core利用可能.value" :tools-online="toolsOnline" :visible="tab==='tools'&&!ミニ表示"/>
 <AI設定パネル v-if="connected" v-show="tab==='settings'&&!ミニ表示" :api="api" :connected="connected" :core-online="起動.Core利用可能.value"/>
 <footer v-show="!ミニ表示"><div class="diag-meta"><span>診断 {{connected?'接続済み':'未接続'}}</span><span>tools {{toolsOnline?'オンライン':'オフライン'}}</span></div><p id="coverage" v-if="調査.sourceTargetFiles">調査{{調査.complete ? '完了':'途中'}}: 対象ソース・設定 {{Number(調査.scannedSourceFiles || 0).toLocaleString()}} / {{Number(調査.sourceTargetFiles).toLocaleString()}} 件 · {{項目.length}} 項目 · {{String(調査.commit || '').slice(0,8)}}。通常の Markdown 本文・画像・音声・モデル等は除外。</p><p v-else>ソース調査情報は接続後に表示します。</p>対象はこの診断サーバーの実行環境です。存在確認は動作・認証・接続の保証ではありません。</footer>
+</div>
 </template>

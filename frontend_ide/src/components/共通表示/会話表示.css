@@ -238,13 +238,12 @@
 .live-component .live-connect.awaiting:enabled { animation: connect-breathe 4.5s ease-in-out infinite; }
 @keyframes connect-breathe { 0%, 100% { background-color: #fff; } 50% { background-color: var(--voice); } }
 .panel-brand { --surface: var(--aidiy-titlebar-background); --muted: var(--aidiy-titlebar-secondary); grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); min-height: 34px; height: auto; padding: 2px; background: var(--aidiy-titlebar-background); color: var(--aidiy-titlebar-foreground); }
-.panel-brand .connection-label { color: var(--aidiy-titlebar-secondary); }
+.panel-brand .connection-label { display: flex; align-items: center; color: var(--aidiy-titlebar-secondary); }
 /* ファイル閲覧の見出しも、埋込・Web・別窓で同じタイトル帯にする。 */
 :is(.explorer-panel,.viewer-popup,.viewer-pinned) > header { --surface: var(--aidiy-titlebar-background); --muted: var(--aidiy-titlebar-secondary); background: var(--aidiy-titlebar-background); color: var(--aidiy-titlebar-foreground); }
 .panel-brand strong { font-size: 16px; letter-spacing: -.5px; white-space: nowrap; }
-.code-component .panel-brand, .navigation-panel .panel-brand, .navigation-window .panel-brand { min-height: 31px; padding: 1px 2px; }
+.code-component .panel-brand, .live-component .panel-brand, .console-component .panel-brand, .taskteam-shell .panel-brand, .navigation-panel .panel-brand, .navigation-window .panel-brand { min-height: 31px; padding: 1px 2px; }
 .code-component .panel-brand strong { font-size: 14px; }
-.live-component .panel-brand { min-height: 31px; }
 .live-component .panel-brand strong { font-size: 14px; }
 .window-actions { gap: 2px; -webkit-app-region: no-drag; }
 .window-actions button { display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; padding: 0; border: 0; color: var(--muted); font-size: 21px; background: transparent; }

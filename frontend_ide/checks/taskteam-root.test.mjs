@@ -16,6 +16,7 @@ script = script.replace(/import\s+(?:\{[^}]*\}|[\w,\s]+)\s+from\s+['"]vue['"];?/
   const binding = match.match(/import\s+(.*?)\s+from/s)[1].replace(/\s+as\s+/g, ': ');
   return `const ${binding} = Vue;`;
 });
+script = script.replace(/import PanelToggle[^;]+;/, 'const PanelToggle = {};');
 script = script.replace(/import StatusBar[^;]+;/, 'const StatusBar = {};').replace(/import EscapingMark[^;]+;/, 'const EscapingMark = {};').replace(/import TaskPanel[^;]+;/, 'const TaskPanel = {};').replace(/import TeamPanel[^;]+;/, 'const TeamPanel = {};');
 script = script.replace(/import Task(?:Request|Flow|Detail|Editor)[^;]+;/g, match => 'const ' + match.match(/import (\w+)/)[1] + ' = {};');
 script = script.replace(/import \{ resolveTaskView, createTaskSession, createTaskSelectionCache \}[^;]+;/, 'const { resolveTaskView, createTaskSession, createTaskSelectionCache } = sessionTools;');
@@ -142,4 +143,24 @@ test('invalid shared session returns host to logged-out primary state', async ()
   revision = 1; shared = 'invalid'; notify({ revision, token: shared }); await flush(); await flush();
   assert.equal(shared, ''); assert.deepEqual(changes, [{ token: '', expectedRevision: 1 }]);
   assert.equal(run.state.user, null); assert.equal(run.state.password, '********'); run.app.unmount();
+});
+
+
+test('Task and Team collapse keeps authentication and open peer state intact', async () => {
+  for (const kind of ['task', 'team']) {
+    const run = mount({ kind, stored: 'saved' }); await flush();
+    const user = run.state.user;
+    run.state.panelCollapsed = true; run.state.panelHidden = true;
+    await flush();
+    assert.equal(run.state.user, user); assert.equal(run.bridge.token(), 'saved');
+    assert.equal(run.state.panelHidden, true);
+    run.state.panelCollapsed = false; run.state.panelHidden = false;
+    await flush(); assert.equal(run.state.user, user);
+    run.app.unmount();
+  }
+  assert.match(source, /class="ai-component taskteam-shell"/);
+  assert.match(source, /#leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop"/);
+  assert.match(source, /@hidden="panelHidden = \$event"/);
+  assert.match(source, /\.taskteam-shell\.panel-collapsed > :not\(\.panel-brand\)\{display:none!important\}/);
+  assert.doesNotMatch(source, /v-if="!?panel(?:Hidden|Collapsed)"/);
 });

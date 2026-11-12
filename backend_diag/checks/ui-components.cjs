@@ -19,7 +19,7 @@ const cache = new Map();
 function dependency(name) {
  const module = { exports: {} };
  const transformed = transformSync(source(name), { format: 'cjs', loader: 'js' }).code;
- vm.runInNewContext(transformed, { module, exports: module.exports, setTimeout, clearTimeout, AbortController, require: id => id.endsWith('.mjs') ? dependency(path.posix.normalize(path.posix.join(path.posix.dirname(name), id))) : uiRequire(id) });
+ vm.runInNewContext(transformed, { module, exports: module.exports, setTimeout, clearTimeout, AbortController, require: id => (/\.[cm]?js$/.test(id)&&id.startsWith('.')) ? dependency(path.posix.normalize(path.posix.join(path.posix.dirname(name), id))) : uiRequire(id) });
  return module.exports;
 }
 function component(name) {
@@ -29,12 +29,12 @@ function component(name) {
   const compiled = compileScript(descriptor, { id: name, inlineTemplate: true });
   const { code } = transformSync(compiled.content, { format: 'cjs', loader: 'js' });
   const module = { exports: {} };
-  vm.runInNewContext(code, { module, exports: module.exports, ResizeObserver:class {observe(){}disconnect(){}}, require: id => {
+  vm.runInNewContext(code, { module, exports: module.exports, window:{addEventListener(){},removeEventListener(){}}, ResizeObserver:class {observe(){}disconnect(){}}, require: id => {
     if (id.endsWith('.css')) return {};
     const relative = path.posix.normalize(path.posix.join(path.posix.dirname(name), id));
     if (id.endsWith('.vue')) return component(relative);
     if (id.endsWith('.json')) return JSON.parse(source(relative));
-    if (id.endsWith('.mjs')) {
+    if ((/\.[cm]?js$/.test(id)&&id.startsWith('.'))) {
       return dependency(relative);
     }
     return uiRequire(id);

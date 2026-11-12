@@ -121,3 +121,12 @@ test('Browser直接変形: サイズ変更snapshotを撤去し、共通登場モ
  assert.doesNotMatch(browser,/createBrowserResizeMotion|entry\.motion|setOpacity/);assert.match(browser,/entry\.sizing\.preset\(value\)/);
  assert.match(desktop,/require\('\.\/host\/scripts\/window-opening\.cjs'\)/);assert.match(desktop,/await 拡大表示\(BrowserWindow,window/);
 });
+
+test('Browser折り畳み: 本文非表示中の寸法を採用せず、展開後に元の余白で復帰',()=>{
+ const f=fixture();try{
+  const original={...f.view.bounds};f.control.setPanelCollapsed(true);
+  assert.equal(f.control.measure({left:0,top:0,width:0,height:0,viewportWidth:1000,viewportHeight:700,fullscreen:false,measuredAt:999}),false);
+  f.control.layout();assert.deepEqual(f.view.bounds,original);
+  f.control.setPanelCollapsed(false);assert.equal(f.measure(),true);assert.deepEqual(f.view.bounds,original);
+ }finally{f.close();}
+});
