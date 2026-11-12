@@ -8,6 +8,13 @@ import { ref, onBeforeUnmount } from 'vue';
 export function usePanelCollapse(props){
  const panelElement=ref(),panelCollapsed=ref(false),panelHidden=ref(false),panelBusy=ref(false);
  let revision=0,animation;
+ // LDはmain側で窓の寸法を戻してから状態を通知する。再invokeせず表示だけ同期する。
+ const stateApi=props.desktop?(props.windowApi??window.aidiyWindow):undefined;
+ const stopState=stateApi?.onPanelCollapseState?.(state=>{
+  if(!state||state.name!=null||typeof state.collapsed!=='boolean')return;
+  revision++;animation?.cancel();
+  panelCollapsed.value=state.collapsed;panelHidden.value=state.hidden===true;panelBusy.value=state.busy===true;
+ });
  async function togglePanel(){
   const element=panelElement.value;if(!element)return;
   const current=++revision,collapsed=!panelCollapsed.value;
@@ -27,6 +34,6 @@ export function usePanelCollapse(props){
   animation=element.animate([{maxHeight:from+'px'},{maxHeight:to+'px'}],{duration:220,easing:'ease-out'});
   try{await animation.finished;if(current===revision)panelHidden.value=collapsed;}catch{}finally{if(current===revision)panelBusy.value=false;}
  }
- onBeforeUnmount(()=>{revision++;animation?.cancel();});
+ onBeforeUnmount(()=>{revision++;animation?.cancel();stopState?.();});
  return {panelElement,panelCollapsed,panelHidden,panelBusy,togglePanel};
 }

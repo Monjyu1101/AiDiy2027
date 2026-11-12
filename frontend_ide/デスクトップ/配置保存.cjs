@@ -10,6 +10,7 @@ const {programDataDirectory,preparePrivateDirectory}=require('../host/scripts/pr
 const {setWindowBounds}=require('./全画面横断.cjs');
 const {windowBounds}=require('./window-layout.cjs');
 const kinds=new Set(['console','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
+const foldKinds=new Set(['console','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
 const domKinds=new Set(['explorer','panel-viewer','panel-routes','panel-navigation']);
 const limit=1024*1024;
 function bounds(value){
@@ -69,13 +70,15 @@ function text(value,max=4096){if(typeof value!=='string'||!value||value.length>m
 function validateRenderer(value){
  if(!value||value.version!==1||!['2d','3d'].includes(value.viewMode)||!Array.isArray(value.navigation)||value.navigation.length>100||!value.space||!Array.isArray(value.space.viewers)||value.space.viewers.length>100)throw Error('保存された画面構成が不正です。');
  const explorer=value.space.explorer||{};
- return{version:1,viewMode:value.viewMode,navigation:value.navigation.map(item=>({name:text(item.name,200),...(item.code===true?{code:true}:{})})),space:{explorer:{...(explorer.explorerName?{explorerName:text(explorer.explorerName,200)}:{}),...(explorer.routesName?{routesName:text(explorer.routesName,200)}:{})},viewers:value.space.viewers.map(item=>({name:text(item.name,200),file:{path:text(item.file?.path),name:text(item.file?.name),type:text(item.file?.type,100)}}))}};
+ if(explorer.routesExpanded!==undefined&&typeof explorer.routesExpanded!=='boolean')throw Error('保存された軌跡バーの開閉状態が不正です。');
+ return{version:1,viewMode:value.viewMode,navigation:value.navigation.map(item=>({name:text(item.name,200),...(item.code===true?{code:true}:{})})),space:{explorer:{...(typeof explorer.routesExpanded==='boolean'?{routesExpanded:explorer.routesExpanded}:{}),...(explorer.explorerName?{explorerName:text(explorer.explorerName,200)}:{}),...(explorer.routesName?{routesName:text(explorer.routesName,200)}:{})},viewers:value.space.viewers.map(item=>({name:text(item.name,200),file:{path:text(item.file?.path),name:text(item.file?.name),type:text(item.file?.type,100)}}))}};
 }
+function foldField(value){if(value?.collapsed===undefined)return{};if(typeof value.collapsed!=='boolean')throw Error('保存された折りたたみ状態が不正です。');return{collapsed:value.collapsed};}
 function validate(value){
  if(!value||value.version!==1||!Array.isArray(value.panels)||value.panels.length>100)throw Error('保存された配置の形式に対応していません。');
  const result={version:1,ide:{bounds:bounds(value.ide?.bounds),maximized:value.ide?.maximized===true},panels:value.panels.map(item=>{
   if(!kinds.has(item.kind)||item.kind==='task'&&!['request','flow','detail'].includes(item.view))throw Error('保存されたパネル種別が不正です。');
-  return{kind:item.kind,bounds:bounds(item.bounds),maximized:item.maximized===true,...(domKinds.has(item.kind)?{name:text(item.name,200)}:{}),...(item.kind==='viewer'?{path:text(item.path)}:{}),...(item.kind==='browser'&&item.url!=null?{url:text(item.url)}:{}),...(item.kind==='task'?{view:item.view}:{})};
+  return{kind:item.kind,bounds:bounds(item.bounds),maximized:item.maximized===true,...(foldKinds.has(item.kind)?foldField(item):{}),...(domKinds.has(item.kind)?{name:text(item.name,200)}:{}),...(item.kind==='viewer'?{path:text(item.path)}:{}),...(item.kind==='browser'&&item.url!=null?{url:text(item.url)}:{}),...(item.kind==='task'?{view:item.view}:{})};
  }),renderer:validateRenderer(value.renderer)};
  if(value.avatar!=null){
   if(!Array.isArray(value.avatar.windows)||value.avatar.windows.length>20)throw Error('保存されたAvatarの配置が不正です。');
@@ -97,8 +100,9 @@ function writeLayout(project,value,guard=()=>{}){
  try{fs.writeFileSync(temporary,serialized+'\n',{encoding:'utf8',mode:0o600,flag:'wx'});guard();fs.renameSync(temporary,filename);}
  finally{try{fs.unlinkSync(temporary);}catch(error){if(error.code!=='ENOENT')throw error;}}
 }
-function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,openNative,browserURL=()=>null,isQuitting=()=>false,read=readLayout,write=writeLayout,timeout=60000,steps=20,stepDelay=25,moveDuration=3000}){
+function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,openNative,browserURL=()=>null,captureCollapse=()=>null,restoreCollapse=async()=>({ok:false}),isQuitting=()=>false,read=readLayout,write=writeLayout,timeout=60000,steps=20,stepDelay=25,moveDuration=3000}){
  const busy=new WeakMap(),requests=new Map();
+ const capturePlacement=record=>captureCollapse(record)||{...placement(record),...(foldKinds.has(record.kind)?{collapsed:false}:{})};
  // Browserは保存時に表示していたURLも残す。取得できない・空白ページは従来どおりホームから開く。
  const savedURL=record=>{let url;try{url=browserURL(record);}catch{}return typeof url==='string'&&url&&url!=='about:blank'&&url.length<=4096&&!url.includes(' ')?{url}:{};};
  const pause=ms=>ms>0?new Promise(resolve=>setTimeout(resolve,ms)):Promise.resolve();
@@ -163,8 +167,8 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
     const avatar=ownedAvatar(owner)?await avatarLauncher.capture(owner):null;
     if(!avatar&&ownedAvatar(owner))throw Error('Avatarの配置を取得できませんでした。保存済みの配置は変更していません。');
     await confirm();
-    const panels=inOpenOrder(children(owner).map(record=>({kind:record.kind,...placement(record),...(domKinds.has(record.kind)?{name:record.name}:{}),...(record.kind==='viewer'?{path:record.viewerPath}:{}),...(record.kind==='browser'?savedURL(record):{}),...(record.kind==='task'?{view:record.taskView}:{})})));
-    const snapshot={version:1,ide:placement(owner),panels,renderer,...(avatar?{avatar}:{})};
+    const panels=inOpenOrder(children(owner).map(record=>({kind:record.kind,...capturePlacement(record),...(domKinds.has(record.kind)?{name:record.name}:{}),...(record.kind==='viewer'?{path:record.viewerPath}:{}),...(record.kind==='browser'?savedURL(record):{}),...(record.kind==='task'?{view:record.taskView}:{})})));
+    const snapshot={version:1,ide:capturePlacement(owner),panels,renderer,...(avatar?{avatar}:{})};
     write(project,snapshot,guard);return{ok:true,count:count(owner),saved:true};
    }
    if(count(owner))throw Error('パネルをすべて閉じてからLoadしてください。');
@@ -216,6 +220,14 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
    }
    if(avatarRestore){const result=await avatarRestore;guard();if(result?.ok)restored++;else failures.push('Avatar: '+(result?.error||'Avatarの位置を復元できません。'));}
    await confirm();
+   // サイズ・位置を確定してから折りたたむ。31pxを通常高として再保存しない。
+   for(const {record,value} of moves){
+    if(value.collapsed!==true||!foldKinds.has(record.kind))continue;
+    try{guard();record.layoutRestoringFold=true;const result=await restoreCollapse(record,true);guard();if(!result?.ok)throw Error('折りたたみ状態を復元できません。');}
+    catch(error){guard();failures.push(record.kind+': '+error.message);}
+    finally{record.layoutRestoringFold=false;}
+   }
+   if(typeof saved.space.explorer.routesExpanded==='boolean')try{await ask(owner,'restore-folds',saved);await confirm();}catch(error){guard();failures.push('軌跡バー: '+error.message);}
    return failures.length?{ok:false,error:'一部のパネルを復元できませんでした。'+failures.join(' / '),count:count(owner),restored}:{ok:true,count:count(owner),restored};
   }catch(error){return{ok:false,error:error.message,count:count(owner),restored};}
   finally{if(busy.get(owner)===operation){busy.delete(owner);owner.layoutBusy=false;}}

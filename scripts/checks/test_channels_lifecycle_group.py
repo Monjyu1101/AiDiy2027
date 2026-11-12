@@ -52,7 +52,7 @@ class ChannelsGroupTests(unittest.TestCase):
                         self.assertNotIn('discord', choices)
                         self.assertNotIn('slack', choices)
                         self.assertEqual(len(prompts), 1)
-                        self.assertIn('Channels(Discord / Slack)', prompts[0][0])
+                        self.assertIn('Channels (Discord / Slack)', prompts[0][0])
                         self.assertEqual(prompts[0][1], 'y')
 
     def test_group_skip_does_not_import_either_component(self):
@@ -71,8 +71,8 @@ class ChannelsGroupTests(unittest.TestCase):
         self.assertEqual(loader.call_args_list, [call(folder) for folder in FOLDERS])
         for component in components.values():
             component.setup.assert_called_once_with(choices, report=False)
-        self.assertEqual(self.output.getvalue().count('Channels(Discord / Slack) セットアップ\x1b'), 1)
-        self.assertEqual(self.output.getvalue().count('Channels(Discord / Slack) セットアップ完了'), 1)
+        self.assertEqual(self.output.getvalue().count('Channels (Discord / Slack) セットアップ\x1b'), 1)
+        self.assertEqual(self.output.getvalue().count('Channels (Discord / Slack) セットアップ完了'), 1)
 
     def test_setup_keeps_fail_fast_and_best_effort_for_false_and_exception(self):
         for keep_going in (False, True):
@@ -166,7 +166,7 @@ class ChannelsGroupTests(unittest.TestCase):
             module.test_stop.assert_called_once()
         self.assertNotIn('フロントエンド(Discord) のクリーンアップ', self.output.getvalue())
         self.assertNotIn('フロントエンド(Slack) のクリーンアップ', self.output.getvalue())
-        self.assertEqual(self.output.getvalue().count('Channels(Discord / Slack) のクリーンアップ完了'), 1)
+        self.assertEqual(self.output.getvalue().count('Channels (Discord / Slack) のクリーンアップ完了'), 1)
 
     def test_setup_components_suppress_headers_without_skipping_work(self):
         for folder, label in zip(FOLDERS, ('discord', 'slack')):

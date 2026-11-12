@@ -20,6 +20,9 @@ export function mountPanelTitle(host, child, owner, title, kind, { restore, titl
   const collapse = reactive({ collapsed: false, hidden: false });
   const collapseApi = collapsible ? {
     collapsePanel: value => owner.aidiyWindow.collapsePanel(value, child.name),
+    onPanelCollapseState: callback => owner.aidiyWindow.onPanelCollapseState?.(value => {
+      if(value?.name === child.name)callback({collapsed:value.collapsed,hidden:value.hidden,busy:value.busy});
+    }),
     beginWindowMove: () => owner.aidiyWindow.beginWindowMove(child.name),
     moveWindow: token => owner.aidiyWindow.moveWindow(token, child.name),
     endWindowMove: token => owner.aidiyWindow.endWindowMove(token, child.name),

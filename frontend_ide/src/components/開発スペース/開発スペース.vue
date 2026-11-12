@@ -74,7 +74,8 @@ async function restoreLayout(saved){
   }
   return panels;
 }
-defineExpose({prepareAll,captureLayout,restoreLayout});
+async function restoreFoldState(saved){await explorer.value?.restoreFoldState(saved.explorer||{});}
+defineExpose({prepareAll,captureLayout,restoreLayout,restoreFoldState});
 watch(selected,file=>{
   browsedSelection.value=null;
   viewerSessions.value=viewerSessions.value.filter(entry=>entry.detached||entry.pinning||entry.file.path===file?.path);

@@ -25,7 +25,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 - frontend_avatar/_setup.py  フロントエンド(Avatar)
 - command_hermes/_setup.py   コマンド(hermes)
 - frontend_ide/_setup.py     IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)
-- frontend_channels/discord/_setup.py / slack/_setup.py Channels(Discord / Slack、まとめて選択)
+- frontend_channels/discord/_setup.py / slack/_setup.py Channels (Discord / Slack、まとめて選択)
 
 Usage:
     python _setup.py
@@ -749,7 +749,7 @@ def collect_setup_choices() -> dict | None:
     choices["avatar"] = ask_yes_no("Avatar のセットアップを実行しますか？", default="y")
     choices["hermes"] = ask_yes_no("Hermes のセットアップを実行しますか？", default="y")
     choices["ide"] = ask_yes_no("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
-    choices["channels"] = ask_yes_no("Channels(Discord / Slack) のセットアップを実行しますか？", default="y")
+    choices["channels"] = ask_yes_no("Channels (Discord / Slack) のセットアップを実行しますか？", default="y")
 
     choices["continue_on_error"] = ask_yes_no("エラーが発生しても続行しますか？", default="y")
 
@@ -759,9 +759,9 @@ def collect_setup_choices() -> dict | None:
 def setup_channels(choices: dict) -> list[str]:
     """Channels を1項目として実行し、2機能それぞれの失敗を記録する。"""
     if not choices.get("channels"):
-        print_warning("Channels(Discord / Slack) のセットアップをスキップしました。")
+        print_warning("Channels (Discord / Slack) のセットアップをスキップしました。")
         return []
-    print_header("Channels(Discord / Slack) セットアップ")
+    print_header("Channels (Discord / Slack) セットアップ")
     warnings = choices.setdefault("_setup_warnings", [])
     warning_count = len(warnings)
     errors = []
@@ -776,11 +776,11 @@ def setup_channels(choices: dict) -> list[str]:
             if not choices.get("continue_on_error"):
                 break
     if errors:
-        print_warning("Channels(Discord / Slack): 一部のセットアップを完了できませんでした。")
+        print_warning("Channels (Discord / Slack): 一部のセットアップを完了できませんでした。")
     elif len(warnings) > warning_count:
-        print_warning("Channels(Discord / Slack): Electron 配置の警告付きで完了しました。")
+        print_warning("Channels (Discord / Slack): Electron 配置の警告付きで完了しました。")
     else:
-        print_success("Channels(Discord / Slack) セットアップ完了")
+        print_success("Channels (Discord / Slack) セットアップ完了")
         print_info("起動: aidiy_discord / aidiy_slack")
     return errors
 
@@ -811,7 +811,7 @@ def check_refresh_node_runtime(version: str) -> bool:
 def setup_node_refresh() -> list[str]:
     """依存同期・既存ビルド・ランチャー再配置のみ。初期設定や診断は実行しない。"""
     print_header("Node.js系の再ビルド")
-    print_info("対象: Diag / Web / Avatar / IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU / Channels(Discord / Slack)")
+    print_info("対象: Diag / Web / Avatar / IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
     print_info("依存同期 / 再ビルド / 起動コマンド登録")
     print_info("Python環境・モデル・共通設定・グローバルCLIは変更しません。")
     node_version = get_node_version()
@@ -960,7 +960,7 @@ def main():
     print_info("  7. Avatar")
     print_info("  8. Hermes")
     print_info("  9. IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU")
-    print_info(" 10. Channels(Discord / Slack)")
+    print_info(" 10. Channels (Discord / Slack)")
     print()
 
     choices = collect_setup_choices()

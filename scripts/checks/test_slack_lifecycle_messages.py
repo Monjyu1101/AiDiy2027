@@ -38,7 +38,7 @@ class SlackLifecycleMessagesTests(unittest.TestCase):
                     with self.assertRaises(NoticeReached):
                         getattr(module, function)()
                 self.assertEqual(len(messages), 1)
-                expected = 'Channels(Discord / Slack)' if filename in ('_setup.py', '_cleanup.py') else '外部チャンネル: Discord / Slack'
+                expected = 'Channels (Discord / Slack)' if filename in ('_setup.py', '_cleanup.py') else '外部チャンネル: Discord / Slack'
                 self.assertIn(expected, messages[0])
                 for unwanted in ('準備中', '未実装', '起動不可', '対象なし'):
                     self.assertNotIn(unwanted, messages[0])

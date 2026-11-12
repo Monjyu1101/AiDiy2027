@@ -63,7 +63,7 @@ test('VR is disabled during layout work and stale operation failure cannot overw
 });
 test('restoring a detached viewer reuses an existing inline preview with the same path',async()=>{
   const source=readFileSync(new URL('../src/components/開発スペース/開発スペース.vue',import.meta.url),'utf8');
-  const fn=source.slice(source.indexOf('async function restoreLayout(saved){'),source.indexOf('defineExpose({prepareAll,captureLayout,restoreLayout});'));
+  const fn=source.slice(source.indexOf('async function restoreLayout(saved){'),source.indexOf('async function restoreFoldState(saved){'));
   const entry={file:{path:'same.txt',name:'same.txt'},detached:false},viewers={value:[entry]};let pins=0;
   const result=await vm.runInNewContext(fn+';restoreLayout({viewers:[{name:"old",file:{path:"same.txt",name:"same.txt"}}]})',{
     scan:{value:{root:'/project'}},disposed:false,explorer:{value:{restoreLayout:async()=>[]}},viewerSessions:viewers,nextTick:async()=>{},viewerRefs:new Map([['same.txt',{pin:async()=>{pins++;return true;},captureLayout:()=>({name:'new'})}]]),Date,setTimeout,
@@ -74,7 +74,7 @@ test('restoring a detached viewer reuses an existing inline preview with the sam
 
 test('native-only layout does not wait for file scanning',async()=>{
  const source=readFileSync(new URL('../src/components/開発スペース/開発スペース.vue',import.meta.url),'utf8');
- const fn=source.slice(source.indexOf('async function restoreLayout(saved){'),source.indexOf('defineExpose({prepareAll,captureLayout,restoreLayout});'));
+ const fn=source.slice(source.indexOf('async function restoreLayout(saved){'),source.indexOf('async function restoreFoldState(saved){'));
  const result=await vm.runInNewContext(fn+';restoreLayout({explorer:{},viewers:[]})',{});
  assert.deepEqual(JSON.parse(JSON.stringify(result)),[]);
 });
@@ -102,4 +102,14 @@ test('IDE keeps last mode selection while expansion is pending and blocks VR/lay
  finish();await expanding;assert.equal(api.viewMode.value,'3d');assert.equal(api.canEnterAll.value,true);
  api.allBusy.value=true;await api.selectViewMode('2d');assert.equal(api.viewMode.value,'3d');
  api.allBusy.value=false;api.layoutBusy.value=true;await api.selectViewMode('2d');assert.equal(api.viewMode.value,'3d');
+});
+
+test('post-placement fold restore preserves mode and awaits renderer expansion',async()=>{
+ const {api}=fixture();let received;
+ api.viewMode.value='2d';api.spaceView.value={restoreFoldState:async value=>{await Promise.resolve();received=value;}};
+ const space={explorer:{routesName:'old',routesExpanded:true}};
+ const result=await api.layoutRequest({action:'restore-folds',payload:{version:1,space}});
+ assert.equal(result.ok,true);assert.equal(received,space);assert.equal(api.viewMode.value,'2d');
+ api.spaceView.value={restoreFoldState:async()=>api.update({active:false})};
+ await assert.rejects(api.layoutRequest({action:'restore-folds',payload:{version:1,space}}),/利用状態が変わりました/);
 });

@@ -12,7 +12,7 @@ const {windowBounds}=require('../デスクトップ/window-layout.cjs');
 const rect={x:20,y:30,width:400,height:600},initial={x:60,y:70,width:480,height:650};
 const renderer=()=>({version:1,viewMode:'3d',navigation:[],space:{explorer:{},viewers:[]}});
 const snapshot=()=>({version:1,ide:{bounds:rect,maximized:false},panels:[{kind:'code',bounds:rect,maximized:false}],renderer:renderer()});
-function fixture(){
+function fixture(extra={}){
  const windows=new Map(),owner={kind:'ide',revision:0,pending:new Map()},state={active:true,mode:'online',startedAt:1,project:{path:'/project'}},written=[];
  let saved=snapshot(),manager,gate,avatar=false,captured=renderer(),restored={panels:[]},opening,readError,avatarCapture={windows:[{role:'core',bounds:rect}]},vr=false;
  const screen={getAllDisplays:()=>[{workArea:{x:0,y:0,width:1920,height:1080}}],getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1080}}),getCursorScreenPoint:()=>({x:100,y:100})};
@@ -20,7 +20,7 @@ function fixture(){
  window(owner);const add=(kind='code',more={})=>window({kind,owner,linkKey:'online:1',...more});
  manager=createLayoutManager({windows,screen,trustedEvent:event=>event.record,readState:async()=>structuredClone(state),sessionKey:s=>s.active?s.mode+':'+s.startedAt:'',allDisplays:{isActive:()=>vr},avatarLauncher:{active:()=>avatar,capture:async()=>avatarCapture,restore:async()=>({ok:true})},
  read:()=>{if(readError)throw readError;return structuredClone(saved);},write:(_project,value,guard)=>{guard();written.push(value);saved=structuredClone(value);},
- openNative:async(_event,panels)=>{opening=(opening||0)+1;if(gate)await gate;return panels.map(p=>add(p.kind,p.kind==='task'?{taskView:p.view}:{}));},timeout:100,stepDelay:0,moveDuration:0,browserURL:record=>record.url});
+ openNative:async(_event,panels)=>{opening=(opening||0)+1;if(gate)await gate;return panels.map(p=>add(p.kind,p.kind==='task'?{taskView:p.view}:{}));},timeout:100,stepDelay:0,moveDuration:0,browserURL:record=>record.url,...extra});
  return{manager,owner,state,windows,screen,add,fill:()=>[add(),add(),add()],written,run:action=>manager.handle({record:owner},action),save:value=>saved=value,gate:value=>gate=value,get opening(){return opening||0;},avatar:value=>avatar=value,capture:value=>captured=value,restore:value=>restored=value,readError:value=>readError=value,avatarCapture:value=>avatarCapture=value,vr:value=>vr=value};
 }
 test('screen coverage accepts negative/adjacent monitors and rejects removed screens, clipped bounds and gaps',()=>{
@@ -207,4 +207,30 @@ test('IDE collapsed bounds cannot be saved/restored and layout work advertises i
  assert.equal((await f.run('state')).ok,true);f.owner.panelCollapsed=false;
  let release;f.gate(new Promise(resolve=>release=resolve));const loading=f.run('load');
  assert.equal(f.owner.layoutBusy,true);release();assert.equal((await loading).ok,true);assert.equal(f.owner.layoutBusy,false);
+});
+
+test('fold flags validate without changing old v1 snapshots',()=>{
+ assert.deepEqual(validate(snapshot()),snapshot());
+ for(const collapsed of [true,false]){const value=snapshot();value.panels[0].collapsed=collapsed;assert.equal(validate(value).panels[0].collapsed,collapsed);}
+ const invalid=snapshot();invalid.panels[0].collapsed='true';assert.throws(()=>validate(invalid),/折りたたみ/);
+ const routes=snapshot();routes.renderer.space.explorer.routesExpanded=true;assert.equal(validate(routes).renderer.space.explorer.routesExpanded,true);
+ routes.renderer.space.explorer.routesExpanded='false';assert.throws(()=>validate(routes),/軌跡バー/);
+});
+test('SV captures expanded bounds instead of title height and preserves per-panel fold state',async()=>{
+ const f=fixture({captureCollapse:record=>record.panelCollapsed?{bounds:rect,maximized:true,collapsed:true}:null});
+ const [first]=f.fill();first.panelCollapsed=true;first.window.rectangle.height=31;
+ assert.equal((await f.run('save')).ok,true);
+ assert.deepEqual(f.written[0].panels[0],{kind:'code',bounds:rect,maximized:true,collapsed:true});
+ assert.equal(f.written[0].panels[1].collapsed,false);
+});
+test('SV during animation rejects rather than overwrites a good layout',async()=>{
+ const f=fixture({captureCollapse:record=>{if(record.kind==='code')throw Error('パネルの開閉完了をお待ちください。');return null;}});f.fill();
+ const result=await f.run('save');assert.equal(result.ok,false);assert.match(result.error,/開閉完了/);assert.equal(f.written.length,0);assert.equal(f.owner.layoutBusy,false);
+});
+test('LD applies expanded placement before collapse, preserves legacy expanded windows, reports failures',async()=>{
+ const calls=[];const f=fixture({restoreCollapse:async(record,value)=>{calls.push({kind:record.kind,value,bounds:record.window.getBounds(),locked:record.layoutRestoringFold});return{ok:record.kind!=='live'};}});
+ const value=snapshot();value.panels=[{kind:'code',bounds:rect,maximized:false,collapsed:true},{kind:'console',bounds:rect,maximized:false},{kind:'live',bounds:rect,maximized:false,collapsed:true}];f.save(value);
+ const result=await f.run('load');assert.equal(result.ok,false);assert.match(result.error,/live.*折りたたみ/);assert.equal(result.restored,3);
+ assert.deepEqual(calls.map(v=>v.kind),['code','live']);for(const call of calls){assert.deepEqual(call.bounds,rect);assert.equal(call.locked,true);assert.equal(call.value,true);}
+ for(const record of f.windows.values())assert.ok(!record.layoutRestoringFold);
 });

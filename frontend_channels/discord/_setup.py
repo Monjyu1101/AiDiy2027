@@ -112,7 +112,7 @@ def setup(choices=None, *, report=True) -> bool:
     try:
         if _discord_in_use():
             if not continue_on_error:
-                print_error('起動中の Discord は停止せず、この Discord の依存更新を保留しました。他項目だけ更新する場合は Channels(Discord / Slack) を選択しないでください。')
+                print_error('起動中の Discord は停止せず、この Discord の依存更新を保留しました。他項目だけ更新する場合は Channels (Discord / Slack) を選択しないでください。')
                 return False
             print_info('[WARN] Discord は起動中ですが、エラーでも継続の指定によりセットアップを試行します。使用中ファイルの更新に失敗する場合があります。')
     except (OSError, ValueError, subprocess.SubprocessError):

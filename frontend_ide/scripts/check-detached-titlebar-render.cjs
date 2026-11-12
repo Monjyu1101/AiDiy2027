@@ -16,7 +16,7 @@ app.whenReady().then(async () => {
   await win.loadFile(join(__dirname, "../temp/detached-titlebar-check/index.html"));
   await new Promise((r) => setTimeout(r, 100));
   for (let n = 0; n < 3; n++) {
-    await win.webContents.executeJavaScript(`document.querySelectorAll('.code-panel-toggle').forEach(x=>x.click())`);
+    await win.webContents.executeJavaScript(n===1?'window.emitLayoutState(true)':`document.querySelectorAll('.code-panel-toggle').forEach(x=>x.click())`);
     await new Promise((r) => setTimeout(r, 100));
     const rows = await win.webContents.executeJavaScript(`['explorer','panel-viewer','panel-navigation'].map(k=>{const r=document.getElementById(k),b=r.querySelector('.connection-bar'),t=r.querySelector('.panel-brand'),content=r.querySelector('.audit-content');return {kind:k,root:r.getBoundingClientRect().height,title:t.getBoundingClientRect().height,width:t.getBoundingClientRect().width,bar:b.getBoundingClientRect().height,display:getComputedStyle(b).display,content:content.getBoundingClientRect().height,mark:r.querySelector('.code-panel-mark').textContent};})`);
     console.log(rows);
@@ -29,7 +29,7 @@ app.whenReady().then(async () => {
       assert.equal(row.content, 0);
       assert.equal(row.mark, "\u25B6");
     }
-    await win.webContents.executeJavaScript(`document.querySelectorAll('.code-panel-toggle').forEach(x=>x.click())`);
+    await win.webContents.executeJavaScript(n===1?'window.emitLayoutState(false)':`document.querySelectorAll('.code-panel-toggle').forEach(x=>x.click())`);
     await new Promise((r) => setTimeout(r, 100));
     const restore = await win.webContents.executeJavaScript(`['explorer','panel-viewer','panel-navigation'].map(k=>{const r=document.getElementById(k);return {kind:k,height:r.getBoundingClientRect().height,bar:r.querySelector('.connection-bar').getBoundingClientRect().height,content:r.querySelector('.audit-content').getBoundingClientRect().height,value:r.querySelector('input').value};})`);
     console.log(restore);

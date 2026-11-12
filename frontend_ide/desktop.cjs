@@ -81,7 +81,7 @@ const {createNavigationCodeWindow,createNavigationCruiseWindow,navigationWindowT
 const navigationCodeWindow=createNavigationCodeWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),screen,isQuitting:()=>quitting});
 const navigationCruiseWindow=createNavigationCruiseWindow({trustedEvent,panelTarget:(owner,name)=>panelWindows.dragTarget(owner,name),readState,sessionKey:state=>sessionKey(state),isQuitting:()=>quitting});
 const {createPanelCollapse}=require('./デスクトップ/パネル折り畳み.cjs');
-const panelCollapse=createPanelCollapse({trustedEvent,resolvePanel:(owner,name)=>{const target=panelWindows.dragTarget(owner,name);return ['panel-navigation','explorer','panel-viewer'].includes(target?.kind)?target:null;},canCollapse:record=>(record.kind!=='ide'||!allDisplays.isActive(record)&&!record.layoutBusy)&&(record.kind!=='browser'||!!browserViews?.canCollapse(record)),onChange:(record,collapsed)=>{if(record.kind==='browser')browserViews?.setPanelCollapsed(record,collapsed);}});
+const panelCollapse=createPanelCollapse({trustedEvent,resolvePanel:(owner,name)=>{const target=panelWindows.dragTarget(owner,name);return ['panel-navigation','explorer','panel-viewer'].includes(target?.kind)?target:null;},canCollapse:record=>(!record.layoutBusy||record.layoutRestoringFold)&&(!record.owner?.layoutBusy||record.layoutRestoringFold)&&(record.kind!=='ide'||!allDisplays.isActive(record))&&(record.kind!=='browser'||!!browserViews?.canCollapse(record)),onChange:(record,collapsed)=>{if(record.kind==='browser')browserViews?.setPanelCollapsed(record,collapsed);},onRestoreState:(record,state)=>{const detached=['explorer','panel-viewer','panel-navigation'].includes(record.kind),target=detached?record.owner:record;if(!target?.window||target.window.isDestroyed())return;target.window.webContents.send('development:panel-collapse-state',{...state,...(detached?{name:record.name}:{})});}});
 const {createCodeDrag}=require('./デスクトップ/code-drag.cjs');
 const codeDrag=createCodeDrag({trustedEvent,screen,resolvePanel:panelWindows.dragTarget,isCenterMove:record=>allDisplays.isActive(record)});
 const {installNativeWindowMove}=require('./デスクトップ/長押し窓移動.cjs');
@@ -482,6 +482,7 @@ app.whenReady().then(async()=>{
  const {createLayoutManager}=require('./デスクトップ/配置保存.cjs');
  layoutManager=createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,isQuitting:()=>quitting,
   browserURL:record=>browserViews?.analysisContext(record)?.url,
+  captureCollapse:record=>panelCollapse.capture(record),restoreCollapse:(record,value)=>panelCollapse.restore(record,value),
   async openNative(event,panels){
    const owner=trustedEvent(event),panel=panels[0],before=new Set(windows.values());
    const state=await readState(owner),key=sessionKey(state),revision=owner.revision;

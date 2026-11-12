@@ -8,11 +8,12 @@ contextBridge.exposeInMainWorld('aidiyWindow',{
  selectedFilePath:file=>webUtils.getPathForFile(file),
  nativeWindowMove:true,
  collapsePanel:(collapsed,name)=>ipcRenderer.invoke('development:panel-collapse',collapsed,name),
+ onPanelCollapseState:callback=>{if(typeof callback!=='function')return()=>{};const listener=(_event,state)=>callback(state);ipcRenderer.on('development:panel-collapse-state',listener);return()=>ipcRenderer.removeListener('development:panel-collapse-state',listener);},
  layout:action=>ipcRenderer.invoke('development:layout',action),
  onLayoutRequest:callback=>{
   if(typeof callback!=='function')return()=>{};
   const listener=async(_event,request)=>{
-   if(!request||typeof request.requestId!=='string'||request.requestId.length>100||!['capture','restore'].includes(request.action))return;
+   if(!request||typeof request.requestId!=='string'||request.requestId.length>100||!['capture','restore','restore-folds'].includes(request.action))return;
    try{const result=await callback({action:request.action,payload:request.payload});ipcRenderer.send('development:layout-result',{requestId:request.requestId,ok:true,result});}
    catch(error){ipcRenderer.send('development:layout-result',{requestId:request.requestId,ok:false,error:String(error?.message||error).slice(0,500)});}
   };

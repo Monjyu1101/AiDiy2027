@@ -161,6 +161,11 @@ function layoutItem(action){return{key:'layout-'+action,class:action==='save'?'l
 async function layoutRequest(request){
   if(!layoutAvailable.value)throw Error('配置はAiDiy接続利用中のIDEで操作してください。');
   if(request.action==='capture')return{version:1,viewMode:viewMode.value,navigation:[...navigationRefs.values()].map(panel=>panel.captureLayout()).filter(item=>item.name),space:spaceView.value?.captureLayout()};
+  if(request.action==='restore-folds'&&request.payload?.version===1){
+    const own=session;await spaceView.value?.restoreFoldState(request.payload.space||{});
+    if(disposed||session!==own)throw Error('IDEの利用状態が変わりました。');
+    return{ok:true};
+  }
   if(request.action!=='restore'||request.payload?.version!==1)throw Error('保存した配置の形式を確認してください。');
   const own=session,snapshot=request.payload,panels=[];
   viewMode.value=snapshot.viewMode==='2d'?'2d':'3d';

@@ -300,3 +300,11 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 `collapsed-status-bar.test.mjs`はバーのinline非表示と各呼出し、`panel-collapse.test.cjs`は全窓種の端数zoom・DPI丸めと反復復元を確認する。画面試験では本番scoped CSSをコンパイルし、試験だけの全体隠蔽CSSを追加しない。タイトル・rootの高さ、バーの`display`と実寸0、外周border、3回以上の開閉復帰を測る。headless Electronの固定寸法iframe内での実Vue測定はCSS描画検証であり、Windows実窓・DPI画面・画像目視の代わりにはしない。
 
 再実行は `ELECTRON_PATH=<Electron実行ファイル> node frontend_ide/scripts/check-titlebar-only-electron.mjs`（共通6画面、`--baseline`でmain比較）、`node frontend_ide/scripts/check-detached-titlebar.mjs` → Electronで `frontend_ide/scripts/check-detached-titlebar-render.cjs`（Explorer／Viewer／Navi別窓）、Electronで `backend_diag/checks/collapsed-title-render.cjs`（Diag標準／ミニ）。headless実行には `--headless --no-sandbox --disable-gpu` を使う。Task／Teamの描画ページは `node frontend_ide/scripts/check-taskteam-titlebar.mjs --write-page` で生成する。
+
+### IDEのSV／LDとパネル開閉状態
+
+- SVはIDEが所有する対応パネルの開閉状態を保存する。折畳時の31pxを通常の高さとして保存せず、展開時の寸法・最大化状態と現在位置を保存する。
+- LDはパネルを開き、保存位置・通常寸法を適用してから折畳状態を戻す。mainからの通知を共通開閉部品へ同期し、▽／▶・本文・シアンバーと実窓寸法を一致させる。DOM別窓は窓名で通知を分離する。
+- 軌跡バーの一覧展開は通常パネルの31px折畳とは別で、`renderer.space.explorer.routesExpanded` に保存し、位置復元後に一覧の開閉と必要な窓高を戻す。CPUの透過切替、Avatar、DiagなどIDE所有でない窓は対象に含めない。
+- 保存形式version 1は維持し、開閉情報のない旧ファイルは従来どおり展開状態で復元する（軌跡一覧は従来の閉状態）。不正な型は読込を拒否する。IDE本体のSV／LDメニューは本文にあるため、本体を展開して操作する。
+- 確認は `checks/layout-save.test.cjs`、`checks/layout-fold-renderer.test.mjs`、`checks/layout-renderer.test.mjs`、`checks/panel-collapse.test.cjs` と別窓実描画スクリプトを使用する。折畳保存→LD→再展開→再保存、名前の異なる複数別窓、旧データ、復元中の終了・連打を含める。

@@ -20,7 +20,8 @@ const bundle=await build({
 stdin:{resolveDir:root,contents:`
 import {mountPanelTitle} from './src/components/ファイル閲覧/別窓タイトル.js';
 const root=document.querySelector('#app'); root.style.width='1000px';
-window.aidiyWindow={panelAction:async()=>({pinned:false,locked:false}),collapsePanel:async(value,name)=>{document.getElementById(name).style.height=value?'31px':'360px';return {ok:true}},beginWindowMove:()=>({ok:true}),moveWindow(){},endWindowMove(){},close(){},minimize(){},maximize(){},togglePin(){}};
+const foldListeners=new Set(); window.emitLayoutState=(collapsed)=>{for(const name of ['explorer','panel-viewer','panel-navigation']){document.getElementById(name).style.height=collapsed?'31px':'360px';for(const listener of foldListeners)listener({name,collapsed,hidden:collapsed,busy:false});}};
+window.aidiyWindow={onPanelCollapseState:listener=>{foldListeners.add(listener);return()=>foldListeners.delete(listener);},panelAction:async()=>({pinned:false,locked:false}),collapsePanel:async(value,name)=>{document.getElementById(name).style.height=value?'31px':'360px';return {ok:true}},beginWindowMove:()=>({ok:true}),moveWindow(){},endWindowMove(){},close(){},minimize(){},maximize(){},togglePin(){}};
 for(const kind of ['explorer','panel-viewer','panel-navigation']){
 const host=document.createElement('section');host.id=kind;
 host.className='development-app native-panel-window '+(kind==='explorer'?'explorer-window':kind==='panel-viewer'?'viewer-window':'navigation-window');

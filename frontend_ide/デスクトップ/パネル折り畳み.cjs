@@ -5,10 +5,10 @@
 // https://github.com/monjyu1101/AiDiy2027
 const {setWindowBounds}=require('./全画面横断.cjs');
 // 窓の高さそのものを変更する。連打時は現在位置から反転し、移動した座標を維持する。
-function createPanelCollapse({trustedEvent,resolvePanel=()=>null,now=()=>performance.now(),setTimer=setTimeout,clearTimer=clearTimeout,duration=220,canCollapse=()=>true,onChange=()=>{}}){
+function createPanelCollapse({trustedEvent,resolvePanel=()=>null,now=()=>performance.now(),setTimer=setTimeout,clearTimer=clearTimeout,duration=220,canCollapse=()=>true,onChange=()=>{},onRestoreState=()=>{}}){
  const states=new WeakMap();
- return function collapse(event,collapsed,name){
-  const source=trustedEvent(event),record=name===undefined?source:resolvePanel(source,name),win=record?.window;
+ function collapseRecord(record,collapsed){
+  const win=record?.window;
   if(typeof collapsed!=='boolean'||!['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'].includes(record?.kind)||!win||win.isDestroyed()||win.isFullScreen()||record.vrPanelMoving||record.owner?.vrPanelMoving||!canCollapse(record))return Promise.resolve({ok:false});
   let state=states.get(win);
   if(!state){
@@ -27,6 +27,7 @@ function createPanelCollapse({trustedEvent,resolvePanel=()=>null,now=()=>perform
    if(state.maximized)win.unmaximize();
    win.setMinimumSize(state.min[0],1);win.setResizable(false);win.setMaximizable(false);
   }
+  state.targetCollapsed=collapsed;
   if(collapsed)onChange(record,true);
   clearTimer(state.timer);state.resolve?.({ok:false,superseded:true});
   const start=now(),from=win.getBounds().height;
@@ -45,5 +46,19 @@ function createPanelCollapse({trustedEvent,resolvePanel=()=>null,now=()=>perform
    frame();
   });
  };
+ const collapse=(event,collapsed,name)=>{const source=trustedEvent(event);return collapseRecord(name===undefined?source:resolvePanel(source,name),collapsed);};
+ // SVでは31pxの現在高ではなく、再展開に必要な通常寸法を保存する。
+ collapse.capture=record=>{
+  const state=states.get(record.window);
+  if(!state)return null;
+  if(state.resolve)throw Error('パネルの開閉完了をお待ちください。');
+  return{bounds:{...record.window.getBounds(),width:state.width,height:state.height},maximized:state.maximized,collapsed:state.targetCollapsed===true};
+ };
+ collapse.restore=async(record,collapsed)=>{
+  onRestoreState(record,{collapsed,hidden:false,busy:true});
+  try{const result=await collapseRecord(record,collapsed);onRestoreState(record,{collapsed:result?.ok?collapsed:false,hidden:result?.ok&&collapsed,busy:false});return result;}
+  catch(error){onRestoreState(record,{collapsed:false,hidden:false,busy:false});throw error;}
+ };
+ return collapse;
 }
 module.exports={createPanelCollapse};

@@ -99,7 +99,7 @@ AiDiy2027/
 python _setup.py
 ```
 
-通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、Navi / Console / Code / Live / IDE / Task / Team / Browser の共通依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels(Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
+通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、Navi / Console / Code / Live / IDE / Task / Team / Browser の共通依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels (Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
 
 依存更新、MCP 設定、モデルダウンロードなどの選択と注意点は [ルート README のセットアップ](../../README.md#1-セットアップ) を参照してください。接続情報は [Discord README](../../frontend_channels/discord/README.md) と [Slack README](../../frontend_channels/slack/README.md) にまとめています。
 

@@ -473,14 +473,23 @@ watch(()=>props.filter,clearSearch);
 watch(mode,clearSearch);
 watch([mode,since,until,matches,aiResult],emitMarks,{immediate:true});
 onBeforeUnmount(()=>{treeDrag.dispose();routeToggleDrag?.dispose();allPanels=undefined;fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
-function captureLayout(){return{explorerName:detached.value?panel.value?.ownerDocument.defaultView?.name:'',routesName:routeDetached.value?routeElement.value?.ownerDocument.defaultView?.name:''};}
+function captureLayout(){
+  if(routeDetached.value&&!['open','closed'].includes(routeMotionState.value.phase))throw Error('軌跡バーの開閉が終わってから保存してください。');
+  return{explorerName:detached.value?panel.value?.ownerDocument.defaultView?.name:'',routesName:routeDetached.value?routeElement.value?.ownerDocument.defaultView?.name:'',...(routeDetached.value?{routesExpanded:routeListOpen.value}:{})};}
 async function restoreLayout(saved){
   const panels=[];
-  if(saved.explorerName){emit('update:open',true);await nextTick();if(!await pinExplorer())throw Error(pinError.value||'エクスプローラーを復元できません。');panels.push({previousName:saved.explorerName,name:captureLayout().explorerName});}
-  if(saved.routesName){routeClosed.value=false;await nextTick();if(!await pinRoutes())throw Error(pinError.value||'軌跡バーを復元できません。');panels.push({previousName:saved.routesName,name:captureLayout().routesName});}
+  if(saved.explorerName){emit('update:open',true);await nextTick();if(!await pinExplorer())throw Error(pinError.value||'エクスプローラーを復元できません。');panels.push({previousName:saved.explorerName,name:panel.value?.ownerDocument.defaultView?.name});}
+  if(saved.routesName){routeClosed.value=false;await nextTick();if(!await pinRoutes())throw Error(pinError.value||'軌跡バーを復元できません。');panels.push({previousName:saved.routesName,name:routeElement.value?.ownerDocument.defaultView?.name});}
   return panels;
 }
-defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
+async function restoreFoldState(saved){
+  if(!saved.routesName||!routeDetached.value||routeDisposed)return;
+  routeListOpen.value=saved.routesExpanded===true;
+  await nextTick();
+  if(routeDisposed)return;
+  await routeMotion.set(routeListOpen.value&&!routeClosed.value);
+}
+defineExpose({captureLayout,restoreLayout,restoreFoldState,reveal,focusDetached:()=>panelWindow?.focus()||false,pinForAll});
 </script>
 <template>
   <div class="explorer-component" data-component="FileExplorer">

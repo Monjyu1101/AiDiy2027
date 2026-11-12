@@ -25,7 +25,7 @@ python frontend_channels/discord/_setup.py
 
 setupとPython起動入口は `package.json` のNode.js要件を確認します。Vue 3・Electron・パネル生成用ツールは `npm ci --include=dev` でプロジェクトに導入し、グローバルVue CLI・Electronは不要です。Electron本体がない場合も既存のWeb起動へ切り替えられますが、Node.jsの版数不足・版数不明だけなら警告して継続します。Node.jsの実行失敗やDiscord設定の不備はエラーのままです。専用ウィンドウの復旧は上記 `_setup.py` を使います。
 
-ルート `_setup.py` の「Channels(Discord / Slack)」からも導入できます。セットアップは既定 Yes（`[y]/n`）で、Electron の事前配置と `_AIDIY/aidiy_discord/bin/aidiy_discord`（Windows は `.cmd`）の登録も行います。ルート `_start.py` の Discord 起動は既定 No（`[n]/y`）で、Yes を選ぶとパネルを開いて自動接続します。
+ルート `_setup.py` の「Channels (Discord / Slack)」からも導入できます。セットアップは既定 Yes（`[y]/n`）で、Electron の事前配置と `_AIDIY/aidiy_discord/bin/aidiy_discord`（Windows は `.cmd`）の登録も行います。ルート `_start.py` の Discord 起動は既定 No（`[n]/y`）で、Yes を選ぶとパネルを開いて自動接続します。
 
 フォルダ移動前に登録した `aidiy_discord` は旧絶対パスを含むため、移動後にルート `_setup.py` の `b`（build: Node.js系の再ビルド）または上記のセットアップで再登録してください。既存の `node_modules` はフォルダごと移動して再利用でき、Git管理には追加しません。
 
@@ -131,7 +131,7 @@ aidiy_discord
 
 ## クリーンアップ
 
-ルート `python _cleanup.py` の Channels(Discord / Slack) 項目は既定 Yes で、両チャンネルをまとめて選択します。削除前にこの作業コピーの Bot を子孫プロセスごと停止し、終了できない場合は削除を中止します。Channels の削除を選ばない場合でも、全体 cleanup の開始時には他サービスと同じく Bot を停止します。
+ルート `python _cleanup.py` の Channels (Discord / Slack) 項目は既定 Yes で、両チャンネルをまとめて選択します。削除前にこの作業コピーの Bot を子孫プロセスごと停止し、終了できない場合は削除を中止します。Channels の削除を選ばない場合でも、全体 cleanup の開始時には他サービスと同じく Bot を停止します。
 
 削除対象は `frontend_channels/discord` 内の `node_modules`、生成物、temp、Python キャッシュと、この作業コピーを指す `aidiy_discord` ランチャーです。ソース、`package-lock.json`、共通 `_config/AiDiy_key.json`、前回のモデル・機能の選択は残ります。単独 cleanup は `python frontend_channels/discord/_cleanup.py` です。
 

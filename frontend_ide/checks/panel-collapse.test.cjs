@@ -103,3 +103,17 @@ for(const kind of ['ide','code','live','console','browser','navi','task','team',
   }
  }
 });
+
+test('layout capture keeps expanded dimensions and maximized state after a folded window was moved',async()=>{
+ const f=fixture();f.win.maximized=true;const p=f.toggle(true);
+ assert.throws(()=>f.collapse.capture(f.record),/開閉完了/);f.step(240);await p;
+ f.win.bounds.x=300;f.win.bounds.y=400;
+ assert.deepEqual(f.collapse.capture(f.record),{bounds:{x:300,y:400,width:700,height:600},maximized:true,collapsed:true});
+ const q=f.toggle(false);f.step(240);await q;assert.equal(f.collapse.capture(f.record),null);
+});
+test('layout restore synchronizes native and renderer state without another invoke',async()=>{
+ const sync=[];const f=fixture('console',{onRestoreState:(_record,value)=>sync.push(value)});
+ const p=f.collapse.restore(f.record,true);assert.deepEqual(sync[0],{collapsed:true,hidden:false,busy:true});f.step(240);assert.equal((await p).ok,true);
+ assert.deepEqual(sync[1],{collapsed:true,hidden:true,busy:false});assert.equal(f.win.bounds.height,31);
+ const q=f.collapse.restore(f.record,false);f.step(240);await q;assert.equal(f.win.bounds.height,600);assert.deepEqual(sync.at(-1),{collapsed:false,hidden:false,busy:false});
+});

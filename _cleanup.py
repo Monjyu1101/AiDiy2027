@@ -711,7 +711,7 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
                     )
 
     choices["ide"] = ask_yes_no("IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)をクリーンアップしますか？", default="y")
-    choices["channels"] = ask_yes_no("Channels(Discord / Slack)をクリーンアップしますか？", default="y")
+    choices["channels"] = ask_yes_no("Channels (Discord / Slack)をクリーンアップしますか？", default="y")
 
     return choices
 
@@ -719,9 +719,9 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
 def cleanup_channels(choices: dict) -> list[str]:
     """Channels を一括選択し、停止・削除確認は各機能の既存処理へ委譲する。"""
     if not choices.get("channels"):
-        print_info("Channels(Discord / Slack)のクリーンアップをスキップしました")
+        print_info("Channels (Discord / Slack)のクリーンアップをスキップしました")
         return []
-    print_header("Channels(Discord / Slack) のクリーンアップ")
+    print_header("Channels (Discord / Slack) のクリーンアップ")
     errors = []
     for label, folder in (("Discord", "frontend_channels/discord"), ("Slack", "frontend_channels/slack")):
         try:
@@ -732,9 +732,9 @@ def cleanup_channels(choices: dict) -> list[str]:
         if not ok:
             errors.append(f"Channels: {label}")
     if errors:
-        print_warning("Channels(Discord / Slack): 一部のクリーンアップを完了できませんでした")
+        print_warning("Channels (Discord / Slack): 一部のクリーンアップを完了できませんでした")
     else:
-        print_success("Channels(Discord / Slack) のクリーンアップ完了")
+        print_success("Channels (Discord / Slack) のクリーンアップ完了")
     return errors
 
 
@@ -874,7 +874,7 @@ def main():
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
     print_info("  9. IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)")
-    print_info(" 10. Channels(Discord / Slack)")
+    print_info(" 10. Channels (Discord / Slack)")
     print_info(f" 11. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()
 
