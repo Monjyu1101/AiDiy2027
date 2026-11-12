@@ -5,10 +5,10 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 defineOptions({name:'ナビ時計2D'});
-// ナビ調査中の待ち時間の表示「時計」。黒い画面の左上に日付（yyyy-mm-dd）、中央に大きく時刻「hh:mm:ss」を出す（秒の後ろのミリ秒は出さない）。
+// ナビ調査中の待ち時間の表示「時計」。黒い画面の高さ33%に日付（yyyy-mm-dd）、66%に大きく時刻「hh:mm:ss」を出す（秒の後ろのミリ秒は出さない）。
 // 時刻の数字は「文字の形のマスク」で、その裏に7色（赤・橙・黄・緑・水・青・紫）の虹色の色盤がある。
 // 色盤の中心に目に見えないカラーピッカーがあり、これがランダムにゆっくり動き回るため、数字の色が虹色に移り変わる。
-// 日付と「:」は色を変えない。時刻は表示端末の現在時刻。
+// 日付全体も時刻の数字と同じカラーパレットで変化する。「:」だけは色を変えない。時刻は表示端末の現在時刻。
 import {ref, onMounted, onBeforeUnmount} from 'vue';
 import {bindNavigationKeys} from './ナビ入力.js';
 const emit = defineEmits(['unsupported']);
@@ -17,7 +17,7 @@ let cleanup = () => {};
 
 // 虹色の7色。色盤は、この7色が角度に沿って一周する（円錐グラデーション）。
 const PALETTE = [[255, 84, 84], [255, 168, 58], [255, 235, 80], [92, 236, 124], [72, 204, 255], [98, 122, 255], [190, 112, 255]];
-const STATIC = [196, 208, 232];   // 日付と「:」の色（変化しない）
+const STATIC = [196, 208, 232];   // 「:」と背景の色（変化しない）
 const rgb = (color, alpha = 1) => `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
 const pad = value => String(value).padStart(2, '0');
 const FONT = size => `700 ${size}px ui-monospace,"Cascadia Mono",Consolas,"Courier New",monospace`;
@@ -30,7 +30,8 @@ onMounted(() => {
   if (!ctx) { emit('unsupported'); return; }
   // 数字のマスク用の描画面（時刻の周りだけの大きさ）。
   const mask = document.createElement('canvas'), maskCtx = mask.getContext('2d');
-  if (!maskCtx) { emit('unsupported'); return; }
+  const dateMask = document.createElement('canvas'), dateCtx = dateMask.getContext('2d');
+  if (!maskCtx || !dateCtx) { emit('unsupported'); return; }
   // 見えないカラーピッカー：マスク内の相対位置（0〜1。少し外側まで）をランダムな目標へなめらかに動かす。
   const picker = {u: rand(.1, .9), v: rand(.2, .8), tu: .5, tv: .5, wait: 0, angle: rand(0, Math.PI * 2)};
   let raf = 0, frameOwner, disposed = false, fontSize = 0, fontWidth = 0, last = 0;
@@ -68,13 +69,13 @@ onMounted(() => {
       const glow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * .62);
       glow.addColorStop(0, rgb(STATIC, .07)); glow.addColorStop(1, rgb(STATIC, 0)); ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
 
-      // 中央の大きな時刻「hh:mm:ss」を等幅で、画面の幅いっぱいに収める。
+      // 高さ66%の大きな時刻「hh:mm:ss」を等幅で、画面の幅いっぱいに収める。
       if (!fontWidth) {
         ctx.font = FONT(100); const unit = ctx.measureText('00:00:00').width;
         fontSize = Math.max(14, Math.min(100 * (w * .92) / unit, h * .5)); fontWidth = w;
       }
       ctx.font = FONT(fontSize); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-      const cell = ctx.measureText('0').width, left = (w - cell * clock.length) / 2, centerY = h * .5;
+      const cell = ctx.measureText('0').width, left = (w - cell * clock.length) / 2, centerY = h * .66;
       const padding = fontSize * .3, regionX = left - padding, regionY = centerY - fontSize * .75, regionW = cell * clock.length + padding * 2, regionH = fontSize * 1.5;
 
       // 「:」は色を変えない。
@@ -97,10 +98,25 @@ onMounted(() => {
       ctx.restore();
       ctx.drawImage(mask, regionX, regionY, regionW, regionH);
 
-      // 左上の日付
-      const dateSize = Math.max(12, Math.min(w, h) * .055);
-      ctx.font = FONT(dateSize); ctx.fillStyle = rgb(STATIC); ctx.shadowColor = rgb(STATIC, .5); ctx.shadowBlur = dateSize * .4;
-      ctx.fillText(text, dateSize * .8, dateSize * 1.3); ctx.shadowBlur = 0;
+      // 高さ33%に、少し大きくした日付を横中央揃えで表示する。
+      ctx.font = FONT(100);
+      const dateSize = Math.min(Math.max(12, Math.min(w, h) * .075), 100 * w * .92 / ctx.measureText(text).width);
+      ctx.font = FONT(dateSize);
+      const dateW = ctx.measureText(text).width + dateSize * .6, dateH = dateSize * 1.5;
+      const dateX = (w - dateW) / 2, dateY = h * .33 - dateH / 2;
+      // 日付全体にも時刻と同じ7色とピッカーを適用する。
+      const dateMaskW = Math.max(1, Math.round(dateW * dpr)), dateMaskH = Math.max(1, Math.round(dateH * dpr));
+      if (dateMask.width !== dateMaskW || dateMask.height !== dateMaskH) { dateMask.width = dateMaskW; dateMask.height = dateMaskH; }
+      dateCtx.setTransform(dpr, 0, 0, dpr, 0, 0); dateCtx.clearRect(0, 0, dateW, dateH);
+      dateCtx.font = FONT(dateSize); dateCtx.textBaseline = 'middle'; dateCtx.textAlign = 'center'; dateCtx.fillStyle = '#fff';
+      dateCtx.fillText(text, dateW / 2, dateH / 2);
+      dateCtx.globalCompositeOperation = 'source-in';
+      dateCtx.fillStyle = colorField(dateCtx, picker.u * dateW, picker.v * dateH, dateW, dateH); dateCtx.fillRect(0, 0, dateW, dateH);
+      dateCtx.globalCompositeOperation = 'source-over';
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      ctx.filter = `blur(${Math.max(2, dateSize * .08)}px)`; ctx.globalAlpha = .75; ctx.drawImage(dateMask, dateX, dateY, dateW, dateH);
+      ctx.restore();
+      ctx.drawImage(dateMask, dateX, dateY, dateW, dateH);
     }
     schedule();
   }
@@ -113,7 +129,7 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" data-scene="ナビ時計2D" class="ナビ時計2D" role="img" aria-label="ナビ時計2D。ナビ調査中の表示。左上に今日の日付、中央に大きく時分秒が表示され、数字の色は虹色に移り変わります。">
+  <div ref="stage" data-scene="ナビ時計2D" class="ナビ時計2D" role="img" aria-label="ナビ時計2D。ナビ調査中の表示。高さ33%の中央に今日の日付、66%の中央に大きく時分秒が表示され、日付と時刻の数字は虹色に移り変わります。">
     <canvas ref="canvas" aria-hidden="true"></canvas>
   </div>
 </template>
