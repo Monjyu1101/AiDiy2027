@@ -5,5 +5,5 @@
 // https://github.com/monjyu1101/AiDiy2027
 export const アプリアイコン=Object.freeze({chrome:'Chrome.svg',...Object.fromEntries(['avatar','task','team','browser','ide','cpu','navi','console','code','live','discord','slack'].map(id=>[id,`AiDiy_${id}.png`])),});
 
-// 通常・円形で同じ順序を使う。Browserの直後をHermes、Slackの直後をCPU、Chromeは最後にする。
-export function 起動項目を整列(items){const ids=['avatar','task','team','ide','navi','console','code','live','browser','aidiy_hermes','discord','slack','cpu','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];return items.map(item=>({...item,名前:item.id==='browser'?'Browser':item.id==='aidiy_hermes'?'Hermes':item.名前})).sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));}
+// 通常・ミニ・円形で同じ順序を使う。Avatar・Task・TeamをCPUの前、Discord・SlackをCPUの後に並べ、Chromeは最後にする。
+export function 起動項目を整列(items){const ids=['ide','console','browser','navi','code','live','aidiy_hermes','avatar','task','team','cpu','discord','slack','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];return items.map(item=>({...item,名前:item.id==='browser'?'Browser':item.id==='aidiy_hermes'?'Hermes':item.名前})).sort((a,b)=>ids.indexOf(a.id)-ids.indexOf(b.id));}

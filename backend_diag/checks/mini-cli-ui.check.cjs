@@ -206,7 +206,7 @@ test('アイコンは上段AiDiy7種（CPUを含む）＋Hermes、下段外部CL
  const upper=mount(compile('components/アプリ起動/ミニアプリ起動.vue',{modules:{'./アプリアイコン.mjs':icons}}),()=>({state:app,cliState:state,online:true}));
  const lower=mount(compile('components/アプリ起動/ミニCLI起動.vue'),()=>({state,appState:app,online:true}));
  const upperButtons=()=>upper.nodes().filter(n=>n.props['data-app']||n.props['data-cli']),lowerButtons=()=>lower.nodes().filter(n=>n.props['data-cli']),hermes=()=>upper.nodes().find(n=>n.props['data-cli']==='aidiy_hermes');
- try{await flush();assert.equal(upperButtons().length,8);assert.deepEqual(upperButtons().map(n=>n.props['data-app']||n.props['data-cli']),[...apps.filter(id=>!['discord','cpu'].includes(id)),'aidiy_hermes','discord','cpu']);assert.deepEqual(lowerButtons().map(n=>n.props['data-cli']),ids.filter(id=>id!=='aidiy_hermes'));assert.equal(lowerButtons().length,6);assert.ok(!lowerButtons().some(n=>n.props['data-cli']==='aidiy_hermes'));assert.equal(hermes().props.disabled,true);
+ try{await flush();assert.equal(upperButtons().length,8);assert.deepEqual(upperButtons().map(n=>n.props['data-app']||n.props['data-cli']),['ide','console','code','live','aidiy_hermes','avatar','cpu','discord']);assert.deepEqual(lowerButtons().map(n=>n.props['data-cli']),ids.filter(id=>id!=='aidiy_hermes'));assert.equal(lowerButtons().length,6);assert.ok(!lowerButtons().some(n=>n.props['data-cli']==='aidiy_hermes'));assert.equal(hermes().props.disabled,true);
   assert.ok([...upper.nodes(),...lower.nodes()].every(n=>!n.props.class?.includes('mini-icon-caption')));
   for(const button of [...upperButtons(),...lowerButtons()]){
    const img=descendants(button).find(n=>n.tag==='img'),appId=button.props['data-app'],cliId=button.props['data-cli'];

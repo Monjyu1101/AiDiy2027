@@ -15,7 +15,7 @@ function icon(key){
  if(!/^[a-zA-Z_]+\.(svg|png)$/.test(name))return '';
  try{if(name.endsWith('.png'))return nativeImage.createFromPath(path.join(__dirname,'../static',name)).resize({width:32,height:32}).toDataURL();return `data:image/${name.endsWith('.svg')?'svg+xml':'png'};base64,${readFileSync(path.join(__dirname,'../static',name)).toString('base64')}`;}catch{return '';}
 }
-const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:cpu','app:console','app:code','app:live','app:browser','cli:aidiy_hermes','app:discord','app:slack']);
+const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:cpu','app:console','app:code','app:live','app:browser','app:navi','cli:aidiy_hermes','app:discord','app:slack']);
 function メニュー範囲(cursor,area,items){
  const left=items.filter(item=>aidiyKeys.has(item.key)).length,rows=Math.max(left,items.length-left,1);
  const width=Math.min(264,area.width),height=Math.min(122+rows*32,area.height);

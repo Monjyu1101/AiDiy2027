@@ -50,17 +50,17 @@ test('Slack process matching is module-local and does not match Discord, command
 });
 test('normal keeps unavailable Slack disabled; mini hides it and orders available Slack after Discord',async()=>{
  const rows=[{id:'cpu',名前:'CPU'},{id:'chrome',名前:'Chrome'},{id:'slack',名前:'Slack',単一起動:true,利用可能:false,無効表示:'未導入'},{id:'discord',名前:'Discord'}];
- const {起動項目を整列}=dependency('components/アプリ起動/アプリアイコン.mjs');assert.deepEqual(Array.from(起動項目を整列(rows),x=>x.id),['discord','slack','cpu','chrome']);
+ const {起動項目を整列}=dependency('components/アプリ起動/アプリアイコン.mjs');assert.deepEqual(Array.from(起動項目を整列(rows),x=>x.id),['cpu','discord','slack','chrome']);
  const ref=value=>({value}),state={項目:ref(rows),フォルダ:ref('/work'),処理中:ref(''),選択中:ref(false),通知:ref(''),結果:ref({}),一覧:ref(null),利用可能:id=>id!=='slack',不可理由:id=>id==='slack'?'Slack の起動ファイルが見つかりません。':'',読込(){},起動(){assert.fail('render must not launch');}};
  for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue']){
   if(name.startsWith('ミニ')){
    const hidden=await render('components/アプリ起動/'+name,{state,online:true});assert.doesNotMatch(hidden,/data-app="slack"/);
    const available={...state,利用可能:()=>true,不可理由:()=>''};
    const visible=await render('components/アプリ起動/'+name,{state:available,online:true});
-   assert.ok(visible.indexOf('data-app="discord"')<visible.indexOf('data-app="slack"'));assert.match(visible,/src="AiDiy_slack.png"/);assert.ok(visible.indexOf('data-app="slack"')<visible.indexOf('data-app="cpu"'));
+   assert.ok(visible.indexOf('data-app="discord"')<visible.indexOf('data-app="slack"'));assert.match(visible,/src="AiDiy_slack.png"/);assert.ok(visible.indexOf('data-app="cpu"')<visible.indexOf('data-app="discord"'));
    continue;
   }
-  const html=await render('components/アプリ起動/'+name,{state,online:true});assert.ok(html.indexOf('data-app="discord"')<html.indexOf('data-app="slack"'));assert.match(html,/src="AiDiy_slack.png"/);assert.ok(html.indexOf('data-app="slack"')<html.indexOf('data-app="cpu"'));assert.doesNotMatch(html,/準備中|frontend_channels|接続済み/);
+  const html=await render('components/アプリ起動/'+name,{state,online:true});assert.ok(html.indexOf('data-app="discord"')<html.indexOf('data-app="slack"'));assert.match(html,/src="AiDiy_slack.png"/);assert.ok(html.indexOf('data-app="cpu"')<html.indexOf('data-app="discord"'));assert.doesNotMatch(html,/準備中|frontend_channels|接続済み/);
   const slack=html.slice(html.indexOf('data-app="slack"'));assert.match(slack.split('</button>')[0],/disabled/);if(name.startsWith('アプリ'))assert.match(slack,/未導入/);
  }
 });

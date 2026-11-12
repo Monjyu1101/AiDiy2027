@@ -179,9 +179,9 @@ test('configured ../ and relative folders resolve against backend_server for val
  await assert.rejects(f.manager.launch('code','../'),{status:400});
 });
 
-test('Navi is before Console and launches only selected project in a separate window',async t=>{
+test('Navi is between Browser and Code and launches only selected project in a separate window',async t=>{
  const {起動項目を整列,アプリアイコン}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');const f=await fixture(t);
- const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='console'));assert.equal(items.find(x=>x.id==='navi').名前,'Navi');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
+ const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='browser')+1,items.findIndex(x=>x.id==='navi'));assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='code'));assert.equal(items.find(x=>x.id==='navi').名前,'Navi');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
  await f.manager.launch('navi',f.project);assert.deepEqual(f.calls[0].args,[join(f.root,'frontend_ide','launch.mjs'),'--app','navi','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.cwd,f.project);
 });
 
@@ -193,7 +193,7 @@ test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
 test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
  await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project]);assert.equal(f.calls[0].options.shell,false);
- const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.equal(ids.indexOf('slack')+1,ids.indexOf('cpu'));
+ const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.deepEqual(ids.slice(ids.indexOf('avatar'),ids.indexOf('slack')+1),['avatar','task','team','cpu','discord','slack']);
 });
 
 test('CPUだけにDiagの実画面を渡し、既存の環境指定を持ち越さない',async t=>{

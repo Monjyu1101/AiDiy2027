@@ -73,7 +73,7 @@ test('通常画面は8アプリ・導入済みCLI・VS Codeを並べ、未導入
   assert.equal((html.match(/width="72" height="72"/g)||[]).length,14);
   assert.match(html,/VS Code でフォルダを開く/);
   for(const id of ['task','team']){const card=html.match(new RegExp(`<article[^>]*data-app="${id}"[^>]*>([\\s\\S]*?)</article>`))[1];assert.match(card,/<button[^>]* disabled/);assert.match(card,/TaskTeam 未起動/);}
-  assert.ok(html.indexOf('data-app="avatar"')<html.indexOf('data-app="task"'));assert.ok(html.indexOf('data-app="task"')<html.indexOf('data-app="team"'));assert.ok(html.indexOf('data-app="team"')<html.indexOf('data-app="ide"'));
+  assert.ok(html.indexOf('data-app="avatar"')<html.indexOf('data-app="task"'));assert.ok(html.indexOf('data-app="task"')<html.indexOf('data-app="team"'));assert.ok(html.indexOf('data-app="ide"')<html.indexOf('data-app="avatar"'));
   assert.doesNotMatch(html,/app-launch-name/);
   assert.ok(html.indexOf('data-cli="aidiy_hermes"')<html.indexOf('data-cli="claude"'));
   for(const item of entries){
@@ -108,5 +108,23 @@ test('ミニ切替の配線はタイトルバーだけに残し、通常ペー�
   assert.equal((html.match(/aria-label="ランチャー表示"/g)||[]).length,1);
   const button=html.match(/<button class="title-mini-switch"[^>]*>/)[0];
   assert.equal(/ disabled(?:[ >])/.test(button),!connected);
+ }
+});
+
+
+test('通常・ミニは指定の先頭6アプリとAvatar・Task・Team・CPU・Discord・Slackを同じ順序で表示する',async()=>{
+ const expected=['ide','console','browser','navi','code','live','aidiy_hermes','avatar','task','team','cpu','discord','slack','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
+ const cliIds=new Set(['aidiy_hermes','claude','codex','copilot','agy','grok','opencode','vscode']);
+ const cliState={項目:value([...expected].reverse().filter(id=>cliIds.has(id)).map(id=>({id,名前:id,利用可能:true}))),処理中:value(''),通知:value(''),失敗:value(false),読込:async()=>{}};
+ for(const missing of [[],['task','team'],['browser','slack'],[]])for(const busy of [false,true]){
+  const state=appState({folder:'/fixture/project',busy});
+  state.項目=value([...expected].reverse().filter(id=>!cliIds.has(id)).map(id=>({id,名前:id})));
+  state.利用可能=id=>!missing.includes(id);state.不可理由=id=>missing.includes(id)?'未起動':'';
+  for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue']){
+   const html=await render('components/アプリ起動/'+name,{state,cliState,online:true,visible:true});
+   const shown=Array.from(html.matchAll(/data-(?:app|cli)="([^"]+)"/g),match=>match[1]);
+   const wanted=name.startsWith('ミニ')?expected.filter(id=>id==='aidiy_hermes'||!cliIds.has(id)&&id!=='chrome'&&!missing.includes(id)):expected;
+   assert.deepEqual(shown,wanted,name);
+  }
  }
 });

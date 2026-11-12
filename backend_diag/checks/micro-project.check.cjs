@@ -113,8 +113,8 @@ test('右クリック一覧は表示アイコンと同じ順序・件数で、�
   f.appState.利用可能=()=>true;
   await flush();
   nodes(f.root).find(n=>n.props['aria-label']==='アイコン化ランチャー').props.onContextmenu({preventDefault(){}});
-  assert.deepEqual(Array.from(f.menus.at(-1),x=>x.key),['app:code','app:browser','cli:aidiy_hermes','app:discord','app:chrome']);
-  assert.deepEqual(Array.from(f.menus.at(-1),x=>x.label),['Code','Browser','Hermes','Discord','Chrome']);
+  assert.deepEqual(Array.from(f.menus.at(-1),x=>x.key),['app:browser','app:code','cli:aidiy_hermes','app:discord','app:chrome']);
+  assert.deepEqual(Array.from(f.menus.at(-1),x=>x.label),['Browser','Code','Hermes','Discord','Chrome']);
   assert.ok(f.menus.at(-1).every(x=>!Object.hasOwn(x,'enabled')));
   f.cliState.項目.value=[];await flush();
   nodes(f.root).find(n=>n.props['aria-label']==='アイコン化ランチャー').props.onContextmenu({preventDefault(){}});
@@ -142,14 +142,17 @@ test('二重円は外側完了後に内側を展開し、収納は同じ遅延�
 test('起動不可の項目は円周と右クリックから消え、復帰すると同じ順序へ戻る',async()=>{
  const f=await fixture();let launches=0;const blocked=vue.ref(new Set());
  try{
-  const ids=['avatar','task','team','browser','discord','slack','cpu','chrome'];
+  const ids=['chrome','slack','discord','cpu','team','task','avatar','browser','live','code','console','navi','ide'];
+  const cliIds=['vscode','opencode','grok','agy','copilot','codex','claude','aidiy_hermes'];
+  const expected=['ide','console','browser','navi','code','live','aidiy_hermes','avatar','task','team','cpu','discord','slack','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
+  f.cliState.項目.value=cliIds.map(id=>({id,名前:id,利用可能:true}));
   f.appState.項目.value=ids.map(id=>({id,名前:id}));f.appState.利用可能=id=>!blocked.value.has(id);f.appState.起動=()=>launches++;
   for(const missing of [[],['task','team'],['task','team','browser','chrome'],['task','team','browser','chrome','slack'],[]]){
    blocked.value=new Set(missing);await flush();
-   const shown=nodes(f.root).filter(n=>n.props.class==='micro-app').map(n=>n.props['data-app']);
-   assert.deepEqual(shown,['avatar','task','team','browser','discord','slack','cpu','chrome'].filter(id=>!missing.includes(id)));
+   const shown=nodes(f.root).filter(n=>n.props.class==='micro-app').map(n=>n.props['data-app']||n.props['data-cli']);
+   assert.deepEqual(shown,expected.filter(id=>!missing.includes(id)));
    nodes(f.root).find(n=>n.props['aria-label']==='アイコン化ランチャー').props.onContextmenu({preventDefault(){}});
-   assert.deepEqual(Array.from(f.menus.at(-1),x=>x.key),shown.map(id=>'app:'+id));
+   assert.deepEqual(Array.from(f.menus.at(-1),x=>x.key),shown.map(id=>(cliIds.includes(id)?'cli:':'app:')+id));
    for(const id of missing)f.menu({type:'launch',key:'app:'+id});
    assert.equal(launches,0);
   }
