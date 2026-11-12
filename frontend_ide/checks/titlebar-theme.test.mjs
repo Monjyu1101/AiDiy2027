@@ -55,7 +55,7 @@ test('本文の黒基準: タイトルの局所surfaceを本文へ継承せず�
  const layout=read('../src/style.css');
  for(const selector of [':root','.ai-component','.ide-heading','.space-view','.ai-popup','.ai-tabs','.development-app.viewer-window','.development-app.explorer-window','.explorer-window .explorer-panel','.viewer-popup','.explorer-panel'])assert.equal(values(layout,selector).background,'#000',selector);
  assert.equal(values(shared,':root')['--surface'],'#000');
- assert.match(read('../src/components/共通表示/状態バー.vue'),/<\/header>\s*<div class="connection-bar"/,'接続バーと後続本文をタイトル要素に含めない');
+ assert.match(read('../src/components/共通表示/状態バー.vue'),/<\/header>\s*<div[^>]* class="connection-bar"/,'接続バーと後続本文をタイトル要素に含めない');
  for(const rule of rules(layout))for(const decl of rule.nodes.filter(node=>node.type==='decl'&&/^(background|background-color)$/.test(node.prop)&&node.value.includes('--aidiy-titlebar-'))){
   assert.equal(rule.selector,'.development-app .route-controls','タイトル背景の使用先は軌跡のタイトル操作行に限定する');
  }

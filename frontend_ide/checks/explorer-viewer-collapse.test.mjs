@@ -18,19 +18,20 @@ for(const kind of ['explorer','panel-viewer','panel-navigation'])test(kind+': de
  const source=read('src/components/ファイル閲覧/別窓タイトル.js').replace(/^import .*;$/gm,'').replace('export function','function');
  vm.runInNewContext(source+'\nthis.mount=mountPanelTitle;',context);
  const cleanup=context.mount(host,child,owner,'Viewer',kind);
- assert.ok(classes.has('ai-component'));
+ assert.ok(classes.has('ai-component'));assert.equal(render().props.hideConnectionBar,false);
  const toggle=render().slots.leading();assert.equal(toggle.props.collapsed,false);assert.equal(toggle.props.windowContext,child);
  await toggle.props.windowApi.collapsePanel(true);toggle.props.windowApi.beginWindowMove();toggle.props.windowApi.moveWindow('token');toggle.props.windowApi.endWindowMove('token');
  assert.deepEqual(calls,[['collapse',true,'owned-panel'],['begin','owned-panel'],['move','token','owned-panel'],['end','token','owned-panel']]);
  toggle.props.onToggle();assert.equal(render().slots.leading().props.collapsed,true);
- toggle.props.onHidden(true);assert.ok(classes.has('native-panel-collapsed'));
- toggle.props.onHidden(false);assert.ok(!classes.has('native-panel-collapsed'));
+ toggle.props.onHidden(true);assert.ok(classes.has('native-panel-collapsed'));assert.equal(render().props.hideConnectionBar,true);
+ toggle.props.onHidden(false);assert.ok(!classes.has('native-panel-collapsed'));assert.equal(render().props.hideConnectionBar,false);
  cleanup();assert.ok(!classes.has('ai-component'));
 });
 test('Explorer embedded burger is preserved, native detached title uses toggle and Viewer keeps DOM',()=>{
  assert.match(read('src/components/ファイル閲覧/ファイル一覧.vue'),/v-if="!allDisplays&&!?\(detached&&nativePanels\)"/);
  const viewer=read('src/components/ファイル閲覧/閲覧ウィンドウ.vue');
  assert.match(viewer,/class="development-app viewer-window ai-component"/);
+ assert.match(viewer,/:hide-connection-bar="panelHidden"/);
  assert.match(viewer,/<PanelToggle[^>]*@hidden="panelHidden=\$event"/);
  assert.doesNotMatch(viewer,/v-if="!panel(?:Hidden|Collapsed)"/);
  const css=read('src/style.css');assert.match(css,/\.native-panel-collapsed \.connection-bar/);assert.match(css,/\.viewer-window.panel-collapsed > :not\(\.panel-brand\)\{display:none!important\}/);

@@ -240,7 +240,7 @@ Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。�
 | Diag | 通常・ミニ表示。折り畳み中もランチャー／アイコンへの明示切替を受け付け、折り畳みを解除してから対象モードへ遷移する。円形アイコン表示自体はタイトルがないため対象外。専用preloadから送信元を検証して共有controllerを使う。UI配布物と共有ファイルのmanifestも同期する。 |
 | Explorer / Viewer | IDEから切り離した別窓とピン留めViewerに共通開閉を適用。別窓は三本バーではなく□▽で開始する。Explorer別窓の重複した2行目ヘッダーは表示せず、1行目に開閉・接続状態・タイトル・窓操作を集約する。ツリーの「全てを閉じる」と更新は検索方法行の右端へ置く。選択・表示内容を破棄しない。所有元IDEの検証を維持し、埋込パネルの操作と別窓の開閉を混同しない。📌移行は元の左上位置・作業領域クランプを維持し、親zoomと共通DPI補正を引き継ぐ。Vueの別窓レイアウト反映後に表示演出を開始し、元画像は表示完了まで保持する。 |
 | IDE本体 | タイトル左端の共通▽／▶で本文と窓を開閉する。3D／2Dはタイトルの接続表示横へ置き、▶の間に押した場合も指定モードで展開する。展開途中の連続選択は最後のモードを採用し、宇宙・選択・子窓を破棄しない。既存Explorerバーガーは変更しない。折り畳み中／展開中はVR開始と配置保存・復元を禁止し、VR／配置処理中の折り畳みも拒否する。 |
-| CPU | ▽は通常背景、▷は背景透過。内容や窓寸法は畳まない。透明Electron窓の上で背景色だけを切り替え、計測・グラフと移動操作を保持する。 |
+| CPU | ▽は通常背景、▷は背景透過。内容や窓寸法は畳まない。透明Electron窓の上で本文の背景色だけを切り替え、計測・グラフと移動操作を保持する。タイトルは透過にせず通常背景を維持し、既存のhover／focusによる表示・非表示は変えない。 |
 
 Avatar、その他の独立パネルとDiscord/Slackは、この追加適用に含めない。別指示なしで一括変更しない。
 
@@ -286,3 +286,17 @@ Console / Code / Live / IDE の Electron 起動完了は1行で案内し、ブ�
 Avatar の両 Vite 設定は `clearScreen: false` とし、開発サーバー再起動でも過去の出力を消しません。アプリ内のConsole・対話CLIの画面制御や、全体起動の明示的なリブート操作は別機能なので変更しません。Windows実機では、起動前の文字列が残ること、日本語の配置先・作業フォルダ、空白入り引数、失敗時の終了コード、`--wait` / Avatar の Ctrl+C を確認してください。
 
 IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs`。実Appと共通タイトル／開閉部品を使い、重い宇宙表示とIPCを模擬する。3D／2D選択からの展開、連打時の最終選択、拒否後の復元、DOM／入力保持、Web版max-heightを確認する。`--compile-only` は画面を撮影しない。実Electronの窓寸法、DPI、最大化復元は別途確認する。
+
+### 折り畳み後のバー・外周を残さない確認
+
+シアンバーはタイトルとボディの間の区切りであり、折り畳み時はボディ側として扱う。展開時はタイトル直下・本文直前に置き、タイトル31pxの中へ含めない。折り畳み完了時はボディとともに領域ごと隠し、展開時に同じ位置へ戻す。
+
+共通`状態バー.vue`には`hideConnectionBar`へ縮小完了の状態を渡す。親のscoped CSSや31pxの窓クリップだけで接続バーを隠さない。状態バー自身の`v-show`で高さ・境界線を含めて非表示にし、接続状態を観測する別窓のためDOMは保持する。展開時は既存バーを復帰させる。折畳中の明滅更新も停止する。
+
+タイトルだけの状態ではタイトルを31 CSS pxに固定し、Task/Teamの外枠とDiagの画面全高に伸びる外周を残さない。Diagのroot高さ制限は縮小完了後に適用し、途中の220ms演出を潰さない。native高さは`ceil(31 * zoom)`であり、端数を切り捨てるとタイトルを欠けさせる。端数余白はタイトルと同色にし、バーを実体として非表示にする。
+
+対象はIDE本体、Code、Live、Console、Browser、Navi単独／別窓、Task／Team、Explorer、別窓／独立Viewer、Diag標準／ミニ。CPUの▷は背景透過切替であり本文折畳みではない。Browser全画面ヘッダー・Diagアイコン表示など別モードも混同しない。
+
+`collapsed-status-bar.test.mjs`はバーのinline非表示と各呼出し、`panel-collapse.test.cjs`は全窓種の端数zoom・DPI丸めと反復復元を確認する。画面試験では本番scoped CSSをコンパイルし、試験だけの全体隠蔽CSSを追加しない。タイトル・rootの高さ、バーの`display`と実寸0、外周border、3回以上の開閉復帰を測る。headless Electronの固定寸法iframe内での実Vue測定はCSS描画検証であり、Windows実窓・DPI画面・画像目視の代わりにはしない。
+
+再実行は `ELECTRON_PATH=<Electron実行ファイル> node frontend_ide/scripts/check-titlebar-only-electron.mjs`（共通6画面、`--baseline`でmain比較）、`node frontend_ide/scripts/check-detached-titlebar.mjs` → Electronで `frontend_ide/scripts/check-detached-titlebar-render.cjs`（Explorer／Viewer／Navi別窓）、Electronで `backend_diag/checks/collapsed-title-render.cjs`（Diag標準／ミニ）。headless実行には `--headless --no-sandbox --disable-gpu` を使う。Task／Teamの描画ページは `node frontend_ide/scripts/check-taskteam-titlebar.mjs --write-page` で生成する。

@@ -30,7 +30,7 @@ test('VS Code版は単独版と同じ共通CSSを配布・参照する', () => {
 
 test('Task / Teamは明示online、Liveは実接続試行中だけonlineにする', () => {
   for (const file of ['タスクチーム/タスクチームパネル']) {
-    assert.match(read(`../src/components/${file}.vue`), /<StatusBar mode="online"/);
+    assert.match(read(`../src/components/${file}.vue`), /<StatusBar[^>]* mode="online"/);
   }
   assert.match(read('../src/components/ライブ/ライブパネル.vue'), /:mode="connected \|\| busy \? 'online' : 'offline'"/);
   const status = read('../src/components/共通表示/状態バー.vue');

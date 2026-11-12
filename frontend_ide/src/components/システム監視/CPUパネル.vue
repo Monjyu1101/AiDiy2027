@@ -78,7 +78,6 @@ onBeforeUnmount(()=>{if(!props.floating)document.documentElement.classList.remov
 .cpu-panel{position:relative;display:flex;flex-direction:column;width:100%;height:100%;min-height:0;background:#000;color:#d9e5ec;overflow:hidden}
 .cpu-panel.cpu-transparent{background:transparent;box-shadow:none;border-color:transparent}
 html.cpu-transparent-window,html.cpu-transparent-window body,html.cpu-transparent-window #app,html.cpu-transparent-window .development-app{background:transparent}
-.cpu-transparent>.cpu-title{background:transparent}
 .cpu-floating{position:absolute;right:8px;bottom:min(376px,max(8px,calc(100% - 168px)));width:min(240px,calc(100% - 16px));height:160px;z-index:50;border:1px solid #465460;box-shadow:0 12px 32px #0009;resize:both;min-width:min(240px,calc(100% - 16px));min-height:150px;max-width:calc(100% - 16px);max-height:calc(100% - 16px)}
 /* CPU専用の小さいタイトル。接続表示・接続バー・その監視処理は持たない。 */
 .cpu-title{position:absolute;left:0;right:0;top:0;z-index:1;opacity:0;pointer-events:none;height:31px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:4px;padding:0 4px;background:#30343a;color:white}

@@ -114,5 +114,7 @@ html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:fl
 
 /* 折畳み時は接続線の黒地・外周の下辺も残さず、タイトルだけを描く。 */
 html:has(.diag-panel[data-collapsed="true"]),body:has(.diag-panel[data-collapsed="true"]),#app:has(.diag-panel[data-collapsed="true"]){background:transparent}
-#app:has(.diag-panel[data-collapsed="true"]){border-bottom:0}
+#app:has(.diag-panel[data-collapsed="true"]){border:0}
+/* 窓と本文の縮小演出を終えてからルートも31pxに制限する。 */
+#app:has(.diag-panel-hidden){height:31px;max-height:31px;overflow:hidden}
 .diag-panel[data-collapsed="true"]>.connection-bar{display:none!important}

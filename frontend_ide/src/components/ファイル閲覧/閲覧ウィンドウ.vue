@@ -37,7 +37,7 @@ onBeforeUnmount(()=>{disposed=true;clearInterval(timer);controller.abort();});
 </script>
 <template>
   <div class="development-app viewer-window ai-component" :class="{'desktop-window':desktop,'panel-opening':!desktop,'panel-collapsed':panelHidden}" data-app="viewer">
-    <StatusBar :title="`Viewer - ${name}`" status="別ウィンドウ" :connected="state.connected" :mode="state.mode" :desktop="desktop"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template></StatusBar>
+    <StatusBar :hide-connection-bar="panelHidden" :title="`AiDiy IDE / Viewer - ${name}`" :connected="state.connected" :mode="state.mode" :desktop="desktop"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template></StatusBar>
     <p v-if="state.active&&error" class="input-hint" role="status">{{ error }} 作業を保持して再試行します。</p>
     <FileViewer v-if="state.active" :file="file" :root="state.project?.path||''" pinned />
     <p v-else class="panel-loading">{{ error||'読み込み中…' }}</p>

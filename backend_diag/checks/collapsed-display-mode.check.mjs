@@ -30,7 +30,12 @@ test('mode buttons remain usable while folded, only in-flight animation is gated
  assert.match(app,/:is="ステータスバー" :key="パネル表示世代"/);
 });
 test('folded normal and mini title remove connection bar including black background',()=>{
- assert.match(source('components/ウィンドウ/ステータスバー.vue'),/v-show="!collapsed&&!hidden" class="connection-bar"/);
+ assert.match(source('components/ウィンドウ/ステータスバー.vue'),/v-if="!collapsed&&!hidden" class="connection-bar"/);
  assert.match(source('style.css'),/\.diag-panel\[data-collapsed="true"\]>\.connection-bar\{display:none!important\}/);
  assert.match(source('style.css'),/#app:has\(\.diag-panel\[data-collapsed="true"\]\)\{background:transparent\}/);
+});
+
+test('folded root never paints viewport-height side borders below the title',()=>{
+ assert.match(source('style.css'),/#app:has\(\.diag-panel\[data-collapsed="true"\]\)\{border:0\}/);
+ assert.match(source('style.css'),/#app:has\(\.diag-panel-hidden\)\{height:31px;max-height:31px;overflow:hidden\}/);
 });

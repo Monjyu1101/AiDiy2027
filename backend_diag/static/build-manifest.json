@@ -48,9 +48,9 @@
   "../static/LICENSE-Octicons.txt": "da259c8bd0de62713ccdcf88910aebca810644f98c2c912bad814fc79ea778df",
   "../static/LICENSE-OpenCode.txt": "625f0f619133f89bbbb2abe37369613dfa1885eba1e50d02170deb62bb42cb6b",
   "../static/LICENSE_ICONS.md": "21dc3ebb929acac1a378bdfc860a96fececdc10358932bd99b757f7c2d9de78c",
-  "../static/app.js": "67a0f8ef5e825f4bf2317e2a2e85ef8c44903ff702fc9407cd385da99be5b1eb",
+  "../static/app.js": "71e871584494383d372eceae73a5d386992981d2dc31c2d2594781599a848090",
   "../static/index.html": "e0baa1f5d602055c2316cc16eb8a180137dabf37fa31fd57176aadffd317776d",
-  "../static/style.css": "649a6c8f5844b6065eb19fcd0df0255bd859afe80f1355b3807f4e6637b2dfc5",
+  "../static/style.css": "85c3147c7f8f61f6fbbaf620088f44cbbea6b926a6c084fe6077eb36e3afbead",
   "../モデル試行/defaults.mjs": "27a9a7922a1b6ee1af95063bf46141fbaaaa222ab02da2043f2136830388bd40",
   "build.mjs": "5dff0645f7e822827a05f51dc367f63b65ea7261f89041dcd879f9b40d43f62c",
   "package-lock.json": "5c59c0e766401338d8aa43b32b732100653c5225c4e2e90347737657b67245c3",
@@ -128,7 +128,7 @@
   "src/components/アプリ起動/起動モーション.css": "904f7868e224eefb9b31781a85a4390a1fd5bf6ea9fe028347b9de26bb67679b",
   "src/components/アプリ起動/起動モーション.mjs": "5c4069cf3e2a311a02ee7d559578b5e83c9fa2465d9634c8622a58e8c3bbe960",
   "src/components/ウィンドウ/Tools接続.mjs": "d1d9166398ba18abee49601f779d65d8ef09f851d8ba56846d0666676912501c",
-  "src/components/ウィンドウ/ステータスバー.vue": "f7c360b3d8b9556d05587a2ec65edd828601e3f4334b18364cea294b35c9b928",
+  "src/components/ウィンドウ/ステータスバー.vue": "d3b45b395f0a79d13088af36a568046232c5125fb2d8a499456469d5a9aae7e2",
   "src/components/ウィンドウ/表示切替準備.mjs": "e44778f8a37d2f3d0b23e8a5b6c77f610c52a92eb2b066869f2924792f5d3363",
   "src/components/ウィンドウ/認証セッション.mjs": "6f48cbdd6f74be221c56e21d6783bc061d867476717489fa31c2e16d31f86630",
   "src/components/ウィンドウ/起動ミニ表示.mjs": "4065443b4c62137a4092cd56d7ab3c021cc029779bbcfc0d362978fccaa19f3c",
@@ -173,6 +173,6 @@
   "src/dialog/AI設定再起動.vue": "eed3cfedd2efba5c78bb750b2408390f2d49401d883201a04bce8dd809083f95",
   "src/index.html": "e0baa1f5d602055c2316cc16eb8a180137dabf37fa31fd57176aadffd317776d",
   "src/main.js": "e9b990f6218a99450f695b974de16c44aa43e1ddfecc54956cd4969b902074da",
-  "src/style.css": "a61e2dab0b88076e83f5011e3eeea8cdb73597891de86cf00a572b0eb0a0b51c",
+  "src/style.css": "2ce6922a4c1d1510cb3727434f2e0deeb9173ad8476bf9c775532c833b882667",
   "tsconfig.runtime.json": "504ec5636210b2c6ae0f980c473cafd961e9785ef1434bd4b2d248812ca2c04a"
 }

@@ -23,7 +23,7 @@ function pin(){
   if(disposed)return Promise.resolve(false);pinBusy.value=true;
   windowPanel??=createPanelWindow({element:()=>panel.value,
     rectangle:()=>panel.value?.querySelector('.history-embedded')||panel.value?.querySelector('.viewer-popup, .viewer-pinned'),
-    title:`Viewer - ${props.file.name}`,displayTitle:()=>`Viewer - ${viewer.value?.selectedFile()?.name||props.file.name}`,kind:'panel-viewer',className:'viewer-window',
+    title:`AiDiy IDE / Viewer - ${props.file.name}`,displayTitle:()=>`AiDiy IDE / Viewer - ${viewer.value?.selectedFile()?.name||props.file.name}`,kind:'panel-viewer',className:'viewer-window',
     changed:value=>{detached.value=value;},closed:()=>emit('close'),moved:()=>viewer.value?.moved(),
     recovered:()=>emit('recover'),report:message=>{error.value=message;}});
   pinRequest=windowPanel.pin().then(ok=>{if(ok)emit('detached');return !!ok;}).finally(()=>{pinBusy.value=false;pinRequest=undefined;});

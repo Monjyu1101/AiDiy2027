@@ -311,3 +311,6 @@ dialog.model-dialog::backdrop { background: #000a; }
 .development-app.ide.desktop-window { animation: startup-fade-in .45s ease-out both; }
 .desktop-opening .development-app, .desktop-opening .ai-component { opacity: 0; animation: none; }
 .desktop-opening .terminal-welcome *, .desktop-opening .terminal-welcome *::before, .desktop-opening .terminal-welcome *::after { animation-play-state: paused !important; }
+
+/* ceil(31 × zoom)の端数余白もタイトルと同色にし、黒い帯を残さない。 */
+.ai-component.panel-collapsed,.development-app.ide.ide-collapsed,.ai-component.native-panel-collapsed{background:var(--aidiy-titlebar-background);overflow:hidden}

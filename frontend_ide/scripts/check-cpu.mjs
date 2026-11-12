@@ -64,6 +64,8 @@ try{
   assert.equal(await evaluate("document.querySelector('.cpu-display-mark').textContent"),'▷');
   assert.equal(await evaluate("getComputedStyle(document.documentElement).backgroundColor"),'rgba(0, 0, 0, 0)');
   assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-panel')).backgroundColor"),'rgba(0, 0, 0, 0)');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).backgroundColor"),'rgb(48, 52, 58)');
+  assert.equal(await evaluate("getComputedStyle(document.querySelector('.cpu-title')).opacity"),'1');
   assert.equal(await evaluate("document.querySelector('.cpu-chart').getBoundingClientRect().height"),chart);
   await evaluate("document.querySelector('.cpu-display-toggle').click()");
   assert.equal(await evaluate("document.querySelector('.cpu-display-mark').textContent"),'▽');

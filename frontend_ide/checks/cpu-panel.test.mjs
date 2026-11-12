@@ -148,3 +148,12 @@ test('CPU native surface alone supports renderer-controlled transparency without
  const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
  assert.doesNotMatch(panel,/setBounds|setSize|panelCollapse|setPanelCollapsed/);
 });
+
+
+test('CPU透過時もタイトル背景を維持し、hover・focusでのみ表示する',()=>{
+ const panel=readFileSync(new URL('../src/components/システム監視/CPUパネル.vue',import.meta.url),'utf8');
+ assert.match(panel,/\.cpu-title\{[^}]*background:#30343a/);
+ assert.doesNotMatch(panel,/\.cpu-transparent\s*>\s*\.cpu-title\s*\{/);
+ assert.match(panel,/\.cpu-title\{[^}]*opacity:0;pointer-events:none/);
+ assert.match(panel,/\.cpu-panel:hover>\.cpu-title,\.cpu-panel:focus-within>\.cpu-title\{opacity:1;pointer-events:auto\}/);
+});

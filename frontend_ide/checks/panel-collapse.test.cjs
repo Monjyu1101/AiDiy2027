@@ -79,3 +79,27 @@ for(const kind of ['ide','code','live','console','browser','navi','task','team',
  f.step(500);
  assert.equal(f.timers.size,0);assert.equal(contents.listenerCount('did-start-navigation'),0);assert.equal(f.win.listenerCount('closed'),0);
 });
+
+// CSSの31pxはrenderer zoomだけをDIPへ換算する。OSのscaleFactorをもう一度
+// 掛けない。端数DPIの丸め・外枠差はsetWindowBoundsに任せ、開閉で蓄積しない。
+for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': fractional zoom and display DPI keep a title-only native height without accumulating bounds',async()=>{
+ for(const zoom of [0.75,0.9,1,1.1,1.25,1.5,2])for(const scaleFactor of [1,1.25,1.5,2]){
+  const f=fixture(kind);f.win.webContents.getZoomFactor=()=>zoom;
+  f.win.getNormalBounds=()=>({...f.win.bounds});
+  // 模擬OSは要求DIP→物理px→DIPの往復を行い、フレーム外枠差も返す。
+  // 実Windows描画の代用ではなく、補正処理に対する回帰試験。
+  const roundDip=value=>Math.round(Math.round(value*scaleFactor)/scaleFactor);
+  f.win.setBounds=value=>{f.win.bounds={...value,width:roundDip(value.width)+1,height:roundDip(value.height)+1};};
+  const expectedHeight=Math.ceil(31*zoom);
+  for(let n=0;n<5;n++){
+   const close=f.toggle(true);f.step(80);f.step(240);assert.deepEqual(await close,{ok:true});
+   assert.equal(f.win.bounds.width,700,`${kind} zoom=${zoom} DPI=${scaleFactor} width`);
+   assert.equal(f.win.bounds.height,expectedHeight,`${kind} zoom=${zoom} DPI=${scaleFactor} height`);
+   // ceilによる余りは1 DIP未満。バーを消すのはrendererの責務。
+   assert.ok(f.win.bounds.height-31*zoom>=0&&f.win.bounds.height-31*zoom<1);
+   const open=f.toggle(false);f.step(240);assert.deepEqual(await open,{ok:true});
+   assert.deepEqual(f.win.bounds,{x:10,y:20,width:700,height:600});
+   assert.equal(f.win.webContents.getZoomFactor(),zoom);
+  }
+ }
+});

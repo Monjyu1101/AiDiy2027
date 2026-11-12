@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { parse, compileScript } from '@vue/compiler-sfc';
 import { transform } from 'esbuild';
 import * as Vue from 'vue';
@@ -163,4 +164,14 @@ test('Task and Team collapse keeps authentication and open peer state intact', a
   assert.match(source, /@hidden="panelHidden = \$event"/);
   assert.match(source, /\.taskteam-shell\.panel-collapsed > :not\(\.panel-brand\)\{display:none!important\}/);
   assert.doesNotMatch(source, /v-if="!?panel(?:Hidden|Collapsed)"/);
+});
+
+test('Task/Team removes the connection bar explicitly without relying on scoped CSS across StatusBar roots',()=>{
+ const source=readFileSync(new URL('../src/components/タスクチーム/タスクチームパネル.vue',import.meta.url),'utf8');
+ assert.match(source,/<StatusBar[^>]*:hide-connection-bar="panelHidden"/);
+ assert.match(source,/\.taskteam-shell\.panel-collapsed\{border:0\}/);
+ const harness=readFileSync(new URL('../scripts/check-taskteam-titlebar.mjs',import.meta.url),'utf8');
+ assert.match(harness,/compileStyle/);
+ assert.match(harness,/component.__scopeId/);
+ assert.doesNotMatch(harness,/\$\{css\}\.panel-collapsed/);
 });

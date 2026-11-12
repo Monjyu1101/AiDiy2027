@@ -13,7 +13,8 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import assert from 'node:assert/strict';
 import { build } from 'esbuild';
-import { parse, compileScript } from '@vue/compiler-sfc';
+import { createHash } from 'node:crypto';
+import { parse, compileScript, compileStyle } from '@vue/compiler-sfc';
 import WebSocket from 'ws';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -30,8 +31,11 @@ createApp({render:()=>h('div',{style:'height:750px'},['task','team'].map(kind=>h
     builder.onLoad({ filter: /\.vue$/ }, args => {
       const { descriptor, errors } = parse(readFileSync(args.path, 'utf8'), { filename: args.path });
       assert.deepEqual(errors, []);
-      const script = compileScript(descriptor, { id: 'panel-collapse-check', inlineTemplate: true });
-      return { loader: descriptor.scriptSetup?.lang === 'ts' ? 'ts' : 'js', contents: script.content + `\n{const style=document.createElement('style');style.textContent=${JSON.stringify(descriptor.styles.map(s => s.content).join('\n'))};document.head.append(style);}`, resolveDir: dirname(args.path) };
+      const id='data-v-'+createHash('sha256').update(args.path).digest('hex').slice(0,8);
+      const script = compileScript(descriptor, { id, inlineTemplate: true });
+      const styles=descriptor.styles.map(style=>compileStyle({source:style.content,filename:args.path,id,scoped:style.scoped}).code).join('\n');
+      const component=script.content.replace('export default','const component =')+`\ncomponent.__scopeId=${JSON.stringify(id)};export default component;`;
+      return { loader: descriptor.scriptSetup?.lang === 'ts' ? 'ts' : 'js', contents: component + `\n{const style=document.createElement('style');style.textContent=${JSON.stringify(styles)};document.head.append(style);}`, resolveDir: dirname(args.path) };
     });
   } }],
 });
@@ -40,8 +44,10 @@ if (process.argv.includes('--compile-only')) {
 }
 mkdirSync(output, { recursive: true });
 const temporary = mkdtempSync(join(tmpdir(), 'panel-collapse-check-'));
-const css = readFileSync(join(root, 'src/style.css'), 'utf8');
-const server = createServer((req,res)=>res.end(`<!doctype html><meta charset="utf-8"><style>${css}.panel-collapsed > :not(.panel-brand){display:none!important}</style><div id="app"></div><script>${bundle.outputFiles[0].text}</script>`));
+const css = readFileSync(join(root, 'src/style.css'), 'utf8')+'\n'+readFileSync(join(root,'src/components/共通表示/会話表示.css'),'utf8');
+const page=`<!doctype html><meta charset="utf-8"><style>${css}</style><div id="app"></div><script>${bundle.outputFiles[0].text}</script>`;
+if(process.argv.includes('--write-page')){writeFileSync(join(output,'index.html'),page);rmSync(temporary,{recursive:true,force:true});console.log(join(output,'index.html'));process.exit(0);}
+const server = createServer((req,res)=>res.end(page));
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
 const chrome = spawn(process.env.CHROME_PATH || '/usr/bin/chromium', ['--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--remote-debugging-port=0', '--window-size=1200,850', '--user-data-dir=' + temporary, 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'], env: { ...process.env, HOME: temporary, XDG_CONFIG_HOME: temporary, XDG_CACHE_HOME: temporary } });
 let socket, browserErrors = ''; chrome.stderr.on('data', data => { browserErrors += data; });
@@ -69,13 +75,17 @@ try {
     const middle=await evaluate(`document.querySelector('${root}').getBoundingClientRect().height`);assert.ok(middle>31&&middle<height);
     await sleep(250); assert.equal(await evaluate(`document.querySelector('${root}').getBoundingClientRect().height`),31);
     assert.equal(await evaluate(`getComputedStyle(document.querySelector('${root} .connection-bar')).display`),'none');
+    assert.equal(await evaluate(`document.querySelector('${root} .connection-bar').getBoundingClientRect().height`),0);
+    assert.equal(await evaluate(`document.querySelector('${root} .taskteam-login-screen').getBoundingClientRect().height`),0);
     await capture(kind+'-02-collapsed');
     await click(toggle); await sleep(300);
     assert.equal(await evaluate(`document.querySelector('${root}').getBoundingClientRect().height`),height);
     assert.equal(await evaluate(`document.querySelector('${root} input').value`),'保持するID');
+    assert.equal(await evaluate(`!!document.querySelector('${root} .connection-bar')`),true);
     await click(toggle);await sleep(40);await click(toggle);await sleep(300);
     assert.equal(await evaluate(`document.querySelector('${root}').getBoundingClientRect().height`),height);
     assert.equal(await evaluate(`document.querySelector('${root} input').value`),'保持するID');
+    assert.equal(await evaluate(`!!document.querySelector('${root} .connection-bar')`),true);
     await capture(kind+'-03-restored');
   }
   assert.deepEqual(errors,[]);

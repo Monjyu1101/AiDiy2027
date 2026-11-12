@@ -133,7 +133,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
 </script>
 <template>
   <main class="ai-component taskteam-shell" :class="{ 'panel-collapsed': panelHidden }" :data-app="config.kind">
-    <StatusBar mode="online" :title="title" :connected="connected" :busy="checking" :desktop="desktop" :clock-pulse="true" :status="`Task / Team :${port} ${connected ? '接続済' : '未接続'}`"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
+    <StatusBar :hide-connection-bar="panelHidden" mode="online" :title="title" :connected="connected" :busy="checking" :desktop="desktop" :clock-pulse="true" :status="`Task / Team :${port} ${connected ? '接続済' : '未接続'}`"><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span>{{ user ? `${user.利用者名 || user.利用者ID} (${user.利用者ID})` : '利用者認証' }}</span><nav><template v-if="user && taskView !== 'combined' && taskView !== 'dialog'"><button v-for="view in (['request','flow','detail'] as const).filter(view => view !== taskView && !openViews.includes(view))" :key="view" @click="openTaskWindows(view)">{{ {request:'要求',flow:'フロー図',detail:'明細'}[view] }}</button></template><button v-if="user && !config.projectFixed" @click="logout()">ログアウト</button></nav></div>
     <p v-if="config.projectFixed" class="fixed-project">IDE連携・プロジェクト固定: {{ config.fixedProject }}（変更不可）</p>
     <p v-if="restoring" class="taskteam-message" role="status">認証を確認しています…</p>
@@ -160,6 +160,7 @@ onBeforeUnmount(() => { disposed = true; revision++; clearTimeout(timer); clearT
 </template>
 <style scoped>
 /* 非表示だけを切り替え、認証・選択・編集中の内容と子部品を保持する。 */
+.taskteam-shell.panel-collapsed{border:0}
 .taskteam-shell.panel-collapsed > :not(.panel-brand){display:none!important}
 .fixed-project{flex:none;margin:0;padding:4px 8px;font-size:11px;overflow-wrap:anywhere}
 .taskteam-shell{width:100%;height:100%;box-sizing:border-box;border:1px solid var(--aidiy-panel-border);background:#000;display:flex;flex-direction:column;overflow:hidden;color:#d9e0f2}

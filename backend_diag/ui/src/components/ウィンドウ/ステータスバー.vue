@@ -36,5 +36,5 @@ onBeforeUnmount(()=>{disposed=true;unsubscribePin?.();window.removeEventListener
   <template v-if="desktop"><button class="window-pin" :class="{pinned:pin.pinned}" :aria-pressed="pin.pinned" :disabled="pin.locked||pinBusy" :title="pinTitle" :aria-label="pinTitle" @click="togglePin"><span aria-hidden="true">📌</span></button><button @click="action('close')" title="閉じる" aria-label="終了">×</button></template>
  </span>
 </header>
-<div v-show="!collapsed&&!hidden" class="connection-bar" :class="{online:connected&&serverState==='online',offline:connected&&serverState==='offline',disconnected:!connected||!['online','offline'].includes(serverState)}" aria-hidden="true"></div>
+<div v-if="!collapsed&&!hidden" class="connection-bar" :class="{online:connected&&serverState==='online',offline:connected&&serverState==='offline',disconnected:!connected||!['online','offline'].includes(serverState)}" aria-hidden="true"></div>
 </template>
