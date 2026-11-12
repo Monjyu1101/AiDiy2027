@@ -779,7 +779,7 @@ Codex / Copilot / Hermesは共通の通常システム指示を使い、Navi固�
 ナビ・再評価の処理中は前回の明細・総合評価・おすすめを隠し、AiDiyアイコンと「FINDING YOUR ROUTE」を表示します。成功時は新しい結果、失敗時は前回の正常結果とエラーを表示します。開始画面と探索中のアイコンは、マウスが左側に入ると右へ、右側なら左へ、回転する四角と共に表示範囲の端まで移動します。同じ側の端にいるときは反対側へ移ります。タッチでは動かず、他画面の開始アイコンには適用しません。
 
 ナビ・再評価ボタンの行は入力欄との間隔と下余白を3pxとし、探索中の下側の光は枠と重ならないよう1px内側に置きます。
-実行中のナビ／再評価ボタンは「調査中」／「評価中」と赤い「！」の停止ボタンへ切り替えます。実行していない側は無効のまま残し、中止時には自動航行もオフにします。
+実行中のナビ／再評価ボタンはCodeと同じ赤地・白文字の停止ボタンへ切り替え、白い「！」の下に「調査中」／「評価中」（中止要求中は「中止中」）を表示します。実行していない側は無効のまま残し、中止時には自動航行もオフにします。
 
 関連確認は `node --test frontend_ide/checks/navigation.test.mjs frontend_ide/checks/panel-windows.test.mjs frontend_ide/checks/panel-lifecycle.test.mjs frontend_ide/checks/vr-panel-placement.test.mjs`。画面変更後は配布物を生成したうえで `node frontend_ide/scripts/check-navigation.mjs`（専用一時プロジェクト・模擬AI・実ブラウザ）と `node frontend_ide/scripts/check-navigation-desktop.mjs`（専用Electron・送信なし）を使います。既存利用者のIDE・サーバーを再起動する必要はありません。模擬AIの成功と実AIの調査品質は区別してください。
 

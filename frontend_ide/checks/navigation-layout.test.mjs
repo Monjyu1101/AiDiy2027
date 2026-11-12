@@ -248,3 +248,24 @@ test('中止ボタンは調査時にナビ側、評価時に再評価側を置�
  assert.ok(hasClass(evaluate,'navigation-evaluate'));assert.ok(evaluate.props.some(p=>p.type===7&&p.name==='else'));
  assert.match(source,/\{\{routing&&!evaluating\?'調査中…':'ナビ'\}\}/);
 });
+
+test('ナビの停止表示はCodeと同じ赤地・白文字・白アイコンで処理中名を下に置く',()=>{
+ const css=descriptor.styles.map(style=>style.content).join('\n');
+ const codeCss=readFileSync(new URL('../src/components/共通表示/会話表示.css',import.meta.url),'utf8');
+ const declarations=(text,selector)=>Object.fromEntries([...text.matchAll(/([^{}]+)\{([^}]*)\}/g)].filter(([,selectors])=>selectors.split(',').some(value=>value.trim()===selector)).flatMap(([,,body])=>body.split(';').filter(value=>value.trim()).map(value=>value.trim().split(/:(.*)/s).slice(0,2))));
+ const code=codeCss.replace(/\s+/g,' ').replace(/ ?([{}:;]) ?/g,'$1');
+ for(const [naviSelector,codeSelector,properties] of [
+  ['.navigation-goal-form .navigation-stop','.ai-component .stop',['background','color']],
+  ['.navigation-goal-form .navigation-stop:hover','.ai-component .stop:hover',['background','border-color']],
+  ['.navigation-stop img','.ai-component .stop .stop-icon',['width','height','object-fit','filter','pointer-events']],
+  ['.navigation-stop .navigation-stop-label','.ai-component .stop .stop-label',['font-size','font-weight','line-height']],
+  ['.navigation-goal-form .navigation-stop:disabled','.ai-component .stop:disabled',['opacity']],
+ ]){
+  const navi=declarations(css,naviSelector),reference=declarations(code,codeSelector);
+  for(const property of properties){assert.ok(reference[property],codeSelector+' '+property);assert.equal(navi[property],reference[property],naviSelector+' '+property);}
+ }
+ for(const stop of walk(baseParse(descriptor.template.content)).filter(node=>hasClass(node,'navigation-stop'))){
+  const [icon,label]=elements(stop);assert.equal(icon.tag,'img');assert.ok(hasClass(label,'navigation-stop-label'));
+  assert.equal(label.children[0].content.content,"stopping?'中止中':operationLabel");
+ }
+});

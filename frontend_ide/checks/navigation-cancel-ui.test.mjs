@@ -73,10 +73,10 @@ test('非実行時の停止は何も送らず、アンマウント後の停止�
  const f=fixture();await f.api.cancelNavigation();assert.equal(f.requests.length,0);
  f.api.job.value={id:'running',status:'running'};const cancel=f.api.cancelNavigation();for(const fn of f.unmount)fn();const count=f.requests.length;await f.answer(f.requests[0],{job:{id:'running',status:'cancelled'}});await cancel;assert.equal(f.requests.length,count);assert.equal(f.api.job.value.status,'running');
 });
-test('停止はラベルを赤い！の上に置いたネイティブボタンで、長押しやシーン入力を使わない',()=>{
+test('停止は白い！の下に処理中名を置いたネイティブボタンで、長押しやシーン入力を使わない',()=>{
  const buttons=[...full.matchAll(/<button v-if="routing&&canStop&&!?evaluating"[\s\S]*?<\/button>/g)].map(match=>match[0]);assert.equal(buttons.length,2);
  for(const markup of buttons){
-  assert.match(markup,/type="button"/);assert.match(markup,/:disabled="stopping"/);assert.match(markup,/@click="cancelNavigation"/);assert.match(markup,/:aria-label=/);assert.match(markup,/<span[^>]*>[\s\S]*?<\/span><img :src="stopIcon"/);assert.doesNotMatch(markup,/pointerdown|contextmenu|keydown/);
+  assert.match(markup,/type="button"/);assert.match(markup,/:disabled="stopping"/);assert.match(markup,/@click="cancelNavigation"/);assert.match(markup,/:aria-label=/);assert.match(markup,/<img :src="stopIcon"[^>]*><span class="navigation-stop-label">/);assert.doesNotMatch(markup,/pointerdown|contextmenu|keydown/);
  }
  assert.match(full,/new URL\('abort.png',sendIcon.value\)/);assert.match(full,/\.navigation-stop img\{position:static/);
 });
