@@ -29,6 +29,7 @@ import * as fileAnalysisStatus from '../src/components/ファイル閲覧/ファ
 import * as displayUrls from '../viewer/表示URL.mjs';
 import * as mediaTypes from '../viewer/media-types.mjs';
 import * as routeExpansion from '../src/components/ファイル閲覧/軌跡パネル展開.js';
+import * as panelToggleDrag from '../src/components/コード/パネル切替ドラッグ.js';
 import * as panelWindows from '../src/components/ファイル閲覧/パネル別窓.js';
 import { scanWarning } from '../src/components/ファイル閲覧/走査警告.js';
 import { fileIcon } from '../src/components/ファイル閲覧/ファイルアイコン.js';
@@ -104,6 +105,7 @@ async function workspace(t, { auto = false, fetcher, hash = '', mode = '2d', act
   }
   t.mock.method(performance, 'now', () => clock);
   const moduleMap = {
+    '../コード/パネル切替ドラッグ.js':panelToggleDrag,
     '../ファイル閲覧/ファイル解析状態.js':fileAnalysisStatus,
     '../共通表示/浮動ダイアログ.js': floatingDialog,
     './エクスプローラードラッグ.js': explorerDrag,
@@ -1045,5 +1047,37 @@ test('VR連続切替: 解除前の再表示待ちを次のVR準備として流�
     oldCancel();assert.equal(a.isOpen,true,'古い取消は新しい準備を終了させない');
     h.viewProps.allDisplays=true;await flush();h.viewProps.allDisplays=false;await flush();
     assert.equal(a.isOpen,false);assert.equal(b.isOpen,false,'新しい記録に従ってVR新規窓を片付ける');
+  }finally{h.dispose();}
+});
+
+for(const native of [false,true])test(`軌跡別窓: ${native?'Electron':'Web'}左端マークは一覧開閉・分類変更・復帰に追従`,async t=>{
+  const windows=layoutPanelWindows(),calls=[];
+  const api=native?{panelAction(){},beginWindowMove:async name=>{calls.push(['begin',name]);return'token';},moveWindow:async(token,name)=>{calls.push(['move',name]);return true;},endWindowMove:async(token,name)=>{calls.push(['end',name]);}}:undefined;
+  const h=await workspace(t,{panelWindowFactory:windows.create,windowApi:api});
+  try{
+    await h.click(node=>hasClass(node,'route-restore-toggle'));
+    await h.click(node=>hasClass(node,'route-detach'));
+    const state=h.states.get('FileExplorer'),button=()=>h.find(node=>hasClass(node,'route-burger'));
+    assert.equal(textOf(button().children.find(n=>hasClass(n,'route-panel-mark')).children[0]),'▶︎');
+    for(let n=0;n<3;n++){
+      await h.click(node=>hasClass(node,'route-burger'));assert.equal(textOf(button().children.find(n=>hasClass(n,'route-panel-mark')).children[0]),'▽');assert.equal(state.routeListOpen.value,true);
+      await h.click(node=>hasClass(node,'route-burger'));assert.equal(textOf(button().children.find(n=>hasClass(n,'route-panel-mark')).children[0]),'▶︎');assert.equal(state.routeListOpen.value,false);
+    }
+    state.chooseRoute('search');await flush();assert.equal(textOf(button().children.find(n=>hasClass(n,'route-panel-mark')).children[0]),'▽');
+    if(native){
+      const view=new EventTarget();Object.assign(view,{name:'routes-child',setInterval,clearInterval});
+      const target={ownerDocument:{defaultView:view},setPointerCapture(){},hasPointerCapture(){return false;}};
+      button().props.onPointerdown({currentTarget:target,button:0,isPrimary:true,pointerType:'mouse',pointerId:1,screenX:10,screenY:10});
+      button().props.onPointermove({pointerId:1,buttons:1,screenX:20,screenY:10,preventDefault(){}});await flush();
+      button().props.onPointerup({pointerId:1});await flush();
+      button().props.onClick({detail:1,preventDefault(){},stopPropagation(){}});await flush();
+      assert.equal(state.routeListOpen.value,true,'drag release does not collapse');
+      assert.deepEqual(calls.map(c=>c[0]),['begin','move','end']);assert.ok(calls.every(c=>c[1]==='routes-child'));
+      button().props.onClick({detail:0});await flush();assert.equal(state.routeListOpen.value,false,'keyboard toggle works after drag');
+    }
+    windows.panels.get('panel-routes').restore();await flush();
+    assert.equal(h.find(node=>hasClass(node,'route-panel-mark')),undefined);
+    assert.ok(h.find(node=>hasClass(node,'burger-v')));
+    await h.click(node=>hasClass(node,'route-burger'));assert.equal(state.routeClosed.value,true);
   }finally{h.dispose();}
 });

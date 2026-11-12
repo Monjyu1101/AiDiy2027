@@ -318,9 +318,11 @@
 /* 本体・別窓とも幅360pxに同じ部品寸法・間隔で収める。 */
 .explorer-routes .route-controls>.route-burger{width:26px;min-width:26px;height:38px;margin:-5px 3px -5px -3px;border:0;border-right:1px solid #343943;background:transparent}
 .explorer-routes .route-controls>.route-burger:hover{background:#202737}
-/* 別窓は左端のバーガーをタイトルバー代わりの即時ドラッグ面にする。 */
+/* 別窓の左端は□▶/□▽。クリックで内容開閉、押したまま4px移動で窓移動。 */
 .explorer-routes .route-controls{gap:0;padding-inline:3px}
-.native-route-window .route-controls>.route-burger{-webkit-app-region:drag;user-select:none;cursor:move}
+.native-route-window .route-controls>.route-burger{-webkit-app-region:no-drag;user-select:none;touch-action:none;cursor:pointer}
+.route-panel-mark{box-sizing:border-box;display:grid;place-items:center;width:var(--burger-size,22px);height:var(--burger-size,22px);border:var(--burger-line,2px) solid currentColor;border-radius:0;font-size:0;line-height:1;pointer-events:none}
+.route-panel-mark svg{width:14px;height:14px;grid-area:1/1}
 .explorer-routes .route-controls>.route-choice{padding-inline:1px}
 .explorer-routes .route-choice:before{margin-right:2px}
 .explorer-routes .route-detach{margin-left:auto}

@@ -83,7 +83,7 @@ app.whenReady().then(async()=>{
    assert.equal(begins,before);assert.ok((await js('getSelection().toString()')).length>0,'file-name text selection is preserved');results.push({kind,fileNameTextSelection:true});
   }else{
    assert.equal(await js(`getComputedStyle(document.querySelector('.route-controls')).webkitAppRegion`),'no-drag');
-   assert.equal(await js(`getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion`),'drag');
+   assert.equal(await js(`getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion`),'no-drag');
    assert.equal(await js(`!!document.querySelector('.route-drag-handle')`),false);
    await hold('.route-controls',true,{padding:true});await hold('.route-choice',true);await hold('#route-pin',true);
   }

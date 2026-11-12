@@ -110,36 +110,32 @@ test('ページ内Explorer: 別ウィンドウ操作はヘッダーの右端、�
   assert.match(readFileSync(new URL('../src/style.css', import.meta.url), 'utf8'), /\.explorer-panel header \.explorer-detach\{margin-left:auto\}/);
 });
 
-test('軌跡バー: バーガーは即時ドラッグ、余分な縦線はなく、native切離し操作は重複しない', () => {
+test('軌跡バー: 別窓の開閉マークはclick可能で、native切離し操作は重複しない', () => {
   const source = readFileSync(new URL('../src/components/ファイル閲覧/ファイル一覧.vue', import.meta.url), 'utf8');
   assert.match(source, /class="route-detach panel-detach-pin"/);
   assert.match(source, /v-if="\(!routeDetached\|\|!nativePanels\)\&\&\(!allDisplays\|\|!routeDetached\)"/);
   assert.match(source, /:aria-pressed="routeDetached"/);
   const css = readFileSync(new URL('../src/style.css', import.meta.url), 'utf8');
   assert.match(css, /\.native-route-window \.route-controls\{-webkit-app-region:no-drag/);
-  assert.match(css, /\.native-route-window \.route-controls>\.route-burger\{[^}]*-webkit-app-region:drag/);
+  assert.match(css, /\.native-route-window \.route-controls>\.route-burger\{[^}]*-webkit-app-region:no-drag/);
   assert.doesNotMatch(source, /route-drag-handle/);
   assert.doesNotMatch(css, /route-drag-handle|route-controls>\.route-burger[^}]*display:none|native-route-window \.route-choice:before\{display:none/);
 });
 
-test('軌跡バー: VR/ALLの別窓でも縦三本を残し、クリックで窓を閉じない', () => {
+test('軌跡バー: 別窓は展開状態を□▶/□▽へ反映、本体は縦バーガーを維持', () => {
   const source = readFileSync(new URL('../src/components/ファイル閲覧/ファイル一覧.vue', import.meta.url), 'utf8');
   const button = source.match(/<button[^>]*class="burger-button route-burger"[\s\S]*?<\/button>/)?.[0];
-  assert.ok(button, '実コンポーネントの縦三本を検証する');
+  assert.ok(button);
   const render = new Function('Vue', compile(button, { mode: 'function' }).code)(Vue);
-  for (const allDisplays of [false, true]) {
-    for (const routeDetached of [false, true]) {
-      let closed = 0;
-      const node = render({ allDisplays, routeDetached, nativePanels: true, closeRoutes: () => { closed++; } }, []);
-      if (allDisplays && !routeDetached) {
-        assert.notEqual(node.type, 'button', 'VR移行前の本体内には閉じる操作を追加しない');
-        continue;
-      }
-      assert.equal(node.type, 'button');
-      assert.equal(node.props['aria-label'], routeDetached ? '軌跡ウィンドウを移動' : '軌跡バーを閉じる');
-      node.props.onClick();
-      assert.equal(closed, routeDetached ? 0 : 1, '別窓は移動専用、本体内は従来の折り畳み');
-      assert.equal(node.children[0].props.class, 'burger burger-v');
-    }
+  for (const allDisplays of [false, true]) for (const routeDetached of [false, true]) for (const routeListOpen of [false,true]) {
+    let clicks=0;
+    const node=render({allDisplays,routeDetached,routeListOpen,nativePanels:true,routeToggleDown(){},routeToggleDrag:null,routeToggleClick(){clicks++;}},[]);
+    if(allDisplays&&!routeDetached){assert.notEqual(node.type,'button');continue;}
+    assert.equal(node.props['aria-expanded'],routeDetached?routeListOpen:undefined);
+    assert.equal(node.props['aria-label'],routeDetached?(routeListOpen?'軌跡内容を閉じる':'軌跡内容を開く'):'軌跡バーを閉じる');
+    node.props.onClick();assert.equal(clicks,1);
+    const mark=node.children.find(n=>n.type==='span');
+    assert.equal(mark.props.class,routeDetached?'route-panel-mark':'burger burger-v');
+    if(routeDetached){assert.equal(mark.children[0].children,routeListOpen?'▽':'▶︎');assert.equal(mark.children[1].children[0].props.fill,routeListOpen?'none':'currentColor');}
   }
 });

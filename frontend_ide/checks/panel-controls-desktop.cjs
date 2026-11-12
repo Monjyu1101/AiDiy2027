@@ -193,13 +193,18 @@ async function run() {
   assert.deepEqual(await evaluate(routes.window,routeMetrics),embeddedMetrics,'Embedded and independent bars share compact dimensions, font and spacing');
   assert.equal(await evaluate(routes.window, `document.querySelectorAll('.panel-window-title,.route-detach,.window-minimize,.window-maximize,.window-close').length`), 0);
   assert.equal(await evaluate(routes.window, `document.querySelectorAll('.route-controls .window-pin').length`), 1);
-  assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='drag' && !document.querySelector('.route-drag-handle')`), true);
+  assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='no-drag' && !document.querySelector('.route-drag-handle')`), true);
   assert.equal(await evaluate(routes.window, `document.querySelector('.route-window-actions')===document.querySelector('.route-controls').lastElementChild`), true);
   assert.deepEqual(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].map(n=>n.textContent)`), ['閲覧軌跡', '時刻軌跡', 'AI検索軌跡']);
   result.routeGeometry = await evaluate(routes.window, `(()=>{const n=document.querySelector('.route-controls'),r=n.getBoundingClientRect();return{width:r.width,height:r.height,scrollWidth:n.scrollWidth,clientWidth:n.clientWidth,buttons:[...n.querySelectorAll('button')].map(b=>({text:b.textContent,left:b.getBoundingClientRect().left,width:b.getBoundingClientRect().width,top:b.getBoundingClientRect().top,bottom:b.getBoundingClientRect().bottom}))};})()`);
   assert.ok(result.routeGeometry.scrollWidth <= result.routeGeometry.clientWidth, 'Native route bar fits 360px without horizontal scrolling');
   assert.ok(result.routeGeometry.height <= 40, 'Native route controls stay in the original compact-height row');
   assert.equal(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].every(n=>n.scrollWidth<=n.clientWidth && getComputedStyle(n).textOverflow!=='ellipsis')`), true, 'Full route labels are not clipped or truncated');
+  assert.equal(await evaluate(routes.window, `document.querySelector('.route-panel-mark').textContent`), '▶︎');
+  await click(routes.window, '.route-burger');
+  await until(routes.window, `document.querySelector('.route-panel-mark').textContent==='▽' && document.querySelector('.route-reveal')?.dataset.phase==='open'`);
+  await click(routes.window, '.route-burger');
+  await until(routes.window, `document.querySelector('.route-panel-mark').textContent==='▶︎' && document.querySelector('.route-reveal')?.dataset.phase==='closed'`);
   await toggle(routes, false); await toggle(routes, true);
   await click(routes.window, '.route-choice[title="閲覧軌跡"]');
   await until(routes.window, `document.querySelector('.route-reveal')?.dataset.phase==='open' && document.querySelector('.route-file-list')?.getAttribute('aria-hidden')==='false'`);
@@ -214,19 +219,19 @@ async function run() {
   await until(routes.window, `document.querySelector('.route-reveal')?.dataset.phase==='open'`);
   await restore(routes);
   assert.equal(await evaluate(owner, `fixture.saved.routes===document.querySelector('.explorer-routes') && !!document.querySelector('.route-tree [data-route-path="keep.txt"]')`), true);
-  result.checks.push('Native routes keep a compact 360px row with immediate-drag burger, no extra vertical handle, pin and close at right; classification and preserved DOM still work');
+  result.checks.push('Native routes keep a compact 360px row with click-toggle / threshold-drag button, no extra vertical handle, pin and close at right; classification and preserved DOM still work');
 
   await click(owner, '.route-detach'); routes = await detached('panel-routes');
   assert.equal(await evaluate(routes.window, `document.querySelectorAll('.route-window-actions').length`), 1);
   await click(routes.window, '.route-burger');
-  assert.equal(routes.window.isDestroyed(), false, 'Native title drag surface does not close on click');
+  assert.equal(routes.window.isDestroyed(), false, 'Native toggle does not close the detached window');
   await restore(routes);
   await click(owner, '.route-burger');
   await until(owner, `fixture.saved.routes.ownerDocument===document && !!document.querySelector('.route-restore-toggle')`);
   assert.ok(routes.window.isDestroyed());
   assert.equal(await evaluate(owner, `getComputedStyle(fixture.saved.routes).display`), 'none');
   await click(owner, '.route-restore-toggle');
-  result.checks.push('Repeated route detachment has one controls mount; native burger stays a title drag surface; embedded burger still closes the bar and preserves its reopen entry');
+  result.checks.push('Repeated route detachment has one controls mount; native toggle keeps the detached window; embedded burger still closes the bar and preserves its reopen entry');
 
   await click(owner, '.explorer-detach'); explorer = await detached('explorer');
   await click(owner, '.route-detach'); routes = await detached('panel-routes');
@@ -239,7 +244,7 @@ async function run() {
     assert.equal(result.actions.filter(action => action.action === 'toggle-pin').length, before);
   }
   assert.equal(await evaluate(explorer.window, `document.querySelector('.window-close').disabled`), true);
-  assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='drag'`), true);
+  assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='no-drag'`), true);
   await click(routes.window, '.route-burger');
   assert.equal(await evaluate(routes.window, `!!document.querySelector('.explorer-routes')`), true);
   assert.equal(routes.window.isDestroyed(), false);

@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+import { createPanelToggleDrag } from '../コード/パネル切替ドラッグ.js';
 import { createExplorerDrag } from './エクスプローラードラッグ.js';
 import RefreshButton from '../共通表示/再読込ボタン.vue';
 import { ref, shallowRef, computed, inject, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
@@ -53,7 +54,21 @@ const treeDrag=createExplorerDrag({activity:()=>emit('activity')});
 const panel=ref(),detached=ref(false),pinError=ref('');
 const draftActions=inject('fileDraftActions',null),draftRequest=ref(null);
 const nativePanels=!!window.aidiyWindow?.panelAction;
-let panelWindow,routeWindow;
+let panelWindow,routeWindow,routeToggleDrag;
+function toggleRouteContent(){if(routeDetached.value)chooseRoute(routeMode.value);else closeRoutes();}
+function routeToggleDown(event){
+  if(!routeDetached.value)return;
+  routeToggleDrag?.dispose();
+  const view=event.currentTarget.ownerDocument.defaultView,owner=window.aidiyWindow;
+  const api=nativePanels?{
+    beginWindowMove:()=>owner.beginWindowMove(view.name),
+    moveWindow:token=>owner.moveWindow(token,view.name),
+    endWindowMove:token=>owner.endWindowMove(token,view.name),
+  }:undefined;
+  routeToggleDrag=createPanelToggleDrag({api,win:view,toggle:toggleRouteContent});
+  routeToggleDrag.down(event);
+}
+function routeToggleClick(event){if(routeToggleDrag)routeToggleDrag.click(event);else toggleRouteContent();}
 // 軌跡バーはエクスプローラーと同じく、最初は閉じて縦三本の正方形ボタンだけを出す。
 const routeDetached=ref(false),routeClosed=ref(true),preparingAll=ref(false);
 function pinRoutes(){
@@ -189,6 +204,7 @@ const routeMotion=createRouteExpansion({measure:routeMeasure,
   reserve:async height=>{const node=routeElement.value;if(routeDetached.value&&node?.ownerDocument!==document)return routeWindow.reserveRouteHeight(height);return{height:routeMeasure().bar+routeMeasure().available};},
   changed:value=>{routeMotionState.value=value;},report:message=>{pinError.value=message;}});
 function syncRouteDocument(){
+  routeToggleDrag?.dispose();routeToggleDrag=undefined;
   routeDocumentCleanup();if(routeDisposed)return;
   const view=routeElement.value?.ownerDocument?.defaultView||window;
   const resize=()=>routeMotion.refresh();
@@ -456,7 +472,7 @@ watch(()=>props.startedAt,()=>{mode.value='since';clearSearch();resetLatest();in
 watch(()=>props.filter,clearSearch);
 watch(mode,clearSearch);
 watch([mode,since,until,matches,aiResult],emitMarks,{immediate:true});
-onBeforeUnmount(()=>{treeDrag.dispose();allPanels=undefined;fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
+onBeforeUnmount(()=>{treeDrag.dispose();routeToggleDrag?.dispose();allPanels=undefined;fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
 function captureLayout(){return{explorerName:detached.value?panel.value?.ownerDocument.defaultView?.name:'',routesName:routeDetached.value?routeElement.value?.ownerDocument.defaultView?.name:''};}
 async function restoreLayout(saved){
   const panels=[];
@@ -472,7 +488,14 @@ defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.
     <!-- 軌跡バーはエクスプローラーと同じ扱い。閉じている時は縦三本の正方形ボタン、開くと同じ場所から横に開き、先頭の縦三本で閉じる。 -->
     <button v-if="routeClosed&&!routeDetached" class="route-restore-toggle burger-button" :class="{'explorer-open':open&&!detached,'explorer-detached':detached&&!preparingAll}" aria-label="軌跡バーを開く" title="軌跡バー" :aria-expanded="false" @click="openRoutes"><span class="burger burger-v" aria-hidden="true"><i></i><i></i></span></button>
     <div ref="routeElement" v-show="!routeClosed" class="explorer-routes" :class="{'explorer-collapsed':!open||(detached&&!preparingAll),'explorer-detached':detached&&!preparingAll}" role="group" aria-label="軌跡表示" @keydown.esc.stop.prevent="routeListOpen=false">
-      <div class="route-controls" :data-aidiy-window-move-handle="routeDetached&&nativePanels?'':undefined"><button v-if="!allDisplays||routeDetached" class="burger-button route-burger" :aria-label="routeDetached&&nativePanels?'軌跡ウィンドウを移動':'軌跡バーを閉じる'" :title="routeDetached&&nativePanels?'ドラッグして移動':'軌跡バーを閉じる'" @click="routeDetached&&nativePanels?undefined:closeRoutes()"><span class="burger burger-v" aria-hidden="true"><i></i><i></i></span></button>
+      <div class="route-controls" :data-aidiy-window-move-handle="routeDetached&&nativePanels?'':undefined"><button v-if="!allDisplays||routeDetached" class="burger-button route-burger" data-aidiy-no-window-move
+        :aria-expanded="routeDetached?routeListOpen:undefined" aria-controls="route-file-list"
+        :aria-label="routeDetached?(routeListOpen?'軌跡内容を閉じる':'軌跡内容を開く'):'軌跡バーを閉じる'"
+        :title="routeDetached?(routeListOpen?'軌跡内容を閉じる':'軌跡内容を開く')+(nativePanels?'（ドラッグで移動）':''):'軌跡バーを閉じる'"
+        @pointerdown="routeToggleDown" @pointermove="routeToggleDrag?.move($event)" @pointerup="routeToggleDrag?.up($event)" @pointercancel="routeToggleDrag?.cancel($event)" @lostpointercapture="routeToggleDrag?.up($event)" @click="routeToggleClick" @dragstart.prevent>
+        <span v-if="routeDetached" class="route-panel-mark" aria-hidden="true">{{ routeListOpen?'▽':'▶︎' }}<svg viewBox="0 0 16 16" focusable="false"><path :d="routeListOpen?'M2 3H14L8 14Z':'M4 2L14 8L4 14Z'" :fill="routeListOpen?'none':'currentColor'" stroke="currentColor" stroke-width="1.2"/></svg></span>
+        <span v-else class="burger burger-v" aria-hidden="true"><i></i><i></i></span>
+      </button>
       <button v-for="[value,label] in [['view','閲覧軌跡'],['search',searchRouteLabel],['ai','AI検索軌跡']]" :key="value" class="route-choice" :title="label" :aria-pressed="routeMode===value" :aria-expanded="routeMode===value&&routeListOpen" aria-controls="route-file-list" @click="chooseRoute(value)">{{ label }}</button>
       <button title="プロジェクトルートへ" @click="select({type:'dir',path:''})">ルート</button><button :aria-label="routeMode==='ai'?'前の関連ファイル':routeMode==='search'?'前の検索ファイル':'前の閲覧ファイル'" :disabled="!routeSteps.length||routeIndex===0" @click="stepRoute(-1)">&lt;</button><button :aria-label="routeMode==='ai'?'次の関連ファイル':routeMode==='search'?'次の検索ファイル':'次の閲覧ファイル'" :disabled="!routeSteps.length||routeIndex===routeSteps.length-1" @click="stepRoute(1)">&gt;</button>
       <button v-if="(!routeDetached||!nativePanels)&&(!allDisplays||!routeDetached)" class="route-detach panel-detach-pin" :class="{'pin-active':routeDetached}" :aria-pressed="routeDetached" :aria-label="routeDetached?'軌跡バーを本体へ戻す':'軌跡バーを別ウィンドウで開く'" :title="routeDetached?'本体へ戻す':'小さな別ウィンドウで開く'" @click="routeDetached?routeWindow.restore():pinRoutes()"><span aria-hidden="true">📌</span></button>
@@ -510,7 +533,7 @@ defineExpose({captureLayout,restoreLayout,reveal,focusDetached:()=>panelWindow?.
         <p v-if="mode==='ai'&&hiddenAI" role="status">{{ hiddenAI }}件は現在の一覧にありません。フィルターをOFFにするか一覧を更新してください。</p>
       </section>
       <section v-if="searchResults.length" class="explorer-search-results" aria-label="検索一覧">
-        <button type="button" class="search-results-toggle" :aria-expanded="searchResultsOpen" aria-controls="explorer-search-result-list" @click="searchResultsOpen=!searchResultsOpen"><span aria-hidden="true">{{ searchResultsOpen?'▼':'▶' }}</span> 検索一覧 · {{ searchResultsLabel }} · {{ searchResults.length }}件</button>
+        <button type="button" class="search-results-toggle" :aria-expanded="searchResultsOpen" aria-controls="explorer-search-result-list" @click="searchResultsOpen=!searchResultsOpen"><span aria-hidden="true">{{ searchResultsOpen?'▼':'▶︎' }}</span> 検索一覧 · {{ searchResultsLabel }} · {{ searchResults.length }}件</button>
         <div v-if="searchResultsOpen" id="explorer-search-result-list" class="search-results-content">
           <p v-if="mode==='ai'&&aiResult" :title="aiResult.query">{{ aiResult.title || aiResult.query }}</p>
           <ol :aria-label="searchResultsLabel+'の検索結果'"><li v-for="(result,index) in searchResults" :key="`${result.path}:${result.line||0}:${result.column||0}:${index}`"><button type="button" :title="result.line?`${result.path}:${result.line}:${result.column}`:result.path" :aria-current="selected===result.path?'true':undefined" @click="selectSearchResult(result)"><span>{{ result.path }}<template v-if="result.line">:{{ result.line }}:{{ result.column }}</template></span><small v-if="result.source==='grep'" class="search-result-snippet">{{ result.snippet }}</small><small v-else-if="result.source==='ai'">{{ result.reason }}</small><small v-else>{{ new Date(result.mtime).toLocaleString('ja-JP') }}</small></button></li></ol>
