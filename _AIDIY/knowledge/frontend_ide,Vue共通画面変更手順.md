@@ -709,6 +709,16 @@ Windows実機では、すでに開いた両パネルでVRへ切り替え、本�
 
 Electron・Web・VS Code の共通画面はタイトル背景と同じグレー `#30343a` の1px外周を表示します。共通の `共通表示/タイトルバー配色.css` にある `--aidiy-panel-border` がタイトル背景トークンを参照し、Task / Team・Diag・Discordも同じ外枠色へ揃えます。`src/style.css` の`border-box` で外寸を変えず内側に1pxを確保し、操作やスクロールバーへ装飾を重ねません。固定ヘッダーとCanvasもその内側に合わせます。Web内の子パネルは既存の1px境界の色だけを変更し、Code / Live / Console自身へ枠を重ねません。Browser全画面の繰り出しパネルは通常外枠の対象から明示的に除外し、専用のすりガラスの縁だけを表示します。透明な軌跡窓とVR全面には画面全体の四角枠を追加せず、実パネルの境界を使います。検証は `node --test checks/panel-perimeter.test.mjs`。実機のElectron境界や倍率別の描画は別途目視確認してください。
 
+## Browserのマルチタブ
+
+Browserは1つのElectron窓に複数のタブを保持します。タブ行の＋で追加、タイトルで切替、×でそのタブだけを閉じます。通常表示とF11の専用ヘッダーは同じ状態を共有し、折りたたみ中はタイトルバーだけにします。左右キー・Home・Endで選択、Deleteで閉じられます。
+
+タブごとに独立したWebContentsView、URL・タイトル・読込/エラー状態・戻る/進む履歴・ページ内状態を持ち、選択中のViewだけを表示します。窓サイズとヘッダーは共通です。タブ切替でもURL欄の未確定入力を保存します。外部タイトルはテキストとして扱います。閉じたタブのView・CDP公開・イベントを破棄し、窓を閉じる時は全タブを破棄します。最後のタブを閉じると空ページ1枚を残し、1窓32タブまでに制限します。再起動後のタブ復元は今回の範囲外です。
+
+撮影・解析・要素選択・Code等への連携はURLに加えてタブIDとナビゲーション世代を確認し、同URLの別タブへの切替中に遅い応答が来ても取り違えません。連携は既存の `session` と `tab_id` を使い、CDP公開IDと一致させます。`tabid` という別パラメータは新設しません。非表示タブにも sandbox・Node無効化・権限拒否・内部URL禁止を同じように適用します。
+
+UI回帰は `checks/browser-tabs-ui.test.mjs`、実Vue/CSS確認用ハーネスは `scripts/check-browser-tabs.mjs`。モックの成功と実Electron描画の確認は区別します。
+
 ## BrowserのAI解析とIDEソース選択
 
 `ファイル機能/browser-analysis.mjs` が `GET /api/browser-analysis?url=...` と `POST /api/browser-analysis`（`{url,title}`）を所有します。Browser単独ではこのAPIと接続状態だけを公開し、一般のファイルAPI・Console起動は公開しません。実行時はTools接続と現在の利用セッションを確認します。

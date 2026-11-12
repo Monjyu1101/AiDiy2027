@@ -138,3 +138,22 @@ test('Browser CDP: new_tabは別bridgeで登録した実sessionを返し、未�
  destroyed=true;contents.emit('destroyed');assert.equal((await fetch(base+'/json/new')).status,409);
  destroyed=false;opened={};target.add(opened,contents);target.close();assert.equal((await fetch(base+'/json/new')).status,409);
 });
+
+test('Browser CDP: native tabs select/close only the target and simultaneous new returns exact IDs',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'aidiy-native-tabs-'));t.after(()=>rm(directory,{recursive:true,force:true}));
+ const record={window:{isMinimized:()=>false,show(){},focus(){},close(){assert.fail('tab close must not close window');}}};
+ let selected='',sequence=0;const values=new Map();
+ const bridge=await bridgeModule.createBrowserCDP({directory,canUse:async()=>true,allowedURL:()=>true,openPanel:async url=>{
+  const id='abc-'+(++sequence),contents=Object.assign(new EventEmitter(),{getTitle:()=>id,getURL:()=>url,isDestroyed:()=>false,focus(){}});
+  bridge.add(record,contents,{id,activate:()=>{selected=id;record.browserTabId=id;},close:()=>{values.delete(id);contents.emit('destroyed');}});
+  values.set(id,contents);record.browserTabId=id;return{record,tabId:id};
+ }});
+ t.after(()=>bridge.close());const m=JSON.parse(await readFile(join(directory,bridge.name+'.json'),'utf8')),base=`http://127.0.0.1:${m.port}/${m.token}`;
+ const opened=await Promise.all(['a','b'].map(path=>fetch(base+'/json/new?url='+encodeURIComponent('https://example.test/'+path)).then(r=>r.json())));
+ assert.equal(new Set(opened.map(page=>page.id)).size,2);
+ assert.deepEqual(opened.map(page=>page.url),['https://example.test/a','https://example.test/b']);
+ await fetch(base+'/json/activate/'+opened[0].id);assert.equal(selected,opened[0].id);
+ await fetch(base+'/json/close/'+opened[0].id);assert.equal(values.size,1);
+ assert.equal((await fetch(base+'/json/activate/'+opened[0].id)).status,409);
+ assert.equal((await(await fetch(base+'/json')).json())[0].id,opened[1].id);
+});

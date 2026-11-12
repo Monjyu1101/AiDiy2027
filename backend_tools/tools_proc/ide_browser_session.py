@@ -46,6 +46,20 @@ class IDEBrowserClient(CDPClient):
         super().__init__(port=entry["port"])
         self.token = entry["token"]
 
+    def resolve_tab(self, tab_id=None):
+        """Browser連携は session 内の明示IDだけを解決し、暗黙の対象変更を防ぐ。"""
+        if not isinstance(tab_id, str) or not tab_id.strip() or tab_id == "auto":
+            raise ValueError(
+                "AiDiy Browser のページ操作には session と tab_id を明示してください。"
+                "list_tabs(session=...) の id、または連携で渡された tab_id を使ってください。"
+            )
+        # 毎回このセッションの現在の一覧と照合。閉鎖済み・他sessionのIDを拒否する。
+        return super().resolve_tab(tab_id)
+
+    async def resolve_tab_async(self, tab_id=None):
+        # 基底のautoキャッシュ経由で検証が省略されないよう、常に上の契約を通す。
+        return await asyncio.to_thread(self.resolve_tab, tab_id)
+
     def _http_get(self, path, *, parse_json=True):
         return super()._http_get("/" + self.token + path, parse_json=parse_json)
 

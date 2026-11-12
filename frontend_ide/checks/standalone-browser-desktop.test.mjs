@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
+import {randomUUID} from 'node:crypto';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
 import {mkdtempSync,mkdirSync,readFileSync,realpathSync,rmSync,symlinkSync,writeFileSync} from 'node:fs';
@@ -25,7 +26,7 @@ const desktopRequire=createRequire(desktopPath),desktopSource=readFileSync(deskt
 function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',appData,locks,newWindow=false,realBridges=false,mode='online',initialConnected=true,startupURL=async()=>browser.HOME}){
  const app=new EventEmitter(),process=new EventEmitter(),windows=[],messages=[],paths={appData,temp:appData},order=[],startupRequests=[],navigation=[];
  const ipcMain=new EventEmitter(),handlers=new Map();ipcMain.handle=(name,handler)=>handlers.set(name,handler);
- let ready=Promise.resolve(),connected=initialConnected,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page){pages.push({record,page});},close(){bridgeClosed++;}};
+ let ready=Promise.resolve(),connected=initialConnected,active=true,startedAt=1,bridgeOptions,bridgeClosed=0;const bridges=[];const pages=[],availability=[];const bridge={name:'aidiy_browser 5ea6a3a0-21b2-4c31-80ab-123456789abc',add(record,page,controls){pages.push({record,page,controls});},close(){bridgeClosed++;}};
  app.getPath=name=>paths[name];app.setPath=(name,path)=>{paths[name]=path;order.push(name);};app.setName=()=>{};
  app.requestSingleInstanceLock=()=>{
   order.push('lock');const existing=locks.get(paths.userData);
@@ -50,7 +51,15 @@ function desktop({project,cwd=project,kind='ide',url='http://127.0.0.1:12345/',a
  const area={x:0,y:0,width:1920,height:1080};
  const electron={app,BrowserWindow:Window,ipcMain,shell:{},dialog:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:Object.assign(new EventEmitter(),{getCursorScreenPoint:()=>({x:0,y:0}),getDisplayNearestPoint:()=>({workArea:area}),getDisplayMatching:()=>({workArea:area})})};
  const load=name=>name==='electron'?electron:name==='./host/scripts/window-opening.cjs'?{拡大表示:async(_type,window)=>{window.show();window.focus();return true;}}
-  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode,connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target)=>{const page=Object.assign(new EventEmitter(),{isDestroyed:()=>record.window.isDestroyed(),url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});record.window.once('closed',()=>page.emit('destroyed'));return page;},navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value,connected,mode)=>availability.push({record,value,connected,mode}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
+  :name==='./デスクトップ/desktop-session.cjs'?{readDevelopmentState:async()=>({active,mode,connected,startedAt,project:{path:project}})}:name==='./デスクトップ/ブラウザCDP.cjs'?{createBrowserCDP:async options=>{bridgeOptions=options;const value=realBridges?await browserCDP.createBrowserCDP(options):bridge;bridges.push(value);return value;}}:name==='./デスクトップ/ブラウザ.cjs'?{...browser,browserStartupURL:async()=>{startupRequests.push(true);return startupURL();},createBrowserViews:()=>({isAnalysisSender:()=>false,trustedAnalysis:()=>null,allowedURL:()=>true,attach:(record,target,_available,_connected,_mode,onTabCreated)=>{
+   const create=target=>{
+    const id=randomUUID(),page=Object.assign(new EventEmitter(),{destroyed:false,isDestroyed(){return this.destroyed||record.window.isDestroyed();},url:target,getURL(){return this.url||'https://example.test/';},getTitle:()=> 'fixture',focus(){}});
+    const controls={id,activate:()=>{record.browserTabId=id;},close:()=>{page.destroyed=true;page.emit('destroyed');}};
+    record.window.once('closed',()=>page.emit('destroyed'));onTabCreated(page,controls);record.browserTabId=id;return{page,id};
+   };
+   record.openBrowserTab=value=>({record,tabId:create(value).id});
+   return create(target).page;
+  },navigate:async(record,target)=>{if(record.window.isDestroyed())throw Error('Browserが終了しています。');const page=pages.find(item=>item.record===record&&item.controls.id===record.browserTabId).page;page.url=target;navigation.push({record,target});},setAvailable:(record,value,connected,mode)=>availability.push({record,value,connected,mode}),action:async()=>({ok:true}),maximize:record=>{record.window.browserMaximized=true;return true;}})}:desktopRequire(name);
  const api=vm.runInNewContext(`(function(require,__dirname,process){${desktopSource}\nreturn{createWindow,records:windows,checkChildren,checkStandaloneBrowser};})`,{console,setInterval,clearInterval,URL})(load,dirname(desktopPath),process);
  return{...api,app,process,windows,messages,paths,order,pages,startupRequests,navigation,availability,bridges,setConnected(value){connected=value;},setActive(value){active=value;},setStartedAt(value){startedAt=value;},get bridgeOptions(){return bridgeOptions;},get bridgeClosed(){return bridgeClosed;},ready:()=>ready,request:(name,window,...args)=>handlers.get(name)({sender:window.webContents,senderFrame:window.webContents.mainFrame},...args)};
 }
@@ -65,7 +74,7 @@ test('Standalone Browser: 専用プロファイル、共有CDP、最終窓終了
  assert.equal(a.windows[0].options.enableLargerThanScreen,true);assert.equal(await a.request('development:window',a.windows[0],'maximize'),true);assert.equal(a.windows[0].browserMaximized,true);
  assert.notEqual(a.paths.userData,b.paths.userData);assert.equal(a.paths.userData,a.paths.sessionData);assert.ok(!a.order.includes('lock'));
  assert.equal(a.bridgeOptions.sessionPrefix,'aidiy_browser');assert.equal(await a.bridgeOptions.canUse(),true);
- const second=await a.bridgeOptions.openPanel('https://example.com/');assert.equal(a.windows.length,2);assert.equal(second.owner,undefined);
+ const opened=await a.bridgeOptions.openPanel('https://example.com/');assert.equal(a.windows.length,1);assert.equal(opened.record.owner,undefined);
  assert.equal(a.pages.length,2);assert.equal(a.messages[0].windowShown,true);
  a.setConnected(false);assert.equal(await a.bridgeOptions.canUse(),false);
  assert.equal((await a.request('development:browser-action',a.windows[0],'size','portrait')).ok,true);
@@ -76,8 +85,9 @@ test('Standalone Browser: 専用プロファイル、共有CDP、最終窓終了
  a.setActive(false);assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,false);a.setActive(true);
  await assert.rejects(a.bridgeOptions.openPanel('https://example.com/'),/tools/);
  a.setConnected(true);assert.equal((await a.request('development:browser-action',a.windows[0],'navigate','https://example.com/')).ok,true);
+ const secondWindow=await a.createWindow('browser','http://127.0.0.1:12345/#browser');
  a.windows[0].destroy();await new Promise(resolve=>setImmediate(resolve));assert.equal(a.bridgeClosed,0);assert.equal(await a.bridgeOptions.canUse(),true);
- second.window.destroy();await new Promise(resolve=>setImmediate(resolve));assert.equal(a.bridgeClosed,1);assert.equal(b.bridgeClosed,0);assert.equal(await b.bridgeOptions.canUse(),true);
+ secondWindow.destroy();await new Promise(resolve=>setImmediate(resolve));assert.equal(a.bridgeClosed,1);assert.equal(b.bridgeClosed,0);assert.equal(await b.bridgeOptions.canUse(),true);
  b.process.emit('disconnect');await new Promise(resolve=>setImmediate(resolve));assert.equal(b.bridgeClosed,1);assert.equal(b.windows[0].destroyed,true);
 });
 
@@ -92,8 +102,8 @@ for(const running of [true,false])test(`Standalone Browser: frontend_web${runnin
  assert.equal(a.pages[0].page.getURL(),running?'http://127.0.0.1:8090/':browser.HOME);
  assert.equal(a.startupRequests.length,1);
  for(const target of ['https://example.test/selected','about:blank',browser.HOME]){
-  const record=await a.bridgeOptions.openPanel(target);
-  assert.equal(a.pages.find(page=>page.record===record).page.getURL(),target);
+  const opened=await a.bridgeOptions.openPanel(target);
+  assert.equal(a.pages.find(page=>page.controls.id===opened.tabId).page.getURL(),target);
  }
  assert.equal(a.startupRequests.length,1,'MCPで明示されたURLを初期表示で置き換えない');
  a.setConnected(false);await a.checkStandaloneBrowser([...a.records.values()][0]);
@@ -238,11 +248,15 @@ test('IDE Browser: 窓別session/番号は1,2,3→2閉じ→2再利用、Codeと
  assert.equal((await bridgeRequest(oldSecondEndpoint,'/close')).status,200);await settle();
  assert.equal(second.window.isDestroyed(),true);assert.equal(first.window.isDestroyed(),false);assert.equal(third.window.isDestroyed(),false);assert.equal(codeA.isDestroyed(),false);assert.equal(other.window.isDestroyed(),false);
  const created=await bridgeRequest(endpoint,'/json/new?url='+encodeURIComponent('https://example.test/new-child'));
- assert.equal(created.status,200);assert.equal(created.value.session,'aidiy_ide 2');assert.equal(created.value.url,'https://example.test/new-child');
- const reused=childrenA().find(record=>record.slot===1);assert.ok(reused);assert.equal(reused.browserTabId,created.value.id);assert.notEqual(reused.browserTabId,second.browserTabId);assert.equal(reused.window.getTitle(),'AiDiy IDE / Browser 2');
+ assert.equal(created.status,200);assert.equal(created.value.session,'aidiy_ide 1');assert.equal(created.value.url,'https://example.test/new-child');
+ assert.equal(childrenA().length,2,'new_tabは既存Browser窓の中に追加');
+ assert.equal((await bridgeRequest(endpoint,'/json/list')).value.length,2);
+ assert.equal((await bridgeRequest(endpoint,'/json/activate/'+created.value.id)).status,200);
+ assert.equal((await a.request('development:open-browser',ownerA.window)).ok,true);
+ const reused=childrenA().find(record=>record.slot===1);assert.ok(reused);assert.notEqual(reused.browserTabId,created.value.id);assert.notEqual(reused.browserTabId,second.browserTabId);assert.equal(reused.window.getTitle(),'AiDiy IDE / Browser 2');
  const reusedEndpoint=bridgeEndpoint(root,reused.browserSession);assert.notEqual(reusedEndpoint,oldSecondEndpoint);
- assert.equal((await bridgeRequest(endpoint,'/json/activate/'+created.value.id)).status,409,'new_tab後は返却された新sessionを使う');
- assert.equal((await bridgeRequest(reusedEndpoint,'/json/activate/'+created.value.id)).status,200);
+ assert.equal((await bridgeRequest(reusedEndpoint,'/json/activate/'+created.value.id)).status,409,'別sessionのタブを操作しない');
+ assert.equal((await bridgeRequest(reusedEndpoint,'/json/activate/'+reused.browserTabId)).status,200);
  await fetch(oldSecondEndpoint+'/json/list').then(response=>assert.notEqual(response.status,200),()=>{});
  a.setConnected(false);await a.checkChildren(ownerA);
  assert.equal(childrenA().length,3);assert.equal(codeA.isDestroyed(),false);assert.equal((await bridgeRequest(endpoint,'/json/list')).status,409);
@@ -270,13 +284,15 @@ test('Standalone Browser: 実bridgeのUUIDはプロセス間で分離し生存�
  assert.notEqual(first.browserSession,other.browserSession);
  for(const [instance,record]of [[a,first],[b,other]]){assert.equal(record.window.getTitle(),'AiDiy Browser');assert.equal(await instance.request('development:window',record.window,'title'),'AiDiy Browser');}
  const endpoint=bridgeEndpoint(root,first.browserSession),otherEndpoint=bridgeEndpoint(root,other.browserSession);
+ const firstTabId=first.browserTabId;
  const created=await bridgeRequest(endpoint,'/json/new?url='+encodeURIComponent('https://example.test/new'));
  assert.equal(created.status,200);assert.equal(created.value.url,'https://example.test/new');
  const second=[...a.records.values()].find(record=>record.browserTabId===created.value.id);
- assert.ok(second);assert.equal(second.browserSession,first.browserSession);assert.equal(created.value.session,first.browserSession);assert.equal(second.window.getTitle(),'AiDiy Browser');assert.equal(second.owner,undefined);assert.equal(second.slot,1);
+ assert.ok(second);assert.equal(second.browserSession,first.browserSession);assert.equal(created.value.session,first.browserSession);assert.equal(second.window.getTitle(),'AiDiy Browser');assert.equal(second.owner,undefined);assert.equal(second.slot,0);assert.equal(second,first);assert.equal(a.windows.length,1);
  assert.equal((await bridgeRequest(endpoint,'/json/activate/'+second.browserTabId)).status,200);
  assert.equal((await bridgeRequest(otherEndpoint,'/json/activate/'+second.browserTabId)).status,409);
- first.window.destroy();await settle();
+ assert.equal((await bridgeRequest(endpoint,'/json/close/'+firstTabId)).status,200);await settle();
+ assert.equal(first.window.isDestroyed(),false);
  assert.equal((await bridgeRequest(endpoint,'/json/list')).value[0].id,second.browserTabId);
  assert.equal(second.browserSession,first.browserSession);
  assert.equal((await bridgeRequest(endpoint,'/close')).status,200);await settle();

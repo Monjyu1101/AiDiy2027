@@ -11,8 +11,9 @@ function createBrowserSourceSelection({trustedEvent,readState,sessionKey,context
   if(source?.kind!=='browser'||owner?.kind!=='ide'||owner.owner)return{ok:false,error:'IDEから起動したBrowserで利用できます。'};
   if(!value||typeof value.url!=='string'||value.url.length>8192||typeof value.id!=='string'||value.id.length>128||!validPreviewPath(value.path))return{ok:false,error:'解析結果のファイル指定が不正です。'};
   if(pending.has(source))return{ok:false,error:'ファイルを選択中です。'};
-  const revision=owner.revision;
-  const current=()=>!isQuitting()&&trustedEvent(event)===source&&!source.window.isDestroyed()&&!owner.window.isDestroyed()&&source.owner===owner&&owner.revision===revision&&context(source)?.url===value.url;
+  const revision=owner.revision,initial=context(source);
+  const samePage=latest=>latest&&initial&&latest.url===value.url&&latest.activeTabId===initial.activeTabId&&latest.navigationRevision===initial.navigationRevision&&latest.session===initial.session;
+  const current=()=>!isQuitting()&&trustedEvent(event)===source&&!source.window.isDestroyed()&&!owner.window.isDestroyed()&&source.owner===owner&&owner.revision===revision&&samePage(context(source));
   const active=state=>current()&&state?.active&&typeof state.project?.path==='string'&&source.linkKey===sessionKey(state);
   pending.add(source);
   try{
@@ -45,7 +46,7 @@ function createBrowserAnalysisContext({trustedEvent,context,discover,isQuitting=
   if(initial.canSelectSource)return{ok:true,context:initial};
   let status={};try{status=await discover(record);}catch{/* 検出失敗は解析を妨げず、起動中とは表示しない。 */}
   const latest=context(record,event);
-  if(isQuitting()||trustedEvent(event)!==record||!latest||latest.url!==initial.url||latest.projectPath!==initial.projectPath||latest.canSelectSource!==initial.canSelectSource)return{ok:false,error:'Browserの表示ページや利用状態が変わりました。もう一度開いてください。'};
+  if(isQuitting()||trustedEvent(event)!==record||!latest||latest.url!==initial.url||latest.activeTabId!==initial.activeTabId||latest.navigationRevision!==initial.navigationRevision||latest.session!==initial.session||latest.projectPath!==initial.projectPath||latest.canSelectSource!==initial.canSelectSource)return{ok:false,error:'Browserの表示ページや利用状態が変わりました。もう一度開いてください。'};
   return{ok:true,context:{...latest,ideRunning:status.ideRunning===true,viewerAvailable:status.viewerAvailable===true}};
  };
 }

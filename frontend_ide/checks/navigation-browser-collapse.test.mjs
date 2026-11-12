@@ -24,7 +24,7 @@ test('Navi・Explorer・Viewer別窓は対象窓名を指定して切替を付�
 });
 test('Browser別Viewは接続復帰しても閉状態を維持し、表示寸法変更とは排他',()=>{
  const source=read('デスクトップ/ブラウザ.cjs');
- assert.match(source,/view.setVisible\(entry.available&&!entry.panelCollapsed\)/);
+ assert.match(source,/tab.view.setVisible\(tab===entry.active&&entry.available&&!entry.panelCollapsed\)/);
  assert.match(source,/function canCollapse[^\n]*isSettled/);
  assert.match(source,/entry.sizing.setPanelCollapsed\(collapsed\)/);
  assert.match(source,/if\(entry.panelCollapsed&&name==='fullscreen'\)/);

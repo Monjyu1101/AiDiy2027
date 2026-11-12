@@ -26,7 +26,7 @@ test('Browser解析案内: 検出失敗でも解析可能、遅い応答はペ�
  const record={kind:'browser'};
  const failed=createBrowserAnalysisContext({trustedEvent:e=>e.record,context:()=>context,discover:async()=>{throw Error('offline');}});
  assert.deepEqual((await failed({record})).context,{...context,ideRunning:false,viewerAvailable:false});
- for(const mode of ['page','closed','sender','quitting','linked']){
+ for(const mode of ['page','closed','sender','quitting','linked','tab','navigation','session']){
   const pending=deferred();let page={...context},trusted=record,quitting=false;
   const action=createBrowserAnalysisContext({trustedEvent:()=>trusted,context:()=>page,isQuitting:()=>quitting,discover:()=>pending.promise});
   const result=action({record});
@@ -34,6 +34,9 @@ test('Browser解析案内: 検出失敗でも解析可能、遅い応答はペ�
   if(mode==='closed')page=null;
   if(mode==='sender')trusted=null;
   if(mode==='quitting')quitting=true;
+  if(mode==='tab')page={...page,activeTabId:'other'};
+  if(mode==='navigation')page={...page,navigationRevision:2};
+  if(mode==='session')page={...page,session:'other'};
   if(mode==='linked')page={...page,canSelectSource:true};
   pending.resolve({ideRunning:true,viewerAvailable:true});assert.equal((await result).ok,false,mode);
  }

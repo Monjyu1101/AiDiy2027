@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+const {randomUUID}=require('node:crypto');
 const HOME='http://127.0.0.1:8090/';
 const {pathToFileURL,fileURLToPath}=require('node:url');
 const {relative,isAbsolute,sep,resolve,basename}=require('node:path');
@@ -68,18 +69,20 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   callback({cancel:blocked});
  });
  const allowed=url=>{if(url==='about:blank')return true;try{const parsed=new URL(url);if(parsed.protocol==='file:')return localFileAllowed(parsed);return ['http:','https:'].includes(parsed.protocol)&&!parsed.username&&!parsed.password&&!blockedOrigins.has(parsed.origin);}catch{return false;}};
- function attach(record,target=HOME,available=true,connected=available,mode='online'){
+ function attach(record,target=HOME,available=true,connected=available,mode='online',onTabCreated=()=>{}){
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
-  const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}});
-  const contents=view.webContents,entry={view,error:'',rect:null,run:0,navigationRevision:0,available,connected,mode,pendingTarget:available?null:target};entries.set(record,entry);
-  record.window.contentView.addChildView(view);view.setVisible(false);
+  const entry={tabs:[],active:null,navigationRevision:0,available,connected,mode,disposed:false};entries.set(record,entry);
+  for(const key of ['view','error','run','capture','elementLink'])Object.defineProperty(entry,key,{get:()=>entry.active?.[key],set:value=>{if(entry.active)entry.active[key]=value;}});
   let stateRevision=0;
-  const snapshot=()=>({stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,url:contents.getURL()||target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'});
-  const notify=()=>{if(!record.window.isDestroyed()&&!contents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
+  const snapshot=()=>{
+   const tab=entry.active,contents=tab.view.webContents;
+   return{stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,activeTabId:tab.id,tabs:entry.tabs.map(t=>({id:t.id,url:t.view.webContents.getURL()||t.target,title:t.view.webContents.getTitle(),loading:t.view.webContents.isLoading()})),url:contents.getURL()||tab.target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'};
+  };
+  const notify=()=>{if(!entry.disposed&&entry.active&&!record.window.isDestroyed()&&!entry.view.webContents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
   entry.snapshot=snapshot;entry.notify=notify;
-  entry.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available,onChange:notify,onSelected:()=>hostContents.send('development:browser-element-selected'),onError:message=>{if(entry.error!==message){entry.error=message;notify();}}});
-  const sizing=createBrowserSizing({window:record.window,view,screen});entry.sizing=sizing;
+  // サイズ操作は窓ごとに一つ。タブ切替後も同じ測定値を選択中Viewへ適用する。
+  const sizing=createBrowserSizing({window:record.window,view:{setBounds:bounds=>entry.view?.setBounds(bounds),get webContents(){return entry.view?.webContents;}},screen});entry.sizing=sizing;
   const toggleFullscreen=()=>{if(!entry.panelCollapsed)sizing.toggleFullscreen();};
   entry.toggleFullscreen=toggleFullscreen;
   let pointerTimer;
@@ -113,55 +116,98 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   }
   entry.header=createBrowserHeader({BrowserWindow,screen,record,entry,notify,fullscreenKey,headers});
   entry.pointer=pointer;
-  for(const page of [hostContents,contents])page.on('before-input-event',fullscreenKey);
-  entry.navigate=async value=>{
-   const url=browserURL(value);if(!entry.available||!allowed(url))throw Error('このURLはブラウザパネルでは開けません。');
-   draftWindows.close(record);void entry.elementLink.stop();
-   const run=++entry.run;entry.error='';
-   // 読み込み完了を待たず窓を表示する。失敗は同じパネルの操作欄へ通知する。
-   void contents.loadURL(url).catch(error=>{if(run===entry.run&&!contents.isDestroyed()&&error.code!=='ERR_ABORTED'){entry.error='ページを読み込めませんでした。URLや接続を確認して再読み込みしてください。';notify();}});
-   notify();
-  };
-  const guard=(event,url)=>{if(!entry.available||!allowed(url||event.url)){event.preventDefault();entry.error='このリンクはブラウザパネルでは開けません。';notify();}};
-  contents.on('will-navigate',guard);contents.on('will-redirect',guard);contents.on('will-frame-navigate',guard);
-  contents.on('will-attach-webview',event=>event.preventDefault());
-  contents.setWindowOpenHandler(({url})=>{void entry.navigate(url).catch(error=>{entry.error=error.message;notify();});return{action:'deny'};});
-  // URLが同じページへ戻っても、移動前の撮影結果や遅い保存完了を持ち越さない。
-  const resetCapture=()=>{entry.navigationRevision++;entry.capture=undefined;notify();};
-  for(const name of ['did-start-loading','did-stop-loading','page-title-updated'])contents.on(name,notify);
-  contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false){draftWindows.close(record);resetCapture();}});
-  contents.on('did-navigate',resetCapture);
-  contents.on('did-navigate-in-page',(_event,_url,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
-  record.window.on('minimize',()=>draftWindows.close(record));
-  contents.on('render-process-gone',()=>{draftWindows.close(record);entry.error='ページの表示が停止しました。再読み込みしてください。';notify();});
+  hostContents.on('before-input-event',fullscreenKey);
+  function closeHelpers(){draftWindows.close(record);analysisWindows.close(record);void entry.elementLink?.stop();}
+  function selectTab(id){
+   const tab=entry.tabs.find(t=>t.id===id);if(!tab)throw Error('タブが見つかりません。');
+   if(tab===entry.active)return;
+   closeHelpers();entry.active=tab;record.browserTabId=tab.id;entry.navigationRevision++;
+   entry.layout();notify();
+  }
+  function disposeTab(tab){
+   if(tab.closed)return;
+   tab.closed=true;tab.run++;tab.elementLink.dispose();
+   const contents=tab.contents;contents.removeListener('before-input-event',fullscreenKey);
+   // closed後は親窓とViewのnativeハンドルが既に破棄されている場合がある。
+   if(!record.window.isDestroyed()){tab.view.setVisible(false);record.window.contentView.removeChildView?.(tab.view);}
+   if(!contents.isDestroyed())contents.close({waitForBeforeUnload:false});
+  }
+  function closeTab(id){
+   const index=entry.tabs.findIndex(t=>t.id===id);if(index<0)throw Error('タブが見つかりません。');
+   const tab=entry.tabs[index];
+   // 最後のタブを閉じても操作窓を残し、安全な空ページを一つ用意する。
+   if(entry.tabs.length===1)newTab('about:blank');
+   if(entry.active===tab)selectTab(entry.tabs[index+1]?.id||entry.tabs[index-1].id);
+   entry.tabs.splice(entry.tabs.indexOf(tab),1);disposeTab(tab);notify();
+  }
+  function newTab(value=HOME){
+   if(entry.disposed||record.window.isDestroyed())throw Error('Browserが終了しています。');
+   if(entry.tabs.length>=32)throw Error('タブは32個まで開けます。不要なタブを閉じてください。');
+   const target=browserURL(value);if(!allowed(target))throw Error('このURLはブラウザパネルでは開けません。');
+   const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}}),contents=view.webContents;
+   const tab={id:entry.tabs.length===0&&record.browserTabId?record.browserTabId:randomUUID(),view,contents,target,error:'',run:0,closed:false,pendingTarget:entry.available?null:target};
+   record.window.contentView.addChildView(view);view.setVisible(false);
+   tab.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available&&entry.active===tab&&!tab.closed,onChange:notify,onSelected:()=>{if(entry.active===tab)hostContents.send('development:browser-element-selected');},onError:message=>{if(tab.error!==message){tab.error=message;notify();}}});
+   tab.navigate=async value=>{
+    const url=browserURL(value);if(tab.closed||!entry.available||!allowed(url))throw Error('このURLはブラウザパネルでは開けません。');
+    if(entry.active===tab)closeHelpers();else void tab.elementLink.stop();
+    const run=++tab.run;tab.error='';tab.target=url;
+    void contents.loadURL(url).catch(error=>{if(!entry.disposed&&!tab.closed&&run===tab.run&&!contents.isDestroyed()&&error.code!=='ERR_ABORTED'){tab.error='ページを読み込めませんでした。URLや接続を確認して再読み込みしてください。';notify();}});
+    notify();
+   };
+   const guard=(event,url)=>{if(!entry.available||!allowed(url||event.url)){event.preventDefault();tab.error='このリンクはブラウザパネルでは開けません。';notify();}};
+   contents.on('will-navigate',guard);contents.on('will-redirect',guard);contents.on('will-frame-navigate',guard);
+   contents.on('will-attach-webview',event=>event.preventDefault());
+   contents.setWindowOpenHandler(({url})=>{try{if(!entry.available)throw Error('利用を開始してください。');newTab(url);}catch(error){tab.error=error.message;notify();}return{action:'deny'};});
+   const resetCapture=()=>{tab.capture=undefined;if(entry.active===tab){entry.navigationRevision++;draftWindows.close(record);analysisWindows.close(record);}notify();};
+   for(const name of ['did-start-loading','did-stop-loading','page-title-updated'])contents.on(name,notify);
+   contents.on('did-start-navigation',(_event,_url,_inPlace,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
+   contents.on('did-navigate',resetCapture);
+   contents.on('did-navigate-in-page',(_event,_url,isMainFrame)=>{if(isMainFrame!==false)resetCapture();});
+   contents.on('render-process-gone',()=>{if(entry.active===tab)closeHelpers();tab.error='ページの表示が停止しました。再読み込みしてください。';notify();});
+   contents.on('before-input-event',fullscreenKey);
+   entry.tabs.push(tab);
+   onTabCreated(contents,{id:tab.id,activate:()=>selectTab(tab.id),close:()=>closeTab(tab.id)});
+   if(!entry.active){entry.active=tab;record.browserTabId=tab.id;}else selectTab(tab.id);
+   if(entry.available)void tab.navigate(target).catch(error=>{tab.error=error.message;notify();});
+   return tab;
+  }
+  entry.navigate=value=>entry.active.navigate(value);
+  entry.newTab=newTab;entry.selectTab=selectTab;entry.closeTab=closeTab;
   function layout(){
-   sizing.layout();view.setVisible(entry.available&&!entry.panelCollapsed);
+   sizing.layout();for(const tab of entry.tabs)tab.view.setVisible(tab===entry.active&&entry.available&&!entry.panelCollapsed);
   }
   entry.layout=layout;
+  record.openBrowserTab=value=>({record,tabId:newTab(value).id});
+  record.window.on('minimize',()=>draftWindows.close(record));
   record.window.on('enter-full-screen',fullscreenChanged);record.window.on('leave-full-screen',fullscreenChanged);
-  record.window.once('closed',()=>{entry.elementLink.dispose();sizing.dispose();clearInterval(pointerTimer);entry.header.close();for(const page of [hostContents,contents])page.removeListener('before-input-event',fullscreenKey);entries.delete(record);if(!contents.isDestroyed())contents.close({waitForBeforeUnload:false});});
-  if(available)void entry.navigate(target).catch(error=>{entry.error=error.message;notify();});
-  return contents;
+  record.window.once('closed',()=>{entry.disposed=true;sizing.dispose();clearInterval(pointerTimer);entry.header.close();hostContents.removeListener('before-input-event',fullscreenKey);for(const tab of entry.tabs)disposeTab(tab);entry.tabs=[];entries.delete(record);delete record.openBrowserTab;});
+  return newTab(target).view.webContents;
  }
+
  async function action(event,name,value){
   const record=trustedEvent(event),entry=record?.kind==='browser'?entries.get(record):null;
   if(!entry)return{ok:false,error:'ブラウザパネルから操作してください。'};
-  const contents=entry.view.webContents;
+  const tab=entry.active,contents=tab.view.webContents,revision=entry.navigationRevision;
+  const current=()=>{if(entry.disposed||entry.active!==tab||entry.navigationRevision!==revision)throw Error('表示中のページや接続が変わりました。もう一度操作してください。');};
   try{
    if(entry.panelCollapsed&&name==='fullscreen')throw Error('パネルを展開してから全画面表示にしてください。');
    if(!entry.available&&!['state','bounds','size','fullscreen','element-stop','draft-window-close','analysis-window-close','analysis-window-context','header-size','header-pin-state','header-toggle-pin'].includes(name))throw Error('利用を開始してください。');
    if(name==='open-analysis'&&!entry.connected)throw Error('tools接続中のみ解析できます。');
-   if(['back','forward','reload','stop','open-analysis','capture','element-stop'].includes(name)){draftWindows.close(record);await entry.elementLink.stop();}
+   if(['back','forward','reload','stop','open-analysis','capture','element-stop'].includes(name)){draftWindows.close(record);await tab.elementLink.stop();current();}
    if(name==='element-toggle'){if(draftWindows.isOpen(record))throw Error('ダイアログを閉じてから要素連携を開始してください。');entry.error='';await entry.elementLink.start();}
    else if(name==='element-stop')await entry.elementLink.stop();
    else if(name==='element-draft')return{ok:true,request:elementRequest(record,value)};
    else if(name==='open-draft'){
     const element=value===true;if(draftWindows.isOpen(record)&&entry.draftElement!==element)draftWindows.close(record);
-    if(!element&&!draftWindows.isOpen(record))await entry.elementLink.stop();entry.draftElement=element;
+    if(!element&&!draftWindows.isOpen(record))await tab.elementLink.stop();current();entry.draftElement=element;
     await draftWindows.open(record,element);
    }
    else if(name==='draft-window-context')return{ok:true,request:draftWindowRequest(event)};
    else if(name==='draft-window-close'){if(!draftWindows.trusted(event))throw Error('連携先選択ウィンドウから操作してください。');draftWindows.close(record);return{ok:true};}
+   else if(name==='tab-new')entry.newTab(value===undefined?HOME:value);
+   else if(name==='tab-select')entry.selectTab(value);
+   else if(name==='tab-close')entry.closeTab(value);
    else if(name==='navigate')await entry.navigate(value);
    else if(name==='home')await entry.navigate(HOME);
    else if(name==='back'){if(contents.navigationHistory.canGoBack())contents.navigationHistory.goBack();}
@@ -173,7 +219,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    }
    else if(name==='draft')return{ok:true,request:draftRequest(record)};
    else if(name==='analysis-context')return{ok:true,context:analysisContext(record)};
-   else if(name==='open-analysis'){await entry.elementLink.stop(false);await analysisWindows.open(record);}
+   else if(name==='open-analysis'){await tab.elementLink.stop(false);current();await analysisWindows.open(record);}
    else if(name==='analysis-window-context'){const context=analysisWindows.context(event);return context?{ok:true,context}:{ok:false,error:'解析ウィンドウから操作してください。'};}
    else if(name==='analysis-window-close'){if(!analysisWindows.trusted(event))throw Error('解析ウィンドウから操作してください。');analysisWindows.close(record);return{ok:true};}
    else if(name==='header-size'){
@@ -191,10 +237,10 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
     entry.capturing=true;
     try{
      const at=now(),url=contents.getURL(),navigation=entry.navigationRevision,image=await contents.capturePage();
-     if(contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
+     if(entry.active!==tab||contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
      if(image.isEmpty())throw Error('Web画面を撮影できませんでした。');
      const result=await captureImage({record,png:image.toPNG(),size:image.getSize()});
-     if(contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
+     if(entry.active!==tab||contents.isDestroyed()||record.window.isDestroyed()||!entry.available||entry.navigationRevision!==navigation||contents.getURL()!==url)throw Error('表示中のページや接続が変わりました。もう一度撮影してください。');
      entry.capture={path:result.path,at};entry.notify();
      return{ok:true,...entry.snapshot(),...result};
     }finally{entry.capturing=false;}
@@ -214,9 +260,9 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    if(mode!==undefined)entry.mode=mode;
    entry.connected=connected;
    if(changed){
-    entry.available=available;
-    if(!available){draftWindows.close(record);void entry.elementLink.stop();entry.view.webContents.stop();}
-    else if(entry.pendingTarget!==null){const target=entry.pendingTarget;entry.pendingTarget=null;void entry.navigate(target).catch(error=>{entry.error=error.message;entry.notify();});}
+    entry.navigationRevision++;entry.available=available;
+    if(!available){draftWindows.close(record);for(const tab of entry.tabs){void tab.elementLink.stop();tab.view.webContents.stop();tab.run++;}}
+    else for(const tab of entry.tabs)if(tab.pendingTarget!==null){const target=tab.pendingTarget;tab.pendingTarget=null;void tab.navigate(target).catch(error=>{tab.error=error.message;entry.notify();});}
     entry.layout();
    }
    if(changed||connectionChanged)entry.notify();
@@ -244,7 +290,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
  }
  function analysisContext(record){
   const entry=entries.get(record);if(!entry||record.window.isDestroyed()||entry.view.webContents.isDestroyed())return null;
-  return{connected:entry.connected,available:entry.available,url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
+  return{session:record.browserSession,activeTabId:entry.active.id,navigationRevision:entry.navigationRevision,connected:entry.connected,available:entry.available,url:entry.view.webContents.getURL(),title:entry.view.webContents.getTitle(),baseName:basename(projectRoot),projectPath:projectRoot,canSelectSource:record.owner?.kind==='ide'&&!record.owner.window.isDestroyed()};
  }
  function navigate(record,value){
   const entry=entries.get(record);

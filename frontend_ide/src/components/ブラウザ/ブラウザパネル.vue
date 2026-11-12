@@ -5,17 +5,19 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import RefreshButton from '../共通表示/再読込ボタン.vue';
-import {ref,onMounted,onBeforeUnmount} from 'vue';
+import {ref,nextTick,onMounted,onBeforeUnmount} from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import PanelToggle from '../コード/パネル表示切替.vue';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const panelCollapsed=ref(false),panelHidden=ref(false);
-const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
+const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:'',tabs:[],activeTabId:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
 let composingAddress=false;
-const headerOffset=ref(0),windowTitle=ref('');
+const addressDrafts=new Map();
+function rememberAddress(){if(!page.value.activeTabId)return;if(address.value!==displayBrowserURL(page.value.url))addressDrafts.set(page.value.activeTabId,address.value);else addressDrafts.delete(page.value.activeTabId);}
+const headerOffset=ref(0),windowTitle=ref(''),tabList=ref(),addressInput=ref();
 const headerWindowApi=props.headerOnly?{
  ...window.aidiyWindow,
  pinState:()=>window.aidiyWindow.browserAction('header-pin-state'),
@@ -27,7 +29,7 @@ const analysisMonitor=createBrowserAnalysisStatus({
  read:async(url,signal)=>{const response=await fetch('/api/browser-analysis?'+new URLSearchParams({url,status:'1'}),{cache:'no-store',signal:AbortSignal.any([signal,AbortSignal.timeout(12000)])});const value=await response.json();if(!response.ok)throw Error(value.error||'解析状況を確認できません。');return value;},
  changed:value=>{if(!disposed)analysisStatus.value=value;},
 });
-function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.connected===true&&visible,page.value.session||'');}
+function monitorAnalysis(){const visible=props.headerOnly?page.value.headerVisible!==false:!page.value.fullscreen;analysisMonitor.setPage(page.value.url,page.value.connected===true&&visible,JSON.stringify([page.value.session||'',page.value.activeTabId||'']));}
 async function openAnalysis(){
  if(openingAnalysis.value||handing.value||!page.value.available||page.value.connected!==true)return;
  openingAnalysis.value=true;const navigation=analysisNavigation;
@@ -46,28 +48,59 @@ function update(value){
  if(disposed||!value)return;
  // F11の通知より遅く届いた操作応答で、通常表示を古い全画面状態へ戻さない。
  if(Number.isFinite(value.stateRevision)){if(value.stateRevision<stateRevision)return;stateRevision=value.stateRevision;}
- if(browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
+ const sessionChanged=value.session!==page.value.session;
+ const tabChanged=value.activeTabId!==page.value.activeTabId;
+ if(sessionChanged){addressDrafts.clear();editing=false;composingAddress=false;}
+ else if(tabChanged&&editing)rememberAddress();
+ if(Array.isArray(value.tabs)){const ids=new Set(value.tabs.map(tab=>tab.id));for(const id of addressDrafts.keys())if(!ids.has(id))addressDrafts.delete(id);}
+ if(tabChanged){editing=false;composingAddress=false;error.value='';void nextTick(()=>{if(!disposed)tabList.value?.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});});}
+ if(tabChanged||browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
  const showHeader=props.headerOnly&&value.headerVisible&&!page.value.headerVisible&&browserAnalysisPageKey(value.url)===browserAnalysisPageKey(page.value.url);
  // 再撮影中・失敗後に、同じ保存パスの状態通知で古い成功表示を戻さない。
  const captureChanged=value.capturePath!==page.value.capturePath;
- const pageChangedForCapture=value.url!==page.value.url||value.session!==page.value.session||value.navigationRevision!==page.value.navigationRevision;
+ const pageChangedForCapture=tabChanged||value.url!==page.value.url||value.session!==page.value.session||value.navigationRevision!==page.value.navigationRevision;
  const initialPage=!page.value.url;
  if(pageChangedForCapture){if(!initialPage)captureNavigation++;captureMessage.value='';}
- page.value=value;if(!capturing.value&&captureChanged&&(!pageChangedForCapture||initialPage))captureMessage.value=value.capturePath||'';if(!editing)address.value=displayBrowserURL(value.url);
+ page.value=value;if(!capturing.value&&captureChanged&&(!pageChangedForCapture||initialPage))captureMessage.value=value.capturePath||'';if(!editing)address.value=addressDrafts.get(value.activeTabId)??displayBrowserURL(value.url);
  monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
 async function action(name,value){
+ const tab=page.value.activeTabId,session=page.value.session;
  const result=await window.aidiyWindow.browserAction(name,value).catch(e=>({ok:false,error:e.message}));
- if(disposed)return;if(!result?.ok){error.value=result?.error||'ブラウザを操作できません。';return;}
- error.value='';update(result);
+ if(disposed)return false;
+ if(name==='navigate'&&result?.ok&&session===page.value.session)addressDrafts.delete(tab);
+ if(!name.startsWith('tab-')&&tab!==page.value.activeTabId)return false;
+ if(!result?.ok){error.value=result?.error||'ブラウザを操作できません。';return false;}
+ error.value='';update(result);return true;
 }
+async function tabAction(name,id,focus=false){
+ if(!page.value.available)return;
+ const ok=await action(name,id);if(!ok||disposed)return;
+ await nextTick();if(disposed)return;
+ if(name==='tab-new')addressInput.value?.focus();
+ else if(focus)tabList.value?.querySelector('[role=tab][aria-selected=true]')?.focus();
+}
+function tabKeydown(event,id){
+ if(event.altKey||event.ctrlKey||event.metaKey||event.isComposing)return;
+ const tabs=page.value.tabs||[],index=tabs.findIndex(tab=>tab.id===id);if(index<0)return;
+ let next;
+ if(event.key==='ArrowRight')next=(index+1)%tabs.length;
+ else if(event.key==='ArrowLeft')next=(index+tabs.length-1)%tabs.length;
+ else if(event.key==='Home')next=0;
+ else if(event.key==='End')next=tabs.length-1;
+ else if(event.key==='Delete'){event.preventDefault();void tabAction('tab-close',id,true);return;}
+ else return;
+ event.preventDefault();void tabAction('tab-select',tabs[next].id,true);
+}
+function tabLabel(tab){return tab.title||displayBrowserURL(tab.url)||'新しいタブ';}
+
 function focusAddress(event){editing=true;event?.target?.select();}
-function blurAddress(){editing=false;composingAddress=false;}
+function blurAddress(){rememberAddress();editing=false;composingAddress=false;}
 function addressKeydown(event){
  // IMEの確定Enterをフォーム送信へ流さない。変換後の次のEnterで開く。
  if(event.key==='Enter'&&(composingAddress||event.isComposing||event.keyCode===229))event.preventDefault();
 }
-function navigate(){if(composingAddress)return;editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
+function navigate(){if(composingAddress)return;rememberAddress();editing=false;void action('navigate',browserAddressTarget(address.value,page.value.url));}
 async function capture(){
  if(disposed||capturing.value)return;capturing.value=true;captureMessage.value='';const navigation=captureNavigation;
  try{
@@ -105,12 +138,21 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
     </span>
    </template>
   </StatusBar>
+  <div class="browser-tabs-row">
+   <div ref="tabList" class="browser-tabs" role="tablist" aria-label="ブラウザのタブ">
+    <div v-for="tab in page.tabs||[]" :key="tab.id" class="browser-tab" :class="{'browser-tab-active':tab.id===page.activeTabId}" role="presentation">
+     <button type="button" class="browser-tab-select" role="tab" :aria-selected="tab.id===page.activeTabId" :tabindex="tab.id===page.activeTabId?0:-1" :disabled="!page.available" :title="tabLabel(tab)+(tab.url?'\n'+displayBrowserURL(tab.url):'')" @click="tabAction('tab-select',tab.id)" @keydown="tabKeydown($event,tab.id)"><span v-if="tab.loading" aria-label="読み込み中">◌ </span>{{tabLabel(tab)}}</button>
+     <button type="button" class="browser-tab-close" :disabled="!page.available" :aria-label="tabLabel(tab)+' のタブを閉じる'" title="タブを閉じる" @click="tabAction('tab-close',tab.id,true)">×</button>
+    </div>
+   </div>
+   <button type="button" class="browser-tab-new" :disabled="!page.available" aria-label="新しいタブ" title="新しいタブ" @click="tabAction('tab-new')">＋</button>
+  </div>
   <form class="browser-toolbar" @submit.prevent="navigate">
    <button type="button" aria-label="戻る" title="戻る" :disabled="!page.available||!page.back" @click="action('back')">←</button>
    <button type="button" aria-label="進む" title="進む" :disabled="!page.available||!page.forward" @click="action('forward')">→</button>
    <RefreshButton :disabled="!page.available" :stop="page.loading" :aria-label="page.loading?'読み込みを停止':'再読み込み'" :title="page.loading?'読み込みを停止':'再読み込み'" @click="action(page.loading?'stop':'reload')" />
    <button v-if="page.mode !== 'offline'" type="button" :disabled="!page.available" title="AiDiyホーム" aria-label="AiDiyホーム" @click="action('home')">⌂</button>
-   <input v-model="address" :disabled="!page.available" aria-label="URLまたは検索語" :placeholder="page.mode === 'offline' ? 'URLまたは検索語' : 'URLまたはGoogle AIで検索'" spellcheck="false" @focus="focusAddress" @blur="blurAddress" @compositionstart="composingAddress=true" @compositionend="composingAddress=false" @keydown="addressKeydown">
+   <input ref="addressInput" v-model="address" @input="rememberAddress" :disabled="!page.available" aria-label="URLまたは検索語" :placeholder="page.mode === 'offline' ? 'URLまたは検索語' : 'URLまたはGoogle AIで検索'" spellcheck="false" @focus="focusAddress" @blur="blurAddress" @compositionstart="composingAddress=true" @compositionend="composingAddress=false" @keydown="addressKeydown">
    <button type="submit" :disabled="!page.available">開く</button>
   </form>
   <p class="browser-page-title" :class="{'browser-loading':page.loading&&!page.error}" :title="page.title" role="status" :aria-busy="page.loading&&!page.error">{{ page.loading&&!page.error?'Loading…':page.title||'Browser' }}<span v-if="page.session && page.mode !== 'offline'"> · session={{ page.session }}</span></p>
@@ -154,6 +196,16 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-header-only .browser-error{color:#631d28;background:#ffe9efcf;text-shadow:none}
 .browser-window-sizes{display:flex;gap:4px;flex:none;-webkit-app-region:no-drag}
 .browser-window-sizes button{width:auto;min-width:42px;height:24px;padding:0 7px;font-size:11px;white-space:nowrap}
+.browser-tabs-row{display:flex;align-items:stretch;gap:4px;padding:4px 9px 0;border-bottom:1px solid #2c4055;-webkit-app-region:no-drag}
+.browser-tabs{display:flex;flex:1;min-width:0;overflow-x:auto;scrollbar-width:thin}
+.browser-tab{display:flex;align-items:stretch;flex:0 0 180px;max-width:240px;min-width:100px;border:1px solid #2c4055;border-bottom:0;background:#101a28}
+.browser-tab-active{background:#24405a;border-color:#6bc6e9}
+.browser-tab-select{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;padding:6px 8px;border:0;border-radius:0;background:transparent;color:inherit;font-size:12px}
+.browser-tab-close,.browser-tab-new{flex:none;border:0;border-radius:0;padding:4px 7px;background:transparent;color:inherit}
+.browser-tab-close:hover:not(:disabled),.browser-tab-new:hover:not(:disabled){background:#35566e}
+.browser-tabs-row button:focus-visible{outline:2px solid #80eaff;outline-offset:-2px}
+.browser-header-only .browser-tab{background:rgba(229,252,255,.1)}
+.browser-header-only .browser-tab-active{background:rgba(195,242,246,.3);border-color:#377f9e}
 .browser-toolbar{display:flex;align-items:center;gap:5px;padding:7px 9px;border-bottom:1px solid #2c4055;flex:none}
 .browser-toolbar button{padding:5px 9px;flex:none}.browser-toolbar input{flex:1;min-width:60px;background:#080f1b;color:#e2ecf8;border:1px solid #375067;border-radius:3px;padding:6px 9px;font:inherit}
 .browser-page-title{margin:0;padding:3px 10px;font-size:11px;color:#9eb4c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}

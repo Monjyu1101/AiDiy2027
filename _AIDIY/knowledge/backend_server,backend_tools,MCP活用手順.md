@@ -26,7 +26,9 @@
 
 Electron版IDEをtoolsへ接続し、「Browser」を開いてから、`aidiy_chrome_devtools` の各操作に `session="aidiy_ide"` を指定します。`list_tabs` でBrowserのIDを取得し、`navigate`、`click`、`type_text`、`eval_js`、`screenshot` へ `tab_id` を渡します。複数IDEを起動した場合はパネルに表示された `aidiy_ide-2` 以降の名前を使います。
 
-このセッションはIDE所有のBrowser専用です。`new_tab` は同じIDEの別Browserパネルを開き、`close_session` はBrowserパネルだけを閉じます。IDE本体やCode・Consoleは閉じません。未起動時に別Chromeを自動起動せず、tools切断中は操作を拒否します。接続先はIDEが `backend_tools/temp/_ide_browser_sessions/` へ自動登録するため、通常のChrome用ポート設定は不要です。Web版のブラウザタブはこの登録の対象外です。
+Browserのページ操作は `session` と `tab_id` の組で対象を指定します（`tabid` ではなく `tab_id`）。例えば `eval_js(session="aidiy_ide 1", tab_id="12345", expression="document.title")` のように、実際の連携値または `list_tabs(session=...)` の `id` をそのまま使います。Browserでは1タブだけでも `tab_id` の省略・空文字・`auto` を拒否し、閉じたタブや別セッションのIDから別タブへ自動で切り替えません。通常Chromeの自動解決は従来通りです。`list_tabs` / `new_tab` はタブID不要で、`new_tab` の戻り値 `session` と `id` を次の操作へ渡します。
+
+このセッションはIDE所有のBrowser専用です。`new_tab` は選んだBrowserセッション内に新しいタブを開き、`close_session` はBrowserパネルだけを閉じます。IDE本体やCode・Consoleは閉じません。未起動時に別Chromeを自動起動せず、tools切断中は操作を拒否します。接続先はIDEが `backend_tools/temp/_ide_browser_sessions/` へ自動登録するため、通常のChrome用ポート設定は不要です。Web版のブラウザタブはこの登録の対象外です。
 
 単独 `aidiy_browser` は同じ操作で `session="aidiy_browser"`（複数起動は `aidiy_browser-2` 以降）を使います。通常Chromeの `default` やIDEのセッションとは別です。起動単位の一時プロファイルと専用ページだけのCDPを使い、最後の窓を閉じると登録を削除します。DiagのChromeボタンは従来のシステム起動Webタブ「手動で開く」と同じ `new_page` を使い、Tools / MCPとWebが稼働中のときに固定 `http://localhost:8090/` を開きます。
 

@@ -12,13 +12,13 @@ import {createRequire} from 'node:module';
 const {createBrowserSourceSelection}=createRequire(import.meta.url)('../デスクトップ/ブラウザ解析連携.cjs');
 async function fixture(t){
  const root=await mkdtemp(join(tmpdir(),'browser-source-'));t.after(()=>rm(root,{recursive:true,force:true}));await mkdir(join(root,'src'));await writeFile(join(root,'src/page.html'),'hello');
- const sent=[],focused=[];let alive=true,page='https://example.test/page';
+ const sent=[],focused=[];let alive=true,page='https://example.test/page',activeTabId='tab-a';
  const owner={kind:'ide',revision:1,url:'http://127.0.0.1:12345/',window:{isDestroyed:()=>!alive,webContents:{send:(...args)=>sent.push(args)}}};
  const source={kind:'browser',owner,linkKey:'online:10',window:{isDestroyed:()=>false}};
  let state={active:true,connected:true,mode:'online',startedAt:10,project:{path:root}};
  const result={id:'job-1',files:[{path:'src/page.html'}]};let beforeFetch=()=>{};
- const select=createBrowserSourceSelection({trustedEvent:event=>event.source,readState:async()=>state,sessionKey:s=>`${s.mode}:${s.startedAt}`,connected:s=>s.connected,context:()=>({url:page}),focusWindow:w=>focused.push(w),fetcher:async target=>{assert.equal(target.origin,owner.url.slice(0,-1));await beforeFetch();return{ok:true,json:async()=>({result})};}});
- return{root,owner,source,sent,focused,result,select:(value={url:page,id:'job-1',path:'src/page.html'},event={source})=>select(event,value),setState:value=>state=value,setPage:value=>page=value,setFetch:fn=>beforeFetch=fn,destroy:()=>alive=false};
+ const select=createBrowserSourceSelection({trustedEvent:event=>event.source,readState:async()=>state,sessionKey:s=>`${s.mode}:${s.startedAt}`,connected:s=>s.connected,context:()=>({url:page,activeTabId}),focusWindow:w=>focused.push(w),fetcher:async target=>{assert.equal(target.origin,owner.url.slice(0,-1));await beforeFetch();return{ok:true,json:async()=>({result})};}});
+ return{root,owner,source,sent,focused,result,select:(value={url:page,id:'job-1',path:'src/page.html'},event={source})=>select(event,value),setState:value=>state=value,setPage:value=>page=value,setTab:value=>activeTabId=value,setFetch:fn=>beforeFetch=fn,destroy:()=>alive=false};
 }
 test('Browser source selects exact owning IDE, preserving source path and session',async t=>{const f=await fixture(t);assert.deepEqual(await f.select(),{ok:true});assert.deepEqual(f.sent,[['development:browser-select-source',{path:'src/page.html',startedAt:10,projectPath:f.root}]]);assert.equal(f.focused[0],f.owner.window);});
 test('standalone/untrusted Browser cannot select IDE source',async t=>{const f=await fixture(t);delete f.source.owner;assert.equal((await f.select()).ok,false);assert.equal((await f.select(undefined,{source:null})).ok,false);assert.equal(f.sent.length,0);});
@@ -34,7 +34,7 @@ test('Browser context uses native page and no longer accepts the page-hiding dra
  const record={kind:'browser',window,url:'http://127.0.0.1:12345/',owner:{kind:'ide',window:{isDestroyed:()=>false}}};
  const browser=createBrowserViews({WebContentsView:View,projectRoot:'/tmp/project',session:{fromPartition:()=>({setPermissionRequestHandler(){},setPermissionCheckHandler(){},webRequest:{onBeforeRequest(){}}})},trustedEvent:event=>event.record});
  browser.attach(record,'https://example.test/page');t.after(()=>window.emit('closed'));
- assert.deepEqual((await browser.action({record},'analysis-context',{url:'https://forged.test/'})).context,{connected:true,available:true,url:'https://example.test/page',title:'実際の画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true});
+ assert.deepEqual((await browser.action({record},'analysis-context',{url:'https://forged.test/'})).context,{session:undefined,activeTabId:record.browserTabId,navigationRevision:0,connected:true,available:true,url:'https://example.test/page',title:'実際の画面',baseName:'project',projectPath:'/tmp/project',canSelectSource:true});
  assert.equal((await browser.action({record:{kind:'browser'}},'analysis-context')).ok,false);
  await browser.action({record},'bounds',{left:0,top:100,width:800,height:500,viewportWidth:800,viewportHeight:600});
  assert.equal(view.visible,true);assert.equal((await browser.action({record},'draft-dialog',true)).ok,false);assert.equal(view.visible,true);
@@ -42,3 +42,5 @@ test('Browser context uses native page and no longer accepts the page-hiding dra
 });
 
 test('saved source remains selectable with tools offline',async t=>{const f=await fixture(t);f.setState({active:true,connected:false,mode:'online',startedAt:10,project:{path:f.root}});assert.equal((await f.select()).ok,true);f.setState({active:false,connected:false,mode:'online',startedAt:10,project:{path:f.root}});assert.equal((await f.select()).ok,false);});
+
+test('同URLのタブ切替中は元タブのソース選択を送信しない',async t=>{const f=await fixture(t);f.setFetch(()=>f.setTab('tab-b'));assert.equal((await f.select()).ok,false);assert.equal(f.sent.length,0);});

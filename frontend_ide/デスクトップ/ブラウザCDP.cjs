@@ -28,12 +28,12 @@ async function createBrowserCDP({directory,canUse,openPanel,allowedURL,sessionPr
    if(path==='/json'||path==='/json/list'){json([...pages.values()].filter(p=>!p.contents.isDestroyed()).map(describe));return;}
    if(path==='/json/new'){
     const target=url.searchParams.get('url')||'https://www.google.com/';if(!allowedURL(target))throw Error('WebのURLまたはプロジェクト内のファイルURLを指定してください。');
-    const record=await openPanel(target),page=record&&publishedPages.get(record)?.();if(!page)throw Error('Browserを開けませんでした。');json(page);return;
+    const opened=await openPanel(target),record=opened?.record||opened,page=record&&publishedPages.get(record)?.(opened?.tabId);if(!page)throw Error('Browserを開けませんでした。');json(page);return;
    }
-   if(path==='/close'){for(const page of [...pages.values()])page.record.window.close();json({ok:true});return;}
+   if(path==='/close'){for(const record of new Set([...pages.values()].map(page=>page.record)))record.window.close();json({ok:true});return;}
    const match=/^\/json\/(close|activate)\/([a-f\d-]+)$/.exec(path),page=match&&pages.get(match[2]);
    if(!page)throw Error('Browserパネルが見つかりません。');
-   if(match[1]==='close')page.record.window.close();else{if(page.record.window.isMinimized())page.record.window.restore();page.record.window.show();page.record.window.focus();page.contents.focus();}
+   if(match[1]==='close'){if(page.controls?.close)page.controls.close();else page.record.window.close();}else{page.controls?.activate?.();if(page.record.window.isMinimized())page.record.window.restore();page.record.window.show();page.record.window.focus();page.contents.focus();}
    json({ok:true});
   }catch(error){json({error:error.message},409);}
  });
@@ -81,6 +81,6 @@ async function createBrowserCDP({directory,canUse,openPanel,allowedURL,sessionPr
   if(!file||JSON.parse(readFileSync(file,'utf8')).token!==token)throw Error('IDEブラウザのセッションを確保できません。');
  }catch(error){server.close();ws.close();throw error;}
  function close(){if(closed)return;closed=true;for(const client of sockets)client.terminate();ws.close();server.close();try{if(JSON.parse(readFileSync(file,'utf8')).token===token)unlinkSync(file);}catch{}}
- return{name,add(record,contents){const id=randomUUID(),page={id,record,contents};pages.set(id,page);record.browserSession=name;record.browserTabId=id;publishedPages.set(record,()=>closed||contents.isDestroyed()?undefined:describe(page));contents.once('destroyed',()=>{pages.delete(id);publishedPages.delete(record);});},close};
+ return{name,add(record,contents,controls){const id=controls?.id||randomUUID(),page={id,record,contents,controls};pages.set(id,page);record.browserSession=name;if(!controls)record.browserTabId=id;publishedPages.set(record,(tabId=record.browserTabId)=>{const active=pages.get(tabId);return closed||!active||active.contents.isDestroyed()?undefined:describe(active);});contents.once('destroyed',()=>{pages.delete(id);if(![...pages.values()].some(p=>p.record===record))publishedPages.delete(record);});return id;},close};
 }
 module.exports={createBrowserCDP};

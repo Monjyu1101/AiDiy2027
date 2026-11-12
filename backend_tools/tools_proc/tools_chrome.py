@@ -126,6 +126,11 @@ _SESSION_PARAM = {
 }
 for _m in _CHROME_DEVTOOLS_METHODS:
     _m["parameters"] = {"session": _SESSION_PARAM, **_m["parameters"]}
+    if "tab_id" in _m["parameters"]:
+        _m["parameters"]["tab_id"]["description"] = (
+            "AiDiy Browserではsessionとtab_idの明示が必須。list_tabsで得たidを使い、"
+            "閉鎖済み・別sessionのIDへは切り替えない。通常Chromeは省略時autoを維持。"
+        )
 
 # セッション管理メソッド
 _CHROME_DEVTOOLS_METHODS += [
@@ -530,7 +535,7 @@ def register_tools(mcp, registry):
         Args:
             method: CDP メソッド名 (例: "Page.printToPDF", "Network.setExtraHTTPHeaders")
             params: JSON 文字列形式のパラメータ (例: '{"landscape": true}')
-            tab_id: 対象タブID (省略時は最初のタブ)。
+            tab_id: 対象タブID (AiDiy Browserは明示必須、通常Chromeのみ省略可)。
                     "browser" を指定するとブラウザレベルの WebSocket を使用する
                     (Browser.* / Target.* / SystemInfo.* 等のコマンドに必要)。
         """
@@ -571,7 +576,7 @@ def register_tools(mcp, registry):
         Args:
             accept: True=OK（確認）、False=キャンセル
             dialog_wait: ダイアログが表示されるまで待機する最大秒数（デフォルト0=即時応答）。
-            tab_id: 対象タブID（省略時は最初のタブ）
+            tab_id: 対象タブID（AiDiy Browserは明示必須、通常Chromeのみ省略可）
         """
         cdp = await _ensure_chrome(session=session)
         result = await cdp.handle_dialog(accept, "", tab_id, dialog_wait)
@@ -588,7 +593,7 @@ def register_tools(mcp, registry):
 
         Args:
             dialog_wait: ダイアログが表示されるまで待機する最大秒数（デフォルト0=即時応答）。
-            tab_id: 対象タブID（省略時は最初のタブ）
+            tab_id: 対象タブID（AiDiy Browserは明示必須、通常Chromeのみ省略可）
         """
         cdp = await _ensure_chrome(session=session)
         result = await cdp.handle_dialog(True, "", tab_id, dialog_wait)
@@ -600,7 +605,7 @@ def register_tools(mcp, registry):
         window.confirm/alert/prompt をオーバーライドし、ネイティブダイアログの表示をブロックしない形に変更する。
 
         Args:
-            tab_id: 対象タブID（省略時は最初のタブ）
+            tab_id: 対象タブID（AiDiy Browserは明示必須、通常Chromeのみ省略可）
         """
         cdp = await _ensure_chrome(session=session)
         result = await cdp.install_dialog_override(tab_id)
@@ -613,7 +618,7 @@ def register_tools(mcp, registry):
 
         Args:
             accept: True=OK（確認）、False=キャンセル
-            tab_id: 対象タブID（省略時は最初のタブ）
+            tab_id: 対象タブID（AiDiy Browserは明示必須、通常Chromeのみ省略可）
         """
         cdp = await _ensure_chrome(session=session)
         result = await cdp.set_confirm_result(accept, tab_id)
@@ -625,7 +630,7 @@ def register_tools(mcp, registry):
         最後に呼ばれたダイアログの情報を取得する（js_install_dialog_override が必要）。
 
         Args:
-            tab_id: 対象タブID（省略時は最初のタブ）
+            tab_id: 対象タブID（AiDiy Browserは明示必須、通常Chromeのみ省略可）
         """
         cdp = await _ensure_chrome(session=session)
         state = await cdp.get_dialog_state(tab_id)
@@ -731,9 +736,9 @@ def create_router(registry, _ensure_chrome) -> APIRouter:
             "description": "Chrome DevTools Protocol (CDP) を使い Chrome ブラウザを遠隔操作する。Chrome 未起動時は自動起動する。",
             "endpoint": "POST /aidiy_chrome_devtools/{method_name}",
             "content_type": "application/json",
-            "how_to_call": "method_name を URL パスに指定し、JSON body に各メソッドのパラメータをフラットに渡す。tab_id を省略すると最初のタブを使用する。session を省略すると 'default' セッション（従来の Chrome）を使用する。",
+            "how_to_call": "method_name を URL パスに指定し、JSON body に各メソッドのパラメータをフラットに渡す。AiDiy Browserではsessionとtab_idを明示する。通常Chromeのみtab_id省略時は自動解決する。session を省略すると 'default' セッション（従来の Chrome）を使用する。",
             "tab_id": {
-                "description": "省略または 'auto' 指定で、セッション内で一度解決したタブ（自動解決タブ）を再利用する。毎回タブ一覧を取得し直さないため高速。タブを閉じる/切り替える操作をした場合は次回呼び出しで自動的に再解決される。複数タブを明示的に使い分けたい場合のみ list_tabs で取得した id を指定する。",
+                "description": "AiDiy Browserではsessionとtab_idの明示が必須。通常Chromeのみ、省略または 'auto' 指定で、セッション内で一度解決したタブ（自動解決タブ）を再利用する。毎回タブ一覧を取得し直さないため高速。タブを閉じる/切り替える操作をした場合は次回呼び出しで自動的に再解決される。複数タブを明示的に使い分けたい場合のみ list_tabs で取得した id を指定する。",
             },
             "sessions": {
                 "description": "session パラメータ（自由な文字列）ごとに独立した Chrome（ポート・プロファイル）を起動・管理する。並行実行（自動テスト等）は session を分けることで互いに干渉しない。",

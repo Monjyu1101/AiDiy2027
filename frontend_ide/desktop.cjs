@@ -120,6 +120,7 @@ async function ensureStandaloneBrowserBridge(){
    allowedURL:target=>browserViews.allowedURL(target),
    openPanel:async target=>{
     const source=standaloneBrowsers()[0];if(quitting||!source||!browserConnected(await readState(source)))throw Error('tools接続中のみ起動できます。');
+    if(source.openBrowserTab)return source.openBrowserTab(target);
     const window=await createWindow('browser',url+'#browser',undefined,undefined,undefined,undefined,undefined,target);return windows.get(window.webContents);
    }});
   if(quitting||!standaloneBrowsers().length){bridge.close();throw Error('Browserの利用が終了しました。');}
@@ -144,6 +145,7 @@ async function ensureBrowserBridge(record){
    allowedURL:url=>browserViews.allowedURL(url),
    openPanel:async target=>{
     const state=await readState(owner);if(!browserConnected(state)||record.window.isDestroyed()||owner.window.isDestroyed()||owner.revision!==revision||record.linkKey!==sessionKey(state))throw Error('tools接続中のみ起動できます。');
+    if(record.openBrowserTab)return record.openBrowserTab(target);
     const window=await createWindow('browser',owner.url+'#browser',undefined,owner,sessionKey(state),undefined,undefined,target);return windows.get(window.webContents);
    }});
   if(record.window.isDestroyed()||owner.window.isDestroyed()||owner.revision!==revision){bridge.close();throw Error('IDEの利用が終了しました。');}
@@ -279,7 +281,7 @@ async function createWindow(kind,url,server,owner,linkKey,anchor,displayId,brows
     record.slot=Number(bridge.name.slice('aidiy_ide '.length))-1;title=`AiDiy IDE / Browser ${record.slot+1}`;window.setTitle(title);
     if(displayId===undefined&&!anchor)window.setBounds(windowBounds(kind,area,ownerBounds,record.slot));
    }
-   record.browserSession=bridge.name;const page=browserViews.attach(record,browserTarget,current.active,browserConnected(current),current.mode);attachWindowMove(record,page);bridge.add(record,page);if(!owner)browserViews.setAvailable(record,current.active,browserConnected(current),current.mode);
+   record.browserSession=bridge.name;browserViews.attach(record,browserTarget,current.active,browserConnected(current),current.mode,(page,controls)=>{attachWindowMove(record,page);bridge.add(record,page,controls);});if(!owner)browserViews.setAvailable(record,current.active,browserConnected(current),current.mode);
    browserReady(true);
   }
   await window.loadURL(url);
