@@ -195,7 +195,7 @@ async function run() {
   assert.equal(await evaluate(routes.window, `document.querySelectorAll('.route-controls .window-pin').length`), 1);
   assert.equal(await evaluate(routes.window, `getComputedStyle(document.querySelector('.route-burger')).webkitAppRegion==='drag' && !document.querySelector('.route-drag-handle')`), true);
   assert.equal(await evaluate(routes.window, `document.querySelector('.route-window-actions')===document.querySelector('.route-controls').lastElementChild`), true);
-  assert.deepEqual(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].map(n=>n.textContent)`), ['閲覧軌跡', '検索軌跡', 'AI検索軌跡']);
+  assert.deepEqual(await evaluate(routes.window, `[...document.querySelectorAll('.route-choice')].map(n=>n.textContent)`), ['閲覧軌跡', '時刻軌跡', 'AI検索軌跡']);
   result.routeGeometry = await evaluate(routes.window, `(()=>{const n=document.querySelector('.route-controls'),r=n.getBoundingClientRect();return{width:r.width,height:r.height,scrollWidth:n.scrollWidth,clientWidth:n.clientWidth,buttons:[...n.querySelectorAll('button')].map(b=>({text:b.textContent,left:b.getBoundingClientRect().left,width:b.getBoundingClientRect().width,top:b.getBoundingClientRect().top,bottom:b.getBoundingClientRect().bottom}))};})()`);
   assert.ok(result.routeGeometry.scrollWidth <= result.routeGeometry.clientWidth, 'Native route bar fits 360px without horizontal scrolling');
   assert.ok(result.routeGeometry.height <= 40, 'Native route controls stay in the original compact-height row');
@@ -246,13 +246,38 @@ async function run() {
   await capture(explorer.window, '06-vr-explorer-locked');
   await capture(routes.window, '07-vr-routes-locked');
   await evaluate(owner, 'fixture.setVR(false)');
-  await until(owner, 'fixture.saved.explorer.ownerDocument===document && fixture.saved.routes.ownerDocument===document && !fixture.log.detached');
-  for (let n = 0; n < 150 && (!explorer.window.isDestroyed() || !routes.window.isDestroyed()); n++) await sleep(20);
-  assert.ok(explorer.window.isDestroyed() && routes.window.isDestroyed());
-  assert.equal(await evaluate(owner, `fixture.saved.input.value`), '未送信の検索入力');
-  result.checks.push('VR pins are ON and disabled, return controls disappear, Explorer close is disabled and route burger remains a title drag surface; programmatic click cannot send a pin toggle; exiting VR restores both original DOM nodes and input state');
-  await click(owner, '.explorer-toggle'); await click(owner, '.route-restore-toggle');
-  await capture(owner, '08-restored-after-vr');
+  for(const record of [explorer,routes]){
+    assert.equal(record.window.isDestroyed(),false,'VR開始前から別窓なら同じ窓を維持');
+    await pinState(record,true,false);
+  }
+  assert.equal(await evaluate(explorer.window, `document.querySelector('.grep-query input').value`), '未送信の検索入力');
+  await capture(explorer.window,'08-existing-explorer-after-vr');
+  await capture(routes.window,'09-existing-routes-after-vr');
+  // 既存/新規の全組合せ。復帰後も既存窓は同一、VRだけで開いた窓は終了する。
+  for(const keepExplorer of [true,false])for(const keepRoutes of [true,false]){
+    if(!explorer.window.isDestroyed())await restore(explorer);
+    if(!routes.window.isDestroyed())await restore(routes);
+    if(keepExplorer){await click(owner,'.explorer-detach');explorer=await detached('explorer');}
+    if(keepRoutes){await click(owner,'.route-detach');routes=await detached('panel-routes');}
+    const before=windows.length;
+    await evaluate(owner,'fixture.setVR(true)');
+    const currentExplorer=livePanel('explorer'),currentRoutes=livePanel('panel-routes');
+    assert.ok(currentExplorer&&currentRoutes);
+    assert.equal(windows.length-before,Number(!keepExplorer)+Number(!keepRoutes),'既存パネルを重複起動しない');
+    if(keepExplorer)assert.equal(currentExplorer,explorer);
+    if(keepRoutes)assert.equal(currentRoutes,routes);
+    explorer=currentExplorer;routes=currentRoutes;
+    await evaluate(owner,'fixture.setVR(false)');
+    for(const [record,keep]of [[explorer,keepExplorer],[routes,keepRoutes]]){
+      if(keep){assert.equal(record.window.isDestroyed(),false);await pinState(record,true,false);}
+      else{for(let n=0;n<150&&!record.window.isDestroyed();n++)await sleep(20);assert.equal(record.window.isDestroyed(),true);}
+    }
+    if(!keepExplorer)await click(owner,'.explorer-toggle');
+    if(!keepRoutes)await click(owner,'.route-restore-toggle');
+    assert.equal(await evaluate(owner,`fixture.saved.input.value`),'未送信の検索入力');
+  }
+  result.checks.push('VR preserves existing Explorer/routes windows and DOM/input, unlocks their pins, creates no duplicates across four combinations/repeated cycles, and closes only panels opened for VR');
+  await capture(owner, '10-vr-created-panels-returned');
   assert.deepEqual(await evaluate(owner, 'fixture.log.errors'), []);
   result.apiRequests = await evaluate(owner, 'fixture.log.requests');
   result.resizeMeasurements = await evaluate(owner, 'fixture.log.resizes');

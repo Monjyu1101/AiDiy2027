@@ -41,16 +41,17 @@ window.fetch=async(url,options={})=>{
  return new Response(JSON.stringify(data),{headers:{'content-type':'application/json'}});
 };
 const history=[{type:'file',path:'docs/sample.txt',at:1000},{type:'file',path:'keep.txt',at:2000}];
+let explorer;
 const app=createApp({render:()=>h('main',{class:['development-app','ide',{'all-displays':state.allDisplays}]},[
  h('div',{class:'ide-heading'},[h('div',{class:'connection-bar online'})]),
- h('section',{class:'space-view'},[h(Explorer,{...state,tree,scan:{root:state.root,tree},filter:false,viewHistory:history,viewVoyages:{},
+ h('section',{class:'space-view'},[h(Explorer,{ref:value=>explorer=value,...state,tree,scan:{root:state.root,tree},filter:false,viewHistory:history,viewVoyages:{},
   'onUpdate:open':value=>state.open=value,onDetached:value=>{log.detached=value;log.detachedEvents.push(value);},
   onSelect:row=>{state.selected=row.type==='file'?row.path:'';state.current=row.type==='dir'?row.path:row.path.split('/').slice(0,-1).join('/');log.selected.push(row);}
  })])
 ])});
 app.mount('#app');
 window.fixture={state,log,saved:{},remember(){this.saved.explorer=document.querySelector('.explorer-panel');this.saved.routes=document.querySelector('.explorer-routes');this.saved.input=document.querySelector('.grep-query input');},
- async setVR(value){await window.panelFixture.setVR(value);state.allDisplays=value;await nextTick();},
+ async setVR(value){if(value)await explorer.pinForAll();await window.panelFixture.setVR(value);state.allDisplays=value;await nextTick();},
  unmount:()=>app.unmount(),ready:true};
 `);
 const bundle = await build({

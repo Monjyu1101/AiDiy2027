@@ -65,29 +65,54 @@ function pinRoutes(){
   return routeWindow.pin();
 }
 function openRoutes(){if(!routeWindow?.focus())routeClosed.value=false;}
-function closeRoutes(){if(routeDetached.value)routeWindow.dismiss();else{routeClosed.value=true;routeListOpen.value=false;}}
+function closeRoutes(){if(routeWindow?.isOpen)routeWindow.dismiss();else{routeClosed.value=true;routeListOpen.value=false;}}
 function pinExplorer(){
   fileActions.closeMenu();draftRequest.value=null;
   panelWindow??=createPanelWindow({element:()=>panel.value,changed:value=>{detached.value=value;emit('detached',value);},closed:()=>emit('update:open',false),moved:()=>{draftRequest.value=null;},report:message=>{pinError.value=message;}});
   return panelWindow.pin();
 }
-function closeExplorer(){draftRequest.value=null;fileActions.closeMenu();if(!fileActionState.busy)fileActions.cancel();if(detached.value)panelWindow.dismiss();else emit('update:open',false);}
+function closeExplorer(){draftRequest.value=null;fileActions.closeMenu();if(!fileActionState.busy)fileActions.cancel();if(panelWindow?.isOpen)panelWindow.dismiss();else emit('update:open',false);}
+// VR開始前から別窓だったパネルは、通常表示に戻してもそのまま維持する。
+// VR中の再表示では最初の記録を上書きしない。手動終了した窓は再起動しない。
+let allPanels,allPinRequest;
+function captureAllPanels(){
+  return{explorer:!!panelWindow?.isOpen,routes:!!routeWindow?.isOpen,open:props.open,routeClosed:routeClosed.value,routeListOpen:routeListOpen.value};
+}
+function finishAllPanels(saved,{cancel=false}={}){
+  if(!saved||allPanels!==saved)return;
+  allPanels=undefined;
+  if(!saved.explorer){closeExplorer();if(cancel)emit('update:open',saved.open);}
+  if(!saved.routes){closeRoutes();if(cancel){routeClosed.value=saved.routeClosed;routeListOpen.value=saved.routeListOpen;}}
+}
 watch(()=>props.allDisplays,(active,previous)=>{
-  if(previous&&!active){
-    // DOM・履歴を本体へ回収してから別窓を閉じ、通常画面では閉じた状態へ戻す。
-    closeExplorer();closeRoutes();
-  }
+  if(active)allPanels??=captureAllPanels();
+  else if(previous)finishAllPanels(allPanels);
 });
-async function pinForAll(){
+function pinForAll(){
+  if(routeDisposed)return Promise.resolve();
+  // 解除直後の再移行は、取消済みの起動が片付いてから新しい記録で準備する。
+  if(allPinRequest)return allPanels?allPinRequest:allPinRequest.then(pinForAll,pinForAll);
+  return allPinRequest=prepareAllPanels().finally(()=>{allPinRequest=undefined;});
+}
+async function prepareAllPanels(){
   // 非表示の矩形を測らない。元の窓サイズのまま開いてから、別窓の表示完了を待つ。
   // Explorerを切り離した後も、軌跡の位置はExplorerの右側に保つ。
+  const saved=allPanels??=captureAllPanels(),cancel=()=>finishAllPanels(saved,{cancel:true});
   preparingAll.value=true;
   try{
     emit('update:open',true);await nextTick();
-    if(!await pinExplorer())throw Error(pinError.value||'エクスプローラーを別ウィンドウで開けませんでした。');
+    if(allPanels!==saved)return cancel;
+    const explorerOpened=await pinExplorer();
+    if(allPanels!==saved)return cancel;
+    if(!explorerOpened)throw Error(pinError.value||'エクスプローラーを別ウィンドウで開けませんでした。');
     routeClosed.value=false;await nextTick();
-    if(!await pinRoutes())throw Error(pinError.value||'軌跡バーを別ウィンドウで開けませんでした。');
-  }finally{preparingAll.value=false;}
+    if(allPanels!==saved)return cancel;
+    const routesOpened=await pinRoutes();
+    if(allPanels!==saved)return cancel;
+    if(!routesOpened)throw Error(pinError.value||'軌跡バーを別ウィンドウで開けませんでした。');
+    return cancel;
+  }catch(error){if(!props.allDisplays)cancel();throw error;}
+  finally{preparingAll.value=false;}
 }
 watch([()=>props.open,detached],async([open,away])=>{if(open&&!away){await nextTick();fadePanel(panel.value);}});
 // 一覧は宇宙と同じ（props.tree）。フィルター（星空画面の左下）が ON なら、宇宙もこの一覧もバックアップ対象だけになる。
@@ -431,7 +456,7 @@ watch(()=>props.startedAt,()=>{mode.value='since';clearSearch();resetLatest();in
 watch(()=>props.filter,clearSearch);
 watch(mode,clearSearch);
 watch([mode,since,until,matches,aiResult],emitMarks,{immediate:true});
-onBeforeUnmount(()=>{treeDrag.dispose();fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
+onBeforeUnmount(()=>{treeDrag.dispose();allPanels=undefined;fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
 function captureLayout(){return{explorerName:detached.value?panel.value?.ownerDocument.defaultView?.name:'',routesName:routeDetached.value?routeElement.value?.ownerDocument.defaultView?.name:''};}
 async function restoreLayout(saved){
   const panels=[];

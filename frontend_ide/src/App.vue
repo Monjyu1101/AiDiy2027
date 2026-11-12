@@ -76,14 +76,16 @@ async function toggleAllDisplays(){
   if(allBusy.value||layoutBusy.value||!desktop)return;
   const entering=!allDisplayState.value.active,space=spaceView.value,own=session;
   if(entering&&!canEnterAll.value)return;
+  let cancelPreparation;
   allBusy.value=true;allMessage.value=entering?'VR空間へ移行中…':'VRモードを終了しています…';error.value='';
   try{
     await nextTick();
-    if(entering&&space)await space.prepareAll();
+    if(entering&&space)cancelPreparation=await space.prepareAll();
     if(disposed||space!==spaceView.value||own!==session||(entering&&!canEnterAll.value))throw Error('利用状態が変わったためVR空間への移行を中止しました。');
     updateAllDisplays(await window.aidiyWindow.allDisplays('toggle'));
+    if(entering&&!allDisplayState.value.active)cancelPreparation?.();
   }
-  catch(e){if(!disposed)error.value=e.message||'VRモードを切り替えられませんでした。';}
+  catch(e){if(entering&&!allDisplayState.value.active)cancelPreparation?.();if(!disposed)error.value=e.message||'VRモードを切り替えられませんでした。';}
   finally{allBusy.value=false;}
 }
 const lifetime=new AbortController();

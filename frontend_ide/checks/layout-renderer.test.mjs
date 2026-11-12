@@ -78,3 +78,12 @@ test('native-only layout does not wait for file scanning',async()=>{
  const result=await vm.runInNewContext(fn+';restoreLayout({explorer:{},viewers:[]})',{});
  assert.deepEqual(JSON.parse(JSON.stringify(result)),[]);
 });
+
+
+for(const outcome of ['rejected','throw','stale','inactive','success'])test(`VR準備の取消をnative結果と利用状態に合わせる: ${outcome}`,async()=>{
+ const {api,context}=fixture();let cancellations=0,calls=0;
+ api.spaceView.value={prepareAll:async()=>{if(outcome==='stale')api.update({active:false});return()=>cancellations++;}};
+ context.window.aidiyWindow.allDisplays=async()=>{calls++;if(outcome==='throw')throw Error('切替失敗');return outcome==='rejected'?{ok:false,error:'切替拒否'}:{ok:true,active:outcome==='success'};};
+ await api.toggleAllDisplays();
+ assert.equal(cancellations,outcome==='success'?0:1);assert.equal(calls,outcome==='stale'?0:1);
+});

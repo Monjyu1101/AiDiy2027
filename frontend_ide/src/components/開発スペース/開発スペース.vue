@@ -45,8 +45,9 @@ async function prepareAll(){
   try{
     // 閲覧・比較はIDE内に保ち、Explorerと軌跡だけを別窓へ移す。
     if(!explorer.value)throw Error('エクスプローラーの準備が完了していません。');
-    await explorer.value.pinForAll();
-    if(disposed)throw Error('開発スペースが閉じられました。');
+    const cancel=await explorer.value.pinForAll();
+    if(disposed){cancel?.();throw Error('開発スペースが閉じられました。');}
+    return cancel;
   }finally{preparingAll=false;if(!disposed)engine?.setAutoSpin(resume);}
 }
 function captureLayout(){

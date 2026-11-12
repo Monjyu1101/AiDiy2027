@@ -86,3 +86,31 @@ test('軌跡領域: Webのresize拒否では現窓の実高さを返し、待機
  assert.deepEqual(await f.manager.reserveRouteHeight(368),{height:100});
  const waiting=f.manager.reserveRouteHeight(368);f.manager.close();assert.equal(await waiting,null);assert.equal(f.intervals.size,0);
 });
+
+
+test('別パネル: 既存窓・手動起動待ちを判定し、監視前の終了直後でもDOMの戻り先を維持する',async t=>{
+ const f=fixture(t);assert.equal(f.manager.isOpen,false);
+ let finish;f.win.aidiyWindow={prepareExplorer:()=>new Promise(resolve=>{finish=resolve;})};
+ const pending=f.manager.pin();assert.equal(f.manager.isOpen,true,'手動起動待ちもVRより前の別窓として扱う');
+ assert.equal(f.manager.pin(),pending);finish({ok:true,name:'existing'});await pending;
+ assert.equal(f.manager.isOpen,true);assert.equal(f.opens,1);
+ f.child.close();assert.equal(f.manager.isOpen,false,'終了監視より前にも閉じた窓を検出');
+ delete f.win.aidiyWindow;await f.manager.pin();assert.equal(f.opens,2);assert.equal(f.manager.isOpen,true);
+ f.manager.restore();assert.equal(f.manager.isOpen,false);assert.equal(f.node.parentNode,f.win.document.body);
+ assert.equal(f.node.ownerDocument,f.win.document);assert.equal(f.input.scrollTop,123);
+ assert.equal(f.win.document.body.children.length,1,'古いアンカーを残さない');assert.equal(f.intervals.size,0);
+ f.manager.close();assert.equal(f.manager.isOpen,false);
+});
+
+
+for(const phase of ['prepare','show'])test(`別パネル: ${phase}待機中の復帰は未完了の別窓起動も取り消す`,async t=>{
+ const f=fixture(t);let finish;
+ f.win.aidiyWindow=phase==='prepare'?{prepareExplorer:()=>new Promise(resolve=>finish=resolve)}:{showExplorer:()=>new Promise(resolve=>finish=resolve)};
+ const pending=f.manager.pin();await flush();assert.equal(f.manager.isOpen,true);
+ f.manager.dismiss();assert.equal(f.manager.isOpen,false);
+ finish({ok:true,name:'cancelled'});await pending;
+ assert.equal(f.opens,phase==='prepare'?0:1);assert.equal(f.manager.isOpen,false);assert.equal(f.intervals.size,0);
+ assert.equal(f.node.ownerDocument,f.win.document);assert.equal(f.node.parentNode,f.win.document.body);
+ delete f.win.aidiyWindow;assert.equal(await f.manager.pin(),true,'取消後は再び開ける');
+ f.manager.restore();assert.equal(f.node.parentNode,f.win.document.body);
+});

@@ -38,7 +38,7 @@ export function fadePanel(element) {
 // Vueのインスタンス・DOM・イベントをそのまま移動する。検索ジョブを再発行せず、
 // AI入力、検索結果、展開、選択、スクロールも同じ実体を保持する。
 export function createPanelWindow({ element, changed, report, closed = () => {}, recovered = () => {}, moved = () => {}, title = 'Explorer', kind = 'explorer', className = 'explorer-window', rectangle = element, win = window, titleTools, displayTitle }) {
-  let child, parent, anchor, timer, pinRequest, opening = false, disposed = false, detached = false, documentSeen;
+  let child, parent, anchor, timer, pinRequest, opening = false, pendingOpen = false, generation = 0, disposed = false, detached = false, documentSeen;
   let cleanupDocument = () => {};
   let preview;
   const clearPreview = () => { preview?.remove(); preview = undefined; };
@@ -47,6 +47,7 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
     return () => positions.forEach(([node, top, left]) => { node.scrollTop = top; node.scrollLeft = left; });
   };
   function restore() {
+    generation++; pendingOpen = false;
     clearInterval(timer); timer = undefined; cleanupDocument(); documentSeen = undefined;
     const node = element();
     if (node && parent) {
@@ -124,14 +125,17 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
     if (disposed) return;
     if (child && !child.closed) { child.focus(); return true; }
     if (opening) return;
-    report(''); opening = true;
+    // 終了監視の次周期を待たず再表示されても、古いDOMの戻り先を失わない。
+    if (child) restore();
+    report(''); opening = pendingOpen = true;
+    const own = generation;
     try {
       const node = element(), rect = panelRect(rectangle());
       let name = 'aidiy-explorer-' + win.crypto.randomUUID();
       if (win.aidiyWindow?.prepareExplorer) {
         const result = await win.aidiyWindow.prepareExplorer(rect, kind, kind === 'panel-routes' ? panelRect(node) : rect);
         if (!result?.ok) throw Error(result?.error || '別窓を準備できません。');
-        if (disposed) return;
+        if (disposed || own !== generation) return;
         name = result.name;
         if (result.preview) {
           // DOMやiframeを複製せず、元の描画だけを別窓の表示完了まで保持する。
@@ -140,11 +144,11 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
           image.src = result.preview.src;
           Object.assign(image.style, { left: bounds.left + 'px', top: bounds.top + 'px', width: bounds.width + 'px', height: bounds.height + 'px' });
           await image.decode();
-          if (disposed) return;
+          if (disposed || own !== generation) return;
           preview = image; win.document.body.append(image);
         }
       }
-      if (disposed) return;
+      if (disposed || own !== generation) return;
       child = win.open('about:blank', name, popupFeatures(rect, win, kind === 'panel-routes'));
       if (!child) throw Error('ポップアップがブロックされました。');
       parent = node.parentNode; anchor = win.document.createComment('Explorerを戻す位置'); parent.insertBefore(anchor, node);
@@ -156,8 +160,8 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
         void attach().catch(error => { restore(); recovered(); report(error.message); });
       }, 250);
       return true;
-    } catch (error) { restore(); recovered(); report(error.message); return false; }
-    finally { opening = false; }
+    } catch (error) { if (own !== generation || disposed) return; restore(); recovered(); report(error.message); return false; }
+    finally { opening = pendingOpen = false; }
   }
   const end = () => { disposed = true; restore(); win.removeEventListener('pagehide', end); };
   function dismiss() { restore(); closed(); }
@@ -172,5 +176,5 @@ export function createPanelWindow({ element, changed, report, closed = () => {},
     await new Promise(resolve=>setTimeout(resolve,40));
     return target===child&&!target.closed?{height:target.innerHeight}:null;
   }
-  return { pin, restore, dismiss, reserveRouteHeight, close: end, focus: () => { if (child && !child.closed) { child.focus(); return true; } return false; } };
+  return { pin, restore, dismiss, reserveRouteHeight, close: end, get isOpen() { return !disposed && !!(child && !child.closed || pendingOpen); }, focus: () => { if (child && !child.closed) { child.focus(); return true; } return false; } };
 }

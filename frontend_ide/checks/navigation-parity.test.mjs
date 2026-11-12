@@ -771,9 +771,10 @@ test('3Dルート航行: 呼び出し元の有効期限も全景への移動中�
 function layoutPanelWindows() {
   const panels = new Map();
   return { panels, create(options) {
-    const kind = options.kind || 'explorer'; let detached = false, disposed = false;
+    const kind = options.kind || 'explorer'; let detached = false, disposed = false, opens = 0;
     const manager = {
-      async pin() { if (disposed) return false; if (!detached) { detached = true; options.changed(true); } return true; },
+      async pin() { if (disposed) return false; if (!detached) { opens++; detached = true; options.changed(true); } return true; },
+      get isOpen() { return detached; }, get opens() { return opens; },
       restore() { if (detached) { detached = false; options.changed(false); } },
       dismiss() { this.restore(); options.closed(); },
       close() { this.restore(); disposed = true; },
@@ -833,7 +834,8 @@ test('軌跡外部化の本体復帰はExplorerの現状態に従い、VR準備�
     assert.equal(hasClass(routeNode(h), 'explorer-collapsed'), false);
     explorer.preparingAll.value = false; await flush(); routeLayout(h, 'detached');
     h.viewProps.allDisplays = true; await flush();
-    h.viewProps.allDisplays = false; await flush(); routeLayout(h, 'collapsed');
+    h.viewProps.allDisplays = false; await flush(); routeLayout(h, 'detached');
+    assert.ok(windows.panels.get('explorer').isOpen);
     assert.ok(restoreNode(h));
   } finally { h.dispose(); }
 });
@@ -938,4 +940,110 @@ test('Browser解析: 元IDEの選択通知は同じセッション・プロジ�
     assert.ok(h.requests.some(value=>value.url.startsWith('/api/file?')&&value.url.includes('hidden%2Fpage.html')),'通常のファイルAPIで閲覧する');
   }finally{h.dispose();}
   assert.equal(unsubscribed,true);
+});
+
+
+for(const existingExplorer of [false,true])for(const existingRoutes of [false,true])test(`VR復帰: 既存の別窓だけ維持する (Explorer=${existingExplorer}, 軌跡=${existingRoutes})`,async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{mode:'3d',panelWindowFactory:windows.create});
+  try{
+    const explorer=h.states.get('FileExplorer');
+    if(existingExplorer){h.states.get('SpaceView').open.value=true;await flush();await explorer.pinExplorer();}
+    if(existingRoutes)await explorer.pinRoutes();
+    for(let cycle=0;cycle<3;cycle++){
+      await h.states.get('SpaceView').prepareAll();h.viewProps.allDisplays=true;await flush();
+      const a=windows.panels.get('explorer'),b=windows.panels.get('panel-routes');
+      assert.equal(a.opens,existingExplorer?1:cycle+1);assert.equal(b.opens,existingRoutes?1:cycle+1);
+      await explorer.pinForAll(); // VR中の再表示要求で移行前の状態を上書きしない。
+      assert.equal(a.opens,existingExplorer?1:cycle+1);assert.equal(b.opens,existingRoutes?1:cycle+1);
+      h.viewProps.allDisplays=false;await flush();
+      assert.equal(a.isOpen,existingExplorer);assert.equal(b.isOpen,existingRoutes);
+      assert.equal(explorer.detached.value,existingExplorer);assert.equal(explorer.routeDetached.value,existingRoutes);
+      assert.equal(h.props.get('FileExplorer').open,existingExplorer);assert.equal(explorer.routeClosed.value,!existingRoutes);
+    }
+  }finally{h.dispose();}
+});
+
+test('VR復帰: 既存窓の手動終了・本体復帰・VR中の開き直しを尊重し、次回へ状態を持ち越さない',async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{panelWindowFactory:windows.create});
+  try{
+    const explorer=h.states.get('FileExplorer');
+    await explorer.pinExplorer();await explorer.pinRoutes();await explorer.pinForAll();
+    h.viewProps.allDisplays=true;await flush();
+    const a=windows.panels.get('explorer'),b=windows.panels.get('panel-routes');
+    a.dismiss();b.restore();await flush();
+    h.viewProps.allDisplays=false;await flush();
+    assert.equal(a.isOpen,false);assert.equal(a.opens,1,'手動終了を復活させない');
+    assert.equal(b.isOpen,false);assert.equal(explorer.routeClosed.value,false,'手動で本体へ戻した表示は保持');
+    await explorer.pinForAll();h.viewProps.allDisplays=true;await flush();
+    a.dismiss();await explorer.pinForAll();
+    h.viewProps.allDisplays=false;await flush();
+    assert.equal(a.isOpen,false);assert.equal(b.isOpen,false,'今回VRで開いた窓は従来どおり閉じる');
+    await explorer.pinExplorer();await explorer.pinRoutes();await explorer.pinForAll();
+    h.viewProps.allDisplays=true;await flush();a.dismiss();await explorer.pinForAll();
+    h.viewProps.allDisplays=false;await flush();
+    assert.equal(a.isOpen,true);assert.equal(b.isOpen,true,'移行前から別窓だったパネルの開き直しは維持');
+  }finally{h.dispose();}
+});
+
+for(const existing of [false,true])test(`VR準備失敗: 新規窓だけ回収し、元の本体表示と既存窓を維持する (${existing})`,async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{panelWindowFactory:options=>{
+    const panel=windows.create(options);if(options.kind==='panel-routes')panel.pin=async()=>false;return panel;
+  }});
+  try{
+    const explorer=h.states.get('FileExplorer');h.states.get('SpaceView').open.value=true;explorer.routeClosed.value=false;explorer.routeListOpen.value=true;await flush();
+    if(existing)await explorer.pinExplorer();
+    await assert.rejects(explorer.pinForAll(),/軌跡バー/);await flush();
+    assert.equal(windows.panels.get('explorer').isOpen,existing);assert.equal(h.props.get('FileExplorer').open,true);
+    assert.equal(explorer.routeClosed.value,false);assert.equal(explorer.routeListOpen.value,true);
+    windows.panels.get('panel-routes').pin=async()=>true;
+    const cancel=await explorer.pinForAll();cancel();await flush();
+    assert.equal(windows.panels.get('explorer').isOpen,existing,'失敗後も新しい準備を取り消せる');
+  }finally{h.dispose();}
+});
+
+test('VR準備取消: 古い取消通知で次回VRの窓を閉じず、同時要求も集約する',async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{panelWindowFactory:windows.create});
+  try{
+    const explorer=h.states.get('FileExplorer'),first=explorer.pinForAll();
+    assert.equal(explorer.pinForAll(),first);
+    const cancel=await first;cancel();await flush();
+    assert.equal(windows.panels.get('explorer').isOpen,false);assert.equal(explorer.routeClosed.value,true);
+    await explorer.pinForAll();cancel();
+    assert.equal(windows.panels.get('explorer').isOpen,true);
+    h.viewProps.allDisplays=true;await flush();h.viewProps.allDisplays=false;await flush();
+    assert.equal(windows.panels.get('explorer').isOpen,false);
+  }finally{h.dispose();}
+});
+
+
+for(const pendingKind of ['explorer','panel-routes'])test(`VR終了: ${pendingKind}再表示待ちの継続処理が通常復帰後に窓を再生成しない`,async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{panelWindowFactory:windows.create});
+  try{
+    const explorer=h.states.get('FileExplorer');await explorer.pinForAll();h.viewProps.allDisplays=true;await flush();
+    const a=windows.panels.get('explorer'),b=windows.panels.get('panel-routes'),pending=windows.panels.get(pendingKind),gate=deferred();
+    a.dismiss();b.dismiss();
+    const pin=pending.pin.bind(pending);pending.pin=async()=>{const opened=await pin();await gate.promise;return opened;};
+    const opening=explorer.pinForAll();await flush();h.viewProps.allDisplays=false;await flush();
+    const before=[a.opens,b.opens];assert.equal(a.isOpen,false);assert.equal(b.isOpen,false);
+    gate.resolve();await opening;await flush();
+    assert.deepEqual([a.opens,b.opens],before);assert.equal(a.isOpen,false);assert.equal(b.isOpen,false);
+    assert.equal(h.props.get('FileExplorer').open,false);assert.equal(explorer.routeClosed.value,true);
+  }finally{h.dispose();}
+});
+
+
+test('VR連続切替: 解除前の再表示待ちを次のVR準備として流用しない',async t=>{
+  const windows=layoutPanelWindows(),h=await workspace(t,{panelWindowFactory:windows.create});
+  try{
+    const explorer=h.states.get('FileExplorer');await explorer.pinForAll();h.viewProps.allDisplays=true;await flush();
+    const a=windows.panels.get('explorer'),b=windows.panels.get('panel-routes'),gate=deferred(),pin=a.pin.bind(a);
+    a.dismiss();b.dismiss();a.pin=async()=>{const opened=await pin();await gate.promise;return opened;};
+    const old=explorer.pinForAll();await flush();h.viewProps.allDisplays=false;await flush();
+    const next=explorer.pinForAll(),alsoNext=explorer.pinForAll();
+    gate.resolve();const oldCancel=await old;await Promise.all([next,alsoNext]);
+    assert.equal(a.opens,3);assert.equal(b.opens,2);assert.equal(a.isOpen,true);assert.equal(b.isOpen,true);
+    oldCancel();assert.equal(a.isOpen,true,'古い取消は新しい準備を終了させない');
+    h.viewProps.allDisplays=true;await flush();h.viewProps.allDisplays=false;await flush();
+    assert.equal(a.isOpen,false);assert.equal(b.isOpen,false,'新しい記録に従ってVR新規窓を片付ける');
+  }finally{h.dispose();}
 });
