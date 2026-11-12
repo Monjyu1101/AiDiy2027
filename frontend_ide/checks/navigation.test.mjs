@@ -448,3 +448,30 @@ test('推測目標の前後空白を再評価・再起動・履歴復元でも�
  const reopened=createNavigation(root,{state:()=>state,stateRoot});t.after(()=>reopened.close());assert.deepEqual((await reopened.get()).result,updated.result);
  await reopened.fresh();await reopened.select(updated.result.navigationId);assert.deepEqual((await reopened.get()).result,updated.result);
  });
+
+// 指示の具体例が新規・再評価の両方へ渡り、既存の厳密検証と矛盾しないことを確認。
+test('新規・再評価に順序・ID・終了条件の具体例と出力前照合を渡す',async t=>{
+ const prompts=[];const {service}=await fixture(t,async({prompt},root)=>{prompts.push(prompt);return respond(prompt,root);});
+ await service.start('目標');assert.equal((await finish(service)).job.status,'complete');
+ await service.start('','evaluate');assert.equal((await finish(service)).job.status,'complete');
+ for(const prompt of prompts){
+  for(let i=1;i<=6;i++)assert.ok(prompt.includes('- 例'+i), '具体例'+i);
+  for(const text of ['最小の達成率・重要度・weight・IDの大小では選びません','id文字列を一字も変えず','数値の2ではありません','1〜8000文字','文字列の"null"ではない','overall.progressでは対象の有無を決めません','保存済みのnextItemId・nextPromptは前回値','出力前の照合'])assert.ok(prompt.includes(text),text);
+ }
+});
+test('例の非連番ID・未評価0%・総合100への丸めでも配列の先頭未完了を選ぶ',()=>{
+ for(const [scores,ids,expected] of [[[100,70,0],['step-1','step-2','step-3'],'step-2'],[[0,30],['z-last','a-first'],'z-last'],[[100,99],['done','remaining'],'remaining']]){
+  const d=targetResult(scores);d.items.forEach((item,index)=>item.id=ids[index]);d.nextItemId=expected;
+  assert.equal(validateNavigation(d,{id:d.requestId,goal:d.goal}).nextItemId,expected);
+  if(expected==='remaining')assert.equal(d.overall.progress,100);
+ }
+});
+test('例のIDは文字列完全一致とし数値・項目名を拒否する',()=>{
+ const d=targetResult([100,70,0]);
+ for(const wrong of [2,d.items[1].name]){d.nextItemId=wrong;assert.throws(()=>validateNavigation(d,{id:d.requestId,goal:d.goal}),/おすすめプロンプト/);}
+});
+test('終了時のnull文字列・欠損・空白・完了メッセージは空値として扱わない',()=>{
+ for(const scores of [[100,100],[]])for(const patch of [{nextItemId:'null'},{nextItemId:undefined},{nextPrompt:null},{nextPrompt:undefined},{nextPrompt:' '},{nextPrompt:'\n'},{nextPrompt:'完了しました'}]){
+  const d={...targetResult(scores),...patch};assert.throws(()=>validateNavigation(d,{id:d.requestId,goal:d.goal}),/おすすめプロンプト/);
+ }
+});

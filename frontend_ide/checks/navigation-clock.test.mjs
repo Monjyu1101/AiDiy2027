@@ -40,7 +40,7 @@ function mountClock() {
     get stopped() { return next === null && unbound; }};
 }
 
-test('日付は高さ33%の中央で拡大し、時刻は66%へ配置してリサイズに追従する', () => {
+test('日付は高さ33%の中央で拡大し、時刻は75%へ配置してリサイズに追従する', () => {
   const clock = mountClock();
   for (const [width, height] of [[800, 600], [400, 320], [320, 800], [1200, 200], [160, 120]]) {
     Object.assign(clock.rect, {width, height}); clock.draw();
@@ -49,13 +49,14 @@ test('日付は高さ33%の中央で拡大し、時刻は66%へ配置してリ�
     assert.equal(image.x + image.width / 2, width / 2); assert.equal(image.y + image.height / 2, height * .33);
     assert.equal(date.x, image.width / 2); assert.equal(date.y, image.height / 2);
     assert.deepEqual(clock.gradients.slice(2, 10), clock.gradients.slice(10, 18), '日付と時刻は同じ7色のパレットを使用する');
+    assert.equal(clock.images[1].y + clock.images[1].height / 2, height * .75, '時刻の数字も75%の高さへ配置する');
     assert.equal(clock.images.length, 4, '時刻と日付それぞれに発光と本体を描く');
     assert.equal(date.align, 'center'); assert.equal(date.baseline, 'middle');
     const size = parseFloat(date.font.split(' ')[1]);
     assert.ok(size > Math.max(12, Math.min(width, height) * .055) || size === 12);
     assert.ok(size * .6 * 10 <= width * .92);
     const colons = clock.calls.filter(call => call.text === ':');
-    assert.equal(colons.length, 2); assert.ok(colons.every(call => call.y === height * .66));
+    assert.equal(colons.length, 2); assert.ok(colons.every(call => call.y === height * .75));
     assert.ok(colons.every(call => call.align === 'left'), '前フレームの日付中央揃えを時刻に持ち越さない');
     assert.equal(clock.calls.filter(call => /^\d$/.test(call.text)).map(call => call.text).join(''), '235959');
   }

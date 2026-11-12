@@ -5,7 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 defineOptions({name:'ナビ時計2D'});
-// ナビ調査中の待ち時間の表示「時計」。黒い画面の高さ33%に日付（yyyy-mm-dd）、66%に大きく時刻「hh:mm:ss」を出す（秒の後ろのミリ秒は出さない）。
+// ナビ調査中の待ち時間の表示「時計」。黒い画面の高さ33%に日付（yyyy-mm-dd）、75%に大きく時刻「hh:mm:ss」を出す（秒の後ろのミリ秒は出さない）。
 // 時刻の数字は「文字の形のマスク」で、その裏に7色（赤・橙・黄・緑・水・青・紫）の虹色の色盤がある。
 // 色盤の中心に目に見えないカラーピッカーがあり、これがランダムにゆっくり動き回るため、数字の色が虹色に移り変わる。
 // 日付全体も時刻の数字と同じカラーパレットで変化する。「:」だけは色を変えない。時刻は表示端末の現在時刻。
@@ -69,13 +69,13 @@ onMounted(() => {
       const glow = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * .62);
       glow.addColorStop(0, rgb(STATIC, .07)); glow.addColorStop(1, rgb(STATIC, 0)); ctx.fillStyle = glow; ctx.fillRect(0, 0, w, h);
 
-      // 高さ66%の大きな時刻「hh:mm:ss」を等幅で、画面の幅いっぱいに収める。
+      // 高さ75%の大きな時刻「hh:mm:ss」を等幅で、画面の幅いっぱいに収める。
       if (!fontWidth) {
         ctx.font = FONT(100); const unit = ctx.measureText('00:00:00').width;
         fontSize = Math.max(14, Math.min(100 * (w * .92) / unit, h * .5)); fontWidth = w;
       }
       ctx.font = FONT(fontSize); ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
-      const cell = ctx.measureText('0').width, left = (w - cell * clock.length) / 2, centerY = h * .66;
+      const cell = ctx.measureText('0').width, left = (w - cell * clock.length) / 2, centerY = h * .75;
       const padding = fontSize * .3, regionX = left - padding, regionY = centerY - fontSize * .75, regionW = cell * clock.length + padding * 2, regionH = fontSize * 1.5;
 
       // 「:」は色を変えない。
@@ -129,7 +129,7 @@ onMounted(() => {
 onBeforeUnmount(() => cleanup());
 </script>
 <template>
-  <div ref="stage" data-scene="ナビ時計2D" class="ナビ時計2D" role="img" aria-label="ナビ時計2D。ナビ調査中の表示。高さ33%の中央に今日の日付、66%の中央に大きく時分秒が表示され、日付と時刻の数字は虹色に移り変わります。">
+  <div ref="stage" data-scene="ナビ時計2D" class="ナビ時計2D" role="img" aria-label="ナビ時計2D。ナビ調査中の表示。高さ33%の中央に今日の日付、75%の中央に大きく時分秒が表示され、日付と時刻の数字は虹色に移り変わります。">
     <canvas ref="canvas" aria-hidden="true"></canvas>
   </div>
 </template>
