@@ -9,11 +9,11 @@ import {EventEmitter} from 'node:events';
 import {mkdtemp,mkdir,rm} from 'node:fs/promises';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
-import {createAppLauncher} from '../起動/アプリ起動.mjs';
-import {createServer} from '../diag_main.mjs';
-import {createWebBrowserOpener} from '../起動/Webブラウザ.mjs';
-import {アプリ状態を作成} from '../ui/src/components/アプリ起動/アプリ状態.mjs';
-import {アプリアイコン} from '../ui/src/components/アプリ起動/アプリアイコン.mjs';
+import {createAppLauncher} from '../diag/起動/アプリ起動.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {createWebBrowserOpener} from '../diag/起動/Webブラウザ.mjs';
+import {アプリ状態を作成} from '../diag/ui/components/アプリ起動/アプリ状態.mjs';
+import {アプリアイコン} from '../diag/ui/components/アプリ起動/アプリアイコン.mjs';
 
 test('Chrome has the manual Web gate and fixed MCP call; no project, process spawn or service start',async t=>{
  const root=await mkdtemp(join(tmpdir(),'diag-chrome-'));t.after(()=>rm(root,{recursive:true,force:true}));

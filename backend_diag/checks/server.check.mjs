@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHandler,createServer,basePath,publicUrl,parseArgs} from '../diag_main.mjs';
+import {createHandler,createServer,basePath,publicUrl,parseArgs} from '../diag/diag_main.mjs';
 const response=()=>({status:0,headers:{},body:null,writeHead(status,headers){this.status=status;this.headers=headers;},end(body){this.body=body;}});
 async function request(handler,url,method='GET',authorization,extra={}) {const res=response();await handler({url,method,headers:{authorization,...extra}},res);return res;}
 const auth='Bearer test-key';
@@ -54,7 +54,7 @@ test('integration write saves only server-side integration results, never model 
  assert.equal((await request(h,'/api/キー設定','GET',auth)).status,200);assert.equal((await request(h,'/api/外部連携書込','POST',auth)).status,409,'設定の読み直しで結果を破棄');
 });
 test('integration report keeps registered rows, untested reasons and no secrets or extra fields',async()=>{
- const {integrationReport,INTEGRATION_IDS}=await import('../モデル情報/integration_info.mjs');
+ const {integrationReport,INTEGRATION_IDS}=await import('../diag/モデル情報/integration_info.mjs');
  assert.deepEqual(INTEGRATION_IDS,['huggingface_read','huggingface_write','discord','slack']);
  const report=integrationReport([{id:'huggingface_read',名前:'Hugging Face 読取',キー名:'huggingface_key_read',設定済み:true},{id:'huggingface_write',名前:'Hugging Face 書込',設定済み:false,理由:'キーが未設定です。'},{id:'discord',名前:'Discord Bot',設定済み:true}],
   {huggingface_read:{状態:'OK',説明:'認証できました',確認日時:'2026-10-17T00:00:00Z',secret:'hidden'},discord:{状態:'NG',説明:'失敗',確認日時:'bad'}},new Date('2026-10-17T01:00:00Z'));
@@ -117,7 +117,7 @@ test('write saves only the server-side results of a completed check, never reque
 
 
 test('screen uses latest installation result to skip Ollama and replaces prior acquired models',async()=>{
- const {testKey,runModels}=await import('../モデル情報/key_status.mjs');
+ const {testKey,runModels}=await import('../diag/モデル情報/key_status.mjs');
  let state='未検出',calls=0,saved;
  const h=createHandler({token:'test-key',entries:[{id:'ollama'}],scanFn:async()=>[{id:'ollama',状態:state}],keyStatusFn:async()=>({項目:[{id:'ollama'}]}),modelsWriteFn:async(_providers,results)=>{saved=results.ollama;return [];},keyTestFn:(id,options)=>testKey(id,{...options,run:(action,id,options)=>runModels(action,id,{...options,reader:async()=> '{}',fetch:async provider=>{assert.equal(provider,'ollama-local');calls++;return {models:[{name:'fixture:latest'}]};}})})});
  const run=async()=>JSON.parse((await request(h,'/api/キーテスト/ollama','POST',auth)).body);

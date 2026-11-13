@@ -24,7 +24,7 @@ test('Avatar の実例は components と dialog を src 直下で役割分離す
 });
 
 test('Diag は機能内の関連ソースを components に保ち、再起動 dialog を分離する', () => {
-  const base = 'backend_diag/ui/src/';
+  const base = 'backend_diag/diag/ui/';
   const features = ['AI設定', 'モデル一覧', 'ウィンドウ', '導入状況', '共通表示', 'Tools', 'AIモデル', '設定モデル', 'アプリ起動', '起動', 'キー設定共通', '外部連携'];
   present(features.map(name => base + 'components/' + name));
   absent(features.map(name => base + name));
@@ -58,7 +58,7 @@ for (const [name, base] of [['Discord', 'frontend_channels/discord/panel/'], ['S
 
 test('main / preload、拡張ホストと viewer API は renderer 整理で移さない', () => {
   present(['frontend_avatar/electron/main.ts', 'frontend_avatar/electron/preload.ts',
-    'backend_diag/起動/electron-main.cjs', 'frontend_ide/desktop.cjs',
+    'backend_diag/diag/起動/electron-main.cjs', 'frontend_ide/desktop.cjs',
     'frontend_ide/host/src', 'frontend_ide/viewer', 'frontend_channels/discord/src/main.ts', 'frontend_channels/slack/src/main.ts']);
 });
 

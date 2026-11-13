@@ -8,7 +8,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),path=requir
 const {createRequire}=require('node:module'),req=createRequire(path.join(__dirname,'../ui/package.json'));
 const {parse}=req('postcss'),{source}=require('./ui-components.cjs');
 const normal=parse(source('style.css')),mini=parse(source('components/起動/起動ミニ.css')),launcher=parse(source('components/アプリ起動/マイクロランチャー.css'));
-const palette=parse(require('node:fs').readFileSync(path.join(__dirname,'../ui/src/components/共通表示/タイトルバー配色.css'),'utf8'));
+const palette=parse(require('node:fs').readFileSync(path.join(__dirname,'../diag/ui/components/共通表示/タイトルバー配色.css'),'utf8'));
 const titleColor=value=>value.replace(/var\((--[\w-]+)\)/g,(_match,name)=>declarations(palette,':root')[name]);
 function declarations(css,selector){
  const values={};css.walkRules(rule=>{if(rule.selector===selector)rule.walkDecls(({prop,value})=>values[prop]=value);});return values;
@@ -59,7 +59,7 @@ test('ミニの初期高さ200はタイトル・外枠・アイコン2行・案�
  assert.deepEqual(d('.mini-cli-message'),{});
  const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
  const outerFrame=2*border(declarations(normal,'#app').border);
- const {height}=require('../起動/ミニ表示.cjs').ミニ寸法;
+ const {height}=require('../diag/起動/ミニ表示.cjs').ミニ寸法;
  assert.equal(chrome,34);assert.equal(height,200);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
  assert.equal(px(d('#app>.diag-panel>.panel.start-mini').height),height-chrome-outerFrame);
  assert.equal(d('#app>.diag-panel>.panel.start-mini')['max-width'],'400px');assert.equal(d('#app>.diag-panel>.panel.start-mini').overflow,'hidden');

@@ -7,11 +7,11 @@ const test=require('node:test'),assert=require('node:assert/strict'),path=requir
 const {createRequire}=require('node:module'),req=createRequire(path.join(__dirname,'../ui/package.json'));
 const vue=req('vue'),{parse,compileScript}=req('@vue/compiler-sfc'),{transformSync}=req('esbuild');
 const {source}=require('./ui-components.cjs');
-const {閉じた幅}=require('../起動/マイクロ表示.cjs');
+const {閉じた幅}=require('../diag/起動/マイクロ表示.cjs');
 const flush=async()=>{for(let i=0;i<20;i++)await Promise.resolve();await vue.nextTick();};
 const nodes=node=>[node,...node.children.flatMap(nodes)];
 async function fixture({switching=false}={}){
- const modules={'./アプリアイコン.mjs':await import('../ui/src/components/アプリ起動/アプリアイコン.mjs'),'./アイコン移動.mjs':await import('../ui/src/components/アプリ起動/アイコン移動.mjs'),'./円周配置.cjs':require('../ui/src/components/アプリ起動/円周配置.cjs')};
+ const modules={'./アプリアイコン.mjs':await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs'),'./アイコン移動.mjs':await import('../diag/ui/components/アプリ起動/アイコン移動.mjs'),'./円周配置.cjs':require('../diag/ui/components/アプリ起動/円周配置.cjs')};
  const window=new EventTarget(),calls=[],sizes=[],menus=[];let menuCallback;
  window.aidiyWindow={onMicroMenu:callback=>{menuCallback=callback;return ()=>menuCallback=null;},showMicroMenu:items=>menus.push(items),resizeMicroLabel:async height=>{sizes.push(height);return true;},expandMicro:async(...args)=>{calls.push(args);return true;}};
  const {descriptor}=parse(source('components/アプリ起動/マイクロランチャー.vue'));
@@ -160,7 +160,7 @@ test('起動不可の項目は円周と右クリックから消え、復帰す�
 });
 
 test('円形のVS Codeは導入状態の変化に追従して表示・非表示になる',async()=>{
- const {CLI状態を作成}=await import('../ui/src/components/アプリ起動/CLI状態.mjs');
+ const {CLI状態を作成}=await import('../diag/ui/components/アプリ起動/CLI状態.mjs');
  const f=await fixture();let installed=false;
  const cli=CLI状態を作成({アプリ:f.appState,api:async()=>({対象:[{id:'vscode',名前:'VS Code',種類:'editor',利用可能:installed}]})});
  try{

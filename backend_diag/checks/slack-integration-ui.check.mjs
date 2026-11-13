@@ -83,8 +83,8 @@ test('未設定Slackは一括確認から除外され、モデル一覧の一括
 });
 
 test('Slack の認証API境界と外部連携保存は既存契約を使い、モデル結果へ混ざらない',async()=>{
- const {createHandler}=await import('../diag_main.mjs');
- const {integrationReport}=await import('../モデル情報/integration_info.mjs');
+ const {createHandler}=await import('../diag/diag_main.mjs');
+ const {integrationReport}=await import('../diag/モデル情報/integration_info.mjs');
  let tests=0,saved;
  const handler=createHandler({token:'fixture',keyStatusFn:async()=>({項目:rows()}),keyTestFn:async id=>{tests++;return {id,状態:'OK',説明:'Slack Bot トークンで認証できました。',確認日時:'2026-10-30T00:00:00Z',secret:'must-not-save',slack_app_token:'must-not-save-app'};},integrationWriteFn:async(items,results)=>{saved=integrationReport(items,results);return saved;}});
  const request=async(path,method='POST',headers={authorization:'Bearer fixture'})=>{

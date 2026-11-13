@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {callMcp,createModelTrials} from '../モデル試行/trials.mjs';
+import {callMcp,createModelTrials} from '../diag/モデル試行/trials.mjs';
 
 const config={PORT_TOOLS:8095,CODE_BASE_PATH:'/synthetic/project',DECISION_AI_NAME:'auto'};
 const row={区分:'DECISION',プロバイダ:'auto',モデル:'auto'};

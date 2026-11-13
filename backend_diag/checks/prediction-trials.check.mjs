@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createModelTrials} from '../モデル試行/trials.mjs';
+import {createModelTrials} from '../diag/モデル試行/trials.mjs';
 
 const catalogs={prediction_models:{gemini_chat:{models:{'gemini-flash-lite-latest':'2026/10/01 - gemini-flash-lite-latest'}},codex_cli:{models:{'gpt-6-luna':'2026/09/15 - gpt-6-luna'}}}};
 const baseConfig={CODE_BASE_PATH:'../',PORT_TOOLS:'8095',CHAT_AI_NAME:'openrt_chat',CHAT_OPENRT_MODEL:'chat-model',PREDICTION_AI_NAME:'gemini_chat',PREDICTION_GEMINI_MODEL:'gemini-flash-lite-latest',PREDICTION_CODEX_CLI_MODEL:'gpt-6-luna'};

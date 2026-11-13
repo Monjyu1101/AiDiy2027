@@ -6,7 +6,7 @@
 // プロバイダ別モデル情報（_AIDIY/aidiy_diag/<id>_models_info.json）の構成と保存。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {naviModelsInfo} from '../モデル情報/navi_info.mjs';
+import {naviModelsInfo} from '../diag/モデル情報/navi_info.mjs';
 test('Navi候補は読取専用5方式、Hermes外部CLI転送を除外しCode原本不変',()=>{
  const code={aidiy_hermes:{models:{'openai_oauth/model':'OpenAI','copilot_cli/same':'CLI','claude-code:foo':'CLI','codex-cli/a':'CLI'}},copilot_cli:{models:{'claude-sonnet':'Claude'}},codex_cli:{models:{gpt:'GPT'}},claude_cli:{models:{sonnet:'Claude'}},grok_cli:{models:{grok:'Grok'}}};
  const before=JSON.stringify(code),out=naviModelsInfo(code,{now:()=>new Date('2026-11-04T00:00:00Z')});

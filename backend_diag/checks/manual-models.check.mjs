@@ -5,12 +5,12 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createModelTrials as createActualModelTrials} from '../モデル試行/trials.mjs';
+import {createModelTrials as createActualModelTrials} from '../diag/モデル試行/trials.mjs';
 // 実設定・OAuth・CLI検出へ依存しない隔離試行。必要な候補は各試験から渡す。
 const createModelTrials=options=>createActualModelTrials({catalogReader:async()=>({}),credentialReader:()=>null,installedClisFn:async()=>({}),...options});
-import {manualDecisionAnswer} from '../モデル試行/manual.mjs';
-import {createServer} from '../diag_main.mjs';
-import {TRIAL_PROMPT,decisionQuestions} from '../モデル試行/defaults.mjs';
+import {manualDecisionAnswer} from '../diag/モデル試行/manual.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {TRIAL_PROMPT,decisionQuestions} from '../diag/モデル試行/defaults.mjs';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
 const config={CODE_BASE_PATH:'/fixture/project',CHAT_AI_NAME:'freeai_chat',CHAT_FREEAI_MODEL:'saved-chat',LIVE_AI_NAME:'freeai_live',LIVE_FREEAI_MODEL:'saved-live',LIVE_FREEAI_VOICE:'Zephyr',DECISION_AI_NAME:'freeai_chat',DECISION_FREEAI_MODEL:'saved-decision',CODE_AI1_NAME:'codex_cli',CODE_AI1_MODEL:'saved-code',freeai_key_id:'synthetic-secret'};
 const input=(family='CHAT')=>family==='PREDICTION'?{family,provider:'openai_chat',model:'chosen-model'}:({family,provider:{CHAT:'freeai_chat',LIVE:'freeai_live',DECISION:'freeai_chat',CODE:'codex_cli'}[family],model:'chosen-model',voice:family==='LIVE'?'Puck':'',prompt:'自由な入力\n2行目',...(family==='DECISION'?{questions:[{type:'choice',name:'route',instructions:'行先を選ぶ',choices:[{value:'left'},{value:'right'}]}]}:{})});

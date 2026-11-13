@@ -6,36 +6,36 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {アプリアイコン} from '../ui/src/components/アプリ起動/アプリアイコン.mjs';
-import {createHandler} from '../diag_main.mjs';
+import {アプリアイコン} from '../diag/ui/components/アプリ起動/アプリアイコン.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 const root=new URL('../',import.meta.url),bytes=name=>readFile(new URL(name,root));
 const icons=[...['cpu','navi','console','code','live','ide','task','team','browser','avatar','diag','discord','slack'].map(id=>({id,source:`アイコン/AiDiy_${id}.png`,file:`AiDiy_${id}.png`})),{id:'aidiy_hermes',source:'CLIアイコン/aidiy_hermes.png',file:'CLI_aidiy_hermes.png'}];
 
 test('AiDiy 14 種は Diag 内の PNG コピーだけで配布を検証できる',async()=>{
  assert.equal(icons.length,14);assert.equal(new Set(icons.map(icon=>icon.id)).size,14);
  for(const icon of icons){
-  const png=await bytes('ui/src/components/アプリ起動/'+icon.source);
+  const png=await bytes('diag/ui/components/アプリ起動/'+icon.source);
   assert.equal(png.subarray(1,4).toString(),'PNG');assert.ok(png.readUInt32BE(16)>0);assert.ok(png.readUInt32BE(20)>0);
   assert.deepEqual(await bytes('static/'+icon.file),png,icon.id+' static copy');
   await assert.rejects(bytes('static/'+icon.file.replace(/\.png$/,'.svg')),{code:'ENOENT'});
-  await assert.rejects(bytes('ui/src/components/アプリ起動/'+icon.source.replace(/\.png$/,'.svg')),{code:'ENOENT'});
+  await assert.rejects(bytes('diag/ui/components/アプリ起動/'+icon.source.replace(/\.png$/,'.svg')),{code:'ENOENT'});
   if(icon.id!=='diag'&&icon.id!=='aidiy_hermes')assert.equal(アプリアイコン[icon.id],icon.file);
  }
- for(const name of ['task','team','browser'])await assert.rejects(bytes(`ui/src/components/アプリ起動/アプリアイコン/${name}.svg`),{code:'ENOENT'});
+ for(const name of ['task','team','browser'])await assert.rejects(bytes(`diag/ui/components/アプリ起動/アプリアイコン/${name}.svg`),{code:'ENOENT'});
  assert.equal(アプリアイコン.chrome,'Chrome.svg');
- for(const name of ['ui/build.mjs','ui/verify.mjs','ui/src/style.css'])assert.doesNotMatch((await bytes(name)).toString('utf8').replaceAll('../../frontend_ide/src/components','shared-title-components'),/frontend_(?:ide|channels|avatar)|command_hermes|aidiy-icon-sources|_icons\/AiDiy/,'外部 module の asset を参照しない');
+ for(const name of ['ui/build.mjs','ui/verify.mjs','diag/ui/style.css'])assert.doesNotMatch((await bytes(name)).toString('utf8').replaceAll('../../frontend_ide/src/components','shared-title-components'),/frontend_(?:ide|channels|avatar)|command_hermes|aidiy-icon-sources|_icons\/AiDiy/,'外部 module の asset を参照しない');
 });
 test('AiDiy は固定 PNG 配布のみ、第三者 SVG と認証境界は維持（実待受なし）',async()=>{
  const handler=createHandler({token:'fixture',prefix:'/fixture/',installManagerFactory:()=>({close(){}})});
  const request=async name=>{const res={writeHead(status,headers){this.status=status;this.headers=headers;},end(body){this.body=body;}};await handler({url:'/fixture/'+name,method:'GET',headers:{}},res);return res;};
  try{
-  for(const icon of icons){const response=await request(icon.file);assert.equal(response.status,200,icon.id);assert.equal(response.headers['Content-Type'],'image/png');assert.deepEqual(response.body,await bytes('ui/src/components/アプリ起動/'+icon.source));assert.equal((await request(icon.file.replace(/\.png$/,'.svg'))).status,404);}
+  for(const icon of icons){const response=await request(icon.file);assert.equal(response.status,200,icon.id);assert.equal(response.headers['Content-Type'],'image/png');assert.deepEqual(response.body,await bytes('diag/ui/components/アプリ起動/'+icon.source));assert.equal((await request(icon.file.replace(/\.png$/,'.svg'))).status,404);}
   for(const file of ['Chrome.svg','CLI_codex.svg'])assert.equal((await request(file)).status,200);
   for(const file of ['AiDiy_unknown.png','%2e%2e/frontend_ide/aidiy_code/AiDiy_code.svg'])assert.equal((await request(file)).status,404);
   assert.equal((await request('api/status')).status,401);
  }finally{await handler.close();}
 });
 test('通常・ミニ・マイクロは Hermes のみ PNG、外部 CLI は SVG を維持',async()=>{
- const normal=(await bytes('ui/src/components/アプリ起動/アプリ起動パネル.vue')).toString('utf8'),micro=(await bytes('ui/src/components/アプリ起動/マイクロランチャー.vue')).toString('utf8'),mini=(await bytes('ui/src/components/アプリ起動/ミニアプリ起動.vue')).toString('utf8');
+ const normal=(await bytes('diag/ui/components/アプリ起動/アプリ起動パネル.vue')).toString('utf8'),micro=(await bytes('diag/ui/components/アプリ起動/マイクロランチャー.vue')).toString('utf8'),mini=(await bytes('diag/ui/components/アプリ起動/ミニアプリ起動.vue')).toString('utf8');
  assert.ok(normal.includes("item.id==='aidiy_hermes'?'.png':'.svg'"));assert.ok(micro.includes("item.id==='aidiy_hermes'?'CLI_aidiy_hermes.png'"));assert.ok(mini.includes('CLI_aidiy_hermes.png'));assert.ok(!mini.includes('CLI_aidiy_hermes.svg'));
 });

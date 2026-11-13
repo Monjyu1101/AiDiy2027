@@ -10,9 +10,9 @@ import {PassThrough} from 'node:stream';
 import {mkdtemp,mkdir,readFile,writeFile,readdir,rm,stat} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
-import {createAppLauncher} from '../起動/アプリ起動.mjs';
-import {createCliLauncher} from '../起動/CLI起動.mjs';
-import {createStartManager} from '../起動/サービス管理.mjs';
+import {createAppLauncher} from '../diag/起動/アプリ起動.mjs';
+import {createCliLauncher} from '../diag/起動/CLI起動.mjs';
+import {createStartManager} from '../diag/起動/サービス管理.mjs';
 
 async function fixture(t,existing){
  const root=await mkdtemp(join(tmpdir(),'diag-runtime-日本語 空白-'));

@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as flush} from 'node:timers/promises';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
 
 test('bulk action uses live ports and managed startup, disables unknown states, and sends one stop request',async t=>{
  let opened=false,unknown=false,active=false,stopping=false,release;

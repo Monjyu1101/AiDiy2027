@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
 import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
 
 const configured = {CHAT_AI_NAME:'freeai_chat', CHAT_FREEAI_MODEL:'configured-model'};
 const local = {models:{'local-first':'existing first', 'local-second':'existing second'}};

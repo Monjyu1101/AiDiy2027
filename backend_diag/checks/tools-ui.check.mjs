@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {Tools接続を作成} from '../ui/src/components/ウィンドウ/Tools接続.mjs';
+import {Tools接続を作成} from '../diag/ui/components/ウィンドウ/Tools接続.mjs';
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 test('Tools UI polls only when connected and enabled; off/disconnect abort stale result',async()=>{
  const calls=[],states=[],timers=[];let cleared=0;

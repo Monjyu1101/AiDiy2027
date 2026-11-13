@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
+import {copySharedFixture} from './fixture-layout.mjs';
 import assert from 'node:assert/strict';
 import {cp,mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {spawn} from 'node:child_process';
@@ -16,7 +17,7 @@ test('default Node runtime starts without Python on PATH and serves anonymous mo
  try {
   const diag=path.join(root,'backend_diag');
   await cp(new URL('../',import.meta.url),diag,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|tests|__pycache__)(?:[/\\]|$)/.test(source)});
-  await cp(new URL('../../scripts/opencode-npm.mjs',import.meta.url),path.join(root,'scripts/opencode-npm.mjs'));
+  await copySharedFixture(root);
   await mkdir(path.join(root,'_config'));await writeFile(path.join(root,'_config/AiDiy_key.json'),JSON.stringify({gemini_key_id:'synthetic-gemini-key'}));
   await mkdir(path.join(root,'empty-path'));
   // Keep production startup/cache/runner/catalog. Replace HTTPS transport alone, not model behavior.
@@ -45,7 +46,7 @@ test('actual headless entrypoint works with missing config and no credentials, u
   const diag=path.join(root,'backend_diag');
   await cp(new URL('../',import.meta.url),diag,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|tests|__pycache__)(?:[/\\]|$)/.test(source)});
   await mkdir(path.join(root,'home'));await mkdir(path.join(root,'empty-path'));
-  await cp(new URL('../../scripts/opencode-npm.mjs',import.meta.url),path.join(root,'scripts/opencode-npm.mjs'));
+  await copySharedFixture(root);
   // 本物の設定・OAuthを読ませない。通信は匿名公開一覧とloopbackのみ許容し、接続せず失敗させる。
   const preload=path.join(root,'offline.mjs');
   await writeFile(preload,`import https from 'node:https';import http from 'node:http';import net from 'node:net';import {EventEmitter} from 'node:events';
@@ -56,6 +57,7 @@ const offline=(options)=>{if(options.headers?.Authorization||options.headers?.['
   await once(child,'exit');assert.equal(child.exitCode,0,output+'\n'+stderr);
   const {readFile,access}=await import('node:fs/promises');
   await assert.rejects(access(path.join(root,'_config','AiDiy_key.json')),{code:'ENOENT'});
+  await assert.rejects(access(path.join(root,'_AIDIY','aidiy_memo')),{code:'ENOENT'});
   const load=async group=>JSON.parse(await readFile(path.join(root,'_AIDIY','aidiy_diag',group+'_models_info.json'),'utf8'));
   const chat=await load('chat');assert.deepEqual(Object.keys(chat),['local_chat']);assert.equal(Object.keys(chat.local_chat.models).length,4);
   assert.deepEqual(await load('live'),{});

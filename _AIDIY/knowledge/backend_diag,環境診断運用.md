@@ -49,7 +49,7 @@ Windowsでは透明なBrowserWindowのnative最大化が制限されるため、
 
 ## システム起動管理
 
-導入状況のPython／Node.jsは `backend_diag/診断/セキュリティバージョン.mjs` の系列別基準で緊急パッチを確認します。Python 3.14.10／3.15.2、Node.js 24.22.1／26.12.1が基準です。同系列の基準未満は「注意」とし、右側詳細に「バージョンが古い！ セキュリティパッチ未対応」と更新先を表示します。基準一致・以降は警告しません。Python 3.14未満・Node.jsの旧系列は判定対象外として更新を促す注意にします。Python 3.16以降・Node.js 27以降の未来系列は対応済み扱いにする運用方針です。これは最新版や全脆弱性の安全性保証ではありません。基準は同ファイル記載の公式発表で更新し、境界値の試験 `node --test backend_diag/checks/security-version.check.mjs` を実行します。警告によってエラーや起動禁止にはしません。未検出・コマンド実行失敗は元の判定を維持します。
+導入状況のPython／Node.jsは `backend_diag/diag/診断/セキュリティバージョン.mjs` の系列別基準で緊急パッチを確認します。Python 3.14.10／3.15.2、Node.js 24.22.1／26.12.1が基準です。同系列の基準未満は「注意」とし、右側詳細に「バージョンが古い！ セキュリティパッチ未対応」と更新先を表示します。基準一致・以降は警告しません。Python 3.14未満・Node.jsの旧系列は判定対象外として更新を促す注意にします。Python 3.16以降・Node.js 27以降の未来系列は対応済み扱いにする運用方針です。これは最新版や全脆弱性の安全性保証ではありません。基準は同ファイル記載の公式発表で更新し、境界値の試験 `node --test backend_diag/checks/security-version.check.mjs` を実行します。警告によってエラーや起動禁止にはしません。未検出・コマンド実行失敗は元の判定を維持します。
 
 一括起動（`--auto` のポート解放待機を含む）と強制停止は、タブ下の非モーダル進行ボックスに大きな「一括起動中…」「強制停止中…」と回転表示、実際の処理対象・準備状況を表示します（推定の進捗率は表示しません）。タブの切り替えや他画面の操作を遮らず、別タブでも状態確認を続けます。進行中は表示を閉じず、正常完了・取消後は自動で消え、完了通知を残しません。失敗はコンソール確認の案内とともに残し、「閉じる」で消せます。ミニ表示はコンパクトなボックス、アイコン表示は短い起動中・停止中表示と回転表示、詳細ツールチップです。失敗時は「詳細を確認」から通常表示へ戻せます。アイコンから通常表示へ戻すと詳細を確認できます。通信失敗は処理完了と判断せず、状態の再確認を案内します。検証は `checks/start-progress.check.mjs` と `checks/start-manager.check.mjs`。
 
@@ -66,7 +66,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 - 初期ミニの真偽だけを固定のadditionalArgumentsからsandbox preloadへ渡し、`aidiyWindow.initialMini` として公開する。Vueは最初の描画から同じモードを使う。認証失敗時は通常表示へ戻す。画面再読込は通常表示へ戻し、初期ポート判定を繰り返さない。ミニ中もピンをON/OFFできる。通常へ戻す時は現在のフォーム左肩で元の通常寸法を復元し、最前面ピンは最新のユーザー選択を保持する。任意座標や最前面レベルのIPCは追加しない。
 - 通常・ミニの切替と最大化・復元は `起動/サイズ切替.cjs` の380msの縮小・拡大演出を使う。内包される縮小も登場ズームと同じ透明な短命窓に統一し、実画面へdata画像やinline styleを注入せずCSPを維持する。切替前後の画面画像を変形・クロスフェードし、実窓の連続リサイズで白い縁を出さない。`startMini` は画像を準備して実窓の寸法を変え、Vueが描画した後に固定の `finishMini` で演出を完了する。ミニの内容高はその間に測り、最終寸法へ一度だけ変形する。切替中はボタンを無効にし、再読込・終了・撮影失敗時は演出窓と透明度を回収する。未完了でも2.5秒で実窓を復元する。初期表示には既存の750msの登場ズームだけを使う。検証は `checks/size-transition.check.cjs` と `checks/initial-mini-desktop.mjs` で行う。
 - headlessはElectron経路へ入らず、起動時の8095確認・UI・HTTP待受も実行しない。`checks/node-only-startup.check.mjs` は実headlessのポート確認とlistenを禁止して、診断・書込が従来どおり完了することを確認する。`checks/desktop.check.mjs` / `checks/start-mini.check.mjs` は開放・未開放・確認不可の分岐と位置の復元、最前面ピンの保持を検証する。`node backend_diag/checks/initial-mini-desktop.mjs` は合成Tools稼働・実Electronの初期描画、右下座標、最前面、通常復元を確認する。実サービスには接続せず、テスト窓はフォーカスとマウスを奪わない。
-- 画面は `backend_diag/ui/src/components/起動/`、認証付き API は `diag_main.mjs` の `/api/起動*`、管理は `起動/サービス管理.mjs`。プロセス起動は Node の `spawn` で固定の `python -u -X utf8 <各フォルダ>/_start.py --diag-start <ID>` を実行する。HTTP でコマンド・引数・作業フォルダは指定させない。
+- 画面は `backend_diag/diag/ui/components/起動/`、認証付き API は `diag_main.mjs` の `/api/起動*`、管理は `起動/サービス管理.mjs`。プロセス起動は Node の `spawn` で固定の `python -u -X utf8 <各フォルダ>/_start.py --diag-start <ID>` を実行する。HTTP でコマンド・引数・作業フォルダは指定させない。
 - `scripts/起動対象.json` は順番、フォルダ、既定値の共通元。ルート `_start.py` の auto と aidiy_diag の初期値を両方確認する。aidiy_diag の対象は local / tools / core / apps / taskteam / web の6機能。`起動管理: false` の Avatar 以降はルート起動の既定値だけを残し、システム起動の表示・起動 API・専用経路から除外する（アプリ起動は別機能）。aidiy_diag 自身と on-demand の Hermes も対象に含めない。
 - 設定は `_config/AiDiy_diag_start.json` に原子的に保存する。機能ごとに既知の真偽値だけを受け付ける。起動時に設定のコピーを固定し、処理中に変更した設定は次回へ適用する。ページ再読込・別タブへの移動ではプロセスを停止しない。
 - `scripts/_diag_start.py` は既存の `check_environment` / `start` / `kill_ports` を共用する。Core / Apps は対応するポートだけを停止する。Tools は固定の `diag_main.mjs --headless` を先に実行する。設定不足・事前診断失敗・待受失敗時は後続の起動を中止する。
@@ -98,7 +98,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 
 - ルートには公開入口 `diag_main.mjs` / `aidiy_diag` / `aidiy_diag.cmd` と `_setup.py` / `_start.py` / `_cleanup.py`、パッケージ設定・案内を残します。
 - `起動/` は Electron・IPC・停止監視、`診断/` は導入確認・headless・カタログ、`モデル情報/` はキー確認・モデル/音声合成を担当します。
-- OpenRouter の同梱 ZIP は `backend_diag/モデル情報/openrouter_models/openrouter_models.zip`。対応するローダーと同じ機能の配下に置き、静的公開する `static/` へは入れません。
+- OpenRouter の同梱 ZIP は `backend_diag/diag/モデル情報/openrouter_models/openrouter_models.zip`。対応するローダーと同じ機能の配下に置き、静的公開する `static/` へは入れません。
 - モジュール移動時は import、`import.meta.url`、Electron の package main / preload、fixture の差し替え先を追従させます。Electron の依存物・安全ログ・停止要求は従来の `backend_diag/` 基準、永続的な診断・モデル情報JSONは `_AIDIY/aidiy_diag/` に維持します。一時用途のアプリ/CLI起動ログは `temp/aidiy_diag/アプリ起動/`、サービス監視の実行ID JSON・OSロック・置換用一時ファイルは `temp/aidiy_diag/起動/` を使います。旧場所の自動移動・削除・フォールバックは行いません。更新前の Diag と管理サービスは終了してから起動し直し、稼働中のロック・実行IDは手動削除しません。停止API・cleanupの対象は変更せず、`backend_diag/.stop-request` の位置も維持します。
 - `node --test backend_diag/checks/*.check.mjs backend_diag/checks/*.check.cjs` の layout / bundled-models / launcher / startup / headless テストでパスと起動の回帰を確認します。UI・runtime を変更しない配置変更では配布物を無用に再生成せず、`node backend_diag/ui/verify.mjs` で一致を確認します。
 
@@ -106,13 +106,13 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 
 ## ソース調査の基準
 
-`backend_diag/診断/coverage.json` の基準コミットに対し、対象ソース・設定 3,333 件を全件全文静的走査し、246 候補へ整理した調査履歴を保持しています。現在の診断対象は 19 件（ベース 6、CLI群 7、その他拡張 6）です。AiDiy 起動コマンド、Hermes 専用、Mac 音声、GStreamer、Edge、Brave、OS・任意スキル・開発導入補助等 227 件は確認対象から除外しています。通常の Markdown 本文や画像・音声・モデル等は除外です。各詳細の行番号、`reference/source-manifest.json` の blob SHA、README の調査範囲を照合してください。実行時の導入・認証・接続成功の保証とは別です。
+`backend_diag/diag/診断/coverage.json` の基準コミットに対し、対象ソース・設定 3,333 件を全件全文静的走査し、246 候補へ整理した調査履歴を保持しています。現在の診断対象は 19 件（ベース 6、CLI群 7、その他拡張 6）です。AiDiy 起動コマンド、Hermes 専用、Mac 音声、GStreamer、Edge、Brave、OS・任意スキル・開発導入補助等 227 件は確認対象から除外しています。通常の Markdown 本文や画像・音声・モデル等は除外です。各詳細の行番号、`reference/source-manifest.json` の blob SHA、README の調査範囲を照合してください。実行時の導入・認証・接続成功の保証とは別です。
 
 ## 設定モデルの手動試行
 
 設定モデルは実装済みで、Tools 接続中に専用タブを表示する。現在の CHAT / LIVE / PREDICTION / DECISION / CODE1〜6 / TASK・TEAM 各3フェーズの16行を、利用者の明示操作で確認する。設定ファイルは読み取りだけで、起動・headless・全診断から生成試行を自動実行しない。外部送信や課金があり得ることを説明する。
 
-Chat / Code は既存 MCP、Live / Prediction は非公開の固定 loopback アダプターを使う。未導入CLIは未実施とし、導入済みCLIの認証失敗を未導入と混同しない。同一設定の共有、音声の保存・取消、実SDK契約試験の詳細は `backend_diag/README.md` の「設定モデル（手動のみ）」と `backend_diag/モデル試行/`、`backend_diag/ui/src/components/設定モデル/` を同期元にする。
+Chat / Code は既存 MCP、Live / Prediction は非公開の固定 loopback アダプターを使う。未導入CLIは未実施とし、導入済みCLIの認証失敗を未導入と混同しない。同一設定の共有、音声の保存・取消、実SDK契約試験の詳細は `backend_diag/README.md` の「設定モデル（手動のみ）」と `backend_diag/diag/モデル試行/`、`backend_diag/diag/ui/components/設定モデル/` を同期元にする。
 
 ## Tools管理
 
@@ -173,9 +173,9 @@ Chat / Code は既存 MCP、Live / Prediction は非公開の固定 loopback ア
 
 autoの優先順は `openai_oauth` → `freeai_chat` → `openai_decisions` → `gemini_chat`。起動チェックに成功した方式だけを優先対象にする。
 
-判断系の低コスト方針は `backend_diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-3.5-flash-lite`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
+判断系の低コスト方針は `backend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-3.5-flash-lite`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
 
-モデルIDの同期元は `backend_diag/モデル情報/decisions_info.mjs` の定数と `backend_server/AIコア/AI判断共通.py`。認証付き一覧で実在を確認し、番号やaliasの解決先を推測して候補を生成しない。
+モデルIDの同期元は `backend_diag/diag/モデル情報/decisions_info.mjs` の定数と `backend_server/AIコア/AI判断共通.py`。認証付き一覧で実在を確認し、番号やaliasの解決先を推測して候補を生成しない。
 
 aidiy_diagは認証付きGET一覧に候補配列のIDそのものがある方式だけを掲載する。GoogleはgenerateContent対応を要求する。公開一覧・設定値・別バージョンから候補を捏造しない。未取得・認証なし・失敗・対象ID不在なら方式を省略し、全方式が空なら `{}`。モデル一覧は実行の許可リストではなく、設定画面の候補として扱う。
 
@@ -269,7 +269,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - Antigravity は固定公式 installer のレビュー済み SHA256 を照合し、`--skip-path --skip-aliases` 付きで実行する。既存ありの no-op を避けるため所有確認した `agy.exe` だけを退避し、公式 manifest の SHA512 と実体を確認後に確定する。固定の OS CMD でレビュー済み installer だけを実行し、Windows 引用符は `windowsVerbatimArguments` で保持する。パスの展開・制御文字は事前に拒否する。失敗・中止時は旧バイナリを戻し、復旧ファイルが残れば次の操作を止めて手動確認を求める。共有 staging、`.gemini/antigravity-cli`、OS 資格情報、未知のファイルは削除しない。インストーラー更新時は [公式 CMD](https://antigravity.google/cli/install.cmd) と [オプション](https://www.antigravity.google/docs/cli/install/) を再レビューしてから digest を更新する。
 - npm の標準 prefix / root と実体を確認し、パッケージ外のリンク、別方式のランチャー、不正 manifest では操作しない。操作直前にも所有元を再確認する。再導入は同じ固定パッケージへ `npm install --global` を1回だけ実行して更新し、事前に削除しない。「削除」だけが `npm uninstall --global` を実行する。確認ダイアログはサーバーの `再導入説明` を表示し、npm で削除後に導入すると案内しない。利用者の認証・設定・履歴は削除しない。
 - コマンドは固定 argv・shell 無効・空の一時 npmrc・公式 registry で実行する。終了・失敗・中止時は一時領域を回収して再確認するが、停止未確認中は排他を保持する。同じ OS 利用者の Diag 間では WinGet は全体、npm / Antigravity は同じ導入先で排他する。一時ロックは利用者別なので、別 OS 利用者間の競合は WinGet 自身の制御に従う。ロックが異常終了で残った場合、自動削除しない。OS 上で対象 npm 処理の停止と所有権を確認してから運用者が復旧する。
-- 検証は `node --test backend_diag/checks/install-*.check.mjs` と `node --test backend_diag/ui/src/components/導入状況/checks/*.check.cjs`。合成プロセス・一時 fixture・Vue イベントで確認し、実際のグローバル導入・削除・認証を行わない。Windows の shim と POSIX の実体は別ケースで検証する。
+- 検証は `node --test backend_diag/checks/install-*.check.mjs` と `node --test backend_diag/diag/ui/components/導入状況/checks/*.check.cjs`。合成プロセス・一時 fixture・Vue イベントで確認し、実際のグローバル導入・削除・認証を行わない。Windows の shim と POSIX の実体は別ケースで検証する。
 - UI 変更時は配布画面へ反映するため `npm --prefix backend_diag/ui run build`、`npm --prefix backend_diag/ui run check` を実行する。実ブラウザ確認は別途許可された環境だけで行い、ソース・mock 成功と実OS画面検証を区別する。
 
 
@@ -296,12 +296,12 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - 中央を普通にドラッグして移動できます（移動4pxでクリックと区別、長押し不要）。ダブルクリックでランチャー表示へ戻り、途中の通常画面は見せずに切り替えます。Escは展開中なら収納、収納中なら通常画面へ戻ります。
 - アイコン化中は無条件で最前面に固定します。解除時は元のピン状態へ戻ります。透明部分は背後へクリックを通します。Web版ではOSの最前面・クリック透過・窓寸法変更は対象外です。
 
-表示切替の位置計算は `backend_diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、アイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test backend_diag/checks/display-anchor.check.cjs backend_diag/checks/start-mini.check.mjs backend_diag/checks/micro-window.check.mjs backend_diag/checks/desktop.check.mjs backend_diag/checks/size-transition.check.cjs` で確認します。
+表示切替の位置計算は `backend_diag/diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、アイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test backend_diag/checks/display-anchor.check.cjs backend_diag/checks/start-mini.check.mjs backend_diag/checks/micro-window.check.mjs backend_diag/checks/desktop.check.mjs backend_diag/checks/size-transition.check.cjs` で確認します。
 
 実装上、Windowsのアイコン表示は専用の最前面レベルを設定し、表示切替完了時にも実際の最前面状態を確認します。解除時は共通ピンの選択へ戻します。ドラッグの起点はメインプロセスのマウス押下で記録し、IPC到着前にポインターが動いた場合も最初の移動量を保持します。素早い解放時も最後の位置を反映して終了します。
 - アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くConsoleは作業領域中央に約800×600pxで表示します。
 
-画面は backend_diag/ui/src/components/アプリ起動/マイクロランチャー.vue / .css、共通寸法は同フォルダの 円周配置.cjs、窓制御は backend_diag/起動/マイクロ表示.cjs です。回帰確認は node --test backend_diag/checks/micro-window.check.mjs backend_diag/checks/icon-drag.check.mjs backend_diag/checks/desktop.check.mjs。配布画面を更新するときは npm --prefix backend_diag/ui run build と npm --prefix backend_diag/ui run check を実行します。
+画面は backend_diag/diag/ui/components/アプリ起動/マイクロランチャー.vue / .css、共通寸法は同フォルダの 円周配置.cjs、窓制御は backend_diag/diag/起動/マイクロ表示.cjs です。回帰確認は node --test backend_diag/checks/micro-window.check.mjs backend_diag/checks/icon-drag.check.mjs backend_diag/checks/desktop.check.mjs。配布画面を更新するときは npm --prefix backend_diag/ui run build と npm --prefix backend_diag/ui run check を実行します。
 
 ## 起動アイコンのモーション
 
@@ -362,9 +362,9 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 
 ## 導入状況の公式サイト
 
-左の名前直後の角丸の「Web」は公式サイトを既定ブラウザで開きます。URLは `backend_diag/ui/src/components/導入状況/公式サイト.json` が所有し、VueのリンクとElectronの許可先で共用します。登録URLとの完全一致だけを外部ブラウザへ渡し、Diag本体のページ遷移・Electron新規ウィンドウは許可しません。ベース・CLI群・その他拡張は初期状態ですべて展開します。URL追加時は診断カタログのIDと照合し、画面反映のbuild・verify、導入状況checksとdesktop.checkを確認します。Electron側の変更反映にはDiagの再起動が必要です。
+左の名前直後の角丸の「Web」は公式サイトを既定ブラウザで開きます。URLは `backend_diag/diag/ui/components/導入状況/公式サイト.json` が所有し、VueのリンクとElectronの許可先で共用します。登録URLとの完全一致だけを外部ブラウザへ渡し、Diag本体のページ遷移・Electron新規ウィンドウは許可しません。ベース・CLI群・その他拡張は初期状態ですべて展開します。URL追加時は診断カタログのIDと照合し、画面反映のbuild・verify、導入状況checksとdesktop.checkを確認します。Electron側の変更反映にはDiagの再起動が必要です。
 
-外部連携タブも同じURL一覧を使用し、公開モデル操作（Hugging Face）・Discord・Slackの見出し横にWebリンク、その下にサービス名を表示します。外部連携のURL追加時は `backend_diag/ui/src/components/外部連携/checks` も確認します。
+外部連携タブも同じURL一覧を使用し、公開モデル操作（Hugging Face）・Discord・Slackの見出し横にWebリンク、その下にサービス名を表示します。外部連携のURL追加時は `backend_diag/diag/ui/components/外部連携/checks` も確認します。
 
 ## ランチャーの起動可否と表示
 
@@ -374,7 +374,7 @@ Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表�
 
 ## アイコンメニュー
 
-実装: `backend_diag/起動/アイコンメニュー.cjs`、`backend_diag/起動/アイコンメニュー-preload.cjs`、`backend_diag/起動/アイコンメニュー.css`。
+実装: `backend_diag/diag/起動/アイコンメニュー.cjs`、`backend_diag/diag/起動/アイコンメニュー-preload.cjs`、`backend_diag/diag/起動/アイコンメニュー.css`。
 
 回転メニューを閉じた小さいアイコンの状態でも右クリックから使える。ミニサイズ・標準サイズ・閉じると、表示対象のアプリだけを並べるランチメニューを備える。右クリック時から一覧を展開し、表示操作とアプリ一覧を一体のパネルに収める。全体幅は264px。表示操作は上部の1行に集約し、アプリ行は32px。高さは表示件数から計算し、クリックしたモニターの作業領域内へ位置・サイズを補正する（タスクバーを避け、負座標のモニターにも対応）。画面が小さい場合は一覧内をスクロールする。左列はIDE〜Slack（Browser・Navi・Hermesを含む）、右列はClaudeなどの外部ツール〜Chrome。項目が未表示でも列の所属は変えず、表示対象だけを載せる。多い場合は一覧内をスクロールする。Esc、外側クリック、フォーカス離脱で閉じる。
 
@@ -400,6 +400,25 @@ Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後�
 
 設計判断は[共通の基本方針](./共通,パフォーマンスチューニング.md)に従い、実際の周期は各プログラムで調整します。管理監視、ログの受信、画面への反映を混同しないようにします。
 
-- 起動・自動再起動の監視は `scripts/_diag_start.py`、Diag停止通知は `backend_diag/起動/lifecycle.mjs`、導入処理の子プロセス終了確認は `backend_diag/導入管理/導入管理.mjs` を確認します。stdoutはブロッキング読取のまま維持します。
-- 管理状態とコンソール表示は `backend_diag/ui/src/components/起動/起動状態.mjs`、受信に応じた周期の判定は同フォルダの `受信間隔.mjs` が所有します。対象選択は即時反映し、空の成功応答では活発な期間を延長しません。非表示ではログ取得を止め、必要な稼働監視を継続します。
+- 起動・自動再起動の監視は `scripts/_diag_start.py`、Diag停止通知は `backend_diag/diag/起動/lifecycle.mjs`、導入処理の子プロセス終了確認は `backend_diag/diag/導入管理/導入管理.mjs` を確認します。stdoutはブロッキング読取のまま維持します。
+- 管理状態とコンソール表示は `backend_diag/diag/ui/components/起動/起動状態.mjs`、受信に応じた周期の判定は同フォルダの `受信間隔.mjs` が所有します。対象選択は即時反映し、空の成功応答では活発な期間を延長しません。非表示ではログ取得を止め、必要な稼働監視を継続します。
 - 確認は `node --test backend_diag/checks/start-*.check.mjs backend_diag/checks/lifecycle.check.mjs backend_diag/checks/install*.check.mjs` と `python -m unittest discover -s scripts/checks -p 'test_diag_*.py'` を使います。UIソース変更時は配布物を生成し、manifestも照合します。自動テストの監視回数と実機CPU計測は分けて評価します。
+
+## aidiy_memo（付箋メモ）
+
+- 通常の Diag 起動では Memo を同時に開く。`--headless` はメモの読込・作成・画面起動を行わない。`--no-open` は従来どおり画面を開かず、認証 URL の同じ公開パスにある `memo.html` から利用できる。タイトルバーの「+メモ」、アイコン化中は右クリックメニューの「+メモ」で表示して新規作成する。
+- 保存先は Diag プロセスの起動時カレントフォルダと、Diag のランチャーで選択したプロジェクトの、それぞれ `_AIDIY/aidiy_memo/`。初期プロジェクトは既存 `CODE_BASE_PATH` の解決規則と同じ。実体が同じ場合は一つにまとめる。プロジェクトを切り替えた後、旧保存先の編集内容を別プロジェクトへ誤保存しない。
+- 新しい付箋は UTF-8 の `UUID.memo.json`。既存の `.md` / `.txt` は本文を無変換で扱い、ファイル名由来のタイトルは変更しない。色・位置・寸法は隠し `.memo-<ファイル名hash>.json` に保存する。本文と補助ファイルはそれぞれ原子的に置換するが、二つのファイル全体の一括トランザクションではない。未知の JSON 形式、不正 UTF-8、リンク、1 MB 超のファイルは警告し、元のファイルは変更しない。削除・自動移行は行わない。
+- Electron の Memo 窓は常に最前面。各付箋は上部の保存先帯を0.5秒長押しして移動し、右下でサイズ変更する。最下部のマウスオーバーまたはキーボードフォーカスでパステル色を選択する。色・位置・寸法も保存対象となる。
+- 保存は明示操作。未保存の入力は再読込・終了前に確認する。保存失敗時は入力を保持し、外部編集との競合は上書きせず再読込を促す。保存先はサーバー側で決め、クライアントから任意のパスを保存先として受け取らない。読込だけでフォルダを作成しない。
+- メモ API は Diag と同じ起動認証が必要。保存は同一オリジンの JSON POST のみ。Electron は sandbox / contextIsolation を有効にし、メモ窓へ任意ファイル・任意 IPC を公開しない。
+- 確認: `node --test backend_diag/checks/memo-*.check.*`。UI 配布物を更新するときは `backend_diag/ui` の `npm run build && npm run check` でソースとの一致も確認する。
+
+### Diag / Memo の責務と配置
+
+- `backend_diag/diag/` が診断・モデル・導入・起動管理と Diag 画面 (`diag/ui/`) を所有する。`backend_diag/memo/` が保存・メモ HTTP・Electron メモ窓と Memo 画面 (`memo/ui/src/`) を所有する。
+- 公開の `backend_diag/diag_main.mjs` は薄い起動入口として維持。共通ビルドは `backend_diag/ui/`、配布物は `static/`、共通認証セッションは `shared/ui/` に置く。静的 URL、API URL、プロファイル、停止通知、ユーザーデータの保存先は移動しない。
+- Node の直接 Vue 状態テストは `backend_diag` の開発依存 (`npm ci`) を使用し、配布ビルドは従来どおり `backend_diag/ui` の依存とコマンドを使う。
+- ファイルを移動した際は import だけでなく `new URL`、`__dirname`、Python の `parents[]`、プロセス停止の allowlist、manifest とテスト fixture のコピー対象も確認する。未生成の `_AIDIY` / `_temp`、停止通知・診断ログは存在チェックだけでは参照漏れを検出できない。
+
+新規付箋の既定保存先は現在選択したプロジェクトです。未選択なら起動フォルダへ保存します。既存付箋の保存先と未保存の編集は変更せず、新規追加時だけ現在の保存先一覧を確認します。

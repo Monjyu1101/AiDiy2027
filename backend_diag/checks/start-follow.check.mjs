@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as flush} from 'node:timers/promises';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
 
 function fixture(t){
  let snapshot={対象:['local','tools','core','web'].map(id=>({id,名前:id,設定:{起動対象:true},状態:'未起動'})),実行中:false,起動表示:null};

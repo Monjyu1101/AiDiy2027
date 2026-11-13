@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),{EventEmitter}=require('node:events'),vm=require('node:vm'),fs=require('node:fs'),path=require('node:path');
-const directory=path.resolve(__dirname,'../起動');
+const directory=path.resolve(__dirname,'../diag/起動');
 function fixture(){
  const ipcMain=new EventEmitter(),created=[],imagePaths=[];
  class Window extends EventEmitter{constructor(options){super();this.options=options;this.webContents=new EventEmitter();this.webContents.mainFrame={};this.webContents.setWindowOpenHandler=()=>{};this.webContents.send=()=>{};created.push(this);}isDestroyed(){return !!this.dead;}close(){this.dead=true;this.emit('closed');}setAlwaysOnTop(){}loadURL(value){this.url=value;return Promise.resolve();}}
@@ -21,7 +21,7 @@ test('メニューは画面内に置き、選択は表示項目と送信元に�
  f.ipcMain.emit('diag:icon-menu-action',event,'app:ide');assert.deepEqual(f.events.map(v=>JSON.parse(JSON.stringify(v))),[{type:'launch',key:'app:ide'}]);assert.equal(f.ipcMain.listenerCount('diag:icon-menu-action'),0);
 });
 test('閉じるは親の既存close処理を呼び、サイズ変更は既存イベントに渡す',()=>{
- for(const action of ['mini','normal','close','dismiss']){const f=fixture();let closes=0;f.parent.on('close',()=>closes++);f.ipcMain.emit('diag:icon-menu-action',{sender:f.target.webContents,senderFrame:f.target.webContents.mainFrame},action);assert.equal(closes,action==='close'?1:0);assert.deepEqual(f.events,['mini','normal'].includes(action)?[action]:[]);}
+ for(const action of ['mini','normal','memo','close','dismiss']){const f=fixture();let closes=0;f.parent.on('close',()=>closes++);f.ipcMain.emit('diag:icon-menu-action',{sender:f.target.webContents,senderFrame:f.target.webContents.mainFrame},action);assert.equal(closes,action==='close'?1:0);assert.deepEqual(f.events,['mini','normal','memo'].includes(action)?[action]:[]);}
 });
 
 test('四隅・負座標の別画面・小さい画面でもメニュー全体を作業領域内に収める',()=>{
@@ -37,7 +37,7 @@ test('四隅・負座標の別画面・小さい画面でもメニュー全体�
 test('Slack はAiDiy列の件数へ入り、未導入項目のIPC選択も拒否する',()=>{
  const f=fixture();
  const area={x:0,y:0,width:1920,height:1040},cursor={x:0,y:0};
- assert.equal(f.bounds(cursor,area,[{key:'app:discord'},{key:'app:slack'}]).height,186);
+ assert.equal(f.bounds(cursor,area,[{key:'app:discord'},{key:'app:slack'}]).height,218);
  f.menu.close();f.menu.open([{key:'app:slack',label:'Slack',enabled:false,reason:'未導入'}],value=>f.events.push(value));
  const target=f.latest(),event={sender:target.webContents,senderFrame:target.webContents.mainFrame};
  const action=f.ipcMain.listeners('diag:icon-menu-action')[0];
@@ -67,5 +67,10 @@ test('native右クリックのAiDiy系は配布済ローカルPNGを使い旧SVG
  f.menu.open([...ids.map(id=>({key:'app:'+id,label:id})),{key:'cli:aidiy_hermes',label:'Hermes'}],()=>{});
  f.latest().webContents.emit('did-finish-load');
  const expected=[...ids.map(id=>'AiDiy_'+id+'.png'),'CLI_aidiy_hermes.png'];assert.deepEqual(f.imagePaths.map(p=>path.basename(p)),expected);
- for(const file of f.imagePaths){assert.equal(path.dirname(file),path.resolve(directory,'../static'));assert.equal(fs.existsSync(file),true);}f.menu.close();
+ for(const file of f.imagePaths){assert.equal(path.dirname(file),path.resolve(directory,'../../static'));assert.equal(fs.existsSync(file),true);}f.menu.close();
+});
+
+test('アイコン化メニューに +メモ を表示し固定の memo 操作を送る',()=>{
+ const f=fixture();assert.match(decodeURIComponent(f.target.url),/data-action="memo">\+メモ/);
+ f.ipcMain.emit('diag:icon-menu-action',{sender:f.target.webContents,senderFrame:f.target.webContents.mainFrame},'memo');assert.deepEqual(f.events,['memo']);
 });

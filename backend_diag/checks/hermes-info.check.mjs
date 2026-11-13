@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {HERMES_MODELS_FILE, HERMES_CODE_PROVIDERS, HERMES_SAME_LABEL, hermesChatModel, hermesModelsInfo} from '../モデル情報/hermes_info.mjs';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
+import {HERMES_MODELS_FILE, HERMES_CODE_PROVIDERS, HERMES_SAME_LABEL, hermesChatModel, hermesModelsInfo} from '../diag/モデル情報/hermes_info.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
 import {probe} from '../runtime/model_probe.mjs';
 
 const label = id => `2026/10/15 - ${id}`;

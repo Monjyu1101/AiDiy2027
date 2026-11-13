@@ -6,9 +6,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setTimeout as delay} from 'node:timers/promises';
-import miniWindow from '../起動/ミニ表示.cjs';
-import {起動ミニ表示を作成} from '../ui/src/components/ウィンドウ/起動ミニ表示.mjs';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
+import miniWindow from '../diag/起動/ミニ表示.cjs';
+import {起動ミニ表示を作成} from '../diag/ui/components/ウィンドウ/起動ミニ表示.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
 
 function fakeWindow(maximized=false){
  const window={bounds:{x:140,y:100,width:1160,height:820},minimum:[420,320],maximized,maximizable:true,resizes:0,minimumChanges:0,

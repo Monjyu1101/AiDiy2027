@@ -9,7 +9,7 @@ import {mkdtempSync,readFileSync,writeFileSync,statSync,mkdirSync,rmSync} from '
 import {spawnSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
-import {recordDesktopFailure,recordProbeFailure} from '../起動/desktop-log.mjs';
+import {recordDesktopFailure,recordProbeFailure} from '../diag/起動/desktop-log.mjs';
 
 const limit=65536;
 function fixture(fn) {
@@ -49,7 +49,7 @@ test('sustained writes cross the limit more than once without losing the newest 
   assert.match(readFileSync(file,'utf8'),/ Electron EXIT\n$/);
 }));
 test('fresh processes reopen capped logs and keep safe records after restart',()=>fixture(file=>{
-  const moduleUrl=new URL('../起動/desktop-log.mjs',import.meta.url).href;
+  const moduleUrl=new URL('../diag/起動/desktop-log.mjs',import.meta.url).href;
   const script=`import {recordDesktopFailure} from ${JSON.stringify(moduleUrl)};if(!recordDesktopFailure('LOAD',process.argv[1])||!recordDesktopFailure('EXIT',process.argv[1]))process.exit(1);`;
   for(let restart=0;restart<3;restart++) {
     writeFileSync(file,'x'.repeat(limit));

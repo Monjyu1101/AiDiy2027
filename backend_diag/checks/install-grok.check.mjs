@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {GROK_INSTALLER_URL,GROK_INSTALLER_SHA256,GROK_FILES,officialSigner,inspectGrok,executeGrok} from '../導入管理/grok.mjs';
-import {officialIdentity} from '../導入管理/antigravity.mjs';
-import {NPM_PACKAGES,npmCapability} from '../導入管理/導入管理.mjs';
+import {GROK_INSTALLER_URL,GROK_INSTALLER_SHA256,GROK_FILES,officialSigner,inspectGrok,executeGrok} from '../diag/導入管理/grok.mjs';
+import {officialIdentity} from '../diag/導入管理/antigravity.mjs';
+import {NPM_PACKAGES,npmCapability} from '../diag/導入管理/導入管理.mjs';
 
 const xai='OID.1.3.6.1.4.1.311.60.2.1.3=US, OID.2.5.4.15=Private Organization, CN=X.AI LLC, SERIALNUMBER=NV20243235882, O=X.AI LLC, L=Palo Alto, S=California, C=US';
 const xcorp='CN=X Corp., O=X Corp., L=Bastrop, S=Texas, C=US';

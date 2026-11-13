@@ -10,9 +10,9 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {EventEmitter} from 'node:events';
 import http from 'node:http';
-import {createAppLauncher} from '../起動/アプリ起動.mjs';
-import {createTaskTeamStatus} from '../起動/TaskTeam接続.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createAppLauncher} from '../diag/起動/アプリ起動.mjs';
+import {createTaskTeamStatus} from '../diag/起動/TaskTeam接続.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 async function fixture(t){const root=await mkdtemp(join(tmpdir(),'diag-taskteam-'));t.after(()=>rm(root,{recursive:true,force:true}));return root;}
 test('catalog order and backend availability update without disabling other apps',async t=>{
  const root=await fixture(t);let online=false;
@@ -53,6 +53,6 @@ test('authenticated HTTP catalog awaits availability and POST denies stale enabl
  await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>{server.close(r);server.closeAllConnections();}));
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer test','Content-Type':'application/json'};
  assert.equal((await (await fetch(base+'api/アプリ起動',{headers})).json()).対象[1].利用可能,true);
- for(const id of ['task','team']){const icon=await fetch(base+`AiDiy_${id}.png`);assert.equal(icon.status,200);assert.equal(icon.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await icon.arrayBuffer()),await readFile(new URL(`../ui/src/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));}
+ for(const id of ['task','team']){const icon=await fetch(base+`AiDiy_${id}.png`);assert.equal(icon.status,200);assert.equal(icon.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await icon.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));}
  online=false;assert.equal((await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify({対象:'task',フォルダ:root})})).status,409);
 });

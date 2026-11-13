@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {antigravityModels} from '../モデル情報/antigravity_models.mjs';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
+import {antigravityModels} from '../diag/モデル情報/antigravity_models.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
 
 test('Antigravity uses its CLI list, including non-Gemini and custom IDs', async () => {
   const models = await antigravityModels({

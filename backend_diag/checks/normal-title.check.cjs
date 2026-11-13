@@ -5,9 +5,9 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),{EventEmitter}=require('node:events');
-const {通常窓サイズを作成}=require('../起動/通常窓サイズ.cjs');
-const {標準タイトル操作を取り付け,標準タイトル対象}=require('../起動/標準タイトル操作.cjs');
-const {ミニ表示を作成}=require('../起動/ミニ表示.cjs');
+const {通常窓サイズを作成}=require('../diag/起動/通常窓サイズ.cjs');
+const {標準タイトル操作を取り付け,標準タイトル対象}=require('../diag/起動/標準タイトル操作.cjs');
+const {ミニ表示を作成}=require('../diag/起動/ミニ表示.cjs');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 function fixture({platform='win32',eligible=async()=>1,zoom=1}={}){
  let bounds={x:48,y:48,width:800,height:600},cursor={x:448,y:62},enabled=true,fullscreen=false,focused=true,toggles=0;
@@ -59,7 +59,7 @@ test('special display, fullscreen, unfocused, non-Windows and excluded target ca
 });
 test('maximized standard to mini cancels title gesture and retains original normal dimensions on return',async()=>{
  const f=fixture();f.sizing.maximize();f.point({x:-1000,y:45});f.emit('mouseDown');await flush();f.controller.cancel();f.enable(false);
- const mini=ミニ表示を作成(f.sizing,{screen:f.screen});mini.set(true);f.point({x:300,y:400});f.emit('mouseMove');await flush();assert.equal(f.bounds.width,360);
+ const mini=ミニ表示を作成(f.sizing,{screen:f.screen});mini.set(true);f.point({x:300,y:400});f.emit('mouseMove');await flush();assert.equal(f.bounds.width,400);
  mini.set(false);f.enable(true);assert.equal(f.bounds.width,800);assert.equal(f.bounds.height,600);f.controller.dispose();
 });
 test('isolated title target rejects controls/popups/outside and accepts only standard header background',()=>{

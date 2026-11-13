@@ -9,8 +9,8 @@ import assert from 'node:assert/strict';
 import {setImmediate as flush} from 'node:timers/promises';
 import {readFile} from 'node:fs/promises';
 import {createRequire} from 'node:module';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
-import {自動起動表示を作成} from '../ui/src/components/起動/自動起動表示.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
+import {自動起動表示を作成} from '../diag/ui/components/起動/自動起動表示.mjs';
 const {ref,watch}=createRequire(new URL('../ui/package.json',import.meta.url))('vue');
 const progress=(extra={})=>({実行ID:'auto-1',自動起動:true,対象:['tools'],種別:'start',状態:'done',通知:'起動処理が完了しました。',...extra});
 function fixture(t){
@@ -93,13 +93,13 @@ test('手動停止の受付中・受付失敗後は古いauto完了を採用し�
 });
 
 test('App は完了と明示操作を配線し、初期ミニを強制的に通常表示へ戻さない',async()=>{
- const app=await readFile(new URL('../ui/src/App.vue',import.meta.url),'utf8');
+ const app=await readFile(new URL('../diag/ui/App.vue',import.meta.url),'utf8');
  assert.match(app,/watch\(起動\.自動起動完了,progress=>自動起動表示\.反映\(progress\)\)/);
  assert.match(app,/changeTab\(value\)\{[^\n]*自動起動表示\.利用者操作\(\);tab.value=value/);
  assert.match(app,/async function 表示切替\(mode\)\{\s*自動起動表示\.利用者操作\(\)/);
  for(const opening of [app.match(/<nav class="tabs"[^>]*>/)?.[0],app.match(/<component :is="起動パネル"[^>]*>/)?.[0]]){
   assert.match(opening,/@pointerdown.capture="自動起動表示\.利用者操作"/);assert.match(opening,/@keydown.capture="自動起動表示\.利用者操作"/);
  }
- const navigation=await readFile(new URL('../ui/src/components/起動/自動起動表示.mjs',import.meta.url),'utf8');
+ const navigation=await readFile(new URL('../diag/ui/components/起動/自動起動表示.mjs',import.meta.url),'utf8');
  assert.doesNotMatch(navigation,/表示切替|startMini|startMicro|api\(/);
 });

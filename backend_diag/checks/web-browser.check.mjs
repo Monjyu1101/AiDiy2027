@@ -6,9 +6,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as flush} from 'node:timers/promises';
-import {createWebBrowserOpener} from '../起動/Webブラウザ.mjs';
-import {createServer} from '../diag_main.mjs';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
+import {createWebBrowserOpener} from '../diag/起動/Webブラウザ.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
 
 const ports=(tools,web)=>({対象:[{id:'tools',ポート:8095,開放:tools},{id:'web',ポート:8090,開放:web}]});
 test('opening requires both live ports and sends only the fixed localhost page to Chrome MCP',async()=>{

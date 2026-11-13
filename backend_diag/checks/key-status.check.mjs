@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
-import {getKeyStatus,testKey,KEY_PROVIDERS,runModels} from '../モデル情報/key_status.mjs';
+import {getKeyStatus,testKey,KEY_PROVIDERS,runModels} from '../diag/モデル情報/key_status.mjs';
 const now=new Date('2026-10-15T12:00:00Z');
 const reader=value=>async filename=>{assert.match(String(filename),/[\\/]_config[\\/]AiDiy_key\.json$/);return JSON.stringify(value);};
 const forbidden=()=>assert.fail('Unexpected configuration read or network call');
@@ -80,7 +80,7 @@ test('deadline aborts provider operation and returns a safe error',async()=>{
  assert.equal(result.error,'timeout');assert.equal(signal.aborted,true);assert.ok(!JSON.stringify(result).includes('fixture-secret'));
 });
 test('isolated runners bound concurrency and shutdown cancels every operation',async()=>{
- const {createModelRunner}=await import('../モデル情報/key_status.mjs');const runner=createModelRunner();let started=0;const signals=[];
+ const {createModelRunner}=await import('../diag/モデル情報/key_status.mjs');const runner=createModelRunner();let started=0;const signals=[];
  const options={reader:reader({openai_key_id:'fixture-secret'}),fetch:async(_p,_h,_t,signal)=>{started++;signals.push(signal);return new Promise(()=>{});}};
  const first=runner.run('test','openai',options),second=runner.run('test','gemini',{...options,reader:reader({gemini_key_id:'fixture-secret'})});
  while(started<2)await new Promise(resolve=>setImmediate(resolve));
@@ -89,7 +89,7 @@ test('isolated runners bound concurrency and shutdown cancels every operation',a
  assert.equal((await runner.run('status',undefined,{reader:forbidden})).error,'stopped');
 });
 test('external abort prevents startup and aborts an active request',async()=>{
- const {createModelRunner}=await import('../モデル情報/key_status.mjs');const runner=createModelRunner();const early=new AbortController();early.abort();
+ const {createModelRunner}=await import('../diag/モデル情報/key_status.mjs');const runner=createModelRunner();const early=new AbortController();early.abort();
  assert.equal((await runner.run('status',undefined,{signal:early.signal,reader:forbidden})).error,'stopped');
  const controller=new AbortController();let started;
  const ready=new Promise(resolve=>{started=resolve;});let requestSignal;

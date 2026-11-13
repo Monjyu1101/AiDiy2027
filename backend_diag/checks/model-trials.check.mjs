@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {configRows,createModelTrials as createActualModelTrials,callMcp,localRequest,LIVE_HTTP_TIMEOUT_MS,TRIAL_ROW_TIMEOUT_MS,TRIAL_RUN_TTL_MS} from '../モデル試行/trials.mjs';
-import {createHandler} from '../diag_main.mjs';
+import {configRows,createModelTrials as createActualModelTrials,callMcp,localRequest,LIVE_HTTP_TIMEOUT_MS,TRIAL_ROW_TIMEOUT_MS,TRIAL_RUN_TTL_MS} from '../diag/モデル試行/trials.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 import http from 'node:http';
 const createModelTrials=options=>createActualModelTrials({catalogReader:async()=>({}),credentialReader:async()=>null,installedClisFn:async()=>({}),...options});
 const config=()=>({PORT_TOOLS:8095,CODE_BASE_PATH:'/fixture/project',CHAT_AI_NAME:'freeai_chat',CHAT_FREEAI_MODEL:'gemini-example',LIVE_AI_NAME:'freeai_live',LIVE_FREEAI_MODEL:'gemini-live',LIVE_FREEAI_VOICE:'Zephyr',CODE_AI1_NAME:'codex_cli',CODE_AI1_MODEL:'auto',...Object.fromEntries([2,3,4,5,6].flatMap(i=>[[`CODE_AI${i}_NAME`,'auto'],[`CODE_AI${i}_MODEL`,'ignored']])),TASK_AI_NAME:'codex_cli',TASK_AI_MODEL_plan:'auto',TASK_AI_MODEL_do:'auto',TASK_AI_MODEL_check:'auto',TEAM_AI_NAME:'codex_cli',TEAM_AI_MODEL_plan:'auto',TEAM_AI_MODEL_do:'auto',TEAM_AI_MODEL_check:'auto',openai_key_id:'secret-for-tests'});

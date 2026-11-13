@@ -11,16 +11,16 @@ import https from 'node:https';
 import {EventEmitter,getEventListeners} from 'node:events';
 import {StringDecoder} from 'node:string_decoder';
 import {Readable} from 'node:stream';
-import {createHandler} from '../diag_main.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 import {createModelRunner} from '../runtime/model_runner.mjs';
 import {createRequire} from 'node:module';
 import {DIAG_TRANSPORT_BYTE_LIMIT as LIMIT} from '../runtime/transport_limit.mjs';
-import {AI_SETTINGS_BODY_LIMIT,createCoreSettingsBridge} from '../AI設定/コア設定接続.mjs';
-import {TOOLS_RESPONSE_LIMIT,createToolsStatusChecker} from '../診断/tools_status.mjs';
-import {createTaskTeamStatus} from '../起動/TaskTeam接続.mjs';
+import {AI_SETTINGS_BODY_LIMIT,createCoreSettingsBridge} from '../diag/AI設定/コア設定接続.mjs';
+import {TOOLS_RESPONSE_LIMIT,createToolsStatusChecker} from '../diag/診断/tools_status.mjs';
+import {createTaskTeamStatus} from '../diag/起動/TaskTeam接続.mjs';
 import {CONFIG_LIMIT,RESPONSE_LIMIT,PUBLIC_RESPONSE_LIMIT,fetchMetadata,readConfig,readCodexLocal} from '../runtime/model_probe.mjs';
-import {localRequest} from '../モデル試行/trials.mjs';
-const {起動状態を読む}=createRequire(import.meta.url)('../起動/終了確認.cjs');
+import {localRequest} from '../diag/モデル試行/trials.mjs';
+const {起動状態を読む}=createRequire(import.meta.url)('../diag/起動/終了確認.cjs');
 
 // 日本語を含め、指定byte数ぴったりの正当なJSONを作る。UTF-8途中でも分割して配送する。
 function jsonBytes(body,size){

@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {createModelRunner,testKey} from '../モデル情報/key_status.mjs';
-import {createHandler} from '../diag_main.mjs';
+import {createModelRunner,testKey} from '../diag/モデル情報/key_status.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return {promise,resolve};};

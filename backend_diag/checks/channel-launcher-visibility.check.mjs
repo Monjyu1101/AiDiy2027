@@ -9,7 +9,7 @@ import {mkdtemp,mkdir,writeFile,rm,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createRequire} from 'node:module';
-import {createAppLauncher,アプリ一覧,isChromeInstalled} from '../起動/アプリ起動.mjs';
+import {createAppLauncher,アプリ一覧,isChromeInstalled} from '../diag/起動/アプリ起動.mjs';
 const {render}=createRequire(import.meta.url)('./ui-components.cjs');
 const channels=rows=>rows.filter(row=>['discord','slack'].includes(row.id)).map(row=>row.id);
 async function fixture(t){
@@ -64,7 +64,7 @@ test('normal keeps configured channels; mini shows only available channels in Di
   }
  }
  // 円形も同じサーバーカタログを整列して使い、独自の固定Discord/Slack項目は持たない。
- const micro=await readFile(new URL('../ui/src/components/アプリ起動/マイクロランチャー.vue',import.meta.url),'utf8');
+ const micro=await readFile(new URL('../diag/ui/components/アプリ起動/マイクロランチャー.vue',import.meta.url),'utf8');
  assert.match(micro,/起動項目を整列\(\[\.\.\.props\.appState\.項目\.value\.filter/);
 });
 

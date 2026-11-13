@@ -10,8 +10,8 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,mkdir,rm,readFile,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {createCliLauncher} from '../起動/CLI起動.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createCliLauncher} from '../diag/起動/CLI起動.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
 const ids=['claude','codex','copilot','agy','grok','opencode','aidiy_hermes'];
 async function fixture(t,options={}){
@@ -122,10 +122,10 @@ test('authenticated CLI API limits body fields, confirmation, asset names and me
  const f=await fixture(t);const server=createServer({token:'fixture',cliLauncher:f.manager,modelTrials:{close(){}},startManager:{close(){}}});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}));
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  assert.equal((await fetch(base+'api/CLI起動')).status,401);assert.equal((await fetch(base+'api/CLI起動',{headers})).status,200);
- for(const id of ids){const response=await fetch(base+`CLI_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../ui/src/components/アプリ起動/CLIアイコン/${id}.png`,import.meta.url)));}
- for(const id of ids.filter(id=>id!=='aidiy_hermes')){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../ui/src/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
- for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt']){const license=await fetch(base+name);assert.equal(license.status,200);assert.equal(license.headers.get('content-type'),'text/plain; charset=utf-8');assert.equal(await license.text(),await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/'+name,import.meta.url),'utf8'));}
- const citations=await fetch(base+'LICENSE_ICONS.md');assert.equal(citations.status,200);assert.equal((await citations.text()).replace(/\r\n/g,'\n'),(await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md',import.meta.url),'utf8')).replace(/\r\n/g,'\n'));
+ for(const id of ids){const response=await fetch(base+`CLI_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.png`,import.meta.url)));}
+ for(const id of ids.filter(id=>id!=='aidiy_hermes')){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
+ for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt']){const license=await fetch(base+name);assert.equal(license.status,200);assert.equal(license.headers.get('content-type'),'text/plain; charset=utf-8');assert.equal(await license.text(),await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/'+name,import.meta.url),'utf8'));}
+ const citations=await fetch(base+'LICENSE_ICONS.md');assert.equal(citations.status,200);assert.equal((await citations.text()).replace(/\r\n/g,'\n'),(await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md',import.meta.url),'utf8')).replace(/\r\n/g,'\n'));
  assert.equal((await fetch(base+'CLI_bad.png')).status,404);
  assert.equal((await fetch(base+'CLI_bad.svg')).status,404);
  assert.equal((await fetch(base+'CLI_aidiy_hermes.svg')).status,404);
@@ -147,7 +147,7 @@ test('missing shared CLI module returns safe actionable 503 through authenticate
 
 
 test('Copilot SVG includes its white caption band while preserving Octicons path geometry and MIT notice',async()=>{
- const iconRoot=new URL('../ui/src/components/アプリ起動/CLIアイコン/',import.meta.url);
+ const iconRoot=new URL('../diag/ui/components/アプリ起動/CLIアイコン/',import.meta.url);
  const source=await readFile(new URL('upstream/copilot-24.svg',iconRoot),'utf8'),display=await readFile(new URL('copilot.svg',iconRoot),'utf8');
  const paths=value=>[...value.matchAll(/<path\b[^>]*\bd="([^"]+)"/g)].map(item=>item[1]);assert.equal(paths(source).length,2);assert.deepEqual(paths(display),paths(source));assert.match(display,/<svg[^>]*viewBox="0 0 24 24"[^>]*id="brandmark"/);assert.match(display,/<text[^>]*fill="#000000"[^>]*>Copilot<\/text>/);assert.doesNotMatch(display,/<script|<image|href=/i);
  const license=await readFile(new URL('LICENSE-Octicons.txt',iconRoot),'utf8');assert.match(license,/Copyright \(c\) 2026 GitHub Inc\./);assert.match(license,/Permission is hereby granted/);assert.match(license,/THE SOFTWARE IS PROVIDED "AS IS"/);
@@ -155,7 +155,7 @@ test('Copilot SVG includes its white caption band while preserving Octicons path
 
 
 test('外部CLI SVGの形状・色を維持し、Hermesはlocal PNGのみ配布する',async()=>{
- const root=new URL('../ui/src/components/アプリ起動/CLIアイコン/',import.meta.url),text=async path=>(await readFile(new URL(path,root),'utf8')).replace(/\r\n/g,'\n');
+ const root=new URL('../diag/ui/components/アプリ起動/CLIアイコン/',import.meta.url),text=async path=>(await readFile(new URL(path,root),'utf8')).replace(/\r\n/g,'\n');
  const paths=value=>[...value.matchAll(/<path\b[^>]*\bd="([^"]+)"/g)].map(item=>item[1]);
  for(const [id,filename] of [['claude','claude-code-color-lobe.svg'],['codex','codex-devicons.svg'],['grok','Grok_Logomark_Light.svg'],['opencode','opencode-logo-dark-square.svg']]){
   const original=await text('upstream/'+filename),display=await text(id+'.svg');assert.deepEqual(paths(display),paths(original),id);

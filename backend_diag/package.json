@@ -2,6 +2,9 @@
   "name": "aidiy-diag",
   "private": true,
   "version": "0.1.0",
-  "main": "起動/electron-main.cjs",
-  "devDependencies": { "electron": "^44.7.0" }
+  "main": "diag/起動/electron-main.cjs",
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "vue": "3.5.43"
+  }
 }

@@ -10,8 +10,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {EventEmitter} from 'node:events';
 import {createRequire} from 'node:module';
-import {createAppLauncher,アプリタスク} from '../起動/アプリ起動.mjs';
-import {アプリ状態を作成} from '../ui/src/components/アプリ起動/アプリ状態.mjs';
+import {createAppLauncher,アプリタスク} from '../diag/起動/アプリ起動.mjs';
+import {アプリ状態を作成} from '../diag/ui/components/アプリ起動/アプリ状態.mjs';
 const {render,dependency}=createRequire(import.meta.url)('./ui-components.cjs');
 async function fixture(t){
  const root=await mkdtemp(join(tmpdir(),'diag-slack-launch-')),project=join(root,'日本語 project'),entry=join(root,'frontend_channels/slack/panel/launch.mjs');await mkdir(project);
@@ -72,7 +72,7 @@ test('Slack UI never launches unavailable or stale entries; error and authentica
 });
 
 test('Slack launch API keeps authentication and fixed payload gates; missing entry returns 503, not acceptance',async t=>{
- const f=await fixture(t),{createHandler}=await import('../diag_main.mjs'),{Readable}=await import('node:stream');
+ const f=await fixture(t),{createHandler}=await import('../diag/diag_main.mjs'),{Readable}=await import('node:stream');
  const handler=createHandler({token:'fixture',appLauncher:f.manager});
  const request=async({auth='Bearer fixture',method='POST',body={対象:'slack',フォルダ:f.project},url='/api/アプリ起動/開始'}={})=>{
   const req=Readable.from([Buffer.from(JSON.stringify(body))]);Object.assign(req,{url,method,headers:{authorization:auth,'content-type':'application/json'}});

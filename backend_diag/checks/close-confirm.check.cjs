@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const {createServer}=require('node:http');
 const {setImmediate:flush}=require('node:timers/promises');
-const {終了確認を作成,起動状態を読む}=require('../起動/終了確認.cjs');
+const {終了確認を作成,起動状態を読む}=require('../diag/起動/終了確認.cjs');
 
 function fixture({status=async()=>({終了時停止あり:true}),confirm=async()=>({response:1})}={}){
  const window=new EventEmitter(),dialogs=[];let queries=0;

@@ -9,9 +9,9 @@ import os from 'node:os';
 import path from 'node:path';
 import {mkdtemp,readFile,rm} from 'node:fs/promises';
 import {probe} from '../runtime/model_probe.mjs';
-import {testKey} from '../モデル情報/key_status.mjs';
-import {modelsInfo,writeModelsInfo} from '../モデル情報/models_info.mjs';
-import {COPILOT_FALLBACK_MODELS,oauthModelFallback} from '../モデル情報/model_fallbacks.mjs';
+import {testKey} from '../diag/モデル情報/key_status.mjs';
+import {modelsInfo,writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
+import {COPILOT_FALLBACK_MODELS,oauthModelFallback} from '../diag/モデル情報/model_fallbacks.mjs';
 
 const expected=['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna'];
 const provider={id:'openai_oauth',名前:'OpenAI OAuth',設定済み:true};

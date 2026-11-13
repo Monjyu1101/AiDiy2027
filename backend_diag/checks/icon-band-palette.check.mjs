@@ -22,7 +22,7 @@ function png(bytes){
 const entries=[['cpu','#166534','#FFFFFF'],['task','#0F5C3A','#7DD3FC'],['team','#7DD3FC','#0F5C3A'],['console','#C15308','#FFFFFF'],['avatar','#7C3AED','#FFFFFF'],['browser','#F5A9C8','#000000'],['aidiy_hermes','#000000','#D4AF37'],['vscode','#1E3A5F','#FFFFFF']];
 for(const [id,bg,fg] of entries)test(`${id}: local PNG palette, readable contrast and identical distribution copy`,async()=>{
  const cli=['aidiy_hermes','vscode'].includes(id),file=(cli?'CLI_':'AiDiy_')+id+'.png';
- const source=new URL(`../ui/src/components/アプリ起動/${cli?'CLIアイコン/'+id:'アイコン/AiDiy_'+id}.png`,import.meta.url);
+ const source=new URL(`../diag/ui/components/アプリ起動/${cli?'CLIアイコン/'+id:'アイコン/AiDiy_'+id}.png`,import.meta.url);
  const bytes=await readFile(source),image=png(bytes);assert.deepEqual(await readFile(new URL('../static/'+file,import.meta.url)),bytes);
  assert.equal(image.width,image.height);assert.ok([120,512].includes(image.width));assert.ok(contrast(bg,fg)>=4.5);
  assert.deepEqual(image.pixel(5,image.height*3/4+3),rgb(bg));
@@ -31,8 +31,8 @@ for(const [id,bg,fg] of entries)test(`${id}: local PNG palette, readable contras
  if(id==='aidiy_hermes'||id==='vscode')assert.deepEqual(image.pixel(0,image.height*3/4+5),rgb(id==='vscode'?'#2F9BFF':'#D4AF37'));
 });
 test('VSCode has only an inset band frame and its upstream logo stays local and unchanged',async()=>{
- const svg=await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/vscode.svg',import.meta.url),'utf8');
+ const svg=await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/vscode.svg',import.meta.url),'utf8');
  assert.match(svg,/<rect id="caption-border" x="1" y="91" width="118" height="28" fill="none" stroke="#2F9BFF" stroke-width="2"/);
- const upstream=await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/upstream/vscode-stable.svg',import.meta.url),'utf8');
+ const upstream=await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/upstream/vscode-stable.svg',import.meta.url),'utf8');
  const paths=s=>Array.from(s.matchAll(/<path\b[^>]*\bd="([^"]+)"/g),m=>m[1]);assert.deepEqual(paths(svg),paths(upstream));
 });

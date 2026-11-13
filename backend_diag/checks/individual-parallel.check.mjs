@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHandler} from '../diag_main.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 import {createRequire} from 'node:module';
 const require=createRequire(import.meta.url);
 const {dependency}=require('./ui-components.cjs');

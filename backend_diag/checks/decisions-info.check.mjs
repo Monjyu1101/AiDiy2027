@@ -10,10 +10,10 @@ import os from 'node:os';
 import path from 'node:path';
 import {probe} from '../runtime/model_probe.mjs';
 import {createModelRunner} from '../runtime/model_runner.mjs';
-import {testKey} from '../モデル情報/key_status.mjs';
-import {decisionsModelsInfo,DECISIONS_MODELS_FILE,FREEAI_DECISION_MODEL,OPENAI_DECISION_MODEL,DECISION_MODEL_CANDIDATES} from '../モデル情報/decisions_info.mjs';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
-import {modelsStep} from '../診断/headless.mjs';
+import {testKey} from '../diag/モデル情報/key_status.mjs';
+import {decisionsModelsInfo,DECISIONS_MODELS_FILE,FREEAI_DECISION_MODEL,OPENAI_DECISION_MODEL,DECISION_MODEL_CANDIDATES} from '../diag/モデル情報/decisions_info.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
+import {modelsStep} from '../diag/診断/headless.mjs';
 
 const now=new Date('2026-10-18T00:00:00Z'),created=now.getTime()/1000;
 const providers=['openai','openai_oauth','freeai','gemini'].map(id=>({id,名前:id,設定済み:true,テスト可能:true}));

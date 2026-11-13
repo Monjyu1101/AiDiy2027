@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';import assert from 'node:assert/strict';
 import {mkdtemp,readFile,rm,writeFile} from 'node:fs/promises';import {deflateRawSync} from 'node:zlib';import os from 'node:os';import path from 'node:path';
-import {extractEntry,loadBundledModels,crc32,BUNDLED_ENTRY,EXTRACT_DIRECTORY} from '../モデル情報/bundled_models.mjs';
+import {extractEntry,loadBundledModels,crc32,BUNDLED_ENTRY,EXTRACT_DIRECTORY} from '../diag/モデル情報/bundled_models.mjs';
 // 最小 ZIP（1 エントリ）を組み立てる。
 function zip(name,data,{method=8,flags=0,crc=crc32(data)}={}){
  const body=method===8?deflateRawSync(data):data,file=Buffer.from(name);

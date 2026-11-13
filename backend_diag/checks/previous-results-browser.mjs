@@ -9,7 +9,7 @@ import {spawn} from 'node:child_process';
 import {existsSync,mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
-import {createServer} from '../diag_main.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 const old='2026-10-17T01:02:03Z',requests=[];
 const previousResults={snapshot:async()=>({導入状況:{結果:[{id:'node',状態:'OK',バージョン:'saved-version',前回結果:true}],前回実行日時:old},モデル一覧:{結果:[{id:'openai',状態:'OK',モデル:['saved-model'],前回結果:true}],前回実行日時:old},外部連携:{結果:[{id:'discord',状態:'NG',説明:'保存済み結果',前回結果:true}],前回実行日時:old}})};
 const makeServer=()=>createServer({token:'previous-fixture',previousResults,entries:[{id:'node',name:'Node.js',menuGroup:'ベース',commands:['node']}],toolsStatusFn:async()=>({online:true}),modelTrials:{snapshot:async()=>({項目:[],版:'fixture'}),catalogs:async()=>({区分:{}}),close:()=>{}},installWriteFn:async()=>({件数:1}),modelsWriteFn:async()=>[],integrationWriteFn:async()=>({件数:1}),publicCache:{snapshot:()=>({状態:'未取得'}),input:()=>({})},keyStatusFn:async()=>({設定状態:'読込済み',項目:[{id:'openai',名前:'OpenAI',テスト可能:true},{id:'discord',名前:'Discord',テスト可能:true}]}),scanFn:async()=>[{id:'node',状態:'NG'}],keyTestFn:async id=>({id,状態:'OK',モデル:['new-model']})});

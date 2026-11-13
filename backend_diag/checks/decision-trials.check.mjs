@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {configRows,createModelTrials,DECISION_CHOICES} from '../モデル試行/trials.mjs';
+import {configRows,createModelTrials,DECISION_CHOICES} from '../diag/モデル試行/trials.mjs';
 const config={DECISION_AI_NAME:'freeai_chat',DECISION_FREEAI_MODEL:'gemini-flash-lite-latest',CHAT_AI_NAME:'freeai_chat',CHAT_FREEAI_MODEL:'gemini-flash-lite-latest'};
 const answer=choice=>({status:'OK',data:{model:'freeai_chat/gemini-flash-lite-latest',answers:[{type:'choice',name:'politeness',choice,confidence:.9,probabilities:DECISION_CHOICES.map(value=>({value,probability:value===choice?1:0}))}]}});
 function fixture(payload,{online=true,timeoutMs=1000,requestHook}={}){

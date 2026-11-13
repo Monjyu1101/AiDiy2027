@@ -10,7 +10,7 @@ import {EventEmitter} from 'node:events';
 import {mkdtemp,mkdir,readFile,writeFile,rm,stat,symlink,readdir} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {NPM_PACKAGES,LOG_LIMIT,acquireInstallLock,installEnvironment,safeInstallLog,runInstallCommand as actualRunInstallCommand,findNpm,npmCapability,npmCommands,createInstallManager} from '../導入管理/導入管理.mjs';
+import {NPM_PACKAGES,LOG_LIMIT,acquireInstallLock,installEnvironment,safeInstallLog,runInstallCommand as actualRunInstallCommand,findNpm,npmCapability,npmCommands,createInstallManager} from '../diag/導入管理/導入管理.mjs';
 // Windows はシンボリックリンク権限（開発者モード等）が無いと作成できないため、リンク前提の確認だけ省略する。
 const symlinkSkip=await (async()=>{const temp=await mkdtemp(path.join(os.tmpdir(),'aidiy-diag-link-'));try{await writeFile(path.join(temp,'a'),'');await symlink(path.join(temp,'a'),path.join(temp,'b'));return false;}catch(error){if(error.code==='EPERM')return 'シンボリックリンクを作成できない環境';throw error;}finally{await rm(temp,{recursive:true,force:true});}})();
 

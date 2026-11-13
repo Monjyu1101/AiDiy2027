@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Readable} from 'node:stream';
-import {createHandler} from '../diag_main.mjs';
-import {createToolsSettingsBridge,createToolsRepresentativeBridge,TOOLS_SETTINGS_BODY_LIMIT} from '../Tools/設定接続.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
+import {createToolsSettingsBridge,createToolsRepresentativeBridge,TOOLS_SETTINGS_BODY_LIMIT} from '../diag/Tools/設定接続.mjs';
 const reader=async()=>JSON.stringify({PORT_TOOLS:8095});
 const envelope=(data={},token='fixture.jwt')=>({token,data});
 const ok=data=>({status:'OK',data});

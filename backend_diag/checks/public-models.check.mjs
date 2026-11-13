@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
-import {createPublicModelCache as createCache} from '../モデル情報/public_models.mjs';
+import {createPublicModelCache as createCache} from '../diag/モデル情報/public_models.mjs';
 const noBundle=async()=>{throw Error('no bundle');};
 const createPublicModelCache=(options={})=>createCache({loadBundled:noBundle,...options});
 const success={data:{状態:'OK',公開モデル:{'google/example':{model_id:'google/example',作成日:'2026/10/01',トークン数:'100',モダリティ:'text'}},確認日時:'2026-10-15T00:00:00Z'}};
@@ -18,7 +18,7 @@ test('startup retrieval is nonblocking, single-flight and distinguishable while 
  let release,calls=0;const cache=createPublicModelCache({run:()=>{calls++;return new Promise(resolve=>{release=resolve;});}});
  const first=cache.refresh();assert.equal(cache.snapshot().状態,'取得中');assert.equal(cache.refresh(),first);assert.equal(calls,1);assert.deepEqual(cache.input().公開モデル,{});
  release(success);await first;assert.equal(cache.snapshot().状態,'取得済');assert.equal(cache.snapshot().世代,2);
- const source=await readFile(new URL('../diag_main.mjs',import.meta.url),'utf8');assert.equal((source.match(/void publicCache.refresh\(\)/g)||[]).length,1);
+ const source=await readFile(new URL('../diag/diag_main.mjs',import.meta.url),'utf8');assert.equal((source.match(/void publicCache.refresh\(\)/g)||[]).length,1);
 });
 test('failure invalidates old success and explicit retry can recover',async()=>{
  let result=success;const cache=createPublicModelCache({run:async()=>result});await cache.refresh();result={error:'timeout'};await cache.refresh();assert.equal(cache.snapshot().状態,'失敗');assert.equal(cache.snapshot().件数,0);assert.deepEqual(cache.input().公開モデル,{});

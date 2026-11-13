@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
 import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
-import {liveVoicesInfo} from '../モデル情報/voices_info.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
+import {liveVoicesInfo} from '../diag/モデル情報/voices_info.mjs';
 
 async function scenario(live, config, check) {
   const directory = await mkdtemp(path.join(os.tmpdir(),'live-fallback-'));

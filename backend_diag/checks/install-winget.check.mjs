@@ -8,7 +8,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {WINGET_PACKAGES,WINGET_INSPECTION_SCRIPT,inspectWinget,executeWinget} from '../導入管理/winget.mjs';
+import {WINGET_PACKAGES,WINGET_INSPECTION_SCRIPT,inspectWinget,executeWinget} from '../diag/導入管理/winget.mjs';
 const win=path.win32,SOURCE='Microsoft.Winget.Source_8wekyb3d8bbwe';
 const success={code:0,error:false,cancelled:false,timedOut:false,overflow:false};
 const env={SystemRoot:'C:\\Windows',LOCALAPPDATA:'C:\\Users\\fixture\\AppData\\Local',PROGRAMFILES:'C:\\Program Files'};

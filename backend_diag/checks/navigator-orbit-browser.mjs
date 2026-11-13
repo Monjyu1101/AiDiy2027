@@ -11,9 +11,9 @@ import {PassThrough} from 'node:stream';
 import {existsSync,mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
-import {createServer} from '../diag_main.mjs';
-import {createStartManager} from '../起動/サービス管理.mjs';
-import {createAppLauncher} from '../起動/アプリ起動.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {createStartManager} from '../diag/起動/サービス管理.mjs';
+import {createAppLauncher} from '../diag/起動/アプリ起動.mjs';
 
 const root=mkdtempSync(join(tmpdir(),'diag-start-fixture-'));mkdirSync(join(root,'scripts'));
 writeFileSync(join(root,'scripts','起動対象.json'),readFileSync(new URL('../../scripts/起動対象.json',import.meta.url)));

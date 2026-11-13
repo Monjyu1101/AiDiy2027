@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {アプリ状態を作成} from '../ui/src/components/アプリ起動/アプリ状態.mjs';
+import {アプリ状態を作成} from '../diag/ui/components/アプリ起動/アプリ状態.mjs';
 
 test('native folder cancel never selects cwd, chosen real folder feeds launch and clear disables it',async()=>{
  const calls=[];let selected=null;

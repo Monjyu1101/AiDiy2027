@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {once} from 'node:events';
-import {createToolsStatusChecker,TOOLS_TIMEOUT_MS,TOOLS_RESPONSE_LIMIT} from '../診断/tools_status.mjs';
+import {createToolsStatusChecker,TOOLS_TIMEOUT_MS,TOOLS_RESPONSE_LIMIT} from '../diag/診断/tools_status.mjs';
 
 const good = JSON.stringify({status:'ok', name:'aidiy_code_agents', secret:'never-return-this'});
 async function server(t, handler) {

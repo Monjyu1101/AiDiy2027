@@ -10,9 +10,9 @@ import http from 'node:http';
 import {mkdtemp,rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {createAudioStore} from '../モデル試行/audio_store.mjs';
-import {createHandler} from '../diag_main.mjs';
-import {createModelTrials as createActualModelTrials} from '../モデル試行/trials.mjs';
+import {createAudioStore} from '../diag/モデル試行/audio_store.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
+import {createModelTrials as createActualModelTrials} from '../diag/モデル試行/trials.mjs';
 
 const createModelTrials=options=>createActualModelTrials({catalogReader:async()=>({}),credentialReader:async()=>null,installedClisFn:async()=>({}),...options});
 test('authenticated HTTP trial contract: 16 ordered rows, deduplication, body rejection and cancellation',async()=>{

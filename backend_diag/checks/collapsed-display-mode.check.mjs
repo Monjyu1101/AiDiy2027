@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {表示切替前にパネルを開く} from '../ui/src/components/ウィンドウ/表示切替準備.mjs';
-const source=name=>readFileSync(new URL('../ui/src/'+name,import.meta.url),'utf8');
+import {表示切替前にパネルを開く} from '../diag/ui/components/ウィンドウ/表示切替準備.mjs';
+const source=name=>readFileSync(new URL('../diag/ui/'+name,import.meta.url),'utf8');
 function fixture(api){return {折畳み:{value:true},非表示:{value:true},世代:{value:0},要素:{value:{style:{maxHeight:'31px'}}},api,nextTick:async()=>{}};}
 for(const mode of ['normal-to-mini','normal-to-micro','mini-to-micro','mini-to-normal']){
  test(`collapsed ${mode} restores native dimensions before displaying the target`,async()=>{

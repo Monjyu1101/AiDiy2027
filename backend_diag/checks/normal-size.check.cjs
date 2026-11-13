@@ -5,8 +5,8 @@
 // https://github.com/monjyu1101/AiDiy2027
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {通常窓サイズを作成}=require('../起動/通常窓サイズ.cjs');
-const {ミニ表示を作成}=require('../起動/ミニ表示.cjs');
+const {通常窓サイズを作成}=require('../diag/起動/通常窓サイズ.cjs');
+const {ミニ表示を作成}=require('../diag/起動/ミニ表示.cjs');
 function fixture(){
  let bounds={x:48,y:48,width:800,height:600},minimum=[420,320],maximizable=true;
  const raw={getBounds:()=>({...bounds}),getNormalBounds:()=>({...bounds}),setBounds:v=>{bounds={...v};},isMaximized:()=>false,isDestroyed:()=>false,getMinimumSize:()=>minimum,setMinimumSize:(...v)=>{minimum=v;},isMaximizable:()=>maximizable,setMaximizable:v=>{maximizable=v;},unmaximize(){throw Error('native maximize flags are unreliable in this fixture');}};
@@ -30,7 +30,7 @@ test('Windows以外では既存のnative窓をそのまま使用する',()=>{
 
 test('最大化からアイコンへ切替後も通常寸法を保持し現在のアイコン位置へ復帰する',()=>{
  const {EventEmitter}=require('node:events');
- const {マイクロ表示を作成}=require('../起動/マイクロ表示.cjs');
+ const {マイクロ表示を作成}=require('../diag/起動/マイクロ表示.cjs');
  let bounds={x:48,y:48,width:800,height:600},minimum=[420,320],maximizable=true,resizable=true;
  const raw=new EventEmitter(),contents=new EventEmitter();
  Object.assign(raw,{webContents:contents,getBounds:()=>({...bounds}),getNormalBounds:()=>({...bounds}),setBounds:v=>bounds={...v},isMaximized:()=>false,isDestroyed:()=>false,getMinimumSize:()=>minimum,setMinimumSize:(...v)=>minimum=v,isMaximizable:()=>maximizable,setMaximizable:v=>maximizable=v,isResizable:()=>resizable,setResizable:v=>resizable=v,isAlwaysOnTop:()=>true,setAlwaysOnTop(){},setIgnoreMouseEvents(){}});

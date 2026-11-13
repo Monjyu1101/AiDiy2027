@@ -8,7 +8,7 @@
 const assert=require('node:assert/strict');
 const {writeFileSync}=require('node:fs');
 const {app,BrowserWindow,screen}=require('electron');
-const {初期右下位置,表示切替位置}=require('../起動/表示切替位置.cjs');
+const {初期右下位置,表示切替位置}=require('../diag/起動/表示切替位置.cjs');
 const {holdMove,checkNativeControls,probeBackground}=require('../../frontend_ide/checks/window-move-probe.cjs');
 app.setPath('appData',process.env.DIAG_TEST_PROFILE);
 app.setPath('userData',process.env.DIAG_TEST_PROFILE);
@@ -19,7 +19,7 @@ storage.programDataDirectory=(project,name,root,children)=>
  programDataDirectory(name==='aidiy_diag'?process.env.DIAG_TEST_PROFILE:project,name,root,children);
 // 描画時間は通常起動と同じGPU設定で測定する。
 let checks=0;
-require('../起動/ポート接続.cjs').checkPort=async port=>{checks++;assert.equal(port,8095);return true;};
+require('../diag/起動/ポート接続.cjs').checkPort=async port=>{checks++;assert.equal(port,8095);return true;};
 const show=BrowserWindow.prototype.showInactive,opacity=BrowserWindow.prototype.setOpacity;
 BrowserWindow.prototype.setOpacity=function(value){opacity.call(this,this.isAiDiyOpeningCanvas?value:.01);};
 BrowserWindow.prototype.show=BrowserWindow.prototype.showInactive=function(){if(!this.isAiDiyOpeningCanvas){this.setOpacity(.01);this.setIgnoreMouseEvents(true);this.setSkipTaskbar(true);}show.call(this);};
@@ -97,4 +97,4 @@ app.on('browser-window-created',(_event,window)=>{
  });
 });
 setTimeout(()=>app.exit(1),30000).unref();
-require('../起動/electron-main.cjs');
+require('../diag/起動/electron-main.cjs');

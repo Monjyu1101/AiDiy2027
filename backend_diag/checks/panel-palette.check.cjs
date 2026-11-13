@@ -16,7 +16,7 @@ test('シアンバーより下の通常本文・タブ・見出し・応答・�
  const surfaces={
   'style.css':[':root','body','header','#message','aside','.login','.panel-heading','.tabs','.tabs button[class*="tab-"]'],
   'components/起動/起動.css':['.start-panel','.start-targets','.start-console-heading','.start-panel .start-console','.start-message'],
-  'components/起動/起動ミニ.css':['#app:has(>.start-mini)','#app>.panel.start-mini','.mini-app-buttons .mini-app-button','.mini-services .mini-service','.mini-cli-buttons .mini-cli-button'],
+  'components/起動/起動ミニ.css':['#app:has(>.diag-panel>.start-mini)','#app>.diag-panel>.panel.start-mini','.mini-app-buttons .mini-app-button','.mini-services .mini-service','.mini-cli-buttons .mini-cli-button'],
   'components/アプリ起動/アプリ起動.css':['.app-project','.app-launch-card','.app-launch-button','.app-folder-dialog','.app-launch-panel .app-launch-button','.app-launch-panel .app-single'],
   'components/AIモデル/AIモデル.css':['.ai-model-reply'],
   'components/設定モデル/設定モデル.css':['.trial-reply'],

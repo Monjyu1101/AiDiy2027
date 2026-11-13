@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as tick} from 'node:timers/promises';
 import {readFile} from 'node:fs/promises';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
 const ids=['local','tools','core','apps','taskteam','web'];
 function fixture(t){
  const config={checked:['tools','core','apps','taskteam','web'],ports:Object.fromEntries(ids.map(id=>[id,false])),fail:false,malformed:false,saveFail:false};
@@ -72,7 +72,7 @@ test('定期取得中は直前結果、切断後に遅い応答が来ても正�
  state.表示(false);release();await polling;assert.equal(state.サーバー表示状態.value,'unknown');
 });
 test('通常・ミニとも起動状態をバーへ渡しTools単体に依存せず、全タブで監視する',async()=>{
- const app=await readFile(new URL('../ui/src/App.vue',import.meta.url),'utf8');
+ const app=await readFile(new URL('../diag/ui/App.vue',import.meta.url),'utf8');
  assert.match(app,/:is="ステータスバー"[^>]* :server-state="connected\?起動\.サーバー表示状態\.value:'unknown'"/);
  assert.doesNotMatch(app,/:is="ステータスバー"[^>]*:online="toolsOnline"/);
  assert.match(app,/起動\.表示\(online,value==='start'&&!mini\)/);

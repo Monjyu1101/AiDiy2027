@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {predictionModelsInfo, predictionModelSupported, HERMES_UNSUPPORTED_PREDICTION_ROUTES} from '../モデル情報/prediction_info.mjs';
+import {predictionModelsInfo, predictionModelSupported, HERMES_UNSUPPORTED_PREDICTION_ROUTES} from '../diag/モデル情報/prediction_info.mjs';
 const cases=JSON.parse(readFileSync(new URL('../../scripts/checks/prediction_route_cases.json',import.meta.url),'utf8'));
 test('Hermes external CLI/ACP/AppServer routes are not prediction choices, API routes remain',()=>{
  for(const model of cases.rejected)assert.equal(predictionModelSupported('aidiy_hermes',model),false,model);

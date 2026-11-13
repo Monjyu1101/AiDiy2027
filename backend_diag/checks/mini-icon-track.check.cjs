@@ -6,7 +6,7 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const {createRequire}=require('node:module'),requireUI=createRequire(require('node:path').join(__dirname,'../ui/package.json'));
 const {parse,compileScript}=requireUI('@vue/compiler-sfc'),{transformSync}=requireUI('esbuild');
-const filename=require('node:path').join(__dirname,'../ui/src/components/アプリ起動/ミニアイコン列.vue');
+const filename=require('node:path').join(__dirname,'../diag/ui/components/アプリ起動/ミニアイコン列.vue');
 const {descriptor}=parse(fs.readFileSync(filename,'utf8'),{filename});
 const code=transformSync(compileScript(descriptor,{id:filename,genDefaultAs:'component'}).content+'\nmodule.exports=component;',{format:'cjs'}).code;
 
@@ -121,7 +121,7 @@ test('自動送り・ホバー停止・ドラッグ後のクリック抑止を�
 });
 
 test('起動モーション中は上下2列を止め、最後の光が消えてから同じ位置で再開する',async()=>{
- const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
+ const {起動モーション}=await import('../diag/ui/components/アプリ起動/起動モーション.mjs');
  const panel=launchPanel(),upper=fixture(350,9,{panel}),lower=fixture(350,8,{panel});
  try{
   upper.tick(100);upper.tick(150);lower.tick(100);lower.tick(150);
@@ -142,7 +142,7 @@ test('起動モーション中は上下2列を止め、最後の光が消えて�
 });
 
 test('演出の終了・取消後もホバー、フォーカス、非表示による停止を保つ',async()=>{
- const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');const f=fixture(350,9);
+ const {起動モーション}=await import('../diag/ui/components/アプリ起動/起動モーション.mjs');const f=fixture(350,9);
  try{
   const button=f.row.children[2],start=起動モーション({currentTarget:button});
   start();f.state.ホバー(true);button.runs.at(-1).finish();await Promise.resolve();
@@ -157,7 +157,7 @@ test('演出の終了・取消後もホバー、フォーカス、非表示に�
 });
 
 test('演出中ボタンの削除・ミニ解除で監視と停止を残さず、演出中の再マウントも停止する',async()=>{
- const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
+ const {起動モーション}=await import('../diag/ui/components/アプリ起動/起動モーション.mjs');
  const panel=launchPanel(),upper=fixture(350,9,{panel});let lower;
  try{
   const button=upper.row.children[2];起動モーション({currentTarget:button})();
@@ -173,8 +173,8 @@ test('演出中ボタンの削除・ミニ解除で監視と停止を残さず�
 });
 
 test('起動失敗でも光の終了まで止め、未受付や演出非対応なら停止しない',async()=>{
- const {起動モーション}=await import('../ui/src/components/アプリ起動/起動モーション.mjs');
- const {アプリ状態を作成}=await import('../ui/src/components/アプリ起動/アプリ状態.mjs');const f=fixture(350,9);
+ const {起動モーション}=await import('../diag/ui/components/アプリ起動/起動モーション.mjs');
+ const {アプリ状態を作成}=await import('../diag/ui/components/アプリ起動/アプリ状態.mjs');const f=fixture(350,9);
  try{
   const button=f.row.children[2],state=アプリ状態を作成({api:async()=>{throw Error('fixture launch failure');}});
   const options={開始時:起動モーション({currentTarget:button})};

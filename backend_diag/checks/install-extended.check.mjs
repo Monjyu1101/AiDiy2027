@@ -6,8 +6,8 @@
 // 固定プロバイダーの統合試験。実際の winget / インストーラー / 導入先は使わない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createInstallManager} from '../導入管理/導入管理.mjs';
-import {catalog} from '../診断/probes.mjs';
+import {createInstallManager} from '../diag/導入管理/導入管理.mjs';
+import {catalog} from '../diag/診断/probes.mjs';
 const ids=['ffmpeg','ffprobe','ffplay','uv','ollama','obs','code','agy','node','grok','chrome','python','electron'];
 const entries=ids.map(id=>({id,name:id,commands:[id]}));
 const success={code:0,error:false,cancelled:false,timedOut:false,overflow:false};

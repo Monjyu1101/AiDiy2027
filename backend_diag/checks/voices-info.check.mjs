@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import {mkdtemp, readFile, rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {liveVoicesInfo, LIVE_VOICES_FILE} from '../モデル情報/voices_info.mjs';
-import {writeModelsInfo} from '../モデル情報/models_info.mjs';
+import {liveVoicesInfo, LIVE_VOICES_FILE} from '../diag/モデル情報/voices_info.mjs';
+import {writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
 
 const providers=['gemini','freeai','openai'].map(id=>({id,名前:id,設定済み:true,テスト可能:true}));
 const results=Object.fromEntries(providers.map(({id})=>[id,{状態:'OK',モデル詳細:[]}]));

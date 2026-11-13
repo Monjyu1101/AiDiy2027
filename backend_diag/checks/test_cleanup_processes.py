@@ -31,7 +31,7 @@ class DiagCleanupTests(unittest.TestCase):
         return processes.is_diag(dict(Name=name, CommandLine=command, ExecutablePath=executable), ROOT, True)
 
     def test_normal_and_preloaded_entrypoints(self):
-        for entry in (ROOT / 'diag_main.mjs', ROOT / '起動/electron-main.cjs'):
+        for entry in (ROOT / 'diag_main.mjs', ROOT / 'diag/起動/electron-main.cjs'):
             for prefix in ('', '--require "C:\\test dir\\probe.cjs" ', '--import=probe.mjs ', '-- '):
                 self.assertTrue(self.owned(f'node.exe {prefix}"{entry}" --foreground'))
 
@@ -84,7 +84,7 @@ class DiagCleanupTests(unittest.TestCase):
         for windows in (False, True):
             name = 'node.exe' if windows else 'node'
             for entry in ('backend_diag/diag_main.mjs', './backend_diag/diag_main.mjs',
-                          'diag_main.mjs', '../backend_diag/diag_main.mjs', '起動/electron-main.cjs'):
+                          'diag_main.mjs', '../backend_diag/diag_main.mjs', 'diag/起動/electron-main.cjs'):
                 with self.subTest(windows=windows, entry=entry), self.assertRaisesRegex(ValueError, '作業フォルダが不明'):
                     processes.is_diag(dict(Name=name, CommandLine=f'{name} {entry} --browser'), ROOT, windows)
             self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'{name} other.js backend_diag/diag_main.mjs'), ROOT, windows))
@@ -155,9 +155,9 @@ class DiagCleanupTests(unittest.TestCase):
         for other_root in (Path(str(ROOT) + '-other'), ROOT.with_name(ROOT.name.upper())):
             executable = other_root / 'node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'
             self.assertFalse(processes.is_diag(dict(Name=name, CommandLine='', ExecutablePath=str(executable)), ROOT, False))
-            self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'Electron "{other_root / "起動/electron-main.cjs"}"'), ROOT, False))
-        self.assertTrue(processes.is_diag(dict(Name=name, CommandLine=f'Electron "{ROOT / "起動/electron-main.cjs"}"'), ROOT, False))
-        self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'Electron other.js "{ROOT / "起動/electron-main.cjs"}"'), ROOT, False))
+            self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'Electron "{other_root / "diag/起動/electron-main.cjs"}"'), ROOT, False))
+        self.assertTrue(processes.is_diag(dict(Name=name, CommandLine=f'Electron "{ROOT / "diag/起動/electron-main.cjs"}"'), ROOT, False))
+        self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'Electron other.js "{ROOT / "diag/起動/electron-main.cjs"}"'), ROOT, False))
 
     def test_stop_uses_tree_termination_and_checks_exit(self):
         record = dict(ProcessId=987654, ParentProcessId=0, Name='node.exe', CommandLine=f'node.exe "{ROOT / "diag_main.mjs"}"')

@@ -5,8 +5,8 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createModelTrials} from '../モデル試行/trials.mjs';
-import {installedCodeClis} from '../モデル情報/models_info.mjs';
+import {createModelTrials} from '../diag/モデル試行/trials.mjs';
+import {installedCodeClis} from '../diag/モデル情報/models_info.mjs';
 const providers=['claude_cli','copilot_cli','codex_cli','antigravity_cli','grok_cli','opencode_cli','claude_ollama','codex_ollama'];
 const installed=Object.fromEntries(providers.map(id=>[id,false]));
 const config=provider=>({CODE_BASE_PATH:'/synthetic/project',CODE_AI1_NAME:provider,CODE_AI1_MODEL:'same',CODE_AI2_NAME:'auto',CODE_AI2_MODEL:'same',TASK_AI_NAME:provider,TASK_AI_MODEL_plan:'same',TASK_AI_MODEL_do:'same',TASK_AI_MODEL_check:'same',TEAM_AI_NAME:provider,TEAM_AI_MODEL_plan:'same',TEAM_AI_MODEL_do:'same',TEAM_AI_MODEL_check:'same'});

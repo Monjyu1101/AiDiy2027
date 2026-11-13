@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
-import {createServer} from '../diag_main.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 async function fixture(fn){const server=createServer({token:'fixture',toolsStatusFn:fn});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,url:`http://127.0.0.1:${server.address().port}/api/tools-status`,close:()=>{server.closeAllConnections();server.close();}};}
 test('Tools route requires auth, uses relative route, and exposes boolean only',async()=>{
  let calls=0;const f=await fixture(async()=>{calls++;return {online:true,secret:'NEVER'};});

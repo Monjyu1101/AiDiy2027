@@ -11,8 +11,8 @@ import {join} from 'node:path';
 import {EventEmitter} from 'node:events';
 import {existsSync} from 'node:fs';
 import {PassThrough} from 'node:stream';
-import {createStartManager} from '../起動/サービス管理.mjs';
-import {createServer,autoStart} from '../diag_main.mjs';
+import {createStartManager} from '../diag/起動/サービス管理.mjs';
+import {createServer,autoStart} from '../diag/diag_main.mjs';
 
 const targets=JSON.parse(await readFile(new URL('../../scripts/起動対象.json',import.meta.url),'utf8')).filter(target=>target.起動管理!==false);
 async function fixture(t,{hold=false,fail=false,open=[],stopFailure,portStatusFn,onSpawn}={}){

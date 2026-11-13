@@ -7,8 +7,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {chartSeries,placeLabels,chartRight,labelRight,labelMaxWidth,labelGap} from '../src/components/システム監視/使用率グラフ.js';
 import {createRequire} from 'node:module';
-import {ミニ寸法} from '../../backend_diag/起動/ミニ表示.cjs';
-import {初期右下位置} from '../../backend_diag/起動/表示切替位置.cjs';
+import {ミニ寸法} from '../../backend_diag/diag/起動/ミニ表示.cjs';
+import {初期右下位置} from '../../backend_diag/diag/起動/表示切替位置.cjs';
 const {windowBounds,windowMinimumSize,allWindowBounds}=createRequire(import.meta.url)('../デスクトップ/window-layout.cjs');
 test('unknown samples create gaps instead of zero load',()=>{
  const [cpu,gpu,ram]=chartSeries([{cpu:40,gpu:null,ram:55},{cpu:null,gpu:null,ram:56},{cpu:60,gpu:null,ram:57}]);

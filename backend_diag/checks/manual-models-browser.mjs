@@ -9,8 +9,8 @@ import {spawn} from 'node:child_process';
 import {existsSync,mkdtempSync,mkdirSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
-import {createServer} from '../diag_main.mjs';
-import {createModelTrials} from '../モデル試行/trials.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {createModelTrials} from '../diag/モデル試行/trials.mjs';
 const config={CODE_BASE_PATH:'/fixture/project',CHAT_AI_NAME:'freeai_chat',CHAT_FREEAI_MODEL:'saved-chat',LIVE_AI_NAME:'freeai_live',LIVE_FREEAI_MODEL:'saved-live',LIVE_FREEAI_VOICE:'Zephyr',DECISION_AI_NAME:'freeai_chat',DECISION_FREEAI_MODEL:'saved-decision',CODE_AI1_NAME:'codex_cli',CODE_AI1_MODEL:'saved-code'};
 const calls=[],requests=[];let mode='ok',audioFailure=false,online=true;
 function wav(ms){const n=ms*48,b=Buffer.alloc(44+n);b.write('RIFF');b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(24000,24);b.writeUInt32LE(48000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(n,40);for(let i=0;i<n/2;i++)b.writeInt16LE(Math.sin(i/24000*440*Math.PI*2)*1000,44+i*2);return {mime:'audio/wav',duration_ms:ms,data_base64:b.toString('base64')};}

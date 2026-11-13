@@ -7,8 +7,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createServer as tcpServer} from 'node:net';
 import {EventEmitter} from 'node:events';
-import {createPortStatusChecker,checkPort} from '../起動/ポート状態.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createPortStatusChecker,checkPort} from '../diag/起動/ポート状態.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 
 test('actual TCP open/closed/reopened server is detected without payload or ownership',async()=>{
  let bytes=0;const sockets=new Set();

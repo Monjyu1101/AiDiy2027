@@ -11,8 +11,8 @@ import {mkdtemp,mkdir,writeFile,readFile,rm,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawn} from 'node:child_process';
-import {createAppLauncher,アプリタスク,タスク一覧} from '../起動/アプリ起動.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createAppLauncher,アプリタスク,タスク一覧} from '../diag/起動/アプリ起動.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 import draftBridge from '../../frontend_ide/デスクトップ/下書き共有.cjs';
 
 async function fixture(t,{getLaunchDisplay}={}){
@@ -125,7 +125,7 @@ test('authenticated API rejects arbitrary commands/methods/oversized payloads',a
  assert.equal((await fetch(base+'api/アプリ起動',{headers})).status,200);
  for(const id of ['cpu','avatar','ide','console','code','live','discord']){
   const response=await fetch(base+`AiDiy_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
-  assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../ui/src/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));
+  assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));
  }
  assert.equal((await fetch(base+'AiDiy_unknown.png')).status,404);
  for(const [body,status] of [[{対象:'console',フォルダ:f.project,command:'bad'},400],[{対象:'bad',フォルダ:f.project},400],[{対象:'avatar',フォルダ:''},400],[{対象:'console',フォルダ:'x'.repeat(DIAG_TRANSPORT_BYTE_LIMIT+1)},413]])assert.equal((await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify(body)})).status,status);
@@ -180,7 +180,7 @@ test('configured ../ and relative folders resolve against backend_server for val
 });
 
 test('Navi is between Browser and Code and launches only selected project in a separate window',async t=>{
- const {起動項目を整列,アプリアイコン}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');const f=await fixture(t);
+ const {起動項目を整列,アプリアイコン}=await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs');const f=await fixture(t);
  const items=起動項目を整列((await f.manager.catalog()).対象);assert.equal(items.findIndex(x=>x.id==='browser')+1,items.findIndex(x=>x.id==='navi'));assert.equal(items.findIndex(x=>x.id==='navi')+1,items.findIndex(x=>x.id==='code'));assert.equal(items.find(x=>x.id==='navi').名前,'Navi');assert.equal(アプリアイコン.navi,'AiDiy_navi.png');
  await f.manager.launch('navi',f.project);assert.deepEqual(f.calls[0].args,[join(f.root,'frontend_ide','launch.mjs'),'--app','navi','--project',f.project,'--new-window']);assert.equal(f.calls[0].options.cwd,f.project);
 });
@@ -193,7 +193,7 @@ test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
 test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
  await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project]);assert.equal(f.calls[0].options.shell,false);
- const {アプリアイコン,起動項目を整列}=await import('../ui/src/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.deepEqual(ids.slice(ids.indexOf('avatar'),ids.indexOf('slack')+1),['avatar','task','team','cpu','discord','slack']);
+ const {アプリアイコン,起動項目を整列}=await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.deepEqual(ids.slice(ids.indexOf('avatar'),ids.indexOf('slack')+1),['avatar','task','team','cpu','discord','slack']);
 });
 
 test('CPUだけにDiagの実画面を渡し、既存の環境指定を持ち越さない',async t=>{

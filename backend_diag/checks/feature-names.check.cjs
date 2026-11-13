@@ -12,8 +12,8 @@ const {render,source}=require('./ui-components.cjs');
 test('nine tabs and feature modules use the requested names while stable tab IDs remain',()=>{
  const tabs=[...source('App.vue').matchAll(/@click="changeTab\('([^']+)'\)">([^<]+)<\/button>/g)].map(([,id,name])=>[id,name]);
  assert.deepEqual(tabs,[['install','導入状況'],['keys','モデル一覧'],['integrations','外部連携'],['trials','設定モデル'],['manual','AIモデル'],['settings','設定再起動'],['tools','Tools'],['start','システム起動'],['apps','アプリ起動']]);
- for(const name of tabs.map(([,name])=>name==='システム起動'?'起動':name==='設定再起動'?'AI設定':name))assert.ok(fs.existsSync(path.join(__dirname,'../ui/src/components',name,`${name}パネル.vue`)));
- for(const name of ['インストール','モデルキー設定','外部連携設定','configモデル試行'])assert.equal(fs.existsSync(path.join(__dirname,'../ui/src/components',name)),false);
+ for(const name of tabs.map(([,name])=>name==='システム起動'?'起動':name==='設定再起動'?'AI設定':name))assert.ok(fs.existsSync(path.join(__dirname,'../diag/ui/components',name,`${name}パネル.vue`)));
+ for(const name of ['インストール','モデルキー設定','外部連携設定','configモデル試行'])assert.equal(fs.existsSync(path.join(__dirname,'../diag/ui/components',name)),false);
  assert.match(source('components/導入状況/導入状況状態.mjs'),/api\/診断/);
  assert.match(source('components/キー設定共通/キー設定状態.mjs'),/api\/キー設定/);
  assert.match(source('components/設定モデル/設定モデル状態.mjs'),/api\/モデル試行/);

@@ -5,7 +5,7 @@ import {readFile,writeFile,rename} from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {join,resolve} from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {withoutHermesContextAliases} from '../モデル情報/models_info.mjs';
+import {withoutHermesContextAliases} from '../diag/モデル情報/models_info.mjs';
 const directory=resolve(process.argv[2]||fileURLToPath(new URL('../../_AIDIY/aidiy_diag/',import.meta.url)));
 const files=['openai_models_info.json','openai_oauth_models_info.json','code_models_info.json','navi_models_info.json','prediction_models_info.json','hermes_models_info.json'];
 const native=new Set(['codex_cli','copilot_cli','opencode_cli']);

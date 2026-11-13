@@ -228,7 +228,7 @@ Code CLI の権限モードは `CODE_PERMISSIONS` で管理する。設定 UI �
 
 - `frontend_avatar/src/api/config.ts` の `defaultModelSettings()` は backend 取得前のフォールバック。`conf_json.py` のデフォルトとずれると初期表示が混乱する
 - `CODE_AI<N>_MODEL` はスロットごとの現在モデル、`CODE_CODEX_CLI_MODEL` のようなキーは CLI 種別ごとのデフォルト。混同しない
-- Codeモデル候補の正本はDiagの `_AIDIY/aidiy_diag/code_models_info.json`。`backend_diag/モデル情報/` が取得・合成し、`conf_model.py` は読込時に `auto` / `same` を付加する。旧 `_config/AiDiy_code_*.json` やbatとの同期は行わない。HermesのOAuth候補は `openai_oauth/<モデルID>` を保持する。
+- Codeモデル候補の正本はDiagの `_AIDIY/aidiy_diag/code_models_info.json`。`backend_diag/diag/モデル情報/` が取得・合成し、`conf_model.py` は読込時に `auto` / `same` を付加する。旧 `_config/AiDiy_code_*.json` やbatとの同期は行わない。HermesのOAuth候補は `openai_oauth/<モデルID>` を保持する。
 - 設定変更は既存 WebSocket セッションへ即時完全反映される前提にしない。再起動後の再接続で確認する
 - Code AI は現行6枠。枠数確認は `backend_server/core_router/AIコア.py` と frontend の `PanelKey` を見る
 

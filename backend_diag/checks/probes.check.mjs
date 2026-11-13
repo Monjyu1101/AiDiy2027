@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,rm} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import {probe,resolveProgram,scan,catalog,expandPath} from '../診断/probes.mjs';
+import {probe,resolveProgram,scan,catalog,expandPath} from '../diag/診断/probes.mjs';
 
 async function fixture(code,options={}) {
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-test-'));
@@ -63,11 +63,11 @@ test('Windows disk converter is not ImageMagick',async()=>{
 });
 test('coverage is pinned to complete selected-source manifest and exact catalog bytes',async()=>{
  const {readFile}=await import('node:fs/promises');const {createHash}=await import('node:crypto');
- const coverage=JSON.parse(await readFile(new URL('../診断/coverage.json',import.meta.url),'utf8'));
+ const coverage=JSON.parse(await readFile(new URL('../diag/診断/coverage.json',import.meta.url),'utf8'));
  // Windows の改行変換（CRLF）でチェックアウトされても、記録時の LF の内容と比較する。
  const lf=bytes=>Buffer.from(bytes.toString('utf8').replaceAll('\r\n','\n'),'utf8');
  const manifestBytes=lf(await readFile(new URL('../reference/source-manifest.json',import.meta.url)));
- const catalogBytes=lf(await readFile(new URL('../診断/catalog.json',import.meta.url)));
+ const catalogBytes=lf(await readFile(new URL('../diag/診断/catalog.json',import.meta.url)));
  assert.equal(coverage.complete,true);assert.equal(coverage.sourceTargetFiles,3333);assert.equal(coverage.scannedSourceFiles,3333);
  assert.equal(JSON.parse(manifestBytes).length,3333);assert.equal(createHash('sha256').update(manifestBytes).digest('hex'),coverage.sourceTargetManifestSha256);
  assert.equal(JSON.parse(catalogBytes).length,19);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);

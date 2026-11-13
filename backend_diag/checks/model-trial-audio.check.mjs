@@ -8,9 +8,9 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readdir,readFile,stat,rm,unlink,symlink} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {createAudioStore,validateAudio,AUDIO_MAX_FILES,AUDIO_LIMIT} from '../モデル試行/audio_store.mjs';
-import {createModelTrials as createActualModelTrials} from '../モデル試行/trials.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createAudioStore,validateAudio,AUDIO_MAX_FILES,AUDIO_LIMIT} from '../diag/モデル試行/audio_store.mjs';
+import {createModelTrials as createActualModelTrials} from '../diag/モデル試行/trials.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 function wav(ms=1000) {const n=Math.floor(ms*48),b=Buffer.alloc(44+n);b.write('RIFF',0);b.writeUInt32LE(b.length-8,4);b.write('WAVEfmt ',8);b.writeUInt32LE(16,16);b.writeUInt16LE(1,20);b.writeUInt16LE(1,22);b.writeUInt32LE(24000,24);b.writeUInt32LE(48000,28);b.writeUInt16LE(2,32);b.writeUInt16LE(16,34);b.write('data',36);b.writeUInt32LE(n,40);return {mime:'audio/wav',duration_ms:999999,data_base64:b.toString('base64')};}
 async function fixture(t,options={}){const base=await mkdtemp(path.join(os.tmpdir(),'diag-audio-test-'));const store=createAudioStore({base,...options});t.after(async()=>{await store.close();await rm(base,{recursive:true,force:true});});return {base,store};}
 const config=()=>({PORT_TOOLS:8095,LIVE_AI_NAME:'freeai_live',LIVE_FREEAI_MODEL:'gemini-live',LIVE_FREEAI_VOICE:'Zephyr'});

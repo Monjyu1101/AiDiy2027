@@ -19,7 +19,7 @@ def check_environment():
     node = shutil.which('node.exe' if sys.platform == 'win32' else 'node')
     if not node:
         return False, 'Node.js 18 以降が必要です: https://nodejs.org/'
-    if not (ROOT / 'diag_main.mjs').is_file() or not (ROOT / '診断' / 'catalog.json').is_file():
+    if not (ROOT / 'diag_main.mjs').is_file() or not (ROOT / 'diag' / '診断' / 'catalog.json').is_file():
         return False, '診断のソースファイルが見つかりません。'
     ok, detail = check_node_runtime('>=18', command=node, strict=True)
     if not ok:

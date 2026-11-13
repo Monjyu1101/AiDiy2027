@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {createInterface} from 'node:readline';
-import {callMcp,localRequest} from '../モデル試行/trials.mjs';
-import {decisionQuestions} from '../モデル試行/defaults.mjs';
+import {callMcp,localRequest} from '../diag/モデル試行/trials.mjs';
+import {decisionQuestions} from '../diag/モデル試行/defaults.mjs';
 
 test('isolated Decisions API contract through real MCP SDK to Diag', {skip:!process.env.DIAG_TEST_PYTHON,timeout:90000},async()=>{
  const child=spawn(process.env.DIAG_TEST_PYTHON,[fileURLToPath(new URL('./fixtures/decision_tools.py',import.meta.url))],{stdio:['ignore','pipe','pipe'],windowsHide:true});

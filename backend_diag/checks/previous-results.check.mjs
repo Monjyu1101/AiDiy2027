@@ -8,8 +8,8 @@ import assert from 'node:assert/strict';
 import {mkdtemp,rm,writeFile,readdir,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
-import {createPreviousResults} from '../診断/前回結果.mjs';
-import {createServer} from '../diag_main.mjs';
+import {createPreviousResults} from '../diag/診断/前回結果.mjs';
+import {createServer} from '../diag/diag_main.mjs';
 const old='2026-10-17T01:02:03Z',now='2026-10-18T04:05:06Z';
 async function setup(t){const directory=await mkdtemp(path.join(tmpdir(),'diag-previous-'));t.after(()=>rm(directory,{recursive:true,force:true}));return {directory,store:createPreviousResults({directory}),save:(name,data)=>writeFile(path.join(directory,name),JSON.stringify(data),'utf8')};}
 

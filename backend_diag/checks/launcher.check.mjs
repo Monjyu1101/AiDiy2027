@@ -4,14 +4,15 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
+import {copySharedFixture} from './fixture-layout.mjs';
 import assert from 'node:assert/strict';
 import {cp,mkdtemp,mkdir,readFile,writeFile,rm} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {launchDetached} from '../起動/launch.mjs';
-import {parseArgs} from '../diag_main.mjs';
+import {launchDetached} from '../diag/起動/launch.mjs';
+import {parseArgs} from '../diag/diag_main.mjs';
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 // Windows の SIGTERM は TerminateProcess で、終了コードではなくシグナル終了として報告される。
 const stoppedBySigterm=([code,signal])=>process.platform==='win32'?signal==='SIGTERM':code===0;
@@ -21,16 +22,15 @@ async function until(fn){for(let n=0;n<150;n++){const value=await fn();if(value)
 async function fixture(mode='normal') {
  const workspace=await mkdtemp(path.join(os.tmpdir(),'diag-launch-'));
  const root=path.join(workspace,'backend_diag');
- await mkdir(path.join(workspace,'scripts'));
- await cp(new URL('../../scripts/opencode-npm.mjs',import.meta.url),path.join(workspace,'scripts/opencode-npm.mjs'));
+ await copySharedFixture(workspace);
  await cp(new URL('../',import.meta.url),root,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|tests|__pycache__)(?:[/\\]|$)/.test(source)});
  // ネットワーク API と UI build のみ fixture 化。HTTP、CLI、IPC、所有関係は実プロセス。
- await writeFile(path.join(root,'モデル情報/public_models.mjs'),`export function createPublicModelCache(){return {refresh:async()=>({}),snapshot:()=>({}),input:()=>({})};}`);
+ await writeFile(path.join(root,'diag/モデル情報/public_models.mjs'),`export function createPublicModelCache(){return {refresh:async()=>({}),snapshot:()=>({}),input:()=>({})};}`);
  await writeFile(path.join(root,'ui/verify.mjs'),'export async function verify(){return true;}');
- const desktop=path.join(root,'起動/desktop.mjs');
+ const desktop=path.join(root,'diag/起動/desktop.mjs');
  await writeFile(desktop,(await readFile(desktop,'utf8')).replace(/export async function desktopBinary[\s\S]*?\nconst failures=/,"export async function desktopBinary(){return process.execPath;}\nconst failures="));
- if(mode==='existing'){await writeFile(path.join(root,'起動/electron-main.cjs'),"process.send({type:'diag-existing'},()=>process.exit(0));");return root;}
- await writeFile(path.join(root,'起動/electron-main.cjs'),`
+ if(mode==='existing'){await writeFile(path.join(root,'diag/起動/electron-main.cjs'),"process.send({type:'diag-existing'},()=>process.exit(0));");return root;}
+ await writeFile(path.join(root,'diag/起動/electron-main.cjs'),`
  const fs=require('node:fs');
  process.on('disconnect',()=>process.exit(0));
  process.send({type:'diag-ready'});
@@ -114,7 +114,7 @@ test('detached startup timeout and early child failure reject and reap fixture p
 });
 
 test('safe diagnostic log accepts only fixed codes and stays within 64 KiB',async()=>{
- const {recordDesktopFailure}=await import('../起動/desktop-log.mjs');
+ const {recordDesktopFailure}=await import('../diag/起動/desktop-log.mjs');
  const root=await mkdtemp(path.join(os.tmpdir(),'diag-safe-log-')),file=path.join(root,'errors.log');
  try{
   assert.equal(recordDesktopFailure('SECRET #token=private',file),false);
@@ -132,7 +132,7 @@ test('failure after detach leaves a fixed safe log and closes the server',{timeo
  }finally{await cleanup(root,child,info);}
 });
 test('probe diagnostic log retains safe structured failure fields only',async()=>{
- const {recordProbeFailure}=await import('../起動/desktop-log.mjs');
+ const {recordProbeFailure}=await import('../diag/起動/desktop-log.mjs');
  const root=await mkdtemp(path.join(os.tmpdir(),'diag-probe-log-')),file=path.join(root,'errors.log');
  try{
   assert.equal(recordProbeFailure({reason:'SECRET'},file),false);
@@ -146,7 +146,7 @@ test('detached-mode real version failure writes safe log as well as stderr',{tim
  const root=await fixture();let child;
  try {
   const script=path.join(root,'probe-fixture.mjs');
-  await writeFile(script,`import {runVersion} from './診断/probes.mjs';await runVersion('/definitely/missing/SECRET',['--version'],process.cwd(),{probeId:'fixture'});`);
+  await writeFile(script,`import {runVersion} from './diag/診断/probes.mjs';await runVersion('/definitely/missing/SECRET',['--version'],process.cwd(),{probeId:'fixture'});`);
   child=spawn(process.execPath,[script],{env:{...process.env,AIDIY_DIAG_LAUNCHER_CHILD:'1'},stdio:['ignore','ignore','pipe'],windowsHide:true});let stderr='';child.stderr.on('data',x=>stderr+=x);
   assert.equal((await once(child,'exit'))[0],0);const log=await readFile(path.join(root,'.desktop-errors.log'),'utf8');
   for(const text of [log,stderr]){assert.match(text,/aidiy-diag:probe/);assert.match(text,/spawn_error/);assert.match(text,/ENOENT/);assert.ok(!text.includes('SECRET'));}
@@ -154,7 +154,7 @@ test('detached-mode real version failure writes safe log as well as stderr',{tim
 });
 
 test('safe diagnostic log rejects FIFO and directory without blocking',{skip:process.platform==='win32',timeout:3000},async()=>{
- const {recordDesktopFailure}=await import('../起動/desktop-log.mjs');const root=await mkdtemp(path.join(os.tmpdir(),'diag-log-fifo-'));
+ const {recordDesktopFailure}=await import('../diag/起動/desktop-log.mjs');const root=await mkdtemp(path.join(os.tmpdir(),'diag-log-fifo-'));
  try{const fifo=path.join(root,'fifo');const command=spawn('mkfifo',[fifo]);assert.equal((await once(command,'exit'))[0],0);assert.equal(recordDesktopFailure('EXIT',fifo),false);assert.equal(recordDesktopFailure('EXIT',root),false);}finally{await rm(root,{recursive:true,force:true});}
 });
 

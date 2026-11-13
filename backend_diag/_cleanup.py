@@ -39,7 +39,7 @@ _path_spec.loader.exec_module(_path_helper)
 remove_launcher_path = _path_helper.remove_launcher_path
 
 _stop_spec = importlib.util.spec_from_file_location(
-    'aidiy_diag_stop', Path(__file__).resolve().parent / '起動' / 'プロセス停止.py')
+    'aidiy_diag_stop', Path(__file__).resolve().parent / 'diag' / '起動' / 'プロセス停止.py')
 _stop_helper = importlib.util.module_from_spec(_stop_spec)
 _stop_spec.loader.exec_module(_stop_helper)
 

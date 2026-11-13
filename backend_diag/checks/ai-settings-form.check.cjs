@@ -13,7 +13,7 @@ const req = createRequire(path.join(__dirname, '../ui/package.json'));
 const vue = req('vue');
 const {parse, compileScript, compileTemplate} = req('@vue/compiler-sfc');
 const {transformSync} = req('esbuild');
-const source = fs.readFileSync(path.join(__dirname, '../ui/src/dialog/AI設定再起動.vue'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../diag/ui/dialog/AI設定再起動.vue'), 'utf8');
 function form(request, confirm = () => true) {
   const {descriptor} = parse(source);
   const code = transformSync(compileScript(descriptor, {id:'test'}).content, {format:'cjs'}).code;

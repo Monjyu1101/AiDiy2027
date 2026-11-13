@@ -6,9 +6,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import micro from '../起動/マイクロ表示.cjs';
+import micro from '../diag/起動/マイクロ表示.cjs';
 import pinModule from '../../frontend_ide/デスクトップ/最前面ピン.cjs';
-import layout from '../ui/src/components/アプリ起動/円周配置.cjs';
+import layout from '../diag/ui/components/アプリ起動/円周配置.cjs';
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 test('透過判定のDOM応答待ちにカーソルが変わったら古い判定を捨てる',async()=>{
  const {w,screen,control}=fixture();let point={x:110,y:90},resolve,called=false;

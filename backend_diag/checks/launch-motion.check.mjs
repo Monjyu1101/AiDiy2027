@@ -5,9 +5,9 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {起動モーション} from '../ui/src/components/アプリ起動/起動モーション.mjs';
-import {アプリ状態を作成} from '../ui/src/components/アプリ起動/アプリ状態.mjs';
-import {CLI状態を作成} from '../ui/src/components/アプリ起動/CLI状態.mjs';
+import {起動モーション} from '../diag/ui/components/アプリ起動/起動モーション.mjs';
+import {アプリ状態を作成} from '../diag/ui/components/アプリ起動/アプリ状態.mjs';
+import {CLI状態を作成} from '../diag/ui/components/アプリ起動/CLI状態.mjs';
 import {readFile} from 'node:fs/promises';
 function fixture(){
  const classes=new Set();const runs=[];const icon={parentElement:{classList:{add:name=>classes.add(name),remove:name=>classes.delete(name)}},animate:(frames,options)=>{let finish;const animation={frames,options,cancelled:false,cancel(){this.cancelled=true;},finished:new Promise(resolve=>finish=resolve),finish:()=>finish()};runs.push(animation);return animation;}};
@@ -63,19 +63,19 @@ test('CLI guards and declined confirmation never animate; accepted editor and CL
 });
 test('all normal mini and micro launch surfaces share the accepted-action callback',async()=>{
  for(const name of ['アプリ起動パネル','ミニアプリ起動','ミニCLI起動','マイクロランチャー']){
-  const source=await readFile(new URL(`../ui/src/components/アプリ起動/${name}.vue`,import.meta.url),'utf8');assert.match(source,/import \{起動モーション\}/);assert.match(source,/開始時/);assert.match(source,/\$event/);
+  const source=await readFile(new URL(`../diag/ui/components/アプリ起動/${name}.vue`,import.meta.url),'utf8');assert.match(source,/import \{起動モーション\}/);assert.match(source,/開始時/);assert.match(source,/\$event/);
  }
 });
 
 test('stationary fixed-size icon has a vivid comet ring starting from the bottom and no obsolete flip layers',async()=>{
- const css=await readFile(new URL('../ui/src/components/アプリ起動/起動モーション.css',import.meta.url),'utf8');
+ const css=await readFile(new URL('../diag/ui/components/アプリ起動/起動モーション.css',import.meta.url),'utf8');
  assert.match(css,/@property --launch-spin\{syntax:'<angle>'/);assert.match(css,/conic-gradient\(from calc\(180deg \+ var\(--launch-spin\)\)/);
  assert.match(css,/#ffffff 357deg,transparent 360deg/);assert.match(css,/content-box exclude/);assert.match(css,/drop-shadow/);
  assert.match(css,/opacity:0/);assert.match(css,/pointer-events:none/);assert.doesNotMatch(css,/stroke-dasharray/);
  assert.doesNotMatch(css,/rotate|transform|backface|#808080|launch-card/);
  assert.match(css,/width:40px;height:40px/);assert.match(css,/width:72px;height:72px/);
  for(const name of ['アプリ起動パネル','ミニアプリ起動','ミニCLI起動','マイクロランチャー']){
-  const source=await readFile(new URL(`../ui/src/components/アプリ起動/${name}.vue`,import.meta.url),'utf8');
+  const source=await readFile(new URL(`../diag/ui/components/アプリ起動/${name}.vue`,import.meta.url),'utf8');
   assert.match(source,/import '\.\/起動モーション.css'/);assert.match(source,/<span class="launch-trace"><\/span>/);
   assert.doesNotMatch(source,/<svg class="launch-trace"/);
   assert.doesNotMatch(source,/launch-card-back|launch-card-40|launch-card-72/);

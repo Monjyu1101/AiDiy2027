@@ -2,9 +2,9 @@
 // Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createToolsRepresentativeBridge,TOOL_IDS} from '../Tools/設定接続.mjs';
-import {代表試験} from '../Tools/代表試験.mjs';
-import {Tools代表テスト} from '../ui/src/components/Tools/Tools代表テスト.mjs';
+import {createToolsRepresentativeBridge,TOOL_IDS} from '../diag/Tools/設定接続.mjs';
+import {代表試験} from '../diag/Tools/代表試験.mjs';
+import {Tools代表テスト} from '../diag/ui/components/Tools/Tools代表テスト.mjs';
 const reader=async()=>JSON.stringify({PORT_CORE:8091,PORT_TOOLS:8095});
 const fixtures={
  aidiy_desktop_capture:{monitors:[{width:1920,height:1080}]},

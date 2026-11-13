@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {createServer} from '../diag_main.mjs';
-import {createVSCodeLauncher,resolveVSCode} from '../起動/VSCode起動.mjs';
+import {createServer} from '../diag/diag_main.mjs';
+import {createVSCodeLauncher,resolveVSCode} from '../diag/起動/VSCode起動.mjs';
 function fixture(options={}){
  const calls=[],env={PATH:'/bin',HTTPS_PROXY:'http://proxy.test:8080',NO_PROXY:'localhost',ELECTRON_RUN_AS_NODE:'1',NODE_OPTIONS:'--inspect'};
  const manager=createVSCodeLauncher({startupGrace:1,env,resolveFn:async()=>'/bin/code',realpathFn:async x=>x,statFn:async()=>({isDirectory:()=>true}),spawnFn(command,args,opts){calls.push({command,args,opts});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;},...options});return {manager,calls,env};
@@ -47,18 +47,18 @@ test('VS Code SVG and PNG are served as exact generated assets; generated manife
  const server=createServer({token:'fixture',entries:[]});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));t.after(()=>new Promise(resolve=>server.close(resolve)));
  for(const ext of ['svg','png']){
   const response=await fetch(`http://127.0.0.1:${server.address().port}/CLI_vscode.${ext}`);assert.equal(response.status,200);
-  const original=await readFile(new URL(`../ui/src/components/アプリ起動/CLIアイコン/vscode.${ext}`,import.meta.url));
+  const original=await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/vscode.${ext}`,import.meta.url));
   assert.deepEqual(Buffer.from(await response.arrayBuffer()),original);
  }
 });
 
 test('VS Code label uses editor blue and white, with matching launcher geometry',async()=>{
  const {readFile}=await import('node:fs/promises');
- const svg=await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/vscode.svg',import.meta.url),'utf8');
+ const svg=await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/vscode.svg',import.meta.url),'utf8');
  assert.match(svg,/viewBox="0 0 120 120"/);assert.match(svg,/x="18" y="3" width="84" height="84"/);
  assert.match(svg,/id="caption-band" x="0" y="90" width="120" height="30" fill="#1e3a5f"/);
  assert.match(svg,/font-size="22" font-weight="700" fill="#ffffff">VS Code<\/text>/);
- const png=await readFile(new URL('../ui/src/components/アプリ起動/CLIアイコン/vscode.png',import.meta.url));assert.equal(png.readUInt32BE(16),120);assert.equal(png.readUInt32BE(20),120);
+ const png=await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/vscode.png',import.meta.url));assert.equal(png.readUInt32BE(16),120);assert.equal(png.readUInt32BE(20),120);
 });
 
 test('GUI process failures after spawn are reported; an existing-window handoff exit=0 succeeds',async()=>{

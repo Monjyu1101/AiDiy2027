@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {アプリ状態を作成} from '../ui/src/components/アプリ起動/アプリ状態.mjs';
-import {アプリアイコン} from '../ui/src/components/アプリ起動/アプリアイコン.mjs';
+import {アプリ状態を作成} from '../diag/ui/components/アプリ起動/アプリ状態.mjs';
+import {アプリアイコン} from '../diag/ui/components/アプリ起動/アプリアイコン.mjs';
 const catalog=online=>({対象:[{id:'avatar'},{id:'task',利用可能:online,無効理由:online?'':'TaskTeam 未起動'},{id:'team',利用可能:online,無効理由:online?'':'TaskTeam 未起動'},{id:'code'}]});
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 test('Task/Team fail closed until checked and track backend start/stop without blocking Code',async()=>{
@@ -28,9 +28,9 @@ test('catalog request failure disables only backend-gated apps',async()=>{
  let fail=false;const state=アプリ状態を作成({api:async()=>{if(fail)throw Error('offline');return catalog(true);}});await state.読込();fail=true;await state.読込();assert.equal(state.利用可能('task'),false);assert.equal(state.利用可能('team'),false);assert.equal(state.利用可能('code'),true);
 });
 test('all launcher sizes gate Task/Team and expose disabled reason; app owns polling lifecycle',async()=>{
- for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue','マイクロランチャー.vue']){const s=await readFile(new URL('../ui/src/components/アプリ起動/'+name,import.meta.url),'utf8');assert.match(s,/利用可能\(item.id\)/);assert.match(s,/不可理由\(item.id\)/);}
- const app=await readFile(new URL('../ui/src/App.vue',import.meta.url),'utf8');assert.match(app,/アプリ\.接続\(value\)/);assert.match(app,/アプリ\.終了\(\)/);
+ for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue','マイクロランチャー.vue']){const s=await readFile(new URL('../diag/ui/components/アプリ起動/'+name,import.meta.url),'utf8');assert.match(s,/利用可能\(item.id\)/);assert.match(s,/不可理由\(item.id\)/);}
+ const app=await readFile(new URL('../diag/ui/App.vue',import.meta.url),'utf8');assert.match(app,/アプリ\.接続\(value\)/);assert.match(app,/アプリ\.終了\(\)/);
 });
 test('Task/Team use local PNG copies with readable fixed caption images',async()=>{
- for(const id of ['task','team']){assert.equal(アプリアイコン[id],`AiDiy_${id}.png`);const png=await readFile(new URL(`../ui/src/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url));assert.equal(png.readUInt32BE(16),512);assert.equal(png.readUInt32BE(20),512);assert.deepEqual(png,await readFile(new URL(`../static/AiDiy_${id}.png`,import.meta.url)));}
+ for(const id of ['task','team']){assert.equal(アプリアイコン[id],`AiDiy_${id}.png`);const png=await readFile(new URL(`../diag/ui/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url));assert.equal(png.readUInt32BE(16),512);assert.equal(png.readUInt32BE(20),512);assert.deepEqual(png,await readFile(new URL(`../static/AiDiy_${id}.png`,import.meta.url)));}
 });

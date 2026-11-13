@@ -14,7 +14,7 @@ const { parse, compileScript } = uiRequire('@vue/compiler-sfc');
 const { transformSync } = uiRequire('esbuild');
 const { createSSRApp, h } = uiRequire('vue');
 const { renderToString } = uiRequire('@vue/server-renderer');
-const source = name => fs.readFileSync(path.join(__dirname, '../ui/src', name), 'utf8');
+const source = name => fs.readFileSync(path.join(__dirname, '../diag/ui', name), 'utf8');
 const cache = new Map();
 function dependency(name) {
  const module = { exports: {} };

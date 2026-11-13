@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {アイコン移動} from '../ui/src/components/アプリ起動/アイコン移動.mjs';
+import {アイコン移動} from '../diag/ui/components/アプリ起動/アイコン移動.mjs';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function setup(begin=async()=> 'owned'){
  const calls=[],target={setPointerCapture(){},hasPointerCapture:()=>true,releasePointerCapture(){}};

@@ -6,11 +6,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createHandler} from '../diag_main.mjs';
-import {アプリアイコン} from '../ui/src/components/アプリ起動/アプリアイコン.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
+import {アプリアイコン} from '../diag/ui/components/アプリ起動/アプリアイコン.mjs';
 for(const id of ['discord','slack'])test(`${id}: Diag は module 内の PNG コピーだけで完結する`,async()=>{
- const png=await readFile(new URL(`../ui/src/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url));assert.equal(png.readUInt32BE(16),512);assert.equal(png.readUInt32BE(20),512);assert.deepEqual(await readFile(new URL(`../static/AiDiy_${id}.png`,import.meta.url)),png);
- for(const folder of ['ui/src/components/アプリ起動/アイコン','static'])await assert.rejects(readFile(new URL(`../${folder}/AiDiy_${id}.svg`,import.meta.url)),{code:'ENOENT'});
+ const png=await readFile(new URL(`../diag/ui/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url));assert.equal(png.readUInt32BE(16),512);assert.equal(png.readUInt32BE(20),512);assert.deepEqual(await readFile(new URL(`../static/AiDiy_${id}.png`,import.meta.url)),png);
+ for(const folder of ['diag/ui/components/アプリ起動/アイコン','static'])await assert.rejects(readFile(new URL(`../${folder}/AiDiy_${id}.svg`,import.meta.url)),{code:'ENOENT'});
  assert.equal(アプリアイコン[id],`AiDiy_${id}.png`);
 });
 test('固定 PNG だけを Diag から配布し、SVG・任意 path は公開しない（待受なし）',async()=>{

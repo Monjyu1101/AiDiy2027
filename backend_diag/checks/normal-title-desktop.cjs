@@ -8,8 +8,8 @@
 'use strict';
 const {app,BrowserWindow}=require('electron'),assert=require('node:assert/strict');
 const {mkdtempSync,rmSync}=require('node:fs'),{tmpdir}=require('node:os'),{join}=require('node:path');
-const {通常窓サイズを作成}=require('../起動/通常窓サイズ.cjs');
-const {標準タイトル操作を取り付け}=require('../起動/標準タイトル操作.cjs');
+const {通常窓サイズを作成}=require('../diag/起動/通常窓サイズ.cjs');
+const {標準タイトル操作を取り付け}=require('../diag/起動/標準タイトル操作.cjs');
 const profile=mkdtempSync(join(tmpdir(),'diag-standard-title-'));
 app.setPath('userData',profile);app.setPath('sessionData',profile);
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));

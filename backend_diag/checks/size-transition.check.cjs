@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const test=require('node:test'),assert=require('node:assert/strict'),vm=require('node:vm');
-const {画面サイズ演出を作成}=require('../起動/サイズ切替.cjs');
+const {画面サイズ演出を作成}=require('../diag/起動/サイズ切替.cjs');
 function fixture({offset={x:0,y:0}}={}){
  const windows=[],scripts=[],calls=[];
  const window={bounds:{x:-120,y:40,width:800,height:600},opacity:1,isDestroyed(){return !!this.destroyed;},isVisible:()=>true,isMinimized:()=>false,isAlwaysOnTop:()=>false,getOpacity(){return this.opacity;},setOpacity(value){this.opacity=value;calls.push(value);},moveAbove(id){this.above=id;},getBounds(){return {...this.bounds};},getNormalBounds(){return {...this.bounds};},setBounds(value){this.bounds={...value};this.resizes=(this.resizes||0)+1;},setMinimumSize(){},setMaximizable(){},setResizable(){},unmaximize(){this.maximized=false;},isMaximized(){return !!this.maximized;},getContentBounds(){return {...this.bounds};},webContents:{executeJavaScript:async()=>{},capturePage:async()=>({isEmpty:()=>false,toDataURL:()=> 'data:image/png;base64,fixture'})}};
@@ -52,7 +52,7 @@ test('撮影待ちに再読込・中止された切替を後から適用しな�
  }
 });
 test('UIはミニ描画後に演出完了を通知し、完了までは切替中を保つ',async()=>{
- const {起動ミニ表示を作成}=await import('../ui/src/components/ウィンドウ/起動ミニ表示.mjs');
+ const {起動ミニ表示を作成}=await import('../diag/ui/components/ウィンドウ/起動ミニ表示.mjs');
  const calls=[];let release;
  const state=起動ミニ表示を作成({利用可能:()=>true,切替:async value=>{calls.push(value);return true;},反映:()=>{calls.push(state.表示中.value?'mini-ready':'normal-ready');return new Promise(resolve=>release=resolve);}});
  const pending=state.変更(true);await new Promise(resolve=>setImmediate(resolve));

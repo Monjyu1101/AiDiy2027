@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict');
-const {初期右下位置,表示切替位置,角判定距離}=require('../起動/表示切替位置.cjs');
+const {初期右下位置,表示切替位置,角判定距離}=require('../diag/起動/表示切替位置.cjs');
 const area={x:0,y:28,width:1920,height:1012};
 const screen={getDisplayMatching:()=>({workArea:area,scaleFactor:1.25})};
 const size={width:360,height:186};

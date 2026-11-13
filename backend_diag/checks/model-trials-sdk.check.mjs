@@ -5,12 +5,12 @@
 // https://github.com/monjyu1101/AiDiy2027
 // DIAG_TEST_PYTHON must have backend_tools' MCP 2.x, FastAPI and uvicorn dependencies.
 import test from 'node:test';
-import {decisionQuestions} from '../モデル試行/defaults.mjs';
+import {decisionQuestions} from '../diag/モデル試行/defaults.mjs';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {createInterface} from 'node:readline';
-import {callMcp,createModelTrials as createActualModelTrials,localRequest} from '../モデル試行/trials.mjs';
+import {callMcp,createModelTrials as createActualModelTrials,localRequest} from '../diag/モデル試行/trials.mjs';
 
 // Windows 初回 import と並行回帰の負荷を考慮。AI応答は従来どおり合成の短文だけ。
 const createModelTrials=options=>createActualModelTrials({catalogReader:async()=>({}),credentialReader:async()=>null,installedClisFn:async()=>({}),...options});

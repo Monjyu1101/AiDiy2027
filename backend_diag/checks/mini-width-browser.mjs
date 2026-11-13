@@ -6,7 +6,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve,sep} from 'node:path';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
-import miniWindow from '../起動/ミニ表示.cjs';
+import miniWindow from '../diag/起動/ミニ表示.cjs';
 const require=createRequire(new URL('../ui/package.json',import.meta.url));
 const {build}=require('esbuild'),{parse,compileScript}=require('@vue/compiler-sfc');
 const {width:miniWidth,height}=miniWindow.ミニ寸法;

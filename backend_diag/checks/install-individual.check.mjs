@@ -5,8 +5,8 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createHandler} from '../diag_main.mjs';
-import {installReport} from '../診断/headless.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
+import {installReport} from '../diag/診断/headless.mjs';
 
 const entries=[{id:'node',name:'Node.js'},{id:'ollama',name:'Ollama'},{id:'ffmpeg',name:'ffmpeg'}];
 const auth='Bearer synthetic-install';

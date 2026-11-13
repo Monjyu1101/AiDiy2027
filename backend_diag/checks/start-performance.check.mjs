@@ -6,8 +6,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as turn} from 'node:timers/promises';
-import {起動状態を作成} from '../ui/src/components/起動/起動状態.mjs';
-import {受信間隔を作成} from '../ui/src/components/起動/受信間隔.mjs';
+import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
+import {受信間隔を作成} from '../diag/ui/components/起動/受信間隔.mjs';
 const settle=async()=>{await turn();await turn();};
 
 function fakeClock(){

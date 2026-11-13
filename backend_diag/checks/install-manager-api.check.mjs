@@ -7,8 +7,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {createHandler,createServer} from '../diag_main.mjs';
-import {createInstallManager} from '../導入管理/導入管理.mjs';
+import {createHandler,createServer} from '../diag/diag_main.mjs';
+import {createInstallManager} from '../diag/導入管理/導入管理.mjs';
 
 const entries=[{id:'codex',name:'Codex'},{id:'claude',name:'Claude'},{id:'python',name:'Python'}];
 const token='synthetic-install-manager-api';

@@ -6,7 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {ref} from '../ui/node_modules/vue/index.mjs';
-import {CLI状態を作成} from '../ui/src/components/アプリ起動/CLI状態.mjs';
+import {CLI状態を作成} from '../diag/ui/components/アプリ起動/CLI状態.mjs';
 function fixture(overrides={}){
  const requests=[],confirmations=[],アプリ={フォルダ:ref('/日本語 path & ;'),処理中:ref(''),選択中:ref(false)};
  const state=CLI状態を作成({アプリ,確認:async text=>{confirmations.push(text);return true;},api:async(route,_method,_signal,_format,body)=>{requests.push({route,body});return route==='api/CLI起動'?{対象:[{id:'copilot',名前:'GitHub Copilot CLI',モード:'YOLO',利用可能:true},{id:'grok',名前:'Grok',利用可能:false}]}:{通知:'Console を開きました'};},...overrides});
@@ -101,7 +101,7 @@ test('VS Code shares selected folder but uses editor endpoint without automatic 
 });
 
 test('configured relative display uses shared resolved path for CLI and VS Code payloads',async()=>{
- const {アプリ状態を作成}=await import('../ui/src/components/アプリ起動/アプリ状態.mjs');
+ const {アプリ状態を作成}=await import('../diag/ui/components/アプリ起動/アプリ状態.mjs');
  const requests=[];let selected='/manual';
  const アプリ=アプリ状態を作成({picker:()=>selected,api:async route=>route==='api/アプリ起動'?{対象:[],フォルダ:'../',起動フォルダ:'/repo'}:{フォルダ:selected}});
  const state=CLI状態を作成({アプリ,api:async(route,_method,_signal,_format,body)=>{requests.push({route,body});return {};}});

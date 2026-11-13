@@ -5,8 +5,8 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SECURITY_RELEASES, securityVersionWarning, applySecurityVersionWarning } from '../診断/セキュリティバージョン.mjs';
-import { probe } from '../診断/probes.mjs';
+import { SECURITY_RELEASES, securityVersionWarning, applySecurityVersionWarning } from '../diag/診断/セキュリティバージョン.mjs';
+import { probe } from '../diag/診断/probes.mjs';
 
 for (const [id, policy] of Object.entries(SECURITY_RELEASES)) {
   for (const fixed of policy.fixed) test(`${id} ${fixed} の直前・一致・以降`, () => {

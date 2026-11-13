@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {認証セッションを作成} from '../ui/src/components/ウィンドウ/認証セッション.mjs';
+import {認証セッションを作成} from '../shared/ui/認証セッション.mjs';
 const memory=()=>{const data=new Map();return {getItem:key=>data.get(key)??null,setItem:(key,value)=>data.set(key,value),removeItem:key=>data.delete(key)};};
 const session=(store,url='http://127.0.0.1:3456/')=>認証セッションを作成({location:new URL(url),storage:()=>store});
 test('認証成功後のキーだけ同じタブの再読込へ渡す',()=>{

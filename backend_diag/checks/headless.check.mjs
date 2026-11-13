@@ -8,9 +8,9 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readFile,readdir,rm,writeFile,mkdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {runHeadless,OUTPUT_DIRECTORY,STEPS,modelsStep} from '../診断/headless.mjs';
+import {runHeadless,OUTPUT_DIRECTORY,STEPS,modelsStep} from '../diag/診断/headless.mjs';
 const installOnly=STEPS.filter(step=>step.id==='install');
-import {parseArgs} from '../diag_main.mjs';
+import {parseArgs} from '../diag/diag_main.mjs';
 
 const entries=[{id:'node',name:'Node.js',menuGroup:'ベース'},{id:'ffmpeg',name:'ffmpeg'}];
 const ok=entry=>({id:entry.id,状態:'OK',パス:'/fixture/'+entry.id,バージョン:'1.0.0',説明:'fixture',確認日時:'2026-10-15T00:00:00.000Z'});
@@ -74,7 +74,7 @@ test('models step tests only model providers that can be tested (2 at a time) an
 
 
 test('headless passes current installation results and saves missing Ollama without fetching models',async()=>folder(async directory=>{
- const {testKey,runModels}=await import('../モデル情報/key_status.mjs');
+ const {testKey,runModels}=await import('../diag/モデル情報/key_status.mjs');
  const providers=[{id:'ollama',名前:'Ollama',テスト可能:true}];
  for(const state of ['OK','未検出','OK']){
   let calls=0;

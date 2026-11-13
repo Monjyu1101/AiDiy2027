@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
+import {copySharedFixture} from './fixture-layout.mjs';
 import assert from 'node:assert/strict';
 import {cp,mkdtemp,readFile,writeFile,readdir,rm} from 'node:fs/promises';
 import os from 'node:os';
@@ -12,13 +13,12 @@ import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {randomBytes} from 'node:crypto';
 import {verify,manifest} from '../ui/verify.mjs';
-import {startupMessage} from '../diag_main.mjs';
+import {startupMessage} from '../diag/diag_main.mjs';
 async function fixture(){
  const workspace=await mkdtemp(path.join(os.tmpdir(),'diag-startup-'));
  const root=path.join(workspace,'backend_diag');
  await cp(new URL('../',import.meta.url),root,{recursive:true,filter:source=>!/(?:^|[/\\])(?:node_modules|tests|__pycache__)(?:[/\\]|$)/.test(source)});
- await cp(new URL('../../scripts/opencode-npm.mjs',import.meta.url),path.join(workspace,'scripts/opencode-npm.mjs'));
- for(const name of ['コード/パネル表示切替.vue','コード/パネル切替ドラッグ.js','共通表示/パネル折り畳み.js'])await cp(new URL('../../frontend_ide/src/components/'+name,import.meta.url),path.join(workspace,'frontend_ide/src/components',name));
+ await copySharedFixture(workspace);
  return root;
 }
 async function cleanup(root){
@@ -34,13 +34,13 @@ test('LF and Windows CRLF checkouts verify without rebuilding; actual edits stil
  const root=await fixture(),ui=path.join(root,'ui');
  try {
   assert.equal(await verify(ui),true);const lf=await manifest(ui);
-  assert.ok(Object.hasOwn(lf, 'src/components/導入状況/導入状況パネル.vue'));
+  assert.ok(Object.hasOwn(lf, '../diag/ui/components/導入状況/導入状況パネル.vue'));
   assert.deepEqual(Object.keys(lf), Object.keys(lf).sort());
   assert.ok(!Object.keys(lf).some(name => name.includes('/checks/')));
   await convert(path.dirname(root));assert.equal(await verify(ui),true);assert.deepEqual(await manifest(ui),lf);
   const manifestFile=path.join(root,'static/build-manifest.json');
   await writeFile(manifestFile,JSON.stringify(Object.fromEntries(Object.entries(lf).reverse())));assert.equal(await verify(ui),true);
-  for(const relative of ['ui/src/components/共通表示/シアンバー.css','ui/src/App.vue','ui/src/components/導入状況/導入状況パネル.vue','ui/src/components/導入状況/導入状況状態.mjs','ui/src/components/導入状況/導入状況表示.mjs','ui/src/components/導入状況/導入状況.css','runtime/model_catalog.ts','runtime/model_probe.mjs','ui/tsconfig.runtime.json','ui/build.mjs','static/app.js','static/style.css','static/index.html','ui/src/components/アプリ起動/CLIアイコン/copilot.svg','ui/src/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md','ui/src/components/アプリ起動/CLIアイコン/upstream/antigravity-logo-mark.svg','static/LICENSE_ICONS.md','static/LICENSE-Octicons.txt']){
+  for(const relative of ['diag/ui/components/共通表示/シアンバー.css','diag/ui/App.vue','diag/ui/components/導入状況/導入状況パネル.vue','diag/ui/components/導入状況/導入状況状態.mjs','diag/ui/components/導入状況/導入状況表示.mjs','diag/ui/components/導入状況/導入状況.css','runtime/model_catalog.ts','runtime/model_probe.mjs','ui/tsconfig.runtime.json','ui/build.mjs','static/app.js','static/style.css','static/index.html','diag/ui/components/アプリ起動/CLIアイコン/copilot.svg','diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md','diag/ui/components/アプリ起動/CLIアイコン/upstream/antigravity-logo-mark.svg','static/LICENSE_ICONS.md','static/LICENSE-Octicons.txt']){
    const file=path.join(root,relative),before=await readFile(file);await writeFile(file,Buffer.concat([before,Buffer.from('\nchanged')]));assert.equal(await verify(ui),false,relative);await writeFile(file,before);
   }
   await rm(path.join(root,'static/app.js'));assert.equal(await verify(ui),false);
@@ -56,7 +56,7 @@ for(const crlf of [false,true])test(`real Node browser startup and all static as
  const root=await fixture();let child;
  try {
   // 外部通信のみを差し替え。実際の引数処理・検証・HTTP listen・静的配信を実行する。
-  await writeFile(path.join(root,'モデル情報/public_models.mjs'),`export function createPublicModelCache(){return {refresh:async()=>({}),snapshot:()=>({}),input:()=>({})};}`);
+  await writeFile(path.join(root,'diag/モデル情報/public_models.mjs'),`export function createPublicModelCache(){return {refresh:async()=>({}),snapshot:()=>({}),input:()=>({})};}`);
   if(crlf)await convert(path.dirname(root));
   child=spawn(process.execPath,[path.join(root,'diag_main.mjs'),'--browser','--no-open','--port','0'],{stdio:['ignore','pipe','pipe'],windowsHide:true});
   const exited=once(child,'exit');let output='',errors='';child.stderr.on('data',chunk=>errors+=chunk);
@@ -64,7 +64,7 @@ for(const crlf of [false,true])test(`real Node browser startup and all static as
    child.stdout.on('data',chunk=>{output+=chunk;const match=output.match(/http:\/\/127\.0\.0\.1:\d+\/#token=/);if(match)resolve(match[0].split('#')[0]);});
    child.once('exit',()=>reject(new Error('Startup ended: '+errors)));
   });
-  for(const asset of ['','app.js','style.css','AiDiy_diag.png']){const response=await fetch(address+asset);assert.equal(response.status,200);assert.ok((await response.text()).length>0);}
+  for(const asset of ['','app.js','style.css','AiDiy_diag.png','memo.html','memo.js','memo.css']){const response=await fetch(address+asset);assert.equal(response.status,200);assert.ok((await response.text()).length>0);}
   assert.equal((await fetch(address+'api/'+encodeURIComponent('キー設定'))).status,401);
   // Windows の kill(SIGTERM) は正常終了処理を通さないため、既存の停止通知を使う。
   if(process.platform==='win32')await writeFile(path.join(root,'.stop-request'),randomBytes(16).toString('hex'));
@@ -83,6 +83,6 @@ test('CLI errors report actionable categories without echoing arguments or file 
   assert.match(await run(['--PRIVATE']),/起動引数/);
   const app=path.join(root,'static/app.js'),before=await readFile(app);await writeFile(app,'PRIVATE');
   assert.match(await run(['--no-open']),/Vue UI/);await writeFile(app,before);
-  await writeFile(path.join(root,'診断/catalog.json'),'PRIVATE');assert.match(await run(['--no-open']),/catalog.json/);
+  await writeFile(path.join(root,'diag/診断/catalog.json'),'PRIVATE');assert.match(await run(['--no-open']),/catalog.json/);
  }finally{await cleanup(root);}
 });

@@ -12,22 +12,22 @@ import {spawn} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
-import {browserMode,desktopBinary,openDesktop,closeDesktop,readDesktopDisplay} from '../起動/desktop.mjs';
-import miniWindow from '../起動/ミニ表示.cjs';
-import microWindow from '../起動/マイクロ表示.cjs';
-import resizeEffect from '../起動/サイズ切替.cjs';
-import normalSize from '../起動/通常窓サイズ.cjs';
-import displayPosition from '../起動/表示切替位置.cjs';
-import closeWindow from '../起動/終了確認.cjs';
-import macMenu from '../起動/MacOS-Menu.cjs';
+import {browserMode,desktopBinary,openDesktop,closeDesktop,readDesktopDisplay} from '../diag/起動/desktop.mjs';
+import miniWindow from '../diag/起動/ミニ表示.cjs';
+import microWindow from '../diag/起動/マイクロ表示.cjs';
+import resizeEffect from '../diag/起動/サイズ切替.cjs';
+import normalSize from '../diag/起動/通常窓サイズ.cjs';
+import displayPosition from '../diag/起動/表示切替位置.cjs';
+import closeWindow from '../diag/起動/終了確認.cjs';
+import macMenu from '../diag/起動/MacOS-Menu.cjs';
 import panelCollapse from '../../frontend_ide/デスクトップ/パネル折り畳み.cjs';
 import codeDrag from '../../frontend_ide/デスクトップ/code-drag.cjs';
 import windowPins from '../../frontend_ide/デスクトップ/最前面ピン.cjs';
 const url='http://127.0.0.1:1234/#token='+'a'.repeat(43);
 function childFixture(){const child=new EventEmitter();child.stderr=new EventEmitter();child.send=()=>{};child.kill=()=>{};return child;}
 async function mainFixture({sizeEffects=resizeEffect,opening,load,toolsOpen=false,primary=true,displayMatching,workArea={x:0,y:28,width:1920,height:1052},platform='win32',startStatus={終了時停止あり:false},confirmClose=async()=>({response:1}),selectFolder=async()=>({canceled:true,filePaths:[]})}={}){
- const source=await readFile(new URL('../起動/electron-main.cjs',import.meta.url),'utf8');
- const moves=[],iconMenus=[],directories=[];
+ const source=await readFile(new URL('../diag/起動/electron-main.cjs',import.meta.url),'utf8');
+ const moves=[],iconMenus=[],directories=[],memoRequests=[];
  const profile=path.posix.join('/fixture/project','_AIDIY','aidiy_diag','electron');
  const stdin=Readable.from([]),proc=new EventEmitter(),app=new EventEmitter(),policy={},sent=[],exits=[],handlers={},scripts=[],openings=[],dialogs=[];
  Object.assign(proc,{stdin,pid:42,platform,connected:true,send:(message,callback)=>{sent.push(message);callback?.();}});
@@ -40,8 +40,8 @@ async function mainFixture({sizeEffects=resizeEffect,opening,load,toolsOpen=fals
  const Menu={buildFromTemplate:items=>items,setApplicationMenu(menu){app.menu=menu;}};
  const session={fromPartition(name){assert.ok(!name.startsWith('persist:'));return {setPermissionRequestHandler(fn){policy.permission=fn;},setPermissionCheckHandler(fn){policy.check=fn;},webRequest:{onBeforeRequest(fn){policy.request=fn;}}};}};
  class Window extends EventEmitter {constructor(value){super();options=value;win=this;this.webContents=new EventEmitter();this.webContents.mainFrame={};this.webContents.isDestroyed=()=>false;this.webContents.send=(channel,state)=>{this.pinMessage={channel,state};};this.webContents.executeJavaScript=async script=>{scripts.push(script);};this.webContents.setWindowOpenHandler=fn=>{policy.window=fn;};}isDestroyed(){return !!this.destroyed;}isVisible(){return false;}isMinimized(){return !!this.minimized;}isFullScreen(){return false;}isFocused(){return true;}isMaximized(){return !!this.maximized;}maximize(){this.maximized=true;}unmaximize(){this.maximized=false;}minimize(){this.minimized=true;}close(){const event={preventDefault(){this.prevented=true;}};this.emit('close',event);if(!event.prevented)this.closed=true;}getBounds(){return {...this.getNormalBounds()};}getNormalBounds(){return this.bounds||{x:150,y:100,width:options.width,height:options.height};}getMinimumSize(){return this.minimum||[420,320];}isResizable(){return this.resizable!==false;}setResizable(value){this.resizable=value;}setIgnoreMouseEvents(){}isMaximizable(){return true;}setMinimumSize(...value){this.minimum=value;}setMaximizable(value){this.maximizable=value;}setBounds(value){this.bounds=value;}isAlwaysOnTop(){return !!this.top;}setAlwaysOnTop(value){this.top=value;}setMenuBarVisibility(){}show(){this.shown=true;}async loadURL(value){loaded=value;this.webContents.emit('did-start-loading');await load?.();}}
- vm.runInNewContext(source,{__dirname:'/fixture/project/backend_diag/起動',require:id=>id==='../../frontend_ide/デスクトップ/パネル折り畳み.cjs'?panelCollapse:id==='../../frontend_ide/デスクトップ/code-drag.cjs'?codeDrag:id==='node:path'?path.posix:id==='node:fs'?{mkdirSync:(folder,options)=>{assert.equal(options.recursive,true);directories.push(folder);}}:id==='../../frontend_ide/host/scripts/project-storage.cjs'?{programDataDirectory:(project,program,root,children)=>{assert.equal(project,'/fixture/project');assert.equal(root,project);assert.equal(program,'aidiy_diag');return path.posix.join(project,'_AIDIY',program,...children);},preparePrivateDirectory:folder=>directories.push(folder)}:id==='../ui/src/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./表示切替位置.cjs'?displayPosition:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea}),getDisplayMatching:bounds=>displayMatching?displayMatching(bounds):({workArea})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
- return {stdin,proc,app,policy,sent,exits,handlers,scripts,openings,dialogs,moves,iconMenus,get options(){return options;},get win(){return win;},get loaded(){return loaded;}};
+ vm.runInNewContext(source,{__dirname:'/fixture/project/backend_diag/diag/起動',require:id=>id==='../../memo/ウィンドウ.cjs'?{メモ窓を作成:()=>({open:async(createNew=false)=>{memoRequests.push(createNew);return true;},closeForParent:async()=>true})}:id==='../../../frontend_ide/デスクトップ/パネル折り畳み.cjs'?panelCollapse:id==='../../../frontend_ide/デスクトップ/code-drag.cjs'?codeDrag:id==='node:path'?path.posix:id==='node:fs'?{mkdirSync:(folder,options)=>{assert.equal(options.recursive,true);directories.push(folder);}}:id==='../../../frontend_ide/host/scripts/project-storage.cjs'?{programDataDirectory:(project,program,root,children)=>{assert.equal(project,'/fixture/project');assert.equal(root,project);assert.equal(program,'aidiy_diag');return path.posix.join(project,'_AIDIY',program,...children);},preparePrivateDirectory:folder=>directories.push(folder)}:id==='../ui/components/導入状況/公式サイト.json'?{python:'https://www.python.org/'}:id==='./アイコンメニュー.cjs'?{アイコンメニューを作成:parent=>{const menu={parent,calls:[],open(items,send){this.calls.push({items,send});}};iconMenus.push(menu);return menu;}}:id==='./MacOS-Menu.cjs'?{...macMenu,Macメニューを設定:options=>macMenu.Macメニューを設定({...options,platform})}:id==='../../../frontend_ide/デスクトップ/長押し窓移動.cjs'?{attachNativeWindowMove:(window,screen,kind)=>moves.push({window,screen,kind})}:id==='../../../frontend_ide/デスクトップ/最前面ピン.cjs'?windowPins:id==='./ポート接続.cjs'?{checkPort:async port=>{assert.equal(port,8095);return toolsOpen;}}:id==='./マイクロ表示.cjs'?microWindow:id==='./ミニ表示.cjs'?miniWindow:id==='./表示切替位置.cjs'?displayPosition:id==='./サイズ切替.cjs'?sizeEffects:id==='./標準タイトル操作.cjs'?{標準タイトル操作を取り付け:()=>({cancel(){}})}:id==='./通常窓サイズ.cjs'?{通常窓サイズを作成:(window,screen)=>normalSize.通常窓サイズを作成(window,screen,platform)}:id==='./終了確認.cjs'?{...closeWindow,起動状態を読む:async()=>structuredClone(startStatus)}:id==='../../../frontend_ide/host/scripts/window-opening.cjs'?{拡大表示:async(Constructor,window,options)=>{openings.push({Constructor,window,options});if(opening)return opening(window);window.show();return true;}}:({app,BrowserWindow:Window,session,Menu,shell:{openExternal:async target=>openings.push({external:target})},screen:{getPrimaryDisplay:()=>({workArea}),getDisplayMatching:bounds=>displayMatching?displayMatching(bounds):({workArea})},dialog:{showOpenDialog:selectFolder,showMessageBox:(parent,options)=>{dialogs.push({parent,options});return confirmClose();}},ipcMain:{handle:(name,fn)=>handlers[name]=fn}}),process:proc,URL,setTimeout:()=>({unref(){}}),clearTimeout(){}});
+ return {stdin,proc,app,policy,sent,exits,handlers,scripts,openings,dialogs,moves,iconMenus,memoRequests,get options(){return options;},get win(){return win;},get loaded(){return loaded;}};
 }
 test('desktop default; explicit browser, Codespaces, headless remain Node-only',()=>{
  assert.equal(browserMode({}, {DISPLAY:':1'},'linux'),false);assert.equal(browserMode({}, {},'win32'),false);
@@ -230,7 +230,7 @@ test('mixed-case Windows Node bootstrap environment cannot change Electron mode'
 
 test('frameless controls are fixed, main-frame-only and preserve sandbox',async()=>{
  const f=await mainFixture();f.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));
- assert.equal(f.options.frame,false);assert.equal(f.options.webPreferences.preload,path.posix.join('/fixture/project/backend_diag/起動','preload.cjs'));
+ assert.equal(f.options.frame,false);assert.equal(f.options.webPreferences.preload,path.posix.join('/fixture/project/backend_diag/diag/起動','preload.cjs'));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
  control({...event,senderFrame:{}},'close');assert.equal(f.win.closed,undefined);
  control({...event,sender:{}},'close');assert.equal(f.win.closed,undefined);
@@ -238,9 +238,10 @@ test('frameless controls are fixed, main-frame-only and preserve sandbox',async(
  assert.equal(control(event,'startMini',{width:100}),false);
  control(event,'openFile');assert.equal(f.win.closed,undefined);
  control(event,'minimize');assert.equal(f.win.minimized,true);f.win.minimized=false;await control(event,'maximize');assert.equal(control(event,'isMaximized'),true);await control(event,'maximize');assert.equal(control(event,'isMaximized'),false);control(event,'close');await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.closed,true);assert.equal(f.dialogs.length,0);
- const exposed={};vm.runInNewContext(await readFile(new URL('../起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:{invoke:(...args)=>args}})});
- assert.deepEqual(Object.keys(exposed.aidiyWindow).sort(),['beginDisplay','beginMicroMove','beginWindowMove','close','collapsePanel','customNormalTitle','endMicroMove','endWindowMove','expandMicro','finishDisplay','finishMini','getPinState','initialMini','isMaximized','maximize','minimize','moveMicro','moveWindow','onMicroMenu','onPinState','resizeMicroLabel','resizeMini','selectProject','showMicroMenu','startMicro','startMini','togglePin']);assert.deepEqual(Array.from(exposed.aidiyWindow.close()),['diag:window','close']);
+ const exposed={};vm.runInNewContext(await readFile(new URL('../diag/起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:{invoke:(...args)=>args}})});
+ assert.deepEqual(Object.keys(exposed.aidiyWindow).sort(),['beginDisplay','beginMicroMove','beginWindowMove','close','collapsePanel','customNormalTitle','endMicroMove','endWindowMove','expandMicro','finishDisplay','finishMini','getPinState','initialMini','isMaximized','maximize','minimize','moveMicro','moveWindow','onMicroMenu','onPinState','openMemo','resizeMicroLabel','resizeMini','selectProject','showMicroMenu','startMicro','startMini','togglePin']);assert.deepEqual(Array.from(exposed.aidiyWindow.close()),['diag:window','close']);
  assert.equal(exposed.aidiyWindow.initialMini,false);
+ assert.deepEqual(Array.from(exposed.aidiyWindow.openMemo(true)),['diag:window','openMemo',true]);assert.equal(await exposed.aidiyWindow.openMemo('true'),false);
  assert.deepEqual(Array.from(exposed.aidiyWindow.selectProject()),['diag:window','selectProject']);
  assert.deepEqual(Array.from(exposed.aidiyWindow.finishMini()),['diag:window','finishMini']);assert.deepEqual(Array.from(exposed.aidiyWindow.startMini(true)),['diag:window','startMini',true]);assert.equal(await exposed.aidiyWindow.startMini({width:100}),false);
  assert.deepEqual(Array.from(exposed.aidiyWindow.resizeMini(186)),['diag:window','resizeMini',186]);
@@ -299,7 +300,7 @@ test('closed window or renderer failure during expansion never reports shown',as
 });
 test('load failure skips expansion and content fade is desktop-only without an OS-motion override',async()=>{
  const f=await mainFixture({load:async()=>{throw Error('SECRET');}});f.proc.emit('message',{type:'diag-start',url});await flush();assert.equal(f.openings.length,0);assert.equal(f.sent.at(-1).code,'LOAD');
- const css=await readFile(new URL('../ui/src/style.css',import.meta.url),'utf8');
+ const css=await readFile(new URL('../diag/ui/style.css',import.meta.url),'utf8');
  assert.match(css,/\.desktop-window #app\{animation:startup-fade-in \.45s ease-out both\}/);
  assert.match(css,/\.desktop-opening #app\{opacity:0;animation:none\}/);
  assert.doesNotMatch(css,/prefers-reduced-motion/);
@@ -322,7 +323,7 @@ test('Diag pin is default OFF, main-frame-only and survives normal/mini transiti
 
 test('Diag preload pin subscriptions validate payloads and return an exact unsubscriber',async()=>{
  const ipc=new EventEmitter(),exposed={},calls=[];ipc.invoke=(...args)=>{calls.push(args);return Promise.resolve({pinned:false,locked:false});};
- vm.runInNewContext(await readFile(new URL('../起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:ipc})});
+ vm.runInNewContext(await readFile(new URL('../diag/起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:ipc})});
  const received=[],api=exposed.aidiyWindow,cancel=api.onPinState(value=>received.push(value));
  for(const value of [null,{},true,{pinned:'true',locked:false},{pinned:true}])ipc.emit('diag:pin-state',{},value);
  assert.equal(received.length,0);ipc.emit('diag:pin-state',{}, {pinned:true,locked:false,extra:'ignored'});
@@ -345,13 +346,15 @@ test('icon-menu IPC requires the main frame and icon mode, bounds its payload an
   assert.equal(control(event,'microMenu',items),true);assert.equal(menu.calls.length,1);assert.deepEqual(menu.calls[0].items,items);
   const action={type:'launch',key:'app:browser'};menu.calls[0].send(action);
   assert.deepEqual(f.win.pinMessage,{channel:'diag:micro-menu',state:action});
+  menu.calls[0].send('memo');assert.equal(f.memoRequests.at(-1),true);assert.deepEqual(f.win.pinMessage,{channel:'diag:micro-menu',state:action});
+  const count=f.memoRequests.length;assert.equal(control(event,'openMemo','true'),false);assert.equal(f.memoRequests.length,count);await control(event,'openMemo',true);assert.equal(f.memoRequests.length,count+1);
  }finally{control(event,'startMicro',false);}
  assert.equal(control(event,'microMenu',items),false);
 });
 
 test('Diag preload icon-menu subscriptions filter actions and unsubscribe without exposing arbitrary IPC',async()=>{
  const ipc=new EventEmitter(),exposed={},calls=[];ipc.invoke=(...args)=>{calls.push(args);return Promise.resolve(true);};
- vm.runInNewContext(await readFile(new URL('../起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:ipc})});
+ vm.runInNewContext(await readFile(new URL('../diag/起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[]},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:ipc})});
  const api=exposed.aidiyWindow,items=[{key:'app:browser',label:'Browser'}],received=[];
  for(const value of [null,{},'app:browser'])assert.equal(await api.showMicroMenu(value),false);
  assert.equal(calls.length,0);assert.equal(await api.showMicroMenu(items),true);assert.deepEqual(calls,[['diag:window','microMenu',items]]);
@@ -502,7 +505,7 @@ test('標準最大化の準備中は連打をまとめ、再読込・最小化�
 });
 test('preload標準タイトル能力はWindowsだけに固定公開し汎用IPCを増やさない',async()=>{
  for(const platform of ['win32','linux','darwin']){
-  const exposed={};vm.runInNewContext(await readFile(new URL('../起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[],platform},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:{invoke:()=>{throw Error('capability must not invoke IPC');}}})});
+  const exposed={};vm.runInNewContext(await readFile(new URL('../diag/起動/preload.cjs',import.meta.url),'utf8'),{process:{argv:[],platform},require:()=>({contextBridge:{exposeInMainWorld:(name,api)=>exposed[name]=api},ipcRenderer:{invoke:()=>{throw Error('capability must not invoke IPC');}}})});
   assert.equal(exposed.aidiyWindow.customNormalTitle,platform==='win32');assert.equal(Object.isFrozen(exposed.aidiyWindow),true);
  }
 });

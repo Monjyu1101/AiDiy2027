@@ -9,9 +9,9 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readFile,readdir,rm,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {modelsInfo,writeModelsInfo as saveModelsInfo,installedCodeClis,openCodeModels,MODEL_PROVIDER_IDS,modelsInfoFile} from '../モデル情報/models_info.mjs';
+import {modelsInfo,writeModelsInfo as saveModelsInfo,installedCodeClis,openCodeModels,MODEL_PROVIDER_IDS,modelsInfoFile} from '../diag/モデル情報/models_info.mjs';
 import {probe} from '../runtime/model_probe.mjs';
-import {createHandler} from '../diag_main.mjs';
+import {createHandler} from '../diag/diag_main.mjs';
 
 const reads=[];
 const read=async name=>{reads.push(name);throw Error('must not read model configuration: '+name);};
@@ -154,7 +154,7 @@ test('Grok PASS (fixed candidates) is saved with its source',async()=>{
  assert.equal(info.状態,'PASS');assert.match(info.chat.取得元,/固定候補/);assert.deepEqual(info.chat.モデル.map(row=>row.model_id),['grok-4.7','grok-4.6']);
 });
 test('live candidates use API dates then model ID dates; no configuration, proposals or voices',async()=>{
- const {liveDate,liveLabels}=await import('../モデル情報/models_info.mjs');
+ const {liveDate,liveLabels}=await import('../diag/モデル情報/models_info.mjs');
  assert.equal(liveDate('x','2026/06/24'),'2026/06/24');
  assert.equal(liveDate('gemini-2.5-flash-native-audio-preview-12-2025',null,undefined),'2025/12/--');
  assert.equal(liveDate('model-2026-03-05',null,undefined),'2026/03/05');
@@ -173,7 +173,7 @@ test('live candidates use API dates then model ID dates; no configuration, propo
  assert.deepEqual(failed.live.openai_live.models,{});assert.deepEqual(failed.chat.openai_chat.models,{});assert.deepEqual(failed.chat.モデル,[]);
 });
 test('only Grok and local candidates are fixed in aidiy_diag',async()=>{
- const {FIXED_MODELS}=await import('../モデル情報/models_info.mjs');
+ const {FIXED_MODELS}=await import('../diag/モデル情報/models_info.mjs');
  const reads=[];await modelsInfo({id:'claude',名前:'Claude'},ok(),{read:async name=>{reads.push(name);throw Error(name);},now});
  assert.deepEqual(reads,[]);
  assert.deepEqual(Object.keys(FIXED_MODELS),['grok_cli','local_chat']);

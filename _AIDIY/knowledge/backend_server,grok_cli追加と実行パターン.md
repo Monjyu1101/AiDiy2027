@@ -86,7 +86,7 @@ if self.code_ai == "grok_cli":
 
 ## モデル候補
 
-候補の正本: `backend_diag/モデル情報/models_info.mjs` の `FIXED_MODELS.grok_cli`。利用可能性はログイン済みアカウントの `grok models` で確認する。
+候補の正本: `backend_diag/diag/モデル情報/models_info.mjs` の `FIXED_MODELS.grok_cli`。利用可能性はログイン済みアカウントの `grok models` で確認する。
 
 現行の候補は `grok-4.7` と `grok-4.6` の 2 つ（設定画面には `auto` も表示）。
 公開済みかは OpenRouter の `x-ai/` 一覧に載っているかで判断する（`~x-ai/grok-latest` の参照先が最新）。2026-10-15 時点で `grok-4.8` は発表のみで未掲載のため候補に含めない。

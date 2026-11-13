@@ -1,6 +1,6 @@
 # Electronウィンドウ基本方針
 
-> 文書: `共通,Electronウィンドウ基本方針.md` | 実装: `frontend_ide/デスクトップ/長押し窓移動.cjs`, `frontend_ide/デスクトップ/code-drag.cjs`, `frontend_ide/host/scripts/window-opening.cjs`, `frontend_ide/desktop.cjs`, `frontend_ide/デスクトップ/panel-windows.cjs`, `frontend_avatar/electron/main.ts`, `backend_diag/起動/electron-main.cjs`, `frontend_channels/discord/panel/desktop.cjs`
+> 文書: `共通,Electronウィンドウ基本方針.md` | 実装: `frontend_ide/デスクトップ/長押し窓移動.cjs`, `frontend_ide/デスクトップ/code-drag.cjs`, `frontend_ide/host/scripts/window-opening.cjs`, `frontend_ide/desktop.cjs`, `frontend_ide/デスクトップ/panel-windows.cjs`, `frontend_avatar/electron/main.ts`, `backend_diag/diag/起動/electron-main.cjs`, `frontend_channels/discord/panel/desktop.cjs`
 
 ## このメモを使う場面
 
@@ -129,7 +129,7 @@ AiDiy が所有する Electron の操作画面は、**通常画面の背景を�
 
 Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明窓はnativeタイトルのダブルクリック最大化に制約があるため、単に疑似最大化を撤去しない（[Electron公式の透明窓の制約](https://www.electronjs.org/docs/latest/tutorial/custom-window-styles)）。Avatar も透明窓なので、nativeタイトルへの委譲だけでWindowsの3操作を保証しない。
 
-- **Windows標準パネル**：`backend_diag/起動/標準タイトル操作.cjs` がmainの入力イベントと実カーソルDIPを使い、`通常窓サイズ.cjs` の同じ保存bounds・最大化状態で処理する。OSから届く `clickCount` でダブルクリックを判定し、□ボタンと同じ最大化・復元経路へ送る。タイトルの押下だけでは最大化を解除せず、移動開始時に通常サイズへ戻し、押下位置の水平比率・タイトル内の縦位置をポインターへ合わせる。
+- **Windows標準パネル**：`backend_diag/diag/起動/標準タイトル操作.cjs` がmainの入力イベントと実カーソルDIPを使い、`通常窓サイズ.cjs` の同じ保存bounds・最大化状態で処理する。OSから届く `clickCount` でダブルクリックを判定し、□ボタンと同じ最大化・復元経路へ送る。タイトルの押下だけでは最大化を解除せず、移動開始時に通常サイズへ戻し、押下位置の水平比率・タイトル内の縦位置をポインターへ合わせる。
 - 標準タイトルの印はpreloadの固定readonly能力値 `customNormalTitle` によってWindowsだけへ付ける。CSSを `no-drag` にしてmainの判定へ統一し、同じ領域を500ms背景移動から除外する。任意のrenderer座標・窓ID・新たな汎用IPCは公開しない。
 - **Mac / Linux標準パネル**と**ミニパネル**のタイトルは既存nativeドラッグを維持する。ミニは内容に合わせる特殊寸法と最大化禁止を維持し、標準へ戻すと通常寸法を現在の左肩から広げる。最大化前のサイズを保つが、表示切替後に自動で再最大化しない。
 - **アイコン表示**は既存の透明領域・円形配置・専用移動・最前面管理を維持する。標準のタイトル操作は適用しない。
@@ -144,7 +144,7 @@ Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明�
 
 再取得・再読込は `frontend_web/src/components/AiDiy/compornents/AIファイル.vue` の緑の **↺** に合わせる。通常は背景 `#22c55e`・枠 `#16a34a`・白い文字、hover は背景 `#34d399`・枠 `#22c55e`、disabled は背景 `#1f8a4b`・枠 `#166a39`・opacity `0.4` とする。記号だけのボタンは24px角・記号18pxで、hover時に1.2倍へ拡大する。文字付き操作は説明と既存の配置を保ち、記号だけを拡大する。
 
-- IDE・Explorer・Viewer・Browser・検索／履歴は `frontend_ide/src/components/共通表示/再読込ボタン.vue`、Avatar は `frontend_avatar/src/components/再読込ボタン.vue`、Diag は `backend_diag/ui/src/components/共通表示/再取得ボタン.css` を使う。2D・別窓のテーマや本文の文字サイズで色・記号の大きさを上書きしない。
+- IDE・Explorer・Viewer・Browser・検索／履歴は `frontend_ide/src/components/共通表示/再読込ボタン.vue`、Avatar は `frontend_avatar/src/components/再読込ボタン.vue`、Diag は `backend_diag/diag/ui/components/共通表示/再取得ボタン.css` を使う。2D・別窓のテーマや本文の文字サイズで色・記号の大きさを上書きしない。
 - 記号は `aria-hidden` とし、ボタンには操作名を付ける。既存の読込中・未接続・編集中などの無効条件と実行処理は維持する。Browser は読み込み中に停止操作へ切り替わり、停止を無効化しない。
 - 再起動・再接続・再導入・ループ設定・画面切替は再取得と区別する。操作がない画面へ追加せず、削除済みのDiagミニCLI・Explorer右クリックの再取得も復活させない。ピン・閉じる・時刻検索の配置は変えない。
 - 変更後は各Vueのコンパイルと配布物の一致に加え、通常・hover・disabled、繰り返し操作、Browserの停止切替、2D・別窓の表示を確認する。コンパイルや合成状態の検査を実画面の確認として扱わない。
@@ -183,7 +183,7 @@ Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明�
 
 | 対象 | 長押しの取り付け | 表示開始 |
 |------|------------------|----------|
-| aidiy_diag 通常・ミニ | `backend_diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
+| aidiy_diag 通常・ミニ | `backend_diag/diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
 | Avatar 全12種類 | `createBaseWindow`、`openSettingsWindow` | `electron/main.ts` の `ウィンドウ表示` に集約。読込待ち、連打抑制、非表示要求を共用 |
 | Navi / Console / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
 | Explorer / 比較・Viewer / 軌跡の別窓 | `frontend_ide/デスクトップ/panel-windows.cjs` の `created` | `show` から共通 `拡大表示`。元DOM・状態・表示の保持を崩さない |
