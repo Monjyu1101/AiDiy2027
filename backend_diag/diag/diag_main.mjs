@@ -121,7 +121,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
       const content = Buffer.isBuffer(body) ? body : Buffer.from(JSON.stringify(body));
       res.writeHead(status, {'Content-Type':type,'Content-Length':content.length,'Cache-Control':'no-store',
         'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',
-        'Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"});
+        'Content-Security-Policy':(route==='memo.html'?"img-src 'self' data:; ":'')+"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; media-src 'self' blob:; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"});
       res.end(content);
     };
     let route;

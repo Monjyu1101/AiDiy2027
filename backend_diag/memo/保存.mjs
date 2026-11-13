@@ -7,6 +7,7 @@ import {lstat,realpath,readdir,mkdir,open,rename,unlink,link,writeFile} from 'no
 import {constants} from 'node:fs';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
+import {画像を検証,最大メモバイト数} from './画像.mjs';
 const 最大バイト数=1024*1024;
 const 色一覧=new Set(['yellow','pink','blue','green','purple']);
 const fail=(message,status=400)=>Object.assign(Error(message),{status});
@@ -14,9 +15,9 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 const 有効名=name=>typeof name==='string'&&name.length<=240&&!/[\\/\x00-\x1f]/.test(name)&&!name.startsWith('.')&&/\.(?:memo\.json|md|txt)$/i.test(name);
 async function 安全読取(file){
  const stat=await lstat(file);
- if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1||stat.size>最大バイト数)throw fail('通常のメモファイルではないか、1 MBを超えています。');
+ if(!stat.isFile()||stat.isSymbolicLink()||stat.nlink!==1||stat.size>最大メモバイト数)throw fail('通常のメモファイルではないか、容量上限を超えています。');
  const handle=await open(file,constants.O_RDONLY|(constants.O_NOFOLLOW||0));
- try{const now=await handle.stat();if(now.ino!==stat.ino||now.dev!==stat.dev)throw fail('ファイルが変更されました。再読込してください。',409);const data=await handle.readFile();if(data.length>最大バイト数)throw fail('メモが1 MBを超えています。');return data;}finally{await handle.close();}
+ try{const now=await handle.stat();if(now.ino!==stat.ino||now.dev!==stat.dev)throw fail('ファイルが変更されました。再読込してください。',409);const data=await handle.readFile();if(data.length>最大メモバイト数)throw fail('メモの容量上限を超えています。');return data;}finally{await handle.close();}
 }
 const textFile=id=>!/\.memo\.json$/i.test(id);
 const metadataFile=(directory,id)=>path.join(directory,'.memo-'+hash(id)+'.json');
@@ -31,14 +32,16 @@ function 表示(data,id,保存先,metadata){
  const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(data);let fields;
  if(!textFile(id)){
   fields=JSON.parse(text);
-  if(fields?.version!==1||Object.keys(fields).some(key=>!['version','タイトル','本文','色','位置','サイズ'].includes(key))||typeof fields.タイトル!=='string'||typeof fields.本文!=='string'||!色一覧.has(fields.色))throw fail('メモ形式を確認してください。');
+  if(fields?.version!==1||Object.keys(fields).some(key=>!['version','タイトル','本文','色','位置','サイズ','画像'].includes(key))||typeof fields.タイトル!=='string'||typeof fields.本文!=='string'||!色一覧.has(fields.色))throw fail('メモ形式を確認してください。');
  }else{
   const extra=metadata?JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(metadata)):{};
-  if(metadata&&(extra.version!==1||Object.keys(extra).some(key=>!['version','色','位置','サイズ'].includes(key))||!色一覧.has(extra.色)))throw fail('メモの表示設定を確認してください。');
+  if(metadata&&(extra.version!==1||Object.keys(extra).some(key=>!['version','色','位置','サイズ','画像'].includes(key))||!色一覧.has(extra.色)))throw fail('メモの表示設定を確認してください。');
   fields={タイトル:id.replace(/\.(md|txt)$/i,''),本文:text,色:'yellow',...extra};
  }
+ 画像を検証(fields.画像);
+ if(Buffer.byteLength(fields.本文)>最大バイト数)throw fail('本文は1 MB未満で入力してください。');
  配置確認(fields);
- return {id,保存先,タイトル:fields.タイトル,本文:fields.本文,色:fields.色,...(fields.位置?{位置:fields.位置}:{}),...(fields.サイズ?{サイズ:fields.サイズ}:{}),形式:textFile(id)?'text':'memo',revision:revision(data,metadata)};
+ return {id,保存先,タイトル:fields.タイトル,本文:fields.本文,...(fields.画像?{画像:fields.画像}:{}),色:fields.色,...(fields.位置?{位置:fields.位置}:{}),...(fields.サイズ?{サイズ:fields.サイズ}:{}),形式:textFile(id)?'text':'memo',revision:revision(data,metadata)};
 }
 async function メモ読取(directory,id,source,expected){
  const data=await 安全読取(path.join(directory,id));let metadata;
@@ -47,10 +50,11 @@ async function メモ読取(directory,id,source,expected){
  return {data,metadata,note:表示(data,id,source,metadata)};
 }
 function 入力(body,save){
- if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!(save?['保存先','id','タイトル','本文','色','revision','位置','サイズ']:['保存先','タイトル','本文','色','位置','サイズ','clientId']).includes(key)))throw fail('メモの入力が不正です。');
+ if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!(save?['保存先','id','タイトル','本文','色','revision','位置','サイズ','画像']:['保存先','タイトル','本文','色','位置','サイズ','clientId','画像']).includes(key)))throw fail('メモの入力が不正です。');
  if(typeof body.保存先!=='string'||typeof body.タイトル!=='string'||body.タイトル.length>200||typeof body.本文!=='string'||Buffer.byteLength(body.本文)>最大バイト数-4096||!色一覧.has(body.色))throw fail('タイトルは200文字以内、本文は1 MB未満で入力してください。');
  if(save&&(!有効名(body.id)||typeof body.revision!=='string'||!/^[a-f0-9]{64}$/.test(body.revision)))throw fail('保存対象が不正です。');
- if(!save&&!body.本文.trim()&&!body.タイトル.trim())throw fail('空の付箋は保存しません。');
+ 画像を検証(body.画像);
+ if(!save&&!body.本文.trim()&&!body.タイトル.trim()&&!body.画像)throw fail('空の付箋は保存しません。');
  if(!save&&body.clientId!==undefined&&(typeof body.clientId!=='string'||!/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(body.clientId)))throw fail('付箋の作成IDが不正です。');
  配置確認(body);
  // JSON のエスケープで本文の実バイト数より大きくなるため、生成前にも検査する。
@@ -124,14 +128,15 @@ export function createMemoStore({launchRoot,getLaunchRoot=async()=>launchRoot,ge
   const textFormat=textFile(id);
   if(textFormat&&body.タイトル!==before.note.タイトル)throw fail('既存テキストメモのタイトルはファイル名です。');
   const 位置=body.位置??before?.note.位置,サイズ=body.サイズ??before?.note.サイズ;
-  const display={色:body.色,...(位置?{位置}:{}),...(サイズ?{サイズ}:{})};
+  const 画像=body.画像===undefined?before?.note.画像:body.画像;
+  const display={色:body.色,...(画像?{画像}:{}),...(位置?{位置}:{}),...(サイズ?{サイズ}:{})};
   const data=Buffer.from(textFormat?body.本文:JSON.stringify({version:1,タイトル:body.タイトル,本文:body.本文,...display},null,2)+'\n');
   const metadata=textFormat?Buffer.from(JSON.stringify({version:1,...display},null,2)+'\n'):undefined;
-  if(data.length>最大バイト数||(metadata&&metadata.length>最大バイト数))throw fail('保存形式に変換したメモが1 MBを超えています。');
+  if(data.length>最大メモバイト数||(metadata&&metadata.length>最大メモバイト数))throw fail('保存形式に変換したメモが容量上限を超えています。');
   async function existingCreation(){
    try{
     const existing=await メモ読取(directory,id,source.id),a=existing.note,b=表示(data,id,source.id);
-    const same=['タイトル','本文','色'].every(key=>a[key]===b[key])&&['位置','サイズ'].every(key=>a[key]===undefined?b[key]===undefined:b[key]!==undefined&&Object.keys(a[key]).every(name=>a[key][name]===b[key][name]));
+    const same=['タイトル','本文','色','画像'].every(key=>a[key]===b[key])&&['位置','サイズ'].every(key=>a[key]===undefined?b[key]===undefined:b[key]!==undefined&&Object.keys(a[key]).every(name=>a[key][name]===b[key][name]));
     if(!same)throw fail('同じ作成IDの付箋が別の内容で保存されています。',409);
     return existing.note;
    }catch(error){if(error.code==='ENOENT')return null;throw fail('同じ作成IDの付箋を確認できないか、内容が異なります。',409);}

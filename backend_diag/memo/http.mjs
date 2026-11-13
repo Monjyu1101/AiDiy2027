@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import {fileURLToPath} from 'node:url';
+import {最大メモバイト数} from './画像.mjs';
 import {createMemoStore} from './保存.mjs';
 
 // Diag の共通認証を通過したリクエストだけを受け取る。
@@ -33,7 +34,7 @@ export function createMemoHandler({appLauncher,launchRoot,getLaunchRoot,memoStor
         if(req.headers.origin){try{if(new URL(req.headers.origin).origin!==`http://${req.headers.host}`)return reply(403,{エラー:'同じ画面から操作してください。'});}catch{return reply(403,{エラー:'送信元が不正です。'});}}
         if(String(req.headers['content-type']).split(';')[0]!=='application/json')return reply(400,{エラー:'JSON形式の入力が必要です。'});
         const chunks=[];let size=0;
-        for await(const chunk of req){size+=chunk.length;if(size>2*1024*1024)return reply(413,{エラー:'入力が大きすぎます。'});chunks.push(chunk);}
+        for await(const chunk of req){size+=chunk.length;if(size>最大メモバイト数+4096)return reply(413,{エラー:'入力が大きすぎます。'});chunks.push(chunk);}
         let body;try{body=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks)));}catch{return reply(400,{エラー:'入力JSONが不正です。'});}
         try{
           if(route.endsWith('/プロジェクト')){

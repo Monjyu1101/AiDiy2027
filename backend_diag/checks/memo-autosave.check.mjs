@@ -41,3 +41,13 @@ test('切替は既に始まった作成と後続保存を待つが、失敗・�
  const deferred=fixture({note:seed,delay:1000});deferred.model.edit({本文:'未開始'});assert.equal(await deferred.model.settled(),false);assert.equal(deferred.calls.length,0);deferred.model.dispose();
  let failedCalls=0;const failed=自動保存を作成({note:seed,api:async()=>{failedCalls++;throw Error('offline');}});failed.edit({本文:'保持'});assert.equal(await failed.settled(),false);assert.equal(await failed.settled(),false);assert.equal(failedCalls,1);assert.equal(failed.snapshot().draft.本文,'保持');failed.dispose();
 });
+
+test('image-only memo persists, replacement/removal survive in-flight save and saved empty is retained',async()=>{
+ let resolve;const calls=[];const first=new Promise(r=>resolve=r);
+ const model=自動保存を作成({sourceId:'launch:1',api:async(route,{body})=>{calls.push({route,body});if(calls.length===1)await first;return {...body,id:'image.memo.json',revision:String(calls.length)};}});
+ model.edit({画像:'data:image/png;base64,first'});await Promise.resolve();assert.equal(model.snapshot().blankNew,false);
+ model.edit({画像:'data:image/png;base64,second'});resolve();await model.flush();
+ assert.equal(calls.at(-1).body.画像,'data:image/png;base64,second');
+ model.edit({画像:''});await model.flush();assert.equal(calls.at(-1).body.画像,'');assert.equal(model.snapshot().blankNew,false);
+ model.dispose();
+});

@@ -19,7 +19,7 @@ function メモ一覧を読む(value,scope='normal'){
   const timer=setTimeout(()=>finish(Error('memo timeout')),5000);
   request=http.get(endpoint,{agent:false,headers:{Authorization:'Bearer '+token}},incoming=>{
    response=incoming;if(incoming.statusCode!==200)return finish(Error('memo unavailable'));
-   incoming.on('data',chunk=>{size+=chunk.length;if(size>20*1024*1024)return finish(Error('memo too large'));chunks.push(chunk);});
+   incoming.on('data',chunk=>{size+=chunk.length;if(size>128*1024*1024)return finish(Error('memo too large'));chunks.push(chunk);});
    incoming.on('error',()=>finish(Error('memo unavailable')));incoming.on('aborted',()=>finish(Error('memo unavailable')));
    incoming.on('end',()=>{try{const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(!Array.isArray(data.保存先)||!Array.isArray(data.メモ))throw Error();finish(null,data);}catch{finish(Error('memo unavailable'));}});
   });request.on('error',()=>finish(Error('memo unavailable')));
@@ -36,7 +36,7 @@ function 付箋範囲(note,screen,index=0){
 // renderer が保存APIから受け取った成功結果のみを再読込用snapshotに保持する。
 // このIPCからファイルへは書かず、保存先・既存IDの変更を認めない。
 function 保存済メモは有効(note){
- if(!note||typeof note!=='object'||Array.isArray(note)||Object.keys(note).some(name=>!['id','保存先','タイトル','本文','色','位置','サイズ','形式','revision'].includes(name)))return false;
+ if(!note||typeof note!=='object'||Array.isArray(note)||Object.keys(note).some(name=>!['id','保存先','タイトル','本文','色','位置','サイズ','形式','revision','画像'].includes(name)))return false;
  if(typeof note.id!=='string'||note.id.length>240||note.id.startsWith('.')||/[\\/\x00-\x1f]/.test(note.id)||! /\.(?:memo\.json|md|txt)$/i.test(note.id))return false;
  if(typeof note.保存先!=='string'||note.保存先.length>128||typeof note.タイトル!=='string'||note.タイトル.length>200||typeof note.本文!=='string'||Buffer.byteLength(note.本文)>1024*1024-4096)return false;
  if(!['yellow','pink','blue','green','purple'].includes(note.色)||!['memo','text'].includes(note.形式)||typeof note.revision!=='string'||! /^[a-f0-9]{64}$/.test(note.revision))return false;
@@ -44,7 +44,8 @@ function 保存済メモは有効(note){
   const value=note[name];if(value===undefined)continue;
   if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||Object.keys(value).some(key=>!Object.hasOwn(limits,key))||Object.entries(limits).some(([key,[min,max]])=>!Number.isFinite(value[key])||value[key]<min||value[key]>max))return false;
  }
- return Buffer.byteLength(JSON.stringify(note))<=1024*1024;
+ if(note.画像!==undefined&&(typeof note.画像!=='string'||note.画像.length>7*1024*1024||note.画像&&!/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(note.画像)))return false;
+ return Buffer.byteLength(JSON.stringify(note))<=9*1024*1024;
 }
 function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,readSnapshot=()=>メモ一覧を読む(url),readSystemSnapshot=()=>メモ一覧を読む(url,'system'),onEmpty=()=>{},isStandalone=()=>false}){
  const target=new URL('memo.html',url);target.hash=url.hash;

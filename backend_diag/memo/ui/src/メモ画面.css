@@ -21,3 +21,16 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-add{flex:none;width:24px;height:26px;border:0;background:transparent;color:inherit;font-size:20px;padding:0;cursor:pointer;opacity:0;pointer-events:none}
 .sticky-header:hover .sticky-add,.sticky-add:focus-visible{opacity:1;pointer-events:auto}
 .sticky-add:focus-visible{outline:2px solid #096b84;outline-offset:1px}
+
+.sticky-image-frame{position:relative;flex:1 1 45%;min-height:40px;max-height:55%;margin-top:6px;border:1px solid #29322e55;border-radius:4px;background:#ffffff38;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sticky-image-frame img{display:block;width:100%;height:100%;object-fit:contain;min-height:0}
+.sticky-image-remove{position:absolute;right:3px;top:3px;border:1px solid #29322e55;border-radius:3px;background:#ffffffe0;color:#29322e;width:22px;height:22px;cursor:pointer;opacity:0}
+.sticky-image-frame:hover .sticky-image-remove,.sticky-image-remove:focus-visible{opacity:1}
+
+.sticky-content{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
+.sticky-content .sticky-text{field-sizing:content;min-height:100px;height:100px;overflow:auto}
+@supports(field-sizing:content){.sticky-content .sticky-text{height:auto}}
+.sticky-content .sticky-image-frame{height:180px;min-height:180px;max-height:none;flex:none}
+
+.sticky-move-marker{position:fixed;right:8px;top:8px;z-index:10;pointer-events:none;background:#29322ee8;color:#fff;border-radius:4px;padding:4px 8px;font-size:12px;box-shadow:0 1px 4px #0004}
+.sticky-moving,.sticky-moving input,.sticky-moving textarea{cursor:grabbing!important;user-select:none}

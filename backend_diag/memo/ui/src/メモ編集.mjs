@@ -3,7 +3,7 @@
 export const メモ色 = Object.freeze(['yellow', 'blue', 'green', 'pink', 'purple']);
 export function メモキー(メモ) { return JSON.stringify([メモ.保存先, メモ.id]); }
 export function 編集値(メモ) {
-  return {タイトル:メモ.タイトル || '', 本文:メモ.本文 || '', 色:メモ.色 || 'yellow',...(メモ.位置?{位置:メモ.位置}:{}),...(メモ.サイズ?{サイズ:メモ.サイズ}:{})};
+  return {タイトル:メモ.タイトル || '', 本文:メモ.本文 || '', 色:メモ.色 || 'yellow',...(メモ.画像!==undefined?{画像:メモ.画像}:{}),...(メモ.位置?{位置:メモ.位置}:{}),...(メモ.サイズ?{サイズ:メモ.サイズ}:{})};
 }
 export function 編集開始(メモ) {
   return {...メモ, ...編集値(メモ), 元:JSON.stringify(編集値(メモ)), 保存中:false, エラー:''};

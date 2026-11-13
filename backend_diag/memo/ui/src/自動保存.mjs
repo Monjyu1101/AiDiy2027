@@ -2,9 +2,9 @@
 // Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 const copy=value=>JSON.parse(JSON.stringify(value));
 export function メモ内容(note={}) {
- return {タイトル:note.タイトル||'',本文:note.本文||'',色:note.色||'yellow',...(note.位置?{位置:copy(note.位置)}:{}),...(note.サイズ?{サイズ:copy(note.サイズ)}:{})};
+ return {タイトル:note.タイトル||'',本文:note.本文||'',色:note.色||'yellow',...(note.画像!==undefined?{画像:note.画像}:{}),...(note.位置?{位置:copy(note.位置)}:{}),...(note.サイズ?{サイズ:copy(note.サイズ)}:{})};
 }
-export function 空メモ(note){return !note.タイトル.trim()&&!note.本文.trim();}
+export function 空メモ(note){return !note.タイトル.trim()&&!note.本文.trim()&&!note.画像;}
 export function 自動保存を作成({api,note=null,sourceId,delay=0,changed=()=>{},identity=()=>{},clientId=globalThis.crypto.randomUUID()}){
  let draft=メモ内容(note||{}),saved=note?JSON.stringify(draft):null,record=note?{id:note.id,revision:note.revision,保存先:note.保存先}:null;
  let timer,flight=null,error=null,disposed=false,pendingCreate=null,deleted=false,removing=null;
