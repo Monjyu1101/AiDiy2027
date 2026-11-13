@@ -11,11 +11,11 @@ const {release}=require('node:os');
 const glass=process.platform==='win32'&&Number(release().split('.')[2])>=22621;
 function icon(key){
  const [kind,id]=key.split(':');
- const name=kind==='cli'?`CLI_${id}.${id==='aidiy_hermes'?'png':'svg'}`:id==='chrome'?'Chrome.svg':`AiDiy_${id}.png`;
+ const name=kind==='cli'?`CLI_${id}.${['aidiy_hermes','aidiy_pi'].includes(id)?'png':'svg'}`:id==='chrome'?'Chrome.svg':`AiDiy_${id}.png`;
  if(!/^[a-zA-Z_]+\.(svg|png)$/.test(name))return '';
  try{if(name.endsWith('.png'))return nativeImage.createFromPath(path.join(__dirname,'../../static',name)).resize({width:32,height:32}).toDataURL();return `data:image/${name.endsWith('.svg')?'svg+xml':'png'};base64,${readFileSync(path.join(__dirname,'../../static',name)).toString('base64')}`;}catch{return '';}
 }
-const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:console','app:code','app:live','app:browser','app:navi','cli:aidiy_hermes','app:discord','app:slack']);
+const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:console','app:code','app:live','app:browser','app:navi','app:discord','app:slack']);
 function メニュー範囲(cursor,area,items){
  const left=items.filter(item=>aidiyKeys.has(item.key)).length,rows=Math.max(left,items.length-left,1);
  const width=Math.min(264,area.width),height=Math.min(154+rows*32,area.height);
@@ -50,7 +50,7 @@ function アイコンメニューを作成(parent){
   const css=readFileSync(path.join(__dirname,'アイコンメニュー.css'),'utf8');
   const rows='';
   target.webContents.once('did-finish-load',()=>target.webContents.send('diag:icon-menu-items',items.map(item=>({...item,icon:icon(item.key)}))));
-  const html=`<!doctype html><html lang="ja" class="${glass||process.platform==='darwin'?'glass':''}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><style>${css}</style><body><main><section class="panel main"><header><strong>AiDiy ランチャー</strong></header><div class="caption">表示サイズ</div><div class="sizes"><button data-action="mini" title="ミニサイズ" aria-label="ミニサイズ"><span class="size-icon mini"></span>ミニ</button><button data-action="normal" title="標準サイズ" aria-label="標準サイズ"><span class="size-icon normal"></span>標準</button></div><button class="close" data-action="close"><span>×</span>閉じる</button><footer><span class="key">esc</span> メニューを閉じる</footer></section><button class="memo-action" data-action="memo">+メモ</button><section class="panel apps" id="apps"><div class="apps-head"><div><strong>アプリを起動</strong><small>表示中のアイコン</small></div><span class="count">${items.length}</span></div><div class="app-list" role="menu" aria-label="ランチメニュー">${rows}</div></section></main></body></html>`;
+  const html=`<!doctype html><html lang="ja" class="${glass||process.platform==='darwin'?'glass':''}"><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'"><style>${css}</style><body><main><section class="panel main"><header><strong>AiDiy ランチャー</strong></header><div class="caption">表示サイズ</div><div class="sizes"><button data-action="mini" title="ミニサイズ" aria-label="ミニサイズ"><span class="size-icon mini"></span>ミニ</button><button data-action="normal" title="標準サイズ" aria-label="標準サイズ"><span class="size-icon normal"></span>標準</button></div><button class="close" data-action="close"><span>×</span>閉じる</button><footer><span class="key">esc</span> メニューを閉じる</footer></section><button class="memo-action" data-action="memo">＋付箋</button><section class="panel apps" id="apps"><div class="apps-head"><div><strong>アプリを起動</strong><small>表示中のアイコン</small></div><span class="count">${items.length}</span></div><div class="app-list" role="menu" aria-label="ランチメニュー">${rows}</div></section></main></body></html>`;
   target.once('ready-to-show',()=>{if(!target.isDestroyed()){target.show();target.focus();}});
   target.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html)).catch(close);
  }};

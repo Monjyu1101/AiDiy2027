@@ -76,6 +76,7 @@ def 初期モデル設定生成(app_conf) -> dict:
         "PREDICTION_CODEX_CLI_MODEL": app_conf.json.get("PREDICTION_CODEX_CLI_MODEL", "gpt-6-luna"),
         "PREDICTION_COPILOT_CLI_MODEL": app_conf.json.get("PREDICTION_COPILOT_CLI_MODEL", "gpt-6-luna"),
         "PREDICTION_AIDIY_HERMES_MODEL": app_conf.json.get("PREDICTION_AIDIY_HERMES_MODEL", "openai_oauth/gpt-6-luna"),
+        "PREDICTION_AIDIY_PI_MODEL": app_conf.json.get("PREDICTION_AIDIY_PI_MODEL", "openai_oauth/gpt-6-luna"),
         # DecisionAI設定
         "DECISION_AI_NAME": app_conf.json.get("DECISION_AI_NAME", "auto"),
         "DECISION_OPENAI_MODEL": app_conf.json.get("DECISION_OPENAI_MODEL", "auto"),
@@ -102,6 +103,7 @@ def 初期モデル設定生成(app_conf) -> dict:
         "CODE_CODEX_CLI_MODEL": app_conf.json.get("CODE_CODEX_CLI_MODEL", "auto"),
         "CODE_GROK_CLI_MODEL": app_conf.json.get("CODE_GROK_CLI_MODEL", "auto"),
         "CODE_AIDIY_HERMES_MODEL": app_conf.json.get("CODE_AIDIY_HERMES_MODEL", "auto"),
+        "CODE_AIDIY_PI_MODEL": app_conf.json.get("CODE_AIDIY_PI_MODEL", "auto"),
         "CODE_OPENCODE_CLI_MODEL": app_conf.json.get("CODE_OPENCODE_CLI_MODEL", "auto"),
         "CODE_CLAUDE_OLLAMA_MODEL": app_conf.json.get("CODE_CLAUDE_OLLAMA_MODEL", "auto"),
         "CODE_CODEX_OLLAMA_MODEL": app_conf.json.get("CODE_CODEX_OLLAMA_MODEL", "auto"),

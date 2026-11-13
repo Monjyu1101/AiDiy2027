@@ -184,7 +184,7 @@ function openrouterCatalog(body, now = /* @__PURE__ */ new Date()) {
   }
   return out;
 }
-var GEMINI_CHAT_MODEL_ORDER = Object.freeze(["gemini-4-carbon", "gemini-4-argon", "gemini-3.8-flash"]);
+var GEMINI_CHAT_MODEL_ORDER = Object.freeze(["gemini-4-carbon", "gemini-4-argon", "gemini-4-hydrogen", "gemini-3.8-flash"]);
 function googleCatalog(models, router = {}) {
   const out = empty();
   for (const model of models) {
@@ -277,18 +277,9 @@ function withoutRetired(models) {
 var DEFAULT_CODEX_MODELS = Object.freeze(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]);
 var OAUTH_FALLBACK_MODELS = Object.freeze(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]);
 var FORWARD_COMPAT = [["gpt-6-astra", ["gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]], ["gpt-6.1-sol", ["gpt-5.5", "gpt-5.4"]], ["gpt-6.1-terra", ["gpt-5.5", "gpt-5.4"]], ["gpt-6-luna", ["gpt-5.5", "gpt-5.4"]]];
-var CONTEXT_SUFFIX = "-900k";
-var CONTEXT_BASES = /* @__PURE__ */ new Set(["gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna", "gpt-5.4", "gpt-daybreak-blue-latest"]);
-var CONTEXT_SNAPSHOT_BASES = ["gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"];
-function isCodex900kBase(model) {
-  const slug = model.trim().toLowerCase().split("/").at(-1) ?? "";
-  if (!slug || slug.endsWith(CONTEXT_SUFFIX)) return false;
-  if (CONTEXT_BASES.has(slug)) return true;
-  return CONTEXT_SNAPSHOT_BASES.some((base) => slug.startsWith(base + "-") && /^\d{4}-\d{2}-\d{2}$/.test(slug.slice(base.length + 1)));
-}
 function finalizeCodexModels(ids) {
   const ordered = [], seen = /* @__PURE__ */ new Set();
-  for (const id of ids.filter((id2) => !isRetiredOpenaiModel(id2))) if (!seen.has(id)) {
+  for (const id of ids.filter((id2) => !isRetiredOpenaiModel(id2) && !/-900k$/i.test(id2))) if (!seen.has(id)) {
     ordered.push(id);
     seen.add(id);
   }
@@ -296,14 +287,7 @@ function finalizeCodexModels(ids) {
     ordered.push(synthetic);
     seen.add(synthetic);
   }
-  const out = [], present = new Set(ordered);
-  for (const id of ordered) {
-    out.push(id);
-    const variant = id + CONTEXT_SUFFIX;
-    if (present.has(variant) || out.includes(variant)) continue;
-    if (isCodex900kBase(id)) out.push(variant);
-  }
-  return out;
+  return ordered;
 }
 function codexSlugs(body) {
   const items = row(body).models;
@@ -654,7 +638,7 @@ async function probe(id, { reader, oauthReader, codexLocalReader, fetch = fetchM
       if (credential.account) headers["ChatGPT-Account-Id"] = credential.account;
       const body = await fetch(kind, headers, void 0, signal);
       const details = safeDetails(kind === "codex" ? codexCatalog(body) : grokCatalog(body), [credential.token, ...credential.account ? [credential.account] : []]);
-      const result = { ...output, \u72B6\u614B: "OK", \u30E2\u30C7\u30EB: details.map((item) => item.model_id), \u30E2\u30C7\u30EB\u8A73\u7D30: details, \u78BA\u8A8D\u65E5\u6642: timestamp2, \u8B66\u544A: expired ? [expiredNote] : [], \u8AAC\u660E: "OAuth \u306E\u30ED\u30B0\u30A4\u30F3\u60C5\u5831\u3067\u30E2\u30C7\u30EB\u4E00\u89A7\u3092\u53D6\u5F97\u3057\u307E\u3057\u305F\u3002\u751F\u6210\u53EF\u5426\u30FB\u5229\u7528\u4E0A\u9650\u306F\u672A\u78BA\u8A8D\u3067\u3059\u3002", \u4E00\u89A7\u7BC4\u56F2: kind === "codex" ? "\u672C\u4F53\uFF08get_codex_model_ids\uFF09\u3068\u540C\u3058\u304F\u3001\u975E\u8868\u793A\u30FB\u5EC3\u6B62\u30E2\u30C7\u30EB\u3092\u9664\u3044\u3066\u512A\u5148\u5EA6\u9806\u306B\u4E26\u3079\u3001\u5C06\u6765\u7248\u3068 -900k \u7248\u3092\u88DC\u5B8C\u3002\u8868\u793A\u306F\u6700\u5927500\u4EF6\u3002" : "\u672C\u4F53\u306B API \u4E00\u89A7\u306E\u7D5E\u308A\u8FBC\u307F\u306F\u7121\u3044\u305F\u3081\u3001\u975E\u8868\u793A\u30E2\u30C7\u30EB\u3060\u3051\u3092\u9664\u5916\u3002\u8868\u793A\u306F\u6700\u5927500\u4EF6\u3002" };
+      const result = { ...output, \u72B6\u614B: "OK", \u30E2\u30C7\u30EB: details.map((item) => item.model_id), \u30E2\u30C7\u30EB\u8A73\u7D30: details, \u78BA\u8A8D\u65E5\u6642: timestamp2, \u8B66\u544A: expired ? [expiredNote] : [], \u8AAC\u660E: "OAuth \u306E\u30ED\u30B0\u30A4\u30F3\u60C5\u5831\u3067\u30E2\u30C7\u30EB\u4E00\u89A7\u3092\u53D6\u5F97\u3057\u307E\u3057\u305F\u3002\u751F\u6210\u53EF\u5426\u30FB\u5229\u7528\u4E0A\u9650\u306F\u672A\u78BA\u8A8D\u3067\u3059\u3002", \u4E00\u89A7\u7BC4\u56F2: kind === "codex" ? "\u672C\u4F53\uFF08get_codex_model_ids\uFF09\u3068\u540C\u3058\u304F\u3001\u975E\u8868\u793A\u30FB\u5EC3\u6B62\u30E2\u30C7\u30EB\u3092\u9664\u3044\u3066\u512A\u5148\u5EA6\u9806\u306B\u4E26\u3079\u3001\u5C06\u6765\u7248\u3092\u88DC\u5B8C\u3057\u3001\u6A19\u6E96\u30E2\u30C7\u30EB\u540D\u3060\u3051\u3092\u8868\u793A\u3002\u8868\u793A\u306F\u6700\u5927500\u4EF6\u3002" : "\u672C\u4F53\u306B API \u4E00\u89A7\u306E\u7D5E\u308A\u8FBC\u307F\u306F\u7121\u3044\u305F\u3081\u3001\u975E\u8868\u793A\u30E2\u30C7\u30EB\u3060\u3051\u3092\u9664\u5916\u3002\u8868\u793A\u306F\u6700\u5927500\u4EF6\u3002" };
       return kind !== "codex" ? result : decisionResult(result, id, safeDetails(idsCatalog(codexSlugs(body)), [credential.token, ...credential.account ? [credential.account] : []]), async (_reader, currentOAuthReader) => {
         const current = await readOAuth(kind, currentOAuthReader);
         return current?.token === credential.token && current?.account === credential.account;

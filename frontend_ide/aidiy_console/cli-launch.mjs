@@ -6,6 +6,7 @@
 import { access, readFile, realpath, stat } from 'node:fs/promises';
 import { constants } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { inspectOpenCodeNpm } from '../../scripts/opencode-npm.mjs';
 
 // 診断メニューとConsoleが共有する固定許可リスト。モデル・プロンプト・任意コマンドは渡さない。
@@ -18,14 +19,16 @@ export const CLI_LAUNCHERS = Object.freeze([
   ['grok', 'Grok Build', '--yolo', 'YOLO'],
   ['opencode', 'OpenCode', '--auto', '自動承認（deny維持）'],
   ['aidiy_hermes', 'AiDiy Hermes', '--yolo', 'YOLO'],
-].map(([id, name, flag, mode]) => Object.freeze({ id, name, args: Object.freeze([flag]), mode, autoApproveSupported: true })));
+  // Pi は許可確認の仕組みを持たない（常に確認なし）。承認省略フラグは付けない。
+  ['aidiy_pi', 'AiDiy Pi', null, 'YOLO（Pi標準）'],
+].map(([id, name, flag, mode]) => Object.freeze({ id, name, args: Object.freeze(flag ? [flag] : []), mode, autoApproveSupported: true })));
 const byId = Object.freeze(Object.fromEntries(CLI_LAUNCHERS.map(item => [item.id, item])));
 const npmPackages = Object.freeze({ claude: '@anthropic-ai/claude-code', codex: '@openai/codex', copilot: '@github/copilot', opencode: '@opencode/cli' });
 const validPath = value => typeof value === 'string' && value.length > 0 && !/[\0\r\n]/.test(value);
 const envValue = (env, key, platform) => env[key] || (platform === 'win32' ? Object.entries(env).find(([name]) => name.toUpperCase() === key.toUpperCase())?.[1] : undefined);
 
 export function validateCliOptions(kind, { cli, cliAutoApprove, provider, model } = {}) {
-  if (cli !== undefined && (typeof cli !== 'string' || !Object.hasOwn(byId, cli))) throw Error('--cli は claude / codex / copilot / agy / grok / opencode / aidiy_hermes から指定してください。');
+  if (cli !== undefined && (typeof cli !== 'string' || !Object.hasOwn(byId, cli))) throw Error('--cli は claude / codex / copilot / agy / grok / opencode / aidiy_hermes / aidiy_pi から指定してください。');
   if (cliAutoApprove !== undefined && typeof cliAutoApprove !== 'boolean') throw Error('--cli-auto-approve は真偽値で指定してください。');
   if (cli !== undefined && kind !== 'console') throw Error('--cli は --app console 専用です。');
   if (cliAutoApprove && !cli) throw Error('--cli-auto-approve には --cli が必要です。');
@@ -92,11 +95,32 @@ async function hermesInvocation(shim, platform) {
   } catch { throw Error('AiDiy Hermes: 安全な起動先を確認できません。command_hermes のセットアップで作成したランチャーと仮想環境を確認してください。'); }
 }
 
+// command_pi/_setup.py の aidiy_pi と同じ起動（node + source-resolver + AiDiy 入口）。
+// PATH上のランチャーは解析せず、この配置先の command_pi だけを起動先にする。
+const AIDIY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+async function piInvocation(root = AIDIY_ROOT) {
+  try {
+    const pi = path.join(root, 'command_pi');
+    const resolver = path.join(pi, 'packages', 'coding-agent', 'src', 'experimental', 'source-resolver.ts');
+    const entry = path.join(pi, 'aidiy', 'aidiy_pi.ts');
+    for (const file of [resolver, entry]) if (!(await stat(file)).isFile()) throw Error('file');
+    if (!(await stat(path.join(pi, 'node_modules'))).isDirectory()) throw Error('node_modules');
+    const executable = await realpath(process.execPath), realEntry = await realpath(entry), realResolver = await realpath(resolver);
+    if (!validPath(executable) || !validPath(realEntry) || !validPath(realResolver)) throw Error('real paths');
+    return { executable, args: ['--import', pathToFileURL(realResolver).href, realEntry] };
+  } catch { throw Error('AiDiy Pi: 起動先を確認できません。command_pi のセットアップ（python command_pi/_setup.py）を確認してください。'); }
+}
+
 // ファイルの存在と形式だけを検査する。--versionを含め、CLIやシェルは一切実行しない。
 export async function resolveCliLaunch(id, { autoApprove = false, env = process.env, platform = process.platform } = {}) {
   validateCliOptions('console', { cli: id, cliAutoApprove: autoApprove });
   if (!id) throw Error('CLIを指定してください。');
   const definition = byId[id], windows = platform === 'win32';
+  if (id === 'aidiy_pi') {
+    const invocation = await piInvocation();
+    // Pi は承認の有無で動作が変わらないため、表示モードは常に定義どおり。
+    return { ...definition, ...invocation, env: { ...env }, autoApprove, mode: definition.mode };
+  }
   const get = key => envValue(env, key, platform);
   const directories = (get('PATH') || '').split(windows ? ';' : ':').map(value => /^"[^"\r\n]+"$/.test(value) ? value.slice(1, -1) : value)
     .filter(value => validPath(value) && path.isAbsolute(value));

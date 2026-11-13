@@ -5147,6 +5147,9 @@ def _resolve_openai_oauth_model(cfg: dict, requested: str | None = None) -> str:
     """
     explicit = str(requested or cfg.get("CHAT_OPENAI_OAUTH_MODEL") or "").strip()
     if explicit:
+        if explicit.lower().endswith("-900k"):
+            from agent.model_metadata import strip_codex_context_variant_suffix
+            explicit = strip_codex_context_variant_suffix(explicit)
         return explicit
     model_ids = _openai_oauth_model_ids()
     return model_ids[0] if model_ids else _OPENAI_OAUTH_FALLBACK_MODEL
@@ -12958,6 +12961,9 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 model_name = "same"
         else:
             model_name = _model_from_display_label(model_name) or provider_entry.get("default_model") or self.model
+            if provider_entry.get("slug") == _OPENAI_OAUTH_SLUG and model_name.lower().endswith("-900k"):
+                from agent.model_metadata import strip_codex_context_variant_suffix
+                model_name = strip_codex_context_variant_suffix(model_name)
             if provider_entry.get("slug") == "ollama_chat" and provider_entry.get("base_url", "").rstrip("/") == _OLLAMA_CLOUD_BASE_URL:
                 model_name = _strip_cloud_suffix(model_name)
 

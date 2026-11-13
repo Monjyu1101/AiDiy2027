@@ -50,7 +50,7 @@ onBeforeUnmount(() => { 終了済み = true; ピン購読解除?.(); window.remo
   <main>
     <div id="settings">
       <div class="section-label code-section">コード <component :is="機能切替" id="code-toggle" :有効="true" :無効="true" 説明="コードは常に ON です" /></div>
-      <div class="row"><label for="code-cli">コード</label><span id="code-cli" class="fixed-value" title="コードは aidiy_hermes 固定です">{{ 画面.コードCLI }}</span></div>
+      <div class="row"><label for="code-cli">コード</label><select id="code-cli" v-model="画面.コードCLI" :disabled="画面.コード編集不可" @change="画面.コード変更"><option v-for="id in 画面.コード候補" :key="id" :value="id">{{ id }}</option></select></div>
       <div class="row code-last"><label for="code-model">モデル</label><select id="code-model" v-model="画面.コードモデル" :disabled="画面.コード編集不可" @change="画面.保存"><option v-for="item in 画面.コードモデル一覧" :key="item.id" :value="item.id">{{ item.label }}</option></select></div>
       <textarea id="error-detail" ref="詳細" readonly :hidden="!画面.接続状態.details" :value="画面.接続状態.details || ''" aria-label="接続エラーの詳細（選択してコピーできます）"></textarea>
       <p class="hint">専用チャンネルに投稿すると、スレッドで返信します。</p>

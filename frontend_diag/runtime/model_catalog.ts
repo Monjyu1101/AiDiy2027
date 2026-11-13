@@ -74,7 +74,7 @@ export function openrouterCatalog(body:unknown,now=new Date()):Catalog {
  return out;
 }
 // Gemini / FreeAI の取得済みChat候補の上位順。未取得IDの補完や他providerへの転用はしない。
-export const GEMINI_CHAT_MODEL_ORDER=Object.freeze(['gemini-4-carbon','gemini-4-argon','gemini-3.8-flash']);
+export const GEMINI_CHAT_MODEL_ORDER=Object.freeze(['gemini-4-carbon','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash']);
 export function googleCatalog(models:{name:string;supported_actions:string[];input_token_limit?:unknown}[],router:Catalog={}):Catalog {
  const out=empty();
  for(const model of models) {
@@ -143,25 +143,16 @@ export function withoutRetired(models:Catalog):Catalog {
  const out=empty();for(const [id,model] of Object.entries(models))if(!isRetiredOpenaiModel(id))out[id]=model;return out;
 }
 // command_hermes/hermes_cli/codex_models.py（DEFAULT_CODEX_MODELS・_FORWARD_COMPAT_TEMPLATE_MODELS）と
-// core/model_metadata.py（-900k 対象）、AIチャット_openai.py（_FALLBACK_MODELS）の写し。
+// AIチャット_openai.py（_FALLBACK_MODELS）の写し。900K補正はHermes内部で扱う。
 export const DEFAULT_CODEX_MODELS=Object.freeze(['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
 export const OAUTH_FALLBACK_MODELS=Object.freeze(['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
 const FORWARD_COMPAT:readonly [string,readonly string[]][]=[['gpt-6-astra',['gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']],['gpt-6.1-sol',['gpt-5.5','gpt-5.4']],['gpt-6.1-terra',['gpt-5.5','gpt-5.4']],['gpt-6-luna',['gpt-5.5','gpt-5.4']]];
-const CONTEXT_SUFFIX='-900k',CONTEXT_BASES=new Set(['gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna','gpt-5.4','gpt-daybreak-blue-latest']),CONTEXT_SNAPSHOT_BASES=['gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna'];
-export function isCodex900kBase(model:string):boolean {
- const slug=model.trim().toLowerCase().split('/').at(-1)??'';
- if(!slug||slug.endsWith(CONTEXT_SUFFIX))return false;
- if(CONTEXT_BASES.has(slug))return true;
- return CONTEXT_SNAPSHOT_BASES.some(base=>slug.startsWith(base+'-')&&/^\d{4}-\d{2}-\d{2}$/.test(slug.slice(base.length+1)));
-}
-// _finalize_codex_models: 廃止除外 → 将来版の補完 → -900k 版の追加。
+// _finalize_codex_models: 廃止・旧別名を除外 → 将来版の補完。標準名だけを返す。
 export function finalizeCodexModels(ids:readonly string[]):string[] {
  const ordered:string[]=[],seen=new Set<string>();
- for(const id of ids.filter(id=>!isRetiredOpenaiModel(id)))if(!seen.has(id)){ordered.push(id);seen.add(id);}
+ for(const id of ids.filter(id=>!isRetiredOpenaiModel(id)&&!/-900k$/i.test(id)))if(!seen.has(id)){ordered.push(id);seen.add(id);}
  for(const [synthetic,templates] of FORWARD_COMPAT)if(!seen.has(synthetic)&&templates.some(template=>seen.has(template))){ordered.push(synthetic);seen.add(synthetic);}
- const out:string[]=[],present=new Set(ordered);
- for(const id of ordered){out.push(id);const variant=id+CONTEXT_SUFFIX;if(present.has(variant)||out.includes(variant))continue;if(isCodex900kBase(id))out.push(variant);}
- return out;
+ return ordered;
 }
 // Codex の models 応答（API・models_cache.json 共通）: visibility=hide/hidden を除き、priority→slug の順。
 export function codexSlugs(body:unknown):string[] {

@@ -89,7 +89,7 @@ test('Vue 配布画面は既存の項目・選択・機能切替と外部設定�
     assert.equal(f.get('code-toggle').disabled, true); assert.equal(f.get('code-toggle').getAttribute('aria-checked'), 'true');
     assert.equal(f.get('monitor').getAttribute('aria-checked'), 'false');
     await f.change('model', 'live-b');
-    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.slice(0, 3))), [['selectFeatures', { live: true, code: true }], ['select', { LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'live-b', LIVE_FREEAI_VOICE: 'voice-a' }], ['selectCode', { model: 'code-a' }]]);
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.slice(0, 3))), [['selectFeatures', { live: true, code: true }], ['select', { LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'live-b', LIVE_FREEAI_VOICE: 'voice-a' }], ['selectCode', { cli: 'aidiy_hermes', model: 'code-a' }]]);
     await f.change('provider', 'openai_live');
     assert.equal(f.get('model').value, ''); assert.equal(f.get('toggle').disabled, true);
     await f.change('model', 'open-a'); assert.equal(f.get('toggle').disabled, false);
@@ -97,7 +97,7 @@ test('Vue 配布画面は既存の項目・選択・機能切替と外部設定�
     assert.equal(f.get('provider').disabled, true); assert.equal(f.get('live-toggle').getAttribute('aria-checked'), 'false');
     assert.equal(f.get('feature-live').querySelector('b').textContent, 'OFF');
     assert.equal(f.get('code-model').disabled, false); assert.equal(f.get('toggle').disabled, false);
-    assert.equal(f.get('code-cli').textContent, 'aidiy_hermes', 'コードは aidiy_hermes 固定表示');
+    assert.equal(f.get('code-cli').value, 'aidiy_hermes', '未保存時はHermesを選択');
     await f.change('code-model', 'codex_cli/same');
     assert.ok(f.calls.some(([name, value]) => name === 'selectCode' && value.model === 'codex_cli/same'));
     await f.click('minimize'); await f.click('close');
@@ -209,22 +209,22 @@ test('Live の候補が欠落していても Code のモデルを保存でき、
     assert.equal(f.get('model').value, '');
     assert.equal(f.get('code-model').disabled, false);
     await f.change('code-model', 'same');
-    assert.deepEqual(JSON.parse(JSON.stringify(saved)), { model: 'same' });
+    assert.deepEqual(JSON.parse(JSON.stringify(saved)), { cli: 'aidiy_hermes', model: 'same' });
     assert.ok(!f.calls.some(([action]) => ['select', 'selectFeatures'].includes(action)), 'Code の変更で Live 設定を保存しない');
     assert.equal(f.get('toggle').disabled, true);
     await f.click('toggle'); assert.equal(starts, 0, 'Live 未選択のまま接続しない');
     await f.change('model', 'live-a');
     await f.click('toggle'); assert.equal(starts, 1);
-    assert.deepEqual(JSON.parse(JSON.stringify(saved)), { model: 'same' });
+    assert.deepEqual(JSON.parse(JSON.stringify(saved)), { cli: 'aidiy_hermes', model: 'same' });
   } finally { await f.dispose(); }
 });
 
 
-test('コードは aidiy_hermes 固定表示。保存済みのモデルが候補になくても選択中として残す', async () => {
+test('コードはHermesとPiから選択。保存済みのモデルが候補になくても選択中として残す', async () => {
   const f = fixture({ initial: async () => ({ ...initial(), code: { cli: 'aidiy_hermes', model: 'openai_oauth/old-model' } }) });
   try {
     await flush();
-    assert.equal(f.get('code-cli').tagName, 'SPAN', '選択欄ではなく固定表示');
+    assert.equal(f.get('code-cli').tagName, 'SELECT', 'HermesとPiの選択欄');
     assert.equal(f.get('code-model').value, 'openai_oauth/old-model');
     assert.deepEqual([...f.get('code-model').options].map((item: any) => item.value), ['auto', 'same', 'code-a', 'codex_cli/same', 'openai_oauth/old-model']);
     assert.equal(f.get('model-label').textContent, 'Live: freeai_live - live-a · Code: aidiy_hermes - openai_oauth/old-model');

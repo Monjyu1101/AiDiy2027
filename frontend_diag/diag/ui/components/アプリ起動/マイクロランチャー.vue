@@ -22,7 +22,7 @@ const move=アイコン移動(window.aidiyWindow,{開始(){moving.value=true;cle
 function coreClick(event){if(move.click())return;clearTimeout(clickTimer);if(event.detail===0){void toggle();return;}clickTimer=setTimeout(()=>{void toggle();},400);}
 function coreDouble(){if(move.double())return;clearTimeout(clickTimer);emit('mini');}
 function startMove(event){if(!props.switching&&!busy.value)move.down(event);}
-const apps=computed(()=>起動項目を整列([...props.appState.項目.value.filter(item=>props.appState.利用可能(item.id)).map(item=>({...item,kind:'app',icon:アプリアイコン[item.id]})),...props.cliState.項目.value.map(item=>({...item,kind:'cli',icon:item.id==='aidiy_hermes'?'CLI_aidiy_hermes.png':`CLI_${item.id}.svg`}))]));
+const apps=computed(()=>起動項目を整列([...props.appState.項目.value.filter(item=>props.appState.利用可能(item.id)).map(item=>({...item,kind:'app',icon:アプリアイコン[item.id]})),...props.cliState.項目.value.map(item=>({...item,kind:'cli',icon:['aidiy_hermes','aidiy_pi'].includes(item.id)?`CLI_${item.id}.png`:`CLI_${item.id}.svg`}))]));
 // OSに依存せず、末尾の区切りを除いたフォルダ名だけを表示する。
 const projectName=computed(()=>{const folder=String(props.appState.フォルダ.value||'');return folder.replace(/[\\/]+$/,'').split(/[\\/]/).pop()||folder;});
 const batchProgress=computed(()=>{const value=props.state?.進捗表示?.value;return props.online&&['running','error'].includes(value?.状態)?value:null;});

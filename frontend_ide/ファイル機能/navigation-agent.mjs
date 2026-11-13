@@ -34,6 +34,11 @@ export async function navigationAvailability(selection){
  try{await access(join(root,'backend_tools','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Navi用のPython環境が見つかりません。セットアップ後に再確認してください。'};}
  if(selection.provider==='aidiy_hermes'){
   try{await access(join(root,'command_hermes','prediction_main.py'));await access(join(root,'command_hermes','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Hermesの実行環境が見つかりません。セットアップ後に再確認してください。'};}
+ }else if(selection.provider==='aidiy_pi'){
+  try{
+   await Promise.all(['command_pi/node_modules','command_pi/aidiy/aidiy_pi.ts','command_pi/packages/coding-agent/src/experimental/source-resolver.ts'].map(file=>access(join(root,file))));
+   await promisify(execFile)(process.platform==='win32'?'where.exe':'which',['node'],{timeout:10000,windowsHide:true});
+  }catch{return {available:false,reason:'PiまたはNode.jsの実行環境が見つかりません。セットアップ後に再確認してください。'};}
  }else{
   const command={codex_cli:'codex',copilot_cli:'copilot',claude_cli:'claude',grok_cli:'grok'}[selection.provider];
   if(!command)return {available:false,reason:'対応していないAIです。'};

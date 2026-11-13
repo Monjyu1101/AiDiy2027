@@ -4,8 +4,8 @@ Discord と Slack を同階層の独立したチャンネルとして配置し�
 
 | チャンネル | 配置 | コマンド | 機能 |
 |------------|------|----------|------|
-| Discord | [discord/](./discord/README.md) | `aidiy_discord` | Hermes の Code チャット / AIコア Live 音声 |
-| Slack | [slack/](./slack/README.md) | `aidiy_slack` | Hermes の Code チャット（HTTPS 定期取得） |
+| Discord | [discord/](./discord/README.md) | `aidiy_discord` | Hermes / Pi を選択する Code チャット / AIコア Live 音声 |
+| Slack | [slack/](./slack/README.md) | `aidiy_slack` | Hermes / Pi を選択する Code チャット（HTTPS 定期取得） |
 
 ルートの `python _setup.py` と `python _cleanup.py` では Channels をまとめて選択します。個別の setup・start・cleanup・テストは、各チャンネルの README を参照してください。
 

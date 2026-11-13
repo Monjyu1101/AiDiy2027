@@ -22,8 +22,8 @@ export function パネル状態作成(api) {
   const 解除 = [];
   const 画面 = reactive({
     接続状態: { phase: 'idle' }, 読込済み: false, 保存中: false, 致命的: false, 操作中: false, 操作種別: '',
-    // コードは aidiy_hermes 固定。モデルは auto / same / openai_oauth/gpt-… などの1つの文字列（aidiy_code と同じ）。
-    コードCLI: 'aidiy_hermes', コードモデル: '', コードモデル候補: [], フォルダ: {},
+    // コードは Hermes / Pi から選択。モデルは auto / same / openai_oauth/gpt-… などの1つの文字列（aidiy_code と同じ）。
+    コードCLI: 'aidiy_hermes', コードモデル: '', コードモデル候補: [], コード候補: ['aidiy_hermes', 'aidiy_pi'], コード一覧: {}, コード既定値: {}, フォルダ: {},
     案内: 'モデルは、最後に選んだものを次回も使用します。', 案内エラー: false,
     発言表示: false, 発言消去中: false, 発言役割: 'ai', 発言者: '', 発言本文: '', 文字表示中: false, 設定表示: false,
     状態名: computed(() => !画面.読込済み && 画面.接続状態.phase === 'idle' ? '設定を読み込んでいます…' : 状態名[画面.接続状態.phase] || 画面.接続状態.phase),
@@ -39,7 +39,7 @@ export function パネル状態作成(api) {
     コードモデル一覧: computed(() => 画面.コードモデル && !画面.コードモデル候補.some(item => item.id === 画面.コードモデル)
       ? [...画面.コードモデル候補, { id: 画面.コードモデル, label: 画面.コードモデル }] : 画面.コードモデル候補),
     モデル操作不可: computed(() => !画面.読込済み || 画面.致命的 || 画面.保存中 || 画面.操作中 || 画面.設定表示 || ['connecting', 'stopping'].includes(画面.接続状態.phase)),
-    保存, 接続切替, 開始, 終了, モデル設定, 設定適用, 設定取消,
+    コード変更, 保存, 接続切替, 開始, 終了, モデル設定, 設定適用, 設定取消,
     async ウィンドウ操作(action) { try { if (action === 'close') await 保存待ち; await api.window(action); } catch { 案内表示('ウィンドウを操作できませんでした。', true); } },
   });
   // CSS は Discord 版と共通の body クラス（live-view = 接続後のステージ表示）を使う。
@@ -67,7 +67,7 @@ export function パネル状態作成(api) {
     // 接続中の設定は「適用して再接続」でまとめて保存する。
     if (画面.設定表示) return Promise.resolve(true);
     // 保存中の別イベントが待ち行列の内容を書き換えないよう、要求時点の値を固定する。
-    const コード = { model: 画面.コードモデル.trim() };
+    const コード = { cli: 画面.コードCLI, model: 画面.コードモデル.trim() };
     画面.保存中 = true;
     const job = 保存待ち.then(async () => {
       if (終了済み) return false;
@@ -96,7 +96,7 @@ export function パネル状態作成(api) {
   function モデル設定() {
     if (画面.モデル操作不可) return false;
     if (!画面.接続画面) return false;
-    退避 = { コードモデル: 画面.コードモデル };
+    退避 = { コードCLI: 画面.コードCLI, コードモデル候補: [...画面.コードモデル候補], コードモデル: 画面.コードモデル };
     画面.設定表示 = true;
     案内表示('変更後「適用して再接続」を押すと、Slack に再接続します。');
     return true;
@@ -118,11 +118,20 @@ export function パネル状態作成(api) {
     } catch { 画面.設定表示 = false; 案内表示('再接続できませんでした。設定を確認して接続してください。', true); }
     finally { if (run === 操作世代) { 画面.操作中 = false; 画面.操作種別 = ''; } }
   }
+  function コード変更() {
+    画面.コードモデル候補 = 画面.コード一覧[画面.コードCLI] || [];
+    画面.コードモデル = 画面.コード既定値[画面.コードCLI] || 'same';
+    void 保存('code');
+  }
   async function コード候補取得() {
     const run = ++候補世代;
     try {
       const result = await api.catalogCode();
-      if (!終了済み && run === 候補世代) 画面.コードモデル候補 = result.models || [];
+      if (!終了済み && run === 候補世代) {
+        画面.コード一覧 = result.catalogs || { aidiy_hermes: result.models || [] };
+        画面.コード既定値 = result.defaults || {};
+        画面.コードモデル候補 = 画面.コード一覧[画面.コードCLI] || [];
+      }
     } catch { if (run === 候補世代) 案内表示('モデルの候補を取得できません。保存済みのモデルで接続できます。'); }
   }
   function 発言消去() {

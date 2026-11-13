@@ -205,3 +205,6 @@ internal_auth_keys.json
 .secrets.*
 AZiP*.*
 firiend*
+
+# Pi: setup が生成するモデルデータ（npm run hydrate:model-data）
+command_pi/packages/ai/src/providers/data/

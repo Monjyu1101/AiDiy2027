@@ -37,9 +37,12 @@ async function hermesFixture(directory) {
 
 test('CLI許可リスト: 7種類の固定argv、モデル指定なし、通常承認と自動承認', async () => fixture(async directory => {
   assert.ok(Object.isFrozen(CLI_LAUNCHERS));
-  assert.deepEqual(CLI_LAUNCHERS.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'aidiy_hermes']);
+  assert.deepEqual(CLI_LAUNCHERS.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'aidiy_hermes', 'aidiy_pi']);
+  // aidiy_pi は PATH を探さず、この配置先の command_pi を node で直接起動する（承認フラグなし）。
+  const pi = CLI_LAUNCHERS.find(item => item.id === 'aidiy_pi');
+  assert.ok(Object.isFrozen(pi) && Object.isFrozen(pi.args)); assert.deepEqual(pi.args, []);
   const flags = ['--dangerously-skip-permissions', '--dangerously-bypass-approvals-and-sandbox', '--yolo', '--dangerously-skip-permissions', '--yolo', '--auto', '--yolo'];
-  for (const [index, item] of CLI_LAUNCHERS.entries()) {
+  for (const [index, item] of CLI_LAUNCHERS.filter(item => item.id !== 'aidiy_pi').entries()) {
     assert.ok(Object.isFrozen(item) && Object.isFrozen(item.args));
     const file = path.join(directory, item.id + (process.platform === 'win32' ? '.exe' : ''));
     await executable(file);

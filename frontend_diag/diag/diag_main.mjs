@@ -111,7 +111,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
   assets.set('Chrome.svg',['Chrome.svg','image/svg+xml']);
   assets.set('AiDiy.png',['AiDiy.png','image/png']);
   for(const id of ['avatar','ide','cpu','navi','console','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
-  for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
+  for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
   assets.set('LICENSE_ICONS.md',['LICENSE_ICONS.md','text/markdown; charset=utf-8']);
   for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt'])assets.set(name,[name,'text/plain; charset=utf-8']);
@@ -459,7 +459,7 @@ export async function main(args=process.argv.slice(2)) {
   if (useBrowser) {
     console.log('AiDiy 診断: '+url);
     console.log('この起動中のみ有効な認証 URL です。共有せず、転送ポートは非公開にしてください。Ctrl+C で終了。');
-    if (!options.noOpen && process.env.CODESPACES !== 'true') {openBrowser(url);void openBrowserMemos({url,open:openBrowser,isClosed:()=>closed}).catch(()=>console.error('保存済みメモを開けませんでした。Diag の +メモ から再試行してください。'));}
+    if (!options.noOpen && process.env.CODESPACES !== 'true') {openBrowser(url);void openBrowserMemos({url,open:openBrowser,isClosed:()=>closed}).catch(()=>console.error('保存済みメモを開けませんでした。Diag の ＋付箋 から再試行してください。'));}
   } else {
     console.log((options.memoOnly?'AiDiy Memo':'AiDiy 診断')+': Electron ウィンドウを開きます。Ctrl+C で終了。');
     // 既に起動中なら、そのウィンドウを前面に出してこの起動は正常終了する。

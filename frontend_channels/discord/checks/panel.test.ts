@@ -246,7 +246,7 @@ test('旧形式の3ファイルは読み込まず、移行・削除もしない'
   } finally { f.cleanup(); }
 });
 
-test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
+test('code_name（選択したハーネス）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
   const f = fixture();
   try {
     writeFileSync(f.file, JSON.stringify({ live: false, live_models: {}, code_model: 'same' }));
@@ -260,4 +260,17 @@ test('code_name（将来の別ハーネス用）を保存し、ない保存は a
     assert.equal((await panel.初期情報()).firstRun, true, '不正な code_name の保存は使わない');
     await panel.終了();
   } finally { f.cleanup(); }
+});
+
+// 実CLIやDiscordへ接続せず、選択の永続化とBotへの引渡しを確認する。
+test('Piの選択を保存・再読込し、起動するBotにもPiを渡す', async () => {
+  const f = fixture(), panel = f.panel();
+  try {
+    panel.コード選択保存({ cli: 'aidiy_pi', model: 'openai_oauth/test-pi' });
+    assert.deepEqual((await panel.初期情報()).code, { cli: 'aidiy_pi', model: 'openai_oauth/test-pi' });
+    await panel.開始();
+    assert.equal(f.configurations[0].cli, 'aidiy_pi');
+    assert.equal(f.configurations[0].hermesModel, 'openai_oauth/test-pi');
+    assert.equal(JSON.parse(readFileSync(f.file, 'utf8')).code_name, 'aidiy_pi');
+  } finally { await panel.終了(); f.cleanup(); }
 });

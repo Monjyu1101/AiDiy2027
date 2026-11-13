@@ -21,7 +21,7 @@ export interface Slack設定 {
   botToken: string; teamId: string; userId: string; channelId: string;
   coreUrl: string; coreRoot?: string; folder: string; cli: string; python: string;
   /** aidiy_hermes のモデル（auto / same / openai_oauth/gpt-… など）。 */
-  hermesModel: string; maxTurns: number; timeoutMs: number;
+  hermesModel: string; piModel?: string; maxTurns: number; timeoutMs: number;
 }
 export class 設定エラー extends Error {}
 
@@ -67,7 +67,7 @@ export function 設定解析(data: Record<string, unknown>, root = プロジェ�
   return {
     botToken, teamId, userId, channelId, coreUrl, coreRoot: root, folder,
     cli: 'aidiy_hermes', python: '',
-    hermesModel,
+    hermesModel, piModel: text('CODE_AIDIY_PI_MODEL') || 'auto',
     maxTurns: integer('CODE_MAX_TURNS', 999, 1, Number.MAX_SAFE_INTEGER), timeoutMs: 900_000,
   };
 }

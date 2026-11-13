@@ -150,9 +150,10 @@ class CodeAgents:
             name = key.get(f"CODE_AI{i}_NAME", "").strip()
             if name and name not in candidates:
                 candidates.append(name)
-        if "aidiy_hermes" not in candidates:
-            # auto / same の既定エージェントは CODE_AI* の登録有無にかかわらず確認する。
-            candidates.append("aidiy_hermes")
+        # 同梱エージェントは CODE_AI* の登録有無にかかわらず確認する。
+        for name in ("aidiy_hermes", "aidiy_pi"):
+            if name not in candidates:
+                candidates.append(name)
 
         # 各候補の CLI --version は I/O 待ちが支配的なので並列実行する。
         # 逐次だと最悪「候補数 × timeout」秒かかり、8095 起動（uvicorn）全体を
@@ -203,6 +204,10 @@ class CodeAgents:
                     if None is base:
                         base = [cmd_path]
                     cmd = base + ["--version"]
+                elif ai_name == "aidiy_pi":
+                    # Pi は node で AiDiy 入口を直接起動する（ソース実行のため初回は数秒かかる）。
+                    base = dummy._pi直接実行コマンド()
+                    cmd = (base if base else [cmd_path]) + ["--version"]
                 else:
                     direct = dummy._npmシム直接実行に解決(cmd_path)
                     cmd = (direct if direct else [cmd_path]) + ["--version"]

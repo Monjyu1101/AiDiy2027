@@ -15,7 +15,7 @@ function launchPanel(){
   querySelector(){return [...this.rows].flatMap(row=>row.children).find(button=>button.active)||null;},
   notify(){for(const observer of this.observers)if(!observer.disconnected)observer.callback();}};
 }
-function fixture(width,count,{panel=launchPanel(),availableHeight}={}){
+function fixture(width,count,{panel=launchPanel(),availableHeight,速度}={}){
  let mount,unmount,resize,mutation,frame=0;
  const frames=new Map(),observers=[],module={exports:{}};
  const observer=callback=>({observe(target,options){this.options=options;if(target===panel)panel.observers.add(this);else mutation=callback;},disconnect(){this.disconnected=true;panel.observers.delete(this);},callback});
@@ -26,7 +26,7 @@ function fixture(width,count,{panel=launchPanel(),availableHeight}={}){
   getComputedStyle:()=>({columnGap:'2px'}),
   requestAnimationFrame:fn=>{frames.set(++frame,fn);return frame;},cancelAnimationFrame:id=>frames.delete(id),
  });
- const state=module.exports.setup({}, {expose(){}}),attributes=new Set();
+ const state=module.exports.setup({速度:速度??module.exports.props.速度.default}, {expose(){}}),attributes=new Set();
  const outer={clientWidth:width,closest:selector=>selector==='.mini-content'?panel:selector==='.mini-launch-scroll'?scroll:null,getBoundingClientRect(){return {left:0,right:this.clientWidth,width:this.clientWidth};}};
  const row={children:[],style:{width:''},toggleAttribute(name,value){if(value)attributes.add(name);else attributes.delete(name);},
   contains:node=>row.children.includes(node),getBoundingClientRect(){return {left:0,right:parseFloat(this.style.width)||outer.clientWidth};}};

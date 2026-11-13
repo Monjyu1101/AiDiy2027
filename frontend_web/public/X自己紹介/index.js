@@ -24,13 +24,14 @@ class AiDiyIntroduction {
             "Claude SDK → Integrated",
             "Ollama Chat → Local & Cloud Models",
             "opencode → CLI Integrated",
-            "aidiy_hermes → Custom Agent Engine",
+            "aidiy_hermes / aidiy_pi → Two Coding Agents",
+            "aidiy_memo → Notes, Images & Project Context",
             "MCP Hub ×20 (Windows) / ×19 (Linux・macOS) → browser / db / logs / check / backup / media / voice / obs / ffmpeg / agents / chat / task / team / windows",
             "AI Task Runner → Free-Flow DAG × Critical Path",
             "AiDiy Code / Live → VS Code × Standalone × IDE",
             "AiDiy IDE → Development Space Launched",
-            "7 Apps → Console / Code / Live / IDE / Task / Team / Browser",
-            "Discord → Hermes Chat + Live Voice",
+            "9 Apps → IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU",
+            "Discord → Hermes / Pi Chat + Live Voice",
             "Slack → Thread Chat via HTTPS",
             "AiDiy Diag → Check, Test & Launch",
             "Comet Orbit Autopilot → Tracking Latest Change",
@@ -215,7 +216,8 @@ class AiDiyIntroduction {
                 });
                 gridObserver.unobserve(entry.target);
             }
-        }, { threshold: 0.15, rootMargin: '0px 0px -50px 0px' });
+        // スマホの1列表示ではグリッドが画面より長くなるため、面積比ではなく進入で表示する。
+        }, { threshold: 0, rootMargin: '0px 0px -50px 0px' });
         gridNodes.forEach(grid => gridObserver.observe(grid));
 
         // grid の外にある animate-on-scroll（h2 / p / ボタン等）は従来通り個別観測。
@@ -282,6 +284,7 @@ class AiDiyIntroduction {
     // 自動スクロール
     // -----------------------------------------------------------------
     setupAutoScroll() {
+        if (prefersReducedMotion) return;
         setTimeout(() => {
             if (!this.userInteracted) this.startAutoScroll();
         }, 10000);
@@ -292,10 +295,8 @@ class AiDiyIntroduction {
         const events = ['wheel', 'touchstart', 'touchmove', 'keydown', 'click'];
         for (const name of events) {
             window.addEventListener(name, () => {
-                if (this.autoScrollEnabled) {
-                    this.userInteracted = true;
-                    this.stopAutoScroll();
-                }
+                this.userInteracted = true;
+                if (this.autoScrollEnabled) this.stopAutoScroll();
             }, { passive: true });
         }
         window.addEventListener('scroll', () => {

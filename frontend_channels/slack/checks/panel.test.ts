@@ -57,7 +57,7 @@ test('接続・発言通知・再接続表示・切断を Discord 版と同じ�
   } finally { f.done(); }
 });
 
-test('コードは aidiy_hermes 固定。未保存時は共通設定のモデルを表示し、選んだモデルを1ファイルに保存して Bot に渡す', async () => {
+test('コードはHermesとPiから選択。未保存時は共通設定のモデルを表示し、選んだモデルを1ファイルに保存して Bot に渡す', async () => {
   const f = 準備();
   try {
     const first = await f.panel.初期情報();
@@ -118,7 +118,7 @@ test('起動時の自動接続は保存済みの設定があるときだけ行�
   } finally { await f.panel.終了(); f.done(); }
 });
 
-test('code_name（将来の別ハーネス用）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
+test('code_name（選択したハーネス）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
   const f = 準備();
   try {
     const file = join(f.folder, 'aidiy_slack.json');
@@ -130,5 +130,17 @@ test('code_name（将来の別ハーネス用）を保存し、ない保存は a
     assert.equal(f.states.at(-1)?.phase, 'error'); assert.match(f.states.at(-1)?.message ?? '', /other_harness には未対応/); assert.equal(f.bots.length, 0);
     writeFileSync(file, JSON.stringify({ code_name: 'Bad Name', code_model: 'same' }));
     assert.equal((await f.panel.初期情報()).firstRun, true, '不正な code_name の保存は使わない');
+  } finally { await f.panel.終了(); f.done(); }
+});
+
+test('Piの選択を保存・再読込し、起動するBotにもPiを渡す', async () => {
+  const f = 準備();
+  try {
+    f.panel.コード選択保存({ cli: 'aidiy_pi', model: 'openai_oauth/test-pi' });
+    assert.deepEqual((await f.panel.初期情報()).code, { cli: 'aidiy_pi', model: 'openai_oauth/test-pi' });
+    await f.panel.開始();
+    assert.equal(f.settings()?.cli, 'aidiy_pi');
+    assert.equal(f.settings()?.hermesModel, 'openai_oauth/test-pi');
+    assert.equal(JSON.parse(readFileSync(join(f.folder, 'aidiy_slack.json'), 'utf8')).code_name, 'aidiy_pi');
   } finally { await f.panel.終了(); f.done(); }
 });

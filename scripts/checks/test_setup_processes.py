@@ -102,7 +102,8 @@ class SetupProcessesTest(unittest.TestCase):
         records = [app(10, 'code'), app(11, 'ide'), app(12, 'live'), app(13, 'console')]
         for i, folder in enumerate(subject.COMPONENTS[:-1], 20):
             records.append(proc(i, f'node {ROOT}/{folder}/launch.mjs'))
-        self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {12, 13, *range(20,27), 28})
+        # 27 は frontend_channels（保護）。28 = command_hermes、29 = command_pi は停止対象。
+        self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {12, 13, *range(20,27), 28, 29})
 
     def test_discord_entries_and_cli_mcp_descendants_are_preserved(self):
         for windows in (False, True):

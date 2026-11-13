@@ -16,7 +16,7 @@ export const HERMES_UNSUPPORTED_PREDICTION_ROUTES = Object.freeze([
   'copilot-acp', 'github-copilot-acp', 'codex_app_server',
 ]);
 export function predictionModelSupported(provider, model) {
-  return provider !== 'aidiy_hermes' || !HERMES_UNSUPPORTED_PREDICTION_ROUTES.includes(model.split(/[/:]/, 1)[0].trim().toLowerCase());
+  return !['aidiy_hermes', 'aidiy_pi'].includes(provider) || !HERMES_UNSUPPORTED_PREDICTION_ROUTES.includes(model.split(/[/:]/, 1)[0].trim().toLowerCase());
 }
 
 export const PREDICTION_MODELS_FILE = 'prediction_models_info.json';

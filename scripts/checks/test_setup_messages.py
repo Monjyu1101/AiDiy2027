@@ -70,6 +70,7 @@ class SetupMessageTests(unittest.TestCase):
             "frontend_web": ("Web", "Node.js / Vue 3 / Vite / TypeScript"),
             "frontend_avatar": ("Avatar", "Node.js / Vue 3 / Vite / TypeScript / Electron"),
             "command_hermes": ("Hermes", "Python / uv / Hermes CLI"),
+            "command_pi": ("Pi", "Node.js / npm / Pi CLI"),
             "frontend_ide/host": ("Code / Live", "Node.js / Vue 3 / TypeScript / Electron / VS Code / VSIX"),
             "frontend_ide/viewer": ("IDE", "Node.js / Electron / Monaco Editor / docx-preview / SheetJS / PptxViewJS / PDF.js"),
             "frontend_channels/discord": ("Discord", "Discord / Node.js / Vue 3 / TypeScript / Electron"),

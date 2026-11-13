@@ -111,9 +111,11 @@ Hermesの `/model` は `hermes_models_info.json` の各CLI区分から候補・�
 
 OpenAI OAuthは専用一覧の `openai_oauth.models` を読みます。生成時にCode一覧の `aidiy_hermes.models` から `openai_oauth/` の候補だけを取り、実行IDから接頭辞を外して従来の表示名を保持します。専用一覧がまだ存在しない旧環境では、CLIとOpenAI OAuthだけ従来のCode一覧へ互換退避します。専用一覧が存在して破損している場合や区分がない場合は、旧候補を復活させません。ファイルは候補を開くたびに読み、実行中に更新された一覧も再表示時に反映します。Diagが生成するHermesのCLI経路も `xx/same` に統一し、バックエンドからHermesを呼ぶ際はモデル引数を省略します。
 
-`-900k` はHermesのOpenAI OAuth経路だけで解決する別名です。`codex_cli` / `copilot_cli` へそのまま渡すと無効になるため、Diagは取得結果からの候補生成と保存済みプロバイダ一覧の再合成の両方で除外します。OpenCodeへ写すCodex候補も除外後のものを使います。Hermes自身の `openai_oauth/` 候補は維持します。
+モデル候補・表示・保存・API送信は標準名に統一し、`-900k` 別名は生成しません。HermesのOpenAI OAuth経路では、`core/model_metadata.py` の `use_900k_context` 内部フラグを対象モデルでオンにし、既存のコンテキスト補正経路へ進めます。対象は既存の限定リスト（Sol / Terra / Lunaと対象の日付版、gpt-5.4、gpt-daybreak-blue-latest）で、取得・フォールバック値が272,000の場合だけ900,000へ補正します。明示したコンテキスト設定と、272,000以外の取得値は従来どおり優先します。最大出力トークン数の変更ではなく、Piや通常のAPIモデルへ900Kを一律適用するものでもありません。
 
-保存済み一覧に混入している場合は、ルートから `node frontend_diag/checks/repair-cli-context-aliases.mjs` を実行すると、該当CLI区分の別名だけを修復できます。API取得、認証・設定・保存済みモデル選択の変更、Core／Apps再起動は行いません。候補画面を開き直して通常のモデルを選び直します。起動中のDiagが古い生成処理を保持している場合は、次回Diag起動時にコード修正が反映されます。
+旧別名の保存値・明示入力は対象モデルだけ標準名へ解決します。Diagの再合成とHermesの候補読込でも旧別名を除外し、再表示されないようにします。
+
+保存済み一覧に混入している場合は、ルートから `node frontend_diag/checks/repair-cli-context-aliases.mjs` を実行すると、Hermes / Pi / OAuth / 外部CLIの候補区分から旧別名を除去できます。API取得、認証・設定・保存済みモデル選択の変更、Core／Apps再起動は行いません。候補画面を開き直して標準名を選びます。Diagのモデル生成処理を変更したときは配布ランタイムを再生成し、起動中のDiagを再起動します。
 
 検証は `models-info.check.mjs` / `hermes-info.check.mjs`（frontend_diag/checks）と `test_aidiy_model_catalog.py`（command_hermes/checks）で行います。実キーによる接続、TUI操作、設定保存・次回起動の全体確認は実環境で別途行います。
 

@@ -1,6 +1,6 @@
 # CLI ランチャーの画像素材
 
-外部 CLI は CLI ID と同じ名前の SVG / PNG をここに保存します。AiDiy Hermes は `command_hermes/assets/AiDiy_hermes.svg` / `.png` が正本で、ここには `aidiy_hermes.png` の配布コピーだけを置きます。ライセンス・引用元・権利上の注意は [LICENSE_ICONS.md](./LICENSE_ICONS.md) を参照してください。
+外部 CLI は CLI ID と同じ名前の SVG / PNG をここに保存します。AiDiy Hermes は `command_hermes/assets/AiDiy_hermes.svg` / `.png`、AiDiy Pi は `command_pi/aidiy/assets/AiDiy_pi.svg` / `.png` が正本で、ここには `aidiy_hermes.png` / `aidiy_pi.png` の配布コピーだけを置きます。ライセンス・引用元・権利上の注意は [LICENSE_ICONS.md](./LICENSE_ICONS.md) を参照してください。
 
 ## 表示用の画像
 
@@ -16,6 +16,7 @@ CLI 素材は 120×120px の自己完結した SVG と PNG 派生物です。外
 | `opencode.svg` / `opencode.png` | OpenCode | `upstream/opencode-logo-dark-square.svg` |
 | `vscode.svg` / `vscode.png` | VS Code（青帯・白文字） | `upstream/vscode-stable.svg` / `upstream/vscode-stable.png` |
 | `aidiy_hermes.png`（配布コピー） | HERMES | `command_hermes/assets/AiDiy_hermes.svg` / `.png`（人物素材: `_icons/AiDiy.png`） |
+| `aidiy_pi.png`（配布コピー） | PI（金地の帯・Pi ロゴ付き） | `command_pi/aidiy/assets/AiDiy_pi.svg` / `.png`（人物素材: `_icons/AiDiy.png`、ロゴ: `command_pi/aidiy/assets/upstream/pi-logo.svg`） |
 
 - 共通の外枠は `viewBox="0 0 120 120"`。外部CLI6件は上部の x=18、y=3、84×84px に原本を縦横比を維持して配置します。元のパス、グラデーション、色、viewBox は保持し、トレース・描き直し・切り抜きは行いません。Copilot は従来の暗色 UI 用 `#f0f6fc` を維持します。
 - 名前帯は x=0、y=90、120×30px、白 `#ffffff`。外部CLIの名前は中央揃え・黒 `#000000`・22px 太字です。フォント指定は Arial / Liberation Sans / sans-serif で、フォントファイルの埋め込み・配布はありません。

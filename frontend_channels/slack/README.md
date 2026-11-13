@@ -130,3 +130,5 @@ Bot インスタンス起動後の最初の確定返信にだけ使い方を付�
 
 起動プロジェクトが空文字の場合は AiDiy の配置先ルートを使います。Electron の設定・セッションも `プロジェクト/_AIDIY/aidiy_slack/electron/` に保存し、ユーザーホームを使いません。
 ブラウザ版のプロファイルは `プロジェクト/_AIDIY/aidiy_slack/browser-profile/` に保存します。
+
+コード欄では `aidiy_hermes` / `aidiy_pi` を選択できます。エンジンとモデルをプロジェクトの `code_name` / `code_model` に保存し、接続中は「適用して再接続」で変更を反映します。Piの `openai_oauth` はCodex CLI、`xai_oauth` はGrok CLIのログインを共有します。

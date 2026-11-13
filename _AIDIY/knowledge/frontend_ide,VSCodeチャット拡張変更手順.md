@@ -35,7 +35,7 @@
 
 ## 実装上の維持事項
 
-- Code / Live は既存AIコアのWebSocketとモデル情報APIを使う。Code の接続は `src/code-connection.ts` が input → セッション設定API → 出力1 の順に行い、両init完了後にAIコアへ送信する。未接続中のCode送信はHermesの直接実行へ渡す。
+- Code / Live は既存AIコアのWebSocketとモデル情報APIを使う。Code の接続は `src/code-connection.ts` が input → セッション設定API → 出力1 の順に行い、両init完了後にAIコアへ送信する。未接続中のCode送信はオフラインで選択したHermes / Piの直接実行へ渡す。
 - 独立した Code セッションの input／1 の `connect` には JSON boolean の `voice: false` を送る。新規接続・保存済み会話の再開・自動再接続のすべてで維持し、`checks/code-connection.test.cjs` で実際の送信 packet を確認する。Live の `LiveConnection` と、Web／Avatar 内で音声セッションを共有するコード画面には、この指定を追加しない。
 - Code / Live は別々の拡張 ID・コマンド・設定・VSIX を維持し、`extensionDependencies` / `extensionPack` で相互依存させない。片方の非導入・無効化で他方が起動できることを確認する。
 - Live の Windows マイクは Webview の権限に依存せず、拡張ホストの Python 標準ライブラリ補助で取り込む。音声処理と自動減衰はスタンドアロンと共有し、非表示・切断・無効化でマイクを終了する。
@@ -224,7 +224,7 @@ Code の停止・接続切替は、通常回答・検証途中・知見整理中
 
 停止の連打、送信直後のOFF、モデル候補確認中の新規・OFF、同じON通知の重複、Hermes実行中の自動再接続を確認する。画面中継のSSE切断はAIコアの切断と区別し、モデル・実行中状態を維持して操作を止める。検証入口は `checks/aidiy_code.test.cjs`、`checks/code-extension.test.cjs`、`checks/code-connection.test.cjs`（AIコア側の実行状態には専用の自動テストがない）。模擬AIと実HTTP/SSEで確認し、実機のWindows画面や実AIの確認と区別する。
 
-`aidiy_code` 単独起動版とVS Code拡張は未接続中の送信を自動的にHermesへ渡す。拡張の `src/extension.ts` も `aidiy_code/src/offline.ts` のDiag候補読込・既定値探索・実行処理を共用する。表示用のprovider/modelだけを接続状態で切り替え、会話内のオンラインモデルへオフライン選択を代入しない。通常起動は自動接続ONを既定とし、10秒ごとの再接続を継続する。プロジェクトバー右側の「自動接続」「新規」「一覧」のスイッチでOFFにすると接続・再試行を止め、新規・履歴復帰・ready通知でも再開しない。ONへ戻すと接続を再開し、OFFの選択は次回起動へ保存しない。実行中・モデル変更中の切り替えはUIとホスト側の両方で拒否する。バーはONの未接続で黒、接続済みで従来のシアン明滅、OFFで赤の明滅にする。復帰時も実行中のHermesジョブを維持する。AIコアとHermesのセッションID・保存モデルは分離し、次の送信からAIコアへ戻す。`executionMode` または `--offline` で明示したオフラインは自動接続OFFにし、再接続しない。この場合にスイッチをONへ戻すと新しいオンライン会話へ切り替え、HermesセッションIDをAIコアへ渡さない。明示オフラインの履歴復帰でもOFFへ切り替える。画面に専用のオフライン表示・モードボタンは設けない。`aidiy_code/src/offline.ts` は既存の `runner.ts` / `protocol.ts` を使ってHermesを直接実行し、AIコア・バックアップ・検証ループは呼ばない。コードAIは `aidiy_hermes` に限定し、モデルIDはオンラインのHermesと同じ形式を使う。オンライン用の `aidiy_code_model.json` はそのまま保持し、オフライン用を `aidiy_code_model_offline.json` に別保存する。両ファイルを拡張・単独版で共用し、未接続のモデル変更はオフライン用ファイルだけへ保存する。Hermesの再開IDは `HermesセッションID` に保持し、`コアセッションID` と混在させない。オフラインのコードAI欄は `aidiy_hermes` 固定・変更不可とし、モデル候補は `same` と `_AIDIY/aidiy_diag/code_models_info.json` の `aidiy_hermes.models`（`same` / `auto` を除く）から取得する。既定値・保存値から候補を追加しない。候補外の保存値は共通設定の既定値へ戻し、既定値も候補外なら `same` を使う。Diag一覧がなければ `same` だけを表示し、不正な一覧はエラーにする。モデルAPIへの接続・モデルIDの手入力は不要。単独版の初期モデルは明示した起動引数、モード別の保存値、`_config/AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL` の順に優先し、共通設定が未配置・未指定の場合だけ `auto` を使う。既定値は配置先、作業フォルダの順で親へ探索し、AIコア接続前から表示する。候補外の起動引数・モデル変更要求は拒否する。
+`aidiy_code` 単独起動版とVS Code拡張は未接続中の送信をオフラインで選択したHermes / Piへ渡す。拡張の `src/extension.ts` も `aidiy_code/src/offline.ts` のDiag候補読込・既定値探索・実行処理を共用する。表示用のprovider/modelだけを接続状態で切り替え、会話内のオンラインモデルへオフライン選択を代入しない。通常起動は自動接続ONを既定とし、10秒ごとの再接続を継続する。プロジェクトバー右側の「自動接続」「新規」「一覧」のスイッチでOFFにすると接続・再試行を止め、新規・履歴復帰・ready通知でも再開しない。ONへ戻すと接続を再開し、OFFの選択は次回起動へ保存しない。実行中・モデル変更中の切り替えはUIとホスト側の両方で拒否する。バーはONの未接続で黒、接続済みで従来のシアン明滅、OFFで赤の明滅にする。復帰時も実行中のHermesジョブを維持する。AIコアとHermesのセッションID・保存モデルは分離し、次の送信からAIコアへ戻す。`executionMode` または `--offline` で明示したオフラインは自動接続OFFにし、再接続しない。この場合にスイッチをONへ戻すと新しいオンライン会話へ切り替え、HermesセッションIDをAIコアへ渡さない。明示オフラインの履歴復帰でもOFFへ切り替える。画面に専用のオフライン表示・モードボタンは設けない。`aidiy_code/src/offline.ts` は既存の `runner.ts` / `protocol.ts` を使ってHermesを直接実行し、AIコア・バックアップ・検証ループは呼ばない。コードAIは `aidiy_hermes` / `aidiy_pi` から選び、モデルIDは両方ともオンラインと同じ「プロバイダ/モデル」形式を使う。オンライン用の `aidiy_code_model.json` はそのまま保持し、オフライン用を `aidiy_code_model_offline.json` に別保存する。両ファイルを拡張・単独版で共用し、未接続のモデル変更はオフライン用ファイルだけへ保存する。Hermesの再開IDは `HermesセッションID` に保持し、`コアセッションID` と混在させない。オフラインのコードAI欄は `aidiy_hermes` / `aidiy_pi` から選択でき、モデル候補は `same` と `_AIDIY/aidiy_diag/code_models_info.json` の選択エンジンの `models`（`same` / `auto` を除く）から取得する。既定値・保存値から候補を追加しない。候補外の保存値は共通設定の既定値へ戻し、既定値も候補外なら `same` を使う。Diag一覧がなければ `same` だけを表示し、不正な一覧はエラーにする。モデルAPIへの接続・モデルIDの手入力は不要。単独版の初期モデルは明示した起動引数、モード別の保存値、`_config/AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL` の順に優先し、共通設定が未配置・未指定の場合だけ `auto` を使う。既定値は配置先、作業フォルダの順で親へ探索し、AIコア接続前から表示する。候補外の起動引数・モデル変更要求は拒否する。
 
 モード変更は実行中に拒否する。切り替え後は新規会話とし、一覧の各会話に実行モードを保持してAIコアのセッションIDをHermesへ渡さない。CLIジョブ終了前のモード変更・新規・モデル変更も拒否し、停止／サーバー終了では子プロセスを停止する。明示オフラインへオンライン接続の遅延通知を反映しない。自動オフラインでは再接続通知で実行中フラグを解除せず、停止を進行中のHermesジョブへ渡す。共通Webviewは `オフライン対応` が真の単独版・拡張で未接続時のHermes送信を許可し、オフライン中は検証0固定、オンライン復帰時は直前の検証回数へ戻す。
 
@@ -360,3 +360,9 @@ cleanup は VS Code 本体を終了しない。起動中の拡張ホストには
 ## フォルダ未選択時の操作保護
 
 Code / LiveのVS Code版は、`host/src/workspace-folder.ts`で実在ローカルディレクトリを判定する。赤字案内は両Vueパネルの入力欄直上に置き、フォルダを開く導線だけを残す。拡張ホストでも要求を拒否し、フォルダ削除・切替時は接続を破棄して認証を読み直す。LiveはWebviewを再初期化し、古い世代の要求を破棄する。信頼・認証チェックや単独版の挙動は維持する。確認は `checks/workspace-folder.test.cjs`、`checks/code-extension.test.cjs`、`aidiy_live/checks/extension.test.cjs` とVueのCode/Liveモデル選択テストを使う。
+
+## オフラインCodeのエンジン選択
+
+モデル設定はエンジン別に保存しない。オンラインの `aidiy_code_model.json` と同じ `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.1-sol" }` 形式で、オフラインは `aidiy_code_model_offline.json` 一件に最後の選択を保存する。`provider` はコードエンジン（`aidiy_hermes` / `aidiy_pi`）、`model` は両者とも「プロバイダ/モデル」形式（変更なしの `same` を除く）。Navi用Codeもこの保存先を共用する。エンジン固有の会話再開IDはモデル設定とは別の履歴情報であり、互いに渡さない。Navi自身の案内モデルも `aidiy_navi_model.json` 一件に最後の選択を保存する。
+
+VS Code拡張・単独起動・IDE・Navi用Codeは `aidiy_hermes` / `aidiy_pi` を同じモデル選択画面から選ぶ。候補・保存値の復元は `aidiy_code/src/offline.ts`、実行とPiのJSONイベント読取は `src/runner.ts` を使う。履歴の `HermesセッションID` / `PiセッションID` は分離し、エンジンを変更しても別エンジンのIDを渡さない。Piの配置元は拡張の `aidiy-installation.json` を優先する。Navi自身の案内・再評価は読取専用経路を維持する。

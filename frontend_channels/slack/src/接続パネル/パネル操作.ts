@@ -14,14 +14,14 @@ import { basename } from 'node:path';
 import { SlackBot, エラー案内 } from '../接続/Bot接続';
 import { 設定読込, 設定エラー, type Slack設定 } from '../接続/接続設定';
 import { SlackAPIエラー } from '../接続/ネットワーク接続';
-import { 起動解決 } from '../共通連携/IDE連携';
+import { コード起動解決 } from '../共通連携/IDE連携';
 import { モデル情報取得, type モデル初期情報 } from '../モデル情報/モデル情報';
-import { Hermesモデル候補, Hermesモデル検証, 既定コード名, 対応コード名 } from '../コード/Hermesモデル';
+import { Hermesモデル候補, Hermesモデル検証, 実行コード名検証, 既定コード名, 対応コード名 } from '../コード/Hermesモデル';
 import { パネル設定保存先, パネル設定読込, パネル設定保存 } from './パネル設定';
 
 export type パネル発言 = { who: string; text: string; role: 'user' | 'ai' };
 export type パネル状態 = { phase: 'idle' | 'connecting' | 'connected' | 'reconnecting' | 'stopping' | 'error'; message: string; details?: string };
-type 接続段階 = '設定読込' | 'Hermes確認' | 'Bot作成' | 'Slack接続';
+type 接続段階 = '設定読込' | 'コード確認' | 'Bot作成' | 'Slack接続';
 type Bot = Pick<SlackBot, '起動' | '終了' | '表示' | '正常'>;
 
 /** 接続失敗の詳細。token・API 応答本文は含めず、段階と Slack のエラーコードだけを示す。 */
@@ -46,7 +46,7 @@ export class Slackパネル {
     private readConfig = 設定読込,
     private createBot: (config: Slack設定) => Bot = config => new SlackBot(config),
     private settingsFile = パネル設定保存先(),
-    private validateCLI = (config: Slack設定) => { 起動解決(config.cli, config.python, config.folder); },
+    private validateCLI = (config: Slack設定) => { コード起動解決(config.cli, config.python, config.folder, config.coreRoot); },
     private timeoutMs = 40_000,
     private readAPI = モデル情報取得) {}
   private 状態変更(phase: パネル状態['phase'], message: string, details?: string) {
@@ -65,12 +65,17 @@ export class Slackパネル {
   /** aidiy_hermes のモデル候補（auto / same / openai_oauth/gpt-… など）。 */
   async コード候補() {
     if (this.closed) throw new Error();
-    return { models: Hermesモデル候補(this.apiInfo) };
+    const config = this.readConfig();
+    return { models: Hermesモデル候補(this.apiInfo, config.coreRoot),
+      engines: 対応コード名.map(id => ({ id, label: id })),
+      catalogs: Object.fromEntries(対応コード名.map(id => [id, Hermesモデル候補(this.apiInfo, config.coreRoot, id)])),
+      defaults: { aidiy_hermes: this.既定モデル(config), aidiy_pi: this.apiInfo?.settings.CODE_AIDIY_PI_MODEL || config.piModel || 'auto' } };
   }
   コード選択保存(value: unknown) {
     if (this.closed || !['idle', 'error'].includes(this.状態.phase)) throw new Error('切断してからモデルを選択してください。');
+    const cli = 実行コード名検証((value as { cli?: unknown } | null)?.cli);
     const model = Hermesモデル検証((value as { model?: unknown } | null)?.model);
-    const saved = パネル設定保存({ code_name: 既定コード名, code_model: model }, this.settingsFile);
+    const saved = パネル設定保存({ code_name: cli, code_model: model }, this.settingsFile);
     return { cli: saved.code_name, model: saved.code_model };
   }
   /** 一度でも接続時の設定を保存したか。初回は自動接続せず、モデル設定画面から始める。 */
@@ -94,11 +99,12 @@ export class Slackパネル {
       this.apiInfo = await this.readAPI(config.coreUrl, undefined, config.coreRoot, { signal: this.apiAbort.signal });
       if (run !== this.generation || this.closed) return;
       const saved = this.保存値(config);
-      // 将来の別ハーネス用に code_name を保存している。現在は aidiy_hermes だけを実行できる。
-      if (saved && !対応コード名.includes(saved.code_name)) throw new 設定エラー(`コード実行環境 ${saved.code_name} には未対応です。aidiy_hermes を選び直してください。`);
-      stage = 'Hermes確認'; this.validateCLI(config);
+      const selectedConfig = { ...config, cli: saved?.code_name ?? 既定コード名, hermesModel: saved?.code_model ?? this.既定モデル(config) };
+      // 保存したエンジンとモデルを起動確認・実行の両方へ渡す。
+      if (saved && !対応コード名.includes(saved.code_name)) throw new 設定エラー(`コード実行環境 ${saved.code_name} には未対応です。aidiy_hermes または aidiy_pi を選び直してください。`);
+      stage = 'コード確認'; this.validateCLI(selectedConfig);
       stage = 'Bot作成';
-      const bot = this.createBot({ ...config, hermesModel: saved?.code_model ?? this.既定モデル(config) });
+      const bot = this.createBot({ ...selectedConfig });
       this.bot = bot;
       bot.表示 = (who, text, role) => { if (run === this.generation) this.発言?.({ who: who.slice(0, 100), text: text.slice(0, 2000), role }); };
       const cancelled = new Promise<void>(resolve => { this.cancel = resolve; });

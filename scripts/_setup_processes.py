@@ -22,7 +22,7 @@ from _opencode_service import stop_opencode_service
 
 COMPONENTS = ('frontend_diag', 'backend_local', 'backend_tools', 'backend_server',
               'backend_taskteam', 'frontend_web', 'frontend_avatar', 'frontend_channels',
-              'command_hermes', 'frontend_ide')
+              'command_hermes', 'command_pi', 'frontend_ide')
 # frontend_channels 配下の Discord と Slack をまとめて保護する。
 KEEP = frozenset(('code', 'ide', 'frontend_channels'))
 

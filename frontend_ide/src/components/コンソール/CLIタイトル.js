@@ -6,5 +6,5 @@
 
 // CLIの識別子・正式表示名は変えず、Consoleタイトル内だけ短くする。
 export function cliTitleName(cli) {
-  return cli?.id === 'aidiy_hermes' ? 'Hermes' : cli?.name || '';
+  return cli?.id === 'aidiy_hermes' ? 'Hermes' : cli?.id === 'aidiy_pi' ? 'Pi' : cli?.name || '';
 }

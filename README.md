@@ -9,6 +9,7 @@
 - [AGENTS.md](./AGENTS.md)
 - [backend_server/AGENTS.md](./backend_server/AGENTS.md)
 - [command_hermes/AGENTS.md](./command_hermes/AGENTS.md)
+- [command_pi の AiDiy 連携](./_AIDIY/knowledge/command_pi,AiDiy連携.md)（Pi 本体の開発規則は [command_pi/AGENTS.md](./command_pi/AGENTS.md)）
 - [backend_tools/AGENTS.md](./backend_tools/AGENTS.md)
 - [backend_local/AGENTS.md](./backend_local/AGENTS.md)
 - [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md)
@@ -31,14 +32,16 @@
 
 - バックエンド: FastAPI + SQLAlchemy + SQLite
 - Command Hermes: `command_hermes` / `aidiy_hermes`（コード支援用 CLI 基盤、常駐サーバーではない）
+- Command Pi: `command_pi` / `aidiy_pi`（MIT の Pi を同梱したコード支援 CLI。モデル一覧・キー・OAuth・MCP を AiDiy と連携）
+- フロントエンド Diag / Memo: `aidiy_diag` の環境診断・設定・起動管理と、`aidiy_memo` の付箋メモ（Node.js + Vue 3 + Electron / Web）
 - バックエンド MCP: FastAPI (SSE / Streamable HTTP / stdio) + Python MCP SDK（**Windows は20、Linux / macOS は19サーバーを同居**: Chrome DevTools / Desktop Capture / SQLite / PostgreSQL / Logs / Code Check / Backup / Image Generation / Movie Generation / Speech-to-Text / Text-to-Speech / OBS Studio Control / FFmpeg Control / Notification Sounds / Code Agents / Chat LLM / Decisions Check / Task Agents / Team Agents / Windows Control）
 - バックエンド Local: `backend_local`（ポート 8096、OpenAI 互換の Gemma ローカル推論サーバー）
 - バックエンド TaskTeam: `backend_taskteam`（ポート 8093、AIタスク実行 + 定期タスクと複数AIエージェントのチーム活動を統合した FastAPI）
 - フロントエンド Web: Node.js + Vue 3 + Vite + TypeScript + Pinia
 - フロントエンド Avatar: Node.js + Vue 3 + Vite + TypeScript + Electron
 - フロントエンド VS Code: Node.js + Vue 3 共通画面 + TypeScript + VS Code Extension API + Electron（AiDiy (Code) / AiDiy (Live) の 2 拡張と単独起動版。さらに開発スペース `aidiy_ide` の部品としても動作、常駐なし）
-- フロントエンド Slack: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript（HTTPS定期取得によるHermesチャット、音声なし）
-- フロントエンド Discord: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript + discord.js（Hermes チャット / AIコア Live 音声接続、任意起動の Bot）
+- フロントエンド Slack: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript（HTTPS定期取得によるHermes / Piチャット、音声なし）
+- フロントエンド Discord: Node.js + Vue 3 接続パネル + Electron / Web + TypeScript + discord.js（Hermes / Pi チャットと AIコア Live 音声接続、任意起動の Bot）
 - フロントエンド Navi: `aidiy_navi` で開く開発案内画面。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code がファイルを変更し、完了後に再評価します
 - フロントエンド IDE（開発スペース）: Node.js + Vue 3 + Canvas 2D + Monaco Editor + Electron（宇宙をテーマにした IDE 開発環境。Code / Live を部品として組み込んだ `aidiy_ide`、ポート自動割り当て）
 - 常駐バックエンドは **5 サーバー構成**
@@ -47,20 +50,20 @@
   - `tools_main.py` : `8095`
   - `local_main.py` : `8096`（`_start.py` のデフォルトは起動しない）
   - `taskteam_main.py` : `8093`（`/task/*` と `/team/*`）
-- 補助 CLI として `command_hermes` を統合
-  - `aidiy_hermes` : on-demand 実行のコードエージェント CLI
+- 補助 CLI として `command_hermes` / `command_pi` を統合
+  - `aidiy_hermes` / `aidiy_pi` : on-demand 実行のコードエージェント CLI
 - Web フロントは `8090`
 - Avatar フロントは `8092`
 
 ### 主な特徴
 
 - **開発スペース（宇宙をテーマにした IDE 開発環境）** — プロジェクトを宇宙に見立て、フォルダは銀河、ファイルは星・惑星として浮かびます。目指すのは「ソースをほぼ触らない IDE」。宇宙で全体を眺め、エクスプローラーで辿り、読み取り専用のビューアで中身を読み、変更は Code（コード支援）と Live（音声会話）に頼んで AI に任せます。起点日時より後に AI が更新したファイルは明滅し、どこが変わったかをひと目で見つけられます。Code / Live は単独起動・VS Code 拡張のまま使え、さらに開発スペースの部品として IDE の中から同じプロジェクトで呼び出せるため、IDE 開発への応用が広がります。`aidiy_ide` で起動します
-- **マルチ Code CLI 対応** — `claude_sdk` / `claude_cli` / `copilot_cli` / `codex_cli` / `antigravity_cli` / `grok_cli` / `opencode_cli` / `aidiy_hermes` を切り替えて、`code1`〜`code6` の6コードパネルで同時並走
+- **マルチ Code CLI 対応** — `claude_sdk` / `claude_cli` / `copilot_cli` / `codex_cli` / `antigravity_cli` / `grok_cli` / `opencode_cli` / `aidiy_hermes` / `aidiy_pi` を切り替えて、`code1`〜`code6` の6コードパネルで同時並走
 - **AIタスク自動実行** — 要求を登録すると AI が明細タスクへ分解し、`backend_taskteam` が Code CLI で実行。カンバン方式でも垂直の流れ作業だけでもなく、先行SEQ（複数指定可）で水平の並行分岐を含む**自由なタスクフロー**を定義でき、**クリティカルパス**基準のフロー図で可視化・実行（単独アプリ aidiy_task から操作）
 - **自己改善機構** — コードエージェントが修正後に変更を検出した場合、`_AIDIY/knowledge/` への知見整理を続け、次の作業で参照できるようにする
 - **日本語ネイティブ** — テーブル名・API・コンポーネント名まで日本語で統一
 - **AI 音声対話コーディング** — Avatar に話しかけながらコードを書き進められる
-- **VS Code 拡張** — AiDiy (Code) はセカンダリサイドバーから AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` を直接実行します。選択コード添付、モデル選択、会話継続、停止、実行ログを利用できます。AiDiy (Live) は AIコアへ接続し、作業フォルダを共有した音声・文字のライブ会話を利用。どちらも `aidiy_code` / `aidiy_live` で単独ウィンドウ起動が可能。さらに開発スペース（`aidiy_ide`）の部品としても動作し、IDE の「＋ Code」「＋ Live」から同じプロジェクトの Code / Live を開けます
+- **VS Code 拡張** — AiDiy (Code) はセカンダリサイドバーから AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` / `aidiy_pi` を選択して直接実行します。選択コード添付、モデル選択、会話継続、停止、実行ログを利用できます。AiDiy (Live) は AIコアへ接続し、作業フォルダを共有した音声・文字のライブ会話を利用。どちらも `aidiy_code` / `aidiy_live` で単独ウィンドウ起動が可能。さらに開発スペース（`aidiy_ide`）の部品としても動作し、IDE の「＋ Code」「＋ Live」から同じプロジェクトの Code / Live を開けます
 
 ---
 
@@ -71,7 +74,7 @@
 | ソフトウェア | 目安 |
 |---|---|
 | Python | バックエンド・Hermes の宣言条件は 3.13 以上。uv が対象仮想環境を選択 |
-| Node.js / npm | 全体構成では Node.js 22.13 以降を推奨。モジュール別条件は下記参照 |
+| Node.js / npm | Pi を含む全体構成では Node.js 22.19 以降を推奨（`command_pi/package.json` は `>=22.19.0`）。モジュール別条件は下記参照 |
 | Git | 最新版推奨 |
 | uv | Python パッケージ管理に使用 |
 | Electron / Vue 3 | 各モジュールの npm 依存として導入。グローバル導入は不要 |
@@ -99,7 +102,7 @@ python _setup.py
 `_setup.py` は対話形式で以下を実施します。
 
 1. 共通の Python / npm ツール確認と、選択したグローバルツールの導入・更新
-2. Diag の診断 UI・Electron・`aidiy_diag` ランチャーの準備（通常セットアップでは必須）
+2. Diag / Memo の UI・Electron・`aidiy_diag` / `aidiy_memo` ランチャーの準備（通常セットアップでは必須）
 3. `backend_local` の `uv sync --upgrade`、選択した場合だけモデルの事前ダウンロード
 4. `backend_tools` の依存導入、選択した場合だけ各クライアントのグローバル MCP 設定への書き込み
 5. `backend_server` の `uv sync --upgrade`
@@ -107,8 +110,9 @@ python _setup.py
 7. `frontend_web` の `npm install` と `npm update`
 8. `frontend_avatar` の依存・Electron・ランチャーの準備
 9. `command_hermes` の `.venv` 作成 / `uv sync --upgrade` / `aidiy_hermes` 登録試行
-10. `frontend_ide` の共通 Vue 依存、Navi / Console / Code / Live / IDE / Task / Team / Browser のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
-11. Channels (Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
+10. `command_pi` の `npm ci --ignore-scripts`、モデルデータ準備、`aidiy_pi` ランチャー登録（ソースから起動）
+11. `frontend_ide` の共通 Vue 依存、IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
+12. Channels (Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
 最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `frontend_diag/ui` で `npm ci` により導入します。
 
@@ -143,16 +147,20 @@ Diag を No にした場合は、以下を個別に選びます。
 
 Diag の選択にかかわらず、この配置先の既存プロセスを照合して停止対象を整理します。Diag を使う場合はその後に画面を開き、使わない場合は選択したサービスを順に起動します。Code / IDE / Discord / Slack は通常の全体停止対象から除外されます。既定値は `scripts/起動対象.json` と `_start.py` の `collect_startup_choices()` を参照してください。
 
-`command_hermes` は **常駐サーバーではないため `_start.py` の起動対象外** です。セットアップ後は、AIコードパネルから `aidiy_hermes` として呼び出すか、必要時に手動で起動します。
-Code / Live は全体起動の個別選択のほか、VS Code のコマンドパレットの **AiDiy Code: チャットを開く** / **AiDiy Live: ライブ会話を開く**、または `aidiy_code` / `aidiy_live` で起動できます。Code のオンライン利用と Live は `backend_server`（8091）が必要です。Code は AIコア未接続時に Hermes を直接実行でき、選んだ AI サービスの認証・通信は別途必要です。
+`command_hermes` / `command_pi` は **常駐サーバーではないため `_start.py` の起動対象外** です。セットアップ後は、AIコードパネルから `aidiy_hermes` / `aidiy_pi` として呼び出すか、必要時に手動で起動します。
+Code / Live は全体起動の個別選択のほか、VS Code のコマンドパレットの **AiDiy Code: チャットを開く** / **AiDiy Live: ライブ会話を開く**、または `aidiy_code` / `aidiy_live` で起動できます。Code のオンライン利用と Live は `backend_server`（8091）が必要です。Code は AIコア未接続時に Hermes / Pi を選択して直接実行でき、選んだ AI サービスの認証・通信は別途必要です。
 
 `frontend_channels/` は外部接続チャンネル群の親ディレクトリです。`discord/` と `slack/` は同じ階層の独立モジュールで、将来のチャンネルもここへ追加します。構成と共通方針は [Channels README](./frontend_channels/README.md) を参照してください。
 
-`frontend_channels/discord` は `_config/AiDiy_key.json` の `discord_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`_AIDIY/aidiy_discord/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に Hermes が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
+`frontend_channels/discord` は `_config/AiDiy_key.json` の `discord_*` を設定後、全体 `_start.py` で選択して起動します（デフォルト No）。`aidiy_discord` または `cd frontend_channels/discord && npm start` での個別起動も可能です。保存済みの設定（`_AIDIY/aidiy_discord/aidiy_discord.json`）があれば起動時に自動接続し、初回はモデル設定画面から始まります。専用テキストチャンネルへの普通の投稿に選択した Hermes / Pi が返信し、専用ボイスチャンネルへの入退室に合わせて AIコアとの音声会話を自動開始・終了します。導入と権限設定は [frontend_channels/discord/README.md](./frontend_channels/discord/README.md) を参照してください。
 
 `frontend_channels/slack` は `_config/AiDiy_key.json` の `slack_*` を設定後、同じく全体 `_start.py` で選択するか `aidiy_slack` で起動します（デフォルト No）。Discord 版と双子の接続パネルで、専用チャンネルへの投稿にスレッドで返信します（HTTPS の定期取得、音声なし）。保存は `_AIDIY/aidiy_slack/aidiy_slack.json` です。導入は [frontend_channels/slack/README.md](./frontend_channels/slack/README.md) を参照してください。
 
 Navi はセットアップ後に `aidiy_navi` で単独起動するか、IDE の「＋ Navi」から開きます。全体 `_start.py` の自動起動対象ではありません。使い方は [frontend_ide/README.md](./frontend_ide/README.md) を参照してください。
+
+Memo は通常の Diag 起動で保存済み付箋を復元し、`aidiy_memo` で付箋だけを起動することもできます。単体起動の保存先は配置元 AiDiy の `_AIDIY/aidiy_memo/` で、実行時の作業フォルダではありません。`aidiy_memo --new` は新規付箋を追加します。画像貼り付け・保存・ゴミ箱の操作は [Diag / Memo README](./frontend_diag/README.md#付箋メモaidiy_memo) を参照してください。
+
+CPU は `aidiy_cpu` でホストの CPU / GPU / RAM 使用率を表示します。Core / Tools への接続は不要で、Diag の CPU アイコンや全体起動の個別選択（既定 No）からも起動できます。
 
 ### 個別起動
 
@@ -185,6 +193,12 @@ cd command_hermes
 
 # またはグローバル登録済みなら
 aidiy_hermes
+
+# Command Pi（登録済みランチャー。実行時のフォルダが作業場所）
+aidiy_pi
+
+# 付箋メモ（配置元のシステム付箋を表示）
+aidiy_memo
 
 # フロントエンド Web
 cd frontend_web
@@ -256,7 +270,7 @@ taskkill /PID <pid> /F
 - `_start.py` を再実行すると、対象ポートの既存プロセスは起動前に自動整理されます。
 - バックエンドのみ再読込したい場合は `backend_server/temp/reboot_core.txt` または `backend_server/temp/reboot_apps.txt` を作成します。
 - TaskTeam のみ再読込したい場合は `backend_taskteam/temp/reboot_taskteam.txt` を作成します。
-- `command_hermes` はポート待受しない CLI のため、必要なら `Ctrl+C` でその場のプロセスだけ停止します。
+- `command_hermes` / `command_pi` はポート待受しない CLI のため、必要なら `Ctrl+C` でその場のプロセスだけ停止します。
 
 ---
 
@@ -279,6 +293,7 @@ python _cleanup.py
 - 必要に応じて SQLite DB
 
 `_cleanup.py` は `command_hermes` の `.venv` / `venv` と Python キャッシュに加え、`frontend_ide/host` の配置済み拡張機能（Code / Live）、単独起動ランチャー（`aidiy_code` / `aidiy_live`）、`node_modules`、`dist`、`out` も削除対象として確認します。
+`command_pi` はランチャー / PATH、依存物と生成モデルデータを解除・削除し、利用者の `~/.pi/agent` の設定・認証・セッションは保持します。Diag の cleanup は `aidiy_memo` のランチャーも解除しますが、保存済み付箋は保持します。
 Channels (Discord / Slack) は1項目として一括選択します（既定 Yes）。`frontend_channels/discord` と `frontend_channels/slack` の依存物・生成物・キャッシュが対象です。削除前に両方の実行パスを照合して Bot を停止し、全体監視の自動再起動も止めます。共通 `AiDiy_key.json` の Discord / Slack 設定は保持します。各フォルダの `_setup.py` / `_cleanup.py` を直接実行する場合は、その機能だけが対象です。
 
 `frontend_ide/viewer` も全体クリーンアップに対応しています（既定 Yes）。この配置先のサーバープロセス停止、`aidiy_ide` ランチャー解除、依存物・Python キャッシュの削除を行います。利用方法は [frontend_ide/viewer/README.md](./frontend_ide/viewer/README.md) を参照してください。
@@ -295,7 +310,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 - `_start.py` は **CLI 引数で backend/web/avatar を切り替える方式ではありません**。起動時の対話で選びます。
 - Claude 系のブラウザ自動操作を使う場合は `backend_tools` も起動してください。
 - `_start.py` 起動時のバックエンドは `uvicorn --reload` なしです。コード変更を即反映したい場合は個別起動か reboot 機構を使います。
-- `command_hermes` は `_start.py` では起動しません。`python _setup.py` で導入し、`aidiy_hermes` または `command_hermes\cli_main.py` を必要時に実行します。
+- `command_hermes` / `command_pi` は `_start.py` では起動しません。`python _setup.py` で導入し、`aidiy_hermes` / `aidiy_pi` を必要時に実行します。
 - Code / Live の単独画面は `_start.py` の個別起動対象です。VS Code 拡張自体は VS Code から開きます。拡張の設定や対応範囲は Code が `frontend_ide/host/README.md`、Live が `frontend_ide/host/aidiy_live/README.md` を参照してください。
 - Web フロントの AI 画面ルートは **`/AiDiy`** です。
 - Avatar は Electron と Web の両モードがあります。Web モードでは認証情報を `sessionStorage` に保持します。
@@ -313,8 +328,8 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 6. [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md)
 7. [frontend_web/AGENTS.md](./frontend_web/AGENTS.md)
 8. [frontend_avatar/AGENTS.md](./frontend_avatar/AGENTS.md)
-9. [frontend_diag/AGENTS.md](./frontend_diag/AGENTS.md) — Diag の診断・Vue 画面
-10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面
+9. [frontend_diag/AGENTS.md](./frontend_diag/AGENTS.md) — Diag の診断・Vue 画面と Memo の付箋
+10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面
 11. [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) — Code / Live の拡張ホスト・通信
 12. [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) — Discord の接続・Vue パネル
 13. [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md) — Slack の接続・Vue パネル（Discord の双子）
@@ -328,4 +343,4 @@ Copyright (c) 2014-2027 Mitsuo KONDOU and contributors
 
 AiDiy 独自部分の利用条件は [AiDiy 公開利用ライセンス v1.1](./LICENSE) を参照してください。非商用利用に限る公開ライセンスで、OSI が定義するオープンソースライセンスではありません。商用利用には事前に全著作権者の書面承諾が必要です。再配布時はライセンス全文と著作権表示を含めてください。
 
-第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/discord/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./frontend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。
+第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[Pi 本体の MIT ライセンス](./command_pi/LICENSE)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/discord/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./frontend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。

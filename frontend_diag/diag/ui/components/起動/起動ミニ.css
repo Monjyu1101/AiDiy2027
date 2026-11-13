@@ -64,4 +64,7 @@
 .mini-icon-frame{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;overflow:hidden}.mini-icon-frame img{display:block;width:36px;height:36px;object-fit:contain}
 
 /* 起動演出もミニの画像枠だけに合わせる。通常・マイクロの40/72pxは維持。 */
-.start-mini .launch-frame-36{width:36px;height:36px}
+/* 36pxの表示枠に画像30pxと外周の光を収める。 */
+.start-mini .launch-frame-36{width:30px;height:30px}
+.start-mini .launch-frame-36>.launch-trace{inset:-3px}
+.start-mini .launch-frame-36>.launch-trace::before{border-radius:4px}

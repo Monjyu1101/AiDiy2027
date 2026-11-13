@@ -225,7 +225,7 @@ export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch
    if(credential.account)headers['ChatGPT-Account-Id']=credential.account;
    const body=await fetch(kind,headers,undefined,signal);
    const details=safeDetails(kind==='codex'?codexCatalog(body):grokCatalog(body),[credential.token,...(credential.account?[credential.account]:[])]);
-   const result={...output,状態:'OK',モデル:details.map(item=>item.model_id!),モデル詳細:details,確認日時:timestamp,警告:expired?[expiredNote]:[],説明:'OAuth のログイン情報でモデル一覧を取得しました。生成可否・利用上限は未確認です。',一覧範囲:kind==='codex'?'本体（get_codex_model_ids）と同じく、非表示・廃止モデルを除いて優先度順に並べ、将来版と -900k 版を補完。表示は最大500件。':'本体に API 一覧の絞り込みは無いため、非表示モデルだけを除外。表示は最大500件。'};
+   const result={...output,状態:'OK',モデル:details.map(item=>item.model_id!),モデル詳細:details,確認日時:timestamp,警告:expired?[expiredNote]:[],説明:'OAuth のログイン情報でモデル一覧を取得しました。生成可否・利用上限は未確認です。',一覧範囲:kind==='codex'?'本体（get_codex_model_ids）と同じく、非表示・廃止モデルを除いて優先度順に並べ、将来版を補完し、標準モデル名だけを表示。表示は最大500件。':'本体に API 一覧の絞り込みは無いため、非表示モデルだけを除外。表示は最大500件。'};
    return kind!=='codex'?result:decisionResult(result,id,safeDetails(idsCatalog(codexSlugs(body)),[credential.token,...(credential.account?[credential.account]:[])]),async(_reader,currentOAuthReader)=>{
     const current=await readOAuth(kind,currentOAuthReader);return current?.token===credential.token&&current?.account===credential.account;
    });

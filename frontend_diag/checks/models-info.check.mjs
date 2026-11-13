@@ -59,8 +59,8 @@ test('merged code includes only installed CLIs and Hermes starts with installed 
   const navi=JSON.parse(await readFile(path.join(directory,'navi_models_info.json'),'utf8'));assert.equal(Object.hasOwn(navi,'codex_cli'),false);assert.equal(Object.hasOwn(navi,'copilot_cli'),false);
   await writeModelsInfo([{id:'openai_oauth',名前:'OAuth'}],{openai_oauth:ok()},{directory,now,installedClis:{codex_cli:true},naviHermesAvailable:false});
   const withoutHermes=JSON.parse(await readFile(path.join(directory,'navi_models_info.json'),'utf8'));assert.equal(Object.hasOwn(withoutHermes,'aidiy_hermes'),false);assert.equal(Object.hasOwn(withoutHermes,'codex_cli'),true);
-  const installed=await installedCodeClis({loadEntries:async()=>[{id:'claude'},{id:'agy'}],resolve:async entry=>'/fixture/'+entry.id});
-  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true});
+  const installed=await installedCodeClis({loadEntries:async()=>[{id:'claude'},{id:'agy'}],resolve:async entry=>'/fixture/'+entry.id,piCheck:async()=>false});
+  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true,aidiy_pi:false});
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -125,7 +125,7 @@ test('NG keeps the reason and Grok fixed candidates; only tested providers are w
  try{
   const providers=[{id:'grok',名前:'Grok'},{id:'gemini',名前:'Gemini'},{id:'discord',名前:'Discord'},{id:'openrt_chat',名前:'OpenRouter'}];
   const saved=await writeModelsInfo(providers,{grok:{...ok(),状態:'NG',説明:'expired',警告:['fallback']},gemini:ok(),discord:ok(),openrt_chat:{状態:'未実施'}},{directory,read,now});
-  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','prediction_models_info.json']);
+  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','pi_models_info.json','prediction_models_info.json']);
   const grok=JSON.parse(await readFile(path.join(directory,modelsInfoFile('grok')),'utf8'));
   assert.equal(grok.状態,'NG');assert.equal(grok.説明,'expired');assert.match(grok.chat.取得元,/固定候補/);assert.deepEqual(grok.警告,['fallback']);
   assert.deepEqual(Object.keys(grok.code.grok_cli.models),['grok-4.7','grok-4.6']);
@@ -232,7 +232,7 @@ test('native CLIs keep the newest version per family and exclude Hermes-only con
   assert.deepEqual(Object.keys(info.code.codex_cli.models),['gpt-6.1-sol','gpt-6-luna','gpt-6.1-terra','gpt-6.10-pro','gpt-5.5','gpt-5.4-mini']);
   assert.deepEqual(info.code.copilot_cli,info.code.codex_cli);
   assert.deepEqual(info.chat.モデル.map(row=>row.model_id),ids);
-  if(id==='openai_oauth')assert.ok(Object.hasOwn(info.code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol-900k'));
+  if(id==='openai_oauth')assert.ok(!Object.hasOwn(info.code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol-900k'));
  }
 });
 
@@ -240,7 +240,7 @@ test('merging legacy provider files removes Hermes aliases from native CLI and d
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-native-context-'));
  const native={models:{'gpt-6.1-sol':'base','gpt-6.1-sol-900k':'Hermes alias','gpt-6-luna-900k':'Hermes alias','GPT-6.1-TERRA-900K':'Hermes alias'}};
  try{
-  await writeFile(path.join(directory,'openai_oauth_models_info.json'),JSON.stringify({プロバイダ:'openai_oauth',code:{codex_cli:native,copilot_cli:native,aidiy_hermes:{models:{'openai_oauth/gpt-6.1-sol-900k':'Hermes OAuth'}}}}));
+  await writeFile(path.join(directory,'openai_oauth_models_info.json'),JSON.stringify({プロバイダ:'openai_oauth',code:{codex_cli:native,copilot_cli:native,aidiy_hermes:{models:{'openai_oauth/gpt-6.1-sol':'Hermes OAuth','openai_oauth/gpt-6.1-sol-900k':'旧別名'}}}}));
   await writeModelsInfo([],{}, {directory,now});
   for(const file of ['code_models_info.json','navi_models_info.json','prediction_models_info.json','hermes_models_info.json']){
    const data=JSON.parse(await readFile(path.join(directory,file),'utf8'));
@@ -250,10 +250,11 @@ test('merging legacy provider files removes Hermes aliases from native CLI and d
    }
   }
   const code=JSON.parse(await readFile(path.join(directory,'code_models_info.json'),'utf8'));
-  assert.ok(Object.hasOwn(code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol-900k'));
+  assert.ok(Object.hasOwn(code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol'));
+  assert.doesNotMatch(JSON.stringify(code), /-900k/i);
   assert.ok(Object.keys(code.opencode_cli.models).every(id=>!/-900k$/i.test(id)));
   const hermes=JSON.parse(await readFile(path.join(directory,'hermes_models_info.json'),'utf8'));
-  assert.ok(Object.hasOwn(hermes.openai_oauth.models,'gpt-6.1-sol-900k'));
+  assert.deepEqual(Object.keys(hermes.openai_oauth.models),['gpt-6.1-sol']);
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -427,19 +428,19 @@ test('Copilot keeps fetched latest versioned Claude families, then restores fixe
   assert.deepEqual(source.code.copilot_cli.models,{}); // 未取得source自体を取得成功に書換えない
  }finally{await rm(directory,{recursive:true,force:true});}
 });
-test('Gemini chat tiers keep Carbon above Argon and Flash without changing unrelated positions',async()=>{
+test('Gemini chat tiers keep Carbon, Argon, Hydrogen and Flash in order without changing unrelated positions',async()=>{
  const rows=[
   {model_id:'gemini-3.1-flash-image',作成日:'2026/11/01'},
   {model_id:'gemini-3.8-flash',作成日:'2026/09/02'},
   {model_id:'gemini-3.5-flash-lite',作成日:'2026/08/01'},
-  {model_id:'gemini-4-argon'}, {model_id:'gemini-4-carbon'},
+  {model_id:'gemini-4-hydrogen'}, {model_id:'gemini-4-argon'}, {model_id:'gemini-4-carbon'},
  ];
- const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-3.5-flash-lite','gemini-4-argon','gemini-3.8-flash'];
+ const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-3.5-flash-lite','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash'];
  for(const id of ['gemini','freeai']){
-  for(const subset of [rows,rows.filter(row=>row.model_id!=='gemini-4-carbon'),rows.slice(0,3)]){
+  for(const subset of [rows,rows.filter(row=>row.model_id!=='gemini-4-carbon'),rows.filter(row=>row.model_id!=='gemini-4-hydrogen'),rows.slice(0,3)]){
    const info=await modelsInfo({id,名前:id},ok({モデル詳細:subset}),{now});
    assert.deepEqual(info.chat.モデル.map(row=>row.model_id).filter(model=>model!=='gemini-3.1-flash-image'&&model!=='gemini-3.5-flash-lite'),
-    ['gemini-4-carbon','gemini-4-argon','gemini-3.8-flash'].filter(model=>subset.some(row=>row.model_id===model)));
+    ['gemini-4-carbon','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash'].filter(model=>subset.some(row=>row.model_id===model)));
    assert.deepEqual(Object.keys(info.chat[id+'_chat'].models),info.chat.モデル.map(row=>row.model_id));
    if(subset===rows){
     assert.deepEqual(Object.keys(info.chat[id+'_chat'].models),expected);
@@ -453,13 +454,13 @@ test('Gemini chat tiers keep Carbon above Argon and Flash without changing unrel
  const other=await modelsInfo({id:'openai',名前:'OpenAI'},ok({モデル詳細:rows}),{now});
  assert.deepEqual(other.chat.モデル.map(row=>row.model_id),rows.map(row=>row.model_id));
 });
-test('Gemini tiers survive merged chat and Hermes catalogs without adding other provider candidates',async()=>{
+test('Gemini tiers survive merged chat, Hermes and Pi catalogs without adding other provider candidates',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-gemini-tiers-'));
- const ids=['gemini-3.8-flash','gemini-4-argon','gemini-4-carbon'];
+ const ids=['gemini-3.8-flash','gemini-4-hydrogen','gemini-4-argon','gemini-4-carbon'];
  const providers=['gemini','freeai'].map(id=>({id,名前:id}));
  try{
   await writeModelsInfo(providers,Object.fromEntries(providers.map(({id})=>[id,ok({モデル詳細:ids.map(model_id=>({model_id}))})])),{directory,now,installedClis:{}});
-  for(const file of ['chat_models_info.json','hermes_models_info.json']){
+  for(const file of ['chat_models_info.json','hermes_models_info.json','pi_models_info.json']){
    const saved=JSON.parse(await readFile(path.join(directory,file),'utf8'));
    for(const provider of ['gemini_chat','freeai_chat'])assert.deepEqual(Object.keys(saved[provider].models),[...ids].reverse());
    assert.equal(saved.openrt_chat,undefined);

@@ -11,7 +11,7 @@ import {アプリアイコン,起動項目を整列} from './アプリアイコ�
 import ミニアイコン列 from './ミニアイコン列.vue';
 const props=defineProps({state:Object,cliState:Object,online:Boolean});
 defineEmits(['open-apps']);
-const 起動一覧=computed(()=>起動項目を整列([...props.state.項目.value.filter(item=>item.id!=='chrome'&&props.state.利用可能(item.id)),...(props.cliState?.項目.value||[]).filter(item=>item.id==='aidiy_hermes')]));
+const 起動一覧=computed(()=>起動項目を整列(props.state.項目.value.filter(item=>item.id!=='chrome'&&props.state.利用可能(item.id))));
 watch(()=>props.online,value=>{if(value)void props.state.読込();},{immediate:true});
 // 未選択の案内は英語で右端から左端へ流す（通常画面の入力欄とボタンのtitleは日本語のまま）
 const 未選択案内='SELECT YOUR PROJECT  ▸▸  READY FOR LAUNCH';
@@ -22,10 +22,9 @@ onBeforeUnmount(()=>監視?.disconnect());
 </script>
 <template>
 <div class="mini-app-launch" aria-label="アプリ起動">
- <component :is="ミニアイコン列" class="mini-app-buttons">
+ <component :is="ミニアイコン列" :速度="20" class="mini-app-buttons">
  <template v-for="item in 起動一覧" :key="item.id">
-  <button v-if="item.id!=='aidiy_hermes'" class="mini-app-button" :data-app="item.id" :aria-label="item.名前+' を起動'+(state.不可理由(item.id)?' — '+state.不可理由(item.id):'')" :title="state.不可理由(item.id)||item.名前+' を起動'+(state.フォルダ.value?' — '+state.フォルダ.value:item.id==='memo'?' — 起動フォルダに新しい付箋':' — プロジェクト選択してね')" :disabled="!online||!state.利用可能(item.id)||!['chrome','memo'].includes(item.id)&&!state.フォルダ.value||!!state.処理中.value||state.選択中.value" @click="state.起動(item.id,{開始時:起動モーション($event)})"><span class="mini-icon-frame"><span class="launch-frame launch-frame-36" aria-hidden="true"><img :src="アプリアイコン[item.id]" alt="" width="36" height="36"><span class="launch-trace"></span></span></span></button>
-  <button v-else class="mini-app-button mini-hermes-button" data-cli="aidiy_hermes" :aria-label="item.名前+' をConsoleで起動（'+item.モード+'）'" :title="item.名前+' / '+item.モード+' / モデル指定なし / 複数起動可'+(state.フォルダ.value?' — '+state.フォルダ.value:' — プロジェクト選択してね')" :disabled="!online||!state.フォルダ.value||!!state.処理中.value&&!state.処理中.value.startsWith('cli:')||state.選択中.value" @click="cliState.起動('aidiy_hermes',{確認省略:true,開始時:起動モーション($event)})"><span class="mini-icon-frame"><span class="launch-frame launch-frame-36" aria-hidden="true"><img src="CLI_aidiy_hermes.png" alt="" width="36" height="36"><span class="launch-trace"></span></span></span></button>
+  <button class="mini-app-button" :data-app="item.id" :aria-label="item.名前+' を起動'+(state.不可理由(item.id)?' — '+state.不可理由(item.id):'')" :title="state.不可理由(item.id)||item.名前+' を起動'+(state.フォルダ.value?' — '+state.フォルダ.value:item.id==='memo'?' — 起動フォルダに新しい付箋':' — プロジェクト選択してね')" :disabled="!online||!state.利用可能(item.id)||!['chrome','memo'].includes(item.id)&&!state.フォルダ.value||!!state.処理中.value||state.選択中.value" @click="state.起動(item.id,{開始時:起動モーション($event)})"><span class="mini-icon-frame"><span class="launch-frame launch-frame-36" aria-hidden="true"><img :src="アプリアイコン[item.id]" alt="" width="30" height="30"><span class="launch-trace"></span></span></span></button>
  </template>
  </component>
  <button v-if="!state.フォルダ.value" type="button" class="mini-app-message required mini-project-link" title="プロジェクト選択してね" aria-label="アプリ起動パネルでプロジェクトを選択" @click="$emit('open-apps')"><span ref="マーキー" class="mini-app-marquee">{{未選択案内}}</span></button>

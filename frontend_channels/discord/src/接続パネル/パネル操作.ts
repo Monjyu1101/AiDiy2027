@@ -13,11 +13,11 @@
 import { basename } from 'node:path';
 import { DiscordBot } from '../接続/Bot接続';
 import { 設定読込, 設定エラー, type Discord設定 } from '../接続/接続設定';
-import { ライブ選択エラー, 起動解決 } from '../共通連携/IDE連携';
+import { ライブ選択エラー, コード起動解決 } from '../共通連携/IDE連携';
 import { ライブ候補読込, ライブ初期値 } from '../ライブ/ライブモデル候補';
 import { モデル情報取得, type モデル初期情報 } from '../モデル情報/モデル情報';
 import { 接続失敗案内, 接続エラー詳細, type 接続段階 } from '../接続/接続エラー';
-import { Hermesモデル候補, Hermesモデル検証, 既定コード名, 対応コード名 } from '../コード/Hermesモデル';
+import { Hermesモデル候補, Hermesモデル検証, 実行コード名検証, 既定コード名, 対応コード名 } from '../コード/Hermesモデル';
 import { パネル設定保存先, パネル設定読込, パネル設定更新, type パネル設定 } from './パネル設定';
 
 export type 機能設定 = { live: boolean; code: boolean };
@@ -47,7 +47,7 @@ export class Discordパネル {
     private readConfig = 設定読込,
     private createBot: (config: Discord設定) => Bot = config => new DiscordBot(config),
     private settingsFile = パネル設定保存先(),
-    private validateCLI = (config: Discord設定) => { 起動解決(config.cli, config.python, config.folder); },
+    private validateCLI = (config: Discord設定) => { コード起動解決(config.cli, config.python, config.folder, config.coreRoot); },
     private timeoutMs = 40_000,
     private readCatalog = ライブ候補読込,
     private readAPI = モデル情報取得) {}
@@ -73,15 +73,20 @@ export class Discordパネル {
   /** aidiy_hermes のモデル候補（auto / same / openai_oauth/gpt-… など）。 */
   async コード候補() {
     if (this.closed) throw new Error();
-    return { models: Hermesモデル候補(this.apiInfo) };
+    const config = this.readConfig();
+    return { models: Hermesモデル候補(this.apiInfo, config.coreRoot),
+      engines: 対応コード名.map(id => ({ id, label: id })),
+      catalogs: Object.fromEntries(対応コード名.map(id => [id, Hermesモデル候補(this.apiInfo, config.coreRoot, id)])),
+      defaults: { aidiy_hermes: this.既定モデル(config), aidiy_pi: this.apiInfo?.settings.CODE_AIDIY_PI_MODEL || config.piModel || 'auto' } };
   }
   private 編集確認(what: string) {
     if (this.closed || !['idle', 'error'].includes(this.状態.phase)) throw new Error(`切断してから${what}を選択してください。`);
   }
   コード選択保存(value: unknown) {
     this.編集確認('モデル');
+    const cli = 実行コード名検証((value as { cli?: unknown } | null)?.cli);
     const model = Hermesモデル検証((value as { model?: unknown } | null)?.model);
-    const saved = パネル設定更新({ code_name: 既定コード名, code_model: model }, this.既定モデル(), this.settingsFile);
+    const saved = パネル設定更新({ code_name: cli, code_model: model }, this.既定モデル(), this.settingsFile);
     return { cli: saved.code_name, model: saved.code_model };
   }
   機能選択保存(value: unknown) {
@@ -123,9 +128,10 @@ export class Discordパネル {
       const features = this.features;
       if (!features.live && !features.code) throw new 設定エラー('Live と Code の両方が OFF です。どちらかを ON にしてください。');
       const saved = this.保存値(config);
-      // 将来の別ハーネス用に code_name を保存している。現在は aidiy_hermes だけを実行できる。
-      if (features.code && saved && !対応コード名.includes(saved.code_name)) throw new 設定エラー(`コード実行環境 ${saved.code_name} には未対応です。aidiy_hermes を選び直してください。`);
-      if (features.code) { stage = 'Hermes確認'; this.validateCLI(config); }
+      const selectedConfig = { ...config, cli: saved?.code_name ?? 既定コード名, hermesModel: saved?.code_model ?? this.既定モデル(config) };
+      // 保存したエンジンとモデルを起動確認・実行の両方へ渡す。
+      if (features.code && saved && !対応コード名.includes(saved.code_name)) throw new 設定エラー(`コード実行環境 ${saved.code_name} には未対応です。aidiy_hermes または aidiy_pi を選び直してください。`);
+      if (features.code) { stage = 'コード確認'; this.validateCLI(selectedConfig); }
       if (features.live) {
         stage = 'モデル確認';
         const catalog = this.apiInfo?.catalog || this.readCatalog();
@@ -134,7 +140,7 @@ export class Discordパネル {
         if (error) throw new 設定エラー(error);
       }
       stage = 'Bot作成';
-      const bot = this.createBot({ ...config, hermesModel: saved?.code_model ?? this.既定モデル(config), liveModels, liveEnabled: features.live, codeEnabled: features.code });
+      const bot = this.createBot({ ...selectedConfig, liveModels, liveEnabled: features.live, codeEnabled: features.code });
       this.bot = bot;
       bot.音声 = (kind, pcm, rate) => { if (run === this.generation) this.音声?.({ kind, data: pcm.toString('base64'), rate }); };
       bot.メーター = (kind, level, bins) => { if (run === this.generation) this.音量?.({ kind, level, bins }); };

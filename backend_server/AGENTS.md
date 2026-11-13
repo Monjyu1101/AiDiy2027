@@ -26,6 +26,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | AI判断 / Decisions | [`../_AIDIY/knowledge/backend_server,backend_tools,AI判断追加手順.md`](../_AIDIY/knowledge/backend_server,backend_tools,AI判断追加手順.md) |
 | 設定管理（conf_json / conf_model / conf_path） | [`../_AIDIY/knowledge/backend_server,設定管理(conf).md`](<../_AIDIY/knowledge/backend_server,設定管理(conf).md>) |
 | Code CLI 追加 | [`../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md`](../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md) |
+| Pi の Code 実行・モデル・読み取り専用・予測連携 | [`../_AIDIY/knowledge/command_pi,AiDiy連携.md`](../_AIDIY/knowledge/command_pi,AiDiy連携.md) |
 | MCP 構成・活用 | [`../_AIDIY/knowledge/backend_tools,構成.md`](../_AIDIY/knowledge/backend_tools,構成.md)、[`../_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md`](../_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md) |
 
 ## 概要
@@ -158,7 +159,7 @@ AI 名の規約:
 |----------|------|
 | `CHAT_AI_NAME` | 原則 `_chat` で終わる。OAuth 接続の `openai_oauth` は例外 |
 | `LIVE_AI_NAME` | `_live` で終わる |
-| `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外として `aidiy_hermes` |
+| `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外として `aidiy_hermes` / `aidiy_pi` |
 | `TASK_AI_NAME` | Code AI と同じ規約。`backend_taskteam` の AIタスク自動実行で使用 |
 | `TEAM_AI_NAME` | Code AI と同じ規約。`backend_taskteam` の AIチーム依頼実行で使用 |
 

@@ -4,6 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 機能フォルダの回帰テストを通常の Node テストへ接続する。
+// 部品テストは画面モジュールを import() で読むため、先に Vue を ui/ の 1 実体へそろえる（ui-vue.cjs 参照）。
+require('./ui-vue.cjs');
 require('../diag/ui/components/モデル一覧/checks/モデル一覧.check.cjs');
 require('../diag/ui/components/外部連携/checks/外部連携.check.cjs');
 require('../diag/ui/components/キー設定共通/checks/キー設定状態.check.cjs');

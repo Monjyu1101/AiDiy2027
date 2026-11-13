@@ -113,6 +113,8 @@ class NodeRefreshTests(unittest.TestCase):
         modules = {
             "frontend_diag": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_avatar": SimpleNamespace(install_standalone_launcher=Mock(return_value=True)),
+            # Pi は依存同期・モデルデータ・ランチャーを個別 setup() がまとめて行う。
+            "command_pi": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/host": SimpleNamespace(setup_assets=Mock(return_value=True), install_standalone_launcher=Mock(return_value=True)),
             "frontend_ide/viewer": SimpleNamespace(install_launcher=Mock(return_value=None)),
             "frontend_ide/aidiy_navi": SimpleNamespace(setup=Mock(return_value=True)),
@@ -155,6 +157,7 @@ class NodeRefreshTests(unittest.TestCase):
                                  ("frontend_channels/slack", "build:panel")] * 2)
         self.assertEqual(prepare.call_count, 12)
         modules["frontend_diag"].setup.assert_called_with(desktop=False)
+        self.assertEqual(modules["command_pi"].setup.call_count, 2)
         self.assertEqual(modules["frontend_ide/host"].setup_assets.call_count, 2)
         modules["frontend_ide/host"].setup_assets.assert_called_with("npm", choices={"_defer_ide_launchers": True})
         self.assertEqual(modules["frontend_channels/discord"].install_launcher.call_count, 2)

@@ -23,7 +23,7 @@ import { streamControlOf, visibleStreamContent, type コードパケット } fro
 import { コードモデル読込, コードモデル保存, モデル保存先, コード設定保存先, 検証回数読込, 検証回数保存 } from '../../src/model-preferences';
 import { 接続元許可 } from '../../src/forwarded-origin';
 import { 会話保存先, 会話一覧, 会話書込, 会話削除, 会話本文上限, 履歴メッセージ長さ, type 履歴メッセージ } from '../../src/conversation-store';
-import { オフライン実行, オフラインモデル候補, オフラインモデル保存先, Hermes既定モデル } from './offline';
+import { オフライン実行, 単独モデル候補, オフラインモデル保存先, Hermes既定モデル, オフライン選択, オフラインエンジン } from './offline';
 import type { Packet } from '../../aidiy_live/src/protocol';
 
 // 単独画面と拡張で AIコア接続・メッセージ形式・描画を共用する。
@@ -41,19 +41,22 @@ export async function 単独起動(project: string, backend?: string, initialMod
   // 最後に選んだオンラインの検証回数を次回も使う（未保存なら0回）。
   const optionsFile = コード設定保存先(modelFile);
   // 診断で保存し直した候補を、再起動せず一覧表示と選択検証の両方へ反映する。
-  const offlineModels = () => オフラインモデル候補(root, folder);
-  const offlineModelAllowed = (model: string) => offlineModels().some(item => item.id === model);
+  const offlineModels = (provider: string) => 単独モデル候補(provider, root, folder);
+  const offlineModelAllowed = (model: string, provider: string) => offlineModels(provider).some(item => item.id === model);
+  const offlineProviderAllowed = (provider: string) => オフラインエンジン.some(item => item.id === provider);
+  const sessionKey = (provider: string) => provider === 'aidiy_pi' ? 'PiセッションID' as const : 'HermesセッションID' as const;
   const modeModels = {
     online: コード選択(initialModel.offline ? savedModel ?? {provider:'',model:''}
       : remembered ?? (!requestedProvider && !requestedModel ? {provider:'',model:''}
         : { provider: requestedProvider || 'aidiy_hermes', model: requestedModel || (requestedProvider === 'aidiy_hermes' ? defaultModel.model : '') })),
-    offline: { provider: 'aidiy_hermes', model: offlineSaved?.provider === 'aidiy_hermes' && offlineModelAllowed(offlineSaved.model)
-      ? offlineSaved.model : offlineModelAllowed(defaultModel.model) ? defaultModel.model : 'same' },
+    offline: オフライン選択(offlineSaved, root, folder),
   };
   if (initialModel.offline && (requestedProvider || requestedModel)) {
-    const selected = コード選択({ provider: requestedProvider || 'aidiy_hermes', model: requestedModel || modeModels.offline.model });
-    if (selected.provider !== 'aidiy_hermes') throw new Error('オフラインでは aidiy_hermes だけを使用できます。');
-    if (!offlineModelAllowed(selected.model)) throw new Error('オフラインのモデルは same または aidiy_diag の一覧から選択してください。');
+    const provider = requestedProvider || modeModels.offline.provider;
+    const fallback = provider === modeModels.offline.provider ? modeModels.offline.model : オフライン選択({ provider, model: '' }, root, folder).model;
+    const selected = コード選択({ provider, model: requestedModel || fallback });
+    if (!offlineProviderAllowed(selected.provider)) throw new Error('オフラインでは aidiy_hermes または aidiy_pi を選択してください。');
+    if (!offlineModelAllowed(selected.model, selected.provider)) throw new Error('オフラインのモデルは same または aidiy_diag の一覧から選択してください。');
     modeModels.offline = selected;
   }
   const state = {
@@ -66,9 +69,10 @@ export async function 単独起動(project: string, backend?: string, initialMod
     メッセージ: [] as 履歴メッセージ[], 進捗: [] as string[], 実行中: false, 停止中: false,
     セッションID: undefined as string | undefined, 接続プロジェクトパス: '', 接続世代: 0,
     HermesセッションID: undefined as string | undefined,
+    PiセッションID: undefined as string | undefined,
     履歴: [] as { id: string; 題名: string; 更新日時: number }[]
   };
-  type 保存会話 = { id: string; メッセージ: typeof state.メッセージ; セッションID?: string; HermesセッションID?: string; 実行モード: 'online' | 'offline'; provider: string; model: string; 更新日時: number; 初回依頼?: string };
+  type 保存会話 = { id: string; メッセージ: typeof state.メッセージ; セッションID?: string; HermesセッションID?: string; PiセッションID?: string; 実行モード: 'online' | 'offline'; provider: string; model: string; 更新日時: number; 初回依頼?: string };
   // 会話履歴はプロジェクトの _AIDIY/aidiy_code/histories/ に保存し、次回の起動や VS Code 拡張とも共用する
   const 履歴フォルダ = (create = false) => historyFolder ?? 会話保存先(folder, create);
   let history: 保存会話[] = 会話一覧(履歴フォルダ()).map(item => ({ ...item, 実行モード: item.実行モード ?? 'online' }));
@@ -111,7 +115,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
   const オフライン使用 = () => state.実行モード === 'offline' || !state.接続済み || Boolean(offlineJob);
   const 表示状態 = () => オフライン使用() ? { ...state, 実行モード: 'offline',
     ...(state.実行モード === 'offline' ? {} : modeModels.offline),
-    セッションID: state.実行モード === 'offline' ? state.セッションID : state.HermesセッションID } : state;
+    セッションID: state.実行モード === 'offline' ? state.セッションID : state[sessionKey(modeModels.offline.provider)] } : state;
   const prediction = new InputPrediction(root, () => ({ projectPath: connection.projectPath, conversationId: state.会話ID,
     sessionId: connection.session, enabled: !closed && state.自動接続 && !オフライン使用() && !state.実行中 && !state.モデル変更中 }));
   const notify = () => { prediction.sync(); broadcast(表示状態()); };
@@ -119,7 +123,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
     if (!state.メッセージ.length && !state.セッションID) return;
     const previous = history.find(item => item.id === state.会話ID);
     const entry: 保存会話 = { id: state.会話ID, メッセージ: [...state.メッセージ], セッションID: state.セッションID,
-      HermesセッションID: state.HermesセッションID,
+      HermesセッションID: state.HermesセッションID, PiセッションID: state.PiセッションID,
       実行モード: state.実行モード, provider: state.provider, model: state.model, 更新日時: 更新日時を変更 ? Date.now() : previous?.更新日時 ?? Date.now(),
       初回依頼: previous?.初回依頼 ?? state.メッセージ.find(message => message.種別 === 'user')?.本文.replace(/\s+/g, ' ').slice(0, 160) };
     history = [entry, ...history.filter(item => item.id !== entry.id)];
@@ -189,35 +193,37 @@ export async function 単独起動(project: string, backend?: string, initialMod
     else connection.start(folder, { provider: state.provider, model: state.model }, state.セッションID, state.メッセージ);
   };
   const newConversation = () => {
-    state.会話ID = randomUUID(); state.メッセージ = []; state.進捗 = []; state.セッションID = undefined; state.HermesセッションID = undefined;
+    state.会話ID = randomUUID(); state.メッセージ = []; state.進捗 = []; state.セッションID = undefined; state.HermesセッションID = undefined; state.PiセッションID = undefined;
     Object.assign(state, modeModels[state.実行モード]); reconnect(); notify();
   };
   const execute = (text: string, 検証ループ回数: unknown = 1) => {
     if (オフライン使用()) {
-      // 検証回数に関係なくHermesを1回だけ直接実行する。バックアップ・検証ループはない。
+      // 検証回数に関係なく選択したCLIを1回だけ直接実行する。バックアップ・検証ループはない。
       state.実行中 = true; state.進捗 = [];
       state.メッセージ.push({ 種別: 'user', 本文: text }); trimHistory();
       save(); broadcast({ type: 'accepted', ...(navigationRun ? { navigationRequestId: navigationRun.id } : {}) }); navigationResult('accepted'); notify();
       try {
         const manualOffline = state.実行モード === 'offline';
+        const engine = manualOffline ? state.provider : modeModels.offline.provider;
+        const key = sessionKey(engine);
         const job = runOffline(root, folder, manualOffline ? state.model : modeModels.offline.model, text,
-          manualOffline ? state.セッションID : state.HermesセッションID, receive);
+          state[key], receive, undefined, engine);
         offlineJob = job;
         const ownedNavigation = navigationRun;
         void job.完了.then(result => {
           if (closed) return;
           if (ownedNavigation && navigationRun === ownedNavigation) {
             navigationResult(ownedNavigation.cancelling ? 'cancelled' : !ownedNavigation.failed && ownedNavigation.reply && !result.停止理由 && result.終了コード === 0 ? 'succeeded' : 'failed',
-              result.停止理由 || (result.終了コード !== 0 ? `Hermes終了コード: ${result.終了コード}` : !ownedNavigation.reply ? 'Codeの回答を確認できません。' : ''), true);
+              result.停止理由 || (result.終了コード !== 0 ? `CLI終了コード: ${result.終了コード}` : !ownedNavigation.reply ? 'Codeの回答を確認できません。' : ''), true);
           }
           if (result.セッションID) {
-            state.HermesセッションID = result.セッションID;
+            state[key] = result.セッションID;
             if (manualOffline) state.セッションID = result.セッションID;
           } else if (result.セッション復旧) {
-            state.HermesセッションID = undefined;
+            state[key] = undefined;
             if (manualOffline) state.セッションID = undefined;
           }
-          if (result.停止理由 || result.終了コード !== 0) receive({ メッセージ識別: 'error', メッセージ内容: result.停止理由 || result.ログ || `Hermes終了コード: ${result.終了コード}` });
+          if (result.停止理由 || result.終了コード !== 0) receive({ メッセージ識別: 'error', メッセージ内容: result.停止理由 || result.ログ || `CLI終了コード: ${result.終了コード}` });
         }).catch(error => { navigationResult('failed', String(error)); receive({ メッセージ識別: 'error', メッセージ内容: String(error) }); })
           .finally(() => { offlineJob = undefined; state.実行中 = false; state.停止中 = false; if (!closed) { save(); notify(); } });
       } catch (error) {
@@ -259,9 +265,9 @@ export async function 単独起動(project: string, backend?: string, initialMod
       if (req.method === 'GET' && route === 'catalog') {
         const provider = url.searchParams.get('provider') ?? '';
         if (provider.length > 200) { reply(400, {error:'Provider too long'}); return; }
-        if (オフライン使用() && provider && provider !== 'aidiy_hermes') { reply(400, {error:'オフラインでは aidiy_hermes だけを使用できます。'}); return; }
+        if (オフライン使用() && provider && !offlineProviderAllowed(provider)) { reply(400, {error:'オフラインでは aidiy_hermes または aidiy_pi を選択してください。'}); return; }
         const items = オフライン使用()
-          ? provider ? offlineModels() : [{ id:'aidiy_hermes', label:'aidiy_hermes' }]
+          ? provider ? offlineModels(provider) : オフラインエンジン
           : await connection.catalog(provider);
         reply(200, provider ? { models: items } : { providers: items }); return;
       }
@@ -370,8 +376,10 @@ export async function 単独起動(project: string, backend?: string, initialMod
           state.実行モード = entry.実行モード;
           if (state.実行モード === 'offline') state.自動接続 = false;
           state.会話ID = entry.id; state.メッセージ = [...entry.メッセージ]; state.セッションID = entry.セッションID;
-          state.HermesセッションID = entry.HermesセッションID;
+          state.HermesセッションID = entry.HermesセッションID ?? (entry.実行モード === 'offline' && entry.provider !== 'aidiy_pi' ? entry.セッションID : undefined);
+          state.PiセッションID = entry.PiセッションID ?? (entry.実行モード === 'offline' && entry.provider === 'aidiy_pi' ? entry.セッションID : undefined);
           if (modeChanged) Object.assign(state, modeModels[state.実行モード]);
+          if (state.実行モード === 'offline') state.セッションID = state[sessionKey(state.provider)];
           state.進捗 = []; reconnect(); notify();
         } else if (type === 'deleteHistory') {
           const entry = history.find(item => item.id === data.id);
@@ -388,12 +396,13 @@ export async function 単独起動(project: string, backend?: string, initialMod
           if (typeof data.provider !== 'string' || typeof data.model !== 'string' || data.provider.length > 200 || data.model.length > 300) { reply(400, {error:'モデル指定が不正です。'}); return; }
           const selected = コード選択({ provider: data.provider, model: data.model });
           const offline = オフライン使用();
-          if (offline && selected.provider !== 'aidiy_hermes') { reply(400, {error:'オフラインでは aidiy_hermes だけを使用できます。'}); return; }
-          if (offline && !offlineModelAllowed(selected.model)) { reply(400, {error:'オフラインのモデルは一覧から選択してください。'}); return; }
+          if (offline && !offlineProviderAllowed(selected.provider)) { reply(400, {error:'オフラインでは aidiy_hermes または aidiy_pi を選択してください。'}); return; }
+          if (offline && !offlineModelAllowed(selected.model, selected.provider)) { reply(400, {error:'オフラインのモデルは一覧から選択してください。'}); return; }
           if (!offline) await connection.setModel(selected);
           コードモデル保存(selected, offline ? offlineFile : modelFile);
           modeModels[offline ? 'offline' : 'online'] = selected;
           if (!offline || state.実行モード === 'offline') { state.provider = selected.provider; state.model = selected.model; }
+          if (offline && state.実行モード === 'offline') state.セッションID = state[sessionKey(selected.provider)];
           save(false); notify();
         } else { reply(400, {error:'Unknown message'}); return; }
         reply(200, {ok:true, ...(type === 'cancel_run' ? { navigationPending: !!navigationRun } : {})}); return;

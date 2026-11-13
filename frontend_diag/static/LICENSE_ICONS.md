@@ -36,6 +36,13 @@
 - リポジトリ内の利用条件: [AiDiy 公開利用ライセンス v1.1](../../../../../LICENSE)、`Copyright (c) 2014-2027 Mitsuo KONDOU and contributors`。非商用利用と再配布条件はライセンス本文に従ってください。画像固有の別ライセンス・生成元の追加証跡はこの作業では確認できていません。独立した外部再配布の権利確認が完了したという意味ではありません。
 - `aidiy_hermes` に AiDiy アイコンを使う指定に従った再利用です。別製品の公式ロゴと誤認させる加工はしていません。
 
+## AiDiy / aidiy_pi
+
+- 対象: `aidiy_pi.png`（Diag 配布コピー）。合成アイコンの正本は [`command_pi/aidiy/assets/AiDiy_pi.svg`](../../../../../command_pi/aidiy/assets/AiDiy_pi.svg) / `.png`、人物の共通原画は [`_icons/AiDiy.png`](../../../../../_icons/AiDiy.png)（SHA-256: `3b580e91b8e91a2accd55675c07f2b2b8c3c9cf85677da804ef6b74ae8267042`、aidiy_hermes と同じ原画）です。
+- Pi ロゴの引用元: 同梱の Pi リポジトリ（earendil-works/pi、MIT License、`Copyright (c) 2025 Mario Zechner`、[`command_pi/LICENSE`](../../../../../command_pi/LICENSE)）の [`apps/p2/src/web/PiLogo.tsx`](../../../../../command_pi/apps/p2/src/web/PiLogo.tsx) の形（viewBox `0 0 4 4` の矩形5つ）と `apps/p2/src/web/style.css` の色（コーラル `rgb(228 138 122)`・ブルー `rgb(79 142 179)`・イエロー `rgb(234 182 93)`）。単体 SVG にした原本を [`command_pi/aidiy/assets/upstream/pi-logo.svg`](../../../../../command_pi/aidiy/assets/upstream/pi-logo.svg) に保存（SHA-256: `f8a8496eef3d8e900e117a73d8702fb1a9ade563815fe9724de3bd97929a5ed0`）。形・色は変えていません。
+- 加工: 人物を120×120px全面に配置し、下部120×30pxを金地の帯（縦グラデーション `#F3D77A`→`#D4AF37`→`#B8912A`、2px枠 `#7A5C14`）にしました。帯の中央付近に黒 `#1B1B1B` の角丸タイル（24×24px）を置き、その上に Pi ロゴを18×18pxで等比配置、右に文字 `PI`（Arial Black / Arial / sans-serif、23px、weight900、`#1B1B1B`）。PNG は合成 SVG をヘッドレス Edge で120×120pxに書き出し、RGBA に揃えています。
+- 利用条件: 人物部分は aidiy_hermes と同じく [AiDiy 公開利用ライセンス v1.1](../../../../../LICENSE)。Pi ロゴは MIT License の著作権表示・許諾条項を保持して再配布してください。`aidiy_pi`（AiDiy に同梱した Pi）の起動先を識別するための表示で、Pi 開発元による承認・提携を示すものではありません。
+
 ## Antigravity CLI / agy
 
 - 対象: `agy.svg`、`agy.png`。無改変原本: `upstream/antigravity-logo-mark.svg`。

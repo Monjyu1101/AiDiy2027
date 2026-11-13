@@ -17,9 +17,9 @@ import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { コードモデル読込, コードモデル保存, モデル保存先, コード設定保存先, 検証回数読込, 検証回数保存 } from './model-preferences';
-import { Hermes既定モデル, オフラインモデル候補, オフラインモデル保存先, オフライン実行 } from '../aidiy_code/src/offline';
-import { 起動解決 } from './runner';
-import { extensionCoreConnection } from './extension-installation';
+import { オフライン選択, オフラインエンジン, 単独モデル候補, オフラインモデル保存先, オフライン実行 } from '../aidiy_code/src/offline';
+import { 起動解決, コード起動解決 } from './runner';
+import { extensionCoreConnection, extensionSourceRoot } from './extension-installation';
 import { CodeConnection, コード選択 } from './code-connection';
 import { InputPrediction } from './input-prediction';
 import { validateFileUpload, fileAttachment, isDuplicateAttachment, type ChatAttachment } from './file-attachments';
@@ -28,22 +28,23 @@ import { streamControlOf, visibleStreamContent, type コードパケット } fro
 import { 会話保存先, 会話選択読込, 会話選択保存, 会話一覧, 会話書込, 会話削除, 会話本文上限, 履歴メッセージ長さ, type 保存履歴 } from './conversation-store';
 
 interface メッセージ { 種別: 'user' | 'assistant' | 'error'; 本文: string; 添付?: ChatAttachment }
-interface 会話 { メッセージ: メッセージ[]; 作業URI: string; コアセッションID?: string; HermesセッションID?: string; provider: string; model: string; モデル選択済み?: boolean }
+interface 会話 { メッセージ: メッセージ[]; 作業URI: string; コアセッションID?: string; HermesセッションID?: string; PiセッションID?: string; provider: string; model: string; モデル選択済み?: boolean }
 interface 保存会話 extends 会話 { id: string; 更新日時: number; 初回依頼?: string }
 interface 添付 { 名前: string; 本文: string }
 
 // 会話履歴はプロジェクトの _AIDIY/aidiy_code/histories/ に保存し、単独起動版・開発スペースとも共用する（共通形へ変換）。
 const 履歴へ = (item: 保存会話): 保存履歴 => ({
   id: item.id, 更新日時: item.更新日時, 初回依頼: item.初回依頼, メッセージ: item.メッセージ, provider: item.provider, model: item.model,
-  モデル選択済み: item.モデル選択済み, 実行モード: 'online', セッションID: item.コアセッションID, HermesセッションID: item.HermesセッションID,
+  モデル選択済み: item.モデル選択済み, 実行モード: 'online', セッションID: item.コアセッションID, HermesセッションID: item.HermesセッションID, PiセッションID: item.PiセッションID,
 });
 const 会話へ = (item: 保存履歴, 作業URI: string): 保存会話 => {
   const offline = item.実行モード === 'offline';
   return {
     id: item.id, 更新日時: item.更新日時, 初回依頼: item.初回依頼, 作業URI, provider: item.provider, model: item.model, モデル選択済み: item.モデル選択済み,
     メッセージ: item.メッセージ.filter(message => ['user', 'assistant', 'error'].includes(message.種別)) as メッセージ[],
-    // 単独起動版のオフライン会話は Hermes のセッションとして続ける（AIコアのセッションには渡さない）
-    コアセッションID: offline ? undefined : item.セッションID, HermesセッションID: item.HermesセッションID ?? (offline ? item.セッションID : undefined),
+    // 単独起動版のオフライン会話は各エンジンのセッションとして続ける（AIコアのセッションには渡さない）
+    コアセッションID: offline ? undefined : item.セッションID, HermesセッションID: item.HermesセッションID ?? (offline && item.provider !== 'aidiy_pi' ? item.セッションID : undefined),
+    PiセッションID: item.PiセッションID ?? (offline && item.provider === 'aidiy_pi' ? item.セッションID : undefined),
   };
 };
 
@@ -72,9 +73,9 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
   /** 最後に選んだオンラインの検証回数。未保存なら0回。 */
   private 検証回数 = 0;
   // 起動時の候補を固定せず、現在の会話のフォルダから診断結果を読み直す。
-  private get オフライン候補(): { id: string; label: string }[] {
+  private オフライン候補(provider: string): { id: string; label: string }[] {
     const folder = this.会話 ? this.現在フォルダ() : this.選択フォルダ();
-    return オフラインモデル候補(this.context.extensionPath, folder?.uri.fsPath ?? this.context.extensionPath);
+    return 単独モデル候補(provider, this.context.extensionPath, folder?.uri.fsPath ?? this.context.extensionPath);
   }
   private オフラインジョブ?: ReturnType<typeof オフライン実行>;
   private 最終作業URI?: vscode.Uri;
@@ -91,12 +92,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
         && this.自動接続 && !this.オフライン使用() && !this.実行中 && !this.モデル変更中(),
     }));
     const config = vscode.workspace.getConfiguration('aidiyHermes');
-    const offlineModels = this.オフライン候補;
-    const defaultModel = Hermes既定モデル(context.extensionPath, this.選択フォルダ()?.uri.fsPath ?? context.extensionPath);
-    const offlineSaved = コードモデル読込(this.オフライン保存先);
-    const offlineModel = offlineSaved?.provider === 'aidiy_hermes' && offlineModels.some(item => item.id === offlineSaved.model)
-      ? offlineSaved.model : offlineModels.some(item => item.id === defaultModel) ? defaultModel : 'same';
-    this.オフラインモデル = { provider: 'aidiy_hermes', model: offlineModel };
+    this.オフラインモデル = オフライン選択(コードモデル読込(this.オフライン保存先), context.extensionPath, this.選択フォルダ()?.uri.fsPath ?? context.extensionPath);
     this.検証回数 = 検証回数読込(this.設定保存先) ?? 0;
     this.履歴読込();
     const currentFolder = this.選択フォルダ(), currentId = currentFolder ? 会話選択読込(会話保存先(currentFolder.uri.fsPath)) : undefined;
@@ -258,7 +254,8 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     if (!folder) throw new Error('作業フォルダを VS Code で開いてください。以前のフォルダを閉じた場合は、新しい会話を開始してください。');
     return folder;
   }
-  private 起動設定(folder: vscode.WorkspaceFolder) {
+  private 起動設定(folder: vscode.WorkspaceFolder, provider = this.オフラインモデル.provider) {
+    if (provider === 'aidiy_pi') return コード起動解決(provider, '', folder.uri.fsPath, extensionSourceRoot(this.context.extensionPath));
     const config = vscode.workspace.getConfiguration('aidiyHermes', folder.uri);
     return 起動解決(config.get('cliPath', 'aidiy_hermes'), config.get('pythonPath', ''), folder.uri.fsPath);
   }
@@ -351,10 +348,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     this.設定プロジェクト = project;
     const config = vscode.workspace.getConfiguration('aidiyHermes', folder?.uri);
     this.最終モデル = コード選択(コードモデル読込(this.モデルファイル) ?? { provider: config.get('provider', ''), model: config.get('model', '') });
-    const candidates = this.オフライン候補, saved = コードモデル読込(this.オフライン保存先);
-    const defaultModel = project ? Hermes既定モデル(this.context.extensionPath, project) : 'same';
-    this.オフラインモデル = { provider: 'aidiy_hermes', model: saved?.provider === 'aidiy_hermes' && candidates.some(item => item.id === saved.model)
-      ? saved.model : candidates.some(item => item.id === defaultModel) ? defaultModel : 'same' };
+    this.オフラインモデル = オフライン選択(コードモデル読込(this.オフライン保存先), this.context.extensionPath, project || this.context.extensionPath);
     this.検証回数 = 検証回数読込(this.設定保存先) ?? 0;
     Object.assign(this.会話, this.最終モデル);
   }
@@ -413,7 +407,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
   private async 候補取得(provider = ''): Promise<{ id: string; label: string }[]> {
     this.信頼確認(); this.接続更新();
     if (this.オフライン使用()) {
-      return provider === 'aidiy_hermes' ? this.オフライン候補 : provider ? [] : [{ id: 'aidiy_hermes', label: 'aidiy_hermes' }];
+      return provider ? this.オフライン候補(provider) : オフラインエンジン;
     }
     if (!this.connection) throw new Error('作業フォルダを開いてください。');
     return this.connection.catalog(provider);
@@ -442,8 +436,8 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     const selectedModel = modelValue.trim();
     this.信頼確認();
     if (this.オフライン使用()) {
-      if (selectedProvider !== 'aidiy_hermes' || !this.オフライン候補.some(item => item.id === selectedModel))
-        throw new Error('オフライン用のHermesモデルを選択してください。');
+      if (!オフラインエンジン.some(item => item.id === selectedProvider) || !this.オフライン候補(selectedProvider).some(item => item.id === selectedModel))
+        throw new Error('オフライン用のHermesまたはPiモデルを選択してください。');
       this.オフラインモデル = コードモデル保存({ provider: selectedProvider, model: selectedModel }, this.オフライン保存先);
       this.通知(); return;
     }
@@ -475,6 +469,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     const self_check_loop = typeof 検証ループ回数 === 'number' && Number.isInteger(検証ループ回数) ? Math.max(0, Math.min(3, 検証ループ回数)) : 1;
     const offline = this.オフライン使用();
     const launch = offline ? this.起動設定(folder) : undefined;
+    const sessionKey = this.オフラインモデル.provider === 'aidiy_pi' ? 'PiセッションID' : 'HermesセッションID';
     if (!offline && !this.connection?.send({ メッセージ識別: 'input_text', メッセージ内容: fullPrompt, self_check_loop }))
       throw new Error('AIコアが未接続のため送信できません。');
     this.会話.作業URI = folder.uri.toString();
@@ -485,13 +480,13 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
     if (offline) {
       try {
         const job = オフライン実行(this.context.extensionPath, folder.uri.fsPath, this.オフラインモデル.model,
-          fullPrompt, this.会話.HermesセッションID, packet => { if (this.現在フォルダ()?.uri.fsPath === folder.uri.fsPath && this.会話.作業URI === folder.uri.toString()) this.パケット受信(packet); }, launch);
+          fullPrompt, this.会話[sessionKey], packet => { if (this.現在フォルダ()?.uri.fsPath === folder.uri.fsPath && this.会話.作業URI === folder.uri.toString()) this.パケット受信(packet); }, launch, this.オフラインモデル.provider);
         this.オフラインジョブ = job;
         void job.完了.then(result => {
           if (this.破棄済み || this.オフラインジョブ !== job) return;
-          if (result.セッションID || result.セッション復旧) this.会話.HermesセッションID = result.セッションID;
+          if (result.セッションID || result.セッション復旧) this.会話[sessionKey] = result.セッションID;
           if (result.停止理由) this.エラー(result.停止理由);
-          else if (result.終了コード !== 0) this.エラー(`Hermesが終了コード ${result.終了コード} で終了しました。`);
+          else if (result.終了コード !== 0) this.エラー(result.ログ || `CLIが終了コード ${result.終了コード} で終了しました。`);
         }).catch(error => { if (!this.破棄済み && this.オフラインジョブ === job) this.エラー(error); }).finally(() => {
           if (this.オフラインジョブ !== job) return;
           this.オフラインジョブ = undefined; this.実行中 = false; this.停止中 = false;

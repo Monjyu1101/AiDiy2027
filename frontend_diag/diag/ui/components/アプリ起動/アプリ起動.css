@@ -12,17 +12,31 @@
 
 /* アプリと全CLIを同じ小型タイルで並べ、アイコンを主役にする。 */
 .app-launch-panel .app-project{padding:10px 16px}.app-launch-panel .app-project p{margin:6px 0 0;font-size:11px}
-.app-launch-panel .app-launch-list{grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;padding:10px 14px}
+.app-launch-panel .app-launch-list{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px;padding:6px 14px}
 .app-launch-panel .app-launch-card{padding:0;border:0;border-radius:5px;background:transparent}
-.app-launch-panel .app-launch-button{position:relative;display:grid;place-items:center;min-height:100px;padding:5px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
+.app-launch-panel .app-launch-button{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;min-height:80px;padding:3px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
 .app-launch-panel .app-launch-button:hover:not(:disabled){border-color:#35e0d2;background:#173b46}
 .app-launch-panel .app-launch-button:disabled{opacity:.65;cursor:not-allowed}
-.app-launch-panel .app-launch-icon{width:72px;height:72px;object-fit:contain}
+/* 光る枠の余白を確保し、画像の外周に沿って回す。 */
+.app-launch-panel .launch-frame-standard{width:min(60px,calc(100% - 12px));height:auto;aspect-ratio:1}
+.app-launch-panel .launch-frame-standard>.launch-trace{inset:-6px}
+.app-launch-panel .launch-frame-standard>.launch-trace::before{padding:3px;border-radius:8px}
+.app-launch-panel .app-launch-icon{width:100%;height:100%;object-fit:contain}
 .app-launch-state{position:absolute;bottom:1px;left:2px;right:2px;pointer-events:none;font-size:10px;line-height:12.5px;color:#92c3ce}
 .app-launch-panel .app-single{position:absolute;top:4px;right:4px;padding:0 3px;font-size:8px;background:#000}
 .app-launch-panel .app-launch-result{min-height:0;margin:4px 0!important;font-size:11px}
 .app-launch-panel .unavailable .app-launch-icon{filter:grayscale(1);opacity:.6}
 .app-launch-panel .unavailable .app-launch-state{color:#facc15}
 .app-launch-message.error{color:#ff94a7}
-@media(max-width:700px){.app-launch-panel .app-launch-list{grid-template-columns:repeat(4,minmax(0,1fr))}}
-@media(max-width:480px){.app-launch-panel .app-launch-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.app-launch-panel .app-project{padding:10px}}
+@media(max-width:480px){.app-launch-panel .app-launch-list{gap:6px;padding:8px}.app-launch-panel .app-project{padding:10px}}
+
+/* 標準ランチャーは窓内の残り高さを使い、収まらない一覧だけをスクロールする。 */
+#app>.diag-panel.app-launch-view{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.app-launch-view>*{flex:none}
+.app-launch-view>.app-launch-panel{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
+.app-launch-view>.app-launch-panel>*{flex:none}
+.app-launch-panel .panel-heading{padding:8px 14px}
+.app-launch-panel .panel-heading h2{margin:0}
+.app-launch-view>footer{padding:5px 14px;max-height:20vh;overflow:auto;line-height:1.3}
+.app-launch-view>footer p{margin:4px 0}
+@media(max-height:480px){.app-launch-view>.app-launch-panel{overflow-y:auto}.app-launch-panel .app-launch-list{flex:none!important;overflow:visible}}

@@ -11,6 +11,7 @@ export const cliCompletions = Object.freeze({
   agy: { options: '--dangerously-skip-permissions', description: '権限確認なし' },
   grok: { options: '--yolo', description: '自動承認' },
   aidiy_hermes: { options: '--yolo', description: '自動承認' },
+  // aidiy_pi は許可確認を持たず、承認省略に当たるオプションがないため補完しない（モデルは最後に選んだものを使う）。
 });
 
 // 候補の表示だけを担当する。Tab確定はPSReadLineが実際の入力バッファで判定する。

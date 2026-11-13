@@ -141,7 +141,7 @@ def create_router(task_agents) -> APIRouter:
                     "parameters": {
                         "prompt": {"type": "string", "required": True, "description": "タスク化したい依頼内容"},
                         "project_path": {"type": "string", "required": False, "default": None, "description": "対象プロジェクトのパス。backend_taskteam の Task API の プロジェクト に対応。null なら更新最終レコードの値、無ければ空欄。空文字は明示的な空欄指定"},
-                        "ai_name": {"type": "string", "required": False, "default": None, "description": "TASK_AI_NAME。claude_sdk / claude_cli / codex_cli / aidiy_hermes など。null なら更新最終レコードの値、無ければ規定値"},
+                        "ai_name": {"type": "string", "required": False, "default": None, "description": "TASK_AI_NAME。claude_sdk / claude_cli / codex_cli / aidiy_hermes / aidiy_pi など。null なら更新最終レコードの値、無ければ規定値"},
                         "ai_model_plan": {"type": "string", "required": False, "default": None, "description": "準備（AIによる明細分解）に使うモデル。null なら更新最終レコードの値、無ければ規定値"},
                         "ai_model_do": {"type": "string", "required": False, "default": None, "description": "各ステップの実行に使うモデル。null なら更新最終レコードの値、無ければ規定値"},
                         "ai_model_check": {"type": "string", "required": False, "default": None, "description": "終了時の最終確認に使うモデル。null なら更新最終レコードの値、無ければ規定値"},

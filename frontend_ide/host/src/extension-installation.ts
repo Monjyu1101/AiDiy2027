@@ -43,6 +43,14 @@ function verifiedRoot(root: string): string {
   return realpathSync(root);
 }
 
+/** オフラインCLI・モデル候補も、拡張を導入した同じ配置を参照する。 */
+export function extensionSourceRoot(extensionPath: string): string {
+  try {
+    const root = installationRoot(extensionPath);
+    return root === undefined ? extensionPath : verifiedRoot(root);
+  } catch { throw installationUnavailable(); }
+}
+
 /** 配置済み拡張の記録は接続単位で固定し、秘密は毎要求で同じ配置から読み直す。 */
 export function extensionCoreConnection(extensionPath: string, projectPath?: string | null): { backend: string; authorization: InternalAuthorization } {
   let recorded = true;

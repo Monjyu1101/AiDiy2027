@@ -162,3 +162,36 @@ test('非ゼロ終了は CAN 1バイトで1回終端通知する', async () => {
   assert.equal(packets.filter(packet => packet.メッセージ内容 === STREAM_CANCEL).length, 1);
   assert.equal(packets.filter(packet => packet.メッセージ識別 === 'output_stream').at(-1).メッセージ内容, STREAM_CANCEL);
 });
+
+// Piを起動せず、JSONイベントだけを出すNodeの偽CLIで受信境界を検証する。
+test('PiのJSONから最終回答・セッション・失敗を分離する', async () => {
+  const { Pi会話引数 } = require('../out/runner.cjs');
+  const resume = '11111111-1111-4111-8111-111111111111';
+  assert.deepEqual(Pi会話引数('same', resume), ['--mode', 'json', '-p', '--session-id', resume]);
+  assert.deepEqual(Pi会話引数('openai_oauth/test', resume).slice(-2), ['--model', 'openai_oauth/test']);
+  for (const fail of [false, true]) {
+    const events = [{ type: 'session', id: resume },
+      { type: 'message_update', assistantMessageEvent: { type: 'thinking_delta', delta: '調査中\n' } },
+      { type: 'message_update', assistantMessageEvent: { type: 'thinking_delta', delta: '確認中' } },
+      { type: 'message_update', assistantMessageEvent: { type: 'thinking_end' } },
+      { type: 'message_end', message: { role: 'assistant', content: [{ type: 'text', text: '途中' }], stopReason: 'toolUse' } },
+      { type: 'tool_execution_start', toolName: 'read' },
+      { type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: '回答' } },
+      { type: 'message_end', message: { role: 'assistant', content: [{ type: 'text', text: '最終回答' }, { type: 'thinking', thinking: '内部情報' }], stopReason: fail ? 'error' : 'stop', errorMessage: fail ? '認証失敗' : undefined } },
+      { type: 'message_update', assistantMessageEvent: { type: 'thinking_delta', delta: '終了時の残り' } }];
+    const output = events.map(event => JSON.stringify(event)).join('\n');
+    const packets = [];
+    const progress = [];
+    const result = await CLI実行({ 起動: { 実行ファイル: process.execPath, 引数: ['-e', 'process.stdout.write(' + JSON.stringify(output) + ')'] },
+      作業フォルダ: root, 本文: '入力', 引数: [], 制限時間: 10000, 出力形式: 'pi-json',
+      ストリーム: (text, source) => { packets.push(text); if (source === 'stderr') progress.push(text); } }).完了;
+    assert.equal(result.セッションID, resume);
+    assert.equal(result.回答, '最終回答');
+    assert.equal(result.終了コード, fail ? 1 : 0);
+    assert.ok(packets.includes('Pi: read'));
+    assert.ok(progress.includes('[Pi thinking] 調査中'));
+    assert.ok(progress.includes('[Pi thinking] 確認中'));
+    assert.ok(progress.includes('[Pi thinking] 終了時の残り'));
+    assert.ok(!packets.join('').includes('内部情報'));
+  }
+});

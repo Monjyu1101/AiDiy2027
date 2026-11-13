@@ -6,6 +6,8 @@ https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import {ref,onMounted,onBeforeUnmount} from 'vue';
 
+// 自動送りの速度（px/秒）。
+const props=defineProps({速度:{type:Number,default:28}});
 const 枠=ref(null),列=ref(null);
 const 一周=(位置,長さ)=>((位置%長さ)+長さ)%長さ;
 let ボタン=[],間隔=0,周期=0,位置=0,はみ出す=false,段数=1;
@@ -23,7 +25,7 @@ function 配置(){
 function 進める(now){
  frame=0;
  if(前回){
-  位置=一周(位置-Math.min(now-前回,50)*.028,周期);
+  位置=一周(位置-Math.min(now-前回,50)*props.速度/1000,周期);
   配置();
  }
  前回=now;

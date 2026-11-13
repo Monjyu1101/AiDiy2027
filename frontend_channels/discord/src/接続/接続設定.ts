@@ -21,7 +21,7 @@ export interface Discord設定 {
   token: string; guildId: string; userId: string; textChannelId: string; voiceChannelId: string;
   prefix: string; coreUrl: string; coreRoot?: string; folder: string; cli: string; python: string;
   /** aidiy_hermes のモデル（auto / same / openai_oauth/gpt-… など）。 */
-  hermesModel: string; maxTurns: number; timeoutMs: number; liveModels: Record<string, string>;
+  hermesModel: string; piModel?: string; maxTurns: number; timeoutMs: number; liveModels: Record<string, string>;
   /** 接続制御。省略時は両方 ON。パネルの設定（Live は切替可、Code は ON 固定）で上書きする。 */
   liveEnabled?: boolean; codeEnabled?: boolean;
 }
@@ -68,7 +68,7 @@ export function 設定解析(data: Record<string, unknown>, root = プロジェ�
   return {
     token, guildId, userId, textChannelId, voiceChannelId, prefix: '!aidiy', coreUrl: url.href, coreRoot: root, folder, liveModels,
     cli: 'aidiy_hermes', python: '',
-    hermesModel,
+    hermesModel, piModel: text('CODE_AIDIY_PI_MODEL') || 'auto',
     maxTurns: integer('CODE_MAX_TURNS', 999, 1, Number.MAX_SAFE_INTEGER), timeoutMs: 900_000,
   };
 }

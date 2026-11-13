@@ -11,6 +11,7 @@
 
 from AIコア.AI応答 import 応答正規化, エラー応答
 from AIコア.AI実行オプション import 既定実行オプション, 読取専用CLI対応方式
+from AIコア.AIコードPi出力 import PiJSON出力
 from log_config import get_logger
 logger = get_logger(__name__)
 
@@ -20,6 +21,7 @@ import time
 import datetime
 import asyncio
 import base64
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -33,6 +35,7 @@ import json
 # Copilot は stdout の JSONL を解析し、他の CLI は stderr を進捗として扱う。
 # stdout を output_stream にも流すと、正式回答が途中表示と最終表示で重複する。
 _STDERR_STREAM_STDOUT_FINAL_AI = frozenset({
+    "aidiy_pi",
     "copilot_cli",
     "opencode_cli",
     "antigravity_cli",
@@ -320,6 +323,21 @@ class CodeAI:
             return [venv_py, cli_main]
         return None
 
+    @staticmethod
+    def _pi直接実行コマンド() -> Optional[list]:
+        """aidiy_pi.cmd（cmd.exe）を経由せず、node で AiDiy の Pi 入口を直接起動するコマンドを返す。
+
+        _AIDIY/aidiy_pi/bin のランチャーと同じソース実行（source-resolver + command_pi/aidiy/aidiy_pi.ts）。
+        command_pi が setup されていなければ None。
+        """
+        node = shutil.which("node")
+        pi_dir = Path(__file__).resolve().parents[2] / "command_pi"
+        resolver = pi_dir / "packages" / "coding-agent" / "src" / "experimental" / "source-resolver.ts"
+        entry = pi_dir / "aidiy" / "aidiy_pi.ts"
+        if not node or not resolver.is_file() or not entry.is_file() or not (pi_dir / "node_modules").is_dir():
+            return None
+        return [node, "--import", resolver.as_uri(), str(entry)]
+
     def _npmシム直接実行に解決(self, cmd_path: str) -> Optional[list]:
         """npm が生成する .cmd シム（claude/copilot/gemini/codex）を解析し、
         cmd.exe を経由しない実行コマンド list を返す。失敗時は None。
@@ -392,6 +410,10 @@ class CodeAI:
                     if os.path.isfile(candidate):
                         return candidate
             return "aidiy_hermes"
+        if self.code_ai == "aidiy_pi":
+            launcher = Path(__file__).resolve().parents[2] / "_AIDIY" / "aidiy_pi" / "bin" / (
+                "aidiy_pi.cmd" if os.name == 'nt' else "aidiy_pi")
+            return str(launcher) if launcher.is_file() else "aidiy_pi"
         if self.code_ai == "opencode_cli":
             if os.name == 'nt':
                 userprofile = os.environ.get('USERPROFILE', os.path.expanduser('~'))
@@ -503,6 +525,11 @@ class CodeAI:
                 return バージョン
 
         cmd = self._コマンドパス取得()
+        if self.code_ai == "aidiy_pi" and not os.environ.get("AIDIY_PI_CLI_PATH"):
+            # cmd.exe（.cmd ランチャー）を経由せず node で直接確認する。
+            direct = self._pi直接実行コマンド()
+            if direct:
+                cmd = direct + ["--version"]
         cache_key = f"{self.code_ai}:{cmd}"
         if cache_key in self._バージョンキャッシュ:
             return self._バージョンキャッシュ[cache_key]
@@ -557,6 +584,23 @@ class CodeAI:
         except Exception as e:
             logger.warning(f"[CodeAI] --version 実行エラー: {cmd} {e}")
             return ""
+
+    def _Piコマンド構築(self, 読取専用: bool = False) -> list:
+        # 完全プロンプトは UTF-8 stdin、会話履歴は AiDiy 側から毎回渡す。
+        # read-only は制約を持つ同梱入口に固定し、カスタムCLIへ退避しない。
+        custom_cmd = os.environ.get("AIDIY_PI_CLI_PATH") if not 読取専用 else None
+        base = self._pi直接実行コマンド() if not custom_cmd else None
+        if base is None:
+            if 読取専用:
+                raise 予測読取専用利用不可("Pi の読取専用入口または Node.js を利用できません。")
+            base = [custom_cmd or self._コマンドパス取得()]
+        model = (self.code_model or "").strip()
+        model_args = ["--model", model if model and model.lower() not in ("auto", "same") else "same"]
+        if 読取専用 and model.partition("/")[0].lower() in {
+            "claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli",
+        }:
+            raise 予測読取専用利用不可("Pi の外部CLIモデルは読取専用に対応していません。")
+        return base + (["--read-only"] if 読取専用 else []) + ["--no-session", "--mode", "json", "-p"] + model_args
 
     def _予測CLI確認(self) -> None:
         if self.code_ai not in 読取専用CLI対応方式:
@@ -732,6 +776,8 @@ class CodeAI:
             self._予測CLI確認()
             if self.code_ai == "aidiy_hermes":
                 return self._予測Hermesコマンド(repo_path)
+            if self.code_ai == "aidiy_pi":
+                return self._Piコマンド構築(読取専用=True)
             base, cmd_exe経由 = self._CLI起動コマンド先頭(
                 custom_cmd or self._コマンドパス取得(), custom=bool(custom_cmd),
             )
@@ -779,6 +825,9 @@ class CodeAI:
             else:
                 model_args = ["--model", _model] if _model and _model.lower() != "auto" else []
             return base + ["-Q"] + model_args + ["--oneshot-stdin"]
+
+        if self.code_ai == "aidiy_pi":
+            return self._Piコマンド構築(読取専用=読取専用)
 
         # 以降の CLI（claude/copilot/gemini/codex/opencode）は npm の .cmd シムを直接実行に
         # 解決して cmd.exe を回避する。cmd.exe を経由する場合のみ argv 長制限のため
@@ -1325,7 +1374,7 @@ class CodeAI:
             if (self.code_model or "").strip().lower() == "auto":
                 実行モデル = "same"
                 判断CLI = self.code_ai
-                if 判断CLI in ("codex_cli", "claude_cli", "copilot_cli", "opencode_cli", "aidiy_hermes"):
+                if 判断CLI in ("codex_cli", "claude_cli", "copilot_cli", "opencode_cli", "aidiy_hermes", "aidiy_pi"):
                     from AIコア.AIコードモデル選択 import select_model, model_choices, fallback_model
                     候補 = model_choices(判断CLI)
                     選択モデル = await select_model(
@@ -1399,7 +1448,7 @@ class CodeAI:
                     command=command,
                     cwd=作業ディレクトリ,
                     timeout=タイムアウト秒数,
-                    stdin_text=完全プロンプト if self.code_ai == "aidiy_hermes" else None,
+                    stdin_text=完全プロンプト if self.code_ai in ("aidiy_hermes", "aidiy_pi") else None,
                 )
                 # 候補一覧は複数の一覧を合成しているため、契約上使えないモデルが含まれる場合がある。
                 # auto で選んだモデルを CLI が拒否したときだけ、CLI 既定（same）で1回やり直す。
@@ -1433,7 +1482,7 @@ class CodeAI:
                         command=command,
                         cwd=作業ディレクトリ,
                         timeout=タイムアウト秒数,
-                        stdin_text=完全プロンプト if self.code_ai == "aidiy_hermes" else None,
+                        stdin_text=完全プロンプト if self.code_ai in ("aidiy_hermes", "aidiy_pi") else None,
                     )
 
             # codexの場合、セッションIDを抽出して保存（stderr から抽出）
@@ -1521,7 +1570,8 @@ class CodeAI:
 
             result_lines = []
             stderr_lines = []
-            copilot_output = _CopilotJSON出力() if self.code_ai == "copilot_cli" else None
+            json_output = (_CopilotJSON出力() if self.code_ai == "copilot_cli"
+                           else PiJSON出力() if self.code_ai == "aidiy_pi" else None)
             stdout_line_count = 0
             last_output_time = time.monotonic()
 
@@ -1529,7 +1579,7 @@ class CodeAI:
                 nonlocal last_output_time
                 last_output_time = time.monotonic()
 
-            async def copilot進捗送信(lines):
+            async def JSON進捗送信(lines):
                 for line in lines:
                     if self._強制停止要求あり():
                         await self._停止マーカー送信()
@@ -1545,7 +1595,7 @@ class CodeAI:
                                 "サムネイル画像": None,
                             })
                         except Exception as e:
-                            logger.error(f"[CodeCli] Copilot進捗送信エラー: {e}")
+                            logger.error(f"[CodeCli] JSON進捗送信エラー: {e}")
 
             # stdin 送信は stdout/stderr の読み取りと並行して行う。
             # 子が先に大量出力する場合でも、双方向のパイプ待ちを起こさない。
@@ -1576,8 +1626,8 @@ class CodeAI:
                         last_output_time = time.monotonic()
                         line_text = line.decode('utf-8', errors='replace').rstrip()
                         stdout_line_count += 1
-                        if copilot_output is not None:
-                            await copilot進捗送信(copilot_output.解析(line_text))
+                        if json_output is not None:
+                            await JSON進捗送信(json_output.解析(line_text))
                             continue
                         result_lines.append(line_text)
 
@@ -1602,8 +1652,8 @@ class CodeAI:
                                 })
                             except Exception as e:
                                 logger.error(f"[CodeCli] output_stream送信エラー(stream): {e}")
-                    if copilot_output is not None:
-                        await copilot進捗送信(copilot_output.残りの進捗())
+                    if json_output is not None:
+                        await JSON進捗送信(json_output.残りの進捗())
                 except Exception as e:
                     logger.error(f"stdout読み取りエラー: {e}")
 
@@ -1697,7 +1747,7 @@ class CodeAI:
                 await _所有プロセス終了(process)
 
             # 結果を結合
-            full_output = copilot_output.回答 if copilot_output is not None else "\n".join(result_lines)
+            full_output = json_output.回答 if json_output is not None else "\n".join(result_lines)
             stderr_output = "\n".join(stderr_lines)
 
             # stderr を保存（セッションID抽出用）

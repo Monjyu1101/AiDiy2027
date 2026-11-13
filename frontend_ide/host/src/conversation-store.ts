@@ -39,7 +39,7 @@ export const 履歴メッセージ長さ = (message: 履歴メッセージ): num
 export interface 保存履歴 {
   id: string; 更新日時: number; 初回依頼?: string; メッセージ: 履歴メッセージ[];
   provider: string; model: string; モデル選択済み?: boolean;
-  実行モード?: 'online' | 'offline'; セッションID?: string; HermesセッションID?: string;
+  実行モード?: 'online' | 'offline'; セッションID?: string; HermesセッションID?: string; PiセッションID?: string;
 }
 
 // 本文の上限は拡張・単独起動版で共用する（JavaScript の UTF-16 コード単位数）。

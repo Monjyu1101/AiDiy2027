@@ -54,8 +54,8 @@ test('メニューpreloadはSlackをAiDiy列へ置き、disabledと安全な理�
  ipcRenderer.emit('diag:icon-menu-items',{},[{key:'app:discord',label:'Discord',icon:'local'},{key:'app:slack',label:'Slack',icon:'local',enabled:false,reason:'未導入 <plain text>'}]);
  const discord=list.children[0].children[1],slack=list.children[0].children[2];assert.equal(discord.disabled,false);assert.equal(slack.disabled,true);assert.equal(slack.title,'未導入 <plain text>');assert.equal(slack.children[1].textContent,'Slack');assert.equal(list.children[1].children.length,1);
  listeners.click({target:{closest:()=>slack}});assert.equal(sent.length,0);listeners.click({target:{closest:()=>discord}});assert.deepEqual(sent[0],['diag:icon-menu-action','app:discord']);
- const firstParty=['ide','console','browser','navi','code','live','aidiy_hermes','avatar','task','team','cpu','discord','slack'].map(id=>(id==='aidiy_hermes'?'cli:':'app:')+id);
- const external=['cli:claude','cli:vscode','app:chrome'];
+ const firstParty=['ide','console','browser','navi','code','live','avatar','task','team','cpu','discord','slack'].map(id=>(id==='aidiy_hermes'?'cli:':'app:')+id);
+ const external=['cli:aidiy_hermes','cli:aidiy_pi','cli:claude','cli:vscode','app:chrome'];
  ipcRenderer.emit('diag:icon-menu-items',{},[...firstParty,...external].map(key=>({key,label:key,icon:'local'})));
  assert.deepEqual(list.children[0].children.slice(1).map(n=>n.dataset.action),firstParty);
  assert.deepEqual(list.children[1].children.slice(1).map(n=>n.dataset.action),external);
@@ -70,7 +70,7 @@ test('native右クリックのAiDiy系は配布済ローカルPNGを使い旧SVG
  for(const file of f.imagePaths){assert.equal(path.dirname(file),path.resolve(directory,'../../static'));assert.equal(fs.existsSync(file),true);}f.menu.close();
 });
 
-test('アイコン化メニューに +メモ を表示し固定の memo 操作を送る',()=>{
- const f=fixture();assert.match(decodeURIComponent(f.target.url),/data-action="memo">\+メモ/);
+test('アイコン化メニューに ＋付箋 を表示し固定の memo 操作を送る',()=>{
+ const f=fixture();assert.match(decodeURIComponent(f.target.url),/data-action="memo">＋付箋/);
  f.ipcMain.emit('diag:icon-menu-action',{sender:f.target.webContents,senderFrame:f.target.webContents.mainFrame},'memo');assert.deepEqual(f.events,['memo']);
 });

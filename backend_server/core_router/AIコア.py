@@ -579,7 +579,7 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
         共通設定 = getattr(getattr(http_request.app, "conf", None), "json", None)
         予測設定 = 共通設定 if 共通設定 is not None else 現在設定
         for key in ("PREDICTION_AI_NAME", "PREDICTION_OPENAI_MODEL", "PREDICTION_OAUTH_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
-                    "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL"):
+                    "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL", "PREDICTION_AIDIY_PI_MODEL"):
             現在設定[key] = 予測設定.get(key, "auto") or "auto"
         判断設定 = 共通設定 if 共通設定 is not None else 現在設定
         現在設定["DECISION_AI_NAME"] = 判断設定.get("DECISION_AI_NAME", "auto") or "auto"
@@ -620,6 +620,7 @@ async def TASKモデル選択肢取得(http_request: Request):
             "grok_cli": {"auto": "auto"},
             "opencode_cli": {"auto": "auto"},
             "aidiy_hermes": {"auto": "auto"},
+            "aidiy_pi": {"auto": "auto"},
         }
         conf = getattr(http_request.app, "conf", None)
         if conf and getattr(conf, "models", None):
@@ -722,7 +723,7 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
             # PredictionAI設定
             "PREDICTION_AI_NAME",
             "PREDICTION_OPENAI_MODEL", "PREDICTION_OAUTH_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
-            "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL",
+            "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL", "PREDICTION_AIDIY_PI_MODEL",
             # DecisionAI設定
             "DECISION_AI_NAME",
             "DECISION_OPENAI_MODEL", "DECISION_OAUTH_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL",
@@ -730,7 +731,7 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
             "CODE_AI1_NAME", "CODE_AI2_NAME", "CODE_AI3_NAME", "CODE_AI4_NAME", "CODE_AI5_NAME", "CODE_AI6_NAME",
             "CODE_AI1_MODEL", "CODE_AI2_MODEL", "CODE_AI3_MODEL", "CODE_AI4_MODEL", "CODE_AI5_MODEL", "CODE_AI6_MODEL",
             "CODE_CLAUDE_SDK_MODEL", "CODE_CLAUDE_CLI_MODEL",
-            "CODE_COPILOT_CLI_MODEL", "CODE_ANTIGRAVITY_CLI_MODEL", "CODE_CODEX_CLI_MODEL", "CODE_AIDIY_HERMES_MODEL",
+            "CODE_COPILOT_CLI_MODEL", "CODE_ANTIGRAVITY_CLI_MODEL", "CODE_CODEX_CLI_MODEL", "CODE_AIDIY_HERMES_MODEL", "CODE_AIDIY_PI_MODEL",
             "CODE_OPENCODE_CLI_MODEL", "CODE_GROK_CLI_MODEL",
             "CODE_CLAUDE_OLLAMA_MODEL", "CODE_CODEX_OLLAMA_MODEL",
             "CODE_BASE_PATH",

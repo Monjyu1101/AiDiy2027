@@ -45,7 +45,7 @@ test('ollama sort and known date required',()=>{
  assert.deepEqual(Object.keys(catalog.ollamaCatalog({data:[row('older',240),row('newer',1),row('expired',241),{id:'missing'}]},NOW)),['newer','older']);
 });
 test('new Gemini chat models require Google API membership, not OpenRouter publication',()=>{
- const order=['gemini-4-carbon','gemini-4-argon','gemini-3.8-flash'];
+ const order=['gemini-4-carbon','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash'];
  assert.deepEqual(catalog.GEMINI_CHAT_MODEL_ORDER,order);
  const items=[...order,'gemini-4-carbon-image','unlisted-chat'].map(name=>({name:'models/'+name,supported_actions:['generateContent']}));
  const router={'google/gemini-3.8-flash':{作成日:'2026/09/02'}};
@@ -53,8 +53,10 @@ test('new Gemini chat models require Google API membership, not OpenRouter publi
  assert.deepEqual(Object.keys(out),order);
  assert.equal(out['gemini-4-carbon'].作成日,null);
  assert.equal(out['gemini-4-argon'].作成日,null);
+ assert.equal(out['gemini-4-hydrogen'].作成日,null);
  assert.equal(out['gemini-3.8-flash'].作成日,'2026/09/02');
- assert.deepEqual(Object.keys(catalog.googleCatalog(items.slice(2),router)),['gemini-3.8-flash']);
+ assert.deepEqual(Object.keys(catalog.googleCatalog(items.slice(2),router)),['gemini-4-hydrogen','gemini-3.8-flash']);
  assert.deepEqual(Object.keys(catalog.googleCatalog([{name:'models/gemini-4-carbon',supported_actions:['embedContent']}],router)),[]);
+ assert.deepEqual(Object.keys(catalog.googleCatalog(items.filter(item=>item.name!=='models/gemini-4-hydrogen'),router)),['gemini-4-carbon','gemini-4-argon','gemini-3.8-flash']);
  assert.deepEqual(Object.keys(catalog.googleCatalog([],router)),[]);
 });

@@ -101,7 +101,7 @@ class conf_models:
             if kind == "prediction":
                 entries = ((name, payload.get(name)) for name in (
                     "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat",
-                    "codex_cli", "copilot_cli", "aidiy_hermes",
+                    "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi",
                 ))
             for provider, entry in entries:
                 models = entry.get(field) if isinstance(entry, dict) else None

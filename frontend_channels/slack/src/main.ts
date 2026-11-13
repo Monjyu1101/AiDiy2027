@@ -11,18 +11,23 @@
  */
 
 import { 設定読込, 設定エラー } from './接続/接続設定';
-import { 起動解決 } from './共通連携/IDE連携';
+import { コード起動解決 } from './共通連携/IDE連携';
 import { SlackBot, エラー案内 } from './接続/Bot接続';
 
 // 全体起動の終了後も Bot は継続する。出力先のパイプが閉じても書込みエラーで停止しない。
 for (const stream of [process.stdout, process.stderr]) stream.on('error', () => {});
 
+import { パネル設定読込 } from './接続パネル/パネル設定';
+import { 実行コード名検証 } from './コード/Hermesモデル';
+
 let bot: SlackBot | undefined;
 try {
   const config = 設定読込();
+  const saved = パネル設定読込(config.hermesModel);
+  if (saved) { config.cli = 実行コード名検証(saved.code_name); config.hermesModel = saved.code_model; }
   if (process.argv.includes('--check')) {
-    起動解決(config.cli, config.python, config.folder);
-    console.log('Slack 設定・Hermes 起動パス: OK（外部接続は行っていません）');
+    コード起動解決(config.cli, config.python, config.folder, config.coreRoot);
+    console.log('Slack 設定・コードCLI 起動パス: OK（外部接続は行っていません）');
   } else {
     bot = new SlackBot(config);
     const shutdown = () => { void bot?.終了().catch(() => { process.exitCode = 1; }); };

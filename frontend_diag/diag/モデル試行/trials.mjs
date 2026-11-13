@@ -27,7 +27,8 @@ const LIVE = {gemini_live:'GEMINI',freeai_live:'FREEAI',openai_live:'OPENAI'};
 const DECISION = new Set(['auto','openai_oauth','openai_jsonchat','freeai_chat','openai_decisions','gemini_chat']);
 import {TRIAL_PROMPT,DECISION_CHOICES,decisionQuestions,TRIAL_FAMILIES,PREDICTION_PROVIDERS,PREDICTION_AUTO_PROVIDERS,PREDICTION_MODEL_KEYS,PREDICTION_CLI_PROVIDERS,PREDICTION_STORY_PROMPTS,predictionPerfect} from './defaults.mjs';
 export {DECISION_CHOICES} from './defaults.mjs';
-const CODE = new Set(['auto','same','claude_sdk','claude_cli','claude_ollama','copilot_cli','codex_cli','codex_ollama','antigravity_cli','grok_cli','opencode_cli','aidiy_hermes']);
+// aidiy_pi は Tools の code_agents_run（AIコード_cli.py の aidiy_pi 経路）で Pi を実行する。
+const CODE = new Set(['auto','same','claude_sdk','claude_cli','claude_ollama','copilot_cli','codex_cli','codex_ollama','antigravity_cli','grok_cli','opencode_cli','aidiy_hermes','aidiy_pi']);
 const text = value => typeof value === 'string' ? value.trim() : '';
 const label = value => /^[\w./:@+-]{1,180}$/.test(text(value)) && !/^(?:sk-|AIza|Bearer )/i.test(text(value)) ? text(value) : '';
 const failure = (message, status=409) => Object.assign(new Error(message),{status,trialFailure:true});
@@ -208,7 +209,9 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
   const installationRow=(row,installed)=>{
     if(!['CODE','TASK','TEAM'].includes(row.区分)||row.状態!=='未実行')return row;
     let provider=({claude_ollama:'claude_cli',codex_ollama:'codex_cli'})[row.プロバイダ]||row.プロバイダ;
-    if(['aidiy_hermes','auto','same'].includes(provider))provider=row.モデル.split('/')[0];
+    // Pi は command_pi の setup 済み判定（installed.aidiy_pi）で未導入を見分ける。
+    if(provider==='aidiy_pi'&&installed.aidiy_pi===false)return {...row,状態:'未実施',説明:'aidiy_pi が未導入のため、テストをスキップしました。'};
+    if(['aidiy_hermes','aidiy_pi','auto','same'].includes(provider))provider=row.モデル.split('/')[0];
     return cliKeys.has(provider)&&installed[provider]===false
       ? {...row,状態:'未実施',説明:`${provider} が未導入のため、テストをスキップしました。`}:row;
   };

@@ -114,7 +114,7 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 
 ### CLIを自動起動するConsole
 
-`aidiy_console --project "作業フォルダ" --cli copilot --cli-auto-approve` で、指定フォルダを作業場所にしてCopilotをYOLOモードで自動起動できます。モデル・初期プロンプトは渡さず、各CLIの既定設定を使います。`--cli-auto-approve` を省くと通常承認です。`--cli` はConsole専用で、`--provider` / `--model` と併用できません。
+`aidiy_console --project "作業フォルダ" --cli copilot --cli-auto-approve` で、指定フォルダを作業場所にしてCopilotをYOLOモードで自動起動できます。モデル・初期プロンプトは渡さず、各CLIの既定設定を使います。`--cli-auto-approve` を省くと各CLIの通常モードです（Piは通常モードも確認なし実行）。`--cli` はConsole専用で、`--provider` / `--model` と併用できません。
 
 対応IDと自動承認の固定引数:
 - `claude`: `--dangerously-skip-permissions`
@@ -124,6 +124,7 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 - `grok`: `--yolo`
 - `opencode`: `--auto`（明示的なdenyは維持）
 - `aidiy_hermes`: `--yolo`（provider / モデルは指定せず、Hermesの前回選択、未保存なら自動解決）
+- `aidiy_pi`: 追加フラグなし（Pi標準のYOLO。provider / モデルは指定せず、Piの前回選択または初期モデルを使用）
 
 承認省略ではCLIがファイル変更やコマンドを確認なしで実行できます。Codexはsandboxも省略します。ログイン、プロジェクトの信頼確認、利用規約、組織の禁止設定は別途CLI側で扱います。古いCLIが引数に対応しない場合は端末のエラーを確認し、公式の更新手順を使用してください。
 
@@ -132,6 +133,8 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 実行ファイルは固定IDからPATH / 標準配置を探索し、絶対パスと引数配列で直接PTYへ渡します。Windowsのnpm `.cmd` はシェルで実行せず、許可済みパッケージの宣言済みbinを検証してNodeから起動します。`aidiy_hermes` はPATHまたはユーザーの `~/.local/bin` の導入済みランチャーを使用し、Windowsでは `command_hermes/_setup.py` が生成する `.cmd` 全体の形式とPython / CLIの実在を確認して、仮想環境のPythonへ `cli_main.py` と固定引数を直接渡します。形式不明・ファイル不足は起動せず、リポジトリ内の仮想環境への自動退避や導入、認証確認は行いません。任意コマンド・モデル・環境変数をブラウザから渡す入口はありません。
 
 確認は `node --test frontend_ide/checks/cli-launch.test.mjs frontend_ide/checks/cli-console.test.mjs frontend_ide/checks/console-size.test.mjs`。CLIはすべて制御されたfixture / mockで代替し、実CLI・認証・外部APIは実行しません。Windows実機のPTY・画面確認は別途必要です。
+
+`aidiy_pi` はPATH上のランチャーを使わず、この配置先の `command_pi/aidiy/aidiy_pi.ts` を source resolver とともにNodeから直接起動します。`--cli-auto-approve` の有無にかかわらずPi標準の確認なし実行です。導入・モデル・OAuth・MCPは [PiのAiDiy連携](../_AIDIY/knowledge/command_pi,AiDiy連携.md) を参照してください。
 
 実装と確認手順は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` のConsole節を参照してください。
 
@@ -149,7 +152,7 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
 Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_console`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
-PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` はHermesを直接使用します。Liveの `--connect` は初回だけ接続します。
+PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` は選択したHermes／Piを直接使用します。Navi用Codeも同じ選択画面・保存設定を使います。Liveの `--connect` は初回だけ接続します。
 
 Electron版IDEの二重起動防止は同じプロジェクトだけに適用します。同じフォルダで再実行すると、起動済みのIDEを最小化から戻して前面に表示します。別のプロジェクトは同時に開け、それぞれのIDE・子窓・利用セッションは独立します。相対パス・リンクなどで同じ実フォルダを指定した場合も既存窓を再利用します。単独Code / Liveの種別ごとの再利用と、Consoleの複数起動は従来どおりです。
 

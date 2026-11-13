@@ -23,7 +23,7 @@
 |------|-----------|----|
 | `CHAT_AI_NAME` | 原則 `_chat`（OAuth・無料OpenRouter は例外） | `gemini_chat`, `openrt_chat`, `openrt_free`, `openai_chat`, `openai_oauth`, `freeai_chat`, `ollama_chat`, `local_chat` |
 | `LIVE_AI_NAME` | `_live` | `gemini_live`, `freeai_live`, `openai_live` |
-| `PREDICTION_AI_NAME` | 予測用のChat / CLI方式 | `auto`, `openai_oauth`, `freeai_chat`, `openai_chat`, `gemini_chat`, `codex_cli`, `copilot_cli`, `aidiy_hermes` |
+| `PREDICTION_AI_NAME` | 予測用のChat / CLI方式 | `auto`, `openai_oauth`, `freeai_chat`, `openai_chat`, `gemini_chat`, `codex_cli`, `copilot_cli`, `aidiy_hermes`, `aidiy_pi` |
 | `DECISION_AI_NAME` | 判断用の方式 | `auto`, `openai_oauth`, `freeai_chat`, `openai_decisions`, `gemini_chat` |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外 `aidiy_hermes` | `claude_sdk`, `claude_cli`, `copilot_cli`, `codex_cli`, `antigravity_cli`, `grok_cli`, `opencode_cli`, `aidiy_hermes` |
 | `TASK_AI_NAME` / `TEAM_AI_NAME` | Code AI と同じ候補を使用 | `claude_cli`, `codex_cli`, `aidiy_hermes` |
@@ -87,8 +87,8 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 ### Gemini / FreeAI のChatモデル追加
 
 - 新規設定・設定欠落時の `CHAT_FREEAI_MODEL` とHermesのFreeAI退避先は `gemini-4-carbon`。保存済みの `gemini-3.8-flash` / `gemini-4-argon` や任意モデルは置き換えない。
-- DiagはGoogle APIが返した候補だけを使い、既知3モデル間を `gemini-4-carbon` → `gemini-4-argon` → `gemini-3.8-flash` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
-- 既知3モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
+- DiagはGoogle APIが返した候補だけを使い、既知4モデル間を `gemini-4-carbon` → `gemini-4-argon` → `gemini-4-hydrogen` → `gemini-3.8-flash` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
+- 既知4モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
 - `CHAT_GEMINI_MODEL` の画像モデル、Liveの音声モデル、低コスト用途のPrediction / Decision既定値は別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
 - 回帰確認は `node --test frontend_diag/checks/model-catalog.check.mjs frontend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
 

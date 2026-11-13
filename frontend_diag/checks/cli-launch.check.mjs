@@ -13,7 +13,7 @@ import {join} from 'node:path';
 import {createCliLauncher} from '../diag/起動/CLI起動.mjs';
 import {createServer} from '../diag/diag_main.mjs';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
-const ids=['claude','codex','copilot','agy','grok','opencode','aidiy_hermes'];
+const ids=['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi'];
 async function fixture(t,options={}){
  const root=await mkdtemp(join(tmpdir(),'diag-cli-fixture-')),project=join(root,`日本語 project ' & $ % ;`);await mkdir(project);
  t.after(()=>rm(root,{recursive:true,force:true,maxRetries:5}));
@@ -25,7 +25,7 @@ async function fixture(t,options={}){
  return {root,project,calls,resolved,manager};
 }
 test('CLI catalog is fixed; availability uses resolver only, no process execution',async t=>{
- const f=await fixture(t,{missing:'grok'}),result=await f.manager.catalog();assert.deepEqual(result.対象.map(x=>x.id),ids);assert.equal(result.対象.find(x=>x.id==='grok').利用可能,false);assert.equal(f.calls.length,0);assert.equal(f.resolved.length,7);assert.ok(f.resolved.every(x=>x.value.autoApprove===true));assert.doesNotMatch(JSON.stringify(result),/executable|private path/);
+ const f=await fixture(t,{missing:'grok'}),result=await f.manager.catalog();assert.deepEqual(result.対象.map(x=>x.id),ids);assert.equal(result.対象.find(x=>x.id==='grok').利用可能,false);assert.equal(f.calls.length,0);assert.equal(f.resolved.length,ids.length);assert.ok(f.resolved.every(x=>x.value.autoApprove===true));assert.doesNotMatch(JSON.stringify(result),/executable|private path/);
 });
 test('all CLI launches pass only fixed id, approval, and exact cwd; omit models and shell strings',async t=>{
  const f=await fixture(t);
@@ -123,12 +123,12 @@ test('authenticated CLI API limits body fields, confirmation, asset names and me
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  assert.equal((await fetch(base+'api/CLI起動')).status,401);assert.equal((await fetch(base+'api/CLI起動',{headers})).status,200);
  for(const id of ids){const response=await fetch(base+`CLI_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.png`,import.meta.url)));}
- for(const id of ids.filter(id=>id!=='aidiy_hermes')){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
+ for(const id of ids.filter(id=>!['aidiy_hermes','aidiy_pi'].includes(id))){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
  for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt']){const license=await fetch(base+name);assert.equal(license.status,200);assert.equal(license.headers.get('content-type'),'text/plain; charset=utf-8');assert.equal(await license.text(),await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/'+name,import.meta.url),'utf8'));}
  const citations=await fetch(base+'LICENSE_ICONS.md');assert.equal(citations.status,200);assert.equal((await citations.text()).replace(/\r\n/g,'\n'),(await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md',import.meta.url),'utf8')).replace(/\r\n/g,'\n'));
  assert.equal((await fetch(base+'CLI_bad.png')).status,404);
  assert.equal((await fetch(base+'CLI_bad.svg')).status,404);
- assert.equal((await fetch(base+'CLI_aidiy_hermes.svg')).status,404);
+ for(const id of ['aidiy_hermes','aidiy_pi'])assert.equal((await fetch(base+`CLI_${id}.svg`)).status,404);
  for(const [body,status] of [[{対象:'copilot',フォルダ:f.project},400],[{対象:'copilot',フォルダ:f.project,自動承認確認:true,model:'bad'},400],[{対象:'copilot',フォルダ:'x'.repeat(9000),自動承認確認:true},400],[{対象:'copilot',フォルダ:'x'.repeat(DIAG_TRANSPORT_BYTE_LIMIT),自動承認確認:true},413]])assert.equal((await fetch(base+'api/CLI起動/開始',{method:'POST',headers,body:JSON.stringify(body)})).status,status);
  assert.equal((await fetch(base+'api/CLI起動/開始',{headers})).status,404);assert.equal(f.calls.length,0);
  assert.equal((await fetch(base+'api/CLI起動/開始',{method:'POST',headers,body:JSON.stringify({対象:'copilot',フォルダ:f.project,自動承認確認:true})})).status,202);assert.equal(f.calls.length,1);
@@ -169,6 +169,6 @@ test('外部CLI SVGの形状・色を維持し、Hermesはlocal PNGのみ配布�
   assert.doesNotMatch(svg,/<script|<foreignObject|\b(?:href|xlink:href)="(?!data:image\/png;base64,)/i);
   const png=await readFile(new URL(id+'.png',root));assert.equal(png.readUInt32BE(16),120);assert.equal(png.readUInt32BE(20),120);
  }
- const hermes=await readFile(new URL('aidiy_hermes.png',root));assert.equal(hermes.readUInt32BE(16),120);assert.equal(hermes.readUInt32BE(20),120);await assert.rejects(readFile(new URL('aidiy_hermes.svg',root)),{code:'ENOENT'});
- const notes=await text('LICENSE_ICONS.md');for(const label of ['Copilot','Claude','Codex','Grok','OpenCode','aidiy_hermes','LobeHub'])assert.ok(notes.includes(label),label);assert.doesNotMatch(notes,/取得・確認待ち|独自仮ピクトグラム/);
+ for(const id of ['aidiy_hermes','aidiy_pi']){const png=await readFile(new URL(id+'.png',root));assert.equal(png.readUInt32BE(16),120);assert.equal(png.readUInt32BE(20),120);await assert.rejects(readFile(new URL(id+'.svg',root)),{code:'ENOENT'});}
+ const notes=await text('LICENSE_ICONS.md');for(const label of ['Copilot','Claude','Codex','Grok','OpenCode','aidiy_hermes','aidiy_pi','LobeHub'])assert.ok(notes.includes(label),label);assert.doesNotMatch(notes,/取得・確認待ち|独自仮ピクトグラム/);
 });

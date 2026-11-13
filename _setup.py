@@ -24,6 +24,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 - frontend_web/_setup.py     フロントエンド(Web)
 - frontend_avatar/_setup.py  フロントエンド(Avatar)
 - command_hermes/_setup.py   コマンド(hermes)
+- command_pi/_setup.py       コマンド(pi)（Hermes の後に導入）
 - frontend_ide/_setup.py     IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)
 - frontend_channels/discord/_setup.py / slack/_setup.py Channels (Discord / Slack、まとめて選択)
 
@@ -177,6 +178,7 @@ IMPORT_CACHE_FOLDERS = (
     "frontend_web",
     "frontend_avatar",
     "command_hermes",
+    "command_pi",
     "frontend_ide",
     "frontend_ide/host",
     "frontend_ide/viewer",
@@ -715,6 +717,7 @@ def collect_setup_choices() -> dict | None:
         "web":                   False,
         "avatar":                False,
         "hermes":                False,
+        "pi":                    False,
         "ide":                   False,
         "diag":                  False,
         "channels":              False,
@@ -748,6 +751,7 @@ def collect_setup_choices() -> dict | None:
     choices["web"] = ask_yes_no("Web のセットアップを実行しますか？", default="y")
     choices["avatar"] = ask_yes_no("Avatar のセットアップを実行しますか？", default="y")
     choices["hermes"] = ask_yes_no("Hermes のセットアップを実行しますか？", default="y")
+    choices["pi"] = ask_yes_no("Pi のセットアップを実行しますか？", default="y")
     choices["ide"] = ask_yes_no("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack) のセットアップを実行しますか？", default="y")
 
@@ -811,7 +815,7 @@ def check_refresh_node_runtime(version: str) -> bool:
 def setup_node_refresh() -> list[str]:
     """依存同期・既存ビルド・ランチャー再配置のみ。初期設定や診断は実行しない。"""
     print_header("Node.js系の再ビルド")
-    print_info("対象: Diag / Web / Avatar / IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
+    print_info("対象: Diag / Web / Avatar / Pi / IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
     print_info("依存同期 / 再ビルド / 起動コマンド登録")
     print_info("Python環境・モデル・共通設定・グローバルCLIは変更しません。")
     node_version = get_node_version()
@@ -855,6 +859,8 @@ def setup_node_refresh() -> list[str]:
         ("Avatar: 依存", lambda: dependencies("frontend_avatar", electron=True)),
         ("Avatar: ビルド", lambda: build("frontend_avatar")),
         ("Avatar: aidiy_avatar", lambda: _load_folder_module("frontend_avatar").install_standalone_launcher()),
+        # Pi は依存同期・モデルデータ・ランチャーを個別 setup がまとめて行う（ビルドなし）。
+        ("Pi: 依存 / aidiy_pi", lambda: _load_folder_module("command_pi").setup()),
         ("IDE UI: 依存", lambda: dependencies("frontend_ide")),
         ("Code / Live: 依存", lambda: dependencies("frontend_ide/host", electron=True)),
         # hostの既存compile/packageは共通Vueのビルドも行うため、二重ビルドしない。
@@ -896,6 +902,7 @@ def setup_launchers_only() -> list[str]:
         ('Diag', lambda: _load_folder_module('frontend_diag').setup(desktop=False)),
         ('Avatar', lambda: _load_folder_module('frontend_avatar').install_standalone_launcher()),
         ('Hermes', lambda: _load_folder_module('command_hermes').install_standalone_launcher()),
+        ('Pi', lambda: _load_folder_module('command_pi').install_standalone_launcher()),
         ('IDE', lambda: _load_folder_module('frontend_ide/viewer').install_launcher(BASE_DIR / 'frontend_ide/viewer')),
         ('Console', lambda: _load_folder_module('frontend_ide/aidiy_console').setup()),
         ('Browser', lambda: _load_folder_module('frontend_ide/aidiy_browser').setup()),
@@ -924,6 +931,7 @@ def print_app_launch_commands():
         ('Avatar', 'aidiy_avatar （または cd frontend_avatar && npm run dev）'),
         ('Diag', 'aidiy_diag （ブラウザ版: aidiy_diag --browser）'),
         ('Hermes', 'aidiy_hermes'),
+        ('Pi', 'aidiy_pi'),
         ('IDE', 'aidiy_ide'),
         ('Console', 'aidiy_console'),
         ('Browser', 'aidiy_browser'),
@@ -959,8 +967,9 @@ def main():
     print_info("  6. Web")
     print_info("  7. Avatar")
     print_info("  8. Hermes")
-    print_info("  9. IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU")
-    print_info(" 10. Channels (Discord / Slack)")
+    print_info("  9. Pi")
+    print_info(" 10. IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU")
+    print_info(" 11. Channels (Discord / Slack)")
     print()
 
     choices = collect_setup_choices()
@@ -1138,6 +1147,17 @@ def main():
                 sys.exit(1)
     else:
         print_warning("Hermes のセットアップをスキップしました。")
+
+    print()
+    if choices.get("pi"):
+        pi_mod = _load_folder_module("command_pi")
+        if not pi_mod.setup(choices):
+            error_locations.append("Pi")
+            if not continue_on_error:
+                print_setup_summary(error_locations)
+                sys.exit(1)
+    else:
+        print_warning("Pi のセットアップをスキップしました。")
 
     print()
     if choices.get("ide"):

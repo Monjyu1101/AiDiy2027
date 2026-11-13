@@ -25,10 +25,12 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | frontend_avatar / Electron / VRM / 音声 | [`_AIDIY/knowledge/frontend_avatar,ElectronIPC追加手順.md`](./_AIDIY/knowledge/frontend_avatar,ElectronIPC追加手順.md)、[`_AIDIY/knowledge/frontend_avatar,VRM_VRMA追加手順.md`](./_AIDIY/knowledge/frontend_avatar,VRM_VRMA追加手順.md)、[`_AIDIY/knowledge/backend_server,frontend_avatar,AI音声処理.md`](./_AIDIY/knowledge/backend_server,frontend_avatar,AI音声処理.md) |
 | frontend_ide / Console・Code・Live・IDE の Vue 共通画面 | [`_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md`](./_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) |
 | frontend_diag / 環境診断 | [`_AIDIY/knowledge/frontend_diag,環境診断運用.md`](./_AIDIY/knowledge/frontend_diag,環境診断運用.md) |
+| aidiy_memo / 付箋メモ | [`_AIDIY/knowledge/frontend_diag,環境診断運用.md`](./_AIDIY/knowledge/frontend_diag,環境診断運用.md#aidiy_memo付箋メモ)（単体起動・保存先・画像・ゴミ箱） |
 | frontend_ide/host / VS Code 拡張（Code / Live） | [`_AIDIY/knowledge/frontend_ide,VSCodeチャット拡張変更手順.md`](./_AIDIY/knowledge/frontend_ide,VSCodeチャット拡張変更手順.md) |
 | frontend_channels / Discord（Code / Live）・Slack（Code、双子） | [`_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md`](./_AIDIY/knowledge/frontend_channels,Discord接続変更手順.md) |
 | AI コア / Code CLI / MCP | [`_AIDIY/knowledge/backend_server,frontend_avatar,frontend_web,AIコアWebSocket仕様.md`](./_AIDIY/knowledge/backend_server,frontend_avatar,frontend_web,AIコアWebSocket仕様.md)、[`_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md`](./_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md)、[`_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md`](./_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md) |
 | command_hermes Provider / Slash Command | [`_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md`](./_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md)、[`_AIDIY/knowledge/command_hermes,Slash Command一覧.md`](./_AIDIY/knowledge/command_hermes,Slash Command一覧.md) |
+| command_pi（aidiy_pi）のモデル一覧・キー・OAuth・MCP・setup | [`_AIDIY/knowledge/command_pi,AiDiy連携.md`](./_AIDIY/knowledge/command_pi,AiDiy連携.md) |
 | GitHub issue 運用 | [`_AIDIY/knowledge/共通,GitHubIssue運用手順.md`](./_AIDIY/knowledge/共通,GitHubIssue運用手順.md) |
 
 `_AIDIY/knowledge` は作業ログ置き場ではありません。残す内容は、次回以降に再利用できる HowTo、判断基準、注意点、確認方法だけです。
@@ -42,6 +44,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | [frontend_diag/AGENTS.md](./frontend_diag/AGENTS.md) | Node.js による環境診断・設定・起動管理と Vue / Electron 画面 |
 | [backend_server/AGENTS.md](./backend_server/AGENTS.md) | FastAPI + SQLAlchemy + SQLite の実装詳細 |
 | [command_hermes/AGENTS.md](./command_hermes/AGENTS.md) | `aidiy_hermes` CLI 基盤の実装詳細 |
+| [_AIDIY/knowledge/command_pi,AiDiy連携.md](./_AIDIY/knowledge/command_pi,AiDiy連携.md) | `aidiy_pi` の AiDiy 連携。Pi 本体の開発規則は [command_pi/AGENTS.md](./command_pi/AGENTS.md) |
 | [backend_tools/AGENTS.md](./backend_tools/AGENTS.md) | MCP サーバー群の実装詳細 |
 | [backend_local/AGENTS.md](./backend_local/AGENTS.md) | ローカル LLM（OpenAI 互換 Gemma）サーバーの実装詳細 |
 | [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md) | AIタスク実行・定期タスク・複数AIエージェントのチーム活動を統合した FastAPI サーバーの実装詳細 |
@@ -50,8 +53,8 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) | IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面と単独起動の実装詳細 |
 | [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) | VS Code 拡張 AiDiy (Code) / AiDiy (Live) と単独起動版の実装詳細 |
 | [frontend_channels/AGENTS.md](./frontend_channels/AGENTS.md) | 外部接続チャンネル群の構成・共通方針 |
-| [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) | Discord Bot の Hermes チャット / AIコア Live 音声接続の実装詳細 |
-| [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md) | Slack Bot の Hermes チャット（Discord 版の双子、音声なし・HTTPS 定期取得）の実装詳細 |
+| [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) | Discord Bot の Hermes / Pi チャット / AIコア Live 音声接続の実装詳細 |
+| [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md) | Slack Bot の Hermes / Pi チャット（Discord 版の双子、音声なし・HTTPS 定期取得）の実装詳細 |
 | [frontend_ide/viewer/AGENTS.md](./frontend_ide/viewer/AGENTS.md) | AiDiy IDE のファイルAPI・Office表示・起動互換の実装詳細 |
 | [docs/](./docs/) | HTML 形式の詳細ドキュメント |
 
@@ -95,22 +98,23 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 
 ## アーキテクチャ概要
 
-AiDiy は 5 つの常駐サーバーと 1 つの on-demand CLI 基盤で構成します。
+AiDiy は 5 つの常駐バックエンドサーバーと 2 つの on-demand CLI 基盤（Hermes / Pi）、各フロントエンドで構成します。
 
 | コンポーネント | 役割 | 主なポート |
 |----------------|------|------------|
-| `frontend_diag/diag_main.mjs` | 導入状態の診断、設定・導入操作、サービス起動管理を行う UI / API（`aidiy_diag`） | 自動割り当て・loopback |
+| `frontend_diag/diag_main.mjs` | 導入状態の診断、設定・導入操作、サービス起動管理を行う UI / API（`aidiy_diag`）。付箋メモ `aidiy_memo` も同梱 | 自動割り当て・loopback |
 | `backend_server/core_main.py` | C系と対応するV系、A系、認証、AIコア | 8091 |
 | `backend_server/apps_main.py` | M系、T系、V系、S系 | 8098 |
 | `backend_tools/tools_main.py` | MCP サーバー群 | 8095 |
 | `backend_local/local_main.py` | ローカル LLM（OpenAI 互換 Gemma 推論） | 8096 |
 | `backend_taskteam/taskteam_main.py` | AIタスク実行（要求の AI 分解 + Code CLI 実行）、定期タスク、複数AIエージェントのチーム活動管理 | 8093 |
 | `command_hermes` | `aidiy_hermes` CLI 基盤 | 常駐なし |
+| `command_pi` | `aidiy_pi` CLI 基盤（MIT の Pi を同梱。AiDiy 独自部分は `command_pi/aidiy/`） | 常駐なし |
 | `frontend_web` | 通常 Web UI | 8090 |
 | `frontend_avatar` | Electron/Web デュアルモード Avatar | 8092 |
 | `frontend_ide/host` | AIコアへ接続するコード支援の AiDiy (Code) と、音声会話の AiDiy (Live) の VS Code 拡張 / 単独起動版 | 常駐なし |
-| `frontend_channels/discord` | Discord のテキストチャンネルを `aidiy_hermes`、ボイスチャンネルを AIコア Live へ接続する任意起動の Bot | 待受ポートなし |
-| `frontend_channels/slack` | Slack の専用チャンネルを `aidiy_hermes` へ接続する任意起動の Bot（Discord 版の双子、HTTPS 定期取得） | 待受ポートなし |
+| `frontend_channels/discord` | Discord のテキストチャンネルを `aidiy_hermes` / `aidiy_pi`、ボイスチャンネルを AIコア Live へ接続する任意起動の Bot | 待受ポートなし |
+| `frontend_channels/slack` | Slack の専用チャンネルを `aidiy_hermes` / `aidiy_pi` へ接続する任意起動の Bot（Discord 版の双子、HTTPS 定期取得） | 待受ポートなし |
 | `frontend_ide` | IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面・単独起動。`viewer/` はファイルAPI・Office表示 | 自動割り当て |
 
 `core_main.py`、`apps_main.py`、`taskteam_main.py` は同じ SQLite DB を共有します。`taskteam_main.py` は `Aタスク*` と `Aチーム*` を同一プロセスで管理します。
@@ -120,9 +124,10 @@ frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振�
 
 | ディレクトリ | 内容 |
 |--------------|------|
-| `frontend_diag/` | Node.js の環境診断 API と Vue / Electron 画面。診断に加え、認証付きの明示操作で導入・設定・サービス起動管理を行う |
+| `frontend_diag/` | Node.js の環境診断 API と Vue / Electron 画面。認証付きの明示操作で導入・設定・サービス起動管理を行う。`memo/` に付箋メモ、`memo_main.mjs` に `aidiy_memo` の単体起動入口を持つ |
 | `backend_server/` | FastAPI サーバー、SQLAlchemy モデル、CRUD、Router、AIコア |
 | `command_hermes/` | `aidiy_hermes` CLI |
+| `command_pi/` | `aidiy_pi` CLI（Pi 本体 + `aidiy/` の AiDiy 連携） |
 | `backend_tools/` | Windows では 20 個、Linux / macOS では 19 個の MCP（Chrome DevTools、Desktop Capture、SQLite、PostgreSQL、Logs、Code Check、Backup、Image / Movie Generation、Speech-to-Text、Text-to-Speech、OBS Studio Control、FFmpeg Control、Notification Sounds、Code Agents、Chat LLM、Decisions Check、Task Agents、Team Agents、Windows 限定の Windows Control）と OpenAI / Ollama 互換 Chat Completions |
 | `backend_local/` | ローカル LLM サーバー（HuggingFace Gemma を `transformers` + `torch` で推論、OpenAI 互換 Chat Completions API） |
 | `backend_taskteam/` | AIタスク実行 + 定期タスクと複数AIエージェントのチーム活動を統合した FastAPI サーバー（`/task/*`、`/team/*`、各監視ループ） |
@@ -259,14 +264,14 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 |------|------|
 | `CHAT_AI_NAME` | テキストチャット |
 | `LIVE_AI_NAME` | 音声リアルタイム対話 |
-| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermesは openai_oauth/gpt-6-luna、履歴非保存） |
+| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | code1〜code6 のコード支援 |
 | `TASK_AI_NAME` / `TASK_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIタスク自動実行 |
 | `TEAM_AI_NAME` / `TEAM_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIチーム依頼実行 |
 
 TASK / TEAM のモデルは plan（計画）/ do（実施）/ check（検証）の3種指定です。
 
-Code AI の有効値は `claude_sdk`、`claude_cli`、`copilot_cli`、`codex_cli`、`antigravity_cli`、`grok_cli`、`opencode_cli`、`aidiy_hermes` を想定します。
+Code AI の有効値は `claude_sdk`、`claude_cli`、`copilot_cli`、`codex_cli`、`antigravity_cli`、`grok_cli`、`opencode_cli`、`aidiy_hermes`、`aidiy_pi` を想定します。
 
 ## frontend_web 概要
 
@@ -307,6 +312,7 @@ frontend_avatar は Electron デスクトップアプリと通常 Web ブラウ�
 
 - 拡張 ID、ビュー、設定、VSIX（`dist/aidiy-code-0.1.0.vsix` / `dist/aidiy-live-0.1.0.vsix`）を分け、片方を無効にしても他方が動作する。
 - Code は選択コード添付、Provider / モデル選択、会話継続、停止、実行ログ、対話 CLI を提供し、既存 AIコードと同じ packet 識別子で進捗と正式回答を分離する。
+- Code のオフライン利用は `aidiy_hermes` / `aidiy_pi` を選択して直接実行する。エンジンとモデルはプロジェクトの `_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存し、オンライン用とは分ける。クラウドモデルの認証・通信は別途必要。
 - Live は接続時に作業フォルダを `CODE_BASE_PATH` として渡し、LiveAI とコードエージェントの回答（`output_request`）を表示する。
 - 単独起動版は Electron のフレームレスウィンドウ、または `--browser` でブラウザを使う。
 - VS Code 拡張・単独起動版はそのまま維持し、さらに開発スペース（AiDiy IDE、`aidiy_ide`）の部品としても動作する。Electron 版 IDE は「＋ Code」「＋ Live」で同じプロジェクト・利用モード・セッションの別ウィンドウを開き、Web 版は画面内タブで使う。同じ部品が3つの場所で動くことで、IDE 開発への応用を広げる。
@@ -377,6 +383,7 @@ MCP の使い分けと設定は `_AIDIY/knowledge/backend_server,backend_tools,M
 
 - Backend: `backend_server/AGENTS.md`
 - Hermes: `command_hermes/AGENTS.md`
+- Pi: `_AIDIY/knowledge/command_pi,AiDiy連携.md`（AiDiy 連携）、`command_pi/AGENTS.md`（Pi 本体の開発規則）
 - MCP: `backend_tools/AGENTS.md`
 - Local: `backend_local/AGENTS.md`
 - Task / Team: `backend_taskteam/AGENTS.md`
@@ -393,6 +400,6 @@ docs と実装が食い違う場合は、現行実装を確認したうえで「
 
 ## Vue共通画面
 
-現行のIDE / Console / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+現行のIDE / Console / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code の Hermes / Pi 実行・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
 
-Diag / Navi / Code / Live / Console / IDE / Discord / Slack の独自実装は、日本語の機能名で配置し、共通処理は所有元から再利用します。`src`・`checks`・`scripts`・`dist` などの規約名、公開起動入口、配布URL、IPC/API・保存キーは互換性のため維持します。画面の所有元は Diag が `frontend_diag/ui/src`、Navi / Code / Live / Console / IDE / Task / Team / Browser / CPU が `frontend_ide/src`、Discord が `frontend_channels/discord/panel`、Slack が `frontend_channels/slack/panel` です。
+Diag / Navi / Code / Live / Console / IDE / Discord / Slack の独自実装は、日本語の機能名で配置し、共通処理は所有元から再利用します。`src`・`checks`・`scripts`・`dist` などの規約名、公開起動入口、配布URL、IPC/API・保存キーは互換性のため維持します。画面の所有元は Diag が `frontend_diag/diag/ui`、Memo が `frontend_diag/memo/ui/src`、Navi / Code / Live / Console / IDE / Task / Team / Browser / CPU が `frontend_ide/src`、Discord が `frontend_channels/discord/panel`、Slack が `frontend_channels/slack/panel` です。

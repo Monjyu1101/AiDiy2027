@@ -70,7 +70,7 @@ test('通常画面は8アプリ・導入済みCLI・VS Codeを並べ、未導入
   const state=appState({folder});state.項目=value(['avatar','task','team','ide','console','code','live','discord'].map(id=>({id,名前:id})));
   const html=await render('components/アプリ起動/アプリ起動パネル.vue',{state,cliState,online,visible:true});
   assert.equal((html.match(/class="app-launch-button"/g)||[]).length,14);
-  assert.equal((html.match(/width="72" height="72"/g)||[]).length,14);
+  assert.equal((html.match(/width="60" height="60"/g)||[]).length,14);
   assert.match(html,/VS Code でフォルダを開く/);
   for(const id of ['task','team']){const card=html.match(new RegExp(`<article[^>]*data-app="${id}"[^>]*>([\\s\\S]*?)</article>`))[1];assert.match(card,/<button[^>]* disabled/);assert.match(card,/TaskTeam 未起動/);}
   assert.ok(html.indexOf('data-app="avatar"')<html.indexOf('data-app="task"'));assert.ok(html.indexOf('data-app="task"')<html.indexOf('data-app="team"'));assert.ok(html.indexOf('data-app="ide"')<html.indexOf('data-app="avatar"'));
@@ -113,8 +113,8 @@ test('ミニ切替の配線はタイトルバーだけに残し、通常ペー�
 
 
 test('通常・ミニは指定の先頭6アプリとAvatar・Task・Team・CPU・Discord・Slackを同じ順序で表示する',async()=>{
- const expected=['ide','console','browser','navi','code','live','aidiy_hermes','avatar','task','team','cpu','discord','slack','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
- const cliIds=new Set(['aidiy_hermes','claude','codex','copilot','agy','grok','opencode','vscode']);
+ const expected=['ide','console','browser','navi','code','live','avatar','task','team','cpu','discord','slack','aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
+ const cliIds=new Set(['aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode']);
  const cliState={項目:value([...expected].reverse().filter(id=>cliIds.has(id)).map(id=>({id,名前:id,利用可能:true}))),処理中:value(''),通知:value(''),失敗:value(false),読込:async()=>{}};
  for(const missing of [[],['task','team'],['browser','slack'],[]])for(const busy of [false,true]){
   const state=appState({folder:'/fixture/project',busy});
@@ -123,7 +123,7 @@ test('通常・ミニは指定の先頭6アプリとAvatar・Task・Team・CPU�
   for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue']){
    const html=await render('components/アプリ起動/'+name,{state,cliState,online:true,visible:true});
    const shown=Array.from(html.matchAll(/data-(?:app|cli)="([^"]+)"/g),match=>match[1]);
-   const wanted=name.startsWith('ミニ')?expected.filter(id=>id==='aidiy_hermes'||!cliIds.has(id)&&id!=='chrome'&&!missing.includes(id)):expected;
+   const wanted=name.startsWith('ミニ')?expected.filter(id=>!cliIds.has(id)&&id!=='chrome'&&!missing.includes(id)):expected;
    assert.deepEqual(shown,wanted,name);
   }
  }

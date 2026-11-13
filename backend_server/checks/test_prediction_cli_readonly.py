@@ -40,6 +40,7 @@ MODULES = {
     "AIコア": ModuleType("AIコア"),
     "AIコア.AI実行オプション": options,
     "AIコア.AI応答": response,
+    "AIコア.AIコードPi出力": load_module("prediction_pi_output_under_test", CORE / "AIコードPi出力.py"),
     "log_config": logging_stub,
     "PIL": pil_stub,
 }
@@ -77,7 +78,7 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(getattr(option, name))
 
     async def test_readonly_start_does_not_spawn_version_process(self):
-        for provider in ("codex_cli", "copilot_cli", "aidiy_hermes"):
+        for provider in ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi"):
             with self.subTest(provider=provider):
                 ai = self.make_cli(provider)
                 ai.バージョン確認 = AsyncMock()
@@ -93,6 +94,23 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await ai.開始())
         ai.バージョン確認.assert_awaited_once()
         self.assertEqual(ai.バージョン, "fixture-version")
+
+    def test_pi_readonly_uses_fixed_entry_and_json_without_custom_cli(self):
+        ai = self.make_cli("aidiy_pi")
+        ai._pi直接実行コマンド = Mock(return_value=["node", "fixture/aidiy_pi.ts"])
+        with patch.dict(cli.os.environ, {"AIDIY_PI_CLI_PATH": "unsafe-custom-cli"}):
+            command = self.build(ai)
+        self.assertEqual(command[:2], ["node", "fixture/aidiy_pi.ts"])
+        self.assertIn("--read-only", command)
+        self.assertIn("--no-session", command)
+        self.assertEqual(command[command.index("--mode") + 1], "json")
+        self.assertNotIn("unsafe-custom-cli", command)
+        ai.code_model = "codex_cli/same"
+        with self.assertRaises(cli.予測読取専用利用不可):
+            self.build(ai)
+        ai._pi直接実行コマンド.return_value = None
+        with self.assertRaises(cli.予測読取専用利用不可):
+            self.build(ai)
 
     async def test_codex_uses_verified_readonly_config_and_no_resume(self):
         ai = self.make_cli()

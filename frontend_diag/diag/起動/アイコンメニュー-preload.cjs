@@ -7,9 +7,9 @@
 const {ipcRenderer}=require('electron');
 ipcRenderer.on('diag:icon-menu-items',(_event,items)=>{
  const list=document.querySelector('.app-list');list.replaceChildren();
- const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:console','app:code','app:live','app:browser','app:navi','cli:aidiy_hermes','app:discord','app:slack']);
+ const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:console','app:code','app:live','app:browser','app:navi','app:discord','app:slack']);
  const columns=[document.createElement('div'),document.createElement('div')];
- for(const [index,column] of columns.entries()){column.className='app-column';column.setAttribute('role','group');column.setAttribute('aria-label',index===0?'AiDiy':'外部ツール');const title=document.createElement('div');title.className='column-title';title.textContent=index===0?'AiDiy':'外部ツール';column.append(title);list.append(column);}
+ for(const [index,column] of columns.entries()){column.className='app-column';column.setAttribute('role','group');column.setAttribute('aria-label',index===0?'AiDiy':'CLI・外部ツール');const title=document.createElement('div');title.className='column-title';title.textContent=index===0?'AiDiy':'CLI・外部ツール';column.append(title);list.append(column);}
 
  for(const item of items){const button=document.createElement('button');button.setAttribute('role','menuitem');button.dataset.action=item.key;button.disabled=item.enabled===false;if(typeof item.reason==='string')button.title=item.reason;
  const img=document.createElement('img');img.src=item.icon;img.alt='';const label=document.createElement('span');label.textContent=item.label;

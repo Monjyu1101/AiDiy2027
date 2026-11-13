@@ -490,8 +490,8 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
     </footer>
     <ModalDialog v-if="predictionNotice" label="予測" @close="predictionNotice = ''"><h3>予測</h3><p class="prediction-notice">{{ predictionNotice }}</p><button @click="predictionNotice = ''">閉じる</button></ModalDialog>
     <ModalDialog v-if="picker" label="モデル選択" @close="picker = false"><h3>コードAIとモデル</h3>
-      <p>{{ offline ? 'aidiy_hermes を直接実行します。オンラインとは別のモデルを保存します。' : 'AIコアのコードAIを選択します。' }}</p>
-      <label>コードAI<select v-model="provider" :disabled="catalogBusy || offline" @change="changeProvider"><option v-if="!offline" value="">自動（AIコアの設定）</option><option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label || p.id }}</option></select></label>
+      <p>{{ offline ? 'Hermes または Pi を直接実行します。オンラインとは別のモデルを保存します。' : 'AIコアのコードAIを選択します。' }}</p>
+      <label>コードAI<select v-model="provider" :disabled="catalogBusy" @change="changeProvider"><option v-if="!offline" value="">自動（AIコアの設定）</option><option v-for="p in providers" :key="p.id" :value="p.id">{{ p.label || p.id }}</option></select></label>
       <label>モデル<select v-model="model" :disabled="catalogBusy || !provider || !catalogReady"><option v-if="!offline" value="">{{ provider ? '既定モデル（プロバイダの設定）' : 'AIコアの設定を使用' }}</option><option v-for="m in models" :key="m.id" :value="m.id">{{ m.label || m.id }}</option><option v-if="!offline && provider === state.provider && state.model && !models.some(m => m.id === state.model)" :value="state.model">{{ state.model }}（現在のモデル）</option><option v-if="!offline && provider" value="__custom__">一覧にないモデル ID を入力…</option></select></label>
       <input v-if="model === '__custom__'" v-model="custom" maxlength="300" autocomplete="off" spellcheck="false" aria-label="モデル名"><p v-if="catalogBusy">読み込み中…</p><p v-if="error" class="error">{{ error }}</p>
       <button :disabled="!canApplyModel" @click="applyModel">選択する</button><button @click="picker = false">閉じる</button>

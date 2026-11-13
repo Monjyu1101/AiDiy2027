@@ -15,7 +15,8 @@ import assert from 'node:assert/strict';
 import { 接続失敗案内, 接続エラー詳細 } from '../src/接続/接続エラー';
 
 test('Hermes、Discord認証、Intent、通信の失敗を分けて案内する', () => {
-  assert.match(接続失敗案内(new Error('Python が見つかりません。'), 'Hermes確認'), /Hermes用のPython/);
+  assert.match(接続失敗案内(new Error('Python が見つかりません。'), 'コード確認'), /Hermes用のPython/);
+  assert.match(接続失敗案内(new Error('aidiy_pi が見つかりません。'), 'コード確認'), /command_pi/);
   assert.match(接続失敗案内({ code: 'TokenInvalid' }, 'Discord接続'), /トークン認証/);
   assert.match(接続失敗案内(new Error('Authentication failed'), 'Discord接続'), /トークン認証/);
   assert.match(接続失敗案内(new Error('Used disallowed intents'), 'Discord接続'), /Message Content Intent/);

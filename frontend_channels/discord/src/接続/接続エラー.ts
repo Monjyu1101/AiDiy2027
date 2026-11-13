@@ -13,7 +13,7 @@
 import { 設定エラー } from './接続設定';
 
 export type ライブ接続段階 = 'ボイス参加確認' | 'Discordボイス接続' | 'AIコア接続' | '音声中継' | 'LiveAI';
-export type 接続段階 = '設定読込' | 'Hermes確認' | 'モデル確認' | 'Bot作成' | 'Discord接続' | '準備完了待ち' | ライブ接続段階;
+export type 接続段階 = '設定読込' | 'コード確認' | 'モデル確認' | 'Bot作成' | 'Discord接続' | '準備完了待ち' | ライブ接続段階;
 
 export class ライブ接続エラー extends Error {
   readonly details: string;
@@ -30,14 +30,18 @@ export function 接続失敗案内(error: unknown, stage: 接続段階): string 
   if (error instanceof 設定エラー) return error.message;
   const detail = error as { code?: unknown; status?: unknown; message?: unknown; cause?: unknown } | null;
   const message = typeof detail?.message === 'string' ? detail.message : '';
-  if (stage === 'Hermes確認') {
+  if (stage === 'コード確認') {
+    if (message.startsWith('aidiy_pi が見つかりません。'))
+      return 'aidiy_pi が見つかりません。command_pi のセットアップを確認してください。';
+    if (message.startsWith('node が見つかりません。'))
+      return 'Pi用のNode.jsが見つかりません。Node.jsの導入とPATHを確認してください。';
     if (message.startsWith('Python が見つかりません。'))
       return 'Hermes用のPythonが見つかりません。command_hermes の仮想環境（.venv）をセットアップし直してください。';
     if (message.startsWith('aidiy_hermes が見つかりません。'))
       return 'aidiy_hermes が見つかりません。command_hermes のセットアップとランチャーのPATHを確認してください。';
     if (message.startsWith('この .cmd は AiDiy の起動形式ではありません。'))
       return 'Hermesの起動ランチャーが無効です。PythonやCLIの移動・削除がないか確認し、ランチャーを再登録してください。';
-    return 'Hermesの起動パスを確認できません。command_hermes のセットアップを確認してください。';
+    return 'コードCLIの起動パスを確認できません。選択したHermesまたはPiのセットアップを確認してください。';
   }
   if (detail?.code === 'TokenInvalid' || detail?.code === 50014 || detail?.status === 401 || message === 'Authentication failed')
     return 'DiscordのBotトークン認証に失敗しました。AiDiy_key.json の discord_bot_token を確認してください。';

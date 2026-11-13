@@ -28,6 +28,7 @@ CLI_MODELS = {
     "codex_cli": {"codex-test": "Codex test"},
     "copilot_cli": {"copilot-test": "Copilot test"},
     "aidiy_hermes": {"openai_oauth/hermes-test": "Hermes test"},
+    "aidiy_pi": {"openai_oauth/pi-test": "Pi test"},
 }
 CHAT_MODELS = {
     "openai_oauth": {"oauth-test": "OAuth test"},
@@ -59,7 +60,7 @@ class PredictionModelCatalogTest(unittest.TestCase):
                     {provider: models},
                 )
 
-    def test_mixed_catalog_preserves_all_seven_providers(self):
+    def test_mixed_catalog_preserves_all_eight_providers(self):
         expected = {**CHAT_MODELS, **CLI_MODELS}
         payload = {provider: {"models": models} for provider, models in expected.items()}
         self.assertEqual(self.read_catalog(payload), expected)

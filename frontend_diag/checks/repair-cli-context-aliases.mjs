@@ -7,8 +7,8 @@ import {join,resolve} from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {withoutHermesContextAliases} from '../diag/モデル情報/models_info.mjs';
 const directory=resolve(process.argv[2]||fileURLToPath(new URL('../../_AIDIY/aidiy_diag/',import.meta.url)));
-const files=['openai_models_info.json','openai_oauth_models_info.json','code_models_info.json','navi_models_info.json','prediction_models_info.json','hermes_models_info.json'];
-const native=new Set(['codex_cli','copilot_cli','opencode_cli']);
+const files=['openai_models_info.json','openai_oauth_models_info.json','code_models_info.json','navi_models_info.json','prediction_models_info.json','hermes_models_info.json','pi_models_info.json'];
+const native=new Set(['codex_cli','copilot_cli','opencode_cli','aidiy_hermes','aidiy_pi','openai_oauth']);
 for(const name of files){
  const file=join(directory,name);let data;
  try{data=JSON.parse(await readFile(file,'utf8'));}catch(error){if(error.code==='ENOENT')continue;throw error;}

@@ -89,6 +89,8 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 | 症状・依頼 | 最初に見るファイル |
 |-----------|------------------|
+| aidiy_pi の導入・モデル・OAuth・MCP・Code / Navi / Channels 連携 | [`command_pi,AiDiy連携.md`](./command_pi,AiDiy連携.md) |
+| aidiy_memo の単体起動・保存先・画像・プロジェクト切替・ゴミ箱 | [`frontend_diag,環境診断運用.md`](./frontend_diag,環境診断運用.md#aidiy_memo付箋メモ) |
 | Electronのタイトルバー開閉標準、0.5秒長押し移動、表示開始ズーム | [`共通,Electronウィンドウ基本方針.md`](./共通,Electronウィンドウ基本方針.md) |
 | 今後の改善提案を比較し、採用条件を検討する | [`共通,明日のために,改善提案.md`](./共通,明日のために,改善提案.md) |
 | 固定版の改善課題と再現条件・検証限界を確認する | [`共通,明日のために,改善課題.md`](./共通,明日のために,改善課題.md) |
@@ -262,6 +264,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | CLI 出力の ANSI 制御コードを除去する | [`backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md`](./backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md) |
 | upstream hermes-agent の新版へ移植する | [`command_hermes,upstream移植手順.md`](./command_hermes,upstream移植手順.md) |
 | Hermes CLI の TUI を調整する | [`command_hermes,TUI調整手順.md`](./command_hermes,TUI調整手順.md) |
+| aidiy_pi（command_pi）のモデル一覧・キー・OAuth・MCP・setup・アイコンを確認する | [`command_pi,AiDiy連携.md`](./command_pi,AiDiy連携.md) |
 | Hermes CLI の Provider 一覧・選択ロジックを確認する | [`command_hermes,Provider一覧と選択ロジック.md`](./command_hermes,Provider一覧と選択ロジック.md) |
 | Hermes CLI の Slash Command 一覧・追加手順を確認する | [`command_hermes,Slash Command一覧.md`](./command_hermes,Slash Command一覧.md) |
 | command_hermes を単体 CLI として起動・確認する | [`command_hermes,backend_server,運用手順.md`](./command_hermes,backend_server,運用手順.md) |

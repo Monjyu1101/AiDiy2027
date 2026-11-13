@@ -121,5 +121,5 @@ html:has(.diag-panel[data-collapsed="true"]),body:has(.diag-panel[data-collapsed
 
 /* 300pxへの縮小でも左操作と終了ボタンを残し、タイトルだけ1行省略する。 */
 @media(max-width:399px){.panel-brand.compact{grid-template-columns:auto minmax(0,1fr) auto}.panel-brand.compact strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-/* +メモを含むタイトル操作は狭い窓でも折り返さず、タイトルだけを省略する。 */
+/* ＋付箋を含むタイトル操作は狭い窓でも折り返さず、タイトルだけを省略する。 */
 @media(max-width:639px){.panel-brand,.panel-brand:not(.compact){grid-template-columns:auto minmax(0,1fr) auto}.panel-brand strong{min-width:0;overflow:hidden;text-overflow:ellipsis}.launcher-selector{gap:4px}.launcher-selector button{padding-left:4px;padding-right:4px}}

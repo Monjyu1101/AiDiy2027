@@ -2654,14 +2654,9 @@ _CODEX_OAUTH_CONTEXT_FALLBACK: Dict[str, int] = {
 # ≥11K margin under the observed ceiling and matches the compaction point
 # Codex's own client config documents for the 1M window.
 #
-# OPT-IN ONLY (Aug 2026 policy, Teknium): the large window is exposed via
-# explicit ``-900k`` picker variants (e.g. ``gpt-6.1-sol-900k``) — the base
-# slugs keep the advertised 272K so the cheaper limit is the default. A
-# week of the 900K default burned through subscription usage for people
-# who never asked for it. The variant suffix is a Hermes-side alias: it is
-# stripped before the model id hits the wire (see
-# ``strip_codex_context_variant_suffix`` callers in agent/transports/codex.py
-# and agent/auxiliary_client.py).
+# AiDiy: モデル選択・保存・送信には標準名を使い、対象モデルの900K補正は
+# Hermes内部で適用する。別名の候補は生成しない。旧保存値の接尾辞除去は
+# strip_codex_context_variant_suffix に残し、APIへ別名を送信しない。
 #
 # The bump is applied ONLY when the resolved value (live probe or fallback
 # table) is exactly the known-stale 272,000 advertisement — if OpenAI moves
@@ -2687,8 +2682,7 @@ _CODEX_OAUTH_VERIFIED_ABOVE_ADVERTISED_EXACT: Dict[str, int] = {
 # The advertised value the verified-above table is allowed to override.
 _CODEX_OAUTH_STALE_ADVERTISED_CTX = 272_000
 
-# Hermes-side picker suffix that opts a Codex slug into the live-verified
-# large window. Never sent on the wire.
+# 旧モデル選択の読込互換にだけ使う接尾辞。新しい候補には生成しない。
 CODEX_CONTEXT_VARIANT_SUFFIX = "-900k"
 
 # The ONLY base slugs eligible for a ``-900k`` variant. The gpt-6.1-sol
@@ -2720,12 +2714,7 @@ def _bare_codex_slug(model: Optional[str]) -> str:
 
 
 def is_codex_900k_base(model: Optional[str]) -> bool:
-    """True when *model* (a BASE slug, no suffix) may carry a ``-900k`` variant.
-
-    Single source of truth for the eligibility check — used by picker
-    synthesis, context resolution, `/model` validation, and wire stripping
-    so the four sites can never drift apart.
-    """
+    """標準モデル名がHermes内部の900K補正対象か。未対応モデルへは広げない。"""
     slug = _bare_codex_slug(model)
     if not slug or slug.endswith(CODEX_CONTEXT_VARIANT_SUFFIX):
         return False
@@ -2771,28 +2760,9 @@ def strip_codex_context_variant_suffix(model: Optional[str]) -> str:
     return raw
 
 
-def has_codex_context_variant(model_bare: str) -> bool:
-    """True when a Codex BASE slug should get a synthetic ``-900k`` entry.
-
-    Thin alias over :func:`is_codex_900k_base` kept for the picker call
-    sites' readability.
-    """
-    return is_codex_900k_base(model_bare)
-
-
 def _verified_codex_ctx_for_slug(model_bare: str) -> Optional[int]:
-    """Return the live-verified Codex cap for an OPTED-IN slug, or ``None``.
-
-    The large window is opt-in: only VALID ``-900k`` picker variants
-    (e.g. ``gpt-6.1-sol-900k``) resolve to the verified cap. Base slugs
-    keep the advertised 272K so the cheaper default limit applies unless
-    the user explicitly selects the large-context variant; ineligible
-    aliases (``gpt-5.5-900k``) never resolve here.
-    """
-    slug = _bare_codex_slug(model_bare)
-    if not slug.endswith(CODEX_CONTEXT_VARIANT_SUFFIX):
-        return None
-    base = slug[: -len(CODEX_CONTEXT_VARIANT_SUFFIX)]
+    """対象の標準モデル名に適用する内部コンテキスト上限。旧別名も読める。"""
+    base = _bare_codex_slug(strip_codex_context_variant_suffix(model_bare))
     if not is_codex_900k_base(base):
         return None
     exact = _CODEX_OAUTH_VERIFIED_ABOVE_ADVERTISED_EXACT.get(base)
@@ -2930,16 +2900,20 @@ def _resolve_codex_oauth_context_length_with_source(
     if not model_bare:
         return None, ""
 
+    # AiDiy: 表示・保存・API送信のモデル名とは独立した内部フラグ。
+    # 対象モデルだけ既存の900K補正経路へ進める（取得値が272K以外なら補正しない）。
+    use_900k_context = is_codex_900k_base(strip_codex_context_variant_suffix(model_bare))
+
     def _apply_verified_bump(ctx: int, source: str) -> Tuple[int, str]:
         """Lift a known-stale 272K advertisement to the live-verified cap.
 
-        Only fires for explicit ``-900k`` picker variants (opt-in), and only
+        Applies to eligible standard model names, and only
         when the resolved value is EXACTLY the stale 272,000 advertisement
         for a slug we have probed above it (see
         ``_verified_codex_ctx_for_slug``). Any other advertised value —
         higher or lower — is trusted as a real server-side change.
         """
-        bumped = _verified_codex_ctx_for_slug(model_bare)
+        bumped = _verified_codex_ctx_for_slug(model_bare) if use_900k_context else None
         if bumped is not None and ctx == _CODEX_OAUTH_STALE_ADVERTISED_CTX:
             logger.debug(
                 "Codex OAuth context for %s: advertised %d raised to "

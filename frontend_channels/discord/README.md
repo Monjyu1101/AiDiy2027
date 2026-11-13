@@ -232,3 +232,5 @@ Live は最初の init より前の認証・接続失敗だけを最大5回再�
 その再接続時に新トークンを読み、以前の音声・テキストは再送しません。
 
 起動プロジェクトが空文字の場合は AiDiy の配置先ルートを使います。Electron の設定・セッションも `プロジェクト/_AIDIY/aidiy_discord/electron/` に保存し、ユーザーホームを使いません。
+
+コード欄では `aidiy_hermes` / `aidiy_pi` を選択できます。エンジンとモデルをプロジェクトの `code_name` / `code_model` に保存し、接続中は「適用して再接続」で変更を反映します。Piの `openai_oauth` はCodex CLI、`xai_oauth` はGrok CLIのログインを共有します。

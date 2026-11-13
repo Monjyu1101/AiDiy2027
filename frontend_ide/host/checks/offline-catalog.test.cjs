@@ -54,6 +54,7 @@ function fixture(t) {
   });
   return { root, project, extensionPath, modelFile, bundle, noExecution, onClose: close => cleanup.push(close),
     models: models => write('\uFEFF' + JSON.stringify({ aidiy_hermes: { models } })),
+    catalogs: catalogs => write(JSON.stringify(catalogs)),
     malformed: () => write('{broken'),
     saved: () => JSON.parse(readFileSync(modelFile.replace(/\.json$/, '_offline.json'), 'utf8')),
     onlineUnchanged: () => assert.equal(readFileSync(modelFile, 'utf8'), onlinePreference),
@@ -65,8 +66,8 @@ async function server(t, f) {
   const app = await 単独起動(f.project, 'http://127.0.0.1:1', { offline: true }, f.modelFile, f.noExecution, join(f.root, 'histories'));
   f.onClose(() => app.close());
   return {
-    catalog: async () => { const response = await fetch(app.url + 'catalog?provider=aidiy_hermes'); return { status: response.status, ...await response.json() }; },
-    choose: async model => { const response = await fetch(app.url + 'message', { method: 'POST', headers: { Origin: new URL(app.url).origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'model', provider: 'aidiy_hermes', model }) }); return { status: response.status, ...await response.json() }; },
+    catalog: async (provider = 'aidiy_hermes') => { const response = await fetch(app.url + 'catalog?provider=' + provider); return { status: response.status, ...await response.json() }; },
+    choose: async (model, provider = 'aidiy_hermes') => { const response = await fetch(app.url + 'message', { method: 'POST', headers: { Origin: new URL(app.url).origin, 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'model', provider, model }) }); return { status: response.status, ...await response.json() }; },
   };
 }
 
@@ -124,8 +125,8 @@ function extension(t, f) {
   receive({ type: 'autoConnect', enabled: false });
   f.onClose(() => { try { assert.equal(provider.connection, undefined, 'AIコアへの接続を作成しない'); } finally { provider.dispose(); } });
   return {
-    catalog: async () => { const before = posts.length; receive({ type: 'chooseModel', provider: 'aidiy_hermes' }); await flush(); return posts.slice(before).findLast(packet => ['modelCatalog', 'modelCatalogError'].includes(packet.type)); },
-    choose: async model => { receive({ type: 'setModel', provider: 'aidiy_hermes', model }); await flush(); return posts.findLast(packet => packet.type === 'state'); },
+    catalog: async (provider = 'aidiy_hermes') => { const before = posts.length; receive({ type: 'chooseModel', provider }); await flush(); return posts.slice(before).findLast(packet => ['modelCatalog', 'modelCatalogError'].includes(packet.type)); },
+    choose: async (model, provider = 'aidiy_hermes') => { receive({ type: 'setModel', provider, model }); await flush(); return posts.findLast(packet => packet.type === 'state'); },
   };
 }
 
@@ -152,3 +153,20 @@ test('Code 拡張: 起動後の候補生成・削除・破損・修復を反映�
   assert.deepEqual(f.saved(), { provider: 'aidiy_hermes', model: oldModel });
   f.onlineUnchanged();
 });
+
+for (const [label, open] of [['単独・Navi用Code', server], ['VS Code拡張', extension]]) {
+  test(`${label}: Hermes / Piの最後の選択を共通のオフライン設定一件に保存し、別エンジンの候補を拒否する`, async t => {
+    const f = fixture(t);
+    f.catalogs({ aidiy_hermes: { models: { 'codex_cli/same': 'Hermesだけの候補' } }, aidiy_pi: { models: { 'openai_oauth/pi-test': 'Piの候補' } } });
+    const app = await open(t, f);
+    const catalog = await app.catalog('aidiy_pi');
+    assert.deepEqual((catalog.models || catalog.items).map(item => item.id), ['same', 'openai_oauth/pi-test']);
+    await app.choose('openai_oauth/pi-test', 'aidiy_pi');
+    assert.deepEqual(f.saved(), { provider: 'aidiy_pi', model: 'openai_oauth/pi-test' });
+    await app.choose('codex_cli/same', 'aidiy_pi');
+    assert.deepEqual(f.saved(), { provider: 'aidiy_pi', model: 'openai_oauth/pi-test' });
+    await app.choose('codex_cli/same', 'aidiy_hermes');
+    assert.deepEqual(f.saved(), { provider: 'aidiy_hermes', model: 'codex_cli/same' });
+    f.onlineUnchanged();
+  });
+}

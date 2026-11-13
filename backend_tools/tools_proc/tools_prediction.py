@@ -32,7 +32,7 @@ INTERNAL_PATH = "/internal/prediction_llms"
 INPUT_ERROR = "ユーザー入力予測の引数が不正です。project_path と各設定値を確認してください。"
 RUN_ERROR = "ユーザー入力予測を実行できませんでした。設定と履歴の状態を確認してください。"
 
-PredictionAIName = Literal["auto", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes"]
+PredictionAIName = Literal["auto", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi"]
 ProjectPath = Annotated[str, Field(strict=True, min_length=1, max_length=4096)]
 PredictionModel = Annotated[str, Field(strict=True, min_length=1, max_length=200)]
 TimeoutSeconds = Annotated[int, Field(strict=True, ge=1, le=600)]

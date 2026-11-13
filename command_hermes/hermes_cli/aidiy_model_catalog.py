@@ -81,7 +81,7 @@ def read_model_labels(
                     or not isinstance(label, str) or not label.strip()
                     or any(ord(c) < 32 or ord(c) == 127 for c in label)):
                 raise ValueError("catalog row")
-            if not include_special and model.lower() in {"auto", "same"}:
+            if model.lower().endswith("-900k") or (not include_special and model.lower() in {"auto", "same"}):
                 excluded += 1
                 continue
             rows.append((label, model))

@@ -81,8 +81,18 @@ class CodeCommonDefaultsTests(unittest.TestCase):
 
     def test_session_missing_key_fallback_matches_common_defaults(self):
         settings = create_settings(SimpleNamespace(json={}))
-        for key in ('CODE_AI1_NAME', 'CODE_AI1_MODEL', 'CODE_AIDIY_HERMES_MODEL'):
+        for key in ('CODE_AI1_NAME', 'CODE_AI1_MODEL', 'CODE_AIDIY_HERMES_MODEL', 'CODE_AIDIY_PI_MODEL'):
             self.assertEqual(settings[key], module.conf_json.DEFAULT_CONFIG[key])
+
+    def test_pi_model_is_kept_before_catalog_normalization(self):
+        expected = 'openai_oauth/pi-saved-model'
+        def normalize(settings):
+            self.assertEqual(settings['CODE_AIDIY_PI_MODEL'], expected)
+            return settings
+        settings = create_settings(SimpleNamespace(
+            json={'CODE_AIDIY_PI_MODEL': expected},
+            models=SimpleNamespace(normalize_initial_settings=normalize)))
+        self.assertEqual(settings['CODE_AIDIY_PI_MODEL'], expected)
 
     def test_reloading_new_file_does_not_rewrite(self):
         self.load()

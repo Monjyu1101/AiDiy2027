@@ -7305,6 +7305,7 @@ def validate_requested_model(
             from agent.model_metadata import (
                 CODEX_CONTEXT_VARIANT_SUFFIX,
                 is_codex_context_variant,
+                strip_codex_context_variant_suffix,
             )
             _req_lower = requested_for_lookup.strip().lower()
             if (
@@ -7312,15 +7313,13 @@ def validate_requested_model(
                 and requested_for_lookup not in set(catalog_models)
             ):
                 if is_codex_context_variant(requested_for_lookup):
-                    # Valid variant that a stale catalog hasn't synthesized
-                    # yet. Accept it directly — falling through would let the
-                    # typo auto-corrector "fix" it to the base slug and
-                    # silently drop the large-context opt-in.
+                    # AiDiy: 旧別名の入力は標準名へ訂正。900Kは内部フラグで適用する。
                     return {
                         "accepted": True,
                         "persist": True,
                         "recognized": True,
-                        "message": None,
+                        "corrected_model": strip_codex_context_variant_suffix(requested_for_lookup),
+                        "message": "標準モデル名へ変更します。900K設定はHermes内部で適用します。",
                     }
                 _base_guess = requested_for_lookup[: -len(CODEX_CONTEXT_VARIANT_SUFFIX)]
                 return {
@@ -7328,11 +7327,8 @@ def validate_requested_model(
                     "persist": False,
                     "recognized": False,
                     "message": (
-                        f"`{requested}` is not a valid large-context variant — "
-                        f"`{_base_guess}` enforces the standard 272K window on "
-                        f"Codex, so no `-900k` option exists for it. Pick the "
-                        f"base model, or a verified variant from the `/model` "
-                        f"picker (e.g. `gpt-6.1-sol-900k`)."
+                        f"`{requested}` は対応するモデル名ではありません。"
+                        f"`/model` から標準名（`{_base_guess}` など）を選択してください。"
                     ),
                 }
         if catalog_models:

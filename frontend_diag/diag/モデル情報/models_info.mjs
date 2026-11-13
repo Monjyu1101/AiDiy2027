@@ -19,22 +19,25 @@ import {DECISIONS_MODELS_FILE,decisionsModelsInfo} from './decisions_info.mjs';
 import {COPILOT_FALLBACK_MODELS, OAUTH_FALLBACK_SOURCE, oauthModelFallback} from './model_fallbacks.mjs';
 import {antigravityModels} from './antigravity_models.mjs';
 import {HERMES_MODELS_FILE, hermesModelsInfo} from './hermes_info.mjs';
+import {PI_MODELS_FILE, PI_CODE_PROVIDER, PI_PROVISIONAL_MODELS, piModels, piModelsInfo, piInstalled} from './pi_info.mjs';
 
 // 順序はHermesの先頭候補にも使う。存在確認のみでCLIは実行しない。
 const CODE_CLIS = Object.freeze({copilot_cli:'copilot', claude_cli:'claude', codex_cli:'codex',
   antigravity_cli:'agy', grok_cli:'grok', opencode_cli:'opencode'});
-export async function installedCodeClis({loadEntries = catalog, resolve = resolveProgram} = {}) {
+// aidiy_pi は外部CLIではなく command_pi の setup 済み判定（piInstalled）で加える。
+export async function installedCodeClis({loadEntries = catalog, resolve = resolveProgram, piCheck = piInstalled} = {}) {
   const entries = await loadEntries();
-  return Object.fromEntries(await Promise.all(Object.entries(CODE_CLIS).map(async ([key, id]) => {
+  const clis = Object.fromEntries(await Promise.all(Object.entries(CODE_CLIS).map(async ([key, id]) => {
     const entry = entries.find(item => item.id === id);
     return [key, !!(entry && await resolve(entry))];
   })));
+  return {...clis, [PI_CODE_PROVIDER]:await piCheck()};
 }
 
 // Hermes / OpenCode は渡す値（プロバイダ/モデル）をそのまま表示名にも使う。先頭の日付・仮設定表示は残す。
 export const routeLabel = (id, label) => `${/^(.*?) - /.exec(label)?.[1] ?? 'yyyy/mm/dd'} - ${id}`;
 const routeModels = models => Object.fromEntries(Object.entries(models).map(([id, label]) => [id, routeLabel(id, label)]));
-// -900k はHermesのOAuth実行時にだけ解決する別名。ネイティブCLIへは渡さない。
+// 廃止した -900k 別名を保存済み一覧から復活させない。全エンジンで標準名を使う。
 const hermesContextAlias = id => /-900k$/i.test(id);
 export const withoutHermesContextAliases = models => Object.fromEntries(Object.entries(models).filter(([id]) => !hermesContextAlias(id)));
 
@@ -48,7 +51,7 @@ export function openCodeModels(models) {
 function availableCodeModels(code, installedClis) {
   // 未更新のプロバイダ別ファイルを再合成するときも、旧候補を復活させない。
   code = Object.fromEntries(Object.entries(code).map(([key, entry]) => [key,
-    ['codex_cli','copilot_cli'].includes(key) ? {...entry,models:withoutHermesContextAliases(entry.models)} : entry]));
+    ['codex_cli','copilot_cli','aidiy_hermes','aidiy_pi'].includes(key) ? {...entry,models:withoutHermesContextAliases(entry.models)} : entry]));
   const filtered = Object.fromEntries(Object.entries(code).filter(([key]) => key === 'aidiy_hermes'
     || installedClis[key === 'claude_sdk' ? 'claude_cli' : key] === true));
   // OpenCodeはCodex用の候補を共有。空の場合の規定値と導入判定はCopilotと同じ方式。
@@ -61,14 +64,20 @@ function availableCodeModels(code, installedClis) {
     }
     if (installedClis[key] === true) filtered[key] = {models:key === 'opencode_cli' ? openCodeModels(models) : {...models}};
   }
+  // Pi の OAuth 候補。外部CLIの xx/same 経路は下で Hermes と共用する。
+  if (installedClis[PI_CODE_PROVIDER] === true) {
+    const oauth = Object.entries(piModels(code.aidiy_hermes?.models ?? {})).filter(([id]) => id.startsWith('openai_oauth/'));
+    filtered[PI_CODE_PROVIDER] = {models:oauth.length ? routeModels(Object.fromEntries(oauth)) : {...PI_PROVISIONAL_MODELS}};
+  }
   const routes = Object.fromEntries(Object.keys(CODE_CLIS).filter(key => installedClis[key])
     .map(key => [`${key}/same`, `yyyy/mm/dd - ${key}/same`]));
+  if (filtered[PI_CODE_PROVIDER]) filtered[PI_CODE_PROVIDER] = {models:routeModels({...routes, ...filtered[PI_CODE_PROVIDER].models})};
   if (Object.keys(routes).length || filtered.aidiy_hermes) {
     filtered.aidiy_hermes = {models:{...routes, ...filtered.aidiy_hermes?.models}};
   }
   for (const key of ['aidiy_hermes', 'opencode_cli']) if (filtered[key]) filtered[key] = {models:routeModels(filtered[key].models)};
   const priority = key => key === 'antigravity_cli' ? 2
-    : ['claude_sdk', 'claude_cli', 'copilot_cli', 'codex_cli', 'aidiy_hermes'].includes(key) ? 0 : 1;
+    : ['claude_sdk', 'claude_cli', 'copilot_cli', 'codex_cli', 'aidiy_hermes', PI_CODE_PROVIDER].includes(key) ? 0 : 1;
   return Object.fromEntries(Object.entries(filtered).sort(([a], [b]) => priority(a) - priority(b)));
 }
 
@@ -107,7 +116,7 @@ const LAYOUT = Object.freeze({
 // 作成日（YYYY/MM/DD）の新しい順。日付が同じもの・日付の無いもの（OAuth・Ollama など）は元の順を保ち、日付なしは末尾。
 const dateKey = row => typeof row.作成日 === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(row.作成日) ? row.作成日 : '';
 export const newestFirst = rows => rows.map((row, index) => [row, index]).sort(([a, i], [b, j]) => dateKey(b).localeCompare(dateKey(a)) || i - j).map(([row]) => row);
-// 既知3モデルの位置だけを上位順にする。その他の候補・日付・相対順序は変えない。
+// 既知4モデルの位置だけを上位順にする。その他の候補・日付・相対順序は変えない。
 const geminiChatOrder = rows => {
   const rank = id => GEMINI_CHAT_MODEL_ORDER.indexOf(id);
   const ranked = rows.filter(row => rank(row.model_id) >= 0).sort((a, b) => rank(a.model_id) - rank(b.model_id));
@@ -210,7 +219,7 @@ export async function modelsInfo(provider, result, {now = () => new Date()} = {}
         const codeModels = provisional ? (key === 'aidiy_hermes' ? chatModels : [])
           : key === 'codex_cli' || (['openai', 'openai_oauth'].includes(provider.id) && key === 'copilot_cli') ? latestCodexModels(chatModels) : chatModels;
         info.code[key] = {models:provider.id === 'claude' ? claudeLabels(chatModels, {versioned:key === 'copilot_cli'})
-          : Object.fromEntries(Object.entries(labels(codeModels))
+          : Object.fromEntries(Object.entries(labels(codeModels)).filter(([id]) => !hermesContextAlias(id))
             .map(([id, label]) => [prefix + id, prefix ? routeLabel(prefix + id, label) : label]))};
       }
     }
@@ -316,6 +325,9 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
   const hermesInfos = infos.filter(info => !(info.プロバイダ === 'grok' && providers.some(row => row.id === 'grok' && row.設定済み === false)));
   await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
   saved.push(HERMES_MODELS_FILE);
+  // Pi も Hermes と同じ入力から、標準モデル名・CLI区分を含めて作る。
+  await writeResult(path.join(directory, PI_MODELS_FILE), piModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
+  saved.push(PI_MODELS_FILE);
   return saved;
 }
 

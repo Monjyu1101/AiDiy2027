@@ -68,7 +68,7 @@ export async function navigationCatalog(provider,file=fileURLToPath(new URL('../
  const items=[{id:'same',label:'same（前回のモデル）'},{id:'auto',label:'auto（自動選択）'}];
  if(models&&typeof models==='object'&&!Array.isArray(models))for(const [id,label]of Object.entries(models)){
   if(['same','auto'].includes(id)||typeof label!=='string'||!text(id,300)||/[\x00-\x1f]/.test(id))continue;
-  if(provider==='aidiy_hermes'&&/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id))continue;
+  if(['aidiy_hermes','aidiy_pi'].includes(provider)&&/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id))continue;
   items.push({id,label});
  }
  return {items,notice};
@@ -77,7 +77,7 @@ export async function navigationModels(provider,file){return (await navigationCa
 // Diagが保存した候補をそのまま使う。画面表示時には環境を再確認しない。
 export async function navigationProviders(file=fileURLToPath(new URL('../../_AIDIY/aidiy_diag/navi_models_info.json',import.meta.url))){
  let info;try{info=JSON.parse(await readFile(file,'utf8'));if(info._meta?.schema!==1||info._meta?.readOnly!==true)throw Error('旧形式');}catch{return {providers:[],notice:'Navi用モデル一覧をDiagで書き出してください。'};}
- const candidates=Object.keys(info).filter(provider=>{if(!NAVI_PROVIDERS.includes(provider))return false;const models=info[provider]?.models;return models&&typeof models==='object'&&!Array.isArray(models)&&Object.entries(models).some(([id,label])=>text(id,300)&&typeof label==='string'&&!/[\x00-\x1f]/.test(id)&&(provider!=='aidiy_hermes'||!/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id)));});
+ const candidates=Object.keys(info).filter(provider=>{if(!NAVI_PROVIDERS.includes(provider))return false;const models=info[provider]?.models;return models&&typeof models==='object'&&!Array.isArray(models)&&Object.entries(models).some(([id,label])=>text(id,300)&&typeof label==='string'&&!/[\x00-\x1f]/.test(id)&&(!['aidiy_hermes','aidiy_pi'].includes(provider)||!/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id)));});
  return {providers:candidates,notice:candidates.length?'':'Navi用AIの候補がありません。Diagの一覧を更新してください。'};
 }
 // CodeのHermes用既定値を共有し、保存済みの窓別選択を優先する。

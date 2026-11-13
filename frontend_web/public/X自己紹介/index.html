@@ -9,6 +9,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiDiy - 日本語ファースト AI開発プラットフォーム</title>
+    <meta name="description" content="日本語で設計し、AIと育てる開発環境 AiDiy。宇宙を眺めるIDE、Hermes / Piによるコード支援、Memoの付箋、音声会話と業務サンプルを紹介します。">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700;900&display=swap');
 
@@ -1104,6 +1105,66 @@ https://github.com/monjyu1101/AiDiy2027 -->
             .icon-gallery .icon-card .icon-fallback { width: 28px; height: 28px; font-size: 14px; }
         }
     </style>
+    <style>
+        /* 長い紹介ページの目次と、追加機能の入口 */
+        html { scroll-padding-top: 100px; }
+        .page-nav {
+            position: sticky; top: 0; z-index: 1001;
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; padding: 14px max(20px, calc((100vw - 1160px) / 2));
+            background: rgba(5, 13, 27, .94); border-bottom: 1px solid rgba(0, 255, 255, .2);
+            backdrop-filter: blur(16px);
+        }
+        .page-nav a { color: #d6e7f5; text-decoration: none; }
+        .page-nav .nav-brand { font: 700 1.2rem 'Orbitron', sans-serif; color: #6ff5ff; }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+        .nav-links a { display: inline-flex; align-items: center; min-height: 36px; font-size: .85rem; }
+        .page-nav a:hover { color: #6ff5ff; }
+        a:focus-visible { outline: 2px solid #ffda85; outline-offset: 5px; border-radius: 3px; }
+        .skip-link { position: fixed; top: -100px; left: 16px; z-index: 10002; padding: 10px 18px; background: #071c32; color: #fff; }
+        .skip-link:focus { top: 10px; }
+        .hero-description { max-width: 780px; text-wrap: pretty; }
+        .hero-tags { max-width: 1000px; }
+        .hero-tags span { max-width: 100%; overflow-wrap: anywhere; }
+        .spotlight-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+        .spotlight {
+            padding: 30px; border: 1px solid rgba(255, 218, 133, .4); border-radius: 18px;
+            background: linear-gradient(135deg, rgba(255, 218, 133, .08), rgba(8, 18, 36, .85));
+        }
+        .spotlight.memo { border-color: rgba(111, 245, 255, .4); background: linear-gradient(135deg, rgba(111, 245, 255, .08), rgba(8, 18, 36, .85)); }
+        .spotlight-label { display: block; color: #ffda85; font-size: .8rem; letter-spacing: .12em; margin-bottom: 12px; }
+        .memo .spotlight-label { color: #6ff5ff; }
+        .spotlight h3 { font-size: 1.55rem; margin-bottom: 12px; line-height: 1.5; }
+        .spotlight p, .spotlight li { color: #c7d6e5; font-size: .95rem; line-height: 1.9; }
+        .spotlight ul { padding-left: 1.3em; margin: 16px 0 22px; }
+        .spotlight li + li { margin-top: 8px; }
+        .launch-command { display: block; color: #fff; background: rgba(0, 0, 0, .35); border-radius: 8px; padding: 12px 16px; overflow-wrap: anywhere; }
+        .spotlight .usage-note { font-size: .8rem; color: #a7bbcd; margin-top: 12px; }
+        .architecture-item, .feature-card, .stat-item, .expansion-item, .sample-item { min-width: 0; overflow-wrap: anywhere; }
+        @media (max-width: 720px) {
+            html { scroll-padding-top: 132px; }
+            .page-nav { padding: 10px 16px; flex-direction: column; align-items: flex-start; gap: 2px; }
+            .nav-links { display: grid; grid-template-columns: repeat(3, max-content); justify-content: space-between; width: 100%; gap: 0 10px; }
+            .nav-links a { font-size: .78rem; }
+            .hero-section { padding: 60px 20px 40px; min-height: auto; }
+            .hero-subtitle { font-size: 1.2rem; line-height: 1.7; }
+            .hero-description { font-size: .95rem; }
+            .hero-actions { width: 100%; gap: 10px; }
+            .hero-actions a { width: 100%; max-width: 360px; }
+            .hero-tags { flex-direction: row; gap: 8px; }
+            .hero-tags span { font-size: .73rem; padding: 5px 10px; }
+            .core-features, .architecture-grid, .advanced-grid, .sample-grid, .spotlight-grid { grid-template-columns: minmax(0, 1fr); }
+            .tech-stats, .expansion-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .section-title { font-size: 1.65rem; line-height: 1.6; }
+            .spotlight { padding: 22px; }
+            .architecture-item pre { max-width: 100%; overflow-x: auto; }
+            .typing-text { max-width: 100%; overflow-wrap: anywhere; white-space: normal; font-size: .8rem; }
+        }
+    </style>
+    <noscript><style>
+        .hero-title, .hero-subtitle, .hero-description, .hero-actions, .hero-tags, .hero-tags span, .animate-on-scroll { opacity: 1 !important; transform: none !important; }
+        .hero-title-assembly, .typing-text { display: none; }
+    </style></noscript>
     <script type="importmap">
     {
         "imports": {
@@ -1116,6 +1177,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
     </script>
 </head>
 <body>
+    <a href="#main-content" class="skip-link">本文へ移動</a>
     <!-- 背景レイヤー -->
     <div class="animated-bg"></div>
     <div class="fx-grid"></div>
@@ -1123,8 +1185,20 @@ https://github.com/monjyu1101/AiDiy2027 -->
     <div id="fx-mouse-glow"></div>
     <div id="fx-progress"></div>
 
+    <nav class="page-nav" aria-label="紹介ページの目次">
+        <a class="nav-brand" href="#top">AiDiy</a>
+        <div class="nav-links">
+            <a href="#追加機能">Pi / Memo</a>
+            <a href="#開発スペース">IDE</a>
+            <a href="#独立アプリ">アプリ</a>
+            <a href="#外部連携">Discord / Slack</a>
+            <a href="#業務サンプル">業務サンプル</a>
+            <a href="#環境診断">Diag</a>
+        </div>
+    </nav>
+    <main id="main-content">
     <!-- ヒーローセクション -->
-    <section class="hero-section">
+    <section class="hero-section" id="top">
         <!-- タイトル合体アニメーション -->
         <div class="hero-title-assembly" id="hero-title-assembly">
             <span class="title-half title-left"  id="title-left">AI</span>
@@ -1134,35 +1208,65 @@ https://github.com/monjyu1101/AiDiy2027 -->
         <h1 class="hero-title" id="hero-title-final" data-text="AiDiy">AiDiy</h1>
         <h2 class="hero-subtitle">日本語で設計し、音声でもコードでも動かす。</h2>
         <p class="hero-description">
-            日本語を第一言語にしたフルスタック業務システム開発フレームワーク。<br>
-            FastAPI マルチサーバー、Vue 3 Web UI、Electron/Web デュアルモードのアバター、<br>
-            WebSocket ベースの AI コアを一体で扱えます。<br>
-            プロジェクトを宇宙として眺め、変更は AI に頼む IDE へ。<br>
-            Navi・Console・Code・Live・Task・Team・Browser を組み合わせ、Discord・Slack からも AI と作業できます。
+            プロジェクトを宇宙として眺め、次の一歩を考え、変更を AI に頼む。<br>
+            日本語でつながる業務テンプレートと、開発のための作業環境です。<br>
+            Hermes / Pi のコード支援、音声会話、付箋メモを組み合わせて、<br>
+            アイデアから日々の改善まで、同じプロジェクトで進められます。
         </p>
         <div class="hero-actions">
-            <a href="/AiDiy" class="cyber-button" target="_blank">AiDiy を開く</a>
+            <a href="/AiDiy" class="cyber-button" target="_blank" rel="noopener noreferrer">AiDiy を開く</a>
             <a href="#開発スペース" class="cyber-button-ghost">IDE を知る</a>
-            <a href="#外部連携" class="cyber-button-ghost">Discord / Slack</a>
+            <a href="#追加機能" class="cyber-button-ghost">Pi / Memo を知る</a>
             <a href="#業務サンプル" class="cyber-button-ghost">業務サンプルを見る</a>
         </div>
         <div class="hero-tags">
             <span>日本語テーブル名 / API / JSON / 画面</span>
-            <span>FastAPI 8091 + 8098</span>
+            <span>FastAPI + SQLite</span>
             <span>Vue 3 + Vite + TypeScript</span>
             <span>Electron + VRM + 音声AI</span>
             <span>🧠 自己改善機構 — 使うほど育つ</span>
-            <span>claude / copilot / codex / antigravity / grok / opencode / hermes CLI</span>
-            <span>🔌 MCP Hub — Windows 20 / Linux・macOS 19 — browser / capture / sqlite / postgres / logs / check / backup / image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows</span>
+            <span>コード AI 9 方式 / 6 パネル</span>
+            <span>MCP — Windows 20 / Linux・macOS 19</span>
             <span>🤖 AIタスク自動実行 — AI分解 × 条件分岐・合流 × 並行実行</span>
-            <span>🌌 8 つのアプリ — Navi / Console / Code / Live / IDE / Task / Team / Browser</span>
+            <span>🌌 9 つのアプリ — IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU</span>
         </div>
         <div class="typing-text" id="typing-text"></div>
     </section>
 
+    <section class="section" id="追加機能" aria-labelledby="追加機能タイトル">
+        <h2 class="section-title" id="追加機能タイトル">AI に頼む。思いつきを残す。</h2>
+        <p class="section-subtitle">コード支援の Pi と、作業のそばに置ける Memo。日々の開発に、選択肢を増やしました。</p>
+        <div class="spotlight-grid">
+            <article class="spotlight" id="Pi">
+                <span class="spotlight-label">CODING AGENT / AIDIY PI</span>
+                <h3>Pi も、いつもの AiDiy で。</h3>
+                <p>MIT の Pi を同梱したコード支援 CLI。Hermes と共通のモデル区分で、使いたい AI を選べます。</p>
+                <ul>
+                    <li>Diag のモデル一覧、API キー・OAuth・MCP と連携。</li>
+                    <li>Code のオフライン利用、Discord / Slack でも Hermes / Pi を選択。</li>
+                    <li>Navi の調査・再評価や、次の入力予測にも対応。</li>
+                </ul>
+                <code class="launch-command">aidiy_pi</code>
+                <p class="usage-note">セットアップ後、作業するフォルダで実行。通常は確認なしで実行するため、調査だけなら <code>--read-only</code> を指定します。クラウドモデルの利用には認証・通信が必要です。</p>
+            </article>
+            <article class="spotlight memo" id="Memo">
+                <span class="spotlight-label">DESKTOP NOTES / AIDIY MEMO</span>
+                <h3>アイデアを、付箋でそばに。</h3>
+                <p>やること、気づき、参考画像を独立した付箋に。Diag と一緒にも、メモだけでも使えます。</p>
+                <ul>
+                    <li>タイトル・本文・色・位置・サイズを保存し、次回起動で復元。</li>
+                    <li>画像の貼り付けやドラッグ＆ドロップに対応。削除したメモはゴミ箱へ。</li>
+                    <li>Diag では選択プロジェクトに合わせた付箋を表示。Electron では最前面に置けます。</li>
+                </ul>
+                <code class="launch-command">aidiy_memo &nbsp; / &nbsp; aidiy_memo --new</code>
+                <p class="usage-note">単体起動は配置元 AiDiy のシステム付箋を扱います。コマンドを実行したフォルダは保存先になりません。</p>
+            </article>
+        </div>
+    </section>
+
     <!-- Feature Overview（特徴概要） -->
     <section class="section">
-        <h2 class="section-title animate-on-scroll">Feature Overview</h2>
+        <h2 class="section-title animate-on-scroll">AiDiy でできること</h2>
         <p class="section-subtitle animate-on-scroll">業務テンプレートから、AI と一緒に開発する作業環境へ。</p>
         <div class="core-features">
             <div class="feature-card animate-on-scroll">
@@ -1234,13 +1338,13 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <p class="feature-description">
                     browser / capture / sqlite / postgres / logs / check / backup /<br>
                     image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows の MCP サーバー同居（Windows は 20、Linux / macOS は 19）。<br>
-                    SDK / CLI の 8 方式を code1〜code6 パネルで並走可能。
+                    SDK / CLI の 9 方式を code1〜code6 パネルで並走可能。
                 </p>
             </div>
             <div class="feature-card animate-on-scroll">
                 <span class="feature-icon">💬</span>
                 <h3 class="feature-title">Discord / Slack 連携</h3>
-                <p class="feature-description">普段のチャンネルから Hermes に依頼。Discord は Live 音声、Slack は HTTPS 定期取得によるスレッド会話に対応。</p>
+                <p class="feature-description">普段のチャンネルから Hermes / Pi に依頼。Discord は Live 音声、Slack は HTTPS 定期取得によるスレッド会話に対応。</p>
             </div>
             <div class="feature-card animate-on-scroll">
                 <span class="feature-icon">🩺</span>
@@ -1252,56 +1356,56 @@ https://github.com/monjyu1101/AiDiy2027 -->
 
     <!-- Current Numbers（数値的根拠） -->
     <section class="section">
-        <h2 class="section-title animate-on-scroll">Current Numbers</h2>
+        <h2 class="section-title animate-on-scroll">数値で見る AiDiy</h2>
         <p class="section-subtitle animate-on-scroll">数値で見る AiDiy — 現行の起動構成と AI 接続方式。</p>
         <div class="tech-stats">
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="5">0</span>
+                <span class="stat-number" data-count="5">5</span>
                 <span class="stat-label">常駐サーバー</span>
                 <span class="stat-sub">core 8091 / apps 8098 / tools 8095 / local 8096 / taskteam 8093</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-number" data-count="8">8</span>
                 <span class="stat-label">チャット AI 接続方式</span>
                 <span class="stat-sub">OpenAI API / OAuth、Gemini / FreeAI、OpenRouter Chat / Free、Ollama、ローカル Gemma</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="7">0</span>
+                <span class="stat-number" data-count="7">7</span>
                 <span class="stat-label">分類系統</span>
                 <span class="stat-sub">C / M / T / V / S / A / X</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="6">0</span>
+                <span class="stat-number" data-count="6">6</span>
                 <span class="stat-label">コードパネル</span>
                 <span class="stat-sub">code1 から code6</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-number" data-count="9">9</span>
                 <span class="stat-label">コード AI 接続方式</span>
-                <span class="stat-sub">claude_sdk / claude / copilot / codex / antigravity / grok / opencode / hermes</span>
+                <span class="stat-sub">claude_sdk / claude / copilot / codex / antigravity / grok / opencode / hermes / pi</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="1">0</span>
-                <span class="stat-label">独自エージェント基盤</span>
-                <span class="stat-sub">aidiy_hermes — カスタムツール・TUI・コンテキスト圧縮</span>
+                <span class="stat-number" data-count="2">2</span>
+                <span class="stat-label">統合コードエージェント CLI</span>
+                <span class="stat-sub">aidiy_hermes / aidiy_pi — 必要なときに起動して利用</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="8">0</span>
+                <span class="stat-number" data-count="9">9</span>
                 <span class="stat-label">frontend_ide の独立アプリ</span>
-                <span class="stat-sub">Navi / Console / Code / Live / IDE / Task / Team / Browser。Code / Live は VS Code 拡張でも利用</span>
+                <span class="stat-sub">IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU。Code / Live は VS Code 拡張でも利用</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="2">0</span>
+                <span class="stat-number" data-count="2">2</span>
                 <span class="stat-label">アバターモード</span>
                 <span class="stat-sub">Electron / Web</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="20">0</span>
+                <span class="stat-number" data-count="20">20</span>
                 <span class="stat-label">MCP サーバー（Windows）</span>
                 <span class="stat-sub">Linux / macOS は 19（Windows Control を除く）。browser / capture / sqlite / postgres / logs / check / backup / image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="600">0</span>
+                <span class="stat-number" data-count="600">600</span>
                 <span class="stat-label">JWT 分</span>
                 <span class="stat-sub">認証有効期限（HS256）</span>
             </div>
@@ -1411,13 +1515,13 @@ Key:   利用者名</pre>
                 <div class="meta-tags"><span>Electron</span><span>Web Mode</span><span>BroadcastChannel</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
-                <h3 class="architecture-title">🌌 frontend_ide — 8 つのアプリ<span class="fx-new-badge">NEW</span></h3>
-                <p>Navi / Console / Code / Live / IDE / Task / Team / Browser の画面を Vue 3 の共通部品で統一。VS Code 拡張ホストと Code / Live の通信は host/、ファイル API と Office 表示は viewer/ に集約。Electron と Web で共通画面を使い、ポートは自動割り当て。単独 Browser は Electron 専用です。</p>
+                <h3 class="architecture-title">🌌 frontend_ide — 9 つのアプリ<span class="fx-new-badge">NEW</span></h3>
+                <p>IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の画面を Vue 3 の共通部品で統一。VS Code 拡張ホストと Code / Live の通信は host/、ファイル API と Office 表示は viewer/ に集約。Electron と Web で共通画面を使い、ポートは自動割り当て。単独 Browser は Electron 専用です。</p>
                 <div class="meta-tags"><span>aidiy_navi / aidiy_code / aidiy_live / aidiy_ide</span><span>Vue 3 共通部品</span><span>VSIX × 2</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">💬 frontend_channels<span class="fx-new-badge">NEW</span></h3>
-                <p>Discord と Slack に AI の作業窓口を広げる、任意起動の Bot。Discord は Hermes チャットと AIコアの Live 音声、Slack は HTTPS 定期取得による Hermes のスレッド会話に対応。両者は同じ作りの双子の接続パネル（Electron / Web）を備え、保存した設定で起動時に自動接続します。</p>
+                <p>Discord と Slack に AI の作業窓口を広げる、任意起動の Bot。Discord は Hermes / Pi チャットと AIコアの Live 音声、Slack は HTTPS 定期取得による Hermes / Pi のスレッド会話に対応。両者は同じ作りの双子の接続パネル（Electron / Web）を備え、保存した設定で起動時に自動接続します。</p>
                 <div class="meta-tags"><span>Discord / Slack</span><span>テキスト / Discord 音声</span><span>任意起動</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1505,7 +1609,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔁 AI Flow</h3>
-                <p>マイク・テキスト・画像・コード操作 → REST + WebSocket + Vite Proxy → チャットは OpenAI API / OAuth・Gemini / FreeAI・OpenRouter・Ollama・ローカル Gemma、音声は Gemini Live / OpenAI Realtime、コードは 8 種の Code AI を用途ごとに切替 → チャット・音声応答・コード表示・アバター演出。</p>
+                <p>マイク・テキスト・画像・コード操作 → REST + WebSocket + Vite Proxy → チャットは OpenAI API / OAuth・Gemini / FreeAI・OpenRouter・Ollama・ローカル Gemma、音声は Gemini Live / OpenAI Realtime、コードは 9 種の Code AI を用途ごとに切替 → チャット・音声応答・コード表示・アバター演出。</p>
                 <div class="meta-tags"><span>Input</span><span>Transport</span><span>AI Core</span><span>Output</span></div>
             </div>
         </div>
@@ -1635,7 +1739,7 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">💻 AiDiy Code — コード支援</h3>
-                <p>AIコード画面と同じ Code CLI・モデルを選び、AIコア経由でコードの調査・編集を依頼。AIコアに未接続なら aidiy_hermes の直接実行に自動で切り替えます。オンライン時は「検証」を 1〜3 回に設定してバックアップ・検証・必要な修正を実行。0 回とオフライン時はこの検証ループを行いません。</p>
+                <p>AIコード画面と同じ Code CLI・モデルを選び、AIコア経由でコードの調査・編集を依頼。AIコアに未接続なら、選択した aidiy_hermes / aidiy_pi を直接実行します。オンライン時は「検証」を 1〜3 回に設定してバックアップ・検証・必要な修正を実行。0 回とオフライン時はこの検証ループを行いません。</p>
                 <div class="meta-tags"><span>aidiy.aidiy-code</span><span>オンライン ⇄ オフライン</span><span>検証ループ 0〜3</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1689,7 +1793,7 @@ Key:   利用者名</pre>
                     tools 接続が切れても作業セッションと子窓を保ち、復帰時に再接続します。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
-                    AIコアなしでも Console と Code（Hermes 直接実行）を利用。<br>
+                    AIコアなしでも Console と Code（Hermes / Pi 直接実行）を利用。<br>
                     AIコアへ接続すると Live 音声も使えます。<br>
                     ここでのオフラインは AIコア未接続の意味で、外部 AI の利用には通信が必要です。
                 </div>
@@ -1700,7 +1804,7 @@ Key:   利用者名</pre>
 
     <section class="section" id="独立アプリ">
         <h2 class="section-title animate-on-scroll">🧩 作業に合わせて、必要なアプリを開く</h2>
-        <p class="section-subtitle animate-on-scroll">Navi で次の作業を考え、Console・Code・Live・IDE・Task・Team・Browser で進める。8 つの独立アプリが開発の各場面を支えます。</p>
+        <p class="section-subtitle animate-on-scroll">Navi で次の作業を考え、Console・Code・Live・IDE・Task・Team・Browser で進め、CPU でホストの負荷を確認。9 つの独立アプリが開発の各場面を支えます。</p>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧭 Navi — 次の一歩を考える</h3>
@@ -1727,6 +1831,11 @@ Key:   利用者名</pre>
                 <p>URL・検索・履歴操作を備えた専用ブラウザ。tools 接続中は MCP による操作ができ、表示中の URL と撮影画像を Code / Live の下書きへ渡して、調査や修正を相談できます。単独版は Electron 専用です。</p>
                 <div class="meta-tags"><span>aidiy_browser</span><span>Chrome DevTools 連携</span><span>Code / Live へ</span></div>
             </div>
+            <div class="architecture-item animate-on-scroll" id="CPU">
+                <h3 class="architecture-title">📊 CPU — マシンの状態をそばで確認</h3>
+                <p>CPU / GPU / RAM の使用率を小さな専用画面で表示。AI の実行中やローカルモデルの利用中も、ホストの負荷を確認できます。Core / Tools への接続は不要で、単独コマンド、IDE、Diag の CPU アイコンから開けます。</p>
+                <div class="meta-tags"><span>aidiy_cpu</span><span>ホスト使用率</span><span>単独起動</span></div>
+            </div>
         </div>
     </section>
 
@@ -1737,18 +1846,18 @@ Key:   利用者名</pre>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🎮 Discord — テキストも、声も</h3>
-                <p>専用テキストチャンネルにそのまま話しかけると aidiy_hermes がチャンネルに返信し、利用者・チャンネルごとに会話を引き継ぎます。Live 音声を ON にすれば、ボイスチャンネルで AIコアの Live 音声へ接続し、話しながら相談できます。テキストと音声、それぞれの入口を一つの Bot にまとめています。</p>
-                <div class="meta-tags"><span>aidiy_discord</span><span>Hermes チャット</span><span>Live 音声</span></div>
+                <p>専用テキストチャンネルにそのまま話しかけると 選択した Hermes / Pi がチャンネルに返信し、利用者・チャンネルごとに会話を引き継ぎます。Live 音声を ON にすれば、ボイスチャンネルで AIコアの Live 音声へ接続し、話しながら相談できます。テキストと音声、それぞれの入口を一つの Bot にまとめています。</p>
+                <div class="meta-tags"><span>aidiy_discord</span><span>Hermes / Pi チャット</span><span>Live 音声</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">💼 Slack — スレッドで依頼を進める</h3>
-                <p>専用チャンネルの投稿を HTTPS で定期取得し、aidiy_hermes の回答をスレッドに返します。スレッド内の返信は同じ会話として続きます。WebSocket を使わず外向き HTTPS だけで送受信し、プロキシ設定にも対応します（Slack API への通信許可と Bot 権限が必要です）。パネルは Discord 版と双子の構成で、Slack 版はテキスト会話に対応します。</p>
+                <p>専用チャンネルの投稿を HTTPS で定期取得し、選択した Hermes / Pi の回答をスレッドに返します。スレッド内の返信は同じ会話として続きます。WebSocket を使わず外向き HTTPS だけで送受信し、プロキシ設定にも対応します（Slack API への通信許可と Bot 権限が必要です）。パネルは Discord 版と双子の構成で、Slack 版はテキスト会話に対応します。</p>
                 <div class="meta-tags"><span>aidiy_slack</span><span>Slack Web API</span><span>HTTPS 定期取得</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🎛️ 作業フォルダとモデルを選ぶ</h3>
-                <p>Bot の接続先と許可する利用者を設定し、AI が扱うプロジェクトを選択。コードは aidiy_hermes 固定で、モデルは aidiy_code と同じ auto / same / openai_oauth/gpt-… などから選びます。画面下部の「モデル ▾」から、接続中でも設定を開き「適用して再接続」で切り替えられます。</p>
-                <div class="meta-tags"><span>プロジェクト選択</span><span>aidiy_hermes 固定</span><span>モデル選択</span></div>
+                <p>Bot の接続先と許可する利用者を設定し、AI が扱うプロジェクトを選択。コードは aidiy_hermes / aidiy_pi から選択し、モデルは aidiy_code と同じ auto / same / openai_oauth/gpt-… などから選びます。画面下部の「モデル ▾」から、接続中でも設定を開き「適用して再接続」で切り替えられます。</p>
+                <div class="meta-tags"><span>プロジェクト選択</span><span>Hermes / Pi 選択</span><span>モデル選択</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔁 起動したら、そのまま使える</h3>
@@ -1770,7 +1879,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔑 モデルと外部連携</h3>
-                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。モデル一覧を取得・保存し、Chat / Live / Code / Hermes などがその一覧を利用します。認証情報の確認と AI の試行は分けて扱います。</p>
+                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。モデル一覧を取得・保存し、Chat / Live / Code / Hermes / Pi などがその一覧を利用します。認証情報の確認と AI の試行は分けて扱います。</p>
                 <div class="meta-tags"><span>モデル情報</span><span>外部連携</span><span>AI 試行</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1780,7 +1889,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🚀 アプリ起動とミニランチャー</h3>
-                <p>システムの起動操作に加え、プロジェクトを選んで IDE・Code・Live・Console・Task・Team・Browser や Discord・Slack を開く入口を用意。ミニ表示・アイコン表示で、作業中も手元に置けます。</p>
+                <p>システムの起動操作に加え、プロジェクトを選んで IDE・Navi・Code・Live・Console・Task・Team・Browser・CPU や Discord・Slack を開く入口を用意。ミニ表示・アイコン表示で、作業中も手元に置けます。</p>
                 <div class="meta-tags"><span>aidiy_diag</span><span>アプリ起動</span><span>ミニ / アイコン表示</span></div>
             </div>
         </div>
@@ -1962,7 +2071,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🤖 aidiy_code_agents</h3>
-                <p>Claude / Copilot / Codex / Antigravity / Grok / opencode / hermes など複数の CodeAI CLI をエージェントとして呼び出し。コード生成・修正・レビューを AI が直接 CLI 経由で実行。</p>
+                <p>Claude / Copilot / Codex / Antigravity / Grok / opencode / hermes / pi など複数の CodeAI CLI をエージェントとして呼び出し。コード生成・修正・レビューを AI が直接 CLI 経由で実行。</p>
                 <div class="meta-tags"><span>CodeAI CLI</span><span>multi-agent</span><span>subprocess</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -2017,13 +2126,13 @@ Key:   利用者名</pre>
                 <span class="feature-icon">🔧</span>
                 <h3 class="feature-title">マルチ Code CLI 対応</h3>
                 <p class="feature-description">
-                    SDK / CLI の 8 方式を code1〜code6 パネルへ<br>
+                    SDK / CLI の 9 方式を code1〜code6 パネルへ<br>
                     自由に割り当てて並走できます。<br>
                     新しいツールも手順に沿って追加可能。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     claude_sdk &nbsp;/&nbsp; claude_cli &nbsp;/&nbsp; copilot_cli &nbsp;/&nbsp; codex_cli<br>
-                    antigravity_cli &nbsp;/&nbsp; grok_cli &nbsp;/&nbsp; opencode_cli &nbsp;/&nbsp; aidiy_hermes
+                    antigravity_cli &nbsp;/&nbsp; grok_cli &nbsp;/&nbsp; opencode_cli &nbsp;/&nbsp; aidiy_hermes &nbsp;/&nbsp; aidiy_pi
                 </div>
             </div>
         </div>
@@ -2031,7 +2140,7 @@ Key:   利用者名</pre>
 
     <!-- Future Roadmap（将来性） -->
     <section class="section">
-        <h2 class="section-title animate-on-scroll">Future Roadmap</h2>
+        <h2 class="section-title animate-on-scroll">これからの拡張</h2>
         <p class="section-subtitle animate-on-scroll">ここからは今後の拡張方針。現在の機能を土台に、使い勝手と対応領域を育てます。</p>
         <div class="expansion-grid">
             <div class="expansion-item animate-on-scroll">
@@ -2048,7 +2157,7 @@ Key:   利用者名</pre>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🤖 CLI エコシステム</h4>
-                <p>claude / copilot / codex / antigravity / grok / opencode / hermes に続く新 Code CLI も <code style="color:#00ffff">_sdk</code> / <code style="color:#00ffff">_cli</code> 命名規約で追加可能。</p>
+                <p>claude / copilot / codex / antigravity / grok / opencode / hermes / pi に続く新 Code CLI も <code style="color:#00ffff">_sdk</code> / <code style="color:#00ffff">_cli</code> 命名規約で追加可能。</p>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🧰 hermes 独自エージェント進化</h4>
@@ -2068,7 +2177,7 @@ Key:   利用者名</pre>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>💬 チャンネルと実行環境を広げる</h4>
-                <p>Discord / Slack は双子の構成で、新しいチャンネルも同じ形で追加できる設計。設定には実行環境名（code_name）を持たせ、aidiy_hermes 以外のスタンドアロン・ハーネスにも備えます。</p>
+                <p>Discord / Slack は双子の構成で、新しいチャンネルも同じ形で追加できる設計。実装済みの Hermes / Pi 選択を土台に、今後も対応する実行環境を広げられます。</p>
             </div>
         </div>
     </section>
@@ -2082,7 +2191,7 @@ Key:   利用者名</pre>
 
     <!-- Launch -->
     <section class="section" id="launch-section" style="text-align: center; padding-bottom: 120px;">
-        <h2 class="section-title animate-on-scroll">Launch</h2>
+        <h2 class="section-title animate-on-scroll">AiDiy を使ってみる</h2>
         <p class="animate-on-scroll" style="margin-bottom: 10px; font-size: 1.05rem; color: #aaa;">
             次は、実際に触って確認する番です。
         </p>
@@ -2090,13 +2199,15 @@ Key:   利用者名</pre>
             管理画面を見るなら frontend_web、AI を試すなら /AiDiy、<br>
             アバター体験まで含めるなら frontend_avatar、<br>
             宇宙を旅しながら開発するなら aidiy_ide、<br>
-            次の作業を整理するなら aidiy_navi、会話から頼むなら aidiy_discord / aidiy_slack。
+            次の作業を整理するなら aidiy_navi、会話から頼むなら aidiy_discord / aidiy_slack。<br>
+            ターミナルから頼むなら aidiy_pi / aidiy_hermes、思いつきを残すなら aidiy_memo。
         </p>
-        <a href="/AiDiy" class="cyber-button animate-on-scroll rainbow-blink" target="_blank">
+        <a href="/AiDiy" class="cyber-button animate-on-scroll rainbow-blink" target="_blank" rel="noopener noreferrer">
             AiDiy を開く
         </a>
     </section>
 
+    </main>
     <!-- JavaScript -->
     <script src="index.js"></script>
     <script src="icons.js"></script>

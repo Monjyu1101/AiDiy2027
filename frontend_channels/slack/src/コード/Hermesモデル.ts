@@ -13,19 +13,25 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { プロジェクトルート } from '../接続/接続設定';
-import { 会話引数 } from '../共通連携/IDE連携';
+import { 会話引数, 単独コード名 } from '../共通連携/IDE連携';
 import type { モデル初期情報 } from '../モデル情報/モデル情報';
 
-// コードは aidiy_hermes 固定。モデルは aidiy_code / AIコアと同じ1つの文字列
+// コードは Hermes / Pi から選択。モデルは aidiy_code / AIコアと同じ1つの文字列
 // （auto / same / codex_cli/same / openai_oauth/gpt-… など）で扱う。Discord 版と同じ実装。
 export type モデル候補 = { id: string; label: string };
-/** 保存する code_name。現在の実行環境は aidiy_hermes だけ。将来は別のスタンドアロンハーネスも同じ欄で選べるようにする。 */
+/** 保存する code_name。Hermes / Pi の選択に使う。Hermes の既存関数名は呼出互換のため維持する。 */
 export const 既定コード名 = 'aidiy_hermes';
-export const 対応コード名 = [既定コード名];
+export const 対応コード名 = 単独コード名;
 export function コード名検証(value: unknown): string {
   if (value === undefined) return 既定コード名; // code_name のない旧保存は aidiy_hermes とみなす。
   if (typeof value !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(value.trim())) throw new Error('コード実行環境の指定が不正です。');
   return value.trim();
+}
+
+export function 実行コード名検証(value: unknown): string {
+  const name = コード名検証(value);
+  if (!対応コード名.includes(name)) throw new Error('コード実行環境は aidiy_hermes または aidiy_pi を選択してください。');
+  return name;
 }
 const 固定候補: モデル候補[] = [{ id: 'auto', label: 'auto（自動判定）' }, { id: 'same', label: 'same（変更なし）' }];
 // AIコア（AIコード_cli.py の cli_providers）と同じ、外部 CLI の Hermes provider 名。
@@ -54,14 +60,14 @@ export function Hermes会話引数(model: string, maxTurns: number, resume?: str
 }
 
 /** 候補は AIコアのモデル情報APIを優先し、停止中は diag の code_models_info.json を読む。 */
-export function Hermesモデル候補(api?: モデル初期情報, root = プロジェクトルート): モデル候補[] {
+export function Hermesモデル候補(api?: モデル初期情報, root = プロジェクトルート, provider = 既定コード名): モデル候補[] {
   let ids: string[] = [];
-  const fromApi = api?.code?.aidiy_hermes;
+  const fromApi = api?.code?.[provider];
   if (fromApi) ids = Object.keys(fromApi);
   else {
     try {
       const data = JSON.parse(readFileSync(resolve(root, '_AIDIY/aidiy_diag/code_models_info.json'), 'utf8'));
-      const models = data?.aidiy_hermes?.models;
+      const models = data?.[provider]?.models;
       if (models && typeof models === 'object' && !Array.isArray(models)) ids = Object.keys(models);
     } catch { /* 候補なしでも auto / same は選べる。 */ }
   }

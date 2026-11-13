@@ -12,8 +12,11 @@
 
 import { 設定読込 } from './接続/接続設定';
 import type { DiscordBot } from './接続/Bot接続';
-import { 起動解決 } from './共通連携/IDE連携';
+import { コード起動解決 } from './共通連携/IDE連携';
 import { 接続失敗案内, 接続エラー詳細, type 接続段階 } from './接続/接続エラー';
+
+import { パネル設定読込 } from './接続パネル/パネル設定';
+import { 実行コード名検証 } from './コード/Hermesモデル';
 
 let bot: DiscordBot | undefined;
 let stage: 接続段階 = '設定読込';
@@ -21,11 +24,13 @@ let token = '';
 const startedAt = Date.now();
 try {
   const config = 設定読込();
+  const saved = パネル設定読込(config.hermesModel);
+  if (saved) { config.cli = 実行コード名検証(saved.code_name); config.hermesModel = saved.code_model; }
   token = config.token;
   if (process.argv.includes('--check')) {
-    stage = 'Hermes確認';
-    起動解決(config.cli, config.python, config.folder);
-    console.log('Discord 設定・Hermes 起動パス: OK（外部接続は行っていません）');
+    stage = 'コード確認';
+    コード起動解決(config.cli, config.python, config.folder, config.coreRoot);
+    console.log('Discord 設定・コードCLI 起動パス: OK（外部接続は行っていません）');
   } else {
     // 設定確認だけでは Discord SDK・音声処理を読み込まない。
     const { DiscordBot } = await import('./接続/Bot接続');

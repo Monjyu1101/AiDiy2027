@@ -21,7 +21,7 @@ export function naviModelsInfo(code,{now=()=>new Date(),naviHermesAvailable=true
   if(!NAVI_PROVIDERS.includes(provider))continue;
   if(provider==='aidiy_hermes'&&!naviHermesAvailable)continue;
   const source=code?.[provider]?.models;if(!source||typeof source!=='object'||Array.isArray(source))continue;
-  const models=Object.fromEntries(Object.entries(source).filter(([id,label])=>id&&id.length<=300&&!/[\x00-\x1f]/.test(id)&&typeof label==='string'&&(provider!=='aidiy_hermes'||!nestedCLI.test(id))));
+  const models=Object.fromEntries(Object.entries(source).filter(([id,label])=>id&&id.length<=300&&!/[\x00-\x1f]/.test(id)&&typeof label==='string'&&(!['aidiy_hermes','aidiy_pi'].includes(provider)||!nestedCLI.test(id))));
   if(Object.keys(models).length)result[provider]={models};
  }
  return result;

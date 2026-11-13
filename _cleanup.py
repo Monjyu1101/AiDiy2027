@@ -28,6 +28,7 @@ setup / start の Code / IDE / Discord 継続方針とは異なります。ル�
 - frontend_web/_cleanup.py     cleanup(choices)
 - frontend_avatar/_cleanup.py  cleanup(choices)
 - command_hermes/_cleanup.py   cleanup(choices)（ランチャー/PATH も解除）
+- command_pi/_cleanup.py       cleanup(choices)（ランチャー/PATH 解除・依存物削除）
 - frontend_ide/_cleanup.py   cleanup(choices)（IDE群の拡張・ランチャー・依存物・共通UIを解除）
 - frontend_channels/discord/_cleanup.py / slack/_cleanup.py cleanup(choices)
   （Channels の1項目で両 Bot の停止確認・依存物削除）
@@ -74,6 +75,7 @@ BACKEND_LOCAL_PATH = "backend_local"
 BACKEND_LOCAL_ENV_LIST = [".venv", "venv"]
 BACKEND_HERMES_PATH = "command_hermes"
 BACKEND_HERMES_ENV_LIST = [".venv", "venv"]
+COMMAND_PI_PATH = "command_pi"
 
 BACKUP_PATH = ".aidiy_backup"
 TEMP_DIR_NAMES = frozenset(("temp", "_temp", ".temp", "tmp"))
@@ -242,7 +244,7 @@ CHANNEL_FOLDERS = ("frontend_channels/discord", "frontend_channels/slack")
 # `_start.py` / `_cleanup.py` を import するフォルダ（= `__pycache__` が生成される）。
 IMPORT_CACHE_FOLDERS = tuple(
     folder for _choice_key, folder, _description, _service_names in SERVICE_CLEANUP_TARGETS
-) + ("frontend_diag", BACKEND_HERMES_PATH, "frontend_ide", "frontend_ide/host")
+) + ("frontend_diag", BACKEND_HERMES_PATH, COMMAND_PI_PATH, "frontend_ide", "frontend_ide/host")
 
 # フォルダ別 `_cleanup.py` の担当外になる、ルート側の Python キャッシュ。
 ROOT_CACHE_SCAN_PATHS = ("scripts",)
@@ -640,6 +642,8 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
         "channels":       False,
         "hermes_envs":    {},
         "hermes_temp":    None,
+        "pi":             False,
+        "pi_dependencies": None,
     }
 
     if (base_dir / BACKUP_PATH).exists():
@@ -711,6 +715,14 @@ def collect_cleanup_choices(base_dir: Path) -> dict | None:
                     choices["hermes_envs"][env_name] = ask_yes_no(
                         f"  {BACKEND_HERMES_PATH}/{env_name} を削除しますか？", default="y",
                     )
+
+    choices["pi"] = ask_yes_no("コマンド(pi)をクリーンアップしますか？", default="y")
+    if choices["pi"]:
+        pi_dir = base_dir / COMMAND_PI_PATH
+        if (pi_dir / "node_modules").exists() or (pi_dir / "packages/ai/src/providers/data").exists():
+            choices["pi_dependencies"] = ask_yes_no(
+                f"  {COMMAND_PI_PATH} の依存物（node_modules / 生成モデルデータ）を削除しますか？", default="y",
+            )
 
     choices["ide"] = ask_yes_no("IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)をクリーンアップしますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack)をクリーンアップしますか？", default="y")
@@ -815,6 +827,13 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
         print_info("コマンド(hermes) のクリーンアップをスキップしました")
 
     print()
+    if choices.get("pi"):
+        if not _run_folder_cleanup(COMMAND_PI_PATH, choices):
+            cleanup_errors.append("コマンド(pi)")
+    else:
+        print_info("コマンド(pi) のクリーンアップをスキップしました")
+
+    print()
     if choices.get("ide"):
         if not _run_folder_cleanup("frontend_ide", choices):
             cleanup_errors.append("IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)")
@@ -875,9 +894,10 @@ def main():
     print_info("  6. フロントエンド(Web)")
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
-    print_info("  9. IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)")
-    print_info(" 10. Channels (Discord / Slack)")
-    print_info(f" 11. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
+    print_info("  9. コマンド(pi)")
+    print_info(" 10. IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)")
+    print_info(" 11. Channels (Discord / Slack)")
+    print_info(f" 12. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()
 
     choices = collect_cleanup_choices(base_dir)

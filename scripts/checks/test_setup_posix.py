@@ -71,7 +71,7 @@ class PosixPathTests(unittest.TestCase):
         with patch.object(root, '_load_folder_module', side_effect=folder), patch.object(root.subprocess, 'run') as process:
             self.assertEqual(root.setup_launchers_only(), ['Diag'])
             process.assert_not_called()
-        self.assertEqual(events, ['frontend_diag', 'frontend_avatar', 'command_hermes',
+        self.assertEqual(events, ['frontend_diag', 'frontend_avatar', 'command_hermes', 'command_pi',
                                   'frontend_ide/viewer', 'frontend_ide/aidiy_console',
                                   'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi',
                                   'frontend_ide/host', 'frontend_ide/aidiy_task',

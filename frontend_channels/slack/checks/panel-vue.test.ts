@@ -67,11 +67,11 @@ test('Vue 配布画面は Discord 版と同じ項目を持ち、音声関連の�
     assert.equal(f.get('status-text').textContent, '未接続'); assert.equal(f.get('project-folder').title, '/sample');
     assert.equal(f.get('code-toggle').disabled, true); assert.equal(f.get('code-toggle').getAttribute('aria-checked'), 'true');
     assert.equal(f.get('model-label').textContent, 'aidiy_hermes - code-a');
-    assert.equal(f.get('code-cli').textContent, 'aidiy_hermes', 'コードは aidiy_hermes 固定表示');
+    assert.equal(f.get('code-cli').value, 'aidiy_hermes', '未保存時はHermesを選択');
     assert.deepEqual([...f.get('code-model').options].map((item: any) => item.value), ['auto', 'same', 'code-a', 'codex_cli/same']);
     await f.change('code-model', 'codex_cli/same');
     assert.equal(f.get('model-label').textContent, 'aidiy_hermes - codex_cli/same');
-    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.filter(([name]) => name === 'selectCode').at(-1))), ['selectCode', { model: 'codex_cli/same' }]);
+    assert.deepEqual(JSON.parse(JSON.stringify(f.calls.filter(([name]) => name === 'selectCode').at(-1))), ['selectCode', { cli: 'aidiy_hermes', model: 'codex_cli/same' }]);
     await f.change('code-model', 'auto'); assert.equal(f.get('model-label').textContent, 'aidiy_hermes - auto');
     await f.click('minimize'); await f.click('close');
     assert.deepEqual(f.calls.filter(([name]) => name === 'window'), [['window', 'minimize'], ['window', 'close']]);

@@ -87,37 +87,10 @@ def _add_forward_compat_models(model_ids: List[str]) -> List[str]:
     return ordered
 
 
-def _add_context_variants(model_ids: List[str]) -> List[str]:
-    """Insert ``-900k`` large-context picker variants after eligible base slugs.
-
-    The ChatGPT Codex backend advertised 272K for gpt-5.4, earlier Terra,
-    the earlier Sol model, and gpt-6-luna despite accepting ~911K in Aug 2026.
-    The gpt-6.1-sol entry carries forward the earlier Sol limit pending verification.
-    The base slugs keep the cheaper advertised 272K limit by default; each eligible slug gets an
-    explicit ``<slug>-900k`` picker entry that opts into the large window.
-    The suffix is Hermes-side only — it is stripped before the model id hits
-    the wire (agent/transports/codex.py, agent/auxiliary_client.py).
-    """
-    from agent.model_metadata import (
-        CODEX_CONTEXT_VARIANT_SUFFIX,
-        has_codex_context_variant,
-    )
-
-    out: List[str] = []
-    present = set(model_ids)
-    for model_id in model_ids:
-        out.append(model_id)
-        variant = model_id + CODEX_CONTEXT_VARIANT_SUFFIX
-        if variant in present or variant in out:
-            continue
-        if has_codex_context_variant(model_id):
-            out.append(variant)
-    return out
-
-
 def _finalize_codex_models(model_ids: List[str]) -> List[str]:
-    """Forward-compat synthesis + large-context variant synthesis."""
-    return _add_context_variants(_add_forward_compat_models(filter_retired_models(model_ids)))
+    """標準名の候補だけを返す。900K補正はモデル名と分離して内部で行う。"""
+    standard = [model for model in model_ids if not model.lower().endswith("-900k")]
+    return _add_forward_compat_models(filter_retired_models(standard))
 
 
 def _extract_chatgpt_account_id(access_token: str) -> Optional[str]:

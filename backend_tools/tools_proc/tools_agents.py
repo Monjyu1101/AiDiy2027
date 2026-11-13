@@ -60,7 +60,7 @@ _AGENTS_METHODS = [
         "parameters": {
             "prompt": {"type": "string", "required": True, "description": "エージェントへの指示"},
             "project_path": {"type": "string", "required": False, "description": "作業ディレクトリの絶対パス"},
-            "ai_name": {"type": "string", "required": False, "default": "auto", "description": "auto / same は aidiy_hermes。claude_sdk / claude_cli / copilot_cli / codex_cli なども明示指定可"},
+            "ai_name": {"type": "string", "required": False, "default": "auto", "description": "auto / same は aidiy_hermes。aidiy_pi / claude_sdk / claude_cli / copilot_cli / codex_cli なども明示指定可"},
             "ai_model": {"type": "string", "required": False, "default": "auto"},
             "max_turns": {"type": "integer", "required": False, "default": 999},
             "code_plan": {"type": "string", "required": False, "default": "auto"},
@@ -194,7 +194,7 @@ def create_router(code_agents) -> APIRouter:
                     "parameters": {
                         "prompt": {"type": "string", "required": True, "description": "エージェントへの指示（日本語可）。実装内容・対象ファイル・制約を具体的に記述する"},
                         "project_path": {"type": "string", "required": False, "description": "プロジェクト絶対パス。実行先は省略時 CODE_BASE_PATH、DB履歴の所属は未指定ならNULL"},
-                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "same", "aidiy_hermes", "claude_sdk", "claude_cli", "copilot_cli", "codex_cli"], "description": "使用する AI エージェント。auto / same は aidiy_hermes を選択"},
+                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "same", "aidiy_hermes", "aidiy_pi", "claude_sdk", "claude_cli", "copilot_cli", "codex_cli"], "description": "使用する AI エージェント。auto / same は aidiy_hermes を選択"},
                         "ai_model": {"type": "string", "required": False, "default": "auto", "description": "モデル名。autoはHermes/Codex/Claude/Copilotで履歴から自動選択。Hermesのsameは前回のprovider/モデルを復元、他CLIのsameは指定省略"},
                         "max_turns": {"type": "integer", "required": False, "default": 999, "description": "エージェントの最大ターン数"},
                         "code_plan": {"type": "string", "required": False, "default": "auto", "description": "計画フェーズの有無（auto / on / off）"},

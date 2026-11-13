@@ -9,17 +9,20 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {predictionModelsInfo, predictionModelSupported, HERMES_UNSUPPORTED_PREDICTION_ROUTES} from '../diag/モデル情報/prediction_info.mjs';
 const cases=JSON.parse(readFileSync(new URL('../../scripts/checks/prediction_route_cases.json',import.meta.url),'utf8'));
-test('Hermes external CLI/ACP/AppServer routes are not prediction choices, API routes remain',()=>{
- for(const model of cases.rejected)assert.equal(predictionModelSupported('aidiy_hermes',model),false,model);
- for(const model of cases.allowed)assert.equal(predictionModelSupported('aidiy_hermes',model),true,model);
+test('Hermes/Pi external CLI routes are not prediction choices, API routes remain',()=>{
+ for(const provider of ['aidiy_hermes','aidiy_pi']){
+  for(const model of cases.rejected)assert.equal(predictionModelSupported(provider,model),false,model);
+  for(const model of cases.allowed)assert.equal(predictionModelSupported(provider,model),true,model);
+ }
  assert.equal(predictionModelSupported('codex_cli','model'),true);
 });
 test('generated prediction catalog drops unsupported routes without changing Code catalog',async()=>{
  const models=Object.fromEntries([...cases.rejected,...cases.allowed,'auto','same'].map(model=>[model,model]));
- const codeModels={aidiy_hermes:{models},codex_cli:{models:{model:'model'}}};
+ const codeModels={aidiy_hermes:{models},aidiy_pi:{models},codex_cli:{models:{model:'model'}}};
  const before=JSON.stringify(codeModels);
  const result=await predictionModelsInfo([],{}, {configReader:async()=> '{}',codeModels});
  assert.deepEqual(Object.keys(result.aidiy_hermes.models),cases.allowed);
+ assert.deepEqual(Object.keys(result.aidiy_pi.models),cases.allowed);
  assert.deepEqual(result.codex_cli.models,{model:'model'});
  assert.equal(JSON.stringify(codeModels),before);
  const empty=await predictionModelsInfo([],{}, {configReader:async()=> '{}',codeModels:{aidiy_hermes:{models:{'copilot_cli/same':'x'}}}});

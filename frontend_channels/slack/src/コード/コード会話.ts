@@ -12,7 +12,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { 起動設定 } from '../../../../frontend_ide/host/src/runner';
-import { 起動解決, コード要求実行 } from '../共通連携/IDE連携';
+import { コード起動解決, Pi会話引数, コード要求実行 } from '../共通連携/IDE連携';
 import { Hermes会話引数 } from './Hermesモデル';
 import type { Slack設定 } from '../接続/接続設定';
 
@@ -43,8 +43,9 @@ export class Code接続 {
     this.conversations.set(key, state);
     try {
       state.job = コード要求実行({ セッションID: state.id, チャンネル: 'code1', メッセージ識別: 'input_text', メッセージ内容: text }, {
-        起動: this.launch ?? 起動解決(this.config.cli, this.config.python, this.config.folder), 作業フォルダ: this.config.folder,
-        引数: Hermes会話引数(this.config.hermesModel, this.config.maxTurns, state.resume), 制限時間: this.config.timeoutMs,
+        起動: this.launch ?? コード起動解決(this.config.cli, this.config.python, this.config.folder, this.config.coreRoot), 作業フォルダ: this.config.folder,
+        引数: this.config.cli === 'aidiy_pi' ? Pi会話引数(this.config.hermesModel, state.resume) : Hermes会話引数(this.config.hermesModel, this.config.maxTurns, state.resume), 制限時間: this.config.timeoutMs,
+        出力形式: this.config.cli === 'aidiy_pi' ? 'pi-json' : 'text',
       }, () => {}, state.resume);
       const result = await state.job.完了;
       if (result.セッション復旧) state.resume = undefined;

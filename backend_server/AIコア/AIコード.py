@@ -444,6 +444,8 @@ class CodeAgent:
                         tool = "codex"
                     elif ai_name == "aidiy_hermes":
                         tool = "aidiy_hermes"
+                    elif ai_name == "aidiy_pi":
+                        tool = "aidiy_pi"
                     elif ai_name == "opencode_cli":
                         tool = "opencode"
                     elif ai_name == "grok_cli":

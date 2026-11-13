@@ -28,10 +28,10 @@ from 会話履歴パス import normalize_project_path
 from 会話履歴参照 import HISTORY_MAX_TURNS, HISTORY_WINDOW_SECONDS, read_prediction_history
 
 
-CLI_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes")
+CLI_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi")
 PROVIDERS = ("openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", *CLI_PROVIDERS)
-# autoは候補がある方式をCLI（codex → copilot → hermes）優先、次にChat（OAuth → FreeAI → OpenAI API → Gemini）の順で選ぶ。
-AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat")
+# autoは候補がある方式をCLI（codex → copilot → hermes → pi）優先、次にChat（OAuth → FreeAI → OpenAI API → Gemini）の順で選ぶ。
+AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat")
 MODEL_KEYS = {
     "openai_chat": "PREDICTION_OPENAI_MODEL",
     "openai_oauth": "PREDICTION_OAUTH_MODEL",
@@ -40,6 +40,7 @@ MODEL_KEYS = {
     "codex_cli": "PREDICTION_CODEX_CLI_MODEL",
     "copilot_cli": "PREDICTION_COPILOT_CLI_MODEL",
     "aidiy_hermes": "PREDICTION_AIDIY_HERMES_MODEL",
+    "aidiy_pi": "PREDICTION_AIDIY_PI_MODEL",
 }
 # CLIは実行エラーも「!」始まりで返すため、正常な応答だけに目印を付けさせて区別する。
 _CLI_MARKER = "[[PREDICTION]]"
@@ -185,7 +186,7 @@ class PredictionLLM:
                              if isinstance(model, str) and 0 < len(model) <= 200 and model.strip() == model
                              and not any(ord(c) < 32 or ord(c) == 127 for c in model) and model not in ("auto", "same")
                              and isinstance(label, str)
-                             and (name != "aidiy_hermes" or model.split("/", 1)[0].split(":", 1)[0].strip().lower()
+                             and (name not in ("aidiy_hermes", "aidiy_pi") or model.split("/", 1)[0].split(":", 1)[0].strip().lower()
                                   not in HERMES_UNSUPPORTED_PREDICTION_ROUTES)}
                     if valid:
                         result[name] = {"models": valid}

@@ -8,10 +8,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {setImmediate as flush} from 'node:timers/promises';
 import {readFile} from 'node:fs/promises';
-import {createRequire} from 'node:module';
-import {起動状態を作成} from '../diag/ui/components/起動/起動状態.mjs';
-import {自動起動表示を作成} from '../diag/ui/components/起動/自動起動表示.mjs';
-const {ref,watch}=createRequire(new URL('../ui/package.json',import.meta.url))('vue');
+// 画面モジュールの 'vue' をテストと同じ ui/ の Vue 実体へそろえてから、動的 import() で読む（ui-vue.cjs 参照）。
+import uiVue from './ui-vue.cjs';
+const {起動状態を作成}=await import('../diag/ui/components/起動/起動状態.mjs');
+const {自動起動表示を作成}=await import('../diag/ui/components/起動/自動起動表示.mjs');
+const {ref,watch}=uiVue.vue;
 const progress=(extra={})=>({実行ID:'auto-1',自動起動:true,対象:['tools'],種別:'start',状態:'done',通知:'起動処理が完了しました。',...extra});
 function fixture(t){
  const tab=ref('start'),connected=ref(true),navigation=自動起動表示を作成({tab,接続済み:connected});

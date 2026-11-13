@@ -47,6 +47,7 @@ const TASK_CODE_MODELS既定 = {
   grok_cli: { auto: 'auto' },
   opencode_cli: { auto: 'auto' },
   aidiy_hermes: { auto: 'auto' },
+  aidiy_pi: { auto: 'auto' },
 };
 const availableModels = ref<Record<string, any>>({ code_models: { ...TASK_CODE_MODELS既定 } });
 const currentSettings = ref<Record<string, any>>({});
