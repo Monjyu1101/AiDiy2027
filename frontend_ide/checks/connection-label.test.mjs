@@ -40,7 +40,7 @@ test('共通状態バーは未接続・接続中・接続済・再接続で正�
 test('独自接続表示も接続済に統一し、内部識別子は維持する', () => {
   for (const path of [
     '../src/components/タスクチーム/タスクチームパネル.vue',
-    '../../backend_diag/diag/ui/App.vue',
+    '../../frontend_diag/diag/ui/App.vue',
     '../../frontend_channels/discord/panel/components/接続/パネル状態.js',
     '../../frontend_channels/slack/panel/components/接続/パネル状態.js',
   ]) {
@@ -48,5 +48,5 @@ test('独自接続表示も接続済に統一し、内部識別子は維持す�
     assert.match(source, /'接続済'/);
     assert.doesNotMatch(source, /'接続済み'/);
   }
-  assert.match(read('../../backend_diag/diag/ui/components/導入状況/導入状況パネル.vue'), /'接続済み'/);
+  assert.match(read('../../frontend_diag/diag/ui/components/導入状況/導入状況パネル.vue'), /'接続済み'/);
 });

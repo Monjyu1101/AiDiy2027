@@ -244,8 +244,8 @@ class WindowsProjectPathTests(unittest.TestCase):
         self.assertEqual(self.registry['Path'], (self.original, 2))
 
     def test_diag_cleanup_keeps_foreign_launcher_then_removes_owned_path(self):
-        cleanup = load(ROOT / 'backend_diag/_cleanup.py')
-        root = self.root / 'checkout/backend_diag'
+        cleanup = load(ROOT / 'frontend_diag/_cleanup.py')
+        root = self.root / 'checkout/frontend_diag'
         root.mkdir(parents=True)
         directory = self.root / 'checkout/_AIDIY/aidiy_diag/bin'
         directory.mkdir(parents=True)

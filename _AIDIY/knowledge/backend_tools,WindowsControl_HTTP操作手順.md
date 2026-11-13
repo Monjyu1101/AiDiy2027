@@ -77,7 +77,7 @@ post("aidiy_desktop_capture/screenshot", window_title="AiDiy 診断",
 ## Diag の一括起動
 
 - Diag 画面の「システム起動」タブで、全機能が停止中のときに右上の「一括起動」を押す。稼働中の機能があるときは同じ位置が「強制停止」になる。
-- 画面操作を使わない場合は `aidiy_diag --auto`（`node backend_diag/diag_main.mjs --auto`）で、保存済みの起動設定（`_config/AiDiy_diag_start.json` の「起動対象」）をもとに「設定起動」を自動実行する。
+- 画面操作を使わない場合は `aidiy_diag --auto`（`node frontend_diag/diag_main.mjs --auto`）で、保存済みの起動設定（`_config/AiDiy_diag_start.json` の「起動対象」）をもとに「設定起動」を自動実行する。
 - Diag がすでに起動中だと、`--auto` を付けても既存ウィンドウを前面に出すだけで一括起動は実行されない。`--auto` で起動したい場合は、いったん Diag を終了して起動し直す。
 - 起動後の確認は `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:{8090,8091,8093,8095,8098}/` が 200 を返すこと。`netstat` では IPv6 側の待ち受けが拾えず、起動済みでも一部のポートが出ないことがある（HTTP 応答を正とする）。
 
@@ -92,4 +92,4 @@ post("aidiy_desktop_capture/screenshot", window_title="AiDiy 診断",
 
 - メディア生成など他の HTTP API は [HTTP API の save_path 挙動](./backend_tools,HTTP_API_save_path挙動.md)。
 - MCP の使い分けと SSE 接続は [MCP活用手順](./backend_server,backend_tools,MCP活用手順.md)、[MCP_SSE接続](./command_hermes,backend_tools,MCP_SSE接続.md)。
-- Diag 画面の操作と診断は [環境診断運用](./backend_diag,環境診断運用.md)。
+- Diag 画面の操作と診断は [環境診断運用](./frontend_diag,環境診断運用.md)。

@@ -165,7 +165,7 @@ class StartTests(unittest.TestCase):
         self.assertEqual(json.loads(result.stdout), {'console': False, 'visible': False, 'input': ''})
         self.assertIn('stderr output', result.stderr)
         with tempfile.TemporaryDirectory() as directory:
-            folder = Path(directory) / 'backend_diag'
+            folder = Path(directory) / 'frontend_diag'
             folder.mkdir()
             (folder / 'diag_main.mjs').write_text(source, encoding='utf-8')
             with patch.object(module, 'ROOT', Path(directory)):

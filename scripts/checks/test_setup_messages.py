@@ -62,7 +62,7 @@ class SetupMessageTests(unittest.TestCase):
 
     def test_component_inventories_list_technologies_without_role_descriptions(self):
         inventories = {
-            "backend_diag": ("Diag", "Node.js / Electron / Vue 3"),
+            "frontend_diag": ("Diag", "Node.js / Electron / Vue 3"),
             "backend_local": ("Local", "Python / uv / FastAPI / PyTorch / Transformers / Gemma"),
             "backend_tools": ("Tools", "Python / uv / FastAPI / MCP"),
             "backend_server": ("Core / Apps", "Python / uv / FastAPI / SQLAlchemy / SQLite"),

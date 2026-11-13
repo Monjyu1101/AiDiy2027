@@ -202,7 +202,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 | 目的 | 参照ファイル |
 |------|--------------|
-| aidiy_diag の診断・Vue 画面・配布物・起動を変更・検証する | [`backend_diag,環境診断運用.md`](./backend_diag,環境診断運用.md) |
+| aidiy_diag の診断・Vue 画面・配布物・起動を変更・検証する | [`frontend_diag,環境診断運用.md`](./frontend_diag,環境診断運用.md) |
 
 ## Frontend IDE
 

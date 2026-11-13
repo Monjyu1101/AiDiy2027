@@ -336,11 +336,11 @@ Chat Completions互換HTTPもchat_llmsのenabledに従う。
 Chromeでは `data:{operation:"open",headless:false}` または `{operation:"close"}` を許可する。他Toolは固定ID付き `operation:"test"` を使う。
 セッション名は `diag-tools-test` 固定、任意URL/パス/コマンドは受けない。利用者ログインを毎回確認し、
 enabled/availableを確認してから実行する。起動時・一覧表示時に自動テストはしない。
-代表テストは登録済みToolに対応する。画像・動画・STT/TTS・Code Agents・Chat・Decisions・Taskの8種は説明APIの確認のみで、生成・AI実行を検証済みとは扱わない。固定操作と副作用は [環境診断運用](./backend_diag,環境診断運用.md) のTools管理を参照する。
+代表テストは登録済みToolに対応する。画像・動画・STT/TTS・Code Agents・Chat・Decisions・Taskの8種は説明APIの確認のみで、生成・AI実行を検証済みとは扱わない。固定操作と副作用は [環境診断運用](./frontend_diag,環境診断運用.md) のTools管理を参照する。
 
 隔離試験（ブラウザ/有料API実行なし）:
 
 ```sh
 backend_tools/.venv/bin/python -m unittest discover -s backend_tools/checks -v
-node --test backend_diag/checks/tools-settings-api.check.mjs
+node --test frontend_diag/checks/tools-settings-api.check.mjs
 ```

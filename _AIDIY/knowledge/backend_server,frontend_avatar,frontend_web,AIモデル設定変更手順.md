@@ -82,7 +82,7 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 - 無料用のモデル設定は `CHAT_OPENRT_FREE_MODEL`。初期値は `auto` とし、候補の先頭を選ぶ。既存の `CHAT_OPENRT_MODEL` を転用しない。
 - 分離するのはモデル候補一覧と保存キーだけ。候補欠落時の初期値補正・画面選択も他の方式と同じ処理を使い、無料専用の実行制限は設けない。
 - Web / Avatar / Diag の設定保存APIは無料モデルキーを保存できるが、API キーを設定画面へ返したり書き換えたりしない。
-- 回帰確認は `python -B -m unittest discover -s backend_server/checks -p test_openrt_free_settings.py -v`、`node --test frontend_avatar/checks/ai-settings-models.test.cjs backend_diag/checks/ai-settings-form.check.cjs backend_diag/checks/ai-settings-api.check.mjs`。合成JSONと模擬APIだけを使い、実設定・外部モデルへの接続は行わない。
+- 回帰確認は `python -B -m unittest discover -s backend_server/checks -p test_openrt_free_settings.py -v`、`node --test frontend_avatar/checks/ai-settings-models.test.cjs frontend_diag/checks/ai-settings-form.check.cjs frontend_diag/checks/ai-settings-api.check.mjs`。合成JSONと模擬APIだけを使い、実設定・外部モデルへの接続は行わない。
 
 ### Gemini / FreeAI のChatモデル追加
 
@@ -90,7 +90,7 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 - DiagはGoogle APIが返した候補だけを使い、既知3モデル間を `gemini-4-carbon` → `gemini-4-argon` → `gemini-3.8-flash` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
 - 既知3モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
 - `CHAT_GEMINI_MODEL` の画像モデル、Liveの音声モデル、低コスト用途のPrediction / Decision既定値は別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
-- 回帰確認は `node --test backend_diag/checks/model-catalog.check.mjs backend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
+- 回帰確認は `node --test frontend_diag/checks/model-catalog.check.mjs frontend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
 
 ### Code CLIのautoによるモデル自動選択
 
@@ -228,7 +228,7 @@ Code CLI の権限モードは `CODE_PERMISSIONS` で管理する。設定 UI �
 
 - `frontend_avatar/src/api/config.ts` の `defaultModelSettings()` は backend 取得前のフォールバック。`conf_json.py` のデフォルトとずれると初期表示が混乱する
 - `CODE_AI<N>_MODEL` はスロットごとの現在モデル、`CODE_CODEX_CLI_MODEL` のようなキーは CLI 種別ごとのデフォルト。混同しない
-- Codeモデル候補の正本はDiagの `_AIDIY/aidiy_diag/code_models_info.json`。`backend_diag/diag/モデル情報/` が取得・合成し、`conf_model.py` は読込時に `auto` / `same` を付加する。旧 `_config/AiDiy_code_*.json` やbatとの同期は行わない。HermesのOAuth候補は `openai_oauth/<モデルID>` を保持する。
+- Codeモデル候補の正本はDiagの `_AIDIY/aidiy_diag/code_models_info.json`。`frontend_diag/diag/モデル情報/` が取得・合成し、`conf_model.py` は読込時に `auto` / `same` を付加する。旧 `_config/AiDiy_code_*.json` やbatとの同期は行わない。HermesのOAuth候補は `openai_oauth/<モデルID>` を保持する。
 - 設定変更は既存 WebSocket セッションへ即時完全反映される前提にしない。再起動後の再接続で確認する
 - Code AI は現行6枠。枠数確認は `backend_server/core_router/AIコア.py` と frontend の `PanelKey` を見る
 

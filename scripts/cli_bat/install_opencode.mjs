@@ -7,8 +7,8 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { catalog } from '../../backend_diag/diag/診断/probes.mjs';
-import { createInstallManager } from '../../backend_diag/diag/導入管理/導入管理.mjs';
+import { catalog } from '../../frontend_diag/diag/診断/probes.mjs';
+import { createInstallManager } from '../../frontend_diag/diag/導入管理/導入管理.mjs';
 
 export async function installOpenCode({ manager, write = text => process.stdout.write(text) } = {}) {
   manager ||= createInstallManager({ entries: [(await catalog()).find(entry => entry.id === 'opencode')] });

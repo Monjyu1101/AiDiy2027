@@ -20,7 +20,7 @@ setup / start の Code / IDE / Discord 継続方針とは異なります。ル�
 各フォルダの `_cleanup.py` に委譲します。
 
 フォルダ別スクリプト:
-- backend_diag/_cleanup.py     cleanup(choices)（配布画面は保持）
+- frontend_diag/_cleanup.py     cleanup(choices)（配布画面は保持）
 - backend_local/_cleanup.py    cleanup(choices)
 - backend_tools/_cleanup.py    cleanup(choices)（グローバル MCP 設定も解除）
 - backend_server/_cleanup.py   cleanup(choices)
@@ -242,7 +242,7 @@ CHANNEL_FOLDERS = ("frontend_channels/discord", "frontend_channels/slack")
 # `_start.py` / `_cleanup.py` を import するフォルダ（= `__pycache__` が生成される）。
 IMPORT_CACHE_FOLDERS = tuple(
     folder for _choice_key, folder, _description, _service_names in SERVICE_CLEANUP_TARGETS
-) + ("backend_diag", BACKEND_HERMES_PATH, "frontend_ide", "frontend_ide/host")
+) + ("frontend_diag", BACKEND_HERMES_PATH, "frontend_ide", "frontend_ide/host")
 
 # フォルダ別 `_cleanup.py` の担当外になる、ルート側の Python キャッシュ。
 ROOT_CACHE_SCAN_PATHS = ("scripts",)
@@ -319,9 +319,9 @@ def stop_all_services(
 
     if not keep_diag:
         print_info("バックエンド(Diag) の本体・残留Electronを停止します")
-        run_stop("Diag", lambda: _load_folder_module("backend_diag").stop_processes())
+        run_stop("Diag", lambda: _load_folder_module("frontend_diag").stop_processes())
         print_info("Memo の単体起動・共用残留プロセスを停止します")
-        run_stop("Memo", lambda: _load_folder_module("backend_diag").stop_memo_processes())
+        run_stop("Memo", lambda: _load_folder_module("frontend_diag").stop_memo_processes())
 
     for _choice_key, folder, description, _service_names in SERVICE_CLEANUP_TARGETS:
         if folder in ("frontend_ide/aidiy_console", "frontend_ide/aidiy_cpu", "frontend_ide/viewer", *CHANNEL_FOLDERS):
@@ -756,7 +756,7 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
 
     print()
     if choices.get("diag"):
-        if not _run_folder_cleanup("backend_diag", choices):
+        if not _run_folder_cleanup("frontend_diag", choices):
             cleanup_errors.append("バックエンド(Diag)")
 
     if choices["npm_uninstall"]:

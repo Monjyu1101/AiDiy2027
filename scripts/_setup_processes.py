@@ -20,7 +20,7 @@ import time
 from _cleanup_processes import list_processes, process_arguments
 from _opencode_service import stop_opencode_service
 
-COMPONENTS = ('backend_diag', 'backend_local', 'backend_tools', 'backend_server',
+COMPONENTS = ('frontend_diag', 'backend_local', 'backend_tools', 'backend_server',
               'backend_taskteam', 'frontend_web', 'frontend_avatar', 'frontend_channels',
               'command_hermes', 'frontend_ide')
 # frontend_channels 配下の Discord と Slack をまとめて保護する。
@@ -57,7 +57,15 @@ def process_role(process, root, windows=False):
         value = absolute(value)
         try:
             if value and path.commonpath((root, value)) == root:
-                return path.relpath(value, root).replace('\\', '/')
+                relative_path = path.relpath(value, root).replace('\\', '/')
+                # 改名前に同じ配置元から起動した Diag / Memo も回収する。
+                # commonpath 照合後だけ変換し、別コピーのプロセスは対象にしない。
+                if relative_path.startswith('backend_diag/'):
+                    legacy = Path(root) / 'backend_diag'
+                    if legacy.is_symlink() or getattr(legacy, 'is_junction', lambda: False)():
+                        return ''
+                    return 'frontend_diag/' + relative_path[len('backend_diag/'):]
+                return relative_path
         except ValueError:
             pass
         return ''
@@ -71,7 +79,7 @@ def process_role(process, root, windows=False):
         if electron and '/node_modules/electron/dist/' in '/' + binary:
             # IDEのElectronはCode/Live/Consoleと共用。入口/親子関係不明なら保護。
             if parts[0] != 'frontend_ide':
-                if parts[0] == 'backend_diag' and '--aidiy-memo-only' in args:
+                if parts[0] == 'frontend_diag' and '--aidiy-memo-only' in args:
                     return 'memo'
                 return parts[0]
             for arg in args:
@@ -109,7 +117,7 @@ def process_role(process, root, windows=False):
     if not entry or entry.split('/')[0] not in COMPONENTS:
         return None
     component = entry.split('/')[0]
-    if component == 'backend_diag' and (entry == 'backend_diag/memo_main.mjs' or
+    if component == 'frontend_diag' and (entry == 'frontend_diag/memo_main.mjs' or
             '--memo-only' in args[index + 1:] or '--aidiy-memo-only' in args[index + 1:]):
         return 'memo'
     if component == 'frontend_ide':
@@ -150,7 +158,7 @@ def select_targets(processes, root, windows=False, current_pid=None):
         if roles[process['ProcessId']] is None and registered_supervisor(process, root):
             roles[process['ProcessId']] = 'supervisor'
     # Code/IDE/Discord/Slackの補助/MCP子孫を保護。ただし独立アプリLive等は保護の境界にする。
-    boundaries = {'live', 'console', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'backend_diag', 'memo', 'supervisor'}
+    boundaries = {'live', 'console', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'frontend_diag', 'memo', 'supervisor'}
     protected = {pid for pid, role in roles.items() if role in KEEP}
     while True:
         children = {p['ProcessId'] for p in processes if p.get('ParentProcessId') in protected
@@ -317,13 +325,13 @@ def _stop_aidiy_processes(root, info=print, error=print):
             role = 'supervisor' if registered_supervisor(process, root) else process_role(process, root, windows)
             parent = process
             seen = set()
-            while role not in ('supervisor', 'backend_diag', 'memo') and parent.get('ParentProcessId') in targets:
+            while role not in ('supervisor', 'frontend_diag', 'memo') and parent.get('ParentProcessId') in targets:
                 if parent['ProcessId'] in seen:
                     break
                 seen.add(parent['ProcessId'])
                 parent = targets[parent['ParentProcessId']]
                 role = process_role(parent, root, windows)
-            return ({'supervisor': 0, 'backend_diag': 1, 'memo': 2}.get(role, 3), depth(process))
+            return ({'supervisor': 0, 'frontend_diag': 1, 'memo': 2}.get(role, 3), depth(process))
         info('Diag → Memo の順に強制停止します（共用プロセスは同時終了）。')
         for target in sorted(targets.values(), key=stop_order):
             current = next((p for p in snapshot() if p['ProcessId'] == target['ProcessId']), None)

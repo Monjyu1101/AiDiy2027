@@ -183,7 +183,7 @@ class SetupResultTests(unittest.TestCase):
                     module.main()
                 self.assertEqual(caught.exception.code, 1)
                 module.wait_global_cli_tools_install.assert_called_once()
-                component("backend_diag").setup.assert_not_called()
+                component("frontend_diag").setup.assert_not_called()
                 module.run_diag_headless.assert_not_called()
 
     def test_prerequisite_failure_always_stops_and_restores_auto_mode(self):
@@ -200,7 +200,7 @@ class SetupResultTests(unittest.TestCase):
                 self.assertTrue(module.AUTO_MODE)
                 git.ensure_local_git.assert_not_called()
                 module.setup_common_global_tools.assert_not_called()
-                component("backend_diag").setup.assert_not_called()
+                component("frontend_diag").setup.assert_not_called()
                 self.assertIn("前提条件: Git / Node.js", output.getvalue())
                 self.assertNotIn("セットアップは正常終了しました。", output.getvalue())
 
@@ -218,7 +218,7 @@ class SetupResultTests(unittest.TestCase):
                 self.assertEqual(spawn.call_count, 4)
                 for package in ("@anthropic-ai/claude-code", "@github/copilot", "@openai/codex", "@opencode/cli", "antigravity", "grok-build"):
                     self.assertIn(f"  - 共通: AI CLI ツール導入 ({package})", output.getvalue())
-                self.assertEqual(component("backend_diag").setup.call_count, int(continue_on_error))
+                self.assertEqual(component("frontend_diag").setup.call_count, int(continue_on_error))
                 self.assertNotIn("セットアップは正常終了しました。", output.getvalue())
 
     def test_cli_mixed_failures_wait_for_started_processes_before_stopping(self):
@@ -246,7 +246,7 @@ class SetupResultTests(unittest.TestCase):
             for package in ("@github/copilot", "@openai/codex", "antigravity", "grok-build"):
                 self.assertIn(f"  - 共通: AI CLI ツール導入 ({package})", output.getvalue())
             self.assertNotIn("  - 共通: AI CLI ツール導入 (@opencode/cli)", output.getvalue())
-            component("backend_diag").setup.assert_not_called()
+            component("frontend_diag").setup.assert_not_called()
 
     def test_partial_preparation_and_spawn_failure_with_other_cli_success(self):
         with self.execution(real_common=True) as (module, choices, component, output, _git):

@@ -37,12 +37,22 @@ class SetupProcessesTest(unittest.TestCase):
         self.opencode = opencode.start()
         self.addCleanup(opencode.stop)
 
+    def test_renamed_diag_processes_are_owned_only_in_same_root(self):
+        for windows in (False, True):
+            root = 'C:/repo/AiDiy' if windows else ROOT
+            for entry, role in [('diag_main.mjs', 'frontend_diag'), ('memo_main.mjs', 'memo')]:
+                self.assertEqual(subject.process_role(proc(20, f'node {root}/backend_diag/{entry}'), root, windows), role)
+                self.assertIsNone(subject.process_role(proc(20, f'node {root}-other/backend_diag/{entry}'), root, windows))
+                self.assertIsNone(subject.process_role(proc(20, f'node /other/launch.mjs {root}/backend_diag/{entry}'), root, windows))
+            executable = f'{root}/backend_diag/node_modules/electron/dist/electron'
+            self.assertEqual(subject.process_role(proc(21, executable, name='electron', executable=executable), root, windows), 'frontend_diag')
+
     def test_diag_then_memo_order_and_other_checkout_preserved(self):
         for windows in (False, True):
             root = 'C:/repo/AiDiy' if windows else ROOT
-            records = [proc(30, f'node {root}/backend_diag/memo_main.mjs'),
-                       proc(20, f'node {root}/backend_diag/diag_main.mjs'),
-                       proc(40, f'node {root}-other/backend_diag/memo_main.mjs'),
+            records = [proc(30, f'node {root}/frontend_diag/memo_main.mjs'),
+                       proc(20, f'node {root}/frontend_diag/diag_main.mjs'),
+                       proc(40, f'node {root}-other/frontend_diag/memo_main.mjs'),
                        proc(10, f'python {root}/_start.py', name='python')]
             stopped = []
             def kill(pid, *_):
@@ -63,8 +73,8 @@ class SetupProcessesTest(unittest.TestCase):
     def test_diag_kill_failure_does_not_skip_memo(self):
         for windows in (False, True):
             root = 'C:/repo/AiDiy' if windows else ROOT
-            records = [proc(20, f'node {root}/backend_diag/diag_main.mjs'),
-                       proc(30, f'node {root}/backend_diag/memo_main.mjs')]
+            records = [proc(20, f'node {root}/frontend_diag/diag_main.mjs'),
+                       proc(30, f'node {root}/frontend_diag/memo_main.mjs')]
             attempted = []
             def kill(pid, *_):
                 attempted.append(pid)
@@ -84,7 +94,7 @@ class SetupProcessesTest(unittest.TestCase):
             self.assertEqual([p['ProcessId'] for p in records], [20])
 
     def test_memo_is_independent_boundary_under_preserved_code(self):
-        records = [app(10, 'code'), proc(20, f'node {ROOT}/backend_diag/memo_main.mjs', 10),
+        records = [app(10, 'code'), proc(20, f'node {ROOT}/frontend_diag/memo_main.mjs', 10),
                    proc(21, 'electron --type=renderer', 20)]
         self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {20, 21})
 
@@ -199,10 +209,10 @@ class SetupProcessesTest(unittest.TestCase):
         self.assertEqual(set(subject.select_targets(records,ROOT,current_pid=7)), {9})
 
     def test_other_copy_and_argument_mentions_not_matched(self):
-        for command in (f'node /other/launch.mjs {ROOT}/backend_diag/diag_main.mjs',
-                        f'node {ROOT}-other/backend_diag/diag_main.mjs',
+        for command in (f'node /other/launch.mjs {ROOT}/frontend_diag/diag_main.mjs',
+                        f'node {ROOT}-other/frontend_diag/diag_main.mjs',
                         f'python -c "print(1)" {ROOT}/backend_server/core_main.py',
-                        f'node -econsole.log(1) {ROOT}/backend_diag/diag_main.mjs'):
+                        f'node -econsole.log(1) {ROOT}/frontend_diag/diag_main.mjs'):
             self.assertIsNone(subject.process_role(proc(10,command),ROOT))
 
     def test_windows_spaces_case_and_app_option(self):
@@ -223,7 +233,7 @@ class SetupProcessesTest(unittest.TestCase):
             self.assertEqual(subject.process_role(proc(10,f'node {ROOT}/frontend_ide/{entry}'),ROOT),kind)
 
     def test_orphan_dedicated_electron_but_not_shared(self):
-        for component in ('frontend_avatar','backend_diag','frontend_channels/discord','frontend_channels/slack'):
+        for component in ('frontend_avatar','frontend_diag','frontend_channels/discord','frontend_channels/slack'):
             exe=f'{ROOT}/{component}/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron'
             self.assertEqual(subject.process_role(proc(10,f'"{exe}" --type=gpu-process',name='Electron',executable=exe),ROOT),component.split('/')[0])
         exe=f'{ROOT}/frontend_ide/node_modules/electron/dist/electron'
@@ -238,16 +248,16 @@ class SetupProcessesTest(unittest.TestCase):
 
     def test_mac_snapshot_preserves_helper_executable_spaces(self):
         from types import SimpleNamespace
-        exe=f'{ROOT}/backend_diag/node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Helper (GPU).app/Contents/MacOS/Electron Helper (GPU)'
+        exe=f'{ROOT}/frontend_diag/node_modules/electron/dist/Electron.app/Contents/Frameworks/Electron Helper (GPU).app/Contents/MacOS/Electron Helper (GPU)'
         outputs=[SimpleNamespace(stdout=f'10 1 {exe} --type=gpu-process\n'),
                  SimpleNamespace(stdout=f'10 {exe}\n')]
         with patch.object(subject.sys,'platform','darwin'),patch.object(subject,'list_processes',return_value=[]),patch.object(subject.subprocess,'run',side_effect=outputs):
             records=subject.snapshot()
         self.assertEqual(records[0]['ExecutablePath'],exe)
-        self.assertEqual(subject.process_role(records[0],ROOT),'backend_diag')
+        self.assertEqual(subject.process_role(records[0],ROOT),'frontend_diag')
 
     def test_posix_paths_remain_case_sensitive(self):
-        self.assertIsNone(subject.process_role(proc(10,'node /repo/aidiy/backend_diag/diag_main.mjs'),ROOT))
+        self.assertIsNone(subject.process_role(proc(10,'node /repo/aidiy/frontend_diag/diag_main.mjs'),ROOT))
 
     def test_loader_options_skip_loader_value(self):
         p=proc(10, f'node --import /global/loader.mjs {ROOT}/frontend_channels/discord/src/main.ts')

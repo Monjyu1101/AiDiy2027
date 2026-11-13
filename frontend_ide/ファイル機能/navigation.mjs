@@ -13,7 +13,7 @@ import {fileURLToPath} from 'node:url';
 import {scanTree} from '../viewer/file-scan.mjs';
 import {latestFiles} from '../src/components/ファイル閲覧/最新ファイル.js';
 import {runNavigationAgent,navigationAvailability} from './navigation-agent.mjs';
-import {NAVI_PROVIDERS} from '../../backend_diag/diag/モデル情報/navi_providers.mjs';
+import {NAVI_PROVIDERS} from '../../frontend_diag/diag/モデル情報/navi_providers.mjs';
 async function replaceState(source,target){for(let attempt=0;;attempt++){try{return await rename(source,target);}catch(error){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=4)throw error;await new Promise(done=>setTimeout(done,25*(attempt+1)));}}}
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
 const text=(value,max)=>typeof value==='string'&&!!value.trim()&&value.length<=max;

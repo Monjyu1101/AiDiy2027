@@ -22,7 +22,7 @@
 - `backend_server/conf/conf_model.py`
 - `backend_server/conf/conf_json.py`
 - `_config/AiDiy_key.json`
-- `backend_diag/diag/モデル情報/` と `_AIDIY/aidiy_diag/code_models_info.json`（モデル候補の生成元と合成結果）
+- `frontend_diag/diag/モデル情報/` と `_AIDIY/aidiy_diag/code_models_info.json`（モデル候補の生成元と合成結果）
 
 ### frontend
 - `frontend_web/src/components/AiDiy/dialog/AI設定再起動.vue`
@@ -38,7 +38,7 @@
    - `auto` は対応方式では送信前の自動モデル判断へ渡す。判断後に残る `auto` / 空値は原則引数を省略し、OpenCodeの保存済みモデル、Hermesのsameなど方式別の例外は現行分岐を確認する。`--model auto` を実モデルとして渡さない
 4. OS 依存の起動条件やパス変換が必要なら同ファイル内で分岐する
 5. `AIコード.py` の welcome 文言、候補一覧、未インストール案内を更新する
-6. `backend_diag/diag/モデル情報/` に候補の取得・固定定義と合成ロジックを追加する。`conf_model.py` は合成JSONを読むだけにする
+6. `frontend_diag/diag/モデル情報/` に候補の取得・固定定義と合成ロジックを追加する。`conf_model.py` は合成JSONを読むだけにする
 7. `code_models_info.json` へ候補が出ることを確認する。`auto` / `same` は `get_code_models()` が付加し、合成JSONへ入れない
 8. `conf_json.DEFAULT_CONFIG` と `AiDiy_key.json` に必要な `CODE_<CLI名>_MODEL` を追加する
 9. frontend の `CODE_MODEL_KEYS` に CLI 名と保存キーの対応を追加する

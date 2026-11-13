@@ -41,7 +41,7 @@ class NaviLifecycle(unittest.TestCase):
         self.assertEqual(kinds[:4], ['ide', 'console', 'browser', 'navi'])
         self.assertEqual(kinds.count('navi'), 1)
         self.assertNotIn('aidiy_navi', (ROOT / 'scripts/起動対象.json').read_text(encoding='utf-8'))
-        for icon in ('frontend_ide/public/AiDiy_navi.png', 'backend_diag/static/AiDiy_navi.png'):
+        for icon in ('frontend_ide/public/AiDiy_navi.png', 'frontend_diag/static/AiDiy_navi.png'):
             self.assertTrue((ROOT / icon).is_file())
 
     def test_navi_entries_and_children_but_not_ide_code_other_checkout(self):

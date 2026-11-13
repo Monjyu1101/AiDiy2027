@@ -50,11 +50,11 @@ class ElectronConsoleTest(unittest.TestCase):
         self.assertEqual(observed, [child])
 
     def test_diag_start(self):
-        module = load('backend_diag/_start.py')
+        module = load('frontend_diag/_start.py')
         self.check_child(module, module.start)
 
     def test_diag_auto_launcher_has_no_console(self):
-        module = load('backend_diag/_start.py')
+        module = load('frontend_diag/_start.py')
         real_run = subprocess.run
         observed = []
 
@@ -165,7 +165,7 @@ class ElectronConsoleTest(unittest.TestCase):
 class PosixLaunchOptionsTest(unittest.TestCase):
     def test_windows_flags_are_not_used_on_mac_or_linux(self):
         for relative, name, args in (
-            ('backend_diag/_start.py', 'start', ()),
+            ('frontend_diag/_start.py', 'start', ()),
             ('frontend_ide/host/_start.py', 'start_code', ()),
             ('frontend_channels/discord/_start.py', 'start', ()),
         ):

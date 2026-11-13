@@ -7,7 +7,7 @@
 import json, os, subprocess, sys, time, urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
-ELECTRON = os.path.join(REPO, "backend_diag", "node_modules", "electron", "dist", "electron.exe")
+ELECTRON = os.path.join(REPO, "frontend_diag", "node_modules", "electron", "dist", "electron.exe")
 WORK = os.path.join(REPO, "temp", "ナビ待機画面撮影")
 OUT = os.path.join(WORK, "shots")
 os.makedirs(OUT, exist_ok=True)

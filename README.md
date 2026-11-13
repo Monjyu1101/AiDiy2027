@@ -14,7 +14,7 @@
 - [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md)
 - [frontend_web/AGENTS.md](./frontend_web/AGENTS.md)
 - [frontend_avatar/AGENTS.md](./frontend_avatar/AGENTS.md)
-- [backend_diag/AGENTS.md](./backend_diag/AGENTS.md)
+- [frontend_diag/AGENTS.md](./frontend_diag/AGENTS.md)
 - [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md)
 - [frontend_channels/slack/AGENTS.md](./frontend_channels/slack/AGENTS.md)
 - [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md)
@@ -110,7 +110,7 @@ python _setup.py
 10. `frontend_ide` の共通 Vue 依存、Navi / Console / Code / Live / IDE / Task / Team / Browser のセットアップ、ランチャー登録、VS Code CLI がある場合の Code / Live 拡張配置
 11. Channels (Discord / Slack) を一括選択し、`frontend_channels/discord` と `frontend_channels/slack` の依存・パネル・ランチャーを準備
 
-最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `backend_diag/ui` で `npm ci` により導入します。
+最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `frontend_diag/ui` で `npm ci` により導入します。
 
 依存導入はモジュールごとに異なり、Web・Code / Live などの `npm update` は宣言範囲内で依存を更新します。`package-lock.json` が変わる場合があるため、セットアップ前後の差分も確認してください。ランチャーだけの修復は `python _setup.py --launchers-only` です。
 
@@ -313,7 +313,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 6. [backend_taskteam/AGENTS.md](./backend_taskteam/AGENTS.md)
 7. [frontend_web/AGENTS.md](./frontend_web/AGENTS.md)
 8. [frontend_avatar/AGENTS.md](./frontend_avatar/AGENTS.md)
-9. [backend_diag/AGENTS.md](./backend_diag/AGENTS.md) — Diag の診断・Vue 画面
+9. [frontend_diag/AGENTS.md](./frontend_diag/AGENTS.md) — Diag の診断・Vue 画面
 10. [frontend_ide/AGENTS.md](./frontend_ide/AGENTS.md) — Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面
 11. [frontend_ide/host/AGENTS.md](./frontend_ide/host/AGENTS.md) — Code / Live の拡張ホスト・通信
 12. [frontend_channels/discord/AGENTS.md](./frontend_channels/discord/AGENTS.md) — Discord の接続・Vue パネル
@@ -328,4 +328,4 @@ Copyright (c) 2014-2027 Mitsuo KONDOU and contributors
 
 AiDiy 独自部分の利用条件は [AiDiy 公開利用ライセンス v1.1](./LICENSE) を参照してください。非商用利用に限る公開ライセンスで、OSI が定義するオープンソースライセンスではありません。商用利用には事前に全著作権者の書面承諾が必要です。再配布時はライセンス全文と著作権表示を含めてください。
 
-第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/discord/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./backend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。
+第三者のコード・ライブラリ・画像等は、それぞれのライセンスと表示を確認・保持してください。主な確認先は [Hermes の出典](./command_hermes/NOTICE.md)、[IDE ビューアの第三者表記](./frontend_ide/viewer/web/THIRD_PARTY_NOTICES.txt)、[Discord パネル](./frontend_channels/discord/panel/THIRD_PARTY_NOTICES.txt)、[Slack パネル](./frontend_channels/slack/panel/THIRD_PARTY_NOTICES.txt)、[Diag UI](./frontend_diag/ui/THIRD_PARTY_NOTICES.txt) および各資材に付属する LICENSE / NOTICE です。この一覧は第三者資材の全件一覧ではありません。

@@ -13,8 +13,8 @@ const output=resolve(process.env.AIDIY_ELECTRON_AUDIT_DIR||'.aidiy_cache/selftes
 const jobs=[
  ['00-console-python',['-B','-X','utf8','-m','unittest','scripts/checks/test_electron_console.py','frontend_avatar/checks/test_start.py','scripts/checks/test_start_native_output.py','scripts/checks/test_diag_start.py'],{},process.env.AIDIY_TEST_PYTHON||'python'],
  ['00-console-node',['--test','scripts/checks/electron-console.test.cjs','frontend_avatar/checks/dev-start.test.cjs']],
- ['01-common',['--test','frontend_ide/checks/window-opening.test.mjs','frontend_ide/checks/native-window-move.test.mjs','frontend_ide/checks/folder-pages.test.mjs','frontend_ide/checks/panel-windows.test.mjs','frontend_ide/checks/route-expansion.test.mjs','backend_diag/checks/desktop.check.mjs','backend_diag/checks/statusbar.check.cjs']],
- ['02-diag',['backend_diag/checks/initial-mini-desktop.mjs']],
+ ['01-common',['--test','frontend_ide/checks/window-opening.test.mjs','frontend_ide/checks/native-window-move.test.mjs','frontend_ide/checks/folder-pages.test.mjs','frontend_ide/checks/panel-windows.test.mjs','frontend_ide/checks/route-expansion.test.mjs','frontend_diag/checks/desktop.check.mjs','frontend_diag/checks/statusbar.check.cjs']],
+ ['02-diag',['frontend_diag/checks/initial-mini-desktop.mjs']],
  ['03-console-code-live-ide',['frontend_ide/scripts/check-module-move.mjs']],
  ['04-ide-panels',['frontend_ide/scripts/check-panel-desktop.mjs']],
  ['05-ide-vr',['frontend_ide/scripts/check-all-displays.mjs'],{AIDIY_ALL_PANEL_POSITION_ONLY:'1'}],
@@ -23,7 +23,7 @@ const jobs=[
  ['08-avatar-opening',['--test','frontend_avatar/checks/window-opening.test.cjs']],
  ['09-discord',['frontend_channels/discord/checks/window-behavior-desktop.mjs']],
  ['10-discord-contract',['--test','frontend_channels/discord/checks/desktop.test.ts']],
- ['11-app-mini',['backend_diag/checks/app-launch-browser.mjs']],
+ ['11-app-mini',['frontend_diag/checks/app-launch-browser.mjs']],
  ['12-ide-browser',['frontend_ide/scripts/check-browser.mjs']],
  ['13-transparent-opening',['frontend_ide/checks/Electron表示開始試験.cjs'],{AIDIY_TEST_OUTPUT:join(output,'共通-Electron表示')},require(resolve('frontend_ide/host/node_modules/electron'))],
 ];

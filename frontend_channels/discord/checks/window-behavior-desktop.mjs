@@ -10,7 +10,7 @@ import {once} from 'node:events';
 import {tmpdir} from 'node:os';
 import {resolve,join,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {desktopBinary} from '../../../backend_diag/diag/起動/desktop.mjs';
+import {desktopBinary} from '../../../frontend_diag/diag/起動/desktop.mjs';
 const profile=await mkdtemp(join(tmpdir(),'discord-window-'));let child;
 try{
  const env={...process.env,DISCORD_WINDOW_PROFILE:profile};delete env.ELECTRON_RUN_AS_NODE;

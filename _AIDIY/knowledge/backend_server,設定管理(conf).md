@@ -131,7 +131,7 @@ models.fetch_all_models()  # 互換入口。合成ファイルの読込確認の
 
 ### 音声とMCP
 
-声は `_AIDIY/aidiy_diag/live_voices_info.json` の `{区分: {voices: {音声ID: 表示名}}}` を読みます。区分は `gemini_live` / `freeai_live` / `openai_live` です。固定定義は `backend_diag/diag/モデル情報/voices_info.mjs` で管理し、取得・認証状態にかかわらず3区分すべてを出力します。Python側に音声定義や旧設定への代替読込はありません。MCPは従来の設定を読みます。`conf_models` は設定ファイルを作成・更新しません。
+声は `_AIDIY/aidiy_diag/live_voices_info.json` の `{区分: {voices: {音声ID: 表示名}}}` を読みます。区分は `gemini_live` / `freeai_live` / `openai_live` です。固定定義は `frontend_diag/diag/モデル情報/voices_info.mjs` で管理し、取得・認証状態にかかわらず3区分すべてを出力します。Python側に音声定義や旧設定への代替読込はありません。MCPは従来の設定を読みます。`conf_models` は設定ファイルを作成・更新しません。
 
 ## 設定ファイル一覧
 

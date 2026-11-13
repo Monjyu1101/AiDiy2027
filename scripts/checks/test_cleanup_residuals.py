@@ -23,7 +23,7 @@ def load(name, relative):
 
 cleanup = load('cleanup_residual_root', '_cleanup.py')
 tools = load('cleanup_residual_tools', 'backend_tools/_cleanup.py')
-diag = load('cleanup_residual_diag', 'backend_diag/_cleanup.py')
+diag = load('cleanup_residual_diag', 'frontend_diag/_cleanup.py')
 
 
 class ResidualTests(unittest.TestCase):

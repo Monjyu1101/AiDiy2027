@@ -9,10 +9,10 @@ test('通常窓と別パネルのnative基本背景は黒、専用の透明窓�
  assert.match(desktop,/backgroundColor:'#000'/);
  assert.match(desktop,/kind==='cpu'\?\{transparent:true,backgroundColor:'#00000000'/);
  assert.match(panels,/backgroundColor:route\?'#00000000':'#000'/);
- assert.match(read('../../backend_diag/diag/起動/electron-main.cjs'),/transparent:true,hasShadow:false,backgroundColor:'#00000000'/);
+ assert.match(read('../../frontend_diag/diag/起動/electron-main.cjs'),/transparent:true,hasShadow:false,backgroundColor:'#00000000'/);
 });
 test('外枠はタイトル同色を維持し、別パネルの表示ベースは黒',()=>{
- for(const path of ['../src/components/共通表示/タイトルバー配色.css','../../backend_diag/diag/ui/components/共通表示/タイトルバー配色.css']){
+ for(const path of ['../src/components/共通表示/タイトルバー配色.css','../../frontend_diag/diag/ui/components/共通表示/タイトルバー配色.css']){
   const css=read(path);assert.match(css,/--aidiy-panel-border: var\(--aidiy-titlebar-background\);/);assert.match(css,/--aidiy-titlebar-background: #30343a;/);
  }
  assert.match(read('../src/components/開発スペース/Naviパネル.vue'),/\.navigation-window\{border:1px solid var\(--aidiy-titlebar-background\)/);

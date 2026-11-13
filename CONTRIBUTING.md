@@ -23,7 +23,7 @@
   - `frontend_channels/slack/AGENTS.md`
   - `frontend_ide/AGENTS.md`
   - `frontend_ide/viewer/AGENTS.md`
-  - `backend_diag/AGENTS.md`
+  - `frontend_diag/AGENTS.md`
 
 ## ライセンス（重要）
 
@@ -55,7 +55,7 @@ npm run check
 npm test
 ```
 
-`frontend_ide/checks/` には共通 Vue 画面・Navigator・Console・Task / Team の Node.js テスト、`backend_diag/checks/` には診断・設定・起動管理の検証、`backend_tools/checks/`・`backend_taskteam/checks/` には Python テストがあります。`frontend_avatar/checks/` には Web / Avatar の接続を検証する Node.js テスト、`scripts/checks/` にはルート起動・停止・セットアップのテストもあります。実行方法は [開発環境運用手順](./_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照し、変更対象に応じて実行してください。画面操作は手動でも確認します。
+`frontend_ide/checks/` には共通 Vue 画面・Navigator・Console・Task / Team の Node.js テスト、`frontend_diag/checks/` には診断・設定・起動管理の検証、`backend_tools/checks/`・`backend_taskteam/checks/` には Python テストがあります。`frontend_avatar/checks/` には Web / Avatar の接続を検証する Node.js テスト、`scripts/checks/` にはルート起動・停止・セットアップのテストもあります。実行方法は [開発環境運用手順](./_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照し、変更対象に応じて実行してください。画面操作は手動でも確認します。
 
 - API: http://127.0.0.1:8091/docs / http://127.0.0.1:8098/docs / http://127.0.0.1:8093/docs
 - UI: http://127.0.0.1:8090

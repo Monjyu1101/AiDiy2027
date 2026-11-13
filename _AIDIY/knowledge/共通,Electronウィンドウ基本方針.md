@@ -1,6 +1,6 @@
 # Electronウィンドウ基本方針
 
-> 文書: `共通,Electronウィンドウ基本方針.md` | 実装: `frontend_ide/デスクトップ/長押し窓移動.cjs`, `frontend_ide/デスクトップ/code-drag.cjs`, `frontend_ide/host/scripts/window-opening.cjs`, `frontend_ide/desktop.cjs`, `frontend_ide/デスクトップ/panel-windows.cjs`, `frontend_avatar/electron/main.ts`, `backend_diag/diag/起動/electron-main.cjs`, `frontend_channels/discord/panel/desktop.cjs`
+> 文書: `共通,Electronウィンドウ基本方針.md` | 実装: `frontend_ide/デスクトップ/長押し窓移動.cjs`, `frontend_ide/デスクトップ/code-drag.cjs`, `frontend_ide/host/scripts/window-opening.cjs`, `frontend_ide/desktop.cjs`, `frontend_ide/デスクトップ/panel-windows.cjs`, `frontend_avatar/electron/main.ts`, `frontend_diag/diag/起動/electron-main.cjs`, `frontend_channels/discord/panel/desktop.cjs`
 
 ## このメモを使う場面
 
@@ -51,7 +51,7 @@ frontend_avatar/
 
 | アプリ | 主な起動入口 | renderer の所有元 / bundle |
 |--------|--------------|------------------------------|
-| Diag | `backend_diag/diag_main.mjs` → `起動/electron-main.cjs` | `backend_diag/ui/src` → `static/app.js` |
+| Diag | `frontend_diag/diag_main.mjs` → `起動/electron-main.cjs` | `frontend_diag/ui/src` → `static/app.js` |
 | Avatar | `frontend_avatar/launch.mjs` → `electron/main.ts` | `frontend_avatar/src` |
 | Navi | `frontend_ide/aidiy_navi/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
 | Console | `frontend_ide/aidiy_console/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
@@ -75,7 +75,7 @@ Discord と Slack は **双子**として `panel/components/接続/接続パネ�
 | 所有元 | 対象 | 構成の境界 |
 |--------|------|------------|
 | `frontend_avatar/src` | Avatar の Electron / Web 共通画面 | 上記の参照実例。既に役割分離されている箇所は維持 |
-| `backend_diag/ui/src` | Diag 通常・ミニ | `backend_diag/起動` の main 処理、配布先 `static/` と分離 |
+| `frontend_diag/ui/src` | Diag 通常・ミニ | `frontend_diag/起動` の main 処理、配布先 `static/` と分離 |
 | `frontend_ide/src` | Navi / Console / Code / Live / IDE / Task / Team / Browser と関連別窓 | 同じ所有元の共通画面。Task / Team の専用 bundle 境界は維持 |
 | `frontend_channels/discord/panel` | Discord 接続パネル | Bot の `frontend_channels/discord/src` と分離。既存 `panel` を renderer ルートとして使う |
 | `frontend_channels/slack/panel` | Slack 接続パネル | Discord と対応する構成だが別モジュール。音声機能は追加しない |
@@ -129,22 +129,22 @@ AiDiy が所有する Electron の操作画面は、**通常画面の背景を�
 
 Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明窓はnativeタイトルのダブルクリック最大化に制約があるため、単に疑似最大化を撤去しない（[Electron公式の透明窓の制約](https://www.electronjs.org/docs/latest/tutorial/custom-window-styles)）。Avatar も透明窓なので、nativeタイトルへの委譲だけでWindowsの3操作を保証しない。
 
-- **Windows標準パネル**：`backend_diag/diag/起動/標準タイトル操作.cjs` がmainの入力イベントと実カーソルDIPを使い、`通常窓サイズ.cjs` の同じ保存bounds・最大化状態で処理する。OSから届く `clickCount` でダブルクリックを判定し、□ボタンと同じ最大化・復元経路へ送る。タイトルの押下だけでは最大化を解除せず、移動開始時に通常サイズへ戻し、押下位置の水平比率・タイトル内の縦位置をポインターへ合わせる。
+- **Windows標準パネル**：`frontend_diag/diag/起動/標準タイトル操作.cjs` がmainの入力イベントと実カーソルDIPを使い、`通常窓サイズ.cjs` の同じ保存bounds・最大化状態で処理する。OSから届く `clickCount` でダブルクリックを判定し、□ボタンと同じ最大化・復元経路へ送る。タイトルの押下だけでは最大化を解除せず、移動開始時に通常サイズへ戻し、押下位置の水平比率・タイトル内の縦位置をポインターへ合わせる。
 - 標準タイトルの印はpreloadの固定readonly能力値 `customNormalTitle` によってWindowsだけへ付ける。CSSを `no-drag` にしてmainの判定へ統一し、同じ領域を500ms背景移動から除外する。任意のrenderer座標・窓ID・新たな汎用IPCは公開しない。
 - **Mac / Linux標準パネル**と**ミニパネル**のタイトルは既存nativeドラッグを維持する。ミニは内容に合わせる特殊寸法と最大化禁止を維持し、標準へ戻すと通常寸法を現在の左肩から広げる。最大化前のサイズを保つが、表示切替後に自動で再最大化しない。
 - **アイコン表示**は既存の透明領域・円形配置・専用移動・最前面管理を維持する。標準のタイトル操作は適用しない。
 - 標準タイトルと背景長押しは同じサイズproxyを見る。これによりWindows疑似最大化中にraw窓のfalse判定を使って最大化寸法のまま背景移動する不整合を避ける。
 - 入力部品・選択欄・開いたdialogを除外する。trusted pointer capture、文書・gestureの世代照合を使い、解放・capture喪失・Esc・フォーカス喪失・遷移・破棄・表示切替で回収する。最大化演出中の最小化・閉鎖・再読込・表示切替は古い操作を失効させる。
 
-回帰確認は `node --test backend_diag/checks/normal-title.check.cjs backend_diag/checks/normal-size.check.cjs backend_diag/checks/mini-titlebar.check.cjs backend_diag/checks/desktop.check.mjs`。反復、元のbounds、負座標・倍率、速い押下と解放、遅い判定、capture喪失、各モードへの切替と取消を確認する。UIを変えた場合はDiagの対象bundleとmanifestも同期する。
+回帰確認は `node --test frontend_diag/checks/normal-title.check.cjs frontend_diag/checks/normal-size.check.cjs frontend_diag/checks/mini-titlebar.check.cjs frontend_diag/checks/desktop.check.mjs`。反復、元のbounds、負座標・倍率、速い押下と解放、遅い判定、capture喪失、各モードへの切替と取消を確認する。UIを変えた場合はDiagの対象bundleとmanifestも同期する。
 
-`frontend_ide/host/node_modules/.bin/electron backend_diag/checks/normal-title-desktop.cjs --ozone-platform=headless` はsandboxを維持した合成画面に実trusted入力を送り、本番controllerと隔離DOMを検証する。headlessではOS窓寸法が1×1になるため、このプローブのbounds・カーソル・フォーカスは合成値を使う。**Windows実機の窓位置・DPI・複数画面・nativeジェスチャーの代用ではない。** 対象OS実画面からタイトルを操作し、保存位置・寸法・ポインター位置を実測する。DOMだけの合成 `dblclick` やmockの最大化フラグも実機の合格証拠にしない。
+`frontend_ide/host/node_modules/.bin/electron frontend_diag/checks/normal-title-desktop.cjs --ozone-platform=headless` はsandboxを維持した合成画面に実trusted入力を送り、本番controllerと隔離DOMを検証する。headlessではOS窓寸法が1×1になるため、このプローブのbounds・カーソル・フォーカスは合成値を使う。**Windows実機の窓位置・DPI・複数画面・nativeジェスチャーの代用ではない。** 対象OS実画面からタイトルを操作し、保存位置・寸法・ポインター位置を実測する。DOMだけの合成 `dblclick` やmockの最大化フラグも実機の合格証拠にしない。
 
 ## 再取得・再読込の表示
 
 再取得・再読込は `frontend_web/src/components/AiDiy/compornents/AIファイル.vue` の緑の **↺** に合わせる。通常は背景 `#22c55e`・枠 `#16a34a`・白い文字、hover は背景 `#34d399`・枠 `#22c55e`、disabled は背景 `#1f8a4b`・枠 `#166a39`・opacity `0.4` とする。記号だけのボタンは24px角・記号18pxで、hover時に1.2倍へ拡大する。文字付き操作は説明と既存の配置を保ち、記号だけを拡大する。
 
-- IDE・Explorer・Viewer・Browser・検索／履歴は `frontend_ide/src/components/共通表示/再読込ボタン.vue`、Avatar は `frontend_avatar/src/components/再読込ボタン.vue`、Diag は `backend_diag/diag/ui/components/共通表示/再取得ボタン.css` を使う。2D・別窓のテーマや本文の文字サイズで色・記号の大きさを上書きしない。
+- IDE・Explorer・Viewer・Browser・検索／履歴は `frontend_ide/src/components/共通表示/再読込ボタン.vue`、Avatar は `frontend_avatar/src/components/再読込ボタン.vue`、Diag は `frontend_diag/diag/ui/components/共通表示/再取得ボタン.css` を使う。2D・別窓のテーマや本文の文字サイズで色・記号の大きさを上書きしない。
 - 記号は `aria-hidden` とし、ボタンには操作名を付ける。既存の読込中・未接続・編集中などの無効条件と実行処理は維持する。Browser は読み込み中に停止操作へ切り替わり、停止を無効化しない。
 - 再起動・再接続・再導入・ループ設定・画面切替は再取得と区別する。操作がない画面へ追加せず、削除済みのDiagミニCLI・Explorer右クリックの再取得も復活させない。ピン・閉じる・時刻検索の配置は変えない。
 - 変更後は各Vueのコンパイルと配布物の一致に加え、通常・hover・disabled、繰り返し操作、Browserの停止切替、2D・別窓の表示を確認する。コンパイルや合成状態の検査を実画面の確認として扱わない。
@@ -183,7 +183,7 @@ Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明�
 
 | 対象 | 長押しの取り付け | 表示開始 |
 |------|------------------|----------|
-| aidiy_diag 通常・ミニ | `backend_diag/diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
+| aidiy_diag 通常・ミニ | `frontend_diag/diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
 | Avatar 全12種類 | `createBaseWindow`、`openSettingsWindow` | `electron/main.ts` の `ウィンドウ表示` に集約。読込待ち、連打抑制、非表示要求を共用 |
 | Navi / Console / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
 | Explorer / 比較・Viewer / 軌跡の別窓 | `frontend_ide/デスクトップ/panel-windows.cjs` の `created` | `show` から共通 `拡大表示`。元DOM・状態・表示の保持を崩さない |
@@ -199,11 +199,11 @@ Task / Team も共通の500ms長押し移動に対応する。`frontend_ide/desk
 - Task / Team の追加確認は `node --test frontend_ide/checks/native-window-move.test.mjs frontend_ide/checks/code-drag.test.mjs frontend_ide/checks/task-windows.test.mjs frontend_ide/checks/task-team-launchers.test.mjs`。Task の4窓とTeamで、499ms/500ms境界、実共有controllerへの到達、解放・再操作・Esc・blur・wheel・遷移・破棄、遅いDOM確認の取消を検査する。
 - `node frontend_ide/scripts/check-panel-controls.mjs`：実Vue部品を隔離データで描画し、ページ内の📌、Explorerの既存タイトルと復帰、軌跡の一行表示、繰返し切離し、入力保持、VRロックを確認する。外部通信は行わず、結果と描画画像を一時フォルダへ保存する。
 - `frontend_ide/host/node_modules/.bin/electron frontend_ide/checks/panel-hold-drag-desktop.cjs --ozone-platform=headless`：合成パネルへのtrusted入力で、一覧の行・余白、軌跡ハンドルの500ms長押しと、通常選択・rename・部品・ポップアップの保護を確認する。headlessの結果をWindows実機の位置・重なり確認とは扱わない。
-- ルートで `node --test frontend_avatar/checks/window-opening.test.cjs backend_diag/checks/desktop.check.mjs`、`frontend_channels/discord` で `node --import tsx --test checks/desktop.test.ts`：全12種類の表示経路、連打・取消、Discordへの取り付け、aidiy_diagの初期表示・終了処理。
+- ルートで `node --test frontend_avatar/checks/window-opening.test.cjs frontend_diag/checks/desktop.check.mjs`、`frontend_channels/discord` で `node --import tsx --test checks/desktop.test.ts`：全12種類の表示経路、連打・取消、Discordへの取り付け、aidiy_diagの初期表示・終了処理。
 - 隔離した実Electron入力: `frontend_avatar/node_modules/.bin/electron frontend_ide/checks/native-input-desktop.cjs`。sandboxを維持した合成画面で、元のtrusted down/up、背景のpointercancelとclick抑止、取消・次の通常クリック、native selectのキー選択、2行listboxのマウス選択、dialog内の背景移動禁止を確認する。Linuxの画面なし環境では`--ozone-platform=headless`を指定できるが、OS固有dropdown popupの実機確認は別途必要。結果はOSの一時フォルダへ出力し、画面を取得できた場合だけPNGも残す。
 - Task / Team の隔離Electron入力は上の `native-input-desktop.cjs` へ `AIDIY_TEST_WINDOW_KIND=task` / `team` を指定する（bash例: `AIDIY_TEST_WINDOW_KIND=task frontend_ide/host/node_modules/.bin/electron frontend_ide/checks/native-input-desktop.cjs --ozone-platform=headless`）。実native入力とDOMの保護を検査し、移動controllerは合成する。実controllerのDIP移動はNode回帰で別途検査するため、このheadless試験だけでOSの実窓位置・native dropdownを合格としない。
 - Avatarのmain変更後は `frontend_avatar` の `npm run build:electron` で `dist-electron` を同期する。`node frontend_avatar/checks/window-move-desktop.mjs` は全12種類の実生成関数と共通ズーム・長押しを検査する。本文だけを無害な合成画面へ置き換える。
-- `node backend_diag/checks/initial-mini-desktop.mjs`：実Vueの通常・ミニ表示、長押し、位置・サイズ・最前面・復元。
+- `node frontend_diag/checks/initial-mini-desktop.mjs`：実Vueの通常・ミニ表示、長押し、位置・サイズ・最前面・復元。
 - `node frontend_channels/discord/checks/window-behavior-desktop.mjs`：Discordの本番Vue・preload・ズーム・背景の長押し・選択欄と入力欄のnative操作。Bot workerだけを合成し、接続・保存・外部送信をしない。
 - `node frontend_ide/scripts/check-module-move.mjs`：Code / Live / Consoleの単独・IDE連携、独立Viewer。`node frontend_ide/scripts/check-panel-desktop.mjs`：Explorer、Viewer、比較、iframe、軌跡。Monacoを含む既定の依存物を先にセットアップする。導入済みElectronの指定は各スクリプトの実装を確認する。
 - ズームの画像確認では、キャンバスの透明領域と内側の拡大、実画面のサイズ維持、終了後のキャンバス回収を区別する。光沢の掃引を追加しない。
@@ -259,7 +259,7 @@ Diagでは折り畳み後に接続バーの色を黒くするだけでなく領�
 
 単体ファイルをElectronへ渡す起動では、既定のアプリ名がElectronとなり、別アプリのuserDataと排他ロックが重なる場合がある。aidiy_diagは ready・requestSingleInstanceLock より前に、appData配下の `aidiy_diag` を専用userDataへ指定する。Avatarの既存保存先は変更しない。IDE共通とDiscordの既存アプリ別保存先も維持する。全アプリのMacメニューだけを確認して、Windowsの同時起動確認を省略しない。保存先APIは [Electron公式app API](https://www.electronjs.org/docs/latest/api/app) を参照する。
 
-再検証は `node --test backend_diag/checks/desktop.check.mjs`（3OS分岐と排他前の保存先指定、既存終了確認等）と、aidiy_diagとAvatarを同時に表示する実画面試験を分ける。
+再検証は `node --test frontend_diag/checks/desktop.check.mjs`（3OS分岐と排他前の保存先指定、既存終了確認等）と、aidiy_diagとAvatarを同時に表示する実画面試験を分ける。
 
 ## 大きな修正後の総合テスト
 
@@ -299,7 +299,7 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 
 `collapsed-status-bar.test.mjs`はバーのinline非表示と各呼出し、`panel-collapse.test.cjs`は全窓種の端数zoom・DPI丸めと反復復元を確認する。画面試験では本番scoped CSSをコンパイルし、試験だけの全体隠蔽CSSを追加しない。タイトル・rootの高さ、バーの`display`と実寸0、外周border、3回以上の開閉復帰を測る。headless Electronの固定寸法iframe内での実Vue測定はCSS描画検証であり、Windows実窓・DPI画面・画像目視の代わりにはしない。
 
-再実行は `ELECTRON_PATH=<Electron実行ファイル> node frontend_ide/scripts/check-titlebar-only-electron.mjs`（共通6画面、`--baseline`でmain比較）、`node frontend_ide/scripts/check-detached-titlebar.mjs` → Electronで `frontend_ide/scripts/check-detached-titlebar-render.cjs`（Explorer／Viewer／Navi別窓）、Electronで `backend_diag/checks/collapsed-title-render.cjs`（Diag標準／ミニ）。headless実行には `--headless --no-sandbox --disable-gpu` を使う。Task／Teamの描画ページは `node frontend_ide/scripts/check-taskteam-titlebar.mjs --write-page` で生成する。
+再実行は `ELECTRON_PATH=<Electron実行ファイル> node frontend_ide/scripts/check-titlebar-only-electron.mjs`（共通6画面、`--baseline`でmain比較）、`node frontend_ide/scripts/check-detached-titlebar.mjs` → Electronで `frontend_ide/scripts/check-detached-titlebar-render.cjs`（Explorer／Viewer／Navi別窓）、Electronで `frontend_diag/checks/collapsed-title-render.cjs`（Diag標準／ミニ）。headless実行には `--headless --no-sandbox --disable-gpu` を使う。Task／Teamの描画ページは `node frontend_ide/scripts/check-taskteam-titlebar.mjs --write-page` で生成する。
 
 ### IDEのSV／LDとパネル開閉状態
 

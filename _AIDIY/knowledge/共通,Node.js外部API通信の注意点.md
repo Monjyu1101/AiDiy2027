@@ -1,6 +1,6 @@
 # Node.js 外部 API 通信の注意点
 
-> 文書: `共通,Node.js外部API通信の注意点.md` | 実装: `backend_diag/runtime/environment_proxy.ts`, `backend_diag/runtime/model_probe.ts`, `frontend_channels/discord/src/接続/ネットワーク接続.ts`, `frontend_channels/discord/src/接続/接続エラー.ts`
+> 文書: `共通,Node.js外部API通信の注意点.md` | 実装: `frontend_diag/runtime/environment_proxy.ts`, `frontend_diag/runtime/model_probe.ts`, `frontend_channels/discord/src/接続/ネットワーク接続.ts`, `frontend_channels/discord/src/接続/接続エラー.ts`
 
 ## このメモを使う場面
 
@@ -52,6 +52,6 @@ Diag は旧 `model_probe.ts` の外部 HTTPS も `agent:false` 固定だった�
 
 ## 再検証
 
-`node --test backend_diag/checks/environment-proxy.check.mjs backend_diag/checks/model-http.check.mjs` で、実キー・実 API を使わず loopback mock の proxy と TLS API へ接続する。proxy が CONNECT を受けたこと、API と proxy の認証ヘッダーが分離されること、NO_PROXY / 未指定時の直接接続、自己署名・ホスト名不一致の拒否、proxy 拒否・切断・中止・タイムアウト時の非直結、ローカル Ollama の直接接続、安全な失敗説明を検証する。TLS fixture はテスト子プロセスだけが信頼する公開ダミーで、OS 信頼ストアに入れない。
+`node --test frontend_diag/checks/environment-proxy.check.mjs frontend_diag/checks/model-http.check.mjs` で、実キー・実 API を使わず loopback mock の proxy と TLS API へ接続する。proxy が CONNECT を受けたこと、API と proxy の認証ヘッダーが分離されること、NO_PROXY / 未指定時の直接接続、自己署名・ホスト名不一致の拒否、proxy 拒否・切断・中止・タイムアウト時の非直結、ローカル Ollama の直接接続、安全な失敗説明を検証する。TLS fixture はテスト子プロセスだけが信頼する公開ダミーで、OS 信頼ストアに入れない。
 
-`python -m unittest discover -s backend_diag/checks -p check_setup.py` は、一括・単独セットアップの Diag 見出し / 対象説明 / 順序 / 重複なしを stdout mock で確認する。runtime の TypeScript を変更したら、既存の `node backend_diag/ui/build.mjs` で配布物を再生成し `node backend_diag/ui/verify.mjs` で一致を確認する。
+`python -m unittest discover -s frontend_diag/checks -p check_setup.py` は、一括・単独セットアップの Diag 見出し / 対象説明 / 順序 / 重複なしを stdout mock で確認する。runtime の TypeScript を変更したら、既存の `node frontend_diag/ui/build.mjs` で配布物を再生成し `node frontend_diag/ui/verify.mjs` で一致を確認する。

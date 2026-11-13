@@ -16,7 +16,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 各フォルダの `_setup.py` に委譲します。
 
 フォルダ別スクリプト:
-- backend_diag/_setup.py     環境診断（Node.js / Electron / Vue 3）
+- frontend_diag/_setup.py     環境診断（Node.js / Electron / Vue 3）
 - backend_server/_setup.py   バックエンド(core,apps)
 - backend_taskteam/_setup.py バックエンド(task,team)
 - backend_tools/_setup.py    バックエンド(tools) + MCP 設定
@@ -154,8 +154,8 @@ def stop_setup_apps() -> None:
 def run_diag_headless() -> bool:
     """`aidiy_diag --headless` を実行する。処理本体は全体起動と共通の `_start.py` を使う。"""
     print_header("Diag: aidiy_diag --headless")
-    path = BASE_DIR / "backend_diag" / "_start.py"
-    spec = importlib.util.spec_from_file_location("aidiy_backend_diag_start", path)
+    path = BASE_DIR / "frontend_diag" / "_start.py"
+    spec = importlib.util.spec_from_file_location("aidiy_frontend_diag_start", path)
     mod = importlib.util.module_from_spec(spec)
     try:
         spec.loader.exec_module(mod)
@@ -169,7 +169,7 @@ def run_diag_headless() -> bool:
 
 # `_setup.py` を import するフォルダ（= `__pycache__` が生成される）。
 IMPORT_CACHE_FOLDERS = (
-    "backend_diag",
+    "frontend_diag",
     "backend_local",
     "backend_tools",
     "backend_server",
@@ -790,7 +790,7 @@ def setup_channels(choices: dict) -> list[str]:
 # ============================================================
 def check_refresh_node_runtime(version: str) -> bool:
     """一括buildの実package条件を案内。版数だけでは停止しない。"""
-    projects = ("backend_diag", "backend_diag/ui", "frontend_web", "frontend_avatar",
+    projects = ("frontend_diag", "frontend_diag/ui", "frontend_web", "frontend_avatar",
                 "frontend_ide", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels/discord")
     try:
         for folder in projects:
@@ -846,10 +846,10 @@ def setup_node_refresh() -> list[str]:
 
     # 項目ごとに失敗場所を残し、その後の配置を止める。
     steps = [
-        ("Diag: 依存", lambda: dependencies("backend_diag", electron=True)),
-        ("Diag UI: 依存", lambda: dependencies("backend_diag/ui")),
-        ("Diag UI: ビルド", lambda: build("backend_diag/ui")),
-        ("Diag: aidiy_diag", lambda: _load_folder_module("backend_diag").setup(desktop=False)),
+        ("Diag: 依存", lambda: dependencies("frontend_diag", electron=True)),
+        ("Diag UI: 依存", lambda: dependencies("frontend_diag/ui")),
+        ("Diag UI: ビルド", lambda: build("frontend_diag/ui")),
+        ("Diag: aidiy_diag", lambda: _load_folder_module("frontend_diag").setup(desktop=False)),
         ("Web: 依存", lambda: dependencies("frontend_web")),
         ("Web: ビルド", lambda: build("frontend_web")),
         ("Avatar: 依存", lambda: dependencies("frontend_avatar", electron=True)),
@@ -893,7 +893,7 @@ def setup_node_refresh() -> list[str]:
 def setup_launchers_only() -> list[str]:
     """全起動コマンドの登録を修復する。依存導入・ビルド・サービス起動は行わない。"""
     steps = [
-        ('Diag', lambda: _load_folder_module('backend_diag').setup(desktop=False)),
+        ('Diag', lambda: _load_folder_module('frontend_diag').setup(desktop=False)),
         ('Avatar', lambda: _load_folder_module('frontend_avatar').install_standalone_launcher()),
         ('Hermes', lambda: _load_folder_module('command_hermes').install_standalone_launcher()),
         ('IDE', lambda: _load_folder_module('frontend_ide/viewer').install_launcher(BASE_DIR / 'frontend_ide/viewer')),
@@ -1027,12 +1027,12 @@ def main():
     # 表示順と同じく、共通処理（CLI 導入待機も含む）→ Diag → local の順で実行する。
     print()
     if choices.get("diag"):
-        if not _load_folder_module("backend_diag").setup(choices, desktop=False):
+        if not _load_folder_module("frontend_diag").setup(choices, desktop=False):
             error_locations.append("Diag")
             if not continue_on_error:
                 print_setup_summary(error_locations)
                 sys.exit(1)
-        if not _load_folder_module("backend_diag").setup_desktop(continue_on_error=continue_on_error, copy_warnings=copy_warnings):
+        if not _load_folder_module("frontend_diag").setup_desktop(continue_on_error=continue_on_error, copy_warnings=copy_warnings):
             error_locations.append("Diag: Electron")
             if not continue_on_error:
                 print_setup_summary(error_locations)

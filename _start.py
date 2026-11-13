@@ -16,7 +16,7 @@
 ブラウザ表示・自動再起動監視・一括停止を一元管理します。
 
 フォルダ別スクリプト:
-- backend_diag/_start.py     check_environment / start / run_headless / kill_ports
+- frontend_diag/_start.py     check_environment / start / run_headless / kill_ports
 - backend_local/_start.py    PORT_LOCAL / check_environment / start / kill_ports
 - backend_tools/_start.py    PORT_TOOLS / check_environment / start / kill_ports
 - backend_server/_start.py   PORT_CORE / PORT_APPS / check_environment / start_core / start_apps
@@ -192,7 +192,7 @@ def _remove_folder_import_cache(folder: str) -> None:
 
 def _init_modules() -> None:
     global LOCAL, TOOLS, SERVER, TASKTEAM, WEB, AVATAR, VSCODE, DISCORD, SLACK, DEV, CONSOLE, DIAG, TASK, TEAM, CPU
-    DIAG = _load_folder_module("backend_diag")
+    DIAG = _load_folder_module("frontend_diag")
     LOCAL = _load_folder_module("backend_local")
     TOOLS = _load_folder_module("backend_tools")
     SERVER = _load_folder_module("backend_server")
@@ -209,7 +209,7 @@ def _init_modules() -> None:
     SLACK = _load_folder_module("frontend_channels/slack")
 
     # 起動そのものには不要なので、import で残ったキャッシュは畳んでおく。
-    for folder in ("backend_diag", "frontend_web", "frontend_avatar", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels/discord", "frontend_channels/slack"):
+    for folder in ("frontend_diag", "frontend_web", "frontend_avatar", "frontend_ide/host", "frontend_ide/viewer", "frontend_channels/discord", "frontend_channels/slack"):
         _remove_folder_import_cache(folder)
 
 

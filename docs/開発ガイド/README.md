@@ -20,7 +20,7 @@
 - Discord Bot は `frontend_channels/discord`（任意起動、待受ポートなし）。専用テキストチャンネルを `aidiy_hermes`、専用ボイスチャンネルを Core（`8091`）の AIコア Live へ接続する。起動は `aidiy_discord`
 - Slack Bot は `frontend_channels/slack`。HTTPS の定期取得で専用チャンネルの投稿を Hermes へ渡し、スレッドへ返信する（音声なし）。起動は `aidiy_slack`
 - Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面は `frontend_ide/src/`
-- Diag は `backend_diag`。環境診断に加え、設定・導入操作とサービス起動管理を提供する
+- Diag は `frontend_diag`。環境診断に加え、設定・導入操作とサービス起動管理を提供する
 - DB は **SQLite**
   - `_data/AiDiy/database.db`
 - スキーマ変更は **Alembic なし**
@@ -40,7 +40,7 @@ AiDiy2027/
 ├── _setup.py
 ├── _start.py
 ├── _cleanup.py
-├── backend_diag/              # 診断・設定・起動管理と Vue / Electron 画面
+├── frontend_diag/              # 診断・設定・起動管理と Vue / Electron 画面
 ├── backend_local/             # ローカル Gemma 推論
 ├── command_hermes/            # aidiy_hermes CLI
 ├── backend_tools/
@@ -249,7 +249,7 @@ New-Item -ItemType File -Force backend_server/temp/reboot_apps.txt | Out-Null
 
 ## 10. テスト方針
 
-自動テストは `backend_server/checks/` の `unittest`（AIコア・バックアップ・予測まわり）と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/discord/checks/`・`frontend_channels/slack/checks/` の Node.js / Python テストがあります。`command_hermes/checks/`、`scripts/checks/`（セットアップ・起動・停止・Task / Team）にも `unittest` があります。`frontend_avatar/checks/` の Web / Avatar 接続テスト、`frontend_ide/checks/` の共通画面・Navi・Console テスト、`backend_diag/checks/` の診断・起動管理の検証もあります。実行方法は [開発環境運用手順](../../_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照してください。画面操作は手動でも確認します。
+自動テストは `backend_server/checks/` の `unittest`（AIコア・バックアップ・予測まわり）と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/discord/checks/`・`frontend_channels/slack/checks/` の Node.js / Python テストがあります。`command_hermes/checks/`、`scripts/checks/`（セットアップ・起動・停止・Task / Team）にも `unittest` があります。`frontend_avatar/checks/` の Web / Avatar 接続テスト、`frontend_ide/checks/` の共通画面・Navi・Console テスト、`frontend_diag/checks/` の診断・起動管理の検証もあります。実行方法は [開発環境運用手順](../../_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照してください。画面操作は手動でも確認します。
 
 ```powershell
 cd backend_server
@@ -301,7 +301,7 @@ npm test
 11. [frontend_channels/discord/AGENTS.md](../../frontend_channels/discord/AGENTS.md)
 12. [frontend_channels/slack/AGENTS.md](../../frontend_channels/slack/AGENTS.md)
 13. [frontend_ide/AGENTS.md](../../frontend_ide/AGENTS.md)
-14. [backend_diag/AGENTS.md](../../backend_diag/AGENTS.md)
+14. [frontend_diag/AGENTS.md](../../frontend_diag/AGENTS.md)
 
 ---
 

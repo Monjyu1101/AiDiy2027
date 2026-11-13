@@ -316,7 +316,7 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which("node"), "Node.js required for Diag integration")
     def test_generated_javascript_catalog_round_trip(self):
-        module = (ROOT.parent / "backend_diag/diag/モデル情報/hermes_info.mjs").as_uri()
+        module = (ROOT.parent / "frontend_diag/diag/モデル情報/hermes_info.mjs").as_uri()
         script = f'''import {{hermesModelsInfo}} from {json.dumps(module)};
 const models = {{'image-understanding':'Vision', 'image-output':'Not chat', 'gemini-3.8-flash':'Older', 'gemini-4-pro':'Newer'}};
 const metadata = [{{model_id:'image-understanding', モダリティ:'text+image->text'}}, {{model_id:'image-output', モダリティ:'text->image'}}];

@@ -134,7 +134,7 @@ backend_tools/.venv/Scripts/python.exe -X utf8 -m unittest discover -s scripts/c
 
 ## Diagの判断モデル情報
 
-`_AIDIY/aidiy_diag/decisions_models_info.json` を `conf_models.get_decisions_models()` で読む。形式は `{方式名: {models: {モデルID: 表示名}}}`。4方式のうち認証付き取得候補があるものだけを保存する。詳細は [Diag運用](./backend_diag,環境診断運用.md) を参照。
+`_AIDIY/aidiy_diag/decisions_models_info.json` を `conf_models.get_decisions_models()` で読む。形式は `{方式名: {models: {モデルID: 表示名}}}`。4方式のうち認証付き取得候補があるものだけを保存する。詳細は [Diag運用](./frontend_diag,環境診断運用.md) を参照。
 
 候補のない方式は省略、全体が空なら `{}`。ファイル未作成・不正も読込口では空一覧として扱う。設定値や方式別既定モデルは変更せず、明示引数 > 共通設定 > 方式別設定 > 方式既定値の順と既存の生成起動チェックを維持する。Diagの候補と `decisions_config.available_models`（生成確認済み）は別の意味を持つ。
 
@@ -142,4 +142,4 @@ Web/Avatarの設定画面は4方式とautoを扱い、Diagの判断一覧を候�
 
 ### 判断系の候補管理
 
-書き出す候補の絞り込みは [Diag運用の判断用モデル一覧](./backend_diag,環境診断運用.md#判断用モデル一覧) に集約する。実行側へ固定許可リストを追加せず、起動チェックの利用可能方式・明示引数・設定値を区別する。
+書き出す候補の絞り込みは [Diag運用の判断用モデル一覧](./frontend_diag,環境診断運用.md#判断用モデル一覧) に集約する。実行側へ固定許可リストを追加せず、起動チェックの利用可能方式・明示引数・設定値を区別する。

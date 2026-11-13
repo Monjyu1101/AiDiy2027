@@ -4,7 +4,7 @@ import {readFile,mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
-import {catalog,resolveProgram,probe} from '../../backend_diag/diag/診断/probes.mjs';
+import {catalog,resolveProgram,probe} from '../../frontend_diag/diag/診断/probes.mjs';
 
 const bat = name => readFile(new URL(`../cli_bat/${name}`,import.meta.url));
 test('BAT entry points use the isolated installer, retain asynchronous launch and CRLF',async()=>{

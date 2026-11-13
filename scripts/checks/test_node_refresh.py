@@ -111,7 +111,7 @@ class NodeRefreshTests(unittest.TestCase):
         self.enterContext(patch.object(setup.importlib.util, "module_from_spec", return_value=common))
         run = self.enterContext(patch.object(setup, "run_command", return_value=True))
         modules = {
-            "backend_diag": SimpleNamespace(setup=Mock(return_value=True)),
+            "frontend_diag": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_avatar": SimpleNamespace(install_standalone_launcher=Mock(return_value=True)),
             "frontend_ide/host": SimpleNamespace(setup_assets=Mock(return_value=True), install_standalone_launcher=Mock(return_value=True)),
             "frontend_ide/viewer": SimpleNamespace(install_launcher=Mock(return_value=None)),
@@ -150,11 +150,11 @@ class NodeRefreshTests(unittest.TestCase):
         self.assertEqual(clean_installs, ["frontend_channels/discord"] * 2)
         builds = [(call.kwargs["cwd"].relative_to(ROOT).as_posix(), call.args[0][-1])
                   for call in run.call_args_list if call.args[0][1] == "run"]
-        self.assertEqual(builds, [("backend_diag/ui", "build"), ("frontend_web", "build"),
+        self.assertEqual(builds, [("frontend_diag/ui", "build"), ("frontend_web", "build"),
                                  ("frontend_avatar", "build"), ("frontend_channels/discord", "build:panel"),
                                  ("frontend_channels/slack", "build:panel")] * 2)
         self.assertEqual(prepare.call_count, 12)
-        modules["backend_diag"].setup.assert_called_with(desktop=False)
+        modules["frontend_diag"].setup.assert_called_with(desktop=False)
         self.assertEqual(modules["frontend_ide/host"].setup_assets.call_count, 2)
         modules["frontend_ide/host"].setup_assets.assert_called_with("npm", choices={"_defer_ide_launchers": True})
         self.assertEqual(modules["frontend_channels/discord"].install_launcher.call_count, 2)

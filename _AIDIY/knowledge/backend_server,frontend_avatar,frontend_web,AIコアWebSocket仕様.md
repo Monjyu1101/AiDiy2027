@@ -70,7 +70,7 @@ Python 側は Live の終了・受信待ち・送受信を検証する。モデ�
 
 WebSocketの`output_text`とMCPの`result`／`content`で同じ本文を返します。MCPではエラー応答の`status`も`NG`とし、Diagも空文字・`!`始まりを成功扱いしません。Code CLIは途中の回答があっても終了コードが0以外ならエラーとし、失敗後の検証・自己改善へ進みません。標準Chat Completionsの`tool_calls`だけの中間応答は、有効なツール要求なので空の`content`を許可します。
 
-確認は外部AIへ接続せず、`backend_diag/checks/model-trials.check.mjs`で行います。Python 側の応答エラー整形・CLI出力振り分けには専用の自動テストがありません。変更の反映にはCoreとTools、Diagの再起動が必要です。
+確認は外部AIへ接続せず、`frontend_diag/checks/model-trials.check.mjs`で行います。Python 側の応答エラー整形・CLI出力振り分けには専用の自動テストがありません。変更の反映にはCoreとTools、Diagの再起動が必要です。
 
 ```typescript
 // テキスト入力

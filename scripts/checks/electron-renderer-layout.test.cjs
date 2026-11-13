@@ -24,7 +24,7 @@ test('Avatar の実例は components と dialog を src 直下で役割分離す
 });
 
 test('Diag は機能内の関連ソースを components に保ち、再起動 dialog を分離する', () => {
-  const base = 'backend_diag/diag/ui/';
+  const base = 'frontend_diag/diag/ui/';
   const features = ['AI設定', 'モデル一覧', 'ウィンドウ', '導入状況', '共通表示', 'Tools', 'AIモデル', '設定モデル', 'アプリ起動', '起動', 'キー設定共通', '外部連携'];
   present(features.map(name => base + 'components/' + name));
   absent(features.map(name => base + name));
@@ -58,7 +58,7 @@ for (const [name, base] of [['Discord', 'frontend_channels/discord/panel/'], ['S
 
 test('main / preload、拡張ホストと viewer API は renderer 整理で移さない', () => {
   present(['frontend_avatar/electron/main.ts', 'frontend_avatar/electron/preload.ts',
-    'backend_diag/diag/起動/electron-main.cjs', 'frontend_ide/desktop.cjs',
+    'frontend_diag/diag/起動/electron-main.cjs', 'frontend_ide/desktop.cjs',
     'frontend_ide/host/src', 'frontend_ide/viewer', 'frontend_channels/discord/src/main.ts', 'frontend_channels/slack/src/main.ts']);
 });
 
@@ -73,7 +73,7 @@ for (const kind of ['console', 'code', 'live', 'ide', 'task', 'team', 'browser']
 }
 
 test('11 アプリの所有元を網羅し、互換入口・補助 worker を別 renderer に複製しない', () => {
-  present(['backend_diag/diag_main.mjs', 'frontend_avatar/launch.mjs',
+  present(['frontend_diag/diag_main.mjs', 'frontend_avatar/launch.mjs',
     'frontend_channels/discord/panel/launch.mjs', 'frontend_channels/slack/panel/launch.mjs',
     'frontend_ide/host/aidiy_code/launch.mjs', 'frontend_ide/host/aidiy_live/launch.mjs',
     'frontend_ide/ファイル機能/MarkdownPDF-worker.cjs']);
@@ -85,7 +85,7 @@ test('11 アプリの所有元を網羅し、互換入口・補助 worker を別
 
 test('Diag の検証 fixture も移動後の src/components を参照し、後続整理で旧パスへ戻さない', () => {
   const { readdirSync } = require('node:fs');
-  const checks = resolve(root, 'backend_diag/checks');
+  const checks = resolve(root, 'frontend_diag/checks');
   const oldPath = /ui\/src\/(?:AI設定|モデル一覧|ウィンドウ|導入状況|共通表示|Tools|AIモデル|設定モデル|アプリ起動|起動|キー設定共通|外部連携)\//;
   for (const name of readdirSync(checks).filter(name => /\.[cm]js$/.test(name))) {
     assert.doesNotMatch(readFileSync(resolve(checks, name), 'utf8'), oldPath, name);

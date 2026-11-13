@@ -21,8 +21,8 @@ def load(name, path):
 
 cleanup = load('lifecycle_root_cleanup', '_cleanup.py')
 setup = load('lifecycle_root_setup', '_setup.py')
-diag_setup = load('lifecycle_diag_setup', 'backend_diag/_setup.py')
-diag_start = load('lifecycle_diag_start', 'backend_diag/_start.py')
+diag_setup = load('lifecycle_diag_setup', 'frontend_diag/_setup.py')
+diag_start = load('lifecycle_diag_start', 'frontend_diag/_start.py')
 
 
 class LifecycleResultsTests(unittest.TestCase):
@@ -75,7 +75,7 @@ class LifecycleResultsTests(unittest.TestCase):
         functions = ('stop_all_services', 'cleanup_backup', 'uninstall_global_npm_tools', '_run_folder_cleanup',
                      'remove_launcher_path', 'cleanup_temp_directories', '_remove_folder_import_cache', '_remove_root_python_caches')
         choices = dict.fromkeys(('diag', 'npm_uninstall', 'local', 'tools', 'backend', 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'channels'), True)
-        modules = ('backend_diag', 'backend_local', 'backend_tools', 'backend_server', 'backend_taskteam',
+        modules = ('frontend_diag', 'backend_local', 'backend_tools', 'backend_server', 'backend_taskteam',
                    'frontend_web', 'frontend_avatar', 'command_hermes', 'frontend_ide', 'frontend_channels/discord', 'frontend_channels/slack')
         cases = [(None, None)] + [('_run_folder_cleanup', name) for name in modules] + [(name, None) for name in functions if name not in ('stop_all_services', '_run_folder_cleanup')]
         for failure, folder in cases:

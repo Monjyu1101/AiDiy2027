@@ -62,7 +62,7 @@ class PosixPathTests(unittest.TestCase):
         events = []
         def action(label):
             events.append(label)
-            return False if label == 'backend_diag' else True
+            return False if label == 'frontend_diag' else True
         def folder(name):
             return SimpleNamespace(
                 setup=lambda **_: action(name),
@@ -71,7 +71,7 @@ class PosixPathTests(unittest.TestCase):
         with patch.object(root, '_load_folder_module', side_effect=folder), patch.object(root.subprocess, 'run') as process:
             self.assertEqual(root.setup_launchers_only(), ['Diag'])
             process.assert_not_called()
-        self.assertEqual(events, ['backend_diag', 'frontend_avatar', 'command_hermes',
+        self.assertEqual(events, ['frontend_diag', 'frontend_avatar', 'command_hermes',
                                   'frontend_ide/viewer', 'frontend_ide/aidiy_console',
                                   'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi',
                                   'frontend_ide/host', 'frontend_ide/aidiy_task',
@@ -105,7 +105,7 @@ class PosixPathTests(unittest.TestCase):
         # 本物のサービス・GUI の代わりに、渡された起動引数を出力する。
         stub = '#!' + sys.executable + '\nimport json,sys\nprint(json.dumps(sys.argv[1:]))\n'
         node.write_text(stub, encoding='utf-8'); node.chmod(0o755)
-        files = {'backend_diag': 'diag_main.mjs', 'frontend_ide/viewer': 'launch.mjs',
+        files = {'frontend_diag': 'diag_main.mjs', 'frontend_ide/viewer': 'launch.mjs',
                  'frontend_ide/aidiy_console': 'launch.mjs', 'frontend_channels/discord': 'panel/launch.mjs',
                  'frontend_ide/host': 'aidiy_code/launch.mjs', 'frontend_avatar': 'launch.mjs',
                  'command_hermes': 'cli_main.py'}
@@ -113,12 +113,12 @@ class PosixPathTests(unittest.TestCase):
             target = checkout / folder / file
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text('import json,sys;print(json.dumps(sys.argv))\n', encoding='utf-8')
-        (checkout / 'backend_diag/memo_main.mjs').write_text('// memo fixture', encoding='utf-8')
+        (checkout / 'frontend_diag/memo_main.mjs').write_text('// memo fixture', encoding='utf-8')
         live = checkout / 'frontend_ide/host/aidiy_live/launch.mjs'
         live.parent.mkdir(); live.touch()
         py = checkout / 'command_hermes/.venv/bin/python'
         py.parent.mkdir(parents=True); py.write_text(stub, encoding='utf-8'); py.chmod(0o755)
-        diag = load(ROOT / 'backend_diag/_setup.py')
+        diag = load(ROOT / 'frontend_diag/_setup.py')
         viewer = load(ROOT / 'frontend_ide/viewer/launcher.py')
         discord = load(ROOT / 'frontend_channels/discord/launcher.py')
         host = load(ROOT / 'frontend_ide/host/_setup.py')
@@ -128,7 +128,7 @@ class PosixPathTests(unittest.TestCase):
             self.enterContext(patch.object(module, 'ensure_launcher_path', side_effect=self.helper.ensure_launcher_path))
             if module is not hermes:
                 self.enterContext(patch.object(getattr(module, '_path_helper', module), 'launcher_directory', side_effect=local))
-        self.enterContext(patch.object(diag, 'THIS_DIR', checkout / 'backend_diag'))
+        self.enterContext(patch.object(diag, 'THIS_DIR', checkout / 'frontend_diag'))
         self.enterContext(patch.object(host, 'FRONTEND_VSCODE_DIR', checkout / 'frontend_ide/host'))
         self.enterContext(patch.object(avatar, 'FRONTEND_AVATAR_DIR', checkout / 'frontend_avatar'))
         self.enterContext(patch.object(hermes, 'BACKEND_HERMES_DIR', checkout / 'command_hermes'))
@@ -159,9 +159,9 @@ class PosixPathTests(unittest.TestCase):
         self.assertTrue(viewer.remove_launcher(checkout / 'frontend_ide/viewer'))
         self.assertTrue(viewer.remove_launcher(checkout / 'frontend_ide/aidiy_console', 'console'))
         self.assertTrue(discord.remove_launcher(checkout / 'frontend_channels/discord'))
-        diag_cleanup = load(ROOT / 'backend_diag/_cleanup.py')
+        diag_cleanup = load(ROOT / 'frontend_diag/_cleanup.py')
         self.enterContext(patch.object(getattr(diag_cleanup, '_path_helper', diag_cleanup), 'launcher_directory', side_effect=local))
-        self.enterContext(patch.object(diag_cleanup, '__file__', str(checkout / 'backend_diag/_cleanup.py')))
+        self.enterContext(patch.object(diag_cleanup, '__file__', str(checkout / 'frontend_diag/_cleanup.py')))
         self.assertTrue(diag_cleanup.cleanup())
         host_cleanup = load(ROOT / 'frontend_ide/host/_cleanup.py')
         self.enterContext(patch.object(getattr(host_cleanup, '_path_helper', host_cleanup), 'launcher_directory', side_effect=local))

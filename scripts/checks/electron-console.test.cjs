@@ -29,7 +29,7 @@ test('Avatar開発用ラッパーも実子プロセスにコンソールを作�
 
 test('GUIとして起動するElectronバイナリはWindows GUI形式',{skip:process.platform!=='win32'},()=>{
  const inspected=[];
- for(const owner of ['backend_diag','frontend_ide','frontend_ide/host','frontend_ide/viewer','frontend_avatar','frontend_channels/discord']){
+ for(const owner of ['frontend_diag','frontend_ide','frontend_ide/host','frontend_ide/viewer','frontend_avatar','frontend_channels/discord']){
   const path=resolve(root,owner,'node_modules/electron/dist/electron.exe');if(!existsSync(path))continue;
   const bytes=readFileSync(path),pe=bytes.readUInt32LE(0x3c);assert.equal(bytes.toString('ascii',pe,pe+4),'PE\0\0');
   const subsystem=bytes.readUInt16LE(pe+24+68);assert.equal(subsystem,2,owner);inspected.push(owner);

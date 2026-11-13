@@ -193,7 +193,7 @@ def start_headless(node):
     if os.name == 'nt':
         console = load_module('aidiy_diag_console', Path(__file__).with_name('_diag_console.py'))
         api = console.ConsoleSubprocess(subprocess)
-    return api.Popen([node, str(ROOT / 'backend_diag/diag_main.mjs'), '--headless'],
+    return api.Popen([node, str(ROOT / 'frontend_diag/diag_main.mjs'), '--headless'],
                      cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                      **({} if os.name == 'nt' else {'start_new_session': True}))
 
