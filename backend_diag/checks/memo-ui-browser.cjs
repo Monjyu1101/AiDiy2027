@@ -12,7 +12,7 @@ if(process.versions.electron){
    const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
    const expect=(value,label)=>{if(!value)throw Error(label)};
    const title=document.querySelector('.sticky-title'),text=document.querySelector('.sticky-text');
-   expect(title&&text,'title and body present');expect(!document.querySelector('header,.memo-board'),'no header or board');
+   expect(title&&text,'title and body present');expect(!document.querySelector('.memo-board'),'no board');
    expect(document.querySelectorAll('textarea').length===1,'one note only');
    const rect=document.querySelector('.sticky-note').getBoundingClientRect();expect(rect.width===320&&rect.height===260,'full pastel note '+JSON.stringify({width:rect.width,height:rect.height,innerWidth,innerHeight}));
    window.handlers.bounds({x:-200,y:50,width:320,height:260});document.querySelector('[aria-label="桃色の付箋"]').click();await wait(200);
@@ -26,9 +26,11 @@ if(process.versions.electron){
    window.failSave=false;[...document.querySelectorAll('button')].find(x=>x.textContent==='再試行').click();await wait(10);expect(!document.querySelector('.sticky-error'),'retry resolves');
    const fire=(el,type,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,button:0,clientX:x,clientY:y}));
    fire(text,'pointerdown',20,40);await wait(100);fire(window,'pointermove',40,50);fire(window,'pointerup',40,50);expect(window.dragCalls===0,'ordinary selection not window drag');
-   fire(text,'pointerdown',20,40);await wait(550);fire(window,'pointerup',20,40);expect(window.dragCalls===1,'500ms hold moves window');
+   fire(title,'pointerdown',20,20);await wait(0);fire(window,'pointerup',20,20);expect(window.dragCalls===0,'title remains editable');
+   fire(document.querySelector('.sticky-header'),'pointerdown',300,12);await wait(0);expect(window.dragCalls===1,'header moves immediately');fire(window,'pointerup',300,12);
+   document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
    expect(window.identity?.id==='one.memo.json','created identity reported');
-   return 'PASS one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/longpress';
+   return 'PASS one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';
   })()`));app.exit(0);
  }).catch(error=>{console.error(error);app.exit(1)});
 }else{

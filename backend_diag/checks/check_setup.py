@@ -69,7 +69,7 @@ class LauncherTests(unittest.TestCase):
         shell=setup.launcher_content("/tmp/it's repo/diag_main.mjs",False)
         self.assertIn('aidiy_diag-owner:',shell)
     def test_cleanup_ownership(self):
-        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.object(cleanup,'__file__',str(Path(directory)/'_cleanup.py')),patch.object(cleanup,'stop_processes',return_value=True),patch.object(cleanup._path_helper,'launcher_directory',return_value=Path(directory)/'.local/bin'):
+        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.object(cleanup,'__file__',str(Path(directory)/'_cleanup.py')),patch.object(cleanup,'stop_processes',return_value=True),patch.object(cleanup,'stop_memo_processes',return_value=True),patch.object(cleanup._path_helper,'launcher_directory',return_value=Path(directory)/'.local/bin'):
             folder=Path(directory)/'.local/bin';folder.mkdir(parents=True)
             launcher=folder/'aidiy_diag';launcher.write_text('another checkout')
             self.assertTrue(cleanup.cleanup());self.assertTrue(launcher.exists())
@@ -411,7 +411,7 @@ class SetupDisplayTests(unittest.TestCase):
         self.enterContext(patch.object(setup, 'ensure_launcher_path', return_value=True))
 
     def assert_diag_display(self, output):
-        self.assertEqual(output.count('Diag セットアップ'), 1)
+        self.assertEqual(output.count('Diag, Memo セットアップ'), 1)
         self.assertIn(setup.Colors.HEADER + '=' * 60 + setup.Colors.ENDC, output)
         self.assertIn('[INFO] 作業ディレクトリ:', output)
         self.assertIn('[INFO] 対象: Node.js / Electron', output)
@@ -442,7 +442,7 @@ class SetupDisplayTests(unittest.TestCase):
             stack.enter_context(patch.object(setup,'setup_desktop',side_effect=lambda **kwargs:print('desktop-fixture') or True))
             stack.enter_context(redirect_stdout(output));module.main()
         text=output.getvalue();self.assert_diag_display(text)
-        self.assertLess(text.index('common-wait-fixture'),text.index('Diag セットアップ'))
+        self.assertLess(text.index('common-wait-fixture'),text.index('Diag, Memo セットアップ'))
         self.assertLess(text.index('desktop-fixture'),text.index('local-fixture'))
 
     def test_unselected_diag_has_no_display_or_install(self):

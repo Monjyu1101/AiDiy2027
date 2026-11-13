@@ -27,7 +27,7 @@ export function createMemoHandler({appLauncher,launchRoot,getLaunchRoot,memoStor
       }
       if(route?.startsWith('api/メモ/')){
         if(standalone&&route==='api/メモ/プロジェクト')return reply(404,{エラー:'単体メモはプロジェクトを変更できません。'});
-        if(!['api/メモ/作成','api/メモ/保存','api/メモ/読込','api/メモ/プロジェクト'].includes(route))return reply(404,{エラー:'操作が見つかりません。'});
+        if(!['api/メモ/作成','api/メモ/保存','api/メモ/削除','api/メモ/読込','api/メモ/プロジェクト'].includes(route))return reply(404,{エラー:'操作が見つかりません。'});
         if(req.method!=='POST')return reply(405,{エラー:'POST を使用してください。'});
         if(req.headers['sec-fetch-site']==='cross-site')return reply(403,{エラー:'同じ画面から操作してください。'});
         if(req.headers.origin){try{if(new URL(req.headers.origin).origin!==`http://${req.headers.host}`)return reply(403,{エラー:'同じ画面から操作してください。'});}catch{return reply(403,{エラー:'送信元が不正です。'});}}
@@ -41,6 +41,7 @@ export function createMemoHandler({appLauncher,launchRoot,getLaunchRoot,memoStor
             memoProject=body.フォルダ?(await appLauncher.folders(body.フォルダ)).フォルダ:'';
             return reply(200,{更新:true});
           }
+          if(route.endsWith('/削除'))return reply(200,await store.trash(body));
           if(route.endsWith('/読込'))return reply(200,await store.read(body));
           return reply(200,await (route.endsWith('/作成')?store.create(body):store.save(body)));
         }catch(error){return reply(error.status||500,{エラー:error.status?error.message:route.endsWith('/読込')?'メモを読み込めませんでした。':'メモを保存できませんでした。編集内容を保持して再試行してください。'});}

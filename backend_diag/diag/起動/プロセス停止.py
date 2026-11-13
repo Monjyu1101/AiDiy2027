@@ -125,7 +125,23 @@ def is_diag(process, root, windows):
     return False
 
 
-def stop(root):
+def is_memo(process, root, windows):
+    if not is_diag(process, root, windows):
+        return False
+    args = common.process_arguments(process.get('CommandLine') or '', windows)
+    return any(arg in ('--memo-only', '--aidiy-memo-only') or
+               arg.replace('\\', '/').endswith('/memo_main.mjs') for arg in args[1:])
+
+
+def stop_memo(root):
+    # Diagと共用する残留Electronも含め、最後に両方の不在を確認する。
     return common.stop_matching(
         lambda process: is_diag(process, root, sys.platform == 'win32'),
+        print, print, 'AiDiy Memo（Diag共用プロセスを含む）')
+
+
+def stop(root):
+    return common.stop_matching(
+        lambda process: is_diag(process, root, sys.platform == 'win32') and
+                        not is_memo(process, root, sys.platform == 'win32'),
         print, print, 'AiDiy Diag')

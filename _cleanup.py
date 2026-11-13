@@ -320,6 +320,8 @@ def stop_all_services(
     if not keep_diag:
         print_info("バックエンド(Diag) の本体・残留Electronを停止します")
         run_stop("Diag", lambda: _load_folder_module("backend_diag").stop_processes())
+        print_info("Memo の単体起動・共用残留プロセスを停止します")
+        run_stop("Memo", lambda: _load_folder_module("backend_diag").stop_memo_processes())
 
     for _choice_key, folder, description, _service_names in SERVICE_CLEANUP_TARGETS:
         if folder in ("frontend_ide/aidiy_console", "frontend_ide/aidiy_cpu", "frontend_ide/viewer", *CHANNEL_FOLDERS):

@@ -57,7 +57,7 @@ ensure_launcher_path = _path_helper.ensure_launcher_path
 def setup(choices=None, *, desktop=True):
     if choices is not None and choices.get('diag') is False:
         return True
-    print_header('Diag セットアップ')
+    print_header('Diag, Memo セットアップ')
     print_info(f'作業ディレクトリ: {THIS_DIR}')
     print_info('対象: Node.js / Electron / Vue 3')
     launchers = []

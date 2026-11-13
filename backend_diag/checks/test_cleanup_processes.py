@@ -30,6 +30,32 @@ class DiagCleanupTests(unittest.TestCase):
     def owned(self, command, name='node.exe', executable=''):
         return processes.is_diag(dict(Name=name, CommandLine=command, ExecutablePath=executable), ROOT, True)
 
+    def test_cleanup_stops_diag_then_memo_even_if_diag_fails(self):
+        module = Mock()
+        module.stop_processes.return_value = False
+        with patch.object(cleanup, '_load_folder_module', return_value=module), \
+                patch.object(cleanup, '_load_folder_start_module', return_value=module), \
+                patch.object(cleanup.time, 'sleep'), patch('builtins.print'), \
+                patch.object(cleanup._opencode_service, 'stop_opencode_service'):
+            self.assertFalse(cleanup.stop_all_services(keep_diag=False, strict=False))
+        names = [call[0] for call in module.mock_calls]
+        self.assertLess(names.index('stop_processes'), names.index('stop_memo_processes'))
+
+    def test_diag_stage_leaves_standalone_memo_for_memo_stage(self):
+        for windows in (False, True):
+            records = [dict(Name='node', CommandLine=f'node "{ROOT / entry}"')
+                       for entry in ('diag_main.mjs', 'memo_main.mjs')]
+            predicates = []
+            def stop_matching(predicate, *args):
+                predicates.append(predicate)
+                return True
+            with patch.object(processes.sys, 'platform', 'win32' if windows else 'linux'), \
+                    patch.object(processes.common, 'stop_matching', side_effect=stop_matching):
+                self.assertTrue(processes.stop(ROOT))
+                self.assertTrue(processes.stop_memo(ROOT))
+                self.assertEqual([predicates[0](p) for p in records], [True, False])
+                self.assertEqual([predicates[1](p) for p in records], [True, True])
+
     def test_normal_and_preloaded_entrypoints(self):
         for entry in (ROOT / 'diag_main.mjs', ROOT / 'memo_main.mjs', ROOT / 'diag/起動/electron-main.cjs'):
             for prefix in ('', '--require "C:\\test dir\\probe.cjs" ', '--import=probe.mjs ', '-- '):
@@ -178,7 +204,8 @@ class DiagCleanupTests(unittest.TestCase):
 
     def test_stop_failure_preserves_launcher(self):
         with tempfile.TemporaryDirectory() as folder, patch.object(diag, '__file__', str(Path(folder) / '_cleanup.py')), \
-                patch.object(diag, 'stop_processes', return_value=False), patch.object(diag, 'remove_launcher_path') as remove:
+                patch.object(diag, 'stop_processes', return_value=False), \
+                patch.object(diag, 'stop_memo_processes', return_value=True), patch.object(diag, 'remove_launcher_path') as remove:
             self.assertFalse(diag.cleanup())
             remove.assert_not_called()
 

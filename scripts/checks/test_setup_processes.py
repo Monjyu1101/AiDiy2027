@@ -37,6 +37,57 @@ class SetupProcessesTest(unittest.TestCase):
         self.opencode = opencode.start()
         self.addCleanup(opencode.stop)
 
+    def test_diag_then_memo_order_and_other_checkout_preserved(self):
+        for windows in (False, True):
+            root = 'C:/repo/AiDiy' if windows else ROOT
+            records = [proc(30, f'node {root}/backend_diag/memo_main.mjs'),
+                       proc(20, f'node {root}/backend_diag/diag_main.mjs'),
+                       proc(40, f'node {root}-other/backend_diag/memo_main.mjs'),
+                       proc(10, f'python {root}/_start.py', name='python')]
+            stopped = []
+            def kill(pid, *_):
+                stopped.append(pid)
+                records[:] = [p for p in records if p['ProcessId'] != pid]
+            def run(args, **kwargs):
+                self.assertNotIn('/T', args)
+                kill(int(args[-1]))
+            with patch.object(subject.sys, 'platform', 'win32' if windows else 'linux'), \
+                    patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
+                    patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
+                    patch.object(subject.os, 'kill', side_effect=kill), \
+                    patch.object(subject.subprocess, 'run', side_effect=run):
+                self.assertTrue(subject.stop_setup_processes(root, lambda _: None))
+            self.assertEqual(stopped, [10, 20, 30])
+            self.assertEqual([p['ProcessId'] for p in records], [40])
+
+    def test_diag_kill_failure_does_not_skip_memo(self):
+        for windows in (False, True):
+            root = 'C:/repo/AiDiy' if windows else ROOT
+            records = [proc(20, f'node {root}/backend_diag/diag_main.mjs'),
+                       proc(30, f'node {root}/backend_diag/memo_main.mjs')]
+            attempted = []
+            def kill(pid, *_):
+                attempted.append(pid)
+                if pid == 20:
+                    if windows:
+                        raise subject.subprocess.TimeoutExpired('taskkill', 10)
+                    raise PermissionError('fixture denied')
+                records[:] = [p for p in records if p['ProcessId'] != pid]
+            with patch.object(subject.sys, 'platform', 'win32' if windows else 'linux'), \
+                    patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
+                    patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
+                    patch.object(subject.os, 'kill', side_effect=kill), \
+                    patch.object(subject.subprocess, 'run', side_effect=lambda args, **kw: kill(int(args[-1]))), \
+                    patch.object(subject.time, 'monotonic', side_effect=[0, 6]):
+                self.assertFalse(subject.stop_setup_processes(root, lambda _: None, lambda _: None))
+            self.assertEqual(attempted, [20, 30])
+            self.assertEqual([p['ProcessId'] for p in records], [20])
+
+    def test_memo_is_independent_boundary_under_preserved_code(self):
+        records = [app(10, 'code'), proc(20, f'node {ROOT}/backend_diag/memo_main.mjs', 10),
+                   proc(21, 'electron --type=renderer', 20)]
+        self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {20, 21})
+
     def test_all_components_except_code_ide_discord(self):
         records = [app(10, 'code'), app(11, 'ide'), app(12, 'live'), app(13, 'console')]
         for i, folder in enumerate(subject.COMPONENTS[:-1], 20):

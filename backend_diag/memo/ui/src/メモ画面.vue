@@ -24,18 +24,19 @@ async function flushClose(request){
 async function blur(event){if(event?.bounds)bounds(event.bounds);if(!model){pendingBlur=true;return;}if(model.snapshot().blankNew){if(native)await native.close();else window.close();return;}await model.flush();}
 function beforeUnload(event){if(state.value.dirty||state.value.saving){event.preventDefault();event.returnValue='';}}
 function move(event){
- if(!native||event.button!==0||event.target.closest('button,select,a'))return;
- // 入力欄では短いドラッグを文字選択に使い、静止した500ms長押しだけ窓移動にする。
- dragEnd();let token,timer,interval,ended=false,started=false;
- const x=event.clientX,y=event.clientY;
- const end=()=>{ended=true;clearTimeout(timer);clearInterval(interval);if(token)void native.endWindowMove(token);window.removeEventListener('pointermove',motion);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);window.removeEventListener('blur',end);dragEnd=()=>{};};
- const motion=e=>{if(!started&&Math.hypot(e.clientX-x,e.clientY-y)>5){end();return;}if(started)e.preventDefault();};
- timer=setTimeout(async()=>{try{token=await native.beginWindowMove();if(ended){if(token)void native.endWindowMove(token);return;}if(token){started=true;editor.value?.blur();interval=setInterval(()=>{void native.moveWindow(token);},16);}}catch{end();}},500);
- window.addEventListener('pointermove',motion,{passive:false});window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);window.addEventListener('blur',end);dragEnd=end;
+ if(!native||event.button!==0||event.target.closest('input,textarea,button,select,a'))return;
+ event.preventDefault();dragEnd();let token,interval,ended=false;
+ const end=()=>{ended=true;clearInterval(interval);if(token)void native.endWindowMove(token);window.removeEventListener('pointerup',end);window.removeEventListener('pointercancel',end);window.removeEventListener('blur',end);dragEnd=()=>{};};
+ window.addEventListener('pointerup',end);window.addEventListener('pointercancel',end);window.addEventListener('blur',end);dragEnd=end;
+ void (async()=>{try{token=await native.beginWindowMove();if(ended){if(token)void native.endWindowMove(token);return;}if(token)interval=setInterval(()=>{void native.moveWindow(token);},16);}catch{end();}})();
 }
 async function copyText(){try{await navigator.clipboard.writeText(state.value.draft.本文);copied.value=true;}catch{editor.value?.focus();editor.value?.select();}}
 async function retry(){await model?.retry();}
-async function close(){if(native){await native.close();return;}closing.value=true;try{if(await model?.flush())window.close();}finally{closing.value=false;}}
+async function trash(){
+ if(closing.value||!ready.value)return;closing.value=true;
+ try{if(await model.trash()){if(native)await native.close();else window.close();}}
+ finally{closing.value=false;}
+}
 onMounted(async()=>{
  window.addEventListener('beforeunload',beforeUnload);if(!native)window.addEventListener('blur',blur);
  // close/bounds購読を初期状態取得より先に登録し、起動直後の操作を取りこぼさない。
@@ -70,15 +71,15 @@ onMounted(async()=>{
 onUnmounted(()=>{alive=false;dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
 </script>
 <template>
- <main class="sticky-note" :class="`sticky-${color}`" @pointerdown="move">
+ <main class="sticky-note" :class="`sticky-${color}`">
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
-   <input class="sticky-title" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})">
+   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"></header>
    <textarea ref="editor" class="sticky-text" :value="state.draft.本文" :disabled="!ready||closing" aria-label="付箋の本文" placeholder="メモを書く…" spellcheck="false" @input="edit({本文:$event.target.value})"></textarea>
    <div v-if="state.error" class="sticky-error" role="alert"><span>{{state.error}} 入力内容は保持しています。</span><div><button type="button" @click="retry">再試行</button><button type="button" @click="copyText">{{copied?'コピー済':'本文をコピー'}}</button></div></div>
    <div class="sticky-bottom" :title="source" aria-label="付箋の色と保存先">
     <div class="sticky-palette"><button v-for="value in メモ色" :key="value" type="button" :class="`sticky-${value}`" :aria-label="`${色名[value]}色の付箋`" :aria-pressed="color===value" :disabled="!ready||closing" @click="edit({色:value})"></button></div>
-    <span class="sticky-save-state" role="status">{{state.error?'未保存':state.saving?'保存中…':state.dirty?'未保存':''}}</span><button type="button" class="sticky-close" aria-label="付箋を閉じる" :disabled="closing" @click="close">×</button>
+    <span class="sticky-save-state" role="status">{{state.error?'未保存':state.saving?'保存中…':state.dirty?'未保存':''}}</span><button type="button" class="sticky-trash" aria-label="付箋をゴミ箱へ移動" title="ゴミ箱へ移動" :disabled="!ready||closing" @click="trash">🗑</button>
    </div>
   </template>
  </main>

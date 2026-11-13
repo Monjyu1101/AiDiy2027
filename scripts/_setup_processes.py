@@ -71,6 +71,8 @@ def process_role(process, root, windows=False):
         if electron and '/node_modules/electron/dist/' in '/' + binary:
             # IDEのElectronはCode/Live/Consoleと共用。入口/親子関係不明なら保護。
             if parts[0] != 'frontend_ide':
+                if parts[0] == 'backend_diag' and '--aidiy-memo-only' in args:
+                    return 'memo'
                 return parts[0]
             for arg in args:
                 if not arg.startswith('--user-data-dir='):
@@ -107,6 +109,9 @@ def process_role(process, root, windows=False):
     if not entry or entry.split('/')[0] not in COMPONENTS:
         return None
     component = entry.split('/')[0]
+    if component == 'backend_diag' and (entry == 'backend_diag/memo_main.mjs' or
+            '--memo-only' in args[index + 1:] or '--aidiy-memo-only' in args[index + 1:]):
+        return 'memo'
     if component == 'frontend_ide':
         if entry in ('frontend_ide/launch.mjs', 'frontend_ide/desktop.cjs'):
             tail = args[index + 1:]
@@ -145,7 +150,7 @@ def select_targets(processes, root, windows=False, current_pid=None):
         if roles[process['ProcessId']] is None and registered_supervisor(process, root):
             roles[process['ProcessId']] = 'supervisor'
     # Code/IDE/Discord/Slackの補助/MCP子孫を保護。ただし独立アプリLive等は保護の境界にする。
-    boundaries = {'live', 'console', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'backend_diag', 'supervisor'}
+    boundaries = {'live', 'console', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'backend_diag', 'memo', 'supervisor'}
     protected = {pid for pid, role in roles.items() if role in KEEP}
     while True:
         children = {p['ProcessId'] for p in processes if p.get('ParentProcessId') in protected
@@ -307,20 +312,37 @@ def _stop_aidiy_processes(root, info=print, error=print):
                 seen.add(process['ProcessId'])
                 process = targets[process['ParentProcessId']]
             return len(seen)
-        for target in sorted(targets.values(), key=depth):
+        def stop_order(process):
+            # 監視親の後にDiag、Memo。共用Electron内の付箋はDiagと同時に終了する。
+            role = 'supervisor' if registered_supervisor(process, root) else process_role(process, root, windows)
+            parent = process
+            seen = set()
+            while role not in ('supervisor', 'backend_diag', 'memo') and parent.get('ParentProcessId') in targets:
+                if parent['ProcessId'] in seen:
+                    break
+                seen.add(parent['ProcessId'])
+                parent = targets[parent['ParentProcessId']]
+                role = process_role(parent, root, windows)
+            return ({'supervisor': 0, 'backend_diag': 1, 'memo': 2}.get(role, 3), depth(process))
+        info('Diag → Memo の順に強制停止します（共用プロセスは同時終了）。')
+        for target in sorted(targets.values(), key=stop_order):
             current = next((p for p in snapshot() if p['ProcessId'] == target['ProcessId']), None)
             if current is None or identity(current) != identity(target):
                 continue
             pid = target['ProcessId']
             info(f"AiDiyプロセスを停止します: {target.get('Name', '')} (PID={pid})")
-            if windows:
-                subprocess.run(['taskkill', '/F', '/PID', str(pid)], capture_output=True,
-                               timeout=10, creationflags=subprocess.CREATE_NO_WINDOW)
-            else:
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+            try:
+                if windows:
+                    subprocess.run(['taskkill', '/F', '/PID', str(pid)], capture_output=True,
+                                   timeout=10, creationflags=subprocess.CREATE_NO_WINDOW)
+                else:
+                    try:
+                        os.kill(pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+            except (OSError, subprocess.SubprocessError) as exc:
+                # Diagの停止失敗でもMemo等は試す。最後の再照合で残留を判定する。
+                error(f'AiDiyプロセスの停止操作に失敗しました (PID={pid}): {exc}')
         deadline = time.monotonic() + 5
         while True:
             current_processes = snapshot()

@@ -7,10 +7,10 @@ export function メモ内容(note={}) {
 export function 空メモ(note){return !note.タイトル.trim()&&!note.本文.trim();}
 export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=()=>{},identity=()=>{},clientId=globalThis.crypto.randomUUID()}){
  let draft=メモ内容(note||{}),saved=note?JSON.stringify(draft):null,record=note?{id:note.id,revision:note.revision,保存先:note.保存先}:null;
- let timer,flight=null,error=null,disposed=false,pendingCreate=null;
+ let timer,flight=null,error=null,disposed=false,pendingCreate=null,deleted=false,removing=null;
  const signature=()=>JSON.stringify(draft);
  const blankNew=()=>!record&&!pendingCreate&&空メモ(draft);
- const dirty=()=>!blankNew()&&(!record||signature()!==saved);
+ const dirty=()=>!deleted&&!blankNew()&&(!record||signature()!==saved);
  const snapshot=()=>({draft:copy(draft),saving:!!flight,error:error?.message||'',conflict:error?.status===409,dirty:dirty(),blankNew:blankNew(),id:record?.id||null});
  const emit=()=>{if(!disposed)changed(snapshot());};
  async function drain(){
@@ -32,6 +32,8 @@ export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=
  }
  function flush(){
   clearTimeout(timer);
+  if(removing)return removing;
+  if(deleted)return Promise.resolve(true);
   if(disposed)return Promise.resolve(false);
   if(flight)return flight;
   if(error)return Promise.resolve(false);
@@ -40,11 +42,24 @@ export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=
   flight=Promise.resolve().then(drain).finally(()=>{flight=null;emit();});emit();return flight;
  }
  function edit(patch){
-  if(disposed)return;
+  if(disposed||deleted)return;
   draft={...draft,...copy(patch)};clearTimeout(timer);emit();
   if(!error&&dirty())timer=setTimeout(()=>{void flush();},delay);
  }
  function retry(){error=null;emit();return flush();}
+ function trash(){
+  if(removing)return removing;
+  if(deleted)return Promise.resolve(true);
+  const saved=flush();
+  removing=saved.then(async ok=>{
+   if(!ok)return false;
+   try{
+    if(record)await api('api/メモ/削除',{method:'POST',body:copy(record)});
+    deleted=true;clearTimeout(timer);emit();return true;
+   }catch(failure){error=failure instanceof Error?failure:Error('削除できませんでした。');emit();return false;}
+  }).finally(()=>{removing=null;});
+  return removing;
+ }
  function dispose(){disposed=true;clearTimeout(timer);}
- emit();return {edit,flush,retry,snapshot,dispose};
+ emit();return {edit,flush,trash,retry,snapshot,dispose};
 }

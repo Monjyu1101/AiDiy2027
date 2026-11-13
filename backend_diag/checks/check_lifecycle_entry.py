@@ -109,6 +109,7 @@ class CleanupNotificationTests(unittest.TestCase):
         root = Path(self.enterContext(tempfile.TemporaryDirectory()))
         self.enterContext(patch.object(cleanup, '__file__', str(root / '_cleanup.py')))
         self.enterContext(patch.object(cleanup, 'stop_processes', return_value=False))
+        self.enterContext(patch.object(cleanup, 'stop_memo_processes', return_value=True))
         self.enterContext(patch.object(cleanup, 'cleanup_dependencies', side_effect=AssertionError('must not delete dependencies')))
         self.enterContext(patch.object(subprocess, 'run', side_effect=AssertionError('real process forbidden')))
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))

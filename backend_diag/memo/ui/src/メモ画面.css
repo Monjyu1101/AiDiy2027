@@ -7,9 +7,11 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-title{width:100%;background:transparent;color:inherit;border:0;outline:0;min-height:26px;font-weight:600;font-size:14px;padding-bottom:4px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;flex:none}
 .sticky-text{display:block;width:100%;flex:1;min-height:20px;resize:none;border:0;outline:0;background:transparent;color:inherit;font:14px/1.6 system-ui,sans-serif;padding:0;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-width:thin}
 .sticky-text::placeholder{color:#4b554e88}.sticky-text:disabled{opacity:.6}
-.sticky-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px;flex:none;min-height:26px;cursor:grab;user-select:none}
+.sticky-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px;flex:none;min-height:26px;user-select:none}
 .sticky-palette{display:flex;gap:6px;visibility:hidden}.sticky-bottom:hover .sticky-palette,.sticky-bottom:focus-within .sticky-palette{visibility:visible}
 .sticky-palette button{height:17px;width:17px;border:1px solid #0005;border-radius:50%;padding:0;cursor:pointer}.sticky-palette button[aria-pressed=true]{outline:2px solid #46594e;outline-offset:1px}.sticky-palette button:focus-visible{outline:2px solid #096b84;outline-offset:2px}
 .sticky-save-state{font-size:10px;color:#384138;white-space:nowrap}.sticky-error{font-size:12px;line-height:1.4;color:#7c211c;max-height:45%;overflow:auto;flex:none;overflow-wrap:anywhere;padding:5px 0}.sticky-error button{font:inherit;border:1px solid #6334;background:#fff5;color:inherit;border-radius:3px;margin:4px 5px 0 0;padding:2px 6px;cursor:pointer}
 
-.sticky-title::placeholder{color:#4b554e88}.sticky-close{visibility:hidden;border:0;background:transparent;color:#384138;font-size:20px;padding:0 2px;line-height:20px;cursor:pointer}.sticky-bottom:hover .sticky-close,.sticky-bottom:focus-within .sticky-close{visibility:visible}.sticky-save-state{margin-left:auto}
+.sticky-title::placeholder{color:#4b554e88}.sticky-trash{visibility:hidden;border:0;background:transparent;color:#384138;font-size:20px;padding:0 2px;line-height:20px;cursor:pointer}.sticky-bottom:hover .sticky-trash,.sticky-bottom:focus-within .sticky-trash{visibility:visible}.sticky-save-state{margin-left:auto}
+
+.sticky-header{flex:none;padding:6px 20px 2px 0;cursor:grab;user-select:none}.sticky-header:active{cursor:grabbing}.sticky-title{cursor:text;user-select:text}

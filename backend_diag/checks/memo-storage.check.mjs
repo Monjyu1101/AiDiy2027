@@ -117,3 +117,30 @@ test('動的起動root変更後は新保存先へ作成し、既知旧rootのrea
  const next=(await store.list()).保存先[0];assert.notEqual(next.id,old.id);assert.equal(next.パス,path.join(project,'_AIDIY','aidiy_memo'));await assert.rejects(store.create(memo(old.id)),{status:409});
  const saved=await store.save(edit(note,'保持'));assert.deepEqual(await store.read({保存先:old.id,id:note.id}),saved);await store.create(memo(next.id));assert.ok(calls>=6);
 });
+test('ゴミ箱は原本を復元可能に退避し一覧から除外、古いrevisionは拒否',async t=>{
+ const {launch}=await fixture(t),store=createMemoStore({launchRoot:launch});
+ const source=(await store.list()).保存先[0],note=await store.create(memo(source.id));
+ const file=path.join(source.パス,note.id),original=await readFile(file);
+ await assert.rejects(store.trash({保存先:source.id,id:note.id,revision:'0'.repeat(64)}),{status:409});
+ assert.deepEqual(await readFile(file),original);
+ await store.trash({保存先:source.id,id:note.id,revision:note.revision});
+ assert.equal((await store.list()).メモ.length,0);
+ const trash=path.join(source.パス,'.trash'),entries=await readdir(trash);
+ assert.equal(entries.length,1);assert.deepEqual(await readFile(path.join(trash,entries[0],note.id)),original);
+ await rename(path.join(trash,entries[0],note.id),file);
+ assert.equal((await store.list()).メモ[0].本文,note.本文);
+ await assert.rejects(store.trash({保存先:source.id,id:'../bad.txt',revision:note.revision}),{status:400});
+});
+test('テキストメモの本文とsidecarを退避しリンクのゴミ箱を拒否',async t=>{
+ const {launch,project}=await fixture(t),store=createMemoStore({launchRoot:launch});
+ const source=(await store.list()).保存先[0];await mkdir(source.パス,{recursive:true});
+ await writeFile(path.join(source.パス,'old.txt'),'legacy\r\n');
+ let note=(await store.list()).メモ[0];note=await store.save({...edit(note,note.本文),色:'pink'});
+ await symlink(project,path.join(source.パス,'.trash'));
+ await assert.rejects(store.trash({保存先:source.id,id:note.id,revision:note.revision}),{status:400});
+ await rm(path.join(source.パス,'.trash'));
+ await store.trash({保存先:source.id,id:note.id,revision:note.revision});
+ const trash=path.join(source.パス,'.trash'),folder=path.join(trash,(await readdir(trash))[0]);
+ assert.equal((await readdir(folder)).length,2);
+ assert.equal(await readFile(path.join(folder,note.id),'utf8'),'legacy\r\n');
+});

@@ -13,3 +13,18 @@ test('競合はdraft/revision保持し、自動再送・無条件上書きをし
 test('create応答喪失後は同一clientIdと最初のsnapshotで確認し最新draftを追送',async()=>{const calls=[];let first=true;const model=自動保存を作成({sourceId:'project:one',clientId:'stable-id',api:async(route,{body})=>{calls.push({route,body});if(first){first=false;throw Error('通信切断');}return {...body,id:'created.memo.json',revision:'r'+calls.length};}});model.edit({本文:'最初'});assert.equal(await model.flush(),false);model.edit({本文:'追加した最新版'});assert.equal(await model.retry(),true);assert.deepEqual(calls[0],calls[1]);assert.equal(calls[2].route,'api/メモ/保存');assert.equal(calls[2].body.本文,'追加した最新版');assert.equal(calls[2].body.revision,'r2');model.dispose();});
 test('連続入力は150ms後にまとめ、close flushはtimerを待たず完了する',async()=>{const {model,calls}=fixture({delay:150});model.edit({本文:'a'});model.edit({本文:'ab'});await delay(30);assert.equal(calls.length,0);await model.flush();assert.equal(calls.length,1);assert.equal(calls[0].body.本文,'ab');await delay(170);assert.equal(calls.length,1);model.dispose();});
 test('native再読込用callbackは成功したsnapshot全体を受ける',async()=>{const snapshots=[];let finish;let calls=0;const model=自動保存を作成({note:seed,clientId:'test',identity:value=>snapshots.push(value),api:async(_route,{body})=>{calls++;if(calls===1)await new Promise(resolve=>{finish=resolve;});return {...body,revision:'r'+(calls+1)};}});model.edit({本文:'先行'});const flight=model.flush();await delay(0);model.edit({本文:'後続'});finish();await flight;assert.equal(snapshots[0].本文,'先行');assert.equal(snapshots[1].本文,'後続');assert.equal(snapshots[1].revision,'r3');model.dispose();});
+test('ゴミ箱は最新保存を待ち、終了flushと連打も削除完了を待つ',async()=>{
+ const calls=[];let release;const model=自動保存を作成({note:seed,clientId:'test',api:async(route,{body})=>{
+  calls.push({route,body});if(route.endsWith('/削除')){await new Promise(r=>{release=r});return {削除:true};}return {...body,revision:'latest'};
+ }});
+ model.edit({本文:'最終入力'});const pending=model.trash();await delay(0);
+ assert.equal(model.trash(),pending);const closing=model.flush();let done=false;closing.then(()=>{done=true});
+ await delay(0);assert.equal(done,false);assert.equal(calls[1].body.revision,'latest');
+ release();assert.equal(await pending,true);assert.equal(await closing,true);
+ model.edit({本文:'復活させない'});await model.flush();assert.equal(calls.length,2);assert.equal(model.snapshot().dirty,false);model.dispose();
+});
+test('空新規のゴミ箱はファイルを作らず、削除エラーは内容保持',async()=>{
+ const blank=fixture();assert.equal(await blank.model.trash(),true);assert.equal(blank.calls.length,0);blank.model.dispose();
+ const model=自動保存を作成({note:seed,clientId:'test',api:async()=>{throw Error('退避失敗')}});
+ assert.equal(await model.trash(),false);assert.equal(model.snapshot().draft.本文,seed.本文);assert.match(model.snapshot().error,/退避失敗/);assert.equal(await model.flush(),false);model.dispose();
+});

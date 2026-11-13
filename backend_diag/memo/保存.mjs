@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-import {lstat,realpath,readdir,mkdir,open,rename,unlink,link} from 'node:fs/promises';
+import {lstat,realpath,readdir,mkdir,open,rename,unlink,link,writeFile} from 'node:fs/promises';
 import {constants} from 'node:fs';
 import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
@@ -161,5 +161,23 @@ export function createMemoStore({launchRoot,getLaunchRoot=async()=>launchRoot,ge
   try{return (await メモ読取(directory,body.id,source.id)).note;}
   catch(error){if(error.code==='ENOENT')throw fail('メモが見つかりません。',404);throw error;}
  }
- return {list,read:body=>serial(()=>read(body)),create:body=>serial(()=>write(body,false)),save:body=>serial(()=>write(body,true))};
+ async function trash(body){
+  if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!['保存先','id','revision'].includes(key))||typeof body.保存先!=='string'||!有効名(body.id)||typeof body.revision!=='string'||!/^[a-f0-9]{64}$/.test(body.revision))throw fail('削除対象が不正です。');
+  const source=await sourceFor(body.保存先,true),directory=await folder(source);
+  if(!directory)throw fail('メモが見つかりません。',404);
+  const before=await メモ読取(directory,body.id,source.id,body.revision);
+  // 永久削除しない。元の名前と本文を保存先内の非表示ゴミ箱に保持する。
+  const trashRoot=path.join(directory,'.trash');
+  try{await mkdir(trashRoot,{mode:0o700});}catch(error){if(error.code!=='EEXIST')throw error;}
+  const stat=await lstat(trashRoot);
+  if(!stat.isDirectory()||stat.isSymbolicLink()||await realpath(trashRoot)!==trashRoot)throw fail('ゴミ箱を安全に確認できません。');
+  const destination=path.join(trashRoot,randomUUID());await mkdir(destination,{mode:0o700});
+  // textのsidecarは先に複製。本文移動に失敗しても元のメモは損なわない。
+  if(before.metadata)await writeFile(metadataFile(destination,body.id),before.metadata,{flag:'wx',mode:0o600});
+  await sourceFor(body.保存先,true);await folder(source);
+  await メモ読取(directory,body.id,source.id,body.revision);
+  await rename(path.join(directory,body.id),path.join(destination,body.id));
+  return {削除:true};
+ }
+ return {list,trash:body=>serial(()=>trash(body)),read:body=>serial(()=>read(body)),create:body=>serial(()=>write(body,false)),save:body=>serial(()=>write(body,true))};
 }

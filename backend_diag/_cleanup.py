@@ -49,6 +49,11 @@ def stop_processes():
     return _stop_helper.stop(Path(__file__).resolve().parent)
 
 
+def stop_memo_processes():
+    """Diagの次に単体Memo・共用残留プロセスの終了を確認する。"""
+    return _stop_helper.stop_memo(Path(__file__).resolve().parent)
+
+
 def cleanup(choices=None):
     if choices is not None and choices.get('diag') is False:
         return True
@@ -62,7 +67,9 @@ def cleanup(choices=None):
             stream.write(secrets.token_hex(16))
         temporary.replace(stop_file)
         temporary = None
-        if not stop_processes():
+        diag_stopped = stop_processes()
+        memo_stopped = stop_memo_processes()
+        if not (diag_stopped and memo_stopped):
             return False
         if not cleanup_dependencies(Path(__file__).resolve().parent):
             return False
