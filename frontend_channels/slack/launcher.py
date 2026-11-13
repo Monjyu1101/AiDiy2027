@@ -46,6 +46,7 @@ def install_launcher(root: Path) -> None:
     else:
         path.write_text(f'#!/bin/sh\nexec {shlex.quote(node)} {shlex.quote(str(script))} "$@"\n', encoding='utf-8')
         path.chmod(0o755)
+    _path_helper.sync_shared_launcher(path, script)
     print(f'[OK] aidiy_slack を登録しました: {path}')
     if not ensure_launcher_path(path.parent):
         raise OSError('ランチャーの PATH 登録に失敗しました。')

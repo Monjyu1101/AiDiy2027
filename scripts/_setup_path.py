@@ -7,6 +7,9 @@
 """プロジェクト内ランチャーの Windows PATH 登録と、Hermes の既存共有 bin 管理。"""
 import base64
 import json
+import hashlib
+import re
+import tempfile
 import ntpath
 import os
 import shlex
@@ -49,6 +52,91 @@ def launcher_directory(program, project=None):
         if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
             raise ValueError(f'ランチャー保存先が通常フォルダではありません: {directory}')
     return directory
+
+
+def _normalized_launcher(content, scripts):
+    """既知の生成テンプレートを比較する。埋込コマンドは解析だけで実行しない。"""
+    text = content.replace('\r\n', '\n')
+    # Windowsの日本語パス対応テンプレート。実行ファイルの版/位置だけは変わり得る。
+    def payload(match):
+        try:
+            command = json.loads(base64.b64decode(match.group(1), validate=True))
+        except (ValueError, TypeError):
+            return match.group(0)
+        if (not isinstance(command, list)
+                or not all(isinstance(value, str) for value in command)
+                or not (len(command) == 2 or (len(command) == 4 and command[1:3] == ['-X', 'utf8']))
+                or command[-1] not in scripts):
+            return match.group(0)
+        return "Buffer.from('<owned-launcher>','base64')"
+    text = re.sub(r"Buffer\.from\('([A-Za-z0-9+/=]+)','base64'\)", payload, text)
+    # POSIXのexec行も引数数と配置先を確認し、追記コマンドを受け入れない。
+    lines = text.splitlines(keepends=True)
+    for index, line in enumerate(lines):
+        if not line.startswith('exec '):
+            continue
+        try:
+            args = shlex.split(line)
+        except ValueError:
+            continue
+        if (line.rstrip('\n').endswith(' \"$@\"')
+                and args and args[0] == 'exec' and args[-1] == '$@'
+                and (len(args) == 4 or (len(args) == 6 and args[2:4] == ['-X', 'utf8']))
+                and args[-2] in scripts):
+            lines[index] = 'exec <owned-runtime> <owned-script> "$@"\n'
+    text = ''.join(lines)
+    for script in scripts:
+        text = text.replace(hashlib.sha256(script.encode('utf-8')).hexdigest(), '<owned-hash>')
+        text = text.replace(script.replace('%', '%%'), '<owned-script>')
+        text = text.replace(script, '<owned-script>')
+    return text
+
+
+def sync_shared_launcher(launcher, script, *, legacy_scripts=()):
+    """PATHで優先される旧 ~/.local/bin を、同一コピーの場合だけ最新化する。
+
+    新規ホーム配置は作らず、共有PATH/他アプリ/他コピーには触れない。
+    正規配置先の書込後に呼ぶ。テンプレート外の内容は変更せず失敗として通知する。
+    """
+    launcher, script = Path(launcher), Path(script)
+    shared = Path.home() / '.local' / 'bin' / launcher.name
+    if shared == launcher or not os.path.lexists(shared):
+        return
+    for path in (shared.parent.parent, shared.parent, shared):
+        if path.is_symlink() or getattr(path, 'is_junction', lambda: False)():
+            raise OSError(f'共有ランチャーはリンクのため変更しません: {shared}。直接起動: {launcher}')
+    if not shared.is_file():
+        raise OSError(f'共有ランチャーは通常ファイルではありません: {shared}')
+    scripts = [str(script)]
+    for old in legacy_scripts:
+        old = Path(old)
+        if not old.parent.is_symlink() and not getattr(old.parent, 'is_junction', lambda: False)():
+            scripts.append(str(old))
+    source = launcher.read_bytes()
+    expected = source.decode('utf-8')
+    previous = shared.read_bytes()
+    try:
+        owned = _normalized_launcher(previous.decode('utf-8'), scripts) == _normalized_launcher(expected, scripts)
+    except UnicodeError:
+        owned = False
+    if not owned:
+        raise OSError(f'共有ランチャーは別コピーまたは改変済みのため変更しません: {shared}。直接起動: {launcher}')
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=shared.parent, prefix='.' + shared.name + '-', suffix='.tmp', delete=False) as stream:
+            temporary = Path(stream.name)
+            stream.write(source)
+        if sys.platform != 'win32':
+            temporary.chmod(0o755)
+        # 検査後のユーザー編集やリンクへの置換を上書きしない。
+        if shared.is_symlink() or shared.read_bytes() != previous:
+            raise OSError(f'共有ランチャーが変更されたため更新を中止しました: {shared}')
+        temporary.replace(shared)
+        temporary = None
+        print(f'旧共有ランチャーを更新しました: {shared}')
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def ensure_launcher_path(directory):

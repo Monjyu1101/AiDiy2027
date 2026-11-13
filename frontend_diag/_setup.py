@@ -100,6 +100,9 @@ def setup(choices=None, *, desktop=True):
             finally:
                 if temporary is not None:
                     temporary.unlink(missing_ok=True)
+            entry = 'memo_main.mjs' if launcher.stem == 'aidiy_memo' else 'diag_main.mjs'
+            _path_helper.sync_shared_launcher(launcher, THIS_DIR / entry,
+                legacy_scripts=(THIS_DIR.parent / 'backend_diag' / entry,))
             print(f'{launcher.stem} を登録しました: {launcher}')
     except (OSError, ValueError) as exc:
         print(f'Diag / Memo を登録できません: {exc}')

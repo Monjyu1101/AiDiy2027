@@ -39,7 +39,7 @@ FRONTEND_COMMAND = "npm"
 sys.path.insert(0, str(THIS_DIR.parent / "scripts"))
 from _setup_electron import setup_dependencies
 from _runtime_requirements import check_project_node_runtime
-from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment, launcher_owned_by
+from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment, launcher_owned_by, sync_shared_launcher
 
 AUTO_MODE = False
 
@@ -180,6 +180,7 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
             content = '#!/usr/bin/env sh\nexec ' + ' '.join(shlex.quote(arg) for arg in command) + ' "$@"\n'
             launcher_path.write_text(content, encoding="utf-8")
             launcher_path.chmod(0o755)
+        sync_shared_launcher(launcher_path, script_path, legacy_scripts=(FRONTEND_AVATAR_DIR / '_start.py',))
         print_success(f"aidiy_avatar を登録しました: {launcher_path}")
     except OSError as exc:
         print_error(f"Avatar を登録できません: {launcher_dir} ({exc})")

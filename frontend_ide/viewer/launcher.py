@@ -56,6 +56,7 @@ def install_launcher(root: Path, kind: str = 'ide', *, register_path: bool = Tru
     else:
         path.write_text(f'#!/bin/sh\nexec {shlex.quote(node)} {shlex.quote(str(script))} "$@"\n', encoding='utf-8')
         path.chmod(0o755)
+    _path_helper.sync_shared_launcher(path, script)
     print(f'\033[94m[OK] {path.name} を登録しました: {path}\033[0m')
     if register_path and not ensure_launcher_path(path.parent):
         raise OSError('ランチャーの PATH 登録に失敗しました。')

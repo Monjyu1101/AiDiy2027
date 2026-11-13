@@ -42,7 +42,7 @@ FRONTEND_COMMAND = "npm"
 sys.path.insert(0, str(THIS_DIR.parent.parent / "scripts"))
 from _setup_electron import setup_dependencies
 from _runtime_requirements import check_project_node_runtime, check_vscode_runtime
-from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment
+from _setup_path import launcher_directory, ensure_launcher_path, windows_launcher_command, launcher_owner_comment, sync_shared_launcher
 
 sys.path.insert(0, str(THIS_DIR / "scripts"))
 from vscode_extensions import uninstall_aidiy_extensions
@@ -290,6 +290,7 @@ def install_standalone_launcher(*, register_path: bool = True) -> bool:
             launcher_path.write_bytes(content.replace("\n", "\r\n").encode("utf-8") if sys.platform == "win32" else content.encode("utf-8"))
             if sys.platform != "win32":
                 launcher_path.chmod(0o755)
+            sync_shared_launcher(launcher_path, script_path)
             print_success(f"{launcher_path.name} を登録しました: {launcher_path}")
             if register_path and not ensure_launcher_path(launcher_dir):
                 return False

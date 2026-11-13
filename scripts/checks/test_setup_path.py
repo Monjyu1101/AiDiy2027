@@ -137,7 +137,7 @@ class WindowsProjectPathTests(unittest.TestCase):
         self.winreg.DeleteValue = Mock(side_effect=lambda key, name: self.registry.pop(name))
         self.enterContext(patch.dict('sys.modules', {'winreg': self.winreg}))
         self.enterContext(patch.object(helper.sys, 'platform', 'win32'))
-        self.enterContext(patch.object(Path, 'home', side_effect=AssertionError('home forbidden')))
+        self.enterContext(patch.object(Path, 'home', return_value=self.root / 'empty-home'))
         self.enterContext(patch.dict(os.environ, {'PATH': r'C:\SystemOnly'}))
         self.enterContext(patch.object(helper, '_notify_change'))
         self.output = self.enterContext(contextlib.redirect_stdout(io.StringIO()))
@@ -274,7 +274,7 @@ class LauncherIntegrationTests(unittest.TestCase):
     def test_all_ide_launchers_stay_project_local(self):
         viewer = load(ROOT / 'frontend_ide/viewer/launcher.py')
         host = load(ROOT / 'frontend_ide/host/_setup.py')
-        with tempfile.TemporaryDirectory() as directory, patch.object(helper.sys, 'platform', 'linux'), patch.object(Path, 'home', side_effect=AssertionError('home forbidden')), patch.dict(os.environ):
+        with tempfile.TemporaryDirectory() as directory, patch.object(helper.sys, 'platform', 'linux'), patch.object(Path, 'home', return_value=Path(directory) / 'empty-home'), patch.dict(os.environ):
             def local(name):
                 return Path(directory) / '_AIDIY' / name / 'bin'
             with patch.object(viewer._path_helper, 'launcher_directory', side_effect=local), patch.object(host, 'launcher_directory', side_effect=local), patch.object(viewer.shutil, 'which', return_value='/usr/bin/node'):
@@ -287,6 +287,7 @@ class LauncherIntegrationTests(unittest.TestCase):
                 for kind in ('code', 'live'):
                     name = f'aidiy_{kind}'
                     self.assertTrue((local(f'aidiy_{kind}') / name).is_file())
+                self.assertFalse((Path(directory) / 'empty-home').exists())
 
 if __name__ == '__main__':
     unittest.main()
