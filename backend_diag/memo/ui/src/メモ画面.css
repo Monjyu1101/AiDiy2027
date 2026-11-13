@@ -15,3 +15,9 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-title::placeholder{color:#4b554e88}.sticky-trash{visibility:hidden;border:0;background:transparent;color:#384138;font-size:20px;padding:0 2px;line-height:20px;cursor:pointer}.sticky-bottom:hover .sticky-trash,.sticky-bottom:focus-within .sticky-trash{visibility:visible}.sticky-save-state{margin-left:auto}
 
 .sticky-header{flex:none;padding:6px 20px 2px 0;cursor:grab;user-select:none}.sticky-header:active{cursor:grabbing}.sticky-title{cursor:text;user-select:text}
+
+.sticky-header{display:flex;align-items:center;gap:4px;padding-right:0}
+.sticky-header .sticky-title{width:0;min-width:0;flex:1}
+.sticky-add{flex:none;width:24px;height:26px;border:0;background:transparent;color:inherit;font-size:20px;padding:0;cursor:pointer;opacity:0;pointer-events:none}
+.sticky-header:hover .sticky-add,.sticky-add:focus-visible{opacity:1;pointer-events:auto}
+.sticky-add:focus-visible{outline:2px solid #096b84;outline-offset:1px}

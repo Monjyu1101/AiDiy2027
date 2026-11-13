@@ -6,9 +6,10 @@ import {ref,computed,onMounted,onUnmounted,nextTick} from 'vue';
 import {メモAPIを作成} from './表示対象.mjs';
 import {自動保存を作成} from './自動保存.mjs';
 import {メモ色} from './メモ編集.mjs';
-const props=defineProps({api:{type:Function,required:true},initialNew:Boolean,initialSource:String,initialId:String,initialScope:String,onSaved:Function});
+const props=defineProps({api:{type:Function,required:true},initialNew:Boolean,initialSource:String,initialId:String,initialScope:String,onSaved:Function,onNew:Function});
 const native=globalThis.window?.aidiyMemo;
 const state=ref({draft:{タイトル:'',本文:'',色:'yellow'},saving:false,error:'',conflict:false,dirty:false,blankNew:true});
+const adding=ref(false),addError=ref('');
 const ready=ref(false),closing=ref(false),textFormat=ref(false),bootError=ref(''),source=ref(''),editor=ref(),copied=ref(false);
 const color=computed(()=>メモ色.includes(state.value.draft.色)?state.value.draft.色:'yellow');
 const 色名={yellow:'黄',blue:'青',green:'緑',pink:'桃',purple:'紫'};
@@ -18,7 +19,7 @@ function bounds(value){if(!model||!value)return;const {x,y,width,height}=value;i
 function edit(patch){if(closing.value)return;model?.edit(patch);copied.value=false;}
 async function flushClose(request){
  if(closeBusy)return;closeBusy=true;closing.value=true;
- try{await boot;if(request.bounds)bounds(request.bounds);const ok=ready.value&&!!model&&await model.flush();await native?.completeClose({requestId:request.requestId,ok,error:ok?'':state.value.error||bootError.value||'メモを読み込んでいます。'});}
+ try{await boot;if(!request.waitOnly&&request.bounds)bounds(request.bounds);const ok=ready.value&&!!model&&await (request.waitOnly?model.settled():model.flush());await native?.completeClose({requestId:request.requestId,ok,error:ok?'':state.value.error||bootError.value||'メモを読み込んでいます。'});}
  finally{closeBusy=false;closing.value=false;}
 }
 async function blur(event){if(event?.bounds)bounds(event.bounds);if(!model){pendingBlur=true;return;}if(model.snapshot().blankNew){if(native)await native.close();else window.close();return;}await model.flush();}
@@ -32,6 +33,12 @@ function move(event){
 }
 async function copyText(){try{await navigator.clipboard.writeText(state.value.draft.本文);copied.value=true;}catch{editor.value?.focus();editor.value?.select();}}
 async function retry(){await model?.retry();}
+async function add(){
+ if(adding.value||closing.value||!ready.value)return;adding.value=true;addError.value='';
+ try{if(!await (native?native.newMemo():props.onNew?.()))throw Error('付箋を追加できませんでした。プロジェクト設定とポップアップ許可を確認してください。');}
+ catch(error){addError.value=error.message;}
+ finally{adding.value=false;}
+}
 async function trash(){
  if(closing.value||!ready.value)return;closing.value=true;
  try{if(await model.trash()){if(native)await native.close();else window.close();}}
@@ -61,8 +68,12 @@ onMounted(async()=>{
   if(!sourceId)throw Error('メモの保存先を確認できません。Diagでプロジェクトを選択してください。');
   const selected=initial.sources?.find(item=>item.id===sourceId);source.value=selected?`${selected.名前} · ${selected.パス}`:sourceId;
   textFormat.value=initial.note?.形式==='text';
-  model=自動保存を作成({api:メモAPIを作成(props.api,initial.scope),note:initial.note,sourceId,changed:value=>{state.value=value;},identity:async note=>{if(native?.updateSavedNote)await native.updateSavedNote(note);else if(native?.setNoteIdentity)await native.setNoteIdentity({id:note.id,sourceId:note.保存先});props.onSaved?.(note);}});
-  if(initialBounds||initial.bounds)bounds(initialBounds||initial.bounds);
+  // 復元時の画面内クランプは書込理由にしない。次の実操作で現在位置も保存する。
+  const {x,y,width,height}=initial.bounds||{};
+  const geometry=[x,y,width,height].every(Number.isFinite)?{位置:{x,y},サイズ:{width,height}}:{};
+  const initialNote=initial.note?{...initial.note,...geometry}:null;
+  model=自動保存を作成({api:メモAPIを作成(props.api,initial.scope),note:initialNote,sourceId,changed:value=>{state.value=value;},identity:async note=>{if(native?.updateSavedNote)await native.updateSavedNote(note);else if(native?.setNoteIdentity)await native.setNoteIdentity({id:note.id,sourceId:note.保存先});props.onSaved?.(note);}});
+  if(initialBounds)bounds(initialBounds);else if(!initial.note&&initial.bounds)bounds(initial.bounds);
   ready.value=true;
   await nextTick();if(!initial.note)editor.value?.focus();
  }catch(error){bootError.value=error.message||'メモを開けませんでした。';}
@@ -74,9 +85,10 @@ onUnmounted(()=>{alive=false;dragEnd();model?.dispose();for(const off of unsubsc
  <main class="sticky-note" :class="`sticky-${color}`">
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
-   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"></header>
+   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"><button class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button></header>
    <textarea ref="editor" class="sticky-text" :value="state.draft.本文" :disabled="!ready||closing" aria-label="付箋の本文" placeholder="メモを書く…" spellcheck="false" @input="edit({本文:$event.target.value})"></textarea>
    <div v-if="state.error" class="sticky-error" role="alert"><span>{{state.error}} 入力内容は保持しています。</span><div><button type="button" @click="retry">再試行</button><button type="button" @click="copyText">{{copied?'コピー済':'本文をコピー'}}</button></div></div>
+   <div v-if="addError" class="sticky-error" role="alert">{{addError}}</div>
    <div class="sticky-bottom" :title="source" aria-label="付箋の色と保存先">
     <div class="sticky-palette"><button v-for="value in メモ色" :key="value" type="button" :class="`sticky-${value}`" :aria-label="`${色名[value]}色の付箋`" :aria-pressed="color===value" :disabled="!ready||closing" @click="edit({色:value})"></button></div>
     <span class="sticky-save-state" role="status">{{state.error?'未保存':state.saving?'保存中…':state.dirty?'未保存':''}}</span><button type="button" class="sticky-trash" aria-label="付箋をゴミ箱へ移動" title="ゴミ箱へ移動" :disabled="!ready||closing" @click="trash">🗑</button>

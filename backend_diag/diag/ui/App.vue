@@ -53,11 +53,18 @@ watch([connected,アプリ.フォルダ],([online,selected],[,previous])=>{
  // 初期一覧の取得前の空欄で、設定済みプロジェクトを消さない。
  if(!online||!selected&&!previous)return;
  const folder=アプリ.起動フォルダ();
- memoSync=memoSync.catch(()=>{}).then(()=>api('api/メモ/プロジェクト','POST',undefined,'json',{フォルダ:folder})).catch(error=>{message.value='メモ: '+error.message;});
+ memoSync=memoSync.catch(()=>{}).then(async()=>{
+  const native=window.aidiyWindow;
+  // 旧保存先が有効な間に、都度保存の完了だけを待つ。切替による追加保存はしない。
+  if(native?.prepareMemos&&!await native.prepareMemos())throw Error('付箋の自動保存が完了していません。内容を確認して再試行してください。');
+  let updated=false;
+  try{await api('api/メモ/プロジェクト','POST',undefined,'json',{フォルダ:folder});updated=true;}
+  finally{if(native?.refreshMemos&&!await native.refreshMemos(updated))throw Error('付箋を再表示できませんでした。保存エラーのある付箋を確認して再試行してください。');}
+ }).catch(error=>{message.value='メモ: '+error.message;});
 });
 async function メモを開く(){
  // プロジェクト選択の反映後、既存の編集内容は再読込せず新規を追加する。
- if(window.aidiyWindow?.openMemo){await memoSync;try{await window.aidiyWindow.openMemo(true);}catch{message.value='メモを開けませんでした。';}return;}
+ if(window.aidiyWindow?.openMemo){await memoSync;try{if(!await window.aidiyWindow.openMemo(true))message.value='メモを開けませんでした。プロジェクトを選び直して再試行してください。';}catch{message.value='メモを開けませんでした。';}return;}
  const target=window.open('','_blank','popup,width=320,height=260');
  if(!target){message.value='メモを開くにはポップアップを許可してください。';return;}
  await memoSync;

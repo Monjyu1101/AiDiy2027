@@ -7,6 +7,8 @@
 const {contextBridge,ipcRenderer}=require('electron');
 // 固定ウィンドウ操作だけ。ミニ表示の幅や汎用 invoke は公開せず、高さも範囲を限定する。
 contextBridge.exposeInMainWorld('aidiyWindow',Object.freeze({
+ prepareMemos:()=>ipcRenderer.invoke('diag:window','prepareMemos'),
+ refreshMemos:(release=true)=>typeof release==='boolean'?ipcRenderer.invoke('diag:window','refreshMemos',release):Promise.resolve(false),
  openMemo:(createNew=false)=>typeof createNew==='boolean'?ipcRenderer.invoke('diag:window','openMemo',createNew):Promise.resolve(false),
  customNormalTitle:process.platform==='win32',
  initialMini:process.argv.includes('--aidiy-diag-initial-mini'),

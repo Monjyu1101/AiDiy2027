@@ -89,7 +89,7 @@ async function start(value,{memoOnly=false,newMemo=false}={}) {
   window=new BrowserWindow({...初期右下位置(area,{width:800,height:600},通常表示の余白),title:'AiDiy Diag',icon:path.join(__dirname,'../../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   window.setMenuBarVisibility(false);
   pins.register(window);
-  メモ=メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session:isolated,onEmpty:stopEmptyMemo});
+  メモ=メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session:isolated,onEmpty:stopEmptyMemo,isStandalone:()=>memoOnlyMode});
   終了確認=終了確認を作成({window,終了前確認:()=>メモ.closeForParent(),状態取得:()=>起動状態を読む(url.href),確認:(parent,options)=>dialog.showMessageBox(parent,options)});
   Macメニューを設定({app,Menu,window,icon:path.join(__dirname,'../../static/AiDiy_diag.png')});
   const sizeEffect=画面サイズ演出を作成(BrowserWindow,window,{topmostLevel:()=>micro.active&&process.platform==='win32'?'pop-up-menu':pinLevel});
@@ -127,6 +127,8 @@ async function start(value,{memoOnly=false,newMemo=false}={}) {
   let selectingFolder=false;
   ipcMain.handle('diag:window',(event,action,value)=>{
     if(!window || window.isDestroyed() || event.sender!==window.webContents || event.senderFrame!==window.webContents.mainFrame)return false;
+    if(action==='prepareMemos')return memoOnlyMode?false:メモ.prepareRefresh();
+    if(action==='refreshMemos')return memoOnlyMode||typeof value!=='boolean'?false:メモ.refresh(value);
     if(action==='openMemo')return typeof value==='boolean'?メモ.open(value):false;
     if(action==='collapsePanel'){
       if(typeof value!=='boolean'||micro.active||opening||displaySwitch||sizeEffect.active)return {ok:false};

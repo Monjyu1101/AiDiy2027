@@ -46,9 +46,9 @@ function 保存済メモは有効(note){
  }
  return Buffer.byteLength(JSON.stringify(note))<=1024*1024;
 }
-function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,readSnapshot=()=>メモ一覧を読む(url),readSystemSnapshot=()=>メモ一覧を読む(url,'system'),onEmpty=()=>{}}){
+function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,readSnapshot=()=>メモ一覧を読む(url),readSystemSnapshot=()=>メモ一覧を読む(url,'system'),onEmpty=()=>{},isStandalone=()=>false}){
  const target=new URL('memo.html',url);target.hash=url.hash;
- const records=new Map(),pins=createWindowPins();let queue=Promise.resolve(),parentClose,lastWarnings='',busy=0;
+ const records=new Map(),pins=createWindowPins();let queue=Promise.resolve(),parentClose,lastWarnings='',busy=0,projectChanging=false,creationBlocked=false;
  const trusted=event=>{const record=records.get(event.sender);return record&&!record.window.isDestroyed()&&event.senderFrame===event.sender.mainFrame?record:null;};
  const drag=createCodeDrag({trustedEvent:trusted,screen});
  const key=(source,id)=>JSON.stringify([String(source).replace(/^(?:launch|project):/,''),id]);
@@ -61,12 +61,12 @@ function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,rea
  function sendBounds(record){clearTimeout(record.boundsTimer);if(!record.window.isDestroyed())send(record,'memo:bounds',record.window.getBounds());}
  function dispatchClose(record){
   if(!record.ready||!record.closeId||record.closeSent)return;
-  record.closeSent=true;sendBounds(record);send(record,'memo:close-requested',{requestId:record.closeId,bounds:record.window.getBounds()});
+  record.closeSent=true;if(!record.waitOnly)sendBounds(record);send(record,'memo:close-requested',{requestId:record.closeId,waitOnly:record.waitOnly,...(!record.waitOnly?{bounds:record.window.getBounds()}: {})});
  }
- function requestClose(record){
+ function requestClose(record,waitOnly=false){
   if(record.window.isDestroyed())return Promise.resolve(true);
   if(record.closePromise)return record.closePromise;
-  record.closeId=randomUUID();record.closeSent=false;
+  record.closeId=randomUUID();record.closeSent=false;record.waitOnly=waitOnly;
   const result=record.closePromise=new Promise(resolve=>{record.closeResolve=resolve;});
   record.closeTimer=setTimeout(()=>void failedClose(record),15000);record.closeTimer.unref?.();dispatchClose(record);return result;
  }
@@ -87,6 +87,10 @@ function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,rea
    if(!value||value.requestId!==record.closeId||typeof value.ok!=='boolean'||record.confirming)return false;
    if(value.ok)record.window.destroy();else void failedClose(record);return true;
   }
+  if(action==='newMemo'){
+   if(record.adding)return false;record.adding=true;
+   return (isStandalone()?openSystem(true):open(true)).finally(()=>{record.adding=false;});
+  }
   if(action==='close'){void requestClose(record);return true;}
   if(action==='beginWindowMove')return drag.begin(event);
   if(action==='moveWindow')return typeof value==='string'&&drag.move(event,value);
@@ -106,31 +110,48 @@ function メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session,rea
   for(const name of ['will-navigate','will-redirect','will-attach-webview'])window.webContents.on(name,event=>event.preventDefault());
   window.on('close',event=>{event.preventDefault();void requestClose(record);});
   window.on('blur',()=>{if(window.isDestroyed())return;sendBounds(record);send(record,'memo:blur',{bounds:window.getBounds()});});
-  const boundsChanged=()=>{clearTimeout(record.boundsTimer);record.boundsTimer=setTimeout(()=>{if(!window.isDestroyed())send(record,'memo:bounds',window.getBounds());},80);};window.on('move',boundsChanged);window.on('resize',boundsChanged);
+  const boundsChanged=()=>{sendBounds(record);};window.on('move',boundsChanged);window.on('resize',boundsChanged);
   window.once('closed',()=>{clearTimeout(record.boundsTimer);records.delete(contents);settle(record,true);if(!records.size&&!busy)onEmpty();});
   try{await window.loadURL(target.href+(scope==='system'?'&scope=system':''));if(!window.isDestroyed())window.show();return true;}catch{if(!window.isDestroyed())window.destroy();return false;}
  }
- async function performOpen(createNew,scope='normal'){
+ async function performOpen(createNew,scope='normal',refresh=false,prepare=false){
   try{
-   const snapshot=await (scope==='system'?readSystemSnapshot():readSnapshot());
-   const warnings=Array.isArray(snapshot.警告)?snapshot.警告.filter(item=>typeof item==='string').slice(0,5).join('\n').slice(0,2000):'';
+   let snapshot=await (scope==='system'?readSystemSnapshot():readSnapshot());
+   // システム付箋は選択プロジェクトとは別の寿命を持つ。読み込み失敗時は
+   // 既存窓を触らず、保存済みデータを誤って空一覧として扱わない。
+   let system=scope==='normal'?await readSystemSnapshot():null;
+   if(refresh||prepare){
+    if(snapshot.警告?.length||system?.警告?.length)throw Error('incomplete snapshot');
+    const persistent=new Set([...(system?.保存先||[]),...snapshot.保存先.filter(source=>source.id.startsWith('launch:'))].map(source=>key(source.id,'')));
+    for(const record of [...records.values()]){
+     if(record.initial.scope==='system'||persistent.has(key(record.initial.sourceId,'')))continue;
+     if(!await requestClose(record,true))return false;
+    }
+    // close の flush 完了後に取り直す。閉じる前の古い本文を再表示しない。
+    if(prepare)return true;
+    snapshot=await readSnapshot();
+    system=await readSystemSnapshot();
+   }
+   if(system)for(const note of system.メモ)if(!await create(note,system.保存先,note.保存先,'system'))throw Error('load');
+   const warnings=[...(snapshot.警告||[]),...(system?.警告||[])].filter(item=>typeof item==='string').slice(0,5).join('\n').slice(0,2000);
    if(warnings&&warnings!==lastWarnings){lastWarnings=warnings;await dialog.showMessageBox({type:'warning',title:'AiDiy Memo',message:'一部のメモを読み込めませんでした。元のファイルは変更していません。',detail:warnings,buttons:['閉じる']});}
    if(!createNew&&scope==='system'&&!snapshot.メモ.length){
     const blank=[...records.values()].find(record=>record.initial.scope==='system'&&!record.identity);
     if(blank&&!blank.window.isDestroyed()){blank.window.show();blank.window.focus();return true;}
    }
-   if(createNew||scope==='system'&&!snapshot.メモ.length){const source=snapshot.保存先.find(item=>item.id.startsWith('project:'))||snapshot.保存先[0];if(!source)throw Error('no source');return await create(null,snapshot.保存先,source.id,scope);}
+   if(createNew||scope==='system'&&!snapshot.メモ.length){const source=snapshot.保存先.find(item=>item.id.startsWith('project:'))||snapshot.保存先[0];if(!source)throw Error('no source');const shared=system?.保存先.find(item=>key(item.id,'')===key(source.id,''));return await create(null,shared?system.保存先:snapshot.保存先,shared?.id||source.id,shared?'system':scope);}
    let ok=true;for(const note of snapshot.メモ)if(!await create(note,snapshot.保存先,note.保存先,scope,scope==='system'))ok=false;
    if(!ok)throw Error('load');return true;
   }catch{try{await dialog.showMessageBox({type:'error',title:'AiDiy Memo',message:'付箋を開けませんでした。Diag の「+メモ」から再試行してください。',buttons:['閉じる']});}catch{}return false;}
  }
- function enqueue(createNew,scope){if(parentClose||typeof createNew!=='boolean')return Promise.resolve(false);busy++;const task=queue.then(()=>performOpen(createNew,scope)).finally(()=>{busy--;if(!records.size&&!busy)onEmpty();});queue=task.catch(()=>{});return task;}
+ function enqueue(createNew,scope,refresh=false,prepare=false){if(parentClose||projectChanging&&!refresh||createNew&&scope==='normal'&&creationBlocked||typeof createNew!=='boolean')return Promise.resolve(false);busy++;const task=queue.then(()=>performOpen(createNew,scope,refresh,prepare)).finally(()=>{busy--;if(!records.size&&!busy)onEmpty();});queue=task.catch(()=>{});return task;}
+ async function prepareRefresh(){if(projectChanging)return false;creationBlocked=true;const pending=enqueue(false,'normal',false,true);projectChanging=true;const ok=await pending;if(!ok){projectChanging=false;await enqueue(false,'normal');}return ok;}
  const open=(createNew=false)=>enqueue(createNew,'normal');
  const openSystem=(createNew=false)=>enqueue(createNew,'system');
  function closeForParent(){
   if(parentClose)return parentClose;
   parentClose=(async()=>{await queue;for(const record of [...records.values()])if(!await requestClose(record))return false;return true;})().finally(()=>{parentClose=null;});return parentClose;
  }
- return {open,openSystem,closeForParent,get count(){return records.size;},get busy(){return busy>0;}};
+ return {open,openSystem,prepareRefresh,refresh:(release=true)=>enqueue(false,'normal',true).then(ok=>{if(ok&&release)creationBlocked=false;return ok;}).finally(()=>{projectChanging=false;}),closeForParent,get count(){return records.size;},get busy(){return busy>0;}};
 }
 module.exports={メモ窓を作成,メモ一覧を読む,付箋範囲};

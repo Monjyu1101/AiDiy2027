@@ -5,7 +5,7 @@ export function メモ内容(note={}) {
  return {タイトル:note.タイトル||'',本文:note.本文||'',色:note.色||'yellow',...(note.位置?{位置:copy(note.位置)}:{}),...(note.サイズ?{サイズ:copy(note.サイズ)}:{})};
 }
 export function 空メモ(note){return !note.タイトル.trim()&&!note.本文.trim();}
-export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=()=>{},identity=()=>{},clientId=globalThis.crypto.randomUUID()}){
+export function 自動保存を作成({api,note=null,sourceId,delay=0,changed=()=>{},identity=()=>{},clientId=globalThis.crypto.randomUUID()}){
  let draft=メモ内容(note||{}),saved=note?JSON.stringify(draft):null,record=note?{id:note.id,revision:note.revision,保存先:note.保存先}:null;
  let timer,flight=null,error=null,disposed=false,pendingCreate=null,deleted=false,removing=null;
  const signature=()=>JSON.stringify(draft);
@@ -39,13 +39,15 @@ export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=
   if(error)return Promise.resolve(false);
   if(!dirty()){emit();return Promise.resolve(true);}
   // Microtask化し、同期API/mockでもflight設定より先に完了しないようにする。
-  flight=Promise.resolve().then(drain).finally(()=>{flight=null;emit();});emit();return flight;
+  flight=Promise.resolve().then(drain).finally(()=>{flight=null;emit();if(!disposed&&!error&&dirty()&&delay<=0)void flush();});emit();return flight;
  }
  function edit(patch){
   if(disposed||deleted)return;
   draft={...draft,...copy(patch)};clearTimeout(timer);emit();
-  if(!error&&dirty())timer=setTimeout(()=>{void flush();},delay);
+  if(!error&&dirty()){if(delay>0)timer=setTimeout(()=>{void flush();},delay);else void flush();}
  }
+ // 切替は新しい保存を開始せず、入力・移動が開始した保存だけを待つ。
+ async function settled(){if(removing)return removing;while(flight){if(!await flight)return false;}return !error&&!dirty();}
  function retry(){error=null;emit();return flush();}
  function trash(){
   if(removing)return removing;
@@ -61,5 +63,5 @@ export function 自動保存を作成({api,note=null,sourceId,delay=150,changed=
   return removing;
  }
  function dispose(){disposed=true;clearTimeout(timer);}
- emit();return {edit,flush,trash,retry,snapshot,dispose};
+ emit();return {edit,flush,settled,trash,retry,snapshot,dispose};
 }

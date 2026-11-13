@@ -28,3 +28,16 @@ test('空新規のゴミ箱はファイルを作らず、削除エラーは内�
  const model=自動保存を作成({note:seed,clientId:'test',api:async()=>{throw Error('退避失敗')}});
  assert.equal(await model.trash(),false);assert.equal(model.snapshot().draft.本文,seed.本文);assert.match(model.snapshot().error,/退避失敗/);assert.equal(await model.flush(),false);model.dispose();
 });
+test('既定は内容・位置・サイズ・色の変更直後に保存開始、切替settledは追加保存しない',async()=>{
+ const calls=[];const model=自動保存を作成({note:seed,sourceId:seed.保存先,api:async(_route,{body})=>{calls.push(body);return {...body,revision:'r'+calls.length};}});
+ for(const patch of [{本文:'即時'},{位置:{x:40,y:80}},{サイズ:{width:300,height:250}},{色:'pink'}]){
+  const before=calls.length;model.edit(patch);await Promise.resolve();assert.equal(calls.length,before+1);assert.equal(await model.settled(),true);
+ }
+ const count=calls.length;assert.equal(await model.settled(),true);assert.equal(calls.length,count);assert.ok(calls.every(body=>body.保存先===seed.保存先));model.dispose();
+});
+test('切替は既に始まった作成と後続保存を待つが、失敗・未開始保存を再送しない',async()=>{
+ let release;const calls=[];const model=自動保存を作成({sourceId:seed.保存先,api:async(_route,{body})=>{calls.push(body);if(calls.length===1)await new Promise(resolve=>release=resolve);return {...body,id:'new.memo.json',revision:'r'+calls.length};}});
+ model.edit({本文:'新規'});await Promise.resolve();model.edit({本文:'最新',位置:{x:5,y:6}});let done=false;const waiting=model.settled().then(ok=>{done=true;return ok;});await Promise.resolve();assert.equal(done,false);release();assert.equal(await waiting,true);assert.equal(calls.length,2);assert.equal(calls[1].本文,'最新');assert.ok(calls.every(body=>body.保存先===seed.保存先));model.dispose();
+ const deferred=fixture({note:seed,delay:1000});deferred.model.edit({本文:'未開始'});assert.equal(await deferred.model.settled(),false);assert.equal(deferred.calls.length,0);deferred.model.dispose();
+ let failedCalls=0;const failed=自動保存を作成({note:seed,api:async()=>{failedCalls++;throw Error('offline');}});failed.edit({本文:'保持'});assert.equal(await failed.settled(),false);assert.equal(await failed.settled(),false);assert.equal(failedCalls,1);assert.equal(failed.snapshot().draft.本文,'保持');failed.dispose();
+});

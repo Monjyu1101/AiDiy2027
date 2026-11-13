@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('aidiyMemo',Object.freeze({
  completeClose:value=>ipcRenderer.invoke('diag:memo-window','completeClose',value),
  updateSavedNote:note=>ipcRenderer.invoke('diag:memo-window','updateSavedNote',note),
  setNoteIdentity:value=>ipcRenderer.invoke('diag:memo-window','setNoteIdentity',value),
+ newMemo:()=>ipcRenderer.invoke('diag:memo-window','newMemo'),
  close:()=>ipcRenderer.invoke('diag:memo-window','close'),
  beginWindowMove:()=>ipcRenderer.invoke('diag:memo-window','beginWindowMove'),
  moveWindow:token=>typeof token==='string'?ipcRenderer.invoke('diag:memo-window','moveWindow',token):Promise.resolve(false),

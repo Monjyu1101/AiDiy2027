@@ -18,4 +18,5 @@ async function api(route,{method='GET',body}={}){
  if(!response.ok){if(response.status===401)session.破棄();throw Object.assign(Error(data.エラー||'メモの操作に失敗しました。'),{status:response.status});}
  session.保存(token);return data;
 }
-createApp(メモ画面,{api,initialNew,initialSource,initialId,initialScope,onSaved}).mount('#app');
+const onNew=()=>{const target=new URL('memo.html',location.href);target.hash=new URLSearchParams({token,new:'1',...(initialScope==='system'?{scope:'system'}:{})}).toString();return !!window.open(target.href,'_blank','popup,width=320,height=260');};
+createApp(メモ画面,{api,onNew,initialNew,initialSource,initialId,initialScope,onSaved}).mount('#app');
