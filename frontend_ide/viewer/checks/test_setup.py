@@ -40,6 +40,10 @@ class ViewerSetupTests(unittest.TestCase):
         (self.target / 'package-lock.json').write_text('{}', encoding='utf-8')
         for name in ('vue', '@xterm/xterm', '@xterm/addon-fit', 'node-pty', 'ws'):
             (self.target.parent / 'node_modules' / name).mkdir(parents=True)
+        for name in ('vite/package.json', 'vite/dist/node/index.js', '@vitejs/plugin-vue/package.json', 'esbuild/package.json'):
+            asset = self.target.parent / 'node_modules' / name
+            asset.parent.mkdir(parents=True, exist_ok=True)
+            asset.write_text('{}', encoding='utf-8')
         self.cache = self.project / '.aidiy_cache/electron'
         self.enterContext(patch.object(viewer, 'THIS_DIR', self.target))
         self.enterContext(patch.object(common, 'CACHE_DIR', self.cache))
@@ -53,6 +57,18 @@ class ViewerSetupTests(unittest.TestCase):
         self.launcher = self.enterContext(patch.object(viewer, 'install_launcher'))
         self.download = self.enterContext(patch.object(common.urllib.request, 'urlopen', side_effect=OSError('network unavailable')))
         self.output = self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+
+    def test_partial_common_ui_install_is_repaired_before_build(self):
+        # runtime directories can remain after a failed npm install, while Vite is incomplete.
+        (self.target.parent / 'node_modules/vite/dist/node/index.js').unlink()
+        self.assertFalse(viewer.common_ui_dependencies_ready(self.target.parent))
+        with patch.dict(os.environ, {'ELECTRON_SKIP_BINARY_DOWNLOAD': '1'}):
+            for choices in ({}, {'continue_on_error': True}):
+                with self.subTest(choices=choices):
+                    self.run.reset_mock()
+                    self.assertTrue(viewer.setup(choices))
+                    commands = [c.args[0][1:] for c in self.run.call_args_list if c.kwargs.get('cwd') == self.target.parent]
+                    self.assertEqual(commands, [['ci', '--include=dev', '--no-fund', '--no-audit'], ['run', 'build']])
 
     def make_cached_zip(self, version='44.7.0', *, name=None, contents_version=None):
         self.cache.mkdir(parents=True, exist_ok=True)

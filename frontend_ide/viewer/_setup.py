@@ -36,6 +36,16 @@ from _setup_electron import prepare_electron_binary, frontend_dependency_guard
 from _runtime_requirements import check_project_node_runtime
 
 
+def common_ui_dependencies_ready(root):
+    """中断した npm 導入の空ディレクトリを準備済みと誤認しない。"""
+    modules = root / 'node_modules'
+    runtime = ('vue', '@xterm/xterm', '@xterm/addon-fit', 'node-pty', 'ws')
+    build_files = ('vite/package.json', 'vite/dist/node/index.js',
+                   '@vitejs/plugin-vue/package.json', 'esbuild/package.json')
+    return (all((modules / name).is_dir() for name in runtime)
+            and all((modules / name).is_file() for name in build_files))
+
+
 class Colors:
     HEADER = "\033[97m"
     OKBLUE = "\033[94m"
@@ -115,7 +125,7 @@ def setup(choices=None) -> bool:
                 if not prepare_electron_binary(THIS_DIR, 'IDE', allow_download=updated, info=print_info, error=print_error):
                     return False
         vue = THIS_DIR.parent.parent / 'frontend_ide'
-        if any(not (vue / 'node_modules' / name).is_dir() for name in ('vue', '@xterm/xterm', '@xterm/addon-fit', 'node-pty', 'ws')):
+        if not common_ui_dependencies_ready(vue):
             vue_reuse = frontend_dependency_guard(
                 vue, 'Console / Code / Live / IDE 共通UI', desktop=False,
                 info=print_info, warning=print_warning, error=print_error,
@@ -171,7 +181,7 @@ def _setup_best_effort(npm, choices):
             return ready or len(copy_warnings) > before
         attempt('Electron 配置', place_electron)
     vue = THIS_DIR.parent.parent / 'frontend_ide'
-    if any(not (vue / 'node_modules' / name).is_dir() for name in ('vue', '@xterm/xterm', '@xterm/addon-fit', 'node-pty', 'ws')):
+    if not common_ui_dependencies_ready(vue):
         attempt('共通UI使用中確認', lambda: frontend_dependency_guard(
             vue, 'Console / Code / Live / IDE 共通UI', desktop=False,
             info=print_info, warning=print_warning, error=print_error, continue_on_error=True,

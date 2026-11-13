@@ -14,7 +14,7 @@
 `command_pi` は MIT ライセンスの AI エージェントハーネス Pi を同梱したものです。`aidiy_hermes` と同じく常駐しない Code CLI で、AiDiy では「Hermes と同じように使える」ことを基準にします。
 
 - Pi 本体（`packages/`・`apps/` など upstream 由来）はできるだけ変更しない。AiDiy 独自の処理は `command_pi/aidiy/` に置く。
-- upstream 由来で変更しているのは、起動画面のロゴ（`packages/coding-agent/src/modes/interactive/components/pi-logo.ts` に AiDiy-Pi ロゴを追加、`interactive-mode.ts` と `first-time-setup.ts` から使用）と、test フォルダの削除に伴う `package.json` / `package-lock.json` のワークスペース登録の削除だけ。
+- ランタイムについて upstream 由来で変更しているのは、起動画面のロゴ（`packages/coding-agent/src/modes/interactive/components/pi-logo.ts` に AiDiy-Pi ロゴを追加、`interactive-mode.ts` と `first-time-setup.ts` から使用）と、test フォルダの削除に伴う `package.json` / `package-lock.json` のワークスペース登録の削除だけ。
 - Discord / Slack、オフラインCode（Navi用Codeを含む）、Navi自身の案内／再評価、次入力予測で Hermes / Pi を選択できる。外部 Code CLI のモデル区分も共通化し、Piからは既存CodeAIの実行基盤へ委譲する。Navi・予測では外部CLIへの委譲を除外する。
 
 ## 構成
@@ -120,3 +120,12 @@
 - Diag のチェック: `node --test frontend_diag/checks/pi-info.check.mjs`（一覧生成・導入判定・Code テスト）、`cli-launch.check.mjs` / `aidiy-icon-ownership.check.mjs`（起動一覧・アイコン）。
 - Console / CLI 起動: `node --test frontend_ide/checks/cli-launch.test.mjs`。
 - setup 系: `python -B -X utf8 -m unittest discover -s scripts/checks`（`test_setup_messages` / `test_setup_processes` / `test_setup_posix` / `test_node_refresh` に Pi を含む）。
+
+## 同梱ルートの整理方針
+
+- 利用者・実装者の入口は `command_pi/README.md` と `AGENTS.md`。AiDiy の構成・設定・運用を案内する。
+- upstream 開発用の `.pi/`（プロンプト・拡張・技能）、`.husky/`、`CONTRIBUTING.md`、`pi-test.*` は同梱しない。起動は setup が生成する `aidiy_pi` に統一する。これは利用者の `~/.pi/agent` や作業プロジェクトの `.pi/` を削除するという意味ではない。
+- `prepare: husky` と専用依存も削除し、AiDiy の Git hooks を upstream 用設定で変更しない。
+- `packages/`・`apps/` の実装／原資料、MIT LICENSE、第三者表示は保持する。これらの資料にある upstream 向け手順は AiDiy の setup 手順と区別する。
+- `scripts/`、`test.sh`、TypeScript/Biome/Vitest 設定、Nix のカタログpinと配布設定はモデルデータ生成・検証・upstream保守の相互参照があるため保持する。AiDiy の通常起動は Nix や配布ビルドを必要としない。
+- 整理の検証は `node --test scripts/aidiy-layout.test.mjs`（command_pi 内）と、setup後の `aidiy_pi --version` / `--help` で行う。モデルを呼ぶ必要はない。

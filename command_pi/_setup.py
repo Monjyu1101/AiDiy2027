@@ -17,7 +17,7 @@ Windows ではユーザー PATH へ登録します。
 
 - 依存導入は Pi 本体の方針に合わせ `npm ci --ignore-scripts`（lifecycle script 不実行）。
 - ソース実行に必要なモデルデータは `npm run hydrate:model-data` で生成する（ネットワーク使用）。
-- `npm run build` は行わない。起動は `pi-test.ps1` と同じソース実行方式。
+- `npm run build` は行わない。起動は Node.js の source resolver を使うソース実行方式。
 - `aidiy_pi` は aidiy_hermes と同様、実行したフォルダをそのまま作業フォルダ（プロジェクト）にする。
 - 起動入口は `aidiy/aidiy_pi.ts`。aidiy_diag の pi_models_info.json・AiDiy_key.json・
   Codex / Grok の共有ログインから、Hermes と同じ区分名のプロバイダを登録する。
@@ -171,7 +171,7 @@ def launcher_path() -> Path:
 
 
 def launcher_command(node: str) -> list[str]:
-    """`pi-test.ps1` と同じソース実行。--import にはファイル URL を渡す。
+    """Node.js の source resolver を使うソース実行。--import にはファイル URL を渡す。
 
     作業フォルダは変更しない（起動したフォルダがそのまま Pi の対象プロジェクトになる）。
     """
