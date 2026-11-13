@@ -440,7 +440,7 @@ Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後�
 - セットアップ見出しは「Diag, Memo セットアップ」。ルート setup / start は監視親を先に止め、Diag → 単体 Memo の順に強制停止する。cleanup も Diag の直後に Memo・共用残留プロセスを停止確認する。片方の停止に失敗しても次を試し、失敗時は依存物削除へ進まない。
 - Diag と Memo は Electron を共有するため、同一プロセス内の付箋は Diag と同時に終了する。Memo 単体から Diag へ昇格したプロセスも最終 Memo 確認で停止する。親のない共用 Electron 補助プロセスは Diag 段階で整理する。
 - 配置先・実行入口を照合し、他 checkout や名前だけが同じ Node / Electron は止めない。setup / start は Code / IDE / Discord / Slack と起動元の保護を維持し、Windows でも個別 PID を再照合する。cleanup は従来の所有確認付きプロセスツリー停止を使う。
-- 強制終了は通常の窓終了と異なり、保存 flush の完了を保証しない。即時自動保存の送信中の変更は失われる可能性があるので、編集直後には実行せず保存完了を確認する。保存済み JSON は削除しない。新規空付箋は従来どおり保存しない。
+- 強制終了は通常の窓終了と異なり、保存 flush の完了を保証しない。フォーカス中の未保存入力や保存送信中の変更は失われる可能性があるので、付箋からフォーカスを外して保存完了を確認する。保存済み JSON は削除しない。新規空付箋は従来どおり保存しない。
 - 回帰確認: `python -m unittest discover -s scripts/checks -p 'test_setup_processes.py'` と `python -m unittest discover -s backend_diag/checks -p 'test_cleanup_processes.py'`。停止対象・順序は Windows / POSIX の合成プロセスで確認し、利用中の実プロセスをテストから停止しない。
 
 

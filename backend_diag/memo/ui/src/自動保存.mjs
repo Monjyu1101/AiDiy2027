@@ -7,15 +7,17 @@ export function メモ内容(note={}) {
 export function 空メモ(note){return !note.タイトル.trim()&&!note.本文.trim()&&!note.画像;}
 export function 自動保存を作成({api,note=null,sourceId,delay=0,changed=()=>{},identity=()=>{},clientId=globalThis.crypto.randomUUID()}){
  let draft=メモ内容(note||{}),saved=note?JSON.stringify(draft):null,record=note?{id:note.id,revision:note.revision,保存先:note.保存先}:null;
+ let persistable=copy(draft);
  let timer,flight=null,error=null,disposed=false,pendingCreate=null,deleted=false,removing=null;
  const signature=()=>JSON.stringify(draft);
  const blankNew=()=>!record&&!pendingCreate&&空メモ(draft);
  const dirty=()=>!deleted&&!blankNew()&&(!record||signature()!==saved);
+ const pending=()=>!deleted&&(!record?!空メモ(persistable):JSON.stringify(persistable)!==saved);
  const snapshot=()=>({draft:copy(draft),saving:!!flight,error:error?.message||'',conflict:error?.status===409,dirty:dirty(),blankNew:blankNew(),id:record?.id||null});
  const emit=()=>{if(!disposed)changed(snapshot());};
  async function drain(){
-  while(!disposed&&dirty()&&!error){
-   const captured=copy(draft),capturedSignature=JSON.stringify(captured);
+  while(!disposed&&pending()&&!error){
+   const captured=copy(persistable),capturedSignature=JSON.stringify(captured);
    let body,creating=!record;
    if(creating){pendingCreate ||= {保存先:sourceId,...captured,clientId};body=pendingCreate;}
    else body={...record,...captured};
@@ -28,23 +30,24 @@ export function 自動保存を作成({api,note=null,sourceId,delay=0,changed=()
    }catch(failure){error=failure instanceof Error?failure:Error('保存できませんでした。');}
    emit();
   }
-  return !error&&!dirty();
+  return !error&&!pending();
  }
- function flush(){
+ function save(){
   clearTimeout(timer);
   if(removing)return removing;
   if(deleted)return Promise.resolve(true);
   if(disposed)return Promise.resolve(false);
   if(flight)return flight;
   if(error)return Promise.resolve(false);
-  if(!dirty()){emit();return Promise.resolve(true);}
+  if(!pending()){emit();return Promise.resolve(true);}
   // Microtask化し、同期API/mockでもflight設定より先に完了しないようにする。
-  flight=Promise.resolve().then(drain).finally(()=>{flight=null;emit();if(!disposed&&!error&&dirty()&&delay<=0)void flush();});emit();return flight;
+  flight=Promise.resolve().then(drain).finally(()=>{flight=null;emit();if(!disposed&&!error&&pending()&&delay<=0)void save();});emit();return flight;
  }
- function edit(patch){
+ function flush(){persistable=copy(draft);return save();}
+ function edit(patch,{defer=false}={}){
   if(disposed||deleted)return;
-  draft={...draft,...copy(patch)};clearTimeout(timer);emit();
-  if(!error&&dirty()){if(delay>0)timer=setTimeout(()=>{void flush();},delay);else void flush();}
+  draft=メモ内容({...draft,...copy(patch)});if(defer){emit();return;}persistable=メモ内容({...persistable,...copy(patch)});clearTimeout(timer);emit();
+  if(!error&&pending()){if(delay>0)timer=setTimeout(()=>{void save();},delay);else void save();}
  }
  // 切替は新しい保存を開始せず、入力・移動が開始した保存だけを待つ。
  async function settled(){if(removing)return removing;while(flight){if(!await flight)return false;}return !error&&!dirty();}

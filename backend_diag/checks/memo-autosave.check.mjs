@@ -51,3 +51,20 @@ test('image-only memo persists, replacement/removal survive in-flight save and s
  model.edit({画像:''});await model.flush();assert.equal(calls.at(-1).body.画像,'');assert.equal(model.snapshot().blankNew,false);
  model.dispose();
 });
+
+test('フォーム入力はflushまで保持し、位置・色・画像保存に編集中の本文を混ぜない',async()=>{
+ const {model,calls}=fixture({note:seed,delay:0});
+ model.edit({本文:'入力中'},{defer:true});model.edit({タイトル:'編集中の題'},{defer:true});await delay(10);assert.equal(calls.length,0);
+ model.edit({位置:{x:3,y:4},色:'pink',画像:'data:image/png;base64,new'});await delay(10);
+ assert.equal(calls.length,1);assert.equal(calls[0].body.本文,seed.本文);assert.equal(calls[0].body.タイトル,seed.タイトル);assert.equal(model.snapshot().draft.本文,'入力中');assert.equal(model.snapshot().dirty,true);
+ await model.flush();assert.equal(calls.length,2);assert.equal(calls[1].body.本文,'入力中');assert.equal(calls[1].body.タイトル,'編集中の題');assert.equal(model.snapshot().dirty,false);model.dispose();
+});
+test('保存中の追加入力も次のロストフォーカスまで送らない',async()=>{
+ let release;const calls=[];const {model}=fixture({note:seed,delay:0,api:async(_route,{body})=>{calls.push(body);if(calls.length===1)await new Promise(r=>release=r);return {...body,revision:'r'+calls.length};}});
+ model.edit({本文:'最初の更新'},{defer:true});const first=model.flush();await delay(0);model.edit({本文:'次の入力'},{defer:true});release();await first;
+ assert.equal(calls.length,1);assert.equal(model.snapshot().dirty,true);await model.flush();assert.equal(calls.length,2);assert.equal(calls[1].本文,'次の入力');model.dispose();
+});
+test('空新規の入力と移動はblurまで作成せず、画像のみは即保存できる',async()=>{
+ const {model,calls}=fixture({delay:0});model.edit({本文:'新しい入力'},{defer:true});model.edit({位置:{x:1,y:2}});await delay(10);assert.equal(calls.length,0);
+ model.edit({画像:'data:image/png;base64,image'});await delay(10);assert.equal(calls.length,1);assert.equal(calls[0].body.本文,'');await model.flush();assert.equal(calls[1].body.本文,'新しい入力');model.dispose();
+});

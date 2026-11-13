@@ -31,10 +31,10 @@ const 色名={yellow:'黄',blue:'青',green:'緑',pink:'桃',purple:'紫','vivid
 let resolveBoot;const boot=new Promise(resolve=>{resolveBoot=resolve;});
 let model,alive=true,closeBusy=false,pendingBlur=false,dragEnd=()=>{},unsubscribers=[];
 function bounds(value){if(!model||!value)return;const {x,y,width,height}=value;if([x,y,width,height].every(Number.isFinite))model.edit({位置:{x,y},サイズ:{width,height}});}
-function edit(patch){if(closing.value)return;model?.edit(patch);copied.value=false;}
+function edit(patch){if(closing.value)return;model?.edit(patch,{defer:'タイトル' in patch||'本文' in patch});copied.value=false;}
 async function flushClose(request){
  if(closeBusy)return;inputMove.cancel();closeBusy=true;closing.value=true;
- try{await boot;await imageFlight;if(!request.waitOnly&&request.bounds)bounds(request.bounds);const ok=ready.value&&!!model&&await (request.waitOnly?model.settled():model.flush());await native?.completeClose({requestId:request.requestId,ok,error:ok?'':state.value.error||bootError.value||'メモを読み込んでいます。'});}
+ try{await boot;await imageFlight;if(!request.waitOnly&&request.bounds)bounds(request.bounds);const ok=ready.value&&!!model&&await model.flush();await native?.completeClose({requestId:request.requestId,ok,error:ok?'':state.value.error||bootError.value||'メモを読み込んでいます。'});}
  finally{closeBusy=false;closing.value=false;}
 }
 async function blur(event){await imageFlight;if(event?.bounds)bounds(event.bounds);if(!model){pendingBlur=true;return;}if(model.snapshot().blankNew){if(native)await native.close();else window.close();return;}await model.flush();}
@@ -118,6 +118,7 @@ onUnmounted(()=>{overflowObserver?.disconnect();window.removeEventListener('focu
 </script>
 <template>
  <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused}]" @paste="paste" @dragover.prevent @drop="drop">
+  <div class="sticky-adhesive" aria-hidden="true" @pointerdown="move"></div>
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>

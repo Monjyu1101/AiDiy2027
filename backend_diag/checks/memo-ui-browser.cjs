@@ -14,20 +14,23 @@ if(process.versions.electron){
    const title=document.querySelector('.sticky-title'),text=document.querySelector('.sticky-text');
    expect(title&&text,'title and body present');expect(!document.querySelector('.memo-board'),'no board');
    expect(document.querySelectorAll('textarea').length===1,'one note only');
+   const adhesive=document.querySelector('.sticky-adhesive');
+   const checkAdhesive=()=>{const r=adhesive.getBoundingClientRect(),style=getComputedStyle(adhesive);expect(r.top===0&&r.left===0&&r.width===innerWidth,'adhesive spans top edge');expect(Math.abs(r.height-parseFloat(style.fontSize)/2)<.1,'half-character adhesive height');expect(style.backgroundColor==='rgba(0, 0, 0, 0.07)','subtle shaded adhesive');expect(r.bottom<=title.getBoundingClientRect().top,'adhesive does not cover title');};
+   checkAdhesive();
    const rect=document.querySelector('.sticky-note').getBoundingClientRect();expect(rect.width===320&&rect.height===260,'full pastel note '+JSON.stringify({width:rect.width,height:rect.height,innerWidth,innerHeight}));
    window.handlers.bounds({x:-200,y:50,width:320,height:260});document.querySelector('[aria-label="桃色の付箋"]').click();await wait(200);
    expect(window.calls.length===0,'blank geometry/color creates no file');window.handlers.blur();await wait(0);expect(window.closedCalls===1,'blank blur closes');
    title.value='タイトルだけ';title.dispatchEvent(new Event('input',{bubbles:true}));await wait(220);
-   expect(window.calls.length===1&&window.calls[0].route==='api/メモ/作成','title-only autosaves');expect(window.calls[0].body.色==='pink','pastel persisted');expect(window.calls[0].body.位置.x===-200,'native geometry persisted');
+   expect(window.calls.length===0,'typing title does not save');text.focus();await wait(20);expect(window.calls.length===0,'title to body does not save');window.handlers.blur();await wait(20);expect(window.calls.length===1&&window.calls[0].route==='api/メモ/作成','form blur saves title');expect(window.calls[0].body.色==='pink','pastel persisted');expect(window.calls[0].body.位置.x===-200,'native geometry persisted');
    text.value='すぐ閉じても失わない';text.dispatchEvent(new Event('input',{bubbles:true}));window.handlers.close({requestId:'c1',bounds:{x:-250,y:60,width:400,height:300}});await wait(10);
    expect(window.closeResult.ok===true,'close flush success');expect(window.calls.at(-1).body.本文==='すぐ閉じても失わない','latest body flushed');expect(window.calls.at(-1).body.位置.x===-250,'close latest bounds flushed');
-   window.failSave=true;text.value='失敗しても残る';text.dispatchEvent(new Event('input',{bubbles:true}));await wait(200);
+   window.failSave=true;text.value='失敗しても残る';text.dispatchEvent(new Event('input',{bubbles:true}));window.handlers.blur();await wait(200);
    expect(document.querySelector('.sticky-error')&&text.value==='失敗しても残る','failed autosave keeps input');window.handlers.close({requestId:'c2'});await wait(10);expect(window.closeResult.ok===false,'failed close stays guarded');
    window.failSave=false;[...document.querySelectorAll('button')].find(x=>x.textContent==='再試行').click();await wait(10);expect(!document.querySelector('.sticky-error'),'retry resolves');
    for(const name of ['赤','青','緑','橙','紫','シアン']){
     document.querySelector('[aria-label="原色・'+name+'色の付箋"]').click();await wait(20);
     expect(getComputedStyle(title).color==='rgb(255, 255, 255)'&&getComputedStyle(text).color==='rgb(255, 255, 255)','vivid white title/body '+name);
-    expect(window.calls.at(-1).body.色.startsWith('vivid-'),'vivid color saved '+name);
+    expect(window.calls.at(-1).body.色.startsWith('vivid-'),'vivid color saved '+name);checkAdhesive();
    }
    const palette=document.querySelector('.sticky-palette');expect(palette.getBoundingClientRect().width<150,'palette fits minimum note width');
    document.querySelector('[aria-label="桃色の付箋"]').click();await wait(20);expect(getComputedStyle(text).color==='rgb(41, 50, 46)','pastel dark text restored');
@@ -37,7 +40,7 @@ if(process.versions.electron){
    fire(text,'pointerdown',20,40);await wait(550);expect(!!document.querySelector('.sticky-move-marker'),'long press body shows movement marker');expect(window.dragCalls===1,'body long press native movement');fire(window,'pointerup',20,40);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'release hides marker');
    fire(title,'pointerdown',20,20);await wait(550);expect(window.dragCalls===2,'title long press native movement');fire(window,'pointercancel',20,20);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'cancel hides marker');
    title.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));fire(title,'pointerdown',20,20);await wait(550);expect(window.dragCalls===2,'IME composition prevents movement');title.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));fire(window,'pointerup',20,20);
-   fire(document.querySelector('.sticky-header'),'pointerdown',300,12);await wait(0);expect(window.dragCalls===3,'header moves immediately');fire(window,'pointerup',300,12);
+   fire(document.querySelector('.sticky-header'),'pointerdown',300,12);await wait(0);expect(window.dragCalls===3,'header moves immediately');fire(window,'pointerup',300,12);fire(adhesive,'pointerdown',100,3);await wait(0);expect(window.dragCalls===4,'adhesive moves immediately');fire(window,'pointerup',100,3);
    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
    const file=new File([Uint8Array.from(atob(png),c=>c.charCodeAt(0))],'image.png',{type:'image/png'});
    const transfer=new DataTransfer();transfer.items.add(file);
@@ -50,6 +53,7 @@ if(process.versions.electron){
    const drop=new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer});document.querySelector('.sticky-note').dispatchEvent(drop);await wait(100);expect(drop.defaultPrevented,'drop does not navigate');expect(document.querySelectorAll('.sticky-image-frame img').length===1,'replacement stays one image');expect(innerWidth===320&&innerHeight===260,'replacement keeps window size');
    for(const [width,height] of [[20,60],[60,20]]){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').fillRect(0,0,width,height);const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));const data=new DataTransfer();data.items.add(new File([blob],'ratio.png',{type:'image/png'}));text.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data}));await wait(100);const im=document.querySelector('.sticky-image-frame img'),r=im.getBoundingClientRect();expect(Math.abs(r.width-im.parentElement.clientWidth)<1,'portrait/landscape use full width');expect(Math.abs(r.height/r.width-height/width)<0.01,'portrait/landscape aspect ratio preserved');expect(innerWidth===320&&innerHeight===260,'ratio changes do not resize window');}
    document.querySelector('.sticky-image-remove').click();await wait(20);expect(!document.querySelector('.sticky-image-frame'),'image removed');expect(window.calls.at(-1).body.画像==='','removal saved');
+   text.value='切替前の未保存';text.dispatchEvent(new Event('input',{bubbles:true}));window.handlers.close({requestId:'switch',waitOnly:true});await wait(10);expect(window.closeResult.ok&&window.calls.at(-1).body.本文==='切替前の未保存','project switch flushes deferred text');
    text.value='短いメモ';text.dispatchEvent(new Event('input',{bubbles:true}));window.dispatchEvent(new Event('blur'));await wait(30);
    expect(getComputedStyle(content).scrollbarWidth==='none','blur hides scrollbar');expect(!document.querySelector('.sticky-overflow-hint'),'short note has no continuation marker');
    text.value=Array(30).fill('長いメモ').join(String.fromCharCode(10));text.dispatchEvent(new Event('input',{bubbles:true}));await wait(30);content.scrollTop=0;content.dispatchEvent(new Event('scroll'));await wait(0);
@@ -60,6 +64,20 @@ if(process.versions.electron){
    expect(window.identity?.id==='one.memo.json','created identity reported');
    return 'PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';
   })()`));
+  // Strict 2/3 threshold, repeated resize, and immediate movement in either orientation.
+  for(const [width,height,left] of [[300,200,false],[300,199,true],[320,260,false],[400,125,true],[200,200,false]]){
+   w.setSize(width,height);await new Promise(resolve=>setTimeout(resolve,50));
+   console.log(await w.webContents.executeJavaScript(`(async()=>{
+    const strip=document.querySelector('.sticky-adhesive'),r=strip.getBoundingClientRect(),half=parseFloat(getComputedStyle(strip).fontSize)/2;
+    if(r.top!==0||r.left!==0||Math.abs(r.width-(${left}?half:innerWidth))>.1||Math.abs(r.height-(${left}?innerHeight:half))>.1)throw Error('adhesive orientation at ${width}x${height}');
+    const before=window.dragCalls;
+    strip.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,isPrimary:true,button:0,clientX:2,clientY:2}));
+    await new Promise(resolve=>setTimeout(resolve,0));
+    if(window.dragCalls!==before+1)throw Error('adhesive immediate drag at ${width}x${height}');
+    window.dispatchEvent(new PointerEvent('pointerup',{bubbles:true,pointerId:1,button:0}));
+    return 'PASS adhesive ${left?'left':'top'} at ${width}x${height}';
+   })()`));
+  }
   w.setSize(200,84);await new Promise(resolve=>setTimeout(resolve,50));
   console.log(await w.webContents.executeJavaScript(`(()=>{const note=document.querySelector('.sticky-note'),content=document.querySelector('.sticky-content'),palette=document.querySelector('.sticky-palette');if(innerHeight!==84||content.clientHeight<=0||palette.getBoundingClientRect().right>note.clientWidth)throw Error('minimum 200x84 layout');return 'PASS minimum 200x84 layout';})()`));app.exit(0);
  }).catch(error=>{console.error(error);app.exit(1)});
