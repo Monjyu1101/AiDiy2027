@@ -13,8 +13,8 @@ const {width:miniWidth,height}=miniWindow.ミニ寸法;
 const {outputFiles:[fixture]}=await build({
  stdin:{resolveDir:fileURLToPath(new URL('../ui/',import.meta.url)),contents:`
  import {createApp,h,ref,nextTick} from 'vue';
- import Row from './src/components/アプリ起動/ミニアイコン列.vue';
- import {起動モーション} from './src/components/アプリ起動/起動モーション.mjs';
+ import Row from '../diag/ui/components/アプリ起動/ミニアイコン列.vue';
+ import {起動モーション} from '../diag/ui/components/アプリ起動/起動モーション.mjs';
  const counts=ref([5,6]),clicks=[];
  window.fixture={counts:async(app,cli)=>{counts.value=[app,cli];await nextTick();},clicks};
  const icons=(kind,count)=>h(Row,{class:'mini-'+kind+'-buttons'},()=>Array.from({length:count},(_,i)=>
@@ -33,7 +33,7 @@ const {outputFiles:[fixture]}=await build({
    h('div',{class:'mini-services'},['Tools','Core','Apps','Task/Team','Web','Local'].map(name=>h('button',{class:'mini-service'},name))),
   ])),
  ])}).mount('#app');`},
- bundle:true,write:false,format:'iife',define:{'process.env.NODE_ENV':'"production"'},
+ bundle:true,write:false,format:'iife',alias:{vue:require.resolve('vue/dist/vue.runtime.esm-bundler.js')},define:{'process.env.NODE_ENV':'"production"'},
  plugins:[{name:'vue',setup(build){build.onLoad({filter:/\.vue$/},({path})=>{
   const {descriptor}=parse(readFileSync(path,'utf8'),{filename:path});
   return{contents:compileScript(descriptor,{id:path,inlineTemplate:true}).content,loader:'js'};

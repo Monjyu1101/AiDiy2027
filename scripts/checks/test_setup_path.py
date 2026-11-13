@@ -5,6 +5,7 @@
 # https://github.com/monjyu1101/AiDiy2027
 
 """実際のユーザー PATH を変更せず、登録・解除の境界を確認する。"""
+import hashlib
 import importlib.util
 import contextlib
 import io
@@ -255,12 +256,13 @@ class WindowsProjectPathTests(unittest.TestCase):
         with patch.object(cleanup, '__file__', str(root / '_cleanup.py')), \
                 patch.object(cleanup._path_helper, 'launcher_directory', return_value=directory), \
                 patch.object(cleanup, 'stop_processes', return_value=True), \
+                patch.object(cleanup, 'stop_memo_processes', return_value=True), \
                 patch.object(cleanup, 'cleanup_dependencies', return_value=True), \
                 patch.object(cleanup, 'remove_launcher_path', side_effect=helper.remove_launcher_path):
             self.assertTrue(cleanup.cleanup())
             self.assertTrue(launcher.exists())
             self.assertIn(str(directory), self.registry['Path'][0])
-            marker = 'aidiy_diag-owner:' + cleanup.hashlib.sha256(str(root / 'diag_main.mjs').encode('utf-8')).hexdigest()
+            marker = 'aidiy_diag-owner:' + hashlib.sha256(str(root / 'diag_main.mjs').encode('utf-8')).hexdigest()
             launcher.write_text(marker, encoding='utf-8')
             self.assertTrue(cleanup.cleanup())
         self.assertFalse(launcher.exists())
