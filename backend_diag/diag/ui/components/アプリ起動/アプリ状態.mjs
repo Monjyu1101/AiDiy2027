@@ -17,7 +17,7 @@ export function アプリ状態を作成({api,newMemo,picker=()=>globalThis.aidi
  async function 読込(){
   if(loading)return loading;const version=catalogVersion;
   const request=(async()=>{try{const data=await api('api/アプリ起動');if(version===catalogVersion){
-    項目.value=typeof newMemo==='function'?[...data.対象.filter(item=>item.id!=='memo'),{id:'memo',名前:'Memo',利用可能:true,単一起動:false}]:data.対象;
+    項目.value=typeof newMemo==='function'?[...data.対象.filter(item=>item.id!=='memo'),{id:'memo',名前:'MEMO',利用可能:true,単一起動:false}]:data.対象;
     if(!folderInitialized){
      folderInitialized=true;
      if(!フォルダ.value&&typeof data.フォルダ==='string'){

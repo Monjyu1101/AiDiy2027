@@ -9,7 +9,7 @@ import path from 'node:path';
 import {createHash,randomUUID} from 'node:crypto';
 import {画像を検証,最大メモバイト数} from './画像.mjs';
 const 最大バイト数=1024*1024;
-const 色一覧=new Set(['yellow','pink','blue','green','purple']);
+const 色一覧=new Set(['yellow','pink','blue','green','purple','vivid-red','vivid-blue','vivid-green','vivid-orange','vivid-purple','vivid-cyan']);
 const fail=(message,status=400)=>Object.assign(Error(message),{status});
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const 有効名=name=>typeof name==='string'&&name.length<=240&&!/[\\/\x00-\x1f]/.test(name)&&!name.startsWith('.')&&/\.(?:memo\.json|md|txt)$/i.test(name);
@@ -23,7 +23,7 @@ const textFile=id=>!/\.memo\.json$/i.test(id);
 const metadataFile=(directory,id)=>path.join(directory,'.memo-'+hash(id)+'.json');
 const revision=(data,metadata)=>hash(metadata?Buffer.concat([data,Buffer.from('\0'),metadata]):data);
 function 配置確認(fields){
- for(const [key,limits] of [['位置',{x:[-100000,100000],y:[-100000,100000]}],['サイズ',{width:[200,1200],height:[140,1600]}]]){
+ for(const [key,limits] of [['位置',{x:[-100000,100000],y:[-100000,100000]}],['サイズ',{width:[200,1200],height:[84,1600]}]]){
   const value=fields[key];if(value===undefined)continue;
   if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||Object.keys(value).some(name=>!Object.hasOwn(limits,name))||Object.entries(limits).some(([name,[min,max]])=>!Number.isFinite(value[name])||value[name]<min||value[name]>max))throw fail('付箋の位置またはサイズが不正です。');
  }

@@ -8,7 +8,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-text{display:block;width:100%;flex:1;min-height:20px;resize:none;border:0;outline:0;background:transparent;color:inherit;font:14px/1.6 system-ui,sans-serif;padding:0;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-width:thin}
 .sticky-text::placeholder{color:#4b554e88}.sticky-text:disabled{opacity:.6}
 .sticky-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px;flex:none;min-height:26px;user-select:none}
-.sticky-palette{display:flex;gap:6px;visibility:hidden}.sticky-bottom:hover .sticky-palette,.sticky-bottom:focus-within .sticky-palette{visibility:visible}
+.sticky-palette{display:grid;grid-template-columns:repeat(6,17px);gap:6px;padding:4px 0;visibility:hidden}.sticky-bottom:hover .sticky-palette,.sticky-bottom:focus-within .sticky-palette{visibility:visible}
 .sticky-palette button{height:17px;width:17px;border:1px solid #0005;border-radius:50%;padding:0;cursor:pointer}.sticky-palette button[aria-pressed=true]{outline:2px solid #46594e;outline-offset:1px}.sticky-palette button:focus-visible{outline:2px solid #096b84;outline-offset:2px}
 .sticky-save-state{font-size:10px;color:#384138;white-space:nowrap}.sticky-error{font-size:12px;line-height:1.4;color:#7c211c;max-height:45%;overflow:auto;flex:none;overflow-wrap:anywhere;padding:5px 0}.sticky-error button{font:inherit;border:1px solid #6334;background:#fff5;color:inherit;border-radius:3px;margin:4px 5px 0 0;padding:2px 6px;cursor:pointer}
 
@@ -23,14 +23,32 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-add:focus-visible{outline:2px solid #096b84;outline-offset:1px}
 
 .sticky-image-frame{position:relative;flex:1 1 45%;min-height:40px;max-height:55%;margin-top:6px;border:1px solid #29322e55;border-radius:4px;background:#ffffff38;overflow:hidden;display:flex;align-items:center;justify-content:center}
-.sticky-image-frame img{display:block;width:100%;height:100%;object-fit:contain;min-height:0}
+.sticky-image-frame img{display:block;width:100%;height:auto;flex:none;min-height:0}
 .sticky-image-remove{position:absolute;right:3px;top:3px;border:1px solid #29322e55;border-radius:3px;background:#ffffffe0;color:#29322e;width:22px;height:22px;cursor:pointer;opacity:0}
 .sticky-image-frame:hover .sticky-image-remove,.sticky-image-remove:focus-visible{opacity:1}
 
 .sticky-content{flex:1;min-height:0;overflow:auto;scrollbar-width:thin}
-.sticky-content .sticky-text{field-sizing:content;min-height:100px;height:100px;overflow:auto}
+.sticky-content .sticky-text{field-sizing:content;min-height:22px;height:100px;overflow:auto}
 @supports(field-sizing:content){.sticky-content .sticky-text{height:auto}}
-.sticky-content .sticky-image-frame{height:180px;min-height:180px;max-height:none;flex:none}
+.sticky-content .sticky-image-frame{height:auto;min-height:0;max-height:none;flex:none}
 
 .sticky-move-marker{position:fixed;right:8px;top:8px;z-index:10;pointer-events:none;background:#29322ee8;color:#fff;border-radius:4px;padding:4px 8px;font-size:12px;box-shadow:0 1px 4px #0004}
 .sticky-moving,.sticky-moving input,.sticky-moving textarea{cursor:grabbing!important;user-select:none}
+
+/* 原色系は白文字。既存パステルの文字色と保存名は変更しない。 */
+.sticky-vivid-red{background:#c62828}.sticky-vivid-blue{background:#1565c0}.sticky-vivid-green{background:#15803d}.sticky-vivid-orange{background:#c2410c}.sticky-vivid-purple{background:#7e22ce}.sticky-vivid-cyan{background:#007f8b}
+.sticky-vivid{color:#fff}
+.sticky-vivid .sticky-title::placeholder,.sticky-vivid .sticky-text::placeholder{color:#ffffffb3}
+.sticky-vivid .sticky-save-state,.sticky-vivid .sticky-trash,.sticky-vivid .sticky-error{color:#fff}
+.sticky-vivid .sticky-palette button[aria-pressed=true],.sticky-vivid .sticky-palette button:focus-visible,.sticky-vivid .sticky-add:focus-visible{outline-color:#fff}
+@media(max-width:240px){.sticky-palette{grid-template-columns:repeat(5,17px);gap:4px}}
+
+/* 小さな付箋でも本文領域を確保し、色パレットは下部から重ねて表示。 */
+.sticky-bottom{position:relative;background:inherit}
+.sticky-palette{position:absolute;left:0;bottom:4px;z-index:2;background:inherit;border-radius:4px;padding:4px}
+.sticky-viewport{position:relative;flex:1;min-height:0}
+.sticky-content{height:100%}
+.sticky-note:not(.sticky-focused) .sticky-content,.sticky-note:not(.sticky-focused) .sticky-text{scrollbar-width:none}
+.sticky-note:not(.sticky-focused) .sticky-content::-webkit-scrollbar,.sticky-note:not(.sticky-focused) .sticky-text::-webkit-scrollbar{display:none}
+.sticky-overflow-hint{position:absolute;right:0;bottom:0;line-height:18px;padding:0 4px;background:inherit;pointer-events:none;font-weight:700}
+.sticky-viewport{background:inherit}

@@ -1,0 +1,14 @@
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+ <title>AiDiy MEMO</title>
+ <defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#163552"/><stop offset="1" stop-color="#316877"/></linearGradient><linearGradient id="paper" x2="0" y2="1"><stop stop-color="#fff7ba"/><stop offset="1" stop-color="#ffe28c"/></linearGradient></defs>
+ <path fill="url(#bg)" d="M0 0h512v512H0z"/>
+ <rect x="92" y="54" width="290" height="274" rx="16" fill="#accfdd" transform="rotate(-9 237 191)"/>
+ <path d="M112 48h276v218l-68 70H112z" fill="#102534" opacity=".3" transform="translate(8 12)"/>
+ <path d="M112 48h276v218l-68 70H112z" fill="url(#paper)"/>
+ <path d="M320 336v-70h68z" fill="#e9b95d"/>
+ <path d="M154 114h190M154 160h190M154 206h152M154 252h111" fill="none" stroke="#a17b31" stroke-width="15" stroke-linecap="round"/>
+ <path fill="#35e0d2" d="M0 384h512v128H0z"/>
+ <text x="256" y="482" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="94" font-weight="bold" fill="#000000">MEMO</text>
+</svg>

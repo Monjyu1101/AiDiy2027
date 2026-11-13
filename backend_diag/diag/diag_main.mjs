@@ -110,7 +110,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
   for(const name of ['memo.html','memo.js','memo.css'])assets.set(name,[name,name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.js')?'text/javascript; charset=utf-8':'text/css; charset=utf-8']);
   assets.set('Chrome.svg',['Chrome.svg','image/svg+xml']);
   assets.set('AiDiy.png',['AiDiy.png','image/png']);
-  for(const id of ['avatar','ide','cpu','navi','console','code','live','task','team','browser','discord','slack'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
+  for(const id of ['avatar','ide','cpu','navi','console','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
   assets.set('LICENSE_ICONS.md',['LICENSE_ICONS.md','text/markdown; charset=utf-8']);

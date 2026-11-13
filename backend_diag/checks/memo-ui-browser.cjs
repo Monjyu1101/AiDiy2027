@@ -24,6 +24,13 @@ if(process.versions.electron){
    window.failSave=true;text.value='失敗しても残る';text.dispatchEvent(new Event('input',{bubbles:true}));await wait(200);
    expect(document.querySelector('.sticky-error')&&text.value==='失敗しても残る','failed autosave keeps input');window.handlers.close({requestId:'c2'});await wait(10);expect(window.closeResult.ok===false,'failed close stays guarded');
    window.failSave=false;[...document.querySelectorAll('button')].find(x=>x.textContent==='再試行').click();await wait(10);expect(!document.querySelector('.sticky-error'),'retry resolves');
+   for(const name of ['赤','青','緑','橙','紫','シアン']){
+    document.querySelector('[aria-label="原色・'+name+'色の付箋"]').click();await wait(20);
+    expect(getComputedStyle(title).color==='rgb(255, 255, 255)'&&getComputedStyle(text).color==='rgb(255, 255, 255)','vivid white title/body '+name);
+    expect(window.calls.at(-1).body.色.startsWith('vivid-'),'vivid color saved '+name);
+   }
+   const palette=document.querySelector('.sticky-palette');expect(palette.getBoundingClientRect().width<150,'palette fits minimum note width');
+   document.querySelector('[aria-label="桃色の付箋"]').click();await wait(20);expect(getComputedStyle(text).color==='rgb(41, 50, 46)','pastel dark text restored');
    const fire=(el,type,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,isPrimary:true,button:0,clientX:x,clientY:y}));
    fire(text,'pointerdown',20,40);await wait(100);fire(window,'pointermove',40,50);fire(window,'pointerup',40,50);expect(window.dragCalls===0,'ordinary selection not window drag');
    fire(title,'pointerdown',20,20);await wait(0);fire(window,'pointerup',20,20);expect(window.dragCalls===0,'title remains editable');
@@ -37,14 +44,24 @@ if(process.versions.electron){
    const paste=new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:transfer});text.dispatchEvent(paste);await wait(100);
    expect(innerWidth===320&&innerHeight===260,'image paste keeps window size');expect(paste.defaultPrevented,'image paste intercepted');expect(document.querySelector('.sticky-image-frame img')?.naturalWidth===1,'image decoded in frame');
    expect(window.calls.at(-1).body.画像==='data:image/png;base64,'+png,'base64 autosaved');
+   const image=document.querySelector('.sticky-image-frame img'),frame=image.parentElement;expect(Math.abs(image.getBoundingClientRect().width-frame.clientWidth)<1,'image fills frame width');expect(Math.abs(image.getBoundingClientRect().height-image.getBoundingClientRect().width)<1,'square image scales proportionally beyond former fixed height');
    const content=document.querySelector('.sticky-content');expect(getComputedStyle(content).overflowY==='auto','content scrolls');content.scrollTop=content.scrollHeight;expect(content.scrollTop>0,'image reachable below text by scrolling');
    const plain=new ClipboardEvent('paste',{bubbles:true,cancelable:true});text.dispatchEvent(plain);expect(!plain.defaultPrevented,'text paste unaffected');
    const drop=new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:transfer});document.querySelector('.sticky-note').dispatchEvent(drop);await wait(100);expect(drop.defaultPrevented,'drop does not navigate');expect(document.querySelectorAll('.sticky-image-frame img').length===1,'replacement stays one image');expect(innerWidth===320&&innerHeight===260,'replacement keeps window size');
+   for(const [width,height] of [[20,60],[60,20]]){const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;canvas.getContext('2d').fillRect(0,0,width,height);const blob=await new Promise(r=>canvas.toBlob(r,'image/png'));const data=new DataTransfer();data.items.add(new File([blob],'ratio.png',{type:'image/png'}));text.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data}));await wait(100);const im=document.querySelector('.sticky-image-frame img'),r=im.getBoundingClientRect();expect(Math.abs(r.width-im.parentElement.clientWidth)<1,'portrait/landscape use full width');expect(Math.abs(r.height/r.width-height/width)<0.01,'portrait/landscape aspect ratio preserved');expect(innerWidth===320&&innerHeight===260,'ratio changes do not resize window');}
    document.querySelector('.sticky-image-remove').click();await wait(20);expect(!document.querySelector('.sticky-image-frame'),'image removed');expect(window.calls.at(-1).body.画像==='','removal saved');
+   text.value='短いメモ';text.dispatchEvent(new Event('input',{bubbles:true}));window.dispatchEvent(new Event('blur'));await wait(30);
+   expect(getComputedStyle(content).scrollbarWidth==='none','blur hides scrollbar');expect(!document.querySelector('.sticky-overflow-hint'),'short note has no continuation marker');
+   text.value=Array(30).fill('長いメモ').join(String.fromCharCode(10));text.dispatchEvent(new Event('input',{bubbles:true}));await wait(30);content.scrollTop=0;content.dispatchEvent(new Event('scroll'));await wait(0);
+   expect(!!document.querySelector('.sticky-overflow-hint'),'unfocused overflow shows ellipsis');
+   window.dispatchEvent(new Event('focus'));await wait(10);expect(getComputedStyle(content).scrollbarWidth==='thin','focus shows scrollbar');expect(!document.querySelector('.sticky-overflow-hint'),'focus hides ellipsis');
+   window.dispatchEvent(new Event('blur'));content.scrollTop=content.scrollHeight;content.dispatchEvent(new Event('scroll'));await wait(10);expect(!document.querySelector('.sticky-overflow-hint'),'end of content hides ellipsis');
    document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
    expect(window.identity?.id==='one.memo.json','created identity reported');
    return 'PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';
-  })()`));app.exit(0);
+  })()`));
+  w.setSize(200,84);await new Promise(resolve=>setTimeout(resolve,50));
+  console.log(await w.webContents.executeJavaScript(`(()=>{const note=document.querySelector('.sticky-note'),content=document.querySelector('.sticky-content'),palette=document.querySelector('.sticky-palette');if(innerHeight!==84||content.clientHeight<=0||palette.getBoundingClientRect().right>note.clientWidth)throw Error('minimum 200x84 layout');return 'PASS minimum 200x84 layout';})()`));app.exit(0);
  }).catch(error=>{console.error(error);app.exit(1)});
 }else{
  (async()=>{

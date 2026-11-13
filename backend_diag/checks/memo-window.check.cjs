@@ -5,7 +5,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const {EventEmitter}=require('node:events');
 const {createServer}=require('node:http');
-const {メモ窓を作成,付箋範囲,メモ一覧を読む}=require('../memo/ウィンドウ.cjs');
+const {メモ窓を作成,付箋範囲,追加付箋範囲,メモ一覧を読む}=require('../memo/ウィンドウ.cjs');
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 const sources=[{id:'launch:1',名前:'起動'},{id:'project:2',名前:'プロジェクト'}];
 const note={id:'a.memo.json',保存先:'project:2',本文:'既存',色:'blue'};
@@ -26,7 +26,7 @@ function fixture(snapshot={保存先:sources,メモ:[]},systemSnapshot={保存�
 }
 test('empty startup creates no container; + creates blank project note without file operations',async()=>{
  const f=fixture();await f.control.open();assert.equal(f.windows.length,0);assert.equal(await f.control.open('true'),false);
- await f.control.open(true);const w=f.windows[0],state=f.invoke(w,'getInitialState');assert.equal(state.note,null);assert.equal(state.sourceId,'project:2');assert.equal(w.options.frame,false);assert.equal(w.top,true);assert.equal(w.options.minHeight,140);assert.equal(w.options.webPreferences.sandbox,true);assert.equal(w.options.webPreferences.nodeIntegration,false);assert.match(w.url,/memo.html#token=/);assert.doesNotMatch(w.url,/既存|project/);assert.deepEqual(w.openHandler(),{action:'deny'});
+ await f.control.open(true);const w=f.windows[0],state=f.invoke(w,'getInitialState');assert.equal(state.note,null);assert.equal(state.sourceId,'project:2');assert.match(w.options.icon,/AiDiy_memo\.png$/);assert.equal(w.options.frame,false);assert.equal(w.top,true);assert.equal(w.options.minHeight,84);assert.equal(w.options.webPreferences.sandbox,true);assert.equal(w.options.webPreferences.nodeIntegration,false);assert.match(w.url,/memo.html#token=/);assert.doesNotMatch(w.url,/既存|project/);assert.deepEqual(w.openHandler(),{action:'deny'});
 });
 test('saved notes have independent windows; startup reload never duplicates or resets an existing window',async()=>{
  const f=fixture({保存先:sources,メモ:[note,{...note,id:'b.memo.json'}]});await f.control.open();assert.equal(f.windows.length,2);const w=f.windows[0];assert.equal(f.invoke(w,'getInitialState').note.本文,'既存');await f.control.open();assert.equal(f.windows.length,2);await f.control.open(true);assert.equal(f.windows.length,3);assert.equal(w.isDestroyed(),false);
@@ -137,4 +137,15 @@ test('sticky plus uses selected project in Diag and only system in standalone; r
 });
 test('sticky plus survives blank source blur/close while new window opens',async()=>{
  const f=fixture();await f.control.open(true);const blank=f.windows[0];f.invoke(blank,'getInitialState');const adding=f.invoke(blank,'newMemo');blank.close();const request=blank.sent.at(-1)[1];f.invoke(blank,'completeClose',{...request,ok:true});assert.equal(await adding,true);assert.equal(blank.isDestroyed(),true);assert.equal(f.control.count,1);assert.equal(f.invoke(f.windows[1],'getInitialState').note,null);
+});
+
+test('plus places blank note right, below, then top-left of source display work area',async()=>{
+ const f=fixture(),screen=f.screen;
+ assert.deepEqual(追加付箋範囲({x:40,y:40,width:280,height:230},screen),{x:328,y:40,width:280,height:230});
+ assert.deepEqual(追加付箋範囲({x:1600,y:40,width:280,height:230},screen),{x:1600,y:278,width:280,height:230});
+ assert.deepEqual(追加付箋範囲({x:1600,y:800,width:280,height:230},screen),{x:0,y:0,width:280,height:230});
+ assert.deepEqual(追加付箋範囲({x:-400,y:300,width:280,height:230},screen),{x:-1280,y:-100,width:280,height:230});
+ assert.deepEqual(追加付箋範囲({x:-1200,y:-80,width:280,height:230},screen),{x:-912,y:-80,width:280,height:230});
+ await f.control.open(true);const original=f.windows[0];original.bounds={x:1600,y:40,width:280,height:230};
+ assert.equal(await f.invoke(original,'newMemo'),true);const added=f.windows[1];assert.deepEqual(added.bounds,{x:1600,y:278,width:280,height:230});assert.equal(f.invoke(added,'getInitialState').note,null);
 });

@@ -144,3 +144,17 @@ test('テキストメモの本文とsidecarを退避しリンクのゴミ箱を�
  assert.equal((await readdir(folder)).length,2);
  assert.equal(await readFile(path.join(folder,note.id),'utf8'),'legacy\r\n');
 });
+test('原色6色と既存パステル色は保存・再読込できる',async t=>{
+ const {launch}=await fixture(t),options={launchRoot:launch,getProjectRoot:()=>launch},store=createMemoStore(options);
+ const {保存先}=await store.list();
+ const colors=['yellow','blue','green','pink','purple','vivid-red','vivid-blue','vivid-green','vivid-orange','vivid-purple','vivid-cyan'];
+ for(const 色 of colors)await store.create({...memo(保存先[0].id),色});
+ const result=await createMemoStore(options).list();assert.deepEqual(result.メモ.map(note=>note.色).sort(),colors.sort());
+});
+
+test('最小高さ84pxを保存復元し、それ未満は拒否',async t=>{
+ const {launch}=await fixture(t),store=createMemoStore({launchRoot:launch}),source=(await store.list()).保存先[0];
+ const note=await store.create({...memo(source.id),サイズ:{width:200,height:84}});
+ assert.equal((await createMemoStore({launchRoot:launch}).list()).メモ[0].サイズ.height,84);
+ await assert.rejects(store.save({...edit(note,'小さすぎる'),サイズ:{width:200,height:83}}),{status:400});
+});

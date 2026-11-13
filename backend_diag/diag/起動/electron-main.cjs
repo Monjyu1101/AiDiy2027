@@ -86,12 +86,12 @@ async function start(value,{memoOnly=false,newMemo=false}={}) {
   isolated.webRequest.onBeforeRequest((details,callback)=>{
     try {const target=new URL(details.url);callback({cancel:target.origin!==url.origin});} catch {callback({cancel:true});}
   });
-  window=new BrowserWindow({...初期右下位置(area,{width:800,height:600},通常表示の余白),title:'AiDiy Diag',icon:path.join(__dirname,'../../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
+  window=new BrowserWindow({...初期右下位置(area,{width:800,height:600},通常表示の余白),title:'AiDiy Diag',icon:path.join(__dirname,memoOnlyMode?'../../static/AiDiy_memo.png':'../../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   window.setMenuBarVisibility(false);
   pins.register(window);
   メモ=メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session:isolated,onEmpty:stopEmptyMemo,isStandalone:()=>memoOnlyMode});
   終了確認=終了確認を作成({window,終了前確認:()=>メモ.closeForParent(),状態取得:()=>起動状態を読む(url.href),確認:(parent,options)=>dialog.showMessageBox(parent,options)});
-  Macメニューを設定({app,Menu,window,icon:path.join(__dirname,'../../static/AiDiy_diag.png')});
+  Macメニューを設定({app,Menu,window,icon:path.join(__dirname,memoOnlyMode?'../../static/AiDiy_memo.png':'../../static/AiDiy_diag.png')});
   const sizeEffect=画面サイズ演出を作成(BrowserWindow,window,{topmostLevel:()=>micro.active&&process.platform==='win32'?'pop-up-menu':pinLevel});
   const sizingWindow=通常窓サイズを作成(sizeEffect.window||window,screen);
   const displayPosition=表示切替基準を作成(screen);

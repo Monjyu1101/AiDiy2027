@@ -2,7 +2,7 @@
 Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms. -->
 <script setup>
 import './メモ画面.css';
-import {ref,computed,onMounted,onUnmounted,nextTick} from 'vue';
+import {ref,computed,onMounted,onUnmounted,nextTick,watch} from 'vue';
 import {メモAPIを作成} from './表示対象.mjs';
 import {自動保存を作成} from './自動保存.mjs';
 import {長押し移動を作成} from './長押し移動.mjs';
@@ -17,8 +17,17 @@ const imageError=ref(''),imageBusy=ref(false);
 let imageFlight=null;
 const adding=ref(false),addError=ref('');
 const ready=ref(false),closing=ref(false),textFormat=ref(false),bootError=ref(''),source=ref(''),editor=ref(),copied=ref(false);
+const content=ref(),focused=ref(document.hasFocus()),hasBelow=ref(false);
+let overflowObserver;
+function measureOverflow(){
+ const el=content.value,text=editor.value;
+ hasBelow.value=!!el&&(el.scrollHeight-el.clientHeight-el.scrollTop>1||!!text&&text.scrollHeight-text.clientHeight-text.scrollTop>1);
+}
+function focusForm(){focused.value=true;void nextTick(measureOverflow);}
+function blurForm(){focused.value=false;void nextTick(measureOverflow);}
+watch(()=>[state.value.draft.本文,state.value.draft.画像,ready.value],()=>nextTick(measureOverflow),{flush:'post'});
 const color=computed(()=>メモ色.includes(state.value.draft.色)?state.value.draft.色:'yellow');
-const 色名={yellow:'黄',blue:'青',green:'緑',pink:'桃',purple:'紫'};
+const 色名={yellow:'黄',blue:'青',green:'緑',pink:'桃',purple:'紫','vivid-red':'原色・赤','vivid-blue':'原色・青','vivid-green':'原色・緑','vivid-orange':'原色・橙','vivid-purple':'原色・紫','vivid-cyan':'原色・シアン'};
 let resolveBoot;const boot=new Promise(resolve=>{resolveBoot=resolve;});
 let model,alive=true,closeBusy=false,pendingBlur=false,dragEnd=()=>{},unsubscribers=[];
 function bounds(value){if(!model||!value)return;const {x,y,width,height}=value;if([x,y,width,height].every(Number.isFinite))model.edit({位置:{x,y},サイズ:{width,height}});}
@@ -69,6 +78,7 @@ async function trash(){
  finally{closing.value=false;}
 }
 onMounted(async()=>{
+ window.addEventListener('focus',focusForm);window.addEventListener('blur',blurForm);
  window.addEventListener('beforeunload',beforeUnload);if(!native)window.addEventListener('blur',blur);
  // close/bounds購読を初期状態取得より先に登録し、起動直後の操作を取りこぼさない。
  let initialBounds;
@@ -100,21 +110,23 @@ onMounted(async()=>{
   if(initialBounds)bounds(initialBounds);else if(!initial.note&&initial.bounds)bounds(initial.bounds);
   ready.value=true;
   await nextTick();if(!initial.note)editor.value?.focus();
+  overflowObserver=new ResizeObserver(measureOverflow);if(content.value)overflowObserver.observe(content.value);if(editor.value)overflowObserver.observe(editor.value);measureOverflow();
  }catch(error){bootError.value=error.message||'メモを開けませんでした。';}
  finally{resolveBoot();if(pendingBlur)void blur();}
 });
-onUnmounted(()=>{alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
+onUnmounted(()=>{overflowObserver?.disconnect();window.removeEventListener('focus',focusForm);window.removeEventListener('blur',blurForm);alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
 </script>
 <template>
- <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput}]" @paste="paste" @dragover.prevent @drop="drop">
+ <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused}]" @paste="paste" @dragover.prevent @drop="drop">
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
    <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"><button class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button></header>
-   <div class="sticky-content">
+   <div class="sticky-viewport"><div ref="content" class="sticky-content" @scroll.capture="measureOverflow">
    <textarea ref="editor" class="sticky-text" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.本文" :disabled="!ready||closing" aria-label="付箋の本文" placeholder="メモを書く…" spellcheck="false" @input="edit({本文:$event.target.value})"></textarea>
-   <div v-if="state.draft.画像" class="sticky-image-frame"><img :src="state.draft.画像" alt="付箋に貼り付けた画像" draggable="false"><button class="sticky-image-remove" aria-label="画像を取り除く" title="画像を取り除く" :disabled="closing||imageBusy" @click="removeImage">×</button></div>
+   <div v-if="state.draft.画像" class="sticky-image-frame"><img :src="state.draft.画像" @load="measureOverflow" alt="付箋に貼り付けた画像" draggable="false"><button class="sticky-image-remove" aria-label="画像を取り除く" title="画像を取り除く" :disabled="closing||imageBusy" @click="removeImage">×</button></div>
    </div>
+   <span v-if="!focused&&hasBelow" class="sticky-overflow-hint" aria-label="下に続きがあります">…</span></div>
    <div v-if="imageError" class="sticky-error" role="alert">{{imageError}}</div>
    <div v-if="imageBusy" class="sticky-save-state" role="status">画像を読み込み中…</div>
    <div v-if="state.error" class="sticky-error" role="alert"><span>{{state.error}} 入力内容は保持しています。</span><div><button type="button" @click="retry">再試行</button><button type="button" @click="copyText">{{copied?'コピー済':'本文をコピー'}}</button></div></div>
