@@ -7,6 +7,7 @@
 const {メモ窓を作成}=require('../../memo/ウィンドウ.cjs');
 const {app,BrowserWindow,session,ipcMain,dialog,Menu,screen,shell}=require('electron');
 const path=require('node:path');
+const {randomUUID}=require('node:crypto');
 const {programDataDirectory,preparePrivateDirectory}=require('../../../frontend_ide/host/scripts/project-storage.cjs');
 const {アイコンメニューを作成}=require('./アイコンメニュー.cjs');
 const {拡大表示}=require('../../../frontend_ide/host/scripts/window-opening.cjs');
@@ -31,7 +32,29 @@ const profile=programDataDirectory(projectRoot,'aidiy_diag',projectRoot,['electr
 preparePrivateDirectory(profile);
 app.setPath('userData',profile);
 app.setPath('sessionData',profile);
-let window, failed=false,終了確認,メモ;
+let window, failed=false,終了確認,メモ,memoOnlyMode=false,started=false,showDiag,promoting;
+const pendingIntents=[];
+function stopEmptyMemo(){if(started&&memoOnlyMode&&!promoting&&!メモ?.busy&&メモ?.count===0&&window&&!window.isDestroyed()){終了確認?.許可();window.close();}}
+function promoteServer(cwd){
+ return new Promise(resolve=>{
+  const requestId=randomUUID();let done=false;
+  const finish=ok=>{if(done)return;done=true;clearTimeout(timer);process.off('message',receive);process.off('disconnect',closed);resolve(ok);};
+  const receive=value=>{if(value?.type==='diag-promoted'&&value.requestId===requestId)finish(value.ok===true);};
+  const closed=()=>finish(false),timer=setTimeout(closed,5000);
+  process.on('message',receive);process.once('disconnect',closed);
+  try{process.send({type:'diag-promote',requestId,cwd},error=>{if(error)closed();});}catch{closed();}
+ });
+}
+function instanceIntent(intent){
+ if(!started){pendingIntents.push(intent);return;}
+ if(!window||window.isDestroyed())return;
+ if(intent.mode==='memo'){void メモ.openSystem(intent.newMemo===true).then(stopEmptyMemo);return;}
+ if(!memoOnlyMode){if(window.isMinimized())window.restore();window.show();window.focus();return;}
+ if(promoting)return;
+ const cwd=intent.cwd||projectRoot;
+ if(typeof cwd!=='string'||cwd.length>4096||/[\x00-\x1f]/.test(cwd)||!path.isAbsolute(cwd))return;
+ promoting=(async()=>{if(!await promoteServer(cwd)){try{await dialog.showMessageBox(window,{type:'error',title:'AiDiy Diag',message:'Diag画面を開けませんでした。起動フォルダを確認して再試行してください。',buttons:['閉じる']});}catch{}return;}memoOnlyMode=false;if(!await showDiag()){memoOnlyMode=true;window.hide?.();}})().catch(async()=>{memoOnlyMode=true;window?.hide?.();try{await dialog.showMessageBox({type:'error',title:'AiDiy Diag',message:'Diag画面を開けませんでした。メモは開いたままです。再試行してください。',buttons:['閉じる']});}catch{}}).finally(()=>{promoting=null;stopEmptyMemo();});
+ }
 const pins=createWindowPins({onChanged:(target,state)=>{
   if(!target.isDestroyed()&&!target.webContents.isDestroyed())target.webContents.send('diag:pin-state',state);
 }});
@@ -48,10 +71,11 @@ function validUrl(value) {
   if(url.protocol!=='http:' || url.hostname!=='127.0.0.1' || !url.port || url.username || url.password || url.search || !/^#token=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw new Error('invalid URL');
   return url;
 }
-async function start(value) {
+async function start(value,{memoOnly=false,newMemo=false}={}) {
+  memoOnlyMode=memoOnly===true;
   let url;try{url=validUrl(value);}catch{fail('URL');return;}
   await app.whenReady();
-  const initialMini=await checkPort(8095)===true;
+  const initialMini=!memoOnlyMode&&await checkPort(8095)===true;
   // 通常表示もミニと同じく、主画面の作業領域の右下角から8 DIP内側で表示を始める。
   const area=screen.getPrimaryDisplay().workArea,通常表示の余白=8;
   if(failed||!process.connected)return;
@@ -65,7 +89,7 @@ async function start(value) {
   window=new BrowserWindow({...初期右下位置(area,{width:800,height:600},通常表示の余白),title:'AiDiy Diag',icon:path.join(__dirname,'../../static/AiDiy_diag.png'),show:false,frame:false,roundedCorners:false,transparent:true,hasShadow:false,backgroundColor:'#00000000',minWidth:420,minHeight:320,webPreferences:{session:isolated,preload:path.join(__dirname,'preload.cjs'),additionalArguments:initialMini?['--aidiy-diag-initial-mini']:[],nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true}});
   window.setMenuBarVisibility(false);
   pins.register(window);
-  メモ=メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session:isolated});
+  メモ=メモ窓を作成({BrowserWindow,ipcMain,dialog,screen,url,session:isolated,onEmpty:stopEmptyMemo});
   終了確認=終了確認を作成({window,終了前確認:()=>メモ.closeForParent(),状態取得:()=>起動状態を読む(url.href),確認:(parent,options)=>dialog.showMessageBox(parent,options)});
   Macメニューを設定({app,Menu,window,icon:path.join(__dirname,'../../static/AiDiy_diag.png')});
   const sizeEffect=画面サイズ演出を作成(BrowserWindow,window,{topmostLevel:()=>micro.active&&process.platform==='win32'?'pop-up-menu':pinLevel});
@@ -180,9 +204,16 @@ async function start(value) {
   window.webContents.on('will-navigate',event=>event.preventDefault());
   window.webContents.on('will-redirect',event=>event.preventDefault());
   window.webContents.on('will-attach-webview',event=>event.preventDefault());
-  window.webContents.once('did-fail-load',(_event,_code,_description,_url,isMainFrame)=>{if(isMainFrame!==false)fail('LOAD');});
-  window.webContents.once('render-process-gone',()=>fail('RENDERER'));
-  try{await window.loadURL(url.href);}catch{fail('LOAD');return;}
+  let diagLoadFailed=false;
+  window.webContents.once('did-fail-load',(_event,_code,_description,_url,isMainFrame)=>{if(isMainFrame!==false){if(promoting)diagLoadFailed=true;else fail('LOAD');}});
+  window.webContents.once('render-process-gone',()=>{if(promoting)diagLoadFailed=true;else fail('RENDERER');});
+  showDiag=async()=>{
+  diagLoadFailed=false;
+  try{await window.loadURL(url.href);}catch{diagLoadFailed=true;}
+  if(diagLoadFailed){
+   if(!promoting)fail('LOAD');else try{await dialog.showMessageBox(window,{type:'error',title:'AiDiy Diag',message:'Diag 画面を開けませんでした。メモは開いたままです。再度 Diag を起動してください。',buttons:['閉じる']});}catch{}
+   return false;
+  }
   if(failed || window.isDestroyed())return;
   // Code / Live / Console / IDE と同じ共通演出。内容は拡大完了後にフェード表示する。
   await window.webContents.executeJavaScript("document.documentElement.classList.add('desktop-opening','desktop-window')");
@@ -191,7 +222,12 @@ async function start(value) {
   if(!shown || failed)return;
   await window.webContents.executeJavaScript("document.documentElement.classList.remove('desktop-opening')");
   if(!failed && !window.isDestroyed())void メモ.open();
+  return !failed&&!window.isDestroyed();
+  };
+  if(memoOnlyMode){if(!await メモ.openSystem(newMemo===true)){fail('LOAD');return;}}else if(!await showDiag())return;
+  started=true;for(const intent of pendingIntents.splice(0))instanceIntent(intent);
   if(!failed && !window.isDestroyed() && process.connected)process.send({type:'diag-shown'},error=>{if(error)fail('IPC');});
+  stopEmptyMemo();
 }
 // 同じ作業環境の診断ウィンドウは1つだけ。2つ目は既存ウィンドウを前面に出し、起動元へ固定の通知だけ返して終了する。
 function existing() {
@@ -207,17 +243,17 @@ function primary() {
     if(window&&!window.isDestroyed())try{workArea=screen.getDisplayMatching(window.getBounds()).workArea;}catch{}
     try{process.send({type:'diag-launch-display',requestId:message.requestId,workArea},()=>{});}catch{}
   });
-  app.on('second-instance',()=>{
-    if(!window || window.isDestroyed())return;
-    if(window.isMinimized())window.restore();
-    window.show();window.focus();
+  app.on('second-instance',(_event,_argv,_cwd,data)=>{
+    const intent=data||{mode:'diag'};
+    if(!['memo','diag'].includes(intent.mode)||intent.newMemo!==undefined&&typeof intent.newMemo!=='boolean')return;
+    instanceIntent(intent);
   });
   // Electron on Windows replaces stdin with an empty EOF stream. Use the inherited Node IPC channel.
   const timer=setTimeout(()=>fail('TIMEOUT'),10000);
   process.once('message',message=>{
     clearTimeout(timer);
     if(message?.type!=='diag-start' || typeof message.url!=='string' || message.url.length>4096){fail('IPC');return;}
-    start(message.url).catch(()=>fail('WINDOW'));
+    start(message.url,{memoOnly:message.memoOnly===true,newMemo:message.newMemo===true}).catch(()=>fail('WINDOW'));
   });
   process.once('disconnect',()=>{clearTimeout(timer);終了確認?.許可();app.quit();});
   if(process.connected && process.send){
@@ -225,4 +261,5 @@ function primary() {
   }else{clearTimeout(timer);fail('IPC');}
   app.on('window-all-closed',()=>app.quit());
 }
-if(app.requestSingleInstanceLock())primary();else existing();
+const launchIntent=(process.argv||[]).includes('--aidiy-memo-only')?{mode:'memo',newMemo:(process.argv||[]).includes('--aidiy-memo-new')}:{mode:'diag',cwd:process.cwd?.()||projectRoot};
+if(app.requestSingleInstanceLock(launchIntent))primary();else existing();

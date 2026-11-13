@@ -3,20 +3,31 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+import {fileURLToPath} from 'node:url';
 import {createMemoStore} from './保存.mjs';
 
 // Diag の共通認証を通過したリクエストだけを受け取る。
 // 保存先選択・メモ操作の状態は、この起動単位のハンドラーが所有する。
-export function createMemoHandler({appLauncher,launchRoot,memoStore}) {
-  let memoProject;
-  memoStore ??= createMemoStore({launchRoot,getProjectRoot:async()=>memoProject===undefined?(await appLauncher.catalog()).起動フォルダ:memoProject});
+export function createMemoHandler({appLauncher,launchRoot,getLaunchRoot,memoStore,systemRoot=fileURLToPath(new URL('../../',import.meta.url)),isNormalEnabled=()=>true}) {
+  let memoProject,configuredProject='';
+  const usesConfiguredProject=!memoStore;
+  memoStore ??= createMemoStore({launchRoot,getLaunchRoot,getProjectRoot:async()=>memoProject===undefined?configuredProject:memoProject});
+  const systemStore=createMemoStore({launchRoot:systemRoot});
   return async (req,route,send) => {
     const reply=(...args)=>{send(...args);return true;};
+    const standalone=route==='api/メモ/単体'||route?.startsWith('api/メモ/単体/');
+    if(standalone)route=route.replace('api/メモ/単体','api/メモ');
+    else if((route==='api/メモ'||route?.startsWith('api/メモ/'))&&!isNormalEnabled())return reply(403,{エラー:'通常のメモは起動していません。'});
+    const store=standalone?systemStore:memoStore;
       if(route==='api/メモ'&&req.method==='GET'){
-        try{return reply(200,await memoStore.list());}catch(error){return reply(error.status||500,{エラー:error.status?error.message:'メモを読み込めませんでした。'});}
+        try{
+          // 単体起動や無効な通常画面からプロジェクト設定を読み込まない。
+          if(!standalone&&usesConfiguredProject&&memoProject===undefined)configuredProject=(await appLauncher.catalog()).起動フォルダ;
+          return reply(200,await store.list());}catch(error){return reply(error.status||500,{エラー:error.status?error.message:'メモを読み込めませんでした。'});}
       }
       if(route?.startsWith('api/メモ/')){
-        if(!['api/メモ/作成','api/メモ/保存','api/メモ/プロジェクト'].includes(route))return reply(404,{エラー:'操作が見つかりません。'});
+        if(standalone&&route==='api/メモ/プロジェクト')return reply(404,{エラー:'単体メモはプロジェクトを変更できません。'});
+        if(!['api/メモ/作成','api/メモ/保存','api/メモ/読込','api/メモ/プロジェクト'].includes(route))return reply(404,{エラー:'操作が見つかりません。'});
         if(req.method!=='POST')return reply(405,{エラー:'POST を使用してください。'});
         if(req.headers['sec-fetch-site']==='cross-site')return reply(403,{エラー:'同じ画面から操作してください。'});
         if(req.headers.origin){try{if(new URL(req.headers.origin).origin!==`http://${req.headers.host}`)return reply(403,{エラー:'同じ画面から操作してください。'});}catch{return reply(403,{エラー:'送信元が不正です。'});}}
@@ -30,8 +41,9 @@ export function createMemoHandler({appLauncher,launchRoot,memoStore}) {
             memoProject=body.フォルダ?(await appLauncher.folders(body.フォルダ)).フォルダ:'';
             return reply(200,{更新:true});
           }
-          return reply(200,await (route.endsWith('/作成')?memoStore.create(body):memoStore.save(body)));
-        }catch(error){return reply(error.status||500,{エラー:error.status?error.message:'メモを保存できませんでした。編集内容を保持して再試行してください。'});}
+          if(route.endsWith('/読込'))return reply(200,await store.read(body));
+          return reply(200,await (route.endsWith('/作成')?store.create(body):store.save(body)));
+        }catch(error){return reply(error.status||500,{エラー:error.status?error.message:route.endsWith('/読込')?'メモを読み込めませんでした。':'メモを保存できませんでした。編集内容を保持して再試行してください。'});}
       }
     return false;
   };

@@ -13,6 +13,7 @@ import sys
 import shutil
 import subprocess
 import importlib.util
+import tempfile
 
 THIS_DIR = Path(__file__).resolve().parent
 
@@ -35,7 +36,8 @@ def print_info(message):
 
 def launcher_content(script, windows=None):
     windows = sys.platform == 'win32' if windows is None else windows
-    marker = 'aidiy_diag-owner:' + hashlib.sha256(str(script).encode('utf-8')).hexdigest()
+    program = 'aidiy_memo' if str(script).endswith('memo_main.mjs') else 'aidiy_diag'
+    marker = program + '-owner:' + hashlib.sha256(str(script).encode('utf-8')).hexdigest()
     if windows:
         return ('@echo off\r\nsetlocal DisableDelayedExpansion\r\n' + f'rem {marker}\r\n'
                 'where node.exe >nul 2>nul\r\n'
@@ -58,20 +60,39 @@ def setup(choices=None, *, desktop=True):
     print_header('Diag セットアップ')
     print_info(f'作業ディレクトリ: {THIS_DIR}')
     print_info('対象: Node.js / Electron / Vue 3')
-    directory = _path_helper.launcher_directory('aidiy_diag')
-    launcher = directory / ('aidiy_diag.cmd' if sys.platform == 'win32' else 'aidiy_diag')
+    launchers = []
     try:
-        directory.mkdir(parents=True, exist_ok=True)
-        launcher.write_bytes(launcher_content(THIS_DIR / 'diag_main.mjs').encode('utf-8'))
-        if sys.platform != 'win32':
-            launcher.chmod(0o755)
-    except OSError as exc:
-        print(f'aidiy_diag を登録できません: {exc}')
+        # 全対象を先に照合し、別作業コピーのランチャーを途中まで置換しない。
+        for program, entry in (('aidiy_diag', 'diag_main.mjs'), ('aidiy_memo', 'memo_main.mjs')):
+            directory = _path_helper.launcher_directory(program)
+            launcher = directory / (program + '.cmd' if sys.platform == 'win32' else program)
+            script = THIS_DIR / entry
+            marker = program + '-owner:' + hashlib.sha256(str(script).encode('utf-8')).hexdigest()
+            if launcher.is_symlink() or (launcher.exists() and
+                    (not launcher.is_file() or marker not in launcher.read_text(encoding='utf-8'))):
+                raise ValueError(f'別の作業コピーまたは通常ファイル以外のランチャーは変更できません: {launcher}')
+            launchers.append((directory, launcher, launcher_content(script)))
+        for directory, launcher, content in launchers:
+            directory.mkdir(parents=True, exist_ok=True)
+            temporary = None
+            try:
+                with tempfile.NamedTemporaryFile(dir=directory, prefix='.' + launcher.name + '-', suffix='.tmp', delete=False) as stream:
+                    temporary = Path(stream.name)
+                    stream.write(content.encode('utf-8'))
+                if sys.platform != 'win32':
+                    temporary.chmod(0o755)
+                temporary.replace(launcher)
+            finally:
+                if temporary is not None:
+                    temporary.unlink(missing_ok=True)
+            print(f'{launcher.stem} を登録しました: {launcher}')
+    except (OSError, ValueError) as exc:
+        print(f'Diag / Memo を登録できません: {exc}')
         return False
-    print(f'aidiy_diag を登録しました: {launcher}')
-    if not ensure_launcher_path(directory):
-        return False
-    print('起動: aidiy_diag（Electron） / aidiy_diag --browser（ブラウザ）')
+    for directory in dict.fromkeys(item[0] for item in launchers):
+        if not ensure_launcher_path(directory):
+            return False
+    print('起動: aidiy_diag（診断） / aidiy_diag --browser（ブラウザ） / aidiy_memo（付箋）')
     return setup_desktop(continue_on_error=bool((choices or {}).get("continue_on_error")), copy_warnings=choices.setdefault("_setup_warnings", []) if choices is not None else None) if desktop else True
 
 

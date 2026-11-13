@@ -1,24 +1,52 @@
 // COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
 // Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
-// Synthetic fixture only: no user notes or external API are accessed.
+// Synthetic fixture: no user notes, external APIs or persistent settings.
 // AIDIY_TEST_ELECTRON=/path/to/electron node checks/memo-ui-browser.cjs
 const fs=require('node:fs'),path=require('node:path');
 if(process.versions.electron){
-const {app,BrowserWindow}=require('electron');app.disableHardwareAcceleration();app.whenReady().then(async()=>{const w=new BrowserWindow({width:800,height:600,show:false,frame:false});w.webContents.on('console-message',(_e,_level,message)=>console.log(message));await w.loadFile(process.env.AIDIY_MEMO_UI_FIXTURE);await new Promise(r=>setTimeout(r,500));console.log(await w.webContents.executeJavaScript(`JSON.stringify({notes:document.querySelectorAll('.memo-note').length,rects:[...document.querySelectorAll('.memo-note')].map(x=>({left:x.offsetLeft,top:x.offsetTop,width:x.offsetWidth,height:x.offsetHeight})),body:document.body.innerText})`));console.log(await w.webContents.executeJavaScript(`(async()=>{const note=document.querySelector('.memo-note'),meta=note.querySelector('.memo-note-meta');meta.setPointerCapture=()=>{};meta.releasePointerCapture=()=>{};const emit=(el,type,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,button:0,clientX:x,clientY:y}));emit(meta,'pointerdown',20,20);await new Promise(r=>setTimeout(r,200));emit(window,'pointermove',80,60);emit(window,'pointerup',80,60);await new Promise(r=>setTimeout(r,0));if(note.offsetLeft!==0)throw Error('early drag');emit(meta,'pointerdown',20,20);await new Promise(r=>setTimeout(r,550));emit(window,'pointermove',80,60);emit(window,'pointerup',80,60);await new Promise(r=>setTimeout(r,0));if(note.offsetLeft!==60||note.offsetTop!==40)throw Error('long drag');const handle=note.querySelector('.memo-resize');handle.setPointerCapture=()=>{};handle.releasePointerCapture=()=>{};emit(handle,'pointerdown',260,280);emit(window,'pointermove',310,320);emit(window,'pointerup',310,320);await new Promise(r=>setTimeout(r,0));if(note.offsetWidth!==310||note.offsetHeight!==320)throw Error('resize');if(!note.textContent.includes('未保存'))throw Error('dirty layout');const color=note.querySelector('[aria-label="桃"]');color.click();await new Promise(r=>setTimeout(r,0));if(!note.classList.contains('memo-color-pink'))throw Error('palette');note.querySelector('.memo-note-actions>button').click();await new Promise(r=>setTimeout(r,0));if(note.textContent.includes('未保存'))throw Error('save clean');const area=note.querySelector('textarea');area.value='保持する未保存';area.dispatchEvent(new Event('input',{bubbles:true}));window.memoNew();await new Promise(r=>setTimeout(r,50));if(document.querySelectorAll('.memo-note').length!==3||area.value!=='保持する未保存')throw Error('new request destroyed dirty');if(document.querySelector('select').value!=='project:one')throw Error('default project');window.memoProject='project:two';window.memoNew();await new Promise(r=>setTimeout(r,50));if(document.querySelectorAll('.memo-note').length!==4||document.querySelector('select').value!=='project:two'||area.value!=='保持する未保存')throw Error('new project synchronization');return 'PASS longpress, resize, palette, save, new request preserves dirty and current project';})()`));app.exit(0)}).catch(error=>{console.error(error);app.exit(1)});
-
+ const {app,BrowserWindow}=require('electron');app.disableHardwareAcceleration();
+ app.whenReady().then(async()=>{
+  const w=new BrowserWindow({width:320,height:260,show:false,frame:false});
+  await w.loadFile(process.env.AIDIY_MEMO_UI_FIXTURE);w.setSize(321,261);w.setSize(320,260);await new Promise(resolve=>setTimeout(resolve,100));
+  console.log(await w.webContents.executeJavaScript(`(async()=>{
+   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+   const expect=(value,label)=>{if(!value)throw Error(label)};
+   const title=document.querySelector('.sticky-title'),text=document.querySelector('.sticky-text');
+   expect(title&&text,'title and body present');expect(!document.querySelector('header,.memo-board'),'no header or board');
+   expect(document.querySelectorAll('textarea').length===1,'one note only');
+   const rect=document.querySelector('.sticky-note').getBoundingClientRect();expect(rect.width===320&&rect.height===260,'full pastel note '+JSON.stringify({width:rect.width,height:rect.height,innerWidth,innerHeight}));
+   window.handlers.bounds({x:-200,y:50,width:320,height:260});document.querySelector('[aria-label="桃色の付箋"]').click();await wait(200);
+   expect(window.calls.length===0,'blank geometry/color creates no file');window.handlers.blur();await wait(0);expect(window.closedCalls===1,'blank blur closes');
+   title.value='タイトルだけ';title.dispatchEvent(new Event('input',{bubbles:true}));await wait(220);
+   expect(window.calls.length===1&&window.calls[0].route==='api/メモ/作成','title-only autosaves');expect(window.calls[0].body.色==='pink','pastel persisted');expect(window.calls[0].body.位置.x===-200,'native geometry persisted');
+   text.value='すぐ閉じても失わない';text.dispatchEvent(new Event('input',{bubbles:true}));window.handlers.close({requestId:'c1',bounds:{x:-250,y:60,width:400,height:300}});await wait(10);
+   expect(window.closeResult.ok===true,'close flush success');expect(window.calls.at(-1).body.本文==='すぐ閉じても失わない','latest body flushed');expect(window.calls.at(-1).body.位置.x===-250,'close latest bounds flushed');
+   window.failSave=true;text.value='失敗しても残る';text.dispatchEvent(new Event('input',{bubbles:true}));await wait(200);
+   expect(document.querySelector('.sticky-error')&&text.value==='失敗しても残る','failed autosave keeps input');window.handlers.close({requestId:'c2'});await wait(10);expect(window.closeResult.ok===false,'failed close stays guarded');
+   window.failSave=false;[...document.querySelectorAll('button')].find(x=>x.textContent==='再試行').click();await wait(10);expect(!document.querySelector('.sticky-error'),'retry resolves');
+   const fire=(el,type,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,button:0,clientX:x,clientY:y}));
+   fire(text,'pointerdown',20,40);await wait(100);fire(window,'pointermove',40,50);fire(window,'pointerup',40,50);expect(window.dragCalls===0,'ordinary selection not window drag');
+   fire(text,'pointerdown',20,40);await wait(550);fire(window,'pointerup',20,40);expect(window.dragCalls===1,'500ms hold moves window');
+   expect(window.identity?.id==='one.memo.json','created identity reported');
+   return 'PASS one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/longpress';
+  })()`));app.exit(0);
+ }).catch(error=>{console.error(error);app.exit(1)});
 }else{
-(async()=>{
-const electron=process.env.AIDIY_TEST_ELECTRON;if(!electron)throw Error('AIDIY_TEST_ELECTRON に検証用Electronの実行ファイルを指定してください。');
-const temp=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'aidiy-memo-ui-'));
-try{
-const {createRequire}=require('node:module');const uiRequire=createRequire(path.resolve(__dirname,'../ui/package.json'));const {build}=uiRequire('esbuild');const {parse,compileScript}=uiRequire('@vue/compiler-sfc');
-const component=path.resolve(__dirname,'../memo/ui/src/メモ画面.vue');
-fs.writeFileSync(path.join(temp,'entry.js'),`import {createApp} from 'vue';import Memo from ${JSON.stringify(component)};window.aidiyMemo={setDirty(){},onNewMemo(fn){window.memoNew=fn;return()=>{}},collapsePanel:async()=>({ok:true})};window.memoProject='project:one';const notes=[{id:'1',保存先:'launch',タイトル:'今日やること',本文:'• 設計を見直す\\n• メモを保存する',色:'yellow',revision:'r1'},{id:'2',保存先:'project',タイトル:'プロジェクトのメモ',本文:'UTF-8のテキストも読み込めます。',色:'blue',revision:'r2'}];createApp(Memo,{api:async(route,options)=>{if(options){const n={...options.body,id:options.body.id||'new',revision:'new'};return n}return {保存先:[{id:'launch',名前:'起動',パス:'/launch/_AIDIY/aidiy_memo'},{id:window.memoProject,名前:'プロジェクト',パス:'/project/_AIDIY/aidiy_memo'}],メモ:notes,警告:[]}}}).mount('#app');`);
-fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><meta charset="utf-8"><style>body{margin:0}</style><link rel="stylesheet" href="app.css"><div id="app"></div><script src="app.js"></script>');
-await build({entryPoints:[path.join(temp,'entry.js')],outfile:path.join(temp,'app.js'),bundle:true,alias:{vue:uiRequire.resolve('vue/dist/vue.runtime.esm-bundler.js')},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:'false',__VUE_PROD_DEVTOOLS__:'false',__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:'false'},plugins:[{name:'sfc',setup(b){b.onLoad({filter:/\.vue$/},async({path:filename})=>{const {descriptor}=parse(fs.readFileSync(filename,'utf8'));return {contents:compileScript(descriptor,{id:'memo',inlineTemplate:true}).content,loader:'js',resolveDir:path.dirname(filename)}})}}]});
-
-const result=require('node:child_process').spawnSync(electron,['--no-sandbox','--headless','--disable-gpu',__filename],{env:{...process.env,XDG_CONFIG_HOME:path.join(temp,'config'),AIDIY_MEMO_UI_FIXTURE:path.join(temp,'index.html')},encoding:'utf8',timeout:20000});
-process.stdout.write(result.stdout||'');if(result.status!==0){process.stderr.write(result.stderr||'');throw result.error||Error(`Electron UI check failed: ${result.status}`);}
-}finally{fs.rmSync(temp,{recursive:true,force:true});}
-})().catch(error=>{console.error(error);process.exitCode=1});
+ (async()=>{
+  const electron=process.env.AIDIY_TEST_ELECTRON;if(!electron)throw Error('AIDIY_TEST_ELECTRON に検証用Electronを指定してください。');
+  const temp=fs.mkdtempSync(path.join(require('node:os').tmpdir(),'aidiy-memo-ui-'));
+  try{
+   const req=require('node:module').createRequire(path.resolve(__dirname,'../ui/package.json'));
+   const {build}=req('esbuild'),{parse,compileScript}=req('@vue/compiler-sfc');
+   const component=path.resolve(__dirname,'../memo/ui/src/メモ画面.vue');
+   fs.writeFileSync(path.join(temp,'entry.js'),`import {createApp} from 'vue';import Memo from ${JSON.stringify(component)};
+window.handlers={};window.calls=[];window.closedCalls=0;window.dragCalls=0;
+window.aidiyMemo={getInitialState:async()=>({note:null,sources:[{id:'project:one',名前:'プロジェクト',パス:'/fixture/_AIDIY/aidiy_memo'}],sourceId:'project:one',bounds:{x:0,y:0,width:320,height:260}}),onBounds(fn){window.handlers.bounds=fn},onBlur(fn){window.handlers.blur=fn},onCloseRequested(fn){window.handlers.close=fn},completeClose:async value=>{window.closeResult=value},close:async()=>{window.closedCalls++},setNoteIdentity:async value=>{window.identity=value},beginWindowMove:async()=>{window.dragCalls++;return 'drag-token'},moveWindow:async()=>true,endWindowMove:async()=>true};
+createApp(Memo,{api:async(route,{body})=>{window.calls.push({route,body});if(window.failSave)throw Object.assign(Error('合成競合'),{status:409});return {...body,id:body.id||'one.memo.json',保存先:body.保存先,revision:'revision-'+window.calls.length}}}).mount('#app');`);
+   fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="app.css"><div id="app"></div><script src="app.js"></script>');
+   await build({entryPoints:[path.join(temp,'entry.js')],outfile:path.join(temp,'app.js'),bundle:true,alias:{vue:req.resolve('vue/dist/vue.runtime.esm-bundler.js')},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:'false',__VUE_PROD_DEVTOOLS__:'false',__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:'false'},plugins:[{name:'vue-sfc',setup(b){b.onLoad({filter:/\.vue$/},async({path:filename})=>{const {descriptor,errors}=parse(fs.readFileSync(filename,'utf8'));if(errors.length)throw errors[0];return {contents:compileScript(descriptor,{id:'memo',inlineTemplate:true}).content,loader:'js',resolveDir:path.dirname(filename)}})}}]});
+   const result=require('node:child_process').spawnSync(electron,['--no-sandbox','--headless','--disable-gpu',__filename],{env:{...process.env,XDG_CONFIG_HOME:path.join(temp,'config'),AIDIY_MEMO_UI_FIXTURE:path.join(temp,'index.html')},encoding:'utf8',timeout:20000});
+   process.stdout.write(result.stdout||'');if(result.status!==0){process.stderr.write(result.stderr||'');throw result.error||Error(`UI check failed: ${result.status}`);}
+  }finally{fs.rmSync(temp,{recursive:true,force:true});}
+ })().catch(error=>{console.error(error);process.exitCode=1});
 }

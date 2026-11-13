@@ -69,7 +69,7 @@ class LauncherTests(unittest.TestCase):
         shell=setup.launcher_content("/tmp/it's repo/diag_main.mjs",False)
         self.assertIn('aidiy_diag-owner:',shell)
     def test_cleanup_ownership(self):
-        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.object(cleanup,'__file__',str(Path(directory)/'_cleanup.py')),patch.object(cleanup,'stop_processes',return_value=True):
+        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.object(cleanup,'__file__',str(Path(directory)/'_cleanup.py')),patch.object(cleanup,'stop_processes',return_value=True),patch.object(cleanup._path_helper,'launcher_directory',return_value=Path(directory)/'.local/bin'):
             folder=Path(directory)/'.local/bin';folder.mkdir(parents=True)
             launcher=folder/'aidiy_diag';launcher.write_text('another checkout')
             self.assertTrue(cleanup.cleanup());self.assertTrue(launcher.exists())
@@ -420,7 +420,7 @@ class SetupDisplayTests(unittest.TestCase):
 
     def test_standalone_display_once_before_launcher_and_desktop(self):
         output=io.StringIO()
-        with tempfile.TemporaryDirectory() as directory, patch.object(Path,'home',return_value=Path(directory)), patch.object(setup,'setup_desktop',side_effect=lambda **kwargs:print('desktop-fixture') or True), redirect_stdout(output):
+        with tempfile.TemporaryDirectory() as directory, patch.object(Path,'home',return_value=Path(directory)), patch.object(setup,'setup_desktop',side_effect=lambda **kwargs:print('desktop-fixture') or True), patch.object(setup._path_helper,'launcher_directory',return_value=Path(directory)/'bin'), patch.object(setup,'ensure_launcher_path',return_value=True), redirect_stdout(output):
             self.assertTrue(setup.setup())
         self.assert_diag_display(output.getvalue())
 
@@ -432,6 +432,8 @@ class SetupDisplayTests(unittest.TestCase):
         local=SimpleNamespace(setup=lambda _:print('local-fixture') or True,launch_model_download=lambda _:True)
         with tempfile.TemporaryDirectory() as directory, ExitStack() as stack:
             stack.enter_context(patch.object(Path,'home',return_value=Path(directory)))
+            stack.enter_context(patch.object(setup._path_helper,'launcher_directory',return_value=Path(directory)/'bin'))
+            stack.enter_context(patch.object(setup,'ensure_launcher_path',return_value=True))
             stack.enter_context(patch.object(module,'GLOBAL_CLI_INSTALL_PROCESSES',['fixture']))
             stack.enter_context(patch.object(module,'stop_setup_apps'))
             for name,value in [('collect_setup_choices',lambda:choices),('ensure_prerequisites',lambda:True),('setup_common_global_tools',lambda _:print('common-fixture') or []),('wait_global_cli_tools_install',lambda:print('common-wait-fixture') or []),('_load_folder_module',lambda name:setup if name=='backend_diag' else local),('remove_folder_import_caches',lambda:None),('run_diag_headless',lambda:True),('print_setup_summary',lambda *_:None)]:
@@ -467,7 +469,7 @@ class ElectronSetupTests(unittest.TestCase):
         self.assertEqual(load.call_args.args[1],ROOT.parent/'scripts'/'_setup_electron.py')
         self.assertEqual(calls[0][0],ROOT)
     def test_missing_node_keeps_launcher_but_desktop_setup_fails(self):
-        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.dict('os.environ',{'CODESPACES':'false','DISPLAY':':fixture'}),patch.object(setup.shutil,'which',return_value=None),patch('builtins.print'):
+        with tempfile.TemporaryDirectory() as directory,patch.object(Path,'home',return_value=Path(directory)),patch.dict('os.environ',{'CODESPACES':'false','DISPLAY':':fixture'}),patch.object(setup.shutil,'which',return_value=None),patch.object(setup._path_helper,'launcher_directory',return_value=Path(directory)/'.local/bin'),patch('builtins.print'):
             self.assertFalse(setup.setup())
             self.assertTrue((Path(directory)/'.local/bin'/('aidiy_diag.cmd' if setup.sys.platform=='win32' else 'aidiy_diag')).exists())
     def test_shared_dist_reused_both_directions_without_download(self):

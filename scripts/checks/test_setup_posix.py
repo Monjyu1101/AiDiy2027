@@ -88,12 +88,12 @@ class PosixPathTests(unittest.TestCase):
             self.assertEqual(result.exception.code, 0)
             repair.assert_called_once(); normal.assert_not_called()
 
-    @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで8コマンドを実行する試験')
-    def test_all_eight_launchers_resolve_execute_forward_arguments_and_unlink(self):
+    @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで9コマンドを実行する試験')
+    def test_all_nine_launchers_resolve_execute_forward_arguments_and_unlink(self):
         self.check_all_launchers()
 
-    @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで8コマンドを実行する試験')
-    def test_linux_all_eight_launchers_resolve_execute_forward_arguments_and_unlink(self):
+    @unittest.skipIf(os.name == 'nt', 'POSIX の実シェルで9コマンドを実行する試験')
+    def test_linux_all_nine_launchers_resolve_execute_forward_arguments_and_unlink(self):
         with patch.object(sys, 'platform', 'linux'), patch.dict(os.environ, {'SHELL': '/bin/bash'}):
             self.check_all_launchers()
 
@@ -113,6 +113,7 @@ class PosixPathTests(unittest.TestCase):
             target = checkout / folder / file
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text('import json,sys;print(json.dumps(sys.argv))\n', encoding='utf-8')
+        (checkout / 'backend_diag/memo_main.mjs').write_text('// memo fixture', encoding='utf-8')
         live = checkout / 'frontend_ide/host/aidiy_live/launch.mjs'
         live.parent.mkdir(); live.touch()
         py = checkout / 'command_hermes/.venv/bin/python'
@@ -144,7 +145,7 @@ class PosixPathTests(unittest.TestCase):
             viewer.install_launcher(checkout / 'frontend_ide/viewer')
             viewer.install_launcher(checkout / 'frontend_ide/aidiy_console', 'console')
             discord.install_launcher(checkout / 'frontend_channels/discord')
-        for kind in ('diag', 'ide', 'console', 'code', 'live', 'avatar', 'hermes', 'discord'):
+        for kind in ('diag', 'memo', 'ide', 'console', 'code', 'live', 'avatar', 'hermes', 'discord'):
             with self.subTest(kind=kind):
                 launcher = (self.directory if kind == 'hermes' else local('aidiy_' + kind)) / ('aidiy_' + kind)
                 self.assertEqual(launcher.read_bytes().count(b'\r'), 0)

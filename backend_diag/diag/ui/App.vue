@@ -47,7 +47,7 @@ const tools=Tools接続を作成({api,反映:state=>{toolsOnline.value=state.onl
 const 起動=起動状態を作成({api});
 const 自動起動表示=自動起動表示を作成({tab,接続済み:connected});
 watch(起動.自動起動完了,progress=>自動起動表示.反映(progress));
-const アプリ=アプリ状態を作成({api});
+const アプリ=アプリ状態を作成({api,newMemo:メモを開く});
 let memoSync=Promise.resolve();
 watch([connected,アプリ.フォルダ],([online,selected],[,previous])=>{
  // 初期一覧の取得前の空欄で、設定済みプロジェクトを消さない。
@@ -58,10 +58,10 @@ watch([connected,アプリ.フォルダ],([online,selected],[,previous])=>{
 async function メモを開く(){
  // プロジェクト選択の反映後、既存の編集内容は再読込せず新規を追加する。
  if(window.aidiyWindow?.openMemo){await memoSync;try{await window.aidiyWindow.openMemo(true);}catch{message.value='メモを開けませんでした。';}return;}
- const target=window.open('','aidiy-memo');
+ const target=window.open('','_blank','popup,width=320,height=260');
  if(!target){message.value='メモを開くにはポップアップを許可してください。';return;}
  await memoSync;
- try{if(target.location.origin===location.origin&&target.location.pathname.endsWith('/memo.html')){target.postMessage({type:'aidiy-memo-new'},location.origin);target.focus();return;}}catch{}
+ if(target.closed)return;
  const url=new URL('memo.html',location.href);url.hash=new URLSearchParams({token:key.value,new:'1'}).toString();target.location.href=url.href;
 }
 

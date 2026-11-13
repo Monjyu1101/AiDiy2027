@@ -318,3 +318,19 @@ test('実App状態: 標準/ミニの折畳みからランチャー・アイコ�
   }finally{scope.stop();}
  }
 });
+
+test('Memoは全ランチャーでCPU直前、未選択でも+メモと同じローカル操作のみ実行する',async()=>{
+ const {アプリ状態を作成}=await import('../diag/ui/components/アプリ起動/アプリ状態.mjs');
+ const icons=await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs');
+ let opened=0;const requests=[];
+ const state=アプリ状態を作成({newMemo:async()=>{opened++;},api:async route=>{requests.push(route);assert.equal(route,'api/アプリ起動');return {対象:[{id:'cpu',名前:'CPU'},{id:'team',名前:'Team'}],フォルダ:''};}});
+ await state.読込();assert.deepEqual(icons.起動項目を整列(state.項目.value).map(item=>item.id),['team','memo','cpu']);assert.equal(state.フォルダ必要('memo'),false);
+ const cliState={項目:vue.ref([]),失敗:vue.ref(false),通知:vue.ref(''),処理中:vue.ref(''),読込(){},起動(){throw Error('CLI forbidden');}};
+ for(const name of ['components/アプリ起動/アプリ起動パネル.vue','components/アプリ起動/ミニアプリ起動.vue']){
+  const ui=mount(compile(name,{modules:{'./アプリアイコン.mjs':icons}}),()=>({state,cliState,online:true,visible:true}));
+  try{await flush();const button=ui.button('Memo を起動');assert.ok(button);assert.equal(button.props.disabled,false);button.props.onClick({});await flush();}finally{ui.app.unmount();}
+ }
+ const micro=compile('components/アプリ起動/マイクロランチャー.vue',{inline:false,globals:{window:{},setTimeout,clearTimeout},modules:{'./アプリアイコン.mjs':icons,'./アイコン移動.mjs':dependency('components/アプリ起動/アイコン移動.mjs'),'./円周配置.cjs':require('../diag/ui/components/アプリ起動/円周配置.cjs')}});
+ const scope=vue.effectScope(),warn=console.warn;let view;console.warn=()=>{};try{view=scope.run(()=>micro.setup({appState:state,cliState,online:true,state:{}},{expose(){},emit(){}}));}finally{console.warn=warn;}
+ try{const memo=view.apps.value.find(item=>item.id==='memo');assert.ok(memo);assert.equal(view.disabled(memo),false);view.launch(memo,{});await flush();assert.equal(opened,3);assert.ok(requests.every(route=>route==='api/アプリ起動'));}finally{scope.stop();state.終了();}
+});

@@ -4,14 +4,16 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import http from 'node:http';
+import {openBrowserMemos} from '../memo/browser.mjs';
 import {createMemoHandler} from '../memo/http.mjs';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
 import {createToolsSettingsBridge,createToolsRepresentativeBridge,TOOLS_SETTINGS_ACTIONS,TOOLS_SETTINGS_BODY_LIMIT,BACKUP_REPRESENTATIVE_RESPONSE_TIMEOUT_MS,TOOLS_REPRESENTATIVE_BYTE_LIMIT} from './Tools/設定接続.mjs';
 import {createCoreSettingsBridge,AI_SETTINGS_ACTIONS,AI_SETTINGS_BODY_LIMIT} from './AI設定/コア設定接続.mjs';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile,realpath,stat } from 'node:fs/promises';
+import path from 'node:path';
 import { spawn } from 'node:child_process';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL,fileURLToPath } from 'node:url';
 import { catalog, scan, probe, cancelProbes } from './診断/probes.mjs';
 import {getToolsStatus} from './診断/tools_status.mjs';
 import {createModelTrials,PREDICTION_ROW_TIMEOUT_MS} from './モデル試行/trials.mjs';
@@ -72,6 +74,8 @@ export function parseArgs(args) {
   const options = {port:0, prefix:'/', noOpen:false, browser:false, help:false};
   for (let i=0;i<args.length;i++) {
     const arg = args[i];
+    if (arg === '--memo-only') {options.memoOnly = true;continue;}
+    if (arg === '--new') {options.newMemo = true;continue;}
     if (arg === '--browser') {options.browser = true;continue;}
     if (arg === '--headless') {options.headless = true;continue;}
     if (arg === '--auto') {options.auto = true;continue;}
@@ -84,11 +88,13 @@ export function parseArgs(args) {
   }
   // ヘッドレスは画面・待受を持たないため、表示・待受系の指定とは併用しない。
   if (options.headless && args.some(arg=>arg!=='--headless' && arg!=='--help' && arg!=='-h')) throw new Error('--headless は単独で指定してください。');
+  if(options.newMemo&&!options.memoOnly)throw Error('--new は aidiy_memo 専用です。');
+  if(options.memoOnly&&args.some(arg=>!['--memo-only','--new','--foreground','--wait','--help','-h'].includes(arg)))throw Error('aidiy_memo はシステム付箋だけを扱います。');
   return options;
 }
-export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,getLaunchDisplay,memoStore,launchRoot=process.cwd(),cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
+export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,getLaunchDisplay,memoStore,launchRoot=process.cwd(),systemRoot=fileURLToPath(new URL('../../',import.meta.url)),getLaunchRoot,isNormalEnabled=()=>true,cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
   appLauncher ??= createAppLauncher({portStatusFn,webBrowserOpenFn,getLaunchDisplay});
-  const memoHandler=createMemoHandler({appLauncher,launchRoot,memoStore});
+  const memoHandler=createMemoHandler({appLauncher,launchRoot,memoStore,systemRoot,getLaunchRoot,isNormalEnabled});
   let results = [], busy = false, writing = false, scanStarted = null, scanFinished = null, modelResults = {}, modelWriting = false, progress = [], integrationResults = {}, integrationWriting = false;
   const individualProbes = new Set(), keyBusy = new Set(), keyProgress = new Map();
   const hasBody = req => req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0');
@@ -125,6 +131,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
     const authorized = auth.length === expected.length && timingSafeEqual(auth,expected);
     try {
       if (route?.startsWith('api/') && !authorized) return reply(401,{エラー:'起動時の認証キーを入力してください。'});
+      if(route?.startsWith('api/')&&!isNormalEnabled()&&route!=='api/メモ/単体'&&!route.startsWith('api/メモ/単体/'))return reply(403,{エラー:'単体起動ではシステムメモだけ利用できます。'});
       if(await memoHandler(req,route,reply))return;
       if(route?.startsWith('api/AI設定/')||route?.startsWith('api/Tools/')){
         const isTools=route.startsWith('api/Tools/');
@@ -405,7 +412,7 @@ export async function main(args=process.argv.slice(2)) {
   if (options.help) { console.log('AiDiy 診断: aidiy_diag [--auto] [--browser] [--no-open] [--foreground | --wait] [--port 8097] [--base-path /proxy/8097/]\n            aidiy_diag --headless   画面を開かず全診断を実行し _AIDIY/aidiy_diag/ へ保存\n            --auto                  画面を開き、保存済みの起動設定で「設定起動」を自動実行'); return; }
   if (options.headless) { process.exitCode = await headlessMain(); return; }
   if (!await verifyUi()) throw startupError('UI');
-  const useBrowser=browserMode(options);
+  const useBrowser=!options.memoOnly&&browserMode(options);
   if (!useBrowser && !options.foreground) return launchDetached(args);
   let executable;
   if (!useBrowser) {
@@ -420,10 +427,17 @@ export async function main(args=process.argv.slice(2)) {
   const publicCache=createPublicModelCache();
   const startManager=createStartManager();
   let desktop;
-  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,previousResults:createPreviousResults(),getLaunchDisplay:()=>readDesktopDisplay(desktop)});
+  const systemRoot=fileURLToPath(new URL('../../',import.meta.url));
+  let normalEnabled=!options.memoOnly,normalLaunchRoot=options.memoOnly?systemRoot:process.cwd();
+  const promote=async cwd=>{
+    if(normalEnabled)return true;
+    if(typeof cwd!=='string'||!path.isAbsolute(cwd)||cwd.length>4096||/[\0\r\n]/.test(cwd))return false;
+    try{const root=await realpath(cwd);if(!(await stat(root)).isDirectory())return false;normalLaunchRoot=root;normalEnabled=true;void publicCache.refresh();return true;}catch{return false;}
+  };
+  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,systemRoot,isNormalEnabled:()=>normalEnabled,getLaunchRoot:()=>normalLaunchRoot,previousResults:createPreviousResults(),getLaunchDisplay:()=>readDesktopDisplay(desktop)});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(options.port,'127.0.0.1',resolve);});
   // 公開一覧だけを起動時に取得。キー設定や他 provider の API は自動で呼ばない。
-  void publicCache.refresh();
+  if(normalEnabled)void publicCache.refresh();
   const url=publicUrl(server.address().port,options.prefix)+'#token='+token;
   let stopWatching=()=>{}, closed=false, ready=false, existing=false;
   const onRelease=message=>{if(message?.type==='diag-launch-release' && ready)process.off('disconnect',close);};
@@ -445,12 +459,12 @@ export async function main(args=process.argv.slice(2)) {
   if (useBrowser) {
     console.log('AiDiy 診断: '+url);
     console.log('この起動中のみ有効な認証 URL です。共有せず、転送ポートは非公開にしてください。Ctrl+C で終了。');
-    if (!options.noOpen && process.env.CODESPACES !== 'true') {openBrowser(url);openBrowser(url.replace('#token=','memo.html#token='));}
+    if (!options.noOpen && process.env.CODESPACES !== 'true') {openBrowser(url);void openBrowserMemos({url,open:openBrowser,isClosed:()=>closed}).catch(()=>console.error('保存済みメモを開けませんでした。Diag の +メモ から再試行してください。'));}
   } else {
-    console.log('AiDiy 診断: Electron ウィンドウを開きます。Ctrl+C で終了。');
+    console.log((options.memoOnly?'AiDiy Memo':'AiDiy 診断')+': Electron ウィンドウを開きます。Ctrl+C で終了。');
     // 既に起動中なら、そのウィンドウを前面に出してこの起動は正常終了する。
-    const onExisting=()=>{existing=true;if(!launcherChild)console.log('AiDiy 診断は既に起動しています。既存のウィンドウを前面に表示しました。');close();};
-    try {desktop=openDesktop(executable,url,close,undefined,undefined,notifyReady,onExisting);} catch {close();throw startupError('DESKTOP');}
+    const onExisting=()=>{existing=true;if(!launcherChild)console.log((options.memoOnly?'AiDiy Memo':'AiDiy 診断')+'は既に起動しています。既存のウィンドウを前面に表示しました。');close();};
+    try {desktop=openDesktop(executable,url,close,undefined,undefined,notifyReady,onExisting,{memoOnly:options.memoOnly===true,newMemo:options.newMemo===true,onPromote:promote});} catch {close();throw startupError('DESKTOP');}
   }
   stopWatching=watchStop(initialStop,close);
   server.once('close',()=>stopWatching());

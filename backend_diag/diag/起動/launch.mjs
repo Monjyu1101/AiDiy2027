@@ -10,6 +10,7 @@ import {desktopLogPath} from './desktop-log.mjs';
 // 秘密 URL は常駐側だけで生成する。起動元へは固定の状態通知だけを返す。
 export async function launchDetached(args, {spawnFn=spawn, timeout=30000,
   entry=fileURLToPath(new URL('../../diag_main.mjs',import.meta.url))}={}) {
+  const memoOnly=args.includes('--memo-only'),label=memoOnly?'AiDiy Memo':'AiDiy 診断';
   const env={...process.env,AIDIY_DIAG_LAUNCHER_CHILD:'1'};
   for(const key of Object.keys(env))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH)$/i.test(key))delete env[key];
   const child=spawnFn(process.execPath,[entry,'--foreground',...args],{
@@ -37,10 +38,10 @@ export async function launchDetached(args, {spawnFn=spawn, timeout=30000,
     });
     if(child.connected)child.disconnect();
     child.unref();
-    if(existing){console.log('AiDiy 診断は既に起動しています。既存のウィンドウを前面に表示しました。');return;}
-    console.log('AiDiy 診断を起動しました。ウィンドウを閉じると終了します。');
+    if(existing){console.log(label+'は既に起動しています。既存のウィンドウを前面に表示しました。');return;}
+    console.log(label+'を起動しました。ウィンドウを閉じると終了します。');
     console.log('診断 NG / ERR・異常終了の記録（保存可能な場合）: '+desktopLogPath);
-    console.log('ターミナルで起動状態を確認する場合: aidiy_diag --foreground');
+    console.log('ターミナルで起動状態を確認する場合: '+(memoOnly?'aidiy_memo':'aidiy_diag')+' --foreground');
   } catch(error) {
     if(child.connected)child.disconnect();
     // 起動確認に失敗した常駐側も所有する。SIGTERM を無視する場合は期限付きで停止。

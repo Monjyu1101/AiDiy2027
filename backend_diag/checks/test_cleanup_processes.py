@@ -31,9 +31,15 @@ class DiagCleanupTests(unittest.TestCase):
         return processes.is_diag(dict(Name=name, CommandLine=command, ExecutablePath=executable), ROOT, True)
 
     def test_normal_and_preloaded_entrypoints(self):
-        for entry in (ROOT / 'diag_main.mjs', ROOT / 'diag/起動/electron-main.cjs'):
+        for entry in (ROOT / 'diag_main.mjs', ROOT / 'memo_main.mjs', ROOT / 'diag/起動/electron-main.cjs'):
             for prefix in ('', '--require "C:\\test dir\\probe.cjs" ', '--import=probe.mjs ', '-- '):
                 self.assertTrue(self.owned(f'node.exe {prefix}"{entry}" --foreground'))
+
+    def test_foreground_memo_owned_but_other_checkout_or_argument_is_not(self):
+        entry = ROOT / 'memo_main.mjs'
+        self.assertTrue(self.owned(f'node.exe "{entry}" --foreground'))
+        for command in (f'node.exe "{ROOT}-other/memo_main.mjs"', f'node.exe other.js "{entry}"', f'node.exe --eval run() "{entry}"'):
+            self.assertFalse(self.owned(command))
 
     def test_orphan_electron_children(self):
         exe = str(ROOT / 'node_modules/electron/dist/electron.exe')
@@ -84,7 +90,7 @@ class DiagCleanupTests(unittest.TestCase):
         for windows in (False, True):
             name = 'node.exe' if windows else 'node'
             for entry in ('backend_diag/diag_main.mjs', './backend_diag/diag_main.mjs',
-                          'diag_main.mjs', '../backend_diag/diag_main.mjs', 'diag/起動/electron-main.cjs'):
+                          'diag_main.mjs', '../backend_diag/diag_main.mjs', 'memo_main.mjs', 'backend_diag/memo_main.mjs', '../backend_diag/memo_main.mjs', 'diag/起動/electron-main.cjs'):
                 with self.subTest(windows=windows, entry=entry), self.assertRaisesRegex(ValueError, '作業フォルダが不明'):
                     processes.is_diag(dict(Name=name, CommandLine=f'{name} {entry} --browser'), ROOT, windows)
             self.assertFalse(processes.is_diag(dict(Name=name, CommandLine=f'{name} other.js backend_diag/diag_main.mjs'), ROOT, windows))

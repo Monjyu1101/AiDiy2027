@@ -4,20 +4,20 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import {ref} from 'vue';
-export function アプリ状態を作成({api,picker=()=>globalThis.aidiyWindow?.selectProject?.(),schedule=setTimeout,unschedule=clearTimeout}){
+export function アプリ状態を作成({api,newMemo,picker=()=>globalThis.aidiyWindow?.selectProject?.(),schedule=setTimeout,unschedule=clearTimeout}){
  const 項目=ref([]),フォルダ=ref(''),処理中=ref(''),通知=ref(''),結果=ref({}),選択中=ref(false),参照中=ref(false),一覧=ref(null),パス入力=ref(''),参照エラー=ref('');
  let folderInitialized=false,configuredFolder=null,configuredLaunchFolder='';
  function 起動フォルダ(){return configuredFolder!==null&&フォルダ.value===configuredFolder?configuredLaunchFolder:フォルダ.value;}
  let folderVersion=0,catalogVersion=0,online=false,timer=null,loading=null;
  const backendApps=new Set(['task','team','chrome','browser','slack']);
  function 利用可能(id){const item=項目.value.find(item=>item.id===id);return backendApps.has(id)?item?.利用可能===true:item?.利用可能!==false;}
- function フォルダ必要(id){return id!=='chrome';}
+ function フォルダ必要(id){return !['chrome','memo'].includes(id);}
  function 不可理由(id){return 利用可能(id)?'':項目.value.find(item=>item.id===id)?.無効理由||(id==='slack'?'Slack の起動ファイルを確認できません。':id==='browser'?'Tools / MCP が稼働中の場合だけ開けます。':id==='chrome'?'Tools / MCP と Web が両方とも稼働中の場合だけ開けます。':'TaskTeam バックエンド起動中のみ利用できます。');}
  function unavailable(){項目.value=項目.value.map(item=>backendApps.has(item.id)?{...item,利用可能:false,...(item.id==='slack'?{無効表示:'確認不可'}:{}),無効理由:item.id==='slack'?'Slack の起動ファイルを確認できません。':item.id==='browser'?'Tools / MCP の状態を確認できません。':item.id==='chrome'?'Tools / MCP と Web の状態を確認できません。':'TaskTeam バックエンドの状態を確認できません。'}:item);}
  async function 読込(){
   if(loading)return loading;const version=catalogVersion;
   const request=(async()=>{try{const data=await api('api/アプリ起動');if(version===catalogVersion){
-    項目.value=data.対象;
+    項目.value=typeof newMemo==='function'?[...data.対象.filter(item=>item.id!=='memo'),{id:'memo',名前:'Memo',利用可能:true,単一起動:false}]:data.対象;
     if(!folderInitialized){
      folderInitialized=true;
      if(!フォルダ.value&&typeof data.フォルダ==='string'){
@@ -52,7 +52,7 @@ export function アプリ状態を作成({api,picker=()=>globalThis.aidiyWindow?
  function 解除(){if(処理中.value||選択中.value)return;folderInitialized=true;configuredFolder=null;フォルダ.value='';結果.value={};通知.value='';}
  async function 起動(id,{開始時}={}){
   if(フォルダ必要(id)&&!フォルダ.value||処理中.value||選択中.value||!利用可能(id))return;処理中.value=id;通知.value='';
-  try{開始時?.();const data=id==='chrome'?await api('api/起動/ブラウザ','POST',undefined,'json',{}):await api('api/アプリ起動/開始','POST',undefined,'json',{対象:id,フォルダ:起動フォルダ()});結果.value={...結果.value,[id]:{通知:data.通知||data.メッセージ,種別:data.起動済み?'existing':'accepted',ログ:data.ログ}};}
+  try{開始時?.();const data=id==='memo'?await newMemo()||{}:id==='chrome'?await api('api/起動/ブラウザ','POST',undefined,'json',{}):await api('api/アプリ起動/開始','POST',undefined,'json',{対象:id,フォルダ:起動フォルダ()});結果.value={...結果.value,[id]:{通知:data.通知||data.メッセージ,種別:data.起動済み?'existing':'accepted',ログ:data.ログ}};}
   catch(error){結果.value={...結果.value,[id]:{通知:error.message,種別:'error'}};}
   finally{処理中.value='';}
  }

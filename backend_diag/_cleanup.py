@@ -52,8 +52,6 @@ def stop_processes():
 def cleanup(choices=None):
     if choices is not None and choices.get('diag') is False:
         return True
-    script = str(Path(__file__).resolve().with_name('diag_main.mjs'))
-    marker = 'aidiy_diag-owner:' + hashlib.sha256(script.encode('utf-8')).hexdigest()
     temporary = None
     try:
         stop_file = Path(__file__).resolve().with_name('.stop-request')
@@ -68,15 +66,27 @@ def cleanup(choices=None):
             return False
         if not cleanup_dependencies(Path(__file__).resolve().parent):
             return False
-        launcher_dir = _path_helper.launcher_directory('aidiy_diag')
-        for name in ('aidiy_diag', 'aidiy_diag.cmd'):
-            launcher = launcher_dir / name
-            if launcher.is_file() and marker in launcher.read_text(encoding='utf-8'):
-                launcher.unlink()
-                print(f'診断ランチャーを解除しました: {launcher}')
-        print('この作業コピーの診断の終了を確認しました。')
-        return remove_launcher_path(launcher_dir)
-    except OSError as exc:
+        directories = set()
+        for program, entry in (('aidiy_diag', 'diag_main.mjs'), ('aidiy_memo', 'memo_main.mjs')):
+            script = str(Path(__file__).resolve().with_name(entry))
+            marker = program + '-owner:' + hashlib.sha256(script.encode('utf-8')).hexdigest()
+            launcher_dir = _path_helper.launcher_directory(program)
+            directories.add(launcher_dir)
+            for name in (program, program + '.cmd'):
+                launcher = launcher_dir / name
+                if not launcher.is_symlink() and launcher.is_file() and marker in launcher.read_text(encoding='utf-8'):
+                    launcher.unlink()
+                    print(f'ランチャーを解除しました: {launcher}')
+        print('この作業コピーの Diag / Memo の終了を確認しました。')
+        success = True
+        for directory in directories:
+            # 他checkoutのコマンドやリンクが残るPATHは解除しない。
+            if any((directory / name).exists() or (directory / name).is_symlink()
+                   for name in ('aidiy_diag', 'aidiy_diag.cmd', 'aidiy_memo', 'aidiy_memo.cmd')):
+                continue
+            success = remove_launcher_path(directory) and success
+        return success
+    except (OSError, ValueError) as exc:
         print(f'診断ランチャーの解除に失敗しました: {exc}')
         return False
     finally:

@@ -406,13 +406,24 @@ Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後�
 
 ## aidiy_memo（付箋メモ）
 
-- 通常の Diag 起動では Memo を同時に開く。`--headless` はメモの読込・作成・画面起動を行わない。`--no-open` は従来どおり画面を開かず、認証 URL の同じ公開パスにある `memo.html` から利用できる。タイトルバーの「+メモ」、アイコン化中は右クリックメニューの「+メモ」で表示して新規作成する。
-- 保存先は Diag プロセスの起動時カレントフォルダと、Diag のランチャーで選択したプロジェクトの、それぞれ `_AIDIY/aidiy_memo/`。初期プロジェクトは既存 `CODE_BASE_PATH` の解決規則と同じ。実体が同じ場合は一つにまとめる。プロジェクトを切り替えた後、旧保存先の編集内容を別プロジェクトへ誤保存しない。
-- 新しい付箋は UTF-8 の `UUID.memo.json`。既存の `.md` / `.txt` は本文を無変換で扱い、ファイル名由来のタイトルは変更しない。色・位置・寸法は隠し `.memo-<ファイル名hash>.json` に保存する。本文と補助ファイルはそれぞれ原子的に置換するが、二つのファイル全体の一括トランザクションではない。未知の JSON 形式、不正 UTF-8、リンク、1 MB 超のファイルは警告し、元のファイルは変更しない。削除・自動移行は行わない。
-- Electron の Memo 窓は常に最前面。各付箋は上部の保存先帯を0.5秒長押しして移動し、右下でサイズ変更する。最下部のマウスオーバーまたはキーボードフォーカスでパステル色を選択する。色・位置・寸法も保存対象となる。
-- 保存は明示操作。未保存の入力は再読込・終了前に確認する。保存失敗時は入力を保持し、外部編集との競合は上書きせず再読込を促す。保存先はサーバー側で決め、クライアントから任意のパスを保存先として受け取らない。読込だけでフォルダを作成しない。
-- メモ API は Diag と同じ起動認証が必要。保存は同一オリジンの JSON POST のみ。Electron は sandbox / contextIsolation を有効にし、メモ窓へ任意ファイル・任意 IPC を公開しない。
-- 確認: `node --test backend_diag/checks/memo-*.check.*`。UI 配布物を更新するときは `backend_diag/ui` の `npm run build && npm run check` でソースとの一致も確認する。
+- 本体・一覧ウィンドウは設けない。通常 Diag 起動で保存済み付箋だけを1件1独立ウィンドウで復元し、空一覧なら0窓。`--headless` はメモの読込・作成・画面起動を行わない。`--no-open` は画面を自動で開かない。
+- 保存先は Diag の起動時カレントフォルダと、ランチャーで選択したプロジェクトの `_AIDIY/aidiy_memo/`。実体が同じ場合は重複を除く。「+メモ」はプロジェクト優先、未選択なら起動側。切替前から開いている保存済み付箋は、セッション内で既知の元フォルダへ保存できるが、新規作成は現在の保存先に限定する。元フォルダの差替えは実体・inode等を再検証して拒否する。
+- 新規は UTF-8 の `UUID.memo.json` に `version:1` と `タイトル`、`本文`、`色`、`位置:{x,y}`、`サイズ:{width,height}`。負の画面座標を許可し、復元時は実在画面の作業範囲へ補正する。旧JSONは同じ形式で維持する。既存 `.md` / `.txt` の本文は無変換、色・配置は従来の隠しsidecarを維持し、自動変換・削除を行わない。
+- UIはタイトルと本文だけを常時表示。最下部hover/focusでパステル色・閉じる操作を表示する。Electron窓は常時最前面、0.5秒静止した長押しで移動、端のドラッグでサイズ変更。短い文字選択ドラッグは窓移動にしない。
+- 自動保存は150msの短い待ちと直列queueを使い、保存中の追加入力を捨てず後続保存する。フォーカス離脱・終了時には最終位置を通知して保存完了を待つ。失敗・競合は入力を保持して自動上書きを止める。親Diag終了中は新規窓追加を受理しない。
+- 新規でタイトル・本文がともに空なら、色や寸法を変えてもファイル・ディレクトリを作らず、blurで破棄する。既存の空内容は削除せず保存する。新規作成の応答喪失は固定 `clientId` と同じ初回payloadで再試行し、二重作成を防いでから最新入力を追送する。
+- ファイルは一時書込・fsync後に原子的に置換し、revisionを比較して外部変更を上書きしない。強制終了時の保証は最後に成功した保存までで、未送信の直近入力まで保存したとは扱わない。旧テキスト本文とsidecarは各々原子的だが二つ全体の一括transactionではない。不正形式・リンク・1MB超は警告し原本を保全する。
+- 保存後のrenderer再読込は最新の保存済みsnapshot/identityを復元する。APIは起動認証と同一origin JSON POSTで固定操作だけを公開し、Electronはsandbox/contextIsolationを維持する。Web版は付箋ごとの別ページで、OSの最前面/配置はElectron専用。
+- 確認: `node --test backend_diag/checks/memo-*.check.*`。実Electron DOMは `AIDIY_TEST_ELECTRON=<electron実行ファイル> node backend_diag/checks/memo-ui-browser.cjs`。配布更新は `backend_diag/ui` の `npm run build && npm run check`。
+
+### aidiy_memo 単体起動・二重起動保護
+
+- 公開入口は `backend_diag/memo_main.mjs` と `aidiy_memo` / `aidiy_memo.cmd`。setup/cleanupはDiagと共通。受理するのは `--new` / `--foreground` / `--wait` / `--help` のみ。内部 `--memo-only` へ転送し、headless/auto/project/cwd/browser等の混用を拒否する。
+- システムメモの根は配置元ルート（ソース自身から `fileURLToPath` で解決）。呼出元cwd・環境変数・CODE_BASE_PATHに依存しない。単体API `api/メモ/単体` と固定子操作は、この根専用storeだけを使い、全体一覧取得後のfilterで代用しない。
+- 単体先行では通常Diag APIを403にし、プロジェクト設定・公開モデルfetch・自動サービス起動を行わない。非表示host窓もDiagのURLを読み込まない。後続の通常起動で初めて親Nodeへpromote要求を送り、実在する呼出元cwdを検証後に通常APIとDiag画面を有効化する。
+- Electronのprofileとsingle-instance lockはDiagと共有。追加インスタンスは固定modeと通常起動時cwdのみをメモリ上の追加データで送り、URL/token/本文をargvや保存ファイルに置かない。既存起動へ転送した副プロセスはサーバーを終了する。起動初期の要求はqueueする。
+- 単体起動は保存済みシステム付箋を復元・focusし、空なら未保存blank1枚。通常起動の自動復元は空なら0枚。通常/単体で同じ実フォルダを指す付箋はsource種別prefixに関係なく重複排除し、別project窓の未保存内容を閉じたり移したりしない。
+- 検証は `memo-launcher` / `memo-standalone` / `memo-window` / `desktop` とsetup/cleanupのテスト。単体先行→通常、通常先行→単体、同時起動、最後の付箋終了、旧project誤アクセス拒否を含める。
 
 ### Diag / Memo の責務と配置
 

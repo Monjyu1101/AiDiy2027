@@ -50,12 +50,12 @@ const failures={
   LOAD:'診断画面を読み込めません。',
   RENDERER:'画面プロセスが終了しました。',
 };
-export function openDesktop(executable, url, onClose, spawnFn=spawn, timeout=15000, onReady=()=>{}, onExisting=()=>{}) {
+export function openDesktop(executable, url, onClose, spawnFn=spawn, timeout=15000, onReady=()=>{}, onExisting=()=>{}, {memoOnly=false,newMemo=false,onPromote=async()=>false}={}) {
   // Windows Electron の stdin は常に EOF。IDE と同じ専用 IPC を使い、秘密 URL は argv/env/log に出さない。
   // GUI には SW_HIDE を引き継がせない（windowsHide:true だと Windows で show() 後も非表示のまま）。
   const env={...process.env};
   for(const key of Object.keys(env))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH)$/i.test(key))delete env[key];
-  const child=spawnFn(executable,[fileURLToPath(new URL('./electron-main.cjs',import.meta.url))],{shell:false,stdio:['ignore','ignore','pipe','ipc'],env,windowsHide:false,detached:process.platform!=='win32'});
+  const child=spawnFn(executable,[fileURLToPath(new URL('./electron-main.cjs',import.meta.url)),...(memoOnly?['--aidiy-memo-only']:[]),...(newMemo?['--aidiy-memo-new']:[])],{shell:false,stdio:['ignore','ignore','pipe','ipc'],env,windowsHide:false,detached:process.platform!=='win32'});
   let ended=false, sent=false, shown=false, reported=false, existing=false, disconnectTimer;
   const finish=()=>{if(ended)return;ended=true;clearTimeout(timer);clearTimeout(disconnectTimer);onClose();};
   const report=(code,detail='')=>{
@@ -75,9 +75,12 @@ export function openDesktop(executable, url, onClose, spawnFn=spawn, timeout=150
   });
   child.on('message',message=>{
     if(ended || child.diagClosing)return;
+    if(message?.type==='diag-promote'&&sent&&typeof message.requestId==='string'&&/^[a-f0-9-]{36}$/.test(message.requestId)){
+      void Promise.resolve().then(()=>onPromote(message.cwd)).then(ok=>{if(!ended&&child.connected)child.send({type:'diag-promoted',requestId:message.requestId,ok:ok===true},()=>{});}).catch(()=>{if(!ended&&child.connected)child.send({type:'diag-promoted',requestId:message.requestId,ok:false},()=>{});});return;
+    }
     if(message?.type==='diag-ready' && !sent){
       sent=true;
-      try {child.send({type:'diag-start',url},error=>{if(error && !ended)abort('IPC');});}catch{abort('IPC');}
+      try {child.send({type:'diag-start',url,...(memoOnly?{memoOnly:true,newMemo}: {})},error=>{if(error && !ended)abort('IPC');});}catch{abort('IPC');}
     }else if(message?.type==='diag-shown' && sent){if(!shown){shown=true;clearTimeout(timer);onReady();}}
     else if(message?.type==='diag-failed' && Object.hasOwn(failures,message.code)){report(message.code);}
     // 既に起動中の診断ウィンドウを前面に出した。秘密 URL は送らずに終了させる。

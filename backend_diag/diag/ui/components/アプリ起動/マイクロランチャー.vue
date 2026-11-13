@@ -34,7 +34,7 @@ function 順序スタイル(ring,index){const start=(ring.outer?0:内側開始.v
 const rings=computed(()=>[{items:apps.value.slice(0,orbit.value.内側数),radius:orbit.value.内半径,outer:false},...(orbit.value.外側数?[{items:apps.value.slice(orbit.value.内側数),radius:orbit.value.半径,outer:true}]:[])]);
 watch(()=>apps.value.length,async count=>{if(expanded.value)await window.aidiyWindow?.expandMicro(true,count);});
 watch(()=>props.online,value=>{if(value){void props.appState.読込();void props.cliState.読込();}},{immediate:true});
-function disabled(item){return !props.online||(item.kind==='app'&&!props.appState.利用可能(item.id))||(item.kind!=='app'||item.id!=='chrome')&&!props.appState.フォルダ.value||props.appState.選択中.value||Boolean(props.appState.処理中.value)&&!(item.kind==='cli'&&props.appState.処理中.value.startsWith('cli:'));}
+function disabled(item){return !props.online||(item.kind==='app'&&!props.appState.利用可能(item.id))||(item.kind!=='app'||!['chrome','memo'].includes(item.id))&&!props.appState.フォルダ.value||props.appState.選択中.value||Boolean(props.appState.処理中.value)&&!(item.kind==='cli'&&props.appState.処理中.value.startsWith('cli:'));}
 function contextMenu(){if(busy.value||props.switching)return;activity();void window.aidiyWindow?.showMicroMenu?.(apps.value.map(item=>({key:item.kind+':'+item.id,label:item.名前,...(item.id==='slack'?{enabled:!disabled(item),reason:props.appState.不可理由(item.id)}:{})})));}
 function launch(item,event){if(disabled(item))return;const 開始時=起動モーション(event);if(item.kind==='cli')void props.cliState.起動(item.id,{確認省略:true,開始時});else void props.appState.起動(item.id,{開始時});}
 async function toggle(){

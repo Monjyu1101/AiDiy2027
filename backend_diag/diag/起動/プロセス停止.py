@@ -87,7 +87,7 @@ def is_diag(process, root, windows):
     name = normalize(process.get('Name') or '').rsplit('/', 1)[-1].casefold()
     if name not in ('node', 'node.exe', 'electron', 'electron.exe') or not args:
         return False
-    entries = {normalize(root / 'diag_main.mjs'), normalize(root / 'diag' / '起動' / 'electron-main.cjs')}
+    entries = {normalize(root / 'diag_main.mjs'), normalize(root / 'memo_main.mjs'), normalize(root / 'diag' / '起動' / 'electron-main.cjs')}
     index = 1
     while index < len(args):
         arg = args[index]
@@ -117,9 +117,9 @@ def is_diag(process, root, windows):
     # cwd と作業コピーを照合できない。別コピーを含めて推測で停止せず削除を中止する。
     if not Path(script).is_absolute() and not PureWindowsPath(script).is_absolute():
         relative = script.removeprefix('./')
-        if (relative in ('diag_main.mjs', 'diag/起動/electron-main.cjs')
-                or relative.endswith(('/backend_diag/diag_main.mjs', '/backend_diag/diag/起動/electron-main.cjs'))
-                or relative in ('backend_diag/diag_main.mjs', 'backend_diag/diag/起動/electron-main.cjs')):
+        if (relative in ('diag_main.mjs', 'memo_main.mjs', 'diag/起動/electron-main.cjs')
+                or relative.endswith(('/backend_diag/diag_main.mjs', '/backend_diag/memo_main.mjs', '/backend_diag/diag/起動/electron-main.cjs'))
+                or relative in ('backend_diag/diag_main.mjs', 'backend_diag/memo_main.mjs', 'backend_diag/diag/起動/electron-main.cjs')):
             _uncertain_process()
     # 他のスクリプトの引数にDiagのパスが含まれるだけなら対象外。
     return False
