@@ -174,8 +174,6 @@ test('Browser Load allows exactly 10px at each horizontal edge while keeping its
   {x:-10,y:-1,width:1940,height:1200},
   {x:-10,y:981,width:1940,height:1200},
   {x:4000,y:0,width:900,height:1200},
-  {x:0,y:0,width:20,height:1200},
-  {x:0,y:0,width:900,height:99},
  ]){
   const browser=f.add('browser');
   assert.equal(applyPlacement(browser,{bounds:target,maximized:true},f.screen),false);
@@ -246,4 +244,14 @@ test('LD applies expanded placement before collapse, preserves legacy expanded w
  const result=await f.run('load');assert.equal(result.ok,false);assert.match(result.error,/live.*折りたたみ/);assert.equal(result.restored,3);
  assert.deepEqual(calls.map(v=>v.kind),['code','live']);for(const call of calls){assert.deepEqual(call.bounds,rect);assert.equal(call.locked,true);assert.equal(call.value,true);}
  for(const record of f.windows.values())assert.ok(!record.layoutRestoringFold);
+});
+
+test('Browser旧保存の小さい通常寸法を最小寸法へ広げてから復元する',()=>{
+ const f=fixture(),browser=f.add('browser');
+ browser.window.getMinimumSize=()=>[800,400];
+ assert.equal(applyPlacement(browser,{bounds:{x:0,y:0,width:600,height:300}},f.screen),true);
+ assert.deepEqual(browser.window.getBounds(),{x:0,y:0,width:800,height:400});
+ browser.window.getMinimumSize=()=>[624,344];
+ assert.equal(applyPlacement(browser,{bounds:{x:0,y:0,width:400,height:200}},f.screen),true);
+ assert.deepEqual(browser.window.getBounds(),{x:0,y:0,width:624,height:344});
 });

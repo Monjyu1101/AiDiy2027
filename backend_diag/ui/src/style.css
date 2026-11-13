@@ -118,3 +118,6 @@ html:has(.diag-panel[data-collapsed="true"]),body:has(.diag-panel[data-collapsed
 /* 窓と本文の縮小演出を終えてからルートも31pxに制限する。 */
 #app:has(.diag-panel-hidden){height:31px;max-height:31px;overflow:hidden}
 .diag-panel[data-collapsed="true"]>.connection-bar{display:none!important}
+
+/* 300pxへの縮小でも左操作と終了ボタンを残し、タイトルだけ1行省略する。 */
+@media(max-width:399px){.panel-brand.compact{grid-template-columns:auto minmax(0,1fr) auto}.panel-brand.compact strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}

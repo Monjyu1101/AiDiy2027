@@ -181,15 +181,15 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 <style scoped>
 .browser-panel.panel-collapsed > :not(.browser-chrome),.browser-panel.panel-collapsed .browser-chrome > :not(.panel-brand){display:none!important}
 .browser-panel.panel-collapsed{min-height:0!important}
-.browser-panel.panel-collapsed :deep(.panel-brand){height:31px;min-height:31px;padding:0 9px;grid-template-columns:minmax(auto,1fr) minmax(0,auto) minmax(auto,1fr)}
+.browser-panel.panel-collapsed :deep(.panel-brand){height:31px;min-height:31px;padding:0 9px;grid-template-columns:minmax(0,1fr) minmax(0,22cqi) minmax(0,1fr)}
 .browser-panel.panel-collapsed :deep(.connection-label),.browser-panel.panel-collapsed :deep(.window-actions){flex-wrap:nowrap}
-.browser-panel.panel-collapsed :deep(.panel-brand>.connection-label){grid-column:1;grid-row:1;white-space:nowrap;overflow:hidden;min-width:0}
+.browser-panel.panel-collapsed :deep(.panel-brand>.connection-label){grid-column:1;grid-row:1;white-space:nowrap;overflow-x:auto;min-width:0}
 .browser-panel.panel-collapsed :deep(.panel-brand>strong){grid-column:2;grid-row:1}
 .browser-panel.panel-collapsed :deep(.panel-brand>.window-actions){grid-column:3;grid-row:1;justify-self:end}
 
 
 /* 左右を同じ幅にして、操作ボタンの数によらずタイトルを行の中央へ置く。 */
-.browser-panel :deep(.panel-brand){grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+.browser-panel :deep(.panel-brand){height:31px;min-height:31px;box-sizing:border-box;grid-template-columns:minmax(0,1fr) minmax(0,22cqi) minmax(0,1fr)}
 .browser-panel :deep(.panel-brand>strong){min-width:0;text-align:center;justify-self:center;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .browser-isolated-label{display:inline-block;margin-left:7px;padding:1px 5px;border:1px solid currentColor;border-radius:2px;font-size:10px;line-height:1.4;white-space:nowrap}
 .browser-panel{container:browser-panel / inline-size;height:100vh;display:flex;flex-direction:column;background:#000;color:#dce6f4}
@@ -237,20 +237,19 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-connection-target{display:block;flex:1;box-sizing:border-box;width:100%;min-width:0;padding:6px 4px;border:1px solid #375067;background:#080f1b;color:inherit;font:11px monospace;user-select:text;-webkit-app-region:no-drag}
 .browser-operation-error{color:#ffd1d1;background:#431d28}.browser-operation-error span{flex:1;min-width:0;overflow:auto;max-height:100%;font-size:12px}.browser-operation-error button{flex:none}
 .browser-surface{flex:1;min-height:0}
-/* AI解析を追加した操作欄も、狭い窓では折り返してnative本文へ高さを返す。 */
+/* 通常・全画面・折畳のいずれも1行。小画面・高倍率では操作欄だけ横スクロールし、タイトルへ重ねない。 */
+.browser-panel :deep(.panel-brand>.connection-label),.browser-panel :deep(.panel-brand>.window-actions){display:flex;align-items:center;min-width:0;max-width:100%;flex-wrap:nowrap;white-space:nowrap;overflow-x:auto;scrollbar-width:none}
+.browser-panel :deep(.panel-brand>.connection-label){grid-column:1;grid-row:1}
+.browser-panel :deep(.panel-brand>strong){grid-column:2;grid-row:1}
+.browser-panel :deep(.panel-brand>.window-actions){grid-column:3;grid-row:1}
+.browser-panel :deep(.connection-label>*),.browser-panel :deep(.window-actions>*){flex-shrink:0}
 @container browser-panel (max-width:900px){
- .browser-panel:not(.browser-header-only) :deep(.panel-brand){height:auto;min-height:31px;grid-template-columns:minmax(0,1fr);padding:4px;gap:4px}
- .browser-panel:not(.browser-header-only) :deep(.panel-brand>strong){grid-column:1;grid-row:1}
- .browser-panel:not(.browser-header-only) :deep(.panel-brand>.connection-label){grid-column:1;grid-row:2;display:flex;flex-wrap:wrap;align-items:center;gap:4px;white-space:normal}
- .browser-panel:not(.browser-header-only) :deep(.panel-brand>.window-actions){grid-column:1;grid-row:3;justify-self:start;max-width:100%;flex-wrap:wrap}
+ .browser-element-link,.browser-analysis,.browser-capture,.browser-handoff{margin-left:3px;padding:0 3px}
+ .browser-window-sizes button{min-width:32px;padding:0 3px}
 }
-/* 幅800 DIPを高倍率で使う時も、操作列を切らず高さの測定でnative窓へ返す。 */
-@container browser-header (max-width:760px){
- .browser-header-only :deep(.panel-brand){height:auto;min-height:31px;grid-template-columns:minmax(0,1fr);gap:4px}
- .browser-header-only :deep(.panel-brand>strong){grid-column:1;grid-row:1}
- .browser-header-only :deep(.panel-brand>.connection-label){grid-column:1;grid-row:2;display:flex;flex-wrap:wrap;align-items:center;gap:4px;white-space:normal}
- .browser-header-only :deep(.panel-brand>.window-actions){grid-column:1;grid-row:3;max-width:100%;flex-wrap:wrap}
- .browser-header-only .browser-window-sizes,.browser-header-only .browser-toolbar{flex-wrap:wrap}
+@container browser-header (max-width:900px){
+ .browser-element-link,.browser-analysis,.browser-capture,.browser-handoff{margin-left:3px;padding:0 3px}
+ .browser-window-sizes button{min-width:32px;padding:0 3px}
 }
 </style>
 <style>

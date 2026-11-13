@@ -316,3 +316,10 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 - Diag・CPU・軌道別窓のnative透過は専用表示に必要なため変更しない。nativeの透明背景を黒に上書きしない。
 - 倍率の異なるWindowsモニターへ移動した際の白い1px線は原因未確定。基本背景の黒化はDWMの外枠まで黒くする保証ではない。通常の端リサイズを失う thickFrame:false は使わない。
 - 次の切り分けではWindows実機のスクリーンショットと webContents.capturePage() を比較し、OS側の枠かDOM側の枠かを確認する。クラウドのCSS・寸法回帰テストを実機確認の代わりとしない。
+
+### Browserの1行タイトルと最小寸法（2026-11-13）
+- Browserの展開時の最小寸法は800×400 DIP。初期配置もこれを下回らない。作業領域がこれより小さい場合だけ、既存の画面内配置方針に合わせ余白8 DIPを残して縮小する。
+- 通常・全画面ヘッダー・折畳ともタイトルは1行。幅による複数行化を行わず、中央タイトルは省略表示、左右の操作欄は独立した横スクロール領域とする。小画面・高倍率でも操作とタイトルを重ねない。
+- 折畳中は従来どおり31 CSS px相当の高さを許可し、展開時に最小寸法を復帰する。旧SVデータの小さい通常寸法はLD時に起動先の最小寸法まで広げてから可視判定し、折畳状態はその後で適用する。
+- 回帰確認は `node --test frontend_ide/checks/browser-header-style.test.mjs frontend_ide/checks/window-layout.test.mjs frontend_ide/checks/layout-save.test.cjs frontend_ide/checks/panel-collapse.test.cjs`。
+- 実Vue/scoped CSSは `node frontend_ide/scripts/check-browser-titlebar.mjs` が出力する一時フォルダを、`<Electron実行ファイル> --headless --no-sandbox --disable-gpu frontend_ide/scripts/check-browser-titlebar-render.cjs <一時フォルダ>` へ渡す。400〜1440 CSS px、通常/全画面/長いタイトル/反復開閉を測定し、画像取得が可能な環境では800pxの画像を同フォルダへ保存する（空画像時は警告）。IPCは模擬であり、Windows実窓のDPI・端リサイズ試験とは分ける。

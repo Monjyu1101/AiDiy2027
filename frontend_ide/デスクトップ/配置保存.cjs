@@ -41,6 +41,8 @@ function placement(record){
 // 復元先の矩形。画面外のIDEは通常の初期位置、画面外の子窓は移動しない（null）。
 function destination(record,value,screen){
  const target=bounds(value.bounds),areas=screen.getAllDisplays().map(display=>display.workArea);
+ // 旧保存データも起動先の最小寸法まで拡大してから画面内判定する。折畳復元はこの通常寸法の適用後。
+ if(record.kind==='browser'){const [width,height]=record.window.getMinimumSize?.()||[800,400];target.width=Math.max(target.width,width);target.height=Math.max(target.height,height);}
  // BrowserのFHD本文は外枠分だけ左右にはみ出す。両端10pxを除く上部100px
  // （タイトル・操作欄）が見えていれば復元し、本文下端のはみ出しは許容する。
  // 画面自体は広げないので、複数画面の間の空白は引き続き画面外として扱う。

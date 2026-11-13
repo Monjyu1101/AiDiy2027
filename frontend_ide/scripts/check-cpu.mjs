@@ -74,8 +74,12 @@ try{
  await evaluate('gpuMissing=true');await sleep(100);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),false);assert.equal(await evaluate("document.querySelector('.cpu-caption')"),null);
  await evaluate('failed=true');await sleep(100);assert.match(await evaluate('document.body.textContent'),/CPU —/);
  await evaluate('failed=false;gpuMissing=false');await sleep(100);assert.doesNotMatch(await evaluate('document.body.textContent'),/再試行中/);assert.equal(await evaluate(`[...document.querySelectorAll('.cpu-label text')].some(el=>el.textContent.startsWith('GPU'))`),true);
- await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);const before=await evaluate('calls');await sleep(100);assert.equal(await evaluate('calls'),before);
+ await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:true});document.dispatchEvent(new Event('visibilitychange'))`);const before=await evaluate('calls');
+ const retainedGraph=await evaluate(`document.querySelector('.cpu-chart svg').innerHTML`);await sleep(100);assert.equal(await evaluate('calls'),before);
+ assert.equal(await evaluate(`document.querySelector('.cpu-chart svg').innerHTML`),retainedGraph);
  await evaluate(`Object.defineProperty(document,'hidden',{configurable:true,value:false});document.dispatchEvent(new Event('visibilitychange'))`);await sleep(100);assert.ok(await evaluate('calls')>before);
+ // A cleared history would contain only the few samples since resume, not the retained graph.
+ assert.ok(await evaluate(`document.querySelector('.cpu-chart path[stroke="currentColor"]').getAttribute('d').split(/[ML]/).length`)>30);
  await send('Emulation.setDeviceMetricsOverride',{width:240,height:125,deviceScaleFactor:1,mobile:false});await sleep(100);assert.equal(await evaluate('document.documentElement.scrollWidth'),240);assert.equal(await evaluate('document.documentElement.scrollHeight'),125);
  const small=await send('Page.captureScreenshot',{format:'png'});writeFileSync(join(output,'cpu-small.png'),Buffer.from(small.result.data,'base64'));
  await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});

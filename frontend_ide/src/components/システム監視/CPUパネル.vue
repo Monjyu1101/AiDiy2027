@@ -44,7 +44,8 @@ async function poll(){
   }
  }
 }
-function visibility(){generation++;clearTimeout(timer);nextPollAt=undefined;if(document.hidden)request?.abort();else{samples.value=[];void poll();}}
+// 仮想デスクトップ等で隠れても直近60回を保持。採取・描画更新だけ休止し、復帰時に続ける。
+function visibility(){generation++;clearTimeout(timer);nextPollAt=undefined;if(document.hidden)request?.abort();else void poll();}
 onMounted(()=>{document.addEventListener('visibilitychange',visibility);void poll();});
 onBeforeUnmount(()=>{if(!props.floating)document.documentElement.classList.remove('cpu-transparent-window');disposed=true;clearTimeout(timer);request?.abort();document.removeEventListener('visibilitychange',visibility);});
 </script>

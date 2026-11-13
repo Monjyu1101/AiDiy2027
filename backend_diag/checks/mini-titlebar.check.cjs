@@ -49,7 +49,7 @@ test('実際の左上タイトル操作は通常・無効とも白文字で、�
  assert.equal(declarations(mini,'.mini-app-message.required::after')['pointer-events'],'none');assert.ok(declarations(mini,'.start-mini .mini-project-link:focus-visible').outline);
 });
 
-test('ミニの初期高さ250はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
+test('ミニの初期高さ200はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
  const d=selector=>declarations(mini,selector);
  const chrome=px(declarations(normal,'.panel-brand').height)+px(declarations(normal,'.connection-bar').height);
  const app=d('.mini-app-launch'),appMessage=d('.mini-app-message.required');
@@ -60,12 +60,12 @@ test('ミニの初期高さ250はタイトル・外枠・アイコン2行・案�
  const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
  const outerFrame=2*border(declarations(normal,'#app').border);
  const {height}=require('../起動/ミニ表示.cjs').ミニ寸法;
- assert.equal(chrome,34);assert.equal(height,250);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
+ assert.equal(chrome,34);assert.equal(height,200);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
  assert.equal(px(d('#app>.diag-panel>.panel.start-mini').height),height-chrome-outerFrame);
  assert.equal(d('#app>.diag-panel>.panel.start-mini')['max-width'],'400px');assert.equal(d('#app>.diag-panel>.panel.start-mini').overflow,'hidden');
  assert.equal(d('.mini-launch-scroll')['overflow-y'],'auto');
  assert.equal(d('.desktop-window #app>.diag-panel>.panel.start-mini')['max-width'],'none');
- assert.equal(d('.mini-icon-track').display,'flex');
+ assert.equal(d('.mini-icon-track').display,'grid');
  assert.equal(d('.mini-icon-track').overflow,'clip');
  assert.equal(d('.mini-icon-track')['justify-content'],'center');
  assert.equal(d('.mini-icon-track[data-overflow]')['justify-content'],'flex-start');

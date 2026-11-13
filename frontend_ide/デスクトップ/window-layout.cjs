@@ -7,6 +7,7 @@
 const size=require('../host/scripts/window-size.cjs');
 // Consoleは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
 function windowMinimumSize(kind,bounds){
+ if(kind==='browser')return{minWidth:Math.min(800,bounds.width),minHeight:Math.min(400,bounds.height)};
  if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(125,bounds.height)};
  return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='console'?180:size.会話最小高さ,bounds.height)};
 }
@@ -16,9 +17,9 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='ide')return available;
  if(kind==='cpu'){
   const width=Math.min(400,available.width),height=Math.min(125,available.height);
-  // Diagミニの固定高さ250 DIPと窓間の33 DIPを空け、右端を揃える。
+  // Diagミニの初期高さ200 DIPと窓間の33 DIPを空け、右端を揃える。
   const x=available.x+available.width-width;
-  const y=Math.max(available.y,available.y+available.height-height-250-33);
+  const y=Math.max(available.y,available.y+available.height-height-200-33);
   return{x,y,width,height};
  }
  if(kind==='navi'){
@@ -30,7 +31,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
   return{x:Math.round(area.x+(area.width-width)/2),y:Math.round(area.y+(area.height-height)/2),width,height};
  }
  if(kind==='browser'){
-  const width=Math.min(1100,Math.round(available.width*.8)),height=Math.min(820,Math.round(available.height*.85)),offset=(slot%6)*24;
+  const width=Math.min(available.width,Math.max(800,Math.min(1100,Math.round(available.width*.8)))),height=Math.min(available.height,Math.max(400,Math.min(820,Math.round(available.height*.85)))),offset=(slot%6)*24;
   return{x:Math.round(Math.min(available.x+(available.width-width)/2+offset,available.x+available.width-width)),y:Math.round(Math.min(available.y+(available.height-height)/2+offset,available.y+available.height-height)),width,height};
  }
  if(kind==='console'){

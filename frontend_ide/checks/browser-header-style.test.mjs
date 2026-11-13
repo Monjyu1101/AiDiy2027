@@ -35,20 +35,15 @@ test('Browser全画面ヘッダー: 薄いシアンの四角いすりガラス�
  assert.equal(values('.browser-header-only .browser-toolbar input').background,'rgba(239,255,255,.10)','入力欄は局所的な明るい下地で黒文字を読めるようにする');
 });
 
-test('Browserすりガラス: 800 DIPを高倍率や狭い画面で表示しても操作列を折り返す',()=>{
+test('Browserタイトルは通常・全画面・折畳とも1行で操作欄と衝突しない',()=>{
  const source=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8');
- const {descriptor}=parse(source),style=compileStyle({source:descriptor.styles[0].content,id:'browser-header-wrap',scoped:false});assert.deepEqual(style.errors,[]);
- const container=style.rawResult.root.nodes.find(node=>node.type==='atrule'&&node.name==='container'&&node.params==='browser-header (max-width:760px)');assert.ok(container);
- const values=selector=>Object.fromEntries(container.nodes.find(rule=>rule.selector===selector).nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
- assert.match(source,/container:browser-header \/ inline-size;width:100%/);
- assert.equal(values('.browser-header-only :deep(.panel-brand)')['grid-template-columns'],'minmax(0,1fr)');
- for(const [selector,row] of [['strong','1'],['.connection-label','2'],['.window-actions','3']])assert.equal(values(`.browser-header-only :deep(.panel-brand>${selector})`)['grid-row'],row);
- assert.equal(values('.browser-header-only :deep(.panel-brand>.connection-label)')['white-space'],'normal');
- for(const selector of ['.browser-header-only :deep(.panel-brand>.connection-label)','.browser-header-only :deep(.panel-brand>.window-actions)','.browser-header-only .browser-window-sizes,.browser-header-only .browser-toolbar'])assert.equal(values(selector)['flex-wrap'],'wrap');
- assert.match(source,/if\(chrome.value\)observer.observe\(chrome.value\)/,'折返し後の高さを再測定する');
- assert.match(source,/browserAction\('header-size',chromeHeight.value\)/,'renderer高さをnative窓へ返す');
+ const {descriptor}=parse(source),style=compileStyle({source:descriptor.styles[0].content,id:'browser-header-nowrap',scoped:false});assert.deepEqual(style.errors,[]);
+ assert.doesNotMatch(source,/grid-row:[23]|flex-wrap:wrap|white-space:normal/);
+ assert.match(source,/grid-template-columns:minmax\(0,1fr\) minmax\(0,22cqi\) minmax\(0,1fr\)/);
+ assert.match(source,/flex-wrap:nowrap;white-space:nowrap;overflow-x:auto/);
+ assert.match(source,/overflow:hidden;text-overflow:ellipsis;white-space:nowrap/);
+ assert.match(source,/browserAction\('header-size',chromeHeight.value\)/);
 });
-
 
 test('Browser孤立利用: スタンドアロン表示を既存文字色の細い枠で囲む',()=>{
  const {descriptor}=parse(readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8'));
@@ -60,6 +55,6 @@ test('Browser孤立利用: スタンドアロン表示を既存文字色の細�
 
 test('Browserタイトルは左右対称列で中心を維持する',()=>{
  const source=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8');
- assert.match(source,/\.browser-panel :deep\(\.panel-brand\)\{grid-template-columns:minmax\(0,1fr\) auto minmax\(0,1fr\)/);
+ assert.match(source,/\.browser-panel :deep\(\.panel-brand\)\{[^}]*grid-template-columns:minmax\(0,1fr\) minmax\(0,22cqi\) minmax\(0,1fr\)/);
  assert.match(source,/\.browser-panel :deep\(\.panel-brand>strong\)\{[^}]*text-align:center;justify-self:center/);
 });

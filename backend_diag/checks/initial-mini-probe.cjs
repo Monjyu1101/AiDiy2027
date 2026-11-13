@@ -54,7 +54,7 @@ app.on('browser-window-created',(_event,window)=>{
    assert.equal(await window.webContents.executeJavaScript("document.querySelector('#app-project-folder').value"),'');
    await sleep(650);
    const bounds=window.getBounds();
-   near(bounds,初期右下位置(area,{width:400,height:250},8));assert.equal(window.isAlwaysOnTop(),false);
+   near(bounds,初期右下位置(area,{width:400,height:200},8));assert.equal(window.isAlwaysOnTop(),false);
    const layout=await window.webContents.executeJavaScript(`(()=>{const v=document.querySelector('.start-mini');return {width:innerWidth,height:innerHeight,dpr:devicePixelRatio,scrollWidth:document.documentElement.scrollWidth,scrollHeight:document.documentElement.scrollHeight,miniScroll:v.scrollHeight,miniClient:v.clientHeight,rect:v.getBoundingClientRect().toJSON()};})()`);
    console.log(JSON.stringify({miniLayout:layout}));
    assert.ok(layout.scrollWidth<=layout.width,JSON.stringify(layout));assert.ok(layout.miniScroll<=layout.miniClient,JSON.stringify(layout));
@@ -92,7 +92,7 @@ app.on('browser-window-created',(_event,window)=>{
    await window.webContents.executeJavaScript('window.aidiyWindow.maximize()');assert.equal(await window.webContents.executeJavaScript('window.aidiyWindow.isMaximized()'),false);near(window.getBounds(),restoredNormal);
    const resizeMeasurements=await Promise.all(resizeChecks);assert.equal(resizeMeasurements.length,5);
    assert.ok(BrowserWindow.getAllWindows().every(candidate=>!candidate.isAiDiyResizeCanvas));
-   process.send({testPassed:true,bounds,expectedHeight:250,initialPin:false,pinRoundTrip:true,restored:true,openingMeasurement,resizeMeasurements,miniMove,normalMove,miniControls,normalControls,shot:process.env.DIAG_TEST_SHOT},()=>process.disconnect());
+   process.send({testPassed:true,bounds,expectedHeight:200,initialPin:false,pinRoundTrip:true,restored:true,openingMeasurement,resizeMeasurements,miniMove,normalMove,miniControls,normalControls,shot:process.env.DIAG_TEST_SHOT},()=>process.disconnect());
   }catch(error){console.error(error);app.exit(1);}
  });
 });

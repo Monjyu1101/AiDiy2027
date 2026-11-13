@@ -15,7 +15,7 @@ function launchPanel(){
   querySelector(){return [...this.rows].flatMap(row=>row.children).find(button=>button.active)||null;},
   notify(){for(const observer of this.observers)if(!observer.disconnected)observer.callback();}};
 }
-function fixture(width,count,{panel=launchPanel()}={}){
+function fixture(width,count,{panel=launchPanel(),availableHeight}={}){
  let mount,unmount,resize,mutation,frame=0;
  const frames=new Map(),observers=[],module={exports:{}};
  const observer=callback=>({observe(target,options){this.options=options;if(target===panel)panel.observers.add(this);else mutation=callback;},disconnect(){this.disconnected=true;panel.observers.delete(this);},callback});
@@ -27,7 +27,7 @@ function fixture(width,count,{panel=launchPanel()}={}){
   requestAnimationFrame:fn=>{frames.set(++frame,fn);return frame;},cancelAnimationFrame:id=>frames.delete(id),
  });
  const state=module.exports.setup({}, {expose(){}}),attributes=new Set();
- const outer={clientWidth:width,closest:()=>panel,getBoundingClientRect(){return {left:0,right:this.clientWidth,width:this.clientWidth};}};
+ const outer={clientWidth:width,closest:selector=>selector==='.mini-content'?panel:selector==='.mini-launch-scroll'?scroll:null,getBoundingClientRect(){return {left:0,right:this.clientWidth,width:this.clientWidth};}};
  const row={children:[],style:{width:''},toggleAttribute(name,value){if(value)attributes.add(name);else attributes.delete(name);},
   contains:node=>row.children.includes(node),getBoundingClientRect(){return {left:0,right:parseFloat(this.style.width)||outer.clientWidth};}};
  const buttons=n=>Array.from({length:n},(_,i)=>{
@@ -40,11 +40,14 @@ function fixture(width,count,{panel=launchPanel()}={}){
   }};
   button.querySelector=()=>icon;return button;
  });
+ const scroll=availableHeight===undefined?null:{clientHeight:availableHeight,
+  querySelectorAll:()=>[row],children:[{getBoundingClientRect:()=>({height:row.clientHeight})}]};
+ Object.defineProperty(row,'clientHeight',{get:()=>42*(Number(row.style.gridTemplateRows?.match(/repeat\((\d+)/)?.[1])||1)+2*((Number(row.style.gridTemplateRows?.match(/repeat\((\d+)/)?.[1])||1)-1)});
  row.children=buttons(count);panel.rows.add(row);state.枠.value=outer;state.列.value=row;mount();
  const positions=()=>row.children.map(button=>button.getBoundingClientRect().left);
  const pointer=distance=>({pointerId:1,button:0,isPrimary:true,clientX:100+distance,target:row});
  return {state,row,outer,frames,observers,positions,overflow:()=>attributes.has('data-overflow'),
-  resize(value){outer.clientWidth=value;resize();},count(value){row.children=buttons(value);mutation();panel.notify();},
+  height(value){scroll.clientHeight=value;resize();},resize(value){outer.clientWidth=value;resize();},count(value){row.children=buttons(value);mutation();panel.notify();},
   start(){state.押す(pointer(0));},drag(distance){state.動かす(pointer(distance));},end(){state.離す(pointer(0));},
   tick(now){const [id,fn]=frames.entries().next().value;frames.delete(id);fn(now);},close(){unmount();panel.rows.delete(row);panel.notify();}};
 }
@@ -182,5 +185,18 @@ test('起動失敗でも光の終了まで止め、未受付や演出非対応�
   button.disabled=true;起動モーション({currentTarget:button})();assert.equal(f.frames.size,1);
   button.disabled=false;button.querySelector=()=>({animate(){throw Error('unsupported animation');}});
   起動モーション({currentTarget:button})();assert.equal(f.frames.size,1);
+ }finally{f.close();}
+});
+
+// 高さ86pxは42pxアイコン2段＋2px間隔。全件を収容できない時は1段のまま。
+test('全件が入る境界でだけ2段静止へ切替え、幅・高さ往復で循環を再開する',()=>{
+ const f=fixture(248,10,{availableHeight:85});
+ try{
+  assert.equal(f.overflow(),true);assert.equal(f.frames.size,1);
+  f.height(86);assert.equal(f.row.style.gridTemplateRows,'repeat(2,42px)');assert.equal(f.overflow(),false);assert.equal(f.frames.size,0);
+  f.resize(247);assert.equal(f.row.style.gridTemplateRows,'repeat(1,42px)');assert.equal(f.overflow(),true);assert.equal(f.frames.size,1);
+  f.resize(248);assert.equal(f.overflow(),false);assert.equal(f.frames.size,0);
+  f.height(85);assert.equal(f.overflow(),true);assert.equal(f.frames.size,1);
+  f.resize(498);assert.equal(f.row.style.gridTemplateRows,'repeat(1,42px)');assert.equal(f.overflow(),false);assert.equal(f.frames.size,0);
  }finally{f.close();}
 });

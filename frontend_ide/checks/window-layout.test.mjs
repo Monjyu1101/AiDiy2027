@@ -213,13 +213,26 @@ test('Code / Liveは900 DIPを初期高さとし、余白込みで収まらな�
  }
 });
 
- test('CPUは400×125、Diagミニ250の上に33 DIPを空け、小画面へ収める',()=>{
+ test('CPUは400×125、Diagミニ200の上に33 DIPを空け、小画面へ収める',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:-300,width:320,height:300},{x:20,y:40,width:200,height:90}]){
   const b=windowBounds('cpu',area);
   assert.equal(b.width,Math.min(400,area.width-16));assert.equal(b.height,Math.min(125,area.height-16));
   assert.equal(b.x+b.width,area.x+area.width-8);
-  assert.equal(b.y,Math.max(area.y+8,area.y+area.height-8-b.height-250-33));
+  assert.equal(b.y,Math.max(area.y+8,area.y+area.height-8-b.height-200-33));
   assert.ok(b.y+b.height<=area.y+area.height-8);
   assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:Math.min(240,b.width),minHeight:Math.min(125,b.height)});
+ }
+});
+
+test('Browserは通常800×400以上、画面に収まらない時だけ作業領域へ縮小する',()=>{
+ for(const [width,height] of [[1920,1040],[1000,600],[816,416],[640,360]]){
+  const area={x:-width,y:-100,width,height};
+  for(let slot=0;slot<6;slot++){
+   const b=windowBounds('browser',area,undefined,slot),min=windowMinimumSize('browser',b);
+   assert.deepEqual(min,{minWidth:Math.min(800,width-16),minHeight:Math.min(400,height-16)});
+   assert.ok(b.width>=min.minWidth&&b.height>=min.minHeight);
+   assert.ok(b.x>=area.x+8&&b.x+b.width<=area.x+width-8);
+   assert.ok(b.y>=area.y+8&&b.y+b.height<=area.y+height-8);
+  }
  }
 });

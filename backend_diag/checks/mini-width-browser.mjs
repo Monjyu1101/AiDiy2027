@@ -56,7 +56,7 @@ try{
  async function until(expression){for(let i=0;i<140;i++){if(await evaluate(expression))return;await sleep(50);}assert.fail(expression);}
 
  const css=readFileSync(new URL('../static/style.css',import.meta.url),'utf8');
- const setWidth=(width,deviceScaleFactor=1.875)=>send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor,mobile:false});
+ const setWidth=(width,deviceScaleFactor=1.875,viewportHeight=height)=>send('Emulation.setDeviceMetricsOverride',{width,height:viewportHeight,deviceScaleFactor,mobile:false});
  await send('Runtime.enable');await setWidth(miniWidth);
  await send('Page.setDocumentContent',{frameId:(await send('Page.getFrameTree')).result.frameTree.frame.id,html:`<html class="desktop-window"><style>${css}</style><div id="app"></div>`});
  await evaluate(fixture.text);
@@ -132,6 +132,20 @@ try{
   assert.ok((await state()).every(row=>row.centered&&row.visible===9));
   await assertHeight();
  }
+ for(const scale of [1,1.25,1.5,1.875]){
+  await setWidth(400,scale,300);
+  await until(`document.querySelectorAll('.mini-icon-track[data-overflow]').length===0`);
+  assert.ok((await state()).every(row=>row.visible===9&&!row.oneRow));
+  const stationary=(await state()).map(row=>row.positions);
+  await evaluate(`document.querySelectorAll('.mini-icon-track').forEach(track=>track.dispatchEvent(new PointerEvent('pointerleave')))`);
+  await sleep(150);assert.deepEqual((await state()).map(row=>row.positions),stationary);
+  await setWidth(300,scale,150);
+  await until(`document.querySelectorAll('.mini-icon-track[data-overflow]').length===2`);
+  assert.ok((await state()).every(row=>row.oneRow));
+  await setWidth(400,scale,200);
+  await until(`document.querySelector('.mini-icon-track').clientWidth===390`);
+  assert.ok((await state()).every(row=>row.overflow&&row.oneRow));
+ }
  assert.deepEqual(errors,[]);
- console.log('ミニ表示: 400×250、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
+ console.log('ミニ表示: 400×200、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

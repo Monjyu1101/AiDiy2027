@@ -25,11 +25,11 @@ test('CPU panel keeps 60 samples, reports unavailable and failed requests, recov
  f.setFetch(async()=>({ok:true,json:async()=>null}));await f.context.poll();assert.equal(f.context.state.ready.value,false);
  f.setFetch(async()=>({ok:true,json:async()=>({timestamp:2,cpu:0,gpu:0,ram:45})}));await f.context.poll();assert.equal(f.context.state.ready.value,true);assert.equal(f.context.state.series.value[1].value,0);f.unmount();assert.equal(f.timers.size,0);assert.equal(f.events.size,0);
 });
-test('CPU panel stops hidden polling, resets history on resume, aborts in-flight disposal',async()=>{
+test('CPU panel stops hidden polling, preserves history on resume, aborts in-flight disposal',async()=>{
  const f=fixture();f.mount();await tick();await f.hidden(true);const count=f.calls();await f.context.poll();assert.equal(f.calls(),count);assert.equal(f.timers.size,0);
- await f.hidden(false);assert.equal(f.calls(),count+1);assert.equal(f.context.state.samples.value.length,1);
+ await f.hidden(false);assert.equal(f.calls(),count+1);assert.equal(f.context.state.samples.value.length,2);
  let signal,finish;f.setFetch((url,options)=>{signal=options.signal;return new Promise(r=>finish=r);});const pending=f.context.poll();await f.context.poll();assert.equal(f.calls(),count+2);
- f.unmount();assert.equal(signal.aborted,true);finish({ok:true,json:async()=>({timestamp:3,cpu:80,gpu:50,ram:60})});await pending;assert.equal(f.context.state.samples.value.length,1);assert.equal(f.timers.size,0);
+ f.unmount();assert.equal(signal.aborted,true);finish({ok:true,json:async()=>({timestamp:3,cpu:80,gpu:50,ram:60})});await pending;assert.equal(f.context.state.samples.value.length,2);assert.equal(f.timers.size,0);
 });
 
 test('GPU floating label hides on missing values and errors, then returns including zero percent',async()=>{
@@ -103,12 +103,12 @@ for(const duration of [200,500])test(`CPU panelは${duration}ms採取の100%を�
 
 
 for(const failure of [false,true])test(`hide/show後の旧${failure?'失敗':'成功'}応答を新しい履歴へ混ぜない`,async()=>{
- const f=fixture();let finish;
+ const f=fixture();f.mount();await tick();const retained=f.context.state.samples.value;let finish;
  f.setFetch(()=>new Promise((resolve,reject)=>finish=failure?()=>reject(Error('old')):()=>resolve({ok:true,json:async()=>({timestamp:1,cpu:99})})));
- f.mount();await tick();await f.hidden(true);await f.hidden(false);finish();await tick();
- assert.equal(f.context.state.samples.value.length,0);assert.equal(f.context.state.error.value,'');assert.equal([...f.timers.values()][0].ms,0);
+ void f.context.poll();await tick();await f.hidden(true);await f.hidden(false);finish();await tick();
+ assert.equal(f.context.state.samples.value,retained);assert.equal(f.context.state.error.value,'');assert.equal([...f.timers.values()][0].ms,0);
  f.setFetch(async()=>({ok:true,json:async()=>({timestamp:2,cpu:42})}));await f.context.poll();
- assert.equal(f.context.state.samples.value.length,1);assert.equal(f.context.state.samples.value[0].cpu,42);f.unmount();
+ assert.equal(f.context.state.samples.value.length,2);assert.equal(f.context.state.samples.value.at(-1).cpu,42);f.unmount();
 });
 
 test('初回準備中はCPUラベルを隠し、GPU/RAMを保ち、取得済み0%と新標本は表示する',async()=>{
@@ -156,4 +156,28 @@ test('CPU透過時もタイトル背景を維持し、hover・focusでのみ表�
  assert.doesNotMatch(panel,/\.cpu-transparent\s*>\s*\.cpu-title\s*\{/);
  assert.match(panel,/\.cpu-title\{[^}]*opacity:0;pointer-events:none/);
  assert.match(panel,/\.cpu-panel:hover>\.cpu-title,\.cpu-panel:focus-within>\.cpu-title\{opacity:1;pointer-events:auto\}/);
+});
+
+
+test('long and repeated desktop switches retain the graph without hidden updates or catch-up polling',async()=>{
+ const f=fixture();f.mount();await tick();
+ for(let i=0;i<59;i++)await f.context.poll();
+ assert.equal(f.context.state.samples.value.length,60);
+ for(let i=0;i<5;i++){
+  const retained=f.context.state.samples.value,lines=f.context.state.series.value.map(s=>s.line),calls=f.calls();
+  await f.hidden(true);f.elapse(3600000);await f.context.poll();
+  assert.equal(f.calls(),calls);assert.equal(f.timers.size,0);
+  assert.equal(f.context.state.samples.value,retained);
+  assert.deepEqual(f.context.state.series.value.map(s=>s.line),lines);
+  let finish;
+  f.setFetch(()=>new Promise(resolve=>finish=resolve));await f.hidden(false);
+  // Keep the previous graph visible even while the resumed request is still pending.
+  assert.equal(f.context.state.samples.value,retained);assert.equal(f.calls(),calls+1);
+  finish({ok:true,json:async()=>({timestamp:i+2,cpu:42,gpu:20,ram:60})});await tick();
+  assert.equal(f.context.state.samples.value.length,60);
+  assert.equal(f.context.state.samples.value[0],retained[1]);
+  assert.equal(f.context.state.samples.value.at(-1).cpu,42);
+  assert.equal(f.timers.size,1);assert.equal([...f.timers.values()][0].ms,1000);
+ }
+ f.unmount();assert.equal(f.timers.size,0);
 });

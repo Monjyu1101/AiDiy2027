@@ -79,7 +79,7 @@ test('Windows EOF stdin no longer exits; IPC starts a secure Electron window',as
 test('Tools 8095 open starts mini at primary work-area bottom-right before show, while closed/unknown use normal',async()=>{
  for(const toolsOpen of [true,false,null]){
   const f=await mainFixture({toolsOpen,opening:window=>{
-   if(toolsOpen===true){assert.equal(window.bounds.width,400);assert.equal(window.bounds.height,250);assert.equal(window.bounds.x,1512);assert.equal(window.bounds.y,822);assert.equal(window.top,false);}
+   if(toolsOpen===true){assert.equal(window.bounds.width,400);assert.equal(window.bounds.height,200);assert.equal(window.bounds.x,1512);assert.equal(window.bounds.y,872);assert.equal(window.top,false);}
    else assert.equal(window.bounds,undefined);
    window.show();return true;
   }});
@@ -106,11 +106,11 @@ test('initial mini uses its fixed height during loading and later reload restore
  const f=await mainFixture({toolsOpen:true,load:()=>new Promise(resolve=>loaded=resolve)});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
- assert.deepEqual(f.win.getBounds(),{x:1512,y:822,width:400,height:250});assert.equal(f.openings.length,0);
+ assert.deepEqual(f.win.getBounds(),{x:1512,y:872,width:400,height:200});assert.equal(f.openings.length,0);
  assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);
- assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.bounds.height,250);
+ assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.bounds.height,200);
  loaded();await new Promise(resolve=>setImmediate(resolve));
- assert.equal(f.win.bounds.height,250,'loadURL完了後も初期高さを保つ');assert.equal(f.openings.length,1);assert.equal(f.win.shown,true);
+ assert.equal(f.win.bounds.height,200,'loadURL完了後も初期高さを保つ');assert.equal(f.openings.length,1);assert.equal(f.win.shown,true);
  f.win.webContents.emit('did-start-loading');
  assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  assert.equal(control(event,'resizeMini',200),false);assert.equal(f.win.bounds.height,600);
@@ -129,9 +129,9 @@ test('mini height stays fixed before and after opening',async()=>{
  const f=await mainFixture({toolsOpen:true,opening:()=>new Promise(resolve=>finish=resolve)});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
- for(const height of [186,200,186]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,250);}
+ for(const height of [186,200,186]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,200);}
  assert.equal(control(event,'resizeMini',361),false);assert.equal(control(event,'resizeMini','200'),false);assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);
- finish(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.bounds.height,250);assert.deepEqual(f.win.minimum,[400,250]);
+ finish(true);await new Promise(resolve=>setImmediate(resolve));assert.equal(f.win.bounds.height,200);assert.deepEqual(f.win.minimum,[300,150]);
  control(event,'startMini',false);assert.deepEqual(f.win.getBounds(),{x:1112,y:472,width:800,height:600});
 });
 test('leaving mini during opening restores normal bounds',async()=>{
@@ -256,8 +256,8 @@ test('native mini height IPC stays main-frame-only, bounded and cannot resize no
  const original=f.win.getBounds();assert.equal(control(event,'resizeMini',134),false);assert.deepEqual(f.win.getBounds(),original);
  assert.equal(control(event,'startMini',true),true);
  for(const height of [undefined,null,false,true,'134',{},[],NaN,Infinity,-Infinity,0,79,361,134.5])assert.equal(control(event,'resizeMini',height),false);
- assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);assert.equal(f.win.bounds.height,250);
- for(const height of [134,186,200,134]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,250);assert.equal(f.win.bounds.width,400);assert.equal(control(event,'startMini',true),true);}
+ assert.equal(control({...event,senderFrame:{}},'resizeMini',200),false);assert.equal(control({...event,sender:{}},'resizeMini',200),false);assert.equal(f.win.bounds.height,200);
+ for(const height of [134,186,200,134]){assert.equal(control(event,'resizeMini',height),true);assert.equal(f.win.bounds.height,200);assert.equal(f.win.bounds.width,400);assert.equal(control(event,'startMini',true),true);}
  assert.equal(control(event,'startMini',false),true);assert.deepEqual(f.win.getBounds(),original);assert.deepEqual(f.win.minimum,[420,320]);assert.equal(f.win.top,false);
  assert.equal(control(event,'resizeMini',186),false);assert.deepEqual(f.win.getBounds(),original);
 });
@@ -392,17 +392,17 @@ test('全表示経路は準備完了前にnative寸法を変更せず、遅れ�
    if(source==='micro')control(event,'startMicro',false);
    if(source==='mini'||target==='mini')await control(event,'startMini',target==='mini');
    if(target==='micro')control(event,'startMicro',true);
-   if(target==='mini'){assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.getBounds().height,250);}
+   if(target==='mini'){assert.equal(control(event,'resizeMini',186),true);assert.equal(f.win.getBounds().height,200);}
    await control(event,'finishDisplay');
   }
   assert.ok(changes.length>0);assert.equal(effect.active,false);
-  if(target==='mini')assert.equal(f.win.getBounds().height,250,'切替完了後も初期高さを保つ');
+  if(target==='mini')assert.equal(f.win.getBounds().height,200,'切替完了後も初期高さを保つ');
   if(target==='micro'){assert.equal(f.win.getBounds().height,290);control(event,'startMicro',false);}
  }
 });
 
 test('標準・ミニ・アイコンの全6方向で開始位置から基準を決め、演出と実測後も維持',async()=>{
- const sizes={normal:{width:800,height:600},mini:{width:400,height:250},micro:{width:128,height:138}};
+ const sizes={normal:{width:800,height:600},mini:{width:400,height:200},micro:{width:128,height:138}};
  for(const corner of [null,'top-left','top-right','bottom-left','bottom-right'])for(const source of Object.keys(sizes))for(const target of Object.keys(sizes)){
   if(source===target)continue;
   let planned;
@@ -536,7 +536,7 @@ test('CPU起動元は通常・ミニ・アイコンのDiag実窓がある画面�
  const f=await mainFixture({workArea:primary,displayMatching:bounds=>({workArea:bounds.x<0?secondary:primary})});
  f.proc.emit('message',{type:'diag-start',url});await new Promise(resolve=>setImmediate(resolve));
  const requestId='12345678-1234-1234-1234-123456789abc';
- for(const size of [{width:800,height:600},{width:400,height:250},{width:128,height:138}]){
+ for(const size of [{width:800,height:600},{width:400,height:200},{width:128,height:138}]){
   for(const x of [-900,-700,100]){
    f.win.setBounds({x,y:100,...size});f.proc.emit('message',{type:'diag-launch-display',requestId});
    assert.equal(JSON.stringify(f.sent.at(-1)),JSON.stringify({type:'diag-launch-display',requestId,workArea:x<0?secondary:primary}));
@@ -555,6 +555,17 @@ test('CPU起動画面を実子プロセスのIPC経由で読み、非公開URL�
  child.disconnect();await once(child,'exit');assert.equal(child.exitCode,0);
 });
 
+
+test('300×150に縮小したミニも折畳復帰と通常往復で寸法を保持する',async()=>{
+ const f=await mainFixture({toolsOpen:true});f.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));
+ const control=f.handlers['diag:window'],event={sender:f.win.webContents,senderFrame:f.win.webContents.mainFrame};
+ f.win.setBounds({x:222,y:111,width:300,height:150});
+ assert.equal((await control(event,'collapsePanel',true)).ok,true);assert.equal(f.win.getBounds().height,31);
+ assert.equal((await control(event,'collapsePanel',false)).ok,true);assert.deepEqual(f.win.getBounds(),{x:222,y:111,width:300,height:150});
+ assert.deepEqual(f.win.minimum,[300,150]);
+ assert.equal(await control(event,'startMini',false),true);assert.equal(await control(event,'startMini',true),true);
+ assert.equal(f.win.getBounds().width,300);assert.equal(f.win.getBounds().height,150);
+});
 
 test('Diag title collapse animates normal/mini, preserves position and gates conflicting modes',async()=>{
  for(const toolsOpen of [false,true]){
