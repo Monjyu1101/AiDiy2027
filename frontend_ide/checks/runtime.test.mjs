@@ -56,7 +56,7 @@ test('Code transport: VS Codeの送信・下書き・通知と破棄',async()=>{
 });
 
 // 実際の互換入口を起動する。AIへの送信や外部ブラウザ起動は行わない。
-for(const [kind,entry] of [['code','frontend_ide/host/aidiy_code/launch.mjs'],['live','frontend_ide/host/aidiy_live/launch.mjs'],['ide','frontend_ide/viewer/launch.mjs'],['console','frontend_ide/aidiy_console/launch.mjs']]){
+for(const [kind,entry] of [['code','frontend_ide/host/aidiy_code/launch.mjs'],['live','frontend_ide/host/aidiy_live/launch.mjs'],['ide','frontend_ide/viewer/launch.mjs'],['term','frontend_ide/aidiy_term/launch.mjs']]){
  test(`互換CLI ${kind}: 起動フォルダ・自動ポート・Vue画面`,{timeout:15000},async()=>{
   const child=spawn(process.execPath,[fileURLToPath(new URL('../../'+entry,import.meta.url)),'--no-open',...(kind==='code'?['--offline','--provider','aidiy_hermes']:[])],{cwd:project,windowsHide:true,stdio:['ignore','pipe','pipe']});
   const ended=once(child,'exit');let output='';

@@ -12,7 +12,7 @@ import {createNavigationPopupSizer} from './Navi窓サイズ.js';
 import {createNavigationMessage} from './Naviメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import PanelToggle from '../コード/パネル表示切替.vue';
-import TerminalWelcome from '../コンソール/開始表示.vue';
+import TerminalWelcome from '../ターミナル/開始表示.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
 import NavigationSceneMenu from './ナビ画面メニュー.vue';
 import {ナビ待機画面一覧} from './ナビ待機画面一覧.js';

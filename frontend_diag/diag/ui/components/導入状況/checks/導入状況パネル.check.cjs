@@ -28,8 +28,8 @@ test('導入だけ一覧を広げ、1行目の左に名称・右に確認と状�
   assert.match(css, /\.install-manage\{grid-area:manage;display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px;padding:0 10px 10px\}/);
   assert.match(css, /\.install-check\{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:8px;padding:0 10px 0 0\}/);
   assert.match(css, /\.install-check\{grid-area:check;min-width:0\}/);
-  assert.match(css, /@media\(max-width:900px\)\{\.install-panel>main\{grid-template-columns:minmax\(0,1fr\)/);
-  assert.match(css, /#app>\.install-panel>main\{grid-template-rows:minmax\(0,45%\) minmax\(0,1fr\)/);
+  assert.match(css, /@media\(max-width:700px\)\{\.install-panel>main\{grid-template-columns:minmax\(0,1fr\)/);
+  assert.match(css, /#app>\.diag-panel>\.install-panel>main\{grid-template-rows:minmax\(0,45%\) minmax\(0,1fr\)/);
   assert.equal((css.match(/grid-template-areas:/g) || []).length, 1, '狭幅でも導入操作は2行目を保つ');
   assert.match(source('style.css'), /main\{display:grid;grid-template-columns:310px minmax\(0,1fr\)/, '他画面の既定幅は変更しない');
 });

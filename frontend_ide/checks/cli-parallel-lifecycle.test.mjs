@@ -11,8 +11,8 @@ import { Server } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { WebSocket } from 'ws';
-import { CLI_LAUNCHERS } from '../aidiy_console/cli-launch.mjs';
-import { startConsole } from '../aidiy_console/console.mjs';
+import { CLI_LAUNCHERS } from '../aidiy_term/cli-launch.mjs';
+import { startTerm } from '../aidiy_term/term.mjs';
 import { startDevelopment } from '../server.mjs';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -31,7 +31,7 @@ function mockOwner() {
   const terminals = [];
   return {
     terminals,
-    spawnConsole(file, args, options) {
+    spawnTerm(file, args, options) {
       const dataListeners = new Set(), exitListeners = new Set();
       const subscribe = (listeners, listener) => {
         listeners.add(listener);
@@ -89,9 +89,9 @@ async function withParallelTerminals(cli, run, options = () => ({})) {
     await writeFile(executable, 'TEST FIXTURE, NEVER EXECUTE\n');
     await chmod(executable, 0o755);
     const starts = await Promise.allSettled(owners.map(async (owner, index) => {
-      apps[index] = await startConsole(project, {
+      apps[index] = await startTerm(project, {
         cli, cliAutoApprove: true, env: { PATH: project },
-        checkTools: async () => false, spawnConsole: owner.spawnConsole,
+        checkTools: async () => false, spawnTerm: owner.spawnTerm,
         ...options(index, apps),
       });
     }));
@@ -229,7 +229,7 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
 }
 
 for (const cli of ['aidiy_hermes', 'copilot']) {
-  test(`CLI並列起動: ${cli}の主サーバー・遅延Consoleパネルと終了を分離（CLI実行なし）`, { timeout: 10000 }, async t => {
+  test(`CLI並列起動: ${cli}の主サーバー・遅延Termパネルと終了を分離（CLI実行なし）`, { timeout: 10000 }, async t => {
     const project = await mkdtemp(join(tmpdir(), 'aidiy-parallel-main 日本語 &-'));
     const executable = join(project, cli + (process.platform === 'win32' ? '.exe' : ''));
     const apps = [], listeners = new Map(), allowedPorts = new Set();
@@ -237,7 +237,7 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
     const listen = Server.prototype.listen, fetcher = globalThis.fetch;
     // 実サーバーの待受を観測するだけで、起動・中継・終了処理は置き換えない。
     t.mock.method(Server.prototype, 'listen', function (...args) {
-      assert.equal(args[0], 0, '主サーバー・ConsoleともOSの自動ポートを使う');
+      assert.equal(args[0], 0, '主サーバー・TermともOSの自動ポートを使う');
       assert.equal(args[1], '127.0.0.1');
       this.once('listening', () => {
         const address = this.address();
@@ -263,7 +263,7 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
       await chmod(executable, 0o755);
       const starts = await Promise.allSettled([0, 1].map(async index => {
         apps[index] = await startDevelopment(project, {
-          kind: 'console', cli, cliAutoApprove: true, env: { PATH: project },
+          kind: 'term', cli, cliAutoApprove: true, env: { PATH: project },
           onCliStarted: () => cliStarts++,
         });
       }));
@@ -271,15 +271,15 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
       assert.equal(listeners.size, 2, 'パネル要求前には主サーバーだけが起動する');
       assert.notEqual(new URL(apps[0].url).port, new URL(apps[1].url).port);
       const openPanel = async app => {
-        const response = await request(app.url + 'api/panels/console', { method: 'POST' });
+        const response = await request(app.url + 'api/panels/term', { method: 'POST' });
         assert.equal(response.status, 200);
         return (await response.json()).url;
       };
       const panels = await Promise.all(apps.map(openPanel));
-      assert.equal(listeners.size, 4, '各主サーバーが専用Consoleバックエンドを遅延起動する');
+      assert.equal(listeners.size, 4, '各主サーバーが専用Termバックエンドを遅延起動する');
       assert.equal(new Set(listeners.values()).size, 4, '4つの待受ポートを共有しない');
       assert.notEqual(panels[0], panels[1]);
-      for (const panel of panels) assert.match(panel, /^\/panels\/console\/[a-f0-9]{48}\/$/);
+      for (const panel of panels) assert.match(panel, /^\/panels\/term\/[a-f0-9]{48}\/$/);
       assert.deepEqual(await Promise.all(apps.map(openPanel)), panels, '同じ所有者のパネル再要求では再起動しない');
       assert.equal(listeners.size, 4);
       const terminalServers = [...listeners].filter(([server]) => !apps.some(app => app.server === server));
@@ -292,7 +292,7 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
         assert.equal(config.cli.id, cli);
         assert.equal(config.cli.autoApprove, true);
         const candidates = await Promise.all(terminalServers.map(async ([server, port]) => {
-          const url = `http://127.0.0.1:${port}${panel.slice('/panels/console'.length)}config`;
+          const url = `http://127.0.0.1:${port}${panel.slice('/panels/term'.length)}config`;
           return { server, url, response: await request(url) };
         }));
         assert.deepEqual(candidates.map(item => item.response.status).sort(), [200, 404]);
@@ -305,9 +305,9 @@ for (const cli of ['aidiy_hermes', 'copilot']) {
       assert.equal(cliStarts, 0, 'config確認だけではCLIを開始しない');
       await apps[0].close();
       assert.equal(apps[0].server.listening, false);
-      assert.equal(backends[0].server.listening, false, '主サーバー終了でそのConsoleバックエンドも停止する');
+      assert.equal(backends[0].server.listening, false, '主サーバー終了でそのTermバックエンドも停止する');
       assert.equal(apps[1].server.listening, true);
-      assert.equal(backends[1].server.listening, true, '他方のConsoleバックエンドは停止しない');
+      assert.equal(backends[1].server.listening, true, '他方のTermバックエンドは停止しない');
       await assert.rejects(request(apps[0].url + 'development/config'));
       await assert.rejects(request(backends[0].url));
       assert.equal((await request(apps[1].url + 'development/config')).status, 200);

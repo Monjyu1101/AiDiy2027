@@ -123,7 +123,7 @@
     "Remote/container/WSL/Android executable availability is not established by host PATH checks."
   ],
   "scannedSourceFiles": 3333,
-  "catalogEntries": 19,
+  "catalogEntries": 22,
   "completedAt": "2026-10-15T05:01:04.421238+00:00",
   "treeTruncated": false,
   "sourceRefUrl": "https://github.com/monjyu1101/AiDiy2027/tree/8adbdb484cafe31e145c4fe362897d2af1077eb1",
@@ -144,7 +144,7 @@
   "executionReferenceCount": 10439,
   "literalCandidateCount": 321,
   "uniqueSelectedBlobs": 3283,
-  "catalogSha256": "6d8e32ed1f879b6889962ee4c644d7dd9557d791fcb67b184ff20da9da7c793f",
+  "catalogSha256": "27fa8672b78c4a72f63e1c92e5cb14d4fcc07d9ad0f31b7ad80574fb1aec505c",
   "shellAudit": {
     "shellBatchDockerfileFiles": 66,
     "makefiles": 1,
@@ -156,7 +156,7 @@
   "sourceTargetManifestHashMethod": "SHA256 of exact source-manifest.json file bytes",
   "catalogSelection": {
     "sourceInventoryEntries": 246,
-    "activeEntries": 19,
+    "activeEntries": 22,
     "excludedEntries": 227,
     "excludedScope": "AiDiy launch commands and Hermes-only runtime, plugins, skills and helper dependencies; shared dependencies retained only with non-Hermes evidence. macOS audio playback (afplay) and GStreamer are also excluded from diagnostics by request. Edge and Brave are excluded by request. OS helpers, optional skills, development/setup/deployment utilities (including Git and pip) are excluded by request.",
     "excludedIds": [
@@ -165,7 +165,7 @@
       "aidiy_avatar",
       "aidiy_code",
       "aidiy_live",
-      "aidiy_console",
+      "aidiy_term",
       "aidiy_ide",
       "aidiy_discord",
       "ripgrep",

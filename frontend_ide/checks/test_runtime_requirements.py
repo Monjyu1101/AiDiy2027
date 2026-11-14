@@ -80,7 +80,7 @@ class FrontendRequirementsTests(unittest.TestCase):
                 spawn.assert_not_called()
 
     def test_wrappers_share_node_preflight_and_keep_setup_guidance(self):
-        for kind in ('console', 'task', 'team', 'browser'):
+        for kind in ('term', 'task', 'team', 'browser'):
             module = load(f'frontend_ide/aidiy_{kind}/_start.py')
             with self.subTest(kind=kind), patch.object(module.shared, 'check_node_environment', return_value=(False, 'viewer Node requirement')):
                 self.assertEqual(module.check_environment(), (False, 'viewer Node requirement'))

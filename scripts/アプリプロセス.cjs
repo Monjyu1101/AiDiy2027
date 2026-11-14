@@ -24,7 +24,7 @@ async function タスク一覧(platform=process.platform,{python=true}={}){
  return stdout.split('\n').flatMap(line=>{const match=line.match(/^\s*(\d+)\s+(.+)$/);return match?[{pid:Number(match[1]),command:match[2]}]:[];});
 }
 
-// Consoleの配置用ポート(18440〜)と分け、OSが終了時に解放する。
+// Termの配置用ポート(18440〜)と分け、OSが終了時に解放する。
 const 起動枠={task:18437,team:18438,cpu:18439};
 const 単一起動部品=Object.freeze(Object.keys(起動枠));
 async function 起動枠を確保(id){

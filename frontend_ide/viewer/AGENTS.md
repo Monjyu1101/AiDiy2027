@@ -8,9 +8,9 @@
 ## 位置付け
 
 - 現行実装では、画面は `frontend_ide/src/`、このフォルダはファイルAPI・文書表示・互換起動入口を所有する。
-- Code / Live と同じ AiDiy の正式なサブシステムとして、ルートの `_setup.py` / `_start.py` / `_cleanup.py` にIDE群（IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU）の一部として組み込み済み。ルートの概要・構成表にも掲載する。VS Code 拡張とは独立して動作する。
+- Code / Live と同じ AiDiy の正式なサブシステムとして、ルートの `_setup.py` / `_start.py` / `_cleanup.py` にIDE群（IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU）の一部として組み込み済み。ルートの概要・構成表にも掲載する。VS Code 拡張とは独立して動作する。
 - **独立性を保つ。** ビューアは他サブシステムの `node_modules` を借りない。Code / Live パネルは例外として、ユーザー指定により既存単独版のビルド成果物・画面を再利用する。Monaco と文書表示ライブラリ（docx-preview / SheetJS / PptxViewJS / PDF.js など）は自前の `package.json` で導入する。Monaco がない場合は行番号付きの簡易コード表示になる。
-- **利用方法を手動で選ぶ。** 初期画面は Live と同じターミナル演出。「AiDiy接続利用」はConsoleと同じtoolsポートのpingで稼働を確認して開始し、シアンバーを明滅させる。初回接続失敗は手動で再試行する。利用開始後のtools停止では作業セッション・ファイルAPI・Code子窓を維持し、同じ起点のまま再接続する。明示的な利用終了で初期状態へ戻す。「オフライン利用」はコアに接続せず閲覧でき、バーを赤で明滅させる。ファイルAPIは利用開始後だけ有効にする。
+- **利用方法を手動で選ぶ。** 初期画面は Live と同じターミナル演出。「AiDiy接続利用」はTermと同じtoolsポートのpingで稼働を確認して開始し、シアンバーを明滅させる。初回接続失敗は手動で再試行する。利用開始後のtools停止では作業セッション・ファイルAPI・Code子窓を維持し、同じ起点のまま再接続する。明示的な利用終了で初期状態へ戻す。「オフライン利用」はコアに接続せず閲覧でき、バーを赤で明滅させる。ファイルAPIは利用開始後だけ有効にする。
 - 呼び名は「space ファイルビューア」。見た目は宇宙、役割はファイルビューア。IDE 全体（Code / Live を含む）のコンセプト名は **開発スペース（宇宙をテーマにした IDE 開発環境）**。
 
 ## 目指す姿: ソースをほぼ触らない IDE
@@ -80,7 +80,7 @@
 - ツリー形式は `{ n: 名前, d: [子フォルダ], f: [[名前, サイズ, 更新ms]] }`。
 - 走査は `file-scan.mjs`、常時除外は `../ファイル機能/フォルダ除外規則.mjs` と共通JSONを使う。通常は最大30,000ファイル、バックアップ用フィルター時は100,000ファイル。ディレクトリ数・項目数・深さ・時間にも上限を設け、打ち切りは `truncated` と理由を返す。
 - 単独起動・全体起動ともポートは固定せず、OS が空きポートを自動割り当てする。明示的な `--port` 指定時だけその番号を優先し、`--strict-port` 併用時は競合で失敗する。
-- 接続状態は当該 IDE サーバーの画面間で共有する。オンライン確認はConsoleと同じtoolsのpingを使い、IDE 自体ではAI会話・音声セッションを生成しない。接続先・画面・確認方法は README の「AiDiyへの接続」を参照する。
+- 接続状態は当該 IDE サーバーの画面間で共有する。オンライン確認はTermと同じtoolsのpingを使い、IDE 自体ではAI会話・音声セッションを生成しない。接続先・画面・確認方法は README の「AiDiyへの接続」を参照する。
 - `/api/preview?path=` は「表示」の準備。`.html` は `preview.mjs` の URL を返す。静的サーバーは IDE と別ポート（別オリジン）で、URL に起動ごとの token を含め、Host を `127.0.0.1` / `localhost` に限る。HTML には `CSP: sandbox allow-scripts …` を付け、画面側の iframe も `allow-same-origin` なしの sandbox にして、ページのスクリプトを IDE のファイル API から隔離する。`_config`・隠しファイル（`.` 始まり）・鍵らしいファイル・`node_modules`・`.venv`・`.aidiy_backup` は配らない。`/…` 始まりの参照は Referer のページの `public` を根に解決し、Range に対応する。
 - `.vue` の「表示」は **AiDiy の `frontend_web/src` の .vue だけ、かつ `frontend_web` の Vite 開発サーバー（`vite.config.ts` の `PORT_WEB`、既定 8090）が起動中の時だけ**。`frontend_web/src/router/` のルート定義（`path` と `component`。日本語の識別子にも対応）と import の関係をたどり、その部品を使う画面の URL を返す。HTTP で見に行くだけで、`frontend_web` の `node_modules` は借りない。他プロジェクト・他フォルダの .vue は理由を表示する。
 - `/api/file?path=` はテキスト（先頭 1MB、UTF-8 → Shift_JIS の順に判定）・画像・Office文書・バイナリを判定して返す。`/api/raw` は画像だけを生で返す（SVG は CSP でスクリプトを止める）。`/api/document` は対応するOffice文書・PDFだけを最大50MBまで返す。
@@ -89,7 +89,7 @@
 
 ### 全体起動での扱い
 
-- IDE群のsetup / cleanupは IDE → Console → Browser → Navi → Code → Live → Task → Team → CPU。全体startではIDEは既定OFF。Diagを使わない場合はTask / Teamも既定OFFの個別選択で起動できる。Navi / Browserは独立コマンドやDiagから起動する。
+- IDE群のsetup / cleanupは IDE → Term → Browser → Navi → Code → Live → Task → Team → CPU。全体startではIDEは既定OFF。Diagを使わない場合はTask / Teamも既定OFFの個別選択で起動できる。Navi / Browserは独立コマンドやDiagから起動する。
 - 全体起動ではリポジトリ直下を空きポートで独立起動し、ログをファイルへ保存する。親の終了後も継続し、自動再起動はしない。
 - 全体起動の起動前整理・終了・リブートでは IDE とその子孫を停止しない。cleanup 時だけ `kill_ports()` でこの配置先の実行入口を照合して停止する。ポート番号による停止は行わない。
 
@@ -107,4 +107,4 @@
 
 ## Vue共通画面
 
-現行のIDE / Console / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+現行のIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `frontend_ide/AGENTS.md` と `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。

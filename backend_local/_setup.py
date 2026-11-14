@@ -287,27 +287,6 @@ def check_uv_installed():
 # ============================================================
 # モデル事前ダウンロード
 # ============================================================
-def copy_preloaded_backend_local_models(label: str) -> None:
-    """事前配置された ../models を backend_local/temp/models へ取り込む。"""
-    target_dir = BACKEND_LOCAL_DIR / "temp" / "models"
-    source_dir = PROJECT_ROOT.parent / "models"
-
-    if target_dir.exists():
-        return
-    if not source_dir.is_dir():
-        return
-
-    try:
-        print_info(f"{label}: 事前ダウンロード済みモデル候補を検出しました: {source_dir}")
-        print_info(f"{label}: {target_dir} へコピーします（初回のみ）。")
-        target_dir.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(source_dir, target_dir, symlinks=True)
-        print_success(f"{label}: 事前ダウンロード済みモデルをコピーしました。")
-    except Exception as e:
-        print_warning(f"{label}: 事前ダウンロード済みモデルのコピーに失敗しました: {e}")
-        print_info(f"{label}: 通常のモデルダウンロード処理を続行します。")
-
-
 def run_model_download(choices: dict | None = None) -> None:
     """backend_local のモデル事前ダウンロードを行う（全体処理の最後に実行される想定）。"""
     choices = choices or {}
@@ -328,14 +307,12 @@ def run_model_download(choices: dict | None = None) -> None:
     print_info("モデルの取得は時間がかかるため、セットアップ処理の最後に実行します。")
     print_info("ほかのセットアップ済み機能は、この処理中でも別ターミナルから利用開始できます。")
 
-    copy_preloaded_backend_local_models(label)
-
     cmd = ["uv", "run", "python", "download_model.py"]
     if mode == "all":
         cmd.append("--all")
-        print_info(f"{label}: 候補モデルを temp/models へ一括ダウンロードします（多数 GB・かなり時間がかかります）...")
+        print_info(f"{label}: 候補モデルを ~/.aidiy/models へ一括ダウンロードします（多数 GB・かなり時間がかかります）...")
     else:
-        print_info(f"{label}: 設定モデルを temp/models へ事前ダウンロードします（数 GB・時間がかかります）...")
+        print_info(f"{label}: 設定モデルを ~/.aidiy/models へ事前ダウンロードします（数 GB・時間がかかります）...")
     print_info("  トークンは AiDiy_key.json の huggingface_key_read を使用します。")
     if not run_command(cmd, cwd=BACKEND_LOCAL_DIR):
         print_warning(f"{label}: モデル事前ダウンロードに失敗しました（起動時に再取得されます）。")

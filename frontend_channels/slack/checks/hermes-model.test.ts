@@ -15,7 +15,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Hermes会話引数, Hermesモデル候補, Hermesモデル検証, 旧コードモデル変換 } from '../src/コード/Hermesモデル';
+import { Hermes会話引数, Hermesモデル候補, Hermesモデル検証 } from '../src/コード/Hermesモデル';
 
 // AIコア（AIコード_cli.py）の aidiy_hermes 実行と同じ引数になること。
 test('モデル文字列を AIコアと同じ規則で Hermes の起動引数にする', () => {
@@ -42,10 +42,3 @@ test('候補は auto / same を先頭に、AIコア停止時は diag の候補�
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
-test('旧形式（provider / model）を1つのモデル文字列へ移す', () => {
-  assert.equal(旧コードモデル変換({ provider: '', model: '' }, 'auto'), 'auto');
-  assert.equal(旧コードモデル変換({ provider: 'codex-cli', model: 'gpt-x' }, 'auto'), 'codex_cli/gpt-x');
-  assert.equal(旧コードモデル変換({ provider: 'claude-code', model: '' }, 'auto'), 'claude_cli/same');
-  assert.equal(旧コードモデル変換({ provider: 'openai_oauth', model: 'gpt-6.1-sol' }, 'auto'), 'openai_oauth/gpt-6.1-sol');
-  assert.equal(旧コードモデル変換(undefined, 'same'), 'same');
-});

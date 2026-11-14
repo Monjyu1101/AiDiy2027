@@ -163,12 +163,12 @@
 @media(max-width:600px){.file-analysis-dialog{width:calc(100vw - 16px);height:calc(100dvh - 16px);max-height:calc(100dvh - 16px)}.analysis-instruction{max-height:55%}.analysis-instruction textarea{font-size:12px;max-height:140px}}
 
 /* ターミナルは画面内タブでも残りの高さをすべて使う。 */
-.ai-popup>.console-component{flex:1;min-height:0}
+.ai-popup>.term-component{flex:1;min-height:0}
 
 /* 開いた端末や会話の操作を宇宙の操作ボタンで覆わない。 */
 .development-app.ide .ai-popup{z-index:50}
-.console-screen .xterm-helper-textarea{min-height:0;max-height:none;resize:none}
-.development-app.console.desktop-window{animation:startup-fade-in .45s ease-out both}
+.term-screen .xterm-helper-textarea{min-height:0;max-height:none;resize:none}
+.development-app.term.desktop-window{animation:startup-fade-in .45s ease-out both}
 
 /* 最終更新は3行程度の小さな領域で複数ファイルを辿れる。 */
 .explorer-footer{flex-direction:column;align-items:stretch;gap:4px}
@@ -347,7 +347,7 @@
 .development-app:not(.routes-window):not(.all-displays):not(.browser-header-only){border:1px solid var(--aidiy-panel-border);box-sizing:border-box}
 .development-app.ide:not(.all-displays)>.ide-heading{top:1px;left:1px;right:1px}
 .development-app.ide:not(.all-displays) .space-canvas{inset:1px;width:calc(100% - 2px);height:calc(100% - 2px)}
-/* 埋込は既存1px境界の色だけ変更し、内側のCode/Live/Consoleへ二重枠を足さない。 */
+/* 埋込は既存1px境界の色だけ変更し、内側のCode/Live/Termへ二重枠を足さない。 */
 .development-app :is(.ai-popup,.explorer-panel,.explorer-routes,.viewer-popup,.viewer-pinned){border-color:var(--aidiy-panel-border)}
 .native-panel-window>.explorer-panel,.native-panel-window>.viewer-session .viewer-pinned{border-left:0;border-right:0;border-bottom:0}
 /* 見出しを本文の余白から独立させ、グレーの外枠までタイトル帯をつなぐ。 */

@@ -32,6 +32,25 @@ def cleanup_dependencies(root: Path) -> bool:
     return True
 
 
+# 実行時にDiagフォルダへ作る停止通知とElectron異常終了ログ。停止を確認できた後だけ消す。
+RUNTIME_RESIDUES = ('.stop-request', '.desktop-errors.log')
+
+
+def cleanup_runtime_residues(root: Path) -> bool:
+    """停止通知・異常終了ログを削除する（symlinkは参照先に触れずリンクだけ消す）。"""
+    success = True
+    for name in RUNTIME_RESIDUES:
+        target = root / name
+        try:
+            if target.is_symlink() or target.is_file():
+                target.unlink()
+                print(f'Diagの実行時ファイルを削除しました: {target}')
+        except OSError as exc:
+            print(f'Diagの実行時ファイルを削除できませんでした: {exc}')
+            success = False
+    return success
+
+
 _path_spec = importlib.util.spec_from_file_location('aidiy_diag_cleanup_path', Path(__file__).resolve().parent.parent / 'scripts' / '_setup_path.py')
 _path_helper = importlib.util.module_from_spec(_path_spec)
 _path_spec.loader.exec_module(_path_helper)
@@ -77,6 +96,8 @@ def cleanup(choices=None):
             return False
         if not cleanup_dependencies(Path(__file__).resolve().parent):
             return False
+        if not cleanup_runtime_residues(Path(__file__).resolve().parent):
+            return False
         directories = set()
         for program, entry in (('aidiy_diag', 'diag_main.mjs'), ('aidiy_memo', 'memo_main.mjs')):
             script = str(Path(__file__).resolve().with_name(entry))
@@ -84,7 +105,7 @@ def cleanup(choices=None):
             directories.add(launcher_dir)
             for name in (program, program + '.cmd'):
                 launcher = launcher_dir / name
-                if not launcher.is_symlink() and launcher.is_file() and _setup_helper.owns_launcher(launcher.read_text(encoding='utf-8'), script, name.endswith('.cmd')):
+                if not launcher.is_symlink() and launcher.is_file() and _setup_helper.owns_launcher(launcher.read_text(encoding='utf-8'), script):
                     launcher.unlink()
                     print(f'ランチャーを解除しました: {launcher}')
         print('この作業コピーの Diag / Memo の終了を確認しました。')

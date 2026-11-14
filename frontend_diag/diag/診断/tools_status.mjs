@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-// Console と同じローカル Tools の ping のみ。設定・応答・例外の内容は公開しない。
+// Term と同じローカル Tools の ping のみ。設定・応答・例外の内容は公開しない。
 import http from 'node:http';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../../runtime/transport_limit.mjs';
 import {readConfig} from '../../runtime/model_probe.mjs';

@@ -39,7 +39,7 @@ const 描画待ち = contents => Promise.race([
 // 非表示の実画面を描画して取り込む。登場待ちのopacityだけを一時解除し、白い代用面は作らない。
 async function 表示画像(contents) {
   try {
-    await contents.executeJavaScript(`(()=>{const style=document.createElement('style');style.dataset.aidiyOpeningCapture='';style.textContent='html,body,#app{opacity:1!important}#app{animation:none!important}.development-app.console.desktop-window,.panel-opening,.viewer-popup,.route-file-list,.viewer-window,.explorer-window{animation:none!important}';document.head.append(style);})()`);
+    await contents.executeJavaScript(`(()=>{const style=document.createElement('style');style.dataset.aidiyOpeningCapture='';style.textContent='html,body,#app{opacity:1!important}#app{animation:none!important}.development-app.term.desktop-window,.panel-opening,.viewer-popup,.route-file-list,.viewer-window,.explorer-window{animation:none!important}';document.head.append(style);})()`);
     for(let attempt=0;attempt<3;attempt++){
       contents.invalidate?.();await 描画待ち(contents);
       try{

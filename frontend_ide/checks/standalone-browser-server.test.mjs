@@ -48,7 +48,7 @@ test('Browser配信は共通画面と接続状態を使い、他アプリの開�
  assert.equal((await get('/api/connection').then(r=>r.json())).startedAt,state.startedAt);
  for(const action of ['connect','offline','disconnect'])assert.equal((await fetch(new URL('/api/connection/'+action,app.url),{method:'POST'})).status,405);
  for(const path of ['/api/galaxy','/api/file?path=package.json','/api/explorer'])assert.equal((await get(path)).status,404);
- for(const kind of ['code','live','console'])assert.notEqual((await fetch(new URL('/api/panels/'+kind,app.url),{method:'POST'})).status,200);
+ for(const kind of ['code','live','term'])assert.notEqual((await fetch(new URL('/api/panels/'+kind,app.url),{method:'POST'})).status,200);
  await app.close();assert.ok(closed>=1);
 });
 

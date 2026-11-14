@@ -35,8 +35,8 @@ helper = load(ROOT / 'scripts/_setup_path.py')
 
 class PathTests(unittest.TestCase):
     def test_project_directory_and_empty_project(self):
-        self.assertEqual(helper.launcher_directory('aidiy_console'), ROOT / '_AIDIY/aidiy_console/bin')
-        self.assertEqual(helper.launcher_directory('aidiy_console', ''), ROOT / '_AIDIY/aidiy_console/bin')
+        self.assertEqual(helper.launcher_directory('aidiy_term'), ROOT / '_AIDIY/aidiy_term/bin')
+        self.assertEqual(helper.launcher_directory('aidiy_term', ''), ROOT / '_AIDIY/aidiy_term/bin')
         with tempfile.TemporaryDirectory() as directory:
             self.assertEqual(helper.launcher_directory('aidiy_code', directory), Path(directory) / '_AIDIY/aidiy_code/bin')
         with self.assertRaises(ValueError):
@@ -44,7 +44,7 @@ class PathTests(unittest.TestCase):
 
     def test_only_process_path_changes_and_home_is_never_read(self):
         with tempfile.TemporaryDirectory() as directory, patch.object(helper.sys, 'platform', 'linux'), patch.dict(os.environ, {'PATH': '/existing'}), patch.object(Path, 'home', side_effect=AssertionError('home forbidden')):
-            target = Path(directory) / '_AIDIY/aidiy_console/bin'
+            target = Path(directory) / '_AIDIY/aidiy_term/bin'
             self.assertTrue(helper.ensure_launcher_path(target))
             self.assertTrue(helper.ensure_launcher_path(target))
             self.assertEqual(os.environ['PATH'], str(target) + os.pathsep + '/existing')
@@ -166,6 +166,22 @@ class WindowsProjectPathTests(unittest.TestCase):
         self.assertEqual(self.registry['Path'], (self.original + ';C:\\Later', 2))
         self.assertFalse(helper._state_file(self.directory).exists())
 
+    def test_stale_launcher_path_is_removed_when_folder_and_record_are_gone(self):
+        self.assertTrue(helper.ensure_launcher_path(self.directory))
+        self.registry['Path'] = (self.registry['Path'][0] + ';C:\\Later', 2)
+        shutil.rmtree(self.directory.parent)  # 登録記録ごと消えた状態
+        self.assertTrue(helper.remove_launcher_path(self.directory))
+        # 記録がないため元の区切りは復元できない。対象項目だけを外す。
+        self.assertEqual(self.registry['Path'], (r'%APPDATA%\npm;C:\Tools;;C:\Later', 2))
+        self.assertIn('削除済みランチャーフォルダ', self.output.getvalue())
+
+    def test_stale_path_outside_aidiy_launcher_folders_is_kept(self):
+        other = self.root / 'other/bin'
+        self.registry['Path'] = (self.original + str(other), 2)
+        self.assertTrue(helper.remove_launcher_path(other))
+        self.assertEqual(self.registry['Path'], (self.original + str(other), 2))
+        self.winreg.SetValueEx.assert_not_called()
+
     def test_preexisting_case_insensitive_entry_is_not_duplicated_or_removed(self):
         original = self.original + str(self.directory).upper().replace('/', '\\')
         self.registry['Path'] = (original, 1)
@@ -215,7 +231,7 @@ class WindowsProjectPathTests(unittest.TestCase):
             for _ in range(2):
                 self.assertTrue(group.setup())
         self.assertEqual(self.winreg.SetValueEx.call_count, 9)
-        for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'):
+        for kind in ('ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'):
             directory = local('aidiy_' + kind)
             self.assertIn(str(directory), self.registry['Path'][0].split(';'))
             self.assertTrue((directory / f'aidiy_{kind}.cmd').is_file())
@@ -278,7 +294,7 @@ class LauncherIntegrationTests(unittest.TestCase):
             def local(name):
                 return Path(directory) / '_AIDIY' / name / 'bin'
             with patch.object(viewer._path_helper, 'launcher_directory', side_effect=local), patch.object(host, 'launcher_directory', side_effect=local), patch.object(viewer.shutil, 'which', return_value='/usr/bin/node'):
-                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('console', 'aidiy_console'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('cpu', 'aidiy_cpu')]:
+                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('term', 'aidiy_term'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('cpu', 'aidiy_cpu')]:
                     root = ROOT / 'frontend_ide' / folder
                     viewer.install_launcher(root, kind)
                     self.assertTrue(viewer.launcher_path(kind).is_file())

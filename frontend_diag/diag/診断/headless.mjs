@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 // --headless: 画面を開かず全診断をコマンドラインで最速実行し、結果を _AIDIY/aidiy_diag/ へ保存する。
 // 画面の「書込」も同じ形式・同じ保存処理を使う。
-import { mkdir, rename, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { catalog, probe, scan, cancelProbes } from './probes.mjs';
@@ -49,6 +49,25 @@ export async function writeInstallReport(entries, results, started, finished, di
 }
 
 // インストール状況。最速化のため全項目を同時に確認し、表示はカタログ順にそろえる。
+// 個別の「確認」や導入・削除後の自動確認の結果を、その項目だけ保存済みの導入状況へ反映する。
+// 他の項目と全体の開始・完了日時は保持し、再起動後も最新の確認結果を前回結果として表示できるようにする。
+export async function mergeInstallResult(entries, result, directory = OUTPUT_DIRECTORY) {
+  const entry = entries.find(item => item.id === result?.id);
+  if (!entry || !STATES.includes(result.状態)) return null;
+  const file = path.join(directory, INSTALL_FILE);
+  let report = {};
+  try { const value = JSON.parse((await readFile(file, 'utf8')).replace(/^﻿/, '')); if (value && typeof value === 'object' && !Array.isArray(value)) report = value; } catch {}
+  const byId = new Map((Array.isArray(report.項目) ? report.項目 : []).filter(item => item && typeof item.id === 'string').map(item => [item.id, item]));
+  byId.set(entry.id, {id:entry.id, 名前:entry.name, 分類:entry.menuGroup || 'その他拡張', 状態:result.状態, パス:result.パス ?? null, バージョン:result.バージョン ?? null, 説明:result.説明 ?? '', 確認日時:result.確認日時 ?? new Date().toISOString()});
+  // カタログにない古い項目は残さない。並びはカタログ順にそろえる。
+  const items = entries.flatMap(item => byId.has(item.id) ? [{...byId.get(item.id), 名前:item.name, 分類:item.menuGroup || 'その他拡張'}] : []);
+  const 集計 = Object.fromEntries(STATES.map(state => [state, items.filter(item => item.状態 === state).length]).filter(([, count]) => count));
+  const value = {形式:1, 種類:'インストール状況', 開始日時:report.開始日時 ?? null, 完了日時:report.完了日時 ?? null, 更新日時:new Date().toISOString(),
+    実行環境:{OS:process.platform, CPU:process.arch, Node:process.version}, 件数:items.length, 集計, 項目:items};
+  await writeResult(file, value);
+  return value;
+}
+
 export async function installStep({entries, probeFn = probe, log = console.log, signal, now = () => new Date()}) {
   if (signal?.aborted) throw cancelled();
   const started = now();

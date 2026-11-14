@@ -118,7 +118,7 @@ class NodeRefreshTests(unittest.TestCase):
             "frontend_ide/host": SimpleNamespace(setup_assets=Mock(return_value=True), install_standalone_launcher=Mock(return_value=True)),
             "frontend_ide/viewer": SimpleNamespace(install_launcher=Mock(return_value=None)),
             "frontend_ide/aidiy_navi": SimpleNamespace(setup=Mock(return_value=True)),
-            "frontend_ide/aidiy_console": SimpleNamespace(setup=Mock(return_value=True)),
+            "frontend_ide/aidiy_term": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_task": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_team": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_browser": SimpleNamespace(setup=Mock(return_value=True)),
@@ -170,10 +170,10 @@ class NodeRefreshTests(unittest.TestCase):
         host.setup_assets.side_effect = lambda *args, **kwargs: events.append('assets') or True
         host.install_standalone_launcher.side_effect = lambda: events.extend(['code', 'live']) or True
         modules['frontend_ide/viewer'].install_launcher.side_effect = lambda *args: events.append('ide') or True
-        for kind in ('console', 'browser', 'navi', 'task', 'team', 'cpu'):
+        for kind in ('term', 'browser', 'navi', 'task', 'team', 'cpu'):
             modules['frontend_ide/aidiy_' + kind].setup.side_effect = lambda kind=kind: events.append(kind) or True
         self.assertEqual(setup.setup_node_refresh(), [])
-        self.assertEqual(events, ['assets', 'ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'])
+        self.assertEqual(events, ['assets', 'ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'])
 
     def test_browser_environment_skips_electron_binary_but_builds(self):
         run, prepare, _ = self.fixture(desktop=False)

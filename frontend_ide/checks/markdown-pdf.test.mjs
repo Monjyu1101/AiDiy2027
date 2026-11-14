@@ -38,7 +38,7 @@ test('PDF化中に作られた同名PDFも上書きする',async t=>{
 });
 test('実Electronでプレビューの見出し・日本語・表・相対画像をPDF化', {skip:process.env.AIDIY_TEST_PDF_RENDER!=='1'},async t=>{
  const root=await fixture(t);await writeFile(join(root,'資料','図.svg'),'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="80"><rect width="300" height="80" fill="#38bdf8"/></svg>');
- await writeFile(join(root,'資料','日本語.MD'),'# PDF化の確認\n\n日本語の本文です。\n\n|項目|結果|\n|---|---|\n|日本語|成功|\n\n![相対画像](図.svg)\n\n```js\nconsole.log("hello");\n```');
+ await writeFile(join(root,'資料','日本語.MD'),'# PDF化の確認\n\n日本語の本文です。\n\n|項目|結果|\n|---|---|\n|日本語|成功|\n\n![相対画像](図.svg)\n\n```js\nterm.log("hello");\n```');
  const service=createExplorerFiles(root);const result=await service.apply({action:'pdf',path:'資料/日本語.MD'});const bytes=await readFile(join(root,result.path));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.length>1000);
 });
 

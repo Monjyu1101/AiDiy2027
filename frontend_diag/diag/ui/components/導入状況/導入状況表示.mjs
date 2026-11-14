@@ -9,7 +9,7 @@ import { 完了時 } from '../共通表示/先頭表示.mjs';
 // 一覧の選択・開閉と詳細表示はインストール画面内で保持します。
 export function 導入状況表示を作成(props) {
   const 選択ID=ref(null),折り畳み=ref(new Set());
-  const 分類=['ベース','CLI群','その他拡張'];
+  const 分類=['ベース','開発環境等','CLI群','その他拡張'];
   const 状態=id=>props.結果.find(r=>r.id===id)?.状態 || '未確認';
   const 選択項目=computed(()=>props.項目.find(e=>e.id===選択ID.value));
   const 選択結果=computed(()=>props.結果.find(r=>r.id===選択ID.value));

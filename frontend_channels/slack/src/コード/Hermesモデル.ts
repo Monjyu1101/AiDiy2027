@@ -19,11 +19,10 @@ import type { モデル初期情報 } from '../モデル情報/モデル情報';
 // コードは Hermes / Pi から選択。モデルは aidiy_code / AIコアと同じ1つの文字列
 // （auto / same / codex_cli/same / openai_oauth/gpt-… など）で扱う。Discord 版と同じ実装。
 export type モデル候補 = { id: string; label: string };
-/** 保存する code_name。Hermes / Pi の選択に使う。Hermes の既存関数名は呼出互換のため維持する。 */
+/** 保存する code_name。Hermes / Pi の選択に使う。 */
 export const 既定コード名 = 'aidiy_hermes';
 export const 対応コード名 = 単独コード名;
 export function コード名検証(value: unknown): string {
-  if (value === undefined) return 既定コード名; // code_name のない旧保存は aidiy_hermes とみなす。
   if (typeof value !== 'string' || !/^[a-z][a-z0-9_]{0,63}$/.test(value.trim())) throw new Error('コード実行環境の指定が不正です。');
   return value.trim();
 }
@@ -73,16 +72,4 @@ export function Hermesモデル候補(api?: モデル初期情報, root = プロ
   }
   const rest = ids.filter(id => typeof id === 'string' && !['auto', 'same'].includes(id.toLowerCase()) && id.length <= 300);
   return [...固定候補, ...rest.map(id => ({ id, label: id }))];
-}
-
-/** 旧保存（{ provider, model }）を1つのモデル文字列へ移す。provider が空なら共通設定の値を使う。 */
-export function 旧コードモデル変換(value: unknown, 既定: string): string {
-  const data = value as { provider?: unknown; model?: unknown } | null;
-  const provider = typeof data?.provider === 'string' ? data.provider.trim() : '';
-  const model = typeof data?.model === 'string' ? data.model.trim() : '';
-  if (!provider) return 既定;
-  if (provider === 'same') return 'same';
-  const cli = Object.entries(外部CLI).find(([, name]) => name === provider)?.[0];
-  if (cli) return `${cli}/${model || 'same'}`;
-  return model ? `${provider}/${model}` : 既定;
 }

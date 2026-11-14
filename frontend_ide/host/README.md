@@ -19,7 +19,7 @@
 Node.js 22.12 以降と npm が必要です。IDE群全体を使う場合は文書ビューアも満たす 22.13 以降、Piも使う場合は22.19以降を使用してください。Vue 3・Electronはプロジェクト依存として導入し、グローバルVue CLIやグローバルElectronは要求しません。
 
 1. AiDiy の Core サーバーを起動し、使用する Code CLI の認証を用意します。拡張モードを使う場合は VS Code **1.106 以降**も必要です。
-2. AiDiy ルートの `python _setup.py` で、**IDE群（Navi / Console / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
+2. AiDiy ルートの `python _setup.py` で、**IDE群（Navi / Term / Code / Live / IDE / Task / Team / Browser）** を選びます。単体では `python frontend_ide/host/_setup.py` を実行できます。
 3. 単独画面は `aidiy_code` を実行します。拡張モードは VS Code でフォルダを開き、コマンドパレットから **AiDiy Code: チャットを開く**を実行します。
 
 セットアップは依存関係と Electron バイナリの事前導入、単独起動コマンドの作成と、VS Code CLIがある場合は VSIX を生成・配置します。必要版（`^1.106.0`）を満たさない場合や版数を読めない場合は警告して継続し、明示的な `--extensions-only` も実際のCLI結果に従います。CLI未導入では単独画面だけを準備します。Code / Live のランチャーは AiDiy 本体の `_AIDIY/aidiy_code/bin` / `_AIDIY/aidiy_live/bin` に配置します（Windows は `.cmd`）。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使います。ホーム・シェル設定・レジストリは変更しません。ランチャーだけを更新する場合は `python frontend_ide/host/_setup.py --launchers-only` を使います。既存のホーム配下ランチャーは移行・削除しません。手動で VSIX を配置する場合は、拡張機能画面の `…` → **VSIX からのインストール**で、`dist/aidiy-code-0.1.0.vsix` を選びます。解除と生成物削除は `python frontend_ide/host/_cleanup.py`、またはルートの `python _cleanup.py` から実行できます。
@@ -79,7 +79,7 @@ VS Code 拡張として試す場合は、次の手順を使います。
 
 VS Codeで未接続用のモデルを確定・保存するには、作業フォルダを開き、ワークスペースを信頼する必要があります。「ファイル」→「フォルダーを開く」で作業対象を開くと、AIコアが未接続でもモデルを保存し、文字入力で送信できます。
 
-画面で確定したコードAIとモデルは `_AIDIY/aidiy_code/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.1-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。旧設定の `openai_oauth` と `gpt-6.1-sol` は Hermes の組み合わせモデルへ移行し、`copilot-cli` 等の旧名も読み替えます。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
+画面で確定したコードAIとモデルは `_AIDIY/aidiy_code/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.1-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。コードAIは `copilot_cli` / `aidiy_hermes` などの Code AI 名だけを受け付け、読み替えはしません。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
 
 接続先は Live と共通の解決処理で `127.0.0.1` と `_config/AiDiy_key.json` の `PORT_CORE`（未配置時8091）を使います。Core は拡張ホストまたは単独サーバーと同じ環境で起動してください。
 - **実行ログ**: stdout / stderr の実行状況を出力パネルで確認します。
@@ -137,7 +137,7 @@ npm run package
 
 Windows の実 VS Code で登録・起動を確認する場合は、コンパイル後に `./scripts/test-extension-host.ps1 -Scenario Code` を実行します。専用の一時プロファイルで Code の登録・起動を確認します。
 
-`dist/aidiy-code-0.1.0.vsix` が生成されます。共通セットアップで生成済み VSIX を配置する場合は、ルートから `python frontend_ide/host/_setup.py --extensions-only` を実行します。セットアップは配置対象の VSIX の存在を確認し、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去してから拡張を配置します。旧 `aidiy-vscode` も対象です。クリーンアップも同じ判定で除去し、解除を確認できない場合はランチャー・生成物の削除を中止します。生成物を削除する前に、この作業コピーの単独実行と専用ブラウザも強制終了し、終了を確認します。手動では各 VSIX を個別にインストールできます。`npm test` はモック CLI による検証で、AI API を呼びません。
+`dist/aidiy-code-0.1.0.vsix` が生成されます。共通セットアップで生成済み VSIX を配置する場合は、ルートから `python frontend_ide/host/_setup.py --extensions-only` を実行します。セットアップは配置対象の VSIX の存在を確認し、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去してから拡張を配置します。クリーンアップも同じ判定で除去し、解除を確認できない場合はランチャー・生成物の削除を中止します。生成物を削除する前に、この作業コピーの単独実行と専用ブラウザも強制終了し、終了を確認します。手動では各 VSIX を個別にインストールできます。`npm test` はモック CLI による検証で、AI API を呼びません。
 
 Marketplace で公開する場合は、所有する publisher ID に `package.json` の `publisher` を合わせて公開します。初期値 `aidiy` はローカル配布用の識別子です。
 

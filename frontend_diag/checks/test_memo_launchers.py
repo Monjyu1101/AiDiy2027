@@ -15,6 +15,11 @@ def load(name):
 setup, cleanup = load('_setup'), load('_cleanup')
 
 class MemoLaunchers(unittest.TestCase):
+    def setUp(self):
+        # 共有ランチャー（~/.local/bin）の照合・更新で実ホームを読まない・書かない。
+        home = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(patch.object(Path, 'home', return_value=home))
+
     def test_both_launchers_register_and_owned_cleanup_leaves_sources(self):
         for platform in ('linux', 'win32'):
             with self.subTest(platform=platform), tempfile.TemporaryDirectory() as folder:

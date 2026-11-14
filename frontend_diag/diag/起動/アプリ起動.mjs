@@ -20,7 +20,7 @@ import launchDisplay from '../../../frontend_ide/デスクトップ/起動画面
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 const {単一起動部品,単独起動中の部品,起動枠の使用中}=appProcesses;
-export const アプリ一覧=Object.freeze(['avatar','task','team','ide','cpu','navi','console','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',ide:'IDE',cpu:'CPU',navi:'Navi',console:'Console',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:[...単一起動部品,'avatar','live','discord','slack'].includes(id)})));
+export const アプリ一覧=Object.freeze(['avatar','task','team','ide','cpu','navi','term','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',ide:'IDE',cpu:'CPU',navi:'Navi',term:'Term',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:[...単一起動部品,'avatar','live','discord','slack'].includes(id)})));
 const execute=(command,args,options={})=>new Promise((resolve,reject)=>execFile(command,args,{encoding:'utf8',windowsHide:true,timeout:10000,maxBuffer:8*1024*1024,...options},(error,stdout)=>error?reject(error):resolve(stdout)));
 
 export const {タスク一覧}=appProcesses;

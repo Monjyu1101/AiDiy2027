@@ -16,7 +16,7 @@ import { startServer } from '../server.mjs';
 const project = fileURLToPath(new URL('../web/', import.meta.url));
 const valid = { status: 'ok', name: 'aidiy_code_agents' };
 
-test('IDEはConsoleと同じtools接続先を確認し、子パネルにはcore接続先を保持する', async t => {
+test('IDEはTermと同じtools接続先を確認し、子パネルにはcore接続先を保持する', async t => {
   const expected = new URL('ping', await toolsTarget(project)).href;
   let calls = 0;
   const connection = createCoreConnection(project, { fetcher: async (url, options) => {

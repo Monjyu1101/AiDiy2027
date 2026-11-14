@@ -111,8 +111,8 @@ AiDiy の常駐起動対象かどうかと、Python モジュールの同梱要�
 - 非TTY時は stdout/stderr を UTF-8 に reconfigure してから出す
 - ANSI 色は `_supports_ansi_color()` のような判定に集約し、明確な対応端末だけ許可する
 - `FORCE_COLOR=1` または `CLICOLOR_FORCE` がある場合だけ明示的に色を許可する
-- `_build_tui()` は通常の Windows Terminal / cmd / PowerShell で実操作確認する。非コンソール環境では `NoConsoleScreenBufferError` になることがある
-- 非コンソール subprocess では `prompt_toolkit.print_formatted_text` が `NoConsoleScreenBufferError` になることがある。CLI 出力用の `_cprint()` は失敗時に通常 `print()` へ落とす
+- `_build_tui()` は通常の Windows Terminal / cmd / PowerShell で実操作確認する。非コンソール環境では `NoTermScreenBufferError` になることがある
+- 非コンソール subprocess では `prompt_toolkit.print_formatted_text` が `NoTermScreenBufferError` になることがある。CLI 出力用の `_cprint()` は失敗時に通常 `print()` へ落とす
 - AiDiy Code AI から呼ぶ 1ショットは `aidiy_hermes -Q --oneshot-stdin` とし、完全プロンプトを UTF-8 標準入力で渡す。手動実行の `-Q -z "本文"` は互換性のため維持する
 
 ## spinner / status の要点

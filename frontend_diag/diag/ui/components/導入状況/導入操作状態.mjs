@@ -11,7 +11,7 @@ const 関連 = run => [run?.対象, ...(run?.関連項目 || [])].filter(Boolean
 
 // コマンド・導入方式はサーバーだけが決める。画面の検出結果から操作権限を推測しない。
 // 導入操作は項目ごとに独立して並行実行できる。押せなくするのは実行中・受付中の項目（関連項目を含む）だけ。
-export function 導入操作状態を作成({ api, 接続済み, 操作中 = ref(false), 競合中 = () => false, 結果反映 = () => {}, 確認 = text => globalThis.confirm?.(text) === true, 間隔 = 750, setTimer = setTimeout, clearTimer = clearTimeout }) {
+export function 導入操作状態を作成({ api, 接続済み, 操作中 = ref(false), 競合中 = () => false, 結果反映 = () => {}, 確認 = text => globalThis.confirm?.(text) === true, 間隔 = 750, 外部間隔 = 5000, setTimer = setTimeout, clearTimer = clearTimeout }) {
   const 項目 = ref([]), 実行 = ref(null), 実行一覧 = ref([]), 読込中 = ref(false), 取消中 = ref(false), 取消要求済み = ref(false), エラー = ref(''), 受付 = ref(null), 受付一覧 = ref({}), 取消 = ref({});
   let enabled = false, disposed = false, version = 0, timer, pending, uncertain = false, sent = 0, applied = 0;
   const requests = new Set(), confirming = new Set(), merged = new Set(), startFailures = new Map(), cancelFailures = new Map();
@@ -34,12 +34,17 @@ export function 導入操作状態を作成({ api, 接続済み, 操作中 = ref
     取消要求済み.value = Boolean(latest && 取消.value[latest]);
   }
   function 解除() { version++; clearTimer(timer); timer = undefined; for (const controller of requests) controller.abort(); requests.clear(); pending = undefined; }
-  function 予約() { clearTimer(timer); timer = undefined; if (enabled && !disposed && 接続済み.value && (操作中.value || uncertain)) timer = setTimer(() => { void 読込(); }, 間隔); }
+  // Diag の外で動く処理（コンパイル等）がある間は、間隔を空けて状況を読み直す。
+  const 外部実行中あり = () => 項目.value.some(item => item.外部実行中);
+  function 予約() { clearTimer(timer); timer = undefined; if (!enabled || disposed || !接続済み.value) return; if (操作中.value || uncertain) timer = setTimer(() => { void 読込(); }, 間隔); else if (外部実行中あり()) timer = setTimer(() => { void 読込(); }, 外部間隔); }
   // 並行する GET / POST / DELETE の応答は、送信順で新しいものだけを反映する。
   function 反映(data, seq) {
     if (seq < applied) return;
     applied = seq;
+    const 外部実行中だった = new Set(項目.value.filter(item => item.外部実行中).map(item => item.id));
     項目.value = Array.isArray(data.項目) ? data.項目 : [];
+    // 外部の処理が終わったら、サーバーが自動で行った確認結果を状態表示へ反映する。
+    for (const item of 項目.value) if (外部実行中だった.has(item.id) && !item.外部実行中 && item.最終確認) 結果反映({ 対象: item.id, 結果: item.最終確認 });
     const list = Array.isArray(data.実行一覧) ? data.実行一覧 : data.実行 ? [data.実行] : [];
     実行一覧.value = list; 実行.value = data.実行 || list.at(-1) || null; uncertain = false;
     // 終わった実行の中止表示は片付ける。
@@ -90,8 +95,10 @@ export function 導入操作状態を作成({ api, 接続済み, 操作中 = ref
   }
   function 確認文(id, action, name) {
     const capability = 能力(id);
+    // コンパイル等、サーバーが表示名を返す操作は確認文もその名前で表示する。
+    const label = capability?.表示名?.[action] || action;
     const change = action === '削除' ? '対象パッケージを削除します。このプログラムは利用できなくなります。' : action === '再導入' ? (capability?.再導入説明 || '対象パッケージを削除してから、再度インストールします。再導入に失敗すると、このプログラムが利用できなくなる場合があります。') : '診断サーバーの環境へパッケージを導入します。';
-    return `${name || id} を${action}しますか？\n対象パッケージ: ${capability?.パッケージ || id}\n\n${change}\n認証情報・利用者設定・会話履歴は削除しません。\n${[capability?.説明, capability?.確認説明].filter(Boolean).join('\n')}\n${capability?.関連項目?.length > 1 ? `一式の対象: ${capability.関連項目.join(' / ')}\n` : ''}${capability?.規約URL ? `提供元の案内・規約: ${capability.規約URL}\n` : ''}${action === '削除' ? 'パッケージ管理コマンドを実行します。' : 'ネットワークからパッケージを取得し、インストール処理を実行します。'}\n終了後に対象の各項目で「確認」ボタンと同じ処理を自動実行します。`;
+    return `${name || id} を${label}しますか？\n対象パッケージ: ${capability?.パッケージ || id}\n\n${change}\n認証情報・利用者設定・会話履歴は削除しません。\n${[capability?.説明, capability?.確認説明].filter(Boolean).join('\n')}\n${capability?.関連項目?.length > 1 ? `一式の対象: ${capability.関連項目.join(' / ')}\n` : ''}${capability?.規約URL ? `提供元の案内・規約: ${capability.規約URL}\n` : ''}${action === '削除' ? 'パッケージ管理コマンドを実行します。' : 'ネットワークからパッケージを取得し、インストール処理を実行します。'}\n終了後に対象の各項目で「確認」ボタンと同じ処理を自動実行します。`;
   }
   async function 開始(id, action, name) {
     if (!enabled || disposed || !接続済み.value || uncertain || 競合中() || 項目操作中(id) || !可能操作(id).includes(action)) return false;

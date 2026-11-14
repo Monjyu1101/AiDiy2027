@@ -90,7 +90,7 @@ for(const reason of ['blur','closed','did-start-navigation','render-process-gone
  if(reason==='lease')[...f.timers.values()][0]();else if(reason==='revision')f.record.revision++;else if(reason==='maximized')f.window.isMaximized=()=>true;else if(reason==='fullscreen')f.window.isFullScreen=()=>true;else(reason==='blur'||reason==='closed'?f.window:f.webContents).emit(reason);
  assert.equal(f.api.move(f.event,token),false);assert.equal(f.positions.length,0);assert.equal(f.timers.size,0);assert.equal(f.webContents.listenerCount('did-start-navigation'),0);
 });
-for(const kind of ['code','live','console','viewer','explorer','panel-viewer','panel-routes'])test(`窓全体の長押し: ${kind}の移動・解除`,async()=>{
+for(const kind of ['code','live','term','viewer','explorer','panel-viewer','panel-routes'])test(`窓全体の長押し: ${kind}の移動・解除`,async()=>{
  const f=native();f.record.kind=kind;const token=f.api.begin(f.event);assert.equal(typeof token,'string');
  f.cursor({x:-1800,y:-150});assert.equal(f.api.move(f.event,token),true);f.api.end(f.event,token);assert.equal(f.timers.size,0);
  const b=browser({kind});b.emit('pointerdown');await b.advance(500);assert.equal(b.doc.documentElement.classes.has('window-moving'),true);
@@ -131,7 +131,7 @@ test('通常ドラッグ・入力・ボタン・scrollbarは長押し移動に�
  const f=browser();f.emit('pointerdown');const move=f.emit('pointermove',{screenX:151});f.emit('pointermove',{screenX:150});await f.advance(500);assert.equal(f.calls.length,0);assert.equal(move.prevented,undefined);
  f.target.excluded=true;f.emit('pointerdown');await f.advance(500);assert.equal(f.calls.length,0);f.target.excluded=false;
  Object.assign(f.target,{offsetWidth:500,clientWidth:485,clientLeft:0,offsetHeight:500,clientHeight:500,clientTop:0});assert.equal(windowMoveTarget(f.target,490,50,f.win),false);assert.equal(windowMoveTarget(f.target,100,50,f.win),true);f.dispose();
- Object.assign(f.target,{offsetWidth:150,clientWidth:0,offsetHeight:20,clientHeight:0});assert.equal(windowMoveTarget(f.target,100,10,f.win),true,'MonacoやConsoleの文字spanをスクロールバー扱いしない');
+ Object.assign(f.target,{offsetWidth:150,clientWidth:0,offsetHeight:20,clientHeight:0});assert.equal(windowMoveTarget(f.target,100,10,f.win),true,'MonacoやTermの文字spanをスクロールバー扱いしない');
 });
 test('Explorer一覧・軌跡のno-drag面はfallbackでも500ms待ち、操作部品やnative二重導入を除外',async()=>{
  for(const kind of ['explorer','panel-routes']){

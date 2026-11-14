@@ -55,7 +55,7 @@ def register_tools(mcp_ob, obs):
         """
         OBS Studio WebSocket へ接続し、バージョン情報を返す。
 
-        省略時は _config/aidiy_obs_studio_control.json の値を使う。
+        省略時は _config/mcp_obs_studio_control.json の値を使う。
         """
         try:
             info = await obs.connection_info(host, port)
@@ -162,7 +162,7 @@ def create_router(obs) -> APIRouter:
     async def http_obs_docs() -> dict:
         return {
             "service": "aidiy_obs_studio_control",
-            "description": "OBS Studio WebSocket v5 を制御する。接続先は _config/aidiy_obs_studio_control.json で設定。配信・録画・シーン切替・ソース制御に対応。",
+            "description": "OBS Studio WebSocket v5 を制御する。接続先は _config/mcp_obs_studio_control.json で設定。配信・録画・シーン切替・ソース制御に対応。",
             "endpoint": "POST /aidiy_obs_studio_control/{method_name}",
             "content_type": "application/json",
             "prerequisite": "OBS Studio が起動し WebSocket サーバーが有効になっている必要がある",

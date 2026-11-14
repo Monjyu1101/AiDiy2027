@@ -54,10 +54,10 @@ class StartTests(unittest.TestCase):
     def test_vue_process_matching_keeps_other_apps_out(self):
         root = dev.THIS_DIR.parent.parent / 'frontend_ide'
         for windows in (True, False):
-            for kind in ('console', 'code', 'live', 'ide'):
+            for kind in ('term', 'code', 'live', 'ide'):
                 record = dict(Name='node', CommandLine=f'node "{root / "launch.mjs"}" --app {kind}')
                 self.assertEqual(dev.is_dev_process(record, dev.THIS_DIR, windows), kind == 'ide')
-                self.assertEqual(dev.is_dev_process(record, dev.THIS_DIR, windows, 'console'), kind == 'console')
+                self.assertEqual(dev.is_dev_process(record, dev.THIS_DIR, windows, 'term'), kind == 'term')
 
     def test_shared_logs_use_repository_temp_without_moving_existing_data(self):
         directory = self.enterContext(tempfile.TemporaryDirectory(prefix='AiDiy 起動 '))
@@ -67,7 +67,7 @@ class StartTests(unittest.TestCase):
         process.poll.return_value = None
         try:
             with patch.object(dev, 'THIS_DIR', module), patch.object(dev, 'node_command', return_value='node'), patch.object(dev.subprocess, 'Popen', return_value=process) as launch:
-                for kind in ('ide', 'console', 'task', 'team', 'browser', 'cpu'):
+                for kind in ('ide', 'term', 'task', 'team', 'browser', 'cpu'):
                     with self.subTest(kind=kind):
                         previous = module / 'out' / f'aidiy_{kind}' / 'previous.log'
                         previous.parent.mkdir(parents=True)
@@ -96,10 +96,10 @@ class StartTests(unittest.TestCase):
     def test_root_launch_order_and_no_dev_restart(self):
         with patch.object(start, "stop_all_tasks"), patch.object(start, "start_service", return_value=True) as launch, patch.object(start, "wait_for_services_quiet"):
             flags = start.start_initial_services(False, False, False, False, False, False, {}, {}, None,
-                                                 console_enabled=True, code_enabled=True, live_enabled=True, dev_enabled=True, discord_enabled=True)
+                                                 term_enabled=True, code_enabled=True, live_enabled=True, dev_enabled=True, discord_enabled=True)
         self.assertEqual([c.args[0] for c in launch.call_args_list],
-                         [f"フロントエンド({name})" for name in ("console", "code", "live", "IDE", "Discord")])
-        self.assertFalse(flags["フロントエンド(console)"])
+                         [f"フロントエンド({name})" for name in ("term", "code", "live", "IDE", "Discord")])
+        self.assertFalse(flags["フロントエンド(term)"])
         self.assertFalse(flags["フロントエンド(IDE)"])
 
     def test_shutdown_preserves_dev_but_cleanup_stops_it(self):

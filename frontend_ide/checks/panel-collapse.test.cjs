@@ -13,7 +13,7 @@ function fixture(kind='code',options={}){
  const step=ms=>{time+=ms;const callbacks=[...timers.values()];timers.clear();callbacks.forEach(fn=>fn());};
  return{win,record,frames,timers,step,toggle:value=>collapse(record,value),collapse};
 }
-for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': animate to title only and restore size at dragged position',async()=>{
+for(const kind of ['ide','code','live','term','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': animate to title only and restore size at dragged position',async()=>{
  const f=fixture(kind),p=f.toggle(true);f.step(100);assert.ok(f.win.bounds.height>31&&f.win.bounds.height<600);f.step(200);assert.deepEqual(await p,{ok:true});assert.equal(f.win.bounds.height,31);assert.equal(f.win.resizable,false);
  f.win.bounds.x=123;f.win.bounds.y=234;const restore=f.toggle(false);f.step(100);assert.ok(f.win.bounds.height>31&&f.win.bounds.height<600);f.step(200);await restore;
  assert.deepEqual(f.win.bounds,{x:123,y:234,width:700,height:600});assert.deepEqual(f.win.minimum,[320,200]);assert.equal(f.win.resizable,true);assert.equal(f.win.listenerCount('closed'),0);
@@ -53,7 +53,7 @@ test('named Navi windows require an authorized owner and resolver; unrelated nam
 
 // Windowsのフレームレス窓・端数DPIで発生するsetBounds/getBoundsの非対称を模擬する。
 // 理想的なsetBoundsモックだけでは、毎フレームの読戻しによる幅の累積を見逃す。
-for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': repeated collapse preserves width across native rounding and frame-style changes',async()=>{
+for(const kind of ['ide','code','live','term','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': repeated collapse preserves width across native rounding and frame-style changes',async()=>{
  const f=fixture(kind);f.win.getNormalBounds=()=>({...f.win.bounds});
  f.win.setBounds=v=>{f.win.bounds={...v,width:v.width+1,height:v.height+1};};
  f.win.setResizable=v=>{if(f.win.resizable!==v)f.win.bounds.width+=2;f.win.resizable=v;};
@@ -68,7 +68,7 @@ for(const kind of ['ide','code','live','console','browser','navi','task','team',
  assert.equal(f.win.bounds.width,700);assert.equal(f.win.bounds.height,600);
 });
 
-for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])for(const phase of ['collapsing','collapsed','expanding'])test(kind+': close safely while '+phase,async()=>{
+for(const kind of ['ide','code','live','term','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])for(const phase of ['collapsing','collapsed','expanding'])test(kind+': close safely while '+phase,async()=>{
  const f=fixture(kind,{onChange:record=>assert.equal(record.window.isDestroyed(),false)}),contents=f.win.webContents;
  Object.defineProperty(f.win,'webContents',{get(){if(this.destroyed)throw Error('Object has been destroyed');return contents;}});
  let pending=f.toggle(true);
@@ -82,7 +82,7 @@ for(const kind of ['ide','code','live','console','browser','navi','task','team',
 
 // CSSの31pxはrenderer zoomだけをDIPへ換算する。OSのscaleFactorをもう一度
 // 掛けない。端数DPIの丸め・外枠差はsetWindowBoundsに任せ、開閉で蓄積しない。
-for(const kind of ['ide','code','live','console','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': fractional zoom and display DPI keep a title-only native height without accumulating bounds',async()=>{
+for(const kind of ['ide','code','live','term','browser','navi','task','team','diag','panel-navigation','explorer','panel-viewer','viewer'])test(kind+': fractional zoom and display DPI keep a title-only native height without accumulating bounds',async()=>{
  for(const zoom of [0.75,0.9,1,1.1,1.25,1.5,2])for(const scaleFactor of [1,1.25,1.5,2]){
   const f=fixture(kind);f.win.webContents.getZoomFactor=()=>zoom;
   f.win.getNormalBounds=()=>({...f.win.bounds});
@@ -112,7 +112,7 @@ test('layout capture keeps expanded dimensions and maximized state after a folde
  const q=f.toggle(false);f.step(240);await q;assert.equal(f.collapse.capture(f.record),null);
 });
 test('layout restore synchronizes native and renderer state without another invoke',async()=>{
- const sync=[];const f=fixture('console',{onRestoreState:(_record,value)=>sync.push(value)});
+ const sync=[];const f=fixture('term',{onRestoreState:(_record,value)=>sync.push(value)});
  const p=f.collapse.restore(f.record,true);assert.deepEqual(sync[0],{collapsed:true,hidden:false,busy:true});f.step(240);assert.equal((await p).ok,true);
  assert.deepEqual(sync[1],{collapsed:true,hidden:true,busy:false});assert.equal(f.win.bounds.height,31);
  const q=f.collapse.restore(f.record,false);f.step(240);await q;assert.equal(f.win.bounds.height,600);assert.deepEqual(sync.at(-1),{collapsed:false,hidden:false,busy:false});

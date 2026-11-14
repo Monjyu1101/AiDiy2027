@@ -14,3 +14,5 @@
 .models li{margin-bottom:14px}
 .model-meta{font-size:11px;color:#94afc5}
 .badge.public-indicator{font-size:10px}
+/* 行の余白クリックでも選択できることを示す。 */
+.key-row{cursor:pointer}

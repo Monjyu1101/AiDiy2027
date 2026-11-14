@@ -49,12 +49,6 @@ class SharedLauncherTests(unittest.TestCase):
         helper.sync_shared_launcher(self.canonical, self.script)
         self.assertFalse(self.shared.exists())
 
-    def test_migrates_previous_avatar_python_entry_and_diag_path(self):
-        old = self.script.with_name('_start.py')
-        self.shared.write_text(windows(old, 'C:\\python.exe', ('-X', 'utf8')), encoding='utf-8')
-        helper.sync_shared_launcher(self.canonical, self.script, legacy_scripts=(old,))
-        self.assertEqual(self.shared.read_bytes(), self.canonical.read_bytes())
-
     def test_preserves_foreign_modified_and_invalid_encoding(self):
         foreign = self.root.parent / 'other/frontend_avatar/launch.mjs'
         for bad in (windows(foreign).encode(), (windows(self.script)+'echo injected\n').encode(), b'\xff\xfe'):
@@ -85,13 +79,12 @@ class SharedLauncherTests(unittest.TestCase):
             with self.assertRaises(OSError): helper.sync_shared_launcher(self.canonical, self.script)
             self.assertEqual(self.shared.read_text(), changed)
 
-    def test_posix_runtime_change_and_previous_avatar_flags(self):
+    def test_posix_runtime_change(self):
         self.canonical = self.canonical.with_name('aidiy_avatar')
         self.shared = self.shared.with_name('aidiy_avatar')
         self.canonical.write_text('#!/usr/bin/env sh\nexec /new/node '+shlex.quote(str(self.script))+' "$@"\n')
-        old = self.script.with_name('_start.py')
-        self.shared.write_text('#!/usr/bin/env sh\nexec /old/python -X utf8 '+shlex.quote(str(old))+' "$@"\n')
-        helper.sync_shared_launcher(self.canonical, self.script, legacy_scripts=(old,))
+        self.shared.write_text('#!/usr/bin/env sh\nexec /old/node '+shlex.quote(str(self.script))+' "$@"\n')
+        helper.sync_shared_launcher(self.canonical, self.script)
         self.assertEqual(self.shared.read_bytes(), self.canonical.read_bytes())
         self.assertTrue(self.shared.stat().st_mode & 0o111)
 

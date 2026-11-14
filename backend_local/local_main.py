@@ -31,11 +31,11 @@ HuggingFace Gemma モデルを OpenAI / ChatGPT 互換 API として
 | デバイス | CHAT_LOCAL_DEVICE | auto |
 | dtype | CHAT_LOCAL_DTYPE | auto |
 | 最大生成トークン | CHAT_LOCAL_MAX_TOKENS | 128000 |
-| モデル配置先 | CHAT_LOCAL_MODELS_DIR | temp/models |
+| モデル配置先 | CHAT_LOCAL_MODELS_DIR | ~/.aidiy/models |
 | オフライン強制 | CHAT_LOCAL_OFFLINE | 0 |
 
 モデルは使用時（最初のリクエスト）に遅延ロードする（起動時の先読みはしない）。
-モデルファイルは temp/models/<safe_name> にあればそこからオフラインでロードする。
+モデルファイルは ~/.aidiy/models/<safe_name> にあればそこからオフラインでロードする。
 事前取得は `uv run python download_model.py` を使う。
 """
 

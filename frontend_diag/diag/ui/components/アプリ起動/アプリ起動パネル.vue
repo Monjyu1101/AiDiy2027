@@ -13,8 +13,9 @@ const props=defineProps({state:Object,cliState:Object,online:Boolean,visible:Boo
 const folderInput=ref();
 watch(()=>!!props.state.一覧.value,async value=>{if(value){await nextTick();folderInput.value?.focus();}});
 watch(()=>props.online&&props.visible,value=>{if(value){void props.state.読込();void props.cliState?.読込();}},{immediate:true});
-const descriptions={memo:'新しい付箋メモを開きます。プロジェクト未選択時は起動フォルダに保存します。',cpu:'CPU / GPU / RAMの使用率を小型ウィンドウで表示します。',avatar:'AIコアのアバター画面を開きます。',task:'タスク要求・フロー図・明細を開きます。',team:'チーム活動画面を開きます。',ide:'プロジェクトの開発スペースを開きます。',console:'プロジェクトでターミナルを開きます。',code:'プロジェクトのコード支援画面を開きます。',live:'プロジェクトのライブ会話画面を開きます。',discord:'プロジェクトのDiscord接続パネルを開きます。',slack:'プロジェクトのSlack接続パネルを開きます。',chrome:'システム起動の「手動で開く」と同じChromeで http://localhost:8090/ を開きます。',browser:'IDE内のBrowserを単独ウィンドウで開きます（chrome_devtools対応）。'};
-const 起動一覧=computed(()=>起動項目を整列([...props.state.項目.value.map(item=>({...item,kind:'app'})),...(props.cliState?.項目?.value||[]).map(item=>({...item,kind:'cli'}))]));
+const descriptions={memo:'新しい付箋メモを開きます。プロジェクト未選択時は起動フォルダに保存します。',cpu:'CPU / GPU / RAMの使用率を小型ウィンドウで表示します。',avatar:'AIコアのアバター画面を開きます。',task:'タスク要求・フロー図・明細を開きます。',team:'チーム活動画面を開きます。',ide:'プロジェクトの開発スペースを開きます。',term:'プロジェクトでターミナルを開きます。',code:'プロジェクトのコード支援画面を開きます。',live:'プロジェクトのライブ会話画面を開きます。',discord:'プロジェクトのDiscord接続パネルを開きます。',slack:'プロジェクトのSlack接続パネルを開きます。',chrome:'システム起動の「手動で開く」と同じChromeで http://localhost:8090/ を開きます。',browser:'IDE内のBrowserを単独ウィンドウで開きます（chrome_devtools対応）。'};
+// 標準パネルは未導入・未コンパイルの CLI も灰色（押せない）で並べる。ミニ・アイコンランチャーは利用可能な CLI だけ。
+const 起動一覧=computed(()=>起動項目を整列([...props.state.項目.value.map(item=>({...item,kind:'app'})),...(props.cliState?.全項目?.value||props.cliState?.項目?.value||[]).map(item=>({...item,kind:'cli'}))]));
 const CLI名=item=>item.名前;
 const CLI禁止=item=>item.利用可能!==true||!props.online||!props.state.フォルダ.value||!!props.state.処理中.value&&!props.state.処理中.value.startsWith('cli:')||props.state.選択中.value;
 </script>
@@ -31,7 +32,7 @@ const CLI禁止=item=>item.利用可能!==true||!props.online||!props.state.フ�
    <p v-if="state.結果.value[item.id]?.種別==='error'&&state.結果.value[item.id].通知" class="app-launch-result" role="status" data-tone="error">{{state.結果.value[item.id].通知}}</p>
   </article>
   <article v-else class="app-launch-card app-cli-card" :class="{unavailable:item.利用可能!==true}" :data-cli="item.id">
-   <button class="app-launch-button" :aria-label="item.種類==='editor'?`${CLI名(item)} でフォルダを開く`:`${CLI名(item)} をConsoleで起動`" :title="item.利用可能===true?`${item.名前} / ${item.モード}${item.種類==='editor'?'':' / モデル指定なし'}`:`${item.名前} は未導入です`" :disabled="CLI禁止(item)" @click="cliState.起動(item.id,{確認省略:true,開始時:起動モーション($event)})"><span class="launch-frame launch-frame-standard" aria-hidden="true"><img class="app-launch-icon" :src="'CLI_'+item.id+(['aidiy_hermes','aidiy_pi'].includes(item.id)?'.png':'.svg')" alt="" width="60" height="60"><span class="launch-trace"></span></span><span class="app-launch-state">{{item.利用可能!==true?'未導入':cliState.処理中.value===item.id?'起動確認中…':''}}</span></button>
+   <button class="app-launch-button" :aria-label="item.種類==='editor'?`${CLI名(item)} でフォルダを開く`:`${CLI名(item)} をTermで起動`" :title="item.利用可能===true?`${item.名前} / ${item.モード}${item.種類==='editor'?'':' / モデル指定なし'}`:`${item.名前} は未導入です`" :disabled="CLI禁止(item)" @click="cliState.起動(item.id,{確認省略:true,開始時:起動モーション($event)})"><span class="launch-frame launch-frame-standard" aria-hidden="true"><img class="app-launch-icon" :src="'CLI_'+item.id+(['aidiy_hermes','aidiy_pi','aidiy_codex'].includes(item.id)?'.png':'.svg')" alt="" width="60" height="60"><span class="launch-trace"></span></span><span class="app-launch-state">{{item.利用可能!==true?'未導入':cliState.処理中.value===item.id?'起動確認中…':''}}</span></button>
   </article>
  </template>
  </div>

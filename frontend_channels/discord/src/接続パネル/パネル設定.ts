@@ -55,7 +55,7 @@ export function パネル設定保存(value: unknown, file = パネル設定保�
   return settings;
 }
 
-/** 保存済みの設定。未保存・破損時は undefined。旧保存先は読まず、移行しない。 */
+/** 保存済みの設定。未保存・破損時（code_name がない場合を含む）は undefined。 */
 export function パネル設定読込(_既定モデル: string, file = パネル設定保存先()): パネル設定 | undefined {
   try { return 検証(JSON.parse(readFileSync(file, 'utf8'))); }
   catch { return undefined; }

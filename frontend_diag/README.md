@@ -130,9 +130,9 @@ Copilot CLI が導入済みで取得候補が空なら、`COPILOT_FALLBACK_MODEL
 
 `python frontend_diag/_setup.py` または全体の `python _setup.py` で、AiDiy 本体の `_AIDIY/aidiy_diag/bin` にランチャーを作成します（Windows は `aidiy_diag.cmd`）。全体セットアップのDiagは `[y]` の表示だけで選択入力はありません。シェルプロファイル・レジストリは変更しません。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使ってください。既存のホーム配下ランチャーは移行・削除しません。`frontend_diag/aidiy_diag` / `frontend_diag/aidiy_diag.cmd` からも直接起動できます。
 
-Electron の初回表示は Code / Live / Console / IDE / Discord / Slack と共通の `frontend_ide/host/scripts/window-opening.cjs` を使います。中央55%から750msで拡大し、描画を待ってから本画面を表示、内容を450msでフェード表示します。実ウィンドウを連続リサイズしないため、Windowsの未描画の白い縁を避けます。ブラウザ版・headlessには適用しません。`desktop-opening` 中は内容を隠し、演出完了後に起動済みを通知します。共通演出の仕様を変更する場合は共有する各アプリへの影響を確認してください。`node --test frontend_diag/checks/desktop.check.mjs` で読込・演出・表示通知の順序、演出中の終了・描画失敗と既存IPCの安全境界を確認できます。実OSでの拡大・DPI・最前面表示は別途目視確認が必要です。
+Electron の初回表示は Code / Live / Term / IDE / Discord / Slack と共通の `frontend_ide/host/scripts/window-opening.cjs` を使います。中央55%から750msで拡大し、描画を待ってから本画面を表示、内容を450msでフェード表示します。実ウィンドウを連続リサイズしないため、Windowsの未描画の白い縁を避けます。ブラウザ版・headlessには適用しません。`desktop-opening` 中は内容を隠し、演出完了後に起動済みを通知します。共通演出の仕様を変更する場合は共有する各アプリへの影響を確認してください。`node --test frontend_diag/checks/desktop.check.mjs` で読込・演出・表示通知の順序、演出中の終了・描画失敗と既存IPCの安全境界を確認できます。実OSでの拡大・DPI・最前面表示は別途目視確認が必要です。
 
-上部は Console と同じ高さのタイトルバー・ウィンドウ操作・接続バーです。シアンバーは `frontend_ide/src/components/共通表示/シアンバー.css` を共有し、Web / Code / Live と同じ正弦波（4.5秒周期、黒→シアン→黒）で明滅します。透明度の `ease-in-out` へ戻さず、標本化したRGB値を `linear` で補間します。共有CSSも配布UIの整合性検証に含みます。シアンの接続バーはWindowsのアニメーション設定がOFF（`prefers-reduced-motion: reduce`）でも明滅を維持します。ブラウザ確認ではreduce / no-preferenceの両条件で、時間経過による色の変化を検査します。シアンの線は Tools の接続成功、黒は未接続を示します（Tools の確認は常に有効で、ON/OFF・再確認の操作はありません）。診断自体の接続とは別です。Tools は `_config/AiDiy_key.json` の `PORT_TOOLS`（省略時8095）に対して、固定 loopback の `/aidiy_code_agents/ping` だけを10秒間隔で確認します。キー・モデル・エージェントの実行は行いません。切断・画面破棄で確認を停止します。
+上部は Term と同じ高さのタイトルバー・ウィンドウ操作・接続バーです。シアンバーは `frontend_ide/src/components/共通表示/シアンバー.css` を共有し、Web / Code / Live と同じ正弦波（4.5秒周期、黒→シアン→黒）で明滅します。透明度の `ease-in-out` へ戻さず、標本化したRGB値を `linear` で補間します。共有CSSも配布UIの整合性検証に含みます。シアンの接続バーはWindowsのアニメーション設定がOFF（`prefers-reduced-motion: reduce`）でも明滅を維持します。ブラウザ確認ではreduce / no-preferenceの両条件で、時間経過による色の変化を検査します。シアンの線は Tools の接続成功、黒は未接続を示します（Tools の確認は常に有効で、ON/OFF・再確認の操作はありません）。診断自体の接続とは別です。Tools は `_config/AiDiy_key.json` の `PORT_TOOLS`（省略時8095）に対して、固定 loopback の `/aidiy_code_agents/ping` だけを10秒間隔で確認します。キー・モデル・エージェントの実行は行いません。切断・画面破棄で確認を停止します。
 
 Vue タブの全体構成は前述の表を参照してください。導入状況・モデル一覧・外部連携は保存済みの前回結果があれば初期表示し、なければ未確認です。各パネルの実行ボタン左側に「前回実行日時」を表示します。導入状況パネル右上の「状況確認」で検出・更新します。タブ欄右の「全テスト」は、導入状況・モデル一覧・外部連携をそれぞれ確認して書き込みます（前述）。左側でカテゴリを開閉し、項目を選ぶと右側でパス・バージョン・利用機能・参照ソースを表示します。
 
@@ -178,11 +178,11 @@ Windows では、Tools の事前 headless 診断や各機能の環境確認・�
 
 各アプリの既存アイコンを同梱し、通常画面のカードとミニ表示の起動ボタンで表示します。ミニの「○ / ○ 稼働中」の集計行は表示しません。ミニの起動ボタンはアイコンのみとし、重複する機能名の文字を表示しません。名称はマウスを重ねると確認できます。ミニ表示は通常画面で選択したプロジェクトを共用します。プロジェクト未選択時は英語の案内「SELECT YOUR PROJECT ▸▸ READY FOR LAUNCH」を赤い電光掲示板風（黒い格子線で縦12マスのドット文字）で右端から左端へ15秒かけて流し（titleは「プロジェクト選択してね」）、プロジェクトを必要とするアプリ・CLIの起動ボタンを無効にします（Chromeはプロジェクト不要）。通常画面のプロジェクト欄も、未選択時は赤い枠と赤いフォルダ選択ボタンで選択を促します。稼働中のサービスは、ミニでは項目全体、通常画面ではタブの下線を緑で非線形に明滅させます。周期は約4.5秒で、項目ごとに4.32〜4.68秒とわずかにずらし、表示のたびに小さな揺らぎと開始位置（0〜周期）を乱数で加えて、そろわず同じ模様も繰り返さないようにします。明るさはタイトルバーのシアン帯と同じ |sin(πt)| の非線形で変化させ、ポート確認が未確認（タイムアウト）のときは直前の表示を保ちます。ミニのサービスを押すと、通常画面のシステム起動タブでその機能を選んだ状態に戻ります。「□」で通常表示へ戻り、アプリ起動タブでフォルダを選ぶと、ミニ表示のボタンも有効になります。ミニ表示からの起動も同じ重複確認・非同期起動を使い、定時監視は増やしません。起動ボタンをクリックして起動要求を受け付けると、アイコンの枠を光が一周します（受付の表示で、起動完了は表しません）。光は IDE の自動探索と同じ conic-gradient の彗星状（暗い尾→シアン→白い先頭、発光付き）で、真下から時計回りに約0.9秒で一周し、加速しながら真下へ戻って消えます。シアンバーと同じく、Windows のアニメーション設定が OFF でも省略しません。
 
-上部の「フォルダ選択」でプロジェクトフォルダを指定し、Avatar / Task / Team / IDE / Navi / Console / Code / Live / Discord / Slack / aidiy_browser を個別に開きます。Chrome はプロジェクト不要で、Tools と Web の稼働時に開けます。Task / Team はバックエンドの利用可否、aidiy_browser は Tools の稼働も確認します。Electron は OS のフォルダ選択、ブラウザ版は診断サーバー側のフォルダ一覧を使います。選択したフォルダはタブを移動しても保持し、ページを開き直すと `_config/AiDiy_key.json` の `CODE_BASE_PATH` を初期値にコピーします。`../` も含め、設定された文字列をそのまま表示します。未設定・読込不可の場合は未選択のままです。相対パスは起動時だけ AIコアと同じ `backend_server/` 基準の絶対パスへ解決します（`../` は AiDiy のルート）。空欄・不正なパスから起動先を補完しません。画面内で選択・解除した後は定期更新や再接続で上書きしません。設定ファイルへの書込みやアプリの自動起動は行わず、起動時の実在フォルダ確認は維持します。
+上部の「フォルダ選択」でプロジェクトフォルダを指定し、Avatar / Task / Team / IDE / Navi / Term / Code / Live / Discord / Slack / aidiy_browser を個別に開きます。Chrome はプロジェクト不要で、Tools と Web の稼働時に開けます。Task / Team はバックエンドの利用可否、aidiy_browser は Tools の稼働も確認します。Electron は OS のフォルダ選択、ブラウザ版は診断サーバー側のフォルダ一覧を使います。選択したフォルダはタブを移動しても保持し、ページを開き直すと `_config/AiDiy_key.json` の `CODE_BASE_PATH` を初期値にコピーします。`../` も含め、設定された文字列をそのまま表示します。未設定・読込不可の場合は未選択のままです。相対パスは起動時だけ AIコアと同じ `backend_server/` 基準の絶対パスへ解決します（`../` は AiDiy のルート）。空欄・不正なパスから起動先を補完しません。画面内で選択・解除した後は定期更新や再接続で上書きしません。設定ファイルへの書込みやアプリの自動起動は行わず、起動時の実在フォルダ確認は維持します。
 
 Avatar は AiDiy 本体のパスから起動します。Chrome を除く他のアプリは、選択したフォルダを作業パスとして既存ランチャーへ渡します。別プロセスとして非同期に起動するため、Diag の終了やシステム起動タブの停止でこれらのアプリは停止しません。各アプリの画面から終了してください。起動要求を受け付けたことと、アプリの表示完了は区別します。表示されない場合はカードの「起動ログの保存先」に表示するファイル（`temp/aidiy_diag/アプリ起動/`）を確認してください。
 
-Avatar・Live・Discord・Slack・Task・Team・CPU は、ボタンを押した時に稼働状況を確認します。Task・Team・CPU では、単独版に加えて IDE 内の窓も確認し、稼働中なら「起動済み」と表示します。確認できない場合は理由を表示します。IDE・Navi・Console・Code・aidiy_browser は同じプロジェクトでも `--new-window` で別の画面を開けます。
+Avatar・Live・Discord・Slack・Task・Team・CPU は、ボタンを押した時に稼働状況を確認します。Task・Team・CPU では、単独版に加えて IDE 内の窓も確認し、稼働中なら「起動済み」と表示します。確認できない場合は理由を表示します。IDE・Navi・Term・Code・aidiy_browser は同じプロジェクトでも `--new-window` で別の画面を開けます。
 
 全テスト・headless・初期画面表示ではアプリを起動しません。検証は `node --test frontend_diag/checks/app-launch.check.mjs frontend_diag/checks/desktop.check.mjs frontend_ide/checks/project-instance.test.mjs`、実ブラウザの画面確認は `node frontend_diag/checks/app-launch-browser.mjs` です。アプリを実際に起動せず、合成タスク・合成プロセスで起動先、重複防止、定時監視なし、画面幅、フォルダ選択を確認します。終了独立性のテストのみ無害な Node.js プロセスを起動し、必ずテスト内で回収します。
 
@@ -352,11 +352,9 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 
 全 OS 共通で、Hermes 以外のランチャーは AiDiy 本体の `_AIDIY/aidiy_<pg>/bin/` に配置します。登録だけを修復する場合は `python3 _setup.py --launchers-only`（Windows は `python`）を実行してください。依存導入・ビルド・サービス起動はしません。プロジェクト内ランチャーの PATH はセットアップ自身と子プロセスだけに反映されます。別ターミナルではフルパスか表示されたシェル限定の PATH 設定を使います。cleanup は新しいプロジェクト内ランチャーだけを解除します。Hermes は従来どおり `~/.local/bin` に配置し、シェルプロファイルまたは Windows のユーザー PATH に永続登録します。Hermes の cleanup では共有 bin が空になった場合だけ、自動追加した PATH 登録を解除します。
 
-### フォルダ改名後に旧パスの MODULE_NOT_FOUND が出る場合
+### ランチャーを修復する場合
 
-`aidiy_diag` が旧 `backend_diag/diag_main.mjs` を探す場合、PATH から見つかった生成済みランチャーが改名前の絶対パスを保持している可能性があります。clone / pull は `_AIDIY/*/bin` の生成済みランチャーを再登録しません。旧フォルダを復活させる必要はありません。
-
-通常の `python _setup.py` でも Diag / Memo のランチャーを再登録し、同じ配置元の旧パスを更新します。PATHで先に見つかる `~/.local/bin` の同一コピー生成ランチャーも毎回更新するため、共有binが先でも旧パスは残りません。Diag の登録が成功したことを確認してください。
+clone / pull は `_AIDIY/*/bin` の生成済みランチャーを再登録しません。通常の `python _setup.py` は Diag / Memo のランチャーを再登録し、PATHで先に見つかる `~/.local/bin` の同一コピー生成ランチャーも毎回更新します。Diag の登録が成功したことを確認してください。
 
 依存導入を繰り返さず登録だけ修復する場合は、Windows のリポジトリ直下で次を実行します。
 
@@ -366,7 +364,7 @@ python _setup.py --launchers-only
 _AIDIY\aidiy_diag\bin\aidiy_diag.cmd
 ```
 
-`--launchers-only` は全起動コマンドの登録を修復しますが、依存導入・ビルド・サービス起動は行いません。同じ配置元の旧 Diag / Memo ランチャーは旧フォルダが削除済みでも移行します。別コピーや改変済みのランチャーは上書きしません。
+`--launchers-only` は全起動コマンドの登録を修復しますが、依存導入・ビルド・サービス起動は行いません。別コピーや改変済みのランチャーは上書きしません。
 
 直接指定で起動できるのに `aidiy_diag` だけ失敗する場合は、新しいターミナルで `where aidiy_diag` を確認してください。最初に表示されるパスが実際の起動元です。同一コピーの既知テンプレートなら共有bin側も更新されますが、別コピー・改変済み・リンクは保護して登録失敗を報告します。その場合は表示された正規ランチャーを直接指定し、内容を確認せずに共有binやPATHを削除しないでください。
 
@@ -376,7 +374,7 @@ _AIDIY\aidiy_diag\bin\aidiy_diag.cmd
 
 cleanupの停止通知は同じDiagフォルダに排他的に作った一時ファイルから置換します。固定名 `.stop-request.tmp` が既に存在しても、そのファイルやsymlinkの参照先へ書き込みません。停止・終了確認に失敗した場合は依存削除へ進みません。POSIXの引用符を失った空白入りコマンドや、作業フォルダが分からない相対起動など、プロセス所属を安全に確認できない場合も中止します。その場合は対象Diagのウィンドウを閉じるか起動端末のCtrl+Cで終了し、再実行してください。パスの断片一致だけで別コピーを強制終了することはしません。`static/` の保持、ランチャーの所有マーカー、既存の削除範囲は維持します。
 
-Electron は既存 `scripts/_setup_electron.py` を使い、配置済み、他コンポーネントの同版 dist、`.aidiy_cache/electron` の共有 ZIP の順で再利用し、不足時だけ取得します。Diag は既存 frontend と同じ `^44.7.0` の Electron パッケージを使います。同版 Diag dist も後段 frontend から再利用でき、専用の別キャッシュは作りません。起動時の npm install / ダウンロードはしません。
+Electron は既存 `scripts/_setup_electron.py` を使い、配置済み、他コンポーネントの同版 dist、利用者のホームの `~/.aidiy/cache/electron` にある共有 ZIP の順で再利用し、不足時だけ取得します。Diag は既存 frontend と同じ `^44.7.0` の Electron パッケージを使います。同版 Diag dist も後段 frontend から再利用でき、専用の別キャッシュは作りません。起動時の npm install / ダウンロードはしません。
 
 Electron の認証 URL は親子プロセス専用 IPC で渡し、引数・環境変数・ログへ出しません。Windows の Electron は標準入力が常に EOF になるため、標準入力は使いません。renderer は sandbox / contextIsolation を有効、nodeIntegration を無効にします。非永続 session を使い、権限要求・別ウィンドウ・外部 navigation を拒否します。ウィンドウを閉じると診断サーバーも停止します。
 
@@ -497,9 +495,9 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 
 タイトル欄左側の「ランチャー表示」は、接続中はどのタブからでも使えます。ミニ内の上段にAiDiy6アプリと導入済みHermes、下段に実行ファイルが見つかったClaude / Codex / Copilot / Agy / Grok / OpenCodeを表示します。外部CLIが0件なら下段ごと非表示にし、ある場合はAiDiyと同じ幅のボタンを中央寄せします。更新ボタンは置かず、ミニ表示時・再接続時に存在確認を自動更新します。表示・確認ではCLIを実行せず、インストールやログインも行いません。存在確認は認証成功・動作保証ではありません。
 
-「アプリ起動」で選択中のプロジェクトフォルダを共有します。フォルダ未選択・切断中は起動できません。ミニのアプリ・CLIアイコンは起動確認ダイアログを出さず、1回のクリックで起動します。CLIは同じフォルダを作業ディレクトリとした `aidiy_console` を開き、従来の自動承認モードで対話CLIを開始します。プロンプトやモデル引数は付けず、CLI自身の既定モデルと既存ログインを使います。起動成功後の説明はミニに表示せず、失敗時のエラーと処理中の表示は残します。選択中のフォルダと未選択時の案内は引き続き表示します。ファイル変更・コマンド実行が自動承認され、Codexではサンドボックスも解除されるため、信頼できるプロジェクトだけで使用してください。CLIの契約や設定によって利用料金が発生する場合があります。
+「アプリ起動」で選択中のプロジェクトフォルダを共有します。フォルダ未選択・切断中は起動できません。ミニのアプリ・CLIアイコンは起動確認ダイアログを出さず、1回のクリックで起動します。CLIは同じフォルダを作業ディレクトリとした `aidiy_term` を開き、従来の自動承認モードで対話CLIを開始します。プロンプトやモデル引数は付けず、CLI自身の既定モデルと既存ログインを使います。起動成功後の説明はミニに表示せず、失敗時のエラーと処理中の表示は残します。選択中のフォルダと未選択時の案内は引き続き表示します。ファイル変更・コマンド実行が自動承認され、Codexではサンドボックスも解除されるため、信頼できるプロジェクトだけで使用してください。CLIの契約や設定によって利用料金が発生する場合があります。
 
-固定起動定義は `frontend_ide/aidiy_console/cli-launch.mjs` をConsoleとDiagで共用します（2026-10-20 公式資料確認）。
+固定起動定義は `frontend_ide/aidiy_term/cli-launch.mjs` をTermとDiagで共用します（2026-10-20 公式資料確認）。
 
 - Claude: `--dangerously-skip-permissions`。[公式CLI参考](https://code.claude.com/docs/en/cli-reference)
 - Codex: `--dangerously-bypass-approvals-and-sandbox`。[公式CLI参考](https://developers.openai.com/codex/cli/reference/)
@@ -509,9 +507,9 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - OpenCode: `--auto`。[公式TUI参考](https://opencode.ai/docs/cli/#tui)、[自動承認の範囲](https://opencode.ai/docs/permissions/#auto-mode)
 - AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたはユーザーの `~/.local/bin` に配置済みのランチャーが対象です。
 
-組織の禁止・denyルール・初回の信頼確認・ログインなど、CLI側で保持する制約は解除しません。古いCLIが固定フラグに未対応ならConsoleにそのエラーを表示し、勝手に別フラグや通常モードへ切り替えません。Windowsのnpm `.cmd` は文字列としてシェル実行せず、許可したパッケージの安全な `bin` を検証してNodeから引数配列で開きます。任意のコマンド・モデル・実行ファイル・シェル本文はDiag APIへ渡せません。
+組織の禁止・denyルール・初回の信頼確認・ログインなど、CLI側で保持する制約は解除しません。古いCLIが固定フラグに未対応ならTermにそのエラーを表示し、勝手に別フラグや通常モードへ切り替えません。Windowsのnpm `.cmd` は文字列としてシェル実行せず、許可したパッケージの安全な `bin` を検証してNodeから引数配列で開きます。任意のコマンド・モデル・実行ファイル・シェル本文はDiag APIへ渡せません。
 
-Hermes・外部CLIは、同じDiag・同じプロジェクトでもクリックごとに独立したConsole窓を開きます。起動途中や別窓の稼働中も追加起動でき、既存窓を再利用・前面化しません。各窓は別のサーバーポート・端末セッション・起動ログを持ち、1つを閉じても他の窓は続行します。確認付きの呼出しでは確認ダイアログだけを重ねず、承認後の起動は並行して受け付けます。通信の再接続・重複startはその窓が所有する同じCLIに戻り、終了済みCLIを勝手に再実行しません。Diag終了ではConsoleは終了せず、Console窓・所有サーバーを閉じるとその窓のCLIだけが停止します。ブラウザタブの一時切断は再接続のため30秒だけプロセスを保持し、戻らなければCLIと所有サーバーを終了します。初回の端末接続が表示後30秒以内に始まらない場合も終了し、次回のクリックで再起動できます。既存CLIの全OS横断検出は行いません。Avatar・Live・Discordの単一起動制限と、その他アプリの起動中の排他は変更しません。
+Hermes・外部CLIは、同じDiag・同じプロジェクトでもクリックごとに独立したTerm窓を開きます。起動途中や別窓の稼働中も追加起動でき、既存窓を再利用・前面化しません。各窓は別のサーバーポート・端末セッション・起動ログを持ち、1つを閉じても他の窓は続行します。確認付きの呼出しでは確認ダイアログだけを重ねず、承認後の起動は並行して受け付けます。通信の再接続・重複startはその窓が所有する同じCLIに戻り、終了済みCLIを勝手に再実行しません。Diag終了ではTermは終了せず、Term窓・所有サーバーを閉じるとその窓のCLIだけが停止します。ブラウザタブの一時切断は再接続のため30秒だけプロセスを保持し、戻らなければCLIと所有サーバーを終了します。初回の端末接続が表示後30秒以内に始まらない場合も終了し、次回のクリックで再起動できます。既存CLIの全OS横断検出は行いません。Avatar・Live・Discordの単一起動制限と、その他アプリの起動中の排他は変更しません。
 
 アイコンの出典・ライセンス・引用メモは保存先の `diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md` に集約し、配布先にも同名の `static/LICENSE_ICONS.md` を同梱します。CopilotはGitHub Octicons、Grokはx.ai公式ブランド配布、OpenCodeは公式リポジトリ、Codex / Claude CodeはLobeHubのMIT素材です。各素材の形状・色を保持し（Copilotは記録済み単色変更）、外部CLIとHermesは白い帯・黒い名称を含む120×120pxの自己完結SVGとして表示します。PNG派生物も同梱します。Hermesは既存AiDiy画像にHERMESの帯を組み合わせ、AgyはAntigravity公式サイトの山形マークです。AiDiy6アプリは名称入りの既存画像を使い、いずれもHTMLで名前を重ねません。ミニの上段は利用可能なAiDiyアプリ（CPUを含む）、下段はHermes・Pi・外部CLIとChromeです。初期幅では各行に7個分の枠があります。収まる行は中央に揃い、あふれる行は左端から表示を始めて右から左へ循環します。左右にドラッグして表示位置を動かせます。Electronでウィンドウを広げると表示できる数が増えます。CLIは利用可能なものだけを並べます。ミニのアイコンを名称帯込みの36px枠・30px表示へ揃え、元の縦横比を維持します。稼働インジケーター6件は1行で表示します。再生成方法と原本の場所は同フォルダのREADMEを参照してください。
 
@@ -535,7 +533,7 @@ Hermes・外部CLIは、同じDiag・同じプロジェクトでもクリック�
 表示切替の位置計算は `frontend_diag/diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、アイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test frontend_diag/checks/display-anchor.check.cjs frontend_diag/checks/start-mini.check.mjs frontend_diag/checks/micro-window.check.mjs frontend_diag/checks/desktop.check.mjs frontend_diag/checks/size-transition.check.cjs` で確認します。
 
 実装上、Windowsのアイコン表示は専用の最前面レベルを設定し、表示切替完了時にも実際の最前面状態を確認します。解除時は共通ピンの選択へ戻します。ドラッグの起点はメインプロセスのマウス押下で記録し、IPC到着前にポインターが動いた場合も最初の移動量を保持します。素早い解放時も最後の位置を反映して終了します。
-- アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くConsoleは作業領域中央に約800×600pxで表示します。
+- アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くTermは作業領域中央に約800×600pxで表示します。
 
 画面は frontend_diag/diag/ui/components/アプリ起動/マイクロランチャー.vue / .css、共通寸法は同フォルダの 円周配置.cjs、窓制御は frontend_diag/diag/起動/マイクロ表示.cjs です。回帰確認は node --test frontend_diag/checks/micro-window.check.mjs frontend_diag/checks/icon-drag.check.mjs frontend_diag/checks/desktop.check.mjs。配布画面を更新するときは npm --prefix frontend_diag/ui run build と npm --prefix frontend_diag/ui run check を実行します。
 
@@ -545,7 +543,7 @@ Hermes・外部CLIは、同じDiag・同じプロジェクトでもクリック�
 
 ### VS Code ランチャー
 
-アプリ起動・ミニ・アイコン化の外部ランチャーに VS Code を表示します。導入タブと同じ実行ファイル探索を使用し、未導入時は通常画面で無効、ミニ・アイコン化では非表示です。選択した実在プロジェクトフォルダを `--new-window` で開きます。Console・AI CLI・自動承認は使用せず、フォルダ未選択・削除済みの場合は別フォルダへ代替しません。Windows の `code.cmd` は同梱 `Code.exe` を直接起動し、パスをシェル文字列に展開しません。呼び出し元のプロキシ環境変数を引き継ぎ、Diag 終了時にも VS Code は独立して継続します。
+アプリ起動・ミニ・アイコン化の外部ランチャーに VS Code を表示します。導入タブと同じ実行ファイル探索を使用し、未導入時は通常画面で無効、ミニ・アイコン化では非表示です。選択した実在プロジェクトフォルダを `--new-window` で開きます。Term・AI CLI・自動承認は使用せず、フォルダ未選択・削除済みの場合は別フォルダへ代替しません。Windows の `code.cmd` は同梱 `Code.exe` を直接起動し、パスをシェル文字列に展開しません。呼び出し元のプロキシ環境変数を引き継ぎ、Diag 終了時にも VS Code は独立して継続します。
 
 公式原画を保持したうえで、表示用は青帯・白字 VSCODE を含む SVG と120px PNGに合成しています。出典・利用条件は `diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md`、コマンド仕様は https://code.visualstudio.com/docs/configure/command-line を参照してください。
 
@@ -589,7 +587,7 @@ Toolsの一括試験は、通常タブの「全テスト」および `--headless
 
 ## Pi（aidiy_pi）の連携
 
-`diag/モデル情報/pi_info.mjs` が Hermes と同じ区分・順序の `pi_models_info.json` を生成します。`command_pi` がセットアップ済みの場合は、合成 `code_models_info.json` にも `aidiy_pi` を含めます。アプリ起動の CLI 一覧では Hermes の次に表示し、Console と共通の起動処理から、この配置先の Pi ソースを Node で直接起動します。追加の承認省略フラグは付けず、Pi標準のYOLOとして扱います。
+`diag/モデル情報/pi_info.mjs` が Hermes と同じ区分・順序の `pi_models_info.json` を生成します。`command_pi` がセットアップ済みの場合は、合成 `code_models_info.json` にも `aidiy_pi` を含めます。アプリ起動の CLI 一覧では Hermes の次に表示し、Term と共通の起動処理から、この配置先の Pi ソースを Node で直接起動します。追加の承認省略フラグは付けず、Pi標準のYOLOとして扱います。
 
 モデル・キー・OAuth・MCPと、Code / Navi / Discord / Slackへの連携は [PiのAiDiy連携](../_AIDIY/knowledge/command_pi,AiDiy連携.md) を参照してください。
 

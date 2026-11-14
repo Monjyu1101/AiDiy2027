@@ -22,19 +22,12 @@ const MODEL_KEYS: Record<string, string> = {
   copilot_cli: 'CODE_COPILOT_CLI_MODEL', codex_cli: 'CODE_CODEX_CLI_MODEL',
   antigravity_cli: 'CODE_ANTIGRAVITY_CLI_MODEL', grok_cli: 'CODE_GROK_CLI_MODEL',
   opencode_cli: 'CODE_OPENCODE_CLI_MODEL', aidiy_hermes: 'CODE_AIDIY_HERMES_MODEL', aidiy_pi: 'CODE_AIDIY_PI_MODEL',
+  aidiy_codex: 'CODE_AIDIY_CODEX_MODEL',
   claude_ollama: 'CODE_CLAUDE_OLLAMA_MODEL', codex_ollama: 'CODE_CODEX_OLLAMA_MODEL',
 };
-// 旧ランチャー・保存値を AIコアの Code AI 名へ移行する。
+// 保存値・入力値の前後の空白だけを除く。Code AI 名（MODEL_KEYS のキー）はそのまま使う。
 export function コード選択(value: CodeModel): CodeModel {
-  const aliases: Record<string, string> = {
-    'copilot-cli': 'copilot_cli', 'codex-cli': 'codex_cli', 'claude-code': 'claude_cli',
-    'antigravity-cli': 'antigravity_cli', 'grok-cli': 'grok_cli', 'opencode-cli': 'opencode_cli', hermes_cli: 'aidiy_hermes',
-  };
-  const provider = value.provider.trim();
-  const model = value.model.trim();
-  const hermesProvider = provider && !aliases[provider] && !MODEL_KEYS[provider] && !provider.endsWith('_cli');
-  return { provider: aliases[provider] || (hermesProvider ? 'aidiy_hermes' : provider),
-    model: hermesProvider && model && model !== 'auto' ? `${provider}/${model}` : model };
+  return { provider: value.provider.trim(), model: value.model.trim() };
 }
 type Info = { available_models: { code_models: Record<string, Record<string, string>> }; モデル設定: Record<string, string> };
 

@@ -28,7 +28,7 @@ async function fixture({switching=false}={}){
 test('VS Codeを含む6アプリ・7CLI・エディターの14個をアイコン表示へ渡す',async()=>{
  const f=await fixture();
  try{
-  f.appState.項目.value=['avatar','ide','console','code','live','discord'].map(id=>({id,名前:id}));
+  f.appState.項目.value=['avatar','ide','term','code','live','discord'].map(id=>({id,名前:id}));
   f.cliState.項目.value=['claude','codex','copilot','agy','grok','opencode','aidiy_hermes'].map(id=>({id,名前:id,利用可能:true}));
   f.cliState.項目.value.push({id:'vscode',名前:'VS Code',種類:'editor',利用可能:true});
   await flush();
@@ -126,7 +126,7 @@ test('右クリック一覧は表示アイコンと同じ順序・件数で、�
 test('二重円は外側完了後に内側を展開し、収納は同じ遅延を反転する',async()=>{
  const f=await fixture();
  try{
-  f.appState.項目.value=['avatar','task','team','ide','console','code','live','discord','browser','chrome'].map(id=>({id,名前:id}));
+  f.appState.項目.value=['avatar','task','team','ide','term','code','live','discord','browser','chrome'].map(id=>({id,名前:id}));
   f.cliState.項目.value=['aidiy_hermes','claude','codex','copilot','agy','grok','opencode','vscode'].map(id=>({id,名前:id}));await flush();
   const positions=nodes(f.root).filter(n=>n.props.class==='micro-position');
   assert.equal(positions.length,18);
@@ -142,9 +142,9 @@ test('二重円は外側完了後に内側を展開し、収納は同じ遅延�
 test('起動不可の項目は円周と右クリックから消え、復帰すると同じ順序へ戻る',async()=>{
  const f=await fixture();let launches=0;const blocked=vue.ref(new Set());
  try{
-  const ids=['chrome','slack','discord','cpu','team','task','avatar','browser','live','code','console','navi','ide'];
+  const ids=['chrome','slack','discord','cpu','team','task','avatar','browser','live','code','term','navi','ide'];
   const cliIds=['vscode','opencode','grok','agy','copilot','codex','claude','aidiy_hermes','aidiy_pi'];
-  const expected=['ide','console','browser','navi','code','live','avatar','task','team','cpu','discord','slack','aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
+  const expected=['ide','term','browser','navi','code','live','avatar','task','team','cpu','discord','slack','aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
   f.cliState.項目.value=cliIds.map(id=>({id,名前:id,利用可能:true}));
   f.appState.項目.value=ids.map(id=>({id,名前:id}));f.appState.利用可能=id=>!blocked.value.has(id);f.appState.起動=()=>launches++;
   for(const missing of [[],['task','team'],['task','team','browser','chrome'],['task','team','browser','chrome','slack'],[]]){

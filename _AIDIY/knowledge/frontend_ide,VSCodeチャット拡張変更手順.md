@@ -108,11 +108,11 @@ python frontend_ide/host/_setup.py
 
 `frontend_ide/host/_setup.py` は `npm install`、`npm update`、Electron の準備、`npm run package` による Code / Live の VSIX 生成、`code --install-extension --force` を順に実行し、最後に両拡張の ID とバージョンを再取得して配置を確認する。VS Code CLI が見つからない場合は単独画面だけをコンパイルする。最後に AiDiy 本体の `_AIDIY/aidiy_code/bin/aidiy_code.cmd`（Windows）または `_AIDIY/aidiy_code/bin/aidiy_code`（macOS / Linux）を作り、`aidiy_code/launch.mjs` を絶対パスで呼び出す。`code` が PATH に無い場合は、稼働中の Codespaces / IDE Container / Remote SSH の Remote CLI と VS Code の標準配置先も探索する。単にファイルが存在するだけでなく、`--version` に成功した CLI だけを使う。
 
-同時に AiDiy 本体の `_AIDIY/aidiy_live/bin/` に `aidiy_live` のランチャーも作り、`aidiy_live/launch.mjs` を呼び出す。ランチャーだけの更新は `python frontend_ide/host/_setup.py --launchers-only` を使う。旧名 `aidiy_vscode` を含むホーム配下の旧ランチャーは移行・削除しない。生成済み VSIX だけを配置する場合は `python frontend_ide/host/_setup.py --extensions-only` を使う。通常セットアップと `--extensions-only` は両 VSIX の存在を確認してから、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去し、除去を確認した後に Code / Live を配置する。旧 `aidiy-vscode` も同じ判定で対象になる。表示名は `AiDiy Code` / `AiDiy Live`、内部モジュール名・起動コマンドは `aidiy_code` / `aidiy_live` とする。拡張パッケージ名は `aidiy-code` / `aidiy-live`、拡張 ID は `aidiy.aidiy-code` / `aidiy.aidiy-live` とする。
+同時に AiDiy 本体の `_AIDIY/aidiy_live/bin/` に `aidiy_live` のランチャーも作り、`aidiy_live/launch.mjs` を呼び出す。ランチャーだけの更新は `python frontend_ide/host/_setup.py --launchers-only` を使う。生成済み VSIX だけを配置する場合は `python frontend_ide/host/_setup.py --extensions-only` を使う。通常セットアップと `--extensions-only` は両 VSIX の存在を確認してから、拡張名が `aidiy-` で始まる既存拡張（`publisher.aidiy-*`）をすべて除去し、除去を確認した後に Code / Live を配置する。表示名は `AiDiy Code` / `AiDiy Live`、内部モジュール名・起動コマンドは `aidiy_code` / `aidiy_live` とする。拡張パッケージ名は `aidiy-code` / `aidiy-live`、拡張 ID は `aidiy.aidiy-code` / `aidiy.aidiy-live` とする。
 
 片方だけを無効にする場合は VS Code の拡張一覧で対象の歯車から「無効にする」または「無効にする（ワークスペース）」を選択する。必要に応じてウィンドウを再読み込みする。
 
-Electron は VSIX 生成・単独画面コンパイルより前に `scripts/_setup_electron.py` の共通処理で準備する。配置済みの実行ファイル・`version`・`path.txt` を照合し、未配置なら Avatar の同じバージョンのバイナリ、`.aidiy_cache/electron/` の共有 ZIP の順に再利用する。まだ取得されていない場合だけ Python で GitHub から取得する。npm の install / update / rebuild では Electron の自動取得をスキップし、同じ取得を繰り返さない。Electron を準備できない場合はセットアップを失敗扱いにする。詳細は [`共通,開発環境運用手順.md`](./共通,開発環境運用手順.md) の「Electron の共通セットアップ」を参照する。
+Electron は VSIX 生成・単独画面コンパイルより前に `scripts/_setup_electron.py` の共通処理で準備する。配置済みの実行ファイル・`version`・`path.txt` を照合し、未配置なら Avatar の同じバージョンのバイナリ、`~/.aidiy/cache/electron/`（利用者のホームの共有キャッシュ）の ZIP の順に再利用する。まだ取得されていない場合だけ Python で GitHub から取得する。npm の install / update / rebuild では Electron の自動取得をスキップし、同じ取得を繰り返さない。Electron を準備できない場合はセットアップを失敗扱いにする。詳細は [`共通,開発環境運用手順.md`](./共通,開発環境運用手順.md) の「Electron の共通セットアップ」を参照する。
 
 単独画面は作業フォルダで `aidiy_code`、または `aidiy_code "C:\work\project"` のように明示して起動する。前者は起動時のカレントフォルダを使用する。フルパスか、セットアップが表示する現在のシェル限定の PATH 設定でプロジェクト内ランチャーを使う。Hermes の `~/.local/bin` とは別の保存先で、Code / Live のセットアップはシェル設定・レジストリを変更しない。Windows の `.cmd` と macOS / Linux のシェルランチャーは、どちらも `aidiy_code/launch.mjs` を直接呼ぶ。`launch-extension-dev.ps1` は Windows で Code / Live の両方を `--extensionDevelopmentPath` に指定した VS Code 拡張の開発ホストを起動する。
 
@@ -197,8 +197,8 @@ node --test checks/runner.test.cjs checks/code-connection.test.cjs checks/code-e
 
 ## Code / Live のファイル添付と返却画像
 
-- HTTP本文・WebSocketメッセージの転送上限は、20 MiB未満だった固定値を20 × 1024 × 1024 bytesへそろえる。Code / LiveのHTTP中継、Live拡張ホストのAPIとWS双方向、IDEのExplorer・検索・解析・TaskTeam・共有下書き、Console・Browser CDP、Discord・SlackのパネルとDiscord Liveが対象。UTF-8の文字数ではなくbytesで判定する。既存の20 MiB以上・無制限の中継や利用者の明示設定は引き下げない。
-- 転送上限と業務上限は別。下記の添付4 MiB・10件、入力文字数、検索・解析の指示文字数、プレビュー省略、Consoleの入力chunk・未確認出力、Liveの送信待ち量、ファイル専用packet検証、TaskダイアログのIPC上限は維持する。転送できても業務検証で拒否される要求がある。
+- HTTP本文・WebSocketメッセージの転送上限は、20 MiB未満だった固定値を20 × 1024 × 1024 bytesへそろえる。Code / LiveのHTTP中継、Live拡張ホストのAPIとWS双方向、IDEのExplorer・検索・解析・TaskTeam・共有下書き、Term・Browser CDP、Discord・SlackのパネルとDiscord Liveが対象。UTF-8の文字数ではなくbytesで判定する。既存の20 MiB以上・無制限の中継や利用者の明示設定は引き下げない。
+- 転送上限と業務上限は別。下記の添付4 MiB・10件、入力文字数、検索・解析の指示文字数、プレビュー省略、Termの入力chunk・未確認出力、Liveの送信待ち量、ファイル専用packet検証、TaskダイアログのIPC上限は維持する。転送できても業務検証で拒否される要求がある。
 - 転送境界は `frontend_ide/checks/transport-limits.test.mjs`、Code / Liveホスト再生成後の `host/aidiy_live/checks/host.test.cjs`、Discord / Slackそれぞれの `checks/transport-limits.test.ts` で確認する。実socketや実APIは不要で、20 MiBちょうど・1byte超過・マルチバイト・分割受信をpure/VM/mockで検証する。
 - 共通Vueの `src/components/添付ファイル/` と `host/src/file-attachments.ts` を使う。単独起動・IDE・VS Code拡張とも、Core接続中の現在の会話へファイルをドロップする。Codeは「＋ ファイル」でも選べる。オフラインHermesへファイルを自動転送しない。
 - 1件は空でない4 MiB以下、1回は10件まで。全件の名前・サイズを先に検証し、読込後もsession・会話・プロジェクトと接続世代を照合する。切断・会話変更・送信失敗時は残りを中止し、自動再送しない。本文の下書きは保持する。
@@ -301,7 +301,7 @@ Live のブラウザ版は通常の `--browser` と Electron 失敗時の自動�
 python frontend_ide/host/_cleanup.py
 ```
 
-ルートの `python _cleanup.py` でも、`command_hermes` の次に `frontend_ide/host` を選択できる。拡張名が `aidiy-` で始まる配置済み拡張（`publisher.aidiy-*`）をすべて解除し、拡張一覧に対象が残っていないことを確認してから、AiDiy 本体の `_AIDIY/aidiy_code/bin/` / `_AIDIY/aidiy_live/bin/` に配置した当該作業コピーのランチャー、`node_modules`、`dist`、`aidiy_live/dist`、`out`、`frontend_ide/host` 直下の `*.vsix`、Python cache を削除する。ホーム配下の旧ランチャーと旧名 `aidiy_vscode` は変更・削除しない。セットアップとクリーンアップの対象判定・解除確認は `frontend_ide/host/scripts/vscode_extensions.py` で共有する。解除が失敗した場合はランチャー・生成物を削除しない。
+ルートの `python _cleanup.py` でも、`command_hermes` の次に `frontend_ide/host` を選択できる。拡張名が `aidiy-` で始まる配置済み拡張（`publisher.aidiy-*`）をすべて解除し、拡張一覧に対象が残っていないことを確認してから、AiDiy 本体の `_AIDIY/aidiy_code/bin/` / `_AIDIY/aidiy_live/bin/` に配置した当該作業コピーのランチャー、`node_modules`、`dist`、`aidiy_live/dist`、`out`、`frontend_ide/host` 直下の `*.vsix`、Python cache を削除する。セットアップとクリーンアップの対象判定・解除確認は `frontend_ide/host/scripts/vscode_extensions.py` で共有する。解除が失敗した場合はランチャー・生成物を削除しない。
 
 cleanup は VS Code 本体を終了しない。起動中の拡張ホストには再読み込みまで旧コードが残る場合があるため、解除を画面へ反映するときだけ利用者が VS Code のウィンドウを再読み込みする。CLI が利用できない、解除後も拡張が残る、生成物を削除できない場合は失敗として終了する。
 

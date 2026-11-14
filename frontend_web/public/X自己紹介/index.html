@@ -1228,7 +1228,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
             <span>コード AI 9 方式 / 6 パネル</span>
             <span>MCP — Windows 20 / Linux・macOS 19</span>
             <span>🤖 AIタスク自動実行 — AI分解 × 条件分岐・合流 × 並行実行</span>
-            <span>🌌 9 つのアプリ — IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU</span>
+            <span>🌌 9 つのアプリ — IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU</span>
         </div>
         <div class="typing-text" id="typing-text"></div>
     </section>
@@ -1392,7 +1392,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="9">9</span>
                 <span class="stat-label">frontend_ide の独立アプリ</span>
-                <span class="stat-sub">IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU。Code / Live は VS Code 拡張でも利用</span>
+                <span class="stat-sub">IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU。Code / Live は VS Code 拡張でも利用</span>
             </div>
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="2">2</span>
@@ -1516,7 +1516,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🌌 frontend_ide — 9 つのアプリ<span class="fx-new-badge">NEW</span></h3>
-                <p>IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の画面を Vue 3 の共通部品で統一。VS Code 拡張ホストと Code / Live の通信は host/、ファイル API と Office 表示は viewer/ に集約。Electron と Web で共通画面を使い、ポートは自動割り当て。単独 Browser は Electron 専用です。</p>
+                <p>IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の画面を Vue 3 の共通部品で統一。VS Code 拡張ホストと Code / Live の通信は host/、ファイル API と Office 表示は viewer/ に集約。Electron と Web で共通画面を使い、ポートは自動割り当て。単独 Browser は Electron 専用です。</p>
                 <div class="meta-tags"><span>aidiy_navi / aidiy_code / aidiy_live / aidiy_ide</span><span>Vue 3 共通部品</span><span>VSIX × 2</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -1780,7 +1780,7 @@ Key:   利用者名</pre>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     単独起動: <code>aidiy_code</code> / <code>aidiy_live</code><br>
                     VS Code 拡張: セカンダリサイドバー<br>
-                    IDE 部品: 「＋ Console」「＋ Code」「＋ Live」（Electron は別ウィンドウ、Web は画面内タブ）<br>
+                    IDE 部品: 「＋ Term」「＋ Code」「＋ Live」（Electron は別ウィンドウ、Web は画面内タブ）<br>
                     <strong>場所を変えても、同じ Code / Live の操作感</strong>
                 </div>
             </div>
@@ -1793,7 +1793,7 @@ Key:   利用者名</pre>
                     tools 接続が切れても作業セッションと子窓を保ち、復帰時に再接続します。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
-                    AIコアなしでも Console と Code（Hermes / Pi 直接実行）を利用。<br>
+                    AIコアなしでも Term と Code（Hermes / Pi 直接実行）を利用。<br>
                     AIコアへ接続すると Live 音声も使えます。<br>
                     ここでのオフラインは AIコア未接続の意味で、外部 AI の利用には通信が必要です。
                 </div>
@@ -1804,7 +1804,7 @@ Key:   利用者名</pre>
 
     <section class="section" id="独立アプリ">
         <h2 class="section-title animate-on-scroll">🧩 作業に合わせて、必要なアプリを開く</h2>
-        <p class="section-subtitle animate-on-scroll">Navi で次の作業を考え、Console・Code・Live・IDE・Task・Team・Browser で進め、CPU でホストの負荷を確認。9 つの独立アプリが開発の各場面を支えます。</p>
+        <p class="section-subtitle animate-on-scroll">Navi で次の作業を考え、Term・Code・Live・IDE・Task・Team・Browser で進め、CPU でホストの負荷を確認。9 つの独立アプリが開発の各場面を支えます。</p>
         <div class="architecture-grid">
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🧭 Navi — 次の一歩を考える</h3>
@@ -1812,9 +1812,9 @@ Key:   利用者名</pre>
                 <div class="meta-tags"><span>aidiy_navi</span><span>単独 / IDE から起動</span><span>ナビ・再評価は読取専用</span><span>自動航行は明示オン</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
-                <h3 class="architecture-title">⌨️ Console — 端末をそばに</h3>
+                <h3 class="architecture-title">⌨️ Term — 端末をそばに</h3>
                 <p>作業フォルダでコマンドやコード AI の CLI を実行するターミナル。IDE から複数の窓を開き、調査・実行・ログ確認を並べられます。Code への依頼と手元の操作を同じプロジェクトで進めます。</p>
-                <div class="meta-tags"><span>aidiy_console</span><span>PTY</span><span>複数ウィンドウ</span></div>
+                <div class="meta-tags"><span>aidiy_term</span><span>PTY</span><span>複数ウィンドウ</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔀 Task — 要求を実行フローへ</h3>
@@ -1889,7 +1889,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🚀 アプリ起動とミニランチャー</h3>
-                <p>システムの起動操作に加え、プロジェクトを選んで IDE・Navi・Code・Live・Console・Task・Team・Browser・CPU や Discord・Slack を開く入口を用意。ミニ表示・アイコン表示で、作業中も手元に置けます。</p>
+                <p>システムの起動操作に加え、プロジェクトを選んで IDE・Navi・Code・Live・Term・Task・Team・Browser・CPU や Discord・Slack を開く入口を用意。ミニ表示・アイコン表示で、作業中も手元に置けます。</p>
                 <div class="meta-tags"><span>aidiy_diag</span><span>アプリ起動</span><span>ミニ / アイコン表示</span></div>
             </div>
         </div>

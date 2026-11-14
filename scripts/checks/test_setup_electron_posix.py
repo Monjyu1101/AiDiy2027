@@ -54,17 +54,17 @@ def payload(platform_name):
 
 
 class ElectronCacheLocationTests(unittest.TestCase):
-    def test_cache_is_project_relative_not_working_directory_or_user_cache(self):
+    def test_cache_is_shared_user_cache_not_working_directory(self):
         original = Path.cwd()
         with tempfile.TemporaryDirectory(prefix='electron cache ') as other:
             try:
                 os.chdir(other)
-                # 単体 setup とルート setup のどちらでも同じ絶対パスになる。
+                # 単体 setup とルート setup のどちらでも、clone・コピーした別環境でも同じユーザーの共有キャッシュになる。
                 spec = importlib.util.spec_from_file_location(
                     'electron_cache_location', ROOT / 'scripts/_setup_electron.py')
                 helper = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(helper)
-                self.assertEqual(helper.CACHE_DIR, ROOT / '.aidiy_cache' / 'electron')
+                self.assertEqual(helper.CACHE_DIR, Path.home() / '.aidiy' / 'cache' / 'electron')
                 self.assertTrue(helper.CACHE_DIR.is_absolute())
             finally:
                 os.chdir(original)

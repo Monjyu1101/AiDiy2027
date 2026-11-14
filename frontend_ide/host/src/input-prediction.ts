@@ -42,7 +42,7 @@ export class InputPrediction {
     const valid = () => !controller.signal.aborted && this.context().enabled && identity(this.context()) === context;
     try {
       const target = ローカルTools接続先(this.root, current.projectPath);
-      // Core接続だけをtools通信可能とみなさない。Console/IDEと同じpingで確認する。
+      // Core接続だけをtools通信可能とみなさない。Term/IDEと同じpingで確認する。
       const ping = await this.request(new URL('/aidiy_code_agents/ping', target), {
         signal: AbortSignal.any([controller.signal, AbortSignal.timeout(1500)]), redirect: 'error',
       });

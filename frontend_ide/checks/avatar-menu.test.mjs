@@ -12,23 +12,23 @@ function fixture(){
  const context={ref:value=>({value}),desktop:false,window:{},cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),launching:{value:''},state:{value:{mode:'online'}},liveOpen:{value:false},browserAvailable:{value:true},panelOpen:{value:false},tab:{value:'code'},openNavigation(){},openWindow(){},openPanel(){}};
  vm.runInNewContext(source.slice(source.indexOf('const launchText='),source.indexOf('async function openWindow'))+';globalThis.desktop=desktopLaunchItems;globalThis.web=panelLaunchItems;',context);return context;
 }
-test('IDEメニュー: Console → Browser と Live → Avatar、起動中は両方を除き終了後復元',()=>{
+test('IDEメニュー: Term → Browser と Live → Avatar、起動中は両方を除き終了後復元',()=>{
  const f=fixture(),keys=()=>Array.from(f.desktop.value,item=>item.key);
- assert.deepEqual(keys(),['console','browser','navigation','code','live','avatar','task','team','cpu']);
+ assert.deepEqual(keys(),['term','browser','navigation','code','live','avatar','task','team','cpu']);
  assert.equal(f.desktop.value.find(x=>x.key==='avatar').text,'Avatar');
  for(const kind of ['live','avatar']){f.launching.value=kind;assert.ok(!keys().includes('live'));assert.ok(!keys().includes('avatar'));}f.launching.value='';
- f.liveOpen.value=true;assert.deepEqual(keys(),['console','browser','navigation','code','task','team','cpu']);
+ f.liveOpen.value=true;assert.deepEqual(keys(),['term','browser','navigation','code','task','team','cpu']);
  f.liveOpen.value=false;assert.ok(keys().includes('live'));assert.ok(keys().includes('avatar'));
- f.state.value.mode='offline';assert.deepEqual(keys(),['console','browser','code','cpu']);
+ f.state.value.mode='offline';assert.deepEqual(keys(),['term','browser','code','cpu']);
 });
 test('Web IDEはプロセス起動のAvatarを表示せず、既存Liveタブと順序を保つ',()=>{
- const f=fixture();assert.deepEqual(Array.from(f.web.value,x=>x.key),['console','browser','navigation','code','live','cpu']);
+ const f=fixture();assert.deepEqual(Array.from(f.web.value,x=>x.key),['term','browser','navigation','code','live','cpu']);
  f.liveOpen.value=true;assert.ok(f.web.value.some(x=>x.key==='live'));
 });
-test('VR起動列もConsole直後Browser、Live直後Avatar、CPUは最後',()=>{
+test('VR起動列もTerm直後Browser、Live直後Avatar、CPUは最後',()=>{
  const toolbar=source.slice(source.indexOf('<div class="all-launchers">'),source.indexOf('<div v-if="allBusy"'));
  const labels=Array.from(toolbar.matchAll(/@click="(openWindow\('([^']+)'|openNavigation)/g),m=>m[2]||'navigation');
- assert.deepEqual(labels,['console','browser','navigation','code','live','avatar','cpu']);
+ assert.deepEqual(labels,['term','browser','navigation','code','live','avatar','cpu']);
  assert.ok(toolbar.indexOf("openWindow(type,toolbar.displayId)") < toolbar.indexOf("openWindow('cpu',toolbar.displayId)"));
  assert.ok(toolbar.includes("['task','team'].filter(type=>!runningApps.includes(type))"));
  assert.ok(toolbar.includes("v-if=\"!runningApps.includes('cpu')\""));
@@ -43,7 +43,7 @@ test('起動中のTask / Team / CPUだけメニューから外し、終了後に
   f.runningApps.value=[kind];assert.deepEqual(keys(),initial.filter(key=>key!==kind));
   f.runningApps.value=[];assert.deepEqual(keys(),initial);
  }
- f.state.value.mode='offline';f.runningApps.value=['cpu'];assert.deepEqual(keys(),['console','browser','code']);
+ f.state.value.mode='offline';f.runningApps.value=['cpu'];assert.deepEqual(keys(),['term','browser','code']);
  f.cpuOpen.value=true;assert.ok(!f.web.value.some(item=>item.key==='cpu'));
  f.cpuOpen.value=false;assert.equal(f.web.value.at(-1).run,f.openCpu);
 });

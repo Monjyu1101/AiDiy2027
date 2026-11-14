@@ -21,7 +21,7 @@ app.whenReady().then(async()=>{
   const initial=window.getBounds();
   // 整数DIPへ戻す際の1 DIP以内の誤差は許容するが、ジェスチャー間でも累積させない。
   function check(stage){const actual=window.getBounds();assert.ok(Math.abs(actual.width-initial.width)<=1&&Math.abs(actual.height-initial.height)<=1,`${stage}: ${JSON.stringify({initial,actual})}`);}
-  const kinds=['code','live','console','viewer','explorer','panel-viewer','panel-routes'];
+  const kinds=['code','live','term','viewer','explorer','panel-viewer','panel-routes'];
   for(const kind of kinds){
    record.kind=kind;
    const token=drag.begin(event);assert.equal(typeof token,'string');

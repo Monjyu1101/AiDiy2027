@@ -62,7 +62,8 @@ class SetupMessageTests(unittest.TestCase):
 
     def test_component_inventories_list_technologies_without_role_descriptions(self):
         inventories = {
-            "frontend_diag": ("Diag", "Node.js / Electron / Vue 3"),
+            # Diag の setup は付箋メモ（aidiy_memo）も同時に準備するため見出しは「Diag, Memo」。
+            "frontend_diag": ("Diag, Memo", "Node.js / Electron / Vue 3"),
             "backend_local": ("Local", "Python / uv / FastAPI / PyTorch / Transformers / Gemma"),
             "backend_tools": ("Tools", "Python / uv / FastAPI / MCP"),
             "backend_server": ("Core / Apps", "Python / uv / FastAPI / SQLAlchemy / SQLite"),

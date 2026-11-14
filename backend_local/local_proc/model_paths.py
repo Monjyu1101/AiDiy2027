@@ -12,7 +12,9 @@
 ローカルモデル配置パスの解決ユーティリティ
 
 モデルは HuggingFace の既定キャッシュ（~/.cache/huggingface）ではなく、
-backend_local/temp/models/<safe_name> へモデルごとのフォルダで配置する。
+利用者のホームの ~/.aidiy/models/<safe_name> へモデルごとのフォルダで配置する。
+git clone やフォルダコピーで作った別の AiDiy 環境とも共有し、プロジェクトの cleanup では削除されない。
+設定 CHAT_LOCAL_MODELS_DIR を指定した場合はそちらを使う。
 
 - safe_name: repo_id の "/" を "__" に置換した名前（例: google/gemma-4-E4B-it
   → google__gemma-4-E4B-it）。
@@ -22,13 +24,10 @@ backend_local/temp/models/<safe_name> へモデルごとのフォルダで配置
 
 import os
 
-# backend_local ディレクトリ（local_proc の親）
-_BACKEND_LOCAL_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
 
 def default_models_dir() -> str:
-    """既定のモデル配置ディレクトリ（backend_local/temp/models）を返す。"""
-    return os.path.join(_BACKEND_LOCAL_DIR, "temp", "models")
+    """既定のモデル配置ディレクトリ（~/.aidiy/models）を返す。"""
+    return os.path.join(os.path.expanduser("~"), ".aidiy", "models")
 
 
 def safe_dir_name(model_id: str) -> str:

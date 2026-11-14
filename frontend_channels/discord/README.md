@@ -121,7 +121,7 @@ aidiy_discord
 
 モデル情報APIから初期値とモデル・音声候補を取得します。APIを取得できない場合は `_AIDIY/aidiy_diag/` の `live_models_info.json`、`live_voices_info.json`、`chat_models_info.json`、`code_models_info.json` を読みます。キーや音声の旧設定ファイルは使いません。候補を更新する場合は `aidiy_diag --headless` を実行してパネルを開き直してください。共通初期値は有効な候補へ補正します。手動保存したモデル・音声が候補から削除されている場合は、選び直すまで接続を止めます。
 
-パネルの選択は `プロジェクト/_AIDIY/aidiy_discord/aidiy_discord.json` の1ファイルに、音声会話の ON/OFF（`live`、未保存時は OFF）、Live のモデル・音声（`live_models`）、コードの実行環境（`code_name`、現在は `aidiy_hermes` 固定。将来の別ハーネス用）とモデル（`code_model`）をまとめて保存します。このファイルがあれば起動時に自動接続します。旧設定の読込や自動移行は行いません。未保存・破損時は共通 `LIVE_*` / `CODE_AIDIY_HERMES_MODEL` を使います。API キー・トークン・ID はモデル保存ファイルには含めません。
+パネルの選択は `プロジェクト/_AIDIY/aidiy_discord/aidiy_discord.json` の1ファイルに、音声会話の ON/OFF（`live`、未保存時は OFF）、Live のモデル・音声（`live_models`）、コードの実行環境（`code_name`、`aidiy_hermes` / `aidiy_pi`）とモデル（`code_model`）をまとめて保存します。このファイルがあれば起動時に自動接続します。未保存・破損時（`code_name` がない場合を含む）は共通 `LIVE_*` / `CODE_AIDIY_HERMES_MODEL` を使います。API キー・トークン・ID はモデル保存ファイルには含めません。
 
 `frontend_channels/discord` での `npm start`、またはプロジェクトルートでの `python frontend_channels/discord/_start.py` でも同じパネルが開きます。`aidiy_discord --check` / `npm run config:check` は設定と Hermes の実行パスだけを確認し、Discord には接続しません。Code だけなら Core は不要で、Live を利用する場合はルート `_start.py` などで Core を起動してください。Core 停止中は保存済み・共通設定のモデルを表示します。起動ログは配置先リポジトリの `temp/aidiy_discord/logs/`（`<UUID>.stdout.log` / `.stderr.log`）、起動完了通知は `temp/aidiy_discord/runtime/`（`<UUID>.ready.json`）に保存します。旧ログの移行・削除・旧保存先への退避は行いません。ブラウザ版のプロファイルは `プロジェクト/_AIDIY/aidiy_discord/browser-profile/` に保存します。Electron の設定・セッションは `プロジェクト/_AIDIY/aidiy_discord/electron/` に保存します。
 

@@ -36,10 +36,10 @@ test('offscreen saved child keeps initial placement, onscreen restores exact nor
  assert.equal(applyPlacement(child,{bounds:rect,maximized:true},f.screen),true);assert.deepEqual(child.window.getBounds(),rect);assert.equal(child.window.isMaximized(),true);
  f.owner.window.setBounds(out);applyPlacement(f.owner,{bounds:out,maximized:true},f.screen);assert.equal(onScreen(f.owner.window.getBounds(),f.screen.getAllDisplays().map(d=>d.workArea)),true);assert.notDeepEqual(f.owner.window.getBounds(),out);
 });
-test('Console restores saved size instead of replacing it with the new 600×400 default',()=>{
- const f=fixture(),child=f.add('console');
+test('Term restores saved size instead of replacing it with the new 600×400 default',()=>{
+ const f=fixture(),child=f.add('term');
  const area={x:0,y:0,width:1920,height:1080};
- const defaults=windowBounds('console',area);
+ const defaults=windowBounds('term',area);
  assert.equal(defaults.width,600);assert.equal(defaults.height,400);
  child.window.setBounds(defaults);
  const saved={x:80,y:100,width:850,height:500};
@@ -70,7 +70,7 @@ test('empty/missing layouts and offline/foreign requests are rejected without st
  const f=fixture();assert.equal((await f.run('save')).ok,false);f.save(null);assert.equal((await f.run('load')).ok,false);f.state.mode='offline';assert.equal((await f.run('load')).ok,false);assert.equal((await f.manager.handle({record:f.add()},'save')).ok,false);assert.equal(f.opening,0);
 });
 test('end-session during native restore stops later launches and renderer restore',async()=>{
- const f=fixture();f.save({...snapshot(),panels:[snapshot().panels[0],{kind:'console',bounds:rect}]});let release;f.gate(new Promise(resolve=>release=resolve));const loading=f.run('load');await new Promise(resolve=>setImmediate(resolve));f.owner.revision++;f.state.active=false;release();assert.equal((await loading).ok,false);assert.equal(f.opening,1);
+ const f=fixture();f.save({...snapshot(),panels:[snapshot().panels[0],{kind:'term',bounds:rect}]});let release;f.gate(new Promise(resolve=>release=resolve));const loading=f.run('load');await new Promise(resolve=>setImmediate(resolve));f.owner.revision++;f.state.active=false;release();assert.equal((await loading).ok,false);assert.equal(f.opening,1);
 });
 test('Save rejects late renderer result after session/project switches without overwriting layout',async()=>{
  const f=fixture();f.fill();f.owner.window.webContents.send=(_channel,value)=>{f.state.project.path='/other';f.manager.reply({record:f.owner},{requestId:value.requestId,ok:true,result:renderer()});};
@@ -119,17 +119,17 @@ test('Load uses the exact existing initial IDE placement when its saved display 
 });
 test('Load opens panels in the + menu order and moves them only after every panel is open',async()=>{
  const f=fixture(),far={x:900,y:300,width:800,height:500};
- f.save({...snapshot(),panels:[{kind:'cpu',bounds:rect,maximized:false},{kind:'code',bounds:far,maximized:false},{kind:'viewer',path:'a.txt',bounds:rect,maximized:false},{kind:'browser',bounds:rect,maximized:false},{kind:'console',bounds:rect,maximized:false}]});
+ f.save({...snapshot(),panels:[{kind:'cpu',bounds:rect,maximized:false},{kind:'code',bounds:far,maximized:false},{kind:'viewer',path:'a.txt',bounds:rect,maximized:false},{kind:'browser',bounds:rect,maximized:false},{kind:'term',bounds:rect,maximized:false}]});
  assert.equal((await f.run('load')).ok,true);
  const children=[...f.windows.values()].filter(record=>record.owner===f.owner);
- assert.deepEqual(children.map(record=>record.kind),['viewer','console','browser','code','cpu']);
+ assert.deepEqual(children.map(record=>record.kind),['viewer','term','browser','code','cpu']);
  for(const child of children)assert.ok(child.window.moves.every(move=>move.count===f.windows.size),child.kind);
  assert.deepEqual(children.find(record=>record.kind==='code').window.getBounds(),far);
  assert.deepEqual(children.find(record=>record.kind==='cpu').window.getBounds(),rect);
 });
 test('Load moves position and size together in 20 steps, so farther windows take larger steps',async()=>{
  const f=fixture(),far={x:860,y:270,width:880,height:750};
- f.save({...snapshot(),ide:{bounds:far,maximized:false},panels:[{kind:'code',bounds:far,maximized:false},{kind:'console',bounds:{...initial,x:initial.x+40},maximized:false}]});
+ f.save({...snapshot(),ide:{bounds:far,maximized:false},panels:[{kind:'code',bounds:far,maximized:false},{kind:'term',bounds:{...initial,x:initial.x+40},maximized:false}]});
  assert.equal((await f.run('load')).ok,true);
  const moves=kind=>[...f.windows.values()].find(record=>record.kind===kind).window.moves;
  for(const kind of ['ide','code']){
@@ -137,13 +137,13 @@ test('Load moves position and size together in 20 steps, so farther windows take
   assert.deepEqual({x:list[0].x,y:list[0].y,width:list[0].width,height:list[0].height},{x:100,y:80,width:500,height:655});
   assert.deepEqual({...list[19],count:undefined},{...far,count:undefined});
  }
- const near=moves('console');assert.equal(near.length,20);assert.equal(near[0].x-initial.x,2);assert.equal(moves('code')[0].x-initial.x,40);
+ const near=moves('term');assert.equal(near.length,20);assert.equal(near[0].x-initial.x,2);assert.equal(moves('code')[0].x-initial.x,40);
 });
 test('Save writes panels in the order Load opens them, keeping same-kind panels in opened order',async()=>{
  const f=fixture();
- f.add('cpu');f.add('viewer',{viewerPath:'b.txt'});f.add('code');f.add('panel-navigation',{name:'navi-1'});f.add('viewer',{viewerPath:'a.txt'});f.add('console');f.add('explorer',{name:'explorer-1'});
+ f.add('cpu');f.add('viewer',{viewerPath:'b.txt'});f.add('code');f.add('panel-navigation',{name:'navi-1'});f.add('viewer',{viewerPath:'a.txt'});f.add('term');f.add('explorer',{name:'explorer-1'});
  assert.equal((await f.run('save')).ok,true);
- assert.deepEqual(f.written[0].panels.map(panel=>panel.kind),['explorer','viewer','viewer','console','panel-navigation','code','cpu']);
+ assert.deepEqual(f.written[0].panels.map(panel=>panel.kind),['explorer','viewer','viewer','term','panel-navigation','code','cpu']);
  assert.deepEqual(f.written[0].panels.filter(panel=>panel.kind==='viewer').map(panel=>panel.path),['b.txt','a.txt']);
 });
 test('Save keeps the Browser URL and the Navi Code switch, and Load passes the URL back to the Browser',async()=>{
@@ -180,7 +180,7 @@ test('Browser Load allows exactly 10px at each horizontal edge while keeping its
   assert.deepEqual(browser.window.getBounds(),initial);
   assert.equal(browser.window.isMaximized(),false);
  }
- for(const kind of ['code','live','console','cpu','task','team','viewer','explorer','panel-navigation']){
+ for(const kind of ['code','live','term','cpu','task','team','viewer','explorer','panel-navigation']){
   const panel=f.add(kind);
   assert.equal(applyPlacement(panel,{bounds:{x:-1,y:0,width:900,height:600}},f.screen),false,kind);
   assert.deepEqual(panel.window.getBounds(),initial);
@@ -240,7 +240,7 @@ test('SV during animation rejects rather than overwrites a good layout',async()=
 });
 test('LD applies expanded placement before collapse, preserves legacy expanded windows, reports failures',async()=>{
  const calls=[];const f=fixture({restoreCollapse:async(record,value)=>{calls.push({kind:record.kind,value,bounds:record.window.getBounds(),locked:record.layoutRestoringFold});return{ok:record.kind!=='live'};}});
- const value=snapshot();value.panels=[{kind:'code',bounds:rect,maximized:false,collapsed:true},{kind:'console',bounds:rect,maximized:false},{kind:'live',bounds:rect,maximized:false,collapsed:true}];f.save(value);
+ const value=snapshot();value.panels=[{kind:'code',bounds:rect,maximized:false,collapsed:true},{kind:'term',bounds:rect,maximized:false},{kind:'live',bounds:rect,maximized:false,collapsed:true}];f.save(value);
  const result=await f.run('load');assert.equal(result.ok,false);assert.match(result.error,/live.*折りたたみ/);assert.equal(result.restored,3);
  assert.deepEqual(calls.map(v=>v.kind),['code','live']);for(const call of calls){assert.deepEqual(call.bounds,rect);assert.equal(call.locked,true);assert.equal(call.value,true);}
  for(const record of f.windows.values())assert.ok(!record.layoutRestoringFold);

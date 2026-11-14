@@ -150,4 +150,4 @@ router.push({
 4. DevTools Network で `/core` / `/apps` の呼び先、payload、`status/message/data` を確認する。
 5. 日本語URLをリロードし、ログイン済みなら同じ画面へ復帰することを確認する。
 
-一覧の件数・ページング・ソート、登録・変更・削除後の再取得、DevTools Consoleの警告とNetworkの401 / 403 / 500も確認します。
+一覧の件数・ページング・ソート、登録・変更・削除後の再取得、DevTools Termの警告とNetworkの401 / 403 / 500も確認します。

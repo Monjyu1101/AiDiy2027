@@ -103,6 +103,7 @@ class conf_json:
         'PREDICTION_COPILOT_CLI_MODEL': 'gpt-6-luna',
         'PREDICTION_AIDIY_HERMES_MODEL': 'openai_oauth/gpt-6-luna',
         'PREDICTION_AIDIY_PI_MODEL': 'openai_oauth/gpt-6-luna',
+        'PREDICTION_AIDIY_CODEX_MODEL': 'openai_oauth/gpt-6-luna',
 
         # DecisionAI設定（方式別モデル。autoは各方式の既定値）
         'DECISION_AI_NAME': 'auto',
@@ -136,6 +137,7 @@ class conf_json:
         'CODE_GROK_CLI_MODEL': 'same',
         'CODE_AIDIY_HERMES_MODEL': 'auto',
         'CODE_AIDIY_PI_MODEL': 'auto',
+        'CODE_AIDIY_CODEX_MODEL': 'auto',
         'CODE_OPENCODE_CLI_MODEL': 'auto',
         'CODE_MAX_TURNS': 999,
         'CODE_PLAN': 'auto',

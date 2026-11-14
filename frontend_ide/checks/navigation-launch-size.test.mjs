@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import size from '../host/scripts/window-size.cjs';
-import * as cliTitles from '../src/components/コンソール/CLIタイトル.js';
+import * as cliTitles from '../src/components/ターミナル/CLIタイトル.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -22,12 +22,12 @@ function fixture(opened, browser = true, desktopFailure = false) {
   Object.assign(process, { argv: [], env: { AIDIY_LAUNCHER_CHILD: '1' }, cwd: () => '/fixture', pid: 123, send: value => messages.push(value) });
   const app = { url: 'http://127.0.0.1:9999/', publicUrl: 'http://127.0.0.1:9999/', close: async () => { closed++; } };
   const modules = {
-    './src/components/コンソール/CLIタイトル.js': cliTitles,
+    './src/components/ターミナル/CLIタイトル.js': cliTitles,
     'node:child_process': { spawn() { throw Error('process spawning is forbidden in fixture'); } },
     'node:fs': { existsSync: () => true }, 'node:path': path, 'node:url': url, 'node:util': { parseArgs },
     './server.mjs': { startDevelopment: async (_project, value) => { options = value; return app; } },
-    './aidiy_console/cli-launch.mjs': { validateCliOptions() {}, resolveCliLaunch: async id => ({id,name:id==='aidiy_hermes'?'AiDiy Hermes':'GitHub Copilot CLI'}) },
-    './aidiy_console/cli-session.mjs': { createCliOwnerLifetime: () => ({ arm: () => armed++, dispose: () => disposed++, started() {} }) },
+    './aidiy_term/cli-launch.mjs': { validateCliOptions() {}, resolveCliLaunch: async id => ({id,name:id==='aidiy_hermes'?'AiDiy Hermes':'GitHub Copilot CLI'}) },
+    './aidiy_term/cli-session.mjs': { createCliOwnerLifetime: () => ({ arm: () => armed++, dispose: () => disposed++, started() {} }) },
     './viewer/launch-options.mjs': { projectFolder: () => '/fixture', useBrowser: () => browser, electronExecutable: () => 'fixture-electron' },
     './host/scripts/launch-project.mjs': { ウィンドウ: size, ブラウザで開く: async (_url, value) => { browserOptions = value; openCalls++; return opened; } },
     './デスクトップ/desktop-process.mjs': { spawnDesktop(_executable,_args,{env}) { desktopEnv=env;desktopArgs=_args;const child=new EventEmitter();child.kill=()=>{};queueMicrotask(()=>desktopFailure?child.emit('error',Error('Electron unavailable')):child.emit('message',{windowShown:true}));return child; } },

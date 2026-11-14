@@ -38,7 +38,7 @@ test('_AIDIY内の未知aidiy_*はGitと同じ除外で、通常名・ファイ�
   const root = await mkdtemp(join(tmpdir(), 'aidiy-runtime-filter-'));
   t.after(() => rm(root, { recursive: true, force: true }));
   const excluded = ['aidiy_custom', 'aidiy_ide_extra', 'aidiy_', 'aidiy_新機能', 'aidiy_with space',
-    ...['avatar','browser','code','console','diag','discord','hermes','ide','live','navi','slack','task','team'].map(name => `aidiy_${name}`)]
+    ...['avatar','browser','code','term','diag','discord','hermes','ide','live','navi','slack','task','team'].map(name => `aidiy_${name}`)]
     .flatMap(name => [`_AIDIY/${name}/record.md`, `nested/_AIDIY/${name}/record.md`]);
   const included = ['_AIDIY/knowledge/guide.md', '_AIDIY/histories/entry.md', '_AIDIY/custom/note.md',
     '_AIDIY/aidiy-custom/note.md', '_AIDIY/AIDIY_custom/note.md', '_aidiy/aidiy_custom/note.md',

@@ -19,14 +19,14 @@ import { createAISearch } from './ファイル機能/ai-search.mjs';
 import { createFileAnalysis } from './ファイル機能/file-analysis.mjs';
 import { createBrowserAnalysis } from './ファイル機能/browser-analysis.mjs';
 import { normalizeDisplayUrls, isPageSource } from './viewer/表示URL.mjs';
-import { startConsole } from './aidiy_console/console.mjs';
-import { cliTitleName } from './src/components/コンソール/CLIタイトル.js';
-import { validateCliOptions, resolveCliLaunch } from './aidiy_console/cli-launch.mjs';
+import { startTerm } from './aidiy_term/term.mjs';
+import { cliTitleName } from './src/components/ターミナル/CLIタイトル.js';
+import { validateCliOptions, resolveCliLaunch } from './aidiy_term/cli-launch.mjs';
 import { createFileHistory } from './ファイル機能/file-history.mjs';
 import { catppuccinAsset } from './src/components/ファイル閲覧/ファイルアイコン.js';
 const require=createRequire(import.meta.url),root=fileURLToPath(new URL('.',import.meta.url)),vscodeRoot=fileURLToPath(new URL('./host/',import.meta.url));
 export async function startDevelopment(project,{kind='ide',linked=false,projectFixed=false,port=0,strict=false,offline=false,provider,model,cli,cliAutoApprove=false,onCliStarted,onCliAbandoned,autoConnect=false,env=process.env,connection,aiSearchOptions,navigationOptions,fileAnalysisOptions,browserAnalysisOptions,explorerOptions}={}){
- if(!['code','live','ide','console','task','team','browser','navi','cpu'].includes(kind))throw Error('アプリはcode / live / ide / console / task / team / browser / navi / cpuから指定してください。');
+ if(!['code','live','ide','term','task','team','browser','navi','cpu'].includes(kind))throw Error('アプリはcode / live / ide / term / task / team / browser / navi / cpuから指定してください。');
  validateCliOptions(kind,{cli,cliAutoApprove,provider,model});
  const cliLaunch=cli?await resolveCliLaunch(cli,{autoApprove:cliAutoApprove,env}):undefined;
  project=require('./host/scripts/project-storage.cjs').projectRoot(project,fileURLToPath(new URL('../',import.meta.url)));
@@ -59,7 +59,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
     const sample=await systemMetrics.sample();
     res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(sample));return true;
    }
-   // Browser単独画面にはページ解析だけを公開し、一般のプロジェクト操作・Console APIは公開しない。
+   // Browser単独画面にはページ解析だけを公開し、一般のプロジェクト操作・Term APIは公開しない。
    if(kind==='browser'&&url.pathname.startsWith('/api/')&&!['/api/connection','/api/browser-analysis'].includes(url.pathname)){res.writeHead(url.pathname.startsWith('/api/connection/')?405:404).end();return true;}
    if(kind==='navi'&&url.pathname.startsWith('/api/')&&!['/api/navigation','/api/navigation/code','/api/navigation/sound','/api/connection'].includes(url.pathname)){res.writeHead(404).end();return true;}
    if (['ide','navi'].includes(kind) && url.pathname === '/api/navigation/code') {
@@ -102,7 +102,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
   },
   panelsFactory:(project,state)=>(panels=createPanels(project,state,async(type,folder,snapshot,{instance}={})=>{
    if(kind!=='ide'&&type!==kind&&!(kind==='navi'&&type==='code'&&instance))throw Error('このアプリでは利用できません。');
-   if(type==='console')return startConsole(folder,{env,cli,cliAutoApprove,onCliStarted,onCliAbandoned});
+   if(type==='term')return startTerm(folder,{env,cli,cliAutoApprove,onCliStarted,onCliAbandoned});
    const bundle=require(join(vscodeRoot,'dist',`aidiy_${type}`,'server.cjs'));
    if(type==='code')return bundle.単独起動(folder,backend,{offline:snapshot.mode==='offline',lockedMode:kind==='ide'||kind==='navi'||linked,keepAlive:true,provider,model});
    const vendor=provider==='openai_live'?'OPENAI':provider==='freeai_live'?'FREEAI':'GEMINI';

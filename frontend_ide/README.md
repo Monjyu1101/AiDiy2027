@@ -1,6 +1,6 @@
 # AiDiy IDE（Vue）
 
-IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
+IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の画面をVue 3で共通化します。VS Code拡張はCode / Live、単独実行は9種類です。
 
 
 ## 導入・起動の要件
@@ -9,7 +9,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 
 - Vue 3はプロジェクトのnpm依存です。グローバルのVue CLIは不要です。共有画面・依存物の復旧は `python frontend_ide/_setup.py` を使います。
 - VS Codeは **Code / Liveの拡張配置時だけ** 必要です（`^1.106.0`）。CLI未導入では通常setupは単独画面だけを準備します。版数不足・版数不明は警告して従来の配置処理へ進み、`--extensions-only` も実際のCLI結果に従います。
-- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navi / Console / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
+- Electronは各プロジェクトで宣言されたnpmパッケージと同版の本体を使います。Navi / Term / Code / Live / IDE / Task / Teamは既存のWeb切替を維持します。**BrowserだけはElectron必須**で、viewerまたはhostに準備された本体を利用します。
 - cleanupにはNode.js・Electron・VS Codeの最低版チェックを追加しません。Code / Liveの拡張解除は従来どおりVS Code CLIで確認し、確認不能なら生成物を残して失敗を報告します。依存を直す前にcleanupする必要はありません。
 
 ## ソースの配置
@@ -17,7 +17,7 @@ IDE群全体は **Node.js 22.13 以降と npm** を使用してください。`v
 - `launch.mjs` / `server.mjs` / `desktop.cjs`: 共通起動・HTTPサーバー・Electronの入口。既存のコマンドと起動パスを維持します。
 - `デスクトップ/`: preload、ウィンドウ配置、プロジェクト別プロファイル、下書き受け渡し、ネイティブプレビュー。
 - `ファイル機能/`: AI検索、ファイル解析、履歴と記録保存。
-- `aidiy_console/`: Consoleの入口とPTY・端末プロセス。`aidiy_code/` / `aidiy_live/` / `aidiy_ide/` は各コマンドの入口です。
+- `aidiy_term/`: Termの入口とPTY・端末プロセス。`aidiy_code/` / `aidiy_live/` / `aidiy_ide/` は各コマンドの入口です。
 - `src/`: 共通Vue画面。通常部品と機能内処理は `src/components/<日本語機能名>/`、独立ダイアログは `src/dialog/`。Task / Team は専用 bundle の機能内構成を維持。`host/`: Code / Live通信とVS Code拡張。`viewer/`: ファイルAPIと文書表示。
 - `scripts/` / `checks/`: 開発用スクリプトとテスト。
 
@@ -45,11 +45,11 @@ AiDiy IDE は、プロジェクトを宇宙に見立てた **開発スペース*
 
 Electron版IDEは3D表示中、右上の **VR** で全ディスプレイにまたがる宇宙空間へ入れます。「VR空間へ移行中…」を表示し、エクスプローラー、軌跡バーの順に開いてピン留めしてから広げます。VRモード中はタイトル・接続バー・宇宙の操作バーを隠し、パネルによる自動中心補正を止めます。各ディスプレイの右上へマウスを寄せると復帰ボタンが現れ、クリックで元の位置・サイズへ戻ります。終了時はエクスプローラーと軌跡バーの別窓を閉じ、通常画面の「☰」「軌跡」から状態を保持したまま再表示できます。画面の継ぎ目に合わせる手動中心調整は今後の対応です。
 
-VRモード中のファイルビューアー・ソース比較は中心星の右側のパネルに表示し、ファイル選択で内容を切り替えます。📌を押した場合だけ別窓になります。各画面の右上メニューからConsoleを左下、Codeを右上、未起動のLiveを左上へ開けます。IDEから起動したパネルはタイトル・配置・セッションでIDEとのつながりを保ち、OS上は独立した窓として操作できます。最前面ピンは初期ONで、VR中以外はOFFにできます。本体もONの場合は、最後に選択したON窓が手前になります。
+VRモード中のファイルビューアー・ソース比較は中心星の右側のパネルに表示し、ファイル選択で内容を切り替えます。📌を押した場合だけ別窓になります。各画面の右上メニューからTermを左下、Codeを右上、未起動のLiveを左上へ開けます。IDEから起動したパネルはタイトル・配置・セッションでIDEとのつながりを保ち、OS上は独立した窓として操作できます。最前面ピンは初期ONで、VR中以外はOFFにできます。本体もONの場合は、最後に選択したON窓が手前になります。
 
 **＋ Browser** は利用開始後にオフラインでも使えます。`http://127.0.0.1:8090/` から始まり、URL／検索欄、戻る・進む・再読み込みを備えます。HTML／HTMのビューアーには従来の「コード」「表示」に加えて「ブラウザ」があり、Electronでは選択したファイルの絶対パスを `file:///...` にして直接開きます。相対リンク・画像・CSSは元ファイルのフォルダを基準に読み込みます。例外として、AiDiyの `frontend_web/public` 内でルート登録されたHTMLは対応するWebページを開きます。Webサーバー停止中は起動を案内し、認証が必要な画面はログイン後に利用します。通常画面とVRの各画面メニューから起動でき、VRでは選んだ画面の中央へ配置します。tools切断中もページ操作を維持し、AI解析だけを無効にします。IDEの利用終了でBrowserも閉じます。Web起動時は新しいブラウザタブを開きます。
 
-Electron版のIDE配下Browserは、窓ごとに `aidiy_chrome_devtools` の `session="aidiy_ide N"` を持ち、タイトルを **AiDiy IDE / Browser N** と表示します。Nは全IDEのBrowserで共有する最小の空き正整数です。1・2・3のうち2を閉じると、次のBrowserは2を再利用します。複数IDEでも同名sessionが衝突しないよう、CodeのIDEごとの番号とは採番範囲を分けます。`list_tabs` で対象の `tab_id` を確認し、`navigate`・`click`・`type_text`・`screenshot` などを呼びます。`new_tab` は同じ所有IDEに別sessionのBrowserを追加し、応答の新しい `session` と `id` を以後の操作に使います。`close_session` は指定したBrowserだけを閉じ、同じIDEの他Browser・IDE本体・Code・Consoleは閉じません。IDEの利用終了では、そのIDEに属するBrowserをまとめて閉じます。Web起動で開いた通常タブはこのsessionには登録しません。
+Electron版のIDE配下Browserは、窓ごとに `aidiy_chrome_devtools` の `session="aidiy_ide N"` を持ち、タイトルを **AiDiy IDE / Browser N** と表示します。Nは全IDEのBrowserで共有する最小の空き正整数です。1・2・3のうち2を閉じると、次のBrowserは2を再利用します。複数IDEでも同名sessionが衝突しないよう、CodeのIDEごとの番号とは採番範囲を分けます。`list_tabs` で対象の `tab_id` を確認し、`navigate`・`click`・`type_text`・`screenshot` などを呼びます。`new_tab` は同じ所有IDEに別sessionのBrowserを追加し、応答の新しい `session` と `id` を以後の操作に使います。`close_session` は指定したBrowserだけを閉じ、同じIDEの他Browser・IDE本体・Code・Termは閉じません。IDEの利用終了では、そのIDEに属するBrowserをまとめて閉じます。Web起動で開いた通常タブはこのsessionには登録しません。
 
 ## 単独Browser（aidiy_browser）
 
@@ -65,11 +65,11 @@ URL欄の検証は `node --test checks/browser-address.test.mjs checks/browser-s
 
 「Code / Liveへ」の下書き先頭には実際の `session` と送信元の `tab_id` を付け、その後にURLと撮影後60秒以内の画像パスを渡します。単独版の同じsession内の別Browser窓や、番号を再利用した窓と取り違えないため、操作時には両方を指定します。通常タイトルとF11上端ヘッダーは、Codeと同じ限定IPCで取得したOSタイトルに揃えます。起動中の旧形式名は互換性のため引き続き接続できます。
 
-Electron全体のデバッグポートは開きません。既存のloopback・起動単位トークン・Origin拒否付きCDPブリッジを再利用し、Browserページ以外のTargetやAI/Console/ファイル操作APIを公開しません。
+Electron全体のデバッグポートは開きません。既存のloopback・起動単位トークン・Origin拒否付きCDPブリッジを再利用し、Browserページ以外のTargetやAI/Term/ファイル操作APIを公開しません。
 
-ElectronのIDE / Code / Live / Console / Browser / ファイルビューア・ソース比較 / エクスプローラー / 軌跡バーは、本文・入力欄・ボタン・リンク上で、左ボタンを同じ位置で0.5秒長押しすると、その窓をドラッグできます。短押しの選択はボタンを離してから行い、長押し移動後はクリックやリンク遷移を起こしません。0.5秒の判定中に少しでも動かした場合は長押しを取り消し、通常の文字選択・宇宙の旋回として使えます。標準の移動カーソルと四方向マーカーを表示し、矢印回転などの演出は行いません。最大化・OSの全画面中の窓は対象外です。VR中のIDE本体では巨大な窓を動かさず、ドラッグ量だけ宇宙の中心をずらします。マーカーはマウスに追従し、手動補正はファイル選択・ビューア開閉・VRの再移行でも維持します（IDE終了まで）。VR中に開いた別パネルは通常どおり窓を移動します。
+ElectronのIDE / Code / Live / Term / Browser / ファイルビューア・ソース比較 / エクスプローラー / 軌跡バーは、本文・入力欄・ボタン・リンク上で、左ボタンを同じ位置で0.5秒長押しすると、その窓をドラッグできます。短押しの選択はボタンを離してから行い、長押し移動後はクリックやリンク遷移を起こしません。0.5秒の判定中に少しでも動かした場合は長押しを取り消し、通常の文字選択・宇宙の旋回として使えます。標準の移動カーソルと四方向マーカーを表示し、矢印回転などの演出は行いません。最大化・OSの全画面中の窓は対象外です。VR中のIDE本体では巨大な窓を動かさず、ドラッグ量だけ宇宙の中心をずらします。マーカーはマウスに追従し、手動補正はファイル選択・ビューア開閉・VRの再移行でも維持します（IDE終了まで）。VR中に開いた別パネルは通常どおり窓を移動します。
 
-Code / Live / Consoleの長押しドラッグは、IDEからの起動と単体起動（`aidiy_code` / `aidiy_live` / `aidiy_console`）の両方で有効です。
+Code / Live / Termの長押しドラッグは、IDEからの起動と単体起動（`aidiy_code` / `aidiy_live` / `aidiy_term`）の両方で有効です。
 
 宇宙のファイル表示は、本日更新を薄い黄色、当日の最終更新を黄金色のオーラで示し、外側ほど淡く透明にします。ファイル名の後ろに「本日更新」「最終更新」を表示します。表示中フォルダの直下で判定し、同時刻の最終更新はすべて強調します。衛星の周回は行いません。
 
@@ -85,7 +85,7 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 
 ## 3D / 2D の切り替え
 
-プロジェクトバーは左から「プロジェクト名」「3D」「2D」、右端に「Console」「Code」「Live」と利用終了を配置します。Electron版は「＋ Console」「＋ Code」「＋ Live」で別ウィンドウ、Web版は各ボタンで既存の画面内タブを開きます。オフライン利用ではLiveを表示しません。
+プロジェクトバーは左から「プロジェクト名」「3D」「2D」、右端に「Term」「Code」「Live」と利用終了を配置します。Electron版は「＋ Term」「＋ Code」「＋ Live」で別ウィンドウ、Web版は各ボタンで既存の画面内タブを開きます。オフライン利用ではLiveを表示しません。
 
 - 利用開始時は従来の **3D** です。宇宙の配置・自動探索・ワープ・案内線はそのまま使えます。エクスプローラー・ファイルビューア・閲覧/検索軌跡には、暗い宇宙との境界がわかる白い影を付けています。遠点での軌道変更は全方向から選び、フォルダがあれば2回に1回その銀河内を通過します。行き過ぎと戻りも回転量の15%に合わせます。
 - 3Dでは現在フォルダの直下ファイルを惑星、直下サブフォルダを銀河として表示します。銀河の中は、深い階層まで含めた全ファイルを1つずつ星として描きます。星の位置はファイルの相対パス、色は種類、大きさは容量と種類で決まり、ファイルが増減しても既存の星は同じ位置を保ちます。星のクリック、検索・履歴・最終更新からは、そのファイルの実際のフォルダへ移動して内容を表示します。ファイル総数と更新・検索マークも全階層のファイルを対象にします。
@@ -96,13 +96,13 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 - 2Dでも「自動探索」で最終更新を追跡します。手動操作後の1分間と、手動で選んだファイルの表示中は割り込みません。ファイル更新の確認は3Dと共通の約1分周期です。通知後は追加の待ち時間なしで追跡し、手動待機・手動プレビューの保護は両モード共通です。2Dの矢印・スクロール操作も待機時間を更新します。探索可能な間は3Dと同じ枠の回転を表示し、手動待機の終了時だけ1回判定します。待機中の描画ループはありません。自動探索OFFでも、エクスプローラー・検索・最終更新の手動クリックは対象ページと共通ビューアを開きます。
 - 検索したファイルがフィルター対象外でも、grepのプレビューは開けます。親フォルダまで一覧から除外されている場合は別ページを作らず、フィルターOFF・一覧更新・再選択の案内を表示します。削除された履歴・検索結果への移動失敗でも、現在のページを覆わず操作を続けられます。
 
-## ターミナル（AiDiy Console）
+## ターミナル（AiDiy Term）
 
-`aidiy_console` は作業フォルダでシェルを開くシンプルな端末です。WindowsはPowerShell、Linux / macOSは `SHELL`（未指定時は `/bin/sh`）を使います。AiDiyコアへの接続は不要です。
+`aidiy_term` は作業フォルダでシェルを開くシンプルな端末です。WindowsはPowerShell、Linux / macOSは `SHELL`（未指定時は `/bin/sh`）を使います。AiDiyコアへの接続は不要です。
 
-- 単独起動: `aidiy_console`。ブラウザなら `aidiy_console --browser`。
-- Electron版は画面の作業領域の幅2/3・高さは横長で1/3、縦長・正方形で1/4として、画面左下に端から8px空けて開きます。単独コマンドの再実行も別窓になり、IDEの「＋ Console」と共通で28pxずつ右上へずらします。画面端まで進んだら左下へ戻ります。CLI指定時も左下で、サイズは800×600です（小画面では縮小）。
-- IDE: 利用開始後の「＋ Console」で別ウィンドウを開きます。複数起動できます。Web版はConsoleタブです。
+- 単独起動: `aidiy_term`。ブラウザなら `aidiy_term --browser`。
+- Electron版は画面の作業領域の幅2/3・高さは横長で1/3、縦長・正方形で1/4として、画面左下に端から8px空けて開きます。単独コマンドの再実行も別窓になり、IDEの「＋ Term」と共通で28pxずつ右上へずらします。画面端まで進んだら左下へ戻ります。CLI指定時も左下で、サイズは800×600です（小画面では縮小）。
+- IDE: 利用開始後の「＋ Term」で別ウィンドウを開きます。複数起動できます。Web版はTermタブです。
 - 最初の入力まではCodeと同じアイコン付き初期表示と、画面下部の端末入力欄を表示します。文字入力・貼り付け・キー操作で端末を全体へ広げ、同じシェルと入力を引き継ぎます。「再起動」で初期表示に戻ります。
 - Ctrl+C / Cmd+C はコピー専用で、割り込みは「Ctrl+C送信」ボタンから送ります。Ctrl+V / Cmd+V は通常の貼り付けです。それ以外のCtrl・Alt・Shiftの組合せは端末へ送ります。Ctrl+英字は制御文字、Alt+文字はESC付きで送り、記号は実際のキーボード配列に従います。WindowsのConPTYが拡張入力を要求した場合、Shift / Ctrl / Alt+Enter（組合せを含む）はWin32のキー情報として送り、修飾状態を保持します。それ以外ではAlt+EnterはESC+CR、Shift+EnterやCtrl+EnterなどはCSI-uを使います。通常のEnterとIME確定は変更しません。受信側CLIによって対応する組合せは異なります。
 - ANSIカラー、日本語入力、矢印キー、Ctrl+C送信ボタン、貼り付け、スクロール履歴、ウィンドウサイズへの追従に対応します。文字を選択した状態のCtrl+Cはコピーです。
@@ -112,9 +112,9 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 - Webのタブ切替・パネル非表示ではシェルを維持します。ページ再読込・端末窓の終了・IDEの利用終了ではシェルとその子プロセスを終了します。
 - 実行するのはアプリを動かしているPCのシェルです。ファイルビューアの読み取り専用制約とは別で、通常のターミナルと同じ権限でコマンドを実行します。
 
-### CLIを自動起動するConsole
+### CLIを自動起動するTerm
 
-`aidiy_console --project "作業フォルダ" --cli copilot --cli-auto-approve` で、指定フォルダを作業場所にしてCopilotをYOLOモードで自動起動できます。モデル・初期プロンプトは渡さず、各CLIの既定設定を使います。`--cli-auto-approve` を省くと各CLIの通常モードです（Piは通常モードも確認なし実行）。`--cli` はConsole専用で、`--provider` / `--model` と併用できません。
+`aidiy_term --project "作業フォルダ" --cli copilot --cli-auto-approve` で、指定フォルダを作業場所にしてCopilotをYOLOモードで自動起動できます。モデル・初期プロンプトは渡さず、各CLIの既定設定を使います。`--cli-auto-approve` を省くと各CLIの通常モードです（Piは通常モードも確認なし実行）。`--cli` はTerm専用で、`--provider` / `--model` と併用できません。
 
 対応IDと自動承認の固定引数:
 - `claude`: `--dangerously-skip-permissions`
@@ -128,15 +128,15 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 
 承認省略ではCLIがファイル変更やコマンドを確認なしで実行できます。Codexはsandboxも省略します。ログイン、プロジェクトの信頼確認、利用規約、組織の禁止設定は別途CLI側で扱います。古いCLIが引数に対応しない場合は端末のエラーを確認し、公式の更新手順を使用してください。
 
-CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ）は `AiDiy Console / CLI表示名` です。通常Consoleのタイトルとプロジェクト表示は変更しません。CLI窓は最初から端末を全体表示し、CLI名・承認モード・「モデル指定なし」を表示します。「表示クリア」はCLI窓では全体表示を維持します。通信の再接続や重複した開始要求ではCLIを再実行せず、直近256Ki文字の出力と終了状態を再表示します。CLI終了後にもう一度実行するには新しいConsole窓を開いてください。Electron窓を閉じるか起動サーバーを終了すると、所有するCLIプロセスも終了します。全接続が切れた場合は30秒間だけ再接続を待ち、その間に有効な端末接続が戻らなければCLIを終了します。猶予を過ぎたセッションを自動再実行することはありません。未開始・不正な接続ではこの猶予を延ばしません。通常のCLI窓起動では猶予切れ時に起動サーバーも閉じ、診断メニューから再び起動できるようにします。画面を開いた後30秒以内に最初の端末開始が届かない場合も同様です。明示的な `--no-open` / `--serve` には初回未接続の期限を設けず、所有者が停止します（開始後の再接続猶予は同じです）。
+CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ）は `AiDiy Term / CLI表示名` です。通常Termのタイトルとプロジェクト表示は変更しません。CLI窓は最初から端末を全体表示し、CLI名・承認モード・「モデル指定なし」を表示します。「表示クリア」はCLI窓では全体表示を維持します。通信の再接続や重複した開始要求ではCLIを再実行せず、直近256Ki文字の出力と終了状態を再表示します。CLI終了後にもう一度実行するには新しいTerm窓を開いてください。Electron窓を閉じるか起動サーバーを終了すると、所有するCLIプロセスも終了します。全接続が切れた場合は30秒間だけ再接続を待ち、その間に有効な端末接続が戻らなければCLIを終了します。猶予を過ぎたセッションを自動再実行することはありません。未開始・不正な接続ではこの猶予を延ばしません。通常のCLI窓起動では猶予切れ時に起動サーバーも閉じ、診断メニューから再び起動できるようにします。画面を開いた後30秒以内に最初の端末開始が届かない場合も同様です。明示的な `--no-open` / `--serve` には初回未接続の期限を設けず、所有者が停止します（開始後の再接続猶予は同じです）。
 
 実行ファイルは固定IDからPATH / 標準配置を探索し、絶対パスと引数配列で直接PTYへ渡します。Windowsのnpm `.cmd` はシェルで実行せず、許可済みパッケージの宣言済みbinを検証してNodeから起動します。`aidiy_hermes` はPATHまたはユーザーの `~/.local/bin` の導入済みランチャーを使用し、Windowsでは `command_hermes/_setup.py` が生成する `.cmd` 全体の形式とPython / CLIの実在を確認して、仮想環境のPythonへ `cli_main.py` と固定引数を直接渡します。形式不明・ファイル不足は起動せず、リポジトリ内の仮想環境への自動退避や導入、認証確認は行いません。任意コマンド・モデル・環境変数をブラウザから渡す入口はありません。
 
-確認は `node --test frontend_ide/checks/cli-launch.test.mjs frontend_ide/checks/cli-console.test.mjs frontend_ide/checks/console-size.test.mjs`。CLIはすべて制御されたfixture / mockで代替し、実CLI・認証・外部APIは実行しません。Windows実機のPTY・画面確認は別途必要です。
+確認は `node --test frontend_ide/checks/cli-launch.test.mjs frontend_ide/checks/cli-term.test.mjs frontend_ide/checks/term-size.test.mjs`。CLIはすべて制御されたfixture / mockで代替し、実CLI・認証・外部APIは実行しません。Windows実機のPTY・画面確認は別途必要です。
 
 `aidiy_pi` はPATH上のランチャーを使わず、この配置先の `command_pi/aidiy/aidiy_pi.ts` を source resolver とともにNodeから直接起動します。`--cli-auto-approve` の有無にかかわらずPi標準の確認なし実行です。導入・モデル・OAuth・MCPは [PiのAiDiy連携](../_AIDIY/knowledge/command_pi,AiDiy連携.md) を参照してください。
 
-実装と確認手順は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` のConsole節を参照してください。
+実装と確認手順は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` のTerm節を参照してください。
 
 | 入力 | Tabで追加するオプション（`scripts/cli_bat` 準拠） |
 |---|---|
@@ -150,17 +150,17 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 ## 起動
 
 セットアップはリポジトリ直下で `python frontend_ide/_setup.py`。既存の全体セットアップからも共通画面を準備します。
-Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_console`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
+Windowsではセットアップが各アプリのプロジェクト内binをユーザーPATHへ登録します。完了後にターミナルやVS Codeを開き直し、表示したいフォルダで `aidiy_ide`、`aidiy_term`、`aidiy_browser`、`aidiy_navi`、`aidiy_code`、`aidiy_live`、`aidiy_task`、`aidiy_team`、`aidiy_cpu` を実行します。既に開いている呼出元のシェルにはPATHは反映されません。Linux / macOSでは表示された現在のシェル用PATH設定を実行してください。各 `_AIDIY/aidiy_<app>/bin/` のランチャーはフルパスでも起動できます。9種類とも共通の起動基盤を使い、Task / Teamだけは専用のVue bundleを読み込みます。IDEの起動名は `aidiy_ide`、アプリ指定は `--app ide` です。
 
-PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / console / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` は選択したHermes／Piを直接使用します。Navi用Codeも同じ選択画面・保存設定を使います。Liveの `--connect` は初回だけ接続します。
+PATH登録なしでも `node <配置先>/frontend_ide/launch.mjs --app ide`（navi / term / code / live / task / team / browser / cpuも可）。引数を省略した作業フォルダは実行時のカレントフォルダです。`--project <フォルダ>`、`--port <番号>`、`--strict-port` に対応し、Browser以外では `--browser` / `--no-open` も使えます。ポートの既定は0（自動割り当て）。Browser以外は `--browser` と、Codespaces・画面のないLinuxでのWeb起動に対応します。Electron起動失敗時は前景起動ならWebへ切り替えますが、通常の分離起動ではエラーを報告します。Codeの `--offline` は選択したHermes／Piを直接使用します。Navi用Codeも同じ選択画面・保存設定を使います。Liveの `--connect` は初回だけ接続します。
 
-Electron版IDEの二重起動防止は同じプロジェクトだけに適用します。同じフォルダで再実行すると、起動済みのIDEを最小化から戻して前面に表示します。別のプロジェクトは同時に開け、それぞれのIDE・子窓・利用セッションは独立します。相対パス・リンクなどで同じ実フォルダを指定した場合も既存窓を再利用します。単独Code / Liveの種別ごとの再利用と、Consoleの複数起動は従来どおりです。
+Electron版IDEの二重起動防止は同じプロジェクトだけに適用します。同じフォルダで再実行すると、起動済みのIDEを最小化から戻して前面に表示します。別のプロジェクトは同時に開け、それぞれのIDE・子窓・利用セッションは独立します。相対パス・リンクなどで同じ実フォルダを指定した場合も既存窓を再利用します。単独Code / Liveの種別ごとの再利用と、Termの複数起動は従来どおりです。
 
-IDEは初期画面の3行案内の下にある「AiDiy接続利用」「オフライン利用」で手動開始します。開始ボタンは高さ52px以上で、狭い画面では縦に並びます。利用開始後にtoolsとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、tools復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインの起動メニューは「Console」「Browser」「Code」の3項目だけです。Browserはtools未接続でも操作でき、AI解析だけtools接続中に有効になります。
+IDEは初期画面の3行案内の下にある「AiDiy接続利用」「オフライン利用」で手動開始します。開始ボタンは高さ52px以上で、狭い画面では縦に並びます。利用開始後にtoolsとの接続を失っても、ファイル表示・作業起点・Code子窓を維持し、tools復帰時に再接続します。初回接続失敗は手動で再試行します。オフラインの起動メニューは「Term」「Browser」「Code」の3項目だけです。Browserはtools未接続でも操作でき、AI解析だけtools接続中に有効になります。
 
 宇宙表示の自動飛行は彗星のような楕円軌道を進み、船首は現在フォルダの中心を向きます。最遠点ごとに全方向から軌道を選び、フォルダがあれば2回に1回その銀河内を通過します。再開時は現在地で進路へ向き直ってから前進します。ファイル選択中・フォルダ移動中は停止し、手動操作後は最後の操作から1分停止します。ドラッグだけは例外として中心星を軸に球をつかむように回り込みます。視点が傾いたり上下反転していても、手前側の星は左ドラッグで左、上ドラッグで上へ動き、中心星の位置と周回距離は保ちます。移動後の位置・向きを宇宙船の現在地として扱います。スペースキーで自動飛行の有効・無効を切り替えられます。
 
-Electron版IDEはプロジェクト表示行の右端にある「＋ Console」「＋ Code」「＋ Live」で別ウィンドウを開きます。プロジェクト・利用モード・セッションをIDEに連携させます。「終了」はそこから開いたCode / Liveと各通信を終了し、IDEの起動画面へ戻ります。タイトルバーの×は、利用中（「AiDiy接続利用」「オフライン利用」の開始後）だけ「AiDiy IDE を終了しますか？」と確認し、「終了する」でIDEと子窓をすべて閉じます。「キャンセル」では作業を維持します。初期画面と、「終了」で起動画面へ戻った後の×は確認せずに閉じます。利用セッションの切り替えでも別窓を閉じます。`start`のCtrl+Cによるコア停止では別窓を閉じません。別窓のCodeから接続モードは変更できません。Code / Liveだけを個別に閉じることもできます。Web版・Codespacesは従来通り画面内のCode / Liveタブを使います。
+Electron版IDEはプロジェクト表示行の右端にある「＋ Term」「＋ Code」「＋ Live」で別ウィンドウを開きます。プロジェクト・利用モード・セッションをIDEに連携させます。「終了」はそこから開いたCode / Liveと各通信を終了し、IDEの起動画面へ戻ります。タイトルバーの×は、利用中（「AiDiy接続利用」「オフライン利用」の開始後）だけ「AiDiy IDE を終了しますか？」と確認し、「終了する」でIDEと子窓をすべて閉じます。「キャンセル」では作業を維持します。初期画面と、「終了」で起動画面へ戻った後の×は確認せずに閉じます。利用セッションの切り替えでも別窓を閉じます。`start`のCtrl+Cによるコア停止では別窓を閉じません。別窓のCodeから接続モードは変更できません。Code / Liveだけを個別に閉じることもできます。Web版・Codespacesは従来通り画面内のCode / Liveタブを使います。
 
 ファイルビューアの見出しには「📌（ピン留め）」と「⟳（更新）」があります。📌 を押すと右側のプレビューは閉じ、同じファイルを宇宙パネルの外の独立ウィンドウ（Electron版はIDEの子ウィンドウ「AiDiy IDE / Viewer - ファイル名」、Web版はブラウザの別ウィンドウ）で開きます。何枚でも開けるので、複数のファイルの内容を並べて見られます。同じファイルをもう一度ピン留めすると既存の窓を前面に出します。Electron版のピン留め窓はIDEの利用終了・セッション切り替えで他の子ウィンドウと一緒に閉じます。⟳ はファイルをキャッシュなしで読み直し、AIが更新した直後の内容を確認できます（画像・Office文書・PDFも再読込）。
 
@@ -199,7 +199,7 @@ Officeが作る `~$報告.docx` などの一時ロックファイルは、全階
 - Vue: `frontend_web/src` の `.vue` は、`frontend_web` の開発サーバー（8090）が動いている時だけ、その部品を使っている画面（ルート）を表示します。部品ならimportをたどって画面を探し、候補が複数あれば選べます。ログインが必要な画面ではログイン画面が出ます（IDEのログイン状態はブラウザと別です）。開発サーバーが止まっている時は理由と起動方法を表示します。
 - Markdown: 既存の `markdown-it` で見出し・表・箇条書き・コードブロック・画像を表示します。「コード / プレビュー」で切り替え、ピン留めでも同じ表示を利用できます。相対画像・別のMarkdownへのリンクは元ファイルのフォルダ基準、外部リンクは別タブで開きます。UTF-8 / Shift_JIS の1MBまでに対応し、Markdown内のHTMLは文字として表示します。HTML/SVGと同じ別オリジンのサーバーを利用します。
 
-Console / Code / Live / IDEの単独Electron起動は、画面表示後にコマンドプロンプトへ戻ります。背景起動した画面のログや制御文字は起動元端末へ転送せず、Windowsでは画面のプロセスもコンソールから分離します。サーバーと画面は独立して動作し、×で画面を閉じるとサーバーも終了します。Code / Live / IDEは起動済みなら既存画面を前面へ出し、Consoleは独立した別窓を開きます。終了までコマンドを待機させてログも表示する場合は各コマンドへ `--foreground`（または `--wait`）を付けます。`--browser`、`--no-open`、`--serve` は従来どおりサーバーを前面で動かします。
+Term / Code / Live / IDEの単独Electron起動は、画面表示後にコマンドプロンプトへ戻ります。背景起動した画面のログや制御文字は起動元端末へ転送せず、Windowsでは画面のプロセスもコンソールから分離します。サーバーと画面は独立して動作し、×で画面を閉じるとサーバーも終了します。Code / Live / IDEは起動済みなら既存画面を前面へ出し、Termは独立した別窓を開きます。終了までコマンドを待機させてログも表示する場合は各コマンドへ `--foreground`（または `--wait`）を付けます。`--browser`、`--no-open`、`--serve` は従来どおりサーバーを前面で動かします。
 
 ## ファイルを探してCode / Liveへ渡す
 
@@ -293,9 +293,9 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 
 - AI検索の自動検証: `npm test`。模擬エージェントで実画面まで確認する場合はルートから `node frontend_ide/scripts/check-ai-search.mjs`（AI呼び出しなし、`nn-ai-search-*.png` を保存）。実際のエージェントとの疎通は `node frontend_ide/scripts/check-ai-search-live.mjs`（明示実行専用・AI利用あり）。
 
-- Consoleキー入力: `node --test checks/console-keyboard.test.mjs checks/console-size.test.mjs checks/console-window-title.test.mjs`。実ブラウザーのclipboard / 修飾Enter確認は `node scripts/check-console-keyboard.mjs`（`CHROME_PATH` でChromiumを指定可能、PTYはfixture）。Windows Electron / 各CLIでの改行動作は別途確認します。
-- Consoleフォーカス復帰: `node --test checks/console-focus.test.mjs checks/console-size.test.mjs`。実Vue/xtermの隔離画面は `node scripts/check-console-focus.mjs`（配布用build・実PTYなし、`--compile-only` はブラウザー不要）。OS固有の非アクティブ窓クリック・最小化復帰・IMEは別途実機確認します。
-- Console文字コード: WindowsのPowerShellセッション内だけでコンソール入出力と外部コマンド向け `$OutputEncoding` をBOMなしUTF-8にそろえます。共通PTY起動ではPythonの `PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8` を未指定時だけ追加し、大小文字違いを含む明示設定を維持します。Diagからの直接CLI起動にも適用し、OS・親プロセス・利用者のプロファイルは変更しません。`node --test checks/console-encoding.test.mjs` で環境・IPCを確認し、Windowsでは実PTYのPowerShell経由／直接Pythonの `•・·日本語` 入出力も検証します（他OSではWindows実PTY部分をスキップ）。ElectronでのIME／貼付けとHermes入力欄の表示は別途実機確認します。
+- Termキー入力: `node --test checks/term-keyboard.test.mjs checks/term-size.test.mjs checks/term-window-title.test.mjs`。実ブラウザーのclipboard / 修飾Enter確認は `node scripts/check-term-keyboard.mjs`（`CHROME_PATH` でChromiumを指定可能、PTYはfixture）。Windows Electron / 各CLIでの改行動作は別途確認します。
+- Termフォーカス復帰: `node --test checks/term-focus.test.mjs checks/term-size.test.mjs`。実Vue/xtermの隔離画面は `node scripts/check-term-focus.mjs`（配布用build・実PTYなし、`--compile-only` はブラウザー不要）。OS固有の非アクティブ窓クリック・最小化復帰・IMEは別途実機確認します。
+- Term文字コード: WindowsのPowerShellセッション内だけでコンソール入出力と外部コマンド向け `$OutputEncoding` をBOMなしUTF-8にそろえます。共通PTY起動ではPythonの `PYTHONUTF8=1` / `PYTHONIOENCODING=utf-8` を未指定時だけ追加し、大小文字違いを含む明示設定を維持します。Diagからの直接CLI起動にも適用し、OS・親プロセス・利用者のプロファイルは変更しません。`node --test checks/term-encoding.test.mjs` で環境・IPCを確認し、Windowsでは実PTYのPowerShell経由／直接Pythonの `•・·日本語` 入出力も検証します（他OSではWindows実PTY部分をスキップ）。ElectronでのIME／貼付けとHermes入力欄の表示は別途実機確認します。
 - 配布画面更新: このフォルダで `npm run build`。同じbundleをCode / LiveのVS Code配布先にもコピーします。
 - 拡張作成: `frontend_ide/host` で `npm run package`。既存の2つの拡張IDとVSIX名を維持します。
 - 共通テスト: このフォルダで `npm test`。アイコンの対応・Vue部品・HTTP配信・配布物と帰属は `node --test checks/file-icons.test.mjs`。先に共通画面とCode / Liveをビルドしてください。
@@ -311,13 +311,13 @@ Canvas描画は `src/components/開発スペース/宇宙描画.js`、通信は 
 - 同じ Electron 確認で、タイトルバーの最大化／元のサイズへの復元も実ウィンドウで検証します。
 - 音声・バックエンドの回帰確認: `frontend_ide/host` の `npm test` / `npm run live:test`、`frontend_ide/viewer` の `npm test`。
 
-全体のsetup・cleanupはIDE / Console / Browser / Navi / Code / Live / Task / Team / CPUをまとめて扱います。全体startはDiagを使わない場合、IDE / Console / Code / LiveやTask / Team / CPU（既定OFF）を個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはIDE → Console → Browser → Navi → Code → Live → Task → Team → CPU → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
+全体のsetup・cleanupはIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUをまとめて扱います。全体startはDiagを使わない場合、IDE / Term / Code / LiveやTask / Team / CPU（既定OFF）を個別に選択できます。Navi / Browserは独立コマンドやDiagから起動します。セットアップで稼働中の画面を停止しません。cleanupはIDE → Term → Browser → Navi → Code → Live → Task → Team → CPU → 共通UIの順に解除し、停止・解除に失敗した場合は共通のnode_modulesとdistを残します。
 
 ## ウィンドウ配置
 
 Electron版は現在の画面の作業領域（タスクバーを除く）に合わせ、IDEを余白付きで大きく開きます。Code / Live は初期幅480 × 高さ900（最小360 × 480、Electronの論理ピクセル）です。寸法は `host/scripts/window-size.cjs` を共用し、収まらない小画面だけ縮小します。単独版は画面上端から8px、Codeを左端から8px、Liveを右端から8pxに開きます。IDEから開くCode / Liveも同じディスプレイの左上 / 右上へ配置し、Codeの追加窓は24px刻みでずらします。VRの各画面メニューではCodeが右上、Liveが左上です。IDE配下のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」です。移動済みの窓を再選択しても配置を戻しません。
 
-Code / Liveの単独版は種類ごと、IDEは同じプロジェクトごとに二重起動を防ぎ、起動済みの窓を復元して前面に出します。Consoleは単独版も複数起動できます。IDEから開いたCode / Liveは最前面ピンが初期ONで、VR中以外はOFFへ切り替えられます。IDE連携の「＋Code」は依頼ごとに別窓を開き、2窓目以降を少しずらして配置します。「＋Live」はオンライン時だけ利用でき、初期化中も含めて1窓に制限します。Live起動後はボタンを隠し、閉じると再表示します。IDEの明示終了に連動して子窓を終了します。
+Code / Liveの単独版は種類ごと、IDEは同じプロジェクトごとに二重起動を防ぎ、起動済みの窓を復元して前面に出します。Termは単独版も複数起動できます。IDEから開いたCode / Liveは最前面ピンが初期ONで、VR中以外はOFFへ切り替えられます。IDE連携の「＋Code」は依頼ごとに別窓を開き、2窓目以降を少しずらして配置します。「＋Live」はオンライン時だけ利用でき、初期化中も含めて1窓に制限します。Live起動後はボタンを隠し、閉じると再表示します。IDEの明示終了に連動して子窓を終了します。
 
 IDEの規定位置Loadでは、Browserだけは左右それぞれ10px以内のはみ出しを許容し、上部100pxのヘッダーが作業領域内にあれば保存位置・サイズへ戻します。本文下端は画面外でも復元します。ヘッダーが隠れる、左右が10pxを超える、画面間に隙間がある場合は起動時の位置を維持します。他のパネルは従来どおり窓全体が画面内にある場合だけ復元します。座標はElectronの論理ピクセルです。
 
@@ -383,9 +383,9 @@ AiDiy自身のモデル設定・画面状態・履歴は、選択プロジェク
 - Discord / Slack: 各プログラム名のJSONと `electron/`・`browser-profile/`。
 - Electronの設定・cookie・キャッシュは各プログラムの `electron/`。別窓の一時profileもその配下で作り、終了時に削除します。
 
-旧ホーム設定、旧プロジェクト `.aidiy/`、旧検索temp結果からの読込・自動移行・フォールバックはしません。旧ファイルは変更・削除しません。AiDiy本体では新規の各保存先をGit管理から除外します。バックアップでも各保存先を除外し、Electron/ブラウザprofileは汎用ビューア・検索・解析からも除外します。Consoleのシェル履歴とElectron・専用ブラウザprofileには専用 `.gitignore` を作るため、外部Gitプロジェクトでも生成物を除外します。利用者のGit設定は変更せず、既存の専用除外規則が不十分なら上書きせず停止します。既にGit追跡済みのファイルや `git add -f` は保護できません。外部CLIの認証保存先は各ツールの管理であり、自動移行しません。
+旧ホーム設定、旧プロジェクト `.aidiy/`、旧検索temp結果からの読込・自動移行・フォールバックはしません。旧ファイルは変更・削除しません。AiDiy本体では新規の各保存先をGit管理から除外します。バックアップでも各保存先を除外し、Electron/ブラウザprofileは汎用ビューア・検索・解析からも除外します。Termのシェル履歴とElectron・専用ブラウザprofileには専用 `.gitignore` を作るため、外部Gitプロジェクトでも生成物を除外します。利用者のGit設定は変更せず、既存の専用除外規則が不十分なら上書きせず停止します。既にGit追跡済みのファイルや `git add -f` は保護できません。外部CLIの認証保存先は各ツールの管理であり、自動移行しません。
 
-Console のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_console/` に保存します。bash / zsh / sh / PowerShell のユーザープロファイルは読み込まず、そこで追加する PATH・alias・関数は使用できません。HOME と外部 CLI の認証情報は変更しません。未対応シェルはホームへ保存せずエラーを返します。
+Term のシェル履歴は選択プロジェクトの `_AIDIY/aidiy_term/` に保存します。bash / zsh / sh / PowerShell のユーザープロファイルは読み込まず、そこで追加する PATH・alias・関数は使用できません。HOME と外部 CLI の認証情報は変更しません。未対応シェルはホームへ保存せずエラーを返します。
 
 ## CPU / GPU / RAM使用率
 
@@ -401,10 +401,10 @@ CPUの値が他の表示と合わない場合は、問題のCPU画面とeyesを�
 
 AiDiy接続利用中、保存された配置があり、IDE以外のパネルをまだ開いていない時だけ、＋メニューの左端に **Ld ↓（Load）** が表示されます。IDE以外のパネルを3つ以上開くと、右端へ **Sv ↑（Save）** が表示されます。1〜2パネルの時はどちらも表示しません。SaveはIDE自身と、そのIDEから開いているパネルの種類・表示位置・大きさをプロジェクト別に保存します。Browserは保存時に表示していたURL、NaviはCodeを開いていたかどうかも保存し、Loadで同じURL・同じ開閉状態に戻します（Naviの会話と自動航行は復元しません）。保存された配置がない時はLoadを表示しません。
 
-Loadはパネルをすべて閉じた状態で使用します。Console・Browser・Navi・Code・LiveまたはAvatar・Task・Team・CPU、別窓にしたExplorer・軌跡・Viewerを再度開き、保存した配置へ戻します。復元は、IDE自身を大きさを変えながら保存位置へ動かす → Explorer・軌跡を別窓へ分離 → 別窓にしていたViewerを保存時のファイルで開く → ＋メニューの項目順（Console・Browser・Navi・Code・Live / Avatar・Task・Team・CPU）に1つずつ開き終わるのを待つ → 開いた窓すべてを同時に、約3秒かけて20ステップで保存した位置と大きさへ動かす、の順に進みます。分割数が同じなので、遠い窓ほど速く動きます。復元時の画面領域からはみ出す窓は、IDE自身も含めて通常の初期位置で表示します。外したモニターの座標を画面端へ押し込むことはしません。
+Loadはパネルをすべて閉じた状態で使用します。Term・Browser・Navi・Code・LiveまたはAvatar・Task・Team・CPU、別窓にしたExplorer・軌跡・Viewerを再度開き、保存した配置へ戻します。復元は、IDE自身を大きさを変えながら保存位置へ動かす → Explorer・軌跡を別窓へ分離 → 別窓にしていたViewerを保存時のファイルで開く → ＋メニューの項目順（Term・Browser・Navi・Code・Live / Avatar・Task・Team・CPU）に1つずつ開き終わるのを待つ → 開いた窓すべてを同時に、約3秒かけて20ステップで保存した位置と大きさへ動かす、の順に進みます。分割数が同じなので、遠い窓ほど速く動きます。復元時の画面領域からはみ出す窓は、IDE自身も含めて通常の初期位置で表示します。外したモニターの座標を画面端へ押し込むことはしません。
 
 - 保存先は選択プロジェクトの `_AIDIY/aidiy_ide/window-layout.json` です。専用フォルダの生成データとしてGit対象から除外します。
-- 会話・認証情報・Consoleの実行コマンド・Naviの自動航行は保存・再実行しません。Browserは通常の初期ページで開きます。Taskの編集中ダイアログ、解析・設定等の一時ダイアログは対象外です。
+- 会話・認証情報・Termの実行コマンド・Naviの自動航行は保存・再実行しません。Browserは通常の初期ページで開きます。Taskの編集中ダイアログ、解析・設定等の一時ダイアログは対象外です。
 - 別のIDEや単独起動中の窓は移動しません。Task・Team・CPUの起動枠が使用中等で一部を開けない場合は、復元できた窓を残して理由を表示します。
 - VR中は保存・復元しません。VRを終了してから操作してください。Web版はOSウィンドウ位置を扱えないため、この操作を表示しません。
 

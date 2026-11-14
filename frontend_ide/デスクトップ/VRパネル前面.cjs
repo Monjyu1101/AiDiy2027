@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 
-// Explorer・軌跡・Viewer・Code・Live・Console等のピンON子窓を同じmainで管理する。
+// Explorer・軌跡・Viewer・Code・Live・Term等のピンON子窓を同じmainで管理する。
 // OS親子関係・上位topmost層・focus()・定期監視は使わず、VR本体との相対順だけ直す。
 function createVRPanelStacking({windows,isActive,isPinned=()=>true,platform=process.platform,schedule=callback=>setTimeout(callback,100),cancel=clearTimeout,onError=error=>console.warn('VRパネルの前面配置:',error.message)}){
  const entries=new WeakMap(),pending=new Map(),running=new Set();

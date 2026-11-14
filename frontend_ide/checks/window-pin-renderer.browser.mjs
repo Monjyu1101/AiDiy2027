@@ -37,7 +37,7 @@ function api(name, pinned=false, locked=false) {
   count:()=>listeners.size};
  return apis[name]=result;
 }
-const hosts = ['IDE','Code','Live','Console','Viewer','Browser'];
+const hosts = ['IDE','Code','Live','Term','Viewer','Browser'];
 for (const [index,name] of hosts.entries()) {
  const section=document.createElement('section'); section.dataset.kind=name;
  section.className=name==='Code'?'code-component':name==='Live'?'live-component':'';

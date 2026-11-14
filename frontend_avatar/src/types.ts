@@ -78,6 +78,7 @@ export interface ModelSettings {
   CODE_GROK_CLI_MODEL?: string;
   CODE_AIDIY_HERMES_MODEL?: string;
   CODE_AIDIY_PI_MODEL?: string;
+  CODE_AIDIY_CODEX_MODEL?: string;
   CODE_OPENCODE_CLI_MODEL?: string;
   CODE_MAX_TURNS?: number;
   CODE_PLAN?: string;
@@ -95,6 +96,7 @@ export interface ModelSettings {
   PREDICTION_COPILOT_CLI_MODEL?: string;
   PREDICTION_AIDIY_HERMES_MODEL?: string;
   PREDICTION_AIDIY_PI_MODEL?: string;
+  PREDICTION_AIDIY_CODEX_MODEL?: string;
   DECISION_AI_NAME?: string;
   DECISION_OPENAI_MODEL?: string;
   DECISION_OAUTH_MODEL?: string;

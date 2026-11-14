@@ -140,7 +140,6 @@ import { getPiUserAgent } from "../../utils/pi-user-agent.ts";
 import { killTrackedDetachedChildren } from "../../utils/shell.ts";
 import { loadAllHighlightLanguages } from "../../utils/syntax-highlight.ts";
 import { stripBom } from "../../utils/text.ts";
-import { ensureTool, type ToolStatus } from "../../utils/tools-manager.ts";
 import { checkForNewPiVersion, type LatestPiRelease } from "../../utils/version-check.ts";
 import { reportBug } from "./bug-report.ts";
 import { createChatViewport } from "./chat-viewport.ts";
@@ -493,7 +492,6 @@ export class InteractiveMode {
 	private editorComponentFactory: EditorFactory | undefined;
 	private autocompleteProvider: AutocompleteProvider | undefined;
 	private autocompleteProviderWrappers: AutocompleteProviderFactory[] = [];
-	private fdPath: string | undefined;
 	private editorContainer: Container;
 	private activeSelectorToken?: object;
 	private activeSelectorDispose?: () => void;
@@ -529,7 +527,6 @@ export class InteractiveMode {
 	private lastStatusSpacer: Spacer | undefined = undefined;
 	private lastStatusText: ThemedText | undefined = undefined;
 	private lastStatusMessage = "";
-	private managedToolStatusStarted = false;
 
 	// Streaming message tracking
 	private streamingComponent: AssistantMessageComponent | undefined = undefined;
@@ -856,7 +853,6 @@ export class InteractiveMode {
 		return new CombinedAutocompleteProvider(
 			[...slashCommands, ...templateCommands, ...extensionCommands, ...skillCommandList],
 			this.sessionManager.getCwd(),
-			this.fdPath,
 		);
 	}
 
@@ -1133,16 +1129,7 @@ export class InteractiveMode {
 		if (this.renderer.mode === "fullscreen") this.showFullscreenModelScopeNotice();
 		this.ui.requestRender();
 
-		// Ensure fd and rg are available after mounting the TUI (downloads if missing, adds to PATH via getBinDir)
-		// so slow downloads do not make startup appear frozen.
-		// Both are needed: fd for autocomplete, rg for grep tool and bash commands.
-		const [fdPath] = await Promise.all([
-			ensureTool("fd", (status) => this.showManagedToolStatus(status)),
-			ensureTool("rg", (status) => this.showManagedToolStatus(status)),
-		]);
-		this.fdPath = fdPath;
-
-		// Enable the remaining input handlers only after managed-tool setup completes.
+		// Node.js search is available immediately; no executable setup is needed.
 		this.setupKeyHandlers();
 		this.setupEditorSubmitHandler();
 		this.ui.requestRender();
@@ -3951,19 +3938,6 @@ export class InteractiveMode {
 		return textBlocks.map((c) => (c as { text: string }).text).join("");
 	}
 
-	/** Show a managed-tool status update in the chat. */
-	private showManagedToolStatus(status: ToolStatus): void {
-		if (!this.managedToolStatusStarted) {
-			this.chatContainer.addChild(new Spacer(1));
-			this.managedToolStatusStarted = true;
-		}
-		const message = status.type === "warning" ? `Warning: ${status.message}` : status.message;
-		const color = status.type === "warning" ? "warning" : "dim";
-		this.chatContainer.addChild(new ThemedText(() => theme.fg(color, message), 1, 0));
-		this.lastStatusSpacer = undefined;
-		this.lastStatusText = undefined;
-		this.ui.requestRender();
-	}
 
 	/**
 	 * Show a status message in the chat.

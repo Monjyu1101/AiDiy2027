@@ -104,7 +104,7 @@ try{
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),false);
  assert.equal(await evaluate(`document.querySelectorAll('.app-launch-button:not(:disabled)').length`),10);
  await sleep(900);assert.equal(taskChecks,0,'フォルダ選択・表示・待機ではアプリの稼働中確認をしない');
- for(const name of ['Avatar','IDE','Console','Code','Live','Discord']){
+ for(const name of ['Avatar','IDE','Term','Code','Live','Discord']){
   await click(`${name} を起動`);await until(`![...document.querySelectorAll('.app-launch-state')].some(state=>state.textContent==='起動確認中…')`);
  }
  assert.deepEqual(appCalls.map(item=>item.args.includes('--project')?item.args[item.args.indexOf('--project')+1]:item.cwd),[root,project,project,project,project]);

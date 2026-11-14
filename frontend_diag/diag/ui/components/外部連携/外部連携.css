@@ -17,3 +17,5 @@
 .integration-group .integration-row{margin-left:16px}
 .integration-web{display:inline-flex;align-items:center;justify-content:center;height:24px;padding:0 7px;border:1px solid #52778d;border-radius:5px;color:#b8def2;background:#142632;font:11px Arial,sans-serif;text-decoration:none}
 .integration-web:hover,.integration-web:focus-visible{background:#183443;color:#fff;outline:1px solid #7dd3fc}
+/* 行の余白クリックでも選択できることを示す。 */
+.integration-row{cursor:pointer}

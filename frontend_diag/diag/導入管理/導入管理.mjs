@@ -15,6 +15,8 @@ import {resolveProgram,probe} from '../診断/probes.mjs';
 import {WINGET_PACKAGES,inspectWinget,executeWinget} from './winget.mjs';
 import {inspectAntigravity,executeAntigravity} from './antigravity.mjs';
 import {inspectGrok,executeGrok} from './grok.mjs';
+import {inspectRust,executeRust,inspectLlvmMingw,executeLlvmMingw} from './rust.mjs';
+import {CODEX_COMPILE_ID,inspectCodexCompile,executeCodexCompile} from './codex_compile.mjs';
 import {OPENCODE_LEGACY_PACKAGE,inspectOpenCodeNpm} from '../../../scripts/opencode-npm.mjs';
 
 // _setup.py の共通セットアップと同じ4パッケージ。クライアントから名前・コマンドを受け取らない。
@@ -22,7 +24,7 @@ import {OPENCODE_LEGACY_PACKAGE,inspectOpenCodeNpm} from '../../../scripts/openc
 export const NPM_PACKAGES=Object.freeze({claude:'@anthropic-ai/claude-code',codex:'@openai/codex',copilot:'@github/copilot',opencode:'@opencode/cli'});
 const packageFor=id=>typeof id==='string'&&Object.hasOwn(NPM_PACKAGES,id)?NPM_PACKAGES[id]:null;
 const ACTIONS=['導入','再導入','削除'];
-const providerFor=id=>packageFor(id)?'npm':typeof id==='string'&&Object.hasOwn(WINGET_PACKAGES,id)?'winget':id==='agy'?'antigravity':id==='grok'?'grok':null;
+const providerFor=id=>packageFor(id)?'npm':typeof id==='string'&&Object.hasOwn(WINGET_PACKAGES,id)?'winget':id==='agy'?'antigravity':id==='grok'?'grok':id==='rust'?'rust':id==='llvm-mingw'?'llvmMingw':id===CODEX_COMPILE_ID?'codexCompile':null;
 const affectedIds=id=>['ffmpeg','ffprobe','ffplay'].includes(id)?['ffmpeg','ffprobe','ffplay']:[id];
 // 排他は項目（FFmpeg は3つ一式）単位。別の項目は同じ導入元でも並行して操作できる。
 const lockScopeFor=id=>packageFor(id)||affectedIds(id)[0];
@@ -186,33 +188,48 @@ export function npmCommands(npm,id,action,configFile,capability) {
   return [command(step,[pkg])];
 }
 
-export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),env=process.env,platform=process.platform,findNpmFn=findNpm,capabilityFn=npmCapability,inspectWingetFn=inspectWinget,executeWingetFn=executeWinget,inspectAntigravityFn=inspectAntigravity,executeAntigravityFn=executeAntigravity,inspectGrokFn=inspectGrok,executeGrokFn=executeGrok,run=runInstallCommand,timeout=300000,acquireLock=acquireInstallLock}={}) {
+export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),env=process.env,platform=process.platform,findNpmFn=findNpm,capabilityFn=npmCapability,inspectWingetFn=inspectWinget,executeWingetFn=executeWinget,inspectAntigravityFn=inspectAntigravity,executeAntigravityFn=executeAntigravity,inspectGrokFn=inspectGrok,executeGrokFn=executeGrok,inspectRustFn=inspectRust,executeRustFn=executeRust,inspectLlvmMingwFn=inspectLlvmMingw,executeLlvmMingwFn=executeLlvmMingw,inspectCodexCompileFn=inspectCodexCompile,executeCodexCompileFn=executeCodexCompile,run=runInstallCommand,timeout=300000,acquireLock=acquireInstallLock}={}) {
   // 実行は項目ごとに独立して持つ。同じ項目（関連項目を含む）だけを排他し、別項目は並行して実行する。
   const jobs=[],tasks=new Set();let closed=false,cache=null,loading=null,generation=0;
+  // Diag の外で動く独立プロセス（aidiy_codex のコンパイル）の終了を検知し、自動で確認するための記録。
+  let externalRunning=false,externalChecked=false;
   const active=job=>Boolean(job?.実行中);
   const busy=()=>jobs.some(active);
   const append=(job,text)=>{job.raw=(job.raw+String(text)).slice(-LOG_LIMIT*2);};
   async function inspect(){
-    let npm,reason,winget,antigravity,grok;
+    let npm,reason,winget,antigravity,grok,rust,llvmMingw,codexCompile;
     const windowsEntries=entries.filter(entry=>providerFor(entry.id)==='winget');
     const agy=entries.find(entry=>entry.id==='agy'),grokEntry=entries.find(entry=>entry.id==='grok');
+    const rustEntry=entries.find(entry=>entry.id==='rust'),llvmEntry=entries.find(entry=>entry.id==='llvm-mingw'),codexEntry=entries.find(entry=>entry.id===CODEX_COMPILE_ID);
     // 導入元ごとの読み取り確認は互いに独立しているため並行して行う。
     await Promise.all([
       (async()=>{if(entries.some(entry=>packageFor(entry.id)))try{npm=await findNpmFn({env,platform,run});}catch(error){reason=error.status?error.message:'npm の導入先を確認できません。';}})(),
       (async()=>{if(windowsEntries.length)try{winget=await inspectWingetFn({entries:windowsEntries,env:installEnvironment(env,{ollama:windowsEntries.some(entry=>entry.id==='ollama')}),platform,run});}catch{winget={items:windowsEntries.map(entry=>({id:entry.id,操作:[],理由:'WinGet の導入元を確認できません。'}))};}})(),
       (async()=>{if(agy)try{antigravity=await inspectAntigravityFn(agy,{env:installEnvironment(env),platform,run});}catch{antigravity={item:{id:'agy',操作:[],理由:'Antigravity の導入元を確認できません。'}};}})(),
       (async()=>{if(grokEntry)try{grok=await inspectGrokFn(grokEntry,{env:installEnvironment(env),platform,run});}catch{grok={item:{id:'grok',操作:[],理由:'Grok Build の導入元を確認できません。'}};}})(),
+      (async()=>{if(rustEntry)try{rust=await inspectRustFn(rustEntry,{env:installEnvironment(env),platform,run});}catch{rust={item:{id:'rust',操作:[],理由:'Rust の導入元を確認できません。'}};}})(),
+      (async()=>{if(llvmEntry)try{llvmMingw=await inspectLlvmMingwFn(llvmEntry,{env:installEnvironment(env),platform,run});}catch{llvmMingw={item:{id:'llvm-mingw',操作:[],理由:'llvm-mingw の導入元を確認できません。'}};}})(),
+      (async()=>{if(codexEntry)try{codexCompile=await inspectCodexCompileFn(codexEntry,{env:installEnvironment(env),platform,run});}catch{codexCompile={item:{id:CODEX_COMPILE_ID,操作:[],理由:'コンパイルの前提を確認できません。'}};}})(),
     ]);
     const items=await Promise.all(entries.map(async entry=>{
       const provider=providerFor(entry.id);
       if(provider==='winget')return winget.items.find(item=>item.id===entry.id)||{id:entry.id,操作:[],理由:'WinGet の導入元を確認できません。'};
       if(provider==='antigravity')return antigravity.item;
       if(provider==='grok')return grok.item;
+      if(provider==='rust')return rust.item;
+      if(provider==='llvmMingw')return llvmMingw.item;
+      if(provider==='codexCompile')return codexCompile.item;
       if(provider!=='npm')return {id:entry.id,操作:[],理由:'安全な導入・削除コマンドが登録されていません。'};
       if(!npm)return {id:entry.id,パッケージ:NPM_PACKAGES[entry.id],操作:[],理由:reason};
       try{return await capabilityFn(entry,npm,{env,platform});}catch{return {id:entry.id,操作:[],理由:'導入元を確認できません。'};}
     }));
-    return {npm,winget:winget?.context,antigravity:antigravity?.context,grok:grok?.context,items};
+    // 独立プロセスのコンパイルが終わったら（起動直後は完了済みの状態を一度だけ）、確認ボタンと同じ処理で再確認する。
+    const codexItem=items.find(item=>item.id===codexEntry?.id),nowRunning=Boolean(codexItem?.外部実行中);
+    if(codexItem&&((externalRunning&&!nowRunning)||(!externalChecked&&codexCompile?.context?.status?.状態==='完了'))){
+      try{const result=await probeFn(codexEntry);onResult(result);codexItem.最終確認=result;}catch{}
+    }
+    if(codexItem){externalRunning=nowRunning;externalChecked=true;}
+    return {npm,winget:winget?.context,antigravity:antigravity?.context,grok:grok?.context,rust:rust?.context,llvmMingw:llvmMingw?.context,codexCompile:codexCompile?.context,items};
   }
   async function capabilities(){
     if(cache)return cache;
@@ -222,6 +239,8 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
   const publicJob=job=>{const {raw,controller,...rest}=job;return {...rest,ログ:safeInstallLog(raw,env).slice(-LOG_LIMIT)};};
   async function snapshot(){
     // 実行中は確認処理を待たず、直近の確認結果で応答する（開始・中止・ポーリングを遅らせない）。
+    // 独立プロセスが動いている間は、直前の確認結果を使わず毎回その状態を読み直す。
+    if(!busy()&&cache?.items?.some(item=>item.外部実行中)){cache=null;generation++;}
     const state=busy()&&cache?cache:busy()?null:await capabilities();
     const list=jobs.map(publicJob);
     // 実行 は互換のため最後に開始した1件。全件は 実行一覧 で返す。
@@ -232,7 +251,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
     if(!state.items.find(item=>item.id===entry.id)?.操作?.includes(action))throw failure('導入状況または所有元が変わりました。操作せず再確認します。',409);
   };
   async function execute(job,entry,action,expectedCapability){
-    let directory,releaseLock,lockedCapability,status='完了',message='操作が完了しました。';
+    let directory,releaseLock,lockedCapability,status='完了',message='操作が完了しました。',detached=false;
     const provider=providerFor(entry.id),controller=job.controller,log=text=>append(job,text);
     const onUncertain=()=>{job.状態='停止未確認';job.説明='停止の完了を確認できません。実行中の処理が終了するまで、この項目の新しい操作はできません。';};
     const operationRun=async command=>{
@@ -284,10 +303,12 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
           await checkedRun(command);
         }
       }else{
-        const executeProvider=provider==='winget'?executeWingetFn:provider==='grok'?executeGrokFn:executeAntigravityFn;
+        const executeProvider=provider==='winget'?executeWingetFn:provider==='grok'?executeGrokFn:provider==='rust'?executeRustFn:provider==='llvmMingw'?executeLlvmMingwFn:provider==='codexCompile'?executeCodexCompileFn:executeAntigravityFn;
         // 実コマンドは共通の期限・中止・終了確認を通す。プロバイダー内の照会も実行中として排他する。
         const result=await executeProvider(entry,action,fresh[provider],{env:installEnvironment(env,{ollama:entry.id==='ollama'}),platform,run:operationRun,signal:controller.signal,timeout,cwd:directory,onData:log,onUncertain});
         if(result?.code!==undefined)job.終了コード=result.code;
+        // 独立プロセスを開始しただけの操作は、ここでは導入確認の合否を判定しない（完了後に自動確認する）。
+        if(result?.非同期){detached=true;message=result.メッセージ||message;}
         if(controller.signal.aborted)throw failure('操作を中止しました。');
       }
     }catch(error){status=controller.signal.aborted?'中止':'失敗';message=error.status?error.message:'導入操作でエラーが発生しました。';}
@@ -301,7 +322,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
           const result=await probeFn(target);checked.push(result);Object.assign(job,onResult(result));
           if(target.id===entry.id)job.結果=result;
           log(`確認結果 [${target.name||target.id}]: ${result.状態}\n${result.説明||''}\n`);
-          if(status==='完了'&&((action==='削除'&&result.パス)||(action!=='削除'&&result.状態!=='OK'))){status='失敗';message=action==='削除'?'別の導入先を含め、実行ファイルが残っています。確認結果を参照してください。':'コマンドは終了しましたが、導入を確認できませんでした。PATH の反映や確認結果を参照してください。';log(`${message}\n`);}
+          if(status==='完了'&&!detached&&((action==='削除'&&result.パス)||(action!=='削除'&&result.状態!=='OK'))){status='失敗';message=action==='削除'?'別の導入先を含め、実行ファイルが残っています。確認結果を参照してください。':'コマンドは終了しましたが、導入を確認できませんでした。PATH の反映や確認結果を参照してください。';log(`${message}\n`);}
         }catch{status='失敗';message='操作後の導入確認に失敗しました。確認ボタンで再試行してください。';log(`${target.name||target.id}: ${message}\n`);}
       }
       job.結果一覧=checked;
@@ -325,6 +346,11 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
     if(!entry||!providerFor(id)||!ACTIONS.includes(action))throw failure('未対応の導入操作です。',404);
     if(closed)throw failure('導入操作は終了しています。',409);
     if(jobs.some(job=>active(job)&&overlaps(job.対象,id)))throw failure('この項目の導入操作を実行中です。完了後に再試行してください。',409);
+    // Diag の外で動くコンパイル中は、新しいコンパイルを受け付けない（状態ファイルをその場で読み直す）。
+    if(providerFor(id)==='codexCompile'){
+      const current=await inspectCodexCompileFn(entry,{env:installEnvironment(env),platform,run}).catch(()=>null);
+      if(current?.item?.外部実行中)throw failure(current.item.理由||'コンパイル中です。完了を待ってください。',409);
+    }
     const job={実行ID:randomUUID(),対象:id,関連項目:affectedIds(id),操作:action,状態:'実行中',実行中:true,開始日時:new Date().toISOString(),終了日時:null,raw:`${entry.name||id}: ${action}\n導入元を確認しています。\n`,controller:new AbortController()};
     jobs.push(job);prune();
     const task=execute(job,entry,action,cache?.items.find(item=>item.id===id)).finally(()=>tasks.delete(task));tasks.add(task);

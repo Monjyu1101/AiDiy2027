@@ -41,7 +41,7 @@ test('候補の順序を維持し、保存済みでも削除されたモデル�
   const f = fixture();
   try {
     // Live を ON で使っている既存の利用者（初回の既定は OFF）。保存は aidiy_discord.json の1ファイル。
-    writeFileSync(f.file, JSON.stringify({ live: true, live_models: selection, code_model: 'auto' }));
+    writeFileSync(f.file, JSON.stringify({ live: true, live_models: selection, code_name: 'aidiy_hermes', code_model: 'auto' }));
     const panel = f.panel();
     delete (f.catalog.voices.openai_live as Record<string, string>).marin;
     const info = await panel.初期情報();
@@ -110,7 +110,7 @@ test('手動選択は再起動後にも適用され、トークンや共通設�
   const f = fixture(), first = f.panel();
   try {
     first.選択保存(selection);
-    first.コード選択保存({ model: 'openai_oauth/test-code-model' });
+    first.コード選択保存({ cli: 'aidiy_hermes', model: 'openai_oauth/test-code-model' });
     await first.終了();
     assert.deepEqual(JSON.parse(readFileSync(f.file, 'utf8')), { live: false, live_models: selection, code_name: 'aidiy_hermes', code_model: 'openai_oauth/test-code-model' });
     assert.ok(!readFileSync(f.file, 'utf8').includes(f.read().token), 'トークンを保存しない');
@@ -246,12 +246,12 @@ test('旧形式の3ファイルは読み込まず、移行・削除もしない'
   } finally { f.cleanup(); }
 });
 
-test('code_name（選択したハーネス）を保存し、ない保存は aidiy_hermes として解釈する。未対応の値では接続しない', async () => {
+test('code_name（選択したハーネス）を保存する。code_name のない保存・不正な値は使わず、未対応の値では接続しない', async () => {
   const f = fixture();
   try {
     writeFileSync(f.file, JSON.stringify({ live: false, live_models: {}, code_model: 'same' }));
     const panel = f.panel();
-    assert.deepEqual((await panel.初期情報()).code, { cli: 'aidiy_hermes', model: 'same' });
+    assert.equal((await panel.初期情報()).firstRun, true, 'code_name のない保存は使わない');
     assert.equal(JSON.parse(readFileSync(f.file, 'utf8')).code_name, undefined, '読込時に保存内容を書き換えない');
     writeFileSync(f.file, JSON.stringify({ live: false, live_models: {}, code_name: 'other_harness', code_model: 'same' }));
     await panel.開始();

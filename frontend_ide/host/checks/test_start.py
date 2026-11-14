@@ -99,7 +99,7 @@ class StartupTest(unittest.TestCase):
         with patch.object(start, '_init_modules'), patch.object(start, 'collect_startup_choices', return_value=(False, False, False, False, False, False, False, True, True, True, False, False, False, False)), patch.object(start, 'validate_initial_environment', return_value=(True, None)) as validate, patch.object(start, 'start_initial_services', return_value={}) as launch, patch.object(start, 'monitor_and_restart', side_effect=KeyboardInterrupt), patch.object(start, 'stop_processes'), patch.object(start, 'stop_all_tasks'), patch.object(start.time, 'sleep'), patch.object(start.sys, 'platform', 'linux'):
             start.main()
         for invocation in (validate.call_args, launch.call_args):
-            self.assertTrue(invocation.kwargs['console_enabled'])
+            self.assertTrue(invocation.kwargs['term_enabled'])
             self.assertTrue(invocation.kwargs['code_enabled'])
             self.assertTrue(invocation.kwargs['live_enabled'])
             self.assertFalse(invocation.kwargs['discord_enabled'])

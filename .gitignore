@@ -52,7 +52,8 @@ dist/
 /share/python-wheels/
 .installed.cfg
 *.egg
-MANIFEST
+# 大文字・小文字を区別しない環境（Windows の core.ignorecase）では manifest/ にも一致するため直下に限定する。
+/MANIFEST
 
 # PyInstaller
 *.manifest
@@ -208,3 +209,20 @@ firiend*
 
 # Pi: setup が生成するモデルデータ（npm run hydrate:model-data）
 command_pi/packages/ai/src/providers/data/
+
+# Rust（cargo）: ビルド成果物は保管しない。command_codex 以外の Rust ワークスペースにも共通で適用する。
+# Cargo.lock はアプリの依存固定に使うため除外しない。
+**/target/
+**/*.rs.bk
+*.pdb
+
+# 同梱ソース（command_codex / command_pi）のうち、上の一般パターンに一致してしまう正規ファイルを戻す。
+# Windows の core.ignorecase では env/ が packages/env/ に、MANIFEST が manifest/ にも一致する。
+!command_codex/codex-rs/core-plugins/src/manifest/
+!command_codex/codex-rs/http-client/tests/fixtures/*.pem
+!command_codex/codex-rs/vendor/bubblewrap/packaging/bubblewrap.spec
+!command_codex/codex-rs/windows-sandbox-rs/codex-windows-sandbox-setup.manifest
+!command_pi/apps/p2/plugins/logs/
+!command_pi/packages/env/
+!command_pi/packages/durable/src/env/
+!command_pi/packages/coding-agent/examples/extensions/doom-overlay/doom/build/

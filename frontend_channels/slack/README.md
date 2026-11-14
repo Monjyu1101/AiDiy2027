@@ -68,7 +68,7 @@ aidiy_slack
 
 Diag の Slack ボタン、ルート `_start.py` で Slack を Yes にした場合も同じパネルを開いて自動接続します。全体の終了後もパネルは継続し、停止はパネルの「×」か `_cleanup.py` で行います。パネルを重ねて起動すると既存の画面を表示します。
 
-モデルの選択は `プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json` の1ファイルに、コードの実行環境（`code_name`、現在は `aidiy_hermes` 固定。将来の別ハーネス用）とモデル（`code_model`）として保存します。このファイルがあれば起動時に自動接続します。旧設定の読込や自動移行は行いません。起動ログは配置先リポジトリの `temp/aidiy_slack/logs/`、起動完了通知は `temp/aidiy_slack/runtime/` に保存します。
+モデルの選択は `プロジェクト/_AIDIY/aidiy_slack/aidiy_slack.json` の1ファイルに、コードの実行環境（`code_name`、`aidiy_hermes` / `aidiy_pi`）とモデル（`code_model`）として保存します。このファイルがあれば起動時に自動接続します。`code_name` がない・不正な保存は未保存として扱います。起動ログは配置先リポジトリの `temp/aidiy_slack/logs/`、起動完了通知は `temp/aidiy_slack/runtime/` に保存します。
 
 画面を使わずに Bot だけを前面で動かす場合は、`frontend_channels/slack` で `npm run bot` を実行します（Ctrl+C で停止）。
 

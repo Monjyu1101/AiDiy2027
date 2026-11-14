@@ -11,7 +11,7 @@
 """
 Gemma モデル事前ダウンロードスクリプト
 
-HuggingFace から指定モデルを backend_local/temp/models/<safe_name> へ
+HuggingFace から指定モデルを ~/.aidiy/models/<safe_name> へ
 モデルごとのフォルダで取得する。ダウンロード後は local_main.py がそのフォルダから
 オフラインでロードできる。
 
@@ -79,7 +79,7 @@ def _all_models() -> list[str]:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Gemma モデルを temp/models へ事前ダウンロードする")
+    parser = argparse.ArgumentParser(description="Gemma モデルを ~/.aidiy/models へ事前ダウンロードする")
     parser.add_argument(
         "model",
         nargs="?",
@@ -94,7 +94,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--models-dir",
         default=DEFAULT_MODELS_DIR,
-        help="配置先ベースディレクトリ（既定: backend_local/temp/models）",
+        help="配置先ベースディレクトリ（既定: ~/.aidiy/models）",
     )
     parser.add_argument(
         "--token",
@@ -110,7 +110,7 @@ def parse_args() -> argparse.Namespace:
 
 
 def _download_one(model: str, models_dir: str, token: str | None, force: bool) -> int:
-    """1モデルを temp/models/<safe_name> へダウンロードする。0=成功(またはスキップ)。"""
+    """1モデルを ~/.aidiy/models/<safe_name> へダウンロードする。0=成功(またはスキップ)。"""
     from huggingface_hub import snapshot_download
     from huggingface_hub.utils import GatedRepoError, RepositoryNotFoundError
 

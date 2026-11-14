@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { shellHistory } from '../aidiy_console/shell-history.mjs';
+import { shellHistory } from '../aidiy_term/shell-history.mjs';
 
 test('shell history is isolated by project without changing HOME', async () => {
   const root = await mkdtemp(join(tmpdir(), 'aidiy-shell-'));
@@ -15,12 +15,12 @@ test('shell history is isolated by project without changing HOME', async () => {
       assert.notEqual(a.env.HISTFILE, b.env.HISTFILE);
       assert.equal(a.env.HOME, env.HOME);
       assert.equal(env.HISTFILE, '/forbidden-history');
-      assert.ok(a.env.HISTFILE.startsWith(join(root, 'a/_AIDIY/aidiy_console/')));
+      assert.ok(a.env.HISTFILE.startsWith(join(root, 'a/_AIDIY/aidiy_term/')));
       assert.deepEqual(a.args, args);
       assert.equal(a.env.ENV, '');
     }
     const windows = await shellHistory(root, { USERPROFILE: '/unchanged' }, 'win32');
-    assert.equal(windows.env.HISTFILE, join(root, '_AIDIY/aidiy_console/powershell_history'));
+    assert.equal(windows.env.HISTFILE, join(root, '_AIDIY/aidiy_term/powershell_history'));
     await assert.rejects(shellHistory(root, { SHELL: '/bin/fish' }, 'linux'), /未対応/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });

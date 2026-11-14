@@ -15,7 +15,7 @@ for (const background of [true, false]) {
     const child = spawn(process.execPath, ['--input-type=module', '-e', `
       import { once } from 'node:events';
       import { spawnDesktop } from ${JSON.stringify(new URL('../デスクトップ/desktop-process.mjs', import.meta.url).href)};
-      const desktop = spawnDesktop(process.execPath, [${JSON.stringify(fileURLToPath(new URL('./console-child.cjs', import.meta.url)))}], {background:${background}});
+      const desktop = spawnDesktop(process.execPath, [${JSON.stringify(fileURLToPath(new URL('./term-child.cjs', import.meta.url)))}], {background:${background}});
       const ended = once(desktop, 'exit');
       await once(desktop, 'message');
       const stdout=[],stderr=[];

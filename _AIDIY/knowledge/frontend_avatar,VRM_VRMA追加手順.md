@@ -69,4 +69,4 @@ IPC を変更する場合は `_AIDIY/knowledge/frontend_avatar,ElectronIPC追加
 2. Web 単独は `npm run dev:renderer`、Electron と Vite の同時開発起動は `npm run dev` を使う。
 3. アバターが正面を向き、画面内に収まることを確認する。
 4. 追加 VRMA が選択・巡回再生され、終了後に停止しないことを確認する。
-5. DevTools Console と Network で `.vrm` / `.vrma` の 404 や decode エラーがないことを確認する。
+5. DevTools Term と Network で `.vrm` / `.vrma` の 404 や decode エラーがないことを確認する。

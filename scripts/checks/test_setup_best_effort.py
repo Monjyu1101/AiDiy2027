@@ -67,7 +67,7 @@ class BestEffortElectronTests(unittest.TestCase):
 
 class RootWarningSummaryTests(unittest.TestCase):
     def test_warning_only_summary_is_not_clean_success(self):
-        tree = ast.parse((ROOT / '_setup.py').read_text())
+        tree = ast.parse((ROOT / '_setup.py').read_text(encoding='utf-8'))
         function = next(n for n in tree.body if isinstance(n, ast.FunctionDef) and n.name == 'print_setup_summary')
         warning, success = Mock(), Mock()
         namespace = {'print': Mock(), 'print_header': Mock(), 'print_warning': warning, 'print_success': success}

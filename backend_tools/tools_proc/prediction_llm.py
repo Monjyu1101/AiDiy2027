@@ -28,10 +28,10 @@ from 会話履歴パス import normalize_project_path
 from 会話履歴参照 import HISTORY_MAX_TURNS, HISTORY_WINDOW_SECONDS, read_prediction_history
 
 
-CLI_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi")
+CLI_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex")
 PROVIDERS = ("openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", *CLI_PROVIDERS)
-# autoは候補がある方式をCLI（codex → copilot → hermes → pi）優先、次にChat（OAuth → FreeAI → OpenAI API → Gemini）の順で選ぶ。
-AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat")
+# autoは候補がある方式をCLI（codex → copilot → hermes → pi → aidiy_codex）優先、次にChat（OAuth → FreeAI → OpenAI API → Gemini）の順で選ぶ。
+AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat")
 MODEL_KEYS = {
     "openai_chat": "PREDICTION_OPENAI_MODEL",
     "openai_oauth": "PREDICTION_OAUTH_MODEL",
@@ -41,6 +41,7 @@ MODEL_KEYS = {
     "copilot_cli": "PREDICTION_COPILOT_CLI_MODEL",
     "aidiy_hermes": "PREDICTION_AIDIY_HERMES_MODEL",
     "aidiy_pi": "PREDICTION_AIDIY_PI_MODEL",
+    "aidiy_codex": "PREDICTION_AIDIY_CODEX_MODEL",
 }
 # CLIは実行エラーも「!」始まりで返すため、正常な応答だけに目印を付けさせて区別する。
 _CLI_MARKER = "[[PREDICTION]]"

@@ -97,12 +97,13 @@ const CODE_MODEL_KEYS = {
   opencode_cli: "CODE_OPENCODE_CLI_MODEL",
   aidiy_hermes: "CODE_AIDIY_HERMES_MODEL",
   aidiy_pi: "CODE_AIDIY_PI_MODEL",
+  aidiy_codex: "CODE_AIDIY_CODEX_MODEL",
   claude_ollama: "CODE_CLAUDE_OLLAMA_MODEL",
   codex_ollama: "CODE_CODEX_OLLAMA_MODEL"
 };
 const chatAiOptions = computed(() => Object.keys(availableModels.value?.chat_models || {}));
-const predictionProviders = ["openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi"];
-const predictionAutoProviders = ["codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat"];
+const predictionProviders = ["openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex"];
+const predictionAutoProviders = ["codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat"];
 const predictionAiOptions = computed(() => [.../* @__PURE__ */ new Set(["auto", ...predictionProviders, selections.predictionAi])].filter(Boolean));
 const predictionCatalog = computed(() => {
   const catalog = {};
@@ -124,7 +125,8 @@ const predictionFields = [
   { key: "PREDICTION_CODEX_CLI_MODEL", provider: "codex_cli" },
   { key: "PREDICTION_COPILOT_CLI_MODEL", provider: "copilot_cli" },
   { key: "PREDICTION_AIDIY_HERMES_MODEL", provider: "aidiy_hermes" },
-  { key: "PREDICTION_AIDIY_PI_MODEL", provider: "aidiy_pi" }
+  { key: "PREDICTION_AIDIY_PI_MODEL", provider: "aidiy_pi" },
+  { key: "PREDICTION_AIDIY_CODEX_MODEL", provider: "aidiy_codex" }
 ];
 const predictionModels = reactive({});
 const predictionHasCandidates = computed(() => Object.keys(predictionCatalog.value[predictionResolvedAi.value] || {}).length > 0);
@@ -604,7 +606,7 @@ function handleTeamAiChange() {
                 </div>
               </div>
               <div id="config-prediction-note" class="config-model-note" role="note">
-                <p>方式のautoはDiag候補がある codex_cli → copilot_cli → aidiy_hermes → aidiy_pi → OAuth → FreeAI → OpenAI API → Gemini の順です。</p>
+                <p>方式のautoはDiag候補がある codex_cli → copilot_cli → aidiy_hermes → aidiy_pi → aidiy_codex → OAuth → FreeAI → OpenAI API → Gemini の順です。</p>
                 <p v-if="!predictionHasCandidates">選択方式のDiag候補はありません。現在設定とautoを保持しています。候補をDiagで取得・書き出してから画面を開き直してください。</p>
                 <p v-else>候補はDiagの取得済み一覧です。各方式のモデルautoはその方式の先頭候補を使います。候補掲載は現在の利用可否を保証しません。</p>
               </div>

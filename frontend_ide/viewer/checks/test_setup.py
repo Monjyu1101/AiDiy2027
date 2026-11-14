@@ -345,7 +345,7 @@ class SharedUiSetupTests(unittest.TestCase):
                     patch.object(shared, 'frontend_dependency_guard', return_value=guard_result) as guard, \
                     patch.object(shared.subprocess, 'run') as run:
                 self.assertEqual(shared.prepare(), guard_result is not False)
-                guard.assert_called_once_with(shared.ROOT, 'Console / Code / Live / IDE / Task / Team / Browser 共通UI', desktop=False)
+                guard.assert_called_once_with(shared.ROOT, 'IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU 共通UI', desktop=False)
                 if guard_result is None:
                     run.assert_called_once()
                 else:

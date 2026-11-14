@@ -23,7 +23,7 @@ async function moduleServer(kind){
  const server=createServer(async(req,res)=>{
   const json=data=>{res.setHeader('content-type','application/json');res.end(JSON.stringify(data));};
   if(req.url==='/development/config')return json({kind,base:'/fixture/',icon:'/development/AiDiy.png'});
-  if(req.url==='/api/panels/console')return json({url:`http://127.0.0.1:${server.address().port}/fixture/`});
+  if(req.url==='/api/panels/term')return json({url:`http://127.0.0.1:${server.address().port}/fixture/`});
   if(req.url==='/fixture/config')return json({自動接続:false,作業フォルダ:{名前:'fixture',パス:'/fixture'}});
   if(req.url.startsWith('/fixture/api/'))return json({status:'OK',data:{モデル設定:settings,available_models:{live_models:{freeai_live:{'test-model':'試験モデル'}},live_voices:{freeai_live:{Zephyr:'Zephyr'}}}}});
   if(req.url==='/fixture/message')return json({});
@@ -45,18 +45,18 @@ app.on('browser-window-created',(_,owner)=>{
    await evaluate(owner,`[...document.querySelectorAll('button')].find(b=>b.textContent==='オフライン利用').click()`);
    await until(()=>evaluate(owner,`!!window.aidiyIDE`),'利用開始');
    const state=await evaluate(owner,`fetch('/api/connection').then(r=>r.json())`),parent=globalThis.moveDesktop.windows.get(owner.webContents),key=`${state.mode}:${state.startedAt}`;
-   for(const kind of ['code','live','console'])for(const linked of [false,true]){
+   for(const kind of ['code','live','term'])for(const linked of [false,true]){
     const server=await moduleServer(kind),window=await globalThis.moveDesktop.createWindow(kind,server.url,undefined,linked?parent:undefined,linked?key:undefined);
     try{
      const selector=kind==='code'?'.message.assistant p':kind==='live'?'.live-conversation':'.xterm-screen';
      await until(()=>evaluate(window,`!!document.querySelector(${JSON.stringify(selector)})&&!document.documentElement.classList.contains('desktop-opening')`),kind+'描画');
      const label=kind+(linked?' IDE起動':' 単独起動');
-     const background=kind==='console'?await probeBackground(window.webContents):selector;
+     const background=kind==='term'?await probeBackground(window.webContents):selector;
      results.push(await holdMove(window,window.webContents,background,label+'背景'));
      results.push(await checkNativeControls(window,window.webContents,label));
-     if(kind==='console')results.push(await holdUnmoved(window,window.webContents,'.xterm-screen',label+'端末入力'));
+     if(kind==='term')results.push(await holdUnmoved(window,window.webContents,'.xterm-screen',label+'端末入力'));
      if(kind==='code'&&!linked)results.push(await checkMaximizedInput(window,window.webContents,label));
-     if(kind!=='console'){
+     if(kind!=='term'){
       results.push(await holdUnmoved(window,window.webContents,'textarea',label+'入力欄'));
       await shortClick(window.webContents,'textarea');assert.equal(await evaluate(window,`document.activeElement.tagName`),'TEXTAREA');
       window.webContents.insertText('入力は維持');assert.equal(await evaluate(window,`document.querySelector('textarea').value`),'入力は維持');
@@ -78,7 +78,7 @@ app.on('browser-window-created',(_,owner)=>{
    const viewerBackground=await probeBackground(viewer.webContents);
    results.push(await holdMove(viewer,viewer.webContents,viewerBackground,'独立ファイルビューア背景'));
    for(const ending of ['escape','blur'])results.push(await holdMove(viewer,viewer.webContents,viewerBackground,'独立Viewer取消_'+ending,ending));viewer.destroy();
-   const result={testPassed:true,scope:'Code / Live / Console の単独・IDE起動、独立ファイルビューア',input:'Electron実入力。カーソル位置とフォーカスだけfixture、OS窓サイズは実測。',results,shots};writeFileSync(join(output,'modules-result.json'),JSON.stringify(result,null,2));process.send?.(result);app.exit(0);
+   const result={testPassed:true,scope:'Code / Live / Term の単独・IDE起動、独立ファイルビューア',input:'Electron実入力。カーソル位置とフォーカスだけfixture、OS窓サイズは実測。',results,shots};writeFileSync(join(output,'modules-result.json'),JSON.stringify(result,null,2));process.send?.(result);app.exit(0);
   }catch(error){console.error(error);app.exit(1);}
  });
 });

@@ -127,7 +127,7 @@ IPC を呼ぶ箇所は optional chaining にし、戻り値がない場合の We
 1. `cd frontend_avatar && npm run type-check`
 2. `表示選択` で追加ウィジェットを選び、表示が切り替わることを確認する。
 3. `controlsVisible=false` でオプションパネルが消えることを確認する。
-4. Electron と Web の両方で、IPC 不在時に Console エラーが出ないことを確認する。
+4. Electron と Web の両方で、IPC 不在時に Term エラーが出ないことを確認する。
 5. アニメーションや interval が画面切替後に残らないことを DevTools で確認する。
 
 CPUの隔離試験はリポジトリ直下で `node --test frontend_avatar/checks/xeyes-cpu.test.cjs`。実際のmain/preload/Vueを使い、Windows/非Windowsの分岐、nullと0%、欠損・復帰、12枠平均、500ms予定、終了・破棄をmockで確認する。Avatarの依存物が未配置でも、導入済みのfrontend_ideのVue/TypeScriptがあればコンパイル試験に利用する。これは本番実行時の依存解決を変更せず、通常の `npm run type-check` やWindows実機の数値・色の確認を代替しない。

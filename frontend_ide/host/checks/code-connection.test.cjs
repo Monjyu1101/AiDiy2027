@@ -128,9 +128,8 @@ test('Code 接続: 30秒のinit待ちで失敗し、設定APIのNGも送信可�
   finally { failed.dispose(); }
 });
 
-test('Code モデル: Hermes旧設定とCLI別名を移行し、組み合わせIDを保持する', () => {
-  assert.deepEqual(コード選択({provider:'openai_oauth',model:'gpt-6.1-sol'}),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});
-  assert.deepEqual(コード選択({provider:'copilot-cli',model:'gpt-6-sol'}),{provider:'copilot_cli',model:'gpt-6-sol'});
+test('Code モデル: Code AI 名と組み合わせIDをそのまま保持する', () => {
+  assert.deepEqual(コード選択({provider:' copilot_cli ',model:' gpt-6-sol '}),{provider:'copilot_cli',model:'gpt-6-sol'});
   assert.deepEqual(コード選択({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});
 });
 

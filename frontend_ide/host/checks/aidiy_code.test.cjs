@@ -236,19 +236,19 @@ test('Code: 単独起動の検証ループ指定をAIコアへ渡し、未指定
   } finally { await stream.close(); await app.close(); }
 });
 
-test('Code: 最終選択を復元し、旧Hermes Providerを組み合わせモデルへ移行する', async t => {
+test('Code: 最終選択を復元し、指定があれば指定を使う', async t => {
   const backend = require('./fake-core.cjs').core(); backend.install(t);
-  const file = join(preferences,'migration.json');
-  writeFileSync(file, JSON.stringify({provider:'openai_oauth',model:'gpt-6.1-sol'}));
+  const file = join(preferences,'restore.json');
+  writeFileSync(file, JSON.stringify({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}));
   for (const [initial, provider, model] of [
     [{}, 'aidiy_hermes', 'openai_oauth/gpt-6.1-sol'],
-    [{provider:'copilot-cli',model:'gpt-6-sol'}, 'copilot_cli', 'gpt-6-sol'],
+    [{provider:'copilot_cli',model:'gpt-6-sol'}, 'copilot_cli', 'gpt-6-sol'],
   ]) {
     const app = await 単独起動(process.cwd(),'http://127.0.0.1:18091',initial,file), stream = await connect(app);
     try {
       const state = await stream.wait(p=>p.type==='state' && p.接続済み);
       assert.equal(state.provider,provider); assert.equal(state.model,model);
-      assert.equal(JSON.parse(readFileSync(file,'utf8')).provider,'openai_oauth');
+      assert.equal(JSON.parse(readFileSync(file,'utf8')).provider,'aidiy_hermes');
     } finally { await stream.close(); await app.close(); }
   }
 });

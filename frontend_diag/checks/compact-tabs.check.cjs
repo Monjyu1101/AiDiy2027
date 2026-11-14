@@ -38,7 +38,7 @@ test('通常タブは文字を縮めず、余白と間隔だけを詰めて押�
     assert.equal(button['white-space'], 'nowrap');
     assert.equal(button['border-bottom'], '3px solid transparent');
     assert.equal(row.background, '#000');
-    const zoom = Number(declarations('#app>.tabs').zoom);
+    const zoom = Number(declarations('#app>.diag-panel>.tabs').zoom);
     assert.equal(zoom, .85);
     assert.ok(Number.parseFloat(button['min-height']) * zoom >= 24);
   }

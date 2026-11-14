@@ -15,7 +15,7 @@ const search=createAISearch(root,{state:()=>({active:true,startedAt:1}),runAgent
 try {
   await mkdir(join(root,'src'));
   await writeFile(join(root,'src','login.ts'),'export function authenticated(token: string) { return token === "sample"; }');
-  await writeFile(join(root,'main.ts'),'import { authenticated } from "./src/login";\nconsole.log(authenticated("sample"));');
+  await writeFile(join(root,'main.ts'),'import { authenticated } from "./src/login";\nterm.log(authenticated("sample"));');
   const job=await search.start('認証に関係するファイルを探してください。main.tsとsrc内だけを調べてください。');
   console.log('AI SEARCH LIVE: 依頼送信、最大5分で結果を確認します。');
   for(;;) {

@@ -89,6 +89,22 @@ class ResidualTests(unittest.TestCase):
             self.assertTrue((root / 'static/sample.txt').exists())
             self.assertTrue(diag.cleanup_dependencies(root))
 
+    def test_diag_removes_runtime_residues_without_touching_link_targets(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            (root / '.stop-request').write_text('a' * 32, encoding='utf-8')
+            target = root / 'keep.log'
+            target.write_text('keep', encoding='utf-8')
+            try:
+                (root / '.desktop-errors.log').symlink_to(target)
+            except OSError:
+                (root / '.desktop-errors.log').write_text('Electron EXIT', encoding='utf-8')
+            self.assertTrue(diag.cleanup_runtime_residues(root))
+            self.assertFalse((root / '.stop-request').exists())
+            self.assertFalse((root / '.desktop-errors.log').is_symlink() or (root / '.desktop-errors.log').exists())
+            self.assertEqual(target.read_text(encoding='utf-8'), 'keep')
+            self.assertTrue(diag.cleanup_runtime_residues(root))
+
     def test_diag_delete_failure_is_reported(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()

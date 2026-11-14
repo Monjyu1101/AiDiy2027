@@ -1,7 +1,7 @@
-import { spawn } from "child_process";
 import { readdirSync, statSync } from "fs";
 import { homedir } from "os";
 import { basename, dirname, join } from "path";
+import { walkSearchEntries } from "./file-search.ts";
 import { fuzzyFilter } from "./fuzzy.ts";
 import { autocompleteBoundaryRegex, autocompleteSeparatorRegex } from "./utils.ts";
 
@@ -12,35 +12,6 @@ const PATH_WRAPPERS: Record<string, string> = { "(": ")", "[": "]", "{": "}", "<
 
 function toDisplayPath(value: string): string {
 	return value.replace(/\\/g, "/");
-}
-
-function escapeRegex(value: string): string {
-	return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function buildFdPathQuery(query: string): string {
-	const normalized = toDisplayPath(query);
-	if (!normalized.includes("/")) {
-		return escapeRegex(normalized);
-	}
-
-	const hasTrailingSeparator = normalized.endsWith("/");
-	const trimmed = normalized.replace(/^\/+|\/+$/g, "");
-	if (!trimmed) {
-		return normalized;
-	}
-
-	const separatorPattern = "[\\\\/]";
-	const segments = trimmed
-		.split("/")
-		.filter(Boolean)
-		.map((segment) => escapeRegex(segment));
-
-	let pattern = segments.join(separatorPattern);
-	if (hasTrailingSeparator) {
-		pattern += separatorPattern;
-	}
-	return pattern;
 }
 
 function findLastDelimiter(text: string): number {
@@ -142,105 +113,35 @@ function buildCompletionValue(
 	return `${openQuote}${path}${closeQuote}`;
 }
 
-// Use fd to walk directory tree (fast, respects .gitignore)
-async function walkDirectoryWithFd(
+// Search in Node.js; completion never downloads or launches a search executable.
+async function walkDirectory(
 	baseDir: string,
-	fdPath: string,
 	query: string,
 	maxResults: number,
 	signal: AbortSignal,
 	maxDepth?: number,
 ): Promise<Array<{ path: string; isDirectory: boolean }>> {
-	const args = [
-		"--base-directory",
-		baseDir,
-		"--max-results",
-		String(maxResults),
-		"--type",
-		"f",
-		"--type",
-		"d",
-		"--follow",
-		"--hidden",
-		"--exclude",
-		".git",
-		"--exclude",
-		".git/*",
-		"--exclude",
-		".git/**",
-	];
-
-	if (maxDepth !== undefined) {
-		args.push("--max-depth", String(maxDepth));
-	}
-
-	if (toDisplayPath(query).includes("/")) {
-		args.push("--full-path");
-	}
-
-	if (query) {
-		args.push(buildFdPathQuery(query));
-	}
-
-	return await new Promise((resolve) => {
-		if (signal.aborted) {
-			resolve([]);
-			return;
+	const results: Array<{ path: string; isDirectory: boolean }> = [];
+	const normalized = toDisplayPath(query);
+	const ignoreCase = normalized === normalized.toLowerCase();
+	const needle = ignoreCase ? normalized.toLowerCase() : normalized;
+	try {
+		for await (const entry of walkSearchEntries(baseDir, {
+			signal,
+			maxDepth,
+			followSymlinks: true,
+			tolerateErrors: true,
+			ignoreFiles: [".gitignore", ".ignore", ".fdignore"],
+		})) {
+			const candidate = normalized.includes("/") ? entry.path : basename(entry.path.replace(/\/$/, ""));
+			if (!(ignoreCase ? candidate.toLowerCase() : candidate).includes(needle)) continue;
+			results.push({ path: entry.path, isDirectory: entry.isDirectory });
+			if (results.length >= maxResults) break;
 		}
-
-		const child = spawn(fdPath, args, {
-			stdio: ["ignore", "pipe", "pipe"],
-		});
-		let stdout = "";
-		let resolved = false;
-
-		const finish = (results: Array<{ path: string; isDirectory: boolean }>) => {
-			if (resolved) return;
-			resolved = true;
-			signal.removeEventListener("abort", onAbort);
-			resolve(results);
-		};
-
-		const onAbort = () => {
-			if (child.exitCode === null) {
-				child.kill("SIGKILL");
-			}
-		};
-
-		signal.addEventListener("abort", onAbort, { once: true });
-		child.stdout.setEncoding("utf-8");
-		child.stdout.on("data", (chunk: string) => {
-			stdout += chunk;
-		});
-		child.on("error", () => {
-			finish([]);
-		});
-		child.on("close", (code) => {
-			if (signal.aborted || code !== 0 || !stdout) {
-				finish([]);
-				return;
-			}
-
-			const lines = stdout.trim().split("\n").filter(Boolean);
-			const results: Array<{ path: string; isDirectory: boolean }> = [];
-
-			for (const line of lines) {
-				const displayLine = toDisplayPath(line);
-				const hasTrailingSeparator = displayLine.endsWith("/");
-				const normalizedPath = hasTrailingSeparator ? displayLine.slice(0, -1) : displayLine;
-				if (normalizedPath === ".git" || normalizedPath.startsWith(".git/") || normalizedPath.includes("/.git/")) {
-					continue;
-				}
-
-				results.push({
-					path: displayLine,
-					isDirectory: hasTrailingSeparator,
-				});
-			}
-
-			finish(results);
-		});
-	});
+	} catch {
+		return [];
+	}
+	return signal.aborted ? [] : results;
 }
 
 export interface AutocompleteItem {
@@ -300,12 +201,14 @@ export interface AutocompleteProvider {
 export class CombinedAutocompleteProvider implements AutocompleteProvider {
 	private commands: (SlashCommand | AutocompleteItem)[];
 	private basePath: string;
-	private fdPath: string | null;
 
-	constructor(commands: (SlashCommand | AutocompleteItem)[] = [], basePath: string, fdPath: string | null = null) {
+	constructor(
+		commands: (SlashCommand | AutocompleteItem)[] = [],
+		basePath: string,
+		_legacyFdPath: string | null = null,
+	) {
 		this.commands = commands;
 		this.basePath = basePath;
-		this.fdPath = fdPath;
 	}
 
 	async getSuggestions(
@@ -758,28 +661,28 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 		query: string,
 		signal: AbortSignal,
 	): Promise<Array<{ path: string; isDirectory: boolean }>> {
-		if (!this.fdPath || signal.aborted) {
+		if (signal.aborted) {
 			return [];
 		}
 
-		return await walkDirectoryWithFd(baseDir, this.fdPath, query, 100, signal, 1);
+		return await walkDirectory(baseDir, query, 100, signal, 1);
 	}
 
-	// Fuzzy file search using fd (fast, respects .gitignore)
+	// Fuzzy file search using Node.js (respects .gitignore)
 	private async getFuzzyFileSuggestions(
 		query: string,
 		options: { isQuotedPrefix: boolean; signal: AbortSignal },
 	): Promise<AutocompleteItem[]> {
-		if (!this.fdPath || options.signal.aborted) {
+		if (options.signal.aborted) {
 			return [];
 		}
 
 		try {
 			const scopedQuery = this.resolveScopedFuzzyQuery(query);
-			const fdBaseDir = scopedQuery?.baseDir ?? this.basePath;
-			const fdQuery = scopedQuery?.query ?? query;
-			const baseDirEntries = await this.getBaseDirSuggestions(fdBaseDir, fdQuery, options.signal);
-			const recursiveEntries = await walkDirectoryWithFd(fdBaseDir, this.fdPath, fdQuery, 100, options.signal);
+			const searchBaseDir = scopedQuery?.baseDir ?? this.basePath;
+			const searchQuery = scopedQuery?.query ?? query;
+			const baseDirEntries = await this.getBaseDirSuggestions(searchBaseDir, searchQuery, options.signal);
+			const recursiveEntries = await walkDirectory(searchBaseDir, searchQuery, 100, options.signal);
 			const seenPaths = new Set(baseDirEntries.map((entry) => entry.path));
 			const entries = [
 				...baseDirEntries,
@@ -796,7 +699,7 @@ export class CombinedAutocompleteProvider implements AutocompleteProvider {
 			const scoredEntries = entries
 				.map((entry) => ({
 					...entry,
-					score: fdQuery ? this.scoreEntry(entry.path, fdQuery, entry.isDirectory) : 1,
+					score: searchQuery ? this.scoreEntry(entry.path, searchQuery, entry.isDirectory) : 1,
 				}))
 				.filter((entry) => entry.score > 0);
 

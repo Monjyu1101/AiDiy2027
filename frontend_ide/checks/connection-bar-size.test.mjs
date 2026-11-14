@@ -9,7 +9,7 @@ import { readFileSync } from 'node:fs';
 const read = path => readFileSync(new URL(path, import.meta.url), 'utf8');
 const rules = css => [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)];
 const declaration = (body, property) => body.match(new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*([^;]+)`))?.[1].trim();
-test('Console / Code / Live / IDE の接続バーは境界線込み3pxを共有する', () => {
+test('Term / Code / Live / IDE の接続バーは境界線込み3pxを共有する', () => {
   const css = read('../src/style.css') + '\n' + read('../src/components/共通表示/会話表示.css');
   assert.match(css, /\*\s*\{\s*box-sizing\s*:\s*border-box/);
   const sizes = rules(css).filter(([_, selector, body]) => selector.includes('.connection-bar') && declaration(body, 'height'));

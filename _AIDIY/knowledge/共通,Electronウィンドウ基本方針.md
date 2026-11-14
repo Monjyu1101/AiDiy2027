@@ -54,7 +54,7 @@ frontend_avatar/
 | Diag | `frontend_diag/diag_main.mjs` → `起動/electron-main.cjs` | `frontend_diag/ui/src` → `static/app.js` |
 | Avatar | `frontend_avatar/launch.mjs` → `electron/main.ts` | `frontend_avatar/src` |
 | Navi | `frontend_ide/aidiy_navi/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
-| Console | `frontend_ide/aidiy_console/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
+| Term | `frontend_ide/aidiy_term/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
 | Code | `frontend_ide/aidiy_code/launch.mjs` | 同上。VS Code 拡張へも同じ bundle を配布 |
 | Live | `frontend_ide/aidiy_live/launch.mjs` | 同上。VS Code 拡張へも同じ bundle を配布 |
 | IDE | `frontend_ide/aidiy_ide/launch.mjs` | `frontend_ide/src` → `dist/app.js` |
@@ -64,11 +64,11 @@ frontend_avatar/
 | Discord | `frontend_channels/discord/panel/launch.mjs` | `frontend_channels/discord/panel` → `view.js` |
 | Slack | `frontend_channels/slack/panel/launch.mjs` | `frontend_channels/slack/panel` → `view.js` |
 
-Navi / Console / Code / Live / IDE / Task / Team / Browser の入口は共通 `frontend_ide/launch.mjs` / `desktop.cjs` へ進む。`host/aidiy_code` / `host/aidiy_live` 等の互換入口を別アプリとして複製しない。Viewer、Explorer、比較、軌跡、Task の要求・フロー・明細・編集などの関連窓も、それぞれの所有元で確認する。
+Navi / Term / Code / Live / IDE / Task / Team / Browser の入口は共通 `frontend_ide/launch.mjs` / `desktop.cjs` へ進む。`host/aidiy_code` / `host/aidiy_live` 等の互換入口を別アプリとして複製しない。Viewer、Explorer、比較、軌跡、Task の要求・フロー・明細・編集などの関連窓も、それぞれの所有元で確認する。
 
 Discord と Slack は **双子**として `panel/components/接続/接続パネル.vue`・`機能切替.vue`・`パネル状態.js` の配置と起動・停止・モデル設定の契約を揃える。Slack に Live / 音声部品を足さず、Discord の `components/ライブ/` だけが音声を持つ。互いの画像や実装を直接参照する新たな依存は作らない。
 
-`aidiy_hermes` はこのリポジトリでは Python CLI / TUI で、Console 上で使う場合は Console の renderer が対象。upstream 由来の `command_hermes/package.json` に `install:desktop` / Electron の記述があっても、現行 checkout に `apps/desktop` の実装はないため独立 Electron UI の修正済みとして数えない。将来導入する場合は実在する main / renderer を改めて棚卸しする。Markdown PDF の非表示 Electron worker、表示演出の一時 canvas、Diag のアイコンメニューは通常の Vue renderer とは別の補助窓であり、空の `components` / `dialog` を無理に追加しない。
+`aidiy_hermes` はこのリポジトリでは Python CLI / TUI で、Term 上で使う場合は Term の renderer が対象。upstream 由来の `command_hermes/package.json` に `install:desktop` / Electron の記述があっても、現行 checkout に `apps/desktop` の実装はないため独立 Electron UI の修正済みとして数えない。将来導入する場合は実在する main / renderer を改めて棚卸しする。Markdown PDF の非表示 Electron worker、表示演出の一時 canvas、Diag のアイコンメニューは通常の Vue renderer とは別の補助窓であり、空の `components` / `dialog` を無理に追加しない。
 
 実際の renderer の所有元ごとに確認する。アプリ名ごとに同じ画面を複製しない。
 
@@ -76,7 +76,7 @@ Discord と Slack は **双子**として `panel/components/接続/接続パネ�
 |--------|------|------------|
 | `frontend_avatar/src` | Avatar の Electron / Web 共通画面 | 上記の参照実例。既に役割分離されている箇所は維持 |
 | `frontend_diag/ui/src` | Diag 通常・ミニ | `frontend_diag/起動` の main 処理、配布先 `static/` と分離 |
-| `frontend_ide/src` | Navi / Console / Code / Live / IDE / Task / Team / Browser と関連別窓 | 同じ所有元の共通画面。Task / Team の専用 bundle 境界は維持 |
+| `frontend_ide/src` | Navi / Term / Code / Live / IDE / Task / Team / Browser と関連別窓 | 同じ所有元の共通画面。Task / Team の専用 bundle 境界は維持 |
 | `frontend_channels/discord/panel` | Discord 接続パネル | Bot の `frontend_channels/discord/src` と分離。既存 `panel` を renderer ルートとして使う |
 | `frontend_channels/slack/panel` | Slack 接続パネル | Discord と対応する構成だが別モジュール。音声機能は追加しない |
 
@@ -96,13 +96,13 @@ Avatar を基準に、Diag → IDE 共通画面 → Discord → Slack の順で�
 
 AiDiy が所有する Electron の操作画面は、**通常画面の背景を同じ位置で左ボタンで0.5秒長押しした後のドラッグ移動**と、**表示開始時のズーム**を基本とする。選択欄・入力欄などの操作と、ポップアップ中のモデル選択を窓移動より優先する。新規のアプリ・別窓にも最初から組み込む。光沢・影が走る追加の登場演出は入れない。
 
-対象は aidiy_diag、Avatar、Navi、Console、Code、Live、IDE、Task、Team、Browser、Discord、Slack と、その機能別ウィンドウ。IDE の Explorer、Viewer、ソース比較、軌跡バー、Browser 本文、Avatar の設定、独立 Task の要求・フロー・明細・編集窓も含む。Webブラウザ版・VS Code拡張の埋め込み画面にはOS窓移動を導入しない。演出用の短命な透明キャンバスは操作画面ではないため、長押しを取り付けない。
+対象は aidiy_diag、Avatar、Navi、Term、Code、Live、IDE、Task、Team、Browser、Discord、Slack と、その機能別ウィンドウ。IDE の Explorer、Viewer、ソース比較、軌跡バー、Browser 本文、Avatar の設定、独立 Task の要求・フロー・明細・編集窓も含む。Webブラウザ版・VS Code拡張の埋め込み画面にはOS窓移動を導入しない。演出用の短命な透明キャンバスは操作画面ではないため、長押しを取り付けない。
 
 ## タイトル操作と最前面ピン
 
 - 操作の並びは **ー □ 📌 Ｘ**。既存のタイトル位置・高さ・窓寸法は維持する。Diagのミニ表示では最大化を理由付きで無効化する。軌跡バーは通常タイトルバーを持たない例外で、最小化・最大化を追加しない。左端のバーガーを即時ドラッグ面とし、隣の二重縦線は表示しない。右端はピン・×の順にする。
 - 最前面の管理は `frontend_ide/デスクトップ/最前面ピン.cjs` の `createWindowPins` を全アプリで共用する。通常起動はOFF、沈んだ表示。再起動を越えてON状態を保存しない。Diagのミニ表示への切替・復帰も、その時点のユーザー選択を維持する。
-- IDEから開くConsole / Code / Live / Viewer / Browser / Explorer / 比較 / 軌跡だけはONで生成する。現在これらはIDEと同じElectronプロセスで、main側の `record.owner` が起動元の根拠となる。CLIの `--linked`、URL、rendererからの任意フラグを根拠にしない。
+- IDEから開くTerm / Code / Live / Viewer / Browser / Explorer / 比較 / 軌跡だけはONで生成する。現在これらはIDEと同じElectronプロセスで、main側の `record.owner` が起動元の根拠となる。CLIの `--linked`、URL、rendererからの任意フラグを根拠にしない。
 - Diagからのアプリ起動、単独Avatar（設定を含む）、単独Task / Team、単独Discord / SlackはIDE由来ではないためOFF。現行IDEにこれらの別プロセス起動経路はない。今後IDEから外部Electronを起動する場合は、mainが管理する起動元とVR状態の通知・切断処理を加え、単に別プロセスだからOFFと判断しない。
 - ONは全OS・全アプリで同じ `floating` 層。選択されたON窓だけ `focus` 時に `moveTop` する。`focus()` の奪い返し、タイマー再固定、IDE選択時の子窓一括持上げ、`pop-up-menu` 等の上位層は使わない。これにより別プロセスのON窓同士も通常のOS選択順に従う。OFF窓の選択では持上げ処理をしない。
 - IDEのVR中は、本体と所属する既存・新規子窓をONにロックする。UIは `aria-pressed` と理由付きdisabledで表示し、mainでもOFF要求を拒否する。F11・VR再押下・最大化によるVR終了後は、各窓のVR直前のユーザー選択へ戻す。VR中にIDEから新規生成した窓はONへ戻り、その後OFFにできる。
@@ -121,7 +121,7 @@ AiDiy が所有する Electron の操作画面は、**通常画面の背景を�
 
 通常フォームとして確認する操作は、タイトルのダブルクリックで最大化、再ダブルクリックで元の位置・寸法へ復元、最大化中のタイトルドラッグで復元してポインターに追従すること。最大化ボタンのテストだけで、この3操作を検証済みとして扱わない。
 
-- Avatar の `_WindowShell.vue` / ログイン画面、Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 `状態バー.vue`、Discord / Slack の header は通常タイトルを CSS `app-region: drag` としており、タイトルのダブルクリック専用ハンドラーは持たない。操作は Electron / OS の native hit-testing に委譲される。ボタン・入力・選択欄の `no-drag` と操作可能性を別途確認する。
+- Avatar の `_WindowShell.vue` / ログイン画面、Navi / Term / Code / Live / IDE / Task / Team / Browser の共通 `状態バー.vue`、Discord / Slack の header は通常タイトルを CSS `app-region: drag` としており、タイトルのダブルクリック専用ハンドラーは持たない。操作は Electron / OS の native hit-testing に委譲される。ボタン・入力・選択欄の `no-drag` と操作可能性を別途確認する。
 - 共通の500ms背景長押しは最大化・全画面を拒否する。これは通常タイトルの即時ドラッグとは別経路であり、最大化解除ドラッグの代替実装ではない。
 - 最大化ボタンの経路は、通常の `maximize` / `unmaximize`、Browser の専用表示領域controller、Diag の通常窓サイズcontrollerに分かれる。IDEのVR、BrowserのF11全画面・glass header、最大化操作を持たない軌跡バーは通常窓とは分けて扱う。
 
@@ -185,7 +185,7 @@ Diag は3表示で同じ透明窓・Vue状態を共有する。Windowsの透明�
 |------|------------------|----------|
 | aidiy_diag 通常・ミニ | `frontend_diag/diag/起動/electron-main.cjs` | 内容読込と初期ミニ寸法の確定後に共通 `拡大表示` |
 | Avatar 全12種類 | `createBaseWindow`、`openSettingsWindow` | `electron/main.ts` の `ウィンドウ表示` に集約。読込待ち、連打抑制、非表示要求を共用 |
-| Navi / Console / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
+| Navi / Term / Code / Live / IDE / Task / Team / 独立Viewer / Browser | `frontend_ide/desktop.cjs` の `attachWindowMove`。BrowserのWebContentsView本文にも取り付ける | `createWindow` で内容・配置確定後に共通 `拡大表示` |
 | Explorer / 比較・Viewer / 軌跡の別窓 | `frontend_ide/デスクトップ/panel-windows.cjs` の `created` | `show` から共通 `拡大表示`。元DOM・状態・表示の保持を崩さない |
 | Discord / Slack | `frontend_channels/discord/panel/desktop.cjs` / `frontend_channels/slack/panel/desktop.cjs` | 内容・配置確定後に共通 `拡大表示`。Botの実接続は演出と独立 |
 
@@ -205,7 +205,7 @@ Task / Team も共通の500ms長押し移動に対応する。`frontend_ide/desk
 - Avatarのmain変更後は `frontend_avatar` の `npm run build:electron` で `dist-electron` を同期する。`node frontend_avatar/checks/window-move-desktop.mjs` は全12種類の実生成関数と共通ズーム・長押しを検査する。本文だけを無害な合成画面へ置き換える。
 - `node frontend_diag/checks/initial-mini-desktop.mjs`：実Vueの通常・ミニ表示、長押し、位置・サイズ・最前面・復元。
 - `node frontend_channels/discord/checks/window-behavior-desktop.mjs`：Discordの本番Vue・preload・ズーム・背景の長押し・選択欄と入力欄のnative操作。Bot workerだけを合成し、接続・保存・外部送信をしない。
-- `node frontend_ide/scripts/check-module-move.mjs`：Code / Live / Consoleの単独・IDE連携、独立Viewer。`node frontend_ide/scripts/check-panel-desktop.mjs`：Explorer、Viewer、比較、iframe、軌跡。Monacoを含む既定の依存物を先にセットアップする。導入済みElectronの指定は各スクリプトの実装を確認する。
+- `node frontend_ide/scripts/check-module-move.mjs`：Code / Live / Termの単独・IDE連携、独立Viewer。`node frontend_ide/scripts/check-panel-desktop.mjs`：Explorer、Viewer、比較、iframe、軌跡。Monacoを含む既定の依存物を先にセットアップする。導入済みElectronの指定は各スクリプトの実装を確認する。
 - ズームの画像確認では、キャンバスの透明領域と内側の拡大、実画面のサイズ維持、終了後のキャンバス回収を区別する。光沢の掃引を追加しない。
 
 実Electronの入力とOSの窓位置・寸法を使う検証でも、無操作のためカーソル位置・フォーカス判定だけを模擬する場合がある。Windowsでの結果をMac / Linuxの実機確認として扱わない。異なるDPIの画面間移動やMac / Linuxの描画は各実機でも確認する。
@@ -225,7 +225,7 @@ Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。�
 ### 幅・タイトル位置・終了処理の注意点
 
 - アニメーションの幅は開始時のDIP値で固定する。毎フレームの `getBounds().width` を次の指定幅へ戻すと、Windowsの外枠や端数DPIの読戻し差が蓄積する。既存の `setWindowBounds` で補正し、`setResizable` を元へ戻した後も保存寸法を適用する。
-- 開閉ボタンと接続表示は共通CSSで横並びにする。Codeだけへ指定するとLiveや後から追加した画面でボタンと文字が縦に積まれる。Code / Live / Console / Task / Team / Naviは31pxのタイトル行と上下余白を合わせる。UI試験でも `会話表示.css` を読み、Vueのscoped CSSを実コンパイルして比較する。
+- 開閉ボタンと接続表示は共通CSSで横並びにする。Codeだけへ指定するとLiveや後から追加した画面でボタンと文字が縦に積まれる。Code / Live / Term / Task / Team / Naviは31pxのタイトル行と上下余白を合わせる。UI試験でも `会話表示.css` を読み、Vueのscoped CSSを実コンパイルして比較する。
 - `closed` 後に `BrowserWindow.webContents` を再取得しない。生存中に保存した参照でリスナーを解除し、破棄済み窓への表示更新を止める。畳む途中・非表示・開く途中の各段階で閉じる試験と、開閉を30回繰り返す幅維持試験を全対象へ行う。
 
 ### 適用範囲と固有の注意点
@@ -233,7 +233,7 @@ Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。�
 | 対象 | 適用・保持・除外 |
 |---|---|
 | Code / Live | 既存基準。VS Codeのホストやタイトルなし埋込画面を窓折り畳み対象にしない。 |
-| Console | PTYと履歴を保持する。縮小中に極小行数へfitせず、展開後のResizeObserverで再fitする。 |
+| Term | PTYと履歴を保持する。縮小中に極小行数へfitせず、展開後のResizeObserverで再fitする。 |
 | Browser | 通常窓だけ。WebContentsViewは別描画なのでDOM非表示だけで済ませず、縮小開始から展開完了までViewを隠す。ページ・セッションは破棄しない。プリセット寸法変更中は折り畳みを拒否し、閉状態では測定値によるリサイズ、最大化、F11と全画面を抑止する。全画面の浮動ヘッダーにはボタンを置かない。 |
 | Navi | 単独窓とIDEのNavi別窓。別窓APIは所有元IDEから名前を解決し、現在所有するpanel-navigationだけへ転送する。他パネルへ権限を広げない。Code表示幅の変更と折り畳みを競合させない。 |
 | Task / Team | 認証前後の共通ルート。Task要求・フロー・明細・編集窓にも適用し、各窓の入力・認証を保持する。 |
@@ -246,7 +246,7 @@ Avatar、その他の独立パネルとDiscord/Slackは、この追加適用に�
 
 ### 再検証
 
-- `node --test frontend_ide/checks/panel-collapse.test.cjs frontend_ide/checks/code-panel-toggle.test.mjs frontend_ide/checks/console-size.test.mjs frontend_ide/checks/navigation-browser-collapse.test.mjs frontend_ide/checks/taskteam-root.test.mjs`
+- `node --test frontend_ide/checks/panel-collapse.test.cjs frontend_ide/checks/code-panel-toggle.test.mjs frontend_ide/checks/term-size.test.mjs frontend_ide/checks/navigation-browser-collapse.test.mjs frontend_ide/checks/taskteam-root.test.mjs`
 - `frontend_ide` で `npm run taskteam:type-check`。
 - `node frontend_ide/scripts/check-panel-collapse.mjs`、`node frontend_ide/scripts/check-navigation-browser-collapse.mjs`、`node frontend_ide/scripts/check-taskteam-titlebar.mjs`。`--compile-only` は画面確認を行わない。
 - Diagの `checks/titlebar_browser.mjs` と既存 `checks/desktop.check.mjs`、ミニ/アイコン試験。画面試験は実Vueを使い、外部APIは隔離する。
@@ -281,9 +281,9 @@ AvatarのGUI起動は `electron/dev-start.cjs` がVite・TypeScript監視・Elec
 
 ## 起動元コンソールの保持
 
-Console / Code / Live / IDE の Electron 起動完了は1行で案内し、ブラウザ版・`--no-open` / `--serve` のURL、失敗理由、診断ログは維持します。Windows の直接 `.cmd` と PATH ランチャーは起動元で `chcp` / `cls` を実行しません。登録時は `scripts/_setup_path.py` の共通生成を使い、実行ファイル・固定引数をASCIIの実行文から復元して渡すため、日本語の配置先でもコンソールのコードページを変更しません。既存の PATH ランチャーはセットアップで再登録してください。
+Term / Code / Live / IDE の Electron 起動完了は1行で案内し、ブラウザ版・`--no-open` / `--serve` のURL、失敗理由、診断ログは維持します。Windows の直接 `.cmd` と PATH ランチャーは起動元で `chcp` / `cls` を実行しません。登録時は `scripts/_setup_path.py` の共通生成を使い、実行ファイル・固定引数をASCIIの実行文から復元して渡すため、日本語の配置先でもコンソールのコードページを変更しません。既存の PATH ランチャーはセットアップで再登録してください。
 
-Avatar の両 Vite 設定は `clearScreen: false` とし、開発サーバー再起動でも過去の出力を消しません。アプリ内のConsole・対話CLIの画面制御や、全体起動の明示的なリブート操作は別機能なので変更しません。Windows実機では、起動前の文字列が残ること、日本語の配置先・作業フォルダ、空白入り引数、失敗時の終了コード、`--wait` / Avatar の Ctrl+C を確認してください。
+Avatar の両 Vite 設定は `clearScreen: false` とし、開発サーバー再起動でも過去の出力を消しません。アプリ内のTerm・対話CLIの画面制御や、全体起動の明示的なリブート操作は別機能なので変更しません。Windows実機では、起動前の文字列が残ること、日本語の配置先・作業フォルダ、空白入り引数、失敗時の終了コード、`--wait` / Avatar の Ctrl+C を確認してください。
 
 IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs`。実Appと共通タイトル／開閉部品を使い、重い宇宙表示とIPCを模擬する。3D／2D選択からの展開、連打時の最終選択、拒否後の復元、DOM／入力保持、Web版max-heightを確認する。`--compile-only` は画面を撮影しない。実Electronの窓寸法、DPI、最大化復元は別途確認する。
 
@@ -295,7 +295,7 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 
 タイトルだけの状態ではタイトルを31 CSS pxに固定し、Task/Teamの外枠とDiagの画面全高に伸びる外周を残さない。Diagのroot高さ制限は縮小完了後に適用し、途中の220ms演出を潰さない。native高さは`ceil(31 * zoom)`であり、端数を切り捨てるとタイトルを欠けさせる。端数余白はタイトルと同色にし、バーを実体として非表示にする。
 
-対象はIDE本体、Code、Live、Console、Browser、Navi単独／別窓、Task／Team、Explorer、別窓／独立Viewer、Diag標準／ミニ。CPUの▷は背景透過切替であり本文折畳みではない。Browser全画面ヘッダー・Diagアイコン表示など別モードも混同しない。
+対象はIDE本体、Code、Live、Term、Browser、Navi単独／別窓、Task／Team、Explorer、別窓／独立Viewer、Diag標準／ミニ。CPUの▷は背景透過切替であり本文折畳みではない。Browser全画面ヘッダー・Diagアイコン表示など別モードも混同しない。
 
 `collapsed-status-bar.test.mjs`はバーのinline非表示と各呼出し、`panel-collapse.test.cjs`は全窓種の端数zoom・DPI丸めと反復復元を確認する。画面試験では本番scoped CSSをコンパイルし、試験だけの全体隠蔽CSSを追加しない。タイトル・rootの高さ、バーの`display`と実寸0、外周border、3回以上の開閉復帰を測る。headless Electronの固定寸法iframe内での実Vue測定はCSS描画検証であり、Windows実窓・DPI画面・画像目視の代わりにはしない。
 
@@ -312,7 +312,7 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 
 ### 倍率変更時の枠と基本背景（2026-11-13）
 - 表示パネルのベース背景は黒とする。外枠1pxはタイトル同色のまま維持する（黒にしない）。タイトル帯のグレー、文字・接続バーの色、折畳後のタイトル高さ端数の同色補完も維持する。
-- Browserと通常のIDE/Code/Live/Console/Navi/Task/Teamのnative背景は従来から黒。Explorer/Viewer/Navi別窓も黒へ統一する。独立Explorer/ViewerのDOMベースと軌道別窓の内容面は黒を明示し、外側の透明領域は維持する。
+- Browserと通常のIDE/Code/Live/Term/Navi/Task/Teamのnative背景は従来から黒。Explorer/Viewer/Navi別窓も黒へ統一する。独立Explorer/ViewerのDOMベースと軌道別窓の内容面は黒を明示し、外側の透明領域は維持する。
 - Diag・CPU・軌道別窓のnative透過は専用表示に必要なため変更しない。nativeの透明背景を黒に上書きしない。
 - 倍率の異なるWindowsモニターへ移動した際の白い1px線は原因未確定。基本背景の黒化はDWMの外枠まで黒くする保証ではない。通常の端リサイズを失う thickFrame:false は使わない。
 - 次の切り分けではWindows実機のスクリーンショットと webContents.capturePage() を比較し、OS側の枠かDOM側の枠かを確認する。クラウドのCSS・寸法回帰テストを実機確認の代わりとしない。

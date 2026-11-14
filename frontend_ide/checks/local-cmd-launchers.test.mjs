@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
-for (const kind of ['cpu', 'console', 'code', 'live', 'ide', 'task', 'team']) {
+for (const kind of ['cpu', 'term', 'code', 'live', 'ide', 'task', 'team']) {
   test(`${kind}: 配布用cmdは同じフォルダの入口へ全引数をそのまま渡す`, () => {
     const wrapper = readFileSync(new URL(`../aidiy_${kind}.cmd`, import.meta.url), 'utf8');
     // 最後のnodeを直接実行し、その終了コードを後続コマンドで上書きしない。
@@ -28,8 +28,8 @@ for (const kind of ['cpu', 'console', 'code', 'live', 'ide', 'task', 'team']) {
   });
 }
 
-test('ConsoleのWindowsラッパーはCRLF・BOMなしで配布する', () => {
-  const wrapper = readFileSync(new URL('../aidiy_console.cmd', import.meta.url));
+test('TermのWindowsラッパーはCRLF・BOMなしで配布する', () => {
+  const wrapper = readFileSync(new URL('../aidiy_term.cmd', import.meta.url));
   assert.equal(wrapper[0], 0x40);
   assert.equal(wrapper.toString().replace(/\r\n/g, '').includes('\n'), false);
 });

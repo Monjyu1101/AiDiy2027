@@ -4,13 +4,15 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+import { 行の余白クリック } from '../共通表示/行選択.mjs';
 import { ref, computed, watch, nextTick } from 'vue';
 import { 先頭へスクロール, 完了時 } from '../共通表示/先頭表示.mjs';
 import { 再生可能な音声 } from './設定モデル音声.mjs';
 import 状態バッジ from '../共通表示/状態バッジ.vue';
 import './設定モデル.css';
 const props=defineProps(['data','results','loading','running','selected','online','message','audioStates','visible']);
-defineEmits(['refresh','start','test','cancel','select','audio-load','audio-error']);
+const emit=defineEmits(['refresh','start','test','cancel','select','audio-load','audio-error']);
+const 行選択=(event,id)=>{if(行の余白クリック(event))emit('select',id);};
 const items=computed(()=>props.data?.項目||[]);
 const row=computed(()=>items.value.find(item=>item.id===props.selected));
 const result=computed(()=>props.results?.[props.selected]);
@@ -40,7 +42,7 @@ watch(()=>props.running,完了時(()=>{if(props.selected===items.value[0]?.id)�
  <p v-else-if="message" class="panel-note" role="status" aria-live="polite">{{message}}</p>
  <main class="trial-layout"><aside aria-label="設定モデル一覧"><p v-if="loading">設定を読込中…</p><p v-else-if="!items.length">設定項目がありません。設定を再読込してください。</p>
   <section v-for="group in グループ" :key="group.key" class="trial-group" :aria-label="group.名前"><h3 class="trial-group-title">{{group.名前}}<span> · {{group.項目.length}}</span></h3>
-  <div v-for="item in group.項目" :key="item.id" class="trial-row" :class="{selected:selected===item.id}">
+  <div v-for="item in group.項目" :key="item.id" class="trial-row" :class="{selected:selected===item.id}" @click="行選択($event,item.id)">
    <button class="trial-select" :aria-pressed="selected===item.id" @click="$emit('select',item.id)"><strong>{{名前(item)}}</strong><span class="trial-model">{{item.プロバイダ || '未設定'}} / {{item.モデル || '未設定'}}</span><span v-if="results?.[item.id]?.共有元" class="trial-share">共有元: {{results[item.id].共有元}}</span></button>
    <div class="trial-test"><button class="single-test-button" :data-trial-id="item.id" :aria-label="`${名前(item)}をテスト`" :disabled="!online || loading || running || (item.id==='PREDICTION' && !data?.予測条件?.テスト可能)" :title="item.id==='PREDICTION'?data?.予測条件?.説明:undefined" @click="$emit('select',item.id);$emit('test',item.id)">テスト</button><component :is="状態バッジ" :state="状態(item)" :label="状態(item)==='実行中'?'テスト中':''"/></div>
   </div>

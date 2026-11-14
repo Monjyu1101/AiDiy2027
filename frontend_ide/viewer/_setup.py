@@ -127,7 +127,7 @@ def setup(choices=None) -> bool:
         vue = THIS_DIR.parent.parent / 'frontend_ide'
         if not common_ui_dependencies_ready(vue):
             vue_reuse = frontend_dependency_guard(
-                vue, 'Console / Code / Live / IDE 共通UI', desktop=False,
+                vue, 'Term / Code / Live / IDE 共通UI', desktop=False,
                 info=print_info, warning=print_warning, error=print_error,
             )
             if vue_reuse is False:
@@ -183,7 +183,7 @@ def _setup_best_effort(npm, choices):
     vue = THIS_DIR.parent.parent / 'frontend_ide'
     if not common_ui_dependencies_ready(vue):
         attempt('共通UI使用中確認', lambda: frontend_dependency_guard(
-            vue, 'Console / Code / Live / IDE 共通UI', desktop=False,
+            vue, 'Term / Code / Live / IDE 共通UI', desktop=False,
             info=print_info, warning=print_warning, error=print_error, continue_on_error=True,
         ))
         attempt('共通UI依存', lambda: subprocess.run([npm, 'ci', '--include=dev', '--no-fund', '--no-audit'], cwd=vue, check=True))

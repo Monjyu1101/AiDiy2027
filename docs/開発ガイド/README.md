@@ -19,7 +19,7 @@
 - VS Code 拡張は `frontend_ide/host`。AiDiy (Code) はオンライン時に Core（`8091`）の AIコアへ接続して各 Code CLI を選び、未接続時は `aidiy_hermes` を直接起動する。AiDiy (Live) は同じ AIコアへ接続する。どちらも常駐ポートなし（単独起動版は `aidiy_code` / `aidiy_live`）
 - Discord Bot は `frontend_channels/discord`（任意起動、待受ポートなし）。専用テキストチャンネルを `aidiy_hermes`、専用ボイスチャンネルを Core（`8091`）の AIコア Live へ接続する。起動は `aidiy_discord`
 - Slack Bot は `frontend_channels/slack`。HTTPS の定期取得で専用チャンネルの投稿を Hermes へ渡し、スレッドへ返信する（音声なし）。起動は `aidiy_slack`
-- Navi / Console / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面は `frontend_ide/src/`
+- Navi / Term / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面は `frontend_ide/src/`
 - Diag は `frontend_diag`。環境診断に加え、設定・導入操作とサービス起動管理を提供する
 - DB は **SQLite**
   - `_data/AiDiy/database.db`
@@ -99,7 +99,7 @@ AiDiy2027/
 python _setup.py
 ```
 
-通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、Navi / Console / Code / Live / IDE / Task / Team / Browser の共通依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels (Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
+通常セットアップでは Diag を必ず準備します。IDE群を選ぶと、Navi / Term / Code / Live / IDE / Task / Team / Browser の共通依存・ランチャーを準備し、VS Code CLI がある場合は Code / Live の VSIX を生成・配置します。Channels (Discord / Slack) を選ぶと両 Bot の依存・パネル・ランチャーを準備します。
 
 依存更新、MCP 設定、モデルダウンロードなどの選択と注意点は [ルート README のセットアップ](../../README.md#1-セットアップ) を参照してください。接続情報は [Discord README](../../frontend_channels/discord/README.md) と [Slack README](../../frontend_channels/slack/README.md) にまとめています。
 
@@ -109,9 +109,9 @@ python _setup.py
 python _start.py
 ```
 
-最初の Diag 選択は既定 Yes です。Yes では `aidiy_diag --auto` へ起動管理を渡し、保存済みの設定で起動します。No ではバックエンド、Web / Avatar、Task / Team、Console / Code / Live / IDE、Discord / Slack を個別選択します。
+最初の Diag 選択は既定 Yes です。Yes では `aidiy_diag --auto` へ起動管理を渡し、保存済みの設定で起動します。No ではバックエンド、Web / Avatar、Task / Team、Term / Code / Live / IDE、Discord / Slack を個別選択します。
 
-個別起動コマンド、OS ごとの Python パス、停止対象は [ルート README の起動](../../README.md#2-起動) と [停止](../../README.md#3-停止) を参照してください。常駐バックエンド以外の起動入口は `aidiy_navi` / `aidiy_console` / `aidiy_code` / `aidiy_live` / `aidiy_ide` / `aidiy_task` / `aidiy_team` / `aidiy_browser` / `aidiy_avatar` / `aidiy_discord` / `aidiy_slack` です。
+個別起動コマンド、OS ごとの Python パス、停止対象は [ルート README の起動](../../README.md#2-起動) と [停止](../../README.md#3-停止) を参照してください。常駐バックエンド以外の起動入口は `aidiy_navi` / `aidiy_term` / `aidiy_code` / `aidiy_live` / `aidiy_ide` / `aidiy_task` / `aidiy_team` / `aidiy_browser` / `aidiy_avatar` / `aidiy_discord` / `aidiy_slack` です。
 
 ---
 
@@ -249,7 +249,7 @@ New-Item -ItemType File -Force backend_server/temp/reboot_apps.txt | Out-Null
 
 ## 10. テスト方針
 
-自動テストは `backend_server/checks/` の `unittest`（AIコア・バックアップ・予測まわり）と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/discord/checks/`・`frontend_channels/slack/checks/` の Node.js / Python テストがあります。`command_hermes/checks/`、`scripts/checks/`（セットアップ・起動・停止・Task / Team）にも `unittest` があります。`frontend_avatar/checks/` の Web / Avatar 接続テスト、`frontend_ide/checks/` の共通画面・Navi・Console テスト、`frontend_diag/checks/` の診断・起動管理の検証もあります。実行方法は [開発環境運用手順](../../_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照してください。画面操作は手動でも確認します。
+自動テストは `backend_server/checks/` の `unittest`（AIコア・バックアップ・予測まわり）と、`frontend_ide/host/checks/`（Code）・`frontend_ide/host/aidiy_live/checks/`（Live）の Node.js テスト、`frontend_ide/host/checks/` の Python テスト、`frontend_channels/discord/checks/`・`frontend_channels/slack/checks/` の Node.js / Python テストがあります。`command_hermes/checks/`、`scripts/checks/`（セットアップ・起動・停止・Task / Team）にも `unittest` があります。`frontend_avatar/checks/` の Web / Avatar 接続テスト、`frontend_ide/checks/` の共通画面・Navi・Term テスト、`frontend_diag/checks/` の診断・起動管理の検証もあります。実行方法は [開発環境運用手順](../../_AIDIY/knowledge/共通,開発環境運用手順.md) の「自動テスト」を参照してください。画面操作は手動でも確認します。
 
 ```powershell
 cd backend_server

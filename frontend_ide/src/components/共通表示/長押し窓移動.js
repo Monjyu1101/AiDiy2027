@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const controls='input,textarea,select,button,a,summary,[contenteditable]:not([contenteditable="false"]),[role="button"],[role="slider"],[role="textbox"],[draggable="true"],.scrollbar,.slider';
-const movableKinds=new Set(['cpu','code','live','navi','console','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
+const movableKinds=new Set(['cpu','code','live','navi','term','browser','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
 // ピン留めは所有元の限定APIを渡す。iframeにも同じ窓のAPIだけを使う。
 export function installWindowMove({kind,host=false,win=window,api=win.aidiyWindow}){
  if(!movableKinds.has(kind)||host||api?.nativeWindowMove||!api?.beginWindowMove||!api?.moveWindow||!api?.endWindowMove)return()=>{};
@@ -82,7 +82,7 @@ function installSurfaceMove({win,api,onBegin}){
   if(current)finish();
   if(event.button!==0||event.isPrimary===false||event.pointerType!=='mouse'||!windowMoveTarget(event.target,event.clientX,event.clientY,win))return;
   onBegin(finish);
-  // Monaco / Consoleは押下後の再描画で文字DOMを差し替える。存続するDocumentの根で捕捉する。
+  // Monaco / Termは押下後の再描画で文字DOMを差し替える。存続するDocumentの根で捕捉する。
   const drag={id:event.pointerId,target:doc.documentElement,sx:event.screenX,sy:event.screenY};
   current=drag;const run=++sequence;drag.timer=win.setTimeout(()=>void activate(drag,run),500);
  });

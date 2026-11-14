@@ -23,7 +23,7 @@ import {getKeyStatus,testKey,KEY_PROVIDERS,INTEGRATION_PROBES,cancelKeyProbes} f
 import {verify as verifyUi} from '../ui/verify.mjs';
 import {stopRevision,watchStop} from './起動/lifecycle.mjs';
 import {launchDetached} from './起動/launch.mjs';
-import {headlessMain,writeInstallReport,INSTALL_FILE} from './診断/headless.mjs';
+import {headlessMain,writeInstallReport,mergeInstallResult,INSTALL_FILE} from './診断/headless.mjs';
 import {writeIntegrationInfo,INTEGRATION_FILE} from './モデル情報/integration_info.mjs';
 import {writeModelsInfo} from './モデル情報/models_info.mjs';
 import {createPreviousResults} from './診断/前回結果.mjs';
@@ -92,16 +92,19 @@ export function parseArgs(args) {
   if(options.memoOnly&&args.some(arg=>!['--memo-only','--new','--foreground','--wait','--help','-h'].includes(arg)))throw Error('aidiy_memo はシステム付箋だけを扱います。');
   return options;
 }
-export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,getLaunchDisplay,memoStore,launchRoot=process.cwd(),systemRoot=fileURLToPath(new URL('../../',import.meta.url)),getLaunchRoot,isNormalEnabled=()=>true,cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
+export function createHandler({token, prefix='/', entries=[], coverage={}, scanFn=scan, probeFn=probe, toolsStatusFn=getToolsStatus, keyStatusFn=getKeyStatus, keyTestFn=testKey, publicCache=createPublicModelCache(), installWriteFn=writeInstallReport,installMergeFn=null, modelsWriteFn=writeModelsInfo, integrationWriteFn=writeIntegrationInfo, modelTrials=createModelTrials(), previousResults, startManager=createStartManager(), appLauncher,getLaunchDisplay,memoStore,launchRoot=process.cwd(),systemRoot=fileURLToPath(new URL('../../',import.meta.url)),getLaunchRoot,isNormalEnabled=()=>true,cliLauncher=createCliLauncher(),vscodeLauncher=createVSCodeLauncher(),portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),installManagerFactory=createInstallManager,coreSettingsBridge=createCoreSettingsBridge(),toolsSettingsBridge=createToolsSettingsBridge(),toolsRepresentativeBridge=createToolsRepresentativeBridge()}) {
   appLauncher ??= createAppLauncher({portStatusFn,webBrowserOpenFn,getLaunchDisplay});
   const memoHandler=createMemoHandler({appLauncher,launchRoot,memoStore,systemRoot,getLaunchRoot,isNormalEnabled});
   let results = [], busy = false, writing = false, scanStarted = null, scanFinished = null, modelResults = {}, modelWriting = false, progress = [], integrationResults = {}, integrationWriting = false;
   const individualProbes = new Set(), keyBusy = new Set(), keyProgress = new Map();
+  let installMerging = Promise.resolve();
   const hasBody = req => req.headers['transfer-encoding'] || (req.headers['content-length'] && req.headers['content-length'] !== '0');
   const recordInstallResult=(result,started=new Date())=>{
     const byId=new Map(results.map(item=>[item.id,item]));byId.set(result.id,result);
     results=entries.flatMap(item=>byId.has(item.id)?[byId.get(item.id)]:[]);
     scanStarted ??= started;scanFinished=new Date();
+    // 個別確認・導入後の確認結果も保存済みの導入状況へ反映する（順に書き、書込失敗は表示を妨げない）。
+    if(installMergeFn)installMerging=installMerging.then(()=>installMergeFn(entries,result)).catch(()=>{});
     return {前回実行日時:scanFinished.toISOString(),確認済み:results.length===entries.length};
   };
   const management=installManagerFactory({entries,probeFn,onResult:recordInstallResult});
@@ -110,8 +113,8 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
   for(const name of ['memo.html','memo.js','memo.css'])assets.set(name,[name,name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.js')?'text/javascript; charset=utf-8':'text/css; charset=utf-8']);
   assets.set('Chrome.svg',['Chrome.svg','image/svg+xml']);
   assets.set('AiDiy.png',['AiDiy.png','image/png']);
-  for(const id of ['avatar','ide','cpu','navi','console','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
-  for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
+  for(const id of ['avatar','ide','cpu','navi','term','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
+  for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','aidiy_codex','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
   assets.set('LICENSE_ICONS.md',['LICENSE_ICONS.md','text/markdown; charset=utf-8']);
   for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt'])assets.set(name,[name,'text/plain; charset=utf-8']);
@@ -434,7 +437,7 @@ export async function main(args=process.argv.slice(2)) {
     if(typeof cwd!=='string'||!path.isAbsolute(cwd)||cwd.length>4096||/[\0\r\n]/.test(cwd))return false;
     try{const root=await realpath(cwd);if(!(await stat(root)).isDirectory())return false;normalLaunchRoot=root;normalEnabled=true;void publicCache.refresh();return true;}catch{return false;}
   };
-  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,systemRoot,isNormalEnabled:()=>normalEnabled,getLaunchRoot:()=>normalLaunchRoot,previousResults:createPreviousResults(),getLaunchDisplay:()=>readDesktopDisplay(desktop)});
+  const server=createServer({token,prefix:options.prefix,entries,coverage,publicCache,startManager,systemRoot,isNormalEnabled:()=>normalEnabled,getLaunchRoot:()=>normalLaunchRoot,previousResults:createPreviousResults(),installMergeFn:mergeInstallResult,getLaunchDisplay:()=>readDesktopDisplay(desktop)});
   await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(options.port,'127.0.0.1',resolve);});
   // 公開一覧だけを起動時に取得。キー設定や他 provider の API は自動で呼ばない。
   if(normalEnabled)void publicCache.refresh();

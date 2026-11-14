@@ -9,7 +9,7 @@ import {ref} from '../ui/node_modules/vue/index.mjs';
 import {CLI状態を作成} from '../diag/ui/components/アプリ起動/CLI状態.mjs';
 function fixture(overrides={}){
  const requests=[],confirmations=[],アプリ={フォルダ:ref('/日本語 path & ;'),処理中:ref(''),選択中:ref(false)};
- const state=CLI状態を作成({アプリ,確認:async text=>{confirmations.push(text);return true;},api:async(route,_method,_signal,_format,body)=>{requests.push({route,body});return route==='api/CLI起動'?{対象:[{id:'copilot',名前:'GitHub Copilot CLI',モード:'YOLO',利用可能:true},{id:'grok',名前:'Grok',利用可能:false}]}:{通知:'Console を開きました'};},...overrides});
+ const state=CLI状態を作成({アプリ,確認:async text=>{confirmations.push(text);return true;},api:async(route,_method,_signal,_format,body)=>{requests.push({route,body});return route==='api/CLI起動'?{対象:[{id:'copilot',名前:'GitHub Copilot CLI',モード:'YOLO',利用可能:true},{id:'grok',名前:'Grok',利用可能:false}]}:{通知:'Term を開きました'};},...overrides});
  return {state,アプリ,requests,confirmations};
 }
 test('only available CLI entries appear and idle loading cannot launch anything',async()=>{const f=fixture();await f.state.読込();assert.deepEqual(f.state.項目.value.map(x=>x.id),['copilot']);assert.equal(f.requests.length,1);assert.equal(f.confirmations.length,0);});
@@ -35,7 +35,7 @@ test('mini launch skips confirmation and sends an independent request per click 
   assert.equal(confirmations.length,0);assert.deepEqual(requests,[{route:'api/CLI起動/開始',method:'POST',format:'json',body:{対象:id,フォルダ:'/日本語 path & ;',自動承認確認:true}}]);
   assert.equal(f.state.処理中.value,id);assert.equal(f.アプリ.処理中.value,'cli:'+id);
   const second=f.state.起動(id,{確認省略:true});assert.equal(requests.length,2);assert.deepEqual(requests[0],requests[1]);
-  pending[1].resolve({通知:'Console を開きました'});await second;
+  pending[1].resolve({通知:'Term を開きました'});await second;
   assert.equal(f.state.処理中.value,id);assert.equal(f.アプリ.処理中.value,'cli:'+id,'one completion must not clear another pending launch');
   pending[0].resolve({通知:'古い結果'});await first;assert.equal(f.state.処理中.value,'');assert.equal(f.アプリ.処理中.value,'');assert.equal(f.state.失敗.value,false);
   assert.equal(f.state.通知.value,'');assert.equal(confirmations.length,0);

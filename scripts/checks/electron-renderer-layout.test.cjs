@@ -62,7 +62,7 @@ test('main / preload、拡張ホストと viewer API は renderer 整理で移�
     'frontend_ide/host/src', 'frontend_ide/viewer', 'frontend_channels/discord/src/main.ts', 'frontend_channels/slack/src/main.ts']);
 });
 
-for (const kind of ['console', 'code', 'live', 'ide', 'task', 'team', 'browser']) {
+for (const kind of ['term', 'code', 'live', 'ide', 'task', 'team', 'browser']) {
   test(`${kind} の独立起動入口を省略せず共通 renderer へ接続する`, () => {
     const entry = `frontend_ide/aidiy_${kind}/launch.mjs`;
     present([entry, `frontend_ide/aidiy_${kind}.cmd`]);

@@ -76,5 +76,5 @@ test('Windowsは同じ最前面層のmoveTopで本体選択後もパネルを維
 
 test('VR中に追加した全種別のパネルはピン固定で本体より前に出る',()=>{
  const f=fixture('win32');f.vr(true);
- for(const kind of ['explorer','panel-routes','panel-viewer','code','live','navi','console']){const record=f.add(kind,f.ide);assert.deepEqual(f.pins.state(record.window),{pinned:true,locked:true});f.pins.toggle(record.window);assert.equal(f.pins.state(record.window).pinned,true);f.ide.window.focus();f.flush();f.above(record);}
+ for(const kind of ['explorer','panel-routes','panel-viewer','code','live','navi','term']){const record=f.add(kind,f.ide);assert.deepEqual(f.pins.state(record.window),{pinned:true,locked:true});f.pins.toggle(record.window);assert.equal(f.pins.state(record.window).pinned,true);f.ide.window.focus();f.flush();f.above(record);}
 });

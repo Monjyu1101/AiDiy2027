@@ -39,7 +39,7 @@ try{
  const page=await browser.newPage({viewport:{width:1360,height:950}}),errors=[],requests=[];
  page.on('pageerror',error=>errors.push(String(error)));page.on('request',request=>{if(!decodeURIComponent(request.url()).endsWith('/起動/ログ'))requests.push([request.method(),request.url()]);});
  await page.goto(`http://127.0.0.1:${port}/proxy/8097/#token=synthetic-ui-test`);await page.getByRole('button',{name:'導入状況',exact:true}).click();await page.waitForSelector('#list .item');assert.ok(!page.url().includes('#'));
- assert.equal(await page.locator('#list .item').count(),19);
+ assert.equal(await page.locator('#list .item').count(),22);
  assert.ok(!requests.some(([method])=>method==='POST'));
  assert.ok(await page.locator('#install-write').isDisabled(),'write must wait for a completed check');
  // 全テスト: 全項目が確認中で回り、上から順に結果へ変わり、確認後に書き込む。

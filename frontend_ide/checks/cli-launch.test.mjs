@@ -5,10 +5,10 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, writeFile, chmod, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, chmod, rm, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { CLI_LAUNCHERS, resolveCliLaunch, validateCliOptions } from '../aidiy_console/cli-launch.mjs';
+import { CLI_LAUNCHERS, resolveCliLaunch, validateCliOptions } from '../aidiy_term/cli-launch.mjs';
 import { launch } from '../launch.mjs';
 import { startDevelopment } from '../server.mjs';
 
@@ -35,14 +35,14 @@ async function hermesFixture(directory) {
   return { home, bin, root, python, cli, shim };
 }
 
-test('CLI許可リスト: 7種類の固定argv、モデル指定なし、通常承認と自動承認', async () => fixture(async directory => {
+test('CLI許可リスト: 8種類の固定argv、モデル指定なし、通常承認と自動承認', async () => fixture(async directory => {
   assert.ok(Object.isFrozen(CLI_LAUNCHERS));
-  assert.deepEqual(CLI_LAUNCHERS.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'aidiy_hermes', 'aidiy_pi']);
+  assert.deepEqual(CLI_LAUNCHERS.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'aidiy_hermes', 'aidiy_pi', 'aidiy_codex']);
   // aidiy_pi は PATH を探さず、この配置先の command_pi を node で直接起動する（承認フラグなし）。
   const pi = CLI_LAUNCHERS.find(item => item.id === 'aidiy_pi');
   assert.ok(Object.isFrozen(pi) && Object.isFrozen(pi.args)); assert.deepEqual(pi.args, []);
   const flags = ['--dangerously-skip-permissions', '--dangerously-bypass-approvals-and-sandbox', '--yolo', '--dangerously-skip-permissions', '--yolo', '--auto', '--yolo'];
-  for (const [index, item] of CLI_LAUNCHERS.filter(item => item.id !== 'aidiy_pi').entries()) {
+  for (const [index, item] of CLI_LAUNCHERS.filter(item => !['aidiy_pi', 'aidiy_codex'].includes(item.id)).entries()) {
     assert.ok(Object.isFrozen(item) && Object.isFrozen(item.args));
     const file = path.join(directory, item.id + (process.platform === 'win32' ? '.exe' : ''));
     await executable(file);
@@ -53,6 +53,19 @@ test('CLI許可リスト: 7種類の固定argv、モデル指定なし、通常�
     assert.ok(!automatic.args.some(value => /model|provider|prompt/.test(value)));
     assert.equal(normal.mode, '通常承認'); assert.equal(automatic.mode, item.mode);
   }
+  // aidiy_codex は PATH 上の同名を使わず、ホームの ~/.aidiy/bin/aidiy_codex だけを起動する。
+  const codex = CLI_LAUNCHERS.find(item => item.id === 'aidiy_codex');
+  assert.ok(Object.isFrozen(codex) && Object.isFrozen(codex.args)); assert.deepEqual(codex.args, ['--dangerously-bypass-approvals-and-sandbox']);
+  const exe = process.platform === 'win32' ? '.exe' : '';
+  await executable(path.join(directory, 'aidiy_codex' + exe));
+  const home = path.join(directory, 'home'), installed = path.join(home, '.aidiy', 'bin', 'aidiy_codex' + exe);
+  const homeEnv = { PATH: directory, [process.platform === 'win32' ? 'USERPROFILE' : 'HOME']: home };
+  await assert.rejects(resolveCliLaunch('aidiy_codex', { env: homeEnv, platform: process.platform }), /aidiy_codex|コンパイル/);
+  await mkdir(path.dirname(installed), { recursive: true }); await executable(installed);
+  const normal = await resolveCliLaunch('aidiy_codex', { env: homeEnv, platform: process.platform });
+  const automatic = await resolveCliLaunch('aidiy_codex', { env: homeEnv, platform: process.platform, autoApprove: true });
+  assert.equal(normal.executable, await realpath(installed)); assert.deepEqual(normal.args, []); assert.equal(normal.mode, '通常承認');
+  assert.deepEqual(automatic.args, ['--dangerously-bypass-approvals-and-sandbox']); assert.equal(automatic.mode, codex.mode);
 }));
 
 test('Windows Hermes .cmd: セットアップ形式を直接Pythonのargvに解決し、標準配置を検出する', async () => fixture(async directory => {
@@ -156,26 +169,26 @@ test('Windows npm .cmd: 別パッケージ・未宣言bin・外部シンボリ�
   }
 }));
 
-test('CLI起動オプション: Console専用、モデル・providerを混在させない', async () => {
-  for (const kind of ['ide', 'code', 'live']) assert.throws(() => validateCliOptions(kind, { cli: 'copilot' }), /console/);
-  assert.throws(() => validateCliOptions('console', { cliAutoApprove: true }), /必要/);
+test('CLI起動オプション: Term専用、モデル・providerを混在させない', async () => {
+  for (const kind of ['ide', 'code', 'live']) assert.throws(() => validateCliOptions(kind, { cli: 'copilot' }), /term/);
+  assert.throws(() => validateCliOptions('term', { cliAutoApprove: true }), /必要/);
   for (const option of ['provider', 'model']) {
-    assert.throws(() => validateCliOptions('console', { cli: 'copilot', [option]: '' }), /同時/);
-    await assert.rejects(launch('console', ['--cli', 'copilot', `--${option}`, 'bad', '--no-open']), /同時/);
-    await assert.rejects(startDevelopment(tmpdir(), { kind: 'console', cli: 'copilot', [option]: 'bad' }), /同時/);
+    assert.throws(() => validateCliOptions('term', { cli: 'copilot', [option]: '' }), /同時/);
+    await assert.rejects(launch('term', ['--cli', 'copilot', `--${option}`, 'bad', '--no-open']), /同時/);
+    await assert.rejects(startDevelopment(tmpdir(), { kind: 'term', cli: 'copilot', [option]: 'bad' }), /同時/);
   }
-  await assert.rejects(launch('ide', ['--cli', 'copilot', '--no-open']), /console/);
-  await assert.rejects(launch('console', ['--cli-auto-approve', '--no-open']), /必要/);
+  await assert.rejects(launch('ide', ['--cli', 'copilot', '--no-open']), /term/);
+  await assert.rejects(launch('term', ['--cli-auto-approve', '--no-open']), /必要/);
 });
 
 
-for (const cli of ['copilot', 'aidiy_hermes']) test(`startDevelopmentからConsoleへ${cli}・承認モード・作業フォルダを転送する（CLI実行なし）`, async () => fixture(async project => {
+for (const cli of ['copilot', 'aidiy_hermes']) test(`startDevelopmentからTermへ${cli}・承認モード・作業フォルダを転送する（CLI実行なし）`, async () => fixture(async project => {
   await executable(path.join(project, cli + (process.platform === 'win32' ? '.exe' : '')));
-  const app = await startDevelopment(project, { kind: 'console', cli, cliAutoApprove: true, env: { PATH: project } });
+  const app = await startDevelopment(project, { kind: 'term', cli, cliAutoApprove: true, env: { PATH: project } });
   try {
     const launchConfig = await fetch(app.url + 'development/config').then(response => response.json());
     assert.equal(launchConfig.cliName, cli === 'aidiy_hermes' ? 'Hermes' : CLI_LAUNCHERS.find(item => item.id === cli).name);
-    const response = await fetch(app.url + 'api/panels/console', { method: 'POST' }); assert.equal(response.status, 200);
+    const response = await fetch(app.url + 'api/panels/term', { method: 'POST' }); assert.equal(response.status, 200);
     const panel = await response.json(), config = await fetch(new URL(panel.url + 'config', app.url)).then(response => response.json());
     assert.equal(config.project, project); assert.equal(config.cli.id, cli); assert.equal(config.cli.autoApprove, true); assert.equal(config.cli.mode, 'YOLO');
     assert.equal(config.cli.name, CLI_LAUNCHERS.find(item => item.id === cli).name);
@@ -184,8 +197,8 @@ for (const cli of ['copilot', 'aidiy_hermes']) test(`startDevelopmentからConso
 }));
 
 
-test('ordinary Console config does not publish a CLI title suffix',async()=>fixture(async project=>{
- const app=await startDevelopment(project,{kind:'console'});
+test('ordinary Term config does not publish a CLI title suffix',async()=>fixture(async project=>{
+ const app=await startDevelopment(project,{kind:'term'});
  try{const config=await fetch(app.url+'development/config').then(response=>response.json());assert.equal(config.cliName,undefined);}
  finally{await app.close();}
 }));

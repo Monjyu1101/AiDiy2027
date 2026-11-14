@@ -8,7 +8,7 @@ const assert=require('node:assert/strict');
 const {Macメニューを設定}=require('../scripts/MacOS-Menu.cjs');
 
 test('Mac の全7アプリはアプリ名と閉じるだけを表示し、native編集操作を保持する',()=>{
- for(const 名前 of ['AiDiy 診断','AiDiy Console','AiDiy Code','AiDiy Live','AiDiy IDE','AiDiy Avatar','AiDiy Discord']){
+ for(const 名前 of ['AiDiy 診断','AiDiy Term','AiDiy Code','AiDiy Live','AiDiy IDE','AiDiy Avatar','AiDiy Discord']){
   let menu,dock,icon,closed=0,childClosed=0;
   const app={dock:{setMenu(value){dock=value;},setIcon(value){icon=value;}}};
   const Menu={buildFromTemplate:items=>items,setApplicationMenu(value){menu=value;}};

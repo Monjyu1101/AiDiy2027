@@ -37,16 +37,6 @@ def install_launcher(root: Path, kind: str = 'ide', *, register_path: bool = Tru
     if not script.is_file():
         raise OSError(f'起動スクリプトが見つかりません: {script}')
     path = launcher_path(kind)
-    # この配置先の旧コマンドを撤去する。互換ランチャーは作らない。
-    legacy = path.with_name('aidiy_dev.cmd' if sys.platform == 'win32' else 'aidiy_dev')
-    if kind == 'ide' and legacy.is_file() and str(script) in legacy.read_text(encoding='utf-8'):
-        legacy.unlink()
-    if kind == 'console':
-        # 改名前のこの配置先が所有するランチャーだけを解除する。
-        old_path = launcher_path('term')
-        old_script = root.resolve().parent / 'aidiy_term' / 'launch.mjs'
-        if old_path.is_file() and launcher_owned_by(old_path.read_text(encoding='utf-8'), old_script):
-            old_path.unlink()
     path.parent.mkdir(parents=True, exist_ok=True)
     if sys.platform == 'win32':
         content = ('@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n'

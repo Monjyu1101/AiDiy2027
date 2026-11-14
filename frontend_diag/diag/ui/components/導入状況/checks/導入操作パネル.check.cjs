@@ -54,7 +54,7 @@ test('名称の下の2行目左側に能力由来の導入・再導入・削除�
   assert.ok(html.indexOf('data-install-check="claude"') < html.indexOf('data-install-id="claude"'), 'キーボード順序も1行目の確認から2行目の導入操作へ進む');
 });
 
-const updateItems = require('../../../../診断/catalog.json').filter(item => item.menuGroup === 'CLI群');
+const updateItems = require('../../../../診断/catalog.json').filter(item => item.menuGroup === 'CLI群' && item.installAction !== false);
 test('CLI群7項目は未導入・導入済みとも同じ導入・更新ボタンを表示する', async () => {
   assert.deepEqual(updateItems.map(item => item.id), ['claude', 'codex', 'copilot', 'agy', 'grok', 'opencode', 'ollama']);
   for (const installed of [false, true]) {

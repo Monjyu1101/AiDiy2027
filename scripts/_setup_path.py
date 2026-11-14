@@ -65,7 +65,7 @@ def _normalized_launcher(content, scripts):
             return match.group(0)
         if (not isinstance(command, list)
                 or not all(isinstance(value, str) for value in command)
-                or not (len(command) == 2 or (len(command) == 4 and command[1:3] == ['-X', 'utf8']))
+                or len(command) != 2
                 or command[-1] not in scripts):
             return match.group(0)
         return "Buffer.from('<owned-launcher>','base64')"
@@ -81,7 +81,7 @@ def _normalized_launcher(content, scripts):
             continue
         if (line.rstrip('\n').endswith(' \"$@\"')
                 and args and args[0] == 'exec' and args[-1] == '$@'
-                and (len(args) == 4 or (len(args) == 6 and args[2:4] == ['-X', 'utf8']))
+                and len(args) == 4
                 and args[-2] in scripts):
             lines[index] = 'exec <owned-runtime> <owned-script> "$@"\n'
     text = ''.join(lines)
@@ -92,7 +92,7 @@ def _normalized_launcher(content, scripts):
     return text
 
 
-def sync_shared_launcher(launcher, script, *, legacy_scripts=()):
+def sync_shared_launcher(launcher, script):
     """PATHで優先される旧 ~/.local/bin を、同一コピーの場合だけ最新化する。
 
     新規ホーム配置は作らず、共有PATH/他アプリ/他コピーには触れない。
@@ -108,10 +108,6 @@ def sync_shared_launcher(launcher, script, *, legacy_scripts=()):
     if not shared.is_file():
         raise OSError(f'共有ランチャーは通常ファイルではありません: {shared}')
     scripts = [str(script)]
-    for old in legacy_scripts:
-        old = Path(old)
-        if not old.parent.is_symlink() and not getattr(old.parent, 'is_junction', lambda: False)():
-            scripts.append(str(old))
     source = launcher.read_bytes()
     expected = source.decode('utf-8')
     previous = shared.read_bytes()
@@ -375,12 +371,51 @@ def _ensure_windows_path(directory):
     return True
 
 
+def _remove_stale_windows_path(directory):
+    """登録記録ごと消えた AiDiy ランチャー bin の PATH を解除する。
+
+    `_AIDIY/aidiy_*/bin` がフォルダごと削除されると登録記録も失われ、記録による
+    解除ができない。存在しない AiDiy ランチャー bin を指す項目だけを外し、実在する
+    フォルダ（利用者が自分で登録したものを含む）と他の PATH 項目は変更しない。
+    """
+    if (directory.name != 'bin' or not directory.parent.name.startswith('aidiy_')
+            or directory.parent.parent.name != '_AIDIY' or directory.exists()):
+        return True
+
+    import winreg
+
+    target = _normalize(str(directory))
+    try:
+        with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, 'Environment', 0,
+                                winreg.KEY_QUERY_VALUE | winreg.KEY_SET_VALUE) as key:
+            try:
+                path, value_type = winreg.QueryValueEx(key, 'Path')
+            except FileNotFoundError:
+                return True
+            if value_type not in (winreg.REG_SZ, winreg.REG_EXPAND_SZ):
+                raise ValueError('ユーザー PATH が文字列型ではありません。')
+            entries = path.split(';')
+            kept = [entry for entry in entries if not entry.strip() or _normalize(entry) != target]
+            if len(kept) == len(entries):
+                return True
+            winreg.SetValueEx(key, 'Path', 0, value_type, ';'.join(kept))
+        process_path = os.environ.get('PATH', '')
+        os.environ['PATH'] = ';'.join(entry for entry in process_path.split(';')
+                                     if not entry.strip() or _normalize(entry) != target)
+        _notify_change()
+        print(f'削除済みランチャーフォルダの PATH 登録を解除しました: {directory}')
+        return True
+    except (OSError, ValueError) as exc:
+        print(f'PATH 登録の解除に失敗しました: {exc}')
+        return False
+
+
 def _remove_windows_path(directory):
     """bin が空になったときだけ、セットアップが追加した PATH を解除する。"""
     directory = Path(directory).absolute()
     state_file = _state_file(directory)
     if not state_file.is_file():
-        return True
+        return _remove_stale_windows_path(directory)
 
     import winreg
 

@@ -286,8 +286,7 @@ export const SettingsSchema = Type.Object(
 		selfUpdateCommand: Type.Optional(
 			Type.Array(Type.String(), {
 				minItems: 1,
-				description:
-					'Command `pi update` runs to update Pi itself, in argv form such as ["mise", "use", "-g", "npm:{packageName}@{version}"]. Placeholders: {packageName}, {version}, {installSpec}. PI_SELF_UPDATE_COMMAND takes precedence. Global setting only.',
+				description: "AiDiy同梱版ではPi本体の自己更新は無効です。この設定とPI_SELF_UPDATE_COMMANDは使用しません。",
 			}),
 		),
 		collapseChangelog: Type.Optional(

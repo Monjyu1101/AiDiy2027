@@ -61,23 +61,24 @@ test('通常のアプリ起動は未接続・未選択・処理中でもペー�
  assert.doesNotMatch(source('components/アプリ起動/アプリ起動パネル.vue'),/defineEmits|\$emit\(['"]mini['"]\)/);
 });
 
-test('通常画面は8アプリ・導入済みCLI・VS Codeを並べ、未導入CLIを隠す',async()=>{
+test('通常画面は8アプリ・CLI・VS Codeを並べ、未導入CLIは灰色（押せない）で表示する',async()=>{
  const ids=['claude','codex','copilot','agy','grok','opencode','aidiy_hermes'];
  const entries=ids.map(id=>({id,名前:id,モード:'fixture',利用可能:!['grok','opencode'].includes(id)}));
  entries.push({id:'vscode',名前:'VS Code',種類:'editor',モード:'プロジェクトフォルダを開く',利用可能:true});
  const cliState={項目:value(entries.filter(item=>item.利用可能===true)),全項目:value(entries),処理中:value(''),通知:value(''),失敗:value(false),読込:async()=>{}};
  for(const online of [true,false])for(const folder of ['/fixture/project','']){
-  const state=appState({folder});state.項目=value(['avatar','task','team','ide','console','code','live','discord'].map(id=>({id,名前:id})));
+  const state=appState({folder});state.項目=value(['avatar','task','team','ide','term','code','live','discord'].map(id=>({id,名前:id})));
   const html=await render('components/アプリ起動/アプリ起動パネル.vue',{state,cliState,online,visible:true});
-  assert.equal((html.match(/class="app-launch-button"/g)||[]).length,14);
-  assert.equal((html.match(/width="60" height="60"/g)||[]).length,14);
+  assert.equal((html.match(/class="app-launch-button"/g)||[]).length,16);
+  assert.equal((html.match(/width="60" height="60"/g)||[]).length,16);
   assert.match(html,/VS Code でフォルダを開く/);
   for(const id of ['task','team']){const card=html.match(new RegExp(`<article[^>]*data-app="${id}"[^>]*>([\\s\\S]*?)</article>`))[1];assert.match(card,/<button[^>]* disabled/);assert.match(card,/TaskTeam 未起動/);}
   assert.ok(html.indexOf('data-app="avatar"')<html.indexOf('data-app="task"'));assert.ok(html.indexOf('data-app="task"')<html.indexOf('data-app="team"'));assert.ok(html.indexOf('data-app="ide"')<html.indexOf('data-app="avatar"'));
   assert.doesNotMatch(html,/app-launch-name/);
   assert.ok(html.indexOf('data-cli="aidiy_hermes"')<html.indexOf('data-cli="claude"'));
   for(const item of entries){
-   if(!item.利用可能){assert.ok(!html.includes(`data-cli="${item.id}"`));continue;}
+   // 未導入も並べ、カードは灰色（unavailable）・ボタンは押せない。
+   if(!item.利用可能)assert.match(html,new RegExp(`<article[^>]*class="[^"]*unavailable[^"]*"[^>]*data-cli="${item.id}"`),item.id);
    const card=html.match(new RegExp(`<article[^>]*data-cli="${item.id}"[^>]*>([\\s\\S]*?)</article>`))[1];
    const button=card.match(/<button[^>]*>/)[0];
    assert.equal(/ disabled(?:[ >])/.test(button),!online||!folder||!item.利用可能,item.id);
@@ -113,7 +114,7 @@ test('ミニ切替の配線はタイトルバーだけに残し、通常ペー�
 
 
 test('通常・ミニは指定の先頭6アプリとAvatar・Task・Team・CPU・Discord・Slackを同じ順序で表示する',async()=>{
- const expected=['ide','console','browser','navi','code','live','avatar','task','team','cpu','discord','slack','aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
+ const expected=['ide','term','browser','navi','code','live','avatar','task','team','cpu','discord','slack','aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode','chrome'];
  const cliIds=new Set(['aidiy_hermes','aidiy_pi','claude','codex','copilot','agy','grok','opencode','vscode']);
  const cliState={項目:value([...expected].reverse().filter(id=>cliIds.has(id)).map(id=>({id,名前:id,利用可能:true}))),処理中:value(''),通知:value(''),失敗:value(false),読込:async()=>{}};
  for(const missing of [[],['task','team'],['browser','slack'],[]])for(const busy of [false,true]){

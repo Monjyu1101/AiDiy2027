@@ -79,9 +79,9 @@
 .terminal-welcome.welcome-input-started .welcome-type::after { display: none; }
 
 .terminal-welcome.live h1 { font-size: clamp(9px, 3.4vw, 18px); --typing-steps: 31; }
-.terminal-welcome.console .welcome-eyebrow { font-size: 10px; letter-spacing: .08em; --typing-steps: 30; }
-.terminal-welcome.console h1 { font-size: clamp(14px, 3.4vw, 22px); --typing-steps: 26; }
-.terminal-welcome.console .welcome-caption { --typing-steps: 30; }
+.terminal-welcome.term .welcome-eyebrow { font-size: 10px; letter-spacing: .08em; --typing-steps: 30; }
+.terminal-welcome.term h1 { font-size: clamp(14px, 3.4vw, 22px); --typing-steps: 26; }
+.terminal-welcome.term .welcome-caption { --typing-steps: 30; }
 .terminal-welcome.live .welcome-eyebrow { --typing-steps: 25; }
 .terminal-welcome.live .welcome-caption { --typing-steps: 26; }
 .terminal-welcome.live p { font-family: var(--vscode-editor-font-family, Consolas, monospace); font-size: clamp(9px, 2.6vw, 12px); text-shadow: 0 1px 4px #000, 0 0 8px #000; }
@@ -242,7 +242,7 @@
 /* ファイル閲覧の見出しも、埋込・Web・別窓で同じタイトル帯にする。 */
 :is(.explorer-panel,.viewer-popup,.viewer-pinned) > header { --surface: var(--aidiy-titlebar-background); --muted: var(--aidiy-titlebar-secondary); background: var(--aidiy-titlebar-background); color: var(--aidiy-titlebar-foreground); }
 .panel-brand strong { font-size: 16px; letter-spacing: -.5px; white-space: nowrap; }
-.code-component .panel-brand, .live-component .panel-brand, .console-component .panel-brand, .taskteam-shell .panel-brand, .navigation-panel .panel-brand, .navigation-window .panel-brand { min-height: 31px; padding: 1px 2px; }
+.code-component .panel-brand, .live-component .panel-brand, .term-component .panel-brand, .taskteam-shell .panel-brand, .navigation-panel .panel-brand, .navigation-window .panel-brand { min-height: 31px; padding: 1px 2px; }
 .code-component .panel-brand strong { font-size: 14px; }
 .live-component .panel-brand strong { font-size: 14px; }
 .window-actions { gap: 2px; -webkit-app-region: no-drag; }

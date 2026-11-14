@@ -38,7 +38,7 @@ class SetupOutputTests(unittest.TestCase):
                     return True
                 with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(host, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(sys, 'platform', platform), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(launcher, 'ensure_launcher_path', side_effect=path_notice) as ensure, patch.object(host, 'ensure_launcher_path') as host_ensure, contextlib.redirect_stdout(output):
                     self.assertTrue(setup.register_launchers(host))
-                names = ['ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu']
+                names = ['ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu']
                 suffix = '.cmd' if platform == 'win32' else ''
                 lines = [line for line in output.getvalue().splitlines() if 'を登録しました:' in line]
                 self.assertEqual(len(lines), 9)
@@ -65,7 +65,7 @@ class SetupOutputTests(unittest.TestCase):
         register.assert_called_once_with(children[4])
         lines = [line for line in output.getvalue().splitlines() if ' 起動:' in line]
         self.assertEqual(len(lines), 9)
-        expected = [f'aidiy_{kind}' for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
+        expected = [f'aidiy_{kind}' for kind in ('ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
         commands = [line.split('起動: ')[1].split()[0] for line in lines]
         self.assertEqual([command for command in commands if command in expected], expected)
         self.assertEqual(len({line.index(':') for line in lines}), 1)
@@ -95,7 +95,7 @@ class SetupOutputTests(unittest.TestCase):
                 launcher.ensure_launcher_path.assert_not_called()
 
     def test_command_only_children_obey_deferred_mode(self):
-        for kind in ('navi', 'console', 'task', 'team', 'browser', 'cpu'):
+        for kind in ('navi', 'term', 'task', 'team', 'browser', 'cpu'):
             module = load(f'frontend_ide/aidiy_{kind}/_setup.py')
             with patch.object(module.importlib.util, 'spec_from_file_location') as loader:
                 self.assertTrue(module.setup({'_defer_ide_launchers': True}))
@@ -104,7 +104,7 @@ class SetupOutputTests(unittest.TestCase):
     def test_single_launcher_keeps_path_notice_and_suffix(self):
         launcher = load('frontend_ide/viewer/launcher.py')
         with tempfile.TemporaryDirectory() as tmp, patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda name: Path(tmp) / '_AIDIY' / name / 'bin'), patch.object(launcher.shutil, 'which', return_value='node'), patch.object(launcher, 'ensure_launcher_path', return_value=True) as ensure, contextlib.redirect_stdout(io.StringIO()):
-            launcher.install_launcher(ROOT / 'frontend_ide/aidiy_console', 'console')
+            launcher.install_launcher(ROOT / 'frontend_ide/aidiy_term', 'term')
             self.assertEqual(ensure.call_count, 1)
 
     def test_single_host_setup_keeps_path_registration(self):
@@ -120,11 +120,11 @@ class SetupOutputTests(unittest.TestCase):
             root.print_app_launch_commands()
         lines = output.getvalue().splitlines()
         self.assertEqual(len(lines), 14)
-        expected = [f'aidiy_{kind}' for kind in ('ide', 'console', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
+        expected = [f'aidiy_{kind}' for kind in ('ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu')]
         commands = [line.split('起動: ')[1].split()[0] for line in lines]
         self.assertEqual([command for command in commands if command in expected], expected)
         self.assertEqual(len({line.index(':') for line in lines}), 1)
-        self.assertIn('Console起動: aidiy_console', output.getvalue())
+        self.assertIn('Term起動: aidiy_term', output.getvalue())
         self.assertIn('Browser起動: aidiy_browser', output.getvalue())
         self.assertIn('Discord起動: aidiy_discord', output.getvalue())
 

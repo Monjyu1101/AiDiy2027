@@ -27,6 +27,8 @@ import {
 	getSelfUpdateUnavailableInstruction,
 	makeConfiguredSelfUpdateCommand,
 	PACKAGE_NAME,
+	SELF_UPDATE_DISABLED_MESSAGE,
+	SELF_UPDATE_ENABLED,
 	type SelfUpdateCommand,
 	type SelfUpdatePackageTarget,
 	VERSION,
@@ -376,6 +378,17 @@ Examples:
 			return;
 
 		case "update":
+			if (!SELF_UPDATE_ENABLED) {
+				console.log(`${SELF_UPDATE_DISABLED_MESSAGE}
+
+利用できる更新:
+  ${APP_NAME} update --extensions          拡張パッケージを更新
+  ${APP_NAME} update --extension <source>  指定した拡張を更新
+  ${APP_NAME} update --models              モデル一覧を更新
+
+本体更新を含む update / --self / --all / self / pi は拒否します。--force でも解除できません。`);
+				return;
+			}
 			console.log(`${chalk.bold("Usage:")}
   ${getPackageCommandUsage("update")}
 
@@ -1010,6 +1023,18 @@ export async function handlePackageCommand(
 	if (options.conflictingOptions) {
 		console.error(chalk.red(options.conflictingOptions));
 		console.error(chalk.dim(`Usage: ${getPackageCommandUsage(options.command)}`));
+		process.exitCode = 1;
+		return true;
+	}
+
+	// 設定・認証の読込や拡張更新に入る前に拒否する。--all も部分実行しない。
+	if (
+		!SELF_UPDATE_ENABLED &&
+		options.command === "update" &&
+		updateTargetIncludesSelf(options.updateTarget ?? { type: "self" })
+	) {
+		console.error(chalk.red(SELF_UPDATE_DISABLED_MESSAGE));
+		console.error("拡張は update --extensions、モデル一覧は update --models を指定してください。");
 		process.exitCode = 1;
 		return true;
 	}

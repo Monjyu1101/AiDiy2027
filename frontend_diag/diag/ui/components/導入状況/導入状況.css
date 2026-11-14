@@ -28,6 +28,8 @@
 .install-manage button{padding:3px 7px;font-size:11px;white-space:nowrap}
 .install-manage .install-delete{border-color:#925064;color:#ffbdc8}
 .install-unavailable{flex-basis:100%;font-size:11px;line-height:1.5;color:#c1cbd5;overflow-wrap:anywhere}
+/* Diag の外で動く処理（コンパイル等）の状況。実行中は目立つ色で示す。 */
+.install-status-note.running{color:#fde68a}
 .install-check{grid-area:check;min-width:0}
 .install-progress{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .install-progress button,.install-detail-tabs button,.install-console-heading button{padding:4px 10px;font-size:12px}
@@ -39,9 +41,11 @@
 .install-recheck{margin-top:18px;border-top:1px solid #304253;padding-top:15px}
 .install-recheck>strong{margin-right:10px}
 .install-recheck p,.install-capability-note{font-size:12px}
-/* 詳細・コンソールを圧迫する幅では上下に分け、各領域の内部スクロールを保つ。 */
-@media(max-width:900px){.install-panel>main{grid-template-columns:minmax(0,1fr)}#app>.install-panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}.install-panel>main>aside{border-right:0;border-bottom:1px solid #304253;max-height:none}.install-panel>main>article{padding:26px 20px}}
+/* 狭い画面（700px 以下）だけ上下に分け、各領域の内部スクロールを保つ。800px 幅（標準サイズ）は左右表示。 */
+@media(max-width:700px){.install-panel>main{grid-template-columns:minmax(0,1fr)}#app>.diag-panel>.install-panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}.install-panel>main>aside{border-right:0;border-bottom:1px solid #304253;max-height:none}.install-panel>main>article{padding:26px 20px}}
 @media(max-width:380px){.install-check{gap:4px;padding-right:4px}.install-manage{gap:3px;padding-right:8px}.install-manage button{padding:3px 5px}}
 .security-version-warning{padding:14px 16px;margin:12px 0;border:1px solid #d6a24b;border-left:4px solid #e5ad51;border-radius:8px;background:#3b301c;color:#ffe0a4;overflow-wrap:anywhere}
 .security-version-warning strong{font-size:1.12rem}
 .security-version-warning p{margin:8px 0 0;line-height:1.7}
+/* 行の余白クリックでも選択できることを示す。 */
+.install-item{cursor:pointer}

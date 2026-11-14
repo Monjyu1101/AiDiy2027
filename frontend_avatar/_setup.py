@@ -161,11 +161,6 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
     launcher_dir = launcher_dir or launcher_directory('aidiy_avatar')
     try:
         launcher_dir.mkdir(parents=True, exist_ok=True)
-        # 廃止した旧コマンドは、この配置元が登録したものだけ除去する。
-        for name in ('aidiy_avatar_alone', 'aidiy_avatar_alone.cmd'):
-            legacy = launcher_dir / name
-            if legacy.is_file() and launcher_owned_by(legacy.read_text(encoding='utf-8'), str(script_path)):
-                legacy.unlink()
         launcher_path = launcher_dir / ("aidiy_avatar.cmd" if sys.platform == "win32" else "aidiy_avatar")
         command = [node, str(script_path)]
         if sys.platform == "win32":
@@ -180,7 +175,7 @@ def install_standalone_launcher(launcher_dir: Path | None = None) -> bool:
             content = '#!/usr/bin/env sh\nexec ' + ' '.join(shlex.quote(arg) for arg in command) + ' "$@"\n'
             launcher_path.write_text(content, encoding="utf-8")
             launcher_path.chmod(0o755)
-        sync_shared_launcher(launcher_path, script_path, legacy_scripts=(FRONTEND_AVATAR_DIR / '_start.py',))
+        sync_shared_launcher(launcher_path, script_path)
         print_success(f"aidiy_avatar を登録しました: {launcher_path}")
     except OSError as exc:
         print_error(f"Avatar を登録できません: {launcher_dir} ({exc})")

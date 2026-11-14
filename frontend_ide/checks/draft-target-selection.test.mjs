@@ -96,7 +96,7 @@ test('Web候補: 表示した種別とマウント固有IDを使い、閉鎖・�
  const reopened=registry.snapshot([panel('new')],'/project','code');assert.notEqual(reopened.frontmostTargetId,initial.targets[0].id);assert.equal(inserted.length,0);
 });
 
-test('Web App実setup: Code/Live表示・Console・ピン留め・追加後・利用再開で最前面候補を同期する',async()=>{
+test('Web App実setup: Code/Live表示・Term・ピン留め・追加後・利用再開で最前面候補を同期する',async()=>{
  const current={active:true,mode:'online',startedAt:1,project:{path:'/project'}},provided=new Map();
  const component=compile('../src/App.vue',{scriptOnly:true,vueApi:{...vue,onMounted(){},onBeforeUnmount(){},provide:(key,value)=>provided.set(key,value)},
   modules:{'./components/下書き連携/連携先登録.js':{createDraftTargetRegistry},'./components/共通表示/接続状態.js':{validConnectionState:()=>true}},
@@ -106,7 +106,7 @@ test('Web App実setup: Code/Live表示・Console・ピン留め・追加後・�
  try{s.update(current);s.codePanel.value=panel('code');s.livePanel.value=panel('live');
   await s.openPanel('live');let result=await s.loadDraftTargets(request);assert.equal(result.frontmostTargetId,result.targets.find(item=>item.kind==='live').id);
   await s.openPanel('code');result=await s.loadDraftTargets(request);const code=result.targets.find(item=>item.kind==='code');assert.equal(result.frontmostTargetId,code.id);
-  await s.openPanel('console');s.panelOpen.value=false;result=await s.loadDraftTargets(request);assert.equal(result.frontmostTargetId,code.id);
+  await s.openPanel('term');s.panelOpen.value=false;result=await s.loadDraftTargets(request);assert.equal(result.frontmostTargetId,code.id);
   const viewer={closed:false};provided.get('registerPinnedViewer')(viewer);result=await s.draftLink.list(viewer,request);assert.equal(result.frontmostTargetId,code.id);
   const live=result.targets.find(item=>item.kind==='live');assert.equal((await s.insertFileDraft({...request,targetId:live.id,contextId:live.contextId,sessionKey:result.sessionKey,text:'本文'})).ok,true);
   result=await s.loadDraftTargets(request);assert.equal(result.frontmostTargetId,live.id);

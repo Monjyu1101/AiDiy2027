@@ -53,7 +53,7 @@ export function createCoreConnection(project, { target, fetcher = fetch, interva
     pending = (async () => {
       try {
         if (configError) throw new Error(configError);
-        // Console と同じ tools ポートの軽量 ping で確認する。
+        // Term と同じ tools ポートの軽量 ping で確認する。
         const tools = target || await toolsTarget(project);
         signal.throwIfAborted();
         const response = await fetcher(new URL('/aidiy_code_agents/ping', tools), {

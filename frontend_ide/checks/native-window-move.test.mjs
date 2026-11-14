@@ -60,7 +60,7 @@ test('Discord・Slack・Task・Teamは実共有controllerまで通り、長押�
  }
 });
 test('全パネル: nativeのdown/upを直ちに一度だけ渡し、短押しを再送しない',async()=>{
- for(const kind of ['ide','code','live','navi','console','browser','viewer','explorer','panel-viewer','panel-routes','diag','avatar','discord','slack','task','team']){
+ for(const kind of ['ide','code','live','navi','term','browser','viewer','explorer','panel-viewer','panel-routes','diag','avatar','discord','slack','task','team']){
   const f=fixture(kind);assert.notEqual(f.emit('mouseDown').prevented,true);assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown']);assert.equal(f.calls.length,0);
   assert.notEqual(f.emit('mouseUp').prevented,true);await f.advance();assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown','mouseUp']);assert.equal(f.timers.size,0);assert.deepEqual(f.sent,[]);assert.deepEqual(f.calls,[]);f.dispose();
  }

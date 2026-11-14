@@ -11,7 +11,7 @@
 """開発環境起動スクリプト（まとめ役）
 
 各フォルダの `_start.py` を import し、バックエンド(local/tools/core/apps/task,team)・
-フロントエンド(Web/Avatar/task/team/console/code/live/IDE/Discord) を統一手順で起動します。各サービスの環境確認・
+フロントエンド(Web/Avatar/task/team/term/code/live/IDE/Discord) を統一手順で起動します。各サービスの環境確認・
 起動コマンドはフォルダ側に委譲し、このスクリプトは起動順序・出力集約・
 ブラウザ表示・自動再起動監視・一括停止を一元管理します。
 
@@ -25,7 +25,7 @@
 - frontend_avatar/_start.py  PORT_AVATAR / check_environment / start / kill_electron_processes
 - frontend_ide/aidiy_task/_start.py  check_environment / start / kill_ports
 - frontend_ide/aidiy_team/_start.py  check_environment / start / kill_ports
-- frontend_ide/aidiy_console/_start.py  check_environment / start / kill_ports
+- frontend_ide/aidiy_term/_start.py  check_environment / start / kill_ports
 - frontend_ide/host/_start.py  check_environment / start_code / start_live / kill_ports
 - frontend_ide/viewer/_start.py     check_environment / start / kill_ports（空きポート）
 - frontend_channels/discord/_start.py check_environment / start / kill_ports（パネルから自動接続）
@@ -33,7 +33,7 @@
 
 開始承認後と Ctrl+C 終了時は、setupと共通のプロセス照合で停止します。
 この配置先の aidiy_code / aidiy_ide / aidiy_discord / aidiy_slack と必要な補助プロセスを保持します。
-独立して起動された Live / Console 等は、Code / IDE / Discord / Slack の子でも停止対象です。
+独立して起動された Live / Term 等は、Code / IDE / Discord / Slack の子でも停止対象です。
 cleanupの全停止とは別の保持方針です。
 
 標準の起動順:
@@ -47,7 +47,7 @@ cleanupの全停止とは別の保持方針です。
 7. フロントエンド(Avatar)
 8. フロントエンド(task・選択時)
 9. フロントエンド(team・選択時)
-10. フロントエンド(console)
+10. フロントエンド(term)
 11. フロントエンド(code)
 12. フロントエンド(live、選択時に自動接続)
 13. フロントエンド(IDE・選択時)
@@ -158,7 +158,7 @@ MANAGED_SERVICE_NAMES = frozenset({
 })
 
 # フォルダ別 _start.py モジュール（_init_modules で設定）
-LOCAL = TOOLS = SERVER = TASKTEAM = WEB = AVATAR = VSCODE = DISCORD = SLACK = DEV = CONSOLE = DIAG = TASK = TEAM = CPU = None
+LOCAL = TOOLS = SERVER = TASKTEAM = WEB = AVATAR = VSCODE = DISCORD = SLACK = DEV = TERM = DIAG = TASK = TEAM = CPU = None
 # collect_startup_choices の既存tupleを変えずに保持する、Slack / CPUの起動選択。
 SLACK_ENABLED = False
 CPU_ENABLED = False
@@ -191,7 +191,7 @@ def _remove_folder_import_cache(folder: str) -> None:
 
 
 def _init_modules() -> None:
-    global LOCAL, TOOLS, SERVER, TASKTEAM, WEB, AVATAR, VSCODE, DISCORD, SLACK, DEV, CONSOLE, DIAG, TASK, TEAM, CPU
+    global LOCAL, TOOLS, SERVER, TASKTEAM, WEB, AVATAR, VSCODE, DISCORD, SLACK, DEV, TERM, DIAG, TASK, TEAM, CPU
     DIAG = _load_folder_module("frontend_diag")
     LOCAL = _load_folder_module("backend_local")
     TOOLS = _load_folder_module("backend_tools")
@@ -202,7 +202,7 @@ def _init_modules() -> None:
     TASK = _load_folder_module("frontend_ide/aidiy_task")
     TEAM = _load_folder_module("frontend_ide/aidiy_team")
     CPU = _load_folder_module("frontend_ide/aidiy_cpu")
-    CONSOLE = _load_folder_module("frontend_ide/aidiy_console")
+    TERM = _load_folder_module("frontend_ide/aidiy_term")
     VSCODE = _load_folder_module("frontend_ide/host")
     DEV = _load_folder_module("frontend_ide/viewer")
     DISCORD = _load_folder_module("frontend_channels/discord")
@@ -522,7 +522,7 @@ def collect_startup_choices() -> tuple[bool, ...]:
     avatar_enabled        = prompt_choice("  Avatar    : 起動しますか?", default_yes=STARTUP_DEFAULTS['avatar'])
     print("フロントエンド(IDE)")
     dev_enabled           = prompt_choice("  IDE       : 起動しますか?", default_yes=STARTUP_DEFAULTS['ide'])
-    console_enabled       = prompt_choice("  Console   : 起動しますか?", default_yes=STARTUP_DEFAULTS['console'])
+    term_enabled       = prompt_choice("  Term      : 起動しますか?", default_yes=STARTUP_DEFAULTS['term'])
     # Browser / Navi は従来どおり独立コマンド・Diagから手動起動する。
     code_enabled          = prompt_choice("  Code      : 起動しますか?", default_yes=STARTUP_DEFAULTS['code'])
     live_enabled          = prompt_choice("  Live      : 起動しますか?", default_yes=STARTUP_DEFAULTS['live'])
@@ -534,7 +534,7 @@ def collect_startup_choices() -> tuple[bool, ...]:
     # 既存の選択結果の並びを変えないよう、Slack はモジュール変数で main へ渡す。
     global SLACK_ENABLED
     SLACK_ENABLED         = prompt_choice("  Slack     : 起動しますか?", default_yes=STARTUP_DEFAULTS.get('slack', False))
-    return local_enabled, backend_tools_enabled, backend_enabled, backend_taskteam_enabled, web_enabled, avatar_enabled, diag_enabled, console_enabled, code_enabled, live_enabled, dev_enabled, discord_enabled, task_enabled, team_enabled
+    return local_enabled, backend_tools_enabled, backend_enabled, backend_taskteam_enabled, web_enabled, avatar_enabled, diag_enabled, term_enabled, code_enabled, live_enabled, dev_enabled, discord_enabled, task_enabled, team_enabled
 
 
 # ============================================================
@@ -595,7 +595,7 @@ def stop_processes(processes: dict[str, subprocess.Popen[bytes]], *, keep_standa
     slack_was_running = not keep_standalone and "フロントエンド(Slack)" in processes
     task_windows = [module for label, module in (("task", TASK), ("team", TEAM), ("cpu", CPU))
                     if f"フロントエンド({label})" in processes and module is not None]
-    console_was_running = "フロントエンド(console)" in processes
+    term_was_running = "フロントエンド(term)" in processes
     dev_was_running = not keep_standalone and "フロントエンド(IDE)" in processes
     for name, process in list(processes.items()):
         if name == "フロントエンド(Avatar)":
@@ -638,8 +638,8 @@ def stop_processes(processes: dict[str, subprocess.Popen[bytes]], *, keep_standa
         AVATAR.kill_ports()
     for module in task_windows:
         module.kill_ports()
-    if console_was_running and CONSOLE is not None:
-        CONSOLE.kill_ports()
+    if term_was_running and TERM is not None:
+        TERM.kill_ports()
     if VSCODE is not None:
         for module in standalone_modules:
             VSCODE.kill_ports(module)
@@ -678,7 +678,7 @@ def validate_initial_environment(
     web_enabled: bool,
     avatar_enabled: bool,
     discord_enabled: bool = False,
-    console_enabled: bool = False,
+    term_enabled: bool = False,
     code_enabled: bool = False,
     live_enabled: bool = False,
     dev_enabled: bool = False,
@@ -761,8 +761,8 @@ def validate_initial_environment(
         else:
             print_error(f"バックエンド(Diag): 未準備 ({detail})")
             has_error = True
-    if dev_enabled or console_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
-        print_header("IDE群(IDE / Console / Code / Live / Task / Team / CPU)")
+    if dev_enabled or term_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
+        print_header("IDE群(IDE / Term / Code / Live / Task / Team / CPU)")
     if dev_enabled:
         ok, detail = DEV.check_environment()
         if ok:
@@ -770,12 +770,12 @@ def validate_initial_environment(
         else:
             print_error(f"フロントエンド(IDE): 未準備 ({detail})")
             has_error = True
-    if console_enabled:
-        ok, detail = CONSOLE.check_environment()
+    if term_enabled:
+        ok, detail = TERM.check_environment()
         if ok:
-            print_success(f'フロントエンド(console): OK ({detail})')
+            print_success(f'フロントエンド(term): OK ({detail})')
         else:
-            print_error(f'フロントエンド(console): 未準備 ({detail})')
+            print_error(f'フロントエンド(term): 未準備 ({detail})')
             has_error = True
     for module, enabled in (("code", code_enabled), ("live", live_enabled)):
         if enabled:
@@ -887,8 +887,8 @@ def start_service(
             process = TEAM.start()
         elif name == "フロントエンド(cpu)":
             process = CPU.start()
-        elif name == "フロントエンド(console)":
-            process = CONSOLE.start()
+        elif name == "フロントエンド(term)":
+            process = TERM.start()
         elif name == "フロントエンド(code)":
             process = VSCODE.start_code()
         elif name == "フロントエンド(live)":
@@ -923,7 +923,7 @@ def start_initial_services(
     last_output_times: dict[str, float],
     npm_command: str | None,
     discord_enabled: bool = False,
-    console_enabled: bool = False,
+    term_enabled: bool = False,
     code_enabled: bool = False,
     live_enabled: bool = False,
     dev_enabled: bool = False,
@@ -944,7 +944,7 @@ def start_initial_services(
         # 手動で閉じた単独ウィンドウ・パネルは自動で開き直さない。
         "バックエンド(Diag)": False,
         "フロントエンド(IDE)": False,
-        "フロントエンド(console)": False,
+        "フロントエンド(term)": False,
         "フロントエンド(code)": False,
         "フロントエンド(live)": False,
         "フロントエンド(task)": False,
@@ -997,9 +997,9 @@ def start_initial_services(
         if start_service("バックエンド(Diag)", processes, last_output_times, npm_command):
             wait_for_services_quiet(last_output_times, ["バックエンド(Diag)"], label="バックエンド(Diag)")
 
-    if dev_enabled or console_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
-        print_header("IDE群(IDE / Console / Code / Live / Task / Team / CPU)")
-    for module, enabled in (("IDE", dev_enabled), ("console", console_enabled),
+    if dev_enabled or term_enabled or code_enabled or live_enabled or task_enabled or team_enabled or cpu_enabled:
+        print_header("IDE群(IDE / Term / Code / Live / Task / Team / CPU)")
+    for module, enabled in (("IDE", dev_enabled), ("term", term_enabled),
                             ("code", code_enabled), ("live", live_enabled),
                             ("task", task_enabled), ("team", team_enabled), ("cpu", cpu_enabled)):
         if enabled:
@@ -1106,6 +1106,24 @@ def monitor_and_restart(
         time.sleep(1)
 
 
+def print_command_cli_guidance() -> None:
+    """Hermes / Pi / aidiy_codex はここでは起動せず、利用可否と起動コマンドだけを案内する。"""
+    windows = sys.platform == "win32"
+    def launcher(program: str) -> bool:
+        names = (f"{program}.cmd", f"{program}.exe") if windows else (program,)
+        directory = BASE_DIR / "_AIDIY" / program / "bin"
+        return any((directory / name).is_file() for name in names) or shutil.which(program) is not None
+    codex = Path.home() / ".aidiy" / "bin" / ("aidiy_codex.exe" if windows else "aidiy_codex")
+    rows = (
+        ("Hermes", "aidiy_hermes", launcher("aidiy_hermes"), "未導入（python _setup.py で導入）"),
+        ("Pi", "aidiy_pi", launcher("aidiy_pi"), "未導入（python _setup.py で導入）"),
+        ("Codex", "aidiy_codex", codex.is_file(), "未コンパイル（aidiy_diag の「コンパイル」または python command_codex/_compile.py）"),
+    )
+    print_info("コード支援 CLI（ここでは起動しません。作業フォルダのターミナルで実行してください）")
+    for name, command, ready, missing in rows:
+        print_info(f"  {name:<7}: {command}" if ready else f"  {name:<7}: {missing}")
+
+
 def launch_diag_gui() -> None:
     """aidiy_diag --auto の画面を開いて終了する。設定起動とその後の操作は画面側で行う。"""
     print_header("バックエンド(Diag) 起動")
@@ -1121,6 +1139,7 @@ def launch_diag_gui() -> None:
         sys.exit(1)
     print_success("バックエンド(Diag): aidiy_diag --auto を起動しました")
     print_info("保存済みの起動設定で設定起動します。進捗は aidiy_diag のシステム起動タブで確認してください")
+    print_command_cli_guidance()
     print_info("5秒後に終了します")
     time.sleep(5)
 
@@ -1136,7 +1155,7 @@ def main() -> None:
         web_enabled,
         avatar_enabled,
         diag_enabled,
-        console_enabled,
+        term_enabled,
         code_enabled,
         live_enabled,
         dev_enabled,
@@ -1169,7 +1188,7 @@ def main() -> None:
         slack_enabled=slack_enabled,
         cpu_enabled=cpu_enabled,
         diag_enabled=diag_enabled,
-        console_enabled=console_enabled,
+        term_enabled=term_enabled,
         code_enabled=code_enabled,
         live_enabled=live_enabled,
         dev_enabled=dev_enabled,
@@ -1204,7 +1223,7 @@ def main() -> None:
                 slack_enabled=slack_enabled,
                 cpu_enabled=cpu_enabled,
                 diag_enabled=diag_enabled,
-                console_enabled=console_enabled,
+                term_enabled=term_enabled,
                 code_enabled=code_enabled,
                 live_enabled=live_enabled,
                 dev_enabled=dev_enabled,
@@ -1230,7 +1249,7 @@ def main() -> None:
                 print_success(f"フロントエンド(Avatar): renderer http://127.0.0.1:{AVATAR.PORT_AVATAR}")
             if "バックエンド(Diag)" in processes:
                 print_success("バックエンド(Diag): aidiy_diag 起動済み")
-            for module in ("console", "code", "live"):
+            for module in ("term", "code", "live"):
                 if f"フロントエンド({module})" in processes:
                     print_success(f"フロントエンド({module}): aidiy_{module} 起動済み")
             if "フロントエンド(IDE)" in processes:
@@ -1239,6 +1258,7 @@ def main() -> None:
                 print_success("フロントエンド(Discord): パネル起動済み（接続状態はパネルで確認してください）")
             if "フロントエンド(Slack)" in processes:
                 print_success("フロントエンド(Slack): パネル起動済み（接続状態はパネルで確認してください）")
+            print_command_cli_guidance()
             monitor_and_restart(selected_services, processes, last_output_times, npm_command)
 
         except KeyboardInterrupt:

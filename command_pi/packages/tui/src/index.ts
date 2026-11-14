@@ -1,3 +1,4 @@
+export { checkSearchAbort, type SearchEntry, type WalkSearchOptions, walkSearchEntries } from "./file-search.ts";
 // Core TUI interfaces and classes
 
 export { Marked, type Token, type Tokens } from "marked";

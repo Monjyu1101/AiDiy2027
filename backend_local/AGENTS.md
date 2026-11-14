@@ -49,26 +49,26 @@ OpenAI 互換の `tool_calls`（`finish_reason="tool_calls"`）へ変換して�
 | `local_proc/gemma_engine.py` | Gemma モデルのロードと生成（OpenAI messages → 応答テキスト） |
 | `local_proc/openai_api.py` | OpenAI 互換 `/v1/chat/completions` `/v1/models` ルーター |
 | `log_config.py` | 共通ログ設定（全サーバー共通） |
-| `download_model.py` | モデルを `temp/models/<safe_name>` へ事前ダウンロードする CLI |
+| `download_model.py` | モデルを `~/.aidiy/models/<safe_name>` へ事前ダウンロードする CLI |
 | `local_proc/aidiy_config.py` | 共通設定 JSON と診断モデル一覧の読み取り（設定の書き戻しはしない） |
 | `local_proc/gemma_tools.py` | Gemma の tool call 出力を OpenAI 互換形式へ変換 |
-| `local_proc/model_paths.py` | ローカルモデル配置パス解決（`temp/models`、safe_name） |
+| `local_proc/model_paths.py` | ローカルモデル配置パス解決（`~/.aidiy/models`、safe_name） |
 | `pyproject.toml` | uv 依存定義（fastapi / transformers / torch ほか） |
 
-## モデルのローカル配置（temp/models）
+## モデルのローカル配置（~/.aidiy/models）
 
-モデルは HuggingFace 既定キャッシュではなく、`backend_local/temp/models/<safe_name>` に
+モデルは HuggingFace 既定キャッシュではなく、利用者のホームの `~/.aidiy/models/<safe_name>` に
 **モデルごとのフォルダ**で配置する。`safe_name` は repo_id の `/` と `:` を `__` に置換し、前後の空白を除いた名前。
 
 | repo_id | 配置フォルダ |
 |---------|-------------|
-| `google/gemma-4-E4B-it` | `temp/models/google__gemma-4-E4B-it/` |
+| `google/gemma-4-E4B-it` | `~/.aidiy/models/google__gemma-4-E4B-it/` |
 
 エンジンは以下の優先順で **ロード元を自動解決** する。
 
 1. `CHAT_LOCAL_MODEL` が既存ディレクトリ（`config.json` あり）→ そのパスをオフラインロード
-2. `temp/models/<safe_name>/config.json` が存在 → そのフォルダをオフラインロード
-3. いずれも無ければ repo_id でハブからダウンロード（`temp/models` をキャッシュ先に使用）。`CHAT_LOCAL_OFFLINE` が有効ならハブ取得を行わず、ローカルキャッシュだけを使う
+2. `~/.aidiy/models/<safe_name>/config.json` が存在 → そのフォルダをオフラインロード
+3. いずれも無ければ repo_id でハブからダウンロード（`~/.aidiy/models` をキャッシュ先に使用）。`CHAT_LOCAL_OFFLINE` が有効ならハブ取得を行わず、ローカルキャッシュだけを使う
 
 ## HowTo参照先
 
@@ -88,7 +88,7 @@ OpenAI 互換の `tool_calls`（`finish_reason="tool_calls"`）へ変換して�
 | デバイス | `CHAT_LOCAL_DEVICE` | `auto` |
 | dtype | `CHAT_LOCAL_DTYPE` | `auto` |
 | 最大生成トークン | `CHAT_LOCAL_MAX_TOKENS` | `128000` |
-| モデル配置先 | `CHAT_LOCAL_MODELS_DIR` | `temp/models` |
+| モデル配置先 | `CHAT_LOCAL_MODELS_DIR` | `~/.aidiy/models` |
 | オフライン強制 | `CHAT_LOCAL_OFFLINE` | `0` |
 
 `PORT_LOCAL`、`CHAT_LOCAL_MODEL`、`CHAT_LOCAL_DTYPE` は
@@ -101,7 +101,7 @@ OpenAI 互換の `tool_calls`（`finish_reason="tool_calls"`）へ変換して�
 
 ## モデルのロードタイミング
 
-- モデルファイルの取得: `_setup.py` の「事前ロード（ダウンロード）」で `temp/models` へ取得（既定は取得しない）。
+- モデルファイルの取得: `_setup.py` の「事前ロード（ダウンロード）」で `~/.aidiy/models` へ取得（既定は取得しない）。
   しなかった場合は使用時に自動ダウンロードする。
 - メモリへのロード: **遅延ロード**（最初の `/v1/chat/completions` リクエスト時）。
   起動時の先読みロードは行わない。

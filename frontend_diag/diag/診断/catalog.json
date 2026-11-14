@@ -775,6 +775,59 @@
     }
   },
   {
+    "id": "aidiy_codex",
+    "name": "AiDiy Codex（コンパイル版）",
+    "category": "AI CLI",
+    "commands": [
+      "aidiy_codex"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "command_codex（Codex CLI エンジン）をコンパイルして利用する場合のみ必要",
+    "required_by": [
+      "command_codex（Codex CLI エンジン）をコンパイルして利用する場合のみ必要"
+    ],
+    "sources": [
+      "command_codex/_compile.py",
+      "command_codex/codex-rs/cli/Cargo.toml"
+    ],
+    "notes": "npm 版の OpenAI Codex CLI とは別に、同梱ソースをコンパイルした ~/.aidiy/bin/aidiy_codex の有無で利用可否を判断します（プロジェクトの外に置くため、git clone やフォルダコピーの影響を受けません）。「コンパイル」「再コンパイル」ボタンで python command_codex/_compile.py を独立プロセスとして開始し、Diag を閉じても続行します。コンパイル中は状況を表示し、完了すると自動で確認します。前提として開発環境等の Rust と llvm-mingw（Windows）が必要です。認証は本物の codex と同じ ~/.codex を使います。--version だけを実行し、認証・モデル呼出は行いません。",
+    "priority": 27,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "optional_feature",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "command_codex/_compile.py",
+        "line": 68,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "command_codex/codex-rs/cli/Cargo.toml",
+        "line": 10,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "CLI群",
+    "usageTier": "cli",
+    "installAction": false,
+    "paths": {
+      "win32": [
+        "~/.aidiy/bin/aidiy_codex.exe"
+      ],
+      "linux": [
+        "~/.aidiy/bin/aidiy_codex"
+      ],
+      "darwin": [
+        "~/.aidiy/bin/aidiy_codex"
+      ]
+    }
+  },
+  {
     "id": "ffmpeg",
     "name": "ffmpeg",
     "category": "音声・動画",
@@ -1104,7 +1157,107 @@
         "kind": "source_text_reference"
       }
     ],
-    "menuGroup": "その他拡張",
+    "menuGroup": "開発環境等",
+    "usageTier": "integration"
+  },
+  {
+    "id": "rust",
+    "name": "Rust (rustup / cargo)",
+    "category": "開発ツール",
+    "commands": [
+      "cargo",
+      "cargo.exe"
+    ],
+    "version_args": null,
+    "description": "command_codex（Codex CLI エンジン）など Rust ソースのビルド",
+    "required_by": [
+      "command_codex（Codex CLI エンジン）など Rust ソースのビルド"
+    ],
+    "sources": [
+      "command_codex/codex-rs/rust-toolchain.toml",
+      "command_codex/codex-rs/.cargo/config.toml"
+    ],
+    "notes": "MSVC / Visual Studio を使わない x86_64-pc-windows-gnullvm を既定ホストにして導入します。C のコンパイル・リンクには llvm-mingw が必要です。cargo は rustup のプロキシで、確認用の一時ホームではツールチェーンを解決できないため存在のみ確認します。版は command_codex/codex-rs/rust-toolchain.toml の指定を初回ビルド時に rustup が取得します。",
+    "paths": {
+      "win32": [
+        "~/.cargo/bin/cargo.exe"
+      ],
+      "linux": [
+        "~/.cargo/bin/cargo"
+      ],
+      "darwin": [
+        "~/.cargo/bin/cargo"
+      ]
+    },
+    "priority": 40,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "optional_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "command_codex/codex-rs/rust-toolchain.toml",
+        "line": 2,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "command_codex/codex-rs/.cargo/config.toml",
+        "line": 26,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "開発環境等",
+    "usageTier": "integration"
+  },
+  {
+    "id": "llvm-mingw",
+    "name": "llvm-mingw",
+    "category": "開発ツール",
+    "commands": [
+      "x86_64-w64-mingw32-clang",
+      "x86_64-w64-mingw32-clang.exe"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "Rust の gnullvm ターゲットで C を含む依存をビルド（MSVC 不要）",
+    "required_by": [
+      "Rust の gnullvm ターゲットで C を含む依存をビルド（MSVC 不要）"
+    ],
+    "sources": [
+      "command_codex/codex-rs/.cargo/config.toml"
+    ],
+    "notes": "clang / lld / mingw-w64 の C / C++ コンパイラとリンカーです。Visual Studio Build Tools の代わりに使います。Windows のみ。AiDiy の導入は %LOCALAPPDATA%\\Programs\\llvm-mingw に展開し、bin をユーザー PATH に追加します。",
+    "paths": {
+      "win32": [
+        "$LOCALAPPDATA/Programs/llvm-mingw/bin/x86_64-w64-mingw32-clang.exe"
+      ]
+    },
+    "platforms": [
+      "win32"
+    ],
+    "priority": 41,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "optional_feature",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "command_codex/codex-rs/.cargo/config.toml",
+        "line": 14,
+        "kind": "source_text_reference"
+      },
+      {
+        "path": "command_codex/codex-rs/.cargo/config.toml",
+        "line": 26,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "開発環境等",
     "usageTier": "integration"
   }
 ]

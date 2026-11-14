@@ -27,7 +27,7 @@ function fixture(displays=four,platform='linux',options={}){
  return{controller,record,window:record.window,screen,event,synced,displays:next=>{current=next;screen.emit('display-removed');},toggle:()=>controller.handle(event,'toggle')};
 }
 test('F11は本体・子パネル・Browser本文から所属IDEのVRを解除し、通常時は開始しない',()=>{
- for(const kind of ['ide','code','console','live','viewer','explorer','panel-routes','browser']){
+ for(const kind of ['ide','code','term','live','viewer','explorer','panel-routes','browser']){
   const f=fixture(),contents=new EventEmitter(),original=f.window.getBounds();
   const record=kind==='ide'?f.record:{kind,owner:f.record};
   const dispose=f.controller.attachExitKey(record,contents);

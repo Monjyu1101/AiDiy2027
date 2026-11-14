@@ -48,20 +48,12 @@ def launcher_content(script, windows=None):
             f'exec node {shlex.quote(str(script))} "$@"\n')
 
 
-def owns_launcher(content, script, windows):
-    """現在の所有印、または同じ配置元の改名前ランチャーだけを受け入れる。"""
+def owns_launcher(content, script):
+    """この配置元の所有印を持つランチャーだけを受け入れる。"""
     script = Path(script)
     program = 'aidiy_memo' if script.name == 'memo_main.mjs' else 'aidiy_diag'
     marker = program + '-owner:' + hashlib.sha256(str(script).encode('utf-8')).hexdigest()
-    if marker in content:
-        return True
-    # 改名前の依存フォルダが残っていても移行できる。リンク先は別コピーなので除外。
-    legacy = script.parent.parent / 'backend_diag'
-    if (script.parent.name != 'frontend_diag' or legacy.is_symlink()
-            or getattr(legacy, 'is_junction', lambda: False)()):
-        return False
-    expected = launcher_content(legacy / script.name, windows)
-    return content.replace('\r\n', '\n') == expected.replace('\r\n', '\n')
+    return marker in content
 
 
 _path_spec = importlib.util.spec_from_file_location('aidiy_diag_setup_path', THIS_DIR.parent / 'scripts' / '_setup_path.py')
@@ -84,7 +76,7 @@ def setup(choices=None, *, desktop=True):
             launcher = directory / (program + '.cmd' if sys.platform == 'win32' else program)
             script = THIS_DIR / entry
             if launcher.is_symlink() or (launcher.exists() and
-                    (not launcher.is_file() or not owns_launcher(launcher.read_text(encoding='utf-8'), script, sys.platform == 'win32'))):
+                    (not launcher.is_file() or not owns_launcher(launcher.read_text(encoding='utf-8'), script))):
                 raise ValueError(f'別の作業コピーまたは通常ファイル以外のランチャーは変更できません: {launcher}')
             launchers.append((directory, launcher, launcher_content(script)))
         for directory, launcher, content in launchers:
@@ -101,8 +93,7 @@ def setup(choices=None, *, desktop=True):
                 if temporary is not None:
                     temporary.unlink(missing_ok=True)
             entry = 'memo_main.mjs' if launcher.stem == 'aidiy_memo' else 'diag_main.mjs'
-            _path_helper.sync_shared_launcher(launcher, THIS_DIR / entry,
-                legacy_scripts=(THIS_DIR.parent / 'backend_diag' / entry,))
+            _path_helper.sync_shared_launcher(launcher, THIS_DIR / entry)
             print(f'{launcher.stem} を登録しました: {launcher}')
     except (OSError, ValueError) as exc:
         print(f'Diag / Memo を登録できません: {exc}')

@@ -151,7 +151,8 @@ class CodeAgents:
             if name and name not in candidates:
                 candidates.append(name)
         # 同梱エージェントは CODE_AI* の登録有無にかかわらず確認する。
-        for name in ("aidiy_hermes", "aidiy_pi"):
+        # aidiy_codex はコンパイル済み（~/.aidiy/bin/aidiy_codex）のときだけ利用可になる。
+        for name in ("aidiy_hermes", "aidiy_pi", "aidiy_codex"):
             if name not in candidates:
                 candidates.append(name)
 
@@ -198,6 +199,9 @@ class CodeAgents:
                 dummy = CodeAI(AI_NAME=ai_name, AI_MODEL="auto")
                 cmd_path = dummy._コマンドパス取得()
                 info["cmd"] = cmd_path
+                if ai_name == "aidiy_codex" and not os.path.isfile(cmd_path):
+                    # 未コンパイルの環境では実行せず、利用不可として返す。
+                    return {"ok": False, "version": "未コンパイル（python command_codex/_compile.py）", "cmd": cmd_path}
 
                 if ai_name == "aidiy_hermes":
                     base = dummy._hermes直接実行コマンド()

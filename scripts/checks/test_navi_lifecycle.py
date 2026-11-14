@@ -27,7 +27,7 @@ class NaviLifecycle(unittest.TestCase):
                 return SimpleNamespace(cleanup=run, cleanup_app=lambda *a, **k: True, cleanup_shared=lambda **k: True)
             with patch.object(cleanup, '_load_cleanup', side_effect=child), patch.object(Path, 'exists', return_value=True), patch.object(cleanup.shutil, 'rmtree') as remove:
                 self.assertEqual(cleanup.cleanup({'ide': True}), success)
-            self.assertEqual(calls[:4], ['viewer', 'aidiy_console', 'aidiy_browser', 'aidiy_navi'])
+            self.assertEqual(calls[:4], ['viewer', 'aidiy_term', 'aidiy_browser', 'aidiy_navi'])
             self.assertEqual(calls.count('aidiy_navi'), 1)
             self.assertEqual(remove.call_count, 3 if success else 0)
 
@@ -38,7 +38,7 @@ class NaviLifecycle(unittest.TestCase):
         with patch.object(setup, 'load_setup_module', return_value=launcher), patch.object(setup.subprocess, 'run', side_effect=AssertionError('no installation')), patch.object(setup.subprocess, 'Popen', side_effect=AssertionError('no launch')):
             self.assertTrue(setup.register_launchers(host))
         kinds = [call.args[1] for call in launcher.install_launcher.call_args_list]
-        self.assertEqual(kinds[:4], ['ide', 'console', 'browser', 'navi'])
+        self.assertEqual(kinds[:4], ['ide', 'term', 'browser', 'navi'])
         self.assertEqual(kinds.count('navi'), 1)
         self.assertNotIn('aidiy_navi', (ROOT / 'scripts/起動対象.json').read_text(encoding='utf-8'))
         for icon in ('frontend_ide/public/AiDiy_navi.png', 'frontend_diag/static/AiDiy_navi.png'):
@@ -74,7 +74,7 @@ class NaviLifecycle(unittest.TestCase):
             starts['frontend_ide/aidiy_navi'].kill_ports.assert_called_once_with()
             starts['frontend_ide/viewer'].kill_ports.assert_called_once_with()
             order = list(starts)
-            self.assertEqual(order.index('frontend_ide/aidiy_navi') + 1, order.index('frontend_ide/aidiy_console'))
+            self.assertEqual(order.index('frontend_ide/aidiy_navi') + 1, order.index('frontend_ide/aidiy_term'))
             starts['frontend_ide/aidiy_navi'].kill_ports.return_value = False
             with self.assertRaises(RuntimeError):
                 cleanup.stop_all_services({'ide': False})

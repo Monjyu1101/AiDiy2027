@@ -14,7 +14,7 @@
 `command_pi` は MIT ライセンスの AI エージェントハーネス Pi を同梱したものです。`aidiy_hermes` と同じく常駐しない Code CLI で、AiDiy では「Hermes と同じように使える」ことを基準にします。
 
 - Pi 本体（`packages/`・`apps/` など upstream 由来）はできるだけ変更しない。AiDiy 独自の処理は `command_pi/aidiy/` に置く。
-- ランタイムについて upstream 由来で変更しているのは、起動画面のロゴ（`packages/coding-agent/src/modes/interactive/components/pi-logo.ts` に AiDiy-Pi ロゴを追加、`interactive-mode.ts` と `first-time-setup.ts` から使用）と、test フォルダの削除に伴う `package.json` / `package-lock.json` のワークスペース登録の削除だけ。
+- ランタイムについて upstream 由来で変更しているのは、起動画面のロゴ（`packages/coding-agent/src/modes/interactive/components/pi-logo.ts` に AiDiy-Pi ロゴを追加、`interactive-mode.ts` と `first-time-setup.ts` から使用）、検索・補完の Node.js 化と本体自己更新の無効化（後述）、test フォルダの削除に伴う `package.json` / `package-lock.json` のワークスペース登録の削除。
 - Discord / Slack、オフラインCode（Navi用Codeを含む）、Navi自身の案内／再評価、次入力予測で Hermes / Pi を選択できる。外部 Code CLI のモデル区分も共通化し、Piからは既存CodeAIの実行基盤へ委譲する。Navi・予測では外部CLIへの委譲を除外する。
 
 ## 構成
@@ -36,6 +36,28 @@
 - setup は `npm ci --ignore-scripts`（Pi の方針どおり lifecycle script を実行しない）→ `npm run hydrate:model-data`（ネットワークで `packages/ai/src/providers/data/` を生成、失敗しても既存データがあれば続行）→ ランチャー作成 → `--version` で起動確認。
 - cleanup はこの配置先が登録したランチャーと PATH 登録を解除し、確認のうえ全階層の `node_modules` と生成モデルデータを削除する。利用者の設定・認証・セッション（`~/.pi/agent`）は削除しない。
 - `command_pi` 配下の test フォルダはセルフテストのため削除済み。ルート cleanup の test フォルダ削除はそのまま適用する（保護しない）。
+
+## 検索・補完（外部検索実行ファイル不要）
+
+- 組込み `grep`・`find` と対話画面の `@` ファイル名補完は Node.js 内で処理する。`rg.exe` / `fd.exe` の探索・起動・自動ダウンロードは行わない。起動時の検索ツール導入処理と `utils/tools-manager.ts` も削除している。
+- ディレクトリ走査は `packages/tui/src/file-search.ts` を共有する。既存の JavaScript 依存 `ignore` と `minimatch` を使い、隠しファイル、階層別 `.gitignore`、否定規則、`.ignore`、`.git/info/exclude`、標準のグローバル ignore を扱う。`find` / 補完は `.fdignore`、`grep` は `.rgignore` も読む。`.git` 内部は走査しない。Git設定の `core.excludesFile` / `includeIf` による独自のグローバル除外指定は解釈しないため、必要な除外は `.gitignore` / `.ignore` に置く。
+- `find` は basename glob、検索起点からの相対パスglob、絶対パスglob、小文字だけのパターンの大文字小文字無視、件数・出力サイズ上限を扱う。検索結果の順序はファイルシステムの列挙順であり、旧fdと一致することは保証しない。
+- `grep` は正規表現／固定文字列、大文字小文字無視、glob、行番号、前後文脈、件数・出力サイズ・長い行の制限を扱う。明示的な正のglobはignore規則より優先する。文字列は行単位で検索し、UTF-8・BOM付きUTF-16を読み、NULを含む通常のバイナリデータを除外する。
+- 正規表現は **JavaScript RegExp（Unicodeモード）**。ripgrepのRust正規表現との完全互換ではない。例えば先頭の `(?i)` ではなく `ignoreCase: true` を使い、文字そのものを探す場合は `literal: true` を使う。`\w` などのUnicode文字クラスの意味にも差がある。
+- grepは `packages/coding-agent/src/utils/node-grep.ts` のNodeワーカースレッドで実行する。外部プロセスは作らず、重い正規表現もキャンセルできる。60秒で打ち切りエラーになる場合は検索パスやパターンを絞る。検索ツールはディレクトリのシンボリックリンクを辿らず、補完だけは循環を検出しつつ辿る。
+- この変更は組込み検索・補完が対象。`bash` / `powershell` に直接入力した `rg` / `fd` を代替するものではない。以前ダウンロードされた `~/.pi/agent/bin/rg(.exe)` / `fd(.exe)` は自動削除しない。
+- 検証は `command_pi` で `node --import ./packages/coding-agent/src/experimental/source-resolver.ts --test scripts/aidiy-node-search.test.mjs`。外部プロセス起動とfetchを禁止して検索・補完・キャンセルを検査する。通常の依存導入は従来のsetupで実施する。
+- upstream更新時は検索ツール2個、共有走査、TUI補完・起動処理、`pi-tui` の `ignore` 依存とlockfileを維持し、検索バイナリの自動ダウンロードを復活させない。
+
+## Pi本体の自己更新は無効
+
+- AiDiy同梱Piは独自修正を含むため、本体の更新はAiDiyのソース更新として管理する。Pi自身による本体更新・最新版確認・更新通知は無効。
+- `aidiy_pi update`、`update --self`、`update self`、`update pi`、`update --all`、本体と拡張の同時指定は、管理コマンドの設定読込・通信・更新処理より前に終了コード1で拒否する。`--all` で拡張だけを先に更新することもない。
+- `--force`、環境変数 `PI_SELF_UPDATE_COMMAND`、グローバル設定 `selfUpdateCommand` では解除できない。設定ファイル自体は削除・書換えしない。
+- `update --extensions`、`update --extension <source>`、`update <拡張source>`、`update --models` は従来どおり使用できる。拡張の自動導入やモデル一覧取得を一括禁止する変更ではない。
+- 実装の入口は `packages/coding-agent/src/config.ts` の固定方針 `SELF_UPDATE_ENABLED = false`。`package-manager-cli.ts` の更新対象検査と `utils/version-check.ts` の通信前ガードで適用する。更新用コマンドの解決関数も無効化する。
+- upstream更新時はこの固定方針・早期拒否・ヘルプ表示を維持する。更新された上流コードの導入は、AiDiy独自修正を確認してから開発側で行う。
+- 検証: `command_pi` で `node --test scripts/aidiy-self-update.test.mjs`。実際の更新は実行せず、実装の引数解析・ハンドラを依存処理から隔離して拒否位置と許可経路を確認し、更新確認関数の通信が0件であることを検査する。モデル定義JSONが未生成でも実行できる。
 
 ## モデル一覧・キー・OAuth
 
@@ -88,7 +110,7 @@
 - `AIコードPi出力.py` がJSONLのthinking・ツール開始／進捗／完了を `output_stream` へ送り、最後のassistantのtextだけを正式回答にする。受信ごとに待機時間を更新し、生JSON・思考・ツール結果は正式回答へ混ぜない。JSON内のerror/aborted/lengthと完了イベント欠落は、プロセス終了コードが0でも失敗扱いにする。
 - 設定キーは `CODE_AIDIY_PI_MODEL`。モデル設定更新APIの許可キーとセッション初期読込の両方で扱う。AIコアの `auto` は Hermes と同じ Decisions 選択を使い、Piの一覧にある `openai_oauth/` の最新GPT系列から選ぶ。判断失敗時は一覧内の既定候補、候補なしなら `same` を使う。`code_models_info.json` の `aidiy_pi` 区分（OAuthモデルと導入済み外部CLIのsame経路）は command_pi が setup 済みのときだけ生成される。
 - Tools の利用可否確認（`code_agents.py`）とバージョン確認も node の直接起動を使う。
-- Diag の CLI 起動は Console と共用の `frontend_ide/aidiy_console/cli-launch.mjs`。`aidiy_pi` は PATH を探さず、この配置先の `command_pi` を node で起動する。通常は追加フラグ不要で、モードは「YOLO（Pi標準）」。
+- Diag の CLI 起動は Term と共用の `frontend_ide/aidiy_term/cli-launch.mjs`。`aidiy_pi` は PATH を探さず、この配置先の `command_pi` を node で起動する。通常は追加フラグ不要で、モードは「YOLO（Pi標準）」。
 - Diag のアイコンは Hermes と同じく PNG（`CLI_aidiy_pi.png`）。並び順は Hermes の次。
 
 ## Discord / Slack・オフラインCode
@@ -118,7 +140,7 @@
 - プロバイダ確認: `aidiy_pi --no-session --model <区分>/<モデル> -p "おはよう"`。
 - MCP 確認: Tools 起動中に `aidiy_pi --no-session -p "通知音を鳴らして"` で `play_notification_sound` が呼ばれる。
 - Diag のチェック: `node --test frontend_diag/checks/pi-info.check.mjs`（一覧生成・導入判定・Code テスト）、`cli-launch.check.mjs` / `aidiy-icon-ownership.check.mjs`（起動一覧・アイコン）。
-- Console / CLI 起動: `node --test frontend_ide/checks/cli-launch.test.mjs`。
+- Term / CLI 起動: `node --test frontend_ide/checks/cli-launch.test.mjs`。
 - setup 系: `python -B -X utf8 -m unittest discover -s scripts/checks`（`test_setup_messages` / `test_setup_processes` / `test_setup_posix` / `test_node_refresh` に Pi を含む）。
 
 ## 同梱ルートの整理方針

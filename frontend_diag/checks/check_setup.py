@@ -109,7 +109,7 @@ class RootIntegrationTests(unittest.TestCase):
             '3. Tools','4. Core / Apps',
             '5. Task / Team','6. Web',
             '7. Avatar','8. Hermes',
-            '9. Navi / Console / Code / Live / IDE / Task / Team','10. Discord','11. Slack',
+            '9. Navi / Term / Code / Live / IDE / Task / Team','10. Discord','11. Slack',
         ])
     def test_cleanup_auto_includes_diag_first(self):
         module=self.root_module('_cleanup');calls=[];original=module.ask_yes_no
@@ -144,7 +144,7 @@ class RootIntegrationTests(unittest.TestCase):
                     self.assertIn('Slack',calls[14][0]);self.assertFalse(calls[14][1])
                     self.assertIn('aidiy_task',calls[7][0]);self.assertFalse(calls[7][1])
                     self.assertIn('aidiy_team',calls[8][0]);self.assertFalse(calls[8][1])
-                    self.assertIn('Console',calls[9][0])
+                    self.assertIn('Term',calls[9][0])
                     # Task / Team の質問はAvatar直後だが、返却タプルは既存要素を保持して末尾へ追加する。
                     # Slack（最後の質問）は返却タプルに含めず、モジュール変数で保持する。
                     self.assertEqual(values[:6]+values[12:]+values[7:12],tuple(default for _,default in calls[1:-1]))

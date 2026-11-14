@@ -117,5 +117,5 @@ onMounted(() => {
 
 ## 確認方法
 - `cd frontend_avatar && npm run type-check`
-- Electron 起動後、DevTools Console で `window.desktopApi` に追加 API が出ているか確認する。
+- Electron 起動後、DevTools Term で `window.desktopApi` に追加 API が出ているか確認する。
 - Web モードで同じ画面を開き、`desktopApi` 不在でもエラーにならないことを確認する。

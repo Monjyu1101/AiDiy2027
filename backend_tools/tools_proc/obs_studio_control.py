@@ -47,7 +47,6 @@ class ObsStudioControl:
 
     # OBS 接続設定ファイル（backend_tools 起点）
     _OBS_CONFIG_REL = "../_config/mcp_obs_studio_control.json"
-    _LEGACY_OBS_CONFIG_REL = "../_config/aidiy_obs_studio_control.json"
 
     def __init__(
         self,
@@ -79,9 +78,6 @@ class ObsStudioControl:
     def _obs_config_path(self) -> Path:
         return Path(__file__).resolve().parent.parent / self._OBS_CONFIG_REL
 
-    def _legacy_obs_config_path(self) -> Path:
-        return Path(__file__).resolve().parent.parent / self._LEGACY_OBS_CONFIG_REL
-
     def _default_obs_config(self) -> dict[str, Any]:
         return {
             "version": 1,
@@ -101,21 +97,9 @@ class ObsStudioControl:
             json.dump(self._default_obs_config(), f, ensure_ascii=False, indent=2)
             f.write("\n")
 
-    def _migrate_legacy_obs_config(self, config_path: Path) -> bool:
-        legacy_path = self._legacy_obs_config_path()
-        if config_path.exists() or not legacy_path.exists():
-            return False
-        try:
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-            legacy_path.replace(config_path)
-            return True
-        except OSError:
-            return False
-
     def _load_or_create_config(self) -> dict[str, Any]:
         """設定ファイルがあればそれを読む。無ければデフォルトを書き出す。"""
         config_path = self._obs_config_path()
-        self._migrate_legacy_obs_config(config_path)
         if not config_path.exists():
             try:
                 self._write_default_obs_config(config_path)

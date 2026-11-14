@@ -11,11 +11,11 @@ const {release}=require('node:os');
 const glass=process.platform==='win32'&&Number(release().split('.')[2])>=22621;
 function icon(key){
  const [kind,id]=key.split(':');
- const name=kind==='cli'?`CLI_${id}.${['aidiy_hermes','aidiy_pi'].includes(id)?'png':'svg'}`:id==='chrome'?'Chrome.svg':`AiDiy_${id}.png`;
+ const name=kind==='cli'?`CLI_${id}.${['aidiy_hermes','aidiy_pi','aidiy_codex'].includes(id)?'png':'svg'}`:id==='chrome'?'Chrome.svg':`AiDiy_${id}.png`;
  if(!/^[a-zA-Z_]+\.(svg|png)$/.test(name))return '';
  try{if(name.endsWith('.png'))return nativeImage.createFromPath(path.join(__dirname,'../../static',name)).resize({width:32,height:32}).toDataURL();return `data:image/${name.endsWith('.svg')?'svg+xml':'png'};base64,${readFileSync(path.join(__dirname,'../../static',name)).toString('base64')}`;}catch{return '';}
 }
-const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:console','app:code','app:live','app:browser','app:navi','app:discord','app:slack']);
+const aidiyKeys=new Set(['app:avatar','app:task','app:team','app:ide','app:memo','app:cpu','app:term','app:code','app:live','app:browser','app:navi','app:discord','app:slack']);
 function メニュー範囲(cursor,area,items){
  const left=items.filter(item=>aidiyKeys.has(item.key)).length,rows=Math.max(left,items.length-left,1);
  const width=Math.min(264,area.width),height=Math.min(154+rows*32,area.height);

@@ -32,7 +32,7 @@ VS Code の Office Viewer（cweijan/vscode-office）で採用・紹介されて�
 ### 内部認証ファイルの非公開
 
 - Core / TaskTeam が生成する `internal_auth.json`、秘密鍵リング `internal_auth_keys.json`、それぞれの原子的保存用 `.internal_auth.json.*.tmp` / `.internal_auth_keys.json.*.tmp` は、汎用ファイル表示・静的プレビュー・一覧/本文検索・履歴/解析・Explorer操作から除外する。要求パスだけでなく解決後の実パスも確認し、別名symlink経由の取得を防ぐ。
-- 資格情報としての拒否対象はこの名前に限定する。`docs/internal_auth.md` / `docs/internal_auth_keys.md` や通常のコード・JSONは従来どおり扱う。これはWebの汎用ファイルAPIからの公開を防ぐもので、同じマシンの利用者、Console、AI/CLIの直接ファイルアクセスを隔離する機能ではない。
+- 資格情報としての拒否対象はこの名前に限定する。`docs/internal_auth.md` / `docs/internal_auth_keys.md` や通常のコード・JSONは従来どおり扱う。これはWebの汎用ファイルAPIからの公開を防ぐもので、同じマシンの利用者、Term、AI/CLIの直接ファイルアクセスを隔離する機能ではない。
 - `node --test frontend_ide/viewer/checks/internal-credential-files.test.mjs` は合成資格情報・symlinkだけで検証する。実資格情報を読まず、サーバー・外部AI・OS関連アプリは起動しない。
 
 ### フィルターOFFでも残す除外

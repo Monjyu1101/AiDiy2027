@@ -32,8 +32,10 @@
 /* タブは余白だけを詰め、縮小表示でも押せる高さを確保する。全テストは右端。 */
 .tabs{display:flex;align-items:stretch;gap:1px;padding:0 8px;border-bottom:2px solid #263544;background:#000}.tabs button{position:relative;min-height:30px;margin-bottom:-2px;padding:3px 9px 2px;white-space:nowrap;border:0;border-bottom:3px solid transparent;border-radius:0;background:transparent;color:#7f91a6;font-size:13px}.tabs button:hover{color:#d8e6f3;background:#121b25}.tabs button.active{color:#f2fffd;font-weight:700;background:#132230;border-bottom-color:#35e0d2}.tabs #run.run-all{align-self:center;margin:1px 0 1px auto;padding:3px 12px;border:1px solid #ffb547;border-radius:4px;background:#f59e0b;color:#1b1203;font-weight:700;letter-spacing:.04em}.tabs #run.run-all:hover:not(:disabled){background:#ffb84d;border-color:#ffd08a}.tabs #run.run-all:disabled{opacity:.45;cursor:not-allowed}@media(max-width:480px){.tabs{padding:0 4px;flex-wrap:wrap}.tabs button{padding:3px 6px 2px;font-size:12px}}
 /* 画面全体は固定し、スクロールは各パネルの一覧・詳細の内側だけにする。 */
-html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}#app>*{flex:none}#app>.panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}#app>.panel>*{flex:none}#app>.panel>main{flex:1 1 auto;min-height:0;overflow:hidden}#app>.panel>main>aside,#app>.panel>main>article{min-height:0;overflow:auto;overscroll-behavior:contain}#app>footer{max-height:30vh;overflow:auto}@media(max-width:700px){#app>.panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.panel>main>aside{max-height:none}}
-@media(max-width:800px){#app>.panel>main.key-layout{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.panel>main.key-layout>aside{max-height:none}}
+html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}#app>*{flex:none}#app>.diag-panel{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}#app>.diag-panel>*{flex:none}#app>.diag-panel>.panel{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}#app>.diag-panel>.panel>*{flex:none}#app>.diag-panel>.panel>main{flex:1 1 auto;min-height:0;overflow:hidden}#app>.diag-panel>.panel>main>aside,#app>.diag-panel>.panel>main>article{min-height:0;overflow:auto;overscroll-behavior:contain}#app>.diag-panel>footer{max-height:30vh;overflow:auto}
+/* 左右に分かれる幅（701px 以上）だけ、左側一覧のスクロールバーを常に表示して明細との仕切りにする。上下表示では不要。 */
+@media(min-width:701px){#app>.diag-panel>.panel>main>aside{overflow-y:scroll}}@media(max-width:700px){#app>.diag-panel>.panel>main{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.diag-panel>.panel>main>aside{max-height:none}}
+@media(max-width:800px){#app>.diag-panel>.panel>main.key-layout{grid-template-rows:minmax(0,45%) minmax(0,1fr)}#app>.diag-panel>.panel>main.key-layout>aside{max-height:none}}
 /* 確認中は回転表示。結果が出たら地色が切り替わる。 */
 .badge{transition:background-color .35s ease}.badge-spinner{width:9px;height:9px;flex:none;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:badge-spin .7s linear infinite}@keyframes badge-spin{to{transform:rotate(360deg)}}
 .heading-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 16px}.public-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#9fb3c6;white-space:nowrap}
@@ -47,33 +49,35 @@ html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:fl
 .previous-run{align-self:center;color:#9aa7b8;font-size:11px;white-space:nowrap}
 
 /* 通常画面の全ページを一回り小さくする。タイトルバーとミニ画面は元の寸法を保つ。 */
-#app>.tabs,#app>.login,#app>#message,#app>.panel:not(.start-mini),#app>footer{zoom:.85}
+#app>.diag-panel>.tabs,#app>.diag-panel>.login,#app>.diag-panel>#message,#app>.diag-panel>.panel:not(.start-mini),#app>.diag-panel>footer{zoom:.85}
 
 /* 明細は文字サイズより上下余白を詰め、800×600でも項目を一覧しやすくする。 */
-#app>.panel:not(.start-mini)>main>article{padding:18px 22px}
-#app>.panel:not(.start-mini) article h2{font-size:25px;margin:8px 0 12px}
-#app>.panel:not(.start-mini) article h3{margin:16px 0 8px}
-#app>.panel:not(.start-mini) article p{margin:6px 0;line-height:1.45}
-#app>.panel:not(.start-mini) dl{margin:12px 0;grid-template-columns:110px minmax(0,1fr)}
-#app>.panel:not(.start-mini) dt,#app>.panel:not(.start-mini) dd{padding:6px 0;line-height:1.4}
-#app>.panel:not(.start-mini) article ul{margin:6px 0;line-height:1.45}
-#app>.panel:not(.start-mini) .models li{margin-bottom:6px}
-#app>.panel:not(.start-mini) .item{padding:7px 8px}
-#app>.panel:not(.start-mini) .key-row,#app>.panel:not(.start-mini) .integration-row{padding:6px 4px;gap:8px}
-#app>.panel:not(.start-mini) .trial-select{padding:6px 8px}
-#app>.panel:not(.start-mini) .trial-test{padding:5px;gap:4px}
-#app>.panel:not(.start-mini) .ai-config-row{margin:7px 0;grid-template-columns:100px minmax(0,1fr)}
-#app>footer{padding:6px 16px;line-height:1.35}
-#app>footer p{margin:3px 0}
+#app>.diag-panel>.panel:not(.start-mini)>main>article{padding:18px 22px}
+#app>.diag-panel>.panel:not(.start-mini) article h2{font-size:25px;margin:8px 0 12px}
+#app>.diag-panel>.panel:not(.start-mini) article h3{margin:16px 0 8px}
+#app>.diag-panel>.panel:not(.start-mini) article p{margin:6px 0;line-height:1.45}
+#app>.diag-panel>.panel:not(.start-mini) dl{margin:12px 0;grid-template-columns:110px minmax(0,1fr)}
+#app>.diag-panel>.panel:not(.start-mini) dt,#app>.diag-panel>.panel:not(.start-mini) dd{padding:6px 0;line-height:1.4}
+#app>.diag-panel>.panel:not(.start-mini) article ul{margin:6px 0;line-height:1.45}
+#app>.diag-panel>.panel:not(.start-mini) .models li{margin-bottom:6px}
+#app>.diag-panel>.panel:not(.start-mini) .item{padding:7px 8px}
+#app>.diag-panel>.panel:not(.start-mini) .key-row,#app>.diag-panel>.panel:not(.start-mini) .integration-row{padding:6px 4px;gap:8px}
+#app>.diag-panel>.panel:not(.start-mini) .trial-select{padding:6px 8px}
+#app>.diag-panel>.panel:not(.start-mini) .trial-test{padding:5px;gap:4px}
+#app>.diag-panel>.panel:not(.start-mini) .ai-config-row{margin:7px 0;grid-template-columns:100px minmax(0,1fr)}
+#app>.diag-panel>footer{padding:6px 16px;line-height:1.35}
+#app>.diag-panel>footer p{margin:3px 0}
 
 /* 800px幅では一覧と明細を左右に置き、狭い画面だけ上下表示へ切り替える。 */
 @media(min-width:701px) and (max-width:1000px){
- #app>.install-panel>main,#app>.panel>main.key-layout,#app>.panel>main.trial-layout{grid-template-columns:minmax(280px,34%) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
- #app>.panel>main>aside{border-right:1px solid #304253;border-bottom:0;max-height:none;padding:12px 10px}
- #app>.ai-model-panel>.ai-model-scroll{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
- #app>.ai-model-panel .ai-model-form{border-right:1px solid #304253;border-bottom:0}
+ #app>.diag-panel>.install-panel>main,#app>.diag-panel>.panel>main.key-layout,#app>.diag-panel>.panel>main.trial-layout{grid-template-columns:minmax(280px,34%) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+ /* 導入状況は1行に名称・Web・確認・状態が並ぶため、800px 幅でも名称を折り返しにくい幅にする。 */
+ #app>.diag-panel>.install-panel>main{grid-template-columns:minmax(330px,44%) minmax(0,1fr)}
+ #app>.diag-panel>.panel>main>aside{border-right:1px solid #304253;border-bottom:0;max-height:none;padding:12px 10px}
+ #app>.diag-panel>.ai-model-panel>.ai-model-scroll{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ #app>.diag-panel>.ai-model-panel .ai-model-form{border-right:1px solid #304253;border-bottom:0}
 }
-@media(max-width:480px){#app>.panel:not(.start-mini) .ai-config-row{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:480px){#app>.diag-panel>.panel:not(.start-mini) .ai-config-row{grid-template-columns:minmax(0,1fr)}}
 
 /* 次の操作: 確認前は水色、確認後の未保存結果は青で書込を案内する。 */
 .panel-actions button.check-next,.trial-test button.check-next{background:#38bdf8;border-color:#7dd3fc;color:#082f49}

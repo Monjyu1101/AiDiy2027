@@ -33,7 +33,7 @@ test('バー非表示時は明滅更新を停止する',()=>{
 });
 for(const [file,state] of [
  ['コード/コードパネル.vue','panelHidden'],['ライブ/ライブパネル.vue','panelHidden'],
- ['コンソール/コンソールパネル.vue','panelHidden'],['ブラウザ/ブラウザパネル.vue','panelHidden'],
+ ['ターミナル/ターミナルパネル.vue','panelHidden'],['ブラウザ/ブラウザパネル.vue','panelHidden'],
  ['開発スペース/Naviパネル.vue','panelHidden'],['タスクチーム/タスクチームパネル.vue','panelHidden'],
 ])test(`${file} はscoped CSSのクリップだけに頼らず非描画を伝える`,()=>{
  assert.match(read('../src/components/'+file),new RegExp(':hide-connection-bar="'+state+'"'));

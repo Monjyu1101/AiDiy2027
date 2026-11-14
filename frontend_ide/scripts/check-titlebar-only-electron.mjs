@@ -22,7 +22,7 @@ const readCSS=path=>readSource(path).replace(/@import\s+["'](\.[^"']+)["']\s*;/g
 const entry=`import {createApp,h} from 'vue';
 import Code from './src/components/コード/コードパネル.vue';
 import Live from './src/components/ライブ/ライブパネル.vue';
-import Console from './src/components/コンソール/コンソールパネル.vue';
+import Term from './src/components/ターミナル/ターミナルパネル.vue';
 import Navi from './src/components/開発スペース/Naviパネル.vue';
 import Browser from './src/components/ブラウザ/ブラウザパネル.vue';
 import App from './src/App.vue';
@@ -31,7 +31,7 @@ window.runtimeErrors=[];addEventListener('error',e=>runtimeErrors.push(e.message
 window.fetch=async()=>({ok:true,json:async()=>({active:true,mode:'online',connected:true,startedAt:1,project:{path:'/fixture',name:'fixture'},items:[],result:null,job:null,availability:{available:true},models:{},voices:{}})});
 window.EventSource=class{close(){}};window.WebSocket=class{static OPEN=1;readyState=0;close(){}send(){}};
 window.aidiyWindow={title:async()=> 'AiDiy '+kind,pinState:async()=>({pinned:false}),onPinChanged:()=>()=>{},onBrowserChanged:()=>()=>{},browserAction:async()=>({ok:true,available:true,connected:true,url:'https://example.test/'}),childWindows:async()=>({}),allDisplays:async()=>({ok:true,active:false}),onAllDisplaysChanged:()=>()=>{},collapsePanel:async()=>{await new Promise(r=>setTimeout(r,220));return{ok:true}}};
-const component={code:Code,live:Live,console:Console,navi:Navi,browser:Browser,ide:App}[kind];
+const component={code:Code,live:Live,term:Term,navi:Navi,browser:Browser,ide:App}[kind];
 createApp({render:()=>h(component,{desktop:true,standalone:true,instance:'audit',project:{path:'/fixture',name:'fixture'},config:{kind:'ide'}})}).mount('#app');`;
 try{
  const result=await build({stdin:{contents:entry,resolveDir:root},bundle:true,write:false,format:'iife',loader:{'.css':'empty'},plugins:[{name:'real-vue-titlebars',setup(b){
@@ -45,7 +45,7 @@ try{
    return{contents:script.content+`\ncomponent.__scopeId=${JSON.stringify(id)};export default component;{const s=document.createElement('style');s.textContent=${JSON.stringify(css)};document.head.append(s);}`,resolveDir:dirname(args.path)};
   });
  }}]});
- if(process.argv.includes('--compile-only')){console.log('PASS: actual Code/Live/Console/Browser/Navi/App with production scoped CSS compile.');process.exit(0);}
+ if(process.argv.includes('--compile-only')){console.log('PASS: actual Code/Live/Term/Browser/Navi/App with production scoped CSS compile.');process.exit(0);}
  writeFileSync(join(temp,'app.js'),result.outputFiles[0].text);
  const css=readCSS(join(root,'src/style.css'))+'\n'+readCSS(join(root,'src/components/共通表示/会話表示.css'));
  writeFileSync(join(temp,'fixture.html'),`<!doctype html><meta charset="utf-8"><style>${css}</style><div id="app"></div><script src="app.js"></script>`);
@@ -54,7 +54,7 @@ try{
  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
  app.whenReady().then(async()=>{const win=new BrowserWindow({width:1100,height:850,show:false,frame:false,webPreferences:{sandbox:true,offscreen:true,backgroundThrottling:false}});await win.loadFile(join(__dirname,'index.html'));
  const evaluate=code=>win.webContents.executeJavaScript("document.querySelector('#fixture').contentWindow.eval("+JSON.stringify(code)+")");
- for(const kind of ['code','live','console','navi','browser','ide']){
+ for(const kind of ['code','live','term','navi','browser','ide']){
   await win.webContents.executeJavaScript("document.querySelector('#fixture').src='fixture.html#"+kind+"'");
   let ready=false;for(let i=0;i<50;i++){await sleep(100);try{ready=await evaluate("!!document.querySelector('.code-panel-toggle')");if(ready)break;}catch{}}
   assert.ok(ready,kind+' mount');await sleep(200);

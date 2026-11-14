@@ -65,14 +65,14 @@ try{
  assert.equal(await evaluate(`document.querySelector('nav.tabs button.active').textContent`),'システム起動');
  await click('ランチャー表示');
  await until(`document.querySelector('.mini-app-button[data-app="navi"] img')?.naturalWidth===512`);
- assert.equal(await evaluate(`(()=>{const ids=[...document.querySelectorAll('.mini-app-button')].map(x=>x.dataset.app);return ids.indexOf('navi')+1===ids.indexOf('console');})()`),true);
+ assert.equal(await evaluate(`(()=>{const ids=[...document.querySelectorAll('.mini-app-button')].map(x=>x.dataset.app);return ids.indexOf('navi')+1===ids.indexOf('term');})()`),true);
  await capture('navigator-mini');
  await click('アプリ起動パネルでプロジェクトを選択');
  await until(`document.querySelector('[data-app="navi"] .app-launch-icon')?.naturalWidth===512`);
- assert.equal(await evaluate(`(()=>{const ids=[...document.querySelectorAll('.app-launch-card[data-app]')].map(x=>x.dataset.app);return ids.indexOf('navi')+1===ids.indexOf('console');})()`),true);
+ assert.equal(await evaluate(`(()=>{const ids=[...document.querySelectorAll('.app-launch-card[data-app]')].map(x=>x.dataset.app);return ids.indexOf('navi')+1===ids.indexOf('term');})()`),true);
  await capture('navigator-launcher');
  assert.equal(appCalls.length,0);assert.deepEqual(errors,[]);
- console.log('Navi: mini/full icon 512px, before Console, no app/service launch PASS');
+ console.log('Navi: mini/full icon 512px, before Term, no app/service launch PASS');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}

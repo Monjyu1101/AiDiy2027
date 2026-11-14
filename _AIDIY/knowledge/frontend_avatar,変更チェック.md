@@ -171,12 +171,12 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - Web で `http://127.0.0.1:8092` を開ける。
 - Electron と Web で storage の使い分けが崩れていない。
 - WebSocket 接続、チャット送信、コード送信が通る。
-- DevTools Console に `desktopApi` 未定義エラーがない。
+- DevTools Term に `desktopApi` 未定義エラーがない。
 - `npm run type-check` が通る。
 
 ## Avatar共通ランチャー
 
-公開コマンドは `aidiy_avatar` に統一します。旧 `aidiy_avatar_alone` は登録せず、setupでこの配置元の旧ランチャーだけ除去します。他の配置元・所有元不明のランチャーや旧プロファイルは削除しません。
+公開コマンドは `aidiy_avatar` です。setup はこの配置元のランチャーだけを登録し、他の配置元・所有元不明のランチャーは変更しません。
 
 - `aidiy_avatar --internal-auth --project <folder>` はプロジェクトを指定し、省略時は呼出元のカレントフォルダーを使用します。切り離す前に存在するディレクトリへ正規化します。
 - IDE は `node frontend_avatar/launch.mjs --internal-auth --project <絶対フォルダー> --foreground --initial-pinned` と `AIDIY_LAUNCHER_CHILD=1`、IPC付きstdioで起動します。
@@ -186,7 +186,7 @@ WebSocket packet は `AIコアWebSocket仕様.md` を確認する。
 - 単独版のrendererはloopbackの空きポートとVite `avatar-alone` modeを使い、`--strictPort` で別ポートへ逃げません。通常版の8092は変更しません。
 - `AIDIY_AVATAR_ALONE=1` と検証済み `AIDIY_AVATAR_PROJECT` をElectronへ渡します。接続先や内部認証情報はrendererの起動引数に含めません。
 - 通常の `aidiy_avatar` はログイン認証と8092のWeb公開を維持します。IDEは同じ入口を内部認証オプション付きで呼び出します。内部認証プロファイルは選択プロジェクトの `_AIDIY/aidiy_avatar/electron/internal` に置き、通常版のプロファイルと隔離します。
-- cleanupは同じ配置元の現行ランチャーと残存する旧ランチャーだけを解除します。別配置元のランチャーは残します。
+- cleanupは同じ配置元のランチャーだけを解除します。別配置元のランチャーは残します。
 
 実サービス・認証情報を使わない確認:
 
@@ -197,7 +197,7 @@ python -m unittest discover -s frontend_avatar/checks -p 'test_*py'
 
 ### 単独版とIDEの確認ポイント
 
-- IDEの＋メニューは `Console → Browser → Navi → Code → Live → Avatar → TASK → TEAM`。IDEからLiveまたはAvatarを起動中は、起動待ちを含め両方を隠し、終了後に戻します。AvatarはElectron版IDEで利用します。
+- IDEの＋メニューは `Term → Browser → Navi → Code → Live → Avatar → TASK → TEAM`。IDEからLiveまたはAvatarを起動中は、起動待ちを含め両方を隠し、終了後に戻します。AvatarはElectron版IDEで利用します。
 - 単独版はコア・設定・Chat（0番）・Code1〜6・File・Capture（イメージ）の窓を許可します。各パネルはコアのセッション・選択プロジェクト・接続状態を同期し、再接続時も同じプロジェクトを維持します。マイク、スピーカー、アバター表示選択、設定は維持します。
 - Fileの内容取得・上書き保存はセッションIDを送り、内部認証では所有セッションのプロジェクト配下の通常ファイルだけを許可します。プロジェクト外、リンク、内部認証ファイルを拒否します。通常ログイン版のファイル経路は変更しません。単独版の右側temp一覧とCapture画像の保存先は選択プロジェクトの `temp/` と `temp/input/` です。
 - Captureの画面・ウィンドウ選択は従来の明示操作を維持します。OSの画面収録権限は自動付与しません。実機では初回許可、取消、再選択、Core再接続、Fileの表示・上書き・ダウンロード、IDE終了・Avatar本体終了時の全子窓終了を確認してください。

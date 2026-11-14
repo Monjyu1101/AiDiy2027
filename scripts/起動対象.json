@@ -86,11 +86,11 @@
     "起動管理": false
   },
   {
-    "id": "console",
-    "名前": "Console",
+    "id": "term",
+    "名前": "Term",
     "区分": "IDE",
-    "フォルダ": "frontend_ide/aidiy_console",
-    "監視名": "フロントエンド(console)",
+    "フォルダ": "frontend_ide/aidiy_term",
+    "監視名": "フロントエンド(term)",
     "初期設定": {
       "起動対象": false,
       "自動再起動": false

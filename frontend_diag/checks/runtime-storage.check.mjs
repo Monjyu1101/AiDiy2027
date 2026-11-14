@@ -43,7 +43,7 @@ for(const existing of [false,true]){
   const manager=createAppLauncher({root,tasks:async()=>[],taskTeamStatus:async()=>({利用可能:true}),portStatusFn:async()=>({対象:[{id:'tools',開放:true}]}),spawnFn(){
    const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;
   }});
-  for(const id of ['avatar','task','team','ide','console','code','live','discord','browser','console']){
+  for(const id of ['avatar','task','team','ide','term','code','live','discord','browser','term']){
    const result=await manager.launch(id,project);paths.push(result.ログ);
    assert.equal(dirname(result.ログ),join(root,'temp','aidiy_diag','アプリ起動'));
    assert.ok((await stat(result.ログ)).isFile());

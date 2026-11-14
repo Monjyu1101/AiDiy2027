@@ -12,7 +12,7 @@ function fixture(options={}){
  const calls=[],env={PATH:'/bin',HTTPS_PROXY:'http://proxy.test:8080',NO_PROXY:'localhost',ELECTRON_RUN_AS_NODE:'1',NODE_OPTIONS:'--inspect'};
  const manager=createVSCodeLauncher({startupGrace:1,env,resolveFn:async()=>'/bin/code',realpathFn:async x=>x,statFn:async()=>({isDirectory:()=>true}),spawnFn(command,args,opts){calls.push({command,args,opts});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;},...options});return {manager,calls,env};
 }
-test('VS Code opens exact selected folder without shell, model, Console, or approval flags; inherits proxy',async()=>{
+test('VS Code opens exact selected folder without shell, model, Term, or approval flags; inherits proxy',async()=>{
  const f=fixture(),project="/tmp/日本語 project ' & $ % ;";assert.equal((await f.manager.launch(project)).受付,true);
  assert.deepEqual(f.calls[0].args,['--new-window',project]);assert.equal(f.calls[0].opts.cwd,project);assert.equal(f.calls[0].opts.shell,false);assert.equal(f.calls[0].opts.windowsHide,false);
  assert.equal(f.calls[0].opts.env.HTTPS_PROXY,f.env.HTTPS_PROXY);assert.equal(f.calls[0].opts.env.NO_PROXY,'localhost');assert.equal(f.calls[0].opts.env.ELECTRON_RUN_AS_NODE,undefined);assert.equal(f.env.ELECTRON_RUN_AS_NODE,'1');

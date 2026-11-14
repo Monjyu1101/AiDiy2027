@@ -119,7 +119,7 @@ class GemmaEngine:
 
         優先順位:
         1. model_id 自体が既存ディレクトリ → そのパスをローカルロード。
-        2. temp/models/<safe_name> に config.json がある → そのパスをローカルロード。
+        2. ~/.aidiy/models/<safe_name> に config.json がある → そのパスをローカルロード。
         3. いずれも無ければ repo_id でハブからダウンロード（offline 時は不可）。
         """
         if os.path.isdir(self.model_id) and os.path.isfile(
@@ -174,7 +174,7 @@ class GemmaEngine:
 
         token = self.hf_token
         # ローカルパスからロードする場合は token / cache_dir は不要。
-        # repo_id からダウンロードする場合は temp/models をキャッシュ先に使う。
+        # repo_id からダウンロードする場合は ~/.aidiy/models をキャッシュ先に使う。
         common_kwargs: dict[str, Any] = {"local_files_only": local_only}
         if not local_only:
             common_kwargs["token"] = token

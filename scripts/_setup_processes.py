@@ -57,15 +57,7 @@ def process_role(process, root, windows=False):
         value = absolute(value)
         try:
             if value and path.commonpath((root, value)) == root:
-                relative_path = path.relpath(value, root).replace('\\', '/')
-                # 改名前に同じ配置元から起動した Diag / Memo も回収する。
-                # commonpath 照合後だけ変換し、別コピーのプロセスは対象にしない。
-                if relative_path.startswith('backend_diag/'):
-                    legacy = Path(root) / 'backend_diag'
-                    if legacy.is_symlink() or getattr(legacy, 'is_junction', lambda: False)():
-                        return ''
-                    return 'frontend_diag/' + relative_path[len('backend_diag/'):]
-                return relative_path
+                return path.relpath(value, root).replace('\\', '/')
         except ValueError:
             pass
         return ''
@@ -77,7 +69,7 @@ def process_role(process, root, windows=False):
         if python and parts[1].startswith(('.venv', 'venv')):
             return parts[0]
         if electron and '/node_modules/electron/dist/' in '/' + binary:
-            # IDEのElectronはCode/Live/Consoleと共用。入口/親子関係不明なら保護。
+            # IDEのElectronはCode/Live/Termと共用。入口/親子関係不明なら保護。
             if parts[0] != 'frontend_ide':
                 if parts[0] == 'frontend_diag' and '--aidiy-memo-only' in args:
                     return 'memo'
@@ -86,9 +78,9 @@ def process_role(process, root, windows=False):
                 if not arg.startswith('--user-data-dir='):
                     continue
                 profile = path.basename(arg.split('=', 1)[1]).casefold()
-                for kind in ('code', 'live', 'console', 'term', 'task', 'team', 'browser', 'navi', 'cpu'):
+                for kind in ('code', 'live', 'term', 'task', 'team', 'browser', 'navi', 'cpu'):
                     if profile == f'aidiy_{kind}_vue' or profile.startswith(f'aidiy-{kind}-profile-'):
-                        return 'console' if kind == 'term' else kind
+                        return kind
 
     index = 1
     while index < len(args):
@@ -129,11 +121,10 @@ def process_role(process, root, windows=False):
                     selected = tail[position + 1]
                 elif arg.startswith('--app='):
                     selected = arg.split('=', 1)[1]
-            selected = 'console' if selected == 'term' else selected
-            return selected if selected in ('code', 'live', 'ide', 'console', 'task', 'team', 'browser', 'navi', 'cpu') else None
-        for kind in ('code', 'live', 'console', 'term', 'ide', 'task', 'team', 'browser', 'navi', 'cpu'):
+            return selected if selected in ('code', 'live', 'ide', 'term', 'task', 'team', 'browser', 'navi', 'cpu') else None
+        for kind in ('code', 'live', 'term', 'ide', 'task', 'team', 'browser', 'navi', 'cpu'):
             if f'/aidiy_{kind}/' in '/' + entry:
-                return 'console' if kind == 'term' else kind
+                return kind
         if entry.startswith('frontend_ide/viewer/'):
             return 'ide'
         # 共用runtimeは所有元の親プロセスから判別し、単体では止めない。
@@ -158,7 +149,7 @@ def select_targets(processes, root, windows=False, current_pid=None):
         if roles[process['ProcessId']] is None and registered_supervisor(process, root):
             roles[process['ProcessId']] = 'supervisor'
     # Code/IDE/Discord/Slackの補助/MCP子孫を保護。ただし独立アプリLive等は保護の境界にする。
-    boundaries = {'live', 'console', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'frontend_diag', 'memo', 'supervisor'}
+    boundaries = {'live', 'term', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'frontend_diag', 'memo', 'supervisor'}
     protected = {pid for pid, role in roles.items() if role in KEEP}
     while True:
         children = {p['ProcessId'] for p in processes if p.get('ParentProcessId') in protected

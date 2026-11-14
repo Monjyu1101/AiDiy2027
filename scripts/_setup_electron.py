@@ -25,7 +25,9 @@ import zipfile
 from pathlib import Path, PurePosixPath
 
 
-CACHE_DIR = Path(__file__).resolve().parents[1] / ".aidiy_cache" / "electron"
+# Electron の共有 ZIP はユーザーのホーム（~/.aidiy/cache/electron）に置き、
+# git clone やフォルダコピーで作った別の AiDiy 環境とも共有する。
+CACHE_DIR = Path.home() / ".aidiy" / "cache" / "electron"
 DOWNLOAD_TIMEOUT = 30
 
 
@@ -277,7 +279,7 @@ def _runtime_in_use(frontend_dir: Path) -> bool:
     for process in list_processes():
         if frontend_dir.name == "frontend_ide":
             from _setup_processes import process_role
-            if process_role(process, frontend_dir.parent, windows=True) in ("code", "ide", "navi", "console", "live"):
+            if process_role(process, frontend_dir.parent, windows=True) in ("code", "ide", "navi", "term", "live"):
                 return True
         executable = process.get("ExecutablePath") or ""
         if not executable:

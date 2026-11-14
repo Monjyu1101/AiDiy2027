@@ -26,24 +26,24 @@ async function fixture(t,{getLaunchDisplay}={}){
 test('unconfigured channel apps hidden; missing/relative/file/unknown inputs never launch or check tasks',async t=>{
  const f=await fixture(t);let reads=0;
  const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),tasks:async()=>{reads++;return [];}});
- assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','ide','cpu','navi','console','code','live','chrome','browser']);
- for(const id of ['cpu','avatar','ide','console','code','live','discord'])for(const path of ['',undefined,'relative',join(f.root,'missing')])await assert.rejects(manager.launch(id,path),{status:400});
+ assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','ide','cpu','navi','term','code','live','chrome','browser']);
+ for(const id of ['cpu','avatar','ide','term','code','live','discord'])for(const path of ['',undefined,'relative',join(f.root,'missing')])await assert.rejects(manager.launch(id,path),{status:400});
  await writeFile(join(f.root,'file'),'x');await assert.rejects(manager.launch('avatar',join(f.root,'file')),{status:400});
  await assert.rejects(manager.launch('arbitrary-command',f.project),{status:400});assert.equal(reads,0);
 });
 test('project argument/cwd remain exact; Avatar retains app base; detached logs and no IPC ownership',async t=>{
  const f=await fixture(t);
- for(const id of ['cpu','avatar','ide','console','code','live','discord']){
+ for(const id of ['cpu','avatar','ide','term','code','live','discord']){
   assert.equal((await f.manager.launch(id,f.project)).受付,true);
   const call=f.calls.at(-1);assert.equal(call.options.cwd,id==='avatar'?f.root:f.project);
   assert.equal(call.options.detached,true);assert.equal(call.options.shell,false);assert.equal(call.options.windowsHide,true);assert.equal(call.options.stdio[0],'ignore');assert.equal(call.options.stdio.includes('ipc'),false);assert.equal(call.child.unreferenced,true);
   if(id==='discord')assert.equal(call.args[0],join(f.root,'frontend_channels','discord','panel','launch.mjs'));
   if(id==='avatar'){assert.equal(call.command,process.execPath);assert.equal(call.args.at(-1),join(f.root,'frontend_avatar','launch.mjs'));}
-  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['ide','console','code'].includes(id));}
+  else {assert.equal(call.args[call.args.indexOf('--project')+1],f.project);assert.equal(call.args.includes('--new-window'),['ide','term','code'].includes(id));}
  }
  assert.equal(f.calls.length,7);
 });
-test('singleton checks run only on click, block existing tasks, permit IDE/Console/Code repeats and serialize races',async t=>{
+test('singleton checks run only on click, block existing tasks, permit IDE/Term/Code repeats and serialize races',async t=>{
  const f=await fixture(t);let reads=0,calls=0,release;
  const tasks=[{command:'python "C:/AiDiy/frontend_avatar/_start.py"'},{command:'electron "C:/AiDiy/frontend_ide/desktop.cjs" --app live'},{command:'node "/a/frontend_channels/discord/src/web-server.ts"'}];
  const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),linkedLiveRunning:async()=>false,tasks:async()=>{reads++;return tasks;},spawnFn(){calls++;throw Error();}});
@@ -53,7 +53,7 @@ test('singleton checks run only on click, block existing tasks, permit IDE/Conso
  const racing=createAppLauncher({chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,tasks:()=>new Promise(resolve=>{release=resolve;})});
  const one=racing.launch('live',f.project);while(!release)await new Promise(resolve=>setImmediate(resolve));
  await assert.rejects(racing.launch('live',f.project),{status:409});release(tasks);await one;
- for(const id of ['ide','console','code']){await f.manager.launch(id,f.project);await f.manager.launch(id,f.project);}
+ for(const id of ['ide','term','code']){await f.manager.launch(id,f.project);await f.manager.launch(id,f.project);}
  assert.equal(f.calls.length,6);assert.equal(reads,3);
 });
 test('Windows/macOS/Linux task entries and legacy Live match without matching other apps or tests',()=>{
@@ -123,14 +123,14 @@ test('authenticated API rejects arbitrary commands/methods/oversized payloads',a
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  assert.equal((await fetch(base+'api/アプリ起動')).status,401);
  assert.equal((await fetch(base+'api/アプリ起動',{headers})).status,200);
- for(const id of ['cpu','avatar','ide','console','code','live','discord']){
+ for(const id of ['cpu','avatar','ide','term','code','live','discord']){
   const response=await fetch(base+`AiDiy_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');
   assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/アイコン/AiDiy_${id}.png`,import.meta.url)));
  }
  assert.equal((await fetch(base+'AiDiy_unknown.png')).status,404);
- for(const [body,status] of [[{対象:'console',フォルダ:f.project,command:'bad'},400],[{対象:'bad',フォルダ:f.project},400],[{対象:'avatar',フォルダ:''},400],[{対象:'console',フォルダ:'x'.repeat(DIAG_TRANSPORT_BYTE_LIMIT+1)},413]])assert.equal((await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify(body)})).status,status);
+ for(const [body,status] of [[{対象:'term',フォルダ:f.project,command:'bad'},400],[{対象:'bad',フォルダ:f.project},400],[{対象:'avatar',フォルダ:''},400],[{対象:'term',フォルダ:'x'.repeat(DIAG_TRANSPORT_BYTE_LIMIT+1)},413]])assert.equal((await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify(body)})).status,status);
  assert.equal((await fetch(base+'api/アプリ起動/開始',{headers})).status,404);
- const response=await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify({対象:'console',フォルダ:f.project})});assert.equal(response.status,202);assert.equal(f.calls.length,1);
+ const response=await fetch(base+'api/アプリ起動/開始',{method:'POST',headers,body:JSON.stringify({対象:'term',フォルダ:f.project})});assert.equal(response.status,202);assert.equal(f.calls.length,1);
 });
 test('real detached app survives Diag server shutdown and inherits chosen cwd',async t=>{
  const f=await fixture(t);await mkdir(join(f.root,'frontend_ide'));const marker=join(f.root,'alive.json');
@@ -138,7 +138,7 @@ test('real detached app survives Diag server shutdown and inherits chosen cwd',a
  let child;const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,spawnFn:(...args)=>(child=spawn(...args))});
  const server=createServer({token:'fixture',appLauncher:manager,modelTrials:{close(){}},startManager:{close(){}}});await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  try{
-  await manager.launch('console',f.project);for(let i=0;i<100;i++){try{await readFile(marker);break;}catch{await new Promise(resolve=>setTimeout(resolve,20));}}
+  await manager.launch('term',f.project);for(let i=0;i<100;i++){try{await readFile(marker);break;}catch{await new Promise(resolve=>setTimeout(resolve,20));}}
   const before=JSON.parse(await readFile(marker,'utf8'));await new Promise(resolve=>server.close(resolve));await new Promise(resolve=>setTimeout(resolve,150));
   const after=JSON.parse(await readFile(marker,'utf8'));assert.equal(after.cwd,f.project);assert.equal(after.pid,child.pid);assert.ok(after.time>before.time);
  }finally{if(server.listening)await new Promise(resolve=>server.close(resolve));if(child?.exitCode===null){await new Promise(resolve=>{child.once('exit',resolve);child.kill();});}}

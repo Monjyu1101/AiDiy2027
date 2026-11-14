@@ -106,7 +106,7 @@ cd command_hermes
 
 `_verify.py` は非対話部分しか見ません。`aidiy_hermes_exec.bat` を cmd から実行して、
 起動バナー、`/model` ピッカー（provider 選択・モデル選択・type-to-filter）、`/help`、応答ボックスを目視してください。
-Git Bash などの非コンソール環境では `NoConsoleScreenBufferError` になり TUI は起動しません。
+Git Bash などの非コンソール環境では `NoTermScreenBufferError` になり TUI は起動しません。
 
 ## AiDiy レイヤ一覧（再適用チェックリスト）
 

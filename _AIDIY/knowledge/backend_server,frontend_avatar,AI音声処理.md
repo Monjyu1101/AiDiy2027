@@ -133,4 +133,4 @@ OpenAI の切断には専用の自動テストがないため、通常切断と�
 3. スピーカー OFF で実音は止まり、必要な視覚演出だけ残る。
 4. `cancel_audio` 受信時に即時停止し、キューが再開しない。
 5. Electron と Web の両方で、初回クリック後に `AudioContext` が resume する。
-6. DevTools Console で AudioController 関連のエラーがないことを確認する。
+6. DevTools Term で AudioController 関連のエラーがないことを確認する。

@@ -13,8 +13,8 @@ import {join,resolve,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=mkdtempSync(join(tmpdir(),'aidiy-launch-check-'));
 const kind=process.argv[2]||'code';
-assert.ok(['console','code','live','ide'].includes(kind),'対象はconsole / code / live / ide');
-const entry=fileURLToPath(new URL(kind==='console'?'../aidiy_console/launch.mjs':kind==='ide'?'../viewer/launch.mjs':`../host/aidiy_${kind}/launch.mjs`,import.meta.url));
+assert.ok(['term','code','live','ide'].includes(kind),'対象はterm / code / live / ide');
+const entry=fileURLToPath(new URL(kind==='term'?'../aidiy_term/launch.mjs':kind==='ide'?'../viewer/launch.mjs':`../host/aidiy_${kind}/launch.mjs`,import.meta.url));
 const hook=fileURLToPath(new URL('../checks/launcher-preload.cjs',import.meta.url));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(check){for(let i=0;i<150;i++){if(await check())return;await sleep(100);}throw Error('ランチャー確認がタイムアウトしました');}
@@ -46,7 +46,7 @@ try{
    await until(()=>run.child.exitCode!==null);assert.equal(await run.exit,0);
    assert.ok(alive(ready.pid),'コマンド終了後もサーバーが動作する');
    assert.doesNotMatch(run.output(),/プロジェクト:/);
-   if(kind==='console'){
+   if(kind==='term'){
     const monitor=join(folder,'second');mkdirSync(join(monitor,'profile'),{recursive:true});
     const second=launch(folder,[],monitor);await until(()=>second.child.exitCode!==null&&existsSync(join(monitor,'window.json')));
     assert.equal(await second.exit,0);assert.doesNotMatch(second.output(),/起動済み/);
@@ -58,7 +58,7 @@ try{
     const offset=Math.min(window.area.width-16-600,window.area.height-16-400)>=28?28:0;
     assert.ok(Math.abs(next.bounds.x-window.bounds.x-offset)<=2);assert.ok(Math.abs(next.bounds.y-window.bounds.y+offset)<=2);
     await close(monitor);assert.equal((await fetch(ready.url)).status,200);
-    console.log('LAUNCH PASS: Consoleの同一プロジェクト複数起動・600×400（小画面では縮小）・左下から右上配置・個別終了');
+    console.log('LAUNCH PASS: Termの同一プロジェクト複数起動・600×400（小画面では縮小）・左下から右上配置・個別終了');
    }else{
     const second=launch(folder);await until(()=>second.child.exitCode!==null);
     assert.equal(await second.exit,0);assert.match(second.output(),/起動済み/);

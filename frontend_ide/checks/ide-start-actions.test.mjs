@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
-const app=read('../src/App.vue'),welcome=read('../src/components/コンソール/開始表示.vue'),css=read('../src/style.css');
+const app=read('../src/App.vue'),welcome=read('../src/components/ターミナル/開始表示.vue'),css=read('../src/style.css');
 
 test('開始ボタンは3行案内のslotだけに置き、利用中は従来の終了を表示する',()=>{
  const heading=app.slice(app.indexOf('<div v-show="!allDisplayState.active"'),app.indexOf('<template v-if="allDisplayState.active">'));
@@ -34,10 +34,10 @@ function menuFixture(mode='offline',active=true,connected=false){
  const context={ref:value=>({value}),desktop:false,window:{},cpuOpen:{value:false},runningApps:{value:[]},openCpu(){},computed:fn=>({get value(){return fn();}}),state:{value:{mode,active,connected}},launching:{value:''},liveOpen:{value:false},panelOpen:{value:false},tab:{value:'code'},openWindow(){},openPanel(){},openNavigation(){}};
  vm.runInNewContext(app.slice(app.indexOf('const browserAvailable='),app.indexOf("provide('browserAvailable'"))+app.slice(app.indexOf('const launchText='),app.indexOf('async function openWindow'))+';globalThis.desktopItems=desktopLaunchItems;globalThis.webItems=panelLaunchItems;globalThis.available=browserAvailable;',context);return context;
 }
-test('オフラインメニューはCPU・Console・Browser・CodeだけでBrowserは接続なしでも有効',()=>{
+test('オフラインメニューはCPU・Term・Browser・CodeだけでBrowserは接続なしでも有効',()=>{
  for(const mode of ['offline','online']){
   const f=menuFixture(mode);
-  const expected=mode==='offline'?['console','browser','code','cpu']:['console','browser','navigation','code','live','avatar','task','team','cpu'];
+  const expected=mode==='offline'?['term','browser','code','cpu']:['term','browser','navigation','code','live','avatar','task','team','cpu'];
   assert.deepEqual(Array.from(f.desktopItems.value,x=>x.key),expected);
   if(mode==='offline')assert.deepEqual(Array.from(f.webItems.value,x=>x.key),expected);
   assert.equal(f.available.value,true);

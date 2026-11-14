@@ -130,4 +130,4 @@ Invoke-WebRequest -UseBasicParsing -Uri 'http://127.0.0.1:8090/Xその他/<画�
 ```
 
 - Vue 直実装の場合は `node --check` 対象がないため、`npm run type-check` を優先する。
-- DevTools が使える場合は Console エラー、Network 404、描画サイズ、操作系イベントを確認する。
+- DevTools が使える場合は Term エラー、Network 404、描画サイズ、操作系イベントを確認する。

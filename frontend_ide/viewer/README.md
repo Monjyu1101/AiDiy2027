@@ -4,7 +4,7 @@
 
 AiDiy の **開発スペース**（宇宙をテーマにした IDE 開発環境）の中心となる、作業フォルダを宇宙の見た目で眺めて操作するファイルビューアです。Code / Live とともに、AiDiy の正式なサブシステムを構成します。
 目指すのは「ソースをほぼ触らない IDE」です。宇宙で全体を眺め、エクスプローラーで辿り、ビューアで読み、変更は Code / Live を通じて AI に任せます。
-ルートのsetup / cleanupではIDE群（Navi / Console / Code / Live / IDE / Task / Team / Browser）として扱います。全体startはDiagを使わない場合にIDEを個別選択できます（既定OFF）。
+ルートのsetup / cleanupではIDE群（Navi / Term / Code / Live / IDE / Task / Team / Browser）として扱います。全体startはDiagを使わない場合にIDEを個別選択できます（既定OFF）。
 起動時は Live と同じターミナル演出の初期画面を表示します。「AiDiy接続利用」または「オフライン利用」を手動で選んで宇宙表示を開始します。
 
 見た目は宇宙のテーマですが、画面の文字は「フォルダ」「ファイル」など一般的な名前で表示します。
@@ -57,14 +57,14 @@ node frontend_ide/viewer\launch.mjs . --no-open   # サーバーだけ起動
 - 通常は Electron の専用ウィンドウを独立プロセスで開き、コマンドプロンプトへ戻ります。窓を閉じると、そのプロジェクトのサーバーも終了します。`--foreground` / `--wait` 指定時は起動中のまま待機し、Ctrl+Cでも終了できます。
 - Codespaces・画面のないLinuxはWebで開きます。Electron起動失敗時のWeb切り替えは前景起動時だけで、通常の分離起動では失敗を報告します。`--browser` でも指定できます。Web 版は Ctrl+C で終了します。
 - ポート番号は固定せず、起動ごとに OS が空きポートを割り当てます。画面は起動ログの URL で開きます。番号が必要な場合だけ `--port 番号`（厳密指定は `--strict-port` を併用）を渡します。Codespaces では実際に割り当てたポートの転送 URL を表示し、`$BROWSER` へ localhost URL を渡して VS Code に転送を任せます。「ポート」から開くこともできます。転送先は環境変数で特定した当該 Codespace だけを許可します。
-- Diagを使わない全体起動では、選択したTask / Team、Console / Code / Live / IDE、Discord / Slackを順に扱います。IDE は空きポートで独立起動し、ログを配置先リポジトリの `temp/aidiy_ide/logs/` に保存します。共通起動を使う Console / Task / Team / Browser も `temp/aidiy_<kind>/logs/` へ起動ごとの UUID 名で保存します。旧 `viewer/out/` のログは移行・削除せず、新保存先に書けない場合も旧保存先へ退避しません。Electron の設定・認証・プロファイルは変更しません。全体起動の起動前整理・Ctrl+C・リブートでは停止せず、自動再起動もしません。クリーンアップ（`python _cleanup.py`）はこの配置先のプロセスを照合して停止し、`aidiy_ide` コマンド解除・`node_modules` 削除を行います。
+- Diagを使わない全体起動では、選択したTask / Team、Term / Code / Live / IDE、Discord / Slackを順に扱います。IDE は空きポートで独立起動し、ログを配置先リポジトリの `temp/aidiy_ide/logs/` に保存します。共通起動を使う Term / Task / Team / Browser も `temp/aidiy_<kind>/logs/` へ起動ごとの UUID 名で保存します。旧 `viewer/out/` のログは移行・削除せず、新保存先に書けない場合も旧保存先へ退避しません。Electron の設定・認証・プロファイルは変更しません。全体起動の起動前整理・Ctrl+C・リブートでは停止せず、自動再起動もしません。クリーンアップ（`python _cleanup.py`）はこの配置先のプロセスを照合して停止し、`aidiy_ide` コマンド解除・`node_modules` 削除を行います。
 - `node_modules`、`.git`、`dist`、`.venv`、`_cache` などは表示しません（`file-scan.mjs` と `../ファイル機能/フォルダ除外規則.mjs` の共通規則）。
 
 ## AiDiyへの接続
 
 - 初期画面で「AiDiy接続利用」「オフライン利用」のどちらかを選びます。自動開始はせず、初回接続失敗も手動で再試行します。利用前はファイルビューアを隠し、ファイル取得 API を 503 で停止します。
 - 接続先は AiDiy 配置先を優先して `_config/AiDiy_key.json` の `PORT_TOOLS` を読み、ホストは `127.0.0.1` に固定します。設定がなければ 8095 です。設定ファイルのキー情報は画面へ返しません。
-- IDEはConsoleと同じ `GET /aidiy_code_agents/ping` で稼働を確認し、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live 子パネルの接続先は従来どおり `PORT_CORE` です。
+- IDEはTermと同じ `GET /aidiy_code_agents/ping` で稼働を確認し、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live 子パネルの接続先は従来どおり `PORT_CORE` です。
 - AiDiy接続利用: toolsの応答を確認して開始し、上部のシアンバーが Live と同じ4.5秒周期で明滅します。10秒ごとにtoolsを確認（応答期限1.5秒）します。tools停止中もファイル表示・ファイル API・Code子窓・作業起点を維持し、復帰時に同じセッションで再接続します。
 - オフライン利用: コアに接続せずファイルビューアを利用でき、同じバーが赤で明滅します。toolsの状態確認も行いません。
 - 「終了」（Web版は「利用終了」）でCode / Liveを停止して起動画面に戻り、利用方法を選び直せます。Electron版のタイトルバーの×は、利用中だけ「AiDiy IDE を終了しますか？」の確認後にIDE全体を終了します。初期画面・起動画面へ戻った後は確認せずに終了します。

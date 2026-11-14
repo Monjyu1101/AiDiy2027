@@ -25,6 +25,18 @@ def load(relative):
     return module
 
 
+def stale_runtime(data, windows):
+    """同じ入口のまま、実行ファイル（node）の場所だけが古い共有ランチャーを作る。"""
+    text = data.decode()
+    if windows:
+        payload = re.search(r"Buffer\.from\('([A-Za-z0-9+/=]+)','base64'\)", text)
+        command = json.loads(base64.b64decode(payload.group(1))); command[0] = '/old node/node'
+        return text.replace(payload.group(1), base64.b64encode(json.dumps(command, ensure_ascii=False).encode()).decode()).encode()
+    lines = [('exec ' + shlex.quote('/old node/node') + ' ' + ' '.join(shlex.quote(arg) for arg in shlex.split(line)[2:-1]) + ' "$@"\n')
+             if line.startswith('exec ') else line for line in text.splitlines(keepends=True)]
+    return ''.join(lines).encode()
+
+
 class SharedLauncherIntegration(unittest.TestCase):
     @contextmanager
     def fixture(self, windows):
@@ -48,7 +60,7 @@ class SharedLauncherIntegration(unittest.TestCase):
                 'live': 'frontend_ide/host/aidiy_live/launch.mjs',
             }
             entries.update({name: 'frontend_ide/' + ('viewer' if name == 'ide' else 'aidiy_' + name) + '/launch.mjs'
-                            for name in ('ide', 'console', 'browser', 'navi', 'task', 'team', 'cpu')})
+                            for name in ('ide', 'term', 'browser', 'navi', 'task', 'team', 'cpu')})
             for relative in entries.values():
                 script = checkout / relative; script.parent.mkdir(parents=True, exist_ok=True)
                 script.write_text('// fixture', encoding='utf-8')
@@ -95,31 +107,9 @@ class SharedLauncherIntegration(unittest.TestCase):
                         path.write_text('stale hermes', encoding='utf-8')
                         continue
                     target = shared / path.name
-                    if name in ('diag', 'memo'):
-                        old_entry = checkout / 'backend_diag' / Path(entries[name]).name
-                        data = modules['diag'].launcher_content(old_entry, windows).encode()
-                    elif name == 'avatar':
-                        old_entry = checkout / 'frontend_avatar/_start.py'
-                        if windows:
-                            data = ('@echo off\r\nsetlocal EnableExtensions DisableDelayedExpansion\r\n'
-                                    + modules['avatar'].launcher_owner_comment(old_entry) + '\r\n'
-                                    + modules['avatar'].windows_launcher_command(['/old python/python', '-X', 'utf8', str(old_entry)])
-                                    + '\r\nexit /b %ERRORLEVEL%\r\n').encode()
-                        else:
-                            data = ('#!/usr/bin/env sh\nexec ' + shlex.quote('/old python/python') + ' -X utf8 '
-                                    + shlex.quote(str(old_entry)) + ' "$@"\n').encode()
-                    else:
-                        data = original[name]
-                        if windows:
-                            text = data.decode(); payload = re.search(r"Buffer\.from\('([A-Za-z0-9+/=]+)','base64'\)", text)
-                            command = json.loads(base64.b64decode(payload.group(1))); command[0] = '/old node/node'
-                            text = text.replace(payload.group(1), base64.b64encode(json.dumps(command, ensure_ascii=False).encode()).decode())
-                            data = text.encode()
-                        else:
-                            data = data.replace(b'/new node/node', b'/old node/node')
+                    data = stale_runtime(original[name], windows)
                     target.write_bytes(data)
                     if not windows: target.chmod(0o755)
-                self.assertFalse((checkout / 'backend_diag').exists())
                 # sharedが先頭のPATHを維持したまま2回実行する。
                 path_value = os.pathsep.join([str(shared), *[str(path.parent) for path in paths.values()]])
                 stack.enter_context(patch.dict(os.environ, {'PATH': path_value}))
@@ -133,14 +123,14 @@ class SharedLauncherIntegration(unittest.TestCase):
                             self.assertEqual(selected, shared / path.name)
                             self.assertEqual(selected.read_bytes(), original[name])
                             self.assertEqual(path.read_bytes(), original[name])
-                self.assertFalse((checkout / 'backend_diag').exists())
 
-    def test_normal_root_setup_repairs_shared_diag_memo_before_desktop(self):
+    def test_normal_root_setup_refreshes_shared_diag_memo_before_desktop(self):
         for windows in (False, True):
             with self.subTest(windows=windows), self.fixture(windows) as (modules, checkout, shared, _, paths, _, stack):
                 root, diag = modules['root'], modules['diag']
                 for name in ('diag', 'memo'):
-                    (shared / paths[name].name).write_bytes(diag.launcher_content(checkout / 'backend_diag' / (name + '_main.mjs'), windows).encode())
+                    current = diag.launcher_content(checkout / 'frontend_diag' / (name + '_main.mjs'), windows).encode()
+                    (shared / paths[name].name).write_bytes(stale_runtime(current, windows))
                 choices = dict.fromkeys(('common', 'local', 'mcp', 'backend', 'taskteam', 'web', 'avatar', 'hermes', 'ide', 'continue_on_error'), False)
                 choices['diag'] = True
                 stack.enter_context(patch.object(root.sys, 'argv', ['_setup.py']))
@@ -165,7 +155,6 @@ class SharedLauncherIntegration(unittest.TestCase):
                     root.main()
                 self.assertEqual(summary.call_count, 2)
                 self.assertEqual(summary.call_args.args, ([],))
-                self.assertFalse((checkout / 'backend_diag').exists())
 
 
 if __name__ == '__main__':

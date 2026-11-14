@@ -43,6 +43,13 @@
 - 加工: 人物を120×120px全面に配置し、下部120×30pxを金地の帯（縦グラデーション `#F3D77A`→`#D4AF37`→`#B8912A`、2px枠 `#7A5C14`）にしました。帯の中央付近に黒 `#1B1B1B` の角丸タイル（24×24px）を置き、その上に Pi ロゴを18×18pxで等比配置、右に文字 `PI`（Arial Black / Arial / sans-serif、23px、weight900、`#1B1B1B`）。PNG は合成 SVG をヘッドレス Edge で120×120pxに書き出し、RGBA に揃えています。
 - 利用条件: 人物部分は aidiy_hermes と同じく [AiDiy 公開利用ライセンス v1.1](../../../../../LICENSE)。Pi ロゴは MIT License の著作権表示・許諾条項を保持して再配布してください。`aidiy_pi`（AiDiy に同梱した Pi）の起動先を識別するための表示で、Pi 開発元による承認・提携を示すものではありません。
 
+## AiDiy / aidiy_codex
+
+- 対象: `aidiy_codex.png`（Diag 配布コピー）。合成アイコンの正本は [`command_codex/aidiy/assets/AiDiy_codex.svg`](../../../../../command_codex/aidiy/assets/AiDiy_codex.svg) / `.png`、人物の共通原画は [`_icons/AiDiy.png`](../../../../../_icons/AiDiy.png)（aidiy_hermes / aidiy_pi と同じ原画）です。
+- 加工: aidiy_pi と同じ配置で、人物を120×120px全面に置き、下部120×30pxを金地の帯（縦グラデーション `#F3D77A`→`#D4AF37`→`#B8912A`、2px枠 `#7A5C14`）にしました。帯の中央に文字 `CODEX`（Arial Black / Arial / sans-serif、19px、weight900、`#1B1B1B`）。PNG は合成 SVG を sharp（command_pi の依存）で120×120px・RGBA に書き出しています。
+- ロゴ: OpenAI / Codex の公式ロゴは使っていません（文字のみ）。
+- 利用条件: 人物部分は aidiy_hermes / aidiy_pi と同じく [AiDiy 公開利用ライセンス v1.1](../../../../../LICENSE)。`aidiy_codex`（同梱の OpenAI Codex ソース〔Apache-2.0、[`command_codex/codex-rs/LICENSE`](../../../../../command_codex/codex-rs/LICENSE) / [`NOTICE`](../../../../../command_codex/codex-rs/NOTICE)〕を AiDiy でコンパイルしたもの）の起動先を識別するための表示で、OpenAI による承認・提携を示すものではありません。
+
 ## Antigravity CLI / agy
 
 - 対象: `agy.svg`、`agy.png`。無改変原本: `upstream/antigravity-logo-mark.svg`。

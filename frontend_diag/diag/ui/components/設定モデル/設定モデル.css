@@ -7,3 +7,5 @@
 .trial-audio audio{display:block;width:min(100%,420px);margin:12px 0}.trial-audio p{font-size:12px}.trial-audio button{font-size:12px}
 
 .trial-heading{flex-wrap:wrap;gap:10px}.trial-heading h2{white-space:nowrap}.trial-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}.trial-actions button{white-space:nowrap}.trial-group+.trial-group{margin-top:14px}.trial-group-title{margin:0 0 6px;font-size:13px;color:#c2e6df}.trial-group-title span{font-weight:400;color:#94afc5}.trial-reload{padding:3px 10px;font-size:11px;white-space:nowrap}@media(max-width:700px){.trial-heading{padding:12px 16px}.trial-actions{gap:6px}.trial-actions button{font-size:12px;padding:6px 8px}}
+/* 行の余白クリックでも選択できることを示す。 */
+.trial-row{cursor:pointer}

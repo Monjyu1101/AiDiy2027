@@ -73,7 +73,7 @@ test('VRはユーザー選択を変更せず強制ON、ロック中の連打を�
  assert.deepEqual(pins.setLocked(during,false),{pinned:true,locked:false},'VR中にIDEから起動した窓は通常のIDE由来ONへ戻る');
 });
 test('IDE由来の全モジュールはピン・VR中もOS上で独立し、IDE選択で再前面化しない',()=>{
- for(const kind of ['navi','console','code','live','viewer','browser','explorer','compare','routes']){
+ for(const kind of ['navi','term','code','live','viewer','browser','explorer','compare','routes']){
   const order=[],pins=createWindowPins(),ide=windowFixture('ide',order),child=windowFixture(kind,order);
   child.setParentWindow=()=>assert.fail('ピン操作でOS親子関係を作らない');
   pins.register(ide);pins.register(child,{owner:ide,pinned:true});assert.equal(child.getParentWindow(),null,kind);

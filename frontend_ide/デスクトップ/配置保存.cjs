@@ -9,8 +9,8 @@ const {randomUUID}=require('node:crypto');
 const {programDataDirectory,preparePrivateDirectory}=require('../host/scripts/project-storage.cjs');
 const {setWindowBounds}=require('./全画面横断.cjs');
 const {windowBounds}=require('./window-layout.cjs');
-const kinds=new Set(['console','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
-const foldKinds=new Set(['console','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
+const kinds=new Set(['term','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
+const foldKinds=new Set(['term','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
 const domKinds=new Set(['explorer','panel-viewer','panel-routes','panel-navigation']);
 const limit=1024*1024;
 function bounds(value){
@@ -63,10 +63,10 @@ function applyPlacement(record,value,screen){
  return visible;
 }
 // Loadの＋メニュー順。Naviはrendererが開く別窓、AvatarはLiveの次。
-const loadOrder=['console','browser','panel-navigation','code','live','avatar','task','team','cpu'];
+const loadOrder=['term','browser','panel-navigation','code','live','avatar','task','team','cpu'];
 const rectKeys=['x','y','width','height'];
 // 保存ファイルのpanelsもLoadで開く順に並べる。同じ種類は開いていた順を保つ。
-const openOrder=['explorer','panel-routes','viewer','panel-viewer','console','browser','panel-navigation','code','live','task','team','cpu'];
+const openOrder=['explorer','panel-routes','viewer','panel-viewer','term','browser','panel-navigation','code','live','task','team','cpu'];
 const inOpenOrder=panels=>[...panels].sort((a,b)=>openOrder.indexOf(a.kind)-openOrder.indexOf(b.kind));
 function text(value,max=4096){if(typeof value!=='string'||!value||value.length>max||value.includes('\0'))throw Error('保存されたパネル情報が不正です。');return value;}
 function validateRenderer(value){
@@ -202,7 +202,7 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
    };
    // 2) Explorer・軌跡を別窓へ分離する（表示モードもここで戻す）。
    await openDom('explorer',part({space:{explorer:saved.space.explorer,viewers:[]}}),['explorer','panel-routes']);
-   // 別窓にしていたビューアは、Explorerの次・Consoleの前に、保存時のファイルを表示して開く。
+   // 別窓にしていたビューアは、Explorerの次・Termの前に、保存時のファイルを表示して開く。
    await openNativePanels('viewer');
    if(saved.space.viewers.length)await openDom('panel-viewer',part({space:{explorer:{},viewers:saved.space.viewers}}),['panel-viewer']);
    // 3) ＋メニューの項目順に、1つずつ開き終わるのを待つ。

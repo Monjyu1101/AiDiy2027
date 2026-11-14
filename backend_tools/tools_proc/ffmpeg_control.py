@@ -55,7 +55,6 @@ class FfmpegControl:
 
     # 接続設定ファイル（backend_tools 起点）
     _FFMPEG_CONFIG_REL = "../_config/mcp_ffmpeg_control.json"
-    _LEGACY_FFMPEG_CONFIG_REL = "../_config/aidiy_ffmpeg_control.json"
 
     def __init__(
         self,
@@ -100,9 +99,6 @@ class FfmpegControl:
     def _config_path(self) -> Path:
         return Path(__file__).resolve().parent.parent / self._FFMPEG_CONFIG_REL
 
-    def _legacy_config_path(self) -> Path:
-        return Path(__file__).resolve().parent.parent / self._LEGACY_FFMPEG_CONFIG_REL
-
     def _default_config(self) -> dict[str, Any]:
         return {
             "version": 1,
@@ -123,21 +119,9 @@ class FfmpegControl:
             json.dump(self._default_config(), f, ensure_ascii=False, indent=2)
             f.write("\n")
 
-    def _migrate_legacy_config(self, config_path: Path) -> bool:
-        legacy_path = self._legacy_config_path()
-        if config_path.exists() or not legacy_path.exists():
-            return False
-        try:
-            config_path.parent.mkdir(parents=True, exist_ok=True)
-            legacy_path.replace(config_path)
-            return True
-        except OSError:
-            return False
-
     def _load_or_create_config(self) -> dict[str, Any]:
         """設定ファイルがあれば読む。無ければデフォルトを書き出す。"""
         config_path = self._config_path()
-        self._migrate_legacy_config(config_path)
         if not config_path.exists():
             try:
                 self._write_default_config(config_path)

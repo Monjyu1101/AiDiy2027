@@ -70,7 +70,7 @@ test('coverage is pinned to complete selected-source manifest and exact catalog 
  const catalogBytes=lf(await readFile(new URL('../diag/診断/catalog.json',import.meta.url)));
  assert.equal(coverage.complete,true);assert.equal(coverage.sourceTargetFiles,3333);assert.equal(coverage.scannedSourceFiles,3333);
  assert.equal(JSON.parse(manifestBytes).length,3333);assert.equal(createHash('sha256').update(manifestBytes).digest('hex'),coverage.sourceTargetManifestSha256);
- assert.equal(JSON.parse(catalogBytes).length,19);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
+ assert.equal(JSON.parse(catalogBytes).length,22);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
  for (const entry of JSON.parse(catalogBytes)) assert.ok(entry.evidence?.length && entry.evidence.every(e=>e.path && Number.isInteger(e.line) && e.line>0));
 });
 
@@ -79,15 +79,17 @@ test('menu classification keeps base minimal and all source evidence',async()=>{
  assert.deepEqual(entries.filter(e=>e.menuGroup==='ベース').map(e=>e.id),['python','uv','node','npm','npx','electron']);
  assert.ok(entries.every(e=>!['optional','reference'].includes(e.usageTier)));
  assert.ok(entries.every(e=>!['git','pip','bash','docker','curl','winget'].includes(e.id)));
- for(const e of entries) {assert.ok(['ベース','CLI群','その他拡張'].includes(e.menuGroup));assert.ok(e.usageTier);}
+ for(const e of entries) {assert.ok(['ベース','開発環境等','CLI群','その他拡張'].includes(e.menuGroup));assert.ok(e.usageTier);}
  assert.equal(entries.find(e=>e.id==='ffmpeg').usageTier,'integration');
  assert.equal(entries.find(e=>e.id==='chrome').name,'Chrome');
  assert.equal(entries.find(e=>e.id==='code').name,'VS Code');
  assert.equal(entries.find(e=>e.id==='codex').menuGroup,'CLI群');
- assert.deepEqual(entries.filter(e=>e.menuGroup==='CLI群').map(e=>e.id),['claude','codex','copilot','agy','grok','opencode','ollama']);
- assert.ok(entries.every(e=>!e.id.startsWith('aidiy_') && !['hermes','afplay','gst-launch','pwsh','edge','brave'].includes(e.id)));
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='CLI群').map(e=>e.id),['claude','codex','copilot','agy','grok','opencode','ollama','aidiy_codex']);
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='開発環境等').map(e=>e.id),['code','rust','llvm-mingw']);
+ // aidiy_codex は起動コマンドではなく、同梱ソースをコンパイルした実行ファイルの有無を診断する例外。
+ assert.ok(entries.every(e=>(e.id==='aidiy_codex' || !e.id.startsWith('aidiy_')) && !['hermes','afplay','gst-launch','pwsh','edge','brave'].includes(e.id)));
  for(const entry of entries) assert.ok(entry.sources.every(s=>!s.startsWith('command_hermes/')) && entry.evidence.every(e=>!e.path.startsWith('command_hermes/')));
- assert.equal(entries.filter(e=>e.usageTier==='integration').length,6);
+ assert.equal(entries.filter(e=>e.usageTier==='integration').length,8);
 });
 
 test('version warning, NG command failure and ERR execution failures are distinct',async()=>{

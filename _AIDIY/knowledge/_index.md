@@ -50,7 +50,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | 冊子・本文 | PDF | 役割 | 対象実行形態 |
 |---|---|---|---|
 | [aidiy_navi ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_navi,操作編.pdf) | 開発目標・作業項目・推定達成率・次の提案 | 単独／IDE・Web。評価は読み取り専用、自動航行オン時はCodeが変更 |
-| [aidiy_console ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_console,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_console,操作編.pdf) | CLIを開く入口とConsole画面 | 単独Electron（CLI個別操作はHermes編等） |
+| [aidiy_term ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_term,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_term,操作編.pdf) | CLIを開く入口とTerm画面 | 単独Electron（CLI個別操作はHermes編等） |
 | [aidiy_hermes ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_hermes,操作編.pdf) | ヘルプ・状態確認とCLI会話 | CLI。Electronアプリではありません |
 | [aidiy_code ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_code,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_code,操作編.pdf) | コード支援チャットの起動・入力・応答 | 単独Electron／--browser／VS Code拡張 |
 | [aidiy_live ／ 操作編](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_live,操作編.md) | [PDF](../../docs/セルフテスト、操作ガイド/セルフテスト,aidiy_live,操作編.pdf) | Live接続、文字・音声会話 | 単独Electron／--browser／VS Code拡張 |
@@ -90,6 +90,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | 症状・依頼 | 最初に見るファイル |
 |-----------|------------------|
 | aidiy_pi の導入・モデル・OAuth・MCP・Code / Navi / Channels 連携 | [`command_pi,AiDiy連携.md`](./command_pi,AiDiy連携.md) |
+| aidiy_codex のコンパイル・区分別接続・設定 JSON、同梱 Codex の upstream 最新版への再移行 | [`command_codex/AGENTS.md`](../../command_codex/AGENTS.md)、[`変更点と最新版再移行要点.md`](../../command_codex/変更点と最新版再移行要点.md) |
 | aidiy_memo の単体起動・保存先・画像・プロジェクト切替・ゴミ箱 | [`frontend_diag,環境診断運用.md`](./frontend_diag,環境診断運用.md#aidiy_memo付箋メモ) |
 | Electronのタイトルバー開閉標準、0.5秒長押し移動、表示開始ズーム | [`共通,Electronウィンドウ基本方針.md`](./共通,Electronウィンドウ基本方針.md) |
 | 今後の改善提案を比較し、採用条件を検討する | [`共通,明日のために,改善提案.md`](./共通,明日のために,改善提案.md) |
@@ -210,8 +211,8 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 
 | 目的 | 参照ファイル |
 |------|--------------|
-| Console / Code / Live / IDE の日本語機能フォルダ・共通 Vue 部品・配布・検証を確認する | [`frontend_ide,Vue共通画面変更手順.md`](./frontend_ide,Vue共通画面変更手順.md) |
-| Code / Live の画面隅・複数窓、Console の縦横別サイズを調整する | [`frontend_ide,初期ウィンドウ配置.md`](./frontend_ide,初期ウィンドウ配置.md) |
+| Term / Code / Live / IDE の日本語機能フォルダ・共通 Vue 部品・配布・検証を確認する | [`frontend_ide,Vue共通画面変更手順.md`](./frontend_ide,Vue共通画面変更手順.md) |
+| Code / Live の画面隅・複数窓、Term の縦横別サイズを調整する | [`frontend_ide,初期ウィンドウ配置.md`](./frontend_ide,初期ウィンドウ配置.md) |
 | IDE の今日・本日最新の強調、銀河の光輪・ラベル、描画負荷を確認する | [`frontend_ide,更新の目印と電子表示.md`](./frontend_ide,更新の目印と電子表示.md) |
 | IDE の文書表示（Word / Excel / PowerPoint / PDF）を変更する | [`frontend_ide,文書ビューア.md`](./frontend_ide,文書ビューア.md) |
 

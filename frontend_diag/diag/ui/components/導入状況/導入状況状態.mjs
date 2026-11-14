@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { ref, computed } from 'vue';
 
-export const 分類順 = ['ベース', 'CLI群', 'その他拡張'];
+export const 分類順 = ['ベース', '開発環境等', 'CLI群', 'その他拡張'];
 const 待機 = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // 認証付き API と通知欄は App と共有し、キー試験には触れません。

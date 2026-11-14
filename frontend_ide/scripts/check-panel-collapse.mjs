@@ -23,11 +23,11 @@ const bundle = await build({
   stdin: { resolveDir: root, contents: `import {createApp,h,ref} from 'vue';
 import Code from './src/components/コード/コードパネル.vue';
 import Live from './src/components/ライブ/ライブパネル.vue';
-import Console from './src/components/コンソール/コンソールパネル.vue';
+import Term from './src/components/ターミナル/ターミナルパネル.vue';
 import Toggle from './src/components/コード/パネル表示切替.vue';
 import Status from './src/components/共通表示/状態バー.vue';
 
-window.components=[Code,Live,Console];
+window.components=[Code,Live,Term];
 createApp({setup(){const collapsed=ref(false),hidden=ref(false);return()=>h('section',{class:'ai-component code-component '+(hidden.value?'panel-collapsed':'')},[h(Status,{title:'AiDiy Code / Live',connected:true},{leading:()=>h(Toggle,{collapsed:collapsed.value,onToggle:()=>collapsed.value=!collapsed.value,onHidden:value=>hidden.value=value})}),h('textarea',{value:'入力と接続を保持'}),h('p','パネル本文')]);}}).mount('#app');
 createApp({render:()=>h('div',{},['code','live'].map(kind=>h('section',{class:'ai-component '+kind+'-component',style:'height:100px'},[h(Status,{title:'AiDiy '+kind,desktop:true},{leading:()=>h(Toggle,{collapsed:false})})])))}).mount('#comparison');` },
   bundle: true, write: false, format: 'iife', loader: {'.css':'empty'}, plugins: [{ name: 'vue-label-check', setup(builder) {
@@ -44,7 +44,7 @@ createApp({render:()=>h('div',{},['code','live'].map(kind=>h('section',{class:'a
   } }],
 });
 if (process.argv.includes('--compile-only')) {
-  console.log('PASS: Code, Live, Console and panel toggle Vue components compile.'); process.exit(0);
+  console.log('PASS: Code, Live, Term and panel toggle Vue components compile.'); process.exit(0);
 }
 mkdirSync(output, { recursive: true });
 const temporary = mkdtempSync(join(tmpdir(), 'panel-collapse-check-'));
@@ -83,7 +83,7 @@ try {
   await click('.code-panel-toggle');await sleep(40);await click('.code-panel-toggle');await sleep(300);
   assert.equal(await evaluate(`document.querySelector('section').getBoundingClientRect().height`),height);
   assert.equal(await evaluate(`document.querySelector('textarea').value`),'入力と接続を保持');await capture('03-restored');assert.deepEqual(errors,[]);
-  console.log('PASS: Code/Live/Console compile, shared real Vue UI collapse/expand, intermediate animation, rapid reversal, input retention. Screenshots: '+output);
+  console.log('PASS: Code/Live/Term compile, shared real Vue UI collapse/expand, intermediate animation, rapid reversal, input retention. Screenshots: '+output);
 
 } finally {
   socket?.close(); if (chrome.exitCode === null && chrome.signalCode === null) { const exited = once(chrome, 'exit'); chrome.kill(); await exited; }

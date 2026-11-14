@@ -25,7 +25,8 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 - frontend_avatar/_setup.py  フロントエンド(Avatar)
 - command_hermes/_setup.py   コマンド(hermes)
 - command_pi/_setup.py       コマンド(pi)（Hermes の後に導入）
-- frontend_ide/_setup.py     IDE群(IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU)
+- command_codex/_compile.py  コマンド(aidiy_codex)（Pi の後。既定は実行しない。独立プロセスでコンパイル）
+- frontend_ide/_setup.py     IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)
 - frontend_channels/discord/_setup.py / slack/_setup.py Channels (Discord / Slack、まとめて選択)
 
 Usage:
@@ -179,6 +180,7 @@ IMPORT_CACHE_FOLDERS = (
     "frontend_avatar",
     "command_hermes",
     "command_pi",
+    "command_codex",
     "frontend_ide",
     "frontend_ide/host",
     "frontend_ide/viewer",
@@ -718,6 +720,7 @@ def collect_setup_choices() -> dict | None:
         "avatar":                False,
         "hermes":                False,
         "pi":                    False,
+        "codex":                 False,
         "ide":                   False,
         "diag":                  False,
         "channels":              False,
@@ -752,7 +755,9 @@ def collect_setup_choices() -> dict | None:
     choices["avatar"] = ask_yes_no("Avatar のセットアップを実行しますか？", default="y")
     choices["hermes"] = ask_yes_no("Hermes のセットアップを実行しますか？", default="y")
     choices["pi"] = ask_yes_no("Pi のセットアップを実行しますか？", default="y")
-    choices["ide"] = ask_yes_no("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
+    # aidiy_codex は Rust / llvm-mingw が前提で、初回は1時間以上かかるため既定では実行しない。
+    choices["codex"] = ask_yes_no("aidiy_codex のコンパイルを実行しますか？（Rust・llvm-mingw が必要。独立プロセスで実行）", default="n")
+    choices["ide"] = ask_yes_no("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack) のセットアップを実行しますか？", default="y")
 
     choices["continue_on_error"] = ask_yes_no("エラーが発生しても続行しますか？", default="y")
@@ -815,7 +820,7 @@ def check_refresh_node_runtime(version: str) -> bool:
 def setup_node_refresh() -> list[str]:
     """依存同期・既存ビルド・ランチャー再配置のみ。初期設定や診断は実行しない。"""
     print_header("Node.js系の再ビルド")
-    print_info("対象: Diag / Web / Avatar / Pi / IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
+    print_info("対象: Diag / Web / Avatar / Pi / IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
     print_info("依存同期 / 再ビルド / 起動コマンド登録")
     print_info("Python環境・モデル・共通設定・グローバルCLIは変更しません。")
     node_version = get_node_version()
@@ -867,7 +872,7 @@ def setup_node_refresh() -> list[str]:
         ("Code / Live / IDE: ビルド・配置", lambda: _load_folder_module("frontend_ide/host").setup_assets(npm, choices={"_defer_ide_launchers": True})),
         ("IDE Viewer: 依存", lambda: dependencies("frontend_ide/viewer", electron=True)),
         ("IDE: aidiy_ide", lambda: _load_folder_module("frontend_ide/viewer").install_launcher(BASE_DIR / "frontend_ide/viewer")),
-        ("Console: aidiy_console", lambda: _load_folder_module("frontend_ide/aidiy_console").setup()),
+        ("Term: aidiy_term", lambda: _load_folder_module("frontend_ide/aidiy_term").setup()),
         ("Browser: aidiy_browser", lambda: _load_folder_module("frontend_ide/aidiy_browser").setup()),
         ("Navi: aidiy_navi", lambda: _load_folder_module("frontend_ide/aidiy_navi").setup()),
         ("Code / Live: ランチャー", lambda: _load_folder_module("frontend_ide/host").install_standalone_launcher()),
@@ -904,7 +909,7 @@ def setup_launchers_only() -> list[str]:
         ('Hermes', lambda: _load_folder_module('command_hermes').install_standalone_launcher()),
         ('Pi', lambda: _load_folder_module('command_pi').install_standalone_launcher()),
         ('IDE', lambda: _load_folder_module('frontend_ide/viewer').install_launcher(BASE_DIR / 'frontend_ide/viewer')),
-        ('Console', lambda: _load_folder_module('frontend_ide/aidiy_console').setup()),
+        ('Term', lambda: _load_folder_module('frontend_ide/aidiy_term').setup()),
         ('Browser', lambda: _load_folder_module('frontend_ide/aidiy_browser').setup()),
         ('Navi', lambda: _load_folder_module('frontend_ide/aidiy_navi').setup()),
         ('Code / Live', lambda: _load_folder_module('frontend_ide/host').install_standalone_launcher()),
@@ -925,6 +930,32 @@ def setup_launchers_only() -> list[str]:
     return errors
 
 
+def setup_codex() -> bool:
+    """aidiy_codex のコンパイルを独立プロセスで開始する（完了を待たない）。
+
+    前提（Rust / llvm-mingw）が無ければ案内して失敗にする。コンパイル中なら重ねて開始しない。
+    """
+    print_header("Codex (aidiy_codex) コンパイル")
+    try:
+        codex = _load_folder_module("command_codex", "_compile.py")
+    except Exception as exc:  # 読込失敗は他の項目を止めない
+        print_error(f"aidiy_codex: _compile.py を読み込めません: {exc}")
+        return False
+    env, _ = codex.check_prerequisites()
+    if env is None:
+        print_info("  Rust / llvm-mingw は aidiy_diag の「導入状況 › 開発環境等」から導入できます。")
+        return False
+    result = codex.start_detached(release=True, jobs=None)
+    if result == 2:
+        print_info("aidiy_codex: すでにコンパイル中です。完了を待ってください。")
+        return True
+    if result != 0:
+        return False
+    print_info("  進み具合: python command_codex/_compile.py --status（aidiy_diag の導入状況にも表示）")
+    print_info("  完了すると ~/.aidiy/bin/aidiy_codex に配置され、aidiy_codex で起動できます。")
+    return True
+
+
 def print_app_launch_commands():
     """アプリ名の最長幅に揃えて起動コマンドを表示する。"""
     app_commands = (
@@ -932,8 +963,9 @@ def print_app_launch_commands():
         ('Diag', 'aidiy_diag （ブラウザ版: aidiy_diag --browser）'),
         ('Hermes', 'aidiy_hermes'),
         ('Pi', 'aidiy_pi'),
+        ('Codex', 'aidiy_codex （コンパイル後。~/.aidiy/bin）'),
         ('IDE', 'aidiy_ide'),
-        ('Console', 'aidiy_console'),
+        ('Term', 'aidiy_term'),
         ('Browser', 'aidiy_browser'),
         ('Navi', 'aidiy_navi'),
         ('Code', 'aidiy_code'),
@@ -968,8 +1000,9 @@ def main():
     print_info("  7. Avatar")
     print_info("  8. Hermes")
     print_info("  9. Pi")
-    print_info(" 10. IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU")
-    print_info(" 11. Channels (Discord / Slack)")
+    print_info(" 10. Codex (aidiy_codex コンパイル)")
+    print_info(" 11. IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU")
+    print_info(" 12. Channels (Discord / Slack)")
     print()
 
     choices = collect_setup_choices()
@@ -1160,14 +1193,24 @@ def main():
         print_warning("Pi のセットアップをスキップしました。")
 
     print()
-    if choices.get("ide"):
-        if not _load_folder_module("frontend_ide").setup(choices):
-            error_locations.append("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU")
+    if choices.get("codex"):
+        if not setup_codex():
+            error_locations.append("Codex (aidiy_codex)")
             if not continue_on_error:
                 print_setup_summary(error_locations)
                 sys.exit(1)
     else:
-        print_warning("IDE / Console / Browser / Navi / Code / Live / Task / Team / CPU のセットアップをスキップしました。")
+        print_warning("aidiy_codex のコンパイルをスキップしました（aidiy_diag の「コンパイル」または python command_codex/_compile.py で後から実行できます）。")
+
+    print()
+    if choices.get("ide"):
+        if not _load_folder_module("frontend_ide").setup(choices):
+            error_locations.append("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU")
+            if not continue_on_error:
+                print_setup_summary(error_locations)
+                sys.exit(1)
+    else:
+        print_warning("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU のセットアップをスキップしました。")
 
     print()
     channel_errors = setup_channels(choices)

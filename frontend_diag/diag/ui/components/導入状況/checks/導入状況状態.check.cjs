@@ -83,7 +83,7 @@ test('選択・詳細・参照重複除外・分類開閉は結果更新後も�
   const { 導入状況表示を作成 } = await import('../導入状況表示.mjs');
   const props = reactive({ 項目: [{ id: 'node', name: 'Node.js', commands: ['node'], usageTier: 'base', minimumVersion: '18', evidence: [{ path: 'a', line: 1 }, { path: 'a', line: 1 }] }], 結果: [] });
   const view = 導入状況表示を作成(props);
-  assert.deepEqual(view.分類, ['ベース', 'CLI群', 'その他拡張']);
+  assert.deepEqual(view.分類, ['ベース', '開発環境等', 'CLI群', 'その他拡張']);
   assert.equal(view.選択項目.value, undefined); assert.equal(view.状態('node'), '未確認');
   view.選択ID.value = 'node'; assert.deepEqual(view.参照箇所.value, ['a:1']);
   assert.ok(view.詳細項目.value.some(([label, value]) => label === '必要バージョン' && value.includes('18')));

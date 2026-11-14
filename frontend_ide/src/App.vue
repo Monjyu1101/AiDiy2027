@@ -8,14 +8,14 @@ import { ref, reactive, computed, provide, nextTick, onMounted, onBeforeUnmount 
 import { installWindowMove } from './components/共通表示/長押し窓移動.js';
 import CpuPanel from './components/システム監視/CPUパネル.vue';
 import CodePanel from './components/コード/コードパネル.vue';
-import ConsolePanel from './components/コンソール/コンソールパネル.vue';
+import TermPanel from './components/ターミナル/ターミナルパネル.vue';
 import LivePanel from './components/ライブ/ライブパネル.vue';
 import NavigationPanel from './components/開発スペース/Naviパネル.vue';
 import SpaceView from './components/開発スペース/開発スペース.vue';
 import PanelToggle from './components/コード/パネル表示切替.vue';
 import StatusBar from './components/共通表示/状態バー.vue';
 import LaunchMenu from './components/共通表示/起動メニュー.vue';
-import TerminalWelcome from './components/コンソール/開始表示.vue';
+import TerminalWelcome from './components/ターミナル/開始表示.vue';
 import ViewerWindow from './components/ファイル閲覧/閲覧ウィンドウ.vue';
 import BrowserPanel from './components/ブラウザ/ブラウザパネル.vue';
 import BrowserAnalysisWindow from './components/ブラウザ/ブラウザ解析ウィンドウ.vue';
@@ -56,7 +56,7 @@ const browserHeader=location.hash==='#browser-header';
 const browserDraft=location.hash==='#browser-draft'&&!!window.aidiyWindow;
 const browserAnalysis=location.hash==='#browser-analysis'&&!!window.aidiyWindow;
 const browserPanel=(config.kind==='browser'||config.kind==='ide'&&(location.hash==='#browser'||browserHeader||browserAnalysis||browserDraft))&&!!window.aidiyWindow;
-const state=ref({active:false}),base=reactive({console:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
+const state=ref({active:false}),base=reactive({term:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
 const statusError=ref('');
 const error=ref(''),pending=ref(false),panelOpen=ref(false),tab=ref('code'),liveOpen=ref(false),viewMode=ref('3d');
 const ideToggle=ref(),ideCollapsed=ref(false),ideHidden=ref(false),ideCollapseBusy=ref(false);
@@ -122,7 +122,7 @@ function update(data){
   if(disposed)return;
   const next=data.active?`${data.mode}:${data.startedAt}:${data.project?.path||''}`:'';
   if(next!==session)runningApps.value=[];
-  if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.console='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
+  if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.term='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
   state.value=data;error.value=data.message||'';
 }
 async function start(action){
@@ -185,7 +185,7 @@ async function layoutRequest(request){
 }
 const desktopLaunchItems=computed(()=>[
   ...(layoutAvailable.value&&layoutState.value.count===0&&layoutState.value.saved?[layoutItem('load')]:[]),
-  {key:'console',text:launchText('console','Console'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('console')},
+  {key:'term',text:launchText('term','Term'),title:'ターミナルを別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('term')},
   {key:'browser',text:launchText('browser','Browser'),title:browserAvailable.value?'ブラウザを別ウィンドウで開く':'利用開始後に起動できます',disabled:!!launching.value||!browserAvailable.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
   {key:'code',text:launchText('code','Code'),title:'コード支援を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('code')},
@@ -195,7 +195,7 @@ const desktopLaunchItems=computed(()=>[
   ...(layoutAvailable.value&&layoutState.value.count>=3?[layoutItem('save')]:[]),
 ].map(item=>({...item,disabled:item.disabled||layoutBusy.value})));
 const panelLaunchItems=computed(()=>[
-  {key:'console',text:'Console',pressed:panelOpen.value&&tab.value==='console',run:()=>openPanel('console')},
+  {key:'term',text:'Term',pressed:panelOpen.value&&tab.value==='term',run:()=>openPanel('term')},
   {key:'browser',text:'Browser',title:browserAvailable.value?'新しいブラウザタブで http://127.0.0.1:8090/ を開く':'利用開始後に起動できます',disabled:!browserAvailable.value||!!launching.value,run:()=>openWindow('browser')},
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
   {key:'code',text:'Code',pressed:panelOpen.value&&tab.value==='code',run:()=>openPanel('code')},
@@ -321,7 +321,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
       <template v-if="allDisplayState.active"><nav v-for="toolbar in allToolbars" :key="toolbar.displayId" class="all-restore-zone" :data-display-id="toolbar.displayId" :style="allRestoreStyle(toolbar)" aria-label="この画面のVR操作" @mouseenter="status();refreshLayout()" @focusin="status();refreshLayout()">
         <button class="all-restore-button" :disabled="allBusy" aria-label="VRモードを終了して元の表示に戻す" title="VRモードを終了" @click="toggleAllDisplays"><span class="all-restore-icon" aria-hidden="true"></span></button>
         <div class="all-launchers">
-          <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('console',toolbar.displayId)">{{ launching==='console'?'起動中…':'Console' }}</button>
+          <button :disabled="!!launching||allBusy" title="この画面の下部にターミナルを開く" @click="openWindow('term',toolbar.displayId)">{{ launching==='term'?'起動中…':'Term' }}</button>
           <button :disabled="!!launching||allBusy||!browserAvailable" :title="browserAvailable?'この画面にブラウザを開く':'利用開始後に起動できます'" @click="openWindow('browser',toolbar.displayId)">{{ launching==='browser'?'起動中…':'Browser' }}</button>
           <button v-if="state.mode==='online'" class="navigation-launch" :disabled="!!launching||allBusy" @click="openNavigation">{{ launching==='navigation'?'起動中…':'Navi' }}</button>
           <button :disabled="!!launching||allBusy" title="この画面の右上にコード支援を開く" @click="openWindow('code',toolbar.displayId)">{{ launching==='code'?'起動中…':'Code' }}</button>
@@ -344,10 +344,10 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
         <NavigationPanel v-for="id in navigationWindows" :key="id" :ref="value=>value?navigationRefs.set(id,value):navigationRefs.delete(id)" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
         <CpuPanel v-if="cpuOpen" floating @close="cpuOpen=false" />
         <SpaceView ref="spaceView" :key="`${state.mode}:${state.startedAt}:${state.project?.path||''}`" :started-at="state.startedAt" :view-mode="viewMode" :all-displays="allDisplayState.active" />
-        <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='console'" @click="openPanel('console')">Console</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>
+        <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='term'" @click="openPanel('term')">Term</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>
           <CodePanel ref="codePanel" v-if="base.code" v-show="tab==='code'" :key="base.code" :base="base.code" :icon="config.icon" embedded page-notifications />
           <LivePanel ref="livePanel" v-if="base.live&&state.mode==='online'" v-show="panelOpen&&tab==='live'" :visible="panelOpen&&tab==='live'" :key="base.live" :base="base.live" :icon="config.icon" />
-          <ConsolePanel v-if="base.console" v-show="tab==='console'" :key="base.console" :base="base.console" :icon="config.icon" :visible="panelOpen&&tab==='console'" linked />
+          <TermPanel v-if="base.term" v-show="tab==='term'" :key="base.term" :base="base.term" :icon="config.icon" :visible="panelOpen&&tab==='term'" linked />
           <p v-if="!base[tab]" class="panel-loading">読み込み中…</p>
         </aside>
       </template>
@@ -355,7 +355,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
     <NavigationPanel v-else-if="config.kind==='navi'" standalone :instance="config.navigationInstance" :project="config.project" />
     <CodePanel v-else-if="config.kind==='code'&&base.code" :base="config.host?'':base.code" :host="config.host" :embedded="config.linked" :linked="config.linked" :icon="config.icon" :desktop="desktop" />
     <LivePanel v-else-if="config.kind==='live'&&base.live" :base="config.host?'':base.live" :config="config.live||{}" :linked="config.linked" :icon="config.icon" :desktop="desktop" />
-    <ConsolePanel v-else-if="config.kind==='console'&&base.console" :base="base.console" :icon="config.icon" :desktop="desktop" :linked="config.linked" />
+    <TermPanel v-else-if="config.kind==='term'&&base.term" :base="base.term" :icon="config.icon" :desktop="desktop" :linked="config.linked" />
     <p v-else class="panel-loading">読み込み中…</p>
     <p v-if="error||statusError" class="app-error" role="alert">{{ error||statusError }}</p>
   </div>

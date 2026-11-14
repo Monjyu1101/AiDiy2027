@@ -73,7 +73,7 @@ Webの「ブラウザで開く」の右に「手動で開く」を置く。Tools
 - Web の表示設定は「ブラウザで開く」の1項目（保存キー `ブラウザ表示`、既定 ON）。保存ファイルに統合前の `chrome_devtoolsで開く` があれば読込時だけ取り除き、`ブラウザ表示` の ON / OFF は維持する。設定 API は引き続き既知の真偽値だけを受け付ける。ON 時はポート開通後も HTTP 200 が20秒間継続するまで待ち、失敗応答で安定時間を数え直す（最大90秒）。安定後に Tools の既存 `POST /aidiy_chrome_devtools/new_page` を呼び、戻り値のページ ID を確認する。OFF 時は画面を開かず Web だけ起動する。Tools / Chrome の失敗は理由をコンソールに出して Web を稼働継続し、HTTP 安定待機の失敗は起動失敗とする。loopback 通信はプロキシを経由させず、安定待機中の停止ではページを開かない。外部サービスを操作しない Python 試験で応答失敗・継続安定・停止・タイムアウト・呼出順・Tools 失敗を確認する。
 - 通常の `_start.py` 監視には既存の `cleanup_stop_request` を通知し、旧インスタンスの自動復活を防ぐ。aidiy_diag 同士の入替は `temp/aidiy_diag/起動/<ID>.json` の実行IDと OS ファイルロックを使い、旧監視が停止処理を終えるまで新監視は待つ。PID だけを保存して後から停止する方式にはしない。
 - キーボードの Ctrl+C / ⌘C はログの選択コピーに使い、停止 API へ接続しない。起動画面は通常のテキスト選択を許可する。「停止（Ctrl+C）」ボタンは Python の制御入力に停止要求を送り、`scripts/_diag_console.py` が対象へ実際の割り込みを送る。POSIX は対象のプロセスグループへ SIGINT、Windows は aidiy_diag 経路だけ隠した専用コンソールへ分離し、短命の補助プロセスから CTRL_C_EVENT を送る。専用コンソールとして生成した印がないプロセスには送らず、他のターミナルを巻き込まない。5秒で終了しない場合や送信失敗時は従来の強制停止へ進み、各機能の子・孫プロセスも既存停止 API で回収する。起動中の停止、異常終了時の再起動待ちの停止、aidiy_diag 終了による標準入力 EOF も同じ停止要求として処理する。自動再起動 ON の明示停止は再起動させない。
-- Windows で一瞬コマンド画面が出る場合は、診断本体だけでなく環境確認・ポート整理・強制停止の子プロセスも確認する。Tools の事前 headless 診断は本サービスと同じ `ConsoleSubprocess` で隠した専用コンソールへ起動し、停止時の Ctrl+C を維持する。各フォルダの `subprocess.run` は aidiy_diag 経路の間だけ `HiddenSubprocess` を介し、`CREATE_NO_WINDOW` と既定の標準入力 EOF を指定する。診断単独の Node バージョン確認・headless 実行も同様に非表示にする。Node 側の診断コマンドは `windowsHide: true` を維持する。Electron や利用者が選んだ Web ブラウザには非表示指定を適用しない。`scripts/checks/test_diag_start.py` は実プロセスのコンソール有無・非表示・出力取得と Ctrl+C を確認する。
+- Windows で一瞬コマンド画面が出る場合は、診断本体だけでなく環境確認・ポート整理・強制停止の子プロセスも確認する。Tools の事前 headless 診断は本サービスと同じ `TermSubprocess` で隠した専用コンソールへ起動し、停止時の Ctrl+C を維持する。各フォルダの `subprocess.run` は aidiy_diag 経路の間だけ `HiddenSubprocess` を介し、`CREATE_NO_WINDOW` と既定の標準入力 EOF を指定する。診断単独の Node バージョン確認・headless 実行も同様に非表示にする。Node 側の診断コマンドは `windowsHide: true` を維持する。Electron や利用者が選んだ Web ブラウザには非表示指定を適用しない。`scripts/checks/test_diag_start.py` は実プロセスのコンソール有無・非表示・出力取得と Ctrl+C を確認する。
 - コンソールは機能別にメモリ上で最大120,000文字を保持し、ログ位置を指定して差分を取得する。個別再起動の受理時は対象のログをクリアし、位置の基点を以前の末尾より先へ進めて古いカーソルにも置換を通知する。UIも対象のキャッシュとカーソルを消し、取得中の古い応答を無効にする。一括起動では履歴を維持する。ANSI 制御文字を除去し、画面はテキスト補間で表示する。HTTP の起動要求を全診断・headless・画面初期表示から呼ばない。起動画面の表示だけでは Python を探索・起動しない。
 - ログは `white-space: pre` で折り返さず横スクロールできるようにする。幅は画面内に収め、ページ全体を横へ広げない。新着ログ・対象切替・起動画面の再表示時は描画後にコンソールを最下部へスクロールする。手動で上へスクロールしても新着時は最下部へ戻す。実ブラウザ試験は長い合成ログで縦横の内部スクロールを発生させ、手動スクロール後の追従も確認する。
 - 専用窓の終了確認は `起動/終了確認.cjs` と Electron の `close` イベントで扱う。タイトルバー・OS の閉じる・ミニ表示に共通で、renderer の表示タブやポーリング済み状態には依存させない。固定 loopback の認証付き `api/起動` を3秒以内に再取得し、`終了時停止あり` が true のときだけ停止の確認を表示する。この値は順次起動の実行中または未終了の管理子プロセスがある間 true とし、起動処理の完了後も稼働中なら true のまま。状態取得失敗時も確認し、既定と Escape はキャンセルとする。連打中は同じ確認を共有する。親サーバーの切断は既存の自動終了を継続する。検証は `close-confirm.check.cjs` と `desktop.check.mjs` で、未起動・稼働中・キャンセル・承認・二重操作・状態取得失敗・認証・外部 redirect の非追従を確認する。
@@ -236,7 +236,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - Avatar / Live / Discord / Slack / Task / Team / CPU は、押下時に既知の実行入口と照合し、起動済みなら通知する。Task / Team / CPU は IDE 内の窓と単独 Electron 版が共有するループバックの起動枠も確認する。起動枠はアプリごとに TCP 18437〜18439 を使い、窓の終了時に解放する。Task は要求・フロー図・明細のすべてが閉じた時に解放する。タスク内容はサーバー内で扱い、画面には判定結果を返す。
 - Diag は Avatar と Live の稼働を個別に判定し、同種の起動済み通知を返す。Live は IDE が所有する窓と起動処理中の状態も既存のループバック連携から確認する。IDE 内の Live / Avatar はペアで相互排他を維持する。
 - 起動は `detached: true` / 標準入力 EOF / ログファイル出力 / `unref()`。aidiy_diag と IPC で所有関係を結ばない。ログは `temp/aidiy_diag/アプリ起動/` に起動ごとに分ける。画面の通知は「起動要求」とし、表示成功として扱わない。
-- IDE / Code は既存 `frontend_ide/launch.mjs --new-window` から一時プロファイルで別窓を開く。通常起動の既存窓再利用や Live の排他は変えない。Console は従来から複数起動を許可する。一時プロファイルはアプリ終了時に回収する。
+- IDE / Code は既存 `frontend_ide/launch.mjs --new-window` から一時プロファイルで別窓を開く。通常起動の既存窓再利用や Live の排他は変えない。Term は従来から複数起動を許可する。一時プロファイルはアプリ終了時に回収する。
 - 検証は `checks/app-launch.check.mjs`（実フォルダ・パス・タスク判定・認証・入力制限・aidiy_diag終了後の無害な子プロセス継続）、`checks/desktop.check.mjs`（フォルダ選択の限定IPC）、`frontend_ide/checks/project-instance.test.mjs`（通常起動と複数窓）。`checks/app-launch-browser.mjs` は合成プロセスで390/1280pxの実画面、フォルダ必須、押下時だけの確認、起動先、定時監視がないことを確認する。
 
 
@@ -277,8 +277,8 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 
 - 通常のアプリ起動パネルも同じ `CLI状態.mjs` と起動APIを使う。`全項目` は未導入を含む全7CLIを保持し、通常画面ではアプリ・Hermes・外部CLI・Chromeを共通の整列処理で並べる。未導入は「未導入」と表示して無効化し、状態処理でも起動要求を送らない。ミニは従来の導入済みだけの `項目` を使う。通常画面のアイコンは72pxで名称は画像内の帯を使い、別の名前ラベルを重ねない。通常・ミニとも明示クリックでは起動確認ダイアログを出さず、固定の起動APIへ直接送る。起動受付・成功・起動済みの通知やログ保存先は表示せず、通常画面は処理中とエラーだけ表示する。ミニ画面は処理中・成功・失敗の一時メッセージを表示せず、起動中もプロジェクト表示を保ち、通知行の追加による高さ変更を起こさない。エラー内容は通常画面の同じ状態から確認する。
 - `ui/src/components/アプリ起動/CLI状態.mjs` と `ミニCLI起動.vue` が確認・利用可能項目・名称帯を管理する。プロジェクトは既存アプリ状態を共有する。Hermes・外部CLIは起動中も追加起動でき、要求ごとの処理中状態を管理する。確認ダイアログ・他アプリの起動・フォルダ選択は重ねない。ミニ表示時と再接続時は存在確認だけで、CLI・ログイン・導入を実行しない。
-- `起動/CLI起動.mjs` は固定ID・絶対プロジェクト・自動承認指定だけを受け付け、固定 `frontend_ide/launch.mjs --app console --cli <ID> --cli-auto-approve` へ渡す。ミニの明示クリックは確認ダイアログなしで従来の起動指定を送り、成功後の説明を表示しない。エラー・処理中の状態は通常画面で確認できるまま保持し、ミニには表示しない。同じCLI・プロジェクトでもクリックごとに別のConsole窓を開く。モデル・コマンド文字列を受け付けず、実行ファイルの探索と引数は `frontend_ide/aidiy_console/cli-launch.mjs` を共有する。公式フラグ・出典・古いCLIでの失敗時の扱いは frontend_diag/README.md の「ミニ表示からCLIを開く」を参照する。
-- 起動通知はIPCでConsole窓の準備完了を待つ。CLI自身の起動結果はConsoleに表示する。同じDiagで同じCLI・正規化済みプロジェクトでも並行起動し、既存窓へ戻らない。Consoleごとに動的ポート・端末セッション・起動ログを分ける。1つの窓の起動失敗・終了では他の窓のCLIやサーバーを止めない。ブラウザの最後の有効な端末接続が切れて30秒戻らない場合と、表示後30秒以内に初回端末接続が始まらない場合はその窓のCLIと所有サーバーだけを終了する。Diag終了とConsole終了は連動させない。Avatar・Live・Discord・Slackの単一起動制限は維持する。
+- `起動/CLI起動.mjs` は固定ID・絶対プロジェクト・自動承認指定だけを受け付け、固定 `frontend_ide/launch.mjs --app term --cli <ID> --cli-auto-approve` へ渡す。ミニの明示クリックは確認ダイアログなしで従来の起動指定を送り、成功後の説明を表示しない。エラー・処理中の状態は通常画面で確認できるまま保持し、ミニには表示しない。同じCLI・プロジェクトでもクリックごとに別のTerm窓を開く。モデル・コマンド文字列を受け付けず、実行ファイルの探索と引数は `frontend_ide/aidiy_term/cli-launch.mjs` を共有する。公式フラグ・出典・古いCLIでの失敗時の扱いは frontend_diag/README.md の「ミニ表示からCLIを開く」を参照する。
+- 起動通知はIPCでTerm窓の準備完了を待つ。CLI自身の起動結果はTermに表示する。同じDiagで同じCLI・正規化済みプロジェクトでも並行起動し、既存窓へ戻らない。Termごとに動的ポート・端末セッション・起動ログを分ける。1つの窓の起動失敗・終了では他の窓のCLIやサーバーを止めない。ブラウザの最後の有効な端末接続が切れて30秒戻らない場合と、表示後30秒以内に初回端末接続が始まらない場合はその窓のCLIと所有サーバーだけを終了する。Diag終了とTerm終了は連動させない。Avatar・Live・Discord・Slackの単一起動制限は維持する。
 - タイトル欄はdrag、ボタンはno-dragを維持する。ミニは初期寸法400×200 DIP、最小300×150 DIPで開き、初期幅では上下のアイコン行は7個を欠けずに表示する。ミニCSSは `#app > .diag-panel > .start-mini` の実際のラッパー階層に合わせ、タイトル・接続線は縮めず、状態列を窓の下端に保つ。外部CLIのSVG・PNG・出典・ライセンスは `ui/src/components/アプリ起動/CLIアイコン/` に保持する。AiDiy系は各所有moduleが正本を持ち、DiagはローカルPNGコピーだけを使う（[共通手順](./共通,アイコン原本と配布.md)）。CopilotはGitHub Octicons、Codex / Claude CodeはLobeHub、Grok / OpenCodeは公式配布元の実素材。Hermesは既存AiDiy画像、AgyはAntigravity公式サイトの山形マーク。画像はSVGで作ってPNG化し、生成スクリプトは常設しない。外部CLIのSVGとPNG派生物、HermesのPNG、出典・ライセンス全文 `LICENSE_ICONS.md` をstaticへ配布する。Hermesの正本は `command_hermes/assets/`、Diagでは保守時にコピーしたPNGだけを表示する。通常build/verifyでは他moduleのassetを読まない。アプリアイコンも画像内の名称を使い、HTMLの名前は重ねない。上段は利用可能なアプリ（Chrome以外）、下段はHermes・Pi・導入済み外部CLIと利用可能なChromeを表示する。高さ・幅に全件が収まる時だけ各一覧を必要な段数に増やし、自動送りを停止する。収まらない場合は1段の循環を維持する。300×150への縮小時は状態列を下端に保ち、起動一覧の縦スクロールで内容に到達できる。外部CLIもChromeもなければ下段と余白を出さず、更新ボタンも置かない。ミニの画像は名称帯込みの36px枠・30px表示（縦横比維持）、稼働インジケーター6件は1行。変更後はUIビルドとmanifest照合を行う。
 - 回帰確認: `node --test frontend_diag/checks/{cli-launch,cli-launch-state,mini-cli-ui,start-mini}.check.*` と frontend_ide のCLI/端末テスト（`cli-parallel-lifecycle.test.mjs`を含む）。全タブ復帰・ミニの確認なし起動と成功説明の非表示・連続／同時起動・個別終了・切断・起動失敗・日本語と記号付きパス・モデル引数なし・再接続での再実行なしをfixtureで確認する。実CLI自動作業や有料APIを回帰テストに使わない。
 
@@ -299,7 +299,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 表示切替の位置計算は `frontend_diag/diag/起動/表示切替位置.cjs` に集約します。演出予定位置と実際の切替位置は同じ開始位置から計算し、アイコン名の高さ確定後も基準を保ちます。円周の展開・収納は従来の中心基準と移動量復元を維持します。位置回帰は `node --test frontend_diag/checks/display-anchor.check.cjs frontend_diag/checks/start-mini.check.mjs frontend_diag/checks/micro-window.check.mjs frontend_diag/checks/desktop.check.mjs frontend_diag/checks/size-transition.check.cjs` で確認します。
 
 実装上、Windowsのアイコン表示は専用の最前面レベルを設定し、表示切替完了時にも実際の最前面状態を確認します。解除時は共通ピンの選択へ戻します。ドラッグの起点はメインプロセスのマウス押下で記録し、IPC到着前にポインターが動いた場合も最初の移動量を保持します。素早い解放時も最後の位置を反映して終了します。
-- アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くConsoleは作業領域中央に約800×600pxで表示します。
+- アプリとCLIの起動状態・フォルダは既存状態を共有します。CLIから開くTermは作業領域中央に約800×600pxで表示します。
 
 画面は frontend_diag/diag/ui/components/アプリ起動/マイクロランチャー.vue / .css、共通寸法は同フォルダの 円周配置.cjs、窓制御は frontend_diag/diag/起動/マイクロ表示.cjs です。回帰確認は node --test frontend_diag/checks/micro-window.check.mjs frontend_diag/checks/icon-drag.check.mjs frontend_diag/checks/desktop.check.mjs。配布画面を更新するときは npm --prefix frontend_diag/ui run build と npm --prefix frontend_diag/ui run check を実行します。
 
@@ -332,7 +332,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 
 ### アイコン配置と起動受付
 
-- IDE → Console → Browser → Navi → Code → Live → Hermes → Avatar → Task → Team → CPU → Discord → Slack の順に表示し、その後に外部CLI・VS Code、最後にChromeを表示します。Browser と Hermes の表示名には aidiy / AiDiy を付けません。両方に名前の帯を表示します。
+- IDE → Term → Browser → Navi → Code → Live → Hermes → Avatar → Task → Team → CPU → Discord → Slack の順に表示し、その後に外部CLI・VS Code、最後にChromeを表示します。Browser と Hermes の表示名には aidiy / AiDiy を付けません。両方に名前の帯を表示します。
 - Browser は Tools / MCP 稼働中のみ起動できます。Chrome は従来どおり Tools / MCP と Web の両方が必要です。状態取得失敗・切断時は起動不可とします。
 - 円形表示は10個以下で一重円、11個以上で二重円です。表示順の先頭から約40%（四捨五入）を内側、残りを外側へ配置します。現在の18個では内側7個・外側11個です。
 - 内側は時計回り、外側は反時計回りです。画像は正立を維持し、円の間隔も確保します。
@@ -368,9 +368,9 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 
 ## ランチャーの起動可否と表示
 
-アプリ候補は `起動/アプリ起動.mjs` の avatar / task / team / ide / navi / console / code / live / discord / slack / chrome / browser の12種です。Discord / SlackはBot tokenの設定有無、Chromeは実行ファイルの有無でカタログへの掲載を判定します。Bot tokenの設定は接続成功を意味しません。標準のアプリ起動画面はこのカタログの全項目を表示し、起動条件を満たさない項目を薄く表示します。ミニランチャー・アイコン展開・その右クリック一覧は、バックエンドや導入状態により起動できない項目を表示対象から外します。処理中の一時的な操作禁止やフォルダ未選択だけで並びを変えないよう、表示対象の判定とボタンの押下可否を分けます。
+アプリ候補は `起動/アプリ起動.mjs` の avatar / task / team / ide / navi / term / code / live / discord / slack / chrome / browser の12種です。Discord / SlackはBot tokenの設定有無、Chromeは実行ファイルの有無でカタログへの掲載を判定します。Bot tokenの設定は接続成功を意味しません。標準のアプリ起動画面はこのカタログの全項目を表示し、起動条件を満たさない項目を薄く表示します。ミニランチャー・アイコン展開・その右クリック一覧は、バックエンドや導入状態により起動できない項目を表示対象から外します。処理中の一時的な操作禁止やフォルダ未選択だけで並びを変えないよう、表示対象の判定とボタンの押下可否を分けます。
 
-Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表示になります。Core停止だけではオフライン利用できるIDE・Console・Code・Live等を隠しません。サービス復帰後は元の順序へ戻し、円周配置とミニ表示の各行を件数に合わせて更新します。
+Task / Team停止時はTask・Team、Tools停止時はBrowser・Chromeが非表示になります。Core停止だけではオフライン利用できるIDE・Term・Code・Live等を隠しません。サービス復帰後は元の順序へ戻し、円周配置とミニ表示の各行を件数に合わせて更新します。
 
 ## アイコンメニュー
 
@@ -452,9 +452,3 @@ Electron のプロジェクト切替では追加保存・一括保存をしな�
 
 
 付箋のタイトル入力欄右側はヘッダーのマウスオーバー時に「＋」を表示する。キーボードフォーカス時も操作できる。通常 Diag では現在のプロジェクト優先（未選択なら起動フォルダ）、単体 Memo ではシステム保存先に新規空付箋を追加する。既存内容を保存し直したり複製せず、追加中の連打を抑止する。元の空付箋が blur で閉じても、開始済みの追加を失わない。
-
-## フォルダ改名後の確認
-
-実装の配置は `frontend_diag/` です。更新後は通常のセットアップを再実行し、Diag / Memo のランチャーを新しい配置へ更新します。同じ配置元に残る改名前ランチャーは生成内容が一致した場合だけ移行し、別コピー・改変された内容・リンクは上書きしません。付箋・設定の `_AIDIY/aidiy_memo` / `_AIDIY/aidiy_diag` は移動しません。
-
-参照点検では実行コード・設定・現在の手順を対象に旧名を検索します。旧名は同一配置元の移行照合とその回帰テスト、および過去の履歴・試験証跡にだけ残します。履歴や固定版の引用は現行パスへ機械的に書き換えません。移行確認は `python -m unittest frontend_diag/checks/test_directory_migration.py scripts/checks/test_setup_processes.py` で行えます。

@@ -11,7 +11,7 @@
     "live": "node launch.mjs --app live",
     "test": "node --test checks/*.test.mjs checks/*.test.cjs",
     "ide": "node launch.mjs --app ide",
-    "console": "node launch.mjs --app console",
+    "term": "node launch.mjs --app term",
     "taskteam:type-check": "vue-tsc --noEmit -p tsconfig.taskteam.json",
     "task": "node launch.mjs --app task",
     "team": "node launch.mjs --app team",

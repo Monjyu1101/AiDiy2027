@@ -60,12 +60,12 @@ app.on('browser-window-created',(_,owner)=>{
    };
    for(const display of displays){
     await capture(display,'available');
-    assert.deepEqual(await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].map(b=>b.textContent.trim())`),['Console','Code','Live','Browser']);
-    for(const kind of ['console','code','live']){
+    assert.deepEqual(await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].map(b=>b.textContent.trim())`),['Term','Code','Live','Browser']);
+    for(const kind of ['term','code','live']){
      const before=new Set(BrowserWindow.getAllWindows().map(w=>w.id));
      await evaluate(owner,`[...document.querySelectorAll('${selector(display)} .all-launchers button')].find(b=>b.textContent.includes('${kind[0].toUpperCase()+kind.slice(1)}')).click()`);
      let child;
-     await until(()=>{child=BrowserWindow.getAllWindows().find(w=>!before.has(w.id)&&w.getTitle().includes(kind==='code'?'Code':kind==='live'?'Live':'Console'));return child?.isVisible();},kind+'別窓');
+     await until(()=>{child=BrowserWindow.getAllWindows().find(w=>!before.has(w.id)&&w.getTitle().includes(kind==='code'?'Code':kind==='live'?'Live':'Term'));return child?.isVisible();},kind+'別窓');
      await until(()=>evaluate(owner,`[...document.querySelectorAll('${selector(display)} button')].every(b=>!b.disabled)`),'起動完了');
      near(child.getBounds(),allWindowBounds(kind,display.workArea));
      assert.equal(child.getParentWindow(),null);assert.equal(child.isAlwaysOnTop(),true);

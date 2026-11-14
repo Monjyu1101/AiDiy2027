@@ -4,6 +4,7 @@ Commercial use requires prior written consent from all copyright holders.
 See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
+import { 行の余白クリック } from '../共通表示/行選択.mjs';
 import { ref, watch, nextTick, computed } from 'vue';
 import 前回実行日時 from '../共通表示/前回実行日時.vue';
 import 状態バッジ from '../共通表示/状態バッジ.vue';
@@ -14,6 +15,7 @@ import 公式サイト from '../導入状況/公式サイト.json';
 const props=defineProps(['lastRun','data','results','loading','testing','testingIds','batchBusy','connected','busy','writeBusy','written']);
 defineEmits(['check','write','test']);
 const { selected,items,row,result,config } = 外部連携表示を作成(props);
+const 行選択=(event,id)=>{if(行の余白クリック(event))selected.value=id;};
 const グループ=computed(()=>[
  {id:'huggingface',名前:'公開モデル操作',項目:items.value.filter(item=>item.id.startsWith('huggingface'))},
  {id:'discord',名前:'Discord',項目:items.value.filter(item=>item.id==='discord')},
@@ -34,7 +36,7 @@ watch(()=>props.busy,完了時(()=>先頭へスクロール(パネル.value)));
   <p v-if="loading">設定状況を確認中…</p><p v-else-if="!data">接続すると設定状況を表示します。</p>
   <template v-else><p v-if="data.設定状態!=='読込済み'" role="status">設定ファイル: {{data.設定状態}}</p><p v-if="data.説明" role="status">{{data.説明}}</p>
    <section v-for="group in グループ" :key="group.id" class="integration-group"><div class="integration-group-heading"><span>{{group.名前}}</span><a class="integration-web" :href="公式サイト[group.id]" target="_blank" rel="noopener noreferrer" :aria-label="`${group.名前} の公式サイトを開く`">Web</a></div>
-   <div v-for="item in group.項目" :key="item.id" class="integration-row" :class="{selected:selected===item.id}">
+   <div v-for="item in group.項目" :key="item.id" class="integration-row" :class="{selected:selected===item.id}" @click="行選択($event,item.id)">
     <button class="key-select" :aria-pressed="selected===item.id" @click="selected=item.id"><span>{{サービス名(item)}}</span><span class="config-state">{{config(item)}}</span></button>
     <div class="integration-test"><button class="single-test-button" :disabled="!connected || busy || writeBusy || 行確認中(item.id) || batchBusy || loading || !item.テスト可能" :title="item.理由 || '読み取り専用の認証確認を1回行います'" @click="selected=item.id;$emit('test',item.id)">{{行確認中(item.id)?(results?.[item.id]?.状態==='待機中'?'待機中…':'確認中…'):'テスト'}}</button><component :is="状態バッジ" :state="results?.[item.id]?.状態 || '未実施'"/><span v-if="item.理由" class="integration-reason">{{item.理由}}</span></div>
    </div></section>

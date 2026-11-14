@@ -26,10 +26,11 @@ def load(folder, name):
 
 @contextmanager
 def isolated_launcher(module, project):
-    """動的importごとの保存先とPATH操作を一時プロジェクトへ隔離する。"""
+    """動的importごとの保存先とPATH操作、旧共有ランチャー（~/.local/bin）を一時プロジェクトへ隔離する。"""
     launcher = getattr(module, '_launcher', module)
     directory = launcher._path_helper.launcher_directory
     with patch.object(launcher._path_helper, 'launcher_directory', side_effect=lambda program: directory(program, project=project)), \
+            patch.object(Path, 'home', return_value=Path(project) / 'home'), \
             patch.object(launcher, 'ensure_launcher_path', return_value=True), \
             patch.object(launcher, 'remove_launcher_path', return_value=True), \
             patch.object(launcher.shutil, 'which', return_value='/fixture/node'):
@@ -66,26 +67,6 @@ class LauncherTests(unittest.TestCase):
                         self.assertEqual(launcher.launcher_path(), paths[second])
                         self.assertTrue(cleanup.remove_launcher(ROOT / second))
                     self.assertFalse(paths[second].exists())
-
-    def test_console_replaces_only_this_checkout_legacy_launcher(self):
-        for platform in ('win32', 'linux', 'darwin'):
-            for owned in (True, False):
-                with self.subTest(platform=platform, owned=owned), tempfile.TemporaryDirectory() as temp:
-                    launcher = load('frontend_ide/viewer', 'launcher')
-                    home = Path(temp)
-                    root = home / 'repo' / 'frontend_ide' / 'aidiy_console'
-                    root.mkdir(parents=True)
-                    (root / 'launch.mjs').write_text('// fixture', encoding='utf-8')
-                    old_script = root.parent / 'aidiy_term' / 'launch.mjs' if owned else home / 'other' / 'aidiy_term' / 'launch.mjs'
-                    with isolated_launcher(launcher, home), patch.object(launcher.sys, 'platform', platform):
-                        old = launcher.launcher_path('term')
-                        self.assertTrue(old.is_relative_to(home))
-                        self.assertTrue(launcher.launcher_path('console').is_relative_to(home))
-                        old.parent.mkdir(parents=True)
-                        old.write_text(launcher.launcher_owner_comment(old_script), encoding='utf-8')
-                        launcher.install_launcher(root, 'console')
-                        self.assertTrue(launcher.launcher_path('console').is_file())
-                        self.assertEqual(old.exists(), not owned)
 
     def test_missing_entry_does_not_overwrite_registered_command(self):
         for folder in ('frontend_ide/viewer', 'frontend_channels/discord'):

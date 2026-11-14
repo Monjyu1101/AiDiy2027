@@ -4,15 +4,15 @@
 
 ## 機能フォルダと共通部品の所有者
 
-`src/App.vue` は画面の組み合わせ、`src/main.js` は起動、`src/style.css` は共通レイアウトを担当します。Console・Code・Live・IDEはいずれも同じ Vue 3 基盤です。Code / Live の VS Code 版も同じ配布画面を読み込みます。
+`src/App.vue` は画面の組み合わせ、`src/main.js` は起動、`src/style.css` は共通レイアウトを担当します。Term・Code・Live・IDEはいずれも同じ Vue 3 基盤です。Code / Live の VS Code 版も同じ配布画面を読み込みます。
 
-シアン接続バー上の通常タイトル行は `src/components/共通表示/タイトルバー配色.css` のトークン（背景 `#30343a`、主文字・補助文字 `#fff`）を使います。`.panel-brand` の共通ルールにまとめ、単独窓・IDE内のWebパネル・Task / Team・Viewer / Explorer別窓でdesktop条件による色の差を付けません。Diag / Discordも同じトークンを配布へ取り込みます。シアンバー下の通常本文・タブ土台・見出し・空白領域は `#000` に揃え、タイトル用トークンは本文へ転用しません。Task / Teamのログインカード・内側パネル・独立Task窓・表の見出しと空行・編集窓の地色も黒にし、表のデータ行や入力・選択の配色は残します。Consoleのxterm描画面と補完下地も同じ黒へ揃えます。入力・選択・状態色、閲覧するWebページ・画像、2Dページの内容色、接続バーの明滅は維持します。ピン留めボタンは通常・固定・hoverとも背景を透明にし、親のタイトル帯を透かします。固定状態はアイコンと枠で区別し、黒い内側影は付けません。Browserの全画面ガラスだけは透明背景と黒文字の専用トークンで上書きし、通常タイトル行へ揃えないでください。`checks/titlebar-theme.test.mjs` で共有経路と例外を確認します。
+シアン接続バー上の通常タイトル行は `src/components/共通表示/タイトルバー配色.css` のトークン（背景 `#30343a`、主文字・補助文字 `#fff`）を使います。`.panel-brand` の共通ルールにまとめ、単独窓・IDE内のWebパネル・Task / Team・Viewer / Explorer別窓でdesktop条件による色の差を付けません。Diag / Discordも同じトークンを配布へ取り込みます。シアンバー下の通常本文・タブ土台・見出し・空白領域は `#000` に揃え、タイトル用トークンは本文へ転用しません。Task / Teamのログインカード・内側パネル・独立Task窓・表の見出しと空行・編集窓の地色も黒にし、表のデータ行や入力・選択の配色は残します。Termのxterm描画面と補完下地も同じ黒へ揃えます。入力・選択・状態色、閲覧するWebページ・画像、2Dページの内容色、接続バーの明滅は維持します。ピン留めボタンは通常・固定・hoverとも背景を透明にし、親のタイトル帯を透かします。固定状態はアイコンと枠で区別し、黒い内側影は付けません。Browserの全画面ガラスだけは透明背景と黒文字の専用トークンで上書きし、通常タイトル行へ揃えないでください。`checks/titlebar-theme.test.mjs` で共有経路と例外を確認します。
 
 通常画面と機能内の補助処理は `src/components/`、独立したダイアログは `src/dialog/` に配置します。基準は [Electron の Avatar 構成例](./共通,Electronウィンドウ基本方針.md#renderer-のフォルダ構成avatar-を実例にする)です。
 
 - `components/コード/`: コードパネル・通信・会話到着演出（Liveも共有）
 - `components/ライブ/`: ライブパネル・通信
-- `components/コンソール/`: コンソールパネル・コマンド補完・進捗表示・開始表示（Code / Liveも共有）
+- `components/ターミナル/`: ターミナルパネル・コマンド補完・進捗表示・開始表示（Code / Liveも共有）
 - `components/開発スペース/`: 開発スペース・宇宙キャンバス・描画・視点・経路記録
 - `components/ファイル閲覧/`: 一覧・ビューア・フォルダページ・アイコン・ファイル操作・最新ファイル・走査警告
 - `components/ファイル検索/`: AI検索パネル
@@ -25,7 +25,7 @@
 
 日本語の機能フォルダを維持し、描画・通信だけを `engines` / `transports` などへ分散しません。既存の関数名・props・emit・保存キー・IPC/API・CSSクラスは互換契約として保ち、移動だけで変更しません。`host/src` のDiscord共有モジュール、公開起動入口、worker、配布URLも維持します。
 
-移動時は通常のimportに加え、テストのreadFile・仮想require、型宣言の隣接、`viewer/server.mjs` の最新ファイル共有、`aidiy_console/console.mjs` のPowerShell補完情報を確認してください。日本語パスをファイルAPIへ渡すときはURLオブジェクトか `fileURLToPath()` を使い、URLの `.pathname` を直接ファイル名として使わないでください。`checks/component-paths.mjs` は実Vueマウントの論理名とファイルの対応を一か所にまとめます。
+移動時は通常のimportに加え、テストのreadFile・仮想require、型宣言の隣接、`viewer/server.mjs` の最新ファイル共有、`aidiy_term/term.mjs` のPowerShell補完情報を確認してください。日本語パスをファイルAPIへ渡すときはURLオブジェクトか `fileURLToPath()` を使い、URLの `.pathname` を直接ファイル名として使わないでください。`checks/component-paths.mjs` は実Vueマウントの論理名とファイルの対応を一か所にまとめます。
 
 ## Task / Team の独立版（Avatarからの移設）
 
@@ -61,19 +61,19 @@ Vite 8.3.4 の Rolldown 進捗表示は、日本語パスを表示幅で切り�
 
 ## 変更先の選び方
 
-`viewer/_start.py` を共用する IDE / Console / Task / Team / Browser の起動ログは、配置先リポジトリの `temp/aidiy_<kind>/logs/<UUID>.log` に保存する。閲覧プロジェクトやカレントディレクトリから保存先を決めず、旧 `viewer/out/` のログは移行・削除・退避先利用しない。ElectronのuserData・profile・会話履歴は選択プロジェクトの `_AIDIY/aidiy_<pg>/` に保存する。`python -B -m unittest discover -s frontend_ide/viewer/checks -p test_start.py` で5種類の保存先・別起動のログ分離・旧ログ保持・保存失敗時の非起動を確認する。
+`viewer/_start.py` を共用する IDE / Term / Task / Team / Browser の起動ログは、配置先リポジトリの `temp/aidiy_<kind>/logs/<UUID>.log` に保存する。閲覧プロジェクトやカレントディレクトリから保存先を決めず、旧 `viewer/out/` のログは移行・削除・退避先利用しない。ElectronのuserData・profile・会話履歴は選択プロジェクトの `_AIDIY/aidiy_<pg>/` に保存する。`python -B -m unittest discover -s frontend_ide/viewer/checks -p test_start.py` で5種類の保存先・別起動のログ分離・旧ログ保持・保存失敗時の非起動を確認する。
 
-Mac のアプリ名とメニューは `desktop.cjs` と `host/scripts/MacOS-Menu.cjs` で扱います。Console / Code / Live / IDE の単独起動・IDE子窓・ピン留め・ブラウザ窓は同じアプリメニューを使います。⌘Q / アプリメニューの「閉じる」は親窓の既存 close を通し、⌘W はフォーカス中の窓だけを閉じます。Mac のシステム Dock「終了」も IDE の利用中確認を通します。親との切断時の回収は `forcedQuit` で確認待ちにしません。編集キーは native role に任せ、Console の選択コピーやシェルへの Ctrl+C を main のキー処理で奪わないでください。`node --test checks/code-window-title.test.mjs host/checks/mac-menu.test.cjs` は各起動種別・終了確認と親子窓の寿命を確認します。
+Mac のアプリ名とメニューは `desktop.cjs` と `host/scripts/MacOS-Menu.cjs` で扱います。Term / Code / Live / IDE の単独起動・IDE子窓・ピン留め・ブラウザ窓は同じアプリメニューを使います。⌘Q / アプリメニューの「閉じる」は親窓の既存 close を通し、⌘W はフォーカス中の窓だけを閉じます。Mac のシステム Dock「終了」も IDE の利用中確認を通します。親との切断時の回収は `forcedQuit` で確認待ちにしません。編集キーは native role に任せ、Term の選択コピーやシェルへの Ctrl+C を main のキー処理で奪わないでください。`node --test checks/code-window-title.test.mjs host/checks/mac-menu.test.cjs` は各起動種別・終了確認と親子窓の寿命を確認します。
 
-IDEのElectron版はプロジェクト表示行の名前のすぐ右側に並ぶ「Console」「Code」「Live」から別ウィンドウを開き、Web版は画面内タブです。切り分けは `window.aidiyWindow` で行います。IPCにはアプリ種別だけを渡し、プロジェクト・モードはメインプロセスでIDEサーバーの状態から取得します。
+IDEのElectron版はプロジェクト表示行の名前のすぐ右側に並ぶ「Term」「Code」「Live」から別ウィンドウを開き、Web版は画面内タブです。切り分けは `window.aidiyWindow` で行います。IPCにはアプリ種別だけを渡し、プロジェクト・モードはメインプロセスでIDEサーバーの状態から取得します。
 
 Codeの回答通知は、IDEブラウザー版のCodeタブだけ `page-notifications` でページ中央へ表示します。Navi内・別窓・単独・VS CodeのCodeは各自の領域内へ表示します。Naviの別窓化では同じVue DOMを別Documentへ移すため、通知・文字送り・飛行演出・可視状態・タイマーは発言要素の `ownerDocument` とその `defaultView` を使います。元IDEのglobal documentへ追加しないでください。`checks/code-notification-ownership.test.mjs` で複数窓、移動、非表示、破棄、Web例外と領域内の飛行を検証します。
 
 画面は `frontend_ide/src/` の対応する日本語機能フォルダを変更します。Code / LiveをIDEへ配置するときも同じVue部品を使用します。ホストと通信プロトコルは `frontend_ide/host`、ファイルAPIとOffice表示資産は `frontend_ide/viewer` に統合しています。親ディレクトリ数を固定して共通設定やHermesを探さず、配置先から親方向へ探索してください。
 
-IDEのオンライン利用では、`viewer/core-connection.mjs` がConsoleと同じ `PORT_TOOLS`（既定8095）の `GET /aidiy_code_agents/ping` を10秒ごとに確認し、`src/App.vue` も状態を10秒ごとに取得します。応答期限はConsoleと同じ1.5秒で、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live子パネルの接続先は `PORT_CORE` のままです。接続済みの定期確認中は `connected=true` / `connecting=false` を維持し、確認が失敗した時に接続表示を変えます。初回接続と切断後の再接続では `connecting=true` を表示します。tools停止でも利用開始時刻・作業・子窓を維持してください。単体検証は `node --test frontend_ide/viewer/checks/connection.test.mjs`、実画面検証はVue配布ファイル生成後の `node frontend_ide/scripts/check-connection.mjs`（Chromeを任意配置している場合は `CHROME_PATH` で指定）。模擬toolsを使い、10秒周期・定期確認中の表示維持・停止と復帰を確認し、日本時間の日時付き画像を `temp/connection-check/` へ保存します。
+IDEのオンライン利用では、`viewer/core-connection.mjs` がTermと同じ `PORT_TOOLS`（既定8095）の `GET /aidiy_code_agents/ping` を10秒ごとに確認し、`src/App.vue` も状態を10秒ごとに取得します。応答期限はTermと同じ1.5秒で、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live子パネルの接続先は `PORT_CORE` のままです。接続済みの定期確認中は `connected=true` / `connecting=false` を維持し、確認が失敗した時に接続表示を変えます。初回接続と切断後の再接続では `connecting=true` を表示します。tools停止でも利用開始時刻・作業・子窓を維持してください。単体検証は `node --test frontend_ide/viewer/checks/connection.test.mjs`、実画面検証はVue配布ファイル生成後の `node frontend_ide/scripts/check-connection.mjs`（Chromeを任意配置している場合は `CHROME_PATH` で指定）。模擬toolsを使い、10秒周期・定期確認中の表示維持・停止と復帰を確認し、日本時間の日時付き画像を `temp/connection-check/` へ保存します。
 
-接続監視の負荷を確認する場合は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/viewer/checks/connection.test.mjs` を使います。IDE・ピン留めビューアの状態取得、IDEのtools確認、Consoleのtools確認は10秒周期です。Codeは切断をWebSocketで検知し、再試行だけ10秒待ちます。初回確認・手動操作は即時のままです。Liveは既存のWebSocket通知を使い、定期HTTP確認を追加しません。Code / Liveの20秒ping、Consoleの15秒pingと端末ACK、音声処理の周期は変更しません。子窓の400ms監視とパネル寿命の250ms同期は終了連携用であり、接続疎通の周期と混同しないでください。
+接続監視の負荷を確認する場合は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/viewer/checks/connection.test.mjs` を使います。IDE・ピン留めビューアの状態取得、IDEのtools確認、Termのtools確認は10秒周期です。Codeは切断をWebSocketで検知し、再試行だけ10秒待ちます。初回確認・手動操作は即時のままです。Liveは既存のWebSocket通知を使い、定期HTTP確認を追加しません。Code / Liveの20秒ping、Termの15秒pingと端末ACK、音声処理の周期は変更しません。子窓の400ms監視とパネル寿命の250ms同期は終了連携用であり、接続疎通の周期と混同しないでください。
 
 非表示のIDEはCanvas描画と毎フレームの配置取得を止め、再表示時は1つの描画ループだけを再開します。Web版のLiveを隠す時は、会話・下書き・接続を保持したまま `AudioCloud.setVisible(false)` で描画を停止し、StatusBarのclock-pulseも止めます。画面全体の非表示とパネルの非表示は別々に扱い、Canvasが0サイズの間も描かず、表示・サイズ復帰でRAFを1本だけ再開します。20秒の接続pingは変更しません。`checks/live-visibility.test.mjs` は実LivePanel・AudioCloud・StatusBarでこの寿命を検証します。接続バーは未接続の黒表示・画面非表示では50msの更新を止め、表示復帰時に現在時刻へ揃えます。Canvasのラベル幅は文字・フォントごとに保持し、階層再構築・サイズ変更・フォント読込時に破棄します。上記テストの呼出し回数は処理削減の確認用で、実機のCPU使用率を測定した値ではありません。画面の見た目・OSごとのCPU/GPU負荷は実画面検証で別途確認してください。
 
@@ -225,13 +225,13 @@ Code / Live / IDE / Browserの接続バーは `状態バー.vue` のclockPulse�
 
 接続バーの回帰確認は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/checks/live-visibility.test.mjs`。`node frontend_ide/scripts/check-connection-bar.mjs` は隔離Chromiumでシアン・赤の時間変化、OFF黒の固定、connectedが残ったOFF、反復切替、CSS側の表示を確認し、`frontend_ide/temp/connection-bar-check/` に撮影します。`--compile-only` は配布物を作らず実VueとAppのコンパイルだけ確認します。
 
-ポートは自動割り当てです。aidiy_code / aidiy_live / aidiy_ideからVue版を起動します。旧aidiy_devの互換起動はありません。cleanupのプロセス照合は起動スクリプトの完全一致とアプリ種別で行い、IDE群の解除が成功してから共通Vue生成物を削除します。
+ポートは自動割り当てです。aidiy_code / aidiy_live / aidiy_ideからVue版を起動します。cleanupのプロセス照合は起動スクリプトの完全一致とアプリ種別で行い、IDE群の解除が成功してから共通Vue生成物を削除します。
 
-Electronの初期配置は `デスクトップ/window-layout.cjs` で画面のworkAreaから計算します。IDEは余白付きの大きな画面、Code / Liveは左右に配置し、IDE連携でも同じディスプレイの隅を基準にし、Codeの2枚目以降だけslotに従ってずらします。詳細は [初期ウィンドウ配置](./frontend_ide,初期ウィンドウ配置.md) を参照します。連携窓のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」で、単独版のタイトルと区別します。既存窓の再表示では最小化を解除して前面に出すだけにします。単独Code / Liveは種別ごとのsingle-instance lock、IDEは同じプロジェクトごとのlockを使い、Consoleは複数起動を許可します。IDEのCode子窓は複数起動でき、それぞれ独立したサーバー・会話を持ちます。Live子窓だけ親セッションと初期化中のPromiseで重複を防ぎ、起動中は＋Liveを隠します。子窓の状態はメインプロセスから取得し、閉じたときにボタンを戻します。`checks/window-layout.test.mjs` と `scripts/check-windows.mjs` で画面外にはみ出さない配置・連打・前面復帰・終了連携を確認します。
+Electronの初期配置は `デスクトップ/window-layout.cjs` で画面のworkAreaから計算します。IDEは余白付きの大きな画面、Code / Liveは左右に配置し、IDE連携でも同じディスプレイの隅を基準にし、Codeの2枚目以降だけslotに従ってずらします。詳細は [初期ウィンドウ配置](./frontend_ide,初期ウィンドウ配置.md) を参照します。連携窓のタイトルは「AiDiy IDE / Code」「AiDiy IDE / Live」で、単独版のタイトルと区別します。既存窓の再表示では最小化を解除して前面に出すだけにします。単独Code / Liveは種別ごとのsingle-instance lock、IDEは同じプロジェクトごとのlockを使い、Termは複数起動を許可します。IDEのCode子窓は複数起動でき、それぞれ独立したサーバー・会話を持ちます。Live子窓だけ親セッションと初期化中のPromiseで重複を防ぎ、起動中は＋Liveを隠します。子窓の状態はメインプロセスから取得し、閉じたときにボタンを戻します。`checks/window-layout.test.mjs` と `scripts/check-windows.mjs` で画面外にはみ出さない配置・連打・前面復帰・終了連携を確認します。
 
 IDEのプロジェクト識別は `デスクトップ/project-profile.cjs` に集約します。`launch.mjs` が `--project` / 位置引数 / 起動フォルダを先に解決し、実パスを `AIDIY_DEVELOPMENT_PROJECT` でElectronへ渡します。`desktop.cjs` はロック取得前に実プロジェクトの `_AIDIY/aidiy_ide/electron/` を `userData` と `sessionData` に指定します。Code / Liveを含む各アプリも同じく `aidiy_<pg>/electron/` で分離します。同名の別フォルダは共有せず、相対表記・リンクは同じ実体に揃えます。Windowsでは大小文字・区切り・長いパス表記を統一し、ファイルIDも加えて大小文字を区別する別実体を混同しません。ファイルAPIへ渡す実パスの大小文字は変えません。サーバーは従来どおり自動ポート・個別所有を維持し、他プロジェクトの終了・再起動に巻き込まないでください。旧プロファイルから認証・保存情報をコピーしません。`node --test frontend_ide/checks/project-instance.test.mjs` は模擬Electronと実ローカルHTTPで、重複時の前面化、別プロジェクトの子窓・キャッシュ・接続・ポート・終了の分離、起動引数、同時起動を確認します。実ElectronでのOSロックと前面化は別途確認が必要です。
 
-Consoleのシェル履歴とElectron・専用ブラウザのprofileは、`host/scripts/project-storage.cjs` が専用保存先直下に `*` を含む `.gitignore` を作り、外部Gitプロジェクトでも自動生成物を除外します。利用者のルート `.gitignore`・`.git/info/exclude`・共有Git設定は変更しません。専用 `.gitignore` が既にあれば上書きせず、コメントと空行を除いた規則が `*` だけでなければ停止します。`_AIDIY` から `electron`・`browser-profile`・`fixed`・`standalone` を含む保存先各階層のsymlinkと、専用 `.gitignore` のsymlinkを拒否します。既にGit追跡済みのファイルや `git add -f` は `.gitignore` では保護できません。回帰確認は `node --test frontend_ide/checks/private-storage.test.mjs` です。
+Termのシェル履歴とElectron・専用ブラウザのprofileは、`host/scripts/project-storage.cjs` が専用保存先直下に `*` を含む `.gitignore` を作り、外部Gitプロジェクトでも自動生成物を除外します。利用者のルート `.gitignore`・`.git/info/exclude`・共有Git設定は変更しません。専用 `.gitignore` が既にあれば上書きせず、コメントと空行を除いた規則が `*` だけでなければ停止します。`_AIDIY` から `electron`・`browser-profile`・`fixed`・`standalone` を含む保存先各階層のsymlinkと、専用 `.gitignore` のsymlinkを拒否します。既にGit追跡済みのファイルや `git add -f` は `.gitignore` では保護できません。回帰確認は `node --test frontend_ide/checks/private-storage.test.mjs` です。
 
 WindowsでElectronのGUI本体をspawnするときは `windowsHide: false` にします。`true` では初回の画面表示が隠され、URLだけ出て再実行するまで窓が見えない場合があります。バックグラウンドの補助プロセスとは区別し、初回起動時の可視状態を `scripts/check-single-instance.mjs` でも確認します。
 
@@ -285,13 +285,13 @@ IDE配下のMCP sessionはBrowser窓ごとの `aidiy_ide N` です。`backend_to
 
 Vueの通常タイトル・F11上端ヘッダーは `window.aidiyWindow.title()` の限定IPCから同じOSタイトルを取得します。ページ題名・フォーカス中の別窓から組み立てません。取得失敗や不正値では従来の種別名を表示し、破棄後に届いた応答は捨てます。`panel-window-title` の既存の縮小・省略規則を再利用し、全画面パネルの半透明背景は維持します。
 
-Electron全体のremote-debugging-portは使わず、専用ページのCDPだけを中継します。HTTP・WebSocketはloopbackとトークンで限定し、WebページからのOrigin付き要求を拒否します。IDE本体やCode/ConsoleのTargetへアクセスするBrowser/Targetドメインは転送しません。`new_tab` だけは専用アダプターから新しいBrowserパネルを要求します。IDE版では同じ所有IDEに別の `aidiy_ide N` を作り、応答の `session` と `id` を組にして以後の操作へ渡します。新tabを元sessionへ登録した扱いにしません。単独版では同じ起動UUIDのsessionへ追加します。Web起動の通常タブは登録しません。
+Electron全体のremote-debugging-portは使わず、専用ページのCDPだけを中継します。HTTP・WebSocketはloopbackとトークンで限定し、WebページからのOrigin付き要求を拒否します。IDE本体やCode/TermのTargetへアクセスするBrowser/Targetドメインは転送しません。`new_tab` だけは専用アダプターから新しいBrowserパネルを要求します。IDE版では同じ所有IDEに別の `aidiy_ide N` を作り、応答の `session` と `id` を組にして以後の操作へ渡します。新tabを元sessionへ登録した扱いにしません。単独版では同じ起動UUIDのsessionへ追加します。Web起動の通常タブは登録しません。
 
 確認は `node --test frontend_ide/checks/browser*.test.mjs frontend_ide/checks/standalone-browser-desktop.test.mjs` と `backend_tools/.venv/Scripts/python.exe -m unittest discover -s frontend_ide/checks -p 'test_browser_*.py'`。番号の同時確保・閉鎖後再利用、IDE所属と利用終了、new_tab応答session、close_sessionの対象分離、単独UUIDの維持、通常/F11タイトルの一致・失敗・破棄後応答も対象にします。実画面確認は共通Vueの配布物生成と変更済みtoolsの起動後、`node frontend_ide/scripts/check-browser.mjs` を実行します。Googleへの実接続、HTML/HTMと相対CSS・リンク、履歴、MCPからの一覧・クリック・入力・移動・撮影・新規パネル・終了、各ディスプレイのVR起動配置、利用終了連携を確認し、`temp/browser-check/` に画像と結果を保存します。テスト用プロジェクトとElectronプロファイルを使い、有料AIや音声は起動しません。
 
 ## 起動メニューとバーガー・＋の図形
 
-IDE上部の起動ボタン列は `src/components/共通表示/起動メニュー.vue` が描きます。Electron版（別ウィンドウを開く）とWeb版（パネルを開く）は `App.vue` の `desktopLaunchItems` / `panelLaunchItems` を渡し、項目は Console → Navi → Code → Live → Browser → TASK → TEAM の順です。項目名に「＋」は付けません（Naviの `navigation-launch` クラスと、起動中の「起動中…」表示は維持）。窓幅が `max-width:900px` 以下（`breakpoint`）のときは、枠付きの「＋」だけを表示し、押すと下向きの起動メニュー（`.launch-popup`）を開きます。Esc・外側のクリック・項目の選択で閉じます。広いときは、枠付きの「＋」の右に項目を横に並べます。VRの起動メニュー（`.all-launchers`）も項目名から「＋」を外しています。
+IDE上部の起動ボタン列は `src/components/共通表示/起動メニュー.vue` が描きます。Electron版（別ウィンドウを開く）とWeb版（パネルを開く）は `App.vue` の `desktopLaunchItems` / `panelLaunchItems` を渡し、項目は Term → Navi → Code → Live → Browser → TASK → TEAM の順です。項目名に「＋」は付けません（Naviの `navigation-launch` クラスと、起動中の「起動中…」表示は維持）。窓幅が `max-width:900px` 以下（`breakpoint`）のときは、枠付きの「＋」だけを表示し、押すと下向きの起動メニュー（`.launch-popup`）を開きます。Esc・外側のクリック・項目の選択で閉じます。広いときは、枠付きの「＋」の右に項目を横に並べます。VRの起動メニュー（`.all-launchers`）も項目名から「＋」を外しています。
 
 バーガーと「＋」は、角を丸めない枠（`--burger-size` 22px、太さ `--burger-line`）の中に、2本線（バーガー）または十字（`.plus-mark`）を描く同じ部品です。frontend_webのハンバーガー（2本線）と同じ構成で、角だけ丸めません。横2本がエクスプローラー、縦2本が軌跡バーで、IDE内・別窓（エクスプローラー、軌跡バー）・VRで同じ `.burger` を使います。ボタン自体の枠は外し（`.burger-button`）、枠は図形側の1本だけにします。線の太さと間隔は `main.js` が表示倍率の整数画素にそろえます。
 
@@ -317,7 +317,7 @@ Explorerと軌跡のVR位置は `デスクトップ/VRパネル配置.cjs` がID
 
 VR中は再オープン用の入口が隠れるため、Explorerの別窓タイトルの×と内部の閉じる☰、軌跡バーの×を非表示にします。VR解除では移行前から別窓だったExplorer・軌跡バーを維持し、VR移行で新規に開いたものだけを閉じて本体でも非表示にします。移行前の別窓状態は最初の準備時に記録し、手動ピン留めの完了待ちも含めて既存要求を再利用します。VR中の再表示で記録を上書きせず、手動で閉じた窓を自動で再起動しません。VR準備・切替に失敗した場合は、新規に開いた窓だけを回収し、本体の元の開閉状態へ戻します。DOM・閲覧履歴・検索状態は保持し、通常画面の「☰」「軌跡」から再表示できます。`ファイル一覧.vue` でVR状態の解除を監視し、既存のdismiss処理でDOMを回収してから閉じます。ビューアーなど他の別窓はそのまま維持します。
 
-VR中の復帰・起動メニューは全ディスプレイの作業領域の右上に置き、マウスオーバーまたはキーボードフォーカスで表示します。復帰マークの下のConsoleはその画面の左下、Codeは右上、Liveは左上へ開きます。Liveは接続利用中かつ未起動の場合だけ表示し、終了後はメニューへ入る時の状態取得でも再表示します。`全画面横断.cjs` の `toolbars` は画面IDとIDE内の割合座標を返し、`openApp` は任意座標ではなく画面IDだけを渡します。main側でVR状態・実在画面・所有元を照合し、起動準備中の切断やVR解除も窓生成時に再確認します。通常起動の配置と窓番号は維持し、VRの重ね位置だけ画面別に数えます。
+VR中の復帰・起動メニューは全ディスプレイの作業領域の右上に置き、マウスオーバーまたはキーボードフォーカスで表示します。復帰マークの下のTermはその画面の左下、Codeは右上、Liveは左上へ開きます。Liveは接続利用中かつ未起動の場合だけ表示し、終了後はメニューへ入る時の状態取得でも再表示します。`全画面横断.cjs` の `toolbars` は画面IDとIDE内の割合座標を返し、`openApp` は任意座標ではなく画面IDだけを渡します。main側でVR状態・実在画面・所有元を照合し、起動準備中の切断やVR解除も窓生成時に再確認します。通常起動の配置と窓番号は維持し、VRの重ね位置だけ画面別に数えます。
 
 環境変数 `AIDIY_ALL_LAUNCHERS_ONLY=1` で同スクリプトを実行すると、接続中の各実ディスプレイでホバー表示・3種の起動位置・Liveボタンの非表示/復帰・各画面からのVR解除を検証し、メニュー画像を保存します。IDE画面・IPC・別窓・表示演出は実Electronで、接続状態と子窓の本文サーバーをfixtureに替えます。Code CLI・PTY・マイク・有料APIの検証は含みません。
 
@@ -353,55 +353,53 @@ Codespacesの転送先からAPIを開いた場合は、既存の `forwardedOrigi
 
 `node --test frontend_ide/viewer/checks/preview.test.mjs` と `node frontend_ide/scripts/check-preview.mjs` で配信・ブラウザ表示を確認します。前者は転送HostとプロキシがHostを書き換えた場合、ローカル利用、token・パス・別サイトの拒否も確認します。後者は別ポートの模擬外部画像にRefererが送られず、ルート相対画像は読めることも確認します。実Codespacesのポート転送・認証確認はローカルのHost模擬テストとは別に実施してください。実ファイルは `check-preview.mjs --project <ルート> --html <相対パス> --svg <相対パス>` で読み取り専用に検証し、`nn-preview-*.png` に撮影します。配信側を変更した際は、画面再読み込みだけでなくIDEを終了して再起動してください。
 
-## Console（ターミナル）の変更・検証
+## Term（ターミナル）の変更・検証
 
-Consoleの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。通常Consoleの初期サイズは600×400pxとし、最小幅360pxとCode / Live / IDE / ビューアの最小寸法は変えません。CLI指定の800×600pxも維持します。作業領域がさらに小さい時は初期配置の寸法を上限にします。`コンソールパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `console-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
+Termの最小高さは `デスクトップ/window-layout.cjs` の `windowMinimumSize()` で180pxにし、単独窓とIDE子窓で共用します。通常Termの初期サイズは600×400pxとし、最小幅360pxとCode / Live / IDE / ビューアの最小寸法は変えません。CLI指定の800×600pxも維持します。作業領域がさらに小さい時は初期配置の寸法を上限にします。`ターミナルパネル.vue` はパネル自身をsize containerにし、高さ240px以下では入力前・表示クリア後の起動案内を畳んで端末へ高さを渡します。通常の14px文字なら180pxの窓で約4行が目安です。FitAddonとResizeObserverの対象は余白のない内側の `term-viewport` にし、外側のpaddingを行数へ数えて最下行が欠けることを防ぎます。ステータスは1行、短い画面のエラーは1行分のスクロールに収めます。Web版にも同じパネル内判定を使い、ブラウザー自体の最小サイズは変更しません。
 
-`checks/window-layout.test.mjs` は小さい作業領域・単独/IDE子窓の最小寸法と従来の初期配置、`checks/console-size.test.mjs` は実Vue処理と実FitAddonによる1〜5行への縮小・復元・入力・表示クリア・タブ往復・再起動、`checks/console.test.mjs` は小さい行数のサーバー検証と実PTYのリサイズを確認します。これらは実描画の検証ではありません。Electronの `checks/console-desktop-probe.cjs` では360×180への縮小・入力・クリア・操作ボタン・最下行・元の大きさへの復元も撮影して確認してください。
+`checks/window-layout.test.mjs` は小さい作業領域・単独/IDE子窓の最小寸法と従来の初期配置、`checks/term-size.test.mjs` は実Vue処理と実FitAddonによる1〜5行への縮小・復元・入力・表示クリア・タブ往復・再起動、`checks/term.test.mjs` は小さい行数のサーバー検証と実PTYのリサイズを確認します。これらは実描画の検証ではありません。Electronの `checks/term-desktop-probe.cjs` では360×180への縮小・入力・クリア・操作ボタン・最下行・元の大きさへの復元も撮影して確認してください。
 
-通常ConsoleのElectron窓は600×400px（小画面では作業領域に収まる寸法）として画面左下に端から8px空けて開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Consoleはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/console-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
+通常TermのElectron窓は600×400px（小画面では作業領域に収まる寸法）として画面左下に端から8px空けて開き、次の窓を28pxずつ右上へ配置します。親IDEの矩形には合わせず、親と同じディスプレイの作業領域を使います。画面端まで進んだら基点へ戻します。単独Termはsingle-instance lockを使わず、起動ごとの一時Chromiumプロファイルを終了時に片付けます。`デスクトップ/term-window-slot.cjs` は127.0.0.1の18440〜18567を操作受付のない排他用ポートとして使い、単独プロセスとIDE子窓で配置番号を共有します。番号は窓終了で解放し、プロセス異常終了でもOSが解放します。Code / Live / IDEの既存窓再利用は維持します。
 
 プロジェクトバーの「Tools接続確認」はCodeの `auto-connect` トグルを共用します。既定ON、WebSocketの `tools-check` で切り替え、`tools` 応答の `enabled` / `online` で画面を同期します。OFFは疎通の定期実行を止め、シアン表示を解除して静的な黒いバーにします。ONへ戻すと即時に疎通確認を再開します。シェルの再起動は行わず、端末の再起動でも同じサーバー内の選択を維持します。確認中にOFFへ変わった場合の古い応答は世代番号で無視してください。
 
-キー変換は `src/components/コンソール/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs` と `node frontend_ide/scripts/check-console-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
+キー変換は `src/components/ターミナル/キー入力.js` に集約します。Ctrl+C / Cmd+C はコピー、Ctrl+V / Cmd+V はxterm標準の貼り付けに任せ、それ以外の修飾キーを送信します。Ctrl+英字・記号は通常の制御文字、Windows / LinuxのAlt+文字はESC付き、標準の制御文字がない組合せはCSI-uで送ります。MacのOption / Shift+Optionによる通常文字はxterm既定の `macOptionIsMeta:false` に合わせて文字入力へ委ね、ESCを付けません。OS判定はサーバー側ではなく入力元ブラウザーの `navigator.platform` を使います。Ctrl・Alt付きのTab、修飾Enter、修飾Insert / PageUp / PageDownも送信し、ブラウザー操作やxtermのローカルスクロールに使いません。日本語配列の記号はkeyCodeのUS配列換算ではなく `event.key` を使います。IME変換中・AltGraph・Deadキーはxtermへ委ね、keydownだけで送信してkeypress / keyupの重複を防ぎます。受信側CLIの対応によって解釈は異なります。`node --test frontend_ide/checks/term-keyboard.test.mjs frontend_ide/checks/term-size.test.mjs` と `node frontend_ide/scripts/check-term-keyboard.mjs` で、英字・記号・複合修飾、コピー、日本語の通常貼り付けとbracketed paste、IME、二重送信を確認します。実ブラウザー検証は専用プロファイルと模擬WebSocketを使い、コマンドを実行しません。
 
 
 修飾Enterは接続先の入力形式を優先します。WindowsのCodexはWin32の入力レコードを読むため、CSI-uの文字列だけではShift / Ctrlを伝えられない場合があります。xtermの公開parserでConPTYの `CSI ? 9001 h/l` を監視し、有効な間だけShift / Ctrl / Alt+Enterの全組合せを `CSI Vk;Sc;Uc;Kd;Cs;Rc _` へ変換します。EnterはVk=13、Sc=28、UcはCtrl付きならLF=10、それ以外はCR=13です。修飾はShift=16・Ctrl=8・Alt=2、テンキーEnterはさらに256です。UcをCRへ固定すると、Node/libuv等の文字ストリーム入力でCtrl+Enterが通常Enterへ化けるため、修飾ビットと文字値の両方を保持します。Alt+EnterはCRとAltビットを送り、文字入力側でESC+CRへ変換されます。keydownごとに押下・解放を一組で送り、フォーカス移動時のkeyup欠落と二重送信を避けます。これは修飾Enterの補完であり、全キーのWin32入力実装ではありません。
 
 ブラウザーのOSやCLI名で形式を固定しないでください。要求がない端末では従来のCSI-u / ESC+CRを保ち、通常Enter・IME・Meta・コピー・貼付けは変更しません。parserハンドラーはfalseを返して同じCSI内のカーソル・bracketed paste等をxtermへ渡します。表示クリアでは入力モードを保持し、再接続・RIS（`ESC c`）では解除、破棄時は購読を解放します。再接続では旧接続の追加出力を捨て、xtermに残る未解析出力を空writeの完了で排出してからリセット・新PTYの開始を行います。`terminal.reset()`だけでは未解析の9001要求が後から復活するため、連続再接続と破棄の確認も必要です。CLI再接続は同じPTYを保つため、サーバーの `input-mode.mjs` でもモードを出力履歴とは別に保存し、末尾256KiBの履歴を再生した後に `keyboard-mode` 通知で復元します。起動時の9001要求が履歴から消えても維持します。Kitty / modifyOtherKeysの完全対応を宣言する応答は追加しません。
 
-修飾Enterの確認は `node --test frontend_ide/checks/console-keyboard.test.mjs frontend_ide/checks/console-size.test.mjs frontend_ide/checks/console-enter-pty.test.mjs`。実xtermの分割・複合CSI解析、既存モードの保持、再接続・破棄、Unix実PTYのバイト列を確認します。Windowsでは同じPTYテストがPowerShellの `Console.ReadKey` でEnter・全7組の修飾・KeyChar（Ctrl付きLF／それ以外CR）を確認し、他OSではこの1件をskipします。`node frontend_ide/scripts/check-console-keyboard.mjs` は現行Vueソースを一時コンパイルし、隔離Chromiumと模擬WebSocketでブラウザー入力・クリア・再起動を検証して撮影します。`--compile-only` はブラウザーを起動しません。Windowsの実Codexで改行・通常Enter送信・日本語IMEを確認する試験と、WSL / SSH先でのConPTY変換確認は別途必要です。
+修飾Enterの確認は `node --test frontend_ide/checks/term-keyboard.test.mjs frontend_ide/checks/term-size.test.mjs frontend_ide/checks/term-enter-pty.test.mjs`。実xtermの分割・複合CSI解析、既存モードの保持、再接続・破棄、Unix実PTYのバイト列を確認します。Windowsでは同じPTYテストがPowerShellの `Term.ReadKey` でEnter・全7組の修飾・KeyChar（Ctrl付きLF／それ以外CR）を確認し、他OSではこの1件をskipします。`node frontend_ide/scripts/check-term-keyboard.mjs` は現行Vueソースを一時コンパイルし、隔離Chromiumと模擬WebSocketでブラウザー入力・クリア・再起動を検証して撮影します。`--compile-only` はブラウザーを起動しません。Windowsの実Codexで改行・通常Enter送信・日本語IMEを確認する試験と、WSL / SSH先でのConPTY変換確認は別途必要です。
 
-Win32のCtrl+Enterと、拡張プロトコルの独立したCtrl+Enterは、文字入力のCLIでは同じ動作になるとは限りません。Claude CodeではLF（Ctrl+J）とAlt+Enterは改行ですが、CSI-u等で区別されたCtrl+Enterはv2.1.275以降、既定で `chat:sendNow`（即時送信）です。Console側で全形式を改行へ置き換えたり、Claudeのキー設定を変更したりしません。CLIの版・キー設定・Windowsの入力方式を確認し、転送したバイトの正しさと実CLIの動作確認を分けてください。Windows実機での未実施試験を、Linuxの単体・ブラウザー試験で合格扱いにしません。
+Win32のCtrl+Enterと、拡張プロトコルの独立したCtrl+Enterは、文字入力のCLIでは同じ動作になるとは限りません。Claude CodeではLF（Ctrl+J）とAlt+Enterは改行ですが、CSI-u等で区別されたCtrl+Enterはv2.1.275以降、既定で `chat:sendNow`（即時送信）です。Term側で全形式を改行へ置き換えたり、Claudeのキー設定を変更したりしません。CLIの版・キー設定・Windowsの入力方式を確認し、転送したバイトの正しさと実CLIの動作確認を分けてください。Windows実機での未実施試験を、Linuxの単体・ブラウザー試験で合格扱いにしません。
 
 入力形式の参照先: [Microsoft ConPTY仕様](https://github.com/microsoft/terminal/blob/main/doc/specs/%234999%20-%20Improved%20keyboard%20handling%20in%20Conpty.md)、[Microsoft Return文字変換](https://github.com/microsoft/terminal/blob/main/src/terminal/input/terminalInput.cpp)、[libuv Windows文字入力](https://github.com/libuv/libuv/blob/v1.x/src/win/tty.c)、[Codex Windows入力モード](https://github.com/openai/codex/blob/main/codex-rs/tui/src/tui/windows_console.rs)、[Claudeキー設定](https://code.claude.com/docs/en/keybindings)、[Claude端末設定](https://code.claude.com/docs/en/terminal-config)。
 
-Consoleの入力フォーカス復帰は `src/components/コンソール/入力フォーカス.js` が担当します。窓・ブラウザータブの復帰とConsole内の通常の余白クリックで、接続済み・表示中の同じxtermへ戻します。窓自体の前面化、入力の合成、シェルのカーソル移動はしません。ボタン・入力欄・リンク・文字選択・端末内部の操作を優先し、非表示・切断・破棄時は復帰しません。WebのConsoleタブを明示的に開いた時は従来どおり入力先を戻しますが、その後の新しいクリックやフォーカス移動を優先します。購読と復帰待ちタイマーは破棄時に解除します。
+Termの入力フォーカス復帰は `src/components/ターミナル/入力フォーカス.js` が担当します。窓・ブラウザータブの復帰とTerm内の通常の余白クリックで、接続済み・表示中の同じxtermへ戻します。窓自体の前面化、入力の合成、シェルのカーソル移動はしません。ボタン・入力欄・リンク・文字選択・端末内部の操作を優先し、非表示・切断・破棄時は復帰しません。WebのTermタブを明示的に開いた時は従来どおり入力先を戻しますが、その後の新しいクリックやフォーカス移動を優先します。購読と復帰待ちタイマーは破棄時に解除します。
 
-フォーカス境界の単体・実Vue setup検証は `node --test checks/console-focus.test.mjs checks/console-size.test.mjs checks/console-window-title.test.mjs`。`node scripts/check-console-focus.mjs --compile-only` は配布用buildなしでVue・xterm・scoped CSSをコンパイルします。`node scripts/check-console-focus.mjs` は隔離Chromiumと模擬WebSocketで、余白クリック直後の日本語入力・再復帰・ボタン・選択保持・タブ・再起動・破棄を確認して `temp/console-focus-check/` に撮影します。実行にはChromiumのローカルソケット権限が必要です。この試験の窓focus通知は模擬のため、実Windows/macOSの非アクティブ窓のクリック、Alt+Tab、最小化からの復元、IMEの変換途中の復帰は別途実機で確認してください。
+フォーカス境界の単体・実Vue setup検証は `node --test checks/term-focus.test.mjs checks/term-size.test.mjs checks/term-window-title.test.mjs`。`node scripts/check-term-focus.mjs --compile-only` は配布用buildなしでVue・xterm・scoped CSSをコンパイルします。`node scripts/check-term-focus.mjs` は隔離Chromiumと模擬WebSocketで、余白クリック直後の日本語入力・再復帰・ボタン・選択保持・タブ・再起動・破棄を確認して `temp/term-focus-check/` に撮影します。実行にはChromiumのローカルソケット権限が必要です。この試験の窓focus通知は模擬のため、実Windows/macOSの非アクティブ窓のクリック、Alt+Tab、最小化からの復元、IMEの変換途中の復帰は別途実機で確認してください。
 
-Consoleの入力前はCodeと同じ `開始表示.vue` とアイコンを使い、実PTYの入力欄を下部へ小さく配置します。xtermの `onKey` とDOMの `input` / `paste` で初回操作を検出し、同じ端末要素を拡張・再fitします。シェルや端末を作り直さず、初回の文字・日本語IME・貼り付けを失わないようにしてください。シェルが自動送信する制御応答を入力開始と誤認しないよう、`onData` だけで判定しません。再起動時は初期表示へ戻し、タブ切替では表示状態を保持します。
+Termの入力前はCodeと同じ `開始表示.vue` とアイコンを使い、実PTYの入力欄を下部へ小さく配置します。xtermの `onKey` とDOMの `input` / `paste` で初回操作を検出し、同じ端末要素を拡張・再fitします。シェルや端末を作り直さず、初回の文字・日本語IME・貼り付けを失わないようにしてください。シェルが自動送信する制御応答を入力開始と誤認しないよう、`onData` だけで判定しません。再起動時は初期表示へ戻し、タブ切替では表示状態を保持します。
 
-CLI補完候補は `コンソールパネル.vue` でカーソル直後へ薄いグレーの文字として重ねます。xtermのセル寸法・表示中の行位置から配置し、右端で折り返します。端末バッファには候補を書き込まず、Tab確定時だけPSReadLineが入力へ追加します。描画・スクロール・サイズ変更時に位置を更新し、別画面や終了時には表示しません。候補を常設の下部パネルへ戻さず、下部はキー操作の案内だけにします。
+CLI補完候補は `ターミナルパネル.vue` でカーソル直後へ薄いグレーの文字として重ねます。xtermのセル寸法・表示中の行位置から配置し、右端で折り返します。端末バッファには候補を書き込まず、Tab確定時だけPSReadLineが入力へ追加します。描画・スクロール・サイズ変更時に位置を更新し、別画面や終了時には表示しません。候補を常設の下部パネルへ戻さず、下部はキー操作の案内だけにします。
 
-タイトルバーはCodeと同じ `状態バー.vue`、プロジェクトバーは共通の `component-toolbar` を使い、フォルダ名と完全パスのツールチップを表示します。シェルの状態は下部に分け、シアンバーはtoolsの疎通だけで決めます。`aidiy_console/console.mjs` は `ファイル機能/ai-search.mjs` の接続先解決（`PORT_TOOLS`、既定8095）を共用し、`aidiy_code_agents/ping` を10秒ごと・タイムアウト1.5秒で確認します。tools停止でシェルを終了させず、シェルの自然終了後もtoolsの状態通知は維持します。
+タイトルバーはCodeと同じ `状態バー.vue`、プロジェクトバーは共通の `component-toolbar` を使い、フォルダ名と完全パスのツールチップを表示します。シェルの状態は下部に分け、シアンバーはtoolsの疎通だけで決めます。`aidiy_term/term.mjs` は `ファイル機能/ai-search.mjs` の接続先解決（`PORT_TOOLS`、既定8095）を共用し、`aidiy_code_agents/ping` を10秒ごと・タイムアウト1.5秒で確認します。tools停止でシェルを終了させず、シェルの自然終了後もtoolsの状態通知は維持します。
 
-Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッションだけにPSReadLineのTabハンドラーを設定します。入力が対象CLI名だけでカーソルが末尾なら、`scripts/cli_bat` と同じ権限省略オプションを追加し、実行はEnterに任せます。対象は `codex` / `claude` / `copilot` / `agy` / `grok` / `aidiy_hermes` で、Claudeは既存バッチに合わせて `--chrome` も追加します。モデルは変更しません。それ以外は元のTab処理へ戻します。`src/components/コンソール/コマンド補完.js` の `cliCompletions` を候補表示とシェル補完で共用し、履歴予測の斜体表示と確定済み引数を区別します。ユーザーのプロファイルは変更しません。検証では同名の模擬関数で引数を確認し、実CLIを起動しないでください。
+Windowsの `aidiy_term/powershell-init.ps1` は、その端末セッションだけにPSReadLineのTabハンドラーを設定します。入力が対象CLI名だけでカーソルが末尾なら、`scripts/cli_bat` と同じ権限省略オプションを追加し、実行はEnterに任せます。対象は `codex` / `claude` / `copilot` / `agy` / `grok` / `aidiy_hermes` で、Claudeは既存バッチに合わせて `--chrome` も追加します。モデルは変更しません。それ以外は元のTab処理へ戻します。`src/components/ターミナル/コマンド補完.js` の `cliCompletions` を候補表示とシェル補完で共用し、履歴予測の斜体表示と確定済み引数を区別します。ユーザーのプロファイルは変更しません。検証では同名の模擬関数で引数を確認し、実CLIを起動しないでください。
 
-`aidiy_console` は `aidiy_console/launch.mjs` → 共通 `launch.mjs` の `--app console` で起動します。IDEのElectron版は「Console」で独立した子窓を複数開き、Web版は `コンソールパネル.vue` をConsoleタブに保持します。利用モードはオンライン・オフライン両方で有効です。setup / start / cleanup の表示と処理は Console → Code → Live → IDE の順に揃えます。`aidiy_console/_setup.py` はランチャー、`_start.py` は環境確認・独立起動・プロセス照合、`_cleanup.py` は停止とランチャー解除を担当し、依存物は共通UIにまとめます。
+`aidiy_term` は `aidiy_term/launch.mjs` → 共通 `launch.mjs` の `--app term` で起動します。IDEのElectron版は「Term」で独立した子窓を複数開き、Web版は `ターミナルパネル.vue` をTermタブに保持します。利用モードはオンライン・オフライン両方で有効です。setup / start / cleanup の表示と処理は Term → Code → Live → IDE の順に揃えます。`aidiy_term/_setup.py` はランチャー、`_start.py` は環境確認・独立起動・プロセス照合、`_cleanup.py` は停止とランチャー解除を担当し、依存物は共通UIにまとめます。
 
-旧 `aidiy_term` から更新した場合は setup を再実行してください。同じ配置先が所有する旧ランチャーだけを解除して `aidiy_console` を登録します。他の作業コピーのランチャー・プロファイル・ユーザーデータは変更しません。
+`aidiy_term/term.mjs` はランダムパス付きのローカルサーバー、`viewer/panels.mjs` は同一公開元への中継です。Host / Origin・IDE利用状態を検証し、シェル・開始フォルダはサーバー側で決めます。入力サイズと端末寸法を制限し、描画完了のACKで出力を制御します。パネル初期化中・終了中のセッション切替では、破棄中のサーバーも完了まで待ちます。
 
-`aidiy_console/console.mjs` はランダムパス付きのローカルサーバー、`viewer/panels.mjs` は同一公開元への中継です。Host / Origin・IDE利用状態を検証し、シェル・開始フォルダはサーバー側で決めます。入力サイズと端末寸法を制限し、描画完了のACKで出力を制御します。パネル初期化中・終了中のセッション切替では、破棄中のサーバーも完了まで待ちます。
+`aidiy_term/term-process.mjs` は `aidiy_term/term-worker.mjs` を端末ごとに起動します。ネイティブのPTYと補助スレッドをそのプロセスに閉じ込め、ElectronからもNodeモードで動かします。Windowsの終了はそのworkerのプロセスツリーを停止します。WebSocket切断・ページ再読込・窓終了・IDE終了で停止し、タブ非表示だけでは切断しません。自然終了では末尾のIPC出力を送り終えてからworkerを終了します。ConPTYをIDEメインプロセスで直接保持すると補助スレッドの寿命がIDEに影響するため、この境界を維持してください。
 
-`aidiy_console/console-process.mjs` は `aidiy_console/console-worker.mjs` を端末ごとに起動します。ネイティブのPTYと補助スレッドをそのプロセスに閉じ込め、ElectronからもNodeモードで動かします。Windowsの終了はそのworkerのプロセスツリーを停止します。WebSocket切断・ページ再読込・窓終了・IDE終了で停止し、タブ非表示だけでは切断しません。自然終了では末尾のIPC出力を送り終えてからworkerを終了します。ConPTYをIDEメインプロセスで直接保持すると補助スレッドの寿命がIDEに影響するため、この境界を維持してください。
+- `node --test frontend_ide/checks/term.test.mjs`: 不正接続・寸法・フロー制御、実PTYの日本語、開始フォルダ、リサイズ、Ctrl+C、シェル配下の子プロセスの終了。
+- `node frontend_ide/scripts/check-term.mjs`: 専用ブラウザで日本語入力、タブ保持、狭い画面、exit後の再起動、利用終了。WindowsのChrome / Edgeで実行します。
+- `node frontend_ide/scripts/check-term-desktop.mjs`: 専用Electronプロファイルで日本語入力、複数窓、個別終了、IDEとの終了連携。
+- `node frontend_ide/scripts/check-launcher.mjs term`: プロンプト復帰、同一プロジェクトの複数起動、600×400（小画面では縮小）、右上への配置、個別終了、待機指定、サーバー終了。
 
-- `node --test frontend_ide/checks/console.test.mjs`: 不正接続・寸法・フロー制御、実PTYの日本語、開始フォルダ、リサイズ、Ctrl+C、シェル配下の子プロセスの終了。
-- `node frontend_ide/scripts/check-console.mjs`: 専用ブラウザで日本語入力、タブ保持、狭い画面、exit後の再起動、利用終了。WindowsのChrome / Edgeで実行します。
-- `node frontend_ide/scripts/check-console-desktop.mjs`: 専用Electronプロファイルで日本語入力、複数窓、個別終了、IDEとの終了連携。
-- `node frontend_ide/scripts/check-launcher.mjs console`: プロンプト復帰、同一プロジェクトの複数起動、600×400（小画面では縮小）、右上への配置、個別終了、待機指定、サーバー終了。
-
-画面確認画像は `temp/console-check/` に日本時間の日時付きで保存します。画面の変更を実行中の配信へ反映する場合は共通Vueの配布ファイルを再生成し、サーバー側を変えた場合は対象アプリを再起動します。PTYの依存は `node-pty`、画面は `@xterm/xterm` / `@xterm/addon-fit`。第三者ライセンスを `scripts/build.mjs` の通知生成へ含めます。新規環境の `npm ci` でPTYのビルドが必要になるOSでは、そのOSのC++ビルド環境も用意してください。
+画面確認画像は `temp/term-check/` に日本時間の日時付きで保存します。画面の変更を実行中の配信へ反映する場合は共通Vueの配布ファイルを再生成し、サーバー側を変えた場合は対象アプリを再起動します。PTYの依存は `node-pty`、画面は `@xterm/xterm` / `@xterm/addon-fit`。第三者ライセンスを `scripts/build.mjs` の通知生成へ含めます。新規環境の `npm ci` でPTYのビルドが必要になるOSでは、そのOSのC++ビルド環境も用意してください。
 
 
 ## 状態確認・最終更新・下書き連携の境界
@@ -412,7 +410,7 @@ Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッション
 - `ファイルビューア.vue` は `ファイル参照.js` でgrepの行・列・検索語を現在の内容と照合します。Monacoと簡易表示の双方に位置を伝え、CRLF/CR/LFとUTF-16列を扱います。本文変更や削除で不一致なら再検索の案内にします。
 - `下書き連携ダイアログ.vue` は初回表示時に候補を取得し、有効な `frontmostTargetId` を初期選択します。閉じて再表示した時も、その時点の最前面を取り直します。連携先行の「最前面を再選択」は候補を取り直し、`frontmostTargetId` を選び直します。通常の候補更新では有効な手動選択を保持し、再選択だけで下書きを追加しません。有効な候補が1件なら最前面情報の有無によらず名前を表示して選択します。最小化・非表示などで最前面情報がない場合は「最前面は未確認」と明示し、最前面と断定しません。初回表示・再選択時に複数候補の最前面を特定できなければ未選択として案内し、一覧での明示選択を残します。ゼロ件で自動起動・自動送信はしません。`コードパネル.vue` / `ライブパネル.vue` の `draftTarget()` / `insertDraft()` は `src/components/下書き連携/下書き受け渡し.js` を共有し、今の下書きに追記します。Codeは合計200,000文字、Liveは20,000文字、選択本文は80,000文字までで、超過は切り詰めず拒否します。Codeの新規・履歴切替など会話変更操作では、要求を送る前に連携先を同期的に無効化します。途中の旧会話stateやHTTP成功だけで復帰させず、要求先の会話stateまたは変更前の確定拒否を待ちます。VS CodeはrequestId付きのconversationChangeResultと会話stateを照合し、実行中・モデル変更中・消えた履歴の拒否でも安全に復帰します。マルチルートの新規だけは、ホストが成功応答で確認した別の作業フォルダへ移れます。履歴選択は要求した会話ID・元のプロジェクトを維持します。応答喪失や500は適用済みか判断できないので、旧下書きのまま連携を停止し再読み込みを案内します。`checks/code-transition-handoff.test.mjs` は実テンプレートのクリックとHTTP/SSE・VS Code経路を検証します。
 - Webは `連携先登録.js` のマウント固有IDと会話contextIdを再照合します。ピン留めはAppが実際に開いたWindow参照だけを登録し、同じ公開元・IDEセッション・プロジェクトと送信元の生存を確認します。BroadcastChannelやlocalStorageに本文を流さないでください。
-- Electronは `デスクトップ/draft-router.cjs` が所有IDE、セッション、窓ID、会話contextId、プロジェクトを検証し、限定したpreloadのIPCへ渡します。受信結果のACKまで待ち、期限切れ・閉じた窓・再配送を扱います。表示名やCodeの配置番号だけで相手を決めないでください。最前面候補はホストのウィンドウfocus順を記録し、現在の所有IDE・セッション・登録に一致する表示中のCode / Liveだけから選びます。IDE・ビューア・ダイアログへのフォーカスや登録情報の更新では順番を変えず、閉鎖・最小化・非表示の窓は最前面候補から除外します。Webは最後に表示したCode / Live種別をマウント固有IDへ変換し、Console・ダイアログを候補にせず、利用再開時に記録を消します。
+- Electronは `デスクトップ/draft-router.cjs` が所有IDE、セッション、窓ID、会話contextId、プロジェクトを検証し、限定したpreloadのIPCへ渡します。受信結果のACKまで待ち、期限切れ・閉じた窓・再配送を扱います。表示名やCodeの配置番号だけで相手を決めないでください。最前面候補はホストのウィンドウfocus順を記録し、現在の所有IDE・セッション・登録に一致する表示中のCode / Liveだけから選びます。IDE・ビューア・ダイアログへのフォーカスや登録情報の更新では順番を変えず、閉鎖・最小化・非表示の窓は最前面候補から除外します。Webは最後に表示したCode / Live種別をマウント固有IDへ変換し、Term・ダイアログを候補にせず、利用再開時に記録を消します。
 - LiveのWebパネルは隠してもマウントを保持し、`visible` でマイク取得待ちを無効化し音声入出力を止めます。会話・下書き・スピーカーの選択を残し、再表示でマイクを自動再開しません。
 
 `viewer/file-scan.mjs` の走査は同じサーバー内でフィルターと走査範囲（通常/grep）ごとに1秒だけ共有し、同時実行は1本です。grepのbackup除外は走査前に行い、対象外の保存版で候補・フォルダ・深さ・時間上限を消費しないようにします。通常のgalaxy/latestとは進行中の要求・キャッシュを分離し、通常一覧のbackup表示条件は維持します。明示操作の `fresh=1` は完了済みキャッシュを使わず、進行中の同じ走査は共有します。既定上限は30,000ファイル（backupフィルターは100,000）、10,000フォルダ、200,000項目、128階層、10秒。待機者の個別中断、全待機者の中断、利用終了・切替、サーバー終了を伝播し、中断した走査はキャッシュに残しません。常時watcherは使いません。
@@ -423,7 +421,7 @@ Windowsの `aidiy_console/powershell-init.ps1` は、その端末セッション
 
 ## 3D / 2D の表示部品を変更するとき
 
-- `App.vue` は利用セッションごとの `viewMode` を持ち、開始時は3Dにします。プロジェクト名の直後に3D / 2D、右側にConsole / Code / Liveを配置します。表示モードを `SpaceView` やCode / Live / Consoleのkeyに含めないでください。
+- `App.vue` は利用セッションごとの `viewMode` を持ち、開始時は3Dにします。プロジェクト名の直後に3D / 2D、右側にTerm / Code / Liveを配置します。表示モードを `SpaceView` やCode / Live / Termのkeyに含めないでください。
 - `開発スペース.vue` は共通の走査結果・選択・エクスプローラー・読み取り専用ビューアを結びます。`宇宙キャンバス.vue` は既存の `createSpace()` を包む薄いライフサイクル部品です。3Dエンジン内の既存の走査・選択・移動管理を共用し、二重取得や別セッションを作りません。
 - 3Dは現在フォルダの直下ファイルを惑星、直下サブフォルダを銀河にし、各銀河の全子孫ファイルを1ファイル＝1星で描きます。深いフォルダによる集約・間引きは行いません。空フォルダは個別のファイル星を持たず、直下に来た時は空の銀河として移動できます。星の座標は銀河内の相対パスで区別し、色・容量によるサイズ・更新や検索の強調もファイル単位で保ちます。クリック・検索・履歴・最終更新は実ファイルの親へ移動します。銀河の更新件数は走査・マーク変更時に集計し、毎フレームの描画やhoverで元ツリーを再走査しないでください。新規星の誕生時刻と描画時刻はどちらも実時刻を使い、通常サイズの4倍から6秒で元へ戻します。`checks/star-depth.test.mjs` で集約前の座標・色・サイズ・瞬き、同名ファイルの区別、12,000件の深いファイルの個別描画・当たり判定、検索・航路・追加削除・6秒の新規強調を確認します。非表示時の描画停止・ラベル幅キャッシュ・通信周期の負荷改善は維持してください。
 - `setViewMode('2d')` はRAFとワープの待機・アニメーションを中断し、3Dのキー・ポインター操作を止めます。2Dの最終更新追跡は、共有の自動探索ON/OFF・手動操作後の猶予・手動プレビュー保護を守るイベント駆動です。探索枠の回転条件も3Dと共通にし、更新候補がない待機中も自動探索が可能なら回します。手動猶予の終了時だけ1回起きて枠を復帰し、更新予約があれば追跡します。OFF・モード変更・フィルター・セッション・非表示・破棄で古い処理を無効にし、常時のRAF・追加ポーリングは作りません。`goTo` / `ascend` / ブラウザ履歴は2D中だけ直接階層を切り替えます。3Dへ戻す時は同じworldと現在の選択を保ち、描画予約を必ず1本だけ再開してください。ページ非表示からの復帰でも2DのRAFを再開しません。
@@ -509,11 +507,11 @@ IDE連携CodeのOSタイトルは、既存の窓配置番号 `record.slot + 1` �
 `node --test frontend_ide/checks/draft-handoff.test.mjs frontend_ide/checks/draft-target-selection.test.mjs frontend_ide/checks/code-window-title.test.mjs` で、フォーカス順と作成順の違い、対象外窓、閉鎖・最小化・未登録・新規窓、初回・再表示の最前面選択、再選択と明示選択、1件・不明候補、連打・遅延応答・取得失敗、追加なし、Webピン留め・利用再開、Code追加・閉鎖・番号再利用を確認します。ダイアログは実Vueテンプレートをメモリ内へマウントし、App・Codeは実setup、Electronは実createWindowと模擬OSを使います。実OSの重なり順、横長・狭幅の見た目、タイトル表示は実画面で別途確認してください。
 
 
-## IDE連携Consoleの番号付きタイトル
+## IDE連携Termの番号付きタイトル
 
-IDEから開いたConsoleは、既存の `reserveTermSlot()` が確保した配置番号 `record.slot + 1` を使って `AiDiy IDE / Console n` と表示します。OSタイトルと `コンソールパネル.vue` の見出しは、Codeと同じ限定 `title()` IPCで一致させます。番号用の別カウンターは追加しません。配置slotは単独Consoleや別IDEとも共有するため、使用中のslotがあれば番号は1から始まらない場合があります。閉鎖されたslotは再利用し、単独ConsoleとWeb内Consoleの表示、初期サイズ・位置は維持します。
+IDEから開いたTermは、既存の `reserveTermSlot()` が確保した配置番号 `record.slot + 1` を使って `AiDiy IDE / Term n` と表示します。OSタイトルと `ターミナルパネル.vue` の見出しは、Codeと同じ限定 `title()` IPCで一致させます。番号用の別カウンターは追加しません。配置slotは単独Termや別IDEとも共有するため、使用中のslotがあれば番号は1から始まらない場合があります。閉鎖されたslotは再利用し、単独TermとWeb内Termの表示、初期サイズ・位置は維持します。
 
-`node --test frontend_ide/checks/code-window-title.test.mjs frontend_ide/checks/console-window-title.test.mjs frontend_ide/checks/window-layout.test.mjs` で、複数起動、単独Consoleとのslot共有、閉鎖・再起動、OSタイトルの維持、送信元照合、Vue見出しへの反映、取得失敗、破棄後の遅延応答、配置の回帰を確認します。Electronと端末接続は模擬環境、Vueは実setup・実テンプレートをコンパイルして検証します。実OSでのタイトル表示やDPIは別途実画面で確認してください。
+`node --test frontend_ide/checks/code-window-title.test.mjs frontend_ide/checks/term-window-title.test.mjs frontend_ide/checks/window-layout.test.mjs` で、複数起動、単独Termとのslot共有、閉鎖・再起動、OSタイトルの維持、送信元照合、Vue見出しへの反映、取得失敗、破棄後の遅延応答、配置の回帰を確認します。Electronと端末接続は模擬環境、Vueは実setup・実テンプレートをコンパイルして検証します。実OSでのタイトル表示やDPIは別途実画面で確認してください。
 
 ## Codeの入力枠モーションとストリーム表示
 
@@ -583,7 +581,7 @@ Electronは親IDEからの限定IPCで、一度だけ使えるwindow名とabout:
 
 Web別窓、画面内Explorer/Viewer、軌跡一覧の開始は260msのopacityフェードです。通常の再描画や内容更新では繰り返さず、閉→開・明示的な本体への復帰でだけ開始します。別Documentへ移す際は元Documentのフェードを解除します。Electron別窓は既存 `host/scripts/window-opening.cjs` の750ms・.55倍からのズーム演出を使います。reduced-motionでは両方式とも開始演出を省略します。フォルダ更新線の演出は独立しています。別窓は不透明背景、本体へ戻すと既存すりガラスの適用範囲へ戻ります。
 
-IDE / Code / Live / Console / Viewer と Explorer・軌跡・比較・Web 別窓には、開いた後に光や影が走る演出を付けません。`aidiy-window-shown` やパネルのフェード完了から光沢を呼び出さず、光沢用の DOM・CSS・タイマーも生成しません。ネイティブの拡大表示と通常のフェードは維持します。`scripts/check-code-drag.mjs` は登場完了後の光沢が生成されないことと寸法・入力・ヒット判定を撮影して確認します。`AIDIY_OPENING_ONLY=1` を指定した `scripts/check-all-displays.mjs` は IDE 内のパネルとピン留め Explorer に絞って実 Electron で撮影し、指定なしの試験は Explorer / 軌跡 / 比較を含む全画面横断の確認も行います。`checks/panel-lifecycle.test.mjs` と `checks/panel-windows.test.mjs` は共有パネルの移動・復元・フェードを確認します。
+IDE / Code / Live / Term / Viewer と Explorer・軌跡・比較・Web 別窓には、開いた後に光や影が走る演出を付けません。`aidiy-window-shown` やパネルのフェード完了から光沢を呼び出さず、光沢用の DOM・CSS・タイマーも生成しません。ネイティブの拡大表示と通常のフェードは維持します。`scripts/check-code-drag.mjs` は登場完了後の光沢が生成されないことと寸法・入力・ヒット判定を撮影して確認します。`AIDIY_OPENING_ONLY=1` を指定した `scripts/check-all-displays.mjs` は IDE 内のパネルとピン留め Explorer に絞って実 Electron で撮影し、指定なしの試験は Explorer / 軌跡 / 比較を含む全画面横断の確認も行います。`checks/panel-lifecycle.test.mjs` と `checks/panel-windows.test.mjs` は共有パネルの移動・復元・フェードを確認します。
 
 `node --test frontend_ide/checks/panel-windows.test.mjs frontend_ide/checks/window-layout.test.mjs frontend_ide/checks/desktop-session.test.mjs frontend_ide/checks/navigation-parity.test.mjs` で配置・ズーム・負座標・予約とセッション境界・既存IDE連携を確認します。ビルド済み画面の検証は `node frontend_ide/scripts/check-panel-pins.mjs` と `node frontend_ide/scripts/check-panel-desktop.mjs` です。後者はセットアップ済みElectronを使い、必要ならELECTRON_PATHを指定します。一時プロジェクト/プロファイルだけを使い、実サービスや有料AI APIを起動しません。画像と結果は `temp/panel-pin-check/` に保存します。
 
@@ -612,7 +610,7 @@ IDEの `閲覧セッション.vue` は通常ビューアと更新履歴の比較
 
 Diagの通常・ミニ表示、Avatarの全Electronパネル、Discord・Slackも同じ処理を使います。他アプリは `デスクトップ/長押し窓移動.cjs` の `attachNativeWindowMove(window,screen,kind)` をmainの窓生成時に一度取り付けます。許可した種別は `diag` / `avatar` / `discord` / `slack`。窓種別の追加時は外側の長押し判定と内側の `code-drag.cjs` の許可集合を揃え、実際の共有controllerを通す回帰も確認します。mainが所有する窓のrecordを内部で作り、`code-drag.cjs` のDIP差分・サイズ補正・解除処理を共用します。rendererへ窓ID・任意座標・新しいIPCを公開しません。詳細な適用箇所・検証は各アプリの運用ナレッジを参照してください。
 
-Electron の Code / Live / Console / Browser / Viewer と、IDEからピン留めした Explorer / ファイルビューア・ソース比較 / 軌跡バーは、左ボタンを同じ位置で0.5秒静止して押すと窓を移動できます。背景などの移動対象面に適用し、入力欄・ボタン・リンク等の操作部品は除外します（軌跡バーの専用移動面など、明示した対象は例外）。押下・解放のnative入力は直ちに通し、短押しを再送しません。0.5秒の判定中に位置を動かした場合は窓移動を開始せず、通常の文字選択・dragを続けます。最大化・全画面の窓では開始しません。
+Electron の Code / Live / Term / Browser / Viewer と、IDEからピン留めした Explorer / ファイルビューア・ソース比較 / 軌跡バーは、左ボタンを同じ位置で0.5秒静止して押すと窓を移動できます。背景などの移動対象面に適用し、入力欄・ボタン・リンク等の操作部品は除外します（軌跡バーの専用移動面など、明示した対象は例外）。押下・解放のnative入力は直ちに通し、短押しを再送しません。0.5秒の判定中に位置を動かした場合は窓移動を開始せず、通常の文字選択・dragを続けます。最大化・全画面の窓では開始しません。
 
 成立後は標準の移動カーソルと静止した四方向マーカーでドラッグ状態を示します。`デスクトップ/窓移動表示.cjs` が透明なpopoverを最前面に置き、iframe・Monaco・比較の左右どちらでも表示します。回転・拡縮の演出は行いません。単にhtml要素のcursorだけを検査せず、押した位置のヒット要素と移動中の画像を確認してください。解放・Esc・blur・ページ遷移・画面破棄で解除し、移動後も解放をページへ渡して押下状態を片付け、成立したgestureのclickだけを抑止して誤操作を防ぎます。
 
@@ -624,7 +622,7 @@ IDE本体の確認は `$env:AIDIY_ALL_CENTER_ONLY='1'; node scripts/check-all-di
 
 ネイティブ側 `デスクトップ/code-drag.cjs` は窓の種別・信頼した主frame・tokenを検証します。`development:window-move-*` は各モジュール自身の窓、またはIDE本人から名前で指定した所有パネルだけを対象にします。ピン留めパネルは表示済み・同じ所有元・同じ起動世代を `panel-windows.cjs` で照合します。rendererから座標や任意の窓IDを受け取らず、Electronのカーソル・窓位置を同じDIP座標で差分計算します。lease・navigation・終了時にtokenと購読を破棄します。旧 `development:code-move-*` は互換入口として残します。
 
-検証は `node --test checks/native-window-move.test.mjs checks/code-drag.test.mjs checks/code-window-title.test.mjs`。実Electronでは `node scripts/check-module-move.mjs` がCode / Live / Consoleの単独・IDE起動と独立Viewer、`node scripts/check-panel-desktop.mjs` がExplorer項目・Viewer・比較・同一/別オリジンHTML・軌跡ボタン、`node scripts/check-browser.mjs` がGoogle入力欄・HTMLリンク・VR中の各画面を確認します。入力はElectronのsendInputEvent、窓の座標・寸法は実OSを使い、カーソル位置とフォーカス判定だけを模擬します。長押し後の誤クリック防止、短押しの入力・遷移、サイズ維持を検査します。`node scripts/check-code-drag.mjs` は旧renderer方式の隔離Chromeテストとして残します。
+検証は `node --test checks/native-window-move.test.mjs checks/code-drag.test.mjs checks/code-window-title.test.mjs`。実Electronでは `node scripts/check-module-move.mjs` がCode / Live / Termの単独・IDE起動と独立Viewer、`node scripts/check-panel-desktop.mjs` がExplorer項目・Viewer・比較・同一/別オリジンHTML・軌跡ボタン、`node scripts/check-browser.mjs` がGoogle入力欄・HTMLリンク・VR中の各画面を確認します。入力はElectronのsendInputEvent、窓の座標・寸法は実OSを使い、カーソル位置とフォーカス判定だけを模擬します。長押し後の誤クリック防止、短押しの入力・遷移、サイズ維持を検査します。`node scripts/check-code-drag.mjs` は旧renderer方式の隔離Chromeテストとして残します。
 
 Windowsの端数倍率では、`setPosition` が内部で窓サイズを再設定するとDIPの丸め誤差が累積します。静止中のheartbeatはlease更新だけにし、移動時は長押し開始時の寸法を明示した `setBounds` と1回の実測補正を使います。整数DIPでは一致できない座標の残差を次の長押しの基準寸法へ加算しないよう、最後の実測サイズと基準寸法を保持します。手動でサイズが変更された場合は新しい寸法を採用します。
 
@@ -682,13 +680,13 @@ VR中は `--vr-viewer-top:192px`・`--vr-viewer-bottom:48px` を確保し、最�
 
 右クリック・インライン名前変更・コピー・確認付きゴミ箱移動の境界と検証は [エクスプローラーファイル操作](./frontend_ide,エクスプローラーファイル操作.md) を参照してください。ビューア本文は読み取り専用のまま、項目管理だけを扱います。
 
-## CLI起動時のConsole窓
+## CLI起動時のTerm窓
 
-`launch.mjs --app console --cli <ID>` はCLI起動専用の指定をElectronへ渡し、`デスクトップ/window-layout.cjs` で作業領域の下端（端から8px）・横中央の約800×600pxに配置します。小さい画面では作業領域内に縮め、複数起動でも同じ下端中央から表示します。通常のConsoleとIDEから開く子Consoleは従来の左下・段違い配置を使います。確認は `node --test frontend_ide/checks/window-layout.test.mjs frontend_ide/checks/cli-owner-launch.test.mjs`、実窓はDPIの丸めによる数px差を含め下端中央の配置を確認します。
+`launch.mjs --app term --cli <ID>` はCLI起動専用の指定をElectronへ渡し、`デスクトップ/window-layout.cjs` で作業領域の下端（端から8px）・横中央の約800×600pxに配置します。小さい画面では作業領域内に縮め、複数起動でも同じ下端中央から表示します。通常のTermとIDEから開く子Termは従来の左下・段違い配置を使います。確認は `node --test frontend_ide/checks/window-layout.test.mjs frontend_ide/checks/cli-owner-launch.test.mjs`、実窓はDPIの丸めによる数px差を含め下端中央の配置を確認します。
 
 ## VR中のExplorer・軌跡バーの重なり順
 
-`デスクトップ/VRパネル前面.cjs` はVR中だけ、所属する独立窓のExplorer・軌跡バーをIDE本体の直前へ配置します。画面は別rendererでも、BrowserWindowは同じElectron mainの `windows` で管理されるため、新しいプロセス間通信やOS親子関係は不要です。独立起動した別IDEやConsole / Code / Liveなどの選択順は変更しません。
+`デスクトップ/VRパネル前面.cjs` はVR中だけ、所属する独立窓のExplorer・軌跡バーをIDE本体の直前へ配置します。画面は別rendererでも、BrowserWindowは同じElectron mainの `windows` で管理されるため、新しいプロセス間通信やOS親子関係は不要です。独立起動した別IDEやTerm / Code / Liveなどの選択順は変更しません。
 
 全窓のピン層は引き続き `floating` です。Windowsでは上位層名だけに頼らず、[ElectronのmoveAbove](https://www.electronjs.org/docs/latest/api/browser-window#winmoveabovemediasourceid) と本体の `getMediaSourceId()` で相対Z-orderを指定します。VR切替、表示、復元、本体の選択・最大化関連イベントで補正し、OSイベント完了後に一回だけ再適用します。focus()、blurからの奪い返し、定期タイマーは使用しません。非表示・最小化したパネルを勝手に表示せず、終了時に購読と未実行処理を解除します。通常表示へ戻ると補正を止め、ピンはVR前のユーザー選択へ戻します。
 
@@ -703,11 +701,11 @@ Windows実機では、すでに開いた両パネルでVRへ切り替え、本�
 
 `デスクトップ/VRパネル前面.cjs` は同じIDEに属するピンON子窓を本体より前へ配置します。Windowsでは選択済み本体の再前面化でfocus通知が出ないため、WM_WINDOWPOSCHANGEDも監視し、OS処理後に一度だけ補正します。フォーカス奪取、OS親子化、上位topmost層、周期的な再固定は使いません。
 
-確認では本体を続けて2回選ぶ操作、別アプリへの切替、VR開始後のViewer・Code・Live・Console追加を含めます。`checks/vr-panel-stacking-desktop.cjs` を実Electronで起動し、WindowsのZ順とWS_EX_TOPMOSTを照合します。headlessのAPI成功だけで前面維持の合格にしません。全画面では本体をずらして裏を探せないため、パネルが見え続け、直接選択・移動できることを実画面でも確認します。
+確認では本体を続けて2回選ぶ操作、別アプリへの切替、VR開始後のViewer・Code・Live・Term追加を含めます。`checks/vr-panel-stacking-desktop.cjs` を実Electronで起動し、WindowsのZ順とWS_EX_TOPMOSTを照合します。headlessのAPI成功だけで前面維持の合格にしません。全画面では本体をずらして裏を探せないため、パネルが見え続け、直接選択・移動できることを実画面でも確認します。
 
 ## 控えめなパネル外周
 
-Electron・Web・VS Code の共通画面はタイトル背景と同じグレー `#30343a` の1px外周を表示します。共通の `共通表示/タイトルバー配色.css` にある `--aidiy-panel-border` がタイトル背景トークンを参照し、Task / Team・Diag・Discordも同じ外枠色へ揃えます。`src/style.css` の`border-box` で外寸を変えず内側に1pxを確保し、操作やスクロールバーへ装飾を重ねません。固定ヘッダーとCanvasもその内側に合わせます。Web内の子パネルは既存の1px境界の色だけを変更し、Code / Live / Console自身へ枠を重ねません。Browser全画面の繰り出しパネルは通常外枠の対象から明示的に除外し、専用のすりガラスの縁だけを表示します。透明な軌跡窓とVR全面には画面全体の四角枠を追加せず、実パネルの境界を使います。検証は `node --test checks/panel-perimeter.test.mjs`。実機のElectron境界や倍率別の描画は別途目視確認してください。
+Electron・Web・VS Code の共通画面はタイトル背景と同じグレー `#30343a` の1px外周を表示します。共通の `共通表示/タイトルバー配色.css` にある `--aidiy-panel-border` がタイトル背景トークンを参照し、Task / Team・Diag・Discordも同じ外枠色へ揃えます。`src/style.css` の`border-box` で外寸を変えず内側に1pxを確保し、操作やスクロールバーへ装飾を重ねません。固定ヘッダーとCanvasもその内側に合わせます。Web内の子パネルは既存の1px境界の色だけを変更し、Code / Live / Term自身へ枠を重ねません。Browser全画面の繰り出しパネルは通常外枠の対象から明示的に除外し、専用のすりガラスの縁だけを表示します。透明な軌跡窓とVR全面には画面全体の四角枠を追加せず、実パネルの境界を使います。検証は `node --test checks/panel-perimeter.test.mjs`。実機のElectron境界や倍率別の描画は別途目視確認してください。
 
 ## Browserのマルチタブ
 
@@ -727,7 +725,7 @@ BrowserのURL欄の下にはページ名・識別情報・エラーの常設行�
 
 ## BrowserのAI解析とIDEソース選択
 
-`ファイル機能/browser-analysis.mjs` が `GET /api/browser-analysis?url=...` と `POST /api/browser-analysis`（`{url,title}`）を所有します。Browser単独ではこのAPIと接続状態だけを公開し、一般のファイルAPI・Console起動は公開しません。実行時はTools接続と現在の利用セッションを確認します。
+`ファイル機能/browser-analysis.mjs` が `GET /api/browser-analysis?url=...` と `POST /api/browser-analysis`（`{url,title}`）を所有します。Browser単独ではこのAPIと接続状態だけを公開し、一般のファイルAPI・Term起動は公開しません。実行時はTools接続と現在の利用セッションを確認します。
 
 解析依頼にはプロジェクトの `base_name` / `base_path` と、Electron本文から取得したURL・タイトルを渡します。概要と関連ソースを同時に調べ、結果は `{requestId,url,summary,files:[{role,path,summary}]}`。実在するプロジェクト内ファイル、相対パス、認証・除外フォルダ、リンク先を検証してから保存します。未確定URL・秘密値を含むURLは受け付けず、URL・ページ文言・ソース内の指示は調査データとして扱います。
 
@@ -779,7 +777,7 @@ rendererの本文矩形には同時に測定した小数のroot幅・高さ、fu
 
 ### 名称帯の配色と元画像の保持
 
-Taskの帯/文字は `#0F5C3A` / `#7DD3FC`、Teamはその反転（4.82:1）。Consoleは `#C15308` / 白（4.66:1）、Browserは `#F5A9C8` / 黒。AvatarはIDEと同じ `#7C3AED` / 白。Hermesは黒地に `#D4AF37` の文字・帯だけの枠、VSCodeは既存青帯/白文字を保ち帯だけ `#2F9BFF` の枠を使う。
+Taskの帯/文字は `#0F5C3A` / `#7DD3FC`、Teamはその反転（4.82:1）。Termは `#C15308` / 白（4.66:1）、Browserは `#F5A9C8` / 黒。AvatarはIDEと同じ `#7C3AED` / 白。Hermesは黒地に `#D4AF37` の文字・帯だけの枠、VSCodeは既存青帯/白文字を保ち帯だけ `#2F9BFF` の枠を使う。
 
 帯は従来の下25%、原画・透過・寸法は変更しない。SVGがpathならfill/strokeだけを変更する。Avatar/Hermesは環境フォントで旧字形が変わるため、正本SVG内の `caption-source` に従来PNGを固定埋込し、`caption-ink` の色変換filterと帯clipで字形を再着色する（画像ピクセルを編集しない）。Hermesの縮小済原画も同じ固定素材で保持する。Browserの既存描画に一致する字形はpathに固定済み。通常buildはPNGを使い、Inkscapeやフォントを要求しない。
 
@@ -788,7 +786,7 @@ Taskの帯/文字は `#0F5C3A` / `#7DD3FC`、Teamはその反転（4.82:1）。C
 
 ## Navi の変更・確認
 
-開発目標を案内するNaviは `src/components/開発スペース/Naviパネル.vue`、APIと結果検証は `ファイル機能/navigation.mjs` が所有します。IDEの起動欄で「Console」の手前にある「Navi」から、独立した作業窓を追加します。Explorerのバーガーや上下分割とは連動しません。既存の `createPanelWindow` を使い、Electronでは独立窓、Webではポップアップで開きます。複数窓は起動順のID（navi-1等）ごとに目標・結果・評価・モデル・実行状態を分離します。VRでは既存の独立窓の配置・ピン動作に従い、移行/復帰で窓を増やさず、入力と結果を保持します。パネル表示だけではAIを実行しません。
+開発目標を案内するNaviは `src/components/開発スペース/Naviパネル.vue`、APIと結果検証は `ファイル機能/navigation.mjs` が所有します。IDEの起動欄で「Term」の手前にある「Navi」から、独立した作業窓を追加します。Explorerのバーガーや上下分割とは連動しません。既存の `createPanelWindow` を使い、Electronでは独立窓、Webではポップアップで開きます。複数窓は起動順のID（navi-1等）ごとに目標・結果・評価・モデル・実行状態を分離します。VRでは既存の独立窓の配置・ピン動作に従い、移行/復帰で窓を増やさず、入力と結果を保持します。パネル表示だけではAIを実行しません。
 
 「ナビ」「再評価」の明示操作、または自動航行でCodeが成功した後の再評価で、`navigation_readonly.py` から既存CodeAgentsの選択済みモデルを使い、`AI実行オプション.読取専用予測()` を固定して目標とプロジェクト調査を依頼します。通常HTTP runや変更可能な経路へフォールバックしません。モデルには読取専用ツール境界が適用され、会話継続・履歴保存・出力ファイル保存は無効です。読取専用に未対応の設定では失敗として表示します。実作業の開始ではありません。Toolsのオンライン表示に関係なく、ローカル実行依存が利用できれば送信できます（後述の実行経路を参照）。依頼ID・目標・最大50項目・一意ID・整数0〜100の達成度・根拠・次のプロンプト案を検証し、成功結果を `_AIDIY/aidiy_navi/navigation/<プロジェクト実パスのSHA-256>/<窓ID>/latest.json` に原子的に保存します。AIはJSONを返答するだけで、アプリが検証後に専用状態へ保存します。対象プロジェクトに結果ファイルを作成しません。達成度はAI推定であり、人による検証済みの意味ではありません。無効な結果・期限切れ・利用セッション変更を成功扱いせず、前回の正常結果を維持します。表示はテキスト補間に限定し、AIのHTMLやコードを実行しません。
 
@@ -817,7 +815,7 @@ Naviの外枠はCodeと同じ状態バー・窓操作とプロジェクト表示
 初期サイズは `host/scripts/window-size.cjs` の幅480・ナビ高さ900を使います。Code / Liveの会話高さ600とは分けます。単独・IDE・VRは `windowBounds('navi', area)` で小画面の作業領域へ縮小し、Webパネルも高さ900を上限に、上部バーと下端16pxの余白を除く表示領域へ収めます。初期寸法だけを変更し、手動サイズ、Codeオン／オフの別々のサイズ保持、VR復帰時の既存窓の寸法は上書きしません。`checks/navigation-size.test.cjs`、`checks/panel-windows.test.mjs`、`checks/navigation-code-window.test.cjs`、`checks/navigation-popup-size.test.mjs` で確認します。
 
 - `aidiy_navi [作業フォルダ | --project 作業フォルダ]` はCode同様に起動フォルダを対象にする。`--browser`、`--new-window`、`--foreground`、`--port` を共通起動処理で扱う。モデルは画面から選び、起動引数で上書きしない。
-- IDEのアプリ選択（別窓・パネル・VRの3か所）は `Console`、`Navi`、`Code` … の順。Naviも他のアプリと同じく、押すと `launching==="navigation"` で全ボタンを無効にして「起動中…」を出し、`Naviパネル.vue` が窓を開き終えて `opened` を出すと解除する（`closed`、または10秒で解除）。順序と表示は `checks/folder-pages.test.mjs` が確認する。
+- IDEのアプリ選択（別窓・パネル・VRの3か所）は `Term`、`Navi`、`Code` … の順。Naviも他のアプリと同じく、押すと `launching==="navigation"` で全ボタンを無効にして「起動中…」を出し、`Naviパネル.vue` が窓を開き終えて `opened` を出すと解除する（`closed`、または10秒で解除）。順序と表示は `checks/folder-pages.test.mjs` が確認する。
 - 単独タイトルは `AiDiy Navi`。IDEの「Navi」からの窓は `AiDiy IDE / Navi 1` のように実際の起動番号を表示する。
 - 「＋ 新規」は現在窓の選択を解除する。「一覧」で同一プロジェクトの過去ナビを選ぶと目標・項目・評価を復元する。モデルは今の選択を保ち、履歴に残っていたモデルへ切り替えず `aidiy_navi_model.json` も更新しない（Codeの履歴選択も同じで、会話本文だけを開く）。評価は元の項目構成を保持し、そのナビの履歴を更新する。選択と一覧閲覧ではAIを呼ばない。
 - 保存先は対象プロジェクト外の `_AIDIY/aidiy_navi/navigation/<プロジェクト実パスのSHA256>/`。窓別の `navi-N/`（単独は `standalone-navi-N/`）に現在状態（モデルの選択は含めず、前項の `_AIDIY/aidiy_navi/aidiy_navi_model.json` に保存）、`history/` にナビ単位のJSONを保存する。プロジェクトの内容は変更しない。
@@ -835,10 +833,10 @@ Naviの依存可否は `navigationAvailability` でローカルPython・CLIの�
 Naviの新規ナビ作成では空入力をUI・APIの両方で拒否し、AIを呼びません。再評価は保存済み結果がある場合だけ利用でき、目標欄が編集済み・空欄でも押せます。押下時にそのナビの最終実行時の目標へ復元し、APIも保存済み目標を使います。実行失敗では前回の正常結果を保持し、押下後に新たに入力した下書きは完了時に上書きしません。「＋ 新規」は既定指示へ戻し、履歴選択は保存済み目標へ戻します。Code共通の開始表示部品にnavi用の英文を渡し、帯なしAiDiy画像を使います。タイトル行はCodeと同じ31px・14px文字、本文は黒、外枠はタイトル色1pxです。単独の接続表示は既存createCoreConnectionのTools ping、IDE別窓は所有IDEの接続バーに同期します。ナビ／評価の処理中はCodeのprompt-reflect演出を共有し、接続状態の表示とは分けます。
 
 
-### 独立アプリ追加時のConsoleとの照合
+### 独立アプリ追加時のTermとの照合
 
 Navi等の追加時は、起動入口・setup/cleanupの表示と登録順・setup/startの停止所属判定・共有依存使用中保護・Diagカタログ/アイコン配布・IDE起動導線・タイトル/サイズ・長押し移動のmain/renderer両側・ピン/VR・履歴/モデル保存・文書索引を確認する。旧アプリ一覧を固定したテストfixtureも更新する。
-NaviはConsoleのPTY、シェル自動承認、CLI補完、端末入力中継を使用しない。全体startの自動起動一覧へ追加せず、手動で開く。Diag診断の過去インベントリや過去試験結果を、現在の追加機能の実機確認済みとして書き換えない。
+NaviはTermのPTY、シェル自動承認、CLI補完、端末入力中継を使用しない。全体startの自動起動一覧へ追加せず、手動で開く。Diag診断の過去インベントリや過去試験結果を、現在の追加機能の実機確認済みとして書き換えない。
 
 
 
@@ -967,7 +965,7 @@ WindowsのGPUは `aidiy_cpu/windows-gpu.mjs` の標準CIM `Win32_PerfFormattedDa
 
 どちらのWindows経路も取得不能の場合と他OSは `nvidia-smi` のGPU全体利用率（複数台は最大値）へフォールバックする。すべて未対応・未導入・取得失敗ならnullとし、GPUの線と浮動ラベルを隠す。実測0%は保持する。約1秒ごとに最大60回分を保持し、取得不能区間は線をつながない。GPUは取得中も直前の値を使って非同期に更新し、CPU/RAMのHTTP応答を待たせない。初回はGPU値が届くまで数秒かかる場合があり、30秒以上古い値と全経路失敗後の値は表示しない。非表示中は新規要求と描画更新を止めるが、直近60回の履歴は保持する。仮想デスクトップ等から復帰した時は保持したグラフをそのまま表示し、即時の1回取得から再開する。非表示期間の補間・埋め合わせ要求は行わず、グラフは経過秒数でなく直近60回の取得結果を表す。復帰前の進行要求の遅延応答は履歴に混ぜない。終了時は進行中の要求・GPUコマンド・タイマーを解除する。
 
-APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのGPU固定照会は8秒・512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Console起動APIは公開しない。CPU用の追加依存はsysteminformation 5.33.19。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
+APIは利用中のIDEまたはCPU単独サーバーの `GET /api/system-metrics`。既存Host / Origin検証を維持し、GPUコマンドはshellを介さず、Windows PowerShellのGPU固定照会は8秒・512KiB、nvidia-smiは1.5秒・16KiBで制限する。PowerShellはプロファイルと対話入力を無効化し、外部入力をコマンドへ埋め込まない。失敗したWindows経路は30秒休止し、全取得失敗時も完了から30秒おきに再確認する。取得中の追加プロセス起動は抑止する。CPU単独版も共通サーバーを使い、Core / Toolsへは接続しない。ファイル操作・AI・Term起動APIは公開しない。CPU用の追加依存はsysteminformation 5.33.19。単独入口 `aidiy_cpu` とDiagのCPUアイコン、setup/start/cleanup登録を維持する。
 
 確認: `node --test frontend_ide/checks/cpu*.test.mjs frontend_ide/checks/cpu*.test.cjs`、`node --test --test-name-pattern="CPU uses" frontend_ide/checks/code-window-title.test.mjs`。`node frontend_ide/scripts/check-cpu.mjs --compile-only` はCPU部品とApp全体のimportを配布物を作らず検証する。`node frontend_ide/scripts/check-cpu.mjs` はChromiumで模擬値・取得失敗と復帰・GPU未取得・非表示と復帰・小型寸法・破棄を確認し `frontend_ide/temp/cpu-check/` に画像を保存する。Chromiumがローカルソケットを使える環境が必要。`cpu-windows-command.test.mjs` はWindowsではPowerShellの実行でCPU/GPUの独立した失敗・JSON変換・CPU更新器の暖機/再使用・GPU CIM・英語/日本語名解決・最終標本の選択をmock検証し、他OSではその実行部分をskipする。実ElectronとGPU実機での確認は別途必要。
 
@@ -1027,4 +1025,4 @@ Webブラウザは選択したFileの完全なパスを公開しないため、�
 
 ### タイトルバーの折り畳み
 
-Code / Live を基準に Console / Browser / Navi / Task / Team と Diagへ適用する。仕様・例外・再検証の正本は [Electronウィンドウ基本方針](./共通,Electronウィンドウ基本方針.md#タイトルバーの開閉標準)。共通部品を再利用し、DOMを破棄せず窓自体を220msで開閉する。Avatarなど対象外への展開は別指示を待つ。
+Code / Live を基準に Term / Browser / Navi / Task / Team と Diagへ適用する。仕様・例外・再検証の正本は [Electronウィンドウ基本方針](./共通,Electronウィンドウ基本方針.md#タイトルバーの開閉標準)。共通部品を再利用し、DOMを破棄せず窓自体を220msで開閉する。Avatarなど対象外への展開は別指示を待つ。

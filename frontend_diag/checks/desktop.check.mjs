@@ -161,7 +161,7 @@ test('Mac native clipboard shortcuts remain available without an Edit menu and C
  const edit=f.app.menu[0].submenu.filter(item=>item.role);
  assert.deepEqual(edit.map(item=>item.role),['undo','redo','cut','copy','paste','pasteAndMatchStyle','selectAll']);
  assert.ok(edit.every(item=>item.visible===false&&item.acceleratorWorksWhenHidden));
- assert.equal(f.win.webContents.listenerCount('before-input-event'),0,'IME・Console・エディタのキー入力は横取りしない');assert.equal(f.dialogs.length,0);
+ assert.equal(f.win.webContents.listenerCount('before-input-event'),0,'IME・Term・エディタのキー入力は横取りしない');assert.equal(f.dialogs.length,0);
  f.app.menu[0].submenu.find(item=>item.accelerator==='Command+W').click(null,f.win);await new Promise(r=>setImmediate(r));
  assert.equal(f.dialogs.length,1);assert.equal(f.win.closed,undefined);
  const other=await mainFixture();other.proc.emit('message',{type:'diag-start',url});await new Promise(r=>setImmediate(r));assert.equal(other.app.menu,undefined);assert.equal(other.app.dock.icon,undefined);

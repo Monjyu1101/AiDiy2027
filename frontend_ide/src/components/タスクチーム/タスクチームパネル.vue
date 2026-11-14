@@ -7,7 +7,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import { ref, provide, onMounted, onBeforeUnmount } from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import PanelToggle from '../コード/パネル表示切替.vue';
-import EscapingMark from '../コンソール/逃げるマーク.vue';
+import EscapingMark from '../ターミナル/逃げるマーク.vue';
 import TaskPanel from './components/AIタスク/AIタスク.vue';
 import TeamPanel from './components/AIチーム/AIチーム.vue';
 import TaskRequest from './components/AIタスク/windows/AIタスク_要求ウィンドウ.vue';

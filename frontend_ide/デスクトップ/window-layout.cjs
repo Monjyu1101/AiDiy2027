@@ -5,11 +5,11 @@
 // https://github.com/monjyu1101/AiDiy2027
 // ElectronのworkArea（タスクバーを除いた論理座標）に収める。
 const size=require('../host/scripts/window-size.cjs');
-// Consoleは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
+// Termは操作バーと端末の数行を残せればよい。初期配置・会話画面の最小寸法とは分ける。
 function windowMinimumSize(kind,bounds){
  if(kind==='browser')return{minWidth:Math.min(800,bounds.width),minHeight:Math.min(400,bounds.height)};
  if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(125,bounds.height)};
- return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='console'?180:size.会話最小高さ,bounds.height)};
+ return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='term'?180:size.会話最小高さ,bounds.height)};
 }
 function windowBounds(kind,area,owner,slot=0,cli=false){
  const margin=kind==='ide'?Math.min(32,Math.max(12,Math.round(Math.min(area.width,area.height)*.025))):8;
@@ -34,10 +34,10 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
   const width=Math.min(available.width,Math.max(800,Math.min(1100,Math.round(available.width*.8)))),height=Math.min(available.height,Math.max(400,Math.min(820,Math.round(available.height*.85)))),offset=(slot%6)*24;
   return{x:Math.round(Math.min(available.x+(available.width-width)/2+offset,available.x+available.width-width)),y:Math.round(Math.min(available.y+(available.height-height)/2+offset,available.y+available.height-height)),width,height};
  }
- if(kind==='console'){
+ if(kind==='term'){
   if(cli){
    const width=Math.min(800,available.width),height=Math.min(600,available.height);
-   // CLI専用窓は通常Consoleの左下・段違い配置と分け、下端中央から表示する。
+   // CLI専用窓は通常Termの左下・段違い配置と分け、下端中央から表示する。
    return{x:Math.round(area.x+(area.width-width)/2),y:available.y+available.height-height,width,height};
   }
   const width=Math.min(600,available.width),height=Math.min(400,available.height);
@@ -61,7 +61,7 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  const y=available.y+offset;
  return{x:Math.round(Math.max(available.x,Math.min(x,available.x+available.width-width))),y:Math.round(Math.max(available.y,Math.min(y,available.y+available.height-height))),width,height};
 }
-// ALLの選択画面でもConsoleを左下、Naviを左中央へ。Codeは右上、Liveは左上へ置く。
+// ALLの選択画面でもTermを左下、Naviを左中央へ。Codeは右上、Liveは左上へ置く。
 function allWindowBounds(kind,area,slot=0){
  const bounds=windowBounds(kind,area,area,slot);
  if(kind==='code'||kind==='live')bounds.x=area.x+area.width-(bounds.x-area.x)-bounds.width;

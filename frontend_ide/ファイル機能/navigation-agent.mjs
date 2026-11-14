@@ -8,6 +8,7 @@ import {promisify} from 'node:util';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {access} from 'node:fs/promises';
+import {homedir} from 'node:os';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 // HTTPの通常code_agents/runには読取専用境界がないため使わない。
 // セットアップ済みPythonから既存CLI読取専用オプションを固定した入口だけを呼ぶ。
@@ -34,6 +35,9 @@ export async function navigationAvailability(selection){
  try{await access(join(root,'backend_tools','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Navi用のPython環境が見つかりません。セットアップ後に再確認してください。'};}
  if(selection.provider==='aidiy_hermes'){
   try{await access(join(root,'command_hermes','prediction_main.py'));await access(join(root,'command_hermes','.venv',process.platform==='win32'?'Scripts/python.exe':'bin/python'));}catch{return {available:false,reason:'Hermesの実行環境が見つかりません。セットアップ後に再確認してください。'};}
+ }else if(selection.provider==='aidiy_codex'){
+  // command_codex/_compile.py が配置する実行ファイルだけを使う（PATH 上の同名は使わない）。
+  try{await access(join(homedir(),'.aidiy','bin',process.platform==='win32'?'aidiy_codex.exe':'aidiy_codex'));}catch{return {available:false,reason:'aidiy_codex が未コンパイルです。Diagの「コンパイル」または python command_codex/_compile.py で作成してください。'};}
  }else if(selection.provider==='aidiy_pi'){
   try{
    await Promise.all(['command_pi/node_modules','command_pi/aidiy/aidiy_pi.ts','command_pi/packages/coding-agent/src/experimental/source-resolver.ts'].map(file=>access(join(root,file))));

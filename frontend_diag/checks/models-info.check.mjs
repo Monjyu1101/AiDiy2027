@@ -10,6 +10,7 @@ import {mkdtemp,readFile,readdir,rm,writeFile} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {modelsInfo,writeModelsInfo as saveModelsInfo,installedCodeClis,openCodeModels,MODEL_PROVIDER_IDS,modelsInfoFile} from '../diag/モデル情報/models_info.mjs';
+import {codexCodeModels} from '../diag/モデル情報/codex_info.mjs';
 import {probe} from '../runtime/model_probe.mjs';
 import {createHandler} from '../diag/diag_main.mjs';
 
@@ -32,6 +33,30 @@ test('no provider inserts xx/auto and partial merges discard old inserted record
   await writeModelsInfo([{id:'openai_oauth',名前:'OAuth'}],{openai_oauth:ok()},{directory,now,installedClis:{}});
   const code=JSON.parse(await readFile(path.join(directory,'code_models_info.json'),'utf8'));
   assert.deepEqual(code.aidiy_hermes.models,{'openai_oauth/m1':'2026/10/01 - openai_oauth/m1'});
+ }finally{await rm(directory,{recursive:true,force:true});}
+});
+
+test('aidiy_codex candidates come from aidiy_codex_models_info.json and appear only when compiled',async()=>{
+ const directory=await mkdtemp(path.join(os.tmpdir(),'diag-aidiy-codex-'));
+ const providers=[{id:'openai_oauth',名前:'OAuth'},{id:'gemini',名前:'Gemini'}];
+ const results={openai_oauth:ok(),gemini:ok({モデル:['gemini-m1'],モデル詳細:[{model_id:'gemini-m1',作成日:'2026/10/02',トークン数:'100',モダリティ:'text->text'}]})};
+ try{
+  await writeModelsInfo(providers,results,{directory,now,installedClis:{codex_cli:true,aidiy_codex:true}});
+  const load=async name=>JSON.parse(await readFile(path.join(directory,name),'utf8'));
+  const codex=await load('aidiy_codex_models_info.json');
+  const expected=Object.fromEntries(Object.entries(codexCodeModels(codex)).map(([id,label])=>[id,`${/^(.*?) - /.exec(label)?.[1]??'yyyy/mm/dd'} - ${id}`]));
+  const code=await load('code_models_info.json');
+  assert.deepEqual(code.aidiy_codex.models,expected,'Code の候補は aidiy_codex_models_info.json の全区分');
+  // 今動く openai_oauth を先頭に、他社の区分（aidiy_codex 側の対応待ち）も <区分>/<モデル名> で入る。外部CLIへの委譲 xx/same は持たない。
+  assert.equal(Object.keys(code.aidiy_codex.models)[0],'openai_oauth/m1');
+  assert.ok(Object.hasOwn(code.aidiy_codex.models,'gemini_chat/gemini-m1'));
+  assert.ok(Object.keys(code.aidiy_codex.models).every(id=>!/_cli\//.test(id)));
+  assert.deepEqual(Object.keys((await load('prediction_models_info.json')).aidiy_codex.models),Object.keys(expected));
+  assert.deepEqual(Object.keys((await load('navi_models_info.json')).aidiy_codex.models),Object.keys(expected));
+  for(const installedClis of [{codex_cli:true},{codex_cli:true,aidiy_codex:false}]){
+   await writeModelsInfo(providers,results,{directory,now,installedClis});
+   for(const name of ['code_models_info.json','prediction_models_info.json','navi_models_info.json'])assert.equal(Object.hasOwn(await load(name),'aidiy_codex'),false,name);
+  }
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -59,8 +84,8 @@ test('merged code includes only installed CLIs and Hermes starts with installed 
   const navi=JSON.parse(await readFile(path.join(directory,'navi_models_info.json'),'utf8'));assert.equal(Object.hasOwn(navi,'codex_cli'),false);assert.equal(Object.hasOwn(navi,'copilot_cli'),false);
   await writeModelsInfo([{id:'openai_oauth',名前:'OAuth'}],{openai_oauth:ok()},{directory,now,installedClis:{codex_cli:true},naviHermesAvailable:false});
   const withoutHermes=JSON.parse(await readFile(path.join(directory,'navi_models_info.json'),'utf8'));assert.equal(Object.hasOwn(withoutHermes,'aidiy_hermes'),false);assert.equal(Object.hasOwn(withoutHermes,'codex_cli'),true);
-  const installed=await installedCodeClis({loadEntries:async()=>[{id:'claude'},{id:'agy'}],resolve:async entry=>'/fixture/'+entry.id,piCheck:async()=>false});
-  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true,aidiy_pi:false});
+  const installed=await installedCodeClis({loadEntries:async()=>[{id:'claude'},{id:'agy'}],resolve:async entry=>'/fixture/'+entry.id,piCheck:async()=>false,codexCheck:async()=>false});
+  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true,aidiy_pi:false,aidiy_codex:false});
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -125,7 +150,7 @@ test('NG keeps the reason and Grok fixed candidates; only tested providers are w
  try{
   const providers=[{id:'grok',名前:'Grok'},{id:'gemini',名前:'Gemini'},{id:'discord',名前:'Discord'},{id:'openrt_chat',名前:'OpenRouter'}];
   const saved=await writeModelsInfo(providers,{grok:{...ok(),状態:'NG',説明:'expired',警告:['fallback']},gemini:ok(),discord:ok(),openrt_chat:{状態:'未実施'}},{directory,read,now});
-  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','pi_models_info.json','prediction_models_info.json']);
+  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['aidiy_codex_models_info.json','chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','pi_models_info.json','prediction_models_info.json']);
   const grok=JSON.parse(await readFile(path.join(directory,modelsInfoFile('grok')),'utf8'));
   assert.equal(grok.状態,'NG');assert.equal(grok.説明,'expired');assert.match(grok.chat.取得元,/固定候補/);assert.deepEqual(grok.警告,['fallback']);
   assert.deepEqual(Object.keys(grok.code.grok_cli.models),['grok-4.7','grok-4.6']);

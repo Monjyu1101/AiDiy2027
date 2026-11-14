@@ -52,15 +52,7 @@ def _check_posix_electron_arguments(process, root, args):
 
 
 def is_diag(process, root, windows):
-    root = Path(root).resolve()
-    if _is_diag_at_root(process, root, windows):
-        return True
-    # 改名直後の旧Node/Electronも同じ作業コピーだけ停止する。別rootやリンクは対象外。
-    legacy = root.parent / 'backend_diag'
-    if (root.name == 'frontend_diag' and not legacy.is_symlink()
-            and not getattr(legacy, 'is_junction', lambda: False)()):
-        return _is_diag_at_root(process, legacy, windows)
-    return False
+    return _is_diag_at_root(process, Path(root).resolve(), windows)
 
 
 def _is_diag_at_root(process, root, windows):
@@ -131,7 +123,7 @@ def _is_diag_at_root(process, root, windows):
         relative = script.removeprefix('./')
         if (relative in ('diag_main.mjs', 'memo_main.mjs', 'diag/起動/electron-main.cjs')
                 or any(relative == f'{folder}/{entry}' or relative.endswith(f'/{folder}/{entry}')
-                       for folder in ('frontend_diag', 'backend_diag')
+                       for folder in ('frontend_diag',)
                        for entry in ('diag_main.mjs', 'memo_main.mjs', 'diag/起動/electron-main.cjs'))):
             _uncertain_process()
     # 他のスクリプトの引数にDiagのパスが含まれるだけなら対象外。

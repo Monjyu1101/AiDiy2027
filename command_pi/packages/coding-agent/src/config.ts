@@ -7,6 +7,10 @@ import { spawnProcessSync } from "./utils/child-process.ts";
 import { normalizePath } from "./utils/paths.ts";
 import { stripBom } from "./utils/text.ts";
 
+// AiDiy同梱版の固定方針。環境変数・利用者設定では本体更新を再有効化しない。
+export const SELF_UPDATE_ENABLED: boolean = false;
+export const SELF_UPDATE_DISABLED_MESSAGE = "AiDiy同梱版ではPi本体の自己更新は無効です。AiDiy側で更新してください。";
+
 // =============================================================================
 // Package Detection
 // =============================================================================
@@ -326,6 +330,7 @@ export function getSelfUpdateCommand(
 	npmCommand?: string[],
 	updatePackageTarget: SelfUpdatePackageTarget = packageName,
 ): SelfUpdateCommand | undefined {
+	if (!SELF_UPDATE_ENABLED) return undefined;
 	const method = detectInstallMethod();
 	const command = getSelfUpdateCommandForMethod(method, packageName, updatePackageTarget, npmCommand);
 	if (!command || !isManagedByGlobalPackageManager(method, packageName, npmCommand) || !isSelfUpdatePathWritable()) {
@@ -339,6 +344,7 @@ export function getSelfUpdateCommand(
  * argv, no quoting), else the global `selfUpdateCommand` setting. Overrides install-method detection.
  */
 export function getConfiguredSelfUpdateArgv(setting: string[] | undefined): string[] | undefined {
+	if (!SELF_UPDATE_ENABLED) return undefined;
 	const fromEnv = process.env.PI_SELF_UPDATE_COMMAND?.trim().split(/\s+/).filter(Boolean);
 	if (fromEnv?.length) return fromEnv;
 	return setting?.length ? setting : undefined;

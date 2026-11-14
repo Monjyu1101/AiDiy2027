@@ -1,6 +1,6 @@
 import { compare, valid } from "semver";
+import { SELF_UPDATE_ENABLED } from "../config.ts";
 import { fetchWithRetry } from "./management-http.ts";
-import { getPiUserAgent } from "./pi-user-agent.ts";
 
 const LATEST_VERSION_URL = "https://pi.dev/api/latest-version";
 const DEFAULT_VERSION_CHECK_TIMEOUT_MS = 10000;
@@ -52,7 +52,8 @@ export async function getLatestPiRelease(
 	currentVersion: string,
 	options: { timeoutMs?: number; retry?: boolean } = {},
 ): Promise<LatestPiRelease | undefined> {
-	if (process.env.PI_OFFLINE) return undefined;
+	if (!SELF_UPDATE_ENABLED || process.env.PI_OFFLINE) return undefined;
+	const { getPiUserAgent } = await import("./pi-user-agent.ts");
 
 	const response = await fetchWithRetry(
 		LATEST_VERSION_URL,

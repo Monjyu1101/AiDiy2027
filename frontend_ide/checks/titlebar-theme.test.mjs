@@ -30,8 +30,8 @@ test('通常タイトル行: desktop条件なしの共通ルールで単独窓�
  assert.equal(values(shared,'.panel-brand .connection-label').color,'var(--aidiy-titlebar-secondary)');
  assert.equal(values(shared,':root')['--muted'],'#9aa7b8','本文の補助文字は従来どおり');
  for(const file of ['../src/main.js','../src/components/タスクチーム/起動.js'])assert.match(read(file),/共通表示\/会話表示\.css/);
- for(const file of ['../src/App.vue','../src/components/コード/コードパネル.vue','../src/components/ライブ/ライブパネル.vue','../src/components/コンソール/コンソールパネル.vue','../src/components/ブラウザ/ブラウザパネル.vue','../src/components/タスクチーム/タスクチームパネル.vue','../src/components/ファイル閲覧/閲覧ウィンドウ.vue'])assert.match(read(file),/<StatusBar\b/);
- assert.match(read('../src/App.vue'),/<aside v-if="!desktop"[\s\S]*<CodePanel[\s\S]*<LivePanel[\s\S]*<ConsolePanel/,'IDE内のWebパネルも同じ部品へ進む');
+ for(const file of ['../src/App.vue','../src/components/コード/コードパネル.vue','../src/components/ライブ/ライブパネル.vue','../src/components/ターミナル/ターミナルパネル.vue','../src/components/ブラウザ/ブラウザパネル.vue','../src/components/タスクチーム/タスクチームパネル.vue','../src/components/ファイル閲覧/閲覧ウィンドウ.vue'])assert.match(read(file),/<StatusBar\b/);
+ assert.match(read('../src/App.vue'),/<aside v-if="!desktop"[\s\S]*<CodePanel[\s\S]*<LivePanel[\s\S]*<TermPanel/,'IDE内のWebパネルも同じ部品へ進む');
 });
 
 test('通常タイトル行: ピンのON/OFFとシアン接続バーの状態色は維持する',()=>{
@@ -65,12 +65,12 @@ test('本文の黒基準: タイトルの局所surfaceを本文へ継承せず�
  assert.equal(values(taskteam.styles[0].content,'.taskteam-shell').background,'#000');
 });
 
-test('Consoleの黒基準: 起動案内・端末描画・補完下地に青い地色を残さない',()=>{
- const source=read('../src/components/コンソール/コンソールパネル.vue'),{descriptor}=parse(source);
+test('Termの黒基準: 起動案内・端末描画・補完下地に青い地色を残さない',()=>{
+ const source=read('../src/components/ターミナル/ターミナルパネル.vue'),{descriptor}=parse(source);
  assert.match(descriptor.scriptSetup.content,/theme: \{ background: '#000'/,'xtermの描画もシェルと同じ黒');
- assert.equal(values(descriptor.styles[0].content,'.console-component').background,'#000');
- assert.equal(values(descriptor.styles[0].content,'.console-ghost-row').background,'#000');
- assert.equal(values(descriptor.styles[0].content,'.console-welcome').background,'var(--surface)');
+ assert.equal(values(descriptor.styles[0].content,'.term-component').background,'#000');
+ assert.equal(values(descriptor.styles[0].content,'.term-ghost-row').background,'#000');
+ assert.equal(values(descriptor.styles[0].content,'.term-welcome').background,'var(--surface)');
 });
 
 test('本文の黒基準: Webページ・文書・画像・2Dページと選択色は塗り潰さない',()=>{

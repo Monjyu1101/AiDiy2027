@@ -58,7 +58,7 @@ print(json.dumps({'order':order,'topmost':[bool(u.GetWindowLongPtrW(h,-20)&8) fo
   for(const event of ['focus','show','restore','maximize','unmaximize']){const before=calls.length;ide.window.emit(event);await pause();assert.ok(calls.length>before,event);}
   for(const record of [ide,explorer,routes])assert.equal(record.window.getParentWindow(),null);
   const originalFocus=BrowserWindow.getFocusedWindow();stack.refresh(ide);await pause();assert.equal(BrowserWindow.getFocusedWindow(),originalFocus,'相対順変更でフォーカスを盗まない');
-  newPanels=[await create('panel-viewer',ide),await create('live',ide),await create('console',ide)];
+  newPanels=[await create('panel-viewer',ide),await create('live',ide),await create('term',ide)];
   for(const record of newPanels){assert.deepEqual(pins.state(record.window),{pinned:true,locked:true});pins.toggle(record.window);assert.equal(pins.state(record.window).pinned,true);}
   for(const selected of [ide,code,other,explorer,routes,...newPanels,other,ide,ide]){selected.window.focus();await pause();await nativeOrder('選択:'+selected.kind);}
   const settled=calls.length;await pause();await pause();assert.equal(calls.length,settled,'待機中に再配置を繰り返さない');

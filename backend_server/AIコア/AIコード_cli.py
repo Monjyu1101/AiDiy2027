@@ -42,6 +42,16 @@ _STDERR_STREAM_STDOUT_FINAL_AI = frozenset({
 })
 
 
+# Codex 系の CLI。aidiy_codex は command_codex をコンパイルした Codex で、codex_cli と同じ引数で動く。
+# モデルは `<区分>/<モデル名>` のまま渡す（aidiy_codex 側で区分ごとの接続先を決め、区分名を外す）。
+_CODEX系AI = frozenset({"codex_cli", "aidiy_codex"})
+
+
+def _aidiy_codex実行ファイル() -> str:
+    """command_codex/_compile.py が配置する ~/.aidiy/bin/aidiy_codex(.exe)。"""
+    return str(Path.home() / ".aidiy" / "bin" / ("aidiy_codex.exe" if os.name == "nt" else "aidiy_codex"))
+
+
 class 予測読取専用利用不可(ValueError):
     """安全な予測CLIを構築できない場合。通常のCode実行には適用しない。"""
 
@@ -414,6 +424,10 @@ class CodeAI:
             launcher = Path(__file__).resolve().parents[2] / "_AIDIY" / "aidiy_pi" / "bin" / (
                 "aidiy_pi.cmd" if os.name == 'nt' else "aidiy_pi")
             return str(launcher) if launcher.is_file() else "aidiy_pi"
+        if self.code_ai == "aidiy_codex":
+            # command_codex/_compile.py が配置する実行ファイルだけを使う（PATH 上の同名は使わない）。
+            # 未コンパイルなら起動に失敗し、「利用できません」として扱われる。
+            return _aidiy_codex実行ファイル()
         if self.code_ai == "opencode_cli":
             if os.name == 'nt':
                 userprofile = os.environ.get('USERPROFILE', os.path.expanduser('~'))
@@ -696,11 +710,11 @@ class CodeAI:
 
     async def _予測CLI準備(self, repo_path: str) -> None:
         self._予測CLI確認()
-        if self.code_ai != "codex_cli":
+        if self.code_ai not in _CODEX系AI:
             return
         self._予測CodexMCP設定 = None
         self._予測Codex検証パス = None
-        custom_cmd = os.environ.get("CODEX_CLI_CLI_PATH")
+        custom_cmd = os.environ.get(f"{self.code_ai.upper()}_CLI_PATH")
         base, _ = self._CLI起動コマンド先頭(
             custom_cmd or self._コマンドパス取得(), custom=bool(custom_cmd),
         )
@@ -721,7 +735,7 @@ class CodeAI:
 
     def _予測読取専用コマンド構築(self, base: list, プロンプト: str, repo_path: str) -> list:
         self._予測CLI確認()
-        if self.code_ai == "codex_cli":
+        if self.code_ai in _CODEX系AI:
             if self._予測CodexMCP設定 is None or self._予測Codex検証パス != repo_path:
                 raise 予測読取専用利用不可("Codex の読取専用設定が未検証です。")
             common = base + self._予測Codex共通引数()
@@ -756,7 +770,7 @@ class CodeAI:
         if self.code_model and self.code_model.lower() not in ("auto", "same"):
             common.extend(["--model", self.code_model])
         # 予測では既存のCLIセッションや許可状態を継続しない。
-        return common + ([プロンプト] if self.code_ai == "codex_cli" else ["-p", プロンプト])
+        return common + ([プロンプト] if self.code_ai in _CODEX系AI else ["-p", プロンプト])
 
     def _コマンド構築(self, プロンプト: str, 初回: bool = False, repo_path: str = None, 読取専用: bool = False) -> list:
         """
@@ -902,8 +916,8 @@ class CodeAI:
                 # -c (--continue) は -p の後ろに付ける（opencode_cli と同様）
                 return common + ["-p", プロンプト, "-c"]
 
-        elif self.code_ai == "codex_cli":
-            # OpenAI Codex CLI
+        elif self.code_ai in _CODEX系AI:
+            # OpenAI Codex CLI / aidiy_codex（同梱 Codex をコンパイルしたもの）
             # Codex はサンドボックス無視を常に有効にする。
             base_args = base + ["exec", "--skip-git-repo-check", "--dangerously-bypass-approvals-and-sandbox"]
             # auto / same（変更無し）はCLI側のモデル設定に任せる。
@@ -1337,7 +1351,7 @@ class CodeAI:
             履歴テキスト = self._履歴取得()
 
             # 完全なプロンプト構築（プロバイダー別）
-            if self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "codex_cli", "opencode_cli", "grok_cli"]:
+            if self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "codex_cli", "aidiy_codex", "opencode_cli", "grok_cli"]:
                 # 履歴送信不要。初回のみ system_prompt を付与して方針を伝える
                 if 初回送信:
                     完全プロンプト = f"{self.system_prompt}\n\n{送信用要求テキスト}"
@@ -1374,7 +1388,7 @@ class CodeAI:
             if (self.code_model or "").strip().lower() == "auto":
                 実行モデル = "same"
                 判断CLI = self.code_ai
-                if 判断CLI in ("codex_cli", "claude_cli", "copilot_cli", "opencode_cli", "aidiy_hermes", "aidiy_pi"):
+                if 判断CLI in ("codex_cli", "claude_cli", "copilot_cli", "opencode_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex"):
                     from AIコア.AIコードモデル選択 import select_model, model_choices, fallback_model
                     候補 = model_choices(判断CLI)
                     選択モデル = await select_model(
@@ -1486,7 +1500,7 @@ class CodeAI:
                     )
 
             # codexの場合、セッションIDを抽出して保存（stderr から抽出）
-            if self.code_ai == "codex_cli":
+            if self.code_ai in _CODEX系AI:
                 セッションID = self._codexセッションID抽出(self.last_stderr_output)
                 if セッションID:
                     self.codex_セッションID = セッションID

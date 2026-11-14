@@ -13,12 +13,12 @@
 cd backend_local
 uv sync
 
-# 2. モデルを temp/models へ事前ダウンロード（トークンは AiDiy_key.json の huggingface_key_read）
+# 2. モデルを ~/.aidiy/models へ事前ダウンロード（トークンは AiDiy_key.json の huggingface_key_read）
 #    既定 CHAT_LOCAL_MODEL、または引数でモデル指定
 uv run python download_model.py
 uv run python download_model.py google/gemma-4-E2B-it
 
-# 3. 起動（ポート 8096）。temp/models にあればオフラインでロードされる
+# 3. 起動（ポート 8096）。~/.aidiy/models にあればオフラインでロードされる
 uv run uvicorn local_main:app --reload --host 127.0.0.1 --port 8096 --ws-max-size 20971520
 # または
 uv run python local_main.py
@@ -43,4 +43,4 @@ Gemma は HuggingFace 上のゲート付きモデルです。利用前に以下�
 
 `GET http://127.0.0.1:8096/health` で稼働状態を確認します。モデルは最初の推論要求時にメモリへロードされるため、health成功だけでは推論成功を意味しません。必要メモリと速度はモデル・dtype・入力長・デバイスによって異なります。
 
-全体cleanupで `backend_local/temp/models` も削除されます。次の利用前にモデルの再取得が必要です。設定・対応APIは [実装概要](../../backend_local/AGENTS.md)、整理方法は [cleanup後の確認](./共通,クリーンアップ手順.md) を参照してください。
+モデルは利用者のホームの `~/.aidiy/models` に置くため、全体cleanupでは削除されず、git clone やフォルダコピーで作った別の AiDiy 環境とも共有します（設定 `CHAT_LOCAL_MODELS_DIR` を指定した場合はそちら）。不要になったモデルは `~/.aidiy/models/<safe_name>` を手動で削除してください。設定・対応APIは [実装概要](../../backend_local/AGENTS.md)、整理方法は [cleanup後の確認](./共通,クリーンアップ手順.md) を参照してください。
