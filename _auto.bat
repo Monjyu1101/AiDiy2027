@@ -135,7 +135,8 @@ echo ============================================================
 echo(
 set "STAGE=clone"
 set "STAGING=%USERPROFILE%\.AiDiy2027-clone-%AIDIY_RUN%"
-git clone --branch main --single-branch https://github.com/Monjyu1101/AiDiy2027.git "%STAGING%"
+rem Clone config is written before checkout and retained for later Git commands.
+git clone --config core.longpaths=true --branch main --single-branch https://github.com/Monjyu1101/AiDiy2027.git "%STAGING%"
 set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto failed
 rem REN refuses an existing destination. Keep the staging clone on failure.
@@ -152,6 +153,11 @@ echo(
 set "RC=3"
 call :validate_repository
 if errorlevel 1 goto failed
+rem Change only this validated repository, never global/system Git settings.
+set "STAGE=repository_longpaths"
+git config --local core.longpaths true >"%AIDIY_TEMP%\validation.txt" 2>&1
+set "RC=%ERRORLEVEL%"
+if not "%RC%"=="0" goto control_failed
 set "CONTROL=%TARGET%\temp\_auto"
 set "STAGE=repository_control_directory"
 rem Keep launcher backups outside Git metadata; never follow temp junctions.

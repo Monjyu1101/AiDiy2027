@@ -171,6 +171,18 @@ class BatchStructureTests(unittest.TestCase):
                 self.assertEqual(lines[i + 1], 'if errorlevel 1 goto repository_failed')
         self.assertIn(':repository_failed\nset "VALIDATION_RC=%ERRORLEVEL%"', TEXT)
 
+    def test_longpaths_enabled_before_clone_checkout_and_existing_updates(self):
+        clone = 'git clone --config core.longpaths=true --branch main --single-branch'
+        self.assertIn(clone, TEXT)
+        self.assertIn('core.longpaths=true --branch main --single-branch https://github.com/Monjyu1101/AiDiy2027.git "%STAGING%"', TEXT)
+        main = TEXT[TEXT.index('\n:existing\n'):TEXT.index('\n:setup\n')]
+        configure = 'git config --local core.longpaths true'
+        self.assertLess(main.index('call :validate_repository'), main.index(configure))
+        self.assertLess(main.index(configure), main.index('call :prepare_overwrite'))
+        self.assertLess(main.index(configure), main.index('git fetch '))
+        self.assertIn(configure + ' >"%AIDIY_TEMP%\\validation.txt" 2>&1\nset "RC=%ERRORLEVEL%"\nif not "%RC%"=="0" goto control_failed', main)
+        self.assertNotRegex(TEXT, r'(?im)^git config --(?:global|system)')
+
     def test_clone_publish_uses_rename_not_move_into_existing_target(self):
         self.assertIn('ren "%STAGING%" "AiDiy2027"', TEXT)
         self.assertNotRegex(TEXT, r"(?im)^move\b")
@@ -621,6 +633,30 @@ class GitContractTests(unittest.TestCase):
         self.git(self.seed, 'push', '-u', 'origin', 'main')
         self.repo.parent.mkdir()
         self.git(self.base, 'clone', '--branch', 'main', str(self.remote), str(self.repo))
+
+    def test_clone_longpaths_config_persists_and_long_snapshot_is_checked_out(self):
+        # Real Git contract; Linux does not reproduce the Windows MAX_PATH limit.
+        relative = Path('command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots') / (
+            'codex_tui__bottom_pane__chat_composer__sparkle__tests__'
+            'sparkle_matches_the_original_starfield_and_protects_the_placeholder_and_cursor.snap')
+        source = self.seed / relative
+        source.parent.mkdir(parents=True)
+        source.write_text('snapshot fixture\n', encoding='utf-8')
+        self.commit()
+        self.git(self.seed, 'push', 'origin', 'main')
+        clone = self.base / ('.AiDiy2027-clone-' + '12345-' * 5)
+        self.assertGreater(len(str(clone / relative)), 260)
+        # Use the actual batch clone options, substituting only remote/destination.
+        command = next(line for line in TEXT.splitlines() if line.startswith('git clone '))
+        options = shlex.split(command)[1:-2]
+        self.git(self.base, *options, str(self.remote), str(clone))
+        self.assertEqual(self.git(clone, 'config', '--local', '--get', 'core.longpaths').stdout.strip(), b'true')
+        self.assertEqual((clone / relative).read_text(encoding='utf-8'), 'snapshot fixture\n')
+        self.assertEqual(self.git(clone, 'status', '--porcelain').stdout, b'')
+        # Existing clones can enable the setting locally without changing globals.
+        self.git(self.repo, 'config', '--local', 'core.longpaths', 'false')
+        self.git(self.repo, 'config', '--local', 'core.longpaths', 'true')
+        self.assertEqual(self.git(self.repo, 'config', '--local', '--get', 'core.longpaths').stdout.strip(), b'true')
 
     def tearDown(self):
         self.tmp.cleanup()
