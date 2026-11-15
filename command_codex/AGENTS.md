@@ -68,7 +68,7 @@ Hermes / Pi と同じく、AI コア（Code）・AIタスク・入力予測・Na
 ## 変更時の基本方針
 
 - AiDiy 固有の処理は原則 `_compile.py` と `aidiy/` に置き、`codex-rs/` 側の変更は必要最小限にする。変更した箇所には `AiDiy:` のコメントを残す。
-- Windows は MSVC / Visual Studio を使わず、`x86_64-pc-windows-gnullvm`（ARM64 は `aarch64-pc-windows-gnullvm`）と llvm-mingw でビルドする。Rust と llvm-mingw は aidiy_diag の「導入状況 › 開発環境等」から導入する。
+- Windows は MSVC / Visual Studio を使わず、`x86_64-pc-windows-gnullvm`（ARM64 は `aarch64-pc-windows-gnullvm`）と llvm-mingw でビルドする。不足する Rust と Windows llvm-mingw は `_compile.py` の通常実行時に公式配布元から導入する（Windows の自動導入は x64）。既存ツールは尊重し、`--check` では導入しない。Linux / macOS は OS の C ツールチェーンを使い、不足時は管理者操作を自動実行せず案内する。
 - サーバーはクライアントの版でモデルを出し分ける（例: `gpt-6-luna` は `0.155.0` 以上）。送る版は実行ファイルと同じフォルダの `~/.aidiy/bin/aidiy_codex_settings.json` の `client_version` に外出ししてある（`codex-rs/login/src/aidiy_settings.rs`）。通常は `_compile.py` が配置時に書き出し、設定ファイル自体が無ければ初回起動時に `{"client_version": "0.169.0"}` で書き出し、手修正されていればその値を送る（再ビルド不要。不正な内容なら `0.169.0` を使い、ファイルは上書きしない）。使うのは User-Agent とモデル一覧取得の `client_version`。
 - ビルドの版（`--version` の表示。`codex-rs/Cargo.toml` の `[workspace.package] version` と `Cargo.lock` のワークスペース分）も `0.169.0` に固定する。upstream main の `0.0.0` には戻さない。変えるのは明示の依頼がある場合だけ。
 - 依存は `Cargo.lock` に従い `--locked` でビルドする。lockfile や toolchain の版を検証目的で勝手に更新しない。

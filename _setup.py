@@ -756,7 +756,7 @@ def collect_setup_choices() -> dict | None:
     choices["hermes"] = ask_yes_no("Hermes のセットアップを実行しますか？", default="y")
     choices["pi"] = ask_yes_no("Pi のセットアップを実行しますか？", default="y")
     # aidiy_codex は Rust / llvm-mingw が前提で、初回は1時間以上かかるため既定では実行しない。
-    choices["codex"] = ask_yes_no("aidiy_codex のコンパイルを実行しますか？（Rust・llvm-mingw が必要。独立プロセスで実行）", default="n")
+    choices["codex"] = ask_yes_no("aidiy_codex のコンパイルを実行しますか？（不足する Rust / Windows LLVM も公式配布元から導入。独立プロセスで実行）", default="n")
     choices["ide"] = ask_yes_no("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack) のセットアップを実行しますか？", default="y")
 
@@ -933,7 +933,7 @@ def setup_launchers_only() -> list[str]:
 def setup_codex() -> bool:
     """aidiy_codex のコンパイルを独立プロセスで開始する（完了を待たない）。
 
-    前提（Rust / llvm-mingw）が無ければ案内して失敗にする。コンパイル中なら重ねて開始しない。
+    不足する Rust / Windows llvm-mingw は子プロセスで導入する。コンパイル中なら重ねて開始しない。
     """
     print_header("Codex (aidiy_codex) コンパイル")
     try:
@@ -941,10 +941,7 @@ def setup_codex() -> bool:
     except Exception as exc:  # 読込失敗は他の項目を止めない
         print_error(f"aidiy_codex: _compile.py を読み込めません: {exc}")
         return False
-    env, _ = codex.check_prerequisites()
-    if env is None:
-        print_info("  Rust / llvm-mingw は aidiy_diag の「導入状況 › 開発環境等」から導入できます。")
-        return False
+    print_info("  不足する Rust / Windows llvm-mingw は公式配布元から導入します。既存ツールは更新しません。")
     result = codex.start_detached(release=True, jobs=None)
     if result == 2:
         print_info("aidiy_codex: すでにコンパイル中です。完了を待ってください。")

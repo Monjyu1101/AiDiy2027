@@ -39,15 +39,21 @@ class SetupCodexTests(unittest.TestCase):
         self.assertLess(source.index('if choices["hermes"]:'), source.index('if choices.get("pi"):'))
         self.assertLess(source.index('if choices.get("pi"):'), source.index('if choices.get("codex"):'))
 
-    def test_setup_codex_starts_detached_only_when_prerequisites_exist(self):
+    def test_setup_codex_starts_detached_and_bootstraps_in_child(self):
         setup = load("_setup.py")
-        for env_ok, code, expected in ((False, 0, False), (True, 0, True), (True, 2, True), (True, 1, False)):
+        for code, expected in ((0, True), (2, True), (1, False)):
             calls = []
-            stub = types.SimpleNamespace(check_prerequisites=lambda ok=env_ok: ({} if ok else None, "target"),
-                                         start_detached=lambda release, jobs, c=code: calls.append((release, jobs)) or c)
-            with patch.object(setup, "_load_folder_module", lambda folder, entry, s=stub: s), contextlib.redirect_stdout(io.StringIO()):
-                self.assertEqual(setup.setup_codex(), expected, (env_ok, code))
-            self.assertEqual(calls, [(True, None)] if env_ok else [])
+            stub = types.SimpleNamespace(
+                start_detached=lambda release, jobs, c=code: calls.append((release, jobs)) or c)
+            with patch.object(setup, "_load_folder_module", return_value=stub), contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(setup.setup_codex(), expected)
+            self.assertEqual(calls, [(True, None)])
+            self.assertIn("公式配布元", output.getvalue())
+
+    def test_setup_codex_load_failure_does_not_start(self):
+        setup = load("_setup.py")
+        with patch.object(setup, "_load_folder_module", side_effect=FileNotFoundError("missing")), contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(setup.setup_codex())
 
 
 class StartGuidanceTests(unittest.TestCase):

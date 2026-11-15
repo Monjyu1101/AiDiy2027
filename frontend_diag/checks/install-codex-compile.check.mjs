@@ -38,11 +38,30 @@ test('status file: a dead compile process is shown as 中断, and the log tail i
   }finally{await rm(directory,{recursive:true,force:true});}
 });
 
-test('missing prerequisites disable the compile button with a reason',async()=>{
-  for(const [map,reason] of [[{},/Python/],[{python:'C:\\py\\python.exe'},/Rust/],[{python:'C:\\py\\python.exe',cargo:'C:\\c\\cargo.exe'},/llvm-mingw/]]){
-    const {item}=await inspectCodexCompile(entry,{env,platform:'win32',arch:'x64',resolve:found(map),statusReader:idle,logReader:noLog});
-    assert.deepEqual(item.操作,[]);assert.match(item.理由,reason);
+test('Python is required; missing Rust and Windows LLVM are bootstrapped with Node',async()=>{
+  const inspect=map=>inspectCodexCompile(entry,{env,platform:'win32',arch:'x64',resolve:found(map),statusReader:idle,logReader:noLog});
+  const missingPython=await inspect({});
+  assert.deepEqual(missingPython.item.操作,[]);assert.match(missingPython.item.理由,/Python/);
+  const missingNode=await inspect({python:'python'});
+  assert.deepEqual(missingNode.item.操作,[]);assert.match(missingNode.item.理由,/Node.js/);
+  for(const map of [{python:'python',node:'node'},{python:'python',node:'node',cargo:'cargo'}]){
+    const {item}=await inspect(map);
+    assert.equal(item.操作.length,1);assert.match(item.状況,/導入します/);
+    assert.match(item.確認説明,/公式配布元/);
   }
+});
+
+test('unsupported Windows bootstrap arch is blocked, existing tools remain usable',async()=>{
+  const base={env,platform:'win32',arch:'arm64',statusReader:idle,logReader:noLog};
+  const missing=await inspectCodexCompile(entry,{...base,resolve:found({python:'python',node:'node'})});
+  assert.deepEqual(missing.item.操作,[]);assert.match(missing.item.理由,/CPU/);
+  const installed=await inspectCodexCompile(entry,{...base,resolve:found(ready)});
+  assert.equal(installed.item.操作.length,1);
+});
+
+test('Linux bootstrap only needs Python at inspection time, not Windows LLVM',async()=>{
+  const {item}=await inspectCodexCompile(entry,{env:{HOME:'/tmp/fixture'},platform:'linux',arch:'x64',resolve:found({python:'python'}),statusReader:idle,logReader:noLog});
+  assert.equal(item.操作.length,1);assert.match(item.状況,/Rust/);assert.doesNotMatch(item.状況,/llvm-mingw/);
 });
 
 test('labels are コンパイル / 再コンパイル; a running compile shows its progress and blocks a second start',async()=>{

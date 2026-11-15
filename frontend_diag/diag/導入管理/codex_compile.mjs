@@ -74,8 +74,8 @@ const time=value=>{const date=new Date(value||'');return Number.isNaN(date.getTi
 export async function inspectCodexCompile(entry,{env=process.env,platform=process.platform,arch=process.arch,resolve=resolveProgram,statusReader=readCompileStatus,logReader=lastLogLine}={}) {
   const item={id:entry.id,パッケージ:'command_codex（Codex CLI エンジン）→ aidiy_codex',表示名:LABELS,
     説明:'同梱の OpenAI Codex ソース（Apache-2.0）から python command_codex/_compile.py で aidiy_codex をコンパイルします。',
-    再導入説明:'_compile.py をもう一度実行し、変更のあったクレートだけを再コンパイルします。成果物以外は変更しません。',
-    確認説明:'独立したプロセスで aidiy_codex をビルドし、~/.aidiy/bin に配置して PATH に登録します（Windows は MSVC 不要の gnullvm＋llvm-mingw）。Diag を閉じてもコンパイルは続きます。初回は Rust の固定版・依存（V8 のサブモジュールを含む）を取得し、数十分〜1時間程度かかります。認証・設定・会話履歴は変更しません。',操作:[]};
+    再導入説明:'_compile.py をもう一度実行し、変更のあったクレートだけを再コンパイルします。不足する Rust / Windows llvm-mingw は導入しますが、既存ツールは更新しません。',
+    確認説明:'独立したプロセスで aidiy_codex をビルドし、~/.aidiy/bin に配置して PATH に登録します（Windows は MSVC 不要の gnullvm＋llvm-mingw）。Diag を閉じてもコンパイルは続きます。不足する Rust / Windows llvm-mingw も公式配布元から利用者領域へ導入します（Windows 自動導入は x64）。既存ツールは更新せず、Linux / macOS の OS 開発ツールが不足する場合は手順を案内して停止します。初回は Rust の固定版・依存（V8 のサブモジュールを含む）を取得し、数十分〜1時間程度かかります。認証・設定・会話履歴は変更しません。',操作:[]};
   let context=null;
   try{
     if(entry.id!==CODEX_COMPILE_ID)throw failure('未対応の導入操作です。');
@@ -93,13 +93,16 @@ export async function inspectCodexCompile(entry,{env=process.env,platform=proces
     if(!python)throw failure('Python が見つかりません。Python を導入してから再確認してください。');
     const home=envValue(env,'USERPROFILE')||envValue(env,'HOME');
     const cargo=await resolve({id:'cargo',commands:['cargo'],paths:{[platform]:[path.join(home||'',`.cargo/bin/cargo${platform==='win32'?'.exe':''}`)]}},{env,platform});
-    if(!cargo)throw failure('cargo が見つかりません。先に「開発環境等 › Rust」を導入してください。');
+    const missing=cargo?[]:['Rust'];
     if(platform==='win32'){
       const local=envValue(env,'LOCALAPPDATA')||'';
       const prefix=codexTargets(platform,arch)[0].replace('-pc-windows-gnullvm','-w64-mingw32');
       const clang=await resolve({id:'llvm-mingw',commands:[`${prefix}-clang`],paths:{win32:[path.join(local,'Programs','llvm-mingw','bin',`${prefix}-clang.exe`)]}},{env,platform});
-      if(!clang)throw failure('llvm-mingw が見つかりません。先に「開発環境等 › llvm-mingw」を導入してください。');
+      if(!clang)missing.push('llvm-mingw');
+      if(missing.length&&arch!=='x64')throw failure('この CPU の自動導入は未対応です。Rust / llvm-mingw を手動で導入してください。');
+      if(missing.length&&!await resolve({id:'node',commands:['node']},{env,platform}))throw failure('不足する Rust / llvm-mingw の自動導入には Node.js が必要です。');
     }
+    if(missing.length)item.状況=`コンパイル開始時に ${missing.join(' / ')} を導入します。`;
     const binary=await firstExisting(codexBinaries(platform,home||os.homedir()));
     context={prefix:BUILD_DIR,lockKey:BUILD_DIR,python,binary,status};
     item.操作=[binary?'再導入':'導入'];

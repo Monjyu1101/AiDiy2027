@@ -15,7 +15,7 @@ CLI 本体 `codex` を cargo でビルドします。同梱元の LICENSE / NOTI
 
 - Windows は MSVC / Visual Studio を使わず、LLVM 系の `x86_64-pc-windows-gnullvm`
   （ARM64 は `aarch64-pc-windows-gnullvm`）でビルドします。C のコンパイル・リンクには llvm-mingw を使います。
-  Rust（rustup）と llvm-mingw は aidiy_diag の「導入状況 › 開発環境等」から導入できます。
+  未導入の Rust（rustup）と llvm-mingw は本スクリプトが公式配布から導入します（Windows x64）。
 - Linux / macOS は rustup の既定ホストでビルドします。
 - Rust の版は `rust-toolchain.toml` に従い、未導入なら初回に rustup が自動取得します（ネットワーク使用）。
 - 依存は `Cargo.lock` に固定（`--locked`）。初回は crates.io / git から依存を取得します。
@@ -409,7 +409,7 @@ def check_prerequisites() -> tuple[dict | None, str | None]:
         if not (cargo_bin / f"rustup{EXE}").is_file() and not shutil.which("rustup"):
             print_warning("rustup が見つかりません。rust-toolchain.toml の版を自動取得できない場合があります。")
     else:
-        print_error("cargo が見つかりません。aidiy_diag の「導入状況 › 開発環境等 › Rust」から導入してください。")
+        print_error("cargo が見つかりません。通常実行時に Rust を自動導入します（--check では導入しません）。")
         ok = False
 
     target = windows_target() if IS_WINDOWS else None
@@ -419,7 +419,7 @@ def check_prerequisites() -> tuple[dict | None, str | None]:
         if llvm_bin:
             print_info(f"llvm-mingw: {llvm_bin}")
         else:
-            print_error("llvm-mingw が見つかりません。aidiy_diag の「導入状況 › 開発環境等 › llvm-mingw」から導入してください。")
+            print_error("llvm-mingw が見つかりません。Windows x64 は通常実行時に自動導入します（--check では導入しません）。")
             ok = False
         print_info(f"ターゲット: {target}（MSVC 不要）")
     else:
@@ -550,15 +550,63 @@ def cancel_compile(reason: str = "クリーンアップ") -> bool:
 # ============================================================
 # ビルド本体
 # ============================================================
+def ensure_prerequisites() -> tuple[dict | None, str | None]:
+    """確認に同意した compile 経路のみ不足ツールを導入。--check からは呼ばない。"""
+    for relative in ("Cargo.toml", "Cargo.lock", "cli/Cargo.toml"):
+        if not (WORKSPACE_DIR / relative).is_file():
+            print_error(f"ソースが不足しています: {relative}")
+            return None, None
+    cargo = find_cargo_bin()
+    target = windows_target() if IS_WINDOWS else None
+    llvm = find_llvm_mingw_bin(target) if target else None
+    missing = ([] if cargo else ["rust"]) + (["llvm-mingw"] if target and not llvm else [])
+    # Linux/macOS では llvm-mingw は不要。OS 管理の開発ツールは勝手に sudo/brew で変更しない。
+    if not IS_WINDOWS:
+        required = ["cc", "c++"] + (["pkg-config"] if sys.platform == "linux" else [])
+        absent = [tool for tool in required if not shutil.which(tool)]
+        if sys.platform == "darwin" and not absent:
+            # /usr/bin/cc は未導入でも stub が存在するため、実コンパイラを確認する。
+            try:
+                checked = subprocess.run(["xcrun", "--find", "clang"], capture_output=True, text=True, timeout=15)
+                if checked.returncode or not Path(checked.stdout.strip()).is_file():
+                    absent.append("Xcode Command Line Tools")
+            except (OSError, subprocess.SubprocessError):
+                absent.append("Xcode Command Line Tools")
+        if absent:
+            hint = "Xcode Command Line Tools" if sys.platform == "darwin" else "C/C++ 開発ツールと pkg-config（例: build-essential、pkg-config）"
+            print_error(f"{', '.join(absent)} がありません。OS の手順で {hint} を導入してください。")
+            return None, None
+    if missing:
+        # 大容量取得前に止める。既存ツールは消さず、空きを確保してから再実行できる。
+        gb = free_gb(existing_parent(BUILD_DIR))
+        if 0 <= gb < MIN_FREE_GB:
+            print_error(f"開発ツール導入前に停止しました。ビルド先の空き {gb:.1f}GB、推奨 {MIN_FREE_GB}GB 以上を確保してください。")
+            return None, None
+        spec = importlib.util.spec_from_file_location("aidiy_codex_setup_tools", THIS_DIR / "aidiy" / "setup_tools.py")
+        helper = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(helper)
+        try:
+            for tool in missing:
+                print_info(f"不足する開発ツールを導入します: {tool}")
+                if IS_WINDOWS:
+                    helper.install_windows_tool(tool)
+                else:
+                    helper.install_unix_rust()
+        except (OSError, RuntimeError, subprocess.SubprocessError) as error:
+            print_error(f"開発ツールの導入に失敗しました: {error}。途中の導入物は削除していません。状態を確認して再実行してください。")
+            return None, None
+    return check_prerequisites()
+
+
 def compile_codex(release: bool = True, jobs: int | None = None) -> Path | None:
     """codex をビルドし、aidiy_codex(.exe) として配置したパスを返す。失敗時は None。"""
-    env, target = check_prerequisites()
+    env, target = ensure_prerequisites()
     if env is None:
         return None
 
     # rust-toolchain.toml の版を明示的に導入し、ターゲットの標準ライブラリを追加する（導入済みなら何もしない）。
     if shutil.which("rustup", path=env["PATH"]):
-        if not run(["rustup", "toolchain", "install"], env, "Rust ツールチェーンの導入"):
+        if not run(["rustup", "toolchain", "install", toolchain_channel()], env, "Rust ツールチェーンの導入"):
             return None
         if target and not run(["rustup", "target", "add", target], env, "ターゲットの追加"):
             return None
@@ -655,7 +703,7 @@ def main():
     parser.add_argument("--check", action="store_true", help="前提確認だけ行い、ビルドしない")
     parser.add_argument("--status", action="store_true", help="コンパイル状態（状態ファイル）を表示する")
     parser.add_argument("--detach", action="store_true", help="独立プロセスで開始してすぐ戻る（ログは ~/.aidiy/cache/codex に保存）")
-    parser.add_argument("--yes", action="store_true", help="確認なしで実行する")
+    parser.add_argument("--yes", action="store_true", help="不足ツールの導入を含め、確認なしで実行する")
     parser.add_argument("--cancel", action="store_true", help="実行中のコンパイルを中止する（全体 cleanup からも呼ばれる）")
     args = parser.parse_args()
 
@@ -676,7 +724,7 @@ def main():
         sys.exit(0 if env is not None else 1)
 
     profile = "debug" if args.debug else "release"
-    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（初回は依存取得を含め数十分かかります）"):
+    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（不足する Rust・Windows LLVM の公式導入と依存取得を含みます。初回は数十分かかります）"):
         print_warning("ビルドをキャンセルしました。")
         return
     if args.detach:
