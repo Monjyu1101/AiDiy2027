@@ -11,3 +11,6 @@
 
 # PDF はバイナリとして扱い、改行変換しない。
 *.pdf binary
+
+# 単体配布 bat は CP932 / CRLF を維持する。
+/_auto.bat -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol

@@ -25,6 +25,7 @@ class BatchStructureTests(unittest.TestCase):
         self.assertNotIn(b"\n", data.replace(b"\r\n", b""))
         self.assertNotIn(b"\x1a", data)
         self.assertNotIn(b"\x00", data)
+        self.assertIn("/_auto.bat -text", (ROOT / ".gitattributes").read_text(encoding="utf-8"))
 
     def test_nonascii_source_is_only_ui_not_control_flow(self):
         for line in TEXT.splitlines():
@@ -228,15 +229,58 @@ class BatchStructureTests(unittest.TestCase):
         self.assertIn('goto failed', block)
 
     def test_optional_tools_cannot_block_initial_setup(self):
-        block = TEXT[TEXT.index('set "STAGE=check_node"'):TEXT.index('set "STAGE=git_environment"')]
-        for name in ('node', 'npm', 'uv'):
+        block = TEXT[TEXT.index('set "STAGE=check_npm"'):TEXT.index('set "STAGE=git_environment"')]
+        for name in ('npm', 'uv'):
             self.assertIn(f'set "STAGE=check_{name}"', block)
-        self.assertEqual(block.count('set "CHECK_RC=%ERRORLEVEL%"'), 3)
-        self.assertEqual(block.count('call :report_optional_check'), 3)
+        self.assertEqual(block.count('set "CHECK_RC=%ERRORLEVEL%"'), 2)
+        self.assertEqual(block.count('call :report_optional_check'), 2)
         self.assertNotIn('goto failed', block)
         self.assertNotIn('goto prerequisite_failed', block)
         report = TEXT[TEXT.index('\n:report_optional_check\n'):TEXT.index('\n:prerequisite_failed\n')]
         self.assertIn('exit /b 0', report)
+
+    def test_missing_tools_install_only_after_confirmation_before_git_changes(self):
+        main = TEXT[:TEXT.index('set "STAGE=git_environment"')]
+        self.assertLess(main.index('if not errorlevel 1 goto cancelled'), main.index(':check_python'))
+        for label, flag, package in (('python', 'PYTHON', 'Python.Python.3.13'),
+                                     ('node', 'NODE', 'OpenJS.NodeJS.LTS')):
+            block = main[main.index(':check_' + label):main.index(':' + label + '_ready')]
+            self.assertIn('if not errorlevel 1 goto ' + label + '_ready', block)
+            self.assertIn('if defined ' + flag + '_INSTALLED goto restart_required', block)
+            self.assertIn('set "INSTALL_ID=' + package + '"', block)
+            self.assertIn('call :install_missing_tool\nif errorlevel 1 goto prerequisite_failed', block)
+            self.assertIn('set "' + flag + '_INSTALLED=1"\ngoto check_' + label, block)
+            self.assertIn('set "' + flag + '_INSTALLED="', main)
+        self.assertLess(main.index('py -3 '), main.index('python -X utf8'))
+
+    def test_install_confirmation_empty_yes_no_declines_without_input_expansion(self):
+        block = TEXT[TEXT.index('\n:install_missing_tool\n'):TEXT.index('\n:python_version_warning\n')]
+        self.assertIn('set "INSTALL_REPLY=y"\nset /p "INSTALL_REPLY=%INSTALL_NAME% を導入しますか[y]/n: "', block)
+        self.assertIn('set INSTALL_REPLY | findstr /i /x /c:"INSTALL_REPLY=n" >nul\nif not errorlevel 1 goto install_declined', block)
+        self.assertIn('set INSTALL_REPLY | findstr /i /x /c:"INSTALL_REPLY=y" >nul\nif errorlevel 1 goto confirm_install', block)
+        self.assertNotIn('%INSTALL_REPLY%', TEXT)
+        self.assertIn(':install_declined', block)
+        self.assertIn('Installation declined:', block)
+
+    def test_installer_is_exact_winget_source_no_upgrade_no_auto_agreement(self):
+        self.assertIn('winget install --id %INSTALL_ID% -e --source winget --no-upgrade', TEXT)
+        for option in ('--force', '--ignore-security-hash', '--accept-package-agreements', '--accept-source-agreements'):
+            self.assertNotIn(option, TEXT)
+        block = TEXT[TEXT.index('\n:install_missing_tool\n'):TEXT.index('\n:python_version_warning\n')]
+        self.assertIn('winget --version', block)
+        self.assertIn('if errorlevel 1 goto winget_missing', block)
+        self.assertIn('set "INSTALL_RC=%ERRORLEVEL%"\nchcp 932 >nul', block)
+        self.assertIn('if not "%INSTALL_RC%"=="0" goto install_failed', block)
+        self.assertIn('INSTALL_FAILED %INSTALL_ID% exit=%INSTALL_RC%', block)
+
+    def test_restart_path_does_not_touch_repository_or_reinstall(self):
+        block = TEXT[TEXT.index('\n:restart_required\n'):TEXT.index('\n:python_version_warning\n')]
+        self.assertIn('set "RC=2"', block)
+        self.assertIn('RESTART_REQUIRED %STAGE%', block)
+        self.assertIn('端末を開き直し', block)
+        self.assertTrue(block.rstrip().endswith('goto finish'))
+        for token in ('git ', 'winget ', '_setup.py', 'set "PATH=', 'setx '):
+            self.assertNotIn(token, block)
 
     def test_npm_cmd_is_isolated_in_child_cmd_not_chained(self):
         self.assertIn('"%ComSpec%" /d /c npm --version', TEXT)
@@ -476,7 +520,7 @@ class BackupDestinationTests(unittest.TestCase):
 class ConfirmationModelTests(unittest.TestCase):
     """確認部分の実コマンドを限定モデルで実行。入力/FINDSTRのみ模擬する。"""
     def confirm(self, answer):
-        block = TEXT[TEXT.index('set "RUN_AIDIY=y"'):TEXT.index('rem Only bootstrap requirements')]
+        block = TEXT[TEXT.index('set "RUN_AIDIY=y"'):TEXT.index('rem Install missing Python/Node')]
         value, matched, output = None, False, []
         for line in block.splitlines():
             if not line or line.startswith('rem '):

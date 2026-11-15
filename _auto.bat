@@ -51,7 +51,9 @@ echo ============================================================
 echo 環境チェック
 echo ============================================================
 echo(
-rem Only bootstrap requirements are fatal here. Normal setup owns Node/npm/uv.
+rem Install missing Python/Node only after confirmation, before repository changes.
+set "PYTHON_INSTALLED="
+set "NODE_INSTALLED="
 set "RC=2"
 set "STAGE=prerequisite_git"
 echo [INFO] Git
@@ -59,13 +61,22 @@ git --version >"%AIDIY_TEMP%\probe.txt" 2>&1
 if errorlevel 1 goto prerequisite_failed
 type "%AIDIY_TEMP%\probe.txt"
 type "%AIDIY_TEMP%\probe.txt" >>"%LOG%"
+:check_python
 set "STAGE=prerequisite_python"
 echo [INFO] Python実行環境（3.13以上を推奨、旧版でも続行）
 py -3 -X utf8 -c "import sys;encoded=sys.executable.encode('cp932');encoded.decode('cp932')!=sys.executable and sys.exit(3);sys.stdout.buffer.write(encoded+b'\r\n');sys.stderr.write('Python '+sys.version.split()[0]+'\n')" >"%AIDIY_TEMP%\python.txt" 2>"%AIDIY_TEMP%\probe.txt"
 if not errorlevel 1 goto python_ready
 type "%AIDIY_TEMP%\probe.txt" >>"%LOG%"
 python -X utf8 -c "import sys;encoded=sys.executable.encode('cp932');encoded.decode('cp932')!=sys.executable and sys.exit(3);sys.stdout.buffer.write(encoded+b'\r\n');sys.stderr.write('Python '+sys.version.split()[0]+'\n')" >"%AIDIY_TEMP%\python.txt" 2>"%AIDIY_TEMP%\probe.txt"
+if not errorlevel 1 goto python_ready
+if defined PYTHON_INSTALLED goto restart_required
+set "INSTALL_NAME=Python"
+set "INSTALL_ID=Python.Python.3.13"
+set "INSTALL_URL=https://www.python.org/downloads/windows/"
+call :install_missing_tool
 if errorlevel 1 goto prerequisite_failed
+set "PYTHON_INSTALLED=1"
+goto check_python
 :python_ready
 set "PYTHON="
 set /p "PYTHON="<"%AIDIY_TEMP%\python.txt"
@@ -76,10 +87,21 @@ rem Minimum versions are warnings only. Never block an executable old Python.
 "%PYTHON%" -c "import sys;sys.exit(0 if sys.version_info >= (3,13) else 1)" >nul 2>&1
 if errorlevel 1 call :python_version_warning
 
-rem Advisory only: setup offers its normal installation and update choices.
+rem Node must be executable before setup; npm and uv remain setup-owned.
+:check_node
 set "STAGE=check_node"
 node --version >"%AIDIY_TEMP%\probe.txt" 2>&1
-set "CHECK_RC=%ERRORLEVEL%"
+if not errorlevel 1 goto node_ready
+if defined NODE_INSTALLED goto restart_required
+set "INSTALL_NAME=Node.js"
+set "INSTALL_ID=OpenJS.NodeJS.LTS"
+set "INSTALL_URL=https://nodejs.org/en/download"
+call :install_missing_tool
+if errorlevel 1 goto prerequisite_failed
+set "NODE_INSTALLED=1"
+goto check_node
+:node_ready
+set "CHECK_RC=0"
 call :report_optional_check
 set "STAGE=check_npm"
 rem npm is commonly npm.cmd. A child CMD returns here instead of chaining away.
@@ -216,6 +238,56 @@ if errorlevel 1 (echo [NG] Cannot restore code page 932. TEMP kept. & exit /b 2)
 >>"%LOG%" echo START_EXIT=%RC%
 if not "%RC%"=="0" goto failed
 >>"%LOG%" echo SUCCESS %DATE% %TIME%
+goto finish
+
+:install_missing_tool
+type "%AIDIY_TEMP%\probe.txt" >>"%LOG%"
+echo [WARN] %INSTALL_NAME% を実行できません。未導入の場合は導入できます。
+echo [INFO] Windows Package Manager の winget ソースを使用します: %INSTALL_ID%
+echo [INFO] 導入済みのツールは更新しません。利用条件や管理者確認が表示された場合は確認してください。
+:confirm_install
+set "INSTALL_REPLY=y"
+set /p "INSTALL_REPLY=%INSTALL_NAME% を導入しますか[y]/n: "
+rem Never expand reply text: metacharacters must not become commands.
+set INSTALL_REPLY | findstr /i /x /c:"INSTALL_REPLY=n" >nul
+if not errorlevel 1 goto install_declined
+set INSTALL_REPLY | findstr /i /x /c:"INSTALL_REPLY=y" >nul
+if errorlevel 1 goto confirm_install
+winget --version >"%AIDIY_TEMP%\probe.txt" 2>&1
+if errorlevel 1 goto winget_missing
+rem Do not auto-accept agreements, bypass hashes, or upgrade an installed tool.
+winget install --id %INSTALL_ID% -e --source winget --no-upgrade
+set "INSTALL_RC=%ERRORLEVEL%"
+chcp 932 >nul
+if errorlevel 1 exit /b 2
+>>"%LOG%" echo INSTALL %INSTALL_ID% exit=%INSTALL_RC%
+if not "%INSTALL_RC%"=="0" goto install_failed
+exit /b 0
+
+:install_declined
+>"%AIDIY_TEMP%\probe.txt" echo Installation declined: %INSTALL_NAME%
+echo [INFO] 導入を中止しました。リポジトリ更新・setup・起動は行いません。
+exit /b 2
+
+:winget_missing
+echo [NG] winget が使用できません。Windows のアプリ インストーラーを確認してください。
+echo [INFO] 手動導入先: %INSTALL_URL%
+exit /b 2
+
+:install_failed
+>"%AIDIY_TEMP%\probe.txt" echo INSTALL_FAILED %INSTALL_ID% exit=%INSTALL_RC%
+echo [NG] 導入が完了していません。上の表示を確認してください。
+echo [INFO] 再起動が必要な場合は再起動後、端末を開き直して _auto.bat を再実行してください。
+echo [INFO] 手動導入先: %INSTALL_URL%
+exit /b 2
+
+:restart_required
+set "RC=2"
+>>"%LOG%" echo RESTART_REQUIRED %STAGE%
+echo [INFO] 導入後のツールを現在の端末で確認できないため、ここで終了します。
+echo [INFO] PATH反映のため端末を開き直し、_auto.bat を再実行してください。
+echo [INFO] それでも実行できない場合は、導入結果とPATHを確認してください。
+echo [INFO] リポジトリ更新・setup・起動はまだ行っていません。
 goto finish
 
 :python_version_warning
