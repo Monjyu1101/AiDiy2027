@@ -97,7 +97,7 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
  const historyDirectory=async()=>{const dir=join(await directory(),'..','history');await mkdir(dir,{recursive:true});const base=await realpath(stateRoot),full=await realpath(dir);if(!within(base,full))throw Error('Navi履歴の保存先が不正です。');return full;};
  const validId=id=>typeof id==='string'&&/^[a-f0-9-]{36}$/.test(id);
  // 旧記録の明示的な更新日時だけを評価日時として使う。作成日時から補完せず、不明は履歴選択後も保持する。
- const restored=data=>({...validateNavigation(data,{id:data.requestId,goal:data.goal,inferred:data.inferred}),createdAt:data.createdAt,navigationId:validId(data.navigationId)?data.navigationId:data.requestId,updatedAt:data.updatedAt||data.createdAt,checkedAt:checkedTime(Object.hasOwn(data,'checkedAt')?data.checkedAt:data.updatedAt),...(data.selection?{selection:validateNavigationModel(data.selection)}:{})});
+ const restored=data=>({evaluationBasis:['source','documents'].includes(data.evaluationBasis)?data.evaluationBasis:'auto',...validateNavigation(data,{id:data.requestId,goal:data.goal,inferred:data.inferred}),createdAt:data.createdAt,navigationId:validId(data.navigationId)?data.navigationId:data.requestId,updatedAt:data.updatedAt||data.createdAt,checkedAt:checkedTime(Object.hasOwn(data,'checkedAt')?data.checkedAt:data.updatedAt),...(data.selection?{selection:validateNavigationModel(data.selection)}:{})});
  async function atomicJSON(file,data){const temporary=file+'.'+randomUUID()+'.tmp';try{await writeFile(temporary,JSON.stringify(data,null,2),{encoding:'utf8',flag:'wx'});await replaceState(temporary,file);}finally{await rm(temporary,{force:true});}}
  async function historyRead(id){if(!validId(id))throw Error('Navi履歴IDが不正です。');const dir=await historyDirectory(),file=await realpath(join(dir,id+'.json'));if(!within(dir,file)||(await stat(file)).size>1024*1024)throw Error('Navi履歴が不正です。');return restored(JSON.parse(await readFile(file,'utf8')));}
  async function list(){active();const dir=await historyDirectory(),items=[];for(const name of await readdir(dir)){if(!name.endsWith('.json')||!validId(name.slice(0,-5)))continue;try{const item=await historyRead(name.slice(0,-5));items.push({id:item.navigationId,goal:item.goal,updatedAt:item.updatedAt});}catch{}}return items.sort((a,b)=>b.updatedAt-a.updatedAt);}
@@ -142,7 +142,7 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    const content=typeof answer==='string'?answer:answer?.content;
    const validated=validateNavigationResponse(parseNavigationResponse(content),j),checkedAt=now();
    // AIが各ファイルを見た瞬間ではなく、全項目の有効な評価結果をアプリが受け取った日時。
-   const result={...validated,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection};
+   const result={...validated,evaluationBasis:j.evaluationBasis,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection};
    if(!current(j)||j.status!=='running')return;
    temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
    if(!current(j)||j.status!=='running')return;
@@ -154,7 +154,8 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
   }catch(e){if((current(j)||j.committing)&&j.status==='running'){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;}}
   finally{clearTimeout(timer);j.controller.signal.removeEventListener('abort',abort);if(temporary)await rm(temporary,{force:true});}
  }
- async function start(goal,action='navigate',clientRequestId){
+ async function start(goal,action='navigate',clientRequestId,evaluationBasis){
+  if(evaluationBasis!==undefined&&!['auto','source','documents'].includes(evaluationBasis))throw Error('評価基準が不正です。');
   active();if(!['navigate','evaluate'].includes(action))throw Error('Navi操作が不正です。');if(state().mode==='offline')throw Error('オンラインで利用を開始してください。');
   if(action==='navigate'&&(typeof goal!=='string'||goal.length>4000||!goal.trim()))throw Error('開発目標を1〜4000文字で入力してください。');
   if(clientRequestId!==undefined&&!validRequest(clientRequestId))throw Error('Navi要求IDが不正です。');
@@ -167,10 +168,11 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    const session=j.session,dir=await directory();if(interrupted())return {job:describeJob(j)};active();if(state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
    const previous=action==='evaluate'?await read():null;if(interrupted())return {job:describeJob(j)};if(action==='evaluate'&&!previous)throw Error('先にNaviで作業項目を作成してください。');
    if(previous)goal=previous.goal;
+   evaluationBasis=evaluationBasis??previous?.evaluationBasis??'auto';
    const ready=await availability(await readModel());if(interrupted())return {job:describeJob(j)};if(!ready.available)throw Error(ready.reason||'実行環境が利用できません。');
    const selection=await readModel();if(interrupted())return {job:describeJob(j)};
    const id=j.id;
-   Object.assign(j,{navigationId:previous?.navigationId,createdAt:previous?.createdAt,selection,items:previous?.items,goal:previous?previous.goal:goal.trim(),inferred:previous?previous.inferred:goal.trim()===DEFAULT_NAVIGATION_GOAL});
+   Object.assign(j,{evaluationBasis,navigationId:previous?.navigationId,createdAt:previous?.createdAt,selection,items:previous?.items,goal:previous?previous.goal:goal.trim(),inferred:previous?previous.inferred:goal.trim()===DEFAULT_NAVIGATION_GOAL});
    const recentScan=await scan(project,{filter:'backup',limits:{timeMs:3000,maxFiles:10000}});
    if(interrupted())return {job:describeJob(j)};
    if(closed||!state().active||state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
@@ -190,6 +192,7 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
 - 例5: itemsが [] ならnextItemIdはnull、nextPromptは""、overall.progressは0です。
 - 例6（再評価）: 前回 [step-1:60%, step-2:0%] でnextItemIdが"step-1"でも、今回 [step-1:100%, step-2:20%] になったらnextItemIdを"step-2"へ変更し、nextPromptもstep-2の残作業だけに書き直します。今回両方100%になったらnullと""へ変更します。保存済みのnextItemId・nextPromptは前回値であり、固定してはいけません。
 出力前の照合: 今回返すitemsを先頭から再確認し、最初の100%未満のidとnextItemIdが完全一致し、nextPromptがその項目だけの非空文字列か確認してください。対象なしならnextItemIdがnull、nextPromptが""か確認してください。`;
+   j.prompt=navigationEvaluationPrompt(evaluationBasis)+j.prompt;
    j.prompt+=`\n回答形式（厳守）: 調査を終えてから、最終回答は「{」で始まり「}」で終わる完成したJSONオブジェクト1つだけを出力してください。アプリは回答全体をJSONとして解析し、解析できない場合は最初の「{」から最後の「}」まで（括弧を含む）を抽出して読み取ります。複数のJSONから1件を選ぶことはできません。前置き・調査経過・JSON外の説明・Markdown・コードフェンスは出力しないでください。入力例や保存済みJSONを別掲したり、途中版・修正版・複数案を並べたりしないでください。差分だけやJSONを包む配列・文字列ではなく、必須キーと全項目を含む最終結果1つを返してください。\n文字列内の改行・二重引用符・バックスラッシュはJSONの規則でエスケープし、コメント・末尾カンマ・省略記号を使わないでください。新しく書く説明は簡潔にし、全項目と閉じ括弧を省略せず最後まで出力してください。再評価で固定する保存済みの値は短縮しないでください。出力前にJSON構文と必須キーを確認し、requestIdは下の出力形式の値をそのまま使ってください。結果の保存はアプリ側で行います。ファイルの作成・変更はしないでください。\n${previous?'出力形式: ':''}${JSON.stringify(previous?{schemaVersion:3,requestId:id,goal:previous.goal,items:previous.items,overall:previous.overall,nextItemId:previous.nextItemId,nextPrompt:previous.nextPrompt}:{schemaVersion:3,requestId:id,goal:j.inferred?'仮の開発目標':j.goal,items:[{id:'step-1',name:'バックエンド調整',progress:100,reason:'必要なAPIと関連試験を確認済みの場合の例',weight:50,weightReason:'複数APIとデータ整合性の検証が全体工数の半分を占める見積例'},{id:'step-2',name:'フロントエンド',progress:70,reason:'基本画面は確認済みで残る表示確認がある場合の例',weight:30,weightReason:'画面実装と状態遷移の検証範囲から3割と見積もる例'},{id:'step-3',name:'セルフテスト',progress:0,reason:'計画された試験が未実施と確認できた場合の例',weight:20,weightReason:'結合試験と回帰確認に2割を見積もる例'}],overall:{progress:71,reason:'工数配分50:30:20の加重平均は71%。残作業は画面確認と結合試験が中心。工数比率はAIの推定です。'},nextItemId:'step-2',nextPrompt:'今回の目標は、利用者が画面を迷わず使える状態に仕上げることです。\n対処しようとしている内容は、基本画面の実装後に残っている表示確認です。現在の調査では表示の検証結果を確認できていません。\n今回の作業では、フロントエンドの対象画面とその検証手順を確認し、表示崩れの有無を調べ、必要な修正と表示の再確認を行ってください。確認できた内容と未確認部分を報告してください。今回はこの項目だけを対象にしてください。'})}`;
    j.deadline=now()+waitMs;j.done=execute(j,dir);return {job:describe()};
   }catch(error){if(interrupted())return {job:describeJob(j)};if(current(j)){j.status='failed';j.message=error.message;}throw error;}finally{if(starting===j)starting=null;}
@@ -199,7 +202,7 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
   const reply=(status,data)=>res.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(data));
   try{
    if(req.method==='GET')reply(200,url.searchParams.get('providers')==='1'?await providerList():url.searchParams.has('catalog')?await navigationCatalog(url.searchParams.get('catalog')):url.searchParams.get('list')==='1'?{items:await list()}:await get());
-   else if(req.method==='POST'||req.method==='PUT'){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>20000)throw Error('入力が大きすぎます。');chunks.push(Buffer.from(chunk));}const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(req.method==='PUT')reply(200,{selection:await saveModel(data)});else if(data.action==='cancel')reply(200,await cancel(data));else if(data.action==='select')reply(200,await select(data.id));else if(data.action==='new')reply(200,await fresh());else reply(202,await start(data.goal,data.action,data.clientRequestId));}
+   else if(req.method==='POST'||req.method==='PUT'){const chunks=[];let size=0;for await(const chunk of req){size+=chunk.length;if(size>20000)throw Error('入力が大きすぎます。');chunks.push(Buffer.from(chunk));}const data=JSON.parse(Buffer.concat(chunks).toString('utf8'));if(req.method==='PUT')reply(200,{selection:await saveModel(data)});else if(data.action==='cancel')reply(200,await cancel(data));else if(data.action==='select')reply(200,await select(data.id));else if(data.action==='new')reply(200,await fresh());else reply(202,await start(data.goal,data.action,data.clientRequestId,data.evaluationBasis));}
    else reply(405,{error:'対応していない操作です。'});
   }catch(e){reply(400,{error:e.message});}return true;
  }};
@@ -226,3 +229,10 @@ export function createNavigationInstances(project,options){
  };
 }
 
+
+// 自動は既存の要求を変更しない。限定モードは共通の出力・読取専用規則を保ったまま評価の根拠を絞る。
+export function navigationEvaluationPrompt(basis){
+ if(basis==='source')return '評価基準: 実装ソース。以下の指示中の「関連内容」「関連ファイル」「現状の根拠」は実装ソースとテストコードの内容だけを指します。関連文書・README・設計書・作業履歴の記述は達成度の根拠にしないでください。例: 文書に「実装済み」とあってもソースに存在しなければ完了にしません。実装が存在すれば文書が未整備という理由で減点しません。対象ソースがない・読めない場合は根拠不足として0%にし、overall.reasonに明記してください。新規の項目分解とおすすめプロンプトも実装ソースの範囲に限定します。再評価では保存済み項目を維持しますが、保存済みの達成率やreasonを新しい根拠にせず、今回のソースだけで再判定してください。\n';
+ if(basis==='documents')return '評価基準: 関連文書。以下の指示中の「関連内容」「関連ファイル」「現状の根拠」は目標に関連する文書（README・仕様書・設計書・操作手順など）の内容だけを指します。実装ソースやテストコードは評価の根拠にしないでください。例: 実装済みでも必要な説明が文書になければ文書の完成とはしません。文書が整っていれば実装が未完成という理由で減点しません。記述された実装完了を実際の動作保証と混同せず、文書内容の充足度だけを評価してください。対象文書がない・読めない場合は根拠不足として0%にし、overall.reasonに明記してください。新規の項目分解とおすすめプロンプトも関連文書の範囲に限定します。再評価では保存済み項目を維持しますが、保存済みの達成率やreasonを新しい根拠にせず、今回の文書だけで再判定してください。\n';
+ return '';
+}

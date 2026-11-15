@@ -475,3 +475,39 @@ test('終了時のnull文字列・欠損・空白・完了メッセージは空�
   const d={...targetResult(scores),...patch};assert.throws(()=>validateNavigation(d,{id:d.requestId,goal:d.goal}),/おすすめプロンプト/);
  }
 });
+
+for(const basis of ['auto','source','documents'])test('評価基準: '+basis+'の要求・保存・履歴・再評価',async t=>{
+ const prompts=[];
+ const {service}=await fixture(t,async({prompt},root)=>{prompts.push(prompt);return respond(prompt,root);});
+ await service.start('検索画面を整える','navigate',undefined,basis);
+ const first=await finish(service);assert.equal(first.job.status,'complete',first.job.message);assert.equal(first.result.evaluationBasis,basis);
+ await service.start('', 'evaluate');const second=await finish(service);assert.equal(second.job.status,'complete',second.job.message);assert.equal(second.result.evaluationBasis,basis);
+ for(const prompt of prompts){
+  if(basis==='auto')assert.ok(prompt.startsWith('プロジェクトを読み取り調査'));
+  if(basis==='source'){assert.ok(prompt.startsWith('評価基準: 実装ソース'));assert.match(prompt,/文書が未整備という理由で減点しません/);}
+  if(basis==='documents'){assert.ok(prompt.startsWith('評価基準: 関連文書'));assert.match(prompt,/実装が未完成という理由で減点しません/);}
+ }
+ await service.fresh();assert.equal((await service.get()).result,null);
+ await service.select(first.result.navigationId);assert.equal((await service.get()).result.evaluationBasis,basis);
+ await service.start('','evaluate',undefined,'documents');assert.equal((await finish(service)).result.evaluationBasis,'documents');
+});
+test('評価基準の不正値はAIを呼ばず拒否する',async t=>{
+ const {service}=await fixture(t,()=>assert.fail('AI呼出し不要'));
+ for(const basis of ['invalid',null,{},1])await assert.rejects(service.start('目標','navigate',undefined,basis),/評価基準/);
+});
+
+test('同一プロジェクトの複数窓は基準・再評価・再起動時の復元を個別に保持する',async t=>{
+ const prompts=[];const run=async({prompt},root)=>{prompts.push(prompt);return respond(prompt,root);};
+ const a=await fixture(t,run,{instance:'navi-1'});
+ const options={state:()=>a.state,stateRoot:a.stateRoot,defaultModel:async()=>({provider:'aidiy_hermes',model:'same'}),runAgent:args=>run(args,a.root)};
+ const b=createNavigation(a.root,{...options,instance:'navi-2'});t.after(()=>b.close());
+ await Promise.all([a.service.start('検索画面を整える','navigate',undefined,'source'),b.start('検索画面を整える','navigate',undefined,'documents')]);
+ const first=await Promise.all([finish(a.service),finish(b)]);assert.deepEqual(first.map(v=>v.result.evaluationBasis),['source','documents']);
+ await Promise.all([a.service.start('','evaluate'),b.start('','evaluate')]);
+ const updated=await Promise.all([finish(a.service),finish(b)]);assert.deepEqual(updated.map(v=>v.result.evaluationBasis),['source','documents']);
+ assert.equal(prompts.filter(p=>p.startsWith('評価基準: 実装ソース')).length,2);assert.equal(prompts.filter(p=>p.startsWith('評価基準: 関連文書')).length,2);
+ a.service.close();b.close();
+ const reopened=['navi-1','navi-2'].map(instance=>createNavigation(a.root,{...options,instance}));t.after(()=>reopened.forEach(service=>service.close()));
+ assert.deepEqual(await Promise.all(reopened.map(async service=>(await service.get()).result.evaluationBasis)),['source','documents']);
+ await reopened[0].fresh();assert.equal((await reopened[0].get()).result,null);assert.equal((await reopened[1].get()).result.evaluationBasis,'documents');
+});

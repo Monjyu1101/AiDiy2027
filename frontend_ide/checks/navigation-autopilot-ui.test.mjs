@@ -18,12 +18,12 @@ const reply=data=>({ok:true,json:async()=>data});
 const flush=async()=>{for(let i=0;i<80;i++)await Promise.resolve();};
 function fixture(handler,props={}){
  const calls=[],resizes=[],sounds=[],watchers=[],timers=new Map();let id=0,evaluations=0,state=makeResult(0),job=null;
- const api=vm.runInNewContext(source+`;({title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,soundOn,codeOpen,codeToggleLabel,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,autopilotMessage,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot,busy,routing})`,{ref,computed,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,inject:()=>null,watch:(source,callback)=>{watchers.push({source,callback});},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineExpose(){},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
+ const api=vm.runInNewContext(source+`;({evaluationBasis,navigate,selectHistory,matchesResult,title,normalTitle,syncCruiseTitle,toggleAutopilot,stopAutopilot,toggleCode,ensureCode,releaseCode,codeDriving,soundOn,codeOpen,codeToggleLabel,codeOpening,codeBase,codePanel,autopilot,autopilotStatus,autopilotMessage,availability,result,goal,panel,visible,detached,job,refresh,canAutopilot,busy,routing})`,{ref,computed,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,inject:()=>null,watch:(source,callback)=>{watchers.push({source,callback});},onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineExpose(){},defineProps:()=>({instance:'navi-1',standalone:true,project:{path:'/project'},...props}),defineEmits:()=>()=>{},window:{aidiyWindow:{navigationCode:async value=>{resizes.push(value);return {ok:true};}}},DEFAULT_NAVIGATION_GOAL:'goal',AbortController,AbortSignal,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('aborted');},setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:id=>timers.delete(id),fetch:async(url,options={})=>{
   const method=options.method||'GET';calls.push({url,method});const custom=await handler?.(url,options);if(custom)return custom;
   if(url==='/api/connection')return reply({active:true,startedAt:1});
   if(url.startsWith('/api/navigation/code'))return reply({url:'/panels/code/navi-1/test/'});
   if(url==='/api/navigation/sound'){sounds.push(JSON.parse(options.body).kind);return reply({});}
-  if(method==='POST'){job={id:'evaluate-'+(++evaluations),status:'complete'};state=makeResult(Math.min(100,evaluations*50),job.id);return reply({job});}
+  if(method==='POST'){job={id:'evaluate-'+(++evaluations),status:'complete'};state={...makeResult(Math.min(100,evaluations*50),job.id),evaluationBasis:JSON.parse(options.body).evaluationBasis||'auto'};return reply({job});}
   return reply({job,result:state,availability:{available:true}});
  }});
  api.visible.value=true;api.panel.value={style:{},ownerDocument:{visibilityState:'visible'}};api.result.value=state;api.goal.value='goal';api.availability.value={available:true};
@@ -170,4 +170,38 @@ test('通知音のトグル: 初期値はオンで、オフにすると評価・
  assert.deepEqual(f.sounds,[]);
  f.api.soundOn.value=true;f.sounds.length=0;f.api.result.value=makeResult(40);watcher(['job-2','failed','client-2'],['job-2','running','client-2']);await flush();
  assert.deepEqual(f.sounds,['注意']); // オンに戻すと鳴る
+});
+
+test('評価基準は通常要求と自動航行へ渡し、未評価の基準では自動航行を開始しない',async()=>{
+ const bodies=[];const f=fixture((url,options)=>{if(options.body&&url.startsWith('/api/navigation?'))bodies.push(JSON.parse(options.body));});
+ f.api.evaluationBasis.value='source';assert.equal(f.api.matchesResult.value,false);assert.equal(f.api.canAutopilot.value,false);
+ await f.api.navigate('evaluate');assert.equal(bodies[0].evaluationBasis,'source');
+ const a=fixture((url,options)=>{if(options.body&&url.startsWith('/api/navigation?'))bodies.push(JSON.parse(options.body));});
+ a.api.result.value={...a.api.result.value,evaluationBasis:'documents'};a.api.evaluationBasis.value='documents';
+ a.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:async()=>{}};
+ await a.api.toggleAutopilot();assert.equal(bodies[1].evaluationBasis,'documents');
+});
+
+for(const basis of ['source','documents'])test('自動航行の2回の読取専用再評価で評価基準を維持: '+basis,async()=>{
+ const requests=[],codeRequests=[];
+ const f=fixture((url,options)=>{if(options.body&&url.startsWith('/api/navigation?'))requests.push(JSON.parse(options.body));});
+ f.api.result.value={...f.api.result.value,evaluationBasis:basis};f.api.evaluationBasis.value=basis;
+ f.api.codePanel.value={navigationReadiness:()=>({ready:true}),runNavigationPrompt:async request=>codeRequests.push(request.text)};
+ await f.api.toggleAutopilot();await flush();
+ assert.equal(codeRequests.length,2);assert.equal(requests.length,2);
+ for(const request of requests){assert.equal(request.action,'evaluate');assert.equal(request.evaluationBasis,basis);assert.equal(request.goal,'goal');}
+ assert.equal(f.api.result.value.evaluationBasis,basis);assert.equal(f.api.result.value.overall.progress,100);
+ assert.match(f.api.autopilotStatus.value,/100%/);assert.equal(f.api.autopilot.value,false);
+});
+test('複数Naviのラジオ選択と再評価要求は独立し、定期取得は編集中の基準を上書きしない',async()=>{
+ const requests=[[],[]];const windows=[0,1].map(index=>fixture((url,options)=>{if(options.body&&url.startsWith('/api/navigation?'))requests[index].push(JSON.parse(options.body));},{instance:'navi-'+(index+1)}));
+ await Promise.all(windows.map(f=>f.api.refresh()));
+ windows[0].api.evaluationBasis.value='source';windows[1].api.evaluationBasis.value='documents';
+ await Promise.all(windows.map(f=>f.api.refresh()));
+ assert.equal(windows[0].api.evaluationBasis.value,'source');assert.equal(windows[1].api.evaluationBasis.value,'documents');
+ await Promise.all(windows.map(f=>f.api.navigate('evaluate')));await flush();
+ assert.equal(requests[0][0].evaluationBasis,'source');assert.equal(requests[1][0].evaluationBasis,'documents');
+ assert.ok(windows[0].calls.filter(call=>call.url.startsWith('/api/navigation?')).every(call=>call.url.endsWith('instance=navi-1')));
+ assert.ok(windows[1].calls.filter(call=>call.url.startsWith('/api/navigation?')).every(call=>call.url.endsWith('instance=navi-2')));
+ windows[0].api.evaluationBasis.value='auto';assert.equal(windows[1].api.evaluationBasis.value,'documents');
 });
