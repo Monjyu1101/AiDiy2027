@@ -9,7 +9,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AiDiy - 日本語ファースト AI開発プラットフォーム</title>
-    <meta name="description" content="日本語で設計し、AIと育てる開発環境 AiDiy。宇宙を眺めるIDE、Hermes / Piによるコード支援、Memoの付箋、音声会話と業務サンプルを紹介します。">
+    <meta name="description" content="日本語で設計し、AIと育てる開発環境 AiDiy。宇宙を眺めるIDE、Hermes / Pi / Codexの3種のAIハーネス、Memoの付箋、音声会話と業務サンプルを紹介します。">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700;900&display=swap');
 
@@ -1188,7 +1188,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
     <nav class="page-nav" aria-label="紹介ページの目次">
         <a class="nav-brand" href="#top">AiDiy</a>
         <div class="nav-links">
-            <a href="#追加機能">Pi / Memo</a>
+            <a href="#追加機能">AIハーネス / Memo</a>
             <a href="#開発スペース">IDE</a>
             <a href="#独立アプリ">アプリ</a>
             <a href="#外部連携">Discord / Slack</a>
@@ -1210,13 +1210,13 @@ https://github.com/monjyu1101/AiDiy2027 -->
         <p class="hero-description">
             プロジェクトを宇宙として眺め、次の一歩を考え、変更を AI に頼む。<br>
             日本語でつながる業務テンプレートと、開発のための作業環境です。<br>
-            Hermes / Pi のコード支援、音声会話、付箋メモを組み合わせて、<br>
+            Hermes / Pi / Codex の3種のAIハーネスと、音声会話・付箋メモを組み合わせて、<br>
             アイデアから日々の改善まで、同じプロジェクトで進められます。
         </p>
         <div class="hero-actions">
             <a href="/AiDiy" class="cyber-button" target="_blank" rel="noopener noreferrer">AiDiy を開く</a>
             <a href="#開発スペース" class="cyber-button-ghost">IDE を知る</a>
-            <a href="#追加機能" class="cyber-button-ghost">Pi / Memo を知る</a>
+            <a href="#追加機能" class="cyber-button-ghost">3種のAIハーネスを知る</a>
             <a href="#業務サンプル" class="cyber-button-ghost">業務サンプルを見る</a>
         </div>
         <div class="hero-tags">
@@ -1225,7 +1225,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
             <span>Vue 3 + Vite + TypeScript</span>
             <span>Electron + VRM + 音声AI</span>
             <span>🧠 自己改善機構 — 使うほど育つ</span>
-            <span>コード AI 9 方式 / 6 パネル</span>
+            <span>コード AI 10 方式 / 6 パネル / AIハーネス3種</span>
             <span>MCP — Windows 20 / Linux・macOS 19</span>
             <span>🤖 AIタスク自動実行 — AI分解 × 条件分岐・合流 × 並行実行</span>
             <span>🌌 9 つのアプリ — IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU</span>
@@ -1235,12 +1235,24 @@ https://github.com/monjyu1101/AiDiy2027 -->
 
     <section class="section" id="追加機能" aria-labelledby="追加機能タイトル">
         <h2 class="section-title" id="追加機能タイトル">AI に頼む。思いつきを残す。</h2>
-        <p class="section-subtitle">コード支援の Pi と、作業のそばに置ける Memo。日々の開発に、選択肢を増やしました。</p>
+        <p class="section-subtitle">標準で拡張性の高い Hermes、最小構成で拡張性の高い Pi、Rust による高速性と安定性を重視した Codex。用途に合わせて選べる3種のAIハーネスと、作業のそばに置ける Memo。</p>
         <div class="spotlight-grid">
+            <article class="spotlight" id="Hermes">
+                <span class="spotlight-label">AI HARNESS / AIDIY HERMES</span>
+                <h3>Hermes — 標準・拡張性大。</h3>
+                <p>AiDiy の標準となる AI ハーネス。豊富なツールと拡張機構を備え、日々のコード支援から複雑な作業までを支えます。</p>
+                <ul>
+                    <li>プラグイン・スキル・MCP で、作業に合わせて機能を拡張。</li>
+                    <li>会話のコンテキスト圧縮やツール実行を内蔵。</li>
+                    <li>Code のオフライン利用、Discord / Slack の窓口にも対応。</li>
+                </ul>
+                <code class="launch-command">aidiy_hermes</code>
+                <p class="usage-note">必要なときに起動する CLI。利用する AI 接続先に応じた認証・設定が必要です。</p>
+            </article>
             <article class="spotlight" id="Pi">
-                <span class="spotlight-label">CODING AGENT / AIDIY PI</span>
-                <h3>Pi も、いつもの AiDiy で。</h3>
-                <p>MIT の Pi を同梱したコード支援 CLI。Hermes と共通のモデル区分で、使いたい AI を選べます。</p>
+                <span class="spotlight-label">AI HARNESS / AIDIY PI</span>
+                <h3>Pi — 最小・拡張性大。</h3>
+                <p>最小構成を土台に、拡張機能やスキルで育てる AI ハーネス。MIT の Pi を同梱し、AiDiy 共通のモデル区分で使いたい AI を選べます。</p>
                 <ul>
                     <li>Diag のモデル一覧、API キー・OAuth・MCP と連携。</li>
                     <li>Code のオフライン利用、Discord / Slack でも Hermes / Pi を選択。</li>
@@ -1248,6 +1260,18 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 </ul>
                 <code class="launch-command">aidiy_pi</code>
                 <p class="usage-note">セットアップ後、作業するフォルダで実行。通常は確認なしで実行するため、調査だけなら <code>--read-only</code> を指定します。クラウドモデルの利用には認証・通信が必要です。</p>
+            </article>
+            <article class="spotlight" id="Codex">
+                <span class="spotlight-label">AI HARNESS / AIDIY CODEX</span>
+                <h3>Codex — Rust 高速・安定性大。</h3>
+                <p>Rust 製の Codex を内包した AI ハーネス。高速性と安定性を重視し、AiDiy のモデル区分で複数の AI 接続先を扱います。</p>
+                <ul>
+                    <li>AIコア・Task・Navi・入力予測などから利用。</li>
+                    <li>OpenAI OAuth / API に加え、Gemini / FreeAI・Claude などの接続先に対応。</li>
+                    <li>コンパイル済み実行ファイルがある場合に、対応画面の候補へ表示。</li>
+                </ul>
+                <code class="launch-command">aidiy_codex</code>
+                <p class="usage-note">事前の Rust コンパイルが必要です（setup では既定 OFF、Diag からも実行可能）。一部調整中。Code のオフライン直接実行と Discord / Slack は Hermes / Pi が対象です。</p>
             </article>
             <article class="spotlight memo" id="Memo">
                 <span class="spotlight-label">DESKTOP NOTES / AIDIY MEMO</span>
@@ -1338,7 +1362,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <p class="feature-description">
                     browser / capture / sqlite / postgres / logs / check / backup /<br>
                     image / movie / stt / tts / obs / ffmpeg / notify / agents / chat / decisions / task / team / windows の MCP サーバー同居（Windows は 20、Linux / macOS は 19）。<br>
-                    SDK / CLI の 9 方式を code1〜code6 パネルで並走可能。
+                    SDK / CLI の 10 方式を code1〜code6 パネルで並走可能。
                 </p>
             </div>
             <div class="feature-card animate-on-scroll">
@@ -1380,14 +1404,14 @@ https://github.com/monjyu1101/AiDiy2027 -->
                 <span class="stat-sub">code1 から code6</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="9">9</span>
+                <span class="stat-number" data-count="10">10</span>
                 <span class="stat-label">コード AI 接続方式</span>
-                <span class="stat-sub">claude_sdk / claude / copilot / codex / antigravity / grok / opencode / hermes / pi</span>
+                <span class="stat-sub">claude_sdk / claude / copilot / codex_cli / antigravity / grok / opencode / aidiy_hermes / aidiy_pi / aidiy_codex</span>
             </div>
             <div class="stat-item animate-on-scroll">
-                <span class="stat-number" data-count="2">2</span>
-                <span class="stat-label">統合コードエージェント CLI</span>
-                <span class="stat-sub">aidiy_hermes / aidiy_pi — 必要なときに起動して利用</span>
+                <span class="stat-number" data-count="3">3</span>
+                <span class="stat-label">統合 AI ハーネス</span>
+                <span class="stat-sub">aidiy_hermes / aidiy_pi / aidiy_codex — 必要なときに起動して利用</span>
             </div>
             <div class="stat-item animate-on-scroll">
                 <span class="stat-number" data-count="9">9</span>
@@ -1879,7 +1903,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🔑 モデルと外部連携</h3>
-                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。モデル一覧を取得・保存し、Chat / Live / Code / Hermes / Pi などがその一覧を利用します。認証情報の確認と AI の試行は分けて扱います。</p>
+                <p>AI プロバイダーのモデル情報や、Hugging Face・Discord・Slack の接続設定を確認。モデル一覧を取得・保存し、Chat / Live / Code / Hermes / Pi / Codex などがその一覧を利用します。認証情報の確認と AI の試行は分けて扱います。</p>
                 <div class="meta-tags"><span>モデル情報</span><span>外部連携</span><span>AI 試行</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -2071,7 +2095,7 @@ Key:   利用者名</pre>
             </div>
             <div class="architecture-item animate-on-scroll">
                 <h3 class="architecture-title">🤖 aidiy_code_agents</h3>
-                <p>Claude / Copilot / Codex / Antigravity / Grok / opencode / hermes / pi など複数の CodeAI CLI をエージェントとして呼び出し。コード生成・修正・レビューを AI が直接 CLI 経由で実行。</p>
+                <p>Claude / Copilot / Codex / Antigravity / Grok / opencode / hermes / pi / aidiy_codex など複数の CodeAI CLI をエージェントとして呼び出し。コード生成・修正・レビューを AI が直接 CLI 経由で実行。</p>
                 <div class="meta-tags"><span>CodeAI CLI</span><span>multi-agent</span><span>subprocess</span></div>
             </div>
             <div class="architecture-item animate-on-scroll">
@@ -2126,13 +2150,13 @@ Key:   利用者名</pre>
                 <span class="feature-icon">🔧</span>
                 <h3 class="feature-title">マルチ Code CLI 対応</h3>
                 <p class="feature-description">
-                    SDK / CLI の 9 方式を code1〜code6 パネルへ<br>
+                    SDK / CLI の 10 方式を code1〜code6 パネルへ<br>
                     自由に割り当てて並走できます。<br>
                     新しいツールも手順に沿って追加可能。
                 </p>
                 <div class="self-improve-detail" style="border-left-color:#00ffff; color:#aaf0ff;">
                     claude_sdk &nbsp;/&nbsp; claude_cli &nbsp;/&nbsp; copilot_cli &nbsp;/&nbsp; codex_cli<br>
-                    antigravity_cli &nbsp;/&nbsp; grok_cli &nbsp;/&nbsp; opencode_cli &nbsp;/&nbsp; aidiy_hermes &nbsp;/&nbsp; aidiy_pi
+                    antigravity_cli &nbsp;/&nbsp; grok_cli &nbsp;/&nbsp; opencode_cli &nbsp;/&nbsp; aidiy_hermes &nbsp;/&nbsp; aidiy_pi &nbsp;/&nbsp; aidiy_codex
                 </div>
             </div>
         </div>
@@ -2157,7 +2181,7 @@ Key:   利用者名</pre>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🤖 CLI エコシステム</h4>
-                <p>claude / copilot / codex / antigravity / grok / opencode / hermes / pi に続く新 Code CLI も <code style="color:#00ffff">_sdk</code> / <code style="color:#00ffff">_cli</code> 命名規約で追加可能。</p>
+                <p>claude / copilot / codex / antigravity / grok / opencode / hermes / pi / aidiy_codex に続く新 Code CLI も <code style="color:#00ffff">_sdk</code> / <code style="color:#00ffff">_cli</code> 命名規約で追加可能。</p>
             </div>
             <div class="expansion-item animate-on-scroll">
                 <h4>🧰 hermes 独自エージェント進化</h4>
@@ -2200,7 +2224,7 @@ Key:   利用者名</pre>
             アバター体験まで含めるなら frontend_avatar、<br>
             宇宙を旅しながら開発するなら aidiy_ide、<br>
             次の作業を整理するなら aidiy_navi、会話から頼むなら aidiy_discord / aidiy_slack。<br>
-            ターミナルから頼むなら aidiy_pi / aidiy_hermes、思いつきを残すなら aidiy_memo。
+            ターミナルから頼むなら aidiy_hermes / aidiy_pi / aidiy_codex、思いつきを残すなら aidiy_memo。
         </p>
         <a href="/AiDiy" class="cyber-button animate-on-scroll rainbow-blink" target="_blank" rel="noopener noreferrer">
             AiDiy を開く
