@@ -20,3 +20,25 @@ IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU は AiDiy の正�
 - Navi は独立した開発案内画面。目標・作業項目・推定達成率・次のプロンプトの作成と再評価は読み取り専用。明示的に自動航行をオンにした場合だけ、右側に埋め込んだ専用Codeへ提案を送り、成功後に再評価する。Codeはファイル変更を伴う通常実行で、総合評価100%・3回連続の改善なし・失敗・対象変更などで停止する。停止要求は変更済みファイルの取り消しではない。単独起動は `aidiy_navi`、IDEでは「＋ Navi」から複数窓を開く。
 
 - CPUは `aidiy_cpu` で単独起動できる小型のホスト使用率画面。IDE子窓と同じVue部品・計測APIを使い、Core / Toolsへの接続を必要としない。単独サーバーは計測と状態読込だけを公開し、ファイル操作・AI・Term起動は許可しない。DiagのCPUアイコンと全体startの個別選択（既定OFF）からも起動する。
+
+## 開発スペースの考え方
+
+AiDiy IDE の中心となる画面は `frontend_ide/src/components/開発スペース/` が所有し、`frontend_ide/viewer` はファイルAPI・Office表示を担当します。AiDiy の**開発スペース**（宇宙をテーマにした IDE 開発環境）は、作業フォルダを眺め、探し、中身を読むための開発用 UI です。目指すのは「ソースをほぼ触らない IDE」で、人は宇宙で全体を眺め、エクスプローラーで辿り、ビューアで読み、変更は部品として呼び出す Code / Live を通じて AI に任せます。
+
+- フォルダを銀河、ファイルを星・惑星として1階層ずつ表示する。
+- 左上のバーガーボタンで左側のエクスプローラーを開閉し、右側でコード・画像・フォルダ内容を表示する。
+- ビューアは読み取り専用。起点日時以降の更新を明滅・金色表示で可視化する。
+- Node.js、Vue 3、Canvas 描画、Monaco Editor で構成する。IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の画面と依存物は `frontend_ide` で共有する。
+- 全体のセットアップ・起動・クリーンアップに組み込み済み。単独起動コマンドは `aidiy_ide`、ポートは固定せず自動割り当て。
+
+ファイルAPI・Office表示は [viewer/AGENTS.md](./viewer/AGENTS.md) を参照してください。
+
+## Navi 概要
+
+Navi は `frontend_ide` が所有する開発案内画面です。`aidiy_navi` で単独起動するか、IDE の「＋ Navi」から開きます。ナビ・再評価は読み取り専用で、目標・作業項目・推定達成率・次のプロンプトを表示します。「自動航行」を明示的にオンにすると、専用 Code が提案を実行してファイルを変更し、完了後に再評価します。自動航行の許可は保存せず、再表示時はオフです。全体 start の個別自動起動対象ではありません。
+
+## Vue共通画面と配置規則
+
+現行のIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code の Hermes / Pi 実行・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+
+Diag / Navi / Code / Live / Term / IDE / Discord / Slack の独自実装は、日本語の機能名で配置し、共通処理は所有元から再利用します。`src`・`checks`・`scripts`・`dist` などの規約名、公開起動入口、配布URL、IPC/API・保存キーは互換性のため維持します。画面の所有元は Diag が `frontend_diag/diag/ui`、Memo が `frontend_diag/memo/ui/src`、Navi / Code / Live / Term / IDE / Task / Team / Browser / CPU が `frontend_ide/src`、Discord が `frontend_channels/discord/panel`、Slack が `frontend_channels/slack/panel` です。

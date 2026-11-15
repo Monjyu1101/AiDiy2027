@@ -1,6 +1,6 @@
 {
-  "count": 23,
-  "pages": 399,
+  "count": 26,
+  "pages": 423,
   "generation": "docs/セルフテスト、操作ガイド/_tools/総合テストPDF.mjs",
   "files": [
     {
@@ -36,12 +36,12 @@
       "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
     },
     {
-      "file": "セルフテスト,aidiy_term,操作編.pdf",
-      "pages": 4,
-      "sha256": "23285957db864ca9be22ce582a2db22400f1ffa68ae470a51d2ba052777f5a47",
-      "source_sha256": "adbbfed1c93934405e5fb339bcc11cc03514db575a6406c2a4816a4eff0dd342",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。"
+      "file": "セルフテスト,aidiy_codex,操作編.pdf",
+      "pages": 7,
+      "sha256": "f20a20db4c9e1eeff5347a5ed06c9b04849c011bc2f71a084bdde6f49c50fa1a",
+      "source_sha256": "ce9af13c960d90ee1c70fe2b31cfe64f3cf9bb67f8358f3c9536466d54bf851e",
+      "review": "新規作成。Windows実機でDiag起動・起動時の警告・/・/status・/model表示・会話1回・/quit・単体CLI終了を確認し、画像8点（アカウント情報は含めない範囲）を掲載。",
+      "alignment_review": "2026-11-15: PDFリンクを相対化。全ページを画像化して目視確認。"
     },
     {
       "file": "セルフテスト,aidiy_diag,AIモデル・Tools編.pdf",
@@ -61,11 +61,11 @@
     },
     {
       "file": "セルフテスト,aidiy_diag,ランチャー編.pdf",
-      "pages": 29,
-      "sha256": "41aaad8d44d251aba4b80acf048ba2de43800e71abd86e5fd5543709ef9d0df2",
-      "source_sha256": "c189ff735ecab1908c71ea906a02a21de24630e2bb37f9e9f3157bd7f2d8dadc",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。"
+      "pages": 30,
+      "sha256": "567b29a49d70f24f9a1509579d14549a21e03cf5c5483d51cca270920b43da83",
+      "source_sha256": "81a384509ee3e748f4f98147650053005a7040cc76bf1275be0ff3aba02f501a",
+      "review": "Term改名後の画面と現行24項目の画面（図101・201・301・401・501・606・610・613〜618）へ差し替えて再生成。全章の実機再試験ではない。",
+      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。"
     },
     {
       "file": "セルフテスト,aidiy_diag,環境確認編.pdf",
@@ -101,11 +101,11 @@
     },
     {
       "file": "セルフテスト,aidiy_ide,操作編.pdf",
-      "pages": 30,
-      "sha256": "0c193d3d3e9a1d5d0c22c9972ed9d106638fd71b5d5dc783f68ee819078147b6",
-      "source_sha256": "4b919888d9083bc0091c85169247952b63f4a695e5829261d0f89973cebda0db",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。",
+      "pages": 31,
+      "sha256": "63aab5ad76fe6f169b8773b573ecae0edb8cd36bedf65c087507ba546aab5bb0",
+      "source_sha256": "5ec171b953d7b031ff50b19aa3874890fa02da5d8ef962f019654482b82a4fdc",
+      "review": "Term改名後の実画面へ画像を差し替えて再生成（Term・Hermes起動画面／IDEの3D・2D・Term独立窓）。全章の実機再試験ではない。",
+      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。",
       "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
@@ -116,6 +116,23 @@
       "review": "2026-11-09: 現行Markdownから再生成。掲載画像8点、相対リンク15件を照合。",
       "alignment_review": "2026-11-09: 全17ページを描画し、全体一覧と更新した図のページを目視確認。",
       "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+    },
+    {
+      "file": "セルフテスト,aidiy_navi,操作編.pdf",
+      "pages": 29,
+      "sha256": "f11e9695ea4a6785bb9700421cdfc08a4397728941a890e5875b0b6396ddd93d",
+      "source_sha256": "d1ae1e4fb182f49ff5669a9c685db12f4848fc1b60eb16831a3842683e3b85fd",
+      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
+      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。",
+      "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
+    },
+    {
+      "file": "セルフテスト,aidiy_pi,操作編.pdf",
+      "pages": 8,
+      "sha256": "f41fa95874fdfb59b546f0b1e6241dd51cb60905f0b9dd139423df441cd4da75",
+      "source_sha256": "f97e00d2208e9d2bb7767547c0ece3e14be9c183f96b162537b88bc591f295fe",
+      "review": "新規作成。Windows実機でDiag起動・/・/session・/model表示・会話1回・/quit・単体CLI終了を確認し、画像7点を掲載。",
+      "alignment_review": "2026-11-15: PDFリンクを相対化。全ページを画像化して目視確認。"
     },
     {
       "file": "セルフテスト,aidiy_slack,操作編.pdf",
@@ -140,6 +157,14 @@
       "source_sha256": "91588819e06864b1e92ed2338fd98eee7b8fa7e66854715bb21f576b1ec536f9",
       "review": "資料整合：本文・画像・参照先を照合。生成PDFの変更ページ14を画像化して目視し、日本語・表・画像の欠け・重なりなし。実機再試験ではない。",
       "alignment_review": "2026-11-07: 再生成後の全ページを描画照合。全体縮小一覧と変更ページを拡大目視し、日本語・欠け・重なりを確認。"
+    },
+    {
+      "file": "セルフテスト,aidiy_term,操作編.pdf",
+      "pages": 4,
+      "sha256": "9b65d4a7f1e2e7ec0e437390a6de7e892b1b80dad72fa88a9a934bc91bb5fe7a",
+      "source_sha256": "2cc549a3b57cc7bfd4460254a7f5336b69a694e9f034782071304fd13b5e7de0",
+      "review": "Term改名後の実画面へ画像を差し替えて再生成（Term・Hermes起動画面／IDEの3D・2D・Term独立窓）。全章の実機再試験ではない。",
+      "alignment_review": "2026-11-15: 改名前画像の注記を削除し、PDFリンクを相対化。全ページを画像化して目視確認。"
     },
     {
       "file": "セルフテスト,backend_tools,主要メソッド編.pdf",
@@ -176,25 +201,34 @@
     },
     {
       "file": "セルフテスト,共通,確認結果.pdf",
-      "pages": 17,
-      "sha256": "dadf1a02880f17e4e593a523ecf21e134d6092d97342693b5c8ca60e47a1f140",
-      "source_sha256": "cee0c074806926fb04dc7f7c7ed66212417c4809ff43b2b9aac2ca1f3a8d7629",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。",
+      "pages": 18,
+      "sha256": "6cf1b4d5a39582550998799e9d5ce82a2030ec34942f96f397f26f538e2b1ae0",
+      "source_sha256": "ee12261a0739611a6734748ca7bce1448701f18decb4a75afa380b2df51323be",
+      "review": "2026-11-15: Memoの既存実機8項目・7図を照合。追加自動試験81/85成功・権限制約4件と隔離Electron UI成功を区別して記載。",
+      "alignment_review": "2026-11-15: 全18ページを画像化し表示確認。Memoは各ページ、共通結果は縮小一覧と追記ページ拡大。リンク相対化・参照先存在を確認。",
       "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     },
     {
-      "file": "セルフテスト,aidiy_navi,操作編.pdf",
-      "pages": 29,
-      "sha256": "f11e9695ea4a6785bb9700421cdfc08a4397728941a890e5875b0b6396ddd93d",
-      "source_sha256": "d1ae1e4fb182f49ff5669a9c685db12f4848fc1b60eb16831a3842683e3b85fd",
-      "review": "Term改名に合わせて本文から再生成。旧画面の画像は当時の記録として保持。全章の実機再試験ではない。",
-      "alignment_review": "2026-11-15: コマンド名・参照リンクを更新し、PDFリンクを相対化。",
+      "file": "セルフテスト,aidiy_memo,操作編.pdf",
+      "pages": 6,
+      "sha256": "c7e999df2635aa216475b43311f31e2fc33d9e2b4aeefe2a19bf6a075ea72dca",
+      "source_sha256": "179fa6ba1da2df7ab606b50a92bee7caf2f3ddbba70a4995cf24f60620d309dd",
+      "review": "2026-11-15: Memoの既存実機8項目・7図を照合。追加自動試験81/85成功・権限制約4件と隔離Electron UI成功を区別して記載。",
+      "alignment_review": "2026-11-15: 全6ページを画像化し表示確認。Memoは各ページ、共通結果は縮小一覧と追記ページ拡大。リンク相対化・参照先存在を確認。",
       "generation": "総合テストPDF.mjs / Headless Chrome、pypdfでリンクを相対化"
     }
   ],
   "visual_review": "2026-11-08: IDE全31ページと共通確認結果全17ページは再生成後に全ページ縮小表示と重点5ページ拡大を確認。Navigator全40ページの既存検証は維持。他20冊の今回の全ページ目視や新しい実機PASSを示さない。詳細はalignment_recordとevidence/IDE資料整合/PDF機械照合.json。",
   "alignment_evidence": "evidence/document-alignment.json",
   "prior_visual_review": "2026-11-03: 全22冊の追記を描画して目視確認。PDFテキスト抽出の日本語判定は使用せず、実表示で確認。",
-  "alignment_record": "evidence/document-alignment.json"
+  "alignment_record": "evidence/document-alignment.json",
+  "memo_completion_review": {
+    "at": "2026-11-15T15:02:39+09:00",
+    "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_memo,操作編/Memo_完了記録.json",
+    "reviewedPdfs": [
+      "セルフテスト,aidiy_memo,操作編.pdf",
+      "セルフテスト,共通,確認結果.pdf"
+    ],
+    "scope": "Memo6ページ・共通結果18ページのみ。既存の他冊子の検証記録は維持。"
+  }
 }

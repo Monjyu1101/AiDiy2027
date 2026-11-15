@@ -42,24 +42,25 @@ export function piWordmark(): string {
 // ---------------------------------------------------------------------------
 // AiDiy-Pi logo (AiDiy customization)
 //
-// "AiDiy-" drawn in the same 4-pixel-tall half-block style and palette as the pi logo, followed by the
-// pi logo itself, which reads as "Pi":
+// "AiDiy-" drawn in the same 4-pixel-tall half-block style as the pi logo, followed by the
+// original pi logo. AiDiy uses Hermes gold; y bends left within the same height:
 //
-//   .b. y bb. y b.b .. ccc.
-//   b.b . b.b . b.b .. b.c.
-//   bbb y b.b y .b. gg bb.y
-//   b.b y bb. y .b. .. b..y
+//   .a. a aa. a a.a .. ccc.
+//   a.a . a.a . a.a .. b.c.
+//   aaa a a.a a .aa gg bb.y
+//   a.a a aa. a aa. .. b..y
 //
-// b = blue, y = yellow, c = coral, g = gray, . = empty.
+// a = gold, b = blue, y = yellow, c = coral, g = gray, . = empty.
 // ---------------------------------------------------------------------------
+const GOLD = rgbColor(255, 215, 0); // AiDiy: Hermesと同じ黄金色 #FFD700
 const GRAY = rgbColor(140, 140, 140);
-const AIDIY_PI_COLORS: Record<string, typeof CORAL> = { b: BLUE, y: YELLOW, c: CORAL, g: GRAY };
+const AIDIY_PI_COLORS: Record<string, typeof CORAL> = { a: GOLD, b: BLUE, y: YELLOW, c: CORAL, g: GRAY };
 const AIDIY_PREFIX_GLYPHS = [
-	[".b.", "b.b", "bbb", "b.b"], // A
-	["y", ".", "y", "y"], // i
-	["bb.", "b.b", "b.b", "bb."], // D
-	["y", ".", "y", "y"], // i
-	["b.b", "b.b", ".b.", ".b."], // y
+	[".a.", "a.a", "aaa", "a.a"], // A
+	["a", ".", "a", "a"], // i
+	["aa.", "a.a", "a.a", "aa."], // D
+	["a", ".", "a", "a"], // i
+	["a.a", "a.a", ".aa", "aa."], // AiDiy: Codexと同じ小文字風のy（高さは維持）
 	["..", "..", "gg", ".."], // -
 ];
 const PI_GLYPH = ["ccc.", "b.c.", "bb.y", "b..y"];
@@ -88,7 +89,7 @@ function renderHalfBlockLine(upper: string, lower: string): string {
 	return line;
 }
 
-/** The AiDiy-Pi header logo: 2 lines tall, same style and colors as {@link piLogoLines}. */
+/** The AiDiy-Pi header logo: 2 lines tall, gold AiDiy prefix and original Pi colors. */
 export function aidiyPiLogoLines(): [string, string] {
 	return [
 		renderHalfBlockLine(AIDIY_PI_PIXELS[0]!, AIDIY_PI_PIXELS[1]!),
@@ -109,7 +110,6 @@ export function aidiyPiSetupLogoLines(): string[] {
 /** Text fallback for the AiDiy-Pi logo. */
 export function aidiyPiWordmark(): string {
 	const mode = theme.getColorMode();
-	const blue = foregroundAnsi(BLUE, mode);
-	const yellow = foregroundAnsi(YELLOW, mode);
-	return `${blue}A${RESET}${yellow}i${RESET}${blue}D${RESET}${yellow}i${RESET}${blue}y${RESET}${foregroundAnsi(GRAY, mode)}-${RESET}${piWordmark()}`;
+	const gold = foregroundAnsi(GOLD, mode);
+	return `${gold}AiDiy${RESET}${foregroundAnsi(GRAY, mode)}-${RESET}${piWordmark()}`;
 }

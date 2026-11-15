@@ -670,8 +670,7 @@ split-debuginfo = "off"
 # sidecar symbols and stripped the binaries.
 strip = false
 
-# Balance parallel release code generation against binary size.
-codegen-units = 4
+# AiDiy: コード生成の並列分割数も Cargo / rustc の既定値に任せる。
 
 [profile.profiling]
 inherits = "release"

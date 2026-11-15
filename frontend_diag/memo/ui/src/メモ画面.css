@@ -58,3 +58,11 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-adhesive:active{cursor:grabbing}
 /* 高さ/幅が2/3未満だけ左側へ。境界値は上のまま。 */
 @media (aspect-ratio > 3/2){.sticky-adhesive{right:auto;bottom:0;width:.5em;height:auto}}
+
+/* 下部の行（保存表示・色・ゴミ箱）は常に透明な重ね表示にし、本文領域へ高さを返す。
+   縦幅を極限まで狭めた付箋（最小84px）でも本文1行を隠さない。ホバー時の色・ゴミ箱の表示は従来どおり。 */
+.sticky-bottom{position:absolute;left:10px;right:10px;bottom:4px;background:transparent}
+
+/* 下部の行を透明にしても、ホバー時の色パレットは付箋と同じ色で塗り、本文と重ねて見えないようにする。 */
+.sticky-yellow{--sticky-bg:#f7e69c}.sticky-blue{--sticky-bg:#b4deef}.sticky-green{--sticky-bg:#c6e6ad}.sticky-pink{--sticky-bg:#f2c4d1}.sticky-purple{--sticky-bg:#d7c8ec}.sticky-vivid-red{--sticky-bg:#c62828}.sticky-vivid-blue{--sticky-bg:#1565c0}.sticky-vivid-green{--sticky-bg:#15803d}.sticky-vivid-orange{--sticky-bg:#c2410c}.sticky-vivid-purple{--sticky-bg:#7e22ce}.sticky-vivid-cyan{--sticky-bg:#007f8b}
+.sticky-palette{background:var(--sticky-bg,#f7e69c)}

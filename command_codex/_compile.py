@@ -21,9 +21,13 @@ CLI 本体 `codex` を cargo でビルドします。同梱元の LICENSE / NOTI
 - 依存は `Cargo.lock` に固定（`--locked`）。初回は crates.io / git から依存を取得します。
 - cargo の成果物 `target/<ターゲット>/<release|debug>/codex(.exe)` を、AiDiy 用の名前で
   `~/.aidiy/bin/aidiy_codex(.exe)` に配置し、`~/.aidiy/bin` を PATH に登録します。
+  まず同じフォルダの `aidiy_codex_temp(.exe)` を完成させ、最後に本体と入れ替えます。
+  入れ替え失敗時は一時ファイルを残すため、本体を終了して手動で入れ替えできます。
+  Code Mode ホストも配置します。Windows は同じ版の公式 npm 配布物を SHA-512 検証して利用し、
+  Linux / macOS は同梱ソースから本体と一緒にコンパイルします。
   プロジェクトの外に置くため、git clone やフォルダのコピーの影響を受けません。
   release（既定）は thin LTO のため時間がかかります。動作確認だけなら `--debug` を使います。
-- 並列ジョブ数は物理メモリから自動で決めます（最適化ビルドのメモリ不足を防ぐ。`--jobs` で変更可）。
+- 並列ジョブ数は Cargo の自動判定に任せます。制限したいときだけ `--jobs N` を指定します。
 - `--detach` は独立プロセスで開始してすぐ戻ります（呼び出し元の Diag を閉じても続行）。
   状態は `~/.aidiy/cache/codex/aidiy_codex_compile.json`、ログは同じフォルダの `aidiy_codex_compile.log` に残ります。
 - ビルド作業フォルダ（cargo の target）は `~/.aidiy/cache/codex/target` に置き、clone・コピーした別環境とも共有します
@@ -174,41 +178,6 @@ def free_gb(path: Path) -> float:
         return -1
 
 
-# 最適化ビルドで 1 ジョブが使うメモリの目安（GB）。
-GB_PER_JOB = 6
-
-
-def total_memory_gb() -> float:
-    """物理メモリ量（GB）。取得できなければ 0。"""
-    try:
-        if IS_WINDOWS:
-            import ctypes
-
-            class MemoryStatus(ctypes.Structure):
-                _fields_ = [("dwLength", ctypes.c_ulong), ("dwMemoryLoad", ctypes.c_ulong),
-                            ("ullTotalPhys", ctypes.c_ulonglong), ("ullAvailPhys", ctypes.c_ulonglong),
-                            ("ullTotalPageFile", ctypes.c_ulonglong), ("ullAvailPageFile", ctypes.c_ulonglong),
-                            ("ullTotalVirtual", ctypes.c_ulonglong), ("ullAvailVirtual", ctypes.c_ulonglong),
-                            ("ullAvailExtendedVirtual", ctypes.c_ulonglong)]
-
-            status = MemoryStatus()
-            status.dwLength = ctypes.sizeof(MemoryStatus)
-            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
-                return status.ullTotalPhys / 1024 ** 3
-            return 0
-        return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1024 ** 3
-    except (OSError, ValueError, AttributeError):
-        return 0
-
-
-def default_jobs() -> int:
-    """CPU 数とメモリ量の小さい方に合わせた並列ジョブ数（最低 1）。"""
-    cpus = os.cpu_count() or 1
-    memory = total_memory_gb()
-    by_memory = int(memory // GB_PER_JOB) if memory else 2
-    return max(1, min(cpus, by_memory))
-
-
 def toolchain_channel() -> str:
     """rust-toolchain.toml の channel（表示用）。"""
     try:
@@ -272,6 +241,15 @@ def prepare_install(target: str | None = None) -> bool:
     except OSError as e:
         print_error(f"配置先を作れません: {INSTALL_DIR}（{e}）")
         return False
+    if IS_WINDOWS:
+        try:
+            spec = importlib.util.spec_from_file_location("aidiy_codex_runtime_tools", THIS_DIR / "aidiy" / "runtime_tools.py")
+            runtime_tools = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(runtime_tools)
+            runtime_tools.install_windows_host(INSTALL_DIR, BUILD_DIR, DEFAULT_CLIENT_VERSION, target, WORKSPACE_DIR)
+        except Exception as e:
+            print_error(f"Code Mode ホストを配置できません: {e}")
+            return False
     llvm_bin = find_llvm_mingw_bin(target) if IS_WINDOWS and target else None
     if llvm_bin:
         triple = target.replace("-pc-windows-gnullvm", "-w64-mingw32")
@@ -298,14 +276,24 @@ def prepare_install(target: str | None = None) -> bool:
 
 
 def install_object(built: Path, target: str | None = None) -> Path | None:
-    """cargo の成果物 codex(.exe) を ~/.aidiy/bin/aidiy_codex(.exe) として置く（ビルド後の処理はこれだけ）。"""
+    """aidiy_codex_temp(.exe) を完成させてから本体と交換し、交換失敗時は手動配置用に残す。"""
     output = INSTALL_DIR / f"{OBJECT_NAME}{EXE}"
+    temporary = INSTALL_DIR / f"{OBJECT_NAME}_temp{EXE}"
     llvm_bin = find_llvm_mingw_bin(target) if IS_WINDOWS and target else None
     strip = llvm_bin / f"llvm-strip{EXE}" if llvm_bin and (llvm_bin / f"llvm-strip{EXE}").is_file() else None
     try:
-        replace_file(built, output, strip)
+        # 不完全なコピー・strip 出力を公開せず、完成した実行ファイルだけを一時名で配置する。
+        replace_file(built, temporary, strip)
     except (OSError, subprocess.SubprocessError) as e:
-        print_error(f"{output} を配置できません（aidiy_codex を実行中の場合は終了してください）: {e}")
+        print_error(f"{temporary} を生成できません: {e}")
+        return None
+    print_info(f"入れ替え用の実行ファイルを生成しました: {temporary}")
+    try:
+        os.replace(temporary, output)
+    except OSError as e:
+        print_error(f"{output} を入れ替えできません: {e}")
+        print_warning(f"生成済みファイルを保持しました: {temporary}")
+        print_info(f"aidiy_codex を終了してから、{temporary} を {output} に手動で入れ替えてください。")
         return None
     print_success(f"配置しました: {output}" + ("（デバッグ情報を除去）" if strip else ""))
     return output
@@ -615,15 +603,20 @@ def compile_codex(release: bool = True, jobs: int | None = None) -> Path | None:
         return None
 
     command =["cargo", "build", "--locked", "-p", PACKAGE, "--bin", BINARY]
+    if not IS_WINDOWS:
+        command += ["-p", "codex-code-mode-host", "--bin", "codex-code-mode-host"]
     if release:
         command.append("--release")
     if target:
         command += ["--target", target]
-    # 大きなクレート（codex-core / codex-tui）は最適化時に 1 つで数 GB を使う。
-    # 指定がなければ物理メモリから並列数を決め、メモリ不足（out of memory）で落ちないようにする。
-    jobs = jobs or default_jobs()
-    print_info(f"並列ジョブ数: {jobs}（物理メモリ {total_memory_gb():.0f}GB から自動設定。--jobs で変更可）")
-    command += ["--jobs", str(jobs)]
+    # AiDiy: 未指定なら Cargo 自身の自動判定。メモリ量から独自に上限を付けない。
+    if jobs is not None:
+        if jobs < 1:
+            raise ValueError("--jobs は 1 以上を指定してください。")
+        command += ["--jobs", str(jobs)]
+        print_info(f"並列ジョブ数: {jobs}（明示指定）")
+    else:
+        print_info("並列ジョブ数: 自動（Cargo に任せる）")
 
     started = time.monotonic()
     if not run(command, env, "ビルド"):
@@ -635,6 +628,12 @@ def compile_codex(release: bool = True, jobs: int | None = None) -> Path | None:
     if not built.is_file():
         print_error(f"ビルドは終了しましたが、成果物が見つかりません: {built}")
         return None
+    if not IS_WINDOWS:
+        try:
+            replace_file(built.with_name("codex-code-mode-host"), INSTALL_DIR / "codex-code-mode-host")
+        except OSError as e:
+            print_error(f"Code Mode ホストを配置できません: {e}")
+            return None
     output = install_object(built, target)
     if output is None:
         return None
@@ -699,13 +698,15 @@ def start_detached(release: bool, jobs: int | None) -> int:
 def main():
     parser = argparse.ArgumentParser(description="command_codex の Codex CLI を aidiy_codex としてビルドします。")
     parser.add_argument("--debug", action="store_true", help="開発用ビルド（release より速いが大きい）")
-    parser.add_argument("--jobs", type=int, default=None, help="並列ジョブ数（メモリ不足時に下げる）")
+    parser.add_argument("--jobs", type=int, default=None, help="並列ジョブ数（省略時は Cargo の自動判定）")
     parser.add_argument("--check", action="store_true", help="前提確認だけ行い、ビルドしない")
     parser.add_argument("--status", action="store_true", help="コンパイル状態（状態ファイル）を表示する")
     parser.add_argument("--detach", action="store_true", help="独立プロセスで開始してすぐ戻る（ログは ~/.aidiy/cache/codex に保存）")
     parser.add_argument("--yes", action="store_true", help="不足ツールの導入を含め、確認なしで実行する")
     parser.add_argument("--cancel", action="store_true", help="実行中のコンパイルを中止する（全体 cleanup からも呼ばれる）")
     args = parser.parse_args()
+    if args.jobs is not None and args.jobs < 1:
+        parser.error("--jobs は 1 以上を指定してください。")
 
     if args.cancel:
         sys.exit(0 if cancel_compile(reason="--cancel の指定") else 1)

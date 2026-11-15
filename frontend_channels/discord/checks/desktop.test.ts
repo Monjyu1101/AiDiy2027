@@ -24,7 +24,7 @@ import { createRequire } from 'node:module';
 async function desktop(platform = 'win32', owned = true, project: string | undefined = undefined) {
   const file = fileURLToPath(new URL('../panel/desktop.cjs', import.meta.url));
   const timers = new Map<number, { at: number; callback: () => void }>();
-  const files = new Map<string, any>(), requests: any[] = [], kills: any[] = [], states: any[] = [], moves: any[] = [], dialogs: any[] = [];
+  const files = new Map<string, any>(), requests: any[] = [], kills: any[] = [], states: any[] = [], moves: any[] = [], dialogs: any[] = [], collapses: any[] = [];
   let dialogAnswer = 1;
   const handlers = new Map<string, (...args: any[]) => any>();
   let clock = 0, sequence = 0, window: any, exited = false, locked = false;
@@ -75,6 +75,8 @@ async function desktop(platform = 'win32', owned = true, project: string | undef
       if (name === 'node:path') return path;
       if (name === '../../../frontend_ide/デスクトップ/長押し窓移動.cjs') return {attachNativeWindowMove: (window: any, screen: any, kind: string) => moves.push({window, screen, kind})};
       if (name === '../../../frontend_ide/デスクトップ/最前面ピン.cjs') return createRequire(import.meta.url)(name);
+      // 窓の高さ変更は IDE 共通処理の責務。ここでは信頼判定と種類・方向の受け渡しだけを確認する。
+      if (name === '../../../frontend_ide/デスクトップ/パネル折り畳み.cjs') return { createPanelCollapse: ({ trustedEvent }: any) => (event: any, collapsed: boolean) => { const record = trustedEvent(event); collapses.push({ window: record?.window, kind: record?.kind, collapsed }); return { ok: !!record }; } };
       if (name === '../../../frontend_ide/host/scripts/single-instance.cjs') return { 起動ロック: async () => owned ? { close: async () => {} } : null };
       // 3本共通のウィンドウ大きさ・初回演出は実物を使う。
       if (name.endsWith('/project-storage.cjs')) return { ...createRequire(import.meta.url)(name), preparePrivateDirectory() {} };
@@ -95,7 +97,7 @@ async function desktop(platform = 'win32', owned = true, project: string | undef
   for (let entry; (entry = [...timers.entries()].sort((a, b) => a[1].at - b[1].at)[0]) && entry[1].at <= 1000;) {
     clock = entry[1].at; timers.delete(entry[0]); entry[1].callback(); await flush();
   }
-  return { app, worker, window, files, requests, kills, states, timers, flush, moves, handlers, dialogs, answer(value: number) { dialogAnswer = value; },
+  return { app, worker, window, files, requests, kills, states, timers, flush, moves, handlers, dialogs, collapses, answer(value: number) { dialogAnswer = value; },
     exited: () => exited, locked: () => locked,
     exitWorker(code: number | null, signal: string | null = null) {
       worker.exitCode = code; worker.signalCode = signal; worker.connected = false; worker.emit('exit', code, signal);
@@ -172,12 +174,15 @@ test('Discord の4操作は主frame専用で、ピンは OFF から切り替え�
   assert.deepEqual(control(event, 'getPinState'), { pinned: false, locked: false }); assert.equal(f.window.top, false);
   for (const denied of [{ ...event, senderFrame: {} }, { ...event, sender: {} }, { ...event, senderFrame: { url: event.senderFrame.url } }]) {
     for (const action of ['togglePin', 'getPinState', 'maximize', 'minimize', 'close']) assert.equal(control(denied, action), false);
+    for (const action of ['collapse', 'expand']) assert.equal(control(denied, action), false);
   }
   assert.equal(f.window.top, false); assert.equal(f.window.maximized, false); assert.equal(f.window.minimized, false);
   assert.deepEqual(control(event, 'togglePin'), { pinned: true, locked: false }); assert.equal(f.window.top, true);
   f.window.emit('focus'); assert.equal(f.window.raised, 1);
   control(event, 'maximize'); assert.equal(control(event, 'isMaximized'), true); control(event, 'maximize'); assert.equal(control(event, 'isMaximized'), false);
   control(event, 'minimize'); assert.equal(f.window.minimized, true);
+  assert.deepEqual(control(event, 'collapse'), { ok: true }); assert.deepEqual(control(event, 'expand'), { ok: true });
+  assert.deepEqual(f.collapses.map((item: any) => [item.window === f.window, item.kind, item.collapsed]), [[true, 'discord', true], [true, 'discord', false]]);
   control(event, 'togglePin'); f.window.emit('focus'); assert.equal(f.window.raised, 1); assert.equal(f.window.top, false);
   control(event, 'setLocked'); assert.equal(control(event, 'getPinState').locked, false);
   f.window.destroyed = true; assert.equal(control(event, 'togglePin'), false);
@@ -187,7 +192,7 @@ test('Discord preload は固定の窓操作と検証済みピン通知のみを�
   const ipc = Object.assign(new EventEmitter(), { invoke: (...args: any[]) => args });
   let api: any;
   runInNewContext(readFileSync(new URL('../panel/preload.cjs', import.meta.url), 'utf8'), { require: () => ({ contextBridge: { exposeInMainWorld(_name: string, value: any) { api = value; } }, ipcRenderer: ipc }) });
-  for (const action of ['minimize', 'maximize', 'close']) assert.deepEqual(Array.from(api.window(action)), ['discord:window', action]);
+  for (const action of ['minimize', 'maximize', 'close', 'collapse', 'expand']) assert.deepEqual(Array.from(api.window(action)), ['discord:window', action]);
   assert.equal(await api.window('setLocked'), false); assert.equal(await api.window({ action: 'close' }), false);
   assert.deepEqual(Array.from(api.getPinState()), ['discord:window', 'getPinState']); assert.deepEqual(Array.from(api.togglePin()), ['discord:window', 'togglePin']);
   const values: any[] = [], cancel = api.onPinState((value: any) => values.push(value));

@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-15T15:02:39+09:00",
+  "status": "基本操作の実機結果の照合・資料仕上げ完了。追加自動試験には環境制約4件あり",
+  "existingRealDeviceEvidence": {
+    "file": "Memo_201_付箋の操作.json",
+    "executedAt": "2026-11-15T14:50:00+09:00",
+    "passed": 8,
+    "rerun": false,
+    "screenshots": 7
+  },
+  "automatedTests": {
+    "command": "node --test frontend_diag/checks/memo-*.check.*",
+    "total": 85,
+    "passed": 81,
+    "failed": 4,
+    "skipped": 0,
+    "log": "Memo_自動試験.log",
+    "failureReason": "Windows EPERM: symlink試験データ作成の権限不足。リンク保護を合格扱いにしない"
+  },
+  "isolatedElectronUi": {
+    "command": "AIDIY_TEST_ELECTRON=frontend_diag/node_modules/electron/dist/electron.exe node frontend_diag/checks/memo-ui-browser.cjs",
+    "passed": true,
+    "log": "Memo_UI試験.log",
+    "realUserDataUsed": false
+  },
+  "documentReview": {
+    "figureNumbers": [
+      101,
+      201,
+      301,
+      302,
+      303,
+      401,
+      501
+    ],
+    "missingLocalLinks": [],
+    "pdfs": {
+      "セルフテスト,aidiy_memo,操作編.pdf": 6,
+      "セルフテスト,共通,確認結果.pdf": 18
+    },
+    "visualReview": "Memo全6ページを表示確認。共通確認結果全18ページを縮小一覧で確認し、追記した18ページを拡大確認。欠落・重なりなし。",
+    "relativePdfLinks": true
+  },
+  "untestedOnRealDevice": [
+    "画像貼付・ドロップ",
+    "全11色",
+    "複数保存先",
+    "Web版",
+    "Mac/Linux"
+  ],
+  "preservation": {
+    "existingUserNotesChanged": false,
+    "realDeviceTestNote": "先行試験でゴミ箱へ退避済み",
+    "productCodeChanged": false,
+    "productionBuildRun": false
+  },
+  "figureRenumbering": {
+    "202": "301",
+    "203": "302",
+    "204": "303",
+    "301": "401",
+    "401": "501"
+  }
+}

@@ -12,6 +12,7 @@ import {createNavigationPopupSizer} from './Navi窓サイズ.js';
 import {createNavigationMessage} from './Naviメッセージ.js';
 import StatusBar from '../共通表示/状態バー.vue';
 import PanelToggle from '../コード/パネル表示切替.vue';
+import { createActivityFoldTone } from './Navi折畳配色.js';
 import TerminalWelcome from '../ターミナル/開始表示.vue';
 import NavigationRunButton from './ナビ実行ボタン.vue';
 import NavigationSceneMenu from './ナビ画面メニュー.vue';
@@ -144,7 +145,7 @@ async function restoreCode(){if(codeOpen.value||disposed||!visible.value)return;
 defineExpose({layoutReady:()=>layoutOpening,restoreCode,captureLayout:()=>({name:detached.value?panel.value?.ownerDocument.defaultView?.name:'',...(codeOpen.value?{code:true}:{})})});
 async function pin(){
  await nextTick();
- windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,titleTools:({collapsed}={})=>h('button',{type:'button',disabled:collapsed,class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
+ windowPanel??=createPanelWindow({element:()=>panel.value,title:'Navi '+props.instance.slice(5),kind:'panel-navigation',className:'navigation-window',displayTitle:()=>title.value,foldTone:naviFold,titleTools:({collapsed}={})=>h('button',{type:'button',disabled:collapsed,class:'navigation-code-toggle',role:'switch','aria-label':codeToggleLabel.value,'aria-checked':codeOpen.value,onClick:event=>{autopilotMessage.dismiss(event);toggleCode();}},codeToggleLabel.value),changed:value=>detached.value=value,closed:()=>{stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();visible.value=false;clearTimeout(timer);emit('closed');},report:message=>error.value=message});
  return windowPanel.pin();
 }
 function close(){stopAutopilot('Naviを閉じたため停止しました。');void releaseCode();draftRequest.value=null;if(detached.value)windowPanel.dismiss();else{visible.value=false;emit('closed');}clearTimeout(timer);}
@@ -241,6 +242,12 @@ function syncCruiseTitle(){
 }
 watch(()=>[autopilot.value,detached.value],syncCruiseTitle,{immediate:true});
 const codeDriving=computed(()=>autopilot.value&&overall.value?.progress<100);
+// 折畳アイコンの配色。ナビ・再評価（routing）・自動航行・内蔵Codeの実行のどれかが動いていれば脈動、
+// 止まったら緑。ジョブ失敗・エラー表示・自動航行のエラー終了は赤（利用者の停止操作は赤にしない）。
+const naviFold=createActivityFoldTone();let autopilotFailed=false;
+const naviActive=computed(()=>routing.value||autopilot.value||!!codePanel.value?.isRunning?.());
+watch(naviActive,value=>naviFold.activity(value,job.value?.status==='failed'||!!error.value||autopilotFailed),{immediate:true});
+watch(panelCollapsed,value=>naviFold.collapsed(value));
 const canAutopilot=computed(()=>!busy.value&&!history.value&&matchesResult.value&&availability.value.available&&overall.value?.progress<100&&!!recommendedPrompt.value);
 const codeEndpoint=session=>'/api/navigation/code?instance='+encodeURIComponent(props.instance)+'&session='+encodeURIComponent(session);
 async function ensureCode(){
@@ -327,7 +334,7 @@ async function evaluateForAutopilot(signal){
 async function toggleAutopilot(){
  if(autopilot.value){stopAutopilot();return;}
  if(!canAutopilot.value||autopilotController)return;
- const controller=new AbortController();autopilotController=controller;autopilot.value=true;codeOpen.value=true;
+ const controller=new AbortController();autopilotController=controller;autopilotFailed=false;autopilot.value=true;codeOpen.value=true;
  const projectPath=props.project?.path,startedAt=props.startedAt,initial=result.value;
  const current=()=>autopilot.value&&!disposed&&shown()&&props.project?.path===projectPath&&props.startedAt===startedAt&&matchesResult.value&&result.value?.navigationId===initial.navigationId&&goal.value.trim()===initial.goal.trim();
  const doc=panel.value?.ownerDocument,owner=doc?.defaultView;
@@ -352,7 +359,7 @@ async function toggleAutopilot(){
    evaluated:({progress})=>notifySound(evaluationSound(progress))});
   // 自動航行の通知音: 再評価ごとに 100%=完了・100%未満=注意。100%で終わるときは、その評価の完了音で済ませて重ねない。止まったときは 注意。
   if(autopilot.value)autopilotMessage.show(message);
- }catch(e){if(!disposed)notifySound('注意');if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
+ }catch(e){if(!disposed)notifySound('注意');if(!controller.signal.aborted)autopilotFailed=true;if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
  finally{doc?.removeEventListener?.('visibilitychange',hidden);owner?.removeEventListener?.('pagehide',leaving);autopilot.value=false;autopilotController=null;autopilotPhase.value='';}
 }
 watch(()=>props.project?.path,()=>{stopAutopilot('プロジェクトが変わったため停止しました。');void releaseCode();codeOpen.value=false;});
@@ -366,7 +373,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 <template>
  <section ref="panel" v-show="visible" class="navigation-panel ai-component" :class="{detached,standalone,'has-code':codeOpen,'panel-collapsed':standalone&&panelHidden}" :style="{visibility:openingWindow?'hidden':undefined}" aria-label="Navi" @click.capture="autopilotMessage.dismiss" @keydown.capture="autopilotMessage.dismiss" @wheel.capture.passive="autopilotMessage.dismiss" @touchmove.capture.passive="autopilotMessage.dismiss">
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :load-targets="draftActions.loadTargets" :insert-draft="draftActions.insertDraft" :launch-target="standalone?undefined:draftActions.launchTarget" :empty-hint="standalone?'同じプロジェクトで aidiy_code または aidiy_live を起動してください。':undefined" @close="draftRequest=null" />
-  <StatusBar :hide-connection-bar="panelHidden" v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="native" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template><template #connection-tools><button type="button" class="navigation-code-toggle" :disabled="panelCollapsed" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
+  <StatusBar :hide-connection-bar="panelHidden" v-if="standalone" :title="title" :desktop="native" :connected="toolsState.connected" :mode="toolsState.mode" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :tone="naviFold.tone.value || undefined" :desktop="native" @toggle="panelCollapsed=!panelCollapsed" @hidden="panelHidden=$event" /></template><template #connection-tools><button type="button" class="navigation-code-toggle" :disabled="panelCollapsed" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button></template></StatusBar>
   <header class="navigation-local-header" v-else-if="!detached||!native"><span class="navigation-emblem" aria-hidden="true">◇</span><strong>{{title}}</strong><span class="navigation-header-space"></span><button type="button" class="navigation-code-toggle" role="switch" :aria-label="codeToggleLabel" :aria-checked="codeOpen" @click="toggleCode">{{codeToggleLabel}}</button><button v-if="!detached" aria-label="Naviを別窓にピン留め" title="別窓にピン留め" @click="pin">📌</button><button aria-label="Naviを閉じる" @click="close">×</button></header>
   <div class="component-toolbar navigation-project"><span :title="project?.path">プロジェクト: {{project?.name || project?.path}}</span><nav><small>評価は読取専用</small><button :disabled="busy||autopilot" @click="selectHistory()">＋ 新規</button><button :disabled="busy||autopilot" :aria-expanded="history" @click="toggleHistory">{{history?'戻る':'一覧'}}</button></nav></div>
    <form class="navigation-goal-form" @submit.prevent="navigate()">

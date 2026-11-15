@@ -80,6 +80,16 @@ fn aidiy_section_model(section: &str, name: &str) -> String {
 
 /// `<区分>/<モデル名>` の区分の接続先（内部用。ID は区分名）。openai_oauth・区分なしは None。
 pub fn aidiy_model_provider(model: &str) -> Option<(String, ModelProviderInfo)> {
+    // AiDiy: CLI は core のローカル委譲経路で処理する。OpenAI ログインを要求しない。
+    if crate::split_aidiy_cli_model(model).is_some() {
+        let provider = serde_json::from_value(json!({
+            "name": "AiDiy CLI", "base_url": "http://127.0.0.1:1/aidiy-cli",
+            "wire_api": "chat", "requires_openai_auth": false,
+            "supports_websockets": false
+        }))
+        .ok()?;
+        return Some((crate::AIDIY_CLI_PROVIDER.to_string(), provider));
+    }
     let (section, _) = split_aidiy_model(model)?;
     if section == AIDIY_OPENAI_OAUTH_SECTION {
         return None;
@@ -157,7 +167,9 @@ fn section_provider(section: &str, config: &Value) -> Option<ModelProviderInfo> 
             "http_headers": {"HTTP-Referer": OPENROUTER_REFERER, "X-Title": OPENROUTER_TITLE},
         }),
         "ollama_chat" => match valid_key(config, "ollama_key_id") {
-            Some(key) => json!({"name": "Ollama Cloud (AiDiy)", "base_url": OLLAMA_CLOUD_BASE_URL, "wire_api": "chat", "experimental_bearer_token": key}),
+            Some(key) => {
+                json!({"name": "Ollama Cloud (AiDiy)", "base_url": OLLAMA_CLOUD_BASE_URL, "wire_api": "chat", "experimental_bearer_token": key})
+            }
             None => {
                 let host = config_text(config, "ollama_host")
                     .unwrap_or_else(|| DEFAULT_OLLAMA_HOST.to_string());
@@ -185,7 +197,7 @@ fn section_provider(section: &str, config: &Value) -> Option<ModelProviderInfo> 
 }
 
 /// AiDiy の場所。実行ファイルの隣の aidiy_codex_settings.json の `aidiy_root`。
-fn aidiy_root() -> Option<PathBuf> {
+pub fn aidiy_root() -> Option<PathBuf> {
     let dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
     read_settings_root(&dir)
 }
@@ -224,13 +236,24 @@ mod tests {
 
     #[test]
     fn splits_aidiy_sections_only() {
-        assert_eq!(split_aidiy_model(" gemini_chat/ g-3 "), Some(("gemini_chat", "g-3")));
+        assert_eq!(
+            split_aidiy_model(" gemini_chat/ g-3 "),
+            Some(("gemini_chat", "g-3"))
+        );
         assert_eq!(
             split_aidiy_model("openrt_chat/google/gemini-2.5-pro"),
             Some(("openrt_chat", "google/gemini-2.5-pro"))
         );
-        assert_eq!(split_aidiy_model("openai_oauth/gpt-6-luna"), Some(("openai_oauth", "gpt-6-luna")));
-        for model in ["gpt-6-luna", "openai_oauth/", "OPENAI_OAUTH/gpt-6-luna", "vendor/model"] {
+        assert_eq!(
+            split_aidiy_model("openai_oauth/gpt-6-luna"),
+            Some(("openai_oauth", "gpt-6-luna"))
+        );
+        for model in [
+            "gpt-6-luna",
+            "openai_oauth/",
+            "OPENAI_OAUTH/gpt-6-luna",
+            "vendor/model",
+        ] {
             assert_eq!(split_aidiy_model(model), None, "{model}");
             assert_eq!(aidiy_api_model(model), model);
         }
@@ -245,7 +268,12 @@ mod tests {
         for section in AIDIY_SECTIONS {
             assert!(!providers.contains_key(*section), "{section}");
         }
-        assert_eq!(aidiy_model_provider("gemini_chat/g-4").map(|(id, _)| id).as_deref(), Some("gemini_chat"));
+        assert_eq!(
+            aidiy_model_provider("gemini_chat/g-4")
+                .map(|(id, _)| id)
+                .as_deref(),
+            Some("gemini_chat")
+        );
         assert!(aidiy_model_provider("openai_oauth/gpt-6-astra").is_none());
         assert!(aidiy_model_provider("gpt-6-astra").is_none());
     }
@@ -262,21 +290,33 @@ mod tests {
         assert!(gemini.experimental_bearer_token.is_some());
         let openai = provider("openai_chat", &config);
         assert_eq!(openai.wire_api, WireApi::Responses);
-        assert!(openai.experimental_bearer_token.is_none(), "template key is not used");
+        assert!(
+            openai.experimental_bearer_token.is_none(),
+            "template key is not used"
+        );
         let claude = provider("claude_chat", &config);
         assert_eq!(claude.wire_api, WireApi::Anthropic);
         let headers = claude.http_headers.expect("headers");
         assert!(headers.contains_key("x-api-key") && headers.contains_key("anthropic-version"));
         let xai = provider("xai_oauth", &config);
         assert_eq!(xai.wire_api, WireApi::Chat);
-        assert!(xai.auth.is_some(), "token comes from the shared Grok login command");
+        assert!(
+            xai.auth.is_some(),
+            "token comes from the shared Grok login command"
+        );
         for section in ["openrt_chat", "openrt_free"] {
             let openrt = provider(section, &json!({"openrt_key_id": "r-key"}));
             assert_eq!(openrt.wire_api, WireApi::Chat);
             assert!(openrt.experimental_bearer_token.is_some(), "{section}");
             let headers = openrt.http_headers.expect("attribution headers");
-            assert_eq!(headers.get("X-Title").map(|value| value.as_str()), Some(OPENROUTER_TITLE));
-            assert_eq!(headers.get("HTTP-Referer").map(|value| value.as_str()), Some(OPENROUTER_REFERER));
+            assert_eq!(
+                headers.get("X-Title").map(|value| value.as_str()),
+                Some(OPENROUTER_TITLE)
+            );
+            assert_eq!(
+                headers.get("HTTP-Referer").map(|value| value.as_str()),
+                Some(OPENROUTER_REFERER)
+            );
         }
         let local = provider("local_chat", &config);
         assert_eq!(local.base_url.as_deref(), Some("http://localhost:9000/v1"));
@@ -289,7 +329,10 @@ mod tests {
         let cloud = provider("ollama_chat", &json!({"ollama_key_id": "o-key"}));
         assert_eq!(cloud.base_url.as_deref(), Some(OLLAMA_CLOUD_BASE_URL));
         assert_eq!(strip_cloud_suffix("gpt-oss:120b-cloud"), "gpt-oss:120b");
-        assert_eq!(strip_cloud_suffix("deepseek-v4-flash:cloud"), "deepseek-v4-flash");
+        assert_eq!(
+            strip_cloud_suffix("deepseek-v4-flash:cloud"),
+            "deepseek-v4-flash"
+        );
     }
 
     #[test]
@@ -300,7 +343,10 @@ mod tests {
         let settings =
             json!({"client_version": "0.169.0", "aidiy_root": root.path().to_string_lossy()});
         std::fs::write(&path, format!("\u{feff}{settings}")).expect("write");
-        assert_eq!(read_settings_root(dir.path()), Some(root.path().to_path_buf()));
+        assert_eq!(
+            read_settings_root(dir.path()),
+            Some(root.path().to_path_buf())
+        );
         for text in [
             r#"{"aidiy_root": "Z:/missing/aidiy"}"#,
             r#"{"aidiy_root": ""}"#,

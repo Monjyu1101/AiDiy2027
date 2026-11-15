@@ -10,13 +10,14 @@ import vm from 'node:vm';
 import {ref,computed,watch,effectScope,reactive} from 'vue';
 import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
 import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
+import {createActivityFoldTone} from '../src/components/開発スペース/Navi折畳配色.js';
 import {NAVIGATION_SCENES,NAVIGATION_SCENE_GROUPS} from '../src/components/開発スペース/ナビ風景.js';
 const source=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
 const saved={schemaVersion:3,navigationId:'saved',goal:'保存済み目標',overall:{progress:20},items:[{id:'first',progress:20}],nextItemId:'first',nextPrompt:'次の作業'};
 function fixture(t){
  const scope=effectScope(),requests=[],props=reactive({instance:'navi-1',project:{path:'/fixture'},startedAt:1});let randoms=0;
  const api=scope.run(()=>vm.runInNewContext(source+`;({navigate,chooseScene,runWithScene,sceneAction,待機画面名,待機画面非対応,goal,result,availability,submitting,job,autopilot,visible,detached,sceneRequest})`,{
-  ref,computed,watch,createNavigationPopupSizer,createNavigationMessage,NAVIGATION_SCENES,NAVIGATION_SCENE_GROUPS,pickNavigationScene:()=>{randoms++;return 'ナビ羽衣ライディング3D';},
+  ref,computed,watch,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,NAVIGATION_SCENES,NAVIGATION_SCENE_GROUPS,pickNavigationScene:()=>{randoms++;return 'ナビ羽衣ライディング3D';},
   inject:()=>null,onMounted(){},onBeforeUnmount(){},nextTick:async()=>{},defineExpose(){},defineProps:()=>props,defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},
   fetch:(url,options)=>{requests.push({url,...options});return new Promise(()=>{});},
  }));

@@ -51,6 +51,19 @@ test('Browser tabs: collapse and offline hide all pages, closing window disposes
  f.control.setPanelCollapsed(f.record,false);assert.equal(f.views.filter(view=>view.visible).length,1);
  f.close();assert.ok(f.views.every(view=>view.webContents.destroyed));
 });
+
+test('Browser hidden View publishes DOM changes, state reads stay unchanged and expansion stops monitoring',async t=>{
+ const f=fixture();t.after(f.close);let revision='document:0',reads=0;
+ f.page.executeJavaScriptInIsolatedWorld=async(_world,scripts)=>{if(scripts[0].code.endsWith('("stop")'))return null;reads++;return revision;};
+ f.control.setPanelCollapsed(f.record,true);await flush();
+ assert.equal(f.views[0].visible,false);
+ const before=(await f.action('state')).contentRevision;
+ revision='document:1';await new Promise(resolve=>setTimeout(resolve,1150));
+ assert.equal((await f.action('state')).contentRevision,before+1);
+ assert.equal(f.sent.at(-1).contentRevision,before+1);
+ f.control.setPanelCollapsed(f.record,false);const count=reads;
+ await new Promise(resolve=>setTimeout(resolve,1150));assert.equal(reads,count);
+});
 test('Browser tabs: popup opens new tab but unsafe URLs and host origin remain blocked',async t=>{
  const f=fixture();t.after(f.close);
  assert.deepEqual(f.page.popup({url:'https://popup.test/'}),{action:'deny'});

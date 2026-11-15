@@ -101,10 +101,6 @@ let startupArgs: string[];
 try {
 	mode = aidiyModeArgs(process.argv.slice(2));
 	startupArgs = aidiyArgs(mode.args);
-	const parsed = parseArgs(startupArgs);
-	if (mode.readOnly && (CLI_PROVIDERS.includes(parsed.provider ?? "") || CLI_PROVIDERS.includes(parsed.model?.split("/")[0] ?? ""))) {
-		throw new Error("Pi の外部CLIモデルは read-only では使えません。API / OAuth モデルを選択してください。");
-	}
 } catch (error) {
 	console.error(`[aidiy_pi] ${error instanceof Error ? error.message : String(error)}`);
 	process.exit(2);

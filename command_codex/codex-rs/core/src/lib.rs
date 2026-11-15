@@ -8,6 +8,8 @@
 mod apply_patch;
 mod apps;
 mod client;
+// AiDiy: 子 CLI の進捗・回答を通常の ResponseStream に変換する。
+mod aidiy_cli;
 mod client_common;
 mod model_request;
 mod realtime_context;

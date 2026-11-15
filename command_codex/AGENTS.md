@@ -33,7 +33,15 @@ OpenAI Codex（openai/codex、Apache-2.0）の Rust ワークスペース `codex
 - Chat Completions（`wire_api = "chat"`、upstream では削除済み）と Anthropic Messages は AiDiy が追加した接続方式。実装は `codex-rs/codex-api/src/endpoint/chat_completions.rs` / `anthropic_messages.rs`。Codex が組み立てた Responses 形式の要求を変換し、ストリームを `ResponseEvent` に戻すので、core の再試行・認証・ツール実行はそのまま使う。
 - ツールは function をそのまま、custom（`apply_patch` など）を文字列 `input` 1つの function に、namespace 内を `<namespace>__<name>` にして送り、呼び出しを元のツールに戻す。Web 検索などの組み込みツールは送らない。Anthropic は `input_schema` 最上位の `oneOf` / `anyOf` / `allOf` を受け付けないため、各候補の `properties` を1つの object にまとめる（`required` は `allOf` の分だけ残す）。
 - aidiy_codex の設定は実行ファイルの隣の `~/.aidiy/bin/aidiy_codex_settings.json` の1ファイルにまとめる。項目は `aidiy_root`（AiDiy の場所。キーとモデル一覧を読む）と `client_version`（送る版番号）。`_compile.py` が配置時に無い項目だけを書き足し、手修正した値・他の項目は上書きしない（JSON として読めなければ変更しない）。キーそのものは `~/.aidiy/bin` にコピーしない。
-- `/model` での途中切り替えは、まだ同じ接続先の中だけ（Diag の一覧に合わせた `/model` は未対応）。
+- `/model` は現在の API 接続先のモデルに加え、Diag の外部 CLI 区分を表示する。API で開始した会話から CLI への切り替えと、CLI 間の切り替えに対応。CLI で開始した会話から API へ移る場合は API モデルを指定して新しい会話を開始する。
+
+## メタハーネス
+
+- 外部 CLI 区分を選ぶと、共通 CodeAI が子 CLI を起動し、進捗と最終回答を通常の Codex イベントに変換する。TUI / exec とも同じ経路を使う。
+- 親の全アクセス＋承認不要は YOLO、read-only は子にも読取専用として渡す。その他の独自 sandbox / workspace-write は安全に同等変換できないため停止する。制限を外して実行しない。
+- 全会話のテキストを各ターンに渡し、子の過去の別セッションは resume しない。画像・音声・構造化出力・CLI モデルでの `/compact` は対象外。トークン使用量は子から取得できないため未報告。
+- 実行には backend_tools または backend_server の Python venv が必要。親終了・中断で監視ラッパーが子孫を回収する。CLI の失敗を親が自動再実行しない。
+- 起動例・モード継承・検証は [メタハーネス運用](../_AIDIY/knowledge/command_hermes,command_pi,command_codex,メタハーネス.md) を参照。
 
 ## AiDiy 連携
 
@@ -41,7 +49,7 @@ Hermes / Pi と同じく、AI コア（Code）・AIタスク・入力予測・Na
 引数は `codex_cli` と同じ経路（`exec`、`resume`、読取専用の予測）を使い、実行ファイルだけを `~/.aidiy/bin/aidiy_codex(.exe)` に固定する（PATH 上の同名は使わない）。
 
 - 有効・無効は Diag の `installedCodeClis()`（`codexInstalled()`：実行ファイルの有無だけを見る）で決まる。未コンパイルなら `code_models_info.json` / `prediction_models_info.json` / `navi_models_info.json` に `aidiy_codex` 区分が入らず、各画面の選択肢にも出ない。
-- 候補の正本は Diag が書き出す `_AIDIY/aidiy_diag/aidiy_codex_models_info.json`。Code の `aidiy_codex` 区分は、その全区分を `<区分>/<モデル名>` にしたもの（`codexCodeModels()`。今動く `openai_oauth` を先頭に置く。外部 CLI への委譲 `xx/same` は持たない）。
+- 候補の正本は Diag が書き出す `_AIDIY/aidiy_diag/aidiy_codex_models_info.json`。Pi と同じ API / OAuth / 外部 CLI 区分を保存する。Code の `aidiy_codex` 区分は `<区分>/<モデル名>` に変換し、`openai_oauth` を先頭に置く。CLI の `xx/same` と明示モデルも渡す。CLI 委譲は `core/src/aidiy_cli.rs` と共通 `backend_tools/tools_proc/harness_cli.py` で行う。Navi・入力予測では外部 CLI 区分を除外する。
 - 他社の区分（`gemini_chat/…` など）も候補に出て、上の「区分ごとの接続」で実行する。AiDiy 側（Diag・backend・画面）は `<区分>/<モデル名>` をそのまま渡す。
 - 設定キーは `CODE_AIDIY_CODEX_MODEL`（既定 `auto`）と `PREDICTION_AIDIY_CODEX_MODEL`（既定 `openai_oauth/gpt-6-luna`）。
 - 主な連携箇所: `backend_server/AIコア/AIコード_cli.py`（`_CODEX系AI`）、`AIコードモデル選択.py`、`AI実行オプション.py`、`frontend_diag/diag/モデル情報/models_info.mjs` / `codex_info.mjs`、`backend_tools/tools_proc/code_agents.py` / `prediction_llm.py`、`frontend_ide/ファイル機能/navigation-agent.mjs`、`scripts/cli_bat/_aidiy_codex_cli.bat`。
@@ -72,7 +80,7 @@ Hermes / Pi と同じく、AI コア（Code）・AIタスク・入力予測・Na
 - サーバーはクライアントの版でモデルを出し分ける（例: `gpt-6-luna` は `0.155.0` 以上）。送る版は実行ファイルと同じフォルダの `~/.aidiy/bin/aidiy_codex_settings.json` の `client_version` に外出ししてある（`codex-rs/login/src/aidiy_settings.rs`）。通常は `_compile.py` が配置時に書き出し、設定ファイル自体が無ければ初回起動時に `{"client_version": "0.169.0"}` で書き出し、手修正されていればその値を送る（再ビルド不要。不正な内容なら `0.169.0` を使い、ファイルは上書きしない）。使うのは User-Agent とモデル一覧取得の `client_version`。
 - ビルドの版（`--version` の表示。`codex-rs/Cargo.toml` の `[workspace.package] version` と `Cargo.lock` のワークスペース分）も `0.169.0` に固定する。upstream main の `0.0.0` には戻さない。変えるのは明示の依頼がある場合だけ。
 - 依存は `Cargo.lock` に従い `--locked` でビルドする。lockfile や toolchain の版を検証目的で勝手に更新しない。
-- `_compile.py` は exe 以外の配置（`~/.aidiy/bin` の作成、`libunwind.dll`、設定 JSON の書き足し、PATH 登録）をビルド前に済ませ、ビルド後は exe を置く（llvm-strip でデバッグ情報を除いて rename）だけで終える。放置した後に残る処理・プロセスを少なくするため、ビルド後の起動確認（`--version`）も行わない。
+- `_compile.py` は `~/.aidiy/bin`、Windows の公式同版 Code Mode ホスト（配布物のハッシュ検証付き）、`libunwind.dll`、設定 JSON、PATH をビルド前に準備する。Linux / macOS はホストも同時にコンパイル・配置する。本体は `aidiy_codex_temp(.exe)` を完成させて最後に入れ替え、交換失敗時は手動配置用に残す。ビルド後の起動確認（`--version`）は行わない。
 - release ビルドは thin LTO で時間がかかる。日常の確認は `--check` / `--status` / `--debug` を優先し、release ビルドは理由が明確な場合だけ行う。
 - AiDiy の起動導線（Diag の診断カタログ・アプリ起動、`_setup.py`、`_start.py`、`scripts/checks/test_setup_codex.py`）と成果物名・配置先をそろえて変更する。
 - キー・トークン・`~/.codex` の認証ファイルの内容をログ、テスト証跡、コミットに含めない。有料API呼出しや実認証の更新をテスト目的で勝手に実行しない。

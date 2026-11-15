@@ -17,7 +17,7 @@ AIチャット / AIコード 共通の実行オプション
 from dataclasses import dataclass
 from typing import Any
 
-読取専用CLI対応方式 = frozenset({"aidiy_hermes", "aidiy_pi", "aidiy_codex", "codex_cli", "copilot_cli", "claude_cli", "grok_cli"})
+読取専用CLI対応方式 = frozenset({"aidiy_hermes", "aidiy_pi", "aidiy_codex", "codex_cli", "copilot_cli", "claude_cli", "grok_cli", "antigravity_cli", "opencode_cli"})
 
 
 @dataclass(frozen=True)
@@ -26,7 +26,7 @@ class AI実行オプション:
     履歴保存: bool = True        # 保存関数で A会話履歴 へ書き込む
     ストリーム送信: bool = True  # 接続の send_to_channel で画面へ送る
     出力ファイル保存: bool = True  # AIが返した画像などを temp/output へ保存する
-    CLI読取専用: bool = False    # 内部予測専用。通常の code_permissions=none とは別の制約
+    CLI読取専用: bool = False    # 予測・メタハーネスの読取専用。code_permissions=none（通常承認）とは別
 
     @classmethod
     def 単発(cls) -> "AI実行オプション":

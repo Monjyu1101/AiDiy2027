@@ -5211,158 +5211,6 @@ def provider_entry_is_cli(slug: str) -> bool:
     return any(p["slug"] == (slug or "").lower() for p in _AIDIY_CLI_PROVIDERS)
 
 
-def _aidiy_cli_command_path(cli_slug: str) -> str:
-    # Mirrors backend_server/AIコア/AIコード_cli.py::_コマンドパス取得 so that
-    # command_hermes can spawn the same external CLIs (claude / antigravity /
-    # copilot / codex / opencode / grok) when the user picks one via /model.
-    env_var = f"{cli_slug.upper().replace('-', '_')}_CLI_PATH"
-    custom = os.environ.get(env_var)
-    if custom:
-        return custom
-    if cli_slug == "opencode":
-        if os.name == "nt":
-            userprofile = os.environ.get("USERPROFILE", os.path.expanduser("~"))
-            for cand in (
-                os.path.join(userprofile, ".local", "bin", "opencode.exe"),
-                os.path.join(userprofile, "AppData", "Roaming", "npm", "opencode.cmd"),
-            ):
-                if os.path.isfile(cand):
-                    return cand
-        return "opencode"
-    if cli_slug == "antigravity-cli":
-        if os.name == "nt":
-            userprofile = os.environ.get("USERPROFILE", os.path.expanduser("~"))
-            candidate = os.path.join(
-                userprofile, "AppData", "Local", "agy", "bin", "agy.exe"
-            )
-            if os.path.isfile(candidate):
-                return candidate
-        return "agy"
-    if cli_slug == "grok-cli":
-        # 公式 Grok Build CLI（xai-org/grok-build）。npm ではなく ~/.grok/bin へ入る
-        userprofile = os.environ.get("USERPROFILE", os.path.expanduser("~"))
-        exe = "grok.exe" if os.name == "nt" else "grok"
-        candidate = os.path.join(userprofile, ".grok", "bin", exe)
-        if os.path.isfile(candidate):
-            return candidate
-        return "grok"
-    if os.name == "nt":
-        userprofile = os.environ.get("USERPROFILE", os.path.expanduser("~"))
-        npm_bin = os.path.join(userprofile, "AppData", "Roaming", "npm")
-        names_nt = {
-            "claude-code": "claude.cmd",
-            "copilot-cli": "copilot.cmd",
-            "codex-cli": "codex.cmd",
-        }
-        return os.path.join(npm_bin, names_nt.get(cli_slug, "claude.cmd"))
-    names = {
-        "claude-code": "claude",
-        "copilot-cli": "copilot",
-        "codex-cli": "codex",
-    }
-    return names.get(cli_slug, "claude")
-
-
-def _aidiy_cli_normalize_prompt(text: str) -> str:
-    if text is None:
-        return ""
-    return " ".join(str(text).split())
-
-
-def _aidiy_cli_code_permissions() -> str:
-    config_path = _AIDIY_KEY_JSON
-    try:
-        with config_path.open("r", encoding="utf-8-sig") as f:
-            cfg = json.load(f)
-    except Exception:
-        return "auto"
-    permissions = str(cfg.get("CODE_PERMISSIONS") or "auto").strip().lower()
-    return permissions if permissions in {"auto", "full", "none"} else "auto"
-
-
-def _aidiy_cli_build_command(
-    cli_slug: str,
-    prompt: str,
-    is_initial: bool,
-    repo_path: Optional[str] = None,
-    model: Optional[str] = None,
-) -> list:
-    # Mirrors backend_server/AIコア/AIコード_cli.py::_コマンド構築.
-    # same（旧表記 auto）は外部 CLI のモデルを変更せず、明示指定だけ --model へ渡す。
-    cmd_path = _aidiy_cli_command_path(cli_slug)
-    one_line = _aidiy_cli_normalize_prompt(prompt)
-    permissions = _aidiy_cli_code_permissions()
-    selected_model = str(model or "").strip()
-    model_args = ["--model", selected_model] if selected_model and selected_model.lower() not in {"auto", "same"} else []
-
-    if cli_slug == "claude-code":
-        common = [cmd_path]
-        if permissions != "none":
-            common.extend(["--allow-dangerously-skip-permissions",
-                           "--permission-mode", "bypassPermissions"])
-        common.extend(model_args)
-        if repo_path:
-            common.extend(["--add-dir", repo_path])
-        if is_initial:
-            return common + ["-p", one_line]
-        return common + ["--continue", "-p", one_line]
-
-    if cli_slug == "antigravity-cli":
-        common = [cmd_path]
-        if permissions != "none":
-            common.append("--dangerously-skip-permissions")
-        common.extend(model_args)
-        if repo_path:
-            common.extend(["--add-dir", repo_path])
-        common.extend(["--print-timeout", "20m", "-p", one_line])
-        if not is_initial:
-            common.append("-c")
-        return common
-
-    if cli_slug == "copilot-cli":
-        # --silent keeps stdout limited to the final agent response so the
-        # VS Code runner can treat stderr as progress/diagnostics.
-        common = [cmd_path, "--silent"]
-        if permissions != "none":
-            common.append("--allow-all-tools")
-        common.extend(model_args)
-        if repo_path:
-            common.extend(["--add-dir", repo_path])
-        if is_initial:
-            return common + ["-p", one_line]
-        return common + ["--continue", "-p", one_line]
-
-    if cli_slug == "codex-cli":
-        return [cmd_path, "exec", "--skip-git-repo-check",
-                "--dangerously-bypass-approvals-and-sandbox", *model_args, one_line]
-
-    if cli_slug == "opencode":
-        cmd_args = [cmd_path, "run"]
-        cmd_args.extend(model_args)
-        cmd_args.append(one_line)
-        if not is_initial:
-            cmd_args.append("-c")
-        return cmd_args
-
-    if cli_slug == "grok-cli":
-        common = [cmd_path]
-        if permissions != "none":
-            # --always-approve（別名 --yolo）で全ツール実行を自動承認
-            common.append("--always-approve")
-        common.extend(model_args)
-        if repo_path:
-            common.extend(["--cwd", repo_path])
-        # 自動更新チェックはヘッドレス実行では不要
-        common.append("--no-auto-update")
-        if is_initial:
-            # -p (--single) は単発プロンプト。応答を stdout へ出して終了する
-            return common + ["-p", one_line]
-        # -c (--continue) で同一 cwd の直近セッションを継続する
-        return common + ["-c", "-p", one_line]
-
-    return []
-
-
 def _strip_cloud_suffix(model: str) -> str:
     if not isinstance(model, str):
         return model
@@ -12658,189 +12506,42 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         images: list = None,
         quiet_output: bool = False,
     ) -> Optional[str]:
-        # CLI providers (claude-code / antigravity-cli / copilot-cli /
-        # codex-cli / opencode / grok-cli) are handled by spawning the external
-        # CLI binary directly,
-        # rather than by routing through the AiDiy Hermes loop. Mirrors the
-        # dispatch pattern used by backend_server/AIコア/AIコード_cli.py.
-        import subprocess as _subprocess
-
+        # AiDiy: Pi / Codex と同じアダプターへ親の現在のモードを渡す。
+        from hermes_cli.aidiy_cli_bridge import run_cli
         cli_slug = (getattr(self, "_aidiy_provider_slug", "") or "").lower()
         if not cli_slug:
             return None
-        self._aidiy_cli_last_exit_code = None
-        self._aidiy_cli_last_stderr = ""
-
+        if images:
+            self._aidiy_cli_last_exit_code = 2
+            return "! 外部 CLI 委譲はテキスト入力だけに対応しています。"
         if isinstance(message, list):
-            try:
-                text_parts = [
-                    p.get("text", "") for p in message
-                    if isinstance(p, dict) and p.get("type") == "text"
-                ]
-                message_text = "\n".join(text_parts).strip()
-            except Exception:
-                message_text = str(message)
-        else:
-            message_text = str(message or "")
-
-        if not message_text.strip():
+            message = "\n".join(p.get("text", "") for p in message if isinstance(p, dict) and p.get("type") == "text")
+        message = str(message or "")
+        if not message.strip():
             return None
-
-        if not hasattr(self, "_aidiy_cli_session_started"):
-            self._aidiy_cli_session_started = {}
-        is_initial = not self._aidiy_cli_session_started.get(cli_slug, False)
-
-        repo_path = os.getcwd()
-        cmd = _aidiy_cli_build_command(
-            cli_slug=cli_slug,
-            prompt=message_text,
-            is_initial=is_initial,
-            repo_path=repo_path,
-            model=getattr(self, "model", None),
-        )
-        if not cmd:
-            _cprint(f"  CLI dispatch is not implemented for provider: {cli_slug}")
-            return None
-
-        # Persist the user message before spawning so /history shows it even if
-        # the subprocess fails midway through.
-        self.conversation_history.append({"role": "user", "content": message_text})
-
-        _cprint(f"  {_DIM}→ Spawning {cli_slug}: {os.path.basename(cmd[0])}{_RST}")
-
-        popen_kwargs = {}
-        if cli_slug == "antigravity-cli" and os.name == "nt":
-            # agy.exe may write directly to the parent console through CONOUT$.
-            # Detaching forces its output through the configured pipes, matching
-            # backend_server/AIコア/AIコード_cli.py::_antigravity実行().
-            creation_flag = getattr(_subprocess, "DETACHED_PROCESS", 0)
-            if creation_flag:
-                popen_kwargs["creationflags"] = creation_flag
-
+        read_only = os.environ.get("AIDIY_HERMES_READ_ONLY") == "1"
+        mode = "read-only" if read_only else ("yolo" if self._is_session_yolo_active() else "normal")
+        self.conversation_history.append({"role": "user", "content": message})
+        history = "\n\n".join(f"[{item.get('role', 'user')}]\n{item.get('content', '')}"
+                                for item in self.conversation_history)
+        prompt = "以下は AiDiy Hermes の会話です。最後のユーザー依頼を処理し、最終回答を返してください。\n\n" + history
+        self._aidiy_cli_last_stderr = ""
+        _cprint(f"  {_DIM}→ {cli_slug} / {mode}{_RST}")
         try:
-            proc = _subprocess.Popen(
-                cmd,
-                stdout=_subprocess.PIPE,
-                stderr=_subprocess.PIPE,
-                text=True,
-                encoding="utf-8",
-                errors="replace",
-                bufsize=1,  # line-buffered so readline() returns immediately
-                cwd=repo_path,
-                env=os.environ.copy(),
-                **popen_kwargs,
-            )
-        except FileNotFoundError:
-            self._aidiy_cli_last_exit_code = 127
-            err = f"CLI binary not found: {cmd[0]}"
-            _cprint(f"  {err}")
-            self.conversation_history.append({"role": "assistant", "content": err})
-            return err
-        except Exception as exc:
+            final = run_cli(_PROJECT_ROOT.parent, cli_slug, getattr(self, "model", None),
+                            prompt, os.getcwd(), mode,
+                            lambda text: _cprint(text))
+            self._aidiy_cli_last_exit_code = 0
+        except (ValueError, OSError) as exc:
+            final = f"! {exc}"
             self._aidiy_cli_last_exit_code = 1
-            err = f"CLI spawn failed: {exc}"
-            _cprint(f"  {err}")
-            self.conversation_history.append({"role": "assistant", "content": err})
-            return err
-
-        # Read stdout/stderr concurrently with readline() so output streams
-        # in real time. ``for line in proc.stdout`` would use the iterator's
-        # 8 KiB read-ahead buffer and only emit once enough bytes accumulate,
-        # which made the live progress invisible for long CLI turns.
-        import threading as _threading
-
-        output_lines: list[str] = []
-        stderr_lines: list[str] = []
-        # Idle timeout: abort if no byte arrives on either stream for this many
-        # seconds. Resets on every received line, so a long-running turn that
-        # keeps emitting progress will not trip it. 5 minutes per user request.
-        idle_timeout_sec = 300
-        last_output_time = [time.time()]
-        timed_out = [False]
-
-        def _stdout_reader():
-            try:
-                if proc.stdout is None:
-                    return
-                while True:
-                    line = proc.stdout.readline()
-                    if not line:
-                        break
-                    last_output_time[0] = time.time()
-                    text = line.rstrip("\r\n")
-                    output_lines.append(text)
-                    if not quiet_output:
-                        _cprint(text)
-            except Exception as exc:
-                logging.warning("CLI stdout read error: %s", exc)
-
-        def _stderr_reader():
-            try:
-                if proc.stderr is None:
-                    return
-                while True:
-                    line = proc.stderr.readline()
-                    if not line:
-                        break
-                    last_output_time[0] = time.time()
-                    text = line.rstrip("\r\n")
-                    stderr_lines.append(text)
-                    _cprint(f"  {_DIM}{text}{_RST}")
-            except Exception as exc:
-                logging.warning("CLI stderr read error: %s", exc)
-
-        def _idle_monitor():
-            while proc.poll() is None:
-                time.sleep(1)
-                if time.time() - last_output_time[0] > idle_timeout_sec:
-                    timed_out[0] = True
-                    try:
-                        proc.kill()
-                    except Exception as exc:
-                        logging.warning("CLI idle-timeout kill failed: %s", exc)
-                    return
-
-        t_out = _threading.Thread(target=_stdout_reader, daemon=True)
-        t_err = _threading.Thread(target=_stderr_reader, daemon=True)
-        t_mon = _threading.Thread(target=_idle_monitor, daemon=True)
-        t_out.start()
-        t_err.start()
-        t_mon.start()
-
-        try:
-            proc.wait()
-        except Exception:
-            pass
-
-        t_out.join()
-        t_err.join()
-        t_mon.join(timeout=2)
-
-        if timed_out[0]:
-            msg = f"  {_DIM}[idle-timeout] no output for {idle_timeout_sec}s — aborted{_RST}"
-            _cprint(msg)
-            output_lines.append(f"[idle-timeout] no output for {idle_timeout_sec}s — aborted")
-
-        exit_code = 124 if timed_out[0] else (proc.returncode if proc.returncode is not None else 1)
-        self._aidiy_cli_last_exit_code = exit_code
-        self._aidiy_cli_last_stderr = "\n".join(stderr_lines).strip()
-        self._aidiy_cli_session_started[cli_slug] = exit_code == 0
-
-        final = "\n".join(output_lines).strip() or "(no output)"
-
-        # Render the collected stdout inside the standard AiDiy Hermes response
-        # box so CLI output appears in the same shape as agent/chat responses.
-        # Real-time stdout/stderr above is preserved; this is an additional
-        # consolidated rendering that the agent layer (history, /save, etc.)
-        # also treats as a normal assistant turn.
+        except KeyboardInterrupt:
+            final = "! 外部 CLI を中断しました。"
+            self._aidiy_cli_last_exit_code = 130
         if not quiet_output:
-            try:
-                self._reset_stream_state()
-                self._emit_stream_text(final + "\n")
-                self._flush_stream()
-            except Exception as exc:
-                logging.warning("CLI final render failed: %s", exc)
-
+            self._reset_stream_state()
+            self._emit_stream_text(final + "\n")
+            self._flush_stream()
         self.conversation_history.append({"role": "assistant", "content": final})
         return final
 
@@ -23962,6 +23663,8 @@ def _build_arg_parser():
         default=False,
         help="Bypass dangerous command approval prompts.",
     )
+    parser.add_argument("--read-only", action="store_true", default=False,
+                        help="調査・説明のみ。外部 CLI へも読み取り専用モードを引き継ぐ。")
     parser.add_argument("prompt", nargs="*")
     return parser
 
@@ -24206,6 +23909,21 @@ def cli_entry(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     args = _build_arg_parser().parse_args(argv)
 
+    # AiDiy: read-only は --yolo より優先。API の実行境界と外部 CLI の両方に適用。
+    if args.read_only:
+        import prediction_main as readonly
+        import toolsets as readonly_toolsets
+        import agent.tool_executor as readonly_executor
+        import tools.read_extract as readonly_extraction
+        readonly._prepare_environment(os.getcwd())
+        os.environ["AIDIY_HERMES_READ_ONLY"] = "1"
+        readonly._install_readonly_policy(sys.modules[__name__], readonly_toolsets,
+                                         readonly_executor, readonly_extraction, allow_cli=True)
+        args.yolo = False
+        args.ignore_user_config = args.ignore_rules = True
+        args.toolsets = readonly.READONLY_TOOLSET
+        args.checkpoints = False
+
     if args.version:
         try:
             from hermes_cli import __version__, __release_date__
@@ -24259,6 +23977,15 @@ def cli_entry(argv: list[str] | None = None) -> int:
     # AIコードパネルで CODE_AI<N>_MODEL="auto" を選んだ場合もこの経路を通る。
     # ここで AiDiy_key.json の CODE_AIDIY_HERMES_MODEL を補完すると、画面上は
     # auto なのに特定モデル（OAuth 未認証時は FreeAI）を指定した起動になってしまう。
+    # AiDiy: Pi / Codex と同じ区分付き CLI モデルをそのまま受け取る。
+    cli_aliases = {"claude_cli": "claude-code", "antigravity_cli": "antigravity-cli",
+                   "codex_cli": "codex-cli", "copilot_cli": "copilot-cli",
+                   "opencode_cli": "opencode", "grok_cli": "grok-cli"}
+    if args.model and not args.provider:
+        prefix, separator, suffix = args.model.partition("/")
+        if separator and (prefix in cli_aliases or provider_entry_is_cli(prefix)):
+            args.provider, args.model = cli_aliases.get(prefix, prefix), suffix
+    args.provider = cli_aliases.get(args.provider, args.provider)
     cli_provider = provider_entry_is_cli(args.provider or "")
     if args.provider and not cli_provider:
         defaults = _load_aidiy_hermes_provider_defaults(args.provider, args.api_key)

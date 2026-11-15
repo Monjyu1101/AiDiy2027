@@ -240,11 +240,14 @@ pub(crate) async fn run_turn(
             Ok(_) => Err(unsupported_uploaded_audio_error()),
         };
     }
-    let auto_compaction_enabled = sess
-        .services
-        .thread_extension_data
-        .get::<AutoCompactionDisabled>()
-        .is_none();
+    // AiDiy: CLI の文脈管理は子ハーネスに任せ、親の API 圧縮を起動しない。
+    let auto_compaction_enabled =
+        codex_model_provider_info::split_aidiy_cli_model(&model_info.slug).is_none()
+            && sess
+                .services
+                .thread_extension_data
+                .get::<AutoCompactionDisabled>()
+                .is_none();
     let auto_summarization_enabled =
         auto_compaction_enabled && !turn_context.config.features.enabled(Feature::TokenBudget);
     if crate::guardian::is_basic_session_source(&turn_context.session_source) {
@@ -3001,6 +3004,22 @@ async fn try_run_sampling_request(
     let mut resampling = crate::guardian::ResponseResampling::new(&sess);
     let prompt = Arc::new(prompt);
     let mut stream_request = async |prompt: &Arc<Prompt>| {
+        // AiDiy: API を呼ぶ前に選択モデルで外部 CLI へ委譲する。
+        if codex_model_provider_info::split_aidiy_cli_model(&step_context.settings.model_info.slug)
+            .is_some()
+        {
+            return crate::aidiy_cli::stream(
+                prompt,
+                &step_context.settings.model_info.slug,
+                diagnostic_cwd,
+                &turn_context.permission_profile(),
+                turn_context.approval_policy(),
+            )
+            .await;
+        }
+        if turn_context.config.model_provider_id == codex_model_provider_info::AIDIY_CLI_PROVIDER {
+            return Err(CodexErr::InvalidRequest("CLI で開始した会話から API へ切り替える場合は、API モデルを指定して新しい会話を開始してください。".to_string()));
+        }
         client_session
             .stream(
                 prompt,

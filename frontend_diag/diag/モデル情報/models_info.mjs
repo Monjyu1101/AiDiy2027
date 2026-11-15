@@ -324,7 +324,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     }
     if (group === 'code') {
       // aidiy_codex_models_info.json を正本にし、Code の aidiy_codex 区分はそこから作る（コンパイル済みのときだけ）。
-      // 入力予測・Navi は Code の一覧から派生するので、同じ候補になる。
+      // 入力予測・Navi は Code から派生し、各生成処理で外部CLIへの委譲候補を除外する。
       codexInfo = codexModelsInfo({chatModels:selections.chat, codeModels:nonempty, providerInfos:hermesInfos});
       if (installedClis[CODEX_CODE_PROVIDER] === true) {
         const entries = Object.entries(nonempty);
@@ -344,7 +344,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
   // Pi も Hermes と同じ入力から、標準モデル名・CLI区分を含めて作る。
   await writeResult(path.join(directory, PI_MODELS_FILE), piModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
   saved.push(PI_MODELS_FILE);
-  // aidiy_codex も Pi と同じ入力・区分で用意する（Code の aidiy_codex 区分と同じ内容。今動くのは openai_oauth のみ）。
+  // aidiy_codex の専用一覧も Pi と同じ CLI 区分を含める。Code は codexCodeModels で区分付きモデル名へ変換する。
   await writeResult(path.join(directory, CODEX_MODELS_FILE), codexInfo);
   saved.push(CODEX_MODELS_FILE);
   return saved;

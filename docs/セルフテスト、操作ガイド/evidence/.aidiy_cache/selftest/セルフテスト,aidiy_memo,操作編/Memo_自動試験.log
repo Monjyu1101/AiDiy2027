@@ -1,0 +1,151 @@
+✔ メモAPI: 認証、同一origin、GET、JSON、作成・保存、競合・安全な失敗表示 (423.6693ms)
+✔ メモAPI: プロジェクト切替は検証済みフォルダだけ、保存先idが更新される (567.3785ms)
+✔ 空新規は色・位置・サイズ変更やflushでも作成しない (36.4221ms)
+✔ タイトルだけでも1件作成し、以降は同じID/revisionで自動更新 (2.9838ms)
+✔ 保存中の入力・色・サイズを古いresponseで上書きせず後続保存する (2.9883ms)
+✔ 既存の空内容は削除せず保存し、空新規の扱いにしない (0.744ms)
+✔ 競合はdraft/revision保持し、自動再送・無条件上書きをしない (39.3265ms)
+✔ create応答喪失後は同一clientIdと最初のsnapshotで確認し最新draftを追送 (27.9619ms)
+✔ 連続入力は150ms後にまとめ、close flushはtimerを待たず完了する (217.515ms)
+✔ native再読込用callbackは成功したsnapshot全体を受ける (15.3982ms)
+✔ ゴミ箱は最新保存を待ち、終了flushと連打も削除完了を待つ (16.0232ms)
+✔ 空新規のゴミ箱はファイルを作らず、削除エラーは内容保持 (1.4996ms)
+✔ 既定は内容・位置・サイズ・色の変更直後に保存開始、切替settledは追加保存しない (12.1359ms)
+✔ 切替は既に始まった作成と後続保存を待つが、失敗・未開始保存を再送しない (11.2039ms)
+✔ image-only memo persists, replacement/removal survive in-flight save and saved empty is retained (14.3217ms)
+✔ フォーム入力はflushまで保持し、位置・色・画像保存に編集中の本文を混ぜない (53.4501ms)
+✔ 保存中の追加入力も次のロストフォーカスまで送らない (3.1621ms)
+✔ 空新規の入力と移動はblurまで作成せず、画像のみは即保存できる (28.0811ms)
+✔ Web起動: 保存済みだけ個別表示し、空一覧は何も開かない (31.1724ms)
+✔ Web起動: 外部URL・失敗・終了中は空付箋を補完しない (3.5919ms)
+✔ 読み込み、編集、保存成功後の変更状態とrevision (4.4987ms)
+✔ 同名メモは保存先ごとに識別し新規にはID/revisionを送らない (0.5503ms)
+✔ タイトルと色の変更も未保存であり、元に戻すと解除する (0.4706ms)
+✔ 位置・サイズも未保存に含めて保存し、textのsidecar用にも渡す (0.5207ms)
+✔ MEMO専用画像は全ランチャー共通でCPUの直前、配布画像は正本と一致 (102.5839ms)
+✔ 通常と単体モードの両方でMEMO画像を配信 (300.2302ms)
+✔ 画像検証は固定raster MIME・magic・canonical base64・5 MiB上限を守る (114.6218ms)
+✔ 画像のみ新規・再起動・省略保持・置換・除去と空欄保持 (897.7682ms)
+✔ 画像込み作成再試行は同一内容のみ、trashは画像含むJSONを保全 (495.3209ms)
+✔ 旧textは画像をsidecarへ保存し本文を変更しない (149.8272ms)
+✔ HTTPは画像のbase64増分を許可し、上限超過は保存呼出し前に拒否 (80.2173ms)
+✔ aidiy_memo引数は固定modeだけでproject/cwd/auto/headlessを受け取らない (8.5109ms)
+✔ 単体modeは非秘密flags、URLはIPCのみ、昇格要求は検証してACKする (12.4393ms)
+✔ 単体サーバーはsystemroot限定でプロジェクトを読まず、昇格後だけ通常APIを開く (263.1231ms)
+✔ 500 ms stationary hold enables marker, native move and restores text selection; release cleans up (22.3721ms)
+✔ short selection, release, scroll, IME, key, cancel and blur never initiate movement (4.1142ms)
+✔ release during pending native begin ends token and never revives marker/interval (0.998ms)
+✔ 単体APIは配置元専用。通常無効時にproject設定・起動rootを一切読まない (551.1352ms)
+✔ 通常catalogは有効なGET一覧だけで読み、単体保存先とは混ぜない (183.0373ms)
+✔ 一覧は書込しない・同一保存先は重複しない (85.4458ms)
+✔ 両保存先へ新規保存、再起動、編集・競合保護 (583.9015ms)
+✔ 既存md/txtは本文をそのまま編集、壊れた形式は保持して警告 (102.0262ms)
+✔ プロジェクト変更後の旧保存先へは書かない (47.1009ms)
+✔ 相対パス・パストラバーサル・不正サイズは拒否 (12.4283ms)
+✖ symlink保存先・ファイル・hardlinkを拒否 (10.7442ms)
+✔ 同一revisionの並列保存で後続を競合扱いにする (42.7883ms)
+✔ 位置・サイズ・色を再読込後も保持、未指定の更新は既存配置を保持 (46.7376ms)
+✖ 既存textは本文を触らずsidecarへ配置・色保存、sidecar競合・リンクも保護 (101.4562ms)
+✔ 新規空メモは保存先も作成せず、既存を空にする編集は削除しない (44.2095ms)
+✔ clientIdは再起動や並列作成後の応答消失を再試行しても二重作成しない (101.4692ms)
+✔ 一覧で認識済みの保存先は切替後も元の付箋のみ保存可能、新規作成は不可 (67.1088ms)
+✖ 既知rootが差し替わった場合は旧sourceの保存を拒否する (82.2035ms)
+✔ readは現在/既知の旧保存先だけに限定し、フォルダ越境・未知root・差替えを拒否 (73.1553ms)
+✔ JSONエスケープ後の1 MB超過をmkdir前に拒否し、既存ファイルも保全する (234.9923ms)
+✔ 複数storeの同一ファイル更新は共有queueで直列化し、後続の古いrevisionは拒否 (143.9284ms)
+✔ 動的起動root変更後は新保存先へ作成し、既知旧rootのread/saveは保持 (66.7453ms)
+✔ ゴミ箱は原本を復元可能に退避し一覧から除外、古いrevisionは拒否 (50.1063ms)
+✖ テキストメモの本文とsidecarを退避しリンクのゴミ箱を拒否 (35.0075ms)
+✔ 原色6色と既存パステル色は保存・再読込できる (152.2086ms)
+✔ 最小高さ84pxを保存復元し、それ未満は拒否 (16.7608ms)
+✔ hash除去後のreloadでも同じ保存対象を復元しtoken/本文は記録しない (2.6396ms)
+✔ 新規は他タブから複製された対象を消し、保存後のreloadは既存扱い (1.4662ms)
+✔ 壊れたstorage・storage禁止・他公開pathに対象を混同しない (0.8713ms)
+✔ 単体scopeはreload後も保持し、通常APIと混ぜない (3.1725ms)
+✔ empty startup creates no container; + creates blank project note without file operations (19.4735ms)
+✔ saved notes have independent windows; startup reload never duplicates or resets an existing window (1.6834ms)
+✔ new saved identity is retained for dedup (1.0987ms)
+✔ close waits for flush; failure defaults to preserving note and Diag; explicit discard closes (10.4152ms)
+✔ successful flush closes cleanly without reading destroyed webContents (1.9594ms)
+✔ negative monitor coordinates preserved; offscreen and oversized bounds clamped (0.5543ms)
+✔ startup HTTP uses fixed authenticated endpoint and refuses redirects (109.1555ms)
+✔ blur and close flush latest native bounds before renderer save; parent close rejects new windows (2.6035ms)
+✔ new and existing saved snapshots survive renderer reload; invalid updates never replace them (8.6507ms)
+✔ standalone uses only system snapshot, creates blank when empty, and canonical dedup avoids same-root alias (2.8237ms)
+✔ project refresh flushes old project, rereads latest data, and keeps system and launch windows (7.4583ms)
+✔ failed/conflicting save preserves old note and aborts reload; retry can reconcile (8.0077ms)
+✔ rapid queued refresh and new note cannot race a project flush (1.7727ms)
+✔ empty new project note is asked to flush/close; partial listing preserves all windows (1.8478ms)
+✔ prepare completes while old source is valid; opens blocked until refresh, failed update can restore old project (1.7602ms)
+✔ system deleted while project flush is waiting is not resurrected by stale snapshot (1.5122ms)
+✔ partial prepare failure restores previously saved windows and blocks wrongly targeted new notes (3.8645ms)
+✔ failed API update refresh keeps normal creation blocked until successful sync (0.9677ms)
+✔ sticky plus uses selected project in Diag and only system in standalone; repeated clicks serialize (1.4398ms)
+✔ sticky plus survives blank source blur/close while new window opens (1.2716ms)
+✔ plus places blank note right, below, then top-left of source display work area (0.964ms)
+ℹ tests 85
+ℹ suites 0
+ℹ pass 81
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3370.2506
+
+✖ failing tests:
+
+test at frontend_diag\checks\memo-storage.check.mjs:46:1
+✖ symlink保存先・ファイル・hardlinkを拒否 (10.7442ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-SWo2hm\project' -> 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-SWo2hm\launch\_AIDIY'
+      at async symlink (node:internal/fs/promises:1714:10)
+      at async TestContext.<anonymous> (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_diag/checks/memo-storage.check.mjs:47:42)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-SWo2hm\\project',
+    dest: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-SWo2hm\\launch\\_AIDIY'
+  }
+
+test at frontend_diag\checks\memo-storage.check.mjs:61:1
+✖ 既存textは本文を触らずsidecarへ配置・色保存、sidecar競合・リンクも保護 (101.4562ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-jkVdQ9\project\保護.json' -> 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-jkVdQ9\launch\_AIDIY\aidiy_memo\.memo-31c07d33fbca30ae0d177006ceffc514f3283de3df0770905baacf0df7b1a8b6.json'
+      at async symlink (node:internal/fs/promises:1714:10)
+      at async TestContext.<anonymous> (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_diag/checks/memo-storage.check.mjs:67:98)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-jkVdQ9\\project\\保護.json',
+    dest: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-jkVdQ9\\launch\\_AIDIY\\aidiy_memo\\.memo-31c07d33fbca30ae0d177006ceffc514f3283de3df0770905baacf0df7b1a8b6.json'
+  }
+
+test at frontend_diag\checks\memo-storage.check.mjs:88:1
+✖ 既知rootが差し替わった場合は旧sourceの保存を拒否する (82.2035ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-1m5VeF\project-old' -> 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-1m5VeF\project'
+      at async symlink (node:internal/fs/promises:1714:10)
+      at async TestContext.<anonymous> (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_diag/checks/memo-storage.check.mjs:91:37)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-1m5VeF\\project-old',
+    dest: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-1m5VeF\\project'
+  }
+
+test at frontend_diag\checks\memo-storage.check.mjs:134:1
+✖ テキストメモの本文とsidecarを退避しリンクのゴミ箱を拒否 (35.0075ms)
+  Error: EPERM: operation not permitted, symlink 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-3dBjqX\project' -> 'C:\Users\admin\AppData\Local\Temp\aidiy-memo-3dBjqX\launch\_AIDIY\aidiy_memo\.trash'
+      at async symlink (node:internal/fs/promises:1714:10)
+      at async TestContext.<anonymous> (file:///C:/Users/admin/Desktop/AiDiy2027_dev/frontend_diag/checks/memo-storage.check.mjs:139:2)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    errno: -4048,
+    code: 'EPERM',
+    syscall: 'symlink',
+    path: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-3dBjqX\\project',
+    dest: 'C:\\Users\\admin\\AppData\\Local\\Temp\\aidiy-memo-3dBjqX\\launch\\_AIDIY\\aidiy_memo\\.trash'
+  }

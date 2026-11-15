@@ -12,6 +12,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import * as completion from '../src/components/ターミナル/コマンド補完.js';
+import * as foldTone from '../src/components/ターミナル/折畳配色.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileStyle}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const {descriptor}=parse(readFileSync(new URL('../src/components/ターミナル/ターミナルパネル.vue',import.meta.url),'utf8'));
@@ -34,7 +35,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=fa
   cols=80;rows=24;options={scrollback:5000};listeners={};buffer={active:{}};
   parserHandlers=new Map();
   registerParser=(id,callback)=>{const key=JSON.stringify(id);this.parserHandlers.set(key,callback);return{dispose:()=>this.parserHandlers.delete(key)};};
-  parser={registerCsiHandler:this.registerParser,registerEscHandler:this.registerParser};
+  parser={registerCsiHandler:this.registerParser,registerEscHandler:this.registerParser,registerOscHandler:this.registerParser};
   write(_data,callback){callback?.();}
   _core={_renderService:{dimensions:{css:{cell:{width:8,height:17}}},clear(){}}};
   constructor(){terminal=this;resources.terminals++;}
@@ -50,7 +51,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=fa
  class ResizeObserver{
   constructor(callback){this.callback=callback;observers.add(this);} observe(target){this.target=target;} disconnect(){observers.delete(this);}
  }
- const modules={'../コード/パネル表示切替.vue':{},'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/コマンド補完.js':completion};
+ const modules={'../コード/パネル表示切替.vue':{},'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'./折畳配色.js':foldTone,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/コマンド補完.js':completion};
  const script=compileScript(descriptor,{id:'TermPanel',genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,URL,window,WebSocket:Socket,ResizeObserver,location:{href:'http://localhost/'},
@@ -153,10 +154,11 @@ test('Term実setup: ConPTY要求はクリアで保持し、再接続で解除・
  const f=await fixture(t),e={type:'keydown',key:'Enter',shiftKey:true,preventDefault(){},stopPropagation(){}};
  const enable=()=>f.terminal.parserHandlers.get(JSON.stringify({prefix:'?',final:'h'}))([9001]);
  const check=data=>{f.terminal.handleKey(e);assert.deepEqual(f.packets.at(-1),{type:'input',data});};
- assert.equal(f.terminal.parserHandlers.size,3);enable();check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
+ // ConPTY要求の3件と、折畳アイコン用のOSC 133（コマンド開始・終了）1件。
+ assert.equal(f.terminal.parserHandlers.size,4);enable();check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
  await f.state.clearDisplay();check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
  f.state.connect();f.sockets.at(-1).onopen();f.sockets.at(-1).receive({type:'ready',project:'/fixture',shell:'bash'});
- check('\x1b[13;2u');assert.equal(f.terminal.parserHandlers.size,3);
+ check('\x1b[13;2u');assert.equal(f.terminal.parserHandlers.size,4);
  f.sockets.at(-1).receive({type:'keyboard-mode',win32InputMode:true});check('\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_');
  f.sockets.at(-1).receive({type:'keyboard-mode',win32InputMode:false});check('\x1b[13;2u');
  f.dispose();assert.equal(f.terminal.parserHandlers.size,0);

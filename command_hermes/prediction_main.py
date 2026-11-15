@@ -128,7 +128,7 @@ def _readonly_arguments(name, args) -> bool:
     return True
 
 
-def _install_readonly_policy(cli, toolsets, executor, extraction) -> None:
+def _install_readonly_policy(cli, toolsets, executor, extraction, *, allow_cli=False) -> None:
     toolsets.create_custom_toolset(
         READONLY_TOOLSET,
         "次入力予測専用。ファイルの読取りと検索のみ。",
@@ -180,7 +180,11 @@ def _install_readonly_policy(cli, toolsets, executor, extraction) -> None:
         agent._dump_api_request_debug = lambda *args, **kwargs: None
         return agent
 
+    original_configure = cli._configure_aidiy_cli_provider
+
     def configure_provider(instance, provider, *, resumed=False, requested_model=None):
+        if allow_cli and original_configure(instance, provider, resumed=resumed, requested_model=requested_model):
+            return True
         _reject_cli_provider(cli, provider, requested_model)
         # CLI は constructor で store を用意するが、ここではまだ本文未投入。
         # _init_agent は store を再作成し得るが、factory は使わず、最終 flush
@@ -217,8 +221,9 @@ def main(argv: list[str] | None = None) -> int:
     try:
         _prepare_environment(args.workdir)
         cli, toolsets, executor, extraction = _load_runtime()
-        _reject_cli_provider(cli, args.provider, args.model)
-        _install_readonly_policy(cli, toolsets, executor, extraction)
+        # AiDiy: 外部 CLI も共通アダプターで同じ read-only 状態を引き継ぐ。
+        os.environ["AIDIY_HERMES_READ_ONLY"] = "1"
+        _install_readonly_policy(cli, toolsets, executor, extraction, allow_cli=True)
         command = [
             "--model", args.model, "--toolsets", READONLY_TOOLSET,
             "--ignore-user-config", "--ignore-rules", "--oneshot-stdin", "-Q",

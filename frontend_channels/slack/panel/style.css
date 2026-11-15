@@ -158,3 +158,11 @@ body.live-view.settings-open main{display:block;overflow:auto;padding:17px 18px 
 #settings-actions button{border:1px solid #353e53;border-radius:0;padding:3px 10px;background:#1b202c;color:#e9ecf5;font-size:11px}
 #settings-actions #settings-apply{border-color:#69dcff;background:#fff;color:#000}
 #settings-actions button:hover:enabled{border-color:#69dcff}
+/* 左上の折り畳みボタン。折畳中は隠れた #activity-bar と同じ色・明滅で接続状況を示す。 */
+.header-leading{grid-column:1;justify-self:start;display:flex;align-items:center;gap:2px;min-width:0}
+#fold{flex:none;display:grid;place-items:center;width:26px;min-width:26px;height:26px;padding:0;border:0;border-radius:0;background:transparent;color:var(--aidiy-titlebar-foreground);box-shadow:none}
+.panel-fold-mark{box-sizing:border-box;display:grid;place-items:center;width:22px;height:22px;border:2px solid currentColor;font-size:14px;line-height:1;pointer-events:none}
+#fold:hover .panel-fold-mark{background:#ffffff1f}
+.panel-fold-mark.collapsed{background:#ff4500;animation:orange-bar-breathe 4.5s linear infinite}
+body.connected .panel-fold-mark.collapsed{background:#00ff00;animation:green-bar-breathe 4.5s linear infinite}
+.browser-mode #fold{display:none}

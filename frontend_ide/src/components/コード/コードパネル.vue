@@ -17,9 +17,13 @@ import { chatArrival } from '../コード/会話到着演出';
 import { createDraftReceiver } from '../下書き連携/下書き受け渡し.js';
 import ChatAttachment from '../添付ファイル/チャット添付.vue';
 import { readDroppedFiles } from '../添付ファイル/ファイル送信.js';
+import { createReplyFoldTone } from './折畳配色.js';
 const props = defineProps({ base: String, host: Boolean, icon: String, embedded: Boolean, hideStatusBar: Boolean, linked: Boolean, desktop: Boolean, pageNotifications: Boolean, projectNotice: String });
 const windowTitle = ref('');
 const panelCollapsed = ref(false), panelHidden = ref(false);
+// 折畳アイコンの配色（依頼中シアン脈動／回答で緑・「!」の回答やエラーで赤。未実行で折畳・展開時は無色）。
+const replyFold = createReplyFoldTone();
+watch(panelCollapsed, collapsed => replyFold.collapsed(collapsed, !!state.実行中));
 const state = reactive({ メッセージ: [], 履歴: [], 進捗: [], 信頼済み: false, 自動接続: true });
 const prompt = ref(''), error = ref(''), pending = ref(false), history = ref(false), picker = ref(false), catalogBusy = ref(false);
 const stopPending = ref(false);
@@ -265,7 +269,8 @@ function receive(packet) {
       invalidateFiles();
     }
     if (!packet.信頼済み || packet.実行中 || packet.モデル変更中 || state.接続世代 !== packet.接続世代) invalidateFiles();
-    if (packet.実行中 && !state.実行中) { predictionReply = false; predictionFailed = false; cancelPrediction(); }
+    if (packet.実行中 && !state.実行中) { predictionReply = false; predictionFailed = false; cancelPrediction(); replyFold.started(); }
+    else if (!packet.実行中 && state.実行中) replyFold.finished();
     const confirmed = confirmsConversationChange(packet);
     const previous = state.メッセージ.map(item => `${item.種別}:${item.本文}`);
     if (first || changed) { revision++; arrivals.reset(); }
@@ -330,6 +335,7 @@ function receive(packet) {
     }
   } else if (['modelCatalogError', 'transportError', 'error'].includes(packet.type)) {
     cancelPrediction(); predictionReply = false; predictionFailed = true;
+    if (packet.type !== 'modelCatalogError') replyFold.failed();
     if (packet.type === 'modelCatalogError' && (!picker.value || (packet.provider || '') !== catalogProvider)) return;
     error.value = packet.message || packet.error || '処理に失敗しました。'; pending.value = false; catalogBusy.value = false;
     stopPending.value = false; autoPending.value = false;
@@ -347,10 +353,11 @@ function receive(packet) {
     const text = typeof packet.メッセージ内容 === 'string' ? packet.メッセージ内容.trim() : '';
     if (text.startsWith('!')) { predictionReply = false; predictionFailed = true; }
     const progressOnly = /^【(?:検証|自己改善)(?:開始|完了)】/.test(text);
+    if (!progressOnly) replyFold.reply(text);
     if (state.実行中 && !state.停止中 && !predictionFailed && text && !progressOnly) predictionReply = true;
   } else if (['error', 'cancel_run'].includes(packet.メッセージ識別)
       || (packet.メッセージ識別 === 'output_end' && packet.メッセージ内容)) {
-    predictionReply = false; predictionFailed = true; cancelPrediction();
+    predictionReply = false; predictionFailed = true; cancelPrediction(); replyFold.failed();
   }
 }
 function finishConversationChange() {
@@ -438,7 +445,7 @@ const draftReceiver = createDraftReceiver({
   // 単独起動もBrowserの連携先。IDE所属かどうかで受信IPCを無効にしない。
   api: props.desktop ? window.aidiyWindow : undefined,
 });
-defineExpose({ draftTarget: draftReceiver.target, insertDraft: draftReceiver.insert, runNavigationPrompt, navigationReadiness });
+defineExpose({ draftTarget: draftReceiver.target, insertDraft: draftReceiver.insert, runNavigationPrompt, navigationReadiness, isRunning: () => !!state.実行中 });
 watch(() => [state.作業フォルダ?.パス, state.会話ID, state.信頼済み, state.画面接続済み, pending.value, changingConversation.value, navigationRunning.value, navigationCancelling.value, state.履歴], () => draftReceiver.publish());
 watch(prompt, text => { if (prediction && text !== prediction.draft) cancelPrediction(); transport.saveDraft(text); }, { flush: 'sync' });
 watch(offline, () => { picker.value = false; });
@@ -449,7 +456,7 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
 </script>
 <template>
   <section class="ai-component code-component" :class="{ running: busy, 'desktop-window': desktop, 'panel-collapsed': panelHidden && !hideStatusBar && !host }" data-component="CodePanel" @dragover="dragFiles" @dragleave="leaveFiles" @drop="dropFiles">
-    <StatusBar :hide-connection-bar="panelHidden" v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" :status="state.接続中 ? '接続中' : state.接続済み ? '接続済' : '未接続'" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
+    <StatusBar :hide-connection-bar="panelHidden" v-if="!hideStatusBar" :title="windowTitle || (linked ? 'AiDiy IDE / Code' : 'AiDiy Code')" :mode="state.自動接続 ? 'online' : 'offline'" :connected="state.接続済み" :busy="state.接続中" :active="state.実行中" :desktop="desktop" :status="state.接続中 ? '接続中' : state.接続済み ? '接続済' : '未接続'" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :tone="replyFold.tone.value || undefined" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span :title="state.作業フォルダ?.パス">プロジェクト: {{ state.作業フォルダ?.名前 }}</span><nav>
       <button v-if="!embedded" class="auto-connect" role="switch" :aria-checked="state.自動接続" :title="`自動接続 ${state.自動接続 ? 'ON' : 'OFF'}`" :disabled="busy || autoPending || !operable" @click="toggleAuto"><span>自動接続</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button>
       <button :disabled="busy || autoPending || !operable || (!offline && !state.接続済み) || (!state.作業フォルダ && !state.新規可能)" @click="send('new')">＋ 新規</button><button :disabled="!operable" :aria-expanded="history" @click="arrivals.reset(); history = !history">{{ history ? '戻る' : '一覧' }}</button>

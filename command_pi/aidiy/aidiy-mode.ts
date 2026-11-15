@@ -8,7 +8,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { parseArgs } from "../packages/coding-agent/src/cli/args.ts";
 
 const READ_TOOLS = ["read", "grep", "find", "ls"];
-const READ_ONLY_PROMPT = "読み取り専用モードです：調査・説明だけを行い、ファイルの作成・変更・削除、コマンド実行、外部サービスへの変更操作を行わないでください。";
+const READ_ONLY_PROMPT = "読み取り専用モードです：調査・説明だけを行い、ファイルの作成・変更・削除、外部サービスへの変更操作は禁止です。Pi 自身では read / grep / find / ls だけを使い、シェルは実行しないでください。外部 CLI に委譲された場合は、その CLI の read-only 制約の下で読み取りツールを使ってください。読み取り手段がコマンドの場合も、read-only sandbox 内の非変更操作だけに限定し、制約の回避や権限昇格は行わないでください。";
 // Pi の値付きオプションの値を、AiDiy のモード指定と取り違えない。
 export const PI_VALUE_FLAGS = new Set([
 	"--mode", "--provider", "--model", "--api-key", "--system-prompt", "--append-system-prompt",

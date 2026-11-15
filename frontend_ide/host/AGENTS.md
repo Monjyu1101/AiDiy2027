@@ -129,3 +129,21 @@ Live の画面は frontend_ide の Vue 画面（`src/components/ライブ/`）�
 ## Vue共通画面
 
 現行のNavi / Term / Code / Live / IDE / Task / Team / Browser / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code/Hermes・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は [共通画面の構成](../AGENTS.md) と [Vue共通画面変更手順](../../_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md) を参照してください。
+
+## 拡張と単独起動の要点
+
+`frontend_ide/host` は、VS Code のセカンダリサイドバーに表示する 2 つの独立した拡張と、同じ画面を使う単独起動版を提供します。
+
+| 拡張 | 拡張 ID | 役割 | 単独起動 |
+|------|---------|------|----------|
+| AiDiy (Code) | `aidiy.aidiy-code` | 既存AIコアへ接続するコード支援チャット。`AIコード.vue` と同じ Code CLI・モデルを選択する | `aidiy_code` |
+| AiDiy (Live) | `aidiy.aidiy-live` | 既存 AIコア（`backend_server` 8091）へ接続するライブ音声・文字会話。VS Code 拡張内のマイクは Windows の Python 標準ライブラリ（WinMM）で取り込む | `aidiy_live` |
+
+- 拡張 ID、ビュー、設定、VSIX（`dist/aidiy-code-0.1.0.vsix` / `dist/aidiy-live-0.1.0.vsix`）を分け、片方を無効にしても他方が動作する。
+- Code は選択コード添付、Provider / モデル選択、会話継続、停止、実行ログ、対話 CLI を提供し、既存 AIコードと同じ packet 識別子で進捗と正式回答を分離する。
+- Code のオフライン利用は `aidiy_hermes` / `aidiy_pi` を選択して直接実行する。エンジンとモデルはプロジェクトの `_AIDIY/aidiy_code/aidiy_code_model_offline.json` に保存し、オンライン用とは分ける。クラウドモデルの認証・通信は別途必要。
+- Live は接続時に作業フォルダを `CODE_BASE_PATH` として渡し、LiveAI とコードエージェントの回答（`output_request`）を表示する。
+- 単独起動版は Electron のフレームレスウィンドウ、または `--browser` でブラウザを使う。
+- VS Code 拡張・単独起動版はそのまま維持し、さらに開発スペース（AiDiy IDE、`aidiy_ide`）の部品としても動作する。Electron 版 IDE は「＋ Code」「＋ Live」で同じプロジェクト・利用モード・セッションの別ウィンドウを開き、Web 版は画面内タブで使う。同じ部品が3つの場所で動くことで、IDE 開発への応用を広げる。
+- Code / Live とも最後に手動選択したモデルを対象プロジェクトの `_AIDIY/aidiy_code/aidiy_code_model.json` / `_AIDIY/aidiy_live/aidiy_live_model.json` に保存し、拡張と単独起動版で共用する。
+- Windows デスクトップ版 VS Code を主対象とし、VS Code 1.106 以降を前提とする。

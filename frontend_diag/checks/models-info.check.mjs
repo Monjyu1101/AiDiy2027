@@ -44,15 +44,20 @@ test('aidiy_codex candidates come from aidiy_codex_models_info.json and appear o
   await writeModelsInfo(providers,results,{directory,now,installedClis:{codex_cli:true,aidiy_codex:true}});
   const load=async name=>JSON.parse(await readFile(path.join(directory,name),'utf8'));
   const codex=await load('aidiy_codex_models_info.json');
+  assert.deepEqual(codex,await load('pi_models_info.json'),'保存した専用一覧はCLI区分も含めてPiと一致する');
+  assert.ok(Object.hasOwn(codex.codex_cli.models,'same'));
+  assert.equal(Object.hasOwn(codex,'claude_cli'),false,'未導入CLIは専用一覧にも追加しない');
   const expected=Object.fromEntries(Object.entries(codexCodeModels(codex)).map(([id,label])=>[id,`${/^(.*?) - /.exec(label)?.[1]??'yyyy/mm/dd'} - ${id}`]));
   const code=await load('code_models_info.json');
-  assert.deepEqual(code.aidiy_codex.models,expected,'Code の候補は aidiy_codex_models_info.json の全区分');
-  // 今動く openai_oauth を先頭に、他社の区分（aidiy_codex 側の対応待ち）も <区分>/<モデル名> で入る。外部CLIへの委譲 xx/same は持たない。
+  assert.deepEqual(code.aidiy_codex.models,expected,'Code の候補は専用一覧の全区分');
+  // openai_oauth を先頭にし、Code にはCLI委譲経路、Navi・予測にはAPI区分だけを入れる。
   assert.equal(Object.keys(code.aidiy_codex.models)[0],'openai_oauth/m1');
   assert.ok(Object.hasOwn(code.aidiy_codex.models,'gemini_chat/gemini-m1'));
-  assert.ok(Object.keys(code.aidiy_codex.models).every(id=>!/_cli\//.test(id)));
-  assert.deepEqual(Object.keys((await load('prediction_models_info.json')).aidiy_codex.models),Object.keys(expected));
-  assert.deepEqual(Object.keys((await load('navi_models_info.json')).aidiy_codex.models),Object.keys(expected));
+  assert.ok(Object.hasOwn(code.aidiy_codex.models,'codex_cli/same'));
+  assert.ok(Object.hasOwn(code.aidiy_codex.models,'codex_cli/m1'));
+  const readonlyModels=Object.keys(expected).filter(id=>!/_cli\//.test(id));
+  assert.deepEqual(Object.keys((await load('prediction_models_info.json')).aidiy_codex.models),readonlyModels);
+  assert.deepEqual(Object.keys((await load('navi_models_info.json')).aidiy_codex.models),readonlyModels);
   for(const installedClis of [{codex_cli:true},{codex_cli:true,aidiy_codex:false}]){
    await writeModelsInfo(providers,results,{directory,now,installedClis});
    for(const name of ['code_models_info.json','prediction_models_info.json','navi_models_info.json'])assert.equal(Object.hasOwn(await load(name),'aidiy_codex'),false,name);

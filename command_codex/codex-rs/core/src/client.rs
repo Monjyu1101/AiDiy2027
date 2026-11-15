@@ -2677,6 +2677,10 @@ impl ModelClientSession {
         responses_metadata: &CodexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
+        // AiDiy: 圧縮などの補助要求から CLI 名を API へ送らない。
+        if codex_model_provider_info::split_aidiy_cli_model(&model_info.slug).is_some() {
+            return Err(CodexErr::InvalidRequest("CLI モデルは通常ターンの委譲経路で実行してください。/compact は未対応です。".to_string()));
+        }
         let wire_api = self.client.state.provider.info().wire_api;
         match wire_api {
             // AiDiy: Chat Completions / Anthropic have no WebSocket transport; they use the HTTP path.

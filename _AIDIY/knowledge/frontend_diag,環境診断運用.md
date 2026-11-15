@@ -273,6 +273,14 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - UI 変更時は配布画面へ反映するため `npm --prefix frontend_diag/ui run build`、`npm --prefix frontend_diag/ui run check` を実行する。実ブラウザ確認は別途許可された環境だけで行い、ソース・mock 成功と実OS画面検証を区別する。
 
 
+## aidiy_codex のモデル一覧
+
+`diag/モデル情報/codex_info.mjs` は `piModelsInfo()` と同じ入力から `aidiy_codex_models_info.json` を生成する。導入済みの `claude_cli` / `antigravity_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli` を含め、候補の順序・表示名・先頭の `same` を Pi と揃える。生成 JSON だけを編集せず、この生成処理を維持する。
+
+Code の `aidiy_codex` 候補は、コンパイル済みの場合に `<区分>/<モデル名>` として出す。`codex_cli/same`、`codex_cli/gpt-6-luna`、`opencode_cli/openai/gpt-6-luna` のように渡し、CLI の `same` は保持、`auto` は省く。これは本体側の CLI 委譲対応を前提とした入出力契約で、一覧への掲載だけで実行成功とは扱わない。Navi・入力予測では Pi と同様に外部 CLI 経路を除外する。
+
+確認は `node --test frontend_diag/checks/codex-info.check.mjs frontend_diag/checks/models-info.check.mjs frontend_diag/checks/pi-info.check.mjs frontend_diag/checks/headless.check.mjs`。通常のモデル一覧の書込・headless が同じ生成処理を使う。生成処理だけの変更では UI ビルドは不要で、起動中の Diag は次回起動から変更を読み込む。
+
 ## ミニCLI起動を変更するとき
 
 - 通常のアプリ起動パネルも同じ `CLI状態.mjs` と起動APIを使う。`全項目` は未導入を含む全7CLIを保持し、通常画面ではアプリ・Hermes・外部CLI・Chromeを共通の整列処理で並べる。未導入は「未導入」と表示して無効化し、状態処理でも起動要求を送らない。ミニは従来の導入済みだけの `項目` を使う。通常画面のアイコンは72pxで名称は画像内の帯を使い、別の名前ラベルを重ねない。通常・ミニとも明示クリックでは起動確認ダイアログを出さず、固定の起動APIへ直接送る。起動受付・成功・起動済みの通知やログ保存先は表示せず、通常画面は処理中とエラーだけ表示する。ミニ画面は処理中・成功・失敗の一時メッセージを表示せず、起動中もプロジェクト表示を保ち、通知行の追加による高さ変更を起こさない。エラー内容は通常画面の同じ状態から確認する。
@@ -396,6 +404,8 @@ Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後�
 
 確認は `checks/server-status-bar.check.mjs`、`statusbar.check.cjs`、`start-bulk-state.check.mjs`、`tools-ui.check.mjs`、`tools-status.check.mjs` と、UIビルド・manifest照合を使います。
 
+折畳中は接続バーが隠れるため、`ステータスバー.vue` の `barTone`（全起動=online、1つでも停止・再起動中=disconnected、全停止=offline）を通常表示・ミニ表示の両方の ▽ へ `tone` として渡し、▶ の背景を同じ色・明滅（`cyan-bar-breathe` / `disconnected-bar-breathe`）にします。共通部品 `frontend_ide/.../パネル表示切替.vue` のscoped CSSはDiagの配布CSSへ入らないため、配色は `diag/ui/style.css` に置きます。検証は `node --test frontend_diag/checks/collapsed-tone.check.mjs`。変更後は `frontend_diag/ui` で `npm run build` と `npm run check` を実行します。
+
 ## パフォーマンスチューニング
 
 設計判断は[共通の基本方針](./共通,パフォーマンスチューニング.md)に従い、実際の周期は各プログラムで調整します。管理監視、ログの受信、画面への反映を混同しないようにします。
@@ -410,11 +420,12 @@ Windows 11 22H2以降ではElectronのbackgroundMaterial（acrylic）で背後�
 - 保存先は Diag の起動時カレントフォルダと、ランチャーで選択したプロジェクトの `_AIDIY/aidiy_memo/`。実体が同じ場合は重複を除く。「+メモ」はプロジェクト優先、未選択なら起動側。切替前から開いている保存済み付箋は、セッション内で既知の元フォルダへ保存できるが、新規作成は現在の保存先に限定する。元フォルダの差替えは実体・inode等を再検証して拒否する。
 - 新規は UTF-8 の `UUID.memo.json` に `version:1` と `タイトル`、`本文`、`色`、`位置:{x,y}`、`サイズ:{width,height}`。負の画面座標を許可し、復元時は実在画面の作業範囲へ補正する。旧JSONは同じ形式で維持する。既存 `.md` / `.txt` の本文は無変換、色・配置は従来の隠しsidecarを維持し、自動変換・削除を行わない。
 - UIはタイトルと本文だけを常時表示。最下部hover/focusでパステル色・ゴミ箱操作を表示する。Electron窓は常時最前面、タイトル欄の上部・右側のヘッダー余白を押すと待機なしで移動、端のドラッグでサイズ変更。短い文字選択ドラッグは窓移動にしない。
-- 自動保存は内容・移動・サイズ・色の変更時に待ち時間なしで開始し、直列queueを使い、保存中の追加入力を捨てず後続保存する。フォーカス離脱・終了時には最終位置を通知して保存完了を待つ。失敗・競合は入力を保持して自動上書きを止める。親Diag終了中は新規窓追加を受理しない。
+- 現行実装ではタイトル・本文の入力を編集中の下書きに保持し、フォーカス離脱・終了時に保存する。移動・サイズ・色の変更は待ち時間なしで保存を開始する。直列queueを使い、保存中の追加入力を捨てず後続保存する。フォーカス離脱・終了時には最終位置を通知して保存完了を待つ。失敗・競合は入力を保持して自動上書きを止める。親Diag終了中は新規窓追加を受理しない。
 - 新規でタイトル・本文がともに空なら、色や寸法を変えてもファイル・ディレクトリを作らず、blurで破棄する。既存の空内容は削除せず保存する。新規作成の応答喪失は固定 `clientId` と同じ初回payloadで再試行し、二重作成を防いでから最新入力を追送する。
 - ファイルは一時書込・fsync後に原子的に置換し、revisionを比較して外部変更を上書きしない。強制終了時の保証は最後に成功した保存までで、未送信の直近入力まで保存したとは扱わない。旧テキスト本文とsidecarは各々原子的だが二つ全体の一括transactionではない。不正形式・リンク・1MB超は警告し原本を保全する。
 - 保存後のrenderer再読込は最新の保存済みsnapshot/identityを復元する。APIは起動認証と同一origin JSON POSTで固定操作だけを公開し、Electronはsandbox/contextIsolationを維持する。Web版は付箋ごとの別ページで、OSの最前面/配置はElectron専用。
 - 確認: `node --test frontend_diag/checks/memo-*.check.*`。実Electron DOMは `AIDIY_TEST_ELECTRON=<electron実行ファイル> node frontend_diag/checks/memo-ui-browser.cjs`。配布更新は `frontend_diag/ui` の `npm run build && npm run check`。
+- 下部の行（保存表示・色・ゴミ箱）は常に透明な重ね表示で、本文領域へ高さを返す。最小 200×84 でも本文1行（約22px）が全部見える。ホバー時の色パレットは `--sticky-bg` で付箋と同じ色に塗り、本文と重ねて見せない。付箋の余白（本文の下・下部の行の空き・外周）を押すと本文の末尾から入力を再開する。タイトル・ボタン・色・画像・のりしろ／見出しの移動は従来の操作を優先する。検証は `AIDIY_TEST_ELECTRON` を指定した `node frontend_diag/checks/memo-ui-browser.cjs`。
 
 ### aidiy_memo 単体起動・二重起動保護
 

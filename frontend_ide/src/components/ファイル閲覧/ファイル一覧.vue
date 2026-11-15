@@ -5,6 +5,7 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import { createPanelToggleDrag } from '../コード/パネル切替ドラッグ.js';
+import { createContentFoldTone } from '../共通表示/内容変更折畳配色.js';
 import { createExplorerDrag } from './エクスプローラードラッグ.js';
 import RefreshButton from '../共通表示/再読込ボタン.vue';
 import { ref, shallowRef, computed, inject, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
@@ -22,6 +23,11 @@ import { searchRouteRecords } from '../開発スペース/経路記録.js';
 import { routeTreeRows, viewTreeRecords, routeNavigationSteps } from '../開発スペース/軌跡ツリー.js';
 const props = defineProps({ tree: Object, scan: Object, root: String, selected: String, current: String, navigating: Boolean, startedAt: Number, open: Boolean, allDisplays: Boolean, viewHistory: { type: Array, default: () => [] }, viewVoyages: { type: Object, default: () => ({}) }, filter: { type: Boolean, default: true }, applyFileChange: Function, reload: Function, color: { type: Function, default: () => '#bac7da' } });
 const emit = defineEmits(['update:open', 'select', 'clear', 'marks', 'latest', 'freshness', 'route', 'clear-view-history', 'detached', 'activity', 'pause-refresh']);
+const contentFold = createContentFoldTone({
+  setTimer(callback,ms){const view=panel.value?.ownerDocument.defaultView||window;return{view,id:view.setTimeout(callback,ms)};},
+  clearTimer(timer){timer?.view.clearTimeout(timer.id);},
+});
+onBeforeUnmount(contentFold.dispose);
 const checkedPaths=ref(new Set());
 const multipleChecked=computed(()=>checkedPaths.value.size>1);
 let checkAnchor='';
@@ -83,7 +89,7 @@ function openRoutes(){if(!routeWindow?.focus())routeClosed.value=false;}
 function closeRoutes(){if(routeWindow?.isOpen)routeWindow.dismiss();else{routeClosed.value=true;routeListOpen.value=false;}}
 function pinExplorer(){
   fileActions.closeMenu();draftRequest.value=null;
-  panelWindow??=createPanelWindow({element:()=>panel.value,changed:value=>{detached.value=value;emit('detached',value);},closed:()=>emit('update:open',false),moved:()=>{draftRequest.value=null;},report:message=>{pinError.value=message;}});
+  panelWindow??=createPanelWindow({element:()=>panel.value,foldTone:contentFold,changed:value=>{detached.value=value;if(!value)contentFold.collapsed(false);emit('detached',value);},closed:()=>emit('update:open',false),moved:()=>{draftRequest.value=null;},report:message=>{pinError.value=message;}});
   return panelWindow.pin();
 }
 function closeExplorer(){draftRequest.value=null;fileActions.closeMenu();if(!fileActionState.busy)fileActions.cancel();if(panelWindow?.isOpen)panelWindow.dismiss();else emit('update:open',false);}
@@ -472,6 +478,8 @@ watch(()=>props.startedAt,()=>{mode.value='since';clearSearch();resetLatest();in
 watch(()=>props.filter,clearSearch);
 watch(mode,clearSearch);
 watch([mode,since,until,matches,aiResult],emitMarks,{immediate:true});
+// 再取得で同じ配列が作られても通知しない。銀河からの選択・移動と実際の一覧変更を比較する。
+watch(()=>JSON.stringify([props.root,props.current,props.selected,props.filter,rows.value,recentUpdates.value]),()=>contentFold.changed());
 onBeforeUnmount(()=>{treeDrag.dispose();routeToggleDrag?.dispose();allPanels=undefined;fileActions.dispose();routeDisposed=true;routeMotion.dispose();routeDocumentCleanup();routeWindow?.close();panelWindow?.close();cancelSinceExpansion();generation++;controller?.abort();clearInterval(latestTimer);latestDisposed=true;latestRun++;latestController?.abort();document.removeEventListener('pointerdown',closeRouteList);});
 function captureLayout(){
   if(routeDetached.value&&!['open','closed'].includes(routeMotionState.value.phase))throw Error('軌跡バーの開閉が終わってから保存してください。');

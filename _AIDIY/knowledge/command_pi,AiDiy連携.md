@@ -15,6 +15,7 @@
 
 - Pi 本体（`packages/`・`apps/` など upstream 由来）はできるだけ変更しない。AiDiy 独自の処理は `command_pi/aidiy/` に置く。
 - ランタイムについて upstream 由来で変更しているのは、起動画面のロゴ（`packages/coding-agent/src/modes/interactive/components/pi-logo.ts` に AiDiy-Pi ロゴを追加、`interactive-mode.ts` と `first-time-setup.ts` から使用）、検索・補完の Node.js 化と本体自己更新の無効化（後述）、test フォルダの削除に伴う `package.json` / `package-lock.json` のワークスペース登録の削除。
+- 起動ロゴは2行のまま、AiDiy部分をHermesと同じ黄金色 `#FFD700` に揃える。yはCodexと同じく裾を左へ曲げた小文字風にし、高さは増やさない。文字版の代替表示もAiDiy部分を黄金色にする。ハイフンはグレー、Piマークは元の配色を維持する。
 - Discord / Slack、オフラインCode（Navi用Codeを含む）、Navi自身の案内／再評価、次入力予測で Hermes / Pi を選択できる。外部 Code CLI のモデル区分も共通化し、Piからは既存CodeAIの実行基盤へ委譲する。Navi・予測では外部CLIへの委譲を除外する。
 
 ## 構成
@@ -88,7 +89,7 @@
 - `write` / `edit` だけではシェル経由の変更が残るため、許可した4ツール以外は `tool_call` でも拒否する。bash / PowerShell / codemode / MCP、対話画面の `!` / `!!` とRPCのbashは使用できない。
 - read-only では拡張の自動読込とMCP接続を無効にする。明示的な追加拡張（`-e` / `--extension`）、管理サブコマンド、`--export` はエラーにする。`--tools` で変更ツールを指定しても制約は解除されず、`--yolo` と併記した場合も read-only を優先する。
 - read-only はモデルのツール操作の制限であり、OSのファイルシステムsandboxではない。OAuth更新やPi自身の状態管理は通常どおり。会話を保存しない場合は `--no-session` も指定する。AiDiyの最終選択モデルはread-only中に保存しない。
-- AIコアの `読取専用=True` / `CLI読取専用=True` でも同じ `--read-only` を使用する。この場合は同梱Pi入口を使い、`AIDIY_PI_CLI_PATH` やPATH上の別CLIへ退避しない。CLIプロバイダは登録せず、保存値・明示値が外部CLIなら停止する。
+- AIコアの `読取専用=True` / `CLI読取専用=True` でも同じ `--read-only` を使用する。この場合は同梱Pi入口を使い、`AIDIY_PI_CLI_PATH` やPATH上の別CLIへ退避しない。外部 CLI にも `read-only` を継承する。6 CLI の具体的な制約は [メタハーネス運用](./command_hermes,command_pi,command_codex,メタハーネス.md) を参照。
 
 ## 外部CLIへの委譲
 

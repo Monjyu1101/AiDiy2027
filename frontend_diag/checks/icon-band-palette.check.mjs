@@ -19,16 +19,18 @@ function png(bytes){
  for(let y=0;y<height;y++){const filter=raw[y*(stride+1)];assert.ok(filter<=4);for(let x=0;x<stride;x++){const i=y*stride+x,a=x>=4?data[i-4]:0,b=y?data[i-stride]:0,c=y&&x>=4?data[i-stride-4]:0;data[i]=(raw[y*(stride+1)+1+x]+[0,a,b,Math.floor((a+b)/2),paeth(a,b,c)][filter])&255;}}
  return {width,height,data,pixel:(x,y)=>Array.from(data.subarray((y*width+x)*4,(y*width+x)*4+3))};
 }
-const entries=[['cpu','#166534','#FFFFFF'],['task','#0F5C3A','#7DD3FC'],['team','#7DD3FC','#0F5C3A'],['term','#C15308','#FFFFFF'],['avatar','#7C3AED','#FFFFFF'],['browser','#F5A9C8','#000000'],['aidiy_hermes','#000000','#D4AF37'],['vscode','#1E3A5F','#FFFFFF']];
+const entries=[['cpu','#166534','#FFFFFF'],['task','#0F5C3A','#7DD3FC'],['team','#7DD3FC','#0F5C3A'],['term','#000000','#00FF00'],['avatar','#7C3AED','#FFFFFF'],['browser','#F5A9C8','#000000'],['aidiy_hermes','#FACC15','#1B1B1B'],['vscode','#1E3A5F','#FFFFFF']];
 for(const [id,bg,fg] of entries)test(`${id}: local PNG palette, readable contrast and identical distribution copy`,async()=>{
  const cli=['aidiy_hermes','vscode'].includes(id),file=(cli?'CLI_':'AiDiy_')+id+'.png';
  const source=new URL(`../diag/ui/components/アプリ起動/${cli?'CLIアイコン/'+id:'アイコン/AiDiy_'+id}.png`,import.meta.url);
  const bytes=await readFile(source),image=png(bytes);assert.deepEqual(await readFile(new URL('../static/'+file,import.meta.url)),bytes);
  assert.equal(image.width,image.height);assert.ok([120,512].includes(image.width));assert.ok(contrast(bg,fg)>=4.5);
- assert.deepEqual(image.pixel(5,image.height*3/4+3),rgb(bg));
+ // Termは名称帯の外周に緑枠（512px基準で8px）があるため、帯の地色は枠の内側で調べる。
+ assert.deepEqual(image.pixel(id==='term'?20:5,image.height*3/4+20),rgb(bg));
  let ink=0;for(let y=image.height*3/4;y<image.height;y++)for(let x=0;x<image.width;x++)if(image.pixel(x,y).every((v,i)=>v===rgb(fg)[i]))ink++;
  assert.ok(ink>100,id+' foreground remains visible');
- if(id==='aidiy_hermes'||id==='vscode')assert.deepEqual(image.pixel(0,image.height*3/4+5),rgb(id==='vscode'?'#2F9BFF':'#D4AF37'));
+ if(id==='vscode')assert.deepEqual(image.pixel(0,image.height*3/4+5),rgb('#2F9BFF'));
+ if(id==='term')assert.deepEqual(image.pixel(2,image.height*7/8),rgb('#00FF00'),'term caption border');
 });
 test('VSCode has only an inset band frame and its upstream logo stays local and unchanged',async()=>{
  const svg=await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/vscode.svg',import.meta.url),'utf8');

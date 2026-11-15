@@ -35,8 +35,10 @@ setup / start の Code / IDE / Discord 継続方針とは異なります。ル�
 
 Usage:
     python _cleanup.py
+    python _cleanup.py --auto  # 開始確認の a=auto と同じく各項目を既定値で実行
 """
 
+import argparse
 import importlib.util
 import json
 import os
@@ -676,11 +678,15 @@ def uninstall_global_npm_tools() -> bool:
 # ============================================================
 # 選択収集
 # ============================================================
-def collect_cleanup_choices(base_dir: Path) -> dict | None:
-    """全ての y/n を最初にまとめて聞く。キャンセル時は None を返す。"""
+def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
+    """全ての y/n を最初にまとめて聞く。auto=True は開始確認の a=auto と同じ。"""
     global AUTO_MODE
 
-    run_cleanup, AUTO_MODE = ask_start_mode("クリーンアップを実行しますか？", default="n")
+    if auto:
+        print_info("[AUTO] --auto 指定: クリーンアップを実行します (a=auto)")
+        run_cleanup, AUTO_MODE = True, True
+    else:
+        run_cleanup, AUTO_MODE = ask_start_mode("クリーンアップを実行しますか？", default="n")
     if not run_cleanup:
         return None
 
@@ -980,7 +986,10 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
     return not cleanup_errors
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description="プロジェクトのクリーンアップ")
+    parser.add_argument("--auto", action="store_true", help="開始確認を省略し、各項目を既定値で実行（a=auto と同じ）")
+    args = parser.parse_args(argv)
     print_header("プロジェクト クリーンアップ")
 
     base_dir = BASE_DIR
@@ -1003,7 +1012,7 @@ def main():
     print_info(f" 12. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()
 
-    choices = collect_cleanup_choices(base_dir)
+    choices = collect_cleanup_choices(base_dir, auto=args.auto)
     if choices is None:
         print_info("クリーンアップをキャンセルしました")
         return

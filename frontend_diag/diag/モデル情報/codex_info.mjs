@@ -4,10 +4,10 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // aidiy_codex（command_codex をコンパイルした ~/.aidiy/bin/aidiy_codex）用のモデル一覧。
-// Pi 一覧（pi_info.mjs）と同じ入力・同じ区分名で作り、chat モデルの区分だけを残す。
-// Hermes / Pi と違い、外部 Code CLI（*_cli）への委譲区分は使わない。
+// Pi 一覧（pi_info.mjs）と同じ入力・区分・モデルで作り、外部 Code CLI（*_cli）も保存する。
+// Code の候補にも CLI 区分を渡す。本体側のCLI委譲は同じ <区分>/<モデル名> を受け取る。
 // この一覧が aidiy_codex の候補の正本（Code / 入力予測 / Navi の aidiy_codex 区分もここから作る）。
-// 区分ごとの接続は aidiy_codex 本体（codex-rs/core/src/config/aidiy_model.rs）が Hermes / Pi に合わせて行う。
+// API区分ごとの接続は aidiy_codex 本体（codex-rs/model-provider-info/src/aidiy_sections.rs）が行う。
 import {access} from 'node:fs/promises';
 import {piModelsInfo} from './pi_info.mjs';
 import {codexBinaries} from '../導入管理/codex_compile.mjs';
@@ -26,17 +26,17 @@ export const isCliSection = section => /_cli$/.test(section);
 
 // 入力は Hermes / Pi と同じ合成結果のみ。API 呼出・設定読取・キー保存は行わない。
 export function codexModelsInfo(input = {}) {
-  return Object.fromEntries(Object.entries(piModelsInfo(input)).filter(([section]) => !isCliSection(section)));
+  return piModelsInfo(input);
 }
 
 // aidiy_codex_models_info.json（codexModelsInfo の結果）を Code の候補 `<区分>/<モデル名>` にする。
-// これが aidiy_codex の候補の正本。既定の接続先 openai_oauth を先頭に置く。
+// 既定の接続先 openai_oauth を先頭に置く。CLI の same はモデル指定なしの委譲経路として保持する。
 export function codexCodeModels(info = {}) {
   const sections = Object.keys(info).sort((a, b) => (b === CODEX_SUPPORTED_SECTION) - (a === CODEX_SUPPORTED_SECTION));
   const models = {};
   for (const section of sections) {
     for (const [id, label] of Object.entries(info[section]?.models ?? {})) {
-      if (!id || ['auto', 'same'].includes(id) || typeof label !== 'string') continue;
+      if (!id || id === 'auto' || (id === 'same' && !isCliSection(section)) || typeof label !== 'string') continue;
       models[`${section}/${id}`] = label;
     }
   }

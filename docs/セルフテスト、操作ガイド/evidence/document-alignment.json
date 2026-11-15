@@ -6297,5 +6297,22 @@
     "removedUnreferencedImages": 16,
     "externalAiRequests": 0,
     "testCasesPassed": 260
+  },
+  "memo_completion_20261115": {
+    "at": "2026-11-15T15:02:39+09:00",
+    "currentBooklets": 26,
+    "currentGuides": 25,
+    "currentLedgers": 1,
+    "evidence": "evidence/.aidiy_cache/selftest/セルフテスト,aidiy_memo,操作編/Memo_完了記録.json",
+    "changedPdfs": [
+      "セルフテスト,aidiy_memo,操作編.pdf",
+      "セルフテスト,共通,確認結果.pdf"
+    ],
+    "missingLocalLinks": 0,
+    "figures": 7,
+    "productCodeChanged": false,
+    "realDeviceTestsRerun": false,
+    "isolatedTestsRun": true,
+    "note": "先行scope/summaryは2026-11-07時点の履歴として維持。今回の全冊再検証を意味しない。"
   }
 }

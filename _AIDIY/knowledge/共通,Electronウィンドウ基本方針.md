@@ -222,6 +222,14 @@ Code / Live のタイトル開閉を AiDiy Electron 実装の基本とする。�
 - DOMを破棄しない。接続、認証、入力、選択、会話、実行中処理は継続する。保存とは同じ窓の表示切替中の保持であり、終了後の折り畳み状態の永続化ではない。
 - 畳んだ間はリサイズと最大化を無効にする。元が最大化なら解除して畳み、展開完了で戻す。全画面・VRパネル移動中は切替を拒否する。終了・ページ遷移時はタイマーと一時状態を解放する。Web版はOS窓を変更せずパネルmax-heightをアニメーションする。
 
+### Browser / Explorer の内容変更通知
+
+BrowserとExplorer別窓の折畳アイコンは、展開中と折畳直後を黒で固定する。折畳後の内容変更でシアンを15秒脈動させ、その後は緑を保持する。次の変更では最後の変更から15秒を数え直し、展開・再折畳・別窓の復元で解除する。状態管理は `共通表示/内容変更折畳配色.js`、色は共通 `パネル表示切替.vue` を使う。ExplorerのタイマーはDOMを所有する別窓へ置く。
+
+BrowserはURL・タイトル・タブ・ナビゲーションとDOM内容の変更を検知する。`デスクトップ/ブラウザ内容監視.cjs` は折畳中だけ隔離worldのMutationObserverによる変更番号を約1秒周期で読み、ページにIPC権限を追加しない。接続状態や寸法、同じ内容の状態取得では通知しない。Explorerは銀河側からの選択・フォルダ移動、表示一覧と最終更新の実内容を比較し、同一内容の再取得で通知しない。
+
+確認は `node --test frontend_ide/checks/content-fold-tone.test.mjs frontend_ide/checks/collapsed-tone.test.mjs frontend_ide/checks/browser-tabs-native.test.mjs`。画面は `node frontend_ide/scripts/check-content-fold.mjs` で実Vueと模擬窓APIを使い、15秒遷移・繰り返し・展開・同一内容の再取得を確認し、`frontend_ide/temp/content-fold-check/` に撮影する。実ElectronのOS窓操作とは区別する。
+
 ### 幅・タイトル位置・終了処理の注意点
 
 - アニメーションの幅は開始時のDIP値で固定する。毎フレームの `getBounds().width` を次の指定幅へ戻すと、Windowsの外枠や端数DPIの読戻し差が蓄積する。既存の `setWindowBounds` で補正し、`setResizable` を元へ戻した後も保存寸法を適用する。

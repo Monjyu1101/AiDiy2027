@@ -94,6 +94,7 @@ Electronの基本操作・表示は [共通,Electronウィンドウ基本方針.
 - `panel/components/接続/接続パネル.vue` と `機能切替.vue` が描画、`panel/components/接続/パネル状態.js` が状態管理、`panel/components/ライブ/音声表示.js` が音声インジケーター。内部状態名は「接続状態」「コードAI」「ライブAI」「ライブモデル」「音声」「ウィンドウ操作」に揃える。IPC と `LIVE_*` 設定キーは外部互換のため維持する。
 - `panel/view.js` は SFC を事前コンパイルした配布物。Electron の file:// とブラウザの token 配下で同じ静的 URL を使い、CSP に unsafe-eval や CDN を追加しない。`panel/visualizer.js` は旧 URL の互換入口として残す。
 - シアン接続バー上のタイトル行は module 内の `panel/titlebar.css` の変数を使い、`style.css` から import します。共通配色と同じ内容を保守作業でコピーしますが、通常buildは他moduleのCSSを読みません。Web は固定 allowlist にあるコピーだけを配信し、原本フォルダは公開しません。配色変更後は ローカルコピー更新後に `build:panel` と `check:panel` で module 内の manifest を同期します。タイトルは背景 `#30343a`・文字 `#fff` に統一し、1px外枠も共通 `--aidiy-panel-border` でタイトルと同色にします。シアンバーより下の外側・通常の応答表示面は未接続・接続中とも真黒 `#000` に揃えます。入力・警告・機能状態・内容本来の色、接続バー、ピンの状態色は識別のため維持します。
+- Discord / Slack とも左上の ▽ で窓をタイトル行の高さへ折り畳む。窓の高さ変更は `frontend_ide/デスクトップ/パネル折り畳み.cjs` を共用し（種類 `discord` / `slack`）、preload は `collapse` / `expand` だけを追加で通す。折畳中は隠れた `#activity-bar` と同じ色・明滅（未接続 `#ff4500`、接続済 `#00ff00`）を ▶ の背景に付けて接続状況を示す。ブラウザ版では窓操作と同様に表示しない。IDE 側の Live は `パネル表示切替.vue` の `tone` で接続バーと同じシアン／赤／黒を付ける。
 - `checks/panel-vue.test.ts` は実バンドルを模擬 DOM・IPC・音声で検証する。保存中の連打、開始応答待ち中の停止、再接続、候補欠落、Live OFF、音声モニターの初期 OFF、終了時の購読・タイマー・AudioContext の回収も確認する。OS の実描画と Discord の実通話は別途検証する。
 
 ## 音声変更時の注意

@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 const require = createRequire(import.meta.url), vue = require('vue');
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
 const { transformSync } = require('esbuild');
@@ -25,7 +26,7 @@ function fixture(provider = 'aidiy_hermes', host = false) {
   const noop = () => {};
   vm.runInNewContext(transformSync(script.content + '\n' + template.code + '\ncomponent.render=render;module.exports=component;', { format: 'cjs' }).code, {
     module, URL, location: { href: 'http://localhost/' }, console,
-    require: id => id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: noop, onBeforeUnmount: fn => unmounted.push(fn) }
+    require: id => id === './折畳配色.js' ? codeFoldTone : id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: noop, onBeforeUnmount: fn => unmounted.push(fn) }
       : id === 'markdown-it' ? class { renderer = { rules: {} }; utils = { escapeHtml: text => text }; render(text) { return text; } }
       : id === '../コード/コード通信.js' ? { codeTransport: (_props, fn) => { receive = fn; return { send: async packet => calls.push(packet), saveDraft: noop, dispose: noop }; } }
       : id === '../../../host/src/stream-control' ? streamModule.exports

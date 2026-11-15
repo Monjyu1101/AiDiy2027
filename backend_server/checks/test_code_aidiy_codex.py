@@ -8,11 +8,14 @@
 """aidiy_codex（command_codex をコンパイルした Codex）の Code 実行経路を合成fixtureだけで確認する。"""
 
 import importlib.util
+import contextlib
+import io
 from pathlib import Path
 import sys
 from types import ModuleType
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -72,7 +75,7 @@ class AiDiyCodexCommandTest(unittest.TestCase):
         command = ai._コマンド構築("fixture prompt", 初回=True, repo_path="/fixture/project")
         self.assertEqual(command, [
             "fixture-aidiy-codex", "exec", "--skip-git-repo-check", "--dangerously-bypass-approvals-and-sandbox",
-            "--model", "openai_oauth/gpt-6-luna", "fixture prompt",
+            "--model", "openai_oauth/gpt-6-luna", "-",
         ])
 
     def test_resume_and_auto_follow_codex_cli(self):
@@ -80,7 +83,7 @@ class AiDiyCodexCommandTest(unittest.TestCase):
         ai.codex_セッションID = "session-1"
         command = ai._コマンド構築("next", 初回=False, repo_path="/fixture/project")
         self.assertNotIn("--model", command)
-        self.assertEqual(command[-3:], ["resume", "session-1", "next"])
+        self.assertEqual(command[-3:], ["resume", "session-1", "-"])
 
     def test_readonly_prediction_uses_codex_restrictions(self):
         ai = self.make(readonly=True)
@@ -92,7 +95,7 @@ class AiDiyCodexCommandTest(unittest.TestCase):
         self.assertIn('sandbox_mode="read-only"', command)
         self.assertEqual(command[command.index("exec"):command.index("exec") + 4],
                          ["exec", "--skip-git-repo-check", "--sandbox", "read-only"])
-        self.assertEqual(command[-3:], ["--model", "openai_oauth/gpt-6-luna", "fixture prompt"])
+        self.assertEqual(command[-3:], ["--model", "openai_oauth/gpt-6-luna", "-"])
 
     def test_model_choices_keep_openai_oauth_prefix(self):
         catalog = {"aidiy_codex": {
@@ -103,6 +106,30 @@ class AiDiyCodexCommandTest(unittest.TestCase):
         values = {item["value"] for item in selection.model_choices("aidiy_codex", catalog)}
         self.assertEqual(values, {"openai_oauth/gpt-6.1-sol", "openai_oauth/gpt-6.1-terra", "openai_oauth/gpt-6-luna"})
         self.assertIn("aidiy_codex", selection.MODEL_INSTRUCTIONS)
+
+
+class CodexStdinTests(unittest.IsolatedAsyncioTestCase):
+    async def test_long_multiline_prompt_uses_stdin_in_both_modes(self):
+        self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+        prompt = ('日本語 "引用"\n次の行\n' * 4000) + 'END_MARKER'
+        for provider in ('codex_cli', 'aidiy_codex'):
+            for readonly in (False, True):
+                with self.subTest(provider=provider, readonly=readonly), tempfile.TemporaryDirectory() as project:
+                    option = options.AI実行オプション(会話継続=False, 履歴保存=False,
+                        ストリーム送信=False, 出力ファイル保存=False, CLI読取専用=readonly)
+                    ai = cli.CodeAI(AI_NAME=provider, AI_MODEL='gpt-6-luna', 絶対パス=project, 実行オプション=option)
+                    ai.is_alive = True
+                    ai._CLI起動コマンド先頭 = Mock(return_value=(['fixture-codex'], False))
+                    ai._aidiy参照プロンプト取得 = Mock(return_value='')
+                    ai._予測CLI準備 = AsyncMock()
+                    ai._予測CodexMCP設定 = ''
+                    ai._予測Codex検証パス = Path(project).resolve().as_posix()
+                    ai._subprocess実行 = AsyncMock(return_value='fixture answer')
+                    self.assertEqual(await ai.実行(prompt, resume=False), 'fixture answer')
+                    sent = ai._subprocess実行.call_args.kwargs
+                    self.assertEqual(sent['command'][-1], '-')
+                    self.assertLess(sum(map(len, sent['command'])), 5000)
+                    self.assertIn(prompt, sent['stdin_text'])
 
 
 class AiDiyCodexAvailabilityTest(unittest.TestCase):

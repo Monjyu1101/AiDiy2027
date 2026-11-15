@@ -1,0 +1,8 @@
+
+PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash
+PASS adhesive top at 300x200
+PASS adhesive left at 300x199
+PASS adhesive top at 320x260
+PASS adhesive left at 400x125
+PASS adhesive top at 200x200
+PASS minimum 200x84 layout (body 36px >= line 22.4px) and blank press resumes input

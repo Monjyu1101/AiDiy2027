@@ -388,6 +388,10 @@ CLI補完候補は `ターミナルパネル.vue` でカーソル直後へ薄い
 
 Windowsの `aidiy_term/powershell-init.ps1` は、その端末セッションだけにPSReadLineのTabハンドラーを設定します。入力が対象CLI名だけでカーソルが末尾なら、`scripts/cli_bat` と同じ権限省略オプションを追加し、実行はEnterに任せます。対象は `codex` / `claude` / `copilot` / `agy` / `grok` / `aidiy_hermes` で、Claudeは既存バッチに合わせて `--chrome` も追加します。モデルは変更しません。それ以外は元のTab処理へ戻します。`src/components/ターミナル/コマンド補完.js` の `cliCompletions` を候補表示とシェル補完で共用し、履歴予測の斜体表示と確定済み引数を区別します。ユーザーのプロファイルは変更しません。検証では同名の模擬関数で引数を確認し、実CLIを起動しないでください。
 
+同じ初期化は、空でない行を確定した直後に OSC 133;C、次のプロンプト表示時に OSC 133;D;<終了コード> を出します（`$?` が成功なら0、失敗時はコマンドで変わった `$LASTEXITCODE`、無ければ1）。Term画面は `src/components/ターミナル/折畳配色.js` でこれを受け、折畳んだ時点で実行中だった場合だけ ▶ の背景をシアン脈動にし、そのまま終了したら0で緑・0以外で赤にします。未実行で折畳んだ場合は無色、展開すると解除します。CLI起動のTermは対象外です。検証は `node --test checks/term-fold-tone.test.mjs`。実機確認ではPowerShell 5.1の `>nul` が即エラーになるため、`ping -n 60 127.0.0.1 >$null`（成功）と `ping -n 8 127.0.0.1 >$null; cmd /c exit 2`（失敗）を使います。
+
+Code の折畳アイコンは `src/components/コード/折畳配色.js` で、折畳中に依頼が実行中ならシアン脈動、回答（進捗だけの【検証開始】等を除く output_text）が届いたら緑、先頭が「!」の回答（AIコア共通のエラー応答）・error・transportError・停止なら赤にします。赤は次の依頼開始まで緑へ戻しません。Navi等から折畳中に始まった依頼も脈動を付けます。実行終了の状態が回答より先に届くことがあるため、終了だけでは色を変えません。未実行で折畳んだ場合は無色、展開で解除します。検証は `node --test checks/code-fold-tone.test.mjs`。コードパネルを読み込む試験は import を模擬するため、新しい依存を足したら各試験の置き換え表へ実モジュールを登録します。
+
 `aidiy_term` は `aidiy_term/launch.mjs` → 共通 `launch.mjs` の `--app term` で起動します。IDEのElectron版は「Term」で独立した子窓を複数開き、Web版は `ターミナルパネル.vue` をTermタブに保持します。利用モードはオンライン・オフライン両方で有効です。setup / start / cleanup の表示と処理は Term → Code → Live → IDE の順に揃えます。`aidiy_term/_setup.py` はランチャー、`_start.py` は環境確認・独立起動・プロセス照合、`_cleanup.py` は停止とランチャー解除を担当し、依存物は共通UIにまとめます。
 
 `aidiy_term/term.mjs` はランダムパス付きのローカルサーバー、`viewer/panels.mjs` は同一公開元への中継です。Host / Origin・IDE利用状態を検証し、シェル・開始フォルダはサーバー側で決めます。入力サイズと端末寸法を制限し、描画完了のACKで出力を制御します。パネル初期化中・終了中のセッション切替では、破棄中のサーバーも完了まで待ちます。

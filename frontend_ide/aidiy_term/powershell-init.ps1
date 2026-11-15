@@ -14,6 +14,36 @@ $AiDiyUtf8 = New-Object System.Text.UTF8Encoding($false)
 $global:OutputEncoding = $AiDiyUtf8
 Import-Module PSReadLine -ErrorAction Stop
 Set-PSReadLineOption -HistorySavePath $env:HISTFILE
+# Command start / exit markers (OSC 133;C and 133;D;<code>) for the folded Term icon.
+# Empty lines emit nothing, so an idle prompt never looks like a finished command.
+$global:AiDiyOsc = [string][char]27 + ']133;'
+$global:AiDiyBell = [string][char]7
+$global:AiDiyCommandPending = $false
+$global:AiDiyOriginalReadLine = $function:PSConsoleHostReadLine
+function global:PSConsoleHostReadLine {
+    $line = & $global:AiDiyOriginalReadLine
+    if ($line -is [string] -and $line.Trim()) {
+        $global:AiDiyCommandPending = $true
+        $global:AiDiyExitBefore = $global:LASTEXITCODE
+        [Console]::Write($global:AiDiyOsc + 'C' + $global:AiDiyBell)
+    }
+    $line
+}
+$global:AiDiyOriginalPrompt = $function:prompt
+function global:prompt {
+    # $? must be read first; any statement before it would overwrite the result.
+    $succeeded = $?
+    if ($global:AiDiyCommandPending) {
+        $global:AiDiyCommandPending = $false
+        $code = 0
+        if (-not $succeeded) {
+            $code = 1
+            if ($global:LASTEXITCODE -is [int] -and $global:LASTEXITCODE -ne 0 -and $global:LASTEXITCODE -ne $global:AiDiyExitBefore) { $code = $global:LASTEXITCODE }
+        }
+        [Console]::Write($global:AiDiyOsc + 'D;' + $code + $global:AiDiyBell)
+    }
+    & $global:AiDiyOriginalPrompt
+}
 $global:AiDiyCliOptions = @{}
 ($CliOptionsJson | ConvertFrom-Json).PSObject.Properties | ForEach-Object { $global:AiDiyCliOptions[$_.Name] = $_.Value }
 $global:AiDiyOriginalTabHandler = Get-PSReadLineKeyHandler -Bound | Where-Object { $_.Key -eq 'Tab' } | Select-Object -First 1

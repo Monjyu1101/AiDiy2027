@@ -21,6 +21,21 @@ compile = load('command_codex/_compile.py')
 helper = load('command_codex/aidiy/setup_tools.py')
 
 class BootstrapTests(unittest.TestCase):
+    def test_compile_leaves_parallelism_to_cargo_unless_explicit(self):
+        for jobs in (None, 2):
+            with self.subTest(jobs=jobs), \
+                 patch.object(compile, 'ensure_prerequisites', return_value=({'PATH': ''}, None)), \
+                 patch.object(compile.shutil, 'which', return_value=None), \
+                 patch.object(compile, 'prepare_install', return_value=True), \
+                 patch.object(compile, 'run', return_value=False) as run, \
+                 contextlib.redirect_stdout(io.StringIO()):
+                compile.compile_codex(jobs=jobs)
+                command = run.call_args.args[0]
+                if jobs is None:
+                    self.assertNotIn('--jobs', command)
+                else:
+                    self.assertEqual(command[-2:], ['--jobs', '2'])
+
     def prepare(self, **values):
         defaults = dict(IS_WINDOWS=False, find_cargo_bin=lambda: None,
                         free_gb=lambda _: 30, check_prerequisites=lambda: ({'PATH':'test'}, None))
@@ -86,6 +101,62 @@ class BootstrapTests(unittest.TestCase):
                 compile.main()
             self.assertEqual(error.exception.code, 0)
             install.assert_not_called()
+
+class ObjectPlacementTests(unittest.TestCase):
+    def setUp(self):
+        self.root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        self.enterContext(patch.object(compile, 'INSTALL_DIR', self.root))
+        self.enterContext(patch.object(compile, 'EXE', '.exe'))
+        self.enterContext(contextlib.redirect_stdout(io.StringIO()))
+        self.built = self.root / 'codex.exe'
+        self.built.write_bytes(b'new executable')
+        self.output = self.root / 'aidiy_codex.exe'
+        self.output.write_bytes(b'old executable')
+        self.staged = self.root / 'aidiy_codex_temp.exe'
+
+    def test_success_replaces_existing_binary_after_staging(self):
+        replace = compile.os.replace
+        seen = []
+
+        def observe(source, output):
+            if output == self.output:
+                self.assertEqual(source, self.staged)
+                self.assertEqual(source.read_bytes(), b'new executable')
+                self.assertEqual(output.read_bytes(), b'old executable')
+                seen.append(True)
+            replace(source, output)
+
+        with patch.object(compile.os, 'replace', side_effect=observe):
+            self.assertEqual(compile.install_object(self.built), self.output)
+        self.assertEqual(seen, [True])
+        self.assertEqual(self.output.read_bytes(), b'new executable')
+        self.assertFalse(self.staged.exists())
+
+    def test_locked_binary_keeps_completed_staging_file(self):
+        replace = compile.os.replace
+
+        def locked(source, output):
+            if output == self.output:
+                raise PermissionError('in use')
+            replace(source, output)
+
+        with patch.object(compile.os, 'replace', side_effect=locked):
+            self.assertIsNone(compile.install_object(self.built))
+        self.assertEqual(self.output.read_bytes(), b'old executable')
+        self.assertEqual(self.staged.read_bytes(), b'new executable')
+
+    def test_failed_generation_does_not_publish_partial_file(self):
+        self.staged.write_bytes(b'previous complete executable')
+
+        def partial_copy(source, output):
+            output.write_bytes(b'partial')
+            raise OSError('disk full')
+
+        with patch.object(compile.shutil, 'copy2', side_effect=partial_copy):
+            self.assertIsNone(compile.install_object(self.built))
+        self.assertEqual(self.output.read_bytes(), b'old executable')
+        self.assertEqual(self.staged.read_bytes(), b'previous complete executable')
+        self.assertEqual(list(self.root.glob('*.tmp')), [])
 
 class InstallerTests(unittest.TestCase):
     def test_custom_home_protected(self):

@@ -1,0 +1,59 @@
+{
+  "document": "セルフテスト,aidiy_pi,操作編.md",
+  "executedAt": "2026-11-15T13:13:00+09:00",
+  "environment": {
+    "os": "Windows 11",
+    "project": "AiDiy2027_dev（ルートcwd）",
+    "pi": "AiDiy-Pi v1.5.2",
+    "model": "openai_oauth / gpt-6.1-sol / medium"
+  },
+  "steps": [
+    {
+      "id": "Pi_101",
+      "action": "Diagアプリ起動の「PI」",
+      "result": "「AiDiy Term / Pi」が開き、ロゴ・Context・Extensions・入力待ちを表示",
+      "pass": true
+    },
+    {
+      "id": "Pi_201",
+      "action": "入力待ちで / を入力",
+      "result": "コマンド候補 26件（1/26）を表示",
+      "pass": true
+    },
+    {
+      "id": "Pi_202",
+      "action": "/session",
+      "result": "Messages 0・Tokens 0・Cache Warming idle を表示（読み取りのみ）",
+      "pass": true
+    },
+    {
+      "id": "Pi_203",
+      "action": "/model を開き Esc",
+      "result": "候補238件と現在のgpt-6.1-solのチェックを確認。Escで閉じ、モデル表示は変化なし",
+      "pass": true
+    },
+    {
+      "id": "Pi_204",
+      "action": "「おはようございます」を1回送信",
+      "result": "「おはようございます！今日もよろしくお願いします。」を受信。/sessionでUser 1・Assistant 1・Tools 0 calls・Tokens 12,410・Cost $0.025",
+      "pass": true
+    },
+    {
+      "id": "Pi_301",
+      "action": "/quit（Term内）",
+      "result": "「[AiDiy Piが終了しました: 0]」。×で窓を閉じ、所有プロセスの終了を確認",
+      "pass": true
+    },
+    {
+      "id": "Pi_302",
+      "action": "通常Termで aidiy_pi → /quit",
+      "result": "起動後 /quit でPowerShellへ戻り $LASTEXITCODE 0",
+      "pass": true
+    }
+  ],
+  "notes": [
+    "AI送信は挨拶1回のみ。モデル変更・ファイル操作の依頼は行っていない。",
+    "単体CLIは、セットアップ前から起動していた試験用プロセスの古いPATHを引き継いだため、Termで利用者PATHを読み直してから起動した。利用者PATHへの登録（_AIDIY\u0007idiy_pi\bin）は確認済み。",
+    "Pi内の表示は上流名のまま（再開案内 'pi --session …'、/quit の説明 'Quit pi'）。"
+  ]
+}

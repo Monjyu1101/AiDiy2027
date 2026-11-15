@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import {ref,computed} from 'vue';
 import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
 import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
+import {createActivityFoldTone} from '../src/components/開発スペース/Navi折畳配色.js';
 import {runNavigationAutopilot} from '../src/components/開発スペース/Navi自動運転.js';
 const full=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
 const source=full.split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
@@ -19,7 +20,7 @@ const flush=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
 function fixture(){
  const requests=[],timers=new Map(),unmount=[];let serial=0;
  const api=vm.runInNewContext(source+`;request=new AbortController();({navigate,cancelNavigation,refresh,toggleAutopilot,evaluating,operationLabel,canStop,activeRun,pendingCancel,stopping,reconciling,submitting,job,result,goal,error,availability,visible,panel,autopilot,autopilotStatus,codePanel,failureDialog,busy,routing})`,{
-  ref,computed,createNavigationPopupSizer,createNavigationMessage,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('stopped');},
+  ref,computed,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,runNavigationAutopilot,navigationWait:async(_ms,signal)=>{if(signal.aborted)throw Error('stopped');},
   inject:()=>null,watch(){},onMounted(){},onBeforeUnmount:fn=>unmount.push(fn),nextTick:async()=>{},defineExpose(){},defineProps:()=>({instance:'navi-1',project:{path:'/project'},startedAt:1}),defineEmits:()=>()=>{},window:{},DEFAULT_NAVIGATION_GOAL:'保存目標',AbortController,AbortSignal,
   setTimeout:fn=>{timers.set(++serial,fn);return serial;},clearTimeout:id=>timers.delete(id),clearInterval(){},
   fetch:(url,options={})=>new Promise((resolve,reject)=>requests.push({url,...options,data:options.body?JSON.parse(options.body):null,resolve,reject})),

@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import * as draftHandoff from '../src/components/下書き連携/下書き受け渡し.js';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 
 const require = createRequire(import.meta.url), vue = require('vue');
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
@@ -56,7 +57,7 @@ async function panel(t, { host = false, desktop = false } = {}) {
   assert.deepEqual(template.errors, []);
   const module = { exports: {} };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
-    ...globals, module, require: id => id === 'vue' ? vue : modules[id] || (id.endsWith('.vue') ? { render: () => null } : assert.fail(id)),
+    ...globals, module, require: id => id === './折畳配色.js' ? codeFoldTone : id === 'vue' ? vue : modules[id] || (id.endsWith('.vue') ? { render: () => null } : assert.fail(id)),
   });
   const component = module.exports, setup = component.setup;
   component.setup = (props, context) => { state = setup(props, { ...context, expose(value) { exposed = value; context.expose(value); } }); return state; };

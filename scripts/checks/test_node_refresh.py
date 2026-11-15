@@ -80,6 +80,23 @@ class NodeRefreshTests(unittest.TestCase):
             self.assertFalse(choices["common"])
             self.assertFalse(setup.AUTO_MODE)
 
+    def test_auto_option_skips_start_prompt_and_uses_defaults(self):
+        with patch.object(setup, "_read_single_key") as read:
+            choices = setup.collect_setup_choices(auto=True)
+            read.assert_not_called()
+            self.assertTrue(setup.AUTO_MODE)
+            self.assertTrue(choices["common_python_upgrade"])
+            self.assertFalse(choices["common_npm_install"])
+            self.assertFalse(choices["codex"])
+            self.assertEqual(choices["local_download"], "no")
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(patch.object(setup.sys, "argv", ["_setup.py", "--auto"]))
+            collect = stack.enter_context(patch.object(setup, "collect_setup_choices", return_value=None))
+            stack.enter_context(patch.object(setup, "stop_setup_apps"))
+            with self.assertRaises(SystemExit):
+                setup.main()
+            collect.assert_called_once_with(auto=True)
+
     def test_refresh_bypasses_full_setup_and_reports_failure_exit(self):
         for failures in ([], ["Web: ビルド"]):
             with self.subTest(failures=failures), contextlib.ExitStack() as stack:

@@ -10,6 +10,7 @@ import vm from 'node:vm';
 import {ref,computed,watch,effectScope,reactive,nextTick} from 'vue';
 import {createNavigationPopupSizer} from '../src/components/開発スペース/Navi窓サイズ.js';
 import {createNavigationMessage} from '../src/components/開発スペース/Naviメッセージ.js';
+import {createActivityFoldTone} from '../src/components/開発スペース/Navi折畳配色.js';
 import {createDraftReceiver,DRAFT_LIMITS} from '../src/components/下書き連携/下書き受け渡し.js';
 const full=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8');
 const source=full.split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\r?\n/gm,'');
@@ -21,7 +22,7 @@ async function fixture(t,{standalone=true,native=false,actions=true}={}){
  const receiverState=reactive({path:'/fixture',session:'conversation-1',ready:true,draft:'既存の下書き'});let focus=0,identity=0;
  const receiver=createDraftReceiver({kind:'code',project:()=>receiverState.path,scope:()=>receiverState.session,ready:()=>receiverState.ready,draft:()=>receiverState.draft,setDraft:value=>{receiverState.draft=value;},focus:()=>{focus++;},uuid:()=>`context-${++identity}`});receiver.mount();
  const api=scope.run(()=>vm.runInNewContext(source+`;codeSession=1;({setCodeSession:value=>{codeSession=value;},handoff,handoffLabel,handoffTitle,canHandoff,handoffBusy,handoffError,draftRequest,codeOpen,codeOpening,codePanel,codeBase,autopilot,result,goal,visible,detached,submitting,toolsState})`,{
-  ref,computed,watch,nextTick,createNavigationPopupSizer,createNavigationMessage,
+  ref,computed,watch,nextTick,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,
   inject:()=>actions?{}:null,onMounted(){},onBeforeUnmount(){},defineExpose(){},defineProps:()=>props,defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},pickNavigationScene:()=> 'ride',
   fetch:async(url,options={})=>{requests.push({url,...options});return {ok:true,json:async()=>({})};},
  }));

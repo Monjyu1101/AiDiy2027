@@ -5,6 +5,7 @@ use crate::line_truncation::line_width;
 use crate::line_truncation::truncate_line_with_ellipsis_if_overflow;
 use crate::style::accent_color;
 use crate::width::display_width;
+use ratatui::style::Color;
 
 /// Render `lines` inside a border whose inner width is at least `inner_width`.
 ///
@@ -44,9 +45,45 @@ pub(crate) fn with_border_with_inner_width(
 pub(crate) fn codex_title(version: &str) -> Vec<Span<'static>> {
     vec![
         ">_ ".fg(accent_color()),
-        "OpenAI Codex".bold(),
+        // AiDiy: 起動時・状態カードの表示名を同梱CLIに合わせる。
+        "AiDiy CODEX".bold(),
         format!(" (v{version})").dim(),
     ]
+}
+
+// AiDiy: Pi風の2行ロゴ。AiDiy部分はHermesと同じ黄金色で表示する。
+fn aidiy_logo_lines() -> [Line<'static>; 2] {
+    let gold = Color::Rgb(255, 215, 0); // Hermesの_GOLDと同じ#FFD700
+    let white = Color::Rgb(255, 255, 255);
+    let gray = Color::Rgb(140, 140, 140);
+    let glyphs = [
+        (["▄▀▄", "█▀█"], gold),
+        (["▀", "█"], gold),
+        (["█▀▄", "█▄▀"], gold),
+        (["▀", "█"], gold),
+        (["█ █", "▄█▀"], gold), // 高さを変えず、左へ曲がる裾で小文字のyを表現
+        (["  ", "▀▀"], gray),
+        (["▄▀▀", "▀▄▄"], white),
+        (["█▀█", "█▄█"], white), // 四角いO
+        (["█▀▄", "█▄▀"], white),
+        (["█▀▀", "█▄▄"], white), // 大文字Eの中央は上段の下線
+        (["▀▄▀", "▄▀▄"], white),
+    ];
+    std::array::from_fn(|row| {
+        let mut spans = vec![Span::raw("     ")];
+        for (index, (glyph, color)) in glyphs.iter().enumerate() {
+            if index > 0 {
+                spans.push(Span::raw(" "));
+            }
+            let mut style = Style::default().fg(*color);
+            // AiDiy: Eの上段に下線を重ね、2行のまま中央の横棒を描く。
+            if index == 9 && row == 0 {
+                style = style.add_modifier(Modifier::UNDERLINED);
+            }
+            spans.push(Span::styled(glyph[row], style));
+        }
+        Line::from(spans)
+    })
 }
 
 #[derive(Debug)]
@@ -383,15 +420,14 @@ impl HistoryCell for SessionHeaderHistoryCell {
         let width = usize::from(width);
         let mut title = vec!["  ".into()];
         title.extend(codex_title(self.version));
-        let mut lines = vec![
-            Line::default(),
-            Line::from(title),
-            Line::from(vec![
-                "     ".into(),
-                self.format_directory(Some(width.saturating_sub(/*rhs*/ 5)))
-                    .dim(),
-            ]),
-        ];
+        let mut lines = vec![Line::default(), Line::from(title)];
+        // AiDiy: タイトルの次の行から簡易ロゴを挟み込む。
+        lines.extend(aidiy_logo_lines());
+        lines.push(Line::from(vec![
+            "     ".into(),
+            self.format_directory(Some(width.saturating_sub(/*rhs*/ 5)))
+                .dim(),
+        ]));
         if self.yolo_mode {
             lines.push(Line::from(vec![
                 "  permissions: ".dim(),
@@ -406,7 +442,8 @@ impl HistoryCell for SessionHeaderHistoryCell {
 
     fn raw_lines(&self) -> Vec<Line<'static>> {
         let mut lines = vec![
-            Line::from(format!("OpenAI Codex (v{})", self.version)),
+            // AiDiy: 通常表示と同じ名称をプレーンテキストにも使う。
+            Line::from(format!("AiDiy CODEX (v{})", self.version)),
             Line::from(format!(
                 "model: {}{}",
                 self.model,

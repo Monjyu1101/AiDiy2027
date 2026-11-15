@@ -5,13 +5,18 @@ See LICENSE for full terms. Thank you for keeping the rules.
 https://github.com/monjyu1101/AiDiy2027 -->
 <script setup>
 import RefreshButton from '../共通表示/再読込ボタン.vue';
-import {ref,computed,nextTick,onMounted,onBeforeUnmount} from 'vue';
+import {ref,computed,nextTick,onMounted,onBeforeUnmount,watch} from 'vue';
 import StatusBar from '../共通表示/状態バー.vue';
 import PanelToggle from '../コード/パネル表示切替.vue';
+import {createContentFoldTone} from '../共通表示/内容変更折畳配色.js';
+import {browserContentKey} from './ブラウザ内容変更.js';
 import {displayBrowserURL,browserAddressTarget} from './URL表示.js';
 import {browserAnalysisPageKey,createBrowserAnalysisStatus} from './ブラウザ解析状態.js';
 const props=defineProps({standalone:Boolean,headerOnly:Boolean});
 const panelCollapsed=ref(false),panelHidden=ref(false);
+const contentFold=createContentFoldTone();
+watch(panelCollapsed,value=>contentFold.collapsed(value),{flush:'sync'});
+onBeforeUnmount(contentFold.dispose);
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:'',tabs:[],activeTabId:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 // 公開識別子だけを表示する。CDPの認証情報や接続URLは含めない。
 const infoTabId=ref('');
@@ -74,6 +79,7 @@ function update(value){
  const pageChangedForCapture=tabChanged||value.url!==page.value.url||value.session!==page.value.session||value.navigationRevision!==page.value.navigationRevision;
  const initialPage=!page.value.url;
  if(pageChangedForCapture){if(!initialPage)captureNavigation++;captureMessage.value='';}
+ if(browserContentKey(value)!==browserContentKey(page.value))contentFold.changed();
  page.value=value;if(!capturing.value&&captureChanged&&(!pageChangedForCapture||initialPage))captureMessage.value=value.capturePath||'';if(!editing)address.value=addressDrafts.get(value.activeTabId)??displayBrowserURL(value.url);
  monitorAnalysis();if(showHeader)void analysisMonitor.refresh();
 }
@@ -141,7 +147,7 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
   <div ref="chrome" class="browser-chrome panel-window-title" data-aidiy-window-move-handle @transitionrun="transition">
   <!-- バーはMCP制御の可否。復帰待ちは赤、明示的な孤立利用だけ黒で示す。 -->
   <StatusBar :hide-connection-bar="panelHidden" :mode="page.mode === 'offline' ? 'offline' : 'online'" :title="windowTitle||(standalone?'AiDiy Browser':'AiDiy IDE / Browser')" :connected="page.connected===true" :status="page.connected===true?'接続済':'未接続'" desktop :clock-pulse="true" :window-api="headerWindowApi" :pin-title="headerOnly?(page.headerPinned?'ヘッダーの常時表示を解除':'ヘッダーを常時表示'):undefined">
-   <template #leading><PanelToggle v-if="!headerOnly" :collapsed="panelCollapsed" desktop @toggle="panelCollapsed=!panelCollapsed" @hidden="setPanelHidden" /></template>
+   <template #leading><PanelToggle v-if="!headerOnly" :collapsed="panelCollapsed" :tone="contentFold.tone.value" black-expanded desktop @toggle="panelCollapsed=!panelCollapsed" @hidden="setPanelHidden" /></template>
    <template #connection-tools><span v-if="page.mode === 'offline'" class="browser-isolated-label" title="Toolsへの接続を試行しない孤立利用">スタンドアロン</span><button v-if="page.mode !== 'offline'" type="button" class="browser-analysis" :disabled="openingAnalysis||handing||capturing||!page.available||page.connected!==true" :title="analysisStatus.message||(analysisStatus.status==='waiting'?'このページをバックグラウンド解析中。クリックで進行状況を確認':analysisStatus.status==='complete'?'このページの解析結果を表示':'表示中URLに対応する関連ソースをAIで解析')" @click="openAnalysis">{{analysisStatus.status==='waiting'?'解析中…':openingAnalysis?'準備中…':analysisStatus.status==='complete'?'AI解析済':analysisStatus.status==='failed'?'AI解析 要確認':'AI解析'}}</button><span v-if="page.mode !== 'offline'" class="browser-capture-tools"><button type="button" class="browser-capture" :disabled="capturing||!page.available" :title="captureMessage||'表示中のWeb画面をtemp/inputに保存'" aria-label="Web画面を撮影" @click="capture">{{capturing?'撮影中…':'📷'}}</button><span v-if="captureMessage&&!capturing" class="browser-capture-status" :title="captureMessage" role="status">保存済み</span></span><button v-if="page.mode !== 'offline'" type="button" class="browser-handoff" aria-label="Code / Liveへ下書きを追加" :disabled="handing||capturing||!page.available" title="session・tab_id・URLと1分以内の撮影画像パスを下書きへ追加" @click="handoff">C/Lへ</button><button v-if="page.mode !== 'offline'" type="button" class="browser-element-link" :aria-label="page.elementPicking?'要素連携を終了（Escでも解除）':'要素連携を開始'" :disabled="openingAnalysis||handing||capturing||!page.available" :aria-pressed="!!page.elementPicking" title="ホバーで要素のHTML/CSSを表示し、クリックでCode / Liveの下書きへ。Escで解除" @click="action('element-toggle')">{{page.elementPicking?'要素中':'要素'}}</button></template>
    <template #window-tools>
     <span class="browser-window-sizes">

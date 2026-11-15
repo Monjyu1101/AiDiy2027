@@ -115,6 +115,10 @@ html,body{height:100%;overflow:hidden}#app{height:100vh;height:100dvh;display:fl
 .panel-brand .code-panel-toggle{flex:none;display:grid;place-items:center;width:26px;min-width:26px;height:26px;padding:0;border:0;border-radius:0;background:transparent;color:inherit;box-shadow:none;touch-action:none;user-select:none;cursor:pointer}
 .code-panel-mark{box-sizing:border-box;display:grid;place-items:center;width:22px;height:22px;border:2px solid currentColor;border-radius:0;font-size:14px;line-height:1;pointer-events:none}
 .code-panel-toggle:hover .code-panel-mark{background:#ffffff1f}
+/* 折畳中の▶は、隠れた接続バーと同じ配色・明滅で起動状況を示す（全起動=シアン、1つでも停止・再起動中=赤、全停止=黒）。 */
+.code-panel-mark.tone-online{background:cyan;animation:cyan-bar-breathe 4.5s linear infinite}
+.code-panel-mark.tone-disconnected{background:#ff0000;animation:disconnected-bar-breathe 4.5s linear infinite}
+.code-panel-mark.tone-offline{background:#000}
 
 /* 折畳み時は接続線の黒地・外周の下辺も残さず、タイトルだけを描く。 */
 html:has(.diag-panel[data-collapsed="true"]),body:has(.diag-panel[data-collapsed="true"]),#app:has(.diag-panel[data-collapsed="true"]){background:transparent}

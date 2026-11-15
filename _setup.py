@@ -31,6 +31,8 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 
 Usage:
     python _setup.py
+    python _setup.py --auto            # 開始確認で a=auto を選んだのと同じ（各項目を既定値で実行）
+    python _setup.py --launchers-only  # 起動コマンドと PATH の修復だけ
 """
 
 import importlib.util
@@ -687,11 +689,18 @@ def setup_common_global_tools(choices: dict) -> list[str]:
 # ============================================================
 # 選択収集
 # ============================================================
-def collect_setup_choices() -> dict | None:
-    """全ての y/n を最初にまとめて聞く。キャンセル時は None を返す。"""
+def collect_setup_choices(auto: bool = False) -> dict | None:
+    """全ての y/n を最初にまとめて聞く。キャンセル時は None を返す。
+
+    auto=True（`--auto` 指定）は開始確認で a=auto を選んだのと同じ扱いにする。
+    """
     global AUTO_MODE
 
-    run_setup, AUTO_MODE = ask_start_mode("セットアップを実行しますか?", default="n")
+    if auto:
+        print_info("[AUTO] --auto 指定: セットアップを実行します (a=auto)")
+        run_setup, AUTO_MODE = True, True
+    else:
+        run_setup, AUTO_MODE = ask_start_mode("セットアップを実行しますか?", default="n")
     if not run_setup:
         return None
 
@@ -1002,7 +1011,7 @@ def main():
     print_info(" 12. Channels (Discord / Slack)")
     print()
 
-    choices = collect_setup_choices()
+    choices = collect_setup_choices(auto=sys.argv[1:] == ['--auto'])
     if choices is None:
         print_warning("セットアップをキャンセルしました。")
         sys.exit(0)

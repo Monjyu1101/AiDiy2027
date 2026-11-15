@@ -1,0 +1,72 @@
+{
+  "document": "セルフテスト,aidiy_codex,操作編.md",
+  "executedAt": "2026-11-15T14:30:00+09:00",
+  "environment": {
+    "os": "Windows 11",
+    "project": "AiDiy2027_dev（ルートcwd）",
+    "codex": "aidiy_codex（OpenAI Codex v0.169.0 を同梱・コンパイル、~/.aidiy/bin）",
+    "model": "GPT-6-Astra / reasoning high / openai"
+  },
+  "steps": [
+    {
+      "id": "Codex_101",
+      "action": "Diagアプリ起動の「CODEX」",
+      "result": "「AiDiy Term / Codex」が開き、OpenAI Codex v0.169.0・YOLO mode・入力待ちを表示",
+      "pass": true
+    },
+    {
+      "id": "Codex_102",
+      "action": "F2で起動時の警告を確認",
+      "result": "3件。1件目は利用者設定 ~/.codex/config.toml の未対応キー computer_use.windows.always_allowed_app_ids を無視。2・3件目は AGENTS.md 34,230バイトが project_doc_max_bytes 32,768 を超え、32,768バイトだけ読込",
+      "pass": true
+    },
+    {
+      "id": "Codex_102b",
+      "action": "ルート AGENTS.md を 34,230→11,032 バイトへ整理後、Diagから再起動してF2",
+      "result": "警告は1件（config.toml の未対応キー）のみ。AGENTS.md の読込上限の警告2件は解消。/quit で終了しプロセス0件",
+      "pass": true
+    },
+    {
+      "id": "Codex_201",
+      "action": "入力待ちで / を入力",
+      "result": "コマンド候補を表示",
+      "pass": true
+    },
+    {
+      "id": "Codex_202",
+      "action": "/status",
+      "result": "Model GPT-6-Astra（reasoning high）・Model provider openai・Permissions Full Access・Agents.md AGENTS.md を表示（読み取りのみ）",
+      "pass": true
+    },
+    {
+      "id": "Codex_203",
+      "action": "/model を開き Esc",
+      "result": "候補8件と現在の GPT-6-Astra を確認。Escで閉じ、モデル変更なし",
+      "pass": true
+    },
+    {
+      "id": "Codex_204",
+      "action": "「おはようございます」を1回送信",
+      "result": "「おはようございます！今日は何を進めましょうか？」を受信（Worked for 2s）。終了時の表示 total=14,506 input=14,488 output=18",
+      "pass": true
+    },
+    {
+      "id": "Codex_301",
+      "action": "/quit（Term内）",
+      "result": "「[AiDiy Codexが終了しました: 0]」。×で窓を閉じ、aidiy_codex.exe のプロセス0件",
+      "pass": true
+    },
+    {
+      "id": "Codex_302",
+      "action": "通常Termで aidiy_codex → /quit",
+      "result": "PowerShellへ戻り $LASTEXITCODE 0。終了後の aidiy_codex.exe プロセス0件",
+      "pass": true
+    }
+  ],
+  "notes": [
+    "AI送信は挨拶1回のみ。モデル変更・ファイル操作の依頼は行っていない。",
+    "/status・/model の画面にはアカウントのメール・ワークスペースID・残高が出るため、掲載画像はその部分を含まない範囲で切り取った。",
+    "Codex内の表示は上流名のまま（見出し 'OpenAI Codex'、再接続案内 'codex resume …'）。",
+    "単体CLIは、試験用プロセスの古いPATHを避けるためTermで利用者PATHを読み直してから起動した。"
+  ]
+}

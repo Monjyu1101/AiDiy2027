@@ -51,6 +51,10 @@ with patch.dict(sys.modules, MODULES):
 
 class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
+        self.modules = patch.dict(sys.modules, {**MODULES,
+            "AIコア.AIコードCLI権限": load_module("cli_permissions_under_test", CORE / "AIコードCLI権限.py")})
+        self.modules.start()
+        self.addCleanup(self.modules.stop)
         self.env = patch.dict(cli.os.environ, {}, clear=True)
         self.env.start()
         self.addCleanup(self.env.stop)
@@ -106,8 +110,7 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(command[command.index("--mode") + 1], "json")
         self.assertNotIn("unsafe-custom-cli", command)
         ai.code_model = "codex_cli/same"
-        with self.assertRaises(cli.予測読取専用利用不可):
-            self.build(ai)
+        self.assertIn("--read-only", self.build(ai))
         ai._pi直接実行コマンド.return_value = None
         with self.assertRaises(cli.予測読取専用利用不可):
             self.build(ai)
@@ -132,7 +135,7 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
             self.assertIn(["--disable", feature], [cmd[i:i + 2] for i in range(len(cmd) - 1)])
         override = next(value for value in cmd if value.startswith("mcp_servers="))
         self.assertEqual(tomllib.loads(override), {"mcp_servers": {"server.one/@team": {"enabled": False}}})
-        self.assertEqual(cmd[-1], "fixture prompt")
+        self.assertEqual(cmd[-1], "-")
         first, second = ai._予測CodexMCP一覧.await_args_list
         self.assertEqual(first.args[2], "/fixture/project")
         self.assertEqual(second.args[2], "/fixture/project")
@@ -191,6 +194,26 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
             with self.subTest(provider=provider), self.assertRaises(cli.予測読取専用利用不可):
                 self.build(self.make_cli(provider))
 
+    def test_antigravity_readonly_uses_session_settings_without_bypass(self):
+        cmd = self.build(self.make_cli("antigravity_cli"))
+        self.assertEqual(cmd[cmd.index("--mode") + 1], "plan")
+        settings = json.loads(cmd[cmd.index("--settings") + 1])
+        self.assertIn("write_file(*)", settings["permissions"]["deny"])
+        self.assertIn("command(*)", settings["permissions"]["deny"])
+        self.assertNotIn("--dangerously-skip-permissions", cmd)
+        self.assertNotIn("-c", cmd)
+
+    def test_opencode_readonly_uses_private_server_and_never_auto_approves(self):
+        cmd = self.build(self.make_cli("opencode_cli"))
+        self.assertEqual(cmd[1:5], ["--standalone", "run", "--agent", "build"])
+        self.assertNotIn("--auto", cmd)
+        self.assertNotIn("-c", cmd)
+        self.assertEqual(cmd[-1], "fixture prompt")
+
+    def test_opencode_yolo_sets_auto_and_normal_does_not(self):
+        self.assertIn("--auto", self.build(self.make_cli("opencode_cli", readonly=False, permissions="full")))
+        self.assertNotIn("--auto", self.build(self.make_cli("opencode_cli", readonly=False, permissions="none")))
+
     def test_claude_readonly_uses_only_read_tools_and_disables_customizations(self):
         cmd = self.build(self.make_cli('claude_cli'))
         for flag in ('--restricted', '--safe-mode', '--strict-mcp-config', '--no-session-persistence', '--disable-slash-commands'):
@@ -239,17 +262,19 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
                 self.build(ai)
         ai._コマンドパス取得.assert_not_called()
 
-    def test_hermes_nested_cli_models_are_rejected(self):
+    def test_hermes_nested_cli_models_use_readonly_adapter(self):
         ai = self.make_cli("aidiy_hermes")
         with patch.object(cli.Path, "is_file", return_value=True):
             for model in ("codex_cli/fixture", "copilot-cli/fixture", "opencode/fixture", "claude-code/fixture"):
-                with self.subTest(model=model), self.assertRaises(cli.予測読取専用利用不可):
+                with self.subTest(model=model):
                     ai.code_model = model
-                    self.build(ai)
+                    command = self.build(ai)
+                    self.assertTrue(command[1].endswith("prediction_main.py"))
+                    self.assertEqual(command[command.index("--model") + 1], model)
 
-    def test_normal_code_permissions_none_is_unchanged(self):
+    def test_normal_code_permissions_none_does_not_enable_yolo(self):
         codex = self.build(self.make_cli(readonly=False, permissions="none"))
-        self.assertIn("--dangerously-bypass-approvals-and-sandbox", codex)
+        self.assertNotIn("--dangerously-bypass-approvals-and-sandbox", codex)
         self.assertIn("resume", codex)
         copilot = self.build(self.make_cli("copilot_cli", readonly=False, permissions="none"))
         self.assertIn("--continue", copilot)

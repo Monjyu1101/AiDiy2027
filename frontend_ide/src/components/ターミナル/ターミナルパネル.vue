@@ -15,6 +15,7 @@ import { cliTitleName } from './CLIタイトル.js';
 import { termKeyHandler } from './キー入力.js';
 import { termInputFocus } from './入力フォーカス.js';
 import { termCompletion, cliCompletions } from '../ターミナル/コマンド補完.js';
+import { createCommandFoldTone } from './折畳配色.js';
 const props = defineProps({ base: String, icon: String, desktop: Boolean, linked: Boolean, visible: { type: Boolean, default: true } });
 const windowTitle = ref(''), panel = ref(null);
 const panelCollapsed = ref(false), panelHidden = ref(false);
@@ -26,7 +27,10 @@ const ghostRows = ref([]);
 const inputStarted = ref(false);
 const completionDescription = computed(() => cliCompletions[completion.value.split(' ')[0]]?.description || '');
 const projectName = computed(() => project.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || project.value);
-let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, inputFocus, keyInput, completionEnabled = false, disposed = false;
+let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, osc, inputFocus, keyInput, completionEnabled = false, disposed = false;
+// 折畳アイコンの配色（実行中シアン脈動／終了コードで緑・赤。未実行で折畳・展開時は無色）。
+const foldTone = createCommandFoldTone();
+watch(panelCollapsed, collapsed => foldTone.collapsed(collapsed));
 function startInput() {
   if (!connected.value || inputStarted.value) return;
   inputStarted.value = true;
@@ -83,7 +87,7 @@ function connect() {
   if (disposed) return;
   inputStarted.value = false;
   socketReady.value = false; toolsChanging.value = false;
-  socket?.close(); completion.value = ''; completionEnabled = false; connected.value = false; error.value = ''; status.value = '起動中';
+  socket?.close(); completion.value = ''; completionEnabled = false; connected.value = false; error.value = ''; status.value = '起動中'; foldTone.reset();
   const url = new URL(props.base + 'socket', location.href); url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   const current = socket = new WebSocket(url);
   current.onopen = () => {
@@ -103,7 +107,7 @@ function connect() {
     if (message.type === 'data') terminal.write(message.data, () => { if (current === socket && current.readyState === WebSocket.OPEN) { current.send(JSON.stringify({ type: 'ack', length: message.data.length })); updateCompletion(); } });
     // CLIは同じPTYへ再接続する。切り詰めた表示履歴の解析後に最新モードを復元する。
     if (message.type === 'keyboard-mode') terminal.write('', () => { if (current === socket && !disposed) keyInput.restore(message.win32InputMode); });
-    if (message.type === 'exit') { connected.value = false; completion.value = ''; status.value = `終了 (${message.exitCode})`; terminal.writeln(`\r\n[${cli.value?.name || 'シェル'}が終了しました: ${message.exitCode}]`); }
+    if (message.type === 'exit') { foldTone.shellExited(message.exitCode); connected.value = false; completion.value = ''; status.value = `終了 (${message.exitCode})`; terminal.writeln(`\r\n[${cli.value?.name || 'シェル'}が終了しました: ${message.exitCode}]`); }
     if (message.type === 'error') { if (cli.value) connected.value = false; error.value = message.message; status.value = 'エラー'; }
   };
   current.onclose = () => { if (current !== socket || disposed) return; socketReady.value = false; toolsChanging.value = false; connected.value = false; toolsOnline.value = false; completion.value = ''; if (status.value === '実行中' || status.value === '起動中') status.value = '切断'; };
@@ -123,6 +127,7 @@ onMounted(() => {
   key = terminal.onKey(startInput);
   container.value.addEventListener('input', startInput, true);
   container.value.addEventListener('paste', startInput, true);
+  osc = terminal.parser.registerOscHandler(133, foldTone.marker);
   resize = terminal.onResize(({ cols, rows }) => { if (connected.value) send({ type: 'resize', cols, rows }); });
   cursor = terminal.onCursorMove(updateCompletion);
   scroll = terminal.onScroll(updateCompletion);
@@ -130,11 +135,11 @@ onMounted(() => {
   observer = new ResizeObserver(fitTerminal); observer.observe(container.value);
   connect();
 });
-onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
+onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); osc?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
 </script>
 <template>
   <section ref="panel" class="ai-component term-component" :class="{ 'panel-collapsed': panelHidden, 'desktop-window': desktop, 'term-waiting': !inputStarted }">
-    <StatusBar :hide-connection-bar="panelHidden" :title="title" :mode="toolsEnabled ? 'online' : 'offline'" :status="toolsEnabled ? '' : '確認OFF'" :connected="toolsOnline" :desktop="desktop" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
+    <StatusBar :hide-connection-bar="panelHidden" :title="title" :mode="toolsEnabled ? 'online' : 'offline'" :status="toolsEnabled ? '' : '確認OFF'" :connected="toolsOnline" :desktop="desktop" clock-pulse><template #leading><PanelToggle :collapsed="panelCollapsed" :tone="foldTone.tone.value || undefined" :desktop="desktop" @toggle="panelCollapsed = !panelCollapsed" @hidden="panelHidden = $event" /></template></StatusBar>
     <div class="component-toolbar"><span :title="project">プロジェクト: {{ projectName }}</span><nav><button class="auto-connect" role="switch" :aria-checked="toolsEnabled" :title="`Tools接続確認 ${toolsEnabled ? 'ON' : 'OFF'}`" :disabled="!socketReady || toolsChanging" @click="toggleTools"><span>Tools接続確認</span><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span></button><button :disabled="!connected" title="実行中の処理へ割り込みを送信（キーボードのCtrl+Cはコピー専用）" @click="interrupt">Ctrl+C送信</button><button @click="clearDisplay">表示クリア</button><button v-if="!connected" @click="connect">{{ cli ? '再接続' : '再起動' }}</button></nav></div>
     <div v-if="!inputStarted" class="term-welcome"><TerminalWelcome kind="term" :icon="icon || '/development/AiDiy.png'" /></div>
     <div class="term-screen" aria-label="ターミナル"><div ref="container" class="term-viewport"><div v-if="completion" class="term-completion" role="status" :aria-label="`${completion}（Tabで補完）`"><span v-for="(row, i) in ghostRows" :key="i" class="term-ghost-row" :style="row.style" aria-hidden="true">{{ row.text }}</span></div></div></div>

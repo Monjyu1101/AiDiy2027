@@ -8,6 +8,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 const require = createRequire(import.meta.url), vue = require('vue');
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
 const { transformSync } = require('esbuild');
@@ -45,7 +46,7 @@ function fixture({ host = false, offline = false } = {}) {
   const module = { exports: {} };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
     ...globals, module,
-    require: id => id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: noop, onBeforeUnmount: fn => unmounted.push(fn) }
+    require: id => id === './折畳配色.js' ? codeFoldTone : id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: noop, onBeforeUnmount: fn => unmounted.push(fn) }
       : id === 'markdown-it' ? require('markdown-it')
       : id === '../コード/コード通信.js' ? { codeTransport: (props, fn) => { receive = fn; return transport.exports.codeTransport(props, fn); } }
       : id === '../../../host/src/stream-control' ? { visibleStreamContent: text => text }

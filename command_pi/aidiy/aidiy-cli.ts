@@ -16,7 +16,7 @@ import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-age
 export const CLI_PROVIDERS = ["claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"];
 
 /** 同梱Pythonと共通CodeAIへ委譲する。キャンセル時は監視ラッパーが子孫も回収する。 */
-async function runCli(root: string, request: { provider: string; model: string; project: string; prompt: string },
+async function runCli(root: string, request: { provider: string; model: string; project: string; prompt: string; mode: "yolo" | "read-only" },
 	options: SimpleStreamOptions | undefined, progress: (text: string) => void): Promise<string> {
 	const suffix = process.platform === "win32" ? "Scripts/python.exe" : "bin/python";
 	const python = ["backend_tools", "backend_server"].map((name) => join(root, name, ".venv", suffix)).find(existsSync);
@@ -79,7 +79,7 @@ async function runCli(root: string, request: { provider: string; model: string; 
 }
 
 /** CLI区分をPiのモデル選択へ登録する。外部CLIもPiの会話・JSONイベント経路で扱う。 */
-export function registerCliProviders(pi: ExtensionAPI, root: string, models: Record<string, Record<string, string>>): void {
+export function registerCliProviders(pi: ExtensionAPI, root: string, models: Record<string, Record<string, string>>, readOnly = false): void {
 	let cwd = process.cwd();
 	pi.on("before_agent_start", async (_event, ctx) => { cwd = ctx.cwd; });
 	for (const provider of CLI_PROVIDERS) {
@@ -108,7 +108,7 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					stream.push({ type: "start", partial: output });
 					output.content.push({ type: "thinking", thinking: "" });
 					stream.push({ type: "thinking_start", contentIndex: 0, partial: output });
-					const text = await runCli(root, { provider, model: model.id, project: cwd, prompt: payload.prompt }, options, (text) => {
+					const text = await runCli(root, { provider, model: model.id, project: cwd, prompt: payload.prompt, mode: readOnly ? "read-only" : "yolo" }, options, (text) => {
 						const part = output.content[0];
 						if (part.type !== "thinking") return;
 						const delta = text + "\n";

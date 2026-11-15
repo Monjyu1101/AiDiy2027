@@ -101,3 +101,30 @@ Web では単一ページ内でコアのパネルを表示します。Task / Tea
 - アバター表示は `AIコア_アバター.vue`、`AIコア_自立身体制御.ts`、`AIコア_自動カメラワーク.ts` を起点に見る。
 - 音声は `AIコア_音声処理.ts` の `AudioController` を起点に見る。
 - Web と Electron の差分は `_AIDIY/knowledge/frontend_avatar,変更チェック.md` を先に確認する。
+
+## 動作モードと 3D アバター
+
+frontend_avatar は Electron デスクトップアプリと通常 Web ブラウザの両方で動作します。
+
+| 項目 | Electron モード | Web モード |
+|------|----------------|-----------|
+| 判定 | `window.desktopApi` あり | `window.desktopApi` なし |
+| 認証 Storage | `localStorage` | `sessionStorage` |
+| UI | 複数 Electron ウィンドウ | 左アバター + 右タブ |
+| アクセス | `http://127.0.0.1:8092` | `http://127.0.0.1:8092` |
+
+主な技術:
+
+- Electron。
+- Three.js。
+- `@pixiv/three-vrm`。
+- `@pixiv/three-vrm-animation`。
+- WebSocket。
+- BroadcastChannel `avatar-desktop-sync`。
+
+### 3D アバター
+
+- VRM モデルを Three.js で表示する。
+- VRMA モーションを `public/vrma/` から再生する。
+- 背景透過により Electron の透明フレームレスウィンドウと重ねられる。
+- マイク入力 / AI 音声出力のレベルを口パクや演出へ反映する。

@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('discordPanel', {
   start: () => ipcRenderer.invoke('discord:request', 'start'),
   stop: () => ipcRenderer.invoke('discord:request', 'stop'),
   monitor: on => ipcRenderer.invoke('discord:request', 'monitor', on),
-  window: action => ['minimize', 'maximize', 'close'].includes(action) ? ipcRenderer.invoke('discord:window', action) : Promise.resolve(false),
+  window: action => ['minimize', 'maximize', 'close', 'collapse', 'expand'].includes(action) ? ipcRenderer.invoke('discord:window', action) : Promise.resolve(false),
   isMaximized: () => ipcRenderer.invoke('discord:window', 'isMaximized'),
   getPinState: () => ipcRenderer.invoke('discord:window', 'getPinState'),
   togglePin: () => ipcRenderer.invoke('discord:window', 'togglePin'),

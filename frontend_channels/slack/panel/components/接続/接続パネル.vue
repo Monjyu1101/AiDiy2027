@@ -21,6 +21,7 @@ import EscapingMark from './逃げるマーク.vue';
 const 画面 = パネル状態作成(window.slackPanel);
 const 本文 = ref(), 詳細 = ref();
 const ピン = ref({ pinned: false, locked: false }), ピン切替中 = ref(false), 最大化中 = ref(false);
+const 折畳 = ref(false), 折畳切替中 = ref(false);
 const ピン説明 = computed(() => ピン.value.locked ? 'VRモード中はピン止めを解除できません' : ピン.value.pinned ? 'ピン止めを解除（最前面 OFF）' : 'ピン止め（最前面 ON）');
 let ピン購読解除, 終了済み = false, ピン通知世代 = 0;
 function ピン反映(value) { if (!終了済み && typeof value?.pinned === 'boolean' && typeof value?.locked === 'boolean') ピン.value = value; }
@@ -28,6 +29,13 @@ async function ピン切替() {
   if (ピン切替中.value || ピン.value.locked) return;
   ピン切替中.value = true;
   try { ピン反映(await window.slackPanel.togglePin?.()); } catch {} finally { ピン切替中.value = false; }
+}
+// 窓をタイトル行の高さへ折り畳む。折畳中は▶の背景で、隠れた接続バーと同じ接続状況の色を示す。
+async function 折畳切替() {
+  if (折畳切替中.value) return;
+  折畳切替中.value = true;
+  const next = !折畳.value;
+  try { if ((await window.slackPanel.window(next ? 'collapse' : 'expand'))?.ok) 折畳.value = next; } catch {} finally { 折畳切替中.value = false; }
 }
 async function 最大化反映() { try { 最大化中.value = !!(await window.slackPanel.isMaximized?.()); } catch {} }
 async function 最大化切替() { await 画面.ウィンドウ操作('maximize'); await 最大化反映(); }
@@ -43,7 +51,7 @@ onMounted(() => {
 onBeforeUnmount(() => { 終了済み = true; ピン購読解除?.(); window.removeEventListener('resize', 最大化反映); 画面.終了(); });
 </script>
 <template>
-  <header><div id="status" role="status" aria-live="polite"><i id="dot" :data-phase="画面.接続状態.phase"></i><span id="status-text">{{ 画面.状態名 }}</span></div><div class="brand"><strong>AiDiy Slack</strong></div><div class="window-actions"><button id="minimize" title="最小化" aria-label="最小化" @click="画面.ウィンドウ操作('minimize')">−</button><button id="maximize" :class="{ maximized: 最大化中 }" :title="最大化中 ? '元のサイズに戻す' : '最大化'" :aria-label="最大化中 ? '元のサイズに戻す' : '最大化'" @click="最大化切替"><span class="window-maximize"></span></button><button id="pin" class="window-pin" :class="{ pinned: ピン.pinned }" :aria-pressed="ピン.pinned" :disabled="ピン.locked || ピン切替中" :title="ピン説明" :aria-label="ピン説明" @click="ピン切替"><span aria-hidden="true">📌</span></button><button id="close" title="閉じる" aria-label="閉じる" @click="画面.ウィンドウ操作('close')">×</button></div></header>
+  <header><div class="header-leading"><button id="fold" type="button" data-aidiy-no-window-move :aria-expanded="!折畳" :title="折畳 ? 'パネル内容を表示' : 'パネル内容を非表示'" :aria-label="折畳 ? 'パネル内容を表示' : 'パネル内容を非表示'" @click="折畳切替"><span class="panel-fold-mark" :class="{ collapsed: 折畳 }" aria-hidden="true">{{ 折畳 ? '▶' : '▽' }}</span></button><div id="status" role="status" aria-live="polite"><i id="dot" :data-phase="画面.接続状態.phase"></i><span id="status-text">{{ 画面.状態名 }}</span></div></div><div class="brand"><strong>AiDiy Slack</strong></div><div class="window-actions"><button id="minimize" title="最小化" aria-label="最小化" @click="画面.ウィンドウ操作('minimize')">−</button><button id="maximize" :class="{ maximized: 最大化中 }" :title="最大化中 ? '元のサイズに戻す' : '最大化'" :aria-label="最大化中 ? '元のサイズに戻す' : '最大化'" @click="最大化切替"><span class="window-maximize"></span></button><button id="pin" class="window-pin" :class="{ pinned: ピン.pinned }" :aria-pressed="ピン.pinned" :disabled="ピン.locked || ピン切替中" :title="ピン説明" :aria-label="ピン説明" @click="ピン切替"><span aria-hidden="true">📌</span></button><button id="close" title="閉じる" aria-label="閉じる" @click="画面.ウィンドウ操作('close')">×</button></div></header>
   <div id="activity-bar" aria-hidden="true"></div>
   <div class="conversation-toolbar"><div class="conversation-context"><span class="project-label">プロジェクト:</span><span id="project-folder" :title="画面.フォルダ.path">{{ 画面.フォルダ.name }}</span></div><button id="toggle" :class="{ awaiting: 画面.編集可能 }" :disabled="画面.接続操作不可" @click="画面.接続切替">{{ 画面.接続ボタン }}</button></div>
   <div id="features" role="group" aria-label="有効な機能"><span id="feature-code" class="feature-chip"><i aria-hidden="true"></i><em>CODE</em><b>ON</b></span></div>

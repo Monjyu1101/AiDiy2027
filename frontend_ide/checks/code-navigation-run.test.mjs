@@ -9,6 +9,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 const require = createRequire(import.meta.url), vue = require('vue');
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
 const { transformSync, buildSync } = require('esbuild');
@@ -34,7 +35,7 @@ function fixture(host = false, options = {}) {
   };
   vm.runInNewContext(transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`, { format: 'cjs' }).code, {
     module, URL, console, window: {}, location: { href: 'http://localhost/code/' }, crypto, setTimeout: (fn, ms) => { timers.set(++timerId, fn); timerDelays.set(timerId, ms); return timerId; }, clearTimeout: id => { timers.delete(id); timerDelays.delete(id); },
-    require: id => id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: no, onBeforeUnmount: callback => unmounted.push(callback) }
+    require: id => id === './折畳配色.js' ? codeFoldTone : id === 'vue' ? { ...vue, withDirectives: node => node, onMounted: no, onBeforeUnmount: callback => unmounted.push(callback) }
       : id === 'markdown-it' ? require('markdown-it') : modules[id] || {},
   });
   const scope = vue.effectScope(), props = { host, ...options }, data = scope.run(() => module.exports.setup(props, { expose: value => { exposed = value; } }));

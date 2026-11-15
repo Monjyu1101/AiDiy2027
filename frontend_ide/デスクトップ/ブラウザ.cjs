@@ -14,6 +14,7 @@ const {createBrowserHeader}=require('./ブラウザ全画面パネル.cjs');
 const {createBrowserAnalysisWindows}=require('./ブラウザ解析窓.cjs');
 const {createBrowserChildWindows}=require('./ブラウザ補助窓.cjs');
 const {createBrowserElementLink}=require('./ブラウザ要素連携.cjs');
+const {createBrowserContentMonitor}=require('./ブラウザ内容監視.cjs');
 // Tools未接続時はGoogle AI、接続中はローカルWebを初期表示する。
 const defaultBrowserURL=connected=>connected===true?'http://localhost:8090/':'https://www.google.com/ai';
 async function browserStartupURL(connected=false){return defaultBrowserURL(connected);}
@@ -74,15 +75,15 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
  function attach(record,target,available=true,connected=available,mode='online',onTabCreated=()=>{}){
   const hostContents=record.window.webContents;
   blockedOrigins.add(new URL(record.url).origin);
-  const entry={homeURL:browserURL(target??defaultBrowserURL(connected)),tabs:[],active:null,navigationRevision:0,available,connected,mode,disposed:false};entries.set(record,entry);
+  const entry={homeURL:browserURL(target??defaultBrowserURL(connected)),tabs:[],active:null,navigationRevision:0,contentRevision:0,available,connected,mode,disposed:false};entries.set(record,entry);
   for(const key of ['view','error','run','capture','elementLink'])Object.defineProperty(entry,key,{get:()=>entry.active?.[key],set:value=>{if(entry.active)entry.active[key]=value;}});
   let stateRevision=0;
   const snapshot=()=>{
    const tab=entry.active,contents=tab.view.webContents;
    return{stateRevision:++stateRevision,navigationRevision:entry.navigationRevision,homeURL:entry.homeURL,activeTabId:tab.id,pageLoadFailed:!!tab.pageLoadFailed,tabs:entry.tabs.map(t=>({id:t.id,url:t.view.webContents.getURL()||t.target,title:t.view.webContents.getTitle(),loading:t.view.webContents.isLoading()})),url:contents.getURL()||tab.target,title:contents.getTitle(),session:record.browserSession,available:entry.available,connected:entry.connected,mode:entry.mode,elementPicking:!!entry.elementLink?.active,fullscreen:record.window.isFullScreen(),headerVisible:!!entry.headerVisible,headerPinned:!!entry.headerPinned,capturePath:entry.capture?.path||'',loading:contents.isLoading(),back:contents.navigationHistory.canGoBack(),forward:contents.navigationHistory.canGoForward(),error:entry.available?entry.error:'利用を開始してください。'};
   };
-  const notify=()=>{if(!entry.disposed&&entry.active&&!record.window.isDestroyed()&&!entry.view.webContents.isDestroyed()){const value=snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
-  entry.snapshot=snapshot;entry.notify=notify;
+  const notify=()=>{if(!entry.disposed&&entry.active&&!record.window.isDestroyed()&&!entry.view.webContents.isDestroyed()){const value=entry.snapshot();hostContents.send('development:browser-changed',value);entry.header?.send('development:browser-changed',value);analysisWindows.notify(record,'development:browser-changed',value);}};
+  entry.snapshot=()=>({...snapshot(),contentRevision:entry.contentRevision});entry.notify=notify;
   // サイズ操作は窓ごとに一つ。タブ切替後も同じ測定値を選択中Viewへ適用する。
   const statusView=createBrowserStatusView({WebContentsView,session:isolated,window:record.window,onKey:fullscreenKey});
   const sizing=createBrowserSizing({window:record.window,view:{setBounds:bounds=>{entry.view?.setBounds(bounds);statusView.setBounds(bounds);},get webContents(){return entry.view?.webContents;}},screen});entry.sizing=sizing;
@@ -129,7 +130,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
   }
   function disposeTab(tab){
    if(tab.closed)return;
-   tab.closed=true;tab.run++;tab.elementLink.dispose();
+   tab.closed=true;tab.run++;tab.contentMonitor.dispose();tab.elementLink.dispose();
    const contents=tab.contents;contents.removeListener('before-input-event',fullscreenKey);
    // closed後は親窓とViewのnativeハンドルが既に破棄されている場合がある。
    if(!record.window.isDestroyed()){tab.view.setVisible(false);record.window.contentView.removeChildView?.(tab.view);}
@@ -149,6 +150,8 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
    const target=browserURL(value);if(!allowed(target))throw Error('このURLはブラウザパネルでは開けません。');
    const view=new WebContentsView({webPreferences:{session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,nodeIntegrationInSubFrames:false,webSecurity:true}}),contents=view.webContents;
    const tab={id:entry.tabs.length===0&&record.browserTabId?record.browserTabId:randomUUID(),view,contents,target,error:'',run:0,navigationEpoch:0,closed:false,pendingTarget:entry.available?null:target};
+   tab.contentMonitor=createBrowserContentMonitor({contents,changed:()=>{if(!entry.disposed&&!tab.closed){entry.contentRevision++;notify();}}});
+   tab.contentMonitor.setEnabled(!!entry.panelCollapsed);
    record.window.contentView.addChildView(view);view.setVisible(false);
    tab.elementLink=createBrowserElementLink({contents,record,BrowserWindow,screen,available:()=>entry.available&&entry.active===tab&&!tab.closed,onChange:notify,onSelected:()=>{if(entry.active===tab)hostContents.send('development:browser-element-selected');},onError:message=>{if(tab.error!==message){tab.error=message;notify();}}});
    tab.navigate=async value=>{
@@ -310,6 +313,7 @@ function createBrowserViews({BrowserWindow,WebContentsView,session,screen,window
  function setPanelCollapsed(record,collapsed){
   const entry=entries.get(record);if(!entry)return;
   entry.panelCollapsed=collapsed;
+  for(const tab of entry.tabs)tab.contentMonitor.setEnabled(collapsed);
   entry.sizing.setPanelCollapsed(collapsed);
   if(collapsed){entry.header.close();void entry.elementLink.stop();}
   if(!record.window.isDestroyed())entry.layout();

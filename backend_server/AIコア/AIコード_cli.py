@@ -45,6 +45,8 @@ _STDERR_STREAM_STDOUT_FINAL_AI = frozenset({
 # Codex 系の CLI。aidiy_codex は command_codex をコンパイルした Codex で、codex_cli と同じ引数で動く。
 # モデルは `<区分>/<モデル名>` のまま渡す（aidiy_codex 側で区分ごとの接続先を決め、区分名を外す）。
 _CODEX系AI = frozenset({"codex_cli", "aidiy_codex"})
+# 会話全文は argv に載せない。Pi / Hermes と同じ UTF-8 stdin 経路で渡す。
+_STDINプロンプトAI = _CODEX系AI | {"aidiy_hermes", "aidiy_pi"}
 
 
 def _aidiy_codex実行ファイル() -> str:
@@ -610,10 +612,6 @@ class CodeAI:
             base = [custom_cmd or self._コマンドパス取得()]
         model = (self.code_model or "").strip()
         model_args = ["--model", model if model and model.lower() not in ("auto", "same") else "same"]
-        if 読取専用 and model.partition("/")[0].lower() in {
-            "claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli",
-        }:
-            raise 予測読取専用利用不可("Pi の外部CLIモデルは読取専用に対応していません。")
         return base + (["--read-only"] if 読取専用 else []) + ["--no-session", "--mode", "json", "-p"] + model_args
 
     def _予測CLI確認(self) -> None:
@@ -631,13 +629,7 @@ class CodeAI:
         if not python_path.is_file() or not entrypoint.is_file():
             raise 予測読取専用利用不可("Hermes の予測用アダプターまたは実行環境を利用できません。")
         model = self._ollama_cloud_suffix除去(self.code_model or "")
-        provider = model.partition("/")[0].lower()
-        if provider in {
-            "copilot_cli", "copilot-cli", "claude_cli", "claude-code", "codex_cli", "codex-cli",
-            "antigravity_cli", "antigravity-cli", "opencode_cli", "opencode", "grok_cli", "grok-cli",
-        }:
-            raise 予測読取専用利用不可("Hermes の外部CLIモデルは読取専用予測に対応していません。")
-        # provider/モデルの最終解決後も、アダプター側で外部CLIと変更ツールを拒否する。
+        # 外部 CLI はアダプターが親の read-only 制約を引き継ぐ。
         return [
             str(python_path), str(entrypoint), "--workdir", repo_path or self.cwd_str,
             "--model", model or "auto",
@@ -745,6 +737,13 @@ class CodeAI:
                 "exec", "--skip-git-repo-check", "--sandbox", "read-only",
                 "--ephemeral", "--ignore-rules",
             ])
+        elif self.code_ai == "antigravity_cli":
+            from AIコア.AIコードCLI権限 import antigravity読取専用設定
+            common = base + ["--mode", "plan", "--settings", antigravity読取専用設定(),
+                             "--disable-slash-commands", "--print-timeout", "0"]
+        elif self.code_ai == "opencode_cli":
+            # 私有サーバーにセッション限定の read-only policy を渡す。
+            common = base + ["--standalone", "run", "--agent", "build"]
         elif self.code_ai == "claude_cli":
             # 読取ツールのみ。通常のMCP・プラグイン・フック・セッション継続を無効化する。
             # 古いCLIがこれらの引数を受け付けない場合は通常実行へ戻さず失敗する。
@@ -770,7 +769,9 @@ class CodeAI:
         if self.code_model and self.code_model.lower() not in ("auto", "same"):
             common.extend(["--model", self.code_model])
         # 予測では既存のCLIセッションや許可状態を継続しない。
-        return common + ([プロンプト] if self.code_ai in _CODEX系AI else ["-p", プロンプト])
+        if self.code_ai in _CODEX系AI:
+            return common + ["-"]
+        return common + ([プロンプト] if self.code_ai == "opencode_cli" else ["-p", プロンプト])
 
     def _コマンド構築(self, プロンプト: str, 初回: bool = False, repo_path: str = None, 読取専用: bool = False) -> list:
         """
@@ -857,6 +858,8 @@ class CodeAI:
                 _model = self._opencode最終選択モデル()
             model_args = ["--model", _model] if _model else []
             cmd_args = base + ["run"]
+            if self.code_permissions != "none":
+                cmd_args.append("--auto")
             cmd_args += model_args + [プロンプト]
             if not 初回:
                 cmd_args.append("-c")
@@ -918,8 +921,10 @@ class CodeAI:
 
         elif self.code_ai in _CODEX系AI:
             # OpenAI Codex CLI / aidiy_codex（同梱 Codex をコンパイルしたもの）
-            # Codex はサンドボックス無視を常に有効にする。
-            base_args = base + ["exec", "--skip-git-repo-check", "--dangerously-bypass-approvals-and-sandbox"]
+            # 明示された承認モードを引き継ぐ。none を YOLO に昇格させない。
+            base_args = base + ["exec", "--skip-git-repo-check"]
+            if self.code_permissions != "none":
+                base_args.append("--dangerously-bypass-approvals-and-sandbox")
             # auto / same（変更無し）はCLI側のモデル設定に任せる。
             if self.code_model and self.code_model.lower() not in ("auto", "same"):
                 base_args.extend(["--model", self.code_model])
@@ -928,7 +933,7 @@ class CodeAI:
             if not 初回 and self.codex_セッションID:
                 base_args.extend(["resume", self.codex_セッションID])
 
-            base_args.append(プロンプト)
+            base_args.append("-")  # exec / resume の双方で標準入力から会話全文を読む。
             return base_args
 
         elif self.code_ai == "codex_ollama":
@@ -1462,7 +1467,7 @@ class CodeAI:
                     command=command,
                     cwd=作業ディレクトリ,
                     timeout=タイムアウト秒数,
-                    stdin_text=完全プロンプト if self.code_ai in ("aidiy_hermes", "aidiy_pi") else None,
+                    stdin_text=完全プロンプト if self.code_ai in _STDINプロンプトAI else None,
                 )
                 # 候補一覧は複数の一覧を合成しているため、契約上使えないモデルが含まれる場合がある。
                 # auto で選んだモデルを CLI が拒否したときだけ、CLI 既定（same）で1回やり直す。
@@ -1496,7 +1501,7 @@ class CodeAI:
                         command=command,
                         cwd=作業ディレクトリ,
                         timeout=タイムアウト秒数,
-                        stdin_text=完全プロンプト if self.code_ai in ("aidiy_hermes", "aidiy_pi") else None,
+                        stdin_text=完全プロンプト if self.code_ai in _STDINプロンプトAI else None,
                     )
 
             # codexの場合、セッションIDを抽出して保存（stderr から抽出）
@@ -1557,6 +1562,10 @@ class CodeAI:
             # プロセス起動
             if os.name == "nt" and not creationflags:
                 creationflags = subprocess.CREATE_NO_WINDOW
+            cli_env = os.environ.copy()
+            if self.code_ai == "opencode_cli" and self.実行オプション.CLI読取専用:
+                from AIコア.AIコードCLI権限 import CLI実行環境
+                cli_env = CLI実行環境(cli_env, self.code_ai, True)
             spawn_task = asyncio.create_task(asyncio.create_subprocess_exec(
                 sys.executable, str(_PROCESS_LIFETIME),
                 "--parent-pid", str(os.getpid()),
@@ -1569,7 +1578,7 @@ class CodeAI:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
-                env=os.environ.copy(),
+                env=cli_env,
                 start_new_session=(os.name != "nt"),
                 creationflags=creationflags,
             ))

@@ -6,14 +6,14 @@
   "panel/AiDiy_slack.svg": "176b6346a66e39c7c1fca4ce8995d7c69feb535ecf0872881f6bc0482ea1de69",
   "panel/THIRD_PARTY_NOTICES.txt": "991f108cf9b45856e7f9864d918cb66c1f6f9ab41f18dd885f0c95bf8aa10d12",
   "panel/components/接続/パネル状態.js": "c28488dc0dec10dd7dedfd5e3725fbd1999a962a06a1df9c3705d5d97bf14d40",
-  "panel/components/接続/接続パネル.vue": "5b4896c0591b850fc0c8f8df857e770c7c815bf78c67a06d5bcb16b860a3bd6d",
+  "panel/components/接続/接続パネル.vue": "aefa95c8af77ed88315162fad9f6f89457c8dafa7e381034018cf30cba05687b",
   "panel/components/接続/機能切替.vue": "2d9a368fef8e11b98cff072ade805e175eeb9beb0e4c0b5f12cbba889acf975b",
   "panel/components/接続/逃げるマーク.vue": "5a1e8974766d2dcec020eb830ffd4510f286a7ce2b75118ad5dd6ad310aefa15",
   "panel/index.html": "3dc10b8a20cd588e1f4a76473ae4d991988a75d41500614ae53b118b4e85f855",
   "panel/main.js": "bc9b7ea29c435bf7e1beacbb15091a0b272447e787e614509610831952b54c21",
-  "panel/style.css": "766aa8f1e641688a0c031fee9774849a6ee6add8aed7073d760c01ce1f8e966e",
+  "panel/style.css": "e5a8e5edda53fb58e29a63d08f8ca43c90704c5ad7b05f8b1dfc050d59d13328",
   "panel/titlebar.css": "5d61d68094a9ddfa5c5271a96d19808bcbb664965f88cb9b249bd07d58e1aeb0",
-  "panel/view.js": "2cec3dc98652d6afe09a394f2b732b8122c860fa2ac8df1729f7284bc315eebc",
+  "panel/view.js": "08a3d3de248f7ba1bab6a07b2a07ca668492a78f62bb0aa0ba492cbabc5f74fe",
   "scripts/build-panel.mjs": "9d787646a2a8207531123de3d19ad5f6c8fa8461775bdf7a89e129c2b1ee4995",
   "scripts/verify-panel.mjs": "d3057955dc7e155caf8d61f5bd4c43889c72280bf7b732b241a8c922e3b77c95"
 }

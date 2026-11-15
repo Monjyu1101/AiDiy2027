@@ -9,6 +9,7 @@ import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
 import {createDraftTargetRegistry} from '../src/components/下書き連携/連携先登録.js';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const flush=async()=>{for(let n=0;n<30;n++)await Promise.resolve();};
@@ -31,7 +32,7 @@ function compile(path,{modules={},globals={},scriptOnly=false,vueApi=vue}={}){
  const template=scriptOnly?'':compileTemplate({source:descriptor.template.content,filename:path,id:path,compilerOptions:{bindingMetadata:script.bindings}}).code;
  const module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\n'+template+'\n'+(scriptOnly?'':'component.render=render;')+'module.exports=component;',{format:'cjs'}).code,{module,console,AbortController,AbortSignal,URLSearchParams,Response,URL,Date,
-  require:id=>id==='vue'?vueApi:modules[id]||{},...globals});
+  require:id=>id==='./折畳配色.js'?codeFoldTone:id==='vue'?vueApi:modules[id]||{},...globals});
  return module.exports;
 }
 function dialogFixture(initial,{load,launch,frontmost=initial.length===1?initial[0].id:''}={}){

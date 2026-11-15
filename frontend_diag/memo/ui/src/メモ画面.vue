@@ -24,6 +24,13 @@ function measureOverflow(){
  hasBelow.value=!!el&&(el.scrollHeight-el.clientHeight-el.scrollTop>1||!!text&&text.scrollHeight-text.clientHeight-text.scrollTop>1);
 }
 function focusForm(){focused.value=true;void nextTick(measureOverflow);}
+// 付箋の余白（本文の下・下部の行の空き・外周）を押したら、本文の末尾から入力を再開する。
+// タイトル・ボタン・色・画像・のりしろ／見出しの移動・エラー表示は従来の操作を優先する。
+function resumeInput(event){
+ if(event.button!==0||!ready.value||closing.value||!editor.value||editor.value.disabled)return;
+ if(event.target.closest?.('input,textarea,button,a,img,.sticky-header,.sticky-adhesive,.sticky-palette,.sticky-error,.sticky-move-marker'))return;
+ event.preventDefault();editor.value.focus();const end=editor.value.value.length;editor.value.setSelectionRange(end,end);
+}
 function blurForm(){focused.value=false;void nextTick(measureOverflow);}
 watch(()=>[state.value.draft.本文,state.value.draft.画像,ready.value],()=>nextTick(measureOverflow),{flush:'post'});
 const color=computed(()=>メモ色.includes(state.value.draft.色)?state.value.draft.色:'yellow');
@@ -117,7 +124,7 @@ onMounted(async()=>{
 onUnmounted(()=>{overflowObserver?.disconnect();window.removeEventListener('focus',focusForm);window.removeEventListener('blur',blurForm);alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
 </script>
 <template>
- <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused}]" @paste="paste" @dragover.prevent @drop="drop">
+ <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused}]" @pointerdown="resumeInput" @paste="paste" @dragover.prevent @drop="drop">
   <div class="sticky-adhesive" aria-hidden="true" @pointerdown="move"></div>
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>

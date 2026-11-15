@@ -119,7 +119,7 @@ python _setup.py
 
 最後に Diag の headless 診断で導入状況とモデル情報を書き込みます。外部連携の認証試験は headless 対象外ですが、モデル一覧の取得など外部通信を行う処理はあります。Diag UI の開発用依存は `frontend_diag/ui` で `npm ci` により導入します。
 
-依存導入はモジュールごとに異なり、Web・Code / Live などの `npm update` は宣言範囲内で依存を更新します。`package-lock.json` が変わる場合があるため、セットアップ前後の差分も確認してください。ランチャーだけの修復は `python _setup.py --launchers-only` です。
+依存導入はモジュールごとに異なり、Web・Code / Live などの `npm update` は宣言範囲内で依存を更新します。`package-lock.json` が変わる場合があるため、セットアップ前後の差分も確認してください。ランチャーだけの修復は `python _setup.py --launchers-only` です。確認なしで各項目を既定値のまま実行する場合は `python _setup.py --auto`（開始確認の `a=auto` と同じ）を使います。
 
 補足:
 

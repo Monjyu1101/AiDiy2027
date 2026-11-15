@@ -183,3 +183,103 @@ MCP の構成と使い分けは `_AIDIY/knowledge/backend_tools,構成.md` と `
 - 認証付き API は `deps.get_現在利用者` を使う。
 - AIコア変更は `core_router/AIコア.py` と `AIコア/` を起点に見る。
 - 具体手順は必ず `_AIDIY/knowledge/_index.md` から該当 HowTo を開く。
+
+## 業務データの設計規則
+
+### テーブル命名規則
+
+| 接頭辞 | 種別 | 例 |
+|--------|------|----|
+| `C` | Core / Common | `C権限`、`C利用者`、`C採番` |
+| `M` | Master | `M商品`、`M取引先`、`M商品構成` |
+| `T` | Transaction | `T配車`、`T生産`、`T商品入庫` |
+| `V` | View endpoint | `V商品`、`V生産`、`V商品推移表` |
+| `S` | Scheduler / Special | `S配車_週表示`、`S生産_日表示` |
+| `A` | AI / Advanced | `A会話履歴`、`Aタスク要求`、`Aタスク明細` |
+| `X` | Experimental | `Xテトリス`、`X世界の絶景` |
+
+`V` 系は DB VIEW オブジェクトではなく、生SQLによる JOIN / 集計エンドポイントとして実装します。
+
+### 提供機能
+
+#### C系 Core / Common
+
+- `C権限`: 権限マスタ。
+- `C利用者`: JWT 認証つき利用者マスタ。
+- `C採番`: カスタムID生成。
+
+#### M系 Master
+
+- 配車区分、生産区分、生産工程、商品分類、取引先分類、取引先、車両、商品。
+- `M商品構成`: `明細SEQ=0` をヘッダー、`明細SEQ>=1` を材料明細とする明細型マスタ。
+
+#### T系 Transaction
+
+- `T配車`: 配車トランザクション。
+- `T生産`: `明細SEQ=0` をヘッダー、`明細SEQ>=1` を払出明細とする明細型トランザクション。
+- `T商品入庫`、`T商品出庫`、`T商品棚卸`: 在庫管理トランザクション。
+
+#### V系 View Endpoint
+
+- コア、マスタ、トランザクション、在庫推移の JOIN / 集計表示。
+- DB VIEW は作らず、Router 内の SELECT + JOIN で実装する。
+
+#### S系 Scheduler / Special
+
+- `S配車_週表示`、`S配車_日表示`。
+- `S生産_週表示`、`S生産_日表示`。
+
+#### A系 AI / Advanced
+
+- `AIコア`: WebSocket + マルチベンダー AI + Code CLI パネル。
+- `A会話履歴`: 会話履歴保存。
+- `Aタスク要求` / `Aタスク明細`: AIタスク自動実行（backend_taskteam が管理、単独アプリ aidiy_task から操作）。明細は `先行SEQ` による DAG で、直列だけでなく水平の並行分岐を含む自由なタスクフローを定義でき、フロー図はクリティカルパス基準で表示する。
+- `Aチーム要員`: backend_taskteam のエージェント要員マスタ。初期要員 `admin` は削除不可。
+
+#### X系 Experimental
+
+- `Xテトリス`、`Xインベーダー`、`Xリバーシ`、`X立体リバーシ`、`Xドッグファイト`。
+- `X世界の絶景`、`X太陽系`、`X動画再生BGM`、`Xビデオ`。
+- `X自己紹介`。
+
+### 業務サンプル概要
+
+| サンプル | 主な構成 |
+|----------|----------|
+| 配車管理 | `M配車区分`、`M車両`、`T配車`、`V配車`、`S配車_*` |
+| 生産管理 | `M生産区分`、`M生産工程`、`M商品`、`M商品構成`、`T生産`、`V生産`、`S生産_*` |
+| 資材在庫管理 | `M商品`、`T商品入庫`、`T商品出庫`、`T商品棚卸`、`V商品推移表` |
+
+### 明細型パターン
+
+ヘッダー行と明細行を単一テーブルで管理します。
+
+```text
+ID    | 明細SEQ | 意味
+------+---------+----------------
+P001  | 0       | ヘッダー行
+P001  | 1       | 明細行
+P001  | 2       | 明細行
+```
+
+代表例:
+
+- `M商品構成`: 商品構成ヘッダー + 材料明細。
+- `T生産`: 生産指示ヘッダー + 材料払出明細。
+
+## AI コアの設定キー一覧
+
+AIコアは、テキスト、音声、画像、ファイル、コード支援を統合する多パネル UI です。
+
+| 種別 | 役割 |
+|------|------|
+| `CHAT_AI_NAME` | テキストチャット |
+| `LIVE_AI_NAME` | 音声リアルタイム対話 |
+| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
+| `CODE_AI1_NAME`〜`CODE_AI6_NAME` | code1〜code6 のコード支援 |
+| `TASK_AI_NAME` / `TASK_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIタスク自動実行 |
+| `TEAM_AI_NAME` / `TEAM_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIチーム依頼実行 |
+
+TASK / TEAM のモデルは plan（計画）/ do（実施）/ check（検証）の3種指定です。
+
+Code AI の有効値は `claude_sdk`、`claude_cli`、`copilot_cli`、`codex_cli`、`antigravity_cli`、`grok_cli`、`opencode_cli`、`aidiy_hermes`、`aidiy_pi`、`aidiy_codex` を想定します。`aidiy_codex` は `~/.aidiy/bin/aidiy_codex` にコンパイル済みの環境だけで候補に出ます。候補は `aidiy_codex_models_info.json` の `<区分>/<モデル名>` で。区分ごとの接続（Responses / Chat Completions / Anthropic Messages）は Hermes / Pi に合わせてある（`command_codex/AGENTS.md`）。

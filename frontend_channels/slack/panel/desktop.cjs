@@ -20,6 +20,7 @@ const size = require('../../../frontend_ide/host/scripts/window-size.cjs');
 const { 拡大表示 } = require('../../../frontend_ide/host/scripts/window-opening.cjs');
 const { attachNativeWindowMove } = require('../../../frontend_ide/デスクトップ/長押し窓移動.cjs');
 const { createWindowPins } = require('../../../frontend_ide/デスクトップ/最前面ピン.cjs');
+const { createPanelCollapse } = require('../../../frontend_ide/デスクトップ/パネル折り畳み.cjs');
 const { 起動ロック } = require('../../../frontend_ide/host/scripts/single-instance.cjs');
 
 const root = join(__dirname, '..');
@@ -170,12 +171,15 @@ if (!app.requestSingleInstanceLock({ readyFile, autoConnect })) {
     window.webContents.session.setPermissionCheckHandler(() => false);
     window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
     const trusted = event => window && !window.isDestroyed() && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame && event.senderFrame.url === page;
+    // 左上の▽で窓をタイトル行の高さへ折り畳む（Code / Live / Term と同じ処理）。
+    const panelCollapse = createPanelCollapse({ trustedEvent: event => trusted(event) ? { kind: 'slack', window } : null });
     ipcMain.handle('slack:request', (event, action, value) => {
       if (!trusted(event) || !['initial', 'select-code', 'catalog-code', 'start', 'stop'].includes(action)) throw new Error('許可されていない操作です。');
       return request(action, value);
     });
     ipcMain.handle('slack:window', (event, action) => {
       if (!trusted(event)) return false;
+      if (action === 'collapse' || action === 'expand') return panelCollapse(event, action === 'collapse');
       if (action === 'getPinState') return pins.state(window);
       if (action === 'togglePin') return pins.toggle(window);
       if (action === 'isMaximized') return window.isMaximized();

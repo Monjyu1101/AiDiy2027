@@ -63,7 +63,14 @@ impl ModelCatalog {
     }
 
     pub(crate) fn try_list_models(&self) -> Result<Vec<ModelPreset>, Infallible> {
-        Ok(self.models.clone())
+        // AiDiy: Diag が保存した外部 CLI を /model に追加する。
+        let mut models = self.models.clone();
+        for preset in codex_model_provider_info::aidiy_cli_presets() {
+            if !models.iter().any(|existing| existing.model == preset.model) {
+                models.push(preset);
+            }
+        }
+        Ok(models)
     }
 
     pub(crate) fn display_name<'a>(&'a self, model: &'a str) -> &'a str {

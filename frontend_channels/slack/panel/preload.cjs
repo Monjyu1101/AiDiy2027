@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('slackPanel', {
   catalogCode: provider => ipcRenderer.invoke('slack:request', 'catalog-code', provider),
   start: () => ipcRenderer.invoke('slack:request', 'start'),
   stop: () => ipcRenderer.invoke('slack:request', 'stop'),
-  window: action => ['minimize', 'maximize', 'close'].includes(action) ? ipcRenderer.invoke('slack:window', action) : Promise.resolve(false),
+  window: action => ['minimize', 'maximize', 'close', 'collapse', 'expand'].includes(action) ? ipcRenderer.invoke('slack:window', action) : Promise.resolve(false),
   isMaximized: () => ipcRenderer.invoke('slack:window', 'isMaximized'),
   getPinState: () => ipcRenderer.invoke('slack:window', 'getPinState'),
   togglePin: () => ipcRenderer.invoke('slack:window', 'togglePin'),

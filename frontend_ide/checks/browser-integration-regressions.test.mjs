@@ -14,6 +14,7 @@ import displaysModule from '../デスクトップ/全画面横断.cjs';
 import pinsModule from '../デスクトップ/最前面ピン.cjs';
 import routerModule from '../デスクトップ/draft-router.cjs';
 import * as draftModule from '../src/components/下書き連携/下書き受け渡し.js';
+import * as codeFoldTone from '../src/components/コード/折畳配色.js';
 
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
@@ -50,7 +51,7 @@ function draftPanel(kind,{desktop=true,linked=false}={}){
  const script=compileScript(descriptor,{id:path,genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,console,URL,location:{href:'http://localhost/'},window:{aidiyWindow:api},requestAnimationFrame:()=>1,
-  require:id=>id==='vue'?{...vue,onMounted(){},onBeforeUnmount(){}}:modules[id]||{},
+  require:id=>id==='./折畳配色.js'?codeFoldTone:id==='vue'?{...vue,onMounted(){},onBeforeUnmount(){}}:modules[id]||{},
  });
  const scope=vue.effectScope(),panel=scope.run(()=>module.exports.setup({desktop,linked,host:false,config:{},visible:true},{expose(){}}));
  const ready=()=>{

@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
+import * as foldTone from '../src/components/ターミナル/折畳配色.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const flush=async()=>{for(let n=0;n<10;n++)await Promise.resolve();};
@@ -21,11 +22,11 @@ function fixture({desktop=true,linked=true,title=()=>Promise.resolve('AiDiy IDE 
  const script=compileScript(descriptor,{id:'term',genDefaultAs:'component'});
  const template=compileTemplate({source:descriptor.template.content,filename:'TermPanel.vue',id:'term',compilerOptions:{bindingMetadata:script.bindings}});assert.deepEqual(template.errors,[]);
  const noop=()=>{},subscription=()=>({dispose:noop});
- class Terminal{parser={registerCsiHandler:subscription,registerEscHandler:subscription};loadAddon(){}open(){}attachCustomKeyEventHandler(){}reset(){}dispose(){}onData=subscription;onKey=subscription;onResize=subscription;onCursorMove=subscription;onScroll=subscription;onRender=subscription;}
+ class Terminal{parser={registerCsiHandler:subscription,registerEscHandler:subscription,registerOscHandler:subscription};loadAddon(){}open(){}attachCustomKeyEventHandler(){}reset(){}dispose(){}onData=subscription;onKey=subscription;onResize=subscription;onCursorMove=subscription;onScroll=subscription;onRender=subscription;}
  const module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,URL,window:{aidiyWindow:{title:()=>{calls++;return title();}}},location:{href:'http://localhost/'},ResizeObserver:class{observe(){}disconnect(){}},WebSocket:class{close(){}},
-  require:id=>id==='./CLIタイトル.js'?cliTitles:id==='./キー入力.js'?keyboard:id==='./入力フォーカス.js'?focus:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:id==='@xterm/xterm'?{Terminal}:id==='@xterm/addon-fit'?{FitAddon:class{}}:id==='../ターミナル/コマンド補完.js'?{cliCompletions:{}}:{},
+  require:id=>id==='./折畳配色.js'?foldTone:id==='./CLIタイトル.js'?cliTitles:id==='./キー入力.js'?keyboard:id==='./入力フォーカス.js'?focus:id==='vue'?{...vue,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:id==='@xterm/xterm'?{Terminal}:id==='@xterm/addon-fit'?{FitAddon:class{}}:id==='../ターミナル/コマンド補完.js'?{cliCompletions:{}}:{},
  });
  const scope=vue.effectScope(),component=module.exports,props={desktop,linked,visible:true,base:'/term/'};
  const state=scope.run(()=>component.setup(props,{expose(){}}));state.container.value={addEventListener:noop,removeEventListener:noop};

@@ -280,8 +280,8 @@ export function aidiyExtension(pi: ExtensionAPI, { readOnly = false } = {}): voi
 		);
 	}
 	for (const provider of aidiyProviders()) pi.registerProvider(provider as never);
+	registerCliProviders(pi, AIDIY_ROOT, readPiModels(), readOnly);
 	if (readOnly) return;
-	registerCliProviders(pi, AIDIY_ROOT, readPiModels());
 
 	// /model・Ctrl+P などで選んだ AiDiy モデルを保存し、次回の起動で復元する。
 	pi.on("model_select", async (event) => {

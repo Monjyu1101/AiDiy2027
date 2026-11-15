@@ -72,3 +72,14 @@ test('Discord のタイトル配色はmodule内のコピーだけを読み、Web
     }
   } finally { await window.happyDOM.close(); }
 });
+
+test('Discord の折り畳み中は ▶ の背景を #activity-bar と同じ色・明滅にして接続状況を示す', () => {
+  assert.match(css, /\.panel-fold-mark\.collapsed\{background:#ff4500;animation:orange-bar-breathe 4\.5s linear infinite\}/);
+  assert.match(css, /body\.connected \.panel-fold-mark\.collapsed\{background:#00ff00;animation:green-bar-breathe 4\.5s linear infinite\}/);
+  assert.match(css, /#activity-bar \{[^}]*background: #ff4500; animation: orange-bar-breathe 4\.5s linear infinite;/);
+  assert.match(css, /body\.connected #activity-bar \{ background: #00ff00; animation: green-bar-breathe 4\.5s linear infinite; \}/);
+  assert.match(css, /\.browser-mode #fold\{display:none\}/);
+  const view = readFileSync(new URL('../panel/components/接続/接続パネル.vue', import.meta.url), 'utf8');
+  assert.match(view, /<span class="panel-fold-mark" :class="\{ collapsed: 折畳 \}" aria-hidden="true">\{\{ 折畳 \? '▶' : '▽' \}\}<\/span>/);
+  assert.match(view, /window\.discordPanel\.window\(next \? 'collapse' : 'expand'\)/);
+});
