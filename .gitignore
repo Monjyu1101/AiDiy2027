@@ -178,6 +178,10 @@ julius/
 _MCP/
 
 # Secrets / sensitive
+# ローカル AWS / Codex の資格情報。ソース・伏せ字処理のテストは除外しない。
+.aws/
+**/.codex/auth.json
+**/.codex/auth.json.*
 # 全階層の内部認証情報と、同一ディレクトリで原子的に保存する際の一時ファイル。
 internal_auth.json
 .internal_auth.json.*.tmp

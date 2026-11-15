@@ -1896,13 +1896,22 @@ Run codex doctor without --summary for detailed diagnostics.
                 ("sk-proj-SYNTHETIC_CREDENTIAL", "<redacted>"),
                 ("ghp_SYNTHETIC_CREDENTIAL", "<redacted>"),
                 ("github_pat_SYNTHETIC_CREDENTIAL", "<redacted>"),
-                ("AKIAABCDEFGHIJKLMNOP", "<redacted>"),
-                ("ASIAABCDEFGHIJKLMNOP", "<redacted>"),
                 ("eyJhbGciOiJIUzI1NiJ9.synthetic.signature", "<redacted>"),
             ] {
                 assert_eq!(
                     redact_detail(&format!("demo-server: {prefix} {variable} is not set")),
                     format!("demo-server: {prefix} {expected} is not set")
+                );
+            }
+        }
+        // AiDiy: build non-authentic AWS-shaped fixtures only at test runtime.
+        // Do not commit complete credential-shaped literals from upstream fixtures.
+        for key_prefix in ["AKIA", "ASIA"] {
+            let variable = format!("{key_prefix}{}", "X".repeat(16));
+            for prefix in ["env var", "bearer token env var", "header env var"] {
+                assert_eq!(
+                    redact_detail(&format!("demo-server: {prefix} {variable} is not set")),
+                    format!("demo-server: {prefix} <redacted> is not set")
                 );
             }
         }
