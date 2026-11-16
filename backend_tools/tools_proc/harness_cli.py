@@ -32,7 +32,13 @@ class ProgressConnection:
 async def run(request):
     if not isinstance(request, dict) or request.get("provider") not in CLI_PROVIDERS:
         raise ValueError("未対応の外部CLIです。")
+    # Legacy Codex binaries omit cli_mode; Hermes/Pi explicitly send their chat default.
+    cli_mode = request.get("cli_mode", "passthrough")
+    if cli_mode not in {"chat", "passthrough"}:
+        raise ValueError("CLI方式は chat または passthrough を指定してください。")
     model, prompt, project = (request.get(key) for key in ("model", "prompt", "project"))
+    if cli_mode == "chat":
+        prompt = "structured chat"
     if not all(isinstance(value, str) and value.strip() for value in (model, prompt, project)):
         raise ValueError("外部CLIへの入力が不正です。")
     if len(model) > 300 or any(ord(c) < 32 for c in model):
@@ -43,6 +49,14 @@ async def run(request):
     if mode not in {"yolo", "read-only", "normal"}:
         raise ValueError("外部CLIの実行モードが不正です。")
     sys.path.insert(0, str(ROOT / "backend_server"))
+    if cli_mode == "chat":
+        if __package__:
+            from .harness_chat import run_chat
+        else:
+            from harness_chat import run_chat
+        message = await run_chat(request)
+        emit({"type": "result", "ok": True, "text": message.get("content") or "", "message": message})
+        return
     from AIコア.AIコード_cli import CodeAI
     from AIコア.AI実行オプション import AI実行オプション
     from AIコア.AI応答 import エラー応答判定

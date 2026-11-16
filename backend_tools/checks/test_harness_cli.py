@@ -28,9 +28,10 @@ permissions = load("harness_permissions", "backend_server/AIコア/AIコードCL
 
 class HarnessTest(unittest.IsolatedAsyncioTestCase):
     async def test_all_six_providers_inherit_each_mode_without_resume(self):
-        for provider in sorted(adapter.CLI_PROVIDERS):
+        for provider, cli_mode in [(provider, cli_mode) for provider in sorted(adapter.CLI_PROVIDERS)
+                                   for cli_mode in (None, "passthrough")]:
             for mode in ("yolo", "normal", "read-only"):
-                with self.subTest(provider=provider, mode=mode):
+                with self.subTest(provider=provider, mode=mode, cli_mode=cli_mode):
                     code = SimpleNamespace(実行=AsyncMock(return_value="fixture answer"))
                     factory = Mock(return_value=code)
                     output = io.StringIO()
@@ -40,7 +41,8 @@ class HarnessTest(unittest.IsolatedAsyncioTestCase):
                         "AIコア.AI応答": SimpleNamespace(エラー応答判定=lambda _: False)}
                     with patch.dict(sys.modules, modules), patch.object(adapter, "OUTPUT", output):
                         await adapter.run({"provider": provider, "model": "same", "project": str(ROOT),
-                                           "prompt": "[user]\nfixture", "mode": mode})
+                                           "prompt": "[user]\nfixture", "mode": mode,
+                                           **({"cli_mode": cli_mode} if cli_mode else {})})
                         await factory.call_args.kwargs["親"].接続.send_to_channel("code", {
                             "メッセージ識別": "output_stream", "メッセージ内容": "progress"})
                     kw = factory.call_args.kwargs

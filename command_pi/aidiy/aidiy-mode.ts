@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 
+import type { CliMode } from "./aidiy-cli-chat.ts";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { parseArgs } from "../packages/coding-agent/src/cli/args.ts";
 
@@ -19,9 +20,10 @@ export const PI_VALUE_FLAGS = new Set([
 const SUBCOMMANDS = new Set(["auth", "mcp", "update", "install", "remove", "uninstall", "list", "config"]);
 
 /** AiDiy 独自のモード指定を取り出し、read-only の起動制約を Pi に渡す。 */
-export function aidiyModeArgs(input: string[]): { args: string[]; readOnly: boolean } {
+export function aidiyModeArgs(input: string[]): { args: string[]; readOnly: boolean; cliMode: CliMode } {
 	const args: string[] = [];
 	let readOnly = false;
+	let cliMode: CliMode = "chat";
 	let endOfOptions = -1;
 	let missingValue: string | undefined;
 	for (let index = 0; index < input.length; index++) {
@@ -31,7 +33,11 @@ export function aidiyModeArgs(input: string[]): { args: string[]; readOnly: bool
 			args.push(...input.slice(index));
 			break;
 		}
-		if (arg === "--read-only") {
+		if (arg === "--cli" || arg.startsWith("--cli=")) {
+			const value = arg === "--cli" ? input[++index] : arg.slice(6);
+			if (value !== "chat" && value !== "passthrough") throw new Error("--cli は chat または passthrough を指定してください。");
+			cliMode = value;
+		} else if (arg === "--read-only") {
 			readOnly = true;
 		} else if (arg === "--yolo") {
 			// Pi 標準が確認なし。両指定の場合も read-only は解除しない。
@@ -60,11 +66,12 @@ export function aidiyModeArgs(input: string[]): { args: string[]; readOnly: bool
 		// 設定・拡張・MCP から変更ツールを追加させず、既存 --tools より後で確定する。
 		args.splice(endOfOptions < 0 ? args.length : endOfOptions, 0, "--no-extensions", "--no-mcp", "--tools", READ_TOOLS.join(","));
 	}
-	return { args, readOnly };
+	return { args, readOnly, cliMode };
 }
 
 /** 表示上のツール制限だけに頼らず、実行直前にも読取ツール以外を拒否する。 */
 export function aidiyModeExtension(pi: ExtensionAPI, readOnly: boolean): void {
+	pi.registerFlag("cli", { description: "外部CLI方式: chat（標準）/ passthrough（従来の委譲）", type: "string" });
 	pi.registerFlag("yolo", { description: "確認なしで実行（Pi 標準の動作）", type: "boolean" });
 	pi.registerFlag("read-only", { description: "調査・説明のみ。read / grep / find / ls 以外を禁止", type: "boolean" });
 	if (!readOnly) return;

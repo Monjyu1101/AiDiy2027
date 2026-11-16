@@ -226,6 +226,7 @@ class HermesModelCatalogTests(unittest.TestCase):
         args = SimpleNamespace(**dict.fromkeys("image toolsets skills reasoning max_turns run_budget verbose gateway worktree checkpoints pass_session_id resume base_url api_key".split()))
         args.version = args.read_only = args.yolo = args.oneshot_stdin = args.compact = args.list_tools = args.list_toolsets = args.ignore_user_config = args.ignore_rules = False
         args.ignore_user_config = ignore_user_config
+        args.cli = "chat"
         args.quiet = True
         args.oneshot = "test"
         args.query = args.prompt = None

@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Chrome DevTools Protocol を MCP ツールとして公開するサーバー"
 requires-python = ">=3.13"
 dependencies = [
+    "jsonschema>=4.18,<5",
+    "github-copilot-sdk==1.0.34",
     "psutil",
     "mcp[cli]>=2,<3",
     "fastapi",

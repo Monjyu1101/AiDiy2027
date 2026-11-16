@@ -17921,7 +17921,8 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         # forward the user message to the selected external CLI subprocess
         # (claude / antigravity / copilot / codex / opencode / grok). Mirrors how
         # backend_server/AIコア/AIコード_cli.py runs these CLIs from AiDiy.
-        if provider_entry_is_cli(getattr(self, "_aidiy_provider_slug", "") or ""):
+        if (provider_entry_is_cli(getattr(self, "_aidiy_provider_slug", "") or "")
+                and getattr(self, "_aidiy_cli_mode", "chat") == "passthrough"):
             return self._dispatch_aidiy_cli_subprocess(message, images=images)
 
         # Reset the per-turn interrupt flag. Any subsequent path that
@@ -22938,6 +22939,7 @@ def main(
     ignore_user_config: bool = False,
     ignore_rules: bool = False,
     aidiy_provider_slug: str = None,
+    cli_mode: str = "chat",
 ):
     """
     AiDiy Hermes CLI - Interactive AI Assistant
@@ -23165,6 +23167,7 @@ def main(
                 pass_session_id=pass_session_id,
                 ignore_rules=ignore_rules,
             )
+            cli._aidiy_cli_mode = cli_mode
             cli._aidiy_remember_model_selection = not quiet
             if aidiy_provider_slug:
                 # runtime の custom 変換後も Gemini / FreeAI の独立したキーを保つ。
@@ -23363,7 +23366,7 @@ def main(
             sys.exit(1)
         try:
             query, single_query_images = _collect_query_images(query, image)
-            if quiet and provider_entry_is_cli(
+            if quiet and cli_mode == "passthrough" and provider_entry_is_cli(
                 getattr(cli, "_aidiy_provider_slug", "") or ""
             ):
                 sys.exit(_run_aidiy_cli_quiet(cli, query, single_query_images))
@@ -23663,6 +23666,8 @@ def _build_arg_parser():
         default=False,
         help="Bypass dangerous command approval prompts.",
     )
+    parser.add_argument("--cli", choices=("chat", "passthrough"), default="chat",
+                        help="外部 CLI: chat は Hermes のツールを利用、passthrough は従来の移譲")
     parser.add_argument("--read-only", action="store_true", default=False,
                         help="調査・説明のみ。外部 CLI へも読み取り専用モードを引き継ぐ。")
     parser.add_argument("prompt", nargs="*")
@@ -24022,6 +24027,7 @@ def cli_entry(argv: list[str] | None = None) -> int:
     try:
         main(
             query=query,
+            cli_mode=args.cli,
             oneshot=oneshot,
             image=args.image,
             toolsets=args.toolsets,
