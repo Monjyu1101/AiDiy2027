@@ -828,6 +828,17 @@ impl Session {
         git_enrichment_policy: GitEnrichmentPolicy,
         windows_sandbox_proxy_settings_mode: codex_sandboxing::WindowsSandboxProxySettingsMode,
     ) -> anyhow::Result<Arc<Self>> {
+        // AiDiy: inference-only children never execute tools or startup hooks.
+        if crate::aidiy_inference::enabled() {
+            crate::aidiy_inference::validate_model(
+                config.model.as_deref(),
+                &config.model_provider_id,
+            )?;
+            thread_extension_init.insert(crate::aidiy_inference::tool_policy());
+            session_configuration.base_instructions =
+                crate::aidiy_inference::INSTRUCTIONS.to_string();
+            session_configuration.developer_instructions = None;
+        }
         debug!(
             "Configuring session: model={}; provider={:?}",
             session_configuration

@@ -1,15 +1,33 @@
 # Hermes / Pi / Codex の外部 CLI chat / passthrough
 
-モデルを `copilot_cli/same` のように選ぶと、親ハーネスが子CLIを利用する。Hermes / Pi では `--cli chat` が既定、`--cli passthrough` で旧委譲方式へいつでも戻せる。APIモデルにはこの切替は影響しない。対応区分は `claude_cli`、`antigravity_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデルを変更せず、OpenCode の `openai/gpt-6-luna` のような階層付きモデル名は保持する。
+モデルを `copilot_cli/same` のように選ぶと、親ハーネスが子CLIを利用する。Hermes / Pi / 新しいCodexソースでは `--cli chat` が既定、`--cli passthrough` で旧委譲方式へいつでも戻せる。APIモデルにはこの切替は影響しない。対応区分は `claude_cli`、`antigravity_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデルを変更せず、OpenCode の `openai/gpt-6-luna` のような階層付きモデル名は保持する。
 
 
-## Hermes / Pi の chat（既定）と passthrough（旧方式）
+## Hermes / Pi / Codex の chat（既定）と passthrough（旧方式）
 
 - `--cli chat` / 指定なし: 親が会話・system・知識・tools・承認を所有し、子は推論だけを行う。構造化されたツール要求を親へ返し、親の通常ループで実行する。ファイル操作も親側で実施する。
 - `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
 - 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
 
-chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（公式Python SDKのempty modeと構造化応答）が対象。`codex_cli` / `antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側は今回Hermes / Piのみ対応。Codex外側の変更は検証後に別途提供し、現行Codexは従来の委譲方式を維持する。この「外側ハーネス」と「内側CLI」の対応は別物。
+chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（公式Python SDKのempty modeと構造化応答）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
+
+### Codexの専用推論入口
+
+`codex_cli` のchatは、通常の外部 `codex` ではなく `~/.aidiy/bin/aidiy_codex(.exe)` の `exec --aidiy-inference-only` を使う。専用版への再コンパイルが必要。旧バイナリは未知オプションで停止し、外部Codexやpassthroughへ降格しない。通常のpassthroughは従来の外部CLIのまま。
+
+既存の `~/.codex`（または `CODEX_HOME`）認証経路を使用し、秘密情報を一時フォルダへコピーしない。ユーザー設定・rules・プロジェクト設定からの自動実行を避け、新しい一時セッションに親の正規会話を毎回渡す。親側の知識・履歴・ツール結果が会話の正本で、子セッションはresumeしない。`same` / `auto` は隔離したCodex既定モデルとなり、ユーザーconfig内の既定モデルは読まない。モデルを固定したい場合は明示する。
+
+Codexのstrict構造化応答に合わせ、transport上のみツール引数はJSON文字列とする。Pythonでobjectへ復元し、他エンジンと同じ親schemaで名前・引数を検証する。自然文のツール要求は実行しない。
+
+検証にはRust専用入口の試験と共通Python試験の両方が必要。Python mock成功だけで新バイナリの実行や実認証推論を確認した扱いにしない。
+
+### 未対応エンジンと障害の区別
+
+「内側CLIのchat接続未対応」は外側Hermes/Pi/Codexの知識・ツール機構の不存在を意味しない。対応エンジンへ切り替えるか通常APIモデルを使う。旧方式の `passthrough` は子自身が処理する別方式で、chat障害時に自動選択しない。
+
+- 外部Codexの `exec --output-schema` は最終応答形式だけを制約する。`read-only` は読取ツールを残すため推論専用ではない。内部の空 `ToolPolicy.allowed_tools` は全ツールを止められるが、現行の公開exec/app-server設定から指定できない。
+- Grokのtools許可リストだけではMCP meta-toolsが残る。Antigravityの構造化出力だけでは別ファイルからのhooks等を止められない。OpenCodeの共有サーバー接続も、個別プロセスへ渡した設定だけで隔離できたと判断しない。
+- Claudeの異常終了はCLI版・認証・通信・モデルの分類と終了コードを返す。子の生stderrは会話・秘密情報を含み得るため返さない。分類は診断補助であり、原因を確定するものではない。
 
 ツール定義・会話・結果IDをJSONで渡し、応答は `{content, tool_calls:[{name, arguments}]}` の厳密なJSON。通常文章を正規表現でツール要求へ変換しない。子のファイル/シェル/MCP等は無効で、登録ツール名・引数schemaを共通入口で検証してから親形式へ変換する。呼出IDは共通入口が発行し、次の結果と対応付ける。画像・音声等は現状未対応で、捨てずにエラーにする。
 
@@ -27,7 +45,7 @@ aidiy_pi --cli passthrough --model codex_cli/gpt-6-luna
 
 検証: `backend_tools/checks/test_harness_chat.py`（入力・schema・不正呼出・旧方式への非降格）、各ハーネスのchat adapter試験。mockの往復成功は実認証付きCLIの精度評価ではない。実運用導入時は同じ課題でAPI・chat・passthroughの結果、ツール実行数、所要時間を比較する。
 
-共通JSON入口の `cli_mode` 未指定は、現行Codexバイナリとの互換性のためpassthrough。Hermes / Piは起動オプション未指定時にも明示的にchatを送る。
+共通JSON入口の `cli_mode` 未指定は、現行Codexバイナリとの互換性のためpassthrough。Hermes / Pi / 新しいCodexソースは起動オプション未指定時にも明示的にchatを送る。
 
 ## 共通の実行経路（passthrough）
 

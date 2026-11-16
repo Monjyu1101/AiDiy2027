@@ -131,17 +131,36 @@ def claude_command(model):
     return args
 
 
+def execution_failure(returncode, stderr):
+    """Return a useful category without echoing child output (tokens/prompts/paths)."""
+    error = stderr.decode("utf-8", errors="replace").lower()
+    if any(word in error for word in ("unknown option", "unrecognized argument", "unknown flag", "unexpected argument")):
+        if "--aidiy-inference-only" in error:
+            reason = "aidiy_codexが推論専用経路に対応していません。python command_codex/_compile.py で再コンパイルしてください。"
+        else:
+            reason = "CLIの版がchat用オプションに対応していません。CLIを更新してください。"
+    elif any(word in error for word in ("not logged in", "authentication", "unauthorized", "invalid api key", "login required")):
+        reason = "CLIの認証に失敗しました。選択したCLIへログインしてください。"
+    elif any(word in error for word in ("timeout", "timed out", "connection", "econn", "fetch failed")):
+        reason = "CLIの通信に失敗しました。接続先とネットワークを確認してください。"
+    elif any(word in error for word in ("model not found", "unknown model", "invalid model", "model is not available")):
+        reason = "選択したモデルをCLIで利用できません。モデル指定を確認してください。"
+    else:
+        reason = "CLIが正常終了しませんでした。CLIの版・モデル・認証を確認してください。"
+    return f"CLI chatエンジンの実行失敗（終了コード {returncode}）。{reason} この応答の生成を停止しました。自動でpassthroughへ切り替えません。"
+
+
 async def run_process(command, payload, cwd):
     wrapper = ROOT / "backend_tools" / "tools_proc" / "process_lifetime.py"
     process = await asyncio.create_subprocess_exec(
         sys.executable, str(wrapper), "--parent-pid", str(os.getpid()), "--", *command,
         cwd=cwd, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.PIPE,
     )
     try:
-        stdout, _ = await asyncio.wait_for(process.communicate(payload), timeout=600)
+        stdout, stderr = await asyncio.wait_for(process.communicate(payload), timeout=600)
         if process.returncode:
-            raise ValueError("CLI chatの推論専用実行に失敗しました。CLIの版・認証を確認してください。自動でpassthroughへ切り替えません。")
+            raise ValueError(execution_failure(process.returncode, stderr))
         if len(stdout) > LIMIT:
             raise ValueError("CLI chatの応答が大きすぎます。")
         return stdout
@@ -172,6 +191,12 @@ async def run_chat(request):
             from harness_copilot_chat import chat
         value = await chat(request)
         # Copilot backend returns the same inference-only structured envelope.
+    elif provider == "codex_cli":
+        if __package__:
+            from .harness_codex_chat import chat
+        else:
+            from harness_codex_chat import chat
+        value = await chat(request)
     elif provider == "claude_cli":
         command = claude_command(request["model"])
         payload = json.dumps({"messages": request["messages"], "tools": request.get("tools", []), "tool_choice": request.get("tool_choice", "auto")}, ensure_ascii=False).encode("utf-8")
@@ -185,7 +210,13 @@ async def run_chat(request):
             raise ValueError("Claude CLIの構造化応答が不正です。")
         value = result.get("structured_output")
     else:
-        raise ValueError(f"{provider} は推論専用chatが未対応です。既存方式には --cli passthrough を指定してください。")
+        raise ValueError(
+            f"選択した内側CLI {provider} は、親ハーネスがツールを実行するchatエンジン接続に未対応です。"
+            "Hermes/Pi/Codex自体が推論できないという意味ではありません。"
+            "chatではclaude_cli / copilot_cli / 推論専用版codex_cli、または通常のAPIモデルを選択してください。"
+            "子CLIへ処理全体を渡す旧方式は --cli passthrough です（親ツール実行とは異なります）。"
+            "自動で旧方式へ切り替えません。"
+        )
     message = normalize_response(value, definitions)
     choice = request.get("tool_choice", "auto")
     calls = message["tool_calls"]

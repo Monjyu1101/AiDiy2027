@@ -151,3 +151,11 @@ fn worktree_flag_is_accepted_before_fork_subcommand() {
     assert!(cli.worktree);
     assert!(matches!(cli.command, Some(Command::Fork(_))));
 }
+
+#[test]
+fn aidiy_inference_flag_is_explicit_and_off_by_default() {
+    assert!(!Cli::parse_from(["codex-exec", "hello"]).aidiy_inference_only);
+    let cli = Cli::parse_from(["codex-exec", "--aidiy-inference-only", "-"]);
+    assert!(cli.aidiy_inference_only);
+    assert_eq!(cli.prompt.as_deref(), Some("-"));
+}

@@ -178,6 +178,10 @@ pub(crate) async fn stream(
     permissions: &PermissionProfile,
     approvals: AskForApproval,
 ) -> Result<ResponseStream> {
+    // AiDiy: inference-only children never execute tools or startup hooks.
+    if crate::aidiy_inference::enabled() {
+        return Err(invalid("inference-only child cannot delegate to a CLI"));
+    }
     let (provider, model) = codex_model_provider_info::split_aidiy_cli_model(model)
         .ok_or_else(|| invalid("未対応の CLI モデルです。"))?;
     let passthrough = PASSTHROUGH.load(std::sync::atomic::Ordering::Relaxed);

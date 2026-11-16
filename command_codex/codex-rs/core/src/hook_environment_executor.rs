@@ -53,6 +53,10 @@ pub(crate) fn with_tool_environment_hooks(
     environments: &TurnEnvironmentSnapshot,
     target_environments: &[&str],
 ) -> Hooks {
+    // AiDiy: even owner-admitted environment hooks must not run in the child.
+    if crate::aidiy_inference::enabled() {
+        return session.hooks().as_ref().clone();
+    }
     session.hooks().with_environment_hooks(
         environment_hook_sources(environments, target_environments),
         Arc::new(EnvironmentCommandExecutor {

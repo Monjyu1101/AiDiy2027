@@ -315,9 +315,11 @@ impl McpManager {
         disabled_plugin_ids: &[String],
     ) -> McpRuntimeProjection {
         let config = context.config();
-        if context
-            .thread_init()
-            .is_some_and(|init| init.get::<McpServersDisabled>().is_some())
+        // AiDiy: inference-only children never execute tools or startup hooks.
+        if crate::aidiy_inference::enabled()
+            || context
+                .thread_init()
+                .is_some_and(|init| init.get::<McpServersDisabled>().is_some())
         {
             let mut mcp_config = config.to_mcp_config_with_loaded_plugins(&Default::default(), []);
             mcp_config.mcp_server_catalog = Default::default();

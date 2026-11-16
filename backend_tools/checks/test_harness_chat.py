@@ -24,6 +24,16 @@ def request():
 
 
 class ChatTests(unittest.IsolatedAsyncioTestCase):
+    def test_failure_diagnostics_do_not_echo_private_stderr(self):
+        cases = [("error: unknown option --safe-mode", "CLIの版"),
+                 ("unknown flag --aidiy-inference-only", "再コンパイル"), ("not logged in", "認証"), ("fetch failed", "通信"),
+                 ("unknown model", "モデル"), ("unexpected failure", "正常終了")]
+        for raw, expected in cases:
+            result = chat.execution_failure(2, (raw + " token=private-fixture path=/private").encode())
+            self.assertIn(expected, result)
+            self.assertIn("終了コード 2", result)
+            self.assertNotIn("private", result)
+
     def test_schema_and_unknown_tools_fail_closed(self):
         defs = chat.validate_request(request())
         for value in [
@@ -113,9 +123,10 @@ class ChatTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(answer["tool_calls"])
 
     async def test_unsupported_child_never_delegates(self):
-        r = request(); r['provider'] = 'codex_cli'
-        with self.assertRaisesRegex(ValueError, 'passthrough'):
-            await cli.run(r)
+        for provider in ('opencode_cli', 'grok_cli', 'antigravity_cli'):
+            r = request(); r['provider'] = provider
+            with self.assertRaisesRegex(ValueError, '選択した内側CLI.*passthrough'):
+                await cli.run(r)
 
     async def test_no_markdown_or_plain_text_tool_extraction(self):
         with patch.object(chat, 'claude_command', return_value=['fake']), patch.object(chat, 'run_process', AsyncMock(return_value=b'{"type":"result","result":"call read(a)"}')):
