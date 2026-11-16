@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 //! Exercises Google Cloud onboarding through the widget and embedded app-server.
@@ -31,7 +32,9 @@ async fn gcp_menu_gating_and_setup_flow() {
         terminal
             .draw(|frame| widget.render_ref(area, frame.buffer_mut()))
             .unwrap();
-        insta::assert_snapshot!(name, terminal.backend().to_string());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, terminal.backend().to_string());
+        });
     };
     snapshot(
         &widget,

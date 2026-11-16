@@ -1,5 +1,6 @@
 //! Completion metadata rendering, date selection, and muted styling coverage.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use chrono::NaiveDateTime;
 use chrono::TimeZone;
@@ -111,7 +112,9 @@ fn completion_uses_twenty_four_hour_time_with_dates_and_wrapping() {
             vec![Line::from(cell.label(next_year).unwrap())]
         );
     }
-    insta::assert_snapshot!(labels.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(labels.join("\n"));
+    });
 }
 
 #[test]

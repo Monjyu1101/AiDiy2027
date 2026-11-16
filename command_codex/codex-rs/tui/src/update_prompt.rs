@@ -1,6 +1,7 @@
 //! Shared picker presentation for the installed CLI's update choices.
 //! Update discovery and execution remain disabled in debug builds.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(any(not(debug_assertions), test))]
 
 use crate::bottom_pane::picker_option_list;
@@ -298,7 +299,9 @@ mod tests {
         terminal
             .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
             .expect("render update prompt");
-        insta::assert_snapshot!("update_prompt_modal", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("update_prompt_modal", terminal.backend());
+        });
     }
 
     #[test]
@@ -360,7 +363,9 @@ mod tests {
         let words = rendered.split_whitespace().collect::<Vec<_>>().join(" ");
         assert!(words.contains("enter continue · esc skip"));
         assert_eq!(screen.selection(), None);
-        insta::assert_snapshot!(format!("update_picker_selected_{width}x{height}"), rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!("update_picker_selected_{width}x{height}"), rendered);
+        });
         screen.handle_key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert_eq!(screen.selection(), Some(UpdateSelection::NotNow));
     }

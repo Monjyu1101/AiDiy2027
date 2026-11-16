@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::history_cell::PlainHistoryCell;
 use crate::legacy_core::config::Config;
 use crate::legacy_core::config::Permissions;
@@ -724,7 +725,9 @@ interrupt_message = false
             .await
             .expect("load config");
 
-        insta::assert_snapshot!(render_to_text(&render_agents_config_lines(&config)));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(render_to_text(&render_agents_config_lines(&config)));
+        });
     }
 
     fn empty_toml_table() -> TomlValue {
@@ -1012,7 +1015,9 @@ interrupt_message = false
 
         let rendered = render_stack_to_text(&stack);
         #[cfg(not(windows))]
-        insta::assert_snapshot!("debug_config_requirement_sources", rendered.as_str());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("debug_config_requirement_sources", rendered.as_str());
+        });
 
         let requirements_source = (RequirementSource::LegacyManagedConfigTomlFromMdm).to_string();
         assert!(rendered.contains(&format!(
@@ -1137,10 +1142,12 @@ interrupt_message = false
             sandbox_mode_is_allowed_by_permissions(&permissions, mode)
         });
         #[cfg(not(windows))]
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "debug_config_effective_sandbox_modes_with_deny_read",
             rendered.as_str()
         );
+        });
         assert!(
             rendered.contains(
                 format!(
@@ -1230,7 +1237,9 @@ interrupt_message = false
             outputs.push(format!("{table}:\n{}", render_stack_to_text(&stack)));
         }
 
-        insta::assert_snapshot!(outputs.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(outputs.join("\n\n"));
+        });
     }
 
     #[test]

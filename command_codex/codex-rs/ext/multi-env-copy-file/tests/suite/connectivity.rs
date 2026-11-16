@@ -1,5 +1,6 @@
 //! Keeps the tool stable across unavailable attachments and reports lost executor connections.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -94,13 +95,16 @@ async fn copy_file_remains_available_with_unavailable_attachment() -> Result<()>
                 .tool_by_name("functions", "multi_env_copy_file")
                 .is_some()
     );
-    insta::assert_json_snapshot!(
-        "unavailable_endpoints",
-        json!({
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = json!({
             "source": mock.function_call_output_text("source-offline").context("source error")?,
             "target": mock.function_call_output_text("target-offline").context("target error")?,
-        })
-    );
+        });
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_json_snapshot!("unavailable_endpoints", snapshot_value);
+        });
+    };
     Ok(())
 }
 
@@ -241,7 +245,9 @@ async fn copy_file_reports_disconnection_after_step_capture() -> Result<()> {
         .map(|item| json!({"call_id": item["call_id"], "output": item["output"]}))
         .collect::<Vec<_>>();
     assert_eq!(outputs.len(), 2);
-    insta::assert_json_snapshot!("disconnected_executor", outputs);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_json_snapshot!("disconnected_executor", outputs);
+    });
     assert_eq!(fs::read(root.path().join("target.bin"))?, b"original");
     streaming.shutdown().await;
     Ok(())

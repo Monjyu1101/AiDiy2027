@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::App;
 use super::AppEvent;
 use super::AppServerSession;
@@ -196,7 +197,9 @@ async fn global_chord_keeps_hints_and_completes_before_deadline() -> Result<()> 
     for pos in panel.area.positions() {
         panel[pos] = tui.terminal.previous_buffer()[pos].clone();
     }
-    insta::assert_snapshot!("pending_custom_chord", buffer_text(&panel));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("pending_custom_chord", buffer_text(&panel));
+    });
     let narrow_size = ratatui::layout::Size::new(/*width*/ 36, /*height*/ 9);
     app.handle_tui_event(&mut tui, &mut app_server, TuiEvent::Resize(narrow_size))
         .await?;
@@ -210,10 +213,12 @@ async fn global_chord_keeps_hints_and_completes_before_deadline() -> Result<()> 
     app.handle_tui_event(&mut tui, &mut app_server, TuiEvent::Resize(inline_size))
         .await?;
     assert_eq!(tui.shortcut_hud_area, Some(tui.terminal.viewport_area));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "pending_custom_chord_inline",
         buffer_text(tui.terminal.previous_buffer())
     );
+    });
     tokio::time::advance(std::time::Duration::from_millis(/*millis*/ 650)).await;
     app.handle_tui_event(&mut tui, &mut app_server, TuiEvent::Draw)
         .await?;
@@ -1373,7 +1378,9 @@ async fn sidebar_chooser_preserves_the_parent_draft_and_starts_a_side_chat() -> 
         }
         if key == KeyCode::Esc {
             let frame = super::side_frame(&mut app, &mut tui, size)?;
-            insta::assert_snapshot!("sidebar_new_chat", frame);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("sidebar_new_chat", frame);
+            });
             app.begin_pane_resize(&mut tui)?;
             let resizing = super::side_frame(&mut app, &mut tui, size)?;
             let footer = resizing.lines().last().unwrap().split_once('│').unwrap().1;
@@ -1488,7 +1495,9 @@ async fn sidebar_chooser_preserves_the_parent_draft_and_starts_a_side_chat() -> 
     )
     .await?;
     let narrow = super::side_frame(&mut app, &mut tui, ratatui::layout::Size::new(30, 8))?;
-    insta::assert_snapshot!("sidebar_failed_creation", narrow);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("sidebar_failed_creation", narrow);
+    });
     super::side_frame(&mut app, &mut tui, size)?;
     app.begin_pane_resize(&mut tui)?;
     assert!(app.pane_resize.is_some());

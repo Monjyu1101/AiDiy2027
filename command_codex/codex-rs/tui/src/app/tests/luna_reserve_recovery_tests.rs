@@ -1,5 +1,6 @@
 //! Verify Reserve recovery through accepted usage reads and the task settings RPC.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::UserMessage;
 use codex_app_server_protocol::GetAccountRateLimitsResponse;
@@ -297,7 +298,9 @@ async fn luna_reserve_recovery_restores_task_and_pending_turn_after_fresh_backen
                 _ => None,
             })
             .expect("recovery notice");
-        insta::assert_snapshot!("luna_reserve_recovery_notice", notice);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("luna_reserve_recovery_notice", notice);
+        });
         server.shutdown().await?;
         proxy.await??;
     }

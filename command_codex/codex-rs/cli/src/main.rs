@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use clap::Args;
 use clap::CommandFactory;
 use clap::Parser;
@@ -3248,7 +3249,9 @@ enabled = true
             .expect_err("unsupported worktree command");
             errors.push(format!("{}: {error}", arguments.join(" ")));
         }
-        insta::assert_snapshot!("unsupported_worktree_commands", errors.join("\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("unsupported_worktree_commands", errors.join("\n"));
+        });
     }
 
     #[test]

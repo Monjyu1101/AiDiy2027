@@ -1,5 +1,6 @@
 //! Verify captured catalog definitions and history attachments reach outgoing model requests.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -164,12 +165,14 @@ async fn history_images_reach_the_next_model_request() -> Result<(), Box<dyn std
                 {"type": "input_image", "image_url": format!("data:image/png;base64,{PNG}"), "detail": "original"}
         ])
     );
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "History/Notes catalog definitions preserve empty and whitespace namespace descriptions, and history images reach the next model request.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }

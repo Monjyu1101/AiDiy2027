@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::AgentMarkdownCell;
 use crate::history_cell::HistoryCell;
@@ -254,7 +255,9 @@ fn viewer_materializes_sandboxed_static_document() {
     let contract = format!(
         "{shell} srcdoc=\"[canonical visualization frame]\"></iframe></body></html>\n\nembedded frame:\n- canonical control styles\n- Floating UI tooltip runtime\n- Lucide icon runtime\n- visualization fragment"
     );
-    insta::assert_snapshot!("viewer_document_contract", contract);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("viewer_document_contract", contract);
+    });
 }
 
 #[test]
@@ -305,10 +308,12 @@ fn viewer_embeds_interactive_controls() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "viewer_controls",
         format!("{}\n\n{controls}\n\n{styles}", fragment.trim())
     );
+    });
 }
 
 #[test]
@@ -386,7 +391,9 @@ fn finalized_agent_cell_replays_visualization_link() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    insta::assert_snapshot!("finalized_agent_cell_visualization_link", snapshot_text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("finalized_agent_cell_visualization_link", snapshot_text);
+    });
     let title_span = lines
         .iter()
         .flat_map(|line| &line.line.spans)
@@ -493,10 +500,12 @@ fn transcript_overlay_remeasures_visualization_when_artifact_becomes_available()
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_overlay_visualization_becomes_available",
         format!("before:\n{unavailable}\n\nafter:\n{available}")
     );
+    });
 }
 
 #[test]
@@ -516,7 +525,9 @@ fn agent_code_blocks_preserve_visualization_directive_literals() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    insta::assert_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(text);
+    });
 }
 
 #[test]

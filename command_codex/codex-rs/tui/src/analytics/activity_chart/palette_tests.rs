@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::terminal_palette::rgb_color;
 use pretty_assertions::assert_eq;
@@ -26,7 +27,9 @@ fn current_palette_uses_effective_terminal_color_level() {
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!(legend);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(legend);
+            });
         },
     );
 }

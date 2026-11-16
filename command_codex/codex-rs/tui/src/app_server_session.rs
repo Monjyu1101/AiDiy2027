@@ -3,6 +3,7 @@
 //! This module owns the typed JSON-RPC calls needed by the TUI and keeps
 //! request/response plumbing out of `App` and `ChatWidget`.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod account;
 pub(crate) use account::SessionAccount;
 mod cloud_project;
@@ -5168,12 +5169,14 @@ mod tests {
         let (mut chat, _sender, _events, mut commands) =
             crate::chatwidget::tests::helpers::make_chatwidget_manual_with_sender().await;
         chat.handle_thread_session(started.session);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "resumed_plan_mode",
             crate::chatwidget::tests::helpers::normalize_snapshot_paths(
                 crate::chatwidget::tests::helpers::render_bottom_popup(&chat, /*width*/ 40),
             )
         );
+        });
         chat.handle_paste("Continue planning".to_string());
         chat.handle_key_event(crossterm::event::KeyCode::Enter.into());
         let submitted_mode = std::iter::from_fn(|| commands.try_recv().ok()).find_map(|command| {

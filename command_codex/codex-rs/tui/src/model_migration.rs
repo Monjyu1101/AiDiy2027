@@ -1,6 +1,7 @@
 //! Model upgrade copy and choices with shared picker presentation.
 //! Mandatory and optional migration outcomes retain their existing keyboard policy.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::bottom_pane::picker_option_list;
 use crate::bottom_pane::render_menu_surface;
 use crate::key_hint;
@@ -453,7 +454,9 @@ mod tests {
         }
         terminal.flush().expect("flush");
 
-        assert_snapshot!("model_migration_prompt", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("model_migration_prompt", terminal.backend());
+        });
     }
 
     #[test]
@@ -480,7 +483,9 @@ mod tests {
             frame.render_widget_ref(&screen, frame.area());
         }
         terminal.flush().expect("flush");
-        assert_snapshot!("model_migration_prompt_gpt5_family", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("model_migration_prompt_gpt5_family", terminal.backend());
+        });
     }
 
     #[test]
@@ -600,7 +605,9 @@ mod tests {
         assert!(rendered.contains("› 2. Use existing model"));
         assert!(rendered.contains("enter/esc confirm"));
         assert!(!screen.is_done());
-        assert_snapshot!(format!("model_picker_selected_{width}x{height}"), rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(format!("model_picker_selected_{width}x{height}"), rendered);
+        });
         screen.handle_key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert_eq!(screen.outcome(), super::ModelMigrationOutcome::Rejected);
     }

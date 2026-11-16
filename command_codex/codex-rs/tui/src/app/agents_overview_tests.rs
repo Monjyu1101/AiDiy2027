@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #[path = "agents_overview_discovery_tests.rs"]
 mod discovery;
 
@@ -41,10 +42,12 @@ async fn overview_worktree_creation_busy_state() {
     }
     assert!(rx.try_recv().is_err());
     app.chat_widget.show_bottom_pane_view(Box::new(view));
-    insta::assert_snapshot!(normalize_agent_center_snapshot(render_bottom_popup(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(normalize_agent_center_snapshot(render_bottom_popup(
         &app.chat_widget,
         /*width*/ 80,
     )));
+    });
 }
 
 #[tokio::test]
@@ -93,7 +96,9 @@ async fn overview_thread_colors_match_footer_and_respect_color_suppression() {
             }
         }
     }
-    insta::assert_snapshot!(snapshot.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot.join("\n"));
+    });
 }
 
 #[tokio::test]
@@ -103,7 +108,9 @@ async fn older_server_notice_is_visible_in_agents_overview() {
     let view = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
     app.chat_widget.show_bottom_pane_view(Box::new(view));
     let rendered = render_bottom_popup(&app.chat_widget, /*width*/ 80);
-    insta::assert_snapshot!(rendered.lines().last().unwrap());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered.lines().last().unwrap());
+    });
 }
 
 #[tokio::test]
@@ -129,10 +136,12 @@ async fn older_server_notice_truncates_in_narrow_overview() {
     app.update_server_version_overview_notice("0.153.0", Some("0.152.1"));
     let view = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
     app.chat_widget.show_bottom_pane_view(Box::new(view));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "older_server_narrow_overview",
         render_bottom_popup(&app.chat_widget, /*width*/ 12)
     );
+    });
 }
 
 use crate::app::test_support::make_test_app;
@@ -868,10 +877,12 @@ async fn shared_overview_seeds_once_and_retains_locally_resumed_history() -> Res
     let rendered = render_bottom_popup(&restarted.chat_widget, /*width*/ 80)
         .replace(&test_path_display("/"), "/");
     let age = regex_lite::Regex::new(r" +[0-9]+d ago").unwrap();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_recent_sessions",
         age.replace_all(&rendered, " [age]")
     );
+    });
     assert!(restarted.agents_overview.has_more(app_server.backend_id()));
     // Opening starts a metadata refresh; Show more queues behind it.
     restarted.show_more_agents_overview(&app_server);
@@ -1091,7 +1102,9 @@ async fn agents_overview_details_show_available_attention_without_expanding_rows
         " ".repeat(project.len().saturating_sub("/tmp/project".len()))
     );
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_attention", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  2"), &normalized_group).replace(&project, "/tmp/project"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_attention", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  2"), &normalized_group).replace(&project, "/tmp/project"));
+        });
     });
     app.handle_app_server_event(
         &app_server,
@@ -1112,7 +1125,9 @@ async fn agents_overview_details_show_available_attention_without_expanding_rows
     let view = app.agents_overview_view(threads, Some(unloaded));
     app.chat_widget.show_bottom_pane_view(Box::new(view));
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_last_message", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  2"), &normalized_group).replace(&project, "/tmp/project"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_last_message", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  2"), &normalized_group).replace(&project, "/tmp/project"));
+        });
     });
     app.track_agents_overview_notification(&ServerNotification::ThreadReverted(
         codex_app_server_protocol::ThreadRevertedNotification {
@@ -1159,10 +1174,12 @@ async fn agents_overview_details_render_markdown() {
         .draw(|frame| view.render(frame.area(), frame.buffer_mut()))
         .unwrap();
     let cached = terminal.backend().to_string();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_markdown",
         normalize_agent_center_snapshot(&cached)
     );
+    });
 
     app.agents_overview.last_messages.clear();
     app.track_agents_overview_activity(
@@ -1200,10 +1217,12 @@ async fn agents_overview_details_render_markdown() {
     let view = app.agents_overview_view(vec![thread.clone()], Some(thread_id));
     app.chat_widget.show_bottom_pane_view(Box::new(view));
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_markdown_long_lines",
         normalize_agent_center_snapshot(render_bottom_popup(&app.chat_widget, /*width*/ 96))
     );
+    });
 
     app.agents_overview.last_messages.insert(
         thread_id,
@@ -1211,10 +1230,12 @@ async fn agents_overview_details_render_markdown() {
     );
     let view = app.agents_overview_view(vec![thread], Some(thread_id));
     app.chat_widget.show_bottom_pane_view(Box::new(view));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_markdown_table",
         normalize_agent_center_snapshot(render_bottom_popup(&app.chat_widget, /*width*/ 96))
     );
+    });
 }
 
 #[tokio::test]
@@ -1256,7 +1277,9 @@ async fn agents_overview_preview_links_survive_wrapping_and_clipping() {
                 || !cell.symbol().contains("\x1b]8;;")
         }));
         if height == 40 {
-            insta::assert_snapshot!("agents_overview_link_rows", linked_rows.join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("agents_overview_link_rows", linked_rows.join("\n"));
+            });
             assert!(buffer.content.iter().any(|cell| {
                 cell.symbol()
                     .starts_with("\x1b]8;;https://example.com/prompt\x07")
@@ -1306,7 +1329,9 @@ async fn agents_overview_reasoning_uses_existing_events_and_expires_with_attachm
         " ".repeat(project.len().saturating_sub("/tmp/project".len()))
     );
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_live_activity", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  1"), &normalized_group).replace(&project, "/tmp/project"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_live_activity", render_bottom_popup(&app.chat_widget, /*width*/ 96).replace(&format!("{project}  1"), &normalized_group).replace(&project, "/tmp/project"));
+        });
     });
     assert!(app.agents_overview.active_refresh.is_none());
 
@@ -1497,14 +1522,18 @@ async fn worktrees_overview_groups_by_project_or_directory() {
     }
     let directory_grouping = directory_grouping.replace('\\', "/");
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "agents_overview_worktree_grouping",
             normalize_agent_center_snapshot(project_grouping)
         );
-        insta::assert_snapshot!(
+        });
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "agents_overview_directory_grouping",
             normalize_agent_center_snapshot(directory_grouping)
         );
+        });
     });
 }
 
@@ -1576,12 +1605,14 @@ async fn overview_model_grouping_shows_details_and_preserves_selection() {
         );
     }
     app.chat_widget.show_bottom_pane_view(Box::new(view));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_model_grouping",
         render_bottom_popup(&app.chat_widget, /*width*/ 100)
             .replace(&test_path_display("/tmp/project"), "/tmp/project")
             .replace("fwd del", "del")
     );
+    });
 }
 
 #[tokio::test]
@@ -1685,12 +1716,14 @@ async fn shared_overview_shows_only_root_sessions() {
         " ".repeat(project.len().saturating_sub("/tmp/project".len()))
     );
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "agents_overview",
             render_bottom_popup(&app.chat_widget, /*width*/ 96)
                 .replace(&format!("{project}  3"), &normalized_project_group)
                 .replace(&project, "/tmp/project")
         );
+        });
     });
 
     let threads = (0..20)
@@ -2188,7 +2221,9 @@ async fn overview_selection_applies_user_permissions_only_to_unloaded_threads() 
     let end = start + rendered[start..].find(')').expect("source end") + 1;
     rendered.replace_range(start..end, "(set by <requirements>)");
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_reviewer_conflict", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_reviewer_conflict", rendered);
+        });
     });
     // The picker must also abort when a session-only choice violates destination policy.
     std::fs::write(&requirements, "allowed_approval_policies = [\"never\"]\n")?;
@@ -2534,7 +2569,9 @@ async fn empty_command_center_can_open_resume_picker() {
         normalize_agent_center_snapshot(render_bottom_popup(&app.chat_widget, /*width*/ 48))
             .replace("fwd del", "del");
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_empty_narrow", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_empty_narrow", rendered);
+        });
     });
 }
 
@@ -2581,7 +2618,9 @@ async fn resume_failure_keeps_command_center_available() {
     let before = render_bottom_popup(&app.chat_widget, /*width*/ 96);
     app.add_session_picker_error("The session is unavailable.".to_string());
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_resume_error", render_bottom_popup(&app.chat_widget, /*width*/ 96));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_resume_error", render_bottom_popup(&app.chat_widget, /*width*/ 96));
+        });
     });
     app.chat_widget
         .handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
@@ -3147,7 +3186,9 @@ async fn command_center_attach_conflict_opens_read_only_and_retries() -> Result<
         .turns;
     assert!(serde_json::to_string(&turns)?.contains("Saved task"));
     insta::with_settings!({snapshot_path => "../snapshots"}, {
-        insta::assert_snapshot!("agents_overview_attach_conflict", render_bottom_popup(&app.chat_widget, /*width*/ 96));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("agents_overview_attach_conflict", render_bottom_popup(&app.chat_widget, /*width*/ 96));
+        });
     });
 
     for key in [KeyCode::Left, KeyCode::Esc] {
@@ -3372,7 +3413,9 @@ async fn overview_fork_preserves_an_open_side_conversation() -> Result<()> {
     assert!(app.side_threads.contains_key(&side));
     assert!(!app.chat_widget.fork_in_progress);
     assert_eq!(server.next_request_id(), RequestId::Integer(request + 1));
-    insta::assert_snapshot!(render_bottom_popup(&app.chat_widget, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_bottom_popup(&app.chat_widget, /*width*/ 80));
+    });
     server.shutdown().await?;
     Ok(())
 }

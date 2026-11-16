@@ -1,6 +1,7 @@
 //! Explicit local commands return to their output without making background updates
 //! steal the reader's position in the owned transcript.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::RateLimitResetCreditsSummary;
 use crossterm::event::KeyCode;
@@ -356,10 +357,12 @@ async fn keymap_daemon_validates_before_saving_or_applying_bindings() -> Result<
                 vec!["home", "ctrl-a", "super-left"],
             );
             let error = app.transcript_cells.last().expect("save error");
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "keymap_daemon_rejected_binding",
                 lines_to_single_string(&error.display_lines(/*width*/ 80)),
             );
+            });
         }
         server.start_thread(&app.config).await?;
         server.shutdown().await?;

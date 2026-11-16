@@ -1,4 +1,5 @@
 //! Responsive navigation and report loading regression coverage.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -16,7 +17,9 @@ fn reports_keep_tabs_fixed_and_expose_data_on_small_screens() {
         assert_eq!(tabs, failed.lines().take(3).collect::<Vec<_>>());
         assert!(failed.contains("Couldn't load tokens."));
         if width == 40 {
-            insta::assert_snapshot!(format!("{tokens}\n{failed}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(format!("{tokens}\n{failed}"));
+            });
         }
     }
 }
@@ -49,7 +52,9 @@ fn keyboard_tabs_and_help_preserve_report_reading_position() {
     assert!(help.contains("Usage shortcuts"));
     assert!(help.lines().nth_back(/*n*/ 1).unwrap().contains("scroll"));
     assert!(!help.lines().last().unwrap().contains("tab report"));
-    insta::assert_snapshot!("narrow_help", help);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("narrow_help", help);
+    });
     press(&mut view, KeyCode::PageDown);
     screen(&mut view, /*width*/ 40, /*height*/ 16);
     assert!(view.scroll_offset() > 0);

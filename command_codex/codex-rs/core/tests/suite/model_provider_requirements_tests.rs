@@ -1,5 +1,6 @@
 //! Exercises managed provider routing and conflict diagnostics through real turns.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_config::LoaderOverrides;
 use codex_config::config_toml::ConfigToml;
@@ -146,7 +147,9 @@ X-Managed = "required"
         .cloned()
         .collect::<Vec<_>>();
     if local_selection == "other" {
-        insta::assert_debug_snapshot!("provider_selection_override_warning", warnings);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!("provider_selection_override_warning", warnings);
+        });
     } else {
         assert_eq!(warnings, Vec::<String>::new());
     }
@@ -175,7 +178,9 @@ X-Managed = "required"
             if cli_provider == "gateway" {
                 assert_eq!(warnings, Vec::<String>::new());
             } else {
-                insta::assert_debug_snapshot!("provider_selection_override_warning", warnings);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_debug_snapshot!("provider_selection_override_warning", warnings);
+                });
             }
             assert_eq!(&overridden.model_provider, &test.config.model_provider);
             let rebuilt = Config::rebuild_with_session_layers(

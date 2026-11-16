@@ -20,6 +20,7 @@
 //! drafts, paste bursts, and active dialogs keep their normal input routing.
 //! Owned transcripts separate activity from the transcript and reserve their shared hint row
 //! below activity and previews, above the composer.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 pub(crate) use chat_composer::CommandPopupPlacement;
 pub(crate) use chat_composer::ComposerRenderOptions;
 pub(crate) use chat_composer::TranscriptFooter;
@@ -2867,10 +2868,12 @@ mod tests {
             width,
             pane.desired_height(width),
         );
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "inline_banner_wrapped_and_truncated",
             render_snapshot(&pane, area)
         );
+        });
         assert!(!pane.is_normal_backtrack_mode());
         pane.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert!(pane.is_normal_backtrack_mode());
@@ -2936,10 +2939,12 @@ mod tests {
                 width,
                 pane.desired_height(width),
             );
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 format!("backend_banner_{kind}"),
                 render_snapshot(&pane, area)
             );
+            });
             pane.handle_key_event(KeyEvent::new(KeyCode::Char('2'), KeyModifiers::NONE));
             let selected = match rx.try_recv().expect("numbered CTA dispatch") {
                 AppEvent::OpenUrlInBrowser { url } => url,
@@ -3602,10 +3607,12 @@ mod tests {
         pane.pause_status_timer_for_modal();
         let paused = pane.status_timer.elapsed_at(Instant::now());
         pane.ensure_status_indicator();
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "status_timer_survives_hidden_row",
             render_snapshot(&pane, area)
         );
+        });
         assert_eq!(
             pane.status_timer
                 .elapsed_at(Instant::now() + Duration::from_secs(/*secs*/ 10)),
@@ -3671,10 +3678,12 @@ mod tests {
             "expected at least 3 rows to render spacer, status, and composer; got {height}"
         );
         let area = Rect::new(0, 0, 30, height);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "status_and_composer_fill_height_without_bottom_padding",
             render_snapshot(&pane, area)
         );
+        });
     }
 
     #[test]
@@ -3698,7 +3707,9 @@ mod tests {
         let width = 48;
         let height = pane.desired_height(width);
         let area = Rect::new(0, 0, width, height);
-        assert_snapshot!("status_only_snapshot", render_snapshot(&pane, area));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("status_only_snapshot", render_snapshot(&pane, area));
+        });
     }
 
     #[test]
@@ -3763,10 +3774,12 @@ mod tests {
         let width = 48;
         let height = pane.desired_height(width);
         let area = Rect::new(0, 0, width, height);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "status_with_details_and_queued_messages_snapshot",
             render_snapshot(&pane, area)
         );
+        });
     }
 
     #[test]
@@ -3796,10 +3809,12 @@ mod tests {
         let width = 48;
         let height = pane.desired_height(width);
         let area = Rect::new(0, 0, width, height);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "queued_messages_visible_when_status_hidden_snapshot",
             render_snapshot(&pane, area)
         );
+        });
     }
 
     #[test]
@@ -3828,10 +3843,12 @@ mod tests {
         let width = 48;
         let height = pane.desired_height(width);
         let area = Rect::new(0, 0, width, height);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "status_and_queued_messages_snapshot",
             render_snapshot(&pane, area)
         );
+        });
     }
 
     #[test]
@@ -3997,10 +4014,12 @@ mod tests {
 
         let width = 60;
         let area = Rect::new(0, 0, width, pane.desired_height(width));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "slash_command_popup_dismissed",
             render_snapshot(&pane, area)
         );
+        });
 
         pane.insert_str("i");
         assert!(pane.composer.popup_active());

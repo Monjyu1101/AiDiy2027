@@ -21,6 +21,7 @@
 //! `TranscriptOverlay::sync_live_tail`. This preserves the invariant that the overlay reflects
 //! both committed history and in-flight activity without changing flush or coalescing behavior.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod browsing;
 mod legacy_input;
 mod prompt_navigation;
@@ -1242,6 +1243,8 @@ mod tests {
         );
         let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
 
-        insta::assert_snapshot!(rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(rendered);
+        });
     }
 }

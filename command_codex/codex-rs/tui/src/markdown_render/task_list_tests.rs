@@ -1,5 +1,6 @@
 //! Task markers share list indentation in streaming and completed Markdown.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::ListSpacing;
 use super::render_markdown_text_with_width;
 use super::render_streaming_markdown_lines_with_width_and_cwd;
@@ -39,5 +40,7 @@ fn lists_preserve_layout() {
         );
         stages.push(rendered.to_string());
     }
-    insta::assert_snapshot!(stages.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(stages.join("\n---\n"));
+    });
 }

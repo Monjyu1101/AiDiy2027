@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::ScrollbackStrategy;
 use crate::custom_terminal::Terminal;
 use crate::insert_history::HistoryLineWrapPolicy;
@@ -224,10 +225,12 @@ fn standard_viewport_growth_preserves_composer_and_cursor() {
         );
         // vt100 intentionally omits scrollback for partial regions, even for newlines. Snapshot
         // visible geometry here; the wire test below and real-terminal smoke cover scrollback.
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             format!("standard_viewport_growth_{scroll_by}"),
             screen.contents()
         );
+        });
 
         // A newline at the physical bottom must scroll the full screen after the region reset.
         queue!(

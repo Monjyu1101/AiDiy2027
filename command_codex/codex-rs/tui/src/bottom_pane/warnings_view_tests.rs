@@ -1,5 +1,6 @@
 //! Independent warning navigation, full-text copying, and bounded scrolling.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::WarningId;
 use crate::render::renderable::Renderable;
@@ -86,7 +87,9 @@ fn warning_pages_wrap_and_scroll_long_diagnostics() {
         RuntimeKeymap::defaults(),
         AppEventSender::new(tx),
     );
-    insta::assert_snapshot!("warnings_narrow", draw(&view, /*width*/ 40, /*height*/ 9));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("warnings_narrow", draw(&view, /*width*/ 40, /*height*/ 9));
+    });
     key(&mut view, KeyCode::PageDown);
     assert!(!draw(&view, /*width*/ 40, /*height*/ 9).contains("Long diagnostic"));
     key(&mut view, KeyCode::End);
@@ -228,10 +231,12 @@ fn warning_links_preserve_destinations_when_wrapped_and_scrolled() {
         })
         .collect::<String>();
     assert_eq!(linked, url);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "warnings_wrapped_url",
         draw(&view, /*width*/ 32, /*height*/ 9)
     );
+    });
     key(&mut view, KeyCode::Down);
     let area = Rect::new(0, 0, 32, 5);
     let mut buffer = Buffer::empty(area);

@@ -1,5 +1,6 @@
 //! Same-named executor MCP servers retain separate tools, resources, calls, and approvals.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use anyhow::Context;
 use codex_config::Constrained;
@@ -406,10 +407,12 @@ async fn same_named_executor_mcps_keep_calls_and_approvals_separate() -> Result<
     );
     let history = regex_lite::Regex::new(r"Wall time: [0-9]+(?:\.[0-9]+)? seconds")?
         .replace_all(&history, "Wall time: <DURATION> seconds");
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Approval prompts\n{}\n\n{history}",
         approval_messages.join("\n")
     ));
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

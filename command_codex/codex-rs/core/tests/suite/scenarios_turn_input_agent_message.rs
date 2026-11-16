@@ -1,5 +1,6 @@
 //! Follow-ups use native agent-mail sampling and final-answer boundaries.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_core::StartThreadOptions;
 use codex_core::TurnInput;
 use codex_core::TurnInputRequest;
@@ -294,7 +295,8 @@ async fn agent_followup_preserves_native_boundaries(
         ]
     );
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!("agent_followup_{arrival:?}"),
         context_snapshot::format_context_snapshot(
             "Agent follow-ups interrupt at a reasoning boundary, preserve encrypted input, and start a new turn when not consumed before the final answer completes.",
@@ -302,6 +304,7 @@ async fn agent_followup_preserves_native_boundaries(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     child.shutdown_and_wait().await?;
     streaming.shutdown().await;
     Ok(())

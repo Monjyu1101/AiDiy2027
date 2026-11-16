@@ -1,6 +1,7 @@
 //! A server named "environment" adds, replaces, then removes MCP tools between turns.
 //! The execution environment runs throughout; this tests MCP refresh, not executor shutdown.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::ConfigRefreshOutcome;
 use codex_features::Feature;
@@ -191,7 +192,9 @@ text(JSON.stringify(results));"#;
         r"(?m)(^00:additional_tools/developer \(\d+; hash=|^ +- namespace/functions; hash=)[0-9a-f]{16}",
     )?
     .replace_all(&snapshot, "${1}<INITIAL_BUILD_HASH>");
-    insta::assert_snapshot!("strict_3p_mcp_catalog_cache", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("strict_3p_mcp_catalog_cache", snapshot);
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::status::StatusAccountDisplay;
 use assert_matches::assert_matches;
@@ -736,8 +737,10 @@ async fn model_migration_prompt_shows_for_hidden_model() {
         can_opt_out,
     );
 
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "model_migration_prompt_shows_for_hidden_model",
         model_migration_copy_to_plain_text(&copy)
     );
+    });
 }

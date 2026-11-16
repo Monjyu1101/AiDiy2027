@@ -1,5 +1,6 @@
 //! Exercise caught-panic recovery through a real terminal and the production panic hook.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::fs::File;
 use std::io::Read as _;
 use std::io::Write as _;
@@ -133,7 +134,9 @@ fn caught_panic_rehides_cursor_before_repainting_and_restores_its_shape() {
             .collect::<Vec<_>>();
         format!("{name}: {}", commands.join(" "))
     });
-    insta::assert_snapshot!("caught_panic_cursor_commands", phases.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("caught_panic_cursor_commands", phases.join("\n"));
+    });
 }
 
 #[tokio::test(flavor = "current_thread")]

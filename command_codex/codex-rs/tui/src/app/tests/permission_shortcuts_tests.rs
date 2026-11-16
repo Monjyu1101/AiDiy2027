@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_arg0::Arg0DispatchPaths;
 use pretty_assertions::assert_eq;
@@ -60,7 +61,8 @@ async fn permission_shortcut_rejections_leave_state_unchanged() -> Result<()> {
             original
         );
         assert_eq!(app.config.approvals_reviewer, original_reviewer);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             if experimental_api {
                 "permission_shortcut_server_error"
             } else {
@@ -68,6 +70,7 @@ async fn permission_shortcut_rejections_leave_state_unchanged() -> Result<()> {
             },
             next_history_message(&mut events).replace(&thread_id.to_string(), "<THREAD_ID>")
         );
+        });
         assert!(events.try_recv().is_err());
         app_server.shutdown().await?;
     }

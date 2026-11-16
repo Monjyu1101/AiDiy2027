@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::tests::new_test_composer;
 use super::tests::snapshot_composer_state_with_width;
 use super::*;
@@ -178,10 +179,12 @@ fn effort_transition_keeps_the_full_footer_row() {
             .trim_end()
             .to_owned()
     });
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "effort_transition_keeps_the_full_footer_row",
         rows.join("\n")
     );
+    });
 }
 
 #[test]

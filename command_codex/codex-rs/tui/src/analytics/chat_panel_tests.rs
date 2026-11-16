@@ -1,5 +1,6 @@
 //! Chat list coverage, responsive expansion, and controls for fixed-period data.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -102,7 +103,9 @@ fn chats_breakdown_ranks_nonzero_groups_and_reflows() {
     let wide = view.chat_lines(/*width*/ 220).0;
     // The content stays within 96 columns, plus one highlighted trailing blank.
     assert!(wide.iter().all(|line| line.width() <= 97));
-    insta::assert_snapshot!(screens.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(screens.join("\n"));
+    });
 }
 
 #[test]
@@ -117,7 +120,9 @@ fn chats_long_title_keeps_detail_indent_and_counts_missing_estimates() {
     press(&mut view, KeyCode::Enter);
     let output = screen(&mut view, /*width*/ 110, /*height*/ 30);
     assert!(output.contains("2 chat estimates unavailable"));
-    insta::assert_snapshot!(output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(output);
+    });
 }
 
 #[tokio::test]

@@ -1,5 +1,6 @@
 //! Catalog function and namespace prefixes follow the current model without changing dispatch.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::code_mode::custom_tool_output_last_non_empty_text;
 use super::super::rmcp_client::remote_aware_environment_id;
 use super::super::rmcp_client::remote_aware_stdio_server_bin;
@@ -241,7 +242,8 @@ text({descriptions, echo: report.structuredContent.echo, agent: agents.agents[0]
     }
     assert_eq!(outputs[0], expected);
     if tool_mode == ToolMode::CodeModeOnly {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "catalog_indirect_namespace_prefixes",
             context_snapshot::format_request_history_snapshot(
                 "Function prefixes annotate direct and indirect tools; namespace prefixes annotate embedded namespace docs, loaded namespaces, and flat indirect entries. A model switch clears both without changing dispatch.",
@@ -251,6 +253,7 @@ text({descriptions, echo: report.structuredContent.echo, agent: agents.agents[0]
                     .include_request_settings(),
             )
         );
+        });
     }
     if include_search {
         test.codex

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript;
 use super::*;
 use crate::app_event::HistoryLookupResponse;
@@ -124,7 +125,9 @@ async fn resumed_initial_messages_render_history() {
             &test_path_display("/home/user/project"),
             "/home/user/project",
         );
-    insta::assert_snapshot!("resumed_daybreak_banner", history);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("resumed_daybreak_banner", history);
+    });
 }
 
 #[tokio::test]
@@ -172,10 +175,12 @@ async fn replayed_failed_turns_preserve_overload_warnings_between_retries() {
 
     assert_eq!(rendered.matches(prompt).count(), 2);
     assert_eq!(rendered.matches(error_message).count(), 2);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "replayed_failed_turns_preserve_overload_warnings_between_retries",
         rendered
     );
+    });
 }
 
 #[tokio::test]
@@ -488,7 +493,9 @@ async fn replayed_nested_review_prompts_do_not_render_or_seed_composer_history()
         .collect::<String>();
     assert!(!rendered.contains(review_prompt));
     assert_eq!(rendered.matches(review_hint).count(), 4);
-    insta::assert_snapshot!("replayed_nested_review_prompts", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("replayed_nested_review_prompts", rendered);
+    });
 
     chat.handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::NONE));
     assert_eq!(chat.bottom_pane.composer_text(), review_hint);
@@ -1467,7 +1474,9 @@ async fn failed_repl_mcp_tool_call_preserves_status_and_result() {
             panic!("expected one completed MCP tool call for {server}");
         };
         if server == "cua_repl" {
-            insta::assert_snapshot!("failed_computer_activity", lines_to_single_string(lines));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("failed_computer_activity", lines_to_single_string(lines));
+            });
             continue;
         }
         insta::allow_duplicates! {

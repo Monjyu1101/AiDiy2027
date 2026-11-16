@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 //! Managed checkpoints require a fresh human decision even with automatic review, hooks, and saved rules.
@@ -177,6 +178,8 @@ justification = "A person must approve this command."
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!(snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot);
+    });
     Ok(())
 }

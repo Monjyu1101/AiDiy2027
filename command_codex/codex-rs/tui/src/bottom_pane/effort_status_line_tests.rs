@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 use crate::terminal_hyperlinks::osc8_hyperlink;
@@ -233,5 +234,7 @@ fn transition_frames_snapshot() {
         }
     }
 
-    insta::assert_snapshot!("effort_status_line_transition_frames", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("effort_status_line_transition_frames", frames.join("\n"));
+    });
 }

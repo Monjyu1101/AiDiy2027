@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crossterm::event::KeyCode;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Constraint;
@@ -354,7 +355,9 @@ mod tests {
             popup.move_down();
         }
 
-        insta::assert_snapshot!("skill_popup_scrolled", render_popup(&popup, /*width*/ 72));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("skill_popup_scrolled", render_popup(&popup, /*width*/ 72));
+        });
     }
 
     #[test]
@@ -380,7 +383,9 @@ mod tests {
                 snapshots.push(format!("name={name:?}, width={width}\n{rendered}"));
             }
         }
-        insta::assert_snapshot!("skill_popup_category_tags", snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("skill_popup_category_tags", snapshots.join("\n\n"));
+        });
     }
 
     #[test]
@@ -404,10 +409,12 @@ mod tests {
                 (0, Some(vec![0, 1]), 0),
             ]
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "skill_popup_lowercase_expansion",
             render_popup(&popup, /*width*/ 48)
         );
+        });
     }
 
     #[test]

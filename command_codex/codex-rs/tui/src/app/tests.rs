@@ -1,5 +1,6 @@
 //! App-level orchestration tests for the TUI.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #[path = "tests/terminal_size_telemetry_tests.rs"]
 mod terminal_size_telemetry_tests;
 
@@ -263,7 +264,9 @@ use tokio::time;
 macro_rules! assert_app_snapshot {
     ($name:expr, $value:expr $(,)?) => {
         insta::with_settings!({snapshot_path => "../snapshots"}, {
-            assert_snapshot!($name, $value);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!($name, $value);
+            });
         });
     };
 }
@@ -3673,7 +3676,9 @@ async fn reopen_saved_side_chat(during: DuringOpen) -> Result<()> {
     app.refresh_saved_chats(&server, parent);
     finish_discovery(&mut app, &mut tui, &mut server).await?;
     capture("Readable reply", side_frame(&mut app, &mut tui, narrow)?);
-    insta::assert_snapshot!("saved_chat_discovery_states", states.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("saved_chat_discovery_states", states.join("\n\n"));
+    });
     app.pending_server_profiles.insert(
         parent,
         PermissionProfileSelection {
@@ -5050,7 +5055,9 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     boxed_future!(app.handle_tui_event(&mut tui, &mut app_server, scroll)).await?;
     app.render_owned_transcript(&mut tui, even)?;
     assert!(!app.transcript_view.is_following());
-    insta::assert_snapshot!("workspace_leader_hints", panel_text(&tui));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("workspace_leader_hints", panel_text(&tui));
+    });
     app.reconnect.offline = true;
     app.render_owned_transcript(&mut tui, even)?;
     let offline = panel_text(&tui);
@@ -5059,11 +5066,15 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     let draft = app.chat_widget.composer_text_with_pending();
     keys!(KeyCode::Char('p').into());
     assert_eq!(app.render_owned_transcript(&mut tui, even)?, composer);
-    insta::assert_snapshot!("workspace_presets", panel_text(&tui));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("workspace_presets", panel_text(&tui));
+    });
     let compact = Size::new(/*width*/ 80, /*height*/ 6);
     tui.terminal = terminal_at(compact);
     app.render_owned_transcript(&mut tui, compact)?;
-    insta::assert_snapshot!("workspace_presets_compact", panel_text(&tui));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("workspace_presets_compact", panel_text(&tui));
+    });
     tui.terminal = terminal_at(even);
     keys!(KeyCode::Esc.into());
     assert_eq!(app.chat_widget.composer_text_with_pending(), draft);
@@ -5376,7 +5387,9 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     let narrow = Size::new(24, even.height);
     let narrow_frame = side_frame(&mut app, &mut tui, narrow)?;
     let header = narrow_frame.lines().next().unwrap();
-    insta::assert_snapshot!("side_chat_tab_overflow", header.trim_end());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("side_chat_tab_overflow", header.trim_end());
+    });
     let arrow = header.chars().position(|c| c == '‹').expect("previous tab");
     for (kind, expected) in [
         (MouseEventKind::Down(MouseButton::Left), side_thread_id),
@@ -5413,7 +5426,9 @@ async fn handle_start_side_seeds_navigation_before_thread_started() -> Result<()
     keys!(prefix);
     tokio::time::advance(crate::keymap::CHORD_REVEAL_DELAY).await;
     side_frame(&mut app, &mut tui, even)?;
-    insta::assert_snapshot!("sidebar_tab_shortcuts", panel_text(&tui));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("sidebar_tab_shortcuts", panel_text(&tui));
+    });
     side_frame(&mut app, &mut tui, Size::new(even.width, /*height*/ 10))?;
     let overlap = tui
         .shortcut_hud_area
@@ -9646,10 +9661,12 @@ async fn owned_stream_reflows_at_allocated_width_without_reporting_activity() ->
                 "{kind} at {width}: {frame}"
             );
             if kind == "answer" && width == 44 {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "allocated_stream_table",
                     normalize_snapshot_paths(frame.as_str())
                 );
+                });
             }
         }
         app.transcript_view
@@ -9680,7 +9697,7 @@ async fn owned_stream_reflows_at_allocated_width_without_reporting_activity() ->
 }
 
 #[tokio::test]
-async fn app_server_thread_replacement_clears_previous_transcript_before_replay() -> Result<()> {
+async fn thread_replacement_clears_transcript() -> Result<()> {
     let (mut app, mut events, _op_rx) = make_test_app_with_channels().await;
     app.local_settings.tui.show_tooltips = false;
     let previous_thread_id = ThreadId::new();
@@ -9764,7 +9781,9 @@ async fn app_server_thread_replacement_clears_previous_transcript_before_replay(
         .join("\n");
     assert!(!rendered.contains("Previous thread transcript"));
     assert!(!rendered.contains("Previous queued history"));
-    assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(rendered);
+    });
     app_server.shutdown().await?;
     Ok(())
 }
@@ -10118,7 +10137,8 @@ async fn required_stream_reflow_during_capped_initial_replay_uses_transcript_tai
     );
 
     let rendered = app.render_transcript_lines_for_reflow(/*width*/ 80);
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "required_stream_reflow_during_capped_initial_replay",
         rendered
             .lines
@@ -10127,6 +10147,7 @@ async fn required_stream_reflow_during_capped_initial_replay_uses_transcript_tai
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
 
     app.finish_initial_history_replay_buffer(&mut tui);
     assert!(app.initial_history_replay_buffer.is_none());
@@ -10156,7 +10177,8 @@ async fn directive_only_completion_removes_streamed_directive() -> Result<()> {
     )?;
 
     let rendered = app.render_transcript_lines_for_reflow(/*width*/ 80);
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "directive_only_completion_removes_streamed_directive",
         rendered
             .lines
@@ -10165,6 +10187,7 @@ async fn directive_only_completion_removes_streamed_directive() -> Result<()> {
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     Ok(())
 }
 
@@ -10637,7 +10660,9 @@ async fn feedback_saved_receipt_shows_the_full_archive_path() {
         }),
     )
     .await;
-    insta::assert_snapshot!("feedback_saved_receipt", next_history_message(&mut events));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("feedback_saved_receipt", next_history_message(&mut events));
+    });
 }
 
 #[tokio::test]
@@ -11952,7 +11977,9 @@ async fn prompt_edit_reverts_earlier_and_first_visible_prompts_in_place_scenario
     let stable_cwd = "/tmp/project";
     let cwd = test_path_buf(stable_cwd).display().to_string();
     let transcript = transcript.replace(&cwd, &format!("{stable_cwd:<width$}", width = cwd.len()));
-    insta::assert_snapshot!("owned_prompt_revert_retained_history", transcript);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("owned_prompt_revert_retained_history", transcript);
+    });
     assert!(Arc::ptr_eq(
         &child,
         &app.thread_event_channels[&child_id].store

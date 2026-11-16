@@ -203,7 +203,7 @@ aidiy_hermes --provider ollama --model "deepseek-v4-flash:cloud" -Q -z "おは�
 ```
 
 TUI / slash command の詳細調整は `command_hermes,TUI調整手順.md` を使う。
-Code CLI としての追加・表示・ANSI 対策は `backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md`、`backend_server,CodeCLIプロンプト整形.md`、`backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md` を使う。
+Code CLI としての追加・表示・ANSI 対策は `共通,CodeCLI追加手順.md`、`backend_server,CodeCLIプロンプト整形.md`、`backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md` を使う。
 
 ## 任意Gateway・proxyの通信サイズ
 

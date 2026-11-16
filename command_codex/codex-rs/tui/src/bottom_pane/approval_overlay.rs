@@ -11,6 +11,7 @@
 //! This module does not evaluate whether an action is safe to run; it only
 //! presents choices and routes user decisions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -1529,7 +1530,9 @@ mod tests {
                     })
                     .collect::<Vec<_>>()
                     .join("\n");
-                insta::assert_snapshot!("approval_header_wrapped_url", visible);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("approval_header_wrapped_url", visible);
+                });
             }
         }
     }
@@ -1724,10 +1727,12 @@ mod tests {
             Features::with_defaults(),
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "approval_overlay_cross_thread_prompt",
             render_overlay_lines(&view, /*width*/ 80)
         );
+        });
     }
 
     #[test]
@@ -2218,10 +2223,12 @@ mod tests {
         });
 
         let view = make_overlay(exec_request, tx, Features::with_defaults());
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "approval_overlay_additional_permissions_prompt",
             normalize_snapshot_paths(render_overlay_lines(&view, /*width*/ 120))
         );
+        });
     }
 
     #[test]
@@ -2229,10 +2236,12 @@ mod tests {
         let (tx, _rx) = unbounded_channel::<AppEvent>();
         let tx = AppEventSender::new(tx);
         let view = make_overlay(make_permissions_request(), tx, Features::with_defaults());
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "approval_overlay_permissions_prompt",
             normalize_snapshot_paths(render_overlay_lines(&view, /*width*/ 120))
         );
+        });
     }
 
     #[test]
@@ -2306,10 +2315,12 @@ mod tests {
             changes: HashMap::new(),
         });
         let view = make_overlay(request, tx, Features::with_defaults());
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "approval_overlay_patch_destination_unavailable",
             normalize_snapshot_paths(render_overlay_lines(&view, /*width*/ 120))
         );
+        });
     }
 
     #[test]
@@ -2348,7 +2359,9 @@ mod tests {
             Rect::new(0, 0, 100, view.desired_height(/*width*/ 100)),
             &mut buf,
         );
-        assert_snapshot!("network_exec_prompt", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("network_exec_prompt", format!("{buf:?}"));
+        });
 
         let rendered: Vec<String> = (0..buf.area.height)
             .map(|row| {

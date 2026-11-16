@@ -1,5 +1,6 @@
 //! Exercise warning delivery, detailed transcript toggling, and clearing through the owned UI.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -120,7 +121,9 @@ async fn elevated_launch_warning_appears_in_warning_center() -> Result<()> {
     );
     app.chat_widget.open_warnings(&app.transcript_cells);
     app.render_owned_transcript(&mut tui, size)?;
-    insta::assert_snapshot!("elevated_launch_warning_center", screen(&tui));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("elevated_launch_warning_center", screen(&tui));
+    });
     tui.set_owned_screen(/*owned*/ false)?;
     Ok(())
 }

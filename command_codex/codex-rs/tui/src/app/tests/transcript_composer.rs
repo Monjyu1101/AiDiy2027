@@ -3,6 +3,7 @@
 //! The default-off feature must leave the existing viewer and its draft intact.
 //! Analytics also preserves the composer and stays separate from transcript backtracking.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::pager_overlay::TranscriptHistoryState;
 use crate::test_support::test_path_display;
@@ -268,7 +269,9 @@ async fn transcript_flag_off_preserves_viewer_and_backtracking() -> Result<()> {
         panic!("viewer closed")
     };
     overlay.render(area, &mut buffer);
-    insta::assert_snapshot!("transcript_flag_off_viewer", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("transcript_flag_off_viewer", buffer_text(&buffer));
+    });
     for (key, selected) in [
         (KeyCode::Esc, 1),
         (KeyCode::Left, 0),
@@ -346,13 +349,15 @@ async fn assert_transcript_close_repaints_inline_draft(mut app: Box<App>) -> Res
         deferred_history
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_close_restores_inline_draft",
         buffer_text(crate::custom_terminal::test_support::last_rendered_buffer(
             &tui.terminal
         ))
         .replace(&test_path_display("/tmp/project"), "/tmp/project")
     );
+    });
     Ok(())
 }
 

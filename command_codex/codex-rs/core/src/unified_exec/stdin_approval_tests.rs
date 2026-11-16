@@ -1,5 +1,6 @@
 //! Direct policy comparisons, launch capture, and private approval text.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::session::tests::make_session_and_context;
 use codex_network_proxy::NetworkMode;
@@ -45,10 +46,13 @@ fn reduced_permissions_require_review() -> anyhow::Result<()> {
         permissions.review_requirement(&current.policy, &baseline),
         Ok(expected)
     );
-    insta::assert_snapshot!(
-        "reduced_permissions",
-        permissions.approval_reason(expected)?
-    );
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = permissions.approval_reason(expected)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("reduced_permissions", snapshot_value);
+        });
+    };
     Ok(())
 }
 
@@ -62,7 +66,13 @@ fn proxy_bypass_requires_review_even_when_permissions_match() -> anyhow::Result<
         permissions.review_requirement(&permissions.policy, &baseline),
         Ok(expected)
     );
-    insta::assert_snapshot!("proxy_bypass", permissions.approval_reason(expected)?);
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = permissions.approval_reason(expected)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("proxy_bypass", snapshot_value);
+        });
+    };
     Ok(())
 }
 
@@ -143,7 +153,13 @@ async fn captured_network_changes_require_review() -> anyhow::Result<()> {
         permissions.review_requirement(&current, environment.permission_profile()),
         Ok(expected)
     );
-    insta::assert_snapshot!("network_mode", permissions.approval_reason(expected)?);
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = permissions.approval_reason(expected)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("network_mode", snapshot_value);
+        });
+    };
 
     environment.config_mut().network_policy = Some(EnvironmentNetworkPolicy::from_config(
         &proxy, /*managed_allowed_domains_only*/ false,
@@ -206,7 +222,13 @@ async fn internal_grants_do_not_require_review_or_hide_agent_grants() -> anyhow:
         );
         if additional_permissions.is_none() {
             // Strict review can still request this description for ordinary stdin.
-            insta::assert_snapshot!("internal_grant", permissions.approval_reason(expected)?);
+            {
+                // Evaluate fallible/async values before entering synchronous Insta settings.
+                let snapshot_value = permissions.approval_reason(expected)?;
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("internal_grant", snapshot_value);
+                });
+            };
         }
         let mut bypassed = permissions;
         bypassed.launch_permissions = SandboxPermissions::RequireEscalated;

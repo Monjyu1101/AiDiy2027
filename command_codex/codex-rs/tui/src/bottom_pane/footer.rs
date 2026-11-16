@@ -23,6 +23,7 @@
 //!
 //! The composer fits ordinary navigation, modes, actions, and warnings in `chat_composer::passive_hints`.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::StatusLine;
 use super::shortcut_overlay;
 use super::status_line_style::STATUS_LINE_SEPARATOR;
@@ -984,10 +985,12 @@ mod tests {
                 }
             })
             .collect::<Vec<_>>();
-        insta::assert_debug_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!(
             "voice_footer_rendered_styles",
             (backend.to_string(), style_runs)
         );
+        });
     }
 
     fn snapshot_footer(name: &str, props: FooterProps) {
@@ -1221,7 +1224,9 @@ mod tests {
             /*ide_context_active*/ false,
             context_line,
         );
-        assert_snapshot!(name, terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(name, terminal.backend());
+        });
     }
 
     fn render_footer_with_mode_indicator_and_context(
@@ -1260,7 +1265,9 @@ mod tests {
             ide_context_active,
             context_window_line(/*percent*/ None, /*used_tokens*/ None),
         );
-        assert_snapshot!(name, terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(name, terminal.backend());
+        });
     }
 
     #[test]

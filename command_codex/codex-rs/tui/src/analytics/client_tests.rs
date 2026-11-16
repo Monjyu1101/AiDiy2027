@@ -1,5 +1,6 @@
 //! Account-scoped authentication and request identity regression coverage.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::analytics::sections::Section;
 use crate::legacy_core::config::ConfigBuilder;
@@ -813,7 +814,9 @@ async fn live_account_identity_is_visible_and_closing_aborts_pending_loads() {
     terminal
         .draw(|frame| view.render(frame.area(), frame.buffer_mut()))
         .unwrap();
-    insta::assert_snapshot!(terminal.backend().to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(terminal.backend().to_string());
+    });
     let (draw_tx, _) = tokio::sync::broadcast::channel(/*capacity*/ 1);
     let (cancelled_tx, cancelled_rx) = tokio::sync::oneshot::channel::<()>();
     view.sections[Section::Usage].history = super::super::data::Load::start(

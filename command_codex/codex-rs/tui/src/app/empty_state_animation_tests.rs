@@ -1,6 +1,7 @@
 //! Empty-state decoration integration uses the actual owned-screen draw path.
 //! Startup content opts in; other history dismisses the logo independently of viewport space.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::buffer::Buffer;
@@ -205,7 +206,8 @@ async fn empty_state_animation_preserves_header_cursor_and_footer() -> Result<()
         &after.content[after.index_of(/*x*/ 0, before_bottom.y)..],
         &before.content[before.index_of(/*x*/ 0, before_bottom.y)..]
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fresh_thread_header",
         format!(
             "enabled:\n{}\n---\ndisabled:\n{}",
@@ -213,6 +215,7 @@ async fn empty_state_animation_preserves_header_cursor_and_footer() -> Result<()
             text(&before)
         )
     );
+    });
     let short = Size::new(/*width*/ 120, /*height*/ 12);
     draw(&mut app, &mut tui, short)?;
     assert!(!has_blossom(&tui));

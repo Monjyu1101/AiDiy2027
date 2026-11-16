@@ -1,5 +1,6 @@
 //! Reasoning activity retains the latest usable line through empty items and status-row replacement.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -121,7 +122,9 @@ async fn reasoning_status_tracks_items_and_restores_after_tool_activity() {
     delta(&mut chat, "second", "\n**Preparing evidence report**");
     capture(&chat, &mut headers);
 
-    insta::assert_debug_snapshot!(headers);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_debug_snapshot!(headers);
+    });
     let mut timer = crate::status_indicator_widget::StatusTimer::default();
     timer.pause_at(std::time::Instant::now());
     timer.reset(std::time::Duration::from_secs(/*secs*/ 42));

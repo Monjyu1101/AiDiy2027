@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::terminal_hyperlinks::visible_lines;
 use pretty_assertions::assert_eq;
@@ -20,13 +21,15 @@ fn preview_caps_wrapped_output_and_counts_hidden_logical_lines() {
             .iter()
             .all(|line| line.width() <= 16)
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         preview
             .iter()
             .map(ToString::to_string)
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
 }
 
 #[test]
@@ -158,7 +161,8 @@ fn command_preview_matches_streamed_and_completed_output() {
     );
     let completed = cell.display_lines(/*width*/ 80);
     assert_eq!(&live[1..], &completed[1..]);
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "history:\n{}\n\ncompact:\n{}\n\ntranscript:\n{}",
         completed
             .iter()
@@ -176,4 +180,5 @@ fn command_preview_matches_streamed_and_completed_output() {
             .collect::<Vec<_>>()
             .join("\n"),
     ));
+    });
 }

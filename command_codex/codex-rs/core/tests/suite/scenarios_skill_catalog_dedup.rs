@@ -1,5 +1,6 @@
 //! Snapshots skill deduplication and incremental catalogs across turns and context resets.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashSet;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
@@ -164,7 +165,8 @@ async fn cloud_preference_preserves_executor_aliases_and_description_budget(
             if omit_descriptions { 0 } else { 3 }
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         if omit_descriptions {
             "dedup_without_descriptions"
         } else {
@@ -180,6 +182,7 @@ async fn cloud_preference_preserves_executor_aliases_and_description_budget(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -464,7 +467,8 @@ async fn skill_catalog_deltas_survive_resume_and_rebuild_after_compaction() -> R
             [1, 0, 1, 1, 0],
         ]
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "skill_catalog_deltas",
         context_snapshot::format_request_history_snapshot(
             "Skill additions and edits share the remaining metadata budget across turns and resume. Removals stay silent and do not refund budget. Compaction rebuilds the current catalog and resets the allowance.",
@@ -472,6 +476,7 @@ async fn skill_catalog_deltas_survive_resume_and_rebuild_after_compaction() -> R
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -515,7 +520,8 @@ async fn repository_skill_turn_grant() -> Result<()> {
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "repository_skill_turn_grant",
         context_snapshot::format_context_snapshot(
             "A repository skill appears after approval. The next turn withdraws it, then restores it after reapproval.",
@@ -526,5 +532,6 @@ async fn repository_skill_turn_grant() -> Result<()> {
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

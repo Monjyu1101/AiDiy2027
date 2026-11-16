@@ -1,5 +1,6 @@
 //! Warning notice layout, shortcut remapping, and input-priority coverage.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
@@ -64,7 +65,9 @@ fn warning_notice_styles() {
         },
         || render(&composer, /*width*/ 80, /*count*/ 3),
     );
-    insta::assert_debug_snapshot!("warning_notice_styles", styled);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_debug_snapshot!("warning_notice_styles", styled);
+    });
 }
 
 #[test]

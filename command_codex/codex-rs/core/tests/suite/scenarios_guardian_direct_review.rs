@@ -1,5 +1,6 @@
 //! Direct review preserves live action rendering without executing commands or applying patches.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::config::Constrained;
 use codex_core::guardian_review::GuardianReviewResult;
@@ -253,7 +254,9 @@ async fn direct_exec_review_matches_live_action_without_execution() -> Result<()
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_direct_exec", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_direct_exec", snapshot);
+    });
     direct.thread.shutdown_and_wait().await?;
     test.codex.shutdown_and_wait().await?;
     Ok(())
@@ -397,7 +400,9 @@ async fn direct_patch_review_matches_live_action_without_writes(
         .replace(&file, "\"<CWD>/guardian-direct.txt\"")
         .replace(&cwd, "\"<CWD>\"")
         .replace(&environment_id, "\"<ENVIRONMENT>\"");
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
     direct.thread.shutdown_and_wait().await?;
     test.codex.shutdown_and_wait().await?;
     Ok(())
@@ -534,7 +539,9 @@ async fn direct_permissions_review_matches_live_action() -> Result<()> {
     let compact_write =
         serde_json::to_string_pretty(&json!({"write": ["<CWD>"]}))?.replace('\n', "\n            ");
     let snapshot = snapshot.replace(&canonical_write, &compact_write);
-    insta::assert_snapshot!("guardian_direct_permissions", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_direct_permissions", snapshot);
+    });
     direct.thread.shutdown_and_wait().await?;
     test.codex.shutdown_and_wait().await?;
     Ok(())
@@ -752,7 +759,9 @@ prefix_rule(pattern=["git", "init", "guardian-rewritten"], decision="prompt")
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_direct_pre_tool_use_rewrite", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_direct_pre_tool_use_rewrite", snapshot);
+    });
 
     assert!(!harness.path_exists("guardian-original").await?);
     assert!(!harness.path_exists("guardian-rewritten").await?);

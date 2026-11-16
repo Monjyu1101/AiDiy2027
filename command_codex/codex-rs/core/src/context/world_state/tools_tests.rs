@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::MAX_NAMESPACE_DESCRIPTION_CHARS;
 use super::MAX_RENDERED_FRAGMENT_BYTES;
 use super::ToolsState;
@@ -27,10 +28,12 @@ fn snapshots_description_truncation() {
         Arc::new(RecordingMetrics::default()),
     );
 
-    insta::assert_snapshot!(render_section_cases(&[(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[(
         PreviousSectionState::Absent,
         PreviousSectionState::Known(&tools),
     )]));
+    });
 }
 
 #[test]
@@ -45,10 +48,12 @@ fn snapshots_namespace_omission() {
         Arc::new(RecordingMetrics::default()),
     );
 
-    insta::assert_snapshot!(render_section_cases(&[(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[(
         PreviousSectionState::Absent,
         PreviousSectionState::Known(&tools),
     )]));
+    });
 }
 
 #[test]

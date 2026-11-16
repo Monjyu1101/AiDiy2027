@@ -1,5 +1,6 @@
 //! Inspects Git executable locations and repository metadata without running Git.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::BTreeSet;
 use std::path::Path;
 use std::path::PathBuf;
@@ -147,7 +148,8 @@ mod tests {
             codex_version: "test".to_string(),
             checks: vec![check],
         };
-        insta::assert_snapshot!(super::super::render_human_report(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(super::super::render_human_report(
             &report,
             super::super::HumanOutputOptions {
                 show_details: true,
@@ -156,5 +158,6 @@ mod tests {
                 color_enabled: false,
             },
         ));
+        });
     }
 }

@@ -1,5 +1,6 @@
 //! Exercises independently opted-in async allocation through a complete classifier request.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_config::test_support::CloudConfigBundleFixture;
 use codex_protocol::openai_models::GuardianV2ModelConfig;
@@ -129,7 +130,9 @@ async fn async_elastic_classifier_request_history() -> anyhow::Result<()> {
     let snapshot = snapshot
         .replace("environment \"local\"", "environment \"<ENVIRONMENT>\"")
         .replace("environment \"remote\"", "environment \"<ENVIRONMENT>\"");
-    insta::assert_snapshot!("async_elastic_classifier", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("async_elastic_classifier", snapshot);
+    });
     assert!(
         retained_repetitions > 0 && retained_repetitions < REPEATS,
         "async entry cap must survive model defaults: {retained_repetitions}"

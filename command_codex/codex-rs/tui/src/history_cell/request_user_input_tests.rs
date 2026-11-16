@@ -1,5 +1,6 @@
 //! Result rendering preserves answer styles and wrapped unanswered questions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::ToolRequestUserInputOption;
 use ratatui::buffer::Buffer;
@@ -52,7 +53,9 @@ fn completed_and_interrupted_results() {
                 cell.answers.clear();
                 cell.interrupted = true;
             }
-            insta::assert_snapshot!(snapshots.join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshots.join("\n"));
+            });
         },
     );
 }

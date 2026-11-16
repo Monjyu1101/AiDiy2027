@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -135,10 +136,12 @@ async fn saved_chat_retry_and_supersession_with_pending_requests() -> Result<()>
         }
         if index == 2 {
             let retry = sidebar_rows(side_frame(&mut app, &mut tui, size)?);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "waiting_and_retry_rows",
                 format!("Waiting\n{waiting}\n\nRetry\n{retry}")
             );
+            });
             app.sidebar_mut().choice = 4;
             boxed_future!(app.handle_tui_event(
                 &mut tui,

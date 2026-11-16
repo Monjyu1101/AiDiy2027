@@ -1,5 +1,6 @@
 //! Render the live mention frame at full, clipped and narrow dimensions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -68,7 +69,9 @@ fn live_picker_frame_snapshots() {
             SearchMode::Results,
             "",
         );
-        insta::assert_snapshot!(name, text(&buffer));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, text(&buffer));
+        });
     }
 }
 
@@ -121,7 +124,9 @@ fn selection_covers_the_row_and_empty_filter_clears_previous_results() {
         SearchMode::FilesystemOnly,
         "new-query",
     );
-    insta::assert_snapshot!("empty_filter", text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("empty_filter", text(&buffer));
+    });
     assert!(buffer.content.iter().all(|cell| {
         cell.bg == Color::Reset
             || cell.bg
@@ -198,6 +203,8 @@ fn long_mentions_leave_room_for_distinguishing_parent_paths() {
             },
             "no matches",
         );
-        insta::assert_snapshot!(name, text(&buffer));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, text(&buffer));
+        });
     }
 }

@@ -1,5 +1,6 @@
 //! Dashboard rows, paging, metadata clipping and status-filter regressions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use assert_matches::assert_matches;
 use pretty_assertions::assert_eq;
@@ -112,9 +113,11 @@ async fn live_center_keeps_status_order_across_progress_refreshes() {
             .is_empty()
     );
     let after = screen(&view, /*width*/ 100, /*height*/ 18);
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Initial display:\n{before}\n\nAfter subagents fail under Alpha and Ready task:\n{after}"
     ));
+    });
 }
 
 #[tokio::test]
@@ -352,7 +355,9 @@ async fn live_center_columns() {
         .insert(ThreadId::from_u128(/*value*/ 47));
     let mut view = app.agents_overview_view(threads, Some(current));
     assert!(screen(&view, /*width*/ 50, /*height*/ 24).contains("● Error: Failed task"));
-    insta::assert_snapshot!(screen(&view, /*width*/ 160, /*height*/ 22));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(screen(&view, /*width*/ 160, /*height*/ 22));
+    });
     view.pinned_thread_ranks = None;
     let mut selected_status_styles = Vec::new();
     for _ in 0..fixtures.len() {
@@ -377,10 +382,12 @@ async fn live_center_columns() {
         ));
         view.handle_key_event(KeyCode::Down.into());
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_selected_status_styles",
         selected_status_styles.join("\n")
     );
+    });
 }
 
 #[tokio::test]
@@ -478,7 +485,9 @@ async fn live_center_metadata_clips_at_grapheme_boundaries() {
                 ))
                 .unwrap();
             assert!(cursor.0 < 24);
-            insta::assert_snapshot!("live_center_narrow_rename", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("live_center_narrow_rename", rendered);
+            });
         }
         view.handle_key_event(KeyCode::Esc.into());
     }
@@ -619,10 +628,12 @@ async fn live_center_navigation_and_complete_hints() {
     view.handle_key_event(KeyEvent::new(KeyCode::BackTab, KeyModifiers::SHIFT));
     view.handle_key_event(KeyEvent::new(KeyCode::Tab, KeyModifiers::SHIFT));
     assert_eq!(selected(&view), unloaded);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_status_filter",
         screen(&view, /*width*/ 40, /*height*/ 12)
     );
+    });
     view.handle_key_event(KeyCode::Tab.into());
 
     let repeat_help =
@@ -635,7 +646,9 @@ async fn live_center_navigation_and_complete_hints() {
         ("live_center_help_one_column", 40, 32),
         ("live_center_navigation_and_complete_hints", 40, 24),
     ] {
-        insta::assert_snapshot!(name, screen(&view, width, height));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, screen(&view, width, height));
+        });
     }
     view.handle_key_event(KeyCode::Esc.into());
     view.handle_key_event(repeat_help);
@@ -754,10 +767,12 @@ toggle_pin = 'z p'
     app.agents_overview.pins_by_backend =
         [(crate::backend_id::BackendId::new(), Some(Vec::new()))].into();
     let view = app.agents_overview_view(Vec::new(), /*selected_thread_id*/ None);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_custom_footer",
         screen(&view, /*width*/ 100, /*height*/ 12)
     );
+    });
     let thread_id = ThreadId::from_u128(/*value*/ 42);
     let mut view = app.agents_overview_view(
         vec![overview_thread(
@@ -769,10 +784,12 @@ toggle_pin = 'z p'
         Some(thread_id),
     );
     view.handle_key_event(KeyCode::Char('?').into());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_custom_help",
         screen(&view, /*width*/ 100, /*height*/ 24)
     );
+    });
 }
 
 #[tokio::test]
@@ -804,10 +821,12 @@ async fn live_center_search_row_appears_only_while_editing() {
     for key in [KeyCode::Char('/'), KeyCode::F(3)] {
         view.handle_key_event(key.into());
         view.handle_paste("find".into());
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "live_center_search_active",
             screen(&view, area.width, area.height)
         );
+        });
         view.handle_key_event(KeyCode::Esc.into());
         assert_eq!(screen(&view, area.width, area.height), idle);
     }
@@ -896,10 +915,12 @@ async fn live_center_show_more_navigation_search_and_loading() {
     );
     let mut view = app.agents_overview_view(vec![thread], /*selected_thread_id*/ None);
     view.handle_key_event(KeyCode::Down.into());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_show_more",
         screen(&view, /*width*/ 80, /*height*/ 12)
     );
+    });
     view.handle_key_event(KeyCode::Enter.into());
     view.handle_key_event(KeyCode::Enter.into());
     assert_matches!(rx.try_recv(), Ok(AppEvent::ShowMoreAgentsOverview));
@@ -915,10 +936,12 @@ async fn live_center_show_more_navigation_search_and_loading() {
     let id = assert_matches!(rx.try_recv(), Ok(AppEvent::SearchAgentsOverview(id, _)) => id);
     insta::assert_snapshot!(screen(&view, /*width*/ 80, /*height*/ 12).lines().nth(6).unwrap(), @"  ›   Searching history…");
     app.apply_agents_overview_search_page(id, Vec::new(), Default::default(), /*ok*/ false);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "live_center_show_more_search_retry",
         screen(&view, /*width*/ 80, /*height*/ 12)
     );
+    });
     view.handle_key_event(KeyCode::Enter.into());
     let id = assert_matches!(rx.try_recv(), Ok(AppEvent::SearchAgentsOverview(id, _)) => id);
     app.apply_agents_overview_search_page(id, Vec::new(), Default::default(), /*ok*/ true);

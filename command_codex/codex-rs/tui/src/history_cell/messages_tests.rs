@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::markdown_render_cache::MarkdownRenderCacheKey;
 use assert_matches::assert_matches;
@@ -44,7 +45,9 @@ fn typed_prompt_markdown_keeps_the_prompt_gutter_and_links() {
             .join("\n");
         snapshots.push(format!("width {width}\n{rendered}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -100,7 +103,9 @@ fn user_prompt_urls_keep_destinations_across_widths() {
             ratatui::text::Text::from(visible_lines(lines))
         ));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -114,11 +119,13 @@ fn local_image_only_user_message_remains_visible() {
     let display = cell.display_lines(/*width*/ 40);
 
     assert_eq!(cell.transcript_lines(/*width*/ 40), display);
-    insta::assert_snapshot!(ratatui::text::Text::from(display));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(ratatui::text::Text::from(display));
+    });
 }
 
 #[test]
-fn mixed_image_labels_preserve_existing_placeholders_without_duplicates() {
+fn image_labels_preserve_placeholders() {
     let placeholder = "[Image #2]";
     let cell = new_user_prompt(
         format!("{placeholder} **compare** these"),
@@ -130,7 +137,9 @@ fn mixed_image_labels_preserve_existing_placeholders_without_duplicates() {
         vec!["https://example.test/remote.png".to_string()],
     );
 
-    insta::assert_snapshot!(ratatui::text::Text::from(cell.display_lines(/*width*/ 40)));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(ratatui::text::Text::from(cell.display_lines(/*width*/ 40)));
+    });
 }
 
 #[test]
@@ -238,7 +247,9 @@ fn spoken_user_messages_have_a_red_chevron_without_changing_raw_text() {
         spoken.display_lines(area.width)
     });
     Paragraph::new(lines).render(area, &mut buf);
-    insta::assert_snapshot!("spoken_user_prompt", format!("{buf:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("spoken_user_prompt", format!("{buf:?}"));
+    });
 }
 
 fn replace_cached_lines(

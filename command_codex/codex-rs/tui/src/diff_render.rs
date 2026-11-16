@@ -32,6 +32,7 @@
 //! preserved across the split so that no color information is lost. Theme foregrounds
 //! are resolved against the painted diff fill, without dimming corrected syntax colors.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use diffy::Hunk;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -1426,7 +1427,9 @@ mod tests {
             assert_ne!(buffer[(3, 0)].fg, buffer[(3, 1)].fg);
             assert_ne!(buffer[(18, 0)].fg, buffer[(18, 1)].fg);
             assert_ne!(buffer[(24, 0)].fg, buffer[(24, 1)].fg);
-            assert_snapshot!(format!("{buffer:?}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(format!("{buffer:?}"));
+            });
         });
     }
 
@@ -1492,7 +1495,9 @@ mod tests {
                 .all(|cell| !cell.symbol().contains('\t')),
             "diff buffer should not contain literal tabs"
         );
-        assert_snapshot!(name, terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(name, terminal.backend());
+        });
     }
 
     fn display_width(text: &str) -> usize {
@@ -1522,7 +1527,9 @@ mod tests {
             .map(|s| s.trim_end().to_string())
             .collect::<Vec<_>>()
             .join("\n");
-        assert_snapshot!(name, text);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(name, text);
+        });
     }
 
     fn diff_gallery_changes() -> HashMap<PathBuf, FileChange> {
@@ -2126,7 +2133,9 @@ mod tests {
             style_line_bg_for(DiffLineType::Insert, backgrounds).bg,
             style_line_bg_for(DiffLineType::Delete, backgrounds).bg,
         );
-        assert_snapshot!("theme_scope_background_resolution", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("theme_scope_background_resolution", snapshot);
+        });
     }
 
     #[test]
@@ -2417,7 +2426,9 @@ mod tests {
                 })
                 .collect::<Vec<_>>();
 
-                assert_debug_snapshot!("cpp_module_extension_highlighting", highlighted_tokens);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    assert_debug_snapshot!("cpp_module_extension_highlighting", highlighted_tokens);
+                });
             },
         );
     }

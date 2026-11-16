@@ -1,5 +1,6 @@
 //! Undelivered speech returns to visible history without leaks or clipping.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -68,7 +69,9 @@ async fn paraphrased_voice_answers_do_not_reappear_on_overflow_or_stop() {
     chat.stop_realtime_conversation();
     commit_realtime_history_events(&mut chat, &mut events);
     let rendered = format!("{last_exchange}\n{}", history_text(&mut events));
-    insta::assert_snapshot!("paraphrased_voice_recovery", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("paraphrased_voice_recovery", rendered);
+    });
 }
 
 #[tokio::test]

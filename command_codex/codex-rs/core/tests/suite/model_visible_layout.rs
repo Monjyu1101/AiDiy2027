@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_protocol::protocol::TurnEnvironmentRequest;
 use codex_protocol::protocol::TurnEnvironmentRequests;
 use core_test_support::test_codex::local_requests;
@@ -362,7 +363,8 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
 
     let requests = responses.requests();
     assert_eq!(requests.len(), 2, "expected two requests");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_turn_overrides",
         format_labeled_requests_snapshot(
             "Second turn changes cwd and approval policy while keeping model constant.",
@@ -372,6 +374,7 @@ async fn snapshot_model_visible_layout_turn_overrides() -> Result<()> {
             ]
         )
     );
+    });
 
     Ok(())
 }
@@ -490,7 +493,8 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
         2,
         "expected second request to retain the original AGENTS.md item and append its replacement"
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_cwd_change_refreshes_agents",
         format_labeled_requests_snapshot(
             "Second turn changes cwd to a directory with different AGENTS.md and refreshes the model-visible instructions.",
@@ -500,6 +504,7 @@ async fn snapshot_model_visible_layout_cwd_change_refreshes_agents() -> Result<(
             ]
         )
     );
+    });
 
     Ok(())
 }
@@ -598,7 +603,8 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
             .iter()
             .any(|text| text.contains(&format!("{PRETURN_CONTEXT_DIFF_CWD}</cwd>")))
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_resume_with_personality_change",
         format_labeled_requests_snapshot(
             "First post-resume turn where resumed config model differs from rollout and personality changes.",
@@ -608,6 +614,7 @@ async fn snapshot_model_visible_layout_resume_with_personality_change() -> Resul
             ]
         )
     );
+    });
 
     Ok(())
 }
@@ -692,7 +699,8 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
             .iter()
             .any(|text| text.contains(&format!("{PRETURN_CONTEXT_DIFF_CWD}</cwd>")))
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_resume_override_matches_rollout_model",
         format_labeled_requests_snapshot(
             "First post-resume turn where pre-turn override sets model to rollout model; no model-switch update should appear.",
@@ -702,26 +710,31 @@ async fn snapshot_model_visible_layout_resume_override_matches_rollout_model() -
             ]
         )
     );
+    });
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn snapshot_model_visible_layout_environment_context_includes_one_subagent() -> Result<()> {
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_environment_context_includes_one_subagent",
         format_environment_context_subagents_snapshot(&["- agent-1: Atlas"])
     );
+    });
 
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn snapshot_model_visible_layout_environment_context_includes_two_subagents() -> Result<()> {
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "model_visible_layout_environment_context_includes_two_subagents",
         format_environment_context_subagents_snapshot(&["- agent-1: Atlas", "- agent-2: Juniper"])
     );
+    });
 
     Ok(())
 }

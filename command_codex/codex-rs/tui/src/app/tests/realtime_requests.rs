@@ -1,5 +1,6 @@
 //! App-to-RPC coverage for a delegated voice answer without audio hardware.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::tests::session_lifecycle_requests::RealtimeRequestBehavior;
 use crate::app::tests::session_lifecycle_requests::recorded_params;
@@ -658,7 +659,8 @@ async fn switching_threads_keeps_the_source_voice_partial_only_on_reattach() {
         .collect::<Vec<_>>()
         .join("\n");
     assert_eq!(rendered.matches("spoken partial completed").count(), 1);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_partial_completed_after_thread_switch",
         normalize_voice_snapshot_directory(
             &format!(
@@ -668,6 +670,7 @@ async fn switching_threads_keeps_the_source_voice_partial_only_on_reattach() {
             &app.config.cwd,
         )
     );
+    });
     while let Ok(event) = side_events.try_recv() {
         if let AppEvent::InsertHistoryCell(cell) = event {
             assert!(
@@ -898,10 +901,12 @@ async fn replay_reconciles_only_matching_voice_captions_one_for_one() {
     assert_eq!(rendered.matches("spoken answer").count(), 1);
     assert_eq!(rendered.matches("typed words").count(), 2);
     assert_eq!(rendered.matches("different caption").count(), 1);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_replay_reconciles_matching_captions",
         normalize_voice_snapshot_directory(&rendered, &app.config.cwd)
     );
+    });
 }
 
 #[tokio::test]
@@ -1073,10 +1078,12 @@ async fn buffered_voice_items_reconcile_captions_after_thread_switch() {
         .join("\n");
     assert_eq!(rendered.matches("buffered question").count(), 1);
     assert_eq!(rendered.matches("buffered answer").count(), 1);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_buffered_replay_reconciles_captions",
         normalize_voice_snapshot_directory(&rendered, &app.config.cwd)
     );
+    });
 }
 
 #[tokio::test]
@@ -1280,10 +1287,12 @@ async fn completed_voice_caption_survives_repeated_thread_replacement() {
                 < rendered.find("Later typed question").unwrap()
         );
         if cycle == 0 {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "voice_completed_after_thread_switch",
                 normalize_voice_snapshot_directory(&rendered, &app.config.cwd)
             );
+            });
         }
     }
 }
@@ -1447,12 +1456,14 @@ async fn rejected_realtime_speech_restores_the_delegated_final_answer() -> Resul
             .iter()
             .any(|line| line.contains("Voice conversation failed:"))
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "rejected_realtime_speech",
         rendered
             .join("\n")
             .replace(&thread_id.to_string(), "<thread-id>")
     );
+    });
     app_server.shutdown().await?;
     proxy.await??;
     Ok(())
@@ -2104,10 +2115,12 @@ async fn remote_voice_picker_reads_server_preference() -> Result<()> {
         recorded_params(&requests, "thread/realtime/listVoices").len(),
         1
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "remote_voice_picker",
         crate::chatwidget::tests::helpers::render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     server.shutdown().await?;
     proxy.await??;
     Ok(())
@@ -2142,7 +2155,9 @@ async fn remote_voice_catalog_success_and_failure() -> Result<()> {
         assert!(!popup.contains("(current)"));
         assert!(!popup.contains("  3. spruce"));
         if expected_catalog {
-            insta::assert_snapshot!("remote_voice_picker_server_default", popup);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("remote_voice_picker_server_default", popup);
+            });
         }
         assert_eq!(
             recorded_params(&requests, "thread/realtime/listVoices").len(),
@@ -2163,7 +2178,9 @@ async fn remote_voice_catalog_success_and_failure() -> Result<()> {
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!("voice_catalog_failure_picker", messages);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("voice_catalog_failure_picker", messages);
+            });
         }
         server.shutdown().await?;
         proxy.await??;
@@ -2248,7 +2265,9 @@ async fn overridden_voice_save_keeps_effective_voice() -> Result<()> {
             .join("\n");
         assert!(message.contains("saved but not applied"));
         if !project_override {
-            insta::assert_snapshot!("overridden_voice_save", message);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("overridden_voice_save", message);
+            });
         }
         server.shutdown().await?;
     }

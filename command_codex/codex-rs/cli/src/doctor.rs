@@ -11,6 +11,7 @@
 //! mutate user state. That keeps the command safe to run before filing a support
 //! issue or while diagnosing a broken local installation.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::BTreeMap;
 use std::collections::BTreeSet;
 use std::collections::HashMap;
@@ -3334,7 +3335,9 @@ mod tests {
 
         assert!(!rendered.contains("private-close-reason"));
         assert!(!rendered.contains("private-stream-error"));
-        insta::assert_snapshot!("websocket_probe_human_output", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("websocket_probe_human_output", rendered);
+        });
     }
 
     #[test]
@@ -4507,7 +4510,8 @@ mod tests {
                     codex_version: "0.0.0".to_string(),
                     checks: vec![check],
                 };
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "doctor_dumb_non_interactive_human",
                     render_human_report(
                         &report,
@@ -4519,6 +4523,7 @@ mod tests {
                         }
                     )
                 );
+                });
             }
         }
     }
@@ -4606,7 +4611,8 @@ mod tests {
             check.issues[0].remedy.as_deref(),
             Some("check that $TERMINFO points to a readable directory")
         );
-        insta::assert_snapshot!(render_human_report(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(render_human_report(
             &DoctorReport {
                 schema_version: 1,
                 generated_at: "0s since unix epoch".to_string(),
@@ -4621,6 +4627,7 @@ mod tests {
                 color_enabled: false,
             }
         ));
+        });
     }
 
     #[test]

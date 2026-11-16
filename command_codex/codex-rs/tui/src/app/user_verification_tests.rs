@@ -1,5 +1,6 @@
 //! Covers the controller's RPC boundary, cancellation generations, and proof redaction.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::McpServerElicitationRequest;
 use codex_app_server_protocol::McpServerElicitationRequestParams;
@@ -347,9 +348,13 @@ async fn run_verification_rpc_scenario(scenario: RpcScenario) -> color_eyre::Res
             .collect::<Vec<_>>()
             .join("\n");
         if scenario == RpcScenario::RemoteWorkspace {
-            insta::assert_snapshot!("remote_workspace_verification_warning", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("remote_workspace_verification_warning", rendered);
+            });
         } else {
-            insta::assert_snapshot!("older_binary_verification_warning", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("older_binary_verification_warning", rendered);
+            });
         }
     }
     tokio::time::timeout(std::time::Duration::from_secs(/*secs*/ 5), server).await???;

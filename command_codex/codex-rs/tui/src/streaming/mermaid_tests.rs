@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::controller::StreamController;
 use super::render::StreamingRender;
 use crate::history_cell::HistoryRenderMode;
@@ -75,7 +76,9 @@ fn mermaid_stream_closes_resizes_and_preserves_raw_source() {
                 .join("\n"),
         );
     }
-    assert_snapshot!(stages.join("\n\n---\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(stages.join("\n\n---\n\n"));
+    });
 }
 
 #[test]

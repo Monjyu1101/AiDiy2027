@@ -1,4 +1,5 @@
 //! Exercise question drafts, selection, and the constrained terminal viewport.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::render::renderable::Renderable;
 use crossterm::event::KeyCode;
@@ -137,7 +138,9 @@ fn long_prompt_keeps_the_active_input_visible() {
     let buffer = render_editor(&editor, /*width*/ 40, /*height*/ 8);
     let text = buffer_text(&buffer);
     assert!(text.contains("visible answer"));
-    insta::assert_snapshot!("long_prompt_active_input", text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("long_prompt_active_input", text);
+    });
 }
 
 #[test]
@@ -168,10 +171,12 @@ fn wrapped_question_url_keeps_its_complete_destination() {
             .collect::<String>();
         if height == full_height {
             assert_eq!(linked_text, url);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "question_wrapped_url",
                 crate::terminal_hyperlinks::strip_osc8(&buffer_text(&buffer))
             );
+            });
         } else {
             assert!(!linked_text.is_empty());
             assert!(url.starts_with(&linked_text));
@@ -225,7 +230,9 @@ fn markdown_question_preserves_formatting_and_link_destinations() {
         }
     }
     assert_eq!(rendered[0], rendered[1]);
-    insta::assert_snapshot!("question_multiline", rendered[0]);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_multiline", rendered[0]);
+    });
 }
 
 #[test]
@@ -258,7 +265,9 @@ fn selected_other_renders_as_a_dim_placeholder() {
     for offset in 0..5 {
         assert_eq!(buffer[(input.x + offset, input.y)].modifier, Modifier::DIM);
     }
-    insta::assert_snapshot!("selected_other_placeholder", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("selected_other_placeholder", buffer_text(&buffer));
+    });
     editor.state.pending[1].question.title = "Second".into();
     render_editor(&editor, /*width*/ 50, /*height*/ 10);
     editor.set_vim_enabled(/*enabled*/ true);
@@ -322,7 +331,9 @@ fn question_choice_remaps_paging_and_inline_feedback() {
     editor.handle_key_event(KeyEvent::from(KeyCode::Char('7')));
     assert_eq!(editor.selected_option_index(), Some(0));
     editor.render(area, &mut buffer);
-    insta::assert_snapshot!("question_remapped_choice_footer", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_remapped_choice_footer", buffer_text(&buffer));
+    });
 }
 
 #[test]
@@ -348,7 +359,9 @@ fn question_inline_history_search() {
             .iter()
             .any(|cell| cell.modifier.contains(Modifier::REVERSED))
     );
-    insta::assert_snapshot!("question_inline_history_search", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_inline_history_search", buffer_text(&buffer));
+    });
     assert_eq!(editor.capture(), saved);
 }
 
@@ -361,14 +374,18 @@ fn question_other_remains_visible_at_nine_columns_and_distinguishes_named_other(
     editor.on_ctrl_c();
     editor.handle_key_event(KeyEvent::from(KeyCode::Up));
     let buffer = render_editor(&editor, /*width*/ 50, /*height*/ 12);
-    insta::assert_snapshot!("question_named_other", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_named_other", buffer_text(&buffer));
+    });
     editor.select_option(/*index*/ 1);
     editor.handle_paste("x".into());
     let buffer = render_editor(&editor, /*width*/ 9, /*height*/ 8);
     let narrow = buffer.area;
     assert!(editor.cursor_pos(narrow).is_some());
     assert!(buffer.content.iter().any(|cell| cell.symbol() == "x"));
-    insta::assert_snapshot!("question_narrow_other", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_narrow_other", buffer_text(&buffer));
+    });
 }
 
 #[test]
@@ -396,7 +413,8 @@ fn question_options_reserve_wrapped_height_at_the_width_boundary() {
     assert_eq!(editor.visible_options.get(), (0, 0));
     editor.go_next_or_submit();
     assert!(editor.submission.is_none());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_options_width_boundary",
         format!(
             "Full height:\n{}\n\nClipped:\n{}",
@@ -404,6 +422,7 @@ fn question_options_reserve_wrapped_height_at_the_width_boundary() {
             buffer_text(&clipped),
         )
     );
+    });
 }
 
 #[test]
@@ -421,10 +440,12 @@ fn question_other_excludes_clipped_options_at_the_width_boundary() {
     let mut buffer = Buffer::empty(area);
     editor.render_inline_options(area, &mut buffer);
     assert_eq!(editor.visible_options.get(), (0, 0));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_other_clipped_width_boundary",
         buffer_text(&buffer)
     );
+    });
 }
 
 #[test]
@@ -436,7 +457,9 @@ fn question_wrapped_options_and_other_share_the_text_indent() {
     ]);
     editor.restore_current_draft();
     let buffer = render_editor(&editor, /*width*/ 36, /*height*/ 16);
-    insta::assert_snapshot!("question_wrapped_named_option", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_wrapped_named_option", buffer_text(&buffer));
+    });
     let options = editor.state.pending[0].question.options.as_mut().unwrap();
     options.insert(
         0,
@@ -444,19 +467,23 @@ fn question_wrapped_options_and_other_share_the_text_indent() {
     );
     editor.select_option(/*index*/ 1);
     let clipped = render_editor(&editor, /*width*/ 36, /*height*/ 10);
-    insta::assert_snapshot!("question_wrapped_selected_option", buffer_text(&clipped));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_wrapped_selected_option", buffer_text(&clipped));
+    });
     render_editor(&editor, /*width*/ 0, /*height*/ 0);
     editor.go_next_or_submit();
     assert!(editor.submission.is_none());
     render_editor(&editor, /*width*/ 36, /*height*/ 6);
     editor.go_next_or_submit();
     assert!(editor.submission.is_none());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_clipped_choice_rejected",
         buffer_text(&render_editor(
             &editor, /*width*/ 50, /*height*/ 8
         ))
     );
+    });
     render_editor(&editor, /*width*/ 80, /*height*/ 20);
     editor.go_next_or_submit();
     assert!(editor.submission.take().is_some());
@@ -488,7 +515,9 @@ fn question_wrapped_options_and_other_share_the_text_indent() {
     let clipped = render_editor(&editor, /*width*/ 50, /*height*/ 3);
     editor.go_next_or_submit();
     assert!(editor.submission.is_none());
-    insta::assert_snapshot!("question_clipped_prompt", buffer_text(&clipped));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_clipped_prompt", buffer_text(&clipped));
+    });
     editor.state.pending.last_mut().unwrap().question.title = "Question".into();
     for action in ["move_left", "move_right", "cancel"] {
         let config = toml::from_str(&format!("[list]\n{action} = '1'")).unwrap();
@@ -515,7 +544,9 @@ fn question_wrapped_other_shares_the_text_indent() {
     editor.select_option(/*index*/ 1);
     editor.handle_paste("An alternative answer that wraps across several option rows".into());
     let buffer = render_editor(&editor, /*width*/ 36, /*height*/ 16);
-    insta::assert_snapshot!("question_wrapped_other", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_wrapped_other", buffer_text(&buffer));
+    });
     editor.composer.clear_for_ctrl_c();
     editor.handle_paste(" \n ".into());
     editor.select_option(/*index*/ 0);
@@ -527,7 +558,9 @@ fn question_wrapped_other_shares_the_text_indent() {
     editor.composer.move_cursor_to_end();
     let buffer = render_editor(&editor, /*width*/ 50, /*height*/ 18);
     assert_eq!(editor.cursor_pos(buffer.area), Some((7, 12)));
-    insta::assert_snapshot!("question_capped_other", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("question_capped_other", buffer_text(&buffer));
+    });
     editor.select_option(/*index*/ 0);
     assert!(editor.other_label().len() <= 128);
     editor.state.pending[0].draft.text = format!("a{}", "\u{301}".repeat(10_000));

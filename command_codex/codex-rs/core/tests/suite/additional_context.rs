@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::TurnInputRequest;
 use codex_core::config::Config;
@@ -119,7 +120,8 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
     assert_eq!(outputs.len(), 1);
     assert_browser_context_actor_output(&outputs[0]);
     assert!(request.has_content_kinds(&["user.text"]));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "additional_context_simple_input",
         context_snapshot::format_labeled_requests_snapshot(
             "additional context is inserted before the user turn input.",
@@ -127,6 +129,7 @@ async fn additional_context_is_model_visible_but_not_a_user_message_item() -> Re
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     let developer_context_texts = request
         .message_input_texts("developer")
         .into_iter()

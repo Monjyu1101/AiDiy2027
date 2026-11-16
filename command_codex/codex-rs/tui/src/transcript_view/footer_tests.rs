@@ -1,5 +1,6 @@
 //! Loading feedback preserves the transcript's selection, search editor, and passive context.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::PlainHistoryCell;
 use crate::style::accent_color;
@@ -166,7 +167,9 @@ fn selection_hints_follow_selected_text_instead_of_mouse_down() {
         .map(str::trim_end)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("selection_hint_threshold", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("selection_hint_threshold", snapshot);
+    });
 }
 
 #[test]
@@ -265,7 +268,9 @@ fn loading_and_failure_preserve_search_query_and_caret() {
             hints.push(format!("{width} columns, {state:?}: {hint}"));
         }
     }
-    insta::assert_snapshot!(hints.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(hints.join("\n"));
+    });
     view.history = TranscriptHistoryState::Complete;
     assert!(!view.advance_search(&cells));
     view.handle_key(KeyCode::Esc.into(), &cells);
@@ -375,7 +380,9 @@ fn passive_footer_keeps_jump_actions_in_one_row() {
             snapshots.push(format!("{width} columns, {history:?}: {}", footer.text));
         }
     }
-    insta::assert_snapshot!("compact_navigation_hints", snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("compact_navigation_hints", snapshots.join("\n"));
+    });
 }
 
 #[test]
@@ -403,7 +410,9 @@ fn narrow_selection_and_search_keep_complete_exit_hints() {
             snapshots.push(format!("search={searching}, {width} columns: {hint}"));
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n"));
+    });
 }
 
 #[derive(Debug, Default)]
@@ -558,7 +567,9 @@ fn activity_focus_keeps_controls_without_passive_hints() {
         );
         hints.push(format!("{configured}: {hint}"));
     }
-    insta::assert_snapshot!(hints.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(hints.join("\n"));
+    });
 }
 
 #[test]
@@ -580,7 +591,9 @@ fn transcript_footer_keys_remain_distinct_from_prose_and_query_text() {
     );
     let mut buffer = Buffer::empty(area);
     Paragraph::new(footer.text).render(area, &mut buffer);
-    insta::assert_snapshot!(format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("{buffer:?}"));
+    });
 }
 
 impl TranscriptView {

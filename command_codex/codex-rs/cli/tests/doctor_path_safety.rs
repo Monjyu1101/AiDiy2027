@@ -1,5 +1,6 @@
 //! Black-box coverage for safe diagnostic execution and config error reporting.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::ffi::OsString;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -300,7 +301,9 @@ fn doctor_reports_failed_database_paths() -> Result<()> {
                     .replace('\\', "/")
                 );
             } else {
-                insta::assert_snapshot!(snapshot_name, state_row);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(snapshot_name, state_row);
+                });
             }
         }
         for path in &failed_paths {
@@ -411,7 +414,13 @@ fn doctor_reports_only_safe_config_error_metadata() -> Result<()> {
             assert!(!stdout.contains("sk-proj-ABC123example"));
             // Keep snapshots stable across serde_json feature sets in Cargo and Bazel.
             check.sort_all_objects();
-            insta::assert_snapshot!(snapshot_name, serde_json::to_string_pretty(&check)?);
+            {
+                // Evaluate fallible/async values before entering synchronous Insta settings.
+                let snapshot_value = serde_json::to_string_pretty(&check)?;
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(snapshot_name, snapshot_value);
+                });
+            };
         }
         std::fs::remove_file(config_file)?;
     }
@@ -484,7 +493,13 @@ extends = ":read-only"
     } else {
         "doctor_configured_filesystem_paths"
     };
-    insta::assert_snapshot!(snapshot_name, serde_json::to_string_pretty(&details)?);
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = serde_json::to_string_pretty(&details)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot_name, snapshot_value);
+        });
+    };
     Ok(())
 }
 

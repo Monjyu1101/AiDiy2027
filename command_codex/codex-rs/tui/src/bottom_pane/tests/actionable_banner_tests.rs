@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::actionable_banner::BannerDismissal;
 use super::*;
 use pretty_assertions::assert_eq;
@@ -40,7 +41,9 @@ fn promoted_banner_uses_picker_hints_and_preserves_the_draft() {
         assert!(rendered.contains("View usage"), "{rendered}");
         assert!(rendered.contains("f3 select · f2 back"), "{rendered}");
         if confirm {
-            assert_snapshot!(format!("promoted_action_banner_{width}"), rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(format!("promoted_action_banner_{width}"), rendered);
+            });
         }
         assert_eq!(pane.composer.draft_snapshot(), draft);
 
@@ -132,7 +135,9 @@ fn hidden_banner_preserves_input_before_render_and_after_resize() {
             )
         };
         if composer_gap.is_some() {
-            assert_snapshot!("actionable_banner_with_composer_gap", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!("actionable_banner_with_composer_gap", rendered);
+            });
         }
         assert!(rendered.contains("View usage"));
         assert!(!pane.is_normal_backtrack_mode());
@@ -245,9 +250,13 @@ fn information_banner_preserves_input_and_honors_dismissal() {
             dismissal == BannerDismissal::Dismissible
         );
         if dismissal == BannerDismissal::Persistent {
-            assert_snapshot!("information_banner_persistent", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!("information_banner_persistent", rendered);
+            });
         } else {
-            assert_snapshot!("information_banner_dismissible", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!("information_banner_dismissible", rendered);
+            });
         }
         pane.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert_eq!(
@@ -292,5 +301,7 @@ fn banner_copy_preserves_wrapped_url_destinations() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("banner_wrapped_url", visible);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("banner_wrapped_url", visible);
+    });
 }

@@ -1,5 +1,6 @@
 //! Shared MCP transports preserve each chat's model-visible tools and input responses.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_history::InitialHistory;
 use codex_history::ResumedHistory;
@@ -22,7 +23,9 @@ async fn shared_mcp_keeps_tools_and_model_requested_input_per_chat() -> Result<(
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
 
     let snapshot = exercise_mcp_sharing(/*resume_with_replacement_auth*/ false).await?;
-    insta::assert_snapshot!(snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot);
+    });
     Ok(())
 }
 

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::ConnectorsSnapshot;
 use crate::bottom_pane::RestrictedInputMode;
@@ -2059,13 +2060,15 @@ async fn output_free_ctrl_c_interrupt_keeps_prompt_and_opens_blank_composer() {
     let (saw_prompt, interrupted_history) = interrupted_history(&mut rx, prompt);
     assert!(saw_prompt);
     assert!(chat.bottom_pane.composer_is_empty());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "output_free_ctrl_c_interrupt_keeps_prompt_and_blank_composer",
         format!(
             "history:\n{interrupted_history}\ncomposer:\n{}",
             chat.bottom_pane.composer_text()
         )
     );
+    });
 }
 
 #[tokio::test]

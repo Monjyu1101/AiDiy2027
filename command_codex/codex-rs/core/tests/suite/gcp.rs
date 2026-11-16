@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use anyhow::Result;
 use codex_core::StartThreadOptions;
@@ -409,13 +410,15 @@ async fn vertex_guardian_requests_use_luna() -> Result<()> {
         .await?;
 
     let models = test.thread_manager.get_models_manager().try_list_models()?;
-    insta::assert_debug_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_debug_snapshot!(
         "gcp_model_picker",
         models
             .iter()
             .map(|model| (&model.model, model.show_in_picker, model.is_default))
             .collect::<Vec<_>>()
     );
+    });
 
     test.submit_text_turn("run a command").await?;
 

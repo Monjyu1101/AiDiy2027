@@ -1,5 +1,6 @@
 //! Theme-derived styling for the configurable footer statusline.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use ratatui::style::Color;
 use ratatui::style::Style;
 use ratatui::style::Styled;
@@ -435,7 +436,9 @@ mod tests {
             );
             let mut buffer = Buffer::empty(area);
             line.render(area, &mut buffer);
-            insta::assert_snapshot!(format!("{buffer:?}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(format!("{buffer:?}"));
+            });
         });
     }
 

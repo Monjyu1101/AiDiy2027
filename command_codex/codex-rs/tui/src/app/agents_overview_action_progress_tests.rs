@@ -1,5 +1,6 @@
 //! The dashboard remains browsable while lifecycle requests hold the server lock.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::tests::helpers::normalize_agent_center_snapshot;
 use crate::test_support::PathBufExt;
@@ -112,7 +113,9 @@ async fn modal_consumes_input_and_finishes_after_input_closes() -> color_eyre::R
         terminal.draw(|frame| app.chat_widget.render(frame.area(), frame.buffer_mut()))?;
         let text = normalize_agent_center_snapshot(terminal.backend().to_string());
         let age = regex_lite::Regex::new(r" +[0-9]+d ago").unwrap();
-        insta::assert_snapshot!(snapshot, age.replace_all(&text, " [age]"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, age.replace_all(&text, " [age]"));
+        });
         server.shutdown().await?;
     }
     Ok(())

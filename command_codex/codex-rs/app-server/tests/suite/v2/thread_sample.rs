@@ -1,5 +1,6 @@
 //! Exercises sampling through JSON-RPC, including cache identity and cleanup.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use app_test_support::MockResponsesConfig;
 use app_test_support::TestAppServer;
@@ -362,7 +363,8 @@ async fn sample_preserves_context_and_keeps_source_unchanged(
     let requests = mock.requests();
     assert_eq!(requests.len(), sample_index + 3);
     if history_mode == ThreadHistoryMode::Legacy && parent_status == TurnStatus::Completed {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "sample_inherits_parent_context",
             context_snapshot::format_request_history_snapshot(
                 "A parent uses high effort with custom instructions, client tools, permission tools, and priority service. A medium-effort sample, prediction fork, and subsequent parent turn preserve the same request context and high request-effort baseline.",
@@ -370,6 +372,7 @@ async fn sample_preserves_context_and_keeps_source_unchanged(
                 &ContextSnapshotOptions::default().include_request_settings(),
             )
         );
+        });
     }
     if compact_parent {
         assert_eq!(
@@ -593,7 +596,8 @@ async fn sample_in_progress_turn_uses_captured_history(
             SnapshotEntry::body(sample).labeled("Child samples the open turn"),
             SnapshotEntry::body(follow_up).labeled("Parent receives the tool result"),
         ];
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "sample_compacted_parent_with_pending_tool_call",
             context_snapshot::format_context_snapshot(
                 "A child samples a compacted parent while a tool call is pending. The parent then receives the real tool result.",
@@ -601,6 +605,7 @@ async fn sample_in_progress_turn_uses_captured_history(
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     }
     let child = &requests[child_request_index];
     let follow_up = &requests[child_request_index + 1];

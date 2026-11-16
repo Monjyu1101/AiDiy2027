@@ -1,5 +1,6 @@
 //! End-to-end command lifecycle with a snapshot of its complete model-visible history.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::openai_models::ConfigShellToolType;
 use codex_protocol::protocol::ThreadSettingsOverrides;
@@ -177,14 +178,17 @@ text(result.output);"#
 
     // Command text is platform-specific; lifecycle assertions run on every native executor.
     if core_test_support::test_target_os() != core_test_support::TestTargetOs::Windows {
-        insta::assert_snapshot!(
-            "command_sessions_world_state",
-            context_snapshot::format_request_history_snapshot(
+        {
+            // Evaluate fallible/async values before entering synchronous Insta settings.
+            let snapshot_value = context_snapshot::format_request_history_snapshot(
                 "A Code Mode script drops its command handle. WorldState retains it while polling is unavailable, restores it after compaction, preserves exited results, clears drained sessions, and deletes stale handles after restart.",
                 &responses::received_responses_requests(server).await,
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
-            )
-        );
+            );
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("command_sessions_world_state", snapshot_value);
+            });
+        };
     }
     Ok(())
 }

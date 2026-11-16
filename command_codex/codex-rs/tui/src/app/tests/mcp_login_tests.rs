@@ -1,4 +1,5 @@
 //! Regression coverage for overlapping starts, replacement attempts, and thread-scoped results.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::McpServerOauthLoginCompletedNotification;
 use codex_app_server_protocol::McpServerOauthLoginResponse;
@@ -35,7 +36,9 @@ async fn overlapping_mcp_login_preserves_first_start() {
         app.pending_mcp_login_start.as_ref().unwrap().request_id,
         "first"
     );
-    assert_snapshot!("overlapping_mcp_login", next_history_message(&mut events));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("overlapping_mcp_login", next_history_message(&mut events));
+    });
     app.handle_event(
         &mut tui,
         &mut server,
@@ -234,10 +237,12 @@ async fn mcp_login_results_survive_thread_switch_and_session_refresh() {
         for event in snapshot.events {
             app.handle_thread_event_replay(event);
         }
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             format!("mcp_login_switched_thread_{success}"),
             next_history_message(&mut events)
         );
+        });
         server.shutdown().await.unwrap();
     }
 }
@@ -316,6 +321,8 @@ async fn rejected_mcp_login_retry_preserves_previous_result() {
             }
         })
         .collect::<Vec<_>>();
-    assert_snapshot!("rejected_mcp_login_retry", messages.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("rejected_mcp_login_retry", messages.join("\n"));
+    });
     server.shutdown().await.unwrap();
 }

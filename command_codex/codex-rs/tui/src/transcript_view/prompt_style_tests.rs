@@ -1,5 +1,6 @@
 //! Full-row prompt styles and source-free wrapping margins survive viewport painting and resize.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::TextLayout;
 use crate::history_cell::HistoryCell;
 use crate::history_cell::new_user_prompt;
@@ -92,7 +93,9 @@ fn prompt_margin_and_blank_background_survive_resize_without_changing_copy() {
             vec![" "; fresh_lines.len()],
         );
         if width == 20 {
-            insta::assert_snapshot!(name, format!("{actual:?}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(name, format!("{actual:?}"));
+            });
         }
     }
 

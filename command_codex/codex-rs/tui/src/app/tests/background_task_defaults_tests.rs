@@ -1,5 +1,6 @@
 //! Request-level coverage for command-center session defaults and worktree creation.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::agents_overview::AGENTS_OVERVIEW_VIEW_ID;
 use crate::app::tests::session_lifecycle_requests::HistoryCapabilities;
@@ -127,10 +128,12 @@ async fn command_center_new_keeps_startup_draft_visible_through_handoff() -> Res
         tui.set_owned_screen(/*owned*/ false)?;
         server.shutdown().await?;
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "command_center_new_draft_handoff",
         crate::chatwidget::tests::helpers::normalize_snapshot_paths(snapshots.join("\n\n"))
     );
+    });
     Ok(())
 }
 
@@ -189,11 +192,13 @@ async fn review_regression_agents_overview_creation_is_fresh_but_returning_is_no
                     .collect::<Vec<_>>()
                     .join("\n")
             };
-            insta::assert_snapshot!(format!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("fresh_agents_overview", format!(
                 "created from the dashboard:\n{}\nreturned to the existing task:\n{}",
                 before_footer(&created),
                 before_footer(&returned)
             ));
+            });
         }
         server.shutdown().await?;
     }
@@ -609,7 +614,8 @@ async fn command_center_new_read_failure_keeps_overview_and_does_not_start() -> 
             HistoryCapabilities::ThreadStartWhileShuttingDown
                 | HistoryCapabilities::ThreadStartDuringLegacyShutdown
         ) {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 if matches!(app.app_server_target, AppServerTarget::Embedded) {
                     "command_center_embedded_server_shutting_down"
                 } else {
@@ -620,14 +626,17 @@ async fn command_center_new_read_failure_keeps_overview_and_does_not_start() -> 
                     /*width*/ 80,
                 )
             );
+            });
         } else {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "command_center_session_start_error",
                 crate::chatwidget::tests::helpers::render_bottom_popup(
                     &app.chat_widget,
                     /*width*/ 80,
                 )
             );
+            });
         }
         server.shutdown().await?;
         proxy.await??;
@@ -1316,10 +1325,12 @@ async fn command_center_new_checkout_and_worktree_preserve_source_and_default_br
                 &app.chat_widget,
                 /*width*/ 500,
             );
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "command_center_retained_worktree_error",
                 rendered.replace(&unused.root.display().to_string(), "<worktree>")
             );
+            });
             failed_server.shutdown().await?;
             failed_proxy.await??;
         }

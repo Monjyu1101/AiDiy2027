@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::GetAccountRateLimitsResponse;
 use pretty_assertions::assert_eq;
@@ -65,10 +66,12 @@ async fn backend_banner_presentation_and_cta_do_not_imply_recovery() {
             .start_add_credits_nudge_email_request(AddCreditsNudgeCreditType::Credits)
             .expect("start notification");
         if presentation == Some("inline") {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "backend_banner_notification",
                 normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 70))
             );
+            });
         }
         chat.handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));
         assert!(
@@ -120,15 +123,19 @@ async fn backend_banner_zero_actions_preserve_guidance_and_composer_input() {
                 presentation == Some("dismissible")
             );
             if presentation == Some("dismissible") {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "backend_banner_information_dismissible",
                     normalize_snapshot_paths(rendered)
                 );
+                });
             } else {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "backend_banner_information_only",
                     normalize_snapshot_paths(rendered)
                 );
+                });
             }
             chat.handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));
             // An ordinary navigation key flushes the composer's pending first-character buffer.
@@ -255,7 +262,9 @@ async fn owner_notification_completion_cannot_cross_account_change() {
         .into_iter()
         .map(|lines| lines_to_single_string(&lines))
         .collect::<String>();
-    insta::assert_snapshot!("owner_notification_after_account_change", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("owner_notification_after_account_change", rendered);
+    });
 }
 
 #[tokio::test]

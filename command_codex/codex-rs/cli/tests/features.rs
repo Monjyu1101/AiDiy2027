@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::path::Path;
 
 use anyhow::Context;
@@ -63,7 +64,9 @@ fn mcp_list_reports_invalid_keybinding_reason() -> Result<()> {
             .clone();
         let output = String::from_utf8(output)?;
         insta::allow_duplicates! {
-            insta::assert_snapshot!(output);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(output);
+            });
         }
     }
     Ok(())
@@ -355,7 +358,13 @@ fn remote_start_rejects_add_dir_before_connecting() -> Result<()> {
         .get_output()
         .stderr
         .clone();
-    insta::assert_snapshot!(String::from_utf8(output)?);
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = String::from_utf8(output)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot_value);
+        });
+    };
     Ok(())
 }
 

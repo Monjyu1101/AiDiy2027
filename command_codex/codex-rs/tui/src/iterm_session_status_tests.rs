@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::io;
 
 use codex_terminal_detection::Multiplexer;
@@ -45,7 +46,9 @@ fn encodes_iterm_session_status_fields() {
         .map(|value| value.escape_debug().to_string())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("iterm_session_status_fields", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("iterm_session_status_fields", snapshot);
+    });
 }
 
 #[test]

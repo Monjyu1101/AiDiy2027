@@ -1,5 +1,6 @@
 //! Browsing restores its origin and gives selection/search priority over rewind keys.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::tests::make_test_app_with_channels;
 use crate::history_cell::HistoryRenderMode;
@@ -265,7 +266,9 @@ async fn browsing_footer_adapts_to_width() -> Result<()> {
         overlay.render(area, &mut buffer);
         snapshots.push(format!("{width} columns\n{}", buffer_text(&buffer)));
     }
-    insta::assert_snapshot!("browsing_footer", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("browsing_footer", snapshots.join("\n\n"));
+    });
     let Some(Overlay::Transcript(overlay)) = &mut app.overlay else {
         panic!("expected inline browsing");
     };

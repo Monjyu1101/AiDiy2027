@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::prompt::GuardianTranscriptHistory;
 use super::*;
 use crate::config::Config;
@@ -1142,10 +1143,12 @@ async fn build_guardian_prompt_items_explains_network_access_review_scope() -> a
     settings.set_snapshot_path("snapshots");
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
-        assert_snapshot!(
-            "codex_core__guardian__tests__network_access_guardian_prompt_layout",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
+            "network_access_guardian_prompt_layout",
             normalize_guardian_snapshot_paths(text)
         );
+        });
     });
 
     Ok(())
@@ -1884,13 +1887,15 @@ async fn guardian_review_request_layout_matches_model_visible_request_snapshot()
     settings.set_snapshot_path("snapshots");
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
-        assert_snapshot!(
-            "codex_core__guardian__tests__guardian_review_request_layout",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
+            "guardian_review_request_layout",
             normalize_guardian_snapshot_paths(format_guardian_requests_snapshot(
                 "Guardian review request layout",
                 &[("Guardian Review Request", &request)],
             ))
         );
+        });
     });
 
     Ok(())
@@ -2337,8 +2342,9 @@ async fn guardian_reuses_prompt_cache_key_and_appends_prior_reviews() -> anyhow:
     settings.set_snapshot_path("snapshots");
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
-        assert_snapshot!(
-            "codex_core__guardian__tests__guardian_followup_review_request_layout",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
+            "guardian_followup_review_request_layout",
             format!(
                 "{}\n\nshared_prompt_cache_key: {}\nfollowup_contains_first_rationale: {}",
                 normalize_guardian_snapshot_paths(format_guardian_requests_snapshot(
@@ -2352,6 +2358,7 @@ async fn guardian_reuses_prompt_cache_key_and_appends_prior_reviews() -> anyhow:
                 second_body.to_string().contains(first_rationale),
             )
         );
+        });
     });
 
     Ok(())

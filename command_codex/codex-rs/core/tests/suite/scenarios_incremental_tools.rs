@@ -1,5 +1,6 @@
 //! Request-history coverage for incremental tools on Responses and Responses Lite.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::ForkSnapshot;
 use codex_core::McpServersDisabled;
@@ -139,7 +140,8 @@ async fn prediction_fork_keeps_inherited_tools() -> Result<()> {
         &child["input"].as_array().expect("child input")[..prefix.len()],
         prefix
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "prediction_fork_inherited_tools",
         context_snapshot::format_request_history_snapshot(
             "Request 1 starts the parent thread. Request 2 is the prediction child's only turn. Request 3 continues the original parent and verifies that it still has its MCP tools.",
@@ -149,6 +151,7 @@ async fn prediction_fork_keeps_inherited_tools() -> Result<()> {
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -435,7 +438,8 @@ async fn incremental_tools_append_changed_catalog_without_rewriting_history(
             "Review results before responding."
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         if suppress_model_change_announcements == Some(true) {
             "incremental_tools_suppressed_announcements"
         } else if incremental_tools && use_responses_lite {
@@ -459,6 +463,7 @@ async fn incremental_tools_append_changed_catalog_without_rewriting_history(
                 .include_request_settings(),
         )
     );
+    });
     metrics.shutdown()?;
     Ok(())
 }
@@ -697,7 +702,8 @@ async fn tool_removal_appends_a_standalone_notice_without_rewriting_history(
     } else {
         "incremental_tool_removals_regular_responses"
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot_name,
         context_snapshot::format_request_history_snapshot(
             scenario,
@@ -707,5 +713,6 @@ async fn tool_removal_appends_a_standalone_notice_without_rewriting_history(
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }

@@ -1,5 +1,6 @@
 //! Rendering and capture-state regressions for live recording controls.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -221,7 +222,9 @@ async fn voice_meters_do_not_sample_again_on_early_redraws() {
         std::collections::VecDeque::from([(0, 0); super::super::MAX_REALTIME_AUDIO_METER_FRAMES])
     );
     meters.push(render_meter(&chat, /*width*/ 80));
-    insta::assert_snapshot!(meters.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_meter_redraw", meters.join("\n"));
+    });
 }
 
 #[tokio::test]
@@ -343,7 +346,9 @@ async fn voice_footer_renders_the_main_conversation_states() {
         render_bottom_popup(&chat, /*width*/ 80)
     ));
 
-    insta::assert_snapshot!(states.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_footer_states", states.join("\n\n"));
+    });
 }
 
 #[tokio::test]

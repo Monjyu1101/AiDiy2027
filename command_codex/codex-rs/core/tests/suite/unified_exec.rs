@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_config::test_support::CloudConfigBundleFixture;
 use codex_core::EnvironmentConfig;
 use codex_core::TurnInputRequest;
@@ -328,7 +329,9 @@ async fn exec_command_hides_and_rejects_tty_when_disabled() -> Result<()> {
         .await?;
 
     let rejection = harness.function_call_stdout("tty-denied").await;
-    insta::assert_snapshot!("exec_command_tty_disabled", rejection);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("exec_command_tty_disabled", rejection);
+    });
     assert!(!harness.path_exists("tty-disabled-rejected").await?);
 
     let request = request_log.requests()[0].body_json();

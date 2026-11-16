@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::McpRefreshReason;
 use crate::agent::LocalAgentControl;
 use codex_mcp::McpServerKey;
@@ -4291,10 +4292,12 @@ async fn fork_startup_context_then_first_turn_diff_snapshot() -> anyhow::Result<
     settings.set_snapshot_path("snapshots");
     settings.set_prepend_module_to_snapshot(false);
     settings.bind(|| {
-        insta::assert_snapshot!(
-            "codex_core__codex_tests__fork_startup_context_then_first_turn_diff",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
+            "fork_startup_context_then_first_turn_diff",
             snapshot
         );
+        });
     });
 
     Ok(())

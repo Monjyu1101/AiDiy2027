@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::test_backend::VT100Backend;
 use crossterm::event::KeyEvent;
@@ -21,7 +22,9 @@ fn external_agent_config_source_prompt_snapshot() {
     terminal
         .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
         .expect("render source prompt");
-    insta::assert_snapshot!("external_agent_config_source_prompt", terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("external_agent_config_source_prompt", terminal.backend());
+    });
 }
 
 #[test]

@@ -3,6 +3,7 @@
 //! Layout code measures and wraps ordinary ratatui lines. Hyperlink annotations are applied only
 //! when text reaches a terminal buffer or scrollback writer so OSC 8 bytes never affect geometry.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod paragraph;
 mod source;
 
@@ -1201,10 +1202,12 @@ mod tests {
             })
             .expect("render scrolled hyperlinks");
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "buffer_hyperlinks_follow_scrolled_wrapped_rows",
             terminal.backend()
         );
+        });
     }
 
     #[test]
@@ -1292,10 +1295,12 @@ mod tests {
             })
             .expect("render hyperlinks");
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "forced_width_hyperlinks_render_wide_and_halfwidth_cells",
             terminal.backend()
         );
+        });
     }
 
     #[test]

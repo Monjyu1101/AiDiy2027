@@ -1,5 +1,6 @@
 //! Outgoing context-tool definitions follow the captured acting model.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::openai_models::ContextManagementToolMessages;
 use codex_protocol::openai_models::ModelInfo;
@@ -83,12 +84,14 @@ async fn catalog_context_tool_definitions_follow_captured_models() -> Result<()>
             assert_eq!(tool["parameters"]["description"], "Catalog arguments.");
         }
     }
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "Context tool descriptions and parameters use the captured model; selecting a model with explicit empty descriptions preserves empty text and prior history.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }

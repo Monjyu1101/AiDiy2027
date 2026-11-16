@@ -1,5 +1,6 @@
 //! Offline edits retain the same attachment bookkeeping as ordinary text edits.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::tests::new_test_composer;
 use super::*;
 use crossterm::event::MouseEvent;
@@ -109,7 +110,9 @@ fn offline_delete_reveals_the_edited_row_without_moving_the_caret() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("offline_delete_after_wheel", rows);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("offline_delete_after_wheel", rows);
+    });
 }
 
 #[test]

@@ -1,5 +1,6 @@
 //! Dynamic tool replacement takes effect between model requests, including after restart.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use core_test_support::responses;
 use pretty_assertions::assert_eq;
@@ -184,13 +185,15 @@ async fn dynamic_tools_update_preserves_pending_calls_and_survives_resume() -> R
         "deployment"
     ));
     let requests = responses::received_responses_requests(&server).await;
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "A pending release call survives replacement with deployment. The next step uses deployment. Replacement and clearing each survive restart.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

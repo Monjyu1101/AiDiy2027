@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_server_session::ResumeModelSettings;
 use crate::test_backend::VT100Backend;
@@ -129,12 +130,16 @@ fn render_inline(width: u16) -> String {
 
 #[test]
 fn inline_prompt_preserves_shell_context_snapshot() {
-    insta::assert_snapshot!("inline_prompt", render_inline(/*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("inline_prompt", render_inline(/*width*/ 80));
+    });
 }
 
 #[test]
 fn narrow_inline_prompt_wraps_snapshot() {
-    insta::assert_snapshot!("narrow_inline_prompt", render_inline(/*width*/ 28));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("narrow_inline_prompt", render_inline(/*width*/ 28));
+    });
 }
 
 #[tokio::test]

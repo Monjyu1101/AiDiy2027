@@ -1,6 +1,7 @@
 //! Snapshot and layout regressions for compact voice controls across widths and states.
 //! Supplied microphone and speaker histories remain independent when rendered.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::style::Color;
@@ -165,5 +166,7 @@ fn voice_controls_follow_configured_mute_binding_and_unbinding() {
         strip.state.microphone_muted = false;
         strip.state.activity = "listening";
     }
-    insta::assert_snapshot!(layouts.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(layouts.join("\n\n"));
+    });
 }

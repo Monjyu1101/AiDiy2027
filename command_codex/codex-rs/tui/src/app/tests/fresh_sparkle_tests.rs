@@ -1,5 +1,6 @@
 //! Covers confirmed new tasks, existing attachment paths, and the user model picker.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::chatwidget::AstraModelPickerAction;
@@ -475,7 +476,7 @@ async fn only_confirmed_picker_model_changes_can_arm_the_sparkle() -> Result<()>
 }
 
 #[tokio::test]
-async fn astra_picker_confirms_the_model_at_application_after_an_automatic_update() -> Result<()> {
+async fn astra_picker_after_auto_update() -> Result<()> {
     let mut snapshots = Vec::new();
     for (picker, key, switches_away) in [
         ("default no-op", KeyCode::Enter, false),
@@ -569,7 +570,9 @@ async fn astra_picker_confirms_the_model_at_application_after_an_automatic_updat
         }
         server.shutdown().await?;
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
     Ok(())
 }
 
@@ -731,7 +734,9 @@ async fn session_only_astra_picker_shows_stars_only_on_an_untouched_task() -> Re
         assert!(!visible(&app.chat_widget));
     }
 
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
     server.shutdown().await?;
     Ok(())
 }

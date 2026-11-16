@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript;
 use super::*;
 use crate::bottom_pane::slash_commands::ServiceTierCommand;
@@ -149,10 +150,12 @@ async fn service_tier_commands_and_saved_selection_respect_independent_speed_pol
         } else {
             "ultrafast_command_denied"
         };
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             snapshot_name,
             normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
         );
+        });
     }
 }
 
@@ -1652,7 +1655,9 @@ async fn slash_copy_picker_uses_completed_commentary_during_active_turn() {
     while rx.try_recv().is_ok() {}
 
     chat.dispatch_command(SlashCommand::Copy);
-    insta::assert_snapshot!(render_bottom_popup(&chat, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_bottom_popup(&chat, /*width*/ 80));
+    });
     chat.handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));
     assert_eq!(
         next_copy_selection(&mut rx),
@@ -2699,7 +2704,9 @@ async fn copy_shortcut_submits_markdown_and_reports_completion_once() {
         Ok(crate::clipboard_copy::CopyStatus::Pending(1)),
     );
     let pending = lines_to_single_string(&drain_insert_history(&mut rx)[0]);
-    insta::assert_snapshot!("pending_copy", pending);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("pending_copy", pending);
+    });
     let completion = (1, Ok(crate::clipboard_copy::CopyStatus::Confirmed));
     chat.finish_clipboard(&completion, /*composer_visible*/ true);
     let result = lines_to_single_string(&drain_insert_history(&mut rx)[0]);
@@ -2710,10 +2717,12 @@ async fn copy_shortcut_submits_markdown_and_reports_completion_once() {
         "last message",
         Ok(crate::clipboard_copy::CopyStatus::Unconfirmed),
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "unconfirmed_copy",
         lines_to_single_string(&drain_insert_history(&mut rx)[0])
     );
+    });
 }
 
 #[tokio::test]
@@ -3877,27 +3886,33 @@ async fn transcript_copy_feedback_stays_in_the_footer_without_history_or_interru
     chat.show_selection_copy_result(Ok(crate::clipboard_copy::CopyStatus::Confirmed));
     assert_eq!(drain_insert_history(&mut events).len(), 0);
     assert!(operations.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_copy_success",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
     chat.show_selection_copy_result(Ok(crate::clipboard_copy::CopyStatus::Unconfirmed));
     assert_eq!(drain_insert_history(&mut events).len(), 0);
     assert!(operations.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_copy_unconfirmed",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
     chat.open_warnings(&[Arc::new(history_cell::new_warning_event(
         "selected café".into(),
     ))]);
     chat.show_selection_copy_result(Err("clipboard unavailable".to_string()));
     assert_eq!(drain_insert_history(&mut events).len(), 0);
     assert!(operations.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_copy_failure",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
 }
 
 #[tokio::test]

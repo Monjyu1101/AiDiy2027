@@ -7,6 +7,7 @@
 //! - Reorder items
 //! - Preview the rendered title
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use itertools::Itertools;
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
@@ -445,10 +446,12 @@ mod tests {
             tx,
             crate::keymap::RuntimeKeymap::defaults().list,
         );
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "terminal_title_setup_basic",
             render_lines(&view, /*width*/ 84)
         );
+        });
     }
 
     #[test]

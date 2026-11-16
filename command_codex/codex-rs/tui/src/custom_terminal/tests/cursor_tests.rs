@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::terminal_palette::rgb_color;
 use pretty_assertions::assert_eq;
@@ -132,7 +133,9 @@ fn terminal_draw_repairs_styled_anchor_on_cursor_only_frames() {
         }
         frames.push(terminal.backend().output().escape_debug().to_string());
     }
-    assert_snapshot!("cursor_style_styled_frames", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("cursor_style_styled_frames", frames.join("\n"));
+    });
 }
 
 #[test]
@@ -160,7 +163,9 @@ fn terminal_draw_repairs_owned_wide_hyperlink_after_skipped_glyphs() {
             .expect("draw");
         frames.push(terminal.backend().output().escape_debug().to_string());
     }
-    assert_snapshot!("cursor_style_owned_wide_frames", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("cursor_style_owned_wide_frames", frames.join("\n"));
+    });
 }
 
 #[test]
@@ -191,7 +196,9 @@ fn terminal_draw_repairs_single_column_without_scrolling() {
     }
     parser.screen_mut().set_scrollback(/*rows*/ 1);
     assert_eq!(parser.screen().scrollback(), 0);
-    assert_snapshot!("cursor_style_single_column_frames", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("cursor_style_single_column_frames", frames.join("\n"));
+    });
 }
 
 #[test]

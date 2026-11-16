@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_config::types::McpServerConfig;
 use codex_config::types::McpServerTransportConfig;
@@ -1759,10 +1760,12 @@ async fn new_context_tool_skips_auto_compact_fallback() -> Result<()> {
         &[("Final Follow-Up Request", &requests[2])],
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "token_budget_new_context_window_tool_full_context",
         snapshot
     );
+    });
 
     Ok(())
 }

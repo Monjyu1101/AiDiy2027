@@ -1,5 +1,6 @@
 //! Verify that approvals persistence failures retain the backend's actionable cause.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[tokio::test]
@@ -33,6 +34,8 @@ async fn approvals_reviewer_error_retains_config_cause() -> Result<()> {
         "<CODEX_HOME>/config.toml",
     );
     assert!(rendered.contains("unclosed array"), "{rendered}");
-    insta::assert_snapshot!("approvals_reviewer_config_error", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("approvals_reviewer_config_error", rendered);
+    });
     Ok(())
 }

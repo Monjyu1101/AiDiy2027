@@ -4,6 +4,7 @@
 //! snapshot-based so that layout regressions and status/header changes show up as stable,
 //! reviewable diffs.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 pub(super) use super::*;
 pub(super) use crate::app_command::AppCommand as Op;
 pub(super) use crate::app_event::AppEvent;
@@ -177,10 +178,9 @@ pub(super) use tokio::sync::mpsc::unbounded_channel;
 pub(super) use toml::Value as TomlValue;
 
 pub(super) fn chatwidget_snapshot_dir() -> PathBuf {
-    let snapshot_file = codex_utils_cargo_bin::find_resource!(
-        "src/chatwidget/snapshots/codex_tui__chatwidget__tests__chatwidget_tall.snap"
-    )
-    .expect("snapshot file");
+    let snapshot_file =
+        codex_utils_cargo_bin::find_resource!("src/chatwidget/snapshots/chatwidget_tall.snap")
+            .expect("snapshot file");
     snapshot_file
         .parent()
         .unwrap_or_else(|| panic!("snapshot file has no parent: {}", snapshot_file.display()))
@@ -193,7 +193,9 @@ macro_rules! assert_chatwidget_snapshot {
         settings.set_prepend_module_to_snapshot(false);
         settings.set_snapshot_path(crate::chatwidget::tests::chatwidget_snapshot_dir());
         settings.bind(|| {
-            insta::assert_snapshot!(format!("codex_tui__chatwidget__tests__{}", $name), $value);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!($name, $value);
+            });
         });
     }};
     ($name:expr, $value:expr, @$snapshot:literal $(,)?) => {{
@@ -202,7 +204,7 @@ macro_rules! assert_chatwidget_snapshot {
         settings.set_snapshot_path(crate::chatwidget::tests::chatwidget_snapshot_dir());
         settings.bind(|| {
             insta::assert_snapshot!(
-                format!("codex_tui__chatwidget__tests__{}", $name),
+                $name,
                 $value,
                 @$snapshot
             );

@@ -1,5 +1,6 @@
 //! Snapshots pending mail across remote compaction, restart, and normal inference.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::turn_input::InjectedResponseItem;
 use core_test_support::responses::strip_metadata_from_json;
@@ -105,7 +106,8 @@ async fn remote_slash_compact_preserves_context_across_windows() -> Result<()> {
         json!([mail]),
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "remote_slash_compact",
         context_snapshot::format_context_snapshot(
             "Pending mail survives repeated /compact and cold resume, then normal inference acknowledges it for subsequent compaction.",
@@ -119,5 +121,6 @@ async fn remote_slash_compact_preserves_context_across_windows() -> Result<()> {
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

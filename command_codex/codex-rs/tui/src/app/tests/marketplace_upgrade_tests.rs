@@ -1,5 +1,6 @@
 //! Marketplace startup failures reach the warning notice and its details view.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::owned_transcript::tests::buffer_text;
 use crate::chatwidget::tests::helpers::normalize_snapshot_paths;
@@ -100,11 +101,13 @@ async fn automatic_marketplace_upgrade_failure_shows_warning() -> Result<()> {
     let second_details = buffer_text(last_rendered_buffer(&tui.terminal));
     server.shutdown().await?;
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "marketplace_upgrade_warning",
         normalize_snapshot_paths(format!(
             "Warning notice:\n{notice}\n\nFirst warning details:\n{first_details}\n\nSecond warning details:\n{second_details}"
         ))
     );
+    });
     Ok(())
 }

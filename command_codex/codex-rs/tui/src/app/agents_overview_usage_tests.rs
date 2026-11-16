@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::agents_overview_usage::AgentsOverviewUsage;
 use crate::app::agents_overview_usage::usage_lines;
@@ -135,13 +136,15 @@ async fn selected_usage_is_cached_and_account_changes_discard_old_results() -> R
         "/tmp/project  2{}",
         " ".repeat(project.len().saturating_sub("/tmp/project".len()))
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agents_overview_usage",
         render_bottom_popup(&app.chat_widget, /*width*/ 96)
             .replace(&format!("{project}  2"), &group)
             .replace(&project, "/tmp/project")
             .replace("fwd del", "del")
     );
+    });
     for notification in [
         ServerNotification::ThreadReverted(codex_app_server_protocol::ThreadRevertedNotification {
             thread_id: selected.to_string(),

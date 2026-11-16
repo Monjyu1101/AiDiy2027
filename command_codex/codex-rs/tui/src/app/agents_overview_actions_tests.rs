@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::agents_overview_discovery::list_pinned_threads;
 use crate::app::tests::test_thread_session;
@@ -434,10 +435,12 @@ async fn archiving_selects_the_next_displayed_task() -> Result<()> {
             }
         }
         if matches!(action, AgentsOverviewAction::Archive) {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "archiving_selects_the_next_displayed_task",
                 selections.join("\n")
             );
+            });
         }
     }
     Ok(())
@@ -670,7 +673,9 @@ async fn hiding_tasks_keeps_selection_adjacent_in_display_order() -> Result<()> 
             );
         }
     }
-    insta::assert_snapshot!(selections.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(selections.join("\n"));
+    });
     app_server.shutdown().await?;
     Ok(())
 }
@@ -1097,10 +1102,12 @@ async fn lifecycle_removes_background_and_current_tasks_without_losing_the_dashb
             (app.primary_thread_id, app.chat_widget.thread_id()),
             (Some(primary), Some(primary))
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             format!("{snapshot}_failure"),
             render_bottom_popup(&app.chat_widget, /*width*/ 80)
         );
+        });
         app.chat_widget.handle_key_event(KeyCode::Enter.into());
         app_server
             .request_handle()
@@ -1133,13 +1140,15 @@ async fn lifecycle_removes_background_and_current_tasks_without_losing_the_dashb
             .find(|event| matches!(event, AppEvent::ConfirmAgentsOverviewAction { .. }))
             .expect("shortcut requests confirmation");
         Box::pin(app.handle_event(&mut tui, &mut app_server, confirmation)).await?;
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             format!("{snapshot}_confirmation"),
             normalize_agent_center_snapshot(render_bottom_popup(
                 &app.chat_widget,
                 /*width*/ 80
             ))
         );
+        });
         app.chat_widget.handle_key_event(KeyCode::Enter.into());
         assert!(
             !std::iter::from_fn(|| rx.try_recv().ok())

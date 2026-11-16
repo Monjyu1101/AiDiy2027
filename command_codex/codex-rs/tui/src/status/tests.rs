@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::new_status_output;
 use super::new_status_output_with_rate_limits;
 use super::new_status_output_with_rate_limits_handle;
@@ -345,7 +346,9 @@ async fn status_snapshot_includes_reasoning_details() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -449,7 +452,9 @@ async fn status_snapshot_shows_chatgpt_plan_without_email() {
     );
     let sanitized =
         sanitize_directory(render_lines(&composite.display_lines(/*width*/ 80))).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -764,7 +769,9 @@ async fn status_snapshot_shows_active_user_defined_profile() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -813,7 +820,9 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
     );
     let rendered =
         sanitize_directory(render_lines(&composite.display_lines(/*width*/ 120))).join("\n");
-    assert_snapshot!("status_server_auth_not_required", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("status_server_auth_not_required", rendered);
+    });
 
     config.model_provider_id = "openai-proxy".to_string();
     config.model_provider = ModelProviderInfo {
@@ -844,7 +853,9 @@ async fn status_uses_server_provider_id_and_auth_requirement() {
     );
     let rendered =
         sanitize_directory(render_lines(&composite.display_lines(/*width*/ 120))).join("\n");
-    assert_snapshot!("status_server_auth_required", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("status_server_auth_required", rendered);
+    });
 
     for width in [24, 42, 120] {
         let lines = composite.display_hyperlink_lines(width);
@@ -920,7 +931,9 @@ async fn status_snapshot_shows_auto_review_permissions() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1020,7 +1033,9 @@ async fn status_snapshot_includes_forked_from() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1086,7 +1101,9 @@ async fn status_snapshot_includes_monthly_limit() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1152,7 +1169,9 @@ async fn status_snapshot_includes_enterprise_monthly_credit_limit() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 
     let mut rendered_lines = render_lines(&composite.display_lines(/*width*/ 46));
     if cfg!(windows) {
@@ -1161,10 +1180,12 @@ async fn status_snapshot_includes_enterprise_monthly_credit_limit() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(
-        "status_snapshot_wraps_enterprise_monthly_credit_details_in_narrow_terminal",
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
+        "status_enterprise_credit_wrap",
         sanitized
     );
+    });
 }
 
 #[tokio::test]
@@ -1234,7 +1255,9 @@ async fn status_snapshot_uses_generic_limit_labels_for_unsupported_windows() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1623,7 +1646,9 @@ async fn status_snapshot_wraps_in_narrow_terminal() {
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
 
-    assert_snapshot!("status_snapshot_truncates_in_narrow_terminal", sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("status_snapshot_truncates_in_narrow_terminal", sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1660,10 +1685,12 @@ async fn status_snapshot_wraps_halfwidth_kana_in_narrow_terminal() {
     let rendered_lines = render_lines(&composite.display_lines(/*width*/ 42));
     let sanitized = sanitize_directory(rendered_lines).join("\n");
 
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "status_snapshot_truncates_halfwidth_kana_in_narrow_terminal",
         sanitized
     );
+    });
 }
 
 #[tokio::test]
@@ -1711,7 +1738,9 @@ async fn status_snapshot_shows_missing_limits_message() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1779,7 +1808,9 @@ async fn status_snapshot_uses_default_reasoning_when_config_empty() {
             }
         }
         let sanitized = sanitize_directory(rendered_lines).join("\n");
-        assert_snapshot!(snapshot, sanitized);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(snapshot, sanitized);
+        });
     }
 }
 
@@ -1848,7 +1879,9 @@ async fn status_snapshot_shows_refreshing_limits_notice() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -1930,10 +1963,12 @@ async fn transcript_overlay_remeasures_status_after_rate_limit_refresh() {
         after.contains("Weekly limit"),
         "status output was clipped: {after:?}"
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "transcript_overlay_status_rate_limit_refresh",
         format!("before:\n{before}\n\nafter:\n{after}")
     );
+    });
 }
 
 #[tokio::test]
@@ -2010,7 +2045,9 @@ async fn status_snapshot_includes_credits_and_limits() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -2071,7 +2108,9 @@ async fn status_snapshot_shows_unavailable_limits_message() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -2202,7 +2241,9 @@ async fn status_snapshot_shows_stale_limits_message() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]
@@ -2276,7 +2317,9 @@ async fn status_snapshot_cached_limits_hide_credits_without_flag() {
         }
     }
     let sanitized = sanitize_directory(rendered_lines).join("\n");
-    assert_snapshot!(sanitized);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(sanitized);
+    });
 }
 
 #[tokio::test]

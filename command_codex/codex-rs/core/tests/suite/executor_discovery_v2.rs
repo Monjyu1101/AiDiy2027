@@ -1,5 +1,6 @@
 //! Verifies executor discovery, merged plugin routing, acceptance across auth changes, and caching.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use anyhow::Result;
 use codex_core::TurnInputRequest;
@@ -1399,7 +1400,8 @@ async fn auth_rotation_refreshes_plugin_acceptance_before_merged_skills() -> Res
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "plugin_acceptance_auth_refresh",
         context_snapshot::format_context_snapshot(
             "Two installations of one cloud plugin route MCP calls through their own executors. Mid-turn auth refresh preserves skill context and executor access; revocation removes both MCPs and cloud skill instructions and denies executor reads.",
@@ -1410,6 +1412,7 @@ async fn auth_rotation_refreshes_plugin_acceptance_before_merged_skills() -> Res
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 

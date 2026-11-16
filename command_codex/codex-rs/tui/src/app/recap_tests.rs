@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::App;
 use super::GeneratedRecap;
 use super::RECAP_DELAY;
@@ -925,7 +926,9 @@ fn recap_history_cell_preserves_line_breaks_and_optional_next() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    insta::assert_snapshot!("recap_dimmed", format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("recap_dimmed", format!("{buffer:?}"));
+    });
     insta::assert_snapshot!(raw, @r"
     Conversation recap
     Finished the parser.

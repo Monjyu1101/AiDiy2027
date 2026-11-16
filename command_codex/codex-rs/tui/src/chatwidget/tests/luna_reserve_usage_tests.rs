@@ -1,5 +1,6 @@
 //! Exercise Reserve picker focus, its status label, and the composer palette across entry and exit.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::normalize_snapshot_paths;
 use super::*;
 use crate::terminal_palette::with_test_default_colors;
@@ -75,10 +76,12 @@ async fn luna_reserve_selector_supports_arrows_enter_shortcuts_and_escape_withou
         for key in keys {
             chat.handle_key_event(KeyEvent::from(key));
             if key == KeyCode::Down {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "luna_reserve_selector_second_choice",
                     normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 90))
                 );
+                });
             }
         }
         let queued = std::iter::from_fn(|| events.try_recv().ok()).collect::<Vec<_>>();
@@ -120,11 +123,15 @@ async fn luna_reserve_status_tracks_the_active_model() {
     chat.set_model("gpt-reserve");
     let rendered = normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80));
     assert!(rendered.contains("Luna Reserve default"));
-    insta::assert_snapshot!("luna_reserve_usage_wide", rendered);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("luna_reserve_usage_wide", rendered);
+    });
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "luna_reserve_usage_narrow",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 34))
     );
+    });
 
     chat.set_model("gpt-5.6-sol");
     assert!(
@@ -196,10 +203,12 @@ async fn luna_reserve_usage_survives_banner_dismissal_and_typing_during_a_turn()
             }
         });
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "luna_reserve_usage_with_upsell",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
     chat.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
     assert!(
         !normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
@@ -210,7 +219,9 @@ async fn luna_reserve_usage_survives_banner_dismissal_and_typing_during_a_turn()
     chat.handle_key_event(KeyEvent::new(KeyCode::Left, KeyModifiers::NONE));
     let rendered = normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80));
     assert_eq!(chat.composer_text_with_pending(), "x");
-    insta::assert_snapshot!("luna_reserve_usage_running", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("luna_reserve_usage_running", rendered);
+    });
 }
 
 #[tokio::test]

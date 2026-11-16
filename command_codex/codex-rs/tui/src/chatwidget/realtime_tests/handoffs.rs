@@ -1,5 +1,6 @@
 //! Voice delegation routes completed answers without exposing private protocol text.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -339,7 +340,9 @@ async fn explicit_final_answer_can_explain_private_channel_markers() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("explicit_final_answer_with_channel_marker", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("explicit_final_answer_with_channel_marker", rendered);
+    });
 }
 
 #[tokio::test]

@@ -1,6 +1,7 @@
 //! Covers model request history through authenticated MCP and retained cwd/environment roots.
 //! This scenario does not establish filesystem sandbox enforcement.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::legacy_core::config::Config;
 use codex_app_server_client::AppServerEvent;
@@ -261,7 +262,8 @@ pub(super) async fn exercise(
         .iter()
         .map(context_snapshot::SnapshotEntry::body)
         .collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "managed_worktree_model_creation",
         context_snapshot::format_context_snapshot(
             "Model request history for creating, polling and listing a task-attached checkout, then renaming another task through MCP. Separate assertions verify retained cwd/environment roots, not sandbox enforcement.",
@@ -271,5 +273,6 @@ pub(super) async fn exercise(
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }

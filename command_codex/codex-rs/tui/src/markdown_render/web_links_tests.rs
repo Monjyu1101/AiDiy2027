@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::WebLinkDisplay;
 use crate::markdown_render::MarkdownStyles;
 use crate::markdown_render::render_markdown_lines_with_width_cwd_and_hidden_link_destinations;
@@ -36,7 +37,9 @@ fn bare_urls_are_styled_without_coloring_surrounding_prose() {
             Span::styled("https://example.com/c", MarkdownStyles::default().link).bold(),
         ])),
     );
-    assert_debug_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(text);
+    });
 }
 
 #[test]
@@ -62,7 +65,9 @@ fn bare_urls_keep_link_style_when_wrapped_in_tables() {
         /*width*/ 20,
         WebLinkDisplay::LabelOnly,
     )));
-    assert_debug_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(text);
+    });
 }
 
 fn terminal(name: TerminalName) -> TerminalInfo {
@@ -251,5 +256,7 @@ fn label_only_and_fallback_presentations_snapshot() {
     let markdown = "plain [plain](https://example.com) `code` [`code`](https://example.com)\n\n| Resource |\n| --- |\n| [docs](https://example.com/docs) |";
     let presentations = [WebLinkDisplay::LabelOnly, WebLinkDisplay::WithDestination]
         .map(|display| Text::from(visible_lines(render(markdown, /*width*/ 40, display))));
-    assert_debug_snapshot!(presentations);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(presentations);
+    });
 }

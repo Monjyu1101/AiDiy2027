@@ -1,5 +1,6 @@
 //! Shared-store sender evidence reaches only the reviewer, including after compacted replay.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::sync::Arc;
 
 use anyhow::Result;
@@ -191,7 +192,9 @@ async fn cross_host_sender_context(history_mode: ThreadHistoryMode) -> Result<()
                 .replace_all(&snapshot, replacement)
                 .into_owned();
         }
-        insta::assert_snapshot!("cross_host_sender_context", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cross_host_sender_context", snapshot);
+        });
     }
     sender.codex.shutdown_and_wait().await?;
     receiver.codex.shutdown_and_wait().await?;

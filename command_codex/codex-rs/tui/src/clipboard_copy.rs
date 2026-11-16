@@ -20,6 +20,7 @@
 //! so callers must distinguish them from confirmed native clipboard writes.
 //! Image paste lives in `clipboard_paste`.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 pub(crate) mod primary;
 mod tmux;
 pub(crate) mod worker;
@@ -630,7 +631,9 @@ mod tests {
         let Err(error) = result else {
             panic!("expected tmux and OSC 52 errors");
         };
-        insta::assert_snapshot!("all_copy_backends_fail", error);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("all_copy_backends_fail", error);
+        });
     }
 
     #[test]

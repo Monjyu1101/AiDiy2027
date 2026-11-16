@@ -1,5 +1,6 @@
 //! Managed policies and explicit user goals reach Guardian through their distinct trusted sources.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use codex_config::test_support::CloudConfigBundleFixture;
 use codex_core::config::Constrained;
@@ -181,6 +182,8 @@ guardian_extra_policy = "Draft reminders without sending them."
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("extra_policy_reaches_guardian_review", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("extra_policy_reaches_guardian_review", snapshot);
+    });
     Ok(())
 }

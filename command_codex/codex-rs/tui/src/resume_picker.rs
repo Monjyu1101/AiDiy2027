@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::path::Path;
@@ -4354,10 +4355,12 @@ mod tests {
         // display path so the snapshot is independent of the temporary directory.
         state.filtered_rows[0].cwd = Some(PathBuf::from("/repo/linked"));
         state.update_viewport(/*rows*/ 12, /*width*/ 100);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_linked_worktree",
             render_picker_list(&state, /*width*/ 100, /*height*/ 12)
         );
+        });
         assert_eq!(
             repository_cwd_filter(&primary, /*uses_remote_filesystem*/ false),
             ThreadListCwdFilter::Many(vec![
@@ -4637,12 +4640,14 @@ mod tests {
         );
         assert_eq!(state.pagination.num_scanned_files, 3);
         let repaired_snapshot = render_state(&state);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_db_fallback_transition",
             format!(
                 "---- loading fallback ----\n{loading_snapshot}\n---- repaired results ----\n{repaired_snapshot}"
             )
         );
+        });
         state.pagination.complete_page(
             Some(PageCursor::AppServer("fallback-next".to_string())),
             /*num_scanned_files*/ 0,
@@ -5132,7 +5137,9 @@ mod tests {
         assert_eq!(state.selected, 1);
 
         let snapshot = render_picker_list(&state, /*width*/ 80, /*height*/ 12);
-        assert_snapshot!("resume_picker_table", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("resume_picker_table", snapshot);
+        });
     }
 
     #[test]
@@ -5168,7 +5175,9 @@ mod tests {
         terminal.flush().expect("flush");
 
         let snapshot = terminal.backend().to_string();
-        assert_snapshot!("resume_picker_search_error", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("resume_picker_search_error", snapshot);
+        });
     }
 
     #[test]
@@ -5289,10 +5298,12 @@ mod tests {
             SessionPickerAction::Resume,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_footer_wide",
             footer_snapshot(&state, /*width*/ 220, /*list_height*/ 20)
         );
+        });
     }
 
     #[test]
@@ -5310,10 +5321,12 @@ mod tests {
         state.query = String::from("picker");
         state.density = SessionListDensity::Dense;
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_footer_compact",
             footer_snapshot(&state, /*width*/ 96, /*list_height*/ 20)
         );
+        });
     }
 
     #[test]
@@ -5786,7 +5799,9 @@ mod tests {
             .map(str::trim_end)
             .collect::<Vec<_>>()
             .join("\n");
-        assert_snapshot!("resume_picker_transcript_loading_overlay", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("resume_picker_transcript_loading_overlay", snapshot);
+        });
     }
 
     #[tokio::test]
@@ -6302,10 +6317,12 @@ session_picker_view = "dense"
         }
         terminal.flush().expect("flush");
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_search_line_sort_filter_tabs",
             terminal.backend().to_string()
         );
+        });
     }
 
     #[test]
@@ -6391,7 +6408,8 @@ session_picker_view = "dense"
 
     #[test]
     fn dense_session_snapshot_omits_cwd_in_cwd_filter() {
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_dense_cwd",
             render_dense_row_snapshot(
                 /*show_all*/ false,
@@ -6401,16 +6419,19 @@ session_picker_view = "dense"
                 /*width*/ 100,
             )
         );
+        });
     }
 
     #[test]
     fn dense_session_snapshot_drops_metadata_when_narrow() {
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_dense_narrow",
             render_dense_row_snapshot(
                 /*show_all*/ true, /*filter_cwd*/ None, /*width*/ 48,
             )
         );
+        });
     }
 
     #[test]
@@ -6556,10 +6577,12 @@ session_picker_view = "dense"
         }
         terminal.flush().expect("flush");
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_dense_no_blank_lines",
             terminal.backend().to_string()
         );
+        });
     }
 
     #[test]
@@ -6634,7 +6657,9 @@ session_picker_view = "dense"
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert_snapshot!("resume_picker_expanded_session", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("resume_picker_expanded_session", rendered);
+        });
     }
 
     #[test]
@@ -6684,10 +6709,12 @@ session_picker_view = "dense"
         }
         terminal.flush().expect("flush");
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_narrow_session",
             terminal.backend().to_string()
         );
+        });
     }
 
     #[test]
@@ -6739,10 +6766,12 @@ session_picker_view = "dense"
         }
         terminal.flush().expect("flush");
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "resume_picker_more_indicators",
             terminal.backend().to_string()
         );
+        });
     }
 
     #[test]

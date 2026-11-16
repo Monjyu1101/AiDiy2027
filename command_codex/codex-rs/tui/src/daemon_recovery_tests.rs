@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -52,7 +53,9 @@ fn daemon_recovery_requires_explicit_restart_and_defaults_to_cancel() {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!(snapshot, text);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, text);
+        });
         view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         assert_eq!(view.take_last_selected_index(), Some(2));
 

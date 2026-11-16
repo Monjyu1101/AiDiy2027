@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::markdown_render::render_markdown_text_with_width;
 use insta::assert_snapshot;
 use pretty_assertions::assert_eq;
@@ -39,7 +40,9 @@ fn mermaid_fences_use_native_renderer_for_every_family() {
 #[test]
 fn mermaid_nested_fences_and_unicode() {
     let source = "> ~~~~mermaid\n> flowchart TD\n>     A[请求] --> B[Réponse]\n> ~~~~~\n\n- Diagram:\n\n  ```mermaid\n  flowchart LR\n      A --> B\n  ```\n";
-    assert_snapshot!(markdown_text(source, /*width*/ 60));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(markdown_text(source, /*width*/ 60));
+    });
 }
 
 #[test]
@@ -50,7 +53,9 @@ flowchart LR
 ```"#;
     let output = markdown_text(source, /*width*/ 100);
     assert!(output.starts_with('┌'));
-    assert_snapshot!(output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(output);
+    });
 }
 
 #[test]
@@ -82,7 +87,9 @@ flowchart TD
 ```";
     let output = markdown_text(source, /*width*/ 100);
     assert!(output.starts_with('╭'));
-    assert_snapshot!(output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(output);
+    });
     assert!(
         markdown_text(source, /*width*/ 40).ends_with(&markdown_text(
             &source.replacen("mermaid", "unknown", /*count*/ 1),
@@ -154,13 +161,17 @@ fn mermaid_fallback_notices_preserve_source() {
         )));
         cases.push(format!("{name}\n{output}"));
     }
-    assert_snapshot!(cases.join("\n\n---\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(cases.join("\n\n---\n\n"));
+    });
 }
 
 #[test]
 fn mermaid_fallback_notices_follow_nested_indentation() {
     let source = "> ```mermaid\n> pie\n> \"Cats\": 2\n> ```\n\n- Diagram:\n\n  ```mermaid\n  pie\n  \"Cats\": 2\n  ```\n";
-    assert_snapshot!(markdown_text(source, /*width*/ 40));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(markdown_text(source, /*width*/ 40));
+    });
 }
 
 #[test]
@@ -206,5 +217,7 @@ fn mermaid_styles_follow_the_supplied_theme() {
             .join("\n");
         cases.push(format!("{name}\n{styled}"));
     }
-    assert_snapshot!(cases.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(cases.join("\n\n"));
+    });
 }

@@ -1,6 +1,7 @@
 //! Display file completions while preserving the full path used for insertion.
 //! Narrow rows retain the filename; fuzzy highlights refer to the displayed text.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::path::PathBuf;
 
 use codex_file_search::FileMatch;
@@ -283,7 +284,9 @@ mod tests {
                 popup.move_down();
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshots.join("\n\n"));
+        });
     }
 
     #[test]

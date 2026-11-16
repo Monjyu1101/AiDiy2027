@@ -1,5 +1,6 @@
 //! Copy outcomes remain truthful at narrow widths and release stale navigation hit targets.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::transcript_view::tests::cell;
 use crate::transcript_view::tests::render;
@@ -47,10 +48,12 @@ fn pending_copy_feedback_survives_expiry_and_selection_replacement() {
     assert_eq!(view.selected_text(&cells), Some(selected));
     buffer.reset();
     view.render_composer_gap(Some(area), /*hint*/ None, &mut buffer, Instant::now());
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Pending after ten seconds\n{pending_frame}\nSetup failed\n{}",
         text(&buffer)
     ));
+    });
 
     // Feedback still completes if the selection owner disappears, including composer copies.
     view.show_copy_feedback(&Ok(CopyStatus::Pending(2)), /*characters*/ 3);
@@ -82,7 +85,7 @@ fn pending_copy_feedback_survives_expiry_and_selection_replacement() {
 }
 
 #[test]
-fn copy_feedback_is_right_aligned_and_does_not_claim_terminal_delivery() {
+fn right_aligned_copy_feedback() {
     let mut snapshots = Vec::new();
     for result in [
         Ok(CopyStatus::Pending(1)),
@@ -111,7 +114,9 @@ fn copy_feedback_is_right_aligned_and_does_not_claim_terminal_delivery() {
             snapshots.push(format!("{result:?}, {width} columns\n{}", text(&buffer)));
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]

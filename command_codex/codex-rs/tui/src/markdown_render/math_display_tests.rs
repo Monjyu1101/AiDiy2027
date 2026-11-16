@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::MathMarkdown;
 use super::render::MathMode;
 use super::render::render;
@@ -65,12 +66,15 @@ Shell examples: $HOME and echo $$.
 After rejected equations: $\alpha$.
 
 $$\beta$$";
-    insta::assert_snapshot!(plain(source, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(source, /*width*/ 80));
+    });
 }
 
 #[test]
 fn issue_48403_renders_zero_and_multiline_display() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Inline math: $0$; inline operator: $\bigwedge_{j=0}^{n}$
 
 $$
@@ -81,11 +85,13 @@ F_{n}(s)\land
 $$",
         /*width*/ 80
     ));
+    });
 }
 
 #[test]
 fn unicode_math_schrodinger_equation_snapshot() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"\[
 i\hbar \frac{\partial}{\partial t}\Psi(\mathbf r,t)
 =
@@ -95,6 +101,7 @@ i\hbar \frac{\partial}{\partial t}\Psi(\mathbf r,t)
 \]",
         /*width*/ 100
     ));
+    });
 }
 
 #[test]
@@ -134,12 +141,15 @@ fn unicode_math_optimization_model() {
 After the model: \(\alpha^2\).";
     let rendered = plain(source, /*width*/ 240);
     assert!(!rendered.contains('\\'), "{rendered}");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
 fn unicode_math_display_limits() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"\[
 \underset{x,u,m\ge0}{\operatorname{minimize}}\quad
 \sum_{g,t}x_{gpt}+\lambda\sum^{N}_{i=1}y_i
@@ -164,6 +174,7 @@ fn unicode_math_display_limits() {
 Inline: \(\sum_{i=1}^N x_i\), \(\underset{x\ge0}{\min} x\).",
         /*width*/ 100
     ));
+    });
     assert_eq!(
         render(r"\sum_i^N x_i", MathMode::Display),
         render(r"\sum^N_i x_i", MathMode::Display)
@@ -190,12 +201,14 @@ Inline: \(\sum_{i=1}^N x_i\), \(\underset{x\ge0}{\min} x\).",
 
 #[test]
 fn unicode_math_grouped_scripts_and_annotations() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Indices: \(x_{gpt} + x_{i,j} + w_{\pi_{gt}} + x^{q+1} + x_{g}^2\).
 Native scripts: \(x_i^2 + y_{10}\). Sets: \(\mathcal Q_t\).
 Annotations: \(\underset{i\in I}{\min} x_i\), \(\overset{\text{def}}{=}\).",
         /*width*/ 100
     ));
+    });
 }
 
 #[test]
@@ -207,7 +220,9 @@ fn integral_limits_and_parenthesized_matrices() {
         r"$$\begin{pmatrix}\frac{1}{2}&0\\*100&x\end{pmatrix}v$$",
         r"$$\begin{pmatrix}a&b\\ *x&y\\ [2pt]&z\end{pmatrix}$$",
     ];
-    insta::assert_snapshot!(plain(&formulas.join("\n\n"), /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(&formulas.join("\n\n"), /*width*/ 80));
+    });
     for formula in formulas {
         assert_eq!(
             plain(formula, /*width*/ 10),
@@ -224,11 +239,13 @@ fn unicode_math_aligned_fraction_and_narrow_fallback() {
 y_{gpt}&=3 &&\text{second}\\
 \end{aligned}
 \]";
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Wide:\n{}\n\nNarrow:\n{}",
         plain(formula, /*width*/ 80),
         plain(formula, /*width*/ 12)
     ));
+    });
 }
 
 #[test]
@@ -248,7 +265,9 @@ fn unicode_math_aligned_preserves_fraction_geometry() {
 \begin{aligned}x&=\begin{aligned}\frac{a}{b}\end{aligned}\\y&=2\end{aligned}
 \]";
     let rendered = plain(source, /*width*/ 80);
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
     let spaced = source
         .replace('&', " \n &")
         .replace(r"\\", " \n \\\\")
@@ -311,10 +330,12 @@ fn unicode_math_structured_bounds_and_invalid_input() {
 
 #[test]
 fn unicode_math_narrow_layout_stays_meaningful() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         "$$\\frac{a+b}{c+d}$$\n\nWords $\\alpha^2$ more words.",
         /*width*/ 12
     ));
+    });
     for width in [80, 14] {
         for prefix in [
             "- a\n  - b\n    - c\n\n      ",

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -133,10 +134,12 @@ async fn externally_archived_thread_keeps_advertised_agents_navigation() -> Resu
     let event = events.try_recv()?;
     assert_matches!(event, AppEvent::OpenAgentsOverview);
     app.handle_event(&mut tui, &mut app_server, event).await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "externally_archived_thread_agents",
         render_bottom_popup(&app.chat_widget, /*width*/ 96)
     );
+    });
     app_server.shutdown().await?;
     Ok(())
 }

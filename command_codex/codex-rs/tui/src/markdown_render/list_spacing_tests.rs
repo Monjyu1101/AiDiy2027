@@ -1,5 +1,6 @@
 //! Width-aware list policies preserve nested layout, paragraphs, and semantic link metadata.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::ListSpacing;
 use crate::markdown::render_markdown_agent_with_list_spacing;
 use pretty_assertions::assert_eq;
@@ -33,7 +34,9 @@ fn list_spacing_is_uniform_per_list_and_preserves_item_paragraphs() {
             ));
         }
     }
-    insta::assert_snapshot!(stages.join("\n\n---\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(stages.join("\n\n---\n\n"));
+    });
 }
 
 #[test]

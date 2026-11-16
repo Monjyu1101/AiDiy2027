@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_feedback::CODEX_APP_DIRECTORY_CACHE_ATTACHMENT_FILENAME;
 use codex_feedback::CODEX_APPS_TOOLS_CACHE_ATTACHMENT_FILENAME;
 use codex_feedback::DOCTOR_REPORT_ATTACHMENT_FILENAME;
@@ -402,7 +403,9 @@ mod tests {
 
         let rendered = render_renderable(params.header.as_ref(), /*width*/ 60);
 
-        insta::assert_snapshot!("feedback_upload_consent_lists_doctor_report", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("feedback_upload_consent_lists_doctor_report", rendered);
+        });
     }
 
     #[test]
@@ -421,10 +424,12 @@ mod tests {
 
         let rendered = render_renderable(params.header.as_ref(), /*width*/ 60);
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "feedback_upload_consent_lists_windows_sandbox_log_when_included",
             rendered
         );
+        });
     }
 
     #[test]
@@ -525,7 +530,9 @@ mod tests {
             ),
             /*width*/ 120,
         );
-        insta::assert_snapshot!("feedback_success_employee", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("feedback_success_employee", rendered);
+        });
     }
 
     #[test]

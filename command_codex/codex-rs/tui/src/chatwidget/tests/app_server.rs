@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript;
 use super::*;
 use codex_app_server_protocol::AuthRecoveryNotification;
@@ -1190,13 +1191,15 @@ async fn config_warning_during_turn_retains_transcript_details() {
         /*replay_kind*/ None,
     );
     let cells = drain_insert_history_transcript(&mut rx);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "runtime_config_warning",
         cells
             .iter()
             .map(|lines| lines_to_single_string(lines))
             .collect::<String>()
     );
+    });
 }
 
 #[tokio::test]
@@ -1212,13 +1215,15 @@ async fn sqlite_recovery_warning_shows_backup_and_metadata_limitations() {
         /*replay_kind*/ None,
     );
     let cells = drain_insert_history_transcript(&mut rx);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "sqlite_recovery_warning",
         cells
             .iter()
             .map(|lines| lines_to_single_string(lines))
             .collect::<String>()
     );
+    });
 }
 
 #[tokio::test]
@@ -1290,7 +1295,9 @@ async fn startup_config_warning_is_not_repeated_by_thread() {
             .expect("closing the panel dismisses the viewed diagnostics");
         assert_eq!(dismissed, original_warnings);
     }
-    insta::assert_snapshot!("startup_config_warning_panel", warnings.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("startup_config_warning_panel", warnings.join("\n\n"));
+    });
 }
 
 #[tokio::test]
@@ -1653,10 +1660,7 @@ async fn live_app_server_collab_spawn_completed_renders_requested_model_and_effo
         .map(|lines| lines_to_single_string(&lines))
         .collect::<Vec<_>>()
         .join("\n");
-    assert_chatwidget_snapshot!(
-        "app_server_collab_spawn_completed_renders_requested_model_and_effort",
-        combined
-    );
+    assert_chatwidget_snapshot!("collab_spawn_model_effort", combined);
 }
 
 #[tokio::test]
@@ -2123,10 +2127,12 @@ async fn app_server_safety_access_errors_render_dedicated_notice() {
     for (case, rendered) in &rendered_cases[1..] {
         assert_eq!(rendered, canonical, "unexpected rendering for {case}");
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "app_server_bio_policy_error_renders_dedicated_notice",
         rendered_cases.last().unwrap().1.as_str()
     );
+    });
 }
 
 #[tokio::test]
@@ -2355,8 +2361,10 @@ async fn sqlite_log_write_warning_is_visible_in_warnings() {
         .collect();
     assert_eq!(cells.len(), 1);
     chat.open_warnings(&cells);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "sqlite_log_write_warning",
         super::helpers::render_bottom_popup(&chat, /*width*/ 80)
     );
+    });
 }

@@ -1,5 +1,6 @@
 //! Uploaded audio references remain intact across model requests and user-message history.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::audio_duration_store::TestAudioDurationStore;
 use super::*;
 use codex_protocol::models::AudioReference;
@@ -71,7 +72,8 @@ async fn uploaded_audio_survives_follow_up_and_resume() -> Result<()> {
             "request {index}",
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "uploaded_audio_survives_follow_up",
         context_snapshot::format_request_history_snapshot(
             "An uploaded audio file ID is forwarded to Responses and retained across follow-up and resume.",
@@ -79,6 +81,7 @@ async fn uploaded_audio_survives_follow_up_and_resume() -> Result<()> {
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -241,7 +244,8 @@ async fn uploaded_audio_survives_compaction_and_cold_resume(
         ),
         AudioAtCompaction::MissingAtStore | AudioAtCompaction::MissingAtResponses => return Ok(()),
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot,
         context_snapshot::format_request_history_snapshot(
             description,
@@ -249,6 +253,7 @@ async fn uploaded_audio_survives_compaction_and_cold_resume(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -451,7 +456,8 @@ async fn rejected_uploaded_audio_does_not_poison_follow_up_or_resume(
             completed.error
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "rejected_uploaded_audio_follow_up_and_resume",
         context_snapshot::format_request_history_snapshot(
             "A rejected uploaded recording is omitted only from request projections on follow-up and after resume, preserving surrounding text and aligned annotations without inventing user content.",
@@ -459,6 +465,7 @@ async fn rejected_uploaded_audio_does_not_poison_follow_up_or_resume(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1331,7 +1338,8 @@ async fn unsupported_steered_audio_is_rejected_before_continuation_and_resume() 
         );
     }
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "unsupported_steered_audio_follow_up_and_resume",
         context_snapshot::format_context_snapshot(
             "Unsupported audio queued during an active turn is never forwarded or persisted; the next turn and resumed thread continue without it.",
@@ -1339,6 +1347,7 @@ async fn unsupported_steered_audio_is_rejected_before_continuation_and_resume() 
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 

@@ -1,5 +1,6 @@
 //! Keeps loaded sessions selectable when background pagination fails.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use insta::assert_snapshot;
 use pretty_assertions::assert_eq;
@@ -87,10 +88,12 @@ async fn later_page_error_preserves_loaded_sessions() {
             assert_eq!(requests.lock().unwrap().len(), 2);
 
             if matches!(action, SessionPickerAction::Resume) && query.is_empty() {
-                assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    assert_snapshot!(
                     "resume_picker_pagination_error",
                     search_line(&state, /*width*/ 80).to_string()
                 );
+                });
             }
             let selection = state
                 .handle_key(KeyEvent::from(KeyCode::Enter))

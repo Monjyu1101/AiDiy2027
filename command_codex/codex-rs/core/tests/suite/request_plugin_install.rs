@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![allow(clippy::unwrap_used)]
 
 use anyhow::Context;
@@ -555,7 +556,8 @@ async fn startup_recommendations_use_developer_message(
     test.submit_turn("suggest a plugin").await?;
 
     if feature == Feature::RecommendedPlugins && disabled_feature.is_none() {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "startup_recommendations_developer_context",
             context_snapshot::format_request_history_snapshot(
                 "Startup recommendations share the developer message with other context.",
@@ -563,6 +565,7 @@ async fn startup_recommendations_use_developer_message(
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     }
 
     let request = model_response.single_request();
@@ -736,7 +739,8 @@ async fn catalog_plugin_recommendations_use_receiving_model(case: &str) -> Resul
                 .any(|text| text.contains("<recommended_plugins>"))
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!("catalog_plugin_recommendations_{case}"),
         context_snapshot::format_request_history_snapshot(
             "The first receiving model controls recommendation wording without changing feature eligibility, developer role, runtime plugin identities or retained-history deduplication.",
@@ -746,6 +750,7 @@ async fn catalog_plugin_recommendations_use_receiving_model(case: &str) -> Resul
                 .include_request_settings(),
         )
     );
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

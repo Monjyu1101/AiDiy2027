@@ -42,6 +42,7 @@
 //! retaining its usual modifiers and falling back when a scope has no foreground.
 //! Inline code and local file paths share the active syntax theme's raw-markup foreground.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::line_truncation::span_width;
 use crate::markdown_text_merge::DecodedTextMerge;
 use crate::render::highlight::current_syntax_theme;
@@ -2914,7 +2915,9 @@ mod tests {
             Style::default(),
         );
         let rendered: Vec<_> = lines.iter().map(|line| line.line.to_string()).collect();
-        insta::assert_debug_snapshot!(rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!(rendered);
+        });
     }
 
     // ---------------------------------------------------------------

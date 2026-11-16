@@ -1,5 +1,6 @@
 //! Cache reuse, bounded lifetime, and invalidation across frames.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::text::Line;
@@ -213,13 +214,15 @@ fn fullscreen_image_previews_follow_layout_without_entering_text_surfaces() {
     view.image_protocol = Some(ImageProtocol::Kitty);
     view.render(area, &mut buf, &cells);
     let expanded_areas: Vec<_> = view.image_placements().iter().map(|p| p.area).collect();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fullscreen_image_artifact_rows",
         format!(
             "Collapsed inspection / generated output\n{collapsed}\nGraphics: {collapsed_areas:?}\n\nExpanded inspection / generated output\n{}\nGraphics: {expanded_areas:?}",
             frame(&buf)
         )
     );
+    });
     for (index, expected) in text.iter().enumerate() {
         let layout = view.layout(&cells, index).unwrap();
         assert_eq!(layout.text(), expected);

@@ -1,4 +1,5 @@
 //! Question orchestration retains input buffers and renders pending-question summaries.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use tokio::sync::mpsc::unbounded_channel;
@@ -35,7 +36,8 @@ fn questions_flush_buffered_typing_and_record_activity() {
         .set_expanded(/*expanded*/ false);
     pane.push_async_questions("next", &questions);
     let now = Instant::now() + Duration::from_secs(15);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_collapsed_countdown",
         pane.question_summary(now)
             .unwrap()
@@ -44,6 +46,7 @@ fn questions_flush_buffered_typing_and_record_activity() {
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     let editor = pane.questions.as_mut().unwrap();
     assert!(editor.countdown(now + Duration::from_secs(30)).is_none());
     editor.set_expanded(/*expanded*/ true);

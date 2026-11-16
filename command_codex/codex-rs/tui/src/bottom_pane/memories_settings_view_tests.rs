@@ -1,5 +1,6 @@
 //! Verify that memory settings reserve enough space for wrapped choices.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[test]
@@ -41,5 +42,7 @@ fn reset_confirmation_keeps_both_choices_at_wrap_boundary() {
         );
         snapshots.push(format!("width={width}\n{text}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }

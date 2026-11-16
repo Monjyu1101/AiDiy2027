@@ -1,4 +1,5 @@
 //! Provider browsing through loading, startup attachment, nested views, and dismissal.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -123,10 +124,12 @@ async fn provider_views_show_reported_endpoints_and_ids_outside_the_catalog() ->
         &app.keymap.list,
         /*notice*/ None,
     ));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "provider_list",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
 
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     handle(
@@ -143,10 +146,12 @@ async fn provider_views_show_reported_endpoints_and_ids_outside_the_catalog() ->
     let first_page = terminal.backend().to_string();
     pager.handle_event(&mut tui, TuiEvent::Key(KeyCode::PageDown.into()))?;
     terminal.draw(|frame| pager.render(frame.area(), frame.buffer_mut()))?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "openai_provider_details",
         format!("{first_page}\n{}", terminal.backend())
     );
+    });
     server.shutdown().await?;
     Ok(())
 }
@@ -247,10 +252,12 @@ async fn space_saves_once_retries_and_preserves_the_current_chat() -> Result<()>
     app.chat_widget.handle_key_event(KeyCode::Esc.into());
     app.chat_widget.handle_key_event(KeyCode::Home.into());
     assert_eq!(app.chat_widget.config_ref().model_provider_id, original);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "saved_default_provider",
         render_bottom_popup(&app.chat_widget, /*width*/ 100)
     );
+    });
 
     // Switch back, then dismiss the picker before the save result is delivered.
     app.chat_widget.handle_key_event(KeyCode::End.into());
@@ -429,7 +436,9 @@ async fn adding_a_custom_provider_saves_to_the_server_and_preserves_the_default(
     };
     let mut terminal = Terminal::new(TestBackend::new(/*width*/ 72, /*height*/ 12))?;
     terminal.draw(|frame| pager.render(frame.area(), frame.buffer_mut()))?;
-    insta::assert_snapshot!("editable_provider_details", terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("editable_provider_details", terminal.backend());
+    });
     app.handle_backtrack_overlay_event(&mut tui, &mut server, TuiEvent::Key(KeyCode::Enter.into()))
         .await?;
     handle(

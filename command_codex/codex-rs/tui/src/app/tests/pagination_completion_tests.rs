@@ -1,5 +1,6 @@
 //! Older page completion preserves answer order, navigation intent, and pending request ownership.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::session_lifecycle_requests::start_recording_app_server;
 use super::*;
 use crate::pager_overlay::TranscriptHistoryState;
@@ -256,10 +257,12 @@ async fn older_pagination_completion_footers_follow_answers_without_overlap_dupl
     }
     // Canonicalize the fixture's afternoon clock while retaining minute differences.
     let afternoon_clock = regex_lite::Regex::new(r"at 14:(\d\d)").unwrap();
-    insta::assert_snapshot!(afternoon_clock.replace_all(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("pagination_footers", afternoon_clock.replace_all(
         &snapshots.join("\n\n--- next overlapping page ---\n\n"),
         "at 2:$1 PM",
     ));
+    });
     app_server.shutdown().await?;
     proxy.await??;
     Ok(())

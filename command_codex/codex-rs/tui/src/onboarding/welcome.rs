@@ -1,6 +1,7 @@
 //! Shared welcome header for the existing sign-in and Bedrock onboarding pickers.
 //! The logo occupies a fixed stage so its motion never shifts the choices below it.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
 use ratatui::buffer::Buffer;
@@ -217,6 +218,8 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!(format!("welcome_logo_{width}x{height}"), visible.trim_end());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!("welcome_logo_{width}x{height}"), visible.trim_end());
+        });
     }
 }

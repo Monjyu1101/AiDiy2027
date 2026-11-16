@@ -1,5 +1,6 @@
 //! Covers transcript copy navigation, rendering, and original-source clipboard payloads.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::clipboard_copy::CopyStatus;
 use crate::transcript_view::tests::render;
@@ -262,7 +263,9 @@ fn copy_highlight_fills_a_block_across_blank_and_wrapped_rows() {
         snapshots.push(rows.join("\n"));
         assert_eq!(payload(&mut view, &cells), "longer line\n\nx\n");
     }
-    insta::assert_snapshot!(snapshots.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -302,7 +305,9 @@ fn whole_user_turn_highlight_includes_bottom_padding() {
         snapshots.push(rows.join("\n"));
         assert_eq!(payload(&mut view, &cells), message);
     }
-    insta::assert_snapshot!(snapshots.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -670,7 +675,9 @@ fn rendered_fenced_table_has_a_block_highlight() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rows);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rows);
+    });
 }
 
 #[test]
@@ -714,7 +721,9 @@ fn copy_navigation_leaves_context_and_preserves_the_center_band() {
         );
     }
     let buffer = render(&mut view, &cells, /*width*/ 50, /*height*/ 10);
-    insta::assert_snapshot!(text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(text(&buffer));
+    });
 }
 
 #[test]
@@ -765,7 +774,9 @@ fn copy_resize_keeps_whole_user_padding_inside_context() {
         rows[0] > 0 && *rows.last().unwrap() < 9,
         "selected rows: {rows:?}"
     );
-    insta::assert_snapshot!(text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(text(&buffer));
+    });
 }
 
 #[test]

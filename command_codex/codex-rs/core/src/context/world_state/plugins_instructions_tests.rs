@@ -1,4 +1,5 @@
 //! Covers generic plugin wording transitions and recovery from retained developer history.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -31,7 +32,7 @@ fn expected_body(intro: &str, usage: &str) -> String {
 }
 
 #[test]
-fn snapshots() {
+fn plugins_instructions_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -45,7 +46,8 @@ fn snapshots() {
     let available =
         PluginsInstructionsState::new(/*available*/ true, bundled, std::iter::empty());
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&unavailable)),
         (Absent, Known(&available)),
@@ -55,6 +57,7 @@ fn snapshots() {
         (Unknown, Known(&unavailable)),
         (Unknown, Known(&available)),
     ]));
+    });
 }
 
 #[test]

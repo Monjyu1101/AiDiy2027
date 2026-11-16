@@ -1,5 +1,6 @@
 //! Verifies storage failures remain visible in direct login diagnostics.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::DEFAULT_LOGIN_LOG_FILTER;
 use codex_config::types::AuthCredentialsStoreMode;
 use codex_login::AuthKeyringBackendKind;
@@ -49,13 +50,15 @@ fn login_default_filter_records_sanitized_storage_fallback() -> anyhow::Result<(
     let cause = std::fs::create_dir_all(home.path().join("secrets"))
         .unwrap_err()
         .to_string();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         logs.replace(
             home.path().join("secrets").to_str().unwrap(),
             "[SECRETS_PATH]"
         )
         .replace(&cause, "[OS_ERROR]")
     );
+    });
     Ok(())
 }
 
@@ -78,10 +81,12 @@ fn login_storage_error_displays_context_and_cause() -> anyhow::Result<()> {
     assert!(message.contains(&cause), "{message}");
     assert!(!message.contains("private-api-key"));
     // The temporary path and native filesystem error differ across platforms.
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         message
             .replace(secrets_path.to_str().unwrap(), "[SECRETS_PATH]")
             .replace(&cause, "[OS_ERROR]")
     );
+    });
     Ok(())
 }

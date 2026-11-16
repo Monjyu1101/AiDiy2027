@@ -1,5 +1,6 @@
 //! Exercise the warnings panel through the real app, including composer and scroll restoration.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -47,10 +48,12 @@ async fn warnings_hide_and_restore_draft_and_freeze_until_reopened() -> Result<(
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "warnings_page",
         crate::chatwidget::tests::helpers::normalize_snapshot_paths(screen),
     );
+    });
     let mut app_server = crate::start_embedded_app_server_for_picker(&app.config).await?;
     app.reconnect.offline = true;
     app.handle_tui_event(
@@ -123,10 +126,12 @@ async fn warnings_hide_and_restore_draft_and_freeze_until_reopened() -> Result<(
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "warnings_partial_dismissal",
         crate::chatwidget::tests::helpers::normalize_snapshot_paths(screen),
     );
+    });
     app.chat_widget.apply_external_edit("/m".into());
     app.chat_widget.open_warnings(&app.transcript_cells);
     app.render_owned_transcript(&mut tui, size)?;

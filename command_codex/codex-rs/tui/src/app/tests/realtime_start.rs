@@ -1,5 +1,6 @@
 //! Voice startup rejection coverage without an audio device.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::tests::session_lifecycle_requests::recorded_params;
 use crate::app::tests::session_lifecycle_requests::start_recording_remote_app_server;
@@ -55,9 +56,13 @@ async fn rejected_voice_start_does_not_leave_local_capture_active() -> Result<()
             .collect::<Vec<_>>()
             .join("\n");
         if replay_only {
-            insta::assert_snapshot!("rejected_voice_start_replay_only", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("rejected_voice_start_replay_only", rendered);
+            });
         } else {
-            insta::assert_snapshot!("rejected_voice_start_no_active_thread", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("rejected_voice_start_no_active_thread", rendered);
+            });
         }
         app_server.shutdown().await?;
         proxy.await??;

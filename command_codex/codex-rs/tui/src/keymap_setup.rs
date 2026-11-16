@@ -17,6 +17,7 @@
 //! the edited config so the app layer can decide how to save, reload, and
 //! surface errors.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod actions;
 mod capture;
 mod debug;
@@ -973,10 +974,12 @@ mod tests {
             fast_mode_action_filter(),
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "keymap_picker_fast_mode_enabled",
             render_picker(params, /*width*/ 120)
         );
+        });
     }
 
     #[test]
@@ -1081,7 +1084,9 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert_snapshot!("keymap_picker_first_actions", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_first_actions", snapshot);
+        });
         let agents = all_tab
             .items
             .iter()
@@ -1101,7 +1106,9 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        assert_snapshot!("keymap_picker_agents_actions", agents);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_agents_actions", agents);
+        });
     }
 
     #[test]
@@ -1220,7 +1227,9 @@ mod tests {
             .find(|line| line.contains("Repeat Last Change"))
             .expect("repeat-last-change row should render");
 
-        assert_snapshot!("keymap_picker_repeat_last_change", repeat_row);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_repeat_last_change", repeat_row);
+        });
 
         let params = build_keymap_picker_params_for_selected_action(
             &runtime,
@@ -1234,12 +1243,15 @@ mod tests {
             .find(|line| line.contains("Redo"))
             .expect("redo row should render");
 
-        assert_snapshot!("keymap_picker_redo", redo_row);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_redo", redo_row);
+        });
     }
 
     #[test]
     fn picker_voice_toggle_snapshot() {
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "keymap_voice_toggle",
             render_picker(
                 build_keymap_action_menu_params(
@@ -1251,6 +1263,7 @@ mod tests {
                 /*width*/ 80,
             )
         );
+        });
     }
 
     #[test]
@@ -1273,7 +1286,9 @@ mod tests {
                 .to_string()
             })
             .join("\n\n");
-        assert_snapshot!("keymap_question_action_descriptions", descriptions);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_question_action_descriptions", descriptions);
+        });
     }
 
     #[test]
@@ -1304,7 +1319,9 @@ mod tests {
             .collect::<Vec<_>>()
             .join("\n");
 
-        assert_snapshot!("keymap_picker_all_tab_search", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_all_tab_search", snapshot);
+        });
     }
 
     #[test]
@@ -1312,7 +1329,9 @@ mod tests {
         let runtime = RuntimeKeymap::defaults();
         let params = build_keymap_picker_params(&runtime, &TuiKeymap::default());
 
-        assert_snapshot!("keymap_picker_wide", render_picker(params, /*width*/ 120));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_wide", render_picker(params, /*width*/ 120));
+        });
     }
 
     #[test]
@@ -1320,7 +1339,9 @@ mod tests {
         let runtime = RuntimeKeymap::defaults();
         let params = build_keymap_picker_params(&runtime, &TuiKeymap::default());
 
-        assert_snapshot!("keymap_picker_narrow", render_picker(params, /*width*/ 78));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_narrow", render_picker(params, /*width*/ 78));
+        });
     }
 
     #[test]
@@ -1329,7 +1350,9 @@ mod tests {
         let mut params = build_keymap_picker_params(&runtime, &TuiKeymap::default());
         params.initial_tab_id = Some("editor-shortcuts".to_string());
 
-        assert_snapshot!("keymap_picker_editor", render_picker(params, /*width*/ 120));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_editor", render_picker(params, /*width*/ 120));
+        });
     }
 
     #[test]
@@ -1340,7 +1363,9 @@ mod tests {
         let runtime = RuntimeKeymap::from_config(&keymap).expect("runtime keymap");
         let params = build_keymap_picker_params(&runtime, &keymap);
 
-        assert_snapshot!("keymap_picker_custom", render_picker(params, /*width*/ 120));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_picker_custom", render_picker(params, /*width*/ 120));
+        });
     }
 
     #[test]
@@ -1355,10 +1380,12 @@ mod tests {
         let runtime = RuntimeKeymap::from_config(&keymap).expect("runtime keymap");
         let params = build_keymap_picker_params(&runtime, &keymap);
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "keymap_picker_global_chord",
             render_picker(params, /*width*/ 120)
         );
+        });
     }
 
     #[test]
@@ -1452,7 +1479,9 @@ mod tests {
         ]
         .join("\n");
 
-        assert_snapshot!("keymap_action_menu", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_action_menu", snapshot);
+        });
 
         for params in [unbound_params, single_params, multi_params, replace_params] {
             let item_count = params.items.len();
@@ -1493,7 +1522,9 @@ mod tests {
         ]
         .join("\n");
 
-        assert_snapshot!("keymap_action_menu_responsive", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_action_menu_responsive", snapshot);
+        });
     }
 
     #[test]
@@ -1542,20 +1573,24 @@ mod tests {
             app_event_sender(),
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "keymap_capture_view",
             format!("{:?}", render_capture(&view, /*width*/ 80, /*height*/ 8))
         );
+        });
     }
 
     #[test]
     fn debug_view_initial_snapshot() {
         let view = build_keymap_debug_view(&RuntimeKeymap::defaults(), &TuiKeymap::default());
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "keymap_debug_view_initial",
             render_debug(&view, /*width*/ 80)
         );
+        });
     }
 
     #[test]
@@ -1565,7 +1600,9 @@ mod tests {
 
         let rendered = render_debug(&view, /*width*/ 100);
         assert!(rendered.contains("Still waiting?"));
-        assert_snapshot!("keymap_debug_view_delayed_hint", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_debug_view_delayed_hint", rendered);
+        });
     }
 
     #[test]
@@ -1577,7 +1614,9 @@ mod tests {
 
         let rendered = render_debug(&view, /*width*/ 100);
         assert!(!rendered.contains("Still waiting?"));
-        assert_snapshot!("keymap_debug_view_match", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("keymap_debug_view_match", rendered);
+        });
     }
 
     #[test]

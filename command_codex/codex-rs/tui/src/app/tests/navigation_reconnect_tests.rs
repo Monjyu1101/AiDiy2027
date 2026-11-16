@@ -1,5 +1,6 @@
 //! Command-center inventory and cached navigation recover independently of active work.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::active_reconnect::drain_history;
 use super::disconnect::serve_reconnect_requests;
 use super::*;
@@ -304,20 +305,24 @@ async fn reconnect_daemon_command_center_after_socket_replacement_without_a_conv
         let mut tui = crate::tui::test_support::make_test_tui()?;
         assert_eq!(draft(&app), "Keep this task draft!");
         if previous_thread.is_none() && !overview_initialized {
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "daemon_command_center_reconnecting",
                 render_bottom_popup(&app.chat_widget, /*width*/ 100)
             );
+            });
             app.agents_overview
                 .view_state
                 .lock()
                 .unwrap()
                 .connection_notice =
                 Some("Reconnect failed — agent list is stale; relaunch to retry");
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "daemon_command_center_failed",
                 render_bottom_popup(&app.chat_widget, /*width*/ 100)
             );
+            });
         }
         let connected = reconnect(
             session.backend_id(),
@@ -416,10 +421,12 @@ async fn reconnect_daemon_command_center_after_socket_replacement_without_a_conv
         if previous_thread.is_some() {
             let history = drain_history(&mut app, &mut tui, &mut session, &mut events).await?;
             assert!(history.contains("Unsubmitted title: Keep this task draft!"));
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "daemon_command_center_vanished_rename",
                 render_bottom_popup(&app.chat_widget, /*width*/ 100)
             );
+            });
             app.handle_tui_event(
                 &mut tui,
                 &mut session,
@@ -482,13 +489,15 @@ async fn reconnect_daemon_command_center_after_socket_replacement_without_a_conv
             let content = &preserved_history[preserved_history
                 .find("Cached previous conversation")
                 .unwrap()..];
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "reconnected_unavailable_conversation",
                 format!(
                     "{content}\n{}",
                     render_bottom_popup(&app.chat_widget, /*width*/ 80)
                 )
             );
+            });
 
             app.handle_tui_event(
                 &mut tui,

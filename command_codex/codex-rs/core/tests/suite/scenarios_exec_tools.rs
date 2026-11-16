@@ -1,5 +1,6 @@
 //! Exec tools append changed entries and refresh frozen exec sections only at compaction.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_features::Feature;
 use codex_protocol::openai_models::IncrementalToolMessages;
@@ -424,6 +425,8 @@ async fn changed_sections_and_entries_append_without_repeating_the_catalog(
         &requests,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     );
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
     Ok(())
 }

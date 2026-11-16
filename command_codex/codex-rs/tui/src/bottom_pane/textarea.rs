@@ -20,6 +20,7 @@
 //! atomic. Wheel browsing leaves the caret in place; moving or editing returns to caret following.
 //! The editing module resolves replacement targets shared by insertion and paste-context inspection.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::key_hint::KeyBindingListExt;
 use crate::key_hint::is_altgr;
 use crate::keymap::EditorKeymap;
@@ -2554,10 +2555,12 @@ mod tests {
                 StatefulWidgetRef::render_ref(&(&t), frame.area(), frame.buffer_mut(), &mut state);
             })
             .unwrap();
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_thai_backspace_preserves_remaining_marks",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
         assert_eq!(t.text(), "ที");
 
         t.delete_backward(/*n*/ 1);
@@ -3085,7 +3088,9 @@ mod tests {
             states.push(format!("{}\n{}^", t.text(), " ".repeat(t.cursor())));
         }
 
-        insta::assert_snapshot!("vim_e_advances_from_each_word_end", states.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("vim_e_advances_from_each_word_end", states.join("\n\n"));
+        });
     }
 
     #[test]
@@ -3906,10 +3911,12 @@ mod tests {
             })
             .unwrap();
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_full_non_final_line_has_a_visible_cursor_row",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -3926,10 +3933,12 @@ mod tests {
             .unwrap();
 
         assert_eq!(t.desired_height(area.width), 3);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_trailing_spaces_wrap_without_cursor_overflow",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -3947,10 +3956,12 @@ mod tests {
 
         assert_eq!(t.desired_height(area.width), 2);
         assert_eq!(t.cursor_pos(area), Some((1, 1)));
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_separator_after_full_line_hangs_before_following_text",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
 
         for text in ["界界 a", "abｶﾞ a", "abad\ta"] {
             let mut t = ta_with(text);
@@ -3976,10 +3987,12 @@ mod tests {
 
         assert_eq!(t.desired_height(area.width), 3);
         assert_eq!(t.cursor_pos(area), Some((1, 2)));
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_breakable_unicode_space_hangs_before_following_text",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -4019,10 +4032,12 @@ mod tests {
             })
             .unwrap();
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_leading_space_reflows_across_following_wrapped_fragments",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -4058,10 +4073,12 @@ mod tests {
             })
             .unwrap();
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_reflow_keeps_fitting_remainder_on_current_row",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -4077,10 +4094,12 @@ mod tests {
             })
             .unwrap();
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_reflow_preserves_hyphenated_word_breakpoint",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -4110,7 +4129,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(t.desired_height(area.width), 3);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_full_final_line_scrolls_to_visible_cursor_row",
             format!(
                 "scroll: {}\ncursor: {:?}\n{}",
@@ -4119,6 +4139,7 @@ mod tests {
                 terminal.backend()
             )
         );
+        });
     }
 
     #[test]
@@ -4174,10 +4195,12 @@ mod tests {
             snapshots.push(format!("{overlay}\n{}", terminal.backend()));
         }
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_styled_overlays_stay_inside_the_textarea",
             snapshots.join("\n\n")
         );
+        });
     }
 
     #[test]
@@ -4252,10 +4275,12 @@ mod tests {
             terminal.backend().buffer()[(cursor.0 - 1, cursor.1)].symbol(),
             "%"
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_tabs_render_as_spaces_and_align_with_cursor",
             format!("cursor: {cursor:?}\n{}", terminal.backend())
         );
+        });
     }
 
     #[test]
@@ -4317,10 +4342,12 @@ mod tests {
             ));
         }
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_halfwidth_sound_marks_wrap_and_align_with_cursor",
             snapshots.join("\n\n")
         );
+        });
     }
 
     #[test]
@@ -4341,10 +4368,12 @@ mod tests {
             .unwrap();
 
         assert_eq!(t.cursor_pos(area), Some((0, 1)));
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "textarea_masked_graphemes_align_with_cursor",
             format!("cursor: {:?}\n{}", t.cursor_pos(area), terminal.backend())
         );
+        });
     }
 
     #[test]

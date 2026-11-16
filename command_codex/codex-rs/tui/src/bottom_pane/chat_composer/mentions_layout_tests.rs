@@ -1,5 +1,6 @@
 //! Production mention overlays retain the draft, status footer and editor cursor across scopes.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::layout::Size;
@@ -138,7 +139,9 @@ fn mention_scopes_overlay_history_without_moving_composer_or_footer() {
                 }));
             }
             if (width, height) == (80, 32) && scope == "all" {
-                insta::assert_snapshot!("mention_scopes_overlay_history", buffer_text(&open));
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("mention_scopes_overlay_history", buffer_text(&open));
+                });
             }
             composer.handle_key_event(KeyEvent::new(KeyCode::Right, KeyModifiers::NONE));
         }
@@ -184,7 +187,9 @@ fn mention_menu_reserves_height_above_composer_and_owns_cursor_over_interactive_
         composer.cursor_pos_with_options(area, options),
         Some((3, textarea.y))
     );
-    insta::assert_snapshot!("mention_menu_above_composer", buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("mention_menu_above_composer", buffer_text(&buffer));
+    });
 }
 
 #[test]

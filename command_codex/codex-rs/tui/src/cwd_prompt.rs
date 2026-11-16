@@ -1,5 +1,6 @@
 //! Resume/fork directory choices with shared picker presentation and caller-owned persistence.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::path::Path;
 
 use crate::bottom_pane::picker_option_list;
@@ -382,7 +383,9 @@ mod tests {
         terminal
             .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
             .expect("render cwd prompt");
-        insta::assert_snapshot!("cwd_prompt_modal", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cwd_prompt_modal", terminal.backend());
+        });
     }
 
     #[test]
@@ -400,7 +403,9 @@ mod tests {
         terminal
             .draw(|frame| frame.render_widget_ref(&screen, frame.area()))
             .expect("render cwd prompt");
-        insta::assert_snapshot!("cwd_prompt_fork_modal", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cwd_prompt_fork_modal", terminal.backend());
+        });
     }
 
     #[test]
@@ -424,7 +429,9 @@ mod tests {
             .map(str::trim_end)
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("cwd_prompt_remote_exec_modal", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cwd_prompt_remote_exec_modal", rendered);
+        });
     }
 
     #[test]
@@ -448,7 +455,9 @@ mod tests {
             .map(str::trim_end)
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("cwd_prompt_remembered_current_modal", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cwd_prompt_remembered_current_modal", rendered);
+        });
     }
 
     #[test]
@@ -481,7 +490,9 @@ mod tests {
         assert!(rendered.contains("› 4. Always use current directory"));
         assert!(rendered.contains("esc use session"));
         assert_eq!(screen.selection(), None);
-        insta::assert_snapshot!(format!("cwd_picker_selected_{width}x{height}"), rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!("cwd_picker_selected_{width}x{height}"), rendered);
+        });
         screen.handle_key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert_eq!(screen.selection(), Some(CwdSelection::Session));
     }
@@ -581,7 +592,9 @@ mod tests {
             .expect("render persistence error");
         let rendered = terminal.backend().to_string();
 
-        insta::assert_snapshot!("cwd_prompt_persistence_failure", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cwd_prompt_persistence_failure", rendered);
+        });
         Ok(())
     }
 }

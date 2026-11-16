@@ -4,6 +4,7 @@
 //! either render a dedicated footer row or reuse the same text inline in the
 //! status row without duplicating copy/grammar logic.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::style::Stylize;
@@ -101,7 +102,9 @@ mod tests {
         let height = footer.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         footer.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_more_sessions", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_more_sessions", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -112,6 +115,8 @@ mod tests {
         let height = footer.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         footer.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_many_sessions", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_many_sessions", format!("{buf:?}"));
+        });
     }
 }

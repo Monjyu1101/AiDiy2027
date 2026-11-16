@@ -4,6 +4,7 @@
 //! cell is an escape-sequence operation rather than a normal ratatui render. Untrusted content
 //! follows ratatui’s control-character filtering before semantic hyperlinks add trusted escapes.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::fmt;
 use std::io;
 use std::io::Write;
@@ -1186,7 +1187,9 @@ mod tests {
         .expect("insert Zellij raw history");
 
         let rows: Vec<String> = term.backend().vt100().screen().rows(0, width).collect();
-        insta::assert_snapshot!("zellij_raw_terminal_wrap_above_viewport", rows.join("\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("zellij_raw_terminal_wrap_above_viewport", rows.join("\n"));
+        });
         let history_rows = rows[..usize::from(term.viewport_area.y)]
             .iter()
             .map(|row| row.trim_end())
@@ -1222,10 +1225,12 @@ mod tests {
         .expect("replay Zellij raw history");
 
         let rows: Vec<String> = term.backend().vt100().screen().rows(0, width).collect();
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "zellij_raw_terminal_wrap_overflow_above_viewport",
             rows.join("\n")
         );
+        });
         let history_rows = rows[..usize::from(term.viewport_area.y)]
             .iter()
             .map(|row| row.trim_end())

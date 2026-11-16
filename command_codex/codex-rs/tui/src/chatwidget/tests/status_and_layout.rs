@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript;
 use super::*;
 use crate::bottom_pane::goal_status_indicator_line;
@@ -3177,10 +3178,12 @@ async fn unsupported_code_mode_warning_renders_as_warning_history_cell() {
 
     let cells = drain_insert_history_transcript(&mut rx);
     assert_eq!(cells.len(), 1, "expected one warning history cell");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "unsupported_code_mode_warning",
         lines_to_single_string(&cells[0])
     );
+    });
 }
 
 #[tokio::test]
@@ -5558,10 +5561,7 @@ async fn completed_hook_output_precedes_following_assistant_message() {
         .iter()
         .map(|lines| lines_to_single_string(lines))
         .collect::<String>();
-    assert_chatwidget_snapshot!(
-        "completed_hook_output_precedes_following_assistant_message_snapshot",
-        history
-    );
+    assert_chatwidget_snapshot!("hook_output_before_assistant", history);
     let hook_index = history
         .find("Blocked by hook")
         .expect("hook feedback should be in history");

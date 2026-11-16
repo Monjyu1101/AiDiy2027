@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::HyperlinkRows;
 use crossterm::event::KeyCode;
@@ -295,7 +296,9 @@ mod tests {
                     })
                     .collect::<Vec<_>>()
                     .join("\n");
-                assert_snapshot!("render_oversized_preview_url", visible);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    assert_snapshot!("render_oversized_preview_url", visible);
+                });
             }
         }
     }
@@ -310,7 +313,9 @@ mod tests {
         let area = Rect::new(0, 0, width, queue.desired_height(width));
         let mut buf = Buffer::empty(area);
         queue.render(area, &mut buf);
-        assert_snapshot!("render_narrow_preview", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_narrow_preview", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -321,7 +326,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_one_message", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_one_message", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -335,7 +342,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_two_messages", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_two_messages", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -355,7 +364,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_more_than_three_messages", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_more_than_three_messages", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -371,7 +382,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_wrapped_message", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_wrapped_message", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -384,7 +397,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_many_line_message", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_many_line_message", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -427,7 +442,9 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!("render_one_pending_steer", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("render_one_pending_steer", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -439,10 +456,12 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "render_one_pending_steer_with_remapped_interrupt_binding",
             format!("{buf:?}")
         );
+        });
     }
 
     #[test]
@@ -462,10 +481,12 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "render_pending_steers_above_queued_messages",
             format!("{buf:?}")
         );
+        });
     }
 
     #[test]
@@ -478,9 +499,11 @@ mod tests {
         let height = queue.desired_height(width);
         let mut buf = Buffer::empty(Rect::new(0, 0, width, height));
         queue.render(Rect::new(0, 0, width, height), &mut buf);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "render_multiline_pending_steer_uses_single_prefix_and_truncates",
             format!("{buf:?}")
         );
+        });
     }
 }

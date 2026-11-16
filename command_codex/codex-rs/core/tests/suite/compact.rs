@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use anyhow::anyhow;
 use codex_core::TurnInputRequest;
@@ -2774,7 +2775,8 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
         next_model,
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "pre_sampling_model_switch_compaction_shapes",
         format_labeled_requests_snapshot(
             "Pre-sampling compaction on model switch to a smaller context window: current behavior compacts using prior-turn history only (incoming user message excluded), and the follow-up request carries compacted history plus the new user message.",
@@ -2788,6 +2790,7 @@ async fn pre_sampling_compact_runs_on_switch_to_smaller_context_model() {
             ]
         )
     );
+    });
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -4863,13 +4866,15 @@ async fn manual_compact_twice_preserves_latest_user_messages() {
         "second compact request should include latest history"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "manual_compact_with_history_shapes",
         format_history_snapshot(
             "Manual /compact with prior user history compacts existing history and the follow-up turn includes the compact summary plus new user message.",
             &requests
         )
     );
+    });
 
     let first_compact_has_prompt = contains_user_text(&requests[1], SUMMARIZATION_PROMPT);
     let second_compact_has_prompt = contains_user_text(&requests[3], SUMMARIZATION_PROMPT);
@@ -5216,13 +5221,15 @@ async fn paginated_compaction_cold_resume_from_bounded_suffix() -> Result<()> {
         &requests[3].input()[..replacement_len],
         &requests[2].input()[..replacement_len]
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "compaction_cold_resume_after_completion",
         format_history_snapshot(
             "Real paginated mid-turn compaction and cold resume from the bounded suffix.",
             &requests,
         )
     );
+    });
     Ok(())
 }
 
@@ -5331,7 +5338,8 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
         "mid-turn auto compact request should include the summarization prompt after exceeding 95% (limit {limit})"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "mid_turn_compaction_shapes",
         format_history_snapshot(
             "True mid-turn continuation compaction after tool output: compact request includes tool artifacts, and the continuation request includes the summary in the same turn.",
@@ -5342,6 +5350,7 @@ async fn snapshot_request_shape_mid_turn_continuation_compaction() {
             ]
         )
     );
+    });
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -5903,13 +5912,15 @@ async fn snapshot_request_shape_pre_turn_compaction_including_incoming_user_mess
             test_path_buf(PRETURN_CONTEXT_DIFF_CWD).display()
         ))
     }));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "pre_turn_compaction_including_incoming_shapes",
         format_history_snapshot(
             "Pre-turn auto-compaction uses the prior context without the incoming user message; the follow-up carries the cwd override, image, and text.",
             &requests
         )
     );
+    });
     let compact_request_user_texts = requests[2].message_input_texts("user");
     assert!(
         !compact_request_user_texts
@@ -6024,7 +6035,8 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
         "post-compaction follow-up should include model-switch update item"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "pre_turn_compaction_strips_incoming_model_switch_shapes",
         format_labeled_requests_snapshot(
             "Pre-turn compaction during model switch (without pre-sampling model-switch compaction): current behavior strips incoming <model_switch> from the compact request and restores it in the post-compaction follow-up request.",
@@ -6035,6 +6047,7 @@ async fn snapshot_request_shape_pre_turn_compaction_strips_incoming_model_switch
             ]
         )
     );
+    });
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -6102,7 +6115,8 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
         "expected first turn and at least one compaction request"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "pre_turn_compaction_context_window_exceeded_shapes",
         format_labeled_requests_snapshot(
             "Pre-turn auto-compaction context-window failure: compaction request excludes the incoming user message and the turn errors.",
@@ -6112,6 +6126,7 @@ async fn snapshot_request_shape_pre_turn_compaction_context_window_exceeded() {
             ),]
         )
     );
+    });
 
     assert!(
         error_message.contains("ran out of room in the model's context window"),
@@ -6166,7 +6181,8 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
         "expected manual /compact request and follow-up turn request"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "manual_compact_without_prev_user_shapes",
         format_labeled_requests_snapshot(
             "Manual /compact with no prior user turn currently still issues a compaction request; follow-up turn carries canonical context and the new user message.",
@@ -6176,6 +6192,7 @@ async fn snapshot_request_shape_manual_compact_without_previous_user_messages() 
             ]
         )
     );
+    });
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

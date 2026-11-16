@@ -1,4 +1,5 @@
 //! Inline previews must be erased before their rows can enter terminal history.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::PendingHistoryLines;
@@ -53,7 +54,7 @@ fn preview_at(protocol: ImageProtocol, y: u16) -> ImagePlacement {
 }
 
 #[test]
-fn inline_history_erases_preview_before_scrolling_and_preserves_draft() {
+fn inline_history_preview_and_draft() {
     let viewport = Rect::new(
         /*x*/ 0, /*y*/ 4, /*width*/ 32, /*height*/ 4,
     );
@@ -124,7 +125,9 @@ fn inline_history_erases_preview_before_scrolling_and_preserves_draft() {
     assert!(!contents.contains("stale preview"), "{contents}");
     assert!(contents.contains("streamed response"), "{contents}");
     assert!(contents.contains("unsent [Image #1]"), "{contents}");
-    insta::assert_snapshot!(contents);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(contents);
+    });
     terminal
         .draw_with_size(size, &mut retained, |frame| {
             Line::from("unsent [Image #1]").render(

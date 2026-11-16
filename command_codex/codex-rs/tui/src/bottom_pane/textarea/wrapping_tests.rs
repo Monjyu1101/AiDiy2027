@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::TextArea;
 use super::super::TextAreaState;
 use super::visible_prefix;
@@ -63,7 +64,8 @@ fn mandatory_breaks_keep_distinct_cursor_positions() {
                     WidgetRef::render_ref(&(&t), frame.area(), frame.buffer_mut());
                 })
                 .unwrap();
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "mandatory_break_cursor",
                 format!(
                     "before: {before:?}\nafter: {after:?}\n{}",
@@ -71,6 +73,7 @@ fn mandatory_breaks_keep_distinct_cursor_positions() {
                 )
                 .replace(separator, "\\u{2028}")
             );
+            });
         }
     }
 }
@@ -197,7 +200,8 @@ fn hanging_tabs_keep_cursor_scrolling_and_navigation_aligned() {
         .unwrap();
     let scrolled_cursor = t.cursor_pos_with_state(terminal.backend().buffer().area, state);
     assert_eq!((state.scroll, scrolled_cursor), (1, Some((0, 0))));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "hanging_tab_cursor_and_scroll",
         format!(
             "cursors: {cursors:?}\nscroll: {}\ncursor: {scrolled_cursor:?}\n{}",
@@ -205,6 +209,7 @@ fn hanging_tabs_keep_cursor_scrolling_and_navigation_aligned() {
             terminal.backend()
         )
     );
+    });
 
     t.move_cursor_up();
     assert_eq!((t.cursor(), t.cursor_pos(area)), (0, Some((0, 0))));
@@ -262,10 +267,12 @@ fn vertical_navigation_clamps_saved_column_after_resize() {
             .unwrap();
         format!("width {width}\n{}", terminal.backend())
     });
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "vertical_navigation_after_resize",
         format!("{}\n\n{}", cursors.join("\n"), layouts.join("\n"))
     );
+    });
 }
 
 #[test]
@@ -298,7 +305,9 @@ fn typing_after_eol_spaces_reflows_without_changing_text() {
         ));
     }
     assert_eq!(t.text(), "abad   ");
-    insta::assert_snapshot!("typing_after_eol_spaces", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("typing_after_eol_spaces", snapshots.join("\n\n"));
+    });
 }
 
 #[test]

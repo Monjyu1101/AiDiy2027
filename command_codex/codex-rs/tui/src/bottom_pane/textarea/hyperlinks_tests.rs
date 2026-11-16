@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::TextArea;
 use super::super::TextAreaState;
 use crate::app_event::AppEvent;
@@ -108,7 +109,9 @@ fn wrapped_url_fragments_keep_the_complete_destination() {
         .filter(|line| !line.is_empty())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("wrapped_textarea_url_keeps_original_appearance", visible);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("wrapped_textarea_url_keeps_original_appearance", visible);
+    });
 }
 
 #[test]
@@ -178,10 +181,12 @@ fn maximum_length_urls_render_without_osc8_annotations() {
     assert_eq!(textarea.text(), text);
     assert_eq!(linked_cells(&buf), Vec::new());
     assert!(buf.content.iter().all(|cell| cell.symbol().len() == 1));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "maximum_length_url_without_annotations",
         hyperlink_snapshot(&buf)
     );
+    });
 }
 
 #[test]
@@ -232,7 +237,9 @@ fn joined_emoji_preserve_complete_url_cell_ranges() {
             }
         }
     }
-    insta::assert_snapshot!("joined_emoji_url_cell_ranges", snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("joined_emoji_url_cell_ranges", snapshots.join("\n"));
+    });
 }
 
 #[test]
@@ -264,7 +271,9 @@ fn unicode_whitespace_separates_url_destinations() {
             ));
         }
     }
-    insta::assert_snapshot!("unicode_whitespace_url_destinations", snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("unicode_whitespace_url_destinations", snapshots.join("\n"));
+    });
 }
 
 #[test]

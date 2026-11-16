@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use ratatui::widgets::WidgetRef;
@@ -365,7 +366,9 @@ mod tests {
         );
         let mut buf = Buffer::empty(area);
         popup.render_ref(area, &mut buf);
-        insta::assert_snapshot!("side_conversation_unavailable_command", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("side_conversation_unavailable_command", format!("{buf:?}"));
+        });
         popup.on_composer_text_change("/a".to_string());
         popup.move_up();
         assert!(popup.selected_item().is_some());
@@ -497,7 +500,9 @@ mod tests {
             snapshots.push(format!("width {width}\n{snapshot}"));
         }
 
-        insta::assert_snapshot!("command_popup_wrap_boundary", snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("command_popup_wrap_boundary", snapshots.join("\n\n"));
+        });
     }
 
     #[test]
@@ -540,7 +545,9 @@ mod tests {
         let mut buf = Buffer::empty(area);
         popup.render_ref(area, &mut buf);
 
-        insta::assert_snapshot!("command_popup_app", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("command_popup_app", format!("{buf:?}"));
+        });
     }
 
     #[cfg(any(target_os = "macos", target_os = "windows"))]
@@ -565,7 +572,9 @@ mod tests {
         let mut buf = Buffer::empty(area);
         popup.render_ref(area, &mut buf);
 
-        insta::assert_snapshot!("command_popup_voice", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("command_popup_voice", format!("{buf:?}"));
+        });
     }
 
     #[test]
@@ -613,10 +622,12 @@ mod tests {
         );
         let mut buf = Buffer::empty(area);
         popup.render_ref(area, &mut buf);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "command_popup_filter_reset_after_scroll",
             format!("{buf:?}")
         );
+        });
     }
 
     #[test]

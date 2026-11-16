@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -102,7 +103,9 @@ async fn unicode_math_termination_preserves_source_through_mode_and_resize() -> 
                         &content
                     );
                     if !raw && width == 20 && !ending.is_empty() && kind != "plan_policy" {
-                        insta::assert_snapshot!(format!("{kind}_math_narrow"), rendered);
+                        insta::with_settings!({prepend_module_to_snapshot => false}, {
+                            insta::assert_snapshot!(format!("{kind}_math_narrow"), rendered);
+                        });
                     }
                 }
             }

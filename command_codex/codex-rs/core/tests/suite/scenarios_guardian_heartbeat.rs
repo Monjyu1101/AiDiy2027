@@ -1,5 +1,6 @@
 //! Scheduled repetitions preserve human overrides without flooding review evidence.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_core::TurnInputRequest;
 use codex_core::config::Constrained;
 use codex_features::Feature;
@@ -144,10 +145,12 @@ async fn heartbeat_repetitions_keep_later_human_authorization() -> anyhow::Resul
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "heartbeat_repetitions_keep_later_human_authorization",
         snapshot
     );
+    });
     streaming.shutdown().await;
     Ok(())
 }

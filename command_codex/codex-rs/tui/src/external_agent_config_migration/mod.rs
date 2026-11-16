@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::diff_render::display_path_for;
 use crate::tui::FrameRequester;
 use crate::tui::Tui;
@@ -868,7 +869,9 @@ mod tests {
         );
 
         let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 24);
-        assert_snapshot!("external_agent_config_migration_prompt", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("external_agent_config_migration_prompt", rendered);
+        });
     }
 
     #[test]
@@ -884,12 +887,16 @@ mod tests {
 
         let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 34);
         #[cfg(windows)]
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "external_agent_config_migration_customize_windows",
             rendered
         );
+        });
         #[cfg(not(windows))]
-        assert_snapshot!("external_agent_config_migration_customize", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("external_agent_config_migration_customize", rendered);
+        });
     }
 
     #[test]
@@ -911,10 +918,12 @@ mod tests {
         screen.customize();
 
         let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 18);
-        assert_snapshot!(
-            "external_agent_config_migration_secondary_source_customize",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
+            "customize_secondary",
             rendered
         );
+        });
     }
 
     #[test]
@@ -931,12 +940,16 @@ mod tests {
 
         let rendered = render_screen(&screen, /*width*/ 80, /*height*/ 30);
         #[cfg(windows)]
-        assert_snapshot!(
-            "external_agent_config_migration_customize_action_windows",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
+            "customize_windows",
             rendered
         );
+        });
         #[cfg(not(windows))]
-        assert_snapshot!("external_agent_config_migration_customize_action", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("external_agent_config_migration_customize_action", rendered);
+        });
     }
 
     #[test]

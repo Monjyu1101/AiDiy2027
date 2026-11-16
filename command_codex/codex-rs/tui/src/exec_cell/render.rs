@@ -1,5 +1,6 @@
 //! Command previews and full transcripts, retaining logical text through display wrapping.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::time::Instant;
 
 use super::model::CommandOutput;
@@ -1147,10 +1148,12 @@ mod tests {
         let compact = visible_lines(cell.compact_hyperlink_lines(/*width*/ 60));
         let transcript = cell.transcript_lines(/*width*/ 60);
 
-        insta::assert_debug_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!(
             "truncated_live_output_preview_and_transcript",
             (preview, compact, transcript)
         );
+        });
     }
 
     #[test]

@@ -1,5 +1,6 @@
 //! Opportunistic attachment may fall back; automatic startup requires a shared server.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::legacy_core::config::ConfigBuilder;
 use crate::*;
 use pretty_assertions::assert_eq;
@@ -230,7 +231,9 @@ async fn daemon_feature_compatibility_respects_required_and_optional_attachment(
                     )
                 );
                 if scenario == "explicit enable" && !allow_embedded_fallback {
-                    insta::assert_snapshot!("daemon_feature_mismatch_error", error);
+                    insta::with_settings!({prepend_module_to_snapshot => false}, {
+                        insta::assert_snapshot!("daemon_feature_mismatch_error", error);
+                    });
                 }
             }
         }
@@ -425,5 +428,7 @@ fn daemon_exclusion_warning_snapshot() {
         .map(ToString::to_string)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("daemon_exclusion_warning", text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("daemon_exclusion_warning", text);
+    });
 }

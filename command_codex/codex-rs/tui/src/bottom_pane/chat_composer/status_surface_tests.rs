@@ -1,5 +1,6 @@
 //! Persistent status survives transient footer modes and suggestion overlays.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::osc8_hyperlink;
@@ -198,7 +199,9 @@ fn provider_status_and_hints_use_separate_rows() {
             .collect::<Vec<_>>()
             .join("\n")
     });
-    insta::assert_snapshot!(frames.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -238,10 +241,12 @@ fn status_rows_respect_host_budget_and_yield_to_the_draft() {
                 Some((input.x + 1, input.y + 2))
             );
             if height == 7 && separate_status_line {
-                insta::assert_snapshot!(
-                    "status_rows_respect_host_budget_and_yield_to_the_draft",
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
+                    "status_host_budget",
                     frame(&buffer)
                 );
+                });
             }
         }
     }
@@ -369,7 +374,9 @@ fn thumbnails_fit_after_basic_footer_rows_and_before_extra_status() {
             frames.push(format!("height {cap}\n{}", frame(&buffer)));
         }
     }
-    insta::assert_snapshot!(frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("thumbnail_priority", frames.join("\n\n"));
+    });
 
     let options = ComposerRenderOptions {
         image_previews: Some(&previews),
@@ -545,7 +552,9 @@ fn native_status_wraps_links_within_the_host_budget() {
                 .join("\n"),
         );
     }
-    insta::assert_snapshot!(frames.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("status_link_wrap", frames.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -699,7 +708,9 @@ fn fullscreen_plan_indicator_keeps_the_cycle_hint_when_it_fits() {
         wide.contains("Plan mode (⇧tab to cycle)"),
         "idle fullscreen must explain how to leave Plan mode: {wide}"
     );
-    insta::assert_snapshot!("fullscreen_plan_cycle_hint", wide);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("fullscreen_plan_cycle_hint", wide);
+    });
 
     let mut status = HyperlinkLine::from("project · ");
     status.push_span("PR #42".underlined(), Some("https://example.com/pull/42"));
@@ -833,7 +844,9 @@ fn footer_layout_in_fullscreen_and_scrollback() {
             lines.join("\n")
         ));
     }
-    insta::assert_snapshot!(frames.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -930,7 +943,9 @@ fn shortcut_help_stays_above_the_prompt_and_bottom_status() {
         );
         assert_eq!(prompt_row + 3, rows.len() - 1);
         if let Some(name) = snapshot {
-            insta::assert_snapshot!(name, text);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(name, text);
+            });
         }
     }
 }
@@ -1067,7 +1082,9 @@ fn status_survives_hints_feedback_and_queue() {
         assert_eq!(state.matches("Plan mode").count(), 1);
         assert!(state.contains("MODEL · ~/project · Context 20% used"));
     }
-    insta::assert_snapshot!("persistent_status_and_messages", states.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("persistent_status_and_messages", states.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -1133,7 +1150,9 @@ fn slash_suggestions_take_space_before_status_expands() {
     );
     let (buf, rows) = render_status(&composer, area, options);
     assert_eq!(rows, ["one…"]);
-    insta::assert_snapshot!(frame(&buf));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("slash_before_status", frame(&buf));
+    });
 }
 
 #[test]
@@ -1175,7 +1194,9 @@ fn slash_popup_preserves_footer_and_selection_style() {
         let status_text: String = (0..width).map(|x| buf[(x, status.y)].symbol()).collect();
         assert!(status_text.contains("model · high · fast"));
         if !clipped && width == 80 {
-            insta::assert_snapshot!("slash_popup_footer_wide", format!("{buf:?}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("slash_popup_footer_wide", format!("{buf:?}"));
+            });
         }
     }
 
@@ -1223,5 +1244,7 @@ fn activity_shortcut_help_follows_runtime_binding() {
         let (text, _) = render(&composer, /*width*/ 130, /*footer*/ None);
         snapshots.push(format!("{configured}\n{text}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n---\n"));
+    });
 }

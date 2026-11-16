@@ -1,5 +1,6 @@
 //! Usage warnings preserve composer geometry and yield to active interactions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::RateLimitSnapshot;
 use codex_app_server_protocol::ServerNotification;
@@ -118,10 +119,12 @@ async fn usage_notice_preserves_composer_geometry_on_recovery() -> Result<()> {
         assert_eq!(tui.terminal.last_known_cursor_pos, cursor);
         tui.set_owned_screen(/*owned*/ false)?;
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "composer_usage_notice",
         crate::chatwidget::tests::helpers::normalize_snapshot_paths(snapshots.join("\n\n")),
     );
+    });
     Ok(())
 }
 

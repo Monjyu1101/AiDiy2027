@@ -1,5 +1,6 @@
 //! Composer input resumes after transcript selection without changing search or keymap ownership.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::tests::attach_thread;
 use super::*;
 use crate::app::tests::make_test_app_with_channels;
@@ -275,7 +276,9 @@ async fn plan_menu_allows_transcript_wheel_scrolling_and_keeps_keyboard_ownershi
         }
         let scrolled = screen(&tui);
         if close == KeyCode::Esc {
-            insta::assert_snapshot!("plan_prompt_scrolled", scrolled);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("plan_prompt_scrolled", scrolled);
+            });
         }
         for (key, selected) in [(KeyCode::PageDown, "› 3."), (KeyCode::PageUp, "› 1.")] {
             app.handle_tui_event(&mut tui, &mut server, TuiEvent::Key(key.into()))
@@ -410,13 +413,15 @@ async fn plan_menu_allows_transcript_selection_and_copy_but_respects_popup_bound
             }
         })
         .collect::<String>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "plan_prompt_selection",
         format!(
             "{selection}\n\n{}",
             render_bottom_popup(&app.chat_widget, /*width*/ 80),
         )
     );
+    });
     app.handle_tui_event(&mut tui, &mut server, TuiEvent::Key(KeyCode::Esc.into()))
         .await?;
     app.transcript_view.end_selection(&app.transcript_cells);
@@ -715,10 +720,12 @@ async fn escape_returns_to_latest_without_changing_the_composer_draft() -> Resul
         app.chat_widget.composer_text_with_pending(),
         "draft preserved"
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "escape_returns_to_latest",
         format!("before\n{before}\n\nafter\n{}", screen(&tui))
     );
+    });
 
     app.transcript_view
         .scroll(&app.transcript_cells, /*rows*/ -10);
@@ -812,13 +819,15 @@ async fn raw_multiline_paste_defers_rendering_and_submits_once() -> Result<()> {
     app.handle_tui_event(&mut tui, &mut server, TuiEvent::Draw)
         .await?;
     assert!(screen(&tui).contains("After paste"));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "raw_paste_burst_render",
         format!(
             "During paste:\n{during_paste}\n\nAfter flush:\n{}",
             screen(&tui)
         )
     );
+    });
     app.handle_tui_event(&mut tui, &mut server, TuiEvent::Key(KeyCode::Enter.into()))
         .await?;
     assert_eq!(

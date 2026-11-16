@@ -1,6 +1,6 @@
 # Code CLI 追加手順
 
-> 文書: `backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md` | 実装: `backend_server/AIコア/`, `frontend_avatar/src/components/AIコード.vue`, `frontend_web/src/components/AiDiy/dialog/AI設定再起動.vue`
+> 文書: `共通,CodeCLI追加手順.md` | 実装: `backend_server/AIコア/`, `frontend_avatar/src/components/AIコード.vue`, `frontend_web/src/components/AiDiy/dialog/AI設定再起動.vue`
 
 ## このメモを使う場面
 - `codex_cli` や `aidiy_hermes` のような Code CLI を追加する

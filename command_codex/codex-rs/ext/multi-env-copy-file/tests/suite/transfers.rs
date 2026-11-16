@@ -1,5 +1,6 @@
 //! Exercises real local, remote, and foreign-OS copy paths through model tool calls.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_config::ConfigLayerSource;
 use codex_config::ConfigLayerStack;
@@ -203,7 +204,9 @@ async fn copy_file_transfers_between_selected_and_native_executors() -> Result<(
             .rewrite_known_segments()
             .include_request_settings(),
     );
-    insta::assert_snapshot!("multi_env_copy_file", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("multi_env_copy_file", snapshot);
+    });
     Ok(())
 }
 

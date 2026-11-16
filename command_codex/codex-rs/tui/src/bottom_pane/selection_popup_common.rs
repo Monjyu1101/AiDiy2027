@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 // Note: Table-based layout previously used Constraint; the manual renderer
@@ -809,7 +810,9 @@ mod tests {
             assert!(text.contains("Blocked (disabled)"));
             snapshots.push(format!("width={width}\n{text}"));
         }
-        insta::assert_snapshot!("description_column_visibility", snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("description_column_visibility", snapshots.join("\n\n"));
+        });
     }
 
     #[test]
@@ -921,7 +924,9 @@ mod tests {
             assert_eq!(buf[(4, row_index as u16)].symbol(), "d");
         }
 
-        insta::assert_snapshot!("popup_fuzzy_matched_emoji_graphemes", format!("{buf:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("popup_fuzzy_matched_emoji_graphemes", format!("{buf:?}"));
+        });
     }
 
     #[test]

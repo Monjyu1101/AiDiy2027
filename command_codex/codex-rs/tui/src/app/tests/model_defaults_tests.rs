@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::collaboration_modes;
 use codex_app_server_client::AppServerClient;
@@ -88,7 +89,9 @@ async fn session_model_selection_preserves_defaults_and_updates_active_thread() 
                     }
                     Box::pin(app.handle_event(&mut tui, &mut server, event)).await?;
                 }
-                insta::assert_snapshot!("session_only_model_confirmation", messages.join("\n"));
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("session_only_model_confirmation", messages.join("\n"));
+                });
             }
             app.enqueue_thread_notification(
                 thread_id,
@@ -714,14 +717,18 @@ async fn model_default_saves_report_server_outcomes_and_target_server_profile() 
             if outcome == "rejected" { 4 } else { 0 }
         );
         if outcome == "overridden" {
-            insta::assert_snapshot!("overridden_model_defaults", messages);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("overridden_model_defaults", messages);
+            });
         }
         let persisted = std::fs::read_to_string(&profile_path)?;
         if outcome == "rejected" {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "service_tier_default_save_error",
                 service_tier_error.expect("expected a service-tier save error")
             );
+            });
             assert_eq!(persisted, "[broken");
             assert!(!messages.contains("Model changed"));
             assert!(!messages.contains("Service tier set"));

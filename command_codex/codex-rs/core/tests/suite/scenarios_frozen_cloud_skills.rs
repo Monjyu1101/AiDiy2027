@@ -1,5 +1,6 @@
 //! Frozen cloud skills remain available alongside a named executor and use native skill tools.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_skills_extension::FrozenCloudSkillProvider;
 use pretty_assertions::assert_eq;
@@ -141,7 +142,8 @@ async fn frozen_cloud_skills_with_named_executor_request_history() -> Result<()>
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "frozen_cloud_skills_with_named_executor_request_history",
         context_snapshot::format_context_snapshot(
             "A cloud parent lists and reads a frozen skill alongside a named executor after the snapshot file has been removed.",
@@ -149,5 +151,6 @@ async fn frozen_cloud_skills_with_named_executor_request_history() -> Result<()>
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

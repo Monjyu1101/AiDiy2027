@@ -1,4 +1,5 @@
 //! Verify question input delivery, retained drafts, and visible editor behavior.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::bottom_pane::RestrictedInputMode;
 use codex_protocol::items::AsyncUserInputQuestion;
@@ -38,10 +39,12 @@ async fn accepted_question_answer_uses_existing_delivery_and_keeps_main_draft() 
         chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
         assert_eq!(question_count(&chat), 2);
         if !queued {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "freeform_question",
                 render_bottom_popup(&chat, /*width*/ 80)
             );
+            });
         }
         chat.bottom_pane.handle_paste("!literal answer".into());
         chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
@@ -49,10 +52,12 @@ async fn accepted_question_answer_uses_existing_delivery_and_keeps_main_draft() 
         assert_eq!(chat.bottom_pane.composer_text(), "main draft");
         let expected = "> Which way?\n\n!literal answer";
         if queued {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "queued_async_question_reply",
                 render_bottom_popup(&chat, /*width*/ 80)
             );
+            });
             let restored = chat.pop_latest_queued_composer_state().unwrap();
             assert_eq!(restored.text, expected);
             assert!(op_rx.try_recv().is_err());
@@ -139,13 +144,15 @@ async fn ordinary_follow_up_clears_unanswered_questions_after_accepted_input() {
             assert!(op_rx.try_recv().is_err());
         } else {
             assert_answer(op_rx.try_recv().unwrap(), "New prompt");
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "questions_cleared_by_follow_up",
                 render_bottom_popup(&chat, /*width*/ 80)
                     .lines()
                     .next()
                     .unwrap()
             );
+            });
         }
         chat.add_async_questions("old", &questions());
         assert_eq!(question_count(&chat), 0);
@@ -445,7 +452,9 @@ async fn selected_answers_preserve_long_labels_and_reject_oversized_submissions(
             &[question("What next?", Some(vec![label.clone()]))],
         );
         chat.handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::ALT));
-        insta::assert_snapshot!(snapshot, render_bottom_popup(&chat, /*width*/ 80));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, render_bottom_popup(&chat, /*width*/ 80));
+        });
         let saved = question_count(&chat);
         chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
         if length > 512 {
@@ -518,10 +527,12 @@ async fn question_inputs_support_vim_editing_and_search() {
             op_rx.try_recv().unwrap(),
             "> Which way?\n\nalpha beta\nalpha delta",
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             format!("question_vim_{name}"),
             format!("NORMAL\n{normal}\n\nSEARCH\n{search}")
         );
+        });
     }
 }
 
@@ -614,10 +625,12 @@ async fn question_editor_keeps_working_status_and_queued_messages_visible() {
     chat.bottom_pane.set_status_line_enabled(/*enabled*/ false);
     let completed = render_bottom_popup(&chat, /*width*/ 80);
     let completed = completed.split("\n\n›").next().unwrap();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "questions_with_status_and_queue",
         format!("OPEN\n{open}\n\nONLY QUESTIONS\n{completed}")
     );
+    });
 }
 
 #[tokio::test]
@@ -761,10 +774,12 @@ async fn question_queue_pop_becomes_an_ordinary_composer_draft_and_clears_questi
     open_questions(&mut chat, /*options*/ None);
     let forward = KeyEvent::new(KeyCode::Up, KeyModifiers::ALT);
     chat.handle_key_event(forward);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "last_question_with_queue",
         render_bottom_popup(&chat, /*width*/ 80)
     );
+    });
     chat.handle_key_event(forward);
     assert_eq!(chat.bottom_pane.composer_text(), "newer");
     chat.bottom_pane.handle_paste(" edited".into());
@@ -858,7 +873,9 @@ async fn single_question_spacing_with_working_status() {
     assert!(rows[question - 1].is_empty());
     assert_eq!(rows[question + 2].trim(), "A typed answer");
     assert!(rows[question + 3].is_empty());
-    insta::assert_snapshot!("single_question_working_spacing", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("single_question_working_spacing", rendered);
+    });
 }
 
 fn assert_answer(op: Op, expected: &str) {
@@ -918,10 +935,12 @@ async fn questions_and_queued_messages_share_the_resolved_shortcut() {
         assert!(rendered.contains(&format!("{backward_hint} main prompt")));
         assert!(rendered.contains(&format!("{forward_hint} next question")));
         if forward.code == KeyCode::Left {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "question_queue_hint_Left",
                 render_bottom_popup(&chat, /*width*/ 100)
             );
+            });
         }
         chat.handle_key_event(forward);
         let rendered = render_bottom_popup(&chat, /*width*/ 100);
@@ -949,10 +968,12 @@ prompt_stack_back = ["alt-down", "shift-right"]
         render_bottom_popup(&chat, /*width*/ 100).contains(&format!("{forward_hint} to answer"))
     );
     chat.handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::ALT));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_queue_hint_Up",
         render_bottom_popup(&chat, /*width*/ 100)
     );
+    });
 
     let config = toml::from_str(
         r#"
@@ -1038,14 +1059,18 @@ async fn desktop_async_answer_dismisses_only_its_question_and_preserves_the_othe
             },
             || {
                 let persisted = cells[0].transcript_lines(/*width*/ 80);
-                insta::assert_debug_snapshot!("desktop_async_question_reply", persisted);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_debug_snapshot!("desktop_async_question_reply", persisted);
+                });
                 assert_eq!(drain_insert_history(&mut rx), [persisted]);
             },
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "async_question_answered_on_another_client",
             render_bottom_popup(&chat, /*width*/ 80)
         );
+        });
         chat.thread_id = Some(ThreadId::new());
         chat.input_queue.suppress_queue_autosend = true;
         chat.handle_key_event(KeyEvent::from(KeyCode::Enter));
@@ -1100,7 +1125,9 @@ async fn async_question_markdown_matches_loaded_history() {
                 /*config*/ None,
             );
             assert_eq!(cells, [paged[0].transcript_lines(/*width*/ 80)]);
-            insta::assert_debug_snapshot!("async_question_transcript", cells[0]);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_debug_snapshot!("async_question_transcript", cells[0]);
+            });
         },
     );
 }

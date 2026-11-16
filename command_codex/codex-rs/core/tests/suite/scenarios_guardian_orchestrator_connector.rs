@@ -1,5 +1,6 @@
 //! A host-owned Apps connector contributes its exact identity to Guardian's complete request history.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::sync::Arc;
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering;
@@ -221,9 +222,11 @@ async fn host_owned_orchestrator_connector_reaches_guardian_context(
     )?
     .replace_all(&snapshot, "$1\"<ENVIRONMENT>\"")
     .into_owned();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "host_owned_orchestrator_connector_request_history",
         context_snapshot::normalize_json_lines(&snapshot)
     );
+    });
     Ok(())
 }

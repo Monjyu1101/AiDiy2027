@@ -1,5 +1,6 @@
 //! Presentation and new keyboard navigation checks for the local-provider startup picker.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::test_backend::VT100Backend;
 use pretty_assertions::assert_eq;
@@ -47,7 +48,9 @@ fn provider_picker_snapshots() {
         terminal
             .draw(|frame| frame.render_widget_ref(&widget, frame.area()))
             .expect("draw");
-        insta::assert_snapshot!(name, terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, terminal.backend());
+        });
     }
 }
 

@@ -1,5 +1,6 @@
 //! Snapshot coverage for draft text, plugin mentions, shortcuts, and live voice controls.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::tests::new_test_composer;
 use super::tests::snapshot_composer_state_with_width;
 use super::tests::test_plugin_summary;
@@ -150,7 +151,9 @@ fn draft_and_voice_composer_snapshots() {
                 } else {
                     "draft_composer"
                 };
-                insta::assert_snapshot!(name, rows);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(name, rows);
+                });
             }
         },
     );

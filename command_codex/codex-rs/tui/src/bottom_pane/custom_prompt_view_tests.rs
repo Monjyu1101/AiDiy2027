@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::key_hint;
 use crate::keymap::KeymapContext;
@@ -30,10 +31,12 @@ fn picker_prompt_keeps_multiline_cursor_and_escape_hint_visible_after_resize() {
                 })
                 .collect::<Vec<_>>();
             assert!(rows.last().unwrap().contains("esc normal mode"));
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 format!("picker_prompt_multiline_{width}x{height}"),
                 rows.join("\n")
             );
+            });
         }
     }
     view.handle_key_event(KeyEvent::from(KeyCode::Esc));
@@ -163,7 +166,9 @@ fn vim_prompt_hint_tracks_escape_behavior() {
     assert_eq!(vim_color(&view), Some(ratatui::style::Color::Magenta));
     view.handle_key_event(KeyEvent::from(KeyCode::Char('R')));
     hints.push(rendered_hint(&view, /*width*/ 80));
-    insta::assert_snapshot!(hints.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(hints.join("\n"));
+    });
 }
 
 #[test]

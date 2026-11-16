@@ -1,5 +1,6 @@
 //! Config-panel persistence and delayed notification-preview behavior.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::AppServerTarget;
 use crate::app::test_support::make_test_app;
@@ -159,10 +160,12 @@ async fn effects_editor_refresh_preserves_pending_toggles() -> Result<()> {
     let first_preference = next_config_preference(&mut rx)?;
     app.save_config_preference(&mut tui, first_preference).await;
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "effects_picker_after_animation_save",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
 
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     let second_preference = next_config_preference(&mut rx)?;

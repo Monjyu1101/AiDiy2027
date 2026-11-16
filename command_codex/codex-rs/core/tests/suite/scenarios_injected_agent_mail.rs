@@ -1,5 +1,6 @@
 //! Injected agent messages share native delivery boundaries while retaining their wire payloads.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_core::InputWaitOutcome;
 use codex_core::TurnInputRequest;
 use codex_core::TurnInputSubmission;
@@ -225,11 +226,13 @@ async fn injected_mail_respects_delivery_boundaries() -> anyhow::Result<()> {
         "deferred mail precedes the next task"
     );
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(context_snapshot::format_context_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_context_snapshot(
         "Injected agent messages enter idle history, interrupt active sampling, and remain for the next task once the final answer closes delivery.",
         &entries,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     ));
+    });
     server.shutdown().await;
     Ok(())
 }
@@ -237,9 +240,7 @@ async fn injected_mail_respects_delivery_boundaries() -> anyhow::Result<()> {
 #[test_case::test_case(true; "instant interrupt enabled")]
 #[test_case::test_case(false; "instant interrupt disabled")]
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn injected_agent_message_interrupting_sampling_survives_mid_turn_compaction(
-    instant_interrupt: bool,
-) -> anyhow::Result<()> {
+async fn injected_message_survives_compaction(instant_interrupt: bool) -> anyhow::Result<()> {
     let (release_boundary, boundary_gate) = oneshot::channel();
     let chunk = |gate, events| StreamingSseChunk {
         gate,
@@ -351,11 +352,13 @@ async fn injected_agent_message_interrupting_sampling_survives_mid_turn_compacti
         responses::strip_metadata_from_json(serde_json::to_value([message])?)
     );
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(context_snapshot::format_context_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_context_snapshot(
         "An injected agent message that interrupts sampling is included in the first request after mid-turn compaction.",
         &entries,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     ));
+    });
     server.shutdown().await;
     Ok(())
 }

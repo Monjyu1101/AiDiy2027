@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -148,7 +149,9 @@ async fn persisted_default_loads_and_renders_without_animation() -> anyhow::Resu
         frames.try_recv(),
         Err(tokio::sync::mpsc::error::TryRecvError::Empty)
     );
-    insta::assert_snapshot!(terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(terminal.backend());
+    });
     Ok(())
 }
 

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use anyhow::Result;
 use chrono::Utc;
@@ -3561,7 +3562,7 @@ async fn conversation_start_injects_startup_context_from_thread_history() -> Res
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-async fn conversation_startup_context_current_thread_selects_many_turns_by_budget() -> Result<()> {
+async fn startup_context_turn_budget() -> Result<()> {
     skip_if_no_network!(Ok(()));
 
     let api_server = start_mock_server().await;
@@ -3721,10 +3722,12 @@ async fn conversation_startup_context_current_thread_selects_many_turns_by_budge
         latest_rendered_source.len().div_ceil(4),
         rendered_turns.len(),
     );
-    insta::assert_snapshot!(
-        "conversation_startup_context_current_thread_selects_many_turns_by_budget",
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
+        "startup_context_turn_budget",
         snapshot
     );
+    });
 
     // The input includes a turn over 300 approximate tokens, and every rendered
     // turn still fits the per-turn cap after labels and truncation markers.

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use std::time::Duration;
@@ -65,14 +66,18 @@ fn feedback_category_titles() {
 fn feedback_view_bug() {
     let view = make_view(FeedbackCategory::Bug);
     let rendered = render(&view, /*width*/ 60);
-    insta::assert_snapshot!("feedback_view_bug", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("feedback_view_bug", rendered);
+    });
 }
 
 #[test]
 fn feedback_view_safety_check() {
     let view = make_view(FeedbackCategory::SafetyCheck);
     let rendered = render(&view, /*width*/ 60);
-    insta::assert_snapshot!("feedback_view_safety_check", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("feedback_view_safety_check", rendered);
+    });
 }
 
 #[test]
@@ -123,7 +128,9 @@ fn feedback_disclosure_matches_audience_at_normal_and_narrow_widths() {
         "remote server (80 columns)\n{}",
         render(&remote_view, /*width*/ 80)
     ));
-    insta::assert_snapshot!("feedback_disclosures", rendered.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("feedback_disclosures", rendered.join("\n\n"));
+    });
 }
 
 #[test]
@@ -158,7 +165,9 @@ fn feedback_disclosure_scrolls_without_hiding_input_in_short_panes() {
             rendered.push(format!("{width}x{height} {stage}\n{text}"));
         }
     }
-    insta::assert_snapshot!("feedback_disclosure_short_panes", rendered.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("feedback_disclosure_short_panes", rendered.join("\n\n"));
+    });
 }
 
 #[test]
@@ -191,10 +200,12 @@ fn feedback_disclosure_keeps_editor_visible_in_four_rows() {
     let scrolled = render_buffer(area, &buf);
     assert!(saw_sensitive_information_notice);
     assert!(scrolled.contains("which is not sent to OpenAI"));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "feedback_disclosure_four_rows",
         format!("{initial}\n\n{scrolled}")
     );
+    });
 
     let narrow_area = Rect::new(
         /*x*/ 0, /*y*/ 0, /*width*/ 24, /*height*/ 4,
@@ -240,7 +251,9 @@ fn feedback_paste_burst_preserves_multiline_note_until_submit() {
             let expected_note = note.replace('\t', "");
             assert_eq!(view.textarea.text(), expected_note);
             if !include_logs && note == "foo\nbar" {
-                insta::assert_snapshot!("feedback_multiline_paste", render(&view, /*width*/ 60));
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("feedback_multiline_paste", render(&view, /*width*/ 60));
+                });
             }
 
             view.handle_key_event_at(
@@ -387,10 +400,12 @@ fn save_shortcut_keeps_note_and_consent_with_or_without_uploads() {
         );
         view.handle_paste("Review before sharing".into());
         if audience.is_none() {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "feedback_note_uploads_disabled",
                 render(&view, /*width*/ 60)
             );
+            });
             view.handle_key_event(KeyCode::Enter.into());
             assert!(!view.is_complete());
             assert!(rx.try_recv().is_err());

@@ -1,5 +1,6 @@
 //! Direct MCP review uses the current catalog and policy without dispatching the recorded call.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::guardian_direct_review::model_input;
 use anyhow::Result;
 use codex_config::types::AppToolApproval;
@@ -162,7 +163,9 @@ async fn direct_mcp_review_without_dispatch() -> Result<()> {
         &format!("environment {environment_id:?}"),
         "environment \"<ENVIRONMENT>\"",
     );
-    insta::assert_snapshot!("guardian_direct_mcp", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_direct_mcp", snapshot);
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

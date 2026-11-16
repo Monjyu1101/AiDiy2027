@@ -1,5 +1,6 @@
 //! Exercise compact streaming and source-backed completion without list-specific holdback.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::local_settings::LocalSettings;
 use codex_config::types::AltScreenMode;
@@ -145,5 +146,7 @@ async fn list_spacing_streams_compact_then_reflows_on_completion_or_interruption
             }
         }
     }
-    insta::assert_snapshot!(stages.join("\n\n---\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("list_spacing_reflow", stages.join("\n\n---\n\n"));
+    });
 }

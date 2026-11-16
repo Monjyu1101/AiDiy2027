@@ -6,6 +6,7 @@
 //! - Typing while focused on options jumps into notes to keep freeform input fast.
 //! - The composer submit binding advances to the next question; the last question submits all answers.
 //! - Freeform-only questions submit an empty answer list when empty.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashMap;
 use std::collections::VecDeque;
 use std::path::PathBuf;
@@ -1928,10 +1929,12 @@ mod tests {
         let now = Instant::now();
         overlay.request_started_at = now - AUTO_RESOLUTION_HIDDEN_GRACE;
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_auto_resolution_countdown",
             render_snapshot_at(&overlay, Rect::new(0, 0, 120, 16), now)
         );
+        });
     }
 
     #[test]
@@ -3377,10 +3380,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
         let area = Rect::new(0, 0, 120, 16);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_options",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3400,10 +3405,12 @@ mod tests {
         overlay.handle_key_event(KeyEvent::from(KeyCode::Tab));
 
         let area = Rect::new(0, 0, 120, 16);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_options_notes_visible",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3417,10 +3424,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
         let area = Rect::new(0, 0, 120, 10);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_tight_height",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3544,10 +3553,12 @@ mod tests {
             .saturating_add(options_height)
             .saturating_add(8);
         let area = Rect::new(0, 0, width, height);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_wrapped_options",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3564,10 +3575,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
         let area = Rect::new(0, 0, 120, 18);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_long_option_text",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3615,10 +3628,12 @@ mod tests {
         let width = 52u16;
         let height = overlay.desired_height(width);
         let area = Rect::new(0, 0, width, height);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_footer_wrap",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3667,10 +3682,12 @@ mod tests {
             answer.options_state.selected_idx = Some(3);
         }
         let area = Rect::new(0, 0, 120, 12);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_scrolling_options",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3719,10 +3736,12 @@ mod tests {
             answer.options_state.selected_idx = Some(3);
         }
         let area = Rect::new(0, 0, 80, 10);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_hidden_options_footer",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3763,7 +3782,9 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("request_user_input_wrapped_url", visible);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("request_user_input_wrapped_url", visible);
+        });
     }
 
     #[test]
@@ -3777,10 +3798,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
         let area = Rect::new(0, 0, 120, 10);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_freeform",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3835,10 +3858,12 @@ mod tests {
             keymap,
         );
         let area = Rect::new(0, 0, 120, 10);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_freeform_remapped_submit",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3855,10 +3880,12 @@ mod tests {
             keymap,
         );
         let area = Rect::new(0, 0, 120, 10);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_freeform_remapped_interrupt",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3878,10 +3905,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
         let area = Rect::new(0, 0, 120, 15);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_multi_question_first",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3902,10 +3931,12 @@ mod tests {
         );
         overlay.move_question(/*next*/ true);
         let area = Rect::new(0, 0, 120, 12);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_multi_question_last",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]
@@ -3928,10 +3959,12 @@ mod tests {
         overlay.open_unanswered_confirmation();
 
         let area = Rect::new(0, 0, 80, 12);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "request_user_input_unanswered_confirmation",
             render_snapshot(&overlay, area)
         );
+        });
     }
 
     #[test]

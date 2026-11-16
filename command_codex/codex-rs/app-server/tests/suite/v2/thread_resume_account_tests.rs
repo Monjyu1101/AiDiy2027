@@ -1,5 +1,6 @@
 //! Exercises CLI account checks through thread/resume, including attachment to loaded threads.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use app_test_support::ChatGptIdTokenClaims;
 use app_test_support::encode_id_token;
@@ -120,10 +121,13 @@ async fn thread_resume_account_check(
                 let error = mcp
                     .read_stream_until_error_message(RequestId::Integer(resume_id))
                     .await?;
-                insta::assert_snapshot!(
-                    "thread_resume_account_mismatch",
-                    serde_json::to_string_pretty(&error.error)?,
-                );
+                {
+                    // Evaluate fallible/async values before entering synchronous Insta settings.
+                    let snapshot_value = serde_json::to_string_pretty(&error.error)?;
+                    insta::with_settings!({prepend_module_to_snapshot => false}, {
+                        insta::assert_snapshot!("thread_resume_account_mismatch", snapshot_value);
+                    });
+                };
                 let list_id = mcp
                     .send_thread_loaded_list_request(ThreadLoadedListParams::default())
                     .await?;
@@ -234,10 +238,13 @@ async fn thread_resume_account_check_loaded_thread_recovers_after_switching_back
                 let error = mcp
                     .read_stream_until_error_message(RequestId::Integer(resume_id))
                     .await?;
-                insta::assert_snapshot!(
-                    "thread_resume_account_mismatch",
-                    serde_json::to_string_pretty(&error.error)?,
-                );
+                {
+                    // Evaluate fallible/async values before entering synchronous Insta settings.
+                    let snapshot_value = serde_json::to_string_pretty(&error.error)?;
+                    insta::with_settings!({prepend_module_to_snapshot => false}, {
+                        insta::assert_snapshot!("thread_resume_account_mismatch", snapshot_value);
+                    });
+                };
             }
             ResumeOutcome::Allowed => {
                 let response: ThreadResumeResponse = mcp.read_response(resume_id).await?;

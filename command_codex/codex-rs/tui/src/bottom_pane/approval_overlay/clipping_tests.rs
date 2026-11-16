@@ -1,5 +1,6 @@
 //! Clipped approval headers expose the configured route to their complete payload.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::keymap::RuntimeKeymap;
 use pretty_assertions::assert_eq;
@@ -97,5 +98,7 @@ fn clipped_exec_approval_opens_the_complete_command() {
             assert!(rx.try_recv().is_err());
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("full_exec_command", snapshots.join("\n\n"));
+    });
 }

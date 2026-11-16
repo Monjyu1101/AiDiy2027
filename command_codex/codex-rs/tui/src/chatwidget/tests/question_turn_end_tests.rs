@@ -1,5 +1,6 @@
 //! Live terminal turns recover open and collapsed question drafts into the composer.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::bottom_pane::QueuedInputAction;
 use codex_protocol::items::AsyncUserInputQuestion;
@@ -47,10 +48,12 @@ async fn question_turn_end_escapes_command_drafts_before_submission() {
             let submitted_text = expected.trim().to_string();
             assert_eq!(chat.bottom_pane.composer_text(), expected);
             if draft == "!echo partial" && !queued {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "question_turn_end_escaped_shell_command",
                     normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
                 );
+                });
             }
 
             if queued {
@@ -115,10 +118,12 @@ async fn question_turn_end_appends_open_drafts_in_order_once() {
         (recovered.into(), vec![element], 0)
     );
     assert!(ops.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_turn_end_recovered_composer",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
 
     handle_turn_completed(&mut chat, "ended-turn", /*duration_ms*/ None);
     assert_recovered_draft(&mut chat, recovered);
@@ -133,10 +138,12 @@ async fn question_turn_end_appends_open_drafts_in_order_once() {
         format!("{recovered}\n\n> Which way?\n\n{}", large_answer.trim())
     );
     assert_eq!(chat.bottom_pane.composer_pending_pastes().len(), 1);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "question_turn_end_large_draft",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
     );
+    });
 }
 
 #[tokio::test]
@@ -270,10 +277,12 @@ async fn question_turn_end_recovers_after_interruption_restores_queued_input() {
             assert_eq!(chat.bottom_pane.composer_text(), "main draft");
             chat.handle_key_event(KeyEvent::from(KeyCode::Backspace));
             if matches!(main_input, MainInput::HistoryAccept) {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "question_turn_end_keeps_history_search",
                     normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 80))
                 );
+                });
             }
             chat.handle_key_event(match main_input {
                 MainInput::HistoryAccept => KeyEvent::from(KeyCode::Enter),

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use assert_matches::assert_matches;
@@ -349,5 +350,7 @@ fn standalone_help_documents_executor_options() {
         .map(str::trim_end)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(help);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(help);
+    });
 }

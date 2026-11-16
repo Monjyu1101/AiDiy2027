@@ -1,5 +1,6 @@
 //! Clipboard routing, native ownership, and payload-boundary regressions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::ClipboardLease;
 use super::CopyEnvironment;
 use super::CopyFormat;
@@ -159,7 +160,9 @@ fn empty_copy_reports_failure_without_touching_clipboards() {
         |_, _| panic!("empty input must not reach the native clipboard"),
         |_| panic!("empty input must not reach PowerShell"),
     );
-    insta::assert_snapshot!(result.err().expect("empty selection should fail"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(result.err().expect("empty selection should fail"));
+    });
 }
 
 #[test]

@@ -1,5 +1,6 @@
 //! Request-history coverage for incremental tool modes across resume, fork, and window rebuilds.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::ForkSnapshot;
 use codex_core::StartThreadOptions;
@@ -138,7 +139,8 @@ async fn legacy_resume_switches_only_after_window_replacement(token_budget: bool
         .submit_turn("Resume with the same updated tools.")
         .await?;
     let requests = mock.requests();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         if token_budget {
             "legacy_resume_window_reset"
         } else {
@@ -152,6 +154,7 @@ async fn legacy_resume_switches_only_after_window_replacement(token_budget: bool
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -209,7 +212,8 @@ async fn disable_incremental_tools_at_next_window() -> Result<()> {
         .await?;
     resumed.submit_turn("Resume with the same tools.").await?;
     let requests = mock.requests();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "disable_incremental_tools",
         context_snapshot::format_request_history_snapshot(
             "Disabling incremental tools preserves updates in the existing window; after compaction the generated catalog survives resume.",
@@ -219,6 +223,7 @@ async fn disable_incremental_tools_at_next_window() -> Result<()> {
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 

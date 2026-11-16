@@ -1,5 +1,6 @@
 //! Remote credential masking and its effects on model-visible context.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use anyhow::Context;
 use codex_protocol::models::PermissionProfile;
@@ -220,6 +221,8 @@ credential_masking = true
     } else {
         "remote_credential_masking"
     };
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
     Ok(())
 }

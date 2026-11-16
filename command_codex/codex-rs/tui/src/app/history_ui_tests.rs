@@ -1,5 +1,6 @@
 //! Desktop handoff output and clear-screen history reset behavior.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::tests::make_test_app_with_channels;
 use crate::history_cell;
@@ -14,14 +15,18 @@ fn desktop_thread_opened_history_snapshot() {
         /*hint*/ None,
     );
 
-    insta::assert_snapshot!("desktop_thread_opened_history", render_cell(&cell));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("desktop_thread_opened_history", render_cell(&cell));
+    });
 }
 
 #[test]
 fn desktop_thread_open_error_history_snapshot() {
     let cell = history_cell::new_error_event(desktop_thread_open_error_message("launch failed"));
 
-    insta::assert_snapshot!("desktop_thread_open_error_history", render_cell(&cell));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("desktop_thread_open_error_history", render_cell(&cell));
+    });
 }
 
 fn render_cell(cell: &impl HistoryCell) -> String {

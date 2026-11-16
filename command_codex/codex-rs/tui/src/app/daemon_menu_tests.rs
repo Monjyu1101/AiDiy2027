@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::test_support::make_test_app;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
@@ -102,10 +103,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
         app.daemon_cli_executable = executable.clone();
         app.open_daemon_menu();
         if source == DaemonUpdateSource::PublicStable {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "daemon_menu",
                 render_bottom_popup(&app.chat_widget, /*width*/ 80)
             );
+            });
         } else {
             app.chat_widget.handle_key_event(KeyCode::Down.into());
         }
@@ -123,11 +126,13 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
             .unwrap(),
         );
         app.confirm_daemon_update(source);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             snapshot,
             render_bottom_popup(&app.chat_widget, width)
                 .replace(r"C:\cli-build\bin\codex", "/x/cli-build/bin/codex")
         );
+        });
         // The default choice cancels without emitting an update or exiting.
         app.chat_widget.handle_key_event(KeyCode::Enter.into());
         assert!(rx.try_recv().is_err());
@@ -167,10 +172,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
         AppEvent::ConfirmDaemonRestart
     ));
     app.confirm_daemon_restart();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "daemon_restart_confirmation",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     crate::terminal_palette::with_test_default_colors(
         crate::terminal_probe::DefaultColors {
             fg: (229, 229, 229),
@@ -220,10 +227,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
         .unwrap()
         .is_managed_daemon = false;
     app.open_daemon_menu();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "daemon_unmanaged",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     app.chat_widget.handle_key_event(KeyCode::Down.into());
     app.chat_widget.handle_key_event(KeyCode::Down.into());
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
@@ -244,10 +253,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
     ] {
         app.open_daemon_menu();
         if source == DaemonUpdateSource::PublicStable {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "daemon_disconnected",
                 render_bottom_popup(&app.chat_widget, /*width*/ 80)
             );
+            });
         } else {
             app.chat_widget.handle_key_event(KeyCode::Down.into());
         }
@@ -273,10 +284,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
     app.daemon_cli_executable =
         Some(AbsolutePathBuf::from_absolute_path(package.path().join("bin/codex-tui")).unwrap());
     app.open_daemon_menu();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "daemon_unpackaged_cli",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     assert!(matches!(
         rx.try_recv().unwrap(),
@@ -285,10 +298,12 @@ async fn daemon_menu_is_read_only_and_confirmation_can_cancel_or_handoff() {
 
     app.daemon_cli_executable = None;
     app.open_daemon_menu();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "daemon_no_cli_handoff",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     assert!(rx.try_recv().is_err());
 }
@@ -313,10 +328,12 @@ async fn unavailable_daemon_menu_offers_guidance_without_update_actions() {
         is_managed_daemon: false,
     });
     app.open_daemon_menu();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "daemon_remote_guidance",
         render_bottom_popup(&app.chat_widget, /*width*/ 80)
     );
+    });
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     assert!(rx.try_recv().is_err());
     assert_eq!(app.pending_update_action, None);

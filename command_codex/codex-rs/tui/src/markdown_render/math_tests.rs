@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::render::MathMode;
 use super::render::render;
 use crate::markdown_render::render_markdown_text_with_width;
@@ -14,7 +15,8 @@ fn plain(source: &str, width: usize) -> String {
 
 #[test]
 fn unicode_math_inline_snapshot() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Inline $\alpha^2 + \beta_{10}$ on $\mathbb{R}^n$.
 Root $\sqrt{x^2+y^2}$ and fraction $a/\frac{b}{c}$.
 Percent: $3.8\%$ and $100000 \times 3.8\% \times \frac{360}{365} \approx 3747.95$.
@@ -23,19 +25,23 @@ Angles: <$x$>, <\(\alpha\)>, and <$\unknown{x}$>.
 Code: `$\alpha$`; money: $5 and $10; shell: $HOME.",
         /*width*/ 80
     ));
+    });
 }
 
 #[test]
 fn unicode_math_inline_narrow_snapshot() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Words $\alpha^2 + \beta_1$ more words and $\sqrt{x}$.",
         /*width*/ 16
     ));
+    });
 }
 
 #[test]
 fn unicode_math_accents_and_symbols_snapshot() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Operators: $\hat H^2 + \hbar^2$, $\ell$, $A\dagger$, $B\ddagger$.
 Accents: $\bar{x}_1$, $\tilde{x}^2$, $\vec{v}_i$, $\dot{x}$, $\ddot{x}$.
 Greek accents: $\hat{\Psi}^2$, $\bar{\varrho}$, $\tilde{\varsigma}$.
@@ -51,11 +57,13 @@ Collections: $\coprod A$, $\bigcup B$, $\bigcap C$.
 Punctuation: $x\prime$, $a\circ b\bullet c$, $\vdots\ddots$.",
         /*width*/ 80
     ));
+    });
 }
 
 #[test]
 fn unicode_math_named_delimiters_snapshot() {
-    insta::assert_snapshot!(plain(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(plain(
         r"Inner product: $\left\langle\hat H\right\rangle$.
 Rounding: $\lfloor x\rfloor + \left\lceil y\right\rceil$.
 Norms: $\left\lVert v\right\rVert$, $\lvert x\rvert$, $\left\|w\right\|$.
@@ -63,6 +71,7 @@ Sets: $\left\{x\right\}$, $\lbrace y\rbrace$, $\lbrack z\rbrack$.
 Angles: $\left<x\right>$.",
         /*width*/ 80
     ));
+    });
 }
 
 #[test]

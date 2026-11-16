@@ -5,6 +5,7 @@
 //! groups checks by concern, colors only status/actionable tokens, and redacts
 //! sensitive detail lines before showing them in detailed output.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod detail;
 
 use std::fmt::Write as _;
@@ -1487,10 +1488,12 @@ Background Server
             ];
             assert_eq!(desktop_update_note(update).unwrap().summary, expected);
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "doctor_human_report_environment_rows",
             render_human_report(&report, detailed_no_color_unicode_options())
         );
+        });
     }
 
     #[test]
@@ -1955,10 +1958,12 @@ Run codex doctor without --summary for detailed diagnostics.
             checks: vec![check],
             ..sample_report()
         };
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "missing_env_diagnostics",
             render_human_report(&report, detailed_all_no_color_unicode_options())
         );
+        });
     }
 
     #[test]
@@ -2021,6 +2026,8 @@ Run codex doctor without --summary for detailed diagnostics.
         } else {
             "copyable_items_color"
         };
-        insta::assert_snapshot!(snapshot_name, rendered.replace('\u{1b}', "<ESC>"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot_name, rendered.replace('\u{1b}', "<ESC>"));
+        });
     }
 }

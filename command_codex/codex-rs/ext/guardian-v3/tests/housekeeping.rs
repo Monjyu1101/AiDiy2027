@@ -1,5 +1,6 @@
 //! Original evidence is routed as data through an isolated runtime into a real board.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![allow(clippy::expect_used)]
 
 use codex_analytics::GuardianReviewSessionKind;
@@ -220,7 +221,8 @@ async fn routes_captured_originals_and_updates_descriptions(
         test.codex.shutdown_and_wait().await?;
         return Ok(());
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "guardian_housekeeping_originals",
         context_snapshot::format_request_history_snapshot(
             "Housekeeper routes captured originals and updates discovery descriptions.",
@@ -228,6 +230,7 @@ async fn routes_captured_originals_and_updates_descriptions(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     assert_eq!(routed.disposition, SessionDisposition::Reusable);
     assert_eq!(routed.result?, 1);
     assert_eq!(

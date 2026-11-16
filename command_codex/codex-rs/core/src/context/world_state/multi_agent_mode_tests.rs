@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::test_support::render_section_cases;
 use super::*;
 use crate::context::MultiAgentRoleInstructions;
@@ -13,7 +14,7 @@ fn state(mode: Option<MultiAgentMode>) -> MultiAgentModeState {
 }
 
 #[test]
-fn snapshots() {
+fn multi_agent_mode_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -26,7 +27,8 @@ fn snapshots() {
     )));
     let empty = state(Some(MultiAgentMode::Custom(String::new())));
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&inactive)),
         (Absent, Known(&explicit)),
@@ -39,6 +41,7 @@ fn snapshots() {
         (Unknown, Known(&explicit)),
         (Unknown, Known(&inactive)),
     ]));
+    });
 }
 
 #[test]

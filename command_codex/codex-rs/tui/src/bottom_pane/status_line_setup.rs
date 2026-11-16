@@ -21,6 +21,7 @@
 //! - Session info (thread title, thread ID, tokens used)
 //! - Application version
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use ratatui::buffer::Buffer;
 use ratatui::layout::Rect;
 use std::collections::HashSet;
@@ -758,7 +759,9 @@ mod tests {
             crate::keymap::RuntimeKeymap::defaults().list,
         );
 
-        assert_snapshot!(render_lines(&view, /*width*/ 72));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(render_lines(&view, /*width*/ 72));
+        });
     }
 
     #[test]
@@ -784,7 +787,9 @@ mod tests {
             crate::keymap::RuntimeKeymap::defaults().list,
         );
 
-        assert_snapshot!(render_lines(&view, /*width*/ 100));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(render_lines(&view, /*width*/ 100));
+        });
     }
 
     #[test]
@@ -810,13 +815,15 @@ mod tests {
             crate::keymap::RuntimeKeymap::defaults().list,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             render_lines(&view, /*width*/ 100)
                 .lines()
                 .map(str::trim_end)
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+        });
     }
 
     fn render_lines(view: &StatusLineSetupView, width: u16) -> String {

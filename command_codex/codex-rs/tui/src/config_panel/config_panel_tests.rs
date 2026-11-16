@@ -1,5 +1,6 @@
 //! Snapshot each configuration group and exercise shared panel interactions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
@@ -79,10 +80,12 @@ fn config_panel_renders_each_group_at_a_stable_height() {
         panel
             .picker
             .handle_key_event(KeyEvent::new(KeyCode::Up, KeyModifiers::NONE));
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             format!("config_{}", section.title()),
             render(&panel, /*width*/ 140)
         );
+        });
         panel
             .picker
             .handle_key_event(KeyEvent::new(KeyCode::Right, KeyModifiers::NONE));
@@ -99,7 +102,9 @@ fn effects_picker_groups_animation_settings() {
         keymap,
     );
 
-    insta::assert_snapshot!("effects_picker", render(&view, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("effects_picker", render(&view, /*width*/ 80));
+    });
     view.handle_key_event(KeyCode::Enter.into());
     assert!(!view.is_complete());
     assert!(matches!(
@@ -134,10 +139,12 @@ fn deselect_after_copy_requires_effective_copy_on_select() {
         },
         notice: None,
     });
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "deselect_after_copy_unavailable",
         render(&panel, /*width*/ 50)
     );
+    });
     panel.handle_key_event(KeyCode::Enter.into());
     assert!(rx.try_recv().is_err());
 
@@ -176,7 +183,9 @@ fn notification_controls_render_dependency_states_and_condition_picker() {
         /*custom_notification_filters*/ true,
     );
     panel.handle_key_event(KeyCode::Right.into());
-    insta::assert_snapshot!("config_notifications_custom", render(&panel, /*width*/ 100));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("config_notifications_custom", render(&panel, /*width*/ 100));
+    });
 
     let (tx, _rx) = unbounded_channel();
     let keymap = RuntimeKeymap::defaults().list;
@@ -185,10 +194,12 @@ fn notification_controls_render_dependency_states_and_condition_picker() {
         AppEventSender::new(tx),
         keymap,
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_notification_condition_choice",
         render(&picker, /*width*/ 100)
     );
+    });
 
     let mut panel = panel_with_notifications(
         Notifications::Enabled(false),
@@ -196,7 +207,9 @@ fn notification_controls_render_dependency_states_and_condition_picker() {
     );
     panel.handle_key_event(KeyCode::Right.into());
     panel.handle_key_event(KeyCode::Down.into());
-    insta::assert_snapshot!("config_notifications_off", render(&panel, /*width*/ 100));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("config_notifications_off", render(&panel, /*width*/ 100));
+    });
 }
 
 #[test]
@@ -204,7 +217,9 @@ fn search_finds_settings_across_groups_and_preserves_the_selected_group() {
     let (mut panel, mut rx) = panel();
     panel.handle_key_event(KeyEvent::from(KeyCode::Char('/')));
     assert!(panel.handle_paste("notify when".to_string()));
-    insta::assert_snapshot!("config_global_search", render(&panel, /*width*/ 100));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("config_global_search", render(&panel, /*width*/ 100));
+    });
 
     panel.handle_key_event(KeyEvent::from(KeyCode::Right));
     assert_eq!(panel.picker.active_tab_id(), Some("Notifications"));
@@ -312,10 +327,12 @@ fn session_picker_layout_uses_editor_handoff_and_saves_choice() {
         AppEventSender::new(tx),
         keymap,
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_session_picker_layout_choice",
         render(&picker, /*width*/ 100)
     );
+    });
     picker.handle_key_event(KeyCode::Down.into());
     picker.handle_key_event(KeyCode::Enter.into());
 
@@ -348,10 +365,12 @@ fn copy_on_select_uses_editor_handoff_and_saves_choice() {
         AppEventSender::new(tx),
         keymap,
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_copy_on_select_choice",
         render(&picker, /*width*/ 100)
     );
+    });
     picker.handle_key_event(KeyCode::Down.into());
     picker.handle_key_event(KeyCode::Enter.into());
 
@@ -388,10 +407,12 @@ fn unavailable_right_click_paste_remains_editable() {
     }
     panel.handle_key_event(KeyCode::Down.into());
     panel.handle_key_event(KeyCode::Down.into());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_right_click_paste_unavailable",
         render(&panel, /*width*/ 140)
     );
+    });
     panel.handle_key_event(KeyCode::Enter.into());
     assert!(matches!(
         rx.try_recv().expect("open editor event"),
@@ -405,10 +426,12 @@ fn unavailable_right_click_paste_remains_editable() {
         AppEventSender::new(tx),
         keymap,
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_right_click_paste_choice",
         render(&picker, /*width*/ 100)
     );
+    });
     picker.handle_key_event(KeyCode::Down.into());
     picker.handle_key_event(KeyCode::Enter.into());
     assert!(matches!(
@@ -430,10 +453,12 @@ fn resume_directory_disables_current_without_remote_cwd_override() {
         AppEventSender::new(tx),
         keymap,
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "config_resume_directory_remote",
         render(&picker, /*width*/ 100)
     );
+    });
     picker.handle_key_event(KeyCode::Down.into());
     picker.handle_key_event(KeyCode::Enter.into());
 
@@ -482,7 +507,9 @@ fn refresh_preserves_search_and_updates_visible_state() {
             enabled: false,
         })
     ));
-    insta::assert_snapshot!(render(&panel, /*width*/ 140));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render(&panel, /*width*/ 140));
+    });
 }
 
 #[test]
@@ -498,7 +525,9 @@ fn config_panel_wraps_complete_save_error() {
         ),
     });
 
-    insta::assert_snapshot!(render(&panel, /*width*/ 50));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render(&panel, /*width*/ 50));
+    });
 }
 
 #[test]

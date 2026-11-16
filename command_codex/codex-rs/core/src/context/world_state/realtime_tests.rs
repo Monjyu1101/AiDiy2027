@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::test_support::render_section_cases;
 use super::*;
 use codex_protocol_test_support::ContentItemTestExt;
@@ -7,7 +8,7 @@ fn state(active: bool, start_instructions: Option<&str>) -> RealtimeState {
 }
 
 #[test]
-fn snapshots() {
+fn realtime_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -20,7 +21,8 @@ fn snapshots() {
         Some("changed custom realtime instructions"),
     );
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&inactive)),
         (Absent, Known(&active)),
@@ -32,6 +34,7 @@ fn snapshots() {
         (Unknown, Known(&active)),
         (Unknown, Known(&inactive)),
     ]));
+    });
 }
 
 #[test]

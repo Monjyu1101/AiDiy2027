@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::init;
 use crate::markdown::render_streaming_markdown_agent_with_links_and_cwd;
 use crate::markdown_render::render_markdown_text;
@@ -50,7 +51,9 @@ fn disabled_renderers_preserve_source_independently() {
             }
         }
     }
-    insta::assert_snapshot!(snapshot.join("\n\n---\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot.join("\n\n---\n\n"));
+    });
 }
 
 #[test]
@@ -87,7 +90,9 @@ fn disabled_tables_keep_markdown_fences_and_cell_markup() {
     let quoted =
         "> ```md\n> Intro\n>\n>| A | B |\n> |---|---|\n> | a | b |\n>\n>> literal\n> ```\n";
     let rendered = render_markdown_text(quoted).to_string();
-    insta::assert_snapshot!("disabled_tables_keep_mixed_quote_spacing", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("disabled_tables_keep_mixed_quote_spacing", rendered);
+    });
     let streamed = render_streaming_markdown_agent_with_links_and_cwd(
         quoted,
         /*width*/ None,

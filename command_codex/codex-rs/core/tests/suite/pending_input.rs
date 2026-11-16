@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use core_test_support::test_codex::local_requests;
 use std::sync::Arc;
 use std::time::Duration;
@@ -1216,7 +1217,9 @@ fn assert_two_responses_input_snapshot(snapshot_name: &str, requests: &[Vec<u8>]
         ],
         &options,
     );
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

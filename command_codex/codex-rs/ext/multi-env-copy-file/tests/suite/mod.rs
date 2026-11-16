@@ -1,5 +1,6 @@
 //! Covers opt-in file copying, argument validation, and independent endpoint permissions.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use anyhow::Result;
 use codex_core::TurnInputRequest;
@@ -255,7 +256,9 @@ async fn copy_file_validates_endpoints() -> Result<()> {
         }
     };
     insta::with_settings!({snapshot_suffix => platform, sort_maps => true, filters => filters}, {
-        insta::assert_json_snapshot!("endpoint_errors", errors);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_json_snapshot!("endpoint_errors", errors);
+        });
     });
     assert_eq!(
         test.fs()
@@ -496,7 +499,9 @@ async fn copy_file_uses_each_environments_permissions(use_grants: bool) -> Resul
     // Linux hides inaccessible roots; other sandbox implementations may report a denial instead.
     #[cfg(target_os = "linux")]
     if !use_grants {
-        insta::assert_json_snapshot!("permission_errors", [read_error, write_error]);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_json_snapshot!("permission_errors", [read_error, write_error]);
+        });
     }
     assert_eq!(
         (fs::read(&source)?, fs::read(&target)?),

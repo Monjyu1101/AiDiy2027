@@ -1,5 +1,6 @@
 //! Catalog resource-tool text reaches direct calls and Code Mode without changing MCP execution.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::rmcp_client::remote_aware_environment_id;
 use super::super::rmcp_client::remote_aware_stdio_server_bin;
 use anyhow::Result;
@@ -196,7 +197,8 @@ async fn mcp_resource_messages(tool_mode: ToolMode) -> Result<()> {
             .body_contains_text("This is a sample MCP resource served by the rmcp test server.")
     );
     if tool_mode == ToolMode::CodeModeOnly {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_resource_messages",
             context_snapshot::format_request_history_snapshot(
                 "Broad discovery names the dormant server. Calling it by name returns its resources and templates through Code Mode.",
@@ -204,6 +206,7 @@ async fn mcp_resource_messages(tool_mode: ToolMode) -> Result<()> {
                 &ContextSnapshotOptions::default().include_request_settings(),
             )
         );
+        });
     }
     Ok(())
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #[cfg(target_os = "macos")]
 use std::path::Path;
 use std::process::Command;
@@ -220,7 +221,9 @@ async fn network_only_human_output() -> Result<()> {
         .output()?;
     let stdout = String::from_utf8(output.stdout)?;
     assert!(output.status.success(), "{stdout}");
-    insta::assert_snapshot!("network_only_human_output", stdout);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("network_only_human_output", stdout);
+    });
     Ok(())
 }
 
@@ -243,7 +246,9 @@ async fn network_only_config_failure_human_output() -> Result<()> {
     let file_row = Regex::new(r"(?m)^(      file +).+[\\/]config\.toml$")?;
     assert!(file_row.is_match(&stdout), "{stdout}");
     let stdout = file_row.replace_all(&stdout, "${1}<CODEX_HOME>/config.toml");
-    insta::assert_snapshot!("network_only_config_failure_human_output", stdout);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("network_only_config_failure_human_output", stdout);
+    });
     Ok(())
 }
 

@@ -1,5 +1,6 @@
 //! Regression coverage for wide hook selection styling and URL-preserving detail truncation.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::tests::hook;
 use super::super::tests::render_buffer;
 use super::super::tests::render_lines;
@@ -96,8 +97,10 @@ fn wrapped_hook_command_preserves_the_complete_url_destination() {
         .map(ratatui::buffer::Cell::symbol)
         .collect::<Vec<_>>();
     assert_eq!(ellipses, vec!["…"]);
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "hooks_browser_wrapped_url",
         render_lines(&view, /*width*/ 44)
     );
+    });
 }

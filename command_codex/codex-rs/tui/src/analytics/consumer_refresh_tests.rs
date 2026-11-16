@@ -1,4 +1,5 @@
 //! Consumer chat columns follow reported metrics without substituting billing estimates.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::analytics::tasks::Chat;
 use crate::analytics::tasks::Chats;
@@ -97,10 +98,12 @@ fn consumer_chats_keep_missing_rows_and_only_offer_known_metrics() {
         assert_eq!(task_panel::amount(Some(&amounts), /*metric*/ 2), expected);
     }
     assert_eq!(view.task_metrics(), vec![0, 1, 2]);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "consumer_chat_all_metrics",
         screen(&mut view, /*width*/ 110, /*height*/ 30)
     );
+    });
     press(&mut view, KeyCode::Char('s'));
     assert_eq!(view.task_metric(), 1);
 }

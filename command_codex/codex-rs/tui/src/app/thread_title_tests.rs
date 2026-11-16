@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::THREAD_TITLE_MAX_CHARS;
 use super::THREAD_TITLE_PROMPT_MAX_BYTES;
 use super::THREAD_TITLE_RECENT_MESSAGES;
@@ -363,7 +364,8 @@ async fn check_thread_title_generation(scenario: TitleScenario) -> color_eyre::R
         );
         if matches!(scenario, TitleScenario::Automatic) {
             app.chat_widget.refresh_status_surfaces();
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "automatic_thread_title_pending",
                 normalize_snapshot_paths(format!(
                     "terminal title: {}\nfooter:\n{}",
@@ -374,6 +376,7 @@ async fn check_thread_title_generation(scenario: TitleScenario) -> color_eyre::R
                     render_bottom_popup(&app.chat_widget, /*width*/ 120)
                 ))
             );
+            });
         }
         assert_eq!(
             app_server
@@ -459,10 +462,12 @@ async fn check_thread_title_generation(scenario: TitleScenario) -> color_eyre::R
                 let popup = render_bottom_popup(&app.chat_widget, /*width*/ 120);
                 assert!(popup.contains("Keep this title"));
                 if matches!(scenario, TitleScenario::ManualRename) {
-                    insta::assert_snapshot!(
+                    insta::with_settings!({prepend_module_to_snapshot => false}, {
+                        insta::assert_snapshot!(
                         "manual_rename_cancels_thread_title",
                         normalize_snapshot_paths(popup)
                     );
+                    });
                 }
                 renamed = true;
             }

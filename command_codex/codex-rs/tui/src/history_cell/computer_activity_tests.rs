@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::mcp::CallToolResult;
 use pretty_assertions::assert_eq;
@@ -71,9 +72,13 @@ fn computer_activity_active_and_interrupted() {
     cell.complete(call("1", "Opened Chrome"), Duration::ZERO, result("ready"));
     cell.start(call("2", "Load the terminal"));
     cell.start(call("2", "Duplicate start"));
-    insta::assert_snapshot!("computer_activity_active", render(&cell, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_active", render(&cell, /*width*/ 80));
+    });
     cell.mark_failed();
-    insta::assert_snapshot!("computer_activity_interrupted", render(&cell, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_interrupted", render(&cell, /*width*/ 80));
+    });
     assert_eq!(
         cell.group
             .calls
@@ -114,9 +119,14 @@ fn computer_activity_prioritizes_errors_and_images_without_reordering() {
         Duration::ZERO,
         result("checked"),
     );
-    insta::assert_snapshot!("computer_activity_mixed", render(&cell, /*width*/ 90));
-    insta::assert_snapshot!("computer_activity_narrow", render(&cell, /*width*/ 24));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_mixed", render(&cell, /*width*/ 90));
+    });
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_narrow", render(&cell, /*width*/ 24));
+    });
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "computer_activity_compact",
         cell.compact_hyperlink_lines(/*width*/ 24)
             .iter()
@@ -124,13 +134,16 @@ fn computer_activity_prioritizes_errors_and_images_without_reordering() {
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     let transcript = cell
         .transcript_lines(/*width*/ 100)
         .iter()
         .map(|line| line.to_string().trim_end().to_owned())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("computer_activity_expanded", transcript);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_expanded", transcript);
+    });
     assert!(transcript.contains("Full tool documentation"));
     assert_eq!(
         cell.raw_lines(),
@@ -152,7 +165,9 @@ fn computer_activity_completed_and_transport_errors_keep_full_details() {
         result("A successful result with details"),
     );
     cell.complete(call("2", "Reload page"), Duration::ZERO, result("Loaded"));
-    insta::assert_snapshot!("computer_activity_success", render(&cell, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_success", render(&cell, /*width*/ 80));
+    });
     let mut failure =
         result("Browser state changed\nRe-query the browser before continuing").unwrap();
     failure.is_error = Some(true);
@@ -161,10 +176,12 @@ fn computer_activity_completed_and_transport_errors_keep_full_details() {
         Duration::ZERO,
         Ok(failure),
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "computer_activity_failed_result",
         render(&cell, /*width*/ 90)
     );
+    });
     cell.mark_failed();
     assert_eq!(
         cell.group
@@ -185,7 +202,9 @@ fn computer_activity_preview_handles_unicode_and_long_diagnostics() {
         Duration::ZERO,
         Err("diagnostic ".repeat(200)),
     );
-    insta::assert_snapshot!("computer_activity_unicode", render(&cell, /*width*/ 24));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("computer_activity_unicode", render(&cell, /*width*/ 24));
+    });
     assert!(
         cell.display_lines(/*width*/ 24)
             .iter()

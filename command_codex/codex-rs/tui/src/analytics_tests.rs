@@ -1,5 +1,6 @@
 //! Dashboard layout, local detail, shared ranges, grouping, and scroll/focus retention.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::analytics::sections::Section;
 #[path = "analytics/compact_tests.rs"]
 mod compact;
@@ -154,7 +155,9 @@ async fn analytics_loading_errors_and_empty_reports_stay_independent() {
     })
     .collect::<Vec<_>>()
     .join("\n\n");
-    insta::assert_snapshot!(panels);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(panels);
+    });
     // Refresh drops pending work before a stale result can populate the retained view.
     view.refresh();
     tokio::task::yield_now().await;
@@ -203,13 +206,15 @@ fn analytics_preserves_full_denominators_and_signed_small_credits() {
     let credits = view
         .panel(Section::Credits, /*width*/ 54, /*chart_height*/ 2)
         .lines;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         task.into_iter()
             .chain(credits)
             .map(|line| line.to_string())
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
 }
 
 #[test]
@@ -318,7 +323,9 @@ fn analytics_dates_distinguish_zero_missing_and_exact_details() {
             .collect::<Vec<_>>()
             .join("\n"),
     );
-    insta::assert_snapshot!(screens.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(screens.join("\n\n"));
+    });
 }
 
 #[test]
@@ -360,7 +367,9 @@ fn analytics_maximized_refunds_leave_room_for_both_bands() {
             .lines()
             .any(|line| line.contains("● CLI") && line.contains("-0.000004"))
     );
-    insta::assert_snapshot!(output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(output);
+    });
 }
 
 #[test]
@@ -492,7 +501,9 @@ fn analytics_series_rank_by_range_and_keep_calendar_ticks_stable() {
     .join("\n");
     assert!(crowded.contains('┊'));
     assert!(crowded.contains("0.4"));
-    insta::assert_snapshot!(crowded);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(crowded);
+    });
 }
 
 #[test]

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;
@@ -3899,7 +3900,8 @@ async fn production_turn_keeps_rebalanced_catalogs_stable_after_compaction_and_r
         );
     }
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         // The in-process executor uses the host OS. Windows guidance appears when it is ready.
         if cfg!(windows) {
             "cloud_skills_across_executor_readiness_windows"
@@ -3914,6 +3916,7 @@ async fn production_turn_keeps_rebalanced_catalogs_stable_after_compaction_and_r
                 .include_request_settings(),
         )
     );
+    });
 
     Ok(())
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -35,7 +36,9 @@ fn web_action_labels_and_missing_details() {
         .map(|line| line.to_string())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -52,7 +55,9 @@ fn web_action_compact_display_preserves_transcript_and_raw_details() {
     let display = cell.display_lines(/*width*/ 32);
     assert_eq!(display.len(), 1);
     assert!(display[0].width() <= 32);
-    insta::assert_snapshot!(display[0].to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(display[0].to_string());
+    });
     let full = format!("Searched for '日本語 🦀 needle' in {url}");
     assert_eq!(cell.raw_lines(), vec![Line::from(full.clone())]);
     assert_eq!(

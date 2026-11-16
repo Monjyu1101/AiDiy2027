@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::lines;
 use crate::bottom_pane::footer::FooterKeyHints;
 use crate::bottom_pane::footer::FooterMode;
@@ -64,7 +65,9 @@ fn snapshot(name: &str, width: u16, height: Option<u16>, props: &FooterProps) {
         .rposition(|row| row.iter().any(|cell| cell.symbol() != " "))
         .map_or(/*default*/ 0, |row| row + 1);
     assert_eq!(painted_height, usize::from(height));
-    insta::assert_snapshot!(name, terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(name, terminal.backend());
+    });
 }
 
 #[test]

@@ -1,5 +1,6 @@
 //! Offline editing, uncertain submissions, and stale events never consume local work.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::reconnect::ReconnectPresentation;
 use crate::app::reconnect::reconnect;
@@ -141,7 +142,8 @@ async fn lost_mutation_reply_preserves_work_without_resubmitting() -> Result<()>
         (history.session_id, history.text),
         (id.to_string(), "only once".into())
     );
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "offline_draft",
         format!(
             "{}\n{}",
@@ -154,6 +156,7 @@ async fn lost_mutation_reply_preserves_work_without_resubmitting() -> Result<()>
             normalize_reconnect_status(&render_bottom_popup(&app.chat_widget, /*width*/ 80))
         )
     );
+    });
     let mut keymap = codex_config::types::TuiKeymap::default();
     keymap.chat.edit_queued_message = Some(codex_config::types::KeybindingsSpec::One(
         codex_config::types::KeybindingSpec("ctrl-x up".into()),
@@ -196,7 +199,9 @@ async fn lost_mutation_reply_preserves_work_without_resubmitting() -> Result<()>
         .split("\n\n")
         .next()
         .unwrap();
-    assert_snapshot!("offline_expanded_paste", draft);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("offline_expanded_paste", draft);
+    });
     assert!(ops.try_recv().is_err());
     for character in ['c', 'C', 'd', 'D'] {
         if character.eq_ignore_ascii_case(&'d') {
@@ -293,7 +298,9 @@ async fn disconnected_command_center_keeps_input_and_blocks_actions() -> Result<
     );
     assert!(app.chat_widget.has_active_view());
     assert!(!render_bottom_popup(&app.chat_widget, /*width*/ 100).contains("Search ›"));
-    assert_snapshot!("offline_command_center", searching);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("offline_command_center", searching);
+    });
     session.shutdown().await?;
     Ok(())
 }
@@ -623,10 +630,12 @@ async fn rejected_initial_thread_start_reconnects_and_submits_prompt_once() -> R
             TuiEvent::Paste("startup draft".into()),
         )
         .await?;
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "rejected_startup_reconnecting",
             normalize_reconnect_status(&render_bottom_popup(&app.chat_widget, /*width*/ 80))
         );
+        });
 
         let mut launch_choices = crate::app_server_session::StartupLaunchChoices::default();
         launch_choices.model = Some("gpt-retry".into());
@@ -676,10 +685,12 @@ async fn rejected_initial_thread_start_reconnects_and_submits_prompt_once() -> R
             );
         } else {
             assert_eq!(app.primary_thread_id, Some(thread_id));
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "rejected_startup_reconnected",
                 normalize_snapshot_paths(render_bottom_popup(&app.chat_widget, /*width*/ 80))
             );
+            });
         }
         let submitted = std::iter::from_fn(|| events.try_recv().ok())
             .filter_map(|event| match event {

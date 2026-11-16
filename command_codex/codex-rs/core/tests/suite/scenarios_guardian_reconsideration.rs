@@ -1,5 +1,6 @@
 //! Denial resampling repeats the last request and publishes only the final decision.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::TurnInputRequest;
 use codex_core::config::Constrained;
@@ -149,6 +150,8 @@ async fn guardian_denial_reconsideration() -> Result<()> {
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_denial_reconsideration", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_denial_reconsideration", snapshot);
+    });
     Ok(())
 }

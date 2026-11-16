@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript as drain_insert_history;
 use super::*;
 use pretty_assertions::assert_eq;
@@ -656,13 +657,15 @@ async fn mcp_startup_failure_restores_running_status_header() {
     );
     notify_mcp_status(&mut chat, "beta", McpServerStartupState::Ready);
     let warnings = drain_insert_history(&mut rx);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "runtime_mcp_warning",
         warnings
             .iter()
             .map(|lines| lines_to_single_string(lines))
             .collect::<String>()
     );
+    });
 
     assert!(chat.bottom_pane.is_task_running());
     assert!(chat.bottom_pane.status_indicator_visible());

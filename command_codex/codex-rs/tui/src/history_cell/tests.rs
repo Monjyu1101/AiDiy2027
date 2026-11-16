@@ -1,5 +1,6 @@
 //! Coverage for history-cell rendering, wrapping, and transcript behavior.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::exec_cell::CommandOutput;
 use crate::exec_cell::ExecCall;
@@ -60,7 +61,9 @@ fn connected_server_version_notice_snapshot() {
     )
     .expect("older remote service should have a notice");
     let cell = new_server_version_warning(notice);
-    insta::assert_snapshot!(render_lines(&cell.transcript_lines(/*width*/ 100)).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_lines(&cell.transcript_lines(/*width*/ 100)).join("\n"));
+    });
 }
 
 #[test]
@@ -93,10 +96,12 @@ fn local_daemon_version_notice_snapshot() {
         )
         .expect("local service should have a notice");
         let cell = new_server_version_warning(notice);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             snapshot,
             render_lines(&cell.transcript_lines(/*width*/ 100)).join("\n")
         );
+        });
     }
 }
 
@@ -368,7 +373,9 @@ fn proposed_plan_cell_renders_markdown_table() {
             );
 
             let lines = plan.display_lines(/*width*/ 80);
-            insta::assert_debug_snapshot!(lines);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_debug_snapshot!(lines);
+            });
 
             let raw = render_lines(&plan.raw_lines());
             assert!(
@@ -535,9 +542,11 @@ fn delegated_message_list_spacing_in_scrollback_and_transcript() {
     )))
     .join("\n");
 
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Scrollback\n{scrollback}\n\nRedrawable transcript\n{transcript}"
     ));
+    });
 }
 
 #[test]
@@ -595,7 +604,9 @@ fn raw_mode_toggle_transcript_snapshot() {
         render(HistoryRenderMode::Rich)
     );
 
-    insta::assert_snapshot!("raw_mode_toggle_transcript", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("raw_mode_toggle_transcript", rendered);
+    });
 }
 
 #[test]
@@ -754,7 +765,9 @@ fn final_message_separator_includes_worked_label_after_one_minute() {
 fn ps_output_empty_snapshot() {
     let cell = new_unified_exec_processes_output(Vec::new());
     let rendered = render_lines(&cell.display_lines(/*width*/ 60)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[tokio::test]
@@ -795,7 +808,9 @@ async fn session_info_availability_nux_tooltip_snapshot() {
     );
 
     let rendered = render_transcript(&cell).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[tokio::test]
@@ -847,7 +862,9 @@ async fn session_info_preserves_styled_tooltip_links() {
             ));
         }
     }
-    insta::assert_snapshot!(rendered.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered.join("\n"));
+    });
 }
 
 #[tokio::test]
@@ -914,7 +931,9 @@ fn ps_output_multiline_snapshot() {
         },
     ]);
     let rendered = render_lines(&cell.display_lines(/*width*/ 40)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -924,21 +943,27 @@ fn ps_output_multiline_long_command_snapshot() {
         recent_chunks: Vec::new(),
     }]);
     let rendered = render_lines(&cell.display_lines(/*width*/ 100)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
 fn cyber_policy_error_event_snapshot() {
     let cell = new_cyber_policy_error_event(crate::daybreak::Notice::Apply);
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
 fn cyber_policy_error_event_astra_snapshot() {
     let cell = new_cyber_policy_error_event(crate::daybreak::Notice::Astra);
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -953,14 +978,18 @@ fn cyber_policy_error_event_available_snapshot() {
     })
     .collect::<Vec<_>>()
     .join("\n\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
 fn safety_access_block_event_snapshot() {
     let cell = new_safety_access_block_event();
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
     let body = cell.display_lines(u16::MAX)[1].to_string();
     assert_eq!(cell.raw_lines()[1].to_string(), body.trim_start());
 }
@@ -969,7 +998,9 @@ fn safety_access_block_event_snapshot() {
 fn cyber_policy_error_event_narrow_snapshot() {
     let cell = new_cyber_policy_error_event(crate::daybreak::Notice::Apply);
     let rendered = render_lines(&cell.display_lines(/*width*/ 36)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -981,7 +1012,9 @@ fn ps_output_long_command_snapshot() {
         recent_chunks: vec!["searching...".to_string()],
     }]);
     let rendered = render_lines(&cell.display_lines(/*width*/ 36)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -991,7 +1024,9 @@ fn ps_output_halfwidth_sound_marks_snapshot() {
         recent_chunks: vec!["output ｶﾞﾊﾟｶﾞﾊﾟｶﾞﾊﾟｶﾞﾊﾟｶﾞﾊﾟ".to_string()],
     }]);
     let rendered = render_lines(&cell.display_lines(/*width*/ 24)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1005,7 +1040,9 @@ fn ps_output_many_sessions_snapshot() {
             .collect(),
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 32)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1018,7 +1055,9 @@ fn ps_output_chunk_leading_whitespace_snapshot() {
         ],
     }]);
     let rendered = render_lines(&cell.display_lines(/*width*/ 60)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1027,7 +1066,9 @@ fn error_event_oversized_input_snapshot() {
         "Message exceeds the maximum length of 1048576 characters (1048577 provided).".to_string(),
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1052,7 +1093,9 @@ unset it, then restart Codex"
     let cell = new_error_event(error.to_string());
     let rendered = render_lines(&cell.display_lines(/*width*/ 100)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[tokio::test]
@@ -1118,7 +1161,9 @@ async fn mcp_tools_output_masks_sensitive_values() {
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[tokio::test]
@@ -1158,7 +1203,9 @@ async fn mcp_tools_output_lists_tools_for_hyphenated_server_names() {
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1195,7 +1242,9 @@ fn mcp_tools_output_from_statuses_renders_status_only_servers() {
         new_mcp_tools_output_from_statuses(&statuses, McpServerStatusDetail::ToolsAndAuthOnly);
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1248,7 +1297,9 @@ fn mcp_tools_output_from_statuses_renders_verbose_inventory() {
     let cell = new_mcp_tools_output_from_statuses(&statuses, McpServerStatusDetail::Full);
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1400,7 +1451,9 @@ fn web_search_history_cell_snapshot() {
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 64)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1409,7 +1462,9 @@ fn standalone_unix_update_available_history_cell_snapshot() {
         UpdateAvailableHistoryCell::new("9.9.9".to_string(), Some(UpdateAction::StandaloneUnix));
     let rendered = render_lines(&cell.display_lines(/*width*/ 110)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1418,7 +1473,9 @@ fn standalone_windows_update_available_history_cell_snapshot() {
         UpdateAvailableHistoryCell::new("9.9.9".to_string(), Some(UpdateAction::StandaloneWindows));
     let rendered = render_lines(&cell.display_lines(/*width*/ 110)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1427,7 +1484,9 @@ fn pnpm_update_available_history_cell_snapshot() {
         UpdateAvailableHistoryCell::new("9.9.9".to_string(), Some(UpdateAction::PnpmGlobalLatest));
     let rendered = render_lines(&cell.display_lines(/*width*/ 110)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1435,7 +1494,9 @@ fn web_search_history_cell_without_detail_snapshot() {
     let cell = new_web_search_call("call-1".to_string(), String::new(), WebSearchAction::Other);
     let rendered = render_lines(&cell.display_lines(/*width*/ 64)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1489,7 +1550,9 @@ fn web_search_history_cell_transcript_snapshot() {
     );
     let rendered = render_lines(&cell.transcript_lines(/*width*/ 64)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1511,7 +1574,9 @@ fn active_mcp_tool_call_snapshot() {
     );
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1610,7 +1675,9 @@ fn mcp_inventory_loading_snapshot() {
     let cell = new_mcp_inventory_loading(/*animations_enabled*/ true);
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1659,7 +1726,9 @@ fn completed_mcp_tool_call_success_snapshot() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1691,7 +1760,9 @@ fn completed_mcp_tool_call_image_after_text_snapshot() {
     cell.complete(Duration::from_millis(25), Ok(result));
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1721,7 +1792,9 @@ fn completed_mcp_tool_call_accepts_data_url_image_blocks() {
     cell.complete(Duration::from_millis(25), Ok(result));
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1750,7 +1823,9 @@ fn completed_mcp_tool_call_multiple_image_blocks_snapshot() {
     cell.complete(Duration::from_millis(25), Ok(result));
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1774,7 +1849,9 @@ fn completed_mcp_tool_call_error_snapshot() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1815,7 +1892,9 @@ fn completed_mcp_tool_call_multiple_outputs_snapshot() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 48)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1848,7 +1927,9 @@ fn completed_mcp_tool_call_wrapped_outputs_snapshot() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 40)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1882,7 +1963,9 @@ fn completed_mcp_tool_call_multiple_outputs_inline_snapshot() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 120)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1900,7 +1983,9 @@ fn session_header_clamps_to_narrow_width() {
     let widths = lines.iter().map(line_width).collect::<Vec<_>>();
 
     assert!(widths.iter().all(|width| *width <= usize::from(WIDTH)));
-    insta::assert_snapshot!(render_lines(&lines).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_lines(&lines).join("\n"));
+    });
 }
 
 #[test]
@@ -1918,7 +2003,9 @@ fn session_header_indicates_yolo_mode() {
     .with_yolo_mode(/*yolo_mode*/ true);
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 80)).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1936,7 +2023,9 @@ fn session_header_truncates_halfwidth_directory() {
     let mut buf = Buffer::empty(area);
     cell.render(area, &mut buf);
 
-    insta::assert_snapshot!("session_header_halfwidth_directory", format!("{buf:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("session_header_halfwidth_directory", format!("{buf:?}"));
+    });
 }
 
 #[test]
@@ -2026,7 +2115,9 @@ fn coalesces_sequential_reads_within_one_call() {
 
     let lines = cell.display_lines(/*width*/ 80);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2079,7 +2170,9 @@ fn coalesces_reads_across_multiple_calls() {
 
     let lines = cell.display_lines(/*width*/ 80);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2116,7 +2209,9 @@ fn coalesced_reads_dedupe_names() {
     cell.complete_call("c1", CommandOutput::default(), Duration::from_millis(1));
     let lines = cell.display_lines(/*width*/ 80);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2144,7 +2239,9 @@ fn multiline_command_wraps_with_extra_indent_on_subsequent_lines() {
     let width: u16 = 28;
     let lines = cell.display_lines(width);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2167,7 +2264,9 @@ fn single_line_command_compact_when_fits() {
     // Wide enough that it fits inline
     let lines = cell.display_lines(/*width*/ 80);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2190,7 +2289,9 @@ fn single_line_command_wraps_with_four_space_continuation() {
     cell.complete_call(&call_id, CommandOutput::default(), Duration::from_millis(1));
     let lines = cell.display_lines(/*width*/ 24);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2214,7 +2315,9 @@ fn single_line_command_over_highlight_limit_uses_plain_text_fallback() {
 
     let rendered = render_lines(&cell.display_lines(/*width*/ 24)).join("\n");
 
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2237,7 +2340,9 @@ fn multiline_command_without_wrap_uses_branch_then_eight_spaces() {
     cell.complete_call(&call_id, CommandOutput::default(), Duration::from_millis(1));
     let lines = cell.display_lines(/*width*/ 80);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2261,7 +2366,9 @@ fn multiline_command_both_lines_wrap_with_correct_prefixes() {
     cell.complete_call(&call_id, CommandOutput::default(), Duration::from_millis(1));
     let lines = cell.display_lines(/*width*/ 28);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2303,7 +2410,9 @@ fn stderr_tail_more_than_five_lines_snapshot() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2349,7 +2458,9 @@ fn ran_cell_multiline_with_stderr_snapshot() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 #[test]
 fn user_history_cell_wraps_and_prefixes_each_line_snapshot() {
@@ -2368,7 +2479,9 @@ fn user_history_cell_wraps_and_prefixes_each_line_snapshot() {
     let rendered = render_lines(&lines).join("\n");
 
     assert_eq!(render_lines(&cell.raw_lines()), ["_count_rows"]);
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2421,10 +2534,12 @@ fn user_history_cell_wraps_long_urls_inside_the_message_gutter() {
         "each wrapped URL fragment must preserve the complete clickable destination"
     );
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "user_history_cell_wraps_long_urls_inside_the_message_gutter",
         render_lines(&cell.display_lines(width)).join("\n")
     );
+    });
 }
 
 #[test]
@@ -2441,7 +2556,9 @@ fn user_history_cell_renders_remote_image_urls() {
 
     assert!(rendered.contains("[Image #1]"));
     assert!(rendered.contains("describe these"));
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2481,7 +2598,9 @@ fn user_image_labels_follow_the_painted_prompt_surface() {
             },
         );
     }
-    insta::assert_snapshot!(snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n"));
+    });
 }
 
 #[test]
@@ -2504,10 +2623,12 @@ fn user_history_cell_summarizes_inline_data_urls() {
         (0..placeholder.len()).into(),
         Some(placeholder.to_string()),
     )];
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "portable_image_raw_output",
         render_lines(&cell.raw_lines()).join("\n")
     );
+    });
 }
 
 #[test]
@@ -2527,7 +2648,9 @@ fn user_history_cell_numbers_multiple_remote_images() {
 
     assert!(rendered.contains("[Image #1]"));
     assert!(rendered.contains("[Image #2]"));
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2693,7 +2816,9 @@ fn plan_update_with_note_and_wrapping_snapshot() {
         "Compact\n{compact}\n\nFull\n{}",
         render_lines(&lines).join("\n")
     );
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2715,7 +2840,9 @@ fn plan_update_without_note_snapshot() {
     let cell = new_plan_update(update);
     let lines = cell.display_lines(/*width*/ 40);
     let rendered = render_lines(&lines).join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -3018,7 +3145,9 @@ fn legacy_zsh_migration_notice_snapshot() {
         .next()
         .expect("migration notice");
     let cell = new_deprecation_notice(usage.summary.clone(), usage.details.clone());
-    insta::assert_snapshot!(render_lines(&cell.transcript_lines(/*width*/ 80)).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_lines(&cell.transcript_lines(/*width*/ 80)).join("\n"));
+    });
 }
 
 #[test]
@@ -3078,7 +3207,9 @@ fn streamed_agent_list_paragraph_preserves_item_indent_when_wrapped() {
             .all(|line| line.starts_with("     ")),
         "expected all wrapped paragraph rows to retain the assistant gutter and list indent: {lines:?}",
     );
-    insta::assert_snapshot!(lines.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(lines.join("\n"));
+    });
 }
 
 #[test]

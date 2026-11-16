@@ -1,5 +1,6 @@
 //! Exercises daemon startup and excluded resume/fork pickers with Cargo's CLI executable.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context as _;
 use anyhow::Result;
 use anyhow::ensure;
@@ -541,10 +542,12 @@ async fn daemon_startup(command: &str) -> Result<()> {
                         .replace("     tab/⇧tab filter", "tab/shift+tab filter");
                         let transition = transition.lines().map(str::trim_end).collect::<Vec<_>>().join("\n");
                         let snapshot = codex_utils_cargo_bin::find_resource!(
-                            "tests/snapshots/daemon_startup__agents_overview_before_folder_consent.snap"
+                            "tests/snapshots/agents_overview_before_folder_consent.snap"
                         )?;
                         insta::with_settings!({snapshot_path => snapshot.parent().context("snapshot has no parent")?}, {
-                            insta::assert_snapshot!("agents_overview_before_folder_consent", transition);
+                            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                                insta::assert_snapshot!("agents_overview_before_folder_consent", transition);
+                            });
                         });
                     }
                     if mismatch {
@@ -586,7 +589,9 @@ async fn daemon_startup(command: &str) -> Result<()> {
                             let warning = contents.lines()
                                 .find(|line| line.contains("Running without the shared background server:"))
                                 .context("missing rendered fallback warning")?;
-                            insta::assert_snapshot!("restrictive_launcher_warning", warning.trim());
+                            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                                insta::assert_snapshot!("restrictive_launcher_warning", warning.trim());
+                            });
                         }
                     }
                     return Ok::<_, anyhow::Error>(());

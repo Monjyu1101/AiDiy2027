@@ -1,5 +1,6 @@
 //! Exercises provider sharing and model-visible updates across parent unload and restart.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::agents_md::RecordingThreadInstructionsProvider;
 use super::super::agents_md::expected_provider_only_instruction_fragment;
 use super::super::agents_md::instruction_fragments;
@@ -175,7 +176,8 @@ async fn running_descendants_refresh_only_shared_thread_instructions(shared: boo
             child.thread.shutdown_and_wait().await?;
             test.thread_manager.remove_thread(&child.thread_id).await;
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "shared_instructions_update_running_descendants",
             context_snapshot::format_request_history_snapshot(
                 "A host updates and clears shared instructions for surviving descendants. A separately started thread uses captured instructions over its live provider, then resumes with them explicitly cleared.",
@@ -183,6 +185,7 @@ async fn running_descendants_refresh_only_shared_thread_instructions(shared: boo
                 &ContextSnapshotOptions::default(),
             )
         );
+        });
     }
     Ok(())
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::helpers::drain_insert_history_transcript;
 use super::*;
 use pretty_assertions::assert_eq;
@@ -381,7 +382,7 @@ async fn guardian_approved_exec_is_hidden_from_history() {
 }
 
 #[tokio::test]
-async fn guardian_approved_request_permissions_clears_status_without_history() {
+async fn guardian_permissions_clear_status() {
     let (mut chat, mut rx, _op_rx) = make_chatwidget_manual(/*model_override*/ None).await;
     chat.show_welcome_banner = false;
     let action = GuardianAssessmentAction::RequestPermissions {
@@ -461,7 +462,7 @@ async fn guardian_approved_request_permissions_clears_status_without_history() {
     .expect("draw guardian request permissions approval history");
 
     assert_chatwidget_snapshot!(
-        "guardian_approved_request_permissions_clears_status_without_history",
+        "guardian_permissions_clear_status",
         normalize_working_snapshot(term.backend().vt100().screen().contents())
     );
 }

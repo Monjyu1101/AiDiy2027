@@ -1,5 +1,6 @@
 //! Snapshots settlement records delivered to the model after code-mode execution.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -52,7 +53,8 @@ await stream_settled(new Map([["failed", Promise.reject("unavailable")], ["compl
     let output = output.to_string();
     assert!(output.contains("fulfilled"), "{output}");
     assert!(output.contains("rejected"), "{output}");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "code_mode_settled_helpers",
         context_snapshot::format_request_history_snapshot(
             "Settlement helpers deliver fulfilled and rejected records with input indices and map keys.",
@@ -60,5 +62,6 @@ await stream_settled(new Map([["failed", Promise.reject("unavailable")], ["compl
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }

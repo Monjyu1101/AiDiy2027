@@ -1,5 +1,6 @@
 //! Independent status effects and master-switch precedence.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::AppEvent;
 use crate::terminal_palette::with_test_default_colors;
@@ -51,7 +52,9 @@ fn shimmer_and_progress_are_independent_and_obey_master_switch() {
                     "animations={animations}, shimmer={shimmer}, progress={progress}\n{header}\n{label:?}"
                 ));
             }
-            insta::assert_snapshot!(snapshots.join("\n\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshots.join("\n\n"));
+            });
         },
     );
 }

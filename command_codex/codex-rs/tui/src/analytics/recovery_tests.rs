@@ -1,5 +1,6 @@
 //! Restored dashboard, visible controls, and responsive report regression coverage.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[test]
@@ -48,11 +49,13 @@ fn twelve_hour_metadata_keeps_utc_across_renderers() {
                 .filter(|line| line.contains("Updated") || line.contains("Report updated")),
         );
     }
-    insta::assert_snapshot!(output.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(output.join("\n"));
+    });
 }
 
 #[test]
-fn tall_reports_use_available_height_and_wide_reports_put_details_beside_plot() {
+fn report_height_and_side_details() {
     for (width, height) in [(80, 60), (180, 60)] {
         let mut view = fixture::view(models::AccountKind::Business);
         view.section = Section::Usage;
@@ -70,7 +73,9 @@ fn tall_reports_use_available_height_and_wide_reports_put_details_beside_plot() 
                     .lines()
                     .any(|line| line.contains("4.4M tokens") && line.contains('─'))
             );
-            insta::assert_snapshot!(output);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(output);
+            });
         }
     }
 }

@@ -1,5 +1,6 @@
 //! Owned transcript integration preserves composer spacing/input, prompt editing, and gestures.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::tests::make_test_app_with_channels;
 use crate::app_command::AppCommand;
@@ -124,7 +125,8 @@ async fn external_writer_escape_returns_to_command_center_without_editing() -> R
         if offline {
             assert!(app.agents_overview.active_refresh.is_none());
             assert!(app.reconnect.presentation == reconnect::ReconnectPresentation::Overview);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "external_writer_escape_offline_command_center",
                 crate::chatwidget::tests::helpers::normalize_agent_center_snapshot(
                     crate::chatwidget::tests::helpers::render_bottom_popup(
@@ -133,8 +135,10 @@ async fn external_writer_escape_returns_to_command_center_without_editing() -> R
                     )
                 )
             );
+            });
         } else if !detailed && !scrolled {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "external_writer_escape_command_center",
                 crate::chatwidget::tests::helpers::normalize_agent_center_snapshot(
                     crate::chatwidget::tests::helpers::render_bottom_popup(
@@ -143,6 +147,7 @@ async fn external_writer_escape_returns_to_command_center_without_editing() -> R
                     )
                 )
             );
+            });
         }
         tui.set_owned_screen(/*owned*/ false)?;
         app_server.shutdown().await?;
@@ -257,7 +262,9 @@ async fn older_page_loading_uses_the_status_row_without_moving_content_or_cursor
             snapshots.push(format!("{width} columns · {state:?}\n{rendered}"));
         }
     }
-    insta::assert_snapshot!("owned_history_loading_footer", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("owned_history_loading_footer", snapshots.join("\n\n"));
+    });
     tui.set_owned_screen(/*owned*/ false)?;
     Ok(())
 }
@@ -318,10 +325,12 @@ async fn recap_spacing_belongs_to_the_transcript_tail() -> Result<()> {
         snapshot(&mut app, "Live message after recap")?;
         tui.set_owned_screen(/*owned*/ false)?;
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "recap_tail_spacing",
         normalize_snapshot_paths(snapshots.join("\n\n"))
     );
+    });
     Ok(())
 }
 
@@ -414,7 +423,9 @@ async fn owned_transcript_reserves_a_row_above_the_composer() -> Result<()> {
                 .is_none()
         );
     }
-    insta::assert_snapshot!("owned_transcript_composer_gap", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("owned_transcript_composer_gap", snapshots.join("\n\n"));
+    });
     tui.set_owned_screen(/*owned*/ false)?;
     Ok(())
 }
@@ -686,10 +697,12 @@ async fn owned_details_keep_the_composer_cursor_and_screen() -> Result<()> {
         .await?;
     assert_eq!(presented(&tui), [neighbor]);
     server.shutdown().await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "conversation_in_offset_rect",
         normalize_snapshot_paths(screen)
     );
+    });
     assert!(app.handle_owned_backtrack_event(
         &mut tui,
         &TuiEvent::Key(KeyEvent::new(KeyCode::Char('t'), KeyModifiers::CONTROL)),
@@ -1536,7 +1549,9 @@ async fn slash_picker_overlays_history_without_moving_the_transcript_or_composer
             &before.content()[composer_start..]
         );
         if (width, height) == (80, 14) {
-            insta::assert_snapshot!("slash_picker_overlays_history", open_text);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("slash_picker_overlays_history", open_text);
+            });
         }
 
         app.chat_widget.apply_external_edit("/mo".to_string());
@@ -1628,12 +1643,14 @@ async fn double_escape_browses_prompts_without_reverting_and_explains_editing() 
     );
     app.keymap = RuntimeKeymap::defaults();
     app.render_owned_transcript(&mut tui, size)?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "prompt_navigation",
         normalize_snapshot_paths(buffer_text(
             crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal)
         ))
     );
+    });
     app.close_transcript_overlay(&mut tui);
     assert!(!app.backtrack.overlay_preview_active);
     server.shutdown().await?;
@@ -1725,7 +1742,9 @@ async fn find_refreshes_live_details_before_searching_the_first_query() -> Resul
         &tui.terminal,
     ));
     assert!(rendered.contains("printf needle"), "{rendered}");
-    insta::assert_snapshot!("compact_overlay_finds_hidden_live_text", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("compact_overlay_finds_hidden_live_text", rendered);
+    });
     app_server.shutdown().await?;
     Ok(())
 }
@@ -1867,7 +1886,8 @@ async fn fullscreen_composer_mouse_copy_and_input_ownership() -> Result<()> {
     assert_eq!(app.chat_widget.capture_thread_input_state(), draft);
     app.render_owned_transcript(&mut tui, size)?;
     assert!(row_containing(&tui, "Copied 5 chars to host clipboard") < y);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fullscreen_composer_right_click_copy",
         format!(
             "{}\n\n{}",
@@ -1877,6 +1897,7 @@ async fn fullscreen_composer_mouse_copy_and_input_ownership() -> Result<()> {
             ))
         )
     );
+    });
 
     app.chat_widget.handle_key_event(KeyCode::Char('x').into());
     for event in &copy_events {
@@ -2043,10 +2064,12 @@ async fn fullscreen_composer_scrolls_without_moving_caret_or_transcript() -> Res
     app.render_owned_transcript(&mut tui, small)?;
     let buffer = crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal);
     frames.push(format!("Short screen\n{}", buffer_text(buffer)));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fullscreen_prompt_wheel",
         normalize_snapshot_paths(frames.join("\n\n"))
     );
+    });
     server.shutdown().await?;
     tui.set_owned_screen(/*owned*/ false)?;
     Ok(())
@@ -2118,7 +2141,9 @@ async fn composer_thumbnails_follow_draft_deletion_and_resize() -> Result<()> {
                 .take(6)
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!("composer_thumbnail_strip", snapshot);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("composer_thumbnail_strip", snapshot);
+            });
         }
 
         let wide = Size::new(/*width*/ 60, /*height*/ 24);
@@ -2200,10 +2225,12 @@ async fn fullscreen_composer_remote_images_leave_an_editable_prompt_row() -> Res
             .map(|n| format!("https://example.com/image-{n}.png"))
             .collect::<Vec<_>>()
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fullscreen_prompt_remote_images",
         normalize_snapshot_paths(frames.join("\n\n"))
     );
+    });
 
     tui.set_owned_screen(/*owned*/ false)?;
     Ok(())
@@ -2252,12 +2279,14 @@ async fn footer_selection_defers_warning_clicks_and_preserves_the_draft() -> Res
         let crate::rendered_selection::RenderedSelection { view, cells, .. } = &mut *selection;
         assert!(view.selected_text(cells).unwrap().contains("warning"));
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "fullscreen_footer_selection",
         normalize_snapshot_paths(buffer_text(
             crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal)
         ))
     );
+    });
     assert!(app.handle_rendered_selection_event(
         &mut tui,
         &TuiEvent::Key(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE))

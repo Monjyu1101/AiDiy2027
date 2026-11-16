@@ -1,5 +1,6 @@
 //! Exercises daemon compatibility recovery through real TUI startup.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::focus_palette::PtyCodex;
 use super::focus_palette::write_test_config;
 use anyhow::Context;
@@ -83,7 +84,9 @@ async fn incompatible_daemon_can_run_embedded_for_explicit_features() -> Result<
             .lines()
             .find(|line| line.contains("Running without the shared background server"))
             .context("missing warning line")?;
-        insta::assert_snapshot!(snapshot, warning);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, warning);
+        });
         terminal.write_input(b"\x14")?;
         terminal.write_input(b"/status")?;
         terminal.wait_for_screen("show current session configuration")?;

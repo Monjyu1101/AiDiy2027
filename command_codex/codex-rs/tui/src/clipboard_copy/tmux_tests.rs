@@ -1,5 +1,6 @@
 //! Verifies tmux client selection and clipboard capability checks.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::clipboard_target;
 use pretty_assertions::assert_eq;
 
@@ -57,5 +58,7 @@ fn tmux_clipboard_target_rejects_no_attached_client() {
         || Ok("\n".to_string()),
         |_| panic!("capabilities require an attached client"),
     );
-    insta::assert_snapshot!(result.expect_err("no receiving client"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(result.expect_err("no receiving client"));
+    });
 }

@@ -1,5 +1,6 @@
 //! Snapshots a worker's retained history and unread mail across idle eviction and follow-up.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_core::ThreadEvictionOutcome;
 use codex_exec_server::CreateDirectoryOptions;
@@ -272,10 +273,12 @@ async fn idle_eviction_preserves_worker_context_for_followup() -> Result<()> {
     );
     mailbox.sort_all_objects();
     let mailbox = serde_json::to_string_pretty(&mailbox)?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "idle_eviction_followup",
         format!("{history}\n\nResumed worker mailbox:\n{mailbox}")
     );
+    });
     test.thread_manager
         .shutdown_all_threads_bounded(Duration::from_secs(5))
         .await;

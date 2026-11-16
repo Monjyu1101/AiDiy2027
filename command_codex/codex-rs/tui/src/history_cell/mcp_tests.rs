@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use base64::Engine;
 use codex_protocol::mcp::CallToolResult;
@@ -53,7 +54,9 @@ fn mcp_inventory_connection_states() {
         .map(ToString::to_string)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
     for (name, expected) in [
         ("auth", status_style(StatusTone::Attention)),
         ("cancelled", Style::default().dim()),
@@ -111,7 +114,9 @@ fn mcp_inventory_older_app_server_authentication() {
         .map(ToString::to_string)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered);
+    });
     let styles = cell
         .lines
         .iter()
@@ -144,7 +149,7 @@ fn result(content: Vec<Value>) -> CallToolResult {
 }
 
 #[test]
-fn mcp_preview_shares_one_limit_across_blocks_and_preserves_transcript() {
+fn mcp_preview_shared_limit() {
     let mut cell = new_active_mcp_tool_call(
         "call-preview".into(),
         McpInvocation {
@@ -165,7 +170,8 @@ fn mcp_preview_shares_one_limit_across_blocks_and_preserves_transcript() {
     assert_eq!(cell.tool_call_labels(), ["Called search.lookup"]);
     let display = cell.display_lines(/*width*/ 80);
     let transcript = cell.transcript_lines(/*width*/ 80);
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "compact:\n{}\n\nhistory:\n{}\n\ntranscript:\n{}",
         visible_lines(cell.compact_hyperlink_lines(/*width*/ 80))
             .iter()
@@ -183,6 +189,7 @@ fn mcp_preview_shares_one_limit_across_blocks_and_preserves_transcript() {
             .collect::<Vec<_>>()
             .join("\n"),
     ));
+    });
     assert_eq!(
         cell.raw_lines()
             .iter()
@@ -574,13 +581,15 @@ fn titled_image_call_keeps_error_and_full_title_when_narrow() {
     let lines = cell.display_lines(/*width*/ 32);
     assert!(lines[0].width() <= 32);
     assert_eq!(lines[0].spans[0].style, "•".red().bold().style);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         lines
             .iter()
             .map(ToString::to_string)
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     assert!(cell.raw_lines()[0].to_string().contains(title));
     assert!(
         cell.transcript_lines(/*width*/ 200)[0]

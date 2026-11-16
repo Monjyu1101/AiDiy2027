@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[tokio::test]
@@ -30,5 +31,7 @@ async fn image_result_live_and_replay_render_in_the_owning_call() {
         outputs.push(lines_to_single_string(&cells[0]));
     }
     assert_eq!(outputs[0], outputs[1]);
-    insta::assert_snapshot!(outputs[0]);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(outputs[0]);
+    });
 }

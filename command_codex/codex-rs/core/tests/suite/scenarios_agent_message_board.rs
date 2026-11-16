@@ -1,5 +1,6 @@
 //! Exercises board tools through the runtime, including resume and native mailbox notifications.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Context;
 use codex_core::TurnInputRequest;
 use codex_features::Feature;
@@ -237,7 +238,8 @@ async fn board_post_and_reads_reach_model_context_without_self_notices(
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "agent_message_board_context",
         context_snapshot::format_context_snapshot(
             "An active agent describes a channel, lists it, posts a shared decision and reads it without a self-notification.",
@@ -245,6 +247,7 @@ async fn board_post_and_reads_reach_model_context_without_self_notices(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1219,7 +1222,8 @@ async fn codex_instances_share_board_with_fixed_access() -> anyhow::Result<()> {
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "board_connections",
         context_snapshot::format_context_snapshot(
             "Independent Codex runtimes share a local board: a writer publishes, an isolated Guardian reads and cannot publish.",
@@ -1227,6 +1231,7 @@ async fn codex_instances_share_board_with_fixed_access() -> anyhow::Result<()> {
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
 
     unconnected.thread.shutdown_and_wait().await?;
     for instance in instances {

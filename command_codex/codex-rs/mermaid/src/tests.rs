@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::RenderError;
 use super::render;
 use insta::assert_snapshot;
@@ -33,7 +34,9 @@ fn stadiums_with_other_shapes_in_every_direction() {
         assert_eq!(render(&source, width - 1), Err(RenderError::TooWide));
         cases.push(format!("{direction}\n{output}"));
     }
-    assert_snapshot!(cases.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(cases.join("\n\n"));
+    });
 }
 
 #[test]
@@ -203,7 +206,9 @@ fn quoted_flowchart_labels_reject_malformed_and_unsafe_text() {
 #[test]
 fn branches_merges_and_retry_loop() {
     let source = "flowchart TD\nA[\"Go []; &\"] --> B{\"x < 3?\"}\nB -->|\"y|n\"| C[Reserve]\nB -->|no| D[Waitlist]\nC --> E{Paid?}\nE -->|yes| F[Ship]\nE -->|no| G[Retry payment]\nG --> E\nD --> H[Notify buyer]\nF --> H";
-    assert_snapshot!(render(source, /*max_width*/ 100).unwrap());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(render(source, /*max_width*/ 100).unwrap());
+    });
 }
 
 #[test]

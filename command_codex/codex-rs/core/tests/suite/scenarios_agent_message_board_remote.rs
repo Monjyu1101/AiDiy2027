@@ -1,5 +1,6 @@
 //! Runs the board tools against a remote message board.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::super::code_mode::custom_tool_output_last_non_empty_text;
 use super::BoardClock;
 use super::configure;
@@ -176,10 +177,13 @@ async fn remote_board_uses_the_existing_tools_and_session_identity() -> anyhow::
         responses::strip_response_item_ids_from_json(json!(notices)),
     );
     notification.sort_all_objects();
-    insta::assert_snapshot!(
-        "remote_board_notification",
-        serde_json::to_string_pretty(&notification)?
-    );
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = serde_json::to_string_pretty(&notification)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("remote_board_notification", snapshot_value);
+        });
+    };
     // Normalize tool JSON key order across Cargo and Bazel feature sets.
     let mut bodies = requests
         .iter()
@@ -195,7 +199,8 @@ async fn remote_board_uses_the_existing_tools_and_session_identity() -> anyhow::
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "remote_board_tools",
         context_snapshot::format_context_snapshot(
             "Remote board tools and active-turn notifications share the existing session identity.",
@@ -203,6 +208,7 @@ async fn remote_board_uses_the_existing_tools_and_session_identity() -> anyhow::
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     let request_count = board
         .received_requests()
         .await
@@ -373,7 +379,8 @@ async fn remote_board_effective_permissions_and_denials(code_mode: bool) -> anyh
                 }
             }
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "remote_board_permissions_direct",
             context_snapshot::format_context_snapshot(
                 "Permission discovery preserves legacy output, exposes reply-only access, and returns a denied post before an allowed reply.",
@@ -381,6 +388,7 @@ async fn remote_board_effective_permissions_and_denials(code_mode: bool) -> anyh
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     }
     root.codex.shutdown_and_wait().await?;
     Ok(())

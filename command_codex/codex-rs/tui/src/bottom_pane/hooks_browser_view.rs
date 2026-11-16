@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_app_server_protocol::HookEventName;
 use codex_app_server_protocol::HookHandlerMetadata;
 use codex_app_server_protocol::HookMetadata;
@@ -901,12 +902,16 @@ mod tests {
     #[test]
     fn renders_event_browser() {
         let mut view = view();
-        assert_snapshot!("hooks_browser_events", render_lines(&view, /*width*/ 112));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("hooks_browser_events", render_lines(&view, /*width*/ 112));
+        });
         view.state.selected_idx = Some(view.event_rows().len() - 1);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_model_requests",
             render_lines(&view, /*width*/ 112),
         );
+        });
         view.keymap.accept.clear();
         assert!(!render_lines(&view, /*width*/ 112).contains("enter details"));
     }
@@ -930,7 +935,9 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!(text);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(text);
+        });
         let selected_y = text
             .lines()
             .position(|line| line.starts_with("› "))
@@ -982,10 +989,12 @@ mod tests {
             AppEventSender::new(tx_raw),
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_events_with_review_column",
             render_lines(&view, /*width*/ 112)
         );
+        });
         assert_eq!(
             view.event_table_lines()[1].spans[3].style.fg,
             selection_style().fg
@@ -1011,17 +1020,21 @@ mod tests {
             AppEventSender::new(tx_raw),
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_events_with_issues",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
     fn renders_handler_browser_with_details() {
         let mut view = view();
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_snapshot!("hooks_browser_handlers", render_lines(&view, /*width*/ 112));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("hooks_browser_handlers", render_lines(&view, /*width*/ 112));
+        });
     }
 
     #[test]
@@ -1031,10 +1044,12 @@ mod tests {
         view.entry.hooks[1].status_message = Some(" \t\n ".to_string());
         view.entry.hooks[2].event_name = HookEventName::PreToolUse;
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_status_messages",
             render_lines(&view, /*width*/ 112)
         );
+        });
 
         for (fg, bg) in [
             ((230, 230, 230), (18, 20, 30)),
@@ -1090,10 +1105,12 @@ mod tests {
 
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_mcp_tool_handler",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1119,10 +1136,12 @@ mod tests {
 
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_additional_context_limit",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1151,10 +1170,12 @@ mod tests {
         );
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_untrusted_enabled_handler",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1218,10 +1239,12 @@ mod tests {
         let mut view = view();
         view.handle_key_event(KeyEvent::from(KeyCode::Down));
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_managed_handler",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1256,10 +1279,12 @@ mod tests {
         );
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
         view.handle_key_event(KeyEvent::from(KeyCode::Down));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_selected_managed_handler",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1289,10 +1314,12 @@ mod tests {
         for _ in 0..MAX_POPUP_ROWS + 1 {
             view.handle_key_event(KeyEvent::from(KeyCode::Down));
         }
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_scrolled_handlers",
             render_lines(&view, /*width*/ 112)
         );
+        });
         assert_eq!(
             view.selected_hook(HookEventName::PreToolUse)
                 .map(|hook| hook.key.as_str()),
@@ -1323,10 +1350,12 @@ mod tests {
             AppEventSender::new(tx_raw),
         );
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_capped_command_details",
             render_lines(&view, /*width*/ 44)
         );
+        });
     }
 
     #[test]
@@ -1340,10 +1369,12 @@ mod tests {
         );
         view.handle_key_event(KeyEvent::from(KeyCode::Down));
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_empty_handlers",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     #[test]
@@ -1456,10 +1487,12 @@ mod tests {
         );
         view.handle_key_event(KeyEvent::from(KeyCode::Enter));
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "hooks_browser_review_needed_handler",
             render_lines(&view, /*width*/ 112)
         );
+        });
     }
 
     fn assert_unmanaged_toggle_key(key_code: KeyCode) {

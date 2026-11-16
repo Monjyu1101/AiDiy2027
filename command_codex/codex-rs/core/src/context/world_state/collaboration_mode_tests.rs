@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::PreviousSectionState;
 use super::super::test_support::render_section_cases;
 use super::*;
@@ -16,7 +17,7 @@ use codex_protocol_test_support::ContentItemTestExt;
 use pretty_assertions::assert_eq;
 
 #[test]
-fn snapshots() {
+fn collaboration_mode_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -26,7 +27,8 @@ fn snapshots() {
     let new_default = collaboration_mode_state(ModeKind::Default, "new instructions");
     let plan = collaboration_mode_state(ModeKind::Plan, "make a plan");
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&default)),
         (Known(&default), Known(&default)),
@@ -34,6 +36,7 @@ fn snapshots() {
         (Known(&default), Known(&plan)),
         (Unknown, Known(&default)),
     ]));
+    });
 }
 
 #[test]

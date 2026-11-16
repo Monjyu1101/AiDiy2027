@@ -5,6 +5,7 @@
 //! It intentionally does not decide onboarding flow completion; the enclosing
 //! onboarding screen coordinates step progression.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![allow(clippy::unwrap_used)]
 
 use codex_app_server_client::AppServerRequestHandle;
@@ -1517,7 +1518,9 @@ mod tests {
                 .draw(|frame| widget.render_ref(area, frame.buffer_mut()))
                 .expect("draw");
 
-            insta::assert_snapshot!(name, terminal.backend().to_string());
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(name, terminal.backend().to_string());
+            });
         }
     }
 
@@ -1738,7 +1741,9 @@ mod tests {
             .expect("draw");
 
         let contents = terminal.backend().to_string();
-        insta::assert_snapshot!("continue_in_browser_narrow_long_url", contents);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("continue_in_browser_narrow_long_url", contents);
+        });
         assert!(contents.contains("On a remote or headless machine?"));
         assert!(contents.contains("Press esc to cancel"));
     }

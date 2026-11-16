@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 //! Exercises independent worker replies, stale pages, and action ownership.
 
@@ -575,7 +576,9 @@ async fn partial_failure_keeps_healthy_rows_visible() {
         frame.render_widget_ref(&line, frame.area());
     }
     terminal.flush().unwrap();
-    insta::assert_snapshot!("partial_backend_failure", terminal.backend().to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("partial_backend_failure", terminal.backend().to_string());
+    });
 }
 
 #[tokio::test]

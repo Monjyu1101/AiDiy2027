@@ -1,5 +1,6 @@
 //! Filled tabs preserve active visibility and Unicode clipping on narrow terminals.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::style::Color;
@@ -37,7 +38,9 @@ fn filled_tabs_window_around_active_tab() {
             ];
             let strips =
                 [0, 2, 6].map(|active_idx| rendered_strip(&labels, active_idx, /*width*/ 30).0);
-            insta::assert_snapshot!(strips.join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(strips.join("\n"));
+            });
             for active_idx in 0..labels.len() {
                 let (text, buf) = rendered_strip(&labels, active_idx, /*width*/ 30);
                 assert!(text.contains(labels[active_idx]), "{text}");
@@ -60,7 +63,9 @@ fn filled_tabs_window_around_active_tab() {
 fn filled_tabs_truncate_unicode_without_hiding_active_tab() {
     let labels = ["All", "文件系统 plugins", "Debug"];
     let strips = [1, 4, 9, 16].map(|width| rendered_strip(&labels, /*active_idx*/ 1, width).0);
-    insta::assert_snapshot!(strips.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(strips.join("\n"));
+    });
 }
 
 // Non-Windows tests have an unprobed default palette; Windows retains its console probe.

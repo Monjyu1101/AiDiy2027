@@ -1,5 +1,6 @@
 //! Logical copy and display wrapping for reasoning, plans, questions, and recaps.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::HistoryCell;
 use crate::history_cell::ReasoningSummaryCell;
@@ -286,7 +287,9 @@ fn selected_recap_remains_visible_when_resize_cannot_fit_its_gutter() {
         assert_eq!(restored, wide_buffer);
         assert_eq!(view.selected_text(&cells), Some(recap.to_owned()));
     }
-    insta::assert_snapshot!("owned_recap_selected_narrow", frames.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("owned_recap_selected_narrow", frames.join("\n---\n"));
+    });
 }
 
 #[test]

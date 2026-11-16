@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::clipboard_copy::CopyFormat;
 use crate::history_cell::AgentMarkdownCell;
@@ -57,11 +58,15 @@ fn selected_markdown_preserves_lists_and_inline_code() {
             let CopyFormat::MarkdownSelection(source) = format else {
                 panic!("expected rich selection");
             };
-            insta::assert_snapshot!(text);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(text);
+            });
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "selected_list_html",
                 crate::clipboard_html::render_markdown(&source)
             );
+            });
             Ok(crate::clipboard_copy::CopyStatus::Confirmed)
         },
     )
@@ -160,7 +165,9 @@ fn inline_code_selection_copies_only_selected_content() {
             }
         }
     }
-    insta::assert_snapshot!(copies.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n"));
+    });
 }
 
 #[test]
@@ -244,7 +251,9 @@ fn inline_boundaries_preserve_selected_text_and_formatting() {
             "{source}\nSelected: {selected:?}\nMarkdown: {copied}\n{html}"
         ));
     }
-    insta::assert_snapshot!(copies.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n"));
+    });
 }
 
 #[test]
@@ -261,7 +270,9 @@ fn lists_keep_nesting_and_paragraphs_without_sibling_spacers() {
         copies.push(copied);
     }
     assert_eq!(copies[0], copies[1]);
-    insta::assert_snapshot!(copies[0]);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies[0]);
+    });
 }
 
 #[test]
@@ -279,7 +290,9 @@ fn code_only_is_literal_and_mixed_code_has_safe_fences() {
     let (copy, format) = payload(&layout, 0..layout.text().len());
     assert_eq!(format, CopyFormat::Markdown);
     assert!(copy.contains("````\n  *literal* <tag>\n```\n````"));
-    insta::assert_snapshot!(crate::clipboard_html::render_markdown(&copy));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(crate::clipboard_html::render_markdown(&copy));
+    });
 }
 
 #[test]
@@ -435,7 +448,9 @@ fn mixed_user_prose_preserves_literal_text_without_code_fences() {
         assert_eq!(format, CopyFormat::Markdown);
         copies.push(crate::clipboard_html::render_markdown(&text));
     }
-    insta::assert_snapshot!(copies.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -559,7 +574,7 @@ fn selected_local_link_keeps_one_visible_destination() {
 }
 
 #[test]
-fn complete_rules_keep_structure_and_partial_rules_keep_selected_text() {
+fn complete_and_partial_rules() {
     let mut copies = Vec::new();
     for (source, partial) in [
         ("Before\n\n---\n\nAfter", "—"),
@@ -574,7 +589,9 @@ fn complete_rules_keep_structure_and_partial_rules_keep_selected_text() {
         let start = layout.text().find('—').unwrap();
         assert_eq!(payload(&layout, start..start + "—".len()).0, partial);
     }
-    insta::assert_snapshot!(copies.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -584,10 +601,12 @@ fn table_spillover_keeps_prose_outside_the_literal_table() {
         /*width*/ 80,
     );
     let copied = payload(&layout, 0..layout.text().len()).0;
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "{copied}\n{}",
         crate::clipboard_html::render_markdown(&copied)
     ));
+    });
 }
 
 #[test]
@@ -611,7 +630,9 @@ fn partial_prose_keeps_leading_whitespace_outside_code_blocks() {
             crate::clipboard_html::render_markdown(&copied)
         ));
     }
-    insta::assert_snapshot!(copies.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -628,7 +649,9 @@ fn nested_tables_keep_their_copy_containers() {
             crate::clipboard_html::render_markdown(&copied)
         ));
     }
-    insta::assert_snapshot!(copies.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(copies.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -744,10 +767,12 @@ fn adjacent_top_level_code_blocks_keep_blank_lines_and_boundaries() {
         /*width*/ 80,
     );
     let copied = payload(&layout, 0..layout.text().len()).0;
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "Markdown:\n{copied}\n\nHTML:\n{}",
         crate::clipboard_html::render_markdown(&copied)
     ));
+    });
 }
 
 #[test]

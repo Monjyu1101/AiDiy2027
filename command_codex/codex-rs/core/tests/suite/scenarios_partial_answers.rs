@@ -1,5 +1,6 @@
 //! Partial answers retain their phase in live events and subsequent model requests.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::guardian_retained_context::ForkTestLifecycle;
 use super::*;
 use codex_protocol::models::MessagePhase;
@@ -98,7 +99,8 @@ async fn partial_answers_preserve_phase_across_sampling_continuation() -> Result
             json!("final_answer")
         ]
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "partial_answer_continuation",
         context_snapshot::format_request_history_snapshot(
             "A nonterminal answer continues sampling; its phase survives an ordinary follow-up.",
@@ -106,6 +108,7 @@ async fn partial_answers_preserve_phase_across_sampling_continuation() -> Result
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -322,7 +325,8 @@ async fn partial_answers_survive_forked_child_requests(
                     .contains("/root/worker")
             );
         } else {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "preserved_answer_fork",
                 context_snapshot::format_request_history_snapshot(
                     "A worker inherits the parent prefix unchanged and receives its own instructions. Requests are grouped by parent, then child.",
@@ -330,9 +334,11 @@ async fn partial_answers_survive_forked_child_requests(
                     &ContextSnapshotOptions::default().rewrite_known_segments()
                 )
             );
+            });
         }
     } else {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "partial_answer_fork",
             context_snapshot::format_request_history_snapshot(
                 "A forked worker receives both stable answer fragments, with their phases preserved and parent commentary filtered out.",
@@ -340,6 +346,7 @@ async fn partial_answers_survive_forked_child_requests(
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     }
     assert_eq!(assistant_messages, expected_messages);
     child.shutdown_and_wait().await?;

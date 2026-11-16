@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_app_server_protocol::ThreadItem;
 use std::sync::Arc;
 
@@ -56,10 +57,12 @@ fn markdown_transcript_preserves_messages_and_formats_activity() {
         user("[Image #1] describe this", vec!["image.png".into()]),
     ];
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "markdown_transcript",
         render_markdown_transcript(&cells).expect("exported transcript")
     );
+    });
 }
 
 #[test]
@@ -229,5 +232,7 @@ fn persisted_web_and_image_activity_preserves_full_details() {
         crate::thread_transcript::RawReasoningVisibility::Hidden,
         /*config*/ None,
     );
-    insta::assert_snapshot!(render_markdown_transcript(&cells).expect("exported transcript"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_markdown_transcript(&cells).expect("exported transcript"));
+    });
 }

@@ -1,4 +1,5 @@
 //! Guardian sees root windows delivered along a nested delegation chain.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[test_case::test_case(false; "text_history")]
@@ -46,6 +47,8 @@ async fn guardian_handoff_delegation_request_history(native_history: bool) -> Re
     } else {
         "guardian_handoff_delegation"
     };
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
     Ok(())
 }

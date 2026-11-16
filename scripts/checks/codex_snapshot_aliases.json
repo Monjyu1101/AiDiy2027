@@ -1,0 +1,157 @@
+[
+  {
+    "source": "command_codex/codex-rs/ext/guardian-v2/src/async_scorer/conversation_tests.rs",
+    "snapshot": "command_codex/codex-rs/ext/guardian-v2/src/async_scorer/snapshots/concurrent_history.snap",
+    "alias": "concurrent_history"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/app/tests/background_task_defaults_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/app/tests/snapshots/fresh_agents_overview.snap",
+    "alias": "fresh_agents_overview"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/app/tests/pagination_completion_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/app/tests/snapshots/pagination_footers.snap",
+    "alias": "pagination_footers"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/app/tests/new_session_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/app/tests/snapshots/mentions_without_history.snap",
+    "alias": "mentions_without_history"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/approval_overlay/clipping_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/approval_overlay/snapshots/full_exec_command.snap",
+    "alias": "full_exec_command"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/astra_pending_command.snap",
+    "alias": "astra_pending_command"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/history_cancel_deadline.snap",
+    "alias": "history_cancel_deadline"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/disconnected_edits.snap",
+    "alias": "disconnected_edits"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/history_completion.snap",
+    "alias": "history_completion"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/history_held_command.snap",
+    "alias": "history_held_command"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/cancel_held_slash.snap",
+    "alias": "cancel_held_slash"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/help_sparkle_deadline.snap",
+    "alias": "help_sparkle_deadline"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/help_vs_question_mark.snap",
+    "alias": "help_vs_question_mark"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/sparkle_fade_15s.snap",
+    "alias": "sparkle_fade_15s"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/sparkle_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/starfield_protected_content.snap",
+    "alias": "starfield_protected_content"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/status_surface_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/status_link_wrap.snap",
+    "alias": "status_link_wrap"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/status_surface_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/slash_before_status.snap",
+    "alias": "slash_before_status"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/status_surface_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/status_host_budget.snap",
+    "alias": "status_host_budget"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/status_surface_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/chat_composer/snapshots/thumbnail_priority.snap",
+    "alias": "thumbnail_priority"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/bottom_pane/request_user_input/render_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/bottom_pane/request_user_input/snapshots/halfwidth_marks.snap",
+    "alias": "halfwidth_marks"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/chatwidget/realtime/recording_controls_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/chatwidget/realtime/snapshots/voice_footer_states.snap",
+    "alias": "voice_footer_states"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/chatwidget/realtime/recording_controls_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/chatwidget/realtime/snapshots/voice_meter_redraw.snap",
+    "alias": "voice_meter_redraw"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/chatwidget/realtime_tests/transcripts.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/chatwidget/realtime_tests/snapshots/transcript_completion.snap",
+    "alias": "transcript_completion"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/chatwidget/tests/list_spacing_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/chatwidget/tests/snapshots/list_spacing_reflow.snap",
+    "alias": "list_spacing_reflow"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/external_agent_config_migration/mod.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/external_agent_config_migration/snapshots/customize_windows.snap",
+    "alias": "customize_windows"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/external_agent_config_migration/mod.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/external_agent_config_migration/snapshots/customize_secondary.snap",
+    "alias": "customize_secondary"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/markdown_render_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/snapshots/narrow_path_table.snap",
+    "alias": "narrow_path_table"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/transcript_view/right_click_copy_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/transcript_view/snapshots/right_click_selection.snap",
+    "alias": "right_click_selection"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/transcript_view/table_copy_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/transcript_view/snapshots/empty_row_copy_spacing.snap",
+    "alias": "empty_row_copy_spacing"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/transcript_view/prompt_header_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/transcript_view/snapshots/prompt_header_reading.snap",
+    "alias": "prompt_header_reading"
+  },
+  {
+    "source": "command_codex/codex-rs/tui/src/markdown_render_tests.rs",
+    "snapshot": "command_codex/codex-rs/tui/src/snapshots/fragmented_table_records.snap",
+    "alias": "fragmented_table_records"
+  }
+]

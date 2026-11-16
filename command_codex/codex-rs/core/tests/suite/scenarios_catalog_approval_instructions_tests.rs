@@ -1,5 +1,6 @@
 //! Catalog approval headings follow model changes without rewriting or repeating context.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -135,10 +136,12 @@ async fn catalog_approval_headings_follow_selected_model() -> Result<()> {
         let next = pair[1].input();
         assert_eq!(&next[..previous.len()], previous);
     }
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "Catalog permission-request and automatic-review headings follow the selected model. The switch appends new developer instructions after the prior reply and before the next user message; an unchanged follow-up preserves the full history without repeating instructions.",
         &requests,
         &ContextSnapshotOptions::default().include_request_settings(),
     ));
+    });
     Ok(())
 }

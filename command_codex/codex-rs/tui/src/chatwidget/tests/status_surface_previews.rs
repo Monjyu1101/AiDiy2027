@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::bottom_pane::preview_line_for_title_items;
 use crate::chatwidget::ThreadUsageOutcome;
@@ -36,7 +37,9 @@ async fn thread_color_preview_matches_footer() {
                 assert_eq!(line, footer.line);
                 snapshot.push(format!("colors={use_colors}: {line:?}"));
             }
-            insta::assert_snapshot!(snapshot.join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshot.join("\n"));
+            });
         },
     );
 }

@@ -6,6 +6,7 @@
 //! keeps doctor safe to run while the user is debugging startup or update-loop
 //! issues.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::io::Read;
 use std::num::NonZeroU32;
 use std::path::Path;
@@ -341,7 +342,9 @@ mod tests {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("configured_updater", details);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("configured_updater", details);
+        });
     }
 
     #[test]

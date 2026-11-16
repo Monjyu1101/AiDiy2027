@@ -1,5 +1,6 @@
 //! Dynamic calls must finish visibly whether transcript rows are retained or terminal-owned.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::local_settings::LocalSettings;
 use crate::transcript_mode::TranscriptMode;
@@ -168,5 +169,7 @@ async fn turn_finalization_drains_lifecycle_queue_before_interrupting_remaining_
     );
     let mut buffer = Buffer::empty(area);
     Paragraph::new(lines).render(area, &mut buffer);
-    insta::assert_snapshot!("interrupted_dynamic_activity", format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("interrupted_dynamic_activity", format!("{buffer:?}"));
+    });
 }

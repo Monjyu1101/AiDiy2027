@@ -1,5 +1,6 @@
 //! Model-visible context for standalone web search.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use anyhow::Context;
 use codex_protocol::config_types::WebSearchMode;
@@ -96,17 +97,22 @@ async fn literature_search_and_open() -> Result<()> {
         .expect("web.run parameters")
         .clone();
     parameters.sort_all_objects();
-    insta::assert_snapshot!(
-        "literature_search_web_run_schema",
-        serde_json::to_string_pretty(&parameters)?
-    );
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = serde_json::to_string_pretty(&parameters)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("literature_search_web_run_schema", snapshot_value);
+        });
+    };
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "A model opted into literature search finds a paper, opens the returned reference, and reads the result before answering.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }
 
@@ -343,13 +349,15 @@ async fn model_selected_search_preserves_discovery_and_call_history() -> Result<
     assert!(requests[3].tool_by_name("web", "run").is_none());
     let output = requests[6].function_call_output("open");
     assert!(output.to_string().contains("2x"), "{output}");
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "MCP returns a paper reference. A discovery outage withholds native search, then MCP opens the same reference after recovery. Switching to a standalone model retains the history.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }
 

@@ -1,5 +1,6 @@
 //! Selection keeps displayed stream revisions and extends by valid text units across interaction.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::exec_cell::CommandOutput;
 use crate::exec_cell::ExecCall;
@@ -53,7 +54,9 @@ fn selection_highlights_hard_breaks_within_and_between_entries() {
         assert_eq!(view.selected_text(&cells).as_deref(), Some("code\n"));
         frames.push(format!("{buffer:?}"));
     }
-    insta::assert_snapshot!(frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n"));
+    });
 }
 
 #[test]

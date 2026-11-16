@@ -1,5 +1,6 @@
 //! Picker panels retain controls and page by the results that actually fit.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::AppEvent;
 use pretty_assertions::assert_eq;
@@ -104,7 +105,9 @@ fn shared_menu_presentation_at_wide_and_narrow_sizes() {
         assert!(text.contains("enter select · esc back"));
         snapshots.push(format!("{width}x{height}\n{text}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -139,7 +142,9 @@ fn short_browser_keeps_header_tabs_search_and_footer() {
         assert!(view.rendered_item_count() > 0);
         snapshots.push(format!("{width}×{height}:\n{text}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -150,7 +155,9 @@ fn browser_page_navigation_uses_rows_that_fit() {
     assert!(visible < view.max_visible_rows);
     view.handle_key_event(KeyEvent::from(KeyCode::PageDown));
     let (text, buf) = render_browser(&view, /*width*/ 60, /*height*/ 18);
-    insta::assert_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(text);
+    });
     assert_eq!(view.selected_actual_idx(), Some(visible));
     let selected_row = text
         .lines()

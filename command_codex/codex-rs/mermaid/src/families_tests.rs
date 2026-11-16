@@ -1,5 +1,6 @@
 //! End-to-end grammar, topology, and rendered output checks for each supported family.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::RenderError;
 use crate::render;
 use pretty_assertions::assert_eq;
@@ -106,7 +107,9 @@ fn complex_families() {
         let width = output.lines().map(UnicodeWidthStr::width).max().unwrap();
         assert_eq!(render(source, width), Ok(output.clone()));
         assert_eq!(render(source, width - 1), Err(RenderError::TooWide));
-        insta::assert_snapshot!(name, output);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, output);
+        });
     }
 }
 
@@ -124,7 +127,9 @@ fn unicode_labels_and_later_declarations() {
         assert_eq!(render(&source, width), Ok(output.clone()));
         assert_eq!(render(&source, width - 1), Err(RenderError::TooWide));
         if direction == "LR" {
-            insta::assert_snapshot!("LR", output);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("LR", output);
+            });
         }
     }
     for descriptions in [

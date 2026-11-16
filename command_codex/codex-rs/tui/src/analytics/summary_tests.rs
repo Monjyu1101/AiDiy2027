@@ -1,4 +1,5 @@
 //! Summary reflow, aggregation selection, and independently unavailable profile sections.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -22,10 +23,12 @@ fn summary_modes_reflow_and_keep_selection_across_tabs() {
     view.profile = Load::Ready(profile());
     view.end_date = "2026-09-09".parse().unwrap();
     view.select_summary(Some(crate::analytics::TokenActivityView::Daily));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "summary_daily_wide",
         screen(&mut view, /*width*/ 140, /*height*/ 44)
     );
+    });
     press(&mut view, KeyCode::Char('g'));
     assert_eq!(view.sections[Section::Summary].group, 1);
     assert!(view.profile.ready().is_some());
@@ -33,10 +36,12 @@ fn summary_modes_reflow_and_keep_selection_across_tabs() {
     press(&mut view, KeyCode::BackTab);
     assert_eq!(view.sections[Section::Summary].group, 1);
     press(&mut view, KeyCode::Char('g'));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "summary_cumulative_narrow",
         screen(&mut view, /*width*/ 64, /*height*/ 60)
     );
+    });
     for width in [1, 4, 28, 64] {
         let lines = view.summary_lines(width);
         assert!(lines.iter().all(|line| line.width() <= width));
@@ -61,7 +66,9 @@ fn partial_summary_keeps_missing_values_and_zero() {
     })).unwrap());
     let rendered = screen(&mut view, /*width*/ 100, /*height*/ 40);
     assert!(!rendered.contains("sensitive upstream error"));
-    insta::assert_snapshot!("summary_partial", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("summary_partial", rendered);
+    });
     view.refresh();
     assert!(view.profile.ready().is_none());
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 //! Complete request history for catalog Apps wording across model switches and resumes.
@@ -160,7 +161,8 @@ async fn catalog_apps_instructions_follow_selected_model() -> Result<()> {
         guidance[7], guidance[6],
         "cleared resume must not repeat a notice"
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "catalog_apps_instructions_follow_selected_model",
         context_snapshot::format_request_history_snapshot(
             "Apps wording follows the selected model, retires bundled guidance when an unavailable model selects an override, preserves literal bytes, and survives both custom and cleared restarts without duplication.",
@@ -168,5 +170,6 @@ async fn catalog_apps_instructions_follow_selected_model() -> Result<()> {
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

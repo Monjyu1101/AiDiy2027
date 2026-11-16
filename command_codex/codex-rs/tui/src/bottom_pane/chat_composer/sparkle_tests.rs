@@ -1,5 +1,6 @@
 //! Covers the original starfield appearance, protected content, and composer eligibility.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::LARGE_PASTE_CHAR_THRESHOLD;
 use super::*;
 use crate::app_event_sender::AppEventSender;
@@ -168,7 +169,9 @@ fn sparkle_matches_the_original_starfield_and_protects_the_placeholder_and_curso
                 text(&typed)
             ));
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("starfield_protected_content", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -214,12 +217,14 @@ fn sparkle_fades_without_adding_dots_and_finishes_by_fifteen_seconds() {
             )
             .is_empty()
         );
-        insta::assert_snapshot!(format!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("sparkle_fade_15s", format!(
             "before fade:\n{}\nfading:\n{}\nfinished:\n{}",
             text(&last),
             text(&fading),
             text(&finished)
         ));
+        });
     });
 }
 
@@ -364,7 +369,9 @@ fn shortcut_help_preserves_an_unused_sparkle_but_literal_question_marks_do_not()
                 ));
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("help_vs_question_mark", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -451,7 +458,9 @@ fn shortcut_help_hides_visible_sparkles_without_restarting_their_deadline() {
         assert_eq!(literal.composer.current_text(), "?");
         key(&mut literal, KeyCode::Backspace);
         assert!(dots(&draw(&literal.composer, /*width*/ 80, during).0).is_empty());
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("help_sparkle_deadline", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -521,7 +530,9 @@ fn disconnected_sparkle_edits_are_tracked_between_renders() {
                 }
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("disconnected_edits", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -560,11 +571,13 @@ fn a_fresh_astra_response_waits_for_the_pending_command_to_leave() {
                 "{completion}"
             );
             if completion == "submit" {
-                insta::assert_snapshot!(format!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("astra_pending_command", format!(
                     "command during startup:\n{}\n\nafter command:\n{}",
                     text(&pending),
                     text(&completed)
                 ));
+                });
             }
         }
     });
@@ -629,7 +642,9 @@ fn history_search_acceptance_and_cancellation_update_sparkles_before_rendering()
                 }
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("history_completion", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -693,7 +708,9 @@ fn canceled_history_search_restores_visible_stars_only_before_the_original_deadl
                 ));
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("history_cancel_deadline", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -754,7 +771,9 @@ fn history_search_preserves_a_held_sparkle_command_without_reclassifying_it() {
                 }
             }
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("history_held_command", snapshots.join("\n\n"));
+        });
     });
 }
 
@@ -900,10 +919,12 @@ fn canceled_commands_remain_eligible_but_inserted_content_and_ordinary_paste_do_
             assert_eq!(pane.composer.sparkle.draft.get(), SparkleDraft::Dismissed);
             assert!(dots(&draw(&pane.composer, /*width*/ 80, now).0).is_empty());
             if input == "recovered" {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "cleared_recovered_draft_keeps_sparkle_dismissed",
                     text(&draw(&pane.composer, /*width*/ 80, now).0)
                 );
+                });
             }
         }
     });
@@ -946,7 +967,9 @@ fn review_regression_canceling_a_held_slash_restores_sparkle_command_tracking() 
                 text(&selected)
             ));
         }
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("cancel_held_slash", snapshots.join("\n\n"));
+        });
     });
 }
 

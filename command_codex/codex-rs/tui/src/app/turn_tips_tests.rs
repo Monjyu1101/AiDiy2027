@@ -1,5 +1,6 @@
 //! Foreground lifecycle, actual exposure, and dedicated-row geometry.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::owned_transcript::tests::attach_thread;
 use crate::app::owned_transcript::tests::buffer_text;
@@ -392,10 +393,12 @@ async fn turn_tip_placements_and_completion_barrier() -> Result<()> {
         }
         tui.set_owned_screen(/*owned*/ false)?;
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "turn_tip_placements",
         crate::chatwidget::tests::helpers::normalize_snapshot_paths(screens.join("\n\n"))
     );
+    });
     Ok(())
 }
 
@@ -485,10 +488,12 @@ async fn working_tip_stays_put_through_mouse_selection() -> Result<()> {
         );
         assert!(screen.contains("└ Tip: Try /help."), "{screen}");
         if kind == Down(Left) {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "working_tip_mouse_down",
                 crate::chatwidget::tests::helpers::normalize_working_snapshot(screen)
             );
+            });
         }
     }
     assert_eq!(
@@ -529,12 +534,14 @@ async fn working_tip_stays_put_through_mouse_selection() -> Result<()> {
         let crate::rendered_selection::RenderedSelection { view, cells, .. } = &mut *selection;
         assert_eq!(view.selected_text(cells), Some("/help".into()));
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "working_tip_selected",
         crate::chatwidget::tests::helpers::normalize_working_snapshot(buffer_text(
             crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal),
         ))
     );
+    });
     app.transcript_view.jump_to_latest();
     app.chat_widget
         .on_rate_limit_snapshot(Some(serde_json::from_value(serde_json::json!({

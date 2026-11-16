@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::StreamingRender;
 use super::render_source;
 use crate::history_cell::HistoryRenderMode;
@@ -112,7 +113,9 @@ fn incremental_render_keeps_final_block_mutable_and_matches_full_render() {
 
     assert!(render.stable_source_len > 0);
     assert!(render.stable_source_len < source.len());
-    assert_debug_snapshot!("incremental_render_representative_stream", render.lines);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!("incremental_render_representative_stream", render.lines);
+    });
 }
 
 #[test]
@@ -138,7 +141,9 @@ fn incremental_file_citations_preserve_metadata_unicode_and_markdown() {
 
         render.lines
     });
-    assert_debug_snapshot!("incremental_file_citations", rendered_cases);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!("incremental_file_citations", rendered_cases);
+    });
 }
 
 #[test]
@@ -333,10 +338,12 @@ fn inline_visualizations_without_context_use_canonical_full_render() {
 
     assert_eq!(render.stable_source_len, 0);
     assert!(render.has_inline_visualization_directive);
-    assert_debug_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(
         "inline_visualizations_without_context_use_canonical_full_render",
         render.lines
     );
+    });
 }
 
 #[test]

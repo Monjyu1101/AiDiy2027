@@ -1,5 +1,6 @@
 //! Real buffered notifications must use finalized rendering without losing live stream tails.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::tests::helpers::normalize_snapshot_paths;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
@@ -703,10 +704,12 @@ async fn switching_back_to_a_long_running_turn_preserves_steering() {
             }]
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "steers_after_returning_to_a_running_turn",
         normalize_snapshot_paths(render_bottom_popup(&app.chat_widget, /*width*/ 80))
     );
+    });
 }
 
 #[tokio::test]
@@ -814,12 +817,16 @@ async fn misalignment_buffered_replay_preserves_input_after_continuation() {
             _ => None,
         })
         .collect::<String>();
-    insta::assert_snapshot!("misalignment_replayed_failed_tool", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("misalignment_replayed_failed_tool", rendered);
+    });
     assert!(!app.chat_widget.has_misalignment_policy_violation());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "misalignment_replayed_input",
         normalize_snapshot_paths(render_bottom_popup(&app.chat_widget, /*width*/ 80))
     );
+    });
     assert_eq!(app.chat_widget.composer_text_with_pending(), "keep draft");
     assert_eq!(
         app.chat_widget.queued_user_message_texts(),

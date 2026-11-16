@@ -1,6 +1,7 @@
 //! Tooltip placeholders follow current keybindings and chords, render safely as Markdown,
 //! and suppress tips when any referenced shortcut is invalid or unbound.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use serde_json::json;
@@ -48,13 +49,15 @@ fn configured_shortcut_tips_render_at_narrow_width() {
     {
         line.spans[0].style.fg = None;
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         lines
             .iter()
             .map(|line| format!("{line:?}"))
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
 }
 
 #[test]

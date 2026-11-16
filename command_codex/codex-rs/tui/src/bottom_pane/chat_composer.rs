@@ -309,6 +309,7 @@
 //! overall state machine, since it affects which transitions are even possible from a given UI
 //! state.
 //!
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::key_hint;
 use crate::key_hint::KeyBinding;
 use crate::key_hint::ShortcutHint;
@@ -5113,7 +5114,9 @@ mod tests {
                 buffer[(0, 1)].bg,
                 crate::terminal_palette::rgb_color((244, 244, 244))
             );
-            insta::assert_snapshot!("light_terminal_palette_composer", format!("{buffer:?}"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("light_terminal_palette_composer", format!("{buffer:?}"));
+            });
         });
     }
 
@@ -5277,7 +5280,9 @@ mod tests {
         terminal
             .draw(|f| composer.render(f.area(), f.buffer_mut()))
             .unwrap();
-        insta::assert_snapshot!(name, terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, terminal.backend());
+        });
     }
 
     pub(super) fn snapshot_composer_state<F>(name: &str, enhanced_keys_supported: bool, setup: F)
@@ -5587,10 +5592,12 @@ mod tests {
             magenta.pop();
         }
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "plugin_at_mentions_render_with_plugin_accent",
             format!("text:    {text}\nmagenta: {magenta}")
         );
+        });
     }
 
     #[test]
@@ -7198,7 +7205,7 @@ mod tests {
     #[test]
     fn skill_popup_targets_unbound_mention_right_of_adjacent_bound_mention_snapshot() {
         snapshot_composer_state(
-            "skill_popup_targets_unbound_mention_right_of_adjacent_bound_mention",
+            "skill_popup_unbound_mention",
             /*enhanced_keys_supported*/ false,
             configure_bound_skill_left_of_unbound_skill,
         );
@@ -9346,7 +9353,9 @@ mod tests {
                 .draw(|f| composer.render(f.area(), f.buffer_mut()))
                 .unwrap_or_else(|e| panic!("Failed to draw {name} composer: {e}"));
 
-            insta::assert_snapshot!(name, terminal.backend());
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(name, terminal.backend());
+            });
         }
     }
 
@@ -9439,7 +9448,9 @@ mod tests {
             .expect("draw composer");
 
         // The picker sits above the draft; clipping must keep the draft and cursor visible.
-        insta::assert_snapshot!("slash_popup_mo_clipped", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("slash_popup_mo_clipped", terminal.backend());
+        });
     }
 
     #[test]
@@ -12817,6 +12828,8 @@ mod tests {
         terminal
             .draw(|f| composer.render(f.area(), f.buffer_mut()))
             .unwrap();
-        insta::assert_snapshot!("shutdown_in_progress", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("shutdown_in_progress", terminal.backend());
+        });
     }
 }

@@ -1,5 +1,6 @@
 //! Deferred namespace summaries keep names discoverable when descriptions exceed the budget.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_core::StartThreadOptions;
 use codex_features::Feature;
@@ -145,7 +146,8 @@ async fn descriptions_share_space_without_hiding_late_namespaces() -> Result<()>
             }],
         }]),
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "names_before_descriptions",
         context_snapshot::format_request_history_snapshot(
             "A crowded tool catalog retains every namespace, discovers a late namespace, and stays unchanged on follow-up.",
@@ -153,5 +155,6 @@ async fn descriptions_share_space_without_hiding_late_namespaces() -> Result<()>
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }

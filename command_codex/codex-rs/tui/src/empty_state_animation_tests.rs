@@ -1,5 +1,6 @@
 //! Logo visibility, theme contrast, placement, and redraw lifecycle tests.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyModifiers;
 use pretty_assertions::assert_eq;
@@ -175,7 +176,9 @@ fn first_screen_single_click_replays_the_visible_blossom() {
             painted.fg,
         ));
     }
-    insta::assert_snapshot!("first_screen_replay_fade", fade_frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("first_screen_replay_fade", fade_frames.join("\n"));
+    });
     assert_eq!(
         draw(&mut animation, &mut buffer, Some(ComposerState::Empty)),
         None
@@ -437,7 +440,8 @@ fn onboarding_keeps_full_color_after_budget_and_pause() {
             );
             assert_eq!(animation.opacity, 1.0);
             assert!(buffer.content.iter().any(|cell| cell.symbol() != " "));
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "onboarding_settled_logo",
                 buffer
                     .content
@@ -451,6 +455,7 @@ fn onboarding_keeps_full_color_after_budget_and_pause() {
                     .collect::<Vec<_>>()
                     .join("\n")
             );
+            });
             let settled = buffer.clone();
             animation.pause_clock();
             buffer.reset();

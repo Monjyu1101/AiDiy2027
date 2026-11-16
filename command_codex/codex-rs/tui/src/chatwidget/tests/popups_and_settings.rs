@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::ConnectorsSnapshot;
 use crate::bottom_pane::ExperimentalFeatureItem;
@@ -3206,10 +3207,12 @@ async fn experimental_popup_loading_snapshot() {
     chat.open_experimental_popup();
     assert!(!chat.has_active_view());
     let cell = assert_matches!(rx.try_recv(), Ok(AppEvent::InsertHistoryCell(cell)) => cell);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "experimental_features_startup",
         lines_to_single_string(&cell.display_lines(/*width*/ 80))
     );
+    });
     assert!(rx.try_recv().is_err());
     chat.thread_id = Some(ThreadId::new());
     chat.open_experimental_popup();

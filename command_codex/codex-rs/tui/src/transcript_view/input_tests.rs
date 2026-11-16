@@ -1,11 +1,12 @@
 //! Mouse gestures preserve selection anchors and accumulate fractional transcript scrolling.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::AgentMarkdownCell;
 use pretty_assertions::assert_eq;
 
 #[test]
-fn mouse_scroll_speed_scales_rows_and_accumulates_fractional_movement() {
+fn mouse_scroll_fractional_rows() {
     use crate::history_cell::PlainHistoryCell;
     use crate::transcript_view::tests::text;
 
@@ -50,7 +51,9 @@ fn mouse_scroll_speed_scales_rows_and_accumulates_fractional_movement() {
             }
         }
     }
-    insta::assert_snapshot!(frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n\n"));
+    });
 }
 
 #[test]
@@ -220,7 +223,9 @@ fn shift_click_extends_a_double_clicked_word_in_both_directions() {
         view.handle_mouse(mouse(kind, /*column*/ 17, /*row*/ 1), &cells);
     }
     assert_eq!(view.selected_text(&cells), None);
-    insta::assert_snapshot!(frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n\n"));
+    });
 }
 
 #[test]

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyEventKind;
@@ -141,7 +142,9 @@ fn startup_draft_renders_full_empty_and_multiline_composer_frames() {
         snapshots.push(format!("{label} ({width} columns):\n{frame}"));
     }
 
-    insta::assert_snapshot!("startup_draft_full_frames", snapshots.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("startup_draft_full_frames", snapshots.join("\n---\n"));
+    });
 }
 
 #[test]
@@ -193,12 +196,14 @@ fn terminal_app_ssh_fallback_renders_inline_startup() {
             "terminal_app_over_ssh={terminal_app_over_ssh}, owned={owned}\n{frame}"
         ));
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "terminal_app_ssh_startup",
         frames
             .join("\n---\n")
             .replace(crate::version::CODEX_CLI_VERSION, "<VERSION>")
     );
+    });
 }
 
 #[tokio::test]
@@ -284,10 +289,12 @@ async fn startup_draft_clears_loading_status_when_starting_fresh() {
         snapshots.push(format!("{label}:\nbefore:\n{before}\nafter:\n{after}"));
     }
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "startup_draft_fresh_session_transitions",
         snapshots.join("\n---\n")
     );
+    });
 }
 
 #[tokio::test]
@@ -750,7 +757,9 @@ async fn startup_draft_applies_super_editor_keymap_without_inserting_pending_new
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("startup_draft_safe_chord_guide", text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("startup_draft_safe_chord_guide", text);
+    });
     pump.handle_event(&mut tui, TuiEvent::Key(KeyCode::Char('e').into()))
         .expect("complete startup editor chord");
     assert_eq!(pump.bottom_pane.composer_cursor(), "draftx".len());
@@ -841,7 +850,9 @@ async fn startup_draft_waits_for_onboarding_before_accepting_input() {
         .replace(crate::version::CODEX_CLI_VERSION, "<VERSION>");
     drop(renderable);
     frames.push_str(&format!("\n---\nafter onboarding:\n{visible_frame}"));
-    insta::assert_snapshot!("startup_draft_onboarding_transition", frames);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("startup_draft_onboarding_transition", frames);
+    });
 
     pump.handle_event(
         &mut tui,

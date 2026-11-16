@@ -1,5 +1,6 @@
 //! Replacement starts use server defaults and preserve the current task on failure.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::backend_sessions::BackendSessions;
 use crate::app_server_session::AppServerSessionEvent;
@@ -263,7 +264,9 @@ async fn new_session_preserves_vim_line_yank() -> Result<()> {
         .take(2)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(composer_lines);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(composer_lines);
+    });
     server.shutdown().await?;
     proxy.await??;
     Ok(())
@@ -319,10 +322,12 @@ async fn widget_replacement_preserves_mention_usage_with_history_disabled() -> R
     app.replace_chat_widget(ChatWidget::new_with_app_event(init));
     app.chat_widget.set_skills_from_response(&skills);
     app.chat_widget.insert_str("$stat");
-    insta::assert_snapshot!(normalize_snapshot_paths(render_bottom_popup(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("mentions_without_history", normalize_snapshot_paths(render_bottom_popup(
         &app.chat_widget,
         /*width*/ 80
     )));
+    });
     assert!(
         !app.local_settings
             .codex_home
@@ -620,7 +625,8 @@ async fn plan_implementation_reads_approved_plan_file_in_fresh_session() -> Resu
     assert_eq!(prompt["role"], "user");
     let text = &mut prompt["content"][0]["text"];
     *text = text.as_str().unwrap().replace(path, "<PLAN_FILE>").into();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "clear_context_plan_request",
         context_snapshot::format_context_snapshot(
             "Clear context and implement the approved plan in a fresh thread.",
@@ -628,6 +634,7 @@ async fn plan_implementation_reads_approved_plan_file_in_fresh_session() -> Resu
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     server.shutdown().await?;
     Ok(())
 }
@@ -1513,7 +1520,9 @@ async fn provider_continuation_starts_current_provider_and_drafts_saved_referenc
                 .take(2)
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!("provider_continuation_draft", composer_lines);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("provider_continuation_draft", composer_lines);
+            });
             // A repeated queued key cannot create a second chat or send into the original.
             Box::pin(app.handle_event(
                 &mut tui,

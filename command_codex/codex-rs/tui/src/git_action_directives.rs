@@ -2,6 +2,7 @@
 //!
 //! Preserve whitespace on unchanged lines: Markdown hard breaks and code can depend on it.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::assistant_directives::AssistantDirective;
 use crate::assistant_directives::QuoteEscaping;
 use crate::assistant_directives::parse_assistant_directive;
@@ -279,7 +280,9 @@ mod tests {
             Path::new("/repo"),
         );
 
-        insta::assert_snapshot!("code_comment_directive_fallback", parsed.visible_markdown);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("code_comment_directive_fallback", parsed.visible_markdown);
+        });
         assert_eq!(
             parsed.git_actions,
             vec![GitActionDirective::Stage {

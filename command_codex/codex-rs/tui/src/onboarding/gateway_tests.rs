@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -38,10 +39,14 @@ async fn select_a_saved_gateway_during_sign_in() -> color_eyre::Result<()> {
     widget.gateway_setup_enabled = true;
 
     widget.handle_key_event(KeyCode::Char('3').into());
-    insta::assert_snapshot!("gateway_sign_in_menu", screen(&widget, /*height*/ 8));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_sign_in_menu", screen(&widget, /*height*/ 8));
+    });
     widget.handle_key_event(KeyCode::Char('4').into());
     widget.advance_gateway_request().await;
-    insta::assert_snapshot!("gateway_empty_picker", screen(&widget, /*height*/ 8));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_empty_picker", screen(&widget, /*height*/ 8));
+    });
     widget.handle_key_event(KeyCode::Esc.into());
 
     let managed = home.path().join("managed_config.toml");
@@ -50,7 +55,9 @@ async fn select_a_saved_gateway_during_sign_in() -> color_eyre::Result<()> {
     widget.advance_gateway_request().await;
     let error = screen(&widget, /*height*/ 8);
     assert!(error.contains("configuration policy"));
-    insta::assert_snapshot!("gateway_load_error", error);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_load_error", error);
+    });
     widget.handle_key_event(KeyCode::Esc.into());
     std::fs::remove_file(managed)?;
     std::fs::write(
@@ -64,7 +71,9 @@ wire_api = "responses"
     )?;
     widget.handle_key_event(KeyCode::Char('4').into());
     widget.advance_gateway_request().await;
-    insta::assert_snapshot!("gateway_saved_picker", screen(&widget, /*height*/ 8));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_saved_picker", screen(&widget, /*height*/ 8));
+    });
     widget.handle_key_event(KeyCode::Enter.into());
     widget.advance_gateway_request().await;
     assert!(matches!(widget.get_step_state(), StepState::Complete));
@@ -117,15 +126,21 @@ async fn create_highlights_the_saved_gateway_until_explicitly_selected() -> colo
     widget.handle_key_event(KeyCode::Down.into());
     widget.handle_paste("TEAM_KEY-".into());
     widget.handle_key_event(KeyCode::Down.into());
-    insta::assert_snapshot!("gateway_save_focused_short", screen(&widget, /*height*/ 4));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_save_focused_short", screen(&widget, /*height*/ 4));
+    });
     widget.handle_key_event(KeyCode::Enter.into());
-    insta::assert_snapshot!("gateway_save_error_short", screen(&widget, /*height*/ 4));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_save_error_short", screen(&widget, /*height*/ 4));
+    });
     widget.handle_key_event(KeyCode::Up.into());
     widget.handle_key_event(KeyCode::Backspace.into());
     widget.handle_key_event(KeyCode::Down.into());
     widget.handle_key_event(KeyCode::Enter.into());
     widget.advance_gateway_request().await;
-    insta::assert_snapshot!("gateway_validation_retry", screen(&widget, /*height*/ 8));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_validation_retry", screen(&widget, /*height*/ 8));
+    });
 
     // Correct the invalid URL and keep the other fields.
     widget.handle_key_event(KeyCode::Up.into());
@@ -142,7 +157,9 @@ async fn create_highlights_the_saved_gateway_until_explicitly_selected() -> colo
         KeyEventKind::Repeat,
     ));
     assert!(matches!(widget.get_step_state(), StepState::InProgress));
-    insta::assert_snapshot!("gateway_created_picker", screen(&widget, /*height*/ 8));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_created_picker", screen(&widget, /*height*/ 8));
+    });
     let page = list_providers(&widget.app_server_request_handle)
         .await
         .map_err(color_eyre::Report::msg)?;
@@ -192,10 +209,14 @@ async fn gateway_oauth_displays_the_browser_link_and_retry_action() {
         provider_id: "office".into(),
         url: Some("https://office.example.test/authorize".into()),
     };
-    insta::assert_snapshot!("gateway_oauth_browser", screen(&widget, /*height*/ 4));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_oauth_browser", screen(&widget, /*height*/ 4));
+    });
     *widget.sign_in_state.write().unwrap() = SignInState::GatewayOAuthFailed {
         provider_id: "office".into(),
         message: "Gateway sign-in expired.".into(),
     };
-    insta::assert_snapshot!("gateway_oauth_failed", screen(&widget, /*height*/ 4));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gateway_oauth_failed", screen(&widget, /*height*/ 4));
+    });
 }

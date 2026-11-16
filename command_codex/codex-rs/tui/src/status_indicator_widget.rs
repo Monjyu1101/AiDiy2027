@@ -6,6 +6,7 @@
 //! Hook activity uses the remaining space or its own line on overflow, so it
 //! never displaces background-process controls.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::time::Duration;
 use std::time::Instant;
 
@@ -380,7 +381,9 @@ mod tests {
         terminal
             .draw(|f| w.with_timer(&timer).render(f.area(), f.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -400,7 +403,9 @@ mod tests {
         terminal
             .draw(|f| w.with_timer(&timer).render(f.area(), f.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -430,7 +435,9 @@ mod tests {
         terminal
             .draw(|f| w.with_timer(&timer).render(f.area(), f.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -476,7 +483,9 @@ mod tests {
         terminal
             .draw(|f| w.with_timer(&timer).render(f.area(), f.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -522,7 +531,9 @@ mod tests {
                     .expect("draw");
                 frames.push(format!("{width} columns:\n{}", terminal.backend()));
             }
-            insta::assert_snapshot!(snapshot, frames.join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshot, frames.join("\n"));
+            });
         }
     }
 

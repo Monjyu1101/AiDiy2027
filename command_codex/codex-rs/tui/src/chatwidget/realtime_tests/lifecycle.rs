@@ -1,5 +1,6 @@
 //! Voice startup, shutdown, and retry maintain one active owned session.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::session_lock::SessionLock;
 use super::*;
 use crate::app_event::RealtimeWebrtcStartupFailure;
@@ -254,7 +255,8 @@ async fn voice_becomes_active_only_after_backend_and_current_peer_are_ready() {
     let Ok(AppEvent::InsertHistoryCell(cell)) = events.try_recv() else {
         panic!("voice start should insert its history banner");
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_start_banner",
         cell.display_lines(/*width*/ 80)
             .into_iter()
@@ -262,6 +264,7 @@ async fn voice_becomes_active_only_after_backend_and_current_peer_are_ready() {
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
 }
 
 #[tokio::test]
@@ -286,7 +289,9 @@ async fn normal_voice_close_renders_the_ended_message() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("voice_ended_message", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_ended_message", rendered);
+    });
 }
 
 #[tokio::test]
@@ -344,7 +349,9 @@ async fn startup_retry_waits_for_closed_then_uses_a_fresh_attempt_and_preserves_
             );
         }
     }
-    insta::assert_snapshot!("voice_startup_retry", rendered.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_startup_retry", rendered.join("\n"));
+    });
     chat.on_realtime_conversation_closed(Some("transport_closed".into()));
     assert_eq!(
         chat.realtime_conversation.phase,
@@ -520,7 +527,9 @@ async fn session_lock_during_retry_cleanup_keeps_the_microphone_off() {
         .map(|line| line.to_string())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("voice_session_lock_stop", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_session_lock_stop", rendered);
+    });
 }
 
 #[tokio::test]
@@ -566,7 +575,9 @@ async fn startup_transport_close_before_peer_timeout_retries_once_and_ignores_ol
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("voice_startup_transport_close_retry", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_startup_transport_close_retry", rendered);
+    });
 
     chat.on_realtime_webrtc_connected(
         /*attempt_id*/ 0,
@@ -663,5 +674,7 @@ async fn failure_cleanup_does_not_attribute_stop_to_the_user() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("voice_device_failure_cleanup", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_device_failure_cleanup", rendered);
+    });
 }

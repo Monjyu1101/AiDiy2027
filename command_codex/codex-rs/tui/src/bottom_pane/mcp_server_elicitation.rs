@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashSet;
 use std::collections::VecDeque;
 use std::path::PathBuf;
@@ -2313,10 +2314,12 @@ mod tests {
         .map(str::trim_end)
         .collect::<Vec<_>>()
         .join("\n");
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_text_configured_key_chords",
             snapshot
         );
+        });
         assert!(
             overlay
                 .keymap_contexts()
@@ -2665,7 +2668,9 @@ mod tests {
             })
             .collect::<String>();
         assert_eq!(linked, url);
-        insta::assert_snapshot!("mcp_form_wrapped_url", snapshot_buffer(&buf));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("mcp_form_wrapped_url", snapshot_buffer(&buf));
+        });
     }
 
     #[test]
@@ -2702,10 +2707,12 @@ mod tests {
             overlay.program_status_blocked_kind(),
             Some(ProgramStatusKind::Question)
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_boolean_form",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 
     #[test]
@@ -2733,10 +2740,12 @@ mod tests {
             overlay.program_status_blocked_kind(),
             Some(ProgramStatusKind::Permission)
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_approval_form_without_schema",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 
     #[test]
@@ -2756,10 +2765,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_message_only_form",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 
     #[test]
@@ -2784,10 +2795,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_message_only_form_with_persist_options",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 
     #[test]
@@ -2814,10 +2827,12 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_approval_form_with_session_persist",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 
     #[test]
@@ -2867,9 +2882,11 @@ mod tests {
             /*disable_paste_burst*/ false,
         );
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "mcp_server_elicitation_approval_form_with_param_summary",
             render_snapshot(&overlay, Rect::new(0, 0, 120, 16))
         );
+        });
     }
 }

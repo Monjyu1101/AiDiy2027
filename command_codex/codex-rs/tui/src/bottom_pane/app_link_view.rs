@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #[cfg(test)]
 use crate::app_command::AppCommand as Op;
 use codex_app_server_protocol::McpServerElicitationAction;
@@ -1641,13 +1642,15 @@ mod tests {
             tx,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "app_link_view_install_suggestion_with_reason",
             render_snapshot(
                 &view,
                 Rect::new(0, 0, 72, view.desired_height(/*width*/ 72))
             )
         );
+        });
     }
 
     #[test]
@@ -1670,13 +1673,15 @@ mod tests {
             tx,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "app_link_view_enable_suggestion_with_reason",
             render_snapshot(
                 &view,
                 Rect::new(0, 0, 72, view.desired_height(/*width*/ 72))
             )
         );
+        });
     }
 
     #[test]
@@ -1700,13 +1705,15 @@ mod tests {
             tx,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "app_link_view_auth_suggestion_with_reason",
             render_snapshot(
                 &view,
                 Rect::new(0, 0, 72, view.desired_height(/*width*/ 72))
             )
         );
+        });
     }
 
     #[test]
@@ -1730,13 +1737,15 @@ mod tests {
         .expect("expected generic URL app link params");
         let view = AppLinkView::new(params, tx);
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "app_link_view_generic_url_elicitation",
             render_snapshot(
                 &view,
                 Rect::new(0, 0, 72, view.desired_height(/*width*/ 72))
             )
         );
+        });
     }
 
     #[test]
@@ -1762,12 +1771,14 @@ mod tests {
 
         view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "app_link_view_generic_url_elicitation_confirmation",
             render_snapshot(
                 &view,
                 Rect::new(0, 0, 72, view.desired_height(/*width*/ 72))
             )
         );
+        });
     }
 }

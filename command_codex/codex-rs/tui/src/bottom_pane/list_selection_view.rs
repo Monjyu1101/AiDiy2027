@@ -3,6 +3,7 @@
 //! Controls and overflow indicators keep their own rows outside the result viewport.
 //! Letter-labeled children are indented and do not consume numeric shortcuts.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -2168,16 +2169,20 @@ mod tests {
     #[test]
     fn renders_blank_line_between_title_and_items_without_subtitle() {
         let view = make_selection_view(/*subtitle*/ None);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_spacing_without_subtitle",
             render_lines(&view)
         );
+        });
     }
 
     #[test]
     fn renders_blank_line_between_subtitle_and_items() {
         let view = make_selection_view(Some("Switch between Codex approval presets"));
-        assert_snapshot!("list_selection_spacing_with_subtitle", render_lines(&view));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("list_selection_spacing_with_subtitle", render_lines(&view));
+        });
     }
 
     #[test]
@@ -2279,10 +2284,12 @@ mod tests {
             },
             tx,
         );
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_footer_note_wraps",
             render_lines_with_width(&view, /*width*/ 40)
         );
+        });
     }
 
     #[test]
@@ -2336,7 +2343,9 @@ mod tests {
             .map(str::trim_end)
             .collect::<Vec<_>>()
             .join("\n");
-        assert_snapshot!("list_selection_empty_searchable", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("list_selection_empty_searchable", rendered);
+        });
     }
 
     #[test]
@@ -3200,10 +3209,12 @@ mod tests {
             },
             tx,
         );
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_model_picker_width_80",
             render_lines_with_width(&view, /*width*/ 80)
         );
+        });
     }
 
     #[test]
@@ -3227,10 +3238,12 @@ mod tests {
             },
             tx,
         );
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_narrow_width_preserves_rows",
             render_lines_with_width(&view, /*width*/ 24)
         );
+        });
     }
 
     #[test]
@@ -3265,23 +3278,29 @@ mod tests {
             render_lines_with_width(&view, /*width*/ 20),
             render_lines_with_width(&view, /*width*/ 24)
         );
-        assert_snapshot!("list_selection_halfwidth_sound_marks_narrow", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("list_selection_halfwidth_sound_marks_narrow", rendered);
+        });
     }
 
     #[test]
     fn snapshot_auto_visible_col_width_mode_scroll_behavior() {
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_col_width_mode_auto_visible_scroll",
             render_before_after_scroll_snapshot(ColumnWidthMode::AutoVisible, /*width*/ 96)
         );
+        });
     }
 
     #[test]
     fn snapshot_auto_all_rows_col_width_mode_scroll_behavior() {
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "list_selection_col_width_mode_auto_all_rows_scroll",
             render_before_after_scroll_snapshot(ColumnWidthMode::AutoAllRows, /*width*/ 96)
         );
+        });
     }
 
     #[test]

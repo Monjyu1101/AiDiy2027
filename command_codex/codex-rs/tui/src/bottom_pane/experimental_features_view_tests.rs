@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -44,7 +45,9 @@ fn experimental_features_keep_following_choice_at_wrap_boundary() {
         );
         snapshots.push(format!("width={width}\n{text}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 /// Experimental settings show each feature's label, description, and default state.
@@ -130,10 +133,12 @@ fn experimental_features_discovery_preserves_server_order_and_accepts_new_keys()
     );
     let mut buffer = Buffer::empty(area);
     view.render(area, &mut buffer);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "experimental_features_server_discovery",
         buffer_text(&buffer)
     );
+    });
     // New server features are writable without a local Feature enum variant.
     view.state.selected_idx = Some(1);
     view.toggle_selected();
@@ -238,7 +243,9 @@ fn experimental_features_empty_error_and_cancel_remain_usable() {
         );
         let mut buffer = Buffer::empty(area);
         view.render(area, &mut buffer);
-        insta::assert_snapshot!(snapshot, buffer_text(&buffer));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, buffer_text(&buffer));
+        });
         view.on_ctrl_c();
         assert!(view.is_complete());
         assert!(app_rx.try_recv().is_err());
@@ -280,5 +287,7 @@ fn snapshot_view(name: &str, view: &ExperimentalFeaturesView) {
     );
     let mut buffer = Buffer::empty(area);
     view.render(area, &mut buffer);
-    insta::assert_snapshot!(name, buffer_text(&buffer));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(name, buffer_text(&buffer));
+    });
 }

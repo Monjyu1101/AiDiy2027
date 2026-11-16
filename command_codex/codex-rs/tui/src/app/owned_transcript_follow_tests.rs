@@ -1,5 +1,6 @@
 //! The return control preserves composer geometry and draft across mouse navigation and resize.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::PlainHistoryCell;
 use crossterm::event::MouseButton;
@@ -50,12 +51,14 @@ async fn follow_control_click_preserves_draft_caret_and_composer_geometry() -> R
         let cursor = tui.terminal.last_known_cursor_pos;
         if running {
             let buffer = crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "running_without_composer_hint",
                 crate::chatwidget::tests::helpers::normalize_snapshot_paths(
                     super::tests::buffer_text(buffer)
                 ),
             );
+            });
         }
         app.transcript_view
             .scroll(&app.transcript_cells, /*rows*/ -10);
@@ -117,22 +120,26 @@ async fn follow_control_click_preserves_draft_caret_and_composer_geometry() -> R
             if running && height == 9 {
                 let buffer =
                     crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal);
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "running_follow_control_short_terminal",
                     crate::chatwidget::tests::helpers::normalize_snapshot_paths(
                         super::tests::buffer_text(buffer)
                     ),
                 );
+                });
             }
         }
         let buffer = crate::custom_terminal::test_support::last_rendered_buffer(&tui.terminal);
         if running {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "running_follow_control",
                 crate::chatwidget::tests::helpers::normalize_snapshot_paths(
                     super::tests::buffer_text(buffer)
                 ),
             );
+            });
         }
         let (column, row) = buffer
             .content()
@@ -192,12 +199,14 @@ async fn follow_control_click_preserves_draft_caret_and_composer_geometry() -> R
                     super::tests::buffer_text(buffer)
                 ));
             }
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "running_copy_feedback_spacing",
                 crate::chatwidget::tests::helpers::normalize_working_snapshot(
                     snapshots.join("\n\n")
                 ),
             );
+            });
         }
     }
     tui.set_owned_screen(/*owned*/ false)?;

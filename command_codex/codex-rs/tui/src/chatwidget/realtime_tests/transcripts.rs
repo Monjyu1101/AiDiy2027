@@ -1,5 +1,6 @@
 //! Partial and completed captions stay ordered and bounded through voice shutdown.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -279,7 +280,9 @@ async fn interleaved_partial_transcripts_survive_voice_close() {
         .join("\n");
     assert_eq!(rendered.matches("Correction").count(), 1);
     assert_eq!(rendered.matches("First answer").count(), 1);
-    insta::assert_snapshot!("interleaved_partials_on_close", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("interleaved_partials_on_close", rendered);
+    });
 }
 
 #[tokio::test]
@@ -354,7 +357,9 @@ async fn stopping_voice_keeps_the_complete_late_final_caption() {
     assert_eq!(rendered.matches("First").count(), 2);
     assert_eq!(rendered.matches("and last").count(), 1);
     assert!(ops.try_recv().is_err());
-    insta::assert_snapshot!("voice_stop_late_transcript", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_stop_late_transcript", rendered);
+    });
 }
 
 #[tokio::test]
@@ -679,7 +684,9 @@ async fn completed_transcript_is_added_to_history_and_clears_the_caption() {
         ),
         (None, "")
     );
-    insta::assert_snapshot!(rendered.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("transcript_completion", rendered.join("\n"));
+    });
 }
 
 #[tokio::test]

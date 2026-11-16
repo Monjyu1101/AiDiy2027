@@ -1,5 +1,6 @@
 //! Quota selection, sparse updates, read ordering, and compact notice formatting.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::AppEvent;
 use crate::app_event::RateLimitRefreshOrigin;
@@ -66,7 +67,9 @@ fn notice_details_fit_without_truncating_the_warning() {
                     .to_owned(),
             );
         }
-        insta::assert_snapshot!(name, lines.join("\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, lines.join("\n"));
+        });
     }
 }
 

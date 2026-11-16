@@ -1,5 +1,6 @@
 //! Regression coverage for the live and replayed patch-approval pager.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::app_server_requests::AppServerRequestResolution;
 use crate::app::owned_transcript::tests::buffer_text;
@@ -224,7 +225,9 @@ async fn active_patch_approval_pager_preserves_changes_and_accepts_once() -> Res
     app.render_owned_transcript(&mut tui, size)?;
     let expanded = buffer_text(last_rendered_buffer(&tui.terminal));
     insta::with_settings!({snapshot_path => "../../snapshots"}, {
-        insta::assert_snapshot!("patch_approval_expanded_inline", normalize_snapshot_paths(expanded));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("patch_approval_expanded_inline", normalize_snapshot_paths(expanded));
+        });
     });
     let request = open_patch(&mut app, &mut rx);
     assert_eq!(request.changes, expected_changes());
@@ -237,7 +240,9 @@ async fn active_patch_approval_pager_preserves_changes_and_accepts_once() -> Res
     .await?;
     let first = render_pager(&mut app, /*width*/ 48, /*height*/ 11);
     insta::with_settings!({snapshot_path => "../../snapshots"}, {
-        insta::assert_snapshot!("patch_approval_pager_top", format!("{first:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("patch_approval_pager_top", format!("{first:?}"));
+        });
     });
 
     app.handle_tui_event(
@@ -248,7 +253,9 @@ async fn active_patch_approval_pager_preserves_changes_and_accepts_once() -> Res
     .await?;
     let last = render_pager(&mut app, /*width*/ 48, /*height*/ 11);
     insta::with_settings!({snapshot_path => "../../snapshots"}, {
-        insta::assert_snapshot!("patch_approval_pager_bottom", format!("{last:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("patch_approval_pager_bottom", format!("{last:?}"));
+        });
     });
     let _ = render_pager(&mut app, /*width*/ 36, /*height*/ 7);
     assert_eq!(render_pager(&mut app, /*width*/ 48, /*height*/ 11), last);

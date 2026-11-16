@@ -42,6 +42,7 @@
 //! .build();
 //! ```
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_utils_fuzzy_match::fuzzy_match;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -1090,7 +1091,9 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["field-11"]
         );
-        insta::assert_snapshot!(snapshots.join("\n\n"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshots.join("\n\n"));
+        });
     }
 
     #[test]
@@ -1143,8 +1146,10 @@ mod tests {
         let last = render(&picker);
         picker.handle_key_event(KeyEvent::new(KeyCode::Char('z'), KeyModifiers::NONE));
         let empty = render(&picker);
-        insta::assert_snapshot!(format!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!(
             "First page:\n{first:?}\nLast page:\n{last:?}\nNo matches:\n{empty:?}"
         ));
+        });
     }
 }

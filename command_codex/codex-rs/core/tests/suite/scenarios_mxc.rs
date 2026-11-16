@@ -1,5 +1,6 @@
 //! Exercises resolved local MXC selection in a real thread and snapshots its permission context.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_protocol::models::PermissionProfile;
 use codex_protocol::permissions::NetworkSandboxPolicy;
@@ -54,7 +55,8 @@ async fn preferred_mxc_reaches_local_thread_and_permission_context(prefer_mxc: b
         )]
     );
     if prefer_mxc {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "preferred_mxc_permissions",
             context_snapshot::format_request_history_snapshot(
                 "Resolved local MXC selection preserves workspace-write permissions in a real agent turn.",
@@ -62,6 +64,7 @@ async fn preferred_mxc_reaches_local_thread_and_permission_context(prefer_mxc: b
                 &ContextSnapshotOptions::default(),
             )
         );
+        });
     }
     Ok(())
 }

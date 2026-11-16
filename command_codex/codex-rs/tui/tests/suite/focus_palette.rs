@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::fs::File;
 use std::io::Read;
 use std::io::Write;
@@ -682,7 +683,9 @@ fn auto_daemon_start_failure_exits_with_manual_fallback_hint() -> Result<()> {
                     "[CODEX_HOME]",
                 )
                 .replace('\r', "");
-            insta::assert_snapshot!("daemon_auto_start_failure", failure.trim());
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("daemon_auto_start_failure", failure.trim());
+            });
             return Ok(());
         }
     }

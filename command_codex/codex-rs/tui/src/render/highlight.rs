@@ -27,6 +27,7 @@
 //! prevent pathological CPU/memory usage.  Callers must fall back to plain
 //! unstyled text.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::model_themes;
 use ratatui::style::Color as RtColor;
 use ratatui::style::Modifier;
@@ -1194,7 +1195,9 @@ mod tests {
                 out.push_str(&format!("  {color}\n"));
             }
         }
-        assert_snapshot!("ansi_family_foreground_palette", out);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("ansi_family_foreground_palette", out);
+        });
     }
 
     #[test]

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyModifiers;
@@ -58,29 +59,35 @@ fn make_view_for_request(
 #[test]
 fn prompt_snapshot() {
     let (view, _app_rx) = make_view();
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "user_verification_prompt",
         render_view_lines(&view, /*width*/ 80, view.desired_height(/*width*/ 80))
     );
+    });
 }
 
 #[test]
 fn clipped_prompt_exposes_fullscreen_hint() {
     let (view, _app_rx) = make_view();
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "user_verification_narrow",
         render_view_lines(&view, /*width*/ 40, /*height*/ 8)
     );
+    });
 }
 
 #[test]
 fn waiting_snapshot_and_duplicate_approval_suppression() {
     let (mut view, mut app_rx) = make_view();
     view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "user_verification_waiting",
         render_view_lines(&view, /*width*/ 80, view.desired_height(/*width*/ 80))
     );
+    });
     view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
     assert_eq!(
         app_rx.try_recv().expect("approval"),
@@ -166,10 +173,12 @@ fn long_url_tokens_remain_visible_in_a_narrow_verification_prompt() {
         server_name: "deployments".to_string(),
         request_id: RequestId::Integer(12),
     });
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "user_verification_long_urls",
         render_view_lines(&view, /*width*/ 30, view.desired_height(/*width*/ 30))
     );
+    });
     let urls = [
         "https://example.com/production/release/candidate?",
         "https://example.com/production/critical-release-candidate",
@@ -231,6 +240,8 @@ async fn full_screen_pager_reaches_the_end_of_a_long_request() -> std::io::Resul
         crate::tui::TuiEvent::Key(KeyEvent::new(KeyCode::End, KeyModifiers::NONE)),
     )?;
     pager.render(area, &mut buf);
-    assert_snapshot!("user_verification_full_screen_bottom", format!("{buf:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("user_verification_full_screen_bottom", format!("{buf:?}"));
+    });
     Ok(())
 }

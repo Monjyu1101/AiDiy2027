@@ -1,5 +1,6 @@
 //! Host capacity is acquired by the ordinary task startup path, including on a root.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -223,14 +224,17 @@ async fn root_denial_and_interruption_retain_input_and_grants_span_execution() -
         .await?;
     wait_for_successful_turn(&test.codex).await;
     assert!(released.is_cancelled());
-    insta::assert_snapshot!(
-        "retained_input_after_admission",
-        context_snapshot::format_request_history_snapshot(
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = context_snapshot::format_request_history_snapshot(
             "The admitted turn receives input retained after denial and interruption, then completes its tool call.",
             &responses::received_responses_requests(&server).await,
             &ContextSnapshotOptions::default().rewrite_known_segments(),
-        )
-    );
+        );
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("retained_input_after_admission", snapshot_value);
+        });
+    };
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

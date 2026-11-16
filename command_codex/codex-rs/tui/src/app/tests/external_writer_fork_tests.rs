@@ -1,5 +1,6 @@
 //! Locked-thread fork shortcuts reuse the normal fork flow without taking the source lease.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::session_lifecycle_requests::recorded_params;
 use super::session_lifecycle_requests::start_recording_app_server;
 use super::*;
@@ -212,7 +213,9 @@ async fn external_writer_fork_opens_editable_thread_without_taking_source_lease(
             _ => None,
         })
         .collect::<Vec<_>>();
-    insta::assert_snapshot!("fork_completion", messages.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("fork_completion", messages.join("\n"));
+    });
     assert_eq!(
         recorded_params(&requests, "thread/fork")
             .into_iter()

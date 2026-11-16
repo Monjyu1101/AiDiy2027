@@ -1,5 +1,6 @@
 //! Composer paste handling for literal paths and raw tabs.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::tests::new_test_composer;
 use super::*;
 use pretty_assertions::assert_eq;
@@ -58,7 +59,9 @@ fn paste_burst_tabs_preserve_multiline_draft() {
                 terminal
                     .draw(|frame| composer.render(frame.area(), frame.buffer_mut()))
                     .unwrap();
-                insta::assert_snapshot!("paste_burst_tab_indentation", terminal.backend());
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("paste_burst_tab_indentation", terminal.backend());
+                });
             }
 
             let (result, _) = composer.handle_key_event(KeyEvent::from(KeyCode::Tab));

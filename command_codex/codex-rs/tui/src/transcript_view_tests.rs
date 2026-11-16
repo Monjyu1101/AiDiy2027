@@ -1,5 +1,6 @@
 //! Viewport behavior and cache lifetime across scrolling, selection, and redraws.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::new_user_prompt;
 use crossterm::event::KeyCode;
@@ -103,10 +104,12 @@ fn consecutive_user_prompts_share_one_background_block() {
         || {
             let mut view = TranscriptView::default();
             let buffer = render(&mut view, &cells, /*width*/ 32, /*height*/ 12);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "consecutive_user_prompts_share_one_background_block",
                 format!("{buffer:?}")
             );
+            });
         },
     );
 }
@@ -247,10 +250,12 @@ fn page_keys_follow_pager_scroll_bindings() {
             assert!(view.handle_key(key, &cells).is_none());
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "page_keys_follow_pager_scroll_bindings",
         frames.join("\n\n")
     );
+    });
 }
 
 #[test]
@@ -387,7 +392,9 @@ fn terminal_output_disclosure_counts_only_revealable_lines() {
             .trim_end()
         ));
     }
-    insta::assert_snapshot!(frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(frames.join("\n\n"));
+    });
 }
 
 #[test]
@@ -768,7 +775,9 @@ fn selecting_within_an_edge_row_does_not_start_selection_autoscroll() {
             assert_eq!(view.selected_text(&cells).as_deref(), Some("row"));
         }
         if edge == 0 {
-            insta::assert_snapshot!("horizontal_selection_at_edge_0", text(&selected));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("horizontal_selection_at_edge_0", text(&selected));
+            });
         }
         let drag = MouseEvent {
             kind: MouseEventKind::Drag(MouseButton::Left),
@@ -872,7 +881,9 @@ fn wheel_scrolling_pauses_selection_autoscroll_until_the_next_drag() {
         view.handle_mouse(click, &cells);
         assert_eq!(view.selected_text(&cells), None);
     }
-    insta::assert_snapshot!("wheel_stops_selection_autoscroll", frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("wheel_stops_selection_autoscroll", frames.join("\n\n"));
+    });
 }
 
 #[test]
@@ -1303,10 +1314,12 @@ fn user_prompt_has_a_background_without_a_terminal_palette() {
         || {
             let mut view = TranscriptView::default();
             let buffer = render(&mut view, &cells, /*width*/ 32, /*height*/ 8);
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "user_prompt_has_a_background_without_a_terminal_palette",
                 format!("{buffer:?}")
             );
+            });
         },
     );
 }

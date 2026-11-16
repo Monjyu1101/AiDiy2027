@@ -1,5 +1,6 @@
 //! Copy and painting regressions over the shared source-backed text layout.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::TextLayout;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::adaptive_wrap_hyperlink_lines;
@@ -402,7 +403,9 @@ fn command_and_output_copy_preserve_hard_lines_across_resize() {
         );
         let mut buffer = Buffer::empty(area);
         narrow.render(area, &mut buffer, /*start_row*/ 0);
-        insta::assert_snapshot!(name, format!("{buffer:?}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(name, format!("{buffer:?}"));
+        });
     }
 }
 

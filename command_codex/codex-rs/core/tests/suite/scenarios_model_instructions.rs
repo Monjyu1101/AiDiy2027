@@ -1,5 +1,6 @@
 //! Model-visible instructions and tools from catalog routing, refresh, and compaction.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_models_manager::manager::RefreshStrategy;
 use codex_models_manager::model_info::model_info_from_slug;
@@ -89,7 +90,8 @@ async fn originator_catalogs_control_turn_instructions_and_tools() -> Result<()>
     ]) {
         assert_eq!(request.instructions_text(), expected);
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "originator_catalog_instructions_and_tools",
         context_snapshot::format_request_history_snapshot(
             "Default, Work, Chat, unsupported, and repeated Work threads use their own catalog instructions and tools. Unsupported callers preserve the default request; repeated Work reuses its catalog.",
@@ -99,6 +101,7 @@ async fn originator_catalogs_control_turn_instructions_and_tools() -> Result<()>
                 .include_request_settings(),
         )
     );
+    });
     let tools = requests
         .iter()
         .map(|request| {
@@ -208,7 +211,8 @@ async fn catalog_refresh_replaces_instructions_and_compaction_installs_latest_ba
     .await;
     test.submit_turn("Continue after compaction.").await?;
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "incremental_model_instructions",
         context_snapshot::format_request_history_snapshot(
             "A same-model catalog refresh appends replacement instructions once without changing tools or the prefix. Compaction starts a new window with the latest base.",
@@ -216,5 +220,6 @@ async fn catalog_refresh_replaces_instructions_and_compaction_installs_latest_ba
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

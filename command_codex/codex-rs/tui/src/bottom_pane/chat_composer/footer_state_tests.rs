@@ -1,5 +1,6 @@
 //! Footer replacement keeps the existing layout and the focused editor's cursor together.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event::AppEvent;
 use crate::app_event_sender::AppEventSender;
@@ -99,10 +100,12 @@ fn retained_command_suggestions_yield_paint_and_cursor_to_find() {
             text(&buffer)
         ));
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "find_hides_retained_command_suggestions",
         frames.join("\n\n")
     );
+    });
     assert_eq!(render(&composer, /*footer*/ None), original);
 }
 
@@ -127,7 +130,9 @@ fn copying_from_find_preserves_the_query_above_selection_feedback() {
     let output = text(&buffer);
     assert!(output.contains("Find: needle"));
     assert!(output.contains("Copied selection to clipboard"));
-    insta::assert_snapshot!("transcript_find_copy_footer", output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("transcript_find_copy_footer", output);
+    });
 }
 
 #[test]

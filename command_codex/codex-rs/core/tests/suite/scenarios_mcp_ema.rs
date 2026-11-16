@@ -1,5 +1,6 @@
 //! Enterprise authentication and revocation preserve ordinary tools and accumulated history.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_config::test_support::CloudConfigBundleFixture;
 use codex_login::CodexAuth;
@@ -66,7 +67,9 @@ http_headers = {{ Authorization = "Bearer ordinary-access" }}
                 _ => None,
             })
             .await;
-            insta::assert_snapshot!("enterprise_sign_in_required", error);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("enterprise_sign_in_required", error);
+            });
         }
         // Allow MCP's 30-second startup deadline before checking the result.
         let startup = wait_for_event_with_timeout(
@@ -131,10 +134,12 @@ http_headers = {{ Authorization = "Bearer ordinary-access" }}
         test.codex.shutdown_and_wait().await?;
     }
     assert_eq!(histories[0], histories[1]);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "enterprise_failure_preserves_ordinary_mcp_history",
         histories[1]
     );
+    });
     Ok(())
 }
 
@@ -722,7 +727,8 @@ http_headers = {{ Authorization = "Bearer ordinary-access" }}
             "Bearer ordinary-access"
         ]
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "enterprise_revocation_preserves_history_and_ordinary_tools",
         context_snapshot::format_request_history_snapshot(
             "Enterprise access disappears after revocation. Prior calls remain in history and ordinary tools still work.",
@@ -732,6 +738,7 @@ http_headers = {{ Authorization = "Bearer ordinary-access" }}
                 .include_request_settings(),
         )
     );
+    });
     test.codex.shutdown_and_wait().await?;
     Ok(())
 }

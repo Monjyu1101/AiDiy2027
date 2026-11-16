@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::async_scorer::authorization::ScoreAuthorization;
 use crate::async_scorer::conversation::ConversationBackend;
@@ -931,14 +932,16 @@ async fn concurrent_requests_retain_only_the_newest_completed_history() -> Resul
             .map(|(request, label)| SnapshotEntry::body(request).labeled(label))
             .collect::<Vec<_>>();
         // Completing or cancelling the older request must leave the same context.
-        insta::assert_snapshot!(
-            "concurrent_requests_retain_only_the_newest_completed_history",
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
+            "concurrent_history",
             format_context_snapshot(
                 "Concurrent reviews fork the latest completed history. The newer review finishes first; invalid output and the older review cannot replace its history.",
                 &entries,
                 &ContextSnapshotOptions::default().include_request_settings(),
             )
         );
+        });
         fixture.test.codex.shutdown_and_wait().await?;
         server.shutdown().await;
     }

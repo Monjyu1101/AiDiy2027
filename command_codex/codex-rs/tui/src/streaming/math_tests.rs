@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::StreamCore;
 use super::render_source;
 use crate::history_cell::HistoryRenderMode;
@@ -110,7 +111,9 @@ fn unicode_math_raw_preview_preserves_line_on_newline() {
         assert_eq!(preview.len(), 1);
         assert_eq!(preview[0].line.to_string(), source);
         if open == "$$" {
-            insta::assert_snapshot!("unicode_math_raw_preview", preview[0].line.to_string());
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("unicode_math_raw_preview", preview[0].line.to_string());
+            });
         }
         stream.push_delta("\n");
         let (lines, raw) = stream.finalize_remaining();
@@ -144,7 +147,8 @@ fn unicode_math_unfinished_display_is_visible_and_reflows() {
             );
             assert!(lines.iter().all(|line| line.line.width() <= width));
             if open == "$$" && width == 20 {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "unicode_math_live_source_narrow",
                     lines
                         .iter()
@@ -152,6 +156,7 @@ fn unicode_math_unfinished_display_is_visible_and_reflows() {
                         .collect::<Vec<_>>()
                         .join("\n")
                 );
+                });
             }
         }
         stream.push_delta(&format!("\n{close}\n"));

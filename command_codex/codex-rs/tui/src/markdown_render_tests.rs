@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::MarkdownStyles;
 use crate::render::highlight::set_syntax_theme;
 use crate::style::accent_color;
@@ -58,7 +59,9 @@ fn bare_url_with_tilde_keeps_complete_hyperlink() {
         })
         .collect::<Vec<_>>();
 
-    assert_debug_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -631,7 +634,9 @@ fn list_ordered() {
 fn empty_list_items_keep_their_markers() {
     let rendered =
         ["8.", "-\n  -", "> -\n>   -"].map(|source| plain_lines(&render_markdown_text(source)));
-    assert_debug_snapshot!("empty_list_items", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!("empty_list_items", rendered);
+    });
 }
 
 #[test]
@@ -650,7 +655,9 @@ fn ordered_list_markers_use_terminal_palette_snapshot() {
     let text = render_markdown_text(
         "1. plain [plain](https://example.com) `code` [`code`](https://example.com)",
     );
-    assert_debug_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(text);
+    });
 }
 
 #[test]
@@ -841,7 +848,9 @@ fn inline_code_and_file_paths_follow_syntax_theme() {
             }
         });
     }
-    assert_debug_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -957,7 +966,9 @@ fn web_link_labels_have_a_visible_underline_snapshot() {
     let text = render_markdown_text(
         "plain [plain](https://example.com) `code` [`code`](https://example.com)",
     );
-    assert_debug_snapshot!(text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_debug_snapshot!(text);
+    });
 }
 
 #[test]
@@ -1010,7 +1021,9 @@ fn file_link_keeps_descriptive_label_and_target() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1024,7 +1037,9 @@ fn file_link_preserves_tilde_and_absolute_destinations() {
          [/home/alice/project/src/lib.rs](/home/alice/project/src/lib.rs)\n\n\
          [~](/home/alice:12)";
     let text = render_markdown_text_for_cwd(markdown, Path::new("/home/alice/project"));
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1058,7 +1073,9 @@ fn file_link_preserves_path_labels_and_formats_destinations() {
     let rendered = plain_lines(&text)
         .join("\n")
         .replace("My%20File.rs", "My File.rs");
-    assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -1085,7 +1102,9 @@ fn file_link_preserves_labels_with_invalid_percent_encoding() {
         "[bad%FF label](/tmp/)\n\n[bad%FF label](/)",
         Path::new("/repo"),
     );
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1094,7 +1113,9 @@ fn file_link_preserves_directory_labels_and_destinations() {
         "[dir](./dir/)\n\n[dir/](./dir)\n\n[dir](/outside/dir/)\n\n[dir/](/outside/dir)",
         Path::new("/repo"),
     );
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1108,7 +1129,9 @@ fn file_link_keeps_unrelated_relative_label_with_matching_suffix() {
         ")".into(),
     ]));
     assert_eq!(text, expected);
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1322,7 +1345,9 @@ fn markdown_render_file_link_snapshot() {
         [broken](<file://[>)\n\n\
         | File |\n| --- |\n| [analysis.md](/tmp/codex-link-repro/analysis.md) |\n| [](./empty.md) |";
     let text = render_markdown_text_for_cwd(markdown, Path::new("/tmp/codex-link-repro"));
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1617,10 +1642,12 @@ fn list_item_after_code_block_keeps_blank_separator() {
         lines,
         vec!["1. First:", "", "   fn first() {}", "", "2. Second:"]
     );
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "list_item_after_code_block_keeps_blank_separator",
         lines.join("\n")
     );
+    });
 }
 
 #[test]
@@ -1666,7 +1693,9 @@ fn multiline_finding_items_are_separated_snapshot() {
 3. **High-confidence churn reduction: consolidate table-driven filter tests.**
 "#;
     let text = render_markdown_text(md);
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1689,7 +1718,9 @@ fn wrapped_list_item_is_separated_from_next_sibling() {
 fn mixed_url_markdown_wraps_prose_without_splitting_words_snapshot() {
     let md = "This paragraph keeps **strikethrough** intact near a [link](https://example.com/path) while enough surrounding prose forces wrapping.";
     let text = render_markdown_text_with_width(md, Some(/*width*/ 48));
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -1760,7 +1791,9 @@ URL with parentheses: [link](https://example.com/path_(with)_parens).
         .collect::<Vec<_>>()
         .join("\n");
 
-    assert_snapshot!(rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(rendered);
+    });
 }
 
 #[test]
@@ -2024,7 +2057,7 @@ fn table_separates_logical_rows_after_wrapped_content() {
 }
 
 #[test]
-fn table_wraps_file_paths_before_collapsing_narrative_columns_snapshot() {
+fn table_wraps_paths_before_narrative() {
     let md = r#"| Unit | Files | Adds | Removes | What It Adds |
 |---|---:|---:|---:|---|
 | Suggestion engine and unit coverage | [next_prompt_suggestion.rs](/Users/example/code/codex/codex-rs/core/src/next_prompt_suggestion.rs:1), [next_prompt_suggestion_tests.rs](/Users/example/code/codex/codex-rs/core/src/next_prompt_suggestion_tests.rs:1) | 704 | 0 | Sampling workflow, stable-history checks, tool-flow suppression, fast reasoning profile, filtering rules, cancellation and timeout. |
@@ -2036,7 +2069,9 @@ fn table_wraps_file_paths_before_collapsing_narrative_columns_snapshot() {
         Some(Path::new("/Users/example/code/codex")),
     );
 
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -2049,11 +2084,13 @@ fn table_renders_stacked_key_value_records_when_path_column_becomes_too_narrow_s
 "#;
     let text = render_markdown_text_with_width(md, Some(/*width*/ 42));
 
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("narrow_path_table", plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
-fn table_renders_records_when_multiple_prose_columns_are_starved_snapshot() {
+fn table_starved_prose_columns() {
     let md = r#"| Issue | Activity | Complexity | Why start |
 | --- | ---: | ---: | --- |
 | [#24485: newline shortcut fails in PyCharm terminal on Windows](https://github.com/openai/codex/issues/24485) | `+1` 0, substantive comments 0 | Low | New, deterministic regression range; localized composer/keymap path. |
@@ -2064,7 +2101,9 @@ fn table_renders_records_when_multiple_prose_columns_are_starved_snapshot() {
 "#;
     let text = render_markdown_text_with_width(md, Some(/*width*/ 76));
 
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -2077,7 +2116,9 @@ fn table_keeps_grid_when_only_one_compact_record_fragments_snapshot() {
 "#;
     let text = render_markdown_text_with_width(md, Some(/*width*/ 40));
 
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -2090,7 +2131,9 @@ fn table_renders_key_value_records_when_compact_fragmentation_is_systemic_snapsh
 "#;
     let text = render_markdown_text_with_width(md, Some(/*width*/ 17));
 
-    assert_snapshot!(plain_lines(&text).join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("fragmented_table_records", plain_lines(&text).join("\n"));
+    });
 }
 
 #[test]
@@ -2104,11 +2147,13 @@ fn table_renders_halfwidth_sound_marks_at_constrained_width_snapshot() {
     let grid = render_markdown_text_with_width(md, Some(/*width*/ 23));
     let records = render_markdown_text_with_width(md, Some(/*width*/ 17));
 
-    assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(format!(
         "grid (23 cells):\n{}\n\nrecords (17 cells):\n{}",
         plain_lines(&grid).join("\n"),
         plain_lines(&records).join("\n")
     ));
+    });
 }
 
 #[test]

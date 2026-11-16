@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::ExternalAgentConfigImportItemTypeFailure;
 use codex_app_server_protocol::ExternalAgentConfigImportItemTypeSuccess;
@@ -199,7 +200,9 @@ fn external_agent_config_migration_messages_snapshot() {
         .collect::<Vec<_>>()
         .join("\n");
 
-    insta::assert_snapshot!("external_agent_config_migration_messages", messages);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("external_agent_config_migration_messages", messages);
+    });
 }
 
 #[test]

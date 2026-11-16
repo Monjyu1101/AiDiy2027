@@ -1,5 +1,6 @@
 //! Standalone transcript behavior exercised through the shared viewport.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell;
 use crossterm::event::KeyModifiers;
@@ -558,7 +559,9 @@ fn transcript_overlay_snapshots_paginated_history_states() {
         snapshots.push_str(&format!("--- {name} ---\n{}", buffer_to_text(&buf, area)));
     }
 
-    assert_snapshot!("transcript_overlay_paginated_history_states", snapshots);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("transcript_overlay_paginated_history_states", snapshots);
+    });
 }
 
 #[test]
@@ -756,10 +759,12 @@ fn transcript_overlay_history_rebuild_preserves_only_the_live_tail() {
             reopened.render(area, &mut expected);
             assert_eq!(actual, expected);
             if tail.is_none() {
-                assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    assert_snapshot!(
                     "transcript_overlay_completed_stream",
                     buffer_to_text(&actual, area)
                 );
+                });
             }
         }
     }

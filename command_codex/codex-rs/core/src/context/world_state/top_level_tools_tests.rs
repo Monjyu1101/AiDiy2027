@@ -1,5 +1,6 @@
 //! Catalog diffs preserve unchanged definitions, including tools inside namespaces.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::context::world_state::test_support::render_section_cases;
 use crate::context_manager::updates::merge_world_state_updates;
@@ -78,7 +79,8 @@ fn snapshots_catalog_transitions() {
     )
     .unwrap();
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Known(&original)),
         (Known(&original), Known(&original)),
         (Known(&original), Known(&updated)),
@@ -86,6 +88,7 @@ fn snapshots_catalog_transitions() {
         (Known(&only_web), Known(&empty)),
         (Known(&empty), Known(&original)),
     ]));
+    });
 }
 
 #[tokio::test]
@@ -176,7 +179,8 @@ async fn snapshots_namespace_transitions() {
     )
     .unwrap();
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Known(&original)),
         (Known(&original), Known(&original)),
         (Known(&original), Known(&updated)),
@@ -190,6 +194,7 @@ async fn snapshots_namespace_transitions() {
         // Restoration declares both an old member and one that has never been available.
         (Known(&empty), Known(&restored)),
     ]));
+    });
 
     let snapshot = metrics.snapshot().unwrap();
     let counter = snapshot

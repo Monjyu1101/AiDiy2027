@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyModifiers;
 use pretty_assertions::assert_eq;
@@ -5,7 +6,9 @@ use pretty_assertions::assert_eq;
 #[test]
 fn gov_cloud_guidance_requires_acknowledgement() {
     let mut state = BedrockState::guidance();
-    insta::assert_snapshot!("gov_cloud_warning", render_visible(&state));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gov_cloud_warning", render_visible(&state));
+    });
     assert!(!state.handle_guidance_key_event(&KeyEvent::new_with_kind(
         KeyCode::Enter,
         KeyModifiers::NONE,
@@ -29,7 +32,9 @@ fn gov_cloud_guidance_scrolls_in_short_panes() {
     let mut state = BedrockState::guidance();
     let area = Rect::new(0, 0, 24, 6);
     let initial = render_visible_at(&state, area);
-    insta::assert_snapshot!("gov_cloud_warning_short", initial);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("gov_cloud_warning_short", initial);
+    });
 
     // Even a one-row disclosure viewport must expose every line and the link.
     for height in [6, 2] {

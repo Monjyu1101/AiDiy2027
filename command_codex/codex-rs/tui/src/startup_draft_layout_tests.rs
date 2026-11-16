@@ -1,5 +1,6 @@
 //! Verify provisional composer geometry while startup owns the terminal.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 
 #[test]
@@ -26,11 +27,13 @@ fn owned_startup_keeps_the_live_bottom_geometry() {
         })
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "owned_startup_layout",
         format!("cursor={:?}\n{frame}", layout.cursor_pos(area))
             .replace(crate::version::CODEX_CLI_VERSION, "<VERSION>")
     );
+    });
 }
 
 #[test]

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::clipboard_copy::CopyStatus;
 use crate::history_cell::PlainHistoryCell;
@@ -794,7 +795,8 @@ fn select_mode_renders_cursor_and_scannable_footer_hints() {
     press(&mut view, &cells, KeyCode::Right);
     let find_marked_buffer = render(&mut view, &cells);
 
-    insta::assert_snapshot!(format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!(
         "{buffer:?}\nunmarked wide: {}\nunmarked:\n{footer_buffer:?}\nunmarked narrow: {}\nmarked:\n{marked_buffer:?}\nmarked wide: {}\nmarked: {}\nfind:\n{find_buffer:?}\nfind footer: {}\nfind cursor: {:?}\nfind marked:\n{find_marked_buffer:?}",
         unmarked_wide.text,
         unmarked_narrow.text,
@@ -803,4 +805,5 @@ fn select_mode_renders_cursor_and_scannable_footer_hints() {
         find_footer_text,
         find_footer.cursor_column,
     ));
+    });
 }

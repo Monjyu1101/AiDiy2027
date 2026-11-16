@@ -1,5 +1,6 @@
 //! Blocked backends leave UI work and teardown independent of clipboard progress.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::clipboard_copy::CopyOutcome;
 use crate::history_cell::PlainHistoryCell;
@@ -154,7 +155,9 @@ async fn blocked_copy_allows_overlay_exit_rejects_backlog_and_wakes_completion()
             );
         }
     }
-    insta::assert_snapshot!("image_paste_while_copy_is_busy", feedback.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("image_paste_while_copy_is_busy", feedback.join("\n"));
+    });
     release.send(()).unwrap();
     tokio::time::timeout(Duration::from_secs(/*secs*/ 5), draw_rx.recv())
         .await
@@ -486,7 +489,8 @@ async fn right_click_paste_uses_normal_input_and_discards_stale_reads() {
             "{shortcut:?} {change}"
         );
         if shortcut.is_some() && change == "none" {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "shortcut_clipboard_paste",
                 crate::chatwidget::tests::helpers::normalize_snapshot_paths(
                     crate::chatwidget::tests::helpers::render_bottom_popup(
@@ -495,6 +499,7 @@ async fn right_click_paste_uses_normal_input_and_discards_stale_reads() {
                     )
                 )
             );
+            });
         }
     }
 }

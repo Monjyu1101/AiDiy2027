@@ -1,6 +1,7 @@
 //! Approval-request focused tests extracted from the main chatwidget test file
 //! to keep the primary module under blob-size policy limits.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -37,16 +38,20 @@ async fn exec_approval_emits_proposed_command_and_decision_history() {
     let area = Rect::new(0, 0, 80, chat.desired_height(/*width*/ 80));
     let mut buf = ratatui::buffer::Buffer::empty(area);
     chat.render(area, &mut buf);
-    assert_snapshot!("exec_approval_modal_exec", format!("{buf:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("exec_approval_modal_exec", format!("{buf:?}"));
+    });
 
     chat.handle_key_event(KeyEvent::new(KeyCode::Char('y'), KeyModifiers::NONE));
     let decision = drain_insert_history(&mut rx)
         .pop()
         .expect("expected decision cell in history");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "exec_approval_history_decision_approved_short",
         lines_to_single_string(&decision)
     );
+    });
 }
 
 #[tokio::test]
@@ -131,7 +136,9 @@ async fn app_server_write_stdin_approval_renders_terminal_input() {
     let area = Rect::new(0, 0, 80, chat.desired_height(/*width*/ 80));
     let mut buf = ratatui::buffer::Buffer::empty(area);
     chat.render(area, &mut buf);
-    assert_snapshot!("write_stdin_approval_modal", format!("{buf:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("write_stdin_approval_modal", format!("{buf:?}"));
+    });
 }
 
 #[test]
@@ -241,10 +248,12 @@ async fn network_exec_approval_history_describes_session_host_allowance() {
     let decision = drain_insert_history(&mut rx)
         .pop()
         .expect("expected decision cell in history");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "network_exec_approval_history_session_host_allowance",
         lines_to_single_string(&decision)
     );
+    });
 }
 
 #[tokio::test]
@@ -284,10 +293,12 @@ async fn network_exec_approval_history_describes_one_time_host_allowance() {
     let decision = drain_insert_history(&mut rx)
         .pop()
         .expect("expected decision cell in history");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "network_exec_approval_history_one_time_host_allowance",
         lines_to_single_string(&decision)
     );
+    });
 }
 
 #[tokio::test]
@@ -327,10 +338,12 @@ async fn network_exec_approval_history_describes_canceled_host_request() {
     let decision = drain_insert_history(&mut rx)
         .pop()
         .expect("expected decision cell in history");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "network_exec_approval_history_canceled_host_request",
         lines_to_single_string(&decision)
     );
+    });
 }
 
 #[test]
@@ -480,10 +493,12 @@ async fn exec_approval_decision_truncates_multiline_and_long_commands() {
     let aborted_multi = drain_insert_history(&mut rx)
         .pop()
         .expect("expected aborted decision cell (multiline)");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "exec_approval_history_decision_aborted_multiline",
         lines_to_single_string(&aborted_multi)
     );
+    });
 
     let long = format!("echo {}", "a".repeat(200));
     let ev_long = ExecApprovalRequestEvent {
@@ -511,8 +526,10 @@ async fn exec_approval_decision_truncates_multiline_and_long_commands() {
     let aborted_long = drain_insert_history(&mut rx)
         .pop()
         .expect("expected aborted decision cell (long)");
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "exec_approval_history_decision_aborted_long",
         lines_to_single_string(&aborted_long)
     );
+    });
 }

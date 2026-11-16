@@ -42,6 +42,7 @@
 //! - During confirmed table streaming, only lines from the table header onward
 //!   are forced into tail; pre-table lines may remain stable.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::history_cell::HistoryCell;
 use crate::history_cell::HistoryRenderMode;
 use crate::history_cell::{self};
@@ -1481,10 +1482,12 @@ mod tests {
         let committed = cell.expect("completed table and prose should enter scrollback");
         assert!(idle);
         assert!(ctrl.has_live_tail(), "the later table must stay mutable");
-        insta::assert_debug_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!(
             "completed_table_scrollback",
             lines_to_plain_strings(&committed.transcript_lines(u16::MAX)),
         );
+        });
 
         let context = InlineVisualizationContext::new(&test_cwd(), codex_protocol::ThreadId::new())
             .expect("visualization context");
@@ -1527,10 +1530,12 @@ mod tests {
                 HistoryRenderMode::Rich,
                 /*inline_visualization_context*/ None,
             );
-            insta::assert_debug_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_debug_snapshot!(
                 "completed_table_reference",
                 lines_to_plain_strings(&visible_lines(rendered))
             );
+            });
         }
     }
 
@@ -1979,7 +1984,9 @@ mod tests {
                 let lines = cell
                     .expect("final plan stream table cell")
                     .display_hyperlink_lines(/*width*/ 32);
-                insta::assert_debug_snapshot!(lines);
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_debug_snapshot!(lines);
+                });
                 let linked_rows = lines
                     .iter()
                     .filter(|line| !line.hyperlinks.is_empty())

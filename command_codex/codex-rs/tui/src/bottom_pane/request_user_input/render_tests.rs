@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::truncate_line_word_boundary_with_ellipsis;
 use pretty_assertions::assert_eq;
 use ratatui::buffer::Buffer;
@@ -30,8 +31,10 @@ fn halfwidth_sound_marks_are_truncated_and_rendered_at_a_grapheme_boundary() {
 
     Paragraph::new(lines.to_vec()).render(area, &mut buf);
 
-    insta::assert_snapshot!(
-        "request_user_input_halfwidth_sound_marks_truncation",
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
+        "halfwidth_marks",
         format!("{buf:?}\n{lines:#?}")
     );
+    });
 }

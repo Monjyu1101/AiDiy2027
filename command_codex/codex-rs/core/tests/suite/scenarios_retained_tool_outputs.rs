@@ -1,5 +1,6 @@
 //! Client-marked function outputs survive compaction and a cold resume in their original role.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::turn_input::AnnotatedResponseItem;
 use codex_protocol::turn_input::ResponseItemAnnotations;
@@ -138,7 +139,8 @@ async fn retained_tool_output_survives_compaction_and_resume() -> Result<()> {
         } else {
             assert!(outputs.is_empty());
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             if enabled {
                 "retained_tool_output_survives_compaction_and_resume"
             } else {
@@ -154,6 +156,7 @@ async fn retained_tool_output_survives_compaction_and_resume() -> Result<()> {
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
         resumed.codex.shutdown_and_wait().await?;
     }
     Ok(())

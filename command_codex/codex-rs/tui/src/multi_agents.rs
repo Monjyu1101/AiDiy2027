@@ -4,6 +4,7 @@
 //! picker entries, and the fast-switch keyboard shortcuts. Higher-level coordination, such as
 //! deciding which thread becomes active or when a thread closes, stays in [`crate::app::App`].
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::history_cell::LabeledToolCell;
 use crate::history_cell::PlainHistoryCell;
 use crate::render::line_utils::prefix_lines;
@@ -842,7 +843,9 @@ mod tests {
             .map(cell_to_text)
             .collect::<Vec<_>>()
             .join("\n\n");
-        assert_snapshot!("collab_agent_transcript", snapshot);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("collab_agent_transcript", snapshot);
+        });
     }
 
     #[cfg(target_os = "macos")]
@@ -938,7 +941,9 @@ mod tests {
         use CollabAgentToolCallStatus::Completed;
         use CollabAgentToolCallStatus::Failed;
         let cell = resume_cell(Completed, CollabAgentStatus::Interrupted);
-        assert_snapshot!("collab_resume_interrupted", cell_to_text(&cell));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("collab_resume_interrupted", cell_to_text(&cell));
+        });
         let missing = resume_cell(Failed, CollabAgentStatus::NotFound);
         assert_eq!(missing.tool_call_labels(), ["Failed to resume agent"]);
     }

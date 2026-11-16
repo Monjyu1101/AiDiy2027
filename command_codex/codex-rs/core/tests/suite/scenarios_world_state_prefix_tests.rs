@@ -1,5 +1,6 @@
 //! Exercises extension prefixes through live updates, compaction, and persisted history.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_extension_api::ContextContributor;
 use codex_extension_api::ExtensionFuture;
@@ -189,7 +190,8 @@ async fn extension_window_prefix_survives_compaction(compaction: &str) -> Result
         assert!(!body.contains("rejected_assistant_prefix"));
     }
 
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!("extension_window_prefix_{compaction}"),
         context_snapshot::format_context_snapshot(
             "An extension supplies A, stays unchanged, appends B, then supplies C during compaction. Only C starts the new window. Non-developer prefix fragments are never rendered.",
@@ -206,5 +208,6 @@ async fn extension_window_prefix_survives_compaction(compaction: &str) -> Result
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

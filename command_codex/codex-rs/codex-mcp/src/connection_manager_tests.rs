@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::McpServerExposure;
 use crate::McpServerKey;
@@ -5630,7 +5631,9 @@ fn mcp_init_error_display_quotes_server_names() {
             ));
         }
     }
-    insta::assert_snapshot!(displays.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(displays.join("\n\n"));
+    });
 }
 
 #[test]

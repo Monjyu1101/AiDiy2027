@@ -1,5 +1,6 @@
 //! Pointer editing follows rendered rows and preserves atomic text boundaries.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::MouseButton::Left;
 use crossterm::event::MouseEventKind::Down;
@@ -81,7 +82,9 @@ fn wheel_at_edges_preserves_caret_following_or_browsing_after_resize() {
             ));
         }
     }
-    insta::assert_snapshot!("wheel_at_edges_after_resize", frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("wheel_at_edges_after_resize", frames.join("\n\n"));
+    });
 }
 
 #[test]
@@ -163,7 +166,9 @@ fn mouse_drag_highlights_and_edits_wrapped_selection() {
             })
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("mouse_wrapped_selection", rows);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("mouse_wrapped_selection", rows);
+        });
         t.input(key);
         assert_eq!((t.text(), t.cursor()), expected);
         if key.modifiers == KeyModifiers::CONTROL {

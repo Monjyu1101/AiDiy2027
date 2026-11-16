@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::context::world_state::test_support::FragmentSectionTestExt as _;
 use crate::context::world_state::test_support::render_section_cases;
@@ -18,7 +19,7 @@ use serde_json::json;
 use std::path::Path;
 
 #[test]
-fn snapshots() {
+fn permissions_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -27,7 +28,8 @@ fn snapshots() {
     let full_access = permissions_state(PermissionProfile::Disabled, AskForApproval::OnRequest);
     let never_ask = permissions_state(PermissionProfile::read_only(), AskForApproval::Never);
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&read_only)),
         (Known(&read_only), Known(&read_only)),
@@ -35,6 +37,7 @@ fn snapshots() {
         (Known(&read_only), Known(&never_ask)),
         (Unknown, Known(&read_only)),
     ]));
+    });
 }
 
 #[test]
@@ -99,10 +102,12 @@ fn approved_prefix_is_rendered_without_reinjecting_permissions() {
     let model_visible_before_and_after = format!(
         "BEFORE APPROVAL — PERMISSIONS ALREADY IN CONTEXT (CONDENSED)\n{before_approval_permissions}\n\nAFTER APPROVAL — WORLD-STATE DIFF APPENDS\n{rendered_update}\n\nFULL PERMISSIONS BLOCK APPENDED AFTER APPROVAL\nNone",
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "approved_prefix_is_rendered_without_reinjecting_permissions",
         model_visible_before_and_after
     );
+    });
 }
 
 #[test]

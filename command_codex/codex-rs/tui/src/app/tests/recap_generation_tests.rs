@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::session_lifecycle::ThreadAttachPresentation;
 use crate::app::tests::session_lifecycle_requests::recorded_params;
@@ -435,10 +436,12 @@ async fn auto_recap_opt_out_blocks_requests_and_cleans_up_pending_start() -> Res
     assert!(app.temporary_structured_requests.is_empty());
     app_server.shutdown().await?;
     proxy.await??;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "auto_recap_disabled_transcript",
         lines_to_single_string(&rendered)
     );
+    });
     Ok(())
 }
 

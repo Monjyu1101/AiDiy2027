@@ -1,5 +1,6 @@
 //! Native output preserves ordering, quota warning visibility, and replay consistency.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::DynamicToolCallOutputContentItem;
 use codex_app_server_protocol::DynamicToolCallStatus;
@@ -32,7 +33,9 @@ async fn quota_warnings_are_emitted_once_and_survive_native_replay() -> Result<(
         app.finish_initial_history_replay_buffer(&mut tui);
         let inserted = tui.pending_history_lines_for_test();
         insta::allow_duplicates! {
-            insta::assert_snapshot!("native_quota_warning", inserted.iter().map(|line| line.line.to_string()).collect::<Vec<_>>().join("\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("native_quota_warning", inserted.iter().map(|line| line.line.to_string()).collect::<Vec<_>>().join("\n"));
+            });
         }
         assert_eq!(
             app.render_transcript_lines_for_reflow(/*width*/ 80).lines,

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::UserMessage;
 use crate::chatwidget::tests::helpers::normalize_snapshot_paths;
@@ -110,10 +111,12 @@ async fn backend_banner_fallback_updates_task_settings_and_keeps_notice() -> Res
         let rendered = render_bottom_popup(&app.chat_widget, /*width*/ 72);
         assert!(rendered.contains("Selected model usage exhausted"));
         if mode_kind == ModeKind::Default {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "backend_banner_after_fallback",
                 normalize_snapshot_paths(rendered)
             );
+            });
         }
         app.chat_widget
             .handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));
@@ -129,7 +132,9 @@ async fn backend_banner_fallback_updates_task_settings_and_keeps_notice() -> Res
             })
             .collect::<Vec<_>>();
         assert_eq!(notices.len(), 1);
-        insta::assert_snapshot!("backend_banner_fallback_notice", notices[0]);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("backend_banner_fallback_notice", notices[0]);
+        });
         assert!(!queued.iter().any(|event| matches!(
             event,
             AppEvent::PersistModelSelection { .. } | AppEvent::CodexOp(_)
@@ -242,10 +247,12 @@ async fn backend_banner_fallback_keeps_existing_recovery_without_candidate() -> 
         let rendered = render_bottom_popup(&app.chat_widget, /*width*/ 72);
         assert_eq!(rendered.contains("View usage"), expect_legacy_banner);
         if !expect_legacy_banner {
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "backend_banner_fallback_unavailable",
                 normalize_snapshot_paths(rendered)
             );
+            });
         }
     }
     app.chat_widget.set_model("gpt-5.6-terra");
@@ -390,10 +397,12 @@ async fn backend_banner_fallback_handles_settings_failure_and_queued_manual_sele
             assert!(rendered.contains("Add credits"));
             assert!(!rendered.contains("You’re now using Luna"));
             if error_code == Some(-32601) {
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "luna_reserve_settings_unavailable",
                     normalize_snapshot_paths(rendered)
                 );
+                });
             }
             app.chat_widget
                 .handle_key_event(KeyEvent::new(KeyCode::Char('1'), KeyModifiers::NONE));

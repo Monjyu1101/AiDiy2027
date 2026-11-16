@@ -1,5 +1,6 @@
 //! Active recovery keeps local input and policy while reusing ordinary thread resume.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::reconnect::ReconnectPresentation;
 use crate::app::reconnect::reconnect;
@@ -442,10 +443,12 @@ async fn reconnect_restores_history_permissions_and_resumes_unsent_input() -> Re
             assert!(ops.try_recv().is_err());
         } else if recovered_queue {
             assert!(!app.chat_widget.has_queued_follow_up_messages());
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "restored_conversation",
                 render_bottom_popup(&app.chat_widget, /*width*/ 80)
             );
+            });
         } else {
             app.chat_widget
                 .handle_key_event(KeyEvent::new(KeyCode::Char('u'), KeyModifiers::CONTROL));
@@ -658,7 +661,8 @@ async fn reconnect_exhaustion_and_unknown_initial_thread_stay_offline() -> Resul
     assert_eq!(start.elapsed().as_secs(), 120);
     app.begin_reconnect();
     app.chat_widget.reconnect_failed();
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "reconnect_failed",
         format!(
             "{error}\n{}",
@@ -668,6 +672,7 @@ async fn reconnect_exhaustion_and_unknown_initial_thread_stay_offline() -> Resul
             ))
         )
     );
+    });
     tokio::time::resume();
     Ok(())
 }
@@ -751,7 +756,8 @@ async fn reconnect_allows_slow_hydration_but_bounds_a_stalled_server() -> Result
             );
             let history = drain_history(&mut app, &mut tui, &mut session, &mut events).await?;
             let history = &history[history.find("• This conversation is unavailable").unwrap()..];
-            assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                assert_snapshot!(
                 "unavailable_conversation",
                 format!(
                     "{history}\n{}",
@@ -762,6 +768,7 @@ async fn reconnect_allows_slow_hydration_but_bounds_a_stalled_server() -> Result
                     "/tmp/project"
                 )
             );
+            });
             session.shutdown().await?;
             assert!((15..120).contains(&elapsed), "{elapsed}");
             let methods = server.await??;

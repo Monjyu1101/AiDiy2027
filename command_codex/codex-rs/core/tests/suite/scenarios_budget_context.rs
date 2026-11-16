@@ -1,5 +1,6 @@
 //! Host budgets and agent session reads use World State.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::agent_control::HostSessionReader;
 use super::super::rollout_budget::HostAccounting;
 use super::super::rollout_budget::rollout_budget;
@@ -297,6 +298,8 @@ async fn host_budget_context_refreshes_after_remote_compaction() -> Result<()> {
             .rewrite_known_segments()
             .preserve_environment_context(),
     );
-    insta::assert_snapshot!("host_budget_context_after_compaction", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("host_budget_context_after_compaction", snapshot);
+    });
     Ok(())
 }

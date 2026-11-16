@@ -1,4 +1,5 @@
 //! Overview cards retain alignment and geometry while selection and report states change.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::style::accent_style;
 use pretty_assertions::assert_eq;
@@ -84,7 +85,9 @@ fn dashboard_cards_align_and_keep_stable_summary_heights() {
             view.sections.0.each_ref().map(|state| state.group)
         )
     );
-    insta::assert_snapshot!(format!("{wide}\n{narrow}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("{wide}\n{narrow}"));
+    });
 }
 
 #[test]

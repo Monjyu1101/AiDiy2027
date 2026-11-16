@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_http_client::HttpClientFactory;
 use codex_http_client::OutboundProxyPolicy;
 use codex_model_provider::create_model_provider;
@@ -208,5 +209,7 @@ fn bundled_tool_contracts() {
         .iter()
         .map(|tool| tool.spec())
         .collect();
-    insta::assert_snapshot!(serde_json::to_string_pretty(&specs).unwrap());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(serde_json::to_string_pretty(&specs).unwrap());
+    });
 }

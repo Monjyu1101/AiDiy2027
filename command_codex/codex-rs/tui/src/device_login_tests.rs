@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 //! Exercise gateway sign-in over the app-server protocol and snapshot the device prompt.
 
@@ -32,7 +33,9 @@ fn device_prompt_shows_where_to_enter_the_code_and_how_to_cancel() {
             )
         })
         .unwrap();
-    insta::assert_snapshot!(terminal.backend().to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(terminal.backend().to_string());
+    });
 }
 
 #[tokio::test]

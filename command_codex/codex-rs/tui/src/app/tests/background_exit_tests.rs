@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -59,10 +60,12 @@ async fn embedded_quit_confirms_stopping_a_running_side_conversation() -> Result
             .await?,
         AppRunControl::Continue
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "embedded_exit_running_sessions",
         render_bottom_popup(&app.chat_widget, /*width*/ 90)
     );
+    });
     app.chat_widget.handle_key_event(KeyCode::Down.into());
     app.chat_widget.handle_key_event(KeyCode::Enter.into());
     assert_matches!(
@@ -202,7 +205,9 @@ async fn external_writer_view_respects_remapped_left() -> Result<()> {
         let mut tui = crate::tui::test_support::make_test_tui()?;
 
         if !offline && vim {
-            insta::assert_snapshot!(render_bottom_popup(&app.chat_widget, /*width*/ 96));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(render_bottom_popup(&app.chat_widget, /*width*/ 96));
+            });
         }
         app.handle_tui_event(
             &mut tui,
@@ -233,7 +238,9 @@ async fn daemon_disconnect_exit_summary_includes_reconnect_and_stop_instructions
         .format_exit_messages(/*color_enabled*/ false)
         .join("\n")
         .replace(&thread_id.to_string(), "THREAD_ID");
-    assert_snapshot!("daemon_disconnect_exit", output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("daemon_disconnect_exit", output);
+    });
     Ok(())
 }
 
@@ -262,7 +269,9 @@ async fn remote_disconnect_exit_summary_does_not_require_a_local_rollout_or_prin
             auth_token: None,
         }
     );
-    assert_snapshot!("remote_disconnect_exit", lines.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("remote_disconnect_exit", lines.join("\n"));
+    });
 }
 
 #[tokio::test]
@@ -568,7 +577,9 @@ async fn exit_interrupts_before_requesting_shutdown() -> Result<()> {
         .format_exit_messages(/*color_enabled*/ false)
         .join("\n")
         .replace(&thread_id.to_string(), "THREAD_ID");
-    assert_snapshot!("interrupted_disconnect_exit", output);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!("interrupted_disconnect_exit", output);
+    });
     Ok(())
 }
 

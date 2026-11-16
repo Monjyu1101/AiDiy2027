@@ -1,5 +1,6 @@
 //! Chart scales, signed bands, missing days, narrow viewports, and terminal palettes.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::analytics::models::AccountAnalyticsHistory;
 use crate::analytics::render::categories;
@@ -170,7 +171,9 @@ fn signed_chart(theme: &str, colors: DefaultColors) {
             history.unit,
         );
         assert_eq!(rendered.bands, 2);
-        insta::assert_snapshot!(format!("signed_chart_{theme}"), display(&rendered));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!("signed_chart_{theme}"), display(&rendered));
+        });
     });
 }
 
@@ -234,7 +237,9 @@ fn missing_zero_and_narrow_charts_keep_the_selection_visible() {
                     display(&rendered)
                 ));
             }
-            insta::assert_snapshot!(snapshots.join("\n\n"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshots.join("\n\n"));
+            });
         },
     );
 }
@@ -264,7 +269,9 @@ fn zero_credit_history_uses_a_readable_scale() {
         history.unit,
     );
     assert_eq!(axis_max(peak(&days, &[]), history.unit), 1.0);
-    insta::assert_snapshot!(display(&rendered));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(display(&rendered));
+    });
 }
 
 #[test]
@@ -306,7 +313,9 @@ fn partial_cells_use_the_midpoint_and_descend_from_the_baseline() {
         );
         snapshots.push(format!("sign={sign}\n{}", display(&rendered)));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -341,7 +350,9 @@ fn oversized_axes_are_hidden_instead_of_truncated() {
         }
         snapshots.push(format!("width={width}\n{}", display(&rendered)));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -362,7 +373,9 @@ fn selected_callout_keeps_the_authoritative_daily_total() {
     );
     assert!(display(&rendered).contains("20.00"));
     assert!(!display(&rendered).contains("12.00"));
-    insta::assert_snapshot!(display(&rendered));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(display(&rendered));
+    });
 }
 
 #[test]
@@ -394,7 +407,9 @@ fn narrow_long_range_charts_never_truncate_dates() {
         assert_eq!(rendered.lines.last().unwrap().to_string().trim(), expected);
         snapshots.push(format!("width={width}\n{}", display(&rendered)));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -435,7 +450,9 @@ fn tiny_segments_keep_their_series_color_beside_a_large_day() {
         );
         snapshots.push(format!("sign={sign}\n{}", display(&rendered)));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -465,7 +482,9 @@ fn duplicate_message_dates_render_the_full_other_remainder() {
         /*height*/ 10,
         AccountAnalyticsUnit::Count,
     );
-    insta::assert_snapshot!(display(&rendered));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(display(&rendered));
+    });
 }
 
 #[test]
@@ -494,7 +513,9 @@ fn seven_day_totals_render_without_selecting_each_bar() {
     for day in &rows {
         assert!(text.contains(&day.total.to_string()));
     }
-    insta::assert_snapshot!("seven_day_totals", text);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("seven_day_totals", text);
+    });
 }
 
 #[test]
@@ -531,5 +552,7 @@ fn narrow_equal_height_totals_remain_separate_numbers() {
         assert!(!text.contains("111111"));
         screens.push(text);
     }
-    insta::assert_snapshot!(screens.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(screens.join("\n\n"));
+    });
 }

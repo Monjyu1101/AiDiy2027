@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::StatusLine;
@@ -87,7 +88,9 @@ fn prepared_tree_paints_only_the_footer_viewport() {
         .chunks(8)
         .map(|row| row.iter().map(|cell| strip_osc8(cell.symbol())).collect())
         .collect();
-    insta::assert_snapshot!(rows.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rows.join("\n"));
+    });
 
     assert_eq!(buffer[(1, 4)].symbol(), osc8_hyperlink(url, "a"));
     assert_eq!(buffer[(2, 4)].symbol(), "…");

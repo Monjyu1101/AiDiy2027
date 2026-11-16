@@ -1,9 +1,10 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::PreviousSectionState;
 use super::super::test_support::render_section_cases;
 use super::*;
 
 #[test]
-fn snapshots() {
+fn agents_md_snapshots() {
     use PreviousSectionState::Absent;
     use PreviousSectionState::Known;
     use PreviousSectionState::Unknown;
@@ -16,7 +17,8 @@ fn snapshots() {
     let new = LoadedAgentsMd::from_text_for_testing("new instructions");
     let new = AgentsMdState::new(Some(&new));
 
-    insta::assert_snapshot!(render_section_cases(&[
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(render_section_cases(&[
         (Absent, Absent),
         (Absent, Known(&empty)),
         (Absent, Known(&project_formatter)),
@@ -26,4 +28,5 @@ fn snapshots() {
         (Unknown, Known(&new)),
         (Unknown, Known(&empty)),
     ]));
+    });
 }

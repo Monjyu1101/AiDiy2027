@@ -1,5 +1,6 @@
 //! Picker hints follow runtime bindings while preserving custom and required-choice policy.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -31,7 +32,9 @@ fn popup_hints_follow_configured_bindings() {
             pane.desired_height(width),
         );
         let rendered = render_snapshot(&pane, area);
-        assert_snapshot!(format!("popup_hint_{name}"), rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(format!("popup_hint_{name}"), rendered);
+        });
         assert!(rendered.contains("f3 select · f2 back"), "{rendered}");
         pane.handle_key_event(KeyEvent::from(KeyCode::F(/*n*/ 2)));
         assert!(pane.view_stack.is_empty());

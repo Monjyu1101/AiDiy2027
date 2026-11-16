@@ -1,5 +1,6 @@
 //! Exercise the rendered-cell adapter; gesture and clipboard state machines have shared tests.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
@@ -22,7 +23,7 @@ fn mouse(kind: MouseEventKind, column: u16, row: u16) -> TuiEvent {
 }
 
 #[test]
-fn rendered_selection_preserves_unicode_links_and_the_selected_revision() {
+fn selection_preserves_unicode_links_revision() {
     let area = Rect::new(
         /*x*/ 0, /*y*/ 2, /*width*/ 30, /*height*/ 1,
     );
@@ -58,7 +59,9 @@ fn rendered_selection_preserves_unicode_links_and_the_selected_revision() {
     for position in area.positions() {
         assert_eq!(buffer[position].symbol(), original[position].symbol());
     }
-    insta::assert_snapshot!(format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("{buffer:?}"));
+    });
     // A new warning must replace the held revision even while the turn keeps running.
     selection.register(area, /*invalidate*/ true);
     assert!(!selection.view.has_selection_range());

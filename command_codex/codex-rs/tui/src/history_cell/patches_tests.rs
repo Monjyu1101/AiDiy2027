@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -38,7 +39,9 @@ fn compact_patches_retain_full_changes_and_failure_details() {
             Text::from(full)
         ));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -89,7 +92,9 @@ fn viewed_image_narrow_summary() {
             (15..row.width(), Some(url.to_string()))
         );
     }
-    insta::assert_snapshot!(compact[0].line.to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(compact[0].line.to_string());
+    });
 }
 
 #[test]

@@ -1,5 +1,6 @@
 //! Follow gestures and the visible return control share one reading-state contract.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::PlainHistoryCell;
 use crossterm::event::KeyCode;
@@ -289,7 +290,9 @@ fn control_tracks_pause_activity_hover_resize_and_click() {
     assert!(view.is_following());
     paint(&mut view, &cells, /*width*/ 20);
     assert!(view.follow_control.area.is_none());
-    insta::assert_snapshot!("follow_control", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("follow_control", snapshots.join("\n\n"));
+    });
 }
 
 #[test]

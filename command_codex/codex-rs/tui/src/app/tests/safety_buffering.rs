@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app::safety_buffering::SafetyBufferedRetry;
 use crate::app::session_lifecycle::ThreadAttachPresentation;
@@ -285,7 +286,9 @@ async fn safety_recourse_handles_a_policy_block() -> Result<()> {
             assert!(notice.contains("research and safety considerations."));
             continue;
         }
-        insta::assert_snapshot!("safety_recourse", format!("{loading}\n\n{notice}"));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("safety_recourse", format!("{loading}\n\n{notice}"));
+        });
         let picker = render_bottom_popup(&app.chat_widget, /*width*/ 80);
         let goal = server
             .thread_goal_set(
@@ -311,7 +314,8 @@ async fn safety_recourse_handles_a_policy_block() -> Result<()> {
         wait_for_turn_completed(&mut app, &mut server, fork_id).await;
         let requests = responses::received_responses_requests(&model).await;
         assert_eq!(requests[1].body_json()["model"], selected_model);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "safety_recourse_request_history",
             context_snapshot::format_request_history_snapshot(
                 "The fork excludes the blocked turn and submits the selected rewrite.",
@@ -319,6 +323,7 @@ async fn safety_recourse_handles_a_policy_block() -> Result<()> {
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
         let header = requests[1].header("x-codex-turn-metadata").unwrap();
         let metadata: Value = serde_json::from_str(&header)?;
         assert_eq!(metadata["turn_trigger"], "safety_recourse_follow_up");
@@ -1335,7 +1340,9 @@ goals = true
             .skip_while(|line| !line.contains(RETRY_PROMPT))
             .collect::<Vec<_>>()
             .join("\n");
-        insta::assert_snapshot!("safety_retry_committed_steer_history", rendered_retry);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("safety_retry_committed_steer_history", rendered_retry);
+        });
     }
 
     drive_until_request_count(&mut app, &mut app_server, &server, expected_request_count).await;

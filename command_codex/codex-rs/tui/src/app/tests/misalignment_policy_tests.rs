@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::session_lifecycle_requests::HistoryCapabilities;
 use super::session_lifecycle_requests::recorded_params;
 use super::session_lifecycle_requests::start_recording_app_server;
@@ -149,7 +150,9 @@ async fn misalignment_continuation_requires_current_review_and_submits_once() ->
             /*width*/ 38, /*height*/ 16,
         ))?;
         terminal.draw(|frame| overlay.render(frame.area(), frame.buffer_mut()))?;
-        insta::assert_snapshot!("misalignment_findings_38", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("misalignment_findings_38", terminal.backend());
+        });
         app.overlay = None;
         assert!(recorded_params(&requests, "turn/start").is_empty());
         let mut withdrawn = policy_error();
@@ -202,13 +205,15 @@ async fn misalignment_continuation_requires_current_review_and_submits_once() ->
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!(
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(
                 "misalignment_continue_failed",
                 format!(
                     "{errors}\n{}",
                     render_bottom_popup(&app.chat_widget, /*width*/ 80)
                 )
             );
+            });
             server.shutdown().await?;
             proxy.await??;
             continue;

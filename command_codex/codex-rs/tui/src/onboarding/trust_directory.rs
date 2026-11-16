@@ -1,5 +1,6 @@
 //! Folder trust disclosure with bounded paths, shared picker styling, and protected selection.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -353,7 +354,9 @@ mod tests {
             .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
             .expect("draw");
 
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -365,7 +368,9 @@ mod tests {
         terminal
             .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
         widget.handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
         assert!(widget.should_quit());
     }
@@ -387,7 +392,8 @@ mod tests {
             .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
             .expect("draw");
 
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             terminal
                 .backend()
                 .to_string()
@@ -396,6 +402,7 @@ mod tests {
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+        });
     }
 
     #[test]
@@ -413,9 +420,13 @@ mod tests {
                 .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
                 .expect("draw");
             if existing_task {
-                insta::assert_snapshot!("existing_untrusted_task", terminal.backend());
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!("existing_untrusted_task", terminal.backend());
+                });
             } else {
-                insta::assert_snapshot!(terminal.backend());
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(terminal.backend());
+                });
             }
         }
     }
@@ -433,7 +444,9 @@ mod tests {
             .draw(|f| (&widget).render_ref(f.area(), f.buffer_mut()))
             .expect("draw");
 
-        insta::assert_snapshot!(terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(terminal.backend());
+        });
     }
 
     #[test]
@@ -449,7 +462,9 @@ mod tests {
         terminal
             .draw(|frame| (&widget).render_ref(frame.area(), frame.buffer_mut()))
             .expect("draw");
-        insta::assert_snapshot!("folder_picker_restricted_40x24", terminal.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("folder_picker_restricted_40x24", terminal.backend());
+        });
     }
 
     #[test]
@@ -477,7 +492,9 @@ mod tests {
             terminal
                 .draw(|frame| (&widget).render_ref(frame.area(), frame.buffer_mut()))
                 .expect("draw");
-            insta::assert_snapshot!(snapshot, terminal.backend().to_string().replace('\\', "/"));
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(snapshot, terminal.backend().to_string().replace('\\', "/"));
+            });
         }
     }
 }

@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::clock_format::ClockFormat;
 use crate::exec_command::relativize_to_home;
 use crate::legacy_core::config::Config;
@@ -224,12 +225,14 @@ mod tests {
             plan_type_display_name(PlanType::SelfServeBusinessProLite),
             @"Business Premium"
         );
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "education_plan_display_names",
             [PlanType::Edu, PlanType::EduPlus, PlanType::EduPro]
                 .map(plan_type_display_name)
                 .join("\n")
         );
+        });
         insta::assert_snapshot!(
             [PlanType::Sci, PlanType::SciPlus]
                 .map(plan_type_display_name)

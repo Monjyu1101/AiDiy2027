@@ -1,5 +1,6 @@
 //! Persisted tool cells must match initial replay in compact and detailed presentations.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::thread_transcript::RawReasoningVisibility;
 use crate::thread_transcript::thread_items_to_transcript_cells;
@@ -167,7 +168,8 @@ async fn older_tool_projection_matches_initial_replay() {
                 .is_some_and(|cell| cell.iter_calls().count() == 2)
         })
         .expect("adjacent completed reads share one exploration group");
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "completion_only_replay_exploration_group",
         format!(
             "compact:\n{}\ndetailed:\n{}",
@@ -175,6 +177,7 @@ async fn older_tool_projection_matches_initial_replay() {
             lines_to_single_string(&exploration.transcript_lines(/*width*/ 40)),
         )
     );
+    });
 }
 
 #[tokio::test]
@@ -244,7 +247,9 @@ async fn snapshot_formatter_reasoning_matches_compact_and_detailed_replay() {
             .expect("initial replay retains reasoning for older-page joins");
         assert_eq!(reasoning.source_item_id(), Some("reasoning"));
     }
-    insta::assert_snapshot!(snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n"));
+    });
 }
 
 #[test]
@@ -297,10 +302,12 @@ async fn snapshot_formatter_completed_patch_needs_no_started_notification() {
                 )
             );
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "snapshot_formatter_completed_patch",
             lines_to_single_string(&replayed[0].display_lines(/*width*/ 80))
         );
+        });
     }
 }
 
@@ -334,10 +341,12 @@ async fn snapshot_formatter_live_and_buffered_patch_notifications_render_once() 
         );
         let replayed = take_history_cells(&mut rx);
         assert_eq!(replayed.len(), 1);
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "snapshot_formatter_completed_patch",
             lines_to_single_string(&replayed[0].display_lines(/*width*/ 80))
         );
+        });
     }
 }
 

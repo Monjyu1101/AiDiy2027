@@ -13,7 +13,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 |------|--------|
 | `aidiy_hermes` の起動、provider、CLI 確認 | [`../_AIDIY/knowledge/command_hermes,backend_server,運用手順.md`](../_AIDIY/knowledge/command_hermes,backend_server,運用手順.md) |
 | TUI、slash command、補完、spinner の調整 | [`../_AIDIY/knowledge/command_hermes,TUI調整手順.md`](../_AIDIY/knowledge/command_hermes,TUI調整手順.md) |
-| Code CLI として AiDiy に追加・調整する | [`../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md`](../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md) |
+| Code CLI として AiDiy に追加・調整する | [`../_AIDIY/knowledge/共通,CodeCLI追加手順.md`](../_AIDIY/knowledge/共通,CodeCLI追加手順.md) |
 | Code CLI のプロンプト整形 | [`../_AIDIY/knowledge/backend_server,CodeCLIプロンプト整形.md`](../_AIDIY/knowledge/backend_server,CodeCLIプロンプト整形.md) |
 | CLI 出力の ANSI 制御コード対処 | [`../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md`](../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md) |
 | Provider 一覧と選択ロジック | [`../_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md`](../_AIDIY/knowledge/command_hermes,Provider一覧と選択ロジック.md) |

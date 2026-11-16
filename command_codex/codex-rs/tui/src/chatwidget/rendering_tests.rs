@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::tests::make_chatwidget_manual_with_sender;
 use pretty_assertions::assert_eq;
@@ -245,12 +246,14 @@ async fn external_writer_view_shows_notice_instead_of_composer() {
         .chunks(usize::from(frame.area.width))
         .map(|row| row.iter().map(ratatui::buffer::Cell::symbol).collect())
         .collect();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         rows.iter()
             .map(|row| row.trim_end())
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     assert_ne!(frame[(0, 1)].bg, ratatui::style::Color::Reset);
     assert_eq!(frame[(0, 1)].bg, frame[(59, 4)].bg);
     assert_eq!(
@@ -281,13 +284,15 @@ async fn external_writer_fork_progress_restores_the_previous_view() {
                     .collect::<String>()
             })
             .collect::<Vec<_>>();
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "fork_pending",
             rows.iter()
                 .map(|row| row.trim_end())
                 .collect::<Vec<_>>()
                 .join("\n")
         );
+        });
         widget.fork_in_progress = false;
         assert_eq!(render_frame(&widget, /*width*/ 60), previous);
     }
@@ -444,10 +449,12 @@ async fn active_cell_layout_preserves_custom_height_and_bottom_scroll() {
         height: 2,
         ..second.area
     });
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "cached_active_cell_bottom_scroll",
         format!("{transcript:?}")
     );
+    });
     assert!(contains_text(&first, "frame 1 row 2"));
     assert!(!contains_text(&first, "frame 1 row 0"));
     assert!(contains_text(&second, "frame 2 row 2"));
@@ -549,7 +556,9 @@ async fn external_writer_notice_offers_command_center() {
     widget.show_external_writer_thread();
     for width in [60, 100] {
         let rendered = crate::chatwidget::tests::render_bottom_popup(&widget, width);
-        insta::assert_snapshot!(format!("external_writer_command_center_{width}"), rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(format!("external_writer_command_center_{width}"), rendered);
+        });
     }
 }
 
@@ -642,5 +651,7 @@ async fn provider_error_preserves_draft_and_survives_thread_navigation() {
             ));
         }
     }
-    insta::assert_snapshot!("provider_errors", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("provider_errors", snapshots.join("\n\n"));
+    });
 }

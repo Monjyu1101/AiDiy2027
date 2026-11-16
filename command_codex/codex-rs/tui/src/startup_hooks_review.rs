@@ -1,5 +1,6 @@
 //! Startup hook consent using the shared picker while retaining explicit trust confirmation.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use color_eyre::eyre::Result;
 use crossterm::event::KeyEventKind;
 use ratatui::buffer::Buffer;
@@ -492,10 +493,12 @@ mod tests {
             &keymap,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "startup_hooks_review_prompt",
             render_lines(&view, /*width*/ 40)
         );
+        });
     }
 
     #[test]
@@ -512,10 +515,12 @@ mod tests {
             &keymap,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "startup_hooks_review_prompt_with_trust_error",
             render_lines(&view, /*width*/ 62)
         );
+        });
     }
 
     #[test]
@@ -530,9 +535,11 @@ mod tests {
         );
         view.handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
         assert_eq!(selected_choice(&mut view), None);
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "startup_hooks_picker_progress_40",
             render_lines(&view, /*width*/ 40)
         );
+        });
     }
 }

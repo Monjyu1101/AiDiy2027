@@ -1,5 +1,6 @@
 //! Exercise editor handoff through a terminal, including editors that switch screens.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::PtyCodex;
 use super::write_test_config;
 use anyhow::Result;
@@ -98,7 +99,9 @@ fn external_editors_keep_the_screen_and_return_the_draft() -> Result<()> {
         terminal.write_input(b"!")?;
         terminal.wait_for_screen("edited draft!")?;
         if let Some(visible) = visible {
-            insta::assert_snapshot!("external_editor_visible_handoff", visible);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("external_editor_visible_handoff", visible);
+            });
         }
     }
     Ok(())

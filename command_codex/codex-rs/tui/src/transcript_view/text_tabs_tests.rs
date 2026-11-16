@@ -1,5 +1,6 @@
 //! Tab display and source-coordinate regressions for owned transcript rows.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::TextLayout;
 use crate::terminal_hyperlinks::HyperlinkLine;
 use crate::terminal_hyperlinks::prefix_hyperlink_lines;
@@ -62,7 +63,9 @@ fn styled_tabs_use_row_stops_including_the_gutter() {
         vec![13, 14, 15],
     );
     assert_eq!(&layout.text()[6..7], "\t");
-    insta::assert_snapshot!("styled_tab_stops_and_selection", format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("styled_tab_stops_and_selection", format!("{buffer:?}"));
+    });
 }
 
 #[test]
@@ -163,5 +166,7 @@ fn hard_wrapped_tabs_keep_source_characters_and_actual_row_stops() {
     );
     let mut buffer = Buffer::empty(area);
     layout.render(area, &mut buffer, /*start_row*/ 0);
-    insta::assert_snapshot!("hard_wrapped_tabs", format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("hard_wrapped_tabs", format!("{buffer:?}"));
+    });
 }

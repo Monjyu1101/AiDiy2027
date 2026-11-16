@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -54,10 +55,12 @@ async fn computer_activity_live_and_replay_group_identically() {
         assert_eq!(cells[0], outputs.last().unwrap().0);
     }
     assert_eq!(outputs[0], outputs[1]);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "computer_activity_replayed",
         lines_to_single_string(&outputs[0].0)
     );
+    });
 }
 
 #[tokio::test]
@@ -121,7 +124,9 @@ async fn computer_activity_keeps_reasoning_in_order_live_and_replayed() {
         ));
     }
     assert_eq!(outputs[0], outputs[1]);
-    insta::assert_snapshot!(outputs[0]);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(outputs[0]);
+    });
 }
 
 #[tokio::test]
@@ -159,8 +164,10 @@ async fn computer_activity_out_of_order_completion_and_interruption() {
     chat.finalize_turn();
     let cells = drain_insert_history(&mut rx);
     assert_eq!(cells.len(), 1);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "computer_activity_partial_interruption",
         lines_to_single_string(&cells[0])
     );
+    });
 }

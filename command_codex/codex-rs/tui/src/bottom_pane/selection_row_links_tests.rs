@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::*;
 
 #[test]
@@ -87,5 +88,7 @@ fn choice_labels_and_descriptions_keep_complete_url_destinations() {
             }
         }
     }
-    insta::assert_snapshot!("choice_wrapped_urls", snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("choice_wrapped_urls", snapshots.join("\n\n"));
+    });
 }

@@ -1,5 +1,6 @@
 //! Voice settings hierarchy, parent navigation and selection routing without audio hardware.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::chatwidget::tests::make_chatwidget_manual_with_sender;
 use crate::chatwidget::tests::render_bottom_popup;
@@ -18,7 +19,9 @@ async fn voice_settings_selects_a_voice_without_starting_audio() {
             .any(|event| matches!(event, AppEvent::OpenRealtimeSettings))
     );
     chat.open_realtime_settings();
-    insta::assert_snapshot!("voice_settings", render_bottom_popup(&chat, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_settings", render_bottom_popup(&chat, /*width*/ 80));
+    });
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
     chat.bottom_pane
@@ -28,7 +31,9 @@ async fn voice_settings_selects_a_voice_without_starting_audio() {
             .any(|event| matches!(event, AppEvent::OpenRealtimeVoices))
     );
     chat.open_realtime_voices(Some(RealtimeVoice::Maple), RealtimeVoicesList::builtin());
-    insta::assert_snapshot!("voice_choices", render_bottom_popup(&chat, /*width*/ 80));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("voice_choices", render_bottom_popup(&chat, /*width*/ 80));
+    });
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Home, KeyModifiers::NONE));
     chat.bottom_pane
@@ -57,7 +62,9 @@ async fn saved_voice_confirmation_snapshot() {
         .map(|line| line.to_string())
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("saved_voice_confirmation", lines);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("saved_voice_confirmation", lines);
+    });
 }
 
 #[tokio::test]
@@ -70,10 +77,12 @@ async fn voice_settings_uses_server_catalog() {
             ..RealtimeVoicesList::builtin()
         },
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_settings_server_catalog",
         render_bottom_popup(&chat, /*width*/ 80)
     );
+    });
 }
 
 #[tokio::test]
@@ -95,10 +104,12 @@ async fn microphone_channel_picker_routes_selection_without_starting_audio() {
             .any(|event| matches!(event, AppEvent::OpenRealtimeSoundDevices))
     );
     chat.open_realtime_sound_devices();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_settings_input_channel",
         render_bottom_popup(&chat, /*width*/ 90)
     );
+    });
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Home, KeyModifiers::NONE));
     chat.bottom_pane
@@ -116,20 +127,24 @@ async fn microphone_channel_picker_routes_selection_without_starting_audio() {
         channels: 4,
         is_default: true,
     });
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_input_channels",
         render_bottom_popup(&chat, /*width*/ 90)
     );
+    });
     // Space toggles without persisting; Enter saves both selected inputs.
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Down, KeyModifiers::NONE));
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Char(' '), KeyModifiers::NONE));
     assert!(events.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_input_channel_subset",
         render_bottom_popup(&chat, /*width*/ 90)
     );
+    });
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
     let selected = std::iter::from_fn(|| events.try_recv().ok()).find_map(|event| match event {
@@ -157,10 +172,12 @@ async fn microphone_channel_picker_routes_selection_without_starting_audio() {
         .handle_key_event(KeyEvent::new(KeyCode::Enter, KeyModifiers::NONE));
     assert!(chat.has_active_view());
     assert!(events.try_recv().is_err());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_input_channels_empty",
         render_bottom_popup(&chat, /*width*/ 90)
     );
+    });
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Esc, KeyModifiers::NONE));
     assert!(matches!(
@@ -280,7 +297,9 @@ async fn device_pickers_route_selection_and_only_offer_channels_for_multichannel
             },
         ];
         chat.open_realtime_device_picker(kind, devices.clone());
-        insta::assert_snapshot!(snapshot, render_bottom_popup(&chat, /*width*/ 80));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot, render_bottom_popup(&chat, /*width*/ 80));
+        });
         chat.bottom_pane
             .handle_key_event(KeyEvent::new(KeyCode::Char('2'), KeyModifiers::NONE));
         let selected =
@@ -324,10 +343,12 @@ async fn ambiguous_device_names_cannot_select_the_wrong_device() {
         })
         .to_vec();
     chat.open_realtime_device_picker(AudioDeviceKind::Input, devices);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "voice_ambiguous_input_devices",
         render_bottom_popup(&chat, /*width*/ 80)
     );
+    });
     while events.try_recv().is_ok() {}
     chat.bottom_pane
         .handle_key_event(KeyEvent::new(KeyCode::Char('2'), KeyModifiers::NONE));

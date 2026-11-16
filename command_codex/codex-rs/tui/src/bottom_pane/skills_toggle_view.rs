@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crossterm::event::KeyCode;
 use crossterm::event::KeyEvent;
 use crossterm::event::KeyModifiers;
@@ -441,7 +442,9 @@ mod tests {
             },
         ];
         let view = SkillsToggleView::new(items, tx, crate::keymap::RuntimeKeymap::defaults().list);
-        assert_snapshot!("skills_toggle_basic", render_lines(&view, /*width*/ 72));
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("skills_toggle_basic", render_lines(&view, /*width*/ 72));
+        });
     }
 
     #[test]
@@ -483,7 +486,9 @@ mod tests {
         assert_eq!(view.search_query, "completion");
 
         let rendered = render_lines(&view, /*width*/ 96);
-        assert_snapshot!("skills_toggle_pasted_search", rendered);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!("skills_toggle_pasted_search", rendered);
+        });
         assert!(!view.handle_paste(" \r\n\t ".to_string()));
         assert_eq!(render_lines(&view, /*width*/ 96), rendered);
 
@@ -509,10 +514,12 @@ mod tests {
             crate::keymap::RuntimeKeymap::defaults().list,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "skills_toggle_long_names_use_available_width",
             render_lines(&view, /*width*/ 96)
         );
+        });
     }
 
     #[test]
@@ -525,10 +532,12 @@ mod tests {
             crate::keymap::RuntimeKeymap::defaults().list,
         );
 
-        assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(
             "skills_toggle_long_names_at_narrow_width",
             render_lines(&view, /*width*/ 48)
         );
+        });
     }
 
     #[test]

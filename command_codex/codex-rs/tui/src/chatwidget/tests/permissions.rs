@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::legacy_core::config::PermissionProfileCatalogEntry;
 use crate::permission_discovery::PermissionDiscovery as Discovery;
@@ -217,10 +218,12 @@ async fn permissions_command_rejects_disabled_profile() {
     );
 
     let cell = assert_matches!(events.try_recv(), Ok(AppEvent::InsertHistoryCell(cell)) => cell);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "permissions_command_disabled_profile",
         lines_to_single_string(&cell.display_lines(/*width*/ 80))
     );
+    });
     assert_matches!(events.try_recv(), Ok(AppEvent::SettingsSelectionClosed));
     assert!(chat.input_queue.recovered_queue);
 }
@@ -237,10 +240,12 @@ async fn permissions_command_rejects_unknown_profile() {
     );
 
     let cell = assert_matches!(events.try_recv(), Ok(AppEvent::InsertHistoryCell(cell)) => cell);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "permissions_command_unknown_profile",
         lines_to_single_string(&cell.display_lines(/*width*/ 80))
     );
+    });
     assert_matches!(events.try_recv(), Ok(AppEvent::SettingsSelectionClosed));
 }
 
@@ -1045,7 +1050,9 @@ async fn windows_sandbox_help_links_keep_complete_wrapped_destinations() {
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!("windows_sandbox_wrapped_help_url", visible);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("windows_sandbox_wrapped_help_url", visible);
+            });
         }
     }
 }

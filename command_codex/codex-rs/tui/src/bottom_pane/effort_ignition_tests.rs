@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::styles::envelope;
 use super::styles::paint_style;
 use super::styles::spark_frame;
@@ -340,5 +341,7 @@ fn effort_ignition_animation_gallery_snapshot() {
             }
         }
     }
-    insta::assert_snapshot!("effort_ignition_animation_gallery", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("effort_ignition_animation_gallery", frames.join("\n"));
+    });
 }

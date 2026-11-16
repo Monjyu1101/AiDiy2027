@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::test_support::PathBufExt;
 use crate::test_support::test_path_buf;
@@ -94,7 +95,9 @@ fn completed_tools_keep_compact_and_detailed_presentations() {
         })
         .collect::<Vec<_>>()
         .join("\n\n");
-    insta::assert_snapshot!("completed_tool_presentations", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("completed_tool_presentations", rendered);
+    });
 }
 
 #[test]
@@ -134,11 +137,13 @@ fn incomplete_tool_payloads_preserve_last_known_status_and_output() {
     .map(|line| line.to_string())
     .collect::<Vec<_>>()
     .join("\n");
-    insta::assert_snapshot!("pending_tool_presentations", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("pending_tool_presentations", rendered);
+    });
 }
 
 #[test]
-fn historical_command_fallbacks_preserve_status_output_and_group_boundaries() {
+fn command_fallback_status_groups() {
     let cwd = test_path_buf("/workspace").abs();
     let exploration = |call_id: &str| {
         let mut item = command_item(CommandExecutionStatus::Completed);
@@ -256,11 +261,13 @@ fn historical_command_fallbacks_preserve_status_output_and_group_boundaries() {
         assert_eq!((&detailed, &raw), (&compact, &compact));
         snapshots.push(format!("{label}\n{compact}"));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
-fn agent_tool_fallbacks_preserve_status_without_duplicating_v2_activity() {
+fn agent_tool_fallback_status() {
     let cwd = test_path_buf("/workspace").abs();
     let mut snapshots = Vec::new();
     for (tool, status) in [
@@ -339,5 +346,7 @@ fn agent_tool_fallbacks_preserve_status_without_duplicating_v2_activity() {
             snapshots.push(text);
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n"));
+    });
 }

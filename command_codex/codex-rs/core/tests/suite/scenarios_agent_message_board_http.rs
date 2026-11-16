@@ -1,5 +1,6 @@
 //! Two real agents share the detached board through ordinary HTTP MCP configuration.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use std::sync::Arc;
@@ -310,7 +311,8 @@ async fn http_board_is_shared_with_children(mode: BoardMode) -> anyhow::Result<(
                 }
             }
         }
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             if mode == BoardMode::Feature {
                 "agent_message_board_mcp_feature_context"
             } else if plugin {
@@ -328,6 +330,7 @@ async fn http_board_is_shared_with_children(mode: BoardMode) -> anyhow::Result<(
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     }
     if mode == BoardMode::Feature {
         // The child must keep the shared board usable after its original host unloads.

@@ -1,5 +1,6 @@
 //! Exercises fixed model theme files through selection, preview, and cancellation.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::app_event_sender::AppEventSender;
 use crate::terminal_palette::with_test_default_colors;
@@ -89,5 +90,7 @@ fn model_theme_files_preview_select_and_restore() {
             assert_eq!(highlight::current_syntax_theme(), original);
         });
     }
-    insta::assert_snapshot!(snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot);
+    });
 }

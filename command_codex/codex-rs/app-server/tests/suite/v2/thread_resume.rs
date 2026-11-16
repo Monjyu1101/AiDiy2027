@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use app_test_support::ChatGptAuthFixture;
 use app_test_support::MockResponsesConfig;
@@ -3966,10 +3967,13 @@ async fn thread_goal_keeps_original_root_until_external_objective_edit() -> Resu
     let mut wire_item = objective.as_object().expect("goal context item").clone();
     wire_item.remove("id"); // Generated for each run.
     wire_item.sort_keys();
-    insta::assert_snapshot!(
-        "model_written_goal_as_untrusted_tool_output",
-        serde_json::to_string_pretty(&wire_item)?,
-    );
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = serde_json::to_string_pretty(&wire_item)?;
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("model_written_goal_as_untrusted_tool_output", snapshot_value);
+        });
+    };
     for request in [&created, &first_continuation] {
         let input = request["input"].as_array().expect("request input");
         assert!(!input.iter().any(|item| {

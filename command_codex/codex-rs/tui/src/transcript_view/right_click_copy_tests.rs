@@ -1,5 +1,6 @@
 //! Right-click copying uses existing delivery semantics without moving the reading position.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::clipboard_copy::CopyStatus;
 use crate::transcript_view::tests::cell;
@@ -72,7 +73,9 @@ fn right_click_retains_selection_until_confirmed_and_preserves_reading_position(
         );
         frames.push(format!("{result:?}\n{}", text(&buffer)));
     }
-    insta::assert_snapshot!(frames.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("right_click_selection", frames.join("\n\n"));
+    });
     assert!(view.handle_mouse(click, &cells).is_none());
 }
 

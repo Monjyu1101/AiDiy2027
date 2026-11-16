@@ -1,5 +1,6 @@
 //! Picker confirmation and selected-file persistence leave the running renderer unchanged.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::app::tests::make_test_app_with_channels;
 use crate::app_event::AppEvent;
 use crate::chatwidget::tests::helpers::render_bottom_popup;
@@ -45,7 +46,9 @@ async fn tui_mode_picker_requires_confirmation_and_explains_restart() {
         assert_eq!(choices, vec![!current]);
         assert_eq!(app.chat_widget.local_settings, before);
     }
-    insta::assert_snapshot!(screens.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(screens.join("\n\n"));
+    });
 }
 
 #[tokio::test]

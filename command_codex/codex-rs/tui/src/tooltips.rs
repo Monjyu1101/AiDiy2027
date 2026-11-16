@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use crate::keymap::RuntimeKeymap;
 use crate::keymap::keymap_action_id;
 use crate::terminal_hyperlinks::HyperlinkLine;
@@ -404,7 +405,9 @@ mod tests {
                 .map(|line| format!("{:?} {:?}", line.line, line.hyperlinks))
                 .collect::<Vec<_>>()
                 .join("\n");
-            insta::assert_snapshot!(format!("desktop_app_tip_{platform}"), rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!(format!("desktop_app_tip_{platform}"), rendered);
+            });
         }
     }
 

@@ -1,5 +1,6 @@
 //! Dynamic tool projections keep truthful status and bounded previews without losing detail.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::test_support::PathBufExt;
 use crate::test_support::test_path_buf;
@@ -73,7 +74,9 @@ fn dynamic_status_and_output_match_persisted_presentations() {
             }
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -115,5 +118,7 @@ fn dynamic_preview_reports_hidden_lines_and_retains_full_output() {
             .join("\n");
         assert!(output.lines().all(|line| detailed.contains(line)));
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }

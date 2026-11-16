@@ -3,6 +3,7 @@
 //! Static content retains its generic pager. Transcript previews share the main conversation
 //! viewport, including its scrolling, selection, search and bounded text layouts.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 mod scrolling;
 mod transcript;
 
@@ -576,7 +577,9 @@ mod tests {
         let mut term = Terminal::new(TestBackend::new(/*width*/ 40, /*height*/ 10)).expect("term");
         term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
             .expect("draw");
-        assert_snapshot!(term.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(term.backend());
+        });
     }
 
     #[test]
@@ -588,7 +591,9 @@ mod tests {
         let mut term = Terminal::new(TestBackend::new(/*width*/ 24, /*height*/ 8)).expect("term");
         term.draw(|f| overlay.render(f.area(), f.buffer_mut()))
             .expect("draw");
-        assert_snapshot!(term.backend());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            assert_snapshot!(term.backend());
+        });
     }
 
     #[test]

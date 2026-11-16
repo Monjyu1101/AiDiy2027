@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::security_setup::Identity;
 use crate::security_setup::Notice;
@@ -24,7 +25,9 @@ async fn security_setup_preserves_draft_action_and_dismissal_across_widgets() {
     let (mut chat, _rx, _ops) = make_chatwidget_manual(Some("test-model-a")).await;
     chat.show_security_setup(setup_identity(), setup_notice());
     let rendered = normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 70));
-    insta::assert_snapshot!("security_setup_banner", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("security_setup_banner", rendered);
+    });
     let (mut replacement, mut events, _ops) = make_chatwidget_manual(Some("test-model-a")).await;
     chat.app_event_tx
         .voice_only
@@ -103,7 +106,9 @@ async fn security_setup_dismissal_survives_usage_banner_replacement() {
         let rendered = normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 70));
         assert_eq!(rendered.contains("Set up security"), !dismiss_security);
         if dismiss_security {
-            insta::assert_snapshot!("security_setup_dismissed_after_usage", rendered);
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("security_setup_dismissed_after_usage", rendered);
+            });
         }
 
         let (mut replacement, _events, _ops) = make_chatwidget_manual(Some("test-model-a")).await;
@@ -129,10 +134,12 @@ async fn security_setup_after_cutoff_wraps_in_narrow_terminal() {
     notice.title = "Set up security for Daybreak mode".into();
     notice.description = "Set up Advanced Account Security with a hardware security key. Already Persona-verified? Add your key before October 15 to skip re-verification. You can keep using Codex while you finish setup.".into();
     chat.show_security_setup(setup_identity(), notice);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "security_setup_after_cutoff",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 48))
     );
+    });
 }
 
 #[tokio::test]
@@ -142,10 +149,12 @@ async fn security_setup_after_persona_grace_wraps_in_narrow_terminal() {
     notice.title = "Set up security for Daybreak mode".into();
     notice.description = "Set up Advanced Account Security with a hardware security key. Verify each new hardware security key with Persona. You can keep using Codex while you finish setup.".into();
     chat.show_security_setup(setup_identity(), notice);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "security_setup_after_persona_grace",
         normalize_snapshot_paths(render_bottom_popup(&chat, /*width*/ 48))
     );
+    });
 }
 
 #[tokio::test]

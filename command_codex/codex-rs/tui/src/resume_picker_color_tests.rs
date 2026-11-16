@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::terminal_palette::rgb_color;
 use crate::terminal_palette::with_test_default_colors;
@@ -235,7 +236,9 @@ fn compact_picker_keeps_metadata_and_labeled_primary_actions() {
             }
         },
     );
-    insta::assert_snapshot!(snapshots.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n"));
+    });
 }
 
 #[test]
@@ -345,5 +348,7 @@ async fn narrow_toolbar_keeps_keyboard_focused_control_visible() {
             }
         }
     }
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshots.join("\n\n"));
+    });
 }

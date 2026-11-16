@@ -1,5 +1,6 @@
 //! Typed and spoken steering preserve ownership and private reasoning boundaries.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 
@@ -117,7 +118,9 @@ async fn typed_steering_restores_normal_output_for_an_existing_voice_item() {
     }
     assert!(rendered.contains("typed answer"), "{rendered}");
     assert!(!rendered.contains("private voice commentary"), "{rendered}");
-    insta::assert_snapshot!("typed_steering_keeps_voice_commentary_private", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("typed_steering_keeps_voice_commentary_private", rendered);
+    });
     assert!(ops.try_recv().is_err());
 }
 
@@ -267,7 +270,9 @@ async fn voice_handoff_preserves_started_typed_reasoning_but_hides_new_reasoning
         "{rendered}"
     );
     assert!(!rendered.contains("private after handoff"), "{rendered}");
-    insta::assert_snapshot!("typed_reasoning_through_voice_handoff", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("typed_reasoning_through_voice_handoff", rendered);
+    });
 }
 
 #[tokio::test]

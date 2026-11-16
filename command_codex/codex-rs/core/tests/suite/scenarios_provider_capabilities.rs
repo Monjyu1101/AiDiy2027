@@ -1,5 +1,6 @@
 //! Custom provider overrides constrain web access and enable V2 compaction.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_protocol::models::PermissionProfile;
 use pretty_assertions::assert_eq;
@@ -86,7 +87,8 @@ remote_compaction = "v2"
         .find(|tool| tool["type"] == "web_search")
         .expect("cached search");
     assert_eq!(web_search["external_web_access"], false);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "custom_provider_capabilities",
         context_snapshot::format_request_history_snapshot(
             "Custom provider overrides keep unrestricted search cached and enable V2 compaction.",
@@ -96,5 +98,6 @@ remote_compaction = "v2"
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }

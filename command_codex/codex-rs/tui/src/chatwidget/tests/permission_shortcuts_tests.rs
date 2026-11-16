@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::permissions::requirements_stack;
 use super::*;
 use ApprovalsReviewer::AutoReview;
@@ -140,10 +141,12 @@ async fn permission_shortcuts_respect_managed_mode_requirements() {
         else {
             panic!("must not submit a forbidden mode");
         };
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "permission_shortcut_no_alternative",
             lines_to_single_string(&cell.display_lines(/*width*/ 80))
         );
+        });
         assert!(rx.try_recv().is_err(), "must not submit a forbidden mode");
     }
 }

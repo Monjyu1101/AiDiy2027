@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::HashMap;
 use std::io;
 use std::sync::Arc;
@@ -970,7 +971,7 @@ async fn pre_discovered_executor_catalog_snapshot() {
     });
     snapshot.sort_all_objects();
     let snapshot_file = codex_utils_cargo_bin::find_resource!(
-        "tests/snapshots/executor_file_system_authority__pre_discovered_executor_catalog.snap"
+        "tests/snapshots/pre_discovered_executor_catalog.snap"
     )
     .expect("resolve catalog snapshot");
     let snapshot_dir = snapshot_file
@@ -979,10 +980,12 @@ async fn pre_discovered_executor_catalog_snapshot() {
     let mut settings = insta::Settings::clone_current();
     settings.set_snapshot_path(snapshot_dir);
     settings.bind(|| {
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "pre_discovered_executor_catalog",
             serde_json::to_string_pretty(&snapshot).expect("serialize catalog snapshot")
         );
+        });
     });
 
     std::fs::remove_dir_all(test_root).expect("remove skill directory");

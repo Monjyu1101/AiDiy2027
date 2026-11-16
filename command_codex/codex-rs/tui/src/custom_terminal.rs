@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 // This is derived from `ratatui::Terminal`, which is licensed under the following terms:
 //
 // The MIT License (MIT)
@@ -1008,10 +1009,12 @@ mod tests {
                 assert!(output.contains("i=8388864,U=1"));
                 let (_, grid) = output.split_once("\x1b[38;2;128;1;0m").unwrap();
                 let (grid, _) = grid.split_once("\x1b[39m").unwrap();
-                insta::assert_snapshot!(
+                insta::with_settings!({prepend_module_to_snapshot => false}, {
+                    insta::assert_snapshot!(
                     "fullscreen_tmux_image_cells",
                     grid.replace('\x1b', "\nESC").trim()
                 );
+                });
             }
             if protocol == crate::pets::ImageProtocol::KittyLocalFile {
                 assert!(output.contains("t=f") && output.contains("C=1"));

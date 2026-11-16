@@ -1,5 +1,6 @@
 //! Recovery commands remain usable when only the current conversation is unavailable.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::active_reconnect::drain_history;
 use super::*;
 use pretty_assertions::assert_eq;
@@ -132,10 +133,12 @@ async fn unavailable_thread_routes_local_and_recovery_commands() -> Result<()> {
         .await?;
     let history = drain_history(&mut app, &mut tui, &mut session, &mut events).await?;
     assert!(history.contains("Current working directory:"));
-    assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        assert_snapshot!(
         "unavailable_thread_local_command",
         history.replace(&app.config.cwd.display().to_string(), "/project")
     );
+    });
 
     app.chat_widget
         .restore_user_message_to_composer("/status".into());

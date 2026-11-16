@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use codex_app_server_protocol::ThreadItem;
 use pretty_assertions::assert_eq;
@@ -45,7 +46,9 @@ async fn external_writer_snapshot_freezes_active_command_and_mcp_rows() {
             );
         }
     }
-    insta::assert_snapshot!(rendered.join("\n---\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(rendered.join("\n---\n"));
+    });
 }
 
 #[tokio::test]
@@ -219,8 +222,11 @@ async fn exploration_nonzero_exits_remain_visible_beside_successful_reads() {
         let item = begin_exec(&mut chat, id, command);
         end_exec(&mut chat, item, "", "", exit_code);
     }
-    insta::assert_snapshot!(active_blob(&chat));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(active_blob(&chat));
+    });
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "compact_exploration_with_failures",
         chat.transcript
             .active_cell
@@ -232,6 +238,7 @@ async fn exploration_nonzero_exits_remain_visible_beside_successful_reads() {
             .collect::<Vec<_>>()
             .join("\n")
     );
+    });
     let statuses = chat
         .transcript
         .active_cell
@@ -269,7 +276,9 @@ async fn exploration_reasoning_during_followup_command_stays_ordered() {
     assert!(drain_insert_history(&mut rx).is_empty());
     end_exec(&mut chat, second, "contents\n", "", /*exit_code*/ 0);
     let transcript = chat.active_cell_transcript_lines(/*width*/ 80).unwrap();
-    insta::assert_snapshot!(lines_to_single_string(&transcript));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(lines_to_single_string(&transcript));
+    });
 }
 
 #[tokio::test]
@@ -373,7 +382,9 @@ async fn adjacent_exploration_groups_across_reasoning_live_and_replayed() {
         renders.push(render);
     }
     assert_eq!(renders[0], renders[1]);
-    insta::assert_snapshot!(renders[0]);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(renders[0]);
+    });
 }
 
 #[tokio::test]

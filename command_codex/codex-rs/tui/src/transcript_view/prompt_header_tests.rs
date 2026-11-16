@@ -1,5 +1,6 @@
 //! Sticky context follows the visible turn while leaving source text and hit rows intact.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::new_spoken_user_prompt;
 use crate::history_cell::new_user_prompt;
@@ -85,7 +86,9 @@ fn prompt_header_tracks_reading_and_yields_to_visible_prompts_and_short_screens(
         ))
     ));
     assert_eq!(view.area.y, 0);
-    insta::assert_snapshot!(snapshots.join("\n\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("prompt_header_reading", snapshots.join("\n\n"));
+    });
 }
 
 #[test]
@@ -96,7 +99,9 @@ fn header_sanitizes_controls_and_truncates_by_display_width() {
     )
     .unwrap();
     assert!(line.width() <= 18);
-    insta::assert_snapshot!(line.to_string());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(line.to_string());
+    });
 }
 
 #[test]

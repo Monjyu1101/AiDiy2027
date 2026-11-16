@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use std::collections::BTreeSet;
 use std::time::Duration;
 use std::time::Instant;
@@ -181,7 +182,8 @@ extends = "base"
         codex_version: "test".to_string(),
         checks: vec![check],
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "doctor_read_restricted_filesystem_paths",
         super::super::render_human_report(
             &report,
@@ -193,6 +195,7 @@ extends = "base"
             },
         )
     );
+    });
 }
 
 #[tokio::test]

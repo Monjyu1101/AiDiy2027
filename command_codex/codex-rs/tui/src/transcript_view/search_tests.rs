@@ -1,5 +1,6 @@
 //! Literal search, history continuation, and presentation restoration share source offsets.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use pretty_assertions::assert_eq;
 use ratatui::style::Modifier;
@@ -130,7 +131,9 @@ fn find_keeps_context_and_allows_reading_without_losing_the_query() {
     finish_scan(&mut view, &cells);
     let mut found = Buffer::empty(area);
     view.render(area, &mut found, &cells);
-    insta::assert_snapshot!("find_context", format!("{found:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("find_context", format!("{found:?}"));
+    });
 
     let matched = view.position;
     view.handle_key(KeyCode::PageDown.into(), &cells);
@@ -204,7 +207,9 @@ fn find_reduces_context_to_keep_a_tall_match_visible() {
         view.render(area, &mut buffer, &cells);
         frames.push(format!("height {height}\n{buffer:?}"));
     }
-    insta::assert_snapshot!("find_context_for_tall_matches", frames.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("find_context_for_tall_matches", frames.join("\n"));
+    });
 }
 
 #[test]
@@ -249,10 +254,12 @@ fn selection_pauses_find_and_normalized_navigation_resumes_the_same_query() {
         &cells,
     );
     assert!(!view.is_search_editing());
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "selection_owns_find_highlight",
         format!("{selected_frame:?}")
     );
+    });
 }
 
 #[test]
@@ -352,7 +359,9 @@ fn resizing_a_read_find_result_preserves_relative_navigation() {
     view.prepare_width(/*width*/ 20);
     let mut resized = Buffer::empty(view.area);
     view.render(view.area, &mut resized, &cells);
-    insta::assert_snapshot!("find_context_after_resize", format!("{resized:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("find_context_after_resize", format!("{resized:?}"));
+    });
     assert_eq!(
         view.search.current.as_ref().map(|found| found.anchor.index),
         Some(1)
@@ -615,10 +624,12 @@ fn empty_find_keeps_following_new_output_after_a_page_join() {
         (true, true, true),
         "{buffer:?}",
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "empty_find_follows_output_after_page_join",
         format!("{buffer:?}")
     );
+    });
 }
 
 #[test]
@@ -1124,10 +1135,12 @@ fn find_expands_only_the_match_and_preserves_manual_disclosures() {
     view.jump_to_entry(&cells, /*index*/ 0);
     let mut buffer = Buffer::empty(area);
     view.render(area, &mut buffer, &cells);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "find_selective_expansion",
         crate::transcript_view::tests::text(&buffer)
     );
+    });
     view.handle_key(KeyCode::Enter.into(), &cells);
     // Reading keeps the result and lets the normal activity controls open another block.
     view.handle_key(KeyCode::F(4).into(), &cells);

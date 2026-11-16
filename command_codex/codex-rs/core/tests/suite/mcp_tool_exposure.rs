@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use anyhow::Result;
 use codex_config::Constrained;
 use codex_core::CodexThread;
@@ -1414,7 +1415,8 @@ enabled = false
     assert_eq!(tools_states[2].len(), 2);
     assert!(tools_states[2][1].contains("Removed deferred tool namespaces:\n"));
     assert!(tools_states[2][1].contains("No deferred tool namespaces remain.\n"));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "deferred_tools_initial_unchanged_and_removed",
         format_labeled_requests_snapshot(
             "Initially available deferred tools remain unchanged until disabling Calendar removes them.",
@@ -1425,6 +1427,7 @@ enabled = false
             ],
         )
     );
+    });
 
     test.codex.shutdown_and_wait().await?;
     Ok(())
@@ -1525,7 +1528,8 @@ async fn deferred_tool_world_state_survives_resume_without_duplicate_updates() -
     assert_eq!(tools_states[0], tools_states[1]);
     assert_eq!(tools_states[0].len(), 1);
     assert!(tools_states[0][0].contains(SEARCH_CALENDAR_NAMESPACE));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "deferred_tools_resume_without_duplicate_update",
         context_snapshot::format_context_snapshot(
             "Persisted deferred tools remain unchanged after resuming the thread.",
@@ -1536,6 +1540,7 @@ async fn deferred_tool_world_state_survives_resume_without_duplicate_updates() -
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
 
     Ok(())
 }
@@ -1714,7 +1719,8 @@ async fn apps_guidance_and_deferred_namespace_appear_after_recovery_within_a_tur
         "recovered request should advertise tool_search: {recovered_body}"
     );
     assert_eq!(startup_control.initialize_attempts(), 2);
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "deferred_tools_recover_during_sampling",
         format_labeled_requests_snapshot(
             "Deferred namespaces appear after Apps recovers between sampling requests.",
@@ -1724,6 +1730,7 @@ async fn apps_guidance_and_deferred_namespace_appear_after_recovery_within_a_tur
             ],
         )
     );
+    });
 
     Ok(())
 }

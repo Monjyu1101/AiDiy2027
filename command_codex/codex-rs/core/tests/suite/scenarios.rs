@@ -1,5 +1,6 @@
 //! Multi-turn Astra scenarios snapshot the model-visible request history of shipped features.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #[path = "scenarios_turn_input_agent_message.rs"]
 mod turn_input_agent_message;
 
@@ -507,13 +508,15 @@ async fn gif_generation_preserves_animation_and_replays_a_still_preview() -> Res
     );
     let requests = mock.requests();
     assert_eq!(requests.len(), 3);
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "GIF generation exposes animation controls and guidance, preserves the animated artifact, and replays a still preview through a follow-up turn.",
         &requests,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }
 
@@ -563,11 +566,13 @@ async fn admitted_prompt_id_reaches_responses() -> Result<()> {
             assert!(id.starts_with("msg_") && !id.starts_with("msg_input_"));
         }
     }
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "An admitted prompt and an ordinary prompt with identical text reach Responses on successive turns.",
         &requests,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     ));
+    });
     Ok(())
 }
 
@@ -683,7 +688,8 @@ async fn additional_context_tool_outputs(tool_outputs: bool) -> Result<()> {
             vec![2, 3, 4, 6]
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         if tool_outputs {
             "additional_context_tool_outputs"
         } else {
@@ -695,6 +701,7 @@ async fn additional_context_tool_outputs(tool_outputs: bool) -> Result<()> {
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -704,20 +711,23 @@ async fn cached_stdio_stays_dormant_in_a_new_chat_until_first_use() -> Result<()
     skip_if_wine_exec!(Ok(()), "requires a Windows test_stdio_server binary");
     let requests = super::mcp_tool_cache::cached_stdio_first_use_scenario().await?;
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(context_snapshot::format_context_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_context_snapshot(
         "A new chat uses a cached MCP catalog for unrelated work, then calls echo. The live server updates the tool definitions and marks cwd as app-only.",
         &entries,
         &ContextSnapshotOptions::default()
             .rewrite_known_segments()
             .include_request_settings(),
     ));
+    });
     Ok(())
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 async fn realtime_attachment_replacement_preserves_handoff_context() -> Result<()> {
     let requests = super::realtime_attachment::attachment_replacement_scenario().await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "realtime_attachment_replacement",
         context_snapshot::format_request_history_snapshot(
             "A replacement fences an older pending connection and stale stops; only the selected call starts a Codex handoff.",
@@ -725,6 +735,7 @@ async fn realtime_attachment_replacement_preserves_handoff_context() -> Result<(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -875,11 +886,13 @@ async fn unavailable_images_are_rechecked_without_rewriting_history() -> Result<
             detail: Some(ImageDetail::High),
         })
     );
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "Available file references pass through. A later request replaces missing files, preserves references on backend errors, rechecks each distinct ID once, and keeps canonical history intact.",
         &requests,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     ));
+    });
     Ok(())
 }
 
@@ -899,11 +912,17 @@ content(result.content);"#,
     let output = response.single_request().custom_tool_call_output("call-1");
     assert_eq!(output["output"][1]["text"], "sample");
     assert_eq!(output["output"][2]["type"], "input_image");
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
-        "Code Mode forwards MCP text and image blocks to the model in their original order.",
-        &core_test_support::responses::received_responses_requests(&server).await,
-        &ContextSnapshotOptions::default().rewrite_known_segments(),
-    ));
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = context_snapshot::format_request_history_snapshot(
+            "Code Mode forwards MCP text and image blocks to the model in their original order.",
+            &core_test_support::responses::received_responses_requests(&server).await,
+            &ContextSnapshotOptions::default().rewrite_known_segments(),
+        );
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot_value);
+        });
+    };
     Ok(())
 }
 
@@ -911,7 +930,8 @@ content(result.content);"#,
 async fn code_mode_mcp_schema_limits_preserve_explicit_overrides() -> Result<()> {
     skip_if_no_network!(Ok(()));
     let requests = super::code_mode::mcp_schema_max_bytes_scenario().await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "code_mode_mcp_schema_limits",
         context_snapshot::format_request_history_snapshot(
             "Code Mode exposes explicit MCP schema limits in its prompt and runtime tool catalog.",
@@ -921,6 +941,7 @@ async fn code_mode_mcp_schema_limits_preserve_explicit_overrides() -> Result<()>
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -963,7 +984,8 @@ async fn mcp_tool_discovery_in_same_turn(tool_mode: ToolMode) -> Result<()> {
         }
     }
     let entries = bodies.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!("mcp_tool_discovery_{tool_mode:?}"),
         context_snapshot::format_context_snapshot(
             "An MCP discovery call announces a new tool, which is called in the same turn.",
@@ -973,6 +995,7 @@ async fn mcp_tool_discovery_in_same_turn(tool_mode: ToolMode) -> Result<()> {
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1139,7 +1162,8 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
         assert_eq!(tool["parameters"], parameters);
     }
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "astra_async_question_and_answer",
         context_snapshot::format_context_snapshot(
             "Astra uses the catalog question schema to ask who a launch update is for, keeps working, and receives the user's answer in the active turn.",
@@ -1147,6 +1171,7 @@ async fn astra_asks_an_async_question_and_receives_the_answer_while_working() ->
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1260,7 +1285,8 @@ async fn astra_switches_environments_for_the_rest_of_the_active_turn() -> Result
         .await?;
 
     let requests = mock.requests();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "astra_active_environment_selection",
         context_snapshot::format_request_history_snapshot(
             "Astra starts in one workspace, switches for the next step of the active turn, and returns to the original workspace on the next turn.",
@@ -1268,6 +1294,7 @@ async fn astra_switches_environments_for_the_rest_of_the_active_turn() -> Result
             &ContextSnapshotOptions::default(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1375,7 +1402,8 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
     .await;
 
     let requests = mock.requests();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "astra_kickoff_remote_compaction_windows",
         context_snapshot::format_request_history_snapshot(
             "Astra plans a kickoff with local and plugin skills, remotely compacts, and checks an image brief.",
@@ -1383,6 +1411,7 @@ async fn astra_kickoff_with_skills_plugins_and_remote_compaction() -> Result<()>
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1465,7 +1494,8 @@ enabled = true
         .await?;
 
     let requests = mock.requests();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         if omit_descriptions {
             "astra_plugin_policy_without_skill_descriptions"
         } else {
@@ -1477,6 +1507,7 @@ enabled = true
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1763,7 +1794,8 @@ async fn astra_omits_disabled_executor_and_plugin_skills_from_model_context(
             "Astra applies refreshed plugin policy to the next step while preserving earlier authorized skill context and tool output.",
         ),
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot_name,
         context_snapshot::format_context_snapshot(
             description,
@@ -1771,6 +1803,7 @@ async fn astra_omits_disabled_executor_and_plugin_skills_from_model_context(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -1942,10 +1975,16 @@ async fn child_completion_wakes_parent_after_final_answer() -> Result<()> {
             serde_json::Value::Array(wake.single_request().inputs_of_type("agent_message")),
         ));
     mailbox.sort_all_objects();
-    insta::assert_snapshot!(format!(
-        "{history}\n\nWoken parent mailbox:\n{}",
-        serde_json::to_string_pretty(&mailbox)?,
-    ));
+    {
+        // Evaluate fallible/async values before entering synchronous Insta settings.
+        let snapshot_value = format!(
+            "{history}\n\nWoken parent mailbox:\n{}",
+            serde_json::to_string_pretty(&mailbox)?,
+        );
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(snapshot_value);
+        });
+    };
     test.thread_manager
         .shutdown_all_threads_bounded(Duration::from_secs(5))
         .await;
@@ -2198,7 +2237,8 @@ async fn skill_read_recovers_omitted_installation_and_reads_selected_environment
             }
         }
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "skill_read_installation_recovery_request_history",
         context_snapshot::format_context_snapshot(
             "Astra reads Cloud instructions, discovers an omitted deployment installation, and reads its instructions from env-04.",
@@ -2206,6 +2246,7 @@ async fn skill_read_recovers_omitted_installation_and_reads_selected_environment
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     Ok(())
 }
 
@@ -2290,7 +2331,8 @@ async fn multi_agent_catalog_parameters(
             "Astra calls list_agents using the selected catalog parameter schema.",
         )
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         name,
         context_snapshot::format_request_history_snapshot(
             description,
@@ -2298,6 +2340,7 @@ async fn multi_agent_catalog_parameters(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -2404,7 +2447,8 @@ text(`MCP: ${ping.structuredContent?.echo ?? "missing"}`);"#,
     .await;
 
     test.submit_turn("Check the Settings release. Read release/diagnostics.log, inspect release/settings.png, confirm the local MCP integration responds, and update release/status.md with the result. Tell me whether another agent is working on this task.").await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "astra_settings_release_check_tool_shapes",
         context_snapshot::format_request_history_snapshot(
             "Astra checks a Settings release using direct collaboration and Code Mode tools.",
@@ -2412,6 +2456,7 @@ text(`MCP: ${ping.structuredContent?.echo ?? "missing"}`);"#,
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -2484,7 +2529,8 @@ throw 'boom';"#,
         "Run a code cell, inspect its timing and a failed wait, then check the diagnostic script.",
     )
     .await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "astra_code_mode_call_timing",
         context_snapshot::format_request_history_snapshot(
             "Astra reads code-mode timings and the collector notice even at zero tokens, then a failed wait and a truncated script error.",
@@ -2492,6 +2538,7 @@ throw 'boom';"#,
             &ContextSnapshotOptions::default(),
         )
     );
+    });
     Ok(())
 }
 
@@ -2608,7 +2655,9 @@ async fn astra_continues_after_a_stream_is_interrupted() -> Result<()> {
         &entries,
         &ContextSnapshotOptions::default().rewrite_known_segments(),
     );
-    insta::assert_snapshot!("astra_input_interrupts_response", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("astra_input_interrupts_response", snapshot);
+    });
     test.codex.shutdown_and_wait().await?;
     drop(release_interrupted_response);
     streaming.shutdown().await;
@@ -2739,7 +2788,9 @@ async fn astra_continues_after_input_yields_a_code_mode_cell() -> Result<()> {
     )
     .replace("cell ID 1", "cell ID <CELL_ID>")
     .replace("\"cell_id\":\"1\"", "\"cell_id\":\"<CELL_ID>\"");
-    insta::assert_snapshot!("astra_input_yields_code_mode_cell", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("astra_input_yields_code_mode_cell", snapshot);
+    });
     Ok(())
 }
 
@@ -2872,7 +2923,8 @@ text(result.tools[0].description);"#,
             "Catalog Code Mode instructions and wait parameter descriptions accompany a yielded cell through completion.",
         )
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot_name,
         context_snapshot::format_request_history_snapshot(
             scenario,
@@ -2880,6 +2932,7 @@ text(result.tools[0].description);"#,
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -2998,7 +3051,8 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread(
     } else {
         "astra_plugin_refresh_simplified_selection_hints_off"
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot_name,
         context_snapshot::format_request_history_snapshot(
             "Astra checks for Notes, refreshes its installed plugin without restarting, and uses the new skill and Code Mode MCP tool across turns.",
@@ -3006,6 +3060,7 @@ async fn astra_refreshes_plugin_tools_and_skills_in_an_existing_thread(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -3029,7 +3084,9 @@ async fn subagent_browser_auth_resolves_user_prompt() -> Result<()> {
     let snapshot = regex_lite::Regex::new(r"Wall time: [0-9]+(?:\.[0-9]+)? seconds")?
         .replace_all(&snapshot, "Wall time: <DURATION> seconds")
         .into_owned();
-    insta::assert_snapshot!("subagent_browser_auth", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("subagent_browser_auth", snapshot);
+    });
     Ok(())
 }
 
@@ -3204,7 +3261,9 @@ max_total_section_tokens = {SELECTED_EXEC_TOKENS}
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_elastic_budgeting", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_elastic_budgeting", snapshot);
+    });
     Ok(())
 }
 
@@ -3262,7 +3321,9 @@ async fn guardian_code_mode_messaging_request_history() -> Result<()> {
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_code_mode_messaging", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_code_mode_messaging", snapshot);
+    });
     Ok(())
 }
 
@@ -3325,7 +3386,9 @@ async fn subagent_waits_for_its_inherited_environment_configuration() -> Result<
         } else {
             "subagent_inherits_pending_environment"
         };
-    insta::assert_snapshot!(snapshot_name, snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot_name, snapshot);
+    });
     Ok(())
 }
 
@@ -3333,11 +3396,13 @@ async fn subagent_waits_for_its_inherited_environment_configuration() -> Result<
 async fn prediction_fork_inherits_parent_context() -> Result<()> {
     skip_if_no_network!(Ok(()));
     let requests = super::reasoning_effort_override::prediction_fork_requests().await?;
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "A parent pins high request effort, then selects low. Its ephemeral prediction fork inherits the context and baseline, then selects medium on its first turn. Continuing the parent at medium produces the same request.",
         &requests,
         &ContextSnapshotOptions::default().include_request_settings(),
     ));
+    });
     Ok(())
 }
 
@@ -3409,11 +3474,13 @@ async fn prediction_fork_preserves_context_above_compaction_threshold() -> Resul
 
     let requests = mock.requests();
     assert_eq!(requests.len(), 3);
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "The parent finishes above the compaction threshold. Its prediction fork retains the parent's context and reminder, but neither compacts nor adds another reminder after a tool call.",
         &requests,
         &ContextSnapshotOptions::default().include_request_settings(),
     ));
+    });
     Ok(())
 }
 
@@ -3509,11 +3576,13 @@ async fn attached_side_chat_preserves_model_context_on_cold_resume() -> Result<(
 
     let requests = mock.requests();
     assert_eq!(requests.len(), 3);
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "A side chat receives the parent turn as reference, adds its own turn, and resumes from disk with the policy and prior answer intact.",
         &requests,
         &ContextSnapshotOptions::default(),
     ));
+    });
     Ok(())
 }
 
@@ -3549,7 +3618,9 @@ async fn guardian_checkpoint_migration_request_history() -> Result<()> {
             .replace_all(&snapshot, replacement)
             .into_owned();
     }
-    insta::assert_snapshot!("guardian_checkpoint_migration", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("guardian_checkpoint_migration", snapshot);
+    });
     Ok(())
 }
 
@@ -3561,7 +3632,8 @@ async fn app_tool_exposure_request_history() -> Result<()> {
         ),
     )
     .await?;
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "app_tool_exposure_CodeModeOnly",
         context_snapshot::format_request_history_snapshot(
             "A non-deferred connector is called through code mode while another connector stays deferred.",
@@ -3571,6 +3643,7 @@ async fn app_tool_exposure_request_history() -> Result<()> {
                 .include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -3582,11 +3655,13 @@ async fn model_catalog_refresh_preserves_tools_and_history() -> Result<()> {
         /*model_catalog_in_context*/ true,
     )
     .await?;
-    insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(context_snapshot::format_request_history_snapshot(
         "Catalog refreshes append the updated listing once while preserving tools and prior input.",
         &requests,
         &ContextSnapshotOptions::default().include_request_settings(),
     ));
+    });
     Ok(())
 }
 
@@ -3641,7 +3716,8 @@ async fn catalog_permission_paths_follow_selected_model(
             "Catalog denied-read wording follows the selected model, appending changed permissions once while preserving prior input, denial facts, and mandatory policy warnings.",
         ),
     };
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         snapshot_name,
         context_snapshot::format_context_snapshot(
             description,
@@ -3649,6 +3725,7 @@ async fn catalog_permission_paths_follow_selected_model(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -4081,7 +4158,8 @@ async fn astra_async_compaction_keeps_work_added_after_its_snapshot(
         let user = position("Check who can finish the notes.");
         assert!(draft < compaction && compaction < default && default < plan && plan < user);
         let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-        insta::assert_snapshot!(
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!(
             "astra_async_compaction_with_live_suffix",
             context_snapshot::format_context_snapshot(
                 "Astra compacts a completed launch-notes turn in the background. The user switches to Plan mode and the host changes which budget reminder opts out of full context. Adoption keeps the live suffix and refreshes both reminders after the tool output.",
@@ -4089,6 +4167,7 @@ async fn astra_async_compaction_keeps_work_added_after_its_snapshot(
                 &ContextSnapshotOptions::default().rewrite_known_segments(),
             )
         );
+        });
     } else {
         let tool = position("delegated work");
         if matches!(
@@ -4732,7 +4811,9 @@ async fn unshared_apps_catalog_across_turns() -> Result<()> {
             .rewrite_known_segments()
             .include_request_settings(),
     );
-    insta::assert_snapshot!("unshared_apps_catalog_across_turns", snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("unshared_apps_catalog_across_turns", snapshot);
+    });
     Ok(())
 }
 
@@ -4950,7 +5031,8 @@ async fn catalog_plugin_guidance_follows_model_and_survives_resume() -> Result<(
                 .any(|text| text.contains("<plugins_instructions>"))
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "catalog_plugin_guidance_follows_model_and_survives_resume",
         context_snapshot::format_labeled_requests_snapshot(
             "First and final requests show generic plugin guidance and the complete append-only history. All ten intermediate model, wording, fallback, availability and resume states are asserted in the test.",
@@ -4961,6 +5043,7 @@ async fn catalog_plugin_guidance_follows_model_and_survives_resume() -> Result<(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -5162,7 +5245,8 @@ async fn catalog_selected_plugin_wording_preserves_capability_policy(
                 .any(|text| text.contains("Catalog selected notes."))
         );
     }
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!(
             "catalog_selected_plugin_wording_apps_{apps_enabled}_simplified_{simplified_selection}"
         ),
@@ -5172,6 +5256,7 @@ async fn catalog_selected_plugin_wording_preserves_capability_policy(
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }
 
@@ -5247,7 +5332,8 @@ async fn catalog_selected_plugin_omission_bounds_runtime_capabilities() -> Resul
         selected[0].len() <= 4096,
         "the bound applies after runtime capability substitution"
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "catalog_selected_plugin_omission_bounds_runtime_capabilities",
         context_snapshot::format_request_history_snapshot(
             "A catalog omission suffix is reserved within the final selected-plugin bound after substituting a long Unicode runtime capability name.",
@@ -5255,5 +5341,6 @@ async fn catalog_selected_plugin_omission_bounds_runtime_capabilities() -> Resul
             &ContextSnapshotOptions::default().include_request_settings(),
         )
     );
+    });
     Ok(())
 }

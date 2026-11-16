@@ -1,3 +1,4 @@
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 #![cfg(test)]
 
 use super::*;
@@ -111,7 +112,9 @@ fn links_only_annotate_their_own_cells() {
             .symbol()
             .contains("https://example.com/pr/42")
     );
-    insta::assert_snapshot!(format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("{buffer:?}"));
+    });
 }
 
 #[test]
@@ -246,7 +249,9 @@ fn inline_modifiers_and_row_surfaces_follow_the_tree() {
         &mut buffer,
         /*plain_style*/ None,
     );
-    insta::assert_snapshot!(format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("{buffer:?}"));
+    });
 
     let clipped = Rect { width: 6, ..area };
     let mut buffer = Buffer::empty(clipped);
@@ -306,7 +311,9 @@ fn semantic_colors_follow_the_theme_and_terminal() {
 
     const CHILD: &str = "CODEX_STATUSLINE_SEMANTIC_PALETTE_TEST";
     if std::env::var_os(CHILD).is_some() {
-        insta::assert_snapshot!("semantic_statusline_ansi16", paint_semantic_samples());
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_snapshot!("semantic_statusline_ansi16", paint_semantic_samples());
+        });
         return;
     }
     let limited = std::process::Command::new(std::env::current_exe().unwrap())
@@ -324,7 +331,9 @@ fn semantic_colors_follow_the_theme_and_terminal() {
             bg: (0, 0, 0),
         },
         || {
-            insta::assert_snapshot!("semantic_statusline_truecolor", paint_semantic_samples());
+            insta::with_settings!({prepend_module_to_snapshot => false}, {
+                insta::assert_snapshot!("semantic_statusline_truecolor", paint_semantic_samples());
+            });
         },
     );
     assert!(
@@ -608,7 +617,7 @@ fn wrapping_row_moves_a_hash_and_nonbreaking_pr_label_together() {
 }
 
 #[test]
-fn authored_line_breaks_and_collapsed_whitespace_preserve_styles_and_links() {
+fn line_breaks_preserve_styles_and_links() {
     let href = "https://example.com/pr/42";
     let node = tree(json!({"type":"text","children":[
         "  ready  \t", {"type":"bold","children":["  now"]}, "\r", "\n\n",
@@ -631,9 +640,11 @@ fn authored_line_breaks_and_collapsed_whitespace_preserve_styles_and_links() {
             crate::terminal_hyperlinks::osc8_hyperlink(href, &g.to_string())
         );
     }
-    insta::assert_snapshot!(crate::terminal_hyperlinks::strip_osc8(&format!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(crate::terminal_hyperlinks::strip_osc8(&format!(
         "{buffer:?}"
     )));
+    });
     assert_eq!(buffer[(6, 3)].symbol(), "…");
 }
 

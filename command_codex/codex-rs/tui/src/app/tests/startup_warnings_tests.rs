@@ -1,5 +1,6 @@
 //! Startup diagnostic ordering, aggregation, and transcript coverage.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::history_cell::StartupWarningsCell;
 use codex_app_server_protocol::McpServerStartupFailureReason;
@@ -85,7 +86,9 @@ async fn deprecation_delivery_deduplicates_retained_transcript() -> Result<()> {
     crate::terminal_palette::with_test_default_colors(/*colors*/ None, || {
         overlay.render(area, &mut buffer);
     });
-    insta::assert_snapshot!("deduplicated_deprecation_transcript", format!("{buffer:?}"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("deduplicated_deprecation_transcript", format!("{buffer:?}"));
+    });
 
     for (summary, details) in [
         ("`legacy_option` is deprecated.", None),
@@ -224,10 +227,12 @@ async fn mcp_startup_summary_counts_servers_and_sign_in_subset() -> Result<()> {
             ("MCP · gamma".into(), false)
         ],
     );
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "mcp_startup_details",
         lines_to_single_string(&warnings.transcript_lines(/*width*/ 40))
     );
+    });
     insert_warnings(&mut app, &mut tui, &["Skill manifest is invalid."]);
     assert_eq!(history_cell::warning_count(&app.transcript_cells), 4);
     Ok(())

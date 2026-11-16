@@ -25,7 +25,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | AIモデル設定 | [`../_AIDIY/knowledge/backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md`](../_AIDIY/knowledge/backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md) |
 | AI判断 / Decisions | [`../_AIDIY/knowledge/backend_server,backend_tools,AI判断追加手順.md`](../_AIDIY/knowledge/backend_server,backend_tools,AI判断追加手順.md) |
 | 設定管理（conf_json / conf_model / conf_path） | [`../_AIDIY/knowledge/backend_server,設定管理(conf).md`](<../_AIDIY/knowledge/backend_server,設定管理(conf).md>) |
-| Code CLI 追加 | [`../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md`](../_AIDIY/knowledge/backend_server,command_hermes,frontend_avatar,frontend_web,CodeCLI追加手順.md) |
+| Code CLI 追加 | [`../_AIDIY/knowledge/共通,CodeCLI追加手順.md`](../_AIDIY/knowledge/共通,CodeCLI追加手順.md) |
 | Pi の Code 実行・モデル・読み取り専用・予測連携 | [`../_AIDIY/knowledge/command_pi,AiDiy連携.md`](../_AIDIY/knowledge/command_pi,AiDiy連携.md) |
 | MCP 構成・活用 | [`../_AIDIY/knowledge/backend_tools,構成.md`](../_AIDIY/knowledge/backend_tools,構成.md)、[`../_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md`](../_AIDIY/knowledge/backend_server,backend_tools,MCP活用手順.md) |
 

@@ -1,6 +1,7 @@
 //! Mailbox scheduling preserves deferred responses and drains graceful interrupts.
 //! Queued mail reaches the next request without losing completed response items.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use codex_core::TurnInputRequest;
 use codex_core::TurnInputSubmission;
 use codex_features::Feature;
@@ -189,7 +190,8 @@ async fn mailbox_preemption_preserves_response_when_deferred(
         ],
     );
     let entries = requests.iter().map(SnapshotEntry::body).collect::<Vec<_>>();
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         format!("mailbox_preemption_{boundary_name}_deferred_{defer_mailbox_preemption}"),
         context_snapshot::format_context_snapshot(
             "Worker messages arrive during a response. Deferred mailbox preemption lets the planned tool execute before the next request receives both messages.",
@@ -197,6 +199,7 @@ async fn mailbox_preemption_preserves_response_when_deferred(
             &ContextSnapshotOptions::default().rewrite_known_segments(),
         )
     );
+    });
     streaming.shutdown().await;
     Ok(())
 }

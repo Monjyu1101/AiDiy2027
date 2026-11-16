@@ -10,6 +10,7 @@
 //! 3. Quiet completions leave the summary immediately but retain their existing cleanup timer
 //!    for exec-flush and usage-output ordering.
 //! 4. Completed runs only persist when they have user-facing output or a non-success status.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::HistoryCell;
 use super::plain_lines;
 use codex_ansi_escape::ansi_escape;
@@ -587,7 +588,9 @@ mod tests {
                 "    across lines plain".to_string(),
             ],
         );
-        insta::assert_debug_snapshot!("completed_hook_system_message_ansi_styles", lines);
+        insta::with_settings!({prepend_module_to_snapshot => false}, {
+            insta::assert_debug_snapshot!("completed_hook_system_message_ansi_styles", lines);
+        });
     }
 
     #[test]

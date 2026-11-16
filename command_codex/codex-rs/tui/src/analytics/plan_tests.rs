@@ -1,4 +1,5 @@
 //! Snapshot semantics and independent plan-period navigation without a live billing service.
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::analytics::AnalyticsView;
 use crate::analytics::fixture;
@@ -141,7 +142,9 @@ fn period_navigation_preserves_unknowns_and_resets_on_new_snapshot() {
             .unwrap();
         output.push(terminal.backend().to_string());
     }
-    insta::assert_snapshot!(output.join("\n"));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(output.join("\n"));
+    });
     let mut next = response();
     next.data_as_of = Some("2026-09-02T13:00:00Z".into());
     view.plan.report = Load::Ready(Report::parse(next).unwrap().unwrap());
@@ -206,7 +209,9 @@ fn unavailable_empty_and_zero_history_are_distinct() {
         .map(str::trim_end)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(snapshot);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(snapshot);
+    });
     let mut missing = response();
     missing.data_as_of = None;
     assert!(Report::parse(missing).unwrap().is_none());
@@ -358,5 +363,7 @@ fn plan_clocks_follow_preference_and_keep_utc() {
         .map(ToString::to_string)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!("plan_clocks_twelve_hour", rendered);
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("plan_clocks_twelve_hour", rendered);
+    });
 }

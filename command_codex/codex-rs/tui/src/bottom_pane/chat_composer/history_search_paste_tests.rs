@@ -1,5 +1,6 @@
 //! Pasted text edits the active history query while preserving the original draft.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::super::super::chat_composer_history::HistoryEntry;
 use super::super::super::chat_composer_history::HistorySearchResult;
 use super::super::ChatComposer;
@@ -71,7 +72,9 @@ fn history_search_paste_appends_query_and_accepts_match() {
     assert_eq!(composer.draft.textarea.text(), "git status");
 
     let terminal = render_composer(&composer, /*width*/ 70);
-    insta::assert_snapshot!("history_search_pasted_query", terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("history_search_pasted_query", terminal.backend());
+    });
 
     let (result, _) = composer.handle_key_event(KeyCode::Enter.into());
     assert!(matches!(result, InputResult::None));
@@ -91,10 +94,12 @@ fn history_search_large_paste_clamps_cursor() {
         ComposerRenderOptions::default(),
     );
     assert_eq!(cursor, Some((79, 4)));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "history_search_large_paste_cursor",
         format!("{}\nCursor: {cursor:?}", terminal.backend())
     );
+    });
 }
 
 #[test]
@@ -114,7 +119,9 @@ fn history_search_empty_paste_preserves_selected_match() {
     }
 
     let terminal = render_composer(&composer, /*width*/ 70);
-    insta::assert_snapshot!("history_search_empty_paste", terminal.backend());
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!("history_search_empty_paste", terminal.backend());
+    });
 }
 
 #[test]
@@ -138,10 +145,12 @@ fn history_search_paste_shows_separators_and_matches_original_query() {
         ComposerRenderOptions::default(),
     );
     assert_eq!(cursor, Some((31, 4)));
-    insta::assert_snapshot!(
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(
         "history_search_pasted_separators",
         format!("{}\nCursor: {cursor:?}", terminal.backend())
     );
+    });
 
     composer.handle_key_event(KeyCode::Esc.into());
     composer

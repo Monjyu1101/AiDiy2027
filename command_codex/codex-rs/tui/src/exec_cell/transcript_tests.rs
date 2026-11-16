@@ -1,5 +1,6 @@
 //! Grouped command details retain terminal input in raw output without exposing hidden reasoning.
 
+// AiDiy: Keep snapshot filenames short; scoped settings preserve suffixes and paths.
 use super::*;
 use crate::exec_cell::CommandOutput;
 use crate::exec_cell::model::ExecCall;
@@ -60,7 +61,9 @@ fn raw_grouped_history_retains_terminal_input_and_omits_reasoning() {
         .map(Line::to_string)
         .collect::<Vec<_>>()
         .join("\n");
-    insta::assert_snapshot!(format!("Rich\n{rich}\n\nRaw\n{}", raw.join("\n")));
+    insta::with_settings!({prepend_module_to_snapshot => false}, {
+        insta::assert_snapshot!(format!("Rich\n{rich}\n\nRaw\n{}", raw.join("\n")));
+    });
 
     let mut earlier = completed_read("earlier.txt", "earlier output");
     earlier
