@@ -324,16 +324,23 @@ def _stop_aidiy_processes(root, info=print, error=print):
                 role = process_role(parent, root, windows)
             return ({'supervisor': 0, 'frontend_diag': 1, 'memo': 2}.get(role, 3), depth(process))
         info('Diag → Memo の順に強制停止します（共用プロセスは同時終了）。')
-        for target in sorted(targets.values(), key=stop_order):
+        attempted = set()
+
+        def stop_target(target):
             current = next((p for p in snapshot() if p['ProcessId'] == target['ProcessId']), None)
             if current is None or identity(current) != identity(target):
-                continue
+                return
+            attempted.add(identity(current))
             pid = target['ProcessId']
             info(f"AiDiyプロセスを停止します: {target.get('Name', '')} (PID={pid})")
             try:
                 if windows:
-                    subprocess.run(['taskkill', '/F', '/PID', str(pid)], capture_output=True,
-                                   timeout=10, creationflags=subprocess.CREATE_NO_WINDOW)
+                    result = subprocess.run(['taskkill', '/F', '/PID', str(pid)], capture_output=True,
+                                            text=True, errors='replace', timeout=10,
+                                            creationflags=subprocess.CREATE_NO_WINDOW)
+                    if result.returncode:
+                        detail = (result.stderr or result.stdout or '').strip()
+                        error(f'taskkill が失敗しました (PID={pid}, 終了コード={result.returncode}): {detail}')
                 else:
                     try:
                         os.kill(pid, signal.SIGKILL)
@@ -342,6 +349,8 @@ def _stop_aidiy_processes(root, info=print, error=print):
             except (OSError, subprocess.SubprocessError) as exc:
                 # Diagの停止失敗でもMemo等は試す。最後の再照合で残留を判定する。
                 error(f'AiDiyプロセスの停止操作に失敗しました (PID={pid}): {exc}')
+        for target in sorted(targets.values(), key=stop_order):
+            stop_target(target)
         deadline = time.monotonic() + 5
         while True:
             current_processes = snapshot()
@@ -353,8 +362,17 @@ def _stop_aidiy_processes(root, info=print, error=print):
                 info('この配置先で確認した停止対象の AiDiy プロセスの終了を確認しました（Code / IDE / Discord / Slack は継続）。')
                 return True
             if time.monotonic() >= deadline:
+                for process in remaining.values():
+                    role = process_role(process, root, windows) or '所有確認済みの補助プロセス'
+                    error(f"残留: {process.get('Name', '')} (PID={process['ProcessId']}, 親PID={process.get('ParentProcessId', '')}, 対象={role})")
                 error('停止対象の AiDiy プロセスが残っています。停止を完了できませんでした。')
                 return False
+            # 一覧取得後に生成された対象だけ再処理する。拒否された同一プロセスへ連打しない。
+            # PIDの再利用はidentityで区別し、各操作の直前にも一致を確認する。
+            targets.update(remaining)
+            for process in sorted(remaining.values(), key=stop_order):
+                if identity(process) not in attempted:
+                    stop_target(process)
             time.sleep(0.2)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:
         error(f'AiDiy プロセスの状態を確認できません。停止完了は未確認です: {exc}')

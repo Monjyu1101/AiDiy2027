@@ -51,6 +51,7 @@ class SetupProcessesTest(unittest.TestCase):
             def run(args, **kwargs):
                 self.assertNotIn('/T', args)
                 kill(int(args[-1]))
+                return subject.subprocess.CompletedProcess(args, 0)
             with patch.object(subject.sys, 'platform', 'win32' if windows else 'linux'), \
                     patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
                     patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
@@ -77,11 +78,46 @@ class SetupProcessesTest(unittest.TestCase):
                     patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
                     patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
                     patch.object(subject.os, 'kill', side_effect=kill), \
-                    patch.object(subject.subprocess, 'run', side_effect=lambda args, **kw: kill(int(args[-1]))), \
+                    patch.object(subject.subprocess, 'run', side_effect=lambda args, **kw: (kill(int(args[-1])) or subject.subprocess.CompletedProcess(args, 0))), \
                     patch.object(subject.time, 'monotonic', side_effect=[0, 6]):
                 self.assertFalse(subject.stop_setup_processes(root, lambda _: None, lambda _: None))
             self.assertEqual(attempted, [20, 30])
             self.assertEqual([p['ProcessId'] for p in records], [20])
+
+    def test_new_owned_process_during_shutdown_is_stopped(self):
+        first = app(10, 'live')
+        spawned = app(20, 'term')
+        unrelated = proc(21, 'node /other/app.mjs')
+        records = [first, unrelated]
+        stopped = []
+        def kill(pid, *_):
+            stopped.append(pid)
+            records[:] = [p for p in records if p['ProcessId'] != pid]
+            if pid == 10:
+                records.append(spawned)
+        with patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
+                patch.object(subject.os, 'kill', side_effect=kill), \
+                patch.object(subject.time, 'sleep'):
+            self.assertTrue(subject.stop_setup_processes(ROOT, lambda _: None))
+        self.assertEqual(stopped, [10, 20])
+        self.assertEqual(records, [unrelated])
+
+    def test_windows_access_denied_has_pid_exit_code_and_diagnostic(self):
+        root = r'C:\repo'
+        process = proc(2012, r'python C:\repo\backend_tools\tools_main.py', name='python.exe')
+        errors = []
+        result = subject.subprocess.CompletedProcess([], 5, '', 'Access is denied.')
+        with patch.object(subject.sys, 'platform', 'win32'), \
+                patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
+                patch.object(subject, 'snapshot', return_value=[process]), \
+                patch.object(subject.subprocess, 'run', return_value=result) as run, \
+                patch.object(subject.time, 'monotonic', side_effect=[0, 6]):
+            self.assertFalse(subject.stop_setup_processes(root, lambda _: None, errors.append))
+        self.assertEqual(run.call_count, 1)
+        self.assertIn('終了コード=5', errors[0])
+        self.assertIn('Access is denied.', errors[0])
+        self.assertIn('PID=2012', errors[-2])
+        self.assertIn('対象=backend_tools', errors[-2])
 
     def test_memo_is_independent_boundary_under_preserved_code(self):
         records = [app(10, 'code'), proc(20, f'node {ROOT}/frontend_diag/memo_main.mjs', 10),
