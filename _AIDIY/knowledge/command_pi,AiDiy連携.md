@@ -34,7 +34,7 @@
 
 ## setup / cleanup
 
-- setup は `npm ci --ignore-scripts`（Pi の方針どおり lifecycle script を実行しない）→ `npm run hydrate:model-data`（ネットワークで `packages/ai/src/providers/data/` を生成、失敗しても既存データがあれば続行）→ ランチャー作成 → `--version` で起動確認。
+- setup は `npm ci --ignore-scripts`（Pi の方針どおり lifecycle script を実行しない）→ 同梱固定カタログから `packages/ai/src/providers/data/` を生成・検証（外部カタログ通信なし）→ ランチャー作成 → `--version` で起動確認。
 - cleanup はこの配置先が登録したランチャーと PATH 登録を解除し、確認のうえ全階層の `node_modules` と生成モデルデータを削除する。利用者の設定・認証・セッション（`~/.pi/agent`）は削除しない。
 - `command_pi` 配下の test フォルダはセルフテストのため削除済み。ルート cleanup の test フォルダ削除はそのまま適用する（保護しない）。
 
@@ -154,12 +154,14 @@
 - 整理の検証は `node --test scripts/aidiy-layout.test.mjs`（command_pi 内）と、setup後の `aidiy_pi --version` / `--help` で行う。モデルを呼ぶ必要はない。
 
 
-## 外部モデルカタログへ接続できない場合
+## setup の内部モデルデータ（外部カタログ通信なし）
 
-`_setup.py` は通常の `npm run hydrate:model-data` を最大3回試す。失敗時は `check:model-data` に合格する既存データを優先し、既存データも利用できなければ `aidiy/assets/model-catalog.json.gz` の公式Pi固定カタログを使用する。新規cloneでキャッシュがなく、models.devに接続できない場合もカタログ準備を継続できる。
+`_setup.py` は最初から `aidiy/assets/model-catalog.json.gz` の公式Pi固定カタログで内部モデルデータを生成する。models.dev / pi.dev へのアクセス、外部カタログ取得の再試行、既存データへのフォールバックは行わない。新規cloneでも外部カタログ通信なしで準備できる。
+
+AiDiyのモデル候補は従来どおり `_AIDIY/aidiy_diag/pi_models_info.json`。この同梱データはPi本体が静的importする内部情報とコンテキスト長などの補完用で、AiDiy候補一覧を置き換えない。
 
 同梱元は `https://pi.dev/api/models/revisions/sha256-4cbd75daee429216860f6e5b7e13b4ddb12b495f6947061e5777edd27ce0b4f1?types=chat,image,classifier`（2026-11-16取得）。展開後のSHA256はrevisionと一致する。`nix/model-catalog.json` の固定revisionおよび `_setup.py` の `BUNDLED_MODEL_REVISION` と一致しないデータは使用しない。生成は同梱Piの `hydrate-model-catalog.ts`、検証は `check-model-data.ts` を使用し、不一致・破損・検証失敗を成功扱いしない。
 
-これは最新取得成功ではなく固定カタログの利用であり、setupは警告で明示する。モデルデータだけを生成し、認証・会話履歴は触らない。初回 `npm ci` の依存取得と実AI接続までオフラインになるわけではない。
+これは最新取得ではなく、検証済みの固定カタログを利用する通常のsetup経路である。モデルデータだけを生成し、認証・会話履歴は触らない。初回 `npm ci` の依存取得と実AI接続までオフラインになるわけではない。
 
 Piの更新で固定revisionやprovider構造が変わった場合は、公式revisionのカタログを取得しハッシュ検証して同梱資材と定数を同時更新する。勝手なモデルの追加や空リストによる検証回避は行わない。回帰確認: `python -m unittest scripts/checks/test_pi_bundled_catalog.py scripts/checks/test_setup_recovery.py`。

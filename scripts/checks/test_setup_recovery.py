@@ -50,19 +50,22 @@ class PiRecovery(unittest.TestCase):
                     self.assertTrue(pi.install_standalone_launcher())
                     self.assertEqual(shared.read_bytes(), path.read_bytes())
 
-    def test_transient_retry_success(self):
-        with patch.object(pi, 'run_command', side_effect=[False, True]) as run, patch.object(pi.time, 'sleep') as sleep:
-            self.assertTrue(pi.hydrate_model_data())
-            self.assertEqual(run.call_count, 2)
-            sleep.assert_called_once_with(2)
-    def test_missing_data_stays_failed(self):
-        with patch.object(pi, 'hydrate_bundled_model_data', return_value=False), tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)/'missing'), patch.object(pi, 'run_command', return_value=False) as run, patch.object(pi.time, 'sleep'):
+    def test_full_setup_only_uses_npm_for_dependency_install(self):
+        with patch.object(pi, 'check_project_node_runtime', return_value=(True, 'test node')), patch.object(pi.shutil, 'which', return_value='npm'), patch.object(pi, 'run_command', return_value=True) as run, patch.object(pi, 'hydrate_bundled_model_data', return_value=True) as bundle, patch.object(pi, 'install_standalone_launcher', return_value=True), patch.object(pi, 'verify_cli', return_value=True):
+            self.assertTrue(pi.setup())
+            bundle.assert_called_once_with()
+            run.assert_called_once_with([pi.npm_command(), 'ci', '--ignore-scripts', '--no-fund', '--no-audit'], cwd=pi.PI_DIR)
+
+    def test_setup_uses_bundle_without_online_generation(self):
+        for success in (True, False):
+            with patch.object(pi, 'hydrate_bundled_model_data', return_value=success) as bundle, patch.object(pi, 'run_command') as run:
+                self.assertEqual(pi.hydrate_model_data(), success)
+                bundle.assert_called_once_with()
+                run.assert_not_called()
+
+    def test_existing_data_does_not_bypass_bundled_validation(self):
+        with tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)), patch.object(pi, 'hydrate_bundled_model_data', return_value=False), patch.object(pi, 'run_command') as run:
             self.assertFalse(pi.hydrate_model_data())
-            self.assertEqual(run.call_count, 3)
-    def test_existing_data_must_pass_validation(self):
-        for valid in (True, False):
-            with patch.object(pi, 'hydrate_bundled_model_data', return_value=False), tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)), patch.object(pi, 'run_command', side_effect=[False,False,False,valid]) as run, patch.object(pi.time, 'sleep'):
-                self.assertEqual(pi.hydrate_model_data(), valid)
-                self.assertEqual(run.call_args.args[0][-2:], ['run','check:model-data'])
+            run.assert_not_called()
 
 if __name__ == '__main__': unittest.main()

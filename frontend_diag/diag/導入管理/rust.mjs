@@ -7,7 +7,7 @@
 // - rust: 公式 rustup-init（固定版・SHA-256 照合）で x86_64-pc-windows-gnullvm 向け stable を ~/.cargo・~/.rustup に導入。
 // - llvm-mingw: 公式リリース zip（固定版・SHA-256 照合）を %LOCALAPPDATA%\Programs\llvm-mingw に展開し、bin をユーザー PATH へ登録。
 // 公式: https://rust-lang.github.io/rustup/ / https://github.com/mstorsjo/llvm-mingw
-import {mkdir,readdir,readFile,writeFile,rename,rm,unlink} from 'node:fs/promises';
+import {mkdir,readdir,readFile,writeFile,rename,rm,rmdir,unlink} from 'node:fs/promises';
 import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 import {resolveProgram} from '../診断/probes.mjs';
@@ -104,7 +104,7 @@ export async function inspectRust(entry,{env=process.env,platform=process.platfo
   const item={id:entry.id,パッケージ:`Rust（rustup ${RUSTUP_INIT.version} / ${RUST_HOST}）`,
     説明:`公式 rustup で MSVC 不要の ${RUST_HOST} 向け stable（minimal）を導入します。Visual Studio / MSVC は使用しません。C のコンパイルとリンクには llvm-mingw が必要です。`,
     再導入説明:'rustup update で導入済みのツールチェーンと rustup 自身を更新します。ツールチェーン・cargo のキャッシュは削除しません。',
-    確認説明:`公式 rustup-init ${RUSTUP_INIT.version}（SHA-256 照合済みの固定版）を実行し、~/.cargo と ~/.rustup に導入します。rustup の標準動作として ~/.cargo/bin をユーザー PATH に追加します。既定ホスト ${RUST_HOST}・stable・minimal で約300MB を取得します。プロジェクトが rust-toolchain.toml で別の版を指定している場合は、初回ビルド時に rustup が自動取得します。削除（rustup self uninstall）は ~/.cargo 全体を消すため自動実行しません。`,操作:[]};
+    確認説明:`公式 rustup-init ${RUSTUP_INIT.version}（SHA-256 照合済みの固定版）を実行し、~/.cargo と ~/.rustup に導入します。rustup の標準動作として ~/.cargo/bin をユーザー PATH に追加します。既定ホスト ${RUST_HOST}・stable・minimal で約300MB を取得します。プロジェクトが rust-toolchain.toml で別の版を指定している場合は、初回ビルド時に rustup が自動取得します。削除は ~/.cargo と ~/.rustup をホーム内の .aidiy-rust-backup-* へ退避し、ユーザー PATH を解除します。cargo で追加したツールも利用できなくなります。退避後に .rustup/toolchains のRust本体を削除して容量を解放します。認証・設定・cargo追加ツールとキャッシュは退避先に保持します。再利用にはRustの再導入が必要です。`,操作:[]};
   let context=null;
   try{
     if(entry.id!=='rust')throw failure('未対応の導入操作です。');
@@ -117,7 +117,7 @@ export async function inspectRust(entry,{env=process.env,platform=process.platfo
     const selected=await resolve(entry,{env,platform});
     if(selected&&!same(selected,context.cargo))throw failure('別の導入先の cargo が検出されました。元の方法で管理してください。');
     // rustup のプロキシ（cargo.exe 等）は rustup.exe のハードリンクのため、ハードリンクを許可する。
-    if(await plainPath(context.rustup,{fileOnly:true,allowHardlinks:true})){item.操作=['再導入'];return {item,context};}
+    if(await plainPath(context.rustup,{fileOnly:true,allowHardlinks:true})){item.操作=['再導入','削除'];return {item,context};}
     if(await exists(context.cargo))throw failure('rustup の管理外の cargo が ~/.cargo/bin にあります。元の方法で管理してください。');
     item.操作=['導入'];return {item,context};
   }catch(error){item.理由=error.status?error.message:'Rust の導入元を確認できません。';return {item,context};}
@@ -146,8 +146,44 @@ export async function executeRust(entry,action,context,{env=process.env,platform
     onData('rustup update を実行します。\n');
     await checkedRun({label:'rustup update',executable:context.rustup,args:['update'],cwd:context.home,env:environment(env,context,path.join(context.local,'Temp')),timeout:Math.max(timeout,INSTALL_TIMEOUT)},options);
     onData('Rust を更新しました。\n');
-  }else throw failure('Rust の削除は自動実行しません。rustup self uninstall を手動で実行してください。');
+  }else{
+    await retireRust(context,{signal,onData,removePath:()=>userPath(context,'remove',context.bin,env,options)});
+  }
   return {code:0};
+}
+
+// 認証や cargo install の資産を保護し、Rustツールチェーンだけを削除。実行中のWindowsファイルはrename失敗で停止する。
+export async function retireRust(context,{signal,onData=()=>{},removePath,move=rename}={}) {
+  const sources=[path.join(context.home,'.cargo'),path.join(context.home,'.rustup')];
+  for(const source of sources){const info=await plainPath(source);if(info&&!info.isDirectory())throw failure('Rust の配置先がフォルダではありません。');}
+  await plainPath(path.join(context.home,'.rustup','toolchains'));
+  stopped(signal);
+  const backup=path.join(context.home,`.aidiy-rust-backup-${randomUUID()}`);
+  await mkdir(backup);const moved=[];
+  try{
+    for(const source of sources){
+      stopped(signal);if(!await plainPath(source))continue;
+      const target=path.join(backup,path.basename(source));await move(source,target);moved.push([source,target]);
+    }
+    stopped(signal);await removePath();
+  }catch(error){
+    let failed=false;
+    for(const [source,target] of moved.reverse()){
+      try{if(await exists(source))throw failure('復元先が既に存在します。');await move(target,source);}
+      catch{failed=true;onData(`復元が必要です: ${target} → ${source}\n`);}
+    }
+    if(!failed)await rmdir(backup).catch(()=>{});
+    throw failure(`${error.message} ${failed?'退避先を保持しました。ログの復元先を確認してください。':'フォルダを元へ戻しました。PATH変更の結果が不明な場合は設定を確認してください。'}`);
+  }
+  const toolchains=path.join(backup,'.rustup','toolchains');
+  onData(`認証・設定・cargo追加ツールの保全先: ${backup}\n`);
+  try{
+    stopped(signal);await plainPath(toolchains);
+    // ツールチェーン内のリンクはリンク自身を削除し、外部の参照先は辿らない。
+    await rm(toolchains,{recursive:true,force:true,maxRetries:2,retryDelay:200});
+  }catch(error){throw failure(`RustのPATH解除と退避は完了しましたが、ツールチェーン削除に失敗しました。保全先 ${backup} は残しています。使用中のRustを終了して状態を確認してください: ${error.message}`);}
+  onData('Rustツールチェーンを削除しました。再利用にはRustの再導入が必要です。保全先の認証・設定・追加ツールを必要に応じて戻してください（既存フォルダへ一括上書きしないでください）。\n');
+  return backup;
 }
 
 // ---------------------------------------------------------------- llvm-mingw

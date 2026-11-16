@@ -16,7 +16,7 @@ Pi（MIT ライセンスの AI エージェントハーネス）の npm 依存�
 Windows ではユーザー PATH へ登録します。
 
 - 依存導入は Pi 本体の方針に合わせ `npm ci --ignore-scripts`（lifecycle script 不実行）。
-- ソース実行に必要なモデルデータは `npm run hydrate:model-data` で生成する（ネットワーク使用）。
+- ソース実行に必要な内部モデルデータは同梱固定カタログから生成する（外部カタログ通信なし）。
 - `npm run build` は行わない。起動は Node.js の source resolver を使うソース実行方式。
 - `aidiy_pi` は aidiy_hermes と同様、実行したフォルダをそのまま作業フォルダ（プロジェクト）にする。
 - 起動入口は `aidiy/aidiy_pi.ts`。aidiy_diag の pi_models_info.json・AiDiy_key.json・
@@ -263,7 +263,7 @@ def hydrate_bundled_model_data() -> bool:
                 return False
         if not run_command([node, str(PI_DIR / "packages/ai/scripts/check-model-data.ts")], cwd=PI_DIR):
             return False
-        print_warning("Pi: 最新データを取得できないため、同梱の公式固定カタログを使用します（最新取得成功ではありません）。")
+        print_info("Pi: 同梱の公式固定カタログから内部モデルデータを生成・検証しました（外部カタログ通信なし）。")
         return True
     except (OSError, ValueError, EOFError) as exc:
         print_error(f"Pi: 同梱カタログを使用できません: {exc}")
@@ -271,20 +271,10 @@ def hydrate_bundled_model_data() -> bool:
 
 
 def hydrate_model_data() -> bool:
-    """一時的な通信失敗を再試行し、不完全な既存データは成功扱いしない。"""
-    for attempt in range(1, 4):
-        if run_command([npm_command(), "run", "hydrate:model-data"], cwd=PI_DIR):
-            return True
-        if attempt < 3:
-            print_warning(f"Pi: モデルデータの取得・生成に失敗しました。再試行します ({attempt}/3)。")
-            time.sleep(attempt * 2)
-    if MODEL_DATA_DIR.is_dir() and run_command(
-            [npm_command(), "--prefix", "packages/ai", "run", "check:model-data"], cwd=PI_DIR):
-        print_warning("Pi: モデルデータを更新できませんでした。検証済みの既存データで続行します。")
-        return True
+    """AiDiy の候補一覧とは別の Pi 内部データを、同梱資材だけから生成する。"""
     if hydrate_bundled_model_data():
         return True
-    print_error("Pi: モデルデータを準備できません。通信エラーや生成エラーを確認し、python command_pi/_setup.py を再実行してください。")
+    print_error("Pi: 同梱カタログから内部モデルデータを準備できません。上の検証エラーと配置ファイルを確認してください。")
     return False
 
 

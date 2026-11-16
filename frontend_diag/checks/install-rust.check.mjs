@@ -43,7 +43,7 @@ test('non-Windows and custom CARGO_HOME are not operated',async()=>{
   assert.deepEqual(llvmLinux.item.操作,[]);
 });
 
-test('rust offers install, update for rustup-managed cargo, and never deletes',{skip:!windows},async()=>{
+test('rust offers install, update and recoverable removal for rustup-managed cargo',{skip:!windows},async()=>{
   const {root,home,env}=await fixture();
   try{
     let state=await inspectRust(rust,{env,platform:'win32',resolve:none,rawEnv:{}});
@@ -54,7 +54,7 @@ test('rust offers install, update for rustup-managed cargo, and never deletes',{
     assert.deepEqual(state.item.操作,[]);assert.match(state.item.理由,/rustup の管理外/);
     await writeFile(path.join(bin,'rustup.exe'),'MZ');
     state=await inspectRust(rust,{env,platform:'win32',resolve:async()=>path.join(bin,'cargo.exe'),rawEnv:{}});
-    assert.deepEqual(state.item.操作,['再導入']);
+    assert.deepEqual(state.item.操作,['再導入','削除']);
     const other=await inspectRust(rust,{env,platform:'win32',resolve:async()=>'C:\\other\\cargo.exe',rawEnv:{}});
     assert.deepEqual(other.item.操作,[]);assert.match(other.item.理由,/別の導入先/);
     // 更新は rustup update だけを実行する。
@@ -62,7 +62,7 @@ test('rust offers install, update for rustup-managed cargo, and never deletes',{
     await executeRust(rust,'再導入',state.context,{env,platform:'win32',resolve:none,rawEnv:{},run:async command=>{calls.push(command);return {code:0};}});
     assert.equal(calls.length,1);assert.equal(path.basename(calls[0].executable),'rustup.exe');assert.deepEqual(calls[0].args,['update']);
     assert.equal(calls[0].env.PATH.toLowerCase().includes('.cargo'),false);
-    await assert.rejects(executeRust(rust,'削除',state.context,{env,platform:'win32',resolve:none,rawEnv:{},run:async()=>({code:0})}));
+    assert.match(state.item.確認説明,/容量を解放/);
   }finally{await rm(root,{recursive:true,force:true});}
 });
 

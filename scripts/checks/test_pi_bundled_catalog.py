@@ -29,7 +29,7 @@ class CatalogTests(unittest.TestCase):
         return root
 
     @unittest.skipUnless(shutil.which('node'), 'Node required for real offline hydration')
-    def test_new_checkout_without_cache_and_all_network_generation_failures(self):
+    def test_new_checkout_without_cache_never_uses_network_generation(self):
         root = self.fixture()
         data = root/'packages/ai/src/providers/data'
         self.assertFalse(data.exists())
@@ -37,14 +37,12 @@ class CatalogTests(unittest.TestCase):
         calls = []
         def run(command, cwd=None):
             calls.append(command)
-            if command[1:] == ['run','hydrate:model-data']:
-                return False  # models.dev and every online generation attempt unavailable
             self.assertEqual(command[0], shutil.which('node'))
             self.assertIn(Path(command[1]).name, ('hydrate-model-catalog.ts','check-model-data.ts'))
             return original_run(command,cwd)
-        with patch.object(pi,'PI_DIR',root), patch.object(pi,'MODEL_DATA_DIR',data), patch.object(pi,'run_command',side_effect=run), patch.object(pi.time,'sleep'):
+        with patch.object(pi,'PI_DIR',root), patch.object(pi,'MODEL_DATA_DIR',data), patch.object(pi,'run_command',side_effect=run):
             self.assertTrue(pi.hydrate_model_data())
-        self.assertEqual(len(calls),5)
+        self.assertEqual(len(calls),2)
         self.assertTrue((data/'.manifest.json').is_file())
         subprocess.run([shutil.which('node'), str(root/'packages/ai/scripts/check-model-data.ts')], check=True)
 
