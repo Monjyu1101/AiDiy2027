@@ -206,10 +206,13 @@ def install_standalone_launcher() -> bool:
             path.write_text("#!/bin/sh\nexec " + " ".join(shlex.quote(c) for c in command) + ' "$@"\n',
                             encoding="utf-8")
             path.chmod(0o755)
-        _path_helper.sync_shared_launcher(path, ENTRY_PATH.resolve())
+        _path_helper.sync_shared_launcher(path, ENTRY_PATH.resolve(), create=True)
         print_success(f"{label}: {path.name} を作成しました: {path}")
         print_info(f"  Node: {node}")
         print_info(f"  CLI : {ENTRY_PATH.resolve()}")
+        if not _path_helper.ensure_launcher_path(Path.home() / ".local" / "bin"):
+            print_error(f"{label}: 共有ランチャーの PATH 登録に失敗しました。")
+            return False
         if not _path_helper.ensure_launcher_path(path.parent):
             print_error(f"{label}: ランチャーの PATH 登録に失敗しました。")
             return False

@@ -52,23 +52,24 @@ def launcher_directory(program, project=None):
     return directory
 
 
-def sync_shared_launcher(launcher, script):
+def sync_shared_launcher(launcher, script, *, create=False):
     """既存の共有ランチャーを、今回setupした配置元の最新版で置き換える。
 
     旧形式・別コピー・編集済みでも通常ファイルなら更新する。
-    新規共有配置は作らず、リンクや通常ファイル以外には書き込まない。
+    create=True の場合だけ新規共有配置を作る。リンクや通常ファイル以外には書き込まない。
     """
     launcher, script = Path(launcher), Path(script)
     shared = Path.home() / '.local' / 'bin' / launcher.name
-    if shared == launcher or not os.path.lexists(shared):
+    if shared == launcher or (not create and not os.path.lexists(shared)):
         return
     for path in (shared.parent.parent, shared.parent, shared):
         if path.is_symlink() or getattr(path, 'is_junction', lambda: False)():
             raise OSError(f'共有ランチャーはリンクのため変更しません: {shared}。直接起動: {launcher}')
-    if not shared.is_file():
+    shared.parent.mkdir(parents=True, exist_ok=True)
+    if os.path.lexists(shared) and not shared.is_file():
         raise OSError(f'共有ランチャーは通常ファイルではありません: {shared}')
     source = launcher.read_bytes()
-    previous = shared.read_bytes()
+    previous = shared.read_bytes() if shared.exists() else None
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(dir=shared.parent, prefix='.' + shared.name + '-', suffix='.tmp', delete=False) as stream:
@@ -77,7 +78,7 @@ def sync_shared_launcher(launcher, script):
         if sys.platform != 'win32':
             temporary.chmod(0o755)
         # 検査後のユーザー編集やリンクへの置換を上書きしない。
-        if shared.is_symlink() or shared.read_bytes() != previous:
+        if shared.is_symlink() or (shared.read_bytes() if shared.exists() else None) != previous:
             raise OSError(f'共有ランチャーが変更されたため更新を中止しました: {shared}')
         temporary.replace(shared)
         temporary = None

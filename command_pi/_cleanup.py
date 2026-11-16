@@ -193,6 +193,16 @@ def remove_launcher(label: str) -> bool:
         if not _path_helper.remove_launcher_path(path.parent):
             print_error(f"{label}: PATH 登録の解除に失敗しました。")
             return False
+        shared = Path.home() / ".local" / "bin" / path.name
+        # 共有配置は他コピーのもの・リンク先を削除しない。
+        if not any(_is_directory_link(item) for item in (shared.parent.parent, shared.parent, shared)):
+            if shared.is_file():
+                content = shared.read_text(encoding="utf-8")
+                if _path_helper.launcher_owned_by(content, ENTRY_PATH.resolve()):
+                    shared.unlink()
+                    print_success(f"{label}: 共有ランチャーを削除しました: {shared}")
+            if not _path_helper.remove_launcher_path(shared.parent):
+                return False
         # 空になった保存先だけを片付ける。
         for directory in (path.parent, path.parent.parent):
             if directory.is_dir() and not any(directory.iterdir()):

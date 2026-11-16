@@ -173,11 +173,13 @@ export class ModelSelectorComponent extends Container implements Focusable {
 			const refreshed = this.modelRuntime.getModel(scoped.model.provider, scoped.model.id);
 			return refreshed ? { ...scoped, model: refreshed } : scoped;
 		});
-		this.scopedModelItems = this.scopedModels.map((scoped) => ({
-			provider: scoped.model.provider,
-			id: scoped.model.id,
-			model: scoped.model,
-		}));
+		this.scopedModelItems = this.sortModels(
+			this.scopedModels.map((scoped) => ({
+				provider: scoped.model.provider,
+				id: scoped.model.id,
+				model: scoped.model,
+			})),
+		);
 		this.activeModels = this.scope === "scoped" ? this.scopedModelItems : this.allModels;
 		this.filteredModels = this.activeModels;
 		const currentIndex = this.filteredModels.findIndex((item) => modelsAreEqual(this.currentModel, item.model));
@@ -236,18 +238,8 @@ export class ModelSelectorComponent extends Container implements Focusable {
 
 	private sortModels(models: ModelItem[]): ModelItem[] {
 		const sorted = [...models];
-		// Sort: current model first, default model second, then by provider.
-		sorted.sort((a, b) => {
-			const aIsCurrent = modelsAreEqual(this.currentModel, a.model);
-			const bIsCurrent = modelsAreEqual(this.currentModel, b.model);
-			if (aIsCurrent && !bIsCurrent) return -1;
-			if (!aIsCurrent && bIsCurrent) return 1;
-			const aIsDefault = this.isDefaultModel(a.model);
-			const bIsDefault = this.isDefaultModel(b.model);
-			if (aIsDefault && !bIsDefault) return -1;
-			if (!aIsDefault && bIsDefault) return 1;
-			return a.provider.localeCompare(b.provider);
-		});
+		// Keep the list ordered by the displayed provider/model, including current/default rows.
+		sorted.sort((a, b) => `${a.provider}/${a.id}`.localeCompare(`${b.provider}/${b.id}`));
 		return sorted;
 	}
 
@@ -333,11 +325,11 @@ export class ModelSelectorComponent extends Container implements Focusable {
 
 			const cursor = isSelected ? theme.fg("accent", "→ ") : "  ";
 			const currentMarker = isCurrent ? theme.fg("accent", "✓ ") : "  ";
-			const modelText = isSelected ? theme.fg("accent", item.id) : item.id;
+			const modelLabel = `${item.provider}/${item.id}`;
+			const modelText = isSelected ? theme.fg("accent", modelLabel) : modelLabel;
 			const name = getDistinctModelName({ id: item.id, name: item.model.name });
 			const nameText = name ? theme.fg("muted", ` (${name})`) : "";
-			const providerBadge = theme.fg("muted", `[${item.provider}]`);
-			const line = `${cursor}${currentMarker}${modelText}${nameText} ${providerBadge}${defaultBadge}`;
+			const line = `${cursor}${currentMarker}${modelText}${nameText}${defaultBadge}`;
 
 			this.listContainer.addChild(new Text(line, 0, 0));
 		}

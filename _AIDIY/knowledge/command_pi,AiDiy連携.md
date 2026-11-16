@@ -30,7 +30,7 @@
 | `command_pi/aidiy/assets/` | アイコン正本 `AiDiy_pi.svg` / `.png`、Pi ロゴ原本 `upstream/pi-logo.svg` |
 | `command_pi/_setup.py` / `_cleanup.py` | 個別の setup / cleanup。全体の `_setup.py` / `_cleanup.py` では Hermes の次（9番）に実行 |
 
-起動は `node --import <source-resolver.ts> command_pi/aidiy/aidiy_pi.ts`（ソース実行、ビルドなし）。ランチャーは `_AIDIY/aidiy_pi/bin/aidiy_pi(.cmd)` で、Windows はユーザー PATH に登録します。実行したフォルダがそのまま作業フォルダ（プロジェクト）です。
+起動は `node --import <source-resolver.ts> command_pi/aidiy/aidiy_pi.ts`（ソース実行、ビルドなし）。ランチャーは `_AIDIY/aidiy_pi/bin/aidiy_pi(.cmd)` と共有の `~/.local/bin/aidiy_pi(.cmd)` に毎回配置します。共有版がまだ無い初回setupでも新規作成します。Windows は共有binとプロジェクト内binをユーザー PATH に登録します。既に開いているCMDには反映されないため、setup後はターミナルを開き直してください。実行したフォルダがそのまま作業フォルダ（プロジェクト）です。
 
 ## setup / cleanup
 
@@ -74,6 +74,7 @@
 - `--model=<値>` も空白区切りと同じ指定として解釈する。プロンプト本文や `--` 以降は引数として書き換えない。外部CLIを `--provider codex_cli --model same` のように明示した場合のsame/autoは、指定したCLIへ渡す。
 - セッション再開（`-c` / `-r` / `--session` など）はそのセッションのモデルを使う。
 - それ以外は前回選んだモデル（`~/.pi/agent/aidiy_model.json`）、無ければ `openai_oauth/gpt-6.1-sol`。OpenAI OAuth に未ログインなら FreeAI（Gemini）の先頭モデルへ退避する。
+- `/model` の選択一覧は `provider/model`（例: `openai_oauth/gpt-6.1-sol`）を先頭に表示し、全候補・scoped候補ともこの結合名で昇順に並べる。現在・既定モデルは先頭へ移動せず、マーカーだけで示す。検索中は従来の関連度順を維持する。確認: `node --test scripts/aidiy-model-selector.test.mjs`（command_pi内）。
 - `/model` や Ctrl+P で選んだモデルは `model_select` イベントで `aidiy_model.json` に保存する。起動時の `--model` 指定や非対話実行では保存しない。
 
 ## MCP
