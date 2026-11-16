@@ -140,15 +140,14 @@ test('親だけ正常終了して子孫が残る場合も timeout まで監視�
   child.emit('close',0);await killed.promise;assert.equal(resolved,false);alive=false;const result=await promise;assert.equal(result.timedOut,true);
 });
 
-test('Windows は非同期の tree 停止確認を待ち、false では解除せず強制停止を継続する',async()=>{
-  for(const confirmation of [true,undefined,false]){
-    const child=syntheticProcess(),controller=new AbortController(),gate=defer(),kills=[];let resolved=false;
-    const promise=runInstallCommand({env:{},platform:'win32',isTreeRunning:undefined,spawnFn:()=>child,signal:controller.signal,killTree:(_child,force)=>{kills.push(force);return force?Promise.resolve(true):gate.promise;}}).then(value=>{resolved=true;return value;});
-    controller.abort();child.emit('close',null);await new Promise(resolve=>setImmediate(resolve));assert.equal(resolved,false);
-    gate.resolve(confirmation);await new Promise(resolve=>setImmediate(resolve));
-    if(confirmation===false){assert.equal(resolved,false);await until(()=>kills.includes(true));}
-    assert.equal((await promise).cancelled,true);assert.deepEqual(kills,confirmation===false?[false,true]:[false]);
-  }
+test('Windows は taskkill 失敗後も実プロセス消失で終了する',async()=>{
+  const child=syntheticProcess(),controller=new AbortController();let alive=true,resolved=false;
+  const now=Date.now();
+  const promise=actualRunInstallCommand({env:{},platform:'win32',spawnFn:()=>child,signal:controller.signal,
+    readProcesses:async()=>alive?[{pid:child.pid,parentPid:1,created:now}]:[],killTree:()=>false}).then(value=>{resolved=true;return value;});
+  await new Promise(resolve=>setImmediate(resolve));controller.abort();child.emit('close',null);
+  await new Promise(resolve=>setImmediate(resolve));assert.equal(resolved,false);
+  alive=false;assert.equal((await promise).cancelled,true);
 });
 
 async function npmTree(t,platform='linux'){
@@ -466,7 +465,7 @@ test('残留子孫の定期確認は1秒周期、親close直後は即時に確�
   t.mock.timers.enable({apis:['setTimeout']});
   const child=syntheticProcess();let alive=true,checks=0,resolved=false;
   const promise=runInstallCommand({env:{},spawnFn:()=>child,isTreeRunning:()=>{checks++;return alive;}}).then(value=>{resolved=true;return value;});
-  child.emit('close',0);assert.equal(checks,1);assert.equal(resolved,false);
+  child.emit('close',0);await new Promise(resolve=>setImmediate(resolve));assert.equal(checks,1);assert.equal(resolved,false);
   t.mock.timers.tick(999);assert.equal(checks,1);alive=false;
   t.mock.timers.tick(1);assert.equal(checks,2);assert.equal((await promise).code,0);assert.equal(resolved,true);
 });

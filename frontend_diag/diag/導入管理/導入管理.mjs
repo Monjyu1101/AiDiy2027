@@ -4,6 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 明示操作専用の導入管理。登録済みの固定プロバイダーだけを実行します。
+import {acquireProcessInstallLock} from './process_lock.mjs';
+import {createInstallProcessTracker,readWindowsInstallProcesses} from './process_state.mjs';
 import {spawn,execFile} from 'node:child_process';
 import {readFile,realpath,stat,lstat,mkdtemp,writeFile,rm,open,unlink} from 'node:fs/promises';
 import {randomUUID,createHash} from 'node:crypto';
@@ -35,10 +37,11 @@ const noop=()=>{};
 export const LOG_LIMIT=120000;
 
 // 複数の Diag からも同じ導入先の同じパッケージを同時変更しない。異常終了で残ったロックを推測で削除しない。
-export async function acquireInstallLock(prefix,{platform=process.platform,directory=os.tmpdir(),scope=''}={}) {
+export async function acquireInstallLock(prefix,{platform=process.platform,directory=os.tmpdir(),scope='',env=process.env,inspectProcesses}={}) {
   const resolved=await realpath(prefix).catch(()=>path.resolve(prefix));
   const key=createHash('sha256').update((platform==='win32'?resolved.toLowerCase():resolved)+(scope?`\0${scope}`:'')).digest('hex').slice(0,32);
   const file=path.join(directory,`aidiy-npm-${key}.lock`);
+  if(platform==='win32'&&['rust','llvm-mingw'].includes(scope))return acquireProcessInstallLock(file,{scope,inspectProcesses:inspectProcesses||(()=>readWindowsInstallProcesses({env}))});
   let handle;
   try{handle=await open(file,'wx',0o600);await handle.writeFile(String(process.pid));}
   catch(error){if(handle){await handle.close();await unlink(file).catch(noop);}throw failure(error.code==='EEXIST'?'同じ導入先で別の操作が実行中、または前回の停止確認が必要です。':'導入操作の排他ロックを作成できません。',409);}
@@ -57,26 +60,29 @@ export function safeInstallLog(text,env=process.env) {
 }
 
 // shell は使用しない。中止・期限超過後も終了確認まで待ち、停止未確認では排他を解除しない。
-export function runInstallCommand({executable,args,cwd,env,signal,onData=noop,onUncertain=noop,timeout=300000,outputLimit=4*1024*1024,spawnFn=spawn,platform=process.platform,killTree,isTreeRunning,windowsVerbatimArguments=false}) {
+export function runInstallCommand({executable,args,cwd,env,signal,onData=noop,onUncertain=noop,timeout=300000,outputLimit=4*1024*1024,spawnFn=spawn,platform=process.platform,killTree,isTreeRunning,readProcesses,windowsVerbatimArguments=false}) {
   return new Promise(resolve=>{
-    let child,done=false,timedOut=false,stopped=false,overflow=false,processError=false,parentClosed=false,treeKilled=false,closeCode=null,bytes=0,timer,forceTimer,uncertainTimer,treeTimer;
-    const treeGone=()=>{
+    let child,done=false,timedOut=false,stopped=false,overflow=false,processError=false,parentClosed=false,closeCode=null,bytes=0,timer,forceTimer,uncertainTimer,treeTimer,processTracker;
+    const treeGone=async()=>{
       if(!child?.pid)return true;
-      if(isTreeRunning){try{return !isTreeRunning(child);}catch{return false;}}
-      if(platform==='win32')return !stopped||treeKilled;
+      if(isTreeRunning){try{return (await isTreeRunning(child))===false;}catch{return false;}}
+      if(processTracker)return (await processTracker.running())===false;
       try{process.kill(-child.pid,0);return false;}catch(error){return error.code==='ESRCH';}
     };
-    const check=()=>{
-      if(done||!parentClosed)return;
-      if(treeGone()){finish(closeCode,processError);return;}
+    const check=async()=>{
+      if(done)return;
+      const gone=await treeGone();
+      if(done)return;
+      if(parentClosed&&gone){finish(closeCode,processError);return;}
       clearTimeout(treeTimer);treeTimer=setTimeout(check,1000);
     };
     const kill=force=>{
       if(!child?.pid)return;
-      if(killTree){try{Promise.resolve(killTree(child,force)).then(result=>{if(result!==false)treeKilled=true;check();},noop);}catch{}return;}
+      if(killTree){try{Promise.resolve(killTree(child,force)).then(()=>{check();},noop);}catch{}return;}
       if(platform==='win32'){
+        if(parentClosed)return; // 終了済み親 PID を再利用した別プロセスを停止しない。
         const taskkill=path.join(env?.SystemRoot||env?.SYSTEMROOT||process.env.SystemRoot||'C:\\Windows','System32','taskkill.exe');
-        execFile(taskkill,['/PID',String(child.pid),'/T','/F'],{windowsHide:true,timeout:5000},error=>{if(!error)treeKilled=true;check();});
+        execFile(taskkill,['/PID',String(child.pid),'/T','/F'],{windowsHide:true,timeout:5000},()=>{check();});
       }else try{process.kill(-child.pid,force?'SIGKILL':'SIGTERM');}catch{}
     };
     const stop=()=>{if(done||stopped)return;stopped=true;kill(false);forceTimer=setTimeout(()=>kill(true),1000);uncertainTimer=setTimeout(()=>{if(!done)onUncertain();},6000);};
@@ -84,6 +90,7 @@ export function runInstallCommand({executable,args,cwd,env,signal,onData=noop,on
     if(signal?.aborted){finish(null);return;}
     try{child=spawnFn(executable,args,{cwd,env,shell:false,windowsHide:true,...(platform==='win32'&&windowsVerbatimArguments?{windowsVerbatimArguments:true}:{}),detached:platform!=='win32',stdio:['ignore','pipe','pipe']});}
     catch{finish(null,true);return;}
+    if(platform==='win32'&&!isTreeRunning&&child.pid){processTracker=createInstallProcessTracker(child.pid,{read:readProcesses||(()=>readWindowsInstallProcesses({env}))});check();}
     signal?.addEventListener('abort',stop,{once:true});
     for(const stream of [child.stdout,child.stderr])if(stream){
       const decoder=new StringDecoder('utf8');
@@ -275,7 +282,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
       if(controller.signal.aborted)throw failure('操作を中止しました。');
       const context=fresh[provider],lockKey=context?.lockKey||context?.prefix;
       if(!lockKey)throw failure('導入先の排他を確認できません。',409);
-      releaseLock=await acquireLock(lockKey,{platform,scope:lockScopeFor(entry.id)});
+      releaseLock=await acquireLock(lockKey,{platform,scope:lockScopeFor(entry.id),env:installEnvironment(env)});
       // ロック取得を待つ間に別の操作が完了していても、古い所有判定では実行しない。
       if(provider==='npm'){
         lockedCapability=await capabilityFn(entry,fresh.npm,{env,platform});

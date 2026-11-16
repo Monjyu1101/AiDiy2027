@@ -352,6 +352,7 @@ def _stop_aidiy_processes(root, info=print, error=print):
         for target in sorted(targets.values(), key=stop_order):
             stop_target(target)
         deadline = time.monotonic() + 5
+        additional_rounds = 0
         while True:
             current_processes = snapshot()
             remaining = select_targets(current_processes, root, windows)
@@ -361,7 +362,10 @@ def _stop_aidiy_processes(root, info=print, error=print):
             if not remaining:
                 info('この配置先で確認した停止対象の AiDiy プロセスの終了を確認しました（Code / IDE / Discord / Slack は継続）。')
                 return True
-            if time.monotonic() >= deadline:
+            pending = [p for p in remaining.values() if identity(p) not in attempted]
+            # Windowsの一覧取得だけで5秒を超えても、未試行対象の停止を省略しない。
+            # ただし再生成が続く場合は追加3ラウンドまでで失敗として返す。
+            if additional_rounds >= 3 or (time.monotonic() >= deadline and not pending):
                 for process in remaining.values():
                     role = process_role(process, root, windows) or '所有確認済みの補助プロセス'
                     error(f"残留: {process.get('Name', '')} (PID={process['ProcessId']}, 親PID={process.get('ParentProcessId', '')}, 対象={role})")
@@ -370,8 +374,9 @@ def _stop_aidiy_processes(root, info=print, error=print):
             # 一覧取得後に生成された対象だけ再処理する。拒否された同一プロセスへ連打しない。
             # PIDの再利用はidentityで区別し、各操作の直前にも一致を確認する。
             targets.update(remaining)
-            for process in sorted(remaining.values(), key=stop_order):
-                if identity(process) not in attempted:
+            if pending:
+                additional_rounds += 1
+                for process in sorted(pending, key=stop_order):
                     stop_target(process)
             time.sleep(0.2)
     except (OSError, ValueError, subprocess.SubprocessError) as exc:

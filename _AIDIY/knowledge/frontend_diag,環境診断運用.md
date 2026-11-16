@@ -268,7 +268,7 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - WinGet の標準インストーラーによる PATH 登録・UAC の可能性を操作確認へ表示する。`--accept-*`、強制・purge・権限回避を付けない。OBS の設定・シーン・録画は保持するが、本体内の追加プラグインは再導入が必要な場合がある。アプリや関連プロセスが動いている間は変更せず、利用者が終了して再確認する。
 - Antigravity は固定公式 installer のレビュー済み SHA256 を照合し、`--skip-path --skip-aliases` 付きで実行する。既存ありの no-op を避けるため所有確認した `agy.exe` だけを退避し、公式 manifest の SHA512 と実体を確認後に確定する。固定の OS CMD でレビュー済み installer だけを実行し、Windows 引用符は `windowsVerbatimArguments` で保持する。パスの展開・制御文字は事前に拒否する。失敗・中止時は旧バイナリを戻し、復旧ファイルが残れば次の操作を止めて手動確認を求める。共有 staging、`.gemini/antigravity-cli`、OS 資格情報、未知のファイルは削除しない。インストーラー更新時は [公式 CMD](https://antigravity.google/cli/install.cmd) と [オプション](https://www.antigravity.google/docs/cli/install/) を再レビューしてから digest を更新する。
 - npm の標準 prefix / root と実体を確認し、パッケージ外のリンク、別方式のランチャー、不正 manifest では操作しない。操作直前にも所有元を再確認する。再導入は同じ固定パッケージへ `npm install --global` を1回だけ実行して更新し、事前に削除しない。「削除」だけが `npm uninstall --global` を実行する。確認ダイアログはサーバーの `再導入説明` を表示し、npm で削除後に導入すると案内しない。利用者の認証・設定・履歴は削除しない。
-- コマンドは固定 argv・shell 無効・空の一時 npmrc・公式 registry で実行する。終了・失敗・中止時は一時領域を回収して再確認するが、停止未確認中は排他を保持する。同じ OS 利用者の Diag 間では WinGet は全体、npm / Antigravity は同じ導入先で排他する。一時ロックは利用者別なので、別 OS 利用者間の競合は WinGet 自身の制御に従う。ロックが異常終了で残った場合、自動削除しない。OS 上で対象 npm 処理の停止と所有権を確認してから運用者が復旧する。
+- コマンドは固定 argv・shell 無効・空の一時 npmrc・公式 registry で実行する。終了・失敗・中止時は一時領域を回収して再確認するが、停止未確認中は排他を保持する。同じ OS 利用者の Diag 間では WinGet は全体、npm / Antigravity は同じ導入先で排他する。一時ロックは利用者別なので、別 OS 利用者間の競合は WinGet 自身の制御に従う。Rust / llvm-mingw 以外のロックが異常終了で残った場合、自動削除しない。OS 上で対象 npm 処理の停止と所有権を確認してから運用者が復旧する。
 - 検証は `node --test frontend_diag/checks/install-*.check.mjs` と `node --test frontend_diag/diag/ui/components/導入状況/checks/*.check.cjs`。合成プロセス・一時 fixture・Vue イベントで確認し、実際のグローバル導入・削除・認証を行わない。Windows の shim と POSIX の実体は別ケースで検証する。
 - UI 変更時は配布画面へ反映するため `npm --prefix frontend_diag/ui run build`、`npm --prefix frontend_diag/ui run check` を実行する。実ブラウザ確認は別途許可された環境だけで行い、ソース・mock 成功と実OS画面検証を区別する。
 
@@ -478,3 +478,11 @@ Electron のプロジェクト切替では追加保存・一括保存をしな�
 ### 標準ランチャーのアプリ／CLI段
 
 標準表示はアプリを上段、CLI・外部アプリ（Hermes・Pi・Codex・外部CLI・VS Code・Chrome）を下段に分けます。各段内は共通の起動順を維持し、ミニ表示と同じ分類でChromeは下段の末尾です。横幅が不足した段だけ横スクロールし、CLIをアプリ段の余白へ詰めたり折り返したりしません。CLI・Chromeともに0件なら空段を表示しません。未導入CLIの灰色表示、起動可否、連続起動、フォルダ選択、モーションは従来どおりです。ミニ・アイコン表示は変更しません。回帰確認は `checks/standard-launch-rows.check.cjs` と既存の起動状態・モーション試験を使い、配布UIを再生成してmanifest照合してください。
+
+### Rust / llvm-mingw 導入中の異常終了と排他復旧
+
+導入コマンドの Windows 停止判定は taskkill の成否ではなく、実プロセス一覧の PID・開始時刻と子孫を確認します。親終了後も残る子孫を監視し、既に消えたプロセスへの taskkill 失敗だけでは「停止未確認」を固定しません。照会不能の間は解除せず、照会が復旧すれば再判定します。実プロセスの終了は成功とは区別して、失敗・中止結果と導入状況の再確認を表示します。
+
+Windows では Rust / llvm-mingw の排他に所有者 PID とプロセス開始時刻を記録します。再操作時、所有者の終了（または PID が別プロセスへ再利用されたこと）と導入関連プロセスの不在を確認できた場合だけ、前回の排他を取り直します。旧 PID だけのロックは、その PID が生存する間は解除しません。親が終了しても子・rustup・取得/展開・PATH 更新プロセスが残っていれば拒否します。プロセス照会の失敗、関連プロセスの情報不足、壊れたロックは安全側で拒否します。
+
+回収競合は一時的な `.recovery` 排他で直列化します。この回収自体の強制終了で `.recovery` が残った場合は自動削除せず、全 Diag と導入処理の停止を確認した運用者による復旧が必要です。llvm-mingw の展開/退避途中フォルダは、排他が復旧しても勝手に消さず従来どおり手動確認を求めます。プロセス不在は導入成功を意味しないため、導入結果は改めて確認します。

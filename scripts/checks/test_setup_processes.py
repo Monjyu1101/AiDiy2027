@@ -102,6 +102,45 @@ class SetupProcessesTest(unittest.TestCase):
         self.assertEqual(stopped, [10, 20])
         self.assertEqual(records, [unrelated])
 
+    def test_slow_windows_snapshot_does_not_skip_unattempted_targets(self):
+        root = r'C:\repo'
+        initial = proc(10, r'python C:\repo\backend_tools\tools_main.py', name='python.exe')
+        late = proc(3536, r'python C:\repo\command_hermes\cli_main.py', parent=10792, name='python.exe')
+        unrelated = proc(10792, r'cmd.exe', name='cmd.exe')
+        code = proc(80, r'node C:\repo\frontend_ide\launch.mjs --app code')
+        protected = proc(81, r'python C:\repo\command_hermes\cli_main.py', parent=80, name='python.exe')
+        records = [initial, unrelated, code, protected]
+        stopped = []
+        def run(args, **kwargs):
+            pid = int(args[-1])
+            stopped.append(pid)
+            records[:] = [p for p in records if p['ProcessId'] != pid]
+            if pid == 10:
+                records.append(late)
+            return subject.subprocess.CompletedProcess(args, 0)
+        with patch.object(subject.sys, 'platform', 'win32'), \
+                patch.object(subject.subprocess, 'CREATE_NO_WINDOW', 0, create=True), \
+                patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
+                patch.object(subject.subprocess, 'run', side_effect=run), \
+                patch.object(subject.time, 'monotonic', side_effect=[0, 6, 12]), \
+                patch.object(subject.time, 'sleep'):
+            self.assertTrue(subject.stop_setup_processes(root, lambda _: None, lambda _: None))
+        self.assertEqual(stopped, [10, 3536])
+        self.assertEqual(records, [unrelated, code, protected])
+
+    def test_continuously_respawning_targets_are_bounded(self):
+        records = [app(10, 'live')]
+        stopped = []
+        def kill(pid, *_):
+            stopped.append(pid)
+            records[:] = [app(pid + 1, 'live')]
+        with patch.object(subject, 'snapshot', side_effect=lambda: list(records)), \
+                patch.object(subject.os, 'kill', side_effect=kill), \
+                patch.object(subject.time, 'monotonic', return_value=0), \
+                patch.object(subject.time, 'sleep'):
+            self.assertFalse(subject.stop_setup_processes(ROOT, lambda _: None, lambda _: None))
+        self.assertEqual(stopped, [10, 11, 12, 13])
+
     def test_windows_access_denied_has_pid_exit_code_and_diagnostic(self):
         root = r'C:\repo'
         process = proc(2012, r'python C:\repo\backend_tools\tools_main.py', name='python.exe')
