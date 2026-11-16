@@ -139,30 +139,6 @@ class RootCleanupTests(unittest.TestCase):
             self.assertIn("aidiy_codex のコンパイル", str(raised.exception))
             self.assertFalse(self.cleanup.stop_all_services(keep_diag=False, strict=False))
 
-    def test_cleanup_removes_compile_intermediate_files_only(self):
-        home = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        target = home / "cache" / "codex" / "target"
-        (target / "release").mkdir(parents=True)
-        (target / "release" / "codex.exe").write_bytes(b"x")
-        status = target.parent / "aidiy_codex_compile.json"
-        status.write_text("{}", encoding="utf-8")
-        codex = Mock(TARGET_DIR=target)
-        codex.cancel_compile.return_value = True
-        with patch.object(self.cleanup, "_load_codex_compile_module", return_value=codex):
-            self.assertEqual(self.cleanup._codex_target_dir(), target)
-            self.assertTrue(self.cleanup.cleanup_codex_intermediate())
-            self.assertFalse(target.exists())
-            self.assertTrue(status.exists(), "状態・ログは残す")
-            self.assertTrue(self.cleanup.cleanup_codex_intermediate(), "無ければ何もしない")
-
-    def test_cleanup_keeps_intermediate_files_when_compile_cannot_be_cancelled(self):
-        target = Path(self.enterContext(tempfile.TemporaryDirectory())) / "target"
-        target.mkdir()
-        codex = Mock(TARGET_DIR=target)
-        codex.cancel_compile.return_value = False
-        with patch.object(self.cleanup, "_load_codex_compile_module", return_value=codex):
-            self.assertFalse(self.cleanup.cleanup_codex_intermediate())
-        self.assertTrue(target.exists())
 
 
 if __name__ == "__main__":

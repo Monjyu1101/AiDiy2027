@@ -29,9 +29,7 @@ class CleanupAutoTests(unittest.TestCase):
         database.parent.mkdir(parents=True)
         database.write_bytes(b"preserved")
         (root / self.module.BACKEND_PATH / ".venv").mkdir(parents=True)
-        with patch.object(self.module, "_codex_target_dir", return_value=None), \
-                patch.object(self.module, "_electron_cache_dir", return_value=None), \
-                patch.object(self.module, "_read_single_key", side_effect=AssertionError("入力待ち")), \
+        with patch.object(self.module, "_read_single_key", side_effect=AssertionError("入力待ち")), \
                 patch.object(self.module, "ask_start_mode", return_value=(True, True)) as start:
             auto = self.module.collect_cleanup_choices(root, auto=True)
             start.assert_not_called()

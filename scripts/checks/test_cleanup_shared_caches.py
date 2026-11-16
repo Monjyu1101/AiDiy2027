@@ -8,7 +8,7 @@
 # https://github.com/monjyu1101/AiDiy2027
 # -------------------------------------------------------------------------
 
-"""全体 cleanup の ~/.aidiy/cache の共有キャッシュ（Electron の ZIP）。利用者のホームには触れない。"""
+"""全体 cleanup の ~/.aidiy/cache の共有キャッシュ（Electron / Rust）保持。利用者のホームには触れない。"""
 
 import contextlib
 import importlib.util
@@ -28,52 +28,49 @@ def load(name, relative):
     return module
 
 
-class ElectronCacheCleanupTests(unittest.TestCase):
+class SharedCachePreservationTests(unittest.TestCase):
     def setUp(self):
-        self.cleanup = load("aidiy_test_root_cleanup_electron", "_cleanup.py")
+        self.cleanup = load("aidiy_test_root_cleanup_caches", "_cleanup.py")
         self.enterContext(contextlib.redirect_stdout(io.StringIO()))
 
-    def test_cache_dir_comes_from_setup_electron(self):
-        setup_electron = load("aidiy_test_setup_electron", "scripts/_setup_electron.py")
-        self.assertEqual(self.cleanup._electron_cache_dir(), setup_electron.CACHE_DIR)
-        self.assertEqual(setup_electron.CACHE_DIR, Path.home() / ".aidiy" / "cache" / "electron")
-
-    def test_cache_is_removed_and_missing_cache_is_ok(self):
-        cache = Path(self.enterContext(tempfile.TemporaryDirectory())) / "electron"
-        cache.mkdir()
-        (cache / "electron-v44.11.3-win32-x64.zip").write_bytes(b"zip")
-        with patch.object(self.cleanup, "_electron_cache_dir", return_value=cache):
-            self.assertTrue(self.cleanup.cleanup_electron_cache())
-            self.assertFalse(cache.exists())
-            self.assertTrue(self.cleanup.cleanup_electron_cache(), "無ければ何もしない")
-
-    def test_unknown_cache_location_is_reported(self):
-        with patch.object(self.cleanup, "_electron_cache_dir", return_value=None):
-            self.assertFalse(self.cleanup.cleanup_electron_cache())
-
-    def test_choice_is_asked_only_when_cache_exists(self):
-        cache = Path(self.enterContext(tempfile.TemporaryDirectory())) / "electron"
-        for exists in (True, False):
-            with self.subTest(exists=exists):
-                if exists:
-                    cache.mkdir(exist_ok=True)
-                elif cache.exists():
-                    cache.rmdir()
+    def test_shared_caches_have_no_choice_in_interactive_or_auto(self):
+        for auto in (False, True):
+            with self.subTest(auto=auto), tempfile.TemporaryDirectory() as base:
                 prompts = []
-
                 def ask(prompt, default="n"):
                     prompts.append(prompt)
                     return default == "y"
+                with patch.object(self.cleanup, "ask_start_mode", return_value=(True, False)), \
+                        patch.object(self.cleanup, "ask_yes_no", side_effect=ask):
+                    choices = self.cleanup.collect_cleanup_choices(Path(base), auto=auto)
+                self.assertNotIn("electron_cache", choices)
+                self.assertNotIn("codex_intermediate", choices)
+                self.assertFalse(any("共有キャッシュ" in p or "コンパイル中間" in p for p in prompts))
 
-                with tempfile.TemporaryDirectory() as base, \
-                        patch.object(self.cleanup, "ask_start_mode", return_value=(True, False)), \
-                        patch.object(self.cleanup, "ask_yes_no", side_effect=ask), \
-                        patch.object(self.cleanup, "_codex_target_dir", return_value=None), \
-                        patch.object(self.cleanup, "_electron_cache_dir", return_value=cache):
-                    choices = self.cleanup.collect_cleanup_choices(Path(base))
-                asked = [prompt for prompt in prompts if "Electron の共有キャッシュ" in prompt]
-                self.assertEqual(len(asked), 1 if exists else 0)
-                self.assertEqual(choices["electron_cache"], True if exists else None)
+    def test_execution_preserves_cache_even_with_old_choice_keys(self):
+        base = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        home = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        files = [home / ".aidiy/cache/electron/test.zip",
+                 home / ".aidiy/cache/codex/target/release/codex",
+                 home / ".aidiy/cache/rust/test.cache"]
+        for path in files:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"keep")
+        with patch.object(self.cleanup, "ask_start_mode", return_value=(True, True)):
+            choices = self.cleanup.collect_cleanup_choices(base, auto=True)
+        choices.update(electron_cache=True, codex_intermediate=True)
+        for method in ("stop_all_services", "cleanup_backup", "_run_folder_cleanup",
+                       "remove_launcher_path", "cleanup_temp_directories",
+                       "_remove_folder_import_cache", "_remove_root_python_caches"):
+            self.enterContext(patch.object(self.cleanup, method, return_value=True))
+        self.enterContext(patch.object(self.cleanup, "cleanup_channels", return_value=[]))
+        self.enterContext(patch.object(self.cleanup.time, "sleep"))
+        self.enterContext(patch.object(Path, "home", return_value=home))
+        with patch.object(self.cleanup, "remove_directory") as remove:
+            self.assertTrue(self.cleanup.execute_cleanup(base, choices))
+            remove.assert_not_called()
+        for path in files:
+            self.assertEqual(path.read_bytes(), b"keep")
 
 
 if __name__ == "__main__":

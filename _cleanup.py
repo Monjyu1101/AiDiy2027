@@ -156,66 +156,6 @@ def _load_codex_compile_module():
     return mod
 
 
-def _codex_target_dir() -> Path | None:
-    """aidiy_codex のコンパイル中間ファイルの場所（~/.aidiy/cache/codex/target）。読めなければ None。"""
-    try:
-        return _load_codex_compile_module().TARGET_DIR
-    except Exception as exc:  # 中間ファイルの確認だけなので、読めなければ選択肢を出さない
-        print_warning(f"aidiy_codex のコンパイル情報を確認できません: {exc}")
-        return None
-
-
-def cleanup_codex_intermediate() -> bool:
-    """aidiy_codex のコンパイル中間ファイルを削除する。
-
-    実行中のコンパイルはプロセス停止の最初（stop_all_services）で中止済み。念のため再確認し、
-    止められない場合は削除しない。配置済みの ~/.aidiy/bin/aidiy_codex(.exe)・設定・状態・ログは残す。
-    """
-    print_header("コマンド(codex)のコンパイル中間ファイルのクリーンアップ")
-    try:
-        codex = _load_codex_compile_module()
-        if not codex.cancel_compile():
-            print_error("aidiy_codex のコンパイルを中止できないため、中間ファイルを削除しません。")
-            return False
-        target = codex.TARGET_DIR
-    except Exception as exc:
-        print_error(f"aidiy_codex のコンパイル情報を読めません: {exc}")
-        return False
-    if not target.exists():
-        print_info(f"コンパイル中間ファイルはありません: {target}")
-        return True
-    return remove_directory(target, "aidiy_codex のコンパイル中間ファイル")
-
-
-def _electron_cache_dir() -> Path | None:
-    """Electron の共有 ZIP キャッシュの場所（scripts/_setup_electron.py の CACHE_DIR）。読めなければ None。"""
-    try:
-        name = "aidiy_setup_electron_for_cleanup"
-        spec = importlib.util.spec_from_file_location(name, BASE_DIR / "scripts" / "_setup_electron.py")
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        return mod.CACHE_DIR
-    except Exception as exc:  # キャッシュの確認だけなので、読めなければ選択肢を出さない
-        print_warning(f"Electron のキャッシュの場所を確認できません: {exc}")
-        return None
-
-
-def cleanup_electron_cache() -> bool:
-    """Electron の共有 ZIP キャッシュ（~/.aidiy/cache/electron）を削除する。
-
-    各 frontend に配置済みの Electron 本体（node_modules/electron/dist）はここでは消さない。
-    clone・コピーした別の AiDiy 環境とも共有するキャッシュで、次回のセットアップで必要な時だけ取り直す。
-    """
-    print_header("Electron の共有キャッシュのクリーンアップ")
-    target = _electron_cache_dir()
-    if target is None:
-        return False
-    if not target.exists():
-        print_info(f"Electron の共有キャッシュはありません: {target}")
-        return True
-    return remove_directory(target, "Electron の共有キャッシュ")
-
-
 def _load_folder_start_module(folder: str):
     """選択対象の既存プロセス停止に使う `_start.py` を読み込む。"""
     name = f"aidiy_{folder}_start_for_cleanup"
@@ -392,7 +332,7 @@ def stop_all_services(
             failures.append(description)
 
     # Diag の「コンパイル」や手動実行で動いている aidiy_codex のビルドを中止する。
-    # コンパイルの中間ファイル（~/.aidiy/cache/codex/target）は、選択された場合だけ後で削除する。
+    # コンパイルの中間ファイル（~/.aidiy/cache/codex/target）は、再利用するため保持する。
     print_info("aidiy_codex のコンパイル（実行中の場合）を中止します")
     run_stop("aidiy_codex のコンパイル", lambda: _load_codex_compile_module().cancel_compile())
 
@@ -805,20 +745,6 @@ def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
                 f"  {COMMAND_PI_PATH} の依存物（node_modules / 生成モデルデータ）を削除しますか？", default="y",
             )
 
-    choices["codex_intermediate"] = None
-    codex_target = _codex_target_dir()
-    if codex_target is not None and codex_target.exists():
-        choices["codex_intermediate"] = ask_yes_no(
-            f"コマンド(codex)のコンパイル中間ファイル（{codex_target}）を削除しますか？", default="y",
-        )
-
-    choices["electron_cache"] = None
-    electron_cache = _electron_cache_dir()
-    if electron_cache is not None and electron_cache.exists():
-        choices["electron_cache"] = ask_yes_no(
-            f"Electron の共有キャッシュ（{electron_cache}）を削除しますか？", default="y",
-        )
-
     choices["ide"] = ask_yes_no("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)をクリーンアップしますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack)をクリーンアップしますか？", default="y")
 
@@ -928,19 +854,7 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
     else:
         print_info("コマンド(pi) のクリーンアップをスキップしました")
 
-    print()
-    if choices.get("codex_intermediate"):
-        if not cleanup_codex_intermediate():
-            cleanup_errors.append("コマンド(codex)のコンパイル中間ファイル")
-    else:
-        print_info("コマンド(codex)のコンパイル中間ファイルの削除をスキップしました")
-
-    print()
-    if choices.get("electron_cache"):
-        if not cleanup_electron_cache():
-            cleanup_errors.append("Electron の共有キャッシュ")
-    else:
-        print_info("Electron の共有キャッシュの削除をスキップしました")
+    print_info("Electron と Rust/Codex の共有キャッシュは保持します")
 
     print()
     if choices.get("ide"):
