@@ -124,7 +124,7 @@ test('通常・ミニは指定の先頭6アプリとAvatar・Task・Team・CPU�
   for(const name of ['アプリ起動パネル.vue','ミニアプリ起動.vue']){
    const html=await render('components/アプリ起動/'+name,{state,cliState,online:true,visible:true});
    const shown=Array.from(html.matchAll(/data-(?:app|cli)="([^"]+)"/g),match=>match[1]);
-   const wanted=name.startsWith('ミニ')?expected.filter(id=>!cliIds.has(id)&&id!=='chrome'&&!missing.includes(id)):expected;
+   const wanted=name.startsWith('ミニ')?expected.filter(id=>!cliIds.has(id)&&id!=='chrome'&&!missing.includes(id)):[...expected.filter(id=>!cliIds.has(id)&&id!=='chrome'),...expected.filter(id=>cliIds.has(id)||id==='chrome')];
    assert.deepEqual(shown,wanted,name);
   }
  }

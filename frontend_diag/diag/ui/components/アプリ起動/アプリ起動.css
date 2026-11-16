@@ -40,3 +40,8 @@
 .app-launch-view>footer{padding:5px 14px;max-height:20vh;overflow:auto;line-height:1.3}
 .app-launch-view>footer p{margin:4px 0}
 @media(max-height:480px){.app-launch-view>.app-launch-panel{overflow-y:auto}.app-launch-panel .app-launch-list{flex:none!important;overflow:visible}}
+
+/* 標準表示はアプリ／CLIの2段。狭い窓でも混在・折返しせず、各段を横スクロールする。 */
+.app-launch-panel .app-launch-rows{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 auto;overflow-y:auto;padding:6px 0}
+.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(76px,1fr);flex:none!important;overflow-x:auto;overflow-y:hidden;min-height:100px;align-items:start}
+@media(max-height:480px){.app-launch-panel .app-launch-rows{flex:none;overflow:visible}.app-launch-panel .app-launch-rows>.app-launch-list{overflow-x:auto;overflow-y:hidden}}
