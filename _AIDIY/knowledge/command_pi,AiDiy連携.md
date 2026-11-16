@@ -152,3 +152,14 @@
 - `packages/`・`apps/` の実装／原資料、MIT LICENSE、第三者表示は保持する。これらの資料にある upstream 向け手順は AiDiy の setup 手順と区別する。
 - `scripts/`、`test.sh`、TypeScript/Biome/Vitest 設定、Nix のカタログpinと配布設定はモデルデータ生成・検証・upstream保守の相互参照があるため保持する。AiDiy の通常起動は Nix や配布ビルドを必要としない。
 - 整理の検証は `node --test scripts/aidiy-layout.test.mjs`（command_pi 内）と、setup後の `aidiy_pi --version` / `--help` で行う。モデルを呼ぶ必要はない。
+
+
+## 外部モデルカタログへ接続できない場合
+
+`_setup.py` は通常の `npm run hydrate:model-data` を最大3回試す。失敗時は `check:model-data` に合格する既存データを優先し、既存データも利用できなければ `aidiy/assets/model-catalog.json.gz` の公式Pi固定カタログを使用する。新規cloneでキャッシュがなく、models.devに接続できない場合もカタログ準備を継続できる。
+
+同梱元は `https://pi.dev/api/models/revisions/sha256-4cbd75daee429216860f6e5b7e13b4ddb12b495f6947061e5777edd27ce0b4f1?types=chat,image,classifier`（2026-11-16取得）。展開後のSHA256はrevisionと一致する。`nix/model-catalog.json` の固定revisionおよび `_setup.py` の `BUNDLED_MODEL_REVISION` と一致しないデータは使用しない。生成は同梱Piの `hydrate-model-catalog.ts`、検証は `check-model-data.ts` を使用し、不一致・破損・検証失敗を成功扱いしない。
+
+これは最新取得成功ではなく固定カタログの利用であり、setupは警告で明示する。モデルデータだけを生成し、認証・会話履歴は触らない。初回 `npm ci` の依存取得と実AI接続までオフラインになるわけではない。
+
+Piの更新で固定revisionやprovider構造が変わった場合は、公式revisionのカタログを取得しハッシュ検証して同梱資材と定数を同時更新する。勝手なモデルの追加や空リストによる検証回避は行わない。回帰確認: `python -m unittest scripts/checks/test_pi_bundled_catalog.py scripts/checks/test_setup_recovery.py`。

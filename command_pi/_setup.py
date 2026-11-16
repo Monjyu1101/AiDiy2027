@@ -30,6 +30,10 @@ Windows ではユーザー PATH へ登録します。
 """
 
 import importlib.util
+import gzip
+import hashlib
+import json
+import tempfile
 import shlex
 import shutil
 import subprocess
@@ -237,6 +241,35 @@ def verify_cli() -> bool:
     return True
 
 
+BUNDLED_MODEL_REVISION = "sha256-4cbd75daee429216860f6e5b7e13b4ddb12b495f6947061e5777edd27ce0b4f1"
+
+
+def hydrate_bundled_model_data() -> bool:
+    """固定版の公式公開カタログから生成。ネットワーク・外部コマンドの取得は不要。"""
+    try:
+        pin = json.loads((PI_DIR / "nix/model-catalog.json").read_text(encoding="utf-8"))
+        if pin.get("revision") != BUNDLED_MODEL_REVISION:
+            raise ValueError("同梱カタログとリポジトリの固定版が一致しません。")
+        catalog = gzip.decompress((PI_DIR / "aidiy/assets/model-catalog.json.gz").read_bytes())
+        if "sha256-" + hashlib.sha256(catalog).hexdigest() != BUNDLED_MODEL_REVISION:
+            raise ValueError("同梱カタログのSHA256が一致しません。")
+        node = shutil.which("node")
+        if not node:
+            raise ValueError("Node.js が見つかりません。")
+        with tempfile.TemporaryDirectory(prefix="aidiy-pi-models-") as temporary:
+            path = Path(temporary) / "models.all.json"
+            path.write_bytes(catalog)
+            if not run_command([node, str(PI_DIR / "packages/ai/scripts/hydrate-model-catalog.ts"), str(path)], cwd=PI_DIR):
+                return False
+        if not run_command([node, str(PI_DIR / "packages/ai/scripts/check-model-data.ts")], cwd=PI_DIR):
+            return False
+        print_warning("Pi: 最新データを取得できないため、同梱の公式固定カタログを使用します（最新取得成功ではありません）。")
+        return True
+    except (OSError, ValueError, EOFError) as exc:
+        print_error(f"Pi: 同梱カタログを使用できません: {exc}")
+        return False
+
+
 def hydrate_model_data() -> bool:
     """一時的な通信失敗を再試行し、不完全な既存データは成功扱いしない。"""
     for attempt in range(1, 4):
@@ -248,6 +281,8 @@ def hydrate_model_data() -> bool:
     if MODEL_DATA_DIR.is_dir() and run_command(
             [npm_command(), "--prefix", "packages/ai", "run", "check:model-data"], cwd=PI_DIR):
         print_warning("Pi: モデルデータを更新できませんでした。検証済みの既存データで続行します。")
+        return True
+    if hydrate_bundled_model_data():
         return True
     print_error("Pi: モデルデータを準備できません。通信エラーや生成エラーを確認し、python command_pi/_setup.py を再実行してください。")
     return False

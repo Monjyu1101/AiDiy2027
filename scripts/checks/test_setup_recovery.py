@@ -56,12 +56,12 @@ class PiRecovery(unittest.TestCase):
             self.assertEqual(run.call_count, 2)
             sleep.assert_called_once_with(2)
     def test_missing_data_stays_failed(self):
-        with tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)/'missing'), patch.object(pi, 'run_command', return_value=False) as run, patch.object(pi.time, 'sleep'):
+        with patch.object(pi, 'hydrate_bundled_model_data', return_value=False), tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)/'missing'), patch.object(pi, 'run_command', return_value=False) as run, patch.object(pi.time, 'sleep'):
             self.assertFalse(pi.hydrate_model_data())
             self.assertEqual(run.call_count, 3)
     def test_existing_data_must_pass_validation(self):
         for valid in (True, False):
-            with tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)), patch.object(pi, 'run_command', side_effect=[False,False,False,valid]) as run, patch.object(pi.time, 'sleep'):
+            with patch.object(pi, 'hydrate_bundled_model_data', return_value=False), tempfile.TemporaryDirectory() as folder, patch.object(pi, 'MODEL_DATA_DIR', Path(folder)), patch.object(pi, 'run_command', side_effect=[False,False,False,valid]) as run, patch.object(pi.time, 'sleep'):
                 self.assertEqual(pi.hydrate_model_data(), valid)
                 self.assertEqual(run.call_args.args[0][-2:], ['run','check:model-data'])
 
