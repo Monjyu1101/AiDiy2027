@@ -15,6 +15,13 @@ use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
+// AiDiy: CLI launch selection is process-local, not persisted to user configuration.
+static PASSTHROUGH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn set_passthrough(enabled: bool) {
+    PASSTHROUGH.store(enabled, std::sync::atomic::Ordering::Relaxed);
+}
+
 const MAX_BYTES: usize = 16 * 1024 * 1024;
 const IDLE: Duration = Duration::from_secs(900);
 
@@ -80,6 +87,90 @@ fn delegated_prompt(prompt: &Prompt) -> Result<String> {
     Ok(text)
 }
 
+fn chat_request(prompt: &Prompt) -> Result<(serde_json::Value, codex_api::CliChatCodec)> {
+    if prompt.output_schema.is_some() {
+        return Err(invalid("CLI chat は構造化最終出力に未対応です。"));
+    }
+    // Reject modalities the bridge cannot carry rather than silently dropping them.
+    for item in &prompt.input {
+        if let ResponseItem::Message { content, .. } = item {
+            if content.iter().any(|part| {
+                !matches!(
+                    part,
+                    ContentItem::InputText { .. } | ContentItem::OutputText { .. }
+                )
+            }) {
+                return Err(invalid("CLI chat はテキスト入力だけに対応しています。"));
+            }
+        }
+    }
+    let mut input = vec![json!({"type": "message", "role": "system",
+        "content": [{"type": "input_text", "text": prompt.base_instructions.text}]})];
+    for item in &prompt.input {
+        if matches!(item, ResponseItem::Message { id: Some(id), .. } if id.as_str().starts_with("aidiy-cli-") && id.as_str().contains("-progress-"))
+        {
+            continue;
+        }
+        input.push(
+            serde_json::to_value(item).map_err(|_| invalid("CLI chat 履歴を変換できません。"))?,
+        );
+    }
+    Ok(codex_api::CliChatCodec::request(
+        &json!({"input": input, "tools": prompt.tools}),
+    ))
+}
+
+fn validate_chat_message(message: &serde_json::Value) -> Result<()> {
+    if message.get("role").and_then(serde_json::Value::as_str) != Some("assistant") {
+        return Err(invalid("CLI chat のroleが不正です。"));
+    }
+    // AiDiy: a non-array tool_calls field must not be silently ignored just because
+    // the response also contains text. The CLI bridge is a structured protocol.
+    if message
+        .get("tool_calls")
+        .is_some_and(|calls| !calls.is_array())
+        || message
+            .get("content")
+            .is_some_and(|content| !content.is_null() && !content.is_string())
+    {
+        return Err(invalid("CLI chat の応答構造が不正です。"));
+    }
+    let has_text = message
+        .get("content")
+        .and_then(serde_json::Value::as_str)
+        .is_some_and(|s| !s.trim().is_empty());
+    let calls = message
+        .get("tool_calls")
+        .and_then(serde_json::Value::as_array);
+    if !has_text && calls.is_none_or(|calls| calls.is_empty()) {
+        return Err(invalid("CLI chat の応答が空です。"));
+    }
+    let mut ids = std::collections::HashSet::new();
+    for call in calls.into_iter().flatten() {
+        let id = call
+            .get("id")
+            .and_then(serde_json::Value::as_str)
+            .filter(|s| !s.is_empty());
+        let name = call
+            .pointer("/function/name")
+            .and_then(serde_json::Value::as_str)
+            .filter(|s| !s.is_empty());
+        let args = call
+            .pointer("/function/arguments")
+            .and_then(serde_json::Value::as_str)
+            .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok());
+        if call.get("type").and_then(serde_json::Value::as_str) != Some("function")
+            || name.is_none()
+            || id.is_none()
+            || !ids.insert(id.unwrap_or_default())
+            || !args.is_some_and(|a| a.is_object())
+        {
+            return Err(invalid("CLI chat のツール要求が不正です。"));
+        }
+    }
+    Ok(())
+}
+
 pub(crate) async fn stream(
     prompt: &Prompt,
     model: &str,
@@ -89,7 +180,13 @@ pub(crate) async fn stream(
 ) -> Result<ResponseStream> {
     let (provider, model) = codex_model_provider_info::split_aidiy_cli_model(model)
         .ok_or_else(|| invalid("未対応の CLI モデルです。"))?;
-    let mode = execution_mode(permissions, approvals, cwd)?;
+    let passthrough = PASSTHROUGH.load(std::sync::atomic::Ordering::Relaxed);
+    let mode = if passthrough {
+        execution_mode(permissions, approvals, cwd)?
+    } else {
+        // Child only generates decisions; the outer Codex enforces its own sandbox/approval.
+        "read-only"
+    };
     let root = codex_model_provider_info::aidiy_root()
         .ok_or_else(|| invalid("aidiy_codex_settings.json の aidiy_root を確認してください。"))?;
     let suffix = if cfg!(windows) {
@@ -106,9 +203,23 @@ pub(crate) async fn stream(
                 "外部 CLI 委譲には backend_tools または backend_server の Python 環境が必要です。",
             )
         })?;
-    let request = serde_json::to_vec(&json!({"provider": provider, "model": model,
-        "project": cwd, "prompt": delegated_prompt(prompt)?, "mode": mode}))
-    .map_err(|_| invalid("外部 CLI の入力を作成できません。"))?;
+    let (payload, codec) = if passthrough {
+        (
+            json!({"provider": provider, "model": model, "project": cwd,
+            "prompt": delegated_prompt(prompt)?, "mode": mode, "cli_mode": "passthrough"}),
+            None,
+        )
+    } else {
+        let (body, codec) = chat_request(prompt)?;
+        (
+            json!({"provider": provider, "model": model, "project": cwd,
+            "messages": body["messages"], "tools": body.get("tools").cloned().unwrap_or(json!([])),
+            "mode": mode, "cli_mode": "chat"}),
+            Some(codec),
+        )
+    };
+    let request =
+        serde_json::to_vec(&payload).map_err(|_| invalid("外部 CLI の入力を作成できません。"))?;
     if request.len() > MAX_BYTES {
         return Err(invalid("外部 CLI の入力が大きすぎます。"));
     }
@@ -141,7 +252,7 @@ pub(crate) async fn stream(
         let outcome = tokio::select! {
             biased;
             _ = cancel.cancelled() => Err(CodexErr::TurnAborted),
-            result = run_child(&mut child, &request, &tx) => result,
+            result = run_child(&mut child, &request, &tx, codec.as_ref()) => result,
         };
         if let Err(error) = outcome {
             stop_child(&mut child).await;
@@ -177,8 +288,16 @@ async fn stop_child(child: &mut Child) {
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum AdapterEvent {
-    Progress { text: String },
-    Result { ok: bool, text: String },
+    Progress {
+        text: String,
+    },
+    Result {
+        ok: bool,
+        #[serde(default)]
+        text: String,
+        #[serde(default)]
+        message: Option<serde_json::Value>,
+    },
 }
 
 async fn send(tx: &mpsc::Sender<Result<ResponseEvent>>, event: ResponseEvent) -> Result<()> {
@@ -197,6 +316,7 @@ async fn run_child(
     child: &mut Child,
     request: &[u8],
     tx: &mpsc::Sender<Result<ResponseEvent>>,
+    codec: Option<&codex_api::CliChatCodec>,
 ) -> Result<()> {
     let mut stdin = child
         .stdin
@@ -222,6 +342,7 @@ async fn run_child(
     let mut buffer = [0u8; 8192];
     let mut pending = Vec::new();
     let mut answer = None;
+    let mut chat_answer = None;
     let mut progress_index = 0;
     loop {
         let size = tokio::time::timeout(IDLE, stdout.read(&mut buffer))
@@ -239,11 +360,14 @@ async fn run_child(
             let event = serde_json::from_slice::<AdapterEvent>(&pending[..end])
                 .map_err(|_| invalid("外部 CLI の応答形式が不正です。"))?;
             pending.drain(..=end);
-            if answer.is_some() {
+            if answer.is_some() || chat_answer.is_some() {
                 return Err(invalid("外部 CLI が最終回答の後に出力しました。"));
             }
             match event {
                 AdapterEvent::Progress { text } => {
+                    if codec.is_some() {
+                        continue;
+                    }
                     if text.is_empty() {
                         continue;
                     }
@@ -261,7 +385,17 @@ async fn run_child(
                     )
                     .await?;
                 }
-                AdapterEvent::Result { ok: true, text } if !text.trim().is_empty() => {
+                AdapterEvent::Result {
+                    ok: true,
+                    message: Some(message),
+                    ..
+                } if codec.is_some() => {
+                    validate_chat_message(&message)?;
+                    chat_answer = Some(message);
+                }
+                AdapterEvent::Result { ok: true, text, .. }
+                    if codec.is_none() && !text.trim().is_empty() =>
+                {
                     answer = Some(text)
                 }
                 AdapterEvent::Result { text, .. } => {
@@ -280,6 +414,15 @@ async fn run_child(
         .map_err(|_| invalid("外部 CLI の終了状態を取得できません。"))?;
     if !status.success() || !pending.is_empty() {
         return Err(invalid("外部 CLI が正常終了しませんでした。"));
+    }
+    if let Some(codec) = codec {
+        let answer = chat_answer.ok_or_else(|| invalid("CLI chat の構造化応答がありません。"))?;
+        for event in codec.response(&answer, &response_id) {
+            if !matches!(event, ResponseEvent::Created { .. }) {
+                send(tx, event).await?;
+            }
+        }
+        return Ok(());
     }
     let answer = answer.ok_or_else(|| invalid("外部 CLI の最終回答を取得できませんでした。"))?;
     let id = format!("{response_id}-answer");
@@ -310,6 +453,52 @@ async fn run_child(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn chat_history_keeps_calls_and_results() {
+        let mut prompt = Prompt::default();
+        prompt.base_instructions.text = "SYSTEM".to_string();
+        prompt.input = vec![
+            serde_json::from_value(
+                json!({"type":"function_call","call_id":"call_1","name":"read","arguments":"{}"}),
+            )
+            .unwrap(),
+            serde_json::from_value(
+                json!({"type":"function_call_output","call_id":"call_1","output":"READ_RESULT"}),
+            )
+            .unwrap(),
+        ];
+        let (request, _) = chat_request(&prompt).unwrap();
+        assert_eq!(request["messages"][0]["content"], "SYSTEM");
+        assert_eq!(request["messages"][1]["tool_calls"][0]["id"], "call_1");
+        assert_eq!(request["messages"][2]["tool_call_id"], "call_1");
+        assert_eq!(request["messages"][2]["content"], "READ_RESULT");
+    }
+
+    #[test]
+    fn chat_rejects_malformed_tool_calls() {
+        assert!(validate_chat_message(&json!({"role":"assistant", "content":"answer"})).is_ok());
+        assert!(
+            validate_chat_message(&json!({"role":"assistant", "tool_calls":[
+                {"id":"c1", "type":"function", "function":{"name":"read", "arguments":"{}"}}
+            ]}))
+            .is_ok()
+        );
+        assert!(
+            validate_chat_message(&json!({"role":"assistant", "tool_calls":[
+                {"id":"c1", "type":"function", "function":{"name":"read", "arguments":"not json"}}
+            ]}))
+            .is_err()
+        );
+        assert!(validate_chat_message(&json!({"role":"assistant"})).is_err());
+        assert!(
+            validate_chat_message(
+                &json!({"role":"assistant", "content":"answer", "tool_calls":{}})
+            )
+            .is_err()
+        );
+        assert!(validate_chat_message(&json!({"role":"assistant", "content":["answer"]})).is_err());
+    }
 
     #[test]
     fn permissions_are_not_silently_elevated() {

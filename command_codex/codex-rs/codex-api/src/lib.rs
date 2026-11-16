@@ -136,3 +136,6 @@ pub use crate::telemetry::SseTelemetry;
 pub use crate::telemetry::WebsocketTelemetry;
 pub use codex_protocol::protocol::RealtimeAudioFrame;
 pub use codex_protocol::protocol::RealtimeEvent;
+
+// AiDiy: structured CLI chat adapter.
+pub use crate::endpoint::chat_completions::CliChatCodec;

@@ -127,6 +127,10 @@ use codex_terminal_detection::TerminalName;
     override_usage = "codex [OPTIONS] [PROMPT]\n       codex [OPTIONS] <COMMAND> [ARGS]"
 )]
 struct MultitoolCli {
+    /// AiDiy: chat uses the outer harness tools; passthrough delegates to the child CLI.
+    #[arg(long = "cli", global = true, default_value = "chat", value_parser = ["chat", "passthrough"])]
+    cli_mode: String,
+
     #[clap(flatten)]
     pub config_overrides: CliConfigOverrides,
 
@@ -1063,6 +1067,7 @@ async fn dispatch_cli(
     remote_control_disabled: bool,
 ) -> anyhow::Result<Option<impl Future<Output = anyhow::Result<()>>>> {
     let MultitoolCli {
+        cli_mode,
         config_overrides: mut root_config_overrides,
         feature_toggles,
         remote,
@@ -1070,6 +1075,7 @@ async fn dispatch_cli(
         subcommand,
     } = config_override_args::try_parse_from(std::env::args_os())
         .unwrap_or_else(|error| error.exit());
+    codex_core::set_aidiy_cli_passthrough(cli_mode == "passthrough");
     // Retain the launch target through TUI exit, even if a launcher changes selection.
     let daemon_cli_executable = arg0_paths
         .codex_self_exe
@@ -3000,6 +3006,23 @@ enabled = true
         );
     }
 
+    #[test]
+    fn aidiy_cli_mode_is_global_and_defaults_to_chat() {
+        assert_eq!(
+            MultitoolCli::try_parse_from(["aidiy_codex"])
+                .unwrap()
+                .cli_mode,
+            "chat"
+        );
+        assert_eq!(
+            MultitoolCli::try_parse_from(["aidiy_codex", "exec", "--cli", "passthrough", "hello"])
+                .unwrap()
+                .cli_mode,
+            "passthrough"
+        );
+        assert!(MultitoolCli::try_parse_from(["aidiy_codex", "--cli", "invalid"]).is_err());
+    }
+
     fn finalize_resume_from_args(args: &[&str]) -> TuiCli {
         let cli = MultitoolCli::try_parse_from(args).expect("parse");
         let MultitoolCli {
@@ -3008,6 +3031,7 @@ enabled = true
             subcommand,
             feature_toggles: _,
             remote: _,
+            cli_mode: _,
         } = cli;
         interactive
             .shared
@@ -3045,6 +3069,7 @@ enabled = true
             subcommand,
             feature_toggles: _,
             remote: _,
+            cli_mode: _,
         } = cli;
         interactive
             .shared
@@ -3089,6 +3114,7 @@ enabled = true
             subcommand,
             feature_toggles: _,
             remote: _,
+            cli_mode: _,
         } = cli;
 
         let Subcommand::Archive(SessionArchiveCommand {

@@ -10,6 +10,8 @@ mod apps;
 mod client;
 // AiDiy: 子 CLI の進捗・回答を通常の ResponseStream に変換する。
 mod aidiy_cli;
+// AiDiy: launch-only CLI mode selector.
+pub use aidiy_cli::set_passthrough as set_aidiy_cli_passthrough;
 mod client_common;
 mod model_request;
 mod realtime_context;
