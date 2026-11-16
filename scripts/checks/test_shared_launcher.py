@@ -49,13 +49,12 @@ class SharedLauncherTests(unittest.TestCase):
         helper.sync_shared_launcher(self.canonical, self.script)
         self.assertFalse(self.shared.exists())
 
-    def test_preserves_foreign_modified_and_invalid_encoding(self):
+    def test_overwrites_foreign_modified_and_invalid_encoding(self):
         foreign = self.root.parent / 'other/frontend_avatar/launch.mjs'
         for bad in (windows(foreign).encode(), (windows(self.script)+'echo injected\n').encode(), b'\xff\xfe'):
             self.shared.write_bytes(bad)
-            with self.assertRaises(OSError):
-                helper.sync_shared_launcher(self.canonical, self.script)
-            self.assertEqual(self.shared.read_bytes(), bad)
+            helper.sync_shared_launcher(self.canonical, self.script)
+            self.assertEqual(self.shared.read_bytes(), self.canonical.read_bytes())
 
     def test_preserves_linked_launcher_and_parent(self):
         target = self.home / 'other'; target.write_text('untouched')
@@ -69,15 +68,15 @@ class SharedLauncherTests(unittest.TestCase):
         with self.assertRaises(OSError): helper.sync_shared_launcher(self.canonical, self.script)
         self.assertEqual((directory / self.shared.name).read_text(), self.content)
 
-    def test_posix_argument_quoting_changes_are_preserved(self):
+    def test_posix_argument_quoting_changes_are_replaced(self):
         self.canonical = self.canonical.with_name('aidiy_avatar')
         self.shared = self.shared.with_name('aidiy_avatar')
         content = '#!/usr/bin/env sh\nexec /new/node '+shlex.quote(str(self.script))+' "$@"\n'
         self.canonical.write_text(content)
         for changed in (content.replace('"$@"', "'$@'"), content.replace('"$@"', '$@')):
             self.shared.write_text(changed)
-            with self.assertRaises(OSError): helper.sync_shared_launcher(self.canonical, self.script)
-            self.assertEqual(self.shared.read_text(), changed)
+            helper.sync_shared_launcher(self.canonical, self.script)
+            self.assertEqual(self.shared.read_text(), content)
 
     def test_posix_runtime_change(self):
         self.canonical = self.canonical.with_name('aidiy_avatar')

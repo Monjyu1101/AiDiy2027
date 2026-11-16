@@ -7,8 +7,6 @@
 """プロジェクト内ランチャーの Windows PATH 登録と、Hermes の既存共有 bin 管理。"""
 import base64
 import json
-import hashlib
-import re
 import tempfile
 import ntpath
 import os
@@ -54,49 +52,11 @@ def launcher_directory(program, project=None):
     return directory
 
 
-def _normalized_launcher(content, scripts):
-    """既知の生成テンプレートを比較する。埋込コマンドは解析だけで実行しない。"""
-    text = content.replace('\r\n', '\n')
-    # Windowsの日本語パス対応テンプレート。実行ファイルの版/位置だけは変わり得る。
-    def payload(match):
-        try:
-            command = json.loads(base64.b64decode(match.group(1), validate=True))
-        except (ValueError, TypeError):
-            return match.group(0)
-        if (not isinstance(command, list)
-                or not all(isinstance(value, str) for value in command)
-                or len(command) != 2
-                or command[-1] not in scripts):
-            return match.group(0)
-        return "Buffer.from('<owned-launcher>','base64')"
-    text = re.sub(r"Buffer\.from\('([A-Za-z0-9+/=]+)','base64'\)", payload, text)
-    # POSIXのexec行も引数数と配置先を確認し、追記コマンドを受け入れない。
-    lines = text.splitlines(keepends=True)
-    for index, line in enumerate(lines):
-        if not line.startswith('exec '):
-            continue
-        try:
-            args = shlex.split(line)
-        except ValueError:
-            continue
-        if (line.rstrip('\n').endswith(' \"$@\"')
-                and args and args[0] == 'exec' and args[-1] == '$@'
-                and len(args) == 4
-                and args[-2] in scripts):
-            lines[index] = 'exec <owned-runtime> <owned-script> "$@"\n'
-    text = ''.join(lines)
-    for script in scripts:
-        text = text.replace(hashlib.sha256(script.encode('utf-8')).hexdigest(), '<owned-hash>')
-        text = text.replace(script.replace('%', '%%'), '<owned-script>')
-        text = text.replace(script, '<owned-script>')
-    return text
-
-
 def sync_shared_launcher(launcher, script):
-    """PATHで優先される旧 ~/.local/bin を、同一コピーの場合だけ最新化する。
+    """既存の共有ランチャーを、今回setupした配置元の最新版で置き換える。
 
-    新規ホーム配置は作らず、共有PATH/他アプリ/他コピーには触れない。
-    正規配置先の書込後に呼ぶ。テンプレート外の内容は変更せず失敗として通知する。
+    旧形式・別コピー・編集済みでも通常ファイルなら更新する。
+    新規共有配置は作らず、リンクや通常ファイル以外には書き込まない。
     """
     launcher, script = Path(launcher), Path(script)
     shared = Path.home() / '.local' / 'bin' / launcher.name
@@ -107,16 +67,8 @@ def sync_shared_launcher(launcher, script):
             raise OSError(f'共有ランチャーはリンクのため変更しません: {shared}。直接起動: {launcher}')
     if not shared.is_file():
         raise OSError(f'共有ランチャーは通常ファイルではありません: {shared}')
-    scripts = [str(script)]
     source = launcher.read_bytes()
-    expected = source.decode('utf-8')
     previous = shared.read_bytes()
-    try:
-        owned = _normalized_launcher(previous.decode('utf-8'), scripts) == _normalized_launcher(expected, scripts)
-    except UnicodeError:
-        owned = False
-    if not owned:
-        raise OSError(f'共有ランチャーは別コピーまたは改変済みのため変更しません: {shared}。直接起動: {launcher}')
     temporary = None
     try:
         with tempfile.NamedTemporaryFile(dir=shared.parent, prefix='.' + shared.name + '-', suffix='.tmp', delete=False) as stream:

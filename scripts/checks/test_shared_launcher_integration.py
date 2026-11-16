@@ -107,7 +107,7 @@ class SharedLauncherIntegration(unittest.TestCase):
                         path.write_text('stale hermes', encoding='utf-8')
                         continue
                     target = shared / path.name
-                    data = stale_runtime(original[name], windows)
+                    data = b'old format or other checkout\r\n\xff'
                     target.write_bytes(data)
                     if not windows: target.chmod(0o755)
                 # sharedが先頭のPATHを維持したまま2回実行する。

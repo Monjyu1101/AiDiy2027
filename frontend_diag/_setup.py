@@ -48,6 +48,8 @@ def launcher_content(script, windows=None):
             f'exec node {shlex.quote(str(script))} "$@"\n')
 
 
+
+
 def owns_launcher(content, script):
     """この配置元の所有印を持つランチャーだけを受け入れる。"""
     script = Path(script)
@@ -70,14 +72,14 @@ def setup(choices=None, *, desktop=True):
     print_info('対象: Node.js / Electron / Vue 3')
     launchers = []
     try:
-        # 全対象を先に照合し、別作業コピーのランチャーを途中まで置換しない。
+        # 通常ファイルは常に最新版へ更新。リンクやディレクトリには書き込まない。
         for program, entry in (('aidiy_diag', 'diag_main.mjs'), ('aidiy_memo', 'memo_main.mjs')):
             directory = _path_helper.launcher_directory(program)
             launcher = directory / (program + '.cmd' if sys.platform == 'win32' else program)
             script = THIS_DIR / entry
-            if launcher.is_symlink() or (launcher.exists() and
-                    (not launcher.is_file() or not owns_launcher(launcher.read_text(encoding='utf-8'), script))):
-                raise ValueError(f'別の作業コピーまたは通常ファイル以外のランチャーは変更できません: {launcher}')
+            if (launcher.is_symlink() or getattr(launcher, 'is_junction', lambda: False)()
+                    or (launcher.exists() and not launcher.is_file())):
+                raise ValueError(f'通常ファイル以外のランチャーは変更できません: {launcher}')
             launchers.append((directory, launcher, launcher_content(script)))
         for directory, launcher, content in launchers:
             directory.mkdir(parents=True, exist_ok=True)

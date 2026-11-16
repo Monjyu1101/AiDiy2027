@@ -202,6 +202,7 @@ def install_standalone_launcher() -> bool:
             path.write_text("#!/bin/sh\nexec " + " ".join(shlex.quote(c) for c in command) + ' "$@"\n',
                             encoding="utf-8")
             path.chmod(0o755)
+        _path_helper.sync_shared_launcher(path, ENTRY_PATH.resolve())
         print_success(f"{label}: {path.name} を作成しました: {path}")
         print_info(f"  Node: {node}")
         print_info(f"  CLI : {ENTRY_PATH.resolve()}")
@@ -236,6 +237,22 @@ def verify_cli() -> bool:
     return True
 
 
+def hydrate_model_data() -> bool:
+    """一時的な通信失敗を再試行し、不完全な既存データは成功扱いしない。"""
+    for attempt in range(1, 4):
+        if run_command([npm_command(), "run", "hydrate:model-data"], cwd=PI_DIR):
+            return True
+        if attempt < 3:
+            print_warning(f"Pi: モデルデータの取得・生成に失敗しました。再試行します ({attempt}/3)。")
+            time.sleep(attempt * 2)
+    if MODEL_DATA_DIR.is_dir() and run_command(
+            [npm_command(), "--prefix", "packages/ai", "run", "check:model-data"], cwd=PI_DIR):
+        print_warning("Pi: モデルデータを更新できませんでした。検証済みの既存データで続行します。")
+        return True
+    print_error("Pi: モデルデータを準備できません。通信エラーや生成エラーを確認し、python command_pi/_setup.py を再実行してください。")
+    return False
+
+
 # ============================================================
 # セットアップ本体
 # ============================================================
@@ -264,13 +281,8 @@ def setup(choices: dict | None = None) -> bool:
         print_error(f"{label}: npm ci に失敗しました。")
         return False
 
-    # ソース実行に必要なモデルデータ（packages/ai/src/providers/data）を生成・更新する。
-    if not run_command([npm_command(), "run", "hydrate:model-data"], cwd=PI_DIR):
-        if any(MODEL_DATA_DIR.glob("*.json")):
-            print_warning(f"{label}: モデルデータを更新できませんでした。既存のモデルデータで続行します。")
-        else:
-            print_error(f"{label}: モデルデータの生成に失敗しました（ネットワーク接続を確認してください）。")
-            return False
+    if not hydrate_model_data():
+        return False
 
     if not install_standalone_launcher():
         return False
