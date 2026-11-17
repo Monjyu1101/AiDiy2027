@@ -9,11 +9,11 @@ import {readFileSync,existsSync} from 'node:fs';
 import {NAVIGATION_SCENES,NAVIGATION_RANDOM_SCENES,pickNavigationScene} from '../src/components/開発スペース/ナビ風景.js';
 import {ナビ水面波紋3D状態を作成} from '../src/components/開発スペース/ナビ水面波紋3D.js';
 import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発スペース/ナビ入力.js';
-test('羽衣ライディング・花火を含む8種類を均等な範囲で選ぶ',()=>{
- assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ万華鏡2D','ナビ水面波紋3D','ナビ時計2D','ナビ迷路3D','ナビ依頼文3D']);
- assert.deepEqual([.01,.13,.26,.39,.52,.64,.77,.90].map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
+test('羽衣ライディング・花火を含む9種類を均等な範囲で選ぶ',()=>{
+ assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ万華鏡2D','ナビ水面波紋3D','ナビ時計2D','ナビ迷路3D','ナビ依頼文3D','ナビ折り紙3D']);
+ assert.deepEqual(NAVIGATION_RANDOM_SCENES.map((_,i)=>(i+.5)/NAVIGATION_RANDOM_SCENES.length).map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
  // 夜間飛行は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
- assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ夜間飛行3D']);
+ assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ折り紙3D','ナビ夜間飛行3D']);
  for(let n=0;n<=1;n+=.001)assert.notEqual(pickNavigationScene(()=>n),'ナビ夜間飛行3D');
  assert.notEqual(pickNavigationScene(()=>1),'ナビ夜間飛行3D');
 });
@@ -103,7 +103,7 @@ test('夜間飛行: コックピット視点だけで機体は描かず、花火
  for(const word of ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','drawCanopy','drawHud','unsupported'])assert.ok(source.includes(word),word);
  const panel=readFileSync(new URL('../src/components/開発スペース/Naviパネル.vue',import.meta.url),'utf8').replace(/\r\n/g,'\n');
  assert.ok(panel.includes(':is="ナビ待機画面一覧[待機画面名]"'));
- assert.match(panel,/<TerminalWelcome v-if="待機画面非対応\|\|待機画面名!=='ナビ夜間飛行3D'" kind="navi" :routing="true" \/>/); // 3行表示は夜間飛行以外のすべての演出で出す
+ assert.ok(panel.includes('v-if="待機画面非対応||![\'ナビ夜間飛行3D\',\'ナビ折り紙3D\'].includes(待機画面名)"')); // 独自説明と3行表示を重ねない
 });
 
 test('時計: 左上に日付、中央に大きく時分秒（ミリ秒は出さない）。数字は文字のマスクで、見えないカラーピッカーがランダムに動いて虹色に移り変わり、日付と「:」は色を変えない（3行ターミナル表示・下線は出さない）',async()=>{

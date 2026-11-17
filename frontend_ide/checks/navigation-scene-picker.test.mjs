@@ -24,14 +24,14 @@ function fixture(t){
  t.after(()=>scope.stop());api.visible.value=true;api.availability.value={available:true};api.result.value=saved;api.goal.value='編集中の目標';
  return {api,requests,props,randoms:()=>randoms};
 }
-test('9候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
- const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ夜間飛行3D']);
+test('10候補に表示名が揃い、右クリックで開いただけでは目標・APIを変更しない',t=>{
+ const f=fixture(t);assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ折り紙3D','ナビ夜間飛行3D']);
  f.api.chooseScene('evaluate');assert.equal(f.api.sceneAction.value,'evaluate');assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
  f.api.sceneAction.value='';assert.equal(f.api.goal.value,'編集中の目標');assert.equal(f.requests.length,0);
 });
 for(const scene of NAVIGATION_SCENES)test(`選択した ${scene} は同期routing処理でも上書きせず、再評価は保存目標で一度実行する`,t=>{
  const f=fixture(t);f.api.chooseScene('evaluate');f.api.runWithScene(scene);assert.equal(f.api.sceneAction.value,'');assert.equal(f.api.待機画面名.value,scene);assert.equal(f.randoms(),0);
- assert.deepEqual(JSON.parse(f.requests[0].body),{goal:'保存済み目標',action:'evaluate',clientRequestId:JSON.parse(f.requests[0].body).clientRequestId});assert.match(JSON.parse(f.requests[0].body).clientRequestId,/^navi-1-/);f.api.runWithScene(scene);assert.equal(f.requests.length,1);
+ assert.deepEqual(JSON.parse(f.requests[0].body),{goal:'保存済み目標',evaluationBasis:'auto',action:'evaluate',clientRequestId:JSON.parse(f.requests[0].body).clientRequestId});assert.match(JSON.parse(f.requests[0].body).clientRequestId,/^navi-1-/);f.api.runWithScene(scene);assert.equal(f.requests.length,1);
 });
 test('選択演出は今回だけで、次の通常実行・自動航行待機は再びランダムになる',t=>{
  const f=fixture(t);f.api.chooseScene('navigate');f.api.runWithScene('ナビ水面波紋3D');assert.equal(f.api.待機画面名.value,'ナビ水面波紋3D');assert.equal(JSON.parse(f.requests[0].body).goal,'編集中の目標');

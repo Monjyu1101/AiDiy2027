@@ -12,6 +12,7 @@ import ナビアクアリウム3D from './ナビアクアリウム3D.vue';
 import ナビ水面波紋3D from './ナビ水面波紋3D.vue';
 import ナビ迷路3D from './ナビ迷路3D.vue';
 import ナビ依頼文3D from './ナビ依頼文3D.vue';
+import ナビ折り紙3D from './ナビ折り紙3D.vue';
 import ナビ夜間飛行3D from './ナビ夜間飛行3D.vue';
 export const ナビ待機画面一覧 = Object.freeze({
   ナビ万華鏡2D,
@@ -22,5 +23,6 @@ export const ナビ待機画面一覧 = Object.freeze({
   ナビ水面波紋3D,
   ナビ迷路3D,
   ナビ依頼文3D,
+  ナビ折り紙3D,
   ナビ夜間飛行3D
 });

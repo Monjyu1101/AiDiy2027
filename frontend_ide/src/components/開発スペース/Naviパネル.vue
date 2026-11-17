@@ -388,7 +388,7 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
-   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!待機画面非対応}"><component v-if="!待機画面非対応" :is="ナビ待機画面一覧[待機画面名]" :key="待機画面名" v-bind="待機画面名==='ナビ依頼文3D'?{text:recommendedPrompt||goal}:{}" @unsupported="待機画面非対応=true" /><TerminalWelcome v-if="待機画面非対応||待機画面名!=='ナビ夜間飛行3D'" kind="navi" :routing="true" /></div>
+   <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!待機画面非対応}"><component v-if="!待機画面非対応" :is="ナビ待機画面一覧[待機画面名]" :key="待機画面名" v-bind="待機画面名==='ナビ依頼文3D'?{text:recommendedPrompt||goal}:{}" @unsupported="待機画面非対応=true" /><TerminalWelcome v-if="待機画面非対応||!['ナビ夜間飛行3D','ナビ折り紙3D'].includes(待機画面名)" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
     <p v-if="!result.items.length">対象の作業項目はありません。</p>
