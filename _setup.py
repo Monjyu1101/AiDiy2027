@@ -939,6 +939,15 @@ def setup_launchers_only() -> list[str]:
     return errors
 
 
+def setup_codex_launcher() -> bool:
+    """コンパイルの選択にかかわらず、既存・将来の本体への導線を登録する。"""
+    try:
+        return _load_folder_module("command_codex", "_compile.py").install_standalone_launcher()
+    except Exception as exc:
+        print_error(f"aidiy_codex: ランチャーを登録できません: {exc}")
+        return False
+
+
 def setup_codex() -> bool:
     """aidiy_codex のコンパイルを独立プロセスで開始する（完了を待たない）。
 
@@ -1199,6 +1208,11 @@ def main():
         print_warning("Pi のセットアップをスキップしました。")
 
     print()
+    if not setup_codex_launcher():
+        error_locations.append("Codex ランチャー")
+        if not continue_on_error:
+            print_setup_summary(error_locations)
+            sys.exit(1)
     if choices.get("codex"):
         if not setup_codex():
             error_locations.append("Codex (aidiy_codex)")

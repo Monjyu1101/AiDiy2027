@@ -10,6 +10,8 @@ OpenAI Codex（openai/codex、Apache-2.0）の Rust ワークスペース `codex
 
 - 常駐 HTTP サーバーではない。`_start.py` は起動せず、利用可否と起動コマンドだけを案内する。
 - 実行名は `aidiy_codex`。成果物は `~/.aidiy/bin/aidiy_codex(.exe)` に置き、プロジェクト内には残さない。
+- 全体 `_setup.py` はコンパイルの選択に関係なく、`_AIDIY/aidiy_codex/bin` と `~/.local/bin` に本体へのランチャーを先に登録する。コンパイル前は本体が存在しないため起動できない。PATH 変更後は端末を開き直す。
+- TUI は AiDiy の組込みハーネスを使う。公式配布パッケージが必要な共有 daemon を暗黙に開始・再利用しない（別版の Codex が動くのを防ぐ）。明示 `--remote` は維持する。修正前のコンパイル済み本体は `aidiy_codex --no-daemon` で起動できる。
 - `_setup.py` の対象（既定は実行しない。独立プロセスでコンパイル）。aidiy_diag の「コンパイル」ボタンからも同じ処理を開始する。
 - 全体 cleanup（`_cleanup.py`）は、実行中のコンパイルを最初に中止する（`python command_codex/_compile.py --cancel` と同じ）。続けて、選択（既定 y）に応じてコンパイルの中間ファイル `~/.aidiy/cache/codex/target/` を削除する。配置済みの `~/.aidiy/bin/aidiy_codex(.exe)`・設定 JSON・状態・ログは残す。削除後の次回ビルドは最初から（release で 1 時間以上）。
 - 認証は本物の `codex` と同じ `~/.codex` を使う（openai_oauth）。他の区分のキーは AiDiy の `_config/AiDiy_key.json`（Hermes / Pi と同じキー名）。

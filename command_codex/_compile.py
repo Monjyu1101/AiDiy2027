@@ -54,6 +54,7 @@ import json
 import os
 import platform
 import shutil
+import shlex
 import subprocess
 import sys
 import time
@@ -228,6 +229,36 @@ def replace_file(source: Path, output: Path, strip: Path | None = None) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def install_standalone_launcher() -> bool:
+    """コンパイル不要で起動導線を先に作る。既存バイナリは変更しない。"""
+    try:
+        helper = load_path_helper()
+        launcher = helper.launcher_directory(OBJECT_NAME, PROJECT_ROOT) / (OBJECT_NAME + (".cmd" if IS_WINDOWS else ""))
+        if launcher.is_symlink() or getattr(launcher, "is_junction", lambda: False)():
+            raise OSError(f"ランチャーはリンクのため変更しません: {launcher}")
+        launcher.parent.mkdir(parents=True, exist_ok=True)
+        executable = INSTALL_DIR / (OBJECT_NAME + EXE)
+        if IS_WINDOWS:
+            content = ("@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\n"
+                       + helper.launcher_owner_comment(executable) + "\n"
+                       + helper.windows_launcher_command([str(executable)]) + "\nexit /b %errorlevel%\n")
+            launcher.write_bytes(content.replace("\n", "\r\n").encode("utf-8"))
+        else:
+            launcher.write_text("#!/bin/sh\nexec " + shlex.quote(str(executable)) + ' "$@"\n', encoding="utf-8")
+            launcher.chmod(0o755)
+        helper.sync_shared_launcher(launcher, executable, create=True)
+        if not helper.ensure_launcher_path(Path.home() / ".local" / "bin"):
+            return False
+        if not helper.ensure_launcher_path(launcher.parent):
+            return False
+        print_success(f"aidiy_codex ランチャーを登録しました: {launcher}")
+        print_info("本体のコンパイル完了後に利用できます。既存端末は開き直してください。")
+        return True
+    except (OSError, ValueError) as exc:
+        print_error(f"aidiy_codex ランチャーを登録できません: {exc}")
+        return False
+
+
 def prepare_install(target: str | None = None) -> bool:
     """ビルド前に、exe 以外の配置（~/.aidiy/bin・libunwind.dll・設定 JSON・PATH 登録）を済ませる。
 
@@ -236,6 +267,8 @@ def prepare_install(target: str | None = None) -> bool:
     Windows（gnullvm）は llvm-mingw の libunwind.dll に依存するため、同じフォルダへ一緒に置き、
     llvm-mingw が PATH に無くても単体で起動できるようにする。
     """
+    if not install_standalone_launcher():
+        return False
     try:
         INSTALL_DIR.mkdir(parents=True, exist_ok=True)
     except OSError as e:

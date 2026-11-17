@@ -15,6 +15,8 @@ import importlib.util
 import io
 import re
 import types
+import tempfile
+import subprocess
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -54,6 +56,50 @@ class SetupCodexTests(unittest.TestCase):
         setup = load("_setup.py")
         with patch.object(setup, "_load_folder_module", side_effect=FileNotFoundError("missing")), contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(setup.setup_codex())
+
+
+class CodexLauncherTests(unittest.TestCase):
+    def test_launcher_created_without_binary_for_both_platforms(self):
+        for windows in (False, True):
+            with self.subTest(windows=windows), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                module = load("command_codex/_compile.py")
+                helper = module.load_path_helper()
+                with patch.object(module, "PROJECT_ROOT", root / "project"), \
+                     patch.object(module, "INSTALL_DIR", root / ".aidiy/bin"), \
+                     patch.object(module, "IS_WINDOWS", windows), \
+                     patch.object(module, "EXE", ".exe" if windows else ""), \
+                     patch.object(module, "load_path_helper", return_value=helper), \
+                     patch.object(helper, "ensure_launcher_path", return_value=True) as ensure, \
+                     patch.object(Path, "home", return_value=root), \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    self.assertTrue(module.install_standalone_launcher())
+                    name = "aidiy_codex.cmd" if windows else "aidiy_codex"
+                    local = root / "project/_AIDIY/aidiy_codex/bin" / name
+                    shared = root / ".local/bin" / name
+                    self.assertEqual(local.read_bytes(), shared.read_bytes())
+                    self.assertFalse((root / ".aidiy/bin/aidiy_codex.exe").exists())
+                    self.assertEqual(ensure.call_count, 2)
+                    shared.write_text("old", encoding="utf-8")
+                    self.assertTrue(module.install_standalone_launcher())
+                    self.assertEqual(local.read_bytes(), shared.read_bytes())
+                    if not windows:
+                        binary = root / ".aidiy/bin/aidiy_codex"
+                        binary.parent.mkdir(parents=True)
+                        binary.write_text('#!/bin/sh\npwd\nprintf "%s\\n" "$@"\nexit 7\n', encoding="utf-8")
+                        binary.chmod(0o755)
+                        result = subprocess.run([str(shared), "resume", "a b", "日本語"], cwd=root,
+                                                capture_output=True, text=True)
+                        self.assertEqual(result.returncode, 7)
+                        self.assertEqual(result.stdout.splitlines(), [str(root), "resume", "a b", "日本語"])
+
+    def test_setup_registers_launcher_before_optional_compile(self):
+        source = (ROOT / "_setup.py").read_text(encoding="utf-8")
+        self.assertLess(source.index("if not setup_codex_launcher():"), source.index('if choices.get("codex"):'))
+        setup = load("_setup.py")
+        stub = types.SimpleNamespace(install_standalone_launcher=lambda: True)
+        with patch.object(setup, "_load_folder_module", return_value=stub):
+            self.assertTrue(setup.setup_codex_launcher())
 
 
 class StartGuidanceTests(unittest.TestCase):

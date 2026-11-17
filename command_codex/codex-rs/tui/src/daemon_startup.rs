@@ -83,6 +83,10 @@ pub(super) fn exclusion(
             cli.strict_config,
             cli.bypass_hook_trust,
         )
+        // AiDiy: ship a standalone custom binary, not an upstream daemon package.
+        // Keep our harness in-process; do not attach to a different installed Codex.
+        // Explicit --remote targets are still selected by app_server_target_for_launch.
+        .or(Some("AiDiy standalone harness"))
     }
 }
 

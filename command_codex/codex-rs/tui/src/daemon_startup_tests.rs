@@ -343,8 +343,9 @@ async fn daemon_startup_falls_back_only_for_implicit_endpoints() -> color_eyre::
 fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
     use clap::Parser;
     for (args, expected) in [
+        ("", Some("AiDiy standalone harness")),
         ("--no-daemon", Some("--no-daemon")),
-        ("--worktree", None),
+        ("--worktree", Some("AiDiy standalone harness")),
         ("--worktree --no-daemon", Some("--no-daemon")),
         ("--oss", Some("--oss")),
         ("--profile test", Some("--profile")),
@@ -355,7 +356,7 @@ fn daemon_eligibility_preserves_launch_options_and_explains_exclusions() {
         ),
         (
             "-m test --cd /tmp -i image.png -a never -s workspace-write --add-dir /tmp --no-alt-screen hello",
-            None,
+            Some("AiDiy standalone harness"),
         ),
     ] {
         let cli = Cli::parse_from(std::iter::once("codex").chain(args.split_whitespace()));
