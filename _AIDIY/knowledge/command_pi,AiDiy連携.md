@@ -95,6 +95,7 @@
 ## 外部CLIへの委譲
 
 - `claude_cli` / `antigravity_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli` をPiのモデル一覧に登録する。例: `aidiy_pi --model codex_cli/same -p "修正して"`。TUIの `/model` でも選択でき、最終選択を保存する。
+- `codex_cli` は既定の `--cli chat` でも PATH 上の通常の `codex` を推論エンジンとして起動し（子のツールは無効化）、`aidiy_codex` は起動しない。子 CLI 自身に処理全体を任せる旧方式は `--cli passthrough`。詳細は [メタハーネス運用](./command_hermes,command_pi,command_codex,メタハーネス.md) の「Codexのchat起動」。
 - `backend_tools` または `backend_server` のPython環境と、委譲先CLIの導入・認証が必要。常駐Core/ToolsやHermesの起動は不要。
 - Piの会話履歴をテキストで渡し、委譲先は毎回新規会話として開始する。Piの再開会話へ、別のCLIセッションを混ぜない。モデルがsameなら委譲先のモデル指定を省略し、autoならCodeAIのモデル選択を使う。
 - Windowsの `.cmd` 解決、タイムアウト、子孫の終了は既存 `AIコード_cli.py` / `process_lifetime.py` を再利用する。進捗はPiのthinkingイベント、結果はtext、異常終了はerrorへ変換する。外部CLIの利用量は取得できないためPiのトークン・費用表示は0となる。

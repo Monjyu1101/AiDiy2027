@@ -11,6 +11,7 @@
 )]
 
 use crate::DbTelemetry;
+use crate::migrations::align_line_ending_checksums;
 use crate::migrations::repair_legacy_recency_migration_version;
 use crate::runtime::recovery::RuntimeDbInitError;
 use crate::telemetry;
@@ -411,6 +412,9 @@ impl SqliteConfig {
         })?;
         let started = Instant::now();
         let migrate_result = async {
+            // AiDiy: 公式 Windows 版（CRLF）と同梱ソース（LF）の改行差で checksum が不一致にならないようにする。
+            let aligned = align_line_ending_checksums(&pool, migrator).await?;
+            let migrator = &aligned;
             if matches!(spec.kind, DbKind::State) {
                 repair_legacy_recency_migration_version(&pool, migrator).await?;
             }

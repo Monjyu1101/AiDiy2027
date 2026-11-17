@@ -11,19 +11,26 @@ import harness_chat
 
 
 class CodexChatTests(unittest.IsolatedAsyncioTestCase):
-    def test_requires_vendored_binary_and_mandatory_flag(self):
-        with patch.object(Path, 'is_file', return_value=False):
-            with self.assertRaisesRegex(ValueError, '再コンパイル'):
+    def test_uses_path_codex_with_child_tools_disabled(self):
+        # codex_cli は PATH 上の通常の codex を使い、aidiy_codex を起動しない。
+        with patch.object(harness_chat.shutil, 'which', return_value=None):
+            with self.assertRaisesRegex(ValueError, 'Codex CLIがありません'):
                 codex.command('same', 'schema', 'result')
-        with patch.object(Path, 'is_file', return_value=True):
+        with patch.object(harness_chat.shutil, 'which', return_value='/usr/bin/codex') as which:
             args = codex.command('same', 'schema', 'result')
-            self.assertIn('--aidiy-inference-only', args)
+            which.assert_called_with('codex')
+            self.assertEqual(args[:2], ['/usr/bin/codex', 'exec'])
+            self.assertFalse(any('aidiy_codex' in arg or 'aidiy-inference-only' in arg for arg in args))
             self.assertIn('--ignore-user-config', args)
             self.assertIn('--ephemeral', args)
             self.assertIn('--ignore-rules', args)
+            self.assertEqual(args[args.index('--sandbox') + 1], 'read-only')
+            disabled = {args[i + 1] for i, arg in enumerate(args) if arg == '--disable'}
+            self.assertTrue({'shell_tool', 'unified_exec', 'apps', 'plugins', 'computer_use', 'hooks'} <= disabled)
+            self.assertIn('web_search=disabled', args)
             self.assertNotIn('--model', args)
             self.assertEqual(args[-1], '-')
-            self.assertIn('aidiy_codex', args[0])
+            self.assertEqual(codex.command('gpt-6.1-sol', 'schema', 'result')[-3:], ['--model', 'gpt-6.1-sol', '-'])
             for model in ('codex_cli/same', 'copilot_cli/same', 'aidiy_hermes/same'):
                 with self.assertRaisesRegex(ValueError, '再指定'):
                     codex.command(model, 'schema', 'result')
@@ -40,7 +47,7 @@ class CodexChatTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result.parent, Path(cwd))
             result.write_text(json.dumps(transport), encoding='utf-8')
             return b''
-        with patch.object(Path, 'is_file', return_value=True), patch.object(harness_chat, 'run_process', process):
+        with patch.object(harness_chat, 'cli_entry', return_value=['codex']), patch.object(harness_chat, 'run_process', process):
             result = await codex.chat({'model': 'same', 'messages': [{'role':'system', 'content':'memory fixture'}], 'tools': []})
         self.assertEqual(result, expected)
         self.assertFalse(paths[0].exists())
@@ -68,7 +75,7 @@ class CodexChatTests(unittest.IsolatedAsyncioTestCase):
             nonlocal count
             count += 1
             raise ValueError('unknown flag --aidiy-inference-only')
-        with patch.object(Path, 'is_file', return_value=True), patch.object(harness_chat, 'run_process', process):
+        with patch.object(harness_chat, 'cli_entry', return_value=['codex']), patch.object(harness_chat, 'run_process', process):
             with self.assertRaisesRegex(ValueError, 'unknown flag'):
                 await codex.chat({'model':'same', 'messages':[], 'tools':[]})
         self.assertEqual(count, 1)

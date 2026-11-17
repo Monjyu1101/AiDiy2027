@@ -1,6 +1,10 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 
 use crate::sqlite::SqliteWriteQueryExt;
+use sqlx::AssertSqlSafe;
+use sqlx::SqlSafeStr;
+use sqlx::migrate::Migration;
 use sqlx::migrate::Migrator;
 use sqlx_sqlite::SqlitePool;
 
@@ -53,6 +57,75 @@ pub(crate) fn runtime_queue_migrator() -> Migrator {
 #[allow(dead_code)]
 pub(crate) fn runtime_thread_history_migrator() -> Migrator {
     runtime_migrator(&THREAD_HISTORY_MIGRATOR)
+}
+
+/// AiDiy: 公式 Codex の Windows 版は CRLF 改行の SQL で checksum を記録する。
+/// 同梱ソースは LF のため、改行だけが異なる適用済みマイグレーションは DB の checksum を採用し、
+/// Windows で新たに適用するものは CRLF の checksum で記録して、公式版と同じ `~/.codex` を共有する。
+/// 改行以外が異なる場合はそのまま SQLx の不一致エラーにする。
+pub(crate) async fn align_line_ending_checksums(
+    pool: &SqlitePool,
+    migrator: &Migrator,
+) -> anyhow::Result<Migrator> {
+    let table_exists = sqlx::query_scalar::<_, i64>(
+        "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?",
+    )
+    .bind(migrator.table_name.as_ref())
+    .fetch_optional(pool)
+    .await?
+    .is_some();
+    let applied: HashMap<i64, Vec<u8>> = if table_exists {
+        sqlx::query_as::<_, (i64, Vec<u8>)>(AssertSqlSafe(format!(
+            "SELECT version, checksum FROM \"{}\"",
+            migrator.table_name
+        )))
+        .fetch_all(pool)
+        .await?
+        .into_iter()
+        .collect()
+    } else {
+        HashMap::new()
+    };
+    let migrations = migrator
+        .migrations
+        .iter()
+        .map(|migration| {
+            let mut migration = migration.clone();
+            let lf = migration.sql.as_str().replace("\r\n", "\n");
+            let crlf = lf.replace('\n', "\r\n");
+            let crlf_checksum = sql_checksum(&migration, crlf);
+            match applied.get(&migration.version) {
+                Some(recorded)
+                    if *recorded == crlf_checksum || *recorded == sql_checksum(&migration, lf) =>
+                {
+                    migration.checksum = Cow::Owned(recorded.clone());
+                }
+                None if cfg!(windows) => migration.checksum = Cow::Owned(crlf_checksum),
+                _ => {}
+            }
+            migration
+        })
+        .collect::<Vec<_>>();
+    Ok(Migrator {
+        migrations: Cow::Owned(migrations),
+        ignore_missing: migrator.ignore_missing,
+        locking: migrator.locking,
+        no_tx: migrator.no_tx,
+        table_name: migrator.table_name.clone(),
+        create_schemas: migrator.create_schemas.clone(),
+    })
+}
+
+fn sql_checksum(migration: &Migration, sql: String) -> Vec<u8> {
+    Migration::new(
+        migration.version,
+        migration.description.clone(),
+        migration.migration_type,
+        AssertSqlSafe(sql).into_sql_str(),
+        migration.no_tx,
+    )
+    .checksum
+    .into_owned()
 }
 
 pub(crate) async fn repair_legacy_recency_migration_version(

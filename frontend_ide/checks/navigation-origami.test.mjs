@@ -1,60 +1,77 @@
 // COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
-// Licensed under "AiDiy 公開利用ライセンス v1.1".
-// Commercial use requires prior written consent from all copyright holders.
-// See LICENSE for full terms. Thank you for keeping the rules.
-// https://github.com/monjyu1101/AiDiy2027
+// Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync,existsSync} from 'node:fs';
-import vm from 'node:vm';
-import {ref,computed} from 'vue';
-import {折り紙作品,折り紙を選ぶ,折り紙の次の手順,兜手順,兜図形,兜の口を開く} from '../src/components/開発スペース/ナビ折り紙3D.js';
-const dir=new URL('../src/components/開発スペース/',import.meta.url);
-const distance=(a,b)=>Math.hypot(...a.map((n,i)=>n-b[i]));
-const area=poly=>{let sum=0;for(let i=1;i<poly.length-1;i++){const a=poly[i].map((n,j)=>n-poly[0][j]),b=poly[i+1].map((n,j)=>n-poly[0][j]);sum+=Math.hypot(a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0])/2;}return sum;};
-test('正式名の変更後に旧ファイル・登録・表示名が残らない',()=>{
- assert.ok(existsSync(new URL('ナビ折り紙3D.vue',dir)));assert.ok(!existsSync(new URL('ナビ折り鶴3D.vue',dir)));
- for(const file of ['ナビ待機画面一覧.js','ナビ風景.js','Naviパネル.vue','ナビ折り紙3D.vue']){
-  const source=readFileSync(new URL(file,dir),'utf8');assert.ok(source.includes('ナビ折り紙3D'));assert.ok(!source.includes('ナビ折り鶴3D'));
- }
+import {兜の手順を作る,折り鶴の手順を作る,折り紙を選ぶ,紙面積,折り途中,折線回転,再生状態を作る,再生を進める,角度差} from '../src/components/開発スペース/ナビ折り紙3D.js';
+const steps=兜の手順を作る(),near=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
+test('全工程で同じ一枚（面積2）を保持し、折りの途中も各辺長と折線上の位置を保つ',()=>{
+  for(const s of steps){
+    if(!s.op){near(s.faces.reduce((n,f)=>n+紙面積(f.points),0),2);continue;}
+    const op=s.op;
+    for(const t of [0,.1,.35,.5,.75,1]){
+      const faces=折り途中(op,t);near(faces.reduce((n,f)=>n+紙面積(f.points),0),2);
+      faces.forEach((f,i)=>f.points.forEach((p,j)=>{
+        assert.ok(p.every(Number.isFinite));const k=(j+1)%f.points.length;
+        near(Math.hypot(...p.map((v,n)=>v-f.points[k][n])),Math.hypot(...op.parts[i].points[j].map((v,n)=>v-op.parts[i].points[k][n])));
+      }));
+      for(const p of op.hinge)折線回転(p,op.a,op.b,op.angle*t).forEach((n,k)=>near(n,p[k]));
+    }
+  }
 });
-test('2種をランダム選択し、作品完了時に次の作品の最初へ戻る',()=>{
- assert.deepEqual(折り紙作品.map(w=>w.id),['crane','kabuto']);
- assert.equal(折り紙を選ぶ(()=>0).id,'crane');assert.equal(折り紙を選ぶ(()=>.99).id,'kabuto');
- for(const w of 折り紙作品){
-  assert.deepEqual(折り紙の次の手順(w,0,()=>.9),{work:w,step:1});
-  assert.equal(折り紙の次の手順(w,w.手順.length-1,()=>.1).work.id,'crane');
-  assert.equal(折り紙の次の手順(w,w.手順.length-1,()=>.9).work.id,'kabuto');
-  assert.equal(折り紙の次の手順(w,w.手順.length-1,()=>.9).step,0);
- }
+test('開き戻しは同じ操作を逆再生し、中心線と角飾りの予備折りを見せる',()=>{
+  const returns=steps.filter(s=>s.reverse);assert.equal(returns.length,2);
+  for(const s of returns){const i=steps.indexOf(s);assert.equal(s.op,steps[i-1].op);assert.deepEqual(折り途中(s.op,0).map(f=>f.points),s.op.parts.map(f=>f.points));}
 });
-test('兜14段階: 左右別、手前1枚、帯だけ、後ろへ折る方式を明記',()=>{
- assert.equal(兜手順.length,14);assert.equal(new Set(兜手順.map(s=>s.型)).size,14);
- assert.match(兜手順.find(s=>s.型==='brim').説明,/手前1枚だけ/);
- assert.match(兜手順.find(s=>s.型==='band').確認,/三角全体ではなく/);
- assert.match(兜手順.find(s=>s.型==='back').確認,/内側へ差し込まず/);
+test('下の手前と奥を別々に折り、角飾りを巻き込まない',()=>{
+  for(const i of [12,13,14]){
+    const moving=steps[i].op.parts.filter(f=>f.moving);assert.ok(moving.length);
+    assert.ok(moving.every(f=>!f.tags.includes('left')&&!f.tags.includes('right')));
+    assert.ok(moving.every(f=>f.tags.includes('front')===(i!==14)));
+  }
 });
-test('兜の全工程で紙の総面積を維持し、有限座標・バッファ上限を守る',()=>{
- for(let i=0;i<兜手順.length;i++)for(const t of [0,.1,.25,.5,.75,.9,1]){
-  const m=兜図形(i,t);let total=0;
-  for(const p of m.polygons){for(const v of p.points){assert.equal(v.length,3);assert.ok(v.every(Number.isFinite));assert.ok(v.every(n=>Math.abs(n)<5));}total+=area(p.points);}
-  assert.ok(Math.abs(total-8)<1e-8,`${i},${t}: ${total}`);
-  assert.ok(m.polygons.reduce((n,p)=>n+(p.points.length-2)*3,0)<4096);
- }
+test('経過時間だけでは折らない。視点到着後の静止と折線の予告を経て折り始める',()=>{
+  const s=再生状態を作る(steps,14);s.yaw=0;s.elapsed=999;
+  再生を進める(s,steps,100);assert.equal(s.phase,'align');assert.equal(s.amount,0);
+  for(let n=0;n<2000&&s.phase==='align';n++){assert.equal(s.amount,0);再生を進める(s,steps,.02);}
+  assert.equal(s.phase,'guide');assert.ok(Math.abs(角度差(s.yaw,steps[14].view))<.012);assert.ok(s.stable>=.65);
+  const yaw=s.yaw;for(let n=0;n<79;n++)再生を進める(s,steps,.02);assert.equal(s.amount,0);
+  while(s.phase!=='hold')再生を進める(s,steps,.02);
+  assert.equal(s.yaw,yaw);near(s.amount,1);
 });
-test('兜の口は頂部・左右の合わせ目を共有したまま開き、各半面の辺長を変えない',()=>{
- const a=[0,0,0],l=[-1,-1,0],r=[1,-1,0],f=[0,-1,0];
- for(const t of [0,.1,.5,1]){
-  for(const seam of [a,l,r])assert.ok(distance(兜の口を開く(seam,t,false),兜の口を開く(seam,t,true))<1e-12);
-  for(const back of [false,true])for(const [p,q]of [[a,l],[a,r],[a,f],[l,f],[r,f]])assert.ok(Math.abs(distance(p,q)-distance(兜の口を開く(p,t,back),兜の口を開く(q,t,back)))<1e-9);
- }
- assert.ok(兜の口を開く(f,1,false)[2]>0);assert.ok(兜の口を開く(f,1,true)[2]<0);
+test('全工程が停止せず完成へ進み、戻しは1から0へ、次の作品で最初へ戻る',()=>{
+  const s=再生状態を作る(steps),seen=new Set();let finished=false;
+  for(let i=0;i<30000;i++){
+    const before=s.index;seen.add(before);if(before===steps.length-1)finished=true;
+    再生を進める(s,steps,.05);assert.ok(s.amount>=0&&s.amount<=1);
+    if(s.index!==before)near(s.amount,steps[s.index].reverse?1:0);
+    if(finished&&s.index===0)break;
+  }
+  assert.equal(seen.size,steps.length);assert.equal(finished,true);assert.equal(s.index,0);
 });
-test('作品切替は手順をリセットし、一時停止状態を維持。短い兜へ切り替えても範囲外にしない',()=>{
- const source=readFileSync(new URL('ナビ折り紙3D.vue',dir),'utf8').split('<script setup>')[1].split('</script>')[0].replace(/^import .*;\n/gm,'');
- const api=vm.runInNewContext(source+';({step,selected,playing,steps,current,chooseWork,go,replay,reducedMotion})',{ref,computed,折り紙作品,折り紙を選ぶ:()=>折り紙作品[0],折り紙の次の手順,defineOptions(){},defineEmits:()=>()=>{},onMounted(){},onBeforeUnmount(){}});
- api.go(31);assert.equal(api.playing.value,false);api.chooseWork('kabuto');assert.equal(api.step.value,0);assert.equal(api.steps.value.length,14);assert.equal(api.playing.value,false);
- api.go(999);assert.equal(api.step.value,13);assert.equal(api.current.value.型,'done');
- api.replay();assert.equal(api.playing.value,true);api.chooseWork('crane');assert.equal(api.playing.value,true);assert.equal(api.step.value,0);
- api.reducedMotion.value=true;api.chooseWork('kabuto');assert.equal(api.playing.value,false);
+test('兜と折り鶴を同じ確率で選び、作品ごとに独立した手順を返す',()=>{
+  assert.equal(折り紙を選ぶ(()=>0).id,'kabuto');assert.equal(折り紙を選ぶ(()=>.4999).id,'kabuto');
+  assert.equal(折り紙を選ぶ(()=>.5).id,'crane');assert.equal(折り紙を選ぶ(()=>.9999).id,'crane');
+  assert.notEqual(折り紙を選ぶ(()=>.7).steps,折り紙を選ぶ(()=>.7).steps);
+});
+test('折り鶴の袋・花弁を含む全工程で面積・辺長を保ち、連動中の共有頂点を離さない',()=>{
+  for(const s of 折り鶴の手順を作る()){
+    if(!s.op){near(s.faces.reduce((n,f)=>n+紙面積(f.points),0),2);continue;}
+    for(const t of [0,.01,.1,.3,.5,.75,.99,1]){
+      const faces=折り途中(s.op,t),vertices=new Map();near(faces.reduce((n,f)=>n+紙面積(f.points),0),2);
+      faces.forEach((f,i)=>f.points.forEach((p,j)=>{
+        assert.ok(p.every(Number.isFinite));const next=(j+1)%f.points.length,original=s.op.parts[i].points;
+        near(Math.hypot(...p.map((v,k)=>v-f.points[next][k])),Math.hypot(...original[j].map((v,k)=>v-original[next][k])));
+        if(s.op.sample){const key=f.keys[j];if(vertices.has(key))p.forEach((v,k)=>near(v,vertices.get(key)[k]));vertices.set(key,p);}
+      }));
+    }
+  }
+});
+test('折り鶴は予備折りと戻しを経て、左右の首尾と前後の翼がある立体で完成する',()=>{
+  const crane=折り鶴の手順を作る();assert.ok(crane.filter(s=>s.reverse).length>=8);
+  const points=crane.at(-1).faces.flatMap(f=>f.points);
+  assert.ok(points.some(p=>p[0]<-.4&&p[1]>.05));assert.ok(points.some(p=>p[0]>.45&&p[1]>.05));
+  assert.ok(points.some(p=>p[2]>.35));assert.ok(points.some(p=>p[2]<-.35));
+  const s=再生状態を作る(crane);let complete=false;
+  for(let i=0;i<40000;i++){再生を進める(s,crane,.05);if(s.index===crane.length-1)complete=true;if(complete&&s.index===0)break;}
+  assert.equal(complete,true);assert.equal(s.index,0);
 });

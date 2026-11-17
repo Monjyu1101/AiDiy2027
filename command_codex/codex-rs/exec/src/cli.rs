@@ -42,10 +42,6 @@ pub struct Cli {
     #[arg(long, global = true)]
     pub trust: bool,
 
-    /// AiDiy inference-only child: no tools, hooks, MCP, or CLI delegation.
-    #[arg(long = "aidiy-inference-only", global = true, default_value_t = false)]
-    pub aidiy_inference_only: bool,
-
     /// Run without persisting session files to disk.
     #[arg(long = "ephemeral", global = true, default_value_t = false)]
     pub ephemeral: bool,

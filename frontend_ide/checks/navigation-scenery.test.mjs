@@ -10,7 +10,7 @@ import {NAVIGATION_SCENES,NAVIGATION_RANDOM_SCENES,pickNavigationScene} from '..
 import {ナビ水面波紋3D状態を作成} from '../src/components/開発スペース/ナビ水面波紋3D.js';
 import {navigationKeyActive,bindNavigationKeys} from '../src/components/開発スペース/ナビ入力.js';
 test('羽衣ライディング・花火を含む9種類を均等な範囲で選ぶ',()=>{
- assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ万華鏡2D','ナビ水面波紋3D','ナビ時計2D','ナビ迷路3D','ナビ依頼文3D','ナビ折り紙3D']);
+ assert.deepEqual(NAVIGATION_RANDOM_SCENES,['ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ万華鏡2D','ナビ水面波紋3D','ナビ時計2D','ナビ迷路3D','ナビ依頼文3D', 'ナビ折り紙3D']);
  assert.deepEqual(NAVIGATION_RANDOM_SCENES.map((_,i)=>(i+.5)/NAVIGATION_RANDOM_SCENES.length).map(n=>pickNavigationScene(()=>n)),NAVIGATION_RANDOM_SCENES);
  // 夜間飛行は右クリックのメニューからだけ選べる。通常クリック・自動航行のランダム選択には出ない。
  assert.deepEqual(NAVIGATION_SCENES,['ナビ万華鏡2D','ナビ時計2D','ナビ羽衣ライディング3D','ナビ花火3D','ナビアクアリウム3D','ナビ水面波紋3D','ナビ迷路3D','ナビ依頼文3D','ナビ折り紙3D','ナビ夜間飛行3D']);

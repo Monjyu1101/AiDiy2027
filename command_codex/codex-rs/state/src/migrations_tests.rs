@@ -8,6 +8,7 @@ use std::borrow::Cow;
 
 use super::STATE_MIGRATOR;
 use super::THREAD_HISTORY_MIGRATOR;
+use super::align_line_ending_checksums;
 use super::repair_legacy_recency_migration_version;
 use crate::PINNED_THREAD_SECTION_ID;
 use crate::PINNED_THREAD_SECTION_NAME;
@@ -552,7 +553,10 @@ INSERT INTO thread_items (thread_id, turn_id, item_id, rollout_ordinal, created_
     .execute(&pool)
     .await
     .expect("pre-migration items should be inserted");
-    THREAD_HISTORY_MIGRATOR
+    // AiDiy: 本番の open_runtime_db と同じく改行差を揃えてから適用する（Windows は CRLF で記録済み）。
+    align_line_ending_checksums(&pool, &THREAD_HISTORY_MIGRATOR)
+        .await
+        .expect("checksums should align")
         .run(&pool)
         .await
         .expect("update-ordinal migration should apply");
@@ -623,7 +627,10 @@ async fn realtime_items_preserve_older_thread_history_writers() {
         .await
         .expect("insert an existing projection checkpoint");
 
-    THREAD_HISTORY_MIGRATOR
+    // AiDiy: 本番の open_runtime_db と同じく改行差を揃えてから適用する（Windows は CRLF で記録済み）。
+    align_line_ending_checksums(&pool, &THREAD_HISTORY_MIGRATOR)
+        .await
+        .expect("checksums should align")
         .run(&pool)
         .await
         .expect("realtime item migration should apply");
@@ -1105,4 +1112,70 @@ async fn writable_pool_reads_do_not_wait_for_an_existing_writer() {
             (expected_mode, vec![7; 5])
         );
     }
+}
+
+/// AiDiy: 公式 Windows 版（CRLF の SQL）で記録された DB を、LF の同梱ソースから開ける。
+#[tokio::test]
+async fn line_ending_only_checksum_differences_are_accepted() {
+    let sqlite_home = crate::runtime::test_support::unique_temp_dir();
+    tokio::fs::create_dir_all(&sqlite_home)
+        .await
+        .expect("sqlite home should be created");
+    let _cleanup = scopeguard::guard(sqlite_home.clone(), |sqlite_home| {
+        let _ = std::fs::remove_dir_all(sqlite_home);
+    });
+    let sqlite = crate::SqliteConfig::new_for_testing(sqlite_home.as_path().abs());
+    let pool = sqlite
+        .open_read_write_pool(&sqlite.state_db_path())
+        .await
+        .expect("sqlite database should open");
+    let mut official_windows = migrator_through(/*version*/ 3);
+    official_windows.migrations = Cow::Owned(
+        official_windows
+            .migrations
+            .iter()
+            .map(|migration| {
+                let crlf = migration
+                    .sql
+                    .as_str()
+                    .replace("\r\n", "\n")
+                    .replace('\n', "\r\n");
+                Migration::new(
+                    migration.version,
+                    migration.description.clone(),
+                    migration.migration_type,
+                    sqlx::SqlSafeStr::into_sql_str(sqlx::AssertSqlSafe(crlf)),
+                    migration.no_tx,
+                )
+            })
+            .collect(),
+    );
+    official_windows
+        .run(&pool)
+        .await
+        .expect("CRLF checksums should be recorded");
+    STATE_MIGRATOR
+        .run(&pool)
+        .await
+        .expect_err("raw LF checksums should not match CRLF records");
+
+    let aligned = align_line_ending_checksums(&pool, &STATE_MIGRATOR)
+        .await
+        .expect("checksums should align");
+    aligned
+        .run(&pool)
+        .await
+        .expect("line-ending-only differences should be accepted");
+
+    sqlx::query("UPDATE _sqlx_migrations SET checksum = x'00' WHERE version = 1")
+        .execute(&pool)
+        .await
+        .expect("checksum should update");
+    let aligned = align_line_ending_checksums(&pool, &STATE_MIGRATOR)
+        .await
+        .expect("checksums should align");
+    aligned
+        .run(&pool)
+        .await
+        .expect_err("real modifications should still be rejected");
 }

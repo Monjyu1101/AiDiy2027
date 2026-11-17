@@ -6156,10 +6156,6 @@ async fn build_hooks_config(
     environment: Option<&TurnEnvironment>,
     disabled_plugin_ids: &[String],
 ) -> HooksConfig {
-    // AiDiy: inference-only children never execute tools or startup hooks.
-    if crate::aidiy_inference::enabled() {
-        return HooksConfig::default();
-    }
     let (hook_shell_program, hook_shell_argv) = environment
         .and_then(|environment| environment.shell.as_ref())
         .map(|shell| {

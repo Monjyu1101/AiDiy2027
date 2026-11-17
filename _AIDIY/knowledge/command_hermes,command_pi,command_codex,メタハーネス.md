@@ -9,11 +9,13 @@
 - `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
 - 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
 
-chatの子エンジンは現在 `claude_cli`（通常のテキスト出力）と `copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
+chatの子エンジンは現在 `claude_cli`（通常のテキスト出力）、`copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）、`codex_cli`（通常の `codex` をstdin/stdoutで呼出し）が対象。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。この「外側ハーネス」と「内側CLI」の対応は別物で、`aidiy_hermes` / `aidiy_pi` / `aidiy_codex` は互いを呼び出さない（区分にも選べない）。
 
-### Codexの専用推論入口
+### Codexのchat起動
 
-`codex_cli` のchatは、通常の外部 `codex` ではなく `~/.aidiy/bin/aidiy_codex(.exe)` の `exec --aidiy-inference-only` を使う。専用版への再コンパイルが必要。旧バイナリは未知オプションで停止し、外部Codexやpassthroughへ降格しない。通常のpassthroughは従来の外部CLIのまま。
+`codex_cli` のchatは、passthroughと同じくPATH上の通常の `codex` を起動する。`aidiy_codex` は起動しない（区分 `codex_cli` を選んで `aidiy_codex` が動くのは誤り）。Windowsのnpmシムは `cmd.exe` を経由せず直接実行に解決する。実装は `backend_tools/tools_proc/harness_codex_chat.py` で、Hermes / Pi / Codex の3ハーネスに共通。
+
+通常の `codex` には全ツールを一括で止める入口が無いため、`exec --ephemeral --ignore-user-config --ignore-rules --sandbox read-only` に加え、`--disable shell_tool` / `unified_exec` / `apps` / `plugins` / `browser_use` / `computer_use` / `hooks` などの子ツール機能と `web_search` を無効化し、空の一時作業フォルダで起動する。codex 0.167.0 の実機で、シェル実行が使えずMCPサーバーも0件になることを確認した。組込みのMCPリソース一覧ツールだけは残る。旧版の `codex` が未知の `--disable` で停止した場合は、`codex` を更新する（passthroughへ自動降格しない）。
 
 既存の `~/.codex`（または `CODEX_HOME`）認証経路を使用し、秘密情報を一時フォルダへコピーしない。ユーザー設定・rules・プロジェクト設定からの自動実行を避け、新しい一時セッションに親の正規会話を毎回渡す。親側の知識・履歴・ツール結果が会話の正本で、子セッションはresumeしない。`same` / `auto` は隔離したCodex既定モデルとなり、ユーザーconfig内の既定モデルは読まない。モデルを固定したい場合は明示する。
 

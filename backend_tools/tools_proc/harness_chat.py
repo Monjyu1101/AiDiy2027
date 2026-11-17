@@ -110,18 +110,23 @@ def normalize_response(value, definitions):
     return {"role": "assistant", "content": value["content"], "tool_calls": calls}
 
 
-def claude_command(model):
-    command = shutil.which("claude")
+def cli_entry(name, label):
+    """PATH上の通常CLIを、cmd.exeを経由しない直接実行の先頭部分へ解決する。"""
+    command = shutil.which(name)
     if not command:
-        raise ValueError("Claude CLIがありません。導入するか --cli passthrough を指定してください。")
+        raise ValueError(f"{label}がありません。導入するか --cli passthrough を指定してください。")
     if command.lower().endswith((".cmd", ".bat")):
         # Do not invoke cmd.exe with a conversation in its command line.
         from AIコア.AIコード_cli import CodeAI
         direct = CodeAI._npmシム直接実行に解決(None, command)
         if not direct:
-            raise ValueError("Claude CLIの直接実行入口を解決できません。")
-    else:
-        direct = [command]
+            raise ValueError(f"{label}の直接実行入口を解決できません。")
+        return direct
+    return [command]
+
+
+def claude_command(model):
+    direct = cli_entry("claude", "Claude CLI")
     args = direct + ["--print", "--output-format", "json", "--json-schema", json.dumps(RESPONSE_SCHEMA),
         "--tools", "", "--strict-mcp-config", "--safe-mode", "--setting-sources", "",
         "--no-session-persistence", "--disable-slash-commands", "--permission-mode", "dontAsk",
@@ -135,10 +140,7 @@ def execution_failure(returncode, stderr):
     """Return a useful category without echoing child output (tokens/prompts/paths)."""
     error = stderr.decode("utf-8", errors="replace").lower()
     if any(word in error for word in ("unknown option", "unrecognized argument", "unknown flag", "unexpected argument")):
-        if "--aidiy-inference-only" in error:
-            reason = "aidiy_codexが推論専用経路に対応していません。python command_codex/_compile.py で再コンパイルしてください。"
-        else:
-            reason = "CLIの版がchat用オプションに対応していません。CLIを更新してください。"
+        reason = "CLIの版がchat用オプションに対応していません。CLIを更新してください。"
     elif any(word in error for word in ("not logged in", "authentication", "unauthorized", "invalid api key", "login required")):
         reason = "CLIの認証に失敗しました。選択したCLIへログインしてください。"
     elif any(word in error for word in ("timeout", "timed out", "connection", "econn", "fetch failed")):
@@ -213,7 +215,7 @@ async def run_chat(request):
         raise ValueError(
             f"選択した内側CLI {provider} は、親ハーネスがツールを実行するchatエンジン接続に未対応です。"
             "Hermes/Pi/Codex自体が推論できないという意味ではありません。"
-            "chatではclaude_cli / copilot_cli / 推論専用版codex_cli、または通常のAPIモデルを選択してください。"
+            "chatではclaude_cli / copilot_cli / codex_cli、または通常のAPIモデルを選択してください。"
             "子CLIへ処理全体を渡す旧方式は --cli passthrough です（親ツール実行とは異なります）。"
             "自動で旧方式へ切り替えません。"
         )

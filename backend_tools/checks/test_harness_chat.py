@@ -26,7 +26,7 @@ def request():
 class ChatTests(unittest.IsolatedAsyncioTestCase):
     def test_failure_diagnostics_do_not_echo_private_stderr(self):
         cases = [("error: unknown option --safe-mode", "CLIの版"),
-                 ("unknown flag --aidiy-inference-only", "再コンパイル"), ("not logged in", "認証"), ("fetch failed", "通信"),
+                 ("unknown flag --disable", "CLIの版"), ("not logged in", "認証"), ("fetch failed", "通信"),
                  ("unknown model", "モデル"), ("unexpected failure", "正常終了")]
         for raw, expected in cases:
             result = chat.execution_failure(2, (raw + " token=private-fixture path=/private").encode())

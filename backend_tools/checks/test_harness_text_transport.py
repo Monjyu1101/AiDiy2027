@@ -29,10 +29,11 @@ class TransportTest(unittest.TestCase):
 
     def test_codex_text(self):
         from tools_proc import harness_codex_chat
-        with patch.object(harness_codex_chat, 'command', return_value=['codex','exec','--aidiy-inference-only','--output-schema','','--output-last-message','','-']), patch.object(harness_chat, 'run_process', AsyncMock(return_value=b'prefix {} suffix')) as run:
+        with patch.object(harness_codex_chat, 'command', return_value=['codex','exec','--sandbox','read-only','--output-schema','','--output-last-message','','-']), patch.object(harness_chat, 'run_process', AsyncMock(return_value=b'prefix {} suffix')) as run:
             self.assertEqual(asyncio.run(harness_chat.run_text_chat(self.request('codex_cli'))), 'prefix {} suffix')
             self.assertNotIn('--output-schema', run.call_args.args[0])
-            self.assertIn('--aidiy-inference-only', run.call_args.args[0])
+            self.assertNotIn('--output-last-message', run.call_args.args[0])
+            self.assertIn('read-only', run.call_args.args[0])
 
     def test_transport_envelope(self):
         with patch.object(harness_chat,'run_text_chat',AsyncMock(return_value='raw')), patch.object(harness_cli,'emit') as emit:

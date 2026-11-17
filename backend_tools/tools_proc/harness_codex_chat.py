@@ -1,12 +1,25 @@
 # COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE.
-"""Use AiDiy's explicit inference-only Codex entry, never an arbitrary codex binary."""
+"""codex_cli の chat は PATH 上の通常の Codex CLI（codex）を推論エンジンとして使う。
+
+aidiy_codex（同梱 Codex のコンパイル版）は起動しない。通常の codex には全ツールを
+一括で止める入口が無いため、子のツール機能を個別に無効化し、read-only sandbox と
+空の一時作業フォルダで起動する。ツールの実行・承認は親ハーネスだけが行う。
+"""
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 import tempfile
+
+
+# 子 Codex 自身にツールを実行させない（シェル・アプリ・プラグイン・ブラウザ等）。
+DISABLED_FEATURES = (
+    "shell_tool", "unified_exec", "shell_snapshot", "apps", "plugins", "remote_plugin",
+    "browser_use", "browser_use_external", "in_app_browser", "computer_use", "image_generation",
+    "view_image", "multi_agent", "hooks", "tool_suggest", "skill_search", "sleep_tool",
+    "goals", "workspace_dependencies", "memories",
+)
 
 
 # Strict Responses schemas cannot express arbitrary argument objects. Encode only
@@ -22,16 +35,20 @@ RESPONSE_SCHEMA = {
 
 
 def command(model, schema, result):
-    binary = Path.home() / ".aidiy" / "bin" / ("aidiy_codex.exe" if os.name == "nt" else "aidiy_codex")
-    if not binary.is_file():
-        raise ValueError("Codex chatには推論専用経路を含むaidiy_codexの再コンパイルが必要です。python command_codex/_compile.py を実行してください。")
     # Do not recurse from an inference engine into another CLI harness.
     prefix = model.split("/", 1)[0]
     if prefix.endswith("_cli") or prefix.startswith("aidiy_"):
         raise ValueError("Codex chatの内側モデルにCLIを再指定できません。推論モデルを指定してください。")
-    args = [str(binary), "exec", "--aidiy-inference-only", "--ephemeral",
-            "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check",
-            "--output-schema", str(schema), "--output-last-message", str(result), "--color", "never"]
+    if __package__:
+        from .harness_chat import cli_entry
+    else:
+        from harness_chat import cli_entry
+    args = cli_entry("codex", "Codex CLI") + ["exec", "--ephemeral",
+            "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check", "--sandbox", "read-only"]
+    for feature in DISABLED_FEATURES:
+        args += ["--disable", feature]
+    args += ["-c", "web_search=disabled", "-c", "project_doc_max_bytes=0",
+             "--output-schema", str(schema), "--output-last-message", str(result), "--color", "never"]
     if model.lower() not in {"same", "auto"}:
         args += ["--model", model]
     return args + ["-"]
@@ -51,8 +68,8 @@ async def chat(request):
         folder = Path(scratch)
         schema, result = folder / "response-schema.json", folder / "response.json"
         schema.write_text(json.dumps(RESPONSE_SCHEMA), encoding="utf-8")
-        # The mandatory flag fails closed on older binaries. No fallback to external
-        # codex, no permission relaxation, no copying credentials into the scratch dir.
+        # Unknown --disable flags fail closed on older codex versions. No fallback to
+        # passthrough, no permission relaxation, no copying credentials into the scratch dir.
         await run_process(command(request["model"], schema, result), prompt, scratch)
         if not result.is_file() or result.stat().st_size > LIMIT:
             raise ValueError("Codex chatの構造化応答がありません、または大きすぎます。")

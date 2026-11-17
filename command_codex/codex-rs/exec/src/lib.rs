@@ -270,25 +270,7 @@ fn exec_stderr_env_filter() -> EnvFilter {
         .unwrap_or_else(|_| EnvFilter::new("error"))
 }
 
-pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
-    // A dedicated process only. Never allow resume/fork to import an old agent's state.
-    if cli.aidiy_inference_only {
-        if cli.command.is_some()
-            || cli.trust
-            || cli.worktree
-            || cli.oss
-            || cli.dangerously_bypass_approvals_and_sandbox
-            || cli.bypass_hook_trust
-        {
-            anyhow::bail!(
-                "--aidiy-inference-only requires a fresh API/OAuth exec without trust/worktree/OSS/bypass flags"
-            );
-        }
-        codex_core::aidiy_inference::enable();
-        cli.ephemeral = true;
-        cli.ignore_user_config = true;
-        cli.ignore_rules = true;
-    }
+pub async fn run_main(cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Result<()> {
     if cli.trust && cli.ignore_user_config {
         anyhow::bail!(
             "--trust cannot be combined with --ignore-user-config: saved project trust decisions must be checked"
@@ -309,7 +291,6 @@ pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Re
         ephemeral,
         ignore_user_config,
         ignore_rules,
-        aidiy_inference_only,
         color,
         last_message_file,
         json: json_mode,
@@ -391,28 +372,6 @@ pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Re
             std::process::exit(1);
         }
     };
-
-    if aidiy_inference_only {
-        for feature in [
-            "hooks",
-            "plugins",
-            "apps",
-            "shell_snapshot",
-            "shell_snapshot_v2",
-            "login_shell_package_path",
-            "memory_tool",
-            "external_agent_memory_import",
-        ] {
-            cli_kv_overrides.push((format!("features.{feature}"), false.into()));
-        }
-        cli_kv_overrides.push(("project_doc_max_bytes".to_string(), 0.into()));
-        cli_kv_overrides.push(("skills.include_instructions".to_string(), false.into()));
-        cli_kv_overrides.push(("include_apps_instructions".to_string(), false.into()));
-        cli_kv_overrides.push((
-            "include_collaboration_mode_instructions".to_string(),
-            false.into(),
-        ));
-    }
 
     let mut resolved_cwd = cwd.clone();
     let mut config_cwd = match resolved_cwd.as_deref() {
@@ -684,8 +643,7 @@ pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Re
         codex_self_exe: arg0_paths.codex_self_exe.clone(),
         codex_linux_sandbox_exe: arg0_paths.codex_linux_sandbox_exe.clone(),
         main_execve_wrapper_exe: None,
-        base_instructions: aidiy_inference_only
-            .then(|| codex_core::aidiy_inference::INSTRUCTIONS.to_string()),
+        base_instructions: None,
         developer_instructions: None,
         personality: None,
         compact_prompt: None,
@@ -712,20 +670,6 @@ pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Re
         build_config,
     )
     .await?;
-    if aidiy_inference_only {
-        codex_core::aidiy_inference::validate_model(
-            config.model.as_deref(),
-            &config.model_provider_id,
-        )?;
-        if config.model_provider.auth.is_some()
-            || config.model_provider.aws.is_some()
-            || config.model_provider.gateway_oauth.is_some()
-        {
-            anyhow::bail!(
-                "inference-only child does not support command-backed provider authentication"
-            );
-        }
-    }
     embedded_network_policy.activate(&mut config);
     #[allow(clippy::print_stderr)]
     if config
@@ -824,12 +768,7 @@ pub async fn run_main(mut cli: Cli, arg0_paths: Arg0DispatchPaths) -> anyhow::Re
         codex_config::allowed_symlinked_codex_home(&config.config_layer_stack, &config.codex_home),
     );
     let state_db = codex_core::init_state_db(&config).await;
-    let environment_manager = if aidiy_inference_only {
-        // AiDiy: never connect to configured/remote executors or load their hooks.
-        EnvironmentManager::without_environments(
-            embedded_network_policy.bind(config.http_client_factory()),
-        )
-    } else if loader_overrides.ignore_user_config {
+    let environment_manager = if loader_overrides.ignore_user_config {
         EnvironmentManager::from_env(
             Some(local_runtime_paths),
             embedded_network_policy.bind(config.http_client_factory()),
