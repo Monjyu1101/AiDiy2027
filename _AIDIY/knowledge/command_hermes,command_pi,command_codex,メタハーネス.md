@@ -9,7 +9,7 @@
 - `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
 - 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
 
-chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（公式Python SDKの隔離セッションと構造化応答）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
+chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
 
 ### Codexの専用推論入口
 
@@ -33,13 +33,19 @@ Codexのstrict構造化応答に合わせ、transport上のみツール引数は
 
 Hermesの通常ループを通すためsystem/contextとメモリ・skills等の組立て、およびツール結果はそのままmessagesとして渡す。主会話・文脈圧縮・自動タイトル生成は同じCLIエンジンを使う。タイトルはagent専用callbackを背景スレッドへ渡し、別の補助APIを解決しない。失敗時はAPIへ切り替えず、入力から導出したタイトルを維持する。通常APIモードのタイトル生成経路は変更しない。回帰試験は `command_hermes/checks/test_cli_chat_title.py`。検索・ファイル操作等は親の許可されたツールとして実行される。ただし独自APIクライアントを直接生成する拡張機能までCLI経由へ自動変換するものではない。独立エージェント/補助機能の対応は別途検証する。
 
-Copilot chat は認証ホストだけ公式SDKの通常モードを使い、既存CLIのログインを公式経路で参照する。`empty` モードはOSのkeychainを禁止し、空の `base_directory` は `COPILOT_HOME` を変えて既存ログインを隠すため、ログイン済みユーザーの利用には組み合わせない。AiDiyが認証ファイルやトークンを抽出・コピーすることはない。
+### Copilotの直接stdioチャット
 
-推論セッションの作業・設定ディレクトリは一時フォルダ。ツール一覧は空、全ツール種別を除外し、権限要求は拒否する。設定探索・hooks・MCP・skills・メモリ・セッション保存・実験機能を無効化し、公式のsession optionsでinstalledPluginsも空にしてから入力を送る。認証ホストの通常モードは、子へのタスク丸投げ（`passthrough`）への切替ではない。
+Copilot chat はSDKを使わず、PATH上の通常の `copilot` を非TTYのstdin/stdoutで呼ぶ。親の会話・system・ツール定義・ツール結果をstdinへ渡し、`--silent --stream=off --output-format=text` の応答を受ける。親用の `{content, tool_calls:[{name, arguments}]}` JSONをプロンプトで指定するが、SDKのresponse_schemaやプロバイダのstrict schemaは要求しない。JSON以外や未知ツール、不正な引数は拒否し、自然文から実行命令を拾わない。
 
-Copilot障害はruntime準備・起動・認証確認・セッション作成・推論の段階を表示する。SDK例外本文は認証情報等を含み得るため表示せず固定文面で分類する。実SDKの呼出仕様とプロセス環境の試験は `backend_tools/checks/test_harness_copilot_sdk.py`。固定版SDKが未導入ならこの試験はskipとなり、認証済みの実推論やWindows実機試験を代替しない。
+`--excluded-tools=builtin:*,mcp:*,custom:*` で子モデルの全ツール種別を除外する。`--deny-tool=shell,read,write,url,memory` も指定。空の `--available-tools` や単独の `--excluded-tools=*` はCLI 1.0.112でツールを消さないため代用しない。プロジェクトと別の一時作業フォルダで、custom instructions、built-in MCP、computer-use、実験機能、自動更新、セッション同期を無効にして起動する。親の自動承認・リポジトリhooks/拡張opt-in環境も引き継がない。
 
-必要依存はbackend_tools/backend_serverのsetupで入れる。Copilotは公式SDKが対応runtimeを用意するため初回取得と既存の認証が必要。Claudeは上記の安全オプションに対応するCLIが必要で、古い版や認証失敗では停止し権限を緩めない。推論専用はCLIの認証・キャッシュ等の内部状態の書込み禁止を意味しない。
+認証は通常CLI自身が行う。`COPILOT_HOME`やkeychainを隠さず、トークンを抽出・コピーしない。独立した新規起動ごとに正規の会話履歴を渡しresumeしない。これは丸投げpassthroughではなく、ファイル操作等は親が行う。CLI自身の認証更新・キャッシュ・ローカルセッション保存や、ユーザー/管理者が導入したグローバル拡張の起動処理まで禁止するOS隔離ではない。
+
+共通PythonプロトコルをHermes/Pi/Codexが使用するため、このCopilot経路の変更は3ハーネスに共通。既にchatプロトコルを搭載したCodexバイナリなら今回のPython修正だけで反映する。古いバイナリへのchat機能追加は別途再コンパイルが必要。
+
+必要なのは通常のCopilot CLIとそのログイン。PythonのCopilot SDK依存は不要。CLI非対応オプション・認証・通信・モデルの失敗は生stderrを出さず固定文面と終了コードで返す。自動で権限を緩めたりpassthroughへ切り替えたりしない。
+
+検証は `backend_tools/checks/test_harness_copilot_chat.py` と、公式CLI実行ファイルを `AIDIY_TEST_COPILOT` に指定する `test_harness_copilot_stdio.py`。後者はローカル疑似APIで挨拶→親のtool call→tool result→報告と、子APIへ送られるtoolsが0個であることを検証する。GitHubへの認証済み実推論やWindows実機試験を代替しない。公式仕様: https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference
 
 ```powershell
 aidiy_hermes --cli chat --model copilot_cli/same

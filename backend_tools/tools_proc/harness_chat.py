@@ -150,11 +150,11 @@ def execution_failure(returncode, stderr):
     return f"CLI chatエンジンの実行失敗（終了コード {returncode}）。{reason} この応答の生成を停止しました。自動でpassthroughへ切り替えません。"
 
 
-async def run_process(command, payload, cwd):
+async def run_process(command, payload, cwd, *, env=None):
     wrapper = ROOT / "backend_tools" / "tools_proc" / "process_lifetime.py"
     process = await asyncio.create_subprocess_exec(
         sys.executable, str(wrapper), "--parent-pid", str(os.getpid()), "--", *command,
-        cwd=cwd, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+        cwd=cwd, env=env, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     try:
