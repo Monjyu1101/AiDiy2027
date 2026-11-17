@@ -15,7 +15,7 @@ if(process.versions.electron){
    expect(title&&text,'title and body present');expect(!document.querySelector('.memo-board'),'no board');
    expect(document.querySelectorAll('textarea').length===1,'one note only');
    const adhesive=document.querySelector('.sticky-adhesive');
-   const checkAdhesive=()=>{const r=adhesive.getBoundingClientRect(),style=getComputedStyle(adhesive);expect(r.top===0&&r.left===0&&r.width===innerWidth,'adhesive spans top edge');expect(Math.abs(r.height-parseFloat(style.fontSize)/2)<.1,'half-character adhesive height');expect(style.backgroundColor==='rgba(0, 0, 0, 0.07)','subtle shaded adhesive');expect(r.bottom<=title.getBoundingClientRect().top,'adhesive does not cover title');};
+   const checkAdhesive=()=>{const r=adhesive.getBoundingClientRect(),style=getComputedStyle(adhesive);expect(r.top===0&&r.left===0&&r.width===innerWidth,'adhesive spans top edge');expect(Math.abs(r.height-parseFloat(style.fontSize))<.1,'one-character adhesive height');expect(style.backgroundColor==='rgba(0, 0, 0, 0.14)','subtle shaded adhesive');expect(r.bottom<=title.getBoundingClientRect().top,'adhesive does not cover title');};
    checkAdhesive();
    const rect=document.querySelector('.sticky-note').getBoundingClientRect();expect(rect.width===320&&rect.height===260,'full pastel note '+JSON.stringify({width:rect.width,height:rect.height,innerWidth,innerHeight}));
    window.handlers.bounds({x:-200,y:50,width:320,height:260});document.querySelector('[aria-label="桃色の付箋"]').click();await wait(200);
@@ -37,9 +37,9 @@ if(process.versions.electron){
    const fire=(el,type,x,y)=>el.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:1,isPrimary:true,button:0,clientX:x,clientY:y}));
    fire(text,'pointerdown',20,40);await wait(100);fire(window,'pointermove',40,50);fire(window,'pointerup',40,50);expect(window.dragCalls===0,'ordinary selection not window drag');
    fire(title,'pointerdown',20,20);await wait(0);fire(window,'pointerup',20,20);expect(window.dragCalls===0,'title remains editable');
-   fire(text,'pointerdown',20,40);await wait(550);expect(!!document.querySelector('.sticky-move-marker'),'long press body shows movement marker');expect(window.dragCalls===1,'body long press native movement');fire(window,'pointerup',20,40);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'release hides marker');
-   fire(title,'pointerdown',20,20);await wait(550);expect(window.dragCalls===2,'title long press native movement');fire(window,'pointercancel',20,20);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'cancel hides marker');
-   title.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));fire(title,'pointerdown',20,20);await wait(550);expect(window.dragCalls===2,'IME composition prevents movement');title.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));fire(window,'pointerup',20,20);
+   title.focus();fire(text,'pointerdown',20,40);text.focus();await wait(550);expect(!!document.querySelector('.sticky-move-marker'),'long press body shows movement marker');expect(window.dragCalls===1,'body long press native movement');fire(window,'pointerup',20,40);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'release hides marker');
+   text.focus();fire(title,'pointerdown',20,20);title.focus();await wait(550);expect(window.dragCalls===2,'title long press native movement');fire(window,'pointercancel',20,20);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'cancel hides marker');
+   title.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));text.focus();fire(title,'pointerdown',20,20);title.focus();await wait(550);expect(window.dragCalls===2,'IME composition prevents movement');title.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));fire(window,'pointerup',20,20);
    fire(document.querySelector('.sticky-header'),'pointerdown',300,12);await wait(0);expect(window.dragCalls===3,'header moves immediately');fire(window,'pointerup',300,12);fire(adhesive,'pointerdown',100,3);await wait(0);expect(window.dragCalls===4,'adhesive moves immediately');fire(window,'pointerup',100,3);
    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
    const file=new File([Uint8Array.from(atob(png),c=>c.charCodeAt(0))],'image.png',{type:'image/png'});
@@ -68,8 +68,10 @@ if(process.versions.electron){
   for(const [width,height,left] of [[300,200,false],[300,199,true],[320,260,false],[400,125,true],[200,200,false]]){
    w.setSize(width,height);await new Promise(resolve=>setTimeout(resolve,50));
    console.log(await w.webContents.executeJavaScript(`(async()=>{
-    const strip=document.querySelector('.sticky-adhesive'),r=strip.getBoundingClientRect(),half=parseFloat(getComputedStyle(strip).fontSize)/2;
-    if(r.top!==0||r.left!==0||Math.abs(r.width-(${left}?half:innerWidth))>.1||Math.abs(r.height-(${left}?innerHeight:half))>.1)throw Error('adhesive orientation at ${width}x${height}');
+    const strip=document.querySelector('.sticky-adhesive'),r=strip.getBoundingClientRect(),em=parseFloat(getComputedStyle(strip).fontSize);
+    if(r.top!==0||r.left!==0||Math.abs(r.width-(${left}?em:innerWidth))>.1||Math.abs(r.height-(${left}?innerHeight:em))>.1)throw Error('adhesive orientation at ${width}x${height}');
+    if(document.elementFromPoint(${left}?5:50,${left}?50:5)!==strip)throw Error('adhesive hit target');
+    if(${left}&&document.querySelector('.sticky-title').getBoundingClientRect().left<r.right)throw Error('adhesive overlaps title');
     const before=window.dragCalls;
     strip.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerId:1,isPrimary:true,button:0,clientX:2,clientY:2}));
     await new Promise(resolve=>setTimeout(resolve,0));

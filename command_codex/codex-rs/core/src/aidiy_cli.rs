@@ -1,6 +1,9 @@
 //! AiDiy: Pi と共通の CodeAI アダプターへ委譲し、進捗・回答を通常イベントへ戻す。
 //! 子の失敗は再試行しない。会話全文を毎回渡し、子の別セッションを resume しない。
 
+#[path = "aidiy_cli_json.rs"]
+mod json_wrapper;
+
 use crate::client_common::{Prompt, ResponseEvent, ResponseStream};
 use codex_protocol::error::{CodexErr, Result};
 use codex_protocol::models::{ContentItem, PermissionProfile, ResponseItem};
@@ -218,7 +221,7 @@ pub(crate) async fn stream(
         (
             json!({"provider": provider, "model": model, "project": cwd,
             "messages": body["messages"], "tools": body.get("tools").cloned().unwrap_or(json!([])),
-            "mode": mode, "cli_mode": "chat"}),
+            "mode": mode, "cli_mode": "chat", "engine_prompt": json_wrapper::engine_prompt(&body)}),
             Some(codec),
         )
     };
@@ -256,7 +259,7 @@ pub(crate) async fn stream(
         let outcome = tokio::select! {
             biased;
             _ = cancel.cancelled() => Err(CodexErr::TurnAborted),
-            result = run_child(&mut child, &request, &tx, codec.as_ref()) => result,
+            result = run_child(&mut child, &request, &tx, codec.as_ref(), &python, &root) => result,
         };
         if let Err(error) = outcome {
             stop_child(&mut child).await;
@@ -304,6 +307,72 @@ enum AdapterEvent {
     },
 }
 
+// The Rust wrapper owns prompt construction and JSON extraction. Reuse the local
+// schema validator only after parsing: it never calls a CLI or executes a tool.
+async fn validate_chat_response(
+    python: &Path,
+    root: &Path,
+    request: &[u8],
+    value: serde_json::Value,
+) -> Result<serde_json::Value> {
+    let mut payload: serde_json::Value =
+        serde_json::from_slice(request).map_err(|_| invalid("CLI chat の検証入力が不正です。"))?;
+    payload["cli_mode"] = json!("validate_chat");
+    payload["response"] = value;
+    payload.as_object_mut().unwrap().remove("engine_prompt");
+    let mut command = Command::new(python);
+    command
+        .arg("-B")
+        .arg(root.join("backend_tools/tools_proc/harness_cli.py"))
+        .env("PYTHONIOENCODING", "utf-8")
+        .env("PYTHONDONTWRITEBYTECODE", "1")
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .kill_on_drop(true);
+    #[cfg(windows)]
+    command.creation_flags(0x08000000);
+    let mut process = command
+        .spawn()
+        .map_err(|_| invalid("CLI chat 検証を開始できません。"))?;
+    let bytes =
+        serde_json::to_vec(&payload).map_err(|_| invalid("CLI chat 検証入力を作成できません。"))?;
+    if bytes.len() > MAX_BYTES {
+        return Err(invalid("CLI chat 検証入力が大きすぎます。"));
+    }
+    let mut stdin = process
+        .stdin
+        .take()
+        .ok_or_else(|| invalid("CLI chat 検証入力がありません。"))?;
+    tokio::time::timeout(Duration::from_secs(30), stdin.write_all(&bytes))
+        .await
+        .map_err(|_| invalid("CLI chat 検証入力がタイムアウトしました。"))?
+        .map_err(|_| invalid("CLI chat 検証入力を送信できません。"))?;
+    drop(stdin);
+    let output = tokio::time::timeout(Duration::from_secs(30), process.wait_with_output())
+        .await
+        .map_err(|_| invalid("CLI chat 検証がタイムアウトしました。"))?
+        .map_err(|_| invalid("CLI chat 検証結果を取得できません。"))?;
+    if output.stdout.len() > MAX_BYTES {
+        return Err(invalid("CLI chat 検証結果が大きすぎます。"));
+    }
+    let event = serde_json::from_slice::<AdapterEvent>(&output.stdout)
+        .map_err(|_| invalid("CLI chat 検証結果が不正です。"))?;
+    match event {
+        AdapterEvent::Result {
+            ok: true,
+            message: Some(message),
+            ..
+        } if output.status.success() => Ok(message),
+        AdapterEvent::Result { text, .. } => Err(invalid(if text.is_empty() {
+            "CLI chat の schema 検証に失敗しました。".to_string()
+        } else {
+            text
+        })),
+        _ => Err(invalid("CLI chat の schema 検証に失敗しました。")),
+    }
+}
+
 async fn send(tx: &mpsc::Sender<Result<ResponseEvent>>, event: ResponseEvent) -> Result<()> {
     tx.send(Ok(event)).await.map_err(|_| CodexErr::TurnAborted)
 }
@@ -321,6 +390,8 @@ async fn run_child(
     request: &[u8],
     tx: &mpsc::Sender<Result<ResponseEvent>>,
     codec: Option<&codex_api::CliChatCodec>,
+    python: &Path,
+    root: &Path,
 ) -> Result<()> {
     let mut stdin = child
         .stdin
@@ -389,11 +460,9 @@ async fn run_child(
                     )
                     .await?;
                 }
-                AdapterEvent::Result {
-                    ok: true,
-                    message: Some(message),
-                    ..
-                } if codec.is_some() => {
+                AdapterEvent::Result { ok: true, text, .. } if codec.is_some() => {
+                    let value = json_wrapper::extract_object(&text).map_err(invalid)?;
+                    let message = validate_chat_response(python, root, request, value).await?;
                     validate_chat_message(&message)?;
                     chat_answer = Some(message);
                 }

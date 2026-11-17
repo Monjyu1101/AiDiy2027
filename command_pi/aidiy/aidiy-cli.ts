@@ -8,18 +8,20 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
-	type AssistantMessage, type AssistantMessageEventStream, type SimpleStreamOptions,
+	type AssistantMessage, type AssistantMessageEventStream, type SimpleStreamOptions, type Tool,
 	createAssistantMessageEventStream, getCurrentSystemPrompt, getCurrentTools,
 } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-agent";
 
-import { chatPayload, parseChatAnswer, type CliMode, type CliAnswer } from "./aidiy-cli-chat.ts";
+import { chatPayload, type CliMode, type CliAnswer } from "./aidiy-cli-chat.ts";
+
+import { enginePrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
 
 export const CLI_PROVIDERS = ["claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"];
 
 /** 同梱Pythonと共通CodeAIへ委譲する。キャンセル時は監視ラッパーが子孫も回収する。 */
-async function runCli(root: string, request: { provider: string; model: string; project: string; prompt?: string; cli_mode: CliMode; messages?: unknown[]; tools?: unknown[]; mode: "yolo" | "read-only" },
-	options: SimpleStreamOptions | undefined, progress: (text: string) => void, allowedTools: string[]): Promise<CliAnswer> {
+async function runCli(root: string, request: { provider: string; model: string; project: string; prompt?: string; engine_prompt?: string; cli_mode: CliMode; messages?: unknown[]; tools?: unknown[]; mode: "yolo" | "read-only" },
+	options: SimpleStreamOptions | undefined, progress: (text: string) => void, tools: Tool[]): Promise<CliAnswer> {
 	const suffix = process.platform === "win32" ? "Scripts/python.exe" : "bin/python";
 	const python = ["backend_tools", "backend_server"].map((name) => join(root, name, ".venv", suffix)).find(existsSync);
 	if (!python) throw new Error("外部CLI委譲には backend_tools または backend_server のPython環境が必要です。");
@@ -44,7 +46,7 @@ async function runCli(root: string, request: { provider: string; model: string; 
 				if (event.type === "progress" && typeof event.text === "string") progress(event.text);
 				else if (event.type === "result" && typeof event.ok === "boolean") {
 					if (!event.ok) failure = new Error(typeof event.text === "string" ? event.text : "外部CLIが失敗しました。");
-					else if (request.cli_mode === "chat") answer = parseChatAnswer(event.message, allowedTools);
+					else if (request.cli_mode === "chat") answer = parseInferenceAnswer(event.text as string, tools);
 					else if (typeof event.text === "string" && event.text.trim()) answer = { content: event.text, toolCalls: [] };
 					else throw new Error("外部CLIの応答形式が不正です。");
 				} else throw new Error("外部CLIの応答形式が不正です。");
@@ -115,13 +117,13 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					stream.push({ type: "start", partial: output });
 					output.content.push({ type: "thinking", thinking: "" });
 					stream.push({ type: "thinking_start", contentIndex: 0, partial: output });
-					const answer = await runCli(root, { ...data, cli_mode: cliMode, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" : "yolo" }, options, (text) => {
+					const answer = await runCli(root, { ...data, ...(cliMode === "chat" ? { engine_prompt: enginePrompt(data) } : {}), cli_mode: cliMode, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" : "yolo" }, options, (text) => {
 						const part = output.content[0];
 						if (part.type !== "thinking") return;
 						const delta = text + "\n";
 						part.thinking += delta;
 						stream.push({ type: "thinking_delta", contentIndex: 0, delta, partial: output });
-					}, tools.map((tool) => tool.name));
+					}, tools);
 					const text = answer.content;
 					const part = output.content[0];
 					stream.push({ type: "thinking_end", contentIndex: 0, content: part.type === "thinking" ? part.thinking : "", partial: output });

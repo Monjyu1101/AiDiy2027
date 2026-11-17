@@ -19,7 +19,7 @@ function png(bytes){
  for(let y=0;y<height;y++){const filter=raw[y*(stride+1)];assert.ok(filter<=4);for(let x=0;x<stride;x++){const i=y*stride+x,a=x>=4?data[i-4]:0,b=y?data[i-stride]:0,c=y&&x>=4?data[i-stride-4]:0;data[i]=(raw[y*(stride+1)+1+x]+[0,a,b,Math.floor((a+b)/2),paeth(a,b,c)][filter])&255;}}
  return {width,height,data,pixel:(x,y)=>Array.from(data.subarray((y*width+x)*4,(y*width+x)*4+3))};
 }
-const entries=[['cpu','#166534','#FFFFFF'],['task','#0F5C3A','#7DD3FC'],['team','#7DD3FC','#0F5C3A'],['term','#000000','#00FF00'],['avatar','#7C3AED','#FFFFFF'],['browser','#F5A9C8','#000000'],['aidiy_hermes','#FACC15','#1B1B1B'],['vscode','#1E3A5F','#FFFFFF']];
+const entries=[['cpu','#CBD5E1','#111827'],['memo','#CBD5E1','#000000'],['task','#0F5C3A','#7DD3FC'],['team','#7DD3FC','#0F5C3A'],['term','#000000','#00FF00'],['avatar','#7C3AED','#FFFFFF'],['browser','#F5A9C8','#000000'],['aidiy_hermes','#FACC15','#1B1B1B'],['vscode','#1E3A5F','#FFFFFF']];
 for(const [id,bg,fg] of entries)test(`${id}: local PNG palette, readable contrast and identical distribution copy`,async()=>{
  const cli=['aidiy_hermes','vscode'].includes(id),file=(cli?'CLI_':'AiDiy_')+id+'.png';
  const source=new URL(`../diag/ui/components/アプリ起動/${cli?'CLIアイコン/'+id:'アイコン/AiDiy_'+id}.png`,import.meta.url);

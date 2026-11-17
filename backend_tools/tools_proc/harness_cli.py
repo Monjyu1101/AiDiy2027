@@ -34,6 +34,14 @@ async def run(request):
         raise ValueError("未対応の外部CLIです。")
     # Legacy Codex binaries omit cli_mode; Hermes/Pi explicitly send their chat default.
     cli_mode = request.get("cli_mode", "passthrough")
+    if cli_mode == "validate_chat":
+        if __package__:
+            from .harness_chat import validate_request, validate_response
+        else:
+            from harness_chat import validate_request, validate_response
+        message = validate_response(request.get("response"), validate_request(request), request.get("tool_choice", "auto"))
+        emit({"type": "result", "ok": True, "text": message.get("content") or "", "message": message})
+        return
     if cli_mode not in {"chat", "passthrough"}:
         raise ValueError("CLI方式は chat または passthrough を指定してください。")
     model, prompt, project = (request.get(key) for key in ("model", "prompt", "project"))
@@ -51,9 +59,13 @@ async def run(request):
     sys.path.insert(0, str(ROOT / "backend_server"))
     if cli_mode == "chat":
         if __package__:
-            from .harness_chat import run_chat
+            from .harness_chat import run_chat, run_text_chat
         else:
-            from harness_chat import run_chat
+            from harness_chat import run_chat, run_text_chat
+        if "engine_prompt" in request:
+            text = await run_text_chat(request)
+            emit({"type": "result", "ok": True, "text": text})
+            return
         message = await run_chat(request)
         emit({"type": "result", "ok": True, "text": message.get("content") or "", "message": message})
         return

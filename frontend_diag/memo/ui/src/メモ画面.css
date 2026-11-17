@@ -53,11 +53,11 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-overflow-hint{position:absolute;right:0;bottom:0;line-height:18px;padding:0 4px;background:inherit;pointer-events:none;font-weight:700}
 .sticky-viewport{background:inherit}
 
-/* のりしろは既存余白内に収め、最小サイズの本文領域を減らさない。 */
-.sticky-adhesive{position:absolute;top:0;left:0;right:0;height:.5em;background:#00000012;cursor:grab;user-select:none}
+/* のりしろは1文字幅。左配置時は本文と重ならない余白を確保する。 */
+.sticky-adhesive{position:absolute;top:0;left:0;right:0;height:1em;z-index:1;background:#00000024;cursor:grab;user-select:none}
 .sticky-adhesive:active{cursor:grabbing}
 /* 高さ/幅が2/3未満だけ左側へ。境界値は上のまま。 */
-@media (aspect-ratio > 3/2){.sticky-adhesive{right:auto;bottom:0;width:.5em;height:auto}}
+@media (aspect-ratio > 3/2){.sticky-note{padding-left:16px}.sticky-note .sticky-bottom{left:16px}.sticky-adhesive{right:auto;bottom:0;width:1em;height:auto}}
 
 /* 下部の行（保存表示・色・ゴミ箱）は常に透明な重ね表示にし、本文領域へ高さを返す。
    縦幅を極限まで狭めた付箋（最小84px）でも本文1行を隠さない。ホバー時の色・ゴミ箱の表示は従来どおり。 */

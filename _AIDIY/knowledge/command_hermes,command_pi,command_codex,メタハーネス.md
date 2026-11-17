@@ -9,7 +9,7 @@
 - `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
 - 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
 
-chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
+chatの子エンジンは現在 `claude_cli`（通常のテキスト出力）と `copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
 
 ### Codexの専用推論入口
 
@@ -17,7 +17,7 @@ chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `co
 
 既存の `~/.codex`（または `CODEX_HOME`）認証経路を使用し、秘密情報を一時フォルダへコピーしない。ユーザー設定・rules・プロジェクト設定からの自動実行を避け、新しい一時セッションに親の正規会話を毎回渡す。親側の知識・履歴・ツール結果が会話の正本で、子セッションはresumeしない。`same` / `auto` は隔離したCodex既定モデルとなり、ユーザーconfig内の既定モデルは読まない。モデルを固定したい場合は明示する。
 
-Codexのstrict構造化応答に合わせ、transport上のみツール引数はJSON文字列とする。Pythonでobjectへ復元し、他エンジンと同じ親schemaで名前・引数を検証する。自然文のツール要求は実行しない。
+更新済み親はCodexにも通常テキストで形式説明を渡し、ツール引数はJSON objectとする。各親のラッパーで抽出・検証し、自然文のツール要求は実行しない。
 
 検証にはRust専用入口の試験と共通Python試験の両方が必要。Python mock成功だけで新バイナリの実行や実認証推論を確認した扱いにしない。
 
@@ -29,7 +29,7 @@ Codexのstrict構造化応答に合わせ、transport上のみツール引数は
 - Grokのtools許可リストだけではMCP meta-toolsが残る。Antigravityの構造化出力だけでは別ファイルからのhooks等を止められない。OpenCodeの共有サーバー接続も、個別プロセスへ渡した設定だけで隔離できたと判断しない。
 - Claudeの異常終了はCLI版・認証・通信・モデルの分類と終了コードを返す。子の生stderrは会話・秘密情報を含み得るため返さない。分類は診断補助であり、原因を確定するものではない。
 
-ツール定義・会話・結果IDをJSONで渡し、応答は `{content, tool_calls:[{name, arguments}]}` の厳密なJSON。通常文章を正規表現でツール要求へ変換しない。子のファイル/シェル/MCP等は無効で、登録ツール名・引数schemaを共通入口で検証してから親形式へ変換する。呼出IDは共通入口が発行し、次の結果と対応付ける。画像・音声等は現状未対応で、捨てずにエラーにする。
+ツール定義・会話・結果IDをJSONで渡し、応答は `{content, tool_calls:[{name, arguments}]}` の厳密なJSON。通常文章を正規表現でツール要求へ変換しない。子のファイル/シェル/MCP等は無効で、登録ツール名・引数schemaを親側のラッパー（Hermes/Codexは検証専用入口）で検証してから親形式へ変換する。呼出IDは検証後に発行し、次の結果と対応付ける。画像・音声等は現状未対応で、捨てずにエラーにする。
 
 Hermesの通常ループを通すためsystem/contextとメモリ・skills等の組立て、およびツール結果はそのままmessagesとして渡す。主会話・文脈圧縮・自動タイトル生成は同じCLIエンジンを使う。タイトルはagent専用callbackを背景スレッドへ渡し、別の補助APIを解決しない。失敗時はAPIへ切り替えず、入力から導出したタイトルを維持する。通常APIモードのタイトル生成経路は変更しない。回帰試験は `command_hermes/checks/test_cli_chat_title.py`。検索・ファイル操作等は親の許可されたツールとして実行される。ただし独自APIクライアントを直接生成する拡張機能までCLI経由へ自動変換するものではない。独立エージェント/補助機能の対応は別途検証する。
 
@@ -114,3 +114,23 @@ Codex の `/model` は現在の API 候補に Diag の CLI 候補を追加する
 単体検証は `backend_tools/checks/test_harness_cli.py`、`backend_server/checks/test_prediction_cli_readonly.py`、`test_prediction_hermes_adapter.py` を使う。実機試験では専用の一時フォルダに識別文字列を置き、子の読取結果・進捗イベント・終了コード・フォルダの変更有無を確認する。モデルが文章で「read-only」と回答するだけでは制限の検証にならないため、実引数と設定も確認する。
 
 Codex の Rust 変更は再コンパイルが必要。既存コンパイル中に編集した場合、今回の変更が含まれたと扱わず、終了後に再検証・再ビルドする。
+
+## CLI chat の JSON 固定応答ラッパー
+
+Hermes（Python）、Pi（TypeScript）、Codex（Rust）の各親側が、回答例と
+`content` / `tool_calls` の形式説明を通常のテキストプロンプトに付加する。
+子CLIは stdin/stdout のテキストエンジンであり、この経路では SDK や
+`--json-schema` / `--output-schema` による形式強制は使用しない。
+子のツール禁止・一時作業フォルダ・親終了時のプロセス回収は維持する。
+
+親側で最初の `{` から最後の `}` までを取り出し、厳密に JSON を解析する。
+前後の説明やコードフェンスは除けるが、複数オブジェクト、壊れた JSON、
+重複キー、未知ツール、引数スキーマ不一致は失敗とし、勝手に修復・実行しない。
+通常文章や passthrough の回答、ツール内部の配列はこの抽出対象ではない。
+Hermes/Codex は既存 backend_tools Python のスキーマ検証専用入口を使い、
+Pi は自身のスキーマ検証を使う。検証専用入口は外部 CLI を起動しない。
+実際のツール実行・承認と次ターンの結果送信は各親ハーネスが所有する。
+
+Python/TS の変更は更新後そのまま使用できる。Codex Rust の変更は再コンパイルが必要。
+旧バイナリからの構造化アダプター経路は移行期間のため維持しており、新方式への反映は
+更新された親コードからの `engine_prompt` 送信で確認する。

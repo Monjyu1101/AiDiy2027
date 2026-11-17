@@ -25,7 +25,9 @@ def run_cli(root, provider, model, prompt, project, mode, progress, *,
     request = {"provider": PROVIDERS[provider], "model": model or "same",
                "project": project, "prompt": prompt, "mode": mode, "cli_mode": cli_mode}
     if cli_mode == "chat":
-        request.update(messages=messages or [], tools=tools or [])
+        from hermes_cli.aidiy_cli_json import engine_prompt
+        request.update(messages=messages or [], tools=tools or [],
+                       engine_prompt=engine_prompt(messages or [], tools or [], tool_choice))
         if tool_choice is not None:
             request["tool_choice"] = tool_choice
     payload = json.dumps(request, ensure_ascii=False).encode("utf-8")
@@ -89,11 +91,25 @@ def run_cli(root, provider, model, prompt, project, mode, progress, *,
             elif event.get("type") == "result" and isinstance(event.get("ok"), bool):
                 if not event["ok"]:
                     raise ValueError(event.get("text") or "外部 CLI が失敗しました。")
-                answer = event.get("message") if cli_mode == "chat" else event.get("text")
+                answer = event.get("text")
             else:
                 raise ValueError("外部 CLI の応答形式が不正です。")
-        if process.wait(timeout=10) != 0 or (not isinstance(answer, dict) if cli_mode == "chat" else not isinstance(answer, str) or not answer.strip()):
+        if process.wait(timeout=10) != 0 or (not isinstance(answer, str) or not answer.strip()):
             raise ValueError("外部 CLI の最終回答を取得できませんでした。")
+        if cli_mode == "chat":
+            from hermes_cli.aidiy_cli_json import parse_response
+            validation = {**request, "cli_mode": "validate_chat", "response": parse_response(answer)}
+            checked = subprocess.run(command, cwd=project,
+                                     input=json.dumps(validation, ensure_ascii=False).encode("utf-8"),
+                                     stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                     creationflags=flags, timeout=30,
+                                     env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"})
+            if checked.returncode or len(checked.stdout) > 16 * 1024 * 1024:
+                raise ValueError("CLI chatの応答検証に失敗しました。")
+            result = json.loads(checked.stdout)
+            if result.get("type") != "result" or result.get("ok") is not True or not isinstance(result.get("message"), dict):
+                raise ValueError("CLI chatの応答検証に失敗しました。")
+            answer = result["message"]
         return answer
     finally:
         stopped.set()

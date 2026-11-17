@@ -49,7 +49,7 @@ async def chat(request):
         "messages": request["messages"], "tools": request.get("tools", []),
         "tool_choice": request.get("tool_choice", "auto"),
     }, ensure_ascii=False)
-    payload = prompt.encode("utf-8")
+    payload = request.get("engine_prompt", prompt).encode("utf-8")
     if len(payload) > LIMIT:
         raise ValueError("CLI chatへの入力が大きすぎます。")
     environment = dict(os.environ)
@@ -62,6 +62,8 @@ async def chat(request):
                         "COPILOT_AUTO_UPDATE": "false"})
     with tempfile.TemporaryDirectory(prefix="aidiy-copilot-chat-") as scratch:
         output = await run_process(command(request.get("model", "same")), payload, scratch, env=environment)
+    if "engine_prompt" in request:
+        return output.decode("utf-8")
     try:
         result = json.loads(output.decode("utf-8"))
     except (UnicodeError, ValueError):

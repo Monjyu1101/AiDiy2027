@@ -12,6 +12,9 @@ test('MEMO専用画像は全ランチャー共通でCPUの直前、配布画像�
  const source=await read('icons/AiDiy_memo.png');assert.equal(source.readUInt32BE(16),512);assert.equal(source.readUInt32BE(20),512);
  for(const name of ['static/AiDiy_memo.png','diag/ui/components/アプリ起動/アイコン/AiDiy_memo.png'])assert.deepEqual(await read(name),source);
  assert.notDeepEqual(source,await read('icons/AiDiy_diag.png'));
+ const svg=(await read('icons/AiDiy_memo.svg')).toString();
+ assert.match(svg,/<path fill="#CBD5E1" d="M0 384h512v128H0z"/);
+ assert.match(svg,/<text[^>]*fill="#000000"[^>]*>MEMO<\/text>/);
  assert.match((await read('diag/ui/components/アプリ起動/アプリ状態.mjs')).toString(),/id:'memo',名前:'MEMO'/);
  assert.match((await read('memo/ui/src/memo.html')).toString(),/href="AiDiy_memo.png"/);
 });

@@ -10,14 +10,18 @@ export function 長押し移動を作成({host=window,native,changed=()=>{},enab
   const end=()=>{
    if(ended)return;ended=true;clearTimer(timer);clearLoop(loop);
    if(token)void native.endWindowMove(token);changed(false);
-   for(const name of ['pointerup','pointercancel','blur','wheel','scroll','keydown','compositionstart'])host.removeEventListener(name,end,{capture:true});
+   for(const name of ['pointerup','pointercancel','wheel','scroll','keydown','compositionstart'])host.removeEventListener(name,end,{capture:true});
+   host.removeEventListener('blur',blur,{capture:true});
    host.removeEventListener('pointermove',moving,{capture:true});host.removeEventListener('selectstart',select,{capture:true});
    if(active){try{target.releasePointerCapture(id);}catch{}}
    cancel=()=>{};
   };
+  // 入力欄をクリックしたときの別入力欄の blur は、窓のフォーカス喪失ではない。
+  const blur=e=>{if(e.target===host)end();};
   const moving=e=>{if(e.pointerId!==id)return;if(!active){if(Math.hypot(e.clientX-x,e.clientY-y)>5)end();}else{e.preventDefault();e.stopPropagation();if(selection)target.setSelectionRange(...selection);}};
   const select=e=>{if(active)e.preventDefault();};
-  for(const name of ['pointerup','pointercancel','blur','wheel','scroll','keydown','compositionstart'])host.addEventListener(name,end,{capture:true});
+  for(const name of ['pointerup','pointercancel','wheel','scroll','keydown','compositionstart'])host.addEventListener(name,end,{capture:true});
+  host.addEventListener('blur',blur,{capture:true});
   host.addEventListener('pointermove',moving,{capture:true});host.addEventListener('selectstart',select,{capture:true});cancel=end;
   timer=setTimer(async()=>{
    if(ended||!enabled()){end();return;}

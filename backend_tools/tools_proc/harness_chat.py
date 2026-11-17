@@ -217,8 +217,11 @@ async def run_chat(request):
             "子CLIへ処理全体を渡す旧方式は --cli passthrough です（親ツール実行とは異なります）。"
             "自動で旧方式へ切り替えません。"
         )
+    return validate_response(value, definitions, request.get("tool_choice", "auto"))
+
+
+def validate_response(value, definitions, choice="auto"):
     message = normalize_response(value, definitions)
-    choice = request.get("tool_choice", "auto")
     calls = message["tool_calls"]
     if choice == "none" and calls:
         raise ValueError("ツール禁止のターンでツール要求を受信しました。")
@@ -227,3 +230,43 @@ async def run_chat(request):
     if isinstance(choice, dict) and (not calls or any(call["function"]["name"] != choice["function"]["name"] for call in calls)):
         raise ValueError("指定外のツール要求を受信しました。")
     return message
+
+
+async def run_text_chat(request):
+    """親が構築したプロンプトと生テキストだけを運ぶ。JSON解釈は親の各言語側。"""
+    validate_request(request)
+    prompt = request.get("engine_prompt")
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise ValueError("CLI chatのテキスト入力が不正です。")
+    payload = prompt.encode("utf-8")
+    if len(payload) > LIMIT:
+        raise ValueError("CLI chatへの入力が大きすぎます。")
+    provider = request["provider"]
+    if provider == "copilot_cli":
+        if __package__:
+            from .harness_copilot_chat import chat
+        else:
+            from harness_copilot_chat import chat
+        return await chat(request)
+    if provider == "claude_cli":
+        command = claude_command(request["model"])
+        index = command.index("--json-schema")
+        del command[index:index + 2]
+        command[command.index("--output-format") + 1] = "text"
+        # 形式指示を含め、親ハーネスがプロンプト全体を所有する。
+        index = command.index("--system-prompt")
+        del command[index:index + 2]
+    elif provider == "codex_cli":
+        if __package__:
+            from .harness_codex_chat import command as codex_command
+        else:
+            from harness_codex_chat import command as codex_command
+        command = codex_command(request["model"], "", "")
+        for option in ("--output-schema", "--output-last-message"):
+            index = command.index(option)
+            del command[index:index + 2]
+    else:
+        raise ValueError("選択した内側CLIはchatエンジン接続に未対応です。自動でpassthroughへ切り替えません。")
+    with tempfile.TemporaryDirectory(prefix="aidiy-text-chat-") as scratch:
+        output = await run_process(command, payload, scratch)
+    return output.decode("utf-8")

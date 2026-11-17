@@ -9,6 +9,6 @@ Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full te
  <path d="M112 48h276v218l-68 70H112z" fill="url(#paper)"/>
  <path d="M320 336v-70h68z" fill="#e9b95d"/>
  <path d="M154 114h190M154 160h190M154 206h152M154 252h111" fill="none" stroke="#a17b31" stroke-width="15" stroke-linecap="round"/>
- <path fill="#35e0d2" d="M0 384h512v128H0z"/>
+ <path fill="#CBD5E1" d="M0 384h512v128H0z"/>
  <text x="256" y="482" text-anchor="middle" font-family="DejaVu Sans,sans-serif" font-size="94" font-weight="bold" fill="#000000">MEMO</text>
 </svg>
