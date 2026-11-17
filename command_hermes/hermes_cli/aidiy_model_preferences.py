@@ -70,3 +70,20 @@ def model_display_name(model, provider=None):
     if value.lower() in {'auto', 'same'} and provider.lower() not in {'', 'auto', 'same', 'unknown'}:
         return f'{provider} ({value.lower()})'
     return '自動選択' if value.lower() in {'', 'auto', 'unknown', '(unknown)'} else value
+
+
+def status_model_display_name(model, provider=None):
+    """状態バー専用。実行用 ID は変えず provider/model を表示する。"""
+    from hermes_cli.aidiy_model_catalog import catalog_key
+
+    value = str(model or '').strip()
+    slug = str(provider or '').strip().lower()
+    key = catalog_key({'openai-codex': 'openai_oauth'}.get(slug, slug))
+    if key in {'', 'auto', 'same', 'unknown'}:
+        return model_display_name(value)
+    # モデル自身の vendor/name は保持し、同じ provider 接頭辞だけ重複を防ぐ。
+    prefix, separator, tail = value.partition('/')
+    if separator and prefix in {slug, key}:
+        value = tail
+    label = value if value.lower() in {'auto', 'same'} else model_display_name(value)
+    return f'{key}/{label}'

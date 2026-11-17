@@ -9,7 +9,7 @@
 - `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
 - 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
 
-chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（公式Python SDKのempty modeと構造化応答）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
+chatの子エンジンは現在 `claude_cli`（CLIのJSON Schema出力）と `copilot_cli`（公式Python SDKの隔離セッションと構造化応答）が対象。`codex_cli` は後述の専用版が必要。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。Codexは再コンパイルが必要で、旧バイナリには反映されない。この「外側ハーネス」と「内側CLI」の対応は別物。
 
 ### Codexの専用推論入口
 
@@ -31,7 +31,13 @@ Codexのstrict構造化応答に合わせ、transport上のみツール引数は
 
 ツール定義・会話・結果IDをJSONで渡し、応答は `{content, tool_calls:[{name, arguments}]}` の厳密なJSON。通常文章を正規表現でツール要求へ変換しない。子のファイル/シェル/MCP等は無効で、登録ツール名・引数schemaを共通入口で検証してから親形式へ変換する。呼出IDは共通入口が発行し、次の結果と対応付ける。画像・音声等は現状未対応で、捨てずにエラーにする。
 
-Hermesの通常ループを通すためsystem/contextとメモリ・skills等の組立て、およびツール結果はそのままmessagesとして渡す。主会話と文脈圧縮は同じCLIエンジンを使う。検索・ファイル操作等は親の許可されたツールとして実行される。ただし独自APIクライアントを直接生成する拡張機能までCLI経由へ自動変換するものではない。独立エージェント/補助機能の対応は別途検証する。
+Hermesの通常ループを通すためsystem/contextとメモリ・skills等の組立て、およびツール結果はそのままmessagesとして渡す。主会話・文脈圧縮・自動タイトル生成は同じCLIエンジンを使う。タイトルはagent専用callbackを背景スレッドへ渡し、別の補助APIを解決しない。失敗時はAPIへ切り替えず、入力から導出したタイトルを維持する。通常APIモードのタイトル生成経路は変更しない。回帰試験は `command_hermes/checks/test_cli_chat_title.py`。検索・ファイル操作等は親の許可されたツールとして実行される。ただし独自APIクライアントを直接生成する拡張機能までCLI経由へ自動変換するものではない。独立エージェント/補助機能の対応は別途検証する。
+
+Copilot chat は認証ホストだけ公式SDKの通常モードを使い、既存CLIのログインを公式経路で参照する。`empty` モードはOSのkeychainを禁止し、空の `base_directory` は `COPILOT_HOME` を変えて既存ログインを隠すため、ログイン済みユーザーの利用には組み合わせない。AiDiyが認証ファイルやトークンを抽出・コピーすることはない。
+
+推論セッションの作業・設定ディレクトリは一時フォルダ。ツール一覧は空、全ツール種別を除外し、権限要求は拒否する。設定探索・hooks・MCP・skills・メモリ・セッション保存・実験機能を無効化し、公式のsession optionsでinstalledPluginsも空にしてから入力を送る。認証ホストの通常モードは、子へのタスク丸投げ（`passthrough`）への切替ではない。
+
+Copilot障害はruntime準備・起動・認証確認・セッション作成・推論の段階を表示する。SDK例外本文は認証情報等を含み得るため表示せず固定文面で分類する。実SDKの呼出仕様とプロセス環境の試験は `backend_tools/checks/test_harness_copilot_sdk.py`。固定版SDKが未導入ならこの試験はskipとなり、認証済みの実推論やWindows実機試験を代替しない。
 
 必要依存はbackend_tools/backend_serverのsetupで入れる。Copilotは公式SDKが対応runtimeを用意するため初回取得と既存の認証が必要。Claudeは上記の安全オプションに対応するCLIが必要で、古い版や認証失敗では停止し権限を緩めない。推論専用はCLIの認証・キャッシュ等の内部状態の書込み禁止を意味しない。
 

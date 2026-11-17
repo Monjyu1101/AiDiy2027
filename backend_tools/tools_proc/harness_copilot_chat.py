@@ -2,7 +2,7 @@
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE.
 """Copilot SDK を副作用のない応答エンジンとして使用する。
 
-公式 SDK 1.0.34 の empty mode + response_schema を使用。ツールは一切
+公式 SDK 1.0.34 の認証ホスト + 隔離セッションを使用。ツールは一切
 登録せず、外側ツールへの要求を JSON で返す。自然文から命令を抽出しない。
 SDK は固定版の公式 runtime を必要に応じて取得する（既存 CLI の委譲とは別）。
 https://github.com/github/copilot-sdk/tree/main/python
@@ -17,6 +17,32 @@ import tempfile
 
 SDK_VERSION = "1.0.34"
 TIMEOUT_SECONDS = 300
+
+
+class CopilotChatError(ValueError):
+    """外側に公開してよい固定文面だけを持つエラー。"""
+
+
+def _failure(exc, stage):
+    # SDK例外はURL/トークン/会話を含み得る。判定にだけ使用し、生文面は返さない。
+    detail = str(exc).lower()
+    if isinstance(exc, (asyncio.TimeoutError, TimeoutError)):
+        reason = "タイムアウトしました。接続状態を確認してください。"
+    elif any(word in detail for word in ("not authenticated", "not logged in", "unauthorized", "authentication", "login required", "401")):
+        reason = "認証を利用できません。通常の copilot CLI のログイン状態を確認してください。"
+    elif any(word in detail for word in ("unknown model", "model not found", "invalid model", "model is not available", "unsupported model")):
+        reason = "指定モデルを利用できません。Copilotで利用可能なモデルを選択してください。"
+    elif any(word in detail for word in ("download", "checksum", "sha256", "runtime not found", "cli not found")):
+        reason = "SDK用runtimeを準備できません。公式配布元への接続と配置先の権限を確認してください。"
+    elif any(word in detail for word in ("connection", "econn", "network", "fetch failed", "timed out")):
+        reason = "通信に失敗しました。ネットワーク・プロキシを確認してください。"
+    elif isinstance(exc, (TypeError, AttributeError)):
+        reason = f"SDKの呼出仕様を確認してください（必要版 {SDK_VERSION}）。"
+    elif isinstance(exc, OSError):
+        reason = "runtimeの起動・ファイル操作に失敗しました。配置先とアクセス権を確認してください。"
+    else:
+        reason = "SDK処理に失敗しました。Copilotの導入・認証・モデルを確認してください。"
+    return CopilotChatError(f"Copilot chat [{stage}]: {reason}")
 
 
 def response_schema(tools):
@@ -51,15 +77,15 @@ def _load_sdk():
         if version("github-copilot-sdk") != SDK_VERSION:
             raise ValueError(f"Copilot chat は github-copilot-sdk=={SDK_VERSION} が必要です。setup を実行してください。")
         from copilot import CopilotClient
-        from copilot.generated.rpc import PermissionDecisionReject
+        from copilot.generated.rpc import PermissionDecisionReject, SessionUpdateOptionsParams
     except (ImportError, PackageNotFoundError) as exc:
         raise ValueError(f"Copilot chat は github-copilot-sdk=={SDK_VERSION} が必要です。setup を実行してください。") from exc
-    return CopilotClient, PermissionDecisionReject
+    return CopilotClient, PermissionDecisionReject, SessionUpdateOptionsParams
 
 
 async def chat(request):
     """1 応答だけ生成する。工具実行/承認/再呼出しは外側ハーネスが所有する。"""
-    CopilotClient, PermissionDecisionReject = _load_sdk()
+    CopilotClient, PermissionDecisionReject, SessionUpdateOptionsParams = _load_sdk()
 
     async def deny_permission(_request, _context):
         return PermissionDecisionReject(feedback="AiDiy chat engine cannot execute tools; the outer harness owns execution.")
@@ -67,13 +93,24 @@ async def chat(request):
     # プロジェクト配下の設定・hooks・MCP・skills を発見させない。認証設定は
     # SDK 自身の公式経路だけを使用し、トークンや既存会話を読み出さない。
     with tempfile.TemporaryDirectory(prefix="aidiy-copilot-chat-") as scratch:
-        client = CopilotClient(
-            mode="empty", base_directory=scratch, working_directory=scratch,
-            log_level="none", use_logged_in_user=True,
-        )
+        client = None
         session = None
+        stage = "runtime準備"
         try:
+            # empty modeはkeychainを禁止し、空のCOPILOT_HOMEは既存ログインも
+            # 隠す。認証は公式SDKの通常経路を維持し、推論セッションだけ隔離する。
+            # 認証ファイル・トークンをAiDiyで読み出したりコピーしたりしない。
+            client = CopilotClient(
+                mode="copilot-cli", working_directory=scratch,
+                log_level="none", use_logged_in_user=True,
+            )
+            stage = "runtime起動"
             await asyncio.wait_for(client.start(), TIMEOUT_SECONDS)
+            stage = "認証確認"
+            auth = await asyncio.wait_for(client.get_auth_status(), TIMEOUT_SECONDS)
+            if not auth.isAuthenticated:
+                raise CopilotChatError("Copilot chat [認証確認]: 通常の copilot CLI でログインしてください。")
+            stage = "セッション作成"
             config = {
                 "available_tools": [], "tools": [], "excluded_tools": ["builtin:*", "mcp:*", "custom:*"],
                 "on_permission_request": deny_permission,
@@ -96,29 +133,41 @@ async def chat(request):
                 "hook_directories": [], "skill_directories": [], "agent_directories": [],
                 "instruction_directories": [], "included_builtin_skills": [],
                 "coauthor_enabled": False, "manage_schedule_enabled": False,
+                "custom_agents_local_only": True, "enable_experimental_mode": False,
+                "memory": {"enabled": False}, "embedding_cache_storage": "in-memory",
+                "mcp_oauth_token_storage": "in-memory",
                 "streaming": False,
             }
             model = request.get("model", "same")
             if model.lower() not in {"same", "auto"}:
                 config["model"] = model
             session = await asyncio.wait_for(client.create_session(**config), TIMEOUT_SECONDS)
+            # empty modeと同じ公式post-create隔離。失敗したら推論を開始しない。
+            await asyncio.wait_for(session.rpc.options.update(
+                SessionUpdateOptionsParams(installed_plugins=[])), TIMEOUT_SECONDS)
             payload = json.dumps({"messages": request["messages"], "tools": request.get("tools", []), "tool_choice": request.get("tool_choice", "auto")}, ensure_ascii=False)
+            stage = "推論"
             event = await session.send_and_wait(
                 payload, response_schema=response_schema(request.get("tools", [])), timeout=TIMEOUT_SECONDS,
             )
             if event is None or not isinstance(event.data.content, str):
-                raise ValueError("Copilot chat が構造化応答を返しませんでした。")
+                raise CopilotChatError("Copilot chat が構造化応答を返しませんでした。")
             try:
                 result = json.loads(event.data.content)
             except (ValueError, TypeError) as exc:
-                raise ValueError("Copilot chat の構造化応答が不正です。") from exc
+                raise CopilotChatError("Copilot chat の構造化応答が不正です。") from exc
             if not isinstance(result, dict):
-                raise ValueError("Copilot chat の構造化応答が不正です。")
+                raise CopilotChatError("Copilot chat の構造化応答が不正です。")
             return result
+        except CopilotChatError:
+            raise
+        except Exception as exc:
+            raise _failure(exc, stage) from None
         finally:
             # SDK の timeout は待機だけを止めるため、生成と runtime 自体も回収。
             if session is not None:
                 with contextlib.suppress(Exception):
                     await asyncio.wait_for(session.abort(), 5)
-            with contextlib.suppress(Exception):
-                await asyncio.wait_for(client.force_stop(), 10)
+            if client is not None:
+                with contextlib.suppress(Exception):
+                    await asyncio.wait_for(client.force_stop(), 10)

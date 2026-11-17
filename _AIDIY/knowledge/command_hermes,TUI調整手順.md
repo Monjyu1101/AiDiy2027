@@ -30,6 +30,8 @@
 - 会話出力は TUI 内の出力ウィンドウに入れず、通常 stdout と `patch_stdout()` でスクロールバックへ流す
 - TUI は下部固定の入力、status、spinner、補完メニューを中心にする
 - モデル未確定時のバナー・状態バーは「自動選択」と表示する。外部 CLI が選択済みの `auto` / `same` は、起動バナーへ `copilot-cli (auto)` のように provider と設定値を表示する。`unknown` を初期表示へ出さず、表示名を実行用モデル値へ代入しない。引数なしの対話起動と `same/same` の復元は初期描画より前に行う（保存・復元は Provider一覧と選択ロジックを参照）。
+- 左下状態バーは `provider/model` 形式で表示する（例: `copilot_cli/claude-sonnet-5.5`、`openai_oauth/gpt-6.1-sol`）。通常は選択中の AiDiy provider、fallback 中は agent の実 provider を使う。実行時の汎用 `custom` に置換して表示しない。モデル ID の `vendor/model` は保持し、同一 provider 接頭辞のみ重複を除く。固定26文字短縮はせず、既存の端末セル幅クリップで折り返しを防ぐ。
+- 状態バー表示のオフライン回帰: `python command_hermes/checks/test_status_model_label.py`。API・OAuth・CLI、切替・fallback復帰、幅20〜160の表示を確認する。Windows Terminal / cmd の実表示確認は別途行う。
 - ANSI 色は対応端末でだけ出す。AiDiy アプリ経由や非TTYでは制御コードを出さない
 
 ## slash command

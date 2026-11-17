@@ -44,6 +44,13 @@ export function formatCwdForFooter(cwd: string, home: string | undefined): strin
 	return relativeToHome === "" ? "~" : `~${sep}${relativeToHome}`;
 }
 
+/** Keep the provider visible even when only one provider is available. */
+export function formatModelForFooter(model: { provider: string; id: string } | undefined): string {
+	if (!model) return "no-model";
+	const prefix = model.provider ? `${model.provider}/` : "";
+	return model.id.startsWith(prefix) ? model.id : `${prefix}${model.id}`;
+}
+
 interface SessionStats {
 	session: AgentSession;
 	sessionId: string;
@@ -217,7 +224,7 @@ export class FooterComponent implements Component {
 		let statsLeft = statsParts.join(" ");
 
 		// Add model name on the right side, plus thinking level if model supports it
-		const modelName = state.model?.id || "no-model";
+		const modelName = formatModelForFooter(state.model);
 
 		let statsLeftWidth = visibleWidth(statsLeft);
 
@@ -231,27 +238,16 @@ export class FooterComponent implements Component {
 		const minPadding = 2;
 
 		// Add thinking level indicator if model supports reasoning
-		let rightSideWithoutProvider = modelName;
+		let rightSide = modelName;
 		if (state.model?.reasoning) {
 			const thinkingLevel = state.thinkingLevel || "off";
-			rightSideWithoutProvider =
-				thinkingLevel === "off" ? `${modelName} • thinking off` : `${modelName} • ${thinkingLevel}`;
+			rightSide = thinkingLevel === "off" ? `${modelName} • thinking off` : `${modelName} • ${thinkingLevel}`;
 		}
 		// A virtual model routes each request; show where the latest response went.
 		const routed = this.session.routedModel;
 		if (routed) {
 			const level = routed.thinkingLevel ? ` • ${routed.thinkingLevel}` : "";
-			rightSideWithoutProvider += ` → ${routed.model.id}${level}`;
-		}
-
-		// Prepend the provider in parentheses if there are multiple providers and there's enough room
-		let rightSide = rightSideWithoutProvider;
-		if (this.footerData.getAvailableProviderCount() > 1 && state.model) {
-			rightSide = `(${state.model!.provider}) ${rightSideWithoutProvider}`;
-			if (statsLeftWidth + minPadding + visibleWidth(rightSide) > width) {
-				// Too wide, fall back
-				rightSide = rightSideWithoutProvider;
-			}
+			rightSide += ` → ${formatModelForFooter(routed.model)}${level}`;
 		}
 
 		const rightSideWidth = visibleWidth(rightSide);

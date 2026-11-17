@@ -5042,7 +5042,7 @@ _OPENAI_OAUTH_RUNTIME_PROVIDER = "openai-codex"
 _XAI_OAUTH_SLUG = "xai-oauth"
 _XAI_OAUTH_DEFAULT_MODEL = "grok-4.6"
 _AIDIY_INITIAL_MODEL = "openai_oauth/gpt-6.1-sol"
-from hermes_cli.aidiy_model_preferences import load_model_choice, save_model_choice, model_display_name
+from hermes_cli.aidiy_model_preferences import load_model_choice, save_model_choice, model_display_name, status_model_display_name
 # Codex backend が返す一覧を取れなかったときだけ使う保険。ChatGPT アカウントで
 # 使えるモデルは契約プランで変わるので、基本はライブ一覧の先頭を既定にする。
 _OPENAI_OAUTH_FALLBACK_MODEL = "gpt-6.1-sol"
@@ -6822,37 +6822,21 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
         idle = max(0.0, time.time() - last_finished_at)
         return f"✓ {format_duration_compact(idle)}"
 
+    def _get_status_model_label(self, agent, configured_model):
+        # Runtime is "custom" for both API and CLI, so prefer the AiDiy slug.
+        provider = self._current_aidiy_provider_slug()
+        if getattr(agent, "_fallback_activated", False):
+            provider = getattr(agent, "provider", None) or provider
+        return status_model_display_name(configured_model, provider)
+
     def _get_status_bar_snapshot(self) -> Dict[str, Any]:
-        # Prefer the agent's model name — it updates on fallback.
-        # self.model reflects the originally configured model and never
-        # changes mid-session, so the TUI would show a stale name after
-        # _try_activate_fallback() switches provider/model.
+        # Prefer the agent's current model, including fallback and /model --once.
         agent = getattr(self, "agent", None)
         configured_model = getattr(agent, "model", None) or self.model
         model_name = model_display_name(configured_model)
-        # Friendly display: prefer reverse-alias from config.yaml ``model_aliases:``
-        # before slash/length truncation. This turns long Palantir RIDs like
-        # ``ri.language-model-service..language-model.anthropic-claude-4-7-opus``
-        # into the user's chosen short name (e.g. ``opus-4.7``) in the status bar.
-        model_short = _reverse_alias_for_display(model_name)
-        if model_short == model_name:
-            model_short = model_name.split("/")[-1] if "/" in model_name else model_name
-            # Strip Palantir RID prefixes via the shared display formatter so
-            # this site and ``ModelSwitchResult`` confirmation can't drift.
-            from hermes_cli.model_switch import format_model_for_display
-            model_short = format_model_for_display(model_short)
-        if model_short.endswith(".gguf"):
-            model_short = model_short[:-5]
-        # CLI providers use a virtual "auto" model — show the provider name
-        # instead so the status bar identifies which CLI is in use.
-        if str(configured_model or "").lower() in {"auto", "same"}:
-            cli_slug = (getattr(self, "_aidiy_provider_slug", "") or "").lower()
-            for cli_def in _AIDIY_CLI_PROVIDERS:
-                if cli_def["slug"] == cli_slug:
-                    model_short = cli_def["name"]
-                    break
-        if len(model_short) > 26:
-            model_short = f"{model_short[:23]}..."
+        model_short = self._get_status_model_label(agent, configured_model)
+        # Do not truncate to 26 characters. Both footer renderers already clip
+        # provider/model by terminal cell width, including Japanese characters.
 
         elapsed_seconds = max(0.0, (datetime.now() - self.session_start).total_seconds())
         snapshot = {

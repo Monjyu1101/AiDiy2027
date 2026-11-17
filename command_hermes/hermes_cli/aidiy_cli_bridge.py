@@ -161,9 +161,14 @@ def install_chat_engine(agent, cli, root):
         route = kwargs.get("route_info")
         if isinstance(route, dict):
             route.update(provider=cli._aidiy_provider_slug, model=cli.model)
-        # Compression preserves its upstream prompt, but uses this same CLI
-        # engine without tools. Never resolve a second API provider.
+        # Compression/title preserve their upstream prompts, but use this same
+        # CLI engine without tools. Never resolve a second API provider.
+        # Title JSON stays inside content and is validated by title_generator;
+        # the child response envelope remains the shared chat schema.
         return complete({"messages": kwargs.get("messages", []), "tools": [], "tool_choice": "none"})
 
+    # Auto-title runs on a background thread; pass a per-agent callback rather
+    # than monkeypatching the global auxiliary API client.
+    agent._aidiy_chat_call = auxiliary
     if getattr(agent, "context_compressor", None) is not None:
         agent.context_compressor._aidiy_chat_call = auxiliary
