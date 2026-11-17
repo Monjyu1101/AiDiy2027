@@ -39,11 +39,13 @@ pub use aidiy_sections::AIDIY_GROK_AUTH_COMMAND;
 pub use aidiy_sections::AIDIY_SETTINGS_FILE;
 pub use aidiy_sections::aidiy_api_model;
 pub use aidiy_sections::aidiy_model_provider;
+// AiDiy: expose the authoritative section parser for UI labels.
+pub use aidiy_sections::split_aidiy_model;
 
 mod aidiy_sections;
-// AiDiy: 外部 CLI のカタログと実行経路の識別。
+// AiDiy: Diag の全区分カタログと外部 CLI 実行経路の識別。
 mod aidiy_cli;
-pub use aidiy_cli::{AIDIY_CLI_PROVIDER, aidiy_cli_presets, split_aidiy_cli_model};
+pub use aidiy_cli::{AIDIY_CLI_PROVIDER, aidiy_cli_presets, aidiy_model_presets, split_aidiy_cli_model};
 pub use aidiy_sections::aidiy_root;
 mod capabilities;
 mod gateway_oauth;

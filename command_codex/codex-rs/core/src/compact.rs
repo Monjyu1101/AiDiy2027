@@ -298,7 +298,15 @@ async fn run_compact_task_inner_impl(
     let mut retries = 0;
     // Reuse one client session so turn-scoped state (sticky routing and websocket incremental
     // request tracking) survives retries within this compact turn.
-    let mut client_session = sess.services.model_client.new_session();
+    let mut client_session = sess
+        .services
+        .model_client
+        .for_aidiy_model(
+            &turn_context.config,
+            &turn_context.model_info().slug,
+            Arc::clone(&sess.services.auth_manager),
+        )?
+        .new_session();
     let compaction_response = loop {
         // Clone is required because of the loop
         let mut turn_input = history

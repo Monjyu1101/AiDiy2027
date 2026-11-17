@@ -2961,3 +2961,310 @@ async fn inference_tools_changes_follow_full_specs_across_turns() {
         );
     }
 }
+
+// AiDiy: model selection changes endpoints and credential ownership together.
+#[tokio::test]
+async fn aidiy_provider_switch_isolates_credentials_and_connection_state() {
+    let config = crate::config::test_config().await;
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-openai-only"));
+    let initial = test_model_client(SessionSource::Cli);
+    let oauth = initial
+        .for_aidiy_model(&config, "openai_oauth/gpt-test", Arc::clone(&auth))
+        .unwrap();
+    assert!(oauth.state.provider.info().requires_openai_auth);
+    assert!(oauth.state.provider.auth_manager().is_some());
+    let gemini = oauth
+        .for_aidiy_model(&config, "gemini_chat/gemini-test", Arc::clone(&auth))
+        .unwrap();
+    assert_eq!(gemini.state.provider.info().wire_api, WireApi::Chat);
+    assert!(gemini.state.provider.auth_manager().is_none());
+    assert!(!Arc::ptr_eq(&oauth.state, &gemini.state));
+    assert!(
+        gemini
+            .state
+            .cached_websocket_session
+            .lock()
+            .unwrap()
+            .connection
+            .is_none()
+    );
+    assert!(gemini.codex_responses_headers.is_none());
+    let claude = gemini
+        .for_aidiy_model(&config, "claude_chat/claude-test", Arc::clone(&auth))
+        .unwrap();
+    assert_eq!(claude.state.provider.info().wire_api, WireApi::Anthropic);
+    assert!(claude.state.provider.auth_manager().is_none());
+    let grok = claude
+        .for_aidiy_model(&config, "xai_oauth/test", Arc::clone(&auth))
+        .unwrap();
+    let grok_again = claude
+        .for_aidiy_model(&config, "xai_oauth/test", Arc::clone(&auth))
+        .unwrap();
+    assert_eq!(grok.auth_owner(), grok_again.auth_owner());
+    assert!(!Arc::ptr_eq(
+        &grok.state.provider.auth_manager().unwrap(),
+        &auth
+    ));
+    let restored = claude
+        .for_aidiy_model(&config, "openai_oauth/gpt-test", auth)
+        .unwrap();
+    assert!(restored.state.provider.info().requires_openai_auth);
+    assert!(restored.state.provider.auth_manager().is_some());
+    assert!(!Arc::ptr_eq(&restored.state, &oauth.state));
+}
+
+#[tokio::test]
+async fn aidiy_cli_to_api_does_not_keep_placeholder_endpoint() {
+    let config = crate::config::test_config().await;
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-openai-only"));
+    let client = test_model_client(SessionSource::Cli);
+    let cli = client
+        .for_aidiy_model(&config, "copilot_cli/test", Arc::clone(&auth))
+        .unwrap();
+    assert!(cli.state.provider.auth_manager().is_none());
+    let api = cli
+        .for_aidiy_model(&config, "openai_chat/gpt-test", auth)
+        .unwrap();
+    assert_eq!(
+        api.state.provider.info().base_url.as_deref(),
+        Some("https://api.openai.com/v1")
+    );
+    assert!(api.state.provider.auth_manager().is_none());
+}
+
+#[test]
+fn aidiy_guard_rejects_cross_provider_and_cli_requests() {
+    let (_, gemini) = codex_model_provider_info::aidiy_model_provider("gemini_chat/test").unwrap();
+    assert!(super::validate_aidiy_provider(&gemini, "gemini_chat/test").is_ok());
+    for wrong in [
+        "claude_chat/test",
+        "openai_chat/test",
+        "openai_oauth/test",
+        "copilot_cli/test",
+    ] {
+        assert!(super::validate_aidiy_provider(&gemini, wrong).is_err());
+    }
+    let (_, cli) = codex_model_provider_info::aidiy_model_provider("copilot_cli/test").unwrap();
+    assert!(super::validate_aidiy_provider(&cli, "gpt-test").is_err());
+    let (_, openai_api) =
+        codex_model_provider_info::aidiy_model_provider("openai_chat/test").unwrap();
+    assert!(super::validate_aidiy_provider(&openai_api, "openai_oauth/test").is_err());
+}
+
+#[tokio::test]
+async fn aidiy_provider_switch_honors_required_provider() {
+    let mut config = crate::config::test_config().await;
+    config.config_layer_stack = codex_config::ConfigLayerStack::new(
+        Vec::new(),
+        codex_config::ConfigRequirements::default(),
+        codex_config::ConfigRequirementsToml {
+            model_provider: Some("openai".into()),
+            ..Default::default()
+        },
+    )
+    .unwrap();
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-openai-only"));
+    let client = test_model_client(SessionSource::Cli);
+    assert!(
+        client
+            .for_aidiy_model(&config, "claude_chat/test", Arc::clone(&auth))
+            .is_err()
+    );
+    assert!(
+        client
+            .for_aidiy_model(&config, "copilot_cli/test", Arc::clone(&auth))
+            .is_err()
+    );
+    assert!(
+        client
+            .for_aidiy_model(&config, "openai_oauth/test", Arc::clone(&auth))
+            .is_ok()
+    );
+    config
+        .features
+        .enable(codex_features::Feature::RuntimeAgentInstances)
+        .expect("enable runtime authentication for the constraint test");
+    assert!(
+        client
+            .for_aidiy_model(&config, "openai_oauth/test", auth)
+            .is_err()
+    );
+}
+
+#[tokio::test]
+async fn aidiy_switch_resolves_destination_and_authorization_as_one_unit() {
+    let config = crate::config::test_config().await;
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-openai-only"));
+    let client = test_model_client(SessionSource::Cli);
+    let oauth = client
+        .for_aidiy_model(&config, "openai_oauth/gpt-test", Arc::clone(&auth))
+        .unwrap();
+    let oauth_setup = oauth
+        .current_client_setup(super::ClientRouting::ConfiguredProvider)
+        .await
+        .unwrap();
+    let mut headers = http::HeaderMap::new();
+    oauth_setup.api_auth.add_auth_headers(&mut headers).unwrap();
+    assert_eq!(
+        headers.get("authorization").unwrap(),
+        "Bearer test-openai-only"
+    );
+    assert!(
+        oauth_setup
+            .api_provider
+            .base_url
+            .starts_with("https://api.openai.com/")
+    );
+
+    let cli = oauth
+        .for_aidiy_model(&config, "copilot_cli/test", Arc::clone(&auth))
+        .unwrap();
+    let local = cli
+        .for_aidiy_model(&config, "local_chat/test", Arc::clone(&auth))
+        .unwrap();
+    let local_setup = local
+        .current_client_setup(super::ClientRouting::ConfiguredProvider)
+        .await
+        .unwrap();
+    let mut local_headers = http::HeaderMap::new();
+    local_setup
+        .api_auth
+        .add_auth_headers(&mut local_headers)
+        .unwrap();
+    assert_ne!(
+        local_headers.get("authorization"),
+        headers.get("authorization")
+    );
+    assert!(!local_headers.contains_key("chatgpt-account-id"));
+    assert!(
+        local_setup
+            .api_provider
+            .base_url
+            .starts_with("http://localhost:")
+    );
+
+    let restored = local
+        .for_aidiy_model(&config, "openai_oauth/gpt-test", auth)
+        .unwrap();
+    let setup = restored
+        .current_client_setup(super::ClientRouting::ConfiguredProvider)
+        .await
+        .unwrap();
+    let mut restored_headers = http::HeaderMap::new();
+    setup
+        .api_auth
+        .add_auth_headers(&mut restored_headers)
+        .unwrap();
+    assert_eq!(
+        restored_headers.get("authorization"),
+        headers.get("authorization")
+    );
+    assert_eq!(
+        setup.api_provider.base_url,
+        oauth_setup.api_provider.base_url
+    );
+}
+
+#[tokio::test]
+async fn aidiy_http_api_cli_oauth_switch_uses_selected_endpoint_and_auth() {
+    let api_server = MockServer::start().await;
+    let oauth_server = MockServer::start().await;
+    Mock::given(method("POST"))
+        .and(path("/v1/chat/completions"))
+        .respond_with(ResponseTemplate::new(200)
+            .insert_header("content-type", "text/event-stream")
+            .set_body_string(concat!(
+                "data: {\"id\":\"chat-a\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"hello\"},\"finish_reason\":null}]}\n\n",
+                "data: {\"id\":\"chat-a\",\"choices\":[{\"index\":0,\"delta\":{},\"finish_reason\":\"stop\"}]}\n\n",
+                "data: [DONE]\n\n"
+            )))
+        .expect(1).mount(&api_server).await;
+    Mock::given(method("POST"))
+        .and(path("/v1/responses"))
+        .respond_with(
+            ResponseTemplate::new(200)
+                .insert_header("content-type", "text/event-stream")
+                .set_body_string(concat!(
+                    "data: {\"type\":\"response.created\",\"response\":{\"id\":\"resp-b\"}}\n\n",
+                    "data: {\"type\":\"response.completed\",\"response\":{\"id\":\"resp-b\"}}\n\n"
+                )),
+        )
+        .expect(1)
+        .mount(&oauth_server)
+        .await;
+    let mut config = crate::config::test_config().await;
+    let mut oauth_info =
+        ModelProviderInfo::create_openai_provider(Some(format!("{}/v1", oauth_server.uri())));
+    oauth_info.supports_websockets = false;
+    config.model_providers.insert("openai".into(), oauth_info);
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("fake-oauth-b"));
+    let mut api_info =
+        create_oss_provider_with_base_url(&format!("{}/v1", api_server.uri()), WireApi::Chat);
+    api_info.experimental_bearer_token = Some("fake-api-a".into());
+    let mut api_client = test_model_client(SessionSource::Cli);
+    Arc::get_mut(&mut api_client.state).unwrap().provider = create_model_provider(api_info, None);
+    let cli_client = api_client
+        .for_aidiy_model(&config, "copilot_cli/test", Arc::clone(&auth))
+        .unwrap();
+    // The intermediate CLI route must not make an HTTP request, even for a bare model.
+    assert!(super::validate_aidiy_provider(cli_client.provider_info(), "gpt-test").is_err());
+    let oauth_client = cli_client
+        .for_aidiy_model(&config, "openai_oauth/gpt-b", auth)
+        .unwrap();
+    for (client, model) in [
+        (&api_client, "gpt-test"),
+        (&oauth_client, "openai_oauth/gpt-b"),
+    ] {
+        let mut info = test_model_info();
+        info.slug = model.into();
+        let metadata = test_responses_metadata_for_client(
+            client,
+            None,
+            "window-1".into(),
+            None,
+            TestCodexResponsesRequestKind::Turn,
+        );
+        let mut session = client.new_session();
+        let mut stream = session
+            .stream(
+                &Arc::new(Prompt::default()),
+                &info,
+                &test_session_telemetry(),
+                None,
+                codex_protocol::config_types::ReasoningSummary::None,
+                None,
+                &metadata,
+                &InferenceTraceContext::disabled(),
+            )
+            .await
+            .unwrap();
+        let mut completed = false;
+        while let Some(event) = stream.next().await {
+            if matches!(event.unwrap(), ResponseEvent::Completed { .. }) {
+                completed = true;
+            }
+        }
+        assert!(completed);
+    }
+    let a = api_server.received_requests().await.unwrap();
+    let b = oauth_server.received_requests().await.unwrap();
+    assert_eq!(a.len(), 1);
+    assert_eq!(b.len(), 1);
+    assert_eq!(
+        a[0].headers.get("authorization").unwrap(),
+        "Bearer fake-api-a"
+    );
+    assert_eq!(
+        b[0].headers.get("authorization").unwrap(),
+        "Bearer fake-oauth-b"
+    );
+    assert_eq!(
+        a[0].body_json::<serde_json::Value>().unwrap()["model"],
+        "gpt-test"
+    );
+    assert_eq!(
+        b[0].body_json::<serde_json::Value>().unwrap()["model"],
+        "gpt-b"
+    );
+    assert!(!b[0].headers.contains_key("x-api-key"));
+}

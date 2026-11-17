@@ -338,6 +338,15 @@ async fn schedule_startup_prewarm_inner(
     );
     let startup_cancellation_token = CancellationToken::new();
     let preconnect_model_info = Arc::clone(startup_turn_context.model_info());
+    // AiDiy: prewarm must use the selected provider, never the startup provider's credentials.
+    let selected_client = session.services.model_client.for_aidiy_model(
+        &startup_turn_context.config,
+        &preconnect_model_info.slug,
+        Arc::clone(&session.services.auth_manager),
+    )?;
+    if !client_session.uses_provider(&selected_client) {
+        client_session = selected_client.new_session();
+    }
     // Spawned subagents inherit the root's selection, with the same feature and model filtering
     // that capture applies to the actual request.
     let inherits_root_service_tier =

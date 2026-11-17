@@ -1094,7 +1094,33 @@ impl Session {
         let session_source = session_configuration.session_source.clone();
         let available_models = models_manager.try_list_models().unwrap_or_default();
 
+        // AiDiy: capability/compaction decisions must use the selected route too.
+        let provider = auth_manager
+            .as_ref()
+            .and_then(|auth| {
+                crate::client::aidiy_provider_for_model(
+                    &per_turn_config,
+                    &provider,
+                    &model_info.slug,
+                    Arc::clone(auth),
+                )
+                .ok()
+            })
+            .unwrap_or(provider);
         let mut per_turn_config = per_turn_config;
+        if let Some((id, _)) = codex_model_provider_info::aidiy_model_provider(&model_info.slug) {
+            if provider.info() != &per_turn_config.model_provider {
+                per_turn_config.model_provider_id = id;
+                per_turn_config.model_provider = provider.info().clone();
+            }
+        } else if codex_model_provider_info::split_aidiy_model(&model_info.slug)
+            .is_some_and(|(section, _)| section == "openai_oauth")
+            && provider.info().requires_openai_auth
+        {
+            per_turn_config.model_provider_id = "openai".into();
+            per_turn_config.model_provider = provider.info().clone();
+        }
+
         let configured_token_budget = per_turn_config.token_budget.clone();
         let use_model_token_budget_defaults =
             per_turn_config.features.enabled(Feature::TokenBudget)

@@ -400,6 +400,8 @@ use self::status_state::TerminalTitleStatusKind;
 mod status_controls;
 mod status_surface_commands;
 mod status_surfaces;
+// AiDiy: shared footer provider/model formatting.
+mod provider_label;
 use self::status_surface_commands::StatusSurfaceOverrides;
 mod streaming;
 use self::status_surfaces::CachedProjectRootName;

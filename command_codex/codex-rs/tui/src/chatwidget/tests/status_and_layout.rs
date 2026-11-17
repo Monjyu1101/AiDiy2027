@@ -4362,7 +4362,7 @@ async fn status_line_model_with_reasoning_includes_fast_for_fast_capable_models(
 
     assert_eq!(
         status_line_text(&chat),
-        Some(format!("gpt-5.4 xhigh fast · Context 0% used · {test_cwd}"))
+        Some(format!("openai/gpt-5.4 xhigh fast · Context 0% used · {test_cwd}"))
     );
 
     chat.set_model("gpt-5.2");
@@ -4370,7 +4370,7 @@ async fn status_line_model_with_reasoning_includes_fast_for_fast_capable_models(
 
     assert_eq!(
         status_line_text(&chat),
-        Some(format!("gpt-5.2 xhigh · Context 0% used · {test_cwd}"))
+        Some(format!("openai/gpt-5.2 xhigh · Context 0% used · {test_cwd}"))
     );
 }
 
@@ -4428,19 +4428,28 @@ async fn status_line_model_with_reasoning_updates_on_mode_switch_without_manual_
     chat.local_settings.tui.status_line = Some(vec!["model-with-reasoning".to_string()]);
     chat.set_reasoning_effort(Some(ReasoningEffortConfig::High));
 
-    assert_eq!(status_line_text(&chat), Some("gpt-5.2 high".to_string()));
+    assert_eq!(
+        status_line_text(&chat),
+        Some("openai/gpt-5.2 high".to_string())
+    );
 
     let plan_mask = collaboration_modes::plan_mask(chat.model_catalog.as_ref())
         .expect("expected plan collaboration mode");
     chat.set_collaboration_mask(plan_mask);
 
-    assert_eq!(status_line_text(&chat), Some("gpt-5.2 medium".to_string()));
+    assert_eq!(
+        status_line_text(&chat),
+        Some("openai/gpt-5.2 medium".to_string())
+    );
 
     let default_mask = collaboration_modes::default_mask(chat.model_catalog.as_ref())
         .expect("expected default collaboration mode");
     chat.set_collaboration_mask(default_mask);
 
-    assert_eq!(status_line_text(&chat), Some("gpt-5.2 high".to_string()));
+    assert_eq!(
+        status_line_text(&chat),
+        Some("openai/gpt-5.2 high".to_string())
+    );
 }
 
 #[tokio::test]
@@ -4576,10 +4585,10 @@ async fn status_line_model_with_reasoning_speed_footer_snapshots() {
 
     chat.local_settings.tui.status_line = Some(vec!["model-with-reasoning".to_string()]);
     chat.set_service_tier(Some(ServiceTier::Flex.request_value().to_string()));
-    insta::assert_snapshot!(status_line_text(&chat).expect("status line"), @"gpt-5.4 xhigh flex");
+    insta::assert_snapshot!(status_line_text(&chat).expect("status line"), @"openai/gpt-5.4 xhigh flex");
 
     chat.set_service_tier(Some("low_latency".to_string()));
-    insta::assert_snapshot!(status_line_text(&chat).expect("status line"), @"gpt-5.4 xhigh low latency");
+    insta::assert_snapshot!(status_line_text(&chat).expect("status line"), @"openai/gpt-5.4 xhigh low latency");
 }
 
 #[tokio::test]
@@ -6230,4 +6239,36 @@ async fn chatwidget_tall() {
         "chatwidget_tall",
         normalize_snapshot_paths(term.backend().vt100().screen().contents())
     );
+}
+
+// AiDiy: switching models must retain provider identity even when the catalog
+// display name is friendly, without duplicating existing provider prefixes.
+#[tokio::test]
+async fn aidiy_footer_provider_model_switches_and_widths() {
+    let (mut chat, _rx, _op_rx) = make_chatwidget_manual(Some("gpt-5.2")).await;
+    chat.show_welcome_banner = false;
+    chat.local_settings.tui.status_line = Some(vec!["model".to_string()]);
+    for (model, expected) in [
+        ("gpt-5.2", "openai/gpt-5.2"),
+        ("openai_oauth/gpt-6.1-sol", "openai_oauth/gpt-6.1-sol"),
+        (
+            "copilot_cli/claude-sonnet-5.5",
+            "copilot_cli/claude-sonnet-5.5",
+        ),
+        ("gpt-5.2", "openai/gpt-5.2"),
+    ] {
+        chat.set_model(model);
+        assert_eq!(status_line_text(&chat).as_deref(), Some(expected));
+        for width in [30, 80] {
+            let height = chat.desired_height(width);
+            let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+            terminal
+                .draw(|f| chat.render(f.area(), f.buffer_mut()))
+                .unwrap();
+            let rendered = normalized_backend_snapshot(terminal.backend());
+            if width == 80 {
+                assert!(rendered.contains(expected), "{rendered}");
+            }
+        }
+    }
 }

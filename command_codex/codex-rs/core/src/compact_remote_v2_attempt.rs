@@ -144,9 +144,19 @@ pub(super) async fn run_remote_compact_v2_attempt(
             sess.services
                 .executed_tool_calls
                 .attach_to_compaction_prompt(&mut input);
-            let client_session = client_session.unwrap_or_else(|| {
-                owned_client_session.insert(sess.services.model_client.new_session())
-            });
+            let client_session = match client_session {
+                Some(session) => session,
+                None => owned_client_session.insert(
+                    sess.services
+                        .model_client
+                        .for_aidiy_model(
+                            &turn_context.config,
+                            &model_info.slug,
+                            Arc::clone(&sess.services.auth_manager),
+                        )?
+                        .new_session(),
+                ),
+            };
             (
                 model_info,
                 input_goal_ids,

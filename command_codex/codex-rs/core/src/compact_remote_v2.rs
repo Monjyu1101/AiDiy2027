@@ -307,7 +307,12 @@ async fn run_remote_compaction_request_v2(
             let trace = InferenceTraceContext::disabled();
             // Replay the routing token without letting this request change foreground routing.
             let turn_state = Arc::new(turn_state.clone().map(OnceLock::from).unwrap_or_default());
-            let http_executor = ResponsesHttpExecutor::new(&sess.services.model_client);
+            let routed_client = sess.services.model_client.for_aidiy_model(
+                &turn_context.config,
+                &settings.model_info.slug,
+                Arc::clone(&sess.services.auth_manager),
+            )?;
+            let http_executor = ResponsesHttpExecutor::new(&routed_client);
             let stream = tokio::select! {
                 biased;
                 _ = cancellation.cancelled() => return Err(CodexErr::TurnAborted),

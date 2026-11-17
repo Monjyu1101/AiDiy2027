@@ -106,6 +106,9 @@ impl ChatWidget {
     }
 
     pub(crate) fn open_model_popup_with_presets(&mut self, presets: Vec<ModelPreset>) {
+        let presets = crate::model_catalog::routable_picker_models(
+            presets, &self.config.model_provider_id,
+        );
         if self.restrict_model_picker_to_luna_reserve() {
             self.open_luna_reserve_model_popup(presets, MODEL_SELECTION_VIEW_ID);
             return;
@@ -261,6 +264,9 @@ impl ChatWidget {
         presets: Vec<ModelPreset>,
         view_id: &'static str,
     ) {
+        let presets = crate::model_catalog::routable_picker_models(
+            presets, &self.config.model_provider_id,
+        );
         if presets.is_empty() {
             self.bottom_pane.dismiss_view_by_id(view_id);
             self.add_info_message(

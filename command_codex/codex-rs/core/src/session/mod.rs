@@ -4871,7 +4871,8 @@ impl Session {
                     // Validate immediately before slicing and replacing the captured prefix.
                     if state.history.history_version() != prefix.generation
                         || state.history.annotated_items().len() < prefix.len
-                        || self.services.model_client.auth_owner() != prefix.auth_owner
+                        || codex_model_provider::request_auth_owner(turn_context.provider.as_ref())
+                            != prefix.auth_owner
                     {
                         return false;
                     }

@@ -725,10 +725,10 @@ impl ChatWidget {
     /// git metadata.
     pub(super) fn status_line_value_for_item(&mut self, item: StatusLineItem) -> Option<String> {
         match item {
-            StatusLineItem::ModelName => Some(self.status_model_display_name().to_string()),
+            StatusLineItem::ModelName => Some(self.status_model_provider_label()),
             StatusLineItem::ModelWithReasoning => {
                 let service_tier = self.processing_tier_display_name().map(str::to_lowercase);
-                Some(self.model_with_reasoning_display_name(service_tier.as_deref()))
+                Some(self.model_with_reasoning_display_name(service_tier.as_deref(), true))
             }
             StatusLineItem::Reasoning => Some(self.reasoning_display_name()),
             StatusLineItem::Profile => {
@@ -976,7 +976,7 @@ impl ChatWidget {
                 /*max_chars*/ 32,
             )),
             TerminalTitleItem::ModelWithReasoning => Some(Self::truncate_terminal_title_part(
-                self.model_with_reasoning_display_name(self.processing_tier_display_name()),
+                self.model_with_reasoning_display_name(self.processing_tier_display_name(), false),
                 /*max_chars*/ 32,
             )),
             TerminalTitleItem::Reasoning => Some(Self::truncate_terminal_title_part(
@@ -1006,8 +1006,25 @@ impl ChatWidget {
         Self::status_line_reasoning_effort_label(effort.as_ref())
     }
 
-    fn model_with_reasoning_display_name(&self, service_tier: Option<&str>) -> String {
-        let model = self.status_model_display_name();
+    // AiDiy: footer labels use the selected ID, not a friendly catalog alias that
+    // can hide the provider. Keep terminal titles and /status unchanged.
+    fn status_model_provider_label(&self) -> String {
+        super::provider_label::model_provider_label(
+            self.selected_model(),
+            &self.config.model_provider_id,
+        )
+    }
+
+    fn model_with_reasoning_display_name(
+        &self,
+        service_tier: Option<&str>,
+        include_provider: bool,
+    ) -> String {
+        let model = if include_provider {
+            self.status_model_provider_label()
+        } else {
+            self.status_model_display_name().to_string()
+        };
         let label = self.reasoning_display_name();
         let service_tier_label = service_tier
             .map(|tier| format!(" {tier}"))

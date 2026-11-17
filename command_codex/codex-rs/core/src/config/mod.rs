@@ -4078,6 +4078,14 @@ impl Config {
         .map(|(id, provider)| {
             model_providers.insert(id.clone(), provider);
             id
+        })
+        .or_else(|| {
+            // AiDiy: explicit OAuth routes also override a provider saved by an older session.
+            codex_model_provider_info::split_aidiy_model(
+                model.as_deref().or(cfg.model.as_deref()).unwrap_or_default(),
+            )
+            .filter(|(section, _)| *section == "openai_oauth")
+            .map(|_| "openai".to_owned())
         });
         let model_provider_id = config_layer_stack.required_model_provider().map(str::to_string)
             .or(aidiy_provider_id)
@@ -5335,3 +5343,22 @@ mod config_loader_tests;
 #[cfg(test)]
 #[path = "runtime_auth_tests.rs"]
 mod runtime_auth_tests;
+
+#[cfg(test)]
+#[tokio::test]
+async fn aidiy_explicit_oauth_overrides_stale_startup_provider() {
+    let home = tempfile::tempdir().unwrap();
+    let config = Config::load_from_base_config_with_overrides(
+        ConfigToml {
+            model: Some("openai_oauth/gpt-test".into()),
+            model_provider: Some("aidiy_cli".into()),
+            ..Default::default()
+        },
+        ConfigOverrides::default(),
+        codex_utils_absolute_path::AbsolutePathBuf::from_absolute_path(home.path()).unwrap(),
+    )
+    .await
+    .unwrap();
+    assert_eq!(config.model_provider_id, "openai");
+    assert!(config.model_provider.requires_openai_auth);
+}

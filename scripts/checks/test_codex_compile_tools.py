@@ -20,6 +20,40 @@ def load(relative):
 compile = load('command_codex/_compile.py')
 helper = load('command_codex/aidiy/setup_tools.py')
 
+class CompilePromptTests(unittest.TestCase):
+    def test_direct_compile_empty_input_accepts_but_no_declines(self):
+        for flags in ([], ["--debug"], ["--detach"]):
+            for answer in ("", "n", "y"):
+                with self.subTest(flags=flags, answer=answer), \
+                     patch.object(compile.sys, "argv", ["_compile.py", *flags]), \
+                     patch("builtins.input", return_value=answer) as prompt, \
+                     patch.object(compile, "running_compile", return_value=None), \
+                     patch.object(compile, "compile_with_status", return_value=True) as build, \
+                     patch.object(compile, "start_detached", return_value=0) as detach, \
+                     contextlib.redirect_stdout(io.StringIO()):
+                    if "--detach" in flags and answer != "n":
+                        with self.assertRaises(SystemExit) as exited:
+                            compile.main()
+                        self.assertEqual(exited.exception.code, 0)
+                    else:
+                        compile.main()
+                    self.assertIn("([y]/n)", prompt.call_args.args[0])
+                    self.assertEqual(build.called, answer != "n" and "--detach" not in flags)
+                    self.assertEqual(detach.called, answer != "n" and "--detach" in flags)
+
+    def test_eof_is_not_enter_and_yes_bypasses_question(self):
+        with patch("builtins.input", side_effect=EOFError):
+            self.assertFalse(compile.ask_yes_no("compile?", default="y"))
+        with patch.object(compile.sys, "argv", ["_compile.py", "--yes"]), \
+             patch("builtins.input") as prompt, \
+             patch.object(compile, "running_compile", return_value=None), \
+             patch.object(compile, "compile_with_status", return_value=True) as build, \
+             contextlib.redirect_stdout(io.StringIO()):
+            compile.main()
+            prompt.assert_not_called()
+            build.assert_called_once()
+
+
 class BootstrapTests(unittest.TestCase):
     def test_compile_leaves_parallelism_to_cargo_unless_explicit(self):
         for jobs in (None, 2):

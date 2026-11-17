@@ -63,14 +63,12 @@ impl ModelCatalog {
     }
 
     pub(crate) fn try_list_models(&self) -> Result<Vec<ModelPreset>, Infallible> {
-        // AiDiy: Diag が保存した外部 CLI を /model に追加する。
-        let mut models = self.models.clone();
-        for preset in codex_model_provider_info::aidiy_cli_presets() {
-            if !models.iter().any(|existing| existing.model == preset.model) {
-                models.push(preset);
-            }
-        }
-        Ok(models)
+        Ok(Self::with_aidiy_models(self.models.clone()))
+    }
+
+    // AiDiy: キャッシュ表示・初回の非同期取得・更新後の表示で同じ候補を使う。
+    pub(crate) fn with_aidiy_models(models: Vec<ModelPreset>) -> Vec<ModelPreset> {
+        merge_aidiy_models(models, codex_model_provider_info::aidiy_model_presets())
     }
 
     pub(crate) fn display_name<'a>(&'a self, model: &'a str) -> &'a str {
@@ -79,5 +77,91 @@ impl ModelCatalog {
             .find(|preset| preset.model == model)
             .map(|preset| preset.display_name.as_str())
             .unwrap_or_else(|| model_display_name(model))
+    }
+}
+
+// AiDiy: CLI で開始した session にサーバー既定の裸 GPT 候補を出さない。
+// 裸 ID は開始時 provider に属するため、CLI のダミー接続先では実行できない。
+pub(crate) fn routable_picker_models(models: Vec<ModelPreset>, provider: &str) -> Vec<ModelPreset> {
+    if provider != codex_model_provider_info::AIDIY_CLI_PROVIDER {
+        return models;
+    }
+    models
+        .into_iter()
+        .filter(|preset| {
+            codex_model_provider_info::split_aidiy_model(&preset.model).is_some()
+                || codex_model_provider_info::split_aidiy_cli_model(&preset.model).is_some()
+        })
+        .collect()
+}
+
+// AiDiy: API 由来の能力メタデータは保持し、区分付き ID でのみ重複を除く。
+fn merge_aidiy_models(mut models: Vec<ModelPreset>, aidiy: Vec<ModelPreset>) -> Vec<ModelPreset> {
+    for preset in aidiy {
+        if !models.iter().any(|existing| existing.model == preset.model) {
+            models.push(preset);
+        }
+    }
+    models
+}
+
+#[cfg(test)]
+mod aidiy_tests {
+    use super::*;
+
+    fn preset(model: &str) -> ModelPreset {
+        serde_json::from_value(serde_json::json!({
+            "id": model, "model": model, "display_name": model, "description": "",
+            "default_reasoning_effort": "medium", "supported_reasoning_efforts": [],
+            "is_default": false, "upgrade": null, "show_in_picker": true,
+            "availability_nux": null, "supported_in_api": true, "input_modalities": ["text"]
+        }))
+        .unwrap()
+    }
+
+    #[test]
+    fn cli_start_hides_unqualified_server_fallbacks_but_keeps_all_routes() {
+        let models = vec![
+            preset("gpt-6-luna"),
+            preset("codex-auto-fast"),
+            preset("openai_oauth/gpt-6-luna"),
+            preset("openrt_chat/vendor/model"),
+            preset("copilot_cli/same"),
+            preset("unknown/model"),
+        ];
+        let filtered = routable_picker_models(
+            models.clone(),
+            codex_model_provider_info::AIDIY_CLI_PROVIDER,
+        );
+        assert_eq!(
+            filtered
+                .iter()
+                .map(|p| p.model.as_str())
+                .collect::<Vec<_>>(),
+            vec![
+                "openai_oauth/gpt-6-luna",
+                "openrt_chat/vendor/model",
+                "copilot_cli/same"
+            ]
+        );
+        assert_eq!(routable_picker_models(models.clone(), "openai"), models);
+    }
+
+    #[test]
+    fn catalog_keeps_distinct_providers_and_existing_capabilities() {
+        let mut existing = preset("openai_oauth/shared");
+        existing.description = "server metadata".into();
+        let models = merge_aidiy_models(
+            vec![existing.clone()],
+            vec![
+                preset("openai_oauth/shared"),
+                preset("openai_chat/shared"),
+                preset("copilot_cli/shared"),
+                preset("openrt_chat/vendor/nested"),
+            ],
+        );
+        assert_eq!(models.len(), 4);
+        assert_eq!(models[0], existing);
+        assert_eq!(merge_aidiy_models(models.clone(), models.clone()), models);
     }
 }

@@ -41,6 +41,20 @@ class SetupCodexTests(unittest.TestCase):
         self.assertLess(source.index('if choices["hermes"]:'), source.index('if choices.get("pi"):'))
         self.assertLess(source.index('if choices.get("pi"):'), source.index('if choices.get("codex"):'))
 
+    def test_setup_codex_question_and_auto_keep_no_default(self):
+        setup = load("_setup.py")
+        output = io.StringIO()
+        # Enter は _read_single_key が受け取る default_key に解決される。
+        with patch.object(setup, "ask_start_mode", return_value=(True, False)), \
+             patch.object(setup, "_read_single_key", side_effect=lambda allowed, default: default), \
+             contextlib.redirect_stdout(output):
+            choices = setup.collect_setup_choices()
+        self.assertFalse(choices["codex"])
+        line = next(line for line in output.getvalue().splitlines() if "aidiy_codex のコンパイル" in line)
+        self.assertIn("(y/[n])", line)
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertFalse(setup.collect_setup_choices(auto=True)["codex"])
+
     def test_setup_codex_starts_detached_and_bootstraps_in_child(self):
         setup = load("_setup.py")
         for code, expected in ((0, True), (2, True), (1, False)):

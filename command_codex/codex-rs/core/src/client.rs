@@ -570,6 +570,87 @@ pub(crate) struct RealtimeWebrtcCallStart {
     pub(crate) sideband_http_client_factory: HttpClientFactory,
 }
 
+// AiDiy: preserve the original provider for unqualified upstream model IDs.
+// Explicit AiDiy routes use their own endpoint/protocol/credentials as one unit.
+pub(crate) fn aidiy_provider_for_model(
+    config: &crate::config::Config,
+    current: &SharedModelProvider,
+    model: &str,
+    auth_manager: Arc<AuthManager>,
+) -> Result<SharedModelProvider> {
+    let route = if let Some(route) = codex_model_provider_info::aidiy_model_provider(model) {
+        Some(route)
+    } else if codex_model_provider_info::split_aidiy_model(model)
+        .is_some_and(|(section, _)| section == "openai_oauth")
+    {
+        Some((
+            "openai".to_owned(),
+            config
+                .model_providers
+                .get("openai")
+                .cloned()
+                .ok_or_else(|| {
+                    CodexErr::InvalidRequest("OpenAI の接続設定が見つかりません。".into())
+                })?,
+        ))
+    } else {
+        None
+    };
+    let Some((id, info)) = route else {
+        return Ok(Arc::clone(current));
+    };
+    if config
+        .config_layer_stack
+        .required_model_provider()
+        .is_some_and(|required| required != id)
+    {
+        return Err(CodexErr::InvalidRequest(
+            "選択モデルは管理者指定の接続先と一致しません。".into(),
+        ));
+    }
+    if &info == current.info() {
+        return Ok(Arc::clone(current));
+    }
+    if current.runtime_auth().is_some()
+        || config
+            .features
+            .enabled(codex_features::Feature::RuntimeAgentInstances)
+    {
+        return Err(CodexErr::InvalidRequest(
+            "runtime 認証の会話では接続先を切り替えられません。".into(),
+        ));
+    }
+    // Command-backed auth is re-scoped by the provider factory and shared by command identity.
+    let credentials = (info.requires_openai_auth || info.auth.is_some()).then_some(auth_manager);
+    Ok(codex_model_provider::create_model_provider(
+        info,
+        credentials,
+    ))
+}
+
+fn validate_aidiy_provider(info: &ModelProviderInfo, model: &str) -> Result<()> {
+    let matches = if info.name == "AiDiy CLI"
+        || codex_model_provider_info::split_aidiy_cli_model(model).is_some()
+    {
+        false // CLI must never reach an HTTP or WebSocket endpoint.
+    } else if let Some((_, expected)) = codex_model_provider_info::aidiy_model_provider(model) {
+        &expected == info
+    } else if codex_model_provider_info::split_aidiy_model(model)
+        .is_some_and(|(section, _)| section == "openai_oauth")
+    {
+        info.is_openai() && info.requires_openai_auth
+    } else {
+        true
+    };
+    if matches {
+        Ok(())
+    } else {
+        Err(CodexErr::InvalidRequest(
+            "モデルの区分と接続先が一致しません。要求は送信していません。".into(),
+        ))
+    }
+}
+
 impl ModelClient {
     #[allow(clippy::too_many_arguments)]
     /// Creates a new session-scoped `ModelClient`.
@@ -652,6 +733,54 @@ impl ModelClient {
                 cyber_access_program::ApiKeyCyberAccessPrograms::UnsupportedProvider,
             required_cyber_access_programs: None,
         }
+    }
+
+    // AiDiy: provider changes never reuse connections, auth recovery, or sticky routing.
+    pub(crate) fn for_aidiy_model(
+        &self,
+        config: &crate::config::Config,
+        model: &str,
+        auth_manager: Arc<AuthManager>,
+    ) -> Result<Self> {
+        let provider = aidiy_provider_for_model(config, &self.state.provider, model, auth_manager)?;
+        if Arc::ptr_eq(&provider, &self.state.provider) {
+            return Ok(self.clone());
+        }
+        if self.required_cyber_access_programs.is_some() {
+            return Err(CodexErr::InvalidRequest(
+                "必須アクセスプログラムのある会話では接続先を切り替えられません。".into(),
+            ));
+        }
+        let state = &self.state;
+        let mut client = Self::new(
+            provider,
+            self.agent_identity_policy,
+            state.thread_id,
+            Arc::clone(&state.item_id_generator),
+            state.session_source.clone(),
+            state.originator.clone(),
+            state.model_verbosity,
+            state.content_item_kinds_enabled,
+            state.reasoning_effort_override_enabled,
+            state.enable_request_compression,
+            state.include_timing_metrics,
+            state.beta_features_header.clone(),
+            state.concurrent_reasoning_summaries_enabled,
+            state.output_token_replay_enabled,
+            state.attestation_provider.clone(),
+            self.http_client_factory.clone(),
+            state.workspace_routing.clone(),
+            self.request_contributors.clone(),
+        );
+        client.executed_tool_calls = self.executed_tool_calls.clone();
+        client.restored_history = self.restored_history;
+        client.event_sender = self.event_sender.clone();
+        // Do not copy provider-specific headers, access programs, or cache identifiers.
+        Ok(client)
+    }
+
+    pub(crate) fn provider_info(&self) -> &ModelProviderInfo {
+        self.state.provider.info()
     }
 
     pub(crate) fn with_executed_tool_calls(mut self, recorder: ExecutedToolCalls) -> Self {
@@ -1012,6 +1141,7 @@ impl ModelClient {
         effort: Option<ReasoningEffortConfig>,
         session_telemetry: &SessionTelemetry,
     ) -> Result<Vec<ApiMemorySummarizeOutput>> {
+        validate_aidiy_provider(self.state.provider.info(), &model_info.slug)?;
         if raw_memories.is_empty() {
             return Ok(Vec::new());
         }
@@ -1611,6 +1741,10 @@ impl Drop for ModelClientSession {
 }
 
 impl ModelClientSession {
+    pub(crate) fn uses_provider(&self, client: &ModelClient) -> bool {
+        self.client.state.provider.info() == client.state.provider.info()
+    }
+
     pub(crate) fn inference_tools_changed(&self, tools: &Arc<[ToolSpec]>) -> bool {
         let previous = self
             .client
@@ -1760,6 +1894,7 @@ impl ModelClientSession {
         {
             return Ok(());
         }
+        validate_aidiy_provider(self.client.state.provider.info(), &model_info.slug)?;
         let provider = Arc::clone(&self.client.state.provider);
         let auth_manager = provider.auth_manager();
         let mut auth_recovery = auth_manager
@@ -1985,6 +2120,7 @@ impl ResponsesHttpExecutor<'_> {
         responses_metadata: &CodexResponsesMetadata,
         inference_trace: &InferenceTraceContext,
     ) -> Result<ResponseStream> {
+        validate_aidiy_provider(self.client.state.provider.info(), &model_info.slug)?;
         let auth_manager = self.client.state.provider.auth_manager();
         let mut auth_recovery = auth_manager
             .as_ref()
@@ -2614,6 +2750,7 @@ impl ModelClientSession {
         if !self.client.responses_websocket_enabled() {
             return Ok(());
         }
+        validate_aidiy_provider(self.client.state.provider.info(), &model_info.slug)?;
         if self.is_websocket_prewarmed().await {
             return Ok(());
         }
@@ -2679,8 +2816,12 @@ impl ModelClientSession {
     ) -> Result<ResponseStream> {
         // AiDiy: 圧縮などの補助要求から CLI 名を API へ送らない。
         if codex_model_provider_info::split_aidiy_cli_model(&model_info.slug).is_some() {
-            return Err(CodexErr::InvalidRequest("CLI モデルは通常ターンの委譲経路で実行してください。/compact は未対応です。".to_string()));
+            return Err(CodexErr::InvalidRequest(
+                "CLI モデルは通常ターンの委譲経路で実行してください。/compact は未対応です。"
+                    .to_string(),
+            ));
         }
+        validate_aidiy_provider(self.client.state.provider.info(), &model_info.slug)?;
         let wire_api = self.client.state.provider.info().wire_api;
         match wire_api {
             // AiDiy: Chat Completions / Anthropic have no WebSocket transport; they use the HTTP path.

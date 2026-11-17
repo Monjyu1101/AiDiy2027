@@ -97,7 +97,8 @@ pub(super) async fn maybe_start(
             || state.shutting_down
             || state.async_compaction.last_attempt.as_ref() == Some(&attempt)
             || state.history.annotated_items().is_empty()
-            || sess.services.model_client.auth_owner() != auth_owner
+            || codex_model_provider::request_auth_owner(turn_context.provider.as_ref())
+                != auth_owner
         {
             return;
         }
@@ -188,7 +189,8 @@ pub(crate) async fn wait_for_pending(
         if attempt.history_version != state.history.history_version()
             || attempt.model_slug != model.slug
             || attempt.compaction_hash != model.comp_hash
-            || attempt.auth_owner != sess.services.model_client.auth_owner()
+            || attempt.auth_owner
+                != codex_model_provider::request_auth_owner(step_context.turn.provider.as_ref())
         {
             return None;
         }

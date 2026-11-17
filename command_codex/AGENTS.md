@@ -35,7 +35,7 @@ OpenAI Codex（openai/codex、Apache-2.0）の Rust ワークスペース `codex
 - Chat Completions（`wire_api = "chat"`、upstream では削除済み）と Anthropic Messages は AiDiy が追加した接続方式。実装は `codex-rs/codex-api/src/endpoint/chat_completions.rs` / `anthropic_messages.rs`。Codex が組み立てた Responses 形式の要求を変換し、ストリームを `ResponseEvent` に戻すので、core の再試行・認証・ツール実行はそのまま使う。
 - ツールは function をそのまま、custom（`apply_patch` など）を文字列 `input` 1つの function に、namespace 内を `<namespace>__<name>` にして送り、呼び出しを元のツールに戻す。Web 検索などの組み込みツールは送らない。Anthropic は `input_schema` 最上位の `oneOf` / `anyOf` / `allOf` を受け付けないため、各候補の `properties` を1つの object にまとめる（`required` は `allOf` の分だけ残す）。
 - aidiy_codex の設定は実行ファイルの隣の `~/.aidiy/bin/aidiy_codex_settings.json` の1ファイルにまとめる。項目は `aidiy_root`（AiDiy の場所。キーとモデル一覧を読む）と `client_version`（送る版番号）。`_compile.py` が配置時に無い項目だけを書き足し、手修正した値・他の項目は上書きしない（JSON として読めなければ変更しない）。キーそのものは `~/.aidiy/bin` にコピーしない。
-- `/model` は現在の API 接続先のモデルに加え、Diag の外部 CLI 区分を表示する。API で開始した会話から CLI への切り替えと、CLI 間の切り替えに対応。CLI で開始した会話から API へ移る場合は API モデルを指定して新しい会話を開始する。
+- `/model` の AiDiy 区分付きモデルは、API / OAuth / 外部 CLI 間で同じ会話のまま切り替える。接続先・認証・プロトコルを区分から一体で解決し、変更時に接続・WebSocket・sticky routing を再作成する。第三者 API へ OpenAI の認証を引き継がない。圧縮・prewarm も選択区分に合わせ、送信直前の区分不一致は送信せずエラーにする。管理者の必須 provider と矛盾する変更、および runtime 認証セッションの provider 変更は拒否する。
 
 ## メタハーネス
 

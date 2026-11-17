@@ -256,8 +256,20 @@ pub(crate) async fn run_turn(
     // Record results from hooks that finished after the previous turn before this turn's user prompt.
     drain_async_hook_results(&sess, &turn_context, /*before_user_prompt*/ true).await;
 
-    let mut client_session =
-        prewarmed_client_session.unwrap_or_else(|| sess.services.model_client.new_session());
+    let routed_client = sess.services.model_client.for_aidiy_model(
+        &turn_context.config,
+        &model_info.slug,
+        Arc::clone(&sess.services.auth_manager),
+    )?;
+    // A prewarm belongs to the startup provider; never carry it across a route change.
+    let mut client_session = if turn_context.config.model.as_deref()
+        == Some(model_info.slug.as_str())
+        && turn_context.provider.info() == sess.services.model_client.provider_info()
+    {
+        prewarmed_client_session.unwrap_or_else(|| routed_client.new_session())
+    } else {
+        routed_client.new_session()
+    };
     // TODO(ccunningham): Pre-turn compaction runs before context updates and the
     // new user message are recorded. Estimate pending incoming items (context
     // diffs/full reinjection + user input) and trigger compaction preemptively
@@ -3017,8 +3029,13 @@ async fn try_run_sampling_request(
             )
             .await;
         }
-        if turn_context.config.model_provider_id == codex_model_provider_info::AIDIY_CLI_PROVIDER {
-            return Err(CodexErr::InvalidRequest("CLI で開始した会話から API へ切り替える場合は、API モデルを指定して新しい会話を開始してください。".to_string()));
+        let selected_client = sess.services.model_client.for_aidiy_model(
+            &turn_context.config,
+            &step_context.settings.model_info.slug,
+            Arc::clone(&sess.services.auth_manager),
+        )?;
+        if !client_session.uses_provider(&selected_client) {
+            *client_session = selected_client.new_session();
         }
         client_session
             .stream(

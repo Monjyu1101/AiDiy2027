@@ -27,6 +27,7 @@ CLI 本体 `codex` を cargo でビルドします。同梱元の LICENSE / NOTI
   Linux / macOS は同梱ソースから本体と一緒にコンパイルします。
   プロジェクトの外に置くため、git clone やフォルダのコピーの影響を受けません。
   release（既定）は thin LTO のため時間がかかります。動作確認だけなら `--debug` を使います。
+- 直接実行のビルド確認は [y]/n（Enter で開始）。全体 `_setup.py` のコンパイル選択は y/[n]（Enter でスキップ）のままです。
 - 並列ジョブ数は Cargo の自動判定に任せます。制限したいときだけ `--jobs N` を指定します。
 - `--detach` は独立プロセスで開始してすぐ戻ります（呼び出し元の Diag を閉じても続行）。
   状態は `~/.aidiy/cache/codex/aidiy_codex_compile.json`、ログは同じフォルダの `aidiy_codex_compile.log` に残ります。
@@ -34,7 +35,7 @@ CLI 本体 `codex` を cargo でビルドします。同梱元の LICENSE / NOTI
   （再コンパイルは差分だけで済みます）。
 
 使い方:
-    python command_codex/_compile.py            # 確認後に release ビルド
+    python command_codex/_compile.py            # [y]/n 確認後に release ビルド（Enter で開始）
     python command_codex/_compile.py --debug    # 開発用（速いが大きい）
     python command_codex/_compile.py --check    # 前提確認だけ（ビルドしない）
     python command_codex/_compile.py --yes      # 確認なしで実行
@@ -127,7 +128,8 @@ def ask_yes_no(prompt, default="n") -> bool:
     try:
         answer = input(f"\n{prompt} ({bracket}): ").strip().lower()
     except EOFError:
-        answer = ""
+        # 入力端末が閉じた場合は Enter と区別し、無人で導入を開始しない。
+        return False
     if not answer:
         return default.lower() == "y"
     return answer.startswith("y")
@@ -758,7 +760,7 @@ def main():
         sys.exit(0 if env is not None else 1)
 
     profile = "debug" if args.debug else "release"
-    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（不足する Rust・Windows LLVM の公式導入と依存取得を含みます。初回は数十分かかります）"):
+    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（不足する Rust・Windows LLVM の公式導入と依存取得を含みます。初回は数十分かかります）", default="y"):
         print_warning("ビルドをキャンセルしました。")
         return
     if args.detach:

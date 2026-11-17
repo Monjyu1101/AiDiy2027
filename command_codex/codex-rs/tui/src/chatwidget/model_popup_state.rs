@@ -88,7 +88,9 @@ impl ChatWidget {
         self.bottom_pane.dismiss_view_by_id(MODEL_LOADING_VIEW_ID);
         if loading {
             match &result {
-                Ok(presets) => self.open_model_popup_with_presets(presets.clone()),
+                Ok(presets) => self.open_model_popup_with_presets(
+                    crate::model_catalog::ModelCatalog::with_aidiy_models(presets.clone()),
+                ),
                 Err(_) => self.add_error_message("Could not load models. Try /model again.".into()),
             }
             if self.no_modal_or_popup_active() {
