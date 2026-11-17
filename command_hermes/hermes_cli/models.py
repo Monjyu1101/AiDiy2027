@@ -88,7 +88,7 @@ OPENROUTER_MODELS: list[tuple[str, str]] = [
     ("anthropic/claude-sonnet-5.5",              ""),
     ("anthropic/claude-haiku-5.5",             ""),
     # OpenAI
-    ("openai/gpt-6.1-sol",                     ""),
+    ("openai/gpt-6.2-sol",                     ""),
     ("openai/gpt-6.1-sol-pro",                 ""),
     ("openai/gpt-6.1-terra",                   ""),
     ("openai/gpt-6.1-terra-pro",               ""),
@@ -161,7 +161,7 @@ VERCEL_AI_GATEWAY_MODELS: list[tuple[str, str]] = [
     ("anthropic/claude-sonnet-5.5",             ""),
     ("anthropic/claude-opus-5.5",             ""),
     ("anthropic/claude-haiku-5.5",           ""),
-    ("openai/gpt-6.1-sol",                     ""),
+    ("openai/gpt-6.2-sol",                     ""),
     ("openai/gpt-6.1-terra",                 ""),
     ("openai/gpt-6-luna",                    ""),
     ("google/gemini-3.1-pro-preview",        ""),
@@ -269,7 +269,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "anthropic/claude-sonnet-5.5",
         "anthropic/claude-haiku-5.5",
         # OpenAI
-        "openai/gpt-6.1-sol",
+        "openai/gpt-6.2-sol",
         "openai/gpt-6.1-sol-pro",
         "openai/gpt-6.1-terra",
         "openai/gpt-6.1-terra-pro",
@@ -314,8 +314,8 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     # with "openai-api" below — both ids normalize to the same route (models.py
     # treats them as equivalent aliases throughout).
     "openai": [
-        "gpt-6-astra",
-        "gpt-6.1-sol",
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
         "gpt-6.1-sol-pro",
         "gpt-6.1-terra",
         "gpt-6.1-terra-pro",
@@ -323,8 +323,8 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "gpt-6-luna-pro",
     ],
     "openai-api": [
-        "gpt-6-astra",
-        "gpt-6.1-sol",
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
         "gpt-6.1-sol-pro",
         "gpt-6.1-terra",
         "gpt-6.1-terra-pro",
@@ -337,8 +337,8 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "copilot-acp",
     ],
     "copilot": [
-        "gpt-6-astra",
-        "gpt-6.1-sol",
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
         "gpt-6.1-terra",
         "gpt-6-luna",
         "claude-sonnet-5.5",
@@ -471,7 +471,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "moonshotai/Kimi-K2.5",
         "google/gemini-3.1-flash-lite-preview",
         "anthropic/claude-sonnet-5.5",
-        "openai/gpt-6.1-sol",
+        "openai/gpt-6.2-sol",
     ],
     # Synced against https://opencode.ai/docs/zen/ + live GET /zen/v1/models
     # (2026-08-20). Zen/Go are _LIVE_FIRST_PICKER_PROVIDERS, so this list is a
@@ -482,7 +482,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "kimi-k3",
         "kimi-k2.5",
         "kimi-k2.6",
-        "gpt-6.1-sol",
+        "gpt-6.2-sol",
         "gpt-6.1-terra",
         "gpt-6-luna",
         "gpt-5.5",
@@ -599,7 +599,7 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     "kilocode": [
         "anthropic/claude-opus-5.5",
         "anthropic/claude-sonnet-5.5",
-        "openai/gpt-6.1-sol",
+        "openai/gpt-6.2-sol",
         "google/gemini-3-pro-preview",
         "google/gemini-3-flash-preview",
     ],

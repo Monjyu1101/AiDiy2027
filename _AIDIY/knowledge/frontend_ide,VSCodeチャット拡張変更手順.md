@@ -84,7 +84,7 @@
 - Live のマイク・スピーカーは `frontend_web/public/icons/microphone.png` / `speaker.png` を `aidiy_live/media/` にコピーし、CSS のマスクで赤／水色に表示する。画像追加時は Live の `.vscodeignore` と `src/server.ts` のリソース許可一覧へ含め、配布ディレクトリだけで読み込めることを確認する。
 - Provider / モデル選択は VS Code 上部の Quick Pick ではなく、`frontend_ide/src/components/コード/コードパネル.vue` のチャットパネル内ダイアログで行う。候補は `chooseModel` / `modelCatalog` / `modelCatalogError`、確定値は `setModel` で Webview と実行層の間を受け渡す。
 - Discord の直接CLI用 Provider と API モデルは `scripts/model-catalog.py` から Hermes の picker を再利用する。外部 CLI のモデルは `_config/AiDiy_code_*.json` を読み、設定がないか `auto` のみなら対応する `scripts/cli_bat` の `MODEL` 値を読む。`claude-code` は `AiDiy_code_claude_cli.json` に対応し、`claude_sdk` は Hermes の外部 CLI Provider には含まれない。
-- Code は選択画面を開くたび `/core/AIコア/モデル情報/取得` の `available_models.code_models` を取得する。`aidiy_hermes` は `openai_oauth/gpt-6.1-sol` のような組み合わせID、`copilot_cli` はCLIのモデルIDをそのまま渡す。
+- Code は選択画面を開くたび `/core/AIコア/モデル情報/取得` の `available_models.code_models` を取得する。`aidiy_hermes` は `openai_oauth/gpt-6.2-sol` のような組み合わせID、`copilot_cli` はCLIのモデルIDをそのまま渡す。
 - 外部 CLI Provider のモデルが `auto` の場合は `--model auto` を渡さず、各 CLI 自身の既定モデル選択へ任せる。明示モデルを選んだ場合は Hermes の外部 CLI 実行まで `--model <ID>` を渡す。
 - `antigravity-cli` は Hermes の外部 CLI Provider 一覧から取得する。`xai-oauth` は API Provider のカタログ入口に含め、`grok-4.6` を Hermes の curated model 一覧から取得する。
 - xAI OAuth の初回認証は静的なワンショット実行中ではなく、拡張の「対話 CLI」から `/model` で `xai-oauth` を選ぶか、`hermes auth add xai-oauth` を実行する。
@@ -363,6 +363,6 @@ Code / LiveのVS Code版は、`host/src/workspace-folder.ts`で実在ローカ�
 
 ## オフラインCodeのエンジン選択
 
-モデル設定はエンジン別に保存しない。オンラインの `aidiy_code_model.json` と同じ `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.1-sol" }` 形式で、オフラインは `aidiy_code_model_offline.json` 一件に最後の選択を保存する。`provider` はコードエンジン（`aidiy_hermes` / `aidiy_pi`）、`model` は両者とも「プロバイダ/モデル」形式（変更なしの `same` を除く）。Navi用Codeもこの保存先を共用する。エンジン固有の会話再開IDはモデル設定とは別の履歴情報であり、互いに渡さない。Navi自身の案内モデルも `aidiy_navi_model.json` 一件に最後の選択を保存する。
+モデル設定はエンジン別に保存しない。オンラインの `aidiy_code_model.json` と同じ `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.2-sol" }` 形式で、オフラインは `aidiy_code_model_offline.json` 一件に最後の選択を保存する。`provider` はコードエンジン（`aidiy_hermes` / `aidiy_pi`）、`model` は両者とも「プロバイダ/モデル」形式（変更なしの `same` を除く）。Navi用Codeもこの保存先を共用する。エンジン固有の会話再開IDはモデル設定とは別の履歴情報であり、互いに渡さない。Navi自身の案内モデルも `aidiy_navi_model.json` 一件に最後の選択を保存する。
 
 VS Code拡張・単独起動・IDE・Navi用Codeは `aidiy_hermes` / `aidiy_pi` を同じモデル選択画面から選ぶ。候補・保存値の復元は `aidiy_code/src/offline.ts`、実行とPiのJSONイベント読取は `src/runner.ts` を使う。履歴の `HermesセッションID` / `PiセッションID` は分離し、エンジンを変更しても別エンジンのIDを渡さない。Piの配置元は拡張の `aidiy-installation.json` を優先する。Navi自身の案内・再評価は読取専用経路を維持する。

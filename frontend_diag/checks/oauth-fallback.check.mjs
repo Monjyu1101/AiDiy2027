@@ -13,10 +13,10 @@ import {testKey} from '../diag/モデル情報/key_status.mjs';
 import {modelsInfo,writeModelsInfo} from '../diag/モデル情報/models_info.mjs';
 import {COPILOT_FALLBACK_MODELS,oauthModelFallback} from '../diag/モデル情報/model_fallbacks.mjs';
 
-const expected=['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna'];
+const expected=['gpt-6.2-astra','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna'];
 const provider={id:'openai_oauth',名前:'OpenAI OAuth',設定済み:true};
 const oauthReader=()=>JSON.stringify({tokens:{access_token:'fixture-token'}});
-const configReader=()=>JSON.stringify({CHAT_AI_NAME:'openai_oauth',CHAT_OPENAI_MODEL:'gpt-6.1-sol'});
+const configReader=()=>JSON.stringify({CHAT_AI_NAME:'openai_oauth',CHAT_OPENAI_MODEL:'gpt-6.2-sol'});
 const inspect=async fetch=>testKey('openai_oauth',{run:async()=>({data:await probe('openai_oauth',{
   oauthReader,reader:()=> '{}',codexLocalReader:()=>'',fetch})})});
 
@@ -86,7 +86,7 @@ test('saved OAuth fallback precedes local, suppresses duplicate config fallback 
     // ログアウト後は保存済みOAuth候補を再利用しない。一般config補完は未検証の1候補だけ。
     await writeModelsInfo([{...provider,設定済み:false}],{},options);
     chat=await load();assert.deepEqual(Object.keys(chat),['openai_oauth','local_chat']);
-    assert.deepEqual(chat.openai_oauth.models,{'gpt-6.1-sol':'仮設定（未検証） - gpt-6.1-sol'});
+    assert.deepEqual(chat.openai_oauth.models,{'gpt-6.2-sol':'仮設定（未検証） - gpt-6.2-sol'});
     await writeModelsInfo([{...provider,設定済み:false}],{},{...options,configReader:()=> '{}'});
     assert.deepEqual(await load(),{local_chat:localBefore});
   }finally{await rm(directory,{recursive:true,force:true});}

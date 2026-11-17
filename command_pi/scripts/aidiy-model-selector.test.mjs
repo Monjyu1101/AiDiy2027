@@ -5,7 +5,7 @@ const { ModelSelectorComponent } = await import('../packages/coding-agent/src/mo
 const { initTheme } = await import('../packages/coding-agent/src/modes/interactive/theme/theme.ts');
 initTheme('dark');
 const model = (provider, id) => ({ provider, id, name: id });
-const models = [model('openai_oauth', 'z'), model('freeai', 'z'), model('openai_oauth', 'gpt-6.1-sol'), model('freeai', 'a')];
+const models = [model('openai_oauth', 'z'), model('freeai', 'z'), model('openai_oauth', 'gpt-6.2-sol'), model('freeai', 'a')];
 const keys = items => items.map(item => `${item.provider}/${item.id}`);
 function selector(scoped = []) {
  const runtime = {
@@ -16,14 +16,14 @@ function selector(scoped = []) {
  };
  return new ModelSelectorComponent({ requestRender() {} }, models[0], runtime, scoped, () => {}, () => {}, undefined, () => {}, models[2]);
 }
-const expected = ['freeai/a', 'freeai/z', 'openai_oauth/gpt-6.1-sol', 'openai_oauth/z'];
+const expected = ['freeai/a', 'freeai/z', 'openai_oauth/gpt-6.2-sol', 'openai_oauth/z'];
 test('all list sorts combined names without current/default promotion and renders provider/model', () => {
  const component = selector();
  try {
   assert.deepEqual(keys(component.filteredModels), expected);
   assert.equal(component.filteredModels[component.selectedIndex].model, models[0]);
   const text = component.render(100).join('\n').replace(/\x1b\[[0-9;]*m/g, '');
-  assert.match(text, /openai_oauth\/gpt-6\.1-sol/);
+  assert.match(text, /openai_oauth\/gpt-6\.2-sol/);
   assert.doesNotMatch(text, /\[openai_oauth\]/);
  } finally { component.dispose(); }
 });
@@ -32,7 +32,7 @@ test('scoped list uses same order; switching, filtering and refresh keep model i
  try {
   assert.deepEqual(keys(component.filteredModels), expected);
   component.setScope('all');
-  component.filterModels('openai_oauth/gpt-6.1-sol');
+  component.filterModels('openai_oauth/gpt-6.2-sol');
   assert.equal(component.filteredModels[0].model, models[2]);
   component.filterModels('');
   assert.deepEqual(keys(component.filteredModels), expected);

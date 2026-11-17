@@ -109,12 +109,12 @@ test('placeholder OpenAI organization is not sent',async()=>{
 });
 // 以下は本体（conf_model.py の get_chat_models / _get_ollama_local_models）との一致。
 test('display lists drop retired OpenAI models like get_chat_models, but the join source keeps them',async()=>{
- const openai=await probe('openai',{now,reader:reader({openai_key_id:'fixture-key'}),fetch:async()=>({data:[{id:'gpt-6-sol',created:created-day},{id:'gpt-6.1-sol',created:created-day},{id:'gpt-6-sol-mini',created:created-day}]})});
- assert.deepEqual(openai.モデル,['gpt-6.1-sol']);
- const 公開モデル=(await publicCatalog({now,fetch:async()=>({data:[{id:'openai/gpt-6-sol',created},{id:'openai/gpt-6.1-sol',created},{id:'~openai/gpt-sol-latest',created}]})})).公開モデル;
+ const openai=await probe('openai',{now,reader:reader({openai_key_id:'fixture-key'}),fetch:async()=>({data:[{id:'gpt-6-sol',created:created-day},{id:'gpt-6.2-sol',created:created-day},{id:'gpt-6-sol-mini',created:created-day}]})});
+ assert.deepEqual(openai.モデル,['gpt-6.2-sol']);
+ const 公開モデル=(await publicCatalog({now,fetch:async()=>({data:[{id:'openai/gpt-6-sol',created},{id:'openai/gpt-6.2-sol',created},{id:'~openai/gpt-sol-latest',created}]})})).公開モデル;
  assert.ok(Object.hasOwn(公開モデル,'openai/gpt-6-sol'),'join source keeps retired models');assert.ok(Object.hasOwn(公開モデル,'~openai/gpt-sol-latest'),'aliases kept like the main app');
  const openrt_chat=await probe('openrt_chat',{...routerAuth,cache:{公開状態:'取得済',公開モデル}});
- assert.deepEqual(openrt_chat.モデル,['openai/gpt-6.1-sol','~openai/gpt-sol-latest']);
+ assert.deepEqual(openrt_chat.モデル,['openai/gpt-6.2-sol','~openai/gpt-sol-latest']);
 });
 test('Ollama lists local models like ollama list (newest first), without keys, and reports a stopped server as NG',async()=>{
  const calls=[];
@@ -130,7 +130,7 @@ test('backend_local reports the fixed candidates (same as CHAT_LOCAL_MODELS) as 
  const row=(await status({reader:reader({})})).項目.find(item=>item.id==='local');assert.equal(row.テスト可能,true);assert.equal(row.ローカル,true);assert.equal(row.キー名,'固定候補');
 });
 test('live candidates carry creation dates: OpenAI from the API, Gemini from the OpenRouter join',async()=>{
- const openai=await probe('openai',{now,reader:reader({openai_key_id:'fixture-key'}),fetch:async()=>({data:[{id:'gpt-realtime-2',created},{id:'gpt-6.1-sol',created}]})});
+ const openai=await probe('openai',{now,reader:reader({openai_key_id:'fixture-key'}),fetch:async()=>({data:[{id:'gpt-realtime-2',created},{id:'gpt-6.2-sol',created}]})});
  assert.deepEqual(openai.ライブ候補,['gpt-realtime-2']);assert.match(openai.ライブ候補作成日['gpt-realtime-2'],/^\d{4}\/\d{2}\/\d{2}$/);
  const gemini=await probe('gemini',{now,reader:reader({gemini_key_id:'fixture-key'}),cache:{公開状態:'取得済',公開モデル:{'google/live-dated':{作成日:'2026/09/01'},'google/chat':{作成日:'2026/09/02'}}},fetch:async()=>({models:[{name:'models/live-dated',supportedGenerationMethods:['bidiGenerateContent']},{name:'models/live-undated',supportedGenerationMethods:['bidiGenerateContent']},{name:'models/chat',supportedGenerationMethods:['generateContent']}]})});
  assert.deepEqual(gemini.ライブ候補,['live-dated','live-undated']);assert.deepEqual(gemini.ライブ候補作成日,{'live-dated':'2026/09/01','live-undated':null});

@@ -144,7 +144,7 @@
         "aidiyHermes.model": {
           "type": "string",
           "default": "",
-          "description": "選択したコードAIのモデル。aidiy_hermes は openai_oauth/gpt-6.1-sol のように指定。"
+          "description": "選択したコードAIのモデル。aidiy_hermes は openai_oauth/gpt-6.2-sol のように指定。"
         }
       }
     }

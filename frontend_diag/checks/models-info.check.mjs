@@ -102,8 +102,8 @@ test('Copilot installed fallback also retains versioned Claude candidates when o
   'claude-opus-5.5':'2026/09/21 - claude-opus-5.5',
   'claude-sonnet-5.5':'2026/09/28 - claude-sonnet-5.5',
   'claude-haiku-5.5':'2026/10/07 - claude-haiku-5.5',
-  'gpt-6-astra':'2026/08/28 - gpt-6-astra',
-  'gpt-6.1-sol':'2026/09/28 - gpt-6.1-sol',
+  'gpt-6.2-astra':'yyyy/mm/dd - gpt-6.2-astra',
+  'gpt-6.2-sol':'yyyy/mm/dd - gpt-6.2-sol',
   'gpt-6.1-terra':'yyyy/mm/dd - gpt-6.1-terra',
   'gpt-6-luna':'2026/09/15 - gpt-6-luna',
  };
@@ -256,35 +256,35 @@ test('Codex excludes realtime; Hermes keeps acquired OAuth models with a provide
 });
 
 test('native CLIs keep the newest version per family and exclude Hermes-only context aliases',async()=>{
- const ids=['gpt-5.6-sol','gpt-6.1-sol','gpt-5.6-luna','gpt-6-luna','gpt-6.1-terra','gpt-6.9-pro','gpt-6.10-pro','gpt-5.6-sol-900k','gpt-6.1-sol-900k','gpt-5.4','gpt-5.5','gpt-5.4-mini','gpt-realtime-2'];
+ const ids=['gpt-5.6-sol','gpt-6.2-sol','gpt-5.6-luna','gpt-6-luna','gpt-6.1-terra','gpt-6.9-pro','gpt-6.10-pro','gpt-5.6-sol-900k','gpt-6.2-sol-900k','gpt-5.4','gpt-5.5','gpt-5.4-mini','gpt-realtime-2'];
  for(const id of ['openai','openai_oauth']){
   const info=await modelsInfo({id,名前:id},ok({モデル詳細:ids.map(model_id=>({model_id}))}),{now});
-  assert.deepEqual(Object.keys(info.code.codex_cli.models),['gpt-6.1-sol','gpt-6-luna','gpt-6.1-terra','gpt-6.10-pro','gpt-5.5','gpt-5.4-mini']);
+  assert.deepEqual(Object.keys(info.code.codex_cli.models),['gpt-6.2-sol','gpt-6-luna','gpt-6.1-terra','gpt-6.10-pro','gpt-5.5','gpt-5.4-mini']);
   assert.deepEqual(info.code.copilot_cli,info.code.codex_cli);
   assert.deepEqual(info.chat.モデル.map(row=>row.model_id),ids);
-  if(id==='openai_oauth')assert.ok(!Object.hasOwn(info.code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol-900k'));
+  if(id==='openai_oauth')assert.ok(!Object.hasOwn(info.code.aidiy_hermes.models,'openai_oauth/gpt-6.2-sol-900k'));
  }
 });
 
 test('merging legacy provider files removes Hermes aliases from native CLI and derived catalogs',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-native-context-'));
- const native={models:{'gpt-6.1-sol':'base','gpt-6.1-sol-900k':'Hermes alias','gpt-6-luna-900k':'Hermes alias','GPT-6.1-TERRA-900K':'Hermes alias'}};
+ const native={models:{'gpt-6.2-sol':'base','gpt-6.2-sol-900k':'Hermes alias','gpt-6-luna-900k':'Hermes alias','GPT-6.1-TERRA-900K':'Hermes alias'}};
  try{
-  await writeFile(path.join(directory,'openai_oauth_models_info.json'),JSON.stringify({プロバイダ:'openai_oauth',code:{codex_cli:native,copilot_cli:native,aidiy_hermes:{models:{'openai_oauth/gpt-6.1-sol':'Hermes OAuth','openai_oauth/gpt-6.1-sol-900k':'旧別名'}}}}));
+  await writeFile(path.join(directory,'openai_oauth_models_info.json'),JSON.stringify({プロバイダ:'openai_oauth',code:{codex_cli:native,copilot_cli:native,aidiy_hermes:{models:{'openai_oauth/gpt-6.2-sol':'Hermes OAuth','openai_oauth/gpt-6.2-sol-900k':'旧別名'}}}}));
   await writeModelsInfo([],{}, {directory,now});
   for(const file of ['code_models_info.json','navi_models_info.json','prediction_models_info.json','hermes_models_info.json']){
    const data=JSON.parse(await readFile(path.join(directory,file),'utf8'));
    for(const provider of ['codex_cli','copilot_cli']){
-    assert.ok(Object.hasOwn(data[provider].models,'gpt-6.1-sol'),file+' '+provider);
+    assert.ok(Object.hasOwn(data[provider].models,'gpt-6.2-sol'),file+' '+provider);
     assert.ok(Object.keys(data[provider].models).every(id=>!/-900k$/i.test(id)),file+' '+provider);
    }
   }
   const code=JSON.parse(await readFile(path.join(directory,'code_models_info.json'),'utf8'));
-  assert.ok(Object.hasOwn(code.aidiy_hermes.models,'openai_oauth/gpt-6.1-sol'));
+  assert.ok(Object.hasOwn(code.aidiy_hermes.models,'openai_oauth/gpt-6.2-sol'));
   assert.doesNotMatch(JSON.stringify(code), /-900k/i);
   assert.ok(Object.keys(code.opencode_cli.models).every(id=>!/-900k$/i.test(id)));
   const hermes=JSON.parse(await readFile(path.join(directory,'hermes_models_info.json'),'utf8'));
-  assert.deepEqual(Object.keys(hermes.openai_oauth.models),['gpt-6.1-sol']);
+  assert.deepEqual(Object.keys(hermes.openai_oauth.models),['gpt-6.2-sol']);
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -295,12 +295,12 @@ test('combined files merge providers and model keys, retain dated labels and pre
  try{
   await writeModelsInfo([provider('claude'),provider('openai')],{
    claude:ok({モデル詳細:[{model_id:'claude-haiku-5-5',作成日:'2026/10/07'}]}),
-   openai:ok({モデル詳細:[{model_id:'gpt-6.1-sol',作成日:'2026/09/28'},{model_id:'gpt-6-luna',作成日:'2026/09/15'}],ライブ候補:['gpt-realtime-2']}),
+   openai:ok({モデル詳細:[{model_id:'gpt-6.2-sol',作成日:'2026/09/28'},{model_id:'gpt-6-luna',作成日:'2026/09/15'}],ライブ候補:['gpt-realtime-2']}),
   },{directory,now});
-  await writeModelsInfo([provider('openai_oauth')],{openai_oauth:ok({モデル詳細:[{model_id:'gpt-6.1-sol'},{model_id:'gpt-6.1-sol-900k'},{model_id:'gpt-6.1-terra',作成日:'2026/10/01'}]})},{directory,now});
+  await writeModelsInfo([provider('openai_oauth')],{openai_oauth:ok({モデル詳細:[{model_id:'gpt-6.2-sol'},{model_id:'gpt-6.2-sol-900k'},{model_id:'gpt-6.1-terra',作成日:'2026/10/01'}]})},{directory,now});
   const code=await load('code');
-  assert.deepEqual(Object.keys(code.codex_cli.models).sort(),['gpt-6.1-terra','gpt-6-luna','gpt-6.1-sol'].sort());
-  assert.equal(code.codex_cli.models['gpt-6.1-sol'],'2026/09/28 - gpt-6.1-sol');
+  assert.deepEqual(Object.keys(code.codex_cli.models).sort(),['gpt-6.1-terra','gpt-6-luna','gpt-6.2-sol'].sort());
+  assert.equal(code.codex_cli.models['gpt-6.2-sol'],'2026/09/28 - gpt-6.2-sol');
   assert.equal(code.copilot_cli.models['claude-haiku-5.5'],'2026/10/07 - claude-haiku-5.5');
   assert.equal(Object.keys(code.copilot_cli.models).length,4);
   assert.deepEqual(Object.keys(code.codex_cli),['models']);
@@ -316,8 +316,8 @@ test('combined files merge providers and model keys, retain dated labels and pre
   assert.deepEqual(codeKeys.slice(0,2),['claude_sdk','claude_cli']);
   assert.equal(codeKeys.at(-1),'antigravity_cli');
   assert.ok(codeKeys.indexOf('codex_cli')<codeKeys.indexOf('antigravity_cli'));
-  await writeModelsInfo([provider('openai_oauth')],{openai_oauth:ok({モデル詳細:[{model_id:'gpt-6.1-sol',作成日:'2026/10/15'}]})},{directory,now});
-  assert.equal((await load('code')).codex_cli.models['gpt-6.1-sol'],'2026/10/15 - gpt-6.1-sol');
+  await writeModelsInfo([provider('openai_oauth')],{openai_oauth:ok({モデル詳細:[{model_id:'gpt-6.2-sol',作成日:'2026/10/15'}]})},{directory,now});
+  assert.equal((await load('code')).codex_cli.models['gpt-6.2-sol'],'2026/10/15 - gpt-6.2-sol');
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 

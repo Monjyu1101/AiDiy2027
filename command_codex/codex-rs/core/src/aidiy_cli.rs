@@ -1,5 +1,5 @@
 //! AiDiy: Pi と共通の CodeAI アダプターへ委譲し、進捗・回答を通常イベントへ戻す。
-//! 子の失敗は再試行しない。会話全文を毎回渡し、子の別セッションを resume しない。
+//! 子の失敗は再試行しない。正常終了したchatのJSON構文不正だけ1回形式修正する。会話全文を毎回渡し、子の別セッションを resume しない。
 
 #[path = "aidiy_cli_json.rs"]
 mod json_wrapper;
@@ -252,11 +252,32 @@ pub(crate) async fn stream(
     let cancel = consumer_dropped.clone();
     let (tx, rx_event) = mpsc::channel(32);
     tokio::spawn(async move {
-        let outcome = tokio::select! {
-            biased;
-            _ = cancel.cancelled() => Err(CodexErr::TurnAborted),
-            result = run_child(&mut child, &request, &tx, codec.as_ref(), &python, &root) => result,
-        };
+        let response_id = format!("aidiy-cli-{}", uuid::Uuid::new_v4());
+        let outcome = async {
+            let mut request = request;
+            for attempt in 0..2 {
+                let repair = tokio::select! {
+                    biased;
+                    _ = cancel.cancelled() => return Err(CodexErr::TurnAborted),
+                    result = run_child(&mut child, &request, &tx, codec.as_ref(), &python, &root, &response_id, attempt == 0) => result?,
+                };
+                let Some(text) = repair else { return Ok(()); };
+                if attempt == 1 {
+                    return Err(invalid("CLI chat の JSON 形式修正に失敗しました。"));
+                }
+                request = json_wrapper::repair_request(&request, &text)
+                    .map_err(|_| invalid("CLI chat の形式修正入力を作成できません。"))?;
+                if request.len() > MAX_BYTES {
+                    return Err(invalid("CLI chat の形式修正入力が大きすぎます。"));
+                }
+                if cancel.is_cancelled() {
+                    return Err(CodexErr::TurnAborted);
+                }
+                child = command.spawn()
+                    .map_err(|_| invalid("CLI chat の形式修正を開始できません。"))?;
+            }
+            unreachable!("bounded format repair loop")
+        }.await;
         if let Err(error) = outcome {
             stop_child(&mut child).await;
             let _ = tx.send(Err(error)).await;
@@ -388,7 +409,9 @@ async fn run_child(
     codec: Option<&codex_api::CliChatCodec>,
     python: &Path,
     root: &Path,
-) -> Result<()> {
+    response_id: &str,
+    emit_created: bool,
+) -> Result<Option<String>> {
     let mut stdin = child
         .stdin
         .take()
@@ -402,14 +425,15 @@ async fn run_child(
         .stdout
         .take()
         .ok_or_else(|| invalid("外部 CLI の出力パイプがありません。"))?;
-    let response_id = format!("aidiy-cli-{}", uuid::Uuid::new_v4());
-    send(
-        tx,
-        ResponseEvent::Created {
-            response_id: Some(response_id.clone()),
-        },
-    )
-    .await?;
+    if emit_created {
+        send(
+            tx,
+            ResponseEvent::Created {
+                response_id: Some(response_id.to_string()),
+            },
+        )
+        .await?;
+    }
     let mut buffer = [0u8; 8192];
     let mut pending = Vec::new();
     let mut answer = None;
@@ -457,10 +481,8 @@ async fn run_child(
                     .await?;
                 }
                 AdapterEvent::Result { ok: true, text, .. } if codec.is_some() => {
-                    let value = json_wrapper::extract_object(&text).map_err(invalid)?;
-                    let message = validate_chat_response(python, root, request, value).await?;
-                    validate_chat_message(&message)?;
-                    chat_answer = Some(message);
+                    // AiDiy: defer parsing until the adapter exits successfully.
+                    chat_answer = Some(text);
                 }
                 AdapterEvent::Result { ok: true, text, .. }
                     if codec.is_none() && !text.trim().is_empty() =>
@@ -485,13 +507,20 @@ async fn run_child(
         return Err(invalid("外部 CLI が正常終了しませんでした。"));
     }
     if let Some(codec) = codec {
-        let answer = chat_answer.ok_or_else(|| invalid("CLI chat の構造化応答がありません。"))?;
-        for event in codec.response(&answer, &response_id) {
+        let text = chat_answer.ok_or_else(|| invalid("CLI chat の構造化応答がありません。"))?;
+        let value = match json_wrapper::extract_object(&text) {
+            Ok(value) => value,
+            Err(_) if json_wrapper::repairable_syntax(&text) => return Ok(Some(text)),
+            Err(error) => return Err(invalid(error)),
+        };
+        let answer = validate_chat_response(python, root, request, value).await?;
+        validate_chat_message(&answer)?;
+        for event in codec.response(&answer, response_id) {
             if !matches!(event, ResponseEvent::Created { .. }) {
                 send(tx, event).await?;
             }
         }
-        return Ok(());
+        return Ok(None);
     }
     let answer = answer.ok_or_else(|| invalid("外部 CLI の最終回答を取得できませんでした。"))?;
     let id = format!("{response_id}-answer");
@@ -509,19 +538,62 @@ async fn run_child(
     send(
         tx,
         ResponseEvent::Completed {
-            response_id,
+            response_id: response_id.to_string(),
             token_usage: None,
             usage_metadata: None,
             reasoning_removals: None,
             end_turn: Some(true),
         },
     )
-    .await
+    .await?;
+    Ok(None)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // AiDiy: malformed engine JSON is repairable only after a successful child exit.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn chat_format_repair_waits_for_successful_process_exit() {
+        for (exit_code, repairable) in [(0, true), (1, false)] {
+            let mut child = Command::new("sh")
+                .arg("-c")
+                .arg(format!("cat >/dev/null; printf '%s\\n' '{{\"type\":\"result\",\"ok\":true,\"text\":\"bad JSON\"}}'; exit {exit_code}"))
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped())
+                .kill_on_drop(true)
+                .spawn()
+                .unwrap();
+            let (_, codec) = codex_api::CliChatCodec::request(&json!({"input":[],"tools":[]}));
+            let (tx, mut rx) = mpsc::channel(32);
+            let result = run_child(
+                &mut child,
+                b"{}",
+                &tx,
+                Some(&codec),
+                Path::new("unused"),
+                Path::new("unused"),
+                "repair-test",
+                true,
+            )
+            .await;
+            if repairable {
+                assert_eq!(result.unwrap(), Some("bad JSON".to_string()));
+            } else {
+                assert!(result.is_err());
+            }
+            assert!(matches!(
+                rx.try_recv().unwrap().unwrap(),
+                ResponseEvent::Created { .. }
+            ));
+            assert!(
+                rx.try_recv().is_err(),
+                "invalid output must not emit tools or completion"
+            );
+        }
+    }
 
     #[test]
     fn chat_history_keeps_calls_and_results() {

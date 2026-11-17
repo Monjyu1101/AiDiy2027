@@ -18,19 +18,19 @@ TOOL = {'type': 'function', 'function': {'name': 'read', 'parameters': {
     'type': 'object', 'properties': {'path': {'type': 'string'}},
     'required': ['path'], 'additionalProperties': False}}}
 def request():
-    return {'cli_mode':'chat', 'provider':'copilot_cli', 'model':'gpt-6.1-sol',
+    return {'cli_mode':'chat', 'provider':'copilot_cli', 'model':'gpt-6.2-sol',
             'project':str(ROOT), 'mode':'normal', 'messages':[{'role':'user','content':'おはよう'}], 'tools':[TOOL]}
 
 class CopilotStdioTests(unittest.IsolatedAsyncioTestCase):
     def test_command_never_uses_sdk_or_child_tools_or_resume(self):
         with patch.object(copilot.shutil, 'which', return_value='/bin/copilot'):
-            command = copilot.command('gpt-6.1-sol')
+            command = copilot.command('gpt-6.2-sol')
         self.assertEqual(command[0], '/bin/copilot')
         self.assertIn('--excluded-tools=builtin:*,mcp:*,custom:*', command)
         self.assertIn('--deny-tool=shell,read,write,url,memory', command)
         self.assertIn('--no-custom-instructions', command)
         self.assertIn('--sync-session=off', command)
-        self.assertEqual(command[-2:], ['--model','gpt-6.1-sol'])
+        self.assertEqual(command[-2:], ['--model','gpt-6.2-sol'])
         for bad in ('--allow-all', '--allow-all-tools', '--resume','--continue','--trust-folder'):
             self.assertNotIn(bad, command)
 
@@ -45,7 +45,7 @@ class CopilotStdioTests(unittest.IsolatedAsyncioTestCase):
         resolver = Mock(return_value=['node.exe', 'copilot/npm-loader.js'])
         module = SimpleNamespace(CodeAI=SimpleNamespace(_npmシム直接実行に解決=resolver))
         with patch.dict(sys.modules, {'AIコア.AIコード_cli': module}), patch.object(copilot.shutil, 'which', return_value='C:/bin/copilot.cmd'):
-            args = copilot.command('gpt-6.1-sol')
+            args = copilot.command('gpt-6.2-sol')
         self.assertEqual(args[:2], ['node.exe', 'copilot/npm-loader.js'])
         self.assertNotIn('cmd.exe', args)
         resolver.assert_called_once_with(None, 'C:/bin/copilot.cmd')

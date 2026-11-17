@@ -23,15 +23,10 @@ def filter_retired_models(model_ids: List[str]) -> List[str]:
 
 
 DEFAULT_CODEX_MODELS: List[str] = [
-    # GPT-6 Astra is the current frontier Codex slug and sorts ahead of the
-    # Sol/Terra/Luna tier in the backend catalog, so keep it first in the curated
-    # offline fallback too. Live discovery (_fetch_models_from_api) overrides
-    # this ordering with the backend's own priority ranking when reachable.
-    "gpt-6-astra",
-    # GPT-6.1 Sol / GPT-6.1 Terra / GPT-6 Luna. The public API exposes "-pro"
-    # variants, but the ChatGPT Codex OAuth backend rejects them with HTTP 400,
-    # so the curated offline fallback must not surface those dead choices.
-    "gpt-6.1-sol",
+    # Current AiDiy curated IDs. Live discovery overrides this ordering.
+    "gpt-6.2-astra",
+    # Do not synthesize unverified "-pro" variants for ChatGPT OAuth.
+    "gpt-6.2-sol",
     "gpt-6.1-terra",
     "gpt-6-luna",
     # gpt-5.5 / gpt-5.4 / gpt-5.4-mini / gpt-5.3-codex / gpt-5.3-codex-spark
@@ -53,8 +48,8 @@ DEFAULT_CODEX_MODELS: List[str] = [
 ]
 
 _FORWARD_COMPAT_TEMPLATE_MODELS: List[tuple[str, tuple[str, ...]]] = [
-    ("gpt-6-astra", ("gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna")),
-    ("gpt-6.1-sol", ("gpt-5.5", "gpt-5.4")),
+    ("gpt-6.2-astra", ("gpt-6-astra", "gpt-6.2-sol", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna")),
+    ("gpt-6.2-sol", ("gpt-6.1-sol", "gpt-5.5", "gpt-5.4")),
     ("gpt-6.1-terra", ("gpt-5.5", "gpt-5.4")),
     ("gpt-6-luna", ("gpt-5.5", "gpt-5.4")),
     # gpt-5.5 / gpt-5.4-mini / gpt-5.4 / gpt-5.3-codex-spark are below the

@@ -140,15 +140,15 @@ test('最後に確定したモデルをaidiy_navi_model.jsonへ保存し、開�
  const open=instance=>{const service=createNavigation(root,{state:()=>state,stateRoot,instance,defaultModel:async()=>({provider:'aidiy_hermes',model:'same'})});t.after(()=>service.close());return service;};
  const b=open('navi-2');
  assert.equal((await a.get()).selection.model,'same');assert.equal((await b.get()).selection.model,'same'); // 保存済みの値がない状態で両方を開く
- await a.saveModel({provider:'codex_cli',model:'gpt-6.1-sol'});
+ await a.saveModel({provider:'codex_cli',model:'gpt-6.2-sol'});
  assert.equal((await b.get()).selection.model,'same'); // 開いている窓Bは、窓Aの確定で変わらない
- assert.deepEqual((await open('navi-3').get()).selection,{provider:'codex_cli',model:'gpt-6.1-sol'}); // 次に開く窓Cは最後の値
+ assert.deepEqual((await open('navi-3').get()).selection,{provider:'codex_cli',model:'gpt-6.2-sol'}); // 次に開く窓Cは最後の値
  const file=join(dirname(stateRoot),'aidiy_navi_model.json');
- assert.deepEqual(JSON.parse(await readFile(file,'utf8')),{provider:'codex_cli',model:'gpt-6.1-sol'});
+ assert.deepEqual(JSON.parse(await readFile(file,'utf8')),{provider:'codex_cli',model:'gpt-6.2-sol'});
  assert.equal((await readdir(stateRoot,{recursive:true})).some(name=>String(name).endsWith('model.json')),false); // 窓別のmodel.jsonは作らない
  await b.saveModel({provider:'aidiy_hermes',model:'auto'}); // 最後に確定した窓の値が次回の初期値になる
  assert.deepEqual((await open('navi-4').get()).selection,{provider:'aidiy_hermes',model:'auto'});
- assert.equal((await a.get()).selection.model,'gpt-6.1-sol'); // Aは自分の確定値を保持
+ assert.equal((await a.get()).selection.model,'gpt-6.2-sol'); // Aは自分の確定値を保持
 });
 test('実行中のモデル保存拒否、現在の処理へ途中反映しない',async t=>{
  let release;const {service}=await fixture(t,()=>new Promise(r=>release=r));await service.start('目標');await assert.rejects(service.saveModel({provider:'codex_cli',model:'same'}));release({content:'invalid'});await finish(service);
@@ -168,10 +168,10 @@ test('複数Naviの同時実行・モデル・結果・評価・終了が独立�
 test('履歴を選んでも今のモデルと保存ファイルは変わらない（履歴に残っていたモデルへ切り替えない）',async t=>{
  const {service,stateRoot}=await fixture(t,async({prompt},root)=>respond(prompt,root));
  await service.start('目標A');const first=(await finish(service)).result;assert.equal(first.selection.model,'same');
- await service.fresh();await service.saveModel({provider:'codex_cli',model:'gpt-6.1-sol'});
+ await service.fresh();await service.saveModel({provider:'codex_cli',model:'gpt-6.2-sol'});
  await service.select(first.navigationId);
- const after=await service.get();assert.equal(after.result.goal,'目標A');assert.deepEqual(after.selection,{provider:'codex_cli',model:'gpt-6.1-sol'});
- assert.deepEqual(JSON.parse(await readFile(join(dirname(stateRoot),'aidiy_navi_model.json'),'utf8')),{provider:'codex_cli',model:'gpt-6.1-sol'});
+ const after=await service.get();assert.equal(after.result.goal,'目標A');assert.deepEqual(after.selection,{provider:'codex_cli',model:'gpt-6.2-sol'});
+ assert.deepEqual(JSON.parse(await readFile(join(dirname(stateRoot),'aidiy_navi_model.json'),'utf8')),{provider:'codex_cli',model:'gpt-6.2-sol'});
 });
 
 test('Navi履歴: 新規/一覧/選択/評価と別窓・別プロジェクトの分離',async t=>{

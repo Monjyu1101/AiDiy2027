@@ -15,7 +15,7 @@ import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-age
 
 import { chatPayload, type CliMode, type CliAnswer } from "./aidiy-cli-chat.ts";
 
-import { enginePrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
+import { CliJsonSyntaxError, enginePrompt, jsonRepairPrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
 
 export const CLI_PROVIDERS = ["claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"];
 
@@ -52,7 +52,7 @@ async function runCli(root: string, request: { provider: string; model: string; 
 				} else throw new Error("外部CLIの応答形式が不正です。");
 			} catch (error) {
 				failure = error instanceof Error ? error : new Error(String(error));
-				child.kill();
+				if (!(failure instanceof CliJsonSyntaxError)) child.kill();
 			}
 		};
 		child.stdout.setEncoding("utf8");
@@ -76,7 +76,8 @@ async function runCli(root: string, request: { provider: string; model: string; 
 		child.once("close", (code) => {
 			clearTimeout(timer);
 			consume(pending);
-			if (failure) reject(failure);
+			if (code !== 0 && failure instanceof CliJsonSyntaxError) reject(new Error("外部CLIが正常終了しませんでした。"));
+			else if (failure) reject(failure);
 			else if (code !== 0 || !answer) reject(new Error("外部CLIの最終回答を取得できませんでした。"));
 			else resolve(answer);
 		});
@@ -117,13 +118,23 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					stream.push({ type: "start", partial: output });
 					output.content.push({ type: "thinking", thinking: "" });
 					stream.push({ type: "thinking_start", contentIndex: 0, partial: output });
-					const answer = await runCli(root, { ...data, ...(cliMode === "chat" ? { engine_prompt: enginePrompt(data) } : {}), cli_mode: cliMode, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" : "yolo" }, options, (text) => {
+					const request = { ...data, ...(cliMode === "chat" ? { engine_prompt: enginePrompt(data) } : {}), cli_mode: cliMode, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" as const : "yolo" as const };
+					const progress = (text: string) => {
 						const part = output.content[0];
 						if (part.type !== "thinking") return;
 						const delta = text + "\n";
 						part.thinking += delta;
 						stream.push({ type: "thinking_delta", contentIndex: 0, delta, partial: output });
-					}, tools);
+					};
+					let answer: CliAnswer;
+					try {
+						answer = await runCli(root, request, options, progress, tools);
+					} catch (error) {
+						if (cliMode !== "chat" || !(error instanceof CliJsonSyntaxError)) throw error;
+						options?.signal?.throwIfAborted();
+						progress("JSON の形式を再要求します（1回のみ）。");
+						answer = await runCli(root, { ...request, engine_prompt: jsonRepairPrompt(request.engine_prompt!) }, options, progress, tools);
+					}
 					const text = answer.content;
 					const part = output.content[0];
 					stream.push({ type: "thinking_end", contentIndex: 0, content: part.type === "thinking" ? part.thinking : "", partial: output });

@@ -154,7 +154,7 @@ Chat / Code は既存 MCP、Live / Prediction は非公開の固定 loopback ア
 - live 全体が空なら `AiDiy_key.json` の `LIVE_AI_NAME` と対応する `LIVE_*_MODEL` を「仮設定（未検証）」として補完します。設定未作成・空値・未対応プロバイダなら空のままです。既存候補が1件でもあれば補完しません。code 全体が空なら従来どおり `aidiy_hermes / auto` を補います。config 自体は変更しません。
 - `live_voices_info.json` は取得・認証状態にかかわらず `freeai_live`、`gemini_live`、`openai_live` の3区分を常に保存します。既存の音声定義と順序を使用し、FreeAI/Gemini は各30件、OpenAI は13件です。
 - 仮モデルや音声候補の表示は、認証成功・モデル取得成功・利用可否の保証ではありません。
-- OpenAI OAuth の一覧取得失敗・空一覧は、Copilot 既定の OpenAI 系4モデル（`gpt-6-astra`、`gpt-6.1-sol`、`gpt-6.1-terra`、`gpt-6-luna`）を未検証候補として補い、診断状態を PASS とします。Chat の `openai_oauth` と Hermes の `openai_oauth/` 経路に使用し、成功時は取得結果を優先します。未設定は未実施のままで4候補を補わず、明示的なログアウト後は保存済みOAuth候補を合成しません。通信失敗とHTTP認証失敗はモデル取得処理ではともに NG ですが、4候補の補完後は既存の PASS を使います。失敗理由・未検証の警告は保持し、認証確認や実モデル応答を成功にはしません。
+- OpenAI OAuth の一覧取得失敗・空一覧は、Copilot 既定の OpenAI 系4モデル（`gpt-6.2-astra`、`gpt-6.2-sol`、`gpt-6.1-terra`、`gpt-6-luna`）を未検証候補として補い、診断状態を PASS とします。Chat の `openai_oauth` と Hermes の `openai_oauth/` 経路に使用し、成功時は取得結果を優先します。未設定は未実施のままで4候補を補わず、明示的なログアウト後は保存済みOAuth候補を合成しません。通信失敗とHTTP認証失敗はモデル取得処理ではともに NG ですが、4候補の補完後は既存の PASS を使います。失敗理由・未検証の警告は保持し、認証確認や実モデル応答を成功にはしません。
 - 回帰確認は `node --test frontend_diag/checks/*.check.mjs frontend_diag/checks/*.check.cjs`。実キーを使わず、未設定・無効・有効キー、旧保存結果、全区分の空プロバイダ除外、固定仮補完を合成データと設定ファイル未作成の実 headless 起動で検証します。runtime 変更後は README の配布物再生成と一致確認も行います。
 
 ## 判断用モデル一覧
@@ -181,7 +181,7 @@ aidiy_diagは認証付きGET一覧に候補配列のIDそのものがある方�
 
 ## OpenCode / Copilot のCode候補
 
-`code_models_info.json` の `opencode_cli.models` はCodex用に合成した候補を共通元とし、OpenCode側のIDと表示名のモデル部分に `openai/` を付ける（例: `openai/gpt-6.1-sol`）。日付・順序は保持し、既存の接頭辞は二重に付けない。Codex候補が0件ならCopilotと同じ `COPILOT_FALLBACK_MODELS` の規定8モデルに同じ `openai/` を付けて補完する。Copilot側の取得候補・規定値は変更しない。OpenCodeの出力条件は自身の導入検出だけで、Codex / Copilotの導入には依存しない。補完はモデル候補の書き出しだけで、認証・実行成功を意味しない。検証は `checks/models-info.check.mjs` で行う。
+`code_models_info.json` の `opencode_cli.models` はCodex用に合成した候補を共通元とし、OpenCode側のIDと表示名のモデル部分に `openai/` を付ける（例: `openai/gpt-6.2-sol`）。日付・順序は保持し、既存の接頭辞は二重に付けない。Codex候補が0件ならCopilotと同じ `COPILOT_FALLBACK_MODELS` の規定8モデルに同じ `openai/` を付けて補完する。Copilot側の取得候補・規定値は変更しない。OpenCodeの出力条件は自身の導入検出だけで、Codex / Copilotの導入には依存しない。補完はモデル候補の書き出しだけで、認証・実行成功を意味しない。検証は `checks/models-info.check.mjs` で行う。
 
 ## 予測モデルの手動試行
 
@@ -491,4 +491,4 @@ Windows では Rust / llvm-mingw の排他に所有者 PID とプロセス開始
 
 のりしろは1文字（1em）幅で、本文色に黒14%を重ねます。高さ/幅が2/3未満なら左側、それ以外は上側に表示します。どちらも押した直後から移動でき、左側表示時は入力欄が帯に重ならない余白を設けます。
 
-タイトル・本文は、短いドラッグを文字選択として維持し、静止した0.5秒の長押しで移動マーカーを表示します。入力欄間のフォーカス切替で発生する要素のblurでは中止しません。窓自体のblur、ボタン解放、取消、スクロール、キー入力、IME開始では解除します。回帰試験は `checks/memo-longpress.check.mjs`、画面試験は `checks/memo-ui-browser.cjs`（検証用Electron指定）を使います。合成IPCの画面試験と実Windowsの窓移動確認は区別してください。
+タイトル・本文は、短いドラッグを文字選択として維持し、静止した0.5秒の長押しで移動マーカーを表示します。本文が短く textarea が縮んだ場合も、本文下や付箋余白の入力再開操作から同じ長押し移動を開始します。タイトル・ボタン・画像・のりしろ等は既存の操作を優先します。入力欄間のフォーカス切替で発生する要素のblurでは中止しません。窓自体のblur、ボタン解放、取消、スクロール、キー入力、IME開始では解除します。回帰試験は `checks/memo-longpress.check.mjs`、画面試験は `checks/memo-ui-browser.cjs`（検証用Electron指定）を使います。合成IPCの画面試験と実Windowsの窓移動確認は区別してください。

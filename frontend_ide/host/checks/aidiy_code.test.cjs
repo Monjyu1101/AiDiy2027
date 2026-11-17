@@ -33,7 +33,7 @@ function offlineFixture() {
   const project = mkdtempSync(join(preferences, 'offline-project-'));
   const directory = join(project, '_AIDIY/aidiy_diag'); mkdirSync(directory, { recursive: true });
   writeFileSync(join(directory, 'code_models_info.json'), JSON.stringify({ aidiy_hermes: { models: {
-    'openai_oauth/gpt-6.1-sol': 'OpenAI', 'copilot_cli/auto': 'Copilot', 'codex_cli/auto': 'Codex',
+    'openai_oauth/gpt-6.2-sol': 'OpenAI', 'copilot_cli/auto': 'Copilot', 'codex_cli/auto': 'Codex',
   } } }));
   // 配布先も一時ディレクトリに置き、ローカル診断の候補を優先して読まない。
   const filename = join(project, 'installation/out/aidiy_code/server.cjs');
@@ -181,17 +181,17 @@ test('Code: AIコアのモデル候補・選択値・送信と停止を中継す
   const backend = require('./fake-core.cjs').core(); backend.install(t);
   const file = join(preferences, 'remember.json');
   // 中継の検証は配置先の共通設定に依存させず、初期選択を明示する。
-  const app = await 単独起動(process.cwd(), 'http://127.0.0.1:18091', { provider: 'aidiy_hermes', model: 'openai_oauth/gpt-6.1-sol' }, file);
+  const app = await 単独起動(process.cwd(), 'http://127.0.0.1:18091', { provider: 'aidiy_hermes', model: 'openai_oauth/gpt-6.2-sol' }, file);
   const stream = await connect(app);
   try {
     const ready = await stream.wait(p => p.type === 'state' && p.接続済み);
-    assert.equal(ready.provider, 'aidiy_hermes'); assert.equal(ready.model, 'openai_oauth/gpt-6.1-sol');
+    assert.equal(ready.provider, 'aidiy_hermes'); assert.equal(ready.model, 'openai_oauth/gpt-6.2-sol');
     assert.deepEqual(backend.sockets.map(socket => socket.channel), ['input', '1']);
     assert.ok(backend.sockets.every(socket => socket.sent[0].CODE_BASE_PATH === process.cwd()));
     const providers = await (await fetch(app.url + 'catalog')).json();
     assert.ok(providers.providers.some(item => item.id === 'copilot_cli'));
     const hermes = await (await fetch(app.url + 'catalog?provider=aidiy_hermes')).json();
-    assert.ok(hermes.models.some(item => item.id === 'openai_oauth/gpt-6.1-sol'));
+    assert.ok(hermes.models.some(item => item.id === 'openai_oauth/gpt-6.2-sol'));
     assert.equal((await fetch(new URL('/events', app.url))).status, 404);
     assert.equal((await post(app, {type:'new'}, 'https://example.com')).status, 403);
     await post(app, { type:'model', provider:'copilot_cli', model:'gpt-6-sol' });
@@ -239,9 +239,9 @@ test('Code: 単独起動の検証ループ指定をAIコアへ渡し、未指定
 test('Code: 最終選択を復元し、指定があれば指定を使う', async t => {
   const backend = require('./fake-core.cjs').core(); backend.install(t);
   const file = join(preferences,'restore.json');
-  writeFileSync(file, JSON.stringify({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}));
+  writeFileSync(file, JSON.stringify({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'}));
   for (const [initial, provider, model] of [
-    [{}, 'aidiy_hermes', 'openai_oauth/gpt-6.1-sol'],
+    [{}, 'aidiy_hermes', 'openai_oauth/gpt-6.2-sol'],
     [{provider:'copilot_cli',model:'gpt-6-sol'}, 'copilot_cli', 'gpt-6-sol'],
   ]) {
     const app = await 単独起動(process.cwd(),'http://127.0.0.1:18091',initial,file), stream = await connect(app);
@@ -322,14 +322,14 @@ test('Code offline: コアなしでHermesを直接実行し、モデル保存・
     assert.deepEqual(catalog.models.map(p=>p.id),expected);
     assert.equal((await post(app,{type:'model',provider:'copilot_cli',model:'auto'})).status,400);
     assert.equal((await post(app,{type:'model',provider:'aidiy_hermes',model:'openai_oauth/unlisted'})).status,400);
-    assert.equal((await post(app,{type:'model',provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'})).status,200);
+    assert.equal((await post(app,{type:'model',provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'})).status,200);
     assert.deepEqual(JSON.parse(readFileSync(file,'utf8')),online);
-    assert.deepEqual(JSON.parse(readFileSync(オフラインモデル保存先(file),'utf8')),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});
+    assert.deepEqual(JSON.parse(readFileSync(オフラインモデル保存先(file),'utf8')),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'});
     for (const text of ['初回','継続']) {
       assert.equal((await post(app,{メッセージ識別:'input_text',メッセージ内容:text,self_check_loop:3})).status,200);
       const done = await stream.wait(p=>p.type==='state' && !p.実行中 && p.セッションID==='test-session-001' && p.メッセージ.some(m=>m.種別==='assistant' && JSON.parse(m.本文).input===text));
       const answer = JSON.parse(done.メッセージ.at(-1).本文);
-      assert.ok(answer.args.includes('openai_oauth/gpt-6.1-sol')); assert.equal(answer.cwd,project);
+      assert.ok(answer.args.includes('openai_oauth/gpt-6.2-sol')); assert.equal(answer.cwd,project);
       assert.ok(!answer.args.includes('--yolo'));
     }
     assert.equal(calls.length,2); assert.equal(calls[0].session,undefined); assert.equal(calls[1].session,'test-session-001');
@@ -344,7 +344,7 @@ test('Code offline: コアなしでHermesを直接実行し、モデル保存・
     assert.equal(connected.provider,online.provider); assert.equal(connected.model,online.model);
     assert.notEqual(connected.セッションID,'test-session-001');
     await post(app,{type:'executionMode',mode:'offline'});
-    await stream.wait(p=>p.type==='state' && p.実行モード==='offline' && p.会話ID!==initial.会話ID && p.model==='openai_oauth/gpt-6.1-sol');
+    await stream.wait(p=>p.type==='state' && p.実行モード==='offline' && p.会話ID!==initial.会話ID && p.model==='openai_oauth/gpt-6.2-sol');
     assert.ok(backend.sockets.every(s=>s.readyState===3));
     await post(app,{type:'selectHistory',id:initial.会話ID});
     const restored = await stream.wait(p=>p.type==='state' && p.会話ID===initial.会話ID && p.セッションID==='test-session-001' && !p.実行中);
@@ -353,7 +353,7 @@ test('Code offline: コアなしでHermesを直接実行し、モデル保存・
   const reopened = await start(project,'http://127.0.0.1:18091',{offline:true},file,run,history), second = await connect(reopened);
   try {
     const restored = await second.wait(p=>p.type==='state' && p.実行モード==='offline');
-    assert.equal(restored.model,'openai_oauth/gpt-6.1-sol');
+    assert.equal(restored.model,'openai_oauth/gpt-6.2-sol');
     // 会話履歴はプロジェクトの保存先から読み直し、再起動後も選んで続けられる
     assert.ok(restored.履歴.some(item=>item.id===initial.会話ID),'再起動後も会話履歴が残る');
     await post(reopened,{type:'selectHistory',id:initial.会話ID});

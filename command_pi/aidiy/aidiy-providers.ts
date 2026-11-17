@@ -36,7 +36,7 @@ export const PI_MODELS_JSON = join(AIDIY_ROOT, "_AIDIY", "aidiy_diag", "pi_model
 /** backend_tools/_setup.py が書く AiDiy の MCP 一覧（Hermes と同じファイル）。 */
 export const AIDIY_MCP_JSON = join(AIDIY_ROOT, "_config", "AiDiy_mcp.json");
 /** Hermes と同じ初期モデル。 */
-export const AIDIY_INITIAL_MODEL = "openai_oauth/gpt-6.1-sol";
+export const AIDIY_INITIAL_MODEL = "openai_oauth/gpt-6.2-sol";
 
 type Json = Record<string, unknown>;
 

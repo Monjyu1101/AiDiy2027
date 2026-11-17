@@ -28,7 +28,7 @@
 
 確認: `test_aidiy_model_catalog.py` で候補・キー分離・起動provider識別をオフライン検証し、`aidiy_hermes` の実起動で起動選択・picker保存・次回復元・非対話実行・初期描画を確認します。
 
-AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_aidiy_hermes_defaults()` が共通設定を読みます。`CODE_AIDIY_HERMES_MODEL` は `openai_oauth/gpt-6.1-sol` に加えて `xai-oauth/grok-4.6` を受理します。対応する OAuth が認証済みなら指定 provider を使い、非対話の Code AI 起動時に未認証または認証切れなら `freeai/gemini-4-carbon` へ退避します。`--provider openai_oauth` / `--provider xai-oauth` を明示指定した場合は OAuth 経路を維持します。CLI の `--model` / `--provider` は初期値より優先されます。
+AiDiy の `aidiy_hermes` エントリでは、この解決より前に `_load_aidiy_hermes_defaults()` が共通設定を読みます。`CODE_AIDIY_HERMES_MODEL` は `openai_oauth/gpt-6.2-sol` に加えて `xai-oauth/grok-4.6` を受理します。対応する OAuth が認証済みなら指定 provider を使い、非対話の Code AI 起動時に未認証または認証切れなら `freeai/gemini-4-carbon` へ退避します。`--provider openai_oauth` / `--provider xai-oauth` を明示指定した場合は OAuth 経路を維持します。CLI の `--model` / `--provider` は初期値より優先されます。
 
 Hermes の `/model` は `_AIDIY/aidiy_diag/hermes_models_info.json` を使用します。`aidiy_diag` のモデル一覧取得・保存時に、既存の Chat / Code 合成一覧と一緒に生成されます。AIチャットパネルの `chat_models_info.json` や Code ダイアログの `code_models_info.json` の構成・絞り込みは変更しません。
 
@@ -133,3 +133,11 @@ OpenAI OAuthは専用一覧の `openai_oauth.models` を読みます。生成時
 - **認証情報の優先順位**: 環境変数 > config.yaml > ハードコード。新規 provider 追加時は env var 名を統一すること
 - **Aggregator provider**: `openrouter`, `nous`, `vercel`, `kilo`, `opencode` はマルチモデルルーター。`auto` 検出時はこれらの優先度が高い
 - **auto 検出のタイミング**: `_ensure_runtime_credentials()` は初回推論時まで遅延される。起動時には実行されない
+
+### CLI chat の JSON 応答
+
+CLI はテキスト入出力として使い、`hermes_cli/aidiy_cli_json.py` と `aidiy_cli_bridge.py` が最初の `{` から最後の `}` を抽出・検証します。タイトル生成など `response_format` 指定付きのツールなし補助処理では、要求 schema の JSON object を直接返させ、Hermes が検証後に chat の content に包みます。内側 CLI に二重エンコードを要求しません。
+
+通常会話・ツール要求も含め、JSON 構文不正の場合だけ同じ CLI に形式を明示して1回再要求します。2回目も不正なら失敗し、API / passthrough へは切り替えません。ツール名・引数 schema・tool_choice の違反、認証・通信エラーはこの形式再試行の対象外です。検証前に外側ツールを実行しません。
+
+確認: `python -m unittest discover -s command_hermes/checks -p 'test_cli*.py'`。テストは模擬 CLI 応答を用いるため、実プロバイダ認証・モデルの出力品質確認とは別です。

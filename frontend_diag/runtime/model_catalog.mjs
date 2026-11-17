@@ -172,9 +172,9 @@ function withoutRetired(models) {
   for (const [id, model] of Object.entries(models)) if (!isRetiredOpenaiModel(id)) out[id] = model;
   return out;
 }
-var DEFAULT_CODEX_MODELS = Object.freeze(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]);
-var OAUTH_FALLBACK_MODELS = Object.freeze(["gpt-6-astra", "gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]);
-var FORWARD_COMPAT = [["gpt-6-astra", ["gpt-6.1-sol", "gpt-6.1-terra", "gpt-6-luna"]], ["gpt-6.1-sol", ["gpt-5.5", "gpt-5.4"]], ["gpt-6.1-terra", ["gpt-5.5", "gpt-5.4"]], ["gpt-6-luna", ["gpt-5.5", "gpt-5.4"]]];
+var DEFAULT_CODEX_MODELS = Object.freeze(["gpt-6.2-astra", "gpt-6.2-sol", "gpt-6.1-terra", "gpt-6-luna"]);
+var OAUTH_FALLBACK_MODELS = Object.freeze(["gpt-6.2-astra", "gpt-6.2-sol", "gpt-6.1-terra", "gpt-6-luna"]);
+var FORWARD_COMPAT = [["gpt-6.2-astra", ["gpt-6-astra", "gpt-6.1-sol", "gpt-6.2-sol", "gpt-6.1-terra", "gpt-6-luna"]], ["gpt-6.2-sol", ["gpt-6.1-sol", "gpt-5.5", "gpt-5.4"]], ["gpt-6.1-terra", ["gpt-5.5", "gpt-5.4"]], ["gpt-6-luna", ["gpt-5.5", "gpt-5.4"]]];
 function finalizeCodexModels(ids) {
   const ordered = [], seen = /* @__PURE__ */ new Set();
   for (const id of ids.filter((id2) => !isRetiredOpenaiModel(id2) && !/-900k$/i.test(id2))) if (!seen.has(id)) {

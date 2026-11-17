@@ -46,7 +46,7 @@ test('Pi list includes the same external CLI sections as Hermes (same keys, orde
 
 test('shared writer saves pi_models_info.json once and adds aidiy_pi to Code only when Pi is set up', async () => fixture(async (directory, load) => {
   const providers = ['gemini', 'openai', 'openai_oauth'].map(provider);
-  const results = {gemini:success(['gemini-3-pro']), openai:success(['gpt-6.1-sol']), openai_oauth:success(['gpt-6-luna', 'gpt-6-luna-900k'])};
+  const results = {gemini:success(['gemini-3-pro']), openai:success(['gpt-6.2-sol']), openai_oauth:success(['gpt-6-luna', 'gpt-6-luna-900k'])};
   const write = installedClis => writeModelsInfo(providers, results, {...options, directory, installedClis});
 
   const saved = await write({codex_cli:true, [PI_CODE_PROVIDER]:true});

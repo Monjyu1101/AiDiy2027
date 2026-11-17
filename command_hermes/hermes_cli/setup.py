@@ -78,8 +78,8 @@ _DEFAULT_PROVIDER_MODELS = {
         "copilot-acp",
     ],
     "copilot": [
-        "gpt-6-astra",
-        "gpt-6.1-sol",
+        "gpt-6.2-astra",
+        "gpt-6.2-sol",
         "gpt-6.1-terra",
         "gpt-6-luna",
         "claude-opus-5.5",
@@ -103,9 +103,9 @@ _DEFAULT_PROVIDER_MODELS = {
     "arcee": ["trinity-large-thinking", "trinity-large-preview", "trinity-mini"],
     "minimax": ["MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1", "MiniMax-M2"],
     "minimax-cn": ["MiniMax-M2.7", "MiniMax-M2.5", "MiniMax-M2.1", "MiniMax-M2"],
-    "ai-gateway": ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", "openai/gpt-6.1-sol", "google/gemini-3-flash"],
-    "kilocode": ["anthropic/claude-sonnet-5.5", "anthropic/claude-opus-5.5", "openai/gpt-6.1-sol", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview"],
-    "opencode-zen": ["x-preview-f-free", "gpt-6.1-sol", "claude-opus-5.5", "claude-sonnet-5.5", "gemini-3.7-flash", "glm-5.2", "kimi-k3", "minimax-m3"],
+    "ai-gateway": ["anthropic/claude-opus-5.5", "anthropic/claude-sonnet-5.5", "openai/gpt-6.2-sol", "google/gemini-3-flash"],
+    "kilocode": ["anthropic/claude-sonnet-5.5", "anthropic/claude-opus-5.5", "openai/gpt-6.2-sol", "google/gemini-3-pro-preview", "google/gemini-3-flash-preview"],
+    "opencode-zen": ["x-preview-f-free", "gpt-6.2-sol", "claude-opus-5.5", "claude-sonnet-5.5", "gemini-3.7-flash", "glm-5.2", "kimi-k3", "minimax-m3"],
     "opencode-free": ["deepseek-v4-flash-free", "hy3-free", "mimo-v2.5-free", "laguna-s-2.1-free", "nemotron-3-ultra-free", "nemotron-3.5-lightning-free", "muse-spark-1.2-contributor-free", "muse-spark-1.3-contributor-free"],
     "opencode-go": ["kimi-k3", "kimi-k2.7-code", "kimi-k2.6", "gpt-6-luna", "grok-4.5", "glm-5.3", "glm-5.3-flash", "glm-5.2", "mimo-v2.5-pro", "mimo-v2.5", "minimax-m3", "minimax-m2.7", "qwen3.8-max", "qwen3.7-max", "deepseek-v4-pro", "hy3"],
     "huggingface": [

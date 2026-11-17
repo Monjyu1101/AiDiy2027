@@ -59,6 +59,7 @@ class CliTitleTest(unittest.TestCase):
             self.assertEqual(run.call_args.kwargs['tools'], [])
             self.assertEqual(run.call_args.kwargs['tool_choice'], 'none')
             self.assertEqual(run.call_args.kwargs['cli_mode'], 'chat')
+            self.assertEqual(run.call_args.kwargs['response_format'], title._TITLE_RESPONSE_FORMAT)
             self.assertIn('You name chat sessions', str(run.call_args.kwargs['messages']))
             http.assert_not_called()
             self.assertEqual(persist.call_args.args[2], '朝の挨拶')

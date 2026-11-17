@@ -8,6 +8,8 @@ INSTRUCTION = '''You are the text inference engine of the outer Hermes harness.
 Follow the supplied conversation and tools. Never execute tools yourself or invent results.
 Return exactly one JSON object: {"content":"answer", "tool_calls":[]}.
 For a tool request use {"content":"", "tool_calls":[{"name":"exact tool name", "arguments":{}}]}.
+Escape double quotes, backslashes and line breaks inside content string values.
+Return one object only, never repeat the input or the examples.
 Arguments must match the supplied tool schema. The outer harness owns tool execution and approvals.
 Use double quotes and valid JSON, without Markdown fences, introductions or trailing explanations.
 The caller extracts from the first { to the last } and strictly validates the result.
@@ -45,3 +47,42 @@ def parse_response(text):
         return json.loads(text[start:end + 1], object_pairs_hook=unique, parse_constant=invalid_constant, parse_float=finite)
     except (ValueError, RecursionError):
         raise ValueError("CLI chatの応答JSONが不正です。") from None
+
+
+def structured_validator(response_format):
+    """JSON固定の補助応答をHermes側で検証。外部schema参照は許可しない。"""
+    from jsonschema import Draft202012Validator
+    if not isinstance(response_format, dict):
+        raise ValueError("CLI chatのresponse_formatが不正です。")
+    kind = response_format.get("type")
+    if kind == "json_object":
+        schema = {"type": "object"}
+    elif kind == "json_schema":
+        schema = response_format.get("json_schema", {}).get("schema")
+    else:
+        raise ValueError("CLI chatのresponse_formatが未対応です。")
+    if not isinstance(schema, dict) or schema.get("type") != "object":
+        raise ValueError("CLI chatのJSON schemaはobjectが必要です。")
+    def check_refs(value):
+        if isinstance(value, dict):
+            for key, item in value.items():
+                if key in {"$ref", "$dynamicRef"} and (not isinstance(item, str) or not item.startswith("#")):
+                    raise ValueError("CLI chatのJSON schemaは外部参照できません。")
+                check_refs(item)
+        elif isinstance(value, list):
+            for item in value:
+                check_refs(item)
+    check_refs(schema)
+    Draft202012Validator.check_schema(schema)
+    return Draft202012Validator(schema)
+
+
+def structured_prompt(messages, schema):
+    return ("You are the text inference engine of the outer Hermes harness.\n"
+            "Follow the supplied conversation. Never execute tools or invent tool results.\n"
+            "Return exactly one JSON object matching response_schema below.\n"
+            "Return the object directly: do NOT wrap it in content/tool_calls or encode it as a string.\n"
+            'For a title schema, an example is {"title":"朝の挨拶"}.\n'
+            "Use valid JSON with double quotes, no Markdown or explanations.\n"
+            "The caller extracts from the first { to the last } and strictly validates the schema.\nInput:\n"
+            + json.dumps({"messages": messages, "response_schema": schema}, ensure_ascii=False))

@@ -7,7 +7,7 @@ const { visibleWidth } = await import('@earendil-works/pi-tui');
 initTheme('dark');
 const plain = text => text.replace(/\x1b\[[0-9;]*m/g, '');
 function footer(providerCount = 1) {
- const model = { provider: 'openai_oauth', id: 'gpt-6.1-sol', reasoning: true, contextWindow: 100000 };
+ const model = { provider: 'openai_oauth', id: 'gpt-6.2-sol', reasoning: true, contextWindow: 100000 };
  const session = {
   model, state: { model, thinkingLevel: 'medium' },
   sessionManager: {
@@ -26,13 +26,13 @@ test('footer shows provider/model for single and multiple providers, right-align
  for (const count of [1, 3]) {
   const { component } = footer(count);
   const line = plain(component.render(100)[1]);
-  assert.ok(line.endsWith('openai_oauth/gpt-6.1-sol • medium'));
+  assert.ok(line.endsWith('openai_oauth/gpt-6.2-sol • medium'));
   assert.equal(visibleWidth(line), 100);
   assert.doesNotMatch(line, /\(openai_oauth\)/);
  }
 });
 test('footer avoids duplicate provider and handles missing model', () => {
- assert.equal(formatModelForFooter({ provider: 'openai_oauth', id: 'openai_oauth/gpt-6.1-sol' }), 'openai_oauth/gpt-6.1-sol');
+ assert.equal(formatModelForFooter({ provider: 'openai_oauth', id: 'openai_oauth/gpt-6.2-sol' }), 'openai_oauth/gpt-6.2-sol');
  assert.equal(formatModelForFooter(undefined), 'no-model');
  assert.equal(formatModelForFooter({ provider: '', id: 'local' }), 'local');
 });

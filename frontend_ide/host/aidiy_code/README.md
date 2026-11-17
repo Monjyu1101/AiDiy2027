@@ -8,16 +8,16 @@ AIコアへ未接続の間も、文字を入力すると送信できます。送
 
 - オンライン：AIコアのコードAI・モデルを選択でき、検証ループは0〜3回（初期値0回、最後に選んだ回数を次回も使用）。
 - プロジェクトバー右側に「自動接続」「新規」「一覧」を表示します。自動接続は右がON、左がOFFで、通常起動時は毎回ONです。ONでは接続失敗・通信切断後も10秒ごとに再試行します。OFFでは接続と再試行を止め、新規会話・履歴復帰でも接続しません。ONでは未接続のバーは黒、接続済みはシアンの明滅、OFFでは赤の明滅です。実行中・モデル変更中は切り替えできません。オフライン実行中に接続が戻っても、その処理は最後まで選択エンジンで行い、次の送信からAIコアへ渡します。`--offline` で明示した場合は自動接続OFFで起動し、ONへ切り替えると新しいオンライン会話を開始します。
-- オフライン：コードAIは `aidiy_hermes` / `aidiy_pi` から選択します。検証ループは0回固定で、バックアップ・検証は行いません。モデル候補は `_AIDIY/aidiy_diag/code_models_info.json` の選択エンジンの `models` と `same` です。どちらも `openai_oauth/gpt-6.1-sol` のような「プロバイダ/モデル」形式を使います。診断でファイルを生成・更新した後は、モデル選択を開き直すと再起動なしで反映され、確定時も最新の候補を確認します。未生成なら `same` だけを表示します。候補内の保存値は次回も使い、候補外なら選択エンジンの共通設定の既定値（これも候補外なら `same`）を使います。モデルIDの手入力はありません。
-- 最後に手動選択したエンジンとモデルを `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.1-sol" }` の一組で保存します。オンラインは `_AIDIY/aidiy_code/aidiy_code_model.json`、オフラインは `_AIDIY/aidiy_code/aidiy_code_model_offline.json` の各一件です。Hermes用・Pi用に分けず、Navi内のCodeも同じ保存先を共用します。起動引数・モード切り替えだけでは保存値を上書きしません。
+- オフライン：コードAIは `aidiy_hermes` / `aidiy_pi` から選択します。検証ループは0回固定で、バックアップ・検証は行いません。モデル候補は `_AIDIY/aidiy_diag/code_models_info.json` の選択エンジンの `models` と `same` です。どちらも `openai_oauth/gpt-6.2-sol` のような「プロバイダ/モデル」形式を使います。診断でファイルを生成・更新した後は、モデル選択を開き直すと再起動なしで反映され、確定時も最新の候補を確認します。未生成なら `same` だけを表示します。候補内の保存値は次回も使い、候補外なら選択エンジンの共通設定の既定値（これも候補外なら `same`）を使います。モデルIDの手入力はありません。
+- 最後に手動選択したエンジンとモデルを `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.2-sol" }` の一組で保存します。オンラインは `_AIDIY/aidiy_code/aidiy_code_model.json`、オフラインは `_AIDIY/aidiy_code/aidiy_code_model_offline.json` の各一件です。Hermes用・Pi用に分けず、Navi内のCodeも同じ保存先を共用します。起動引数・モード切り替えだけでは保存値を上書きしません。
 - 自動切り替えでは表示中の会話を保ち、AIコア・Hermes・Piの会話再開用セッションIDを別々に保持します。手動のモード切り替えでは新しい会話を開始します。前の会話は画面を開いている間「一覧」から戻せます。オンラインのAIコアセッションとオフラインのCLIセッションは共用しません。実行中の切り替えはできません。
 
 直接指定する場合:
 
 ```powershell
 aidiy_code --provider copilot_cli --model claude-sonnet-5.5
-aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6-astra --browser
-aidiy_code --offline --model openai_oauth/gpt-6.1-sol
+aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.2-astra --browser
+aidiy_code --offline --model openai_oauth/gpt-6.2-sol
 ```
 
 引数なしの `aidiy_code` はオンラインで起動し、保存済みのオンラインモデルを使います。未保存なら `_config/AiDiy_key.json` の `CODE_AIDIY_HERMES_MODEL` を使い、AIコア接続前から表示します。`--offline` は保存済みのオフラインモデル、未保存なら同じHermes既定モデルを使います。共通設定が未配置・未指定の場合だけ `auto` を使います。画面で選択・保存した値は次回起動の初期値になり、明示したモデル起動引数がある場合はそちらを優先します。オンラインの `--provider copilot_cli` はAIコアのCopilot CLIを選択します。オフラインのエンジンはHermes / Piから選び、外部CLIを使う場合はモデル候補の `codex_cli/same` などを選択します。起動引数は共通の `frontend_ide/launch.mjs` から `server.mjs` へ渡し、CodeのAPIサーバーへ反映します。

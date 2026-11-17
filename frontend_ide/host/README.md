@@ -70,16 +70,16 @@ VS Code 拡張として試す場合は、次の手順を使います。
 - **新規**: 新しい会話に切り替えます。旧会話は履歴に残ります。
 - **会話一覧**: 会話画面右上の「一覧」で、現在の作業フォルダの会話を最終更新日時の新しい順に表示します。日時と最初の依頼から会話を選択でき、各行の「削除」ではチャットパネル内に確認を表示します。実行中は切り替えと削除を行えません。「戻る」で今の会話に戻ります。
 - **選択コード**: エディターで選択したコードを右クリックメニューから添付します。
-- **コードAI／モデル**: 「モデル」から `aidiy_hermes`、`copilot_cli`、`codex_cli` 等を選び、各コードAIのモデルを選択します。モデル情報APIは `_AIDIY/aidiy_diag/code_models_info.json` を優先して読み、診断で保存した表示名・順序を使います。Hermes は `openai_oauth/gpt-6.1-sol`、Copilot は `claude-haiku-5.5` などを選択します。「自動」はAIコアの既定設定です。接続中の変更はセッションの設定だけに反映し、共通設定は保存しません。
+- **コードAI／モデル**: 「モデル」から `aidiy_hermes`、`copilot_cli`、`codex_cli` 等を選び、各コードAIのモデルを選択します。モデル情報APIは `_AIDIY/aidiy_diag/code_models_info.json` を優先して読み、診断で保存した表示名・順序を使います。Hermes は `openai_oauth/gpt-6.2-sol`、Copilot は `claude-haiku-5.5` などを選択します。「自動」はAIコアの既定設定です。接続中の変更はセッションの設定だけに反映し、共通設定は保存しません。
 
 オフラインのHermes / Pi候補も合成ファイルの選択エンジンの `models` を使い、`same` を追加します。合成ファイルがない場合は `same` だけを表示します。診断でファイルを生成・更新した後は、モデル選択を開き直すと再起動なしで反映されます。選択を確定するときも最新の候補を確認します。`claude_cli/same` / `codex_cli/same` / `copilot_cli/same` は各CLIのモデルを維持して呼び出します。
 - **接続状態**: 単独版はタイトル左側に `未接続` / `接続中` / `接続済み` を表示します。接続済みはモデル設定と入力・コード出力の初期化完了を示します。拡張・単独版とも、自動接続ONでは通信切断・接続失敗時も10秒ごとに再接続を試みます。未接続中は選択したHermes / Piで送信できます。接続復帰時のオフライン実行は完了まで維持し、次の送信からAIコアを使います。単独版の `--offline` は自動接続OFFで起動します。この場合、ONへの切り替えは新しいオンライン会話を開始します。
 
-未接続時のコードAIは `aidiy_hermes` / `aidiy_pi` から選択します。モデルはどちらも `openai_oauth/gpt-6.1-sol` のような「プロバイダ/モデル」形式で、診断の候補と `same` を使います。オンラインと同じ `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.1-sol" }` 形式で、オフライン用の `_AIDIY/aidiy_code/aidiy_code_model_offline.json` 一件へ保存します。エンジン別の設定ファイルは作らず、最後に確定した選択を次回起動時に復元します。Navi内のCodeもこの保存先を共用します。候補外の保存モデルは選択エンジンの共通設定の既定値へ戻し、それも候補外なら `same` を使います。オンライン用の保存値は変更しません。表示形式は両方とも `NAME - MODEL` です。
+未接続時のコードAIは `aidiy_hermes` / `aidiy_pi` から選択します。モデルはどちらも `openai_oauth/gpt-6.2-sol` のような「プロバイダ/モデル」形式で、診断の候補と `same` を使います。オンラインと同じ `{ "provider": "aidiy_pi", "model": "openai_oauth/gpt-6.2-sol" }` 形式で、オフライン用の `_AIDIY/aidiy_code/aidiy_code_model_offline.json` 一件へ保存します。エンジン別の設定ファイルは作らず、最後に確定した選択を次回起動時に復元します。Navi内のCodeもこの保存先を共用します。候補外の保存モデルは選択エンジンの共通設定の既定値へ戻し、それも候補外なら `same` を使います。オンライン用の保存値は変更しません。表示形式は両方とも `NAME - MODEL` です。
 
 VS Codeで未接続用のモデルを確定・保存するには、作業フォルダを開き、ワークスペースを信頼する必要があります。「ファイル」→「フォルダーを開く」で作業対象を開くと、AIコアが未接続でもモデルを保存し、文字入力で送信できます。
 
-画面で確定したコードAIとモデルは `_AIDIY/aidiy_code/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.1-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。コードAIは `copilot_cli` / `aidiy_hermes` などの Code AI 名だけを受け付け、読み替えはしません。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
+画面で確定したコードAIとモデルは `_AIDIY/aidiy_code/aidiy_code_model.json` へ保存し、拡張・単独画面で共用します。未保存ならAIコアの既定設定を使い、起動引数は保存値より優先します。`aidiy_code --provider aidiy_hermes --model openai_oauth/gpt-6.2-sol` または `aidiy_code --provider copilot_cli --model gpt-6-sol` のように起動できます。コードAIは `copilot_cli` / `aidiy_hermes` などの Code AI 名だけを受け付け、読み替えはしません。新規会話は最後の手動選択を使い、履歴復帰はその会話のモデルとAIコアのセッションを使います。
 
 接続先は Live と共通の解決処理で `127.0.0.1` と `_config/AiDiy_key.json` の `PORT_CORE`（未配置時8091）を使います。Core は拡張ホストまたは単独サーバーと同じ環境で起動してください。
 - **実行ログ**: stdout / stderr の実行状況を出力パネルで確認します。

@@ -59,7 +59,7 @@ class ModelCatalogTest(unittest.TestCase):
             config_dir = root / "_config"
             config_dir.mkdir()
             (config_dir / "AiDiy_code_codex_cli.json").write_text(
-                json.dumps({"models": {"auto": "自動", "gpt-6.1-sol": "GPT 6.1 Sol"}}),
+                json.dumps({"models": {"auto": "自動", "gpt-6.2-sol": "GPT 6.1 Sol"}}),
                 encoding="utf-8",
             )
             models = catalog._cli_models(root, "codex-cli")

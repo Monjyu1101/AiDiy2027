@@ -83,7 +83,7 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
   const uri = { scheme:'file',fsPath:'/project',toString:()=> 'file:///project' }, folder = {uri,name:'project'};
   let provider, receive, disposed, visibility, selected, folderChanged;
   const preferences = new Map([['online.json', {provider:'codex_cli',model:'auto'}],
-    ['online_offline.json', {provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}]]);
+    ['online_offline.json', {provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'}]]);
   const runs = [];
   const subscription = {dispose(){}};
   const vscode = { workspace:{isTrusted:true,workspaceFolders:[],getConfiguration:()=>({get:(_key,fallback)=>fallback}),
@@ -111,9 +111,9 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
       if(name==='./conversation-store') return {...require('../out/conversation-store.cjs'),会話保存先:()=>undefined,会話一覧:()=>[],会話書込(){},会話削除(){}};
       if(name==='./runner') return {起動解決:()=>({実行ファイル:'fake-hermes',引数:[]})};
       if(name==='../aidiy_code/src/offline') return {
-        ...require('../out/offline.cjs'),Hermes既定モデル:()=> 'openai_oauth/gpt-6-astra',
+        ...require('../out/offline.cjs'),Hermes既定モデル:()=> 'openai_oauth/gpt-6.2-astra',
         // この試験は選択・保存を検証する。利用者のDiag保存済み候補に依存させない。
-        オフラインモデル候補:()=>[{id:'same',label:'変更なし'},{id:'openai_oauth/gpt-6.1-sol',label:'fixture Sol'},{id:'copilot_cli/auto',label:'fixture Copilot'}],
+        オフラインモデル候補:()=>[{id:'same',label:'変更なし'},{id:'openai_oauth/gpt-6.2-sol',label:'fixture Sol'},{id:'copilot_cli/auto',label:'fixture Copilot'}],
         オフライン実行(root,project,model,text,session,receive,launch) {
           let finish;
           const run={root,project,model,text,session,launch,receive,stops:0,
@@ -150,7 +150,7 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
     assert.equal(latest().実行モード,'offline');
     receive({type:'connect'});
     await flush();
-    receive({type:'setModel',provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});await flush();
+    receive({type:'setModel',provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'});await flush();
     backend.unavailable=false;
     receive({type:'connect'});await flush();
     assert.equal(latest().接続エラー || '','');
@@ -174,7 +174,7 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
     assert.equal(latest().自動接続,true);assert.equal(latest().接続済み,true);
     assert.equal(latest().コアセッションID,sessionBeforeToggle);
     receive({type:'chooseModel',provider:'aidiy_hermes'});await flush();
-    assert.ok(posts.findLast(p=>p.type==='modelCatalog').items.some(m=>m.id==='openai_oauth/gpt-6.1-sol'));
+    assert.ok(posts.findLast(p=>p.type==='modelCatalog').items.some(m=>m.id==='openai_oauth/gpt-6.2-sol'));
     receive({type:'setModel',provider:'copilot_cli',model:'gpt-6-sol'});await flush();
     assert.deepEqual(selected,{provider:'copilot_cli',model:'gpt-6-sol'});
     let finishCatalog;
@@ -220,7 +220,7 @@ test('Code 拡張: 接続状態ごとのモデル保存・復元、Hermes実行�
     backend.holdCancel=false;backend.hold=false;
     receive({type:'disconnect'});await flush();
     assert.equal(latest().接続済み,false);assert.equal(latest().provider,'aidiy_hermes');
-    assert.equal(latest().model,'openai_oauth/gpt-6.1-sol');
+    assert.equal(latest().model,'openai_oauth/gpt-6.2-sol');
     const requestsBefore = backend.requests.length;
     receive({type:'chooseModel',provider:''});await flush();
     assert.deepEqual(posts.findLast(p=>p.type==='modelCatalog').items.map(m=>m.id),['aidiy_hermes']);

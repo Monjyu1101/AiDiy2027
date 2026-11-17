@@ -25,15 +25,15 @@ class StatusModelTests(unittest.TestCase):
     def test_provider_types(self):
         for provider, model, expected in [
             ('copilot-cli', 'claude-sonnet-5.5', 'copilot_cli/claude-sonnet-5.5'),
-            ('openai_oauth', 'gpt-6.1-sol', 'openai_oauth/gpt-6.1-sol'),
-            ('openai-codex', 'gpt-6.1-sol', 'openai_oauth/gpt-6.1-sol'),
-            ('openai', 'gpt-6.1-sol', 'openai_chat/gpt-6.1-sol'),
+            ('openai_oauth', 'gpt-6.2-sol', 'openai_oauth/gpt-6.2-sol'),
+            ('openai-codex', 'gpt-6.2-sol', 'openai_oauth/gpt-6.2-sol'),
+            ('openai', 'gpt-6.2-sol', 'openai_chat/gpt-6.2-sol'),
             ('openrt_chat', 'anthropic/claude-sonnet-5.5', 'openrt_chat/anthropic/claude-sonnet-5.5'),
             ('custom:local', 'model.gguf', 'custom:local/model.gguf'),
             ('copilot-cli', 'auto', 'copilot_cli/auto'),
             ('copilot-cli', 'same', 'copilot_cli/same'),
             ('copilot-cli', 'copilot_cli/claude-sonnet-5.5', 'copilot_cli/claude-sonnet-5.5'),
-            ('openai_oauth', 'openai_oauth/gpt-6.1-sol', 'openai_oauth/gpt-6.1-sol'),
+            ('openai_oauth', 'openai_oauth/gpt-6.2-sol', 'openai_oauth/gpt-6.2-sol'),
             ('auto', '', '自動選択'),
         ]:
             with self.subTest(provider=provider, model=model):
@@ -45,7 +45,7 @@ class StatusModelTests(unittest.TestCase):
         agent = SimpleNamespace(provider='custom')
         self.assertEqual(footer._get_status_model_label(agent, 'claude-sonnet-5.5'), 'copilot_cli/claude-sonnet-5.5')
         agent.provider, agent._fallback_activated = 'openai-codex', True
-        self.assertEqual(footer._get_status_model_label(agent, 'gpt-6.1-sol'), 'openai_oauth/gpt-6.1-sol')
+        self.assertEqual(footer._get_status_model_label(agent, 'gpt-6.2-sol'), 'openai_oauth/gpt-6.2-sol')
         agent._fallback_activated = False
         self.assertEqual(footer._get_status_model_label(agent, 'claude-sonnet-5.5'), 'copilot_cli/claude-sonnet-5.5')
         footer._current_aidiy_provider_slug = lambda: 'gemini'

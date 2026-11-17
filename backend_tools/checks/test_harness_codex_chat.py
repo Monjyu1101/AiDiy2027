@@ -30,7 +30,7 @@ class CodexChatTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn('web_search=disabled', args)
             self.assertNotIn('--model', args)
             self.assertEqual(args[-1], '-')
-            self.assertEqual(codex.command('gpt-6.1-sol', 'schema', 'result')[-3:], ['--model', 'gpt-6.1-sol', '-'])
+            self.assertEqual(codex.command('gpt-6.2-sol', 'schema', 'result')[-3:], ['--model', 'gpt-6.2-sol', '-'])
             for model in ('codex_cli/same', 'copilot_cli/same', 'aidiy_hermes/same'):
                 with self.assertRaisesRegex(ValueError, '再指定'):
                     codex.command(model, 'schema', 'result')

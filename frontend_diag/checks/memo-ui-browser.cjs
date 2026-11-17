@@ -41,6 +41,16 @@ if(process.versions.electron){
    text.focus();fire(title,'pointerdown',20,20);title.focus();await wait(550);expect(window.dragCalls===2,'title long press native movement');fire(window,'pointercancel',20,20);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'cancel hides marker');
    title.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));text.focus();fire(title,'pointerdown',20,20);title.focus();await wait(550);expect(window.dragCalls===2,'IME composition prevents movement');title.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true}));fire(window,'pointerup',20,20);
    fire(document.querySelector('.sticky-header'),'pointerdown',300,12);await wait(0);expect(window.dragCalls===3,'header moves immediately');fire(window,'pointerup',300,12);fire(adhesive,'pointerdown',100,3);await wait(0);expect(window.dragCalls===4,'adhesive moves immediately');fire(window,'pointerup',100,3);
+   // Hit-test the visible blank body rather than dispatching only to the shrunken textarea.
+   text.value='短い本文';text.dispatchEvent(new Event('input',{bubbles:true}));await wait(20);
+   const bodyRect=document.querySelector('.sticky-content').getBoundingClientRect(),textRect=text.getBoundingClientRect();
+   const bodyX=bodyRect.left+30,bodyY=Math.min(bodyRect.bottom-35,textRect.bottom+25);
+   const blankBody=document.elementFromPoint(bodyX,bodyY);expect(blankBody!==text&&blankBody.closest('.sticky-viewport'),'blank body hit target');
+   const beforeBlank=window.dragCalls;title.focus();fire(blankBody,'pointerdown',bodyX,bodyY);await wait(550);
+   expect(window.dragCalls===beforeBlank+1&&!!document.querySelector('.sticky-move-marker'),'blank body long press moves');
+   fire(window,'pointerup',bodyX,bodyY);await wait(0);expect(!document.querySelector('.sticky-move-marker'),'blank body release cleans up');
+   fire(blankBody,'pointerdown',bodyX,bodyY);fire(window,'pointermove',bodyX+20,bodyY);await wait(550);
+   expect(window.dragCalls===beforeBlank+1,'short blank drag does not move window');fire(window,'pointerup',bodyX+20,bodyY);
    const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=';
    const file=new File([Uint8Array.from(atob(png),c=>c.charCodeAt(0))],'image.png',{type:'image/png'});
    const transfer=new DataTransfer();transfer.items.add(file);

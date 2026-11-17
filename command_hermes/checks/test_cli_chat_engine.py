@@ -67,8 +67,8 @@ class ChatEngineTest(unittest.TestCase):
             direct.chat.completions.create(messages=messages, tool_choice='none')
             self.assertEqual(run.call_args.kwargs['messages'], messages)
             self.assertEqual(run.call_args.kwargs['tool_choice'], 'none')
-            with self.assertRaisesRegex(ValueError, 'response_format'):
-                agent._interruptible_api_call({'messages': messages, 'response_format': {'type': 'json_object'}})
+            agent._interruptible_api_call({'messages': messages, 'response_format': {'type': 'json_object'}})
+            self.assertEqual(run.call_args.kwargs['response_format'], {'type': 'json_object'})
 
     def test_argparse_choices(self):
         source = (ROOT / 'cli_main.py').read_text()

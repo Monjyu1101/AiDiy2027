@@ -19,7 +19,7 @@ import { config } from './helpers';
 const launch = { 実行ファイル: process.execPath, 引数: [fileURLToPath(new URL('./fake-cli.cjs', import.meta.url))] };
 test('VS Code と共通のCLIでstdinを渡し、ユーザーとチャンネルごとに会話を継続・リセットする', async () => {
   // OAuth のモデルは provider を明示して渡す（Hermesモデル.ts の Hermes会話引数）。
-  const settings = { ...config(), hermesModel: 'openai_oauth/gpt-6.1-sol' };
+  const settings = { ...config(), hermesModel: 'openai_oauth/gpt-6.2-sol' };
   const code = new Code接続(settings, launch);
   try {
     const text = '日本語 & | " ` $() %PATH%\n';
@@ -27,7 +27,7 @@ test('VS Code と共通のCLIでstdinを渡し、ユーザーとチャンネル�
     assert.equal(first.input, text); assert.equal(first.cwd, settings.folder);
     assert.ok(first.args.includes('--oneshot-stdin')); assert.ok(!first.args.includes('--yolo'));
     assert.equal(first.args[first.args.indexOf('--provider') + 1], 'openai_oauth');
-    assert.equal(first.args[first.args.indexOf('--model') + 1], 'gpt-6.1-sol');
+    assert.equal(first.args[first.args.indexOf('--model') + 1], 'gpt-6.2-sol');
     assert.equal(first.args[first.args.indexOf('--max-turns') + 1], '999');
     const second = JSON.parse(await code.実行('user:channel1', '続き'));
     assert.ok(second.args.includes('--resume')); assert.ok(second.args.includes('discord-test-session'));

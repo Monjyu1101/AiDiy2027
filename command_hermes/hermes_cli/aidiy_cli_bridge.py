@@ -14,8 +14,36 @@ PROVIDERS = {"claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
              "opencode": "opencode_cli", "grok-cli": "grok_cli"}
 
 
+class _ResponseJSONError(ValueError):
+    pass
+
+
 def run_cli(root, provider, model, prompt, project, mode, progress, *,
-            cli_mode="passthrough", messages=None, tools=None, tool_choice=None, cancelled=None):
+            cli_mode="passthrough", messages=None, tools=None, tool_choice=None, cancelled=None,
+            response_format=None):
+    # No tools run in the inner CLI. Only malformed JSON gets one format retry;
+    # process/auth failures and forbidden/schema-invalid tool calls still fail.
+    for attempt in range(2):
+        if cancelled and cancelled():
+            raise InterruptedError("外部 CLI を中断しました。")
+        try:
+            return _run_cli_once(root, provider, model, prompt, project, mode, progress,
+                cli_mode=cli_mode, messages=messages, tools=tools, tool_choice=tool_choice,
+                cancelled=cancelled, response_format=response_format, format_retry=bool(attempt))
+        except _ResponseJSONError:
+            if attempt:
+                raise ValueError("CLI chatの応答JSONが不正です（形式修正を1回再試行済み）。") from None
+
+
+def _run_cli_once(root, provider, model, prompt, project, mode, progress, *,
+            cli_mode="passthrough", messages=None, tools=None, tool_choice=None, cancelled=None,
+            response_format=None, format_retry=False):
+    validator = None
+    if response_format is not None:
+        from hermes_cli.aidiy_cli_json import structured_validator
+        if cli_mode != "chat" or tools or tool_choice not in (None, "none", "auto"):
+            raise ValueError("CLI chatのJSON固定応答はツールなしの呼出し専用です。")
+        validator = structured_validator(response_format)
     root = Path(root)
     suffix = "Scripts/python.exe" if os.name == "nt" else "bin/python"
     python = next((root / name / ".venv" / suffix for name in ("backend_tools", "backend_server")
@@ -28,8 +56,18 @@ def run_cli(root, provider, model, prompt, project, mode, progress, *,
         from hermes_cli.aidiy_cli_json import engine_prompt
         request.update(messages=messages or [], tools=tools or [],
                        engine_prompt=engine_prompt(messages or [], tools or [], tool_choice))
+        if validator is not None:
+            from hermes_cli.aidiy_cli_json import structured_prompt
+            request["engine_prompt"] = structured_prompt(messages or [], validator.schema)
+            request["tool_choice"] = "none"
         if tool_choice is not None:
             request["tool_choice"] = tool_choice
+    if cli_mode == "chat" and format_retry:
+        request["engine_prompt"] += (
+            "\nFORMAT RETRY: The previous response was not valid JSON. Generate the answer again.\n"
+            "Return ONLY the requested JSON object. Escape quotes, backslashes and newlines "
+            "inside string values. Do not concatenate multiple objects or repeat examples.\n"
+            "No tools from the rejected response have been executed. Do not invent their results.\n")
     payload = json.dumps(request, ensure_ascii=False).encode("utf-8")
     if len(payload) > 16 * 1024 * 1024:
         raise ValueError("外部 CLI に渡す会話が大きすぎます。")
@@ -98,7 +136,15 @@ def run_cli(root, provider, model, prompt, project, mode, progress, *,
             raise ValueError("外部 CLI の最終回答を取得できませんでした。")
         if cli_mode == "chat":
             from hermes_cli.aidiy_cli_json import parse_response
-            validation = {**request, "cli_mode": "validate_chat", "response": parse_response(answer)}
+            try:
+                parsed = parse_response(answer)
+            except ValueError as exc:
+                raise _ResponseJSONError(str(exc)) from None
+            if validator is not None:
+                if not validator.is_valid(parsed):
+                    raise ValueError("CLI chatのJSON固定応答がschemaに一致しません。")
+                parsed = {"content": json.dumps(parsed, ensure_ascii=False), "tool_calls": []}
+            validation = {**request, "cli_mode": "validate_chat", "response": parsed}
             checked = subprocess.run(command, cwd=project,
                                      input=json.dumps(validation, ensure_ascii=False).encode("utf-8"),
                                      stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
@@ -137,8 +183,6 @@ def install_chat_engine(agent, cli, root):
     import time
 
     def complete(api_kwargs, *, on_first_delta=None):
-        if api_kwargs.get("response_format"):
-            raise ValueError("CLI chat は response_format に未対応です。")
         if on_first_delta:
             on_first_delta()
         mode = "read-only" if os.environ.get("AIDIY_HERMES_READ_ONLY") == "1" else (
@@ -147,7 +191,8 @@ def install_chat_engine(agent, cli, root):
                           lambda text: None, cli_mode="chat",
                           messages=api_kwargs.get("messages", []), tools=api_kwargs.get("tools", []),
                           tool_choice=api_kwargs.get("tool_choice"),
-                          cancelled=lambda: bool(getattr(agent, "_interrupt_requested", False)))
+                          cancelled=lambda: bool(getattr(agent, "_interrupt_requested", False)),
+                          response_format=api_kwargs.get("response_format"))
         return ChatCompletion.model_validate({
             "id": "aidiy-cli", "object": "chat.completion", "created": int(time.time()),
             "model": cli.model, "choices": [{"index": 0, "message": message,
@@ -179,9 +224,11 @@ def install_chat_engine(agent, cli, root):
             route.update(provider=cli._aidiy_provider_slug, model=cli.model)
         # Compression/title preserve their upstream prompts, but use this same
         # CLI engine without tools. Never resolve a second API provider.
-        # Title JSON stays inside content and is validated by title_generator;
-        # the child response envelope remains the shared chat schema.
-        return complete({"messages": kwargs.get("messages", []), "tools": [], "tool_choice": "none"})
+        # Structured auxiliary output is returned directly by the text CLI;
+        # Hermes validates and wraps it, avoiding nested/escaped JSON demands.
+        response_format = kwargs.get("response_format") or (kwargs.get("extra_body") or {}).get("response_format")
+        return complete({"messages": kwargs.get("messages", []), "tools": [],
+                         "tool_choice": "none", "response_format": response_format})
 
     # Auto-title runs on a background thread; pass a per-agent callback rather
     # than monkeypatching the global auxiliary API client.

@@ -18,7 +18,7 @@ import { defaults } from './helpers';
 
 test('PORT_CORE、共通モデル、作業フォルダを読み込み、元設定は変更しない', () => {
   const data = { ...defaults, PORT_CORE: '18091', CODE_BASE_PATH: '../frontend_ide/host', LIVE_AI_NAME: 'openai_live',
-    CODE_AIDIY_HERMES_MODEL: 'openai_oauth/gpt-6.1-sol', CODE_MAX_TURNS: 999 };
+    CODE_AIDIY_HERMES_MODEL: 'openai_oauth/gpt-6.2-sol', CODE_MAX_TURNS: 999 };
   const before = JSON.stringify(data);
   const result = 設定解析(data);
   assert.equal(new URL(result.coreUrl).port, '18091');
@@ -26,7 +26,7 @@ test('PORT_CORE、共通モデル、作業フォルダを読み込み、元設�
   assert.equal(result.folder, resolve(プロジェクトルート, 'frontend_ide/host'));
   assert.equal(result.liveModels.LIVE_AI_NAME, 'openai_live');
   assert.equal(JSON.stringify(data), before);
-  assert.equal(result.hermesModel, 'openai_oauth/gpt-6.1-sol');
+  assert.equal(result.hermesModel, 'openai_oauth/gpt-6.2-sol');
   assert.equal(result.maxTurns, 999);
 });
 

@@ -1155,7 +1155,21 @@ impl ModelsManager for StaticModelsManager {
 }
 
 fn load_remote_models_from_file() -> Result<Vec<ModelInfo>, std::io::Error> {
-    Ok(crate::bundled_models_response()?.models)
+    let mut models = crate::bundled_models_response()?.models;
+    // AiDiy: latest offline defaults use generic fallback metadata, not the
+    // previous model's unverified capabilities. Keep old IDs for saved configs
+    // and keep bundled_models_response unchanged for Bedrock/GCP catalogs.
+    for (slug, priority) in [("gpt-6.2-sol", -2), ("gpt-6.2-astra", -1)] {
+        if let Some(model) = models.iter_mut().find(|model| model.slug == slug) {
+            model.priority = priority;
+        } else {
+            let mut model = model_info::model_info_from_slug(slug);
+            model.visibility = ModelVisibility::List;
+            model.priority = priority;
+            models.push(model);
+        }
+    }
+    Ok(models)
 }
 
 fn default_model_from_available(available: Vec<ModelPreset>) -> String {

@@ -257,8 +257,8 @@ mod tests {
             assert_eq!(split_aidiy_model(model), None, "{model}");
             assert_eq!(aidiy_api_model(model), model);
         }
-        assert_eq!(aidiy_api_model("openai_oauth/gpt-6-astra"), "gpt-6-astra");
-        assert_eq!(aidiy_api_model("openai_chat/gpt-6-astra"), "gpt-6-astra");
+        assert_eq!(aidiy_api_model("openai_oauth/gpt-6.2-astra"), "gpt-6.2-astra");
+        assert_eq!(aidiy_api_model("openai_chat/gpt-6.2-astra"), "gpt-6.2-astra");
         assert_eq!(aidiy_api_model("openrt_chat/google/g-4"), "google/g-4");
     }
 
@@ -274,8 +274,8 @@ mod tests {
                 .as_deref(),
             Some("gemini_chat")
         );
-        assert!(aidiy_model_provider("openai_oauth/gpt-6-astra").is_none());
-        assert!(aidiy_model_provider("gpt-6-astra").is_none());
+        assert!(aidiy_model_provider("openai_oauth/gpt-6.2-astra").is_none());
+        assert!(aidiy_model_provider("gpt-6.2-astra").is_none());
     }
 
     #[test]

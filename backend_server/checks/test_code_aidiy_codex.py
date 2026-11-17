@@ -99,12 +99,12 @@ class AiDiyCodexCommandTest(unittest.TestCase):
 
     def test_model_choices_keep_openai_oauth_prefix(self):
         catalog = {"aidiy_codex": {
-            "openai_oauth/gpt-6.1-sol": "sol", "openai_oauth/gpt-6-luna": "luna",
+            "openai_oauth/gpt-6.2-sol": "sol", "openai_oauth/gpt-6-luna": "luna",
             "openai_oauth/gpt-6-terra": "old terra", "openai_oauth/gpt-6.1-terra": "terra",
             "gpt-6-luna": "no prefix", "gemini_chat/gemini-3-pro": "other section",
         }}
         values = {item["value"] for item in selection.model_choices("aidiy_codex", catalog)}
-        self.assertEqual(values, {"openai_oauth/gpt-6.1-sol", "openai_oauth/gpt-6.1-terra", "openai_oauth/gpt-6-luna"})
+        self.assertEqual(values, {"openai_oauth/gpt-6.2-sol", "openai_oauth/gpt-6.1-terra", "openai_oauth/gpt-6-luna"})
         self.assertIn("aidiy_codex", selection.MODEL_INSTRUCTIONS)
 
 

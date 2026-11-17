@@ -152,7 +152,7 @@ test('shared writer generates Hermes separately while preserving Chat/Code filte
   const results = {
     gemini:success(ids), freeai:success(['gemini-2.5-flash','gemini-3-flash']),
     claude:success(['claude-sonnet-5-5','claude-sonnet-4-5','claude-opus-5-5']),
-    openai:success(['gpt-5.6-sol','gpt-6.1-sol','gpt-6-luna','gpt-realtime']),
+    openai:success(['gpt-5.6-sol','gpt-6.2-sol','gpt-6-luna','gpt-realtime']),
     openai_oauth:success(['gpt-6-luna']), grok:{状態:'PASS'},
   };
   const installedClis = Object.fromEntries(HERMES_CODE_PROVIDERS.map(key => [key,true]));
@@ -167,8 +167,8 @@ test('shared writer generates Hermes separately while preserving Chat/Code filte
   assert.deepEqual(Object.keys(info.freeai_chat.models), ['gemini-2.5-flash','gemini-3-flash']);
   assert.deepEqual(Object.keys(info.claude_chat.models), ['claude-sonnet-5-5','claude-sonnet-4-5','claude-opus-5-5']);
   assert.deepEqual(Object.keys(code.claude_cli.models), ['sonnet','opus']);
-  assert.deepEqual(Object.keys(code.codex_cli.models), ['gpt-6.1-sol','gpt-6-luna']);
-  assert.deepEqual(Object.keys(info.openai_chat.models), ['gpt-5.6-sol','gpt-6.1-sol','gpt-6-luna']);
+  assert.deepEqual(Object.keys(code.codex_cli.models), ['gpt-6.2-sol','gpt-6-luna']);
+  assert.deepEqual(Object.keys(info.openai_chat.models), ['gpt-5.6-sol','gpt-6.2-sol','gpt-6-luna']);
   for (const key of HERMES_CODE_PROVIDERS) {
     assert.deepEqual(info[key], {models:{same:HERMES_SAME_LABEL, ...code[key].models}}, key);
     assert.equal(Object.keys(info[key].models)[0], 'same', key);

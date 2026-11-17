@@ -42,9 +42,9 @@ test('Code 接続: inputのinit・モデル設定後に出力ソケットを開�
     backend.sockets[0].emit({メッセージ識別:'error',メッセージ内容:'入力処理エラー'});
     assert.equal(packets.at(-1).メッセージ内容,'入力処理エラー');
     const catalog = await client.catalog('aidiy_hermes');
-    assert.ok(catalog.some(m=>m.id==='openai_oauth/gpt-6.1-sol'));
-    await client.setModel({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});
-    assert.equal(backend.requests.at(-1).body.モデル設定.CODE_AI1_MODEL,'openai_oauth/gpt-6.1-sol');
+    assert.ok(catalog.some(m=>m.id==='openai_oauth/gpt-6.2-sol'));
+    await client.setModel({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'});
+    assert.equal(backend.requests.at(-1).body.モデル設定.CODE_AI1_MODEL,'openai_oauth/gpt-6.2-sol');
   } finally { client.dispose(); }
 });
 
@@ -101,7 +101,7 @@ test('Code 接続: 初回失敗も10秒間隔で再試行し、破棄・接続�
   t.mock.timers.enable({ apis:['setTimeout','setInterval'] });
   const backend = core(), {client} = connection(backend); backend.unavailable = true;
   try {
-    client.start('/project',{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}); await flush();
+    client.start('/project',{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'}); await flush();
     assert.equal(client.connected,false);
     t.mock.timers.tick(10000); await flush(); assert.equal(backend.sockets.length,2);
     backend.unavailable = false;
@@ -130,7 +130,7 @@ test('Code 接続: 30秒のinit待ちで失敗し、設定APIのNGも送信可�
 
 test('Code モデル: Code AI 名と組み合わせIDをそのまま保持する', () => {
   assert.deepEqual(コード選択({provider:' copilot_cli ',model:' gpt-6-sol '}),{provider:'copilot_cli',model:'gpt-6-sol'});
-  assert.deepEqual(コード選択({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'}),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.1-sol'});
+  assert.deepEqual(コード選択({provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'}),{provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'});
 });
 
 test('Code 接続: 回答・CAN・中断通知後も要求全体の完了まで実行中を伝える', async () => {
@@ -161,7 +161,7 @@ test('Code 接続: 共通のモデル既定値を使う再接続で会話をリ�
   try {
     client.start('/project',{provider:'',model:''}); await flush();
     const session=backend.sessions.get(client.session);
-    session.settings.CODE_AI1_MODEL='';session.settings.CODE_AIDIY_HERMES_MODEL='openai_oauth/gpt-6.1-sol';
+    session.settings.CODE_AI1_MODEL='';session.settings.CODE_AIDIY_HERMES_MODEL='openai_oauth/gpt-6.2-sol';
     backend.sockets[1].close();t.mock.timers.tick(10000);await flush();
     assert.equal(client.connected,true);
     assert.ok(!backend.requests.some(request=>request.path.endsWith('設定')));

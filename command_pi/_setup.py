@@ -21,7 +21,7 @@ Windows ではユーザー PATH へ登録します。
 - `aidiy_pi` は aidiy_hermes と同様、実行したフォルダをそのまま作業フォルダ（プロジェクト）にする。
 - 起動入口は `aidiy/aidiy_pi.ts`。aidiy_diag の pi_models_info.json・AiDiy_key.json・
   Codex / Grok の共有ログインから、Hermes と同じ区分名のプロバイダを登録する。
-  初期モデルは openai_oauth/gpt-6.1-sol、以後は最後に選んだモデル（~/.pi/agent/aidiy_model.json）。
+  初期モデルは openai_oauth/gpt-6.2-sol、以後は最後に選んだモデル（~/.pi/agent/aidiy_model.json）。
   利用者の設定・認証・セッションは Pi 既定の `~/.pi/agent` に保存される。
 
 公開 API:

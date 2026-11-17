@@ -41,11 +41,11 @@ test('status marks OAuth rows configured by login files even without API keys, a
 test('OpenAI OAuth lists Codex models like the main app: hidden and retired removed, priority order, forward-compat with standard names, account header',async()=>{
  const calls=[];
  const result=await probe('openai_oauth',{now,reader:forbidden,oauthReader,fetch:async(provider,headers)=>{calls.push({provider,headers});return {models:[
-  {slug:'gpt-6-luna',priority:30},{slug:'gpt-6.1-sol',priority:10,context_window:400000},{slug:'hidden-model',priority:1,visibility:'hide'},
-  {slug:'gpt-6-sol',priority:5},{slug:'gpt-6-astra',priority:10},{slug:codexToken,priority:40}]};}});
- assert.equal(result.状態,'OK');assert.deepEqual(result.モデル,['gpt-6-astra','gpt-6.1-sol','gpt-6-luna']);
+  {slug:'gpt-6-luna',priority:30},{slug:'gpt-6.2-sol',priority:10,context_window:400000},{slug:'hidden-model',priority:1,visibility:'hide'},
+  {slug:'gpt-6-sol',priority:5},{slug:'gpt-6.2-astra',priority:10},{slug:codexToken,priority:40}]};}});
+ assert.equal(result.状態,'OK');assert.deepEqual(result.モデル,['gpt-6.2-astra','gpt-6.2-sol','gpt-6-luna']);
  assert.equal(calls.length,1);assert.equal(calls[0].provider,'codex');assert.equal(calls[0].headers.Authorization,'Bearer '+codexToken);assert.equal(calls[0].headers['ChatGPT-Account-Id'],'acct-fixture');
- assert.equal(result.モデル詳細.find(row=>row.model_id==='gpt-6.1-sol').作成日,null);
+ assert.equal(result.モデル詳細.find(row=>row.model_id==='gpt-6.2-sol').作成日,null);
  assert.ok(!JSON.stringify(result).includes(codexToken));assert.ok(!JSON.stringify(result).includes('acct-fixture'));
 });
 test('Grok lists models with its login key; expired login explains re-login and missing login never fetches',async()=>{
@@ -63,14 +63,14 @@ test('catalog shapes fail closed',()=>{
  assert.deepEqual(Object.keys(grokCatalog({models:[{info:{id:'grok-4.6',hidden:false}},{info:{id:'grok-x',hidden:true}}]})),['grok-4.6']);
 });
 test('Codex synthesis matches codex_models.py: retired and legacy aliases removed, forward-compat appended',()=>{
- assert.deepEqual(finalizeCodexModels(['gpt-5.4','gpt-6-sol','gpt-5.4-mini','gpt-6.1-sol-2026-09-01']),['gpt-5.4','gpt-5.4-mini','gpt-6.1-sol-2026-09-01','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
- assert.deepEqual(finalizeCodexModels(['gpt-6.1-sol','gpt-6.1-sol-900k']),['gpt-6.1-sol','gpt-6-astra']);
+ assert.deepEqual(finalizeCodexModels(['gpt-5.4','gpt-6-sol','gpt-5.4-mini','gpt-6.2-sol-2026-09-01']),['gpt-5.4','gpt-5.4-mini','gpt-6.2-sol-2026-09-01','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna']);
+ assert.deepEqual(finalizeCodexModels(['gpt-6.2-sol','gpt-6.2-sol-900k']),['gpt-6.2-sol','gpt-6.2-astra']);
 });
 test('Codex API failure shows the main app fallback: config.toml model, models_cache.json, defaults',async()=>{
  const local=name=>name==='config.toml'?'model = "gpt-custom"\n[profiles.x]\nmodel = "ignored"\n':JSON.stringify({models:[{slug:'gpt-cache',priority:1},{slug:'gpt-hidden',visibility:'hidden'}]});
  assert.deepEqual(await readCodexLocal(local),{defaultModel:'gpt-custom',cacheIds:['gpt-cache']});
- assert.deepEqual(Object.keys(codexFallbackCatalog(null,[])),['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
+ assert.deepEqual(Object.keys(codexFallbackCatalog(null,[])),['gpt-6.2-astra','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna']);
  const failed=await probe('openai_oauth',{now,reader:forbidden,oauthReader,codexLocalReader:local,fetch:async()=>{throw Error('http');}});
- assert.equal(failed.状態,'NG');assert.deepEqual(failed.モデル.slice(0,3),['gpt-custom','gpt-cache','gpt-6-astra']);assert.match(failed.警告[0],/代替候補/);
+ assert.equal(failed.状態,'NG');assert.deepEqual(failed.モデル.slice(0,3),['gpt-custom','gpt-cache','gpt-6.2-astra']);assert.match(failed.警告[0],/代替候補/);
  assert.ok(!JSON.stringify(failed).includes(codexToken));
 });

@@ -3,9 +3,9 @@
 // Short drags remain text selection. Only a stationary 500 ms press enters window movement.
 export function 長押し移動を作成({host=window,native,changed=()=>{},enabled=()=>true,setTimer=setTimeout,clearTimer=clearTimeout,setLoop=setInterval,clearLoop=clearInterval}){
  let cancel=()=>{};
- function start(event){
+ function start(event,editor=event.target){
   cancel();if(!native||!enabled()||event.button!==0||event.isPrimary===false)return;
-  const target=event.target,id=event.pointerId,x=event.clientX,y=event.clientY;
+  const target=editor,id=event.pointerId,x=event.clientX,y=event.clientY;
   let ended=false,active=false,token,timer,loop,selection;
   const end=()=>{
    if(ended)return;ended=true;clearTimer(timer);clearLoop(loop);

@@ -13,8 +13,8 @@ const require = createRequire(import.meta.url), vue = require('vue');
 const { parse, compileScript, compileTemplate } = require('@vue/compiler-sfc');
 const { transformSync } = require('esbuild');
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
-const hermesModels = ['copilot_cli/same', 'openai_oauth/gpt-6.1-sol', 'openai_oauth/gpt-6.1-sol-900k',
-  'openai_oauth/gpt-6-astra', 'openai_oauth/gpt-6-luna', 'openai_oauth/gpt-6-luna-900k',
+const hermesModels = ['copilot_cli/same', 'openai_oauth/gpt-6.2-sol', 'openai_oauth/gpt-6.2-sol-900k',
+  'openai_oauth/gpt-6.2-astra', 'openai_oauth/gpt-6-luna', 'openai_oauth/gpt-6-luna-900k',
   'openai_oauth/gpt-5.6-sol', 'openai_oauth/gpt-6.1-terra', 'openai_oauth/gpt-6.1-terra-900k',
   'openai_oauth/gpt-5.6-luna'].map(id => ({ id, label: `????/??/?? - ${id.split('/')[1]}` }));
 

@@ -21,7 +21,7 @@ const prompt='今回の目標は専用READMEの確認です。今回の作業は
 writeFileSync(join(project,'README.md'),'# Navi停止操作の公開試験資料\nこのフォルダには秘密情報はありません。READMEの確認はCodeの報告で完了です。\n手動承認は未実施です。承認ファイルは存在しません。利用者の別操作まで手動承認の項目は0%にしてください。\nCodeにはREADMEを読み短く報告することだけを依頼し、ファイルを変更しません。\n','utf8');
 const before=createHash('sha256').update(readFileSync(join(project,'README.md'))).digest('hex');
 const stateRoot=join(base,'navigation-state'),key=createHash('sha256').update(project.toLowerCase()).digest('hex'),dir=join(stateRoot,key,'standalone-navi-1');mkdirSync(dir,{recursive:true});
-const id=randomUUID(),at=Date.now(),selection={provider:'codex_cli',model:'gpt-6.1-sol'};
+const id=randomUUID(),at=Date.now(),selection={provider:'codex_cli',model:'gpt-6.2-sol'};
 const initial={schemaVersion:3,requestId:id,navigationId:id,goal,inferred:false,items:[{id:'read',name:'READMEの確認',progress:0,weight:50,reason:'試験開始時点では報告前です。',weightReason:'停止操作用の固定試験項目の半分です。'},{id:'approval',name:'利用者による別途の手動承認',progress:0,weight:50,reason:'手動承認は未実施です。承認ファイルがない限り0%です。',weightReason:'100%自動停止を除外する固定の未完了項目です。'}],overall:{progress:0,reason:'試験開始前です。'},nextItemId:'read',nextPrompt:prompt,selection,createdAt:at,updatedAt:at,checkedAt:at};
 writeFileSync(join(dir,'latest.json'),JSON.stringify(initial,null,2));
 const log=(kind,data)=>appendFileSync(join(output,'agent.jsonl'),JSON.stringify({at:new Date().toISOString(),kind,...data})+'\n');

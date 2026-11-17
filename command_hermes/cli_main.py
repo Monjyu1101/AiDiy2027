@@ -5041,11 +5041,11 @@ _OPENAI_OAUTH_SLUG = "openai_oauth"
 _OPENAI_OAUTH_RUNTIME_PROVIDER = "openai-codex"
 _XAI_OAUTH_SLUG = "xai-oauth"
 _XAI_OAUTH_DEFAULT_MODEL = "grok-4.6"
-_AIDIY_INITIAL_MODEL = "openai_oauth/gpt-6.1-sol"
+_AIDIY_INITIAL_MODEL = "openai_oauth/gpt-6.2-sol"
 from hermes_cli.aidiy_model_preferences import load_model_choice, save_model_choice, model_display_name, status_model_display_name
 # Codex backend が返す一覧を取れなかったときだけ使う保険。ChatGPT アカウントで
 # 使えるモデルは契約プランで変わるので、基本はライブ一覧の先頭を既定にする。
-_OPENAI_OAUTH_FALLBACK_MODEL = "gpt-6.1-sol"
+_OPENAI_OAUTH_FALLBACK_MODEL = "gpt-6.2-sol"
 _openai_oauth_models_cache: Optional[List[str]] = None
 _FREEAI_DEFAULT_MODEL = "gemini-4-carbon"
 

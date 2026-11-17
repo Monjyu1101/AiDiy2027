@@ -17,8 +17,8 @@ if not exist "%CODEX_CMD%" goto NOT_COMPILED
 ECHO.
 ECHO Model list (openai_oauth only for now)
 ECHO   1: same (last selected model)
-ECHO   2: openai_oauth/gpt-6-astra
-ECHO   3: openai_oauth/gpt-6.1-sol
+ECHO   2: openai_oauth/gpt-6.2-astra
+ECHO   3: openai_oauth/gpt-6.2-sol
 ECHO   4: openai_oauth/gpt-6.1-terra
 ECHO   5: openai_oauth/gpt-6-luna
 ECHO   0: Exit
@@ -29,8 +29,8 @@ set /p "MODEL_NUMBER=Model number [Enter: same]: "
 if "%MODEL_NUMBER%"=="0" goto END
 if not defined MODEL_NUMBER set "MODEL_NUMBER=1"
 if "%MODEL_NUMBER%"=="1" set "MODEL=same"
-if "%MODEL_NUMBER%"=="2" set "MODEL=openai_oauth/gpt-6-astra"
-if "%MODEL_NUMBER%"=="3" set "MODEL=openai_oauth/gpt-6.1-sol"
+if "%MODEL_NUMBER%"=="2" set "MODEL=openai_oauth/gpt-6.2-astra"
+if "%MODEL_NUMBER%"=="3" set "MODEL=openai_oauth/gpt-6.2-sol"
 if "%MODEL_NUMBER%"=="4" set "MODEL=openai_oauth/gpt-6.1-terra"
 if "%MODEL_NUMBER%"=="5" set "MODEL=openai_oauth/gpt-6-luna"
 if defined MODEL goto LAUNCH

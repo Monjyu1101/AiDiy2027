@@ -19,8 +19,8 @@ const Module = require('node:module');
 const { buildSync } = require('esbuild');
 
 const host = resolve(__dirname, '..');
-const oldModel = 'openai_oauth/gpt-6.1-sol';
-const newModel = 'openai_oauth/gpt-6-astra';
+const oldModel = 'openai_oauth/gpt-6.2-sol';
+const newModel = 'openai_oauth/gpt-6.2-astra';
 const onlinePreference = JSON.stringify({ provider: 'codex_cli', model: 'auto' }) + '\n';
 const flush = async () => { for (let i = 0; i < 8; i++) await new Promise(resolve => setImmediate(resolve)); };
 
@@ -74,8 +74,8 @@ async function server(t, f) {
 test('Code 単独: 起動後の診断生成・更新を再読込し、確定時も最新候補を検証する', async t => {
   const f = fixture(t), app = await server(t, f);
   assert.deepEqual((await app.catalog()).models.map(item => item.id), ['same']);
-  f.models({ [oldModel]: '2026/10/20 - gpt-6.1-sol', 'copilot_cli/auto': 'Copilot 自動' });
-  assert.deepEqual((await app.catalog()).models, [{ id: 'same', label: 'same (変更なし)' }, { id: oldModel, label: '2026/10/20 - gpt-6.1-sol' }, { id: 'copilot_cli/auto', label: 'Copilot 自動' }]);
+  f.models({ [oldModel]: '2026/10/20 - gpt-6.2-sol', 'copilot_cli/auto': 'Copilot 自動' });
+  assert.deepEqual((await app.catalog()).models, [{ id: 'same', label: 'same (変更なし)' }, { id: oldModel, label: '2026/10/20 - gpt-6.2-sol' }, { id: 'copilot_cli/auto', label: 'Copilot 自動' }]);
   assert.equal((await app.choose(oldModel)).status, 200);
   assert.deepEqual(f.saved(), { provider: 'aidiy_hermes', model: oldModel });
   // ダイアログを開いた後で診断結果が変わっても、削除済みIDは保存しない。
@@ -133,8 +133,8 @@ function extension(t, f) {
 test('Code 拡張: 起動後の候補生成・削除・破損・修復を反映し、オンライン保存値を維持する', async t => {
   const f = fixture(t), app = extension(t, f);
   assert.deepEqual((await app.catalog()).items.map(item => item.id), ['same']);
-  f.models({ [oldModel]: '2026/10/20 - gpt-6.1-sol' });
-  assert.deepEqual((await app.catalog()).items, [{ id: 'same', label: 'same (変更なし)' }, { id: oldModel, label: '2026/10/20 - gpt-6.1-sol' }]);
+  f.models({ [oldModel]: '2026/10/20 - gpt-6.2-sol' });
+  assert.deepEqual((await app.catalog()).items, [{ id: 'same', label: 'same (変更なし)' }, { id: oldModel, label: '2026/10/20 - gpt-6.2-sol' }]);
   assert.equal((await app.choose(oldModel)).model, oldModel);
   assert.deepEqual(f.saved(), { provider: 'aidiy_hermes', model: oldModel });
   f.models({ [newModel]: 'GPT 6 Astra' });

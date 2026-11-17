@@ -189,12 +189,12 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     def test_cli_and_oauth_keep_code_ids_labels_and_same_semantics(self):
         self.write({"claude-code": {"sonnet": "Claude label", "same": "same", "auto": "auto"},
-                    "opencode": {"openai/gpt-6.1-sol": "OpenCode label"},
-                    "openai_oauth": {"gpt-6.1-sol": "yyyy/mm/dd - openai_oauth/gpt-6.1-sol"}})
+                    "opencode": {"openai/gpt-6.2-sol": "OpenCode label"},
+                    "openai_oauth": {"gpt-6.2-sol": "yyyy/mm/dd - openai_oauth/gpt-6.2-sol"}})
         entry = self.picker._get_aidiy_provider_entry("claude-code", True)
         self.assertEqual(entry["models"], [("same (変更なし)", "same"), ("Claude label", "sonnet")])
-        self.assertEqual(self.ns["_aidiy_code_model_labels"]("opencode"), [("OpenCode label", "openai/gpt-6.1-sol")])
-        self.assertEqual(self.ns["_aidiy_code_model_labels"]("openai_oauth")[0][1], "gpt-6.1-sol")
+        self.assertEqual(self.ns["_aidiy_code_model_labels"]("opencode"), [("OpenCode label", "openai/gpt-6.2-sol")])
+        self.assertEqual(self.ns["_aidiy_code_model_labels"]("openai_oauth")[0][1], "gpt-6.2-sol")
         self.picker._apply_aidiy_provider_model(entry, "auto")
         self.assertEqual(self.picker.model, "same")
         self.assertEqual(self.picker._explicit_api_key, None)
@@ -208,10 +208,10 @@ class HermesModelCatalogTests(unittest.TestCase):
 
     def test_every_listed_provider_reads_only_the_file_including_ollama_local_and_oauth(self):
         self.write({"ollama_chat": {"mistral-large-3:675b": "L", "gpt-oss:20b": "S"}, "local_chat": {"google/gemma-4-E2B-it": "Local"},
-                    "openai_oauth": {"gpt-6.1-sol": "O"}, "xai-oauth": {"grok-4.7": "X"}})
+                    "openai_oauth": {"gpt-6.2-sol": "O"}, "xai-oauth": {"grok-4.7": "X"}})
         self.picker._aidiy_config["ollama_host"] = "http://localhost:11434"
         for slug, expected in [("ollama_chat", ["mistral-large-3:675b", "gpt-oss:20b"]), ("local_chat", ["google/gemma-4-E2B-it"]),
-                               ("openai_oauth", ["gpt-6.1-sol"]), ("xai-oauth", ["grok-4.7"])]:
+                               ("openai_oauth", ["gpt-6.2-sol"]), ("xai-oauth", ["grok-4.7"])]:
             entry = self.picker._get_aidiy_provider_entry(slug, include_models=True)
             self.assertEqual([model for _, model in entry["models"]], expected, slug)
         # 候補が無いプロバイダは API を呼ばず、取得・保存の案内を出す。

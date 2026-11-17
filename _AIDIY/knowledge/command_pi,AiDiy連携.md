@@ -73,8 +73,8 @@
 - `--model` / `--models` / `--provider` を指定したら、その指定を使う。`--model same` は前回選択の復元、`--model auto` は初期モデルからの自動決定（Hermes と同じ指定）。
 - `--model=<値>` も空白区切りと同じ指定として解釈する。プロンプト本文や `--` 以降は引数として書き換えない。外部CLIを `--provider codex_cli --model same` のように明示した場合のsame/autoは、指定したCLIへ渡す。
 - セッション再開（`-c` / `-r` / `--session` など）はそのセッションのモデルを使う。
-- それ以外は前回選んだモデル（`~/.pi/agent/aidiy_model.json`）、無ければ `openai_oauth/gpt-6.1-sol`。OpenAI OAuth に未ログインなら FreeAI（Gemini）の先頭モデルへ退避する。
-- `/model` の選択一覧は `provider/model`（例: `openai_oauth/gpt-6.1-sol`）を先頭に表示し、全候補・scoped候補ともこの結合名で昇順に並べる。現在・既定モデルは先頭へ移動せず、マーカーだけで示す。検索中は従来の関連度順を維持する。確認: `node --test scripts/aidiy-model-selector.test.mjs`（command_pi内）。
+- それ以外は前回選んだモデル（`~/.pi/agent/aidiy_model.json`）、無ければ `openai_oauth/gpt-6.2-sol`。OpenAI OAuth に未ログインなら FreeAI（Gemini）の先頭モデルへ退避する。
+- `/model` の選択一覧は `provider/model`（例: `openai_oauth/gpt-6.2-sol`）を先頭に表示し、全候補・scoped候補ともこの結合名で昇順に並べる。現在・既定モデルは先頭へ移動せず、マーカーだけで示す。検索中は従来の関連度順を維持する。確認: `node --test scripts/aidiy-model-selector.test.mjs`（command_pi内）。
 - `/model` や Ctrl+P で選んだモデルは `model_select` イベントで `aidiy_model.json` に保存する。起動時の `--model` 指定や非対話実行では保存しない。
 
 ## MCP
@@ -99,6 +99,13 @@
 - `backend_tools` または `backend_server` のPython環境と、委譲先CLIの導入・認証が必要。常駐Core/ToolsやHermesの起動は不要。
 - Piの会話履歴をテキストで渡し、委譲先は毎回新規会話として開始する。Piの再開会話へ、別のCLIセッションを混ぜない。モデルがsameなら委譲先のモデル指定を省略し、autoならCodeAIのモデル選択を使う。
 - Windowsの `.cmd` 解決、タイムアウト、子孫の終了は既存 `AIコード_cli.py` / `process_lifetime.py` を再利用する。進捗はPiのthinkingイベント、結果はtext、異常終了はerrorへ変換する。外部CLIの利用量は取得できないためPiのトークン・費用表示は0となる。
+
+### CLI chat の JSON エラー
+
+- 外部CLIは純粋なテキスト入出力で呼び出す。Pi側が単一JSONの形式、`content`文字列、`tool_calls`とオブジェクト型`arguments`、文字列のエスケープを説明する。
+- 応答の最初の `{` から最後の `}` を抽出して検証する。JSON構文不正の場合のみ、同じ会話・ツール定義・モデル・read-only制約で1回だけ形式の再生成を求める。生応答は再送もログ出力もしない。
+- 重複キー、不明なツール、引数スキーマ違反、認証・プロセス失敗は再要求せず失敗にする。APIやpassthroughへ切り替えず、検証が完了するまでツール要求はPiへ渡さない。
+- 検証は `node --test scripts/aidiy-cli-json.test.mjs scripts/aidiy-cli-chat.test.mjs scripts/aidiy-cli-stream.test.mjs`（command_pi内）。模擬CLIを使うため実プロバイダの認証・モデル応答の成功を保証するものではない。
 
 ## Navi・次入力予測
 
@@ -139,7 +146,7 @@
 
 ## フッターのモデル表示
 
-- 右下のモデルは、プロバイダ数に関係なく `プロバイダ/モデル` で表示する。例: `openai_oauth/gpt-6.1-sol`。推論レベルとルーティング先の表示は維持する。
+- 右下のモデルは、プロバイダ数に関係なく `プロバイダ/モデル` で表示する。例: `openai_oauth/gpt-6.2-sol`。推論レベルとルーティング先の表示は維持する。
 - 端末幅が狭い場合もプロバイダだけを消さず、結合した表示を利用可能な幅に切り詰める。
 - 回帰確認: `node --test command_pi/scripts/aidiy-footer.test.mjs command_pi/scripts/aidiy-model-selector.test.mjs`（依存導入後、リポジトリルートで実行）。
 

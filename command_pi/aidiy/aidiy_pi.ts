@@ -11,7 +11,7 @@
 //   1. --model / --models / --provider を指定したら、その指定を使う
 //      （--model same は前回選択の復元、--model auto は 3 の初期モデルから自動決定）
 //   2. セッション再開（-c / -r / --session ...）は、そのセッションのモデルを使う
-//   3. それ以外は前回選んだモデル（aidiy_model.json）、無ければ openai_oauth/gpt-6.1-sol
+//   3. それ以外は前回選んだモデル（aidiy_model.json）、無ければ openai_oauth/gpt-6.2-sol
 //      OpenAI OAuth が未ログインなら、FreeAI（Gemini）の先頭モデルへ退避する
 
 import { setupCli } from "../packages/coding-agent/src/cli/setup.ts";

@@ -144,9 +144,9 @@ export function withoutRetired(models:Catalog):Catalog {
 }
 // command_hermes/hermes_cli/codex_models.py（DEFAULT_CODEX_MODELS・_FORWARD_COMPAT_TEMPLATE_MODELS）と
 // AIチャット_openai.py（_FALLBACK_MODELS）の写し。900K補正はHermes内部で扱う。
-export const DEFAULT_CODEX_MODELS=Object.freeze(['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
-export const OAUTH_FALLBACK_MODELS=Object.freeze(['gpt-6-astra','gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']);
-const FORWARD_COMPAT:readonly [string,readonly string[]][]=[['gpt-6-astra',['gpt-6.1-sol','gpt-6.1-terra','gpt-6-luna']],['gpt-6.1-sol',['gpt-5.5','gpt-5.4']],['gpt-6.1-terra',['gpt-5.5','gpt-5.4']],['gpt-6-luna',['gpt-5.5','gpt-5.4']]];
+export const DEFAULT_CODEX_MODELS=Object.freeze(['gpt-6.2-astra','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna']);
+export const OAUTH_FALLBACK_MODELS=Object.freeze(['gpt-6.2-astra','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna']);
+const FORWARD_COMPAT:readonly [string,readonly string[]][]=[['gpt-6.2-astra',['gpt-6-astra','gpt-6.1-sol','gpt-6.2-sol','gpt-6.1-terra','gpt-6-luna']],['gpt-6.2-sol',['gpt-6.1-sol','gpt-5.5','gpt-5.4']],['gpt-6.1-terra',['gpt-5.5','gpt-5.4']],['gpt-6-luna',['gpt-5.5','gpt-5.4']]];
 // _finalize_codex_models: 廃止・旧別名を除外 → 将来版の補完。標準名だけを返す。
 export function finalizeCodexModels(ids:readonly string[]):string[] {
  const ordered:string[]=[],seen=new Set<string>();

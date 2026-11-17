@@ -19,11 +19,11 @@ mod tests {
     #[test]
     fn aidiy_footer_provider_labels() {
         for (model, provider, expected) in [
-            ("gpt-6.1-sol", "openai", "openai/gpt-6.1-sol"),
+            ("gpt-6.2-sol", "openai", "openai/gpt-6.2-sol"),
             (
-                "openai_oauth/gpt-6.1-sol",
+                "openai_oauth/gpt-6.2-sol",
                 "openai",
-                "openai_oauth/gpt-6.1-sol",
+                "openai_oauth/gpt-6.2-sol",
             ),
             (
                 "copilot_cli/claude-sonnet-5.5",

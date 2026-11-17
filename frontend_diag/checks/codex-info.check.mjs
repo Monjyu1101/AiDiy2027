@@ -22,7 +22,7 @@ test('aidiy_codex list file is distinct from code_models_info.json and the npm c
 
 test('aidiy_codex preserves all Pi sections, model order, labels and CLI same entries',()=>{
   const input={
-    chatModels:{openai_oauth:{models:{'gpt-6.1-sol':'GPT-6.1 Sol'}},gemini_chat:{models:{'gemini-4-carbon':'Gemini 4 Carbon'}}},
+    chatModels:{openai_oauth:{models:{'gpt-6.2-sol':'GPT-6.1 Sol'}},gemini_chat:{models:{'gemini-4-carbon':'Gemini 4 Carbon'}}},
     codeModels:Object.fromEntries(HERMES_CODE_PROVIDERS.map(section=>[section,{models:{same:'前回モデル',
       [section==='opencode_cli'?'openai/gpt-6-luna':'gpt-6-luna']:'Luna', 'gpt-6-luna-900k':'旧別名'}}])),
     providerInfos:[],

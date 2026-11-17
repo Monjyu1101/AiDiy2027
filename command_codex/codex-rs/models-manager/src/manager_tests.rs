@@ -1929,3 +1929,37 @@ fn bundled_models_json_roundtrips() {
         "bundled models.json should contain at least one model"
     );
 }
+
+// AiDiy: offline defaults must not silently select the previous generation.
+#[test]
+fn aidiy_offline_defaults_use_current_models_without_invented_capabilities() {
+    let models = super::load_remote_models_from_file().expect("offline catalog");
+    let current = models
+        .iter()
+        .filter(|model| matches!(model.slug.as_str(), "gpt-6.2-sol" | "gpt-6.2-astra"))
+        .collect::<Vec<_>>();
+    assert_eq!(current.len(), 2);
+    for model in current {
+        assert_eq!(model.visibility, ModelVisibility::List);
+        let generic = crate::model_info::model_info_from_slug(&model.slug);
+        assert_eq!(model.context_window, generic.context_window);
+        assert_eq!(
+            model.supported_reasoning_levels,
+            generic.supported_reasoning_levels
+        );
+        assert!(model.service_tiers.is_empty());
+        assert!(model.available_access_programs.is_none());
+    }
+    let first = models.iter().min_by_key(|model| model.priority).unwrap();
+    assert_eq!(first.slug, "gpt-6.2-sol");
+    for legacy in ["gpt-6-astra", "gpt-6.1-sol"] {
+        assert!(models.iter().any(|model| model.slug == legacy));
+        assert!(
+            crate::bundled_models_response()
+                .unwrap()
+                .models
+                .iter()
+                .any(|model| model.slug == legacy)
+        );
+    }
+}

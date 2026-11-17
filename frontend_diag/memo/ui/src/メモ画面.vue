@@ -30,6 +30,8 @@ function resumeInput(event){
  if(event.button!==0||!ready.value||closing.value||!editor.value||editor.value.disabled)return;
  if(event.target.closest?.('input,textarea,button,a,img,.sticky-header,.sticky-adhesive,.sticky-palette,.sticky-error,.sticky-move-marker'))return;
  event.preventDefault();editor.value.focus();const end=editor.value.value.length;editor.value.setSelectionRange(end,end);
+ // field-sizing で本文が短い時も、見た目の本文領域の余白から長押し移動できる。
+ inputMove.start(event,editor.value);
 }
 function blurForm(){focused.value=false;void nextTick(measureOverflow);}
 watch(()=>[state.value.draft.本文,state.value.draft.画像,ready.value],()=>nextTick(measureOverflow),{flush:'post'});

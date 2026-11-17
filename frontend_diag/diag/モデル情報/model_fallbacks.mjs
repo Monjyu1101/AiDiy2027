@@ -9,8 +9,8 @@ export const COPILOT_FALLBACK_MODELS = Object.freeze({
   'claude-opus-5.5':'2026/09/21 - claude-opus-5.5',
   'claude-sonnet-5.5':'2026/09/28 - claude-sonnet-5.5',
   'claude-haiku-5.5':'2026/10/07 - claude-haiku-5.5',
-  'gpt-6-astra':'2026/08/28 - gpt-6-astra',
-  'gpt-6.1-sol':'2026/09/28 - gpt-6.1-sol',
+  'gpt-6.2-astra':'yyyy/mm/dd - gpt-6.2-astra',
+  'gpt-6.2-sol':'yyyy/mm/dd - gpt-6.2-sol',
   'gpt-6.1-terra':'yyyy/mm/dd - gpt-6.1-terra',
   'gpt-6-luna':'2026/09/15 - gpt-6-luna',
 });

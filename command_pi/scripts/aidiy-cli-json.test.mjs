@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { enginePrompt, extractJsonObject, parseInferenceAnswer } from "../aidiy/aidiy-cli-json.ts";
+import { CliJsonSyntaxError, enginePrompt, extractJsonObject, parseInferenceAnswer } from "../aidiy/aidiy-cli-json.ts";
 const tools = [{name:"read",description:"read",parameters:{type:"object",required:["path"],additionalProperties:false,properties:{path:{type:"string"}}}}];
 test("Pi adds fixed JSON instructions and preserves outer input", () => {
  const prompt=enginePrompt({messages:[{role:"user",content:"hello"}],tools});
@@ -25,4 +25,11 @@ test("Pi validates own envelope and tool schema strictly", () => {
   {content:"",tool_calls:[{name:"read",arguments:{}}]},
   {content:"",tool_calls:[{name:"read",arguments:[]}]},
  ]) assert.throws(()=>parseInferenceAnswer(JSON.stringify(value),tools));
+});
+
+test("only JSON syntax failures are eligible for one format regeneration", () => {
+ for (const text of ["plain answer", '{"content":"broken']) assert.throws(()=>parseInferenceAnswer(text, tools), CliJsonSyntaxError);
+ for (const text of ['{"content":"a","content":"b","tool_calls":[]}', '{"content":"","tool_calls":[{"name":"shell","arguments":{}}]}', '{"content":"","tool_calls":[{"name":"read","arguments":{"path":3}}]}']) {
+  try { parseInferenceAnswer(text, tools); assert.fail("must fail"); } catch(error) { assert.ok(!(error instanceof CliJsonSyntaxError)); }
+ }
 });

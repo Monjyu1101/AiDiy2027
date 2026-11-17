@@ -24,7 +24,7 @@ test('モデル文字列を AIコアと同じ規則で Hermes の起動引数に
   assert.deepEqual(tail('same'), ['--provider', 'same', '--model', 'same']);
   assert.deepEqual(tail('codex_cli/same'), ['--provider', 'codex-cli']);
   assert.deepEqual(tail('claude_cli/sonnet'), ['--provider', 'claude-code', '--model', 'sonnet']);
-  assert.deepEqual(tail('openai_oauth/gpt-6.1-sol'), ['--provider', 'openai_oauth', '--model', 'gpt-6.1-sol']);
+  assert.deepEqual(tail('openai_oauth/gpt-6.2-sol'), ['--provider', 'openai_oauth', '--model', 'gpt-6.2-sol']);
   assert.deepEqual(tail('freeai/gemini-test'), ['--model', 'freeai/gemini-test']);
   assert.deepEqual(Hermes会話引数('same', 5, 'session-1').slice(-4), ['--resume', 'session-1', '--model', 'same']);
   for (const bad of ['', ' ', 'a b', 'x'.repeat(301), 1, undefined]) assert.throws(() => Hermesモデル検証(bad));
