@@ -7,6 +7,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
+import {createRequire} from 'node:module';
+import {createCoreConnection} from '../viewer/core-connection.mjs';
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 const app=read('../src/App.vue'),welcome=read('../src/components/ターミナル/開始表示.vue'),css=read('../src/style.css');
 
@@ -49,7 +51,8 @@ test('オフラインメニューはCPU・Term・Browser・CodeだけでBrowser�
 });
 function startFixture(desktop=false){
  let resolve;const calls=[],updates=[];let layoutRefreshes=0;
- const context={pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,refreshLayout:()=>{layoutRefreshes++;},window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>updates.push(state),fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
+ const project={name:'別プロジェクト',path:'C:\\work\\別プロジェクト'};
+ const context={state:{value:{active:true,mode:'online',startedAt:1,project}},config:{project},pending:{value:false},error:{value:''},statusError:{value:''},revision:0,desktop,refreshLayout:()=>{layoutRefreshes++;},window:{aidiyWindow:{endSession:async()=>calls.push('endSession')}},AbortSignal,update:state=>{updates.push(state);context.state.value=state;},fetch:(url,options)=>{calls.push({url,options});return new Promise(done=>{resolve=done;});}};
  vm.runInNewContext(app.slice(app.indexOf('async function start(action)'),app.indexOf('const navigationWindows='))+';globalThis.run=start;',context);
  return{context,calls,updates,get layoutRefreshes(){return layoutRefreshes;},respond:response=>resolve(response)};
 }
@@ -74,4 +77,71 @@ test('接続開始応答の直後に配置状態を取得し、Load表示を定�
  assert.equal(f.layoutRefreshes,0);
  f.respond({ok:true,json:async()=>({active:true,mode:'online'})});await starting;
  assert.equal(f.context.pending.value,false);assert.equal(f.layoutRefreshes,1);
+});
+
+
+test('終了待ち・終了失敗でも起動プロジェクトを消さず、同じ対象で再試行する',async()=>{
+ const f=startFixture(true),project=f.context.state.value.project;
+ let finish;
+ f.context.window.aidiyWindow.endSession=()=>new Promise((resolve,reject)=>{finish={resolve,reject};});
+ const ending=f.context.run('disconnect');
+ assert.equal(f.context.state.value.active,false);
+ assert.equal(f.context.state.value.project,project,'子窓の終了を待つ間もパラメータを保持');
+ assert.equal(f.context.state.value.connected,false);
+ assert.equal(f.context.state.value.startedAt,null);
+ await f.context.run('offline');assert.equal(f.calls.length,0,'終了中の再開連打は送信しない');
+ finish.reject(Error('子窓終了エラー'));await ending;
+ assert.equal(f.context.pending.value,false);assert.equal(f.context.state.value.project,project);
+ assert.match(f.context.error.value,/子窓終了エラー/);
+ const retry=f.context.run('offline');
+ f.respond({ok:true,json:async()=>({active:true,mode:'offline',startedAt:2,project})});await retry;
+ assert.equal(f.context.state.value.project,project);assert.equal(f.context.state.value.active,true);
+});
+
+test('オンライン・オフラインで繰り返し終了しても起動パラメータの対象で再開できる',async t=>{
+ const f=startFixture(true),project=f.context.state.value.project;
+ const connection=createCoreConnection(project.path,{target:'http://127.0.0.1:8095',fetcher:async()=>({ok:true,json:async()=>({status:'ok',name:'aidiy_code_agents'})})});
+ t.after(()=>connection.close());
+ for(const mode of ['offline','connect','offline','connect']){
+  const ending=f.context.run('disconnect');await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(f.context.state.value.project.path,project.path);
+  f.respond({ok:true,json:async()=>connection.disconnect()});await ending;
+  assert.equal(f.context.state.value.project.path,project.path);
+  assert.equal(f.context.state.value.active,false);
+  const starting=f.context.run(mode);
+  f.respond({ok:true,json:async()=>mode==='connect'?await connection.connect():connection.offline()});await starting;
+  assert.equal(f.context.state.value.project.path,project.path);
+  assert.equal(f.context.state.value.active,true);
+  assert.equal(f.context.state.value.mode,mode==='connect'?'online':'offline');
+ }
+});
+
+
+test('App実setup: 起動・終了待ち・失敗・再開の全期間で指定フォルダを保持',async()=>{
+ const require=createRequire(import.meta.url),vue=require('vue');
+ const {parse,compileScript}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
+ const {descriptor}=parse(app),compiled=compileScript(descriptor,{id:'ide-restart',genDefaultAs:'component'});
+ const module={exports:{}};
+ let release;
+ const project={name:'プロジェクト',path:'C:\\work\\プロジェクト'};
+ const current={active:true,mode:'offline',startedAt:1,project};
+ const context={module,AbortController,AbortSignal,console,location:{hash:''},
+  window:{aidiyWindow:{endSession:()=>new Promise(resolve=>{release=resolve;})}},
+  fetch:async()=>({ok:true,json:async()=>current}),
+  require:id=>id==='vue'?{...vue,onMounted(){},onBeforeUnmount(){},provide(){}}:
+   id.endsWith('連携先登録.js')?{createDraftTargetRegistry:()=>({})}:{}};
+ vm.runInNewContext(transformSync(compiled.content+';module.exports=component;',{format:'cjs'}).code,context);
+ const scope=vue.effectScope();
+ const s=scope.run(()=>module.exports.setup({config:{kind:'ide',project}},{expose(){}}));
+ try{
+  assert.deepEqual({...s.state.value.project},project,'初回API待ちでも起動パラメータを表示');
+  s.update(current);
+  const ending=s.start('disconnect');
+  assert.deepEqual({...s.state.value.project},project);
+  assert.equal(s.state.value.active,false);assert.equal(s.pending.value,true);
+  Object.assign(current,{active:false,mode:'initial',startedAt:null});release();await ending;
+  assert.deepEqual({...s.state.value.project},project);assert.equal(s.pending.value,false);
+  Object.assign(current,{active:true,mode:'offline',startedAt:2});await s.start('offline');
+  assert.deepEqual({...s.state.value.project},project);assert.equal(s.state.value.active,true);
+ }finally{scope.stop();}
 });

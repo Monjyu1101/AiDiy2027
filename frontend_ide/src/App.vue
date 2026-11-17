@@ -56,7 +56,7 @@ const browserHeader=location.hash==='#browser-header';
 const browserDraft=location.hash==='#browser-draft'&&!!window.aidiyWindow;
 const browserAnalysis=location.hash==='#browser-analysis'&&!!window.aidiyWindow;
 const browserPanel=(config.kind==='browser'||config.kind==='ide'&&(location.hash==='#browser'||browserHeader||browserAnalysis||browserDraft))&&!!window.aidiyWindow;
-const state=ref({active:false}),base=reactive({term:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
+const state=ref({active:false,project:config.project}),base=reactive({term:'',code:config.kind==='code'?(config.host?'host':config.base||''):'',live:config.kind==='live'?(config.host?'host':config.base||''):''});
 const statusError=ref('');
 const error=ref(''),pending=ref(false),panelOpen=ref(false),tab=ref('code'),liveOpen=ref(false),viewMode=ref('3d');
 const ideToggle=ref(),ideCollapsed=ref(false),ideHidden=ref(false),ideCollapseBusy=ref(false);
@@ -127,7 +127,8 @@ function update(data){
 }
 async function start(action){
   if(pending.value)return;pending.value=true;revision++;error.value='';statusError.value='';
-  if(action==='disconnect')update({active:false});
+  // 終了するのは作業セッションだけ。起動パラメータのプロジェクトは再開まで保持する。
+  if(action==='disconnect')update({active:false,mode:'initial',startedAt:null,connected:false,connecting:false,wanted:false,project:state.value.project||config.project});
   try{if(action==='disconnect'&&desktop)await window.aidiyWindow.endSession();const response=await fetch('/api/connection/'+action,{method:'POST',signal:AbortSignal.timeout(7000)});if(!response.ok)throw Error(await response.text());update(await response.json());}
   catch(e){error.value=e.message;}finally{pending.value=false;void refreshLayout();}
 }

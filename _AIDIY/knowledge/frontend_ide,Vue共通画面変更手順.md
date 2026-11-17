@@ -27,6 +27,12 @@
 
 移動時は通常のimportに加え、テストのreadFile・仮想require、型宣言の隣接、`viewer/server.mjs` の最新ファイル共有、`aidiy_term/term.mjs` のPowerShell補完情報を確認してください。日本語パスをファイルAPIへ渡すときはURLオブジェクトか `fileURLToPath()` を使い、URLの `.pathname` を直接ファイル名として使わないでください。`checks/component-paths.mjs` は実Vueマウントの論理名とファイルの対応を一か所にまとめます。
 
+## IDEの利用終了とプロジェクト保持
+
+「終了」は作業セッションと子窓を終了して起動画面へ戻す操作で、起動パラメータのプロジェクトフォルダを解除する操作ではありません。初回の接続状態取得前は `config.project` を表示し、終了要求時は現在の `state.project` を保持して利用状態だけを初期化します。子窓の終了待ち・終了失敗でも対象を消さないでください。再開時の対象はサーバーが保持する起動プロジェクトを使い、画面側から別のフォルダへ書き換えません。
+
+回帰確認: `node --test frontend_ide/checks/ide-start-actions.test.mjs frontend_ide/checks/desktop-session.test.mjs frontend_ide/viewer/checks/connection.test.mjs`。オンライン／オフラインの反復、終了待ち中の連打、終了失敗後の再試行を含めます。実Windowsでは子窓を開いた状態からの終了・再開も確認してください。
+
 ## Task / Team の独立版（Avatarからの移設）
 
 IDEの「TASK」「TEAM」は既存Code / Liveと同じ所有窓・📌・VR・終了管理に入り、Core内部認証で開きます。タイトルは `AiDiy IDE / TASK` / `AiDiy IDE / TEAM`、単独は `AiDiy TASK` / `AiDiy TEAM` です。同じIDEセッションでは種類ごとに既存窓を再利用し、初期化中の要求も集約します。別IDEセッションのプロジェクトを黙って流用しません。単独起動は種類・正規化済みプロジェクト・起動モードをキーに二重起動を防ぎます。
