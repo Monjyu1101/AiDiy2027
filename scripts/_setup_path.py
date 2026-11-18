@@ -82,7 +82,7 @@ def sync_shared_launcher(launcher, script, *, create=False):
             raise OSError(f'共有ランチャーが変更されたため更新を中止しました: {shared}')
         temporary.replace(shared)
         temporary = None
-        print(f'旧共有ランチャーを更新しました: {shared}')
+        print(f'共有ランチャーを更新しました: {shared}')
     finally:
         if temporary is not None:
             temporary.unlink(missing_ok=True)

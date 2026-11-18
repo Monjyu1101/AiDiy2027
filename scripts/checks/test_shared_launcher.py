@@ -26,7 +26,7 @@ class SharedLauncherTests(unittest.TestCase):
         self.temp = self.enterContext(tempfile.TemporaryDirectory())
         self.home = Path(self.temp) / 'home'; self.home.mkdir()
         self.enterContext(patch.object(Path, 'home', return_value=self.home))
-        self.enterContext(patch('builtins.print'))
+        self.print_mock = self.enterContext(patch('builtins.print'))
         self.root = Path(self.temp) / '日本語 project%test!&'
         self.script = self.root / 'frontend_avatar' / 'launch.mjs'
         self.canonical = self.root / '_AIDIY/aidiy_avatar/bin/aidiy_avatar.cmd'
@@ -44,6 +44,10 @@ class SharedLauncherTests(unittest.TestCase):
             self.assertEqual(self.shared.read_bytes(), self.canonical.read_bytes())
         self.assertEqual(os.environ.get('PATH'), previous_path)
         self.assertEqual(list(self.shared.parent.iterdir()), [self.shared])
+
+    def test_update_message_uses_shared_launcher_without_legacy_prefix(self):
+        helper.sync_shared_launcher(self.canonical, self.script, create=True)
+        self.print_mock.assert_called_once_with(f'共有ランチャーを更新しました: {self.shared}')
 
     def test_no_new_home_launcher(self):
         helper.sync_shared_launcher(self.canonical, self.script)
