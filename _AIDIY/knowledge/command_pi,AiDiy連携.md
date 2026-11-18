@@ -144,8 +144,9 @@
 - test フォルダを削除する場合は、`package.json` の workspaces と `package-lock.json` からワークスペース登録（例: `packages/chord/test/examples/...`）も外す。外さないと `npm ci` が失敗する。
 - Pi の拡張 API（`pi.registerProvider` / `pi.registerMcpServer` / `model_select`）、Codex / xAI OAuth のクライアント ID、`main(args, { extensionFactories })` の形が変わっていないか確認する。
 
-## フッターのモデル表示
+## フッターと切替通知のモデル表示
 
+- `/model` の直接指定・選択画面からの切替通知も `Model: プロバイダ/モデル` で表示する。既にモデルIDに同じプロバイダ接頭辞がある場合は二重付加しない。
 - 右下のモデルは、プロバイダ数に関係なく `プロバイダ/モデル` で表示する。例: `openai_oauth/gpt-6.2-sol`。推論レベルとルーティング先の表示は維持する。
 - 端末幅が狭い場合もプロバイダだけを消さず、結合した表示を利用可能な幅に切り詰める。
 - 回帰確認: `node --test command_pi/scripts/aidiy-footer.test.mjs command_pi/scripts/aidiy-model-selector.test.mjs`（依存導入後、リポジトリルートで実行）。
