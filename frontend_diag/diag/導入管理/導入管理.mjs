@@ -126,7 +126,24 @@ export async function findNpm({env=process.env,platform=process.platform,resolve
   return {executable:process.execPath,cli,prefix,root};
 }
 
+// 現在の npm prefix と、既に PATH にある Windows npm shim の prefix は異なる場合がある。
+// 任意の場所を探索せず、検出済み shim と同じ prefix の package/bin 所有を再検証する。
 export async function npmCapability(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram}={}) {
+  if(!packageFor(entry.id))return {id:entry.id,操作:[],理由:'安全な導入・削除コマンドが登録されていません。'};
+  const executable=await resolve(entry,{env,platform});
+  const options={env,platform,resolve:async()=>executable};
+  const current=await inspectNpmAtPrefix(entry,npm,options);
+  if(current.操作.length||platform!=='win32'||!executable)return current;
+  const prefix=path.dirname(executable);
+  if(path.resolve(prefix).toLowerCase()===path.resolve(npm.prefix).toLowerCase())return current;
+  const alternate={...npm,prefix,root:path.join(prefix,'node_modules')};
+  const verified=await inspectNpmAtPrefix(entry,alternate,options).catch(()=>null);
+  if(!verified?.操作.includes('再導入'))return current;
+  return {...verified,npmPrefix:prefix,npmRoot:alternate.root,
+    説明:`${verified.説明} 検出した npm ランチャーの導入先: ${prefix}`};
+}
+
+async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram}={}) {
   const pkg=packageFor(entry.id);
   if(!pkg)return {id:entry.id,操作:[],理由:'安全な導入・削除コマンドが登録されていません。'};
   const base={id:entry.id,パッケージ:pkg,説明:'npm のグローバルパッケージだけを操作します。認証・設定・履歴は削除しません。',再導入説明:`npm install --global ${pkg} を1回実行して更新・再導入します。事前のアンインストールは行いません。`};
@@ -280,12 +297,15 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
       await loading;
       let fresh=await inspect();cache=fresh;ensureAllowed(fresh,entry,action);
       if(controller.signal.aborted)throw failure('操作を中止しました。');
-      const context=fresh[provider],lockKey=context?.lockKey||context?.prefix;
+      const selectedCapability=fresh.items.find(item=>item.id===entry.id);
+      const context=provider==='npm'&&selectedCapability?.npmPrefix?{...fresh.npm,prefix:selectedCapability.npmPrefix,root:selectedCapability.npmRoot}:fresh[provider];
+      const lockKey=context?.lockKey||context?.prefix;
       if(!lockKey)throw failure('導入先の排他を確認できません。',409);
       releaseLock=await acquireLock(lockKey,{platform,scope:lockScopeFor(entry.id),env:installEnvironment(env)});
       // ロック取得を待つ間に別の操作が完了していても、古い所有判定では実行しない。
       if(provider==='npm'){
         lockedCapability=await capabilityFn(entry,fresh.npm,{env,platform});
+        if((lockedCapability.npmPrefix||fresh.npm.prefix)!==lockKey)throw failure('導入先が変わりました。操作せず再確認します。',409);
         if(!lockedCapability.操作?.includes(action))throw failure('導入状況または所有元が変わりました。操作せず再確認します。',409);
         if(entry.id==='opencode'&&(lockedCapability.移行元||expectedCapability?.移行元)
           &&JSON.stringify(lockedCapability.導入済みパッケージ)!==JSON.stringify(expectedCapability?.導入済みパッケージ)){
@@ -300,11 +320,11 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
       directory=await mkdtemp(path.join(os.tmpdir(),'aidiy-install-'));
       if(provider==='npm'){
         const configFile=path.join(directory,'npmrc');await writeFile(configFile,'',{mode:0o600});await writeFile(configFile+'.global','',{mode:0o600});
-        const commands=npmCommands(fresh.npm,entry.id,action,configFile,lockedCapability);
+        const commands=npmCommands(context,entry.id,action,configFile,lockedCapability);
         for(const [index,command] of commands.entries()){
           if(index>0){
             // V1 削除後に未知の shim が残った・所有元が変わった場合は V2 を上書きしない。
-            const next=await capabilityFn(entry,fresh.npm,{env,platform});
+            const next=await capabilityFn(entry,context,{env,platform});
             if(next.移行元||!next.操作?.some(value=>['導入','再導入'].includes(value)))throw failure('OpenCode V1 の削除後の所有元を確認できません。V2 の導入は行いません。',409);
           }
           await checkedRun(command);

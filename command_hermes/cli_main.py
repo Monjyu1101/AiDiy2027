@@ -23764,6 +23764,20 @@ def _load_xai_oauth_defaults(model_override: str | None = None) -> dict[str, str
     }
 
 
+def _load_openai_chat_defaults(cfg: dict[str, Any], model_override: str | None = None) -> dict[str, str]:
+    """OpenAI API key route; never borrow ChatGPT OAuth or another provider's key."""
+    defaults = {
+        "provider": "custom",
+        "aidiy_provider_slug": "openai_chat",
+        "base_url": _OPENAI_BASE_URL,
+        "model": str(model_override or cfg.get("CHAT_OPENAI_MODEL") or "gpt-5.2").strip(),
+    }
+    key = str(cfg.get("openai_key_id") or "").strip()
+    if _is_valid_key(key):
+        defaults["api_key"] = key
+    return defaults
+
+
 def _load_aidiy_hermes_defaults(requested_model: str | None = None) -> dict[str, str]:
     config_path = _AIDIY_KEY_JSON
     try:
@@ -23781,6 +23795,13 @@ def _load_aidiy_hermes_defaults(requested_model: str | None = None) -> dict[str,
     ).strip()
     if not model or model.lower() == "auto":
         model = str(cfg.get("CHAT_OLLAMA_MODEL") or "deepseek-v4-flash:cloud").strip()
+    # AiDiy callers pass a catalog ID, e.g. openai_chat/gpt-6.2-sol.
+    # Resolve this before the generic Ollama path and keep it distinct from OAuth.
+    for prefix in ("openai_chat/", "openai_chat:", "openai/", "openai:"):
+        if model.lower().startswith(prefix):
+            return _load_openai_chat_defaults(cfg, model[len(prefix):].strip() or None)
+    if model.lower() in {"openai_chat", "openai"}:
+        return _load_openai_chat_defaults(cfg)
     openai_oauth_model = _openai_oauth_model_from_value(model)
     if openai_oauth_model is not None:
         if _openai_oauth_is_authenticated():
@@ -23974,6 +23995,13 @@ def cli_entry(argv: list[str] | None = None) -> int:
         prefix, separator, suffix = args.model.partition("/")
         if separator and (prefix in cli_aliases or provider_entry_is_cli(prefix)):
             args.provider, args.model = cli_aliases.get(prefix, prefix), suffix
+    # --provider と catalog の区分付き --model が併用されても API の
+    # model フィールドへ openai_chat/ を送らない。
+    if _normalize_aidiy_chat_provider(args.provider) == "openai_chat" and args.model:
+        for prefix in ("openai_chat/", "openai_chat:", "openai/", "openai:"):
+            if args.model.lower().startswith(prefix):
+                args.model = args.model[len(prefix):].strip() or None
+                break
     args.provider = cli_aliases.get(args.provider, args.provider)
     cli_provider = provider_entry_is_cli(args.provider or "")
     if args.provider and not cli_provider:
@@ -23990,7 +24018,7 @@ def cli_entry(argv: list[str] | None = None) -> int:
     base_url = args.base_url or defaults.get("base_url")
     api_key = args.api_key or defaults.get("api_key")
     aidiy_provider_slug = defaults.get("aidiy_provider_slug") or _normalize_aidiy_chat_provider(args.provider)
-    if aidiy_provider_slug == "freeai" and not _is_valid_key(api_key or ""):
+    if aidiy_provider_slug in {"freeai", "openai_chat"} and not _is_valid_key(api_key or ""):
         print(f"AiDiy_key.json に {aidiy_provider_slug} の API キーを設定してください。", file=sys.stderr)
         return 2
     model = args.model if args.provider and args.model else (defaults.get("model") or args.model)

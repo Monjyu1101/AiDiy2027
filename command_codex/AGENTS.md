@@ -23,7 +23,7 @@ OpenAI Codex（openai/codex、Apache-2.0）の Rust ワークスペース `codex
 
 | 区分 | 接続方式 | 接続先・認証 |
 |---|---|---|
-| `openai_oauth` | Responses | 組み込みの openai（ChatGPT ログイン、`~/.codex`） |
+| `openai_oauth` | Responses | 組み込みの openai（ChatGPT ログイン、`~/.codex`）。明示区分ではAPIキーへの代替を拒否 |
 | `openai_chat` | Responses（Pi と同じ） | `api.openai.com/v1`、`openai_key_id` |
 | `xai_oauth` | Chat Completions（xAI の Responses は Codex の namespace / custom ツールを受け付けないため） | `api.x.ai/v1`、Grok の共有ログイン `~/.grok/auth.json` を読み、期限前に更新して書き戻す（`codex-rs/login/src/auth/aidiy_grok.rs`。Rust 実装で外部コマンドは起動しない） |
 | `claude_chat` | Anthropic Messages（`wire_api = "anthropic"`） | `api.anthropic.com/v1`、`claude_key_id`（`x-api-key` / `anthropic-version`） |
@@ -99,3 +99,5 @@ AiDiy が upstream に加えた変更の一覧と、最新版へ移し替える�
 
 upstream リポジトリの `codex-rs/` 以外（npm パッケージ、SDK、ドキュメント、CI 設定など）は同梱しません。
 upstream の寄稿規則、GitHub 運用、リリース手順は AiDiy の運用ルールではありません。upstream 更新時も、それらを無条件に復活させず、`codex-rs/` の差し替えと `.cargo/config.toml` の移設、版 `0.169.0` の固定（`cargo update --workspace --offline` で `Cargo.lock` も合わせる）、送る版番号の外出し（`aidiy_settings.rs` と呼び出し2か所）、Chat Completions / Anthropic の接続（`WireApi` の追加、`codex-api` の2モジュール、`core/src/client.rs` の切り替え）、区分ごとの接続（`model-provider-info` の `aidiy_sections.rs`）と `AiDiy:` コメントの箇所、AiDiy の入口とナレッジを維持してください。
+
+- 明示 `openai_oauth/` はモデル解決時に ChatGPT OAuth 認証を確認する。同じ provider の再利用時も確認し、保存済み API キーや provider 固定 Bearer / 認証コマンドでは実行しない。APIキーの利用は `openai_chat/` と `_config/AiDiy_key.json` の `openai_key_id` に分離する。この分離はサービス側の利用条件・組織制限を変更するものではない。

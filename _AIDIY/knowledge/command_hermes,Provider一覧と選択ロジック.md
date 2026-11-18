@@ -52,6 +52,12 @@ Ollama / Local / xAI OAuth の候補・接続処理は今回変更しません�
 
 `frontend_ide/host/scripts/model-catalog.py` は Hermes の picker メソッドを抽出・実行せず、`_AIDIY/aidiy_diag/chat_models_info.json` / `code_models_info.json` と同スクリプトの `PROVIDERS` 対応表から候補を読みます。CLI 自身の picker と画面側の一覧は取得経路を区別します。画面側の確認は Python で `frontend_ide/host/scripts/model-catalog.py command_hermes/cli_main.py <provider>` を実行します。
 
+## OpenAI Chat の API キー
+
+`openai_chat` は `_config/AiDiy_key.json` の `openai_key_id` と `https://api.openai.com/v1` を使う直接 API 経路です。`--provider openai_chat`、`--model openai_chat/<model>`、保存した選択の復元、`/model` の選択で同じキーを使います。明示した `--api-key` / `--base-url` は従来どおり優先します。共通キーが未設定なら設定を案内して停止し、Ollama・OpenRouter・ChatGPT OAuth へ切り替えません。`openai_oauth` は別経路のままです。
+
+オフライン確認は `python command_hermes/checks/test_aidiy_model_catalog.py`。偽キーのみで prefix 起動・picker・キー欠落・OAuth 分離と custom credential pool による上書き防止を検証します。
+
 ## Anthropic の API キー専用運用
 
 AiDiy の Anthropic 接続は `claude_key_id`、明示した `--api-key`、`ANTHROPIC_API_KEY` を使います。

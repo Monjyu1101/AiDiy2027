@@ -181,3 +181,7 @@ AiDiyのモデル候補は従来どおり `_AIDIY/aidiy_diag/pi_models_info.json
 これは最新取得ではなく、検証済みの固定カタログを利用する通常のsetup経路である。モデルデータだけを生成し、認証・会話履歴は触らない。初回 `npm ci` の依存取得と実AI接続までオフラインになるわけではない。
 
 Piの更新で固定revisionやprovider構造が変わった場合は、公式revisionのカタログを取得しハッシュ検証して同梱資材と定数を同時更新する。勝手なモデルの追加や空リストによる検証回避は行わない。回帰確認: `python -m unittest scripts/checks/test_pi_bundled_catalog.py scripts/checks/test_setup_recovery.py`。
+
+### openai_chat のキー解決確認
+
+`openai_chat` は `_config/AiDiy_key.json` の `openai_key_id` をリクエストごとに読み、公式 OpenAI Responses API (`https://api.openai.com/v1`) を使います。キー未設定時に環境変数・保存済み認証・ChatGPT OAuthへ切り替えません。`openai_oauth` は別の共有Codexログイン経路です。鍵を使わない回帰確認は `node --test command_pi/scripts/aidiy-openai-auth.test.mjs` で行えます。

@@ -132,6 +132,8 @@ fn section_provider(section: &str, config: &Value) -> Option<ModelProviderInfo> 
     let mut value = match section {
         "openai_chat" => json!({
             "name": "OpenAI API (AiDiy)",
+            // AiDiy: this section uses only the configured API key, never ChatGPT OAuth.
+            "requires_openai_auth": false,
             "base_url": "https://api.openai.com/v1",
             "wire_api": "responses",
             "experimental_bearer_token": valid_key(config, "openai_key_id"),
@@ -257,8 +259,14 @@ mod tests {
             assert_eq!(split_aidiy_model(model), None, "{model}");
             assert_eq!(aidiy_api_model(model), model);
         }
-        assert_eq!(aidiy_api_model("openai_oauth/gpt-6.2-astra"), "gpt-6.2-astra");
-        assert_eq!(aidiy_api_model("openai_chat/gpt-6.2-astra"), "gpt-6.2-astra");
+        assert_eq!(
+            aidiy_api_model("openai_oauth/gpt-6.2-astra"),
+            "gpt-6.2-astra"
+        );
+        assert_eq!(
+            aidiy_api_model("openai_chat/gpt-6.2-astra"),
+            "gpt-6.2-astra"
+        );
         assert_eq!(aidiy_api_model("openrt_chat/google/g-4"), "google/g-4");
     }
 
@@ -320,6 +328,34 @@ mod tests {
         }
         let local = provider("local_chat", &config);
         assert_eq!(local.base_url.as_deref(), Some("http://localhost:9000/v1"));
+    }
+
+    #[test]
+    fn openai_chat_reads_aidiy_file_key_without_oauth_or_environment_auth() {
+        let root = tempfile::tempdir().expect("root");
+        std::fs::create_dir(root.path().join("_config")).expect("config dir");
+        let path = root.path().join("_config/AiDiy_key.json");
+        std::fs::write(&path, r#"{"openai_key_id":"  test-only-openai-key  "}"#)
+            .expect("mock config");
+        let api = provider("openai_chat", &read_key_config(root.path()));
+        assert_eq!(api.base_url.as_deref(), Some("https://api.openai.com/v1"));
+        assert_eq!(api.wire_api, WireApi::Responses);
+        assert_eq!(
+            api.experimental_bearer_token,
+            Some("test-only-openai-key".into())
+        );
+        assert!(!api.requires_openai_auth);
+        assert!(api.env_key.is_none());
+        assert!(api.auth.is_none());
+        assert!(aidiy_model_provider("openai_oauth/test-model").is_none());
+        for text in ["{}", r#"{"openai_key_id":"< your key >"}"#, "invalid"] {
+            std::fs::write(&path, text).expect("mock missing key");
+            let api = provider("openai_chat", &read_key_config(root.path()));
+            assert!(api.experimental_bearer_token.is_none());
+            assert!(!api.requires_openai_auth);
+            assert!(api.env_key.is_none());
+            assert!(api.auth.is_none());
+        }
     }
 
     #[test]

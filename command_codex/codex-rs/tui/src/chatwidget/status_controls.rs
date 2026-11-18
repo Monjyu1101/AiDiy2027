@@ -248,11 +248,20 @@ impl ChatWidget {
             .collect();
         let agents_summary =
             crate::status::compose_agents_summary(&self.config, &self.instruction_source_paths);
+        // AiDiy: /status must follow the same selected model section as the
+        // per-turn provider resolver, rather than the stale startup provider.
+        let status_model = self
+            .cloud_picker_selection
+            .as_ref()
+            .map_or(model.as_str(), |selection| selection.model.as_str());
+        let status_provider = super::provider_label::selected_provider_label(
+            status_model,
+            &self.config.model_provider_id,
+        );
         let (cell, handle) = crate::status::new_status_output_with_rate_limits_handle(
             &self.config,
             self.requires_openai_auth,
-            self.thread_id
-                .map(|_| self.config.model_provider_id.as_str()),
+            self.thread_id.map(|_| status_provider),
             self.remote_connection.as_ref(),
             self.status_account_display.as_ref(),
             token_info,

@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
+import * as fontFit from '../src/components/ターミナル/横幅フォント.js';
 import * as cliTitles from '../src/components/ターミナル/CLIタイトル.js';
 import * as keyboard from '../src/components/ターミナル/キー入力.js';
 import * as focus from '../src/components/ターミナル/入力フォーカス.js';
@@ -51,7 +52,7 @@ async function fixture(t,{desktop=false,linked=false,nativeTitle='',withFocus=fa
  class ResizeObserver{
   constructor(callback){this.callback=callback;observers.add(this);} observe(target){this.target=target;} disconnect(){observers.delete(this);}
  }
- const modules={'../コード/パネル表示切替.vue':{},'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'./折畳配色.js':foldTone,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/コマンド補完.js':completion};
+ const modules={'./横幅フォント.js':fontFit,'../コード/パネル表示切替.vue':{},'./CLIタイトル.js':cliTitles,'./キー入力.js':keyboard,'./入力フォーカス.js':focus,'./折畳配色.js':foldTone,'@xterm/xterm':{Terminal},'@xterm/addon-fit':fitModule.exports,'@xterm/xterm/css/xterm.css':{},'../共通表示/状態バー.vue':{},'../ターミナル/開始表示.vue':{},'../ターミナル/コマンド補完.js':completion};
  const script=compileScript(descriptor,{id:'TermPanel',genDefaultAs:'component'}),module={exports:{}};
  vm.runInNewContext(transformSync(script.content+'\nmodule.exports=component;',{format:'cjs'}).code,{
   module,URL,window,WebSocket:Socket,ResizeObserver,location:{href:'http://localhost/'},

@@ -13,6 +13,7 @@ import PanelToggle from '../コード/パネル表示切替.vue';
 import TerminalWelcome from '../ターミナル/開始表示.vue';
 import { cliTitleName } from './CLIタイトル.js';
 import { termKeyHandler } from './キー入力.js';
+import { createTermFontFit } from './横幅フォント.js';
 import { termInputFocus } from './入力フォーカス.js';
 import { termCompletion, cliCompletions } from '../ターミナル/コマンド補完.js';
 import { createCommandFoldTone } from './折畳配色.js';
@@ -27,7 +28,7 @@ const ghostRows = ref([]);
 const inputStarted = ref(false);
 const completionDescription = computed(() => cliCompletions[completion.value.split(' ')[0]]?.description || '');
 const projectName = computed(() => project.value.replace(/[\\/]+$/, '').split(/[\\/]/).pop() || project.value);
-let terminal, fit, socket, observer, input, key, resize, cursor, scroll, render, osc, inputFocus, keyInput, completionEnabled = false, disposed = false;
+let terminal, fit, fontFit, socket, observer, input, key, resize, cursor, scroll, render, osc, inputFocus, keyInput, completionEnabled = false, disposed = false;
 // 折畳アイコンの配色（実行中シアン脈動／終了コードで緑・赤。未実行で折畳・展開時は無色）。
 const foldTone = createCommandFoldTone();
 watch(panelCollapsed, collapsed => foldTone.collapsed(collapsed));
@@ -81,7 +82,7 @@ function toggleTools() {
 }
 function fitTerminal() {
   if (panelCollapsed.value || !props.visible || !container.value?.clientWidth || !container.value?.clientHeight) return;
-  fit?.fit();
+  fontFit?.();
 }
 function connect() {
   if (disposed) return;
@@ -119,7 +120,7 @@ onMounted(() => {
   if (props.desktop && props.linked) void window.aidiyWindow?.title?.().then(title => { if (!disposed && typeof title === 'string') windowTitle.value = title; }).catch(() => {});
   terminal = new Terminal({ cursorBlink: true, fontSize: 14, fontFamily: 'Consolas, "Noto Sans Mono", monospace', scrollback: 5000,
     theme: { background: '#000', foreground: '#dce6f2', cursor: '#ffffff', selectionBackground: '#365b78' } });
-  fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fitTerminal();
+  fit = new FitAddon(); terminal.loadAddon(fit); terminal.open(container.value); fontFit = createTermFontFit(terminal, fit); fitTerminal();
   inputFocus = termInputFocus({ panel: panel.value, terminal, available: () => !panelCollapsed.value && props.visible && connected.value });
   keyInput = termKeyHandler(data => { startInput(); sendInput(data); }, { terminal });
   terminal.attachCustomKeyEventHandler(keyInput);
@@ -132,10 +133,11 @@ onMounted(() => {
   cursor = terminal.onCursorMove(updateCompletion);
   scroll = terminal.onScroll(updateCompletion);
   render = terminal.onRender(updateCompletion);
+  window.addEventListener('resize', fitTerminal);
   observer = new ResizeObserver(fitTerminal); observer.observe(container.value);
   connect();
 });
-onBeforeUnmount(() => { disposed = true; inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); osc?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
+onBeforeUnmount(() => { disposed = true; window.removeEventListener('resize', fitTerminal); inputFocus?.dispose(); keyInput?.dispose(); socket?.close(); observer?.disconnect(); input?.dispose(); key?.dispose(); container.value?.removeEventListener('input', startInput, true); container.value?.removeEventListener('paste', startInput, true); resize?.dispose(); osc?.dispose(); cursor?.dispose(); scroll?.dispose(); render?.dispose(); terminal?.dispose(); });
 </script>
 <template>
   <section ref="panel" class="ai-component term-component" :class="{ 'panel-collapsed': panelHidden, 'desktop-window': desktop, 'term-waiting': !inputStarted }">

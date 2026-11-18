@@ -2966,7 +2966,8 @@ async fn inference_tools_changes_follow_full_specs_across_turns() {
 #[tokio::test]
 async fn aidiy_provider_switch_isolates_credentials_and_connection_state() {
     let config = crate::config::test_config().await;
-    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-openai-only"));
+    let auth =
+        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
     let initial = test_model_client(SessionSource::Cli);
     let oauth = initial
         .for_aidiy_model(&config, "openai_oauth/gpt-test", Arc::clone(&auth))
@@ -3267,4 +3268,32 @@ async fn aidiy_http_api_cli_oauth_switch_uses_selected_endpoint_and_auth() {
         "gpt-b"
     );
     assert!(!b[0].headers.contains_key("x-api-key"));
+}
+
+#[tokio::test]
+async fn aidiy_oauth_rejects_api_key_without_changing_api_route() {
+    let config = crate::config::test_config().await;
+    let auth = AuthManager::from_auth_for_testing(CodexAuth::from_api_key("test-only"));
+    let client = test_model_client(SessionSource::Cli);
+    let result = client.for_aidiy_model(&config, "openai_oauth/gpt-test", Arc::clone(&auth));
+    assert!(matches!(result, Err(CodexErr::InvalidRequest(_))));
+    let api = client
+        .for_aidiy_model(&config, "openai_chat/gpt-test", auth)
+        .unwrap();
+    assert!(api.state.provider.auth_manager().is_none());
+}
+
+#[tokio::test]
+async fn aidiy_oauth_rejects_configured_bearer_even_with_chatgpt_login() {
+    let mut config = crate::config::test_config().await;
+    config
+        .model_providers
+        .get_mut("openai")
+        .unwrap()
+        .experimental_bearer_token = Some("test-only".to_string().into());
+    let auth =
+        AuthManager::from_auth_for_testing(CodexAuth::create_dummy_chatgpt_auth_for_testing());
+    let client = test_model_client(SessionSource::Cli);
+    let result = client.for_aidiy_model(&config, "openai_oauth/gpt-test", auth);
+    assert!(matches!(result, Err(CodexErr::InvalidRequest(_))));
 }

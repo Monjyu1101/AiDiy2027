@@ -599,6 +599,27 @@ pub(crate) fn aidiy_provider_for_model(
     let Some((id, info)) = route else {
         return Ok(Arc::clone(current));
     };
+    // Explicit OAuth must not silently use the upstream provider's API-key fallback.
+    // Check before the same-provider fast path, so every turn/switch is checked again.
+    if codex_model_provider_info::split_aidiy_model(model)
+        .is_some_and(|(section, _)| section == "openai_oauth")
+    {
+        let configured_bearer = info.env_key.is_some()
+            || info.experimental_bearer_token.is_some()
+            || info.auth.is_some();
+        if configured_bearer
+            || !auth_manager.auth_cached().is_some_and(|auth| {
+                matches!(
+                    auth,
+                    CodexAuth::Chatgpt(_) | CodexAuth::ChatgptAuthTokens(_)
+                )
+            })
+        {
+            return Err(CodexErr::InvalidRequest(
+                "openai_oauth には ChatGPT ログインが必要です。APIキーでは実行しません。APIキーを使う場合は openai_chat を選択してください。".into(),
+            ));
+        }
+    }
     if config
         .config_layer_stack
         .required_model_provider()

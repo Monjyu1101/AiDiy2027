@@ -469,3 +469,43 @@ test('残留子孫の定期確認は1秒周期、親close直後は即時に確�
   t.mock.timers.tick(999);assert.equal(checks,1);alive=false;
   t.mock.timers.tick(1);assert.equal(checks,2);assert.equal((await promise).code,0);assert.equal(resolved,true);
 });
+
+test('Windows の別 npm prefix は検出済み標準 shim と package/bin の一致時だけ更新する',async t=>{
+  const current=await npmTree(t,'win32');
+  for(const id of ['copilot','claude','codex'])for(const extension of ['.cmd','.ps1','']){
+    const installed=await packageTree(t,{id,platform:'win32'});
+    const shim=path.join(installed.prefix,id+extension);
+    await writeFile(shim,windowsShim(extension,`node_modules/${NPM_PACKAGES[id]}/bin/cli.js`));
+    const entry=entries.find(item=>item.id===id),options={platform:'win32',resolve:async()=>shim};
+    const cap=await npmCapability(entry,current,options);
+    assert.deepEqual(cap.操作,['再導入','削除']);assert.equal(cap.npmPrefix,installed.prefix);assert.equal(cap.npmRoot,installed.root);
+    await writeFile(shim,windowsShim(extension,'node_modules/unowned/cli.js'));
+    assert.deepEqual((await npmCapability(entry,current,options)).操作,[]);
+    await writeFile(shim,windowsShim(extension,`node_modules/${NPM_PACKAGES[id]}/bin/cli.js`));
+    await writeFile(path.join(installed.directory,'package.json'),JSON.stringify({name:'unowned',bin:{[id]:'bin/cli.js'}}));
+    assert.deepEqual((await npmCapability(entry,current,options)).操作,[]);
+  }
+});
+
+test('別 prefix の Copilot 更新は所有確認した導入先をロックし、その prefix だけに install する',async t=>{
+  const current=await npmTree(t,'win32'),installed=await packageTree(t,{id:'copilot',platform:'win32'});
+  const shim=path.join(installed.prefix,'copilot.cmd');
+  await writeFile(shim,windowsShim('.cmd','node_modules/@github/copilot/bin/cli.js'));
+  const locks=[],calls=[];
+  const {manager}=fixture(t,{entries:[entries.find(item=>item.id==='copilot')],platform:'win32',findNpmFn:async()=>current,
+    capabilityFn:(entry,npm,options)=>npmCapability(entry,npm,{...options,resolve:async()=>shim}),
+    acquireLock:async prefix=>{locks.push(prefix);return async()=>{};},run:async command=>{calls.push(command);return success;}});
+  assert.equal((await manager.snapshot()).項目[0].npmPrefix,installed.prefix);
+  await manager.start('copilot','再導入');const job=await settled(manager);
+  assert.equal(job.状態,'完了');assert.deepEqual(locks,[installed.prefix]);assert.equal(calls.length,1);
+  assert.ok(calls[0].args.includes(`--prefix=${installed.prefix}`));assert.equal(calls[0].args[1],'install');
+  assert.equal(calls[0].args.at(-1),'@github/copilot');
+});
+
+test('別 prefix がロック取得中に変わったら npm を実行しない',async t=>{
+  let checks=0;const alternate='/fixture/owned-prefix',other='/fixture/changed-prefix';
+  const {manager,calls}=fixture(t,{capabilityFn:async entry=>({id:entry.id,操作:['再導入'],npmPrefix:++checks===1?alternate:other,npmRoot:'/fixture/root'}),
+    entries:[entries.find(item=>item.id==='copilot')]});
+  await manager.start('copilot','再導入');const job=await settled(manager);
+  assert.equal(job.状態,'失敗');assert.match(job.ログ,/導入先が変わりました/);assert.deepEqual(calls,[]);
+});

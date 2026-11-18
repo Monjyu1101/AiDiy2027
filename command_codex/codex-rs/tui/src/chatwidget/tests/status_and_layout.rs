@@ -6272,3 +6272,35 @@ async fn aidiy_footer_provider_model_switches_and_widths() {
         }
     }
 }
+
+// AiDiy: switching the model must not leave /status on the startup provider.
+#[tokio::test]
+async fn aidiy_status_provider_tracks_selected_model_section() {
+    let (mut chat, mut rx, _ops) = make_chatwidget_manual(None).await;
+    chat.thread_id = Some(ThreadId::new());
+    for (model, stale_provider, expected) in [
+        ("openai_oauth/gpt-6.2-sol", "openai_chat", "openai_oauth"),
+        ("openai_chat/gpt-6.2-sol", "openai", "openai_chat"),
+        ("copilot_cli/same", "openai_chat", "copilot_cli"),
+    ] {
+        chat.config.model_provider_id = stale_provider.to_string();
+        chat.set_model(model);
+        chat.add_status_output(false, None);
+        let cells = drain_insert_history(&mut rx);
+        let provider_line = cells
+            .last()
+            .expect("status output inserted")
+            .iter()
+            .map(|line| {
+                line.spans
+                    .iter()
+                    .map(|span| span.content.as_ref())
+                    .collect::<String>()
+            })
+            .find(|line| line.contains("Model provider"))
+            .expect("provider line");
+        assert!(provider_line.ends_with(expected), "{provider_line}");
+        // Display correction must not mutate routing/auth configuration.
+        assert_eq!(chat.config.model_provider_id, stale_provider);
+    }
+}

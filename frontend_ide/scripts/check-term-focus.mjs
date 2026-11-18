@@ -82,6 +82,15 @@ try {
   await type('日本語の入力'); await until(`!document.querySelector('.term-component').classList.contains('term-waiting')`);
   assert.equal(await evaluate('sockets.length'), 1, 'the terminal session is not recreated');
   await screenshot('01-background-input');
+  // 実xtermセル寸法で80列確保・最小サイズ・復元を検証。
+  await evaluate("document.querySelector('#app').style.width='420px'");
+  await until('testTerminal.options.fontSize < 14 && testTerminal.cols >= 80');
+  await screenshot('01-narrow-80-columns');
+  await evaluate("document.querySelector('#app').style.width='180px'");
+  await until('testTerminal.options.fontSize === 6 && testTerminal.cols < 80');
+  await evaluate("document.querySelector('#app').style.width=''");
+  await until('testTerminal.options.fontSize === 14');
+
   for (const selector of ['.panel-brand strong', '.term-meta', '.component-toolbar > span']) {
     await click('#other'); await click(selector); assert.equal(await evaluate(focused), true, selector); await type('x');
   }

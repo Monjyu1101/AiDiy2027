@@ -28,6 +28,15 @@ const BRACKETED_PASTE_END = "\x1b[201~";
 // Until their header is complete, the input may be batched legacy Alt keystrokes.
 const TERMINAL_REPLY_HEADER_PATTERN = /^\x1b(?:\](?:1[01];|4;\d{1,3};|7501;\?)|P>\||_G(?:[a-z]=\d+,)*[a-z]=\d+;)/;
 
+// DA / Kitty capability replies and cell-size replies can be delayed by the
+// browser → WebSocket → ConPTY path. Never flush their recognized headers as
+// keys: the later numeric tail would otherwise be inserted into the editor.
+const CSI_TERMINAL_REPLY_HEADER_PATTERN = /^\x1b\[(?:\?|6;)/;
+
+function isTerminalReply(data: string): boolean {
+	return TERMINAL_REPLY_HEADER_PATTERN.test(data) || CSI_TERMINAL_REPLY_HEADER_PATTERN.test(data);
+}
+
 function isControlString(data: string): boolean {
 	return data.startsWith(`${ESC}]`) || data.startsWith(`${ESC}P`) || data.startsWith(`${ESC}_`);
 }
@@ -207,7 +216,7 @@ function extractCompleteSequences(buffer: string): { sequences: string[]; remain
 
 		// Try to extract a sequence starting at this position
 		if (remaining.startsWith(ESC)) {
-			const terminalReply = isControlString(remaining) && TERMINAL_REPLY_HEADER_PATTERN.test(remaining);
+			const terminalReply = isTerminalReply(remaining);
 			// Find the end of this escape sequence
 			let seqEnd = 1;
 			while (seqEnd <= remaining.length) {
@@ -409,11 +418,11 @@ export class StdinBuffer extends EventEmitter<StdinBufferEventMap> {
 		}
 
 		if (this.buffer.length > 0) {
-			// Only a recognizable reply header establishes a delimited string.
+			// A recognizable reply header establishes a protocol frame.
 			// Flushing it would turn a delayed tail into text and an OSC's BEL
 			// terminator into Ctrl+G (the external editor shortcut). Other input,
 			// including Alt+] followed by text, must retain bounded recovery.
-			if (TERMINAL_REPLY_HEADER_PATTERN.test(this.buffer)) return;
+			if (isTerminalReply(this.buffer)) return;
 			const timeoutMs = this.buffer === ESC ? this.escapeTimeoutMs : this.timeoutMs;
 			this.timeout = setTimeout(() => {
 				const flushed = this.flush();

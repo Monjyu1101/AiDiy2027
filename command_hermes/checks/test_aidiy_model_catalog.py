@@ -35,7 +35,7 @@ def load_picker(directory):
     functions = {"_aidiy_hermes_catalog_path", "_aidiy_code_model_labels", "_normalize_aidiy_freeai_model",
                  "_is_valid_key", "provider_entry_is_cli", "_load_aidiy_config", "_load_freeai_defaults",
                  "_load_aidiy_hermes_provider_defaults", "_model_from_display_label", "_strip_cloud_suffix", "cli_entry",
-                 "_load_aidiy_hermes_defaults", "_openai_oauth_model_from_value", "_xai_oauth_model_from_value",
+                 "_load_aidiy_hermes_defaults", "_load_openai_chat_defaults", "_openai_oauth_model_from_value", "_xai_oauth_model_from_value",
                  "_local_chat_model_from_value", "_freeai_model_from_value"}
     methods = {"_aidiy_provider_slugs", "_aidiy_runtime_provider", "_current_aidiy_provider_slug",
                "_aidiy_provider_default_model", "_get_aidiy_provider_entry", "_list_aidiy_provider_entries",
@@ -256,6 +256,40 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertEqual(self.picker.api_key, original_key)
         self.assertNotEqual(self.picker.model, "new-model")
 
+    def test_openai_chat_uses_config_key_for_startup_picker_and_prefixed_model(self):
+        for provider, model in [("openai_chat", "gpt-test"), ("openai", "gpt-test"),
+                                (None, "openai_chat/gpt-test"), (None, "openai_chat:gpt-test"),
+                                ("openai_chat", "openai_chat/gpt-test")]:
+            with self.subTest(provider=provider, model=model):
+                code, calls = self.run_entry(provider, model)
+                self.assertEqual(code, 0)
+                self.assertEqual(calls[0]["provider"], "custom")
+                self.assertEqual(calls[0]["aidiy_provider_slug"], "openai_chat")
+                self.assertEqual(calls[0]["base_url"], "https://api.openai.com/v1")
+                self.assertEqual(calls[0]["api_key"], "fake-openai_key_id")
+                self.assertEqual(calls[0]["model"], "gpt-test")
+        self.picker._apply_aidiy_provider_model(self.picker._get_aidiy_provider_entry("openai_chat"), "gpt-test")
+        self.assertEqual(self.picker._explicit_api_key, "fake-openai_key_id")
+        self.assertEqual(self.picker._explicit_base_url, "https://api.openai.com/v1")
+        self.assertEqual(self.picker.api_mode, "chat_completions")
+        cfg = {**self.picker._aidiy_config, "CODE_AIDIY_HERMES_MODEL": "openai_chat/gpt-configured"}
+        self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg))
+        defaults = self.ns["_load_aidiy_hermes_defaults"]()
+        self.assertEqual(defaults["model"], "gpt-configured")
+        self.assertEqual(defaults["api_key"], "fake-openai_key_id")
+
+    def test_openai_chat_missing_config_key_stops_without_oauth_or_other_key(self):
+        for key in [None, "", "<your-openai-key>"]:
+            cfg = {"openrt_key_id": "fake-router", "ollama_key_id": "fake-ollama", "openai_key_id": key}
+            self.ns["_AIDIY_KEY_JSON"].write_text(json.dumps(cfg))
+            for provider, model in [("openai_chat", "gpt-test"), (None, "openai_chat/gpt-test")]:
+                code, calls = self.run_entry(provider, model)
+                self.assertEqual((code, calls), (2, []))
+                self.assertIn("openai_chat", self.ns["sys"].stderr.getvalue())
+        oauth = self.picker._get_aidiy_provider_entry("openai_oauth")
+        self.assertTrue(oauth["auth_runtime"])
+        self.assertFalse(oauth.get("api_key"))
+
     def test_prefixed_freeai_and_saved_alias_startup(self):
         code, calls = self.run_entry(None, "freeai/gemini-4-pro")
         self.assertEqual(code, 0)
@@ -341,7 +375,7 @@ console.log(JSON.stringify(hermesModelsInfo({{chatModels:{{gemini_chat:{{models}
         exec(compile(ast.fix_missing_locations(module), "runtime_provider.py", "exec"), ns)
         resolve = ns["_resolve_named_custom_runtime"]
         url = self.ns["_GEMINI_OPENAI_BASE_URL"]
-        for provider in ["freeai", "gemini"]:
+        for provider in ["freeai", "gemini", "openai_chat"]:
             entry = self.picker._get_aidiy_provider_entry(provider)
             runtime = resolve(requested_provider=entry["runtime_provider"], explicit_base_url=entry["base_url"], explicit_api_key=entry["api_key"])
             self.assertEqual(runtime["api_key"], entry["api_key"])
