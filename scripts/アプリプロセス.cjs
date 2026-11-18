@@ -11,16 +11,16 @@ const execute=promisify(execFile);
 const options={encoding:'utf8',windowsHide:true,timeout:10000,maxBuffer:8*1024*1024};
 
 // コマンドラインは稼働判定にだけ使い、画面やログに返さない。
-async function タスク一覧(platform=process.platform,{python=true}={}){
+async function タスク一覧(platform=process.platform,{python=true,timeout=options.timeout}={}){
  if(platform==='win32'){
   const filter="Name='node.exe' OR Name='electron.exe'"+(python?" OR Name LIKE 'python%.exe'":"");
   const script=String.raw`$ErrorActionPreference='Stop';[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false); @(Get-CimInstance Win32_Process -Filter "${filter}" -Property Name,ProcessId,CommandLine | Where-Object { $_.Name -match '^(node|electron|python(?:w|3(?:\.\d+)?)?)\.exe$' } | Select-Object ProcessId,CommandLine) | ConvertTo-Json -Compress`;
   const command=Buffer.from(script,'utf16le').toString('base64');
-  const {stdout}=await execute('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',command],options);
+  const {stdout}=await execute('powershell.exe',['-NoProfile','-NonInteractive','-EncodedCommand',command],{...options,timeout});
   const values=JSON.parse(stdout.trim()||'[]');
   return (Array.isArray(values)?values:[values]).map(item=>({pid:item.ProcessId,command:item.CommandLine||''}));
  }
- const {stdout}=await execute('ps',['-ax','-o','pid=,args='],options);
+ const {stdout}=await execute('ps',['-ax','-o','pid=,args='],{...options,timeout});
  return stdout.split('\n').flatMap(line=>{const match=line.match(/^\s*(\d+)\s+(.+)$/);return match?[{pid:Number(match[1]),command:match[2]}]:[];});
 }
 
@@ -38,12 +38,12 @@ async function 起動枠を確保(id){
  server.unref();
  return ()=>{if(server.listening)server.close();};
 }
-function 起動枠の使用中(id){
+function 起動枠の使用中(id,{timeout=1000}={}){
  return new Promise((resolve,reject)=>{
   const socket=connect({host:'127.0.0.1',port:起動枠[id]});
   socket.once('connect',()=>{socket.destroy();resolve(true);});
   socket.once('error',error=>{if(error.code==='ECONNREFUSED')resolve(false);else reject(error);});
-  socket.setTimeout(1000,()=>{socket.destroy();reject(Error('起動状態を確認できません。'));});
+  socket.setTimeout(timeout,()=>{socket.destroy();reject(Error('起動状態を確認できません。'));});
  });
 }
 

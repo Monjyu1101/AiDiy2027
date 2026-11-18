@@ -10,6 +10,16 @@ helper = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(helper)
 
 class BestEffortElectronTests(unittest.TestCase):
+    def test_continue_message_recommends_restart_for_each_component(self):
+        for label in ('Diag', 'Avatar', 'Code / Live', 'IDE'):
+            with self.subTest(label=label):
+                warning = Mock()
+                self.assertIsNone(helper.frontend_dependency_guard(
+                    Path('/fixture'), label, warning=warning, continue_on_error=True))
+                warning.assert_called_once_with(
+                    f'{label}: 実行中でも更新を試行します。セットアップ後は再起動推奨です。')
+
+
     def test_explicit_continue_attempts_remaining_stages_and_reports_failure(self):
         run = Mock(side_effect=[False, True])
         with (patch.object(helper, '_runtime_in_use', side_effect=AssertionError('must not block on running')),
@@ -34,8 +44,9 @@ class BestEffortElectronTests(unittest.TestCase):
 
     def test_copy_failure_retains_false(self):
         with patch.object(helper, 'get_electron_version', return_value='1'), patch.object(helper, 'electron_binary_ready', return_value=False), patch.object(helper, '_runtime_in_use', side_effect=AssertionError('must not block')), patch.object(helper, '_dist_ready', side_effect=[False, True]), patch.object(helper, '_place_dist', side_effect=PermissionError('locked')) as place:
-            warnings = []
-            self.assertFalse(helper.prepare_electron_binary(Path('/fixture/frontend_avatar'), 'test', continue_on_error=True, copy_warnings=warnings))
+            warnings, messages = [], []
+            self.assertFalse(helper.prepare_electron_binary(Path('/fixture/frontend_avatar'), 'test', continue_on_error=True, copy_warnings=warnings, info=messages.append))
+            self.assertIn('[WARN] test: 実行中でも Electron の配置を試行します。セットアップ後は再起動推奨です。失敗は記録して次の処理へ進みます。', messages)
             self.assertEqual(len(warnings), 1)
         place.assert_called_once()
 

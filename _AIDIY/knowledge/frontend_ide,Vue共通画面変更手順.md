@@ -79,7 +79,7 @@ Codeの回答通知は、IDEブラウザー版のCodeタブだけ `page-notifica
 
 IDEのオンライン利用では、`viewer/core-connection.mjs` がTermと同じ `PORT_TOOLS`（既定8095）の `GET /aidiy_code_agents/ping` を10秒ごとに確認し、`src/App.vue` も状態を10秒ごとに取得します。応答期限はTermと同じ1.5秒で、`status: "ok"` と `name: "aidiy_code_agents"` を確認します。Code / Live子パネルの接続先は `PORT_CORE` のままです。接続済みの定期確認中は `connected=true` / `connecting=false` を維持し、確認が失敗した時に接続表示を変えます。初回接続と切断後の再接続では `connecting=true` を表示します。tools停止でも利用開始時刻・作業・子窓を維持してください。単体検証は `node --test frontend_ide/viewer/checks/connection.test.mjs`、実画面検証はVue配布ファイル生成後の `node frontend_ide/scripts/check-connection.mjs`（Chromeを任意配置している場合は `CHROME_PATH` で指定）。模擬toolsを使い、10秒周期・定期確認中の表示維持・停止と復帰を確認し、日本時間の日時付き画像を `temp/connection-check/` へ保存します。
 
-接続監視の負荷を確認する場合は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/viewer/checks/connection.test.mjs` を使います。IDE・ピン留めビューアの状態取得、IDEのtools確認、Termのtools確認は10秒周期です。Codeは切断をWebSocketで検知し、再試行だけ10秒待ちます。初回確認・手動操作は即時のままです。Liveは既存のWebSocket通知を使い、定期HTTP確認を追加しません。Code / Liveの20秒ping、Termの15秒pingと端末ACK、音声処理の周期は変更しません。子窓の400ms監視とパネル寿命の250ms同期は終了連携用であり、接続疎通の周期と混同しないでください。
+接続監視の負荷を確認する場合は `node --test frontend_ide/checks/monitoring.test.mjs frontend_ide/viewer/checks/connection.test.mjs` を使います。IDE・ピン留めビューアの状態取得、IDEのtools確認、Termのtools確認は10秒周期です。Codeは切断をWebSocketで検知し、再試行だけ10秒待ちます。初回確認・手動操作は即時のままです。Liveは既存のWebSocket通知を使い、定期HTTP確認を追加しません。Code / Liveの20秒ping、Termの15秒pingと端末ACK、音声処理の周期は変更しません。IDEの子ウィンドウ状態取得は10秒周期のまま、OSプロセス一覧取得だけは成功時から30秒共有し、同時要求を1件に集約します。監視用OS一覧の期限は20秒、起動枠ポートの確認は3秒です。Live/Avatar・起動中フラグ・ポートは毎回確認し、明示起動前の重複起動検査にはキャッシュを使いません。失敗時は前の表示と作業を保持して警告し、次回再試行します。単独起動の一覧表示は最大30秒遅れる場合があります。`checks/child-process-monitor.test.cjs` で期限・共有・失敗復帰を確認します。子窓の400ms監視とパネル寿命の250ms同期は終了連携用であり、接続疎通の周期と混同しないでください。
 
 非表示のIDEはCanvas描画と毎フレームの配置取得を止め、再表示時は1つの描画ループだけを再開します。Web版のLiveを隠す時は、会話・下書き・接続を保持したまま `AudioCloud.setVisible(false)` で描画を停止し、StatusBarのclock-pulseも止めます。画面全体の非表示とパネルの非表示は別々に扱い、Canvasが0サイズの間も描かず、表示・サイズ復帰でRAFを1本だけ再開します。20秒の接続pingは変更しません。`checks/live-visibility.test.mjs` は実LivePanel・AudioCloud・StatusBarでこの寿命を検証します。接続バーは未接続の黒表示・画面非表示では50msの更新を止め、表示復帰時に現在時刻へ揃えます。Canvasのラベル幅は文字・フォントごとに保持し、階層再構築・サイズ変更・フォント読込時に破棄します。上記テストの呼出し回数は処理削減の確認用で、実機のCPU使用率を測定した値ではありません。画面の見た目・OSごとのCPU/GPU負荷は実画面検証で別途確認してください。
 
@@ -1044,6 +1044,8 @@ Code / Live を基準に Term / Browser / Navi / Task / Team と Diagへ適用�
 選択値は `evaluationBasis`（`auto` / `source` / `documents`）として結果・履歴に保存する。未指定の既存記録は自動。再評価は保存済み目標・明細を維持して選択中の基準を適用し、自動航行中と要求実行中は切替を禁止する。新規は自動へ戻す。AI応答の任意属性を信頼せず、保存する基準は要求側の値を使う。
 
 
+限定モードの出力例も選択基準に揃える（文書モードに画面実装・結合試験の例を混ぜない）。更新一覧は探索の手掛かりにすぎず、対象資料が載っていなくても検索する。基準を変えて再評価するときも保存済み明細・reasonは固定であり、対象外項目を削除・改名しない。新しい根拠と対象外の説明はoverall.reasonへ記載する。次の対象は対象外項目も飛ばさず最初の100%未満とし、依頼内容は選択範囲内に限定する。資料がない場合も0%と根拠不足を持つ完全なJSONを返す。評価の正しさやモデルの実出力は模擬応答テストだけでは保証しない。
+
 ### Navi の折り紙待機表示
 
 `ナビ折り紙3D.vue` は兜（16工程）と折り鶴（34工程）を一枚の正方形から折る演出です。開始時と完成後に `折り紙を選ぶ()` でそれぞれ50%の確率で選び、同じ作品が続く場合もあります。最初から・前後操作は現在の作品内で行い、停止中に作品を切り替えません。白い表と、兜の朱色・折り鶴の青緑の裏を区別し、紙を大きく表示して説明は一手ずつにします。通常のランダム候補と右クリックの3Dメニューに登録し、ターミナルの開始表示は重ねません。
@@ -1055,3 +1057,7 @@ Code / Live を基準に Term / Browser / Navi / Task / Team と Diagへ適用�
 進行は「視点合わせ→静止0.65秒→折線の予告1.6秒→折る3.8秒→形の確認→回転」です。視点が目標角度に入るまで折り始めません。裏側への折りではカメラも裏へ回します。一時停止では紙と視点を両方止め、前後操作では各工程の折る前へ移動します。非表示中は進行せず、動きを減らす設定では初期停止します。完成後は一周眺めてから、次の作品をランダムに選び直します。
 
 確認: `node --test frontend_ide/checks/navigation-origami.test.mjs frontend_ide/checks/navigation-scenery.test.mjs frontend_ide/checks/navigation-scene-picker.test.mjs`。`node frontend_ide/scripts/check-navigation-origami.mjs` はAI・DBに接続せず実Vue/WebGLの両作品の各工程、完成後の相互切替、停止・前後・入力欄のキー保持、小画面、破棄・資源数を確認して `frontend_ide/temp/navigation-origami-check/` へ撮影します。図形のテストは紙厚・層の自己交差の完全な物理検証ではありません。
+
+### エクスプローラーの昨日検索
+
+時刻検索のプリセットは「午前・今日・午後・昨日・解除」の順で表示する。「昨日」は選択時の閲覧端末のローカル日付で前日0時以上・当日0時未満を対象にする。24時間固定の減算ではなく暦日を戻すため、夏時間の23時間・25時間の日も含む。共通の `ファイル日時.js` と `ファイル一覧.vue` を使用し、埋め込み・別パネルで同じ境界を使う。日付が変わった後は再選択すると新しい前日範囲になる。確認は `checks/file-dates.test.mjs` と実Vueの `scripts/check-explorer-time.mjs`。

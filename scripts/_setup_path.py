@@ -209,7 +209,6 @@ def _ensure_posix_path(directory):
         process_path = os.environ.get('PATH', '')
         if str(directory) not in process_path.split(':'):
             os.environ['PATH'] = str(directory) + (':' + process_path if process_path else '')
-        print('PATH 登録済み。新しいターミナルを開いて各 aidiy コマンドを実行してください。')
         print(f'今のターミナルで使う場合: export PATH={shlex.quote(str(directory))}:"$PATH"')
         return True
     except (OSError, ValueError) as exc:
@@ -320,7 +319,6 @@ def _ensure_windows_path(directory):
     if changed:
         print(f'ユーザー PATH に登録しました: {directory}')
         _notify_change()
-    print('PATH 登録済み。ターミナルや VS Code を開き直して各 aidiy コマンドを実行してください。')
     return True
 
 

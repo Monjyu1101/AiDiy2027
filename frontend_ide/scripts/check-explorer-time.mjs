@@ -24,7 +24,7 @@ import Explorer from ${JSON.stringify(join(root, 'src/components/ファイル閲
 import ${JSON.stringify(join(root, 'src/style.css'))};
 const now=new Date(2026,9,28,14,0,0).getTime();Date.now=()=>now;
 const at=(h,m=0,s=0,ms=0)=>new Date(2026,9,28,h,m,s,ms).getTime();
-const files=[['previous.txt',1,at(0)-1],['midnight.txt',1,at(0)],['before.txt',1,at(12,29,59,999)],['boundary.txt',1,at(12,30)],['after.txt',1,at(12,30,0,1)],['recent.txt',1,at(13,50)],['last.txt',1,at(24)-1],['next.txt',1,at(24)]];
+const files=[['yesterday-start.txt',1,at(0)-86400000],['too-old.txt',1,at(0)-86400001],['previous.txt',1,at(0)-1],['midnight.txt',1,at(0)],['before.txt',1,at(12,29,59,999)],['boundary.txt',1,at(12,30)],['after.txt',1,at(12,30,0,1)],['recent.txt',1,at(13,50)],['last.txt',1,at(24)-1],['next.txt',1,at(24)]];
 const state=reactive({root:'/fixture',startedAt:at(13),open:true,tree:{n:'fixture',d:[],f:files},selected:'',current:''});
 const log={requests:[],errors:[],marks:[]};
 window.addEventListener('error',e=>log.errors.push(e.message));window.addEventListener('unhandledrejection',e=>log.errors.push(String(e.reason)));
@@ -63,10 +63,10 @@ try {
   await send('Page.navigate',{url:'data:text/html,'+encodeURIComponent(html)});
   await until('window.fixture?.ready');
   const labels = await evaluate(`Array.from(document.querySelectorAll('.since-presets button'),b=>b.textContent)`);
-  assert.deepEqual(labels,['起動','15分','1時間','2時間','午前','今日','午後','解除']);
+  assert.deepEqual(labels,['起動','15分','1時間','2時間','午前','今日','午後','昨日','解除']);
   async function choose(label, expected) {
     await evaluate(`(async()=>{Array.from(document.querySelectorAll('.since-presets button')).find(b=>b.textContent===${JSON.stringify(label)}).click();await fixture.nextTick();})()`);
-    await until(`document.querySelectorAll('[role=treeitem]').length===8`);
+    await until(`document.querySelectorAll('[role=treeitem]').length===10`);
     const actual = await evaluate(`Array.from(document.querySelectorAll('[role=treeitem].fresh'),b=>b.dataset.path).sort()`);
     assert.deepEqual(actual,[...expected].sort(),label);
     assert.equal(await evaluate(`document.querySelector('.since-presets button[aria-pressed=true]').textContent`),label);
@@ -76,6 +76,11 @@ try {
   const afternoon=['boundary.txt','after.txt','recent.txt','last.txt'];
   await choose('午前',morning);await choose('午後',afternoon);await choose('今日',[...morning,...afternoon]);
   await choose('午前',morning);await choose('午前',morning);await choose('午後',afternoon);
+  await choose('昨日',['yesterday-start.txt','previous.txt']);
+  assert.equal(await evaluate(`document.querySelectorAll('.time-search input')[0].value`),'2026-10-27T00:00:00');
+  assert.equal(await evaluate(`document.querySelectorAll('.time-search input')[1].value`),'2026-10-27T23:59:59');
+  assert.equal(await evaluate('fixture.log.marks.at(-1).until'),await evaluate('fixture.at(0)'));
+  await choose('昨日',['yesterday-start.txt','previous.txt']);
   await choose('解除',[]);
   await choose('午前',morning);
   await choose('15分',['recent.txt','last.txt','next.txt']);

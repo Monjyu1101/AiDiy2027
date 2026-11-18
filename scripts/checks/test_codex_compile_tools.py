@@ -245,3 +245,59 @@ class InstallerTests(unittest.TestCase):
             with self.assertRaises(RuntimeError): helper.rust_host('Linux','unknown')
 
 if __name__ == '__main__': unittest.main()
+
+class CompileOutputTests(unittest.TestCase):
+    def test_prerequisite_details_are_only_for_explicit_check(self):
+        for details in (False, True):
+            with self.subTest(details=details), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'cli').mkdir()
+                for name in ('Cargo.toml', 'Cargo.lock', 'cli/Cargo.toml'):
+                    (root / name).touch()
+                output = io.StringIO()
+                with patch.object(compile, 'WORKSPACE_DIR', root), \
+                     patch.object(compile, 'IS_WINDOWS', False), \
+                     patch.object(compile, 'find_cargo_bin', return_value=root), \
+                     patch.object(compile.shutil, 'which', return_value='rustup'), \
+                     patch.object(compile, 'build_environment', return_value={}), \
+                     patch.object(compile, 'free_gb', return_value=30), \
+                     contextlib.redirect_stdout(output):
+                    self.assertEqual(compile.check_prerequisites(details), ({}, None))
+                self.assertEqual('cargo:' in output.getvalue(), details)
+                self.assertEqual('空き容量:' in output.getvalue(), details)
+
+    def test_normal_check_keeps_low_disk_warning(self):
+        with patch.object(compile, 'IS_WINDOWS', False), \
+             patch.object(compile, 'find_cargo_bin', return_value=Path('/cargo')), \
+             patch.object(compile.shutil, 'which', return_value='rustup'), \
+             patch.object(compile, 'build_environment', return_value={}), \
+             patch.object(compile, 'free_gb', return_value=1), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            compile.check_prerequisites()
+        self.assertIn('[WARN]', output.getvalue())
+        self.assertIn('空き容量', output.getvalue())
+
+    def test_install_success_is_silent_and_failure_keeps_recovery(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            built = root / 'built'
+            built.write_bytes(b'example executable')
+            with patch.object(compile, 'INSTALL_DIR', root), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertIsNotNone(compile.install_object(built))
+            self.assertEqual(output.getvalue(), '')
+            with patch.object(compile, 'INSTALL_DIR', root), \
+                 patch.object(compile, 'replace_file'), \
+                 patch.object(compile.os, 'replace', side_effect=OSError('locked')), \
+                 contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertIsNone(compile.install_object(built))
+            self.assertIn('手動で入れ替えてください', output.getvalue())
+
+    def test_subprocess_keeps_progress_and_failure_code(self):
+        with patch.object(compile.shutil, 'which', return_value='/cargo'), \
+             patch.object(compile.subprocess, 'run', side_effect=compile.subprocess.CalledProcessError(7, ['cargo'])), \
+             contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertFalse(compile.run(['cargo', 'build', '--locked'], {'PATH': ''}, 'ビルド'))
+        self.assertIn('ビルド中...', output.getvalue())
+        self.assertIn('終了コード 7', output.getvalue())
+        self.assertNotIn('cargo build', output.getvalue())

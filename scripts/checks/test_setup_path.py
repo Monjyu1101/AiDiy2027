@@ -68,7 +68,7 @@ class HermesSharedPathTests(unittest.TestCase):
         self.directory.mkdir(parents=True)
         self.enterContext(patch.object(Path, 'home', return_value=self.home))
         self.enterContext(patch.dict(os.environ, {'HOME': str(self.home), 'PATH': '/existing', 'SHELL': '/bin/bash'}, clear=True))
-        self.enterContext(patch('builtins.print'))
+        self.print_mock = self.enterContext(patch('builtins.print'))
 
     def test_posix_persistent_registration_is_idempotent_and_restores_profiles(self):
         with patch.object(helper.sys, 'platform', 'linux'):
@@ -80,6 +80,7 @@ class HermesSharedPathTests(unittest.TestCase):
             self.assertIn(helper.SHELL_PATH_BEGIN.encode(), first)
             self.assertTrue(helper.ensure_launcher_path(self.directory))
             self.assertEqual(profile.read_bytes(), first)
+            self.assertFalse(any('PATH 登録済み' in str(call) or '新しいターミナル' in str(call) for call in self.print_mock.call_args_list))
             self.assertTrue(helper._state_file(self.directory).exists())
             other = self.directory / 'other-tool'
             other.touch()
@@ -150,7 +151,9 @@ class WindowsProjectPathTests(unittest.TestCase):
         self.winreg.SetValueEx.assert_called_once()
         self.assertEqual(os.environ['PATH'], 'C:\\SystemOnly;' + str(self.directory))
         self.assertTrue(helper._state_file(self.directory).is_file())
-        self.assertIn('開き直して', self.output.getvalue())
+        self.assertNotIn('開き直して', self.output.getvalue())
+        self.assertNotIn('PATH 登録済み', self.output.getvalue())
+        self.assertIn('ユーザー PATH に登録しました:', self.output.getvalue())
         for call in self.winreg.CreateKeyEx.call_args_list:
             self.assertEqual(call.args[:2], (self.winreg.HKEY_CURRENT_USER, 'Environment'))
 

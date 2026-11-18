@@ -15,7 +15,7 @@
 - パネル、Bot worker、ブラウザ版サーバーだけでなく、依頼処理に必要な Hermes / CLI / MCP の子孫も保持する。共通判定は `scripts/_setup_processes.py`、全体 start の通常終了は `_start.py::stop_processes` で揃える。
 - Core 停止中の Live など、停止したバックエンドに依存する機能まで利用できることは保証しない。独立した Live / Term 等を Discord 配下という理由だけで保持しない。
 - 明示的な `_cleanup.py` とパネルからの停止・終了は従来どおり対象を停止する。cleanup の停止要求は自動再起動を抑止する。
-- 起動中の Discord は依存更新でも停止させない。通常の `frontend_channels/discord/_setup.py` は起動中または判定不能なら依存・ランチャー・共通設定を変更せず `False` で保留する。一括setupで「エラーが発生しても続行」を選択した場合は保留せず、依存・パネル生成・Electron配置・ランチャー・設定補完を可能な限り試行する。Electronコピー・配置の `OSError` のみ WARN（入力欠損は除外）として別集計し、配置未確認と表示する。npm・ビルド等の失敗は NG のまま後続を試行し、最終 `False` を維持する。コピー警告だけなら警告付き `True`。実行中画面の継続動作は保証しない。
+- 起動中の Discord は依存更新でも停止させない。通常の `frontend_channels/discord/_setup.py` は起動中または判定不能なら依存・ランチャー・共通設定を変更せず `False` で保留する。一括setupで「エラーが発生しても続行」を選択した場合は保留せず、依存・パネル生成・Electron配置・ランチャー・設定補完を可能な限り試行する。Electronコピー・配置の `OSError` のみ WARN（入力欠損は除外）として別集計し、配置未確認と表示する。npm・ビルド等の失敗は NG のまま後続を試行し、最終 `False` を維持する。コピー警告だけなら警告付き `True`。セットアップ後は実行中アプリの再起動を推奨する。
 - 回帰確認は `python -B -m unittest discover -s scripts/checks -p test_setup_processes.py`、`python -B -m unittest discover -s scripts/checks -p test_start_shutdown_flow.py`、`python -B -m unittest discover -s frontend_channels/discord/checks -p test_lifecycle.py`。合成プロセスとモックで保持・停止を検証し、実際のサービスは停止しない。
 
 ## 変更箇所

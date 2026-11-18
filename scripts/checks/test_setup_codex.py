@@ -86,8 +86,10 @@ class CodexLauncherTests(unittest.TestCase):
                      patch.object(module, "load_path_helper", return_value=helper), \
                      patch.object(helper, "ensure_launcher_path", return_value=True) as ensure, \
                      patch.object(Path, "home", return_value=root), \
-                     contextlib.redirect_stdout(io.StringIO()):
+                     contextlib.redirect_stdout(io.StringIO()) as output:
                     self.assertTrue(module.install_standalone_launcher())
+                    self.assertIn("本体のコンパイル完了後に利用できます。", output.getvalue())
+                    self.assertNotIn("開き直して", output.getvalue())
                     name = "aidiy_codex.cmd" if windows else "aidiy_codex"
                     local = root / "project/_AIDIY/aidiy_codex/bin" / name
                     shared = root / ".local/bin" / name

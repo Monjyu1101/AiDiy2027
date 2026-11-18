@@ -29,10 +29,11 @@ for(const zone of ['UTC','Asia/Tokyo','America/New_York'])test(`時刻プリセ�
  const module=new URL('../src/components/ファイル閲覧/ファイル日時.js',import.meta.url).href;
  const code=`import assert from 'node:assert/strict';
  import {timeSearchPresets,timeSearchRange,inTimeRange,localDateTimeInput,parseLocalDateTime} from ${JSON.stringify(module)};
- assert.deepEqual(timeSearchPresets.map(([,label])=>label),['起動','15分','1時間','2時間','午前','今日','午後','解除']);
- for(const now of [new Date(2026,9,28,14),new Date(2027,0,1,0,5),new Date(2026,2,8,14),new Date(2026,10,1,14)]){
+ assert.deepEqual(timeSearchPresets.map(([,label])=>label),['起動','15分','1時間','2時間','午前','今日','午後','昨日','解除']);
+ for(const now of [new Date(2026,9,28,14),new Date(2027,0,1,0,5),new Date(2026,2,8,14),new Date(2026,10,1,14),new Date(2026,2,9,14),new Date(2026,10,2,14),new Date(2028,2,1,14)]){
   const at=+now,start=new Date(now),boundary=new Date(now),next=new Date(now);
   start.setHours(0,0,0,0);boundary.setHours(12,30,0,0);next.setHours(24,0,0,0);
+  const yesterday=new Date(start);yesterday.setDate(yesterday.getDate()-1);
   const startedAt=at-123456;
   assert.deepEqual(timeSearchRange('start',startedAt,at),{since:startedAt,until:null});
   assert.deepEqual(timeSearchRange('clear',startedAt,at),{since:null,until:null});
@@ -43,7 +44,7 @@ for(const zone of ['UTC','Asia/Tokyo','America/New_York'])test(`時刻プリセ�
    assert.equal(inTimeRange(since,since,until),true);
    assert.equal(inTimeRange(at,since,until),true);
   }
-  for(const [preset,lo,hi] of [['morning',+start,+boundary],['today',+start,+next],['afternoon',+boundary,+next]]){
+  for(const [preset,lo,hi] of [['morning',+start,+boundary],['today',+start,+next],['afternoon',+boundary,+next],['yesterday',+yesterday,+start]]){
    const {since,until}=timeSearchRange(preset,startedAt,at);
    assert.equal(since,lo);assert.equal(until,hi);
    assert.equal(inTimeRange(lo-0.5,since,until),false);
@@ -55,6 +56,13 @@ for(const zone of ['UTC','Asia/Tokyo','America/New_York'])test(`時刻プリセ�
  }
  const before=+new Date(2026,11,31,23,59,59),after=before+1000;
  assert.equal(timeSearchRange('today',0,before).until,timeSearchRange('today',0,after).since);
+ assert.equal(timeSearchRange('yesterday',0,after).until,timeSearchRange('today',0,after).since);
+ if(process.env.TZ==='America/New_York'){
+  for(const [month,day,hours] of [[2,9,23],[10,2,25]]){
+   const range=timeSearchRange('yesterday',0,+new Date(2026,month,day,14));
+   assert.equal(range.until-range.since,hours*3600000);
+  }
+ }
  // 手入力は従来どおり開始を含み、終了秒全体を含む。
  const since=parseLocalDateTime('2026-10-28T12:30:00'),until=parseLocalDateTime('2026-10-28T12:30:00',{end:true});
  assert.equal(inTimeRange(since,since,until),true);assert.equal(inTimeRange(since+999.5,since,until),true);

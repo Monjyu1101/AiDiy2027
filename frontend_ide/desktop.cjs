@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 const {app,BrowserWindow,WebContentsView,ipcMain,shell,clipboard,session,screen,dialog,Menu}=require('electron');
 const {join,resolve}=require('node:path');
-const {単一起動部品,単独起動中の部品,起動枠を確保,起動枠の使用中}=require('../scripts/アプリプロセス.cjs');
+const {タスク一覧,単一起動部品,単独起動中の部品,起動枠を確保,起動枠の使用中}=require('../scripts/アプリプロセス.cjs');
 const {projectRoot,programDataDirectory,preparePrivateDirectory}=require('./host/scripts/project-storage.cjs');
 const {mkdtempSync,rmSync}=require('node:fs');
 const {projectProfile}=require('./デスクトップ/project-profile.cjs');
@@ -413,12 +413,14 @@ app.whenReady().then(async()=>{
   const record=trustedEvent(event);if(!record||record.kind!=='ide')return;
   closeChildren(record);await Promise.allSettled([...closing]);
  });
+ const {createChildProcessMonitor}=require('./デスクトップ/子窓状態確認.cjs');
+ const childProcessMonitor=createChildProcessMonitor({scan:()=>単独起動中の部品(__dirname,()=>タスク一覧(process.platform,{python:false,timeout:20000}))});
  ipcMain.handle('development:child-windows',async event=>{
   const owner=trustedEvent(event);
   if(owner?.kind!=='ide')return{live:false,avatar:false,runningApps:[]};
   const [running,occupied]=await Promise.all([
-   単独起動中の部品(__dirname),
-   Promise.all(単一起動部品.map(起動枠の使用中)),
+   childProcessMonitor(),
+   Promise.all(単一起動部品.map(type=>起動枠の使用中(type,{timeout:3000}))),
   ]);
   単一起動部品.forEach((type,index)=>{if(occupied[index]||owner.pending.has(type))running.add(type);});
   return{live:!!voiceActive(owner),avatar:avatarLauncher.active(owner),runningApps:[...running]};

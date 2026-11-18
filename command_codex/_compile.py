@@ -28,6 +28,7 @@ CLI 本体 `codex` を cargo でビルドします。同梱元の LICENSE / NOTI
   プロジェクトの外に置くため、git clone やフォルダのコピーの影響を受けません。
   release（既定）は thin LTO のため時間がかかります。動作確認だけなら `--debug` を使います。
 - 直接実行のビルド確認は [y]/n（Enter で開始）。全体 `_setup.py` のコンパイル選択は y/[n]（Enter でスキップ）のままです。
+- 通常表示は処理の進捗・警告・結果に絞り、ツールの場所・ターゲット・空き容量は `--check` で確認します。
 - 並列ジョブ数は Cargo の自動判定に任せます。制限したいときだけ `--jobs N` を指定します。
 - `--detach` は独立プロセスで開始してすぐ戻ります（呼び出し元の Diag を閉じても続行）。
   状態は `~/.aidiy/cache/codex/aidiy_codex_compile.json`、ログは同じフォルダの `aidiy_codex_compile.log` に残ります。
@@ -254,7 +255,7 @@ def install_standalone_launcher() -> bool:
         if not helper.ensure_launcher_path(launcher.parent):
             return False
         print_success(f"aidiy_codex ランチャーを登録しました: {launcher}")
-        print_info("本体のコンパイル完了後に利用できます。既存端末は開き直してください。")
+        print_info("本体のコンパイル完了後に利用できます。")
         return True
     except (OSError, ValueError) as exc:
         print_error(f"aidiy_codex ランチャーを登録できません: {exc}")
@@ -292,12 +293,9 @@ def prepare_install(target: str | None = None) -> bool:
         installed = INSTALL_DIR / runtime.name
         if not runtime.is_file():
             print_warning(f"libunwind.dll が見つかりません: {runtime}（llvm-mingw が PATH に無いと起動できません）")
-        elif installed.is_file() and filecmp.cmp(runtime, installed, shallow=False):
-            print_info(f"libunwind.dll は配置済みです: {installed}")
-        else:
+        elif not (installed.is_file() and filecmp.cmp(runtime, installed, shallow=False)):
             try:
                 replace_file(runtime, installed)
-                print_info(f"libunwind.dll を配置しました: {installed}")
             except OSError as e:
                 print_warning(f"libunwind.dll を配置できません（aidiy_codex を実行中の場合は終了してください）: {e}")
     write_settings_file()
@@ -322,7 +320,6 @@ def install_object(built: Path, target: str | None = None) -> Path | None:
     except (OSError, subprocess.SubprocessError) as e:
         print_error(f"{temporary} を生成できません: {e}")
         return None
-    print_info(f"入れ替え用の実行ファイルを生成しました: {temporary}")
     try:
         os.replace(temporary, output)
     except OSError as e:
@@ -330,7 +327,6 @@ def install_object(built: Path, target: str | None = None) -> Path | None:
         print_warning(f"生成済みファイルを保持しました: {temporary}")
         print_info(f"aidiy_codex を終了してから、{temporary} を {output} に手動で入れ替えてください。")
         return None
-    print_success(f"配置しました: {output}" + ("（デバッグ情報を除去）" if strip else ""))
     return output
 
 
@@ -372,8 +368,6 @@ def write_settings_file(install_dir: Path = INSTALL_DIR, project_root: Path = PR
             temporary.unlink(missing_ok=True)
             print_warning(f"aidiy_codex の設定を書き出せませんでした: {path}（{e}）")
             return path
-    else:
-        print_info(f"aidiy_codex の設定は既存の値を使います: {path}")
     return path
 
 
@@ -416,7 +410,7 @@ def long_path_git_environment() -> dict:
     return {"HOME": str(git_home), "GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": "core.longpaths", "GIT_CONFIG_VALUE_0": "true"}
 
 
-def check_prerequisites() -> tuple[dict | None, str | None]:
+def check_prerequisites(details: bool = False) -> tuple[dict | None, str | None]:
     """ビルドに必要なツールを確認する。戻り値: (環境, ターゲット) / 不足時は (None, None)。"""
     ok = True
     if not (WORKSPACE_DIR / "Cargo.toml").is_file() or not (WORKSPACE_DIR / "Cargo.lock").is_file():
@@ -428,7 +422,8 @@ def check_prerequisites() -> tuple[dict | None, str | None]:
 
     cargo_bin = find_cargo_bin()
     if cargo_bin:
-        print_info(f"cargo: {cargo_bin / ('cargo' + EXE)}")
+        if details:
+            print_info(f"cargo: {cargo_bin / ('cargo' + EXE)}")
         if not (cargo_bin / f"rustup{EXE}").is_file() and not shutil.which("rustup"):
             print_warning("rustup が見つかりません。rust-toolchain.toml の版を自動取得できない場合があります。")
     else:
@@ -440,20 +435,20 @@ def check_prerequisites() -> tuple[dict | None, str | None]:
     if IS_WINDOWS:
         llvm_bin = find_llvm_mingw_bin(target)
         if llvm_bin:
-            print_info(f"llvm-mingw: {llvm_bin}")
+            if details:
+                print_info(f"llvm-mingw: {llvm_bin}")
         else:
             print_error("llvm-mingw が見つかりません。Windows x64 は通常実行時に自動導入します（--check では導入しません）。")
             ok = False
-        print_info(f"ターゲット: {target}（MSVC 不要）")
-    else:
-        print_info("ターゲット: rustup の既定ホスト")
-    print_info(f"Rust の版: {toolchain_channel()}（rust-toolchain.toml）")
+    if details:
+        print_info(f"ターゲット: {target}" if target else "ターゲット: rustup の既定ホスト")
+        print_info(f"Rust の版: {toolchain_channel()}")
 
     # ビルド作業フォルダ（~/.aidiy/cache/codex）はプロジェクトと別のドライブにありうるため、そちらの空きを見る。
     gb = free_gb(existing_parent(BUILD_DIR))
     if 0 <= gb < MIN_FREE_GB:
         print_warning(f"空き容量が {gb:.1f}GB です。ビルドには {MIN_FREE_GB}GB 程度の空きを推奨します。")
-    elif gb >= 0:
+    elif details and gb >= 0:
         print_info(f"空き容量: {gb:.1f}GB")
 
     if not ok:
@@ -462,7 +457,7 @@ def check_prerequisites() -> tuple[dict | None, str | None]:
 
 
 def run(command, env, label) -> bool:
-    print_info(f"実行中: {' '.join(command)}")
+    print_info(f"{label}中...")
     # Windows の CreateProcess は子に渡す PATH ではなく自プロセスの PATH で探すため、先にフルパスへ解決する。
     executable = shutil.which(command[0], path=env.get("PATH"))
     if not executable:
@@ -650,8 +645,6 @@ def compile_codex(release: bool = True, jobs: int | None = None) -> Path | None:
             raise ValueError("--jobs は 1 以上を指定してください。")
         command += ["--jobs", str(jobs)]
         print_info(f"並列ジョブ数: {jobs}（明示指定）")
-    else:
-        print_info("並列ジョブ数: 自動（Cargo に任せる）")
 
     started = time.monotonic()
     if not run(command, env, "ビルド"):
@@ -754,13 +747,13 @@ def main():
         return
 
     print_header("Codex CLI コンパイル（aidiy_codex）")
-    print_info(f"作業ディレクトリ: {WORKSPACE_DIR}")
     if args.check:
-        env, _ = check_prerequisites()
+        print_info(f"作業ディレクトリ: {WORKSPACE_DIR}")
+        env, _ = check_prerequisites(details=True)
         sys.exit(0 if env is not None else 1)
 
     profile = "debug" if args.debug else "release"
-    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（不足する Rust・Windows LLVM の公式導入と依存取得を含みます。初回は数十分かかります）", default="y"):
+    if not args.yes and not ask_yes_no(f"aidiy_codex を {profile} でビルドしますか?（不足する Rust・Windows LLVM の公式導入と依存取得を含む）", default="y"):
         print_warning("ビルドをキャンセルしました。")
         return
     if args.detach:

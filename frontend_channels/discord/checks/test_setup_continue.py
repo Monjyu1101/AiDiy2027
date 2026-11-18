@@ -52,6 +52,8 @@ class ContinueSetupTest(unittest.TestCase):
                 launcher.assert_called_once()
                 config.assert_called_once()
                 self.assertIn('[WARN]', output.getvalue())
+                label = 'Slack' if hasattr(module, '_slack_in_use') else 'Discord'
+                self.assertIn(f'{label}: 実行中でも更新を試行します。セットアップ後は再起動推奨です。', output.getvalue())
 
     def test_each_failure_continues_and_is_not_success(self):
         for module in MODULES:

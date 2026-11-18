@@ -511,3 +511,43 @@ test('同一プロジェクトの複数窓は基準・再評価・再起動時�
  assert.deepEqual(await Promise.all(reopened.map(async service=>(await service.get()).result.evaluationBasis)),['source','documents']);
  await reopened[0].fresh();assert.equal((await reopened[0].get()).result,null);assert.equal((await reopened[1].get()).result.evaluationBasis,'documents');
 });
+
+for(const basis of ['auto','source','documents'])test(`評価基準 ${basis}: 出力例は基準内の作業だけで厳格検証を通る`,async t=>{
+ let captured;
+ const {service}=await fixture(t,async({prompt})=>{
+  captured=prompt;const example=JSON.parse(prompt.split('\n').at(-1));
+  validateNavigation(example,{id:example.requestId,goal:example.goal});
+  if(basis==='documents'){
+   assert.deepEqual(example.items.map(item=>item.name),['要件・仕様の記述','操作手順の記述','文書間の整合確認']);
+   assert.match(example.nextPrompt,/ソースは変更しない/);
+   assert.doesNotMatch(JSON.stringify(example),/バックエンド|フロントエンド|結合試験/);
+  }else if(basis==='source'){
+   assert.deepEqual(example.items.map(item=>item.name),['入力処理の実装','表示処理の実装','テストコードの整備']);
+   assert.match(example.overall.reason,/実行時の動作は保証していません/);
+  }
+  return {content:JSON.stringify(example)};
+ });
+ await service.start('目標','navigate',undefined,basis);assert.equal((await finish(service)).job.status,'complete');
+ if(basis!=='auto'){
+  for(const text of ['一覧に該当資料がなくても','保存済みreasonは過去の記録','対象外項目も飛ばさず','対象資料が未作成でも','progressを確定し、weight合計100'])assert.ok(captured.includes(text),text);
+ }else assert.doesNotMatch(captured,/限定評価の手順/);
+});
+
+test('評価基準切替: 保存項目と根拠は変えず更新進捗から次の対象を選ぶ',async t=>{
+ let count=0,saved;
+ const {service}=await fixture(t,async({prompt})=>{
+  const shape=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  if(++count===1){saved=shape;return {content:JSON.stringify(shape)};}
+  assert.match(prompt,/対象外の項目も削除・改名せず/);
+  assert.deepEqual(shape.items,saved.items);
+  // 実装項目は文書が未確認。先頭を飛ばさず対象にする。
+  shape.items=shape.items.map(item=>({...item,progress:0}));
+  shape.overall={progress:0,reason:'文書の根拠を確認できず、保存済み実装項目は対象外。'};
+  shape.nextItemId=shape.items[0].id;shape.nextPrompt='今回の目標に関連するAPI仕様の記述を確認してください。ソース変更は依頼しません。';
+  return {content:JSON.stringify(shape)};
+ });
+ await service.start('APIを整備','navigate',undefined,'source');assert.equal((await finish(service)).job.status,'complete');
+ await service.start('','evaluate',undefined,'documents');const result=await finish(service);
+ assert.equal(result.job.status,'complete',result.job.message);assert.equal(result.result.nextItemId,'step-1');
+ assert.deepEqual(result.result.items.map(({progress,...item})=>item),saved.items.map(({progress,...item})=>item));
+});

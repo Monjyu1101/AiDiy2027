@@ -216,7 +216,7 @@ def prepare_electron_binary(frontend_dir: Path, label: str, *, allow_download: b
             return True
 
         if continue_on_error:
-            info(f"[WARN] {label}: 続行指定のため、使用中でも Electron の配置を試行します。失敗は記録して次の処理へ進みます。")
+            info(f"[WARN] {label}: 実行中でも Electron の配置を試行します。セットアップ後は再起動推奨です。失敗は記録して次の処理へ進みます。")
         elif _runtime_in_use(frontend_dir):
             error(f"{label}: Electron が使用中のため修復・置換できません。Code / IDE 等を閉じて再実行してください。")
             return False
@@ -343,7 +343,7 @@ def _locked_dependencies_ready(frontend_dir: Path) -> bool:
 def frontend_dependency_guard(frontend_dir: Path, label: str, *, info=print, warning=print, error=print, desktop=True, continue_on_error=False):
     """None=通常導入、True=使用中の整合した依存を再利用、False=更新を安全に中止。"""
     if continue_on_error:
-        warning(f"{label}: 続行指定のため、使用中の依存も更新を試行します。画面の継続動作は保証されません。")
+        warning(f"{label}: 実行中でも更新を試行します。セットアップ後は再起動推奨です。")
         return None
     try:
         if not _runtime_in_use(frontend_dir):

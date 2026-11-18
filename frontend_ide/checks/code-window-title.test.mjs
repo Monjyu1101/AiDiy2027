@@ -6,6 +6,7 @@
 import layoutModule from '../デスクトップ/window-layout.cjs';
 import launchDisplayModule from '../デスクトップ/起動画面.cjs';
 import savedLayoutModule from '../デスクトップ/配置保存.cjs';
+import childMonitorModule from '../デスクトップ/子窓状態確認.cjs';
 import avatarModule from '../デスクトップ/Avatar起動.cjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,6 +55,7 @@ async function desktopFixture({platform='win32',kind='ide',active=true,response=
  const modules={
   electron:{app,BrowserWindow:Window,Menu,ipcMain:{handle:(name,fn)=>handlers.set(name,fn),on(){}},shell:{},clipboard:{},session:{defaultSession:{setPermissionCheckHandler(){},setPermissionRequestHandler(){}}},screen:{getPrimaryDisplay:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayMatching:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getDisplayNearestPoint:()=>({workArea:{x:0,y:0,width:1920,height:1040}}),getCursorScreenPoint:()=>({})},dialog:{showMessageBox:async(_window,options)=>{dialogs.push(options);return{response};}}},
   '../scripts/アプリプロセス.cjs':{単一起動部品:['task','team','cpu'],単独起動中の部品:async()=>new Set(),起動枠の使用中:async type=>appSlots.has(type),起動枠を確保:async type=>{if(appSlots.has(type))return null;appSlots.add(type);return()=>appSlots.delete(type);}},
+  './デスクトップ/子窓状態確認.cjs':childMonitorModule,
   './デスクトップ/Avatar起動.cjs':avatarModule,
   './デスクトップ/起動画面.cjs':launchDisplayModule,
   './デスクトップ/配置保存.cjs':savedLayoutModule,

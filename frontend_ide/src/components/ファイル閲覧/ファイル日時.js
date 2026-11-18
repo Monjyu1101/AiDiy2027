@@ -19,7 +19,7 @@ export function nextLocalMidnight(now = Date.now()) {
 
 export const timeSearchPresets = [
   ['start', '起動'], ['fifteen', '15分'], ['hour', '1時間'], ['twoHours', '2時間'],
-  ['morning', '午前'], ['today', '今日'], ['afternoon', '午後'], ['clear', '解除'],
+  ['morning', '午前'], ['today', '今日'], ['afternoon', '午後'], ['yesterday', '昨日'], ['clear', '解除'],
 ];
 
 // プリセットは選択時の閲覧端末の日付で確定する。上限は含まない。
@@ -27,6 +27,11 @@ export function timeSearchRange(preset, startedAt, now = Date.now()) {
   if (preset === 'start') return { since: startedAt, until: null };
   const minutes = { fifteen: 15, hour: 60, twoHours: 120 }[preset];
   if (minutes) return { since: now - minutes * 60_000, until: null };
+  if (preset === 'yesterday') {
+    const end = new Date(now); end.setHours(0, 0, 0, 0);
+    const start = new Date(end); start.setDate(start.getDate() - 1);
+    return { since: +start, until: +end };
+  }
   if (['morning', 'today', 'afternoon'].includes(preset)) {
     const start = new Date(now), boundary = new Date(now);
     start.setHours(0, 0, 0, 0); boundary.setHours(12, 30, 0, 0);
