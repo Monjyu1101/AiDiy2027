@@ -132,8 +132,9 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					} catch (error) {
 						if (cliMode !== "chat" || !(error instanceof CliJsonSyntaxError)) throw error;
 						options?.signal?.throwIfAborted();
+						const repairPrompt = jsonRepairPrompt(request.engine_prompt!, error.response);
 						progress("JSON の形式を再要求します（1回のみ）。");
-						answer = await runCli(root, { ...request, engine_prompt: jsonRepairPrompt(request.engine_prompt!) }, options, progress, tools);
+						answer = await runCli(root, { ...request, engine_prompt: repairPrompt }, options, progress, tools);
 					}
 					const text = answer.content;
 					const part = output.content[0];

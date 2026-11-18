@@ -65,7 +65,9 @@ test("syntax repair retries once with same constraints and emits only validated 
   assert.ok(second.engine_prompt.startsWith(first.engine_prompt)); assert.match(second.engine_prompt,/再生成/);
   assert.equal(second.mode,"read-only"); assert.equal(second.provider,first.provider); assert.equal(second.model,first.model);
   assert.deepEqual(second.messages,first.messages); assert.deepEqual(second.tools,first.tools);
-  assert.ok(!second.engine_prompt.includes('bad\nquote'));
+  assert.ok(second.engine_prompt.includes(JSON.stringify('{"content":"bad\nquote","tool_calls":[]}')));
+  assert.match(second.engine_prompt,/必要な返答形式（再掲）/);
+  assert.ok(!JSON.stringify(events).includes('bad'));
  });
 });
 test("repair is bounded; schema violations, transport and authentication failures never retry",{skip:process.platform==="win32"},async()=>{
@@ -96,5 +98,14 @@ test("cancellation during format repair aborts without tool emission",{skip:proc
   }
   assert.equal(events.at(-1).error.stopReason,"aborted");
   assert.equal(events.filter(e=>e.type==="toolcall_end").length,0);
+ });
+});
+
+test("oversized malformed response is not partially sent for repair",{skip:process.platform==="win32"},async()=>{
+ await retryFixture([result("x".repeat(65537))],async({config,model,context,count})=>{
+  const answer=await config.streamSimple(model,context,{}).result();
+  assert.equal(answer.stopReason,"error"); assert.equal(count(),1);
+  assert.match(answer.errorMessage,/不正応答が大きすぎる/);
+  assert.ok(!answer.errorMessage.includes("xxxxxxxx"));
  });
 });

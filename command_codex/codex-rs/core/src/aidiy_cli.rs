@@ -266,7 +266,7 @@ pub(crate) async fn stream(
                     return Err(invalid("CLI chat の JSON 形式修正に失敗しました。"));
                 }
                 request = json_wrapper::repair_request(&request, &text)
-                    .map_err(|_| invalid("CLI chat の形式修正入力を作成できません。"))?;
+                    .map_err(invalid)?;
                 if request.len() > MAX_BYTES {
                     return Err(invalid("CLI chat の形式修正入力が大きすぎます。"));
                 }

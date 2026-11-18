@@ -9,7 +9,7 @@ import assert from 'node:assert/strict';
 import {mkdtemp,writeFile,readFile,rm,mkdir,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,dirname} from 'node:path';
-import {createNavigation,validateNavigation,validateNavigationResponse,parseNavigationResponse,navigationModels,navigationCatalog,navigationProviders,navigationDefaultModel} from '../ファイル機能/navigation.mjs';
+import {withNavigationPromptScope,createNavigation,validateNavigation,validateNavigationResponse,parseNavigationResponse,navigationModels,navigationCatalog,navigationProviders,navigationDefaultModel} from '../ファイル機能/navigation.mjs';
 const valid=(id='one',goal='検索画面を整える')=>({schemaVersion:3,requestId:id,goal,items:[{id:'1',name:'入力を整える',progress:25,reason:'入力欄が存在、検証は未確認',weight:100,weightReason:'目標を達成するための主要作業'}],overall:{progress:25,reason:'主要作業の確認結果から評価'},nextItemId:'1',nextPrompt:'入力の空状態を確認してください。'});
 test('結果: 根拠/0と100/空リストを保持し未知の属性を除外',()=>{
  const data=valid();data.items.push({...data.items[0],id:'2',progress:100});data.items[0].progress=0;data.items.forEach(item=>item.weight=50);data.overall.progress=50;data.secret='ignore';
@@ -388,7 +388,7 @@ test('生成から再評価で対象を進め、全件完了後は提案なし�
  await service.start('','evaluate');v=await finish(service);assert.equal(v.result.nextItemId,'2');assert.equal(v.job.status,'complete',v.job.message);
  await service.start('','evaluate');v=await finish(service);assert.equal(v.job.status,'complete',v.job.message);assert.equal(v.result.nextItemId,null);assert.equal(v.result.nextPrompt,'');
  const reopened=createNavigation(root,{state:()=>state,stateRoot});t.after(()=>reopened.close());assert.deepEqual((await reopened.get()).result,v.result);await reopened.fresh();await reopened.select(v.result.navigationId);assert.equal((await reopened.get()).result.nextPrompt,'');
- for(const prompt of prompts){assert.match(prompt,/最初にprogressが100未満/);assert.match(prompt,/後続項目・複数項目/);assert.match(prompt,/新たな仕事を作らない/);assert.match(prompt,/「今回の目標」「対処しようとしている内容」「今回の作業」/);assert.match(prompt,/機械的に転記するだけにせず/);assert.match(prompt,/画面・コピー側では説明を追加しない/);}
+ for(const prompt of prompts){assert.match(prompt,/最初にprogressが100未満/);assert.match(prompt,/後続項目・複数項目/);assert.match(prompt,/新たな仕事を作らない/);assert.match(prompt,/「今回の目標」「対処しようとしている内容」「今回の作業」/);assert.match(prompt,/機械的に転記するだけにせず/);assert.match(prompt,/修正対象の定型文はアプリが最後に追加/);}
  for(const prompt of prompts.slice(1)){assert.match(prompt,/最新の根拠から.*依頼文として書き直し/);assert.match(prompt,/保存済みの提案を機械的に再利用しない/);}
 });
 test('対象IDを持たない旧形式を自動補完しない',()=>{
@@ -519,7 +519,7 @@ for(const basis of ['auto','source','documents'])test(`評価基準 ${basis}: �
   validateNavigation(example,{id:example.requestId,goal:example.goal});
   if(basis==='documents'){
    assert.deepEqual(example.items.map(item=>item.name),['要件・仕様の記述','操作手順の記述','文書間の整合確認']);
-   assert.match(example.nextPrompt,/ソースは変更しない/);
+   assert.match(example.nextPrompt,/レビューアーの指摘に対処してください。$/);
    assert.doesNotMatch(JSON.stringify(example),/バックエンド|フロントエンド|結合試験/);
   }else if(basis==='source'){
    assert.deepEqual(example.items.map(item=>item.name),['入力処理の実装','表示処理の実装','テストコードの整備']);
@@ -550,4 +550,29 @@ test('評価基準切替: 保存項目と根拠は変えず更新進捗から次
  await service.start('','evaluate',undefined,'documents');const result=await finish(service);
  assert.equal(result.job.status,'complete',result.job.message);assert.equal(result.result.nextItemId,'step-1');
  assert.deepEqual(result.result.items.map(({progress,...item})=>item),saved.items.map(({progress,...item})=>item));
+});
+
+for(const [basis,suffix] of [['auto',''],['source','ソースを修正してください。'],['documents','関連文書を修正してください。']])test(`簡潔な提案とロジック範囲付加: ${basis}`,async t=>{
+ const {service,root,state,stateRoot}=await fixture(t,async({prompt})=>{
+  const example=JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,''));
+  assert.match(example.nextPrompt,/レビューアーの指摘に対処してください。/);
+  assert.doesNotMatch(example.nextPrompt,/今回の作業では/);
+  return {content:JSON.stringify(example)};
+ });
+ await service.start('目標','navigate',undefined,basis);
+ const first=await finish(service);assert.equal(first.job.status,'complete',first.job.message);
+ if(suffix)assert.ok(first.result.nextPrompt.endsWith('\n'+suffix));
+ else assert.doesNotMatch(first.result.nextPrompt,/ソースを修正してください。|関連文書を修正してください。/);
+ assert.deepEqual(withNavigationPromptScope(first.result),first.result);
+ await service.fresh();await service.select(first.result.navigationId);
+ assert.equal((await service.get()).result.nextPrompt,first.result.nextPrompt);
+});
+test('範囲定型文は末尾だけ重複除去し根拠と対象を維持、空・完了は追加しない',()=>{
+ const original={...valid(),evaluationBasis:'documents',nextPrompt:'目標と指摘\nレビューアーの指摘に対処してください。\nソースを修正してください。\n関連文書を修正してください。'};
+ const result=withNavigationPromptScope(original);
+ assert.equal(result.nextPrompt,'目標と指摘\nレビューアーの指摘に対処してください。\n関連文書を修正してください。');
+ assert.equal(result.items,original.items);assert.equal(result.nextItemId,original.nextItemId);
+ for(const items of [[],[{progress:100}]])assert.equal(withNavigationPromptScope({...original,items,nextPrompt:''}).nextPrompt,'');
+ assert.equal(withNavigationPromptScope({...original,nextPrompt:' '}).nextPrompt,' ');
+ assert.throws(()=>withNavigationPromptScope({...original,nextPrompt:'あ'.repeat(8000)}),/8000/);
 });
