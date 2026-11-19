@@ -46,7 +46,7 @@ const html=join(temp,'display.html');await writeFile(html,'<!doctype html><html 
 await page.route('**/*',async route=>{const url=route.request().url();if(url.startsWith('file:')&&url.includes('/development/')){const name=url.split('/').pop();try{return await route.fulfill({body:await readFile(join(ide,'public',name)),contentType:'image/png'});}catch{}}if(!url.startsWith('file:'))return route.abort();return route.continue();});
 for(const [state,name] of [['input','Navigator_301_目標入力.png'],['running','Navigator_302_ナビ実行中.png'],['result','Navigator_303_ナビ結果.png'],['expanded','Navigator_304_理由と総合評価.png'],['history','Navigator_401_履歴一覧.png'],['cancelled','Navigator_801_処理の中止.png'],['handoff','Navigator_802_CODE_LIVEへ.png']]){
  await page.goto(pathToFileURL(html).href+(state==='handoff'?'?view=handoff':''));await page.evaluate(state=>window.guide(state),state);await page.evaluate(()=>document.fonts.ready);await page.waitForTimeout(1000);
- if(state==='handoff'){await page.getByRole('button',{name:'CODE/LIVEへ',exact:true}).click();await page.getByText('連携先: 未選択',{exact:true}).waitFor();}
+ if(state==='handoff'){await page.getByRole('button',{name:'Codeへ',exact:true}).click();await page.getByText('連携先: 未選択',{exact:true}).waitFor();}
  const file=join(images,name);await page.screenshot({path:file});shots.push({state,path:'images/セルフテスト,aidiy_navi,操作編/'+name,sha256:createHash('sha256').update(await readFile(file)).digest('hex')});
 }
 }finally{await browser.close();}

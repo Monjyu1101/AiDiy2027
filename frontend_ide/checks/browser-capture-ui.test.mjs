@@ -35,7 +35,7 @@ for(const headerOnly of [false,true]){
   assert.equal(f.state.capturing.value,false);const tools=f.tools(),group=tools.find(n=>n.props?.class==='browser-capture-tools');
   assert.equal(group.children[0].props.class,'browser-capture');
   assert.equal(group.children[1].props.class,'browser-capture-status');assert.equal(group.children[1].children,'保存済み');assert.equal(group.children[1].props.role,'status');assert.match(group.children[1].props.title,/first.png/);
-  assert.equal(tools[tools.indexOf(group)+1]?.props?.class,'browser-handoff','撮影と保存済みの後にCode / Liveへを置く');
+  assert.equal(tools[tools.indexOf(group)+1]?.props?.class,'browser-handoff','撮影と保存済みの後に「Codeへ」を置く');
   f.changed({capturePath:'temp/input/first.png',fullscreen:!headerOnly});assert.ok(f.status(),'通常/F11切替で保存済みを維持する');
  });
  test(`Browser撮影UI: ${headerOnly?'F11ヘッダー':'通常窓'}は失敗・不完全応答・再撮影中に古い保存済みを表示しない`,async t=>{

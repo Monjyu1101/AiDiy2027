@@ -144,7 +144,7 @@ test('コピー失敗後の再試行成功で通知を消し、空の提案を�
  const f=copyFixture({legacy:false});await f.api.copy();assert.ok(f.api.copyError.value);f.doc.execCommand=()=>true;await f.api.copy();assert.equal(f.api.copyError.value,'');assert.equal(f.api.copied.value,true);f.api.result.value={items:[],nextPrompt:''};f.doc.execCommand=()=>{throw Error('must not call');};await f.api.copy();
 });
 
-for(const mode of ['web-ide','desktop-ide','desktop-navi'])test(`CODE/LIVEへ: ${mode}は共通選択用の要求だけを作り本文を改変しない`,()=>{
+for(const mode of ['web-ide','desktop-ide','desktop-navi'])test(`Codeへ: ${mode}は共通選択用の要求だけを作り本文を改変しない`,()=>{
  let calls=0;const actions={loadTargets(){calls++;},insertDraft(){calls++;}};
  const f=fixture({props:{project:{path:'/project'},standalone:mode==='desktop-navi'},native:mode!=='web-ide',draftActions:actions});
  const text='今回の目標\n対処内容\n今回の作業 <本文>  ';

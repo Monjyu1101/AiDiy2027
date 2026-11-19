@@ -21,7 +21,7 @@ async function fixture(t,{standalone=true,native=false,actions=true}={}){
  const props=reactive({instance:'navi-1',standalone,project:{path:'/fixture'},startedAt:1});
  const receiverState=reactive({path:'/fixture',session:'conversation-1',ready:true,draft:'既存の下書き'});let focus=0,identity=0;
  const receiver=createDraftReceiver({kind:'code',project:()=>receiverState.path,scope:()=>receiverState.session,ready:()=>receiverState.ready,draft:()=>receiverState.draft,setDraft:value=>{receiverState.draft=value;},focus:()=>{focus++;},uuid:()=>`context-${++identity}`});receiver.mount();
- const api=scope.run(()=>vm.runInNewContext(source+`;codeSession=1;({setCodeSession:value=>{codeSession=value;},handoff,handoffLabel,handoffTitle,canHandoff,handoffBusy,handoffError,draftRequest,codeOpen,codeOpening,codePanel,codeBase,autopilot,result,goal,visible,detached,submitting,toolsState})`,{
+ const api=scope.run(()=>vm.runInNewContext(source+`;codeSession=1;({setCodeSession:value=>{codeSession=value;},handoff,handoffTitle,canHandoff,handoffBusy,handoffError,draftRequest,codeOpen,codeOpening,codePanel,codeBase,autopilot,result,goal,visible,detached,submitting,toolsState})`,{
   ref,computed,watch,nextTick,createNavigationPopupSizer,createNavigationMessage,createActivityFoldTone,
   inject:()=>actions?{}:null,onMounted(){},onBeforeUnmount(){},defineExpose(){},defineProps:()=>props,defineEmits:()=>()=>{},window:native?{aidiyWindow:{}}:{},DEFAULT_NAVIGATION_GOAL:'目標',AbortController,AbortSignal,setTimeout:()=>1,clearTimeout(){},pickNavigationScene:()=> 'ride',
   fetch:async(url,options={})=>{requests.push({url,...options});return {ok:true,json:async()=>({})};},
@@ -32,9 +32,9 @@ async function fixture(t,{standalone=true,native=false,actions=true}={}){
  await nextTick();
  return {api,props,requests,receiver,receiverState,insertions,focus:()=>focus};
 }
-test('内蔵Code表示中は単独WebでもCODEへと表示し、本文をそのまま既存下書きに追記する',async t=>{
+test('内蔵Code表示中は単独Webでも本文をそのまま既存下書きに追記する',async t=>{
  const f=await fixture(t,{actions:false});f.api.codeOpen.value=true;await nextTick();
- assert.equal(f.api.handoffLabel.value,'CODEへ');assert.equal(f.api.canHandoff.value,true);
+ assert.equal(f.api.canHandoff.value,true);
  await f.api.handoff();
  assert.equal(f.receiverState.draft,'既存の下書き\n\n'+text);assert.equal(f.insertions.length,1);
  assert.equal(f.insertions[0].projectPath,'/fixture');assert.equal(f.insertions[0].text,text);
@@ -74,7 +74,7 @@ test('文字数上限による受信拒否は本文を切り詰めずエラー�
  await f.api.handoff();assert.equal(f.receiverState.draft,'x'.repeat(DRAFT_LIMITS.code));assert.ok(f.api.handoffError.value);assert.equal(f.api.handoffBusy.value,false);assert.equal(f.api.draftRequest.value,null);
 });
 for(const standalone of [true,false])test(`Code非表示は従来の共通ダイアログを使用する（standalone=${standalone}）`,async t=>{
- const f=await fixture(t,{standalone,native:standalone});assert.equal(f.api.handoffLabel.value,'CODE/LIVEへ');assert.equal(f.api.canHandoff.value,true);
+ const f=await fixture(t,{standalone,native:standalone});assert.equal(f.api.canHandoff.value,true);
  await f.api.handoff();assert.equal(f.api.draftRequest.value.text,text);assert.equal(f.api.draftRequest.value.projectPath,'/fixture');assert.equal(f.insertions.length,0);assert.equal(f.requests.length,0);
 });
 test('内蔵Code非表示の単独Webは従来どおり外部連携しない',async t=>{
@@ -94,9 +94,9 @@ test('提案のない全件完了時は下書きを作らない',async t=>{
  const f=await fixture(t);f.api.codeOpen.value=true;f.api.result.value={...saved(),items:[{id:'first',progress:100}],overall:{progress:100},nextItemId:null,nextPrompt:''};await nextTick();
  await f.api.handoff();assert.equal(f.insertions.length,0);assert.equal(f.api.draftRequest.value,null);
 });
-test('ボタンは動的ラベル・無効化・説明に接続し、失敗を通知する',()=>{
+test('ボタンは共通ラベル・無効化・説明に接続し、失敗を通知する',()=>{
  const button=full.match(/<button[^>]*class="navigation-handoff"[^>]*>[\s\S]*?<\/button>/)?.[0];assert.ok(button);
- assert.match(button,/:disabled="!canHandoff"/);assert.match(button,/:title="handoffTitle"/);assert.match(button,/\{\{handoffLabel\}\}/);
+ assert.match(button,/:disabled="!canHandoff"/);assert.match(button,/:title="handoffTitle"/);assert.match(button,/>Codeへ<\/button>/);
  assert.match(full,/v-if="handoffError"[^>]*role="alert"/);
 });
 

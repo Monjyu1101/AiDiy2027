@@ -19,7 +19,7 @@ const menuItems = computed(() => {
       !props.actions.canOpenFile ? 'デスクトップ版で利用できます。' : menu?.target.type !== 'file' ? 'ファイルを選択してください。' : 'OSに関連付けられた既定のアプリで開きます。'],
     ['open-folder','フォルダを開く','',props.actions.canOpenFolder,
       !props.actions.canOpenFolder ? 'デスクトップ版で利用できます。' : menu?.target.type === 'file' ? 'このファイルの保存フォルダをOSで開きます。' : 'このフォルダをOSで開きます。'],
-    ['handoff','Code / Liveへ','',(bulk('handoff')||item && menu.target.type === 'file') && props.actions.canOpenDraft(),
+    ['handoff','Codeへ','',(bulk('handoff')||item && menu.target.type === 'file') && props.actions.canOpenDraft(),
       menu?.target.type !== 'file' ? 'ファイルを選択してください。' : !props.actions.canOpenDraft() ? '下書き連携を利用できません。' : 'このファイルの参照をCode / Liveの下書きへ追加します。AIへの送信はしません。'],
     ['copy-path','パスのコピー','Ctrl+Shift+C',true],['copy-relative','相対パスのコピー','',true],
     ['copy','コピー（IDE内）','Ctrl+C',item||bulk('copy')],['paste','ペースト','Ctrl+V',paste],['duplicate','複製','',item||bulk('duplicate')],

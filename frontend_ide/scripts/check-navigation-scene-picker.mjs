@@ -78,13 +78,13 @@ try{
  }
  if(!scenesOnly){
  // 単独Webでは外部連携は従来どおり無効、内蔵Code表示中だけ直接転記を利用する。
- await reset();assert.equal(await evaluate(`document.querySelector('.navigation-handoff').textContent`),'CODE/LIVEへ');assert.equal(await evaluate(`document.querySelector('.navigation-handoff').disabled`),true);
- await click('.navigation-code-toggle');await until(()=>evaluate(`document.querySelector('.navigation-handoff')?.textContent==='CODEへ'&&!document.querySelector('.navigation-handoff').disabled`),'embedded draft ready');
+ await reset();assert.equal(await evaluate(`document.querySelector('.navigation-handoff').textContent`),'Codeへ');assert.equal(await evaluate(`document.querySelector('.navigation-handoff').disabled`),true);
+ await click('.navigation-code-toggle');await until(()=>evaluate(`document.querySelector('.navigation-handoff')?.textContent==='Codeへ'&&!document.querySelector('.navigation-handoff').disabled`),'embedded draft ready');
  const input='.navigation-code textarea[aria-label="Codeへの依頼"]';
  await evaluate(`(()=>{const el=document.querySelector(${JSON.stringify(input)});el.value='既存の下書き';el.dispatchEvent(new Event('input',{bubbles:true}));})()`);
  const count=codeMessages.length;await click('.navigation-handoff');await until(()=>evaluate(`document.querySelector(${JSON.stringify(input)}).value==='既存の下書き\\n\\n次の作業'`),'draft appended');
  assert.equal(await evaluate(`document.activeElement===document.querySelector(${JSON.stringify(input)})`),true);assert.equal(await evaluate(`!!document.querySelector('.draft-target-row')`),false);assert.equal(codeMessages.length,count,'転記はCodeへ送信しない');await capture('embedded-code-prompt-draft');
- await click('.navigation-code-toggle');await until(()=>evaluate(`document.querySelector('.navigation-handoff').textContent==='CODE/LIVEへ'`),'hidden label');assert.equal(await evaluate(`document.querySelector('.navigation-handoff').disabled`),true);
+ await click('.navigation-code-toggle');await until(()=>evaluate(`document.querySelector('.navigation-handoff').disabled===true`),'external draft disabled');assert.equal(await evaluate(`document.querySelector('.navigation-handoff').textContent`),'Codeへ');
  await click('.navigation-code-toggle');await until(()=>evaluate(`document.querySelector('.navigation-handoff').disabled===false`),'reshown draft ready');assert.equal(await evaluate(`document.querySelector(${JSON.stringify(input)}).value`),'既存の下書き\n\n次の作業');
  emitCode({...codeState,信頼済み:false});await until(()=>evaluate(`document.querySelector('.navigation-handoff').disabled===true`),'untrusted blocks draft');await evaluate(`document.querySelector('.navigation-handoff').click()`);assert.equal(codeMessages.length,count);
  emitCode(codeState);await until(()=>evaluate(`document.querySelector('.navigation-handoff').disabled===false`),'trusted draft restored');
