@@ -315,11 +315,14 @@ npm run check
 
 ## インストール確認の表示分類
 
-左の最上位は「状況確認」で、その下に次の 19 項目を表示します。
+左の最上位は「状況確認」で、その下に次の 22 項目を表示します。
 
 - ベース（6）: Python、uv、Node.js、npm、npx、Electron。
-- CLI群（7）: Claude Code、OpenAI Codex CLI、GitHub Copilot CLI、Antigravity CLI、Grok Build、OpenCode、Ollama。
-- その他拡張（6）: ffmpeg、ffprobe、ffplay、Chrome、OBS Studio、VS Code。
+- 開発環境等（4）: Chrome、VS Code、Rust、llvm-mingw。Chrome は VS Code のすぐ上に表示します。
+- CLI群（8）: Claude Code、OpenAI Codex CLI、GitHub Copilot CLI、Antigravity CLI、Grok Build、OpenCode、Ollama、AiDiy Codex。
+- その他拡張（4）: ffmpeg、ffprobe、ffplay、OBS Studio。
+
+この分類は導入状況と導入状況JSONの表示用です。アプリ起動ランチャーの並び順は変更しません。
 
 Python の検出では WindowsApps の Store エイリアスを除外します。実在する実行ファイル・仮想環境を優先し、必要に応じて `py.exe -3 --version` で確認します。エイリアスだけでは Python 導入済みとは判定しません。
 

@@ -83,9 +83,10 @@ test('menu classification keeps base minimal and all source evidence',async()=>{
  assert.equal(entries.find(e=>e.id==='ffmpeg').usageTier,'integration');
  assert.equal(entries.find(e=>e.id==='chrome').name,'Chrome');
  assert.equal(entries.find(e=>e.id==='code').name,'VS Code');
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='その他拡張').map(e=>e.id),['ffmpeg','ffprobe','ffplay','obs']);
  assert.equal(entries.find(e=>e.id==='codex').menuGroup,'CLI群');
  assert.deepEqual(entries.filter(e=>e.menuGroup==='CLI群').map(e=>e.id),['claude','codex','copilot','agy','grok','opencode','ollama','aidiy_codex']);
- assert.deepEqual(entries.filter(e=>e.menuGroup==='開発環境等').map(e=>e.id),['code','rust','llvm-mingw']);
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='開発環境等').map(e=>e.id),['chrome','code','rust','llvm-mingw']);
  // aidiy_codex は起動コマンドではなく、同梱ソースをコンパイルした実行ファイルの有無を診断する例外。
  assert.ok(entries.every(e=>(e.id==='aidiy_codex' || !e.id.startsWith('aidiy_')) && !['hermes','afplay','gst-launch','pwsh','edge','brave'].includes(e.id)));
  for(const entry of entries) assert.ok(entry.sources.every(s=>!s.startsWith('command_hermes/')) && entry.evidence.every(e=>!e.path.startsWith('command_hermes/')));
