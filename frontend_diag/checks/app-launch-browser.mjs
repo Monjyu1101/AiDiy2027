@@ -105,7 +105,7 @@ try{
    cliStartsAfterApps:cli.getBoundingClientRect().top>=group.getBoundingClientRect().bottom};
  })()`;
  await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
- assert.deepEqual(await evaluate(launcherGeometry),{columns:8,icon:80,horizontalOverflow:false,firstEightInOneRow:true,ninthWraps:true,cliStartsAfterApps:true});
+ assert.deepEqual(await evaluate(launcherGeometry),{columns:8,icon:72,horizontalOverflow:false,firstEightInOneRow:true,ninthWraps:true,cliStartsAfterApps:true});
  // CLI分類にも同じ8列制限を適用する。試験用複製は起動せず即座に除去する。
  assert.equal(await evaluate(`(()=>{
   const group=document.querySelector('[data-launch-row="cli"]');
@@ -123,6 +123,23 @@ try{
   assert.equal(layout.columns,columns);
   assert.equal(layout.horizontalOverflow,false);
  }
+ // 最大構成のアプリ13個・CLI/外部アプリ11個でも800×600で4行すべてが見える。
+ await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
+ assert.equal(await evaluate(`(()=>{
+  const rows=document.querySelector('.app-launch-rows'),copies=[];
+  try{
+   for(const [kind,count] of [['app',13],['cli',11]]){
+    const group=rows.querySelector('[data-launch-row="'+kind+'"]');
+    while(group.children.length<count){const copy=group.firstElementChild.cloneNode(true);group.append(copy);copies.push(copy);}
+   }
+   rows.scrollTop=0;
+   const rect=rows.getBoundingClientRect();
+   const last=rows.querySelector('[data-launch-row="cli"]').lastElementChild.getBoundingClientRect();
+   const fields=[...document.querySelector('.app-project-row').children].map(e=>e.getBoundingClientRect());
+   return rows.scrollHeight<=rows.clientHeight+1&&last.bottom<=rect.bottom+1&&last.top>=rect.top
+    &&rows.scrollWidth<=rows.clientWidth&&Math.max(...fields.map(r=>r.top))<Math.min(...fields.map(r=>r.bottom));
+  }finally{copies.forEach(copy=>copy.remove());}
+ })()`),true,'800×600でプロジェクト欄は1行、最大24アイコンの4行目までスクロールせず表示');
  // 高さ不足時は一覧自身がスクロールでき、最後のCLI/Chromeまで到達する。
  for(const [width,height] of [[800,600],[800,360],[390,360]]){
   await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});

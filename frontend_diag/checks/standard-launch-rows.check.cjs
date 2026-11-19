@@ -36,11 +36,11 @@ test('CLIがない場合は空段を表示せず、未接続・フォルダ未�
   assert.equal((cli.match(/<button[^>]* disabled/g)||[]).length,p.online?2:3);
  }
 });
-test('標準は8列・最大80pxのアイコンとし、狭い画面では列数を減らす',()=>{
+test('標準は8列・最大72pxのアイコンとし、狭い画面では列数を減らす',()=>{
  const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');
  assert.match(css,/#app>\.diag-panel\.app-launch-view>\.app-launch-panel>\.app-launch-rows\{display:flex;flex-direction:column/);
  assert.match(css,/grid-template-columns:repeat\(8,minmax\(0,1fr\)\);grid-auto-flow:row/);
- assert.match(css,/\.launch-frame-standard\{width:min\(80px,/);
+ assert.match(css,/\.launch-frame-standard\{width:min\(72px,/);
  assert.match(css,/@media\(max-width:410px\).*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:310px\).*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.doesNotMatch(css,/grid-auto-flow:column|overflow-x:auto/);
@@ -52,4 +52,23 @@ test('短い窓も一覧を縮めて縦スクロールし、共通flex:noneに�
  assert.ok(rows);
  for(const rule of ['min-height:0','min-width:0','flex:1 1 auto','overflow-y:auto','overflow-x:hidden'])assert.ok(rows.includes(rule),rule);
  assert.doesNotMatch(css,/@media\(max-height:[^}]+(?:overflow:visible|overflow-y:auto|flex:none)/);
+});
+
+test('標準のプロジェクト欄はラベル・読取専用入力・操作を同じ行に置く',async()=>{
+ const html=await render('components/アプリ起動/アプリ起動パネル.vue',props());
+ assert.match(html,/<div class="app-project-row"><label for="app-project-folder">プロジェクト:<\/label><input[^>]*readonly/);
+ assert.match(html,/class="app-launch-note" title="[^"]*Diag を閉じても/);
+});
+
+test('最大構成はアプリ13件とCLI・外部アプリ11件を別グループで維持する',async()=>{
+ const p=props();
+ p.state.項目.value=['ide','term','browser','navi','code','live','avatar','task','team','memo','cpu','discord','slack','chrome'].map(id=>({id,名前:id}));
+ p.cliState.全項目.value=['aidiy_hermes','aidiy_pi','aidiy_codex','claude','codex','copilot','agy','grok','opencode','vscode'].map(id=>({id,名前:id,利用可能:false}));
+ const html=await render('components/アプリ起動/アプリ起動パネル.vue',p);
+ const [app,cli]=html.split('data-launch-row="app"')[1].split('data-launch-row="cli"');
+ assert.equal((app.match(/data-app=/g)||[]).length,13);
+ assert.equal((cli.match(/data-(?:app|cli)=/g)||[]).length,11);
+ assert.equal((html.match(/未導入<\/span>/g)||[]).length,10);
+ const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');
+ assert.match(css,/min-height:92px;padding:3px 3px 14px/);
 });

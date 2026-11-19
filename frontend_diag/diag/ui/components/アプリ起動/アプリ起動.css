@@ -11,14 +11,14 @@
 @keyframes app-project-alert{0%,100%{box-shadow:0 0 0 1px rgba(255,77,109,.35),0 0 4px rgba(255,77,109,.25)}50%{box-shadow:0 0 0 1px rgba(255,77,109,.9),0 0 12px rgba(255,77,109,.55)}}
 
 /* アプリと全CLIを同じ小型タイルで並べ、アイコンを主役にする。 */
-.app-launch-panel .app-project{padding:10px 16px}.app-launch-panel .app-project p{margin:6px 0 0;font-size:11px}
-.app-launch-panel .app-launch-list{gap:8px;padding:6px 14px}
+.app-launch-panel .app-project{padding:5px 14px}.app-launch-panel .app-project p{margin:6px 0 0;font-size:11px}
+.app-launch-panel .app-launch-list{gap:6px;padding:4px 14px}
 .app-launch-panel .app-launch-card{padding:0;border:0;border-radius:5px;background:transparent}
-.app-launch-panel .app-launch-button{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;min-height:104px;padding:3px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
+.app-launch-panel .app-launch-button{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;min-height:92px;padding:3px 3px 14px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
 .app-launch-panel .app-launch-button:hover:not(:disabled){border-color:#35e0d2;background:#173b46}
 .app-launch-panel .app-launch-button:disabled{opacity:.65;cursor:not-allowed}
 /* 光る枠の余白を確保し、画像の外周に沿って回す。 */
-.app-launch-panel .launch-frame-standard{width:min(80px,calc(100% - 12px));height:auto;aspect-ratio:1}
+.app-launch-panel .launch-frame-standard{width:min(72px,calc(100% - 12px));height:auto;aspect-ratio:1}
 .app-launch-panel .launch-frame-standard>.launch-trace{inset:-6px}
 .app-launch-panel .launch-frame-standard>.launch-trace::before{padding:3px;border-radius:8px}
 .app-launch-panel .app-launch-icon{width:100%;height:100%;object-fit:contain}
@@ -35,16 +35,27 @@
 .app-launch-view>*{flex:none}
 .app-launch-view>.app-launch-panel{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden}
 .app-launch-view>.app-launch-panel>*{flex:none}
-.app-launch-panel .panel-heading{padding:8px 14px}
+.app-launch-panel .panel-heading{padding:4px 14px}
 .app-launch-panel .panel-heading h2{margin:0}
 .app-launch-view>footer{padding:5px 14px;max-height:20vh;overflow:auto;line-height:1.3}
 .app-launch-view>footer p{margin:4px 0}
 
 /* 標準800pxでは1行8項目。分類を保ち、狭幅時は列数を減らす。 */
 /* 共通の #app>.diag-panel>.panel>* の flex:none より強く指定し、高さ不足時も一覧だけを縮める。 */
-#app>.diag-panel.app-launch-view>.app-launch-panel>.app-launch-rows{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:6px 0}
+#app>.diag-panel.app-launch-view>.app-launch-panel>.app-launch-rows{display:flex;flex-direction:column;gap:6px;min-height:0;min-width:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:4px 0}
 .app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-flow:row;flex:none!important;overflow:visible;align-items:start}
 @media(max-width:760px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(6,minmax(0,1fr))}}
 @media(max-width:600px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:410px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:310px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* 標準800×600でアプリ2行・CLI2行を表示。ミニ表示には適用しない。 */
+.app-launch-panel .app-project-row{align-items:center;gap:6px}
+.app-launch-panel .app-project-row label{flex:none;margin:0;white-space:nowrap;font-size:12px}
+.app-launch-panel .app-project-row input,.app-launch-panel .app-project-row button{padding:4px 8px;font-size:12px}
+.app-launch-panel .app-project-row button{flex:none;white-space:nowrap}
+.app-launch-panel .app-launch-note{padding:4px 14px;font-size:11px;line-height:1.4}
+#app>.diag-panel.app-launch-view>.tabs{padding-top:4px;padding-bottom:4px;gap:4px}
+#app>.diag-panel.app-launch-view>footer{padding:3px 14px;font-size:10px;line-height:1.2}
+#app>.diag-panel.app-launch-view>footer p{margin:2px 0}
+@media(max-width:480px){.app-launch-panel .app-project-row label{width:100%}.app-launch-panel .app-project-row input{flex-basis:0}.app-launch-panel .app-project{padding:5px 8px}}

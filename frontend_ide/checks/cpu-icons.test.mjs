@@ -9,6 +9,7 @@ import {readFileSync} from 'node:fs';
 test('CPU uses a generic line/area chart, silver title and matching local PNG',()=>{
  const svg=readFileSync(new URL('../aidiy_cpu/AiDiy_cpu.svg',import.meta.url),'utf8');
  assert.match(svg,/<path fill="#CBD5E1" d="M0 384h512v128H0z"/);
+ assert.match(svg,/<linearGradient id="area" x1="0%" y1="0%" x2="0%" y2="100%"><stop stop-color="#fff7ba"\/><stop offset="1" stop-color="#ffe28c"\/><\/linearGradient>/, 'mountain uses the MEMO paper yellow palette from top to bottom');
  assert.match(svg,/<svg[^>]*width="512" height="512" viewBox="0 0 512 512"/);
  assert.match(svg,/<path fill="url\(#area\)" d="M88 275l59-47 52 25 60-76 56 41 62-76 59 60v111H88z"/);
  assert.match(svg,/<path d="M88 231l59-58 52 33 60-89 56 45 62-76 59 59" fill="none" stroke="#edfbff" stroke-width="18"/);

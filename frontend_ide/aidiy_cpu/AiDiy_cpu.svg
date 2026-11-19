@@ -2,7 +2,7 @@
 <title>AiDiy CPU</title>
 <defs>
   <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop stop-color="#163552"/><stop offset="1" stop-color="#316877"/></linearGradient>
-  <linearGradient id="area" x1="0%" y1="0%" x2="0%" y2="100%"><stop stop-color="#7ce8e1"/><stop offset="1" stop-color="#247e93"/></linearGradient>
+  <linearGradient id="area" x1="0%" y1="0%" x2="0%" y2="100%"><stop stop-color="#fff7ba"/><stop offset="1" stop-color="#ffe28c"/></linearGradient>
 </defs>
 <path fill="url(#bg)" d="M0 0h512v384H0z"/>
 <path d="M88 109h348M88 178h348M88 247h348" stroke="#a8d1dd" stroke-opacity=".21" stroke-width="4"/>
