@@ -186,6 +186,8 @@ Piの更新で固定revisionやprovider構造が変わった場合は、公式re
 
 通常画面の `packages/tui/src/tui-main-screen.ts` は、全描画・差分描画・末尾行削除のいずれも、入力欄の `CURSOR_MARKER` へ実端末カーソルを戻して可視性を適用した後に同期描画（DEC 2026）を終了する。描画の右端で同期を終了してからカーソルを移すと、同期確定時の端末状態と入力位置が別になる。fullscreen側も同じ順序を維持する。
 
+メイン画面は描画末尾・入力カーソル移動・可視性・同期終了を同じ `BoundedTerminalWriter` に積み、最後にまとめてflushする。xtermは同期描画中でもparseされた出力ごとにIME用textareaの位置を更新するため、描画とカーソル復帰を別々のstdout.writeにしない。カーソル復帰・可視性・同期終了の短い制御列は1 MiB境界でもまとめて送る。巨大描画の1 MiB分割とPTY側の分割自体は残るため、単一writeがOS全体での原子性を保証するわけではない。
+
 `showHardwareCursor` の明示設定・環境変数の挙動は変えず、入力フォーカスがなくmarkerがない場面では端末カーソルを隠す。IME対策として常時表示や強制focusを追加しない。
 
-回帰確認は `command_pi` 内で `node --test scripts/aidiy-ime-cursor.test.mjs`。実Pi renderer・Editorとheadless端末に、日本語入力→送信→模擬応答→1往復完了、行削除、focus復帰を流し、同期終了時のカーソル位置と可視/非表示を確認する。実AIを呼ばない。この試験はWindows IMEの変換中表示や候補窓自体の再現確認ではないため、aidiy_term／Windows Terminalなど利用端末での確認は別途必要。
+回帰確認は `command_pi` 内で `node --test scripts/aidiy-ime-cursor.test.mjs`。実Pi renderer・CustomEditorとheadless端末に、handleInputによる日本語入力→Enter送信→模擬応答→1往復完了、working表示解除、入力/非入力overlayのfocus移行と終了、行削除、focus復帰を流す。小さいframeの描画とカーソル復帰が同一writeであること、同期終了時のカーソル位置と可視/非表示を確認する。InteractiveModeの全セッションや本物のAI応答を起動する試験ではない。実AIを呼ばない。この試験はWindows IMEの変換中表示や候補窓自体の再現確認ではないため、aidiy_term／Windows Terminalなど利用端末での確認は別途必要。

@@ -63,6 +63,13 @@ class BoundedTerminalWriter {
 		}
 	}
 
+	/** 最後の短い制御列は1 MiB境界でも分割せず、カーソル復帰まで同じwriteで送る。 */
+	finish(tail: string): void {
+		if (this.buffer.length + tail.length > MAX_RENDER_WRITE_CHARS) this.flush();
+		this.append(tail);
+		this.flush();
+	}
+
 	/** Write the current chunk, if any, and retain only its character count for debug output. */
 	flush(): void {
 		if (!this.buffer) return;
@@ -304,7 +311,6 @@ export class TuiMainScreen extends TuiBase implements TUI {
 				}
 				output.append(line);
 			}
-			output.flush();
 			this.cursorRow = Math.max(0, newLines.length - 1);
 			this.hardwareCursorRow = this.cursorRow;
 			// Reset max lines when clearing, otherwise track growth
@@ -315,8 +321,7 @@ export class TuiMainScreen extends TuiBase implements TUI {
 			}
 			const bufferLength = Math.max(height, newLines.length);
 			this.previousViewportTop = Math.max(0, bufferLength - height);
-			this.positionHardwareCursor(cursorPos, newLines.length);
-			this.terminal.write("\x1b[?2026l"); // AiDiy: IME用カーソル位置・可視性まで含めて同期描画を確定する。
+			this.finishRender(output, cursorPos, newLines.length);
 			this.previousLines = newLines;
 			this.previousKittyImageIds = this.collectKittyImageIds(newLines);
 			this.previousWidth = width;
@@ -403,8 +408,8 @@ export class TuiMainScreen extends TuiBase implements TUI {
 
 		// All changes are in deleted lines (nothing to render, just clear)
 		if (firstChanged >= newLines.length) {
+			const output = new BoundedTerminalWriter((data) => this.terminal.write(data));
 			if (this.previousLines.length > newLines.length) {
-				const output = new BoundedTerminalWriter((data) => this.terminal.write(data));
 				output.append("\x1b[?2026h");
 				output.append(this.deleteChangedKittyImages(firstChanged, lastChanged));
 				// Move to end of new content (clamp to 0 for empty content)
@@ -437,12 +442,10 @@ export class TuiMainScreen extends TuiBase implements TUI {
 				if (moveBack > 0) {
 					output.append(`\x1b[${moveBack}A`);
 				}
-				output.flush();
 				this.cursorRow = targetRow;
 				this.hardwareCursorRow = targetRow;
 			}
-			this.positionHardwareCursor(cursorPos, newLines.length);
-			if (this.previousLines.length > newLines.length) this.terminal.write("\x1b[?2026l");
+			this.finishRender(output, cursorPos, newLines.length, this.previousLines.length > newLines.length);
 			this.previousLines = newLines;
 			this.previousKittyImageIds = this.collectKittyImageIds(newLines);
 			this.previousWidth = width;
@@ -598,8 +601,6 @@ export class TuiMainScreen extends TuiBase implements TUI {
 			fs.writeFileSync(debugPath, debugData);
 		}
 
-		output.flush();
-
 		// Track cursor position for next render
 		// cursorRow tracks end of content (for viewport calculation)
 		// hardwareCursorRow tracks actual terminal cursor position (for movement)
@@ -610,9 +611,7 @@ export class TuiMainScreen extends TuiBase implements TUI {
 		this.previousViewportTop = Math.max(prevViewportTop, finalCursorRow - height + 1);
 
 		// Position hardware cursor for IME
-		this.positionHardwareCursor(cursorPos, newLines.length);
-		// AiDiy: 差分描画でも末尾列ではなく入力位置を同期描画の最終状態にする。
-		this.terminal.write("\x1b[?2026l");
+		this.finishRender(output, cursorPos, newLines.length);
 
 		this.previousLines = newLines;
 		this.previousKittyImageIds = this.collectKittyImageIds(newLines);
@@ -620,14 +619,32 @@ export class TuiMainScreen extends TuiBase implements TUI {
 		this.previousHeight = height;
 	}
 
+	private finishRender(
+		output: BoundedTerminalWriter,
+		cursorPos: { row: number; col: number } | null,
+		totalLines: number,
+		endSynchronizedOutput = true,
+	): void {
+		let tail = "";
+		this.positionHardwareCursor(cursorPos, totalLines, (data) => {
+			tail += data;
+		});
+		if (endSynchronizedOutput) tail += "\x1b[?2026l";
+		output.finish(tail);
+	}
+
 	/**
 	 * Position the hardware cursor for IME candidate window.
 	 * @param cursorPos The cursor position extracted from rendered output, or null
 	 * @param totalLines Total number of rendered lines
 	 */
-	private positionHardwareCursor(cursorPos: { row: number; col: number } | null, totalLines: number): void {
+	private positionHardwareCursor(
+		cursorPos: { row: number; col: number } | null,
+		totalLines: number,
+		write: (data: string) => void = (data) => this.terminal.write(data),
+	): void {
 		if (!cursorPos || totalLines <= 0) {
-			this.terminal.hideCursor();
+			write("\x1b[?25l");
 			return;
 		}
 
@@ -647,14 +664,14 @@ export class TuiMainScreen extends TuiBase implements TUI {
 		buffer += `\x1b[${targetCol + 1}G`;
 
 		if (buffer) {
-			this.terminal.write(buffer);
+			write(buffer);
 		}
 
 		this.hardwareCursorRow = targetRow;
 		if (this.getShowHardwareCursor()) {
-			this.terminal.showCursor();
+			write("\x1b[?25h");
 		} else {
-			this.terminal.hideCursor();
+			write("\x1b[?25l");
 		}
 	}
 }
