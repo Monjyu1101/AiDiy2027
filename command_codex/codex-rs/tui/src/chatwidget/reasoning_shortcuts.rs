@@ -87,6 +87,17 @@ impl ChatWidget {
         }
 
         let current_model = self.current_model().to_string();
+        // AiDiy: popup と同じ区分制約。保存済み effort は書き換えない。
+        if !crate::model_catalog::aidiy_effort_selection_allowed(
+            &current_model,
+            &self.config.model_provider_id,
+        ) {
+            self.add_info_message(
+                "Reasoning selection is available only for OpenAI routes.".into(),
+                None,
+            );
+            return true;
+        }
         let Some(preset) = self.current_model_preset() else {
             self.add_info_message(
                 format!("Reasoning shortcuts are unavailable for {current_model}."),

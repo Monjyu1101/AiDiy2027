@@ -83,8 +83,25 @@ impl ModelCatalog {
 // AiDiy: CLI で開始した session にサーバー既定の裸 GPT 候補を出さない。
 // 裸 ID は開始時 provider に属するため、CLI のダミー接続先では実行できない。
 pub(crate) fn routable_picker_models(models: Vec<ModelPreset>, provider: &str) -> Vec<ModelPreset> {
+    // AiDiy: 表示だけを整理する。保存済み裸 ID と custom provider の候補は保持する。
+    let oauth_models: std::collections::HashSet<String> = models
+        .iter()
+        .filter(|preset| preset.show_in_picker)
+        .filter_map(|preset| {
+            preset
+                .model
+                .strip_prefix("openai_oauth/")
+                .map(str::to_owned)
+        })
+        .collect();
     if provider != codex_model_provider_info::AIDIY_CLI_PROVIDER {
-        return models;
+        return models
+            .into_iter()
+            .filter(|preset| {
+                !matches!(provider, "openai" | "openai_chat")
+                    || !oauth_models.contains(&preset.model)
+            })
+            .collect();
     }
     models
         .into_iter()
@@ -95,11 +112,68 @@ pub(crate) fn routable_picker_models(models: Vec<ModelPreset>, provider: &str) -
         .collect()
 }
 
+// AiDiy: effort 選択は明示 OpenAI 区分に限定。裸 ID の実行互換性は変えない。
+pub(crate) fn aidiy_effort_selection_allowed(model: &str, provider: &str) -> bool {
+    matches!(model.split_once('/'), Some(("openai_oauth" | "openai_chat", name)) if !name.is_empty())
+        || (!model.contains('/') && matches!(provider, "openai" | "openai_chat"))
+}
+
 // AiDiy: API 由来の能力メタデータは保持し、区分付き ID でのみ重複を除く。
 fn merge_aidiy_models(mut models: Vec<ModelPreset>, aidiy: Vec<ModelPreset>) -> Vec<ModelPreset> {
     for preset in aidiy {
         if !models.iter().any(|existing| existing.model == preset.model) {
             models.push(preset);
+        }
+    }
+    // 合成候補は能力情報を持たない。既知の同一 OpenAI モデルだけから effort を補完する。
+    let capabilities = models
+        .iter()
+        .filter(|preset| !preset.model.contains('/'))
+        .map(|preset| {
+            (
+                preset.model.clone(),
+                (
+                    preset.default_reasoning_effort.clone(),
+                    preset.supported_reasoning_efforts.clone(),
+                ),
+            )
+        })
+        .collect::<HashMap<_, _>>();
+    for preset in &mut models {
+        if aidiy_effort_selection_allowed(&preset.model, "")
+            && preset.supported_reasoning_efforts.is_empty()
+        {
+            if let Some((_, name)) = preset.model.split_once('/') {
+                if let Some((default, supported)) = capabilities.get(name) {
+                    if !supported.is_empty() {
+                        preset.default_reasoning_effort = default.clone();
+                        preset.supported_reasoning_efforts = supported.clone();
+                    }
+                }
+                // AiDiy: 公式モデル一覧 (2026-11-19) の明示値だけを UI の不足時に補完。
+                // https://developers.openai.com/api/docs/models
+                // API-key 接続は catalog discovery 非対応の場合がある。未知モデルへは広げない。
+                if preset.supported_reasoning_efforts.is_empty()
+                    && matches!(name, "gpt-6.2-sol" | "gpt-6.2-astra")
+                {
+                    use codex_protocol::openai_models::ReasoningEffort;
+                    use codex_protocol::openai_models::ReasoningEffortPreset;
+                    preset.default_reasoning_effort = ReasoningEffort::Medium;
+                    preset.supported_reasoning_efforts = [
+                        ReasoningEffort::Low,
+                        ReasoningEffort::Medium,
+                        ReasoningEffort::High,
+                        ReasoningEffort::XHigh,
+                        ReasoningEffort::Max,
+                    ]
+                    .into_iter()
+                    .map(|effort| ReasoningEffortPreset {
+                        description: effort.to_string(),
+                        effort,
+                    })
+                    .collect();
+                }
+            }
         }
     }
     models
@@ -145,6 +219,115 @@ mod aidiy_tests {
             ]
         );
         assert_eq!(routable_picker_models(models.clone(), "openai"), models);
+    }
+
+    #[test]
+    fn openai_picker_deduplicates_only_usable_oauth_equivalents() {
+        let mut hidden = preset("openai_oauth/hidden");
+        hidden.show_in_picker = false;
+        let models = vec![
+            preset("gpt-6.2-sol"),
+            preset("openai_oauth/gpt-6.2-sol"),
+            preset("openai_chat/gpt-6.2-sol"),
+            preset("other"),
+            preset("hidden"),
+            hidden,
+        ];
+        let filtered = routable_picker_models(models.clone(), "openai");
+        assert!(!filtered.iter().any(|p| p.model == "gpt-6.2-sol"));
+        assert!(filtered.iter().any(|p| p.model == "hidden"));
+        assert!(filtered.iter().any(|p| p.model == "other"));
+        assert_eq!(routable_picker_models(models.clone(), "custom"), models);
+        // 元の catalog は残り、保存済み bare ID の解決には影響しない。
+        assert!(models.iter().any(|p| p.model == "gpt-6.2-sol"));
+    }
+
+    #[test]
+    fn only_openai_routes_borrow_exact_known_effort_metadata() {
+        let mut native = preset("gpt-6.2-sol");
+        native.supported_reasoning_efforts = serde_json::from_value(serde_json::json!([
+            {"effort": "low", "description": "Low"},
+            {"effort": "high", "description": "High"}
+        ]))
+        .unwrap();
+        let models = merge_aidiy_models(
+            vec![native.clone()],
+            vec![
+                preset("openai_oauth/gpt-6.2-sol"),
+                preset("openai_chat/gpt-6.2-sol"),
+                preset("openai_chat/unknown"),
+                preset("claude_chat/gpt-6.2-sol"),
+                preset("copilot_cli/gpt-6.2-sol"),
+            ],
+        );
+        for model in &models[1..3] {
+            assert_eq!(
+                model.supported_reasoning_efforts,
+                native.supported_reasoning_efforts
+            );
+            assert_eq!(
+                model.default_reasoning_effort,
+                native.default_reasoning_effort
+            );
+        }
+        for model in &models[3..] {
+            assert!(model.supported_reasoning_efforts.is_empty());
+        }
+        assert_eq!(models[0], native);
+        assert_eq!(merge_aidiy_models(models.clone(), Vec::new()), models);
+    }
+
+    #[test]
+    fn documented_62_fallback_is_exact_and_does_not_infer_other_models() {
+        for section in ["openai_oauth", "openai_chat"] {
+            for slug in ["gpt-6.2-sol", "gpt-6.2-astra"] {
+                let models =
+                    merge_aidiy_models(Vec::new(), vec![preset(&format!("{section}/{slug}"))]);
+                assert_eq!(models[0].default_reasoning_effort.to_string(), "medium");
+                assert_eq!(
+                    models[0]
+                        .supported_reasoning_efforts
+                        .iter()
+                        .map(|option| option.effort.to_string())
+                        .collect::<Vec<_>>(),
+                    vec!["low", "medium", "high", "xhigh", "max"]
+                );
+            }
+        }
+        for id in [
+            "gpt-6.2-sol",
+            "claude_chat/gpt-6.2-sol",
+            "openai_chat/gpt-6.2-sol-preview",
+            "openai_chat/unknown",
+            "openrt_chat/gpt-6.2-astra",
+        ] {
+            assert!(
+                merge_aidiy_models(Vec::new(), vec![preset(id)])[0]
+                    .supported_reasoning_efforts
+                    .is_empty()
+            );
+        }
+    }
+
+    #[test]
+    fn effort_ui_is_limited_to_openai_routes_and_legacy_openai_sessions() {
+        assert!(aidiy_effort_selection_allowed("gpt-6.2-sol", "openai"));
+        assert!(aidiy_effort_selection_allowed("gpt-6.2-sol", "openai_chat"));
+        for id in ["openai_oauth/gpt-6.2-sol", "openai_chat/gpt-6.2-sol"] {
+            assert!(aidiy_effort_selection_allowed(id, "custom"));
+        }
+        for id in [
+            "gpt-6.2-sol",
+            "openai_chat/",
+            "claude_chat/model",
+            "copilot_cli/model",
+            "openrt_chat/openai/model",
+            "ollama_chat/model",
+            "local_chat/model",
+            "xai_oauth/model",
+        ] {
+            assert!(!aidiy_effort_selection_allowed(id, "custom"));
+        }
     }
 
     #[test]

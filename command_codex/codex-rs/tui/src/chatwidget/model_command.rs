@@ -49,6 +49,13 @@ fn resolve_reasoning_effort(
             model.default_reasoning_effort.clone()
         });
     };
+    // AiDiy: 明示 /model --reasoning も UI と同じ制限。設定/API の互換性は変更しない。
+    if !crate::model_catalog::aidiy_effort_selection_allowed(
+        &model.model,
+        &chat.config.model_provider_id,
+    ) {
+        return Err("Reasoning selection is available only for OpenAI routes.".into());
+    }
     let supported = if model.supported_reasoning_efforts.is_empty() {
         (model.default_reasoning_effort.as_str() == effort)
             .then_some(&model.default_reasoning_effort)
@@ -133,10 +140,10 @@ fn resolve_model_command(chat: &ChatWidget, args: &str) -> Result<ModelCommand, 
         .model
         .clone()
         .unwrap_or_else(|| chat.selected_model().to_owned());
-    let Some(model) =
-        chat.model_catalog.models.iter().find(|model| {
-            model.model == model_name && (args.model.is_none() || model.show_in_picker)
-        })
+    let models = chat.model_catalog.try_list_models().unwrap_or_default();
+    let Some(model) = models
+        .iter()
+        .find(|model| model.model == model_name && (args.model.is_none() || model.show_in_picker))
     else {
         return Err(format!(
             "Model '{model_name}' is unavailable. Use /model to see available models."

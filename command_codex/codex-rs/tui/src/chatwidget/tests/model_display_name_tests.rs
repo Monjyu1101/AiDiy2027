@@ -7,6 +7,7 @@ use pretty_assertions::assert_eq;
 async fn custom_model_display_name_in_pickers_preserves_selection_slug() {
     let slug = "us.openai.gpt-5.6-luna";
     let (mut chat, mut events, _ops) = make_chatwidget_manual(Some(slug)).await;
+    chat.config.model_provider_id = "custom".into();
     let mut preset = get_available_model(&chat, "gpt-5.5");
     preset.id = slug.to_string();
     preset.model = slug.to_string();
@@ -46,11 +47,8 @@ async fn custom_model_display_name_in_pickers_preserves_selection_slug() {
         assert_matches!(events.try_recv(), Ok(AppEvent::OpenReasoningPopup { model }) => model);
     assert_eq!(selected, preset);
     chat.open_reasoning_popup(selected);
-    assert_chatwidget_snapshot!(
-        "custom_model_display_name_reasoning",
-        render_bottom_popup(&chat, /*width*/ 80)
-    );
-    chat.handle_key_event(KeyCode::Enter.into());
+    // AiDiy: custom provider は追加の effort 選択なしで既定値を適用する。
+    assert!(chat.bottom_pane.no_modal_or_popup_active());
     let persisted = assert_matches!(events.try_recv(), Ok(AppEvent::ApplyModelSelection { model, effort }) => (model, effort));
     assert_eq!(
         persisted,
@@ -94,4 +92,16 @@ async fn custom_model_display_name_in_status_line_and_fallback() {
     assert_eq!(chat.model_display_name(), "Luna Reserve");
     chat.set_model("");
     assert_eq!(chat.model_display_name(), DEFAULT_MODEL_DISPLAY_NAME);
+}
+
+#[tokio::test]
+async fn aidiy_non_openai_advanced_picker_does_not_change_effort() {
+    let (mut chat, mut events, _ops) = make_chatwidget_manual(Some("claude_chat/model")).await;
+    let mut preset = get_available_model(&chat, "gpt-5.5");
+    preset.model = "claude_chat/model".into();
+    preset.default_reasoning_effort = ReasoningEffortConfig::Ultra;
+    while events.try_recv().is_ok() {}
+    chat.open_advanced_reasoning_popup(preset);
+    assert!(chat.bottom_pane.no_modal_or_popup_active());
+    assert!(events.try_recv().is_err());
 }

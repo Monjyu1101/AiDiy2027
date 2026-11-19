@@ -107,9 +107,8 @@ impl ChatWidget {
     }
 
     pub(super) fn current_model_quick_dial(&self) -> Result<QuickDial, &'static str> {
-        let Some(model) = self
-            .model_catalog
-            .models
+        let models = self.model_catalog.try_list_models().unwrap_or_default();
+        let Some(model) = models
             .iter()
             .find(|model| model.model == self.current_model() && model.show_in_picker)
             .filter(|_| !self.restrict_model_picker_to_luna_reserve())
@@ -117,7 +116,13 @@ impl ChatWidget {
             return Err("The current model cannot be recalled with /model.");
         };
         let mut input = format!("/model {}", self.current_model());
-        if let Some(effort) = self.current_reasoning_effort() {
+        // AiDiy: recall コマンドにも他社向け --reasoning を新規生成しない。
+        if let Some(effort) = self.current_reasoning_effort().filter(|_| {
+            crate::model_catalog::aidiy_effort_selection_allowed(
+                &model.model,
+                &self.config.model_provider_id,
+            )
+        }) {
             let supported = if model.supported_reasoning_efforts.is_empty() {
                 effort == model.default_reasoning_effort
             } else {

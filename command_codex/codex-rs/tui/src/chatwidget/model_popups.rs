@@ -106,9 +106,8 @@ impl ChatWidget {
     }
 
     pub(crate) fn open_model_popup_with_presets(&mut self, presets: Vec<ModelPreset>) {
-        let presets = crate::model_catalog::routable_picker_models(
-            presets, &self.config.model_provider_id,
-        );
+        let presets =
+            crate::model_catalog::routable_picker_models(presets, &self.config.model_provider_id);
         if self.restrict_model_picker_to_luna_reserve() {
             self.open_luna_reserve_model_popup(presets, MODEL_SELECTION_VIEW_ID);
             return;
@@ -146,11 +145,14 @@ impl ChatWidget {
                     (!preset.description.is_empty()).then_some(preset.description.clone());
                 let model = preset.model.clone();
                 let requires_advanced_selection =
-                    Self::is_advanced_reasoning_effort(&preset.default_reasoning_effort)
+                    crate::model_catalog::aidiy_effort_selection_allowed(
+                        &preset.model,
+                        &self.config.model_provider_id,
+                    ) && (Self::is_advanced_reasoning_effort(&preset.default_reasoning_effort)
                         || preset
                             .supported_reasoning_efforts
                             .iter()
-                            .any(|option| Self::is_advanced_reasoning_effort(&option.effort));
+                            .any(|option| Self::is_advanced_reasoning_effort(&option.effort)));
                 let actions: Vec<SelectionAction> = if requires_advanced_selection {
                     let preset_for_action = preset.clone();
                     let scoped = self.scope_model_picker_event();
@@ -264,9 +266,8 @@ impl ChatWidget {
         presets: Vec<ModelPreset>,
         view_id: &'static str,
     ) {
-        let presets = crate::model_catalog::routable_picker_models(
-            presets, &self.config.model_provider_id,
-        );
+        let presets =
+            crate::model_catalog::routable_picker_models(presets, &self.config.model_provider_id);
         if presets.is_empty() {
             self.bottom_pane.dismiss_view_by_id(view_id);
             self.add_info_message(
@@ -282,12 +283,19 @@ impl ChatWidget {
             let description =
                 (!preset.description.is_empty()).then_some(preset.description.to_string());
             let is_current = preset.model.as_str() == self.current_model();
-            let direct_effort = match preset.supported_reasoning_efforts.as_slice() {
-                [] => Some(preset.default_reasoning_effort.clone()),
-                [option] => Some(option.effort.clone()),
-                _ => None,
-            }
-            .filter(|effort| !Self::is_advanced_reasoning_effort(effort));
+            let direct_effort = if !crate::model_catalog::aidiy_effort_selection_allowed(
+                &preset.model,
+                &self.config.model_provider_id,
+            ) {
+                Some(preset.default_reasoning_effort.clone())
+            } else {
+                match preset.supported_reasoning_efforts.as_slice() {
+                    [] => Some(preset.default_reasoning_effort.clone()),
+                    [option] => Some(option.effort.clone()),
+                    _ => None,
+                }
+                .filter(|effort| !Self::is_advanced_reasoning_effort(effort))
+            };
             let single_supported_effort = direct_effort.is_some();
             let preset_for_action = preset.clone();
             let scoped = self.scope_model_picker_event();
@@ -520,6 +528,14 @@ impl ChatWidget {
     /// Max and Ultra require an explicit second step so expensive efforts cannot
     /// be selected accidentally while moving through the normal effort scale.
     pub(crate) fn open_reasoning_popup(&mut self, preset: ModelPreset) {
+        // AiDiy: 他社/CLI の既定値は変えず、effort 選択画面だけを省略する。
+        if !crate::model_catalog::aidiy_effort_selection_allowed(
+            &preset.model,
+            &self.config.model_provider_id,
+        ) {
+            self.apply_model_and_effort(preset.model, Some(preset.default_reasoning_effort));
+            return;
+        }
         let default_effort = preset.default_reasoning_effort.clone();
         let supported = &preset.supported_reasoning_efforts;
         let in_plan_mode =
@@ -695,6 +711,12 @@ impl ChatWidget {
 
     /// Open the explicit Max/Ultra effort picker for the given model.
     pub(crate) fn open_advanced_reasoning_popup(&mut self, preset: ModelPreset) {
+        if !crate::model_catalog::aidiy_effort_selection_allowed(
+            &preset.model,
+            &self.config.model_provider_id,
+        ) {
+            return;
+        }
         let mut choices = preset
             .supported_reasoning_efforts
             .iter()
