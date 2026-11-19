@@ -12,13 +12,13 @@
 
 /* アプリと全CLIを同じ小型タイルで並べ、アイコンを主役にする。 */
 .app-launch-panel .app-project{padding:10px 16px}.app-launch-panel .app-project p{margin:6px 0 0;font-size:11px}
-.app-launch-panel .app-launch-list{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px;padding:6px 14px}
+.app-launch-panel .app-launch-list{gap:8px;padding:6px 14px}
 .app-launch-panel .app-launch-card{padding:0;border:0;border-radius:5px;background:transparent}
-.app-launch-panel .app-launch-button{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;min-height:80px;padding:3px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
+.app-launch-panel .app-launch-button{position:relative;display:grid;grid-template-columns:minmax(0,1fr);place-items:center;min-width:0;min-height:104px;padding:3px;border:1px solid #2f4a5b;border-radius:5px;background:#000;color:#e7f6fa}
 .app-launch-panel .app-launch-button:hover:not(:disabled){border-color:#35e0d2;background:#173b46}
 .app-launch-panel .app-launch-button:disabled{opacity:.65;cursor:not-allowed}
 /* 光る枠の余白を確保し、画像の外周に沿って回す。 */
-.app-launch-panel .launch-frame-standard{width:min(60px,calc(100% - 12px));height:auto;aspect-ratio:1}
+.app-launch-panel .launch-frame-standard{width:min(80px,calc(100% - 12px));height:auto;aspect-ratio:1}
 .app-launch-panel .launch-frame-standard>.launch-trace{inset:-6px}
 .app-launch-panel .launch-frame-standard>.launch-trace::before{padding:3px;border-radius:8px}
 .app-launch-panel .app-launch-icon{width:100%;height:100%;object-fit:contain}
@@ -41,7 +41,9 @@
 .app-launch-view>footer p{margin:4px 0}
 @media(max-height:480px){.app-launch-view>.app-launch-panel{overflow-y:auto}.app-launch-panel .app-launch-list{flex:none!important;overflow:visible}}
 
-/* 標準表示は分類を分離し、各グループ内で幅に応じて折り返す。 */
+/* 標準は4列（8項目で2段）。分類を保ち、狭幅時は列数を減らす。 */
 .app-launch-panel .app-launch-rows{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 auto;overflow-y:auto;padding:6px 0}
-.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(auto-fill,minmax(min(76px,100%),1fr));grid-auto-flow:row;flex:none!important;overflow:visible;min-height:100px;align-items:start}
+.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row;flex:none!important;overflow:visible;align-items:start}
+@media(max-width:410px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:310px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-height:480px){.app-launch-panel .app-launch-rows{flex:none;overflow:visible}.app-launch-panel .app-launch-rows>.app-launch-list{overflow:visible}}

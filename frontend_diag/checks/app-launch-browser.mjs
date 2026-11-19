@@ -92,6 +92,27 @@ try{
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  }
  await until(`document.querySelectorAll('.app-launch-card[data-app]').length===12`);
+ const launcherGeometry=`(()=>{
+  const group=document.querySelector('[data-launch-row="app"]');
+  const cli=document.querySelector('[data-launch-row="cli"]');
+  const outer=document.querySelector('.app-launch-rows');
+  const cards=[...group.querySelectorAll('.app-launch-card')].map(card=>card.getBoundingClientRect());
+  const columns=cards.filter(card=>card.top===cards[0].top).length;
+  const icon=group.querySelector('.app-launch-icon').getBoundingClientRect().width;
+  return {columns,icon,horizontalOverflow:outer.scrollWidth>outer.clientWidth,
+   firstEightInTwoRows:cards.length>=8&&new Set(cards.slice(0,8).map(card=>card.top)).size===2,
+   fifthWraps:cards[4].top>cards[0].top&&cards[4].left===cards[0].left,
+   cliStartsAfterApps:cli.getBoundingClientRect().top>=group.getBoundingClientRect().bottom};
+ })()`;
+ await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
+ assert.deepEqual(await evaluate(launcherGeometry),{columns:4,icon:80,horizontalOverflow:false,firstEightInTwoRows:true,fifthWraps:true,cliStartsAfterApps:true});
+ for(const [width,columns] of [[390,3],[300,2]]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:600,deviceScaleFactor:1,mobile:false});
+  const layout=await evaluate(launcherGeometry);
+  assert.equal(layout.columns,columns);
+  assert.equal(layout.horizontalOverflow,false);
+ }
+ await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  assert.equal(await evaluate(`document.querySelector('#run').getClientRects().length`),0);
  assert.deepEqual(await evaluate(`[...document.querySelectorAll('.app-launch-button:not(:disabled)')].map(button=>button.closest('[data-app]').dataset.app)`),['chrome']);
  assert.equal(appCalls.length,0);assert.equal(taskChecks,0);

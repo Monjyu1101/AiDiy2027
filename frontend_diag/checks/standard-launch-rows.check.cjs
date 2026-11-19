@@ -36,9 +36,12 @@ test('CLIがない場合は空段を表示せず、未接続・フォルダ未�
   assert.equal((cli.match(/<button[^>]* disabled/g)||[]).length,p.online?2:3);
  }
 });
-test('分類ごとに幅に応じて折り返し、横スクロールしない',()=>{
+test('標準は4列・80pxのアイコンとし、狭い画面では列数を減らす',()=>{
  const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');
  assert.match(css,/\.app-launch-panel \.app-launch-rows\{display:flex;flex-direction:column/);
- assert.match(css,/grid-template-columns:repeat\(auto-fill,minmax\(min\(76px,100%\),1fr\)\);grid-auto-flow:row/);
+ assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\);grid-auto-flow:row/);
+ assert.match(css,/\.launch-frame-standard\{width:min\(80px,/);
+ assert.match(css,/@media\(max-width:410px\).*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(css,/@media\(max-width:310px\).*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.doesNotMatch(css,/grid-auto-flow:column|overflow-x:auto/);
 });
