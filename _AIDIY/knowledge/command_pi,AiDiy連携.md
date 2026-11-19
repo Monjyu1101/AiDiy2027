@@ -180,3 +180,12 @@ Piの更新で固定revisionやprovider構造が変わった場合は、公式re
 ### openai_chat のキー解決確認
 
 `openai_chat` は `_config/AiDiy_key.json` の `openai_key_id` をリクエストごとに読み、公式 OpenAI Responses API (`https://api.openai.com/v1`) を使います。キー未設定時に環境変数・保存済み認証・ChatGPT OAuthへ切り替えません。`openai_oauth` は別の共有Codexログイン経路です。鍵を使わない回帰確認は `node --test command_pi/scripts/aidiy-openai-auth.test.mjs` で行えます。
+
+
+## 日本語IMEと同期描画のカーソル
+
+通常画面の `packages/tui/src/tui-main-screen.ts` は、全描画・差分描画・末尾行削除のいずれも、入力欄の `CURSOR_MARKER` へ実端末カーソルを戻して可視性を適用した後に同期描画（DEC 2026）を終了する。描画の右端で同期を終了してからカーソルを移すと、同期確定時の端末状態と入力位置が別になる。fullscreen側も同じ順序を維持する。
+
+`showHardwareCursor` の明示設定・環境変数の挙動は変えず、入力フォーカスがなくmarkerがない場面では端末カーソルを隠す。IME対策として常時表示や強制focusを追加しない。
+
+回帰確認は `command_pi` 内で `node --test scripts/aidiy-ime-cursor.test.mjs`。実Pi renderer・Editorとheadless端末に、日本語入力→送信→模擬応答→1往復完了、行削除、focus復帰を流し、同期終了時のカーソル位置と可視/非表示を確認する。実AIを呼ばない。この試験はWindows IMEの変換中表示や候補窓自体の再現確認ではないため、aidiy_term／Windows Terminalなど利用端末での確認は別途必要。

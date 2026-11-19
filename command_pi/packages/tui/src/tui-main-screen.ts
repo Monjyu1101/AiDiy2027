@@ -304,7 +304,6 @@ export class TuiMainScreen extends TuiBase implements TUI {
 				}
 				output.append(line);
 			}
-			output.append("\x1b[?2026l"); // End synchronized output
 			output.flush();
 			this.cursorRow = Math.max(0, newLines.length - 1);
 			this.hardwareCursorRow = this.cursorRow;
@@ -317,6 +316,7 @@ export class TuiMainScreen extends TuiBase implements TUI {
 			const bufferLength = Math.max(height, newLines.length);
 			this.previousViewportTop = Math.max(0, bufferLength - height);
 			this.positionHardwareCursor(cursorPos, newLines.length);
+			this.terminal.write("\x1b[?2026l"); // AiDiy: IME用カーソル位置・可視性まで含めて同期描画を確定する。
 			this.previousLines = newLines;
 			this.previousKittyImageIds = this.collectKittyImageIds(newLines);
 			this.previousWidth = width;
@@ -437,12 +437,12 @@ export class TuiMainScreen extends TuiBase implements TUI {
 				if (moveBack > 0) {
 					output.append(`\x1b[${moveBack}A`);
 				}
-				output.append("\x1b[?2026l");
 				output.flush();
 				this.cursorRow = targetRow;
 				this.hardwareCursorRow = targetRow;
 			}
 			this.positionHardwareCursor(cursorPos, newLines.length);
+			if (this.previousLines.length > newLines.length) this.terminal.write("\x1b[?2026l");
 			this.previousLines = newLines;
 			this.previousKittyImageIds = this.collectKittyImageIds(newLines);
 			this.previousWidth = width;
@@ -569,8 +569,6 @@ export class TuiMainScreen extends TuiBase implements TUI {
 			output.append(`\x1b[${extraLines}A`);
 		}
 
-		output.append("\x1b[?2026l"); // End synchronized output
-
 		if (process.env.PI_TUI_DEBUG === "1") {
 			const debugDir = "/tmp/tui";
 			fs.mkdirSync(debugDir, { recursive: true });
@@ -613,6 +611,8 @@ export class TuiMainScreen extends TuiBase implements TUI {
 
 		// Position hardware cursor for IME
 		this.positionHardwareCursor(cursorPos, newLines.length);
+		// AiDiy: 差分描画でも末尾列ではなく入力位置を同期描画の最終状態にする。
+		this.terminal.write("\x1b[?2026l");
 
 		this.previousLines = newLines;
 		this.previousKittyImageIds = this.collectKittyImageIds(newLines);
