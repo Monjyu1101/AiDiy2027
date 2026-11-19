@@ -39,11 +39,11 @@ OpenAI Codex（openai/codex、Apache-2.0）の Rust ワークスペース `codex
 
 ## メタハーネス
 
-- 外部 CLI 区分では `--cli chat`（省略時）が構造化会話・ツール定義を共通アダプターへ渡し、ツール要求を親 Codex の通常ループで実行する。`--cli passthrough` は従来の共通 CodeAI への子 CLI 委譲を維持する。TUI / exec とも同じ経路を使う。子の chat 対応能力が不足する場合は明示エラーとし、暗黙の委譲はしない。
-- passthrough では親の全アクセス＋承認不要は YOLO、read-only は子にも読取専用として渡す。その他の独自 sandbox / workspace-write は安全に同等変換できないため停止する。chat では親が自身の sandbox / 承認を適用し、子側の独自ツールは共通アダプターが禁止する。制限を外して実行しない。
+- 外部 CLI 区分を選んだターンは共通 CodeAI 経由で子 CLI に処理全体を委譲する。TUI / exec とも同じ経路で、子自身がツールを実行し、親は進捗と最終回答のテキストを表示する。モード切替引数はない。通常の API / OAuth 接続は別経路で変更しない。
+- 親の全アクセス＋承認不要は YOLO、全アクセスでその他の承認方式は通常、read-only は子にも読取専用として渡す。その他の独自 sandbox / workspace-write は安全に同等変換できないため停止する。制限を外して実行しない。
 - 全会話のテキストを各ターンに渡し、子の過去の別セッションは resume しない。画像・音声・構造化出力・CLI モデルでの `/compact` は対象外。トークン使用量は子から取得できないため未報告。
-- 実行には backend_tools または backend_server の Python venv が必要。親終了・中断で監視ラッパーが子孫を回収する。CLI の実行失敗は親が自動再実行しない。正常終了した chat 応答の JSON 構文不正・JSON欠落だけ同じ CLI に1回形式修正を求める。schema違反や不正ツールは拒否する。
-- 起動例・モード継承・検証は [メタハーネス運用](../_AIDIY/knowledge/command_hermes,command_pi,command_codex,メタハーネス.md) を参照。
+- 実行には backend_tools または backend_server の Python venv が必要。親終了・中断で監視ラッパーが子孫を回収する。CLI の実行失敗は親が自動再実行しない。
+- 起動例・権限継承・検証は [メタハーネス運用](../_AIDIY/knowledge/command_hermes,command_pi,command_codex,メタハーネス.md) を参照。
 
 ## AiDiy 連携
 

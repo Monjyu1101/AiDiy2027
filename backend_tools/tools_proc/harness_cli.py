@@ -32,21 +32,10 @@ class ProgressConnection:
 async def run(request):
     if not isinstance(request, dict) or request.get("provider") not in CLI_PROVIDERS:
         raise ValueError("未対応の外部CLIです。")
-    # Legacy Codex binaries omit cli_mode; Hermes/Pi explicitly send their chat default.
-    cli_mode = request.get("cli_mode", "passthrough")
-    if cli_mode == "validate_chat":
-        if __package__:
-            from .harness_chat import validate_request, validate_response
-        else:
-            from harness_chat import validate_request, validate_response
-        message = validate_response(request.get("response"), validate_request(request), request.get("tool_choice", "auto"))
-        emit({"type": "result", "ok": True, "text": message.get("content") or "", "message": message})
-        return
-    if cli_mode not in {"chat", "passthrough"}:
-        raise ValueError("CLI方式は chat または passthrough を指定してください。")
+    # 旧バイナリの委譲要求だけを受け付ける。旧推論要求は権限の異なる委譲へ置き換えない。
+    if request.get("cli_mode", "passthrough") != "passthrough" or "engine_prompt" in request:
+        raise ValueError("旧CLIチャット方式は廃止されました。AiDiyを更新し、aidiy_codexは再コンパイルしてください。")
     model, prompt, project = (request.get(key) for key in ("model", "prompt", "project"))
-    if cli_mode == "chat":
-        prompt = "structured chat"
     if not all(isinstance(value, str) and value.strip() for value in (model, prompt, project)):
         raise ValueError("外部CLIへの入力が不正です。")
     if len(model) > 300 or any(ord(c) < 32 for c in model):
@@ -57,18 +46,6 @@ async def run(request):
     if mode not in {"yolo", "read-only", "normal"}:
         raise ValueError("外部CLIの実行モードが不正です。")
     sys.path.insert(0, str(ROOT / "backend_server"))
-    if cli_mode == "chat":
-        if __package__:
-            from .harness_chat import run_chat, run_text_chat
-        else:
-            from harness_chat import run_chat, run_text_chat
-        if "engine_prompt" in request:
-            text = await run_text_chat(request)
-            emit({"type": "result", "ok": True, "text": text})
-            return
-        message = await run_chat(request)
-        emit({"type": "result", "ok": True, "text": message.get("content") or "", "message": message})
-        return
     from AIコア.AIコード_cli import CodeAI
     from AIコア.AI実行オプション import AI実行オプション
     from AIコア.AI応答 import エラー応答判定

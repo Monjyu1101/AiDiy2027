@@ -110,7 +110,7 @@ await main(startupArgs, {
 		name: "aidiy",
 		factory: (pi) => {
 			aidiyModeExtension(pi, mode.readOnly);
-			aidiyExtension(pi, { readOnly: mode.readOnly, cliMode: mode.cliMode });
+			aidiyExtension(pi, { readOnly: mode.readOnly });
 		},
 	}],
 });

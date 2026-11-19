@@ -55,6 +55,14 @@ class HarnessTest(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(events[0], {"type": "result", "ok": True, "text": "fixture answer"})
                     self.assertEqual(events[1]["text"], "progress")
 
+    async def test_retired_chat_payloads_fail_before_delegation(self):
+        request = {"provider": "codex_cli", "model": "same", "project": str(ROOT),
+                   "prompt": "old payload", "mode": "yolo"}
+        for extra in ({"cli_mode": "chat"}, {"cli_mode": "validate_chat"},
+                      {"cli_mode": "unknown"}, {"engine_prompt": "untrusted"}):
+            with self.subTest(extra=extra), self.assertRaisesRegex(ValueError, "廃止"):
+                await adapter.run({**request, **extra})
+
     async def test_invalid_mode_cannot_default_to_yolo(self):
         for mode in (None, "full", True):
             with self.assertRaises(ValueError):

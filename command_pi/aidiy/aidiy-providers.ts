@@ -26,7 +26,6 @@ import {
 import { getBuiltinModels } from "@earendil-works/pi-ai/providers/all";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { codexAccessToken, grokAccessToken } from "./aidiy-oauth.ts";
-import type { CliMode } from "./aidiy-cli-chat.ts";
 import { CLI_PROVIDERS, registerCliProviders } from "./aidiy-cli.ts";
 
 /** AiDiy プロジェクトのルート（command_pi の親）。 */
@@ -272,7 +271,7 @@ function registerAidiyMcpServers(pi: ExtensionAPI): void {
 }
 
 /** Pi へ渡すインライン拡張。 */
-export function aidiyExtension(pi: ExtensionAPI, { readOnly = false, cliMode = "chat" }: { readOnly?: boolean; cliMode?: CliMode } = {}): void {
+export function aidiyExtension(pi: ExtensionAPI, { readOnly = false }: { readOnly?: boolean } = {}): void {
 	if (!readOnly) registerAidiyMcpServers(pi);
 	if (!existsSync(PI_MODELS_JSON)) {
 		console.error(
@@ -281,7 +280,7 @@ export function aidiyExtension(pi: ExtensionAPI, { readOnly = false, cliMode = "
 		);
 	}
 	for (const provider of aidiyProviders()) pi.registerProvider(provider as never);
-	registerCliProviders(pi, AIDIY_ROOT, readPiModels(), readOnly, cliMode);
+	registerCliProviders(pi, AIDIY_ROOT, readPiModels(), readOnly);
 	if (readOnly) return;
 
 	// /model・Ctrl+P などで選んだ AiDiy モデルを保存し、次回の起動で復元する。

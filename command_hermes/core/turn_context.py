@@ -326,8 +326,6 @@ def _maybe_title_session_at_turn_start(agent: Any, messages: List[Any]) -> None:
                 "api_mode": getattr(agent, "api_mode", None),
             },
             title_callback=getattr(agent, "_on_session_title", None),
-            # AiDiy: keep background title inference on this agent's CLI engine.
-            chat_call=getattr(agent, "_aidiy_chat_call", None),
             runtime_validator=lambda: (
                 getattr(agent, "model", None) == _model
                 and getattr(agent, "provider", None) == _provider

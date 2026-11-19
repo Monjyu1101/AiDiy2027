@@ -5545,7 +5545,7 @@ This compaction should PRIORITISE preserving all information related to the focu
             call_kwargs["latency_info"] = _latency_info
             try:
                 with aux_interrupt_protection():
-                    response = getattr(self, "_aidiy_chat_call", call_llm)(**call_kwargs)
+                    response = call_llm(**call_kwargs)
             finally:
                 route_known = bool(_aux_route.get("provider") and _aux_route.get("model"))
                 _aux_provider = _aux_route.get("provider") or self.provider or ""
@@ -7484,7 +7484,7 @@ This compaction should PRIORITISE preserving all information related to the focu
 
         try:
             with aux_interrupt_protection():
-                response = getattr(self, "_aidiy_chat_call", call_llm)(**call_kwargs)
+                response = call_llm(**call_kwargs)
         except Exception as exc:
             logger.info("micro-summarization call failed: %s", exc)
             return None

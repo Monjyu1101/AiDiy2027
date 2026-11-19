@@ -1,69 +1,12 @@
-# Hermes / Pi / Codex の外部 CLI chat / passthrough
+# Hermes / Pi / Codex の外部CLIへの委譲
 
-モデルを `copilot_cli/same` のように選ぶと、親ハーネスが子CLIを利用する。Hermes / Pi / 新しいCodexソースでは `--cli chat` が既定、`--cli passthrough` で旧委譲方式へいつでも戻せる。APIモデルにはこの切替は影響しない。対応区分は `claude_cli`、`antigravity_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデルを変更せず、OpenCode の `openai/gpt-6-luna` のような階層付きモデル名は保持する。
+`copilot_cli/same` のような外部CLIモデルを選ぶと、外部CLIに依頼全体を渡すパススルーで動作する。外部CLIの認証・ファイル操作・ツール実行は子CLI側が担当する。親が子を推論専用のチャットエンジンとして扱う機能と、方式を切り替える起動オプションは廃止した。通常のAPI / OAuthモデルの動作は変わらない。
 
+対象は `claude_cli`、`antigravity_cli`、`codex_cli`、`copilot_cli`、`opencode_cli`、`grok_cli`。`same` は子のモデル指定を省略し、`openai/gpt-6-luna` のような階層付きモデルIDは保持する。`codex_cli` は通常の `codex` を起動し、`aidiy_codex` には委譲しない。
 
-## Hermes / Pi / Codex の chat（既定）と passthrough（旧方式）
+## 共通の実行経路
 
-- `--cli chat` / 指定なし: 親が会話・system・知識・tools・承認を所有し、子は推論だけを行う。構造化されたツール要求を親へ返し、親の通常ループで実行する。ファイル操作も親側で実施する。
-- `--cli passthrough`: 既存方式。子CLI自身がツールを実行して最終回答を返す。
-- 切替は起動オプションのみ。旧実装・旧CLIモデル候補は削除しない。未知の値はエラー。chatに未対応の子CLIを選んでも勝手にpassthroughへ切り替えない。
-
-chatの子エンジンは現在 `claude_cli`（通常のテキスト出力）、`copilot_cli`（通常のCopilot CLIをstdin/stdoutで呼出し）、`codex_cli`（通常の `codex` をstdin/stdoutで呼出し）が対象。`antigravity_cli` / `opencode_cli` / `grok_cli` は推論専用実行を検証できていないため明示エラー。これらを使う場合は `--cli passthrough` を指定する。外側はHermes / Pi / Codexのソースにchat接続を実装している。この「外側ハーネス」と「内側CLI」の対応は別物で、`aidiy_hermes` / `aidiy_pi` / `aidiy_codex` は互いを呼び出さない（区分にも選べない）。
-
-### Codexのchat起動
-
-`codex_cli` のchatは、passthroughと同じくPATH上の通常の `codex` を起動する。`aidiy_codex` は起動しない（区分 `codex_cli` を選んで `aidiy_codex` が動くのは誤り）。Windowsのnpmシムは `cmd.exe` を経由せず直接実行に解決する。実装は `backend_tools/tools_proc/harness_codex_chat.py` で、Hermes / Pi / Codex の3ハーネスに共通。
-
-通常の `codex` には全ツールを一括で止める入口が無いため、`exec --ephemeral --ignore-user-config --ignore-rules --sandbox read-only` に加え、`--disable shell_tool` / `unified_exec` / `apps` / `plugins` / `browser_use` / `computer_use` / `hooks` などの子ツール機能と `web_search` を無効化し、空の一時作業フォルダで起動する。codex 0.167.0 の実機で、シェル実行が使えずMCPサーバーも0件になることを確認した。組込みのMCPリソース一覧ツールだけは残る。旧版の `codex` が未知の `--disable` で停止した場合は、`codex` を更新する（passthroughへ自動降格しない）。
-
-既存の `~/.codex`（または `CODEX_HOME`）認証経路を使用し、秘密情報を一時フォルダへコピーしない。ユーザー設定・rules・プロジェクト設定からの自動実行を避け、新しい一時セッションに親の正規会話を毎回渡す。親側の知識・履歴・ツール結果が会話の正本で、子セッションはresumeしない。`same` / `auto` は隔離したCodex既定モデルとなり、ユーザーconfig内の既定モデルは読まない。モデルを固定したい場合は明示する。
-
-更新済み親はCodexにも通常テキストで形式説明を渡し、ツール引数はJSON objectとする。各親のラッパーで抽出・検証し、自然文のツール要求は実行しない。
-
-検証にはRust専用入口の試験と共通Python試験の両方が必要。Python mock成功だけで新バイナリの実行や実認証推論を確認した扱いにしない。
-
-### 未対応エンジンと障害の区別
-
-「内側CLIのchat接続未対応」は外側Hermes/Pi/Codexの知識・ツール機構の不存在を意味しない。対応エンジンへ切り替えるか通常APIモデルを使う。旧方式の `passthrough` は子自身が処理する別方式で、chat障害時に自動選択しない。
-
-- 外部Codexの `exec --output-schema` は最終応答形式だけを制約する。`read-only` は読取ツールを残すため推論専用ではない。内部の空 `ToolPolicy.allowed_tools` は全ツールを止められるが、現行の公開exec/app-server設定から指定できない。
-- Grokのtools許可リストだけではMCP meta-toolsが残る。Antigravityの構造化出力だけでは別ファイルからのhooks等を止められない。OpenCodeの共有サーバー接続も、個別プロセスへ渡した設定だけで隔離できたと判断しない。
-- Claudeの異常終了はCLI版・認証・通信・モデルの分類と終了コードを返す。子の生stderrは会話・秘密情報を含み得るため返さない。分類は診断補助であり、原因を確定するものではない。
-
-ツール定義・会話・結果IDをJSONで渡し、応答は `{content, tool_calls:[{name, arguments}]}` の厳密なJSON。通常文章を正規表現でツール要求へ変換しない。子のファイル/シェル/MCP等は無効で、登録ツール名・引数schemaを親側のラッパー（Hermes/Codexは検証専用入口）で検証してから親形式へ変換する。呼出IDは検証後に発行し、次の結果と対応付ける。画像・音声等は現状未対応で、捨てずにエラーにする。
-
-Hermesの通常ループを通すためsystem/contextとメモリ・skills等の組立て、およびツール結果はそのままmessagesとして渡す。主会話・文脈圧縮・自動タイトル生成は同じCLIエンジンを使う。タイトルはagent専用callbackを背景スレッドへ渡し、別の補助APIを解決しない。失敗時はAPIへ切り替えず、入力から導出したタイトルを維持する。通常APIモードのタイトル生成経路は変更しない。回帰試験は `command_hermes/checks/test_cli_chat_title.py`。検索・ファイル操作等は親の許可されたツールとして実行される。ただし独自APIクライアントを直接生成する拡張機能までCLI経由へ自動変換するものではない。独立エージェント/補助機能の対応は別途検証する。
-
-### Copilotの直接stdioチャット
-
-Copilot chat はSDKを使わず、PATH上の通常の `copilot` を非TTYのstdin/stdoutで呼ぶ。親の会話・system・ツール定義・ツール結果をstdinへ渡し、`--silent --stream=off --output-format=text` の応答を受ける。親用の `{content, tool_calls:[{name, arguments}]}` JSONをプロンプトで指定するが、SDKのresponse_schemaやプロバイダのstrict schemaは要求しない。JSON以外や未知ツール、不正な引数は拒否し、自然文から実行命令を拾わない。
-
-`--excluded-tools=builtin:*,mcp:*,custom:*` で子モデルの全ツール種別を除外する。`--deny-tool=shell,read,write,url,memory` も指定。空の `--available-tools` や単独の `--excluded-tools=*` はCLI 1.0.112でツールを消さないため代用しない。プロジェクトと別の一時作業フォルダで、custom instructions、built-in MCP、computer-use、実験機能、自動更新、セッション同期を無効にして起動する。親の自動承認・リポジトリhooks/拡張opt-in環境も引き継がない。
-
-認証は通常CLI自身が行う。`COPILOT_HOME`やkeychainを隠さず、トークンを抽出・コピーしない。独立した新規起動ごとに正規の会話履歴を渡しresumeしない。これは丸投げpassthroughではなく、ファイル操作等は親が行う。CLI自身の認証更新・キャッシュ・ローカルセッション保存や、ユーザー/管理者が導入したグローバル拡張の起動処理まで禁止するOS隔離ではない。
-
-共通PythonプロトコルをHermes/Pi/Codexが使用するため、このCopilot経路の変更は3ハーネスに共通。既にchatプロトコルを搭載したCodexバイナリなら今回のPython修正だけで反映する。古いバイナリへのchat機能追加は別途再コンパイルが必要。
-
-必要なのは通常のCopilot CLIとそのログイン。PythonのCopilot SDK依存は不要。CLI非対応オプション・認証・通信・モデルの失敗は生stderrを出さず固定文面と終了コードで返す。自動で権限を緩めたりpassthroughへ切り替えたりしない。
-
-検証は `backend_tools/checks/test_harness_copilot_chat.py` と、公式CLI実行ファイルを `AIDIY_TEST_COPILOT` に指定する `test_harness_copilot_stdio.py`。後者はローカル疑似APIで挨拶→親のtool call→tool result→報告と、子APIへ送られるtoolsが0個であることを検証する。GitHubへの認証済み実推論やWindows実機試験を代替しない。公式仕様: https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-command-reference
-
-```powershell
-aidiy_hermes --cli chat --model copilot_cli/same
-aidiy_pi --cli chat --model copilot_cli/same
-# 旧方式へ戻す
-aidiy_hermes --cli passthrough --model codex_cli/gpt-6-luna
-aidiy_pi --cli passthrough --model codex_cli/gpt-6-luna
-```
-
-検証: `backend_tools/checks/test_harness_chat.py`（入力・schema・不正呼出・旧方式への非降格）、各ハーネスのchat adapter試験。mockの往復成功は実認証付きCLIの精度評価ではない。実運用導入時は同じ課題でAPI・chat・passthroughの結果、ツール実行数、所要時間を比較する。
-
-共通JSON入口の `cli_mode` 未指定は、現行Codexバイナリとの互換性のためpassthrough。Hermes / Pi / 新しいCodexソースは起動オプション未指定時にも明示的にchatを送る。
-
-## 共通の実行経路（passthrough）
-
-`backend_tools/tools_proc/harness_cli.py` が JSON 要求を受け、既存 CodeAI を呼び出す。HTTP サーバーや DB は起動しない。要求は `provider` / `model` / `project` / `prompt` / `mode` / `cli_mode`、応答は JSONL の `progress` と `result`。
+`backend_tools/tools_proc/harness_cli.py` が JSON 要求を受け、既存 CodeAI を呼び出す。HTTP サーバーや DB は起動しない。要求は `provider` / `model` / `project` / `prompt` / `mode`、応答は JSONL の `progress` と `result`。
 
 各ターンに親の会話を渡し、子の別セッションを resume しない。認証とツール実行は子 CLI が担当する。`process_lifetime.py` で親終了時の子孫を回収する。実行には backend_tools または backend_server の Python venv が必要。
 
@@ -71,7 +14,7 @@ Pi / Hermes / Codex → 共通アダプターは JSON を UTF-8 stdin で渡す�
 
 `aidiy_codex` の通常モデルが使う Code Mode ホストは本体と同じ版を配置する。Windows では `_compile.py` が公式 npm 配布物の SHA-512 を検証して `~/.aidiy/bin/codex-code-mode-host.exe` を配置する。Windows の read-only 実機試験は共通 CodeAI と同じ `-c features.prefer_mxc=true` を使う。MXC 非対応環境では権限を広げず、元の sandbox 制約を維持する。
 
-## 権限モードの同期（passthrough）
+## 権限モードの同期
 
 | 親 | 子に渡す状態 |
 |---|---|
@@ -106,8 +49,8 @@ OpenCode V2 の policy は agent の許可・過去の承認より優先する�
 ## 起動と検証
 
 ```powershell
-aidiy_hermes --cli passthrough --read-only --model codex_cli/gpt-6-luna -z "ソースを確認して要点を教えて"
-aidiy_pi --cli passthrough --read-only --no-session --model codex_cli/gpt-6-luna -p "ソースを確認して要点を教えて"
+aidiy_hermes --read-only --model codex_cli/gpt-6-luna -z "ソースを確認して要点を教えて"
+aidiy_pi --read-only --no-session --model codex_cli/gpt-6-luna -p "ソースを確認して要点を教えて"
 aidiy_codex exec --sandbox read-only -m codex_cli/gpt-6-luna "ソースを確認して要点を教えて"
 ```
 
@@ -116,23 +59,3 @@ Codex の `/model` は現在の API 候補に Diag の CLI 候補を追加する
 単体検証は `backend_tools/checks/test_harness_cli.py`、`backend_server/checks/test_prediction_cli_readonly.py`、`test_prediction_hermes_adapter.py` を使う。実機試験では専用の一時フォルダに識別文字列を置き、子の読取結果・進捗イベント・終了コード・フォルダの変更有無を確認する。モデルが文章で「read-only」と回答するだけでは制限の検証にならないため、実引数と設定も確認する。
 
 Codex の Rust 変更は再コンパイルが必要。既存コンパイル中に編集した場合、今回の変更が含まれたと扱わず、終了後に再検証・再ビルドする。
-
-## CLI chat の JSON 固定応答ラッパー
-
-Hermes（Python）、Pi（TypeScript）、Codex（Rust）の各親側が、回答例と
-`content` / `tool_calls` の形式説明を通常のテキストプロンプトに付加する。
-子CLIは stdin/stdout のテキストエンジンであり、この経路では SDK や
-`--json-schema` / `--output-schema` による形式強制は使用しない。
-子のツール禁止・一時作業フォルダ・親終了時のプロセス回収は維持する。
-
-親側で最初の `{` から最後の `}` までを取り出し、厳密に JSON を解析する。
-前後の説明やコードフェンスは除けるが、複数オブジェクト、壊れた JSON、
-重複キー、未知ツール、引数スキーマ不一致は失敗とし、勝手に修復・実行しない。
-通常文章や passthrough の回答、ツール内部の配列はこの抽出対象ではない。
-Hermes/Codex は既存 backend_tools Python のスキーマ検証専用入口を使い、
-Pi は自身のスキーマ検証を使う。検証専用入口は外部 CLI を起動しない。
-実際のツール実行・承認と次ターンの結果送信は各親ハーネスが所有する。
-
-Python/TS の変更は更新後そのまま使用できる。Codex Rust の変更は再コンパイルが必要。
-旧バイナリからの構造化アダプター経路は移行期間のため維持しており、新方式への反映は
-更新された親コードからの `engine_prompt` 送信で確認する。

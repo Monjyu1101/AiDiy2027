@@ -95,17 +95,12 @@
 ## 外部CLIへの委譲
 
 - `claude_cli` / `antigravity_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli` をPiのモデル一覧に登録する。例: `aidiy_pi --model codex_cli/same -p "修正して"`。TUIの `/model` でも選択でき、最終選択を保存する。
-- `codex_cli` は既定の `--cli chat` でも PATH 上の通常の `codex` を推論エンジンとして起動し（子のツールは無効化）、`aidiy_codex` は起動しない。子 CLI 自身に処理全体を任せる旧方式は `--cli passthrough`。詳細は [メタハーネス運用](./command_hermes,command_pi,command_codex,メタハーネス.md) の「Codexのchat起動」。
+- 外部CLIモデルを選ぶと追加フラグなしで子CLIに処理全体を委譲する。 `codex_cli` は PATH 上の通常の `codex` を使い、`aidiy_codex` は起動しない。詳細は [メタハーネス運用](./command_hermes,command_pi,command_codex,メタハーネス.md) を参照。
 - `backend_tools` または `backend_server` のPython環境と、委譲先CLIの導入・認証が必要。常駐Core/ToolsやHermesの起動は不要。
 - Piの会話履歴をテキストで渡し、委譲先は毎回新規会話として開始する。Piの再開会話へ、別のCLIセッションを混ぜない。モデルがsameなら委譲先のモデル指定を省略し、autoならCodeAIのモデル選択を使う。
 - Windowsの `.cmd` 解決、タイムアウト、子孫の終了は既存 `AIコード_cli.py` / `process_lifetime.py` を再利用する。進捗はPiのthinkingイベント、結果はtext、異常終了はerrorへ変換する。外部CLIの利用量は取得できないためPiのトークン・費用表示は0となる。
 
-### CLI chat の JSON エラー
-
-- 外部CLIは純粋なテキスト入出力で呼び出す。Pi側が単一JSONの形式、`content`文字列、`tool_calls`とオブジェクト型`arguments`、文字列のエスケープを説明する。
-- 応答の最初の `{` から最後の `}` を抽出して検証する。JSON構文不正の場合のみ、同じ会話・ツール定義・モデル・read-only制約で1回だけ形式の再生成を求める。失敗した返答を非信頼データの JSON 文字列として引用し、必要な形式を再掲して同じ CLI へ送る。65,536文字を超える返答は切り詰めず再要求を中止し、生応答はログに出力しない。
-- 重複キー、不明なツール、引数スキーマ違反、認証・プロセス失敗は再要求せず失敗にする。APIやpassthroughへ切り替えず、検証が完了するまでツール要求はPiへ渡さない。
-- 検証は `node --test scripts/aidiy-cli-json.test.mjs scripts/aidiy-cli-chat.test.mjs scripts/aidiy-cli-stream.test.mjs`（command_pi内）。模擬CLIを使うため実プロバイダの認証・モデル応答の成功を保証するものではない。
+- 検証は `node --test scripts/aidiy-cli-stream.test.mjs scripts/aidiy-mode.test.mjs`（command_pi内）。実プロバイダの認証と応答は別途確認する。
 
 ## Navi・次入力予測
 

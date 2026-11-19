@@ -28,13 +28,13 @@ test("yolo never cancels explicit read-only", () => {
 	assert.equal(result.args.at(-1), "read,grep,find,ls");
 });
 
-test("CLI mode defaults to chat and preserves explicit rollback", () => {
- assert.equal(aidiyModeArgs([]).cliMode, "chat");
- assert.deepEqual(aidiyModeArgs(["--cli", "passthrough", "hello"]).args, ["hello"]);
- assert.equal(aidiyModeArgs(["--cli=passthrough"]).cliMode, "passthrough");
- assert.equal(aidiyModeArgs(["--cli=chat"]).cliMode, "chat");
- for (const args of [["--cli"], ["--cli=wrong"]]) assert.throws(() => aidiyModeArgs(args));
- assert.deepEqual(aidiyModeArgs(["--", "--cli", "passthrough"]).args, ["--", "--cli", "passthrough"]);
- assert.equal(aidiyModeArgs(["--system-prompt", "--cli", "text"]).cliMode, "chat");
- assert.equal(aidiyModeArgs(["--read-only", "--cli", "passthrough"]).readOnly, true);
+test("only execution permissions are registered as AiDiy mode flags", () => {
+	const flags = [];
+	aidiyModeExtension({ registerFlag(name) { flags.push(name); }, on() {} }, false);
+	assert.deepEqual(flags, ["yolo", "read-only"]);
+	assert.deepEqual(aidiyModeArgs([]), { args: [], readOnly: false });
+	assert.deepEqual(aidiyModeArgs(["--system-prompt", "--read-only", "text"]), {
+		args: ["--system-prompt", "--read-only", "text"], readOnly: false,
+	});
+	assert.deepEqual(aidiyModeArgs(["--", "--read-only"]), { args: ["--", "--read-only"], readOnly: false });
 });

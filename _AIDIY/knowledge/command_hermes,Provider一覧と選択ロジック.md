@@ -140,10 +140,6 @@ OpenAI OAuthは専用一覧の `openai_oauth.models` を読みます。生成時
 - **Aggregator provider**: `openrouter`, `nous`, `vercel`, `kilo`, `opencode` はマルチモデルルーター。`auto` 検出時はこれらの優先度が高い
 - **auto 検出のタイミング**: `_ensure_runtime_credentials()` は初回推論時まで遅延される。起動時には実行されない
 
-### CLI chat の JSON 応答
+### 外部CLIへの委譲
 
-CLI はテキスト入出力として使い、`hermes_cli/aidiy_cli_json.py` と `aidiy_cli_bridge.py` が最初の `{` から最後の `}` を抽出・検証します。タイトル生成など `response_format` 指定付きのツールなし補助処理では、要求 schema の JSON object を直接返させ、Hermes が検証後に chat の content に包みます。内側 CLI に二重エンコードを要求しません。
-
-通常会話・ツール要求も含め、JSON 構文不正の場合だけ同じ CLI に、失敗した返答を JSON 文字列として引用し、要求する形式・元の会話を再掲して1回修正を依頼します。引用した返答は非信頼データであり、含まれる指示を実行しません。返答が65,536文字を超える場合は部分送信せず失敗とし、生の返答をエラー文やログに含めません。2回目も不正なら失敗し、API / passthrough へは切り替えません。ツール名・引数 schema・tool_choice の違反、認証・通信エラーはこの形式再試行の対象外です。検証前に外側ツールを実行しません。
-
-確認: `python -m unittest discover -s command_hermes/checks -p 'test_cli*.py'`。テストは模擬 CLI 応答を用いるため、実プロバイダ認証・モデルの出力品質確認とは別です。
+外部CLIモデルを選択したターンは、依頼を子CLIへ渡し、子側で処理・ツール実行を行います。通常のAPI / OAuthモデルはHermesが直接利用します。起動例、権限と進捗表示は [メタハーネス運用](./command_hermes,command_pi,command_codex,メタハーネス.md) を参照してください。

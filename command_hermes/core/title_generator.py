@@ -344,7 +344,6 @@ def generate_title(
     failure_callback: Optional[FailureCallback] = None,
     main_runtime: dict = None,
     runtime_validator: Optional[RuntimeValidator] = None,
-    chat_call: Optional[Callable[..., Any]] = None,
 ) -> Optional[str]:
     """Generate a session title from the user's opening message.
 
@@ -401,8 +400,7 @@ def generate_title(
     ]
 
     try:
-        # AiDiy: a CLI chat session must not resolve a separate HTTP provider.
-        response = (chat_call if chat_call is not None else call_llm)(
+        response = call_llm(
             task="title_generation",
             messages=messages,
             # A title is a handful of tokens. The old 500-token ceiling let a
@@ -538,7 +536,6 @@ def auto_title_session(
     main_runtime: dict = None,
     title_callback: Optional[TitleCallback] = None,
     runtime_validator: Optional[RuntimeValidator] = None,
-    chat_call: Optional[Callable[..., Any]] = None,
 ) -> None:
     """Generate and store the model title for a session.
 
@@ -566,7 +563,6 @@ def auto_title_session(
             main_runtime=main_runtime,
             title_callback=title_callback,
             runtime_validator=runtime_validator,
-            chat_call=chat_call,
         )
     except Exception as e:
         # WARNING (not debug) so operators see it in agent.log; the message
@@ -592,7 +588,6 @@ def _auto_title_session(
     main_runtime: dict = None,
     title_callback: Optional[TitleCallback] = None,
     runtime_validator: Optional[RuntimeValidator] = None,
-    chat_call: Optional[Callable[..., Any]] = None,
 ) -> None:
     """Body of :func:`auto_title_session` — see its docstring."""
     if not session_db or not session_id:
@@ -634,7 +629,6 @@ def _auto_title_session(
         failure_callback=failure_callback,
         main_runtime=main_runtime,
         runtime_validator=runtime_validator,
-        chat_call=chat_call,
     )
     source = "llm"
     if not title:
@@ -715,7 +709,6 @@ def maybe_auto_title(
     main_runtime: dict = None,
     title_callback: Optional[TitleCallback] = None,
     runtime_validator: Optional[RuntimeValidator] = None,
-    chat_call: Optional[Callable[..., Any]] = None,
 ) -> None:
     """Title a session from its opening message: instant, then upgraded.
 
@@ -762,7 +755,6 @@ def maybe_auto_title(
             "main_runtime": main_runtime,
             "title_callback": title_callback,
             "runtime_validator": runtime_validator,
-            "chat_call": chat_call,
         },
         daemon=True,
         name="auto-title",

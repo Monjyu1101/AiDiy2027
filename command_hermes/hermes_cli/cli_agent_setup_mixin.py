@@ -59,15 +59,6 @@ class CLIAgentSetupMixin:
         are picked up without restarting the CLI.
         Returns True if credentials are ready, False on auth failure.
         """
-        from hermes_cli.aidiy_cli_bridge import uses_chat_engine
-        if uses_chat_engine(self):
-            # Authentication belongs to the child CLI, not an API provider.
-            self.api_key = "aidiy-cli-no-api-key"
-            self.base_url = "aidiy-cli://engine"
-            self.provider = self.requested_provider = "custom"
-            self.api_mode = "chat_completions"
-            self._credential_pool = None
-            return True
         from cli import ChatConsole, _cprint, logger
         from hermes_cli.runtime_provider import (
             resolve_runtime_provider,
@@ -593,10 +584,6 @@ class CLIAgentSetupMixin:
                 notice_clear_callback=self._on_notice_clear,
                 reaction_callback=self._on_reaction,
             )
-            from hermes_cli.aidiy_cli_bridge import uses_chat_engine, install_chat_engine
-            if uses_chat_engine(self):
-                from pathlib import Path
-                install_chat_engine(self.agent, self, Path(__file__).resolve().parents[2])
             # Store reference for atexit memory provider shutdown.
             # NOTE: this MUST write to the ``cli`` module's global, not a
             # local module global. ``_run_cleanup`` (in cli.py) reads

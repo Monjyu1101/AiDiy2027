@@ -8,20 +8,16 @@ import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import {
-	type AssistantMessage, type AssistantMessageEventStream, type SimpleStreamOptions, type Tool,
-	createAssistantMessageEventStream, getCurrentSystemPrompt, getCurrentTools,
+	type AssistantMessage, type AssistantMessageEventStream, type SimpleStreamOptions,
+	createAssistantMessageEventStream, getCurrentSystemPrompt,
 } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-agent";
-
-import { chatPayload, type CliMode, type CliAnswer } from "./aidiy-cli-chat.ts";
-
-import { CliJsonSyntaxError, CliJsonValidationError, cliJsonPreview, enginePrompt, jsonRepairPrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
 
 export const CLI_PROVIDERS = ["claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"];
 
 /** 同梱Pythonと共通CodeAIへ委譲する。キャンセル時は監視ラッパーが子孫も回収する。 */
-async function runCli(root: string, request: { provider: string; model: string; project: string; prompt?: string; engine_prompt?: string; cli_mode: CliMode; messages?: unknown[]; tools?: unknown[]; mode: "yolo" | "read-only" },
-	options: SimpleStreamOptions | undefined, progress: (text: string) => void, tools: Tool[]): Promise<CliAnswer> {
+async function runCli(root: string, request: { provider: string; model: string; project: string; prompt: string; mode: "yolo" | "read-only" },
+	options: SimpleStreamOptions | undefined, progress: (text: string) => void): Promise<string> {
 	const suffix = process.platform === "win32" ? "Scripts/python.exe" : "bin/python";
 	const python = ["backend_tools", "backend_server"].map((name) => join(root, name, ".venv", suffix)).find(existsSync);
 	if (!python) throw new Error("外部CLI委譲には backend_tools または backend_server のPython環境が必要です。");
@@ -32,7 +28,7 @@ async function runCli(root: string, request: { provider: string; model: string; 
 			cwd: request.project, windowsHide: true, stdio: ["pipe", "pipe", "pipe"], signal: options?.signal,
 			env: { ...process.env, PYTHONIOENCODING: "utf-8", PYTHONDONTWRITEBYTECODE: "1" },
 		});
-		let pending = "", answer: CliAnswer | undefined, failure: Error | undefined;
+		let pending = "", answer: string | undefined, failure: Error | undefined;
 		const timer = setTimeout(() => {
 			failure = new Error("外部CLIからの出力が途絶えたため終了しました。");
 			child.kill();
@@ -46,13 +42,12 @@ async function runCli(root: string, request: { provider: string; model: string; 
 				if (event.type === "progress" && typeof event.text === "string") progress(event.text);
 				else if (event.type === "result" && typeof event.ok === "boolean") {
 					if (!event.ok) failure = new Error(typeof event.text === "string" ? event.text : "外部CLIが失敗しました。");
-					else if (request.cli_mode === "chat") answer = parseInferenceAnswer(event.text as string, tools);
-					else if (typeof event.text === "string" && event.text.trim()) answer = { content: event.text, toolCalls: [] };
+					else if (typeof event.text === "string" && event.text.trim()) answer = event.text;
 					else throw new Error("外部CLIの応答形式が不正です。");
 				} else throw new Error("外部CLIの応答形式が不正です。");
 			} catch (error) {
 				failure = error instanceof Error ? error : new Error(String(error));
-				if (!(failure instanceof CliJsonSyntaxError)) child.kill();
+				child.kill();
 			}
 		};
 		child.stdout.setEncoding("utf8");
@@ -76,8 +71,7 @@ async function runCli(root: string, request: { provider: string; model: string; 
 		child.once("close", (code) => {
 			clearTimeout(timer);
 			consume(pending);
-			if (code !== 0 && failure instanceof CliJsonSyntaxError) reject(new Error("外部CLIが正常終了しませんでした。"));
-			else if (failure) reject(failure);
+			if (failure) reject(failure);
 			else if (code !== 0 || !answer) reject(new Error("外部CLIの最終回答を取得できませんでした。"));
 			else resolve(answer);
 		});
@@ -85,13 +79,11 @@ async function runCli(root: string, request: { provider: string; model: string; 
 	});
 }
 
-/** CLI区分をPiのモデル選択へ登録する。外部CLIもPiの会話・JSONイベント経路で扱う。 */
-export function registerCliProviders(pi: ExtensionAPI, root: string, models: Record<string, Record<string, string>>, readOnly = false, cliMode: CliMode = "chat"): void {
+/** CLI区分をPiのモデル選択へ登録する。外部CLIが処理全体を担当し、結果だけをPiへ戻す。 */
+export function registerCliProviders(pi: ExtensionAPI, root: string, models: Record<string, Record<string, string>>, readOnly = false): void {
 	let cwd = process.cwd();
-	let notify: ((message: string) => void) | undefined;
 	pi.on("before_agent_start", async (_event, ctx) => {
 		cwd = ctx.cwd;
-		notify = ctx.hasUI ? (message) => ctx.ui.notify(message, "error") : undefined;
 	});
 	for (const provider of CLI_PROVIDERS) {
 		const entries = Object.entries(models[provider] ?? {});
@@ -111,18 +103,13 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 							.filter((part) => part.type === "text").map((part) => part.text).join("\n");
 						return `[${message.role}]\n${text}`;
 					}).join("\n\n");
-					const tools = getCurrentTools(context.messages);
-					let payload: unknown = cliMode === "chat"
-						? chatPayload(context.messages, getCurrentSystemPrompt(context.messages), tools)
-						: { prompt: `以下はPiから委譲された会話です。最後のユーザー依頼を自身のツールで実行し、最終回答を返してください。\n\n${getCurrentSystemPrompt(context.messages)}\n\n${history}` };
-					payload = await options?.onPayload?.(payload, model) ?? payload;
-					if (!payload || typeof payload !== "object") throw new Error("外部CLIへの入力が不正です。");
-					const data = payload as { prompt?: string; messages?: unknown[]; tools?: unknown[] };
-					if (cliMode === "chat" ? !Array.isArray(data.messages) || !Array.isArray(data.tools) : typeof data.prompt !== "string") throw new Error("外部CLIへの入力が不正です。");
+					const payload = { prompt: `以下はPiから委譲された会話です。最後のユーザー依頼を自身のツールで実行し、最終回答を返してください。\n\n${getCurrentSystemPrompt(context.messages)}\n\n${history}` };
+					const data = await options?.onPayload?.(payload, model) ?? payload;
+					if (!data || typeof data !== "object" || !("prompt" in data) || typeof data.prompt !== "string") throw new Error("外部CLIへの入力が不正です。");
 					stream.push({ type: "start", partial: output });
 					output.content.push({ type: "thinking", thinking: "" });
 					stream.push({ type: "thinking_start", contentIndex: 0, partial: output });
-					const request = { ...data, ...(cliMode === "chat" ? { engine_prompt: enginePrompt(data) } : {}), cli_mode: cliMode, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" as const : "yolo" as const };
+					const request = { prompt: data.prompt, provider, model: model.id, project: cwd, mode: readOnly ? "read-only" as const : "yolo" as const };
 					const progress = (text: string) => {
 						const part = output.content[0];
 						if (part.type !== "thinking") return;
@@ -130,19 +117,7 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 						part.thinking += delta;
 						stream.push({ type: "thinking_delta", contentIndex: 0, delta, partial: output });
 					};
-					let answer: CliAnswer;
-					try {
-						answer = await runCli(root, request, options, progress, tools);
-					} catch (error) {
-						if (cliMode !== "chat" || !(error instanceof CliJsonSyntaxError)) throw error;
-						options?.signal?.throwIfAborted();
-						let repairPrompt: string;
-						try { repairPrompt = jsonRepairPrompt(request.engine_prompt!, error.response); }
-						catch (limitError) { notify?.(cliJsonPreview(error.response)); throw limitError; }
-						progress("JSON の形式を再要求します（1回のみ）。");
-						answer = await runCli(root, { ...request, engine_prompt: repairPrompt }, options, progress, tools);
-					}
-					const text = answer.content;
+					const text = await runCli(root, request, options, progress);
 					const part = output.content[0];
 					stream.push({ type: "thinking_end", contentIndex: 0, content: part.type === "thinking" ? part.thinking : "", partial: output });
 					output.content.push({ type: "text", text: "" });
@@ -150,20 +125,11 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					output.content[1] = { type: "text", text };
 					stream.push({ type: "text_delta", contentIndex: 1, delta: text, partial: output });
 					stream.push({ type: "text_end", contentIndex: 1, content: text, partial: output });
-					for (const toolCall of answer.toolCalls) {
-						const contentIndex = output.content.length;
-						output.content.push(toolCall);
-						stream.push({ type: "toolcall_start", contentIndex, partial: output });
-						stream.push({ type: "toolcall_end", contentIndex, toolCall, partial: output });
-					}
-					output.stopReason = answer.toolCalls.length ? "toolUse" : "stop";
+					output.stopReason = "stop";
 					stream.push({ type: "done", reason: output.stopReason, message: output });
 				} catch (error) {
 					output.stopReason = options?.signal?.aborted ? "aborted" : "error";
 					output.errorMessage = error instanceof Error ? error.message : String(error);
-					if (output.stopReason === "error" && (error instanceof CliJsonSyntaxError || error instanceof CliJsonValidationError)) {
-						notify?.(cliJsonPreview(error.response));
-					}
 					stream.push({ type: "error", reason: output.stopReason, error: output });
 				} finally { stream.end(); }
 			})();

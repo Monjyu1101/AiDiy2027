@@ -1,8 +1,5 @@
 //! AiDiy: Pi と共通の CodeAI アダプターへ委譲し、進捗・回答を通常イベントへ戻す。
-//! 子の失敗は再試行しない。正常終了したchatのJSON構文不正だけ1回形式修正する。会話全文を毎回渡し、子の別セッションを resume しない。
-
-#[path = "aidiy_cli_json.rs"]
-mod json_wrapper;
+//! 子の失敗は再試行しない。会話全文を毎回渡し、子の別セッションを resume しない。
 
 use crate::client_common::{Prompt, ResponseEvent, ResponseStream};
 use codex_protocol::error::{CodexErr, Result};
@@ -17,13 +14,6 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::process::{Child, Command};
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
-
-// AiDiy: CLI launch selection is process-local, not persisted to user configuration.
-static PASSTHROUGH: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-
-pub fn set_passthrough(enabled: bool) {
-    PASSTHROUGH.store(enabled, std::sync::atomic::Ordering::Relaxed);
-}
 
 const MAX_BYTES: usize = 16 * 1024 * 1024;
 const IDLE: Duration = Duration::from_secs(900);
@@ -90,90 +80,6 @@ fn delegated_prompt(prompt: &Prompt) -> Result<String> {
     Ok(text)
 }
 
-fn chat_request(prompt: &Prompt) -> Result<(serde_json::Value, codex_api::CliChatCodec)> {
-    if prompt.output_schema.is_some() {
-        return Err(invalid("CLI chat は構造化最終出力に未対応です。"));
-    }
-    // Reject modalities the bridge cannot carry rather than silently dropping them.
-    for item in &prompt.input {
-        if let ResponseItem::Message { content, .. } = item {
-            if content.iter().any(|part| {
-                !matches!(
-                    part,
-                    ContentItem::InputText { .. } | ContentItem::OutputText { .. }
-                )
-            }) {
-                return Err(invalid("CLI chat はテキスト入力だけに対応しています。"));
-            }
-        }
-    }
-    let mut input = vec![json!({"type": "message", "role": "system",
-        "content": [{"type": "input_text", "text": prompt.base_instructions.text}]})];
-    for item in &prompt.input {
-        if matches!(item, ResponseItem::Message { id: Some(id), .. } if id.as_str().starts_with("aidiy-cli-") && id.as_str().contains("-progress-"))
-        {
-            continue;
-        }
-        input.push(
-            serde_json::to_value(item).map_err(|_| invalid("CLI chat 履歴を変換できません。"))?,
-        );
-    }
-    Ok(codex_api::CliChatCodec::request(
-        &json!({"input": input, "tools": prompt.tools}),
-    ))
-}
-
-fn validate_chat_message(message: &serde_json::Value) -> Result<()> {
-    if message.get("role").and_then(serde_json::Value::as_str) != Some("assistant") {
-        return Err(invalid("CLI chat のroleが不正です。"));
-    }
-    // AiDiy: a non-array tool_calls field must not be silently ignored just because
-    // the response also contains text. The CLI bridge is a structured protocol.
-    if message
-        .get("tool_calls")
-        .is_some_and(|calls| !calls.is_array())
-        || message
-            .get("content")
-            .is_some_and(|content| !content.is_null() && !content.is_string())
-    {
-        return Err(invalid("CLI chat の応答構造が不正です。"));
-    }
-    let has_text = message
-        .get("content")
-        .and_then(serde_json::Value::as_str)
-        .is_some_and(|s| !s.trim().is_empty());
-    let calls = message
-        .get("tool_calls")
-        .and_then(serde_json::Value::as_array);
-    if !has_text && calls.is_none_or(|calls| calls.is_empty()) {
-        return Err(invalid("CLI chat の応答が空です。"));
-    }
-    let mut ids = std::collections::HashSet::new();
-    for call in calls.into_iter().flatten() {
-        let id = call
-            .get("id")
-            .and_then(serde_json::Value::as_str)
-            .filter(|s| !s.is_empty());
-        let name = call
-            .pointer("/function/name")
-            .and_then(serde_json::Value::as_str)
-            .filter(|s| !s.is_empty());
-        let args = call
-            .pointer("/function/arguments")
-            .and_then(serde_json::Value::as_str)
-            .and_then(|s| serde_json::from_str::<serde_json::Value>(s).ok());
-        if call.get("type").and_then(serde_json::Value::as_str) != Some("function")
-            || name.is_none()
-            || id.is_none()
-            || !ids.insert(id.unwrap_or_default())
-            || !args.is_some_and(|a| a.is_object())
-        {
-            return Err(invalid("CLI chat のツール要求が不正です。"));
-        }
-    }
-    Ok(())
-}
-
 pub(crate) async fn stream(
     prompt: &Prompt,
     model: &str,
@@ -183,13 +89,7 @@ pub(crate) async fn stream(
 ) -> Result<ResponseStream> {
     let (provider, model) = codex_model_provider_info::split_aidiy_cli_model(model)
         .ok_or_else(|| invalid("未対応の CLI モデルです。"))?;
-    let passthrough = PASSTHROUGH.load(std::sync::atomic::Ordering::Relaxed);
-    let mode = if passthrough {
-        execution_mode(permissions, approvals, cwd)?
-    } else {
-        // Child only generates decisions; the outer Codex enforces its own sandbox/approval.
-        "read-only"
-    };
+    let mode = execution_mode(permissions, approvals, cwd)?;
     let root = codex_model_provider_info::aidiy_root()
         .ok_or_else(|| invalid("aidiy_codex_settings.json の aidiy_root を確認してください。"))?;
     let suffix = if cfg!(windows) {
@@ -206,21 +106,14 @@ pub(crate) async fn stream(
                 "外部 CLI 委譲には backend_tools または backend_server の Python 環境が必要です。",
             )
         })?;
-    let (payload, codec) = if passthrough {
-        (
-            json!({"provider": provider, "model": model, "project": cwd,
-            "prompt": delegated_prompt(prompt)?, "mode": mode, "cli_mode": "passthrough"}),
-            None,
-        )
-    } else {
-        let (body, codec) = chat_request(prompt)?;
-        (
-            json!({"provider": provider, "model": model, "project": cwd,
-            "messages": body["messages"], "tools": body.get("tools").cloned().unwrap_or(json!([])),
-            "mode": mode, "cli_mode": "chat", "engine_prompt": json_wrapper::engine_prompt(&body)}),
-            Some(codec),
-        )
-    };
+    // AiDiy: 外部 CLI がツールを含めたターン全体を実行する。親へツール呼出しは返さない。
+    let payload = json!({
+        "provider": provider,
+        "model": model,
+        "project": cwd,
+        "prompt": delegated_prompt(prompt)?,
+        "mode": mode,
+    });
     let request =
         serde_json::to_vec(&payload).map_err(|_| invalid("外部 CLI の入力を作成できません。"))?;
     if request.len() > MAX_BYTES {
@@ -253,36 +146,11 @@ pub(crate) async fn stream(
     let (tx, rx_event) = mpsc::channel(32);
     tokio::spawn(async move {
         let response_id = format!("aidiy-cli-{}", uuid::Uuid::new_v4());
-        let outcome = async {
-            let mut request = request;
-            for attempt in 0..2 {
-                let repair = tokio::select! {
-                    biased;
-                    _ = cancel.cancelled() => return Err(CodexErr::TurnAborted),
-                    result = run_child(&mut child, &request, &tx, codec.as_ref(), &python, &root, &response_id, attempt == 0) => result?,
-                };
-                let Some(text) = repair else { return Ok(()); };
-                if attempt == 1 {
-                    json_wrapper::display_failed_response(&text);
-                    return Err(invalid("CLI chat の JSON 形式修正に失敗しました。"));
-                }
-                request = json_wrapper::repair_request(&request, &text)
-                    .map_err(|reason| {
-                        json_wrapper::display_failed_response(&text);
-                        invalid(reason)
-                    })?;
-                if request.len() > MAX_BYTES {
-                    json_wrapper::display_failed_response(&text);
-                    return Err(invalid("CLI chat の形式修正入力が大きすぎます。"));
-                }
-                if cancel.is_cancelled() {
-                    return Err(CodexErr::TurnAborted);
-                }
-                child = command.spawn()
-                    .map_err(|_| invalid("CLI chat の形式修正を開始できません。"))?;
-            }
-            unreachable!("bounded format repair loop")
-        }.await;
+        let outcome = tokio::select! {
+            biased;
+            _ = cancel.cancelled() => Err(CodexErr::TurnAborted),
+            result = run_child(&mut child, &request, &tx, &response_id) => result,
+        };
         if let Err(error) = outcome {
             stop_child(&mut child).await;
             let _ = tx.send(Err(error)).await;
@@ -324,75 +192,7 @@ enum AdapterEvent {
         ok: bool,
         #[serde(default)]
         text: String,
-        #[serde(default)]
-        message: Option<serde_json::Value>,
     },
-}
-
-// The Rust wrapper owns prompt construction and JSON extraction. Reuse the local
-// schema validator only after parsing: it never calls a CLI or executes a tool.
-async fn validate_chat_response(
-    python: &Path,
-    root: &Path,
-    request: &[u8],
-    value: serde_json::Value,
-) -> Result<serde_json::Value> {
-    let mut payload: serde_json::Value =
-        serde_json::from_slice(request).map_err(|_| invalid("CLI chat の検証入力が不正です。"))?;
-    payload["cli_mode"] = json!("validate_chat");
-    payload["response"] = value;
-    payload.as_object_mut().unwrap().remove("engine_prompt");
-    let mut command = Command::new(python);
-    command
-        .arg("-B")
-        .arg(root.join("backend_tools/tools_proc/harness_cli.py"))
-        .env("PYTHONIOENCODING", "utf-8")
-        .env("PYTHONDONTWRITEBYTECODE", "1")
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .kill_on_drop(true);
-    #[cfg(windows)]
-    command.creation_flags(0x08000000);
-    let mut process = command
-        .spawn()
-        .map_err(|_| invalid("CLI chat 検証を開始できません。"))?;
-    let bytes =
-        serde_json::to_vec(&payload).map_err(|_| invalid("CLI chat 検証入力を作成できません。"))?;
-    if bytes.len() > MAX_BYTES {
-        return Err(invalid("CLI chat 検証入力が大きすぎます。"));
-    }
-    let mut stdin = process
-        .stdin
-        .take()
-        .ok_or_else(|| invalid("CLI chat 検証入力がありません。"))?;
-    tokio::time::timeout(Duration::from_secs(30), stdin.write_all(&bytes))
-        .await
-        .map_err(|_| invalid("CLI chat 検証入力がタイムアウトしました。"))?
-        .map_err(|_| invalid("CLI chat 検証入力を送信できません。"))?;
-    drop(stdin);
-    let output = tokio::time::timeout(Duration::from_secs(30), process.wait_with_output())
-        .await
-        .map_err(|_| invalid("CLI chat 検証がタイムアウトしました。"))?
-        .map_err(|_| invalid("CLI chat 検証結果を取得できません。"))?;
-    if output.stdout.len() > MAX_BYTES {
-        return Err(invalid("CLI chat 検証結果が大きすぎます。"));
-    }
-    let event = serde_json::from_slice::<AdapterEvent>(&output.stdout)
-        .map_err(|_| invalid("CLI chat 検証結果が不正です。"))?;
-    match event {
-        AdapterEvent::Result {
-            ok: true,
-            message: Some(message),
-            ..
-        } if output.status.success() => Ok(message),
-        AdapterEvent::Result { text, .. } => Err(invalid(if text.is_empty() {
-            "CLI chat の schema 検証に失敗しました。".to_string()
-        } else {
-            text
-        })),
-        _ => Err(invalid("CLI chat の schema 検証に失敗しました。")),
-    }
 }
 
 async fn send(tx: &mpsc::Sender<Result<ResponseEvent>>, event: ResponseEvent) -> Result<()> {
@@ -411,12 +211,8 @@ async fn run_child(
     child: &mut Child,
     request: &[u8],
     tx: &mpsc::Sender<Result<ResponseEvent>>,
-    codec: Option<&codex_api::CliChatCodec>,
-    python: &Path,
-    root: &Path,
     response_id: &str,
-    emit_created: bool,
-) -> Result<Option<String>> {
+) -> Result<()> {
     let mut stdin = child
         .stdin
         .take()
@@ -430,19 +226,16 @@ async fn run_child(
         .stdout
         .take()
         .ok_or_else(|| invalid("外部 CLI の出力パイプがありません。"))?;
-    if emit_created {
-        send(
-            tx,
-            ResponseEvent::Created {
-                response_id: Some(response_id.to_string()),
-            },
-        )
-        .await?;
-    }
+    send(
+        tx,
+        ResponseEvent::Created {
+            response_id: Some(response_id.to_string()),
+        },
+    )
+    .await?;
     let mut buffer = [0u8; 8192];
     let mut pending = Vec::new();
     let mut answer = None;
-    let mut chat_answer = None;
     let mut progress_index = 0;
     loop {
         let size = tokio::time::timeout(IDLE, stdout.read(&mut buffer))
@@ -460,14 +253,11 @@ async fn run_child(
             let event = serde_json::from_slice::<AdapterEvent>(&pending[..end])
                 .map_err(|_| invalid("外部 CLI の応答形式が不正です。"))?;
             pending.drain(..=end);
-            if answer.is_some() || chat_answer.is_some() {
+            if answer.is_some() {
                 return Err(invalid("外部 CLI が最終回答の後に出力しました。"));
             }
             match event {
                 AdapterEvent::Progress { text } => {
-                    if codec.is_some() {
-                        continue;
-                    }
                     if text.is_empty() {
                         continue;
                     }
@@ -485,14 +275,8 @@ async fn run_child(
                     )
                     .await?;
                 }
-                AdapterEvent::Result { ok: true, text, .. } if codec.is_some() => {
-                    // AiDiy: defer parsing until the adapter exits successfully.
-                    chat_answer = Some(text);
-                }
-                AdapterEvent::Result { ok: true, text, .. }
-                    if codec.is_none() && !text.trim().is_empty() =>
-                {
-                    answer = Some(text)
+                AdapterEvent::Result { ok: true, text } if !text.trim().is_empty() => {
+                    answer = Some(text);
                 }
                 AdapterEvent::Result { text, .. } => {
                     return Err(invalid(if text.is_empty() {
@@ -510,30 +294,6 @@ async fn run_child(
         .map_err(|_| invalid("外部 CLI の終了状態を取得できません。"))?;
     if !status.success() || !pending.is_empty() {
         return Err(invalid("外部 CLI が正常終了しませんでした。"));
-    }
-    if let Some(codec) = codec {
-        let text = chat_answer.ok_or_else(|| invalid("CLI chat の構造化応答がありません。"))?;
-        let value = match json_wrapper::extract_object(&text) {
-            Ok(value) => value,
-            Err(_) if json_wrapper::repairable_syntax(&text) => return Ok(Some(text)),
-            Err(error) => {
-                json_wrapper::display_failed_response(&text);
-                return Err(invalid(error));
-            }
-        };
-        let answer = validate_chat_response(python, root, request, value)
-            .await
-            .and_then(|answer| {
-                validate_chat_message(&answer)?;
-                Ok(answer)
-            })
-            .inspect_err(|_| json_wrapper::display_failed_response(&text))?;
-        for event in codec.response(&answer, response_id) {
-            if !matches!(event, ResponseEvent::Created { .. }) {
-                send(tx, event).await?;
-            }
-        }
-        return Ok(None);
     }
     let answer = answer.ok_or_else(|| invalid("外部 CLI の最終回答を取得できませんでした。"))?;
     let id = format!("{response_id}-answer");
@@ -559,99 +319,63 @@ async fn run_child(
         },
     )
     .await?;
-    Ok(None)
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // AiDiy: malformed engine JSON is repairable only after a successful child exit.
+    // AiDiy: child text is rendered as a final answer, never as a parent-side tool call.
     #[cfg(unix)]
     #[tokio::test]
-    async fn chat_format_repair_waits_for_successful_process_exit() {
-        for (exit_code, repairable) in [(0, true), (1, false)] {
+    async fn delegation_only_displays_plain_text_and_requires_successful_exit() {
+        let text = r#"{"tool_calls":[{"name":"read"}]}"#;
+        let line = json!({"type":"result","ok":true,"text":text}).to_string();
+        for exit_code in [0, 1] {
             let mut child = Command::new("sh")
                 .arg("-c")
-                .arg(format!("cat >/dev/null; printf '%s\\n' '{{\"type\":\"result\",\"ok\":true,\"text\":\"bad JSON\"}}'; exit {exit_code}"))
+                .arg(r#"cat >/dev/null; printf '%s\n' "$1"; exit "$2""#)
+                .arg("aidiy-cli-test")
+                .arg(&line)
+                .arg(exit_code.to_string())
                 .stdin(Stdio::piped())
                 .stdout(Stdio::piped())
                 .kill_on_drop(true)
                 .spawn()
                 .unwrap();
-            let (_, codec) = codex_api::CliChatCodec::request(&json!({"input":[],"tools":[]}));
             let (tx, mut rx) = mpsc::channel(32);
-            let result = run_child(
-                &mut child,
-                b"{}",
-                &tx,
-                Some(&codec),
-                Path::new("unused"),
-                Path::new("unused"),
-                "repair-test",
-                true,
-            )
-            .await;
-            if repairable {
-                assert_eq!(result.unwrap(), Some("bad JSON".to_string()));
-            } else {
-                assert!(result.is_err());
-            }
+            let result = run_child(&mut child, b"{}", &tx, "delegation-test").await;
             assert!(matches!(
                 rx.try_recv().unwrap().unwrap(),
                 ResponseEvent::Created { .. }
             ));
-            assert!(
-                rx.try_recv().is_err(),
-                "invalid output must not emit tools or completion"
-            );
+            if exit_code == 0 {
+                result.unwrap();
+                assert!(matches!(
+                    rx.try_recv().unwrap().unwrap(),
+                    ResponseEvent::OutputItemAdded(ResponseItem::Message { .. })
+                ));
+                assert!(matches!(
+                    rx.try_recv().unwrap().unwrap(),
+                    ResponseEvent::OutputTextDelta(answer) if answer == text
+                ));
+                assert!(matches!(
+                    rx.try_recv().unwrap().unwrap(),
+                    ResponseEvent::OutputItemDone(ResponseItem::Message { .. })
+                ));
+                assert!(matches!(
+                    rx.try_recv().unwrap().unwrap(),
+                    ResponseEvent::Completed {
+                        end_turn: Some(true),
+                        ..
+                    }
+                ));
+            } else {
+                assert!(result.is_err());
+            }
+            assert!(rx.try_recv().is_err());
         }
-    }
-
-    #[test]
-    fn chat_history_keeps_calls_and_results() {
-        let mut prompt = Prompt::default();
-        prompt.base_instructions.text = "SYSTEM".to_string();
-        prompt.input = vec![
-            serde_json::from_value(
-                json!({"type":"function_call","call_id":"call_1","name":"read","arguments":"{}"}),
-            )
-            .unwrap(),
-            serde_json::from_value(
-                json!({"type":"function_call_output","call_id":"call_1","output":"READ_RESULT"}),
-            )
-            .unwrap(),
-        ];
-        let (request, _) = chat_request(&prompt).unwrap();
-        assert_eq!(request["messages"][0]["content"], "SYSTEM");
-        assert_eq!(request["messages"][1]["tool_calls"][0]["id"], "call_1");
-        assert_eq!(request["messages"][2]["tool_call_id"], "call_1");
-        assert_eq!(request["messages"][2]["content"], "READ_RESULT");
-    }
-
-    #[test]
-    fn chat_rejects_malformed_tool_calls() {
-        assert!(validate_chat_message(&json!({"role":"assistant", "content":"answer"})).is_ok());
-        assert!(
-            validate_chat_message(&json!({"role":"assistant", "tool_calls":[
-                {"id":"c1", "type":"function", "function":{"name":"read", "arguments":"{}"}}
-            ]}))
-            .is_ok()
-        );
-        assert!(
-            validate_chat_message(&json!({"role":"assistant", "tool_calls":[
-                {"id":"c1", "type":"function", "function":{"name":"read", "arguments":"not json"}}
-            ]}))
-            .is_err()
-        );
-        assert!(validate_chat_message(&json!({"role":"assistant"})).is_err());
-        assert!(
-            validate_chat_message(
-                &json!({"role":"assistant", "content":"answer", "tool_calls":{}})
-            )
-            .is_err()
-        );
-        assert!(validate_chat_message(&json!({"role":"assistant", "content":["answer"]})).is_err());
     }
 
     #[test]
@@ -673,6 +397,14 @@ mod tests {
         assert_eq!(
             execution_mode(&PermissionProfile::read_only(), AskForApproval::Never, &cwd).unwrap(),
             "read-only"
+        );
+        assert!(
+            execution_mode(
+                &PermissionProfile::workspace_write(),
+                AskForApproval::OnRequest,
+                &cwd
+            )
+            .is_err()
         );
     }
 
