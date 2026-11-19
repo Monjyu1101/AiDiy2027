@@ -195,3 +195,14 @@ test('Predictionの役割と設定モデルの簡易説明は入力予測に統�
  const html=await render('components/設定モデル/設定モデルパネル.vue',{data:{項目:[row]},selected:'PREDICTION',online:false});
  assert.match(html,/PREDICTION \/ 入力予測/);assert.doesNotMatch(html,/次のユーザー入力/);
 });
+
+test('PredictionはChat未試行でも共通シアンボタンで実行でき、切断・処理中は無効',async()=>{
+ const data={項目:[{id:'PREDICTION',区分:'PREDICTION',役割:'入力予測',状態:'未実行'}],チャット成功:[],予測条件:{テスト可能:true}};
+ for(const flags of [{online:true},{online:false},{online:true,loading:true},{online:true,running:true}]){
+  const html=await render('components/設定モデル/設定モデルパネル.vue',{data,...flags});
+  const button=html.match(/<button[^>]*data-trial-id="PREDICTION"[^>]*>/)[0];
+  assert.match(button,/single-test-button/);
+  assert.equal(/ disabled/.test(button),!flags.online||!!flags.loading||!!flags.running);
+ }
+ assert.match(source('components/共通表示/単体テストボタン.css'),/background: #7dd3fc/);
+});

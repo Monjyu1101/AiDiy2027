@@ -185,9 +185,9 @@ aidiy_diagは認証付きGET一覧に候補配列のIDそのものがある方�
 
 ## 予測モデルの手動試行
 
-設定モデル・AIモデルともLive直後にPredictionを置きます。同一provider・実行modelのChat成功をサーバー側で確認し、auto解決後に一致したときだけ `/internal/prediction_llms` へ進みます。OAuth／APIキー、FreeAI／Geminiを混同しません。設定・モデル候補・OAuth認証の変更、再取得・再読込・手動入力変更、Chat再試行で過去の成功を破棄します。
+設定モデル・AIモデルともLive直後にPredictionを置きます。設定モデルの個別テストはChatの事前テストなしで実行でき、成功済みChatがなければ設定中のChatで予測前の会話を準備します。手動のAIモデルは引き続きChat成功が必要です。どちらも2ターンの履歴保存を確認した後だけ `/internal/prediction_llms` へ進みます。OAuth／APIキー、FreeAI／Geminiを混同しません。設定・モデル候補・OAuth認証の変更、再取得・再読込・手動入力変更、Chat再試行で過去の成功を破棄します。
 
-Chatの `aidiy_chat_llms/chat_llms_run`、Code系の `aidiy_code_agents/code_agents_run`、Predictionに同じCODE_BASE_PATHの絶対 `project_path` を渡します。相対パスはbackend_server基準、未設定は実行不可です。通常のMCP側で実際の入力と成功応答をA会話履歴へ保存し、Diagは `history_saved: true` まで確認して成功とします。Chat成功後の1往復は、Predictionが同一プロジェクトの直近2時間・最新最大10ターンを読む通常経路で参照できます。Predictionの試行は、Chat試行でOKになったモデル（予測モデルと同じでなくてよい）で「昔々、あるところに」「おじいさんと」の2ターンをChatとして送り、両方の履歴保存を確認してから予測する。非空の応答はOK、「おばあさん」を含めば `予測評価: 完璧`。1行の期限は通常の2倍。保存失敗・未確認ではPredictionを解禁せず、診断用交換・合成履歴・専用APIで代替しません。
+Chatの `aidiy_chat_llms/chat_llms_run`、Code系の `aidiy_code_agents/code_agents_run`、Predictionに同じCODE_BASE_PATHの絶対 `project_path` を渡します。相対パスはbackend_server基準、未設定は実行不可です。通常のMCP側で実際の入力と成功応答をA会話履歴へ保存し、Diagは `history_saved: true` まで確認して成功とします。Chat成功後の1往復は、Predictionが同一プロジェクトの直近2時間・最新最大10ターンを読む通常経路で参照できます。Predictionの試行は、成功済みChatモデル（設定モデルで未試行の場合は設定中のChatモデル。予測モデルと同じでなくてよい）で「昔々、あるところに」「おじいさんと」の2ターンをChatとして送り、両方の履歴保存を確認してから予測する。非空の応答はOK、「おばあさん」を含めば `予測評価: 完璧`。1行の期限は通常の2倍。保存失敗・未確認ではPredictionを解禁せず、診断用交換・合成履歴・専用APIで代替しません。
 
 正常な非空応答は `!`／`！` で始まる説明も合格とし、NG・空応答・通信失敗・タイムアウトは合格にしません。予測結果を履歴に保存せず、ブラウザから履歴本文や成功判定を受け付けません。詳しい確認条件・経路・mock検証方針は [READMEのPrediction手動試行](../../frontend_diag/README.md#predictionの手動試行) を参照します。
 

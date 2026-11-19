@@ -27,10 +27,23 @@ function fixture({config=baseConfig,answer='おばあさんが住んでいまし
  return {trials,calls,tools,row,close:()=>trials.close()};
 }
 
-test('prediction waits for a Chat success first',async()=>{
+test('設定モデルPredictionはChat未試行でも設定中のChatで履歴を準備して実行できる',async()=>{
  const f=fixture();
- try{assert.equal((await f.trials.snapshot()).予測条件.テスト可能,false);await assert.rejects(()=>f.trials.start({rowId:'PREDICTION'}),/Chatテスト/);}
+ try{
+  assert.equal((await f.trials.snapshot()).予測条件.テスト可能,true);
+  assert.equal((await f.row('PREDICTION')).状態,'OK');
+  assert.deepEqual(f.tools().map(call=>[call.body.params.arguments.ai_name,call.body.params.arguments.ai_model]),[['openrt_chat','chat-model'],['openrt_chat','chat-model']]);
+ }finally{await f.close();}
+});
+test('手動AIモデルPredictionは引き続きChat成功が必要',async()=>{
+ const f=fixture();
+ try{await assert.rejects(()=>f.trials.start({manual:{family:'PREDICTION',provider:'gemini_chat',model:'gemini-flash-lite-latest'}}),/Chatテスト/);assert.equal(f.calls.length,0);}
  finally{await f.close();}
+});
+test('Chat未設定・プロジェクト未設定ではPredictionを開始しない',async()=>{
+ for(const config of [{...baseConfig,CHAT_AI_NAME:''},{...baseConfig,CODE_BASE_PATH:''}]){
+  const f=fixture({config});try{assert.equal((await f.trials.snapshot()).予測条件.テスト可能,false);await assert.rejects(()=>f.trials.start({rowId:'PREDICTION'}));assert.equal(f.calls.length,0);}finally{await f.close();}
+ }
 });
 
 test('story turns use the Chat-OK model, not the prediction model, then the classic continuation is perfect',async()=>{
@@ -63,9 +76,21 @@ test('CLI prediction also sends the story through Chat and uses a longer predict
 test('prediction is NG without calling the predictor when a story turn is not saved to history',async()=>{
  const f=fixture({historySaved:prompt=>prompt!=='昔々、あるところに'});
  try{
-  await f.row('CHAT');const result=await f.row('PREDICTION');
+  const result=await f.row('PREDICTION');
   assert.equal(f.calls.some(call=>call.path==='/internal/prediction_llms'),false);
   assert.equal(result.状態,'NG');assert.match(result.説明,/昔々/);
   assert.deepEqual(result.経過.map(step=>step.状態),['NG']);
+ }finally{await f.close();}
+});
+
+test('設定モデルの一括動作確認ではChat失敗後に追加の会話を送らない',async()=>{
+ const f=fixture({historySaved:()=>false});
+ try{
+  const run=await f.trials.start();
+  assert.equal((await f.trials.next(run.実行ID,'CHAT')).状態,'NG');
+  await f.trials.next(run.実行ID,'LIVE');
+  const before=f.calls.length;
+  assert.equal((await f.trials.next(run.実行ID,'PREDICTION')).状態,'未実施');
+  assert.equal(f.calls.length,before);
  }finally{await f.close();}
 });

@@ -28,7 +28,7 @@ export function 設定モデル状態を作成({ api, 接続可能 }) {
  async function 開始(rowId){
   if(!有効()||実行中.value||読込中.value||!設定.value?.項目?.length)return;
   if(rowId!==undefined&&!設定.value.項目.some(row=>row.id===rowId))return;
-  if(rowId==='PREDICTION'&&!設定.value.予測条件?.テスト可能){通知.value=設定.value.予測条件?.説明||'先にChatテストを成功させてください。';return;}
+  if(rowId==='PREDICTION'&&!設定.value.予測条件?.テスト可能){通知.value=設定.value.予測条件?.説明||'予測モデル・Chatモデル・プロジェクトの設定を確認してください。';return;}
   中止();const 現在=++世代;制御=new AbortController();実行中.value=true;const 前版=設定.value.版;
   // 次の開始で音声は失効する。個別テストでは他の行のテキスト結果だけを残す。
   結果.value=rowId===undefined?{}:Object.fromEntries(Object.entries(結果.value).map(([id,{音声ファイル,...value}])=>[id,value]));通知.value='設定を確認して試行します…';

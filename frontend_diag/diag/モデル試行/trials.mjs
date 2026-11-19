@@ -225,7 +225,15 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
     const installed=await installedClisFn();
     return {state,config,version,predictionCatalog,installed,rows:configRows(config).map(row=>installationRow(row,installed))};
   };
-  function predictionTarget(s,provider,model){
+  function predictionChat(s,configured=false){
+    const passed=successList().at(-1);
+    if(passed)return passed;
+    // 設定モデルの単独Predictionは、設定中のChatで会話履歴を準備できる。
+    // AIモデルの手動選択は従来どおりChat試行成功を必要とする。
+    const row=configured?s.rows.find(row=>row.id==='CHAT'):null;
+    return row?.状態==='未実行'?{provider:row.プロバイダ,model:row.モデル}:null;
+  }
+  function predictionTarget(s,provider,model,configured=false){
     let name=provider==='auto'?text(s.config.PREDICTION_AI_NAME)||'auto':provider;
     if(name==='auto')name=PREDICTION_AUTO_PROVIDERS.find(name=>Object.keys(s.predictionCatalog[name]?.models||{}).some(id=>label(id)&&!['auto','same'].includes(id)));
     let selected=model==='auto'?text(s.config[PREDICTION_MODEL_KEYS[name]])||'auto':model;
@@ -235,11 +243,11 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
     if(!PREDICTION_PROVIDERS.includes(name)||!label(selected)||redact(selected,s.config)!==selected||!models||!Object.hasOwn(models,selected))reason='予測モデル候補がありません。モデル一覧を再取得・書込してください。';
     const project=trialProjectPath(s.config);
     if(!project)reason='CODE_BASE_PATHに予測対象のプロジェクトを設定してください。';
-    // 予測前の2ターンはChat試行でOKになったモデルで送る。予測モデルと同じである必要はない。
-    const passed=successList().length>0;
-    return {provider:label(redact(name,s.config)),model:label(redact(selected,s.config)),project,available:!reason,ready:!reason&&passed,reason:reason||(!passed?'先にChatテストを成功させてください（OKになったモデルで「昔々、あるところに」「おじいさんと」を送ります）。':'')};
+    // 予測前の2ターンは成功済みChatを優先。設定モデルの個別テストだけ設定中Chatも使える。
+    const passed=!!predictionChat(s,configured);
+    return {provider:label(redact(name,s.config)),model:label(redact(selected,s.config)),project,available:!reason,ready:!reason&&passed,reason:reason||(!passed?(configured?'予測前の会話に使うChatモデルを設定してください。':'先にChatテストを成功させてください（OKになったモデルで「昔々、あるところに」「おじいさんと」を送ります）。'):'')};
   }
-  const trialContext=s=>{const row=s.rows.find(row=>row.id==='PREDICTION');const target=predictionTarget(s,row.プロバイダ,row.モデル);return {チャット成功:successList(),予測条件:{プロバイダ:target.provider,モデル:target.model,プロジェクト:redact(target.project,s.config),利用可能:target.available,テスト可能:target.ready,説明:target.reason}};};
+  const trialContext=(s,configured=true)=>{const row=s.rows.find(row=>row.id==='PREDICTION');const target=predictionTarget(s,row.プロバイダ,row.モデル,configured);return {チャット成功:successList(),予測条件:{プロバイダ:target.provider,モデル:target.model,プロジェクト:redact(target.project,s.config),利用可能:target.available,テスト可能:target.ready,説明:target.reason}};};
   const supported=(family,provider)=>family==='CHAT'?Object.hasOwn(CHAT,provider):family==='LIVE'?Object.hasOwn(LIVE,provider):family==='PREDICTION'?['auto',...PREDICTION_PROVIDERS].includes(provider):family==='DECISION'?DECISION.has(provider):family==='CODE'?CODE.has(provider):false;
   const publicSnapshot=s=>({版:s.version,項目:s.rows,...trialContext(s)});
   function cancel(preserveAudio=false){if(run){const id=run.id;run.controller.abort();clearTimeout(run.timer);run=null;if(!preserveAudio)void audioStore.clear(id).catch(()=>{});}}
@@ -289,7 +297,7 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
         if(saved&&redact(saved,s.config)===saved&&!provider.音声.some(v=>v.id===saved))provider.音声.push({id:saved,名前:saved+'（設定保持値・一覧外）'});
       }
       const 初期値=Object.fromEntries(s.rows.filter(row=>['CHAT','LIVE','PREDICTION','DECISION','CODE1'].includes(row.id)).map(row=>[row.区分,{provider:row.プロバイダ,model:row.モデル,voice:row.音声}]));
-      return {区分:families,版:s.version,初期値,...trialContext(s)};
+      return {区分:families,版:s.version,初期値,...trialContext(s,false)};
     },
     async start({signal,rowId,manual,manuals}={}) {
       if(run)throw failure('前の試行を終了してから開始してください。');
@@ -302,7 +310,7 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
       // 準備中も占有し、同時の開始を拒否する。
       const current={id:randomBytes(16).toString('hex'),controller:new AbortController(),cache:new Map(),index:0,busy:false};run=current;
       const abort=()=>current.controller.abort();signal?.addEventListener('abort',abort,{once:true});
-      try {await audioStore.clear();if(signal?.aborted)abort();const s=await snapshot();if(s.state!=='読込済み' || !portOf(s.config))throw failure('設定ファイルを読み取れません。');const queue=manualRows.length?manualRows:rowId===undefined?s.rows:s.rows.filter(row=>row.id===rowId);if(!queue.length)throw failure('設定項目が見つかりません。',404);if(queue.some(row=>row.区分==='CHAT'))chats.clear();if(queue.length===1&&queue[0].区分==='PREDICTION'){const target=predictionTarget(s,queue[0].プロバイダ,queue[0].モデル);if(!target.ready)throw failure(target.reason);}if(!(await statusFn({signal:current.controller.signal})).online || current.controller.signal.aborted)throw failure('Tools に接続してください。');Object.assign(current,s,{queue,manual,manuals});current.timer=setTimeout(cancel,TRIAL_RUN_TTL_MS);current.timer.unref?.();return {実行ID:current.id,実行順:queue.map(row=>row.id),...publicSnapshot(s)};}
+      try {await audioStore.clear();if(signal?.aborted)abort();const s=await snapshot();if(s.state!=='読込済み' || !portOf(s.config))throw failure('設定ファイルを読み取れません。');const queue=manualRows.length?manualRows:rowId===undefined?s.rows:s.rows.filter(row=>row.id===rowId);if(!queue.length)throw failure('設定項目が見つかりません。',404);if(queue.some(row=>row.区分==='CHAT'))chats.clear();if(queue.length===1&&queue[0].区分==='PREDICTION'){const target=predictionTarget(s,queue[0].プロバイダ,queue[0].モデル,rowId==='PREDICTION'&&!manual&&!manuals);if(!target.ready)throw failure(target.reason);}if(!(await statusFn({signal:current.controller.signal})).online || current.controller.signal.aborted)throw failure('Tools に接続してください。');Object.assign(current,s,{queue,manual,manuals,configuredPrediction:rowId==='PREDICTION'&&!manual&&!manuals});current.timer=setTimeout(cancel,TRIAL_RUN_TTL_MS);current.timer.unref?.();return {実行ID:current.id,実行順:queue.map(row=>row.id),...publicSnapshot(s)};}
       catch(error){if(run===current)cancel();throw error;}finally{signal?.removeEventListener('abort',abort);}
     },
     cancel(id){if(run?.id!==id)throw failure('試行が見つかりません。',404);cancel();return {状態:'中止'};},
@@ -329,10 +337,10 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
         if(current.cache.has(key)){const prior=current.cache.get(key);return {...prior,id:row.id,共有元:prior.id,所要ms:0};}
         let payload;
         if(row.区分==='PREDICTION'){
-          const target=predictionTarget(current,row.プロバイダ,row.モデル);
+          const target=predictionTarget(current,row.プロバイダ,row.モデル,current.configuredPrediction===true);
           if(!target.ready)return {...base,状態:'未実施',説明:target.reason};
-          // 予測の材料として、Chat試行でOKになったモデルで2ターンを送り、通常経路で会話履歴へ保存させる。
-          const cli=PREDICTION_CLI_PROVIDERS.includes(target.provider),chat=successList().at(-1);
+          // 成功済みChatを優先し、設定モデルでは未試行でも設定中のChatで2ターンを保存する。
+          const cli=PREDICTION_CLI_PROVIDERS.includes(target.provider),chat=predictionChat(current,current.configuredPrediction===true);
           for(const prompt of PREDICTION_STORY_PROMPTS){
             const done=経過追加(current,`「${prompt}」を送信（${chat.provider} / ${chat.model}）`);
             const turn=await callMcp({区分:'CHAT',プロバイダ:chat.provider,モデル:chat.model},current.config,{signal:current.controller.signal,request,manual:{prompt}});
