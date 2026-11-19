@@ -73,6 +73,8 @@ for(const entry of ['file','package'])test(`Avatarアイコン: ${entry}起動�
  const expected=path.join(root,'public/icons/AiDiy_avatar.png'),source=path.resolve(__dirname,'../public/icons/AiDiy_avatar.png');
  mkdirSync(path.dirname(entryFilename),{recursive:true});mkdirSync(path.dirname(expected),{recursive:true});
  copyFileSync(filename,entryFilename);copyFileSync(source,expected);
+ const layoutSource=path.resolve(__dirname,'../electron/IDE窓配置.cjs'),layoutCopy=path.join(root,'electron/IDE窓配置.cjs');
+ mkdirSync(path.dirname(layoutCopy),{recursive:true});copyFileSync(layoutSource,layoutCopy);
  const cwd=path.join(temporary,'unrelated-working-directory');mkdirSync(cwd);
  const f=fixture({entryFilename,appPath:entry==='file'?path.dirname(entryFilename):root,cwd});
  await assertAvatarIcon(f,root);

@@ -123,11 +123,27 @@ const 表示処理 = new WeakMap<BrowserWindow, Promise<boolean>>()
 const 表示希望 = new WeakMap<BrowserWindow, boolean>()
 
 // IDEから起動されたプロセスの専用IPC。rendererの公開APIには追加しない。
-const { createLayoutController, sanitizeSnapshot: sanitizeIdeLayout } = require(path.join(__dirname, '../electron/IDE窓配置.cjs'))
+const ideManagedAvatar = avatarAlone && process.env.AIDIY_AVATAR_IDE_OWNED === '1' && process.env.AIDIY_AVATAR_MANAGED === '1'
+let coreDisplay = 'アバター'
+const { createLayoutController, restorePanelLayout, isCoreDisplay } = require(path.join(__dirname, '../electron/IDE窓配置.cjs')) as {
+  createLayoutController: (options: {
+    windows: () => BrowserWindow[]; roleOf: (window: BrowserWindow) => WindowRole | undefined
+    screen: typeof screen; initialBoundsOf: (window: BrowserWindow) => WindowBounds; panelOpen: (role: PanelKey) => boolean
+    coreDisplay: () => string
+  }) => { capture: () => unknown; restore: (value: unknown) => boolean; apply: (window: BrowserWindow) => void }
+  isCoreDisplay: (value: unknown) => value is string
+  restorePanelLayout: (value: unknown, actions: {
+    prepare: (role: PanelKey) => Promise<void>; hide: (role: PanelKey) => void
+    show: (role: PanelKey) => Promise<void>; place: (value: { coreDisplay?: string }) => boolean
+    isVisible: (role: 'core' | PanelKey) => boolean
+  }) => Promise<boolean>
+}
 const ideLayout = createLayoutController({
   windows: () => BrowserWindow.getAllWindows(),
   roleOf: (window: BrowserWindow) => windowRoles.get(window.id),
   screen,
+  panelOpen: role => panelStates[role],
+  coreDisplay: () => coreDisplay,
   initialBoundsOf: (window: BrowserWindow) => {
     const role = windowRoles.get(window.id)
     const bounds = role === 'core' ? CORE_BOUNDS : PANEL_BOUNDS[role as PanelKey]
@@ -138,28 +154,32 @@ const ideLayout = createLayoutController({
     return { ...position, width: bounds.width, height: bounds.height }
   },
 })
-if (avatarAlone && process.env.AIDIY_AVATAR_IDE_OWNED === '1' && process.env.AIDIY_AVATAR_MANAGED === '1' && process.connected) {
+if (ideManagedAvatar && process.connected) {
   process.on('message', async (message: any) => {
     const request = message?.avatarLayout
     if (!Number.isSafeInteger(request?.id) || !app.isReady() || !process.connected) return
     if (request.action === 'capture') process.send?.({ avatarLayoutResult: { id: request.id, ok: true, snapshot: ideLayout.capture() } })
     else if (request.action === 'restore') {
-      const snapshot = sanitizeIdeLayout(request.snapshot)
-      let ok = !!snapshot
+      let ok = false
       try {
-        if (snapshot) {
-          // 主窓は起動済み。保存した表示パネルだけを作り、読込後に配置する。
-          for (const item of snapshot.windows) {
-            if (item.role !== 'core') await waitForReady(createPanelWindow(item.role as PanelKey))
-          }
-          ok = ideLayout.restore(snapshot)
-          for (const item of snapshot.windows) {
-            if (item.role !== 'core') await setPanelVisibility(item.role as PanelKey, true)
-            const window = getWindowByRole(item.role)
-            if (!window || window.isDestroyed() || !window.isVisible()) ok = false
-          }
-        }
-      } catch { ok = false }
+        ok = await restorePanelLayout(request.snapshot, {
+          prepare: role => waitForReady(createPanelWindow(role, false)),
+          hide: role => { if (panelWindows.has(role)) void setPanelVisibility(role, false) },
+          show: role => setPanelVisibility(role, true, true),
+          place: snapshot => {
+            if (!ideLayout.restore(snapshot)) return false
+            if (snapshot.coreDisplay !== undefined) {
+              coreDisplay = snapshot.coreDisplay
+              getWindowByRole('core')?.webContents.send('avatar:core-display-changed', coreDisplay)
+            }
+            return true
+          },
+          isVisible: role => {
+            const window = getWindowByRole(role)
+            return !!window && !window.isDestroyed() && !window.isMinimized() && window.isVisible()
+          },
+        })
+      } catch { /* 部分復元は成功として返さない。 */ }
       if (process.connected) process.send?.({ avatarLayoutResult: { id: request.id, ok } })
     }
   })
@@ -489,7 +509,7 @@ function notifyPanelStates() {
   })
 }
 
-async function setPanelVisibility(panel: PanelKey, visible: boolean) {
+async function setPanelVisibility(panel: PanelKey, visible: boolean, restoreMinimized = false) {
   const window = panelWindows.get(panel)
   if (!window || window.isDestroyed()) {
     panelStates[panel] = false
@@ -500,6 +520,7 @@ async function setPanelVisibility(panel: PanelKey, visible: boolean) {
   panelStates[panel] = visible
   notifyPanelStates()
   if (!visible) { ウィンドウ非表示(window); return }
+  if (restoreMinimized && window.isMinimized()) window.restore()
   if (await ウィンドウ表示(window, '#000', () => panelStates[panel] && panelWindows.get(panel) === window)) {
     window.webContents.send('window:shown')
   }
@@ -538,11 +559,11 @@ function applyPrimaryMode(window: BrowserWindow, mode: WindowMode) {
   }, false)
 }
 
-function createPanelWindow(panel: PanelKey) {
+function createPanelWindow(panel: PanelKey, syncVisibility = true) {
   if (!Object.prototype.hasOwnProperty.call(PANEL_BOUNDS, panel)) throw new Error('許可されていないパネルです。')
   const existing = panelWindows.get(panel)
   if (existing && !existing.isDestroyed()) {
-    setPanelVisibility(panel, panelStates[panel])
+    if (syncVisibility) void setPanelVisibility(panel, panelStates[panel])
     return existing
   }
 
@@ -931,6 +952,16 @@ app.whenReady().then(async () => {
   })
 
   ipcMain.handle('panel:get-states', () => ({ ...panelStates }))
+
+  // Sv/Ld対象のIDE所有コアだけ。画面種別以外のデータは取得・保存しない。
+  const ownedCoreSender = (event: IpcMainInvokeEvent) => {
+    const window = ideManagedAvatar ? currentControlWindow(event) : null
+    return !!window && windowRoles.get(window.id) === 'core'
+  }
+  ipcMain.handle('avatar:get-core-display', event => ownedCoreSender(event) ? coreDisplay : null)
+  ipcMain.handle('avatar:set-core-display', (event, value: unknown) => {
+    if (ownedCoreSender(event) && isCoreDisplay(value)) coreDisplay = value
+  })
 
   ipcMain.handle('settings:open', (event, sessionId: string) => {
     if (avatarAlone && !currentControlWindow(event)) return

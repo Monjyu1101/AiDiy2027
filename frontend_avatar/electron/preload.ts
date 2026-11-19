@@ -56,6 +56,13 @@ const api = {
   togglePanel: (panel: PanelKey) => ipcRenderer.invoke('panel:toggle', panel),
   applyPanelStates: (states: Record<PanelKey, boolean>) => ipcRenderer.invoke('panel:apply-states', states) as Promise<Record<PanelKey, boolean>>,
   getPanelStates: () => ipcRenderer.invoke('panel:get-states') as Promise<Record<PanelKey, boolean>>,
+  getCoreDisplay: () => ipcRenderer.invoke('avatar:get-core-display') as Promise<string | null>,
+  setCoreDisplay: (value: string) => ipcRenderer.invoke('avatar:set-core-display', value) as Promise<void>,
+  onCoreDisplayChanged: (callback: (value: string) => void) => {
+    const handler = (_event: unknown, value: string) => callback(value)
+    ipcRenderer.on('avatar:core-display-changed', handler)
+    return () => ipcRenderer.removeListener('avatar:core-display-changed', handler)
+  },
   listDisplaySources: () => ipcRenderer.invoke('desktop:list-sources') as Promise<DisplaySourceInfo[]>,
   listVrmaFiles: (folderName: string) => ipcRenderer.invoke('desktop:list-vrma-files', folderName) as Promise<string[]>,
   setDisplaySource: (sourceId: string | null) => ipcRenderer.invoke('desktop:set-source', sourceId),

@@ -109,9 +109,16 @@ const マイクレベル = ref(0)
 const スピーカーレベル = ref(0)
 const 音声エラー = ref('')
 const ウェルカムホバー中 = ref(false)
-type 表示選択型 = 'アバター' | 'カレンダーα' | 'xneko' | 'xeyes' | 'アナログ時計' | 'デジタル時計' | 'デジアナ時計' | 'カレンダー' | '無し'
+const 表示選択 = ref('アバター')
+let 表示選択世代 = 0
+let 表示選択購読解除: (() => void) | undefined
 
-const 表示選択 = ref<表示選択型>('アバター')
+function 表示選択変更(event: Event) {
+  const value = (event.target as HTMLSelectElement).value
+  表示選択世代 += 1
+  表示選択.value = value
+  void window.desktopApi?.setCoreDisplay?.(value).catch(() => {})
+}
 const 入力スペクトラム = ref<number[]>(初期スペクトラム())
 const 出力スペクトラム = ref<number[]>(初期スペクトラム())
 const 音声Socket = shallowRef<AIWebSocket | null>(null)
@@ -447,11 +454,21 @@ watch(
 )
 
 onMounted(() => {
+  const 世代 = 表示選択世代
+  表示選択購読解除 = window.desktopApi?.onCoreDisplayChanged?.(value => {
+    表示選択世代 += 1
+    表示選択.value = value
+  })
+  void window.desktopApi?.getCoreDisplay?.().then(value => {
+    if (value !== null && 表示選択世代 === 世代) 表示選択.value = value
+  }).catch(() => {})
   UI自動非表示予約()
   ポインター確認開始()
 })
 
 onBeforeUnmount(() => {
+  表示選択世代 += 1
+  表示選択購読解除?.()
   UI自動非表示停止()
   ポインター確認停止()
   字幕タイマー停止()
@@ -595,7 +612,7 @@ defineExpose({ 字幕追加 })
       <div v-show="UI表示中" class="left-bottom-settings">
         <label class="setting-select">
           <span>表示選択</span>
-          <select v-model="表示選択">
+          <select :value="表示選択" @change="表示選択変更">
             <option value="アバター">アバター</option>
             <option value="カレンダーα">カレンダー+α</option>
             <option value="xneko">xneko(猫)</option>

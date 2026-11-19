@@ -16,7 +16,7 @@ function stopAvatarProcess(child,{platform=process.platform,spawnProcess=spawn}=
 }
 
 // IDE単位で所有するランチャー。起動完了とプロセス終了を別々に追跡する。
-function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,environment=process.env,timeout=60000,stopProcess=stopAvatarProcess,layoutTimeout=5000}={}){
+function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,environment=process.env,timeout=60000,stopProcess=stopAvatarProcess,layoutTimeout=5000,restoreLayoutTimeout=15000}={}){
  const processes=new WeakMap();
  let requestNumber=0;
  function request(owner,action,snapshot){
@@ -27,7 +27,7 @@ function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,en
    const finish=value=>{clearTimeout(timer);child.off('message',message);child.off('exit',closed);child.off('disconnect',closed);resolve(value);};
    const message=value=>{if(value?.avatarLayoutResult?.id===id)finish(value.avatarLayoutResult);};
    const closed=()=>finish(null);
-   const timer=setTimeout(closed,layoutTimeout);
+   const timer=setTimeout(closed,action==='restore'?restoreLayoutTimeout:layoutTimeout);
    child.on('message',message);child.once('exit',closed);child.once('disconnect',closed);
    try{child.send({avatarLayout:{id,action,...(snapshot?{snapshot}:{})}},error=>{if(error)closed();});}catch{closed();}
   });

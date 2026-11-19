@@ -211,8 +211,10 @@ test('IDE layout IPC relays only owned ready allowlisted geometry and removes li
   assert.equal(requests.length, 0);
   owner.emit('message', { avatarLayout: { id: 3, action: 'capture', token: 'secret' } });
   assert.deepEqual(requests[0], { avatarLayout: { id: 3, action: 'capture' } });
-  desktop.emit('message', { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], token: 'secret' }, session: 'secret' } });
-  assert.deepEqual(replies[0], { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [] } } });
+  desktop.emit('message', { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], visiblePanels: ['chat', 'code2'], coreDisplay: 'カレンダー', token: 'secret' }, session: 'secret' } });
+  assert.deepEqual(replies[0], { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], visiblePanels: ['chat', 'code2'], coreDisplay: 'カレンダー' } } });
+  owner.emit('message', { avatarLayout: { id: 4, action: 'restore', snapshot: { windows: [], visiblePanels: ['code2'], coreDisplay: 'xeyes' } } });
+  assert.deepEqual(requests[1], { avatarLayout: { id: 4, action: 'restore', snapshot: { windows: [], visiblePanels: ['code2'], coreDisplay: 'xeyes' } } });
   desktop.emit('exit', 0); await running;
   assert.equal(owner.listenerCount('message'), 0);
 });

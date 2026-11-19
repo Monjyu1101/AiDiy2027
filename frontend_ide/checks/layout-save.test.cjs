@@ -255,3 +255,33 @@ test('Browser旧保存の小さい通常寸法を最小寸法へ広げてから�
  assert.equal(applyPlacement(browser,{bounds:{x:0,y:0,width:400,height:200}},f.screen),true);
  assert.deepEqual(browser.window.getBounds(),{x:0,y:0,width:624,height:344});
 });
+
+test('project Save file keeps explicit Avatar panels, accepts legacy geometry and rejects unknown roles',()=>{
+ const root=mkdtempSync(join(tmpdir(),'aidiy-layout-avatar-'));
+ try{
+  const value={...snapshot(),avatar:{windows:[{role:'core',bounds:rect},{role:'code2',bounds:rect}],visiblePanels:['code2'],coreDisplay:'カレンダーα'}};
+  writeLayout(root,value);
+  assert.deepEqual(readLayout(root).avatar,value.avatar);
+  assert.deepEqual(validate({...value,avatar:{windows:value.avatar.windows}}).avatar,{windows:value.avatar.windows});
+  assert.throws(()=>validate({...value,avatar:{...value.avatar,visiblePanels:['settings']}}),/Avatar/);
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+
+test('Sv and Ld transfer the same Avatar panel selection through the owned process',async()=>{
+ const avatar={windows:[{role:'core',bounds:rect},{role:'chat',bounds:initial},{role:'code3',bounds:rect}],visiblePanels:['chat','code3'],coreDisplay:'カレンダー'};
+ const restored=[];let owned=true;
+ const f=fixture({
+  avatarLauncher:{owned:()=>owned,capture:async()=>avatar,restore:async(owner,value)=>{restored.push({owner,value});return {ok:true};}},
+  openNative:async(_event,panels)=>panels.map(panel=>{
+   if(panel.kind==='avatar'){owned=true;return undefined;}
+   return f.add(panel.kind);
+  }),
+ });
+ const children=[f.add('code'),f.add('term')];
+ assert.equal((await f.run('save')).ok,true);
+ assert.deepEqual(f.written[0].avatar,avatar);
+ for(const child of children)child.window.destroy();
+ owned=false;
+ assert.equal((await f.run('load')).ok,true);
+ assert.deepEqual(restored,[{owner:f.owner,value:avatar}]);
+});

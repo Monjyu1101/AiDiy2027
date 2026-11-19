@@ -9,6 +9,7 @@ const {randomUUID}=require('node:crypto');
 const {programDataDirectory,preparePrivateDirectory}=require('../host/scripts/project-storage.cjs');
 const {setWindowBounds}=require('./全画面横断.cjs');
 const {windowBounds}=require('./window-layout.cjs');
+const {sanitizeSnapshot:sanitizeAvatarSnapshot}=require('../../frontend_avatar/electron/IDE窓配置.cjs');
 const kinds=new Set(['term','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
 const foldKinds=new Set(['term','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
 const domKinds=new Set(['explorer','panel-viewer','panel-routes','panel-navigation']);
@@ -83,8 +84,9 @@ function validate(value){
   return{kind:item.kind,bounds:bounds(item.bounds),maximized:item.maximized===true,...(foldKinds.has(item.kind)?foldField(item):{}),...(domKinds.has(item.kind)?{name:text(item.name,200)}:{}),...(item.kind==='viewer'?{path:text(item.path)}:{}),...(item.kind==='browser'&&item.url!=null?{url:text(item.url)}:{}),...(item.kind==='task'?{view:item.view}:{})};
  }),renderer:validateRenderer(value.renderer)};
  if(value.avatar!=null){
-  if(!Array.isArray(value.avatar.windows)||value.avatar.windows.length>20)throw Error('保存されたAvatarの配置が不正です。');
-  result.avatar={windows:value.avatar.windows.map(item=>({role:text(item.role,100),bounds:bounds(item.bounds)}))};
+  const avatar=sanitizeAvatarSnapshot(value.avatar);
+  if(!avatar)throw Error('保存されたAvatarの配置が不正です。');
+  result.avatar=avatar;
  }
  return result;
 }

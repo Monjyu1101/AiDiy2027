@@ -63,6 +63,9 @@ declare global {
       togglePanel?: (panel: AvatarPanelKey) => Promise<Record<AvatarPanelKey, boolean>>
       applyPanelStates?: (states: Record<AvatarPanelKey, boolean>) => Promise<Record<AvatarPanelKey, boolean>>
       getPanelStates?: () => Promise<Record<AvatarPanelKey, boolean>>
+      getCoreDisplay?: () => Promise<string | null>
+      setCoreDisplay?: (value: string) => Promise<void>
+      onCoreDisplayChanged?: (callback: (value: string) => void) => () => void
       listDisplaySources?: () => Promise<AvatarDisplaySource[]>
       listVrmaFiles?: (folderName: string) => Promise<string[]>
       setDisplaySource?: (sourceId: string | null) => Promise<string | null>
