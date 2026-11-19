@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const { sanitizeSnapshot } = require('./electron/IDE窓配置.cjs');
+const { sanitizeMotion } = require('../frontend_ide/デスクトップ/配置移動.cjs');
 export const PORT_AVATAR = 8092;
 const RENDERER_URL = `http://127.0.0.1:${PORT_AVATAR}`;
 
@@ -120,13 +121,15 @@ export async function stopTree(child, grace = 1500) {
   ownedGroups.delete(child);
 }
 
-function electronEnv({ alone, project, initialPinned }, url) {
+function electronEnv({ alone, project, initialPinned, owner }, url) {
   const env = { ...process.env, VITE_DEV_SERVER_URL: url, AIDIY_AVATAR_MANAGED: '1' };
   delete env.AIDIY_AVATAR_ALONE;
   delete env.AIDIY_AVATAR_PROJECT;
   delete env.AIDIY_AVATAR_CORE_URL;
   // 親の初期ピン指定は継承せず、今回の明示引数だけを使う。
   delete env.AIDIY_AVATAR_INITIAL_PINNED;
+  // 初期配置はIDE所有の直接起動だけ。単独起動・別アプリの環境から継承しない。
+  if (!owner || !alone) delete env.AIDIY_AVATAR_INITIAL_LAYOUT;
   if (initialPinned) env.AIDIY_AVATAR_INITIAL_PINNED = '1';
   if (alone) { env.AIDIY_AVATAR_ALONE = '1'; env.AIDIY_AVATAR_PROJECT = project; }
   delete env.ELECTRON_RUN_AS_NODE;
@@ -159,7 +162,7 @@ export async function runAvatar({
   try {
     if (owner && !owner.connected) throw Error('IDEとの接続が終了しました。');
     // 単一起動の所有者を先に確定する。ポート占有だけを起動済みとは判定しない。
-    desktop = spawnOwned(launch, electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
+    desktop = spawnOwned(launch, electron, [join(root, 'dist-electron', 'main.js')], { cwd: root, env: electronEnv({ alone, project, initialPinned, owner }, url), windowsHide: false, stdio: ['ignore', 'ignore', 'ignore', 'ipc'] });
     const code = await new Promise((done, reject) => {
       let primary = false, shown = false, existing = false;
       // 所有IPCだけを中継し、汎用コマンドや既存の単独窓へは転送しない。
@@ -169,8 +172,9 @@ export async function runAvatar({
           if (ending || existing || !shown || !desktop.connected || !Number.isSafeInteger(request?.id)) return;
           if (request.action !== 'capture' && request.action !== 'restore') return;
           const snapshot = request.action === 'restore' ? sanitizeSnapshot(request.snapshot) : null;
-          if (request.action === 'restore' && !snapshot) return;
-          desktop.send({ avatarLayout: { id: request.id, action: request.action, ...(snapshot ? { snapshot } : {}) } }, () => {});
+          const motion = snapshot ? sanitizeMotion(request.motion) : null;
+          if (request.action === 'restore' && (!snapshot || !motion)) return;
+          desktop.send({ avatarLayout: { id: request.id, action: request.action, ...(snapshot ? { snapshot, motion } : {}) } }, () => {});
         };
         owner.on('message', layoutRelay);
       }

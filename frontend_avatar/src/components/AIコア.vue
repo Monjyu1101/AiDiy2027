@@ -109,7 +109,7 @@ const マイクレベル = ref(0)
 const スピーカーレベル = ref(0)
 const 音声エラー = ref('')
 const ウェルカムホバー中 = ref(false)
-const 表示選択 = ref('アバター')
+const 表示選択 = ref((typeof window === 'undefined' ? undefined : window.desktopApi?.initialCoreDisplay) ?? 'アバター')
 let 表示選択世代 = 0
 let 表示選択購読解除: (() => void) | undefined
 

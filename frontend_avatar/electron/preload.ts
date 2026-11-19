@@ -25,11 +25,12 @@ type DisplaySourceInfo = {
   thumbnailDataUrl: string | null
 }
 
-const metadata = ipcRenderer.sendSync('avatar:metadata') as { avatarAlone: boolean; projectPath: string; coreBaseUrl: string }
+const metadata = ipcRenderer.sendSync('avatar:metadata') as { avatarAlone: boolean; projectPath: string; coreBaseUrl: string; initialCoreDisplay?: string }
 const api = {
   avatarAlone: metadata.avatarAlone === true,
   projectPath: metadata.projectPath,
   coreBaseUrl: metadata.coreBaseUrl,
+  initialCoreDisplay: metadata.initialCoreDisplay,
   versions: {
     chrome: process.versions.chrome,
     electron: process.versions.electron,

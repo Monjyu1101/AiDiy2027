@@ -124,19 +124,24 @@ const 表示希望 = new WeakMap<BrowserWindow, boolean>()
 
 // IDEから起動されたプロセスの専用IPC。rendererの公開APIには追加しない。
 const ideManagedAvatar = avatarAlone && process.env.AIDIY_AVATAR_IDE_OWNED === '1' && process.env.AIDIY_AVATAR_MANAGED === '1'
-let coreDisplay = 'アバター'
-const { createLayoutController, restorePanelLayout, isCoreDisplay } = require(path.join(__dirname, '../electron/IDE窓配置.cjs')) as {
+type IdeLayoutSnapshot = { windows: { role: 'core' | PanelKey; bounds: WindowBounds }[]; visiblePanels?: PanelKey[]; coreDisplay?: string }
+const { createLayoutController, showInitialPanels, readInitialLayout, isCoreDisplay } = require(path.join(__dirname, '../electron/IDE窓配置.cjs')) as {
   createLayoutController: (options: {
     windows: () => BrowserWindow[]; roleOf: (window: BrowserWindow) => WindowRole | undefined
     screen: typeof screen; initialBoundsOf: (window: BrowserWindow) => WindowBounds; panelOpen: (role: PanelKey) => boolean
     coreDisplay: () => string
-  }) => { capture: () => unknown; restore: (value: unknown) => boolean; apply: (window: BrowserWindow) => void }
+  }) => { capture: () => unknown; restore: (value: unknown, motion: unknown, guard: () => void) => Promise<boolean> }
   isCoreDisplay: (value: unknown) => value is string
-  restorePanelLayout: (value: unknown, actions: {
-    prepare: (role: PanelKey) => Promise<void>; hide: (role: PanelKey) => void
-    show: (role: PanelKey) => Promise<void>; place: (value: { coreDisplay?: string }) => boolean
-    isVisible: (role: 'core' | PanelKey) => boolean
+  readInitialLayout: (value: unknown) => IdeLayoutSnapshot | null
+  showInitialPanels: (value: IdeLayoutSnapshot, actions: {
+    show: (role: PanelKey) => Promise<void>; isVisible: (role: 'core' | PanelKey) => boolean
   }) => Promise<boolean>
+}
+const initialIdeLayout = ideManagedAvatar && process.connected ? readInitialLayout(process.env.AIDIY_AVATAR_INITIAL_LAYOUT) : null
+let coreDisplay = initialIdeLayout?.coreDisplay ?? 'アバター'
+const layoutWindowVisible = (role: 'core' | PanelKey) => {
+  const window = getWindowByRole(role)
+  return !!window && !window.isDestroyed() && !window.isMinimized() && window.isVisible()
 }
 const ideLayout = createLayoutController({
   windows: () => BrowserWindow.getAllWindows(),
@@ -162,22 +167,8 @@ if (ideManagedAvatar && process.connected) {
     else if (request.action === 'restore') {
       let ok = false
       try {
-        ok = await restorePanelLayout(request.snapshot, {
-          prepare: role => waitForReady(createPanelWindow(role, false)),
-          hide: role => { if (panelWindows.has(role)) void setPanelVisibility(role, false) },
-          show: role => setPanelVisibility(role, true, true),
-          place: snapshot => {
-            if (!ideLayout.restore(snapshot)) return false
-            if (snapshot.coreDisplay !== undefined) {
-              coreDisplay = snapshot.coreDisplay
-              getWindowByRole('core')?.webContents.send('avatar:core-display-changed', coreDisplay)
-            }
-            return true
-          },
-          isVisible: role => {
-            const window = getWindowByRole(role)
-            return !!window && !window.isDestroyed() && !window.isMinimized() && window.isVisible()
-          },
+        ok = await ideLayout.restore(request.snapshot, request.motion, () => {
+          if (isQuitting || !process.connected) throw new Error('IDEとの接続が終了しました。')
         })
       } catch { /* 部分復元は成功として返さない。 */ }
       if (process.connected) process.send?.({ avatarLayoutResult: { id: request.id, ok } })
@@ -446,7 +437,6 @@ async function ウィンドウ表示(window: BrowserWindow, background = '#000',
     await waitForReady(window)
     const allowed = () => 表示希望.get(window) === true && canShow()
     if (window.isDestroyed() || !allowed()) return false
-    ideLayout.apply(window)
     if (window.isVisible()) { window.show(); window.focus(); return true }
     return 拡大表示(BrowserWindow, window, { background, canShow: allowed })
   })()
@@ -782,7 +772,9 @@ app.whenReady().then(async () => {
     const window = BrowserWindow.fromWebContents(event.sender)
     const valid = window && windowRoles.has(window.id) && event.senderFrame === event.sender.mainFrame
       && (!avatarAlone || aloneWindows.get(event.sender.id)?.url === event.senderFrame.url)
-    event.returnValue = valid ? { avatarAlone, projectPath, coreBaseUrl } : { avatarAlone: false, projectPath: '', coreBaseUrl: '' }
+    event.returnValue = valid
+      ? { avatarAlone, projectPath, coreBaseUrl, ...(ideManagedAvatar && windowRoles.get(window.id) === 'core' ? { initialCoreDisplay: coreDisplay } : {}) }
+      : { avatarAlone: false, projectPath: '', coreBaseUrl: '' }
   })
   if (process.platform === 'darwin') {
     const { Macメニューを設定 } = require(path.join(__dirname, '../../frontend_ide/host/scripts/MacOS-Menu.cjs'))
@@ -1007,9 +999,18 @@ app.whenReady().then(async () => {
   // 起動時のログイン画面も、読み込み後に拡大演出で表示する。
   const startupLogin = createLoginWindow(false)
   // aidiy_avatar の起動処理へ表示完了を知らせ、呼出元のコマンドを解放させる。
-  void ウィンドウ表示(startupLogin).then(shown => {
-    if (shown && process.connected) process.send?.({ avatarShown: true })
-  })
+  void (async () => {
+    if (!await ウィンドウ表示(startupLogin)) return
+    // 下書き・接続内容は受け取らず、保存されていた画面だけを通常の初期位置で表示する。
+    if (initialIdeLayout && !await showInitialPanels(initialIdeLayout, {
+      show: async role => {
+        createPanelWindow(role, false)
+        await setPanelVisibility(role, true)
+      },
+      isVisible: layoutWindowVisible,
+    })) throw new Error('Avatarの初期パネルを表示できませんでした。')
+    if (process.connected) process.send?.({ avatarShown: true })
+  })().catch(() => app.quit())
 
   app.on('activate', () => {
     if (!loginWindow && !coreWindow && BrowserWindow.getAllWindows().length === 0) {

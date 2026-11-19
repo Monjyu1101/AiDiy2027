@@ -5,6 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 const {spawn}=require('node:child_process');
 const {join}=require('node:path');
+const {sanitizeMotion}=require('./配置移動.cjs');
 const {sanitizeSnapshot}=require('../../frontend_avatar/electron/IDE窓配置.cjs');
 
 // WindowsのkillはNodeのSIGTERM処理を通さないため、所有PIDの子孫も回収する。
@@ -19,7 +20,7 @@ function stopAvatarProcess(child,{platform=process.platform,spawnProcess=spawn}=
 function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,environment=process.env,timeout=60000,stopProcess=stopAvatarProcess,layoutTimeout=5000,restoreLayoutTimeout=15000}={}){
  const processes=new WeakMap();
  let requestNumber=0;
- function request(owner,action,snapshot){
+ function request(owner,action,snapshot,motion){
   const entry=processes.get(owner);
   if(!entry?.ready||entry.reused||entry.stopping||!entry.child.connected)return Promise.resolve(null);
   const child=entry.child,id=++requestNumber;
@@ -29,19 +30,24 @@ function createAvatarLauncher({spawnProcess=spawn,executable=process.execPath,en
    const closed=()=>finish(null);
    const timer=setTimeout(closed,action==='restore'?restoreLayoutTimeout:layoutTimeout);
    child.on('message',message);child.once('exit',closed);child.once('disconnect',closed);
-   try{child.send({avatarLayout:{id,action,...(snapshot?{snapshot}:{})}},error=>{if(error)closed();});}catch{closed();}
+   try{child.send({avatarLayout:{id,action,...(snapshot?{snapshot,motion}:{})}},error=>{if(error)closed();});}catch{closed();}
   });
  }
  async function capture(owner){const result=await request(owner,'capture');return result?.ok?sanitizeSnapshot(result.snapshot):null;}
- async function restore(owner,value){const snapshot=sanitizeSnapshot(value);if(!snapshot)return {ok:false,error:'Avatarの配置が不正です。'};const result=await request(owner,'restore',snapshot);return result?.ok?{ok:true}:{ok:false,error:'所有するAvatarの配置を復元できませんでした。'};}
+ async function restore(owner,value,timing){const snapshot=sanitizeSnapshot(value),motion=sanitizeMotion(timing);if(!snapshot||!motion)return {ok:false,error:'Avatarの配置が不正です。'};const result=await request(owner,'restore',snapshot,motion);return result?.ok?{ok:true}:{ok:false,error:'所有するAvatarの配置を復元できませんでした。'};}
 
  function owned(owner){const entry=processes.get(owner);return !!entry?.ready&&!entry.reused&&!entry.stopping;}
  function active(owner){return processes.has(owner);}
  function close(owner){const entry=processes.get(owner);if(entry){entry.cancel();entry.stop();}}
- function open(owner,project){
+ function open(owner,project,value){
   if(active(owner))return Promise.resolve({ok:false,error:'Live / Avatarはすでに起動中です。'});
+  const snapshot=value===undefined?null:sanitizeSnapshot(value);
+  if(value!==undefined&&!snapshot)return Promise.resolve({ok:false,error:'Avatarの配置が不正です。'});
+  const env={...environment,ELECTRON_RUN_AS_NODE:'1',AIDIY_LAUNCHER_CHILD:'1',AIDIY_AVATAR_IDE_OWNED:'1'};
+  delete env.AIDIY_AVATAR_INITIAL_LAYOUT;
+  if(snapshot)env.AIDIY_AVATAR_INITIAL_LAYOUT=JSON.stringify(snapshot);
   let child;
-  try{child=spawnProcess(executable,[join(__dirname,'../../frontend_avatar/launch.mjs'),'--internal-auth','--project',project,'--foreground','--initial-pinned'],{cwd:project,env:{...environment,ELECTRON_RUN_AS_NODE:'1',AIDIY_LAUNCHER_CHILD:'1',AIDIY_AVATAR_IDE_OWNED:'1'},windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});}
+  try{child=spawnProcess(executable,[join(__dirname,'../../frontend_avatar/launch.mjs'),'--internal-auth','--project',project,'--foreground','--initial-pinned'],{cwd:project,env,windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});}
   catch(error){return Promise.resolve({ok:false,error:error.message});}
   return new Promise(resolve=>{
    let settled=false;

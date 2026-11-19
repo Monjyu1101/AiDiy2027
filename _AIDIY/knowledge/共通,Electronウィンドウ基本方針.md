@@ -313,7 +313,8 @@ IDEタイトル操作の検証は `node frontend_ide/scripts/check-ide-modes.mjs
 
 - SVはIDEが所有する対応パネルの開閉状態を保存する。折畳時の31pxを通常の高さとして保存せず、展開時の寸法・最大化状態と現在位置を保存する。
 - LDはパネルを開き、保存位置・通常寸法を適用してから折畳状態を戻す。mainからの通知を共通開閉部品へ同期し、▽／▶・本文・シアンバーと実窓寸法を一致させる。DOM別窓は窓名で通知を分離する。
-- 軌跡バーの一覧展開は通常パネルの31px折畳とは別で、`renderer.space.explorer.routesExpanded` に保存し、位置復元後に一覧の開閉と必要な窓高を戻す。CPUの透過切替、Avatar、DiagなどIDE所有でない窓は対象に含めない。
+- IDE所有のAvatarの表示選択は初回描画前にコア窓だけへ渡し、保存された子窓だけを初期位置で表示する。Taskも保存された要求・フロー図・明細だけを、Teamは通常の初期位置で表示する。全窓の表示後、`frontend_ide/デスクトップ/配置移動.cjs` の開始時刻と20分割で、別プロセスのAvatarも位置・寸法を同時に動かす。
+- 軌跡バーの一覧展開は通常パネルの31px折畳とは別で、`renderer.space.explorer.routesExpanded` に保存し、位置復元後に一覧の開閉と必要な窓高を戻す。CPUの透過切替、およびIDE所有でないAvatarやDiagの窓は対象に含めない。
 - 保存形式version 1は維持し、開閉情報のない旧ファイルは従来どおり展開状態で復元する（軌跡一覧は従来の閉状態）。不正な型は読込を拒否する。IDE本体のSV／LDメニューは本文にあるため、本体を展開して操作する。
 - 確認は `checks/layout-save.test.cjs`、`checks/layout-fold-renderer.test.mjs`、`checks/layout-renderer.test.mjs`、`checks/panel-collapse.test.cjs` と別窓実描画スクリプトを使用する。折畳保存→LD→再展開→再保存、名前の異なる複数別窓、旧データ、復元中の終了・連打を含める。
 

@@ -285,3 +285,56 @@ test('Sv and Ld transfer the same Avatar panel selection through the owned proce
  assert.equal((await f.run('load')).ok,true);
  assert.deepEqual(restored,[{owner:f.owner,value:avatar}]);
 });
+
+test('Ld displays Task request/flow/detail, Team and Avatar at default bounds before shared 20-step position and size changes',async()=>{
+ const {taskWindowBounds}=require('../デスクトップ/task-windows.cjs');
+ const {createLayoutController,showInitialPanels}=require('../../frontend_avatar/electron/IDE窓配置.cjs');
+ const savedAvatar={windows:[{role:'core',bounds:{x:320,y:340,width:700,height:680}},{role:'chat',bounds:{x:600,y:120,width:650,height:650}}],visiblePanels:['chat'],coreDisplay:'カレンダー'};
+ const avatarWindows=[{role:'core',rectangle:{x:1200,y:380,width:520,height:620},shown:true,moves:[]},{role:'chat',rectangle:{x:180,y:200,width:520,height:620},shown:false,moves:[]}].map(w=>Object.assign(w,{isDestroyed:()=>false,isVisible:()=>w.shown,getBounds:()=>w.rectangle,setBounds:b=>{w.moves.push(b);w.rectangle=b;}}));
+ const ready=[];let selected=null,motion,owned=false;
+ const group=[...['request','flow','detail'].map((view,i)=>({kind:'task',view,bounds:{x:70+i*155,y:200,width:660,height:710}})),{kind:'team',bounds:{x:850,y:200,width:790,height:730}}];
+ const f=fixture({
+  avatarLauncher:{owned:()=>owned,restore:async(owner,snapshot,value)=>{
+   assert.equal(owner,f.owner);assert.deepEqual(snapshot,savedAvatar);motion=value;
+   assert.deepEqual(ready,['avatar','request','flow','detail','team']);
+   assert.equal(selected,'カレンダー'); assert.ok(avatarWindows.every(w=>w.moves.length===0&&w.shown));
+   const controller=createLayoutController({windows:()=>avatarWindows,roleOf:w=>w.role,screen:f.screen});
+   return {ok:await controller.restore(snapshot,motion)};
+  }},
+  openNative:async(_event,panels)=>{
+   if(panels[0].kind==='avatar'){
+    const snapshot=panels[0].snapshot;
+    selected=snapshot.coreDisplay;
+    assert.equal(await showInitialPanels(snapshot,{
+     show:role=>{const win=avatarWindows.find(w=>w.role===role);assert.equal(win.moves.length,0);win.shown=true;},
+     isVisible:role=>avatarWindows.some(w=>w.role===role&&w.shown),
+    }),true);
+    ready.push('avatar');owned=true;return [];
+   }
+   const area=f.screen.getAllDisplays()[0].workArea;
+   return panels.map(panel=>{
+    const record=f.add(panel.kind,...(panel.view?[{taskView:panel.view}]:[]));
+    const {x,y,width,height}=panel.kind==='task'?taskWindowBounds(panel.view,area):windowBounds('team',area);
+    record.window.rectangle={x,y,width,height};
+    record.window.initial={...record.window.rectangle};
+    ready.push(panel.view||panel.kind);return record;
+   });
+  },
+ });
+ f.save({...snapshot(),panels:group,avatar:savedAvatar});
+ const result=await f.run('load');
+ assert.equal(result.ok,true);assert.equal(result.restored,5);
+ assert.equal(motion.steps,20);assert.ok(Number.isSafeInteger(motion.startAt));
+ for(const item of group){
+  const {window}=Array.from(f.windows.values()).find(r=>r.kind===item.kind&&r.taskView===item.view);
+  assert.equal(window.moves.length,20);
+  const fields=['x','y','width','height'];
+  assert.deepEqual(Object.fromEntries(fields.map(key=>[key,window.moves[0][key]])),
+   Object.fromEntries(fields.map(key=>[key,Math.round(window.initial[key]+(item.bounds[key]-window.initial[key])/20)])));
+  assert.deepEqual(window.getBounds(),item.bounds);
+ }
+ for(const win of avatarWindows){
+  assert.equal(win.moves.length,20);
+  assert.deepEqual(win.getBounds(),savedAvatar.windows.find(w=>w.role===win.role).bounds);
+ }
+});

@@ -63,6 +63,7 @@ declare global {
       togglePanel?: (panel: AvatarPanelKey) => Promise<Record<AvatarPanelKey, boolean>>
       applyPanelStates?: (states: Record<AvatarPanelKey, boolean>) => Promise<Record<AvatarPanelKey, boolean>>
       getPanelStates?: () => Promise<Record<AvatarPanelKey, boolean>>
+      initialCoreDisplay?: string
       getCoreDisplay?: () => Promise<string | null>
       setCoreDisplay?: (value: string) => Promise<void>
       onCoreDisplayChanged?: (callback: (value: string) => void) => () => void

@@ -64,6 +64,7 @@ test('Avatar reused standalone: IDE終了でも既存アプリのツリーを終
  f.children[0].emit('message',{launchReady:true,existingWindow:true});assert.equal((await opening).reused,true);
  f.launcher.close(f.owner);f.children[0].emit('exit',0);assert.equal(f.launcher.active(f.owner),false);
 });
+const motion={steps:20,stepDelay:25,duration:3000,startAt:123};
 test('Avatar layout: only ready owned windows, strict geometry, correlated reply and disconnect cleanup',async()=>{
  const f=fixture({layoutTimeout:10});assert.equal(await f.launcher.capture(f.owner),null);
  const opening=f.launcher.open(f.owner,'/p'),child=f.children[0],sent=[];
@@ -74,8 +75,9 @@ test('Avatar layout: only ready owned windows, strict geometry, correlated reply
  child.emit('message',{avatarLayoutResult:{id:id+1,ok:true,snapshot:{windows:[]}}});
  child.emit('message',{avatarLayoutResult:{id,ok:true,snapshot:{windows:[{role:'core',bounds:{x:0,y:0,width:520,height:620},token:'no'}],token:'no'}}});
  const snapshot=await capture;assert.deepEqual(snapshot,{windows:[{role:'core',bounds:{x:0,y:0,width:520,height:620}}]});
- assert.equal((await f.launcher.restore(f.owner,{windows:[{role:'login',bounds:{}}]})).ok,false);assert.equal(sent.length,1);
- const restore=f.launcher.restore(f.owner,snapshot);child.emit('message',{avatarLayoutResult:{id:sent[1].avatarLayout.id,ok:true}});assert.equal((await restore).ok,true);
+ assert.equal((await f.launcher.restore(f.owner,{windows:[{role:'login',bounds:{}}]},motion)).ok,false);assert.equal(sent.length,1);
+ assert.equal((await f.launcher.restore(f.owner,snapshot,{...motion,steps:Infinity})).ok,false);
+ const restore=f.launcher.restore(f.owner,snapshot,motion);assert.deepEqual(sent[1].avatarLayout.motion,motion);child.emit('message',{avatarLayoutResult:{id:sent[1].avatarLayout.id,ok:true}});assert.equal((await restore).ok,true);
  const disconnected=f.launcher.capture(f.owner);child.emit('disconnect');assert.equal(await disconnected,null);assert.equal(child.listenerCount('message'),0);
  assert.equal(await f.launcher.capture(f.owner),null,'timeout returns unavailable');
  f.launcher.close(f.owner);assert.equal(f.launcher.owned(f.owner),false);child.emit('exit',0);
@@ -83,5 +85,18 @@ test('Avatar layout: only ready owned windows, strict geometry, correlated reply
 test('Avatar reused process never captures or restores standalone windows',async()=>{
  const f=fixture(),opening=f.launcher.open(f.owner,'/p'),child=f.children[0];child.connected=true;child.send=()=>assert.fail('standalone must not receive layout');
  child.emit('message',{launchReady:true,existingWindow:true});await opening;
- assert.equal(f.launcher.owned(f.owner),false);assert.equal(await f.launcher.capture(f.owner),null);assert.equal((await f.launcher.restore(f.owner,{windows:[]})).ok,false);child.emit('exit',0);
+ assert.equal(f.launcher.owned(f.owner),false);assert.equal(await f.launcher.capture(f.owner),null);assert.equal((await f.launcher.restore(f.owner,{windows:[]},motion)).ok,false);child.emit('exit',0);
+});
+
+test('Ld provides validated saved view to the managed process before spawn; ordinary open drops inherited layout',async()=>{
+ const f=fixture({environment:{AIDIY_AVATAR_INITIAL_LAYOUT:'untrusted'}});
+ assert.equal((await f.launcher.open(f.owner,'/p',{windows:[],coreDisplay:'arbitrary'})).ok,false);
+ assert.equal(f.children.length,0);
+ const saved={windows:[],visiblePanels:['chat'],coreDisplay:'カレンダーα'};
+ const opening=f.launcher.open(f.owner,'/p',{...saved,token:'not-transferred'});
+ assert.deepEqual(JSON.parse(f.calls[0][2].env.AIDIY_AVATAR_INITIAL_LAYOUT),saved);
+ f.children[0].emit('message',{launchReady:true});assert.equal((await opening).ok,true);f.children[0].emit('exit',0);
+ const normal=f.launcher.open(f.owner,'/p');
+ assert.equal(f.calls[1][2].env.AIDIY_AVATAR_INITIAL_LAYOUT,undefined);
+ f.children[1].emit('message',{launchReady:true});assert.equal((await normal).ok,true);f.children[1].emit('exit',0);
 });

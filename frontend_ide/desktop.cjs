@@ -425,7 +425,7 @@ app.whenReady().then(async()=>{
   単一起動部品.forEach((type,index)=>{if(occupied[index]||owner.pending.has(type))running.add(type);});
   return{live:!!voiceActive(owner),avatar:avatarLauncher.active(owner),runningApps:[...running]};
  });
- async function openApp(event,type,displayId){
+ async function openApp(event,type,displayId,layoutOptions){
   const source=trustedEvent(event),record=source?.kind==='viewer'?source.owner:source;
   if(!record||record.kind!=='ide'||!['ide','viewer'].includes(source.kind)||!['cpu','code','live','avatar','term','task','team'].includes(type))return{ok:false,error:'この画面からは開けません。'};
   // ピン留めからの明示起動も、元のIDEと同じ利用セッションだけに限定する。
@@ -441,7 +441,7 @@ app.whenReady().then(async()=>{
   if((type==='avatar'&&voiceActive(record))||(type==='live'&&(avatarLauncher.active(record)||record.pending.has('avatar'))))return{ok:false,error:'Live / Avatarはすでに起動中です。'};
   if(type==='avatar'){
    record.avatarKey=sessionKey(state);
-   const opening=avatarLauncher.open(record,state.project.path);record.pending.set(type,opening);
+   const opening=avatarLauncher.open(record,state.project.path,layoutOptions?.avatar);record.pending.set(type,opening);
    try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
   }
   // Codeは依頼ごとに別窓。CPU / Task / Teamは初期化中も共有する。
@@ -474,7 +474,7 @@ app.whenReady().then(async()=>{
       owns:item=>item.taskController===controller,
       onLastClosed:()=>{release();closeServer(service);},
       createWindow:(view,payload)=>createWindow('task',service.url+'#task-view='+view,undefined,record,key,undefined,displayId,undefined,{view,payload,controller})});
-     const result=await controller.start();if(!result.ok)throw Error(result.error);
+     const result=layoutOptions?.taskViews?await controller.restoreViews(layoutOptions.taskViews):await controller.start();if(!result.ok)throw Error(result.error);
     }else{
      const window=await createWindow(type,child.url,child,record,key,undefined,displayId);
      if(release){if(window.isDestroyed())release();else window.once('closed',release);}
@@ -486,7 +486,7 @@ app.whenReady().then(async()=>{
   if(['cpu','live','task','team'].includes(type))record.pending.set(type,opening);
   try{return await opening;}finally{if(record.pending.get(type)===opening)record.pending.delete(type);}
  }
- ipcMain.handle('development:open-app',openApp);
+ ipcMain.handle('development:open-app',(event,type,displayId)=>openApp(event,type,displayId));
  const {createLayoutManager}=require('./デスクトップ/配置保存.cjs');
  layoutManager=createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,isQuitting:()=>quitting,
   browserURL:record=>browserViews?.analysisContext(record)?.url,
@@ -505,15 +505,15 @@ app.whenReady().then(async()=>{
    }
    else if(panel.kind==='viewer')await createWindow('viewer',owner.url+'#viewer='+encodeURIComponent(panel.path),undefined,owner,key);
    else{
-    const result=await openApp(event,panel.kind);
+    const result=await openApp(event,panel.kind,undefined,{
+     ...(panel.kind==='avatar'?{avatar:panel.snapshot}:{}),
+     ...(panel.kind==='task'?{taskViews:panels.map(item=>item.view)}:{}),
+    });
     if(!result?.ok||result.alreadyRunning||result.reused)throw Error(result?.error||'別の起動中アプリがあるため復元できません。');
    }
    const current=await readState(owner);
    if(!valid()||sessionKey(current)!==key||current.project?.path!==state.project?.path)throw Error('IDEの利用状態が変わりました。');
    if(panel.kind==='task'){
-    const controller=created().find(record=>record.kind==='task')?.taskController;
-    if(!controller)throw Error('TASKの起動状態を確認できません。');
-    const result=await controller.restoreViews(panels.map(item=>item.view));if(!result.ok)throw Error(result.error);
     return panels.map(item=>created().find(record=>record.kind==='task'&&record.taskView===item.view));
    }
    return created();

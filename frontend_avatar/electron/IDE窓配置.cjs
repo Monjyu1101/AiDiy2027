@@ -23,16 +23,17 @@ function sanitizeSnapshot(value){
  return {windows,...(visiblePanels===undefined?{}:{visiblePanels:[...visiblePanels]}),...(coreDisplay===undefined?{}:{coreDisplay})};
 }
 // 旧形式は表示中の窓だけを記録していたので、位置情報から開くパネルを復元する。
-async function restorePanelLayout(value,{prepare,hide,show,place,isVisible}){
- const snapshot=sanitizeSnapshot(value);
- if(!snapshot)return false;
- const panels=snapshot.visiblePanels??snapshot.windows.map(item=>item.role).filter(role=>panelRoles.has(role));
- const open=new Set(panels);
- for(const role of panelRoles)if(!open.has(role))hide(role);
- await Promise.all(panels.map(prepare));
- if(!place({...snapshot,windows:snapshot.windows.filter(item=>item.role==='core'||open.has(item.role))}))return false;
+function visiblePanelRoles(snapshot){
+ return snapshot.visiblePanels??snapshot.windows.map(item=>item.role).filter(role=>panelRoles.has(role));
+}
+function readInitialLayout(raw){
+ if(typeof raw!=='string'||raw.length>4096)return null;
+ try{return sanitizeSnapshot(JSON.parse(raw));}catch{return null;}
+}
+async function showInitialPanels(snapshot,{show,isVisible}){
+ const panels=visiblePanelRoles(snapshot);
  await Promise.all(panels.map(show));
- return panels.every(isVisible)&&(!snapshot.windows.some(item=>item.role==='core')||isVisible('core'));
+ return isVisible('core')&&panels.every(isVisible);
 }
 // 隣接画面をまたぐ窓は可。画面の隙間・タスクバー領域が残れば初期位置に戻す。
 function fitsWorkAreas(bounds,areas){
@@ -54,28 +55,36 @@ function fitsWorkAreas(bounds,areas){
  return false;
 }
 function createLayoutController({windows,roleOf,screen,initialBoundsOf=window=>window.getBounds(),panelOpen,coreDisplay=()=>undefined}){
- const pending=new Map();
- function apply(window){
-  const role=roleOf(window),bounds=pending.get(role);
-  if(!bounds||window.isDestroyed())return;
-  pending.delete(role);
-  const areas=screen.getAllDisplays().map(display=>display.workArea);
-  if(window.isFullScreen?.())window.setFullScreen(false);
-  if(window.isMaximized?.())window.unmaximize();
-  window.setBounds(fitsWorkAreas(bounds,areas)?bounds:initialBoundsOf(window));
- }
  function capture(){
   const entries=windows().filter(w=>!w.isDestroyed()&&roles.has(roleOf(w))).map(w=>({window:w,role:roleOf(w)}));
   const open=entries.filter(({role,window})=>panelOpen&&panelRoles.has(role)?panelOpen(role):window.isVisible());
   return sanitizeSnapshot({windows:open.map(({role,window})=>({role,bounds:window.getNormalBounds?.()||window.getBounds()})),visiblePanels:open.map(({role})=>role).filter(role=>panelRoles.has(role)),coreDisplay:coreDisplay()});
  }
- function restore(value){
-  const snapshot=sanitizeSnapshot(value);
-  if(!snapshot)return false;
-  pending.clear();for(const item of snapshot.windows)pending.set(item.role,item.bounds);
-  for(const window of windows())apply(window);
+ // 初期位置で表示済みの窓だけを、IDE本体の子窓と同じタイムラインで動かす。
+ async function restore(value,timing,guard=()=>{}){
+  // 単体Avatarの起動・配置取得ではIDEの移動処理を読み込まない。
+  const {glide,sanitizeMotion}=require('../../frontend_ide/デスクトップ/配置移動.cjs');
+  const snapshot=sanitizeSnapshot(value),motion=sanitizeMotion(timing);
+  if(!snapshot||!motion)return false;
+  guard();
+  const wanted=new Set(['core',...visiblePanelRoles(snapshot)]);
+  const shown=new Map(windows().filter(w=>!w.isDestroyed()&&!w.isMinimized?.()&&w.isVisible()).map(w=>[roleOf(w),w]));
+  if([...wanted].some(role=>!shown.has(role)))return false;
+  const areas=screen.getAllDisplays().map(display=>display.workArea);
+  const flights=[];
+  for(const {role,bounds} of snapshot.windows){
+   if(!wanted.has(role))continue;
+   const win=shown.get(role);
+   if(win.isFullScreen?.())win.setFullScreen(false);
+   if(win.isMaximized?.())win.unmaximize();
+   flights.push({win,end:fitsWorkAreas(bounds,areas)?bounds:initialBoundsOf(win)});
+  }
+  await glide(flights,guard,motion);
+  guard();
+  if([...wanted].some(role=>shown.get(role).isDestroyed()||!shown.get(role).isVisible()))return false;
+  for(const {win,end} of flights)win.setBounds(end);
   return true;
  }
- return {capture,restore,apply};
+ return {capture,restore};
 }
-module.exports={sanitizeSnapshot,fitsWorkAreas,createLayoutController,restorePanelLayout,isCoreDisplay};
+module.exports={sanitizeSnapshot,fitsWorkAreas,createLayoutController,showInitialPanels,readInitialLayout,isCoreDisplay};

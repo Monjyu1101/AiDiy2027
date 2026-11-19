@@ -9,6 +9,7 @@ const {randomUUID}=require('node:crypto');
 const {programDataDirectory,preparePrivateDirectory}=require('../host/scripts/project-storage.cjs');
 const {setWindowBounds}=require('./全画面横断.cjs');
 const {windowBounds}=require('./window-layout.cjs');
+const {glide,defaults:motionDefaults}=require('./配置移動.cjs');
 const {sanitizeSnapshot:sanitizeAvatarSnapshot}=require('../../frontend_avatar/electron/IDE窓配置.cjs');
 const kinds=new Set(['term','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
 const foldKinds=new Set(['term','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
@@ -65,7 +66,6 @@ function applyPlacement(record,value,screen){
 }
 // Loadの＋メニュー順。Naviはrendererが開く別窓、AvatarはLiveの次。
 const loadOrder=['term','browser','panel-navigation','code','live','avatar','task','team','cpu'];
-const rectKeys=['x','y','width','height'];
 // 保存ファイルのpanelsもLoadで開く順に並べる。同じ種類は開いていた順を保つ。
 const openOrder=['explorer','panel-routes','viewer','panel-viewer','term','browser','panel-navigation','code','live','task','team','cpu'];
 const inOpenOrder=panels=>[...panels].sort((a,b)=>openOrder.indexOf(a.kind)-openOrder.indexOf(b.kind));
@@ -104,34 +104,23 @@ function writeLayout(project,value,guard=()=>{}){
  try{fs.writeFileSync(temporary,serialized+'\n',{encoding:'utf8',mode:0o600,flag:'wx'});guard();fs.renameSync(temporary,filename);}
  finally{try{fs.unlinkSync(temporary);}catch(error){if(error.code!=='ENOENT')throw error;}}
 }
-function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,openNative,browserURL=()=>null,captureCollapse=()=>null,restoreCollapse=async()=>({ok:false}),isQuitting=()=>false,read=readLayout,write=writeLayout,timeout=60000,steps=20,stepDelay=25,moveDuration=3000}){
+function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,allDisplays,avatarLauncher,openNative,browserURL=()=>null,captureCollapse=()=>null,restoreCollapse=async()=>({ok:false}),isQuitting=()=>false,read=readLayout,write=writeLayout,timeout=60000,steps=motionDefaults.steps,stepDelay=motionDefaults.stepDelay,moveDuration=motionDefaults.duration}){
  const busy=new WeakMap(),requests=new Map();
  const capturePlacement=record=>captureCollapse(record)||{...placement(record),...(foldKinds.has(record.kind)?{collapsed:false}:{})};
  // Browserは保存時に表示していたURLも残す。取得できない・空白ページは従来どおりホームから開く。
  const savedURL=record=>{let url;try{url=browserURL(record);}catch{}return typeof url==='string'&&url&&url!=='about:blank'&&url.length<=4096&&!url.includes(' ')?{url}:{};};
- const pause=ms=>ms>0?new Promise(resolve=>setTimeout(resolve,ms)):Promise.resolve();
- // 位置と大きさを同じ分割数で同時に動かす。遠い窓ほど1ステップの移動量が大きい。
- // 最終ステップは呼出側のapplyPlacementがDPI補正・最大化を含めて確定する。
- // durationを指定した移動は、窓の再配置にかかった時間を差し引いて全体をその時間に合わせる。
- async function glide(moves,guard,duration=0){
+ const glidePanels=async(moves,guard,motion)=>{
   const flights=[];
+  guard();
   for(const {record,value} of moves){
    const win=record.window;if(win.isDestroyed())continue;
    const end=destination(record,value,screen).target;if(!end)continue;
    if(win.isMinimized?.())win.restore();
    if(win.isMaximized?.())win.unmaximize();
-   const start=win.getBounds();
-   if(rectKeys.some(key=>start[key]!==end[key]))flights.push({win,start,end});
+   flights.push({win,end});
   }
-  if(!flights.length)return;
-  const started=Date.now();
-  for(let step=1;step<steps;step++){
-   guard();
-   for(const {win,start,end} of flights)if(!win.isDestroyed())win.setBounds(Object.fromEntries(rectKeys.map(key=>[key,Math.round(start[key]+(end[key]-start[key])*step/steps)])));
-   await pause(duration>0?started+duration*step/steps-Date.now():stepDelay);
-  }
-  guard();
- }
+  await glide(flights,guard,{steps,stepDelay,...motion});
+ };
  const ownedAvatar=owner=>avatarLauncher.owned?.(owner)??avatarLauncher.active(owner);
  const children=owner=>[...windows.values()].filter(record=>record.owner===owner&&kinds.has(record.kind)&&!(record.kind==='task'&&record.taskView==='dialog')&&!record.window.isDestroyed());
  const count=owner=>children(owner).length+(ownedAvatar(owner)?1:0);
@@ -179,7 +168,7 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
    const snapshot=read(project);if(!snapshot)throw Error('保存された配置がありません。先にSaveしてください。');
    await confirm();if(count(owner))throw Error('パネルの状態が変わりました。');
    // 1) IDE本体を、大きさを変えながら保存位置へ動かす。
-   await glide([{record:owner,value:snapshot.ide}],guard);guard();
+   await glidePanels([{record:owner,value:snapshot.ide}],guard);guard();
    applyPlacement(owner,snapshot.ide,screen);
    const failures=[],moves=[],saved=snapshot.renderer;let avatarOpened=false;
    const part=(more={})=>({version:1,viewMode:saved.viewMode,navigation:[],space:{explorer:{},viewers:[]},...more});
@@ -211,13 +200,15 @@ function createLayoutManager({windows,trustedEvent,readState,sessionKey,screen,a
    for(const kind of loadOrder){
     if(kind==='panel-navigation'){if(saved.navigation.length)await openDom('panel-navigation',part({navigation:saved.navigation}),[kind]);}
     else if(kind==='avatar'){
-     if(snapshot.avatar)try{await confirm();await openNative(event,[{kind:'avatar'}]);await confirm();avatarOpened=true;}catch(error){guard();failures.push('Avatar: '+error.message);}
+     if(snapshot.avatar)try{await confirm();await openNative(event,[{kind:'avatar',snapshot:snapshot.avatar}]);await confirm();avatarOpened=true;}catch(error){guard();failures.push('Avatar: '+error.message);}
     }else await openNativePanels(kind);
    }
    // 4) 開いた窓すべてを同時に、保存した位置と大きさへ動かす。
    await confirm();
-   const avatarRestore=avatarOpened?Promise.resolve().then(()=>avatarLauncher.restore(owner,snapshot.avatar)).catch(error=>({ok:false,error:error.message})):null;
-   await glide(moves,guard,moveDuration);
+   // Avatarは別プロセスなので、通信の待ち時間を吸収してから同時に動かす。
+   const motion={steps,stepDelay,duration:moveDuration,...(avatarOpened?{startAt:Date.now()+(moveDuration>0?100:0)}:{})};
+   const avatarRestore=avatarOpened?Promise.resolve().then(()=>avatarLauncher.restore(owner,snapshot.avatar,motion)).catch(error=>({ok:false,error:error.message})):null;
+   await glidePanels(moves,guard,motion);
    for(const {record,value} of moves){
     if(record.window.isDestroyed()){failures.push(record.kind+': 復元中に閉じられました。');continue;}
     applyPlacement(record,value,screen);restored++;

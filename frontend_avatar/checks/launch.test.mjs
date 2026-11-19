@@ -213,8 +213,12 @@ test('IDE layout IPC relays only owned ready allowlisted geometry and removes li
   assert.deepEqual(requests[0], { avatarLayout: { id: 3, action: 'capture' } });
   desktop.emit('message', { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], visiblePanels: ['chat', 'code2'], coreDisplay: 'カレンダー', token: 'secret' }, session: 'secret' } });
   assert.deepEqual(replies[0], { avatarLayoutResult: { id: 3, ok: true, snapshot: { windows: [], visiblePanels: ['chat', 'code2'], coreDisplay: 'カレンダー' } } });
-  owner.emit('message', { avatarLayout: { id: 4, action: 'restore', snapshot: { windows: [], visiblePanels: ['code2'], coreDisplay: 'xeyes' } } });
-  assert.deepEqual(requests[1], { avatarLayout: { id: 4, action: 'restore', snapshot: { windows: [], visiblePanels: ['code2'], coreDisplay: 'xeyes' } } });
+  const snapshot = { windows: [], visiblePanels: ['code2'], coreDisplay: 'xeyes' };
+  const motion = { startAt: 123, steps: 20, stepDelay: 25, duration: 3000 };
+  owner.emit('message', { avatarLayout: { id: 4, action: 'restore', snapshot, motion: { ...motion, duration: 999999 } } });
+  assert.equal(requests.length, 1);
+  owner.emit('message', { avatarLayout: { id: 4, action: 'restore', snapshot, motion: { ...motion, token: 'ignore' } } });
+  assert.deepEqual(requests[1], { avatarLayout: { id: 4, action: 'restore', snapshot, motion } });
   desktop.emit('exit', 0); await running;
   assert.equal(owner.listenerCount('message'), 0);
 });
