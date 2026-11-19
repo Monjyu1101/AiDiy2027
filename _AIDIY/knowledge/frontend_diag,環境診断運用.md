@@ -274,6 +274,14 @@ AIチャット・AIコードの最終応答が空文字・空白だけ、また�
 - UI 変更時は配布画面へ反映するため `npm --prefix frontend_diag/ui run build`、`npm --prefix frontend_diag/ui run check` を実行する。実ブラウザ確認は別途許可された環境だけで行い、ソース・mock 成功と実OS画面検証を区別する。
 
 
+## 外部CLIの導入状況とモデル書込
+
+画面の「書込」とheadlessは共通の `writeModelsInfo()` で、書込時の `installedCodeClis()` の結果を使います。導入判定は固定catalogのPATH・既定配置に実行ファイルがあることです。モデル一覧の取得成功、以前の診断OK、保存済みプロバイダJSONの候補があることだけでは導入済みにしません。Piはsetup済み、aidiy_codexはコンパイル済みを別に確認します。
+
+`code_models_info.json` は未導入CLIのトップレベル区分だけでなく、保存済み `aidiy_hermes` 等に残る `<CLI区分>/<モデル名>` も除外します。`hermes_models_info.json`・`pi_models_info.json`・`aidiy_codex_models_info.json` も同じ導入判定を適用します。API・OAuth候補はCLI導入状況とは独立です。導入済みCopilot・OpenCodeの取得失敗時の補完候補は維持します。モデル情報のファイルを手修正せず、Diagを再起動して取得・書込、またはheadlessで再生成してください。
+
+回帰確認: `node --test frontend_diag/checks/cli-model-availability.check.mjs`。一時PATHの実行ファイル確認、未導入・削除後の再書込、古い委譲経路、API/OAuth維持、導入済み補完候補を確認します。
+
 ## aidiy_codex のモデル一覧
 
 `diag/モデル情報/codex_info.mjs` は `piModelsInfo()` と同じ入力から `aidiy_codex_models_info.json` を生成する。導入済みの `claude_cli` / `antigravity_cli` / `codex_cli` / `copilot_cli` / `opencode_cli` / `grok_cli` を含め、候補の順序・表示名・先頭の `same` を Pi と揃える。生成 JSON だけを編集せず、この生成処理を維持する。

@@ -41,7 +41,7 @@ export function hermesChatModel(id, detail) {
 
 // 入力は保存に使った合成結果のみ。API 呼出・設定読取・キー保存は行わない。
 // CLI は既存 Code の導入判定、family 絞り込み、表示名、auto/same をそのまま維持する。
-export function hermesModelsInfo({chatModels = {}, codeModels = {}, providerInfos = []} = {}) {
+export function hermesModelsInfo({chatModels = {}, codeModels = {}, providerInfos = [], installedClis} = {}) {
   const result = {};
   const infos = new Map(providerInfos.filter(record).map(info => [info.プロバイダ, info]));
   const details = info => new Map((Array.isArray(info?.chat?.モデル) ? info.chat.モデル : [])
@@ -74,6 +74,8 @@ export function hermesModelsInfo({chatModels = {}, codeModels = {}, providerInfo
     add(provider, modelEntries(chatModels[provider]).filter(([id]) => hermesChatModel(id, metadata.get(id))));
   }
   for (const provider of HERMES_CODE_PROVIDERS) {
+    // 書込時は実行ファイルの現在の導入判定を使う。取得成功や保存済み候補は導入の根拠にしない。
+    if (installedClis && installedClis[provider] !== true) continue;
     if (!record(codeModels[provider]?.models)) continue;
     const entries = modelEntries(codeModels[provider]);
     const same = entries.find(([id]) => id === 'same') ?? ['same', HERMES_SAME_LABEL];

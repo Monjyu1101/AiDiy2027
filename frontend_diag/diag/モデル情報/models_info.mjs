@@ -54,6 +54,15 @@ function availableCodeModels(code, installedClis) {
   // 未更新のプロバイダ別ファイルを再合成するときも、旧候補を復活させない。
   code = Object.fromEntries(Object.entries(code).map(([key, entry]) => [key,
     ['codex_cli','copilot_cli','aidiy_hermes','aidiy_pi',CODEX_CODE_PROVIDER].includes(key) ? {...entry,models:withoutHermesContextAliases(entry.models)} : entry]));
+  // 保存済みの委譲候補にも現在の導入判定を適用する。API/OAuth経路は変更しない。
+  // トップレベルだけを絞ると、旧 aidiy_hermes の xxx_cli/model が復活する。
+  for (const key of ['aidiy_hermes', PI_CODE_PROVIDER, CODEX_CODE_PROVIDER]) {
+    if (!code[key]) continue;
+    code[key] = {...code[key], models:Object.fromEntries(Object.entries(code[key].models).filter(([id]) => {
+      const section = id.split('/')[0];
+      return !section.endsWith('_cli') || installedClis[section] === true;
+    }))};
+  }
   const filtered = Object.fromEntries(Object.entries(code).filter(([key]) => key === 'aidiy_hermes'
     || installedClis[key === 'claude_sdk' ? 'claude_cli' : key] === true));
   // OpenCodeはCodex用の候補を共有。空の場合の規定値と導入判定はCopilotと同じ方式。
@@ -73,7 +82,7 @@ function availableCodeModels(code, installedClis) {
   }
   // aidiy_codex の候補は aidiy_codex_models_info.json から作る（writeMergedModelsInfo の code 保存時）。旧候補は引き継がない。
   delete filtered[CODEX_CODE_PROVIDER];
-  const routes = Object.fromEntries(Object.keys(CODE_CLIS).filter(key => installedClis[key])
+  const routes = Object.fromEntries(Object.keys(CODE_CLIS).filter(key => installedClis[key] === true)
     .map(key => [`${key}/same`, `yyyy/mm/dd - ${key}/same`]));
   if (filtered[PI_CODE_PROVIDER]) filtered[PI_CODE_PROVIDER] = {models:routeModels({...routes, ...filtered[PI_CODE_PROVIDER].models})};
   if (Object.keys(routes).length || filtered.aidiy_hermes) {
@@ -325,7 +334,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     if (group === 'code') {
       // aidiy_codex_models_info.json を正本にし、Code の aidiy_codex 区分はそこから作る（コンパイル済みのときだけ）。
       // 入力予測・Navi は Code から派生し、各生成処理で外部CLIへの委譲候補を除外する。
-      codexInfo = codexModelsInfo({chatModels:selections.chat, codeModels:nonempty, providerInfos:hermesInfos});
+      codexInfo = codexModelsInfo({chatModels:selections.chat, codeModels:nonempty, providerInfos:hermesInfos, installedClis});
       if (installedClis[CODEX_CODE_PROVIDER] === true) {
         const entries = Object.entries(nonempty);
         const after = [PI_CODE_PROVIDER, 'aidiy_hermes'].map(key => entries.findIndex(([name]) => name === key)).find(index => index >= 0) ?? -1;
@@ -339,10 +348,10 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
     saved.push(file);
     if(group==='code'){const naviHermesAvailable=options.naviHermesAvailable??await naviHermesInstalled();await writeResult(path.join(directory,NAVI_MODELS_FILE),naviModelsInfo(nonempty,{...options,naviHermesAvailable}));saved.push(NAVI_MODELS_FILE);}
   }
-  await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
+  await writeResult(path.join(directory, HERMES_MODELS_FILE), hermesModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos, installedClis}));
   saved.push(HERMES_MODELS_FILE);
   // Pi も Hermes と同じ入力から、標準モデル名・CLI区分を含めて作る。
-  await writeResult(path.join(directory, PI_MODELS_FILE), piModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos}));
+  await writeResult(path.join(directory, PI_MODELS_FILE), piModelsInfo({chatModels:selections.chat, codeModels:selections.code, providerInfos:hermesInfos, installedClis}));
   saved.push(PI_MODELS_FILE);
   // aidiy_codex の専用一覧も Pi と同じ CLI 区分を含める。Code は codexCodeModels で区分付きモデル名へ変換する。
   await writeResult(path.join(directory, CODEX_MODELS_FILE), codexInfo);
