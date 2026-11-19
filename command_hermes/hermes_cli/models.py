@@ -349,10 +349,11 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
         "gemini-2.5-pro",
     ],
     "gemini": [
-        "gemini-3.1-pro-preview",
-        "gemini-3-pro-preview",
-        "gemini-3.6-flash",
-        "gemini-3.1-flash-lite-preview",
+        "gemini-4-carbon",
+        "gemini-4-neon",
+        "gemini-4-hydrogen",
+        "gemini-3.8-flash",
+        "gemini-3.8-flash-lite",
     ],
     "zai": [
         "glm-5.3",
@@ -749,17 +750,12 @@ _PROVIDER_MODELS: dict[str, list[str]] = {
     # /model picker only ever shows the currently-configured model.
     # Model IDs use the "google/" publisher prefix Vertex's openapi
     # endpoint expects (see hermes_cli/model_setup_flows.py).
-    # Entries validated live against a GCP project (global region,
-    # HTTP 200) as of 2026-07-21 (PR #68767).
     "vertex": [
-        "google/gemini-3.1-pro-preview",
-        "google/gemini-3-pro-preview",
-        "google/gemini-3.6-flash",
-        "google/gemini-3.5-flash",
-        "google/gemini-3.5-flash-lite",
-        "google/gemini-3-flash-preview",
-        "google/gemini-3.1-flash-lite-preview",
-        "google/gemini-3.1-flash-lite",
+        "google/gemini-4-carbon",
+        "google/gemini-4-neon",
+        "google/gemini-4-hydrogen",
+        "google/gemini-3.8-flash",
+        "google/gemini-3.8-flash-lite",
     ],
     "novita": [
         "moonshotai/kimi-k2.5",

@@ -458,19 +458,19 @@ test('Copilot keeps fetched latest versioned Claude families, then restores fixe
   assert.deepEqual(source.code.copilot_cli.models,{}); // 未取得source自体を取得成功に書換えない
  }finally{await rm(directory,{recursive:true,force:true});}
 });
-test('Gemini chat tiers keep Carbon, Argon, Hydrogen and Flash in order without changing unrelated positions',async()=>{
+test('Gemini chat tiers keep Carbon, Neon, Hydrogen, Flash and Flash Lite in order without changing unrelated positions',async()=>{
  const rows=[
   {model_id:'gemini-3.1-flash-image',作成日:'2026/11/01'},
   {model_id:'gemini-3.8-flash',作成日:'2026/09/02'},
   {model_id:'gemini-3.5-flash-lite',作成日:'2026/08/01'},
-  {model_id:'gemini-4-hydrogen'}, {model_id:'gemini-4-argon'}, {model_id:'gemini-4-carbon'},
+  {model_id:'gemini-3.8-flash-lite'}, {model_id:'gemini-4-hydrogen'}, {model_id:'gemini-4-neon'}, {model_id:'gemini-4-carbon'},
  ];
- const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-3.5-flash-lite','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash'];
+ const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-3.5-flash-lite','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite'];
  for(const id of ['gemini','freeai']){
   for(const subset of [rows,rows.filter(row=>row.model_id!=='gemini-4-carbon'),rows.filter(row=>row.model_id!=='gemini-4-hydrogen'),rows.slice(0,3)]){
    const info=await modelsInfo({id,名前:id},ok({モデル詳細:subset}),{now});
    assert.deepEqual(info.chat.モデル.map(row=>row.model_id).filter(model=>model!=='gemini-3.1-flash-image'&&model!=='gemini-3.5-flash-lite'),
-    ['gemini-4-carbon','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash'].filter(model=>subset.some(row=>row.model_id===model)));
+    ['gemini-4-carbon','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite'].filter(model=>subset.some(row=>row.model_id===model)));
    assert.deepEqual(Object.keys(info.chat[id+'_chat'].models),info.chat.モデル.map(row=>row.model_id));
    if(subset===rows){
     assert.deepEqual(Object.keys(info.chat[id+'_chat'].models),expected);
@@ -486,7 +486,7 @@ test('Gemini chat tiers keep Carbon, Argon, Hydrogen and Flash in order without 
 });
 test('Gemini tiers survive merged chat, Hermes and Pi catalogs without adding other provider candidates',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-gemini-tiers-'));
- const ids=['gemini-3.8-flash','gemini-4-hydrogen','gemini-4-argon','gemini-4-carbon'];
+ const ids=['gemini-3.8-flash-lite','gemini-3.8-flash','gemini-4-hydrogen','gemini-4-neon','gemini-4-carbon'];
  const providers=['gemini','freeai'].map(id=>({id,名前:id}));
  try{
   await writeModelsInfo(providers,Object.fromEntries(providers.map(({id})=>[id,ok({モデル詳細:ids.map(model_id=>({model_id}))})])),{directory,now,installedClis:{}});

@@ -120,7 +120,7 @@ const LAYOUT = Object.freeze({
 // 作成日（YYYY/MM/DD）の新しい順。日付が同じもの・日付の無いもの（OAuth・Ollama など）は元の順を保ち、日付なしは末尾。
 const dateKey = row => typeof row.作成日 === 'string' && /^\d{4}\/\d{2}\/\d{2}$/.test(row.作成日) ? row.作成日 : '';
 export const newestFirst = rows => rows.map((row, index) => [row, index]).sort(([a, i], [b, j]) => dateKey(b).localeCompare(dateKey(a)) || i - j).map(([row]) => row);
-// 既知4モデルの位置だけを上位順にする。その他の候補・日付・相対順序は変えない。
+// 既知5モデルの位置だけを上位順にする。その他の候補・日付・相対順序は変えない。
 const geminiChatOrder = rows => {
   const rank = id => GEMINI_CHAT_MODEL_ORDER.indexOf(id);
   const ranked = rows.filter(row => rank(row.model_id) >= 0).sort((a, b) => rank(a.model_id) - rank(b.model_id));

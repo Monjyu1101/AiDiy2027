@@ -152,11 +152,11 @@ class HermesModelCatalogTests(unittest.TestCase):
         load = self.ns["_load_freeai_defaults"]
         self.assertEqual(load({})["model"], "gemini-4-carbon")
         self.assertEqual(load({"CHAT_FREEAI_MODEL": "gemini-3.5-flash"})["model"], "gemini-4-carbon")
-        for model in ["gemini-3.8-flash", "gemini-4-argon", "gemini-4-carbon", "custom-model"]:
+        for model in ["gemini-3.8-flash", "gemini-4-neon", "gemini-4-carbon", "custom-model"]:
             with self.subTest(model=model):
                 self.assertEqual(load({"CHAT_FREEAI_MODEL": model})["model"], model)
                 self.assertEqual(load({"CHAT_FREEAI_MODEL": "gemini-4-carbon"}, model)["model"], model)
-        ids = ["gemini-4-carbon", "gemini-4-argon", "gemini-3.8-flash"]
+        ids = ["gemini-4-carbon", "gemini-4-neon", "gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.8-flash-lite"]
         self.write({provider: {model: model for model in ids} for provider in ["gemini", "freeai"]})
         for provider in ["gemini", "freeai"]:
             self.assertEqual([model for _, model in self.picker._get_aidiy_provider_entry(provider, True)["models"]], ids)

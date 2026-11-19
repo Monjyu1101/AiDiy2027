@@ -74,7 +74,7 @@ export function openrouterCatalog(body:unknown,now=new Date()):Catalog {
  return out;
 }
 // Gemini / FreeAI の取得済みChat候補の上位順。未取得IDの補完や他providerへの転用はしない。
-export const GEMINI_CHAT_MODEL_ORDER=Object.freeze(['gemini-4-carbon','gemini-4-argon','gemini-4-hydrogen','gemini-3.8-flash']);
+export const GEMINI_CHAT_MODEL_ORDER=Object.freeze(['gemini-4-carbon','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite']);
 export function googleCatalog(models:{name:string;supported_actions:string[];input_token_limit?:unknown}[],router:Catalog={}):Catalog {
  const out=empty();
  for(const model of models) {

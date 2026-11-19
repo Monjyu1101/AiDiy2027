@@ -184,7 +184,7 @@ function openrouterCatalog(body, now = /* @__PURE__ */ new Date()) {
   }
   return out;
 }
-var GEMINI_CHAT_MODEL_ORDER = Object.freeze(["gemini-4-carbon", "gemini-4-argon", "gemini-4-hydrogen", "gemini-3.8-flash"]);
+var GEMINI_CHAT_MODEL_ORDER = Object.freeze(["gemini-4-carbon", "gemini-4-neon", "gemini-4-hydrogen", "gemini-3.8-flash", "gemini-3.8-flash-lite"]);
 function googleCatalog(models, router = {}) {
   const out = empty();
   for (const model of models) {

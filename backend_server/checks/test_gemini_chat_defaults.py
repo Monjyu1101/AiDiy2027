@@ -26,7 +26,7 @@ with patch.dict(sys.modules, {"log_config": SimpleNamespace(get_logger=logging.g
 
 class GeminiChatDefaultsTests(unittest.TestCase):
     def test_new_and_missing_settings_use_carbon_but_existing_settings_survive(self):
-        for model in [None, "gemini-3.8-flash", "gemini-4-argon", "custom-model"]:
+        for model in [None, "gemini-3.8-flash", "gemini-4-neon", "custom-model"]:
             with self.subTest(model=model), tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "AiDiy_key.json"
                 if model is not None:
@@ -52,7 +52,7 @@ class GeminiChatDefaultsTests(unittest.TestCase):
         exec(compile(ast.Module(body=[function], type_ignores=[]), str(path), "exec"), namespace)
         create = namespace["初期モデル設定生成"]
         self.assertEqual(create(SimpleNamespace(json={}))['CHAT_FREEAI_MODEL'], 'gemini-4-carbon')
-        for model in ['gemini-3.8-flash', 'gemini-4-argon', 'custom-model']:
+        for model in ['gemini-3.8-flash', 'gemini-4-neon', 'custom-model']:
             self.assertEqual(create(SimpleNamespace(json={'CHAT_FREEAI_MODEL': model}))['CHAT_FREEAI_MODEL'], model)
         avatar = (ROOT / 'frontend_avatar/src/api/config.ts').read_text(encoding='utf-8')
         defaults = module.conf_json.DEFAULT_CONFIG

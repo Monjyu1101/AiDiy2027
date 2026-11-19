@@ -86,9 +86,10 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 
 ### Gemini / FreeAI のChatモデル追加
 
-- 新規設定・設定欠落時の `CHAT_FREEAI_MODEL` とHermesのFreeAI退避先は `gemini-4-carbon`。保存済みの `gemini-3.8-flash` / `gemini-4-argon` や任意モデルは置き換えない。
-- DiagはGoogle APIが返した候補だけを使い、既知4モデル間を `gemini-4-carbon` → `gemini-4-argon` → `gemini-4-hydrogen` → `gemini-3.8-flash` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
-- 既知4モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
+- 新規設定・設定欠落時の `CHAT_FREEAI_MODEL` とHermesのFreeAI退避先は `gemini-4-carbon`。保存済みの `gemini-3.8-flash` / `gemini-4-neon` や任意モデルは置き換えない。
+- DiagはGoogle APIが返した候補だけを使い、既知5モデル間を `gemini-4-carbon` → `gemini-4-neon` → `gemini-4-hydrogen` → `gemini-3.8-flash` → `gemini-3.8-flash-lite` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
+- HermesのGemini / Vertexの固定候補もこの5モデル。PiのGoogle / Vertexの既定値は先頭の `gemini-4-carbon`。
+- 既知5モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
 - `CHAT_GEMINI_MODEL` の画像モデル、Liveの音声モデル、低コスト用途のPrediction / Decision既定値は別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
 - 回帰確認は `node --test frontend_diag/checks/model-catalog.check.mjs frontend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
 
