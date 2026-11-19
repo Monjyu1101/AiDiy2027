@@ -15,7 +15,7 @@ import type { ExtensionAPI, ProviderConfig } from "@earendil-works/pi-coding-age
 
 import { chatPayload, type CliMode, type CliAnswer } from "./aidiy-cli-chat.ts";
 
-import { CliJsonSyntaxError, enginePrompt, jsonRepairPrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
+import { CliJsonSyntaxError, CliJsonValidationError, cliJsonPreview, enginePrompt, jsonRepairPrompt, parseInferenceAnswer } from "./aidiy-cli-json.ts";
 
 export const CLI_PROVIDERS = ["claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"];
 
@@ -88,7 +88,11 @@ async function runCli(root: string, request: { provider: string; model: string; 
 /** CLI区分をPiのモデル選択へ登録する。外部CLIもPiの会話・JSONイベント経路で扱う。 */
 export function registerCliProviders(pi: ExtensionAPI, root: string, models: Record<string, Record<string, string>>, readOnly = false, cliMode: CliMode = "chat"): void {
 	let cwd = process.cwd();
-	pi.on("before_agent_start", async (_event, ctx) => { cwd = ctx.cwd; });
+	let notify: ((message: string) => void) | undefined;
+	pi.on("before_agent_start", async (_event, ctx) => {
+		cwd = ctx.cwd;
+		notify = ctx.hasUI ? (message) => ctx.ui.notify(message, "error") : undefined;
+	});
 	for (const provider of CLI_PROVIDERS) {
 		const entries = Object.entries(models[provider] ?? {});
 		if (!entries.length) continue;
@@ -132,7 +136,9 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 					} catch (error) {
 						if (cliMode !== "chat" || !(error instanceof CliJsonSyntaxError)) throw error;
 						options?.signal?.throwIfAborted();
-						const repairPrompt = jsonRepairPrompt(request.engine_prompt!, error.response);
+						let repairPrompt: string;
+						try { repairPrompt = jsonRepairPrompt(request.engine_prompt!, error.response); }
+						catch (limitError) { notify?.(cliJsonPreview(error.response)); throw limitError; }
 						progress("JSON の形式を再要求します（1回のみ）。");
 						answer = await runCli(root, { ...request, engine_prompt: repairPrompt }, options, progress, tools);
 					}
@@ -155,6 +161,9 @@ export function registerCliProviders(pi: ExtensionAPI, root: string, models: Rec
 				} catch (error) {
 					output.stopReason = options?.signal?.aborted ? "aborted" : "error";
 					output.errorMessage = error instanceof Error ? error.message : String(error);
+					if (output.stopReason === "error" && (error instanceof CliJsonSyntaxError || error instanceof CliJsonValidationError)) {
+						notify?.(cliJsonPreview(error.response));
+					}
 					stream.push({ type: "error", reason: output.stopReason, error: output });
 				} finally { stream.end(); }
 			})();

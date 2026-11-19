@@ -263,11 +263,16 @@ pub(crate) async fn stream(
                 };
                 let Some(text) = repair else { return Ok(()); };
                 if attempt == 1 {
+                    json_wrapper::display_failed_response(&text);
                     return Err(invalid("CLI chat の JSON 形式修正に失敗しました。"));
                 }
                 request = json_wrapper::repair_request(&request, &text)
-                    .map_err(invalid)?;
+                    .map_err(|reason| {
+                        json_wrapper::display_failed_response(&text);
+                        invalid(reason)
+                    })?;
                 if request.len() > MAX_BYTES {
+                    json_wrapper::display_failed_response(&text);
                     return Err(invalid("CLI chat の形式修正入力が大きすぎます。"));
                 }
                 if cancel.is_cancelled() {
@@ -511,10 +516,18 @@ async fn run_child(
         let value = match json_wrapper::extract_object(&text) {
             Ok(value) => value,
             Err(_) if json_wrapper::repairable_syntax(&text) => return Ok(Some(text)),
-            Err(error) => return Err(invalid(error)),
+            Err(error) => {
+                json_wrapper::display_failed_response(&text);
+                return Err(invalid(error));
+            }
         };
-        let answer = validate_chat_response(python, root, request, value).await?;
-        validate_chat_message(&answer)?;
+        let answer = validate_chat_response(python, root, request, value)
+            .await
+            .and_then(|answer| {
+                validate_chat_message(&answer)?;
+                Ok(answer)
+            })
+            .inspect_err(|_| json_wrapper::display_failed_response(&text))?;
         for event in codec.response(&answer, response_id) {
             if !matches!(event, ResponseEvent::Created { .. }) {
                 send(tx, event).await?;

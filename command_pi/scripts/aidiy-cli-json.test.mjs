@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CliJsonSyntaxError, MAX_REPAIR_RESPONSE_CHARS, jsonRepairPrompt, enginePrompt, extractJsonObject, parseInferenceAnswer } from "../aidiy/aidiy-cli-json.ts";
+import { cliJsonPreview, CliJsonSyntaxError, MAX_REPAIR_RESPONSE_CHARS, jsonRepairPrompt, enginePrompt, extractJsonObject, parseInferenceAnswer } from "../aidiy/aidiy-cli-json.ts";
 const tools = [{name:"read",description:"read",parameters:{type:"object",required:["path"],additionalProperties:false,properties:{path:{type:"string"}}}}];
 test("Pi adds fixed JSON instructions and preserves outer input", () => {
  const prompt=enginePrompt({messages:[{role:"user",content:"hello"}],tools});
- assert.match(prompt,/単一の JSON/); assert.match(prompt,/最初の \{/); assert.match(prompt,/hello/);
+ assert.match(prompt,/単一の JSON/); assert.match(prompt,/単一の JSON オブジェクトを抽出/); assert.match(prompt,/hello/);
 });
 test("Pi accepts wrapped/fenced fixed JSON and nested quoted braces", () => {
  for (const text of ['{"content":"hello","tool_calls":[]}', '説明\n```json\n{"content":"hello","tool_calls":[]}\n```\n完了']) {
@@ -54,4 +54,25 @@ test("repair response limit counts Unicode characters and refuses overflow witho
  const boundary = "😀".repeat(MAX_REPAIR_RESPONSE_CHARS);
  assert.ok(jsonRepairPrompt("original", boundary).includes(JSON.stringify(boundary)));
  assert.throws(() => jsonRepairPrompt("original", boundary + "X"), /不正応答が大きすぎる/);
+});
+
+test("prose braces, a fenced object, and braces inside quoted strings are distinct", () => {
+ const payload = JSON.stringify({content:'編集中の {a} に "引用" と \\ を含む',tool_calls:[]});
+ for (const response of [
+  '説明 {対象ファイル} [関連] \n\x60\x60\x60json\n' + payload + '\n\x60\x60\x60\n補足 {以上}',
+  JSON.stringify(payload),
+ ]) assert.equal(parseInferenceAnswer(response, tools).content, '編集中の {a} に "引用" と \\ を含む');
+ for (const response of [
+  '説明\n[' + payload + ']', payload + '\n{}', payload + '\n' + payload,
+  '説明\n\x60\x60\x60json\n[' + payload + ']\n\x60\x60\x60',
+ ]) assert.throws(() => parseInferenceAnswer(response, tools), { name: "Error", message: /ツール引数が不正/ });
+});
+
+test("terminal-only diagnostic safely limits controls and Unicode text", () => {
+ const control = "\u001b[31m\u009b\u202e";
+ const preview = cliJsonPreview(control + "😀".repeat(2048) + "omitted");
+ for (const char of ["\u001b", "\u009b", "\u202e"]) assert.ok(!preview.includes(char));
+ assert.match(preview,/省略/);
+ assert.ok(!preview.includes("omitted"));
+ assert.equal((cliJsonPreview("😀".repeat(2049)).match(/😀/gu) ?? []).length, 2048);
 });

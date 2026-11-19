@@ -2,6 +2,7 @@
 use serde::Deserialize;
 use serde::de::{self, MapAccess, SeqAccess, Visitor};
 use serde_json::{Map, Value};
+use std::borrow::Cow;
 use std::fmt;
 
 pub(super) fn engine_prompt(body: &Value) -> String {
@@ -15,16 +16,114 @@ Return exactly one JSON object, no Markdown or explanation. Required shape: {{\"
 // AiDiy: only syntax/missing JSON may be regenerated. Valid JSON with an invalid
 // shape, duplicate keys or tool schema must still fail closed without another call.
 pub(super) fn repairable_syntax(text: &str) -> bool {
-    if text.trim_start().starts_with('[') {
-        return false;
+    candidate(&unwrap_json_string(text)) == Err(ExtractError::Syntax)
+}
+
+// Some engines put the entire reply in one JSON-encoded string. Unwrap at
+// most one layer before applying the same object and duplicate-key checks.
+fn unwrap_json_string(text: &str) -> Cow<'_, str> {
+    if text.trim_start().starts_with('"')
+        && let Ok(decoded) = serde_json::from_str::<String>(text)
+    {
+        return Cow::Owned(decoded);
     }
-    let (Some(start), Some(end)) = (text.find('{'), text.rfind('}')) else {
-        return true;
-    };
-    if end < start {
-        return true;
+    Cow::Borrowed(text)
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum ExtractError {
+    Syntax,
+    Ambiguous,
+    NotObject,
+}
+
+// Scan top-level brace/bracket groups, respecting JSON strings and escapes.
+// Do not reinterpret nested objects as independent responses.
+fn candidate(text: &str) -> Result<&str, ExtractError> {
+    let mut stack = Vec::new();
+    let mut start = 0;
+    let mut quoted = false;
+    let mut escaped = false;
+    let mut found = None;
+    for (i, byte) in text.bytes().enumerate() {
+        if stack.is_empty() {
+            if matches!(byte, b'{' | b'[') {
+                start = i;
+                stack.push(byte);
+            }
+        } else if quoted {
+            if escaped {
+                escaped = false;
+            } else if byte == b'\\' {
+                escaped = true;
+            } else if byte == b'"' {
+                quoted = false;
+            }
+        } else {
+            match byte {
+                b'"' => quoted = true,
+                b'{' | b'[' => stack.push(byte),
+                b'}' | b']' => {
+                    if !matches!((stack.pop(), byte), (Some(b'{'), b'}') | (Some(b'['), b']')) {
+                        return Err(ExtractError::Syntax);
+                    }
+                    if stack.is_empty() {
+                        let raw = &text[start..=i];
+                        if let Ok(value) = serde_json::from_str::<Value>(raw) {
+                            if !value.is_object() {
+                                return Err(ExtractError::NotObject);
+                            }
+                            if found.replace(raw).is_some() {
+                                return Err(ExtractError::Ambiguous);
+                            }
+                        } else if raw.as_bytes().first() == Some(&b'{')
+                            && raw[1..].trim_start().starts_with('"')
+                        {
+                            // An apparently malformed envelope cannot be skipped in
+                            // favor of another object supplied later.
+                            return Err(ExtractError::Syntax);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
     }
-    serde_json::from_str::<Value>(&text[start..=end]).is_err()
+    if !stack.is_empty() {
+        return Err(ExtractError::Syntax);
+    }
+    found.ok_or(ExtractError::Syntax)
+}
+
+const PREVIEW_CHARS: usize = 2048;
+
+fn response_preview(text: &str) -> String {
+    let mut chars = text.chars();
+    let mut preview = String::new();
+    // Escape controls, all line breaks and bidi formatting. This is a single
+    // display-only line, not a response item or an error payload.
+    for ch in chars.by_ref().take(PREVIEW_CHARS) {
+        if ch.is_control()
+            || matches!(ch, '\u{061c}' | '\u{200e}'..='\u{200f}' | '\u{2028}'..='\u{202e}' | '\u{2066}'..='\u{206f}')
+        {
+            preview.extend(ch.escape_default());
+        } else {
+            preview.push(ch);
+        }
+    }
+    if chars.next().is_some() {
+        preview.push_str("…（省略）");
+    }
+    preview
+}
+
+pub(super) fn display_failed_response(text: &str) {
+    use std::io::IsTerminal;
+    use std::io::Write;
+    let stderr = std::io::stderr();
+    if stderr.is_terminal() {
+        let _ = writeln!(stderr.lock(), "CLI chat の戻り値: {}", response_preview(text));
+    }
 }
 
 // AiDiy: reject oversized failed replies rather than truncating a tool request.
@@ -107,24 +206,14 @@ impl<'de> Deserialize<'de> for UniqueValue {
 }
 
 pub(super) fn extract_object(text: &str) -> Result<Value, &'static str> {
-    let start = text
-        .find('{')
-        .ok_or("CLI chat の回答に JSON object がありません。")?;
-    let end = text
-        .rfind('}')
-        .ok_or("CLI chat の JSON object が完結していません。")?;
-    if end < start {
-        return Err("CLI chat の JSON object が不正です。");
-    }
-    // A JSON array is not an object envelope; do not silently unwrap it.
-    if text.trim_start().starts_with('[') {
-        return Err("CLI chat の回答は JSON object が必要です。");
-    }
-    let UniqueValue(value) = serde_json::from_str(&text[start..=end])
-        .map_err(|_| "CLI chat の JSON が不正、重複キー、または複数 object です。")?;
-    if !value.is_object() {
-        return Err("CLI chat の回答は JSON object が必要です。");
-    }
+    let unwrapped = unwrap_json_string(text);
+    let raw = candidate(&unwrapped).map_err(|error| match error {
+        ExtractError::Syntax => "CLI chat の回答に有効な JSON object がありません。",
+        ExtractError::Ambiguous => "CLI chat の回答に複数の JSON object があります。",
+        ExtractError::NotObject => "CLI chat の回答は JSON object が必要です。",
+    })?;
+    let UniqueValue(value) = serde_json::from_str(raw)
+        .map_err(|_| "CLI chat の JSON に重複キーまたは不正な値があります。")?;
     Ok(value)
 }
 
@@ -145,7 +234,8 @@ mod tests {
         let expected = serde_json::json!({"content":"quoted { brace }", "tool_calls":[]});
         for text in [
             expected.to_string(),
-            format!("説明\n```json\n{expected}\n```\n以上"),
+            serde_json::to_string(&expected.to_string()).unwrap(),
+            format!("説明 {{参考}} [回答]\n```json\n{expected}\n```\n以上 {{補足}}"),
         ] {
             assert_eq!(extract_object(&text).unwrap(), expected);
         }
@@ -217,12 +307,25 @@ mod tests {
         assert!(repair_request(&input, &"🦀".repeat(MAX_REPAIR_CHARS + 1)).is_err());
     }
     #[test]
+    fn preview_escapes_terminal_controls_and_limits_length() {
+        assert_eq!(response_preview("a\x1b[2J\n\u{202e}"), r"a\u{1b}[2J\n\u{202e}");
+        let preview = response_preview(&("あ".repeat(PREVIEW_CHARS) + "discard"));
+        assert!(preview.ends_with("…（省略）"));
+        assert!(!preview.contains("discard"));
+    }
+
+    #[test]
     fn ambiguous_or_invalid_json_fails_closed() {
+        let wrapped_duplicate = serde_json::to_string(r#"{"a":1,"a":2}"#).unwrap();
+        assert!(extract_object(&wrapped_duplicate).is_err());
+        assert!(!repairable_syntax(&wrapped_duplicate));
         for text in [
             "plain text",
             "{",
             "}{",
             "{} {}",
+            "説明 [{}] その後 {}",
+            "例 {}、回答 {}",
             "{\"a\":1,\"a\":2}",
             "{\"x\":{\"a\":1,\"a\":2}}",
             "[{\"content\":\"x\"}]",

@@ -8,6 +8,8 @@ import queue
 import subprocess
 import threading
 import time
+import sys
+import unicodedata
 
 PROVIDERS = {"claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
              "codex-cli": "codex_cli", "copilot-cli": "copilot_cli",
@@ -15,12 +17,27 @@ PROVIDERS = {"claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
 
 
 class _ResponseJSONError(ValueError):
-    def __init__(self, message, rejected_response):
+    def __init__(self, message, rejected_response, *, retryable=True):
         super().__init__(message)  # Do not expose response contents in exception/log text.
         self.rejected_response = rejected_response
+        self.retryable = retryable
 
 
 _REPAIR_RESPONSE_LIMIT = 64 * 1024
+_PREVIEW_LIMIT = 2048
+
+
+def _show_local_preview(response):
+    # Keep model text out of exceptions, structured logs, and redirected stderr.
+    if not sys.stderr.isatty():
+        return
+    preview = ''.join(
+        ascii(char)[1:-1] if unicodedata.category(char).startswith("C") else char
+        for char in response[:_PREVIEW_LIMIT]
+    )
+    suffix = "（先頭2048文字）" if len(response) > _PREVIEW_LIMIT else ""
+    print(f"CLI chat 戻り値{suffix}: {preview}", file=sys.stderr, flush=True)
+
 
 
 def _repair_prompt(required_prompt, rejected_response):
@@ -39,7 +56,7 @@ def _repair_prompt(required_prompt, rejected_response):
 
 def run_cli(root, provider, model, prompt, project, mode, progress, *,
             cli_mode="passthrough", messages=None, tools=None, tool_choice=None, cancelled=None,
-            response_format=None):
+            response_format=None, show_preview=None):
     # No tools run in the inner CLI. Only malformed JSON gets one format retry;
     # process/auth failures and forbidden/schema-invalid tool calls still fail.
     rejected_response = None
@@ -51,6 +68,12 @@ def run_cli(root, provider, model, prompt, project, mode, progress, *,
                 cli_mode=cli_mode, messages=messages, tools=tools, tool_choice=tool_choice,
                 cancelled=cancelled, response_format=response_format, rejected_response=rejected_response)
         except _ResponseJSONError as exc:
+            if not exc.retryable:
+                if show_preview:
+                    show_preview(exc.rejected_response)
+                raise ValueError(str(exc)) from None
+            if show_preview and (attempt or len(exc.rejected_response) > _REPAIR_RESPONSE_LIMIT):
+                show_preview(exc.rejected_response)
             if attempt:
                 raise ValueError("CLI chatの応答JSONが不正です（形式修正を1回再試行済み）。") from None
             rejected_response = exc.rejected_response
@@ -159,7 +182,7 @@ def _run_cli_once(root, provider, model, prompt, project, mode, progress, *,
                 raise _ResponseJSONError(str(exc), answer) from None
             if validator is not None:
                 if not validator.is_valid(parsed):
-                    raise ValueError("CLI chatのJSON固定応答がschemaに一致しません。")
+                    raise _ResponseJSONError("CLI chatのJSON固定応答がschemaに一致しません。", answer, retryable=False)
                 parsed = {"content": json.dumps(parsed, ensure_ascii=False), "tool_calls": []}
             validation = {**request, "cli_mode": "validate_chat", "response": parsed}
             checked = subprocess.run(command, cwd=project,
@@ -168,10 +191,10 @@ def _run_cli_once(root, provider, model, prompt, project, mode, progress, *,
                                      creationflags=flags, timeout=30,
                                      env={**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONDONTWRITEBYTECODE": "1"})
             if checked.returncode or len(checked.stdout) > 16 * 1024 * 1024:
-                raise ValueError("CLI chatの応答検証に失敗しました。")
+                raise _ResponseJSONError("CLI chatの応答検証に失敗しました。", answer, retryable=False)
             result = json.loads(checked.stdout)
             if result.get("type") != "result" or result.get("ok") is not True or not isinstance(result.get("message"), dict):
-                raise ValueError("CLI chatの応答検証に失敗しました。")
+                raise _ResponseJSONError("CLI chatの応答検証に失敗しました。", answer, retryable=False)
             answer = result["message"]
         return answer
     finally:
@@ -209,7 +232,7 @@ def install_chat_engine(agent, cli, root):
                           messages=api_kwargs.get("messages", []), tools=api_kwargs.get("tools", []),
                           tool_choice=api_kwargs.get("tool_choice"),
                           cancelled=lambda: bool(getattr(agent, "_interrupt_requested", False)),
-                          response_format=api_kwargs.get("response_format"))
+                          response_format=api_kwargs.get("response_format"), show_preview=_show_local_preview)
         return ChatCompletion.model_validate({
             "id": "aidiy-cli", "object": "chat.completion", "created": int(time.time()),
             "model": cli.model, "choices": [{"index": 0, "message": message,

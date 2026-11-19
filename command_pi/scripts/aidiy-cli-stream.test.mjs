@@ -46,11 +46,13 @@ cat "${root}/answer$n.json"
 exit ${exitCode}
 `,{mode:0o700});
   responses.forEach((response,index)=>writeFileSync(join(root,`answer${index+1}.json`),JSON.stringify(response)+"\n"));
-  let config;
-  registerCliProviders({on(){},registerProvider(_name,value){config=value;}},root,{copilot_cli:{same:"same"}},true);
+  let config, before;
+  const notifications = [];
+  registerCliProviders({on(_name, callback){before=callback;},registerProvider(_name,value){config=value;}},root,{copilot_cli:{same:"same"}},true);
+  await before({}, {cwd:root,hasUI:true,ui:{notify:(...args)=>notifications.push(args)}});
   const model={id:"same",api:"aidiy-copilot_cli",provider:"copilot_cli"};
   const context={messages:[{role:"system",content:"outer",toolsAdded:[{name:"read",description:"read",parameters:{type:"object",required:["path"],additionalProperties:false,properties:{path:{type:"string"}}}}],timestamp:0},{role:"user",content:"昨日の更新ファイルを確認して報告",timestamp:0}]};
-  await run({root,config,model,context,count:()=>Number(readFileSync(join(root,"count"),"utf8"))});
+  await run({root,config,model,context,notifications,count:()=>Number(readFileSync(join(root,"count"),"utf8"))});
  } finally {rmSync(root,{recursive:true,force:true});}
 }
 const result=text=>({type:"result",ok:true,text});
@@ -107,5 +109,22 @@ test("oversized malformed response is not partially sent for repair",{skip:proce
   assert.equal(answer.stopReason,"error"); assert.equal(count(),1);
   assert.match(answer.errorMessage,/不正応答が大きすぎる/);
   assert.ok(!answer.errorMessage.includes("xxxxxxxx"));
+ });
+});
+
+test("failed JSON previews only the final response in the interactive UI", {skip:process.platform==="win32"}, async()=>{
+ const final = "最後の応答\u001b[31m\u202e " + "A".repeat(5000) + "tail";
+ await retryFixture([result("直前の応答"),result(final)],async({config,model,context,notifications,count})=>{
+  const answer = await config.streamSimple(model,context,{}).result();
+  assert.equal(answer.stopReason,"error");
+  assert.equal(count(),2);
+  assert.equal(notifications.length,1);
+  const [[preview, level]] = notifications;
+  assert.equal(level,"error");
+  assert.match(preview,/最後の応答/);
+  assert.match(preview,/省略/);
+  assert.ok(!preview.includes("直前の応答") && !preview.includes("tail"));
+  assert.ok(!preview.includes("\u001b") && !preview.includes("\u202e"));
+  assert.ok(!JSON.stringify(answer).includes("最後の応答"));
  });
 });

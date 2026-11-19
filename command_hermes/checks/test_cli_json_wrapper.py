@@ -36,7 +36,7 @@ class WrapperTest(unittest.TestCase):
         with patch('pathlib.Path.is_file', return_value=True), patch('subprocess.Popen', Process), patch('subprocess.run', side_effect=validate):
             value = run_cli(ROOT, 'copilot-cli','same','',str(ROOT),'normal',lambda _:None,cli_mode='chat',messages=messages)
         self.assertEqual(value, {'role':'assistant','content':'おはよう','tool_calls':[]})
-        self.assertIn('first { to the last }', engine_prompt(messages, []))
+        self.assertIn('one unambiguous JSON object', engine_prompt(messages, []))
 
     def test_schema_and_choice_stay_strict(self):
         request = {'messages':[{'role':'user','content':'read'}], 'tools':[{'type':'function','function':{'name':'read','parameters':{'type':'object','required':['path'],'properties':{'path':{'type':'string'}}}}}]}
