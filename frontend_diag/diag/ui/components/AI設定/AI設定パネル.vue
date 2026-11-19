@@ -15,7 +15,7 @@ watch(()=>props.connected&&props.coreOnline,value=>{if(!value){password.value=''
 onUnmounted(()=>{password.value='';state.終了();});
 </script>
 <template>
-<section class="ai-settings-tab" aria-label="設定再起動">
+<section class="ai-settings-tab" aria-label="設定再起動" tabindex="0">
  <header class="ai-settings-toolbar"><h2>設定再起動</h2><button v-if="state.認証済み.value" :disabled="state.変更中.value" @click="state.ログアウト()">Coreからログアウト</button></header>
  <p>Core（AIコア）を起動し、既存の利用者IDでログインしてください。認証はこの画面内だけで保持します。</p>
  <p v-if="!connected" role="status">先にDiagへ接続してください。</p>

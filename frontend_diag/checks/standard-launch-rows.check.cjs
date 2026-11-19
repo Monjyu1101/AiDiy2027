@@ -36,12 +36,20 @@ test('CLIがない場合は空段を表示せず、未接続・フォルダ未�
   assert.equal((cli.match(/<button[^>]* disabled/g)||[]).length,p.online?2:3);
  }
 });
-test('標準は4列・80pxのアイコンとし、狭い画面では列数を減らす',()=>{
+test('標準は8列・最大80pxのアイコンとし、狭い画面では列数を減らす',()=>{
  const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');
- assert.match(css,/\.app-launch-panel \.app-launch-rows\{display:flex;flex-direction:column/);
- assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\);grid-auto-flow:row/);
+ assert.match(css,/#app>\.diag-panel\.app-launch-view>\.app-launch-panel>\.app-launch-rows\{display:flex;flex-direction:column/);
+ assert.match(css,/grid-template-columns:repeat\(8,minmax\(0,1fr\)\);grid-auto-flow:row/);
  assert.match(css,/\.launch-frame-standard\{width:min\(80px,/);
  assert.match(css,/@media\(max-width:410px\).*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
  assert.match(css,/@media\(max-width:310px\).*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.doesNotMatch(css,/grid-auto-flow:column|overflow-x:auto/);
+});
+
+test('短い窓も一覧を縮めて縦スクロールし、共通flex:noneに負けない',()=>{
+ const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');
+ const rows=css.match(/#app>\.diag-panel\.app-launch-view>\.app-launch-panel>\.app-launch-rows\{([^}]+)\}/)?.[1];
+ assert.ok(rows);
+ for(const rule of ['min-height:0','min-width:0','flex:1 1 auto','overflow-y:auto','overflow-x:hidden'])assert.ok(rows.includes(rule),rule);
+ assert.doesNotMatch(css,/@media\(max-height:[^}]+(?:overflow:visible|overflow-y:auto|flex:none)/);
 });

@@ -39,11 +39,12 @@
 .app-launch-panel .panel-heading h2{margin:0}
 .app-launch-view>footer{padding:5px 14px;max-height:20vh;overflow:auto;line-height:1.3}
 .app-launch-view>footer p{margin:4px 0}
-@media(max-height:480px){.app-launch-view>.app-launch-panel{overflow-y:auto}.app-launch-panel .app-launch-list{flex:none!important;overflow:visible}}
 
-/* 標準は4列（8項目で2段）。分類を保ち、狭幅時は列数を減らす。 */
-.app-launch-panel .app-launch-rows{display:flex;flex-direction:column;gap:8px;min-height:0;flex:1 1 auto;overflow-y:auto;padding:6px 0}
-.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:row;flex:none!important;overflow:visible;align-items:start}
+/* 標準800pxでは1行8項目。分類を保ち、狭幅時は列数を減らす。 */
+/* 共通の #app>.diag-panel>.panel>* の flex:none より強く指定し、高さ不足時も一覧だけを縮める。 */
+#app>.diag-panel.app-launch-view>.app-launch-panel>.app-launch-rows{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0;flex:1 1 auto;overflow-y:auto;overflow-x:hidden;padding:6px 0}
+.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-flow:row;flex:none!important;overflow:visible;align-items:start}
+@media(max-width:760px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(6,minmax(0,1fr))}}
+@media(max-width:600px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:410px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:310px){.app-launch-panel .app-launch-rows>.app-launch-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-height:480px){.app-launch-panel .app-launch-rows{flex:none;overflow:visible}.app-launch-panel .app-launch-rows>.app-launch-list{overflow:visible}}

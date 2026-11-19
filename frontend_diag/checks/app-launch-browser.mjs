@@ -98,19 +98,45 @@ try{
   const outer=document.querySelector('.app-launch-rows');
   const cards=[...group.querySelectorAll('.app-launch-card')].map(card=>card.getBoundingClientRect());
   const columns=cards.filter(card=>card.top===cards[0].top).length;
-  const icon=group.querySelector('.app-launch-icon').getBoundingClientRect().width;
+  const icon=group.querySelector('.launch-frame-standard').offsetWidth;
   return {columns,icon,horizontalOverflow:outer.scrollWidth>outer.clientWidth,
-   firstEightInTwoRows:cards.length>=8&&new Set(cards.slice(0,8).map(card=>card.top)).size===2,
-   fifthWraps:cards[4].top>cards[0].top&&cards[4].left===cards[0].left,
+   firstEightInOneRow:cards.length>=8&&new Set(cards.slice(0,8).map(card=>card.top)).size===1,
+   ninthWraps:cards[8].top>cards[0].top&&Math.abs(cards[8].left-cards[0].left)<1,
    cliStartsAfterApps:cli.getBoundingClientRect().top>=group.getBoundingClientRect().bottom};
  })()`;
  await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
- assert.deepEqual(await evaluate(launcherGeometry),{columns:4,icon:80,horizontalOverflow:false,firstEightInTwoRows:true,fifthWraps:true,cliStartsAfterApps:true});
- for(const [width,columns] of [[390,3],[300,2]]){
+ assert.deepEqual(await evaluate(launcherGeometry),{columns:8,icon:80,horizontalOverflow:false,firstEightInOneRow:true,ninthWraps:true,cliStartsAfterApps:true});
+ // CLI分類にも同じ8列制限を適用する。試験用複製は起動せず即座に除去する。
+ assert.equal(await evaluate(`(()=>{
+  const group=document.querySelector('[data-launch-row="cli"]');
+  const copies=[];
+  try{
+   while(group.children.length<9){const copy=group.firstElementChild.cloneNode(true);group.append(copy);copies.push(copy);}
+   const cards=[...group.children].map(card=>card.getBoundingClientRect());
+   return new Set(cards.slice(0,8).map(card=>card.top)).size===1
+    &&cards[8].top>cards[0].top&&Math.abs(cards[8].left-cards[0].left)<1;
+  }finally{copies.forEach(copy=>copy.remove());}
+ })()`),true,'CLIも8項目で折り返す');
+ for(const [width,columns] of [[700,6],[550,4],[390,3],[300,2]]){
   await send('Emulation.setDeviceMetricsOverride',{width,height:600,deviceScaleFactor:1,mobile:false});
   const layout=await evaluate(launcherGeometry);
   assert.equal(layout.columns,columns);
   assert.equal(layout.horizontalOverflow,false);
+ }
+ // 高さ不足時は一覧自身がスクロールでき、最後のCLI/Chromeまで到達する。
+ for(const [width,height] of [[800,600],[800,360],[390,360]]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
+  assert.equal(await evaluate(`(()=>{
+   const rows=document.querySelector('.app-launch-rows');
+   const style=getComputedStyle(rows);
+   rows.scrollTop=rows.scrollHeight;
+   const last=rows.querySelector('[data-launch-row="cli"]').lastElementChild;
+   const bottom=last.getBoundingClientRect().bottom;
+   const bounds=rows.getBoundingClientRect();
+   return style.overflowY==='auto'&&rows.clientHeight>0&&rows.scrollWidth<=rows.clientWidth
+    &&(rows.scrollHeight<=rows.clientHeight||rows.scrollTop>0)
+    &&bottom<=bounds.bottom+1&&bottom>bounds.top;
+  })()`),true,`${width}×${height}: 最終行まで縦スクロールできる`);
  }
  await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  assert.equal(await evaluate(`document.querySelector('#run').getClientRects().length`),0);
@@ -162,7 +188,7 @@ try{
  await click('元のサイズに戻す');await click('アプリ起動');
  await send('Emulation.setDeviceMetricsOverride',{width:390,height:780,deviceScaleFactor:1,mobile:true});await sleep(150);await capture('app-mobile');
  assert.equal(await evaluate(`document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight`),false);
- assert.equal(await evaluate(`getComputedStyle(document.querySelector('.app-launch-list')).overflowY`),'auto');
+ assert.equal(await evaluate(`getComputedStyle(document.querySelector('.app-launch-rows')).overflowY`),'auto');
  await click('解除');assert.deepEqual(await evaluate(`[...document.querySelectorAll('.app-launch-button:not(:disabled)')].map(button=>button.closest('[data-app]').dataset.app)`),['chrome']);
  await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);await click('アプリ起動');
  assert.equal(await evaluate(`document.querySelector('#app-project-folder').value`),'','再起動・再読込では毎回フォルダ未選択');
