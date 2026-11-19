@@ -502,6 +502,9 @@ def prompt_choice(question: str, default_yes: bool) -> bool:
     return default_yes
 
 
+DIAG_ONLY_CHOICES = (False,) * 6 + (True,) + (False,) * 7
+
+
 def collect_startup_choices() -> tuple[bool, ...]:
     global CPU_ENABLED
     CPU_ENABLED = False
@@ -511,7 +514,7 @@ def collect_startup_choices() -> tuple[bool, ...]:
     diag_enabled          = prompt_choice("  Diag      : 開始しますか?", default_yes=True)
     if diag_enabled:
         # 起動指示は aidiy_diag の画面で行うため、後続の入力はすべて省く。
-        return (False,) * 6 + (True,) + (False,) * 7
+        return DIAG_ONLY_CHOICES
     print("バックエンド")
     local_enabled         = prompt_choice("  local     : 起動しますか?", default_yes=STARTUP_DEFAULTS['local'])
     backend_tools_enabled = prompt_choice("  tools     : 起動しますか?", default_yes=STARTUP_DEFAULTS['tools'])
@@ -1144,7 +1147,7 @@ def launch_diag_gui() -> None:
     time.sleep(5)
 
 
-def main() -> None:
+def main(*, diag_only: bool = False) -> None:
     _init_modules()
 
     (
@@ -1162,7 +1165,7 @@ def main() -> None:
         discord_enabled,
         task_enabled,
         team_enabled,
-    ) = collect_startup_choices()
+    ) = DIAG_ONLY_CHOICES if diag_only else collect_startup_choices()
     slack_enabled = SLACK_ENABLED and not diag_enabled
     cpu_enabled = CPU_ENABLED and not diag_enabled
 
@@ -1306,4 +1309,4 @@ if __name__ == "__main__":
     sys.path.insert(0, str(BASE_DIR / "scripts"))
     from _setup_processes import register_start_owner
     with register_start_owner(BASE_DIR):
-        main()
+        main(diag_only=sys.argv[1:] == ["--diag-only"])

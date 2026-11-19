@@ -35,11 +35,11 @@ class SetupResultTests(unittest.TestCase):
         choices.update(continue_on_error=continue_on_error, local_download="no")
         components = {}
 
-        def component(folder):
+        def component(folder, _filename="_setup.py"):
             if folder not in components:
                 components[folder] = Mock()
                 components[folder].launch_model_download.return_value = False
-                for name in ("setup", "setup_desktop", "setup_dependencies", "configure_clients"):
+                for name in ("setup", "setup_desktop", "setup_dependencies", "configure_clients", "install_standalone_launcher"):
                     getattr(components[folder], name).return_value = True
             return components[folder]
 
@@ -68,6 +68,15 @@ class SetupResultTests(unittest.TestCase):
                 yield module, choices, component, output, local_git_setup
         finally:
             sys.path.remove(str(ROOT))
+
+    def test_explicit_build_bypasses_questions_and_full_setup(self):
+        with self.execution() as (module, _, _, _, _):
+            with patch.object(module.sys, "argv", ["_setup.py", "--build"]):
+                self.assertIsNone(module.main())
+            module.collect_setup_choices.assert_not_called()
+            module.stop_setup_apps.assert_called_once_with()
+            module.setup_node_refresh.assert_called_once_with()
+            module.ensure_prerequisites.assert_not_called()
 
     def test_success_keeps_zero_exit_and_success_message(self):
         with self.execution() as (module, _, component, output, _git):

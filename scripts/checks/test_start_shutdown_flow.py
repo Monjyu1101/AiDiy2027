@@ -44,6 +44,19 @@ class ShutdownFlowTests(unittest.TestCase):
         self.assertEqual(order, ['stop', 'validate', 'start'])
         stop.assert_called_once()
 
+    def test_diag_only_bypasses_all_questions_and_uses_standard_start(self):
+        module = load()
+        order = []
+        with patch.object(module, '_init_modules'), \
+                patch.object(module, 'collect_startup_choices') as prompt, \
+                patch.object(module, 'stop_all_tasks', side_effect=lambda *a: order.append('stop') or True), \
+                patch.object(module, 'launch_diag_gui', side_effect=lambda: order.append('diag')), \
+                patch.object(module, 'validate_initial_environment') as other_services:
+            module.main(diag_only=True)
+        prompt.assert_not_called()
+        other_services.assert_not_called()
+        self.assertEqual(order, ['stop', 'diag'])
+
     def test_shutdown_result_controls_final_message(self):
         for verified in (True, False):
             with self.subTest(verified=verified):

@@ -32,6 +32,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 Usage:
     python _setup.py
     python _setup.py --auto            # 開始確認で a=auto を選んだのと同じ（各項目を既定値で実行）
+    python _setup.py --build           # 開始確認で b=build を選んだのと同じ
     python _setup.py --launchers-only  # 起動コマンドと PATH の修復だけ
 """
 
@@ -1020,7 +1021,10 @@ def main():
     print_info(" 12. Channels (Discord / Slack)")
     print()
 
-    choices = collect_setup_choices(auto=sys.argv[1:] == ['--auto'])
+    if sys.argv[1:] == ['--build']:
+        choices = {'node_refresh': True}
+    else:
+        choices = collect_setup_choices(auto=sys.argv[1:] == ['--auto'])
     if choices is None:
         print_warning("セットアップをキャンセルしました。")
         sys.exit(0)

@@ -18,7 +18,7 @@ class BatchStructureTests(unittest.TestCase):
     def test_cp932_crlf_no_bom_and_japanese_ui(self):
         data = BAT.read_bytes()
         self.assertEqual(data.decode('cp932').encode('cp932'), data)
-        self.assertIn('aidiyセットアップと実行しますか？ [y]/n:', TEXT)
+        self.assertIn('aidiy同期、セットアップ、実行を開始しますか？ [y]/n:', TEXT)
         self.assertIn('chcp 932 >nul', TEXT)
         self.assertNotIn('chcp 65001', TEXT)
         self.assertFalse(data.startswith(b"\xef\xbb\xbf"))
@@ -81,7 +81,7 @@ class BatchStructureTests(unittest.TestCase):
     def test_log_path_is_not_displayed_before_execution_confirmation(self):
         before = TEXT.split('if not errorlevel 1 goto cancelled', 1)[0]
         self.assertNotRegex(before, r'(?m)^echo .*%LOG%')
-        self.assertIn('if not errorlevel 1 goto cancelled\necho [INFO] 実行記録: "%LOG%"', TEXT)
+        self.assertLess(TEXT.index(':confirm_diag'), TEXT.index('echo [INFO] 実行記録: "%LOG%"'))
         cancelled_exit = TEXT[TEXT.index('\n:cancelled\n'):TEXT.index('\n:failed\n')]
         finish = TEXT[TEXT.index('\n:finish\n'):]
         self.assertNotRegex(cancelled_exit + finish, r'(?m)^echo .*%LOG%')
@@ -195,10 +195,16 @@ class BatchStructureTests(unittest.TestCase):
             self.assertNotIn(token, TEXT)
         self.assertIn('preserved-files', TEXT)
 
-    def test_interactive_setup_start_and_error_propagation(self):
+    def test_noninteractive_setup_start_and_error_propagation(self):
         block = TEXT[TEXT.index('\n:setup\n'):TEXT.index('\n:validate_repository\n')]
-        for script in ('_setup.py', '_start.py'):
-            self.assertIn(f'"%PYTHON%" -X utf8 -u {script}\nset "RC=%ERRORLEVEL%"', block)
+        for command in ('_setup.py %SETUP_FLAG%', '_start.py --diag-only'):
+            self.assertIn(f'"%PYTHON%" -X utf8 -u {command}\nset "RC=%ERRORLEVEL%"', block)
+        self.assertIn('if defined SETUP_FLAG goto run_setup', block)
+        self.assertIn('echo SETUP_SKIPPED', block)
+        self.assertIn('goto start\n:run_setup', block)
+        self.assertIn('if defined RUN_DIAG goto run_diag', block)
+        self.assertIn('echo START_SKIPPED', block)
+        self.assertIn('goto success\n:run_diag', block)
         self.assertLess(block.index('_setup.py'), block.index('_start.py'))
         self.assertIn('if not "%RC%"=="0" goto failed', block)
         self.assertNotRegex(block, r"(?m)^.*(?:_setup|_start)\.py.*[<>|]")
@@ -206,8 +212,8 @@ class BatchStructureTests(unittest.TestCase):
         self.assertNotIn('setup-state', TEXT)
 
     def test_setup_start_restore_codepage_after_saving_exit_status(self):
-        for script in ('_setup.py', '_start.py'):
-            start = TEXT.index(f'"%PYTHON%" -X utf8 -u {script}\n')
+        for command in ('_setup.py %SETUP_FLAG%', '_start.py --diag-only'):
+            start = TEXT.index(f'"%PYTHON%" -X utf8 -u {command}\n')
             lines = TEXT[start:].splitlines()
             self.assertEqual(lines[1], 'set "RC=%ERRORLEVEL%"')
             self.assertEqual(lines[3], 'chcp 932 >nul')
@@ -531,36 +537,102 @@ class BackupDestinationTests(unittest.TestCase):
 
 class ConfirmationModelTests(unittest.TestCase):
     """確認部分の実コマンドを限定モデルで実行。入力/FINDSTRのみ模擬する。"""
-    def confirm(self, answer):
-        block = TEXT[TEXT.index('set "RUN_AIDIY=y"'):TEXT.index('rem Install missing Python/Node')]
-        value, matched, output = None, False, []
-        for line in block.splitlines():
-            if not line or line.startswith('rem '):
+    def confirm(self, *answers):
+        block = TEXT[TEXT.index(':confirm_run\n'):TEXT.index('rem Install missing Python/Node')]
+        lines = block.splitlines()
+        labels = {line[1:]: i for i, line in enumerate(lines) if line.startswith(':')}
+        values = {}
+        output = []
+        prompts = []
+        idx = 0
+        matched = False
+        for _ in range(100):
+            if idx == len(lines):
+                return values['SETUP_FLAG'], values['RUN_DIAG'], prompts, output
+            line = lines[idx]
+            idx += 1
+            if not line or line.startswith((':', 'rem ')):
                 continue
-            if line == 'set "RUN_AIDIY=y"':
-                value = 'y'
-            elif line == 'set /p "RUN_AIDIY=aidiyセットアップと実行しますか？ [y]/n: "':
-                value = answer or value
-            elif line == 'set RUN_AIDIY | findstr /i /x /c:"RUN_AIDIY=n" >nul':
-                matched = ('RUN_AIDIY=' + value).lower() == 'run_aidiy=n'
-            elif line == 'if not errorlevel 1 goto cancelled':
-                if matched:
-                    return False, output
+            if match := re.fullmatch(r'set /p "([^=]+)=(.*)"', line):
+                key, text = match.groups()
+                answer = answers[len(prompts)]
+                prompts.append(text)
+                if answer:
+                    values[key] = answer
+            elif match := re.fullmatch(r'set "(.*?)=(.*)"', line):
+                values[match[1]] = match[2]
+            elif match := re.fullmatch(r'set (\w+) \| findstr /i /x (.+) >nul', line):
+                key = match[1]
+                matched = f'{key}={values[key]}'.lower() in [s.lower() for s in re.findall(r'/c:"([^"]*)"', match[2])]
+            elif match := re.fullmatch(r'if (not )?errorlevel 1 (.*)', line):
+                if matched == bool(match[1]):
+                    command = match[2]
+                    if command == 'goto cancelled':
+                        return None, None, prompts, output
+                    if command.startswith('goto '):
+                        idx = labels[command[5:]]
+                    else:
+                        assignment = re.fullmatch(r'set "(.*?)=(.*)"', command)
+                        self.assertIsNotNone(assignment)
+                        values[assignment[1]] = assignment[2]
             elif line == 'echo(':
                 output.append('')
             elif line.startswith('echo '):
                 output.append(line[5:])
             else:
                 self.fail(f'Unsupported confirmation model command: {line}')
-        return True, output
+        self.fail('Confirmation did not exit')
 
-    def test_log_and_environment_title_only_on_execution(self):
-        for answer in ('n', 'N', 'y', 'Y', ''):
-            with self.subTest(answer=answer):
-                accepted, output = self.confirm(answer)
-                self.assertEqual(accepted, answer.lower() != 'n')
-                self.assertEqual(any('%LOG%' in line for line in output), accepted)
-                self.assertEqual('環境チェック' in output, accepted)
+    def test_first_no_skips_other_questions_and_execution(self):
+        for answer in ('n', 'N'):
+            setup, diag, prompts, output = self.confirm(answer)
+            self.assertEqual((setup, diag, len(prompts), output), (None, None, 1, []))
+
+    def test_upfront_setup_and_diag_combinations(self):
+        for answer, flag in (('', ''), ('n', ''), ('y', '--auto'), ('A', '--auto'), ('b', '--build')):
+            for diag_answer, run_diag in (('', '1'), ('Y', '1'), ('n', '')):
+                with self.subTest(answer=answer, diag=diag_answer):
+                    setup, diag, prompts, output = self.confirm('', answer, diag_answer)
+                    self.assertEqual((setup, diag), (flag, run_diag))
+                    self.assertEqual([s.split(':')[0].strip() for s in prompts], [
+                        'aidiy同期、セットアップ、実行を開始しますか？ [y]/n',
+                        'セットアップを実行しますか? (y/[n]/a=auto/b=build（Node.js系の再ビルド）)',
+                        'Diag',
+                    ])
+                    self.assertTrue(any('%LOG%' in line for line in output))
+                    self.assertIn('環境チェック', output)
+
+    def test_invalid_or_metacharacter_input_repeats_only_its_question(self):
+        setup, diag, prompts, _ = self.confirm('y & calc', 'y', 'b & calc', 'B', 'n & calc', 'n')
+        self.assertEqual((setup, diag), ('--build', ''))
+        self.assertEqual(prompts[::2], prompts[1::2])
+
+
+    @unittest.skipUnless(os.name == 'nt', 'Windows CMD unavailable; no Windows execution claim')
+    def test_real_cmd_reads_three_answers_without_starting_project(self):
+        block = TEXT[TEXT.index(':confirm_run\n'):TEXT.index('echo [INFO] 実行記録:')]
+        stub = ('@echo off\nsetlocal EnableExtensions DisableDelayedExpansion\nchcp 932 >nul\n'
+                + block + 'echo RESULT setup=[%SETUP_FLAG%] diag=[%RUN_DIAG%]\nexit /b 0\n'
+                ':cancelled\necho RESULT cancelled\nexit /b 0\n')
+        with tempfile.TemporaryDirectory() as folder:
+            script = Path(folder) / 'confirm.bat'
+            script.write_bytes(stub.replace('\n', '\r\n').encode('cp932'))
+            for answers, expected in (
+                (b'n\r\n', 'RESULT cancelled'),
+                (b'y\r\nb\r\nn\r\n', 'RESULT setup=[--build] diag=[]'),
+                (b'y\r\na\r\ny\r\n', 'RESULT setup=[--auto] diag=[1]'),
+                (b'\r\n\r\n\r\n', 'RESULT setup=[] diag=[1]'),
+            ):
+                with self.subTest(answers=answers):
+                    reply_file = Path(folder) / 'answers.txt'
+                    reply_file.write_bytes(answers)
+                    with reply_file.open('rb') as replies:
+                        result = subprocess.run([os.environ['ComSpec'], '/d', '/c', str(script)],
+                                                stdin=replies, capture_output=True, check=True, timeout=10)
+                    output = result.stdout.decode('cp932', errors='replace')
+                    self.assertIn(expected, output)
+                    if answers == b'n\r\n':
+                        self.assertNotIn('Diag', output)
 
 
 class ExitFlowModelTests(unittest.TestCase):

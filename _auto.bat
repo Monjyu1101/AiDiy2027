@@ -39,11 +39,33 @@ if errorlevel 1 goto log_error
 >>"%LOG%" echo CWD="%AIDIY_CWD%"
 echo [WARN] 二重実行は防止しません。他の自動実行がないことを利用者が確認してください。
 echo [WARN] 追跡ファイルのローカル変更は破棄し、GitHubの最新版で強制的に書き換えます。
+rem Read and validate all three choices before checks or checkout changes.
+:confirm_run
 set "RUN_AIDIY=y"
-set /p "RUN_AIDIY=aidiyセットアップと実行しますか？ [y]/n: "
-rem Do not expand user input as command text. Empty input keeps default Yes.
+set /p "RUN_AIDIY=aidiy同期、セットアップ、実行を開始しますか？ [y]/n: "
+rem Never expand reply text: metacharacters must not become commands.
 set RUN_AIDIY | findstr /i /x /c:"RUN_AIDIY=n" >nul
 if not errorlevel 1 goto cancelled
+set RUN_AIDIY | findstr /i /x /c:"RUN_AIDIY=y" >nul
+if errorlevel 1 goto confirm_run
+:confirm_setup
+set "SETUP_REPLY=n"
+set "SETUP_FLAG="
+set /p "SETUP_REPLY=セットアップを実行しますか? (y/[n]/a=auto/b=build（Node.js系の再ビルド）): "
+set SETUP_REPLY | findstr /i /x /c:"SETUP_REPLY=n" /c:"SETUP_REPLY=y" /c:"SETUP_REPLY=a" /c:"SETUP_REPLY=b" >nul
+if errorlevel 1 goto confirm_setup
+set SETUP_REPLY | findstr /i /x /c:"SETUP_REPLY=y" /c:"SETUP_REPLY=a" >nul
+if not errorlevel 1 set "SETUP_FLAG=--auto"
+set SETUP_REPLY | findstr /i /x /c:"SETUP_REPLY=b" >nul
+if not errorlevel 1 set "SETUP_FLAG=--build"
+:confirm_diag
+set "DIAG_REPLY=y"
+set "RUN_DIAG="
+set /p "DIAG_REPLY=  Diag      : 開始しますか? [y]/n  "
+set DIAG_REPLY | findstr /i /x /c:"DIAG_REPLY=n" /c:"DIAG_REPLY=y" >nul
+if errorlevel 1 goto confirm_diag
+set DIAG_REPLY | findstr /i /x /c:"DIAG_REPLY=y" >nul
+if not errorlevel 1 set "RUN_DIAG=1"
 echo [INFO] 実行記録: "%LOG%"
 
 echo(
@@ -214,6 +236,11 @@ set "RC=%ERRORLEVEL%"
 if not "%RC%"=="0" goto failed
 
 :setup
+if defined SETUP_FLAG goto run_setup
+>>"%LOG%" echo SETUP_SKIPPED
+echo [INFO] セットアップをスキップします。
+goto start
+:run_setup
 echo(
 echo ============================================================
 echo セットアップ
@@ -221,14 +248,19 @@ echo ============================================================
 echo(
 set "STAGE=setup"
 >>"%LOG%" echo SETUP %DATE% %TIME%
-echo [INFO] セットアップ開始。通常の確認入力に回答してください。
-"%PYTHON%" -X utf8 -u _setup.py
+"%PYTHON%" -X utf8 -u _setup.py %SETUP_FLAG%
 set "RC=%ERRORLEVEL%"
 rem Child tools may change the shared console code page. Restore before Japanese.
 chcp 932 >nul
 if errorlevel 1 (echo [NG] Cannot restore code page 932. TEMP kept. & exit /b 2)
 >>"%LOG%" echo SETUP_EXIT=%RC%
 if not "%RC%"=="0" goto failed
+:start
+if defined RUN_DIAG goto run_diag
+>>"%LOG%" echo START_SKIPPED
+echo [INFO] Diag の起動をスキップします。
+goto success
+:run_diag
 echo(
 echo ============================================================
 echo アプリケーションの起動
@@ -236,13 +268,14 @@ echo ============================================================
 echo(
 set "STAGE=start"
 >>"%LOG%" echo START_APP %DATE% %TIME%
-"%PYTHON%" -X utf8 -u _start.py
+"%PYTHON%" -X utf8 -u _start.py --diag-only
 set "RC=%ERRORLEVEL%"
 rem Child tools may change the shared console code page. Restore before Japanese.
 chcp 932 >nul
 if errorlevel 1 (echo [NG] Cannot restore code page 932. TEMP kept. & exit /b 2)
 >>"%LOG%" echo START_EXIT=%RC%
 if not "%RC%"=="0" goto failed
+:success
 >>"%LOG%" echo SUCCESS %DATE% %TIME%
 goto finish
 
