@@ -187,7 +187,8 @@ class PredictionReadonlyCommandTest(unittest.IsolatedAsyncioTestCase):
         for forbidden in ("--allow-all-tools", "--allow-all-paths", "--continue", "--yolo"):
             self.assertNotIn(forbidden, cmd)
         self.assertEqual(cmd[cmd.index("--add-dir") + 1], "/fixture/project")
-        self.assertEqual(cmd[-2:], ["-p", "fixture prompt"])
+        self.assertNotIn("-p", cmd)
+        self.assertNotIn("fixture prompt", cmd)
 
     def test_unsupported_provider_never_uses_normal_builder(self):
         for provider in ("claude_sdk", "unknown_cli"):

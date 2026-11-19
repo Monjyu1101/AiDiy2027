@@ -46,7 +46,7 @@ _STDERR_STREAM_STDOUT_FINAL_AI = frozenset({
 # モデルは `<区分>/<モデル名>` のまま渡す（aidiy_codex 側で区分ごとの接続先を決め、区分名を外す）。
 _CODEX系AI = frozenset({"codex_cli", "aidiy_codex"})
 # 会話全文は argv に載せない。Pi / Hermes と同じ UTF-8 stdin 経路で渡す。
-_STDINプロンプトAI = _CODEX系AI | {"aidiy_hermes", "aidiy_pi"}
+_STDINプロンプトAI = _CODEX系AI | {"aidiy_hermes", "aidiy_pi", "copilot_cli"}
 
 
 def _aidiy_codex実行ファイル() -> str:
@@ -771,6 +771,8 @@ class CodeAI:
         # 予測では既存のCLIセッションや許可状態を継続しない。
         if self.code_ai in _CODEX系AI:
             return common + ["-"]
+        if self.code_ai == "copilot_cli":
+            return common  # stdin と -p の併用では stdin が無視される。
         return common + ([プロンプト] if self.code_ai == "opencode_cli" else ["-p", プロンプト])
 
     def _コマンド構築(self, プロンプト: str, 初回: bool = False, repo_path: str = None, 読取専用: bool = False) -> list:
@@ -886,7 +888,8 @@ class CodeAI:
                 return common + ["-c", "-p", プロンプト]
 
         if self.code_ai == "copilot_cli":
-            # GitHub Copilot CLI
+            # GitHub Copilot CLI: Pi / Hermes と同じ UTF-8 stdin 経路で全文を渡す。
+            # 公式の piped input は -p / --prompt と併用できない。argv 長制限も回避する。
             common = list(base)
             common.extend(["--output-format", "json", "--stream", "on"])
             if self.code_permissions != "none":
@@ -897,9 +900,9 @@ class CodeAI:
             if repo_path:
                 common.extend(["--add-dir", repo_path])
             if 初回:
-                return common + ["-p", プロンプト]
+                return common
             else:
-                return common + ["--continue", "-p", プロンプト]
+                return common + ["--continue"]
 
         elif self.code_ai == "antigravity_cli":
             # Antigravity CLI (agy) — claude 互換インターフェース
