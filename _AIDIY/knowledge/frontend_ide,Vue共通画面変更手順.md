@@ -1061,3 +1061,11 @@ Code / Live を基準に Term / Browser / Navi / Task / Team と Diagへ適用�
 ### エクスプローラーの昨日検索
 
 時刻検索のプリセットは「午前・今日・午後・昨日・解除」の順で表示する。「昨日」は選択時の閲覧端末のローカル日付で前日0時以上・当日0時未満を対象にする。24時間固定の減算ではなく暦日を戻すため、夏時間の23時間・25時間の日も含む。共通の `ファイル日時.js` と `ファイル一覧.vue` を使用し、埋め込み・別パネルで同じ境界を使う。日付が変わった後は再選択すると新しい前日範囲になる。確認は `checks/file-dates.test.mjs` と実Vueの `scripts/check-explorer-time.mjs`。
+
+### TermのIME変換開始位置（xterm 6.0.0）
+
+`ターミナル/IME入力位置.js` は `terminal.open()` 後に登録し、破棄時に解除する。PiなどのTUIが実カーソルを入力欄へ戻しても、xterm 6.0.0のIME用textarea座標だけが古い描画位置に残る場合がある。ASCIIの描画位置や確定文字の挿入位置が正常でも、変換中表示だけ右へずれることがある。
+
+[upstream xterm #5759](https://github.com/xtermjs/xterm.js/pull/5759) と同じ順で、compositionstartのcapture時に実カーソルへtextareaを同期し、本体のcompositionstart処理後に変換表示も同期する。入力値・selection・キー送信・Piのカーソル設定を変更しない。現行6.0.0の内部APIは存在確認して使い、xterm更新時は本体への修正取り込みを確認してこの互換処理を外す。Pi専用ウィンドウと通常Term内のPiは同じ部品を通る。他CLIも同じIME開始処理を使い、通常キー送信には介入しない。
+
+`node --test checks/term-ime.test.mjs checks/term-keyboard.test.mjs checks/term-focus.test.mjs` で確認する。IME試験は実xterm Core・CompositionHelperで模擬応答後の実カーソルと古いtextareaアンカーを分け、開始時の同期、日本語確定1回、解除・未対応APIを検証する。DOM測定はfixtureで、Windows実IME・ConPTYそのものの再現試験ではない。任意の追加確認として、隔離先へ `jsdom@26.1.0` を導入し、その `lib/api.js` のfile URLを `AIDIY_TEST_JSDOM` に指定すると本物のHTMLTextAreaElementとDOMイベント順でも同じ試験を実行できる。native IMEやブラウザー描画の確認は別途必要。配布画面は `dist/app.js` なので変更後に `npm run build` を実行する。
