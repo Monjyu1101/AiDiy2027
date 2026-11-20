@@ -1894,7 +1894,7 @@ DEFAULT_CONFIG = {
             # era stopped at alloy/echo/fable/onyx/nova/shimmer)
         },
         "gemini": {
-            "model": "gemini-2.5-flash-preview-tts",
+            "model": "gemini-3.8-flash-tts",
             "voice": "Kore",
             # When true, Gemini 3.1 TTS uses a hidden auxiliary-model rewrite
             # pass to insert freeform square-bracket audio tags into the TTS

@@ -44,6 +44,20 @@ class GeminiChatDefaultsTests(unittest.TestCase):
             self.assertEqual(config.get("CHAT_FREEAI_MODEL"), "gemini-4-carbon")
             self.assertEqual(config.get("CHAT_AI_NAME"), "openai_oauth")
 
+    def test_live_migrates_only_generated_model_defaults(self):
+        for key, previous in module.旧Liveモデル既定値.items():
+            with self.subTest(key=key), tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "AiDiy_key.json"
+                other = "LIVE_FREEAI_MODEL" if key == "LIVE_GEMINI_MODEL" else "LIVE_GEMINI_MODEL"
+                path.write_text(json.dumps({key: previous, other: "custom-live"}), encoding="utf-8")
+                config = module.conf_json(str(path))
+                self.assertEqual(config.get(key), "gemini-3.8-live")
+                self.assertEqual(config.get(other), "custom-live")
+                self.assertEqual(json.loads(path.read_text(encoding="utf-8"))[key], "gemini-3.8-live")
+                self.assertEqual(module.GeminiLive設定モデル(other, previous), previous)
+                self.assertEqual(module.GeminiLive設定モデル(key, f"models/{previous}"), "gemini-3.8-live")
+                self.assertEqual(module.GeminiLive設定モデル(other, f"models/{previous}"), f"models/{previous}")
+
     def test_session_and_avatar_fallbacks_match_config(self):
         path = ROOT / "backend_server/AIコア/AIセッション管理.py"
         tree = ast.parse(path.read_text(encoding="utf-8"))

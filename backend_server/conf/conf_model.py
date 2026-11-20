@@ -140,7 +140,8 @@ class conf_models:
     def normalize_initial_settings(self, settings: dict) -> dict:
         """共通初期値だけを診断候補に合わせる。設定ファイル・接続済みセッションは変更しない。"""
         result = dict(settings)
-        for kind in ("chat", "live", "code"):
+        # Live候補はUIの選択補助。古い診断結果から接続先・モデル・声を代替しない。
+        for kind in ("chat", "code"):
             catalog = self._get_diag_models(kind)
             if catalog is None:
                 continue
@@ -171,10 +172,6 @@ class conf_models:
                         continue
                     vendor = "OPENAI"
                 select(f"{kind.upper()}_{vendor}_MODEL", choices)
-            if kind == "live":
-                for provider, voices in self.get_live_voices().items():
-                    if provider in available and voices:
-                        select(f"LIVE_{provider.removesuffix('_live').upper()}_VOICE", voices)
         return result
 
 

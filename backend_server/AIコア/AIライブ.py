@@ -215,10 +215,13 @@ class Live:
 
     def _select_ai_module(self):
         """AI_NAMEに応じたLiveモジュールを選択してインポート"""
-        module_name = "AIコア.AIライブ_gemini"
         ai_name = (self.AI_NAME or "").lower()
-        if ai_name == "openai_live":
+        if ai_name in ("gemini_live", "freeai_live"):
+            module_name = "AIコア.AIライブ_gemini"
+        elif ai_name == "openai_live":
             module_name = "AIコア.AIライブ_openai"
+        else:
+            return None
         try:
             return importlib.import_module(module_name)
         except Exception as e:
@@ -228,6 +231,8 @@ class Live:
     async def _ensure_ai_instance(self):
         """AIモジュールのLiveAIインスタンスを生成・開始"""
         if not self.AIモジュール:
+            if (self.AI_NAME or "").lower() not in ("gemini_live", "freeai_live", "openai_live"):
+                self._開始エラー = "LiveAI の接続先が未設定または未対応です。Live の設定を確認してください。"
             return None
         if self.AIインスタンス:
             return self.AIインスタンス
@@ -243,9 +248,8 @@ class Live:
                 conf_json = getattr(self.親, "conf", None)
                 if conf_json and hasattr(conf_json, "json"):
                     if live_ai in ("gemini_live", "freeai_live"):
-                        api_key = conf_json.json.get("gemini_key_id", "")
-                        if live_ai == "freeai_live":
-                            api_key = conf_json.json.get("freeai_key_id", "") or api_key
+                        key_id = "freeai_key_id" if live_ai == "freeai_live" else "gemini_key_id"
+                        api_key = conf_json.json.get(key_id, "")
                         if not self.AI_MODEL:
                             key = "LIVE_FREEAI_MODEL" if live_ai == "freeai_live" else "LIVE_GEMINI_MODEL"
                             self.AI_MODEL = conf_json.json.get(key, "") or self.AI_MODEL
@@ -297,6 +301,7 @@ class Live:
             if not started:
                 failed_ai = self.AIインスタンス
                 self.AIインスタンス = None
+                self._開始エラー = getattr(failed_ai, "最終エラー", "")
                 await failed_ai.終了()
                 logger.error("[Live] LiveAIの開始要求が失敗しました。APIキーとバックエンドの設定を確認してください。")
                 return None
@@ -314,11 +319,12 @@ class Live:
             return
 
         self._initializing = True
+        self._開始エラー = ""
         try:
             ai = await self._ensure_ai_instance()
             if ai is None:
                 self.is_alive = False
-                await self._送信エラー通知("LiveAIを開始できませんでした。APIキーとバックエンドの初期化ログを確認してください。")
+                await self._送信エラー通知(self._開始エラー or "LiveAIを開始できませんでした。APIキーとバックエンドの初期化ログを確認してください。")
                 return
             self.is_alive = True
             if self._audio_task is None or self._audio_task.done():
@@ -335,7 +341,7 @@ class Live:
         while True:
             ai = self.AIインスタンス
             if ai is None or not self.is_alive:
-                raise RuntimeError("LiveAI が開始されていません。バックエンドの初期化ログを確認してください。")
+                raise RuntimeError(getattr(self, "_開始エラー", "") or "LiveAI が開始されていません。バックエンドの初期化ログを確認してください。")
             if not getattr(ai, "api_key", None):
                 raise RuntimeError("LiveAI の APIキーが未設定または仮設定です。バックエンドの設定を確認してください。")
             if getattr(ai, "中断停止フラグ", False) or getattr(ai, "エラーフラグ", False):
@@ -365,9 +371,8 @@ class Live:
             if conf_json and hasattr(conf_json, "json"):
                 ai_name = (self.AI_NAME or "").lower()
                 if ai_name in ("gemini_live", "freeai_live"):
-                    api_key = conf_json.json.get("gemini_key_id", "")
-                    if ai_name == "freeai_live":
-                        api_key = conf_json.json.get("freeai_key_id", "") or api_key
+                    key_id = "freeai_key_id" if ai_name == "freeai_live" else "gemini_key_id"
+                    api_key = conf_json.json.get(key_id, "")
                 else:
                     api_key = conf_json.json.get("openai_key_id", "")
         except Exception:

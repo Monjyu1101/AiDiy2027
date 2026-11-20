@@ -29,9 +29,9 @@ SETTLE_SECONDS = 15
 MAX_CONFIG = 1024 * 1024
 MAX_BODY_BYTES = 20 * 1024 * 1024  # JSON transport。設定ファイル・prompt の制約とは別。
 TABLE = {
-    'freeai_live': ('AIコア.AIライブ_gemini', 'FREEAI', 'freeai_key_id', 'gemini_key_id'),
-    'gemini_live': ('AIコア.AIライブ_gemini', 'GEMINI', 'gemini_key_id', 'freeai_key_id'),
-    'openai_live': ('AIコア.AIライブ_openai', 'OPENAI', 'openai_key_id', None),
+    'freeai_live': ('AIコア.AIライブ_gemini', 'FREEAI', 'freeai_key_id'),
+    'gemini_live': ('AIコア.AIライブ_gemini', 'GEMINI', 'gemini_key_id'),
+    'openai_live': ('AIコア.AIライブ_openai', 'OPENAI', 'openai_key_id'),
 }
 
 
@@ -194,22 +194,24 @@ class LiveModelCheck:
             if selected not in TABLE:
                 return result('NG', 'unsupported_provider')
             provider = selected
-            module, prefix, key_id, fallback = TABLE[selected]
-            selected_model = manual['ai_model'] if manual else config.get('LIVE_'+prefix+'_MODEL')
+            module, prefix, key_id = TABLE[selected]
+            model_key = 'LIVE_'+prefix+'_MODEL'
+            selected_model = manual['ai_model'] if manual else config.get(model_key)
+            backend = str(self.root / 'backend_server')
+            if backend not in sys.path:
+                sys.path.append(backend)
+            if not manual and selected in ('gemini_live', 'freeai_live'):
+                from conf.conf_json import GeminiLive設定モデル
+                selected_model = GeminiLive設定モデル(model_key, selected_model)
             if not valid_string(selected_model):
                 return result('NG', 'model_not_configured')
             model = selected_model
             key = config.get(key_id)
-            if not valid_string(key, 8192) and fallback:
-                key = config.get(fallback)
             if not valid_string(key, 8192):
                 return result('NG', 'key_not_configured')
             voice = manual['voice'] if manual else config.get('LIVE_'+prefix+'_VOICE')
             if not valid_string(voice):
                 return result('NG', 'voice_not_configured')
-            backend = str(self.root / 'backend_server')
-            if backend not in sys.path:
-                sys.path.append(backend)
             # 初回SDK import中もToolsのpingを止めず、試行の切断誤判定を防ぐ。
             factory = self.factory or await asyncio.to_thread(lambda: getattr(importlib.import_module(module), 'LiveAI'))
             adapter = factory(セッションID='diag-'+uuid.uuid4().hex, parent_manager=None,
@@ -237,6 +239,8 @@ class LiveModelCheck:
                     if isinstance(item, dict) and set(item) == {'text'} and isinstance(item['text'], str) and item['text'].strip():
                         reply = (reply + item['text'].strip())[:2000]
                         continue  # 字幕が先に届いても、音声のターン完了まで待つ。
+                    if isinstance(item, dict) and item.get('error'):
+                        return result('NG', 'connection_failed')
                     if isinstance(item, dict) and 'diagnostic_turn_complete' in item:
                         if item['diagnostic_turn_complete'] is not True:
                             return result('NG', 'response_incomplete')

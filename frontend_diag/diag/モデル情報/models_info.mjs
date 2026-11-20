@@ -325,7 +325,11 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
       const modelKeys = {freeai_live:'LIVE_FREEAI_MODEL', gemini_live:'LIVE_GEMINI_MODEL', openai_live:'LIVE_OPENAI_MODEL'};
       const provider = typeof config.LIVE_AI_NAME === 'string' ? config.LIVE_AI_NAME.trim() : '';
       const value = Object.hasOwn(modelKeys, provider) ? config[modelKeys[provider]] : null;
-      const model = typeof value === 'string' ? value.trim() : '';
+      let model = typeof value === 'string' ? value.trim() : '';
+      const previous = {freeai_live:'gemini-2.5-flash-native-audio-preview-09-2025', gemini_live:'gemini-2.5-flash-native-audio-preview-12-2025'};
+      if (Object.hasOwn(previous, provider) && (model === previous[provider] || model === `models/${previous[provider]}`)) {
+        model = 'gemini-3.8-live';
+      }
       if (model && !/^<.*>$/.test(model)) nonempty[provider] = {models:{[model]:`仮設定（未検証） - ${model}`}};
     }
     if (group === 'code' && !Object.keys(nonempty).length) {

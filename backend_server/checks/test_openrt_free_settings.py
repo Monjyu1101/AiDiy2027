@@ -81,6 +81,16 @@ class OpenRouterFreeSettingsTest(unittest.TestCase):
             self.assertEqual(result["CHAT_AI_NAME"], expected)
             self.assertEqual(result["CHAT_OPENRT_FREE_MODEL"], "auto")
 
+    def test_stale_catalog_never_replaces_live_provider_model_or_voice(self):
+        configured = dict(self.settings, LIVE_AI_NAME="freeai_live", LIVE_FREEAI_MODEL="gemini-3.8-live",
+                          LIVE_FREEAI_VOICE="Aoede", LIVE_GEMINI_MODEL="explicit-live", LIVE_GEMINI_VOICE="Kore")
+        stale = {"gemini_live": {"old-live": "Old"}, "openai_live": {"different": "Another provider"}}
+        with patch.object(self.models, "_get_diag_models", side_effect=lambda kind: stale if kind == "live" else None) as lookup, \
+             patch.object(self.models, "get_live_voices", return_value={"gemini_live": ["Zephyr"]}) as voices:
+            self.assertEqual(self.models.normalize_initial_settings(configured), configured)
+        self.assertNotIn("live", [call.args[0] for call in lookup.call_args_list])
+        voices.assert_not_called()
+
     def test_initial_session_includes_free_setting_and_default(self):
         source = ROOT / "backend_server/AIコア/AIセッション管理.py"
         tree = ast.parse(source.read_text(encoding="utf-8"))

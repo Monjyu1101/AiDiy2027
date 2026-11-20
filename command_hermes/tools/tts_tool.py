@@ -247,7 +247,7 @@ DEFAULT_XAI_OPTIMIZE_STREAMING_LATENCY_DEFAULT = 0
 # the model normalizes written-form text (numbers, abbreviations, symbols)
 # into spoken-form before generating audio.
 DEFAULT_XAI_TEXT_NORMALIZATION_DEFAULT = False
-DEFAULT_GEMINI_TTS_MODEL = "gemini-2.5-flash-preview-tts"
+DEFAULT_GEMINI_TTS_MODEL = "gemini-3.8-flash-tts"
 DEFAULT_GEMINI_TTS_VOICE = "Kore"
 DEFAULT_GEMINI_TTS_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
 DEFAULT_GEMINI_AUDIO_TAGS = False
@@ -2628,9 +2628,9 @@ def _compose_gemini_tts_prompt(
 def _generate_gemini_tts(text: str, output_path: str, tts_config: Dict[str, Any]) -> str:
     """Generate audio using Google Gemini TTS.
 
-    Gemini's generateContent endpoint with responseModalities=["AUDIO"] returns
-    raw 24kHz mono 16-bit PCM (L16) as base64. We wrap it with a WAV RIFF
-    header to produce a playable file, then ffmpeg-convert to MP3 / Opus if
+    Gemini 3.8 unary generateContent returns a complete base64 WAV. Older
+    explicitly selected models may return PCM, which is wrapped once. We
+    preserve WAV responses, then ffmpeg-convert to MP3 / Opus if
     the caller requested those formats (same pattern as NeuTTS).
 
     Args:
@@ -2656,6 +2656,9 @@ def _generate_gemini_tts(text: str, output_path: str, tts_config: Dict[str, Any]
     raw_gemini_config = tts_config.get("gemini") or {}
     gemini_config = raw_gemini_config if isinstance(raw_gemini_config, dict) else {}
     model = str(gemini_config.get("model", DEFAULT_GEMINI_TTS_MODEL)).strip() or DEFAULT_GEMINI_TTS_MODEL
+    # Resolve only the previous AiDiy default at runtime; never rewrite config.
+    if model == "gemini-2.5-flash-preview-tts":
+        model = DEFAULT_GEMINI_TTS_MODEL
     voice = str(gemini_config.get("voice", DEFAULT_GEMINI_TTS_VOICE)).strip() or DEFAULT_GEMINI_TTS_VOICE
     base_url = str(
         gemini_config.get("base_url")
@@ -2664,18 +2667,20 @@ def _generate_gemini_tts(text: str, output_path: str, tts_config: Dict[str, Any]
     ).strip().rstrip("/")
     persona_prompt = _read_gemini_persona_prompt(gemini_config)
     tts_script = text
-    if _gemini_audio_tags_enabled(gemini_config, model):
+    is_38 = model in (DEFAULT_GEMINI_TTS_MODEL, "gemini-3.8-flash-lite-tts")
+    if not is_38 and _gemini_audio_tags_enabled(gemini_config, model):
         tts_script = _rewrite_gemini_tts_audio_tags(text, persona_prompt=persona_prompt)
-    prompt_text = _compose_gemini_tts_prompt(
+    prompt_text = text if is_38 else _compose_gemini_tts_prompt(
         tts_script,
         gemini_config,
         persona_prompt=persona_prompt,
     )
     max_len = _resolve_max_text_length("gemini", tts_config)
-    if len(prompt_text) > max_len:
+    request_length = len(prompt_text) + (len(persona_prompt) if is_38 else 0)
+    if request_length > max_len:
         raise ValueError(
             "Gemini TTS composed prompt exceeds the provider request limit "
-            f"({len(prompt_text)} > {max_len} chars). Reduce the persona/audio-tag "
+            f"({request_length} > {max_len} chars). Reduce the persona/audio-tag "
             "prompt or lower tts.gemini.max_text_length so long-form text is "
             "split with enough prompt headroom."
         )
@@ -2691,6 +2696,11 @@ def _generate_gemini_tts(text: str, output_path: str, tts_config: Dict[str, Any]
             },
         },
     }
+
+    # 3.8 reads text verbatim; direction belongs to speechMetadata, not transcript.
+    # https://aistudio.google.com/docs/speech-generation#migration
+    if is_38 and persona_prompt:
+        payload["contents"][0]["parts"][0]["speechMetadata"] = {"style": persona_prompt}
 
     headers = {"Content-Type": "application/json"}
     if urlparse(base_url).hostname == "generativelanguage.googleapis.com":
@@ -2745,8 +2755,23 @@ def _generate_gemini_tts(text: str, output_path: str, tts_config: Dict[str, Any]
     if not audio_b64:
         raise RuntimeError("Gemini TTS returned empty audio data")
 
-    pcm_bytes = base64.b64decode(audio_b64)
-    wav_bytes = _wrap_pcm_as_wav(pcm_bytes)
+    audio_bytes = base64.b64decode(audio_b64, validate=True)
+    if audio_bytes[:4] == b"RIFF" and audio_bytes[8:12] == b"WAVE":
+        # Unary 3.8 returns a complete WAV, not headerless PCM. Validate once,
+        # preserve its header/sample rate and never wrap a WAV inside another WAV.
+        import io
+        import wave
+        with wave.open(io.BytesIO(audio_bytes), "rb") as wav:
+            if wav.getnframes() <= 0:
+                raise RuntimeError("Gemini TTS returned empty WAV audio")
+            expected = wav.getnframes() * wav.getnchannels() * wav.getsampwidth()
+            if len(wav.readframes(wav.getnframes())) != expected:
+                raise RuntimeError("Gemini TTS returned truncated WAV audio")
+        wav_bytes = audio_bytes
+    elif is_38:
+        raise RuntimeError("Gemini 3.8 TTS response was not a WAV audio file")
+    else:
+        wav_bytes = _wrap_pcm_as_wav(audio_bytes)
 
     # Fast path: caller wants WAV directly, just write.
     if output_path.lower().endswith(".wav"):

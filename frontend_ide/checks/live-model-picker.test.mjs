@@ -68,20 +68,22 @@ function contents(node) {
 }
 
 // 実SFCと実カタログ検証を通す。通信・保存・音声デバイス・描画だけを隔離する。
-async function fixture(t, { host = false, autoConnect = false, connectError = '', settings = initialSettings, folder = { 名前: 'fixture', パス: '/fixture' } } = {}) {
+async function fixture(t, { host = false, autoConnect = false, connectError = '', settings = initialSettings, explicit = {},
+  configured = { ...initialSettings, LIVE_GEMINI_MODEL: 'gemini-first' }, initialCatalog = catalog,
+  folder = { 名前: 'fixture', パス: '/fixture' } } = {}) {
   const noop = () => {}, mounted = [], unmounted = [], module = { exports: {} };
   const calls = { api: [], saves: [], connects: [], packets: [], disconnects: 0, audioStarts: 0, audioCloses: 0 };
-  const controls = { catalog: clone(catalog), apiError: '', saveError: '', saveGate: null, connectGate: null, connectError, lost: null };
+  const controls = { catalog: clone(initialCatalog), apiError: '', saveError: '', saveGate: null, connectGate: null, connectError, sessionOverride: null, lost: null };
   const intervals = new Map(), frames = new Map(); let timerId = 0, frameId = 0;
   let saved = clone(settings), sessionSettings = clone(settings);
   class Environment {
     host = host; socketUrl = ''; captureUrl = '';
-    async context() { return { 作業フォルダ: folder, 保存モデル設定: clone(saved), 自動接続: autoConnect }; }
+    async context() { return { 作業フォルダ: folder, 保存モデル設定: clone(saved), モデル設定: clone(explicit), 自動接続: autoConnect }; }
     openFolder() { calls.openFolder = (calls.openFolder || 0) + 1; }
     async api(path, body) {
       calls.api.push({ path, body: clone(body) });
       if (controls.apiError) throw Error(controls.apiError);
-      return { status: 'OK', data: { モデル設定: clone(body.セッションID ? sessionSettings : initialSettings), available_models: clone(controls.catalog) } };
+      return { status: 'OK', data: { モデル設定: clone(body.セッションID ? sessionSettings : configured), available_models: clone(controls.catalog) } };
     }
     async saveModel(selected) {
       calls.saves.push(clone(selected));
@@ -98,7 +100,7 @@ async function fixture(t, { host = false, autoConnect = false, connectError = ''
       calls.connects.push(clone(options));
       if (controls.connectGate) await controls.connectGate;
       if (controls.connectError) throw Error(controls.connectError);
-      sessionSettings = { ...initialSettings, ...clone(options.modelSettings) };
+      sessionSettings = { ...configured, ...clone(options.modelSettings), ...controls.sessionOverride };
       this.session = `session-${calls.connects.length}`;
     }
     disconnect() { calls.disconnects++; this.session = ''; }
@@ -343,3 +345,55 @@ test('Live接続バー: モデル変更の再接続試行中だけ赤、失敗�
  assert.equal(f.render().children[0].props.mode,'offline');assert.equal(f.data.connected.value,false);assert.equal(f.data.busy.value,false);assert.equal(f.data.changing.value,false);
  assert.equal(f.data.messages.value[0].text,'残す会話');assert.equal(f.data.prompt.value,'残す下書き');assert.match(f.data.error.value,/再接続失敗/);assert.equal(f.intervals.size,0);
 });
+
+for (const [name, vendor, legacy, voice] of [
+  ['gemini_live', 'GEMINI', 'gemini-2.5-flash-native-audio-preview-12-2025', 'Kore'],
+  ['freeai_live', 'FREEAI', 'gemini-2.5-flash-native-audio-preview-09-2025', 'Zephyr'],
+]) {
+  const key = `LIVE_${vendor}_MODEL`, voiceKey = `LIVE_${vendor}_VOICE`;
+  const saved = { LIVE_AI_NAME: name, [key]: legacy, [voiceKey]: voice };
+  const initialCatalog = clone(catalog);
+  Object.assign(initialCatalog.live_models[name], { 'gemini-3.8-live': 'Gemini 3.8 Live', [legacy]: '旧モデル', 'gemini-3.1-live': 'Gemini 3.1 Live' });
+  for (const restore of [undefined, saved]) test(`Live: ${name} の旧既定値だけ更新して正確な接続先の準備を待つ (保存設定 ${!!restore})`, async t => {
+    const f = await fixture(t, { settings: restore || {}, configured: saved, initialCatalog });
+    const selected = { ...saved, [key]: 'gemini-3.8-live' };
+    assert.equal(f.data.settings.value[key], selected[key]);
+    assert.deepEqual(f.calls.saves, [], '設定ファイルは書き換えない');
+    let ready; f.controls.connectGate = new Promise(resolve => { ready = resolve; });
+    const attempt = f.data.connect(); await flush();
+    assert.deepEqual(f.calls.connects, [{ codeBasePath: '/fixture', modelSettings: selected, waitForLiveReady: true }]);
+    assert.equal(f.data.connected.value, false);
+    assert.equal(f.data.busy.value, true);
+    ready(); await attempt;
+    assert.equal(f.data.connected.value, true);
+  });
+  test(`Live: ${name} の候補なし・準備失敗・接続先の不一致を表示し、別候補で再試行しない`, async t => {
+    const f = await fixture(t, { settings: saved, initialCatalog });
+    delete f.controls.catalog.live_models[name]['gemini-3.8-live'];
+    await f.data.connect();
+    assert.match(f.data.error.value, /gemini-3\.8-live.*候補にありません/);
+    assert.equal(f.calls.connects.length, 0, '別候補や別Providerには接続しない');
+    f.controls.catalog = clone(initialCatalog);
+    f.controls.connectError = '選択した音声AIが Live 接続を拒否しました。';
+    await f.data.connect();
+    assert.equal(f.data.error.value, f.controls.connectError);
+    assert.equal(f.data.connected.value, false);
+    assert.equal(f.calls.connects.length, 1);
+    f.controls.connectError = '';
+    f.controls.sessionOverride = saved;
+    await f.data.connect();
+    assert.match(f.data.error.value, /選択したライブモデルで接続できません.*gemini-3\.8-live/);
+    assert.equal(f.data.connected.value, false);
+    assert.equal(f.calls.connects.length, 2, '利用者の操作1回につき接続試行1回');
+    assert.ok(f.calls.connects.every(({ modelSettings }) => modelSettings.LIVE_AI_NAME === name && modelSettings[key] === 'gemini-3.8-live'));
+  });
+  test(`Live: ${name} の別の手動選択と明示CLI指定は維持する`, async t => {
+    const f = await fixture(t, { settings: { ...saved, [key]: 'gemini-3.1-live' }, initialCatalog });
+    await f.data.connect();
+    assert.equal(f.calls.connects[0].modelSettings[key], 'gemini-3.1-live');
+    const direct = await fixture(t, { settings: saved, explicit: saved, initialCatalog });
+    assert.equal(direct.calls.connects.length, 1, '明示モデルは従来どおり自動接続する');
+    assert.equal(direct.calls.connects[0].modelSettings[key], legacy);
+    assert.deepEqual(direct.calls.saves, [], 'CLIは保存設定を変えない');
+  });
+}

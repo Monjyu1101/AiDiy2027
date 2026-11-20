@@ -111,7 +111,7 @@ class LiveAI:
     """
 
     def __init__(self, セッションID: str, parent_manager=None,
-                 live_ai: str = "gemini", live_model: str = "gemini-live-2.5-flash-preview", live_voice: str = "Zephyr",
+                 live_ai: str = "gemini", live_model: str = "gemini-3.8-live", live_voice: str = "Zephyr",
                  api_key: str = None, system_instruction: str = None, diagnostic: bool = False):
         """初期化"""
         
@@ -127,42 +127,18 @@ class LiveAI:
         self.diagnostic = diagnostic
         self.parent_manager = parent_manager
 
-        # apiキー設定（gemini/freeai相互補完）
-        self.api_key = api_key
+        # 明示プロバイダのキーだけを使う。別プロジェクトへの切替は行わない。
+        self.api_key = api_key.strip() if isinstance(api_key, str) else ""
         if not self.api_key or self.api_key.startswith('<'):
-            # 親マネージャーからキーを取得
-            if parent_manager and hasattr(parent_manager, 'conf') and parent_manager.conf:
-                gemini_key = parent_manager.conf.json.gemini_key_id
-                freeai_key = parent_manager.conf.json.freeai_key_id
+            self.api_key = None
+        self.最終エラー = ""
 
-                # 相互補完ロジック
-                if live_ai.lower() == "gemini":
-                    # gemini選択時: gemini_key → freeai_key
-                    if gemini_key and not gemini_key.startswith('<'):
-                        self.api_key = gemini_key
-                    elif freeai_key and not freeai_key.startswith('<'):
-                        self.api_key = freeai_key
-                        self._logger.info("LiveAI(gemini): gemini_keyが未設定のため、freeai_keyを使用します")
-                    else:
-                        self._logger.warning("LiveAI(gemini): gemini_key・freeai_keyともに未設定です")
-                elif live_ai.lower() == "freeai":
-                    # freeai選択時: freeai_key → gemini_key
-                    if freeai_key and not freeai_key.startswith('<'):
-                        self.api_key = freeai_key
-                    elif gemini_key and not gemini_key.startswith('<'):
-                        self.api_key = gemini_key
-                        self._logger.info("LiveAI(freeai): freeai_keyが未設定のため、gemini_keyを使用します")
-                    else:
-                        self._logger.warning("LiveAI(freeai): freeai_key・gemini_keyともに未設定です")
-
-            # APIキー未設定チェック
-            if not self.api_key or self.api_key.startswith('<'):
-                self.api_key = None
-                self._logger.error("LiveAI初期化: apiキーなし")
-        
         # モデル・音声設定（confの設定値をそのまま利用）
         self.LIVE_AI = live_ai
         self.LIVE_MODEL = live_model
+        self._gemini_38_live = live_model in ("gemini-3.8-live", "models/gemini-3.8-live")
+        # Google Live API の 3.8 例に合わせる。他の明示モデルの接続は変更しない。
+        self._api_version = 'v1beta' if self._gemini_38_live else 'v1alpha'
         self.LIVE_VOICE = live_voice
         # AIライブ.py から注入された定型コンテキストを優先使用
         self.SYSTEM_INSTRUCTION = system_instruction if isinstance(system_instruction, str) and system_instruction else SYSTEM_INSTRUCTION
@@ -174,7 +150,7 @@ class LiveAI:
                 # genai.Clientの初期化（asyncioループが不要な同期初期化）
                 self.client = genai.Client(
                     api_key=self.api_key,
-                    http_options={'api_version': 'v1alpha'}
+                    http_options={'api_version': self._api_version}
                 )
             except RuntimeError as e:
                 if "no running event loop" in str(e):
@@ -280,8 +256,8 @@ class LiveAI:
         # 開始時にフラグをリセット（復旧対応）
         self.中断停止フラグ = False
         self.エラーフラグ = False
+        self.最終エラー = ""
         try:
-            
             # Clientが初期化されていない場合は遅延初期化
             if not self.client and self.api_key:
                 # logger.info("開始:GeminiClient初期化開始")
@@ -290,15 +266,17 @@ class LiveAI:
                     self.client = await asyncio.to_thread(
                         genai.Client,
                         api_key=self.api_key,
-                        http_options={'api_version': 'v1alpha'}
+                        http_options={'api_version': self._api_version}
                     )
                     # logger.info("開始:GeminiClient初期化成功")
                     pass
                 except Exception as e:
                     self._logger.error(f"開始:GeminiClient初期化エラー {type(e).__name__}: {str(e)}")
+                    self.最終エラー = self._接続エラー文(e)
                     return False
             
             if not self.client:
+                self.最終エラー = f"{self.LIVE_AI} の APIキーが未設定または仮設定です。" if not self.api_key else self._接続エラー文()
                 self._logger.error("開始:Liveapi開始失敗（クライアント未初期化）")
                 return False
             
@@ -575,6 +553,26 @@ class LiveAI:
     
     
     
+    def _接続エラー文(self, error=None):
+        # 数値のHTTP/WSステータスのみ。reason・例外文字列・URLは返さない。
+        candidates = (
+            getattr(getattr(error, "response", None), "status_code", None),
+            getattr(error, "status_code", None),
+            getattr(getattr(error, "rcvd", None), "code", None),
+            getattr(error, "code", None),
+        )
+        status = next((int(code) for code in candidates if isinstance(code, int)
+                       and (400 <= code <= 599 or 1000 <= code <= 4999)), None)
+        label = f"（{'HTTP' if status < 1000 else 'WS'} {status}）" if status else ""
+        return f"{self.LIVE_AI} の Live モデル {self.LIVE_MODEL} に接続できませんでした{label}。APIキー、モデルの利用権限、バックエンドのログを確認してください。"
+
+    async def _接続エラー記録(self, error):
+        # SDK例外にはキー付きURLが含まれる可能性があるため画面へ渡さない。
+        if not self.最終エラー:
+            self.最終エラー = self._接続エラー文(error)
+            if self.テキスト受信Ｑ is not None:
+                await self.テキスト受信Ｑ.put({"error": self.最終エラー, "code": "live_connection_failed"})
+
     # ===== LiveAI受信ワーカー（特化版） =====
     
     async def _ライブセッションワーカー(self):
@@ -584,6 +582,7 @@ class LiveAI:
             pass
             
             # 復旧用メインループ（中断停止フラグのみで制御）
+            接続済み = False
             while not self.中断停止フラグ:
                 # logger.info(f"Live apiセッション接続準備:")
                 pass
@@ -621,11 +620,13 @@ class LiveAI:
                         session_start_time = time.time()  # セッション開始時刻記録
                         セッションID = f"{int(session_start_time % 10000)}"  # セッション識別用ID（下4桁）
                         self.live_session = session
+                        接続済み = True
                         self._出力字幕 = ""
                         self.task_group = tg
                         self.is_alive = True  # live_session確立時にTrueに設定
                         self.live_lasttime = time.time()  # セッション開始時にlive_lasttime更新
                         self.再接続試行回数 = 0  # 接続成功時にリセット
+                        self.最終エラー = ""
                         self._logger.info(f"セッション維持ループ開始 (ID:{セッションID})")
                         # logger.info(f"live_session設定完了: {self.live_session is not None}")  # 通常時はコメント化
                         # logger.info(f"live_sessionタイプ: {type(self.live_session)}")  # 通常時はコメント化
@@ -668,6 +669,10 @@ class LiveAI:
                     self.is_alive = False  # live_sessionクリア時にFalseに設定
                     # logger.error(f"live_session破棄完了（エラー時）: is_alive={self.is_alive}")  # パフォーマンス最適化
                     self.エラーフラグ = True
+                    await self._接続エラー記録(e)
+                    # 初回setup失敗はそのまま返す。同じ接続の回復とモデル代替は別扱い。
+                    if not 接続済み:
+                        break
 
                 # 接続エラー時は5秒待機後再接続
                 if not self.中断停止フラグ:
@@ -734,6 +739,7 @@ class LiveAI:
                     # logger.error(f"  セッション存在: {self.live_session is not None}")  # パフォーマンス最適化
                     # logger.error(f"  中断停止フラグ: {self.中断停止フラグ}")  # パフォーマンス最適化
                     self.エラーフラグ = True
+                    await self._接続エラー記録(e)
                     break
                 
         except Exception as e:
@@ -836,46 +842,27 @@ class LiveAI:
             # 設定構成
             from google.genai import types
             
-            try:
-                # Live接続設定（正しい構造）
-                config = types.LiveConnectConfig(
-                    response_modalities=["AUDIO"],
-                    output_audio_transcription=types.AudioTranscriptionConfig(),
-                    speech_config=types.SpeechConfig(
-                        language_code="ja-JP",
-                        voice_config=types.VoiceConfig(
-                            prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=self.LIVE_VOICE)
-                        )
+            # 3.8 LiveはAUDIO応答のみ。thinking/proactivity/affectiveは設定しない。
+            # SDKのLiveConnectConfigに直接生成パラメータを渡してwire変換に委ねる。
+            生成設定 = dict(temperature=1.0, max_output_tokens=8192)
+            return types.LiveConnectConfig(
+                response_modalities=["AUDIO"],
+                output_audio_transcription=types.AudioTranscriptionConfig(),
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=self.LIVE_VOICE)
                     ),
-                    generation_config=types.GenerationConfig(
-                        temperature=1.0,
-                        max_output_tokens=8192,
-                    ),
-                    system_instruction=types.Content(
-                        parts=[types.Part(text=instructions)]
-                    ),
-                    tools=tools,
-                )
-                # logger.info(f"Live接続設定作成完了: voice={self.LIVE_VOICE}")
-                return config
-
-            except Exception as e:
-                self._logger.error(f"設定構成作成エラー: {type(e).__name__}: {e}")
-                # エラー時は最小設定で復旧を試行
-                self._logger.warning("最小設定で復旧試行")
-                return types.LiveConnectConfig(
-                    response_modalities=["AUDIO"],
-                    output_audio_transcription=types.AudioTranscriptionConfig(),
-                    speech_config=types.SpeechConfig(language_code="ja-JP"),
-                    generation_config=types.GenerationConfig(),
-                    system_instruction=types.Content(
-                        parts=[types.Part(text="あなたは、美しい日本語を話す、賢いAIアシスタントです。")]
-                    ),
-                )
-                
+                    # 3.8のnative audioは言語を自動選択。既定の日本語指示はそのまま使う。
+                    # https://aistudio.google.com/docs/live-api/capabilities#change-voice-and-language
+                    **({} if self._gemini_38_live else {"language_code": "ja-JP"}),
+                ),
+                system_instruction=types.Content(parts=[types.Part(text=instructions)]),
+                tools=tools,
+                **(生成設定 if self._gemini_38_live else {"generation_config": types.GenerationConfig(**生成設定)}),
+            )
         except Exception as e:
             self._logger.error(f"設定構成作成で予期しないエラー: {e}")
-            raise e
+            raise
     
     async def _キープアライブ確認(self):
         """アイドル時のキープアライブ確認・処理（1分送受信なしで1秒送信）"""

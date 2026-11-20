@@ -19,6 +19,22 @@ from typing import Any, Dict
 BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_CONFIG_FILE = '../_config/AiDiy_key.json'
 
+GEMINI_LIVE_MODEL = 'gemini-3.8-live'
+# 過去にアプリが生成した初期値のみ移行する。明示の別モデルは維持する。
+旧Liveモデル既定値 = {
+    'LIVE_GEMINI_MODEL': 'gemini-2.5-flash-native-audio-preview-12-2025',
+    'LIVE_FREEAI_MODEL': 'gemini-2.5-flash-native-audio-preview-09-2025',
+}
+
+
+def GeminiLive設定モデル(key: str, value: Any) -> Any:
+    """保存済みの既知の旧初期値を、モデル指定なしで読み込む時だけ移行する。"""
+    previous = 旧Liveモデル既定値.get(key)
+    if previous and isinstance(value, str) and value.removeprefix('models/') == previous:
+        return GEMINI_LIVE_MODEL
+    return value
+
+
 class conf_json:
     """設定JSON管理クラス（シンプル実装・プロパティアクセス対応）"""
 
@@ -86,9 +102,9 @@ class conf_json:
 
         # LiveAI設定
         'LIVE_AI_NAME': 'freeai_live',
-        'LIVE_GEMINI_MODEL': 'gemini-2.5-flash-native-audio-preview-12-2025',
+        'LIVE_GEMINI_MODEL': GEMINI_LIVE_MODEL,
         'LIVE_GEMINI_VOICE': 'Zephyr',
-        'LIVE_FREEAI_MODEL': 'gemini-2.5-flash-native-audio-preview-09-2025',
+        'LIVE_FREEAI_MODEL': GEMINI_LIVE_MODEL,
         'LIVE_FREEAI_VOICE': 'Zephyr',
         'LIVE_OPENAI_MODEL': 'gpt-realtime-2.1-mini',
         'LIVE_OPENAI_VOICE': 'marin',
@@ -209,6 +225,14 @@ class conf_json:
         # 既存設定に不足しているデフォルト項目を補完
         if self._apply_default_keys():
             保存要否 = True
+
+        # 保存済みモデルの初期値を置換する。接続失敗時の代替は行わない。
+        for key in 旧Liveモデル既定値:
+            value = self._config_data[key]
+            updated = GeminiLive設定モデル(key, value)
+            if updated != value:
+                self._config_data[key] = updated
+                保存要否 = True
 
         # ポートは1～65535の文字列へ正規化する
         if self._validate_and_normalize_port_values():

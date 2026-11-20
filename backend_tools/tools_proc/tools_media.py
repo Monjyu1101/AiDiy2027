@@ -360,7 +360,7 @@ def register_tts_tools(mcp_ts, tts):
             speech_text: 合成するテキスト。JSONの空文字列なら1秒の無音音声を生成する
             language: 言語コード（デフォルト "ja"）。Edge の female/male 自動解決は
                       en / fr / de / es / pt / it / ru / nl / zh / ko / ar / ja に対応
-            provider: "auto"=AiDiy_tools.json（初期値edge→freeai） /
+            provider: "auto"=AiDiy_tools.json（初期値 edge、別プロバイダへは切り替えない） /
                       "edge"（無料） / "gemini"（GEMINI_API_KEY） /
                       "freeai"（FREEAI_API_KEY） / "openai"（OPENAI_API_KEY）
             model: "auto"（自動選択、デフォルト）

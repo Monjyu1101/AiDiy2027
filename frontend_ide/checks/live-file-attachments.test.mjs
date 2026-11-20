@@ -35,7 +35,7 @@ function walk(node, predicate) {
   if (predicate(node)) return node;
   for (const child of Array.isArray(node?.children) ? node.children : []) { const found = walk(child, predicate); if (found) return found; }
 }
-async function fixture(t, host = false) {
+async function fixture(t, host = false, providerError = '') {
   const sockets = [], sent = [], mounted = [], unmounted = [], noop = () => {};
   let sessionCount = 0, session = '', disposed = false;
   const settings = { LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'test', LIVE_FREEAI_VOICE: 'Zephyr' };
@@ -48,7 +48,15 @@ async function fixture(t, host = false) {
       if (packet.type === 'connect') {
         this.channel = packet.ソケット番号;
         if (this.channel === 'input') session = `session-${++sessionCount}`;
-        queueMicrotask(() => this.emit({ メッセージ識別: 'init', セッションID: session }));
+        queueMicrotask(() => {
+          this.emit({ メッセージ識別: 'init', セッションID: session });
+          if (packet.Live準備確認) {
+            if (providerError) {
+              this.emit({ メッセージ識別: 'error', メッセージ内容: providerError, セッションID: session });
+              this.close();
+            } else this.emit({ メッセージ識別: 'live_ready', セッションID: session });
+          }
+        });
       }
     }
     emit(packet) { this.onmessage?.({ data: JSON.stringify(packet) }); }
@@ -82,7 +90,7 @@ async function fixture(t, host = false) {
   data.canvas.value = {}; data.conversation.value = { scrollHeight: 100, scrollTop: 0 };
   const dispose = () => { if (disposed) return; disposed = true; for (const cb of unmounted) cb(); scope.stop(); };
   t.after(dispose); for (const cb of mounted) await cb();
-  await data.connect(); assert.equal(data.connected.value, true);
+  await data.connect(); assert.equal(data.connected.value, !providerError);
   const socket = channel => sockets.filter(item => item.channel === channel).at(-1);
   const uploadPackets = () => sent.filter(item => item.packet.メッセージ識別 === 'input_file').map(item => item.packet);
   const echo = (extra = {}, channel = '0') => socket(channel).emit({ セッションID: session, チャンネル: '0', メッセージ識別: 'input_file', ファイル名: 'temp/input/one.png', 元ファイル名: '画像.png', サムネイル画像: png, ...extra });
@@ -177,4 +185,14 @@ test('Live添付: 読込中は本文送信をhandlerと実buttonで止め、Core
     finish(Uint8Array.from(Buffer.from('image')).buffer); await pending;
     assert.equal(f.uploadPackets().length, 1); assert.equal(f.data.uploadingFiles.value, false); assert.equal(f.data.fileStatus.value, ''); assert.match(f.data.error.value, /試験エラー/);
   }
+});
+
+test('Live: 実protocolで音声準備のエラーが届いたら、代替接続せず理由を表示して3ソケットを閉じる', async t => {
+  const message = 'FreeAI の音声接続が拒否されました。';
+  const f = await fixture(t, false, message);
+  assert.equal(f.data.error.value, message);
+  assert.deepEqual(f.sent.map(({ packet }) => packet.ソケット番号), ['input', '0', 'audio']);
+  assert.equal(f.sent.at(-1).packet.Live準備確認, true);
+  assert.ok(f.sent.every(({ packet }) => packet.モデル設定.LIVE_AI_NAME === 'freeai_live'));
+  assert.ok(f.sockets.every(socket => socket.readyState === 3));
 });

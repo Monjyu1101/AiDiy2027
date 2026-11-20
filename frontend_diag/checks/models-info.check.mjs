@@ -321,6 +321,24 @@ test('combined files merge providers and model keys, retain dated labels and pre
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
+test('unverified Live candidates migrate the known saved Gemini and FreeAI defaults only',async()=>{
+ const directory=await mkdtemp(path.join(os.tmpdir(),'diag-live-default-'));
+ try{
+  for(const [provider, key, model, expected] of [
+   ['gemini_live','LIVE_GEMINI_MODEL','gemini-2.5-flash-native-audio-preview-12-2025','gemini-3.8-live'],
+   ['freeai_live','LIVE_FREEAI_MODEL','gemini-2.5-flash-native-audio-preview-09-2025','gemini-3.8-live'],
+   ['freeai_live','LIVE_FREEAI_MODEL','models/gemini-2.5-flash-native-audio-preview-09-2025','gemini-3.8-live'],
+   ['freeai_live','LIVE_FREEAI_MODEL','gemini-2.5-flash-native-audio-preview-12-2025','gemini-2.5-flash-native-audio-preview-12-2025'],
+   ['freeai_live','LIVE_FREEAI_MODEL','gemini-other-live','gemini-other-live'],
+   ['openai_live','LIVE_OPENAI_MODEL','gpt-realtime-2','gpt-realtime-2'],
+  ]){
+   await writeModelsInfo([],{}, {directory, installedClis:{}, configReader:()=>JSON.stringify({LIVE_AI_NAME:provider,[key]:model})});
+   const data=JSON.parse(await readFile(path.join(directory,'live_models_info.json'),'utf8'));
+   assert.deepEqual(data,{[provider]:{models:{[expected]:`仮設定（未検証） - ${expected}`}}});
+  }
+ }finally{await rm(directory,{recursive:true,force:true});}
+});
+
 test('consolidated outputs omit every empty provider after CLI fallback and label filtering',async()=>{
  const directory=await mkdtemp(path.join(os.tmpdir(),'diag-empty-'));
  try {

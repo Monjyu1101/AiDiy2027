@@ -1488,15 +1488,14 @@ platform_toolsets:
 # Text-to-Speech
 # =============================================================================
 # TTS defaults to Edge TTS unless changed in ~/.hermes/config.yaml.
-# Gemini TTS supports persona/director prompt files, and Gemini 3.1 Flash TTS
-# can use a hidden auxiliary rewrite pass to insert expressive square-bracket
-# audio tags into the TTS script without showing tags in chat.
+# Gemini 3.8 TTS sends the transcript as written and uses the optional
+# persona file as separate style metadata. Legacy 3.1 supports auto audio tags.
 #
 # tts:
 #   provider: "gemini"
 #   speed: 1.0              # global speed multiplier (provider-specific overrides this)
 #   gemini:
-#     model: "gemini-3.1-flash-tts-preview"
+#     model: "gemini-3.8-flash-tts"
 #     voice: "Kore"
 #     audio_tags: false
 #     persona_prompt_file: ""  # e.g. ~/.hermes/tts/radio-host.md

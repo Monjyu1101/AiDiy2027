@@ -15,7 +15,7 @@ from unittest.mock import patch, AsyncMock, Mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools_proc import tools_settings as settings
-from tools_proc.text_to_speech import TextToSpeech
+from tools_proc.text_to_speech import TextToSpeech, TextToSpeechError
 from tools_proc.speech_to_text import SpeechToText
 from tools_proc.image_generation import ImageGeneration
 from tools_proc.movie_generation import MovieGeneration
@@ -127,7 +127,7 @@ class SettingsTests(unittest.TestCase):
 
 
 class ProviderTests(unittest.TestCase):
-    def test_tts_auto_explicit_and_fallback(self):
+    def test_tts_auto_explicit_without_provider_fallback(self):
         tts = TextToSpeech.__new__(TextToSpeech)  # ffmpeg/辞書初期化を回避
         tts.auto_provider = "openai"
         with patch.object(tts, "normalize_for_speech", return_value=("hello", [])), patch.object(tts, "_get_api_key", return_value="mock"), patch.object(tts, "_synthesize_provider", return_value=b"ID3mock") as synth:
@@ -136,9 +136,14 @@ class ProviderTests(unittest.TestCase):
             self.assertEqual(info["requested_provider"], "auto")
             _, info = tts.synthesize("hello", provider="edge")
             self.assertEqual(info["used_provider"], "edge")
-            synth.side_effect = [RuntimeError("mock failure"), b"ID3mock"]
-            _, info = tts.synthesize("hello", provider="auto")
-            self.assertEqual(info["used_provider"], "edge")
+            for requested, expected in (("auto", "openai"), ("edge", "edge"), ("freeai", "freeai"), ("gemini", "gemini")):
+                with self.subTest(provider=requested):
+                    synth.reset_mock()
+                    synth.side_effect = RuntimeError("mock failure")
+                    with self.assertRaisesRegex(TextToSpeechError, f"{expected}.*mock failure"):
+                        tts.synthesize("hello", provider=requested)
+                    synth.assert_called_once()
+                    self.assertEqual(synth.call_args.args[0], expected)
 
     def test_image_provider_and_explicit(self):
         image = ImageGeneration()

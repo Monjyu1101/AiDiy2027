@@ -29,6 +29,65 @@ class LiveLifecycleTests(unittest.IsolatedAsyncioTestCase):
     def messages(self, live, level='info'):
         return '\n'.join(str(c.args[0]) for c in getattr(live._logger, level).call_args_list)
 
+    async def test_38_config_and_client_are_single_explicit_route(self):
+        for provider in ('gemini_live', 'freeai_live'):
+            live = MODULE.LiveAI('test-session', live_ai=provider, live_model='gemini-3.8-live',
+                                 live_voice='Aoede', api_key='selected-only', diagnostic=True)
+            config = (await live._設定構成作成()).model_dump(exclude_none=True)
+            self.assertEqual(config['response_modalities'], ['AUDIO'])
+            self.assertEqual(config['speech_config']['voice_config']['prebuilt_voice_config']['voice_name'], 'Aoede')
+            self.assertNotIn('language_code', config['speech_config'])
+            self.assertIn('日本語', config['system_instruction']['parts'][0]['text'])
+            self.assertEqual(config['tools'], [])
+            self.assertIn('output_audio_transcription', config)
+            for field in ('thinking_config', 'proactivity', 'enable_affective_dialog', 'generation_config'):
+                self.assertNotIn(field, config)
+            live._ライブセッションワーカー = AsyncMock()
+            with patch.object(MODULE.genai, 'Client', return_value=object()) as client:
+                self.assertTrue(await live.開始())
+                client.assert_called_once_with(api_key='selected-only', http_options={'api_version': 'v1beta'})
+            await live.終了()
+
+    async def test_explicit_legacy_model_keeps_speech_config(self):
+        live = MODULE.LiveAI('test-session', live_model='gemini-2.5-flash-native-audio-preview-12-2025',
+                             live_voice='Kore', diagnostic=True)
+        speech = (await live._設定構成作成()).speech_config
+        self.assertEqual(speech.language_code, 'ja-JP')
+        self.assertEqual(speech.voice_config.prebuilt_voice_config.voice_name, 'Kore')
+
+    async def test_missing_key_does_not_use_parent_alternative(self):
+        parent = SimpleNamespace(conf=SimpleNamespace(json=SimpleNamespace(
+            gemini_key_id='gemini-must-not-use', freeai_key_id='freeai-must-not-use')))
+        for provider in ('gemini_live', 'freeai_live'):
+            with patch.object(MODULE.genai, 'Client') as client:
+                live = MODULE.LiveAI('test-session', parent_manager=parent, live_ai=provider, api_key='< unset >')
+                self.assertFalse(await live.開始())
+                client.assert_not_called()
+                self.assertIn(provider, live.最終エラー)
+
+    async def test_38_setup_failure_surfaces_safe_message_without_retry(self):
+        live = self.make_live()
+        error = RuntimeError('credential-in-sdk-error')
+        error.response = SimpleNamespace(status_code=403)
+        connect = Mock(side_effect=error)
+        live.client = SimpleNamespace(aio=SimpleNamespace(live=SimpleNamespace(connect=connect)))
+        await asyncio.wait_for(live._ライブセッションワーカー(), 1)
+        connect.assert_called_once()
+        self.assertEqual(connect.call_args.kwargs['model'], 'gemini-3.8-live')
+        self.assertTrue(live.エラーフラグ)
+        failure = live.テキスト受信Ｑ.get_nowait()
+        self.assertEqual(failure['code'], 'live_connection_failed')
+        self.assertIn('gemini-3.8-live', failure['error'])
+        self.assertIn('HTTP 403', failure['error'])
+        self.assertNotIn('credential-in-sdk-error', failure['error'])
+
+    async def test_invalid_config_is_not_retried_with_minimal_setup(self):
+        live = self.make_live()
+        with patch.object(MODULE.types, 'LiveConnectConfig', side_effect=ValueError('wrong voice')) as config:
+            with self.assertRaisesRegex(ValueError, 'wrong voice'):
+                await live._設定構成作成()
+            config.assert_called_once()
+
     async def test_cancel_during_receive_preserves_cancelled_error(self):
         live = self.make_live()
         entered = asyncio.Event()

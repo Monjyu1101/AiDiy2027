@@ -44,6 +44,19 @@ const environment = new LiveEnvironment(props.config, new URL(props.base || './'
 let cloud, audio, connection, heartbeat, generation = 0, micGeneration = 0, disposed = false, cancelFileBatch;
 // 初期化済みソケットの切断はconnectのcatchより先に通知されるため、再接続中の保持方針を共有する。
 let preserveOnConnectionLost = false;
+const geminiLiveModel = 'gemini-3.8-live';
+const geminiLiveProvider = name => name === 'gemini_live' || name === 'freeai_live';
+// 旧既定値だけ更新し、別の手動選択・音声・明示した起動引数は保持する。
+function updateLegacyLiveDefaults(config) {
+  const updated = { ...config };
+  for (const [key, legacy] of [
+    ['LIVE_GEMINI_MODEL', 'gemini-2.5-flash-native-audio-preview-12-2025'],
+    ['LIVE_FREEAI_MODEL', 'gemini-2.5-flash-native-audio-preview-09-2025'],
+  ]) {
+    if (updated[key] === legacy || updated[key] === 'models/' + legacy) updated[key] = geminiLiveModel;
+  }
+  return updated;
+}
 const keys = (name = provider.value) => { const vendor = name === 'openai_live' ? 'OPENAI' : name === 'freeai_live' ? 'FREEAI' : 'GEMINI'; return { model: `LIVE_${vendor}_MODEL`, voice: `LIVE_${vendor}_VOICE` }; };
 const modelLabel = computed(() => [settings.value.LIVE_AI_NAME, settings.value[keys(settings.value.LIVE_AI_NAME).model]].filter(Boolean).join(' - ') || 'AiDiy のライブ会話');
 const folderMissing = computed(() => environment.host && !project.value?.パス);
@@ -121,15 +134,28 @@ function receive(packet) {
     error.value = text || packet.error || '会話エラー';
   }
 }
-async function loadModels(session = '') {
+async function loadModels(session = '', expectedModel = undefined) {
   if (folderMissing.value) return;
   const run = generation;
   const data = await environment.api('core/AIコア/モデル情報/取得', { セッションID: session });
   if (disposed || run !== generation) return;
   if (data.status !== 'OK') throw new Error(data.message || 'モデル情報を取得できません。');
   models.value = data.data.available_models?.live_models || {}; voices.value = data.data.available_models?.live_voices || {};
-  settings.value = { ...data.data.モデル設定, ...(!session ? preferred.value : {}) };
-  if (!session) error.value = ライブ選択エラー(settings.value, { models: models.value, voices: voices.value });
+  const configured = data.data.モデル設定;
+  if (expectedModel) {
+    const name = expectedModel.LIVE_AI_NAME, key = keys(name).model;
+    if (configured?.LIVE_AI_NAME !== name || configured?.[key] !== expectedModel[key])
+      throw new Error(`選択したライブモデルで接続できませんでした（${name}: ${expectedModel[key]}）。`);
+  }
+  settings.value = session ? { ...configured } : { ...updateLegacyLiveDefaults(configured), ...preferred.value };
+  if (!session) error.value = connectionSelectionError();
+}
+function connectionSelectionError() {
+  const invalid = ライブ選択エラー(settings.value, { models: models.value, voices: voices.value });
+  const name = settings.value.LIVE_AI_NAME, selected = settings.value[keys(name).model];
+  if (invalid && geminiLiveProvider(name) && selected === geminiLiveModel && !Object.hasOwn(models.value[name] || {}, selected))
+    return `ライブモデル ${selected} は ${name} の候補にありません。Diag の「モデル一覧」で一括取得・書込を行い、再度接続してください。`;
+  return invalid;
 }
 function disconnect(clear = true) {
   preserveOnConnectionLost = false;
@@ -152,15 +178,20 @@ async function connect(preserve = false, automatic = false) {
     if (run !== generation || disposed) return;
     await loadModels();
     if (run !== generation || disposed) return;
-    const invalid = ライブ選択エラー(settings.value, { models: models.value, voices: voices.value });
+    const invalid = connectionSelectionError();
     if (invalid) throw new Error(invalid);
     const config = await environment.context();
     if (run !== generation || disposed) return;
     project.value = config.作業フォルダ;
     if (!preserve) { arrivals.reset(); messages.value = []; welcomeVisible.value = false; }
-    await connection.connect({ codeBasePath: project.value?.パス || '', modelSettings: preferred.value });
+    const name = settings.value.LIVE_AI_NAME, selected = keys(name);
+    const verifyReady = geminiLiveProvider(name);
+    const liveSettings = verifyReady
+      ? { LIVE_AI_NAME: name, [selected.model]: settings.value[selected.model], [selected.voice]: settings.value[selected.voice] }
+      : preferred.value;
+    await connection.connect({ codeBasePath: project.value?.パス || '', modelSettings: liveSettings, ...(verifyReady ? { waitForLiveReady: true } : {}) });
     if (run !== generation || disposed) return;
-    await loadModels(connection.session);
+    await loadModels(connection.session, verifyReady ? liveSettings : undefined);
     if (run !== generation || disposed) return;
     connected.value = true; audio.mute(audible.value); connection.send('input', 音声操作(false, audible.value));
     if (!environment.host) heartbeat = setInterval(() => connection.send('input', { type: 'ping' }), 20000);
@@ -195,7 +226,11 @@ function submit() {
   else { arrivals.cancelReservation(); error.value = '送信できませんでした。接続を確認してください。'; }
 }
 function choice(values = {}, selected) { return selected ? Object.hasOwn(values, selected) ? selected : '' : Object.keys(values)[0] || ''; }
-function changeProvider() { model.value = choice(models.value[provider.value], settings.value[keys().model]); voice.value = choice(voices.value[provider.value], settings.value[keys().voice]); }
+function changeProvider() {
+  const name = provider.value;
+  model.value = choice(models.value[name], settings.value[keys().model] || (geminiLiveProvider(name) ? geminiLiveModel : ''));
+  voice.value = choice(voices.value[name], settings.value[keys().voice]);
+}
 async function openModels() {
   if (blocked.value || modelLoading.value || picker.value) return;
   const run = generation;
@@ -273,7 +308,7 @@ onMounted(async () => {
   environment.ready();
   try { const config = await environment.context(); if (disposed || initialRun !== generation) return; project.value = config.作業フォルダ; const explicit=config.モデル設定||{}, saved=config.保存モデル設定;
     const remember=!explicit[keys(explicit.LIVE_AI_NAME).model]&&(!explicit.LIVE_AI_NAME||explicit.LIVE_AI_NAME===saved?.LIVE_AI_NAME);
-    preferred.value={...(remember?saved:{}),...explicit,...preferred.value};
+    preferred.value={...(remember?updateLegacyLiveDefaults(saved):{}),...explicit,...preferred.value};
     await loadModels();
     if (disposed || initialRun !== generation) return;
     modelLoading.value = false;

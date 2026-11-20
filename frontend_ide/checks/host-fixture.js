@@ -40,6 +40,7 @@
     if(packet.type==='connect'){
      if(packet.ソケット番号==='input')window.fixtureSession++;
      notify({type:'socket-data',id:message.id,data:JSON.stringify({メッセージ識別:'init',セッションID:'fixture-'+window.fixtureSession})});
+     if(packet.Live準備確認)notify({type:'socket-data',id:message.id,data:JSON.stringify({メッセージ識別:'live_ready',セッションID:'fixture-'+window.fixtureSession})});
     }
     if(packet.メッセージ識別==='input_text')notify({type:'socket-data',id:message.id,data:JSON.stringify({メッセージ識別:'output_text',チャンネル:'0',メッセージ内容:'Liveテスト回答'})});
    }

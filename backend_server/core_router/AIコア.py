@@ -1256,10 +1256,6 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                 elif live_ai == "openai_live":
                     live_model = セッション.モデル設定.get("LIVE_OPENAI_MODEL", "")
                     live_voice = セッション.モデル設定.get("LIVE_OPENAI_VOICE", "")
-                if not live_model:
-                    live_model = セッション.モデル設定.get("LIVE_GEMINI_MODEL", "") or セッション.モデル設定.get("LIVE_FREEAI_MODEL", "")
-                if not live_voice:
-                    live_voice = セッション.モデル設定.get("LIVE_GEMINI_VOICE", "") or セッション.モデル設定.get("LIVE_FREEAI_VOICE", "")
 
                 ウェルカム本文 = (
                     f"私は AiDiy(アイディ) です。 (LastUpdate: {last_update})\n"

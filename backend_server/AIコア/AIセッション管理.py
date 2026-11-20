@@ -61,9 +61,9 @@ def 初期モデル設定生成(app_conf) -> dict:
         "CHAT_LOCAL_DTYPE": app_conf.json.get("CHAT_LOCAL_DTYPE", "bfloat16"),
         # LiveAI設定
         "LIVE_AI_NAME": app_conf.json.get("LIVE_AI_NAME", "freeai_live"),
-        "LIVE_GEMINI_MODEL": app_conf.json.get("LIVE_GEMINI_MODEL", "gemini-2.5-flash-native-audio-preview-12-2025"),
+        "LIVE_GEMINI_MODEL": app_conf.json.get("LIVE_GEMINI_MODEL", "gemini-3.8-live"),
         "LIVE_GEMINI_VOICE": app_conf.json.get("LIVE_GEMINI_VOICE", "Zephyr"),
-        "LIVE_FREEAI_MODEL": app_conf.json.get("LIVE_FREEAI_MODEL", "gemini-2.5-flash-native-audio-preview-09-2025"),
+        "LIVE_FREEAI_MODEL": app_conf.json.get("LIVE_FREEAI_MODEL", "gemini-3.8-live"),
         "LIVE_FREEAI_VOICE": app_conf.json.get("LIVE_FREEAI_VOICE", "Zephyr"),
         "LIVE_OPENAI_MODEL": app_conf.json.get("LIVE_OPENAI_MODEL", "gpt-realtime-2.1-mini"),
         "LIVE_OPENAI_VOICE": app_conf.json.get("LIVE_OPENAI_VOICE", "marin"),

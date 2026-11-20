@@ -60,13 +60,18 @@ Gemini / FreeAI の native-audio モデルでは、`backend_server/AIコア/AI�
 字幕対応 LiveAI の出力音声は `AI音声処理.py` でローカル音声認識へ再投入せず、二重表示を避ける。
 [Google の音声字幕仕様](https://ai.google.dev/gemini-api/docs/live-api/capabilities#audio-transcriptions)を参照する。
 
+### Gemini / FreeAI の既定モデルとエラー
+
+- Tools の Gemini / FreeAI 音声合成と Hermes の Gemini 音声合成の既定は `gemini-3.8-flash-tts`。3.8 には読み上げ本文とスタイルを分けて渡し、WAV ヘッダー付きの音声は PCM として再ラップしない。
+- Gemini / FreeAI Live の既定は `gemini-3.8-live`。従来の AiDiy 既定モデルを保存した設定は読み込み時に新しい既定へ合わせる。他の明示モデル、選択プロバイダーと声は維持する。
+- 合成・接続に失敗したら、別のプロバイダーやキーへ自動で切り替えず、選択した経路のエラーを確認する。無料枠はキーの文字列ではなく、対応する Google Cloud プロジェクトの利用枠で確認する。
+- [Google の TTS 移行ガイド](https://aistudio.google.com/docs/speech-generation#migration)、[Gemini 3.8 Live](https://aistudio.google.com/docs/models/gemini-3.8-live)、[Gemini API の利用枠](https://aistudio.google.com/docs/rate-limits)。
+
 ### Gemini / FreeAI Liveの無応答を調べる
 
 接続済み・準備完了を確認して15秒待機し、初回送信後は最大60秒観測する。画面の実回答と、既存のCoreログの接続・送受信エラーを照合する。送信受付や入力エコーだけでは回答成功にしない。
 
-FreeAIはGeminiの無料枠を利用する方式である。FreeAIの試験で応答がない場合は、対応するGeminiへ画面で切り替えて同等の処理を試験し、Geminiで正常応答を確認できれば試験全体をPASSとしてよい。利用枠制限の明示エラーは代替通過判定の必須条件にしない。Liveでは同じ `AIライブ_gemini.py` を使い、標準の15秒待機・最大60秒観測で確認する。
-
-切替前後のプロバイダ・モデルと結果を残し、「Geminiによる代替試験でPASS」と記録する。FreeAI自体の応答成功や利用枠制限の原因確定とは区別する。これは試験の手動切替・判定方針であり、通常動作の自動フォールバックは追加しない。通常処理に送信時間・受信件数・文字数・音声バイト数などの調査用計測や進捗ログは追加しない。
+FreeAI のエラーは Gemini で代替成功にせず、そのプロバイダー・モデルの結果として記録する。通常処理に送信時間・受信件数・文字数・音声バイト数などの調査用計測や進捗ログは追加しない。
 
 `受信ワーカー:終了` と `live_session破棄完了` は終了状態のINFOログで、実際の接続・受信例外は別のERRORログに残る。経過時間は受信ワーカー内で計測し、キャンセル時にも未定義変数による例外で上書きしない。外部AIを呼ばない確認は `backend_server/.venv/Scripts/python.exe -m unittest discover -s backend_server/checks -p test_live_gemini_lifecycle.py -v` で行う。
 

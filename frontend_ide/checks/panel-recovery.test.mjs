@@ -137,7 +137,10 @@ function interruptedLiveSockets(closedChannel,pendingChannel) {
       const packet=JSON.parse(data);if(packet.type!=='connect')return;
       this.channel=packet.ソケット番号;
       if(this.channel===pendingChannel)queueMicrotask(()=>sockets.find(socket=>socket.channel===closedChannel).close());
-      else queueMicrotask(()=>this.onmessage?.({data:JSON.stringify({メッセージ識別:'init',セッションID:'new-session'})}));
+      else queueMicrotask(()=>{
+        this.onmessage?.({data:JSON.stringify({メッセージ識別:'init',セッションID:'new-session'})});
+        if(packet.Live準備確認)this.onmessage?.({data:JSON.stringify({メッセージ識別:'live_ready',セッションID:'new-session'})});
+      });
     }
     close(){if(this.readyState===3)return;this.readyState=3;queueMicrotask(()=>this.onclose?.({}));}
   }

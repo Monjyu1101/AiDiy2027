@@ -262,7 +262,7 @@ APIキーは書かず、従来の `AiDiy_key.json` を利用する。
 
 | 項目 | 設定可能値・挙動 |
 |------|----------------|
-| TTS auto_provider | edge / openai / gemini / freeai。選んだproviderの既存フォールバック順を使用。初期値はedge→freeai |
+| TTS auto_provider | edge / openai / gemini / freeai。初期値は edge。自動選択・明示指定とも選んだ provider だけを使い、失敗時はエラーを返す |
 | TTS auto_voice | female / male。実際のproviderと言語に応じた音声名へ解決。明示voiceは優先 |
 | STT auto_provider | google / openai。初期値googleはGoogle Web Speech。openaiはWhisper（既存の無音事前チェックあり） |
 | 画像 auto_provider | codex / antigravity / openai / freeai / gemini / grok。既存のprovider別フォールバック順を使用 |

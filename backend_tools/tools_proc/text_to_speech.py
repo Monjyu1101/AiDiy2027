@@ -17,6 +17,7 @@
 
 import asyncio
 import base64
+import io
 import json
 import os
 import re
@@ -26,6 +27,7 @@ import subprocess
 import tempfile
 import time
 import uuid
+import wave
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -45,30 +47,17 @@ class TextToSpeech:
     テキスト音声合成クラス
 
     provider:
-        "auto"   — まず edge を使い、失敗時は freeai へフォールバック
+        "auto"   — 設定の auto_provider を使う（初期値: edge）
         "edge"   — Microsoft Edge ニューラル TTS
         "gemini" — Google Gemini TTS（GEMINI_API_KEY が必要）
         "freeai" — FreeAI TTS（FREEAI_API_KEY が必要、実体は Gemini）
         "openai" — OpenAI TTS（OPENAI_API_KEY が必要）
 
-    自動フォールバックチェーン（FALLBACK_CHAIN）:
-        auto   → edge → freeai
-        edge   → edge → freeai
-        freeai → gemini → edge
-        gemini → freeai → edge
-        openai → edge
-
-    キー無効の候補は事前にスキップし、合成失敗時もチェーンに沿って次の候補へ進む。
+    選択したプロバイダだけで合成する。キー未設定や合成失敗を
+    別プロバイダで補わず、エラーとして返す。
     """
 
-    # 自動フォールバック順（左から順に試す）。
-    FALLBACK_CHAIN: dict[str, list[str]] = {
-        "auto":   ["edge", "freeai"],
-        "edge":   ["edge", "freeai"],
-        "openai": ["openai", "edge"],
-        "gemini": ["gemini", "freeai", "edge"],
-        "freeai": ["freeai", "gemini", "edge"],
-    }
+    PROVIDERS = frozenset(("edge", "gemini", "freeai", "openai"))
 
     auto_provider = "edge"
     auto_voice = "female"
@@ -144,7 +133,7 @@ class TextToSpeech:
     DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1"
 
     # Gemini デフォルト
-    DEFAULT_GEMINI_MODEL = "gemini-2.5-flash-preview-tts"
+    DEFAULT_GEMINI_MODEL = "gemini-3.8-flash-tts"
     DEFAULT_GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta"
     GEMINI_SAMPLE_RATE = 24000
     GEMINI_CHANNELS = 1
@@ -664,13 +653,7 @@ class TextToSpeech:
         """
         テキストから音声を合成する。
 
-        フォールバックは FALLBACK_CHAIN（クラス定数）に従う:
-            auto   → edge → freeai
-            edge   → edge → freeai
-            freeai → gemini → edge
-            gemini → freeai → edge
-            openai → edge
-        キー無効の候補は事前にスキップし、合成例外発生時も次の候補へ進む。
+        auto は設定のプロバイダを選択し、合成に失敗しても別プロバイダへ切り替えない。
 
         Args:
             ratio: 話速倍率。None / 0 / "auto" は provider ごとの既定値として扱う。
@@ -725,45 +708,21 @@ class TextToSpeech:
         normalized_text, replacements = self.normalize_for_speech(speech_text, language)
         voice_input = self.auto_voice if voice.strip().lower() == "auto" else voice
 
-        # FALLBACK_CHAIN に沿って候補を順に試す。
-        # キー無効はスキップ、合成例外は次の候補へ、最終候補で失敗したら raise。
-        chain = self.FALLBACK_CHAIN[self.auto_provider if requested == "auto" else requested]
-        used: Optional[str] = None
-        used_voice: Optional[str] = None
-        audio_bytes: Optional[bytes] = None
-        last_error: Optional[Exception] = None
+        used = self.auto_provider if requested == "auto" else requested
+        if used not in self.PROVIDERS:
+            raise TextToSpeechError(f"未対応の auto_provider です: '{used}'")
+        if used != "edge" and self._get_api_key(used) is None:
+            raise TextToSpeechError(f"{used} の音声合成に必要な API キーが設定されていません")
 
-        for candidate in chain:
-            # キーが必要な候補で、キーが無ければスキップして次へ
-            if candidate in ("openai", "gemini", "freeai"):
-                if self._get_api_key(candidate) is None:
-                    logger.info(f"{candidate} は API キー未設定のためスキップ")
-                    continue
+        voice = self._resolve_voice(voice_input, used, language)
+        effective_ratio = self._resolve_ratio_for_provider(ratio, used)
+        try:
+            audio_bytes = self._synthesize_provider(used, normalized_text, voice, model, effective_ratio)
+        except Exception as e:
+            raise TextToSpeechError(f"{used} の音声合成に失敗しました: {e}") from e
+        if not audio_bytes:
+            raise TextToSpeechError(f"{used} が空の音声データを返しました")
 
-            # 候補ごとに voice を解決し直す（provider 別に female/male マッピングが違うため）
-            resolved_voice = self._resolve_voice(voice_input, candidate, language)
-            effective_ratio = self._resolve_ratio_for_provider(ratio, candidate)
-            try:
-                audio_bytes = self._synthesize_provider(
-                    candidate, normalized_text, resolved_voice, model, effective_ratio
-                )
-                used = candidate
-                used_voice = resolved_voice
-                if candidate != requested:
-                    logger.info(f"{requested} → {candidate} にフォールバックしました")
-                break
-            except Exception as e:
-                last_error = e
-                logger.info(f"{candidate} 合成失敗: {e}")
-                continue
-
-        if audio_bytes is None or used is None:
-            # チェーン全滅。最後のエラーを添えて raise（基本起こり得ない：edge は鍵不要）
-            raise TextToSpeechError(
-                f"全フォールバック候補で合成に失敗しました（requested={requested}, chain={chain}）: {last_error}"
-            )
-
-        voice = used_voice or voice_input
         audio_format = self._detect_audio_format(audio_bytes)
 
         info = {
@@ -772,7 +731,7 @@ class TextToSpeech:
             "model": model if model != "auto" else self._default_model(used),
             "voice": voice,
             "language": language,
-            "ratio": self._resolve_ratio_for_provider(ratio, used),
+            "ratio": effective_ratio,
             "requested_ratio": ratio,
             "speech_text": normalized_text,
             "original_speech_text": speech_text,
@@ -866,69 +825,46 @@ class TextToSpeech:
             base_url = os.environ.get("GEMINI_BASE_URL", self.DEFAULT_GEMINI_BASE_URL)
         base_url = base_url.strip().rstrip("/")
 
-        # Gemini TTS は音声生成用の指示が必要
-        tts_prompt = (
-            f"Generate spoken audio of the following text exactly as written. "
-            f"Do not add any commentary, explanations, or extra words. "
+        # 3.8 の text は逐語読み上げ用で、旧形式の英語指示を含めない。
+        # 明示的に選ぶ旧モデルでは従来のプロンプト形式を保つ。
+        transcript = text if model.startswith("gemini-3.8-") else (
+            "Generate spoken audio of the following text exactly as written. "
+            "Do not add any commentary, explanations, or extra words. "
             f"Just speak this text naturally: {text}"
         )
-
-        base_gen_config = {
-            "responseModalities": ["AUDIO"],
-            "speechConfig": {
-                "voiceConfig": {
-                    "prebuiltVoiceConfig": {"voiceName": voice},
+        payload = {
+            "contents": [{"parts": [{"text": transcript}]}],
+            "generationConfig": {
+                "responseModalities": ["AUDIO"],
+                "speechConfig": {
+                    "voiceConfig": {
+                        "prebuiltVoiceConfig": {"voiceName": voice},
+                    },
                 },
             },
         }
         endpoint = f"{base_url}/models/{model}:generateContent"
 
-        # MP3 直接出力を試みる。API が非対応なら audioConfig なしで再試行
-        # 5xx エラーや接続失敗は最大 3 回まで指数バックオフでリトライ
-        RETRYABLE_STATUS = {429, 500, 502, 503, 504}
-        MAX_RETRIES = 3
-        for attempt_mp3 in (True, False):
-            gen_config = dict(base_gen_config)
-            if attempt_mp3:
-                gen_config["audioConfig"] = {"audioEncoding": "MP3"}
-            payload = {
-                "contents": [{"parts": [{"text": tts_prompt}]}],
-                "generationConfig": gen_config,
-            }
-            resp = None
-            for retry in range(MAX_RETRIES):
-                try:
-                    resp = requests.post(
-                        endpoint,
-                        params={"key": api_key},
-                        headers={"Content-Type": "application/json"},
-                        json=payload,
-                        timeout=60,
-                    )
-                    if resp.status_code in RETRYABLE_STATUS and retry < MAX_RETRIES - 1:
-                        wait_sec = 1.5 * (2 ** retry)
-                        logger.info(
-                            f"Gemini TTS: HTTP {resp.status_code}、{wait_sec:.1f}s 後にリトライ "
-                            f"({retry + 1}/{MAX_RETRIES - 1})"
-                        )
-                        time.sleep(wait_sec)
-                        continue
+        # 同じプロバイダの一時障害のみを再試行する。3.8 の unary は既定の WAV を使う。
+        retryable_status = {429, 500, 502, 503, 504}
+        max_retries = 3
+        for retry in range(max_retries):
+            try:
+                resp = requests.post(
+                    endpoint,
+                    headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
+                    json=payload,
+                    timeout=60,
+                )
+            except requests.RequestException as e:
+                if retry == max_retries - 1:
+                    raise TextToSpeechError(f"Gemini TTS 接続失敗: {type(e).__name__}") from e
+                logger.info("Gemini TTS: 一時的な接続失敗、同じ接続先を再試行")
+            else:
+                if resp.status_code not in retryable_status or retry == max_retries - 1:
                     break
-                except requests.RequestException as e:
-                    if retry < MAX_RETRIES - 1:
-                        wait_sec = 1.5 * (2 ** retry)
-                        logger.info(
-                            f"Gemini TTS: 接続失敗 ({e})、{wait_sec:.1f}s 後にリトライ "
-                            f"({retry + 1}/{MAX_RETRIES - 1})"
-                        )
-                        time.sleep(wait_sec)
-                        continue
-                    raise
-            if resp is not None and resp.status_code == 400 and attempt_mp3:
-                # audioConfig 非対応 → PCM モードで再試行
-                logger.info("Gemini TTS: audioConfig 非対応、PCM モードで再試行")
-                continue
-            break
+                logger.info("Gemini TTS: HTTP %s、同じ接続先を再試行", resp.status_code)
+            time.sleep(1.5 * (2 ** retry))
 
         if resp.status_code != 200:
             try:
@@ -936,9 +872,10 @@ class TextToSpeech:
                 detail = err.get("message", resp.text[:300])
             except Exception:
                 detail = resp.text[:300]
-            raise TextToSpeechError(
-                f"Gemini API エラー (HTTP {resp.status_code}): {detail}"
-            )
+            # 独自エンドポイントのエラー本文がキーを含む場合も返さない。
+            if api_key:
+                detail = str(detail).replace(api_key, "[redacted]")
+            raise TextToSpeechError(f"Gemini API エラー (HTTP {resp.status_code}): {detail}")
 
         try:
             data = resp.json()
@@ -950,22 +887,38 @@ class TextToSpeech:
                 raise TextToSpeechError("Gemini レスポンスに音声データが含まれていません")
             inline = audio_part.get("inlineData") or audio_part.get("inline_data") or {}
             audio_b64 = inline.get("data", "")
-            mime_type = inline.get("mimeType", "")
+            mime_type = inline.get("mimeType") or inline.get("mime_type") or ""
         except (KeyError, IndexError, TypeError) as e:
             raise TextToSpeechError(f"Gemini レスポンスの解析に失敗: {e}")
 
         if not audio_b64:
             raise TextToSpeechError("Gemini が空の音声データを返しました")
 
-        raw_bytes = base64.b64decode(audio_b64)
+        try:
+            raw_bytes = base64.b64decode(audio_b64, validate=True)
+        except (ValueError, TypeError) as e:
+            raise TextToSpeechError("Gemini の音声データが正しい Base64 ではありません") from e
 
-        # mimeType が MP3 系なら変換不要、それ以外は PCM→WAV→MP3 変換
-        if mime_type.lower() in ("audio/mp3", "audio/mpeg", "audio/mpeg3"):
-            logger.info(f"Gemini TTS: MP3 直接出力 ({mime_type})")
+        media_type = mime_type.split(";", 1)[0].strip().lower()
+        if self._detect_audio_format(raw_bytes) == "wav":
+            # RIFF WAV をそのまま変換し、生 PCM として二重に包まない。
+            try:
+                with wave.open(io.BytesIO(raw_bytes), "rb") as wav:
+                    if not wav.readframes(1):
+                        raise TextToSpeechError("Gemini の WAV 音声にサンプルがありません")
+            except (EOFError, wave.Error) as e:
+                raise TextToSpeechError("Gemini の WAV 音声形式が壊れています") from e
+            audio_bytes = self._wav_to_mp3(raw_bytes)
+        elif media_type in ("audio/wav", "audio/x-wav", "audio/wave"):
+            raise TextToSpeechError("Gemini の WAV 音声に RIFF ヘッダーがありません")
+        elif media_type in ("audio/mp3", "audio/mpeg", "audio/mpeg3"):
             audio_bytes = raw_bytes
+        elif media_type in ("audio/l16", "audio/pcm", "audio/x-raw") or (
+            not media_type and not model.startswith("gemini-3.8-")
+        ):
+            audio_bytes = self._wav_to_mp3(self._pcm_to_wav(raw_bytes))
         else:
-            wav_bytes = self._pcm_to_wav(raw_bytes)
-            audio_bytes = self._wav_to_mp3(wav_bytes)
+            raise TextToSpeechError(f"Gemini の未対応音声形式です: {mime_type or '未指定'}")
 
         if ratio != 1.0:
             audio_bytes = self._apply_atempo(audio_bytes, ratio)
@@ -976,7 +929,7 @@ class TextToSpeech:
     # ------------------------------------------------------------------ #
 
     def _pcm_to_wav(self, pcm_bytes: bytes) -> bytes:
-        """16kHz 16bit モノラル PCM を WAV に変換"""
+        """24 kHz 16-bit モノラル PCM を WAV に変換。"""
         sample_rate = self.GEMINI_SAMPLE_RATE
         channels = self.GEMINI_CHANNELS
         sample_width = self.GEMINI_SAMPLE_WIDTH
@@ -1244,10 +1197,9 @@ class TextToSpeech:
     # ------------------------------------------------------------------ #
 
     def _normalize_provider(self, provider: str) -> str:
-        """provider 文字列を正規化する。'auto' はそのまま 'auto' で返し、
-        FALLBACK_CHAIN によって実際の試行順を決める。"""
+        """provider 文字列を正規化する。auto の設定解決は合成時に行う。"""
         p = provider.strip().lower()
-        if p in self.FALLBACK_CHAIN:
+        if p == "auto" or p in self.PROVIDERS:
             return p
         raise TextToSpeechError(
             f"未対応の provider です: '{provider}'（auto / edge / openai / gemini / freeai）"

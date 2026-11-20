@@ -269,10 +269,9 @@ mcp__aidiy_text_to_speech__synthesize_speech
 > ```
 
 - **紹介ビデオのナレーション音声は必ず MP3 で生成・保存する**。拡張子やファイルサイズから尺を推定せず、保存された音声を ffprobe 等で実測する。
-- `freeai` プロバイダは Google Gemini TTS を使い、内部で PCM → WAV → MP3 変換を行う。MP3 変換には ffmpeg（優先）または `lameenc`（フォールバック）を使う。
+- `freeai` プロバイダは Google Gemini TTS を使い、既定モデルは `gemini-3.8-flash-tts`。本文をそのまま REST に渡し、既定の WAV を MP3 へ変換する。旧モデルの生 PCM は一度だけ WAV に包む。MP3 変換には ffmpeg（優先）または `lameenc`（フォールバック）を使う。
 - `lameenc` は `backend_tools` の依存に含まれている（`uv add lameenc` で追加済み）。ffmpeg がない環境でも MP3 出力できる。
-- **フォールバック**は `backend_tools/tools_proc/text_to_speech.py` 側に実装で持つ（ここには書かない）。
-- **MP3 直接出力の試み**: Gemini TTS は `generationConfig.audioConfig.audioEncoding: "MP3"` で MP3 直接出力をリクエストする。現行の `generateContent` エンドポイントが非対応（HTTP 400）の場合は自動的に PCM モードで再試行し、ffmpeg で MP3 変換する。将来 API が対応すれば変換不要になる。
+- **プロバイダの自動切替はしない。** `provider=auto` は設定の `auto_provider`（初期値 edge）を 1 つ選ぶ。キー未設定・合成失敗はエラーとして返す。同じ接続先への一時障害再試行・ローカル変換は別。
 - `_wav_to_mp3` バグ修正済み: ffmpeg 導入後に `None` を返す問題（else ブランチ欠落）を修正。ffmpeg 優先、失敗時は lameenc にフォールバック。
 - 発音辞書は **`_config/mcp_text_to_speech.json`** が単一の正本（未起動のチェックアウトにはない場合がある）。`AiDiy → アイディー`, `MCP → エムシーピー`, `横展開 → よこてんかい` など。辞書を更新したら **必ず全シーンを取り直す**（シーン尺も変わる可能性あり）。
 - `save_path` 明示時は `base64_audio` が空文字になる。省略時は base64 を含む。HTTP の `error`、MCP のエラー内容、実際の `used_provider` と返却 `save_path` を確認してから、ファイルの存在・サイズ・尺を確認する。保存要求だけで成功とは判断しない。
