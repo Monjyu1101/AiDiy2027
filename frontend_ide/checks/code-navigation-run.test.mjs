@@ -219,6 +219,105 @@ function nodeOf(node, predicate) {
   for (const child of children) { const found = nodeOf(child, predicate); if (found) return found; }
 }
 const element = (f, predicate) => nodeOf(f.render(), predicate);
+const turn = [{ 種別: 'user', 本文: '前の依頼' }, { 種別: 'assistant', 本文: '前の回答' }];
+const togglePrediction = f => element(f, node => node?.props?.role === 'switch' && node.props['aria-label'] === '予測').props.onClick();
+const predictionRequests = f => f.calls.filter(call => call.type === 'predictInput');
+const predictionResult = (f, request, text = '次の依頼案') => f.packet({ type: 'predictionResult', requestId: request.requestId, text });
+const finishCodeReply = (f, messages = turn) => {
+  f.state({ 実行中: true });
+  f.packet({ メッセージ識別: 'output_text', メッセージ内容: messages.at(-1).本文 });
+  f.state({ 実行中: false, メッセージ: messages });
+};
+test('予測: 初回ONは次の完了まで待ち、従来の予測経路を一度だけ呼ぶ', () => {
+  const f = fixture(); try {
+    togglePrediction(f); assert.equal(predictionRequests(f).length, 0);
+    finishCodeReply(f);
+    const [request] = predictionRequests(f);
+    assert.equal(predictionRequests(f).length, 1); assert.ok(request);
+    assert.equal(request.historyScope, undefined);
+    predictionResult(f, request); assert.equal(f.data.prompt.value, '次の依頼案');
+    assert.equal(f.calls.some(call => call.type === 'input_text'), false);
+  } finally { f.dispose(); }
+});
+for (const host of [false, true]) test(`予測: 履歴ありONで即起動、OFFと同一状態再受信後も一度だけ下書きへ (${host ? 'VS Code' : 'Web'})`, () => {
+  const f = fixture(host); try {
+    f.state({ メッセージ: turn });
+    togglePrediction(f);
+    const [request] = predictionRequests(f); assert.ok(request);
+    assert.equal(request.historyScope, 'conversation'); assert.equal(request.sessionId, 'session');
+    togglePrediction(f); f.state({});
+    assert.equal(f.data.predicting.value, true);
+    assert.equal(f.calls.some(call => call.type === 'cancelPrediction'), false);
+    predictionResult(f, request);
+    assert.equal(f.data.prompt.value, '次の依頼案'); assert.equal(f.data.predicting.value, false);
+    assert.equal(f.data.autoSuggest.value, false);
+    f.data.prompt.value = ''; finishCodeReply(f);
+    assert.equal(predictionRequests(f).length, 1);
+    predictionResult(f, request, '重複応答'); assert.equal(f.data.prompt.value, '');
+  } finally { f.dispose(); }
+});
+test('予測: 進行中の再ONは重複起動せず、STOPだけが実行中の予測を止める', () => {
+  const f = fixture(); try {
+    f.state({ メッセージ: turn });
+    togglePrediction(f); togglePrediction(f); togglePrediction(f);
+    const [first] = predictionRequests(f);
+    assert.equal(predictionRequests(f).length, 1);
+    const stop = element(f, node => node?.props?.['aria-label'] === '予測を停止');
+    assert.ok(stop); void stop.props.onClick();
+    assert.equal(f.data.predicting.value, false);
+    assert.deepEqual(f.calls.at(-1), { type: 'cancelPrediction', requestId: first.requestId });
+    togglePrediction(f); togglePrediction(f);
+    const [, second] = predictionRequests(f); assert.ok(second);
+    predictionResult(f, first); assert.equal(f.data.prompt.value, '');
+    predictionResult(f, second, '新しい結果'); assert.equal(f.data.prompt.value, '新しい結果');
+    assert.equal(f.calls.some(call => call.type === 'cancel_run'), false);
+  } finally { f.dispose(); }
+});
+test('予測: 別会話・同一セッション再接続の遅延応答は挿入しない', () => {
+  for (const next of [{ 会話ID: 'other', メッセージ: [] }, { 接続世代: 2 }]) {
+    const f = fixture(); try {
+      f.state({ メッセージ: turn }); togglePrediction(f);
+      const [request] = predictionRequests(f);
+      f.state(next); predictionResult(f, request);
+      assert.equal(f.data.prompt.value, '');
+      assert.equal(f.calls.at(-1).type, 'cancelPrediction');
+    } finally { f.dispose(); }
+  }
+});
+test('予測: 手動下書きを消しても古い候補で上書きせず、手動編集で予測通信を止めない', () => {
+  const f = fixture(); try {
+    f.state({ メッセージ: turn }); togglePrediction(f);
+    const [request] = predictionRequests(f);
+    f.data.prompt.value = '自分の下書き'; f.data.prompt.value = '';
+    assert.equal(f.data.predicting.value, true);
+    predictionResult(f, request);
+    assert.equal(f.data.prompt.value, '');
+    assert.equal(f.calls.some(call => call.type === 'cancelPrediction'), false);
+  } finally { f.dispose(); }
+});
+test('予測: 入力済みの欄でONにしても起動・上書きせず、空になっただけでも自動起動しない', () => {
+  const f = fixture(); try {
+    f.state({ メッセージ: turn }); f.data.prompt.value = '入力済み';
+    togglePrediction(f);
+    assert.equal(f.data.prompt.value, '入力済み'); assert.equal(predictionRequests(f).length, 0);
+    f.data.prompt.value = ''; assert.equal(predictionRequests(f).length, 0);
+    togglePrediction(f); togglePrediction(f); assert.equal(predictionRequests(f).length, 1);
+  } finally { f.dispose(); }
+});
+test('予測: 添付・失敗・入力だけでは起動せず、IME変換中の入力欄を上書きしない', () => {
+  for (const messages of [[turn[0]], [turn[0], { 種別: 'assistant', 本文: '!失敗' }], [{ ...turn[0], 添付: {} }, turn[1]]]) {
+    const f = fixture(); try { f.state({ メッセージ: messages }); togglePrediction(f); assert.equal(predictionRequests(f).length, 0); }
+    finally { f.dispose(); }
+  }
+  const f = fixture(); try {
+    f.state({ メッセージ: turn }); f.data.input.value = { value: '変換中', composing: true };
+    togglePrediction(f); assert.equal(predictionRequests(f).length, 0);
+    f.data.input.value = { value: '', composing: false }; togglePrediction(f); togglePrediction(f);
+    const [request] = predictionRequests(f); assert.ok(request);
+    f.data.input.value = { value: '変換中', composing: true }; predictionResult(f, request);
+    assert.equal(f.data.prompt.value, '');
+  } finally { f.dispose(); }
+});
 test('Codeの指定説明はプロジェクト表示の直下に1つだけ置き、通常Codeには出さない', () => {
   const notice='Navi制御下です。自動航行オンならここで実行し、完了後に再評価します。評価が3回改善しない場合は停止します。';
   for (const options of [{}, { embedded:true, projectNotice:notice }]) {

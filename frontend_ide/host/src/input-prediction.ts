@@ -12,16 +12,20 @@
 
 import { ローカルTools接続先 } from '../aidiy_live/local-backend.cjs';
 
-type PredictionContext = { projectPath: string; conversationId: string; sessionId: string; enabled: boolean };
-type PredictionRequest = { requestId?: unknown; projectPath?: unknown; conversationId?: unknown; sessionId?: unknown };
-const identity = (value: PredictionContext) => JSON.stringify([value.projectPath, value.conversationId, value.sessionId]);
+type PredictionContext = { projectPath: string; conversationId: string; sessionId: string; connectionEpoch?: number; enabled: boolean };
+type PredictionRequest = { requestId?: unknown; projectPath?: unknown; conversationId?: unknown; sessionId?: unknown; connectionEpoch?: unknown; historyScope?: unknown };
+const identity = (value: PredictionContext) => JSON.stringify([value.projectPath, value.conversationId, value.sessionId, value.connectionEpoch]);
 
 /** 画面の任意URL・プロジェクト指定を通さず、現在のCode会話だけを内部RESTへ渡す。 */
 export class InputPrediction {
   private requests = new Map<string, { controller: AbortController; context: string }>();
+  private cancelled = new Set<string>();
   constructor(private root: string, private context: () => PredictionContext, private request: typeof fetch = fetch) {}
   cancel(requestId: unknown) {
-    if (typeof requestId !== 'string') return;
+    if (typeof requestId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(requestId)) return;
+    // 別HTTPリクエストのSTOPが予測要求より先に到着しても起動しない。
+    if (this.cancelled.size >= 256) this.cancelled.delete(this.cancelled.values().next().value!);
+    this.cancelled.add(requestId);
     this.requests.get(requestId)?.controller.abort(); this.requests.delete(requestId);
   }
   clear() { for (const id of this.requests.keys()) this.cancel(id); }
@@ -35,7 +39,9 @@ export class InputPrediction {
     if (typeof data.requestId !== 'string' || !/^[a-zA-Z0-9_-]{1,128}$/.test(data.requestId) || !current.enabled
         || !current.projectPath || !current.sessionId || data.projectPath !== current.projectPath
         || data.conversationId !== current.conversationId || data.sessionId !== current.sessionId
-        || this.requests.has(data.requestId) || this.requests.size >= 4) return result;
+        || (data.connectionEpoch !== undefined && data.connectionEpoch !== current.connectionEpoch)
+        || (data.historyScope !== undefined && data.historyScope !== 'conversation')
+        || this.cancelled.has(data.requestId) || this.requests.has(data.requestId) || this.requests.size >= 4) return result;
     const controller = new AbortController(), context = identity(current);
     this.requests.set(data.requestId, { controller, context });
     const timer = setTimeout(() => controller.abort(), 123000);
@@ -51,7 +57,9 @@ export class InputPrediction {
       if (!valid() || health.status !== 'ok' || health.name !== 'aidiy_code_agents') return result;
       const response = await this.request(new URL('/internal/prediction_llms', target), {
         method: 'POST', headers: { 'Content-Type': 'application/json', 'X-AiDiy-Diag': 'model-trial' },
-        body: JSON.stringify({ project_path: current.projectPath, timeout_sec: 120 }), signal: controller.signal, redirect: 'error',
+        body: JSON.stringify({ project_path: current.projectPath, timeout_sec: 120,
+          ...(data.historyScope === 'conversation' ? { session_id: current.sessionId } : {}) }),
+        signal: controller.signal, redirect: 'error',
       });
       if (!response.ok) return result;
       const value = await response.json() as { status?: string; result?: string };

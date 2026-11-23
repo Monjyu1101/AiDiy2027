@@ -84,6 +84,35 @@ class PredictionLatestReplyTests(unittest.TestCase):
                          ["A request", "B request", "A verified", "B follow-up"])
         self.assertEqual([item["turn_id"] for item in result], [1, 2, 1, 3])
 
+    def test_scoped_code_history_excludes_same_project_and_other_lanes(self):
+        self.add("orphan reply", -20, kind="output_text", channel="1", session="code")
+        self.add("selected request", -10, kind="input_request", channel="1", session="code")
+        self.add("chat mirror", -9, channel="0", session="code")
+        self.add("different session", -8, kind="input_request", channel="1", session="other")
+        self.add("different lane", -7, kind="input_request", channel="2", session="code")
+        self.add("different project", -6, kind="input_request", channel="1", session="code",
+                 project="/projects/elsewhere")
+        self.add("selected reply", -5, kind="output_text", channel="1", session="code")
+        self.add("different session reply", -4, kind="output_text", channel="1", session="other")
+        self.add("different lane reply", -3, kind="output_text", channel="2", session="code")
+        self.add("different project reply", -2, kind="output_text", channel="1", session="code",
+                 project="/projects/elsewhere")
+        self.add("orphan-only session", -1, kind="output_text", channel="1", session="orphan")
+        before = self.database.read_bytes()
+
+        result = self.read(session_id="code")
+        self.assertEqual([row["content"] for row in result], ["selected request", "selected reply"])
+        self.assertEqual([row["turn_id"] for row in result], [1, 1])
+        self.assertIn("different session", [row["content"] for row in self.read()])
+        self.assertEqual(self.read(session_id="orphan"), [])
+        self.assertEqual(self.read(session_id="missing"), [])
+        self.assertEqual(self.database.read_bytes(), before)
+
+    def test_invalid_scope_is_never_treated_as_project_wide(self):
+        for scope in ("", " ", " code", "code\x00", 123, "x" * 129):
+            with self.subTest(scope=scope), self.assertRaises(ValueError):
+                self.read(session_id=scope)
+
     def test_repeated_input_in_same_lane_starts_a_new_turn(self):
         self.add("first request", -5)
         self.add("first done", -4, kind="output_text")

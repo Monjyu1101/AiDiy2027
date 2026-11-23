@@ -115,29 +115,41 @@ const { InputPrediction } = load('src/input-prediction.ts', {
 const ok = value => ({ ok: true, json: async () => value });
 const health = () => ok({ status: 'ok', name: 'aidiy_code_agents' });
 function predictionFixture(request) {
-  const context = { projectPath: '/session-project', conversationId: 'conversation', sessionId: 'session', enabled: true }, calls = [];
+  const context = { projectPath: '/session-project', conversationId: 'conversation', sessionId: 'session', connectionEpoch: 1, enabled: true }, calls = [];
   const instance = new InputPrediction('/unused-root', () => context, async (url, options) => {
     calls.push({ url, options });
     return request ? request(url, options) : calls.length === 1 ? health() : ok({ status: 'OK', result: '候補' });
   });
-  return { context, calls, instance, data: { requestId: 'prediction-1', projectPath: context.projectPath, conversationId: context.conversationId, sessionId: context.sessionId } };
+  return { context, calls, instance, data: { requestId: 'prediction-1', projectPath: context.projectPath, conversationId: context.conversationId, sessionId: context.sessionId, connectionEpoch: context.connectionEpoch } };
 }
 test('画面が一致した接続パスだけを履歴取得へ送る', async () => {
   const f = predictionFixture();
   assert.equal((await f.instance.predict({ ...f.data, url: 'http://not-allowed' })).text, '候補');
   assert.deepEqual(JSON.parse(f.calls[1].options.body), { project_path: '/session-project', timeout_sec: 120 });
 });
-for (const field of ['projectPath', 'sessionId', 'conversationId']) test(`古い画面の${field}では通信しない`, async () => {
+test('履歴から即時予測する場合だけ照合済みCoreセッションを送る', async () => {
+  const f = predictionFixture();
+  assert.equal((await f.instance.predict({ ...f.data, historyScope: 'conversation' })).text, '候補');
+  assert.deepEqual(JSON.parse(f.calls[1].options.body), { project_path: '/session-project', timeout_sec: 120, session_id: 'session' });
+});
+test('HTTPでSTOPが予測要求より先に着いた場合も起動しない', async () => {
+  const f = predictionFixture();
+  f.instance.cancel(f.data.requestId);
+  assert.equal((await f.instance.predict({ ...f.data, historyScope: 'conversation' })).text, '');
+  assert.equal(f.calls.length, 0);
+  assert.equal((await f.instance.predict({ ...f.data, requestId: 'new', historyScope: 'conversation' })).text, '候補');
+});
+for (const field of ['projectPath', 'sessionId', 'conversationId', 'connectionEpoch']) test(`古い画面の${field}では通信しない`, async () => {
   const f = predictionFixture();
   assert.equal((await f.instance.predict({ ...f.data, [field]: 'stale' })).text, '');
   assert.equal(f.calls.length, 0);
 });
-for (const field of ['projectPath', 'sessionId', 'conversationId']) for (const stage of ['ping', 'prediction']) test(`${stage}中の${field}変更では旧結果を破棄する`, async () => {
+for (const field of ['projectPath', 'sessionId', 'conversationId', 'connectionEpoch']) for (const stage of ['ping', 'prediction']) test(`${stage}中の${field}変更では旧結果を破棄する`, async () => {
   let finish, count = 0;
   const pending = new Promise(resolve => { finish = resolve; });
   const f = predictionFixture(() => ++count === (stage === 'ping' ? 1 : 2) ? pending : health());
   const result = f.instance.predict(f.data); await flush();
-  f.context[field] = 'changed'; f.instance.sync();
+  f.context[field] = field === 'connectionEpoch' ? 2 : 'changed'; f.instance.sync();
   assert.equal(f.calls.at(-1).options.signal.aborted, true);
   finish(stage === 'ping' ? health() : ok({ status: 'OK', result: '旧結果' }));
   assert.equal((await result).text, '');
@@ -159,7 +171,7 @@ function hostMocks() {
   }
   class Prediction { constructor(_root, context) { prediction = this; this.context = context; } sync() {} clear() {} }
   const models = { コードモデル読込: noop, コードモデル保存: value => value, モデル保存先: () => 'mock-model', コード設定保存先: () => 'mock-options', 検証回数読込: noop };
-  const offline = { Hermes既定モデル: () => 'same', オフラインモデル候補: () => [{ id: 'same' }], オフラインモデル保存先: () => 'mock-offline' };
+  const offline = { オフライン選択: () => ({ provider: 'aidiy_hermes', model: 'same' }), Hermes既定モデル: () => 'same', オフラインモデル候補: () => [{ id: 'same' }], オフラインモデル保存先: () => 'mock-offline' };
   const common = { 'extension-installation': { extensionCoreConnection: () => ({ backend: 'http://127.0.0.1:18091', authorization: () => fixtureHeaders }) }, 'internal-auth': authFixture(), 'file-attachments': require('../out/file-attachments.cjs'), 'code-connection': { CodeConnection: Connection, コード選択: value => ({ provider: value.provider, model: value.model }) }, 'input-prediction': { InputPrediction: Prediction },
     'model-preferences': models, 'conversation-store': { ...store, 会話選択読込:()=>undefined, 会話選択保存:()=>{} }, 'local-backend.cjs': { ローカル接続先: () => 'http://127.0.0.1:18091' }, protocol: {}, offline };
   const deps = {};

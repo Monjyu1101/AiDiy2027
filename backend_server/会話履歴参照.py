@@ -55,6 +55,7 @@ def read_prediction_history(
     now: datetime | None = None,
     user_only: bool = False,
     include_latest_reply: bool = False,
+    session_id: str | None = None,
 ) -> list[dict[str, str | int]]:
     """直近2時間の同一プロジェクトから最新最大10ターンを古い順に返す。
 
@@ -66,6 +67,8 @@ def read_prediction_history(
     時間範囲は呼び出し時点のローカル時刻（秒精度）から2時間前まで、両端を
     含む。未来・期間外・所属不明・他プロジェクトへフォールバックしない。
     now は呼び出し元で一度確定した時刻／検証用。aware値はサーバー時刻へ変換。
+    session_id 指定時は同じ Core セッションの Code チャンネル1だけを参照する。
+    該当なしでも、セッションを限定しない検索に切り替えない。
 
     期間内の候補をカーソルで順次処理し、最新 max_turns ターンだけを保持する。
     本文は各 max_message_chars 文字、最終総計 max_chars 文字まで。既定の方式は
@@ -94,6 +97,18 @@ def read_prediction_history(
     for name, value in (("user_only", user_only), ("include_latest_reply", include_latest_reply)):
         if type(value) is not bool:
             raise ValueError(f"{name} は真偽値で指定してください")
+    if session_id is not None and (
+        not isinstance(session_id, str) or not 1 <= len(session_id) <= 128
+        or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in session_id)
+    ):
+        raise ValueError("セッションIDの形式が不正です")
+    # 固定句のみを組み立て、値はbindする。指定時はプロジェクト・セッションの索引を利用できる。
+    if session_id is None:
+        lane_filter = """h."チャンネル" IN ('0', '1', '2', '3', '4', '5', '6')"""
+        lane_values = ()
+    else:
+        lane_filter = """h."セッションID" = ? AND h."チャンネル" = '1'"""
+        lane_values = (session_id,)
     end = _local_second(now)
     start = end - timedelta(seconds=HISTORY_WINDOW_SECONDS)
     bounds = (start.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S"))
@@ -109,7 +124,7 @@ def read_prediction_history(
         connection.execute("PRAGMA query_only = ON")
         connection.row_factory = sqlite3.Row
         rows = connection.execute(
-            """
+            f"""
             SELECT h."セッションID", h."シーケンス", h."チャンネル",
                    h."メッセージ識別", h."登録日時",
                    substr(h."メッセージ内容", 1, ?) AS "本文",
@@ -118,7 +133,7 @@ def read_prediction_history(
               FROM "A会話履歴" AS h
              WHERE h."プロジェクトパス" = ?
                AND h."登録日時" BETWEEN ? AND ?
-               AND h."チャンネル" IN ('0', '1', '2', '3', '4', '5', '6')
+               AND {lane_filter}
                AND h."メッセージ識別" IN (
                    'input_text', 'input_request', 'output_text', 'output_request'
                )
@@ -141,7 +156,7 @@ def read_prediction_history(
              ORDER BY h."登録日時", h."セッションID", h."シーケンス"
             """,
             (max_message_chars, include_latest_reply, _STRIP_CHARS, *_NON_REPLY_TEXTS,
-             normalized_path, *bounds, user_only and not include_latest_reply,
+             normalized_path, *bounds, *lane_values, user_only and not include_latest_reply,
              include_latest_reply, *mirror_bounds),
         )
         for row in rows:

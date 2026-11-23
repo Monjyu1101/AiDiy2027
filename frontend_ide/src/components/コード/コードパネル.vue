@@ -71,8 +71,8 @@ const canApplyModel = computed(() => catalogReady.value && !catalogBusy.value &&
   (model.value === '__custom__' ? !!custom.value.trim() : !offline.value || models.value.some(item => item.id === model.value)));
 const transport = codeTransport(props, receive);
 let disposed = false;
-const predictionScope = () => JSON.stringify([state.作業フォルダ?.パス, state.接続プロジェクトパス, state.会話ID, state.セッションID || state.コアセッションID]);
-const fileScope = () => JSON.stringify([predictionScope(), state.接続世代]);
+const predictionScope = () => JSON.stringify([state.作業フォルダ?.パス, state.接続プロジェクトパス, state.会話ID, state.セッションID || state.コアセッションID, state.接続世代]);
+const fileScope = predictionScope;
 function invalidateFiles() { fileGeneration++; fileNotice.value = ''; transport.cancelFiles?.(); }
 const fileAllowed = () => allowed.value && !offline.value && !!state.接続プロジェクトパス && !!(state.セッションID || state.コアセッションID)
   && Number.isSafeInteger(state.接続世代) && !state.実行中 && !state.モデル変更中 && !pending.value && !changingConversation.value && !navigationRunning.value;
@@ -96,7 +96,7 @@ async function attachFiles(files) {
   const generation = ++fileGeneration, scope = fileScope();
   const identity = { conversationId: state.会話ID, sessionId: state.セッションID || state.コアセッションID, projectPath: state.接続プロジェクトパス, connectionEpoch: state.接続世代 };
   const current = () => !disposed && generation === fileGeneration && scope === fileScope() && fileAllowed();
-  uploading.value = true; error.value = ''; fileNotice.value = ''; cancelPrediction();
+  uploading.value = true; error.value = ''; fileNotice.value = ''; invalidatePredictionDraft();
   try {
     const count = await readDroppedFiles(files, { isCurrent: current, onFile: async file => {
       if (!current()) throw new Error('会話または接続が変わりました。ファイルを選び直してください。');
@@ -106,8 +106,23 @@ async function attachFiles(files) {
   } catch (failure) { if (!disposed && generation === fileGeneration) error.value = failure.message || 'ファイルを送信できません。'; }
   finally { if (!disposed) uploading.value = false; }
 }
-const predictionAllowed = () => autoSuggest.value && operable.value && state.自動接続 && state.接続済み
-  && !!state.接続プロジェクトパス && !!(state.セッションID || state.コアセッションID) && !offline.value && !busy.value;
+const predictionConnected = () => operable.value && state.自動接続 && state.接続済み
+  && !!state.会話ID && !!state.接続プロジェクトパス && !!(state.セッションID || state.コアセッションID) && !offline.value;
+const inputIsEmpty = () => !prompt.value.trim() && !input.value?.composing
+  && (typeof input.value?.value !== 'string' || !input.value.value.trim());
+function hasCompletedTurn(messages) {
+  let user = false;
+  for (const item of messages) {
+    if (!item || item.添付 || typeof item.本文 !== 'string' || !item.本文.trim()) continue;
+    if (item.種別 === 'user') user = true;
+    else if (user && item.種別 === 'assistant' && !/^(?:[!！]|[（(]応答なし[）)]|【(?:検証|自己改善)(?:開始|完了)】)/.test(item.本文.trim())) return true;
+  }
+  return false;
+}
+function invalidatePredictionDraft() {
+  predictionNotice.value = '';
+  if (prediction) prediction.canFill = false;
+}
 function cancelPrediction(notify = true) {
   predictionNotice.value = '';
   const request = prediction;
@@ -116,25 +131,26 @@ function cancelPrediction(notify = true) {
   clearTimeout(request.timer);
   if (notify) void transport.send({ type: 'cancelPrediction', requestId: request.id }).catch(() => {});
 }
-function startPrediction() {
+function startPrediction(historyScope) {
   // IME変換中はv-modelへ反映前の文字があり得るため、実際の入力欄も確認する。
-  if (!predictionAllowed() || prompt.value.trim() || prediction || input.value?.composing
-      || (typeof input.value?.value === 'string' && input.value.value.trim())) return;
-  const request = { id: crypto.randomUUID(), scope: predictionScope(), draft: prompt.value };
+  if (!autoSuggest.value || !predictionConnected() || busy.value || prediction || !inputIsEmpty()) return;
+  const request = { id: crypto.randomUUID(), scope: predictionScope(), draft: prompt.value, canFill: true };
   prediction = request; predicting.value = true;
   // ホスト応答・画面通信が失われても入力欄をロックしたままにしない。
   request.timer = setTimeout(() => { if (prediction === request) cancelPrediction(); }, 125000);
   void transport.send({ type: 'predictInput', requestId: request.id, projectPath: state.接続プロジェクトパス, conversationId: state.会話ID,
-    sessionId: state.セッションID || state.コアセッションID || '' }).catch(() => { if (prediction === request) cancelPrediction(); });
+    sessionId: state.セッションID || state.コアセッションID || '', connectionEpoch: state.接続世代, ...(historyScope ? { historyScope } : {}) }).catch(() => { if (prediction === request) cancelPrediction(false); });
 }
 function toggleSuggestion() {
   autoSuggest.value = !autoSuggest.value;
-  if (!autoSuggest.value) cancelPrediction();
+  // OFFは次回の自動起動だけを止める。起動済みの1件は結果を受け取る。
+  if (autoSuggest.value && hasCompletedTurn(state.メッセージ)) startPrediction('conversation');
 }
 function acceptPrediction(packet) {
   const request = prediction;
   if (!request || packet.requestId !== request.id) return;
-  const apply = !disposed && predictionAllowed() && predictionScope() === request.scope && prompt.value === request.draft
+  const apply = !disposed && request.canFill && predictionConnected() && !busy.value
+    && predictionScope() === request.scope && prompt.value === request.draft && inputIsEmpty()
     && typeof packet.text === 'string' && !!packet.text.trim() && packet.text.length <= 200000;
   cancelPrediction(false);
   // 提案は編集できる下書きだけ。送信、会話追加、添付変更は行わない。
@@ -290,7 +306,7 @@ function receive(packet) {
     progress.value = (packet.進捗 || []).map(line => visibleStreamContent(String(line))).filter(Boolean).join('\n');
     if (packet.実行中 && progress.value.trim()) hasStreamContent.value = true;
     const messages = packet.メッセージ || [];
-    if ((prediction || predictionNotice.value) && (!predictionAllowed() || (prediction && prediction.scope !== predictionScope()))) cancelPrediction();
+    if ((prediction || predictionNotice.value) && (!predictionConnected() || (prediction && prediction.scope !== predictionScope()))) cancelPrediction();
     if (completedReply) {
       predictionReply = false;
       if (messages.at(-1)?.種別 === 'assistant') startPrediction();
@@ -334,7 +350,7 @@ function receive(packet) {
       catalogBusy.value = false; catalogReady.value = true;
     }
   } else if (['modelCatalogError', 'transportError', 'error'].includes(packet.type)) {
-    cancelPrediction(); predictionReply = false; predictionFailed = true;
+    if (packet.type !== 'modelCatalogError') { cancelPrediction(); predictionReply = false; predictionFailed = true; }
     if (packet.type !== 'modelCatalogError') replyFold.failed();
     if (packet.type === 'modelCatalogError' && (!picker.value || (packet.provider || '') !== catalogProvider)) return;
     error.value = packet.message || packet.error || '処理に失敗しました。'; pending.value = false; catalogBusy.value = false;
@@ -348,7 +364,6 @@ function receive(packet) {
     else if (control === 'start') cancelPrediction();
     stream.value?.packet(String(packet.メッセージ内容 || ''));
   } else if (['output_text', 'output'].includes(packet.メッセージ識別)) {
-    cancelPrediction();
     // AIコア共通のエラー応答は output_text でも先頭が ! になる。中断後の本文でも再開しない。
     const text = typeof packet.メッセージ内容 === 'string' ? packet.メッセージ内容.trim() : '';
     if (text.startsWith('!')) { predictionReply = false; predictionFailed = true; }
@@ -401,6 +416,7 @@ async function submit() {
 }
 async function stop() {
   if (navigationRunning.value) { finishNavigation(new Error('Codeの実行を停止しました。'), true); return; }
+  if (prediction && !state.実行中) { cancelPrediction(); return; }
   if (!canStop.value) return;
   stopPending.value = true;
   if (navigationCancelling.value) {
@@ -435,11 +451,11 @@ async function toggleAuto() { if (busy.value || autoPending.value || !operable.v
 async function deleteHistory() { if (!deleteTarget.value || busy.value || deleting.value || !operable.value) return; deleting.value = true; if (await send('deleteHistory', { id: deleteTarget.value.id })) deleteTarget.value = null; deleting.value = false; }
 function historyDate(value) { const date = new Date(value); if (Number.isNaN(date.getTime())) return ''; const pad = n => String(n).padStart(2, '0'); return `${date.getFullYear()}/${pad(date.getMonth() + 1)}/${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; }
 function link(event) { const a = event.target.closest('a'); if (a) { event.preventDefault(); transport.link(a.href); } }
-function copyInput(text) { cancelPrediction(); prompt.value = text; nextTick(() => { input.value?.focus(); input.value?.setSelectionRange(text.length, text.length); scroll(); }); }
+function copyInput(text) { invalidatePredictionDraft(); prompt.value = text; nextTick(() => { input.value?.focus(); input.value?.setSelectionRange(text.length, text.length); scroll(); }); }
 const draftReceiver = createDraftReceiver({
   kind: 'code', project: () => state.作業フォルダ?.パス, scope: () => state.会話ID,
   ready: () => !disposed && !navigationRunning.value && !navigationCancelling.value && !!state.信頼済み && state.画面接続済み !== false && !pending.value && !changingConversation.value,
-  draft: () => prompt.value, setDraft: value => { cancelPrediction(); prompt.value = value; history.value = false; },
+  draft: () => prompt.value, setDraft: value => { invalidatePredictionDraft(); prompt.value = value; history.value = false; },
   label: () => state.履歴.find(item => item.id === state.会話ID)?.題名 || 'Code',
   focus: () => nextTick(() => { if (!disposed) { input.value?.focus(); input.value?.setSelectionRange(prompt.value.length, prompt.value.length); scroll(); } }),
   // 単独起動もBrowserの連携先。IDE所属かどうかで受信IPCを無効にしない。
@@ -447,7 +463,7 @@ const draftReceiver = createDraftReceiver({
 });
 defineExpose({ draftTarget: draftReceiver.target, insertDraft: draftReceiver.insert, runNavigationPrompt, navigationReadiness, isRunning: () => !!state.実行中 });
 watch(() => [state.作業フォルダ?.パス, state.会話ID, state.信頼済み, state.画面接続済み, pending.value, changingConversation.value, navigationRunning.value, navigationCancelling.value, state.履歴], () => draftReceiver.publish());
-watch(prompt, text => { if (prediction && text !== prediction.draft) cancelPrediction(); transport.saveDraft(text); }, { flush: 'sync' });
+watch(prompt, text => { if (prediction && text !== prediction.draft) invalidatePredictionDraft(); transport.saveDraft(text); }, { flush: 'sync' });
 watch(offline, () => { picker.value = false; });
 onMounted(() => {
   if (props.desktop && props.linked) void window.aidiyWindow?.title?.().then(title => { if (!disposed && typeof title === 'string') windowTitle.value = title; }).catch(() => {});
@@ -491,6 +507,7 @@ onBeforeUnmount(() => { finishNavigation(new Error('Code画面を閉じたため
           <div class="prediction-options"><label class="prediction-caption">予測</label><button type="button" class="auto-connect auto-suggest" :disabled="!operable" role="switch" :aria-checked="autoSuggest" aria-label="予測" :title="`予測 ${autoSuggest ? 'ON' : 'OFF'}`" @click="toggleSuggestion"><span class="auto-connect-track" aria-hidden="true"><span class="auto-connect-thumb"></span></span><span>{{ autoSuggest ? 'ON' : 'OFF' }}</span></button></div>
           <div class="verification-options"><label>検証</label><select :value="offline ? 0 : checks" :disabled="offline || !operable || navigationRunning || navigationCancelling" aria-label="検証回数" @change="checks = Number($event.target.value); checksRestored = true; send('setSelfCheckLoop', { count: checks })"><option v-for="n in [0,1,2,3]" :key="n" :value="n">{{ n }}回</option></select><span class="verification-hint">0回:バックアップ・検証無</span></div>
           <button v-if="state.実行中" type="button" class="stop" :disabled="!canStop" aria-label="実行を停止" title="実行を停止" @click="stop"><img class="stop-icon" :src="stopIcon" alt=""><span class="stop-label" aria-hidden="true">STOP</span></button>
+          <button v-else-if="predicting" type="button" class="stop" aria-label="予測を停止" title="予測を停止" @click="stop"><img class="stop-icon" :src="stopIcon" alt=""><span class="stop-label" aria-hidden="true">STOP</span></button>
           <button v-else ref="sendButton" type="submit" class="send" :class="{ 'ws-disabled': !allowed }" :disabled="!canSend" aria-label="送信"><img :src="sendIcon" alt=""></button>
         </div>
       </form>

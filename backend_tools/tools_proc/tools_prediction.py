@@ -35,11 +35,12 @@ RUN_ERROR = "ユーザー入力予測を実行できませんでした。設定�
 PredictionAIName = Literal["auto", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex"]
 ProjectPath = Annotated[str, Field(strict=True, min_length=1, max_length=4096)]
 PredictionModel = Annotated[str, Field(strict=True, min_length=1, max_length=200)]
+CoreSessionId = Annotated[str, Field(strict=True, min_length=1, max_length=128)]
 TimeoutSeconds = Annotated[int, Field(strict=True, ge=1, le=600)]
 
 
 class PredictionLLMRequest(BaseModel):
-    """予測対象のプロジェクトを必須指定する。会話本文・session・tool 指定は受けない。"""
+    """予測対象のプロジェクトを必須指定する。任意の Core セッション指定で Code 履歴に限定できる。会話本文・tool は受けない。"""
 
     model_config = ConfigDict(extra="forbid", strict=True, hide_input_in_errors=True)
 
@@ -47,6 +48,15 @@ class PredictionLLMRequest(BaseModel):
     ai_name: PredictionAIName = "auto"
     ai_model: PredictionModel = "auto"
     timeout_sec: TimeoutSeconds = 120
+    session_id: CoreSessionId | None = None
+
+    @field_validator("session_id")
+    @classmethod
+    def validate_session_id(cls, value: str | None) -> str:
+        # nullを明示して範囲の広い予測へ切り替えることはできない。
+        if value is None or any(char.isspace() or ord(char) < 32 or ord(char) == 127 for char in value):
+            raise ValueError(INPUT_ERROR)
+        return value
 
     @field_validator("project_path", "ai_model")
     @classmethod
@@ -86,7 +96,7 @@ async def validate_request(request: Request) -> PredictionLLMRequest:
 async def _run_prediction(prediction_llm, request: PredictionLLMRequest) -> dict:
     try:
         with prediction_private_logs():
-            return await prediction_llm.run_async(**request.model_dump())
+            return await prediction_llm.run_async(**request.model_dump(exclude_none=True))
     except Exception:
         # 履歴・入力・モデル出力・例外本文はログにもエラー応答にも残さない。
         logger.warning("aidiy_prediction_llms: 予測実行に失敗しました")

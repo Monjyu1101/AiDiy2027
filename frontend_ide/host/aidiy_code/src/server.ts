@@ -117,7 +117,7 @@ export async function 単独起動(project: string, backend?: string, initialMod
     ...(state.実行モード === 'offline' ? {} : modeModels.offline),
     セッションID: state.実行モード === 'offline' ? state.セッションID : state[sessionKey(modeModels.offline.provider)] } : state;
   const prediction = new InputPrediction(root, () => ({ projectPath: connection.projectPath, conversationId: state.会話ID,
-    sessionId: connection.session, enabled: !closed && state.自動接続 && !オフライン使用() && !state.実行中 && !state.モデル変更中 }));
+    sessionId: connection.session, connectionEpoch: connection.epoch, enabled: !closed && state.自動接続 && !オフライン使用() && !state.実行中 && !state.モデル変更中 }));
   const notify = () => { prediction.sync(); broadcast(表示状態()); };
   const save = (更新日時を変更 = true) => {
     if (!state.メッセージ.length && !state.セッションID) return;

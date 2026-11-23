@@ -226,12 +226,12 @@ class PredictionLLM:
             raise ValueError("指定の予測モデルがDiagの候補にありません。設定とモデル一覧を確認してください。")
         return name, model
 
-    async def run_async(self, project_path: str, ai_name="auto", ai_model="auto", timeout_sec=120):
+    async def run_async(self, project_path: str, ai_name="auto", ai_model="auto", timeout_sec=120, *, session_id=None):
         requested_at = datetime.now()
         with prediction_private_logs():
-            return await self._run_async(project_path, ai_name, ai_model, timeout_sec, requested_at)
+            return await self._run_async(project_path, ai_name, ai_model, timeout_sec, requested_at, session_id=session_id)
 
-    async def _run_async(self, project_path: str, ai_name="auto", ai_model="auto", timeout_sec=120, requested_at=None):
+    async def _run_async(self, project_path: str, ai_name="auto", ai_model="auto", timeout_sec=120, requested_at=None, *, session_id=None):
         result = {"status": "NG", "result": "", "project_path": "", "ai_name": "", "ai_model": "", "history_count": 0}
         try:
             if not isinstance(project_path, str) or len(project_path) > 4096 or any(ord(c) < 32 or ord(c) == 127 for c in project_path):
@@ -249,13 +249,16 @@ class PredictionLLM:
         try:
             history = await asyncio.to_thread(read_prediction_history, self.root / "_data" / "AiDiy" / "database.db", project,
                                               max_turns=HISTORY_MAX_TURNS, max_chars=HISTORY_MAX_CHARS,
-                                              now=requested_at, user_only=True, include_latest_reply=True)
+                                              now=requested_at, user_only=True, include_latest_reply=True,
+                                              session_id=session_id)
         except Exception:
             result["result"] = "会話履歴を読み取れません。DBの準備と現行スキーマを確認してください。"
             return result
         result["history_count"] = sum(row["role"] == "user" for row in history)
         if not history or not any(row["role"] == "user" for row in history):
-            result["result"] = "このプロジェクトの直近2時間には予測に使えるユーザー会話履歴がありません。"
+            result["result"] = ("このCode会話の直近2時間には予測に使えるユーザー会話履歴がありません。"
+                                if session_id is not None else
+                                "このプロジェクトの直近2時間には予測に使えるユーザー会話履歴がありません。")
             return result
         try:
             name, model = self._resolve(ai_name, ai_model)

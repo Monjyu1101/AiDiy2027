@@ -55,6 +55,22 @@ class ScopeTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(kw['self_check_loop'],0)
             self.assertTrue(env['read_prediction_history'].call_args.kwargs['user_only'])
 
+    async def test_session_passed_to_reader_not_provider_and_no_scoped_empty_fallback(self):
+        obj,env=load()
+        with tempfile.TemporaryDirectory() as path:
+            out=await obj.run_async(path, session_id='scope-not-for-model')
+            self.assertEqual(out['status'],'OK')
+            self.assertEqual(env['read_prediction_history'].call_args.kwargs['session_id'], 'scope-not-for-model')
+            self.assertNotIn('scope-not-for-model', str(obj._code.run_async.call_args))
+            env['read_prediction_history'].reset_mock(return_value=True)
+            env['read_prediction_history'].return_value=[]
+            obj._code.run_async.reset_mock()
+            out=await obj.run_async(path, session_id='scope-not-for-model')
+            self.assertEqual(out['status'],'NG')
+            self.assertIn('Code会話',out['result'])
+            env['read_prediction_history'].assert_called_once()
+            obj._code.run_async.assert_not_called()
+
     async def test_invalid_scope_has_no_fallback(self):
         for path in ('','relative',None):
             obj,env=load()

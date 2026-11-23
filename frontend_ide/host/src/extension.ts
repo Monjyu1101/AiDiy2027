@@ -88,7 +88,7 @@ class Hermesチャット implements vscode.WebviewViewProvider, vscode.Disposabl
   constructor(private readonly context: vscode.ExtensionContext) {
     this.prediction = new InputPrediction(context.extensionPath, () => ({
       projectPath: this.connection?.projectPath || '', conversationId: this.会話ID,
-      sessionId: this.connection?.session || '', enabled: !this.破棄済み && !!this.view && vscode.workspace.isTrusted
+      sessionId: this.connection?.session || '', connectionEpoch: this.connection?.epoch, enabled: !this.破棄済み && !!this.view && vscode.workspace.isTrusted
         && this.自動接続 && !this.オフライン使用() && !this.実行中 && !this.モデル変更中(),
     }));
     const config = vscode.workspace.getConfiguration('aidiyHermes');
