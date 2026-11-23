@@ -12,10 +12,13 @@ import {readFile} from 'node:fs/promises';
 import uiVue from './ui-vue.cjs';
 const {起動状態を作成}=await import('../diag/ui/components/起動/起動状態.mjs');
 const {自動起動表示を作成}=await import('../diag/ui/components/起動/自動起動表示.mjs');
+const {起動ミニ表示を作成}=await import('../diag/ui/components/ウィンドウ/起動ミニ表示.mjs');
 const {ref,watch}=uiVue.vue;
 const progress=(extra={})=>({実行ID:'auto-1',自動起動:true,対象:['tools'],種別:'start',状態:'done',通知:'起動処理が完了しました。',...extra});
 function fixture(t){
- const tab=ref('start'),connected=ref(true),navigation=自動起動表示を作成({tab,接続済み:connected});
+ const tab=ref('start'),connected=ref(true),miniCalls=[];
+ const mini=起動ミニ表示を作成({利用可能:()=>connected.value,切替:async next=>{miniCalls.push(next);return true;}});
+ const navigation=自動起動表示を作成({tab,接続済み:connected,ミニに切替:有効=>有効()&&mini.変更(true)});
  const data={対象:[{id:'tools',名前:'Tools',状態:'稼働中',設定:{起動対象:true}}],実行中:false,一括停止中:false,一括進捗:progress()};
  let failPorts=false,snapshot,post;const calls=[],ports={対象:[{id:'tools',開放:true}]};
  const state=起動状態を作成({setTimer:()=>1,clearTimer:()=>{},api:async(route,method)=>{
@@ -27,14 +30,15 @@ function fixture(t){
  }});
  const unwatch=watch(state.自動起動完了,value=>navigation.反映(value));
  t.after(()=>{unwatch();state.終了();});
- return {tab,connected,navigation,data,ports,state,calls,failPorts:value=>failPorts=value,setSnapshot:fn=>snapshot=fn,setPost:fn=>post=fn,async refresh(logs=false){state.表示(true,logs);await flush();await flush();}};
+ return {tab,connected,navigation,mini,miniCalls,data,ports,state,calls,failPorts:value=>failPorts=value,setSnapshot:fn=>snapshot=fn,setPost:fn=>post=fn,async refresh(logs=false){state.表示(true,logs);await flush();await flush();}};
 }
 
-test('--auto の正常完了を最初の取得でも一度だけアプリ起動へ反映する',async t=>{
+test('--auto の正常完了を最初の取得でも一度だけミニランチャーへ反映する',async t=>{
  const f=fixture(t);await f.refresh();assert.equal(f.tab.value,'apps');assert.equal(f.state.自動起動完了.value.実行ID,'auto-1');
+ assert.equal(f.mini.表示中.value,true);assert.deepEqual(f.miniCalls,[true]);
  assert.equal(f.calls.some(([route])=>route==='api/起動/再起動'),false,'表示変更から起動APIを呼ばない');
  f.tab.value='start';await f.refresh();assert.equal(f.tab.value,'start','繰り返し取得で選択を戻さない');
- f.state.表示(false);assert.equal(f.state.自動起動完了.value,null);await f.refresh();assert.equal(f.tab.value,'start','再接続でも同じ結果を再反映しない');
+ f.state.表示(false);assert.equal(f.state.自動起動完了.value,null);await f.refresh();assert.equal(f.tab.value,'start','再接続でも同じ結果を再反映しない');assert.deepEqual(f.miniCalls,[true]);
 });
 
 test('準備・起動中は待ち、最後の正常完了でだけ切り替える',async t=>{
@@ -46,7 +50,7 @@ test('準備・起動中は待ち、最後の正常完了でだけ切り替え�
 
 test('通常起動・手動一括起動・失敗・取消・停止はアプリ起動へ移動しない',async t=>{
  for(const value of [null,progress({自動起動:false}),progress({自動起動:undefined}),progress({状態:'error'}),progress({状態:'cancelled'}),progress({種別:'stop'}),progress({実行ID:''})]){
-  const f=fixture(t);f.data.一括進捗=value;await f.refresh();assert.equal(f.tab.value,'start',JSON.stringify(value));
+  const f=fixture(t);f.data.一括進捗=value;await f.refresh();assert.equal(f.tab.value,'start',JSON.stringify(value));assert.deepEqual(f.miniCalls,[]);
  }
  const f=fixture(t);f.data.一括停止中=true;await f.refresh();assert.equal(f.tab.value,'start');
 });
@@ -55,7 +59,7 @@ test('途中のタブ選択・同じシステム起動の再選択・表示モ�
  for(const selected of ['install','keys','start','apps']){
   const f=fixture(t);f.data.一括進捗.状態='running';f.data.実行中=true;await f.refresh();
   f.navigation.利用者操作();f.tab.value=selected;
-  f.data.一括進捗.状態='done';f.data.実行中=false;await f.refresh();assert.equal(f.tab.value,selected);
+  f.data.一括進捗.状態='done';f.data.実行中=false;await f.refresh();assert.equal(f.tab.value,selected);assert.deepEqual(f.miniCalls,[]);
  }
  const f=fixture(t);f.tab.value='tools';await f.refresh();assert.equal(f.tab.value,'tools','他画面の表示を奪わない');
 });
@@ -83,7 +87,7 @@ test('切断後の遅い完了応答を捨て、接続前の結果でタブを�
  const f=fixture(t);let release;f.setSnapshot(()=>new Promise(resolve=>{release=resolve;}));
  f.state.表示(true,false);await flush();f.connected.value=false;f.state.表示(false);
  release(structuredClone(f.data));await flush();await flush();assert.equal(f.tab.value,'start');assert.equal(f.state.自動起動完了.value,null);
- assert.equal(f.navigation.反映(progress()),false);f.connected.value=true;assert.equal(f.navigation.反映(progress()),true,'接続前の結果を消費しない');
+ assert.equal(await f.navigation.反映(progress()),false);f.connected.value=true;assert.equal(await f.navigation.反映(progress()),true,'接続前の結果を消費しない');
 });
 
 test('手動停止の受付中・受付失敗後は古いauto完了を採用しない',async t=>{
@@ -93,11 +97,34 @@ test('手動停止の受付中・受付失敗後は古いauto完了を採用し�
  reject(Error('合成受付失敗'));await work;await f.refresh();assert.equal(f.tab.value,'start');assert.equal(f.state.自動起動完了.value,null);
 });
 
+test('ミニ切替中の手動選択・切断、または切替失敗でも通常タブは上書きしない',async()=>{
+ for(const interrupted of ['tab','disconnect','failure']){
+  const tab=ref('start'),connected=ref(true);
+  let release;
+  const waiting=new Promise(resolve=>{release=resolve;});
+  const navigation=自動起動表示を作成({tab,接続済み:connected,ミニに切替:async 有効=>await waiting&&有効()});
+  const work=navigation.反映(progress());
+  assert.equal(tab.value,'start','切替完了を待ってからタブを設定する');
+  if(interrupted==='tab'){navigation.利用者操作();tab.value='install';}
+  if(interrupted==='disconnect')connected.value=false;
+  release(interrupted!=='failure');
+  assert.equal(await work,false);
+  assert.equal(tab.value,interrupted==='tab'?'install':'start');
+  assert.equal(await navigation.反映(progress()),false,'同じ完了は切替失敗時にも再試行しない');
+ }
+});
+
 test('App は完了と明示操作を配線し、初期ミニを強制的に通常表示へ戻さない',async()=>{
  const app=await readFile(new URL('../diag/ui/App.vue',import.meta.url),'utf8');
  assert.match(app,/watch\(起動\.自動起動完了,progress=>自動起動表示\.反映\(progress\)\)/);
  assert.match(app,/changeTab\(value\)\{[^\n]*自動起動表示\.利用者操作\(\);tab.value=value/);
- assert.match(app,/async function 表示切替\(mode\)\{\s*自動起動表示\.利用者操作\(\)/);
+ assert.match(app,/ミニに切替:有効=>表示切替\('mini',有効\)/);
+ assert.match(app,/async function 表示切替\(mode,自動切替が有効\)\{\s*if\(!自動切替が有効\)自動起動表示\.利用者操作\(\)/);
+ assert.match(app,/@toggle="パネル折畳みを切替"/);
+ assert.match(app,/function パネル折畳みを切替\(\)\{自動起動表示\.利用者操作\(\)/);
+ assert.match(app,/else if\(ミニ\.表示中\.value\)return 自動切替が有効\(\)/);
+ assert.match(app,/if\(自動切替が有効&&!自動切替が有効\(\)\)\{await ミニ\.変更\(false\);return false;\}/);
+ assert.match(app,/v-if="ミニ\.表示中\.value&&!マイクロ表示" :is="起動ミニパネル"/);
  for(const opening of [app.match(/<nav class="tabs"[^>]*>/)?.[0],app.match(/<component :is="起動パネル"[^>]*>/)?.[0]]){
   assert.match(opening,/@pointerdown.capture="自動起動表示\.利用者操作"/);assert.match(opening,/@keydown.capture="自動起動表示\.利用者操作"/);
  }

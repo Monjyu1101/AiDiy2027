@@ -45,7 +45,7 @@ const { modelLastRun,integrationLastRun,keyData,keyBusy,keyTesting,keyTestingIds
 const toolsOnline=ref(false),toolsChecking=ref(false);
 const tools=Tools接続を作成({api,反映:state=>{toolsOnline.value=state.online;toolsChecking.value=state.checking;}});
 const 起動=起動状態を作成({api});
-const 自動起動表示=自動起動表示を作成({tab,接続済み:connected});
+const 自動起動表示=自動起動表示を作成({tab,接続済み:connected,ミニに切替:有効=>表示切替('mini',有効)});
 watch(起動.自動起動完了,progress=>自動起動表示.反映(progress));
 const アプリ=アプリ状態を作成({api,newMemo:メモを開く});
 let memoSync=Promise.resolve();
@@ -76,8 +76,11 @@ const CLI=CLI状態を作成({api,アプリ,接続可能:()=>connected.value});
 const ミニ=起動ミニ表示を作成({利用可能:()=>connected.value,初期表示:globalThis.window?.aidiyWindow?.initialMini===true&&globalThis.performance?.getEntriesByType('navigation')[0]?.type!=='reload'});
 const マイクロ表示=ref(false),マイクロ切替中=ref(false);
 const ミニ表示=computed(()=>ミニ.表示中.value||マイクロ表示.value);
-async function 表示切替(mode){
- 自動起動表示.利用者操作();
+function パネル折畳みを切替(){自動起動表示.利用者操作();パネル折畳み.value=!パネル折畳み.value;}
+async function 表示切替(mode,自動切替が有効){
+ if(!自動切替が有効)自動起動表示.利用者操作();
+ else if(パネル折畳み.value)return false;
+ else if(ミニ.表示中.value)return 自動切替が有効();
  if(マイクロ切替中.value||ミニ.切替中.value||パネル折畳み.value&&!パネル非表示.value)return false;
  if(mode==='micro'&&(!connected.value||!アプリ.フォルダ.value))return false;
  マイクロ切替中.value=true;
@@ -85,8 +88,10 @@ async function 表示切替(mode){
  try{
   if(パネル折畳み.value&&!await 表示切替前にパネルを開く({折畳み:パネル折畳み,非表示:パネル非表示,世代:パネル表示世代,要素:パネル要素,api:window.aidiyWindow,nextTick}))return false;
   if(window.aidiyWindow?.beginDisplay){if(await window.aidiyWindow.beginDisplay(mode)!==true)return false;transition=true;}
+  if(自動切替が有効&&!自動切替が有効())return false;
   if(マイクロ表示.value){if(window.aidiyWindow&&await window.aidiyWindow.startMicro(false)!==true)return false;マイクロ表示.value=false;await nextTick();}
   if(!await ミニ.変更(mode==='mini'))return false;
+  if(自動切替が有効&&!自動切替が有効()){await ミニ.変更(false);return false;}
   if(mode==='micro'){
    if(window.aidiyWindow&&await window.aidiyWindow.startMicro(true)!==true)throw Error('アイコン化に切り替えられませんでした。');
    マイクロ表示.value=true;
@@ -94,7 +99,7 @@ async function 表示切替(mode){
   return true;
  }catch(error){message.value=error.message;return false;}finally{
   await nextTick();
-  try{if(transition)await window.aidiyWindow.finishDisplay();}finally{マイクロ切替中.value=false;}
+  try{if(transition)await window.aidiyWindow.finishDisplay();}catch(error){message.value=error.message;}finally{マイクロ切替中.value=false;}
  }
 }
 watch([connected,アプリ.フォルダ],()=>{if(マイクロ表示.value&&(!connected.value||!アプリ.フォルダ.value))void 表示切替('normal');});
@@ -128,7 +133,7 @@ onMounted(()=>{if(key.value)connect();});
 </script>
 <template>
 <div ref="パネル要素" class="diag-panel ai-component" :class="{'diag-panel-hidden':パネル非表示,'app-launch-view':tab==='apps'&&!ミニ表示&&!パネル非表示}" :data-collapsed="パネル折畳み">
-<component v-if="!マイクロ表示" :is="ステータスバー" :key="パネル表示世代" :server-state="connected?起動.サーバー表示状態.value:'unknown'" :connected="connected" :compact="ミニ表示" :micro-available="!!アプリ.フォルダ.value" :collapsed="パネル折畳み" :hidden="パネル非表示" @toggle="パネル折畳み=!パネル折畳み" @hidden="パネル非表示=$event" :switching="(パネル折畳み&&!パネル非表示)||ミニ.切替中.value||マイクロ切替中" @memo="メモを開く" @mini="表示切替('mini')" @micro="表示切替('micro')" @restore="表示切替('normal')"/>
+<component v-if="!マイクロ表示" :is="ステータスバー" :key="パネル表示世代" :server-state="connected?起動.サーバー表示状態.value:'unknown'" :connected="connected" :compact="ミニ表示" :micro-available="!!アプリ.フォルダ.value" :collapsed="パネル折畳み" :hidden="パネル非表示" @toggle="パネル折畳みを切替" @hidden="パネル非表示=$event" :switching="(パネル折畳み&&!パネル非表示)||ミニ.切替中.value||マイクロ切替中" @memo="メモを開く" @mini="表示切替('mini')" @micro="表示切替('micro')" @restore="表示切替('normal')"/>
 <component v-if="マイクロ表示" :is="マイクロランチャー" :app-state="アプリ" :cli-state="CLI" :state="起動" :online="connected" :switching="マイクロ切替中" @restore="表示切替('normal')" @mini="表示切替('mini')" @select="コンソールへ戻る"/>
 <nav class="tabs" @pointerdown.capture="自動起動表示.利用者操作" @keydown.capture="自動起動表示.利用者操作" v-show="!ミニ表示" aria-label="診断の種類"><button class="tab-headless" :aria-pressed="tab==='install'" :class="{active:tab==='install'}" @click="changeTab('install')">導入状況</button><button class="tab-headless" :aria-pressed="tab==='keys'" :class="{active:tab==='keys'}" @click="changeTab('keys')">モデル一覧</button><button class="tab-headless" :aria-pressed="tab==='integrations'" :class="{active:tab==='integrations'}" @click="changeTab('integrations')">外部連携</button><button class="tab-model" :aria-pressed="tab==='trials'" :class="{active:tab==='trials'}" :disabled="!connected || !toolsOnline" title="Tools 接続時に利用できます" @click="changeTab('trials')">設定モデル</button><button class="tab-model" :aria-pressed="tab==='manual'" :class="{active:tab==='manual'}" :disabled="!connected || !toolsOnline" @click="changeTab('manual')">AIモデル</button><button class="tab-settings" :aria-pressed="tab==='settings'" :class="{active:tab==='settings'}" :disabled="!connected || !起動.Core利用可能.value" title="Core 起動中のみ利用できます" @click="changeTab('settings')">設定再起動</button><button class="tab-tools" :aria-pressed="tab==='tools'" :class="{active:tab==='tools'}" :disabled="!connected || !起動.Core利用可能.value || !toolsOnline" title="Core と Tools の起動・Coreログインが必要です" @click="changeTab('tools')">Tools</button><button class="tab-launch" :aria-pressed="tab==='start'" :class="{active:tab==='start'}" @click="changeTab('start')">システム起動</button><button class="tab-launch" :aria-pressed="tab==='apps'" :class="{active:tab==='apps'}" @click="changeTab('apps')">アプリ起動</button><button id="run" class="run-all" :class="{'force-stop':tab==='start'&&起動.稼働あり.value}" v-show="tab!=='apps'&&tab!=='settings'&&tab!=='tools'" :disabled="tab==='start'?(!connected||起動.読込中.value||起動.保存中.value||起動.処理中.value||起動.一括停止中.value||(!起動.稼働あり.value&&!起動.設定起動可能.value)):!connected || 操作中 || 全診断中 || 確認中 || Boolean(個別確認中) || keyBusy || Boolean(keyTesting) || 書込中 || latestBusy || modelWriteBusy || integrationBusy || integrationWriteBusy || (tab==='manual' && (!toolsOnline || 手動.実行中.value || 手動.読込中.value || !手動.一覧.value))" @click="tab==='start'?起動.一括操作():tab==='manual'?手動.開始(true):全診断()" :title="tab==='start'?(起動.稼働あり.value?'稼働中の機能をタブの逆順に停止します':'選択した機能をタブの順に起動します'):tab==='manual'?'Chat→Live→Prediction→Decision→Codeを順に試行します':'導入状況・モデル一覧・外部連携を順に確認し、結果を書き込みます'">{{tab==='start'?(起動.一括停止中.value?'強制停止中…':起動.処理中.value&&起動.進捗表示.value?.状態==='running'?(起動.進捗表示.value.種別==='stop'?'強制停止中…':'一括起動中…'):起動.稼働あり.value?'強制停止':'一括起動'):tab==='manual'?(手動.実行中.value?'実行中…':'一括試行'):確認中 || 個別確認中 || integrationBusy ? '確認中…' : 書込中 || modelWriteBusy || integrationWriteBusy ? '書込中…' : latestBusy ? '取得中…' : '全テスト'}}</button></nav>
 <component v-if="connected&&!ミニ表示" :is="一括進捗表示" :state="起動"/>
