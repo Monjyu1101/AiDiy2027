@@ -25,7 +25,6 @@
     ".venv",
     "venv",
     "_data",
-    "temp",
     "log",
     "logs",
     ".aidiy_backup",
@@ -44,6 +43,8 @@
     ".pnpm-store",
     ".yarn"
   ],
+  "temporaryDirectories": ["temp", "_temp", "tmp", "_tmp"],
+  "temporaryFilePrefixes": ["temp_", "_temp_", "tmp_", "_tmp_"],
   "backupFiles": [
     ".DS_Store",
     "Thumbs.db",

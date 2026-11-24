@@ -95,6 +95,46 @@ test('Officeの~$ロックを全階層で除外し、元文書と通常の~名�
   assert.deepEqual(paths((await scanTree(root)).tree).sort(), [...included, ...locks].sort(), 'フィルターOFFでは通常一覧で確認できる');
 });
 
+test('一時接頭辞はファイルだけ、完全一致はフォルダも除外する（バックアップONとGit）', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'aidiy-temp-filter-'));
+  t.after(() => rm(root, { recursive: true, force: true }));
+  const excluded = ['temp_local.txt', 'nested/_temp_notes.md', 'nested/TeMp_資料.md',
+    'nested/files/tmp_', '_TMP_state.json', 'temp/private.txt',
+    'nested/_temp/private.txt', 'nested/Tmp/private.txt', 'nested/_tmp/private.txt', 'temp_pretracked.md'];
+  const included = ['temp_notes/readme.md', 'nested/_temp_data/keep.md', 'nested/tmp_output/info.md',
+    'nested/_tmp_examples/demo.md', 'templates/keep.html', 'nested/report-temp.txt',
+    'template.html', 'temporary.service', 'temp-local.txt', 'temp.txt', 'nested/files/tmp'];
+  const evidence = 'docs/セルフテスト、操作ガイド/evidence/.aidiy_cache/temp/temp_example.json';
+  for (const path of [...excluded, ...included, evidence]) {
+    await mkdir(join(root, ...path.split('/').slice(0, -1)), { recursive: true });
+    await writeFile(join(root, path), 'fixture');
+  }
+  const git = (...args) => spawnSync('git', ['-C', root, ...args], { encoding: 'utf8' });
+  assert.equal(git('init', '--template=').status, 0);
+  assert.equal(git('config', 'core.ignorecase', 'false').status, 0);
+  assert.equal(git('add', '--', 'temp_pretracked.md').status, 0, '既存追跡相当');
+  await writeFile(join(root, '.gitignore'), await readFile(new URL('../../../.gitignore', import.meta.url)));
+  const filtered = await scanTree(root, { filter: 'backup' });
+  const ordinary = await scanTree(root);
+  assert.equal(filtered.truncated, false);
+  const on = new Set(filtered.fileList.map(file => file.path));
+  const off = new Set(ordinary.fileList.map(file => file.path));
+  for (const path of [...excluded, ...included]) {
+    assert.equal(git('check-ignore', '--no-index', '-q', '--', path).status, excluded.includes(path) ? 0 : 1, path);
+    assert.equal(on.has(path), included.includes(path), path);
+    assert.ok(off.has(path), path);
+  }
+  for (const folder of ['temp', 'nested/_temp', 'nested/Tmp', 'nested/_tmp']) {
+    assert.equal((await scanTree(root, { filter: 'backup', folder })).missing, true, folder);
+    assert.equal((await scanTree(root, { folder })).missing, false, folder);
+  }
+  assert.equal(git('check-ignore', '--no-index', '-q', '--', evidence).status, 1, '明示済みセルフテスト証跡の例外');
+  assert.equal(git('add', '.').status, 0);
+  assert.equal(git('ls-files', '--error-unmatch', '--', 'temp_pretracked.md').status, 0, '追跡済みファイルは残る');
+  assert.equal(git('ls-files', '--error-unmatch', '--', 'template.html').status, 0, 'templateは新規追加できる');
+  assert.equal(git('ls-files', '--error-unmatch', '--', 'temp_local.txt').status, 1, '未追跡の接頭辞ファイルは入らない');
+});
+
 test('バックアップフィルターは新旧保存先とキャッシュを除外し、通常のbackupを残す', async t => {
   const root = await mkdtemp(join(tmpdir(), 'aidiy-storage-filter-'));
   t.after(() => rm(root, { recursive: true, force: true }));

@@ -11,15 +11,23 @@
 import os
 import shutil
 import ctypes
+import json
 import time
 from fnmatch import fnmatchcase
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Optional, Tuple, List, TypedDict
 
 from log_config import get_logger
 
 logger = get_logger("バックアップ")
+
+_フォルダ除外規則 = json.loads(
+    (Path(__file__).resolve().parents[1] / "core_router" / "フォルダ除外規則.json").read_text(encoding="utf-8")
+)
+_一時フォルダ名 = frozenset(_フォルダ除外規則["temporaryDirectories"])
+_一時ファイルの接頭辞 = tuple(_フォルダ除外規則["temporaryFilePrefixes"])
 
 _バックアップ除外フォルダ = (
     "__pycache__",
@@ -28,7 +36,6 @@ _バックアップ除外フォルダ = (
     ".venv",
     "venv",
     "_data",
-    "temp",
     "log",
     "logs",
     ".aidiy_backup",
@@ -184,12 +191,13 @@ def _全ファイルスキャン(ベースパス: str, 最大件数: Optional[in
         # ディレクトリ名の完全一致で除外（サブストリング一致は "dialog" → "log" のような誤除外を招く）
         dirs[:] = [
             d for d in dirs
-            if d not in _除外フォルダセット and not d.startswith(".")
+            if d not in _除外フォルダセット and d.lower() not in _一時フォルダ名 and not d.startswith(".")
             and not _バックアップ除外フォルダ判定(root_parts[-1], d)
         ]
         for file_name in file_names:
-            # Office の一時ロックファイルは、件数判定・差分判定・コピーのすべてから除外する。
+            # 一時ファイルは、件数判定・差分判定・コピーのすべてから除外する。
             if (file_name.startswith("~$")
+                    or file_name.lower().startswith(_一時ファイルの接頭辞)
                     or (file_name.startswith((".internal_auth.json.", ".internal_auth_keys.json.")) and file_name.endswith(".tmp"))):
                 continue
             file_path = os.path.join(root, file_name)
@@ -230,7 +238,6 @@ def _ローカルGit記録(base_path: str, files: List[str]) -> None:
     try:
         import importlib.util
         import sys
-        from pathlib import Path
         # Tools はネイティブ実装を複数回ロードするため、helper のキューを共有する。
         module_name = "aidiy_local_git_backup"
         module = sys.modules.get(module_name)

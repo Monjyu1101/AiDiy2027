@@ -62,6 +62,23 @@ class LocalBackupTests(unittest.TestCase):
         (self.root / "source.txt").write_text("source")
         self.assert_protected()
 
+    def test_temp_prefixes_are_excluded_without_a_project_gitignore(self):
+        excluded = ['temp_local.txt', 'nested/_temp_notes.md', 'nested/TeMp_資料.md',
+                    'nested/files/tmp_', '_TMP_state.json', 'temp/private.txt',
+                    'nested/_temp/private.txt', 'nested/Tmp/private.txt', 'nested/_tmp/private.txt', 'temp_pretracked.md']
+        included = ['temp_notes/readme.md', 'nested/_temp_data/keep.md', 'nested/tmp_output/info.md',
+                    'nested/_tmp_examples/demo.md', 'templates/keep.html', 'nested/report-temp.txt',
+                    'template.html', 'temporary.service', 'temp-local.txt', 'temp.txt', 'nested/files/tmp']
+        for path in included + excluded:
+            file = self.root / path
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text('fixture', encoding='utf-8')
+        self.assertEqual(self.snapshot()[0], 'created')
+        tree = self.git('ls-tree', '-rz', '--name-only', 'HEAD')
+        self.assertEqual(tree.returncode, 0, tree.stderr)
+        self.assertEqual(set(tree.stdout.rstrip('\0').split('\0')), set(included))
+        self.assertTrue(all((self.root / path).is_file() for path in included + excluded))
+
     def test_old_aidiy_pointer_is_preserved_not_migrated(self):
         (self.root / ".git").write_text("gitdir: .git_local\n")
         self.assert_protected()

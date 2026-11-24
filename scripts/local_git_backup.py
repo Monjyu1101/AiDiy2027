@@ -8,6 +8,7 @@
 from __future__ import annotations
 import os
 import importlib.util
+import json
 from contextlib import contextmanager
 from fnmatch import fnmatchcase
 from pathlib import Path
@@ -21,6 +22,12 @@ from collections import deque
 
 _PENDING_LOCK = threading.Lock()
 _PENDING = {}
+_フォルダ除外規則 = json.loads(
+    (Path(__file__).resolve().parents[1] / "backend_server" / "core_router" / "フォルダ除外規則.json")
+    .read_text(encoding="utf-8")
+)
+_一時フォルダ名 = frozenset(_フォルダ除外規則["temporaryDirectories"])
+_一時ファイルの接頭辞 = tuple(_フォルダ除外規則["temporaryFilePrefixes"])
 
 
 def _load_setup_module():
@@ -151,8 +158,10 @@ def commit_local_backup(base_dir, files, *, excluded_dirs=(), excluded_files=(),
                 continue
             if any(part in dirs for part in path.parts[:-1]) or path.name in names or path.name.startswith(".env.") or path.name.endswith(suffixes):
                 continue
-            # バックアップ元と同じディレクトリパターン。末尾の通常ファイル名は判定しない。
             folder_parts = path.parts[:-1]
+            if path.name.lower().startswith(_一時ファイルの接頭辞) or any(part.lower() in _一時フォルダ名 for part in folder_parts):
+                continue
+            # バックアップ元と同じディレクトリパターン。末尾の通常ファイル名は判定しない。
             if any(fnmatchcase(parent, parent_pattern) and fnmatchcase(child, child_pattern)
                    for parent, child in zip(folder_parts, folder_parts[1:])
                    for parent_pattern, child_pattern in excluded_pairs):

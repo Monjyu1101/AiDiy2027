@@ -178,6 +178,30 @@ class BackupLocalTest(unittest.TestCase):
         self.assertEqual(self.saver.diff_scan()["最終バックアップ日時"], "")
         self.assertFalse((self.root / ".aidiy_backup").exists())
 
+    def test_temp_prefix_filters_native_mcp_diff_and_folder_status_without_writes(self):
+        excluded = {'temp_local.txt', 'nested/_temp_notes.md', 'nested/TeMp_資料.md',
+                    'nested/files/tmp_', '_TMP_state.json', 'temp/private.txt',
+                    'nested/_temp/private.txt', 'nested/Tmp/private.txt', 'nested/_tmp/private.txt', 'temp_pretracked.md'}
+        included = {'temp_notes/readme.md', 'nested/_temp_data/keep.md', 'nested/tmp_output/info.md',
+                    'nested/_tmp_examples/demo.md', 'templates/keep.html', 'nested/report-temp.txt',
+                    'template.html', 'temporary.service', 'temp-local.txt', 'temp.txt', 'nested/files/tmp'}
+        for path in included | excluded:
+            self.write(path)
+        self.assertEqual({item['パス'] for item in self.native._全ファイルスキャン(str(self.root))}, included)
+        self.assertEqual(self.saver.diff_scan()['差分ファイル'], [], '初回保存までは差分の基準がない')
+        saved = self.write('.aidiy_backup/20200101/010101.all/temp_prior.html', '古い保存版')
+        self.assertEqual(set(self.saver.diff_scan()['差分ファイル']), included)
+        for mode, expected in [('backup', included), ('', included | excluded | {saved.relative_to(self.root).as_posix()})]:
+            status = folder_status.状態走査(self.root, フィルター=mode)
+            self.assertFalse(status['不完全'])
+            self.assertEqual({item['パス'] for item in status['ファイル一覧']}, expected)
+        for folder in ['temp', 'nested/_temp', 'nested/Tmp', 'nested/_tmp']:
+            with self.assertRaises(ValueError):
+                folder_status.状態走査(self.root, フォルダ=folder)
+        self.assertEqual(saved.read_text(encoding='utf-8'), '古い保存版')
+        self.assertEqual(list((self.root / '.aidiy_backup').glob('*/*/*')), [saved])
+        self.assertTrue(all((self.root / path).is_file() for path in included | excluded))
+
     def test_project_named_backup_is_not_excluded(self):
         self.write("backup/project/main.txt")
         project = self.root / "backup/project"

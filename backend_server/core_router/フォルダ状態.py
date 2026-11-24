@@ -22,6 +22,8 @@ from collections import OrderedDict
 
 規則 = json.loads(Path(__file__).with_name("フォルダ除外規則.json").read_text(encoding="utf-8"))
 常時除外 = {name.lower() for name in 規則["ignored"]}
+一時フォルダ名 = frozenset(規則["temporaryDirectories"])
+一時ファイルの接頭辞 = tuple(規則["temporaryFilePrefixes"])
 予約名 = {"con", "prn", "aux", "nul", "null", *[f"com{i}" for i in range(1, 10)], *[f"lpt{i}" for i in range(1, 10)]}
 ロック = threading.Lock()
 キャッシュ = OrderedDict()
@@ -33,7 +35,7 @@ def フォルダ許可(名前, 相対, フィルター):
     if フィルター != "backup":
         return True
     parts = 相対.strip("/").split("/")
-    return (名前 not in 規則["backupDirectories"] and not 名前.startswith(".")
+    return (名前 not in 規則["backupDirectories"] and 名前.lower() not in 一時フォルダ名 and not 名前.startswith(".")
             and not any(fnmatchcase(f"{parent}/{child}", pattern)
                         for parent, child in zip(parts, parts[1:]) for pattern in 規則["backupPaths"]))
 
@@ -43,6 +45,7 @@ def ファイル許可(名前, フィルター):
     if re.fullmatch(r"(?:internal_auth(?:_keys)?\.json|\.internal_auth(?:_keys)?\.json\..+\.tmp)", 正規名, re.IGNORECASE):
         return False
     return フィルター != "backup" or (名前 not in 規則["backupFiles"]
+        and not 名前.lower().startswith(一時ファイルの接頭辞)
         and not 名前.startswith("~$") and not any(名前.endswith(e) for e in 規則["backupExtensions"])
         and 名前.rsplit(".", 1)[0].lower() not in 予約名)
 

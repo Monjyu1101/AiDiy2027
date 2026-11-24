@@ -30,8 +30,11 @@ const BACKUP_EXCLUDED_EXTENSIONS = rules.backupExtensions;
 const WINDOWS_RESERVED = new Set(['con', 'prn', 'aux', 'nul', 'null',
   ...Array.from({ length: 9 }, (_, i) => `com${i + 1}`), ...Array.from({ length: 9 }, (_, i) => `lpt${i + 1}`)]);
 const MAX_BACKUP_FILES = 100000;   // バックアップがキャンセルする件数と同じ
-const backupDirAllowed = name => !BACKUP_EXCLUDED_DIRS.has(name) && !name.startsWith('.');
+const temporaryDirectories = new Set(rules.temporaryDirectories);
+const temporaryFilePrefixes = rules.temporaryFilePrefixes;
+const backupDirAllowed = name => !BACKUP_EXCLUDED_DIRS.has(name) && !temporaryDirectories.has(name.toLowerCase()) && !name.startsWith('.');
 const backupFileAllowed = name => !BACKUP_EXCLUDED_FILES.has(name)
+  && !temporaryFilePrefixes.some(prefix => name.toLowerCase().startsWith(prefix))
   && !name.startsWith('~$') // Officeの一時ロック。Pythonの共通バックアップ判定と合わせる。
   && !BACKUP_EXCLUDED_EXTENSIONS.some(ext => name.endsWith(ext))
   && !WINDOWS_RESERVED.has((name.includes('.') ? name.slice(0, name.lastIndexOf('.')) : name).toLowerCase());

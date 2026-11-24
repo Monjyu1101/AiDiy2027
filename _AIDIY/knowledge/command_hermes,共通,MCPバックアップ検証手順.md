@@ -84,6 +84,8 @@
 
 ## 注意点
 
+- 一時領域は全階層で、フォルダ名が `temp`・`_temp`・`tmp`・`_tmp` と完全一致する場合、ファイル名が `temp_`・`_temp_`・`tmp_`・`_tmp_` で始まる場合に、大文字・小文字を区別せず新規バックアップとローカルGit記録から除外する。IDEのバックアップ対象ONとリポジトリの `.gitignore` も同じ名前条件を使う。たとえば `temp_notes/` のような接頭辞付きフォルダと、`template.html` や `temp.txt` はこの条件では除外しない。`.gitignore` の既存の明示例外・追跡済みファイルは従来どおり。元ファイルや過去の保存版を消す操作ではない。
+
 - Microsoft Officeが文書と同じフォルダに作る `~$` 始まりの一時ロックファイルは、全階層でバックアップの件数・最新時刻・全件保存・差分保存から除外する。IDEのバックアップ対象フィルターと `.gitignore` も同じ条件にする。通常の `.docx` / `.xlsx` / `.pptx` と、`~` だけで始まる通常ファイルは対象に残す。Office使用中のロック自体は削除しない。
 
 - `_AIDIY` 直下の `aidiy_` で始まるフォルダは、全階層でバックアップ・件数判定・ローカルGit記録から除外する。IDEのバックアップ対象フィルターONと `.gitignore` の `**/_AIDIY/aidiy_*/` も同じ条件で、未知の `aidiy_custom/` や `aidiy_ide_extra/` を含む。`_AIDIY/knowledge/`、直下の `histories/`、`frontend_ide/aidiy_code/` などのソース、`_AIDIY/aidiy_note.md` のような通常ファイルはこの条件では除外しない。
