@@ -60,7 +60,7 @@ test('共通の確認日時をタスク見出しに1つだけ表示し、各行�
 
 test('明細と総合の理由は独立したネイティブ開閉で、初期は折りたたむ',()=>{
  const nodes=walk(baseParse(descriptor.template.content));
- const disclosures=nodes.filter(node=>node.tag==='details');
+ const disclosures=nodes.filter(node=>node.tag==='details'&&hasClass(node,'navigation-disclosure'));
  assert.equal(disclosures.length,2);
  for(const details of disclosures){
   assert.equal(hasClass(details,'navigation-disclosure'),true);

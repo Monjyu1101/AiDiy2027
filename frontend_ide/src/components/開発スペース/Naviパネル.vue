@@ -39,7 +39,9 @@ const modelItems=ref([]),catalogBusy=ref(false),catalogNotice=ref(''),providerIt
 const toolsState=ref({connected:false,mode:'online'});
 const availability=ref({available:false,reason:'実行環境を確認しています…'});
 const history=ref(false),historyItems=ref([]);
-const failureDialog=ref(null);let notifiedFailureId=null;
+const failureDialog=ref(null),hiddenFailureId=ref(null);let notifiedFailureId=null;
+const failedResponses=computed(()=>job.value?.status==='failed'&&job.value.id!==hiddenFailureId.value&&Array.isArray(job.value.failedResponses)
+ ?job.value.failedResponses.slice(0,2):[]);
 const scored=value=>Number.isInteger(value)&&value>=0&&value<=100;
 const progressStyle=value=>scored(value)?{'--progress-width':value+'%','--progress-fill':`hsl(${value*1.2} 65% 28%)`,'--progress-accent':`hsl(${value*1.2} 65% 72%)`}: {'--progress-width':'0%','--progress-fill':'#263445','--progress-accent':'#b3c5d8'};
 // APIの旧版・不正応答を数値のない成功表示へ流さない。保存済み結果を画面で補完しない。
@@ -362,7 +364,7 @@ async function toggleAutopilot(){
  }catch(e){if(!disposed)notifySound('注意');if(!controller.signal.aborted)autopilotFailed=true;if(autopilot.value)autopilotMessage.show(e.message||'自動航行を停止しました。');}
  finally{doc?.removeEventListener?.('visibilitychange',hidden);owner?.removeEventListener?.('pagehide',leaving);autopilot.value=false;autopilotController=null;autopilotPhase.value='';}
 }
-watch(()=>props.project?.path,()=>{stopAutopilot('プロジェクトが変わったため停止しました。');void releaseCode();codeOpen.value=false;});
+watch(()=>props.project?.path,()=>{hiddenFailureId.value=job.value?.id??null;failureDialog.value=null;stopAutopilot('プロジェクトが変わったため停止しました。');void releaseCode();codeOpen.value=false;});
 onMounted(()=>{visibilityTimer=setInterval(()=>{if(autopilot.value&&!shown())stopAutopilot('Naviが非表示になったため停止しました。再開にはオンにしてください。');},250);});
 onBeforeUnmount(()=>{stopAutopilot('Naviを閉じたため停止しました。');autopilotMessage.dispose();clearInterval(visibilityTimer);void releaseCode();});
 
@@ -387,6 +389,14 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
    <p v-if="!availability.available" role="status" class="navigation-unavailable">{{availability.reason}}</p>
    <p v-if="error" role="alert" class="navigation-error">{{error}}</p>
    <p v-if="job?.status==='failed'&&!routing" role="status" aria-live="polite" class="navigation-error">{{job.message}}</p>
+   <details v-if="failedResponses.length&&!routing" :key="job.id" class="navigation-failed-responses">
+    <summary>失敗時の回答（{{failedResponses.length}}件）</summary>
+    <section v-for="response in failedResponses" :key="response.attempt">
+     <h3>{{response.attempt===1?'初回の回答':'再試行の回答'}}</h3>
+     <p>{{response.reason}}</p><small v-if="response.truncated">長いため一部を省略しています。</small>
+     <textarea readonly :value="response.text" rows="5" spellcheck="false" :aria-label="response.attempt===1?'初回の回答':'再試行の回答'" />
+    </section>
+   </details>
    <div v-if="routing" class="navigation-cruise-stage" :class="{'is-3d':!待機画面非対応}"><component v-if="!待機画面非対応" :is="ナビ待機画面一覧[待機画面名]" :key="待機画面名" v-bind="待機画面名==='ナビ依頼文3D'?{text:recommendedPrompt||goal}:{}" @unsupported="待機画面非対応=true" /><TerminalWelcome v-if="待機画面非対応||!['ナビ夜間飛行3D','ナビ折り紙3D'].includes(待機画面名)" kind="navi" :routing="true" /></div>
    <template v-else-if="result">
     <h2 class="navigation-task-heading">タスク<time v-if="checkedAt" class="navigation-checked-at" :datetime="checkedAt.iso" title="AI評価結果の確定日時（表示端末の時刻）"> ({{checkedAt.text}})</time><small v-else class="navigation-checked-at"> (確認日時不明)</small></h2>
@@ -414,7 +424,8 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
   <NavigationSceneMenu v-if="sceneAction" :request="sceneRequest" :action="sceneAction" @select="runWithScene" @close="sceneAction=''" />
   <ModalDialog v-if="failureDialog!==null" label="ナビの実行に失敗しました" @close="failureDialog=null">
    <h3>ナビの実行に失敗しました</h3>
-   <p>別のエージェントをお試しください。</p>
+   <p v-if="failedResponses.length">画面の「失敗時の回答」を開くと、回答と検証理由を確認・コピーできます。</p>
+   <p v-else>接続やモデルの設定を確認してください。</p>
    <p v-if="failureDialog" class="navigation-error">{{failureDialog}}</p>
    <button type="button" @click="failureDialog=null">閉じる</button>
   </ModalDialog>
@@ -442,6 +453,11 @@ onBeforeUnmount(()=>{void fetch('/api/navigation?instance='+encodeURIComponent(p
 .navigation-panel{position:fixed;left:16px;top:var(--workspace-top,78px);bottom:auto;width:min(480px,calc(100vw - 32px));height:min(900px,calc(100vh - var(--workspace-top,78px) - 16px));box-sizing:border-box;z-index:42;display:flex;flex-direction:column;background:#0b1220;color:#e5edf8;border:1px solid #395069;border-radius:10px;box-shadow:0 12px 40px #0008;overflow:hidden;font-size:13px}
 .navigation-panel .navigation-local-header{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid #29394f}.navigation-emblem{color:#7de2cf}.navigation-header-space{flex:1}.navigation-content{padding:14px;overflow:auto;min-height:0;flex:1}.navigation-goal-form label{display:block;font-weight:600;margin-bottom:8px}.navigation-goal-form textarea{width:100%;resize:vertical;min-height:48px;max-height:120px}.navigation-form-foot{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end;margin-top:3px}.navigation-input-meta{display:flex;flex-direction:column;gap:6px;min-width:0}.navigation-input-hint{display:block;margin:0;color:#afc2d8;font-size:10px;overflow-wrap:anywhere}.navigation-form-foot .navigation-model-line{min-width:0;flex-wrap:wrap}.navigation-run-actions{display:flex;gap:6px}.navigation-goal-form .navigation-run{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;width:40.6px;height:40.6px;padding:2px;border:1px solid #808080;border-radius:0;background:#808080;color:#fff;font:inherit;font-size:10px;line-height:1.25}.navigation-start{position:relative}.navigation-run img{position:absolute;inset:2px;width:35px;height:35px;object-fit:contain;filter:brightness(0) invert(1)}.navigation-button-label{position:relative;z-index:1;margin-top:14px;padding:1px 2px;font-weight:700;background:#808080;color:#fff}.navigation-goal-form .navigation-run:disabled{opacity:1;cursor:not-allowed}.navigation-content button:focus-visible,.navigation-panel .navigation-local-header button:focus-visible{outline:2px solid #8de8e0;outline-offset:2px}.navigation-content button:disabled{opacity:.55;cursor:default}.navigation-error{color:#ffb7ad}.navigation-result-heading{margin:22px 0 14px}.navigation-content h2{font-size:16px;line-height:1.5;margin:4px 0 8px}.navigation-result-heading small{color:#b3c5d8}.navigation-items{padding:0;list-style:none;margin:0}.navigation-items li{margin-bottom:4px;border:1px solid #32465d;border-radius:0;overflow:hidden}.navigation-items .navigation-progress{border-width:0 0 0 3px;border-radius:0}.navigation-items .navigation-reasons>p{padding:0 9px;font-size:12px}.navigation-progress{position:relative;isolation:isolate;display:flex;align-items:center;gap:8px;overflow:hidden;border:1px solid #32465d;border-radius:0;background:#142235;padding:6px 10px}.navigation-fill{position:absolute;z-index:-1;inset:0 auto 0 0;width:var(--progress-width);background:var(--progress-fill)}.navigation-name{flex:1;overflow-wrap:anywhere}.navigation-progress strong{white-space:nowrap;color:var(--progress-accent)}.navigation-progress{border-left:3px solid var(--progress-accent);color:#f5f7fb;line-height:1.5}.navigation-name{min-width:0}.navigation-progress strong small{font-size:10px;margin-left:2px}.navigation-items .navigation-reasons>p{color:#b8cadc;line-height:1.6;margin:4px 3px;white-space:pre-wrap;overflow-wrap:anywhere}.navigation-next{margin-top:22px;padding:14px;border:1px solid #3e6b7b;border-radius:10px;background:linear-gradient(135deg,#122d3b,#172238)}.navigation-next>.navigation-prompt-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.navigation-prompt-actions h2{margin:0}.navigation-prompt-actions button:last-child{margin-left:auto}.navigation-copy-error{color:#ffb7ad;margin:6px 0;font-size:12px}.navigation-prompt{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.8;user-select:text}.navigation-empty{text-align:center;padding:26px 8px;color:#b5c6db;line-height:1.7}.navigation-empty>span{font-size:36px;color:#7de2cf}
 .navigation-window{height:100vh;display:flex;flex-direction:column}.navigation-window .navigation-panel{position:relative;inset:auto;width:100%;height:100%;min-height:0;flex:1;box-sizing:border-box;border-radius:0}.navigation-window.native-panel-window .navigation-panel{height:calc(100vh - 34px)}
+.navigation-failed-responses{margin:8px 0;padding:8px;border:1px solid var(--terminal-border,#36465a);min-width:0;}
+.navigation-failed-responses summary{cursor:pointer;}
+.navigation-failed-responses section{margin-top:8px;}
+.navigation-failed-responses h3,.navigation-failed-responses p{margin:4px 0;}
+.navigation-failed-responses textarea{width:100%;box-sizing:border-box;resize:vertical;user-select:text;}
 </style>
 
 <style>

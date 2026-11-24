@@ -16,9 +16,9 @@ const scope={active:true,connected:true,mode:'online',startedAt:Date.now(),proje
 const connection={state:()=>scope,connect:async()=>scope,close(){}};
 let calls=0;
 const app=await startDevelopment(project,{kind:'navi',connection,navigationOptions:{stateRoot:join(base,'state'),modelFile:join(base,'model.json'),defaultModel:async()=>({provider:'aidiy_hermes',model:'auto'}),runAgent:async({prompt})=>{
- calls++;const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1));
+ calls++;const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^入力データ: /,''));
  const items=[{id:'read',name:'READMEの確認',progress:100,weight:50,weightReason:'試験用の固定配分',reason:'模擬確認済み'},{id:'approval',name:'別途の手動承認',progress:0,weight:50,weightReason:'試験用の固定配分',reason:'未実施'}];
- return {content:JSON.stringify({...shape,items,overall:{progress:50,reason:'模擬表示の試験'},nextItemId:'approval',nextPrompt:'利用者の別途の手動承認を確認してください。'})};
+ return {content:JSON.stringify({...shape,schemaVersion:3,items,overall:{progress:50,reason:'模擬表示の試験'},nextItemId:'approval',nextPrompt:'利用者の別途の手動承認を確認してください。'})};
 }}});
 const runtime=join(process.env.USERPROFILE,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright-core/index.mjs');
 const {chromium}=await import(pathToFileURL(runtime).href);

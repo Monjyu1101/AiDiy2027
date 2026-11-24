@@ -13,6 +13,7 @@ import {fileURLToPath} from 'node:url';
 import {scanTree} from '../viewer/file-scan.mjs';
 import {latestFiles} from '../src/components/ファイル閲覧/最新ファイル.js';
 import {runNavigationAgent,navigationAvailability} from './navigation-agent.mjs';
+import {failedNavigationResponse,navigationRetryPrompt} from './navigation-retry.mjs';
 import {NAVI_PROVIDERS} from '../../frontend_diag/diag/モデル情報/navi_providers.mjs';
 async function replaceState(source,target){for(let attempt=0;;attempt++){try{return await rename(source,target);}catch(error){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=4)throw error;await new Promise(done=>setTimeout(done,25*(attempt+1)));}}}
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
@@ -120,7 +121,8 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    const data=JSON.parse(await readFile(full,'utf8'));return restored(data);
   }catch(e){if(e.code==='ENOENT')return null;throw e;}
  }
- const describeJob=j=>({id:j.id,action:j.action,clientRequestId:j.clientRequestId,goal:j.goal,status:j.status,message:j.message,deadline:j.deadline});
+ const describeJob=j=>({id:j.id,action:j.action,clientRequestId:j.clientRequestId,goal:j.goal,status:j.status,message:j.message,deadline:j.deadline,
+  ...(j.status==='failed'&&j.failedResponses?.length?{failedResponses:j.failedResponses}:{})});
  const describe=()=>job&&current(job)?describeJob(job):null;
  async function cancel({clientRequestId,jobId}={}){
   active();if(clientRequestId!==undefined&&!validRequest(clientRequestId)||jobId!==undefined&&!validId(jobId)||clientRequestId===undefined&&jobId===undefined)throw Error('中止するNavi要求IDが不正です。');
@@ -136,22 +138,47 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
  async function get(){active();const selection=await readModel();return {result:await read(),job:describe(),selection,availability:state().mode==='offline'?{available:false,reason:'オフライン利用中です。オンライン利用へ戻すと実行できます。'}:await availability(selection)};}
  async function execute(j,dir){
   let timer,temporary,abort;
+  const timeoutMessage='5分以内にNavi結果を確認できませんでした。';
+  const failureResponses=[];
   try{
-   const answer=await Promise.race([runAgent({project,prompt:j.prompt,signal:j.controller.signal,selection:j.selection}),new Promise((_,reject)=>{timer=setTimeout(()=>{reject(Error('5分以内にNavi結果を確認できませんでした。'));j.controller.abort();},waitMs);timer.unref?.();}),new Promise((_,reject)=>{abort=()=>reject(Error('処理を中止しました。'));j.controller.signal.addEventListener('abort',abort,{once:true});})]);
-   if(!current(j)||j.status!=='running')return;
-   const content=typeof answer==='string'?answer:answer?.content;
-   const validated=validateNavigationResponse(parseNavigationResponse(content),j),checkedAt=now();
-   // AIが各ファイルを見た瞬間ではなく、全項目の有効な評価結果をアプリが受け取った日時。
-   const result=withNavigationPromptScope({...validated,evaluationBasis:j.evaluationBasis,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection});
-   if(!current(j)||j.status!=='running')return;
+   const boundary=new Promise((_,reject)=>{
+    timer=setTimeout(()=>{reject(Error(timeoutMessage));j.controller.abort();},Math.max(0,j.deadline-now()));timer.unref?.();
+    abort=()=>reject(Error('処理を中止しました。'));j.controller.signal.addEventListener('abort',abort,{once:true});
+   });
+   const checkActive=()=>{
+    if(!current(j)||j.status!=='running')return false;
+    if(j.controller.signal.aborted||now()>=j.deadline){j.controller.abort();throw Error(timeoutMessage);}
+    return true;
+   };
+   let result,prompt=j.prompt;
+   for(let attempt=1;attempt<=2;attempt++){
+    if(!checkActive())return;
+    const answer=await Promise.race([boundary,Promise.resolve().then(()=>checkActive()?runAgent({project,prompt,signal:j.controller.signal,selection:j.selection}):null)]);
+    if(!checkActive())return;
+    const content=typeof answer==='string'?answer:answer?.content;
+    if(typeof content!=='string'||!content.trim())throw Error('読取専用AIの回答を確認できません。');
+    try{
+     const validated=validateNavigationResponse(parseNavigationResponse(content),j),checkedAt=now();
+     // 受け取った全項目の有効な評価日時。スコープ追記後の長さもこの段階で検証する。
+     result=withNavigationPromptScope({...validated,evaluationBasis:j.evaluationBasis,createdAt:j.createdAt??checkedAt,updatedAt:checkedAt,checkedAt,navigationId:j.navigationId||j.id,selection:j.selection});
+     break;
+    }catch(error){
+     const failure=failedNavigationResponse(attempt,error.message,content);
+     failureResponses.push(failure);
+     if(attempt===2)throw error;
+     j.message='回答の形式を修正するため、一度だけ再試行しています。';
+     prompt=navigationRetryPrompt(j.prompt,failure);
+    }
+   }
+   if(!checkActive())return;
    temporary=join(dir,randomUUID()+'.tmp');await writeFile(temporary,JSON.stringify(result,null,2),{encoding:'utf8',flag:'wx'});
-   if(!current(j)||j.status!=='running')return;
+   if(!checkActive())return;
    // この代入から保存完了までは中止不可。非同期renameの直前を確定境界にする。
    j.committing=true;clearTimeout(timer);
    await replaceState(temporary,join(dir,'latest.json'));
    await atomicJSON(join(await historyDirectory(),result.navigationId+'.json'),result);
    j.status='complete';j.message='Naviを更新しました。';
-  }catch(e){if((current(j)||j.committing)&&j.status==='running'){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;}}
+  }catch(e){if((current(j)||j.committing)&&j.status==='running'){j.status='failed';j.message=e.code==='ENOENT'?'AIの結果JSONを確認できませんでした。':e.message;j.failedResponses=failureResponses;}}
   finally{clearTimeout(timer);j.controller.signal.removeEventListener('abort',abort);if(temporary)await rm(temporary,{force:true});}
  }
  async function start(goal,action='navigate',clientRequestId,evaluationBasis){
@@ -177,31 +204,24 @@ export function createNavigation(project,{state,defaultModel=navigationDefaultMo
    if(interrupted())return {job:describeJob(j)};
    if(closed||!state().active||state().startedAt!==session)throw Error('IDEの利用状態が変わりました。');
    const recent=latestFiles(recentScan.tree,0).sort((a,b)=>b.mtime-a.mtime).slice(0,30).map(({path,mtime})=>({path,updatedAt:new Date(mtime).toISOString()}));
-   j.prompt=`プロジェクトを読み取り調査し、開発目標の案内を作成してください。秘密や私的情報を結果に含めないでください。\n開発目標（調査対象）: ${j.inferred&&!previous?'既定の調査指示。最近の変更と関連内容から意図を推測し、仮の開発目標をgoalに設定してください。推測の根拠と不確実さを各reasonにも明記してください。':JSON.stringify(j.goal)}\n観測日時: ${new Date(now()).toISOString()}。最近の更新（相対パスと日時、${recentScan.truncated?'走査上限による一部のみ':'除外規則適用済み'}）: ${JSON.stringify(recent)}。日時だけで達成を断定せず、関連ファイルの内容を読んで判断してください。手掛かりが不足なら不足を明記し、完了を推測しないでください。\n${previous?'保存済み全項目の達成度だけを再評価し、':'やることを最大50項目に分け、'}現状の根拠から達成度progressを整数0〜100で推定してください。未実施・未評価・根拠不足で判定できない項目は0%にしてください。nullは使わず、すべて数値で評価してください。0%は未確認部分がないという意味ではありません。${previous?'各明細はprogressの数値だけを置き換え、id・name・reason・weight・weightReasonは保存済みの値を一字も変えず維持してください。最新の根拠と未確認部分はoverall.reasonとnextPromptに記載してください。工数比率を再配分しないでください。':'reasonに未実施・未評価の区別、根拠と未確認部分を書いてください。各項目のweightは目標達成までの全体の見積工数に占める相対比率（整数1〜100%、非空なら合計100%）です。残工数だけの比率や重要度と混同せず、規模・難しさ・検証範囲からAIが推定し、weightReasonに具体的な配分理由と不確実さを書いてください。実時間は根拠なしに断定しないでください。'}総合overall.progressもAIが算出します。未実施・未評価を0%として全項目を含め、sum(weight*progress)/100を四捨五入した整数にしてください。項目なしなら0です。nullは使いません。overall.reasonに全体の工数配分・総合値の理由・残る大きな作業と不確実さを簡潔に書いてください。schemaVersionは必ず3です。旧形式は受け付けません。おすすめプロンプトは、itemsを上から順に見て最初にprogressが100未満となる項目1つだけを対象にし、そのidをnextItemIdに設定してください。未評価は0%として対象選択に含めます。nextPromptは、別のAIにそのまま渡せる自然で実用的な依頼文をあなた自身が作成してください。本文の上から「今回の目標」「対処しようとしている内容」「今回の作業」の流れで、目標の意図、対象項目で残っている課題と確認済みの根拠を書いてください。最後の依頼は「レビューアーの指摘に対処してください。」と簡潔にしてください。具体的な修正手順や確認方法を事細かく指定せず、対処方法は実行するAIに任せてください。目標や項目名を機械的に転記するだけにせず、調査で得た文脈を踏まえて文章にしてください。未確認のことは断定せず明記してください。評価基準に応じた修正対象の定型文はアプリが最後に追加するので、あなたは「ソースを修正してください。」「関連文書を修正してください。」を重ねて書かないでください。依頼文だけで目標と対象が分かるようにしてください。全体目標は背景の説明にとどめ、作業の依頼には後続項目・複数項目・一般的な追加作業を含めないでください。全項目が100%または項目がない場合、nextItemIdはnull、nextPromptは空文字にし、新たな仕事を作らないでください。自動実行はしません。`;
-   // 保存済みJSONは今回のrequestIdを持つ出力形式として1回だけ渡し、複数結果の出力を誘発しない。
-   j.prompt+=`\n${previous?'評価モードです。以下の保存済み目標・全項目をそのまま使い、目標・項目ID・項目名・順序・項目数・根拠reason・工数比率weight・配分理由weightReasonを変えないでください。明細はprogressの数値だけを最新状態から評価し更新してください。総合overall.progressは保存済みの工数比率と更新した達成度の加重平均から算出し、overall.reasonには最新の根拠・未確認部分を書いてください。更新した達成度から最初の100%未満の項目を選び直し、nextItemIdをその1項目だけに合わせ、nextPromptも最新の根拠から「今回の目標」「対処しようとしている内容」「今回の作業」を含む依頼文として書き直してください。保存済みの提案を機械的に再利用しないでください。全項目100%ならnextItemIdはnull、nextPromptは空文字です。schemaVersion:3の形式は維持してください。':'以下は形式を示す出力例です。例の項目名・割合を固定で転記せず、実目標に応じた適切な粒度の複数項目を生成してください。'}`;
-   j.prompt+=`\nおすすめプロンプトの決め方（新規・再評価共通）:
-1. まず今回返すitemsの全progressを確定してください。その配列を先頭から見て、最初にprogressが100未満となる項目で止めます。最小の達成率・重要度・weight・IDの大小では選びません。未評価の0%も通常の未完了項目です。再評価では保存済みの順序を変えません。
-2. 見つかった項目のid文字列を一字も変えずnextItemIdに入れてください。配列の位置・項目名・新しいID・複数IDの配列ではありません。例えばidが文字列の"2"ならnextItemIdも"2"であり、数値の2ではありません。nextPromptはその1項目だけの残作業を依頼する、空白だけではない1〜8000文字の文字列にしてください。
-3. 見つからなければnextItemIdはJSONのnull（文字列の"null"ではない）、nextPromptは厳密に空文字""です。「完了しました」・空白・改行・追加改善案を書かず、どちらのキーも省略しないでください。overall.progressでは対象の有無を決めません。総合が四捨五入で100でも、99%の項目があればその項目を選びます。
-対象選択の具体例（idとprogressだけを抜粋した説明用の例です。最終回答には例を並べず、実際の全項目・全必須キーを含むJSONを1つ返してください。例のIDや依頼文を実データへ転記しないでください）:
-- 例1: itemsが [step-1:100%, step-2:70%, step-3:0%] の順ならnextItemIdは"step-2"。0%のstep-3は選ばず、nextPromptではstep-2の残作業だけを依頼します。
-- 例2: itemsが [z-last:0%（未評価）, a-first:30%] の順ならnextItemIdは"z-last"。ID順に並べ替えず、先頭の未評価項目を対象にします。
-- 例3: itemsが [done:100%, remaining:99%] ならnextItemIdは"remaining"。overall.progressが100に丸められてもnextPromptを空にしません。
-- 例4: itemsが [step-1:100%, step-2:100%] ならnextItemIdはnull、nextPromptは""です。
-- 例5: itemsが [] ならnextItemIdはnull、nextPromptは""、overall.progressは0です。
-- 例6（再評価）: 前回 [step-1:60%, step-2:0%] でnextItemIdが"step-1"でも、今回 [step-1:100%, step-2:20%] になったらnextItemIdを"step-2"へ変更し、nextPromptもstep-2の残作業だけに書き直します。今回両方100%になったらnullと""へ変更します。保存済みのnextItemId・nextPromptは前回値であり、固定してはいけません。
-出力前の照合: 今回返すitemsを先頭から再確認し、最初の100%未満のidとnextItemIdが完全一致し、nextPromptがその項目だけの非空文字列か確認してください。対象なしならnextItemIdがnull、nextPromptが""か確認してください。`;
-   j.prompt=navigationEvaluationPrompt(evaluationBasis)+j.prompt;
-   if(evaluationBasis!=='auto')j.prompt+=`
-限定評価の手順（共通例よりこの基準を優先）:
-1. 目標は変更せず、選択された種類の資料を探して内容を読みます。最近の更新一覧は探索の手掛かりであり、対象一覧でも達成の証拠でもありません。一覧に該当資料がなくても関連ディレクトリを読み取り検索してください。日時や過去の達成率だけで評価しません。
-2. 新規ナビでは選択範囲内で目標を達成する項目を作ります。対象資料が未作成でも、作成・確認すべき項目を0%で返せます。読めない資料を読んだことにしたり、評価不能という文章だけを返したりしないでください。
-3. 再評価では、基準を変更しても目標・項目数・順序・id・name・reason・weight・weightReasonを変更しません。保存済みreasonは過去の記録としてそのままコピーし、新しい根拠には使いません。対象外の項目も削除・改名せず、選択範囲の根拠で判定できなければprogressを0にし、対象外であることをoverall.reasonに説明します。項目構成自体を変える必要がある場合はその必要性だけをoverall.reasonに記載します。
-4. 次の対象は対象外項目も飛ばさず、今回のitemsの最初の100%未満です。nextPromptの指摘はその項目に関係する選択範囲内の根拠と残課題だけに限定します。最後の依頼は「レビューアーの指摘に対処してください。」とし、具体的な作業手順は指定しません。修正対象の定型文はアプリが付加します。
-5. JSONの型・必須キー・固定値は全モード共通です。id/requestIdは80文字以内、nameは200文字以内、reason/weightReasonは各2000文字以内、overall.reasonは4000文字以内、nextPromptは末尾にアプリが付加する定型文の余裕を残して7900文字以内。progressを確定し、weight合計100、加重平均、nextItemIdの順に照合して完成したJSONを返してください。`;
-
-   j.prompt+=`\n回答形式（厳守）: 調査を終えてから、最終回答は「{」で始まり「}」で終わる完成したJSONオブジェクト1つだけを出力してください。アプリは回答全体をJSONとして解析し、解析できない場合は最初の「{」から最後の「}」まで（括弧を含む）を抽出して読み取ります。複数のJSONから1件を選ぶことはできません。前置き・調査経過・JSON外の説明・Markdown・コードフェンスは出力しないでください。入力例や保存済みJSONを別掲したり、途中版・修正版・複数案を並べたりしないでください。差分だけやJSONを包む配列・文字列ではなく、必須キーと全項目を含む最終結果1つを返してください。\n文字列内の改行・二重引用符・バックスラッシュはJSONの規則でエスケープし、コメント・末尾カンマ・省略記号を使わないでください。新しく書く説明は簡潔にし、全項目と閉じ括弧を省略せず最後まで出力してください。再評価で固定する保存済みの値は短縮しないでください。出力前にJSON構文と必須キーを確認し、requestIdは下の出力形式の値をそのまま使ってください。結果の保存はアプリ側で行います。ファイルの作成・変更はしないでください。\n${previous?'出力形式: ':''}${JSON.stringify(previous?{schemaVersion:3,requestId:id,goal:previous.goal,items:previous.items,overall:previous.overall,nextItemId:previous.nextItemId,nextPrompt:previous.nextPrompt}:navigationExample(evaluationBasis,{schemaVersion:3,requestId:id,goal:j.inferred?'仮の開発目標':j.goal,items:[{id:'step-1',name:'バックエンド調整',progress:100,reason:'必要なAPIと関連試験を確認済みの場合の例',weight:50,weightReason:'複数APIとデータ整合性の検証が全体工数の半分を占める見積例'},{id:'step-2',name:'フロントエンド',progress:70,reason:'基本画面は確認済みで残る表示確認がある場合の例',weight:30,weightReason:'画面実装と状態遷移の検証範囲から3割と見積もる例'},{id:'step-3',name:'セルフテスト',progress:0,reason:'計画された試験が未実施と確認できた場合の例',weight:20,weightReason:'結合試験と回帰確認に2割を見積もる例'}],overall:{progress:71,reason:'工数配分50:30:20の加重平均は71%。残作業は画面確認と結合試験が中心。工数比率はAIの推定です。'},nextItemId:'step-2',nextPrompt:'今回の目標は、利用者が画面を迷わず使える状態に仕上げることです。\n対処しようとしている内容は、基本画面の実装後に残っている表示確認です。現在の調査では表示の検証結果を確認できていません。\n今回の作業: レビューアーの指摘に対処してください。'}))}`;
+   const input={requestId:id,goal:j.inferred&&!previous?null:j.goal,...(previous?{items:previous.items.map(({progress,...item})=>item)}:{})};
+   j.prompt=navigationEvaluationPrompt(evaluationBasis)+`プロジェクトを読み取り調査してください。秘密や私的情報を結果に含めず、ファイルは変更しないでください。
+【目標と根拠】
+${j.inferred&&!previous?'入力データのgoalがnullなのは新規の既定指示です。最近の変更から仮の開発目標をgoalに設定し、推測の根拠と不確実さを示してください。':'入力データのgoalを一字も変えず返してください。'}
+観測日時: ${new Date(now()).toISOString()}。最近の更新（相対パスと日時、${recentScan.truncated?'走査上限による一部のみ':'除外規則適用済み'}）: ${JSON.stringify(recent)}。更新一覧は探索の手掛かりです。一覧に該当資料がなくても関連内容を探して読み、日時だけで達成を断定せず、読めない・不足する根拠は明記してください。
+${evaluationBasis==='auto'?'':'限定評価の手順: 新規は選択範囲だけで項目を作り、対象資料が未作成でも作成すべき項目は0で返せます。再評価で対象外の項目も削除・改名せず、選択範囲で判定できなければ0にしてoverall.reasonで説明します。次の依頼文は選択範囲の根拠と残作業だけを扱います。\n'}
+【採点と次の対象】
+1. ${previous?'再評価: 入力データのitemsを同じ数・順序で返し、id・name・reason・weight・weightReasonは一字も変えず維持します。保存済みreasonは過去の記録で、新しい根拠ではありません。明細はprogressの数値だけを今回の調査で採点し、工数比率を再配分しないでください。前回の総合値や提案は入力に含みません。最新の根拠から依頼文として書き直してください。':'新規ナビ: 実際の目標を最大50項目に分け、重複しないid（文字列）とnameを付けます。reasonには現状の根拠と不確実さを示し、weightは全体の見積工数の比率（整数1〜100、項目があれば合計100）にし、weightReasonに根拠を書きます。残工数や重要度の比率ではありません。'}
+2. 各progressは整数0〜100。未実施・未評価・根拠不足は0。確認できた範囲だけを評価してください。overall.progressは全項目で sum(weight * progress) / 100 を普通に四捨五入（42.5 → 43）。項目なしなら0。overall.reasonに最新の根拠、未確認部分、加重評価の理由を書きます。progressにnullや"70%"を使いません。
+3. 今回のitemsを先頭から見て最初にprogressが100未満の1件だけを選びます。最小の達成率・重要度・weight・IDの大小では選びません。全体が四捨五入で100でも明細に99があれば選び、根拠不足で0の先頭項目も飛ばしません。nextItemIdはそのid文字列を一字も変えず入れます（"2"は数値の2ではありません）。該当なし（全件100または空）はnextItemIdをJSONのnull（文字列の"null"ではない）、nextPromptを厳密に空文字""とし、新たな仕事を作らないでください。
+4. 選んだ項目があるときは「今回の目標」「対処しようとしている内容」「今回の作業」の順で、今回の根拠と残作業をその一件だけに絞った依頼文を作ります。後続項目・複数項目は含めず、「レビューアーの指摘に対処してください。」で締めます。作業手順は実行するAIに任せ、修正対象の定型文はアプリが最後に追加するので書かないでください。
+【最終回答】
+完成したJSONオブジェクト1つだけを返してください。前置き・JSON外の説明・Markdown・コードフェンスは出力せず、途中版・修正版・複数案を並べたりしないでください。回答例や入力データを別掲せず、差分だけでなく全必須キーと全明細・閉じ括弧を省略せず最後まで出力してください。改行・二重引用符・バックスラッシュはJSONの規則でエスケープします。
+必須キー: 最上位はschemaVersion・requestId・goal・items・overall・nextItemId・nextPrompt。itemsの各要素はid・name・reason・weight・weightReason・progress。overallはprogress・reason。
+schemaVersionは数値3。requestIdは末尾の入力データの値をそのまま使います。文字列の上限はgoal 4000、id 80、name 200、reasonとweightReason 各2000、overall.reason 4000、nextPrompt 7900（アプリの追記余裕）。出力前の照合: 固定値、weight合計、加重平均、最初の未完了IDとnextPromptを確認してください。
+【説明用の回答例】例の目標・requestId・項目・根拠を実回答に転記しないでください。
+${navigationExamples(evaluationBasis,!!previous)}
+入力データ: ${JSON.stringify(input)}`;
    j.deadline=now()+waitMs;j.done=execute(j,dir);return {job:describe()};
   }catch(error){if(interrupted())return {job:describeJob(j)};if(current(j)){j.status='failed';j.message=error.message;}throw error;}finally{if(starting===j)starting=null;}
  }
@@ -245,13 +265,55 @@ export function navigationEvaluationPrompt(basis){
  return '';
 }
 
-// 限定モードの例に、別種の作業や実行済み試験を混ぜない。
-function navigationExample(basis,example){
- if(basis==='auto')return example;
- const documents=basis==='documents';
- const names=documents?['要件・仕様の記述','操作手順の記述','文書間の整合確認']:['入力処理の実装','表示処理の実装','テストコードの整備'];
- const reasons=documents?['必要な仕様が文書に記載されている例','基本手順はあるが例外時の説明が不足している例','文書間の整合を未確認として0%にする例']:['対象処理がソースに存在する例。実行結果は未確認','基本処理は存在するが例外処理が不足している例','対象のテストコードが未作成と確認した例'];
- return {...example,items:example.items.map((item,index)=>({...item,name:names[index],reason:reasons[index],weightReason:`${names[index]}の作成と内容確認に必要な見積工数の比率。実時間ではなく推定です。`})),overall:{progress:71,reason:documents?'文書の充足度を50:30:20で加重評価した例。実装や動作は評価していません。':'ソース内容を50:30:20で加重評価した例。実行時の動作は保証していません。'},nextPrompt:documents?'今回の目標は必要な操作を文書で説明できる状態にすることです。対処しようとしている内容は操作手順の例外時の説明不足です。今回の作業: レビューアーの指摘に対処してください。':'今回の目標は入力と表示の処理を整えることです。対処しようとしている内容は表示処理の例外対応不足です。今回の作業: レビューアーの指摘に対処してください。'};
+// 採点境界と調査範囲を、実際に検証できる完全なJSONで示す。実際の入力とは分離する。
+function navigationExamples(basis, reevaluate){
+ const scope={
+  auto:{
+   goal:'検索条件を保存して再利用する',
+   detail:[['保存処理','設定の保存先と更新処理を確認。','既存保存処理とデータ整合性の検証に半分を見積もる。'],['読込時の表示','一覧の復元は確認。読込エラーを利用者へ表示していない。','画面と状態遷移に3割を見積もる。'],['動作確認','結合確認は未実施。','確認用データの準備と回帰確認に2割を見積もる。']],
+   next:['保存先と更新処理を見つけたが、不正な設定値が保存される場合を確認できていません。','一覧の復元処理は確認しましたが、読込エラーが画面に表示されません。'],
+   reviewNext:'一覧の復元と読込エラー表示は確認しましたが、エラー文言に再試行の案内が一箇所ありません。',
+   limit:'動作確認の範囲外は保証しない。',
+   complete:'この例では保存・読込・動作確認の各項目を確認した。',empty:'目標に結び付く具体的な作業を特定できる根拠がない。',
+   done:['設定の保存先と不正値への対応を確認。','一覧の復元と読込エラー表示を確認。','合成データで保存から再表示までの確認が完了。'],
+  },
+  source:{
+   goal:'検索条件の入力と再表示を実装する',
+   detail:[['入力処理の実装','空入力と正規化の分岐をソースで確認。','入力処理と型定義の変更を見込み半分。'],['表示処理の実装','表示実装に異常値を受け取った場合の分岐がない。','表示分岐と状態管理に3割を見積もる。'],['テストコードの整備','異常値に対応するテストコードは未作成。','テストコードの追加に2割を見積もる。']],
+   next:['正規化はありますが、想定外の型を受ける分岐が入力ソースで未確認です。','表示ソースでは異常値を除外する分岐が未実装です。'],
+   reviewNext:'表示ソースに復元・異常値除外の分岐が加わりましたが、空値時に補助ラベル一箇所が未設定です。',
+   limit:'ソースとテストコードのみを確認。実行時の動作は保証していません。',
+   complete:'対象処理とテストコードの内容を確認。実行時の動作は保証していません。',empty:'目標に結び付く実装ソースやテストコードを特定できない。',
+   done:['正規化・空入力・型エラーを扱う入力ソースを確認。','表示ソースに復元・異常値を除外する分岐がある。','正常値と異常値に対応するテストコードがある。'],
+  },
+  documents:{
+   goal:'検索条件の保存仕様と操作手順を文書にまとめる',
+   detail:[['要件・仕様の記述','仕様書に保存対象とキー規則が記載されている。','仕様の整理と記載確認に半分を見積もる。'],['操作手順の記述','通常の保存手順はあるが、失敗時の説明がない。','操作例と例外の記述に3割を見積もる。'],['文書間の整合確認','仕様書と操作手順の表記の一致は未確認。','関連文書の照合に2割を見積もる。']],
+   next:['仕様書には保存対象がありますが、無効な条件の扱いが記載されていません。','操作手順では通常の保存は説明済みですが、保存失敗時の説明がありません。'],
+   reviewNext:'操作手順に通常時と保存失敗時の記述が揃いましたが、再試行のボタン名が一箇所記載されていません。',
+   limit:'関連文書の記載だけを評価し、実装や動作は評価していません。',
+   complete:'仕様書と操作手順の記載および整合を確認。実装や動作は評価していません。',empty:'目標に結び付く関連文書の内容を確認できない。',
+   done:['仕様書に保存対象・キー規則・無効値の扱いがある。','操作手順に通常の保存と失敗時の扱いがある。','仕様書と操作手順で対象・キー・失敗時の説明が一致。'],
+  },
+ }[basis];
+ const requestId=reevaluate?'sample-review':'sample-navigation';
+ const ids=['z-12','2','a-7'],weights=[50,30,20];
+ const items=scope.detail.map(([name,reason,weightReason],index)=>({id:ids[index],name,reason:reevaluate&&index===2?scope.done[2]:reason,weight:weights[index],weightReason}));
+ const make=(scores,overall,reason,id,issue)=>({schemaVersion:3,requestId,goal:scope.goal,
+  items:scores.map((progress,i)=>({...items[i],progress})),overall:{progress:overall,reason},nextItemId:id,
+  nextPrompt:issue===undefined?'':`今回の目標: ${scope.goal}。\n対処しようとしている内容: ${issue}\n今回の作業: レビューアーの指摘に対処してください。`});
+ const line=(label,value)=>label+': '+JSON.stringify(value);
+ const complete=make([100,100,100],100,scope.complete,null);
+ // 再評価だけは古い明細の根拠をそのまま使い、最新の確認はoverall.reasonに書く。
+ if(!reevaluate)complete.items=complete.items.map((item,index)=>({...item,reason:scope.done[index]}));
+ return [
+  ...(reevaluate?[
+   line('例の前回結果（参考・回答ではない）',{...make([60,70,100],71,'前回の加重平均は71。先頭の確認が残っていた。'+scope.limit,'z-12',scope.next[0]),requestId:'sample-previous'}),
+   line('回答例（再評価・100,99,100、総合99.7→100でも次は文字列の2）',make([100,99,100],100,'新たに先頭を確認。次の項目に小さな不足だけが残る。加重平均は99.7で表示は100。'+scope.limit,'2',scope.reviewNext)),
+  ]:[line('回答例（新規・100,70,0、後続の0でなく最初の未完了）',make([100,70,0],71,'50×100、30×70、20×0を足して100で割ると71。2件目に不足があり3件目は未確認。'+scope.limit,'2',scope.next[1]))]),
+  line('回答例（全項目100・追加依頼なし）',complete),
+  line('回答例（項目なし・総合0、再評価では入力itemsも空の場合のみ）',make([],0,scope.empty,null)),
+ ].join('\n');
 }
 
 // 新規・再評価の保存前に範囲指定を付加し、復元・コピー・自動航行で同じ本文を使う。

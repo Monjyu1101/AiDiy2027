@@ -72,10 +72,10 @@ export function createNavigationScreenRecord({name,temporary,project,stateRoot,p
  }
  return {
   output,mockCalls,bind(value){context=value;},capture,
-  // 再評価は出力形式に含まれる保存済み固定情報を保持し、progressだけを変更する。
+  // 再評価は入力データの保存済み固定情報を保持し、今回のprogressを追加する。
   async respond(prompt){
-   const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));
-   const evaluating=prompt.includes('\n保存済み: '),values=progress?(evaluating?[50,80,100]:[0,50,100]):(evaluating?[85,70]:[65,20]);
+   const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^入力データ: /,''));
+   const evaluating=Array.isArray(shape.items),values=progress?(evaluating?[50,80,100]:[0,50,100]):(evaluating?[85,70]:[65,20]);
    const request=structuredClone(shape);
    if(!evaluating)shape.items=[
     {id:'one',name:'検索画面の入力を整える',reason:'入力欄を確認。空入力の検証を次に行います。'},

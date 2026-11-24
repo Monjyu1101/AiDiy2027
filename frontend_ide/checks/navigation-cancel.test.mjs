@@ -14,7 +14,12 @@ import {Readable} from 'node:stream';
 import {createNavigation} from '../ファイル機能/navigation.mjs';
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});return {promise,resolve,reject};};
 const pause=()=>new Promise(resolve=>setTimeout(resolve,5));
-const answer=prompt=>JSON.stringify(JSON.parse(prompt.split('\n').at(-1).replace(/^出力形式: /,'')));
+const answer=prompt=>{
+ const input=JSON.parse(prompt.split('\n').at(-1).replace(/^入力データ: /,''));
+ const line=prompt.split('\n').find(line=>line.startsWith('回答例（'));
+ const sample=JSON.parse(line.slice(line.indexOf(': ')+2));
+ return JSON.stringify({...sample,requestId:input.requestId,goal:input.goal,...(input.items?{items:input.items.map((item,index)=>({...item,progress:sample.items[index].progress}))}:{})});
+};
 async function fixture(t,options={}){
  const root=await mkdtemp(join(tmpdir(),'navigation-cancel-')),project=join(root,'project'),stateRoot=join(root,'state');await mkdir(project);
  const state={active:true,mode:'online',startedAt:1};

@@ -44,7 +44,7 @@ const connection = createCoreConnection(project, { target: `http://127.0.0.1:${c
 let aiCalls=0,failNext=false;
 const app = await startDevelopment(project, { connection, navigationOptions:{defaultModel:async()=>({provider:'aidiy_hermes',model:'auto'}),stateRoot:join(temporary,'navigation-state'),providerList:async()=>({providers:['aidiy_hermes'],notice:''}),runAgent:async({prompt})=>{
  if(step4)return record.respond(prompt);
- aiCalls++;if(failNext){failNext=false;await new Promise(r=>setTimeout(r,800));throw Error('表示試験の失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));
+ aiCalls++;if(failNext){failNext=false;await new Promise(r=>setTimeout(r,800));throw Error('表示試験の失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^入力データ: /,''));
  shape.items=[{id:'one',name:'検索画面の入力を整える',progress:65,reason:'入力欄を確認。空入力の検証を次に行います。'},{id:'two',name:'操作ガイドを整える',progress:20,reason:'既存の章に追記する方針です。'}];shape.schemaVersion=3;shape.nextItemId='one';shape.items.forEach((item,index)=>{item.weight=[80,20][index];item.weightReason='表示試験用の作業量見積もり';});shape.overall={progress:56,reason:'作業量に基づく加重評価の模擬結果'};shape.nextPrompt='検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。';
  await new Promise(r=>setTimeout(r,1000));return {content:JSON.stringify(shape)};
 }} });
@@ -167,11 +167,12 @@ try {
   assert.equal(await evaluate(`document.querySelectorAll('.navigation-toggle').length`),0);
   await evaluate(`document.querySelector('.explorer-toggle').click()`);
   assert.equal(await evaluate(`document.querySelector('.space-view').classList.contains('navigation-open')`),false);
-  failNext=true;
+  const callsBeforeFailure=aiCalls;failNext=true;
   await child(0,`document.querySelector('.navigation-start').click()`);
   await until(()=>child(0,`!!document.querySelector('.navigation-display.running')`),'failure busy');
   await until(()=>child(0,`document.body.textContent.includes('表示試験の失敗')`),'failure');
-  assert.equal(await child(0,`!![...document.querySelectorAll('dialog[open]')].find(d=>d.textContent.includes('ナビの実行に失敗しました')&&d.textContent.includes('別のエージェントをお試しください。'))`),true);
+  assert.equal(await child(0,`!![...document.querySelectorAll('dialog[open]')].find(d=>d.textContent.includes('ナビの実行に失敗しました')&&d.textContent.includes('接続やモデルの設定を確認してください。'))`),true);
+  assert.equal(aiCalls,callsBeforeFailure+1,'回答が届かないエラーは形式修正の再試行をしない');
   const failureSocket=new WebSocket(popupTarget.webSocketDebuggerUrl);await once(failureSocket,'open');
   const failureCapture=new Promise(resolve=>failureSocket.addEventListener('message',event=>{const response=JSON.parse(event.data);if(response.id===1)resolve(response);}));
   failureSocket.send(JSON.stringify({id:1,method:'Page.captureScreenshot',params:{format:'png'}}));

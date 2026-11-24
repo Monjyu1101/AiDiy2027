@@ -39,7 +39,7 @@ await new Promise(done => core.listen(0, '127.0.0.1', done));
 const connection = createCoreConnection(project, { target: `http://127.0.0.1:${core.address().port}` });
 let aiCalls=0,dependencyReady=true,failNext=false,holdNext=false,releaseHeld;
 const app = await startDevelopment(project, { connection, navigationOptions:{availability:async()=>({available:dependencyReady,reason:dependencyReady?'':'試験依存が停止しています'}),stateRoot:join(temporary,'navigation-state'),runAgent:async({prompt})=>{
- aiCalls++;if(holdNext){holdNext=false;await new Promise(resolve=>releaseHeld=resolve);}if(failNext){failNext=false;throw Error('試験用の応答失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^出力形式: /,''));
+ aiCalls++;if(holdNext){holdNext=false;await new Promise(resolve=>releaseHeld=resolve);}if(failNext){failNext=false;throw Error('試験用の応答失敗');}const shape=JSON.parse(prompt.slice(prompt.lastIndexOf('\n')+1).replace(/^入力データ: /,''));
  shape.items=[{id:'one',name:'検索画面の入力を整える',progress:0,reason:'入力欄を確認。空入力の検証を次に行います。'},{id:'two',name:'操作ガイドを整える',progress:50,reason:'既存の章に追記する方針です。'}];shape.items.push({id:'three',name:'長い項目名でも縮小窓で折り返して読めることを確認する',progress:100,reason:'表示確認用の模擬結果です。'});shape.schemaVersion=2;shape.items.forEach((item,index)=>{item.weight=[60,30,10][index];item.weightReason='表示試験用の作業量見積もり';});shape.overall={progress:25,reason:'作業量に基づく加重評価の模擬結果'};shape.nextPrompt='検索画面の空入力とエラー表示を確認し、必要なテストを追加してください。';
  await new Promise(r=>setTimeout(r,300));return {content:JSON.stringify(shape)};
 }} });
