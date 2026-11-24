@@ -3,10 +3,10 @@
  * Commercial use requires prior written consent from all copyright holders.
  * See LICENSE for full terms. Thank you for keeping the rules.
  * https://github.com/monjyu1101/AiDiy2027 */
-/* 初期窓190 DIPからタイトル・接続線・外枠の36を除いた高さ。 */
+/* 初期窓180 DIPからタイトル・接続線・外枠の36を除いた高さ。 */
 #app>.diag-panel:has(>.start-mini){display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 #app>.diag-panel:has(>.start-mini)>:not(.start-mini){flex:none}
-#app:has(>.diag-panel>.start-mini){background:#000}#app>.diag-panel>.panel.start-mini{width:100%;max-width:400px;height:154px;margin-inline:auto;flex:0 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#000}
+#app:has(>.diag-panel>.start-mini){background:#000}#app>.diag-panel>.panel.start-mini{width:100%;max-width:400px;height:144px;margin-inline:auto;flex:0 1 auto;min-height:0;display:flex;flex-direction:column;overflow:hidden;background:#000}
 .desktop-window #app>.diag-panel>.panel.start-mini{max-width:none;flex:1 1 auto}
 #app>.diag-panel>.panel.start-mini>.mini-content{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 .mini-launch-scroll{flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin}
@@ -14,8 +14,8 @@
 .mini-icon-track[data-overflow]{justify-content:flex-start;cursor:grab}
 .mini-icon-track[data-overflow] button:disabled{pointer-events:none}
 .mini-app-buttons .mini-app-button,.mini-cli-buttons .mini-cli-button{flex:0 0 48px}
-.mini-app-launch{padding:3px 4px 2px;border-bottom:1px solid #263544}.mini-app-buttons .mini-app-button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:42px;padding:2px 0;overflow:hidden;border:1px solid #345062;border-radius:3px;background:#000}.mini-app-buttons .mini-app-button:disabled{cursor:not-allowed;opacity:.42}.mini-app-buttons .mini-app-button:hover:not(:disabled){background:#1e4852}.mini-app-message{margin:2px 0 0;font-size:9px;line-height:12px;color:#a8becd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.mini-app-message.required{color:#ff6b82}
-.mini-services{flex:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:3px 4px}.mini-services .mini-service{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;height:30px;min-height:30px;padding:1px 4px;border:1px solid #2a394b;border-radius:3px;background:#000;text-align:center;color:#a9b9cb;--mini-tone:#718096}.mini-service[data-tone=running]{--mini-tone:#34d399;border-color:#235348;background:#0d2523}.mini-service[data-tone=busy]{--mini-tone:#fbbf24;border-color:#5a4a23;background:#262215}.mini-service[data-tone=error]{--mini-tone:#fb7185;border-color:#6b3043;background:#2b1622}.mini-name{font-size:10px;line-height:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dfebf5}.start-mini .mini-service:hover{filter:brightness(1.15)}.start-mini button:focus-visible{outline:1px solid #35e0d2;outline-offset:-1px}
+.mini-app-launch{padding:1px 4px;border-bottom:1px solid #263544}.mini-app-buttons .mini-app-button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:42px;padding:2px 0;overflow:hidden;border:1px solid #345062;border-radius:3px;background:#000}.mini-app-buttons .mini-app-button:disabled{cursor:not-allowed;opacity:.42}.mini-app-buttons .mini-app-button:hover:not(:disabled){background:#1e4852}.mini-app-message{margin:2px 0 0;font-size:9px;line-height:12px;color:#a8becd;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.mini-app-message.required{color:#ff6b82}
+.mini-services{flex:none;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:3px 4px}.mini-services .mini-service{display:flex;align-items:center;justify-content:center;gap:4px;min-width:0;height:25px;min-height:25px;padding:1px 4px;border:1px solid #2a394b;border-radius:3px;background:#000;text-align:center;color:#a9b9cb;--mini-tone:#718096}.mini-service[data-tone=running]{--mini-tone:#34d399;border-color:#235348;background:#0d2523}.mini-service[data-tone=busy]{--mini-tone:#fbbf24;border-color:#5a4a23;background:#262215}.mini-service[data-tone=error]{--mini-tone:#fb7185;border-color:#6b3043;background:#2b1622}.mini-name{font-size:10px;line-height:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dfebf5}.start-mini .mini-service:hover{filter:brightness(1.15)}.start-mini button:focus-visible{outline:1px solid #35e0d2;outline-offset:-1px}
 .start-view-actions{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:8px 16px}
 .panel-brand.compact .mini-restore:hover{color:#d8fff4;background:#20474d}
 /* 未選択の案内：電光掲示板風。右端から入り左端へ抜けるマーキー（padding-left:100%で親の右端から始め、自身の幅ぶん左へ流す）。
@@ -58,7 +58,7 @@
 }
 
 /* 外部CLIはアプリと同じボタン幅。アイコン出典はCLIアイコン/README。 */
-.mini-cli-launch{padding:2px 4px 3px;border-bottom:1px solid #263544}.mini-cli-buttons .mini-cli-button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:42px;padding:2px 0;border:1px solid #45535d;border-radius:3px;overflow:hidden;background:#000}.mini-cli-button:disabled{opacity:.42;cursor:not-allowed}.mini-cli-button:hover:not(:disabled){background:#2d4555}
+.mini-cli-launch{padding:1px 4px;border-bottom:1px solid #263544}.mini-cli-buttons .mini-cli-button{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;height:42px;padding:2px 0;border:1px solid #45535d;border-radius:3px;overflow:hidden;background:#000}.mini-cli-button:disabled{opacity:.42;cursor:not-allowed}.mini-cli-button:hover:not(:disabled){background:#2d4555}
 
 /* 名称帯を含む画像全体を同じ36px枠・36px表示に揃え、縦横比を保持する。 */
 .mini-icon-frame{display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;overflow:hidden}.mini-icon-frame img{display:block;width:36px;height:36px;object-fit:contain}

@@ -49,18 +49,24 @@ test('実際の左上タイトル操作は通常・無効とも白文字で、�
  assert.equal(declarations(mini,'.mini-app-message.required::after')['pointer-events'],'none');assert.ok(declarations(mini,'.start-mini .mini-project-link:focus-visible').outline);
 });
 
-test('ミニの初期高さ190はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
+test('ミニの初期高さ180はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
  const d=selector=>declarations(mini,selector);
  const chrome=px(declarations(normal,'.panel-brand').height)+px(declarations(normal,'.connection-bar').height);
  const app=d('.mini-app-launch'),appMessage=d('.mini-app-message.required');
+ assert.equal(d('.mini-app-buttons .mini-app-button').height,'42px');
+ assert.equal(d('.mini-cli-buttons .mini-cli-button').height,'42px');
+ assert.equal(appMessage.height,'19.2px');assert.equal(appMessage['line-height'],'19.2px');
  const appHeight=verticalPadding(app.padding)+border(app['border-bottom'])+px(d('.mini-app-buttons .mini-app-button').height)+px(appMessage['margin-top'])+px(appMessage.height);
  const cli=d('.mini-cli-launch');
  const cliHeight=verticalPadding(cli.padding)+border(cli['border-bottom'])+px(d('.mini-cli-buttons .mini-cli-button').height);
  assert.deepEqual(d('.mini-cli-message'),{});
- const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
+ const statusButton=d('.mini-services .mini-service');
+ assert.equal(statusButton.height,'25px');assert.equal(statusButton['min-height'],'25px');
+ const statuses=verticalPadding(d('.mini-services').padding)+px(statusButton.height);
+ assert.equal(statuses,31);
  const outerFrame=2*border(declarations(normal,'#app').border);
  const {height}=require('../diag/起動/ミニ表示.cjs').ミニ寸法;
- assert.equal(chrome,34);assert.equal(height,190);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
+ assert.equal(chrome,34);assert.equal(height,180);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
  assert.equal(px(d('#app>.diag-panel>.panel.start-mini').height),height-chrome-outerFrame);
  assert.equal(d('#app>.diag-panel>.panel.start-mini')['max-width'],'400px');assert.equal(d('#app>.diag-panel>.panel.start-mini').overflow,'hidden');
  assert.equal(d('.mini-launch-scroll')['overflow-y'],'auto');

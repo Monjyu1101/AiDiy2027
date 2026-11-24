@@ -79,7 +79,9 @@ try{
   innerHeight,document.querySelector('.start-mini').clientHeight,
   document.querySelector('.mini-launch-scroll').scrollHeight-document.querySelector('.mini-launch-scroll').clientHeight,
   Math.round(document.querySelector('.mini-services').getBoundingClientRect().bottom),
- ]`),[height,height-36,0,height-1]);
+  document.querySelector('.mini-services').clientHeight,
+  document.querySelector('.mini-service').getBoundingClientRect().height,
+ ]`),[height,height-36,0,height-1,31,25]);
  const fitted=await state();
  for(const row of fitted){assert.equal(row.overflow,false);assert.equal(row.centered,true);}
  await stopMotion();
@@ -148,5 +150,5 @@ try{
   assert.ok((await state()).every(row=>row.overflow&&row.oneRow));
  }
  assert.deepEqual(errors,[]);
- console.log('ミニ表示: 400×190、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
+ console.log('ミニ表示: 400×180、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

@@ -50,14 +50,14 @@ test('CPU shrinks only below Diag mini width plus the two screen margins',()=>{
   const area={x:-1920,y:40,width,height:1040};
   for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:-1800,y:200,width:640,height:480}),allWindowBounds('cpu',area)]){
    assert.equal(b.width,Math.min(ミニ寸法.width,width-16));assert.equal(b.height,125);
-   assert.equal(b.x+b.width,area.x+width-8);assert.equal(b.y,area.y+area.height-356);
+   assert.equal(b.x+b.width,area.x+width-8);assert.equal(b.y,area.y+area.height-346);
    assert.ok(b.x>=area.x+8);assert.equal(windowMinimumSize('cpu',b).minWidth,Math.min(240,b.width));
   }
  }
 });
 
 test('CPU keeps 33 DIP above the mini without crossing the top margin on short displays',()=>{
- for(const height of [1080,400,365,364,363,180,120]){
+ for(const height of [1080,400,355,354,353,180,120]){
   const area={x:-1920,y:-200,width:800,height};
   for(const b of [windowBounds('cpu',area),windowBounds('cpu',area,{x:-1800,y:-150,width:640,height:480}),allWindowBounds('cpu',area)]){
    const mini=初期右下位置(area,ミニ寸法,8);
