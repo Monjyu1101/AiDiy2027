@@ -42,7 +42,7 @@ test('merge replaces legacy Gemini candidates, falls back to auto/same and skips
   const options={directory,installedClis:{antigravity_cli:true},configReader:()=>'{}'};
   const load=async()=>JSON.parse(await readFile(path.join(directory,'code_models_info.json'),'utf8'));
   try {
-    await writeFile(path.join(directory,'gemini_models_info.json'),JSON.stringify({code:{antigravity_cli:{models:{'gemini-3.5-flash-lite':'old API model'}}}}));
+    await writeFile(path.join(directory,'gemini_models_info.json'),JSON.stringify({code:{antigravity_cli:{models:{'gemini-fixture-legacy':'old API model'}}}}));
     const models={'gemini-3.8-flash-high':'yyyy/mm/dd - gemini-3.8-flash-high'};
     await writeModelsInfo([],{}, {...options,antigravityModelsReader:async()=>models});
     assert.deepEqual((await load()).antigravity_cli.models,models);

@@ -41,11 +41,11 @@ test('actual MCP SDK and production Chat/Code/Decision registrations return vali
   }
   assert.equal(wire.filter(x=>x.options.method==='DELETE').length,2);
   const trials=createModelTrials({reader:async()=>JSON.stringify(config),statusFn:async()=>({online:true})});
-  try{const start=await trials.start();for(const row of start.項目){const result=await trials.next(start.実行ID,row.id);if(['CHAT','CODE1','LIVE','DECISION'].includes(row.id))assert.equal(result.状態,'OK',`${row.id}: ${result.説明}`);if(row.id==='DECISION'){assert.equal(result.判断結果,'medium');assert.equal(result.実行モデル,'freeai_chat/gemini-3.5-flash-lite');}}}
+  try{const start=await trials.start();for(const row of start.項目){const result=await trials.next(start.実行ID,row.id);if(['CHAT','CODE1','LIVE','DECISION'].includes(row.id))assert.equal(result.状態,'OK',`${row.id}: ${result.説明}`);if(row.id==='DECISION'){assert.equal(result.判断結果,'medium');assert.equal(result.実行モデル,'freeai_chat/gemini-4-hydrogen');}}}
   finally{await trials.close();}
   const manualTrials=createModelTrials({reader:async()=>JSON.stringify(config),statusFn:async()=>({online:true})});
   try{
-   const manuals=[['CHAT','freeai_chat','chat-test'],['LIVE','freeai_live','live-test'],['DECISION','freeai_chat','gemini-3.5-flash-lite'],['CODE','codex_cli','auto']].map(([family,provider,model])=>({family,provider,model,voice:family==='LIVE'?'Zephyr':'',prompt:'手動SDK入力',...(family==='DECISION'?{questions:decisionQuestions()}:{})}));
+   const manuals=[['CHAT','freeai_chat','chat-test'],['LIVE','freeai_live','live-test'],['DECISION','freeai_chat','gemini-4-hydrogen'],['CODE','codex_cli','auto']].map(([family,provider,model])=>({family,provider,model,voice:family==='LIVE'?'Zephyr':'',prompt:'手動SDK入力',...(family==='DECISION'?{questions:decisionQuestions()}:{})}));
    manuals.splice(2,0,{family:'PREDICTION',provider:'openai_chat',model:'chosen-model'});
    const start=await manualTrials.start({manuals});let audio;
    for(const row of start.実行順){const result=await manualTrials.next(start.実行ID,row);assert.equal(result.状態,row==='PREDICTION'?'未実施':'OK',JSON.stringify(result));if(row==='LIVE'){audio=result.音声ファイル;assert.equal(audio.長さms,1000);}if(row==='DECISION'){assert.equal(JSON.parse(result.応答).data.answers[0].choice,'medium');assert.equal(result.実行プロバイダ,'freeai_chat');}}

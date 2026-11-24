@@ -173,7 +173,7 @@ Chat / Code は既存 MCP、Live / Prediction は非公開の固定 loopback ア
 
 autoの優先順は `openai_oauth` → `freeai_chat` → `openai_decisions` → `gemini_chat`。起動チェックに成功した方式だけを優先対象にする。
 
-判断系の低コスト方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-3.5-flash-lite`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
+判断系の候補方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
 
 モデルIDの同期元は `frontend_diag/diag/モデル情報/decisions_info.mjs` の定数と `backend_server/AIコア/AI判断共通.py`。認証付き一覧で実在を確認し、番号やaliasの解決先を推測して候補を生成しない。
 

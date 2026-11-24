@@ -427,9 +427,9 @@ Tools 接続中に専用タブで開始すると、`_config/AiDiy_key.json` の�
 
 ## 予測用モデル一覧
 
-`diag/モデル情報/prediction_info.mjs` が `_AIDIY/aidiy_diag/prediction_models_info.json` を生成する。判断用の生成関数を共用し、低コスト候補・スキーマ・認証条件を `decisions_models_info.json` と揃えたうえで、OpenAI APIの区分だけ実行先に合わせて `openai_decisions` から `openai_chat` へ置き換える。予測JSONに `openai_decisions` は出力しない。
+`diag/モデル情報/prediction_info.mjs` が `_AIDIY/aidiy_diag/prediction_models_info.json` を生成する。判断用の生成関数を共用し、候補・スキーマ・認証条件を `decisions_models_info.json` と揃えたうえで、OpenAI APIの区分だけ実行先に合わせて `openai_decisions` から `openai_chat` へ置き換える。予測JSONに `openai_decisions` は出力しない。
 
-- 出力方式は `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat`。各区分は `{models: {モデルID: 表示名}}`。現在の候補はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-3.5-flash-lite`。共通の `DECISION_MODEL_CANDIDATES` を使い、別の固定候補は持たない。
+- 出力方式は `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat`。各区分は `{models: {モデルID: 表示名}}`。現在の候補はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。共通の `DECISION_MODEL_CANDIDATES` を使い、別の固定候補は持たない。
 - 認証済みの取得一覧に含まれるモデルだけを出力する。表示名は `YYYY/MM/DD - ID`、日付不明時は `yyyy/mm/dd - ID`。候補がない方式は省略し、全方式が空なら `{}` を保存する。公開・固定・旧保存候補からの補完はしない。
 - 既存の水色の `一括取得` → `書込`、または headless / 全テスト内の共通モデル書込で更新する。保存先一覧では `prediction_models_info.json` を `decisions_models_info.json` の直前に含める。独立した取得APIや生成試行は追加しない。
 - `AiDiy_key.json` の `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` は、方式とChat系4モデルが `auto`、CLI系が `gpt-6-luna`（Hermes / Piは `openai_oauth/gpt-6-luna`）を初期値とする。試行行のモデルは方式に対応するキーを使い、方式autoの行はモデルもautoで送る。CLI方式の候補は合成済みの `code_models_info.json` から `auto` / `same` を除いて載せ。試行はChat試行でOKになったモデルで2ターンを送ってから予測する。候補の書込では設定値を変更せず、予測も実行しない。設定はWeb / AvatarのAI設定画面で変更する。
@@ -452,9 +452,9 @@ Tools 接続中に専用タブで開始すると、`_config/AiDiy_key.json` の�
 
 autoの優先順は `openai_oauth` → `freeai_chat` → `openai_decisions` → `gemini_chat`。起動チェックに成功した方式だけを優先対象にする。
 
-判断系の低コスト方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-3.5-flash-lite`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
+判断系の候補方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
 
-[Google公式alias説明](https://developers.googleblog.com/en/continuing-to-bring-you-our-latest-models-with-an-improved-gemini-2-5-flash-and-flash-lite-release/) でIDを確認した。最新への追従はGoogle側のalias更新を利用し、番号を推測・並べ替えしてモデルを生成しない。[公式モデル一覧](https://ai.google.dev/gemini-api/docs/models) では現時点の安定版Flash-Liteは `gemini-3.5-flash-lite`。latestは安定版専用aliasではなくプレビュー等を指す場合もあるため、現在の解決先バージョンはこの実装で断定しない。
+判断の既定値に使う `gemini-4-hydrogen` は[Googleの明示モデルID](https://aistudio.google.com/docs/models/gemini-4-hydrogen)です。モデルIDを推測・合成せず、明示設定の latest alias は書き換えません。[latest](https://ai.google.dev/gemini-api/docs/models) は安定版専用ではなく、その解決先をこの実装で断定しません。
 
 Diagは認証付きGET一覧に候補配列のIDそのものがある方式だけを掲載する。GoogleはgenerateContent対応を要求する。公開一覧・設定値・別バージョンから候補を捏造しない。未取得・認証なし・失敗・対象ID不在なら方式を省略し、全方式が空なら `{}`。モデル一覧は実行の許可リストではなく、設定画面の候補として扱う。
 

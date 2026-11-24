@@ -480,14 +480,14 @@ test('Gemini chat tiers keep Carbon, Neon, Hydrogen, Flash and Flash Lite in ord
  const rows=[
   {model_id:'gemini-3.1-flash-image',作成日:'2026/11/01'},
   {model_id:'gemini-3.8-flash',作成日:'2026/09/02'},
-  {model_id:'gemini-3.5-flash-lite',作成日:'2026/08/01'},
+  {model_id:'gemini-fixture-unrelated',作成日:'2026/08/01'},
   {model_id:'gemini-3.8-flash-lite'}, {model_id:'gemini-4-hydrogen'}, {model_id:'gemini-4-neon'}, {model_id:'gemini-4-carbon'},
  ];
- const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-3.5-flash-lite','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite'];
+ const expected=['gemini-3.1-flash-image','gemini-4-carbon','gemini-fixture-unrelated','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite'];
  for(const id of ['gemini','freeai']){
   for(const subset of [rows,rows.filter(row=>row.model_id!=='gemini-4-carbon'),rows.filter(row=>row.model_id!=='gemini-4-hydrogen'),rows.slice(0,3)]){
    const info=await modelsInfo({id,名前:id},ok({モデル詳細:subset}),{now});
-   assert.deepEqual(info.chat.モデル.map(row=>row.model_id).filter(model=>model!=='gemini-3.1-flash-image'&&model!=='gemini-3.5-flash-lite'),
+   assert.deepEqual(info.chat.モデル.map(row=>row.model_id).filter(model=>model!=='gemini-3.1-flash-image'&&model!=='gemini-fixture-unrelated'),
     ['gemini-4-carbon','gemini-4-neon','gemini-4-hydrogen','gemini-3.8-flash','gemini-3.8-flash-lite'].filter(model=>subset.some(row=>row.model_id===model)));
    assert.deepEqual(Object.keys(info.chat[id+'_chat'].models),info.chat.モデル.map(row=>row.model_id));
    if(subset===rows){

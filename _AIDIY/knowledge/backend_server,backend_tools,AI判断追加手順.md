@@ -16,14 +16,14 @@
 |---|---|---|
 | `openai_decisions/gpt-6-luna` | `AI判断_openai_decisions.py` | `https://api.openai.com/v1/decisions`、`openai_key_id` |
 | `openai_oauth/gpt-6-luna` | `AI判断_openai_jsonchat.py` | `https://chatgpt.com/backend-api/codex/responses`、Codex OAuth |
-| `freeai_chat/gemini-3.5-flash-lite` | `AI判断_freeai_jsonchat.py` | Google generateContent JSON、`freeai_key_id`優先 |
-| `gemini_chat/gemini-3.5-flash-lite` | `AI判断_gemini_jsonchat.py` | Google generateContent JSON、`gemini_key_id`優先 |
+| `freeai_chat/gemini-4-hydrogen` | `AI判断_freeai_jsonchat.py` | Google generateContent JSON、`freeai_key_id`優先 |
+| `gemini_chat/gemini-4-hydrogen` | `AI判断_gemini_jsonchat.py` | Google generateContent JSON、`gemini_key_id`優先 |
 
 `openai_jsonchat` は `openai_oauth` の別名として受け付ける。`ai_name` / `ai_model` での個別指定も可能。結合形式との矛盾や未知のプロバイダはエラーにする。明示指定した方式から別方式へ自動フォールバックしない。
 
 プロバイダ未指定（空欄 / `auto`）では `DECISION_AI_NAME` を使う。設定も空欄 / `auto` なら、起動チェックに成功した `openai_oauth` を優先し、利用不可なら成功した `freeai_chat` → `openai_decisions` → `gemini_chat` の順で使う。利用可否未確認の直接利用時は `openai_oauth` を使う。引数や設定で指定した方式からの自動変更、実行中の通信エラーによる再送は行わない。
 
-実行モデルは、明示 `model` / `ai_model` → 方式別 `DECISION_*_MODEL` → 低コスト既定値の順で解決する。既存の設定値は保持し、各アダプターも渡されたモデルを使う。未指定の既定値はOpenAI両方式 `gpt-6-luna`、FreeAI/Gemini `gemini-3.5-flash-lite`。通常Chat/Live/Codeには適用しない。
+実行モデルは、明示 `model` / `ai_model` → 方式別 `DECISION_*_MODEL` → 既定値の順で解決する。既存の設定値は保持し、各アダプターも渡されたモデルを使う。未指定の既定値はOpenAI両方式 `gpt-6-luna`、FreeAI/Gemini `gemini-4-hydrogen`。通常Chat/Live/Codeには適用しない。
 
 `AiDiy_key.json` の設定は `conf/conf_json.py` の既定値と同期し、LIVE設定ブロックの直後に保存する。不足したNAME / MODELキーは `auto` で補完する。設定管理を経由せず旧ファイルを直接読んだ場合も、不足キーを `auto` と扱う。既存の値や方式別モデル設定は上書きしない。
 

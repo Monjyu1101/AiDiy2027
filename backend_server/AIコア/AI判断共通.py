@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 # 判断系専用の低コスト既定値。明示モデル/設定値で変更できる。
 OPENAI_DECISION_MODEL = "gpt-6-luna"
-FREEAI_DECISION_MODEL = "gemini-3.5-flash-lite"
+FREEAI_DECISION_MODEL = "gemini-4-hydrogen"
 
 
 class DecisionError(RuntimeError):

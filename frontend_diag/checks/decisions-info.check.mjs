@@ -33,12 +33,12 @@ const acquire=async(id,extra={})=>probe(id,{reader:configReader,oauthReader,fetc
 const allResults=async()=>Object.fromEntries(await Promise.all(providers.map(async({id})=>[id,await acquire(id)])));
 
 test('Google decision auto default is the requested model',()=>{
- assert.equal(FREEAI_DECISION_MODEL,'gemini-3.5-flash-lite');
+ assert.equal(FREEAI_DECISION_MODEL,'gemini-4-hydrogen');
 });
 
 test('four methods use authenticated raw lists without public, synthetic or nontext candidates',async()=>{
  const results=await allResults();
- assert.deepEqual(results.gemini.モデル,['gemini-live'],'legacy public filtering is unchanged');
+ assert.deepEqual(results.gemini.モデル,[FREEAI_DECISION_MODEL,'gemini-live'],'Hydrogen is also an authenticated Chat candidate');
  const info=await decisionsModelsInfo(providers,results,options);
  assert.deepEqual(Object.keys(info),['openai_oauth','freeai_chat','openai_decisions','gemini_chat']);
  assert.deepEqual(Object.keys(info.openai_oauth.models),['gpt-6-luna'],'no forward compatibility or 900k additions');
@@ -97,7 +97,13 @@ test('writer creates exact schema, invalidates old cache and reports headless ou
   const results=await allResults();
   const saved=await writeModelsInfo(providers,results,{...options,directory,installedClis:{}});
   assert.equal(saved.filter(file=>file===DECISIONS_MODELS_FILE).length,1);
-  assert.equal(Object.keys(await load()).length,4);
+  const decisions=await load();
+  const prediction=JSON.parse(await readFile(path.join(directory,'prediction_models_info.json'),'utf8'));
+  assert.equal(Object.keys(decisions).length,4);
+  for(const provider of ['freeai_chat','gemini_chat']){
+   assert.deepEqual(Object.keys(decisions[provider].models),['gemini-4-hydrogen']);
+   assert.deepEqual(prediction[provider],decisions[provider]);
+  }
   await writeModelsInfo(providers,{}, {...options,directory,installedClis:{}});
   assert.deepEqual(await load(),{},'old persisted provider files are not authentication');
   await writeFile(path.join(directory,DECISIONS_MODELS_FILE),'{"public_fake":{"models":{"fake":"fake"}}}');

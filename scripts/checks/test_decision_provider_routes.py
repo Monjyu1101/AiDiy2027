@@ -72,21 +72,23 @@ class DecisionRoutes(unittest.IsolatedAsyncioTestCase):
 
     async def test_google_auto_default_and_explicit_models_preserved(self):
         for name, field in [('freeai_chat', 'DECISION_FREEAI_MODEL'), ('gemini_chat', 'DECISION_GEMINI_MODEL')]:
-            paths = []
+            requests = []
             def transport(request):
-                paths.append(request.url.path)
+                requests.append((request.url.path, request.headers["x-goog-api-key"]))
                 return httpx.Response(200, json={'candidates': [{'finishReason': 'STOP', 'content': {
                     'parts': [{'text': json.dumps(ANSWERS)}]}}]})
             service = self.service(transport)
             for model in ['auto', 'gemini-flash-lite-latest']:
                 result = await service.実行(DecisionRequest(input='hello', questions=QUESTION, ai_name=name, ai_model=model))
-                expected = 'gemini-3.5-flash-lite' if model == 'auto' else model
+                expected = 'gemini-4-hydrogen' if model == 'auto' else model
                 self.assertEqual(result['data']['model'], name + '/' + expected)
-                self.assertTrue(paths[-1].endswith('/' + expected + ':generateContent'))
+                path, api_key = requests[-1]
+                self.assertTrue(path.endswith('/' + expected + ':generateContent'))
+                self.assertEqual(api_key, 'synthetic-freeai' if name == 'freeai_chat' else 'synthetic-gemini')
             req = DecisionRequest(input='hello', questions=QUESTION, ai_name=name)
             self.assertEqual(service.resolve(req, {field: 'gemini-flash-lite-latest'}),
                              (name, 'gemini-flash-lite-latest'))
-            self.assertEqual(service.resolve(req, {field: 'auto'}), (name, 'gemini-3.5-flash-lite'))
+            self.assertEqual(service.resolve(req, {field: 'auto'}), (name, 'gemini-4-hydrogen'))
 
     async def test_api_http_failure_is_not_import_error_and_hides_body(self):
         for name, expected in [('openai_decisions', 'Decisions API HTTP 403'),
@@ -101,7 +103,7 @@ class DecisionRoutes(unittest.IsolatedAsyncioTestCase):
     async def test_auto_uses_startup_snapshot_and_explicit_keeps_provider(self):
         service = self.service(lambda request: httpx.Response(500))
         service.availability = {'openai_oauth': {'ok': False, 'model': 'gpt-6-luna'},
-                                'freeai_chat': {'ok': True, 'model': 'gemini-3.5-flash-lite'}}
+                                'freeai_chat': {'ok': True, 'model': 'gemini-4-hydrogen'}}
         default = DecisionRequest(input='hello', questions=QUESTION)
         self.assertEqual(service.resolve(default, service._load_config())[0], 'freeai_chat')
         explicit = DecisionRequest(input='hello', questions=QUESTION, model='openai_oauth/gpt-6-luna')
