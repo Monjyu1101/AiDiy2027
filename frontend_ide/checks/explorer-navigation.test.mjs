@@ -15,6 +15,7 @@ import * as routeTree from '../src/components/開発スペース/軌跡ツリー
 import * as routeRecords from '../src/components/開発スペース/経路記録.js';
 import * as explorerDrag from '../src/components/ファイル閲覧/エクスプローラードラッグ.js';
 import * as explorerActions from '../src/components/ファイル閲覧/エクスプローラー操作.js';
+import {createContentFoldTone} from '../src/components/共通表示/内容変更折畳配色.js';
 import {scanWarning} from '../src/components/ファイル閲覧/走査警告.js';
 import {createSpace} from '../src/components/開発スペース/宇宙描画.js';
 
@@ -27,9 +28,10 @@ const scan=(files,extra={})=>({root:'/project',tree:{n:'project',d:[],f:files.ma
 
 function explorer(fetcher=async()=>reply({files:[]})){
   const path=new URL('../src/components/ファイル閲覧/ファイル一覧.vue',import.meta.url),{descriptor}=parse(readFileSync(path,'utf8'));
-  assert.deepEqual(compileTemplate({source:descriptor.template.content,id:'explorer',filename:path.pathname}).errors,[]);
   const script=compileScript(descriptor,{id:'explorer',genDefaultAs:'component'});
-  const {code}=transformSync(`${script.content}\nmodule.exports=component;`,{format:'cjs'});
+  const template=compileTemplate({source:descriptor.template.content,id:'explorer',filename:path.pathname,compilerOptions:{bindingMetadata:script.bindings}});
+  assert.deepEqual(template.errors,[]);
+  const {code}=transformSync(`${script.content}\n${template.code}\ncomponent.render=render;module.exports=component;`,{format:'cjs'});
   const mounted=[],unmounted=[],timers=new Map(),events=[],document=new EventTarget();let id=0;
   document.hidden=false;
   const module={exports:{}};
@@ -37,13 +39,52 @@ function explorer(fetcher=async()=>reply({files:[]})){
     module,document,window:Object.assign(new EventTarget(),{innerHeight:800,setTimeout,clearTimeout}),fetch:fetcher,AbortController,URLSearchParams,Date,console,
     localStorage:{getItem:()=>null,setItem(){}},matchMedia:()=>({matches:true}),CSS:{escape:value=>value},
     setInterval:(callback,ms)=>{timers.set(++id,{callback,ms});return id;},clearInterval:key=>timers.delete(key),setTimeout,clearTimeout,
-    require:id=>id==='vue'?{...vue,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)}:id.includes('ファイル日時.js')?fileDates:id.includes('最新ファイル')?latest:id.includes('走査警告')?{scanWarning}:id.includes('軌跡パネル展開')?routeExpansion:id.includes('軌跡ツリー')?routeTree:id.includes('経路記録')?routeRecords:id.includes('エクスプローラー操作.js')?explorerActions:id.includes('エクスプローラードラッグ.js')?explorerDrag:{},
+    require:id=>id==='vue'?{...vue,withDirectives:node=>node,onMounted:callback=>mounted.push(callback),onBeforeUnmount:callback=>unmounted.push(callback)}:id.includes('ファイル日時.js')?fileDates:id.includes('最新ファイル')?latest:id.includes('走査警告')?{scanWarning}:id.includes('軌跡パネル展開')?routeExpansion:id.includes('軌跡ツリー')?routeTree:id.includes('経路記録')?routeRecords:id.includes('エクスプローラー操作.js')?explorerActions:id.includes('エクスプローラードラッグ.js')?explorerDrag:id.includes('内容変更折畳配色.js')?{createContentFoldTone}:{},
   });
   const props=vue.reactive({root:'/project',tree:scan(['old.js']).tree,scan:scan(['old.js']),selected:'',current:'',startedAt:1,open:true,viewHistory:[],filter:true,color:()=>''});
   const scope=vue.effectScope(),state=scope.run(()=>module.exports.setup(props,{expose(){},emit:(...args)=>events.push(args)}));
   for(const callback of mounted)callback();
-  return {props,state,events,timers,dispose(){for(const callback of unmounted)callback();scope.stop();}};
+  return {props,state,events,timers,render:()=>module.exports.render({},[],props,vue.proxyRefs(state),{},{}),dispose(){for(const callback of unmounted)callback();scope.stop();}};
 }
+
+function vnodes(node){
+  if(Array.isArray(node))return node.flatMap(vnodes);
+  return node&&typeof node==='object'?[node,...vnodes(node.children)]:[];
+}
+test('チェック0/1/2件でも一覧直下のフッターを維持し、解除後はスクロールせず一覧へ戻す',()=>{
+  const h=explorer();
+  try{
+    function footer(){
+      const panel=vnodes(h.render()).find(node=>node.props?.class==='explorer-panel');
+      const index=panel.children.findIndex(node=>node.props?.role==='tree');
+      const footer=panel.children[index+1];
+      assert.equal(footer.type,'footer');assert.equal(footer.props.class,'explorer-footer');
+      const slot=vnodes(footer).find(node=>node.props?.class==='explorer-checked-status');
+      assert.equal(slot.type,'div');assert.equal(slot.props.role,undefined);
+      const [status,button]=slot.children;
+      assert.equal(status.props.role,'status');assert.equal(button.type,'button');
+      return{status,button};
+    }
+    let {status,button}=footer();
+    assert.equal(status.children,'');assert.equal(button.props.disabled,true);assert.equal(button.props.class,'no-checks');
+    h.state.toggleCheck({path:'a.js'});
+    ({status,button}=footer());assert.equal(status.children,'☑ 1件');assert.equal(button.props.disabled,false);
+    h.state.toggleCheck({path:'b.js'});
+    ({status,button}=footer());assert.equal(status.children,'☑ 2件 · 最終更新・一覧取得を停止中');assert.equal(status.props.title,status.children);
+    assert.equal(h.events.filter(([type,value])=>type==='pause-refresh'&&value).length,1);
+    h.state.fileActionState.busy=true;
+    assert.equal(footer().button.props.disabled,true);
+    h.state.fileActionState.busy=false;
+    let focusOptions;
+    h.state.treeElement.value={focus(options){focusOptions=options;}};
+    footer().button.props.onClick();
+    assert.equal(focusOptions.preventScroll,true);assert.equal(footer().status.children,'');
+    assert.equal(h.events.filter(([type,value])=>type==='pause-refresh'&&!value).length,1);
+  }finally{h.dispose();}
+  const css=readFileSync(new URL('../src/style.css',import.meta.url),'utf8');
+  assert.match(css,/\.explorer-checked-status>\[role=status\]\{[^}]*white-space:nowrap;overflow:hidden;text-overflow:ellipsis/);
+  assert.match(css,/\.explorer-checked-status>button\.no-checks\{visibility:hidden\}/,'0件でもボタンの高さを保持する');
+});
 
 test('最新通知: 自動追跡と独立して一覧更新を要求し、フィルターOFFでも新規ファイルを手動選択できる',async()=>{
   let files=[{path:'new.js',name:'new.js',mtime:2000}];

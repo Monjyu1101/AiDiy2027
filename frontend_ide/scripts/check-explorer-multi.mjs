@@ -22,6 +22,14 @@ const chrome=spawn(chromePath,['--headless=new','--remote-debugging-port=0',`--u
 const sleep=ms=>new Promise(done=>setTimeout(done,ms));
 const output=resolve('temp/explorer-multi-check');mkdirSync(output,{recursive:true});
 let closeBrowser;
+const geometry=`(()=>{
+ const tree=document.querySelector('.explorer-panel [role=tree]'), row=tree.querySelector('[role=treeitem]');
+ const footer=tree.nextElementSibling, status=footer.querySelector('.explorer-checked-status'), button=status?.querySelector('button');
+ if(!row||!status||!button)throw Error('ツリー直下にチェック状態を表示しません。');
+ const box=tree.getBoundingClientRect(), slot=status.getBoundingClientRect();
+ return{top:box.top,height:box.height,first:row.getBoundingClientRect().top,viewport:tree.clientHeight,scrollHeight:tree.scrollHeight,
+  scrollTop:tree.scrollTop,slotTop:slot.top,slotHeight:slot.height,buttonFits:button.getBoundingClientRect().right<=slot.right+.01};
+})()`;
 async function connect(target){
  const ws=new WebSocket(target.webSocketDebuggerUrl);connections.push(ws);await new Promise(done=>ws.addEventListener('open',done,{once:true}));
  let sequence=0;const pending=new Map();
@@ -51,8 +59,12 @@ try{
  await main.until(`!!window.aidiyIDE?.world`);
  await main.evaluate(`aidiyIDE.setAutoSpin(false);document.querySelectorAll('.ide-view-modes button')[1].click();document.querySelector('.explorer-toggle').click()`);
  await main.until(`!!document.querySelector('[data-path="a.txt"] .explorer-row-check')`);
+ await main.until(`document.querySelector('.explorer-checked-status button')?.disabled===true`);
+ await sleep(300);
+ const unchecked=await main.evaluate(geometry);
  await main.evaluate(`document.querySelector('[data-path="a.txt"]').click()`);
  await main.until(`aidiyIDE.selected?.path==='a.txt'`);
+ assert.deepEqual(await main.evaluate(geometry),unchecked,'本体で0件→1件にしても一覧の位置・高さを変えない');
  await main.evaluate(`document.querySelector('[aria-label="エクスプローラーを別ウィンドウで開く"]').click()`);
  let popup;for(let n=0;n<100&&!popup;n++){popup=(await tabs()).find(tab=>tab.type==='page'&&tab.id!==target.id);if(!popup)await sleep(60);}
  assert.ok(popup,'Explorer別窓');const panel=await connect(popup);
@@ -65,8 +77,10 @@ try{
  assert.equal(await panel.evaluate(`document.querySelectorAll('.explorer-row-check:checked').length`),1);
  await panel.click('[data-path="a.txt"]');
  await main.until(`aidiyIDE.selected?.path==='a.txt'`);
+ const single=await panel.evaluate(geometry);
  await panel.click('[data-path="b.txt"]',2);
  await main.until(`aidiyIDE.selected?.path==='b.txt'`);
+ assert.deepEqual(await panel.evaluate(geometry),single,'別窓で1件→2件にしても一覧の位置・高さを変えない');
  await panel.click('[data-path="c.txt"] .explorer-row-check');
  assert.equal(await main.evaluate(`aidiyIDE.selected.path`),'b.txt');
  await panel.click('[data-path="c.txt"] .explorer-row-check');
@@ -85,6 +99,10 @@ try{
  await panel.key(' ','Space',32);
  assert.equal(await panel.evaluate(`document.querySelectorAll('.explorer-row-check:checked').length`),2);
  await panel.until(`document.querySelector('.explorer-checked-status').textContent.includes('取得を停止中')`);
+ await panel.send('Emulation.setDeviceMetricsOverride',{width:220,height:1000,deviceScaleFactor:1,mobile:false});
+ const narrow=await panel.evaluate(geometry);assert.equal(narrow.buttonFits,true,'狭い別窓で解除ボタンははみ出さない');
+ assert.equal(narrow.slotHeight,single.slotHeight,'説明が長くてもチェック状態は折り返さない');
+ await panel.send('Emulation.setDeviceMetricsOverride',{width:600,height:1000,deviceScaleFactor:1,mobile:false});
  const previous=await main.evaluate(`window.beforeWorld=aidiyIDE.world;true`);assert.equal(previous,true);
  writeFileSync(join(project,'added.txt'),'arrived while frozen');
  assert.equal(await main.evaluate(`aidiyIDE.refresh()`),false);

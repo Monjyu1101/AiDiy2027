@@ -30,6 +30,9 @@ const contentFold = createContentFoldTone({
 onBeforeUnmount(contentFold.dispose);
 const checkedPaths=ref(new Set());
 const multipleChecked=computed(()=>checkedPaths.value.size>1);
+const checkedStatusText=computed(()=>checkedPaths.value.size
+  ? `☑ ${checkedPaths.value.size}件${multipleChecked.value?' · 最終更新・一覧取得を停止中':''}`
+  : '');
 let checkAnchor='';
 const checkParent=path=>path.split('/').slice(0,-1).join('/');
 watch(()=>props.selected,path=>{if(path)checkedPaths.value=multipleChecked.value?new Set([...checkedPaths.value,path]):new Set([path]);},{immediate:true});
@@ -42,6 +45,10 @@ function toggleCheck(row){
   if(fileActionState.busy||fileActionState.rename||fileActionState.dialog)return;
   const next=new Set(checkedPaths.value);next.has(row.path)?next.delete(row.path):next.add(row.path);checkedPaths.value=next;
   checkAnchor=row.path;
+}
+function clearChecks(){
+  checkedPaths.value=new Set();
+  treeElement.value?.focus({preventScroll:true});
 }
 function clickRow(event,row){
   if(fileActionState.busy||fileActionState.rename||fileActionState.dialog)return;
@@ -560,12 +567,16 @@ defineExpose({captureLayout,restoreLayout,restoreFoldState,reveal,focusDetached:
         <button class="chevron" :aria-label="rootExpanded?'ルートフォルダを折りたたむ':'ルートフォルダを展開する'" :aria-expanded="rootExpanded" :disabled="searching||fileActionState.busy||!!fileActionState.rename" @click="cancelSinceExpansion();rootExpanded=!rootExpanded"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" :class="{expanded:rootExpanded}"><path d="M3 1 14 8 3 15Z" /></svg></button>
         <button class="explorer-root-name" :disabled="searching" @click="select({type:'dir',path:''})"><FileTypeIcon :name="tree?.n" directory :open="rootExpanded" /><span class="file-name">{{ tree?.n }}</span></button>
       </div>
-      <p v-if="checkedPaths.size" class="explorer-checked-status" role="status">☑ {{ checkedPaths.size }}件<template v-if="multipleChecked"> · 最終更新・一覧取得を停止中</template><button type="button" :disabled="fileActionState.busy" @click="checkedPaths=new Set()">チェック解除</button></p>
       <ul ref="treeElement" aria-multiselectable="true" @pointerdown="treeDrag.down" @click.capture="treeDrag.click" @dblclick.capture="treeDrag.click" @dragstart="treeDrag.dragstart" role="tree" tabindex="0" :data-aidiy-window-move-list="detached&&nativePanels?'':undefined" @keydown="key" @contextmenu.prevent.stop="contextMenu($event)"><TransitionGroup name="explorer-branch" @before-leave="beforeTreeLeave" @after-leave="afterTreeLeave" @leave-cancelled="afterTreeLeave"><li v-for="row in rows" :key="row.path" role="treeitem" :aria-expanded="row.type==='dir'?row.open:undefined" :aria-selected="checkedPaths.has(row.path)" :data-path="row.path" :data-entry-type="row.type" :title="mode==='ai'?aiFiles.get(row.path):undefined" :style="{'--depth':row.depth}" :class="{fresh:row.fresh,'plain-folder':row.type==='dir'&&mode!=='ai',selected:selected===row.path,cursor:cursor===row.path}" @click="clickRow($event,row)" @mousedown="($event.shiftKey||$event.ctrlKey||$event.metaKey)&&$event.preventDefault()" @contextmenu.prevent.stop="contextMenu($event,row)">
         <button v-if="row.type==='dir'" class="chevron" :aria-expanded="row.open" :aria-label="row.open?'折りたたむ':'展開する'" @click.stop="toggle(row)"><svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" :class="{expanded:row.open}"><path d="M3 1 14 8 3 15Z" /></svg></button><span v-else class="chevron"></span><input class="explorer-row-check" type="checkbox" :aria-label="row.name+'をチェック'" :checked="checkedPaths.has(row.path)" :disabled="fileActionState.busy||!!fileActionState.rename||!!fileActionState.dialog" @click.stop @dblclick.stop @change="toggleCheck(row)"><FileTypeIcon :name="row.name" :directory="row.type==='dir'" :open="row.open" /><input v-if="fileActionState.rename?.path===row.path" v-model="fileActionState.rename.value" class="explorer-rename" aria-label="新しい名前" :disabled="fileActionState.busy" maxlength="255" autocomplete="off" spellcheck="false" @click.stop @contextmenu.stop @keydown.stop="renameKey" @blur="!fileActionState.busy&&fileActions.cancel()"><span v-else class="file-name">{{ row.name }}</span><span v-if="fileActionState.rename?.path!==row.path" class="file-meta">{{ row.type==='dir'?(row.fresh?`${mode==='ai'?'関連':'更新'} ${row.fresh}`:''):new Date(row.mtime).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}) }}</span><span v-if="row.fresh" class="file-mark">●</span>
       </li></TransitionGroup></ul>
-      <!-- 最下部: 前回取得以降の更新。次の更新が来るまで維持する。 -->
       <footer class="explorer-footer">
+        <!-- 0件でも1行を確保し、チェック数でツリーの位置やスクロール範囲を変えない。 -->
+        <div class="explorer-checked-status">
+          <span role="status" :title="checkedStatusText">{{ checkedStatusText }}</span>
+          <button type="button" :class="{'no-checks':!checkedPaths.size}" :disabled="!checkedPaths.size||fileActionState.busy" @click="clearChecks">チェック解除</button>
+        </div>
+        <!-- 前回取得以降の更新。次の更新が来るまで維持する。 -->
         <p v-if="latestWarning" class="scan-warning" role="status">{{ latestWarning }}</p>
         <small v-if="recentUpdates.length">最終更新 · {{ recentUpdates.length }}件</small>
         <div v-if="recentUpdates.length" class="explorer-latest-list" aria-label="最終更新ファイル一覧">

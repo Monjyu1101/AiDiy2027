@@ -361,7 +361,11 @@
 .development-app .viewer-close,.development-app .viewer-close:hover{background:transparent;border-color:transparent}
 .development-app .viewer-close:hover{color:#ff8e9e}
 
-.explorer-row-check{flex:none;width:14px;height:14px;margin:0 2px;accent-color:#7dd3fc;cursor:pointer}.explorer-checked-status{display:flex;align-items:center;gap:5px;margin:0;padding:5px 8px;font-size:11px;color:#7dd3fc;border-bottom:1px solid #29334c}.explorer-checked-status button{margin-left:auto}
+.explorer-row-check{flex:none;width:14px;height:14px;margin:0 2px;accent-color:#7dd3fc;cursor:pointer}
+.explorer-checked-status{display:flex;align-items:center;min-width:0;gap:5px;line-height:1.3;font-size:11px;color:#7dd3fc}
+.explorer-checked-status>[role=status]{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.explorer-checked-status>button{flex:none;white-space:nowrap}
+.explorer-checked-status>button.no-checks{visibility:hidden}
 
 /* AI解析で保存した画面URL。長いURLでもパネル幅を広げない。 */
 .viewer-display-url{font:var(--file-font-size,11px) var(--mono);color:#a5bdd9;overflow-wrap:anywhere;margin:0 0 6px}
