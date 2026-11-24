@@ -49,7 +49,7 @@ test('実際の左上タイトル操作は通常・無効とも白文字で、�
  assert.equal(declarations(mini,'.mini-app-message.required::after')['pointer-events'],'none');assert.ok(declarations(mini,'.start-mini .mini-project-link:focus-visible').outline);
 });
 
-test('ミニの初期高さ200はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
+test('ミニの初期高さ190はタイトル・外枠・アイコン2行・案内・状態列を収める',()=>{
  const d=selector=>declarations(mini,selector);
  const chrome=px(declarations(normal,'.panel-brand').height)+px(declarations(normal,'.connection-bar').height);
  const app=d('.mini-app-launch'),appMessage=d('.mini-app-message.required');
@@ -60,7 +60,7 @@ test('ミニの初期高さ200はタイトル・外枠・アイコン2行・案�
  const statuses=verticalPadding(d('.mini-services').padding)+px(d('.mini-services .mini-service').height);
  const outerFrame=2*border(declarations(normal,'#app').border);
  const {height}=require('../diag/起動/ミニ表示.cjs').ミニ寸法;
- assert.equal(chrome,34);assert.equal(height,200);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
+ assert.equal(chrome,34);assert.equal(height,190);assert.ok(height>=Math.ceil(chrome+outerFrame+appHeight+cliHeight+statuses));
  assert.equal(px(d('#app>.diag-panel>.panel.start-mini').height),height-chrome-outerFrame);
  assert.equal(d('#app>.diag-panel>.panel.start-mini')['max-width'],'400px');assert.equal(d('#app>.diag-panel>.panel.start-mini').overflow,'hidden');
  assert.equal(d('.mini-launch-scroll')['overflow-y'],'auto');
@@ -131,11 +131,11 @@ test('Windows標準タイトルだけ独自操作へ切り替え、ミニnative 
  const css=source('style.css');assert.match(css,/\.panel-brand\.desktop\[data-aidiy-standard-title\][^{}]*\{[^}]*-webkit-app-region:no-drag/);
 });
 
-test('ミニ7列は400pxで36px画像と操作余白を保持し、通常/マイクロの寸法は変えない',()=>{
+test('ミニ7列は400pxで36px枠・30px画像と操作余白を保持し、通常/マイクロの寸法は変えない',()=>{
  const css=source('components/起動/起動ミニ.css');
  assert.match(css,/max-width:400px/);assert.match(css,/\.desktop-window #app>\.diag-panel>\.panel\.start-mini\{max-width:none;flex:1 1 auto\}/);
- assert.match(css,/mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/start-mini \.launch-frame-36\{width:36px;height:36px/);
+ assert.match(css,/mini-icon-frame\{[^}]*width:36px;height:36px/);assert.match(css,/start-mini \.launch-frame-36\{width:30px;height:30px/);
  const cell=48;assert.ok(cell>=36+6);assert.ok(7*cell+12+8+2<=400);assert.equal(42-36,6);
- assert.match(source('components/アプリ起動/アプリ起動.css'),/width:72px;height:72px/);
+ assert.match(source('components/アプリ起動/アプリ起動.css'),/\.launch-frame-standard\{width:min\(72px,calc\(100% - 12px\)\);height:auto;aspect-ratio:1\}/);
  assert.match(source('components/アプリ起動/マイクロランチャー.vue'),/width="40" height="40"/);
 });

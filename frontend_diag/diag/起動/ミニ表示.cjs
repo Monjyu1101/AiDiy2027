@@ -9,7 +9,7 @@ const {表示切替基準を作成,初期右下位置}=require('./表示切替�
 
 const ミニ幅=400,ミニの余白=8;
 // 7アイコンを並べる幅と、案内・状態列を含めた初期寸法。
-const ミニ高さ=200;
+const ミニ高さ=190;
 const ミニ寸法={width:ミニ幅,height:ミニ高さ};
 const ミニ高さは有効=height=>Number.isInteger(height)&&height>=80&&height<=360;
 // 通常時の寸法を保持し、四隅付近以外の表示切替では現在の左肩を引き継ぐ。

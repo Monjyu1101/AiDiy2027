@@ -142,10 +142,11 @@ try{
   await setWidth(300,scale,150);
   await until(`document.querySelectorAll('.mini-icon-track[data-overflow]').length===2`);
   assert.ok((await state()).every(row=>row.oneRow));
-  await setWidth(400,scale,200);
+  await setWidth(miniWidth,scale);
+  await assertHeight();
   await until(`document.querySelector('.mini-icon-track').clientWidth===390`);
   assert.ok((await state()).every(row=>row.overflow&&row.oneRow));
  }
  assert.deepEqual(errors,[]);
- console.log('ミニ表示: 400×200、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
+ console.log('ミニ表示: 400×190、両行の中央揃えと左端開始、左方向の循環、左右ドラッグとクリック抑止、起動演出中の停止・再開、幅変更と倍率を確認。');
 }finally{ws?.close();browser.kill();assert.ok(resolve(profile).startsWith(resolve(tmpdir())+sep));for(let i=0;i<20;i++){try{rmSync(profile,{recursive:true,force:true});break;}catch{await sleep(100);}}}

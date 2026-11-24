@@ -213,12 +213,12 @@ test('Code / Liveは900 DIPを初期高さとし、余白込みで収まらな�
  }
 });
 
- test('CPUは400×125、Diagミニ200の上に33 DIPを空け、小画面へ収める',()=>{
+ test('CPUは400×125、Diagミニ190の上に33 DIPを空け、小画面へ収める',()=>{
  for(const area of [{x:0,y:0,width:1920,height:1040},{x:-1600,y:80,width:1600,height:900},{x:0,y:-300,width:320,height:300},{x:20,y:40,width:200,height:90}]){
   const b=windowBounds('cpu',area);
   assert.equal(b.width,Math.min(400,area.width-16));assert.equal(b.height,Math.min(125,area.height-16));
   assert.equal(b.x+b.width,area.x+area.width-8);
-  assert.equal(b.y,Math.max(area.y+8,area.y+area.height-8-b.height-200-33));
+  assert.equal(b.y,Math.max(area.y+8,area.y+area.height-8-b.height-190-33));
   assert.ok(b.y+b.height<=area.y+area.height-8);
   assert.deepEqual(windowMinimumSize('cpu',b),{minWidth:Math.min(240,b.width),minHeight:Math.min(125,b.height)});
  }
