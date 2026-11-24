@@ -37,9 +37,27 @@ try{
  const target=(await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()).find(t=>t.type==='page');socket=new WebSocket(target.webSocketDebuggerUrl);await once(socket,'open');let id=0;const calls=new Map(),errors=[];socket.on('message',value=>{const data=JSON.parse(value);if(data.id){calls.get(data.id)?.(data);calls.delete(data.id);}if(data.method==='Runtime.exceptionThrown')errors.push(data.params);});
  const send=(method,params={})=>new Promise(resolve=>{calls.set(++id,resolve);socket.send(JSON.stringify({id,method,params}));});const evaluate=async expression=>{const response=await send('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true,userGesture:true});assert.equal(response.result?.exceptionDetails,undefined,JSON.stringify(response));return response.result.result.value;};
  await send('Runtime.enable');await send('Page.enable');
+ assert.equal((await send('Browser.grantPermissions',{origin,permissions:['clipboardReadWrite','clipboardSanitizedWrite']})).error,undefined);
+ await send('Emulation.setFocusEmulationEnabled',{enabled:true});
+ const center=selector=>evaluate(`(()=>{const {x,y,width,height}=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:x+width/2,y:y+height/2};})()`);
+ const move=point=>send('Input.dispatchMouseEvent',{type:'mouseMoved',...point});
+ const click=async(point,clickCount=1)=>{
+  for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,...point,button:'left',clickCount});
+ };
  for(const header of [false,true]){
   await send('Page.navigate',{url:origin+(header?'?header':'')});await until(()=>evaluate(`document.querySelectorAll('[role=tab]').length===2`),'tabs ready');
-  await evaluate(`document.querySelectorAll('[role=tab]')[1].click()`);await until(()=>evaluate(`document.querySelector('input').value==='https://example.test/b'`),'switch address');
+  await evaluate(`(async()=>{const actualClipboard=navigator.clipboard;await actualClipboard.writeText('before tab info copy');window.readTestClipboard=()=>actualClipboard.readText();`+
+   (header?`Object.defineProperty(navigator,'clipboard',{value:{writeText:()=>Promise.reject(new DOMException('Blocked','NotAllowedError'))}});`:'')+`})()`);
+  const tab=await center('[role=tab][aria-selected=false]');await move(tab);await click(tab);
+  await until(()=>evaluate(`document.querySelector('input').value==='https://example.test/b'`),'switch address');
+  assert.equal(await evaluate(`document.querySelector('.browser-tab-copy-hint').textContent`),'ダブルクリックでコピー');
+  const visibleText='session="aidiy_browser test" ,tab_id="b", title="長い日本語のページタイトルを表示するタブ"';
+  assert.equal(await evaluate(`document.querySelector('.browser-connection-target').value`),visibleText);
+  const info=await center('.browser-connection-target');
+  await move({x:tab.x,y:info.y});await move(info);
+  await click(info);await click(info,2);
+  await until(()=>evaluate(`document.querySelector('.browser-tab-copy-hint')?.textContent==='コピーしました'`),'double-click copy');
+  assert.equal(await evaluate('readTestClipboard()'),visibleText);
   await evaluate(`document.querySelector('.browser-tab-new').click()`);await until(()=>evaluate(`document.querySelectorAll('[role=tab]').length===3`),'new tab');assert.equal(await evaluate(`document.activeElement===document.querySelector('input')`),true);
   await evaluate(`document.querySelector('.browser-tab-active .browser-tab-close').click()`);await until(()=>evaluate(`document.querySelectorAll('[role=tab]').length===2`),'close tab');assert.equal(await evaluate(`document.activeElement.getAttribute('role')`),'tab');
   await evaluate(`document.querySelector('[aria-selected=true]').dispatchEvent(new KeyboardEvent('keydown',{key:'Home',bubbles:true}))`);await until(()=>evaluate(`document.querySelector('input').value==='https://example.test/a'`),'keyboard select');
@@ -53,5 +71,5 @@ try{
   await evaluate(`document.querySelector('[role=tab]').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`);await until(()=>evaluate(`!document.querySelector('.browser-connection-target')`),'escape closes');
   for(const width of [360,800,1440]){await send('Emulation.setDeviceMetricsOverride',{width,height:700,deviceScaleFactor:1,mobile:false});await sleep(100);const geometry=await evaluate(`(()=>{const row=document.querySelector('.browser-tabs-row').getBoundingClientRect(),input=document.querySelector('input').getBoundingClientRect();const brand=document.querySelector('.panel-brand').getBoundingClientRect(),title=document.querySelector('.panel-brand strong').getBoundingClientRect();const tabs=document.querySelector('.browser-tabs'),last=tabs.lastElementChild.getBoundingClientRect(),plus=document.querySelector('.browser-tab-new').getBoundingClientRect();return{titleCenter:(title.left+title.right)/2,brandCenter:(brand.left+brand.right)/2,right:row.right,width:innerWidth,input:input.width,plusLeft:plus.left,plusRight:plus.right,lastRight:last.right,tabHeight:last.height,plusHeight:plus.height,closeHeight:document.querySelector('.browser-tab-close').getBoundingClientRect().height,overflow:tabs.scrollWidth>tabs.clientWidth+1};})()`);assert.ok(geometry.right<=geometry.width+1);assert.ok(geometry.input>0);assert.ok(Math.abs(geometry.titleCenter-geometry.brandCenter)<2,'title stays at row center');assert.ok(Math.abs(geometry.tabHeight-22)<1);assert.ok(Math.abs(geometry.plusHeight-22)<1);assert.ok(geometry.closeHeight>=20);assert.ok(geometry.plusRight<=geometry.right+1,'＋ stays inside row when tabs overflow');if(!geometry.overflow)assert.ok(Math.abs(geometry.plusLeft-geometry.lastRight-4)<2,'＋ sits directly after final tab');writeFileSync(join(output,(header?'header':'normal')+'-'+width+'.png'),Buffer.from((await send('Page.captureScreenshot',{format:'png'})).result.data,'base64'));}
  }
- assert.deepEqual(errors,[]);console.log('PASS: tabs creation/selection/closing/keyboard, normal and fullscreen header, 3 widths. '+output);
+ assert.deepEqual(errors,[]);console.log('PASS: tabs creation/selection/closing/keyboard and double-click clipboard (API and denied-API fallback), normal and fullscreen header, 3 widths. '+output);
 }finally{socket?.close();if(chrome.exitCode===null&&chrome.signalCode===null){const exited=once(chrome,'exit');chrome.kill();await exited;}server.closeAllConnections();await new Promise(resolve=>server.close(resolve));rmSync(temporary,{recursive:true,force:true});}

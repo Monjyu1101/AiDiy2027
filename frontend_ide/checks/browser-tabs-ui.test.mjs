@@ -10,6 +10,8 @@ import {createRequire} from 'node:module';
 import vm from 'node:vm';
 import * as addressTools from '../src/components/ブラウザ/URL表示.js';
 import {browserAnalysisPageKey} from '../src/components/ブラウザ/ブラウザ解析状態.js';
+import {createContentFoldTone} from '../src/components/共通表示/内容変更折畳配色.js';
+import {browserContentKey} from '../src/components/ブラウザ/ブラウザ内容変更.js';
 const require=createRequire(import.meta.url),vue=require('vue');
 const {parse,compileScript,compileTemplate}=require('@vue/compiler-sfc'),{transformSync}=require('esbuild');
 const source=readFileSync(new URL('../src/components/ブラウザ/ブラウザパネル.vue',import.meta.url),'utf8');
@@ -21,7 +23,7 @@ function fixture(headerOnly=false){
  vm.runInNewContext(transformSync(script.content+'\n'+template.code+'\ncomponent.render=render;module.exports=component;',{format:'cjs'}).code,{
   module,console,requestAnimationFrame:()=>1,cancelAnimationFrame(){},ResizeObserver:class{observe(){}disconnect(){}},document:{documentElement:{classList:{add(){},remove(){}}}},
   window:{aidiyWindow:{onBrowserChanged(fn){listener=fn;return()=>{};},browserAction(name,value){return new Promise(resolve=>pending.push({name,value,resolve}));}}},
-  require:id=>id==='./ブラウザ解析状態.js'?{browserAnalysisPageKey,createBrowserAnalysisStatus:()=>({setPage:(...args)=>monitors.push(args),refresh(){},dispose(){}})}:id==='./URL表示.js'?addressTools:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
+  require:id=>id==='./ブラウザ解析状態.js'?{browserAnalysisPageKey,createBrowserAnalysisStatus:()=>({setPage:(...args)=>monitors.push(args),refresh(){},dispose(){}})}:id==='./URL表示.js'?addressTools:id==='../共通表示/内容変更折畳配色.js'?{createContentFoldTone}:id==='./ブラウザ内容変更.js'?{browserContentKey}:id==='vue'?{...vue,withDirectives:node=>node,onMounted:fn=>mounted.push(fn),onBeforeUnmount:fn=>unmounted.push(fn)}:{},
  });
  const props={standalone:true,headerOnly},state=module.exports.setup(props,{expose(){}});mounted.forEach(fn=>fn());
  return{state,pending,monitors,notify:value=>listener(value),render:()=>module.exports.render({},[],props,vue.proxyRefs(state),{},{}),close:()=>unmounted.forEach(fn=>fn())};
@@ -138,5 +140,68 @@ for(const header of [false,true])test(`hidden and fullscreen transitions discard
    f.notify(snapshot(6,'a',{headerVisible:true}));assert.equal(f.state.connectionTarget.value,'','header reappearance does not restore old overlay');
    f.state.tabInfoFocus('a');assert.ok(f.state.connectionTarget.value);
   }
+ }finally{f.close();}
+});
+
+const infoInput=f=>nodes(f.render()).find(v=>v.props?.class==='browser-connection-target');
+const copyHint=f=>nodes(f.render()).find(v=>v.props?.class==='browser-tab-copy-hint')?.children;
+function copyInput(value,writeText,legacy=true){
+ const writes=[],input={value,select(){this.selected=this.value;},ownerDocument:{
+  defaultView:{navigator:{clipboard:writeText?{writeText}:undefined}},
+  execCommand(command){assert.equal(command,'copy');if(legacy)writes.push(input.selected);return legacy;},
+ }};
+ input.ownerDocument.activeElement=input;
+ return{input,writes,event:{currentTarget:input,preventDefault(){}}};
+}
+for(const header of [false,true])test(`clicked tab stays open from button to double-click and copies only the displayed value: header=${header}`,async()=>{
+ const f=fixture(header);try{
+  const extra={tabs:[tabs[0],{...tabs[1],title:'日本語 "引用"'}],fullscreen:header};
+  f.notify(snapshot(2,'a',extra));
+  const [,button]=nodes(f.render()).filter(v=>v.props?.role==='tab');
+  button.props.onClick();
+  const expected='session="test" ,tab_id="b", title="日本語 \\"引用\\""';
+  assert.equal(infoInput(f).props.value,expected);
+  assert.equal(copyHint(f),'ダブルクリックでコピー');
+  const selection=f.pending.at(-1);assert.equal(selection.value,'b');
+  f.notify(snapshot(3,'b',extra)); // メイン通知が操作応答より先に届く。
+  selection.resolve(snapshot(4,'b',extra));await flush();
+  assert.equal(infoInput(f).props.value,expected);
+  const writes=[],{input,event}=copyInput(expected,async text=>writes.push(text));
+  const container=nodes(f.render()).find(v=>v.props?.class==='browser-navigation');
+  container.props.onFocusout({currentTarget:{contains:value=>value===input},relatedTarget:input});
+  await infoInput(f).props.onDblclick(event);
+  assert.deepEqual(writes,[expected]);
+  assert.equal(copyHint(f),'コピーしました');
+  assert.equal(input.selected,expected);
+  f.state.navigationLeave();
+  assert.equal(infoInput(f),undefined);
+ }finally{f.close();}
+});
+
+test('clipboard fallback copies in place, reports failure, and never copies a dismissed or replaced overlay',async()=>{
+ const f=fixture(true);try{
+  f.notify(snapshot(2,'a',{fullscreen:true}));
+  f.state.showTabInfo('a');
+  const expected=infoInput(f).props.value;
+  const fallback=copyInput(expected,async()=>{throw Error('NotAllowedError');});
+  await infoInput(f).props.onDblclick(fallback.event);
+  assert.deepEqual(fallback.writes,[expected]);
+  assert.equal(copyHint(f),'コピーしました');
+  const denied=copyInput(expected,undefined,false);
+  await infoInput(f).props.onDblclick(denied.event);
+  assert.equal(copyHint(f),'選択してコピーしてください');
+  let reject;
+  const pending=copyInput(expected,()=>new Promise((_resolve,fail)=>{reject=fail;}));
+  const copying=infoInput(f).props.onDblclick(pending.event);
+  f.state.navigationLeave();
+  f.state.showTabInfo('b');
+  reject(Error('late clipboard denial'));await copying;
+  assert.deepEqual(pending.writes,[]);
+  assert.equal(copyHint(f),'ダブルクリックでコピー');
+  nodes(f.render()).filter(v=>v.props?.role==='tab')[1].props.onClick();
+  const selection=f.pending.at(-1);
+  f.state.navigationLeave();
+  selection.resolve(snapshot(3,'b',{fullscreen:true}));await flush();
+  assert.equal(infoInput(f),undefined,'late activation must not reopen a dismissed overlay');
  }finally{f.close();}
 });

@@ -19,15 +19,40 @@ watch(panelCollapsed,value=>contentFold.collapsed(value),{flush:'sync'});
 onBeforeUnmount(contentFold.dispose);
 const page=ref({url:'',title:'',loading:false,back:false,forward:false,error:'',tabs:[],activeTabId:''}),address=ref(''),surface=ref(),chrome=ref(),chromeHeight=ref(100),error=ref(''),capturing=ref(false),captureMessage=ref('');
 // 公開識別子だけを表示する。CDPの認証情報や接続URLは含めない。
-const infoTabId=ref('');
-let keyboardInput=false;
+const infoTabId=ref(''),tabInfoFeedback=ref('');
+let keyboardInput=false,clickedInfoTabId='',copyAttempt=0;
 const connectionTarget=computed(()=>{const tab=(page.value.tabs||[]).find(tab=>tab.id===infoTabId.value);return tab&&page.value.session?`session=${JSON.stringify(page.value.session)} ,tab_id=${JSON.stringify(tab.id)}, title=${JSON.stringify(tab.title||'')}`:'';});
-function closeTabInfo(){infoTabId.value='';}
+watch(connectionTarget,()=>{copyAttempt++;tabInfoFeedback.value='';},{flush:'sync'});
+function closeTabInfo(){clickedInfoTabId='';infoTabId.value='';}
 function setPanelHidden(hidden){panelHidden.value=hidden;if(hidden)closeTabInfo();}
 function navigationKeydown(event){if(['Tab','ArrowLeft','ArrowRight','Home','End'].includes(event.key))keyboardInput=true;if(event.key==='Escape'){closeTabInfo();error.value='';}}
-function tabInfoFocus(id){if(keyboardInput)infoTabId.value=id;}
+function showTabInfo(id){if(clickedInfoTabId!==id)clickedInfoTabId='';infoTabId.value=id;}
+function tabInfoFocus(id){if(keyboardInput)showTabInfo(id);}
 function navigationLeave(){if(!keyboardInput)closeTabInfo();}
 function navigationBlur(event){if(!event.currentTarget.contains(event.relatedTarget))closeTabInfo();}
+function selectTab(id){
+ if(!page.value.available)return;
+ clickedInfoTabId=id;infoTabId.value=id;
+ void tabAction('tab-select',id);
+}
+async function copyTabInfo(event){
+ const input=event.currentTarget,text=input.value,attempt=++copyAttempt;
+ const current=()=>!disposed&&attempt===copyAttempt&&text===connectionTarget.value;
+ if(!text||!current())return;
+ // 全画面ヘッダー等で Clipboard API が使えなくても、この入力欄の選択をコピーする。
+ // 別の要素へフォーカスを移すと、接続情報欄が閉じてしまう。
+ input.select();
+ let copied=false;
+ try{
+  const clipboard=input.ownerDocument.defaultView?.navigator.clipboard;
+  if(clipboard?.writeText){await clipboard.writeText(text);copied=true;}
+ }catch{}
+ if(!current())return;
+ if(!copied&&input.ownerDocument.activeElement===input){
+  try{input.select();copied=input.ownerDocument.execCommand('copy');}catch{}
+ }
+ tabInfoFeedback.value=copied?'コピーしました':'選択してコピーしてください';
+}
 
 let stop=()=>{},stopFrame=()=>{},stopAnalysis=()=>{},stopElement=()=>{},observer,disposed=false,editing=false,frame,stateRevision=-1,analysisNavigation=0,captureNavigation=0;
 let composingAddress=false;
@@ -69,7 +94,9 @@ function update(value){
  if(sessionChanged){addressDrafts.clear();editing=false;composingAddress=false;}
  else if(tabChanged&&editing)rememberAddress();
  if(Array.isArray(value.tabs)){const ids=new Set(value.tabs.map(tab=>tab.id));for(const id of addressDrafts.keys())if(!ids.has(id))addressDrafts.delete(id);}
- if(tabChanged||sessionChanged||!!value.fullscreen!==!!page.value.fullscreen||(props.headerOnly&&value.headerVisible===false))closeTabInfo();
+ const clickedTabBecomesActive=tabChanged&&clickedInfoTabId===value.activeTabId&&infoTabId.value===value.activeTabId;
+ if((tabChanged&&!clickedTabBecomesActive)||sessionChanged||!!value.fullscreen!==!!page.value.fullscreen||(props.headerOnly&&value.headerVisible===false))closeTabInfo();
+ if(clickedTabBecomesActive)clickedInfoTabId='';
  if(infoTabId.value&&!(value.tabs||[]).some(tab=>tab.id===infoTabId.value))closeTabInfo();
  if(tabChanged){editing=false;composingAddress=false;error.value='';void nextTick(()=>{if(!disposed)tabList.value?.querySelector('[role=tab][aria-selected=true]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});});}
  if(tabChanged||browserAnalysisPageKey(value.url)!==browserAnalysisPageKey(page.value.url)||value.session!==page.value.session)analysisNavigation++;
@@ -160,8 +187,8 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
   <div class="browser-navigation" @mouseleave="navigationLeave" @focusout="navigationBlur">
   <div class="browser-tabs-row">
    <div ref="tabList" class="browser-tabs" role="tablist" aria-label="ブラウザのタブ">
-    <div v-for="tab in page.tabs||[]" :key="tab.id" class="browser-tab" :class="{'browser-tab-active':tab.id===page.activeTabId}" role="presentation" @mouseenter="keyboardInput=false;infoTabId=tab.id" @focusin="tabInfoFocus(tab.id)">
-     <button type="button" class="browser-tab-select" role="tab" :aria-selected="tab.id===page.activeTabId" :tabindex="tab.id===page.activeTabId?0:-1" :disabled="!page.available" :title="tabLabel(tab)+(tab.url?'\n'+displayBrowserURL(tab.url):'')" @click="tabAction('tab-select',tab.id)" @keydown="tabKeydown($event,tab.id)"><span v-if="tab.loading" aria-label="読み込み中">◌ </span>{{tabLabel(tab)}}</button>
+    <div v-for="tab in page.tabs||[]" :key="tab.id" class="browser-tab" :class="{'browser-tab-active':tab.id===page.activeTabId}" role="presentation" @mouseenter="keyboardInput=false;showTabInfo(tab.id)" @focusin="tabInfoFocus(tab.id)">
+     <button type="button" class="browser-tab-select" role="tab" :aria-selected="tab.id===page.activeTabId" :tabindex="tab.id===page.activeTabId?0:-1" :disabled="!page.available" :title="tabLabel(tab)+(tab.url?'\n'+displayBrowserURL(tab.url):'')" @click="selectTab(tab.id)" @keydown="tabKeydown($event,tab.id)"><span v-if="tab.loading" aria-label="読み込み中">◌ </span>{{tabLabel(tab)}}</button>
      <button type="button" class="browser-tab-close" :disabled="!page.available" :aria-label="tabLabel(tab)+' のタブを閉じる'" title="タブを閉じる" @click="tabAction('tab-close',tab.id,true)">×</button>
     </div>
    </div>
@@ -176,7 +203,8 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
    <button type="submit" :disabled="!page.available">開く</button>
   </form>
   <div v-if="connectionTarget" class="browser-tab-info" @keydown.esc.stop="closeTabInfo">
-   <input class="browser-connection-target" :value="connectionTarget" readonly aria-label="セッション・タブID・タイトル" title="選択してコピーできます" spellcheck="false" @focus="$event.target.select()">
+   <input class="browser-connection-target" :value="connectionTarget" readonly aria-label="セッション・タブID・タイトル" aria-describedby="browser-tab-copy-hint" spellcheck="false" @focus="$event.target.select()" @dblclick.prevent="copyTabInfo">
+   <span id="browser-tab-copy-hint" class="browser-tab-copy-hint" role="status">{{tabInfoFeedback||'ダブルクリックでコピー'}}</span>
   </div>
   <div v-if="error" class="browser-operation-error" role="alert"><span>{{error}}</span><button type="button" aria-label="操作エラーを閉じる" @click="error=''">×</button></div>
   </div>
@@ -240,7 +268,10 @@ onBeforeUnmount(()=>{disposed=true;analysisMonitor.dispose();stop();stopFrame();
 .browser-navigation{position:relative;-webkit-app-region:no-drag}
 /* 本文はnative Viewなので、情報はURL操作列の内側だけに重ねる。高さを増やさない。 */
 .browser-tab-info,.browser-operation-error{position:absolute;bottom:0;left:9px;right:9px;height:42px;box-sizing:border-box;display:flex;align-items:center;gap:6px;z-index:3;background:#101a28;color:#dce6f4;padding:4px;box-shadow:0 0 0 1px #375067}
+.browser-tab-info{flex-direction:column;align-items:stretch;gap:1px;padding:3px 4px}
 .browser-connection-target{display:block;flex:1;box-sizing:border-box;width:100%;min-width:0;padding:6px 4px;border:1px solid #375067;background:#080f1b;color:inherit;font:11px monospace;user-select:text;-webkit-app-region:no-drag}
+.browser-tab-info .browser-connection-target{padding:1px 4px;min-height:0}
+.browser-tab-copy-hint{flex:none;color:#9edfff;font-size:11px;line-height:13px}
 .browser-operation-error{color:#ffd1d1;background:#431d28}.browser-operation-error span{flex:1;min-width:0;overflow:auto;max-height:100%;font-size:12px}.browser-operation-error button{flex:none}
 .browser-surface{flex:1;min-height:0}
 /* 通常・全画面・折畳のいずれも1行。小画面・高倍率では操作欄だけ横スクロールし、タイトルへ重ねない。 */
