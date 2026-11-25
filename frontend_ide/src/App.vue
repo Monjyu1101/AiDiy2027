@@ -143,7 +143,7 @@ async function refreshGitAvailability(){
   }catch{if(!disposed&&own===session)gitAvailable.value=false;}
   finally{gitChecking=false;}
 }
-const gitTitle=computed(()=>gitAvailable.value?'選択中のプロジェクトの Git パネルを開く':'プロジェクトのルートに .git があり、Git が利用できる場合に起動できます');
+const gitTitle=computed(()=>gitAvailable.value?'選択中のプロジェクトの Git パネルを開く':'プロジェクトのルートまたは直下に Git リポジトリがある場合に起動できます');
 function openGit(displayId){
   if(!gitAvailable.value||!state.value.active)return;
   if(desktop)return openWindow('git',displayId);

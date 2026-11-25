@@ -41,3 +41,6 @@ aside li{display:flex;min-width:0;gap:4px;margin:3px 0}aside li button:first-chi
 #git-content{display:flex;flex-direction:column;flex:1;min-height:0}.main-tabs{padding:4px 10px}.main-tabs button{min-width:56px}.danger:not(:disabled){color:#ffadae;border-color:#c2777d}#github-content{padding:10px;overflow:auto;flex:1;min-height:0}#github-content a{color:var(--accent)}#github-content li{padding:6px 0;border-bottom:1px solid var(--line)}#github-content a:focus-visible{outline:2px solid var(--accent)}
 
 #force-dialog{background:#192535;color:var(--ink);border:1px solid #c2777d;border-radius:5px;max-width:min(560px,90vw)}#force-dialog::backdrop{background:#0009}#force-target{overflow-wrap:anywhere}#force-confirm{display:block;margin:5px 0 12px;padding:6px;background:#101822;color:inherit;border:1px solid #496581;width:100%;font:inherit}.force-actions,.github-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.force-actions{justify-content:flex-end}.github-meta{display:block;color:var(--muted)}
+
+.repo-selector{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--raised);flex:none}
+.repo-selector select{flex:1;max-width:min(390px,65%);min-width:85px}.repo-selector #repo-count{color:var(--muted);white-space:nowrap}

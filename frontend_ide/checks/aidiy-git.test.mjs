@@ -163,3 +163,32 @@ test('Tools probe checks the same ping as Term and does not gate Git when unavai
  for(const file of ['titlebar-colors.css','toggle-drag.js','window-actions.js','panel-chrome.js'])
   assert.equal((await fetch(new URL('/development/git/'+file,app.url))).status,200);
 });
+test('workspace selects direct repositories only; status, revisions and stage never cross repositories',async t=>{
+ const dir=await make(t),root=join(dir,'workspace'),alpha=join(root,'日本語 A'),beta=join(root,'B'),middle=join(root,'nested'),deep=join(middle,'repo');
+ await mkdir(alpha,{recursive:true});await mkdir(beta);await mkdir(deep,{recursive:true});
+ for(const path of [alpha,beta,deep]){await init(path);await set(path,'same.txt','data\n');}
+ if(process.platform!=='win32'){const {symlink}=await import('node:fs/promises');await symlink(deep,join(root,'alias'));}
+ assert.equal(await repository.gitAvailable(root),true);assert.equal(await repository.gitAvailable(middle),true);
+ const app=await startGit(root);t.after(()=>app.close());
+ const key=keyOf(await fetch(app.url).then(r=>r.text())),request=client(app.url,key);
+ const requestFor=(id,action,body)=>request(action,body,{'x-aidiy-git-repo':id});
+ assert.equal((await request('status')).status,409);
+ const first=(await request('repositories')).result;
+ assert.equal(first.mode,'workspace');assert.equal(first.name,'workspace');
+ assert.deepEqual(new Set(first.repositories.map(repo=>repo.name)),new Set(['日本語 A','B']));
+ assert.ok(first.repositories.every(repo=>Object.keys(repo).length===2 && /^[a-f0-9]{64}$/.test(repo.id)));
+ const a=first.repositories.find(repo=>repo.name==='日本語 A').id,b=first.repositories.find(repo=>repo.name==='B').id;
+ const aStatus=(await requestFor(a,'status')).result,bStatus=(await requestFor(b,'status')).result;
+ assert.notEqual(aStatus.revision,bStatus.revision);
+ assert.equal((await requestFor(b,'stage',{revision:aStatus.revision,path:'same.txt'})).status,409);
+ assert.equal((await requestFor(a,'stage',{revision:aStatus.revision,path:'same.txt'})).status,200);
+ assert.match((await git(alpha,'diff','--cached','--name-only')).stdout,/same.txt/);
+ assert.equal((await git(beta,'diff','--cached','--name-only')).stdout,'');
+ assert.equal((await requestFor('..','status')).status,400);
+ await init(root);
+ assert.equal((await requestFor(a,'status')).status,409,'旧一覧の子はルートリポジトリの作成後に操作しない');
+ const after=(await request('repositories')).result;
+ assert.equal(after.mode,'root');assert.deepEqual(after.repositories.map(repo=>repo.name),['workspace']);
+ assert.equal((await requestFor(a,'status')).status,409);
+ assert.equal((await requestFor(after.repositories[0].id,'status')).status,200);
+});

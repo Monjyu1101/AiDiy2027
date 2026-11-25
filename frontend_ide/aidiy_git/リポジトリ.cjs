@@ -4,7 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 const {execFile}=require('node:child_process');
-const {realpath,lstat}=require('node:fs/promises');
+const {realpath,lstat,opendir}=require('node:fs/promises');
 const path=require('node:path');
 const {promisify}=require('node:util');
 const {createHash}=require('node:crypto');
@@ -37,18 +37,60 @@ async function git(cwd,args,{signal,network=false,allowed=[0]}={}){
   throw fail(labelError(error),error.code==='ENOENT'?503:409);
  }
 }
+const samePath=(a,b)=>process.platform==='win32'?a.toLowerCase()===b.toLowerCase():a===b;
+const stat=async value=>lstat(value).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
+async function gitEntry(candidate, name, signal){
+ const cwd=await realpath(candidate), marker=await stat(path.join(cwd,'.git'));
+ if(!marker||!marker.isDirectory()&&!marker.isFile())return null;
+ const {stdout}=await git(cwd,['rev-parse','--show-toplevel'],{signal});
+ const root=await realpath(stdout.replace(/\r?\n$/,''));
+ if(!samePath(cwd,root))return null;
+ const id=createHash('sha256').update(JSON.stringify([cwd,marker.dev,marker.ino])).digest('hex');
+ return {id,name:name??path.basename(cwd),cwd};
+}
 async function gitRoot(project,{signal}={}){
  if(typeof project!=='string'||!path.isAbsolute(project))return null;
+ try{return (await gitEntry(project,null,signal))?.cwd??null;}catch{return null;}
+}
+// ルートに .git があれば単独。なければ実ディレクトリの1階層目だけ。シンボリックリンクと親・孫は対象外。
+async function gitWorkspace(project,{signal,first=false}={}){
+ if(typeof project!=='string'||!path.isAbsolute(project))return {name:'',mode:'workspace',entries:[]};
+ const workspace=await realpath(project);
+ const name=path.basename(workspace);
+ if(await stat(path.join(workspace,'.git'))){
+  const entry=await gitEntry(workspace,null,signal).catch(()=>null);
+  return {name,mode:'root',entries:entry?[entry]:[]};
+ }
+ const entries=[];
+ const directory=await opendir(workspace);
+ for await(const child of directory){
+  signal?.throwIfAborted();
+  if(!child.isDirectory()||child.name==='.git')continue;
+  const candidate=path.join(workspace,child.name);
+  const entry=await verifyChild(workspace,candidate,child.name,signal);
+  if(!entry)continue;
+  entries.push(entry);
+  if(first)break;
+ }
+ entries.sort((a,b)=>a.name.localeCompare(b.name,'ja',{numeric:true}));
+ return {name,mode:'workspace',entries};
+}
+async function verifyChild(workspace,candidate,name,signal){
  try{
-  const cwd=await realpath(project),marker=await lstat(path.join(cwd,'.git'));
-  if(!marker.isDirectory()&&!marker.isFile())return null;
-  const {stdout}=await git(cwd,['rev-parse','--show-toplevel'],{signal});
-  const top=await realpath(stdout.replace(/\r?\n$/,''));
-  const same=process.platform==='win32'?top.toLowerCase()===cwd.toLowerCase():top===cwd;
-  return same?cwd:null;
+  if(!(await lstat(candidate)).isDirectory()||!samePath(await realpath(candidate),candidate)||!samePath(path.dirname(candidate),workspace))return null;
+  const entry=await gitEntry(candidate,name,signal);
+  return entry&&samePath(entry.cwd,candidate)?entry:null;
  }catch{return null;}
 }
-const gitAvailable=async project=>Boolean(await gitRoot(project));
+async function validateWorkspaceEntry(project,entry,signal){
+ try{
+  const workspace=await realpath(project);
+  const rootMarker=await stat(path.join(workspace,'.git'));
+  const current=rootMarker?(samePath(workspace,entry.cwd)?await gitEntry(workspace,null,signal):null):await verifyChild(workspace,entry.cwd,entry.name,signal);
+  return current?.id===entry.id?current:null;
+ }catch{return null;}
+}
+const gitAvailable=async project=>{try{return (await gitWorkspace(project,{first:true})).entries.length>0;}catch{return false;}};
 const states=(raw)=>{
  const parts=raw.split('\0'),rows=[];
  for(let i=0;i<parts.length&&parts[i];i++){
@@ -147,7 +189,7 @@ async function summarize(cwd,signal){
  }
  const rows=states(status.stdout);
  // 送信の確定前に、ブランチと実URLを含む参照先が変わっていないことを照合する。
- const revision=createHash('sha256').update(JSON.stringify([branchRef,head.stdout,upstream,remotes,rows])).digest('hex');
+ const revision=createHash('sha256').update(JSON.stringify([cwd,branchRef,head.stdout,upstream,remotes,rows])).digest('hex');
  return {project:path.basename(cwd),branch,detached:!branch,head:head.stdout.trim(),remotes,upstream,ahead,behind,rows,revision};
 }
 const forView=s=>({...s,remotes:s.remotes.map(({name,fetchUrls,pushUrls})=>({name,fetch:fetchUrls.map(safeUrl),push:pushUrls.map(safeUrl),github:githubRemote({fetchUrls,pushUrls})}))});
@@ -208,4 +250,4 @@ function createRepository(project){
   },
  };
 }
-module.exports={gitAvailable,gitRoot,createRepository,githubUrl,pushArguments};
+module.exports={gitAvailable,gitRoot,gitWorkspace,validateWorkspaceEntry,createRepository,githubUrl,pushArguments};

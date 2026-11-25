@@ -7,14 +7,15 @@ import {installGitChrome} from './panel-chrome.js';
 import {installGitHubTabs} from './github-tabs.js';
 const $=id=>document.getElementById(id);
 const token=document.querySelector('meta[name=aidiy-git]').content,session=document.querySelector('meta[name=aidiy-session]').content;
-let state, busy=false, selected=null, view='diff', reviewGeneration=0;
+let state, workspace, repoId='', busy=false, selected=null, view='diff', reviewGeneration=0;
+const drafts=new Map();
 const make=(tag,value,cls)=>{const node=document.createElement(tag);if(value!=null)node.textContent=value;if(cls)node.className=cls;return node;};
 const note=(text='',error=false)=>{$('message').textContent=text;$('message').classList.toggle('error',error);};
 const remote=()=>$('remote').value;
 const remoteInfo=()=>state?.remotes?.find(item=>item.name===remote());
 const upstreamMatches=()=>!!state?.head && !!state?.branch && state.upstream?.remote===remote();
 async function request(action,body,signal){
- const response=await fetch('/api/git/'+action,{method:body===undefined?'GET':'POST',signal,cache:'no-store',headers:{'X-AiDiy-Git':token,'X-AiDiy-Git-Session':session,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+ const response=await fetch('/api/git/'+action,{method:body===undefined?'GET':'POST',signal,cache:'no-store',headers:{'X-AiDiy-Git':token,'X-AiDiy-Git-Session':session,...(repoId?{'X-AiDiy-Git-Repo':repoId}:{}),...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
  const value=await response.json();
  if(!response.ok)throw Error(value.error||'Git の処理に失敗しました。');
  return value;
@@ -26,6 +27,8 @@ function controls(){
  $('counts').textContent=state?.ahead==null||!upstreamMatches()?'':`↑${state.ahead} ↓${state.behind}（前回取得時点）`;
  $('commit').disabled=busy||!state?.rows.some(row=>!row.untracked&&row.index!==' ')||state.rows.some(row=>row.conflict)||!$('commit-text').value.trim();
  $('refresh').disabled=busy;
+ $('repository').disabled=busy||!workspace?.repositories.length;
+ $('show-diff').disabled=!repoId; $('show-history').disabled=!repoId;
  $('remote').disabled=busy||!state?.remotes.length;
  $('fetch').disabled=busy||!target;
  $('pull').disabled=busy||!upstreamMatches()||state.rows.some(row=>!row.untracked);
@@ -34,12 +37,12 @@ function controls(){
  $('force-push').disabled=$('push').disabled||!state?.upstream?.oid;
  for(const button of document.querySelectorAll('[data-stage]'))button.disabled=busy;
  const ref=state?.upstream?.remote===target?.name?state?.upstream?.ref?.replace(/^refs\/heads\//,''):'';
- $('target').textContent=target?`${target.name}${ref?' / '+ref:''} · ${target.fetch.join(', ')}${target.push.join('|')===target.fetch.join('|')?'':' ／ 送信: '+target.push.join(', ')}`:'リモート未設定。ローカルで変更確認とコミットができます。';
+ $('target').textContent=target?`${target.name}${ref?' / '+ref:''} · ${target.fetch.join(', ')}${target.push.join('|')===target.fetch.join('|')?'':' ／ 送信: '+target.push.join(', ')}`:!repoId?'': 'リモート未設定。ローカルで変更確認とコミットができます。';
  github.update(target);
 }
 const sideRows=(side)=>state?.rows?.filter(row=>side==='work'?(row.untracked||row.work!==' '):!row.untracked&&row.index!==' ')||[];
 function draw(){
- $('project').textContent='プロジェクト: '+(state?.project||'Git');
+ $('project').textContent='プロジェクト: '+(workspace?.name||'Git');
  $('branch').textContent=state?.branch||(state?.detached?'detached HEAD':'');
  const before=remote();
  const options=(state?.remotes||[]).map(({name})=>{const option=make('option',name);option.value=name;return option;});
@@ -90,10 +93,35 @@ async function renderReview(){
   }
  }catch(error){if(generation!==reviewGeneration)return;if(view==='diff')$('diff').textContent=error.message;else $('history').replaceChildren(make('li',error.message));}
 }
-async function refresh(){
+function setRepository(next){
+ if(repoId===next)return;
+ if(repoId)drafts.set(repoId,$('commit-text').value);
+ repoId=next;state=undefined;selected=null;view='diff';reviewGeneration++;
+ $('commit-text').value=drafts.get(repoId)||'';
+ $('remote').replaceChildren();
+ github.reset();draw();
+}
+function showWorkspace(){
+ const list=workspace.repositories, selector=$('repository');
+ $('repo-selector').hidden=workspace.mode==='root';
+ const placeholder=make('option',list.length?'対象を選択':'対象なし');placeholder.value='';
+ selector.replaceChildren(placeholder,...list.map(({id,name})=>{
+  const option=make('option',name);option.value=id;return option;
+ }));
+ const next=list.some(item=>item.id===repoId)?repoId:list.length===1?list[0].id:'';
+ setRepository(next);selector.value=repoId;
+ $('repo-count').textContent=list.length+'件';
+}
+async function refresh(reloadWorkspace=true){
  if(busy)return;busy=true;controls();note('読み込み中…');
- try{state=await request('status');draw();note(state.rows.some(row=>row.conflict)?'競合があります。エディター等で解消してください。':'');void renderReview();}
- catch(error){note(error.message,true);}
+ try{
+  if(reloadWorkspace){workspace=await request('repositories');showWorkspace();}
+  if(!repoId){
+   draw();note(workspace?.repositories.length?'操作するリポジトリを選択してください。':'このプロジェクトに利用できる Git リポジトリがありません。');
+   void renderReview();return;
+  }
+  state=await request('status');draw();note(state.rows.some(row=>row.conflict)?'競合があります。エディター等で解消してください。':'');void renderReview();
+ }catch(error){state=undefined;reviewGeneration++;draw();void renderReview();note(error.message,true);}
  finally{busy=false;controls();}
 }
 const names={stage:'ステージ',unstage:'ステージ解除',commit:'コミット',fetch:'取得',pull:'取り込み',push:'送信','force-push':'強制送信'};
@@ -109,7 +137,8 @@ async function perform(action,fields={}){
 }
 $('commit-text').oninput=controls;
 $('remote').onchange=controls;
-$('refresh').onclick=refresh;
+$('refresh').onclick=()=>refresh();
+$('repository').onchange=()=>{if(!busy){setRepository($('repository').value);void refresh(false);}};
 $('commit').onclick=()=>perform('commit',{message:$('commit-text').value});
 $('fetch').onclick=()=>perform('fetch',{remote:remote()});
 $('pull').onclick=()=>{const s=state;if(s?.upstream&&confirm(`${s.branch} に ${remote()}/${s.upstream.ref.replace(/^refs\/heads\//,'')} を取り込みます。履歴が分岐している場合は停止します。よろしいですか？`))void perform('pull',{remote:remote()});};
@@ -118,7 +147,7 @@ let forceSelection=null;
 $('force-push').onclick=()=>{
  const r=remoteInfo(),s=state;
  if(!r?.github||!s?.upstream?.oid)return;
- forceSelection={branch:s.branch,remote:r.name,revision:s.revision};
+ forceSelection={branch:s.branch,remote:r.name,revision:s.revision,repoId};
  $('force-target').textContent=`${r.github.url} の ${s.upstream.ref} を上書きします。入力するブランチ名: ${s.branch}`;
  $('force-confirm').value='';
  $('force-submit').disabled=true;
@@ -130,7 +159,7 @@ $('force-submit').onclick=()=>$('force-dialog').close('confirm');
 $('force-confirm').oninput=()=>{$('force-submit').disabled=$('force-confirm').value!==forceSelection?.branch;};
 $('force-dialog').onclose=()=>{
  const selection=forceSelection;forceSelection=null;
- if(selection&&$('force-dialog').returnValue==='confirm'&&selection.revision===state?.revision&&$('force-confirm').value===selection.branch)
+ if(selection&&$('force-dialog').returnValue==='confirm'&&selection.repoId===repoId&&selection.revision===state?.revision&&$('force-confirm').value===selection.branch)
   void perform('force-push',{remote:selection.remote,confirm:selection.branch});
 };
 $('show-diff').onclick=()=>{view='diff';void renderReview();};

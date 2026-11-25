@@ -7,7 +7,7 @@ import {randomBytes} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {toolsTarget} from '../ファイル機能/ai-search.mjs';
 import repository from './リポジトリ.cjs';
-const {gitAvailable,createRepository}=repository;
+const {gitAvailable,gitWorkspace,validateWorkspaceEntry,createRepository}=repository;
 const prefix='/development/git';
 // 公開する共通資産は固定名だけで、プロジェクトの任意ファイルを配信しない。
 const ownAsset=(name,mime)=>[name,[new URL('./'+name,import.meta.url),mime]];
@@ -21,7 +21,7 @@ const assets=new Map([
  ['titlebar-colors.css',[new URL('../src/components/共通表示/タイトルバー配色.css',import.meta.url),'text/css; charset=utf-8']],
 ]);
 const html=await readFile(new URL('./panel.html',import.meta.url),'utf8');
-const fields={status:[],history:[],'tools-status':[],diff:['path','side'],stage:['revision','path'],unstage:['revision','path'],commit:['revision','message'],fetch:['revision','remote'],pull:['revision','remote'],push:['revision','remote'],'force-push':['revision','remote','confirm'],'github-pr':['remote'],'github-issue':['remote']};
+const fields={repositories:[],status:[],history:[],'tools-status':[],diff:['path','side'],stage:['revision','path'],unstage:['revision','path'],commit:['revision','message'],fetch:['revision','remote'],pull:['revision','remote'],push:['revision','remote'],'force-push':['revision','remote','confirm'],'github-pr':['remote'],'github-issue':['remote']};
 const headers={'cache-control':'no-store','x-content-type-options':'nosniff','referrer-policy':'no-referrer'};
 function json(res,code,value){
  if(!res.destroyed&&!res.writableEnded)res.writeHead(code,{...headers,'content-type':'application/json; charset=utf-8'}).end(JSON.stringify(value));
@@ -46,7 +46,14 @@ export async function gitToolsOnline(project,signal,fetcher=fetch,targetFor=tool
  }catch{return false;}
 }
 export function createGitPanel(project,{state,standalone=false,linked=false,checkTools=gitToolsOnline}={}){
- const key=randomBytes(24).toString('hex'),repo=createRepository(project),controllers=new Set();let closed=false;
+ const key=randomBytes(24).toString('hex'),repositories=new Map(),controllers=new Set();let closed=false;
+ async function discover(signal){
+  const found=await gitWorkspace(project,{signal});
+  const active=new Set(found.entries.map(entry=>entry.id));
+  for(const id of repositories.keys())if(!active.has(id))repositories.delete(id);
+  for(const entry of found.entries)if(!repositories.has(entry.id))repositories.set(entry.id,{entry,repo:createRepository(entry.cwd)});
+  return found;
+ }
  const local=req=>/^(?:127\.0\.0\.1|localhost):\d+$/.test(req.headers.host||'');
  const session=()=>standalone?'standalone':state?.().active?String(state().startedAt):'';
  function close(){closed=true;for(const controller of controllers)controller.abort();}
@@ -72,7 +79,7 @@ export function createGitPanel(project,{state,standalone=false,linked=false,chec
   }
   const action=pathname.startsWith('/api/git/')?pathname.slice(9):'';
   if(!Object.hasOwn(fields,action)){json(res,404,{error:'未対応の Git 操作です。'});return true;}
-  const method=['status','history','tools-status'].includes(action)?'GET':'POST';
+  const method=['status','history','tools-status','repositories'].includes(action)?'GET':'POST';
   if(req.method!==method){json(res,405,{error:'メソッドが不正です。'});return true;}
   if(req.headers['x-aidiy-git']!==key){json(res,403,{error:'Git パネルから実行してください。'});return true;}
   const version=session();
@@ -87,7 +94,28 @@ export function createGitPanel(project,{state,standalone=false,linked=false,chec
   controllers.add(controller);res.once('close',disconnect);
   // 作業セッションを閉じた後の実行・送信を防ぐ。開始済み操作の結果は Git で再確認する。
   const guard=setInterval(()=>{if(session()!==version)controller.abort();},250);guard.unref();
-  try{json(res,200,action==='tools-status'?{online:await checkTools(project,controller.signal)===true}:await repo.request(action,body,controller.signal));}
+  try{
+   if(action==='tools-status'){json(res,200,{online:await checkTools(project,controller.signal)===true});return true;}
+   if(action==='repositories'){
+    const {name,mode,entries}=await discover(controller.signal);
+    json(res,200,{name,mode,repositories:entries.map(({id,name})=>({id,name}))});return true;
+   }
+   const id=req.headers['x-aidiy-git-repo'];
+   let target;
+   if(id!==undefined){
+    if(typeof id!=='string'||!/^[a-f0-9]{64}$/.test(id)){json(res,400,{error:'リポジトリの選択が不正です。'});return true;}
+    target=repositories.get(id);
+   }else{
+    // 明示対象のない旧要求は、ルートが単独リポジトリの場合だけ扱う。
+    const {mode,entries}=await discover(controller.signal);
+    if(mode==='root'&&entries.length===1)target=repositories.get(entries[0].id);
+   }
+   if(!target||!await validateWorkspaceEntry(project,target.entry,controller.signal)){
+    json(res,409,{error:'対象のリポジトリを確認できません。再読込して選び直してください。'});return true;
+   }
+   if(controller.signal.aborted||session()!==version){json(res,409,{error:'IDE の利用セッションが変わりました。'});return true;}
+   json(res,200,await target.repo.request(action,body,controller.signal));
+  }
   catch(error){json(res,error.status||500,{error:error.status?error.message:'Git の処理に失敗しました。'});}
   finally{clearInterval(guard);controllers.delete(controller);res.off('close',disconnect);}
   return true;

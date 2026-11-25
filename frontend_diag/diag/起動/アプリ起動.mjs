@@ -90,7 +90,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
   try{
    if(await gitAvailable(path)===true)return {利用可能:true,無効理由:'',無効表示:''};
   }catch{}
-  return {利用可能:false,無効理由:'Git が利用でき、選択フォルダ自体が Git 作業ツリーのルートである場合だけ開けます。',無効表示:'Git 利用不可'};
+  return {利用可能:false,無効理由:'Git が利用でき、選択フォルダまたはその直下に Git リポジトリがある場合に開けます。',無効表示:'Git 利用不可'};
  }
  async function python(){
   if(pythonCommand)return [pythonCommand,[]];

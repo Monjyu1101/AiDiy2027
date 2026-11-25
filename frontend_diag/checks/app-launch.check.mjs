@@ -215,7 +215,7 @@ test('Diagの画面読取失敗はCPU起動を止め、再試行できる',async
  await assert.rejects(invalid.manager.launch('cpu',invalid.project),{status:503});assert.equal(invalid.calls.length,0);
 });
 
-test('Git requires the exact selected Git work-tree root, accepts a linked worktree, and rechecks before launch',async t=>{
+test('Git recognizes a root or its direct workspace children, accepts a linked worktree, and rechecks before launch',async t=>{
  const f=await fixture(t);
  const launchEntry=join(f.root,'frontend_ide','aidiy_git','launch.mjs');
  assert.equal((await f.manager.gitStatus(f.project)).無効表示,'未導入');
@@ -240,9 +240,13 @@ test('Git requires the exact selected Git work-tree root, accepts a linked workt
   assert.equal(f.calls.at(-1).options.cwd,repo);
   assert.equal(f.calls.at(-1).options.shell,false);
  }
+ // f.root has two direct Git worktrees and no .git of its own.
+ assert.equal((await f.manager.gitStatus(f.root)).利用可能,true);
+ assert.equal((await f.manager.launch('git',f.root)).受付,true);
+ assert.deepEqual(f.calls.at(-1).args,[launchEntry,'--project',await realpath(f.root)]);
  await rm(join(linked,'.git'));
  await assert.rejects(f.manager.launch('git',linked),{status:409});
- assert.equal(f.calls.length,2);
+ assert.equal(f.calls.length,3);
 });
 test('the Git status endpoint is authenticated and accepts only a project path',async t=>{
  const f=await fixture(t),server=createServer({token:'fixture',appLauncher:f.manager,modelTrials:{close(){}},startManager:{close(){}}});
