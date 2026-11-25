@@ -40,7 +40,7 @@ function load(project, filename, data) {
   const dependencies = {...vue, onMounted: () => {}, defineProps: () => ({isOpen: false, sessionId: 'fixture'}), defineEmits: () => () => {},
     apiClient: {post: async (url, body) => {calls.push({url, body});return {data: {status: 'OK', data: {available_models: {code_models: data.code_models, ...data.available_models}, モデル設定: structuredClone(data.settings)}}};}},
     qAlert: async () => {}, qMessage: async () => {}, qConfirm: async () => true};
-  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, codeAiOptions, liveAiOptions, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
+  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, codeAiOptions, codeSlotProviders, buildCodeModelOptions, liveAiOptions, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
   return {...api, calls, nextTick: vue.nextTick, close: () => scope.stop(), template: descriptor.template.content};
 }
 
@@ -178,6 +178,42 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
     } finally { app.close(); }
   });
 
+  test(`${project}: saved Code slots stay visible and round trip even when candidates disappear`, async () => {
+    const data = fixture();
+    const savedProviders = ['codex_cli', 'auto', 'aidiy_pi', 'antigravity_cli', 'opencode_cli', 'agy_cli'];
+    for (const [i, provider] of savedProviders.entries()) {
+      data.settings[`CODE_AI${i+1}_NAME`] = provider;
+      data.settings[`CODE_AI${i+1}_MODEL`] = `saved-${i+1}`;
+    }
+    data.code_models = { codex_cli: {auto: 'Auto', next: 'New model'} };
+    const app = load(project, filename, data);
+    try {
+      const verify = async () => {
+        await app.loadConfig(); await app.nextTick();
+        assert.equal(app.calls.at(-1).body.保存済み, true);
+        for (const [i, provider] of savedProviders.entries()) {
+          const index = i+1, model = data.settings[`CODE_AI${index}_MODEL`];
+          assert.equal(app.selections[`codeAi${index}`], provider);
+          assert.equal(app.selections[`codeModel${index}`], model);
+          assert.ok(app.codeSlotProviders(index).includes(provider));
+          assert.ok(app.buildCodeModelOptions(provider, model).some(option => option.value === model));
+          assert.ok(app.template.includes(`v-for="ai in codeSlotProviders(${index})"`));
+        }
+      };
+      await verify();
+      app.selections.codeModel1 = 'next';
+      await app.handleSaveOnly();
+      const request = app.calls.at(-1).body;
+      assert.equal(request.save, true);
+      for (const [i, provider] of savedProviders.entries()) {
+        assert.equal(request.モデル設定[`CODE_AI${i+1}_NAME`], provider);
+        assert.equal(request.モデル設定[`CODE_AI${i+1}_MODEL`], i === 0 ? 'next' : `saved-${i+1}`);
+      }
+      Object.assign(data.settings, request.モデル設定);
+      data.code_models = {};
+      await verify();
+    } finally { app.close(); }
+  });
   test(`${project}: saved values survive loading and every Code slot uses the provider default on manual change`, async () => {
     const data = fixture(), app = load(project, filename, data);
     try {

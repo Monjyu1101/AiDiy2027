@@ -219,19 +219,28 @@ const liveVoiceOptions = computed(() => {
   return Object.entries(voices).map(([value, label]) => ({ value, label: label || value }));
 });
 
-const codeModelOptions1 = computed(() => buildCodeModelOptions(selections.codeAi1));
-const codeModelOptions2 = computed(() => buildCodeModelOptions(selections.codeAi2));
-const codeModelOptions3 = computed(() => buildCodeModelOptions(selections.codeAi3));
-const codeModelOptions4 = computed(() => buildCodeModelOptions(selections.codeAi4));
-const codeModelOptions5 = computed(() => buildCodeModelOptions(selections.codeAi5));
-const codeModelOptions6 = computed(() => buildCodeModelOptions(selections.codeAi6));
+const codeModelOptions1 = computed(() => buildCodeModelOptions(selections.codeAi1, selections.codeModel1));
+const codeModelOptions2 = computed(() => buildCodeModelOptions(selections.codeAi2, selections.codeModel2));
+const codeModelOptions3 = computed(() => buildCodeModelOptions(selections.codeAi3, selections.codeModel3));
+const codeModelOptions4 = computed(() => buildCodeModelOptions(selections.codeAi4, selections.codeModel4));
+const codeModelOptions5 = computed(() => buildCodeModelOptions(selections.codeAi5, selections.codeModel5));
+const codeModelOptions6 = computed(() => buildCodeModelOptions(selections.codeAi6, selections.codeModel6));
 const taskModelOptions = computed(() => buildCodeModelOptions(selections.taskAi));
 const teamModelOptions = computed(() => buildCodeModelOptions(selections.teamAi));
 function codeModelsFor(aiName: string) {
   return availableModels.value?.code_models?.[aiName] || {};
 }
-function buildCodeModelOptions(aiName: string) {
-  return Object.entries(codeModelsFor(aiName)).map(([value, label]) => ({ value, label: label || value }));
+function buildCodeModelOptions(aiName: string, selected?: string) {
+  const options = Object.entries(codeModelsFor(aiName)).map(([value, label]) => ({ value, label: label || value }));
+  if (selected !== undefined && !options.some(option => option.value === selected)) {
+    options.push({ value: selected, label: selected ? selected + "（設定値・一覧外）" : "未設定" });
+  }
+  return options;
+}
+function codeSlotProviders(index: 1 | 2 | 3 | 4 | 5 | 6) {
+  const selected = selections[`codeAi${index}`];
+  const candidates = codeAiOptions.value;
+  return candidates.includes(selected) ? candidates : [...candidates, selected];
 }
 const codeBaseOptionsList = computed(() =>
   Object.entries(codeBaseOptions.value || {}).map(([value, label]) => ({ value, label }))
@@ -309,12 +318,12 @@ const loadConfig = async () => {
         decisionModels[key] = String(currentSettings.value[key] ?? geminiPurposeDefault(key)).trim() || 'auto';
       }
       selections.liveAi = chooseAvailable(currentSettings.value.LIVE_AI_NAME, liveAiOptions.value);
-      selections.codeAi1 = chooseCodeProvider(currentSettings.value.CODE_AI1_NAME);
-      selections.codeAi2 = chooseCodeProvider(currentSettings.value.CODE_AI2_NAME);
-      selections.codeAi3 = chooseCodeProvider(currentSettings.value.CODE_AI3_NAME);
-      selections.codeAi4 = chooseCodeProvider(currentSettings.value.CODE_AI4_NAME);
-      selections.codeAi5 = chooseCodeProvider(currentSettings.value.CODE_AI5_NAME);
-      selections.codeAi6 = chooseCodeProvider(currentSettings.value.CODE_AI6_NAME);
+      selections.codeAi1 = currentSettings.value.CODE_AI1_NAME ?? chooseCodeProvider("");
+      selections.codeAi2 = currentSettings.value.CODE_AI2_NAME ?? chooseCodeProvider("");
+      selections.codeAi3 = currentSettings.value.CODE_AI3_NAME ?? chooseCodeProvider("");
+      selections.codeAi4 = currentSettings.value.CODE_AI4_NAME ?? chooseCodeProvider("");
+      selections.codeAi5 = currentSettings.value.CODE_AI5_NAME ?? chooseCodeProvider("");
+      selections.codeAi6 = currentSettings.value.CODE_AI6_NAME ?? chooseCodeProvider("");
       selections.codeBasePath = currentSettings.value.CODE_BASE_PATH || Object.keys(codeBaseOptions.value || {})[0] || '';
       selections.codePermissions = currentSettings.value.CODE_PERMISSIONS || 'auto';
       selections.taskAi = chooseCodeProvider(currentSettings.value.TASK_AI_NAME || 'claude_cli');
@@ -329,12 +338,12 @@ const loadConfig = async () => {
       const voiceKey = LIVE_VOICE_KEYS[selections.liveAi];
       selections.liveVoice = chooseAvailable(voiceKey && currentSettings.value[voiceKey], Object.keys(liveVoices?.[selections.liveAi] || {}));
 
-      selections.codeModel1 = chooseAvailable(currentSettings.value.CODE_AI1_MODEL, Object.keys(codeModelsFor(selections.codeAi1)));
-      selections.codeModel2 = chooseAvailable(currentSettings.value.CODE_AI2_MODEL, Object.keys(codeModelsFor(selections.codeAi2)));
-      selections.codeModel3 = chooseAvailable(currentSettings.value.CODE_AI3_MODEL, Object.keys(codeModelsFor(selections.codeAi3)));
-      selections.codeModel4 = chooseAvailable(currentSettings.value.CODE_AI4_MODEL, Object.keys(codeModelsFor(selections.codeAi4)));
-      selections.codeModel5 = chooseAvailable(currentSettings.value.CODE_AI5_MODEL, Object.keys(codeModelsFor(selections.codeAi5)));
-      selections.codeModel6 = chooseAvailable(currentSettings.value.CODE_AI6_MODEL, Object.keys(codeModelsFor(selections.codeAi6)));
+      selections.codeModel1 = currentSettings.value.CODE_AI1_MODEL ?? codeDefaultModel(selections.codeAi1);
+      selections.codeModel2 = currentSettings.value.CODE_AI2_MODEL ?? codeDefaultModel(selections.codeAi2);
+      selections.codeModel3 = currentSettings.value.CODE_AI3_MODEL ?? codeDefaultModel(selections.codeAi3);
+      selections.codeModel4 = currentSettings.value.CODE_AI4_MODEL ?? codeDefaultModel(selections.codeAi4);
+      selections.codeModel5 = currentSettings.value.CODE_AI5_MODEL ?? codeDefaultModel(selections.codeAi5);
+      selections.codeModel6 = currentSettings.value.CODE_AI6_MODEL ?? codeDefaultModel(selections.codeAi6);
       const taskModelKeys = Object.keys(codeModelsFor(selections.taskAi));
       selections.taskModelPlan = chooseAvailable(currentSettings.value.TASK_AI_MODEL_plan || 'auto', taskModelKeys);
       selections.taskModelDo = chooseAvailable(currentSettings.value.TASK_AI_MODEL_do || 'auto', taskModelKeys);
@@ -828,7 +837,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai1-select">CODE_AI1_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai1-select" v-model="selections.codeAi1" class="config-panel-select" @change="handleCodeAiChange(1)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(1)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
@@ -844,7 +853,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai2-select">CODE_AI2_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai2-select" v-model="selections.codeAi2" class="config-panel-select" @change="handleCodeAiChange(2)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(2)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
@@ -860,7 +869,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai3-select">CODE_AI3_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai3-select" v-model="selections.codeAi3" class="config-panel-select" @change="handleCodeAiChange(3)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(3)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
@@ -878,7 +887,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai4-select">CODE_AI4_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai4-select" v-model="selections.codeAi4" class="config-panel-select" @change="handleCodeAiChange(4)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(4)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
@@ -894,7 +903,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai5-select">CODE_AI5_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai5-select" v-model="selections.codeAi5" class="config-panel-select" @change="handleCodeAiChange(5)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(5)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
@@ -910,7 +919,7 @@ onMounted(() => {
                     <label class="config-panel-label" for="config-code-ai6-select">CODE_AI6_NAME:</label>
                     <div class="config-panel-control">
                       <select id="config-code-ai6-select" v-model="selections.codeAi6" class="config-panel-select" @change="handleCodeAiChange(6)">
-                        <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                        <option v-for="ai in codeSlotProviders(6)" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                       </select>
                     </div>
                   </div>
