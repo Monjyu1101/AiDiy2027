@@ -449,3 +449,5 @@
 .ide-heading .ide-view-modes button{padding:2px 5px}
 
 .ai-popup.git-popup{width:min(900px,calc(100vw - 32px))}.git-popup iframe{flex:1;min-height:0;width:100%;border:0;background:#101822}
+
+.development-app.ide .git-popup.git-popup-folded{bottom:auto;height:33px}

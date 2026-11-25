@@ -12,7 +12,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import repository from '../aidiy_git/リポジトリ.cjs';
 import {startGit} from '../aidiy_git/serve.mjs';
-import {createGitPanel} from '../aidiy_git/パネル.mjs';
+import {createGitPanel,gitToolsOnline} from '../aidiy_git/パネル.mjs';
 import {createServer} from 'node:http';
 import {once} from 'node:events';
 const execute=promisify(execFile);
@@ -102,6 +102,10 @@ test('only the real github.com fetch/push pair exposes GitHub features and safe 
  await git(dir,'remote','set-url','--push','origin','https://github.com.example.invalid/Org/Repo.git');
  status=await repo.request('status');assert.equal(status.remotes[0].github,null);
  await assert.rejects(repo.request('github-pr',{remote:'origin'}),/GitHub/);
+ await git(dir,'remote','set-url','--push','origin','https://github.com/Org/Repo.git');
+ await git(dir,'remote','set-url','--add','--push','origin','https://github.com/Org/Other.git');
+ status=await repo.request('status');assert.equal(status.remotes[0].push.length,2);assert.equal(status.remotes[0].github,null);
+
  for(const url of ['https://github.com.evil.invalid/o/r','https://github.com@evil.invalid/o/r','https://github.com:444/o/r','https://github.com/o/r/compare','ext::https://github.com/o/r','file:///tmp/git'])
   assert.equal(repository.githubUrl(url),null,url);
  assert.deepEqual(repository.githubUrl('git@github.com:Org/Repo.git'),{owner:'Org',repo:'Repo',url:'https://github.com/Org/Repo'});
@@ -121,6 +125,10 @@ test('normal first push sets upstream; GitHub force requires explicit exact leas
  assert.ok(!args.includes('--force'));
  await git(dir,'clone',bare,peer);await user(peer);await git(peer,'commit','--allow-empty','-m','remote advance');await git(peer,'push');
  const expected=(await git(peer,'rev-parse','HEAD')).stdout;
+ // 別操作の取得で追跡refが新しくなっても、当初確認したleaseを上書きしない。
+ await git(repo,'fetch','origin');
+ assert.notEqual((await service.request('status')).upstream.oid,status.upstream.oid);
+
  await assert.rejects(git(repo,...args),error=>/stale info/i.test(error.stdout+error.stderr));
  assert.equal((await git(bare,'rev-parse','HEAD')).stdout,expected);
 });
@@ -134,4 +142,24 @@ test('public CLI entry starts the isolated Git panel without Core or IDE UI depe
  const request=client(app.url,keyOf(html));
  assert.equal((await request('status')).status,200);
  assert.equal((await fetch(new URL('/development/git/github-tabs.js',app.url))).status,200);
+});
+
+test('Tools probe checks the same ping as Term and does not gate Git when unavailable',async t=>{
+ const dir=await make(t);await init(dir);
+ const target=async()=> 'http://127.0.0.1:8095/aidiy_code_agents/';
+ assert.equal(await gitToolsOnline(dir,undefined,async(url,{signal,redirect})=>{
+  assert.equal(url.href,'http://127.0.0.1:8095/aidiy_code_agents/ping');assert.ok(signal);assert.equal(redirect,'error');
+  return {ok:true,json:async()=>({status:'ok',name:'aidiy_code_agents'})};
+ },target),true);
+ assert.equal(await gitToolsOnline(dir,undefined,async()=>{throw Error('offline');},target),false);
+ assert.equal(await gitToolsOnline(dir,undefined,async()=>({ok:true,json:async()=>({status:'ok',name:'unrelated'})}),target),false);
+ let online=false;
+ const app=await startGit(dir,{checkTools:async(project,signal)=>{assert.equal(project,dir);assert.ok(signal);return online;}});
+ t.after(()=>app.close());
+ const key=keyOf(await fetch(app.url).then(r=>r.text())),request=client(app.url,key);
+ assert.equal((await client(app.url,'bad')('tools-status')).status,403);
+ assert.deepEqual((await request('tools-status')).result,{online:false});assert.equal((await request('status')).status,200);
+ online=true;assert.deepEqual((await request('tools-status')).result,{online:true});
+ for(const file of ['titlebar-colors.css','toggle-drag.js','window-actions.js','panel-chrome.js'])
+  assert.equal((await fetch(new URL('/development/git/'+file,app.url))).status,200);
 });

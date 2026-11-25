@@ -46,8 +46,8 @@ test('Explorer・軌跡: 499msでは通常入力のまま、500msで同じ静止
   assert.notEqual(f.emit('mouseUp').prevented,true);assert.ok(f.calls.some(call=>call[0]==='end'));assert.equal(f.ticks.size,0);f.dispose();
  }
 });
-test('Discord・Slack・Task・Teamは実共有controllerまで通り、長押し移動・解放・再操作・blurを保つ',async()=>{
- for(const kind of ['discord','slack','task','team']){
+test('Discord・Slack・Task・Team・Gitは実共有controllerまで通り、長押し移動・解放・再操作・blurを保つ',async()=>{
+ for(const kind of ['discord','slack','task','team','git']){
   const f=fixture(kind,undefined,undefined,true);
   f.emit('mouseDown');await f.advance(499);assert.equal(f.ticks.size,0,kind);
   await f.advance(1);assert.equal(f.ticks.size,1,kind);assert.equal(f.leases.size,1,kind);
@@ -60,20 +60,20 @@ test('Discord・Slack・Task・Teamは実共有controllerまで通り、長押�
  }
 });
 test('全パネル: nativeのdown/upを直ちに一度だけ渡し、短押しを再送しない',async()=>{
- for(const kind of ['ide','code','live','navi','term','browser','viewer','explorer','panel-viewer','panel-routes','diag','avatar','discord','slack','task','team']){
+ for(const kind of ['ide','code','live','navi','term','browser','viewer','explorer','panel-viewer','panel-routes','diag','avatar','discord','slack','task','team','git']){
   const f=fixture(kind);assert.notEqual(f.emit('mouseDown').prevented,true);assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown']);assert.equal(f.calls.length,0);
   assert.notEqual(f.emit('mouseUp').prevented,true);await f.advance();assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown','mouseUp']);assert.equal(f.timers.size,0);assert.deepEqual(f.sent,[]);assert.deepEqual(f.calls,[]);f.dispose();
  }
 });
 test('背景の長押しだけ移動し、移動後もnative upを渡して次のクリックを妨げない',async()=>{
- for(const kind of ['browser','diag','avatar','discord','slack','task','team']){
+ for(const kind of ['browser','diag','avatar','discord','slack','task','team','git']){
  const f=fixture(kind);f.emit('mouseDown');f.emit('mouseMove');await f.advance();assert.deepEqual(f.calls,[['begin']]);
  f.cursor({x:-300,y:70});f.emit('mouseMove');assert.ok(f.calls.some(c=>c[0]==='move'));assert.notEqual(f.emit('mouseUp').prevented,true);assert.equal(f.inputs.filter(i=>i.type==='mouseDown').length,1);assert.equal(f.inputs.filter(i=>i.type==='mouseUp').length,1);f.inputs.length=0;assert.equal(f.ticks.size,0);
  f.emit('mouseDown');f.emit('mouseUp');assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown','mouseUp']);f.dispose();
  }
 });
 test('操作部品では長押しでもnative入力を遮断・再送せず、移動を開始しない',async()=>{
- for(const kind of ['code','live','diag','avatar','discord','slack','task','team']){
+ for(const kind of ['code','live','diag','avatar','discord','slack','task','team','git']){
   const f=fixture(kind,async()=>false);assert.notEqual(f.emit('mouseDown').prevented,true);await f.advance();
   assert.notEqual(f.emit('mouseUp').prevented,true);assert.deepEqual(f.inputs.map(i=>i.type),['mouseDown','mouseUp']);assert.deepEqual(f.sent,[]);assert.deepEqual(f.calls,[]);assert.equal(f.timers.size,0);f.dispose();
  }

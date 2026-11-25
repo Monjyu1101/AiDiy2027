@@ -49,7 +49,7 @@ const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
 const cpuWindow=config.kind==='cpu'||config.kind==='ide'&&location.hash==='#cpu';
-const cpuOpen=ref(false), gitOpen=ref(false), gitAvailable=ref(false);
+const cpuOpen=ref(false), gitOpen=ref(false), gitAvailable=ref(false), gitFolded=ref(false), gitFrame=ref(null);
 const runningApps=ref([]);
 function openCpu(){if(desktop)return openWindow('cpu');cpuOpen.value=true;}
 const browserHeader=location.hash==='#browser-header';
@@ -121,7 +121,7 @@ async function status(){
 function update(data){
   if(disposed)return;
   const next=data.active?`${data.mode}:${data.startedAt}:${data.project?.path||''}`:'';
-  if(next!==session){runningApps.value=[];gitOpen.value=false;gitAvailable.value=false;}
+  if(next!==session){runningApps.value=[];gitOpen.value=false;gitFolded.value=false;gitAvailable.value=false;}
   if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.term='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
   state.value=data;error.value=data.message||'';
 }
@@ -147,7 +147,12 @@ const gitTitle=computed(()=>gitAvailable.value?'選択中のプロジェクト�
 function openGit(displayId){
   if(!gitAvailable.value||!state.value.active)return;
   if(desktop)return openWindow('git',displayId);
-  gitOpen.value=true;
+  if(!gitOpen.value){gitFolded.value=false;gitOpen.value=true;}
+}
+function gitFrameMessage(event){
+  if(!gitOpen.value||event.origin!==location.origin||event.source!==gitFrame.value?.contentWindow)return;
+  if(event.data?.type==='aidiy-git-fold'&&typeof event.data.hidden==='boolean')gitFolded.value=event.data.hidden;
+  if(event.data?.type==='aidiy-git-close'){gitOpen.value=false;gitFolded.value=false;}
 }
 const gitItem=()=>({key:'git',text:launchText('git','Git'),title:gitTitle.value,disabled:!gitAvailable.value||!!launching.value,run:()=>openGit()});
 const navigationWindows=ref([]),navigationRefs=new Map();let nextNavigation=0;
@@ -309,12 +314,12 @@ onMounted(async()=>{
     const version=allUpdate;
     void window.aidiyWindow.allDisplays?.('state').then(value=>{if(version===allUpdate)updateAllDisplays(value);}).catch(()=>{});
   }
-  if(config.kind==='ide'&&!desktop&&!viewerPath)window.aidiyDraftLink=draftLink;
+  if(config.kind==='ide'&&!desktop&&!viewerPath){window.aidiyDraftLink=draftLink;window.addEventListener('message',gitFrameMessage);}
   if(config.host||viewerPath||browserPanel||cpuWindow)return;
   if(config.kind==='ide'){await status();if(!disposed)timer=setInterval(status,10000);}
   else if(config.kind!=='navi'&&!base[config.kind])await openPanel(config.kind);
 });
-onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=true;revision++;lifetime.abort();clearInterval(timer);pinnedViewers.clear();if(window.aidiyDraftLink===draftLink)delete window.aidiyDraftLink;});
+onBeforeUnmount(()=>{window.removeEventListener('message',gitFrameMessage);stopWindowMove();stopAllDisplays();stopLayout();disposed=true;revision++;lifetime.abort();clearInterval(timer);pinnedViewers.clear();if(window.aidiyDraftLink===draftLink)delete window.aidiyDraftLink;});
 </script>
 <template>
   <DraftHandoffDialog v-if="draftRequest" :request="draftRequest" :modeless="!!draftRequest.sourceElement" :load-targets="loadDraftTargets" :insert-draft="insertFileDraft" :launch-target="launchDraftTarget" @close="draftRequest=null" />
@@ -365,7 +370,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
       <template v-else>
         <NavigationPanel v-for="id in navigationWindows" :key="id" :ref="value=>value?navigationRefs.set(id,value):navigationRefs.delete(id)" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
         <CpuPanel v-if="cpuOpen" floating @close="cpuOpen=false" />
-        <aside v-if="gitOpen&&!desktop" class="ai-popup git-popup" aria-label="Git パネル"><nav class="ai-tabs"><button class="close" @click="gitOpen=false">Git パネルを閉じる</button></nav><iframe :src="'/development/git/?session='+encodeURIComponent(state.startedAt)" title="AiDiy Git" /></aside>
+        <aside v-if="gitOpen&&!desktop" class="ai-popup git-popup" :class="{'git-popup-folded':gitFolded}" aria-label="Git パネル"><iframe ref="gitFrame" :src="'/development/git/?session='+encodeURIComponent(state.startedAt)" title="AiDiy Git" /></aside>
         <SpaceView ref="spaceView" :key="`${state.mode}:${state.startedAt}:${state.project?.path||''}`" :started-at="state.startedAt" :view-mode="viewMode" :all-displays="allDisplayState.active" />
         <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='term'" @click="openPanel('term')">Term</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>
           <CodePanel ref="codePanel" v-if="base.code" v-show="tab==='code'" :key="base.code" :base="base.code" :icon="config.icon" embedded page-notifications />

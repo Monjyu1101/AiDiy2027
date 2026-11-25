@@ -1,23 +1,29 @@
 <!doctype html>
 <!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors. Licensed under AiDiy 公開利用ライセンス v1.1. See LICENSE. -->
 <html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="aidiy-git" content="__GIT_TOKEN__"><meta name="aidiy-session" content="__GIT_SESSION__">
-<title>__GIT_TITLE__</title><link rel="stylesheet" href="/development/git/panel.css"><script type="module" src="/development/git/panel.js"></script></head>
+<meta name="aidiy-git" content="__GIT_TOKEN__"><meta name="aidiy-session" content="__GIT_SESSION__"><meta name="aidiy-embedded" content="__GIT_EMBEDDED__">
+<title>__GIT_TITLE__</title><link rel="stylesheet" href="/development/git/titlebar-colors.css"><link rel="stylesheet" href="/development/git/panel.css"><script type="module" src="/development/git/panel.js"></script></head>
 <body>
-<header class="titlebar"><button id="fold" class="native fold" aria-label="折りたたむ" hidden>▽</button><h1>__PANEL_LABEL__</h1><nav class="native" hidden aria-label="ウィンドウ操作"><button id="min" title="最小化">−</button><button id="max" title="最大化 / 元に戻す">□</button><button id="pin" title="最前面">📌</button><button id="close" title="閉じる">×</button></nav></header>
+<header class="panel-brand titlebar">
+  <span class="connection-label"><button type="button" id="fold" class="fold" data-aidiy-no-window-move aria-label="パネル内容を非表示" aria-expanded="true"><span id="fold-mark" aria-hidden="true">▽</span></button><i id="connection-dot" aria-hidden="true"></i><span id="connection-label" role="status">未接続</span></span>
+  <h1>__PANEL_LABEL__</h1>
+  <nav class="window-actions" aria-label="ウィンドウ操作"><button id="min" class="native" hidden title="最小化" aria-label="最小化"><span class="window-minimize" aria-hidden="true"></span></button><button id="max" class="native" hidden title="最大化" aria-label="最大化"><span class="window-maximize" aria-hidden="true"></span></button><button id="pin" class="native" hidden title="ピン留め" aria-label="ピン留め" disabled><span aria-hidden="true">📌</span></button><button id="close" hidden title="閉じる" aria-label="閉じる"><span class="close-icon" aria-hidden="true"></span></button></nav>
+</header>
+<div id="connection-bar" class="connection-bar" aria-hidden="true"></div>
 <div id="main">
+<div class="component-toolbar" data-aidiy-window-move-handle><span id="project">プロジェクト: Git</span><button type="button" id="tools-check" class="auto-connect" role="switch" aria-checked="true" title="Tools接続確認 ON"><span>Tools接続確認</span><span class="switch-track" aria-hidden="true"></span></button></div>
 <nav class="main-tabs" aria-label="Git パネル">
  <button id="tab-git" aria-pressed="true">Git</button><button id="tab-pr" aria-pressed="false" hidden>PR</button><button id="tab-issue" aria-pressed="false" hidden>Issue</button>
 </nav>
 <div id="git-content">
 <section class="toolbar" aria-label="同期">
- <div class="identity"><strong id="project">Git</strong><span id="branch"></span><span id="counts"></span></div>
+ <div class="identity"><span id="branch"></span><span id="counts"></span></div>
  <label for="remote">リモート</label><select id="remote" title="リモートを選択"></select>
  <button id="fetch">取得</button><button id="pull">取り込み</button><button id="push" class="primary">送信</button><button id="force-push" class="danger" hidden title="GitHub の追跡先が最後の取得時点から変わっていない場合だけ上書きします">強制送信…</button><button id="refresh">再読込</button>
 </section>
 <p id="target"></p>
 <p id="message" class="notice" role="status" aria-live="polite"></p>
-<main>
+<main data-aidiy-window-move-handle>
  <aside aria-label="変更一覧">
   <section><h2>未ステージ <span id="work-count"></span></h2><ul id="work"></ul></section>
   <section><h2>ステージ済 <span id="index-count"></span></h2><ul id="index"></ul></section>

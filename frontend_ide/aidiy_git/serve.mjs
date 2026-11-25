@@ -7,9 +7,9 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {createGitPanel} from './パネル.mjs';
 import repository from './リポジトリ.cjs';
-export async function startGit(project,{port=0,strict=false,linked=false}={}){
+export async function startGit(project,{port=0,strict=false,linked=false,checkTools}={}){
  if(!await repository.gitAvailable(project))throw Error('選択したプロジェクトは Git 管理されていないか、Git を利用できません。');
- const panel=createGitPanel(project,{standalone:true,linked});
+ const panel=createGitPanel(project,{standalone:true,linked,checkTools});
  const server=createServer(async(req,res)=>{
   const actual=server.address()?.port;
   const hosts=[`127.0.0.1:${actual}`,`localhost:${actual}`];

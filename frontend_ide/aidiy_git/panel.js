@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+import {installGitChrome} from './panel-chrome.js';
 import {installGitHubTabs} from './github-tabs.js';
 const $=id=>document.getElementById(id);
 const token=document.querySelector('meta[name=aidiy-git]').content,session=document.querySelector('meta[name=aidiy-session]').content;
@@ -12,12 +13,13 @@ const note=(text='',error=false)=>{$('message').textContent=text;$('message').cl
 const remote=()=>$('remote').value;
 const remoteInfo=()=>state?.remotes?.find(item=>item.name===remote());
 const upstreamMatches=()=>!!state?.head && !!state?.branch && state.upstream?.remote===remote();
-async function request(action,body){
- const response=await fetch('/api/git/'+action,{method:body===undefined?'GET':'POST',cache:'no-store',headers:{'X-AiDiy-Git':token,'X-AiDiy-Git-Session':session,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+async function request(action,body,signal){
+ const response=await fetch('/api/git/'+action,{method:body===undefined?'GET':'POST',signal,cache:'no-store',headers:{'X-AiDiy-Git':token,'X-AiDiy-Git-Session':session,...(body===undefined?{}:{'Content-Type':'application/json'})},...(body===undefined?{}:{body:JSON.stringify(body)})});
  const value=await response.json();
  if(!response.ok)throw Error(value.error||'Git の処理に失敗しました。');
  return value;
 }
+const chrome=installGitChrome({request});
 const github=installGitHubTabs({load:action=>request(action,{remote:remote()}),onGitTab:()=>{}});
 function controls(){
  const target=remoteInfo();
@@ -37,7 +39,7 @@ function controls(){
 }
 const sideRows=(side)=>state?.rows?.filter(row=>side==='work'?(row.untracked||row.work!==' '):!row.untracked&&row.index!==' ')||[];
 function draw(){
- $('project').textContent=state?.project||'Git';
+ $('project').textContent='プロジェクト: '+(state?.project||'Git');
  $('branch').textContent=state?.branch||(state?.detached?'detached HEAD':'');
  const before=remote();
  const options=(state?.remotes||[]).map(({name})=>{const option=make('option',name);option.value=name;return option;});
@@ -96,13 +98,14 @@ async function refresh(){
 }
 const names={stage:'ステージ',unstage:'ステージ解除',commit:'コミット',fetch:'取得',pull:'取り込み',push:'送信','force-push':'強制送信'};
 async function perform(action,fields={}){
- if(busy||!state)return;busy=true;controls();note(names[action]+'中…');
+ if(busy||!state)return;busy=true;chrome.operationStarted();controls();note(names[action]+'中…');
+ let ok=false;
  try{
   state=await request(action,{revision:state.revision,...fields});
   if(action==='commit')$('commit-text').value='';
-  draw();note(names[action]+'しました。');void renderReview();
+  draw();note(names[action]+'しました。');ok=true;void renderReview();
  }catch(error){note(error.message,true);}
- finally{busy=false;controls();}
+ finally{chrome.operationFinished(ok);busy=false;controls();}
 }
 $('commit-text').oninput=controls;
 $('remote').onchange=controls;
@@ -132,15 +135,5 @@ $('force-dialog').onclose=()=>{
 };
 $('show-diff').onclick=()=>{view='diff';void renderReview();};
 $('show-history').onclick=()=>{view='history';void renderReview();};
-if(window.aidiyWindow&&window.top===window){
- const app=window.aidiyWindow;
- for(const element of document.querySelectorAll('.native'))element.hidden=false;
- for(const [id,method] of [['min','minimize'],['max','maximize'],['close','close'],['pin','togglePin']])$(id).onclick=()=>app[method]();
- const pinned=value=>$('pin').setAttribute('aria-pressed',String(!!(value?.pinned??value)));
- app.pinState?.().then(pinned).catch(()=>{});app.onPinChanged?.(pinned);
- const drawFold=(collapsed)=>{$('main').hidden=collapsed;$('fold').textContent=collapsed?'▶':'▽';$('fold').setAttribute('aria-label',collapsed?'展開':'折りたたむ');};
- app.onPanelCollapseState?.(value=>{if(typeof value?.collapsed==='boolean')drawFold(value.collapsed);});
- $('fold').onclick=async()=>{const collapsed=!$('main').hidden;const result=await app.collapsePanel(collapsed);if(result?.ok)drawFold(collapsed);};
-}
 controls();
 void refresh();
