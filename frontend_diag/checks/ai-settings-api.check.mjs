@@ -7,6 +7,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import {Readable} from 'node:stream';
+import {mkdtemp, readFile, writeFile, rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {createModelTrials} from '../diag/モデル試行/trials.mjs';
 import {createHandler} from '../diag/diag_main.mjs';
 import {createCoreSettingsBridge,AI_SETTINGS_ACTIONS,AI_SETTINGS_BODY_LIMIT} from '../diag/AI設定/コア設定接続.mjs';
 const ok=data=>({status:'OK',data});
@@ -192,4 +196,49 @@ test('OpenAI OAuth settings accept only the renamed model keys', async()=>{
  for(const key of Object.keys(oldSettings)){
   await assert.rejects(bridge('設定',envelope({...mutation,モデル設定:{[key]:'old-model'}})),e=>e.status===400);
  }
+});
+
+test('CODE1–6 round trip from Core save to Diag reload preserves all twelve fields', async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'diag-code-settings-'));
+ const file=join(dir,'AiDiy_key.json'), reader=()=>readFile(file,'utf8');
+ const picks=['agy_cli','auto','aidiy_pi','opencode_cli','codex_cli','aidiy_codex'];
+ const slots=Object.fromEntries(picks.flatMap((provider,i)=>[[`CODE_AI${i+1}_NAME`,provider],[`CODE_AI${i+1}_MODEL`,i===3?'same':`saved-model-${i+1}`]]));
+ const bridge=createCoreSettingsBridge({reader,requestFn:async r=>{
+  if(r.path===AI_SETTINGS_ACTIONS.現在利用者)return ok({利用者ID:'fixture'});
+  if(r.path===AI_SETTINGS_ACTIONS.初期化)return ok({セッションID:'fixture-session'});
+  if(r.path===AI_SETTINGS_ACTIONS.設定){
+   assert.equal(r.data.save,true);
+   await writeFile(file,JSON.stringify({...JSON.parse(await reader()),...r.data.モデル設定}));
+   return ok({});
+  }
+  if(r.path===AI_SETTINGS_ACTIONS.取得){
+   assert.equal(r.data.保存済み,true);
+   return ok({モデル設定:JSON.parse(await reader())});
+  }
+  assert.fail('unexpected action');
+ }});
+ const modelTrials=createModelTrials({reader,installedClisFn:async()=>({agy_cli:false}),credentialReader:async()=>null,catalogReader:async()=>({})});
+ const handler=createHandler({token:'diag-fixture',modelTrials});
+ try {
+  await writeFile(file,JSON.stringify({PORT_CORE:8091,CODE_AI1_NAME:'claude_cli',CODE_AI1_MODEL:'before'}));
+  const reload=async()=>{
+   const res={writeHead(code){assert.equal(code,200);},end(body){this.data=JSON.parse(body);}};
+   await handler({method:'GET',url:'/api/モデル試行',headers:{authorization:'Bearer diag-fixture'}},res);
+   return res.data.項目.filter(row=>row.区分==='CODE');
+  };
+  assert.equal((await reload())[0].設定モデル,'before');
+  await bridge('初期化',envelope());
+  await bridge('設定',envelope({...mutation,モデル設定:slots}));
+  const saved=(await bridge('取得',envelope({セッションID:'fixture-session'}))).data.モデル設定;
+  const rows=await reload();
+  assert.equal(rows.length,6);
+  for(const [i,row] of rows.entries()){
+   assert.equal(row.id,`CODE${i+1}`);
+   assert.equal(row.設定プロバイダ,saved[`CODE_AI${i+1}_NAME`]);
+   assert.equal(row.設定モデル,saved[`CODE_AI${i+1}_MODEL`]);
+  }
+  assert.equal(rows[1].継承元,'CODE1');
+  assert.equal(rows[1].プロバイダ,'agy_cli');
+  assert.equal(rows[1].モデル,'saved-model-1');
+ } finally {await handler.close();await rm(dir,{recursive:true,force:true});}
 });

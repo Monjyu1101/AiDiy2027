@@ -45,12 +45,12 @@ export function trialProjectPath(config) {
 export function configRows(config) {
   const rows=[];
   const secrets=new Set(Object.entries(config).filter(([key,value])=>/key|token|secret|password/i.test(key) && typeof value==='string' && value.length>=4).map(([,value])=>value));
-  function add(id, family, role, provider, model, voice='', inherited='') {
-    const safe=value=>[...secrets].some(secret=>text(value).includes(secret))?'':label(value);
+  const safe=value=>[...secrets].some(secret=>text(value).includes(secret))?'':label(value);
+  function add(id, family, role, provider, model, voice='', inherited='', saved={}) {
     provider=safe(provider);model=safe(model);voice=safe(voice);
     const supported=family==='CHAT' ? Object.hasOwn(CHAT,provider) : family==='LIVE' ? Object.hasOwn(LIVE,provider) : family==='PREDICTION' ? ['auto',...PREDICTION_PROVIDERS].includes(provider) : family==='DECISION' ? DECISION.has(provider) : CODE.has(provider);
     const state=provider && !supported ? '未対応' : !provider || !model || (family==='LIVE' && !voice) ? '未設定' : '未実行';
-    rows.push({id,区分:family,役割:role,プロバイダ:provider,モデル:model,音声:voice,継承元:inherited,状態:state,説明:state==='未設定'?'設定値が不足または不正です。':state==='未対応'?'このプロバイダは試行に対応していません。':''});
+    rows.push({id,区分:family,役割:role,プロバイダ:provider,モデル:model,音声:voice,継承元:inherited,...saved,状態:state,説明:state==='未設定'?'設定値が不足または不正です。':state==='未対応'?'このプロバイダは試行に対応していません。':''});
   }
   const chat=text(config.CHAT_AI_NAME),live=text(config.LIVE_AI_NAME);
   add('CHAT','CHAT','会話',chat,config[`CHAT_${CHAT[chat]}_MODEL`]);
@@ -63,7 +63,13 @@ export function configRows(config) {
   // auto方式はToolsで方式とそのモデルを解決する。
   const decisionModel=decisionKey ? config[decisionKey] ?? geminiPurposeDefault(decisionKey) : 'auto';
   add('DECISION','DECISION','挨拶の丁寧さ',decision,text(decisionModel)||'auto');
-  for(let i=1;i<=6;i++){const inherit=i>1 && config[`CODE_AI${i}_NAME`]==='auto';const n=inherit?1:i;add(`CODE${i}`,'CODE',`CODE${i}`,config[`CODE_AI${n}_NAME`],config[`CODE_AI${n}_MODEL`],'',inherit?'CODE1':'');}
+  for(let i=1;i<=6;i++){
+    const provider=config[`CODE_AI${i}_NAME`],model=config[`CODE_AI${i}_MODEL`];
+    const inherit=i>1 && text(provider)==='auto';
+    // 一覧には保存値、試行・結果共有には解決した値を使う。
+    add(`CODE${i}`,'CODE',`CODE${i}`,inherit?config.CODE_AI1_NAME:provider,inherit?config.CODE_AI1_MODEL:model,'',inherit?'CODE1':'',
+      {設定プロバイダ:safe(provider),設定モデル:safe(model)});
+  }
   for(const family of ['TASK','TEAM'])for(const phase of ['plan','do','check'])add(`${family}_${phase}`,family,phase,config[`${family}_AI_NAME`],config[`${family}_AI_MODEL_${phase}`]);
   return rows.map(row=>({...row,共有対象:rows.filter(other=>other.id===row.id || (row.状態==='未実行' && other.状態==='未実行' && sharedKey(other)===sharedKey(row))).map(other=>other.id)}));
 }

@@ -202,3 +202,25 @@ test('OpenAI Live persists across a reopen with an older Diag catalog', async ()
     assert.equal(settings.LIVE_OPENAI_MODEL,'saved-openai');
   } finally { f.stop(); }
 });
+
+test('CODE1–6 keep out-of-catalog saved providers and models visible after reload and preserve them on write',async()=>{
+ const providers=['codex_cli','auto','aidiy_pi','antigravity_cli','opencode_cli','agy_cli'];
+ const settings=Object.fromEntries(providers.flatMap((provider,i)=>[[`CODE_AI${i+1}_NAME`,provider],[`CODE_AI${i+1}_MODEL`,`retained-${i+1}`]]));
+ const f=form(async(p,b)=>{
+  if(b?.save) for(const [key,value] of Object.entries(settings))assert.equal(b.モデル設定[key],value,key);
+  return {data:{status:'OK',data:{モデル設定:{...settings},available_models:{code_models:{codex_cli:{auto:'Auto'}}}}}};
+ });
+ try {
+  await tick();
+  await f.state.loadConfig();
+  for(let i=1;i<=6;i++){
+   assert.equal(f.state.selections[`codeAi${i}`],settings[`CODE_AI${i}_NAME`]);
+   assert.equal(f.state.selections[`codeModel${i}`],settings[`CODE_AI${i}_MODEL`]);
+   assert.ok(f.state.codeSlotProviders(i).includes(settings[`CODE_AI${i}_NAME`]));
+   const model=f.state[`codeModelOptions${i}`].value.find(item=>item.value===settings[`CODE_AI${i}_MODEL`]);
+   assert.match(model.label,/設定値・一覧外/);
+  }
+  await f.state.handleSaveOnly();
+  assert.match(f.state.notice.value,/保存しました/);
+ } finally {f.stop();}
+});

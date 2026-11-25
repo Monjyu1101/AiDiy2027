@@ -206,3 +206,12 @@ test('PredictionはChat未試行でも共通シアンボタンで実行でき、
  }
  assert.match(source('components/共通表示/単体テストボタン.css'),/background: #7dd3fc/);
 });
+
+test('CODE2 の保存値を一覧と詳細に表示し、試行時の CODE1 継承を区別する',async()=>{
+ const data={項目:[{id:'CODE2',区分:'CODE',役割:'CODE2',設定プロバイダ:'auto',設定モデル:'same',
+  プロバイダ:'codex_cli',モデル:'run-model',継承元:'CODE1',状態:'未実行'}]};
+ const html=await render('components/設定モデル/設定モデルパネル.vue',{data,selected:'CODE2',online:true});
+ assert.match(html,/class="trial-model">auto \/ same</);
+ assert.match(html,/<dt>プロバイダ<\/dt><dd>auto<\/dd><dt>設定モデル<\/dt><dd>same<\/dd>/);
+ assert.match(html,/<dt>試行時の設定<\/dt><dd>CODE1 を使用: codex_cli \/ run-model<\/dd>/);
+});
