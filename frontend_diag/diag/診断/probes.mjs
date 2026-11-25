@@ -80,6 +80,26 @@ export async function resolveProgramPaths(entry, options = {}) {
   return usable.filter((_, index) => found[index]).map(candidate=>path.resolve(candidate));
 }
 
+// VS Code 同梱の copilot-shim は Copilot CLI 本体ではない。本体が無いと終了コード 127 で導入を促すだけ。
+// 既知の Windows 配置だけを区別し、内容の解釈や起動はしない。
+export function isVsCodeCopilotShimPath(file, env = process.env) {
+  if (typeof file !== 'string' || !['copilot', 'copilot.exe'].includes(path.basename(file).toLowerCase())) return false;
+  const value = key => Object.entries(env).find(([name]) => name.toUpperCase() === key)?.[1];
+  const directory = path.resolve(path.dirname(file)).toLowerCase();
+  return [[value('LOCALAPPDATA'), 'Programs'], [value('PROGRAMFILES')], [value('PROGRAMFILES(X86)')]].some(([root, ...relative]) =>
+    typeof root === 'string' && path.isAbsolute(root)
+    && directory === path.resolve(root, ...relative, 'Microsoft VS Code', 'bin', 'copilot-shim').toLowerCase());
+}
+
+// copilot-shim と同じ探索先（PATH 上の別配布・MSI の標準配置）に本体があるときだけ、その本体を返す。
+async function copilotBehindVsCodeShim(entry, options) {
+  const env = options.env || process.env;
+  const candidates = (await resolveProgramPaths(entry, options).catch(() => [])).filter(file => !isVsCodeCopilotShimPath(file, env));
+  const msi = expandPath('$LOCALAPPDATA/GitHubCopilotCLI/copilot.exe', env, undefined, 'win32');
+  if (msi) try { if ((await stat(msi)).isFile()) candidates.push(path.resolve(msi)); } catch {}
+  return candidates[0] ?? null;
+}
+
 export async function resolveProgram(entry, options = {}) {
   return (await resolveProgramPaths(entry, options))[0] ?? null;
 }
@@ -186,6 +206,12 @@ export async function probe(entry, options = {}) {
   try { executable = await (options.resolve || resolveProgram)(installProbeEntry(entry, options.platform), options); }
   catch (error) { logProbeFailure(entry.id, 'resolve_error', {errorCode:safeCode(error.code)}); return {...result,状態:'ERR',説明:'実行ファイルの探索に失敗しました。'}; }
   if (!executable) return result;
+  if (entry.id === 'copilot' && (options.platform || process.platform) === 'win32' && isVsCodeCopilotShimPath(executable, options.env || process.env)) {
+    const actual = await copilotBehindVsCodeShim(entry, options);
+    if (!actual) return {...result, 起動用ファイル:executable,
+      説明:`VS Code 同梱の起動用ファイル（${executable}）のみ検出しました。GitHub Copilot CLI 本体は未導入のため使用できません。`};
+    executable = actual;
+  }
   result.パス = executable;
   if (entry.allow_version === false || !entry.version_args) return {...result,状態:'OK',説明:'起動・副作用を避けるため、ファイルの存在のみ確認しました。'};
   if (entry.id === 'python' && /[\\/]Microsoft[\\/]WindowsApps[\\/]/i.test(executable)) return {...result,状態:'未確認',説明:'Windows の実行エイリアスのみ検出しました。Python 本体のバージョンは確認できません。'};

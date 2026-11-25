@@ -41,6 +41,15 @@ export function validateCliOptions(kind, { cli, cliAutoApprove, provider, model 
   if (cli && (provider !== undefined || model !== undefined)) throw Error('--cli と --provider / --model は同時に指定できません。CLI側の既定モデルを使用します。');
 }
 
+// VS Code 同梱の copilot-shim は本体が無いと導入を促して終了するだけなので、Copilot CLI として扱わない。
+function vsCodeCopilotShim(file, env, platform) {
+  if (platform !== 'win32' || !['copilot', 'copilot.exe'].includes(path.basename(file).toLowerCase())) return false;
+  const directory = path.resolve(path.dirname(file)).toLowerCase();
+  return [[envValue(env, 'LOCALAPPDATA', platform), 'Programs'], [envValue(env, 'ProgramFiles', platform)], [envValue(env, 'ProgramFiles(x86)', platform)]]
+    .some(([root, ...relative]) => validPath(root) && path.isAbsolute(root)
+      && directory === path.resolve(root, ...relative, 'Microsoft VS Code', 'bin', 'copilot-shim').toLowerCase());
+}
+
 async function usable(file, platform) {
   try { await access(file, platform === 'win32' ? constants.F_OK : constants.X_OK); return (await stat(file)).isFile(); } catch { return false; }
 }
@@ -165,13 +174,15 @@ export async function resolveCliLaunch(id, { autoApprove = false, env = process.
     throw Error('agy.exe が見つかりません。導入状況を確認してください。');
   }
   const extra = id === 'aidiy_hermes' ? [home && path.join(home, '.local', 'bin')]
-    : windows ? [get('APPDATA') && path.join(get('APPDATA'), 'npm'), get('LOCALAPPDATA') && path.join(get('LOCALAPPDATA'), 'agy', 'bin'), home && path.join(home, '.local', 'bin'), home && path.join(home, '.grok', 'bin')]
+    : windows ? [get('APPDATA') && path.join(get('APPDATA'), 'npm'), get('LOCALAPPDATA') && path.join(get('LOCALAPPDATA'), 'agy', 'bin'), home && path.join(home, '.local', 'bin'), home && path.join(home, '.grok', 'bin'),
+      ...(id === 'copilot' ? [get('LOCALAPPDATA') && path.join(get('LOCALAPPDATA'), 'GitHubCopilotCLI')] : [])]
     : [home && path.join(home, '.local', 'bin'), home && path.join(home, '.grok', 'bin'), home && path.join(home, '.opencode', 'bin')];
   directories.push(...extra.filter(value => validPath(value) && path.isAbsolute(value)));
   const extensions = windows ? (id === 'agy' ? ['.exe', '.com'] : ['.exe', '.com', '.cmd']) : [''];
   for (const directory of new Set(directories)) for (const extension of extensions) {
     const candidate = path.join(directory, id + extension);
     if (!await usable(candidate, platform)) continue;
+    if (id === 'copilot' && vsCodeCopilotShim(candidate, env, platform)) continue;
     const executable = await realpath(candidate);
     // PATH に拡張版が入っていても、それだけでは従来のCLIを有効にしない。
     if (extensionReal && executable.toLowerCase() === extensionReal.toLowerCase()

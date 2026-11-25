@@ -10,11 +10,13 @@ import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
 import {resolveProgram} from '../診断/probes.mjs';
-import {exists,plainPath,digest} from './antigravity.mjs';
+import {exists,plainPath,digest,safetyCheckFailure} from './antigravity.mjs';
 
 export const GROK_INSTALLER_URL='https://x.ai/cli/install.ps1';
-// 2026-10-20 に読んだ公式スクリプト。上流変更時は再レビューするまで実行しない。
-export const GROK_INSTALLER_SHA256='c83dac29885215c79137e48cbc034d3d7c8c11afba3082ff1df0e0769aa902a4';
+// 2026-11-25 に読んだ公式スクリプト。上流変更時は再レビューするまで実行しない。
+// 取得した grok を --version で試行してから配置し、~/.grok/completions へ補完を書き出す。
+// Cursor CLI の切替記録（~/.cursor/grok-switch.json）がある場合は grok.exe / agent.exe を置かないため、導入後の署名確認で失敗・復元する。
+export const GROK_INSTALLER_SHA256='d0f405244c03c36d8faa296123ac4b5e0d7082c8ff42ee8e0f71595b8252c30e';
 // 公式インストーラーが ~/.grok/bin に置く実行ファイル。grove 系は配布がある版だけ置かれる。
 export const GROK_FILES=Object.freeze(['grok.exe','agent.exe','grove.exe','grove-fsmonitor.exe','grove-credential.exe']);
 const ACTIONS=['導入','再導入','削除'];
@@ -70,7 +72,7 @@ async function inspectWindows(context,{env,run,signal}) {
   let output='';stopped(signal);
   const result=await run({executable:context.powershell,args:['-NoLogo','-NoProfile','-NonInteractive','-Command',INSPECT_SCRIPT],cwd:os.tmpdir(),
     env:{...environment(env,context),AIDIY_GROK_DIR:context.prefix},signal,timeout:30000,outputLimit:65536,onData:text=>output+=text,platform:'win32'});
-  stopped(signal);if(!success(result))throw failure('実行中プロセス・署名・Windows の配置を確認できないため、自動操作しません。');
+  stopped(signal);if(!success(result))throw safetyCheckFailure('Grok Build',result);
   let data;try{data=JSON.parse(output.replace(/^﻿/,'').trim());}catch{throw failure('Windows の安全確認結果が不正です。');}
   if(!Number.isInteger(data.processCount)||data.processCount<0)throw failure('実行中プロセスを確認できません。');
   if(data.processCount)throw failure('Grok Build が実行中です。grok / agent を終了してから再確認してください。');
@@ -80,7 +82,7 @@ async function inspectWindows(context,{env,run,signal}) {
 export async function inspectGrok(entry,{env=process.env,platform=process.platform,run,resolve=resolveProgram,signal}={}) {
   const item={id:entry.id,パッケージ:'Grok Build CLI (grok)',説明:'公式 Windows インストーラー（stable）を使用します。認証・設定・履歴・セッションは削除しません。',
     再導入説明:'旧ファイルを退避してから公式インストーラーで更新・再導入します。失敗・中止時は旧ファイルを復元します。',
-    確認説明:'~/.grok/bin の grok.exe / agent.exe（配布がある版は grove 系も）だけを導入・再導入・削除します。公式インストーラーは ~/.grok/config.toml の [cli] installer 行を更新し、ユーザー PATH に ~/.grok/bin が無ければ追加します。再導入は旧ファイルを退避し、失敗・中止時に復元します。削除では PATH・認証・設定・同梱 git（%LOCALAPPDATA%\\grok）を残します。',操作:[]};
+    確認説明:'~/.grok/bin の grok.exe / agent.exe（配布がある版は grove 系も）だけを導入・再導入・削除します。公式インストーラーは ~/.grok/config.toml の [cli] installer 行と ~/.grok/completions の補完を更新し、ユーザー PATH に ~/.grok/bin が無ければ追加します。再導入は旧ファイルを退避し、失敗・中止時に復元します。削除では PATH・認証・設定・同梱 git（%LOCALAPPDATA%\\grok）を残します。',操作:[]};
   let context=null;
   try{
     if(entry.id!=='grok')throw failure('未対応の導入操作です。');

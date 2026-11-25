@@ -252,3 +252,12 @@ test('一式の完了結果をまとめて一度だけ反映し、他行・新�
   assert.deepEqual(state.結果.value.map(row => row.バージョン), ['installed', 'newer', 'installed', 'old']);
   assert.equal(state.確認済み.value, true); assert.equal(state.書込済み.value, false); assert.equal(state.表示中.value, null);
 });
+
+test('Antigravity の完了結果は agy.exe の再確認結果も反映し、関係のない行は変えない', async () => {
+  const { 導入状況状態を作成 } = await import('../導入状況状態.mjs');
+  const state = 導入状況状態を作成({ api: async () => ({}), 接続済み: ref(true), 通知: ref(''), 操作中: ref(false), 間隔: 0 });
+  state.一覧を反映({ 項目: [{ id: 'agy' }, { id: 'agy-exe' }, { id: 'node' }], 結果: [{ id: 'agy', 状態: 'OK' }, { id: 'agy-exe', 状態: 'OK', 検出フォルダ: ['A', 'B'] }, { id: 'node', 状態: 'OK', バージョン: 'old' }] });
+  state.操作結果を反映(completed({ 対象: 'agy', 操作: '削除', 結果: undefined, 結果一覧: [{ id: 'agy', 状態: '未検出', 確認日時: '2026-10-19T22:00:00Z' }, { id: 'agy-exe', 状態: 'OK', 検出フォルダ: ['B'], 確認日時: '2026-10-19T22:00:00Z' }, { id: 'node', 状態: 'NG', 確認日時: '2026-10-19T22:00:00Z' }] }));
+  assert.deepEqual(state.結果.value.map(row => [row.id, row.状態]), [['agy', '未検出'], ['agy-exe', 'OK'], ['node', 'OK']]);
+  assert.deepEqual(state.結果.value[1].検出フォルダ, ['B']);
+});

@@ -4,7 +4,7 @@
  * See LICENSE for full terms. Thank you for keeping the rules.
  * https://github.com/monjyu1101/AiDiy2027 */
 
-// ../runtime/model_catalog.ts
+// runtime/model_catalog.ts
 var DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 var ZERO_DECIMAL = /^[+-]?(?:0+(?:\.0*)?|\.0+)(?:[eE][+-]?\d+)?$/;
 function safeRouterMetadata(value, secrets = []) {

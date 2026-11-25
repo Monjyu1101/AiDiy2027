@@ -13,7 +13,7 @@ import {stripVTControlCharacters} from 'node:util';
 import {StringDecoder} from 'node:string_decoder';
 import path from 'node:path';
 import os from 'node:os';
-import {resolveProgram,resolveProgramPaths,probe} from '../診断/probes.mjs';
+import {resolveProgram,resolveProgramPaths,probe,isVsCodeCopilotShimPath} from '../診断/probes.mjs';
 import {WINGET_PACKAGES,inspectWinget,executeWinget} from './winget.mjs';
 import {inspectAntigravity,executeAntigravity} from './antigravity.mjs';
 import {inspectGrok,executeGrok} from './grok.mjs';
@@ -28,6 +28,8 @@ const packageFor=id=>typeof id==='string'&&Object.hasOwn(NPM_PACKAGES,id)?NPM_PA
 const ACTIONS=['導入','再導入','削除'];
 const providerFor=id=>packageFor(id)?'npm':typeof id==='string'&&Object.hasOwn(WINGET_PACKAGES,id)?'winget':id==='agy'?'antigravity':id==='grok'?'grok':id==='rust'?'rust':id==='llvm-mingw'?'llvmMingw':id===CODEX_COMPILE_ID?'codexCompile':null;
 const affectedIds=id=>['ffmpeg','ffprobe','ffplay'].includes(id)?['ffmpeg','ffprobe','ffplay']:[id];
+// 操作後に状態だけ確認し直す項目。成否の判定・排他には含めない（agy.exe は VS Code 拡張側にも残り得る）。
+export const followUpIds=id=>id==='agy'?['agy-exe']:[];
 // 排他は項目（FFmpeg は3つ一式）単位。別の項目は同じ導入元でも並行して操作できる。
 const lockScopeFor=id=>packageFor(id)||affectedIds(id)[0];
 const overlaps=(a,b)=>affectedIds(a).some(id=>affectedIds(b).includes(id));
@@ -186,12 +188,7 @@ export async function npmCapability(entry,npm,{env=process.env,platform=process.
 
 // VS Code 同梱の起動用ファイルは npm の実体と別物。既知の Windows 配置だけを区別する。
 async function isVsCodeCopilotShim(executable,env){
-  if(!['copilot','copilot.exe'].includes(path.basename(executable).toLowerCase()))return false;
-  const paths=Object.fromEntries(Object.entries(env).map(([key,value])=>[key.toUpperCase(),value]));
-  const roots=[[paths.LOCALAPPDATA,'Programs'],[paths.PROGRAMFILES],[paths['PROGRAMFILES(X86)']]];
-  return roots.some(([root,...relative])=>typeof root==='string'&&path.isAbsolute(root)
-    &&path.resolve(path.dirname(executable)).toLowerCase()===path.resolve(root,...relative,'Microsoft VS Code','bin','copilot-shim').toLowerCase())
-    &&(await lstat(executable).catch(()=>null))?.isFile()===true;
+  return isVsCodeCopilotShimPath(executable,env)&&(await lstat(executable).catch(()=>null))?.isFile()===true;
 }
 
 async function copilotNpmLaunchersAbsent(prefix){
@@ -451,6 +448,13 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
           log(`確認結果 [${target.name||target.id}]: ${result.状態}\n${result.説明||''}\n`);
           if(status==='完了'&&!detached&&((action==='削除'&&result.パス&&!scopedCopilotRemoval)||(action!=='削除'&&result.状態!=='OK'))){status='失敗';message=action==='削除'?'別の導入先を含め、実行ファイルが残っています。確認結果を参照してください。':'コマンドは終了しましたが、導入を確認できませんでした。PATH の反映や確認結果を参照してください。';log(`${message}\n`);}
         }catch{status='失敗';message='操作後の導入確認に失敗しました。確認ボタンで再試行してください。';log(`${target.name||target.id}: ${message}\n`);}
+      }
+      for(const target of entries.filter(item=>followUpIds(entry.id).includes(item.id))){
+        try{const result=await probeFn(target);checked.push(result);Object.assign(job,onResult(result));log(`確認結果 [${target.name||target.id}]: ${result.状態}
+${result.説明||''}
+`);}
+        catch{log(`${target.name||target.id}: 状態の再確認に失敗しました。確認ボタンで再試行してください。
+`);}
       }
       job.結果一覧=checked;
       // 並行中の別項目があっても、終わった項目の操作可否は最新の確認結果で表示する。

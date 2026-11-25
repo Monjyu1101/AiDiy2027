@@ -83,7 +83,8 @@ export function 導入状況状態を作成({ api, 接続済み, 通知, 間隔 
   // 操作後も各行を個別確認と同じ結果で更新する。FFmpeg 一式以外の結果は受け取らない。
   function 操作結果を反映(data) {
     if (!項目.value.some(entry => entry.id === data.対象)) return;
-    const allowed = ['ffmpeg', 'ffprobe', 'ffplay'].includes(data.対象) ? ['ffmpeg', 'ffprobe', 'ffplay'] : [data.対象];
+    // Antigravity の操作後は agy.exe の一覧も確認し直して反映する。
+    const allowed = ['ffmpeg', 'ffprobe', 'ffplay'].includes(data.対象) ? ['ffmpeg', 'ffprobe', 'ffplay'] : data.対象 === 'agy' ? ['agy', 'agy-exe'] : [data.対象];
     const incoming = Array.isArray(data.結果一覧) ? data.結果一覧 : data.結果 ? [data.結果] : [];
     const byId = new Map(結果.value.map(item => [item.id, item]));
     let changed = false;

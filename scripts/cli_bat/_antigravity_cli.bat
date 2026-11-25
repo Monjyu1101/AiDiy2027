@@ -38,33 +38,32 @@ ECHO Invalid input. Enter a number or press Enter.
 goto SELECT_MODEL
 
 :LAUNCH
-if exist "%AGY_EXE%" goto LAUNCH_BY_PATH
-where agy >nul 2>&1
-if errorlevel 1 goto NOT_INSTALLED
+rem Same rule as Diag: the standard agy.exe first, then another agy.exe on PATH.
+rem The VS Code extension agy.exe is not used as Antigravity CLI. It is used only when nothing else exists,
+rem without --dangerously-skip-permissions, like the "agy.exe" launcher in Diag.
+set "AGY_EXTENSION=%USERPROFILE%\.gemini\bin\agy.exe"
+set "AGY_RUN="
+set "AGY_ARGS=--dangerously-skip-permissions"
+if exist "%AGY_EXE%" set "AGY_RUN=%AGY_EXE%"
+if not defined AGY_RUN for /f "delims=" %%P in ('where agy.exe 2^>nul') do if not defined AGY_RUN if /I not "%%~fP"=="%AGY_EXTENSION%" set "AGY_RUN=%%~fP"
+if not defined AGY_RUN if exist "%AGY_EXTENSION%" set "AGY_ARGS="
+if not defined AGY_RUN if exist "%AGY_EXTENSION%" set "AGY_RUN=%AGY_EXTENSION%"
+if not defined AGY_RUN goto NOT_INSTALLED
+if not defined AGY_ARGS ECHO Only the VS Code extension agy.exe was found. It runs with normal approval.
 
 if defined MODEL (
-    ECHO agy --dangerously-skip-permissions --model %MODEL% %*
-    call agy --dangerously-skip-permissions --model "%MODEL%" %*
+    ECHO "%AGY_RUN%" %AGY_ARGS% --model %MODEL% %*
+    call "%AGY_RUN%" %AGY_ARGS% --model "%MODEL%" %*
 ) else (
-    ECHO agy --dangerously-skip-permissions %*
-    call agy --dangerously-skip-permissions %*
-)
-set "EXIT_CODE=%ERRORLEVEL%"
-endlocal & exit /b %EXIT_CODE%
-
-:LAUNCH_BY_PATH
-if defined MODEL (
-    ECHO "%AGY_EXE%" --dangerously-skip-permissions --model %MODEL% %*
-    call "%AGY_EXE%" --dangerously-skip-permissions --model "%MODEL%" %*
-) else (
-    ECHO "%AGY_EXE%" --dangerously-skip-permissions %*
-    call "%AGY_EXE%" --dangerously-skip-permissions %*
+    ECHO "%AGY_RUN%" %AGY_ARGS% %*
+    call "%AGY_RUN%" %AGY_ARGS% %*
 )
 set "EXIT_CODE=%ERRORLEVEL%"
 endlocal & exit /b %EXIT_CODE%
 
 :NOT_INSTALLED
 ECHO Antigravity CLI is not installed. Restart this script and enter y at the update prompt.
+call "%~dp0check_agy_exe.bat"
 endlocal & exit /b 1
 
 :INSTALL_FAILED

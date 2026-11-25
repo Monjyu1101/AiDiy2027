@@ -74,13 +74,20 @@ $identity=$null;
 if(Test-Path -LiteralPath $env:AIDIY_AGY_BINARY -PathType Leaf){$s=Get-AuthenticodeSignature -LiteralPath $env:AIDIY_AGY_BINARY;$v=(Get-Item -LiteralPath $env:AIDIY_AGY_BINARY).VersionInfo;$identity=@{status=[string]$s.Status;subject=[string]$s.SignerCertificate.Subject;company=[string]$v.CompanyName;product=[string]$v.ProductName;original=[string]$v.OriginalFilename}}
 @{processCount=$processes.Count;identity=$identity}|ConvertTo-Json -Compress -Depth 4`;
 
+// 導入・削除の前に PowerShell で行う安全確認（実行中か・署名・リンク配置）が終わらなかったときの表示。
+export function safetyCheckFailure(name,result) {
+  return failure(result?.timedOut
+    ?`${name} の導入・削除前の安全確認（実行中か・署名の確認）が時間内に終わりませんでした。しばらく待ってから「確認」を押してください。`
+    :`${name} の導入・削除前の安全確認（実行中か・署名の確認）を実行できませんでした。「確認」を押して再試行してください。`);
+}
+
 async function inspectWindows(context,{env,run,signal}) {
   if(typeof run!=='function')throw failure('Windows の安全確認を実行できません。');
   let output='';stopped(signal);
   const result=await run({executable:context.powershell,args:['-NoProfile','-NonInteractive','-Command',INSPECT_SCRIPT],cwd:os.tmpdir(),
     env:{...environment(env,context),AIDIY_AGY_BINARY:context.binary,AIDIY_AGY_RECEIPT:context.receipt,AIDIY_AGY_STAGING:context.staging},
-    signal,timeout:10000,outputLimit:65536,onData:text=>output+=text,platform:'win32'});
-  stopped(signal);if(!success(result))throw failure('実行中プロセス・署名・Windows の配置を確認できないため、自動操作しません。');
+    signal,timeout:30000,outputLimit:65536,onData:text=>output+=text,platform:'win32'});
+  stopped(signal);if(!success(result))throw safetyCheckFailure('Antigravity',result);
   let data;try{data=JSON.parse(output.replace(/^\uFEFF/,'').trim());}catch{throw failure('Windows の安全確認結果が不正です。');}
   if(!Number.isInteger(data.processCount)||data.processCount<0)throw failure('実行中プロセスを確認できません。');
   if(data.processCount)throw failure('Antigravity が実行中です。アプリ・CLI を終了してから再確認してください。');

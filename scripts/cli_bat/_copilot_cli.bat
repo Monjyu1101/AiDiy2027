@@ -9,7 +9,6 @@ ECHO   GitHub Copilot CLI
 ECHO   %~nx0
 ECHO ============================================================
 
-set "COPILOT_CMD=%USERPROFILE%\AppData\Roaming\npm\copilot.cmd"
 set "MODEL="
 set /p "UPDATE=update [N]/y: "
 if /I "%UPDATE%"=="y" (
@@ -50,6 +49,12 @@ ECHO Invalid input. Enter a number or press Enter.
 goto SELECT_MODEL
 
 :LAUNCH
+rem Same rule as Diag: the npm copilot.cmd first, then the MSI copilot.exe.
+rem The VS Code copilot-shim is only a launcher and is not GitHub Copilot CLI itself.
+set "COPILOT_CMD="
+if exist "%APPDATA%\npm\copilot.cmd" set "COPILOT_CMD=%APPDATA%\npm\copilot.cmd"
+if not defined COPILOT_CMD if exist "%LOCALAPPDATA%\GitHubCopilotCLI\copilot.exe" set "COPILOT_CMD=%LOCALAPPDATA%\GitHubCopilotCLI\copilot.exe"
+if not defined COPILOT_CMD goto NOT_INSTALLED
 if defined MODEL (
     ECHO copilot --allow-all-tools --model %MODEL% %*
     call "%COPILOT_CMD%" --allow-all-tools --model "%MODEL%" %*
@@ -59,6 +64,12 @@ if defined MODEL (
 )
 set "EXIT_CODE=%ERRORLEVEL%"
 endlocal & exit /b %EXIT_CODE%
+
+:NOT_INSTALLED
+ECHO GitHub Copilot CLI is not installed.
+ECHO The copilot command from VS Code - copilot-shim - is only a launcher and is not used here.
+ECHO Restart this script and enter y at the update prompt.
+endlocal & exit /b 1
 
 :INSTALL_FAILED
 ECHO GitHub Copilot CLI installation failed.

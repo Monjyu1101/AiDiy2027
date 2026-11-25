@@ -77,7 +77,7 @@ aidiy_diag --auto           # 画面を開き、保存済みの起動設定で�
 | Antigravity CLI | Windows の公式 `https://antigravity.google/cli/install.cmd`。標準の `%LOCALAPPDATA%\agy\bin\agy.exe` の Google 署名（製品情報がある版はその一致も）または一致する導入記録を照合します。 |
 | Grok Build | Windows の公式 `https://x.ai/cli/install.ps1`（stable）。`~/.grok/bin` の grok.exe / agent.exe（配布がある版は grove 系も）の X.AI / X Corp. 署名を照合します。 |
 
-導入状況の「Antigravity CLI」は Windows の標準インストール先 `%LOCALAPPDATA%/agy/bin` だけを管理します。PATH や VS Code 拡張に別コピーがあっても、そのファイルには触れず標準配置の導入・再導入が可能です。その直下の「agy.exe」は、PATH・標準配置・`%USERPROFILE%/.gemini/bin` の実行ファイルを起動せず調べ、検出したフォルダを詳細に一覧表示します。導入・再導入・削除ボタンは出しません。
+導入状況の「Antigravity CLI」は Windows の標準インストール先 `%LOCALAPPDATA%/agy/bin` だけを管理します。PATH や VS Code 拡張に別コピーがあっても、そのファイルには触れず標準配置の導入・再導入が可能です。その直下の「agy.exe」は、PATH・標準配置・`%USERPROFILE%/.gemini/bin` の実行ファイルを起動せず調べ、検出したフォルダを詳細に一覧表示します。導入・再導入・削除ボタンは出しません。Antigravity CLI の導入・再導入・削除が終わると、agy.exe の一覧も自動で再確認します（成否の判定には使いません）。
 
 ベース（Python / uv / Node.js / npm / npx / Electron）と VS Code は手動導入とし、導入ボタンを出しません。一覧での表示・確認・バージョン表記はほかの項目と同じです。
 

@@ -51,7 +51,7 @@ test('名称の下の2行目左側に能力由来の導入・再導入・削除�
   const css = source('components/導入状況/導入状況.css'); assert.match(css, /grid-template-areas:"name check" "manage manage"/);
   const nameIndex = html.indexOf('<span>Claude Code</span>');
   assert.ok(nameIndex >= 0 && nameIndex < html.indexOf('data-install-check="claude"'), 'キーボード順序は1行目の名称から右側の確認へ進む');
-  assert.ok(html.indexOf('data-install-check="claude"') < html.indexOf('data-install-id="claude"'), 'キーボード順序も1行目の確認から2行目の導入操作へ進む');
+  assert.ok(html.indexOf('data-install-id="claude"') > nameIndex && html.indexOf('data-install-id="claude"') < html.indexOf('data-install-check="claude"'), 'キーボード順序は名称・Web の右の導入操作から確認へ進む');
 });
 
 const updateItems = require('../../../../診断/catalog.json').filter(item => item.menuGroup === 'CLI群' && item.installAction !== false);
@@ -207,4 +207,18 @@ test('FFmpeg 一式のどの行からも共有コンソールと3行の確認結
     assert.deepEqual(ui.nodes().filter(node => node.props['data-install-result']).map(node => node.props['data-install-result']), ['ffmpeg', 'ffprobe', 'ffplay']);
     assert.equal(ui.select('ffprobe').props['aria-pressed'], true);
   } finally { ui.app.unmount(); }
+});
+
+test('実行中の項目へ別項目から戻るとコンソールを表示し、完了後に戻ると詳細を表示する', async () => {
+  const f = await fixture();
+  try {
+    f.approve(true); f.action('codex', '削除').props.onClick(); await flush();
+    assert.ok(f.nodes().find(node => node.tag === 'pre'), '開始直後はコンソール');
+    f.select('node').props.onClick(); await flush(); assert.equal(f.nodes().find(node => node.tag === 'pre'), undefined);
+    f.select('codex').props.onClick(); await flush();
+    assert.equal(f.select('codex').props['aria-pressed'], true); assert.match(text(f.nodes().find(node => node.tag === 'pre')), /run/);
+    f.finish(); await f.tick();
+    f.select('node').props.onClick(); await flush(); f.select('codex').props.onClick(); await flush();
+    assert.equal(f.nodes().find(node => node.tag === 'pre'), undefined); assert.match(text(f.byId('detail')), /Codex/);
+  } finally { f.close(); }
 });

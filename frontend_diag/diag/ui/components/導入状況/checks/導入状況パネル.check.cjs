@@ -24,9 +24,9 @@ test('導入だけ一覧を広げ、1行目の左に名称・右に確認と状�
   const css = source('components/導入状況/導入状況.css');
   assert.match(css, /\.install-panel>main\{grid-template-columns:clamp\(400px,34vw,480px\) minmax\(0,1fr\)/);
   assert.match(css, /grid-template-columns:minmax\(0,1fr\) auto;grid-template-areas:"name check" "manage manage";align-items:center/);
-  assert.match(css, /\.install-name>\.item\{width:auto;min-width:0;padding:11px 0;overflow-wrap:anywhere/);
+  assert.match(css, /\.install-name\{grid-area:name;display:flex;align-items:center;flex-wrap:nowrap;/); assert.match(css, /\.install-name>\.item>span\{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap\}/);
   assert.match(css, /\.install-manage\{grid-area:manage;display:flex;justify-content:flex-start;flex-wrap:wrap;gap:4px;padding:0 10px 10px\}/);
-  assert.match(css, /\.install-check\{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:8px;padding:0 10px 0 0\}/);
+  assert.match(css, /\.install-check\{display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;gap:5px;padding:0 8px 0 0\}/);
   assert.match(css, /\.install-check\{grid-area:check;min-width:0\}/);
   assert.match(css, /@media\(max-width:700px\)\{\.install-panel>main\{grid-template-columns:minmax\(0,1fr\)/);
   assert.match(css, /#app>\.diag-panel>\.install-panel>main\{grid-template-rows:minmax\(0,45%\) minmax\(0,1fr\)/);

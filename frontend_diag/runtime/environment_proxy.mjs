@@ -4,7 +4,7 @@
  * See LICENSE for full terms. Thank you for keeping the rules.
  * https://github.com/monjyu1101/AiDiy2027 */
 
-// ../runtime/environment_proxy.ts
+// runtime/environment_proxy.ts
 import http from "node:http";
 import https from "node:https";
 import tls from "node:tls";

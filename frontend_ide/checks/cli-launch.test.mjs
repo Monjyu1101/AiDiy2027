@@ -225,3 +225,13 @@ test('Windows standard and extension agy are resolved separately; agy_exe never 
  assert.equal((await resolveCliLaunch('agy_exe',named({PATH:directory}))).executable,await realpath(elsewhere));
  await assert.rejects(resolveCliLaunch('agy_exe',{platform:'linux'}),/Windows/);
 }));
+
+test('Windows Copilot: VS Code の copilot-shim だけでは起動可能にせず、MSI の本体は採用する', async () => fixture(async directory => {
+  const programs = path.join(directory, 'Program Files'), local = path.join(directory, 'Local');
+  const shim = path.join(programs, 'Microsoft VS Code', 'bin', 'copilot-shim', 'copilot.exe'), msi = path.join(local, 'GitHubCopilotCLI', 'copilot.exe');
+  await executable(shim);
+  const env = { PATH: path.dirname(shim), ProgramFiles: programs, LOCALAPPDATA: local, USERPROFILE: path.join(directory, 'home') };
+  await assert.rejects(resolveCliLaunch('copilot', { env, platform: 'win32' }), /見つかりません/);
+  await executable(msi);
+  assert.equal((await resolveCliLaunch('copilot', { env, platform: 'win32' })).executable, await realpath(msi));
+}));

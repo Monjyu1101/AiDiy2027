@@ -97,3 +97,17 @@ test('実操作成功後の未導入照会コードを、操作の終了コー�
   },probeFn:async entry=>({id:entry.id,状態:'未検出',パス:null})});
   await f.manager.start('obs','削除');const job=await settled(f.manager);assert.equal(job.状態,'完了');assert.equal(job.終了コード,0);
 });
+
+test('Antigravity の操作後は agy.exe の一覧も再確認し、残っていても削除の成否には使わない',async t=>{
+  for(const action of ['再導入','削除']){
+    const all=[...entries,{id:'agy-exe',name:'agy.exe',commands:[]}];
+    const probes=[];
+    const f=fixture(t,{entries:all,probeFn:async entry=>{probes.push(entry.id);return entry.id==='agy-exe'
+      ?{id:'agy-exe',状態:'OK',検出フォルダ:['C:\fixture\.gemini\bin'],説明:'1 か所で検出',確認日時:'2026-10-19T23:00:00Z'}
+      :{id:'agy',状態:action==='削除'?'未検出':'OK',パス:action==='削除'?null:'C:\fixture\agy\bin\agy.exe',確認日時:'2026-10-19T23:00:00Z'};}});
+    await f.manager.start('agy',action);const job=await settled(f.manager);
+    assert.equal(job.状態,'完了');assert.deepEqual(probes,['agy','agy-exe']);
+    assert.deepEqual(job.結果一覧.map(row=>row.id),['agy','agy-exe']);assert.equal(job.結果.id,'agy');assert.deepEqual(job.関連項目,['agy']);
+    assert.match(job.ログ,/確認結果 \[agy\.exe\]: OK/);
+  }
+});

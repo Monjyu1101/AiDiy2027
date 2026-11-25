@@ -130,3 +130,24 @@ test('managed Antigravity ignores other copies; agy.exe lists every distinct fol
  await mergeInstallResult([listing],after,storage);
  assert.deepEqual((await previous()).導入状況.結果[0].検出フォルダ,[extra,extension]);
 });
+
+test('VS Code の copilot-shim だけでは Copilot CLI を OK にせず、並存する本体があれば本体を採用する',async t=>{
+ const {mkdir}=await import('node:fs/promises');
+ const root=await mkdtemp(path.join(os.tmpdir(),'diag-copilot-shim-'));t.after(()=>rm(root,{recursive:true,force:true}));
+ const programs=path.join(root,'Program Files'),local=path.join(root,'Local'),roaming=path.join(root,'Roaming');
+ const shimDir=path.join(programs,'Microsoft VS Code','bin','copilot-shim'),npm=path.join(roaming,'npm'),msi=path.join(local,'GitHubCopilotCLI');
+ for(const dir of [shimDir,npm,msi])await mkdir(dir,{recursive:true});
+ await writeFile(path.join(shimDir,'copilot.exe'),'shim');
+ const entry=(await catalog()).find(row=>row.id==='copilot');
+ const options={platform:'win32',env:{PATH:shimDir,ProgramFiles:programs,LOCALAPPDATA:local,APPDATA:roaming}};
+ const shimOnly=await probe(entry,options);
+ assert.equal(shimOnly.状態,'未検出');assert.equal(shimOnly.パス,null);assert.equal(shimOnly.起動用ファイル,path.join(shimDir,'copilot.exe'));
+ assert.match(shimOnly.説明,/本体は未導入/);
+ await writeFile(path.join(msi,'copilot.exe'),'msi');
+ const viaMsi=await probe(entry,options);assert.equal(viaMsi.状態,'OK');assert.equal(viaMsi.パス,path.join(msi,'copilot.exe'));
+ await writeFile(path.join(npm,'copilot.cmd'),'@echo off');
+ const viaNpm=await probe(entry,options);assert.equal(viaNpm.状態,'OK');assert.equal(viaNpm.パス,path.join(npm,'copilot.cmd'));
+ // 別の場所にある同名の copilot.exe は shim 扱いしない。
+ const other=path.join(root,'Other');await mkdir(other);await writeFile(path.join(other,'copilot.exe'),'x');
+ assert.equal((await probe(entry,{...options,env:{...options.env,PATH:other}})).パス,path.join(other,'copilot.exe'));
+});

@@ -41,6 +41,8 @@ async function fixture(t,{binary,owned=false,signed=false,processCount=0,localNa
     if(command.executable===path.join(system,'WindowsPowerShell','v1.0','powershell.exe')){
       assert.deepEqual(command.args.slice(0,3),['-NoProfile','-NonInteractive','-Command']);
       assert.doesNotMatch(command.args.join(' '),/ExecutionPolicy|Bypass|Set-Item|Remove-Item|Unblock-File/i);
+      if(state.inspectResult)return {...result,...state.inspectResult};
+      assert.equal(command.timeout,30000);
       command.onData(JSON.stringify({processCount:state.processCount,identity:state.identity}));return {...result};
     }
     if(command.executable===path.join(system,'curl.exe')){
@@ -255,4 +257,13 @@ test('標準管理行はVS Code配置が先でも標準配置だけ再導入す�
  await executeAntigravity(managed,'再導入',before.context,options);
  assert.equal(await readFile(other,'utf8'),'VS Code extension copy');
  assert.deepEqual(await readFile(f.target),NEW);
+});
+
+test('安全確認が時間切れ・失敗したときは、原因と次の操作が分かる理由を出す',async t=>{
+  const f=await fixture(t,{binary:OLD,owned:true});
+  f.state.inspectResult={timedOut:true,code:null};
+  const timeout=(await f.inspect()).item;assert.deepEqual(timeout.操作,[]);assert.match(timeout.理由,/時間内に終わりませんでした.*「確認」/);
+  f.state.inspectResult={code:1};
+  const failed=(await f.inspect()).item;assert.deepEqual(failed.操作,[]);assert.match(failed.理由,/実行できませんでした.*「確認」を押して再試行/);
+  f.state.inspectResult=null;assert.deepEqual((await f.inspect()).item.操作,['再導入','削除']);
 });

@@ -32,6 +32,7 @@ if not exist "%LOCALAPPDATA%\agy\bin\agy.exe" (
     goto FAILED
 )
 echo Antigravity CLI found: "%LOCALAPPDATA%\agy\bin\agy.exe"
+call "%~dp0check_agy_exe.bat"
 echo In Diag, run the installation check again.
 goto CLEANUP
 
@@ -39,6 +40,7 @@ goto CLEANUP
 if "%EXIT_CODE%"=="0" set "EXIT_CODE=1"
 echo ERROR: Antigravity CLI installation failed. Exit code: %EXIT_CODE%
 echo Review the error above. No login or version command was run.
+call "%~dp0check_agy_exe.bat"
 if /I not "%NO_PAUSE%"=="/no-pause" pause
 
 :CLEANUP
