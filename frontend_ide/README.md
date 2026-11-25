@@ -409,3 +409,13 @@ Loadはパネルをすべて閉じた状態で使用します。Term・Browser�
 - VR中は保存・復元しません。VRを終了してから操作してください。Web版はOSウィンドウ位置を扱えないため、この操作を表示しません。
 
 確認: `node --test checks/layout-save.test.cjs checks/layout-renderer.test.mjs checks/task-windows.test.mjs checks/avatar-launch.test.cjs`。画面外判定、複数画面、保存先分離、不正データ、連打、利用終了時の中断、Task主画面の復元を確認します。実際のOSによるウィンドウ位置・DPI・別画面への移動は実Electronでの確認も必要です。
+
+## Git パネル（aidiy_git）
+
+IDE の「＋」から Task / Team の次に開きます。利用開始したプロジェクトのルートに `.git`（通常のディレクトリまたは linked worktree のファイル）があり、Git の作業ツリーとして確認できる場合に有効です。上位リポジトリは暗黙に選びません。Electron では別窓で、IDE の終了と `Sv / Ld` に連動します。ローカル Web 版では IDE 内で開きます。単独の `aidiy_git --project 作業フォルダ` も Core / Tools なしで動作し、標準セットアップで起動コマンドを登録します。外部公開用の Git サーバーにはしません。
+
+- Git: 未ステージ／ステージ済、ファイル別差分、ステージ／解除、コミット、直近履歴、取得・取り込み・送信。取り込みは fast-forward のみ。未追跡ブランチの初回送信では、明示確認後に追跡先を設定します。
+- 登録済みの一般的な Git リモートに対応し、Git・SSH・資格情報マネージャーの既存認証を使います。AiDiy は資格情報を保存しません。パネルから対話認証はしません。
+- 取得先と送信先が同じ `github.com` リポジトリの場合だけ PR / Issue タブが出ます。既存の GitHub CLI（`gh`）でログイン済みなら、最近の項目を一覧できます。作成・編集・マージ等は公式サイトで行い、`gh` がなくても公式サイトを開けます。
+- GitHub 限定の強制送信は、対象ブランチ名の入力確認と、最後に取得したリモートのコミットを明示する `--force-with-lease` が必要です。無条件の上書きは提供しません。一般リモートへの強制送信は画面とAPIの両方で拒否します。
+- 検証: `node --test frontend_ide/checks/aidiy-git.test.mjs frontend_ide/aidiy_git/github-tabs.test.mjs`。外部アカウントを使わず、一時 Git リポジトリとローカルリモートで検証します。

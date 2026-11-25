@@ -1,0 +1,137 @@
+// COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+// Licensed under "AiDiy 公開利用ライセンス v1.1".
+// Commercial use requires prior written consent from all copyright holders.
+// See LICENSE for full terms. Thank you for keeping the rules.
+// https://github.com/monjyu1101/AiDiy2027
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import repository from '../aidiy_git/リポジトリ.cjs';
+import {startGit} from '../aidiy_git/serve.mjs';
+import {createGitPanel} from '../aidiy_git/パネル.mjs';
+import {createServer} from 'node:http';
+import {once} from 'node:events';
+const execute=promisify(execFile);
+const git=(cwd,...args)=>execute('git',['-c','protocol.file.allow=always',...args],{cwd,encoding:'utf8'});
+const user=async root=>{await git(root,'config','user.name','AiDiy fixture');await git(root,'config','user.email','test@example.invalid');};
+const make=async(t)=>{
+ const dir=await mkdtemp(join(tmpdir(),'aidiy-git-'));t.after(()=>rm(dir,{recursive:true,force:true}));return dir;
+};
+const init=(dir)=>git(dir,'init','-b','main');
+const set=async(root,name,value)=>writeFile(join(root,name),value,'utf8');
+const keyOf=html=>/name="aidiy-git" content="([0-9a-f]+)"/.exec(html)[1];
+function client(origin,key,session='standalone'){
+ return async(action,body,extras={})=>{
+  const response=await fetch(new URL('/api/git/'+action,origin),{method:body===undefined?'GET':'POST',headers:{'x-aidiy-git':key,'x-aidiy-git-session':session,...(body===undefined?{}:{'content-type':'application/json'}),...extras},...(body===undefined?{}:{body:JSON.stringify(body)})});
+  return {status:response.status,result:await response.json().catch(()=>null)};
+ };
+}
+test('real Git panel: diff, staging, unstaging, commits, history, fetch, fast-forward and push on a generic remote',async t=>{
+ const dir=await make(t),root=join(dir,'project'),bare=join(dir,'remote.git'),peer=join(dir,'peer');
+ await mkdir(root);await init(root);await user(root);
+ await git(dir,'init','--bare','-b','main',bare);
+ await git(root,'remote','add','local',bare);
+ await set(root,'start.txt','original\n');await git(root,'add','--','start.txt');await git(root,'commit','-m','initial');
+ await git(root,'push','-u','local','main');
+ const app=await startGit(root);t.after(()=>app.close());
+ const response=await fetch(app.url);const html=await response.text();
+ assert.equal(response.status,200);assert.match(html,/tab-git/);
+ const request=client(app.url,keyOf(html));
+ const status=async()=>{const {status,result}=await request('status');assert.equal(status,200);return result;};
+ const op=async(action,body={},current=null,expected=200)=>{const {revision}=current??await status();const {status:code,result}=await request(action,{revision,...body});assert.equal(code,expected,`${action}: ${result.error}`);return result;};
+ const entry='[literal] 連携.txt';
+ await set(root,entry,'hello world\n');
+ let s=await status();assert.equal(s.rows[0].path,entry);
+ assert.equal(s.remotes[0].github,null);assert.equal(s.upstream.remote,'local');
+ const diff=await request('diff',{path:entry,side:'work'});
+ assert.equal(diff.status,200,JSON.stringify(diff));assert.match(diff.result.diff,/\+hello world/);
+ s=await op('stage',{path:entry},s);assert.equal(s.rows[0].index,'A');
+ s=await op('unstage',{path:entry},s);assert.equal(s.rows[0].untracked,true);
+ s=await op('stage',{path:entry},s);
+ s=await op('commit',{message:'Add literal filename'},s);assert.equal(s.ahead,1);
+ assert.equal((await request('history')).result.entries[0].subject,'Add literal filename');
+ await op('force-push',{remote:'local',confirm:'main'},s,400);
+ s=await op('push',{remote:'local'},s);assert.equal(s.ahead,0);
+ await git(dir,'clone',bare,peer);await user(peer);
+ await set(peer,'peer.txt','peer\n');await git(peer,'add','peer.txt');await git(peer,'commit','-m','peer');await git(peer,'push');
+ s=await op('fetch',{remote:'local'});assert.equal(s.behind,1);
+ s=await op('pull',{remote:'local'},s);assert.equal(s.behind,0);
+ assert.equal(await readFile(join(root,'peer.txt'),'utf8'),'peer\n');
+ await set(root,'start.txt','local divergence\n');await git(root,'add','start.txt');await git(root,'commit','-m','local branch');
+ await set(peer,'peer.txt','different divergence\n');await git(peer,'add','peer.txt');await git(peer,'commit','-m','peer branch');await git(peer,'push');
+ s=await op('fetch',{remote:'local'});const head=s.head;assert.deepEqual([s.ahead,s.behind],[1,1]);
+ await op('pull',{remote:'local'},s,409);await op('push',{remote:'local'},s,409);assert.equal((await status()).head,head);
+ assert.equal((await request('stage',{revision:'different',path:entry})).status,409);
+ assert.equal((await request('stage',{revision:(await status()).revision,path:'../outside'})).status,400);
+ assert.match(response.headers.get('content-security-policy'),/frame-ancestors 'self'/);
+ assert.equal((await client(app.url,'bad')('status')).status,403);
+ assert.equal((await request('status',undefined,{origin:'https://example.invalid'})).status,403);
+ assert.equal((await fetch(new URL('/api/connection',app.url))).status,404);
+});
+test('exact repository root only, linked worktrees work, checkout cannot be selected through HTTP',async t=>{
+ const dir=await make(t),root=join(dir,'repo'),sub=join(root,'nested'),worktree=join(dir,'linked');
+ await mkdir(root);await init(root);await user(root);await git(root,'commit','--allow-empty','-m','init');
+ await mkdir(sub);await git(root,'worktree','add','-b','side',worktree);
+ assert.equal(await repository.gitAvailable(root),true);assert.equal(await repository.gitAvailable(sub),false);assert.equal(await repository.gitAvailable(worktree),true);
+ await assert.rejects(startGit(sub),/Git/);
+ let current={active:false};const panel=createGitPanel(root,{state:()=>current,linked:true});
+ const server=createServer((req,res)=>panel.handle(req,res,new URL(req.url,'http://localhost')).then(handled=>{if(!handled)res.writeHead(404).end();}));
+ server.listen(0,'127.0.0.1');await once(server,'listening');
+ t.after(()=>{panel.close();server.close();});
+ const origin=`http://127.0.0.1:${server.address().port}`;
+ const availability=()=>fetch(origin+'/api/git/available').then(r=>r.json());
+ assert.deepEqual(await availability(),{available:false});
+ current={active:true,startedAt:4};assert.deepEqual(await availability(),{available:true});
+ assert.equal((await fetch(origin+'/development/git/?session=3')).status,409);
+ const html=await fetch(origin+'/development/git/?session=4').then(r=>r.text());
+ const request=client(origin,keyOf(html),'4');assert.equal((await request('status')).status,200);
+ current={active:false};assert.equal((await request('status')).status,409);
+ current={active:true,startedAt:5};assert.equal((await request('status')).status,409);
+});
+test('only the real github.com fetch/push pair exposes GitHub features and safe links',async t=>{
+ const dir=await make(t);await init(dir);await user(dir);
+ await git(dir,'remote','add','origin','https://fake:secret@github.com/Org/Repo.git');
+ const repo=repository.createRepository(dir);
+ let status=await repo.request('status');
+ assert.equal(status.remotes[0].github.url,'https://github.com/Org/Repo');
+ assert.doesNotMatch(JSON.stringify(status),/secret/);
+ await git(dir,'remote','set-url','--push','origin','https://github.com.example.invalid/Org/Repo.git');
+ status=await repo.request('status');assert.equal(status.remotes[0].github,null);
+ await assert.rejects(repo.request('github-pr',{remote:'origin'}),/GitHub/);
+ for(const url of ['https://github.com.evil.invalid/o/r','https://github.com@evil.invalid/o/r','https://github.com:444/o/r','https://github.com/o/r/compare','ext::https://github.com/o/r','file:///tmp/git'])
+  assert.equal(repository.githubUrl(url),null,url);
+ assert.deepEqual(repository.githubUrl('git@github.com:Org/Repo.git'),{owner:'Org',repo:'Repo',url:'https://github.com/Org/Repo'});
+});
+test('normal first push sets upstream; GitHub force requires explicit exact lease and rejects changed remote history',async t=>{
+ const dir=await make(t),repo=join(dir,'repo'),bare=join(dir,'remote.git'),peer=join(dir,'peer');
+ await mkdir(repo);await init(repo);await user(repo);await git(dir,'init','--bare','-b','main',bare);
+ await git(repo,'commit','--allow-empty','-m','initial');await git(repo,'remote','add','origin',bare);
+ const service=repository.createRepository(repo);
+ let status=await service.request('status');assert.equal(status.upstream,null);
+ status=await service.request('push',{revision:status.revision,remote:'origin'});assert.equal(status.upstream.remote,'origin');
+ const remote={name:'origin',fetchUrls:['https://github.com/test/repo.git'],pushUrls:['git@github.com:test/repo.git']};
+ assert.throws(()=>repository.pushArguments(remote,status,{confirm:'incorrect'},true),/ブランチ名/);
+ assert.throws(()=>repository.pushArguments({...remote,pushUrls:['https://other.invalid/test/repo.git']},status,{confirm:'main'},true),/GitHub/);
+ const args=repository.pushArguments(remote,status,{confirm:'main'},true);
+ assert.ok(args.includes('--force-with-lease=refs/heads/main:'+status.upstream.oid));
+ assert.ok(!args.includes('--force'));
+ await git(dir,'clone',bare,peer);await user(peer);await git(peer,'commit','--allow-empty','-m','remote advance');await git(peer,'push');
+ const expected=(await git(peer,'rev-parse','HEAD')).stdout;
+ await assert.rejects(git(repo,...args),error=>/stale info/i.test(error.stdout+error.stderr));
+ assert.equal((await git(bare,'rev-parse','HEAD')).stdout,expected);
+});
+test('public CLI entry starts the isolated Git panel without Core or IDE UI dependencies',async t=>{
+ const dir=await make(t);await init(dir);
+ const {launch}=await import('../launch.mjs');
+ const app=await launch('git',['--project',dir,'--no-open']);
+ t.after(()=>app.close());
+ const html=await fetch(app.url).then(r=>r.text());
+ assert.match(html,/<title>AiDiy Git<\/title>/);
+ const request=client(app.url,keyOf(html));
+ assert.equal((await request('status')).status,200);
+ assert.equal((await fetch(new URL('/development/git/github-tabs.js',app.url))).status,200);
+});

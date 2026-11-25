@@ -1,0 +1,26 @@
+/* COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors. Licensed under AiDiy 公開利用ライセンス v1.1. See LICENSE. */
+:root{color-scheme:dark;--bg:#101822;--raised:#192535;--line:#34465c;--ink:#ecf2f9;--muted:#a9bdd2;--accent:#58d9e9;background:#000;color:var(--ink);font:14px/1.4 system-ui,"Yu Gothic UI",sans-serif}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;height:100vh;border:1px solid #1b3145;display:flex;flex-direction:column;overflow:hidden;background:#000}
+.titlebar{background:#1b3145;height:31px;flex:none;display:flex;align-items:center;padding:0 5px;gap:6px;-webkit-app-region:drag}
+.titlebar h1{flex:1;margin:0;text-align:center;font-size:14px}
+.titlebar nav{display:flex;gap:2px}.titlebar button{-webkit-app-region:no-drag;background:transparent;border-color:transparent;padding:0 6px;height:25px}.titlebar .fold{border:1px solid #96aec4;width:24px;padding:0}
+#main{background:var(--bg);display:flex;flex-direction:column;min-height:0;flex:1;border-top:2px solid var(--accent)}
+.toolbar,footer,.review nav,.main-tabs{display:flex;align-items:center;gap:7px;padding:9px 11px;background:var(--raised);flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.identity{display:flex;flex:1 1 140px;gap:8px;align-items:center;flex-wrap:wrap}
+#branch{font-family:monospace;color:var(--accent)}#counts,#target,#message{color:var(--muted)}#target,#message{margin:0;padding:4px 11px;overflow-wrap:anywhere}#target:empty,#message:empty{display:none}#message.error{color:#ffadae}
+button,select,textarea{font:inherit;color:inherit;background:#172432;border:1px solid #496581;border-radius:4px;padding:4px 8px}
+button:not(:disabled){cursor:pointer}button:not(:disabled):hover{background:#27485c}button:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}button:disabled{opacity:.45}
+button.primary:not(:disabled){background:#166778;border-color:#56cbdc}button[aria-pressed=true]{border-color:var(--accent)}
+main{display:grid;grid-template-columns:minmax(175px,34%) minmax(0,1fr);min-height:0;flex:1}
+aside,.review{min-height:0;min-width:0}aside{padding:8px;border-right:1px solid var(--line);overflow:auto}
+h2{font-size:13px;color:var(--muted);margin:4px 2px}ul{padding:0;margin:0;list-style:none}
+aside li{display:flex;min-width:0;gap:4px;margin:3px 0}aside li button:first-child{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}aside .empty{font-size:12px;color:var(--muted)}.conflict{color:#ffadae}
+.review{display:flex;flex-direction:column}.review nav{flex:none}#selection{min-width:0;overflow-wrap:anywhere;color:var(--muted)}
+#diff,#history{margin:0;padding:10px;overflow:auto;flex:1;font:13px/1.55 ui-monospace,Consolas,monospace}.line{display:block;min-height:1.55em;width:max-content;min-width:100%}.added{background:#153725;color:#a6efba}.removed{background:#3e2027;color:#ffb1bb}.chunk{color:#81ddec}
+#history li{overflow-wrap:anywhere;margin-bottom:6px}footer{border-top:1px solid var(--line);border-bottom:0}textarea{flex:1;min-width:100px;resize:vertical;max-height:130px}select{max-width:150px}
+@media(max-width:620px){main{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(85px,38%) minmax(0,1fr)}aside{border-right:0;border-bottom:1px solid var(--line)}.toolbar{gap:5px}.identity{flex-basis:100%}footer{gap:5px}footer label{font-size:12px}}
+
+#git-content{display:flex;flex-direction:column;flex:1;min-height:0}.main-tabs{padding:4px 10px}.main-tabs button{min-width:56px}.danger:not(:disabled){color:#ffadae;border-color:#c2777d}#github-content{padding:10px;overflow:auto;flex:1;min-height:0}#github-content a{color:var(--accent)}#github-content li{padding:6px 0;border-bottom:1px solid var(--line)}#github-content a:focus-visible{outline:2px solid var(--accent)}
+
+#force-dialog{background:#192535;color:var(--ink);border:1px solid #c2777d;border-radius:5px;max-width:min(560px,90vw)}#force-dialog::backdrop{background:#0009}#force-target{overflow-wrap:anywhere}#force-confirm{display:block;margin:5px 0 12px;padding:6px;background:#101822;color:inherit;border:1px solid #496581;width:100%;font:inherit}.force-actions,.github-controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.force-actions{justify-content:flex-end}.github-meta{display:block;color:var(--muted)}

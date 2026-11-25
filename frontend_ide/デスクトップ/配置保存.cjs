@@ -11,8 +11,8 @@ const {setWindowBounds}=require('./全画面横断.cjs');
 const {windowBounds}=require('./window-layout.cjs');
 const {glide,defaults:motionDefaults}=require('./配置移動.cjs');
 const {sanitizeSnapshot:sanitizeAvatarSnapshot}=require('../../frontend_avatar/electron/IDE窓配置.cjs');
-const kinds=new Set(['term','browser','code','live','cpu','task','team','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
-const foldKinds=new Set(['term','browser','code','live','task','team','viewer','explorer','panel-viewer','panel-navigation']);
+const kinds=new Set(['term','browser','code','live','cpu','task','team','git','viewer','explorer','panel-viewer','panel-routes','panel-navigation']);
+const foldKinds=new Set(['term','browser','code','live','task','team','git','viewer','explorer','panel-viewer','panel-navigation']);
 const domKinds=new Set(['explorer','panel-viewer','panel-routes','panel-navigation']);
 const limit=1024*1024;
 function bounds(value){
@@ -65,9 +65,9 @@ function applyPlacement(record,value,screen){
  return visible;
 }
 // Loadの＋メニュー順。Naviはrendererが開く別窓、AvatarはLiveの次。
-const loadOrder=['term','browser','panel-navigation','code','live','avatar','task','team','cpu'];
+const loadOrder=['term','browser','panel-navigation','code','live','avatar','task','team','git','cpu'];
 // 保存ファイルのpanelsもLoadで開く順に並べる。同じ種類は開いていた順を保つ。
-const openOrder=['explorer','panel-routes','viewer','panel-viewer','term','browser','panel-navigation','code','live','task','team','cpu'];
+const openOrder=['explorer','panel-routes','viewer','panel-viewer','term','browser','panel-navigation','code','live','task','team','git','cpu'];
 const inOpenOrder=panels=>[...panels].sort((a,b)=>openOrder.indexOf(a.kind)-openOrder.indexOf(b.kind));
 function text(value,max=4096){if(typeof value!=='string'||!value||value.length>max||value.includes('\0'))throw Error('保存されたパネル情報が不正です。');return value;}
 function validateRenderer(value){

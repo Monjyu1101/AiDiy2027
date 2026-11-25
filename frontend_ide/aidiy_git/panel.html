@@ -1,0 +1,38 @@
+<!doctype html>
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors. Licensed under AiDiy 公開利用ライセンス v1.1. See LICENSE. -->
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="aidiy-git" content="__GIT_TOKEN__"><meta name="aidiy-session" content="__GIT_SESSION__">
+<title>__GIT_TITLE__</title><link rel="stylesheet" href="/development/git/panel.css"><script type="module" src="/development/git/panel.js"></script></head>
+<body>
+<header class="titlebar"><button id="fold" class="native fold" aria-label="折りたたむ" hidden>▽</button><h1>__PANEL_LABEL__</h1><nav class="native" hidden aria-label="ウィンドウ操作"><button id="min" title="最小化">−</button><button id="max" title="最大化 / 元に戻す">□</button><button id="pin" title="最前面">📌</button><button id="close" title="閉じる">×</button></nav></header>
+<div id="main">
+<nav class="main-tabs" aria-label="Git パネル">
+ <button id="tab-git" aria-pressed="true">Git</button><button id="tab-pr" aria-pressed="false" hidden>PR</button><button id="tab-issue" aria-pressed="false" hidden>Issue</button>
+</nav>
+<div id="git-content">
+<section class="toolbar" aria-label="同期">
+ <div class="identity"><strong id="project">Git</strong><span id="branch"></span><span id="counts"></span></div>
+ <label for="remote">リモート</label><select id="remote" title="リモートを選択"></select>
+ <button id="fetch">取得</button><button id="pull">取り込み</button><button id="push" class="primary">送信</button><button id="force-push" class="danger" hidden title="GitHub の追跡先が最後の取得時点から変わっていない場合だけ上書きします">強制送信…</button><button id="refresh">再読込</button>
+</section>
+<p id="target"></p>
+<p id="message" class="notice" role="status" aria-live="polite"></p>
+<main>
+ <aside aria-label="変更一覧">
+  <section><h2>未ステージ <span id="work-count"></span></h2><ul id="work"></ul></section>
+  <section><h2>ステージ済 <span id="index-count"></span></h2><ul id="index"></ul></section>
+ </aside>
+ <section class="review" aria-label="差分と履歴">
+  <nav aria-label="表示切替"><button id="show-diff" aria-pressed="true">差分</button><button id="show-history" aria-pressed="false">履歴</button><span id="selection"></span></nav>
+  <pre id="diff">変更一覧からファイルを選んでください。</pre>
+  <ul id="history" hidden></ul>
+ </section>
+</main>
+<footer><label for="commit-text">コミットメッセージ</label><textarea id="commit-text" rows="2" maxlength="4000" placeholder="何を変更したか"></textarea><button id="commit" class="primary">コミット</button></footer>
+</div>
+</div><section id="github-content" hidden></section>
+<dialog id="force-dialog" aria-labelledby="force-title">
+<div><h2 id="force-title">GitHub への強制送信</h2><p id="force-target"></p><p>最後に取得した状態とサーバー側の履歴が異なる場合は停止します。</p>
+<label for="force-confirm">現在のブランチ名を入力</label><input id="force-confirm" autocomplete="off" spellcheck="false"><div class="force-actions"><button id="force-cancel" type="button" autofocus>キャンセル</button><button id="force-submit" class="danger" type="button" disabled>強制送信</button></div></div>
+</dialog>
+</body></html>

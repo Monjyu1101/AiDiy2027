@@ -3,6 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
+import {createGitPanel} from './aidiy_git/パネル.mjs';
 import { createSystemMetrics } from './aidiy_cpu/metrics.mjs';
 import { startServer } from './viewer/server.mjs';
 import { createCoreConnection, coreTarget } from './viewer/core-connection.mjs';
@@ -49,8 +50,10 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
  const browserAnalysis=createBrowserAnalysis(project,{...browserAnalysisOptions,state:connection.state});
  const systemMetrics=['ide','cpu'].includes(kind)?createSystemMetrics():undefined;
  const fileHistory=createFileHistory(project,{state:connection.state});
+ const gitPanel=kind==='ide'?createGitPanel(project,{state:connection.state,linked:true}):null;
  const app=await startServer(project,port,{strict,env,connection,explorerOptions,
   requestHandler:async(req,res,url)=>{
+   if(gitPanel&&await gitPanel.handle(req,res,url))return true;
    if(kind==='cpu'&&url.pathname.startsWith('/api/')&&(!['/api/system-metrics','/api/connection'].includes(url.pathname)||req.method!=='GET')){res.writeHead(req.method==='GET'?404:405).end();return true;}
    if(kind==='cpu'&&url.pathname==='/api/connection'){res.writeHead(200,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'}).end(JSON.stringify(connection.state()));return true;}
    if(['ide','cpu'].includes(kind)&&url.pathname==='/api/system-metrics'){
@@ -111,7 +114,7 @@ export async function startDevelopment(project,{kind='ide',linked=false,projectF
   }))
  });
  if(kind==='navi'){try{navigationSlot=await reserveNavigationSlot(project);}catch(error){await app.close();throw error;}}
- app.server.once('close',()=>{systemMetrics?.close();void navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();});
- const close=app.close;app.close=async()=>{await navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();await close();};
+ app.server.once('close',()=>{gitPanel?.close();systemMetrics?.close();void navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();});
+ const close=app.close;app.close=async()=>{gitPanel?.close();await navigationSlot?.close();taskTeamProxy?.close();aiSearch.close();navigation.close();fileAnalysis.close();browserAnalysis.close();await close();};
  return app;
 }

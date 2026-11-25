@@ -10,7 +10,7 @@ const root = new URL('../', import.meta.url);
 
 test('モジュール配置: 公開入口を維持し、内部処理は担当フォルダから読み込む', async () => {
   for (const entry of ['launch.mjs', 'server.mjs', 'desktop.cjs', '_setup.py', '_cleanup.py',
-    'aidiy_cpu/launch.mjs', 'aidiy_term/launch.mjs', 'aidiy_code/launch.mjs', 'aidiy_live/launch.mjs', 'aidiy_ide/launch.mjs']) {
+    'aidiy_git/launch.mjs', 'aidiy_cpu/launch.mjs', 'aidiy_term/launch.mjs', 'aidiy_code/launch.mjs', 'aidiy_live/launch.mjs', 'aidiy_ide/launch.mjs']) {
     await access(new URL(entry, root));
   }
   const modules = {

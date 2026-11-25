@@ -8,7 +8,6 @@ import { existsSync,writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath,pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
-import { startDevelopment } from './server.mjs';
 import { cliTitleName } from './src/components/ターミナル/CLIタイトル.js';
 import { validateCliOptions, resolveCliLaunch } from './aidiy_term/cli-launch.mjs';
 import { createCliOwnerLifetime } from './aidiy_term/cli-session.mjs';
@@ -19,7 +18,7 @@ import projectProfiles from './デスクトップ/project-profile.cjs';
 const {projectIdentity}=projectProfiles;
 // サーバーとElectronは別のNodeプロセスに所有させ、表示完了後に呼出元へ戻る。
 async function launchDetached(defaultKind,args){
- const label=defaultKind==='cpu'?'CPU':defaultKind==='navi'?'Navi':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='term'?'Term':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
+ const label=defaultKind==='git'?'Git':defaultKind==='cpu'?'CPU':defaultKind==='navi'?'Navi':defaultKind==='ide'?'IDE':defaultKind==='live'?'Live':defaultKind==='term'?'Term':defaultKind==='task'?'Task':defaultKind==='team'?'Team':defaultKind==='browser'?'Browser':'Code';
  const child=spawn(process.execPath,[fileURLToPath(import.meta.url),'--app',defaultKind,'--foreground',...args],{cwd:process.cwd(),env:{...process.env,AIDIY_LAUNCHER_CHILD:'1'},detached:true,windowsHide:true,stdio:['ignore','ignore','ignore','ipc']});
  try{
   const result=await new Promise((done,reject)=>{
@@ -39,17 +38,19 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const {values,positionals}=parseArgs({args,allowPositionals:true,options:{app:{type:'string'},project:{type:'string'},'project-fixed':{type:'boolean'},provider:{type:'string'},model:{type:'string'},cli:{type:'string'},'cli-auto-approve':{type:'boolean'},port:{type:'string'},'strict-port':{type:'boolean'},browser:{type:'boolean'},'no-open':{type:'boolean'},offline:{type:'boolean'},connect:{type:'boolean'},foreground:{type:'boolean'},serve:{type:'boolean'},wait:{type:'boolean'},'ready-file':{type:'string'},'new-window':{type:'boolean'},help:{type:'boolean'}}});
  const kind=values.app||defaultKind;
  if(values['project-fixed']&&!['task','team'].includes(kind))throw Error('--project-fixed はTask / Team専用です。');
- if(!['code','live','ide','term','task','team','browser','navi','cpu'].includes(kind))throw Error('--app はcode / live / ide / term / task / team / browser / navi / cpuから指定してください。');
+ if(!['code','live','ide','term','task','team','browser','navi','cpu','git'].includes(kind))throw Error('--app はcode / live / ide / term / task / team / browser / navi / cpu / gitから指定してください。');
+ if(values.help&&kind==='git'){console.log('aidiy_git [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--foreground | --wait]');console.log('選択した Git リポジトリを管理します。Core / Tools への接続は不要です。');return;}
  if(values.help&&kind==='cpu'){console.log('aidiy_cpu [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('CPU / GPU / RAMの使用率を小型画面で表示します。Core / Toolsへの接続は不要です。');return;}
  if(values.help&&kind==='browser'){console.log('aidiy_browser [作業フォルダ | --project 作業フォルダ] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('IDE共通のBrowserをElectronで単独起動します。tools接続時にchrome_devtoolsから操作できます。Web版への切り替えは行いません。');return;}
  if(values.help){console.log(`aidiy_${kind} [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port]${['task','team','navi'].includes(kind)?'':' [--provider 名前] [--model モデル]'}${['code','browser'].includes(kind)?' [--offline]':''}${kind==='live'?'':' [--new-window]'}${kind==='term'?' [--cli 名前] [--cli-auto-approve]':''} [--foreground | --wait]`);console.log('起動フォルダをプロジェクトにしてElectronで開きます。Codespaces等ではWeb版。ポートは自動割り当て。');console.log('単独ウィンドウの表示後はプロンプトへ戻ります。--foreground / --wait で終了まで待機します。');return;}
+ if(kind==='git'&&['connect','offline','provider','model','cli','cli-auto-approve'].some(name=>values[name]!==undefined))throw Error('Git パネルでは接続・AIモデル・CLIオプションは利用できません。');
  if(kind==='cpu'&&['connect','offline','provider','model','cli','cli-auto-approve'].some(name=>values[name]!==undefined))throw Error('CPUはシステム計測専用です。接続・AIモデル・CLIオプションは利用できません。');
  if(kind==='browser'&&['browser','no-open','serve','connect','provider','model','cli','cli-auto-approve'].some(name=>values[name]!==undefined))throw Error('BrowserはElectron専用です。Web起動・AIモデル・CLIのオプションは利用できません。');
  if(['task','team','navi'].includes(kind)&&['provider','model','offline','connect'].some(name=>values[name]!==undefined))throw Error('Task / Team のモデル・接続設定は画面内で指定してください（--provider / --model / --offline / --connect は利用できません）。');
  validateCliOptions(kind,{cli:values.cli,cliAutoApprove:values['cli-auto-approve'],provider:values.provider,model:values.model});
  const cliLaunch=values.cli?await resolveCliLaunch(values.cli,{autoApprove:!!values['cli-auto-approve']}):undefined;
  const requestedProject=projectFolder(positionals,values.project);
- const project=['ide','task','team'].includes(kind)?projectIdentity(requestedProject).path:requestedProject,port=values.port===undefined?0:Number(values.port);
+ const project=['ide','task','team','git'].includes(kind)?projectIdentity(requestedProject).path:requestedProject,port=values.port===undefined?0:Number(values.port);
  if(!Number.isInteger(port)||port<0||port>65535)throw Error('--port は0〜65535で指定してください。');
  if(values.offline&&['live','task','team'].includes(kind))throw Error(`${kind}はAiDiy接続が必要です。`);
  let provider=values.provider?.trim(),model=values.model?.trim();
@@ -59,11 +60,12 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
   if(provider&&!aliases[provider])throw Error('LiveのProviderはfreeai / gemini / openaiを指定してください。');provider=aliases[provider];
   if(model&&!provider)throw Error('Liveの--modelには--providerも指定してください。');
  }
- if(!existsSync(fileURLToPath(new URL(['task','team'].includes(kind)?'./dist/taskteam.js':'./dist/app.js',import.meta.url))))throw Error('Vue画面を準備してください: python frontend_ide/_setup.py');
+ if(kind!=='git'&&!existsSync(fileURLToPath(new URL(['task','team'].includes(kind)?'./dist/taskteam.js':'./dist/app.js',import.meta.url))))throw Error('Vue画面を準備してください: python frontend_ide/_setup.py');
  if(!values.foreground&&!values.wait&&!values.serve&&!values['no-open']&&!values.browser&&(kind==='browser'||!useBrowser()))return launchDetached(kind,args);
  let app,desktop,lifetime,stopping=false;
  const stop=async()=>{if(stopping)return;stopping=true;lifetime?.dispose();if(desktop?.connected)desktop.disconnect();await app?.close();};
  if(values.cli)lifetime=createCliOwnerLifetime(stop);
+ const startDevelopment=kind==='git'?(await import('./aidiy_git/serve.mjs')).startGit:(await import('./server.mjs')).startDevelopment;
  app=await startDevelopment(project,{kind,projectFixed:!!values['project-fixed'],port,strict:values['strict-port'],offline:values.offline,provider,model,cli:values.cli,cliAutoApprove:values['cli-auto-approve'],autoConnect:values.connect,onCliStarted:()=>lifetime?.started(),onCliAbandoned:stop});
  const launcherChild=process.env.AIDIY_LAUNCHER_CHILD==='1'&&!!process.send;
  if(launcherChild)process.once('disconnect',stop);

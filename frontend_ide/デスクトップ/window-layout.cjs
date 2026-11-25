@@ -9,7 +9,7 @@ const size=require('../host/scripts/window-size.cjs');
 function windowMinimumSize(kind,bounds){
  if(kind==='browser')return{minWidth:Math.min(800,bounds.width),minHeight:Math.min(400,bounds.height)};
  if(kind==='cpu')return{minWidth:Math.min(240,bounds.width),minHeight:Math.min(125,bounds.height)};
- return{minWidth:Math.min(['ide','task','team'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='term'?180:size.会話最小高さ,bounds.height)};
+ return{minWidth:Math.min(['ide','task','team','git'].includes(kind)?400:size.最小幅,bounds.width),minHeight:Math.min(kind==='ide'?550:kind==='term'?180:size.会話最小高さ,bounds.height)};
 }
 function windowBounds(kind,area,owner,slot=0,cli=false){
  const margin=kind==='ide'?Math.min(32,Math.max(12,Math.round(Math.min(area.width,area.height)*.025))):8;
@@ -25,6 +25,10 @@ function windowBounds(kind,area,owner,slot=0,cli=false){
  if(kind==='navi'){
   const width=Math.min(size.幅,available.width),height=Math.min(size.ナビ高さ,available.height);
   return{x:available.x,y:Math.round(area.y+(area.height-height)/2),width,height};
+ }
+ if(kind==='git'){
+  const width=Math.min(880,available.width),height=Math.min(620,available.height);
+  return{x:Math.round(area.x+(area.width-width)/2),y:Math.round(area.y+(area.height-height)/2),width,height};
  }
  if(kind==='task'||kind==='team'){
   const width=Math.min(1200,available.width),height=Math.min(820,available.height);

@@ -447,3 +447,5 @@
 .ide-heading .connection-label{display:flex;align-items:center;min-width:0}
 .ide-heading .ide-view-modes{margin-left:6px}
 .ide-heading .ide-view-modes button{padding:2px 5px}
+
+.ai-popup.git-popup{width:min(900px,calc(100vw - 32px))}.git-popup iframe{flex:1;min-height:0;width:100%;border:0;background:#101822}

@@ -1,6 +1,6 @@
 # frontend_ide 実装概要
 
-IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU は AiDiy の正式なサブシステムであり、本フォルダが9種類のVue 3画面を所有する。VS Code拡張はCode / Liveだけ、単独起動は9種類。Task / Team はAvatarから移設した独立版で、専用bundleと独立した認証・ウィンドウを使う。Web／Avatar内の旧Task／Team画面・入口は撤去済み。
+IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU は AiDiy の正式なサブシステムであり、本フォルダが9種類のVue 3画面を所有し、別途ローカル専用のGitパネル（aidiy_git）を持つ。VS Code拡張はCode / Liveだけ、単独起動はGitを含め10種類。Task / Team はAvatarから移設した独立版で、専用bundleと独立した認証・ウィンドウを使う。Web／Avatar内の旧Task／Team画面・入口は撤去済み。
 
 全体のコンセプトは **開発スペース（宇宙をテーマにした IDE 開発環境）**。プロジェクトを宇宙（フォルダ＝銀河、ファイル＝星・惑星）として見せ、人はソースをほぼ触らずに「眺める・辿る・読む・頼む」で開発する。本文の編集は Code / Live を通じて AI に任せ、ビューアは読み取り専用を保つ。エクスプローラーでは明示操作によるコピー・名前変更・新規作成・確認付きのゴミ箱移動を提供する。Code / Live は単独起動・VS Code 拡張を維持したまま、開発スペースの部品としても動作させる（3つの使い方を壊さない）。説明文では見た目を宇宙、画面の文字は「フォルダ」「ファイル」など一般名で書く。
 
@@ -39,6 +39,6 @@ Navi は `frontend_ide` が所有する開発案内画面です。`aidiy_navi` �
 
 ## Vue共通画面と配置規則
 
-現行のIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行は9種類です。エクスプローラーは `frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code の Hermes / Pi 実行・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
+現行のIDE / Term / Browser / Navi / Code / Live / Task / Team / CPUの画面は `frontend_ide` のVue部品を使用します。VS Code拡張はCode / Liveのみ、単独実行はGitを含め10種類です。エクスプローラーは `frontend_ide/src/components/ファイル閲覧/ファイル一覧.vue` に集約し、選択と検索マークを宇宙表示へ通知します。既存の `frontend_ide/host` は拡張ホスト・Code の Hermes / Pi 実行・Live音声基盤、`frontend_ide/viewer` はファイルAPI・Office表示資産を提供します。旧起動入口からもVue版へ進みます。詳細は `_AIDIY/knowledge/frontend_ide,Vue共通画面変更手順.md` を参照してください。
 
 Diag / Navi / Code / Live / Term / IDE / Discord / Slack の独自実装は、日本語の機能名で配置し、共通処理は所有元から再利用します。`src`・`checks`・`scripts`・`dist` などの規約名、公開起動入口、配布URL、IPC/API・保存キーは互換性のため維持します。画面の所有元は Diag が `frontend_diag/diag/ui`、Memo が `frontend_diag/memo/ui/src`、Navi / Code / Live / Term / IDE / Task / Team / Browser / CPU が `frontend_ide/src`、Discord が `frontend_channels/discord/panel`、Slack が `frontend_channels/slack/panel` です。

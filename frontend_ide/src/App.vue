@@ -49,7 +49,7 @@ const { config }=defineProps({config:Object});
 // IDEのピン留めで開いた独立ウィンドウ（URLの #viewer=ファイル）。IDE本体の画面・接続監視は動かさない。
 const viewerPath=config.kind==='ide'&&location.hash.startsWith('#viewer=')?decodeURIComponent(location.hash.slice('#viewer='.length)):'';
 const cpuWindow=config.kind==='cpu'||config.kind==='ide'&&location.hash==='#cpu';
-const cpuOpen=ref(false);
+const cpuOpen=ref(false), gitOpen=ref(false), gitAvailable=ref(false);
 const runningApps=ref([]);
 function openCpu(){if(desktop)return openWindow('cpu');cpuOpen.value=true;}
 const browserHeader=location.hash==='#browser-header';
@@ -116,12 +116,12 @@ async function status(){
       catch{if(!disposed&&run===revision&&session===confirmed)statusError.value='子ウィンドウの状態を確認できません。次の確認で再試行します。';}
     }
   }catch{if(!disposed&&run===revision&&session===own)statusError.value='サーバーの状態を確認できません。作業を保持して再試行します。';}
-  finally{polling=false;void refreshLayout();}
+  finally{polling=false;void refreshLayout();void refreshGitAvailability();}
 }
 function update(data){
   if(disposed)return;
   const next=data.active?`${data.mode}:${data.startedAt}:${data.project?.path||''}`:'';
-  if(next!==session)runningApps.value=[];
+  if(next!==session){runningApps.value=[];gitOpen.value=false;gitAvailable.value=false;}
   if(next!==session){cpuOpen.value=false;navigationWindows.value=[];nextNavigation=0;lastDraftKind='';analysis.value=null;history.value=null;draftRequest.value=null;pinnedViewers.clear();for(const key of Object.keys(opening))delete opening[key];session=next;base.code='';base.live='';base.term='';panelOpen.value=false;tab.value='code';liveOpen.value=false;viewMode.value='3d';}
   state.value=data;error.value=data.message||'';
 }
@@ -130,8 +130,26 @@ async function start(action){
   // 終了するのは作業セッションだけ。起動パラメータのプロジェクトは再開まで保持する。
   if(action==='disconnect')update({active:false,mode:'initial',startedAt:null,connected:false,connecting:false,wanted:false,project:state.value.project||config.project});
   try{if(action==='disconnect'&&desktop)await window.aidiyWindow.endSession();const response=await fetch('/api/connection/'+action,{method:'POST',signal:AbortSignal.timeout(7000)});if(!response.ok)throw Error(await response.text());update(await response.json());}
-  catch(e){error.value=e.message;}finally{pending.value=false;void refreshLayout();}
+  catch(e){error.value=e.message;}finally{pending.value=false;void refreshLayout();void refreshGitAvailability();}
 }
+let gitChecking=false;
+async function refreshGitAvailability(){
+  if(gitChecking||disposed||!state.value.active)return;
+  const own=session;gitChecking=true;
+  try{
+    const response=await fetch('/api/git/available',{cache:'no-store',signal:AbortSignal.any([lifetime.signal,AbortSignal.timeout(5000)])});
+    const available=response.ok&&(await response.json()).available===true;
+    if(!disposed&&own===session)gitAvailable.value=available;
+  }catch{if(!disposed&&own===session)gitAvailable.value=false;}
+  finally{gitChecking=false;}
+}
+const gitTitle=computed(()=>gitAvailable.value?'選択中のプロジェクトの Git パネルを開く':'プロジェクトのルートに .git があり、Git が利用できる場合に起動できます');
+function openGit(displayId){
+  if(!gitAvailable.value||!state.value.active)return;
+  if(desktop)return openWindow('git',displayId);
+  gitOpen.value=true;
+}
+const gitItem=()=>({key:'git',text:launchText('git','Git'),title:gitTitle.value,disabled:!gitAvailable.value||!!launching.value,run:()=>openGit()});
 const navigationWindows=ref([]),navigationRefs=new Map();let nextNavigation=0;
 // Navi も他のアプリと同じく、起動中は全ボタンを無効にして「起動中…」を出す（窓が開いたら解除。万一に備え10秒で解除）。
 let navigationTimer;
@@ -192,6 +210,7 @@ const desktopLaunchItems=computed(()=>[
   {key:'code',text:launchText('code','Code'),title:'コード支援を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('code')},
   ...(state.value.mode==='online'&&!liveOpen.value&&!['live','avatar'].includes(launching.value)?[{key:'live',text:launchText('live','Live'),title:'音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('live')},{key:'avatar',text:launchText('avatar','Avatar'),title:'アバター音声会話を別ウィンドウで開く',disabled:!!launching.value,run:()=>openWindow('avatar')}]:[]),
   ...(state.value.mode==='online'?['task','team'].filter(type=>!runningApps.value.includes(type)).map(type=>({key:type,text:launchText(type,type.toUpperCase()),title:'現在のプロジェクトに固定して '+type.toUpperCase()+' を開く',disabled:!!launching.value,run:()=>openWindow(type)})):[]),
+  gitItem(),
   ...(!runningApps.value.includes('cpu')?[{key:'cpu',text:launchText('cpu','CPU'),title:'CPU / GPU / RAMの使用率を開く',disabled:!!launching.value,run:openCpu}]:[]),
   ...(layoutAvailable.value&&layoutState.value.count>=3?[layoutItem('save')]:[]),
 ].map(item=>({...item,disabled:item.disabled||layoutBusy.value})));
@@ -201,6 +220,7 @@ const panelLaunchItems=computed(()=>[
   ...(state.value.mode==='online'?[{key:'navigation',class:'navigation-launch',text:launchText('navigation','Navi'),disabled:!!launching.value,run:openNavigation}]:[]),
   {key:'code',text:'Code',pressed:panelOpen.value&&tab.value==='code',run:()=>openPanel('code')},
   ...(state.value.mode==='online'?[{key:'live',text:'Live',pressed:panelOpen.value&&tab.value==='live',run:()=>openPanel('live')}]:[]),
+  gitItem(),
   ...(!cpuOpen.value?[{key:'cpu',text:'CPU',run:openCpu}]:[]),
 ]);
 async function openWindow(kind,displayId){
@@ -329,6 +349,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
           <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="この画面の左上に音声会話を開く" @click="openWindow('live',toolbar.displayId)">{{ launching==='live'?'起動中…':'Live' }}</button>
           <button v-if="state.mode==='online'&&!liveOpen&&!['live','avatar'].includes(launching)" :disabled="!!launching||allBusy" title="アバター音声会話を別ウィンドウで開く" @click="openWindow('avatar',toolbar.displayId)">{{ launching==='avatar'?'起動中…':'Avatar' }}</button>
           <button v-for="type in ['task','team'].filter(type=>!runningApps.includes(type))" :key="type" v-show="state.mode==='online'" :disabled="!!launching||allBusy" @click="openWindow(type,toolbar.displayId)">{{ launching===type?'起動中…':type.toUpperCase() }}</button>
+          <button :disabled="!!launching||allBusy||!gitAvailable" :title="gitTitle" @click="openGit(toolbar.displayId)">{{ launchText('git','Git') }}</button>
           <button v-if="!runningApps.includes('cpu')" :disabled="!!launching||allBusy" @click="openWindow('cpu',toolbar.displayId)">CPU</button>
         </div>
       </nav></template>
@@ -344,6 +365,7 @@ onBeforeUnmount(()=>{stopWindowMove();stopAllDisplays();stopLayout();disposed=tr
       <template v-else>
         <NavigationPanel v-for="id in navigationWindows" :key="id" :ref="value=>value?navigationRefs.set(id,value):navigationRefs.delete(id)" :instance="id" :project="state.project" :started-at="state.startedAt" :all-displays="allDisplayState.active" @opened="navigationOpened" @closed="closeNavigation(id)" />
         <CpuPanel v-if="cpuOpen" floating @close="cpuOpen=false" />
+        <aside v-if="gitOpen&&!desktop" class="ai-popup git-popup" aria-label="Git パネル"><nav class="ai-tabs"><button class="close" @click="gitOpen=false">Git パネルを閉じる</button></nav><iframe :src="'/development/git/?session='+encodeURIComponent(state.startedAt)" title="AiDiy Git" /></aside>
         <SpaceView ref="spaceView" :key="`${state.mode}:${state.startedAt}:${state.project?.path||''}`" :started-at="state.startedAt" :view-mode="viewMode" :all-displays="allDisplayState.active" />
         <aside v-if="!desktop" v-show="panelOpen" class="ai-popup"><nav class="ai-tabs" role="tablist"><button role="tab" :aria-selected="tab==='term'" @click="openPanel('term')">Term</button><button role="tab" :aria-selected="tab==='code'" @click="openPanel('code')">Code</button><button v-if="state.mode==='online'" role="tab" :aria-selected="tab==='live'" @click="openPanel('live')">Live</button><button class="close" aria-label="パネルを閉じる" @click="panelOpen=false"><span class="close-icon" aria-hidden="true"></span></button></nav>
           <CodePanel ref="codePanel" v-if="base.code" v-show="tab==='code'" :key="base.code" :base="base.code" :icon="config.icon" embedded page-notifications />
