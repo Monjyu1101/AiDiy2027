@@ -1,0 +1,18 @@
+<!-- COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+     Licensed under "AiDiy 公開利用ライセンス v1.1". -->
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+ <defs><linearGradient id="bg" x2="90%" y2="100%"><stop stop-color="#18355d"/><stop offset="1" stop-color="#0a1428"/></linearGradient><linearGradient id="mark" x2="100%" y2="100%"><stop stop-color="#ffc07d"/><stop offset="1" stop-color="#e8684f"/></linearGradient></defs>
+ <path fill="url(#bg)" d="M0 0h512v386H0z"/>
+ <circle cx="256" cy="193" r="146" fill="none" stroke="#49739a" stroke-width="3" opacity=".5"/>
+ <circle cx="256" cy="193" r="169" fill="none" stroke="#49739a" stroke-width="2" opacity=".6" stroke-dasharray="11 18"/>
+ <rect x="149" y="86" width="214" height="214" rx="29" fill="url(#mark)" transform="rotate(45 256 193)"/>
+ <path d="M220 113v140m0-101c0 53 74 36 74 82" fill="none" stroke="#fff9f5" stroke-width="17" stroke-linecap="round"/>
+ <g fill="#fff9f5"><circle cx="220" cy="115" r="21"/><circle cx="220" cy="259" r="21"/><circle cx="294" cy="235" r="21"/></g>
+ <path fill="#7dd0f0" d="M0 386h512v126H0z"/>
+ <!-- Path-based lettering avoids system font differences. -->
+ <g transform="translate(112 406)" fill="#105741">
+  <path d="M88 25H68c-2-7-7-10-15-10-15 0-21 12-21 28 0 18 6 28 21 28 10 0 15-5 16-14H53V41h36v42H73v-8c-6 8-15 11-26 11C21 86 11 67 11 43 11 18 24 0 53 0c20 0 32 9 35 25z"/>
+  <rect x="121" y="2" width="23" height="82" rx="2"/>
+  <path d="M168 2h106v18h-41v64h-24V20h-41z"/>
+ </g>
+</svg>

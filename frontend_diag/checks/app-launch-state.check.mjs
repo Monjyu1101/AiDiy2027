@@ -77,3 +77,22 @@ test('literal ../ display uses resolved path for launch and browser browse; manu
  await state.読込();await state.起動('code');assert.equal(requests.at(-1).body.フォルダ,'/manual');
  state.解除();await state.読込();assert.equal(state.フォルダ.value,'');assert.equal(state.起動フォルダ(),'');
 });
+
+test('Git launcher follows the selected project and discards an earlier availability response',async()=>{
+ let release;
+ let project='/normal';
+ const state=アプリ状態を作成({picker:async()=>project,api:async(route,_method,_signal,_format,data)=>{
+  if(route==='api/アプリ起動')return {対象:[{id:'git',名前:'Git',利用可能:false}],フォルダ:'../',起動フォルダ:'/initial'};
+  if(route.endsWith('/フォルダ'))return {フォルダ:data.フォルダ};
+  if(route.endsWith('/開始'))assert.fail('Git is unavailable for the previous project');
+  if(data.フォルダ==='/initial')return new Promise(resolve=>release=resolve);
+  return {利用可能:data.フォルダ==='/git',無効表示:'Git 利用不可'};
+ }});
+ const initial=state.読込();while(!release)await Promise.resolve();
+ assert.equal(state.利用可能('git'),false);assert.equal(state.Git無効表示(),'確認中');
+ await state.選択();assert.equal(state.利用可能('git'),false);
+ release({利用可能:true});await initial;assert.equal(state.利用可能('git'),false);
+ await state.起動('git');
+ project='/git';await state.選択();assert.equal(state.利用可能('git'),true);
+ state.解除();assert.equal(state.利用可能('git'),false);assert.equal(state.Git無効表示(),'未選択');
+});

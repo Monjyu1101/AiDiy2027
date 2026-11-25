@@ -20,7 +20,7 @@ import launchDisplay from '../../../frontend_ide/デスクトップ/起動画面
 const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 const {単一起動部品,単独起動中の部品,起動枠の使用中}=appProcesses;
-export const アプリ一覧=Object.freeze(['avatar','task','team','ide','cpu','navi','term','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',ide:'IDE',cpu:'CPU',navi:'Navi',term:'Term',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:[...単一起動部品,'avatar','live','discord','slack'].includes(id)})));
+export const アプリ一覧=Object.freeze(['avatar','task','team','git','ide','cpu','navi','term','code','live','discord','slack','chrome','browser'].map(id=>Object.freeze({id,名前:({avatar:'Avatar',task:'Task',team:'Team',git:'Git',ide:'IDE',cpu:'CPU',navi:'Navi',term:'Term',code:'Code',live:'Live',discord:'Discord',slack:'Slack',chrome:'Chrome',browser:'aidiy_browser'})[id],単一起動:[...単一起動部品,'avatar','live','discord','slack'].includes(id)})));
 const execute=(command,args,options={})=>new Promise((resolve,reject)=>execFile(command,args,{encoding:'utf8',windowsHide:true,timeout:10000,maxBuffer:8*1024*1024,...options},(error,stdout)=>error?reject(error):resolve(stdout)));
 
 export const {タスク一覧}=appProcesses;
@@ -39,8 +39,13 @@ export function アプリタスク(id,{command=''}){
 export async function isChromeInstalled({resolveFn=resolveProgram}={}){
  try{return Boolean(await resolveFn((await programCatalog()).find(item=>item.id==='chrome')));}catch{return false;}
 }
-export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,appSlotInUse=起動枠の使用中,linkedLiveRunning=draftBridge.linkedLiveRunning,node=process.execPath,pythonCommand,taskTeamStatus,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),getLaunchDisplay=async()=>undefined}={}){
+async function defaultGitAvailable(project){
+ const {gitAvailable}=(await import('../../../frontend_ide/aidiy_git/リポジトリ.cjs')).default;
+ return gitAvailable(project);
+}
+export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧,appSlotInUse=起動枠の使用中,linkedLiveRunning=draftBridge.linkedLiveRunning,node=process.execPath,pythonCommand,taskTeamStatus,gitAvailable=defaultGitAvailable,chromeInstalled=isChromeInstalled,portStatusFn=createPortStatusChecker(),webBrowserOpenFn=createWebBrowserOpener({portStatusFn}),getLaunchDisplay=async()=>undefined}={}){
  const pending=new Set();
+ const gitEntry=join(root,'frontend_ide','aidiy_git','launch.mjs');
  const slackEntry=join(root,'frontend_channels','slack','panel','launch.mjs');
  async function slackAvailability(){try{if((await stat(slackEntry)).isFile())return {利用可能:true,無効理由:'',無効表示:''};}catch{}return {利用可能:false,無効理由:'Slack の起動ファイルが見つかりません。セットアップを確認してください。',無効表示:'未導入'};}
  const checkTaskTeam=taskTeamStatus||createTaskTeamStatus({root});
@@ -64,7 +69,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
   // 判定はサーバー内で完結し、設定値やキーをランチャーへ渡さない。
   // Chrome は導入タブと同じ実行ファイル探索のみ。起動やバージョン確認はしない。
   const visibleApps=アプリ一覧.filter(app=>app.id==='chrome'?showChrome:!['discord','slack'].includes(app.id)||configured(config[`${app.id}_bot_token`],app.id));
-  return {対象:visibleApps.map(app=>taskTeam(app.id)?{...app,...state}:app.id==='slack'?{...app,...slackState}:app.id==='chrome'?{...app,...chromeState}:app.id==='browser'?{...app,...browserState}:app),フォルダ,起動フォルダ};
+  return {対象:visibleApps.map(app=>app.id==='git'?{...app,利用可能:false}:taskTeam(app.id)?{...app,...state}:app.id==='slack'?{...app,...slackState}:app.id==='chrome'?{...app,...chromeState}:app.id==='browser'?{...app,...browserState}:app),フォルダ,起動フォルダ};
  }
  async function folder(value){
   if(typeof value!=='string'||!value.trim()||value.length>4096||value.includes('\0')||!isAbsolute(value))throw fail('プロジェクトフォルダを選択してください。');
@@ -74,6 +79,18 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
   const path=await folder(value||root);
   try{return {フォルダ:path,親:dirname(path),子フォルダ:(await readdir(path,{withFileTypes:true})).filter(item=>item.isDirectory()).map(item=>({名前:item.name,パス:join(path,item.name)})).sort((a,b)=>a.名前.localeCompare(b.名前,'ja'))};}
   catch{throw fail('このフォルダの一覧を取得できません。');}
+ }
+ async function gitStatus(project){
+  if(!project)return {利用可能:false,無効理由:'プロジェクトフォルダを選択してください。',無効表示:'未選択'};
+  if(typeof project!=='string'||/[\u0000-\u001f\u007f]/.test(project))return {利用可能:false,無効理由:'プロジェクトフォルダを確認できません。',無効表示:'フォルダ確認不可'};
+  let path;try{path=await folder(project);}catch(error){return {利用可能:false,無効理由:error.message,無効表示:'フォルダ確認不可'};}
+  try{
+   if(!(await stat(gitEntry)).isFile())throw Error();
+  }catch{return {利用可能:false,無効理由:'AiDiy Git の起動ファイルが見つかりません。',無効表示:'未導入'};}
+  try{
+   if(await gitAvailable(path)===true)return {利用可能:true,無効理由:'',無効表示:''};
+  }catch{}
+  return {利用可能:false,無効理由:'Git が利用でき、選択フォルダ自体が Git 作業ツリーのルートである場合だけ開けます。',無効表示:'Git 利用不可'};
  }
  async function python(){
   if(pythonCommand)return [pythonCommand,[]];
@@ -88,6 +105,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
   if(pending.has(id))throw fail('このアプリの起動処理中です。',409);
   pending.add(id);
   try{
+   if(id==='git'){const state=await gitStatus(path);if(!state.利用可能)throw fail(state.無効理由,409);}
    if(id==='slack'){const state=await slackAvailability();if(!state.利用可能)throw fail(state.無効理由,503);}
    if(id==='browser'){const state=await browserAvailability();if(!state.利用可能)throw fail(state.無効理由,409);}
    if(taskTeam(id)){const state=await availability();if(state.利用可能!==true)throw fail(state.無効理由||'Task / Team バックエンドを起動してください。',409);}
@@ -104,6 +122,7 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
    if(id==='avatar'){args=[join(root,'frontend_avatar','launch.mjs')];cwd=root;}
    else if(id==='discord')args=[join(root,'frontend_channels','discord','panel','launch.mjs'),'--project',path];
    else if(id==='slack')args=[slackEntry,'--project',path];
+   else if(id==='git')args=[gitEntry,'--project',path];
    else args=[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',path,...(app.単一起動?[]:['--new-window'])];
    const env={...process.env,PYTHONIOENCODING:'utf-8',PYTHONUNBUFFERED:'1'};
    for(const key of Object.keys(env))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH|AIDIY_(?:DIAG_LAUNCHER_CHILD|LAUNCHER_CHILD|DIAG_SETTINGS|DIAG_RUN))$/i.test(key))delete env[key];
@@ -130,5 +149,5 @@ export function createAppLauncher({root=ROOT,spawnFn=spawn,tasks=タスク一覧
    return {受付:true,通知:`${app.名前} の起動を要求しました。`,ログ:logPath};
   }finally{pending.delete(id);}
  }
- return {catalog,folders,launch};
+ return {catalog,folders,gitStatus,launch};
 }

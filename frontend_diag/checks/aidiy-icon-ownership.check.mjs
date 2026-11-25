@@ -9,10 +9,10 @@ import {readFile} from 'node:fs/promises';
 import {アプリアイコン} from '../diag/ui/components/アプリ起動/アプリアイコン.mjs';
 import {createHandler} from '../diag/diag_main.mjs';
 const root=new URL('../',import.meta.url),bytes=name=>readFile(new URL(name,root));
-const icons=[...['cpu','navi','term','code','live','ide','task','team','browser','avatar','diag','discord','slack'].map(id=>({id,source:`アイコン/AiDiy_${id}.png`,file:`AiDiy_${id}.png`})),...['aidiy_hermes','aidiy_pi','aidiy_codex'].map(id=>({id,source:`CLIアイコン/${id}.png`,file:`CLI_${id}.png`}))];
+const icons=[...['cpu','navi','term','code','live','ide','task','team','git','browser','avatar','diag','discord','slack'].map(id=>({id,source:`アイコン/AiDiy_${id}.png`,file:`AiDiy_${id}.png`})),...['aidiy_hermes','aidiy_pi','aidiy_codex'].map(id=>({id,source:`CLIアイコン/${id}.png`,file:`CLI_${id}.png`}))];
 
-test('AiDiy 16 種は Diag 内の PNG コピーだけで配布を検証できる',async()=>{
- assert.equal(icons.length,16);assert.equal(new Set(icons.map(icon=>icon.id)).size,16);
+test('AiDiy 17 種は Diag 内の PNG コピーだけで配布を検証できる',async()=>{
+ assert.equal(icons.length,17);assert.equal(new Set(icons.map(icon=>icon.id)).size,17);
  for(const icon of icons){
   const png=await bytes('diag/ui/components/アプリ起動/'+icon.source);
   assert.equal(png.subarray(1,4).toString(),'PNG');assert.ok(png.readUInt32BE(16)>0);assert.ok(png.readUInt32BE(20)>0);
@@ -21,7 +21,7 @@ test('AiDiy 16 種は Diag 内の PNG コピーだけで配布を検証できる
   await assert.rejects(bytes('diag/ui/components/アプリ起動/'+icon.source.replace(/\.png$/,'.svg')),{code:'ENOENT'});
   if(!['diag','aidiy_hermes','aidiy_pi','aidiy_codex'].includes(icon.id))assert.equal(アプリアイコン[icon.id],icon.file);
  }
- for(const name of ['task','team','browser'])await assert.rejects(bytes(`diag/ui/components/アプリ起動/アプリアイコン/${name}.svg`),{code:'ENOENT'});
+ for(const name of ['task','team','git','browser'])await assert.rejects(bytes(`diag/ui/components/アプリ起動/アプリアイコン/${name}.svg`),{code:'ENOENT'});
  assert.equal(アプリアイコン.chrome,'Chrome.svg');
  for(const name of ['ui/build.mjs','ui/verify.mjs','diag/ui/style.css'])assert.doesNotMatch((await bytes(name)).toString('utf8').replaceAll('../../frontend_ide/src/components','shared-title-components'),/frontend_(?:ide|channels|avatar)|command_hermes|aidiy-icon-sources|_icons\/AiDiy/,'外部 module の asset を参照しない');
 });

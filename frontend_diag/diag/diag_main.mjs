@@ -113,7 +113,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
   for(const name of ['memo.html','memo.js','memo.css'])assets.set(name,[name,name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.js')?'text/javascript; charset=utf-8':'text/css; charset=utf-8']);
   assets.set('Chrome.svg',['Chrome.svg','image/svg+xml']);
   assets.set('AiDiy.png',['AiDiy.png','image/png']);
-  for(const id of ['avatar','ide','cpu','navi','term','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
+  for(const id of ['avatar','ide','cpu','navi','term','code','live','task','team','git','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','aidiy_codex','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode','agy_exe'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
   assets.set('LICENSE_ICONS.md',['LICENSE_ICONS.md','text/markdown; charset=utf-8']);
@@ -187,14 +187,15 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
       }
       if(route==='api/アプリ起動'&&req.method==='GET')return reply(200,await appLauncher.catalog());
       if(route?.startsWith('api/アプリ起動/')&&req.method==='POST'){
-        if(!['api/アプリ起動/開始','api/アプリ起動/フォルダ'].includes(route))return reply(404,{エラー:'見つかりません。'});
+        if(!['api/アプリ起動/開始','api/アプリ起動/フォルダ','api/アプリ起動/Git確認'].includes(route))return reply(404,{エラー:'見つかりません。'});
         if(String(req.headers['content-type']).split(';')[0]!=='application/json')return reply(400,{エラー:'JSON形式の入力が必要です。'});
+        const byteLimit=route.endsWith('/Git確認')?32768:DIAG_TRANSPORT_BYTE_LIMIT;
         const chunks=[];let size=0;
-        for await(const chunk of req){size+=chunk.length;if(size>DIAG_TRANSPORT_BYTE_LIMIT)return reply(413,{エラー:'入力が大きすぎます。'});chunks.push(chunk);}
+        for await(const chunk of req){size+=chunk.length;if(size>byteLimit)return reply(413,{エラー:'入力が大きすぎます。'});chunks.push(chunk);}
         let body;try{body=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{return reply(400,{エラー:'入力JSONが不正です。'});}
         const keys=route.endsWith('/開始')?['対象','フォルダ']:['フォルダ'];
         if(!body||typeof body!=='object'||Array.isArray(body)||Object.keys(body).some(key=>!keys.includes(key)))return reply(400,{エラー:'入力が不正です。'});
-        try{return route.endsWith('/開始')?reply(202,await appLauncher.launch(body.対象,body.フォルダ)):reply(200,await appLauncher.folders(body.フォルダ));}
+        try{return route.endsWith('/開始')?reply(202,await appLauncher.launch(body.対象,body.フォルダ)):reply(200,await (route.endsWith('/Git確認')?appLauncher.gitStatus(body.フォルダ):appLauncher.folders(body.フォルダ)));}
         catch(error){return reply(error.status||500,{エラー:error.status?error.message:'アプリの起動処理に失敗しました。'});}
       }
       if(route==='api/起動'&&req.method==='GET')return reply(200,await startManager.snapshot());

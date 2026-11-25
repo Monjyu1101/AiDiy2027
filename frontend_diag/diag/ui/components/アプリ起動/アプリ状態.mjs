@@ -8,12 +8,26 @@ export function アプリ状態を作成({api,newMemo,picker=()=>globalThis.aidi
  const 項目=ref([]),フォルダ=ref(''),処理中=ref(''),通知=ref(''),結果=ref({}),選択中=ref(false),参照中=ref(false),一覧=ref(null),パス入力=ref(''),参照エラー=ref('');
  let folderInitialized=false,configuredFolder=null,configuredLaunchFolder='';
  function 起動フォルダ(){return configuredFolder!==null&&フォルダ.value===configuredFolder?configuredLaunchFolder:フォルダ.value;}
- let folderVersion=0,catalogVersion=0,online=false,timer=null,loading=null;
+ let folderVersion=0,catalogVersion=0,online=false,timer=null,loading=null,gitVersion=0;
+ const gitState=ref(null);
+ function 現在のGit状態(){const state=gitState.value;return state?.folder===起動フォルダ()?state:null;}
+ function Git無効表示(){return 現在のGit状態()?.無効表示??(起動フォルダ()?'確認中':'未選択');}
+ async function Git確認(){
+  const version=++gitVersion,folder=起動フォルダ();
+  if(!folder||!項目.value.some(item=>item.id==='git')){gitState.value=null;return;}
+  if(gitState.value?.folder!==folder)gitState.value=null;
+  try{
+   const state=await api('api/アプリ起動/Git確認','POST',undefined,'json',{フォルダ:folder});
+   if(version===gitVersion&&folder===起動フォルダ())gitState.value={...state,folder};
+  }catch{
+   if(version===gitVersion&&folder===起動フォルダ())gitState.value={folder,利用可能:false,無効理由:'Gitの利用状況を確認できません。',無効表示:'確認不可'};
+  }
+ }
  const backendApps=new Set(['task','team','chrome','browser','slack']);
- function 利用可能(id){const item=項目.value.find(item=>item.id===id);return backendApps.has(id)?item?.利用可能===true:item?.利用可能!==false;}
+ function 利用可能(id){if(id==='git')return 現在のGit状態()?.利用可能===true;const item=項目.value.find(item=>item.id===id);return backendApps.has(id)?item?.利用可能===true:item?.利用可能!==false;}
  function フォルダ必要(id){return !['chrome','memo'].includes(id);}
- function 不可理由(id){return 利用可能(id)?'':項目.value.find(item=>item.id===id)?.無効理由||(id==='slack'?'Slack の起動ファイルを確認できません。':id==='browser'?'Tools / MCP が稼働中の場合だけ開けます。':id==='chrome'?'Tools / MCP と Web が両方とも稼働中の場合だけ開けます。':'TaskTeam バックエンド起動中のみ利用できます。');}
- function unavailable(){項目.value=項目.value.map(item=>backendApps.has(item.id)?{...item,利用可能:false,...(item.id==='slack'?{無効表示:'確認不可'}:{}),無効理由:item.id==='slack'?'Slack の起動ファイルを確認できません。':item.id==='browser'?'Tools / MCP の状態を確認できません。':item.id==='chrome'?'Tools / MCP と Web の状態を確認できません。':'TaskTeam バックエンドの状態を確認できません。'}:item);}
+ function 不可理由(id){if(id==='git')return 利用可能(id)?'':現在のGit状態()?.無効理由??(起動フォルダ()?'Gitの利用状況を確認中です。':'プロジェクトフォルダを選択してください。');return 利用可能(id)?'':項目.value.find(item=>item.id===id)?.無効理由||(id==='slack'?'Slack の起動ファイルを確認できません。':id==='browser'?'Tools / MCP が稼働中の場合だけ開けます。':id==='chrome'?'Tools / MCP と Web が両方とも稼働中の場合だけ開けます。':'TaskTeam バックエンド起動中のみ利用できます。');}
+ function unavailable(){gitVersion++;gitState.value=null;項目.value=項目.value.map(item=>backendApps.has(item.id)?{...item,利用可能:false,...(item.id==='slack'?{無効表示:'確認不可'}:{}),無効理由:item.id==='slack'?'Slack の起動ファイルを確認できません。':item.id==='browser'?'Tools / MCP の状態を確認できません。':item.id==='chrome'?'Tools / MCP と Web の状態を確認できません。':'TaskTeam バックエンドの状態を確認できません。'}:item);}
  async function 読込(){
   if(loading)return loading;const version=catalogVersion;
   const request=(async()=>{try{const data=await api('api/アプリ起動');if(version===catalogVersion){
@@ -25,6 +39,7 @@ export function アプリ状態を作成({api,newMemo,picker=()=>globalThis.aidi
       configuredLaunchFolder=typeof data.起動フォルダ==='string'?data.起動フォルダ:data.フォルダ;
      }
     }
+    await Git確認();
    }}
    catch(error){if(version===catalogVersion){unavailable();if(!項目.value.length)通知.value=error.message;}}
    finally{if(version===catalogVersion&&online){unschedule(timer);timer=schedule(()=>{timer=null;void 読込();},2500);}}})();
@@ -43,18 +58,18 @@ export function アプリ状態を作成({api,newMemo,picker=()=>globalThis.aidi
   try{
    const selected=await picker();
    if(selected===undefined){await 参照(起動フォルダ());if(!一覧.value)通知.value=参照エラー.value;return;}
-   if(selected){const data=await api('api/アプリ起動/フォルダ','POST',undefined,'json',{フォルダ:selected});configuredFolder=null;フォルダ.value=data.フォルダ;結果.value={};}
+   if(selected){const data=await api('api/アプリ起動/フォルダ','POST',undefined,'json',{フォルダ:selected});configuredFolder=null;フォルダ.value=data.フォルダ;結果.value={};await Git確認();}
   }catch(error){通知.value=error.message;}
   finally{if(!一覧.value)選択中.value=false;}
  }
- function 決定(){if(!一覧.value||参照中.value)return;configuredFolder=null;フォルダ.value=一覧.value.フォルダ;結果.value={};一覧.value=null;選択中.value=false;}
+ function 決定(){if(!一覧.value||参照中.value)return;configuredFolder=null;フォルダ.value=一覧.value.フォルダ;結果.value={};一覧.value=null;選択中.value=false;void Git確認();}
  function 取消(){folderVersion++;一覧.value=null;選択中.value=false;参照中.value=false;}
- function 解除(){if(処理中.value||選択中.value)return;folderInitialized=true;configuredFolder=null;フォルダ.value='';結果.value={};通知.value='';}
+ function 解除(){if(処理中.value||選択中.value)return;folderInitialized=true;configuredFolder=null;フォルダ.value='';結果.value={};通知.value='';gitVersion++;gitState.value=null;}
  async function 起動(id,{開始時}={}){
   if(フォルダ必要(id)&&!フォルダ.value||処理中.value||選択中.value||!利用可能(id))return;処理中.value=id;通知.value='';
   try{開始時?.();const data=id==='memo'?await newMemo()||{}:id==='chrome'?await api('api/起動/ブラウザ','POST',undefined,'json',{}):await api('api/アプリ起動/開始','POST',undefined,'json',{対象:id,フォルダ:起動フォルダ()});結果.value={...結果.value,[id]:{通知:data.通知||data.メッセージ,種別:data.起動済み?'existing':'accepted',ログ:data.ログ}};}
   catch(error){結果.value={...結果.value,[id]:{通知:error.message,種別:'error'}};}
   finally{処理中.value='';}
  }
- return {項目,フォルダ,起動フォルダ,処理中,通知,結果,選択中,参照中,一覧,パス入力,参照エラー,フォルダ必要,利用可能,不可理由,接続,終了,読込,参照,選択,決定,取消,解除,起動};
+ return {項目,フォルダ,起動フォルダ,処理中,通知,結果,選択中,参照中,一覧,パス入力,参照エラー,フォルダ必要,利用可能,不可理由,Git無効表示,接続,終了,読込,参照,選択,決定,取消,解除,起動};
 }

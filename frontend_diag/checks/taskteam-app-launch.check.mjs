@@ -17,8 +17,8 @@ async function fixture(t){const root=await mkdtemp(join(tmpdir(),'diag-taskteam-
 test('catalog order and backend availability update without disabling other apps',async t=>{
  const root=await fixture(t);let online=false;
  const m=createAppLauncher({chromeInstalled:async()=>true,root,taskTeamStatus:async()=>({利用可能:online,無効理由:online?'':'backend stopped'})});
- let data=await m.catalog();assert.deepEqual(data.対象.map(x=>x.id),['avatar','task','team','ide','navi','term','code','live','chrome','browser']);
- assert.equal(data.対象[1].利用可能,false);assert.equal(data.対象[2].利用可能,false);assert.equal(data.対象[0].利用可能,undefined);
+ let data=await m.catalog();assert.deepEqual(data.対象.map(x=>x.id),['avatar','task','team','git','ide','cpu','navi','term','code','live','chrome','browser']);
+ assert.equal(data.対象[1].利用可能,false);assert.equal(data.対象[2].利用可能,false);assert.equal(data.対象[0].利用可能,undefined);assert.equal(data.対象[3].利用可能,false);
  online=true;data=await m.catalog();assert.equal(data.対象[1].利用可能,true);assert.equal(data.対象[2].利用可能,true);
 });
 test('launch rechecks backend and serializes pending Task/Team clicks; no spawn while offline',async t=>{
@@ -28,7 +28,7 @@ test('launch rechecks backend and serializes pending Task/Team clicks; no spawn 
  online=true;for(const id of ['task','team']){
   release=null;const first=m.launch(id,root);while(!release)await new Promise(r=>setImmediate(r));
   await assert.rejects(m.launch(id,root),{status:409});release();assert.equal((await first).受付,true);
-  assert.deepEqual(calls.at(-1).args,[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',root,'--new-window']);
+  assert.deepEqual(calls.at(-1).args,[join(root,'frontend_ide','launch.mjs'),'--app',id,'--project',root]);
  }
 });
 test('status uses configured loopback health, rejects wrong service/redirect/error and bad config',async t=>{

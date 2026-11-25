@@ -60,13 +60,13 @@ test('標準のプロジェクト欄はラベル・読取専用入力・操作�
  assert.match(html,/class="app-launch-note" title="[^"]*Diag を閉じても/);
 });
 
-test('最大構成はアプリ13件とCLI・外部アプリ11件を別グループで維持する',async()=>{
+test('最大構成はアプリ14件とCLI・外部アプリ11件を別グループで維持する',async()=>{
  const p=props();
- p.state.項目.value=['ide','term','browser','navi','code','live','avatar','task','team','memo','cpu','discord','slack','chrome'].map(id=>({id,名前:id}));
+ p.state.項目.value=['ide','term','browser','navi','code','live','avatar','task','team','git','memo','cpu','discord','slack','chrome'].map(id=>({id,名前:id}));
  p.cliState.全項目.value=['aidiy_hermes','aidiy_pi','aidiy_codex','claude','codex','copilot','agy','grok','opencode','vscode'].map(id=>({id,名前:id,利用可能:false}));
  const html=await render('components/アプリ起動/アプリ起動パネル.vue',p);
  const [app,cli]=html.split('data-launch-row="app"')[1].split('data-launch-row="cli"');
- assert.equal((app.match(/data-app=/g)||[]).length,13);
+ assert.equal((app.match(/data-app=/g)||[]).length,14);
  assert.equal((cli.match(/data-(?:app|cli)=/g)||[]).length,11);
  assert.equal((html.match(/未導入<\/span>/g)||[]).length,10);
  const css=readFileSync(new URL('../diag/ui/components/アプリ起動/アプリ起動.css',`file://${__filename}`),'utf8');

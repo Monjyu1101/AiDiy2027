@@ -10,7 +10,7 @@ import {EventEmitter} from 'node:events';
 import {mkdtemp,mkdir,writeFile,readFile,rm,realpath} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {spawn} from 'node:child_process';
+import {spawn,execFileSync} from 'node:child_process';
 import {createAppLauncher,アプリタスク,タスク一覧} from '../diag/起動/アプリ起動.mjs';
 import {createServer} from '../diag/diag_main.mjs';
 import draftBridge from '../../frontend_ide/デスクトップ/下書き共有.cjs';
@@ -26,7 +26,7 @@ async function fixture(t,{getLaunchDisplay}={}){
 test('unconfigured channel apps hidden; missing/relative/file/unknown inputs never launch or check tasks',async t=>{
  const f=await fixture(t);let reads=0;
  const manager=createAppLauncher({chromeInstalled:async()=>true,root:f.root,portStatusFn:async()=>({対象:[]}),taskTeamStatus:async()=>({利用可能:false}),tasks:async()=>{reads++;return [];}});
- assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','ide','cpu','navi','term','code','live','chrome','browser']);
+ assert.deepEqual((await manager.catalog()).対象.map(x=>x.id),['avatar','task','team','git','ide','cpu','navi','term','code','live','chrome','browser']);
  for(const id of ['cpu','avatar','ide','term','code','live','discord'])for(const path of ['',undefined,'relative',join(f.root,'missing')])await assert.rejects(manager.launch(id,path),{status:400});
  await writeFile(join(f.root,'file'),'x');await assert.rejects(manager.launch('avatar',join(f.root,'file')),{status:400});
  await assert.rejects(manager.launch('arbitrary-command',f.project),{status:400});assert.equal(reads,0);
@@ -193,7 +193,7 @@ test('Discord detection uses its sibling directory on Windows and POSIX',()=>{
 test('CPU launches without Core/Tools and has a fixed first-party icon',async t=>{
  const f=await fixture(t),catalog=await f.manager.catalog();const cpu=catalog.対象.find(item=>item.id==='cpu');assert.equal(cpu.名前,'CPU');assert.notEqual(cpu.利用可能,false);
  await f.manager.launch('cpu',f.project);assert.deepEqual(f.calls[0].args.slice(1),['--app','cpu','--project',f.project]);assert.equal(f.calls[0].options.shell,false);
- const {アプリアイコン,起動項目を整列}=await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.deepEqual(ids.slice(ids.indexOf('avatar'),ids.indexOf('slack')+1),['avatar','task','team','cpu','discord','slack']);
+ const {アプリアイコン,起動項目を整列}=await import('../diag/ui/components/アプリ起動/アプリアイコン.mjs');assert.equal(アプリアイコン.cpu,'AiDiy_cpu.png');const ids=起動項目を整列([...catalog.対象,{id:'slack',名前:'Slack'},{id:'discord',名前:'Discord'}]).map(x=>x.id);assert.deepEqual(ids.slice(ids.indexOf('avatar'),ids.indexOf('slack')+1),['avatar','task','team','git','cpu','discord','slack']);
 });
 
 test('CPUだけにDiagの実画面を渡し、既存の環境指定を持ち越さない',async t=>{
@@ -213,4 +213,46 @@ test('Diagの画面読取失敗はCPU起動を止め、再試行できる',async
  fail=false;await f.manager.launch('cpu',f.project);assert.equal(f.calls.length,1);
  const invalid=await fixture(t,{getLaunchDisplay:async()=>({x:0,y:0,width:0,height:1040})});
  await assert.rejects(invalid.manager.launch('cpu',invalid.project),{status:503});assert.equal(invalid.calls.length,0);
+});
+
+test('Git requires the exact selected Git work-tree root, accepts a linked worktree, and rechecks before launch',async t=>{
+ const f=await fixture(t);
+ const launchEntry=join(f.root,'frontend_ide','aidiy_git','launch.mjs');
+ assert.equal((await f.manager.gitStatus(f.project)).無効表示,'未導入');
+ await mkdir(join(f.root,'frontend_ide','aidiy_git'),{recursive:true});
+ await writeFile(launchEntry,'fixture entry');
+ assert.equal((await f.manager.catalog()).対象.find(app=>app.id==='git').利用可能,false);
+ assert.equal((await f.manager.gitStatus('')).無効表示,'未選択');
+ assert.equal((await f.manager.gitStatus('relative')).利用可能,false);
+ assert.equal((await f.manager.gitStatus(f.project)).利用可能,false);
+ await assert.rejects(f.manager.launch('git',f.project),{status:409});
+ const git=(...args)=>execFileSync('git',['-C',f.project,...args],{stdio:'ignore',shell:false});
+ git('init');
+ git('-c','user.name=Fixture','-c','user.email=fixture@example.invalid','-c','commit.gpgsign=false','commit','--allow-empty','-m','fixture');
+ const nested=join(f.project,'nested'),linked=join(f.root,'linked');
+ await mkdir(nested);
+ git('worktree','add','-b','fixture-linked',linked);
+ assert.equal((await f.manager.gitStatus(nested)).利用可能,false,'親の .git を継承しない');
+ for(const repo of [f.project,await realpath(linked)]){
+  assert.equal((await f.manager.gitStatus(repo)).利用可能,true);
+  assert.equal((await f.manager.launch('git',repo)).受付,true);
+  assert.deepEqual(f.calls.at(-1).args,[launchEntry,'--project',repo]);
+  assert.equal(f.calls.at(-1).options.cwd,repo);
+  assert.equal(f.calls.at(-1).options.shell,false);
+ }
+ await rm(join(linked,'.git'));
+ await assert.rejects(f.manager.launch('git',linked),{status:409});
+ assert.equal(f.calls.length,2);
+});
+test('the Git status endpoint is authenticated and accepts only a project path',async t=>{
+ const f=await fixture(t),server=createServer({token:'fixture',appLauncher:f.manager,modelTrials:{close(){}},startManager:{close(){}}});
+ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+ t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}));
+ const base=`http://127.0.0.1:${server.address().port}/api/アプリ起動/Git確認`;
+ const headers={authorization:'Bearer fixture','content-type':'application/json'};
+ const send=(json,provided=headers)=>fetch(base,{method:'POST',headers:provided,body:JSON.stringify(json)});
+ assert.equal((await send({フォルダ:f.project},{'content-type':'application/json'})).status,401);
+ assert.equal((await send({フォルダ:f.project,対象:'git'})).status,400);
+ const result=await send({フォルダ:f.project});assert.equal(result.status,200);assert.equal((await result.json()).利用可能,false);
+ assert.equal(f.calls.length,0);
 });

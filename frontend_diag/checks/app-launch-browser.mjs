@@ -27,7 +27,7 @@ const manager=createStartManager({root,python:'fixture-python',spawnFn(_command,
  return child;
 }});
 const project=join(root,'日本語 空白 project');mkdirSync(project);mkdirSync(join(project,'subfolder'));
-let taskChecks=0;const appCalls=[],appLauncher=createAppLauncher({root,pythonCommand:'fixture-python',chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,taskTeamStatus:async()=>({利用可能:false,無効理由:'試験用バックエンド停止'}),portStatusFn:async()=>portStatusFn(),tasks:async()=>{taskChecks++;return [{command:'node /fixture/frontend_ide/launch.mjs --app live'}];},spawnFn(command,args,options){appCalls.push({command,args,cwd:options.cwd});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;}});
+let taskChecks=0,gitEnabled=false;const appCalls=[],appLauncher=createAppLauncher({root,gitAvailable:async path=>gitEnabled&&path===project,pythonCommand:'fixture-python',chromeInstalled:async()=>true,linkedLiveRunning:async()=>false,taskTeamStatus:async()=>({利用可能:false,無効理由:'試験用バックエンド停止'}),portStatusFn:async()=>portStatusFn(),tasks:async()=>{taskChecks++;return [{command:'node /fixture/frontend_ide/launch.mjs --app live'}];},spawnFn(command,args,options){appCalls.push({command,args,cwd:options.cwd});const child=new EventEmitter();child.unref=()=>{};queueMicrotask(()=>child.emit('spawn'));return child;}});
 const portCatalog=JSON.parse(readFileSync(new URL('../../scripts/起動対象.json',import.meta.url),'utf8')).filter(item=>item.起動管理!==false);
 const openPorts=new Set(['core','tools','web']);const portSamples=[];
 const portStatusFn=async()=>{portSamples.push(Date.now());return {対象:portCatalog.map(({id,名前,ポート})=>({id,名前,ポート,開放:openPorts.has(id)}))};};
@@ -64,6 +64,31 @@ try{
  const url=`http://127.0.0.1:${server.address().port}/proxy/8097/#token=app-browser-fixture`;
  await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);
  assert.equal(await evaluate(`document.querySelector('nav.tabs button.active').textContent`),'システム起動');
+ async function verifyGit(){
+ const gitCard='[data-app="git"] .app-launch-button';
+ assert.equal(await evaluate(`document.querySelector(${JSON.stringify(gitCard)}).disabled`),true);
+ mkdirSync(join(root,'frontend_ide','aidiy_git'),{recursive:true});
+ const gitEntry=join(root,'frontend_ide','aidiy_git','launch.mjs');
+ writeFileSync(gitEntry,'mock launch');gitEnabled=true;
+ await click('フォルダ選択');await until(`document.querySelector('.app-folder-dialog')`);
+ await evaluate(`document.querySelector('.app-folder-dialog input').value=${JSON.stringify(project)};document.querySelector('.app-folder-dialog input').dispatchEvent(new Event('input',{bubbles:true}))`);
+ await click('移動');await until(`document.querySelector('.app-folder-list').textContent.includes('subfolder')`);
+ await click('このフォルダを選択');await until(`!document.querySelector(${JSON.stringify(gitCard)}).disabled`);
+ assert.equal(await evaluate(`document.querySelector('[data-app="team"]').nextElementSibling.dataset.app`),'git');
+ await capture('app-git-available');
+ await click('ランチャー表示');
+ const miniGit='.mini-app-button[data-app="git"]';
+ await until(`document.querySelector(${JSON.stringify(miniGit)})?.disabled===false`);
+ assert.equal(await evaluate(`document.querySelector('.mini-app-button[data-app="team"]')===null`),true,'利用できないTeamはミニから省く');
+ await evaluate(`document.querySelector(${JSON.stringify(miniGit)}).click()`);
+ await until(`document.querySelector(${JSON.stringify(miniGit)})?.disabled===false`);
+ assert.deepEqual(appCalls.at(-1).args,[gitEntry,'--project',project]);
+ gitEnabled=false;
+ await until(`!document.querySelector(${JSON.stringify(miniGit)})`);
+ }
+ if(process.env.DIAG_GIT_ONLY==='1'){
+  await click('アプリ起動');await verifyGit();
+ }else{
  await click('ランチャー表示');await until(`document.querySelectorAll('.mini-app-button').length===9&&document.querySelectorAll('.mini-cli-button[data-app=chrome]').length===1`);
  await fitMiniViewport();
  await until(`[...document.querySelectorAll('.mini-app-button img')].every(img=>img.complete&&img.naturalWidth>0)`);
@@ -91,7 +116,7 @@ try{
   await until(`!document.querySelector('.start-mini')&&document.querySelector('nav.tabs button.active').textContent==='アプリ起動'`);
   await send('Emulation.setDeviceMetricsOverride',{width:1280,height:850,deviceScaleFactor:1,mobile:false});
  }
- await until(`document.querySelectorAll('.app-launch-card[data-app]').length===12`);
+ await until(`document.querySelectorAll('.app-launch-card[data-app]').length===13`);
  const launcherGeometry=`(()=>{
   const group=document.querySelector('[data-launch-row="app"]');
   const cli=document.querySelector('[data-launch-row="cli"]');
@@ -123,12 +148,12 @@ try{
   assert.equal(layout.columns,columns);
   assert.equal(layout.horizontalOverflow,false);
  }
- // 最大構成のアプリ13個・CLI/外部アプリ11個でも800×600で4行すべてが見える。
+ // 最大構成のアプリ14個・CLI/外部アプリ11個でも800×600で4行すべてが見える。
  await send('Emulation.setDeviceMetricsOverride',{width:800,height:600,deviceScaleFactor:1,mobile:false});
  assert.equal(await evaluate(`(()=>{
   const rows=document.querySelector('.app-launch-rows'),copies=[];
   try{
-   for(const [kind,count] of [['app',13],['cli',11]]){
+   for(const [kind,count] of [['app',14],['cli',11]]){
     const group=rows.querySelector('[data-launch-row="'+kind+'"]');
     while(group.children.length<count){const copy=group.firstElementChild.cloneNode(true);group.append(copy);copies.push(copy);}
    }
@@ -139,7 +164,7 @@ try{
    return rows.scrollHeight<=rows.clientHeight+1&&last.bottom<=rect.bottom+1&&last.top>=rect.top
     &&rows.scrollWidth<=rows.clientWidth&&Math.max(...fields.map(r=>r.top))<Math.min(...fields.map(r=>r.bottom));
   }finally{copies.forEach(copy=>copy.remove());}
- })()`),true,'800×600でプロジェクト欄は1行、最大24アイコンの4行目までスクロールせず表示');
+ })()`),true,'800×600でプロジェクト欄は1行、最大25アイコンの4行目までスクロールせず表示');
  // 高さ不足時は一覧自身がスクロールでき、最後のCLI/Chromeまで到達する。
  for(const [width,height] of [[800,600],[800,360],[390,360]]){
   await send('Emulation.setDeviceMetricsOverride',{width,height,deviceScaleFactor:1,mobile:false});
@@ -210,7 +235,9 @@ try{
  await send('Page.navigate',{url});await until(`document.querySelector('.diag-meta')?.textContent.includes('接続済')`);await click('アプリ起動');
  assert.equal(await evaluate(`document.querySelector('#app-project-folder').value`),'','再起動・再読込では毎回フォルダ未選択');
  assert.equal(await evaluate(`document.querySelector('.app-project').classList.contains('required')`),true);
- assert.deepEqual(errors,[]);console.log('アプリ起動: ミニ400×180・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');
+ await verifyGit();
+ }
+ assert.deepEqual(errors,[]);console.log(process.env.DIAG_GIT_ONLY==='1'?'Git起動: 標準の無効表示・順番・ミニ表示と起動・非Git切替 OK':'アプリ起動: ミニ400×180・電光掲示板のクリック/Enter/Space・フォルダ選択後の起動/排他・390/1280px OK');
 }finally{
  ws?.close();browser.kill();await manager.close();await new Promise(resolve=>{server.close(resolve);server.closeAllConnections();});
  const safeBase=resolve(tmpdir())+sep;for(const path of [root,profile]){assert.ok(resolve(path).startsWith(safeBase));for(let i=0;i<20;i++){try{rmSync(path,{recursive:true,force:true});break;}catch{await sleep(100);}}}
