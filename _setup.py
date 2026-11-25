@@ -26,7 +26,7 @@ AI CLI ツール導入）のみこのスクリプトが直接担当し、フォ�
 - command_hermes/_setup.py   コマンド(hermes)
 - command_pi/_setup.py       コマンド(pi)（Hermes の後に導入）
 - command_codex/_compile.py  コマンド(aidiy_codex)（Pi の後。既定は実行しない。独立プロセスでコンパイル）
-- frontend_ide/_setup.py     IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)
+- frontend_ide/_setup.py     IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU)
 - frontend_channels/discord/_setup.py / slack/_setup.py Channels (Discord / Slack、まとめて選択)
 
 Usage:
@@ -767,7 +767,7 @@ def collect_setup_choices(auto: bool = False) -> dict | None:
     choices["pi"] = ask_yes_no("Pi のセットアップを実行しますか？", default="y")
     # aidiy_codex は Rust / llvm-mingw が前提で、初回は1時間以上かかるため既定では実行しない。
     choices["codex"] = ask_yes_no("aidiy_codex のコンパイルを実行しますか？（不足する Rust / Windows LLVM も公式配布元から導入。独立プロセスで実行）", default="n")
-    choices["ide"] = ask_yes_no("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU のセットアップを実行しますか？", default="y")
+    choices["ide"] = ask_yes_no("IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU のセットアップを実行しますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack) のセットアップを実行しますか？", default="y")
 
     choices["continue_on_error"] = ask_yes_no("エラーが発生しても続行しますか？", default="y")
@@ -830,7 +830,7 @@ def check_refresh_node_runtime(version: str) -> bool:
 def setup_node_refresh() -> list[str]:
     """依存同期・既存ビルド・ランチャー再配置のみ。初期設定や診断は実行しない。"""
     print_header("Node.js系の再ビルド")
-    print_info("対象: Diag / Web / Avatar / Pi / IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU / Channels (Discord / Slack)")
+    print_info("対象: Diag / Web / Avatar / Pi / IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU / Channels (Discord / Slack)")
     print_info("依存同期 / 再ビルド / 起動コマンド登録")
     print_info("Python環境・モデル・共通設定・グローバルCLIは変更しません。")
     node_version = get_node_version()
@@ -888,6 +888,7 @@ def setup_node_refresh() -> list[str]:
         ("Code / Live: ランチャー", lambda: _load_folder_module("frontend_ide/host").install_standalone_launcher()),
         ("Task: aidiy_task", lambda: _load_folder_module("frontend_ide/aidiy_task").setup()),
         ("Team: aidiy_team", lambda: _load_folder_module("frontend_ide/aidiy_team").setup()),
+        ("Git: aidiy_git", lambda: _load_folder_module("frontend_ide/aidiy_git").setup()),
         ("CPU: aidiy_cpu", lambda: _load_folder_module("frontend_ide/aidiy_cpu").setup()),
         ("Discord: 依存", lambda: dependencies("frontend_channels/discord", electron=True)),
         ("Discord: ビルド", lambda: build("frontend_channels/discord", "build:panel")),
@@ -925,6 +926,7 @@ def setup_launchers_only() -> list[str]:
         ('Code / Live', lambda: _load_folder_module('frontend_ide/host').install_standalone_launcher()),
         ('Task', lambda: _load_folder_module('frontend_ide/aidiy_task').setup()),
         ('Team', lambda: _load_folder_module('frontend_ide/aidiy_team').setup()),
+        ('Git', lambda: _load_folder_module('frontend_ide/aidiy_git').setup()),
         ('CPU', lambda: _load_folder_module('frontend_ide/aidiy_cpu').setup()),
         ('Discord', lambda: _load_folder_module('frontend_channels/discord').install_launcher(BASE_DIR / 'frontend_channels/discord')),
         ('Slack', lambda: _load_folder_module('frontend_channels/slack').install_launcher(BASE_DIR / 'frontend_channels/slack')),
@@ -1017,7 +1019,7 @@ def main():
     print_info("  8. Hermes")
     print_info("  9. Pi")
     print_info(" 10. Codex (aidiy_codex コンパイル)")
-    print_info(" 11. IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU")
+    print_info(" 11. IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU")
     print_info(" 12. Channels (Discord / Slack)")
     print()
 
@@ -1229,12 +1231,12 @@ def main():
     print()
     if choices.get("ide"):
         if not _load_folder_module("frontend_ide").setup(choices):
-            error_locations.append("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU")
+            error_locations.append("IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU")
             if not continue_on_error:
                 print_setup_summary(error_locations)
                 sys.exit(1)
     else:
-        print_warning("IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU のセットアップをスキップしました。")
+        print_warning("IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU のセットアップをスキップしました。")
 
     print()
     channel_errors = setup_channels(choices)

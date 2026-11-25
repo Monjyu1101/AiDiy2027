@@ -139,6 +139,7 @@ class NodeRefreshTests(unittest.TestCase):
             "frontend_ide/aidiy_task": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_team": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_browser": SimpleNamespace(setup=Mock(return_value=True)),
+            "frontend_ide/aidiy_git": SimpleNamespace(setup=Mock(return_value=True)),
             "frontend_ide/aidiy_cpu": SimpleNamespace(setup=Mock(return_value=True)),
             # setup()やconf_jsonは用意しない。設定補完経路へ入れば失敗する。
             "frontend_channels/discord": SimpleNamespace(install_launcher=Mock(return_value=None)),
@@ -187,10 +188,10 @@ class NodeRefreshTests(unittest.TestCase):
         host.setup_assets.side_effect = lambda *args, **kwargs: events.append('assets') or True
         host.install_standalone_launcher.side_effect = lambda: events.extend(['code', 'live']) or True
         modules['frontend_ide/viewer'].install_launcher.side_effect = lambda *args: events.append('ide') or True
-        for kind in ('term', 'browser', 'navi', 'task', 'team', 'cpu'):
+        for kind in ('term', 'browser', 'navi', 'task', 'team', 'git', 'cpu'):
             modules['frontend_ide/aidiy_' + kind].setup.side_effect = lambda kind=kind: events.append(kind) or True
         self.assertEqual(setup.setup_node_refresh(), [])
-        self.assertEqual(events, ['assets', 'ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'])
+        self.assertEqual(events, ['assets', 'ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'git', 'cpu'])
 
     def test_browser_environment_skips_electron_binary_but_builds(self):
         run, prepare, _ = self.fixture(desktop=False)

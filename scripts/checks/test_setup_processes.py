@@ -264,6 +264,14 @@ class SetupProcessesTest(unittest.TestCase):
                    proc(23,'electron --type=renderer',22,'electron'), app(24,'term',20)]
         self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {22,23,24})
 
+    def test_standalone_git_is_stopped_without_stopping_ide_other_checkouts_or_git_itself(self):
+        records = [app(10,'ide'), app(20,'git',10),
+                   proc(21,'electron --type=renderer',20,'electron'),
+                   proc(30,f'node {ROOT}/frontend_ide/aidiy_git/launch.mjs'),
+                   proc(40,f'node {ROOT}-other/frontend_ide/aidiy_git/launch.mjs'),
+                   proc(50,'git status',name='git')]
+        self.assertEqual(set(subject.select_targets(records, ROOT, current_pid=999)), {20,21,30})
+
     def test_stop_supervisor_without_killing_kept_descendants(self):
         records = [proc(5,f'python {ROOT}/_start.py',name='python'), app(10,'code',5),
                    app(20,'ide',5), app(30,'term',5), proc(11,'python mcp.py',10,'python')]

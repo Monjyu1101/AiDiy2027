@@ -246,6 +246,7 @@ SERVICE_CLEANUP_TARGETS = (
     ("ide", "frontend_ide/viewer", "フロントエンド(IDE)", ("フロントエンド(IDE)",)),
     ("ide", "frontend_ide/aidiy_term", "フロントエンド(term)", ("フロントエンド(term)",)),
     ("ide", "frontend_ide/aidiy_navi", "フロントエンド(Navi)", ("フロントエンド(navi)", "フロントエンド(Navigator)")),
+    ("ide", "frontend_ide/aidiy_git", "フロントエンド(Git)", ("フロントエンド(git)",)),
     ("ide", "frontend_ide/aidiy_cpu", "フロントエンド(cpu)", ("フロントエンド(cpu)",)),
     ("channels", "frontend_channels/discord", "フロントエンド(Discord)", ("フロントエンド(Discord)",)),
     ("channels", "frontend_channels/slack", "フロントエンド(Slack)", ("フロントエンド(Slack)",)),
@@ -745,7 +746,7 @@ def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
                 f"  {COMMAND_PI_PATH} の依存物（node_modules / 生成モデルデータ）を削除しますか？", default="y",
             )
 
-    choices["ide"] = ask_yes_no("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)をクリーンアップしますか？", default="y")
+    choices["ide"] = ask_yes_no("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU)をクリーンアップしますか？", default="y")
     choices["channels"] = ask_yes_no("Channels (Discord / Slack)をクリーンアップしますか？", default="y")
 
     return choices
@@ -859,9 +860,9 @@ def execute_cleanup(base_dir: Path, choices: dict) -> bool:
     print()
     if choices.get("ide"):
         if not _run_folder_cleanup("frontend_ide", choices):
-            cleanup_errors.append("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)")
+            cleanup_errors.append("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU)")
     else:
-        print_info("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)のクリーンアップをスキップしました")
+        print_info("IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU)のクリーンアップをスキップしました")
 
     print()
     cleanup_errors.extend(cleanup_channels(choices))
@@ -921,7 +922,7 @@ def main(argv=None):
     print_info("  7. フロントエンド(Avatar)")
     print_info("  8. コマンド(hermes)")
     print_info("  9. コマンド(pi)")
-    print_info(" 10. IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU)")
+    print_info(" 10. IDE群(IDE / Term / Browser / Navi / Code / Live / Task / Team / Git / CPU)")
     print_info(" 11. Channels (Discord / Slack)")
     print_info(f" 12. 全階層の {TEMP_TARGET_LABEL} フォルダ（最後にまとめて削除）")
     print()

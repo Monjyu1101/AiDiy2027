@@ -215,7 +215,7 @@ class WindowsProjectPathTests(unittest.TestCase):
         self.assertEqual(os.environ['PATH'], r'C:\SystemOnly')
         self.assertIn('登録できません', self.output.getvalue())
 
-    def test_normal_ide_setup_registers_all_nine_commands_without_home_files(self):
+    def test_normal_ide_setup_registers_all_ten_commands_without_home_files(self):
         group = load(ROOT / 'frontend_ide/_setup.py')
         launcher = load(ROOT / 'frontend_ide/viewer/launcher.py')
         with patch.object(helper.sys, 'platform', 'linux'):
@@ -233,8 +233,8 @@ class WindowsProjectPathTests(unittest.TestCase):
                 patch.object(launcher.shutil, 'which', return_value='node.exe'):
             for _ in range(2):
                 self.assertTrue(group.setup())
-        self.assertEqual(self.winreg.SetValueEx.call_count, 9)
-        for kind in ('ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'cpu'):
+        self.assertEqual(self.winreg.SetValueEx.call_count, 10)
+        for kind in ('ide', 'term', 'browser', 'navi', 'code', 'live', 'task', 'team', 'git', 'cpu'):
             directory = local('aidiy_' + kind)
             self.assertIn(str(directory), self.registry['Path'][0].split(';'))
             self.assertTrue((directory / f'aidiy_{kind}.cmd').is_file())
@@ -290,6 +290,28 @@ class WindowsProjectPathTests(unittest.TestCase):
 
 
 class LauncherIntegrationTests(unittest.TestCase):
+    def test_git_cleanup_removes_only_its_synced_launcher(self):
+        launcher = load(ROOT / 'frontend_ide/viewer/launcher.py')
+        git = ROOT / 'frontend_ide/aidiy_git'
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory) / 'home'
+            local = Path(directory) / 'project/bin/aidiy_git'
+            shared = home / '.local/bin/aidiy_git'
+            shared.parent.mkdir(parents=True)
+            with patch.object(helper.sys, 'platform', 'linux'), patch.object(Path, 'home', return_value=home), \
+                    patch.object(launcher, 'launcher_path', return_value=local), \
+                    patch.object(launcher, 'ensure_launcher_path', return_value=True), \
+                    patch.object(launcher, 'remove_launcher_path', return_value=True):
+                for other in (False, True):
+                    shared.write_bytes(b'previous launcher')
+                    launcher.install_launcher(git, 'git')
+                    self.assertEqual(shared.read_bytes(), local.read_bytes())
+                    if other:
+                        shared.write_bytes(b'other checkout')
+                    self.assertTrue(launcher.remove_launcher(git, 'git', remove_shared=True))
+                    self.assertFalse(local.exists())
+                    self.assertEqual(shared.exists(), other)
+
     def test_all_ide_launchers_stay_project_local(self):
         viewer = load(ROOT / 'frontend_ide/viewer/launcher.py')
         host = load(ROOT / 'frontend_ide/host/_setup.py')
@@ -297,7 +319,7 @@ class LauncherIntegrationTests(unittest.TestCase):
             def local(name):
                 return Path(directory) / '_AIDIY' / name / 'bin'
             with patch.object(viewer._path_helper, 'launcher_directory', side_effect=local), patch.object(host, 'launcher_directory', side_effect=local), patch.object(viewer.shutil, 'which', return_value='/usr/bin/node'):
-                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('term', 'aidiy_term'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('cpu', 'aidiy_cpu')]:
+                for kind, folder in [('ide', 'viewer'), ('navi', 'aidiy_navi'), ('term', 'aidiy_term'), ('task', 'aidiy_task'), ('team', 'aidiy_team'), ('browser', 'aidiy_browser'), ('git', 'aidiy_git'), ('cpu', 'aidiy_cpu')]:
                     root = ROOT / 'frontend_ide' / folder
                     viewer.install_launcher(root, kind)
                     self.assertTrue(viewer.launcher_path(kind).is_file())

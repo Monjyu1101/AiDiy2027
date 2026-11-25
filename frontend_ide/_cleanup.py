@@ -28,8 +28,7 @@ def cleanup(choices=None):
     results.extend(_load_cleanup('aidiy_' + kind).cleanup(choices, report=False) for kind in ('term', 'browser', 'navi'))
     host = _load_cleanup('host')
     results.extend(host.cleanup_app(module, report=False) for module in ('code', 'live'))
-    results.extend(_load_cleanup('aidiy_' + kind).cleanup(choices, report=False) for kind in ('task', 'team', 'cpu'))
-    results.append(_load_cleanup('viewer').remove_launcher(ROOT / 'aidiy_git', 'git'))
+    results.extend(_load_cleanup('aidiy_' + kind).cleanup(choices, report=False) for kind in ('task', 'team', 'git', 'cpu'))
     if not all(results):
         print('IDE群の解除が完了していないため、共通UIの依存関係・生成物を残します。')
         return False
@@ -53,5 +52,5 @@ if __name__ == '__main__':
         spec = importlib.util.spec_from_file_location('ide_root_cleanup', ROOT.parent / '_cleanup.py')
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
-        with module.cleanup_stop_request({}, services=['フロントエンド(navi)', 'フロントエンド(term)', 'フロントエンド(code)', 'フロントエンド(live)', 'フロントエンド(IDE)', 'フロントエンド(cpu)']):
+        with module.cleanup_stop_request({}, services=['フロントエンド(navi)', 'フロントエンド(term)', 'フロントエンド(code)', 'フロントエンド(live)', 'フロントエンド(IDE)', 'フロントエンド(git)', 'フロントエンド(cpu)']):
             sys.exit(0 if cleanup() else 1)

@@ -236,7 +236,7 @@ Playwright と Chromium が利用できる検証環境では `node frontend_diag
 
 ## カタログの調査範囲
 
-基準コミット `8adbdb484cafe31e145c4fe362897d2af1077eb1` の Git tree 全 4,950 ファイルから、対象ソース・設定・スクリプト・テンプレート・テスト・manifest/lockfile **3,333 件**を列挙し、全件の全文を静的走査しました。未取得・未読は 0 件。246 候補から今回の確認対象 **19 項目**を採用し、各項目の詳細に参照パスと行番号を表示します。コードの実行・インストール試験を行ったという意味ではありません。
+基準コミット `8adbdb484cafe31e145c4fe362897d2af1077eb1` の Git tree 全 4,950 ファイルから、対象ソース・設定・スクリプト・テンプレート・テスト・manifest/lockfile **3,333 件**を列挙し、全件の全文を静的走査しました。未取得・未読は 0 件。当初は 246 候補から 19 項目を採用し、その後の追加を含めて、現在は 24 項目の各詳細に参照パスと行番号を表示します。コードの実行・インストール試験を行ったという意味ではありません。
 
 通常の Markdown ガイド・skill 本文（README/AGENTS を除く）、画像・音声・モデル・Office/PDF、LaTeX 文書資産、ライセンス・非実行テキスト等は対象外です。実行可能な skill スクリプトやコード例は含めます。省略のある Python 教材 3 件は AST 解析できませんでしたが、全文テキストを走査済みです。全リポジトリの全バイトを検証したという主張ではありません。
 
@@ -244,7 +244,7 @@ Playwright と Chromium が利用できる検証環境では `node frontend_diag
 - [reference/source-manifest.json](./reference/source-manifest.json): 対象 3,333 件のパスと元の Git blob SHA。
 - [reference/source_scan.ts](./reference/source_scan.ts): 対象コードを実行しない、依存パッケージなしの TypeScript 走査スクリプト。Python は字句解析で呼出し・for・代入・dict 単位に候補を抽出します（旧 Python AST 版と同じ候補を出すことを確認済み。構文エラーのファイルも走査します）。基準コミットの作業コピーに対し Node.js 22.18+ で `node frontend_diag/reference/source_scan.ts REPOSITORY OUTPUT_JSON COMMIT frontend_diag/reference/source-manifest.json` を実行すると候補抽出を再現できます。抽出候補からカタログへの分類にはソース確認が必要です。
 
-Python/Node のライブラリ、内部スクリプト、shell builtin、Git subcommand、モデル ID を外部実行ファイルと混同しません。19 項目すべてが必須ではなく、選択機能に応じて必要な項目を含みます。ユーザー設定の任意コマンドや動的生成、リモート・コンテナ・WSL・Android 側の導入状態は、ホストの PATH 確認だけでは保証できません。
+Python/Node のライブラリ、内部スクリプト、shell builtin、Git subcommand、モデル ID を外部実行ファイルと混同しません。診断項目すべてが必須なわけではなく、選択機能に応じて必要な項目を含みます。ユーザー設定の任意コマンドや動的生成、リモート・コンテナ・WSL・Android 側の導入状態は、ホストの PATH 確認だけでは保証できません。
 
 ## キー設定状況とモデル一覧
 
@@ -332,7 +332,7 @@ Python、uv を先頭に表示します。CLI や拡張は利用する機能に�
 
 ### 今回の確認対象からの除外
 
-旧静的調査の抽出候補 246 件から 227 件を除き、現在の確認対象を 19 件に絞っています。AiDiy 起動コマンド群、Hermes 本体・専用プラグイン・スキル・補助依存、macOS 音声再生（afplay）、GStreamer、Edge、Brave、OS 補助・シェル・開発・導入・配置用の補助ツール（Git / pip 等）は診断カタログに含めません。任意項目を再表示するチェックもありません。
+旧静的調査の抽出結果をもとに、現在は 24 項目を診断します。ベースでは Electron の直前に Git を表示し、PATH 上の実行ファイルとバージョンを確認します。AiDiy 起動コマンド群、Hermes 本体・専用プラグイン・スキル・補助依存、macOS 音声再生（afplay）、GStreamer、Edge、Brave、OS 補助・シェル・開発・導入・配置用の補助ツール（pip 等）は診断カタログに含めません。任意項目を再表示するチェックもありません。
 実際のプログラムや機能を削除する変更ではありません。共通依存は非 Hermes の利用根拠で保持し、Hermes 専用の探索パスも除外します。
 対象ソース・設定 3,333 件の調査履歴・マニフェストは保持します。調査範囲と今回の診断対象は異なり、除外内容は 診断/coverage.json の catalogSelection に記録しています。
 モデル一覧と外部連携は上部の独立タブです。「設定モデル」と「AIモデル」は Tools 接続中だけ操作できます。

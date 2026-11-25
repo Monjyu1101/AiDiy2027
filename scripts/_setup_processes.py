@@ -78,7 +78,7 @@ def process_role(process, root, windows=False):
                 if not arg.startswith('--user-data-dir='):
                     continue
                 profile = path.basename(arg.split('=', 1)[1]).casefold()
-                for kind in ('code', 'live', 'term', 'task', 'team', 'browser', 'navi', 'cpu'):
+                for kind in ('code', 'live', 'term', 'task', 'team', 'browser', 'navi', 'git', 'cpu'):
                     if profile == f'aidiy_{kind}_vue' or profile.startswith(f'aidiy-{kind}-profile-'):
                         return kind
 
@@ -121,8 +121,8 @@ def process_role(process, root, windows=False):
                     selected = tail[position + 1]
                 elif arg.startswith('--app='):
                     selected = arg.split('=', 1)[1]
-            return selected if selected in ('code', 'live', 'ide', 'term', 'task', 'team', 'browser', 'navi', 'cpu') else None
-        for kind in ('code', 'live', 'term', 'ide', 'task', 'team', 'browser', 'navi', 'cpu'):
+            return selected if selected in ('code', 'live', 'ide', 'term', 'task', 'team', 'browser', 'navi', 'git', 'cpu') else None
+        for kind in ('code', 'live', 'term', 'ide', 'task', 'team', 'browser', 'navi', 'git', 'cpu'):
             if f'/aidiy_{kind}/' in '/' + entry:
                 return kind
         if entry.startswith('frontend_ide/viewer/'):
@@ -149,7 +149,7 @@ def select_targets(processes, root, windows=False, current_pid=None):
         if roles[process['ProcessId']] is None and registered_supervisor(process, root):
             roles[process['ProcessId']] = 'supervisor'
     # Code/IDE/Discord/Slackの補助/MCP子孫を保護。ただし独立アプリLive等は保護の境界にする。
-    boundaries = {'live', 'term', 'task', 'team', 'browser', 'navi', 'cpu', 'frontend_avatar', 'frontend_diag', 'memo', 'supervisor'}
+    boundaries = {'live', 'term', 'task', 'team', 'browser', 'navi', 'git', 'cpu', 'frontend_avatar', 'frontend_diag', 'memo', 'supervisor'}
     protected = {pid for pid, role in roles.items() if role in KEEP}
     while True:
         children = {p['ProcessId'] for p in processes if p.get('ParentProcessId') in protected

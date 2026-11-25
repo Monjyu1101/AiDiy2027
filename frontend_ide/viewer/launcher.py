@@ -52,11 +52,20 @@ def install_launcher(root: Path, kind: str = 'ide', *, register_path: bool = Tru
         raise OSError('ランチャーの PATH 登録に失敗しました。')
 
 
-def remove_launcher(root: Path, kind: str = 'ide') -> bool:
+def remove_launcher(root: Path, kind: str = 'ide', *, remove_shared: bool = False) -> bool:
     path = launcher_path(kind)
     try:
         # 別の作業コピーが登録したランチャーは消さない
         if path.is_file() and launcher_owned_by(path.read_text(encoding='utf-8'), root.resolve() / 'launch.mjs'):
+            if remove_shared:
+                # setup が同期した同一内容の共有ランチャーだけを解除する。
+                shared = Path.home() / '.local' / 'bin' / path.name
+                if shared != path and not any(
+                    item.is_symlink() or getattr(item, 'is_junction', lambda: False)()
+                    for item in (shared.parent.parent, shared.parent, shared)
+                ) and shared.is_file() and shared.read_bytes() == path.read_bytes():
+                    shared.unlink()
+                    print(f'[OK] 共有ランチャーを削除しました: {shared}')
             path.unlink()
             print(f'[OK] ランチャーを削除しました: {path}')
         return remove_launcher_path(path.parent)

@@ -53,7 +53,7 @@ test('standard paths expand supported environment syntax',()=>{
  assert.equal(expandPath('${PROGRAMFILES(X86)}/Chrome',{'PROGRAMFILES(X86)':'C:/Program Files (x86)'}),'C:/Program Files (x86)/Chrome');
 });
 test('catalog identifiers unique; fixed version args and source evidence required',async()=>{
- const entries=await catalog();assert.ok(entries.length>=19);assert.equal(entries[0].id,'python');assert.equal(entries[1].id,'uv');assert.equal(new Set(entries.map(e=>e.id)).size,entries.length);
+ const entries=await catalog();assert.ok(entries.length>=24);assert.equal(entries[0].id,'python');assert.equal(entries[1].id,'uv');assert.equal(new Set(entries.map(e=>e.id)).size,entries.length);
  for(const entry of entries) {assert.ok(entry.sources.length);assert.ok(entry.commands.length);assert.ok(entry.version_args===null || (Array.isArray(entry.version_args)&&entry.version_args.every(v=>typeof v==='string')));}
 });
 test('Windows disk converter is not ImageMagick',async()=>{
@@ -70,15 +70,15 @@ test('coverage is pinned to complete selected-source manifest and exact catalog 
  const catalogBytes=lf(await readFile(new URL('../diag/診断/catalog.json',import.meta.url)));
  assert.equal(coverage.complete,true);assert.equal(coverage.sourceTargetFiles,3333);assert.equal(coverage.scannedSourceFiles,3333);
  assert.equal(JSON.parse(manifestBytes).length,3333);assert.equal(createHash('sha256').update(manifestBytes).digest('hex'),coverage.sourceTargetManifestSha256);
- assert.equal(JSON.parse(catalogBytes).length,23);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
+ assert.equal(JSON.parse(catalogBytes).length,24);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
  for (const entry of JSON.parse(catalogBytes)) assert.ok(entry.evidence?.length && entry.evidence.every(e=>e.path && Number.isInteger(e.line) && e.line>0));
 });
 
 test('menu classification keeps base minimal and all source evidence',async()=>{
  const entries=await catalog();
- assert.deepEqual(entries.filter(e=>e.menuGroup==='ベース').map(e=>e.id),['python','uv','node','npm','npx','electron']);
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='ベース').map(e=>e.id),['python','uv','node','npm','npx','git','electron']);
  assert.ok(entries.every(e=>!['optional','reference'].includes(e.usageTier)));
- assert.ok(entries.every(e=>!['git','pip','bash','docker','curl','winget'].includes(e.id)));
+ assert.ok(entries.every(e=>!['pip','bash','docker','curl','winget'].includes(e.id)));
  for(const e of entries) {assert.ok(['ベース','開発環境等','CLI群','その他拡張'].includes(e.menuGroup));assert.ok(e.usageTier);}
  assert.equal(entries.find(e=>e.id==='ffmpeg').usageTier,'integration');
  assert.equal(entries.find(e=>e.id==='chrome').name,'Chrome');
@@ -150,4 +150,23 @@ test('VS Code の copilot-shim だけでは Copilot CLI を OK にせず、並�
  // 別の場所にある同名の copilot.exe は shim 扱いしない。
  const other=path.join(root,'Other');await mkdir(other);await writeFile(path.join(other,'copilot.exe'),'x');
  assert.equal((await probe(entry,{...options,env:{...options.env,PATH:other}})).パス,path.join(other,'copilot.exe'));
+});
+
+test('Git version probe reports the executable on PATH and leaves missing Git undetected', async t => {
+ const git=(await catalog()).find(entry=>entry.id==='git');
+ assert.deepEqual(git.version_args,['--version']);
+ const directory=await mkdtemp(path.join(os.tmpdir(),'diag-git-path-'));
+ t.after(()=>rm(directory,{recursive:true,force:true}));
+ assert.equal((await probe(git,{env:{PATH:directory}})).状態,'未検出');
+ const executable=await resolveProgram(git);
+ if(!executable){t.diagnostic('Git not on PATH; only missing case checked');return;}
+ const result=await probe(git);
+ assert.equal(result.状態,'OK');assert.equal(result.パス,executable);
+ assert.match(result.バージョン,/^\d+\.\d+/);
+});
+
+test('Git for Windows version suffix is retained',async()=>{
+ const result=await fixture('console.log("git version 2.52.0.windows.1")');
+ assert.equal(result.状態,'OK');
+ assert.equal(result.バージョン,'2.52.0.windows.1');
 });

@@ -123,7 +123,7 @@
     "Remote/container/WSL/Android executable availability is not established by host PATH checks."
   ],
   "scannedSourceFiles": 3333,
-  "catalogEntries": 23,
+  "catalogEntries": 24,
   "completedAt": "2026-10-15T05:01:04.421238+00:00",
   "treeTruncated": false,
   "sourceRefUrl": "https://github.com/monjyu1101/AiDiy2027/tree/8adbdb484cafe31e145c4fe362897d2af1077eb1",
@@ -144,7 +144,7 @@
   "executionReferenceCount": 10439,
   "literalCandidateCount": 321,
   "uniqueSelectedBlobs": 3283,
-  "catalogSha256": "7d7645bd356085acb1b7c3116c65cd5f375ffcd51a4708c834899544dad2914a",
+  "catalogSha256": "cf09f737f72789cfa901ce90de0700ee6761474f4bae33f53358ef38e529d719",
   "shellAudit": {
     "shellBatchDockerfileFiles": 66,
     "makefiles": 1,
@@ -156,9 +156,9 @@
   "sourceTargetManifestHashMethod": "SHA256 of exact source-manifest.json file bytes",
   "catalogSelection": {
     "sourceInventoryEntries": 246,
-    "activeEntries": 23,
-    "excludedEntries": 227,
-    "excludedScope": "AiDiy launch commands and Hermes-only runtime, plugins, skills and helper dependencies; shared dependencies retained only with non-Hermes evidence. macOS audio playback (afplay) and GStreamer are also excluded from diagnostics by request. Edge and Brave are excluded by request. OS helpers, optional skills, development/setup/deployment utilities (including Git and pip) are excluded by request.",
+    "activeEntries": 24,
+    "excludedEntries": 226,
+    "excludedScope": "AiDiy launch commands and Hermes-only runtime, plugins, skills and helper dependencies; shared dependencies retained only with non-Hermes evidence. macOS audio playback (afplay) and GStreamer are also excluded from diagnostics by request. Edge and Brave are excluded by request. OS helpers, optional skills, development/setup/deployment utilities (including pip) are excluded by request.",
     "excludedIds": [
       "aidiy_hermes",
       "brave",
@@ -363,7 +363,6 @@
       "pwsh",
       "edge",
       "pip",
-      "git",
       "docker",
       "bash",
       "sh",

@@ -4,6 +4,7 @@
   "node": "https://nodejs.org/",
   "npm": "https://www.npmjs.com/",
   "npx": "https://docs.npmjs.com/cli/commands/npx",
+  "git": "https://git-scm.com/",
   "electron": "https://www.electronjs.org/",
   "claude": "https://code.claude.com/",
   "codex": "https://developers.openai.com/codex/cli/",

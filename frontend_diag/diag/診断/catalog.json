@@ -267,6 +267,43 @@
     "usageTier": "base"
   },
   {
+    "id": "git",
+    "name": "Git",
+    "category": "基盤",
+    "commands": [
+      "git"
+    ],
+    "version_args": [
+      "--version"
+    ],
+    "description": "Git リポジトリの管理・AiDiy の同期",
+    "required_by": [
+      "aidiy_git",
+      "_auto.bat"
+    ],
+    "sources": [
+      "_auto.bat",
+      "frontend_ide/aidiy_git/リポジトリ.cjs"
+    ],
+    "notes": "Git パネルと AiDiy の同期には PATH 上の Git が必要です。実行ファイルとバージョンのみ確認し、Git 本体やリポジトリは変更しません。",
+    "priority": 6,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core",
+    "allow_version": true,
+    "kind": "external_executable",
+    "evidence": [
+      {
+        "path": "_auto.bat",
+        "line": 82,
+        "kind": "source_text_reference"
+      }
+    ],
+    "menuGroup": "ベース",
+    "usageTier": "base"
+  },
+  {
     "id": "electron",
     "name": "Electron",
     "category": "IDE追加機能",
@@ -287,7 +324,7 @@
       "frontend_channels/discord/package.json"
     ],
     "notes": "プロジェクトのnode_modules内バイナリーを利用。PATHにないのが通常。Web版では不要。起動しない。 Diag 通常起動も Electron を利用。--browser / Codespaces / GUI なしでは不要。scripts/_setup_electron.py の共有 ZIP / 同版 dist を再利用します。",
-    "priority": 6,
+    "priority": 7,
     "wholeSystemRequired": false,
     "diagnosticsRequired": false,
     "featureRequired": true,

@@ -21,7 +21,7 @@ export const OUTPUT_LIMIT = 16384;
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 export const CATALOG_PATH = fileURLToPath(new URL('./catalog.json', import.meta.url));
 export async function catalog() { return JSON.parse(await readFile(CATALOG_PATH, 'utf8')); }
-const versionPattern = /(?:^|[^\w.])v?(\d+\.\d+(?:\.\d+){0,3}(?:[-+][\w.-]+)?)(?![\w.])/;
+const versionPattern = /(?:^|[^\w.])v?(\d+\.\d+(?:\.\d+){0,3}(?:\.windows\.\d+)?(?:[-+][\w.-]+)?)(?![\w.])/;
 
 export function expandPath(value, env = process.env, home = os.homedir(), platform = process.platform) {
   let missing = false;

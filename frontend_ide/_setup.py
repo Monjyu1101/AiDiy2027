@@ -86,7 +86,7 @@ def setup(choices=None):
     host = None
     continue_on_error = bool(choices and choices.get("continue_on_error"))
     failed = False
-    for name in ('frontend_ide/viewer', 'frontend_ide/aidiy_term', 'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi', 'frontend_ide/host', 'frontend_ide/aidiy_task', 'frontend_ide/aidiy_team', 'frontend_ide/aidiy_cpu'):
+    for name in ('frontend_ide/viewer', 'frontend_ide/aidiy_term', 'frontend_ide/aidiy_browser', 'frontend_ide/aidiy_navi', 'frontend_ide/host', 'frontend_ide/aidiy_task', 'frontend_ide/aidiy_team', 'frontend_ide/aidiy_git', 'frontend_ide/aidiy_cpu'):
         module = load_setup_module(name + '/_setup.py')
         if name == 'frontend_ide/host':
             host = module

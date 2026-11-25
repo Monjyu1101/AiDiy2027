@@ -31,7 +31,7 @@ test('states and safe text interpolation preserve hierarchy and model text rende
  const install=source('components/導入状況/導入状況パネル.vue')+source('components/導入状況/導入状況表示.mjs');for(const label of ['未確認','ベース','CLI群','その他拡張'])assert.ok(install.includes(label));
  const keys=source('components/モデル一覧/モデル一覧パネル.vue');assert.match(keys,/\{\{model\}\}/);assert.match(keys,/未実施/);assert.match(source('components/キー設定共通/キー設定表示.mjs'),/設定済/);assert.match(source('components/キー設定共通/キー設定表示.mjs'),/未設定/);
  assert.doesNotMatch(source('App.vue')+install+keys,/v-html|innerHTML/);
- const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../diag/診断/catalog.json'),'utf8'));assert.equal(catalog.length,23);assert.deepEqual(catalog.filter(e=>e.menuGroup==='ベース').map(e=>e.name),['Python','uv','Node.js','npm','npx','Electron']);
+ const catalog=JSON.parse(fs.readFileSync(path.join(__dirname,'../diag/診断/catalog.json'),'utf8'));assert.equal(catalog.length,24);assert.deepEqual(catalog.filter(e=>e.menuGroup==='ベース').map(e=>e.name),['Python','uv','Node.js','npm','npx','Git','Electron']);
 });
 test('checked-in compiled assets match current Vue sources',async()=>{const {verify}=await import('../ui/verify.mjs');assert.equal(await verify(),true);});
 test('source edits and altered bundle invalidate deployment manifest',async()=>{
