@@ -7,7 +7,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EventEmitter} from 'node:events';
-import {mkdtemp,mkdir,readFile,writeFile,rm,stat,symlink,readdir} from 'node:fs/promises';
+import {mkdtemp,mkdir,readFile,writeFile,rm,stat,symlink,readdir,unlink} from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import {NPM_PACKAGES,LOG_LIMIT,acquireInstallLock,installEnvironment,safeInstallLog,runInstallCommand as actualRunInstallCommand,findNpm,npmCapability,npmCommands,createInstallManager} from '../diag/導入管理/導入管理.mjs';
@@ -207,7 +207,7 @@ test('Copilot の native bin と標準 npm shim は導入済みでも削除せ�
     }
     const foreign=path.join(tree.prefix,'unowned-copilot.exe');await writeFile(foreign,'MZ unowned');
     const foreignResult=await npmCapability(entry,tree,{platform,resolve:async()=>foreign,resolveCandidates:async()=>[]});
-    assert.deepEqual(foreignResult.操作,platform==='win32'?['再導入']:[]);
+    assert.deepEqual(foreignResult.操作,platform==='win32'?['再導入','削除']:[]);
     if(platform==='win32')assert.match(foreignResult.再導入説明,/先に見つかる別の実行ファイルは更新されません/);
   }
 });
@@ -526,10 +526,94 @@ test('Windows の PATH で別配布の exe が優先されても、唯一確認�
   const first=await shimFor(),second=await shimFor();
   const inspect=paths=>npmCapability(entry,current,{platform:'win32',resolve:async()=>external,resolveCandidates:async()=>paths});
   const cap=await inspect([external,first.shim]);
-  assert.deepEqual(cap.操作,['再導入']);
+  assert.deepEqual(cap.操作,['再導入','削除']);
   assert.equal(cap.npmPrefix,first.installed.prefix);
   assert.deepEqual((await inspect([external,first.shim,second.shim])).操作,[]);
   await writeFile(first.shim,windowsShim('.cmd','node_modules/unowned/bin/cli.js'));
   assert.deepEqual((await inspect([external,first.shim])).操作,[]);
   assert.equal(await readFile(external,'utf8'),'MZ synthetic external executable');
+});
+
+test('Copilot の Windows ネイティブ依存を親の npm パッケージまで照合する',async t=>{
+  const current=await npmTree(t,'win32'),entry=entries.find(item=>item.id==='copilot');
+  const owner=await packageTree(t,{id:'copilot',platform:'win32'});
+  const name='@github/copilot-win32-x64',version='1.0.78';
+  const child=path.join(owner.directory,'node_modules','@github','copilot-win32-x64');
+  await mkdir(child,{recursive:true});
+  const exe=path.join(child,'copilot.exe');await writeFile(exe,'MZ synthetic native');
+  await writeFile(path.join(owner.directory,'package.json'),JSON.stringify({name:'@github/copilot',version,bin:{copilot:'npm-loader.js'},optionalDependencies:{[name]:version}}));
+  const metadata=path.join(child,'package.json');
+  await writeFile(metadata,JSON.stringify({name,version,bin:{'copilot-win32-x64':'copilot.exe'}}));
+  const options={platform:'win32',resolve:async()=>exe,resolveCandidates:async()=>[],env:{}};
+  assert.deepEqual((await npmCapability(entry,owner,options)).操作,['再導入','削除']);
+  await writeFile(metadata,JSON.stringify({name,version:'1.0.79',bin:{'copilot-win32-x64':'copilot.exe'}}));
+  assert.deepEqual((await npmCapability(entry,owner,options)).操作,[]);
+  assert.deepEqual((await npmCapability(entry,current,options)).操作,[]);
+});
+
+test('%APPDATA% の npm 版 Copilot を個別削除し、別配布の検出を削除失敗と誤認しない',async t=>{
+  const current=await npmTree(t,'win32'),entry=entries.find(item=>item.id==='copilot');
+  const appData=await temp(t),prefix=path.join(appData,'npm'),pkg=path.join(prefix,'node_modules','@github','copilot');
+  await mkdir(pkg,{recursive:true});
+  await writeFile(path.join(pkg,'package.json'),JSON.stringify({name:'@github/copilot',bin:{copilot:'npm-loader.js'}}));
+  await writeFile(path.join(pkg,'npm-loader.js'),'// synthetic');
+  const shim=path.join(prefix,'copilot.cmd');await writeFile(shim,windowsShim('.cmd','node_modules/@github/copilot/npm-loader.js'));
+  const foreign=path.join(appData,'copilot.exe');await writeFile(foreign,'MZ synthetic foreign');
+  const opts={env:{AppData:appData},platform:'win32',resolve:async()=>foreign,resolveCandidates:async()=>[]};
+  const calls=[];
+  const {manager}=fixture(t,{entries:[entry],platform:'win32',env:opts.env,findNpmFn:async()=>current,
+    capabilityFn:(entry,npm)=>npmCapability(entry,npm,opts),
+    acquireLock:async locked=>{assert.equal(locked,prefix);return async()=>{};},
+    probeFn:async()=>({id:'copilot',状態:'OK',パス:foreign}),
+    run:async command=>{calls.push(command.args);await rm(pkg,{recursive:true});await unlink(shim);return success;}});
+  const cap=(await manager.snapshot()).項目[0];
+  assert.deepEqual(cap.操作,['再導入','削除']);assert.match(cap.確認説明,/別配布の Copilot は残ります/);
+  await manager.start('copilot','削除');const done=await settled(manager);
+  assert.equal(done.状態,'完了');assert.match(done.説明,/別経路の Copilot は変更していません/);
+  assert.equal(calls.length,1);assert.equal(calls[0][1],'uninstall');assert.ok(calls[0].includes('--prefix='+prefix));assert.equal(calls[0].at(-1),'@github/copilot');
+  assert.equal(await readFile(foreign,'utf8'),'MZ synthetic foreign');
+});
+
+test('VS Code の Copilot shim だけを検出した Windows では、npm 版を追加できるが shim は変更しない',async t=>{
+  const npm=await npmTree(t,'win32'),entry=entries.find(item=>item.id==='copilot');
+  const localAppData=await temp(t);
+  const shims=path.join(localAppData,'Programs','Microsoft VS Code','bin','copilot-shim');
+  await mkdir(shims,{recursive:true});
+  const exe=path.join(shims,'copilot.exe'),script=path.join(shims,'copilot');
+  await writeFile(exe,'MZ synthetic Microsoft shim');await writeFile(script,'synthetic script');
+  const opts={platform:'win32',env:{LocalAppData:localAppData},
+    resolve:async()=>exe,resolveCandidates:async()=>[]};
+  const cap=()=>npmCapability(entry,npm,opts);
+  assert.deepEqual((await cap()).操作,['導入']);
+  assert.match((await cap()).状況,/npm 版は未導入/);
+  assert.deepEqual((await npmCapability(entry,npm,{...opts,resolve:async()=>script})).操作,['導入']);
+  assert.deepEqual((await npmCapability(entry,npm,{...opts,env:{}})).操作,[]);
+  const launcher=path.join(npm.prefix,'copilot.cmd');
+  await writeFile(launcher,'unverified stale launcher');
+  assert.deepEqual((await cap()).操作,[]);
+  await unlink(launcher);
+  const pkg=path.join(npm.root,'@github','copilot');
+  const calls=[];
+  const {manager}=fixture(t,{entries:[entry],env:opts.env,platform:'win32',
+    findNpmFn:async()=>npm,capabilityFn:(entry,npm)=>npmCapability(entry,npm,opts),
+    acquireLock:async locked=>{assert.equal(locked,npm.prefix);return async()=>{};},
+    probeFn:async()=>({id:'copilot',状態:'OK',パス:exe}),
+    run:async ({args})=>{calls.push(args);if(calls.length===1)return success;
+      await mkdir(pkg,{recursive:true});
+      await writeFile(path.join(pkg,'package.json'),JSON.stringify({name:'@github/copilot',bin:{copilot:'npm-loader.js'}}));
+      await writeFile(path.join(pkg,'npm-loader.js'),'// synthetic');
+      await writeFile(launcher,windowsShim('.cmd','node_modules/@github/copilot/npm-loader.js'));
+      return success;
+    }});
+  await manager.snapshot();
+  await manager.start('copilot','導入');
+  const unverified=await settled(manager);
+  assert.equal(unverified.状態,'失敗');
+  assert.match(unverified.説明,/指定先で npm 版 Copilot の導入を確認できません/);
+  await manager.start('copilot','導入');
+  const installed=await settled(manager);
+  assert.equal(installed.状態,'完了');
+  assert.deepEqual((await manager.snapshot()).項目[0].操作,['再導入','削除']);
+  assert.deepEqual(calls.map(args=>[args[1],args.at(-1)]),[['install','@github/copilot@latest'],['install','@github/copilot@latest']]);
+  assert.equal(await readFile(exe,'utf8'),'MZ synthetic Microsoft shim');
 });

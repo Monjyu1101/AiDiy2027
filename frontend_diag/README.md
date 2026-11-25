@@ -69,7 +69,7 @@ aidiy_diag --auto           # 画面を開き、保存済みの起動設定で�
 
 | 対象 | 導入方法・制限 |
 |---|---|
-| Claude Code / Codex / Copilot / OpenCode | 固定 npm グローバルパッケージ（OpenCode は 2.x の公式名 `@opencode/cli`）。標準 prefix / root と実体・shim を照合します。導入・更新は `npm install --global <パッケージ>@latest` を使用し、通常の更新に先立つ削除は行いません。Windows で PATH 上の別配布が優先されても、npm の導入先が一つだけ確認できれば、その npm 版だけを更新できます（別配布の更新や削除は行いません）。 |
+| Claude Code / Codex / Copilot / OpenCode | 固定 npm グローバルパッケージ（OpenCode は 2.x の公式名 `@opencode/cli`）。標準 prefix / root と実体・shim を照合します。導入・更新は `npm install --global <パッケージ>@latest` を使用し、通常の更新に先立つ削除は行いません。Windows で PATH 上の別配布が優先されても、npm の導入先が一つだけ確認できれば、その npm 版だけを更新できます（別配布の更新や削除は行いません）。 Copilot は npm の Windows 用子パッケージと親を照合し、PATH 上に別配布があっても、確認できた npm 版だけを削除できます。削除後も別配布が残る場合、通常の診断は引き続き検出します。 VS Code の Copilot 起動用ファイルだけがある場合は、npm の登録済み導入先が空であることを確認して npm 版を追加できます。VS Code 側の起動用ファイルと PATH の順序は変更しません。 |
 | FFmpeg 一式 | Windows の `Gyan.FFmpeg`。ffmpeg / ffprobe / ffplay のどの行からもパッケージ操作は1回だけ。終了後は3行を各1回確認します。 |
 | Ollama | Windows の `Ollama.Ollama`。新規導入と `winget upgrade` による上書き更新。公式 Inno 登録・標準配置・有効署名を確認し、更新時にアンインストールしません。削除は対象外です。 |
 | Chrome | Windows の `Google.Chrome` の新規導入のみ。プロファイル・拡張機能を保護するため再導入・削除は表示しません。 |

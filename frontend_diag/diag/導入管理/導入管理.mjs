@@ -148,21 +148,76 @@ export async function npmCapability(entry,npm,{env=process.env,platform=process.
     if(primary)return primary;
   }
   // PATH で先に見つかる exe が別配布でも、並存する正規 npm shim を検証して更新できる。
-  // 元の exe は操作せず、影になっている npm 版は更新のみ。複数の所有元は推測しない。
+  // 元の exe は操作しない。確認できた Copilot の npm 版だけは削除も可能。複数の所有元は推測しない。
   const commands=[`${entry.id}.cmd`,`${entry.id}.ps1`];
+  const appData=Object.entries(env).find(([key])=>key.toUpperCase()==='APPDATA')?.[1];
+  const standardCopilotPrefix=entry.id==='copilot'&&typeof appData==='string'&&path.isAbsolute(appData)
+    ? path.join(appData,'npm') : null;
+  if(standardCopilotPrefix&&!equivalent(standardCopilotPrefix,npm.prefix)){
+    const alternate={...npm,prefix:standardCopilotPrefix,root:path.join(standardCopilotPrefix,'node_modules')};
+    const native=await inspect(executable,alternate).catch(()=>null);
+    if(native?.操作.includes('再導入'))return {...native,npmPrefix:alternate.prefix,npmRoot:alternate.root};
+  }
   const candidates=new Set([...(await resolveCandidates({...entry,commands},{env,platform})),
-    ...commands.map(name=>path.join(npm.prefix,name))]);
+    ...[npm.prefix,standardCopilotPrefix].filter(Boolean).flatMap(prefix=>commands.map(name=>path.join(prefix,name)))]);
   const alternatives=new Map();
   for(const target of candidates){
     if(equivalent(target,executable)||!/\.(cmd|ps1)$/i.test(target))continue;
     const verified=await atShimPrefix(target);
     if(!verified||verified.移行元)continue;
     const prefix=verified.npmPrefix||npm.prefix;
-    alternatives.set(path.resolve(prefix).toLowerCase(),{...verified,操作:['再導入'],
+    const copilot=entry.id==='copilot';
+    alternatives.set(path.resolve(prefix).toLowerCase(),{...verified,操作:copilot?['再導入','削除']:['再導入'],
+      ...(copilot?{npmCopilot別経路:true,確認説明:`対象は npm 版 @github/copilot（${prefix}）のみです。PATH で先に見つかる別配布の Copilot は残ります。`}:{}),
       説明:`${verified.説明} PATH 上の別の実行ファイルは変更しません。`,
       再導入説明:`${verified.再導入説明} PATH で先に見つかる別の実行ファイルは更新されません。`});
   }
-  return alternatives.size===1?[...alternatives.values()][0]:current;
+  if(alternatives.size===1)return [...alternatives.values()][0];
+  if(!alternatives.size&&entry.id==='copilot'&&await isVsCodeCopilotShim(executable,env)){
+    const fresh=await inspect(null);
+    if(fresh.操作.includes('導入')&&await copilotNpmLaunchersAbsent(npm.prefix)){
+      return {...fresh,npmCopilotVsCode導入:true,状況:'VS Code の起動用ファイルを検出。npm 版は未導入です。',
+        確認説明:`npm 版 @github/copilot を ${npm.prefix} に追加します。VS Code の起動用ファイル・PATH 順序は変更しません。`};
+    }
+    return {...current,理由:'VS Code の起動用ファイルを検出しましたが、npm 版の状態を確定できません。npm の導入先と残っている起動ファイルを確認してください。'};
+  }
+  return current;
+}
+
+// VS Code 同梱の起動用ファイルは npm の実体と別物。既知の Windows 配置だけを区別する。
+async function isVsCodeCopilotShim(executable,env){
+  if(!['copilot','copilot.exe'].includes(path.basename(executable).toLowerCase()))return false;
+  const paths=Object.fromEntries(Object.entries(env).map(([key,value])=>[key.toUpperCase(),value]));
+  const roots=[[paths.LOCALAPPDATA,'Programs'],[paths.PROGRAMFILES],[paths['PROGRAMFILES(X86)']]];
+  return roots.some(([root,...relative])=>typeof root==='string'&&path.isAbsolute(root)
+    &&path.resolve(path.dirname(executable)).toLowerCase()===path.resolve(root,...relative,'Microsoft VS Code','bin','copilot-shim').toLowerCase())
+    &&(await lstat(executable).catch(()=>null))?.isFile()===true;
+}
+
+async function copilotNpmLaunchersAbsent(prefix){
+  for(const name of ['copilot','copilot.cmd','copilot.ps1','copilot.exe','copilot.bat','copilot.com']){
+    try{await lstat(path.join(prefix,name));return false;}catch(error){if(error.code!=='ENOENT')return false;}
+  }
+  return true;
+}
+
+// Copilot の npm 親パッケージが Windows 向け native package を同梱する配布形式。
+async function ownsCopilotNative(manifest,directory,executable){
+  if(!executable||path.basename(executable).toLowerCase()!=='copilot.exe')return false;
+  for(const arch of ['x64','arm64']){
+    const name=`@github/copilot-win32-${arch}`;
+    const version=manifest.optionalDependencies?.[name];
+    if(typeof version!=='string'||!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version))continue;
+    const child=path.join(directory,'node_modules',...name.split('/')),bin=path.join(child,'copilot.exe');
+    if(path.resolve(executable).toLowerCase()!==path.resolve(bin).toLowerCase())continue;
+    try{
+      const binary=await lstat(bin);
+      if(!binary.isFile()||binary.nlink!==1||await realpath(bin)!==path.join(await realpath(directory),'node_modules',...name.split('/'),'copilot.exe'))return false;
+      const metadata=JSON.parse(await readFile(path.join(child,'package.json'),'utf8'));
+      return metadata.name===name&&metadata.version===version&&metadata.bin?.[`copilot-win32-${arch}`]==='copilot.exe';
+    }catch{return false;}
+  }
+  return false;
 }
 
 async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram}={}) {
@@ -193,6 +248,7 @@ async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.pl
   const realRoot=await realpath(npm.root),realDirectory=await realpath(directory);
   const relativeDirectory=path.relative(realRoot,realDirectory);
   if(!relativeDirectory||relativeDirectory.startsWith('..')||path.isAbsolute(relativeDirectory))return {...base,操作:[],理由:'npm link 等の外部配置は自動操作しません。'};
+  if(entry.id==='copilot'&&platform==='win32'&&await ownsCopilotNative(manifest,directory,executable))return {...base,操作:['再導入','削除']};
   // 欠損したランチャーも、所有が確認できるパッケージとして再導入・削除できる。
   if(!executable)return {...base,操作:['再導入','削除']};
   const bins=typeof manifest.bin==='string'?{[pkg.split('/').pop()]:manifest.bin}:manifest.bin;
@@ -299,7 +355,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
     if(!state.items.find(item=>item.id===entry.id)?.操作?.includes(action))throw failure('導入状況または所有元が変わりました。操作せず再確認します。',409);
   };
   async function execute(job,entry,action,expectedCapability){
-    let directory,releaseLock,lockedCapability,status='完了',message='操作が完了しました。',detached=false;
+    let directory,releaseLock,lockedCapability,scopedCopilotRemoval=false,status='完了',message='操作が完了しました。',detached=false;
     const provider=providerFor(entry.id),controller=job.controller,log=text=>append(job,text);
     const onUncertain=()=>{job.状態='停止未確認';job.説明='停止の完了を確認できません。実行中の処理が終了するまで、この項目の新しい操作はできません。';};
     const operationRun=async command=>{
@@ -324,6 +380,11 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
       const selectedCapability=fresh.items.find(item=>item.id===entry.id);
       const context=provider==='npm'&&selectedCapability?.npmPrefix?{...fresh.npm,prefix:selectedCapability.npmPrefix,root:selectedCapability.npmRoot}:fresh[provider];
       const lockKey=context?.lockKey||context?.prefix;
+      if(entry.id==='copilot'&&action==='削除'&&(selectedCapability?.npmCopilot別経路||expectedCapability?.npmCopilot別経路)
+        &&(!expectedCapability||Boolean(selectedCapability?.npmCopilot別経路)!==Boolean(expectedCapability.npmCopilot別経路)
+          ||(expectedCapability.npmPrefix||fresh.npm.prefix)!==lockKey)){
+        throw failure('確認時と npm 版 Copilot の削除対象が変わりました。導入状況を再確認してください。',409);
+      }
       if(!lockKey)throw failure('導入先の排他を確認できません。',409);
       releaseLock=await acquireLock(lockKey,{platform,scope:lockScopeFor(entry.id),env:installEnvironment(env)});
       // ロック取得を待つ間に別の操作が完了していても、古い所有判定では実行しない。
@@ -331,6 +392,8 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
         lockedCapability=await capabilityFn(entry,fresh.npm,{env,platform});
         if((lockedCapability.npmPrefix||fresh.npm.prefix)!==lockKey)throw failure('導入先が変わりました。操作せず再確認します。',409);
         if(!lockedCapability.操作?.includes(action))throw failure('導入状況または所有元が変わりました。操作せず再確認します。',409);
+        if(entry.id==='copilot'&&action==='削除'&&Boolean(lockedCapability.npmCopilot別経路)!==Boolean(selectedCapability?.npmCopilot別経路))
+          throw failure('確認時と npm 版 Copilot の削除対象が変わりました。導入状況を再確認してください。',409);
         if(entry.id==='opencode'&&(lockedCapability.移行元||expectedCapability?.移行元)
           &&JSON.stringify(lockedCapability.導入済みパッケージ)!==JSON.stringify(expectedCapability?.導入済みパッケージ)){
           throw failure('OpenCode の移行対象が確認時から変わりました。移行説明を再確認してから操作してください。',409);
@@ -353,6 +416,19 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
           }
           await checkedRun(command);
         }
+        if(action==='導入'&&lockedCapability.npmCopilotVsCode導入){
+          const after=await capabilityFn(entry,fresh.npm,{env,platform});
+          if(!after.操作?.includes('再導入')||(after.npmPrefix||fresh.npm.prefix)!==lockKey)
+            throw failure('指定先で npm 版 Copilot の導入を確認できません。');
+          message='npm 版 Copilot を導入しました。VS Code の起動用ファイルは変更していません。';
+        }
+        if(action==='削除'&&lockedCapability.npmCopilot別経路){
+          const packageDirectory=path.join(context.root,'@github','copilot');
+          try{await lstat(packageDirectory);throw failure('指定した npm 版 Copilot の削除を確認できません。');}
+          catch(error){if(error.code!=='ENOENT')throw error;}
+          scopedCopilotRemoval=true;
+          message='指定した npm 版 Copilot を削除しました。別経路の Copilot は変更していません。';
+        }
       }else{
         const executeProvider=provider==='winget'?executeWingetFn:provider==='grok'?executeGrokFn:provider==='rust'?executeRustFn:provider==='llvmMingw'?executeLlvmMingwFn:provider==='codexCompile'?executeCodexCompileFn:executeAntigravityFn;
         // 実コマンドは共通の期限・中止・終了確認を通す。プロバイダー内の照会も実行中として排他する。
@@ -373,7 +449,7 @@ export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),en
           const result=await probeFn(target);checked.push(result);Object.assign(job,onResult(result));
           if(target.id===entry.id)job.結果=result;
           log(`確認結果 [${target.name||target.id}]: ${result.状態}\n${result.説明||''}\n`);
-          if(status==='完了'&&!detached&&((action==='削除'&&result.パス)||(action!=='削除'&&result.状態!=='OK'))){status='失敗';message=action==='削除'?'別の導入先を含め、実行ファイルが残っています。確認結果を参照してください。':'コマンドは終了しましたが、導入を確認できませんでした。PATH の反映や確認結果を参照してください。';log(`${message}\n`);}
+          if(status==='完了'&&!detached&&((action==='削除'&&result.パス&&!scopedCopilotRemoval)||(action!=='削除'&&result.状態!=='OK'))){status='失敗';message=action==='削除'?'別の導入先を含め、実行ファイルが残っています。確認結果を参照してください。':'コマンドは終了しましたが、導入を確認できませんでした。PATH の反映や確認結果を参照してください。';log(`${message}\n`);}
         }catch{status='失敗';message='操作後の導入確認に失敗しました。確認ボタンで再試行してください。';log(`${target.name||target.id}: ${message}\n`);}
       }
       job.結果一覧=checked;
