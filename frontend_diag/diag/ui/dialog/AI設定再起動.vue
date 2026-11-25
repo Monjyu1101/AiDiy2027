@@ -44,7 +44,6 @@ const selections = reactive({
   liveAi: "",
   liveModel: "",
   liveVoice: "",
-  agyCodeModel: "",
   codeAi1: "",
   codeModel1: "",
   codeAi2: "",
@@ -108,8 +107,9 @@ const chatAiOptions = computed(() => Object.keys(availableModels.value?.chat_mod
 const savedAgyUnavailable = computed(() =>
   currentSettings.value.CHAT_AI_NAME === "gemini_agy" && !chatAiOptions.value.includes("gemini_agy")
 );
-const predictionProviders = ["openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex"];
-const predictionAutoProviders = ["codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat"];
+const geminiPurposeDefault = (key) => /^(PREDICTION|DECISION)_(GEMINI_AGY|GEMINI|FREEAI)_MODEL$/.test(key) ? "gemini-4-hydrogen" : "auto";
+const predictionProviders = ["openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "gemini_agy", "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex"];
+const predictionAutoProviders = ["codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "gemini_agy", "freeai_chat", "gemini_chat", "openai_chat"];
 const predictionAiOptions = computed(() => [.../* @__PURE__ */ new Set(["auto", ...predictionProviders, selections.predictionAi])].filter(Boolean));
 const predictionCatalog = computed(() => {
   const catalog = {};
@@ -122,10 +122,18 @@ const predictionCatalog = computed(() => {
   }
   return catalog;
 });
-const predictionResolvedAi = computed(() => selections.predictionAi === "auto" ? predictionAutoProviders.find((provider) => Object.keys(predictionCatalog.value[provider] || {}).length > 0) || "" : selections.predictionAi);
+const predictionResolvedAi = computed(() => selections.predictionAi === 'auto'
+  ? predictionAutoProviders.find(provider => {
+      const models = predictionCatalog.value[provider] || {};
+      const configured = predictionModels.PREDICTION_GEMINI_AGY_MODEL || geminiPurposeDefault('PREDICTION_GEMINI_AGY_MODEL');
+      return Object.keys(models).length > 0 &&
+        (provider !== 'gemini_agy' || configured === 'auto' || Object.hasOwn(models, configured));
+    }) || ''
+  : selections.predictionAi);
 const predictionFields = [
   { key: "PREDICTION_OPENAI_MODEL", provider: "openai_chat" },
-  { key: "PREDICTION_OAUTH_MODEL", provider: "openai_oauth" },
+  { key: "PREDICTION_OPENAI_OAUTH_MODEL", provider: "openai_oauth" },
+  { key: "PREDICTION_GEMINI_AGY_MODEL", provider: "gemini_agy" },
   { key: "PREDICTION_GEMINI_MODEL", provider: "gemini_chat" },
   { key: "PREDICTION_FREEAI_MODEL", provider: "freeai_chat" },
   { key: "PREDICTION_CODEX_CLI_MODEL", provider: "codex_cli" },
@@ -153,11 +161,13 @@ const decisionAiOptions = computed(() => [.../* @__PURE__ */ new Set([
   "freeai_chat",
   "openai_decisions",
   "gemini_chat",
+  "gemini_agy",
   selections.decisionAi
 ])].filter(Boolean));
 const decisionFields = [
   { key: "DECISION_OPENAI_MODEL", provider: "openai_decisions" },
-  { key: "DECISION_OAUTH_MODEL", provider: "openai_oauth" },
+  { key: "DECISION_OPENAI_OAUTH_MODEL", provider: "openai_oauth" },
+  { key: "DECISION_GEMINI_AGY_MODEL", provider: "gemini_agy" },
   { key: "DECISION_GEMINI_MODEL", provider: "gemini_chat" },
   { key: "DECISION_FREEAI_MODEL", provider: "freeai_chat" }
 ];
@@ -174,15 +184,6 @@ const decisionModelOptions = (field) => {
 };
 const liveAiOptions = computed(() => Object.keys(availableModels.value?.live_models || {}));
 const codeAiOptions = computed(() => Object.keys(availableModels.value?.code_models || {}));
-const agyCodeAvailable = computed(() => codeAiOptions.value.includes("agy_cli"));
-const agyCodeModels = computed(() => {
-  const saved = String(currentSettings.value.CODE_AGY_CLI_MODEL || "auto");
-  return {
-    auto: "auto (agy の既定モデル)",
-    ...(saved === "auto" ? {} : { [saved]: saved + "（設定値）" }),
-    ...(availableModels.value?.code_models?.agy_cli || {})
-  };
-});
 const codeBaseOptionsList = computed(() => Object.entries(codeBaseOptions.value || {}).map(([value, label]) => ({ value, label })));
 const codePermissionOptions = ["auto", "full", "none"];
 const chatModelsFor = (provider) => {
@@ -212,7 +213,7 @@ const codeModelOptions6 = computed(() => buildCodeModelOptions(selections.codeAi
 const taskModelOptions = computed(() => buildCodeModelOptions(selections.taskAi));
 const teamModelOptions = computed(() => buildCodeModelOptions(selections.teamAi));
 function codeModelsFor(aiName) {
-  return aiName === "agy_cli" ? agyCodeModels.value : availableModels.value?.code_models?.[aiName] || {};
+  return availableModels.value?.code_models?.[aiName] || {};
 }
 function buildCodeModelOptions(aiName) {
   return Object.entries(codeModelsFor(aiName)).map(([value, label]) => ({ value, label: label || value }));
@@ -284,14 +285,13 @@ async function loadConfig() {
     );
     selections.predictionAi = String(currentSettings.value.PREDICTION_AI_NAME ?? "auto") || "auto";
     for (const { key } of predictionFields) {
-      predictionModels[key] = String(currentSettings.value[key] ?? "auto").trim() || "auto";
+      predictionModels[key] = String(currentSettings.value[key] ?? geminiPurposeDefault(key)).trim() || "auto";
     }
     selections.decisionAi = String(currentSettings.value.DECISION_AI_NAME || "auto").trim() || "auto";
     for (const { key } of decisionFields) {
-      decisionModels[key] = String(currentSettings.value[key] ?? "auto").trim() || "auto";
+      decisionModels[key] = String(currentSettings.value[key] ?? geminiPurposeDefault(key)).trim() || "auto";
     }
     selections.liveAi = chooseAvailable(currentSettings.value.LIVE_AI_NAME, liveAiOptions.value);
-    selections.agyCodeModel = String(currentSettings.value.CODE_AGY_CLI_MODEL || "auto");
     selections.codeAi1 = chooseCodeProvider(currentSettings.value.CODE_AI1_NAME);
     selections.codeAi2 = chooseCodeProvider(currentSettings.value.CODE_AI2_NAME);
     selections.codeAi3 = chooseCodeProvider(currentSettings.value.CODE_AI3_NAME);
@@ -353,7 +353,6 @@ function buildFormSettings() {
   nextSettings.DECISION_AI_NAME = selections.decisionAi || "auto";
   for (const { key } of decisionFields) nextSettings[key] = decisionModels[key] || "auto";
   nextSettings.LIVE_AI_NAME = selections.liveAi;
-  if (agyCodeAvailable.value) nextSettings.CODE_AGY_CLI_MODEL = selections.agyCodeModel;
   nextSettings.CODE_AI1_NAME = selections.codeAi1;
   nextSettings.CODE_AI1_MODEL = selections.codeModel1;
   nextSettings.CODE_AI2_NAME = selections.codeAi2;
@@ -527,7 +526,6 @@ function handleTeamPlanChange() {
   selections.teamModelCheck = selections.teamModelPlan;
 }
 function codeDefaultModel(aiName) {
-  if (aiName === "agy_cli") return selections.agyCodeModel || "auto";
   const models = Object.keys(availableModels.value?.code_models?.[aiName] || {});
   const key = CODE_MODEL_KEYS[aiName];
   return chooseAvailable(key && currentSettings.value[key], models);
@@ -640,7 +638,7 @@ function handleTeamAiChange() {
                 </div>
               </div>
               <div id="config-prediction-note" class="config-model-note" role="note">
-                <p>方式のautoはDiag候補がある codex_cli → copilot_cli → aidiy_hermes → aidiy_pi → aidiy_codex → OAuth → FreeAI → OpenAI API → Gemini の順です。</p>
+                <p>方式のautoはDiag候補がある codex_cli → copilot_cli → aidiy_hermes → aidiy_pi → aidiy_codex → OAuth → AGY → FreeAI → Gemini → OpenAI API の順です。</p>
                 <p v-if="!predictionHasCandidates">選択方式のDiag候補はありません。現在設定とautoを保持しています。候補をDiagで取得・書き出してから画面を開き直してください。</p>
                 <p v-else>候補はDiagの取得済み一覧です。各方式のモデルautoはその方式の先頭候補を使います。候補掲載は現在の利用可否を保証しません。</p>
               </div>
@@ -665,7 +663,7 @@ function handleTeamAiChange() {
                 </div>
               </div>
                 <div id="config-decision-note" class="config-decision-note" role="note">
-                  <p>autoは起動チェック成功の方式からOAuth → FreeAI → Decisions API → Geminiの順で選びます。</p>
+                  <p>autoは起動チェック成功の方式からOAuth → AGY（テキストのみ）→ FreeAI → Gemini → Decisions APIの順で選びます。</p>
 
                   <p v-if="!decisionHasCandidates">Diagの取得済み候補はありません。現在設定とautoを保持しています。設定値は利用可能の保証ではありません。</p>
                   <p v-else>候補はDiagの取得済み一覧です。モデルを変更するときはDiagの書き出し候補を調整してください。現在の利用可否はToolsの判断チェックで確認します。</p>
@@ -727,14 +725,6 @@ function handleTeamAiChange() {
 
             <div class="config-panel-section">
               <div class="config-panel-section-header">Code AI Model</div>
-              <div v-if="agyCodeAvailable || (currentSettings.CODE_AGY_CLI_MODEL && currentSettings.CODE_AGY_CLI_MODEL !== 'auto')" class="config-panel-field">
-                <label class="config-panel-label" for="config-agy-code-model">agy_cli の既定モデル:</label>
-                <div class="config-panel-control">
-                  <select id="config-agy-code-model" v-model="selections.agyCodeModel" class="config-panel-select" :disabled="!agyCodeAvailable">
-                    <option v-for="(label, model) in agyCodeModels" :key="model" :value="model">{{ label }}</option>
-                  </select>
-                </div>
-              </div>
               <div class="config-panel-code-grid">
                 <div class="config-panel-code-col">
                   <div class="config-panel-field">

@@ -8,11 +8,12 @@ const assert = require('node:assert/strict');
 const {render} = require('../../../../../checks/ui-components.cjs');
 
 test('AI model test explains auto provider priorities only in Prediction and Decision', async () => {
+  require('../../../../../checks/ui-vue.cjs');
   const {AIモデル状態を作成} = await import('../AIモデル状態.mjs');
   const state = AIモデル状態を作成({接続可能: () => false, api: async () => {throw new Error('Rendering must not make requests');}});
   const orders = {
-    PREDICTION: 'codex_cli → copilot_cli → aidiy_hermes → openai_oauth → freeai_chat → openai_chat → gemini_chat',
-    DECISION: 'openai_oauth → freeai_chat → openai_decisions → gemini_chat',
+    PREDICTION: 'codex_cli → copilot_cli → aidiy_hermes → aidiy_pi → aidiy_codex → openai_oauth → gemini_agy → freeai_chat → gemini_chat → openai_chat',
+    DECISION: 'openai_oauth → gemini_agy → freeai_chat → gemini_chat → openai_decisions',
   };
   try {
     for (const family of ['CHAT', 'LIVE', 'PREDICTION', 'DECISION', 'CODE']) {

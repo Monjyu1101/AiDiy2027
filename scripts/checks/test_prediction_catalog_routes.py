@@ -21,8 +21,9 @@ def runtime(root, catalog, config=None):
     names = {'CLI_PROVIDERS', 'PROVIDERS', 'AUTO_PROVIDERS', 'MODEL_KEYS', 'HERMES_UNSUPPORTED_PREDICTION_ROUTES'}
     tree = ast.parse(SOURCE.read_text())
     nodes = [n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'PredictionLLM'
+             or isinstance(n, ast.FunctionDef) and n.name == '_configured_model'
              or isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id in names for t in n.targets)]
-    env = dict(Path=Path, json=json)
+    env = dict(Path=Path, json=json, agy_oauthコマンド=lambda: None)
     exec(compile(ast.Module(body=nodes, type_ignores=[]), str(SOURCE), 'exec'), env)
     obj = object.__new__(env['PredictionLLM'])
     obj.root = Path(root)

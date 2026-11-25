@@ -36,7 +36,7 @@ class ChatAI:
     """
 
     def __init__(self, 親=None, セッションID: str = "", チャンネル: int = 0, 絶対パス: str = None,
-                 AI_NAME: str = "gemini", AI_MODEL: str = "gemini-4-carbon",
+                 AI_NAME: str = "gemini", AI_MODEL: str = "gemini-4-hydrogen",
                  api_key: str = None, system_instruction: str = None, 実行オプション=None):
         """初期化"""
 
@@ -866,7 +866,7 @@ if __name__ == "__main__":
             return {}
 
     conf = _load_config()
-    AI_MODEL = conf.get("CHAT_GEMINI_MODEL", "gemini-nano-banana-2.1")
+    AI_MODEL = conf.get("CHAT_GEMINI_MODEL", "gemini-4-hydrogen")
     api_key = conf.get("gemini_key_id")
 
     if not api_key or str(api_key).startswith("<"):

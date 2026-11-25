@@ -94,7 +94,15 @@ class conf_models:
 
     def get_prediction_models(self) -> Dict[str, Dict[str, str]]:
         """予測実行と同じChat・CLI方式の有効なモデルIDだけを画面へ渡す。"""
-        return self._get_diag_models("prediction") or {}
+        models = self._get_diag_models("prediction") or {}
+        if "gemini_agy" in models and not self._gemini_agy_executable():
+            return {name: items for name, items in models.items() if name != "gemini_agy"}
+        return models
+
+    @staticmethod
+    def _gemini_agy_executable():
+        from AIコア.agy_oauth import agy_oauthコマンド
+        return agy_oauthコマンド()
 
 
     def get_decisions_models(self) -> Dict[str, Dict[str, str]]:
@@ -122,7 +130,7 @@ class conf_models:
             entries = payload.items()
             if kind == "prediction":
                 entries = ((name, payload.get(name)) for name in (
-                    "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat",
+                    "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "gemini_agy",
                     "codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex",
                 ))
             for provider, entry in entries:

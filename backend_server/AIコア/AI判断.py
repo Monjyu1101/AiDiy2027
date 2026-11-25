@@ -32,13 +32,16 @@ class Provider:
     api_key_field: str | None = None
     auto_priority: int = 100
     fallback_key_fields: tuple[str, ...] = ()
+    text_only: bool = False
 
 
 PROVIDERS = {
-    "openai_decisions": Provider("AIコア.AI判断_openai_decisions", "DECISION_OPENAI_MODEL", OPENAI_DECISION_MODEL, "api_key", api_key_field="openai_key_id"),
-    "openai_oauth": Provider("AIコア.AI判断_openai_jsonchat", "DECISION_OAUTH_MODEL", OPENAI_DECISION_MODEL, "oauth", ("openai_jsonchat",), auto_priority=0),
+    "openai_decisions": Provider("AIコア.AI判断_openai_decisions", "DECISION_OPENAI_MODEL", OPENAI_DECISION_MODEL, "api_key", api_key_field="openai_key_id", auto_priority=400),
+    "openai_oauth": Provider("AIコア.AI判断_openai_jsonchat", "DECISION_OPENAI_OAUTH_MODEL", OPENAI_DECISION_MODEL, "oauth", ("openai_jsonchat",), auto_priority=0),
     "freeai_chat": Provider("AIコア.AI判断_freeai_jsonchat", "DECISION_FREEAI_MODEL", FREEAI_DECISION_MODEL, "api_key", api_key_field="freeai_key_id", auto_priority=50, fallback_key_fields=("gemini_key_id",)),
     "gemini_chat": Provider("AIコア.AI判断_gemini_jsonchat", "DECISION_GEMINI_MODEL", FREEAI_DECISION_MODEL, "api_key", api_key_field="gemini_key_id", auto_priority=300, fallback_key_fields=("freeai_key_id",)),
+    "gemini_agy": Provider("AIコア.AI判断_gemini_agy", "DECISION_GEMINI_AGY_MODEL",
+                          FREEAI_DECISION_MODEL, "google_cli_oauth", auto_priority=25, text_only=True),
 }
 
 
@@ -90,7 +93,12 @@ class Decision:
         if is_default(name):
             name = str(config.get("DECISION_AI_NAME") or "auto").strip()
         if is_default(name):
-            available = [key for key in PROVIDERS if self.availability.get(key, {}).get("ok")]
+            has_image = isinstance(request.input, list) and any(
+                isinstance(message.content, list) and any(part.type == "input_image" for part in message.content)
+                for message in request.input
+            )
+            available = [key for key, provider in PROVIDERS.items()
+                         if self.availability.get(key, {}).get("ok") and not (has_image and provider.text_only)]
             if available:
                 name = min(available, key=lambda key: PROVIDERS[key].auto_priority)
             else:
@@ -129,10 +137,12 @@ class Decision:
             "default_model": f"{name}/{model}",
             "configured_defaults": {
                 "DECISION_AI_NAME": str(config.get("DECISION_AI_NAME") or "auto").strip() or "auto",
-                **{key: str(config.get(key, "auto") or "auto").strip() or "auto" for key in ("DECISION_OPENAI_MODEL", "DECISION_OAUTH_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL")},
+                **{provider.model_key: str(config.get(
+                    provider.model_key, FREEAI_DECISION_MODEL if key in ("gemini_agy", "gemini_chat", "freeai_chat") else "auto"
+                ) or "auto").strip() or "auto" for key, provider in PROVIDERS.items()},
             },
             "providers": [{"ai_name": key, "implementation": provider.module.rsplit(".", 1)[-1], "aliases": list(provider.aliases), "auth": provider.auth, "default_model": self._default_model(provider, config), "model_config_key": provider.model_key} for key, provider in PROVIDERS.items()],
-            "selection_note": "方式は明示引数、DECISION_AI_NAMEの順。autoなら起動チェック成功の方式からOAuth → FreeAI → Decisions API → Geminiの順。モデルは明示model/ai_model → 方式別MODEL設定 → 低コスト既定値。Diagの候補は書き出し側で絞りますが、実行時のモデル指定を固定しません。既存設定値と明示プロバイダを保持します。",
+            "selection_note": "方式は明示引数、DECISION_AI_NAMEの順。autoなら起動チェック成功の方式からOAuth → AGY（テキストのみ）→ FreeAI → Gemini → Decisions APIの順。モデルは明示model/ai_model → 方式別MODEL設定 → 低コスト既定値。Diagの候補は書き出し側で絞りますが、実行時のモデル指定を固定しません。既存設定値と明示プロバイダを保持します。",
             "question_types": ["predicate", "choice", "score"],
             "availability": deepcopy(self.availability),
             "availability_checked": bool(self.availability),

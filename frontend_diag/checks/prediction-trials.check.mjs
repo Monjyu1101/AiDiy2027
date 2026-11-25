@@ -10,9 +10,9 @@ import {createModelTrials} from '../diag/モデル試行/trials.mjs';
 const catalogs={prediction_models:{gemini_chat:{models:{'gemini-flash-lite-latest':'2026/10/01 - gemini-flash-lite-latest'}},codex_cli:{models:{'gpt-6-luna':'2026/09/15 - gpt-6-luna'}}}};
 const baseConfig={CODE_BASE_PATH:'../',PORT_TOOLS:'8095',CHAT_AI_NAME:'openrt_chat',CHAT_OPENRT_MODEL:'chat-model',PREDICTION_AI_NAME:'gemini_chat',PREDICTION_GEMINI_MODEL:'gemini-flash-lite-latest',PREDICTION_CODEX_CLI_MODEL:'gpt-6-luna'};
 
-function fixture({config=baseConfig,answer='おばあさんが住んでいました',historySaved=prompt=>true}={}){
+function fixture({config=baseConfig,answer='おばあさんが住んでいました',historySaved=prompt=>true,modelLists=catalogs,installedClisFn}={}){
  const calls=[];
- const trials=createModelTrials({reader:()=>JSON.stringify(config),statusFn:async()=>({online:true}),timeoutMs:2000,catalogReader:async name=>catalogs[name]??{},credentialReader:()=>null,request:async request=>{
+ const trials=createModelTrials({reader:()=>JSON.stringify(config),statusFn:async()=>({online:true}),timeoutMs:2000,catalogReader:async name=>modelLists[name]??{},installedClisFn,credentialReader:()=>null,request:async request=>{
   calls.push(request);
   if(request.path==='/internal/prediction_llms')return {body:{status:'OK',result:answer,ai_name:request.body.ai_name,ai_model:request.body.ai_model}};
   if(request.method==='DELETE')return {body:null};
@@ -93,4 +93,18 @@ test('設定モデルの一括動作確認ではChat失敗後に追加の会話�
   assert.equal((await f.trials.next(run.実行ID,'PREDICTION')).状態,'未実施');
   assert.equal(f.calls.length,before);
  }finally{await f.close();}
+});
+
+test('Prediction auto uses installed AGY with the configured model, then FreeAI and Gemini',async()=>{
+ const models={models:{'gemini-4-hydrogen':'Hydrogen'}};
+ for(const [agy,agyModels,free,expected] of [
+  [true,models,true,'gemini_agy'],[false,models,true,'freeai_chat'],
+  [true,{models:{other:'Other'}},true,'freeai_chat'],[false,models,false,'gemini_chat']
+ ]){
+  const f=fixture({config:{...baseConfig,PREDICTION_AI_NAME:'auto',PREDICTION_GEMINI_MODEL:'gemini-4-hydrogen'},
+   modelLists:{prediction_models:{gemini_agy:agyModels,...(free?{freeai_chat:models}:{}),gemini_chat:models,openai_chat:models}},
+   installedClisFn:async()=>({agy_cli:agy})});
+  try{assert.equal((await f.trials.snapshot()).予測条件.プロバイダ,expected);}
+  finally{await f.close();}
+ }
 });

@@ -32,7 +32,7 @@ test('decision row follows LIVE, uses defaults and never shares Chat or Code res
  assert.deepEqual(row.共有対象,['DECISION']);assert.equal(row.モデル,'gemini-flash-lite-latest');
  assert.equal(configRows({}).find(row=>row.id==='DECISION').プロバイダ,'auto');assert.equal(configRows({}).find(row=>row.id==='DECISION').モデル,'auto');
  assert.equal(configRows({...config,DECISION_AI_NAME:'gemini_chat',DECISION_GEMINI_MODEL:'custom'}).find(row=>row.id==='DECISION').モデル,'custom');
- for(const [provider,key] of [['openai_oauth','DECISION_OAUTH_MODEL'],['openai_decisions','DECISION_OPENAI_MODEL'],['openai_jsonchat','DECISION_OAUTH_MODEL']])assert.equal(configRows({...config,DECISION_AI_NAME:provider,[key]:'expensive'}).find(row=>row.id==='DECISION').モデル,'expensive');
+ for(const [provider,key] of [['openai_oauth','DECISION_OPENAI_OAUTH_MODEL'],['openai_decisions','DECISION_OPENAI_MODEL'],['openai_jsonchat','DECISION_OPENAI_OAUTH_MODEL']])assert.equal(configRows({...config,DECISION_AI_NAME:provider,[key]:'expensive'}).find(row=>row.id==='DECISION').モデル,'expensive');
  assert.equal(configRows({...config,DECISION_AI_NAME:'auto',DECISION_FREEAI_MODEL:'expensive'}).find(row=>row.id==='DECISION').モデル,'auto');
 });
 test('all three choices are valid JSON results and use MCP lifecycle only',async()=>{
@@ -57,7 +57,7 @@ test('offline refuses start without request; connection failure and timeout cann
 });
 
 test('decision trial respects four provider settings and explicit auto',()=>{
- const fields={openai_decisions:'DECISION_OPENAI_MODEL',openai_oauth:'DECISION_OAUTH_MODEL',openai_jsonchat:'DECISION_OAUTH_MODEL',gemini_chat:'DECISION_GEMINI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL'};
+ const fields={openai_decisions:'DECISION_OPENAI_MODEL',openai_oauth:'DECISION_OPENAI_OAUTH_MODEL',openai_jsonchat:'DECISION_OPENAI_OAUTH_MODEL',gemini_chat:'DECISION_GEMINI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL'};
  for(const [provider,key] of Object.entries(fields)){
   for(const value of ['selected','auto'])assert.equal(configRows({DECISION_AI_NAME:provider,[key]:value}).find(row=>row.id==='DECISION').モデル,value);
  }

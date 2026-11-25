@@ -75,10 +75,10 @@ config.SOME_KEY = "value" # __setattr__ → 即座に _save()
 | API Key | `gemini_key_id`, `freeai_key_id`, `claude_key_id`, `openai_key_id`, `copilot_key_id`, `openrt_key_id`, `ollama_key_id` |
 | OpenAI/Azure | `openai_api_type`, `openai_organization`, `azure_endpoint`, `azure_version`, `azure_key_id` |
 | Ollama | `ollama_host` |
-| ChatAI | `CHAT_AI_NAME`, `CHAT_GEMINI_MODEL`, `CHAT_FREEAI_MODEL`, `CHAT_OPENRT_MODEL`, `CHAT_OPENRT_FREE_MODEL`, `CHAT_OPENAI_MODEL`, `CHAT_OLLAMA_MODEL`, `CHAT_LOCAL_MODEL` |
+| ChatAI | `CHAT_AI_NAME`, `CHAT_GEMINI_AGY_MODEL`, `CHAT_GEMINI_MODEL`, `CHAT_FREEAI_MODEL`, `CHAT_OPENRT_MODEL`, `CHAT_OPENRT_FREE_MODEL`, `CHAT_OPENAI_MODEL`, `CHAT_OLLAMA_MODEL`, `CHAT_LOCAL_MODEL` |
 | LiveAI | `LIVE_AI_NAME`, `LIVE_GEMINI_MODEL/VOICE`, `LIVE_FREEAI_MODEL/VOICE`, `LIVE_OPENAI_MODEL/VOICE` |
-| PredictionAI | LIVE設定ブロックの後、DecisionAIの直前に `PREDICTION_AI_NAME`, `PREDICTION_OPENAI_MODEL`, `PREDICTION_OAUTH_MODEL`, `PREDICTION_GEMINI_MODEL`, `PREDICTION_FREEAI_MODEL`, `PREDICTION_CODEX_CLI_MODEL`, `PREDICTION_COPILOT_CLI_MODEL`, `PREDICTION_AIDIY_HERMES_MODEL`（初期値は方式とChat系4モデルが `auto`、`PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` が `gpt-6-luna`、`PREDICTION_AIDIY_HERMES_MODEL` が `openai_oauth/gpt-6-luna`）。内部RESTの `aidiy_prediction_llms` が次のユーザー入力予測に使用する。Web / AvatarのAI設定再起動画面でもLIVEとDECISIONの間に表示する |
-| DecisionAI | `DECISION_AI_NAME`, `DECISION_OPENAI_MODEL`, `DECISION_OAUTH_MODEL`, `DECISION_GEMINI_MODEL`, `DECISION_FREEAI_MODEL`（初期値はすべて `auto`）（[AI判断](./backend_server,backend_tools,AI判断追加手順.md)） |
+| PredictionAI | LIVE設定ブロックの後、DecisionAIの直前に `PREDICTION_AI_NAME`, `PREDICTION_OPENAI_MODEL`, `PREDICTION_OPENAI_OAUTH_MODEL`, `PREDICTION_GEMINI_AGY_MODEL`, `PREDICTION_GEMINI_MODEL`, `PREDICTION_FREEAI_MODEL`, `PREDICTION_CODEX_CLI_MODEL`, `PREDICTION_COPILOT_CLI_MODEL`, `PREDICTION_AIDIY_HERMES_MODEL`（初期値は方式とOpenAI 2モデルが `auto`、Gemini / FreeAI / AGY が `gemini-4-hydrogen`、`PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` が `gpt-6-luna`、`PREDICTION_AIDIY_HERMES_MODEL` が `openai_oauth/gpt-6-luna`）。内部RESTの `aidiy_prediction_llms` が次のユーザー入力予測に使用する。Web / AvatarのAI設定再起動画面でもLIVEとDECISIONの間に表示する |
+| DecisionAI | `DECISION_AI_NAME`, `DECISION_OPENAI_MODEL`, `DECISION_OPENAI_OAUTH_MODEL`, `DECISION_GEMINI_AGY_MODEL`, `DECISION_GEMINI_MODEL`, `DECISION_FREEAI_MODEL`（初期値は方式とOpenAI 2モデルが `auto`、Gemini / FreeAI / AGY が `gemini-4-hydrogen`）（[AI判断](./backend_server,backend_tools,AI判断追加手順.md)） |
 | CodeAI | `CODE_BASE_PATH`, `CODE_AI1~6_NAME/MODEL`, `CODE_CLAUDE_SDK_MODEL`, `CODE_MAX_TURNS`, `CODE_PLAN`, `CODE_VERIFY` |
 | TaskAI / TeamAI | `TASK_AI_NAME`, `TEAM_AI_NAME`, `TASK_AI_MODEL_plan/do/check`, `TEAM_AI_MODEL_plan/do/check`（各フェーズを別キーで保持） |
 

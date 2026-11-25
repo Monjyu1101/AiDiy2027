@@ -24,8 +24,8 @@ export const TRIAL_RUN_TTL_MS=45*60*1000;
 
 const CHAT = {gemini_chat:'GEMINI',gemini_agy:'GEMINI_AGY',freeai_chat:'FREEAI',openrt_chat:'OPENRT',openrt_free:'OPENRT_FREE',openai_chat:'OPENAI',openai_oauth:'OPENAI',ollama_chat:'OLLAMA',local_chat:'LOCAL'};
 const LIVE = {gemini_live:'GEMINI',freeai_live:'FREEAI',openai_live:'OPENAI'};
-const DECISION = new Set(['auto','openai_oauth','openai_jsonchat','freeai_chat','openai_decisions','gemini_chat']);
-import {TRIAL_PROMPT,DECISION_CHOICES,decisionQuestions,TRIAL_FAMILIES,PREDICTION_PROVIDERS,PREDICTION_AUTO_PROVIDERS,PREDICTION_MODEL_KEYS,PREDICTION_CLI_PROVIDERS,PREDICTION_STORY_PROMPTS,predictionPerfect} from './defaults.mjs';
+const DECISION = new Set(['auto','openai_oauth','openai_jsonchat','freeai_chat','openai_decisions','gemini_chat','gemini_agy']);
+import {TRIAL_PROMPT,DECISION_CHOICES,decisionQuestions,TRIAL_FAMILIES,PREDICTION_PROVIDERS,PREDICTION_AUTO_PROVIDERS,PREDICTION_MODEL_KEYS,geminiPurposeDefault,PREDICTION_CLI_PROVIDERS,PREDICTION_STORY_PROMPTS,predictionPerfect} from './defaults.mjs';
 export {DECISION_CHOICES} from './defaults.mjs';
 // aidiy_pi は Tools の code_agents_run（AIコード_cli.py の aidiy_pi 経路）で Pi を実行する。aidiy_codex も同じ経路。
 const CODE = new Set(['auto','same','claude_sdk','claude_cli','claude_ollama','copilot_cli','codex_cli','codex_ollama','antigravity_cli','agy_cli','grok_cli','opencode_cli','aidiy_hermes','aidiy_pi','aidiy_codex']);
@@ -57,11 +57,11 @@ export function configRows(config) {
   add('LIVE','LIVE','音声会話',live,config[`LIVE_${LIVE[live]}_MODEL`],config[`LIVE_${LIVE[live]}_VOICE`]);
   // 予測も方式別モデル。auto方式の行はモデルもautoで送り、解決後の方式のキーを使う。
   const prediction=text(config.PREDICTION_AI_NAME)||'auto';
-  add('PREDICTION','PREDICTION','入力予測',prediction,PREDICTION_MODEL_KEYS[prediction]?text(config[PREDICTION_MODEL_KEYS[prediction]])||'auto':'auto');
+  add('PREDICTION','PREDICTION','入力予測',prediction,PREDICTION_MODEL_KEYS[prediction]?text(config[PREDICTION_MODEL_KEYS[prediction]])||geminiPurposeDefault(PREDICTION_MODEL_KEYS[prediction]):'auto');
   const decision=text(config.DECISION_AI_NAME)||'auto';
-  const decisionKey={openai_decisions:'DECISION_OPENAI_MODEL',openai_oauth:'DECISION_OAUTH_MODEL',openai_jsonchat:'DECISION_OAUTH_MODEL',gemini_chat:'DECISION_GEMINI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL'}[decision];
+  const decisionKey={openai_decisions:'DECISION_OPENAI_MODEL',openai_oauth:'DECISION_OPENAI_OAUTH_MODEL',openai_jsonchat:'DECISION_OPENAI_OAUTH_MODEL',gemini_agy:'DECISION_GEMINI_AGY_MODEL',gemini_chat:'DECISION_GEMINI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL'}[decision];
   // auto方式はToolsで方式とそのモデルを解決する。
-  const decisionModel=decisionKey ? config[decisionKey] : 'auto';
+  const decisionModel=decisionKey ? config[decisionKey] ?? geminiPurposeDefault(decisionKey) : 'auto';
   add('DECISION','DECISION','挨拶の丁寧さ',decision,text(decisionModel)||'auto');
   for(let i=1;i<=6;i++){const inherit=i>1 && config[`CODE_AI${i}_NAME`]==='auto';const n=inherit?1:i;add(`CODE${i}`,'CODE',`CODE${i}`,config[`CODE_AI${n}_NAME`],config[`CODE_AI${n}_MODEL`],'',inherit?'CODE1':'');}
   for(const family of ['TASK','TEAM'])for(const phase of ['plan','do','check'])add(`${family}_${phase}`,family,phase,config[`${family}_AI_NAME`],config[`${family}_AI_MODEL_${phase}`]);
@@ -235,8 +235,13 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
   }
   function predictionTarget(s,provider,model,configured=false){
     let name=provider==='auto'?text(s.config.PREDICTION_AI_NAME)||'auto':provider;
-    if(name==='auto')name=PREDICTION_AUTO_PROVIDERS.find(name=>Object.keys(s.predictionCatalog[name]?.models||{}).some(id=>label(id)&&!['auto','same'].includes(id)));
-    let selected=model==='auto'?text(s.config[PREDICTION_MODEL_KEYS[name]])||'auto':model;
+    if(name==='auto')name=PREDICTION_AUTO_PROVIDERS.find(candidate=>{
+      const ids=Object.keys(s.predictionCatalog[candidate]?.models||{}).filter(id=>label(id)&&!['auto','same'].includes(id));
+      if(candidate!=='gemini_agy')return ids.length>0;
+      const configured=model==='auto'?text(s.config.PREDICTION_GEMINI_AGY_MODEL)||geminiPurposeDefault('PREDICTION_GEMINI_AGY_MODEL'):model;
+      return s.installed.agy_cli===true&&ids.length>0&&(configured==='auto'||ids.includes(configured));
+    });
+    let selected=model==='auto'?text(s.config[PREDICTION_MODEL_KEYS[name]])||geminiPurposeDefault(PREDICTION_MODEL_KEYS[name]):model;
     const models=s.predictionCatalog[name]?.models;
     if(selected==='auto')selected=Object.keys(models||{}).find(id=>label(id)&&!['auto','same'].includes(id));
     let reason='';
@@ -278,7 +283,7 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
         if(family==='CODE'&&!providers.some(p=>p.id==='auto'))providers.unshift({id:'auto',モデル:[]});
         for(const provider of providers){
           const prefix=family==='CHAT'?CHAT[provider.id]:family==='LIVE'?LIVE[provider.id]:null;
-          const configKey=prefix?`${family}_${prefix}_MODEL`:family==='PREDICTION'?PREDICTION_MODEL_KEYS[provider.id]:family==='DECISION'?{openai_oauth:'DECISION_OAUTH_MODEL',openai_jsonchat:'DECISION_OAUTH_MODEL',openai_decisions:'DECISION_OPENAI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL',gemini_chat:'DECISION_GEMINI_MODEL'}[provider.id]:family==='CODE'&&!['auto','same'].includes(provider.id)?`CODE_${provider.id.toUpperCase()}_MODEL`:null;
+          const configKey=prefix?`${family}_${prefix}_MODEL`:family==='PREDICTION'?PREDICTION_MODEL_KEYS[provider.id]:family==='DECISION'?{openai_oauth:'DECISION_OPENAI_OAUTH_MODEL',openai_jsonchat:'DECISION_OPENAI_OAUTH_MODEL',openai_decisions:'DECISION_OPENAI_MODEL',freeai_chat:'DECISION_FREEAI_MODEL',gemini_chat:'DECISION_GEMINI_MODEL'}[provider.id]:family==='CODE'&&!['auto','same'].includes(provider.id)?`CODE_${provider.id.toUpperCase()}_MODEL`:null;
           const rowModel=s.rows.find(row=>row.区分===family&&row.プロバイダ===provider.id)?.モデル;
           const saved=label(configKey?s.config[configKey]??(family==='CODE'?rowModel:''):rowModel);
           if(saved&&redact(saved,s.config)===saved){provider.現在モデル=saved;if(!provider.モデル.some(m=>m.id===saved))provider.モデル.push({id:saved,名前:saved+'（保持値・Diag一覧外／未確認）',保存値:true});}

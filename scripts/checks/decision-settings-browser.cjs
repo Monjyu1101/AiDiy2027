@@ -93,7 +93,7 @@ async function main() {
       await evaluate(`window.app.unmount();window.app=Vue.createApp(exports.default,{isOpen:true,sessionId:'isolated-qa'});window.app.mount('#app')`);
       await until(`document.querySelector('#config-decision-ai-select')?.value==='gemini_chat'`);
       assert.equal(await evaluate(`document.querySelector('#config-DECISION_GEMINI_MODEL').value`),'gemini');
-      for(const [key,provider] of [['DECISION_OAUTH_MODEL','openai_oauth'],['DECISION_FREEAI_MODEL','freeai_chat'],['DECISION_OPENAI_MODEL','openai_decisions'],['DECISION_GEMINI_MODEL','gemini_chat']]) {
+      for(const [key,provider] of [['DECISION_OPENAI_OAUTH_MODEL','openai_oauth'],['DECISION_FREEAI_MODEL','freeai_chat'],['DECISION_OPENAI_MODEL','openai_decisions'],['DECISION_GEMINI_MODEL','gemini_chat']]) {
         await evaluate(`window.catalogs.decision_models[${JSON.stringify(provider)}]={'new-from-diag':'2026/10/18 - new-from-diag'};window.app.unmount();window.app=Vue.createApp(exports.default,{isOpen:true,sessionId:'isolated-qa'});window.app.mount('#app')`);
         await until(`document.querySelector('#config-decision-ai-select')`);
         await choose('config-decision-ai-select',provider);

@@ -91,9 +91,9 @@ class conf_json:
 
         # ChatAI設定
         'CHAT_AI_NAME': 'freeai_chat',
-        'CHAT_GEMINI_AGY_MODEL': 'auto',
-        'CHAT_GEMINI_MODEL': 'gemini-3.1-flash-image',
-        'CHAT_FREEAI_MODEL': 'gemini-4-carbon',
+        'CHAT_GEMINI_AGY_MODEL': 'gemini-4-hydrogen',
+        'CHAT_GEMINI_MODEL': 'gemini-4-hydrogen',
+        'CHAT_FREEAI_MODEL': 'gemini-4-hydrogen',
         'CHAT_OPENRT_MODEL': 'google/gemini-3.1-flash-image',
         'CHAT_OPENRT_FREE_MODEL': 'auto',
         'CHAT_OPENAI_MODEL': 'gpt-6.2-sol',
@@ -113,9 +113,10 @@ class conf_json:
         # PredictionAI設定（次のユーザー入力予測用。方式別モデル）
         'PREDICTION_AI_NAME': 'auto',
         'PREDICTION_OPENAI_MODEL': 'auto',
-        'PREDICTION_OAUTH_MODEL': 'auto',
-        'PREDICTION_GEMINI_MODEL': 'auto',
-        'PREDICTION_FREEAI_MODEL': 'auto',
+        'PREDICTION_OPENAI_OAUTH_MODEL': 'auto',
+        'PREDICTION_GEMINI_AGY_MODEL': 'gemini-4-hydrogen',
+        'PREDICTION_GEMINI_MODEL': 'gemini-4-hydrogen',
+        'PREDICTION_FREEAI_MODEL': 'gemini-4-hydrogen',
         'PREDICTION_CODEX_CLI_MODEL': 'gpt-6-luna',
         'PREDICTION_COPILOT_CLI_MODEL': 'gpt-6-luna',
         'PREDICTION_AIDIY_HERMES_MODEL': 'openai_oauth/gpt-6-luna',
@@ -125,9 +126,10 @@ class conf_json:
         # DecisionAI設定（方式別モデル。autoは各方式の既定値）
         'DECISION_AI_NAME': 'auto',
         'DECISION_OPENAI_MODEL': 'auto',
-        'DECISION_OAUTH_MODEL': 'auto',
-        'DECISION_GEMINI_MODEL': 'auto',
-        'DECISION_FREEAI_MODEL': 'auto',
+        'DECISION_OPENAI_OAUTH_MODEL': 'auto',
+        'DECISION_GEMINI_AGY_MODEL': 'gemini-4-hydrogen',
+        'DECISION_GEMINI_MODEL': 'gemini-4-hydrogen',
+        'DECISION_FREEAI_MODEL': 'gemini-4-hydrogen',
 
         # CodeAI設定
         'CODE_BASE_PATH': '../',

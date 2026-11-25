@@ -51,9 +51,9 @@ def 初期モデル設定生成(app_conf, *, 候補に正規化: bool = True) ->
     設定 = {
         # ChatAI設定
         "CHAT_AI_NAME": app_conf.json.get("CHAT_AI_NAME", "freeai_chat"),
-        "CHAT_GEMINI_AGY_MODEL": app_conf.json.get("CHAT_GEMINI_AGY_MODEL", "auto"),
-        "CHAT_GEMINI_MODEL": app_conf.json.get("CHAT_GEMINI_MODEL", "gemini-3.1-flash-image"),
-        "CHAT_FREEAI_MODEL": app_conf.json.get("CHAT_FREEAI_MODEL", "gemini-4-carbon"),
+        "CHAT_GEMINI_AGY_MODEL": app_conf.json.get("CHAT_GEMINI_AGY_MODEL", "gemini-4-hydrogen"),
+        "CHAT_GEMINI_MODEL": app_conf.json.get("CHAT_GEMINI_MODEL", "gemini-4-hydrogen"),
+        "CHAT_FREEAI_MODEL": app_conf.json.get("CHAT_FREEAI_MODEL", "gemini-4-hydrogen"),
         "CHAT_OPENRT_MODEL": app_conf.json.get("CHAT_OPENRT_MODEL", "google/gemini-3.1-flash-image"),
         "CHAT_OPENRT_FREE_MODEL": app_conf.json.get("CHAT_OPENRT_FREE_MODEL", "auto"),
         "CHAT_OPENAI_MODEL": app_conf.json.get("CHAT_OPENAI_MODEL", "gpt-6.2-sol"),
@@ -71,9 +71,10 @@ def 初期モデル設定生成(app_conf, *, 候補に正規化: bool = True) ->
         # PredictionAI設定
         "PREDICTION_AI_NAME": app_conf.json.get("PREDICTION_AI_NAME", "auto"),
         "PREDICTION_OPENAI_MODEL": app_conf.json.get("PREDICTION_OPENAI_MODEL", "auto"),
-        "PREDICTION_OAUTH_MODEL": app_conf.json.get("PREDICTION_OAUTH_MODEL", "auto"),
-        "PREDICTION_GEMINI_MODEL": app_conf.json.get("PREDICTION_GEMINI_MODEL", "auto"),
-        "PREDICTION_FREEAI_MODEL": app_conf.json.get("PREDICTION_FREEAI_MODEL", "auto"),
+        "PREDICTION_OPENAI_OAUTH_MODEL": app_conf.json.get("PREDICTION_OPENAI_OAUTH_MODEL", "auto"),
+        "PREDICTION_GEMINI_AGY_MODEL": app_conf.json.get("PREDICTION_GEMINI_AGY_MODEL", "gemini-4-hydrogen"),
+        "PREDICTION_GEMINI_MODEL": app_conf.json.get("PREDICTION_GEMINI_MODEL", "gemini-4-hydrogen"),
+        "PREDICTION_FREEAI_MODEL": app_conf.json.get("PREDICTION_FREEAI_MODEL", "gemini-4-hydrogen"),
         "PREDICTION_CODEX_CLI_MODEL": app_conf.json.get("PREDICTION_CODEX_CLI_MODEL", "gpt-6-luna"),
         "PREDICTION_COPILOT_CLI_MODEL": app_conf.json.get("PREDICTION_COPILOT_CLI_MODEL", "gpt-6-luna"),
         "PREDICTION_AIDIY_HERMES_MODEL": app_conf.json.get("PREDICTION_AIDIY_HERMES_MODEL", "openai_oauth/gpt-6-luna"),
@@ -82,9 +83,10 @@ def 初期モデル設定生成(app_conf, *, 候補に正規化: bool = True) ->
         # DecisionAI設定
         "DECISION_AI_NAME": app_conf.json.get("DECISION_AI_NAME", "auto"),
         "DECISION_OPENAI_MODEL": app_conf.json.get("DECISION_OPENAI_MODEL", "auto"),
-        "DECISION_OAUTH_MODEL": app_conf.json.get("DECISION_OAUTH_MODEL", "auto"),
-        "DECISION_GEMINI_MODEL": app_conf.json.get("DECISION_GEMINI_MODEL", "auto"),
-        "DECISION_FREEAI_MODEL": app_conf.json.get("DECISION_FREEAI_MODEL", "auto"),
+        "DECISION_OPENAI_OAUTH_MODEL": app_conf.json.get("DECISION_OPENAI_OAUTH_MODEL", "auto"),
+        "DECISION_GEMINI_AGY_MODEL": app_conf.json.get("DECISION_GEMINI_AGY_MODEL", "gemini-4-hydrogen"),
+        "DECISION_GEMINI_MODEL": app_conf.json.get("DECISION_GEMINI_MODEL", "gemini-4-hydrogen"),
+        "DECISION_FREEAI_MODEL": app_conf.json.get("DECISION_FREEAI_MODEL", "gemini-4-hydrogen"),
         # CodeAI設定
         "CODE_AI1_NAME": app_conf.json.get("CODE_AI1_NAME", "aidiy_hermes"),
         "CODE_AI1_MODEL": app_conf.json.get("CODE_AI1_MODEL", "auto"),

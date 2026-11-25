@@ -12,7 +12,7 @@ from pathlib import Path
 import sys
 import unittest
 import types
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 try:
     import httpx
@@ -89,6 +89,41 @@ class DecisionRoutes(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(service.resolve(req, {field: 'gemini-flash-lite-latest'}),
                              (name, 'gemini-flash-lite-latest'))
             self.assertEqual(service.resolve(req, {field: 'auto'}), (name, 'gemini-4-hydrogen'))
+
+    async def test_google_login_decision_priority_and_validates_json(self):
+        service = Decision(config={"DECISION_AI_NAME": "gemini_agy"}, transport=httpx.MockTransport(
+            lambda request: self.fail(f"must not use an API: {request.url}")
+        ))
+        request = DecisionRequest(input="おはよう", questions=QUESTION)
+        with patch("AIコア.AI判断_gemini_agy.ChatAI") as launch:
+            chat = launch.return_value
+            chat.開始 = AsyncMock(return_value=True)
+            chat.実行 = AsyncMock(return_value="```json\n" + json.dumps(ANSWERS) + "\n```")
+            chat.終了 = AsyncMock()
+            actual = await service.実行(request)
+            self.assertEqual(actual["data"]["model"], "gemini_agy/gemini-4-hydrogen")
+            self.assertEqual(actual["data"]["answers"], ANSWERS["answers"])
+            self.assertEqual(launch.call_args.kwargs["AI_MODEL"], "gemini-4-hydrogen")
+            self.assertNotIn("api_key", launch.call_args.kwargs)
+            self.assertIn("JSON Schema", launch.call_args.kwargs["system_instruction"])
+            chat.終了.assert_awaited_once()
+            chat.実行.return_value = "not JSON"
+            with self.assertRaises(DecisionError):
+                await service.実行(request)
+            launch.reset_mock()
+            with self.assertRaisesRegex(DecisionError, "テキスト専用"):
+                await service.実行({"input": [{"content": [{"type": "input_image",
+                    "image_url": "data:image/png;base64,AAAA"}]}], "questions": QUESTION})
+            launch.assert_not_called()
+        service.availability = {name: {"ok": True} for name in ("gemini_agy", "freeai_chat", "gemini_chat", "openai_decisions")}
+        self.assertEqual(service.resolve(request, {})[0], "gemini_agy")
+        image = DecisionRequest(input=[{"content": [{"type": "input_image",
+            "image_url": "data:image/png;base64,AAAA"}]}], questions=QUESTION)
+        self.assertEqual(service.resolve(image, {})[0], "freeai_chat")
+        service.availability["gemini_agy"]["ok"] = False
+        self.assertEqual(service.resolve(request, {})[0], "freeai_chat")
+        service.availability["freeai_chat"]["ok"] = False
+        self.assertEqual(service.resolve(request, {})[0], "gemini_chat")
 
     async def test_api_http_failure_is_not_import_error_and_hides_body(self):
         for name, expected in [('openai_decisions', 'Decisions API HTTP 403'),

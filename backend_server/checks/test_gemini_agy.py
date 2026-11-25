@@ -18,6 +18,7 @@ from AIコア.agy_oauth import agy_oauthコマンド
 from AIコア.AI実行オプション import AI実行オプション
 from conf.conf_model import conf_models
 from tools_proc.chat_llm import ChatLLM
+from tools_proc.prediction_llm import PredictionLLM
 
 
 _FAKE = r'''
@@ -53,8 +54,33 @@ print(json.dumps({"event":"result","result":{"status":"SUCCESS","response":answe
 '''
 
 
+class AGYPredictionConfigTests(unittest.TestCase):
+    def test_auto_prefers_available_agy_then_freeai_then_gemini_and_explicit_stays(self):
+        prediction = PredictionLLM()
+        models = {"models": {"gemini-4-hydrogen": "Google", "configured-agy": "AGY"}}
+        catalog = dict.fromkeys(("gemini_agy", "freeai_chat", "gemini_chat", "openai_chat"), models)
+        with patch.object(prediction, "_catalog", return_value=catalog):
+            with patch.object(prediction._chat, "_load_key_json", return_value={}):
+                with patch("tools_proc.prediction_llm.agy_oauthコマンド", return_value="/fixture/agy"):
+                    self.assertEqual(prediction._resolve("auto", "auto"), ("gemini_agy", "gemini-4-hydrogen"))
+                with patch("tools_proc.prediction_llm.agy_oauthコマンド", return_value=None):
+                    self.assertEqual(prediction._resolve("auto", "auto"), ("freeai_chat", "gemini-4-hydrogen"))
+                    catalog.pop("freeai_chat")
+                    self.assertEqual(prediction._resolve("auto", "auto"), ("gemini_chat", "gemini-4-hydrogen"))
+                self.assertEqual(prediction._resolve("gemini_agy", "auto"), ("gemini_agy", "gemini-4-hydrogen"))
+            with patch.object(prediction._chat, "_load_key_json", return_value={
+                "PREDICTION_AI_NAME": "gemini_agy", "PREDICTION_GEMINI_AGY_MODEL": "configured-agy",
+            }):
+                self.assertEqual(prediction._resolve("auto", "auto"), ("gemini_agy", "configured-agy"))
+
+
 @unittest.skipIf(os.name == "nt", "仮 CLI の POSIX ランチャー")
 class AGYProcessTests(unittest.IsolatedAsyncioTestCase):
+    async def test_prediction_reuses_isolated_agy_text_path(self):
+        prediction = PredictionLLM()
+        answer = await prediction._run_chat("gemini_agy", "gemini-4-hydrogen", "昨日の作業を確認", 5)
+        self.assertEqual(answer, "履歴なし:昨日の作業を確認")
+
     async def asyncSetUp(self):
         directory = TemporaryDirectory()
         self.addCleanup(directory.cleanup)

@@ -61,10 +61,11 @@ for (const [project, relative] of [
 
 
   const fields = [
-    ['DECISION_OPENAI_MODEL','openai_decisions'], ['DECISION_OAUTH_MODEL','openai_oauth'],
-    ['DECISION_GEMINI_MODEL','gemini_chat'], ['DECISION_FREEAI_MODEL','freeai_chat'],
+    ['DECISION_OPENAI_MODEL','openai_decisions'], ['DECISION_OPENAI_OAUTH_MODEL','openai_oauth'],
+    ['DECISION_GEMINI_AGY_MODEL','gemini_agy'], ['DECISION_GEMINI_MODEL','gemini_chat'], ['DECISION_FREEAI_MODEL','freeai_chat'],
   ];
-  test(project + ': 新規4モデルautoとCHAT→LIVE→DECISION→CODE→TASK→TEAM順', async () => {
+  const expectedDefault=key=>/^(DECISION)_(GEMINI_AGY|GEMINI|FREEAI)_MODEL$/.test(key)?'gemini-4-hydrogen':'auto';
+  test(project + ': 新規5モデルの既定値とCHAT→LIVE→DECISION→CODE→TASK→TEAM順', async () => {
     const f=fixture();
     try {
       const b=f.bindings;await b.loadConfig();
@@ -72,7 +73,7 @@ for (const [project, relative] of [
       const html=await f.render();
       const labels=['CHAT_AI_NAME:','LIVE_AI_NAME:','DECISION_AI_NAME:',...fields.map(([key])=>key+':'),'Code AI Setting','TASK_AI_NAME:','TEAM_AI_NAME:'];
       for(let i=1;i<labels.length;i++) assert.ok(html.indexOf(labels[i])>html.indexOf(labels[i-1]),labels[i]);
-      for(const [key] of fields){assert.equal(b.decisionModels[key],'auto');assert.ok(html.includes('id="config-'+key+'"'));}
+      for(const [key] of fields){assert.equal(b.decisionModels[key],expectedDefault(key));assert.ok(html.includes('id="config-'+key+'"'));}
       const saved=b.buildNextSettings();assert.ok(!('DECISION_AI_MODEL' in saved));
       assert.doesNotMatch(source,/gpt-6-luna|gemini-flash-lite-latest|decision_fixed_models/);
     } finally {f.stop();}
@@ -103,14 +104,14 @@ for (const [project, relative] of [
       const b=f.bindings;await b.loadConfig();
       assert.ok(b.decisionAiOptions.value.includes('openai_jsonchat'));
       assert.equal(b.decisionModels.DECISION_OPENAI_MODEL,'auto');
-      for(const [key] of fields.slice(1))assert.equal(b.decisionModels[key],'auto');
+      for(const [key] of fields.slice(1))assert.equal(b.decisionModels[key],expectedDefault(key));
       assert.ok(b.decisionModelOptions(b.decisionFields[1]).some(o=>o.value==='known'));
       await b.handleSaveOnly();await b.loadConfig();
       assert.ok(!('DECISION_AI_MODEL' in b.buildNextSettings()));
       assert.equal(b.buildNextSettings().DECISION_AI_NAME,'openai_jsonchat');
     } finally {f.stop();}
   });
-  test(project + ': 全4方式でDiag候補変更後のモデルを選択・保存・再読込', async () => {
+  test(project + ': 全5方式でDiag候補変更後のモデルを選択・保存・再読込', async () => {
     const catalogs={decision_models:{}};const f=fixture({},catalogs);
     try {
       const b=f.bindings;
@@ -130,7 +131,7 @@ for (const [project, relative] of [
     try {
       const b=f.bindings;await b.loadConfig();assert.match(await f.render(),/取得済み候補はありません/);
       b.selections.decisionAi='freeai_chat';await b.handleSaveOnly();
-      assert.deepEqual(JSON.parse(JSON.stringify(f.calls.at(-1).body.モデル設定)),{...settings,DECISION_AI_NAME:'freeai_chat',PREDICTION_AI_NAME:'auto',PREDICTION_OPENAI_MODEL:'auto',PREDICTION_OAUTH_MODEL:'auto',PREDICTION_GEMINI_MODEL:'auto',PREDICTION_FREEAI_MODEL:'auto',PREDICTION_CODEX_CLI_MODEL:'auto',PREDICTION_COPILOT_CLI_MODEL:'auto',PREDICTION_AIDIY_HERMES_MODEL:'auto',...Object.fromEntries(fields.map(([key])=>[key,key==='DECISION_FREEAI_MODEL'?'future-model':'auto']))});
+      assert.deepEqual(JSON.parse(JSON.stringify(f.calls.at(-1).body.モデル設定)),{...settings,DECISION_AI_NAME:'freeai_chat',PREDICTION_AI_NAME:'auto',PREDICTION_OPENAI_MODEL:'auto',PREDICTION_OPENAI_OAUTH_MODEL:'auto',PREDICTION_GEMINI_AGY_MODEL:'gemini-4-hydrogen',PREDICTION_GEMINI_MODEL:'gemini-4-hydrogen',PREDICTION_FREEAI_MODEL:'gemini-4-hydrogen',PREDICTION_CODEX_CLI_MODEL:'auto',PREDICTION_COPILOT_CLI_MODEL:'auto',PREDICTION_AIDIY_HERMES_MODEL:'auto',...Object.fromEntries(fields.map(([key])=>[key,key==='DECISION_FREEAI_MODEL'?'future-model':expectedDefault(key)]))});
       await b.loadConfig();assert.equal(b.decisionModels.DECISION_FREEAI_MODEL,'future-model');
     } finally {f.stop();}
   });

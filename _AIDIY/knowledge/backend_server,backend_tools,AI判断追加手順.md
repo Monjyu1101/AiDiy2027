@@ -31,7 +31,7 @@
 |---|---|
 | `DECISION_AI_NAME` | `auto` |
 | `DECISION_OPENAI_MODEL` | `auto` |
-| `DECISION_OAUTH_MODEL` | `auto` |
+| `DECISION_OPENAI_OAUTH_MODEL` | `auto` |
 | `DECISION_FREEAI_MODEL` | `auto` |
 | `DECISION_GEMINI_MODEL` | `auto` |
 

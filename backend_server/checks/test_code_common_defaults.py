@@ -122,7 +122,7 @@ class CodeCommonDefaultsTests(unittest.TestCase):
                     'CODE_ANTIGRAVITY_CLI_MODEL': 'legacy-custom', 'custom': 'keep'}
         self.write(existing)
         config = self.load()
-        self.assertEqual(self.saved()['CHAT_GEMINI_AGY_MODEL'], 'auto')
+        self.assertEqual(self.saved()['CHAT_GEMINI_AGY_MODEL'], 'gemini-4-hydrogen')
         self.assertEqual(self.saved()['CODE_AGY_CLI_MODEL'], 'auto')
         self.assertTrue(config.update({'CHAT_AI_NAME': 'gemini_agy', 'CHAT_GEMINI_AGY_MODEL': 'chat-custom',
                                        'CODE_AGY_CLI_MODEL': 'code-custom'}))
@@ -154,7 +154,8 @@ class CodeCommonDefaultsTests(unittest.TestCase):
                 exec(compile(ast.Module(body=[node], type_ignores=[]), str(routes), 'exec'), env)
 
         settings = {'CHAT_AI_NAME': 'gemini_agy', 'CHAT_GEMINI_AGY_MODEL': 'chat-custom',
-                    'CODE_AI4_NAME': 'agy_cli', 'CODE_AI4_MODEL': 'slot-custom', 'CODE_AGY_CLI_MODEL': 'code-custom'}
+                    'CODE_AI4_NAME': 'agy_cli', 'CODE_AI4_MODEL': 'slot-custom', 'CODE_AGY_CLI_MODEL': 'code-custom',
+                    'PREDICTION_OPENAI_OAUTH_MODEL': 'prediction-oauth', 'DECISION_OPENAI_OAUTH_MODEL': 'decision-oauth'}
         request = SimpleNamespace(セッションID='fixture', モデル設定=settings, 再起動要求={}, save=True, リセット=False)
         self.assertEqual(asyncio.run(env['モデル情報設定'](context, request))['status'], 'OK')
         self.assertEqual(session_state['CHAT_GEMINI_AGY_MODEL'], 'stale')

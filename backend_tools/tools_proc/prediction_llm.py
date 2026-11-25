@@ -24,17 +24,19 @@ if _backend not in sys.path:
     sys.path.append(_backend)
 
 from AIコア.AI実行オプション import AI実行オプション
+from AIコア.agy_oauth import agy_oauthコマンド
 from 会話履歴パス import normalize_project_path
 from 会話履歴参照 import HISTORY_MAX_TURNS, HISTORY_WINDOW_SECONDS, read_prediction_history
 
 
 CLI_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex")
-PROVIDERS = ("openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", *CLI_PROVIDERS)
-# autoは候補がある方式をCLI（codex → copilot → hermes → pi → aidiy_codex）優先、次にChat（OAuth → FreeAI → OpenAI API → Gemini）の順で選ぶ。
-AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "freeai_chat", "openai_chat", "gemini_chat")
+PROVIDERS = ("openai_oauth", "freeai_chat", "openai_chat", "gemini_chat", "gemini_agy", *CLI_PROVIDERS)
+# autoは候補がある方式をCLI（codex → copilot → hermes → pi → aidiy_codex）優先、次にChat（OAuth → AGY → FreeAI → Gemini → OpenAI API）の順で選ぶ。
+AUTO_PROVIDERS = ("codex_cli", "copilot_cli", "aidiy_hermes", "aidiy_pi", "aidiy_codex", "openai_oauth", "gemini_agy", "freeai_chat", "gemini_chat", "openai_chat")
 MODEL_KEYS = {
     "openai_chat": "PREDICTION_OPENAI_MODEL",
-    "openai_oauth": "PREDICTION_OAUTH_MODEL",
+    "openai_oauth": "PREDICTION_OPENAI_OAUTH_MODEL",
+    "gemini_agy": "PREDICTION_GEMINI_AGY_MODEL",
     "gemini_chat": "PREDICTION_GEMINI_MODEL",
     "freeai_chat": "PREDICTION_FREEAI_MODEL",
     "codex_cli": "PREDICTION_CODEX_CLI_MODEL",
@@ -43,6 +45,13 @@ MODEL_KEYS = {
     "aidiy_pi": "PREDICTION_AIDIY_PI_MODEL",
     "aidiy_codex": "PREDICTION_AIDIY_CODEX_MODEL",
 }
+def _configured_model(config, key):
+    default = "gemini-4-hydrogen" if key in (
+        "PREDICTION_GEMINI_AGY_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL"
+    ) else "auto"
+    return config.get(key, default)
+
+
 # CLIは実行エラーも「!」始まりで返すため、正常な応答だけに目印を付けさせて区別する。
 _CLI_MARKER = "[[PREDICTION]]"
 # Diag の prediction_info.mjs と同じ既知の非対応経路（parity fixture で照合）。
@@ -202,7 +211,7 @@ class PredictionLLM:
     def _get_config(self):
         config = self._chat._load_key_json()
         return {
-            "prediction_config": {key: config.get(key, "auto") for key in ("PREDICTION_AI_NAME", *MODEL_KEYS.values())},
+            "prediction_config": {key: _configured_model(config, key) for key in ("PREDICTION_AI_NAME", *MODEL_KEYS.values())},
             "available_models": self._catalog(),
             "history_max_turns": HISTORY_MAX_TURNS,
             "history_window_seconds": HISTORY_WINDOW_SECONDS,
@@ -216,10 +225,15 @@ class PredictionLLM:
         catalog = self._catalog()
         name = config.get("PREDICTION_AI_NAME", "auto") if ai_name == "auto" else ai_name
         if name == "auto":
-            name = next((name for name in AUTO_PROVIDERS if name in catalog), None)
+            agy_model = _configured_model(config, MODEL_KEYS["gemini_agy"]) if ai_model == "auto" else ai_model
+            agy_available = ("gemini_agy" in catalog and isinstance(agy_model, str) and
+                             (agy_model == "auto" or agy_model in catalog["gemini_agy"]["models"]) and
+                             bool(agy_oauthコマンド()))
+            name = next((name for name in AUTO_PROVIDERS
+                         if name in catalog and (name != "gemini_agy" or agy_available)), None)
         if name not in PROVIDERS or name not in catalog:
             raise ValueError("予測モデル候補がありません。Diagでモデル一覧を再取得・書込してください。")
-        model = config.get(MODEL_KEYS[name], "auto") if ai_model == "auto" else ai_model
+        model = _configured_model(config, MODEL_KEYS[name]) if ai_model == "auto" else ai_model
         if model == "auto":
             model = next(iter(catalog[name]["models"]))
         if not isinstance(model, str) or model not in catalog[name]["models"]:

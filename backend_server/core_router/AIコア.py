@@ -598,14 +598,14 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
         from AIコア.AI判断 import Decision
         共通設定 = getattr(getattr(http_request.app, "conf", None), "json", None)
         予測設定 = 共通設定 if 共通設定 is not None else 現在設定
-        for key in ("PREDICTION_AI_NAME", "PREDICTION_OPENAI_MODEL", "PREDICTION_OAUTH_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
+        for key in ("PREDICTION_AI_NAME", "PREDICTION_OPENAI_MODEL", "PREDICTION_OPENAI_OAUTH_MODEL", "PREDICTION_GEMINI_AGY_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
                     "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL", "PREDICTION_AIDIY_PI_MODEL",
                     "PREDICTION_AIDIY_CODEX_MODEL"):
-            現在設定[key] = 予測設定.get(key, "auto") or "auto"
+            現在設定[key] = 予測設定.get(key, 現在設定.get(key, "auto")) or "auto"
         判断設定 = 共通設定 if 共通設定 is not None else 現在設定
         現在設定["DECISION_AI_NAME"] = 判断設定.get("DECISION_AI_NAME", "auto") or "auto"
-        for key in ("DECISION_OPENAI_MODEL", "DECISION_OAUTH_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL"):
-            現在設定[key] = 判断設定.get(key, "auto") or "auto"
+        for key in ("DECISION_OPENAI_MODEL", "DECISION_OPENAI_OAUTH_MODEL", "DECISION_GEMINI_AGY_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL"):
+            現在設定[key] = 判断設定.get(key, 現在設定.get(key, "auto")) or "auto"
         利用可能モデル["decision_models"] = Decision.model_options(利用可能モデル.get("decision_models"))
 
         return {
@@ -743,12 +743,12 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
             "LIVE_OPENAI_MODEL", "LIVE_OPENAI_VOICE",
             # PredictionAI設定
             "PREDICTION_AI_NAME",
-            "PREDICTION_OPENAI_MODEL", "PREDICTION_OAUTH_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
+            "PREDICTION_OPENAI_MODEL", "PREDICTION_OPENAI_OAUTH_MODEL", "PREDICTION_GEMINI_AGY_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
             "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL", "PREDICTION_AIDIY_PI_MODEL",
             "PREDICTION_AIDIY_CODEX_MODEL",
             # DecisionAI設定
             "DECISION_AI_NAME",
-            "DECISION_OPENAI_MODEL", "DECISION_OAUTH_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL",
+            "DECISION_OPENAI_MODEL", "DECISION_OPENAI_OAUTH_MODEL", "DECISION_GEMINI_AGY_MODEL", "DECISION_GEMINI_MODEL", "DECISION_FREEAI_MODEL",
             # CodeAI設定
             "CODE_AI1_NAME", "CODE_AI2_NAME", "CODE_AI3_NAME", "CODE_AI4_NAME", "CODE_AI5_NAME", "CODE_AI6_NAME",
             "CODE_AI1_MODEL", "CODE_AI2_MODEL", "CODE_AI3_MODEL", "CODE_AI4_MODEL", "CODE_AI5_MODEL", "CODE_AI6_MODEL",
@@ -860,7 +860,7 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
                     elif chat_ai in ("openai_chat", "openai_oauth"):
                         chat_model = 接続.モデル設定.get("CHAT_OPENAI_MODEL", "")
                     elif chat_ai == "gemini_agy":
-                        chat_model = 接続.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "auto")
+                        chat_model = 接続.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "gemini-4-hydrogen")
                     elif chat_ai in ("gemini_chat", "freeai_chat"):
                         key = "CHAT_FREEAI_MODEL" if chat_ai == "freeai_chat" else "CHAT_GEMINI_MODEL"
                         chat_model = 接続.モデル設定.get(key, "")
@@ -1108,7 +1108,7 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
             elif chat_ai in ("openai_chat", "openai_oauth"):
                 chat_model = セッション.モデル設定.get("CHAT_OPENAI_MODEL", "")
             elif chat_ai == "gemini_agy":
-                chat_model = セッション.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "auto")
+                chat_model = セッション.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "gemini-4-hydrogen")
             elif chat_ai in ("gemini_chat", "freeai_chat"):
                 key = "CHAT_FREEAI_MODEL" if chat_ai == "freeai_chat" else "CHAT_GEMINI_MODEL"
                 chat_model = セッション.モデル設定.get(key, "")

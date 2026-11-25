@@ -177,3 +177,19 @@ test('Diag reads and writes the two OAuth model keys independently of existing p
  await bridge('設定',envelope({...mutation,モデル設定:loaded}));
  assert.deepEqual(calls.at(-1).data.モデル設定,expected);
 });
+
+test('OpenAI OAuth settings accept only the renamed model keys', async()=>{
+ const newSettings={PREDICTION_OPENAI_OAUTH_MODEL:'pred-model',DECISION_OPENAI_OAUTH_MODEL:'decision-model'};
+ const oldSettings=Object.fromEntries(['PREDICTION','DECISION'].map(family=>[family+'_OAUTH'+'_MODEL','old-model']));
+ const {calls,requestFn}=mock();
+ const bridge=createCoreSettingsBridge({reader,requestFn:async r=>r.path===AI_SETTINGS_ACTIONS.取得
+  ?ok({モデル設定:{...oldSettings,...newSettings}}):requestFn(r)});
+ await bridge('初期化',envelope());
+ const loaded=(await bridge('取得',envelope({セッションID:'fixture-session'}))).data.モデル設定;
+ assert.deepEqual(loaded,newSettings);
+ await bridge('設定',envelope({...mutation,モデル設定:loaded}));
+ assert.deepEqual(calls.at(-1).data.モデル設定,newSettings);
+ for(const key of Object.keys(oldSettings)){
+  await assert.rejects(bridge('設定',envelope({...mutation,モデル設定:{[key]:'old-model'}})),e=>e.status===400);
+ }
+});

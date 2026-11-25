@@ -90,7 +90,8 @@ function availableCodeModels(code, installedClis) {
     filtered.aidiy_hermes = {models:{...routes, ...filtered.aidiy_hermes?.models}};
   }
   for (const key of ['aidiy_hermes', 'opencode_cli']) if (filtered[key]) filtered[key] = {models:routeModels(filtered[key].models)};
-  const priority = key => key === 'antigravity_cli' ? 2
+  // Antigravity 系は末尾にまとめ、どちらも導入済みなら agy_cli を直下に置く。
+  const priority = key => key === 'agy_cli' ? 3 : key === 'antigravity_cli' ? 2
     : ['claude_sdk', 'claude_cli', 'copilot_cli', 'codex_cli', 'aidiy_hermes', PI_CODE_PROVIDER, CODEX_CODE_PROVIDER].includes(key) ? 0 : 1;
   return Object.fromEntries(Object.entries(filtered).sort(([a], [b]) => priority(a) - priority(b)));
 }
@@ -400,7 +401,7 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
   // aidiy_codex の専用一覧も Pi と同じ CLI 区分を含める。Code は codexCodeModels で区分付きモデル名へ変換する。
   await writeResult(path.join(directory, CODEX_MODELS_FILE), codexInfo);
   saved.push(CODEX_MODELS_FILE);
-  return saved;
+  return {files:saved, agyModels};
 }
 
 // 結果のあるプロバイダ分を保存したあと、用途別の合成ファイルも更新する。
@@ -419,14 +420,15 @@ export async function writeModelsInfo(providers, results, {directory = OUTPUT_DI
       saved.push(OPENRT_FREE_FILE);
     }
   }
-  saved.push(...await writeMergedModelsInfo(directory, options.installedClis ?? await installedCodeClis(), providers, results, options));
+  const {files, agyModels} = await writeMergedModelsInfo(directory, options.installedClis ?? await installedCodeClis(), providers, results, options);
+  saved.push(...files);
   // 予測・判断用はディスクの旧一覧を認証証跡にしない。実行中の取得結果と現在の認証で再合成。
   let codeModels = {};
   try { codeModels = JSON.parse(await readFile(path.join(directory, modelsInfoFile('code')), 'utf8')); }
   catch (error) { if (error?.code !== 'ENOENT') throw error; }
-  await writeResult(path.join(directory, PREDICTION_MODELS_FILE), await predictionModelsInfo(providers, results, {...options, codeModels}));
+  await writeResult(path.join(directory, PREDICTION_MODELS_FILE), await predictionModelsInfo(providers, results, {...options, codeModels, agyModels}));
   saved.push(PREDICTION_MODELS_FILE);
-  await writeResult(path.join(directory, DECISIONS_MODELS_FILE), await decisionsModelsInfo(providers, results, options));
+  await writeResult(path.join(directory, DECISIONS_MODELS_FILE), await decisionsModelsInfo(providers, results, {...options, agyModels}));
   saved.push(DECISIONS_MODELS_FILE);
   await writeResult(path.join(directory, LIVE_VOICES_FILE), liveVoicesInfo());
   saved.push(LIVE_VOICES_FILE);

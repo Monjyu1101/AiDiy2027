@@ -99,16 +99,26 @@ test('writes one isolated OAuth catalog and derives both Chat and Code lists whi
     assert.deepEqual(Object.keys(chat.gemini_agy.models),['auto',suffix,'custom-chat']);
     assert.deepEqual(Object.keys(code.agy_cli.models),['auto','same',suffix,'custom-code']);
     assert.deepEqual(code.antigravity_cli.models,{'legacy-only':'legacy'});
+    assert.deepEqual(Object.keys(code).slice(-2),['antigravity_cli','agy_cli']);
     assert.deepEqual(chat.gemini_chat.models,{'api-key-model':'Gemini API'});
-    for (const file of ['prediction_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json'])
+    for (const file of ['prediction_models_info.json','decisions_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json'])
       assert.equal((await read(file)).agy_cli,undefined,file);
+    for (const file of ['prediction_models_info.json','decisions_models_info.json'])
+      assert.deepEqual((await read(file)).gemini_agy,{models:{[suffix]:'OAuth'}},file);
     await save({agyModelsReader:async()=>({})});
     assert.equal((await read('gemini_agy_models_info.json')).状態,'未取得');
+    for (const file of ['prediction_models_info.json','decisions_models_info.json'])
+      assert.equal((await read(file)).gemini_agy,undefined,file);
     assert.deepEqual(Object.keys((await read('chat_models_info.json')).gemini_agy.models),['auto','custom-chat']);
     assert.deepEqual(Object.keys((await read('code_models_info.json')).agy_cli.models),['auto','same','custom-code']);
     await save({installedClis:{antigravity_cli:true},agyModelsReader:async()=>assert.fail('must not run')});
     assert.equal((await read('gemini_agy_models_info.json')).状態,'未導入');
     assert.equal((await read('chat_models_info.json')).gemini_agy,undefined);
     assert.equal((await read('code_models_info.json')).agy_cli,undefined);
+    await save({installedClis:{agy_cli:true},agyModelsReader:async()=>({[suffix]:'OAuth'}),
+      antigravityModelsReader:async()=>assert.fail('legacy CLI is not installed')});
+    const oauthOnly=await read('code_models_info.json');
+    assert.equal(oauthOnly.antigravity_cli,undefined);
+    assert.equal(Object.keys(oauthOnly).at(-1),'agy_cli');
   } finally {await rm(directory,{recursive:true,force:true});}
 });

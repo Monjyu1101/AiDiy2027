@@ -26,13 +26,13 @@ function fixture(project) {
     TASK_AI_NAME: 'codex_cli', TEAM_AI_NAME: 'codex_cli' };
   for (let i = 1; i <= 6; i++) Object.assign(settings, { [`CODE_AI${i}_NAME`]: 'codex_cli', [`CODE_AI${i}_MODEL`]: 'same' });
   for (const family of ['TASK', 'TEAM']) for (const phase of ['plan', 'do', 'check']) settings[`${family}_AI_MODEL_${phase}`] = 'same';
-  for (const field of ['OPENAI', 'OAUTH', 'GEMINI', 'FREEAI']) settings[`DECISION_${field}_MODEL`] = 'retained-model';
+  for (const field of ['OPENAI', 'OPENAI_OAUTH', 'GEMINI_AGY', 'GEMINI', 'FREEAI']) settings[`DECISION_${field}_MODEL`] = 'retained-model';
   const available_models = {
     chat_models: { openai_chat: {'chat-one': 'One', 'chat-two': 'Two'}, gemini_chat: {'gemini-one': 'One', 'gemini-two': 'Two'}, gemini_agy: {auto: 'Auto', 'agy-chat': 'Chat'} },
     live_models: { freeai_live: {'freeai-one': 'One', 'freeai-two': 'Two'}, openai_live: {'openai-one': 'One', 'openai-two': 'Two'} },
     live_voices: { freeai_live: {'voice-one': 'One', 'voice-two': 'Two'}, openai_live: {'voice-one': 'One', 'voice-two': 'Two'} },
-    code_models: { agy_cli: {auto: 'Auto', 'agy-code': 'Code'}, codex_cli: {auto: 'Auto', same: 'Same', custom: 'Custom'}, aidiy_hermes: {'openai_oauth/one': 'One', 'openai_oauth/two': 'Two'} },
-    decision_models: Object.fromEntries(['openai_decisions', 'openai_oauth', 'gemini_chat', 'freeai_chat'].map(id => [id, {'decision-one': 'One', 'decision-two': 'Two'}])),
+    code_models: { agy_cli: {auto: 'Auto', 'agy-code': 'Code', 'saved-code-override': 'Saved default'}, codex_cli: {auto: 'Auto', same: 'Same', custom: 'Custom'}, aidiy_hermes: {'openai_oauth/one': 'One', 'openai_oauth/two': 'Two'} },
+    decision_models: Object.fromEntries(['openai_decisions', 'openai_oauth', 'gemini_agy', 'gemini_chat', 'freeai_chat'].map(id => [id, {'decision-one': 'One', 'decision-two': 'Two'}])),
   };
   const calls = [], emitted = [], module = {exports: {}}, props = { isOpen: false, sessionId: 'fixture' };
   const { descriptor } = parse(fs.readFileSync(path.join(root, project, filename), 'utf8'));
@@ -81,19 +81,19 @@ function fixture(project) {
   };
 }
 for (const project of ['frontend_web', 'frontend_avatar']) {
-  test(`${project}: native select events commit Chat, Live, voice and all four Decision model fields`, async () => {
+  test(`${project}: native select events commit Chat, Live, voice and all five Decision model fields`, async () => {
     const f = fixture(project);
     try {
       await f.load();
       await f.choose('config-chat-ai-select', 'gemini_chat');await f.choose('config-chat-model-select', 'gemini-two');
       await f.choose('config-live-ai-select', 'openai_live');await f.choose('config-live-model-select', 'openai-two');await f.choose('config-live-voice-select', 'voice-two');
       await f.choose('config-decision-ai-select', 'openai_oauth');
-      for (const field of ['OPENAI', 'OAUTH', 'GEMINI', 'FREEAI']) await f.choose(`config-DECISION_${field}_MODEL`, 'decision-two');
+      for (const field of ['OPENAI', 'OPENAI_OAUTH', 'GEMINI_AGY', 'GEMINI', 'FREEAI']) await f.choose(`config-DECISION_${field}_MODEL`, 'decision-two');
       const sent = (await f.save()).モデル設定;
       assert.equal(sent.CHAT_AI_NAME, 'gemini_chat');assert.equal(sent.CHAT_GEMINI_MODEL, 'gemini-two');
       assert.equal(sent.LIVE_AI_NAME, 'openai_live');assert.equal(sent.LIVE_OPENAI_MODEL, 'openai-two');assert.equal(sent.LIVE_OPENAI_VOICE, 'voice-two');
       assert.equal(sent.DECISION_AI_NAME, 'openai_oauth');
-      for (const field of ['OPENAI', 'OAUTH', 'GEMINI', 'FREEAI']) assert.equal(sent[`DECISION_${field}_MODEL`], 'decision-two');
+      for (const field of ['OPENAI', 'OPENAI_OAUTH', 'GEMINI_AGY', 'GEMINI', 'FREEAI']) assert.equal(sent[`DECISION_${field}_MODEL`], 'decision-two');
     } finally {f.close();}
   });
   test(`${project}: every Code slot and Task/Team phase commits via its actual select event`, async () => {
@@ -118,17 +118,18 @@ for (const project of ['frontend_web', 'frontend_avatar']) {
     try {
       await f.load();
       assert.equal(f.calls[0].body.保存済み, true);
-      assert.equal(f.data.selections.agyCodeModel, 'saved-code-override');
+      assert.equal(f.control('config-agy-code-model'), undefined);
       await f.choose('config-chat-ai-select', 'gemini_agy');
       await f.choose('config-chat-model-select', 'agy-chat');
-      await f.choose('config-agy-code-model', 'agy-code');
       assert.equal(f.data.selections.codeModel4, 'same');
       await f.choose('config-code-ai4-select', 'agy_cli');
+      assert.equal(f.data.selections.codeModel4, 'saved-code-override');
+      await f.choose('config-code-model4-select', 'agy-code');
       const sent = (await f.save()).モデル設定;
       assert.equal(sent.CHAT_AI_NAME, 'gemini_agy');
       assert.equal(sent.CHAT_GEMINI_AGY_MODEL, 'agy-chat');
       assert.equal(sent.CHAT_GEMINI_MODEL, 'gemini-one');
-      assert.equal(sent.CODE_AGY_CLI_MODEL, 'agy-code');
+      assert.equal(sent.CODE_AGY_CLI_MODEL, 'saved-code-override');
       assert.equal(sent.CODE_ANTIGRAVITY_CLI_MODEL, 'old-antigravity');
       assert.equal(sent.CODE_AI4_NAME, 'agy_cli');
       assert.equal(sent.CODE_AI4_MODEL, 'agy-code');
@@ -137,7 +138,8 @@ for (const project of ['frontend_web', 'frontend_avatar']) {
       assert.equal(f.data.selections.chatModel, 'agy-chat');
       await f.load();
       assert.equal(f.data.selections.chatAi, 'gemini_agy');
-      assert.equal(f.data.selections.agyCodeModel, 'agy-code');
+      assert.equal(f.data.selections.codeAi4, 'agy_cli');
+      assert.equal(f.data.selections.codeModel4, 'agy-code');
     } finally {f.close();}
   });
   test(`${project}: cancel after selecting a model does not send a save request`, async () => {

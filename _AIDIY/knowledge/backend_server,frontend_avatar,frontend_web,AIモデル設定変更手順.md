@@ -86,11 +86,11 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 
 ### Gemini / FreeAI のChatモデル追加
 
-- 新規設定・設定欠落時の `CHAT_FREEAI_MODEL` とHermesのFreeAI退避先は `gemini-4-carbon`。保存済みの `gemini-3.8-flash` / `gemini-4-neon` や任意モデルは置き換えない。
+- 新規設定・設定欠落時は Chat / Prediction / Decision の Gemini・FreeAI・AGY のモデルを `gemini-4-hydrogen` にする。保存済みのモデルや `auto` は置き換えない。Hermes 独自の FreeAI 退避先は引き続き `gemini-4-carbon`。
 - DiagはGoogle APIが返した候補だけを使い、既知5モデル間を `gemini-4-carbon` → `gemini-4-neon` → `gemini-4-hydrogen` → `gemini-3.8-flash` → `gemini-3.8-flash-lite` の上位順に並べる。他モデルは従来の日付順・位置を維持し、日付や未取得IDは補わない。
 - HermesのGemini / Vertexの固定候補もこの5モデル。PiのGoogle / Vertexの既定値は先頭の `gemini-4-carbon`。
 - 既知5モデルはOpenRouterのメタデータに未掲載でもGoogle APIから取得できれば残す。OpenRouter / Copilot / Antigravityの提供候補へは転用しない。
-- `CHAT_GEMINI_MODEL` の画像モデル、Liveの音声モデル、低コスト用途のPrediction / Decision既定値は別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
+- `CHAT_OPENRT_MODEL` の画像モデルと Live の音声モデルは別用途のため維持する。候補更新はDiagのモデル再取得・書込で行い、実APIの利用可否はモデル試行で確認する。
 - 回帰確認は `node --test frontend_diag/checks/model-catalog.check.mjs frontend_diag/checks/models-info.check.mjs`、`python -B -m unittest discover -s backend_server/checks -p test_gemini_chat_defaults.py -v`、`python -B -m unittest discover -s command_hermes/checks -p test_aidiy_model_catalog.py -v`。
 
 ### Code CLIのautoによるモデル自動選択
@@ -123,7 +123,7 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
   "LIVE_AI_NAME": "gemini_live",
   "PREDICTION_AI_NAME": "auto",
   "PREDICTION_OPENAI_MODEL": "auto",
-  "PREDICTION_OAUTH_MODEL": "auto",
+  "PREDICTION_OPENAI_OAUTH_MODEL": "auto",
   "PREDICTION_GEMINI_MODEL": "auto",
   "PREDICTION_FREEAI_MODEL": "auto",
   "PREDICTION_CODEX_CLI_MODEL": "gpt-6-luna",
@@ -131,7 +131,7 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
   "PREDICTION_AIDIY_HERMES_MODEL": "openai_oauth/gpt-6-luna",
   "DECISION_AI_NAME": "auto",
   "DECISION_OPENAI_MODEL": "auto",
-  "DECISION_OAUTH_MODEL": "auto",
+  "DECISION_OPENAI_OAUTH_MODEL": "auto",
   "DECISION_GEMINI_MODEL": "auto",
   "DECISION_FREEAI_MODEL": "auto",
   "CODE_PERMISSIONS": "auto",
@@ -170,9 +170,9 @@ Web / AvatarのCode1〜6、Task / Teamでプロバイダを手動変更したと
 
 Web / Avatar とも「保存(json書換)」は `save: true`、再起動要求なし。「設定/再起動」も `save: true` でJSONを保存してから apps / tools の再起動を要求する。
 
-JSONではLIVEブロックの後に `PREDICTION_AI_NAME` と方式別7モデル（`PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL`）を置き、その直後に判断用の `DECISION_AI_NAME` と方式別4モデル（`DECISION_OPENAI_MODEL` / `DECISION_OAUTH_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL`）を置く。Predictionの初期値・欠落時は方式とChat系4モデルが `auto`、CLI系3モデルが `gpt-6-luna`（Hermesは `openai_oauth/gpt-6-luna`）で、内部RESTの `aidiy_prediction_llms` が予測実行に使用する。Web / Avatar両方のAI設定再起動画面も CHAT → LIVE → PREDICTION → DECISION → CODE の順に表示する。判断の初期値・欠落時もすべて `auto` で、方式のautoは起動チェック成功のものから OAuth → FreeAI → Decisions API → Gemini の順で選ぶ。
+JSONではLIVEブロックの後に `PREDICTION_AI_NAME` と方式別7モデル（`PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_AGY_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL`）を置き、その直後に判断用の `DECISION_AI_NAME` と方式別4モデル（`DECISION_OPENAI_MODEL` / `DECISION_OPENAI_OAUTH_MODEL` / `DECISION_GEMINI_AGY_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL`）を置く。Predictionの初期値・欠落時は方式とChat系4モデルが `auto`、CLI系3モデルが `gpt-6-luna`（Hermesは `openai_oauth/gpt-6-luna`）で、内部RESTの `aidiy_prediction_llms` が予測実行に使用する。Web / Avatar両方のAI設定再起動画面も CHAT → LIVE → PREDICTION → DECISION → CODE の順に表示する。判断の初期値・欠落時もすべて `auto` で、方式のautoは起動チェック成功のものから OAuth → FreeAI → Decisions API → Gemini の順で選ぶ。
 
-予測は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）で実行し、`project_path` が必須。方式は明示引数 → `PREDICTION_AI_NAME`、モデルは明示引数 → 決定した方式のキー（`openai_chat`→`PREDICTION_OPENAI_MODEL`、`openai_oauth`→`PREDICTION_OAUTH_MODEL`、`gemini_chat`→`PREDICTION_GEMINI_MODEL`、`freeai_chat`→`PREDICTION_FREEAI_MODEL`、`codex_cli`→`PREDICTION_CODEX_CLI_MODEL`、`copilot_cli`→`PREDICTION_COPILOT_CLI_MODEL`、`aidiy_hermes`→`PREDICTION_AIDIY_HERMES_MODEL`）の順で決める。方式設定もautoなら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。CLI方式（`codex_cli` / `copilot_cli` / `aidiy_hermes`）はautoで最優先に選ばれ、指定プロジェクトでCLI読取専用・権限none・継続なしの1回だけ実行する。正常応答の先頭に `[[PREDICTION]]` を付けさせ、目印がない応答は実行エラーとして扱う。CLI自身のセッション履歴はCLI側に残る場合がある。そのモデルもautoなら選んだ方式の先頭候補を使う。予測JSONではOpenAI API区分を `openai_chat` とし、`openai_decisions` は含めない。履歴の読み取り・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。判断側の候補・選択順は変更しない。
+予測は内部REST `POST /internal/prediction_llms`（`aidiy_prediction_llms`、MCP非公開）で実行し、`project_path` が必須。方式は明示引数 → `PREDICTION_AI_NAME`、モデルは明示引数 → 決定した方式のキー（`openai_chat`→`PREDICTION_OPENAI_MODEL`、`openai_oauth`→`PREDICTION_OPENAI_OAUTH_MODEL`、`gemini_chat`→`PREDICTION_GEMINI_MODEL`、`freeai_chat`→`PREDICTION_FREEAI_MODEL`、`codex_cli`→`PREDICTION_CODEX_CLI_MODEL`、`copilot_cli`→`PREDICTION_COPILOT_CLI_MODEL`、`aidiy_hermes`→`PREDICTION_AIDIY_HERMES_MODEL`）の順で決める。方式設定もautoなら、Diagの `prediction_models_info.json` に候補がある `codex_cli` → `copilot_cli` → `aidiy_hermes` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で選ぶ。CLI方式（`codex_cli` / `copilot_cli` / `aidiy_hermes`）はautoで最優先に選ばれ、指定プロジェクトでCLI読取専用・権限none・継続なしの1回だけ実行する。正常応答の先頭に `[[PREDICTION]]` を付けさせ、目印がない応答は実行エラーとして扱う。CLI自身のセッション履歴はCLI側に残る場合がある。そのモデルもautoなら選んだ方式の先頭候補を使う。予測JSONではOpenAI API区分を `openai_chat` とし、`openai_decisions` は含めない。履歴の読み取り・非保存仕様は [backend_tools 構成](./backend_tools,構成.md#次のユーザー入力予測) を参照する。判断側の候補・選択順は変更しない。
 
 予測の候補は `conf_models.get_prediction_models()` が毎回読む `_AIDIY/aidiy_diag/prediction_models_info.json` を、取得APIの `available_models.prediction_models` へ渡す。実行側と同じ7方式・有効なモデルIDだけを展開し、外部APIへの照会や候補の補完は行わない。方式がautoの場合は実行時と同じ優先順で最初に候補のある1方式のモデルを表示し、OpenAI APIもこの自動選択順に含まれる。方式の手動変更時はモデルをautoへ戻す。ファイルが未取得・空・不正でもautoと保存値を保持し、一覧外の保存値は「保持値・Diag一覧外／未確認」と表示する。未編集の値は他項目だけの保存で上書きしない。PredictionはToolsが共通JSONを読むため、取得APIでは保存済みの値をセッションの古い値より優先し、保存後の次回予測から適用する。
 

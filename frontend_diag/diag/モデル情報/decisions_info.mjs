@@ -18,7 +18,7 @@ const preferred = (config, first, second) => hasKey(config,first) ? first
   : hasKey(config,second) ? second : first;
 // 一覧APIはJSON/Decisions対応可否を保証しない。選択対象が一覧にある場合だけ候補にし、
 // 実行可否は既存の判断起動チェックが決める。公開モデルや設定値の補充は行わない。
-export async function decisionsModelsInfo(providers,results,{configReader,oauthReader}={}) {
+export async function decisionsModelsInfo(providers,results,{configReader,oauthReader,agyModels={}}={}) {
   const [,config]=await readConfig(configReader);
   const sources={openai_oauth:'openai_oauth',freeai_chat:preferred(config,'freeai','gemini'),
     openai_decisions:'openai',gemini_chat:preferred(config,'gemini','freeai')};
@@ -31,5 +31,6 @@ export async function decisionsModelsInfo(providers,results,{configReader,oauthR
       .map(row=>[row.model_id,`${/^\d{4}\/\d{2}\/\d{2}$/.test(row.作成日??'')?row.作成日:'yyyy/mm/dd'} - ${row.model_id}`]));
     if (Object.keys(models).length) output[name]={models};
   }
+  if (Object.keys(agyModels).length) output.gemini_agy={models:{...agyModels}};
   return output;
 }

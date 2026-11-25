@@ -91,7 +91,8 @@ export interface ModelSettings {
   LIVE_AI_NAME: string;
   PREDICTION_AI_NAME?: string;
   PREDICTION_OPENAI_MODEL?: string;
-  PREDICTION_OAUTH_MODEL?: string;
+  PREDICTION_OPENAI_OAUTH_MODEL?: string;
+  PREDICTION_GEMINI_AGY_MODEL?: string;
   PREDICTION_GEMINI_MODEL?: string;
   PREDICTION_FREEAI_MODEL?: string;
   PREDICTION_CODEX_CLI_MODEL?: string;
@@ -101,7 +102,8 @@ export interface ModelSettings {
   PREDICTION_AIDIY_CODEX_MODEL?: string;
   DECISION_AI_NAME?: string;
   DECISION_OPENAI_MODEL?: string;
-  DECISION_OAUTH_MODEL?: string;
+  DECISION_OPENAI_OAUTH_MODEL?: string;
+  DECISION_GEMINI_AGY_MODEL?: string;
   DECISION_GEMINI_MODEL?: string;
   DECISION_FREEAI_MODEL?: string;
   CODE_AI1_NAME: string;

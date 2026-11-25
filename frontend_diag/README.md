@@ -128,7 +128,7 @@ Gemini / FreeAI はモデルIDに `lyria` を含むものを詳細・chat・live
 
 Copilot CLI が導入済みで取得候補が空なら、`COPILOT_FALLBACK_MODELS` の固定8モデルを補います。取得候補があっても Claude 系が1件もなければ Claude 4系統を追加します。OpenCode は Codex 用候補が空の場合に同じ固定8モデルを使います。これらは合成時の補完で、プロバイダ別ファイルへ取得結果として保存しません。
 
-プロバイダ別ファイルの書込後に、同じ保存先の全プロバイダ別ファイルを読み、`chat_models_info.json` / `live_models_info.json` / `code_models_info.json` も生成します。chat / live の合成時は FreeAI を先頭に並べます。code は Claude / OpenAI 系を前、`antigravity_cli` を最後に並べます。合成ファイルのルートは `gemini_chat` / `gemini_live` / `codex_cli` などの区分名で、それぞれ `{models}` だけを持ちます。詳細配列や診断の説明はプロバイダ別ファイルに残します。同じ区分名・モデルIDはマージし、表示名が重複するときは日付の新しいものを優先します（実日付は `yyyy/mm/dd` より優先）。個別テスト後の書込でも、他プロバイダの保存済み候補を合成に含めます。
+プロバイダ別ファイルの書込後に、同じ保存先の全プロバイダ別ファイルを読み、`chat_models_info.json` / `live_models_info.json` / `code_models_info.json` も生成します。chat / live の合成時は FreeAI を先頭に並べます。code は Claude / OpenAI 系を前に置き、導入済みの `antigravity_cli`、`agy_cli` をこの順で末尾に並べます。合成ファイルのルートは `gemini_chat` / `gemini_live` / `codex_cli` などの区分名で、それぞれ `{models}` だけを持ちます。詳細配列や診断の説明はプロバイダ別ファイルに残します。同じ区分名・モデルIDはマージし、表示名が重複するときは日付の新しいものを優先します（実日付は `yyyy/mm/dd` より優先）。個別テスト後の書込でも、他プロバイダの保存済み候補を合成に含めます。
 
 `python frontend_diag/_setup.py` または全体の `python _setup.py` で、AiDiy 本体の `_AIDIY/aidiy_diag/bin` にランチャーを作成します（Windows は `aidiy_diag.cmd`）。全体セットアップのDiagは `[y]` の表示だけで選択入力はありません。シェルプロファイル・レジストリは変更しません。フルパスかセットアップが表示する現在のシェル限定の PATH 設定で使ってください。既存のホーム配下ランチャーは移行・削除しません。`frontend_diag/aidiy_diag` / `frontend_diag/aidiy_diag.cmd` からも直接起動できます。
 
@@ -434,8 +434,8 @@ Tools 接続中に専用タブで開始すると、`_config/AiDiy_key.json` の�
 - 出力方式は `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat`。各区分は `{models: {モデルID: 表示名}}`。現在の候補はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。共通の `DECISION_MODEL_CANDIDATES` を使い、別の固定候補は持たない。
 - 認証済みの取得一覧に含まれるモデルだけを出力する。表示名は `YYYY/MM/DD - ID`、日付不明時は `yyyy/mm/dd - ID`。候補がない方式は省略し、全方式が空なら `{}` を保存する。公開・固定・旧保存候補からの補完はしない。
 - 既存の水色の `一括取得` → `書込`、または headless / 全テスト内の共通モデル書込で更新する。保存先一覧では `prediction_models_info.json` を `decisions_models_info.json` の直前に含める。独立した取得APIや生成試行は追加しない。
-- `AiDiy_key.json` の `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` は、方式とChat系4モデルが `auto`、CLI系が `gpt-6-luna`（Hermes / Piは `openai_oauth/gpt-6-luna`）を初期値とする。試行行のモデルは方式に対応するキーを使い、方式autoの行はモデルもautoで送る。CLI方式の候補は合成済みの `code_models_info.json` から `auto` / `same` を除いて載せ。試行はChat試行でOKになったモデルで2ターンを送ってから予測する。候補の書込では設定値を変更せず、予測も実行しない。設定はWeb / AvatarのAI設定画面で変更する。
-- 内部RESTの `aidiy_prediction_llms`（`POST /internal/prediction_llms`、MCP非公開）はこのJSONを参照する。方式も `auto` なら、候補が存在する `codex_cli` → `copilot_cli` → `aidiy_hermes` → `aidiy_pi` → `openai_oauth` → `freeai_chat` → `openai_chat` → `gemini_chat` の順で1方式を選ぶ。判断側の候補区分・選択順は変更しない。
+- `AiDiy_key.json` の `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_AGY_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` は、方式とChat系4モデルが `auto`、CLI系が `gpt-6-luna`（Hermes / Piは `openai_oauth/gpt-6-luna`）を初期値とする。試行行のモデルは方式に対応するキーを使い、方式autoの行はモデルもautoで送る。CLI方式の候補は合成済みの `code_models_info.json` から `auto` / `same` を除いて載せ。試行はChat試行でOKになったモデルで2ターンを送ってから予測する。候補の書込では設定値を変更せず、予測も実行しない。設定はWeb / AvatarのAI設定画面で変更する。
+- 内部RESTの `aidiy_prediction_llms`（`POST /internal/prediction_llms`、MCP非公開）はこのJSONを参照する。方式も `auto` なら、候補が存在する `codex_cli` → `copilot_cli` → `aidiy_hermes` → `aidiy_pi` → `aidiy_codex` → `openai_oauth` → `gemini_agy` → `freeai_chat` → `gemini_chat` → `openai_chat` の順で1方式を選ぶ。判断側の候補区分・選択順は変更しない。
 - 内部RESTは `project_path` を必須指定し、同じプロジェクトの過去会話から次のユーザー入力を返す。候補取得・書込だけでは予測を実行せず、Diagでは設定モデル／AIモデルの明示試行から呼び出す。Code画面の自動提案も同じ内部RESTを使い、トグルは初期OFFとする。履歴非保存などの仕様は [backend_tools 構成](../_AIDIY/knowledge/backend_tools,構成.md#次のユーザー入力予測) を参照する。
 
 ## 判断用モデル一覧
@@ -452,7 +452,7 @@ Tools 接続中に専用タブで開始すると、`_config/AiDiy_key.json` の�
 
 ### 判断系4方式の候補管理（2026-10-18）
 
-autoの優先順は `openai_oauth` → `freeai_chat` → `openai_decisions` → `gemini_chat`。起動チェックに成功した方式だけを優先対象にする。
+autoの優先順は `openai_oauth` → `gemini_agy`（テキストのみ）→ `freeai_chat` → `gemini_chat` → `openai_decisions`。起動チェックに成功した方式だけを優先対象にする。
 
 判断系の候補方針は `frontend_diag/diag/モデル情報/decisions_info.mjs` の `DECISION_MODEL_CANDIDATES` で書き出す候補を絞って管理する。現在はOpenAI両方式が `gpt-6-luna`、FreeAI/Geminiが `gemini-4-hydrogen`。将来別モデルへ変更するときはこの候補配列を調整し、認証付き一覧を再取得・書き出しする。実行側や画面にモデル固定・恒久的な選択禁止は置かない。
 
@@ -470,7 +470,7 @@ Diagは認証付きGET一覧に候補配列のIDそのものがある方式だ�
 
 設定モデル動作確認のLIVE直後に `DECISION / 挨拶の丁寧さ` を表示する。個別「テスト」と全体「動作確認」の両方で、既存MCP `/aidiy_decisions_check/mcp` の `decisions_check` を呼ぶ。HTTP `/check` への代替直結は行わない。Tools接続中の明示操作に限定し、headless・起動・全診断では実行しない。
 
-`DECISION_AI_NAME` と方式別 `DECISION_OPENAI_MODEL` / `DECISION_OAUTH_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL` が不足時はauto。方式が明示されている試行行は対応する方式別値を使う。方式autoの行はモデルもautoで送り、Toolsで方式とモデルを解決する。autoの方式順はOAuth → FreeAI → Decisions API → Gemini。結果には実効モデルを表示し、設定ファイルへは書き戻さない。
+`DECISION_AI_NAME` と方式別 `DECISION_OPENAI_MODEL` / `DECISION_OPENAI_OAUTH_MODEL` / `DECISION_GEMINI_AGY_MODEL` / `DECISION_GEMINI_MODEL` / `DECISION_FREEAI_MODEL` が不足時はauto。方式が明示されている試行行は対応する方式別値を使う。方式autoの行はモデルもautoで送り、Toolsで方式とモデルを解決する。autoの方式順はOAuth → FreeAI → Decisions API → Gemini。結果には実効モデルを表示し、設定ファイルへは書き戻さない。
 
 入力は「おはよう」、質問は挨拶としての丁寧さ、choice名は `politeness`、選択肢は `high / medium / low`。3値すべてを正常な選択として受け付け、特定値を正解とはしない。MCPのJSON内のstatus、回答名・型・選択値、3候補の確率分布・合計、confidenceを検証する。不正JSON・欠落・未知選択肢・通信エラーはNG。結果詳細に選択値と検証済みJSON、実際の実行モデルを表示する。
 

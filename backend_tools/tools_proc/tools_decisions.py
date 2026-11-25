@@ -59,10 +59,10 @@ def register_tools(mcp, decisions):
 
         model: openai_decisions/gpt-6-luna（APIキー）または
         openai_oauth/gpt-6-luna（Codex OAuthのResponses JSON Schema）。
-        freeai_chat/gemini-4-hydrogen / gemini_chat/gemini-4-hydrogenもJSON判断に対応。
+        freeai_chat/gemini-4-hydrogen / gemini_chat/gemini-4-hydrogenもJSON判断に対応。gemini_agy は Google ログインでテキスト判断に対応。
         方式は明示引数を優先し、省略・autoはAiDiy_key.jsonのDECISION_AI_NAMEを参照する。
         NAME設定もautoなら起動チェック成功のopenai_oauthを優先し、
-        次にfreeai_chat、openai_decisions、gemini_chatの順。明示プロバイダは変更しない。
+        次にgemini_agy（テキストのみ）、freeai_chat、gemini_chat、openai_decisionsの順。明示プロバイダは変更しない。
         モデルは明示model/ai_model → 方式別MODEL設定 → 既定値。
         既定値はOpenAI両方式gpt-6-luna、FreeAI/Geminiはgemini-4-hydrogen。
         Diagの書き出し候補で絞るが、モデル指定を実行側で固定・上書きしない。通常Chat等には適用しない。

@@ -35,6 +35,7 @@ CHAT_MODELS = {
     "freeai_chat": {"freeai-test": "FreeAI test"},
     "openai_chat": {"openai-test": "OpenAI test"},
     "gemini_chat": {"gemini-test": "Gemini test"},
+    "gemini_agy": {"agy-test": "Google login test"},
 }
 
 
@@ -45,7 +46,7 @@ class PredictionModelCatalogTest(unittest.TestCase):
 
     def read_catalog(self, payload):
         source = mock_open(read_data=json.dumps(payload, ensure_ascii=False))
-        with patch("builtins.open", source):
+        with patch("builtins.open", source), patch.object(self.models, "_gemini_agy_executable", return_value="/fixture/agy"):
             result = self.models.get_prediction_models()
         source.assert_called_once()
         self.assertEqual(Path(source.call_args.args[0]).name, "prediction_models_info.json")
@@ -60,7 +61,7 @@ class PredictionModelCatalogTest(unittest.TestCase):
                     {provider: models},
                 )
 
-    def test_mixed_catalog_preserves_all_eight_providers(self):
+    def test_mixed_catalog_preserves_all_providers(self):
         expected = {**CHAT_MODELS, **CLI_MODELS}
         payload = {provider: {"models": models} for provider, models in expected.items()}
         self.assertEqual(self.read_catalog(payload), expected)

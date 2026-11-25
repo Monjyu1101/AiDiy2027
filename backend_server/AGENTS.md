@@ -273,9 +273,9 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 
 | 種別 | 役割 |
 |------|------|
-| `CHAT_AI_NAME` | テキストチャット。`gemini_agy` は公式 agy の Google ログインを利用し、モデルは `CHAT_GEMINI_AGY_MODEL`（既定 `auto`） |
+| `CHAT_AI_NAME` | テキストチャット。`gemini_agy` は公式 agy の Google ログインを利用し、モデルは `CHAT_GEMINI_AGY_MODEL`（既定 `gemini-4-hydrogen`） |
 | `LIVE_AI_NAME` | 音声リアルタイム対話 |
-| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
+| `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OPENAI_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | code1〜code6 のコード支援 |
 | `TASK_AI_NAME` / `TASK_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIタスク自動実行 |
 | `TEAM_AI_NAME` / `TEAM_AI_MODEL_plan` / `_do` / `_check` | backend_taskteam の AIチーム依頼実行 |
