@@ -13,7 +13,7 @@ import {stripVTControlCharacters} from 'node:util';
 import {StringDecoder} from 'node:string_decoder';
 import path from 'node:path';
 import os from 'node:os';
-import {resolveProgram,probe} from '../診断/probes.mjs';
+import {resolveProgram,resolveProgramPaths,probe} from '../診断/probes.mjs';
 import {WINGET_PACKAGES,inspectWinget,executeWinget} from './winget.mjs';
 import {inspectAntigravity,executeAntigravity} from './antigravity.mjs';
 import {inspectGrok,executeGrok} from './grok.mjs';
@@ -128,25 +128,47 @@ export async function findNpm({env=process.env,platform=process.platform,resolve
 
 // 現在の npm prefix と、既に PATH にある Windows npm shim の prefix は異なる場合がある。
 // 任意の場所を探索せず、検出済み shim と同じ prefix の package/bin 所有を再検証する。
-export async function npmCapability(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram}={}) {
+export async function npmCapability(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram,resolveCandidates=resolveProgramPaths}={}) {
   if(!packageFor(entry.id))return {id:entry.id,操作:[],理由:'安全な導入・削除コマンドが登録されていません。'};
   const executable=await resolve(entry,{env,platform});
-  const options={env,platform,resolve:async()=>executable};
-  const current=await inspectNpmAtPrefix(entry,npm,options);
+  const inspect=(target,context=npm)=>inspectNpmAtPrefix(entry,context,{env,platform,resolve:async()=>target});
+  const current=await inspect(executable);
   if(current.操作.length||platform!=='win32'||!executable)return current;
-  const prefix=path.dirname(executable);
-  if(path.resolve(prefix).toLowerCase()===path.resolve(npm.prefix).toLowerCase())return current;
-  const alternate={...npm,prefix,root:path.join(prefix,'node_modules')};
-  const verified=await inspectNpmAtPrefix(entry,alternate,options).catch(()=>null);
-  if(!verified?.操作.includes('再導入'))return current;
-  return {...verified,npmPrefix:prefix,npmRoot:alternate.root,
-    説明:`${verified.説明} 検出した npm ランチャーの導入先: ${prefix}`};
+  const equivalent=(a,b)=>path.resolve(a).toLowerCase()===path.resolve(b).toLowerCase();
+  const atShimPrefix=async target=>{
+    const prefix=path.dirname(target);
+    const alternate=equivalent(prefix,npm.prefix)?npm:{...npm,prefix,root:path.join(prefix,'node_modules')};
+    const verified=await inspect(target,alternate).catch(()=>null);
+    if(!verified?.操作.includes('再導入'))return null;
+    return equivalent(prefix,npm.prefix)?verified:{...verified,npmPrefix:prefix,npmRoot:alternate.root,
+      説明:`${verified.説明} 検出した npm ランチャーの導入先: ${prefix}`};
+  };
+  if(!equivalent(path.dirname(executable),npm.prefix)){
+    const primary=await atShimPrefix(executable);
+    if(primary)return primary;
+  }
+  // PATH で先に見つかる exe が別配布でも、並存する正規 npm shim を検証して更新できる。
+  // 元の exe は操作せず、影になっている npm 版は更新のみ。複数の所有元は推測しない。
+  const commands=[`${entry.id}.cmd`,`${entry.id}.ps1`];
+  const candidates=new Set([...(await resolveCandidates({...entry,commands},{env,platform})),
+    ...commands.map(name=>path.join(npm.prefix,name))]);
+  const alternatives=new Map();
+  for(const target of candidates){
+    if(equivalent(target,executable)||!/\.(cmd|ps1)$/i.test(target))continue;
+    const verified=await atShimPrefix(target);
+    if(!verified||verified.移行元)continue;
+    const prefix=verified.npmPrefix||npm.prefix;
+    alternatives.set(path.resolve(prefix).toLowerCase(),{...verified,操作:['再導入'],
+      説明:`${verified.説明} PATH 上の別の実行ファイルは変更しません。`,
+      再導入説明:`${verified.再導入説明} PATH で先に見つかる別の実行ファイルは更新されません。`});
+  }
+  return alternatives.size===1?[...alternatives.values()][0]:current;
 }
 
 async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.platform,resolve=resolveProgram}={}) {
   const pkg=packageFor(entry.id);
   if(!pkg)return {id:entry.id,操作:[],理由:'安全な導入・削除コマンドが登録されていません。'};
-  const base={id:entry.id,パッケージ:pkg,説明:'npm のグローバルパッケージだけを操作します。認証・設定・履歴は削除しません。',再導入説明:`npm install --global ${pkg} を1回実行して更新・再導入します。事前のアンインストールは行いません。`};
+  const base={id:entry.id,パッケージ:pkg,説明:'npm のグローバルパッケージだけを操作します。認証・設定・履歴は削除しません。',再導入説明:`npm install --global ${pkg}@latest を1回実行して更新・再導入します。事前のアンインストールは行いません。`};
   const executable=await resolve(entry,{env,platform});
   if(entry.id==='opencode'){
     try{
@@ -155,7 +177,7 @@ async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.pl
       return {...base,導入済みパッケージ:installed,操作:installed.length?['再導入','削除']:['導入'],
         ...(legacy?{移行元:OPENCODE_LEGACY_PACKAGE,
           説明:`${base.説明} 導入済み: ${installed.join(' / ')}。削除は導入済みパッケージだけを対象にします。`,
-          再導入説明:`所有を確認した ${OPENCODE_LEGACY_PACKAGE} を npm uninstall --global で削除してから、npm install --global ${pkg} で V2 へ移行します。導入に失敗すると OpenCode が利用できなくなる場合があります。`}:{}),};
+          再導入説明:`所有を確認した ${OPENCODE_LEGACY_PACKAGE} を npm uninstall --global で削除してから、npm install --global ${pkg}@latest で V2 へ移行します。導入に失敗すると OpenCode が利用できなくなる場合があります。`}:{}),};
     }catch{return {...base,操作:[],理由:'OpenCode のパッケージ・実行ファイルの所有元を確認できないため、自動操作しません。元の導入方法と配置を確認してください。'};}
   }
   const directory=path.join(npm.root,...pkg.split('/'));
@@ -184,6 +206,8 @@ async function inspectNpmAtPrefix(entry,npm,{env=process.env,platform=process.pl
       if(!relativeTarget||relativeTarget.startsWith('..')||path.isAbsolute(relativeTarget))continue;
       if(await realpath(executable)===realTarget)return {...base,操作:['再導入','削除']};
       if(platform==='win32'&&['', '.cmd', '.ps1'].some(ext=>path.resolve(executable).toLowerCase()===path.join(npm.prefix,name+ext).toLowerCase())){
+        const launcher=await lstat(executable);
+        if(!launcher.isFile()||launcher.nlink!==1)continue;
         const shim=(await readFile(executable,'utf8')).split(/\r?\n/).filter(line=>!/^\s*(?:@?rem\b|::|#)/i.test(line)).join('\n').replaceAll('\\','/').toLowerCase();
         // bin の "./bin/x.exe" 表記も、npm の shim と同じ正規化済みパスで照合する。
         const packageTarget=`node_modules/${pkg}/${path.posix.normalize(relative.replaceAll('\\','/'))}`.toLowerCase();
@@ -205,11 +229,11 @@ export function npmCommands(npm,id,action,configFile,capability) {
     const installed=capability.導入済みパッケージ;
     if(!Array.isArray(installed)||!installed.includes(OPENCODE_LEGACY_PACKAGE)||installed.some(name=>![pkg,OPENCODE_LEGACY_PACKAGE].includes(name)))throw failure('OpenCode の移行元を確認できません。',409);
     if(action==='削除')return [command('uninstall',installed)];
-    return [command('uninstall',[OPENCODE_LEGACY_PACKAGE]),command('install',[pkg])];
+    return [command('uninstall',[OPENCODE_LEGACY_PACKAGE]),command('install',[pkg+'@latest'])];
   }
   // 通常の npm 再導入は既存パッケージを削除せず、install だけで更新する。
   const step=action==='削除'?'uninstall':'install';
-  return [command(step,[pkg])];
+  return [command(step,[step==='install'?pkg+'@latest':pkg])];
 }
 
 export function createInstallManager({entries,probeFn=probe,onResult=()=>({}),env=process.env,platform=process.platform,findNpmFn=findNpm,capabilityFn=npmCapability,inspectWingetFn=inspectWinget,executeWingetFn=executeWinget,inspectAntigravityFn=inspectAntigravity,executeAntigravityFn=executeAntigravity,inspectGrokFn=inspectGrok,executeGrokFn=executeGrok,inspectRustFn=inspectRust,executeRustFn=executeRust,inspectLlvmMingwFn=inspectLlvmMingw,executeLlvmMingwFn=executeLlvmMingw,inspectCodexCompileFn=inspectCodexCompile,executeCodexCompileFn=executeCodexCompile,run=runInstallCommand,timeout=300000,acquireLock=acquireInstallLock}={}) {

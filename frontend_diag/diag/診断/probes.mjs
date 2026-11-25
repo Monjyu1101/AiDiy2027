@@ -48,7 +48,7 @@ async function windowsPythonPaths(env) {
   return candidates;
 }
 
-async function resolveProgramPaths(entry, options = {}) {
+export async function resolveProgramPaths(entry, options = {}) {
   const platform = options.platform || process.platform, env = options.env || process.env;
   // 自分の Node は PATH に無くても、起動済み実行ファイルとして検出する。
   if (entry.id === 'node' && !options.env) return [process.execPath];
@@ -56,7 +56,7 @@ async function resolveProgramPaths(entry, options = {}) {
   const pathValue = env.PATH || (platform === 'win32' ? Object.entries(env).find(([key]) => key.toUpperCase() === 'PATH')?.[1] : '') || '';
   const directories = pathValue.split(platform === 'win32' ? ';' : ':').filter(Boolean);
   const candidates = [];
-  for (const command of entry.commands) for (const directory of directories) for (const extension of (/\.(exe|com|cmd|bat)$/i.test(command) ? [''] : extensions)) {
+  for (const command of entry.commands) for (const directory of directories) for (const extension of (/\.(exe|com|cmd|bat|ps1)$/i.test(command) ? [''] : extensions)) {
     candidates.push(path.join(directory.replace(/^"(.*)"$/, '$1'), command + extension));
   }
   for (const value of entry.paths?.[platform] || []) { const expanded=expandPath(value,env,undefined,platform); if(expanded) candidates.push(expanded); }

@@ -69,7 +69,7 @@ aidiy_diag --auto           # 画面を開き、保存済みの起動設定で�
 
 | 対象 | 導入方法・制限 |
 |---|---|
-| Claude Code / Codex / Copilot / OpenCode | 固定 npm グローバルパッケージ（OpenCode は 2.x の公式名 `@opencode/cli`）。標準 prefix / root と実体・shim を照合します。 |
+| Claude Code / Codex / Copilot / OpenCode | 固定 npm グローバルパッケージ（OpenCode は 2.x の公式名 `@opencode/cli`）。標準 prefix / root と実体・shim を照合します。導入・更新は `npm install --global <パッケージ>@latest` を使用し、通常の更新に先立つ削除は行いません。Windows で PATH 上の別配布が優先されても、npm の導入先が一つだけ確認できれば、その npm 版だけを更新できます（別配布の更新や削除は行いません）。 |
 | FFmpeg 一式 | Windows の `Gyan.FFmpeg`。ffmpeg / ffprobe / ffplay のどの行からもパッケージ操作は1回だけ。終了後は3行を各1回確認します。 |
 | Ollama | Windows の `Ollama.Ollama`。新規導入と `winget upgrade` による上書き更新。公式 Inno 登録・標準配置・有効署名を確認し、更新時にアンインストールしません。削除は対象外です。 |
 | Chrome | Windows の `Google.Chrome` の新規導入のみ。プロファイル・拡張機能を保護するため再導入・削除は表示しません。 |

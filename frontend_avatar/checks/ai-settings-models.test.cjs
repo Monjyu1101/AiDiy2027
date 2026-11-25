@@ -40,7 +40,7 @@ function load(project, filename, data) {
   const dependencies = {...vue, onMounted: () => {}, defineProps: () => ({isOpen: false, sessionId: 'fixture'}), defineEmits: () => () => {},
     apiClient: {post: async (url, body) => {calls.push({url, body});return {data: {status: 'OK', data: {available_models: {code_models: data.code_models, ...data.available_models}, モデル設定: structuredClone(data.settings)}}};}},
     qAlert: async () => {}, qMessage: async () => {}, qConfirm: async () => true};
-  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, codeAiOptions, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
+  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, codeAiOptions, liveAiOptions, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
   return {...api, calls, nextTick: vue.nextTick, close: () => scope.stop(), template: descriptor.template.content};
 }
 
@@ -153,6 +153,29 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       for (const field of ['chatModel', 'liveModel', 'liveVoice']) assert.equal(app.selections[field], '');
       for (const key of ['CHAT_OPENAI_MODEL', 'LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE']) assert.equal(app.buildNextSettings()[key], data.settings[key]);
     } finally {app.close();}
+  });
+
+  test(`${project}: OpenAI Live is written and does not disappear when the catalog loses the entry`, async () => {
+    const data = fixture();
+    Object.assign(data.settings, {LIVE_AI_NAME:'freeai_live', LIVE_OPENAI_MODEL:'saved-openai', LIVE_OPENAI_VOICE:'marin'});
+    data.available_models = {live_models:{freeai_live:{first:'FreeAI'},openai_live:{'saved-openai':'OpenAI'}}, live_voices:{}};
+    const app = load(project, filename, data);
+    try {
+      await app.loadConfig();
+      app.selections.liveAi = 'openai_live';
+      await app.nextTick();
+      await app.handleSaveOnly();
+      const payload = app.calls.at(-1).body;
+      assert.equal(payload.save, true);
+      assert.equal(payload.モデル設定.LIVE_AI_NAME, 'openai_live');
+      assert.equal(payload.モデル設定.LIVE_OPENAI_VOICE, 'marin');
+      Object.assign(data.settings, payload.モデル設定);
+      delete data.available_models.live_models.openai_live;
+      await app.loadConfig();
+      assert.equal(app.selections.liveAi, 'openai_live');
+      assert.deepEqual(app.liveAiOptions.value, ['freeai_live','openai_live']);
+      assert.equal(app.buildNextSettings().LIVE_OPENAI_MODEL, 'saved-openai');
+    } finally { app.close(); }
   });
 
   test(`${project}: saved values survive loading and every Code slot uses the provider default on manual change`, async () => {

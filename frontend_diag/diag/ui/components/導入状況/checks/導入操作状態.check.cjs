@@ -65,7 +65,7 @@ test('npm 全4パッケージの実際の能力情報を使い、確認は insta
     assert.deepEqual(capability.操作, ['再導入', '削除']);
     const f = await fixture(); f.setData({ 項目: [capability], 実行: null }); await f.state.接続(true);
     assert.equal(await f.state.開始(id, '再導入', id), true); assert.equal(f.approvals.length, 1);
-    assert.ok(f.approvals[0].includes(`npm install --global ${pkg} を1回実行`));
+    assert.ok(f.approvals[0].includes(`npm install --global ${pkg}@latest を1回実行`));
     assert.match(f.approvals[0], /事前のアンインストールは行いません/); assert.doesNotMatch(f.approvals[0], /削除してから|削除後|npm uninstall/);
     assert.equal(f.calls.filter(([, method]) => method === 'POST').length, 1); f.state.終了();
   }

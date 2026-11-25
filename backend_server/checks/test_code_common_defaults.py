@@ -156,10 +156,15 @@ class CodeCommonDefaultsTests(unittest.TestCase):
 
         settings = {'CHAT_AI_NAME': 'gemini_agy', 'CHAT_GEMINI_AGY_MODEL': 'chat-custom',
                     'CODE_AI4_NAME': 'agy_cli', 'CODE_AI4_MODEL': 'slot-custom', 'CODE_AGY_CLI_MODEL': 'code-custom',
-                    'PREDICTION_OPENAI_OAUTH_MODEL': 'prediction-oauth', 'DECISION_OPENAI_OAUTH_MODEL': 'decision-oauth'}
+                    'PREDICTION_OPENAI_OAUTH_MODEL': 'prediction-oauth', 'DECISION_OPENAI_OAUTH_MODEL': 'decision-oauth',
+                    'LIVE_AI_NAME': 'openai_live', 'LIVE_OPENAI_MODEL': 'fixture-realtime', 'LIVE_OPENAI_VOICE': 'marin'}
         request = SimpleNamespace(セッションID='fixture', モデル設定=settings, 再起動要求={}, save=True, リセット=False)
         self.assertEqual(asyncio.run(env['モデル情報設定'](context, request))['status'], 'OK')
         self.assertEqual(session_state['CHAT_GEMINI_AGY_MODEL'], 'stale')
+        self.assertNotIn('LIVE_AI_NAME', session_state)
+        self.assertEqual(self.saved()['LIVE_AI_NAME'], 'openai_live')
+        self.assertEqual(self.saved()['LIVE_OPENAI_MODEL'], 'fixture-realtime')
+        self.assertEqual(self.saved()['LIVE_OPENAI_VOICE'], 'marin')
         self.assertEqual(self.saved()['gemini_key_id'], 'fixture-key')
         fake_decision = SimpleNamespace(Decision=SimpleNamespace(model_options=lambda _: {}))
         with patch.dict(sys.modules, {'AIコア.AI判断': fake_decision}):

@@ -98,17 +98,20 @@ export async function inspectGrok(entry,{env=process.env,platform=process.platfo
     const names=await readdir(prefix).catch(error=>{if(error.code==='ENOENT')return [];throw error;});
     if(names.some(name=>/\.aidiy-(?:backup|failed)-/.test(name)))throw failure('前回の退避・復旧ファイルが残っています。手動で復旧状態を確認してください。');
     const selected=await resolve(entry,{env,platform});
-    if(selected&&!same(selected,context.binary))throw failure('別の導入先の grok が検出されました。元の方法で管理してください。');
+    const shadowed=selected&&!same(selected,context.binary);
     const present=[];
     for(const name of GROK_FILES)if(await plainPath(path.join(prefix,name),{fileOnly:true}))present.push(name);
     const data=await inspectWindows(context,{env,run,signal});
     if(!present.includes('grok.exe')){
+      if(shadowed)throw failure('標準配置に Grok Build がありません。別の導入先の grok は元の方法で管理してください。');
       if(present.length)throw failure('grok.exe が無く、関連ファイルだけが残っています。手動で配置を確認してください。');
       item.操作=['導入'];return {item,context};
     }
     for(const name of present)if(!officialSigner(data.files?.[name]))throw failure(`${name} の xAI 署名を確認できないため、自動操作しません。`);
     for(const name of present)context.files[name]=await digest(path.join(prefix,name),'sha512',{signal,executable:true});
-    item.操作=['再導入','削除'];return {item,context};
+    item.操作=shadowed?['再導入']:['再導入','削除'];
+    if(shadowed)item.再導入説明+=' PATH で先に見つかる別の grok は更新されません。';
+    return {item,context};
   }catch(error){item.理由=error.status?error.message:'Grok Build の導入元を確認できません。';return {item,context};}
 }
 

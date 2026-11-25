@@ -49,8 +49,9 @@ test('固定4パッケージ・3操作だけを固定 argv と公式 registry �
     assert.deepEqual(commands.map(command=>command.args[1]),steps);
     for(const command of commands){
       assert.equal(command.executable,npm.executable);
-      assert.equal(command.表示,`npm ${command.args[1]} --global ${pkg}`);
-      assert.deepEqual(command.args,[npm.cli,command.args[1],'--global',`--prefix=${npm.prefix}`,'--registry=https://registry.npmjs.org/','--userconfig=/fixture/private config/npmrc','--globalconfig=/fixture/private config/npmrc.global','--no-audit','--no-fund','--no-update-notifier','--foreground-scripts',pkg]);
+      const requested=action==='削除'?pkg:pkg+'@latest';
+      assert.equal(command.表示,`npm ${command.args[1]} --global ${requested}`);
+      assert.deepEqual(command.args,[npm.cli,command.args[1],'--global',`--prefix=${npm.prefix}`,'--registry=https://registry.npmjs.org/','--userconfig=/fixture/private config/npmrc','--globalconfig=/fixture/private config/npmrc.global','--no-audit','--no-fund','--no-update-notifier','--foreground-scripts',requested]);
       assert.ok(command.args.every(value=>typeof value==='string'));
     }
   }
@@ -201,11 +202,13 @@ test('Copilot の native bin と標準 npm shim は導入済みでも削除せ�
       const cap=await npmCapability(entry,tree,{platform,resolve:async()=>executable});
       assert.deepEqual(cap.操作,['再導入','削除']);
       const commands=npmCommands(tree,'copilot','再導入','/fixture/npmrc',cap);
-      assert.equal(commands.length,1);assert.equal(commands[0].args[1],'install');assert.equal(commands[0].args.at(-1),'@github/copilot');
+      assert.equal(commands.length,1);assert.equal(commands[0].args[1],'install');assert.equal(commands[0].args.at(-1),'@github/copilot@latest');
       assert.doesNotMatch(commands[0].表示,/uninstall/);
     }
     const foreign=path.join(tree.prefix,'unowned-copilot.exe');await writeFile(foreign,'MZ unowned');
-    assert.deepEqual((await npmCapability(entry,tree,{platform,resolve:async()=>foreign})).操作,[]);
+    const foreignResult=await npmCapability(entry,tree,{platform,resolve:async()=>foreign,resolveCandidates:async()=>[]});
+    assert.deepEqual(foreignResult.操作,platform==='win32'?['再導入']:[]);
+    if(platform==='win32')assert.match(foreignResult.再導入説明,/先に見つかる別の実行ファイルは更新されません/);
   }
 });
 
@@ -301,13 +304,13 @@ test('導入は空の一時 npmrc と隔離環境で実行し、確認結果を�
   }});
   const started=await manager.start('codex','導入');assert.equal(started.実行.対象,'codex');assert.equal(manager.busy(),true);
   const job=await settled(manager);assert.equal(job.状態,'完了');assert.equal(job.終了コード,0);assert.equal(job.確認済み,true);assert.equal(job.結果.id,'codex');assert.ok(job.終了日時);assert.match(job.ログ,/合成コマンド出力/);
-  assert.deepEqual(probes,['codex']);assert.equal(results.length,1);assert.equal(command.args.at(-1),'@openai/codex');
+  assert.deepEqual(probes,['codex']);assert.equal(results.length,1);assert.equal(command.args.at(-1),'@openai/codex@latest');
   await assert.rejects(()=>stat(command.cwd),{code:'ENOENT'});
 });
 
 test('npm 再導入は install 1回だけで更新し、最後に1回だけ確認する',async t=>{
   for(const [id,pkg] of Object.entries(NPM_PACKAGES)){
-    const sequence=[];const {manager,results}=fixture(t,{run:async command=>{sequence.push(command.args[1]);assert.equal(command.args.at(-1),pkg);return success;},probeFn:async entry=>{sequence.push('probe');return {id:entry.id,状態:'OK'};}});
+    const sequence=[];const {manager,results}=fixture(t,{run:async command=>{sequence.push(command.args[1]);assert.equal(command.args.at(-1),pkg+'@latest');return success;},probeFn:async entry=>{sequence.push('probe');return {id:entry.id,状態:'OK'};}});
     await manager.start(id,'再導入');const job=await settled(manager);assert.equal(job.状態,'完了');assert.deepEqual(sequence,['install','probe']);assert.equal(results.length,1);
     assert.ok(job.ログ.includes(`$ npm install --global ${pkg}`));assert.doesNotMatch(job.ログ,/uninstall/);
   }
@@ -444,7 +447,7 @@ test('別項目は同じ npm 導入先でも並行して実行し、排他ロッ
   const {manager,probes}=fixture(t,{acquireLock:async(prefix,options)=>{assert.equal(prefix,npm.prefix);scopes.push(options.scope);return async()=>{};},run:async command=>{running.push(command.args.at(-1));await gate.promise;return success;}});
   await manager.start('codex','導入');await manager.start('claude','導入');
   await until(()=>running.length===2);
-  assert.deepEqual([...running].sort(),['@anthropic-ai/claude-code','@openai/codex']);assert.deepEqual([...scopes].sort(),['@anthropic-ai/claude-code','@openai/codex']);
+  assert.deepEqual([...running].sort(),['@anthropic-ai/claude-code@latest','@openai/codex@latest']);assert.deepEqual([...scopes].sort(),['@anthropic-ai/claude-code','@openai/codex']);
   assert.equal((await manager.snapshot()).実行一覧.filter(job=>job.実行中).length,2);
   await assert.rejects(()=>manager.start('codex','削除'),{status:409});
   gate.resolve();await settled(manager);
@@ -499,7 +502,7 @@ test('別 prefix の Copilot 更新は所有確認した導入先をロックし
   await manager.start('copilot','再導入');const job=await settled(manager);
   assert.equal(job.状態,'完了');assert.deepEqual(locks,[installed.prefix]);assert.equal(calls.length,1);
   assert.ok(calls[0].args.includes(`--prefix=${installed.prefix}`));assert.equal(calls[0].args[1],'install');
-  assert.equal(calls[0].args.at(-1),'@github/copilot');
+  assert.equal(calls[0].args.at(-1),'@github/copilot@latest');
 });
 
 test('別 prefix がロック取得中に変わったら npm を実行しない',async t=>{
@@ -508,4 +511,25 @@ test('別 prefix がロック取得中に変わったら npm を実行しない'
     entries:[entries.find(item=>item.id==='copilot')]});
   await manager.start('copilot','再導入');const job=await settled(manager);
   assert.equal(job.状態,'失敗');assert.match(job.ログ,/導入先が変わりました/);assert.deepEqual(calls,[]);
+});
+
+test('Windows の PATH で別配布の exe が優先されても、唯一確認できた npm パッケージだけを更新する',async t=>{
+  const current=await npmTree(t,'win32'),entry=entries.find(item=>item.id==='copilot');
+  const external=path.join(current.prefix,'copilot.exe');
+  await writeFile(external,'MZ synthetic external executable');
+  const shimFor=async()=>{
+    const installed=await packageTree(t,{id:'copilot',platform:'win32'});
+    const shim=path.join(installed.prefix,'copilot.cmd');
+    await writeFile(shim,windowsShim('.cmd','node_modules/@github/copilot/bin/cli.js'));
+    return {installed,shim};
+  };
+  const first=await shimFor(),second=await shimFor();
+  const inspect=paths=>npmCapability(entry,current,{platform:'win32',resolve:async()=>external,resolveCandidates:async()=>paths});
+  const cap=await inspect([external,first.shim]);
+  assert.deepEqual(cap.操作,['再導入']);
+  assert.equal(cap.npmPrefix,first.installed.prefix);
+  assert.deepEqual((await inspect([external,first.shim,second.shim])).操作,[]);
+  await writeFile(first.shim,windowsShim('.cmd','node_modules/unowned/bin/cli.js'));
+  assert.deepEqual((await inspect([external,first.shim])).操作,[]);
+  assert.equal(await readFile(external,'utf8'),'MZ synthetic external executable');
 });

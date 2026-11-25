@@ -174,3 +174,31 @@ test('AGY uses the same slot selector and keeps the default unchanged when the m
     assert.equal(settings.CODE_AI4_NAME,'agy_cli');
   } finally {f.stop();}
 });
+
+test('OpenAI Live persists across a reopen with an older Diag catalog', async () => {
+  let settings = {LIVE_AI_NAME:'freeai_live',LIVE_OPENAI_MODEL:'saved-openai',LIVE_OPENAI_VOICE:'marin'};
+  let live_models = {freeai_live:{first:'FreeAI'},openai_live:{'saved-openai':'OpenAI'}};
+  const f=form(async (path, body)=>{
+    if(path.endsWith('/設定')){
+      assert.equal(body.save,true);
+      assert.equal(body.モデル設定.LIVE_AI_NAME,'openai_live');
+      assert.equal(body.モデル設定.LIVE_OPENAI_VOICE,'marin');
+      settings={...settings,...body.モデル設定};
+      return {data:{status:'OK'}};
+    }
+    return {data:{status:'OK',data:{モデル設定:{...settings},available_models:{live_models}}}};
+  });
+  try {
+    await tick();
+    f.state.selections.liveAi='openai_live';
+    await tick();
+    await f.state.handleSaveOnly();
+    live_models={freeai_live:{first:'FreeAI'}};
+    f.props.isOpen=false;
+    f.props.isOpen=true;
+    await tick();
+    assert.equal(f.state.selections.liveAi,'openai_live');
+    assert.deepEqual(Array.from(f.state.liveAiOptions.value),['freeai_live','openai_live']);
+    assert.equal(settings.LIVE_OPENAI_MODEL,'saved-openai');
+  } finally { f.stop(); }
+});

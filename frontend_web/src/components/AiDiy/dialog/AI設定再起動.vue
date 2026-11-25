@@ -190,7 +190,13 @@ const decisionModelOptions = (field: { key: string; provider: string }) => {
   return Object.entries(choices).map(([value, label]) => ({ value, label }));
 };
 
-const liveAiOptions = computed(() => Object.keys(availableModels.value?.live_models || {}));
+const liveCatalogProviders = computed(() => Object.keys(availableModels.value?.live_models || {}));
+const liveAiOptions = computed(() => {
+  const candidates = liveCatalogProviders.value;
+  const saved = String(currentSettings.value.LIVE_AI_NAME || '');
+  // 設定画面では保存値を表示する。候補の再取得前に別の方式へ見かけ上切り替えない。
+  return saved && !candidates.includes(saved) ? [...candidates, saved] : candidates;
+});
 const codeAiOptions = computed(() => Object.keys(availableModels.value?.code_models || {}));
 
 const chatModelsFor = (provider: string) => {
@@ -403,12 +409,12 @@ const buildFormSettings = () => {
     }
 
     const liveKey = LIVE_MODEL_KEYS[selections.liveAi];
-    if (liveKey) {
+    if (liveKey && selections.liveModel) {
       nextSettings[liveKey] = selections.liveModel;
     }
 
     const voiceKey = LIVE_VOICE_KEYS[selections.liveAi];
-    if (voiceKey) {
+    if (voiceKey && selections.liveVoice) {
       nextSettings[voiceKey] = selections.liveVoice;
     }
     return nextSettings;
@@ -686,7 +692,7 @@ onMounted(() => {
                 <label class="config-panel-label" for="config-live-ai-select">LIVE_AI_NAME:</label>
                 <div class="config-panel-control">
                   <select id="config-live-ai-select" v-model="selections.liveAi" class="config-panel-select">
-                    <option v-for="ai in liveAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                    <option v-for="ai in liveAiOptions" :key="ai" :value="ai">{{ liveCatalogProviders.includes(ai) ? ai : ai + '（保存済み・Diag一覧外）' }}</option>
                   </select>
                 </div>
               </div>

@@ -52,3 +52,30 @@ test('OpenCode 2.x の @opencode/cli は "./bin/opencode.exe" 表記の Windows 
   const capability=await npmCapability({id:'opencode'},{prefix,root},{platform:'win32',resolve:async()=>shim});
   assert.deepEqual(capability.操作,['再導入','削除']);
 });
+
+test('Grok は PATH の別配布を変更せず、署名を確認した標準版だけを再導入対象にする',async t=>{
+  const root=await mkdtemp(path.join(os.tmpdir(),'diag-grok-'));
+  t.after(()=>rm(root,{recursive:true,force:true}));
+  const home=path.join(root,'User'),systemRoot=path.join(root,'Windows'),local=path.join(root,'Local');
+  const bin=path.join(home,'.grok','bin');
+  await mkdir(bin,{recursive:true});
+  for(const name of ['curl.exe','WindowsPowerShell/v1.0/powershell.exe']){
+    const file=path.join(systemRoot,'System32',name);
+    await mkdir(path.dirname(file),{recursive:true});await writeFile(file,'Synthetic OS tool');
+  }
+  const standard=path.join(bin,'grok.exe'),foreign=path.join(root,'grok.exe');
+  await writeFile(standard,'MZ synthetic official');await writeFile(foreign,'MZ synthetic external');
+  let signature='Valid';
+  const options={platform:'win32',env:{USERPROFILE:home,LOCALAPPDATA:local,SYSTEMROOT:systemRoot},
+    resolve:async()=>foreign,run:async command=>{
+      command.onData(JSON.stringify({processCount:0,files:{'grok.exe':{status:signature,subject:xcorp}}}));
+      return {code:0};
+    }};
+  const state=await inspectGrok({id:'grok'},options);
+  assert.deepEqual(state.item.操作,['再導入']);
+  assert.match(state.item.再導入説明,/別の grok は更新されません/);
+  signature='NotSigned';
+  assert.deepEqual((await inspectGrok({id:'grok'},options)).item.操作,[]);
+  await rm(standard);
+  assert.deepEqual((await inspectGrok({id:'grok'},options)).item.操作,[]);
+});
