@@ -208,15 +208,9 @@ async function モデル選択肢読込() {
   try {
     const res = await apiClient.post('/core/AIコア/モデル情報/TASK選択肢', {});
     if (res.data.status === 'OK') {
-      availableModels.value = res.data.data?.available_models || { code_models: {} };
+      // 成功時はTask／Team共通APIの候補と表示順を使う。ローカル既定値のマージで並び替えない。
+      availableModels.value = res.data.data?.available_models || { code_models: { ...TASK_CODE_MODELS既定 } };
       currentSettings.value = res.data.data?.モデル設定 || {};
-      const codeModels = { ...TASK_CODE_MODELS既定, ...(availableModels.value.code_models || {}) };
-      for (const ai of Object.keys(codeModels)) {
-        if (!codeModels[ai] || Object.keys(codeModels[ai]).length === 0) {
-          codeModels[ai] = { auto: 'auto' };
-        }
-      }
-      availableModels.value.code_models = codeModels;
     }
   } catch {
     availableModels.value = { code_models: { ...TASK_CODE_MODELS既定 } };

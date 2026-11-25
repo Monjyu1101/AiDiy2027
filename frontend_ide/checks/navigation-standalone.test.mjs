@@ -5,11 +5,12 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,readFile,readdir} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,readdir,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {reserveNavigationSlot} from '../ファイル機能/navigation-slot.mjs';
 import {startDevelopment} from '../server.mjs';
+import {navigationProviders} from '../ファイル機能/navigation.mjs';
 test('standalone slots remain independent and released slots retain identity',async()=>{
  const root=await mkdtemp(join(tmpdir(),'navi-slots-test-'));let a,b,c;
  try{[a,b]=await Promise.all([reserveNavigationSlot(root,{root:join(root,'locks')}),reserveNavigationSlot(root,{root:join(root,'locks')})]);assert.notEqual(a.instance,b.instance);await a.close();c=await reserveNavigationSlot(root,{root:join(root,'locks')});assert.equal(c.instance,a.instance);}
@@ -37,4 +38,23 @@ test('standalone config, API, model persistence and no file mutation API',async(
   c=await startDevelopment(root,options);const cc=await(await fetch(c.url+'development/config')).json();
   assert.equal((await(await fetch(c.url+'api/navigation?instance='+cc.navigationInstance)).json()).selection.model,'openai_oauth/test');
  }finally{await a?.close();await b?.close();await c?.close();await rm(root,{recursive:true,force:true});}
+});
+
+test('standalone model dialog can list and save AGY without sending a prompt',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'navi-agy-server-'));let a;
+ t.after(async()=>{await a?.close();await rm(root,{recursive:true,force:true});});
+ const file=join(root,'navi_models_info.json'),model='gemini-4-hydrogen-medium';
+ await writeFile(file,JSON.stringify({_meta:{schema:1,readOnly:true},agy_cli:{models:{[model]:'Hydrogen'}}}));
+ a=await startDevelopment(root,{kind:'navi',navigationOptions:{
+  providerList:()=>navigationProviders(file,async()=>'/fixture/agy'),stateRoot:join(root,'states'),
+  runAgent:()=>assert.fail('model selection must not send an AI request'),
+ }});
+ const config=await (await fetch(a.url+'development/config')).json();
+ const api=a.url+'api/navigation?instance='+config.navigationInstance;
+ assert.deepEqual((await (await fetch(api+'&providers=1')).json()).providers,['agy_cli']);
+ const selection={provider:'agy_cli',model};
+ const response=await fetch(api,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(selection)});
+ assert.equal(response.status,200);
+ assert.deepEqual((await response.json()).selection,selection);
+ assert.deepEqual((await (await fetch(api)).json()).selection,selection);
 });

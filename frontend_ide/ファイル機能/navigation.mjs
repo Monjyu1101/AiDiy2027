@@ -15,6 +15,7 @@ import {latestFiles} from '../src/components/ファイル閲覧/最新ファイ�
 import {runNavigationAgent,navigationAvailability} from './navigation-agent.mjs';
 import {failedNavigationResponse,navigationRetryPrompt} from './navigation-retry.mjs';
 import {NAVI_PROVIDERS} from '../../frontend_diag/diag/モデル情報/navi_providers.mjs';
+import {resolveAgyOAuth} from '../../frontend_diag/diag/モデル情報/antigravity_models.mjs';
 async function replaceState(source,target){for(let attempt=0;;attempt++){try{return await rename(source,target);}catch(error){if(process.platform!=='win32'||!['EPERM','EACCES','EBUSY'].includes(error.code)||attempt>=4)throw error;await new Promise(done=>setTimeout(done,25*(attempt+1)));}}}
 const within=(root,path)=>{const back=relative(root,path);return back!=='..'&&!back.startsWith(`..${sep}`)&&!isAbsolute(back);};
 const text=(value,max)=>typeof value==='string'&&!!value.trim()&&value.length<=max;
@@ -75,10 +76,14 @@ export async function navigationCatalog(provider,file=fileURLToPath(new URL('../
  return {items,notice};
 }
 export async function navigationModels(provider,file){return (await navigationCatalog(provider,file)).items;}
-// Diagが保存した候補をそのまま使う。画面表示時には環境を再確認しない。
-export async function navigationProviders(file=fileURLToPath(new URL('../../_AIDIY/aidiy_diag/navi_models_info.json',import.meta.url))){
+// Diagの順序を使う。AGYは診断後に取り除かれた場合も候補から外す。
+export async function navigationProviders(file=fileURLToPath(new URL('../../_AIDIY/aidiy_diag/navi_models_info.json',import.meta.url)), resolveAgy=resolveAgyOAuth){
  let info;try{info=JSON.parse(await readFile(file,'utf8'));if(info._meta?.schema!==1||info._meta?.readOnly!==true)throw Error('旧形式');}catch{return {providers:[],notice:'Navi用モデル一覧をDiagで書き出してください。'};}
  const candidates=Object.keys(info).filter(provider=>{if(!NAVI_PROVIDERS.includes(provider))return false;const models=info[provider]?.models;return models&&typeof models==='object'&&!Array.isArray(models)&&Object.entries(models).some(([id,label])=>text(id,300)&&typeof label==='string'&&!/[\x00-\x1f]/.test(id)&&(!['aidiy_hermes','aidiy_pi'].includes(provider)||!/^(?:[a-z0-9_-]*_cli|codex|copilot|claude|claude-code|codex-cli|copilot-cli|opencode|opencode-cli|antigravity|grok)[/:]/i.test(id)));});
+ if(candidates.includes('agy_cli')){
+  let agy=null;try{agy=await resolveAgy();}catch{}
+  if(!agy)candidates.splice(candidates.indexOf('agy_cli'),1);
+ }
  return {providers:candidates,notice:candidates.length?'':'Navi用AIの候補がありません。Diagの一覧を更新してください。'};
 }
 // CodeのHermes用既定値を共有し、保存済みの窓別選択を優先する。

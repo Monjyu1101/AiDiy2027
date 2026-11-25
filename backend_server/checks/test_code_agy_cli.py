@@ -11,7 +11,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from test_code_aidiy_codex import cli
+from test_code_aidiy_codex import CORE, MODULES, cli, load_module, options
 
 FIRST = "ec59ab1b-a729-4e86-b240-210cb7a8d646"
 NEXT = "e7292028-39de-403c-a92a-438abad22e65"
@@ -66,6 +66,39 @@ class AgyCliTest(unittest.IsolatedAsyncioTestCase):
             with patch.object(cli_agent, "_コマンドパス取得", return_value="/fixture/agy"):
                 command = cli_agent._コマンド構築("fixed", 初回=True)
             self.assertEqual("--dangerously-skip-permissions" in command, permissions == "full")
+
+    async def test_readonly_subprocess_uses_plan_deny_rules_and_oauth_stdin(self):
+        with tempfile.TemporaryDirectory() as d:
+            project = Path(d)
+            fake = project / "fake_agy.py"
+            fake.write_text(f"FIRST={FIRST!r}\nSECOND={NEXT!r}\nBAD={BAD!r}\n" + FAKE, encoding="utf-8")
+            oauth = cli.CodeAI(AI_NAME="agy_cli", AI_MODEL="gemini-fixture-low", code_permissions="full",
+                               絶対パス=d, 実行オプション=options.AI実行オプション.読取専用予測())
+            fake_argv = lambda *_args, **_kwargs: ([sys.executable, str(fake)], False)
+            policy = load_module("agy_cli_policy_under_test", CORE / "AIコードCLI権限.py")
+            with (
+                patch.dict(sys.modules, {**MODULES, "AIコア.AIコードCLI権限": policy}),
+                patch.object(oauth, "_CLI起動コマンド先頭", side_effect=fake_argv),
+                patch.object(oauth, "_コマンドパス取得", return_value=sys.executable),
+                patch.dict(os.environ, {"GOOGLE_API_KEY": "fixture"}),
+                contextlib.redirect_stdout(io.StringIO()),
+            ):
+                self.assertEqual(await oauth.実行("長い入力" * 7000), "模擬応答")
+                failure = await oauth.実行("接続失敗")
+                self.assertIn("Google OAuth", failure)
+            [line] = (project / "child-input.jsonl").read_text().splitlines()
+            args, event, credentials, _ = json.loads(line)
+            self.assertEqual(args[args.index("--mode") + 1], "plan")
+            self.assertEqual(args[args.index("--model") + 1], "gemini-fixture-low")
+            self.assertIn("--disable-slash-commands", args)
+            for flag in ("--dangerously-skip-permissions", "--continue", "--conversation", "-p"):
+                self.assertNotIn(flag, args)
+            settings = json.loads(args[args.index("--settings") + 1])
+            self.assertFalse(settings["allowNonWorkspaceAccess"])
+            self.assertEqual(settings["permissions"]["allow"], ["read_file(*)"])
+            self.assertTrue({"write_file(*)", "command(*)", "unsandboxed(*)", "mcp(*)", "read_url(*)", "execute_url(*)", "download_url(*)"} <= set(settings["permissions"]["deny"]))
+            self.assertEqual(credentials, [])
+            self.assertIn("長い入力" * 7000, event["message"]["content"])
 
     async def test_real_subprocess_boundary_stdin_fresh_explicit_resume_error_and_isolation(self):
         with tempfile.TemporaryDirectory() as d:

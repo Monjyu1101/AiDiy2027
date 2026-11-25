@@ -9,6 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {access} from 'node:fs/promises';
 import {homedir} from 'node:os';
+import {resolveAgyOAuth} from '../../frontend_diag/diag/モデル情報/antigravity_models.mjs';
 const root=fileURLToPath(new URL('../../',import.meta.url));
 // HTTPの通常code_agents/runには読取専用境界がないため使わない。
 // セットアップ済みPythonから既存CLI読取専用オプションを固定した入口だけを呼ぶ。
@@ -43,6 +44,8 @@ export async function navigationAvailability(selection){
    await Promise.all(['command_pi/node_modules','command_pi/aidiy/aidiy_pi.ts','command_pi/packages/coding-agent/src/experimental/source-resolver.ts'].map(file=>access(join(root,file))));
    await promisify(execFile)(process.platform==='win32'?'where.exe':'which',['node'],{timeout:10000,windowsHide:true});
   }catch{return {available:false,reason:'PiまたはNode.jsの実行環境が見つかりません。セットアップ後に再確認してください。'};}
+ }else if(selection.provider==='agy_cli'){
+  try{if(!await resolveAgyOAuth())throw Error();}catch{return {available:false,reason:'agy が見つかりません。導入状態を確認してください。'};}
  }else{
   const command={codex_cli:'codex',copilot_cli:'copilot',claude_cli:'claude',grok_cli:'grok'}[selection.provider];
   if(!command)return {available:false,reason:'対応していないAIです。'};

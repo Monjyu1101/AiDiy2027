@@ -16,6 +16,20 @@ from typing import Dict, Optional
 logger = get_logger(__name__)
 
 
+def code_provider_order(models: Dict[str, Dict[str, str]]) -> Dict[str, Dict[str, str]]:
+    """候補・他方式の順序は維持し、両方あるときだけ agy_cli を Antigravity の直後に置く。"""
+    if "antigravity_cli" not in models or "agy_cli" not in models:
+        return models
+    ordered = {}
+    for provider, choices in models.items():
+        if provider == "agy_cli":
+            continue
+        ordered[provider] = choices
+        if provider == "antigravity_cli":
+            ordered["agy_cli"] = models["agy_cli"]
+    return ordered
+
+
 class conf_models:
     """モデル候補はaidiy_diagの合成JSONだけを読む。外部API取得・設定への書込は行わない。"""
     def __init__(self, conf=None):
@@ -163,7 +177,7 @@ class conf_models:
         return {
             provider: {"auto": "auto (自動判定)", "same": "same (変更なし)",
                        **{key: label for key, label in choices.items() if key not in ("auto", "same")}}
-            for provider, choices in models.items()
+            for provider, choices in code_provider_order(models).items()
         }
 
 

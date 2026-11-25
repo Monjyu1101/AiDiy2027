@@ -43,6 +43,7 @@ if バックエンドディレクトリ not in sys.path:
     sys.path.insert(0, バックエンドディレクトリ)
 
 from AIコア.AI要求相関 import ナビ要求相関
+from conf.conf_model import code_provider_order
 from log_config import get_logger
 
 # ロガー取得
@@ -594,6 +595,7 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
                 if isinstance(model, str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}", model):
                     choices.setdefault(model, f"設定値（未検証） - {model}")
             利用可能モデル["code_models"]["agy_cli"] = choices
+        利用可能モデル["code_models"] = code_provider_order(利用可能モデル["code_models"])
         # 予測・判断はToolsが共通JSONを読むため、保存後の再取得でもセッションの古い値を返さない。
         from AIコア.AI判断 import Decision
         共通設定 = getattr(getattr(http_request.app, "conf", None), "json", None)
@@ -664,7 +666,7 @@ async def TASKモデル選択肢取得(http_request: Request):
             "status": "OK",
             "message": "TASKモデル選択肢取得成功",
             "data": {
-                "available_models": {"code_models": code_models},
+                "available_models": {"code_models": code_provider_order(code_models)},
                 "モデル設定": 現在設定,
             },
         }

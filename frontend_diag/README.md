@@ -589,7 +589,7 @@ Toolsの一括試験は、通常タブの「全テスト」および `--headless
 
 ### Navi用のread-onlyモデル候補
 
-モデル情報の通常書出しは、Code一覧から `navi_models_info.json` も同じ `_AIDIY/aidiy_diag/` へ生成します。Hermes・Pi・Codex CLI・Copilot CLI・Claude CLI・Grok CLIのうち、書出し時に必要な実行環境が存在する方式だけをCodeと同じ順序で掲載し、Hermes / Piから外部CLIへ転送する候補は除きます。Code用一覧は変更しません。形式1/readOnlyのメタ情報を持ちますが、候補掲載は認証や実行許可の証明ではありません。Naviの方式選択肢は保存済み一覧から作り、後からCLIをアンインストールした場合はDiagで一覧を更新します。Naviは実行時にもread-onlyを強制し、欠損・旧形式・破損時は更新案内を表示します。Tools接続やモデルへの試験送信は一覧読込に必要ありません。
+モデル情報の通常書出しは、Code一覧から `navi_models_info.json` も同じ `_AIDIY/aidiy_diag/` へ生成します。Hermes・Pi・Codex CLI・Copilot CLI・Claude CLI・Grok CLI・agy_cliのうち、書出し時に必要な実行環境が存在する方式だけをCodeと同じ順序で掲載し、Hermes / Piから外部CLIへ転送する候補は除きます。Code用一覧は変更しません。形式1/readOnlyのメタ情報を持ちますが、候補掲載は認証や実行許可の証明ではありません。Naviの方式選択肢は保存済み一覧から作り、後からCLIをアンインストールした場合はDiagで一覧を更新します。Naviは実行時にもread-onlyを強制し、欠損・旧形式・破損時は更新案内を表示します。Tools接続やモデルへの試験送信は一覧読込に必要ありません。
 
 ## Pi（aidiy_pi）の連携
 

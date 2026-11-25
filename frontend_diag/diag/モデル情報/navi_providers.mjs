@@ -5,4 +5,4 @@
 // https://github.com/monjyu1101/AiDiy2027
 // Naviの読取専用実行を実装した方式。表示順はCodeの合成一覧に従う。
 // aidiy_codex はコンパイル済みのときだけ Code 一覧に入り、そこから Navi 候補にも入る（今は openai_oauth のみ）。
-export const NAVI_PROVIDERS=Object.freeze(['aidiy_hermes','aidiy_pi','aidiy_codex','codex_cli','copilot_cli','claude_cli','grok_cli']);
+export const NAVI_PROVIDERS=Object.freeze(['aidiy_hermes','aidiy_pi','aidiy_codex','codex_cli','copilot_cli','claude_cli','grok_cli','agy_cli']);

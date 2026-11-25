@@ -247,6 +247,19 @@ test('Naviの方式候補はDiag一覧にある安全な方式だけ',async t=>{
  assert.ok((await navigationProviders(join(root,'missing'))).notice);
 });
 
+test('NaviのAGY候補はDiagの一覧と実行ファイルの双方がある場合だけ表示する',async t=>{
+ const root=await mkdtemp(join(tmpdir(),'navi-agy-'));t.after(()=>rm(root,{recursive:true,force:true}));
+ const file=join(root,'navi_models_info.json');
+ const model='gemini-4-hydrogen-medium';
+ const info={_meta:{schema:1,readOnly:true},codex_cli:{models:{test:'Codex'}},agy_cli:{models:{[model]:'Hydrogen'}}};
+ await writeFile(file,JSON.stringify(info));
+ assert.deepEqual((await navigationProviders(file,async()=>'/fixture/agy')).providers,['codex_cli','agy_cli']);
+ assert.deepEqual((await navigationProviders(file,async()=>null)).providers,['codex_cli']);
+ assert.deepEqual((await navigationCatalog('agy_cli',file)).items.map(({id})=>id),['same','auto',model]);
+ delete info.agy_cli;await writeFile(file,JSON.stringify(info));
+ assert.deepEqual((await navigationProviders(file,async()=>assert.fail('未掲載のAGYを探索しない'))).providers,['codex_cli']);
+});
+
 test('加重総合は整数に丸め、未実施・未評価の0%を分母に含める',()=>{
  const d=valid();d.items[0].weight=35;d.items[0].progress=100;d.nextItemId='2';
  d.items.push({...d.items[0],id:'2',name:'残りの作業',weight:65,progress:10});d.overall.progress=42;

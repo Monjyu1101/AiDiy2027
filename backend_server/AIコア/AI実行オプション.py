@@ -17,7 +17,7 @@ AIチャット / AIコード 共通の実行オプション
 from dataclasses import dataclass
 from typing import Any
 
-読取専用CLI対応方式 = frozenset({"aidiy_hermes", "aidiy_pi", "aidiy_codex", "codex_cli", "copilot_cli", "claude_cli", "grok_cli", "antigravity_cli", "opencode_cli"})
+読取専用CLI対応方式 = frozenset({"aidiy_hermes", "aidiy_pi", "aidiy_codex", "codex_cli", "copilot_cli", "claude_cli", "grok_cli", "antigravity_cli", "agy_cli", "opencode_cli"})
 
 
 @dataclass(frozen=True)

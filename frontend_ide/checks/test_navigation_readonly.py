@@ -63,7 +63,7 @@ class NavigationReadonlyTest(unittest.TestCase):
 
     def test_all_providers_use_readonly_options_without_custom_system_instruction(self):
         with tempfile.TemporaryDirectory() as folder:
-            for provider in ("codex_cli", "copilot_cli", "aidiy_hermes", "claude_cli", "grok_cli"):
+            for provider in ("codex_cli", "copilot_cli", "aidiy_hermes", "claude_cli", "grok_cli", "agy_cli"):
                 with self.subTest(provider=provider):
                     code = FakeCode({"status": "OK", "result": "{}"})
                     asyncio.run(module.run({"project": folder, "prompt": "調査", "selection": {"provider": provider, "model": "auto"}}, code))

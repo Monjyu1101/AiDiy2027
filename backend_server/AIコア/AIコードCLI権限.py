@@ -15,6 +15,19 @@ def antigravity読取専用設定() -> str:
     }, ensure_ascii=False)
 
 
+def agy読取専用設定() -> str:
+    return json.dumps({
+        "agentMode": "plan", "toolPermission": "request-review",
+        "allowNonWorkspaceAccess": False,
+        "permissions": {
+            "allow": ["read_file(*)"], "ask": [],
+            "deny": [f"{action}(*)" for action in (
+                "write_file", "command", "unsandboxed", "mcp", "read_url", "execute_url", "download_url",
+            )],
+        },
+    }, ensure_ascii=False)
+
+
 def opencode読取専用設定() -> dict:
     # OpenCode V2: policy は agent 個別の許可と過去の承認より優先する。
     reads = ["read", "grep", "glob", "external_directory"]

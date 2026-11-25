@@ -746,6 +746,11 @@ class CodeAI:
                 "exec", "--skip-git-repo-check", "--sandbox", "read-only",
                 "--ephemeral", "--ignore-rules",
             ])
+        elif self.code_ai == "agy_cli":
+            from AIコア.AIコードCLI権限 import agy読取専用設定
+            return self._agyコマンド共通(base) + [
+                "--mode", "plan", "--settings", agy読取専用設定(), "--disable-slash-commands",
+            ]
         elif self.code_ai == "antigravity_cli":
             from AIコア.AIコードCLI権限 import antigravity読取専用設定
             common = base + ["--mode", "plan", "--settings", antigravity読取専用設定(),
@@ -784,6 +789,14 @@ class CodeAI:
             return common  # stdin と -p の併用では stdin が無視される。
         return common + ([プロンプト] if self.code_ai == "opencode_cli" else ["-p", プロンプト])
 
+    def _agyコマンド共通(self, base: list) -> list:
+        common = base + ["--input-format", "stream-json", "--output-format", "stream-json", "--print-timeout", "0"]
+        if self.code_model and self.code_model.lower() not in ("auto", "same"):
+            if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}", self.code_model):
+                raise ValueError("agy_cli のモデル指定が不正です。")
+            common.extend(["--model", self.code_model])
+        return common
+
     def _コマンド構築(self, プロンプト: str, 初回: bool = False, repo_path: str = None, 読取専用: bool = False) -> list:
         """
         プロバイダー別のコマンドを構築
@@ -804,9 +817,10 @@ class CodeAI:
                 return self._予測Hermesコマンド(repo_path)
             if self.code_ai == "aidiy_pi":
                 return self._Piコマンド構築(読取専用=True)
-            base, cmd_exe経由 = self._CLI起動コマンド先頭(
-                custom_cmd or self._コマンドパス取得(), custom=bool(custom_cmd),
-            )
+            executable = custom_cmd or self._コマンドパス取得()
+            if self.code_ai == "agy_cli" and not executable:
+                raise 予測読取専用利用不可("agy が見つかりません。導入状態を確認してください。")
+            base, cmd_exe経由 = self._CLI起動コマンド先頭(executable, custom=bool(custom_cmd))
             if cmd_exe経由:
                 プロンプト = self._CLI送信用テキスト正規化(プロンプト)
             return self._予測読取専用コマンド構築(base, プロンプト, repo_path)
@@ -918,13 +932,9 @@ class CodeAI:
         elif self.code_ai == "agy_cli":
             # 1回分の会話をstdinへ渡し、公式の構造化結果からこの接続専用のIDを取得する。
             # https://antigravity.google/docs/cli/headless/
-            common = base + ["--input-format", "stream-json", "--output-format", "stream-json", "--print-timeout", "0"]
+            common = self._agyコマンド共通(base)
             if self.code_permissions == "full":
                 common.append("--dangerously-skip-permissions")
-            if self.code_model and self.code_model.lower() not in ("auto", "same"):
-                if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}", self.code_model):
-                    raise ValueError("agy_cli のモデル指定が不正です。")
-                common.extend(["--model", self.code_model])
             if not 初回 and self._agy会話 and self._agy会話[0] == repo_path:
                 common.extend(["--conversation", self._agy会話[1]])
             return common

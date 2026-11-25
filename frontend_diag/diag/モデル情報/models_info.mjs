@@ -17,7 +17,7 @@ import {LIVE_VOICES_FILE, liveVoicesInfo} from './voices_info.mjs';
 import {PREDICTION_MODELS_FILE, predictionModelsInfo} from './prediction_info.mjs';
 import {DECISIONS_MODELS_FILE,decisionsModelsInfo} from './decisions_info.mjs';
 import {COPILOT_FALLBACK_MODELS, OAUTH_FALLBACK_SOURCE, oauthModelFallback} from './model_fallbacks.mjs';
-import {antigravityModels,agyOAuthEntry} from './antigravity_models.mjs';
+import {antigravityModels,resolveAgyOAuth} from './antigravity_models.mjs';
 import {HERMES_MODELS_FILE, hermesModelsInfo} from './hermes_info.mjs';
 import {PI_MODELS_FILE, PI_CODE_PROVIDER, PI_PROVISIONAL_MODELS, piModels, piModelsInfo, piInstalled} from './pi_info.mjs';
 import {CODEX_MODELS_FILE, CODEX_CODE_PROVIDER, codexModelsInfo, codexCodeModels, codexInstalled} from './codex_info.mjs';
@@ -33,8 +33,7 @@ export async function installedCodeClis({loadEntries = catalog, resolve = resolv
     const entry = entries.find(item => item.id === id);
     return [key, !!(entry && await resolve(entry))];
   })));
-  const agy = (platform === 'win32' ? entries.find(item=>item.id === 'agy-exe') : null) ?? entries.find(item=>item.id === 'agy');
-  return {...clis, agy_cli:!!(agy&&await resolve(agyOAuthEntry(agy,platform))), [PI_CODE_PROVIDER]:await piCheck(), [CODEX_CODE_PROVIDER]:await codexCheck()};
+  return {...clis, agy_cli:!!await resolveAgyOAuth({entries,resolve,platform}), [PI_CODE_PROVIDER]:await piCheck(), [CODEX_CODE_PROVIDER]:await codexCheck()};
 }
 
 // Hermes / OpenCode は渡す値（プロバイダ/モデル）をそのまま表示名にも使う。先頭の日付・仮設定表示は残す。

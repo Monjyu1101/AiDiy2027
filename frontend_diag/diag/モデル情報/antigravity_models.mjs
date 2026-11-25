@@ -14,13 +14,18 @@ export function agyOAuthEntry(entry, platform = process.platform) {
     : {...entry, commands:['agy'],paths:{...entry.paths,[platform]:[...(entry.paths?.[platform]??[]),'$HOME/.local/bin/agy']}};
 }
 
+export async function resolveAgyOAuth({entries, loadEntries = catalog, resolve = resolveProgram, env = process.env, platform = process.platform} = {}) {
+  const programs = entries ?? await loadEntries();
+  const managed = programs.find(item => item.id === 'agy');
+  const entry = (platform === 'win32' ? programs.find(item => item.id === 'agy-exe') : null) ?? managed;
+  return entry ? await resolve(agyOAuthEntry(entry,platform),{env,platform}) : null;
+}
+
 const ALTERNATIVE_AUTH = new Set(['GEMINI_API_KEY','GOOGLE_API_KEY','AGY_ADC_AUTH','GOOGLE_APPLICATION_CREDENTIALS','GOOGLE_GEMINI_BASE_URL']);
 export async function antigravityModels({loadEntries = catalog, resolve = resolveProgram, run = promisify(execFile), oauthOnly = false, env = process.env, platform = process.platform} = {}) {
   try {
-    const entries = await loadEntries();
-    const managed = entries.find(item => item.id === 'agy');
-    const entry = oauthOnly && platform === 'win32' ? entries.find(item => item.id === 'agy-exe') ?? managed : managed;
-    const executable = entry && (oauthOnly ? await resolve(agyOAuthEntry(entry,platform),{env,platform}) : await resolve(entry));
+    const entry = oauthOnly ? null : (await loadEntries()).find(item => item.id === 'agy');
+    const executable = oauthOnly ? await resolveAgyOAuth({loadEntries,resolve,env,platform}) : entry && await resolve(entry);
     if (!executable) return {};
     const {stdout} = await run(executable, ['models'], {
       encoding:'utf8', timeout:15000, maxBuffer:256 * 1024, windowsHide:true, shell:false,

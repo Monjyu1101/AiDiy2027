@@ -147,9 +147,10 @@ class CodeCommonDefaultsTests(unittest.TestCase):
         env = {**namespace, 'Request': object, 'モデル情報取得リクエスト': object, 'モデル設定リクエスト': object,
                'authenticate': lambda *_: (object(), None), 'require_session_settings': lambda *_: None,
                'require_session_owner': lambda *_: None, 'AIセッション管理': SimpleNamespace(get_session=lambda _: session),
-               '取得_コードベース選択肢': lambda _: {}, 'logger': logging.getLogger(__name__), 're': re}
+               '取得_コードベース選択肢': lambda _: {}, 'logger': logging.getLogger(__name__), 're': re,
+               'code_provider_order': model_module.code_provider_order, '_backend_local稼働中': lambda _: True}
         for node in ast.parse(routes.read_text(encoding='utf-8')).body:
-            if isinstance(node, ast.AsyncFunctionDef) and node.name in ('モデル情報取得', 'モデル情報設定'):
+            if isinstance(node, ast.AsyncFunctionDef) and node.name in ('モデル情報取得', 'モデル情報設定', 'TASKモデル選択肢取得'):
                 node.decorator_list = []
                 exec(compile(ast.Module(body=[node], type_ignores=[]), str(routes), 'exec'), env)
 
@@ -168,6 +169,35 @@ class CodeCommonDefaultsTests(unittest.TestCase):
         self.assertEqual({key: values[key] for key in settings}, settings)
         self.assertEqual(values['CODE_ANTIGRAVITY_CLI_MODEL'], 'legacy-custom')
         self.assertNotIn('gemini_key_id', values)
+
+        catalog = model_module.conf_models()
+        context.app.conf.models = catalog
+        with patch.object(catalog, '_get_diag_models', side_effect=lambda kind, **_: ({
+            'codex_cli': {'codex-fixture': 'Codex'},
+            'antigravity_cli': {'legacy-fixture': 'Legacy'},
+            'grok_cli': {'grok-fixture': 'Grok'},
+        } if kind == 'code' else {})), patch.dict(sys.modules, {'AIコア.AI判断': fake_decision}):
+            models = asyncio.run(env['モデル情報取得'](
+                context, SimpleNamespace(セッションID='fixture', 保存済み=True)
+            ))['data']['available_models']['code_models']
+            self.assertEqual(list(models), ['codex_cli', 'antigravity_cli', 'agy_cli', 'grok_cli'])
+            self.assertIn('slot-custom', models['agy_cli'])
+            task = asyncio.run(env['TASKモデル選択肢取得'](context))['data']['available_models']['code_models']
+            self.assertNotIn('agy_cli', task)
+
+        candidates = {'agy_cli': {'agy-fixture': 'AGY'}, 'codex_cli': {'x': 'Codex'},
+                      'antigravity_cli': {'y': 'Legacy'}, 'grok_cli': {'z': 'Grok'}}
+        with patch.object(catalog, '_get_diag_models', return_value=candidates):
+            models = catalog.get_code_models()
+            self.assertEqual(list(models), ['codex_cli', 'antigravity_cli', 'agy_cli', 'grok_cli'])
+            task = asyncio.run(env['TASKモデル選択肢取得'](context))['data']['available_models']['code_models']
+            position = list(task).index('antigravity_cli')
+            self.assertEqual(list(task)[position:position+2], ['antigravity_cli', 'agy_cli'])
+            self.assertEqual(task['agy_cli'], models['agy_cli'])
+
+    def test_provider_order_does_not_create_missing_choices(self):
+        for candidates in ({'agy_cli': {'x': 'AGY'}, 'grok_cli': {}}, {'antigravity_cli': {}, 'codex_cli': {}}, {}):
+            self.assertEqual(list(model_module.code_provider_order(candidates).items()), list(candidates.items()))
 
     def test_reloading_new_file_does_not_rewrite(self):
         self.load()
