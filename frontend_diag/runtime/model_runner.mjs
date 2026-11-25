@@ -367,8 +367,9 @@ function publicFailureDescription(code) {
 }
 var CONFIG_PATH = fileURLToPath(new URL("../../_config/AiDiy_key.json", import.meta.url));
 var KEY_PROVIDERS = Object.freeze([
-  ["gemini", "Gemini", "gemini_key_id", "google"],
-  ["freeai", "FreeAI\uFF08Gemini\uFF09", "freeai_key_id", "google"],
+  ["gemini", "Gemini (API)", "gemini_key_id", "google"],
+  ["freeai", "FreeAI (Gemini)", "freeai_key_id", "google"],
+  ["gemini_agy", "Gemini (Agy)", "Google OAuth", "agy-oauth"],
   ["claude", "Claude", "claude_key_id", "anthropic"],
   ["openai", "OpenAI API", "openai_key_id", "openai"],
   ["openai_oauth", "OpenAI OAuth", "~/.codex/auth.json", "codex"],
@@ -469,10 +470,12 @@ var INTEGRATION_PROBES = Object.freeze(["huggingface", "discord", "slack"]);
 function configured(value, id) {
   return typeof value === "string" && (id !== "slack" || value.trim().length > 1 && !/\s/.test(value.trim())) && !!value.trim() && !value.trim().startsWith("<") && !(id === "ollama" && value.trim().toLowerCase() === "ollama");
 }
-async function status({ reader, oauthReader } = {}) {
+async function status({ reader, oauthReader, agyAvailable } = {}) {
   const [state, values] = await readConfig(reader);
   const oauth = { codex: !!await readOAuth("codex", oauthReader), grok: !!await readOAuth("grok", oauthReader) };
+  const agy = await agyAvailable?.().catch(() => false) ?? false;
   return { \u8A2D\u5B9A\u72B6\u614B: state, \u9805\u76EE: KEY_PROVIDERS.map((p) => {
+    if (p.probe === "agy-oauth") return { id: p.id, \u540D\u524D: p.\u540D\u524D, \u30AD\u30FC\u540D: p.\u30AD\u30FC\u540D, \u8A2D\u5B9A\u6E08\u307F: agy, \u30AD\u30FC\u4E0D\u8981: true, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u7406\u7531: agy ? "" : "agy \u3092\u691C\u51FA\u3067\u304D\u307E\u305B\u3093\u3002\u5C0E\u5165\u72B6\u6CC1\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002", \u30C6\u30B9\u30C8\u53EF\u80FD: agy, \u8AAC\u660E: "agy models \u3067 Google OAuth \u306E\u30E2\u30C7\u30EB\u4E00\u89A7\u3092\u53D6\u5F97\u3057\u307E\u3059\u3002API \u30AD\u30FC\u3084\u6587\u7AE0\u751F\u6210\u306F\u4F7F\u3044\u307E\u305B\u3093\u3002" };
     if (p.probe === "local-fixed") return { id: p.id, \u540D\u524D: p.\u540D\u524D, \u30AD\u30FC\u540D: p.\u30AD\u30FC\u540D, \u8A2D\u5B9A\u6E08\u307F: null, \u30AD\u30FC\u4E0D\u8981: true, \u30ED\u30FC\u30AB\u30EB: true, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u7406\u7531: "", \u30C6\u30B9\u30C8\u53EF\u80FD: true, \u8AAC\u660E: "\u672C\u4F53\u3068\u540C\u3058\u56FA\u5B9A\u5019\u88DC\uFF08CHAT_LOCAL_MODELS\uFF09\u3092\u4F7F\u3044\u307E\u3059\uFF08API \u53D6\u5F97\u306A\u3057\uFF09\u3002" };
     if (p.probe === "ollama-local") return { id: p.id, \u540D\u524D: p.\u540D\u524D, \u30AD\u30FC\u540D: p.\u30AD\u30FC\u540D, \u8A2D\u5B9A\u6E08\u307F: null, \u30AD\u30FC\u4E0D\u8981: true, \u30ED\u30FC\u30AB\u30EB: true, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u7406\u7531: "", \u30C6\u30B9\u30C8\u53EF\u80FD: true, \u8AAC\u660E: "\u672C\u4F53\u3068\u540C\u3058\u304F\u3001\u30ED\u30FC\u30AB\u30EB\u306E Ollama\uFF08ollama list \u3068\u540C\u3058\u4E00\u89A7\uFF09\u3092\u78BA\u8A8D\u3057\u307E\u3059\u3002\u30AD\u30FC\u306F\u4F7F\u3044\u307E\u305B\u3093\u3002" };
     if (p.oauth) {
@@ -604,10 +607,23 @@ function authenticatedRouterResult(result, key) {
     return state === "\u8AAD\u8FBC\u6E08\u307F" && configured(values.openrt_key_id, "openrt_chat") && values.openrt_key_id.trim() === key;
   } });
 }
-async function probe(id, { reader, oauthReader, codexLocalReader, fetch = fetchMetadata, now, cache, signal } = {}) {
+async function probe(id, { reader, oauthReader, codexLocalReader, fetch = fetchMetadata, now, cache, signal, agyModels } = {}) {
   const output = { id, \u72B6\u614B: "\u672A\u5B9F\u65BD", \u8AAC\u660E: "\u672A\u5BFE\u5FDC\u306E\u9805\u76EE\u3067\u3059\u3002", \u30E2\u30C7\u30EB: [], \u30E2\u30C7\u30EB\u8A73\u7D30: [], \u78BA\u8A8D\u65E5\u6642: null, \u8B66\u544A: [] };
   const selected = KEY_PROVIDERS.find((row2) => row2.id === id);
   if (!selected?.probe) return output;
+  if (selected.probe === "agy-oauth") {
+    const models = await agyModels?.(signal);
+    if (!models) return { ...output, \u8AAC\u660E: "agy \u304C\u672A\u691C\u51FA\u306E\u305F\u3081\u3001\u30E2\u30C7\u30EB\u4E00\u89A7\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3002" };
+    const ids = Object.keys(models).filter((id2) => /^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(id2) && !["auto", "same"].includes(id2)).slice(0, 500);
+    return {
+      ...output,
+      \u72B6\u614B: ids.length ? "OK" : "NG",
+      \u30E2\u30C7\u30EB: ids,
+      \u78BA\u8A8D\u65E5\u6642: (/* @__PURE__ */ new Date()).toISOString(),
+      \u8AAC\u660E: ids.length ? "agy models \u3067\u30E2\u30C7\u30EB\u4E00\u89A7\u3092\u53D6\u5F97\u3057\u307E\u3057\u305F\u3002\u751F\u6210\u53EF\u5426\u30FB\u5229\u7528\u4E0A\u9650\u306F\u672A\u78BA\u8A8D\u3067\u3059\u3002" : "agy models \u3067\u30E2\u30C7\u30EB\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3067\u3057\u305F\u3002agy \u306E\u30D0\u30FC\u30B8\u30E7\u30F3\u3001Google \u30ED\u30B0\u30A4\u30F3\u3001\u30CD\u30C3\u30C8\u30EF\u30FC\u30AF\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+      \u4E00\u89A7\u7BC4\u56F2: "Google OAuth \u306E CLI \u4E00\u89A7\u3002\u8868\u793A\u306F\u6700\u5927500\u4EF6\u3002"
+    };
+  }
   if (selected.oauth) {
     const kind = selected.oauth, cli = OAUTH_CLI[kind], credential = await readOAuth(kind, oauthReader);
     if (!credential) return { ...output, \u8AAC\u660E: `\u30ED\u30B0\u30A4\u30F3\u60C5\u5831\u304C\u3042\u308A\u307E\u305B\u3093\u3002${cli} CLI \u3067\u30ED\u30B0\u30A4\u30F3\u3057\u3066\u304F\u3060\u3055\u3044\u3002` };

@@ -101,12 +101,13 @@ function availableCodeModels(code, installedClis) {
   return Object.fromEntries(Object.entries(filtered).sort(([a], [b]) => priority(a) - priority(b)));
 }
 
-// モデル一覧に表示する（モデル一覧を取得する）プロバイダ。ファイル名にも使う。
+// 共通の変換・合成スキーマを使うプロバイダ。Agy は専用形式で別に保存する。
 export const MODEL_PROVIDER_IDS = Object.freeze(['gemini', 'freeai', 'claude', 'openai', 'openai_oauth', 'grok', 'openrt_chat', 'ollama', 'local']);
 // OpenRouter は有料を含む一覧を openrt_chat（プロバイダ ID と同名）、無料の絞り込みを派生の openrt_free ファイルに保存する。
 export const modelsInfoFile = id => `${id}_models_info.json`;
 export const OPENRT_FREE_FILE = 'openrt_free_models_info.json';
 export const GEMINI_AGY_MODELS_FILE = 'gemini_agy_models_info.json';
+export const MODEL_TEST_IDS = Object.freeze([...MODEL_PROVIDER_IDS.slice(0,2), 'gemini_agy', ...MODEL_PROVIDER_IDS.slice(2)]);
 
 // Grok / local の固定候補も aidiy_diag で管理し、本体は合成ファイルを読む。
 const fixed = (source, models) => Object.freeze({source, models:Object.freeze(models)});
@@ -322,16 +323,28 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
   delete merged.chat.gemini_agy;
   const agyInstalled = installedClis.agy_cli === true;
   const validAgySlug = id => /^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(id) && !['auto','same'].includes(id);
-  const agyModels = agyInstalled ? Object.fromEntries(Object.entries(
-    await (options.agyModelsReader ?? antigravityModels)({oauthOnly:true}),
-  ).filter(([id,label])=>validAgySlug(id)&&typeof label==='string')) : {};
+  const agyPath = path.join(directory, GEMINI_AGY_MODELS_FILE);
+  let previousAgy = {};
+  try { previousAgy = JSON.parse(await readFile(agyPath, 'utf8')); }
+  catch (error) { if (error?.code !== 'ENOENT' && !(error instanceof SyntaxError)) throw error; }
+  const agyResult = results.gemini_agy;
+  const agyTested = ['OK','NG'].includes(agyResult?.状態);
+  const previousModels = previousAgy?.プロバイダ === 'gemini_agy' && previousAgy.状態 === 'OK' ? previousAgy.models : null;
+  const candidates = !agyInstalled ? {} : agyTested
+    ? Object.fromEntries((agyResult.状態 === 'OK' ? agyResult.モデル ?? [] : []).filter(id=>typeof id==='string' && validAgySlug(id)).map(id=>[id,`yyyy/mm/dd - ${id}`]))
+    : previousModels;
+  const agyModels = Object.fromEntries(Object.entries(candidates ?? {}).filter(([id,label])=>validAgySlug(id)&&typeof label==='string'));
   const oauthInfo = {
     プロバイダ:'gemini_agy', 認証方式:'Google OAuth', 取得元:'agy models',
     状態:!agyInstalled?'未導入':Object.keys(agyModels).length?'OK':'未取得',
     models:agyModels,
+    ...(agyInstalled && agyTested ? {確認日時:agyResult.確認日時, 説明:agyResult.説明} : {}),
   };
-  await writeResult(path.join(directory, GEMINI_AGY_MODELS_FILE), oauthInfo);
-  saved.push(GEMINI_AGY_MODELS_FILE);
+  // 「書込」で再度CLIを呼ばない。未テストなら Agy の有効な保存一覧を維持する。
+  if (agyTested || previousAgy?.プロバイダ !== 'gemini_agy' || previousAgy.状態 !== oauthInfo.状態) {
+    await writeResult(agyPath, oauthInfo);
+    saved.push(GEMINI_AGY_MODELS_FILE);
+  }
   if (agyInstalled) {
     const [, config] = await readConfig(options.configReader);
     const configured = (key) => typeof config[key] === 'string' ? config[key].trim() : '';

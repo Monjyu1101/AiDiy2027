@@ -11,7 +11,7 @@ import path from 'node:path';
 import { catalog, probe, scan, cancelProbes } from './probes.mjs';
 import { getKeyStatus, testKey, cancelKeyProbes } from '../モデル情報/key_status.mjs';
 import { createPublicModelCache } from '../モデル情報/public_models.mjs';
-import { MODEL_PROVIDER_IDS, writeModelsInfo, installedCodeClis } from '../モデル情報/models_info.mjs';
+import { MODEL_TEST_IDS, writeModelsInfo, installedCodeClis } from '../モデル情報/models_info.mjs';
 
 export const OUTPUT_DIRECTORY = fileURLToPath(new URL('../../../_AIDIY/aidiy_diag/', import.meta.url));
 export const INSTALL_FILE = 'install_info.json';
@@ -91,8 +91,8 @@ export async function modelsStep({installResults = [], log = console.log, signal
   if (signal?.aborted) throw cancelled();
   const [status] = await Promise.all([statusFn(), publicCache.refresh()]);
   if (signal?.aborted) throw cancelled();
-  const rows = status.項目.filter(row => MODEL_PROVIDER_IDS.includes(row.id) && row.テスト可能), input = publicCache.input();
-  const results = await scan(rows, row => testFn(row.id, {publicCache:input, installResults}), 2);
+  const rows = status.項目.filter(row => MODEL_TEST_IDS.includes(row.id) && row.テスト可能), input = publicCache.input();
+  const results = await scan(rows, row => testFn(row.id, {publicCache:input, installResults, signal}), 2);
   if (signal?.aborted) throw cancelled();
   const byId = {};
   rows.forEach((row, index) => { const result = results[index]; byId[row.id] = result; log(`  ${String(result?.状態 ?? 'ERR').padEnd(3)} ${row.名前}（${result?.モデル?.length ?? 0} 件）`); });

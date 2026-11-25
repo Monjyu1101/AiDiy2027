@@ -22,13 +22,13 @@ export async function resolveAgyOAuth({entries, loadEntries = catalog, resolve =
 }
 
 const ALTERNATIVE_AUTH = new Set(['GEMINI_API_KEY','GOOGLE_API_KEY','AGY_ADC_AUTH','GOOGLE_APPLICATION_CREDENTIALS','GOOGLE_GEMINI_BASE_URL']);
-export async function antigravityModels({loadEntries = catalog, resolve = resolveProgram, run = promisify(execFile), oauthOnly = false, env = process.env, platform = process.platform} = {}) {
+export async function antigravityModels({loadEntries = catalog, resolve = resolveProgram, run = promisify(execFile), oauthOnly = false, env = process.env, platform = process.platform, executable: fixedExecutable, signal} = {}) {
   try {
     const entry = oauthOnly ? null : (await loadEntries()).find(item => item.id === 'agy');
-    const executable = oauthOnly ? await resolveAgyOAuth({loadEntries,resolve,env,platform}) : entry && await resolve(entry);
-    if (!executable) return {};
+    const executable = fixedExecutable ?? (oauthOnly ? await resolveAgyOAuth({loadEntries,resolve,env,platform}) : entry && await resolve(entry));
+    if (!executable || signal?.aborted) return {};
     const {stdout} = await run(executable, ['models'], {
-      encoding:'utf8', timeout:15000, maxBuffer:256 * 1024, windowsHide:true, shell:false,
+      encoding:'utf8', timeout:15000, maxBuffer:256 * 1024, windowsHide:true, shell:false, signal,
       ...(oauthOnly ? {env:Object.fromEntries(Object.entries(env).filter(([key])=>!ALTERNATIVE_AUTH.has(key.toUpperCase())))} : {}),
     });
     const models = {};

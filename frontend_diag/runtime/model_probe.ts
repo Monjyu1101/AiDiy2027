@@ -30,7 +30,8 @@ export function publicFailureDescription(code:unknown):string {
 }
 const CONFIG_PATH=fileURLToPath(new URL('../../_config/AiDiy_key.json',import.meta.url));
 export const KEY_PROVIDERS=Object.freeze([
- ['gemini','Gemini','gemini_key_id','google'],['freeai','FreeAI（Gemini）','freeai_key_id','google'],
+ ['gemini','Gemini (API)','gemini_key_id','google'],['freeai','FreeAI (Gemini)','freeai_key_id','google'],
+ ['gemini_agy','Gemini (Agy)','Google OAuth','agy-oauth'],
  ['claude','Claude','claude_key_id','anthropic'],['openai','OpenAI API','openai_key_id','openai'],
  ['openai_oauth','OpenAI OAuth','~/.codex/auth.json','codex'],['grok','Grok（xAI）','~/.grok/auth.json','grok'],
  ['azure','Azure OpenAI','azure_key_id',null],['copilot','GitHub Copilot','copilot_key_id',null],
@@ -106,11 +107,17 @@ export async function readCodexLocal(reader?:CodexLocalReader,env:NodeJS.Process
 // 外部連携（モデル一覧なし）。読み取り専用の認証確認だけを行い、送信・書込・Gateway 接続はしない。
 export const INTEGRATION_PROBES=Object.freeze(['huggingface','discord','slack']);
 export function configured(value:unknown,id:string):value is string {return typeof value==='string'&&(id!=='slack'||(value.trim().length>1&&!/\s/.test(value.trim())))&&!!value.trim()&&!value.trim().startsWith('<')&&!(id==='ollama'&&value.trim().toLowerCase()==='ollama');}
-export async function status({reader,oauthReader}:{reader?:Reader;oauthReader?:OAuthReader}={}) {
+export type AgyHooks={
+ agyAvailable?:()=>Promise<boolean>;
+ agyModels?: (signal?:AbortSignal)=>Promise<Record<string,string>|null>;
+};
+export async function status({reader,oauthReader,agyAvailable}:{reader?:Reader;oauthReader?:OAuthReader}&AgyHooks={}) {
  const [state,values]=await readConfig(reader);
  const oauth:Record<OAuthKind,boolean>={codex:!!await readOAuth('codex',oauthReader),grok:!!await readOAuth('grok',oauthReader)};
+ const agy=await agyAvailable?.().catch(()=>false) ?? false;
  return {設定状態:state,項目:KEY_PROVIDERS.map(p=>{
   // OAuth は API キーではなく、該当フォルダのログイン情報の有無で設定済みを判断する。
+  if(p.probe==='agy-oauth')return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:agy,キー不要:true,状態:'未実施',理由:agy?'':'agy を検出できません。導入状況を確認してください。',テスト可能:agy,説明:'agy models で Google OAuth のモデル一覧を取得します。API キーや文章生成は使いません。'};
   if(p.probe==='local-fixed')return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:null,キー不要:true,ローカル:true,状態:'未実施',理由:'',テスト可能:true,説明:'本体と同じ固定候補（CHAT_LOCAL_MODELS）を使います（API 取得なし）。'};
   if(p.probe==='ollama-local')return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:null,キー不要:true,ローカル:true,状態:'未実施',理由:'',テスト可能:true,説明:'本体と同じく、ローカルの Ollama（ollama list と同じ一覧）を確認します。キーは使いません。'};
   if(p.oauth){const present=oauth[p.oauth];return {id:p.id,名前:p.名前,キー名:p.キー名,設定済み:present,キー不要:false,状態:'未実施',理由:present?'':`ログイン情報がありません。${OAUTH_CLI[p.oauth]} CLI でログインしてください。`,テスト可能:present,説明:'ログイン情報（OAuth）の有無のみ。接続は未確認です。'};}
@@ -212,9 +219,17 @@ function authenticatedRouterResult<T extends object>(result:T,key:string):T {
   return state==='読込済み'&&configured(values.openrt_key_id,'openrt_chat')&&values.openrt_key_id.trim()===key;
  }});
 }
-export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch=fetchMetadata,now,cache,signal}:{reader?:Reader;oauthReader?:OAuthReader;codexLocalReader?:CodexLocalReader;fetch?:Fetch;now?:Date;cache?:unknown;signal?:AbortSignal}={}) {
+export async function probe(id:string,{reader,oauthReader,codexLocalReader,fetch=fetchMetadata,now,cache,signal,agyModels}:{reader?:Reader;oauthReader?:OAuthReader;codexLocalReader?:CodexLocalReader;fetch?:Fetch;now?:Date;cache?:unknown;signal?:AbortSignal}&AgyHooks={}) {
  const output={id,状態:'未実施',説明:'未対応の項目です。',モデル:[] as string[],モデル詳細:[] as Model[],確認日時:null as string|null,警告:[] as string[]};
  const selected=KEY_PROVIDERS.find(row=>row.id===id);if(!selected?.probe)return output;
+ if(selected.probe==='agy-oauth'){
+  const models=await agyModels?.(signal);
+  if(!models)return {...output,説明:'agy が未検出のため、モデル一覧を取得できません。'};
+  const ids=Object.keys(models).filter(id=>/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(id)&&!['auto','same'].includes(id)).slice(0,500);
+  return {...output,状態:ids.length?'OK':'NG',モデル:ids,確認日時:new Date().toISOString(),
+    説明:ids.length?'agy models でモデル一覧を取得しました。生成可否・利用上限は未確認です。':'agy models でモデルを取得できませんでした。agy のバージョン、Google ログイン、ネットワークを確認してください。',
+    一覧範囲:'Google OAuth の CLI 一覧。表示は最大500件。'};
+ }
  if(selected.oauth){
   const kind=selected.oauth,cli=OAUTH_CLI[kind],credential=await readOAuth(kind,oauthReader);
   if(!credential)return {...output,説明:`ログイン情報がありません。${cli} CLI でログインしてください。`};

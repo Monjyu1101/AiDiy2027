@@ -15,7 +15,7 @@ test('確認不要（Azure・GitHub Copilot）以外の登録キーを重複な�
  const { 外部連携表示を作成 } = await import('../../外部連携/外部連携表示.mjs');
  const props = reactive({ data: { 項目: KEY_PROVIDERS }, results: {} });
  const model = モデル一覧表示を作成(props), external = 外部連携表示を作成(props);
- assert.deepEqual(model.items.value.map(x=>x.id),['gemini','freeai','claude','openai','openai_oauth','grok','openrt_chat','ollama','local']);
+ assert.deepEqual(model.items.value.map(x=>x.id),['gemini','freeai','gemini_agy','claude','openai','openai_oauth','grok','openrt_chat','ollama','local']);
  assert.deepEqual(external.items.value.map(x=>x.id),['huggingface_read','huggingface_write','discord','slack']);
  assert.equal(new Set([...model.items.value,...external.items.value].map(x=>x.id)).size,KEY_PROVIDERS.length-2);
  // 秘匿対象とサーバーの登録には残す。
@@ -43,4 +43,17 @@ test('一覧再取得の完了後は1項目目を表示する', async () => {
  const model = モデル一覧表示を作成(props);
  props.latestBusy = true; props.testing = 'claude'; await nextTick(); assert.equal(model.selected.value, 'claude');
  props.testing = ''; props.latestBusy = false; await nextTick(); assert.equal(model.selected.value, 'gemini'); assert.equal(model.row.value.id, 'gemini');
+});
+
+test('Gemini (Agy) は API キー表示ではなく導入の有無でテストを切り替える', async () => {
+ const { getKeyStatus, runModels } = await import('../../../../モデル情報/key_status.mjs');
+ for (const detected of [false,true]) {
+  const status=await getKeyStatus({resolveAgy:async()=>detected?'/fixture/agy.exe':null,
+   run:(action,id,options)=>runModels(action,id,{...options,reader:async()=> '{}',oauthReader:async()=>''})});
+  const html=await render('components/モデル一覧/モデル一覧パネル.vue',{data:status,results:{},connected:true});
+  assert.match(html,/Gemini \(API\)[\s\S]+FreeAI \(Gemini\)[\s\S]+Gemini \(Agy\)/);
+  const row=html.slice(html.indexOf('Gemini (Agy)'),html.indexOf('Claude'));
+  assert.match(row,detected?/検出済/:/未検出/);
+  assert.equal(/<button[^>]*single-test-button[^>]*disabled/.test(row),!detected);
+ }
 });

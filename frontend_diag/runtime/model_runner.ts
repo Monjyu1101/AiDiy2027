@@ -4,8 +4,8 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 期限・同時実行・キャンセルをすべてのモデル処理に適用。子プロセスやPython不要。
-import {status,probe,publicCatalog,KEY_PROVIDERS,RESPONSE_LIMIT,type Reader,type Fetch} from './model_probe';
-export type RunOptions={reader?:Reader;fetch?:Fetch;input?:unknown;now?:Date;timeout?:number;signal?:AbortSignal;onState?:(state:'待機中'|'確認中')=>void};
+import {status,probe,publicCatalog,KEY_PROVIDERS,RESPONSE_LIMIT,type Reader,type Fetch,type AgyHooks} from './model_probe';
+export type RunOptions={reader?:Reader;fetch?:Fetch;input?:unknown;now?:Date;timeout?:number;signal?:AbortSignal;onState?:(state:'待機中'|'確認中')=>void}&AgyHooks;
 type Response={data?:unknown;error?:string};
 export function createModelRunner(){
  const active=new Set<AbortController>();let stopping=false;

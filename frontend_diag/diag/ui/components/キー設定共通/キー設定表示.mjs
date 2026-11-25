@@ -9,4 +9,4 @@ export const 外部連携か = item => 外部連携ID.includes(item.id);
 // モデル一覧の確認に対応しない項目は、どちらの画面にも表示しない（サーバー側の登録と秘匿対象には残す）。
 export const 確認不要ID = Object.freeze(['azure', 'copilot']);
 export const 確認不要か = item => 確認不要ID.includes(item.id);
-export const 設定表示 = item => item.ローカル ? 'ローカル' : item.設定済み === null ? '確認不可' : item.設定済み ? '設定済' : '未設定';
+export const 設定表示 = item => item.id==='gemini_agy' ? (item.設定済み === null ? '確認不可' : item.設定済み ? '検出済' : '未検出') : item.ローカル ? 'ローカル' : item.設定済み === null ? '確認不可' : item.設定済み ? '設定済' : '未設定';

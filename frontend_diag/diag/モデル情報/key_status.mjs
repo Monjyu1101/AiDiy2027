@@ -4,6 +4,7 @@
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
 // 設定値を返さず、UI用の固定スキーマだけを公開する。
+import {antigravityModels,resolveAgyOAuth} from './antigravity_models.mjs';
 import {oauthModelFallback} from './model_fallbacks.mjs';
 import {safeRouterMetadata} from '../../runtime/model_catalog.mjs';
 import {KEY_PROVIDERS,INTEGRATION_PROBES,carryOpenRouterProof,carryDecisionsProof} from '../../runtime/model_probe.mjs';
@@ -12,7 +13,8 @@ export {KEY_PROVIDERS,INTEGRATION_PROBES,runModels,cancelKeyProbes,createModelRu
 const reason=code=>({timeout:'モデル確認がタイムアウトしました。',output:'モデル確認の応答が上限を超えました。',busy:'別のキー確認が実行中です。',stopped:'診断を終了しました。'}[code] || 'モデル確認処理を利用できません。配布ファイルと通信状態を確認してください。');
 const text=(value,limit=1000)=>typeof value==='string'?value.slice(0,limit):'';
 export async function getKeyStatus(options={}) {
-  const response=await (options.run || runModels)('status');
+  const resolveAgy=options.resolveAgy ?? resolveAgyOAuth;
+  const response=await (options.run || runModels)('status',undefined,{agyAvailable:async()=>Boolean(await resolveAgy())});
   if(response.error || !Array.isArray(response.data?.項目))return {設定状態:'確認不可',説明:reason(response.error),項目:KEY_PROVIDERS.map(p=>({id:p.id,名前:p.名前,キー名:p.キー名,設定済み:null,状態:'未実施',キー不要:false,説明:'設定有無は未確認です。',テスト可能:false,理由:reason(response.error)})),モデル:[]};
   return {設定状態:['読込済み','未作成','読込不可'].includes(response.data.設定状態)?response.data.設定状態:'読込不可',項目:KEY_PROVIDERS.map(p=>{
     const row=response.data.項目.find(r=>r && r.id===p.id) || {};
@@ -24,7 +26,11 @@ export async function testKey(id,options={}) {
   if(!KEY_PROVIDERS.some(p=>p.id===id && p.probe))return result;
   // 未確認・検出エラーは未導入と見なさず、今回のインストール確認で未検出の場合だけ省略する。
   if(id==='ollama' && options.installResults?.some(row=>row?.id==='ollama' && row.状態==='未検出'))return {...result,スキップ:true,説明:'Ollama が未検出のため、モデル一覧の取得をスキップしました。'};
-  const response=await (options.run || runModels)('test',id,{input:options.publicCache || {公開モデル:{},公開状態:'未取得'},signal:options.signal,onState:options.onState});
+  const agyModels=async signal=>{
+    const executable=await (options.resolveAgy ?? resolveAgyOAuth)();
+    return executable ? (options.readAgyModels ?? antigravityModels)({oauthOnly:true,executable,signal}) : null;
+  };
+  const response=await (options.run || runModels)('test',id,{agyModels,input:options.publicCache || {公開モデル:{},公開状態:'未取得'},signal:options.signal,onState:options.onState});
   if(response.error)return {...result,説明:reason(response.error)};
   const data=response.data;
   if(!data || data.id!==id || !['未実施','OK','NG','PASS'].includes(data.状態) || !Array.isArray(data.モデル))return {...result,説明:reason('invalid')};

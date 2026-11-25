@@ -68,7 +68,7 @@ test('fixed config path, provider order and safe status without key values',asyn
   assert.match(file.replaceAll('\\','/'),/\/_config\/AiDiy_key\.json$/);
   return JSON.stringify({openai_key_id:'fixture-secret',gemini_key_id:' < placeholder > ',ollama_key_id:'ollama'});
  }});
- assert.deepEqual(result.項目.map(row=>row.id),['gemini','freeai','claude','openai','openai_oauth','grok','azure','copilot','openrt_chat','ollama','local','huggingface_read','huggingface_write','discord','slack']);
+ assert.deepEqual(result.項目.map(row=>row.id),['gemini','freeai','gemini_agy','claude','openai','openai_oauth','grok','azure','copilot','openrt_chat','ollama','local','huggingface_read','huggingface_write','discord','slack']);
  assert.ok(!JSON.stringify(result).includes('fixture-secret'));
  const rows=Object.fromEntries(result.項目.map(row=>[row.id,row]));
  assert.equal(rows.openai.設定済み,true);assert.equal(rows.gemini.設定済み,false);

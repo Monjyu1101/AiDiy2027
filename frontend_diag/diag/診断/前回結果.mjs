@@ -6,7 +6,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { OUTPUT_DIRECTORY, INSTALL_FILE, agyFolders } from './headless.mjs';
-import { MODEL_PROVIDER_IDS, modelsInfoFile } from '../モデル情報/models_info.mjs';
+import { MODEL_TEST_IDS, modelsInfoFile } from '../モデル情報/models_info.mjs';
 import { INTEGRATION_IDS, INTEGRATION_FILE } from '../モデル情報/integration_info.mjs';
 
 const 日時 = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null;
@@ -24,7 +24,7 @@ async function 読込(file) { try { const value=JSON.parse((await readFile(file,
 
 export function createPreviousResults({directory=OUTPUT_DIRECTORY}={}) {
   async function snapshot() {
-    const [install,integration,...models]=await Promise.all([INSTALL_FILE,INTEGRATION_FILE,...MODEL_PROVIDER_IDS.map(modelsInfoFile)].map(file=>読込(path.join(directory,file))));
+    const [install,integration,...models]=await Promise.all([INSTALL_FILE,INTEGRATION_FILE,...MODEL_TEST_IDS.map(modelsInfoFile)].map(file=>読込(path.join(directory,file))));
     const groups={導入状況:{結果:[],前回実行日時:null},モデル一覧:{結果:[],前回実行日時:null},外部連携:{結果:[],前回実行日時:null}};
     const merge=(group,values,date,ids)=>{
       const target=groups[group],byId=new Map(target.結果.map(item=>[item.id,item]));
@@ -38,7 +38,16 @@ export function createPreviousResults({directory=OUTPUT_DIRECTORY}={}) {
     };
     merge('導入状況',install.項目,install.完了日時);
     merge('外部連携',integration.項目,最新日時((Array.isArray(integration.項目)?integration.項目:[]).map(item=>item?.確認日時))||integration.保存日時,INTEGRATION_IDS);
-    models.forEach((model,index)=>{const details=Array.isArray(model.chat?.モデル)?model.chat.モデル.filter(item=>item&&typeof item.model_id==='string'):[];merge('モデル一覧',[{...model,id:MODEL_PROVIDER_IDS[index],モデル:details.map(item=>item.model_id),モデル詳細:details}],model.確認日時||model.保存日時,MODEL_PROVIDER_IDS);});
+    models.forEach((model,index)=>{
+      const id=MODEL_TEST_IDS[index];
+      if(id==='gemini_agy'){
+        if(model.プロバイダ===id && (model.状態==='OK' || (model.状態==='未取得' && 日時(model.確認日時))))
+          merge('モデル一覧',[{...model,id,状態:model.状態==='OK'?'OK':'NG',モデル:Object.keys(model.models ?? {})}],model.確認日時,MODEL_TEST_IDS);
+        return;
+      }
+      const details=Array.isArray(model.chat?.モデル)?model.chat.モデル.filter(item=>item&&typeof item.model_id==='string'):[];
+      merge('モデル一覧',[{...model,id,モデル:details.map(item=>item.model_id),モデル詳細:details}],model.確認日時||model.保存日時,MODEL_TEST_IDS);
+    });
     return groups;
   }
   return {snapshot};
