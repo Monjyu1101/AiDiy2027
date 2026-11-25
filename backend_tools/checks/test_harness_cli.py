@@ -27,7 +27,8 @@ permissions = load("harness_permissions", "backend_server/AIコア/AIコードCL
 
 
 class HarnessTest(unittest.IsolatedAsyncioTestCase):
-    async def test_all_six_providers_inherit_each_mode_without_resume(self):
+    async def test_all_providers_inherit_each_mode_without_resume(self):
+        self.assertIn("agy_cli", adapter.CLI_PROVIDERS)
         for provider, cli_mode in [(provider, cli_mode) for provider in sorted(adapter.CLI_PROVIDERS)
                                    for cli_mode in (None, "passthrough")]:
             for mode in ("yolo", "normal", "read-only"):

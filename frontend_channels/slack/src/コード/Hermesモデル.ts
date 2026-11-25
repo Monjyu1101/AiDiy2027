@@ -36,7 +36,7 @@ const 固定候補: モデル候補[] = [{ id: 'auto', label: 'auto（自動判�
 // AIコア（AIコード_cli.py の cli_providers）と同じ、外部 CLI の Hermes provider 名。
 const 外部CLI: Record<string, string> = {
   copilot_cli: 'copilot-cli', claude_cli: 'claude-code', codex_cli: 'codex-cli',
-  antigravity_cli: 'antigravity-cli', opencode_cli: 'opencode', grok_cli: 'grok-cli',
+  antigravity_cli: 'antigravity-cli', agy_cli: 'agy_cli', opencode_cli: 'opencode', grok_cli: 'grok-cli',
 };
 
 export function Hermesモデル検証(value: unknown): string {

@@ -26,7 +26,7 @@ API_MODES = frozenset({
     "chat_completions", "codex_responses", "anthropic_messages", "bedrock_converse",
 })
 CLI_MODEL_ALIASES = frozenset({
-    "claude_cli", "codex_cli", "copilot_cli", "antigravity_cli", "grok_cli", "opencode_cli",
+    "claude_cli", "codex_cli", "copilot_cli", "antigravity_cli", "agy_cli", "grok_cli", "opencode_cli",
 })
 UNSUPPORTED = "! Hermes の予測読取専用モードは外部 CLI / 未対応の実行方式を利用できません。"
 UNAVAILABLE = "! Hermes の予測読取専用モードを安全に初期化できませんでした。"

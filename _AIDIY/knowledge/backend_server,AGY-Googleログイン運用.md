@@ -12,3 +12,9 @@
 - 初回確認は、Diag の設定で `gemini_agy` を選択してモデル試行で「おはよう」が返ることを確認する。次に `agy_cli` を別のコード枠に選び、同じくファイル変更を依頼せず疎通する。Gemini API のキー・課金設定は変更しない。
 
 参考: [Antigravity CLI の認証](https://antigravity.google/docs/cli-install)・[ヘッドレス入出力](https://antigravity.google/docs/cli/headless/)
+
+## Hermes・Pi・Codex と設定画面での候補
+
+- Diagでモデル一覧を取得・書き込みすると、導入状態に応じて `code_models_info.json` から `hermes_models_info.json`、`pi_models_info.json`、`aidiy_codex_models_info.json` が生成される。両方が使える場合は `antigravity_cli` の直後に `agy_cli`。未導入の区分は足さない。
+- 各ハーネスのモデル選択は、専用一覧に保存された順序とモデルIDを使う。外部CLIは共通の委譲入口へ渡し、親の認証設定やAPIキーをAGYの認証に流用しない。Codexの選択に反映するには更新後のバイナリへ再コンパイルが必要。
+- Web・Avatar・Diagの「設定・再起動」は、Coreが `code_models_info.json` から返す順序をそのまま使う。未検証の保存済み値を残す動作と、実行時の既定方式は変更しない。

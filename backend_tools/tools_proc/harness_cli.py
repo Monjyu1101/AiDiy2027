@@ -14,7 +14,7 @@ import sys
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[2]
-CLI_PROVIDERS = frozenset({"claude_cli", "antigravity_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"})
+CLI_PROVIDERS = frozenset({"claude_cli", "antigravity_cli", "agy_cli", "codex_cli", "copilot_cli", "opencode_cli", "grok_cli"})
 OUTPUT = sys.stdout
 
 

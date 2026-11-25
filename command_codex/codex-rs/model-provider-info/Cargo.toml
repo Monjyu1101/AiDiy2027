@@ -21,7 +21,7 @@ http = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 # AiDiy: AiDiy の区分（aidiy_sections.rs）の設定・キーの読み取りに使う。
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] }
 
 [dev-dependencies]
 codex-utils-absolute-path = { workspace = true }

@@ -850,7 +850,7 @@ class CodeAI:
             # --model だけでは Hermes が Ollama のモデル名として解釈してしまう。
             cli_providers = {
                 "copilot_cli": "copilot-cli", "claude_cli": "claude-code",
-                "codex_cli": "codex-cli", "antigravity_cli": "antigravity-cli",
+                "codex_cli": "codex-cli", "antigravity_cli": "antigravity-cli", "agy_cli": "agy_cli",
                 "opencode_cli": "opencode", "grok_cli": "grok-cli",
             }
             provider, separator, model = (self.code_model or "").partition("/")

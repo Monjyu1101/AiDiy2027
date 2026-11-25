@@ -47,6 +47,28 @@ def catalog_key(provider: str | None) -> str:
     return _CATALOG_KEYS.get(slug, slug)
 
 
+def _read_catalog(filename: Path) -> dict:
+    with Path(filename).open("rb") as source:
+        raw = source.read(_MAX_CATALOG_BYTES + 1)
+    if len(raw) > _MAX_CATALOG_BYTES:
+        raise ValueError("catalog size")
+    payload = json.loads(raw.decode("utf-8-sig"))
+    if not isinstance(payload, dict):
+        raise ValueError("catalog root")
+    return payload
+
+
+def catalog_cli_order(filename: Path, supported) -> list[str]:
+    try:
+        payload = _read_catalog(filename)
+    except (OSError, UnicodeError, ValueError, TypeError):
+        return []
+    slugs = {catalog_key(slug): slug for slug in supported}
+    return [slugs[key] for key, entry in payload.items()
+            if key in slugs and isinstance(entry, dict)
+            and isinstance(entry.get("models"), dict) and entry["models"]]
+
+
 def read_model_labels(
     filename: Path,
     provider: str,
@@ -61,14 +83,7 @@ def read_model_labels(
     key = catalog_key(provider)
     guidance = "aidiy_diag でモデル一覧を取得・保存してください。"
     try:
-        with Path(filename).open("rb") as source:
-            raw = source.read(_MAX_CATALOG_BYTES + 1)
-        if len(raw) > _MAX_CATALOG_BYTES:
-            raise ValueError("catalog size")
-        payload = json.loads(raw.decode("utf-8-sig"))
-        if not isinstance(payload, dict):
-            raise ValueError("catalog root")
-        section = payload.get(key)
+        section = _read_catalog(filename).get(key)
         if section is None:
             return [], f"hermes_models_info に {key} の候補がありません。{guidance}"
         if not isinstance(section, dict) or not isinstance(section.get("models"), dict):

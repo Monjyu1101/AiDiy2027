@@ -97,8 +97,9 @@ export function オフライン実行(root: string, project: string, model: stri
     try { launch = 起動解決('aidiy_hermes', '', project); }
     catch { launch = 起動解決(共通ファイル(root, 'command_hermes', 'cli_main.py')); }
   }
-  const cli = /^(claude_cli|codex_cli|copilot_cli|antigravity_cli|grok_cli|opencode_cli)\/(.+)$/.exec(model);
-  const args = cli ? 会話引数(cli[1] === 'claude_cli' ? 'claude-code' : cli[1] === 'opencode_cli' ? 'opencode' : cli[1].replace('_', '-'), cli[2], 999, session) : 会話引数('', model, 999, session);
+  const cli = /^(claude_cli|codex_cli|copilot_cli|antigravity_cli|agy_cli|grok_cli|opencode_cli)\/(.+)$/.exec(model);
+  const cliProvider = !cli ? '' : ({claude_cli: 'claude-code', opencode_cli: 'opencode', agy_cli: 'agy_cli'} as Record<string, string>)[cli[1]] ?? cli[1].replace('_', '-');
+  const args = 会話引数(cliProvider, cli ? cli[2] : model, 999, session);
   return コード要求実行({ セッションID: session || '', チャンネル: 'code1',
     メッセージ識別: 'input_text', メッセージ内容: text }, {
     起動: launch, 作業フォルダ: project, 引数: provider === 'aidiy_pi' ? Pi会話引数(model, session) : args, 制限時間: 1800000,

@@ -9,6 +9,7 @@ pub const AIDIY_CLI_PROVIDER: &str = "aidiy_cli";
 pub const AIDIY_CLI_SECTIONS: &[&str] = &[
     "claude_cli",
     "antigravity_cli",
+    "agy_cli",
     "codex_cli",
     "copilot_cli",
     "opencode_cli",
@@ -88,7 +89,6 @@ fn model_presets(catalog: &Value) -> Vec<ModelPreset> {
             }
         }
     }
-    presets.sort_by(|a, b| a.model.cmp(&b.model));
     presets
 }
 
@@ -105,6 +105,10 @@ mod tests {
         assert_eq!(
             split_aidiy_cli_model("codex_cli/same"),
             Some(("codex_cli", "same"))
+        );
+        assert_eq!(
+            split_aidiy_cli_model("agy_cli/gemini-fixture"),
+            Some(("agy_cli", "gemini-fixture"))
         );
         for invalid in [
             "aidiy_codex/codex_cli/same",
@@ -158,7 +162,12 @@ mod catalog_tests {
             presets.len(),
             (crate::aidiy_sections::AIDIY_SECTIONS.len() + 1 + AIDIY_CLI_SECTIONS.len()) * 2
         );
-        assert!(presets.windows(2).all(|p| p[0].model < p[1].model));
+        let legacy = presets
+            .iter()
+            .position(|p| p.model == "antigravity_cli/shared")
+            .unwrap();
+        assert_eq!(presets[legacy + 1].model, "antigravity_cli/vendor/nested");
+        assert_eq!(presets[legacy + 2].model, "agy_cli/shared");
         assert!(
             presets
                 .iter()

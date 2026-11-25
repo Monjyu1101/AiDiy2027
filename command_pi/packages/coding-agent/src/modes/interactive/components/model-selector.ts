@@ -10,6 +10,7 @@ import {
 	Text,
 	type TUI,
 } from "@earendil-works/pi-tui";
+import { sortAidiyModels } from "../../../core/aidiy-model-order.ts";
 import type { ModelRuntime } from "../../../core/model-runtime.ts";
 import { refreshModelCatalogs } from "../model-catalog-refresh.ts";
 import { getDistinctModelName, getModelSelectorSearchText } from "../model-search.ts";
@@ -237,10 +238,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
 	}
 
 	private sortModels(models: ModelItem[]): ModelItem[] {
-		const sorted = [...models];
-		// Keep the list ordered by the displayed provider/model, including current/default rows.
-		sorted.sort((a, b) => `${a.provider}/${a.id}`.localeCompare(`${b.provider}/${b.id}`));
-		return sorted;
+		return sortAidiyModels(models);
 	}
 
 	private getScopeText(): string {

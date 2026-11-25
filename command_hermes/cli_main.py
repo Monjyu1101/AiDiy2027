@@ -5002,6 +5002,7 @@ _AIDIY_CONFIG_DIR = _PROJECT_ROOT.parent / "_config"
 _AIDIY_KEY_JSON = _AIDIY_CONFIG_DIR / "AiDiy_key.json"
 from hermes_cli.aidiy_model_catalog import (
     CHAT_PROVIDERS as _AIDIY_CHAT_PROVIDERS,
+    catalog_cli_order as _aidiy_catalog_cli_order,
     normalize_chat_provider as _normalize_aidiy_chat_provider,
     read_model_labels as _read_aidiy_model_labels,
 )
@@ -5013,7 +5014,7 @@ def _aidiy_hermes_catalog_path() -> Path:
 
 # hermes_models_info.json から一覧を引く CLI / OAuth のスラッグ。キーへの変換は aidiy_model_catalog.catalog_key が行う。
 _AIDIY_CODE_CATALOG_PROVIDERS = frozenset({
-    "claude-code", "antigravity-cli", "codex-cli", "copilot-cli", "opencode", "grok-cli",
+    "claude-code", "antigravity-cli", "agy_cli", "codex-cli", "copilot-cli", "opencode", "grok-cli",
     "openai_oauth", "xai-oauth",
 })
 
@@ -5166,6 +5167,13 @@ _AIDIY_CLI_PROVIDERS = [
     {
         "slug": "antigravity-cli",
         "name": "Antigravity CLI",
+        "runtime_provider": "anthropic",
+        "api_mode": "anthropic_messages",
+        "is_cli": True,
+    },
+    {
+        "slug": "agy_cli",
+        "name": "agy_cli (Google OAuth)",
         "runtime_provider": "anthropic",
         "api_mode": "anthropic_messages",
         "is_cli": True,
@@ -12243,7 +12251,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             "openrt_chat", "openrt_free",
             "openai_chat", "claude_chat", "anthropic_chat", "gemini_chat", "freeai_chat",
             "local_chat", _OPENAI_OAUTH_SLUG, _XAI_OAUTH_SLUG,
-            "claude-code", "antigravity-cli", "codex-cli", "copilot-cli", "opencode",
+            "claude-code", "antigravity-cli", "agy_cli", "codex-cli", "copilot-cli", "opencode",
         }
 
     @staticmethod
@@ -12255,7 +12263,7 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
             return _XAI_OAUTH_SLUG
         if slug in {"openrt_chat", "openrt_free"}:
             return "openrouter"
-        if slug in {"claude_chat", "claude-code", "antigravity-cli"}:
+        if slug in {"claude_chat", "claude-code", "antigravity-cli", "agy_cli"}:
             return "anthropic"
         if slug == "codex-cli":
             return "openai-codex"
@@ -12475,9 +12483,10 @@ class HermesCLI(CLIAgentSetupMixin, CLICommandsMixin, CLIBillingMixin):
                 if "total_models" not in entry:
                     entry["total_models"] = len(entry.get("models", [])) or 1
                 providers.append(entry)
-        # Always include external CLI providers
-        for cli_def in _AIDIY_CLI_PROVIDERS:
-            entry = self._get_aidiy_provider_entry(cli_def["slug"], include_models=False)
+        # Diag が保存した外部CLIの候補と区分順を使う。
+        slugs = _aidiy_catalog_cli_order(_aidiy_hermes_catalog_path(), (p["slug"] for p in _AIDIY_CLI_PROVIDERS))
+        for slug in slugs:
+            entry = self._get_aidiy_provider_entry(slug, include_models=False)
             if entry:
                 entry["is_current"] = entry["slug"] == current
                 entry.setdefault("total_models", 1)

@@ -11,11 +11,12 @@
  */
 
 // AIコアだけを模擬する。アプリへの HTTP / SSE 通信は実際の Node サーバーを使う。
-function core(defaultSettings = {}) {
+function core(defaultSettings = {}, extraModels = {}) {
   const sockets = [], requests = [], sessions = new Map();
   const models = {
     aidiy_hermes: { auto: '自動', 'openai_oauth/gpt-6.2-sol': 'OpenAI OAuth / gpt-6.2-sol' },
     copilot_cli: { auto: '自動', 'gpt-6-sol': 'GPT-6 Sol' }, codex_cli: { auto: '自動' }, claude_cli: { auto: '自動' },
+    ...extraModels,
   };
   const defaults = { CODE_AI1_NAME: 'aidiy_hermes', CODE_AI1_MODEL: 'openai_oauth/gpt-6.2-sol', ...defaultSettings };
   let unavailable = false, hold = false, holdCancel = false;

@@ -169,4 +169,21 @@ for (const [label, open] of [['単独・Navi用Code', server], ['VS Code拡張',
     assert.deepEqual(f.saved(), { provider: 'aidiy_hermes', model: 'codex_cli/same' });
     f.onlineUnchanged();
   });
+
+  test(`${label}: AGY stays in Diag catalog order under each offline harness`, async t => {
+    const f = fixture(t);
+    const model = 'agy_cli/gemini-fixture';
+    f.catalogs({
+      aidiy_hermes:{models:{'antigravity_cli/same':'Legacy',[model]:'Google OAuth'}},
+      aidiy_pi:{models:{'antigravity_cli/same':'Legacy',[model]:'Google OAuth'}},
+    });
+    const app = await open(t, f);
+    for (const provider of ['aidiy_hermes', 'aidiy_pi']) {
+      const catalog = await app.catalog(provider);
+      assert.deepEqual((catalog.models || catalog.items).map(item => item.id), ['same','antigravity_cli/same',model]);
+      await app.choose(model, provider);
+      assert.deepEqual(f.saved(), {provider,model});
+    }
+    f.onlineUnchanged();
+  });
 }

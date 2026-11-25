@@ -145,7 +145,7 @@ test('AGY uses the same slot selector and keeps the default unchanged when the m
   let available=true;
   const f=form(async (p,b)=>{
     if(b?.save) Object.assign(settings,b.モデル設定);
-    const available_models=available?{chat_models:{gemini_agy:{'chat-new':'Chat'}},code_models:{agy_cli:{'code-new':'Code','code-old':'Saved default'},antigravity_cli:{same:'Same'}}}:{};
+    const available_models=available?{chat_models:{gemini_agy:{'chat-new':'Chat'}},code_models:{antigravity_cli:{same:'Same'},agy_cli:{'code-new':'Code','code-old':'Saved default'}}}:{};
     return {data:{status:'OK',data:{モデル設定:{...settings},available_models}}};
   });
   try {
@@ -153,6 +153,7 @@ test('AGY uses the same slot selector and keeps the default unchanged when the m
     assert.doesNotMatch(source,/config-agy-code-model/);
     f.state.selections.chatModel='chat-new';
     assert.equal(f.state.selections.codeModel4,'same');
+    assert.deepEqual(Array.from(f.state.codeAiOptions.value), ['antigravity_cli','agy_cli']);
     f.state.selections.codeAi4='agy_cli';
     f.state.handleCodeAiChange(4);
     assert.equal(f.state.selections.codeModel4,'code-old');

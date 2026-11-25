@@ -104,8 +104,16 @@ test('writes one isolated OAuth catalog and derives both Chat and Code lists whi
     assert.equal(navi.antigravity_cli,undefined);
     assert.deepEqual(Object.keys(code).slice(-2),['antigravity_cli','agy_cli']);
     assert.deepEqual(chat.gemini_chat.models,{'api-key-model':'Gemini API'});
-    for (const file of ['prediction_models_info.json','decisions_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json'])
+    for (const file of ['hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json']) {
+      const list=await read(file), keys=Object.keys(list), legacy=keys.indexOf('antigravity_cli');
+      assert.ok(legacy>=0,file);
+      assert.equal(keys[legacy+1],'agy_cli',file);
+      assert.equal(list.agy_cli.models[suffix],'OAuth',file);
+      assert.equal(list.agy_cli.models['legacy-only'],undefined,file);
+    }
+    for (const file of ['prediction_models_info.json','decisions_models_info.json'])
       assert.equal((await read(file)).agy_cli,undefined,file);
+    assert.match(code.aidiy_hermes.models[`agy_cli/${suffix}`], new RegExp(`agy_cli/${suffix}$`));
     for (const file of ['prediction_models_info.json','decisions_models_info.json'])
       assert.deepEqual((await read(file)).gemini_agy,{models:{[suffix]:'OAuth'}},file);
     await save({agyModelsReader:async()=>({})});
@@ -119,6 +127,8 @@ test('writes one isolated OAuth catalog and derives both Chat and Code lists whi
     assert.equal((await read('chat_models_info.json')).gemini_agy,undefined);
     assert.equal((await read('code_models_info.json')).agy_cli,undefined);
     assert.equal((await read('navi_models_info.json')).agy_cli,undefined);
+    for (const file of ['hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json'])
+      assert.equal((await read(file)).agy_cli,undefined,file);
     await save({installedClis:{agy_cli:true},agyModelsReader:async()=>({[suffix]:'OAuth'}),
       antigravityModelsReader:async()=>assert.fail('legacy CLI is not installed')});
     const oauthOnly=await read('code_models_info.json');

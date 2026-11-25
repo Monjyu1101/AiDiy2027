@@ -12,7 +12,7 @@ const CHAT_PROVIDERS = Object.freeze(['gemini_chat', 'freeai_chat', 'openrt_chat
 const LOCAL_CHAT_PROVIDERS = Object.freeze(['ollama_chat', 'local_chat']);
 // CLI は same（モデル指定なし）を先頭に置く。--model を付けず、各 CLI が最後に使ったモデルで動く。
 export const HERMES_SAME_LABEL = 'same (変更なし)';
-export const HERMES_CODE_PROVIDERS = Object.freeze(['claude_cli', 'antigravity_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli']);
+export const HERMES_CODE_PROVIDERS = Object.freeze(['claude_cli', 'antigravity_cli', 'agy_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli']);
 // command_hermes/cli_main.py の非対話モデル判定と同じ。画像入力・テキスト出力は許可する。
 const NON_CHAT_MODEL = /image|imagen|nano-banana|realtime|audio|transcribe|tts|whisper|embed|moderation|search|translate|computer-use|dall-e|sora|veo|lyria|aqa|robotics|deep-research|antigravity|davinci|babbage|(?:^|[-/])live(?:-|$)|:batch$/i;
 // 出力モダリティが text でも、専用の実行方式を必要とするモデルは対象外。
@@ -73,7 +73,7 @@ export function hermesModelsInfo({chatModels = {}, codeModels = {}, providerInfo
     const metadata = details(infos.get({ollama_chat:'ollama', local_chat:'local'}[provider]));
     add(provider, modelEntries(chatModels[provider]).filter(([id]) => hermesChatModel(id, metadata.get(id))));
   }
-  for (const provider of HERMES_CODE_PROVIDERS) {
+  for (const provider of Object.keys(codeModels).filter(key => HERMES_CODE_PROVIDERS.includes(key))) {
     // 書込時は実行ファイルの現在の導入判定を使う。取得成功や保存済み候補は導入の根拠にしない。
     if (installedClis && installedClis[provider] !== true) continue;
     if (!record(codeModels[provider]?.models)) continue;

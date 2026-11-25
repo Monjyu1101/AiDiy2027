@@ -49,7 +49,7 @@ test('Hermes output keys follow Chat/Code section names and openai_oauth sits ri
   const claude = {プロバイダ:'claude', 状態:'OK', chat:{モデル:[{model_id:'claude-sonnet-5-5', モダリティ:'text->text'}]}};
   assert.deepEqual(Object.keys(hermesModelsInfo({chatModels:chat, codeModels:code, providerInfos:[claude, grokOk]})), [
     'gemini_chat', 'freeai_chat', 'openrt_chat', 'openrt_free', 'openai_chat', 'openai_oauth', 'xai_oauth', 'claude_chat',
-    'ollama_chat', 'local_chat', 'claude_cli', 'antigravity_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli',
+    'ollama_chat', 'local_chat', 'claude_cli', 'antigravity_cli', 'agy_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli',
   ]);
 });
 
@@ -130,7 +130,7 @@ test('Claude uses every full API model ID, never SDK/CLI aliases, and stores no 
 });
 
 test('CLI sources retain their exact IDs, order, labels and same behavior; OAuth uses only its Code routes', () => {
-  assert.deepEqual([...HERMES_CODE_PROVIDERS], ['claude_cli', 'antigravity_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli']);
+  assert.deepEqual([...HERMES_CODE_PROVIDERS], ['claude_cli', 'antigravity_cli', 'agy_cli', 'codex_cli', 'copilot_cli', 'opencode_cli', 'grok_cli']);
   const codeModels = Object.fromEntries(HERMES_CODE_PROVIDERS.map((key, i) => [key, section(['same','auto',`${i}-image`,`openai/custom-${i}`])]));
   codeModels.aidiy_hermes = section(['copilot_cli/same', 'openai_oauth/gpt-6-luna', 'openai_oauth/gpt-realtime']);
   codeModels.aidiy_hermes.models['openai_oauth/gpt-6-luna'] = '仮設定（未検証） - openai_oauth/gpt-6-luna';

@@ -82,8 +82,14 @@ function availableCodeModels(code, installedClis) {
   }
   // aidiy_codex の候補は aidiy_codex_models_info.json から作る（writeMergedModelsInfo の code 保存時）。旧候補は引き継がない。
   delete filtered[CODEX_CODE_PROVIDER];
-  const routes = Object.fromEntries(Object.keys(CODE_CLIS).filter(key => installedClis[key] === true)
-    .map(key => [`${key}/same`, `yyyy/mm/dd - ${key}/same`]));
+  const routeProviders = Object.keys(CODE_CLIS);
+  routeProviders.splice(routeProviders.indexOf('antigravity_cli') + 1, 0, 'agy_cli');
+  const routes = Object.fromEntries(routeProviders.filter(key => installedClis[key] === true)
+    .flatMap(key => [
+      [`${key}/same`, `yyyy/mm/dd - ${key}/same`],
+      ...(key === 'agy_cli' ? Object.entries(filtered.agy_cli?.models ?? {})
+        .filter(([id]) => id !== 'auto' && id !== 'same').map(([id,label]) => [`agy_cli/${id}`, label]) : []),
+    ]));
   if (filtered[PI_CODE_PROVIDER]) filtered[PI_CODE_PROVIDER] = {models:routeModels({...routes, ...filtered[PI_CODE_PROVIDER].models})};
   if (Object.keys(routes).length || filtered.aidiy_hermes) {
     filtered.aidiy_hermes = {models:{...routes, ...filtered.aidiy_hermes?.models}};

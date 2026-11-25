@@ -8,7 +8,7 @@ import queue
 import subprocess
 import threading
 
-PROVIDERS = {"claude-code": "claude_cli", "antigravity-cli": "antigravity_cli",
+PROVIDERS = {"claude-code": "claude_cli", "antigravity-cli": "antigravity_cli", "agy_cli": "agy_cli",
              "codex-cli": "codex_cli", "copilot-cli": "copilot_cli",
              "opencode": "opencode_cli", "grok-cli": "grok_cli"}
 

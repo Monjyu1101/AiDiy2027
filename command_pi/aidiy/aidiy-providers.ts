@@ -26,6 +26,7 @@ import {
 import { getBuiltinModels } from "@earendil-works/pi-ai/providers/all";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { codexAccessToken, grokAccessToken } from "./aidiy-oauth.ts";
+import { setAidiyModelOrder } from "../packages/coding-agent/src/core/aidiy-model-order.ts";
 import { CLI_PROVIDERS, registerCliProviders } from "./aidiy-cli.ts";
 
 /** AiDiy プロジェクトのルート（command_pi の親）。 */
@@ -272,6 +273,7 @@ function registerAidiyMcpServers(pi: ExtensionAPI): void {
 
 /** Pi へ渡すインライン拡張。 */
 export function aidiyExtension(pi: ExtensionAPI, { readOnly = false }: { readOnly?: boolean } = {}): void {
+	setAidiyModelOrder(readPiModels);
 	if (!readOnly) registerAidiyMcpServers(pi);
 	if (!existsSync(PI_MODELS_JSON)) {
 		console.error(

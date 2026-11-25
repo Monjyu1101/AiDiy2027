@@ -50,6 +50,7 @@ def load_picker(directory):
           "_AIDIY_CHAT_PROVIDERS": catalog.CHAT_PROVIDERS,
           "_normalize_aidiy_chat_provider": catalog.normalize_chat_provider,
           "_read_aidiy_model_labels": catalog.read_model_labels,
+          "_aidiy_catalog_cli_order": catalog.catalog_cli_order,
           "_cprint": lambda *a: None, "save_model_choice": lambda *a: None}
     module = ast.Module(body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0), *nodes], type_ignores=[])
     exec(compile(ast.fix_missing_locations(module), str(ROOT / "cli_main.py"), "exec"), ns)
@@ -126,6 +127,16 @@ class HermesModelCatalogTests(unittest.TestCase):
         self.assertIn("claude_chat", slugs)
         self.assertNotIn("openai", slugs)
         self.assertNotIn("anthropic", slugs)
+
+    def test_cli_picker_uses_catalog_provider_order_and_excludes_absent_providers(self):
+        self.write({"grok-cli": {"same": "Keep"}, "antigravity-cli": {"same": "Legacy"},
+                    "agy_cli": {"same": "Keep", "gemini-test": "Google OAuth"}})
+        entries = [e for e in self.picker._list_aidiy_provider_entries() if e.get("is_cli")]
+        self.assertEqual([e["slug"] for e in entries], ["grok-cli", "antigravity-cli", "agy_cli"])
+        self.assertEqual(entries[-1]["models"][-1], ("Google OAuth", "gemini-test"))
+        self.assertEqual(entries[-1]["api_key"], "")
+        self.path.unlink()
+        self.assertFalse(any(e.get("is_cli") for e in self.picker._list_aidiy_provider_entries()))
 
     def test_missing_empty_malformed_do_not_invent_default(self):
         for payload in [None, "{}", '{"freeai_chat":{"models":{}}}', '{"freeai_chat":{"models":[]}}', "not json", '{"freeai_chat":{"models":{"bad\\nmodel":"label"}}}']:

@@ -48,6 +48,24 @@ test('Code 接続: inputのinit・モデル設定後に出力ソケットを開�
   } finally { client.dispose(); }
 });
 
+test('Code 接続: AGY follows Antigravity and is applied only to the current session', async () => {
+  const model = 'gemini-fixture';
+  const backend = core({}, { antigravity_cli: { same: 'Legacy' }, agy_cli: { [model]: 'Google OAuth' }, grok_cli: { same: 'Grok' } });
+  const { client } = connection(backend);
+  try {
+    client.start('/project', {provider:'aidiy_hermes',model:'openai_oauth/gpt-6.2-sol'});
+    await flush();
+    assert.equal(client.connected, true);
+    assert.deepEqual((await client.catalog()).map(item => item.id).slice(-3), ['antigravity_cli', 'agy_cli', 'grok_cli']);
+    assert.deepEqual(await client.catalog('agy_cli'), [{id:model,label:'Google OAuth'}]);
+    await client.setModel({provider:'agy_cli',model});
+    const write = backend.requests.findLast(request => request.path.endsWith('設定'));
+    assert.equal(write.body.save, false);
+    assert.equal(write.body.モデル設定.CODE_AI1_NAME, 'agy_cli');
+    assert.equal(write.body.モデル設定.CODE_AI1_MODEL, model);
+  } finally { client.dispose(); }
+});
+
 test('Code 接続: 切断から10秒後に再接続し、同じセッションと会話を保持、遅延イベントを無視する', async t => {
   t.mock.timers.enable({ apis:['setTimeout','setInterval'] });
   const backend = core(), {client, packets, states} = connection(backend);

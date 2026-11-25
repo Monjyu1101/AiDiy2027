@@ -10,7 +10,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createRequire } = require('node:module');
 const root = path.resolve(__dirname, '../..');
-const providers = ['claude_sdk', 'claude_cli', 'claude_ollama', 'copilot_cli', 'codex_cli', 'codex_ollama', 'antigravity_cli', 'grok_cli', 'opencode_cli', 'aidiy_hermes'];
+const providers = ['claude_sdk', 'claude_cli', 'claude_ollama', 'copilot_cli', 'codex_cli', 'codex_ollama', 'antigravity_cli', 'agy_cli', 'grok_cli', 'opencode_cli', 'aidiy_hermes'];
 
 function fixture() {
   const settings = {CODE_BASE_PATH: '../', CODE_PERMISSIONS: 'auto', TASK_AI_NAME: 'codex_cli', TEAM_AI_NAME: 'aidiy_hermes'};
@@ -40,7 +40,7 @@ function load(project, filename, data) {
   const dependencies = {...vue, onMounted: () => {}, defineProps: () => ({isOpen: false, sessionId: 'fixture'}), defineEmits: () => () => {},
     apiClient: {post: async (url, body) => {calls.push({url, body});return {data: {status: 'OK', data: {available_models: {code_models: data.code_models, ...data.available_models}, モデル設定: structuredClone(data.settings)}}};}},
     qAlert: async () => {}, qMessage: async () => {}, qConfirm: async () => true};
-  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
+  const api = scope.run(() => new Function(...Object.keys(dependencies), js + '\nreturn {selections, codeAiOptions, chatAiOptions, chatModelOptions, errorMessage, loadConfig, buildNextSettings, handleCodeAiChange, copyCode1Settings, copyCode4Settings, handleTaskAiChange, handleTeamAiChange, handleSaveOnly};')(...Object.values(dependencies)));
   return {...api, calls, nextTick: vue.nextTick, close: () => scope.stop(), template: descriptor.template.content};
 }
 
@@ -159,6 +159,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
     const data = fixture(), app = load(project, filename, data);
     try {
       await app.loadConfig();await app.nextTick();assert.equal(app.errorMessage.value, '');
+      assert.deepEqual(app.codeAiOptions.value, providers);
       for (let index = 1; index <= 6; index++) {
         assert.equal(app.selections[`codeModel${index}`], data.settings[`CODE_AI${index}_MODEL`]);
         assert.match(app.template, new RegExp(`id="config-code-ai${index}-select"[^>]*@change="handleCodeAiChange\\(${index}\\)"`));

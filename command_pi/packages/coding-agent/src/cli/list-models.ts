@@ -5,6 +5,7 @@
 import type { Api, Model } from "@earendil-works/pi-ai";
 import { fuzzyFilter } from "@earendil-works/pi-tui";
 import chalk from "chalk";
+import { sortAidiyModels } from "../core/aidiy-model-order.ts";
 import { formatNoModelsAvailableMessage } from "../core/auth-guidance.ts";
 import type { ModelRuntime } from "../core/model-runtime.ts";
 
@@ -54,12 +55,7 @@ export async function listModels(
 		return;
 	}
 
-	// Sort by provider, then by model id
-	filteredModels.sort((a, b) => {
-		const providerCmp = a.provider.localeCompare(b.provider);
-		if (providerCmp !== 0) return providerCmp;
-		return a.id.localeCompare(b.id);
-	});
+	filteredModels = sortAidiyModels(filteredModels);
 
 	// Calculate column widths
 	const rows = filteredModels.map((m) => ({

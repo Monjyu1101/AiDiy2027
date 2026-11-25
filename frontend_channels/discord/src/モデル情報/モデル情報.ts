@@ -19,7 +19,7 @@ const providerKeys: Record<string, [string, string, string]> = {
   openrt_chat:['chat','openrt_chat','OpenRouter'], openrt_free:['chat','openrt_free','OpenRouter Free'], ollama_chat:['chat','ollama_chat','Ollama'], local_chat:['chat','local_chat','Local'],
   'claude-code':['code','claude_cli','Claude Code (CLI)'], 'codex-cli':['code','codex_cli','Codex CLI'],
   'copilot-cli':['code','copilot_cli','Copilot CLI'], 'grok-cli':['code','grok_cli','Grok CLI'],
-  opencode:['code','opencode_cli','OpenCode'], 'antigravity-cli':['code','antigravity_cli','Antigravity CLI'],
+  opencode:['code','opencode_cli','OpenCode'], 'antigravity-cli':['code','antigravity_cli','Antigravity CLI'], agy_cli:['code','agy_cli','agy_cli (Google OAuth)'],
 };
 
 function choices(value: unknown): Choices {
