@@ -23,6 +23,7 @@ import uuid
 import json
 import asyncio
 import os
+import re
 import sys
 import base64
 import urllib.request
@@ -490,6 +491,7 @@ async def セッション一覧():
 
 class モデル情報取得リクエスト(BaseModel):
     セッションID: str = ""
+    保存済み: bool = False
 
 
 class モデル設定リクエスト(BaseModel):
@@ -572,8 +574,26 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
             if not _backend_local稼働中(http_request.app.conf):
                 利用可能モデル = _local_chat候補除外(利用可能モデル)
 
-        # ソケットのモデル設定を取得
-        現在設定 = dict(接続.モデル設定) if 接続 else 初期モデル設定生成(getattr(http_request.app, "conf", None))
+        # 永続設定の編集画面では、セッション値や候補に合わせた実行時の補正値と混ぜない。
+        if request.保存済み or not 接続:
+            現在設定 = 初期モデル設定生成(
+                getattr(http_request.app, "conf", None), 候補に正規化=not request.保存済み
+            )
+        else:
+            現在設定 = dict(接続.モデル設定)
+        # 保存済みOAuth専用設定を、診断未更新でも別CLIに置き換えない。
+        agy_models = 利用可能モデル.setdefault("code_models", {}).get("agy_cli")
+        agy_selections = [現在設定.get(f"CODE_AI{i}_MODEL") for i in range(1, 7)
+                          if 現在設定.get(f"CODE_AI{i}_NAME") == "agy_cli"]
+        agy_selections.extend(現在設定.get(f"{kind}_AI_MODEL_{phase}")
+                              for kind in ("TASK", "TEAM") if 現在設定.get(f"{kind}_AI_NAME") == "agy_cli"
+                              for phase in ("plan", "do", "check"))
+        if agy_selections:
+            choices = {"auto": "auto (自動判定)", "same": "same (変更なし)", **(agy_models or {})}
+            for model in agy_selections:
+                if isinstance(model, str) and re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}", model):
+                    choices.setdefault(model, f"設定値（未検証） - {model}")
+            利用可能モデル["code_models"]["agy_cli"] = choices
         # 予測・判断はToolsが共通JSONを読むため、保存後の再取得でもセッションの古い値を返さない。
         from AIコア.AI判断 import Decision
         共通設定 = getattr(getattr(http_request.app, "conf", None), "json", None)
@@ -716,7 +736,7 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
         # 設定可能なキーのホワイトリスト（セキュリティのため）
         許可キー = {
             # ChatAI設定
-            "CHAT_AI_NAME", "CHAT_GEMINI_MODEL", "CHAT_FREEAI_MODEL", "CHAT_OPENRT_MODEL", "CHAT_OPENRT_FREE_MODEL", "CHAT_OPENAI_MODEL", "CHAT_OLLAMA_MODEL", "CHAT_LOCAL_MODEL",
+            "CHAT_AI_NAME", "CHAT_GEMINI_AGY_MODEL", "CHAT_GEMINI_MODEL", "CHAT_FREEAI_MODEL", "CHAT_OPENRT_MODEL", "CHAT_OPENRT_FREE_MODEL", "CHAT_OPENAI_MODEL", "CHAT_OLLAMA_MODEL", "CHAT_LOCAL_MODEL",
             # LiveAI設定
             "LIVE_AI_NAME", "LIVE_GEMINI_MODEL", "LIVE_GEMINI_VOICE",
             "LIVE_FREEAI_MODEL", "LIVE_FREEAI_VOICE",
@@ -733,7 +753,7 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
             "CODE_AI1_NAME", "CODE_AI2_NAME", "CODE_AI3_NAME", "CODE_AI4_NAME", "CODE_AI5_NAME", "CODE_AI6_NAME",
             "CODE_AI1_MODEL", "CODE_AI2_MODEL", "CODE_AI3_MODEL", "CODE_AI4_MODEL", "CODE_AI5_MODEL", "CODE_AI6_MODEL",
             "CODE_CLAUDE_SDK_MODEL", "CODE_CLAUDE_CLI_MODEL",
-            "CODE_COPILOT_CLI_MODEL", "CODE_ANTIGRAVITY_CLI_MODEL", "CODE_CODEX_CLI_MODEL", "CODE_AIDIY_HERMES_MODEL", "CODE_AIDIY_PI_MODEL",
+            "CODE_COPILOT_CLI_MODEL", "CODE_ANTIGRAVITY_CLI_MODEL", "CODE_AGY_CLI_MODEL", "CODE_CODEX_CLI_MODEL", "CODE_AIDIY_HERMES_MODEL", "CODE_AIDIY_PI_MODEL",
             "CODE_AIDIY_CODEX_MODEL",
             "CODE_OPENCODE_CLI_MODEL", "CODE_GROK_CLI_MODEL",
             "CODE_CLAUDE_OLLAMA_MODEL", "CODE_CODEX_OLLAMA_MODEL",
@@ -839,6 +859,8 @@ async def モデル情報設定(http_request: Request, request: モデル設定�
                         chat_model = 接続.モデル設定.get("CHAT_OPENRT_FREE_MODEL", "auto")
                     elif chat_ai in ("openai_chat", "openai_oauth"):
                         chat_model = 接続.モデル設定.get("CHAT_OPENAI_MODEL", "")
+                    elif chat_ai == "gemini_agy":
+                        chat_model = 接続.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "auto")
                     elif chat_ai in ("gemini_chat", "freeai_chat"):
                         key = "CHAT_FREEAI_MODEL" if chat_ai == "freeai_chat" else "CHAT_GEMINI_MODEL"
                         chat_model = 接続.モデル設定.get(key, "")
@@ -1085,6 +1107,8 @@ async def websocket_endpoint(WebSocket接続: WebSocket):
                 chat_model = セッション.モデル設定.get("CHAT_OPENRT_FREE_MODEL", "auto")
             elif chat_ai in ("openai_chat", "openai_oauth"):
                 chat_model = セッション.モデル設定.get("CHAT_OPENAI_MODEL", "")
+            elif chat_ai == "gemini_agy":
+                chat_model = セッション.モデル設定.get("CHAT_GEMINI_AGY_MODEL", "auto")
             elif chat_ai in ("gemini_chat", "freeai_chat"):
                 key = "CHAT_FREEAI_MODEL" if chat_ai == "freeai_chat" else "CHAT_GEMINI_MODEL"
                 chat_model = セッション.モデル設定.get(key, "")

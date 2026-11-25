@@ -49,6 +49,7 @@ class ChatLLMError(Exception):
 _AI_TABLE = {
     "openrt_chat": ("AIコア.AIチャット_openrt", "CHAT_OPENRT_MODEL", "openrt_key_id"),
     "openrt_free": ("AIコア.AIチャット_openrt", "CHAT_OPENRT_FREE_MODEL", "openrt_key_id"),
+    "gemini_agy": ("AIコア.AIチャット_gemini_agy", "CHAT_GEMINI_AGY_MODEL", ""),
     "gemini_chat": ("AIコア.AIチャット_gemini", "CHAT_GEMINI_MODEL", "gemini_key_id"),
     "freeai_chat": ("AIコア.AIチャット_gemini", "CHAT_FREEAI_MODEL", "freeai_key_id"),
     "ollama_chat": ("AIコア.AIチャット_ollama", "CHAT_OLLAMA_MODEL", "ollama_key_id"),
@@ -169,9 +170,11 @@ class ChatLLM:
         key = self._load_key_json()
         if ai_name == "auto" or not ai_name:
             # 利用可能 AI を優先、なければ key.json の CHAT_AI_NAME
-            available = [k for k, v in self.version_info.items() if v.get("ok")]
+            available = [k for k, v in self.version_info.items() if v.get("ok") and k != "gemini_agy"]
             default_name = (key.get("CHAT_AI_NAME", "") or "").strip()
-            if default_name in available:
+            if default_name == "gemini_agy":
+                ai_name = default_name  # OAuth 指定を API キー経路に切り替えない
+            elif default_name in available:
                 ai_name = default_name
             elif available:
                 ai_name = available[0]
@@ -242,6 +245,13 @@ class ChatLLM:
                 "model": model,
             }
 
+        # 自動候補にはしない。導入の確認だけでログインや推論は実行しない。
+        from AIコア.AIチャット_gemini_agy import agy実行ファイル取得
+        installed = bool(agy実行ファイル取得())
+        results["gemini_agy"] = {
+            "ok": installed, "version": "agy (Google ログイン未確認)" if installed else "agy が見つかりません",
+            "model": self._model_for("gemini_agy", key) or "auto",
+        }
         return results
 
     # ------------------------------------------------------------------ #
@@ -401,7 +411,7 @@ Args:
 
         # ツール対応（自己ループ）: ChatAI 自身に MCP ツールを使わせる。
         # file_path（画像）指定時はツール経路が未対応のため素実行にフォールバック。
-        if use_tools and not file_path:
+        if use_tools and not file_path and ai_name != "gemini_agy":
             return await self._run_with_self_loop(
                 prompt, resolved_path, ai_name, ai_model, system_instruction,
                 timeout_sec, max_turns, temperature,
@@ -715,6 +725,10 @@ Args:
             要求テキスト = turns[-1][1]
             last_images = turns[-1][2]
             history = [(r, t) for r, t, _ in turns[:-1]]
+
+        if ai_name == "gemini_agy" and (tools or any(images for _, _, images in turns)):
+            return {"status": "NG", "content": "! gemini_agy はテキスト専用です。画像添付・function calling には対応していません。",
+                    "ai_name": ai_name, "ai_model": ai_model}
 
         prompt_chars = sum(len(t) for _, t, _ in turns) + sum(len(s) for s in system_parts)
 

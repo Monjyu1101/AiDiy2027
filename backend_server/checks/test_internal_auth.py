@@ -300,7 +300,7 @@ class RouteCompatibilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(manager.get_session(session_id)._auth_owner, principal.owner)
         decision = ModuleType('AIコア.AI判断'); decision.Decision = SimpleNamespace(model_options=lambda _: {})
         with patch.dict(sys.modules, {'AIコア.AI判断': decision}):
-            result = await scope['モデル情報取得'](request_context, SimpleNamespace(セッションID=session_id))
+            result = await scope['モデル情報取得'](request_context, SimpleNamespace(セッションID=session_id, 保存済み=False))
         self.assertEqual(result['status'], 'OK')
         result = await scope['connect'](manager, SimpleNamespace(application_state='connected'),
                                          セッションID=session_id, accept_in_connect=False, auth_owner=principal.owner)

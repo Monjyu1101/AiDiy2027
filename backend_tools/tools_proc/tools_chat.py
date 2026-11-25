@@ -143,7 +143,7 @@ def register_tools(mcp_cl, chat_llm):
     logger.info(f"aidiy_chat_llms 利用可能: {_cl_available}")
     if _cl_skipped:
         logger.warning(
-            f"aidiy_chat_llms 利用不可: {_cl_skipped} — API キーの設定を確認してください"
+            f"aidiy_chat_llms 利用不可: {_cl_skipped} — API キーまたは CLI の導入と認証を確認してください"
         )
     if not _cl_available:
         logger.warning(
@@ -180,11 +180,11 @@ def create_router(chat_llm) -> APIRouter:
                 },
                 "run": {
                     "summary": "AIチャット実行（ツール自律実行対応）",
-                    "description": "指定プロンプトを ChatAI に渡してテキスト応答を生成する。use_tools=True のときは自前 MCP 群（aidiy_sqlite / aidiy_logs / aidiy_code_check 等）をツールとして LLM に渡し、LLM が返した tool_calls をサーバー側で self-call 実行し、結果を戻して応答が確定するまで最大 max_turns 回ループする（aidiy_chat_llms / aidiy_code_agents 自身はツールから除外）。tool_calls を返すだけのローレベル動作が必要なら aidiy_chat_completions を使う。",
+                    "description": "指定プロンプトを ChatAI に渡してテキスト応答を生成する。use_tools=True のときは自前 MCP 群（aidiy_sqlite / aidiy_logs / aidiy_code_check 等）をツールとして LLM に渡し、LLM が返した tool_calls をサーバー側で self-call 実行し、結果を戻して応答が確定するまで最大 max_turns 回ループする（aidiy_chat_llms / aidiy_code_agents 自身はツールから除外）。gemini_agy はテキスト専用のためツールを呼び出さない。tool_calls を返すだけのローレベル動作が必要なら aidiy_chat_completions を使う。",
                     "parameters": {
                         "prompt": {"type": "string", "required": True, "description": "AI への入力テキスト（日本語可）"},
                         "project_path": {"type": "string", "required": False, "description": "プロジェクト絶対パス。実行先は省略時 CODE_BASE_PATH、DB履歴の所属は未指定ならNULL"},
-                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "openrt_chat", "openrt_free", "gemini_chat", "freeai_chat", "ollama_chat"], "description": "使用する AI。auto で CHAT_AI_NAME を優先選択。openrt_free は無料候補の区分。同じOpenRouter処理・キーで実行"},
+                        "ai_name": {"type": "string", "required": False, "default": "auto", "values": ["auto", "openrt_chat", "openrt_free", "gemini_chat", "gemini_agy", "freeai_chat", "ollama_chat"], "description": "使用する AI。auto で CHAT_AI_NAME を優先選択。openrt_free は無料候補の区分。同じOpenRouter処理・キーで実行"},
                         "ai_model": {"type": "string", "required": False, "default": "auto", "description": "モデル名。auto で ai_name の既定モデルを使用"},
                         "system_instruction": {"type": "string", "required": False, "description": "システム指示"},
                         "session_id": {"type": "string", "required": False, "default": "mcp_default", "description": "モデル文脈の継続キー（resume=True）。DBの呼出し単位history_session_idとは別"},

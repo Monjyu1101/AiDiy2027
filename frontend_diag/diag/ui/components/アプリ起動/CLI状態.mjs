@@ -28,13 +28,13 @@ export function CLI状態を作成({api,アプリ,接続可能=()=>true,確認=m
   try{
    // 確認ダイアログだけは重ねない。確認後の起動は同じCLIも並行して受け付ける。
    // 通常画面・ミニの明示クリックは確認を省き、固定の起動条件は共用する。
-   const accepted=item.種類==='editor'||確認省略===true?true:await 確認(`${item.名前} を aidiy_term で開始しますか？\n\nプロジェクト: ${project}\nモード: ${item.モード}\nモデル: 指定なし（CLI の既定設定）\n\nファイルの変更やコマンド実行が自動承認されます。CLIによってはサンドボックスも解除されます。信頼できるプロジェクトだけで使用してください。CLIの契約や設定によって利用料金が発生する場合があります。ログイン・組織の制限・初回の信頼確認はCLI側に残る場合があります。`);
+   const accepted=item.種類==='editor'||確認省略===true?true:await 確認(`${item.名前} を aidiy_term で開始しますか？\n\nプロジェクト: ${project}\nモード: ${item.モード}\nモデル: 指定なし（CLI の既定設定）\n\n${item.通常承認?'承認設定は CLI の通常動作に従います。':'ファイルの変更やコマンド実行が自動承認されます。CLIによってはサンドボックスも解除されます。信頼できるプロジェクトだけで使用してください。'} CLIの契約や設定によって利用料金が発生する場合があります。ログイン・組織の制限・初回の信頼確認はCLI側に残る場合があります。`);
    if(確認待ち===run)確認待ち=0;
    if(accepted!==true||!接続可能()||connection!==接続番号||project!==アプリ.フォルダ.value)return;
    開始時?.();
    // 成功通知は保持しない。古いサーバーが通知文を返しても画面を押し下げない。
    if(item.種類==='editor')await api('api/VSCode起動/開始','POST',undefined,'json',{フォルダ:launchProject});
-   else await api('api/CLI起動/開始','POST',undefined,'json',{対象:id,フォルダ:launchProject,自動承認確認:true});
+   else await api('api/CLI起動/開始','POST',undefined,'json',{対象:id,フォルダ:launchProject,自動承認確認:item.通常承認!==true});
   }catch(error){if(run===起動番号&&connection===接続番号)起動エラー.value=error.message;}
   finally{if(確認待ち===run)確認待ち=0;起動待ち.delete(run);処理を反映();}
  }

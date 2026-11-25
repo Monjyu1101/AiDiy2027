@@ -22,13 +22,13 @@ export const TRIAL_ROW_TIMEOUT_MS=150000;
 export const PREDICTION_ROW_TIMEOUT_MS=TRIAL_ROW_TIMEOUT_MS*2;
 export const TRIAL_RUN_TTL_MS=45*60*1000;
 
-const CHAT = {gemini_chat:'GEMINI',freeai_chat:'FREEAI',openrt_chat:'OPENRT',openrt_free:'OPENRT_FREE',openai_chat:'OPENAI',openai_oauth:'OPENAI',ollama_chat:'OLLAMA',local_chat:'LOCAL'};
+const CHAT = {gemini_chat:'GEMINI',gemini_agy:'GEMINI_AGY',freeai_chat:'FREEAI',openrt_chat:'OPENRT',openrt_free:'OPENRT_FREE',openai_chat:'OPENAI',openai_oauth:'OPENAI',ollama_chat:'OLLAMA',local_chat:'LOCAL'};
 const LIVE = {gemini_live:'GEMINI',freeai_live:'FREEAI',openai_live:'OPENAI'};
 const DECISION = new Set(['auto','openai_oauth','openai_jsonchat','freeai_chat','openai_decisions','gemini_chat']);
 import {TRIAL_PROMPT,DECISION_CHOICES,decisionQuestions,TRIAL_FAMILIES,PREDICTION_PROVIDERS,PREDICTION_AUTO_PROVIDERS,PREDICTION_MODEL_KEYS,PREDICTION_CLI_PROVIDERS,PREDICTION_STORY_PROMPTS,predictionPerfect} from './defaults.mjs';
 export {DECISION_CHOICES} from './defaults.mjs';
 // aidiy_pi は Tools の code_agents_run（AIコード_cli.py の aidiy_pi 経路）で Pi を実行する。aidiy_codex も同じ経路。
-const CODE = new Set(['auto','same','claude_sdk','claude_cli','claude_ollama','copilot_cli','codex_cli','codex_ollama','antigravity_cli','grok_cli','opencode_cli','aidiy_hermes','aidiy_pi','aidiy_codex']);
+const CODE = new Set(['auto','same','claude_sdk','claude_cli','claude_ollama','copilot_cli','codex_cli','codex_ollama','antigravity_cli','agy_cli','grok_cli','opencode_cli','aidiy_hermes','aidiy_pi','aidiy_codex']);
 const text = value => typeof value === 'string' ? value.trim() : '';
 const label = value => /^[\w./:@+-]{1,180}$/.test(text(value)) && !/^(?:sk-|AIza|Bearer )/i.test(text(value)) ? text(value) : '';
 const failure = (message, status=409) => Object.assign(new Error(message),{status,trialFailure:true});
@@ -205,7 +205,7 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
   const readCatalog=async name=>{try{const value=await catalogReader(name);return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}};
   // 保存済みモデル一覧・認証状態ではなく、現在の実行ファイルの存在だけで判定する。
   // SDK・Hermes本体・auto/sameの自動選択は外部CLIの未導入と混同しない。
-  const cliKeys=new Set(['claude_cli','copilot_cli','codex_cli','antigravity_cli','grok_cli','opencode_cli']);
+  const cliKeys=new Set(['claude_cli','copilot_cli','codex_cli','antigravity_cli','agy_cli','grok_cli','opencode_cli']);
   const installationRow=(row,installed)=>{
     if(!['CODE','TASK','TEAM'].includes(row.区分)||row.状態!=='未実行')return row;
     let provider=({claude_ollama:'claude_cli',codex_ollama:'codex_cli'})[row.プロバイダ]||row.プロバイダ;
@@ -256,16 +256,20 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
     invalidateChat(){clearChat();},
     async catalogs(){
       clearChat();const s=await snapshot(),families={};
+      const agyInfo=s.installed.agy_cli===true ? await readCatalog('gemini_agy_models') : {};
+      const showAgy=agyInfo.プロバイダ==='gemini_agy'&&['OK','未取得'].includes(agyInfo.状態)
+        && agyInfo.models && typeof agyInfo.models==='object' && !Array.isArray(agyInfo.models);
+      const chatTrio=['gemini_agy','gemini_chat','freeai_chat'];
       for(const [family,file] of Object.entries({CHAT:'chat_models',LIVE:'live_models',PREDICTION:'prediction_models',DECISION:'decisions_models',CODE:'code_models'})){
         let source={},state='読込済み';try{source=await catalogReader(file);if(!source||typeof source!=='object'||Array.isArray(source))throw Error();}catch{state='未取得';}
         const providers=[];
         for(const [provider,info] of Object.entries(source)){
-          if(!supported(family,provider)||['auto','same'].includes(provider))continue;
+          if(!supported(family,provider)||['auto','same'].includes(provider)||(family==='CHAT'&&provider==='gemini_agy'&&!showAgy))continue;
           const models=Object.entries(info?.models||{}).filter(([id,title])=>label(id)&&typeof title==='string'&&redact(id,s.config)===id).map(([id,title])=>({id,名前:redact(title,s.config),保存値:false}));
           if(models.length)providers.push({id:provider,モデル:models});
         }
         for(const row of s.rows.filter(row=>row.区分===family)){
-          if(!supported(family,row.プロバイダ)||(family!=='CODE'&&['auto','same'].includes(row.プロバイダ))||!row.モデル)continue;
+          if((family==='CHAT'&&row.プロバイダ==='gemini_agy'&&!providers.some(p=>p.id==='gemini_agy'))||!supported(family,row.プロバイダ)||(family!=='CODE'&&['auto','same'].includes(row.プロバイダ))||!row.モデル)continue;
           let provider=providers.find(p=>p.id===row.プロバイダ);if(!provider){provider={id:row.プロバイダ,モデル:[]};providers.push(provider);}
           if(!provider.モデル.some(m=>m.id===row.モデル))provider.モデル.push({id:row.モデル,名前:row.モデル+'（設定保持値・一覧外）',保存値:true});
         }
@@ -287,6 +291,15 @@ export function createModelTrials({reader,statusFn=getToolsStatus,request=localR
           if(family==='DECISION'&&!provider.モデル.some(m=>m.id==='auto'))provider.モデル.unshift({id:'auto',名前:'auto（既定モデル）',保存値:false});
         }
         if(family==='PREDICTION')for(const provider of providers)for(const model of provider.モデル){const target=predictionTarget(s,provider.id,model.id);Object.assign(model,{解決プロバイダ:target.provider,解決モデル:target.model,利用可能:target.available,説明:target.available?'':target.reason});}
+        if(family==='CHAT'){
+          const first=providers.findIndex(p=>chatTrio.includes(p.id));
+          if(first>=0){
+            const ordered=chatTrio.map(id=>providers.find(p=>p.id===id)).filter(Boolean);
+            const others=providers.filter(p=>!chatTrio.includes(p.id));
+            others.splice(first,0,...ordered);
+            providers.splice(0,providers.length,...others);
+          }
+        }
         families[family]={状態:state,プロバイダ:providers};
       }
       let voices={};try{voices=await catalogReader('live_voices');}catch{}

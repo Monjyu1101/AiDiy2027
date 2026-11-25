@@ -29,13 +29,19 @@ export async function writeResult(file, value) {
   } catch (error) { await rm(temporary, {force:true}).catch(() => {}); throw error; }
 }
 
+// 複数パスは検出専用行の表示にだけ保存・復元する。
+export function agyFolders(result) {
+  return result?.id === 'agy-exe' && Array.isArray(result.検出フォルダ)
+    ? {検出フォルダ:result.検出フォルダ.filter(item=>typeof item==='string' && item && !/[\x00-\x1f\x7f]/.test(item))} : {};
+}
+
 // 全項目の確認結果がカタログ順にそろっている場合だけ、保存用の形式へ変換する。
 export function installReport(entries, results, started, finished) {
   if (!Array.isArray(results) || results.length !== entries.length) throw new Error('Incomplete results');
   const items = entries.map((entry, index) => {
     const result = results[index];
     if (!result || result.id !== entry.id || !STATES.includes(result.状態)) throw new Error('Unexpected probe result');
-    return {id:entry.id, 名前:entry.name, 分類:entry.menuGroup || 'その他拡張', 状態:result.状態, パス:result.パス ?? null, バージョン:result.バージョン ?? null, 説明:result.説明 ?? '', 確認日時:result.確認日時 ?? null};
+    return {id:entry.id, 名前:entry.name, 分類:entry.menuGroup || 'その他拡張', 状態:result.状態, パス:result.パス ?? null, ...agyFolders(result), バージョン:result.バージョン ?? null, 説明:result.説明 ?? '', 確認日時:result.確認日時 ?? null};
   });
   const 集計 = Object.fromEntries(STATES.map(state => [state, items.filter(item => item.状態 === state).length]).filter(([, count]) => count));
   return {形式:1, 種類:'インストール状況', 開始日時:started.toISOString(), 完了日時:finished.toISOString(),
@@ -58,7 +64,7 @@ export async function mergeInstallResult(entries, result, directory = OUTPUT_DIR
   let report = {};
   try { const value = JSON.parse((await readFile(file, 'utf8')).replace(/^﻿/, '')); if (value && typeof value === 'object' && !Array.isArray(value)) report = value; } catch {}
   const byId = new Map((Array.isArray(report.項目) ? report.項目 : []).filter(item => item && typeof item.id === 'string').map(item => [item.id, item]));
-  byId.set(entry.id, {id:entry.id, 名前:entry.name, 分類:entry.menuGroup || 'その他拡張', 状態:result.状態, パス:result.パス ?? null, バージョン:result.バージョン ?? null, 説明:result.説明 ?? '', 確認日時:result.確認日時 ?? new Date().toISOString()});
+  byId.set(entry.id, {id:entry.id, 名前:entry.name, 分類:entry.menuGroup || 'その他拡張', 状態:result.状態, パス:result.パス ?? null, ...agyFolders(result), バージョン:result.バージョン ?? null, 説明:result.説明 ?? '', 確認日時:result.確認日時 ?? new Date().toISOString()});
   // カタログにない古い項目は残さない。並びはカタログ順にそろえる。
   const items = entries.flatMap(item => byId.has(item.id) ? [{...byId.get(item.id), 名前:item.name, 分類:item.menuGroup || 'その他拡張'}] : []);
   const 集計 = Object.fromEntries(STATES.map(state => [state, items.filter(item => item.状態 === state).length]).filter(([, count]) => count));

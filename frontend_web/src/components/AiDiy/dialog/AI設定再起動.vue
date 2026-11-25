@@ -47,6 +47,7 @@ const selections = reactive({
   liveAi: '',
   liveModel: '',
   liveVoice: '',
+  agyCodeModel: "",
   codeAi1: '',
   codeModel1: '',
   codeAi2: '',
@@ -73,6 +74,7 @@ const selections = reactive({
 
 const CHAT_MODEL_KEYS: Record<string, string> = {
   gemini_chat: 'CHAT_GEMINI_MODEL',
+  gemini_agy: 'CHAT_GEMINI_AGY_MODEL',
   freeai_chat: 'CHAT_FREEAI_MODEL',
   openrt_chat: 'CHAT_OPENRT_MODEL',
   openrt_free: 'CHAT_OPENRT_FREE_MODEL',
@@ -99,6 +101,7 @@ const CODE_MODEL_KEYS: Record<string, string> = {
   claude_cli: 'CODE_CLAUDE_CLI_MODEL',
   copilot_cli: 'CODE_COPILOT_CLI_MODEL',
   antigravity_cli: 'CODE_ANTIGRAVITY_CLI_MODEL',
+  agy_cli: 'CODE_AGY_CLI_MODEL',
   codex_cli: 'CODE_CODEX_CLI_MODEL',
   grok_cli: 'CODE_GROK_CLI_MODEL',
   opencode_cli: 'CODE_OPENCODE_CLI_MODEL',
@@ -110,6 +113,9 @@ const CODE_MODEL_KEYS: Record<string, string> = {
 };
 
 const chatAiOptions = computed(() => Object.keys(availableModels.value?.chat_models || {}));
+const savedAgyUnavailable = computed(() =>
+  currentSettings.value.CHAT_AI_NAME === "gemini_agy" && !chatAiOptions.value.includes("gemini_agy")
+);
 // 予測候補はDiag取得値だけ。autoは実行側と同じ優先順の1方式に絞る。
 const predictionProviders = ['openai_oauth', 'freeai_chat', 'openai_chat', 'gemini_chat', 'codex_cli', 'copilot_cli', 'aidiy_hermes', 'aidiy_pi', 'aidiy_codex'];
 const predictionAutoProviders = ['codex_cli', 'copilot_cli', 'aidiy_hermes', 'aidiy_pi', 'aidiy_codex', 'openai_oauth', 'freeai_chat', 'openai_chat', 'gemini_chat'];
@@ -179,12 +185,26 @@ const decisionModelOptions = (field: { key: string; provider: string }) => {
 
 const liveAiOptions = computed(() => Object.keys(availableModels.value?.live_models || {}));
 const codeAiOptions = computed(() => Object.keys(availableModels.value?.code_models || {}));
-
-const chatModelOptions = computed(() => {
-  const models = availableModels.value?.chat_models?.[selections.chatAi] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
+const agyCodeAvailable = computed(() => codeAiOptions.value.includes("agy_cli"));
+const agyCodeModels = computed(() => {
+  const saved = String(currentSettings.value.CODE_AGY_CLI_MODEL || "auto");
+  return {
+    auto: "auto (agy の既定モデル)",
+    ...(saved === "auto" ? {} : { [saved]: saved + "（設定値）" }),
+    ...(availableModels.value?.code_models?.agy_cli || {})
+  };
 });
 
+const chatModelsFor = (provider: string) => {
+  const models = availableModels.value?.chat_models?.[provider] || {};
+  if (provider !== "gemini_agy") return models;
+  const saved = String(currentSettings.value.CHAT_GEMINI_AGY_MODEL || "auto");
+  const retained = saved === "auto" ? {} : {[saved]: saved + "（設定値）"};
+  return {auto: "auto (agy の既定モデル)", ...retained, ...models};
+};
+const chatModelOptions = computed(() =>
+  Object.entries(chatModelsFor(selections.chatAi)).map(([value, label]) => ({ value, label: label || value }))
+);
 const liveModelOptions = computed(() => {
   const models = availableModels.value?.live_models?.[selections.liveAi] || {};
   return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
@@ -195,51 +215,29 @@ const liveVoiceOptions = computed(() => {
   return Object.entries(voices).map(([value, label]) => ({ value, label: label || value }));
 });
 
-const codeModelOptions1 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi1] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const codeModelOptions2 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi2] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const codeModelOptions3 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi3] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const codeModelOptions4 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi4] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const codeModelOptions5 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi5] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const codeModelOptions6 = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.codeAi6] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const taskModelOptions = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.taskAi] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
-const teamModelOptions = computed(() => {
-  const models = availableModels.value?.code_models?.[selections.teamAi] || {};
-  return Object.entries(models).map(([value, label]) => ({ value, label: label || value }));
-});
-
+const codeModelOptions1 = computed(() => buildCodeModelOptions(selections.codeAi1));
+const codeModelOptions2 = computed(() => buildCodeModelOptions(selections.codeAi2));
+const codeModelOptions3 = computed(() => buildCodeModelOptions(selections.codeAi3));
+const codeModelOptions4 = computed(() => buildCodeModelOptions(selections.codeAi4));
+const codeModelOptions5 = computed(() => buildCodeModelOptions(selections.codeAi5));
+const codeModelOptions6 = computed(() => buildCodeModelOptions(selections.codeAi6));
+const taskModelOptions = computed(() => buildCodeModelOptions(selections.taskAi));
+const teamModelOptions = computed(() => buildCodeModelOptions(selections.teamAi));
+function codeModelsFor(aiName: string) {
+  return aiName === "agy_cli" ? agyCodeModels.value : availableModels.value?.code_models?.[aiName] || {};
+}
+function buildCodeModelOptions(aiName: string) {
+  return Object.entries(codeModelsFor(aiName)).map(([value, label]) => ({ value, label: label || value }));
+}
 const codeBaseOptionsList = computed(() =>
   Object.entries(codeBaseOptions.value || {}).map(([value, label]) => ({ value, label }))
 );
 const codePermissionOptions = ['auto', 'full', 'none'];
 
+const chooseCodeProvider = (current: unknown) => {
+  const candidates = codeAiOptions.value;
+  return chooseAvailable(current, current === 'agy_cli' ? candidates : candidates.filter(key => key !== 'agy_cli'));
+};
 const chooseAvailable = (current: any, candidates: string[]) => {
   const value = String(current || '');
   return value && candidates.includes(value) ? value : candidates[0] || '';
@@ -280,7 +278,8 @@ const loadConfig = async () => {
     }
 
     const response = await apiClient.post('/core/AIコア/モデル情報/取得', {
-      セッションID: props.sessionId
+      セッションID: props.sessionId,
+      保存済み: true,
     });
 
     if (response?.data?.status === 'OK') {
@@ -290,12 +289,13 @@ const loadConfig = async () => {
       codeBaseOptions.value = data.external_root_dic || {};
 
       isInitializing.value = true;
-      const chatModels = availableModels.value.chat_models || {};
       const liveModels = availableModels.value.live_models || {};
       const liveVoices = availableModels.value.live_voices || {};
-      const codeModels = availableModels.value.code_models || {};
 
-      selections.chatAi = chooseAvailable(currentSettings.value.CHAT_AI_NAME, chatAiOptions.value);
+      selections.chatAi = savedAgyUnavailable.value ? "" : chooseAvailable(
+        currentSettings.value.CHAT_AI_NAME,
+        chatAiOptions.value.filter(key => key !== "gemini_agy" || currentSettings.value.CHAT_AI_NAME === key)
+      );
       selections.predictionAi = String(currentSettings.value.PREDICTION_AI_NAME ?? 'auto') || 'auto';
       for (const { key } of predictionFields) {
         predictionModels[key] = String(currentSettings.value[key] ?? 'auto').trim() || 'auto';
@@ -305,19 +305,20 @@ const loadConfig = async () => {
         decisionModels[key] = String(currentSettings.value[key] ?? 'auto').trim() || 'auto';
       }
       selections.liveAi = chooseAvailable(currentSettings.value.LIVE_AI_NAME, liveAiOptions.value);
-      selections.codeAi1 = chooseAvailable(currentSettings.value.CODE_AI1_NAME, codeAiOptions.value);
-      selections.codeAi2 = chooseAvailable(currentSettings.value.CODE_AI2_NAME, codeAiOptions.value);
-      selections.codeAi3 = chooseAvailable(currentSettings.value.CODE_AI3_NAME, codeAiOptions.value);
-      selections.codeAi4 = chooseAvailable(currentSettings.value.CODE_AI4_NAME, codeAiOptions.value);
-      selections.codeAi5 = chooseAvailable(currentSettings.value.CODE_AI5_NAME, codeAiOptions.value);
-      selections.codeAi6 = chooseAvailable(currentSettings.value.CODE_AI6_NAME, codeAiOptions.value);
+      selections.agyCodeModel = String(currentSettings.value.CODE_AGY_CLI_MODEL || "auto");
+      selections.codeAi1 = chooseCodeProvider(currentSettings.value.CODE_AI1_NAME);
+      selections.codeAi2 = chooseCodeProvider(currentSettings.value.CODE_AI2_NAME);
+      selections.codeAi3 = chooseCodeProvider(currentSettings.value.CODE_AI3_NAME);
+      selections.codeAi4 = chooseCodeProvider(currentSettings.value.CODE_AI4_NAME);
+      selections.codeAi5 = chooseCodeProvider(currentSettings.value.CODE_AI5_NAME);
+      selections.codeAi6 = chooseCodeProvider(currentSettings.value.CODE_AI6_NAME);
       selections.codeBasePath = currentSettings.value.CODE_BASE_PATH || Object.keys(codeBaseOptions.value || {})[0] || '';
       selections.codePermissions = currentSettings.value.CODE_PERMISSIONS || 'auto';
-      selections.taskAi = chooseAvailable(currentSettings.value.TASK_AI_NAME || 'claude_cli', codeAiOptions.value);
-      selections.teamAi = chooseAvailable(currentSettings.value.TEAM_AI_NAME || 'claude_cli', codeAiOptions.value);
+      selections.taskAi = chooseCodeProvider(currentSettings.value.TASK_AI_NAME || 'claude_cli');
+      selections.teamAi = chooseCodeProvider(currentSettings.value.TEAM_AI_NAME || 'claude_cli');
 
       const chatKey = CHAT_MODEL_KEYS[selections.chatAi];
-      selections.chatModel = chooseAvailable(chatKey && currentSettings.value[chatKey], Object.keys(chatModels?.[selections.chatAi] || {}));
+      selections.chatModel = chooseAvailable(chatKey && currentSettings.value[chatKey], Object.keys(chatModelsFor(selections.chatAi)));
 
       const liveKey = LIVE_MODEL_KEYS[selections.liveAi];
       selections.liveModel = chooseAvailable(liveKey && currentSettings.value[liveKey], Object.keys(liveModels?.[selections.liveAi] || {}));
@@ -325,17 +326,17 @@ const loadConfig = async () => {
       const voiceKey = LIVE_VOICE_KEYS[selections.liveAi];
       selections.liveVoice = chooseAvailable(voiceKey && currentSettings.value[voiceKey], Object.keys(liveVoices?.[selections.liveAi] || {}));
 
-      selections.codeModel1 = chooseAvailable(currentSettings.value.CODE_AI1_MODEL, Object.keys(codeModels?.[selections.codeAi1] || {}));
-      selections.codeModel2 = chooseAvailable(currentSettings.value.CODE_AI2_MODEL, Object.keys(codeModels?.[selections.codeAi2] || {}));
-      selections.codeModel3 = chooseAvailable(currentSettings.value.CODE_AI3_MODEL, Object.keys(codeModels?.[selections.codeAi3] || {}));
-      selections.codeModel4 = chooseAvailable(currentSettings.value.CODE_AI4_MODEL, Object.keys(codeModels?.[selections.codeAi4] || {}));
-      selections.codeModel5 = chooseAvailable(currentSettings.value.CODE_AI5_MODEL, Object.keys(codeModels?.[selections.codeAi5] || {}));
-      selections.codeModel6 = chooseAvailable(currentSettings.value.CODE_AI6_MODEL, Object.keys(codeModels?.[selections.codeAi6] || {}));
-      const taskModelKeys = Object.keys(codeModels?.[selections.taskAi] || {});
+      selections.codeModel1 = chooseAvailable(currentSettings.value.CODE_AI1_MODEL, Object.keys(codeModelsFor(selections.codeAi1)));
+      selections.codeModel2 = chooseAvailable(currentSettings.value.CODE_AI2_MODEL, Object.keys(codeModelsFor(selections.codeAi2)));
+      selections.codeModel3 = chooseAvailable(currentSettings.value.CODE_AI3_MODEL, Object.keys(codeModelsFor(selections.codeAi3)));
+      selections.codeModel4 = chooseAvailable(currentSettings.value.CODE_AI4_MODEL, Object.keys(codeModelsFor(selections.codeAi4)));
+      selections.codeModel5 = chooseAvailable(currentSettings.value.CODE_AI5_MODEL, Object.keys(codeModelsFor(selections.codeAi5)));
+      selections.codeModel6 = chooseAvailable(currentSettings.value.CODE_AI6_MODEL, Object.keys(codeModelsFor(selections.codeAi6)));
+      const taskModelKeys = Object.keys(codeModelsFor(selections.taskAi));
       selections.taskModelPlan = chooseAvailable(currentSettings.value.TASK_AI_MODEL_plan || 'auto', taskModelKeys);
       selections.taskModelDo = chooseAvailable(currentSettings.value.TASK_AI_MODEL_do || 'auto', taskModelKeys);
       selections.taskModelCheck = chooseAvailable(currentSettings.value.TASK_AI_MODEL_check || 'auto', taskModelKeys);
-      const teamModelKeys = Object.keys(codeModels?.[selections.teamAi] || {});
+      const teamModelKeys = Object.keys(codeModelsFor(selections.teamAi));
       selections.teamModelPlan = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_plan || 'auto', teamModelKeys);
       selections.teamModelDo = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_do || 'auto', teamModelKeys);
       selections.teamModelCheck = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_check || 'auto', teamModelKeys);
@@ -367,12 +368,13 @@ const handleCancel = () => {
 
 const buildFormSettings = () => {
     const nextSettings = { ...currentSettings.value };
-    nextSettings.CHAT_AI_NAME = selections.chatAi;
+    if (selections.chatAi || !savedAgyUnavailable.value) nextSettings.CHAT_AI_NAME = selections.chatAi;
     nextSettings.PREDICTION_AI_NAME = selections.predictionAi || 'auto';
     for (const { key } of predictionFields) nextSettings[key] = predictionModels[key] || 'auto';
     nextSettings.DECISION_AI_NAME = selections.decisionAi || 'auto';
     for (const { key } of decisionFields) nextSettings[key] = decisionModels[key] || 'auto';
     nextSettings.LIVE_AI_NAME = selections.liveAi;
+    if (agyCodeAvailable.value) nextSettings.CODE_AGY_CLI_MODEL = selections.agyCodeModel;
     nextSettings.CODE_AI1_NAME = selections.codeAi1;
     nextSettings.CODE_AI1_MODEL = selections.codeModel1;
     nextSettings.CODE_AI2_NAME = selections.codeAi2;
@@ -475,13 +477,16 @@ const handleSaveOnly = async () => {
       loading.value = false;
       return;
     }
+    const nextSettings = buildNextSettings();
     const response = await apiClient.post('/core/AIコア/モデル情報/設定', {
       セッションID: props.sessionId,
-      モデル設定: buildNextSettings(),
+      モデル設定: nextSettings,
       再起動要求: { reboot_core: false, reboot_apps: false, reboot_tools: false, reboot_local: false, reboot_task: false, reboot_team: false },
       save: true
     });
     if (response?.data?.status === 'OK') {
+      currentSettings.value = nextSettings;
+      loadedFormSettings = buildFormSettings();
       void qMessage('モデル情報を保存しました', 'success', 3000);
     } else {
       errorMessage.value = response?.data?.message || '保存に失敗しました';
@@ -527,7 +532,7 @@ const handleResetReboot = async () => {
 watch(
   () => selections.chatAi,
   (newValue) => {
-    const models = availableModels.value?.chat_models?.[newValue] || {};
+    const models = chatModelsFor(newValue);
     const key = CHAT_MODEL_KEYS[newValue];
     selections.chatModel = chooseAvailable(key && currentSettings.value[key], Object.keys(models));
   }
@@ -547,7 +552,7 @@ watch(
 
 // 画面での変更時だけコピーし、読み込み時は保存済みの個別設定を維持する
 function copyCode4Settings() {
-  const models = Object.keys(availableModels.value?.code_models?.[selections.codeAi4] || {});
+  const models = Object.keys(codeModelsFor(selections.codeAi4));
   selections.codeModel4 = chooseAvailable(selections.codeModel4, models);
   selections.codeAi5 = selections.codeAi4;
   selections.codeAi6 = selections.codeAi4;
@@ -583,6 +588,7 @@ function handleTeamPlanChange() {
 
 // プロバイダの手動変更時だけ規定モデルを選ぶ。読込・連動コピーでは個別値を上書きしない。
 function codeDefaultModel(aiName: string) {
+  if (aiName === "agy_cli") return selections.agyCodeModel || "auto";
   const models = Object.keys(availableModels.value?.code_models?.[aiName] || {});
   const key = CODE_MODEL_KEYS[aiName];
   return chooseAvailable(key && currentSettings.value[key], models);
@@ -664,6 +670,7 @@ onMounted(() => {
                 <label class="config-panel-label" for="config-chat-ai-select">CHAT_AI_NAME:</label>
                 <div class="config-panel-control">
                   <select id="config-chat-ai-select" v-model="selections.chatAi" class="config-panel-select">
+                    <option v-if="savedAgyUnavailable" disabled value="">現在の設定は候補外</option>
                     <option v-for="ai in chatAiOptions" :key="ai" :value="ai">{{ ai }}</option>
                   </select>
                 </div>
@@ -814,6 +821,14 @@ onMounted(() => {
 
             <div class="config-panel-section">
               <div class="config-panel-section-header">Code AI Model</div>
+              <div v-if="agyCodeAvailable || (currentSettings.CODE_AGY_CLI_MODEL && currentSettings.CODE_AGY_CLI_MODEL !== 'auto')" class="config-panel-field">
+                <label class="config-panel-label" for="config-agy-code-model">agy_cli の既定モデル:</label>
+                <div class="config-panel-control">
+                  <select id="config-agy-code-model" v-model="selections.agyCodeModel" class="config-panel-select" :disabled="!agyCodeAvailable">
+                    <option v-for="(label, model) in agyCodeModels" :key="model" :value="model">{{ label }}</option>
+                  </select>
+                </div>
+              </div>
               <div class="config-panel-code-grid">
                 <div class="config-panel-code-col">
                   <div class="config-panel-field">

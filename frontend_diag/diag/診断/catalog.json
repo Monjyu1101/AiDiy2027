@@ -556,7 +556,7 @@
       "agy.exe"
     ],
     "version_args": null,
-    "description": "対応プロバイダーを選択したときのみ必要",
+    "description": "公式 Windows インストーラーの標準配置を管理します。",
     "required_by": [
       "対応プロバイダーを選択したときのみ必要"
     ],
@@ -564,12 +564,13 @@
       "backend_server/AIコア/AIコード_cli.py",
       "_setup.py"
     ],
-    "notes": "認証・モデル起動は検査対象外。ollama launchをバージョン確認に使わない。 オフライン・認証なしで終了する保証未確認のため存在確認のみ。",
+    "notes": "状況確認は実行ファイルを起動しません。導入・再導入・削除の対象は標準配置のみです。",
     "paths": {
       "win32": [
         "$LOCALAPPDATA/agy/bin/agy.exe"
       ]
     },
+    "managedStandardOnly": true,
     "priority": 23,
     "wholeSystemRequired": false,
     "diagnosticsRequired": false,
@@ -596,6 +597,35 @@
     ],
     "menuGroup": "CLI群",
     "usageTier": "cli"
+  },
+  {
+    "id": "agy-exe",
+    "name": "agy.exe",
+    "category": "AI CLI",
+    "commands": ["agy.exe"],
+    "platforms": ["win32"],
+    "version_args": null,
+    "description": "PATH・公式の標準配置・VS Code 拡張にある agy.exe を一覧で確認します。",
+    "required_by": ["gemini_agy / agy_cli"],
+    "sources": ["backend_server/AIコア/agy_oauth.py", "frontend_diag/diag/診断/probes.mjs"],
+    "notes": "検出専用です。起動・導入・再導入・削除は行いません。",
+    "paths": {
+      "win32": ["$LOCALAPPDATA/agy/bin/agy.exe", "$USERPROFILE/.gemini/bin/agy.exe"]
+    },
+    "priority": 23.1,
+    "wholeSystemRequired": false,
+    "diagnosticsRequired": false,
+    "featureRequired": true,
+    "scope": "core_feature",
+    "allow_version": false,
+    "kind": "external_executable",
+    "menuGroup": "CLI群",
+    "usageTier": "cli",
+    "installAction": false,
+    "evidence": [
+      {"path": "backend_server/AIコア/agy_oauth.py", "line": 22, "kind": "source_text_reference"},
+      {"path": "frontend_diag/diag/診断/probes.mjs", "line": 174, "kind": "source_text_reference"}
+    ]
   },
   {
     "id": "grok",

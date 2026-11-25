@@ -198,7 +198,9 @@ class CodeAgents:
                 from AIコア.AIコード_cli import CodeAI  # noqa: PLC0415
                 dummy = CodeAI(AI_NAME=ai_name, AI_MODEL="auto")
                 cmd_path = dummy._コマンドパス取得()
-                info["cmd"] = cmd_path
+                info["cmd"] = cmd_path or ""
+                if ai_name == "agy_cli" and not cmd_path:
+                    return {**info, "version": "コマンドが見つかりません"}
                 if ai_name == "aidiy_codex" and not os.path.isfile(cmd_path):
                     # 未コンパイルの環境では実行せず、利用不可として返す。
                     return {"ok": False, "version": "未コンパイル（python command_codex/_compile.py）", "cmd": cmd_path}
@@ -216,10 +218,15 @@ class CodeAgents:
                     direct = dummy._npmシム直接実行に解決(cmd_path)
                     cmd = (direct if direct else [cmd_path]) + ["--version"]
 
+                kwargs = {}
+                if ai_name == "agy_cli":
+                    from AIコア.agy_oauth import agy_oauth環境
+                    kwargs = {"env": agy_oauth環境(), "stdin": subprocess.DEVNULL}
                 result = subprocess.run(
                     cmd,
                     creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0), capture_output=True,
                     timeout=_VERSION_CHECK_TIMEOUT,
+                    **kwargs,
                 )
                 stdout = (result.stdout or b"").decode("utf-8", errors="replace").strip()
                 stderr = (result.stderr or b"").decode("utf-8", errors="replace").strip()

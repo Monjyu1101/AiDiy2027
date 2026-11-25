@@ -143,7 +143,7 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 - `AIセッション管理`
 - `AIストリーミング処理`
 - `AI音声処理`
-- `AIチャット*`（`gemini` / `local` / `ollama` / `openrt_chat` / `openrt_free` / `openai` / `openai_oauth`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
+- `AIチャット*`（`gemini` / `local` / `ollama` / `openrt_chat` / `openrt_free` / `openai` / `openai_oauth` / `gemini_agy`。`freeai_chat` は `AIチャット_gemini.py` が扱う）
 - `AI判断*`（`openai_decisions` / `openai_oauth` / `freeai_chat` / `gemini_chat`。`openai_jsonchat` は `openai_oauth` の別名。共通の真偽確率・選択・段階評価）
 - `AIライブ*`（`gemini` / `openai`。`freeai_live` は `AIライブ_gemini.py` が扱う）
 - `AIコード*`（`AIコード_cli.py`、`AIコード_claude.py`）
@@ -157,7 +157,7 @@ AI 名の規約:
 
 | 設定キー | 規約 |
 |----------|------|
-| `CHAT_AI_NAME` | 原則 `_chat` で終わる。OAuth 接続の `openai_oauth` は例外 |
+| `CHAT_AI_NAME` | 原則 `_chat` で終わる。OAuth 接続の `openai_oauth` と `gemini_agy` は例外 |
 | `LIVE_AI_NAME` | `_live` で終わる |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | 原則 `_sdk` または `_cli`、例外として `aidiy_hermes` / `aidiy_pi` |
 | `TASK_AI_NAME` | Code AI と同じ規約。`backend_taskteam` の AIタスク自動実行で使用 |
@@ -273,7 +273,7 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 
 | 種別 | 役割 |
 |------|------|
-| `CHAT_AI_NAME` | テキストチャット |
+| `CHAT_AI_NAME` | テキストチャット。`gemini_agy` は公式 agy の Google ログインを利用し、モデルは `CHAT_GEMINI_AGY_MODEL`（既定 `auto`） |
 | `LIVE_AI_NAME` | 音声リアルタイム対話 |
 | `PREDICTION_AI_NAME` と方式別 `PREDICTION_OPENAI_MODEL` / `PREDICTION_OAUTH_MODEL` / `PREDICTION_GEMINI_MODEL` / `PREDICTION_FREEAI_MODEL` / `PREDICTION_CODEX_CLI_MODEL` / `PREDICTION_COPILOT_CLI_MODEL` / `PREDICTION_AIDIY_HERMES_MODEL` / `PREDICTION_AIDIY_PI_MODEL` | 内部RESTでプロジェクト履歴から次のユーザー入力を予測（初期値は方式とChat系が auto、CLI系が gpt-6-luna / Hermes・Piは openai_oauth/gpt-6-luna、履歴非保存） |
 | `CODE_AI1_NAME`〜`CODE_AI6_NAME` | code1〜code6 のコード支援 |
@@ -282,4 +282,6 @@ AIコアは、テキスト、音声、画像、ファイル、コード支援を
 
 TASK / TEAM のモデルは plan（計画）/ do（実施）/ check（検証）の3種指定です。
 
-Code AI の有効値は `claude_sdk`、`claude_cli`、`copilot_cli`、`codex_cli`、`antigravity_cli`、`grok_cli`、`opencode_cli`、`aidiy_hermes`、`aidiy_pi`、`aidiy_codex` を想定します。`aidiy_codex` は `~/.aidiy/bin/aidiy_codex` にコンパイル済みの環境だけで候補に出ます。候補は `aidiy_codex_models_info.json` の `<区分>/<モデル名>` で。区分ごとの接続（Responses / Chat Completions / Anthropic Messages）は Hermes / Pi に合わせてある（`command_codex/AGENTS.md`）。
+Code AI の有効値は `claude_sdk`、`claude_cli`、`copilot_cli`、`codex_cli`、`antigravity_cli`、`agy_cli`、`grok_cli`、`opencode_cli`、`aidiy_hermes`、`aidiy_pi`、`aidiy_codex` を想定します。`aidiy_codex` は `~/.aidiy/bin/aidiy_codex` にコンパイル済みの環境だけで候補に出ます。候補は `aidiy_codex_models_info.json` の `<区分>/<モデル名>` で。区分ごとの接続（Responses / Chat Completions / Anthropic Messages）は Hermes / Pi に合わせてある（`command_codex/AGENTS.md`）。
+
+`agy_cli` は既存の `antigravity_cli` と別の Code AI です。モデル既定値は `CODE_AGY_CLI_MODEL`。Google OAuth で取得した `gemini_agy_models_info.json` を会話用 `gemini_agy` と共有しますが、接続・会話継続と設定値は共有しません。

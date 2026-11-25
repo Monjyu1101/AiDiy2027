@@ -32,6 +32,7 @@ const 可能操作 = id => props.操作?.可能操作(id) || [];
 // コンパイルで用意する項目（installAction:false）は導入ボタンを出さない。
 const 導入更新対象 = id => props.項目.some(item => item.id === id && item.menuGroup === 'CLI群' && item.installAction !== false);
 const 表示操作 = id => {
+  if (id === 'agy-exe') return [];
   const actions = 可能操作(id);
   return 導入更新対象(id) ? [actions.includes('再導入') ? '再導入' : '導入', ...actions.filter(action => action === '削除')] : actions;
 };
@@ -75,7 +76,7 @@ watch(()=>props.確認中,完了時(()=>先頭へスクロール(パネル.value
           <div v-if="操作後結果.length && !操作受付" class="install-recheck"><strong>操作後の確認</strong><div v-for="result in 操作後結果" :key="result.id" :data-install-result="result.id"><strong v-if="操作後結果.length > 1">{{項目.find(item=>item.id===result.id)?.name || result.id}} </strong><component :is="状態バッジ" :state="result.状態"/><p>{{result.説明}}</p><p v-if="result.バージョン">バージョン: {{result.バージョン}}</p><p v-if="result.パス">検出パス: {{result.パス}}</p></div></div>
           <p v-if="選択実行?.説明 && !操作受付">{{選択実行.説明}}</p><p v-if="選択実行?.状態==='停止未確認'" class="warning">プロセスの停止を確認できません。ログを確認し、終了を確認するまでこの項目の導入操作を行わないでください。</p>
         </template>
-        <template v-else><component :is="状態バッジ" class="status" :state="状態(選択項目.id)"/><p>{{選択項目.description}}</p><p v-if="能力(選択項目.id)?.理由" class="install-capability-note">{{能力(選択項目.id).理由}}</p><dl><template v-for="[label,value] in 詳細項目" :key="label"><dt>{{label}}</dt><dd>{{value}}</dd></template></dl><h3>ソースの参照箇所</h3><ul><li v-for="source in 参照箇所" :key="source">{{source}}</li></ul></template>
+        <template v-else><component :is="状態バッジ" class="status" :state="状態(選択項目.id)"/><p>{{選択項目.description}}</p><p v-if="能力(選択項目.id)?.理由" class="install-capability-note">{{能力(選択項目.id).理由}}</p><dl><template v-for="[label,value] in 詳細項目" :key="label"><dt>{{label}}</dt><dd><ul v-if="Array.isArray(value)"><li v-for="folder in value" :key="folder">{{folder}}</li></ul><template v-else>{{value}}</template></dd></template></dl><h3>ソースの参照箇所</h3><ul><li v-for="source in 参照箇所" :key="source">{{source}}</li></ul></template>
       </template>
       <div v-else class="welcome"><span class="eyebrow">ENVIRONMENT DIAGNOSTICS</span><h2>導入状況</h2><p>ベース・開発環境等・CLI群・その他拡張からプログラムを選ぶと、利用用途と検出結果を表示します。</p><p>名前の直後の角丸の「Web」で公式サイトを開きます。右側に「確認」と状態を表示します。各項目の「確認」でその項目だけ、右上の「状況確認」で全項目のパスとバージョンを確認します。コマンドで安全に管理できる項目だけ、2行目の左側に「導入」または「再導入」「削除」を表示します。CLI群の「導入・更新」は導入済みでも使えます。安全な操作を確認できない場合は無効にして理由を表示します。</p><p>導入操作は確認ダイアログへの同意後に実行し、別の項目とは並行して実行できます（実行中の項目のボタンだけ押せなくなります）。終了後は「確認」ボタンと同じ処理を実行し、右側コンソールにログと確認結果を表示します。ログインや AI への問い合わせは行いません。</p></div>
     </article>

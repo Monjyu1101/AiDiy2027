@@ -70,7 +70,7 @@ test('coverage is pinned to complete selected-source manifest and exact catalog 
  const catalogBytes=lf(await readFile(new URL('../diag/診断/catalog.json',import.meta.url)));
  assert.equal(coverage.complete,true);assert.equal(coverage.sourceTargetFiles,3333);assert.equal(coverage.scannedSourceFiles,3333);
  assert.equal(JSON.parse(manifestBytes).length,3333);assert.equal(createHash('sha256').update(manifestBytes).digest('hex'),coverage.sourceTargetManifestSha256);
- assert.equal(JSON.parse(catalogBytes).length,22);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
+ assert.equal(JSON.parse(catalogBytes).length,23);assert.equal(createHash('sha256').update(catalogBytes).digest('hex'),coverage.catalogSha256);
  for (const entry of JSON.parse(catalogBytes)) assert.ok(entry.evidence?.length && entry.evidence.every(e=>e.path && Number.isInteger(e.line) && e.line>0));
 });
 
@@ -85,7 +85,7 @@ test('menu classification keeps base minimal and all source evidence',async()=>{
  assert.equal(entries.find(e=>e.id==='code').name,'VS Code');
  assert.deepEqual(entries.filter(e=>e.menuGroup==='その他拡張').map(e=>e.id),['ffmpeg','ffprobe','ffplay','obs']);
  assert.equal(entries.find(e=>e.id==='codex').menuGroup,'CLI群');
- assert.deepEqual(entries.filter(e=>e.menuGroup==='CLI群').map(e=>e.id),['claude','codex','copilot','agy','grok','opencode','ollama','aidiy_codex']);
+ assert.deepEqual(entries.filter(e=>e.menuGroup==='CLI群').map(e=>e.id),['claude','codex','copilot','agy','agy-exe','grok','opencode','ollama','aidiy_codex']);
  assert.deepEqual(entries.filter(e=>e.menuGroup==='開発環境等').map(e=>e.id),['chrome','code','rust','llvm-mingw']);
  // aidiy_codex は起動コマンドではなく、同梱ソースをコンパイルした実行ファイルの有無を診断する例外。
  assert.ok(entries.every(e=>(e.id==='aidiy_codex' || !e.id.startsWith('aidiy_')) && !['hermes','afplay','gst-launch','pwsh','edge','brave'].includes(e.id)));
@@ -100,4 +100,33 @@ test('version warning, NG command failure and ERR execution failures are distinc
  assert.equal((await fixture('setInterval(()=>{},1000)')).状態,'ERR');
  assert.equal((await fixture('process.stdout.write("x".repeat(1000000))')).状態,'ERR');
  const excluded=await probe({id:'fixture',platforms:['imaginary']});assert.equal(excluded.状態,'未確認');assert.match(excluded.説明,/対象外/);
+});
+
+test('managed Antigravity ignores other copies; agy.exe lists every distinct folder without execution',async t=>{
+ const {mkdir}=await import('node:fs/promises');
+ const root=await mkdtemp(path.join(os.tmpdir(),'diag-agy-folders-'));t.after(()=>rm(root,{recursive:true,force:true}));
+ const local=path.join(root,'Local'),home=path.join(root,'User'),extra=path.join(root,'Separate Bin');
+ const standard=path.join(local,'agy','bin'),extension=path.join(home,'.gemini','bin');
+ for(const dir of [standard,extension,extra]) {await mkdir(dir,{recursive:true});await writeFile(path.join(dir,'agy.exe'),'not an executable');}
+ const entries=await catalog();
+ const admin=entries.find(row=>row.id==='agy'), listing=entries.find(row=>row.id==='agy-exe');
+ assert.equal(entries.indexOf(listing),entries.indexOf(admin)+1);
+ assert.equal(listing.installAction,false);
+ const options={platform:'win32',env:{LOCALAPPDATA:local,USERPROFILE:home,PATH:[extra,extra,extension].join(';')}};
+ assert.equal((await probe(admin,options)).パス,path.join(standard,'agy.exe'));
+ const result=await probe(listing,options);
+ assert.equal(result.状態,'OK'); assert.equal(result.バージョン,null);
+ assert.deepEqual(result.検出フォルダ,[extra,extension,standard]);
+ const {writeInstallReport,mergeInstallResult}=await import('../diag/診断/headless.mjs');
+ const {createPreviousResults}=await import('../diag/診断/前回結果.mjs');
+ const storage=path.join(root,'reports'), now=new Date();
+ await writeInstallReport([listing],[result],now,now,storage);
+ const previous=()=>createPreviousResults({directory:storage}).snapshot();
+ assert.deepEqual((await previous()).導入状況.結果[0].検出フォルダ,[extra,extension,standard]);
+ await rm(path.join(standard,'agy.exe'));
+ assert.equal((await probe(admin,options)).状態,'未検出');
+ const after=await probe(listing,options);
+ assert.deepEqual(after.検出フォルダ,[extra,extension]);
+ await mergeInstallResult([listing],after,storage);
+ assert.deepEqual((await previous()).導入状況.結果[0].検出フォルダ,[extra,extension]);
 });

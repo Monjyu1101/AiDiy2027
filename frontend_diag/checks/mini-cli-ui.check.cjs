@@ -336,3 +336,32 @@ test('Memoは全ランチャーでCPU直前、未選択でも＋付箋と同じ�
  const scope=vue.effectScope(),warn=console.warn;let view;console.warn=()=>{};try{view=scope.run(()=>micro.setup({appState:state,cliState,online:true,state:{}},{expose(){},emit(){}}));}finally{console.warn=warn;}
  try{const memo=view.apps.value.find(item=>item.id==='memo');assert.ok(memo);assert.equal(view.disabled(memo),false);view.launch(memo,{});await flush();assert.equal(opened,3);assert.ok(requests.every(route=>route==='api/アプリ起動'));}finally{scope.stop();state.終了();}
 });
+
+test('標準は Antigravity CLI と agy.exe を分け、ミニ・アイコン表示は利用可能な方を一つだけ表示',async()=>{
+ const {CLI状態を作成}=await import('../diag/ui/components/アプリ起動/CLI状態.mjs');
+ const appState={項目:vue.ref([]),フォルダ:vue.ref('/fixture'),処理中:vue.ref(''),選択中:vue.ref(false),一覧:vue.ref(null),通知:vue.ref(''),結果:vue.ref({}),読込(){},利用可能:()=>true,不可理由:()=>''};
+ let legacy=true,detected=true;const launches=[];
+ const cliState=CLI状態を作成({アプリ:appState,api:async(route,_method,_signal,_format,body)=>{
+  if(route==='api/CLI起動')return {対象:[{id:'agy',名前:'Antigravity CLI',モード:'承認省略',利用可能:legacy},{id:'agy_exe',名前:'agy.exe',モード:'通常承認',通常承認:true,利用可能:detected}]};
+  launches.push(body);return {};
+ }});
+ const prefix='components/アプリ起動/';
+ const full=mount(compile(prefix+'アプリ起動パネル.vue'),()=>({state:appState,cliState,online:true,visible:true}));
+ const mini=mount(compile(prefix+'ミニCLI起動.vue'),()=>({state:cliState,appState,online:true}));
+ const micro=compile(prefix+'マイクロランチャー.vue',{inline:false,globals:{window:{},setTimeout,clearTimeout},modules:{'./アイコン移動.mjs':dependency(prefix+'アイコン移動.mjs'),'./円周配置.cjs':require('../diag/ui/components/アプリ起動/円周配置.cjs')}});
+ const scope=vue.effectScope(),warn=console.warn;let view;console.warn=()=>{};try{view=scope.run(()=>micro.setup({appState,cliState,online:true,state:{}},{expose(){},emit(){}}));}finally{console.warn=warn;}
+ const ids=ui=>ui.nodes().map(n=>n.props['data-cli']).filter(Boolean);
+ try{
+  await flush();
+  assert.deepEqual(ids(full),['agy','agy_exe']);assert.deepEqual(ids(mini),['agy']);
+  assert.deepEqual(Array.from(view.apps.value,item=>item.id),['agy']);
+  assert.ok(full.nodes().some(n=>n.tag==='img'&&n.props.src==='CLI_agy_exe.svg'));
+  legacy=false;await cliState.読込();await flush();
+  assert.equal(full.button('Antigravity CLI をTermで起動').props.disabled,true);
+  assert.deepEqual(ids(full),['agy','agy_exe']);assert.deepEqual(ids(mini),['agy_exe']);assert.deepEqual(Array.from(view.apps.value,item=>item.id),['agy_exe']);
+  mini.button('agy.exe をTermで起動（通常承認）').props.onClick({});await flush();
+  assert.deepEqual(launches,[{対象:'agy_exe',フォルダ:'/fixture',自動承認確認:false}]);
+  detected=false;await cliState.読込();await flush();
+  assert.deepEqual(ids(mini),[]);assert.deepEqual(Array.from(view.apps.value,item=>item.id),[]);
+ }finally{mini.app.unmount();full.app.unmount();scope.stop();}
+});

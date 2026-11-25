@@ -12,7 +12,7 @@ import {PREDICTION_CLI_PROVIDERS} from '../モデル試行/defaults.mjs';
 // モデル名だけでは分からない設定由来の transport は、実行時の制約検査を維持する。
 export const HERMES_UNSUPPORTED_PREDICTION_ROUTES = Object.freeze([
   'claude_cli', 'claude-code', 'codex_cli', 'codex-cli', 'copilot_cli', 'copilot-cli',
-  'antigravity_cli', 'antigravity-cli', 'grok_cli', 'grok-cli', 'opencode_cli', 'opencode',
+  'agy_cli', 'antigravity_cli', 'antigravity-cli', 'grok_cli', 'grok-cli', 'opencode_cli', 'opencode',
   'copilot-acp', 'github-copilot-acp', 'codex_app_server',
 ]);
 export function predictionModelSupported(provider, model) {

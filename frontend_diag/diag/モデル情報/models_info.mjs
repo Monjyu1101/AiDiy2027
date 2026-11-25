@@ -17,7 +17,7 @@ import {LIVE_VOICES_FILE, liveVoicesInfo} from './voices_info.mjs';
 import {PREDICTION_MODELS_FILE, predictionModelsInfo} from './prediction_info.mjs';
 import {DECISIONS_MODELS_FILE,decisionsModelsInfo} from './decisions_info.mjs';
 import {COPILOT_FALLBACK_MODELS, OAUTH_FALLBACK_SOURCE, oauthModelFallback} from './model_fallbacks.mjs';
-import {antigravityModels} from './antigravity_models.mjs';
+import {antigravityModels,agyOAuthEntry} from './antigravity_models.mjs';
 import {HERMES_MODELS_FILE, hermesModelsInfo} from './hermes_info.mjs';
 import {PI_MODELS_FILE, PI_CODE_PROVIDER, PI_PROVISIONAL_MODELS, piModels, piModelsInfo, piInstalled} from './pi_info.mjs';
 import {CODEX_MODELS_FILE, CODEX_CODE_PROVIDER, codexModelsInfo, codexCodeModels, codexInstalled} from './codex_info.mjs';
@@ -27,13 +27,14 @@ const CODE_CLIS = Object.freeze({copilot_cli:'copilot', claude_cli:'claude', cod
   antigravity_cli:'agy', grok_cli:'grok', opencode_cli:'opencode'});
 // aidiy_pi は外部CLIではなく command_pi の setup 済み判定（piInstalled）で加える。
 // aidiy_codex は command_codex のコンパイル済み判定（codexInstalled）で加える。
-export async function installedCodeClis({loadEntries = catalog, resolve = resolveProgram, piCheck = piInstalled, codexCheck = codexInstalled} = {}) {
+export async function installedCodeClis({loadEntries = catalog, resolve = resolveProgram, piCheck = piInstalled, codexCheck = codexInstalled, platform = process.platform} = {}) {
   const entries = await loadEntries();
   const clis = Object.fromEntries(await Promise.all(Object.entries(CODE_CLIS).map(async ([key, id]) => {
     const entry = entries.find(item => item.id === id);
     return [key, !!(entry && await resolve(entry))];
   })));
-  return {...clis, [PI_CODE_PROVIDER]:await piCheck(), [CODEX_CODE_PROVIDER]:await codexCheck()};
+  const agy = (platform === 'win32' ? entries.find(item=>item.id === 'agy-exe') : null) ?? entries.find(item=>item.id === 'agy');
+  return {...clis, agy_cli:!!(agy&&await resolve(agyOAuthEntry(agy,platform))), [PI_CODE_PROVIDER]:await piCheck(), [CODEX_CODE_PROVIDER]:await codexCheck()};
 }
 
 // Hermes / OpenCode は渡す値（プロバイダ/モデル）をそのまま表示名にも使う。先頭の日付・仮設定表示は残す。
@@ -99,6 +100,7 @@ export const MODEL_PROVIDER_IDS = Object.freeze(['gemini', 'freeai', 'claude', '
 // OpenRouter は有料を含む一覧を openrt_chat（プロバイダ ID と同名）、無料の絞り込みを派生の openrt_free ファイルに保存する。
 export const modelsInfoFile = id => `${id}_models_info.json`;
 export const OPENRT_FREE_FILE = 'openrt_free_models_info.json';
+export const GEMINI_AGY_MODELS_FILE = 'gemini_agy_models_info.json';
 
 // Grok / local の固定候補も aidiy_diag で管理し、本体は合成ファイルを読む。
 const fixed = (source, models) => Object.freeze({source, models:Object.freeze(models)});
@@ -294,18 +296,56 @@ async function writeMergedModelsInfo(directory, installedClis, providers, result
   const merged = mergeModelsInfo(infos);
   // 旧Geminiファイル由来の候補も必ず置換する。Geminiキーの有無とは独立。
   delete merged.code.antigravity_cli;
-  if (installedClis.antigravity_cli === true) {
-    const models = await (options.antigravityModelsReader ?? antigravityModels)();
-    merged.code.antigravity_cli = {models:Object.keys(models).length ? models : {
+  const legacyInstalled = installedClis.antigravity_cli === true;
+  const legacyModels = legacyInstalled ? await (options.antigravityModelsReader ?? antigravityModels)() : {};
+  const legacyInfo = {
+    プロバイダ:'antigravity', 取得元:'agy models',
+    状態:!legacyInstalled?'未導入':Object.keys(legacyModels).length?'OK':'未取得',
+    models:legacyModels,
+  };
+  const legacyFile = 'antigravity_models_info.json';
+  await writeResult(path.join(directory, legacyFile), legacyInfo);
+  saved.push(legacyFile);
+  if (legacyInstalled) {
+    merged.code.antigravity_cli = {models:Object.keys(legacyInfo.models).length ? legacyInfo.models : {
       auto:'auto (自動判定)', same:'same (変更なし)',
     }};
+  }
+  // 一度取得したOAuth専用一覧を両方の区分に使う。旧CLIやGemini API候補は転用しない。
+  delete merged.code.agy_cli;
+  delete merged.chat.gemini_agy;
+  const agyInstalled = installedClis.agy_cli === true;
+  const validAgySlug = id => /^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}$/.test(id) && !['auto','same'].includes(id);
+  const agyModels = agyInstalled ? Object.fromEntries(Object.entries(
+    await (options.agyModelsReader ?? antigravityModels)({oauthOnly:true}),
+  ).filter(([id,label])=>validAgySlug(id)&&typeof label==='string')) : {};
+  const oauthInfo = {
+    プロバイダ:'gemini_agy', 認証方式:'Google OAuth', 取得元:'agy models',
+    状態:!agyInstalled?'未導入':Object.keys(agyModels).length?'OK':'未取得',
+    models:agyModels,
+  };
+  await writeResult(path.join(directory, GEMINI_AGY_MODELS_FILE), oauthInfo);
+  saved.push(GEMINI_AGY_MODELS_FILE);
+  if (agyInstalled) {
+    const [, config] = await readConfig(options.configReader);
+    const configured = (key) => typeof config[key] === 'string' ? config[key].trim() : '';
+    const withConfigured = (models, key) => {
+      const id = configured(key);
+      return validAgySlug(id)&&!Object.hasOwn(models,id) ? {...models,[id]:`設定値（未検証） - ${id}`} : models;
+    };
+    merged.code.agy_cli = {models:withConfigured({
+      auto:'auto (自動判定)', same:'same (変更なし)', ...oauthInfo.models,
+    },'CODE_AGY_CLI_MODEL')};
+    merged.chat.gemini_agy = {models:withConfigured({
+      auto:'auto (agy の既定モデル)', ...oauthInfo.models,
+    },'CHAT_GEMINI_AGY_MODEL')};
   }
   merged.code = availableCodeModels(merged.code, installedClis);
   const selections = {};
   for (const [group, info] of Object.entries(merged)) {
     // 無効ラベルや旧 auto/same の除外後、CLI の補完後に空区分を落とす。
     let nonempty = Object.fromEntries(Object.entries(info).filter(([, entry]) => Object.keys(entry.models).length));
-    if (group === 'chat' && Object.keys(nonempty).every(key => key === 'local_chat')) {
+    if (group === 'chat' && Object.keys(nonempty).every(key => key === 'local_chat' || key === 'gemini_agy')) {
       const [, config] = await readConfig(options.configReader);
       const modelKeys = {gemini_chat:'CHAT_GEMINI_MODEL', freeai_chat:'CHAT_FREEAI_MODEL',
         openai_chat:'CHAT_OPENAI_MODEL', openai_oauth:'CHAT_OPENAI_MODEL', openrt_chat:'CHAT_OPENRT_MODEL', openrt_free:'CHAT_OPENRT_FREE_MODEL',

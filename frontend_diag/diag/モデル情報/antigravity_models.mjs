@@ -8,18 +8,28 @@ import {execFile} from 'node:child_process';
 import {promisify, stripVTControlCharacters} from 'node:util';
 import {catalog, resolveProgram} from '../診断/probes.mjs';
 
-export async function antigravityModels({loadEntries = catalog, resolve = resolveProgram, run = promisify(execFile)} = {}) {
+// OAuth経路はプラットフォームの公式実行名だけを使い、旧CLIの探索候補とは分ける。
+export function agyOAuthEntry(entry, platform = process.platform) {
+  return platform === 'win32' ? {...entry, commands:['agy.exe']}
+    : {...entry, commands:['agy'],paths:{...entry.paths,[platform]:[...(entry.paths?.[platform]??[]),'$HOME/.local/bin/agy']}};
+}
+
+const ALTERNATIVE_AUTH = new Set(['GEMINI_API_KEY','GOOGLE_API_KEY','AGY_ADC_AUTH','GOOGLE_APPLICATION_CREDENTIALS','GOOGLE_GEMINI_BASE_URL']);
+export async function antigravityModels({loadEntries = catalog, resolve = resolveProgram, run = promisify(execFile), oauthOnly = false, env = process.env, platform = process.platform} = {}) {
   try {
-    const entry = (await loadEntries()).find(item => item.id === 'agy');
-    const executable = entry && await resolve(entry);
+    const entries = await loadEntries();
+    const managed = entries.find(item => item.id === 'agy');
+    const entry = oauthOnly && platform === 'win32' ? entries.find(item => item.id === 'agy-exe') ?? managed : managed;
+    const executable = entry && (oauthOnly ? await resolve(agyOAuthEntry(entry,platform),{env,platform}) : await resolve(entry));
     if (!executable) return {};
     const {stdout} = await run(executable, ['models'], {
       encoding:'utf8', timeout:15000, maxBuffer:256 * 1024, windowsHide:true, shell:false,
+      ...(oauthOnly ? {env:Object.fromEntries(Object.entries(env).filter(([key])=>!ALTERNATIVE_AUTH.has(key.toUpperCase())))} : {}),
     });
     const models = {};
     for (const line of stripVTControlCharacters(stdout).split(/\r?\n/)) {
       // CLIのID<TAB>表示名のみ受け付け、進捗・認証案内は候補にしない。
-      const match = /^([a-zA-Z0-9][a-zA-Z0-9._:/-]*)\t[^\t]+$/.exec(line.trim());
+      const match = (oauthOnly ? /^([a-zA-Z0-9][a-zA-Z0-9._:/-]*)(?:\t| {2,})[^\t]+$/ : /^([a-zA-Z0-9][a-zA-Z0-9._:/-]*)\t[^\t]+$/).exec(line.trim());
       if (match) models[match[1]] = `yyyy/mm/dd - ${match[1]}`;
     }
     return models;

@@ -113,6 +113,7 @@ Toolsが利用できる場合の作業中の音声案内は [MCP活用手順](./
 | Windows ネイティブで terminal / file 操作が落ちる、OS 分岐を入れたい | [`command_hermes,Windows対応規則.md`](./command_hermes,Windows対応規則.md) |
 | hermes を MCP サーバーとして Code CLI から使う | [`command_hermes,MCP_サーバー起動.md`](./command_hermes,MCP_サーバー起動.md) |
 | プロジェクト別に Chat / Code の会話履歴を分析する | [`共通,会話履歴のプロジェクト識別.md`](./共通,会話履歴のプロジェクト識別.md) |
+| 公式 agy の Google ログインで会話・コード支援を使う | [`backend_server,AGY-Googleログイン運用.md`](./backend_server,AGY-Googleログイン運用.md) |
 | AIチャット / AIコードの引数・実行オプション（会話継続・履歴保存・ストリーム送信・出力ファイル保存）を追加・変更する | [`backend_server,backend_tools,AIチャット・AIコード共通パラメータ.md`](./backend_server,backend_tools,AIチャット・AIコード共通パラメータ.md) |
 | AI モデル、WebSocket、code1〜code6 | [`backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md`](./backend_server,frontend_avatar,frontend_web,AIモデル設定変更手順.md)、[`backend_server,frontend_avatar,frontend_web,AIコアWebSocket仕様.md`](./backend_server,frontend_avatar,frontend_web,AIコアWebSocket仕様.md)、[`backend_server,frontend_avatar,frontend_web,AIコードパネル拡張手順.md`](./backend_server,frontend_avatar,frontend_web,AIコードパネル拡張手順.md) |
 | Code CLI 追加、CLI 出力、MCP 設定 | [`共通,CodeCLI追加手順.md`](./共通,CodeCLI追加手順.md)、[`backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md`](./backend_server,command_hermes,frontend_avatar,CodeCLI表示ANSI制御コード対処.md)、[`command_hermes,backend_tools,CodeCLI_MCP設定.md`](./command_hermes,backend_tools,CodeCLI_MCP設定.md) |

@@ -10,6 +10,7 @@ import {spawn} from 'node:child_process';
 import {mkdtemp,mkdir,rm,readFile,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {resolveCliLaunch} from '../../frontend_ide/aidiy_term/cli-launch.mjs';
 import {createCliLauncher} from '../diag/起動/CLI起動.mjs';
 import {createServer} from '../diag/diag_main.mjs';
 import {DIAG_TRANSPORT_BYTE_LIMIT} from '../runtime/transport_limit.mjs';
@@ -18,7 +19,7 @@ async function fixture(t,options={}){
  const root=await mkdtemp(join(tmpdir(),'diag-cli-fixture-')),project=join(root,`日本語 project ' & $ % ;`);await mkdir(project);
  t.after(()=>rm(root,{recursive:true,force:true,maxRetries:5}));
  const calls=[],resolved=[];
- const manager=createCliLauncher({root,resolveCli:async(id,value)=>{resolved.push({id,value});if(options.missing===id)throw Error('private path');return {executable:'/fixture/'+id};},spawnFn(command,args,opts){
+ const manager=createCliLauncher({root,platform:options.platform??'linux',env:options.env,resolveCli:async(id,value)=>{resolved.push({id,value});if(options.resolveCli)return options.resolveCli(id,value);if(options.missing===id)throw Error('private path');return {executable:'/fixture/'+id};},spawnFn(command,args,opts){
   const child=new EventEmitter();child.connected=true;child.disconnect=()=>{child.connected=false;};child.kill=()=>{child.killed=true;};child.unref=()=>{};
   calls.push({command,args,opts,child});if(!options.pending)queueMicrotask(()=>child.emit('message',options.error?{launchError:'sensitive internal error'}:{launchReady:true}));return child;
  },timeout:options.timeout??500});
@@ -123,7 +124,7 @@ test('authenticated CLI API limits body fields, confirmation, asset names and me
  const base=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  assert.equal((await fetch(base+'api/CLI起動')).status,401);assert.equal((await fetch(base+'api/CLI起動',{headers})).status,200);
  for(const id of ids){const response=await fetch(base+`CLI_${id}.png`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/png');assert.deepEqual(Buffer.from(await response.arrayBuffer()),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.png`,import.meta.url)));}
- for(const id of ids.filter(id=>!['aidiy_hermes','aidiy_pi','aidiy_codex'].includes(id))){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
+ for(const id of [...ids.filter(id=>!['aidiy_hermes','aidiy_pi','aidiy_codex'].includes(id)),'agy_exe']){const response=await fetch(base+`CLI_${id}.svg`);assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'image/svg+xml');assert.equal(await response.text(),await readFile(new URL(`../diag/ui/components/アプリ起動/CLIアイコン/${id}.svg`,import.meta.url),'utf8'));}
  for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt']){const license=await fetch(base+name);assert.equal(license.status,200);assert.equal(license.headers.get('content-type'),'text/plain; charset=utf-8');assert.equal(await license.text(),await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/'+name,import.meta.url),'utf8'));}
  const citations=await fetch(base+'LICENSE_ICONS.md');assert.equal(citations.status,200);assert.equal((await citations.text()).replace(/\r\n/g,'\n'),(await readFile(new URL('../diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md',import.meta.url),'utf8')).replace(/\r\n/g,'\n'));
  assert.equal((await fetch(base+'CLI_bad.png')).status,404);
@@ -171,4 +172,28 @@ test('外部CLI SVGの形状・色を維持し、Hermesはlocal PNGのみ配布�
  }
  for(const id of ['aidiy_hermes','aidiy_pi','aidiy_codex']){const png=await readFile(new URL(id+'.png',root));assert.equal(png.readUInt32BE(16),120);assert.equal(png.readUInt32BE(20),120);await assert.rejects(readFile(new URL(id+'.svg',root)),{code:'ENOENT'});}
  const notes=await text('LICENSE_ICONS.md');for(const label of ['Copilot','Claude','Codex','Grok','OpenCode','aidiy_hermes','aidiy_pi','aidiy_codex','LobeHub'])assert.ok(notes.includes(label),label);assert.doesNotMatch(notes,/取得・確認待ち|独自仮ピクトグラム/);
+});
+
+test('Windows launcher lists the standard and detected agy.exe separately and starts agy.exe with normal approval',async t=>{
+ const home=await mkdtemp(join(tmpdir(),'diag-agy-'));t.after(()=>rm(home,{recursive:true,force:true}));
+ const extensionDir=join(home,'.gemini','bin'),extension=join(extensionDir,'agy.exe');
+ const local=join(home,'Local AppData'),standardDir=join(local,'agy','bin'),standard=join(standardDir,'agy.exe');
+ const env={USERPROFILE:home,LOCALAPPDATA:local,PATH:extensionDir};
+ const f=await fixture(t,{platform:'win32',env,resolveCli:async(id,options)=>['agy','agy_exe'].includes(id)?resolveCliLaunch(id,options):{}});
+ const catalog=async()=>Object.fromEntries((await f.manager.catalog()).対象.filter(item=>['agy','agy_exe'].includes(item.id)).map(item=>[item.id,item]));
+ let result=await catalog();assert.equal(result.agy.利用可能,false);assert.equal(result.agy_exe.利用可能,false);
+ await mkdir(extensionDir,{recursive:true});await writeFile(extension,'fixture only');
+ result=await catalog();assert.equal(result.agy.利用可能,false);assert.equal(result.agy_exe.利用可能,true);assert.equal(result.agy_exe.名前,'agy.exe');
+ assert.equal(f.calls.length,0);assert.doesNotMatch(JSON.stringify(result),/fixture|executable/);
+ await f.manager.launch('agy_exe',f.project,false);
+ assert.deepEqual(f.calls[0].args.slice(-3),['--cli','agy_exe','--foreground']);
+ await mkdir(standardDir,{recursive:true});await writeFile(standard,'fixture only');
+ result=await catalog();assert.equal(result.agy.利用可能,true);assert.equal(result.agy_exe.利用可能,true);
+ await f.manager.launch('agy',f.project,true);
+ assert.deepEqual(f.calls[1].args.slice(-4),['--cli','agy','--cli-auto-approve','--foreground']);
+ await rm(extensionDir,{recursive:true});
+ result=await catalog();assert.equal(result.agy_exe.利用可能,true);
+ await rm(standard);
+ await assert.rejects(f.manager.launch('agy_exe',f.project,false),{status:503});
+ assert.equal(f.calls.length,2);
 });

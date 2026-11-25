@@ -440,6 +440,8 @@ class CodeAgent:
                         tool = "copilot"
                     elif ai_name == "antigravity_cli":
                         tool = "antigravity"
+                    elif ai_name == "agy_cli":
+                        tool = "agy (Google OAuth)"
                     elif ai_name == "codex_cli":
                         tool = "codex"
                     elif ai_name == "aidiy_hermes":

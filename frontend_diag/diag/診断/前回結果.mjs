@@ -5,7 +5,7 @@
 // https://github.com/monjyu1101/AiDiy2027
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { OUTPUT_DIRECTORY, INSTALL_FILE } from './headless.mjs';
+import { OUTPUT_DIRECTORY, INSTALL_FILE, agyFolders } from './headless.mjs';
 import { MODEL_PROVIDER_IDS, modelsInfoFile } from '../モデル情報/models_info.mjs';
 import { INTEGRATION_IDS, INTEGRATION_FILE } from '../モデル情報/integration_info.mjs';
 
@@ -14,7 +14,7 @@ const 最新日時 = values => values.map(日時).filter(Boolean).sort((a,b)=>Da
 // 表示専用。認証の証跡・キー・任意の追加フィールドを復元しない。
 function 表示結果(value) {
   if (!value || typeof value.id !== 'string' || !['OK','NG','ERR','PASS','注意','未確認','未検出','未実施'].includes(value.状態)) return null;
-  const result = {id:value.id,状態:value.状態,確認日時:日時(value.確認日時),前回結果:true};
+  const result = {id:value.id,状態:value.状態,...agyFolders(value),確認日時:日時(value.確認日時),前回結果:true};
   for (const key of ['パス','バージョン','説明','一覧範囲','補完']) if(typeof value[key]==='string') result[key]=value[key];
   for (const key of ['モデル','警告']) if(Array.isArray(value[key])) result[key]=value[key].filter(item=>typeof item==='string');
   if(Array.isArray(value.モデル詳細)) result.モデル詳細=value.モデル詳細.filter(item=>item&&typeof item.model_id==='string').map(item=>Object.fromEntries(['model_id','作成日','トークン数','モダリティ'].filter(key=>['string','number'].includes(typeof item[key])).map(key=>[key,item[key]])));

@@ -11,6 +11,7 @@
 
 from AIコア.AI応答 import 応答正規化, エラー応答
 from AIコア.AI実行オプション import 既定実行オプション, 読取専用CLI対応方式
+from AIコア.agy_oauth import agy_oauthコマンド, agy_oauth環境
 from AIコア.AIコードPi出力 import PiJSON出力
 from log_config import get_logger
 logger = get_logger(__name__)
@@ -39,6 +40,7 @@ _STDERR_STREAM_STDOUT_FINAL_AI = frozenset({
     "copilot_cli",
     "opencode_cli",
     "antigravity_cli",
+    "agy_cli",
 })
 
 
@@ -305,6 +307,8 @@ class CodeAI:
 
         # codex専用：セッションID管理
         self.codex_セッションID = None
+        # OAuth 専用。ワークスペース全体の「直近の会話」は継続に使わない。
+        self._agy会話 = None
 
         # 最終実行のstderr出力（セッションID抽出用）
         self.last_stderr_output = ""
@@ -408,7 +412,7 @@ class CodeAI:
 
     def _コマンドパス取得(self) -> str:
         """code_ai に対応するCLIコマンドパスを返す"""
-        custom_cmd = os.environ.get(f'{self.code_ai.upper()}_CLI_PATH')
+        custom_cmd = os.environ.get(f'{self.code_ai.upper()}_CLI_PATH') if self.code_ai != "agy_cli" else None
         if custom_cmd:
             return custom_cmd
         if self.code_ai == "aidiy_hermes":
@@ -441,6 +445,8 @@ class CodeAI:
                 if os.path.isfile(candidate2):
                     return candidate2
             return "opencode"
+        if self.code_ai == "agy_cli":
+            return agy_oauthコマンド()
         if self.code_ai == "antigravity_cli":
             if os.name == 'nt':
                 userprofile = os.environ.get('USERPROFILE', os.path.expanduser('~'))
@@ -541,6 +547,8 @@ class CodeAI:
                 return バージョン
 
         cmd = self._コマンドパス取得()
+        if self.code_ai == "agy_cli" and not cmd:
+            return ""
         if self.code_ai == "aidiy_pi" and not os.environ.get("AIDIY_PI_CLI_PATH"):
             # cmd.exe（.cmd ランチャー）を経由せず node で直接確認する。
             direct = self._pi直接実行コマンド()
@@ -574,6 +582,7 @@ class CodeAI:
                 *version_args,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
+                **({"env": agy_oauth環境(), "stdin": asyncio.subprocess.DEVNULL} if self.code_ai == "agy_cli" else {}),
             )
             try:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout_sec)
@@ -787,7 +796,7 @@ class CodeAI:
             コマンド配列
         """
         # 環境変数からカスタムコマンドパスを取得（オプション）
-        custom_cmd = os.environ.get(f'{self.code_ai.upper()}_CLI_PATH')
+        custom_cmd = os.environ.get(f'{self.code_ai.upper()}_CLI_PATH') if self.code_ai != "agy_cli" else None
 
         if self.実行オプション.CLI読取専用:
             self._予測CLI確認()
@@ -850,6 +859,8 @@ class CodeAI:
         # 解決して cmd.exe を回避する。cmd.exe を経由する場合のみ argv 長制限のため
         # プロンプトを 1 行化する。
         cmd_str = custom_cmd or self._コマンドパス取得()
+        if self.code_ai == "agy_cli" and not cmd_str:
+            raise ValueError("agy_cli を起動できません。agy の導入を確認してください。")
         base, cmd_exe経由 = self._CLI起動コマンド先頭(cmd_str, custom=bool(custom_cmd))
         if cmd_exe経由:
             プロンプト = self._CLI送信用テキスト正規化(プロンプト)
@@ -903,6 +914,20 @@ class CodeAI:
                 return common
             else:
                 return common + ["--continue"]
+
+        elif self.code_ai == "agy_cli":
+            # 1回分の会話をstdinへ渡し、公式の構造化結果からこの接続専用のIDを取得する。
+            # https://antigravity.google/docs/cli/headless/
+            common = base + ["--input-format", "stream-json", "--output-format", "stream-json", "--print-timeout", "0"]
+            if self.code_permissions == "full":
+                common.append("--dangerously-skip-permissions")
+            if self.code_model and self.code_model.lower() not in ("auto", "same"):
+                if not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,199}", self.code_model):
+                    raise ValueError("agy_cli のモデル指定が不正です。")
+                common.extend(["--model", self.code_model])
+            if not 初回 and self._agy会話 and self._agy会話[0] == repo_path:
+                common.extend(["--conversation", self._agy会話[1]])
+            return common
 
         elif self.code_ai == "antigravity_cli":
             # Antigravity CLI (agy) — claude 互換インターフェース
@@ -1346,8 +1371,11 @@ class CodeAI:
                     logger.error(f"CodeAI実行:自動再開始エラー {start_error}")
                     return "! CodeAIが停止状態です。開始してください。"
 
+            作業ディレクトリ = 絶対パス if 絶対パス else self.cwd_str
+            repo_path = Path(作業ディレクトリ).resolve().as_posix()
+
             # 履歴管理
-            if not resume:
+            if not resume or (self.code_ai == "agy_cli" and self._agy会話 and self._agy会話[0] != repo_path):
                 self.履歴辞書 = {}
                 self.履歴最終番号 = 0
             if len(self.履歴辞書) == 0:
@@ -1355,11 +1383,15 @@ class CodeAI:
 
             # 初回判定（resumeがFalseまたはセッション未開始）
             初回送信 = not resume or not self.session_started
+            if self.code_ai == "agy_cli":
+                初回送信 = not resume or not self._agy会話 or self._agy会話[0] != repo_path
+                if 初回送信:
+                    self._agy会話 = None
             # 送信文とモデル判断で同じ履歴を使う。生成はターンごとに1回だけ。
             履歴テキスト = self._履歴取得()
 
             # 完全なプロンプト構築（プロバイダー別）
-            if self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "codex_cli", "aidiy_codex", "opencode_cli", "grok_cli"]:
+            if self.code_ai in ["claude_cli", "copilot_cli", "antigravity_cli", "agy_cli", "codex_cli", "aidiy_codex", "opencode_cli", "grok_cli"]:
                 # 履歴送信不要。初回のみ system_prompt を付与して方針を伝える
                 if 初回送信:
                     完全プロンプト = f"{self.system_prompt}\n\n{送信用要求テキスト}"
@@ -1415,8 +1447,6 @@ class CodeAI:
             self._履歴追加(要求テキスト, "user")
 
             # コマンド構築（プロバイダー別・初回判定付き）
-            作業ディレクトリ = 絶対パス if 絶対パス else self.cwd_str
-            repo_path = Path(作業ディレクトリ).resolve().as_posix()
             if self.実行オプション.CLI読取専用:
                 await self._予測CLI準備(repo_path)
             設定モデル = self.code_model
@@ -1464,6 +1494,11 @@ class CodeAI:
                     command=command,
                     cwd=作業ディレクトリ,
                     timeout=タイムアウト秒数
+                )
+            elif self.code_ai == "agy_cli":
+                stdin = json.dumps({"event": "user", "message": {"content": 完全プロンプト}}, ensure_ascii=False) + "\n"
+                result_text = await self._subprocess実行(
+                    command=command, cwd=repo_path, timeout=タイムアウト秒数, stdin_text=stdin,
                 )
             else:
                 result_text = await self._subprocess実行(
@@ -1566,6 +1601,8 @@ class CodeAI:
             if os.name == "nt" and not creationflags:
                 creationflags = subprocess.CREATE_NO_WINDOW
             cli_env = os.environ.copy()
+            if self.code_ai == "agy_cli":
+                cli_env = agy_oauth環境(cli_env)
             if self.code_ai == "opencode_cli" and self.実行オプション.CLI読取専用:
                 from AIコア.AIコードCLI権限 import CLI実行環境
                 cli_env = CLI実行環境(cli_env, self.code_ai, True)
@@ -1704,6 +1741,9 @@ class CodeAI:
                             await self._停止マーカー送信()
                             break
 
+                        # OAuth URL・資格情報を含み得る AGY の生stderrは転送しない。
+                        if self.code_ai == "agy_cli":
+                            continue
                         # parent_manager経由でoutput_stream送信（stderr）
                         if self.parent_manager and hasattr(self.parent_manager, '接続'):
                             try:
@@ -1782,6 +1822,12 @@ class CodeAI:
             if monitor_error is not None:
                 raise monitor_error
 
+            if self.code_ai == "agy_cli":
+                self.last_stderr_output = ""
+                if self._停止マーカー送信済み:
+                    return "!"
+                return self._agy回答(full_output, cwd, process.returncode)
+
             if self.実行オプション.CLI読取専用 and process.returncode == 2:
                 # adapterの未対応transportやCLIの未対応引数を、本文とは別の能力エラーにする。
                 # 設定・認証情報を含み得るstdout/stderrをログや戻り値へ出さない。
@@ -1826,6 +1872,8 @@ class CodeAI:
             return f"! 処理タイムアウト({timeout}秒)が発生しました。"
 
         except Exception as e:
+            if self.code_ai == "agy_cli":
+                return エラー応答("agy_cli を起動できません。agy の導入を確認してください。")
             logger.error(f"subprocess実行エラー (command={command}, cwd={cwd}): {e}")
             return f"! subprocess実行エラー: {str(e)}"
 
@@ -1841,6 +1889,37 @@ class CodeAI:
                 await _所有プロセス終了(process)
             if process is not None and self.current_process is process:
                 self.current_process = None
+
+    def _agy回答(self, output: str, cwd: str, returncode: int) -> str:
+        failure = "agy_cli の応答を取得できません。agy の Google OAuth ログインとモデルを確認してください。"
+        if returncode != 0:
+            return エラー応答(failure)
+        result = None
+        try:
+            for line in output.splitlines():
+                event = json.loads(line)
+                if not isinstance(event, dict):
+                    raise ValueError
+                if event.get("event") == "result":
+                    if result is not None:
+                        raise ValueError
+                    result = event.get("result")
+                    if not isinstance(result, dict):
+                        raise ValueError
+            if not result or result.get("status") != "SUCCESS":
+                raise ValueError
+            text, session = result.get("response"), result.get("conversation_id")
+            if not isinstance(text, str) or not text.strip() or not isinstance(session, str) or not re.fullmatch(
+                r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}", session,
+            ):
+                raise ValueError
+            if self._agy会話 and self._agy会話 != (cwd, session):
+                # AGYが指定IDを再開せず別会話を作った場合も自動で付け替えない。
+                return エラー応答("agy_cli の会話を継続できません。新しい会話を開始してください。")
+            self._agy会話 = (cwd, session)
+            return text
+        except (ValueError, TypeError):
+            return エラー応答(failure)
 
     async def _antigravity実行(self, command: list, cwd: str, timeout: int) -> str:
         """子コマンドにも表示コンソールを作らせず、回答・進捗をパイプで受け取る。"""

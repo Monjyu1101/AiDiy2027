@@ -9,7 +9,7 @@ import {readFile,lstat,realpath,open,mkdtemp,readdir,writeFile,rename,unlink,rm}
 import {createHash,randomUUID} from 'node:crypto';
 import path from 'node:path';
 import os from 'node:os';
-import {resolveProgram} from '../診断/probes.mjs';
+import {installProbeEntry, resolveProgram} from '../診断/probes.mjs';
 
 export const ANTIGRAVITY_INSTALLER_URL='https://antigravity.google/cli/install.cmd';
 // 2026-10-19 に読んだ公式スクリプト。上流変更時は再レビューするまで実行しない。
@@ -125,7 +125,7 @@ export async function inspectAntigravity(entry,{env=process.env,platform=process
     const leftovers=await readdir(prefix).catch(error=>{if(error.code==='ENOENT')return [];throw error;});
     if(leftovers.some(name=>/^agy\.exe\.aidiy-(?:backup|failed)-/.test(name)))throw failure('前回の退避・復旧ファイルが残っています。手動で復旧状態を確認してください。');
     if(await plainPath(context.staging,{fileOnly:true}))throw failure('公式インストーラーの作業ファイルが残っています。既存の処理を確認してから再試行してください。');
-    const selected=await resolve(entry,{env,platform});
+    const selected=await resolve(installProbeEntry(entry,platform),{env,platform});
     if(selected&&!same(selected,context.binary))throw failure('別の導入先の agy が検出されました。元の方法で管理してください。');
     const identity=await inspectWindows(context,{env,run,signal});
     if(!binaryInfo){if(receipt)throw failure('導入記録はありますがバイナリがありません。手動で配置を確認してください。');item.操作=['導入'];return {item,context};}

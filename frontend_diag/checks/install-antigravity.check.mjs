@@ -240,3 +240,19 @@ test('System32 の通常の hardlink は起動元として許すが、リンク�
   assert.deepEqual((await f.inspect()).item.操作,['導入']);await f.execute('導入');await link(f.target,path.join(f.root,'linked-owned.exe'));
   assert.deepEqual((await f.inspect()).item.操作,[]);
 });
+
+test('標準管理行はVS Code配置が先でも標準配置だけ再導入する',async t=>{
+ const {catalog,resolveProgram}=await import('../diag/診断/probes.mjs');
+ const managed=(await catalog()).find(row=>row.id==='agy');
+ const f=await fixture(t,{binary:OLD,owned:true});
+ const otherBin=path.join(f.env.USERPROFILE,'.gemini','bin');
+ await mkdir(otherBin,{recursive:true});
+ const other=path.join(otherBin,'agy.exe');
+ await writeFile(other,'VS Code extension copy');
+ const options={...f.options,env:{...f.env,PATH:otherBin},resolve:resolveProgram};
+ const before=await inspectAntigravity(managed,options);
+ assert.deepEqual(before.item.操作,['再導入','削除']);
+ await executeAntigravity(managed,'再導入',before.context,options);
+ assert.equal(await readFile(other,'utf8'),'VS Code extension copy');
+ assert.deepEqual(await readFile(f.target),NEW);
+});

@@ -13,15 +13,22 @@ const ROOT=fileURLToPath(new URL('../../../',import.meta.url));
 const fail=(message,status=400)=>Object.assign(new Error(message),{status});
 // 任意コマンド・モデル・引数・実行ファイルはAPIから受け取らない。
 // 存在確認はファイル探索のみ。CLIの起動・認証・バージョン確認は行わない。
-export function createCliLauncher({root=ROOT,node=process.execPath,spawnFn=spawn,resolveCli,loadDefinitions=()=>import('../../../frontend_ide/aidiy_term/cli-launch.mjs'),timeout=30000,env=process.env}={}){
+export function createCliLauncher({root=ROOT,node=process.execPath,spawnFn=spawn,resolveCli,loadDefinitions=()=>import('../../../frontend_ide/aidiy_term/cli-launch.mjs'),timeout=30000,env=process.env,platform=process.platform}={}){
  async function definitions(){
-  try{const shared=await loadDefinitions();return {items:shared.CLI_LAUNCHERS,resolve:resolveCli||shared.resolveCliLaunch};}
+  try{
+   const shared=await loadDefinitions();
+   const items=[...shared.CLI_LAUNCHERS,...(platform==='win32'&&shared.AGY_EXE_LAUNCHER?[shared.AGY_EXE_LAUNCHER]:[])];
+   return {items,resolve:resolveCli||shared.resolveCliLaunch};
+  }
   catch{throw fail('Term のCLI起動ファイルが不足しています。同じ版の frontend_ide を準備してください。',503);}
  }
  async function catalog(){
   const {items,resolve}=await definitions();
   const 対象=await Promise.all(items.map(async item=>{
-   try{await resolve(item.id,{autoApprove:true,env});return {id:item.id,名前:item.name,モード:item.mode,利用可能:true};}
+   try{
+    await resolve(item.id,{autoApprove:item.autoApproveSupported!==false,env,platform});
+    return {id:item.id,名前:item.name,モード:item.mode,利用可能:true,...(item.autoApproveSupported===false?{通常承認:true}:{})};
+   }
    catch{return {id:item.id,名前:item.name,モード:item.mode,利用可能:false};}
   }));
   return {対象};
@@ -30,13 +37,13 @@ export function createCliLauncher({root=ROOT,node=process.execPath,spawnFn=spawn
   const {items,resolve}=await definitions();
   const item=items.find(value=>value.id===id);
   if(!item)throw fail('CLIの起動対象が不正です。');
-  if(approved!==true)throw fail('自動承認モードの注意事項を確認してください。');
+  if(item.autoApproveSupported!==false&&approved!==true)throw fail('自動承認モードの注意事項を確認してください。');
   if(typeof project!=='string'||!project.trim()||project.length>4096||/[\0\r\n]/.test(project)||!isAbsolute(project))throw fail('プロジェクトフォルダを選択してください。');
   let cwd;try{cwd=await realpath(project);if(!(await stat(cwd)).isDirectory())throw Error();}catch{throw fail('フォルダが見つからないか、アクセスできません。');}
   // 同じCLI・プロジェクトでも要求ごとに独立したTermを開く。
   // 起動完了後のCLI・サーバー・窓の所有権と終了処理は、そのTermだけが持つ。
-  try{await resolve(id,{autoApprove:true,env});}catch{throw fail(`${item.name} の実行ファイルが見つからないか、利用できません。導入状況を確認してください。`,503);}
-  const args=[join(root,'frontend_ide','launch.mjs'),'--app','term','--project',cwd,'--new-window','--cli',id,'--cli-auto-approve','--foreground'];
+  try{await resolve(id,{autoApprove:item.autoApproveSupported!==false,env,platform});}catch{throw fail(`${item.name} の実行ファイルが見つからないか、利用できません。導入状況を確認してください。`,503);}
+  const args=[join(root,'frontend_ide','launch.mjs'),'--app','term','--project',cwd,'--new-window','--cli',id,...(item.autoApproveSupported===false?[]:['--cli-auto-approve']),'--foreground'];
   const childEnv={...env,AIDIY_LAUNCHER_CHILD:'1'};
   for(const name of Object.keys(childEnv))if(/^(ELECTRON_RUN_AS_NODE|NODE_OPTIONS|NODE_PATH|AIDIY_(?:DIAG_LAUNCHER_CHILD|DIAG_SETTINGS|DIAG_RUN))$/i.test(name))delete childEnv[name];
   const logs=join(root,'temp','aidiy_diag','アプリ起動');await mkdir(logs,{recursive:true});

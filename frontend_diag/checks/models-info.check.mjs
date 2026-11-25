@@ -90,7 +90,7 @@ test('merged code includes only installed CLIs and Hermes starts with installed 
   await writeModelsInfo([{id:'openai_oauth',名前:'OAuth'}],{openai_oauth:ok()},{directory,now,installedClis:{codex_cli:true},naviHermesAvailable:false});
   const withoutHermes=JSON.parse(await readFile(path.join(directory,'navi_models_info.json'),'utf8'));assert.equal(Object.hasOwn(withoutHermes,'aidiy_hermes'),false);assert.equal(Object.hasOwn(withoutHermes,'codex_cli'),true);
   const installed=await installedCodeClis({loadEntries:async()=>[{id:'claude'},{id:'agy'}],resolve:async entry=>'/fixture/'+entry.id,piCheck:async()=>false,codexCheck:async()=>false});
-  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true,aidiy_pi:false,aidiy_codex:false});
+  assert.deepEqual(installed,{...Object.fromEntries(Object.keys(allClis).map(key=>[key,false])),claude_cli:true,antigravity_cli:true,agy_cli:true,aidiy_pi:false,aidiy_codex:false});
  }finally{await rm(directory,{recursive:true,force:true});}
 });
 
@@ -155,7 +155,7 @@ test('NG keeps the reason and Grok fixed candidates; only tested providers are w
  try{
   const providers=[{id:'grok',名前:'Grok'},{id:'gemini',名前:'Gemini'},{id:'discord',名前:'Discord'},{id:'openrt_chat',名前:'OpenRouter'}];
   const saved=await writeModelsInfo(providers,{grok:{...ok(),状態:'NG',説明:'expired',警告:['fallback']},gemini:ok(),discord:ok(),openrt_chat:{状態:'未実施'}},{directory,read,now});
-  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['aidiy_codex_models_info.json','chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','pi_models_info.json','prediction_models_info.json']);
+  assert.deepEqual(saved,['grok_models_info.json','gemini_models_info.json','antigravity_models_info.json','gemini_agy_models_info.json','chat_models_info.json','live_models_info.json','code_models_info.json','navi_models_info.json','hermes_models_info.json','pi_models_info.json','aidiy_codex_models_info.json','prediction_models_info.json','decisions_models_info.json','live_voices_info.json']);assert.deepEqual((await readdir(directory)).sort(),['aidiy_codex_models_info.json','antigravity_models_info.json','chat_models_info.json','code_models_info.json','decisions_models_info.json','gemini_agy_models_info.json','gemini_models_info.json','grok_models_info.json','hermes_models_info.json','live_models_info.json','live_voices_info.json','navi_models_info.json','pi_models_info.json','prediction_models_info.json']);
   const grok=JSON.parse(await readFile(path.join(directory,modelsInfoFile('grok')),'utf8'));
   assert.equal(grok.状態,'NG');assert.equal(grok.説明,'expired');assert.match(grok.chat.取得元,/固定候補/);assert.deepEqual(grok.警告,['fallback']);
   assert.deepEqual(Object.keys(grok.code.grok_cli.models),['grok-4.7','grok-4.6']);

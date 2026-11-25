@@ -7,12 +7,12 @@ https://github.com/monjyu1101/AiDiy2027 -->
 import {起動モーション} from './起動モーション.mjs';
 import './起動モーション.css';
 import {computed,watch} from 'vue';
-import {アプリアイコン,起動項目を整列} from './アプリアイコン.mjs';
+import {アプリアイコン,起動項目を整列,コンパクトCLI} from './アプリアイコン.mjs';
 import ミニアイコン列 from './ミニアイコン列.vue';
 const props=defineProps({state:Object,appState:Object,online:Boolean});
 watch(()=>props.online,value=>{if(value)void props.state.読込();else props.state.切断();},{immediate:true});
 const Chrome=computed(()=>props.appState.項目?.value?.find(item=>item.id==='chrome'&&props.appState.利用可能('chrome')));
-const 外部CLI=computed(()=>起動項目を整列(props.state.項目.value));
+const 外部CLI=computed(()=>起動項目を整列(コンパクトCLI(props.state.項目.value)));
 </script>
 <template>
 <section v-if="外部CLI.length||Chrome" class="mini-cli-launch" aria-label="外部アプリ・CLI起動">

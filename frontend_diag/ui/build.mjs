@@ -30,7 +30,7 @@ await copyFile(path.join(root,'../icons/AiDiy_diag.png'),path.join(root,'../diag
 await copyFile(path.join(root,'../icons/AiDiy_memo.png'),path.join(root,'../diag/ui/components/アプリ起動/アイコン/AiDiy_memo.png'));
 for(const id of ['avatar','ide','cpu','navi','term','code','live','task','team','browser','discord','slack','diag','memo'])await copyFile(path.join(root,'../diag/ui/components/アプリ起動/アイコン',`AiDiy_${id}.png`),path.join(root,'../static',`AiDiy_${id}.png`));
 for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','aidiy_codex','vscode'])await copyFile(path.join(root,'../diag/ui/components/アプリ起動/CLIアイコン',`${id}.png`),path.join(root,'../static',`CLI_${id}.png`));
-for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])await copyFile(path.join(root,'../diag/ui/components/アプリ起動/CLIアイコン',`${id}.svg`),path.join(root,'../static',`CLI_${id}.svg`));
+for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode','agy_exe'])await copyFile(path.join(root,'../diag/ui/components/アプリ起動/CLIアイコン',`${id}.svg`),path.join(root,'../static',`CLI_${id}.svg`));
 await copyFile(path.join(root,'../diag/ui/components/アプリ起動/CLIアイコン/LICENSE_ICONS.md'),path.join(root,'../static/LICENSE_ICONS.md'));
 for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt'])await copyFile(path.join(root,'../diag/ui/components/アプリ起動/CLIアイコン',name),path.join(root,'../static',name));
 await writeFile(path.join(root,'../static/build-manifest.json'),JSON.stringify(await manifest(),null,2)+'\n');

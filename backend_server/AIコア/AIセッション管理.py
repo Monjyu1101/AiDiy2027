@@ -41,7 +41,7 @@ def _is_disconnect_like_error(e: Exception) -> bool:
     ])
 
 
-def 初期モデル設定生成(app_conf) -> dict:
+def 初期モデル設定生成(app_conf, *, 候補に正規化: bool = True) -> dict:
     if not (app_conf and hasattr(app_conf, 'json')):
         return {}
     
@@ -51,6 +51,7 @@ def 初期モデル設定生成(app_conf) -> dict:
     設定 = {
         # ChatAI設定
         "CHAT_AI_NAME": app_conf.json.get("CHAT_AI_NAME", "freeai_chat"),
+        "CHAT_GEMINI_AGY_MODEL": app_conf.json.get("CHAT_GEMINI_AGY_MODEL", "auto"),
         "CHAT_GEMINI_MODEL": app_conf.json.get("CHAT_GEMINI_MODEL", "gemini-3.1-flash-image"),
         "CHAT_FREEAI_MODEL": app_conf.json.get("CHAT_FREEAI_MODEL", "gemini-4-carbon"),
         "CHAT_OPENRT_MODEL": app_conf.json.get("CHAT_OPENRT_MODEL", "google/gemini-3.1-flash-image"),
@@ -101,6 +102,7 @@ def 初期モデル設定生成(app_conf) -> dict:
         "CODE_CLAUDE_CLI_MODEL": app_conf.json.get("CODE_CLAUDE_CLI_MODEL", "auto"),
         "CODE_COPILOT_CLI_MODEL": app_conf.json.get("CODE_COPILOT_CLI_MODEL", "auto"),
         "CODE_ANTIGRAVITY_CLI_MODEL": app_conf.json.get("CODE_ANTIGRAVITY_CLI_MODEL", "auto"),
+        "CODE_AGY_CLI_MODEL": app_conf.json.get("CODE_AGY_CLI_MODEL", "auto"),
         "CODE_CODEX_CLI_MODEL": app_conf.json.get("CODE_CODEX_CLI_MODEL", "auto"),
         "CODE_GROK_CLI_MODEL": app_conf.json.get("CODE_GROK_CLI_MODEL", "auto"),
         "CODE_AIDIY_HERMES_MODEL": app_conf.json.get("CODE_AIDIY_HERMES_MODEL", "auto"),
@@ -127,7 +129,7 @@ def 初期モデル設定生成(app_conf) -> dict:
         "TEAM_AI_MODEL_check": app_conf.json.get("TEAM_AI_MODEL_check", "auto"),
     }
     models = getattr(app_conf, "models", None)
-    if models is not None and callable(getattr(models, "normalize_initial_settings", None)):
+    if 候補に正規化 and models is not None and callable(getattr(models, "normalize_initial_settings", None)):
         設定 = models.normalize_initial_settings(設定)
     return 設定
 

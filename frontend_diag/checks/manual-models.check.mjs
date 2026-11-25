@@ -88,3 +88,23 @@ test('manual HTTP requires auth/JSON/bounds and calls shared run endpoints',asyn
  const calls=[],trials=createModelTrials({reader:()=>JSON.stringify(config),statusFn:async()=>({online:true}),request:wire(calls),catalogReader:async()=>({})}),server=createServer({token:'fixture',modelTrials:trials});await new Promise(r=>server.listen(0,'127.0.0.1',r));const url=`http://127.0.0.1:${server.address().port}/`,headers={Authorization:'Bearer fixture','Content-Type':'application/json'};
  try{assert.equal((await fetch(url+'api/AIモデル')).status,401);assert.equal((await fetch(url+'api/AIモデル',{headers})).status,200);for(const body of ['null','[]','{','"x"'])assert.equal((await fetch(url+'api/AIモデル/開始',{method:'POST',headers,body})).status,400);assert.equal((await fetch(url+'api/AIモデル/開始',{method:'POST',headers,body:' '.repeat(DIAG_TRANSPORT_BYTE_LIMIT+1)})).status,413);const start=await(await fetch(url+'api/AIモデル/開始',{method:'POST',headers,body:JSON.stringify(input())})).json();const result=await(await fetch(url+`api/モデル試行/${start.実行ID}/CHAT`,{method:'POST',headers})).json();assert.equal(result.状態,'OK');}finally{server.closeAllConnections();await new Promise(r=>server.close(r));await trials.close();}
 });
+
+test('Chat picker orders AGY, Gemini, FreeAI and requires discovery and its separate file',async()=>{
+ let hasAgy=true,report={プロバイダ:'gemini_agy',状態:'未取得',models:{}};
+ const local={...config,CHAT_AI_NAME:'gemini_agy',CHAT_GEMINI_AGY_MODEL:'saved-agy'};
+ const composite=Object.fromEntries(['openai_chat','freeai_chat','local_chat','gemini_chat','gemini_agy'].map(id=>[id,{models:{auto:id}}]));
+ const trials=createModelTrials({reader:()=>JSON.stringify(local),installedClisFn:async()=>({agy_cli:hasAgy}),request:()=>assert.fail('no model requests'),catalogReader:async name=>{
+  if(name==='gemini_agy_models'){if(!report)throw Error('missing');return report;}
+  return name==='chat_models'?composite:{};
+ }});
+ try{
+  const choices=async()=> (await trials.catalogs()).区分.CHAT.プロバイダ.map(p=>p.id);
+  assert.deepEqual(await choices(),['openai_chat','gemini_agy','gemini_chat','freeai_chat','local_chat']);
+  hasAgy=false;
+  for(const absent of [false,true]){
+   if(absent){hasAgy=true;report=null;}
+   assert.deepEqual(await choices(),['openai_chat','gemini_chat','freeai_chat','local_chat']);
+   assert.equal((await trials.catalogs()).初期値.CHAT.provider,'gemini_agy');
+  }
+ } finally{await trials.close();}
+});

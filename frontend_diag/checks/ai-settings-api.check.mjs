@@ -40,7 +40,7 @@ test('fixed Core actions authenticate every request and filter sensitive respons
   assert.equal(calls.at(-1).path,AI_SETTINGS_ACTIONS[action]);
  }
  assert.ok(calls.every(c=>c.port===8091));
- assert.deepEqual(calls.find(c=>c.path===AI_SETTINGS_ACTIONS.取得).data,{セッションID:''});
+ assert.deepEqual(calls.find(c=>c.path===AI_SETTINGS_ACTIONS.取得).data,{セッションID:'',保存済み:true});
  await bridge('設定',envelope({...mutation,モデル設定:{},save:false,再起動要求:rebootFlags(true)}));
  for(const data of [{...mutation,リセット:true},{...mutation,save:false},{...mutation,再起動要求:rebootFlags(true)},{...mutation,再起動要求:{}}])await assert.rejects(bridge('設定',envelope(data)),e=>e.status===400);
 });
@@ -158,4 +158,22 @@ test('free OpenRouter model is whitelisted end to end but API keys remain privat
  await bridge('設定',envelope({...mutation,モデル設定:loaded.data.モデル設定}));
  assert.equal(calls.at(-1).data.モデル設定.CHAT_OPENRT_FREE_MODEL,'vendor/new:free');
  for(const key of ['openrt_key_id','openrt_free_key_id'])await assert.rejects(bridge('設定',envelope({...mutation,モデル設定:{[key]:'secret'}})),e=>e.status===400);
+});
+
+test('Diag reads and writes the two OAuth model keys independently of existing providers', async()=>{
+ const expected={CHAT_AI_NAME:'gemini_agy',CHAT_GEMINI_AGY_MODEL:'agy-chat',CHAT_GEMINI_MODEL:'api-chat',
+  CODE_AI4_NAME:'agy_cli',CODE_AI4_MODEL:'agy-slot',CODE_AGY_CLI_MODEL:'agy-code',CODE_ANTIGRAVITY_CLI_MODEL:'legacy-code'};
+ const {calls,requestFn}=mock();
+ const bridge=createCoreSettingsBridge({reader,requestFn:async r=>{
+  if(r.path===AI_SETTINGS_ACTIONS.取得){
+   assert.equal(r.data.保存済み,true);
+   return ok({モデル設定:expected});
+  }
+  return requestFn(r);
+ }});
+ await bridge('初期化',envelope());
+ const loaded=(await bridge('取得',envelope({セッションID:'fixture-session'}))).data.モデル設定;
+ assert.deepEqual(loaded,expected);
+ await bridge('設定',envelope({...mutation,モデル設定:loaded}));
+ assert.deepEqual(calls.at(-1).data.モデル設定,expected);
 });

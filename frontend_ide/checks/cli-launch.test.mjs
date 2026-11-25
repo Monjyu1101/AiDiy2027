@@ -202,3 +202,26 @@ test('ordinary Term config does not publish a CLI title suffix',async()=>fixture
  try{const config=await fetch(app.url+'development/config').then(response=>response.json());assert.equal(config.cliName,undefined);}
  finally{await app.close();}
 }));
+
+test('Windows standard and extension agy are resolved separately; agy_exe never requests automatic approval',async()=>fixture(async directory=>{
+ const home=path.join(directory,'日本語 & user'),local=path.join(home,'Local AppData');
+ const extDir=path.join(home,'.gemini','bin'),extension=path.join(extDir,'agy.exe'),official=path.join(local,'agy','bin','agy.exe');
+ const named=env=>({autoApprove:true,platform:'win32',env:{USERPROFILE:home,LOCALAPPDATA:local,PATH:'',...env}});
+ await assert.rejects(resolveCliLaunch('agy_exe',named()),/見つかりません/);
+ await executable(path.join(directory,'agy.cmd'));await assert.rejects(resolveCliLaunch('agy_exe',named({PATH:directory})),/見つかりません/);
+ await executable(extension);
+ for(const env of [{},{PATH:'"'+extDir+'"'}]){
+  await assert.rejects(resolveCliLaunch('agy',named(env)),/見つかりません/);
+  const alternate=await resolveCliLaunch('agy_exe',named(env));
+  assert.equal(alternate.executable,await realpath(extension));
+  assert.deepEqual(alternate.args,[]);assert.equal(alternate.autoApprove,false);
+ }
+ await executable(official);
+ assert.equal((await resolveCliLaunch('agy',named({PATH:extDir}))).executable,await realpath(official));
+ assert.equal((await resolveCliLaunch('agy_exe',named())).executable,await realpath(extension));
+ await rm(extension);
+ assert.equal((await resolveCliLaunch('agy_exe',named())).executable,await realpath(official));
+ const elsewhere=path.join(directory,'agy.exe');await executable(elsewhere);
+ assert.equal((await resolveCliLaunch('agy_exe',named({PATH:directory}))).executable,await realpath(elsewhere));
+ await assert.rejects(resolveCliLaunch('agy_exe',{platform:'linux'}),/Windows/);
+}));

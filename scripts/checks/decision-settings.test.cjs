@@ -125,7 +125,7 @@ for (const [project, relative] of [
     } finally {f.stop();}
   });
   test(project + ': 候補未取得でも他設定・未掲載値を失わない', async () => {
-    const settings={CHAT_AI_NAME:'saved-chat',LIVE_AI_NAME:'saved-live',CODE_AI1_NAME:'saved-code',CODE_AI1_MODEL:'saved-model',TASK_AI_NAME:'saved-task',TASK_AI_MODEL_plan:'saved-plan',CUSTOM:'keep',DECISION_AI_NAME:'future-provider',DECISION_FREEAI_MODEL:'future-model'};
+    const settings={CHAT_AI_NAME:'saved-chat',LIVE_AI_NAME:'saved-live',CODE_AI1_NAME:'saved-code',CODE_AI1_MODEL:'saved-model',TASK_AI_NAME:'saved-task',TASK_AI_MODEL_plan:'saved-plan',CUSTOM:'keep',PREDICTION_AIDIY_PI_MODEL:'openai_oauth/pi-retained',PREDICTION_AIDIY_CODEX_MODEL:'openai_oauth/codex-retained',DECISION_AI_NAME:'future-provider',DECISION_FREEAI_MODEL:'future-model'};
     const f=fixture(settings);
     try {
       const b=f.bindings;await b.loadConfig();assert.match(await f.render(),/取得済み候補はありません/);

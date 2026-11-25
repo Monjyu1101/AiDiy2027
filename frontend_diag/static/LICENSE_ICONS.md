@@ -53,7 +53,7 @@
 
 ## Antigravity CLI / agy
 
-- 対象: `agy.svg`、`agy.png`。無改変原本: `upstream/antigravity-logo-mark.svg`。
+- 対象: `agy.svg`、`agy.png`、名称帯だけを agy.exe に変えた `agy_exe.svg`。無改変原本: `upstream/antigravity-logo-mark.svg`。
 - 引用元: [Google Antigravity 公式サイト](https://antigravity.google/) のヘッダーに埋め込まれた虹色の山形マーク（背景なし、180単位の viewBox）。取得日: 2026-10-20 UTC。ページ内の SVG 要素をそのまま保存し、末尾に改行1つを付けています。番号つきリリースはなく、取得時のハッシュで固定しています。
 - 原本 SHA-256: `db3b1dd11fddd2680cc2b5785dbd79f03e1fb305c871b466c3485b4383fd957a`。
 - 形状・色: viewBox、パス、マスク、ぼかしフィルター、色は入れ子 SVG 内にそのまま保持します。トリミングはしていません。表示用 SVG は共通枠に等比配置し、図形の外の白帯に黒字の Antigravity を追加。PNG は合成 SVG をブラウザで描画した120×120pxの透過出力で、公式配布ファイルそのものではありません。

@@ -40,6 +40,7 @@ MODULES = {
     "AIコア": ModuleType("AIコア"),
     "AIコア.AI実行オプション": options,
     "AIコア.AI応答": response,
+    "AIコア.agy_oauth": load_module("agy_oauth_under_test", CORE / "agy_oauth.py"),
     "AIコア.AIコードPi出力": load_module("aidiy_codex_pi_output_under_test", CORE / "AIコードPi出力.py"),
     "log_config": logging_stub,
     "PIL": pil_stub,

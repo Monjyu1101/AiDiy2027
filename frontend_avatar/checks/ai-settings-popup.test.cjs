@@ -18,7 +18,8 @@ function fixture(project) {
   const local = createRequire(path.join(root, project, 'package.json'));
   const vue = local('vue'), { parse, compileScript, compileTemplate } = local('@vue/compiler-sfc'), ts = local('typescript');
   const filename = project === 'frontend_web' ? 'src/components/AiDiy/dialog/AI設定再起動.vue' : 'src/dialog/AI設定再起動.vue';
-  const settings = { CHAT_AI_NAME: 'openai_chat', CHAT_OPENAI_MODEL: 'chat-one', CHAT_GEMINI_MODEL: 'gemini-one',
+  const settings = { CHAT_AI_NAME: 'openai_chat', CHAT_OPENAI_MODEL: 'chat-one', CHAT_GEMINI_MODEL: 'gemini-one', CHAT_GEMINI_AGY_MODEL: 'auto',
+    CODE_AGY_CLI_MODEL: 'saved-code-override', CODE_ANTIGRAVITY_CLI_MODEL: 'old-antigravity',
     LIVE_AI_NAME: 'freeai_live', LIVE_FREEAI_MODEL: 'freeai-one', LIVE_FREEAI_VOICE: 'voice-one',
     LIVE_OPENAI_MODEL: 'openai-one', LIVE_OPENAI_VOICE: 'voice-one', DECISION_AI_NAME: 'auto',
     CODE_CODEX_CLI_MODEL: 'auto', CODE_AIDIY_HERMES_MODEL: 'openai_oauth/one', CODE_BASE_PATH: '../', CODE_PERMISSIONS: 'auto',
@@ -27,10 +28,10 @@ function fixture(project) {
   for (const family of ['TASK', 'TEAM']) for (const phase of ['plan', 'do', 'check']) settings[`${family}_AI_MODEL_${phase}`] = 'same';
   for (const field of ['OPENAI', 'OAUTH', 'GEMINI', 'FREEAI']) settings[`DECISION_${field}_MODEL`] = 'retained-model';
   const available_models = {
-    chat_models: { openai_chat: {'chat-one': 'One', 'chat-two': 'Two'}, gemini_chat: {'gemini-one': 'One', 'gemini-two': 'Two'} },
+    chat_models: { openai_chat: {'chat-one': 'One', 'chat-two': 'Two'}, gemini_chat: {'gemini-one': 'One', 'gemini-two': 'Two'}, gemini_agy: {auto: 'Auto', 'agy-chat': 'Chat'} },
     live_models: { freeai_live: {'freeai-one': 'One', 'freeai-two': 'Two'}, openai_live: {'openai-one': 'One', 'openai-two': 'Two'} },
     live_voices: { freeai_live: {'voice-one': 'One', 'voice-two': 'Two'}, openai_live: {'voice-one': 'One', 'voice-two': 'Two'} },
-    code_models: { codex_cli: {auto: 'Auto', same: 'Same', custom: 'Custom'}, aidiy_hermes: {'openai_oauth/one': 'One', 'openai_oauth/two': 'Two'} },
+    code_models: { agy_cli: {auto: 'Auto', 'agy-code': 'Code'}, codex_cli: {auto: 'Auto', same: 'Same', custom: 'Custom'}, aidiy_hermes: {'openai_oauth/one': 'One', 'openai_oauth/two': 'Two'} },
     decision_models: Object.fromEntries(['openai_decisions', 'openai_oauth', 'gemini_chat', 'freeai_chat'].map(id => [id, {'decision-one': 'One', 'decision-two': 'Two'}])),
   };
   const calls = [], emitted = [], module = {exports: {}}, props = { isOpen: false, sessionId: 'fixture' };
@@ -44,6 +45,7 @@ function fixture(project) {
       if (id === 'vue') return {...vue, onMounted() {}, withDirectives: node => node};
       if (id.endsWith('/api/client')) return {default: {post: async (url, body) => {
         calls.push({url, body: copy(body)});
+        if (url.endsWith('/設定') && body.save) Object.assign(settings, body.モデル設定);
         return {data: {status: 'OK', data: {available_models, モデル設定: copy(settings)}}};
       }}};
       if (id.endsWith('/utils/qAlert')) return {qAlert: async () => {}, qMessage: async () => {}, qConfirm: async () => true};
@@ -109,6 +111,33 @@ for (const project of ['frontend_web', 'frontend_avatar']) {
       const sent = (await f.save()).モデル設定;
       for (let i = 1; i <= 6; i++) {assert.equal(sent[`CODE_AI${i}_NAME`], 'aidiy_hermes');assert.equal(sent[`CODE_AI${i}_MODEL`], 'openai_oauth/two');}
       for (const family of ['TASK', 'TEAM']) {assert.equal(sent[`${family}_AI_NAME`], 'aidiy_hermes');for (const phase of ['plan', 'do', 'check']) assert.equal(sent[`${family}_AI_MODEL_${phase}`], 'openai_oauth/two');}
+    } finally {f.close();}
+  });
+  test(`${project}: independent OAuth models save and reload without changing API or legacy settings`, async () => {
+    const f = fixture(project);
+    try {
+      await f.load();
+      assert.equal(f.calls[0].body.保存済み, true);
+      assert.equal(f.data.selections.agyCodeModel, 'saved-code-override');
+      await f.choose('config-chat-ai-select', 'gemini_agy');
+      await f.choose('config-chat-model-select', 'agy-chat');
+      await f.choose('config-agy-code-model', 'agy-code');
+      assert.equal(f.data.selections.codeModel4, 'same');
+      await f.choose('config-code-ai4-select', 'agy_cli');
+      const sent = (await f.save()).モデル設定;
+      assert.equal(sent.CHAT_AI_NAME, 'gemini_agy');
+      assert.equal(sent.CHAT_GEMINI_AGY_MODEL, 'agy-chat');
+      assert.equal(sent.CHAT_GEMINI_MODEL, 'gemini-one');
+      assert.equal(sent.CODE_AGY_CLI_MODEL, 'agy-code');
+      assert.equal(sent.CODE_ANTIGRAVITY_CLI_MODEL, 'old-antigravity');
+      assert.equal(sent.CODE_AI4_NAME, 'agy_cli');
+      assert.equal(sent.CODE_AI4_MODEL, 'agy-code');
+      await f.choose('config-chat-ai-select', 'gemini_chat');
+      await f.choose('config-chat-ai-select', 'gemini_agy');
+      assert.equal(f.data.selections.chatModel, 'agy-chat');
+      await f.load();
+      assert.equal(f.data.selections.chatAi, 'gemini_agy');
+      assert.equal(f.data.selections.agyCodeModel, 'agy-code');
     } finally {f.close();}
   });
   test(`${project}: cancel after selecting a model does not send a save request`, async () => {

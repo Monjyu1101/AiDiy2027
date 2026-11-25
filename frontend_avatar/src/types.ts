@@ -48,6 +48,7 @@ export interface Column {
 }
 
 export interface ModelSettings {
+  CHAT_GEMINI_AGY_MODEL?: string;
   CHAT_GEMINI_MODEL?: string;
   CHAT_FREEAI_MODEL?: string;
   CHAT_OPENRT_MODEL?: string;
@@ -73,6 +74,7 @@ export interface ModelSettings {
   CODE_CLAUDE_OLLAMA_MODEL?: string;
   CODE_COPILOT_CLI_MODEL?: string;
   CODE_ANTIGRAVITY_CLI_MODEL?: string;
+  CODE_AGY_CLI_MODEL?: string;
   CODE_CODEX_CLI_MODEL?: string;
   CODE_CODEX_OLLAMA_MODEL?: string;
   CODE_GROK_CLI_MODEL?: string;

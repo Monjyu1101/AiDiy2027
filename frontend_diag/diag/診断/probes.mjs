@@ -48,10 +48,10 @@ async function windowsPythonPaths(env) {
   return candidates;
 }
 
-export async function resolveProgram(entry, options = {}) {
+async function resolveProgramPaths(entry, options = {}) {
   const platform = options.platform || process.platform, env = options.env || process.env;
   // 自分の Node は PATH に無くても、起動済み実行ファイルとして検出する。
-  if (entry.id === 'node' && !options.env) return process.execPath;
+  if (entry.id === 'node' && !options.env) return [process.execPath];
   const extensions = platform === 'win32' ? ['.exe', '.com', '.cmd', '.bat'] : [''];
   const pathValue = env.PATH || (platform === 'win32' ? Object.entries(env).find(([key]) => key.toUpperCase() === 'PATH')?.[1] : '') || '';
   const directories = pathValue.split(platform === 'win32' ? ';' : ':').filter(Boolean);
@@ -77,8 +77,17 @@ export async function resolveProgram(entry, options = {}) {
   const found = await Promise.all(usable.map(async candidate => {
     try { await access(candidate, platform === 'win32' ? constants.F_OK : constants.X_OK); return (await stat(candidate)).isFile(); } catch { return false; }
   }));
-  const index = found.indexOf(true);
-  return index < 0 ? null : path.resolve(usable[index]);
+  return usable.filter((_, index) => found[index]).map(candidate=>path.resolve(candidate));
+}
+
+export async function resolveProgram(entry, options = {}) {
+  return (await resolveProgramPaths(entry, options))[0] ?? null;
+}
+
+// 管理対象は Windows の固定配置のみ。PATH の他の agy を検出・操作対象にしない。
+export function installProbeEntry(entry, platform = process.platform) {
+  return entry.id === 'agy' && entry.managedStandardOnly === true && platform === 'win32'
+    ? {...entry, commands:[], paths:{win32:['$LOCALAPPDATA/agy/bin/agy.exe']}} : entry;
 }
 
 function childEnvironment(directory) {
@@ -162,8 +171,19 @@ export async function versionInvocation(entry, executable, options = {}) {
 export async function probe(entry, options = {}) {
   const result = {id:entry.id, 状態:'未検出', パス:null, バージョン:null, 説明:'PATH / 標準配置先に見つかりません。', 確認日時:new Date().toISOString()};
   if (entry.platforms?.length && !entry.platforms.includes(options.platform || process.platform)) return {...result,状態:'未確認',説明:'対象外: この OS では使用しないため確認していません。'};
+  if (entry.id === 'agy-exe') {
+    try {
+      const binaries = await resolveProgramPaths(entry, options);
+      const folders = [...new Map(binaries.map(file=>[path.dirname(file).toLowerCase(),path.dirname(file)])).values()];
+      return {...result,状態:folders.length?'OK':'未検出',検出フォルダ:folders,
+        説明:folders.length?`${folders.length} か所で agy.exe を検出しました。ファイルの存在のみ確認しました。`:'対象の配置先に agy.exe は見つかりません。'};
+    } catch (error) {
+      logProbeFailure(entry.id,'resolve_error',{errorCode:safeCode(error.code)});
+      return {...result,状態:'ERR',検出フォルダ:[],説明:'実行ファイルの探索に失敗しました。'};
+    }
+  }
   let executable;
-  try { executable = await (options.resolve || resolveProgram)(entry, options); }
+  try { executable = await (options.resolve || resolveProgram)(installProbeEntry(entry, options.platform), options); }
   catch (error) { logProbeFailure(entry.id, 'resolve_error', {errorCode:safeCode(error.code)}); return {...result,状態:'ERR',説明:'実行ファイルの探索に失敗しました。'}; }
   if (!executable) return result;
   result.パス = executable;

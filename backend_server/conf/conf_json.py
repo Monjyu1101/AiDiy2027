@@ -91,6 +91,7 @@ class conf_json:
 
         # ChatAI設定
         'CHAT_AI_NAME': 'freeai_chat',
+        'CHAT_GEMINI_AGY_MODEL': 'auto',
         'CHAT_GEMINI_MODEL': 'gemini-3.1-flash-image',
         'CHAT_FREEAI_MODEL': 'gemini-4-carbon',
         'CHAT_OPENRT_MODEL': 'google/gemini-3.1-flash-image',
@@ -148,6 +149,7 @@ class conf_json:
         'CODE_CLAUDE_OLLAMA_MODEL': 'auto',
         'CODE_COPILOT_CLI_MODEL': 'auto',
         'CODE_ANTIGRAVITY_CLI_MODEL': 'auto',
+        'CODE_AGY_CLI_MODEL': 'auto',
         'CODE_CODEX_CLI_MODEL': 'auto',
         'CODE_CODEX_OLLAMA_MODEL': 'auto',
         'CODE_GROK_CLI_MODEL': 'same',

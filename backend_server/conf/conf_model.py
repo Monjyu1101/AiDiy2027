@@ -61,8 +61,30 @@ class conf_models:
 
 
     def get_chat_models(self) -> Dict[str, Dict[str, str]]:
-        """chat合成ファイルの候補を取得する。"""
-        return self._get_diag_models("chat") or {}
+        """選択画面用に候補を並べる。実行既定値の優先順は変更しない。"""
+        models = self._get_diag_models("chat") or {}
+        if "gemini_agy" in models:
+            from AIコア.agy_oauth import agy_oauthコマンド
+            if not agy_oauthコマンド() or not self._gemini_agy一覧あり():
+                models = {name: items for name, items in models.items() if name != "gemini_agy"}
+        trio = ("gemini_agy", "gemini_chat", "freeai_chat")
+        ordered = {}
+        for name, items in models.items():
+            if name in trio:
+                ordered.update((key, models[key]) for key in trio if key in models)
+            else:
+                ordered[name] = items
+        return ordered
+
+    def _gemini_agy一覧あり(self) -> bool:
+        filename = os.path.join(self._config_dir_path(), "..", "_AIDIY", "aidiy_diag", "gemini_agy_models_info.json")
+        try:
+            with open(filename, encoding="utf-8-sig") as source:
+                data = json.loads(source.read(4 * 1024 * 1024 + 1))
+        except (OSError, UnicodeError, ValueError):
+            return False
+        return (isinstance(data, dict) and data.get("プロバイダ") == "gemini_agy"
+                and data.get("状態") in ("OK", "未取得") and isinstance(data.get("models"), dict))
 
 
     def get_live_models(self) -> Dict[str, Dict[str, str]]:
@@ -153,17 +175,25 @@ class conf_models:
                 if current not in choices and not (controls and current in ("auto", "same", "")):
                     result[key] = next(iter(choices), "")
             if kind == "code":
-                for provider, choices in available.items():
+                fallback = {key: models for key, models in available.items() if key != "agy_cli"}
+                if not fallback:
+                    continue
+                for provider, choices in fallback.items():
                     select(f"CODE_{provider.upper()}_MODEL", choices, True)
                 for index in range(1, 7):
                     name_key, model_key = f"CODE_AI{index}_NAME", f"CODE_AI{index}_MODEL"
-                    if result.get(name_key) in ("auto", "same", ""):
+                    if result.get(name_key) in ("auto", "same", "", "agy_cli"):
                         continue
-                    select(name_key, available)
-                    select(model_key, available[result[name_key]], True)
+                    select(name_key, fallback)
+                    select(model_key, fallback[result[name_key]], True)
                 continue
-            select(f"{kind.upper()}_AI_NAME", available)
+            # Google ログイン経路は明示指定だけ。候補が古い場合も他方式で代替しない。
+            fallback = {key: models for key, models in available.items() if key != "gemini_agy"}
+            if result.get("CHAT_AI_NAME") != "gemini_agy" and fallback:
+                select("CHAT_AI_NAME", fallback)
             for provider, choices in available.items():
+                if provider == "gemini_agy":
+                    continue  # CLI が解決する auto・明示モデルをそのまま維持
                 vendor = provider.removesuffix(f"_{kind}").upper()
                 if kind == "chat" and provider == "openai_chat" and result.get("CHAT_AI_NAME") == "openai_oauth":
                     continue

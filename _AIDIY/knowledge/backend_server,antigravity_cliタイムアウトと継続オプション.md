@@ -8,6 +8,15 @@
 - `antigravity_cli` のタイムアウト延長や継続フラグの動作を理解する
 - Code AI 設定で `antigravity_cli` を選んだときの挙動を調整する
 
+## Google OAuth 専用の Code AI（agy_cli）
+
+- 既存の `antigravity_cli` の改名ではありません。通常の Code AI を `agy_cli` に明示変更して利用します。既定モデルキーは `CODE_AGY_CLI_MODEL`。会話用の `gemini_agy` は別方式・別設定です。
+- `agy` の保存済み Google ログインを使い、API キーや明示的な ADC は子プロセスに渡しません。CLI 自体に別方式の認証が設定されて失敗した場合も、別プロバイダで再実行しません。
+- Diag が OAuth 専用環境で `agy models` を読み、`_AIDIY/aidiy_diag/gemini_agy_models_info.json` へ保存します。この一覧を会話用と Code 用に展開しますが、旧 Antigravity や Gemini API のモデル一覧は混ぜません。未取得時の既定・設定値は利用実績を示しません。
+- Windows の Visual Studio Code 拡張が配置する `%USERPROFILE%\.gemini\bin\agy.exe` も使用できます。Diag は標準導入先以外から検出したバイナリを再導入・削除しません。
+- UTF-8 標準入力と構造化結果を使い、継続時は自分の会話IDを `--conversation` で指定します。旧経路の共有「最後の会話」を参照しません。コアや AI インスタンスを再作成した場合、CLI 側は新規になります。操作なしには `--dangerously-skip-permissions` を追加せず、Code の権限 `full` を明示したときだけ設定します。
+- [Google 公式：認証](https://antigravity.google/docs/cli/install/) ／ [Google 公式：ヘッドレス実行](https://antigravity.google/docs/cli/headless/)
+
 ## モデルIDの確認
 
 `invalid model selection` が出た場合は `agy models` でCLIが受け付けるIDを確認します。Gemini APIのモデル一覧とは別体系です。`frontend_diag/diag/モデル情報/antigravity_models.mjs` がこの一覧を取得し、モデル情報の書込時に `code_models_info.json` の `antigravity_cli` を置換します。取得失敗時は `auto` / `same` だけを残し、古いGemini候補は再利用しません。AIモデル試験・AI設定再起動は同じ合成ファイルを使います。

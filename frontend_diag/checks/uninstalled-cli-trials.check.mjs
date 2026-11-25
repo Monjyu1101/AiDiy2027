@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createModelTrials} from '../diag/モデル試行/trials.mjs';
 import {installedCodeClis} from '../diag/モデル情報/models_info.mjs';
-const providers=['claude_cli','copilot_cli','codex_cli','antigravity_cli','grok_cli','opencode_cli','claude_ollama','codex_ollama'];
+const providers=['claude_cli','copilot_cli','codex_cli','antigravity_cli','agy_cli','grok_cli','opencode_cli','claude_ollama','codex_ollama'];
 const installed=Object.fromEntries(providers.map(id=>[id,false]));
 const config=provider=>({CODE_BASE_PATH:'/synthetic/project',CODE_AI1_NAME:provider,CODE_AI1_MODEL:'same',CODE_AI2_NAME:'auto',CODE_AI2_MODEL:'same',TASK_AI_NAME:provider,TASK_AI_MODEL_plan:'same',TASK_AI_MODEL_do:'same',TASK_AI_MODEL_check:'same',TEAM_AI_NAME:provider,TEAM_AI_MODEL_plan:'same',TEAM_AI_MODEL_do:'same',TEAM_AI_MODEL_check:'same'});
 function fixture(provider,options={}){
@@ -47,5 +47,5 @@ test('manual Code path also skips missing CLI before MCP',async()=>{
  const {trials,calls}=fixture('codex_cli');try{const start=await trials.start({manual:{family:'CODE',provider:'codex_cli',model:'same',prompt:'hello'}});assert.equal((await trials.next(start.実行ID,'CODE1')).状態,'未実施');assert.equal(calls.length,0);}finally{await trials.close();}
 });
 test('presence detector uses fixed catalog executable resolution only',async()=>{
- const ids=[];const result=await installedCodeClis({loadEntries:async()=>['claude','copilot','codex','agy','grok','opencode'].map(id=>({id})),resolve:async entry=>{ids.push(entry.id);return entry.id==='codex'?'/synthetic/codex':null;}});assert.equal(ids.length,6);assert.equal(result.codex_cli,true);assert.equal(result.claude_cli,false);
+ const ids=[];const result=await installedCodeClis({loadEntries:async()=>['claude','copilot','codex','agy','grok','opencode'].map(id=>({id})),resolve:async entry=>{ids.push(entry.id);return entry.id==='codex'?'/synthetic/codex':null;}});assert.equal(ids.length,7);assert.equal(result.codex_cli,true);assert.equal(result.claude_cli,false);
 });

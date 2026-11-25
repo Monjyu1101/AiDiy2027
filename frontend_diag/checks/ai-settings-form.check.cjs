@@ -124,3 +124,49 @@ test('missing or empty free catalog follows normal provider selection', async ()
     } finally {f.stop();}
   }
 });
+
+test('gemini_agy is explicit and an old catalogue cannot replace a saved OAuth model', async () => {
+  const fixture = (settings,chat_models) => form(async()=>({data:{status:'OK',data:{モデル設定:settings,available_models:{chat_models}}}}));
+  const saved=fixture({CHAT_AI_NAME:'gemini_agy',CHAT_GEMINI_AGY_MODEL:'saved-agy'},{gemini_chat:{api:'API'}});
+  const unset=fixture({}, {gemini_agy:{auto:'AGY'},gemini_chat:{api:'API'}});
+  try {
+    await tick();
+    assert.equal(saved.state.selections.chatAi,'');
+    assert.ok(!saved.state.chatAiOptions.value.includes('gemini_agy'));
+    assert.equal(saved.state.buildNextSettings().CHAT_AI_NAME,'gemini_agy');
+    assert.equal(saved.state.buildNextSettings().CHAT_GEMINI_AGY_MODEL,'saved-agy');
+    assert.equal(unset.state.selections.chatAi,'gemini_chat');
+  } finally {saved.stop();unset.stop();}
+});
+
+test('AGY defaults save separately and are not cleared when the model list is unavailable', async () => {
+  const settings={CHAT_AI_NAME:'gemini_agy',CHAT_GEMINI_AGY_MODEL:'chat-old',CHAT_GEMINI_MODEL:'api-saved',
+    CODE_AGY_CLI_MODEL:'code-old',CODE_ANTIGRAVITY_CLI_MODEL:'legacy-saved',CODE_AI4_NAME:'antigravity_cli',CODE_AI4_MODEL:'same'};
+  let available=true;
+  const f=form(async (p,b)=>{
+    if(b?.save) Object.assign(settings,b.モデル設定);
+    const available_models=available?{chat_models:{gemini_agy:{'chat-new':'Chat'}},code_models:{agy_cli:{'code-new':'Code'},antigravity_cli:{same:'Same'}}}:{};
+    return {data:{status:'OK',data:{モデル設定:{...settings},available_models}}};
+  });
+  try {
+    await tick();
+    assert.equal(f.state.selections.agyCodeModel,'code-old');
+    f.state.selections.chatModel='chat-new';
+    f.state.selections.agyCodeModel='code-new';
+    assert.equal(f.state.selections.codeModel4,'same');
+    await f.state.handleSaveOnly();
+    assert.equal(settings.CHAT_GEMINI_AGY_MODEL,'chat-new');
+    assert.equal(settings.CODE_AGY_CLI_MODEL,'code-new');
+    available=false;
+    await f.state.loadConfig();
+    assert.equal(f.state.agyCodeAvailable.value,false);
+    assert.equal(f.state.selections.agyCodeModel,'code-new');
+    await f.state.handleSaveOnly();
+    assert.equal(settings.CHAT_AI_NAME,'gemini_agy');
+    assert.equal(settings.CHAT_GEMINI_AGY_MODEL,'chat-new');
+    assert.equal(settings.CHAT_GEMINI_MODEL,'api-saved');
+    assert.equal(settings.CODE_AGY_CLI_MODEL,'code-new');
+    assert.equal(settings.CODE_ANTIGRAVITY_CLI_MODEL,'legacy-saved');
+    assert.equal(settings.CODE_AI4_NAME,'antigravity_cli');
+  } finally {f.stop();}
+});

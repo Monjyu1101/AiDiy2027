@@ -24,13 +24,17 @@ export const CLI_LAUNCHERS = Object.freeze([
   // command_codex をコンパイルした ~/.aidiy/bin/aidiy_codex。Codex CLI と同じ承認・sandbox省略フラグ。
   ['aidiy_codex', 'AiDiy Codex', '--dangerously-bypass-approvals-and-sandbox', '承認・sandbox省略'],
 ].map(([id, name, flag, mode]) => Object.freeze({ id, name, args: Object.freeze(flag ? [flag] : []), mode, autoApproveSupported: true })));
-const byId = Object.freeze(Object.fromEntries(CLI_LAUNCHERS.map(item => [item.id, item])));
+// Windows の実ファイル用。通常の Antigravity CLI と別の固定IDで、承認を省略しない。
+export const AGY_EXE_LAUNCHER = Object.freeze({
+  id: 'agy_exe', name: 'agy.exe', args: Object.freeze([]), mode: '通常承認', autoApproveSupported: false,
+});
+const byId = Object.freeze(Object.fromEntries([...CLI_LAUNCHERS, AGY_EXE_LAUNCHER].map(item => [item.id, item])));
 const npmPackages = Object.freeze({ claude: '@anthropic-ai/claude-code', codex: '@openai/codex', copilot: '@github/copilot', opencode: '@opencode/cli' });
 const validPath = value => typeof value === 'string' && value.length > 0 && !/[\0\r\n]/.test(value);
 const envValue = (env, key, platform) => env[key] || (platform === 'win32' ? Object.entries(env).find(([name]) => name.toUpperCase() === key.toUpperCase())?.[1] : undefined);
 
 export function validateCliOptions(kind, { cli, cliAutoApprove, provider, model } = {}) {
-  if (cli !== undefined && (typeof cli !== 'string' || !Object.hasOwn(byId, cli))) throw Error('--cli は claude / codex / copilot / agy / grok / opencode / aidiy_hermes / aidiy_pi / aidiy_codex から指定してください。');
+  if (cli !== undefined && (typeof cli !== 'string' || !Object.hasOwn(byId, cli))) throw Error(`--cli は ${Object.keys(byId).join(' / ')} から指定してください。`);
   if (cliAutoApprove !== undefined && typeof cliAutoApprove !== 'boolean') throw Error('--cli-auto-approve は真偽値で指定してください。');
   if (cli !== undefined && kind !== 'term') throw Error('--cli は --app term 専用です。');
   if (cliAutoApprove && !cli) throw Error('--cli-auto-approve には --cli が必要です。');
@@ -143,15 +147,35 @@ export async function resolveCliLaunch(id, { autoApprove = false, env = process.
   const directories = (get('PATH') || '').split(windows ? ';' : ':').map(value => /^"[^"\r\n]+"$/.test(value) ? value.slice(1, -1) : value)
     .filter(value => validPath(value) && path.isAbsolute(value));
   const home = get(windows ? 'USERPROFILE' : 'HOME');
+  const windowsAgy = windows && ['agy', 'agy_exe'].includes(id);
+  const local = windowsAgy ? get('LOCALAPPDATA') : null;
+  const standardAgy = validPath(local) && path.isAbsolute(local) ? path.join(local, 'agy', 'bin', 'agy.exe') : null;
+  const extensionAgy = windowsAgy && validPath(home) && path.isAbsolute(home)
+    ? path.join(home, '.gemini', 'bin', 'agy.exe') : null;
+  const extensionReal = extensionAgy && await usable(extensionAgy, platform) ? await realpath(extensionAgy).catch(() => null) : null;
+  if (id === 'agy_exe') {
+    if (!windows) throw Error('agy.exe は Windows 専用です。');
+    const candidates = [...(extensionReal ? [extensionReal] : []), ...directories.map(dir => path.join(dir, 'agy.exe'))];
+    if (standardAgy) candidates.push(standardAgy);
+    for (const candidate of new Set(candidates)) {
+      if (!await usable(candidate, platform)) continue;
+      const executable = await realpath(candidate).catch(() => null);
+      if (validPath(executable)) return { ...definition, executable, args: [], env: { ...env }, autoApprove: false };
+    }
+    throw Error('agy.exe が見つかりません。導入状況を確認してください。');
+  }
   const extra = id === 'aidiy_hermes' ? [home && path.join(home, '.local', 'bin')]
     : windows ? [get('APPDATA') && path.join(get('APPDATA'), 'npm'), get('LOCALAPPDATA') && path.join(get('LOCALAPPDATA'), 'agy', 'bin'), home && path.join(home, '.local', 'bin'), home && path.join(home, '.grok', 'bin')]
     : [home && path.join(home, '.local', 'bin'), home && path.join(home, '.grok', 'bin'), home && path.join(home, '.opencode', 'bin')];
   directories.push(...extra.filter(value => validPath(value) && path.isAbsolute(value)));
-  const extensions = windows ? ['.exe', '.com', '.cmd'] : [''];
+  const extensions = windows ? (id === 'agy' ? ['.exe', '.com'] : ['.exe', '.com', '.cmd']) : [''];
   for (const directory of new Set(directories)) for (const extension of extensions) {
     const candidate = path.join(directory, id + extension);
     if (!await usable(candidate, platform)) continue;
     const executable = await realpath(candidate);
+    // PATH に拡張版が入っていても、それだけでは従来のCLIを有効にしない。
+    if (extensionReal && executable.toLowerCase() === extensionReal.toLowerCase()
+      && path.normalize(candidate).toLowerCase() !== standardAgy?.toLowerCase()) continue;
     if (!validPath(executable)) throw Error(`${definition.name}: 実行ファイルのパスが不正です。`);
     const invocation = windows && extension === '.cmd'
       ? await (id === 'aidiy_hermes' ? hermesInvocation(executable, platform) : npmInvocation(id, executable))

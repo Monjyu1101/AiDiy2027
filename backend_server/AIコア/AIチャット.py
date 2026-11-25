@@ -122,6 +122,8 @@ class Chat:
             module_name = "AIコア.AIチャット_openrt"
         elif self.AI_NAME in ("gemini_chat", "freeai_chat"):
             module_name = "AIコア.AIチャット_gemini"
+        elif self.AI_NAME == "gemini_agy":
+            module_name = "AIコア.AIチャット_gemini_agy"
         elif self.AI_NAME in ("openai_chat", "openai_oauth"):
             module_name = "AIコア.AIチャット_openai"
         elif self.AI_NAME == "ollama_chat":
@@ -154,8 +156,8 @@ class Chat:
                         api_key = conf_json.json.get("ollama_key_id", "ollama")
                     elif self.AI_NAME == "local_chat":
                         api_key = "local"  # backend_local は認証なし（ダミーキー）
-                    elif self.AI_NAME == "openai_oauth":
-                        api_key = ""  # command_hermes の OAuth auth store から取得
+                    elif self.AI_NAME in ("openai_oauth", "gemini_agy"):
+                        api_key = ""  # CLI のログイン情報を利用
                     elif self.AI_NAME == "openai_chat":
                         api_key = conf_json.json.get("openai_key_id", "")
                     else:
@@ -219,8 +221,8 @@ class Chat:
         api_key = ""
         if self.AI_NAME == "local_chat":
             api_key = "local"  # backend_local は認証なし（ダミーキー）
-        elif self.AI_NAME == "openai_oauth":
-            api_key = "oauth"  # command_hermes の auth store を使うため API キー検査は不要
+        elif self.AI_NAME in ("openai_oauth", "gemini_agy"):
+            api_key = "oauth"  # CLI のログイン情報を使うため API キー検査は不要
         elif self.AI_NAME == "openai_chat":
             try:
                 conf_json = getattr(self.親, "conf", None)

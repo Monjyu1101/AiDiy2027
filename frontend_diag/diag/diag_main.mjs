@@ -115,7 +115,7 @@ export function createHandler({token, prefix='/', entries=[], coverage={}, scanF
   assets.set('AiDiy.png',['AiDiy.png','image/png']);
   for(const id of ['avatar','ide','cpu','navi','term','code','live','task','team','browser','discord','slack','memo'])assets.set(`AiDiy_${id}.png`,[`AiDiy_${id}.png`,'image/png']);
   for(const id of ['claude','codex','copilot','agy','grok','opencode','aidiy_hermes','aidiy_pi','aidiy_codex','vscode'])assets.set(`CLI_${id}.png`,[`CLI_${id}.png`,'image/png']);
-  for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
+  for(const id of ['claude','codex','copilot','agy','grok','opencode','vscode','agy_exe'])assets.set(`CLI_${id}.svg`,[`CLI_${id}.svg`,'image/svg+xml']);
   assets.set('LICENSE_ICONS.md',['LICENSE_ICONS.md','text/markdown; charset=utf-8']);
   for(const name of ['LICENSE-Octicons.txt','LICENSE-LobeHub.txt','LICENSE-OpenCode.txt'])assets.set(name,[name,'text/plain; charset=utf-8']);
   const handler=async (req,res) => {

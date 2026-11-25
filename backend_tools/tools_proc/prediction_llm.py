@@ -49,7 +49,7 @@ _CLI_MARKER = "[[PREDICTION]]"
 # 設定から解決される未知の transport は Hermes アダプターの実行時検査で拒否する。
 HERMES_UNSUPPORTED_PREDICTION_ROUTES = frozenset({
     "claude_cli", "claude-code", "codex_cli", "codex-cli", "copilot_cli", "copilot-cli",
-    "antigravity_cli", "antigravity-cli", "grok_cli", "grok-cli", "opencode_cli", "opencode",
+    "agy_cli", "antigravity_cli", "antigravity-cli", "grok_cli", "grok-cli", "opencode_cli", "opencode",
     "copilot-acp", "github-copilot-acp", "codex_app_server",
 })
 HISTORY_MAX_CHARS = 24000
