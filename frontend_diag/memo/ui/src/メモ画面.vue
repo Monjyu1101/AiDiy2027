@@ -8,6 +8,7 @@ import {自動保存を作成} from './自動保存.mjs';
 import {長押し移動を作成} from './長押し移動.mjs';
 import {貼付ファイル,画像読込} from './画像貼付.mjs';
 import {メモ色} from './メモ編集.mjs';
+import {期限入力表示,期限見出し,期限を変換,期限経過} from './期限表示.mjs';
 const props=defineProps({api:{type:Function,required:true},initialNew:Boolean,initialSource:String,initialId:String,initialScope:String,onSaved:Function,onNew:Function});
 const native=globalThis.window?.aidiyMemo;
 const state=ref({draft:{タイトル:'',本文:'',色:'yellow'},saving:false,error:'',conflict:false,dirty:false,blankNew:true});
@@ -18,17 +19,52 @@ let imageFlight=null;
 const adding=ref(false),addError=ref('');
 const ready=ref(false),closing=ref(false),textFormat=ref(false),bootError=ref(''),source=ref(''),editor=ref(),copied=ref(false);
 const content=ref(),focused=ref(document.hasFocus()),hasBelow=ref(false);
+const due=computed(()=>state.value.draft.期限);
+const dueLabel=computed(()=>期限見出し(due.value));
+const overdue=ref(false),dueDialog=ref(),dueInput=ref(),dueValue=ref('');
+let dueTimer;
+function checkDeadline(){
+ clearTimeout(dueTimer);
+ if(!due.value){overdue.value=false;return;}
+ const now=Date.now();
+ overdue.value=期限経過(due.value,now);
+ const remaining=Date.parse(due.value)-now;
+ // 到達時に再描画し、時計の変更やスリープ復帰にも追従する。
+ dueTimer=setTimeout(checkDeadline,remaining>0?Math.min(remaining,60000):60000);
+}
+watch(due,checkDeadline);
+function openDeadline(){
+ if(!ready.value||closing.value)return;
+ inputMove.cancel();
+ dueValue.value=期限入力表示(due.value);
+ dueDialog.value.showModal();
+ dueInput.value.focus();
+}
+function closeDeadline(){if(dueDialog.value?.open)dueDialog.value.close();}
+function applyDeadline(clear=false){
+ if(!ready.value||closing.value)return;
+ const value=clear?null:期限を変換(dueValue.value);
+ if(!clear&&!value){
+  dueInput.value.setCustomValidity('実在する日付と時刻を指定してください。');
+  dueInput.value.reportValidity();
+  return;
+ }
+ closeDeadline();
+ if((due.value??null)===value)return;
+ model.edit({期限:value},{defer:true});
+ void model.flush();
+}
 let overflowObserver;
 function measureOverflow(){
  const el=content.value,text=editor.value;
  hasBelow.value=!!el&&(el.scrollHeight-el.clientHeight-el.scrollTop>1||!!text&&text.scrollHeight-text.clientHeight-text.scrollTop>1);
 }
-function focusForm(){focused.value=true;void nextTick(measureOverflow);}
+function focusForm(){checkDeadline();focused.value=true;void nextTick(measureOverflow);}
 // 付箋の余白（本文の下・下部の行の空き・外周）を押したら、本文の末尾から入力を再開する。
 // タイトル・ボタン・色・画像・のりしろ／見出しの移動・エラー表示は従来の操作を優先する。
 function resumeInput(event){
  if(event.button!==0||!ready.value||closing.value||!editor.value||editor.value.disabled)return;
- if(event.target.closest?.('input,textarea,button,a,img,.sticky-header,.sticky-adhesive,.sticky-palette,.sticky-error,.sticky-move-marker'))return;
+ if(event.target.closest?.('input,textarea,button,a,img,dialog,.sticky-header,.sticky-adhesive,.sticky-palette,.sticky-error,.sticky-move-marker'))return;
  event.preventDefault();editor.value.focus();const end=editor.value.value.length;editor.value.setSelectionRange(end,end);
  // field-sizing で本文が短い時も、見た目の本文領域の余白から長押し移動できる。
  inputMove.start(event,editor.value);
@@ -46,7 +82,7 @@ async function flushClose(request){
  try{await boot;await imageFlight;if(!request.waitOnly&&request.bounds)bounds(request.bounds);const ok=ready.value&&!!model&&await model.flush();await native?.completeClose({requestId:request.requestId,ok,error:ok?'':state.value.error||bootError.value||'メモを読み込んでいます。'});}
  finally{closeBusy=false;closing.value=false;}
 }
-async function blur(event){await imageFlight;if(event?.bounds)bounds(event.bounds);if(!model){pendingBlur=true;return;}if(model.snapshot().blankNew){if(native)await native.close();else window.close();return;}await model.flush();}
+async function blur(event){await imageFlight;if(event?.bounds)bounds(event.bounds);if(dueDialog.value?.open)return;if(!model){pendingBlur=true;return;}if(model.snapshot().blankNew){if(native)await native.close();else window.close();return;}await model.flush();}
 function beforeUnload(event){if(state.value.dirty||state.value.saving||imageBusy.value){event.preventDefault();event.returnValue='';}}
 function move(event){
  if(!native||event.button!==0||event.target.closest('input,textarea,button,select,a'))return;
@@ -87,6 +123,7 @@ async function trash(){
  finally{closing.value=false;}
 }
 onMounted(async()=>{
+ document.addEventListener('visibilitychange',checkDeadline);
  window.addEventListener('focus',focusForm);window.addEventListener('blur',blurForm);
  window.addEventListener('beforeunload',beforeUnload);if(!native)window.addEventListener('blur',blur);
  // close/bounds購読を初期状態取得より先に登録し、起動直後の操作を取りこぼさない。
@@ -123,15 +160,21 @@ onMounted(async()=>{
  }catch(error){bootError.value=error.message||'メモを開けませんでした。';}
  finally{resolveBoot();if(pendingBlur)void blur();}
 });
-onUnmounted(()=>{overflowObserver?.disconnect();window.removeEventListener('focus',focusForm);window.removeEventListener('blur',blurForm);alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
+onUnmounted(()=>{clearTimeout(dueTimer);document.removeEventListener('visibilitychange',checkDeadline);overflowObserver?.disconnect();window.removeEventListener('focus',focusForm);window.removeEventListener('blur',blurForm);alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
 </script>
 <template>
- <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused}]" @pointerdown="resumeInput" @paste="paste" @dragover.prevent @drop="drop">
+ <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused,'sticky-overdue':overdue}]" @pointerdown="resumeInput" @paste="paste" @dragover.prevent @drop="drop">
   <div class="sticky-adhesive" aria-hidden="true" @pointerdown="move"></div>
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
-   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"><button class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button></header>
+   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"><button type="button" class="sticky-deadline" :class="{'sticky-deadline-set':due}" :aria-label="due ? `付箋の期限を変更: ${dueLabel}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :title="due ? `${期限入力表示(due).replace('T',' ')}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :disabled="!ready||closing" @click="openDeadline"><time v-if="due" :datetime="due">{{dueLabel}}</time><span v-else>期限</span></button><button class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button></header>
+   <dialog ref="dueDialog" class="sticky-deadline-dialog" aria-label="付箋の期限">
+    <form @submit.prevent="applyDeadline()">
+     <input ref="dueInput" v-model="dueValue" type="datetime-local" aria-label="期限の日時（ローカル時刻）" required step="60" min="0001-01-01T00:00" max="9999-12-31T23:59" @input="$event.target.setCustomValidity('')">
+     <div class="sticky-deadline-actions"><button v-if="due" type="button" @click="applyDeadline(true)">解除</button><button type="button" @click="closeDeadline">取消</button><button type="submit" :disabled="closing">保存</button></div>
+    </form>
+   </dialog>
    <div class="sticky-viewport"><div ref="content" class="sticky-content" @scroll.capture="measureOverflow">
    <textarea ref="editor" class="sticky-text" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.本文" :disabled="!ready||closing" aria-label="付箋の本文" placeholder="メモを書く…" spellcheck="false" @input="edit({本文:$event.target.value})"></textarea>
    <div v-if="state.draft.画像" class="sticky-image-frame"><img :src="state.draft.画像" @load="measureOverflow" alt="付箋に貼り付けた画像" draggable="false"><button class="sticky-image-remove" aria-label="画像を取り除く" title="画像を取り除く" :disabled="closing||imageBusy" @click="removeImage">×</button></div>

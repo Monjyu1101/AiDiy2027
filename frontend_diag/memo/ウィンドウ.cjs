@@ -7,6 +7,7 @@
 const path=require('node:path');
 const http=require('node:http');
 const {randomUUID}=require('node:crypto');
+const {期限は有効}=require('./期限.cjs');
 const {createCodeDrag}=require('../../frontend_ide/デスクトップ/code-drag.cjs');
 const {createWindowPins}=require('../../frontend_ide/デスクトップ/最前面ピン.cjs');
 function メモ一覧を読む(value,scope='normal'){
@@ -46,14 +47,15 @@ function 追加付箋範囲(origin,screen){
 // renderer が保存APIから受け取った成功結果のみを再読込用snapshotに保持する。
 // このIPCからファイルへは書かず、保存先・既存IDの変更を認めない。
 function 保存済メモは有効(note){
- if(!note||typeof note!=='object'||Array.isArray(note)||Object.keys(note).some(name=>!['id','保存先','タイトル','本文','色','位置','サイズ','形式','revision','画像'].includes(name)))return false;
+ if(!note||typeof note!=='object'||Array.isArray(note)||Object.keys(note).some(name=>!['id','保存先','タイトル','本文','色','位置','サイズ','形式','revision','画像','期限'].includes(name)))return false;
  if(typeof note.id!=='string'||note.id.length>240||note.id.startsWith('.')||/[\\/\x00-\x1f]/.test(note.id)||! /\.(?:memo\.json|md|txt)$/i.test(note.id))return false;
  if(typeof note.保存先!=='string'||note.保存先.length>128||typeof note.タイトル!=='string'||note.タイトル.length>200||typeof note.本文!=='string'||Buffer.byteLength(note.本文)>1024*1024-4096)return false;
- if(!['yellow','pink','blue','green','purple'].includes(note.色)||!['memo','text'].includes(note.形式)||typeof note.revision!=='string'||! /^[a-f0-9]{64}$/.test(note.revision))return false;
+ if(!['yellow','pink','blue','green','purple','vivid-red','vivid-blue','vivid-green','vivid-orange','vivid-purple','vivid-cyan'].includes(note.色)||!['memo','text'].includes(note.形式)||typeof note.revision!=='string'||! /^[a-f0-9]{64}$/.test(note.revision))return false;
  for(const [name,limits]of [['位置',{x:[-100000,100000],y:[-100000,100000]}],['サイズ',{width:[200,1200],height:[84,1600]}]]){
   const value=note[name];if(value===undefined)continue;
   if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).length!==2||Object.keys(value).some(key=>!Object.hasOwn(limits,key))||Object.entries(limits).some(([key,[min,max]])=>!Number.isFinite(value[key])||value[key]<min||value[key]>max))return false;
  }
+ if(note.期限!==undefined&&!期限は有効(note.期限))return false;
  if(note.画像!==undefined&&(typeof note.画像!=='string'||note.画像.length>7*1024*1024||note.画像&&!/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(note.画像)))return false;
  return Buffer.byteLength(JSON.stringify(note))<=9*1024*1024;
 }

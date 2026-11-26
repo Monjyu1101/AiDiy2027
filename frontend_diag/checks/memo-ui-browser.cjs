@@ -70,6 +70,16 @@ if(process.versions.electron){
    expect(!!document.querySelector('.sticky-overflow-hint'),'unfocused overflow shows ellipsis');
    window.dispatchEvent(new Event('focus'));await wait(10);expect(getComputedStyle(content).scrollbarWidth==='thin','focus shows scrollbar');expect(!document.querySelector('.sticky-overflow-hint'),'focus hides ellipsis');
    window.dispatchEvent(new Event('blur'));content.scrollTop=content.scrollHeight;content.dispatchEvent(new Event('scroll'));await wait(10);expect(!document.querySelector('.sticky-overflow-hint'),'end of content hides ellipsis');
+   const dueButton=document.querySelector('.sticky-deadline'),dueDialog=document.querySelector('.sticky-deadline-dialog');
+   dueButton.click();const dueInput=dueDialog.querySelector('input');expect(dueDialog.open,'deadline editor opens');
+   dueInput.value='2000-01-02T03:04';dueInput.dispatchEvent(new Event('input',{bubbles:true}));
+   window.handlers.blur();await wait(10);expect(dueDialog.open,'focus on OS picker does not discard editing');
+   dueDialog.querySelector('button[type=submit]').click();await wait(20);
+   expect(dueButton.textContent==='01/02 03:04'&&!dueDialog.open,'local deadline label');
+   expect(window.calls.at(-1).body.期限===new Date('2000-01-02T03:04').toISOString(),'deadline immediately saved as UTC');
+   expect(document.querySelector('.sticky-note').classList.contains('sticky-overdue'),'overdue note pulses');
+   dueButton.click();[...dueDialog.querySelectorAll('button')].find(x=>x.textContent==='解除').click();await wait(20);
+   expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue'),'clearing deadline stops pulse and saves');
    document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
    expect(window.identity?.id==='one.memo.json','created identity reported');
    return 'PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';

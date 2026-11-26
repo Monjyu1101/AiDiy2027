@@ -158,3 +158,32 @@ test('最小高さ84pxを保存復元し、それ未満は拒否',async t=>{
  assert.equal((await createMemoStore({launchRoot:launch}).list()).メモ[0].サイズ.height,84);
  await assert.rejects(store.save({...edit(note,'小さすぎる'),サイズ:{width:200,height:83}}),{status:400});
 });
+
+test('期限は作成・再読込・未指定更新を経て保持し、nullで解除する',async t=>{
+ const {launch}=await fixture(t),options={launchRoot:launch},store=createMemoStore(options),source=(await store.list()).保存先[0];
+ const 期限='2027-02-28T19:05:00.000Z',clientId='76a1bee4-8f12-44bc-a1d0-706fa0c58d96';
+ const request={...memo(source.id,''),タイトル:'',期限,clientId};
+ const note=await store.create(request);
+ assert.equal(note.期限,期限);
+ assert.deepEqual(await createMemoStore(options).create(request),note);
+ await assert.rejects(store.create({...request,期限:'2027-03-01T19:05:00.000Z'}),{status:409});
+ assert.equal((await createMemoStore(options).list()).メモ[0].期限,期限);
+ const title=await store.save({...edit(note,'本文更新'),タイトル:'期限つき'});assert.equal(title.期限,期限);
+ const cleared=await store.save({...edit(title,title.本文),期限:null});assert.equal(cleared.期限,undefined);
+ assert.equal((await store.read({保存先:source.id,id:note.id})).期限,undefined);
+ for(const invalid of [0,'','2027-02-29T19:05:00.000Z','2027-03-01T24:00:00.000Z','2027-03-01T07:05:00.000+00:00','2027-03-01T19:05:22.000Z']){
+  await assert.rejects(store.create({...memo(source.id),期限:invalid}),{status:400});
+ }
+});
+
+test('既存テキストの期限はsidecarのみに保存し、解除後も原文は不変',async t=>{
+ const {launch}=await fixture(t),directory=path.join(launch,'_AIDIY','aidiy_memo');
+ await mkdir(directory,{recursive:true});const file=path.join(directory,'期日.md'),body='\uFEFF原文\r\n';await writeFile(file,body);
+ const before=await lstat(file),store=createMemoStore({launchRoot:launch}),[note]=(await store.list()).メモ;
+ const 期限='2027-12-25T00:15:00.000Z';
+ const saved=await store.save({...edit(note,note.本文),期限});
+ assert.equal(saved.期限,期限);assert.notEqual(saved.revision,note.revision);
+ assert.equal((await createMemoStore({launchRoot:launch}).list()).メモ[0].期限,期限);
+ await store.save({...edit(saved,saved.本文),期限:null});assert.equal((await store.list()).メモ[0].期限,undefined);
+ assert.equal(await readFile(file,'utf8'),body);assert.equal((await lstat(file)).mtimeMs,before.mtimeMs);
+});

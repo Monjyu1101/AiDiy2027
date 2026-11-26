@@ -66,3 +66,22 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 /* 下部の行を透明にしても、ホバー時の色パレットは付箋と同じ色で塗り、本文と重ねて見えないようにする。 */
 .sticky-yellow{--sticky-bg:#f7e69c}.sticky-blue{--sticky-bg:#b4deef}.sticky-green{--sticky-bg:#c6e6ad}.sticky-pink{--sticky-bg:#f2c4d1}.sticky-purple{--sticky-bg:#d7c8ec}.sticky-vivid-red{--sticky-bg:#c62828}.sticky-vivid-blue{--sticky-bg:#1565c0}.sticky-vivid-green{--sticky-bg:#15803d}.sticky-vivid-orange{--sticky-bg:#c2410c}.sticky-vivid-purple{--sticky-bg:#7e22ce}.sticky-vivid-cyan{--sticky-bg:#007f8b}
 .sticky-palette{background:var(--sticky-bg,#f7e69c)}
+
+/* 期限はタイトルの右。最小幅でも日時を折り返さず、本文の高さを変えない。 */
+.sticky-deadline{flex:none;min-height:24px;white-space:nowrap;font:600 11px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:inherit;border:1px solid transparent;border-radius:4px;padding:0 3px;background:transparent;cursor:pointer}
+.sticky-deadline:not(.sticky-deadline-set){opacity:.72}
+.sticky-deadline:hover,.sticky-deadline:focus-visible{border-color:currentColor;opacity:1}
+.sticky-deadline-dialog{width:min(250px,calc(100% - 16px));max-width:none;max-height:calc(100% - 8px);padding:6px;border:1px solid #666;border-radius:5px;background:#fbf8ee;color:#29322e}
+.sticky-deadline-dialog::backdrop{background:#0005}
+.sticky-deadline-dialog form{display:grid;gap:4px}
+.sticky-deadline-dialog input{width:100%;min-width:0;font:12px system-ui,sans-serif;min-height:24px;color:#29322e}
+.sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
+.sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
+.sticky-overdue{--sticky-pulse-amount:26%;background-color:var(--sticky-bg);box-shadow:inset 0 0 0 2px #f19c1b;animation:sticky-deadline-pulse 2.8s ease-in-out infinite}
+.sticky-vivid.sticky-overdue{--sticky-pulse-amount:10%}
+.sticky-overdue .sticky-deadline{border-color:currentColor}
+@keyframes sticky-deadline-pulse{
+ 0%,100%{background-color:var(--sticky-bg);box-shadow:inset 0 0 0 2px #f19c1b}
+ 50%{background-color:color-mix(in srgb,var(--sticky-bg),white var(--sticky-pulse-amount));box-shadow:inset 0 0 14px 3px #ffb435}
+}
+@media(prefers-reduced-motion:reduce){.sticky-overdue{animation:none}}

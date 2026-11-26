@@ -59,9 +59,10 @@ test('new and existing saved snapshots survive renderer reload; invalid updates 
  const complete={...note,タイトル:'保存済',本文:'保存後の本文',形式:'memo',revision:'a'.repeat(64),位置:{x:-200,y:30},サイズ:{width:250,height:150}};
  for(const existing of [false,true]){
   const f=fixture({保存先:sources,メモ:existing?[{...complete,本文:'起動時'}]:[]});await f.control.open(!existing);const w=f.windows[0];
-  assert.equal(f.invoke(w,'updateSavedNote',complete),true);complete.本文='入力は別のコピー';const state=f.invoke(w,'getInitialState');assert.notEqual(state.note.本文,complete.本文);complete.本文='保存後の本文';
+  complete.期限='2027-01-01T01:23:00.000Z';complete.色='vivid-blue';
+  assert.equal(f.invoke(w,'updateSavedNote',complete),true);complete.本文='入力は別のコピー';const state=f.invoke(w,'getInitialState');assert.notEqual(state.note.本文,complete.本文);assert.equal(state.note.期限,complete.期限);complete.本文='保存後の本文';
   assert.equal(state.note.id,note.id);assert.equal(state.note.revision,'a'.repeat(64));assert.equal(state.sourceId,'project:2');
-  for(const invalid of [{...complete,保存先:'launch:1'},{...complete,id:'other.memo.json'},{...complete,revision:'invalid'},{...complete,本文:'x'.repeat(1024*1024)},{...complete,位置:{x:Infinity,y:0}},{...complete,サイズ:{width:1,height:2}},{...complete,extra:'not allowed'},null])assert.equal(f.invoke(w,'updateSavedNote',invalid),false);
+  for(const invalid of [{...complete,保存先:'launch:1'},{...complete,id:'other.memo.json'},{...complete,revision:'invalid'},{...complete,期限:'2027-02-29T01:23:00.000Z'},{...complete,本文:'x'.repeat(1024*1024)},{...complete,位置:{x:Infinity,y:0}},{...complete,サイズ:{width:1,height:2}},{...complete,extra:'not allowed'},null])assert.equal(f.invoke(w,'updateSavedNote',invalid),false);
   assert.equal(f.invoke(w,'getInitialState').note.本文,'保存後の本文');
  }
 });
