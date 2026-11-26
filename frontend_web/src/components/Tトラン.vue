@@ -23,6 +23,10 @@ import { RouterLink } from 'vue-router';
 
       <div class="transaction-menu-sections">
         <div class="menu-row">
+          <RouterLink class="menu-card menu-card-fixed" to="/Tトラン/T日誌/一覧?URLメニュー=／Tトラン">
+            <div class="menu-card-title"><span class="icon">T日</span> T日誌</div>
+            <div class="menu-card-description">自分の日誌に本文・画像・ファイルを記録</div>
+          </RouterLink>
           <RouterLink class="menu-card menu-card-fixed" to="/Tトラン/T配車/一覧?URLメニュー=／Tトラン">
             <div class="menu-card-title">
               <span class="icon">T配</span>

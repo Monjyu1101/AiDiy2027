@@ -1,0 +1,54 @@
+// COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
+// Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
+import axios from 'axios';
+import apiClient from '../../../api/client';
+
+export interface 日誌見出し {
+  日付: string;
+  利用者ID: string;
+  利用者名: string;
+}
+export interface 日誌明細 {
+  行SEQ: number;
+  内容: string;
+  ファイル名: string;
+  base64内容: string;
+}
+export interface 日誌記録 {
+  記録SEQ: number;
+  記録タイトル: string;
+  明細: 日誌明細[];
+}
+export interface 日誌 extends 日誌見出し { 記録: 日誌記録[] }
+export interface 日誌一覧 {
+  items: (日誌見出し & { 記録件数: number })[];
+  total: number;
+  limit: number | null;
+}
+export interface 日誌保存 { 日付: string; 記録: 日誌記録[] }
+type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
+
+export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {
+  const { data } = await apiClient.post<{status: string; message: string; data: T}>('/apps/T日誌/' + 操作, body);
+  if (data.status !== 'OK') throw new Error(data.message || `日誌の${操作}に失敗しました。`);
+  return data.data;
+}
+
+export function エラー表示(error: unknown, message: string): string {
+  if (axios.isAxiosError(error)) {
+    const status = error.response?.status;
+    if (status === 413) return '添付ファイルまたは日誌全体の容量が上限を超えています。';
+    if (status === 422) return '入力内容を確認してください。日付・記録・明細の形式または上限に問題があります。';
+    if (status === 403) return '日誌を利用する権限がありません。';
+    if (status === 401) return 'ログインし直してください。';
+    const data = error.response?.data;
+    if (typeof data?.message === 'string') return data.message;
+    return error.response ? message : `${message} 接続を確認してください。`;
+  }
+  return error instanceof Error ? error.message : message;
+}
+
+export function ローカル日付(): string {
+  const now = new Date();
+  return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+}

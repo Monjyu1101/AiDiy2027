@@ -48,6 +48,7 @@ const rows = ref<MenuRow[]>([
   {
     axis: 'T', title: 'トラン', accent: '#5f6f4d', panelBg: '#dceccf', panelBgStrong: '#c8deb8',
     items: [
+      { code: 'T日', label: 'T日誌',     desc: '日誌・画像・ファイルの記録',     to: q('/Tトラン/T日誌/一覧') },
       { code: 'T配', label: 'T配車',     desc: '配車情報登録・スケジュール',     to: q('/Tトラン/T配車/一覧') },
       { code: 'T入', label: 'T商品入庫', desc: '入庫情報登録',                   to: q('/Tトラン/T商品入庫/一覧') },
       { code: 'T出', label: 'T商品出庫', desc: '出庫情報登録',                   to: q('/Tトラン/T商品出庫/一覧') },

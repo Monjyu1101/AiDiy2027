@@ -137,6 +137,20 @@ export const appsRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true, title: 'トラン' }
     },
     {
+        path: '/Tトラン/T日誌/一覧',
+        alias: '/T日誌/一覧',
+        name: 'T日誌一覧',
+        component: () => import('../components/Tトラン/T日誌/T日誌一覧.vue'),
+        meta: { requiresAuth: true, title: 'T日誌一覧' }
+    },
+    {
+        path: '/Tトラン/T日誌/編集',
+        alias: '/T日誌/編集',
+        name: 'T日誌編集',
+        component: () => import('../components/Tトラン/T日誌/T日誌編集.vue'),
+        meta: { requiresAuth: true, title: 'T日誌編集' }
+    },
+    {
         path: '/Tトラン/T配車/一覧',
         name: 'T配車一覧',
         component: () => import('../components/Tトラン/T配車/T配車一覧.vue'),

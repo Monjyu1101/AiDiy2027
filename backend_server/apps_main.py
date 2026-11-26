@@ -48,6 +48,8 @@ from apps_router import V商品
 from apps_router import M商品構成
 from apps_router import V商品構成
 from apps_router import T配車
+from apps_router import T日誌
+from apps_crud.T日誌 import 日誌DB初期化
 from apps_router import V配車
 from apps_router import T生産
 from apps_router import V生産
@@ -131,6 +133,7 @@ app.include_router(V商品.router)
 app.include_router(M商品構成.router)
 app.include_router(V商品構成.router)
 app.include_router(T配車.router)
+app.include_router(T日誌.router)
 app.include_router(V配車.router)
 app.include_router(T生産.router)
 app.include_router(V生産.router)
@@ -189,6 +192,8 @@ def startup_event():
     finally:
         db.close()
 
+    app.state.日誌DB = 日誌DB初期化()
+
     # ベースラインバックアップ実行（並列スレッドで処理）
     def バックアップ並列処理():
         try:
@@ -217,6 +222,12 @@ def startup_event():
             logger.error(f"バックアップ実行時エラー: {e}")
     
     threading.Thread(target=バックアップ並列処理, daemon=True).start()
+
+@app.on_event("shutdown")
+def shutdown_event():
+    if hasattr(app.state, "日誌DB"):
+        app.state.日誌DB.dispose()
+
 
 @app.get("/")
 def read_root():
