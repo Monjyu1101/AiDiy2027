@@ -44,3 +44,21 @@ aside li{display:flex;min-width:0;gap:4px;margin:3px 0}aside li button:first-chi
 
 .repo-selector{display:flex;align-items:center;gap:8px;padding:5px 8px;border-bottom:1px solid var(--line);background:var(--raised);flex:none}
 .repo-selector select{flex:1;max-width:min(390px,65%);min-width:85px}.repo-selector #repo-count{color:var(--muted);white-space:nowrap}
+
+#guide-content{flex:1;min-height:0;overflow:auto;padding:clamp(12px,3vw,24px);scroll-padding:12px}
+#guide-content:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.git-guide{max-width:760px;margin:0 auto;color:var(--ink);line-height:1.65}
+.git-guide p{margin:.35em 0}
+.guide-intro{padding:12px 16px;border-left:3px solid var(--accent);background:var(--raised);border-radius:0 6px 6px 0}
+.guide-intro h2{margin:2px 0;font-size:clamp(17px,3vw,23px);color:var(--ink)}
+.guide-kicker{font-size:11px;color:var(--accent);font-weight:700}
+.git-guide h3{margin:16px 0 6px;font-size:14px}
+.guide-steps{margin:0;padding-left:2em}
+.guide-steps li{padding:3px 0 6px .25em}
+.guide-steps li::marker{font-weight:700;color:var(--accent)}
+.guide-sync{margin:0;border-top:1px solid var(--line)}
+.guide-sync>div{display:grid;grid-template-columns:4.5em minmax(0,1fr);gap:8px;padding:6px 0;border-bottom:1px solid var(--line)}
+.guide-sync dt{color:var(--accent);font-weight:700}
+.guide-sync dd{margin:0}
+.git-guide .guide-tip{padding:8px 10px;margin:12px 0;background:#301e17;border-left:3px solid #ffbf8a}
+.git-guide .guide-note{color:var(--muted);font-size:12px}

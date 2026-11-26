@@ -39,7 +39,7 @@ test('real Git panel: diff, staging, unstaging, commits, history, fetch, fast-fo
  await git(root,'push','-u','local','main');
  const app=await startGit(root);t.after(()=>app.close());
  const response=await fetch(app.url);const html=await response.text();
- assert.equal(response.status,200);assert.match(html,/tab-git/);
+ assert.equal(response.status,200);assert.match(html,/id="tab-guide"[^>]*aria-pressed="false"[^]*id="tab-git"[^>]*aria-pressed="true"/);assert.match(html,/id="guide-content"[^>]*hidden/);
  const request=client(app.url,keyOf(html));
  const status=async()=>{const {status,result}=await request('status');assert.equal(status,200);return result;};
  const op=async(action,body={},current=null,expected=200)=>{const {revision}=current??await status();const {status:code,result}=await request(action,{revision,...body});assert.equal(code,expected,`${action}: ${result.error}`);return result;};

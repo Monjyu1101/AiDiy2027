@@ -3,7 +3,7 @@
 // Commercial use requires prior written consent from all copyright holders.
 // See LICENSE for full terms. Thank you for keeping the rules.
 // https://github.com/monjyu1101/AiDiy2027
-// タブの追加は github.com のリモートだけ。一覧は読み取り専用、編集は公式サイトで行う。
+// PR・Issue タブは github.com のリモートだけ。一覧は読み取り専用、編集は公式サイトで行う。
 const host='https://github.com';
 const kinds=Object.freeze({
  pr:{label:'Pull Request',list:'pulls',entry:'pull',newPath:'compare',states:[['open','オープン'],['merged','マージ済'],['closed','クローズ済']]},
@@ -48,17 +48,17 @@ function displayMeta(item,labels){
 
 export function installGitHubTabs({load,onGitTab}){
  const git=document.getElementById('git-content'),view=document.getElementById('github-content');
- const tabs=Object.fromEntries(['git','pr','issue'].map(id=>[id,document.getElementById('tab-'+id)]));
+ const guide=document.getElementById('guide-content');
+ const tabs=Object.fromEntries(['guide','git','pr','issue'].map(id=>[id,document.getElementById('tab-'+id)]));
  const object={pr:null,issue:null};
  const filters={pr:'open',issue:'open'};
  let target=null,tab='git',generation=0;
  function sync(){
   for(const [id,button] of Object.entries(tabs)){
-   button.hidden=id!=='git'&&!target;
-   button.setAttribute('aria-selected',String(id===tab));
+   button.hidden=Object.hasOwn(kinds,id)&&!target;
    button.setAttribute('aria-pressed',String(id===tab));
   }
-  git.hidden=tab!=='git';view.hidden=tab==='git';
+  git.hidden=tab!=='git';guide.hidden=tab!=='guide';view.hidden=!Object.hasOwn(kinds,tab);
  }
  function render(){
   const conf=kinds[tab];
@@ -128,10 +128,10 @@ export function installGitHubTabs({load,onGitTab}){
   }
  }
  function select(id){
-  if(id!=='git'&&(!target||!Object.hasOwn(kinds,id)))return;
+  if(id!=='git'&&id!=='guide'&&(!target||!Object.hasOwn(kinds,id)))return;
   const previous=tab;tab=id;sync();render();
   if(id==='git'){if(previous!=='git')onGitTab?.();return;}
-  if(!object[id])void request(id);
+  if(Object.hasOwn(kinds,id)&&!object[id])void request(id);
  }
  for(const [id,button] of Object.entries(tabs))button.addEventListener('click',()=>select(id));
  sync();
@@ -140,13 +140,13 @@ export function installGitHubTabs({load,onGitTab}){
    const next=githubTarget(remote);
    if(keyOf(next)===keyOf(target))return;
    target=next;generation++;object.pr=null;object.issue=null;
-   if(!target){select('git');return;}
+   if(!target&&Object.hasOwn(kinds,tab)){select('git');return;}
    sync();render();
-   if(tab!=='git')void request(tab);
+   if(Object.hasOwn(kinds,tab))void request(tab);
   },
   reset(){
    target=null;generation++;object.pr=null;object.issue=null;
-   filters.pr='open';filters.issue='open';select('git');
+   filters.pr='open';filters.issue='open';select(tab==='guide'?'guide':'git');
   },
  };
 }

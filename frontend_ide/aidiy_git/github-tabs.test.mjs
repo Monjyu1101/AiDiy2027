@@ -21,7 +21,7 @@ const next=()=>new Promise(resolve=>setImmediate(resolve));
 const repo=(owner,repo,name='origin')=>({name,github:{owner,repo,url:'https://imposter.test/something'}});
 
 test('GitHub tabs work only for selected GitHub repositories and ignore unsafe links',async()=>{
- const ids=Object.fromEntries(['tab-git','tab-pr','tab-issue','git-content','github-content'].map(id=>[id,new Node(id)]));
+ const ids=Object.fromEntries(['tab-guide','tab-git','tab-pr','tab-issue','git-content','guide-content','github-content'].map(id=>[id,new Node(id)]));
  const view=ids['github-content'],old=globalThis.document;
  globalThis.document={getElementById:id=>ids[id],createElement:tag=>new Node(tag)};
  let calls=[],returned=0,release;
@@ -64,7 +64,7 @@ test('GitHub tabs work only for selected GitHub repositories and ignore unsafe l
 });
 
 test('CLI failure keeps the official issue and creation links available',async()=>{
- const ids=Object.fromEntries(['tab-git','tab-pr','tab-issue','git-content','github-content'].map(id=>[id,new Node(id)]));
+ const ids=Object.fromEntries(['tab-guide','tab-git','tab-pr','tab-issue','git-content','guide-content','github-content'].map(id=>[id,new Node(id)]));
  const view=ids['github-content'],old=globalThis.document;
  globalThis.document={getElementById:id=>ids[id],createElement:tag=>new Node(tag)};
  try{
@@ -76,4 +76,25 @@ test('CLI failure keeps the official issue and creation links available',async()
   assert.doesNotMatch(JSON.stringify(view),/must not leak/);
   tabs.reset();assert.equal(ids['tab-issue'].hidden,true);
  }finally {globalThis.document=old;}
+});
+
+test('初心者向け解説は常に開け、リモート・保存先変更で勝手に閉じない',()=>{
+ const ids=Object.fromEntries(['tab-guide','tab-git','tab-pr','tab-issue','git-content','guide-content','github-content'].map(id=>[id,new Node(id)]));
+ const old=globalThis.document;
+ globalThis.document={getElementById:id=>ids[id],createElement:tag=>new Node(tag)};
+ try{
+  const tabs=installGitHubTabs({load:()=>assert.fail('解説は外部に接続しない')});
+  assert.equal(ids['tab-guide'].hidden,false);assert.equal(ids['guide-content'].hidden,true);
+  assert.equal(ids['tab-git'].attrs['aria-pressed'],'true');
+  ids['tab-guide'].events.click();
+  assert.equal(ids['guide-content'].hidden,false);
+  assert.equal(ids['git-content'].hidden,true);
+  assert.equal(ids['github-content'].hidden,true);
+  tabs.update(repo('owner','repo'));tabs.reset();
+  assert.equal(ids['guide-content'].hidden,false);
+  assert.equal(ids['tab-pr'].hidden,true);
+  ids['tab-git'].events.click();
+  assert.equal(ids['guide-content'].hidden,true);
+  assert.equal(ids['git-content'].hidden,false);
+ }finally{globalThis.document=old;}
 });

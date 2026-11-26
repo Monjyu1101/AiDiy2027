@@ -14,8 +14,31 @@
 <div class="component-toolbar" data-aidiy-window-move-handle><span id="project">プロジェクト: Git</span><button type="button" id="tools-check" class="auto-connect" role="switch" aria-checked="true" title="Tools接続確認 ON"><span>Tools接続確認</span><span class="switch-track" aria-hidden="true"></span></button></div>
 <div id="repo-selector" class="repo-selector" hidden><label for="repository">リポジトリ</label><select id="repository"><option value="">対象を選択</option></select><span id="repo-count"></span></div>
 <nav class="main-tabs" aria-label="Git パネル">
- <button id="tab-git" aria-pressed="true">Git</button><button id="tab-pr" aria-pressed="false" hidden>PR</button><button id="tab-issue" aria-pressed="false" hidden>Issue</button>
+ <button id="tab-guide" aria-pressed="false" aria-controls="guide-content">解説</button><button id="tab-git" aria-pressed="true" aria-controls="git-content">Git</button><button id="tab-pr" aria-pressed="false" aria-controls="github-content" hidden>PR</button><button id="tab-issue" aria-pressed="false" aria-controls="github-content" hidden>Issue</button>
 </nav>
+<section id="guide-content" aria-labelledby="guide-title" tabindex="0" hidden>
+ <article class="git-guide">
+  <header class="guide-intro">
+   <p class="guide-kicker">はじめての Git</p>
+   <h2 id="guide-title">変更を確かめて、履歴に残す</h2>
+   <p>Git は、ファイルの変更を記録する仕組みです。まずは自分の PC に履歴を残しましょう。GitHub への送信は後からでもできます。</p>
+  </header>
+  <h3>最初のコミットまで</h3>
+  <ol class="guide-steps">
+   <li><strong>差分を見る</strong><p>「Git」タブの「未ステージ」でファイル名をクリックすると、何が変わったか見られます。自分が変更したファイルから確認します。</p></li>
+   <li><strong>残したい変更を選ぶ</strong><p>ファイルの横の「＋」で「ステージ済」に移します。ステージとは、次に記録する変更を選ぶことです。「−」で選び直せます。ファイルは消えません。</p></li>
+   <li><strong>ひとこと書いてコミット</strong><p>「README に起動手順を追加」のように変更内容を書き、「コミット」を押します。「履歴」で確認できます。この時点では、まだ他の人には送られていません。</p></li>
+  </ol>
+  <h3>サーバーと共有するとき</h3>
+  <dl class="guide-sync">
+   <div><dt>取得</dt><dd>サーバーの最新の履歴を確認します。作業中のファイルは変わりません。</dd></div>
+   <div><dt>取り込み</dt><dd>サーバー側の変更を作業中のブランチに反映します。このパネルでは履歴が分岐していると停止します。</dd></div>
+   <div><dt>送信</dt><dd>コミットをサーバーに共有します。確認画面で送信先とブランチ名を確認してください。</dd></div>
+  </dl>
+  <p class="guide-tip"><strong>迷ったら「強制送信」は押さない。</strong> サーバーの履歴を上書きする操作です。取り込みが止まったら、先に変更の状況を確認してください。</p>
+  <p class="guide-note">「リポジトリ」は Git で管理する作業場所、「ブランチ」は作業の流れ、「リモート」は共有先です。リポジトリが複数ある場合は、操作する対象を先に選びます。GitHub が共有先の場合だけ PR・Issue タブが表示されます。</p>
+ </article>
+</section>
 <div id="git-content">
 <section class="toolbar" aria-label="同期">
  <div class="identity"><span id="branch"></span><span id="counts"></span></div>
@@ -37,7 +60,7 @@
 </main>
 <footer><label for="commit-text">コミットメッセージ</label><textarea id="commit-text" rows="2" maxlength="4000" placeholder="何を変更したか"></textarea><button id="commit" class="primary">コミット</button></footer>
 </div>
-</div><section id="github-content" hidden></section>
+<section id="github-content" hidden></section></div>
 <dialog id="force-dialog" aria-labelledby="force-title">
 <div><h2 id="force-title">GitHub への強制送信</h2><p id="force-target"></p><p>最後に取得した状態とサーバー側の履歴が異なる場合は停止します。</p>
 <label for="force-confirm">現在のブランチ名を入力</label><input id="force-confirm" autocomplete="off" spellcheck="false"><div class="force-actions"><button id="force-cancel" type="button" autofocus>キャンセル</button><button id="force-submit" class="danger" type="button" disabled>強制送信</button></div></div>
