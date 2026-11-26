@@ -88,11 +88,13 @@ def _プロジェクトパス(値: str) -> str:
 
 
 プロジェクトパス = Annotated[str, Field(max_length=4096), AfterValidator(_プロジェクトパス)]
+最大作業ID = 9_007_199_254_740_991
+日誌作業ID = Annotated[int, Field(ge=1, le=最大作業ID)]
 自己申告件数 = Annotated[int, Field(ge=0, le=9_007_199_254_740_991)]
 
 
 class 日誌記録要求(日誌要求):
-    作業ID: int = Field(ge=1, le=最大記録数)
+    作業ID: 日誌作業ID | None = None
     プロジェクト: プロジェクトパス = ""
     作業タイトル: str = Field(min_length=1, max_length=200)
     新規更新ファイル数: 自己申告件数 | None = None
@@ -113,8 +115,9 @@ class T日誌保存要求(T日誌キー):
 
     @model_validator(mode="after")
     def _確認(self) -> Self:
-        if any(記録.作業ID != 番号 for 番号, 記録 in enumerate(self.記録, 1)):
-            raise ValueError("作業IDは1から順に指定してください。")
+        作業ID一覧 = [記録.作業ID for 記録 in self.記録 if 記録.作業ID is not None]
+        if len(set(作業ID一覧)) != len(作業ID一覧):
+            raise ValueError("同じ作業IDを複数回指定できません。")
         if sum(len(記録.明細) for 記録 in self.記録) > 最大明細数:
             raise ValueError("明細は日誌1件につき100行までです。")
         添付合計 = 0
@@ -134,6 +137,14 @@ class T日誌保存要求(T日誌キー):
         return self
 
 
+class T日誌登録要求(T日誌保存要求):
+    @model_validator(mode="after")
+    def _新規作業のみ(self) -> Self:
+        if any(記録.作業ID is not None for 記録 in self.記録):
+            raise ValueError("新規登録では作業IDを指定できません。")
+        return self
+
+
 class T日誌変更要求(T日誌保存要求):
     更新版: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -145,7 +156,7 @@ class T日誌検索要求(日誌期間要求):
 
 
 class T日誌作業キー(T日誌キー):
-    作業ID: int = Field(ge=1, le=最大記録数)
+    作業ID: 日誌作業ID
 
 
 class T日誌作業登録要求(T日誌キー):

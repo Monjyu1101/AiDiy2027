@@ -15,7 +15,7 @@ NAME = "aidiy_dialy_control"
 TOKEN_ENV = "AIDIY_DIARY_AUTHORIZATION"
 DESCRIPTION = (
     "AiDiy 日誌。通常の利用者ログインのBearer認証が必要。利用者本人の日誌のみ操作する。"
-    "変更・削除の直前に検索で日付と連番を確認する。削除後は連番が詰まる。"
+    "変更・削除の直前に日誌日付・作業ID・行番号を確認する。作業IDは固定。明細削除時は後続の行番号が詰まる。"
 )
 _OPERATIONS = {
     "diary_search": "検索",
@@ -96,7 +96,7 @@ def register_tools(mcp):
         ctx: Context, 日誌日付: str, 作業タイトル: str,
         新規更新ファイル数: int | None = None, プロジェクト: str = "",
     ) -> dict:
-        """指定日に作業を追加して作業IDを返す。その日の日誌がなければ同時に1件だけ作る。"""
+        """指定日に作業を追加してC採番で発行した固定の作業IDを返す。その日の日誌がなければ同時に1件だけ作る。"""
         return await run("diary_work_create", ctx, 日誌日付=日誌日付, 作業タイトル=作業タイトル,
                          新規更新ファイル数=新規更新ファイル数, プロジェクト=プロジェクト)
 

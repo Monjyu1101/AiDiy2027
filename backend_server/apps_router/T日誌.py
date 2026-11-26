@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from apps_crud import T日誌 as crud
 from apps_schema.common import ResponseBase
 from apps_schema.T日誌 import (
-    T日誌一覧要求, T日誌変更要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌保存要求,
+    T日誌一覧要求, T日誌変更要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌登録要求,
     T日誌内容キー, T日誌内容変更要求, T日誌内容登録要求, T日誌検索要求, T日誌キー, 日誌本文上限,
 )
 from deps import get_現在利用者
@@ -88,8 +88,11 @@ def 取得(要求: T日誌キー, 所有者=Depends(_現在の所有者), db: Se
 
 
 @router.post("/登録", response_model=ResponseBase)
-def 登録(要求: T日誌保存要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
-    data = crud.保存(db, 所有者, 要求, 新規=True)
+def 登録(要求: T日誌登録要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    try:
+        data = crud.保存(db, 所有者, 要求, 新規=True)
+    except crud.日誌操作エラー as exc:
+        return _NG(exc.コード, str(exc))
     if data is None:
         return _NG("DUPLICATE", "この日付の日誌は登録済みです。日誌一覧から編集してください。")
     return ResponseBase(message="日誌を登録しました。", data=data)

@@ -21,6 +21,7 @@ def init_C採番_data(db: Session, 認証情報: Optional[Dict] = None):
     logger = get_logger(__name__)
     初期データ = [
         ("T配車", 10000, "配車の採番", True),
+        ("T日誌作業", 10000, "日誌作業の採番", True),
         ("T生産", 10000, "生産の採番", True),
         ("T商品棚卸", 10000, "商品棚卸の採番", True),
         ("T商品入庫", 10000, "商品入庫の採番", True),

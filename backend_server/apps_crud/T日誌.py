@@ -5,11 +5,15 @@ import json
 from collections.abc import Sequence
 
 from sqlalchemy import delete, func, insert, or_, select, true, update
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
+
+import database
+from core_models import C採番
 
 from apps_crud.utils import create_audit_fields, update_audit_fields
 from apps_models.T日誌 import T日誌作業, T日誌明細
-from apps_schema.T日誌 import T日誌一覧要求, T日誌保存要求, T日誌検索要求, 日誌記録要求
+from apps_schema.T日誌 import T日誌一覧要求, T日誌保存要求, T日誌検索要求, 日誌記録要求, 最大作業ID
 from list_controls import get_list_limit
 
 
@@ -47,8 +51,12 @@ def _作業一覧(db: Session, 利用者ID: str, 日誌日付: str):
     ).order_by(T日誌作業.作業ID)))
 
 
-def _明細を取得(db: Session, 利用者ID: str, 日誌日付: str):
-    return select(T日誌明細).where(*_所有者条件(T日誌明細, 利用者ID, 日誌日付)).order_by(
+def _明細の所有者条件(利用者ID: str, 日誌日付: str):
+    return (*_所有者条件(T日誌作業, 利用者ID, 日誌日付), T日誌作業.有効.is_(True))
+
+
+def _明細を取得(利用者ID: str, 日誌日付: str):
+    return select(T日誌明細).join(T日誌作業).where(*_明細の所有者条件(利用者ID, 日誌日付)).order_by(
         T日誌明細.作業ID, T日誌明細.行番号,
     )
 
@@ -60,7 +68,7 @@ def 取得(db: Session, 利用者ID: str, 日誌日付: str):
     記録 = {行.作業ID: {"作業ID": 行.作業ID, "作業タイトル": 行.作業タイトル,
                        "プロジェクト": 行.プロジェクト,
                        "新規更新ファイル数": 行.新規更新ファイル数, "明細": []} for 行 in 作業}
-    for 行 in db.scalars(_明細を取得(db, 利用者ID, 日誌日付)):
+    for 行 in db.scalars(_明細を取得(利用者ID, 日誌日付)):
         if 行.作業ID in 記録:
             記録[行.作業ID]["明細"].append({"行番号": 行.行番号, "作業内容": 行.作業内容, "添付": 行.添付})
     return {"日誌日付": 日誌日付, "利用者ID": 利用者ID, "利用者名": 作業[0].利用者名, "記録": list(記録.values())}
@@ -81,18 +89,45 @@ def _明細書込(db: Session, キー: dict, 行, *, 更新=False):
         db.execute(insert(T日誌明細).values(**キー, **値))
 
 
-def _作業登録(db: Session, 認証情報: dict, 日誌日付: str, 記録: Sequence[日誌記録要求], 旧作業=()):
-    共通 = {"日誌日付": 日誌日付, **認証情報, **create_audit_fields(認証情報)}
-    # 全体保存では従来の日誌と同様、日別の登録監査を維持する。
-    if 旧作業:
-        共通.update({key: getattr(旧作業[0], key) for key in 共通 if key.startswith("登録")})
-    for 作業 in 記録:
-        db.execute(insert(T日誌作業).values(**共通,
-            作業ID=作業.作業ID, プロジェクト=作業.プロジェクト,
-            作業タイトル=作業.作業タイトル, 新規更新ファイル数=作業.新規更新ファイル数))
-        for 行 in 作業.明細:
-            _明細書込(db, {"利用者ID": 認証情報["利用者ID"], "日誌日付": 日誌日付,
-                         "作業ID": 作業.作業ID, "行番号": 行.行番号}, 行)
+def _作業ID採番(db: Session, 認証情報: dict, 件数: int) -> range:
+    """業務DBのC採番からまとめて払い出す。日誌DBの保存失敗による欠番は再利用しない。"""
+    if not 件数:
+        return range(0)
+    採番ID = "T日誌作業"
+    # 日誌DBに既存のIDがある場合、採番値の手動変更などで衝突しないようにする。
+    下限 = db.scalar(select(func.max(T日誌作業.作業ID))) or 0
+    with database.SessionLocal.begin() as 採番DB:
+        採番DB.execute(sqlite_insert(C採番).values(
+            採番ID=採番ID, 最終採番値=10000, 採番備考="日誌作業の採番", 有効=True,
+            **create_audit_fields(認証情報),
+        ).on_conflict_do_nothing(index_elements=[C採番.採番ID]))
+        終値 = 採番DB.scalar(update(C採番).where(
+            C採番.採番ID == 採番ID, C採番.有効.is_(True),
+            func.max(C採番.最終採番値, 下限) <= 最大作業ID - 件数,
+        ).values(
+            最終採番値=func.max(C採番.最終採番値, 下限) + 件数,
+            **update_audit_fields(認証情報),
+        ).returning(C採番.最終採番値))
+        if 終値 is None:
+            raise 日誌操作エラー("C採番の「T日誌作業」が無効か上限に達しています。", "NUMBERING_UNAVAILABLE")
+    return range(終値 - 件数 + 1, 終値 + 1)
+
+
+def _作業項目(作業: 日誌記録要求):
+    return 作業.model_dump(include={"プロジェクト", "作業タイトル", "新規更新ファイル数"})
+
+
+def _作業登録(db: Session, 認証情報: dict, 日誌日付: str, 作業: 日誌記録要求, 作業ID: int):
+    db.execute(insert(T日誌作業).values(
+        作業ID=作業ID, 日誌日付=日誌日付, **認証情報,
+        **create_audit_fields(認証情報), **_作業項目(作業),
+    ))
+    _明細登録(db, 作業ID, 作業)
+
+
+def _明細登録(db: Session, 作業ID: int, 作業: 日誌記録要求):
+    for 行 in 作業.明細:
+        _明細書込(db, {"作業ID": 作業ID, "行番号": 行.行番号}, 行)
 
 
 def 保存(db: Session, 認証情報: dict, 要求: T日誌保存要求, *, 新規: bool):
@@ -114,8 +149,23 @@ def 保存(db: Session, 認証情報: dict, 要求: T日誌保存要求, *, 新�
                     "この日誌は別の画面またはツールで更新されています。入力内容を控え、最新の日誌を開き直してください。",
                     "CONFLICT",
                 )
-            db.execute(delete(T日誌作業).where(*条件))
-        _作業登録(db, 認証情報, 日誌日付, 要求.記録, 旧作業)
+        送信ID = {作業.作業ID for 作業 in 要求.記録 if 作業.作業ID is not None}
+        既存ID = {作業.作業ID for 作業 in 旧作業}
+        if not 送信ID <= 既存ID:
+            raise 日誌操作エラー("この日誌にない作業IDが指定されました。", "VALIDATION_ERROR")
+        新規ID = iter(_作業ID採番(db, 認証情報, len(要求.記録) - len(送信ID)))
+        削除ID = 既存ID - 送信ID
+        if 削除ID:
+            db.execute(delete(T日誌作業).where(*条件, T日誌作業.作業ID.in_(削除ID)))
+        for 作業 in 要求.記録:
+            if 作業.作業ID is None:
+                _作業登録(db, 認証情報, 日誌日付, 作業, next(新規ID))
+                continue
+            db.execute(update(T日誌作業).where(*条件, T日誌作業.作業ID == 作業.作業ID).values(
+                **_作業項目(作業), **update_audit_fields(認証情報),
+            ))
+            db.execute(delete(T日誌明細).where(T日誌明細.作業ID == 作業.作業ID))
+            _明細登録(db, 作業.作業ID, 作業)
         return 更新版付き(取得(db, 利用者ID, 日誌日付))
 
 
@@ -133,7 +183,6 @@ def 検索(db: Session, 利用者ID: str, 要求: T日誌検索要求):
             func.json_extract(添付要素.c.value, '$.ファイル名').icontains(語, autoescape=True),
         ).correlate(T日誌明細).exists()
         明細一致 = select(1).where(
-            *_所有者条件(T日誌明細, T日誌作業.利用者ID, T日誌作業.日誌日付),
             T日誌明細.作業ID == T日誌作業.作業ID,
             or_(T日誌明細.作業内容.icontains(語, autoescape=True), 添付一致),
         ).exists()
@@ -153,13 +202,13 @@ def 検索(db: Session, 利用者ID: str, 要求: T日誌検索要求):
         名前 = {}
         要素 = func.json_each(T日誌明細.添付).table_valued("key", "value")
         添付名 = select(T日誌明細.作業ID, T日誌明細.行番号, func.json_extract(要素.c.value, '$.ファイル名')).select_from(
-            T日誌明細.__table__.join(要素, true()),
-        ).where(*_所有者条件(T日誌明細, 利用者ID, 日誌日付)).order_by(
+            T日誌明細.__table__.join(T日誌作業.__table__).join(要素, true()),
+        ).where(*_明細の所有者条件(利用者ID, 日誌日付)).order_by(
             T日誌明細.作業ID, T日誌明細.行番号, 要素.c.key,
         )
         for seq, 行番号, ファイル名 in db.execute(添付名):
             名前.setdefault((seq, 行番号), []).append({"ファイル名": ファイル名})
-        明細 = _明細を取得(db, 利用者ID, 日誌日付).with_only_columns(
+        明細 = _明細を取得(利用者ID, 日誌日付).with_only_columns(
             T日誌明細.作業ID, T日誌明細.行番号, func.substr(T日誌明細.作業内容, 1, 1000), func.length(T日誌明細.作業内容),
         )
         for seq, 行番号, 作業内容, 長さ in db.execute(明細):
@@ -178,7 +227,7 @@ class 日誌操作エラー(Exception):
 
 
 def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
-    """既存 Web の連番・検証規則を守り、書込ロック内の最新状態だけを編集する。"""
+    """固定の作業IDと明細の行番号で、書込ロック内の最新状態を編集する。"""
     利用者ID = 認証情報["利用者ID"]
     日誌日付 = 要求.日誌日付
     # 読み取りより先に書き込みトランザクションを取得し、同時追加の採番競合を防ぐ。
@@ -194,7 +243,6 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
         記録 = 現在["記録"] if 現在 else []
         結果 = {"日誌日付": 日誌日付}
         if 操作 == "作業登録":
-            結果["作業ID"] = len(記録) + 1
             記録.append({"作業タイトル": 要求.作業タイトル, "プロジェクト": 要求.プロジェクト, "新規更新ファイル数": 要求.新規更新ファイル数, "明細": []})
         else:
             対象 = next((行 for 行 in 記録 if 行["作業ID"] == 要求.作業ID), None)
@@ -226,34 +274,30 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
                             対象行["添付"] = [file.model_dump() for file in 要求.添付]
                     else:  # 内容削除
                         明細.remove(対象行)
-        for i, 作業 in enumerate(記録, 1):
-            作業["作業ID"] = i
+        for 作業 in 記録:
             for j, 行 in enumerate(作業["明細"], 1):
                 行["行番号"] = j
         保存要求 = T日誌保存要求(日誌日付=日誌日付, 記録=記録) if 記録 else None
+        if 操作 == "作業登録":
+            作業ID = _作業ID採番(db, 認証情報, 1).start
+            _作業登録(db, 認証情報, 日誌日付, 保存要求.記録[-1], 作業ID)
+            return {**結果, "作業ID": 作業ID}
         作業ID = 結果["作業ID"]
         作業条件 = (*_所有者条件(T日誌作業, 利用者ID, 日誌日付), T日誌作業.作業ID == 作業ID)
-        明細条件 = (*_所有者条件(T日誌明細, 利用者ID, 日誌日付), T日誌明細.作業ID == 作業ID)
-        if 操作 == "作業登録":
-            _作業登録(db, 認証情報, 日誌日付, 保存要求.記録[-1:])
-        elif 操作 == "作業変更":
-            作業 = 保存要求.記録[作業ID - 1]
+        # 上で所有者の日誌から作業IDを確認済み。明細はそのIDだけで特定できる。
+        明細条件 = (T日誌明細.作業ID == 作業ID,)
+        if 操作 == "作業変更":
+            作業 = next(行 for 行 in 保存要求.記録 if 行.作業ID == 作業ID)
             db.execute(update(T日誌作業).where(*作業条件).values(
-                作業タイトル=作業.作業タイトル, プロジェクト=作業.プロジェクト,
-                新規更新ファイル数=作業.新規更新ファイル数,
-                **update_audit_fields(認証情報),
+                **_作業項目(作業), **update_audit_fields(認証情報),
             ))
         elif 操作 == "作業削除":
             db.execute(delete(T日誌作業).where(*作業条件))
-            for 作業 in 保存要求.記録[作業ID - 1:] if 保存要求 is not None else []:
-                db.execute(update(T日誌作業).where(
-                    *_所有者条件(T日誌作業, 利用者ID, 日誌日付), T日誌作業.作業ID == 作業.作業ID + 1,
-                ).values(作業ID=作業.作業ID))
         else:
             db.execute(update(T日誌作業).where(*作業条件).values(**update_audit_fields(認証情報)))
             行番号 = 結果["行番号"]
             行条件 = (*明細条件, T日誌明細.行番号 == 行番号)
-            作業明細 = 保存要求.記録[作業ID - 1].明細
+            作業明細 = next(行.明細 for 行 in 保存要求.記録 if 行.作業ID == 作業ID)
             if 操作 == "内容削除":
                 db.execute(delete(T日誌明細).where(*行条件))
                 for 行 in 作業明細[行番号 - 1:]:
@@ -262,7 +306,7 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
                     ).values(行番号=行.行番号))
             else:
                 _明細書込(
-                    db, {"利用者ID": 利用者ID, "日誌日付": 日誌日付, "作業ID": 作業ID, "行番号": 行番号},
+                    db, {"作業ID": 作業ID, "行番号": 行番号},
                     作業明細[行番号 - 1], 更新=操作 == "内容変更",
                 )
         return 結果

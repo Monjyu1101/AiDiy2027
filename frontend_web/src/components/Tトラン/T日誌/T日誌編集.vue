@@ -13,7 +13,7 @@ import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上�
 
 type 編集添付 = 日誌添付 & { key: number; preview: string };
 type 編集行 = { key: number; 展開: boolean; 作業内容: string; 添付: 編集添付[]; ドラッグ数: number };
-type 編集記録 = Omit<日誌記録, '作業ID' | '明細' | '新規更新ファイル数'> & { key: number; 展開: boolean; 明細: 編集行[]; 件数入力: string };
+type 編集記録 = Omit<日誌記録, '作業ID' | '明細' | '新規更新ファイル数'> & { key: number; 作業ID: number | null; 展開: boolean; 明細: 編集行[]; 件数入力: string };
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -60,7 +60,7 @@ function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
 function 記録を作る(item?: 日誌記録, 展開 = true, 保存前?: 編集記録): 編集記録 {
   const 保存行 = 保存前?.明細.filter(有効な明細);
   return {
-    key: ++次のキー, 展開, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
+    key: ++次のキー, 展開, 作業ID: item?.作業ID ?? null, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
     明細: item ? item.明細.map((行, i) => 行を作る(行, 保存行?.[i]?.展開 ?? false)) : [行を作る()],
   };
 }
@@ -238,8 +238,8 @@ function 保存内容(): 日誌保存 {
   }
   return {
     日誌日付: 日誌日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
-    記録: 記録.value.map((item, i) => ({
-      作業ID: i + 1, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
+    記録: 記録.value.map(item => ({
+      作業ID: item.作業ID, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
       明細: item.明細.filter(有効な明細).map((行, j) => ({
         行番号: j + 1, 作業内容: 行.作業内容, 添付: 行.添付.map(({ ファイル名, base64内容 }) => ({ ファイル名, base64内容 })),
       })),

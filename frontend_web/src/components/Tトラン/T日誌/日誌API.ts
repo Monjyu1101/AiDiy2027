@@ -30,7 +30,7 @@ export interface 日誌一覧 {
   total: number;
   limit: number | null;
 }
-export interface 日誌保存 { 日誌日付: string; 更新版?: string; 記録: 日誌記録[] }
+export interface 日誌保存 { 日誌日付: string; 更新版?: string; 記録: (Omit<日誌記録, "作業ID"> & { 作業ID: number | null })[] }
 type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
 
 export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {

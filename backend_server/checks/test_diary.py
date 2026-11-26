@@ -24,7 +24,7 @@ from apps_crud.utils import create_audit_fields
 from apps_router import T日誌
 from apps_schema.T日誌 import T日誌保存要求
 from auth_keyring import CoreKeyring
-from core_models import C利用者
+from core_models import C利用者, C採番
 
 PREFIX = "/apps/T日誌/"
 DATE = "2026-11-26"
@@ -36,14 +36,13 @@ def sample(日誌日付=DATE):
         "日誌日付": 日誌日付,
         "記録": [
             {
-                "作業ID": 1,
                 "作業タイトル": "  作業メモ  ",
                 "明細": [
                     {"行番号": 1, "作業内容": "更新した\n次はレビュー"},
                     {"行番号": 2, "作業内容": "画像", "添付": [{"ファイル名": "画像.png", "base64内容": PNG}]},
                 ],
             },
-            {"作業ID": 2, "作業タイトル": "見出しだけ", "明細": []},
+            {"作業タイトル": "見出しだけ", "明細": []},
         ],
     }
 
@@ -53,8 +52,9 @@ class 日誌Tests(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
         self.home = Path(stack.enter_context(tempfile.TemporaryDirectory()))
-        self.path = self.home / ".aidiy" / "diary" / "diary_v3.db"
-        shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.home / "業務.db")))
+        self.path = self.home / ".aidiy" / "diary" / "diary_v4.db"
+        self.business_path = self.home / "業務.db"
+        shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
         stack.callback(shared_engine.dispose)
         factory = sessionmaker(bind=shared_engine)
         stack.enter_context(patch.object(database, "engine", shared_engine))
@@ -72,6 +72,7 @@ class 日誌Tests(unittest.TestCase):
         keyring.initialize()
         stack.enter_context(patch.object(auth, "_keyring", keyring))
         C利用者.__table__.create(shared_engine)
+        C採番.__table__.create(shared_engine)
         with factory.begin() as db:
             for id_, name, active in [("one", "利用者A", True), ("two", "利用者B", True), ("off", "停止中", False)]:
                 db.add(C利用者(利用者ID=id_, 利用者名=name, パスワード="fixture", 権限ID="USER", 有効=active, **create_audit_fields()))
@@ -89,8 +90,8 @@ class 日誌Tests(unittest.TestCase):
         with closing(sqlite3.connect(self.path)) as db:
             作業 = list(db.execute("PRAGMA table_info(T日誌作業)"))
             明細 = list(db.execute("PRAGMA table_info(T日誌明細)"))
-            self.assertEqual([col[1] for col in 作業 if col[5]], ["利用者ID", "日誌日付", "作業ID"])
-            self.assertEqual([col[1] for col in 明細 if col[5]], ["利用者ID", "日誌日付", "作業ID", "行番号"])
+            self.assertEqual([col[1] for col in 作業 if col[5]], ["作業ID"])
+            self.assertEqual([col[1] for col in 明細 if col[5]], ["作業ID", "行番号"])
             self.assertTrue({"プロジェクト", "作業タイトル", "新規更新ファイル数"} <= {col[1] for col in 作業})
             self.assertEqual({col[1] for col in 明細 if not col[5]}, {"作業内容", "添付"})
             for table in ("T日誌作業", "T日誌明細"):
@@ -100,8 +101,8 @@ class 日誌Tests(unittest.TestCase):
             "日誌日付": DATE, "プロジェクト": project, "作業タイトル": "作業", "新規更新ファイル数": 0,
         }).json()
         self.assertEqual(created["status"], "OK")
-        self.assertEqual(created["data"]["作業ID"], 1)
-        update = {"日誌日付": DATE, "作業ID": 1, "作業タイトル": "別名"}
+        self.assertEqual(created["data"]["作業ID"], 10001)
+        update = {"日誌日付": DATE, "作業ID": 10001, "作業タイトル": "別名"}
         self.assertEqual(self.call("作業変更", update).json()["status"], "OK")
         result = self.call("検索", {"キーワード": "テスト_%"}).json()["data"]["items"]
         work = result[0]["記録"][0]
@@ -148,9 +149,9 @@ class 日誌Tests(unittest.TestCase):
 
     def test_変更削除は関連行まで反映(self):
         self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
-        small = {"日誌日付": DATE, "記録": [{"作業ID": 1, "作業タイトル": "差し替え"}]}
+        small = {"日誌日付": DATE, "記録": [{"作業ID": 10001, "作業タイトル": "差し替え"}]}
         result = self.call("変更", small).json()
-        self.assertEqual(result["data"]["記録"], [{"作業ID": 1, "作業タイトル": "差し替え", "プロジェクト": "", "新規更新ファイル数": None, "明細": []}])
+        self.assertEqual(result["data"]["記録"], [{"作業ID": 10001, "作業タイトル": "差し替え", "プロジェクト": "", "新規更新ファイル数": None, "明細": []}])
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM T日誌明細").fetchone()[0], 0)
         self.assertEqual(self.call("削除", {"日誌日付": DATE}).json()["status"], "OK")
@@ -165,8 +166,9 @@ class 日誌Tests(unittest.TestCase):
             db.execute("""CREATE TRIGGER fail_fixture BEFORE INSERT ON T日誌明細
                           BEGIN SELECT RAISE(ABORT, 'fixture rollback'); END""")
             db.commit()
-        changed = sample()
-        changed["記録"][0]["作業タイトル"] = "途中失敗"
+        changed = {"日誌日付": DATE, "記録": [
+            {**original["記録"][0], "作業タイトル": "途中失敗"}, *original["記録"][1:],
+        ]}
         response = self.call("変更", changed)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["data"], original)
@@ -207,26 +209,26 @@ class 日誌Tests(unittest.TestCase):
             self.assertEqual(result["status"], "OK", result)
             return result["data"]
 
-        self.assertEqual(run("作業登録", 作業タイトル="初回")["作業ID"], 1)
-        self.assertEqual(run("作業登録", 作業タイトル="次回")["作業ID"], 2)
-        self.assertEqual(run("内容登録", 作業ID=2, 作業内容="先頭")["行番号"], 1)
-        self.assertEqual(run("内容登録", 作業ID=2, 作業内容="画像", 添付=[{"ファイル名": "進捗.png", "base64内容": PNG}])["行番号"], 2)
-        run("作業変更", 作業ID=2, 作業タイトル="進捗 100%")
-        run("内容変更", 作業ID=2, 行番号=2, 作業内容="確認済み")
-        run("内容削除", 作業ID=2, 行番号=1)
-        run("作業削除", 作業ID=1)
-        denied = self.call("作業削除", {"日誌日付": DATE, "作業ID": 1}, user="two").json()
+        self.assertEqual(run("作業登録", 作業タイトル="初回")["作業ID"], 10001)
+        self.assertEqual(run("作業登録", 作業タイトル="次回")["作業ID"], 10002)
+        self.assertEqual(run("内容登録", 作業ID=10002, 作業内容="先頭")["行番号"], 1)
+        self.assertEqual(run("内容登録", 作業ID=10002, 作業内容="画像", 添付=[{"ファイル名": "進捗.png", "base64内容": PNG}])["行番号"], 2)
+        run("作業変更", 作業ID=10002, 作業タイトル="進捗 100%")
+        run("内容変更", 作業ID=10002, 行番号=2, 作業内容="確認済み")
+        run("内容削除", 作業ID=10002, 行番号=1)
+        run("作業削除", 作業ID=10001)
+        denied = self.call("作業削除", {"日誌日付": DATE, "作業ID": 10002}, user="two").json()
         self.assertEqual(denied["error"]["code"], "NOT_FOUND")
         entry = run("取得")["記録"][0]
-        self.assertEqual(entry, {"作業ID": 1, "作業タイトル": "進捗 100%", "プロジェクト": "", "新規更新ファイル数": None, "明細": [
+        self.assertEqual(entry, {"作業ID": 10002, "作業タイトル": "進捗 100%", "プロジェクト": "", "新規更新ファイル数": None, "明細": [
             {"行番号": 1, "作業内容": "確認済み",
              "添付": [{"ファイル名": "進捗.png", "base64内容": PNG}]},
         ]})
-        run("内容変更", 作業ID=1, 行番号=1, 添付=[])
+        run("内容変更", 作業ID=10002, 行番号=1, 添付=[])
         self.assertEqual(run("取得")["記録"][0]["明細"][0]["添付"], [])
-        run("作業削除", 作業ID=1)
+        run("作業削除", 作業ID=10002)
         self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["error"]["code"], "NOT_FOUND")
-        self.assertEqual(run("作業登録", 作業タイトル="再開")["作業ID"], 1)
+        self.assertEqual(run("作業登録", 作業タイトル="再開")["作業ID"], 10003)
 
     def test_検索_日付順_キーワード_ページング_添付非公開(self):
         self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
@@ -248,7 +250,7 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(bad["error"]["code"], "VALIDATION_ERROR")
         self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["error"]["code"], "NOT_FOUND")
         original = self.call("登録", sample()).json()["data"]
-        bad = self.call("内容変更", {"日誌日付": DATE, "作業ID": 1, "行番号": 2,
+        bad = self.call("内容変更", {"日誌日付": DATE, "作業ID": 10001, "行番号": 2,
                                     "添付": [{"ファイル名": "new.png", "base64内容": "SECRET!!!"}]})
         self.assertEqual(bad.json()["error"]["code"], "VALIDATION_ERROR")
         self.assertNotIn("SECRET!!!", bad.text)
@@ -260,16 +262,16 @@ class 日誌Tests(unittest.TestCase):
 
         with ThreadPoolExecutor(max_workers=4) as pool:
             results = list(pool.map(add, range(8)))
-        self.assertEqual(sorted(r["data"]["作業ID"] for r in results if r["status"] == "OK"), list(range(1, 9)))
+        self.assertEqual(sorted(r["data"]["作業ID"] for r in results if r["status"] == "OK"), list(range(10001, 10009)))
         listing = self.call("一覧").json()["data"]
         self.assertEqual(listing["total"], 1)
         self.assertEqual(listing["items"][0]["記録件数"], 8)
 
-    def test_複数添付と自己申告は並替えと再起動後も維持(self):
+    def test_複数添付と自己申告は明細の詰め直しと再起動後も維持(self):
         添付 = [{"ファイル名": "画像.png", "base64内容": PNG}, {"ファイル名": "説明.txt", "base64内容": "YWJj"}]
         body = {"日誌日付": DATE, "記録": [
-            {"作業ID": 1, "作業タイトル": "先頭", "新規更新ファイル数": None},
-            {"作業ID": 2, "作業タイトル": "測定", "プロジェクト": "", "新規更新ファイル数": 0, "明細": [
+            {"作業タイトル": "先頭", "新規更新ファイル数": None},
+            {"作業タイトル": "測定", "プロジェクト": "", "新規更新ファイル数": 0, "明細": [
                 {"行番号": 1, "作業内容": "先頭行", "添付": []},
                 {"行番号": 2, "作業内容": "", "添付": 添付},
             ]},
@@ -277,25 +279,25 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(self.call("登録", body).json()["status"], "OK")
         self.assertEqual(self.call("検索", {"キーワード": "説明.txt"}).json()["data"]["total"], 1)
         self.assertNotIn(PNG, self.call("検索", {}).text)
-        keys = {"日誌日付": DATE, "作業ID": 2, "行番号": 2}
+        keys = {"日誌日付": DATE, "作業ID": 10002, "行番号": 2}
         self.assertEqual(self.call("内容変更", {**keys, "作業内容": "確認済み"}).json()["status"], "OK")
         self.assertEqual(self.call("内容変更", {**keys, "ファイル名": "", "base64内容": ""}).json()["error"]["code"], "VALIDATION_ERROR")
         self.assertEqual(self.call("内容削除", {**keys, "行番号": 1}).json()["status"], "OK")
-        self.assertEqual(self.call("作業削除", {"日誌日付": DATE, "作業ID": 1}).json()["status"], "OK")
+        self.assertEqual(self.call("作業削除", {"日誌日付": DATE, "作業ID": 10001}).json()["status"], "OK")
         self.lifecycle.close()
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
         data = self.call("取得", {"日誌日付": DATE}).json()["data"]
         self.assertEqual(data["記録"], [
-            {"作業ID": 1, "作業タイトル": "測定", "プロジェクト": "", "新規更新ファイル数": 0,
+            {"作業ID": 10002, "作業タイトル": "測定", "プロジェクト": "", "新規更新ファイル数": 0,
              "明細": [{"行番号": 1, "作業内容": "確認済み", "添付": 添付}]},
         ])
-        self.assertEqual(self.call("作業変更", {"日誌日付": DATE, "作業ID": 1, "作業タイトル": "別名"}).json()["status"], "OK")
+        self.assertEqual(self.call("作業変更", {"日誌日付": DATE, "作業ID": 10002, "作業タイトル": "別名"}).json()["status"], "OK")
         self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"][0]["新規更新ファイル数"], 0)
-        self.assertEqual(self.call("作業変更", {"日誌日付": DATE, "作業ID": 1, "作業タイトル": "別名",
+        self.assertEqual(self.call("作業変更", {"日誌日付": DATE, "作業ID": 10002, "作業タイトル": "別名",
                                               "新規更新ファイル数": None}).json()["status"], "OK")
         self.assertIsNone(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"][0]["新規更新ファイル数"])
         self.assertEqual(self.call("変更", {"日誌日付": DATE, "記録": [
-            {"作業ID": 1, "作業タイトル": "添付を外した"},
+            {"作業ID": 10002, "作業タイトル": "添付を外した"},
         ]}).json()["status"], "OK")
 
     def test_旧DBを読まず新DBを使い_旧形式を拒否(self):
@@ -319,7 +321,7 @@ class 日誌Tests(unittest.TestCase):
         body["記録"][0]["新規更新ファイル数"] = 0
         body["記録"][0]["明細"][1]["添付"].append({"ファイル名": "同じ行.pdf", "base64内容": "YWJj"})
         before = self.call("登録", body).json()["data"]
-        keys = {"日誌日付": DATE, "作業ID": 1, "行番号": 2}
+        keys = {"日誌日付": DATE, "作業ID": 10001, "行番号": 2}
         self.assertEqual(self.call("内容変更", {**keys, "作業内容": "ツール側で変更"}).json()["status"], "OK")
         stale = self.call("変更", {**body, "更新版": before["更新版"]}).json()
         self.assertEqual(stale["error"]["code"], "CONFLICT")
@@ -331,6 +333,46 @@ class 日誌Tests(unittest.TestCase):
         self.assertIsNone(now["記録"][1]["新規更新ファイル数"])
         self.assertEqual(self.call("変更", {"日誌日付": DATE, "記録": now["記録"],
                                            "更新版": now["更新版"]}).json()["status"], "OK")
+
+    def test_C採番の値を使い_別日と別利用者でも一意_変更時は維持(self):
+        with closing(sqlite3.connect(self.business_path)) as db:
+            fields = ("T日誌作業", 83000, 1, "初期", "sys", "初期", "sys")
+            db.execute("""INSERT INTO C採番
+                (採番ID, 最終採番値, 有効, 登録日時, 登録利用者ID, 更新日時, 更新利用者ID, 登録端末ID, 更新端末ID)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'fixture', 'fixture')""", fields)
+            db.commit()
+
+        def add(date, user):
+            result = self.call("作業登録", {"日誌日付": date, "作業タイトル": "作業"}, user=user).json()
+            self.assertEqual(result["status"], "OK", result)
+            return result["data"]["作業ID"]
+
+        first, second, other = add(DATE, "one"), add("2026-11-25", "one"), add(DATE, "two")
+        self.assertEqual([first, second, other], [83001, 83002, 83003])
+        current = self.call("取得", {"日誌日付": DATE}).json()["data"]
+        update = {"日誌日付": DATE, "更新版": current["更新版"], "記録": current["記録"]}
+        denied = self.call("変更", {**update, "記録": [{"作業ID": other, "作業タイトル": "別利用者"}]}).json()
+        self.assertEqual(denied["error"]["code"], "VALIDATION_ERROR")
+        denied_detail = self.call("内容登録", {
+            "日誌日付": DATE, "作業ID": other, "作業内容": "別利用者",
+        }).json()
+        self.assertEqual(denied_detail["error"]["code"], "NOT_FOUND")
+        denied_detail = self.call("内容登録", {
+            "日誌日付": DATE, "作業ID": second, "作業内容": "別日",
+        }).json()
+        self.assertEqual(denied_detail["error"]["code"], "NOT_FOUND")
+        saved = self.call("変更", {**update, "記録": [*current["記録"], {"作業タイトル": "新規"}]}).json()["data"]
+        self.assertEqual([work["作業ID"] for work in saved["記録"]], [first, 83004])
+        self.assertEqual(self.call("作業削除", {"日誌日付": DATE, "作業ID": 83004}).json()["status"], "OK")
+        self.assertEqual(add(DATE, "one"), 83005)
+        with closing(sqlite3.connect(self.business_path)) as db:
+            row = db.execute("SELECT 最終採番値, 更新利用者ID FROM C採番 WHERE 採番ID='T日誌作業'").fetchone()
+            self.assertEqual(row, (83005, "one"))
+            db.execute("UPDATE C採番 SET 有効=0 WHERE 採番ID='T日誌作業'")
+            db.commit()
+        disabled = self.call("作業登録", {"日誌日付": DATE, "作業タイトル": "採番なし不可"}).json()
+        self.assertEqual(disabled["error"]["code"], "NUMBERING_UNAVAILABLE")
+        self.assertEqual(self.call("一覧").json()["data"]["items"][0]["記録件数"], 2)
 
     def test_添付容量制限(self):
         for size, count in [(5 * 1024 * 1024 + 1, 1), (4 * 1024 * 1024, 4)]:
