@@ -162,7 +162,7 @@ onMounted(() => {
         <form class="toolbar list-toolbar" @submit.prevent="検索">
           <div class="toolbar-left">
             <div class="search-panel">
-              <div class="detail-row">
+              <div class="detail-row date-row">
                 <span class="detail-label">日付範囲</span>
                 <div class="detail-value date-range">
                   <input :value="開始日付" type="date" class="detail-input date-input" aria-label="開始日付"
@@ -246,12 +246,51 @@ onMounted(() => {
 
 <style scoped src="./日誌.css"></style>
 <style scoped>
-.day-navigation { display: flex; gap: 4px; }
-.day-navigation .btn { min-width: 28px; height: 28px; padding: 0 4px; }
-.date-range { width: auto; flex-wrap: wrap; }
-.search-panel { min-width: 0; }
+.search-panel {
+  width: 570px;
+  max-width: 100%;
+  min-width: 0;
+  font-size: 14px;
+}
 .search-panel .detail-row + .detail-row { margin-top: -1px; }
-.search-input { width: min(100%, 360px); }
+/* T生産などの検索欄と同じ寸法。グローバルの入力欄の上下マージンを持ち込まない。 */
+.search-panel .detail-label { white-space: nowrap; }
+.search-panel .detail-input {
+  width: 100%;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  padding: 0 8px;
+  font-size: inherit;
+}
+.search-panel .date-range {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  gap: 4px 8px;
+  width: auto;
+}
+.day-navigation { display: flex; gap: 4px; }
+.day-navigation .btn { width: 28px; height: 28px; padding: 0; }
+
+@media (max-width: 640px) {
+  .search-panel .detail-label { width: 108px; }
+  .search-panel .detail-value { padding-inline: 8px; }
+}
+
+@media (max-width: 465px) {
+  .search-panel .date-range { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .search-panel .date-input { padding-inline: 3px; }
+  .day-navigation { grid-column: 1 / -1; justify-self: end; }
+}
+
+@media (max-width: 370px) {
+  .search-panel .date-row { flex-direction: column; }
+  .search-panel .date-row .detail-label { width: 100%; min-height: 0; justify-content: flex-start; padding-block: 4px; }
+  .search-panel .date-range {
+    border-top: 0;
+    border-left: 1px solid #ccc;
+  }
+}
 .work-line { display: flex; align-items: center; min-height: 26px; }
 .work-line + .work-line { border-top: 1px solid #e2e8f0; }
 .work-list { display: grid; justify-content: stretch; }
