@@ -393,13 +393,22 @@ class conf_json:
         """設定値を設定し、ファイルに保存（辞書形式）"""
         return self.update({key: value})
 
+    def read_saved(self) -> Dict[str, Any]:
+        """設定画面用に現在のファイルを読み取る。実行中の設定は変更しない。"""
+        config_file = object.__getattribute__(self, '_config_file')
+        with open(config_file, 'r', encoding='utf-8-sig') as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError('設定JSONのルートはオブジェクトである必要があります')
+        return {**self.DEFAULT_CONFIG, **data}
+
     def update(self, data: Dict[str, Any]) -> bool:
         """複数の設定値を一括更新し、ファイルに保存"""
         if not isinstance(data, dict):
             raise TypeError('更新データはdictで指定してください')
 
-        config_data = object.__getattribute__(self, '_config_data')
-        updated = dict(config_data)
+        # Core が起動してから別画面・別プロセスで保存された未編集項目を維持する。
+        updated = self.read_saved()
         updated.update(data)
 
         # 現行ポート値を検証する

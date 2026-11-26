@@ -62,7 +62,7 @@ function fixture(project) {
   };
   const render = () => component.render({}, [], {...props, isOpen: true}, vue.proxyRefs(data), {}, {});
   const control = id => walk(render(), node => node?.type === 'select' && node.props?.id === id);
-  return { data, calls, emitted, render, control,
+  return { data, calls, emitted, render, control, settings, available_models,
     async load() {await data.loadConfig();await flush();assert.equal(data.errorMessage.value, '');},
     async choose(id, value) {
       const node = control(id);assert.ok(node, id);assert.ok(!node.props.disabled, id);
@@ -128,9 +128,9 @@ for (const project of ['frontend_web', 'frontend_avatar']) {
       const sent = (await f.save()).モデル設定;
       assert.equal(sent.CHAT_AI_NAME, 'gemini_agy');
       assert.equal(sent.CHAT_GEMINI_AGY_MODEL, 'agy-chat');
-      assert.equal(sent.CHAT_GEMINI_MODEL, 'gemini-one');
-      assert.equal(sent.CODE_AGY_CLI_MODEL, 'saved-code-override');
-      assert.equal(sent.CODE_ANTIGRAVITY_CLI_MODEL, 'old-antigravity');
+      assert.equal(sent.CHAT_GEMINI_MODEL, undefined);
+      assert.equal(sent.CODE_AGY_CLI_MODEL, undefined);
+      assert.equal(sent.CODE_ANTIGRAVITY_CLI_MODEL, undefined);
       assert.equal(sent.CODE_AI4_NAME, 'agy_cli');
       assert.equal(sent.CODE_AI4_MODEL, 'agy-code');
       await f.choose('config-chat-ai-select', 'gemini_chat');
@@ -149,6 +149,26 @@ for (const project of ['frontend_web', 'frontend_avatar']) {
       f.data.handleCancel();await flush();
       assert.equal(f.calls.filter(c => c.url.endsWith('/設定')).length, 0);
       assert.ok(f.emitted.some(([name]) => name === 'close'));
+    } finally {f.close();}
+  });
+}
+
+for (const project of ['frontend_web', 'frontend_avatar']) {
+  test(`${project}: stale settings screen cannot restore older TASK or TEAM preferences`, async () => {
+    const f=fixture(project);
+    try {
+      await f.load();
+      Object.assign(f.settings,{TASK_AI_NAME:'agy_cli',TASK_AI_MODEL_plan:'missing-task', TEAM_AI_NAME:'aidiy_pi',TEAM_AI_MODEL_check:'missing-team'});
+      delete f.available_models.code_models.agy_cli;
+      await f.choose('config-chat-model-select','chat-two');
+      const saved=(await f.save()).モデル設定;
+      assert.deepEqual(saved,{CHAT_OPENAI_MODEL:'chat-two'});
+      await f.load();
+      assert.equal(f.data.selections.taskAi,'agy_cli');
+      assert.equal(f.data.selections.teamAi,'aidiy_pi');
+      assert.equal(f.data.selections.taskModelPlan,'missing-task');
+      assert.equal(f.data.selections.teamModelCheck,'missing-team');
+      await f.choose('config-team-model-check-select','missing-team');
     } finally {f.close();}
   });
 }

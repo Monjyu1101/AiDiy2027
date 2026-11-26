@@ -198,11 +198,15 @@ test('OpenAI OAuth settings accept only the renamed model keys', async()=>{
  }
 });
 
-test('CODE1–6 round trip from Core save to Diag reload preserves all twelve fields', async()=>{
+test('CODE1–6 and TASK / TEAM round trip from Core save to Diag reload', async()=>{
  const dir=await mkdtemp(join(tmpdir(),'diag-code-settings-'));
  const file=join(dir,'AiDiy_key.json'), reader=()=>readFile(file,'utf8');
  const picks=['agy_cli','auto','aidiy_pi','opencode_cli','codex_cli','aidiy_codex'];
  const slots=Object.fromEntries(picks.flatMap((provider,i)=>[[`CODE_AI${i+1}_NAME`,provider],[`CODE_AI${i+1}_MODEL`,i===3?'same':`saved-model-${i+1}`]]));
+ const phases=Object.fromEntries(['TASK','TEAM'].flatMap((kind,i)=>[
+  [`${kind}_AI_NAME`,i?'aidiy_hermes':'aidiy_pi'],
+  ...['plan','do','check'].map(phase=>[`${kind}_AI_MODEL_${phase}`,`${kind}-${phase}`])
+ ]));
  const bridge=createCoreSettingsBridge({reader,requestFn:async r=>{
   if(r.path===AI_SETTINGS_ACTIONS.現在利用者)return ok({利用者ID:'fixture'});
   if(r.path===AI_SETTINGS_ACTIONS.初期化)return ok({セッションID:'fixture-session'});
@@ -224,15 +228,15 @@ test('CODE1–6 round trip from Core save to Diag reload preserves all twelve fi
   const reload=async()=>{
    const res={writeHead(code){assert.equal(code,200);},end(body){this.data=JSON.parse(body);}};
    await handler({method:'GET',url:'/api/モデル試行',headers:{authorization:'Bearer diag-fixture'}},res);
-   return res.data.項目.filter(row=>row.区分==='CODE');
+   return res.data.項目.filter(row=>['CODE','TASK','TEAM'].includes(row.区分));
   };
   assert.equal((await reload())[0].設定モデル,'before');
   await bridge('初期化',envelope());
-  await bridge('設定',envelope({...mutation,モデル設定:slots}));
+  await bridge('設定',envelope({...mutation,モデル設定:{...slots,...phases}}));
   const saved=(await bridge('取得',envelope({セッションID:'fixture-session'}))).data.モデル設定;
   const rows=await reload();
-  assert.equal(rows.length,6);
-  for(const [i,row] of rows.entries()){
+  assert.equal(rows.length,12);
+  for(const [i,row] of rows.filter(row=>row.区分==='CODE').entries()){
    assert.equal(row.id,`CODE${i+1}`);
    assert.equal(row.設定プロバイダ,saved[`CODE_AI${i+1}_NAME`]);
    assert.equal(row.設定モデル,saved[`CODE_AI${i+1}_MODEL`]);
@@ -240,5 +244,12 @@ test('CODE1–6 round trip from Core save to Diag reload preserves all twelve fi
   assert.equal(rows[1].継承元,'CODE1');
   assert.equal(rows[1].プロバイダ,'agy_cli');
   assert.equal(rows[1].モデル,'saved-model-1');
+  for (const row of rows.slice(6)){
+   const [kind,phase]=row.id.split('_');
+   assert.equal(saved[`${kind}_AI_NAME`],phases[`${kind}_AI_NAME`]);
+   assert.equal(row.プロバイダ,phases[`${kind}_AI_NAME`]);
+   assert.equal(row.モデル,phases[`${kind}_AI_MODEL_${phase}`]);
+   assert.equal(saved[`${kind}_AI_MODEL_${phase}`],row.モデル);
+  }
  } finally {await handler.close();await rm(dir,{recursive:true,force:true});}
 });

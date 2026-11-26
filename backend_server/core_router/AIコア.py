@@ -22,6 +22,7 @@ from typing import Dict, Optional
 import uuid
 import json
 import asyncio
+from types import SimpleNamespace
 import os
 import re
 import sys
@@ -576,10 +577,13 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
                 利用可能モデル = _local_chat候補除外(利用可能モデル)
 
         # 永続設定の編集画面では、セッション値や候補に合わせた実行時の補正値と混ぜない。
-        if request.保存済み or not 接続:
-            現在設定 = 初期モデル設定生成(
-                getattr(http_request.app, "conf", None), 候補に正規化=not request.保存済み
-            )
+        conf = getattr(http_request.app, "conf", None)
+        共通設定 = getattr(conf, "json", None)
+        if request.保存済み and hasattr(共通設定, "read_saved"):
+            共通設定 = 共通設定.read_saved()
+            現在設定 = 初期モデル設定生成(SimpleNamespace(json=共通設定), 候補に正規化=False)
+        elif request.保存済み or not 接続:
+            現在設定 = 初期モデル設定生成(conf, 候補に正規化=not request.保存済み)
         else:
             現在設定 = dict(接続.モデル設定)
         # 保存済みOAuth専用設定を、診断未更新でも別CLIに置き換えない。
@@ -598,7 +602,6 @@ async def モデル情報取得(http_request: Request, request: モデル情報�
         利用可能モデル["code_models"] = code_provider_order(利用可能モデル["code_models"])
         # 予測・判断はToolsが共通JSONを読むため、保存後の再取得でもセッションの古い値を返さない。
         from AIコア.AI判断 import Decision
-        共通設定 = getattr(getattr(http_request.app, "conf", None), "json", None)
         予測設定 = 共通設定 if 共通設定 is not None else 現在設定
         for key in ("PREDICTION_AI_NAME", "PREDICTION_OPENAI_MODEL", "PREDICTION_OPENAI_OAUTH_MODEL", "PREDICTION_GEMINI_AGY_MODEL", "PREDICTION_GEMINI_MODEL", "PREDICTION_FREEAI_MODEL",
                     "PREDICTION_CODEX_CLI_MODEL", "PREDICTION_COPILOT_CLI_MODEL", "PREDICTION_AIDIY_HERMES_MODEL", "PREDICTION_AIDIY_PI_MODEL",
@@ -707,7 +710,7 @@ async def フォルダ参照(request: フォルダ参照リクエスト):
 @router.post("/core/AIコア/モデル情報/設定")
 async def モデル情報設定(http_request: Request, request: モデル設定リクエスト):
     """
-    ソケットのAIモデル設定を更新（セッション内のみ、ファイル保存しない）
+    許可されたAIモデル設定を更新する。save=True なら共通JSONへ保存する。
     """
     principal, _ = authenticate(http_request, "POST", "/core/AIコア/モデル情報/設定")
     require_session_settings(principal, request)

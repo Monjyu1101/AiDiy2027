@@ -46,6 +46,7 @@ test('load failure blocks writes, retry succeeds and write preserves saved edits
   fail=false; await f.state.loadConfig(); await tick();
   f.state.selections.codeBasePath='mock-new';
   await f.state.handleSaveOnly(); await f.state.handleSaveOnly();
+  assert.equal(calls.length,3); // 再押下で未編集の設定を再送しない。
   for(const [,body] of calls.slice(2)) {
     assert.equal(body.モデル設定.CODE_BASE_PATH,'mock-new');
     assert.equal(body.save,true);
@@ -57,6 +58,7 @@ test('duplicate writes blocked and session change invalidates pending completion
   let resolve; let writes=0;
   const f=form(async (p)=>p.endsWith('取得')?ok(): (writes++, await new Promise(r=>{resolve=r;})));
   await tick();
+  f.state.selections.codeBasePath="changed";
   const pending=f.state.handleSaveOnly(); await f.state.handleSaveOnly();
   assert.equal(writes,1);
   assert.equal(f.state.writing.value,true);
@@ -120,7 +122,7 @@ test('missing or empty free catalog follows normal provider selection', async ()
       await tick();
       assert.equal(f.state.selections.chatAi,free.openrt_free?'openrt_free':'openrt_chat');
       assert.equal(f.state.selections.chatModel,free.openrt_free?'':'vendor/paid');
-      assert.equal(f.state.buildNextSettings().CHAT_OPENRT_FREE_MODEL,'auto');
+      assert.equal(f.state.buildNextSettings().CHAT_OPENRT_FREE_MODEL,undefined);
     } finally {f.stop();}
   }
 });
@@ -133,8 +135,8 @@ test('gemini_agy is explicit and an old catalogue cannot replace a saved OAuth m
     await tick();
     assert.equal(saved.state.selections.chatAi,'');
     assert.ok(!saved.state.chatAiOptions.value.includes('gemini_agy'));
-    assert.equal(saved.state.buildNextSettings().CHAT_AI_NAME,'gemini_agy');
-    assert.equal(saved.state.buildNextSettings().CHAT_GEMINI_AGY_MODEL,'saved-agy');
+    assert.equal(saved.state.buildNextSettings().CHAT_AI_NAME,undefined);
+    assert.equal(saved.state.buildNextSettings().CHAT_GEMINI_AGY_MODEL,undefined);
     assert.equal(unset.state.selections.chatAi,'gemini_chat');
   } finally {saved.stop();unset.stop();}
 });
@@ -182,7 +184,7 @@ test('OpenAI Live persists across a reopen with an older Diag catalog', async ()
     if(path.endsWith('/設定')){
       assert.equal(body.save,true);
       assert.equal(body.モデル設定.LIVE_AI_NAME,'openai_live');
-      assert.equal(body.モデル設定.LIVE_OPENAI_VOICE,'marin');
+      assert.equal(body.モデル設定.LIVE_OPENAI_VOICE,undefined);
       settings={...settings,...body.モデル設定};
       return {data:{status:'OK'}};
     }
@@ -207,7 +209,7 @@ test('CODE1–6 keep out-of-catalog saved providers and models visible after rel
  const providers=['codex_cli','auto','aidiy_pi','antigravity_cli','opencode_cli','agy_cli'];
  const settings=Object.fromEntries(providers.flatMap((provider,i)=>[[`CODE_AI${i+1}_NAME`,provider],[`CODE_AI${i+1}_MODEL`,`retained-${i+1}`]]));
  const f=form(async(p,b)=>{
-  if(b?.save) for(const [key,value] of Object.entries(settings))assert.equal(b.モデル設定[key],value,key);
+  if(b?.save) assert.fail('no changes must not write');
   return {data:{status:'OK',data:{モデル設定:{...settings},available_models:{code_models:{codex_cli:{auto:'Auto'}}}}}};
  });
  try {
@@ -221,6 +223,41 @@ test('CODE1–6 keep out-of-catalog saved providers and models visible after rel
    assert.match(model.label,/設定値・一覧外/);
   }
   await f.state.handleSaveOnly();
-  assert.match(f.state.notice.value,/保存しました/);
+  assert.match(f.state.notice.value,/変更はありません/);
  } finally {f.stop();}
+});
+
+test('TASK / TEAM round trip retains all phases and does not revert a save from another screen', async () => {
+  const settings={TASK_AI_NAME:'agy_cli',TEAM_AI_NAME:'aidiy_pi',LIVE_AI_NAME:'freeai_live',CODE_BASE_PATH:'../'};
+  for(const [i,phase] of ['plan','do','check'].entries()){
+    settings[`TASK_AI_MODEL_${phase}`]=`agy-saved-${i}`;
+    settings[`TEAM_AI_MODEL_${phase}`]=`pi-saved-${i}`;
+  }
+  const writes=[];
+  const request=async (path,body)=>{
+    if(body?.save){writes.push(body.モデル設定);Object.assign(settings,body.モデル設定);}
+    return {data:{status:'OK',data:{モデル設定:{...settings},available_models:{code_models:{codex_cli:{one:'One',two:'Two',three:'Three'}}}}}};
+  };
+  const a=form(request), b=form(request);
+  try {
+    await tick();
+    assert.equal(a.state.selections.taskAi,'agy_cli');
+    assert.equal(a.state.selections.teamModelDo,'pi-saved-1');
+    assert.ok(a.state.taskProviders.value.includes('agy_cli'));
+    assert.match(a.state.taskModelOptions.value.find(o=>o.value==='agy-saved-2').label,/一覧外/);
+    a.state.selections.taskAi='codex_cli';a.state.handleTaskAiChange();
+    Object.assign(a.state.selections,{taskModelPlan:'one',taskModelDo:'two',taskModelCheck:'three',
+      teamAi:'aidiy_pi',teamModelPlan:'review-one',teamModelDo:'review-two',teamModelCheck:'review-three'});
+    await a.state.handleSaveOnly();
+    assert.equal(settings.TASK_AI_NAME,'codex_cli');
+    assert.equal(settings.TASK_AI_MODEL_check,'three');
+    assert.equal(settings.TEAM_AI_MODEL_do,'review-two');
+    b.state.selections.codeBasePath='different';
+    await b.state.handleSaveOnly();
+    assert.deepEqual({...writes.at(-1)},{CODE_BASE_PATH:'different'});
+    await b.state.loadConfig();
+    assert.equal(b.state.selections.taskModelDo,'two');
+    assert.equal(b.state.selections.teamModelPlan,'review-one');
+    assert.equal(b.state.selections.teamModelCheck,'review-three');
+  } finally {a.stop();b.stop();}
 });

@@ -34,7 +34,7 @@ for (const [project, relative] of [
     const api = {post: async (url, body) => {
       calls.push({url, body});
       if (url.endsWith('/取得')) return {data: {status: 'OK', data: {モデル設定: {...saved}, available_models: catalogs}}};
-      if (body.save) saved = {...body.モデル設定};
+      if (body.save) saved = {...saved, ...body.モデル設定};
       return {data: {status: 'OK'}};
     }};
     function evaluate(code) {
@@ -89,13 +89,13 @@ for (const [project, relative] of [
       }
       b.selections.decisionAi='openai_decisions';await b.handleSaveOnly();
       const saved=f.calls.at(-1).body;
-      assert.equal(saved.save,true);assert.equal(saved.モデル設定.CUSTOM,'keep');
+      assert.equal(saved.save,true);assert.equal(saved.モデル設定.CUSTOM,undefined);
       assert.ok(Object.values(saved.再起動要求).every(value=>value===false));
       await b.loadConfig();
       for(const [key,provider] of fields){assert.equal(saved.モデル設定[key],provider+'-new');assert.equal(b.decisionModels[key],provider+'-new');}
       b.handleSave();await vue.nextTick();
       assert.equal(f.calls.at(-1).body.再起動要求.reboot_tools,true);
-      assert.equal(f.calls.at(-1).body.モデル設定.DECISION_OPENAI_MODEL,'openai_decisions-new');
+      assert.deepEqual({...f.calls.at(-1).body.モデル設定},{});
     } finally {f.stop();}
   });
   test(project + ': 別名を保持し方式別キーがなければautoで表示する', async () => {
@@ -108,7 +108,8 @@ for (const [project, relative] of [
       assert.ok(b.decisionModelOptions(b.decisionFields[1]).some(o=>o.value==='known'));
       await b.handleSaveOnly();await b.loadConfig();
       assert.ok(!('DECISION_AI_MODEL' in b.buildNextSettings()));
-      assert.equal(b.buildNextSettings().DECISION_AI_NAME,'openai_jsonchat');
+      assert.equal(b.selections.decisionAi,'openai_jsonchat');
+      assert.deepEqual({...b.buildNextSettings()},{});
     } finally {f.stop();}
   });
   test(project + ': 全5方式でDiag候補変更後のモデルを選択・保存・再読込', async () => {
@@ -131,7 +132,7 @@ for (const [project, relative] of [
     try {
       const b=f.bindings;await b.loadConfig();assert.match(await f.render(),/取得済み候補はありません/);
       b.selections.decisionAi='freeai_chat';await b.handleSaveOnly();
-      assert.deepEqual(JSON.parse(JSON.stringify(f.calls.at(-1).body.モデル設定)),{...settings,DECISION_AI_NAME:'freeai_chat',PREDICTION_AI_NAME:'auto',PREDICTION_OPENAI_MODEL:'auto',PREDICTION_OPENAI_OAUTH_MODEL:'auto',PREDICTION_GEMINI_AGY_MODEL:'gemini-4-hydrogen',PREDICTION_GEMINI_MODEL:'gemini-4-hydrogen',PREDICTION_FREEAI_MODEL:'gemini-4-hydrogen',PREDICTION_CODEX_CLI_MODEL:'auto',PREDICTION_COPILOT_CLI_MODEL:'auto',PREDICTION_AIDIY_HERMES_MODEL:'auto',...Object.fromEntries(fields.map(([key])=>[key,key==='DECISION_FREEAI_MODEL'?'future-model':expectedDefault(key)]))});
+      assert.deepEqual({...f.calls.at(-1).body.モデル設定},{DECISION_AI_NAME:'freeai_chat'});
       await b.loadConfig();assert.equal(b.decisionModels.DECISION_FREEAI_MODEL,'future-model');
     } finally {f.stop();}
   });

@@ -61,7 +61,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       const saved = app.calls.at(-1).body.モデル設定;
       assert.equal(saved.CHAT_AI_NAME, 'openrt_free');
       assert.equal(saved.CHAT_OPENRT_FREE_MODEL, 'vendor/other:free');
-      assert.equal(saved.CHAT_OPENRT_MODEL, 'vendor/paid');
+      assert.equal(saved.CHAT_OPENRT_MODEL, undefined);
       Object.assign(data.settings, saved);
       await app.loadConfig(); await app.nextTick();
       assert.equal(app.selections.chatAi, 'openrt_free');
@@ -84,7 +84,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       assert.ok(app.chatModelOptions.value.every(model => model.value !== 'vendor/paid'));
       assert.equal(app.selections.chatModel, 'vendor/new:free');
       assert.equal(app.buildNextSettings().CHAT_OPENRT_FREE_MODEL, 'vendor/new:free');
-      assert.equal(app.buildNextSettings().CHAT_OPENRT_MODEL, 'vendor/paid');
+      assert.equal(app.buildNextSettings().CHAT_OPENRT_MODEL, undefined);
     } finally {app.close();}
   });
   test(`${project}: missing or empty free catalog follows normal provider selection`, async () => {
@@ -99,10 +99,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
         assert.equal(app.selections.chatModel, free.openrt_free ? '' : 'vendor/paid');
         // 他の方式と同じく、未編集の設定値は表示上の補正だけで書き換えない。
         await app.handleSaveOnly();
-        const saved = app.calls.at(-1).body.モデル設定;
-        assert.equal(saved.CHAT_AI_NAME, 'openrt_free');
-        assert.equal(saved.CHAT_OPENRT_FREE_MODEL, 'auto');
-        assert.equal(saved.CHAT_OPENRT_MODEL, 'vendor/paid');
+        assert.ok(!app.calls.some(call => call.url.endsWith('/設定')));
       } finally {app.close();}
     }
   });
@@ -127,7 +124,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       assert.equal(app.selections.liveModel, 'available-live');
       assert.equal(app.selections.liveVoice, 'available-voice');
       // 候補の代替表示だけでは、未編集の保存値を書き換えない。
-      for (const key of ['CHAT_OPENAI_MODEL', 'LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE']) assert.equal(app.buildNextSettings()[key], data.settings[key]);
+      for (const key of ['CHAT_OPENAI_MODEL', 'LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE']) assert.equal(app.buildNextSettings()[key], undefined);
       app.selections.chatAi = 'gemini_chat'; app.selections.liveAi = 'gemini_live'; await app.nextTick();
       assert.equal(app.selections.chatModel, 'available-gemini');
       assert.equal(app.selections.liveModel, 'available-gemini-live');
@@ -151,7 +148,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
     try {
       await app.loadConfig(); await app.nextTick();
       for (const field of ['chatModel', 'liveModel', 'liveVoice']) assert.equal(app.selections[field], '');
-      for (const key of ['CHAT_OPENAI_MODEL', 'LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE']) assert.equal(app.buildNextSettings()[key], data.settings[key]);
+      for (const key of ['CHAT_OPENAI_MODEL', 'LIVE_FREEAI_MODEL', 'LIVE_FREEAI_VOICE']) assert.equal(app.buildNextSettings()[key], undefined);
     } finally {app.close();}
   });
 
@@ -168,13 +165,13 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       const payload = app.calls.at(-1).body;
       assert.equal(payload.save, true);
       assert.equal(payload.モデル設定.LIVE_AI_NAME, 'openai_live');
-      assert.equal(payload.モデル設定.LIVE_OPENAI_VOICE, 'marin');
+      assert.equal(payload.モデル設定.LIVE_OPENAI_VOICE, undefined);
       Object.assign(data.settings, payload.モデル設定);
       delete data.available_models.live_models.openai_live;
       await app.loadConfig();
       assert.equal(app.selections.liveAi, 'openai_live');
       assert.deepEqual(app.liveAiOptions.value, ['freeai_live','openai_live']);
-      assert.equal(app.buildNextSettings().LIVE_OPENAI_MODEL, 'saved-openai');
+      assert.equal(app.buildNextSettings().LIVE_OPENAI_MODEL, undefined);
     } finally { app.close(); }
   });
 
@@ -205,10 +202,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       await app.handleSaveOnly();
       const request = app.calls.at(-1).body;
       assert.equal(request.save, true);
-      for (const [i, provider] of savedProviders.entries()) {
-        assert.equal(request.モデル設定[`CODE_AI${i+1}_NAME`], provider);
-        assert.equal(request.モデル設定[`CODE_AI${i+1}_MODEL`], i === 0 ? 'next' : `saved-${i+1}`);
-      }
+      assert.deepEqual({...request.モデル設定}, {CODE_AI1_MODEL: 'next'});
       Object.assign(data.settings, request.モデル設定);
       data.code_models = {};
       await verify();
@@ -223,7 +217,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
         assert.equal(app.selections[`codeModel${index}`], data.settings[`CODE_AI${index}_MODEL`]);
         assert.match(app.template, new RegExp(`id="config-code-ai${index}-select"[^>]*@change="handleCodeAiChange\\(${index}\\)"`));
       }
-      for (const [key, value] of Object.entries(data.settings)) assert.equal(app.buildNextSettings()[key], value, key);
+      assert.deepEqual({...app.buildNextSettings()}, {});
       for (const provider of providers) for (let index = 1; index <= 6; index++) {
         app.selections[`codeAi${index}`] = provider;
         app.handleCodeAiChange(index);await app.nextTick();
@@ -256,7 +250,7 @@ for (const [project, filename] of [['frontend_web', 'frontend_web/src/components
       assert.equal(sent.モデル設定.CODE_AI5_MODEL, 'same');
       assert.equal(sent.モデル設定.CODE_AI4_MODEL, 'openai/custom');
       assert.equal(sent.モデル設定.CODE_AI6_MODEL, 'openai_oauth/custom');
-      assert.equal(sent.モデル設定.CODE_GROK_CLI_MODEL, 'same');
+      assert.equal(sent.モデル設定.CODE_GROK_CLI_MODEL, undefined);
       assert.equal(sent.モデル設定.TASK_AI_MODEL_plan, 'same');
       assert.ok(Object.values(sent.再起動要求).every(value => value === false));
     } finally {app.close();}

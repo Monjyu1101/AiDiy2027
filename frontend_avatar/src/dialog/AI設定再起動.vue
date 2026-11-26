@@ -228,20 +228,31 @@ const codeModelOptions3 = computed(() => buildCodeModelOptions(selections.codeAi
 const codeModelOptions4 = computed(() => buildCodeModelOptions(selections.codeAi4, selections.codeModel4));
 const codeModelOptions5 = computed(() => buildCodeModelOptions(selections.codeAi5, selections.codeModel5));
 const codeModelOptions6 = computed(() => buildCodeModelOptions(selections.codeAi6, selections.codeModel6));
-const taskModelOptions = computed(() => buildCodeModelOptions(selections.taskAi));
-const teamModelOptions = computed(() => buildCodeModelOptions(selections.teamAi));
+const taskProviders = computed(() => withSavedCodeProvider(selections.taskAi));
+const taskModelOptions = computed(() => {
+  const selected = [selections.taskModelPlan, selections.taskModelDo, selections.taskModelCheck];
+  return buildCodeModelOptions(selections.taskAi, ...selected);
+});
+const teamProviders = computed(() => withSavedCodeProvider(selections.teamAi));
+const teamModelOptions = computed(() => {
+  const selected = [selections.teamModelPlan, selections.teamModelDo, selections.teamModelCheck];
+  return buildCodeModelOptions(selections.teamAi, ...selected);
+});
 function codeModelsFor(aiName: string) {
   return availableModels.value?.code_models?.[aiName] || {};
 }
-function buildCodeModelOptions(aiName: string, selected?: string) {
+function buildCodeModelOptions(aiName: string, ...selectedValues: (string | undefined)[]) {
   const options = Object.entries(codeModelsFor(aiName)).map(([value, label]) => ({ value, label: label || value }));
-  if (selected !== undefined && !options.some(option => option.value === selected)) {
+  for (const selected of selectedValues) {
+    if (selected === undefined || options.some(option => option.value === selected)) continue;
     options.push({ value: selected, label: selected ? selected + "（設定値・一覧外）" : "未設定" });
   }
   return options;
 }
 function codeSlotProviders(index: 1 | 2 | 3 | 4 | 5 | 6) {
-  const selected = selections[`codeAi${index}`];
+  return withSavedCodeProvider(selections[`codeAi${index}`]);
+}
+function withSavedCodeProvider(selected: string) {
   const candidates = codeAiOptions.value;
   return candidates.includes(selected) ? candidates : [...candidates, selected];
 }
@@ -285,6 +296,7 @@ async function handleBrowseCodeBasePath() {
 }
 
 async function loadConfig() {
+  hasLoadedConfig.value = false;
   loading.value = true
   errorMessage.value = ''
 
@@ -332,8 +344,8 @@ async function loadConfig() {
     selections.codeAi6 = currentSettings.value.CODE_AI6_NAME ?? chooseCodeProvider("")
     selections.codeBasePath = props.fixedProjectPath || currentSettings.value.CODE_BASE_PATH || Object.keys(codeBaseOptions.value || {})[0] || ''
     selections.codePermissions = currentSettings.value.CODE_PERMISSIONS || 'auto'
-    selections.taskAi = chooseCodeProvider(currentSettings.value.TASK_AI_NAME || 'codex_cli')
-    selections.teamAi = chooseCodeProvider(currentSettings.value.TEAM_AI_NAME || 'codex_cli')
+    selections.taskAi = currentSettings.value.TASK_AI_NAME ?? chooseCodeProvider('codex_cli')
+    selections.teamAi = currentSettings.value.TEAM_AI_NAME ?? chooseCodeProvider('codex_cli')
 
     const chatKey = CHAT_MODEL_KEYS[selections.chatAi]
     const liveKey = LIVE_MODEL_KEYS[selections.liveAi]
@@ -348,18 +360,18 @@ async function loadConfig() {
     selections.codeModel4 = currentSettings.value.CODE_AI4_MODEL ?? codeDefaultModel(selections.codeAi4)
     selections.codeModel5 = currentSettings.value.CODE_AI5_MODEL ?? codeDefaultModel(selections.codeAi5)
     selections.codeModel6 = currentSettings.value.CODE_AI6_MODEL ?? codeDefaultModel(selections.codeAi6)
-    const taskModelKeys = Object.keys(codeModelsFor(selections.taskAi))
-    selections.taskModelPlan = chooseAvailable(currentSettings.value.TASK_AI_MODEL_plan || 'auto', taskModelKeys)
-    selections.taskModelDo = chooseAvailable(currentSettings.value.TASK_AI_MODEL_do || 'auto', taskModelKeys)
-    selections.taskModelCheck = chooseAvailable(currentSettings.value.TASK_AI_MODEL_check || 'auto', taskModelKeys)
-    const teamModelKeys = Object.keys(codeModelsFor(selections.teamAi))
-    selections.teamModelPlan = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_plan || 'auto', teamModelKeys)
-    selections.teamModelDo = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_do || 'auto', teamModelKeys)
-    selections.teamModelCheck = chooseAvailable(currentSettings.value.TEAM_AI_MODEL_check || 'auto', teamModelKeys)
+
+    selections.taskModelPlan = currentSettings.value.TASK_AI_MODEL_plan ?? 'auto'
+    selections.taskModelDo = currentSettings.value.TASK_AI_MODEL_do ?? 'auto'
+    selections.taskModelCheck = currentSettings.value.TASK_AI_MODEL_check ?? 'auto'
+
+    selections.teamModelPlan = currentSettings.value.TEAM_AI_MODEL_plan ?? 'auto'
+    selections.teamModelDo = currentSettings.value.TEAM_AI_MODEL_do ?? 'auto'
+    selections.teamModelCheck = currentSettings.value.TEAM_AI_MODEL_check ?? 'auto'
 
     await nextTick()
     loadedFormSettings = buildFormSettings();
-      hasLoadedConfig.value = true
+    hasLoadedConfig.value = true
   } catch (error: any) {
     errorMessage.value = `取得エラー: ${error?.response?.data?.message || error?.message || error}`
   } finally {
@@ -418,17 +430,19 @@ function buildFormSettings() {
   return nextSettings
 }
 
-// 未編集のフィールドは取得した保存値を維持する（候補なしでも空欄を書き戻さない）。
+// 開いたままの別画面からの書込で、未編集の保存値を巻き戻さない。
 function buildNextSettings() {
   const next = buildFormSettings();
-  for (const key of Object.keys(next)) {
-    if (key === 'DECISION_AI_NAME' || decisionFields.some(field => field.key === key)) continue;
-    if (next[key] === loadedFormSettings[key]) {
-      if (Object.prototype.hasOwnProperty.call(currentSettings.value, key)) next[key] = currentSettings.value[key];
-      else if (key !== 'PREDICTION_AI_NAME' && !predictionFields.some(field => field.key === key)) delete next[key];
+  const changed = new Set(Object.keys(next).filter(key => next[key] !== loadedFormSettings[key]));
+  for (const group of ["TASK", "TEAM"]) {
+    if (changed.has(`${group}_AI_NAME`)) {
+      for (const phase of ["plan", "do", "check"]) changed.add(`${group}_AI_MODEL_${phase}`);
     }
   }
-  return next;
+  for (let i = 1; i <= 6; i++) {
+    if (changed.has(`CODE_AI${i}_NAME`)) changed.add(`CODE_AI${i}_MODEL`);
+  }
+  return Object.fromEntries([...changed].map(key => [key, next[key]]));
 }
 
 async function submitSettings(
@@ -470,6 +484,7 @@ function handleSave() {
 }
 
 async function handleSaveOnly() {
+  if (!hasLoadedConfig.value || loading.value || browsingCodeBase.value) return;
   loading.value = true
   errorMessage.value = ''
   try {
@@ -478,6 +493,10 @@ async function handleSaveOnly() {
       return
     }
     const nextSettings = buildNextSettings();
+    if (Object.keys(nextSettings).length === 0) {
+      void qAlert('変更はありません。')
+      return;
+    }
     const response = await apiClient.post('/core/AIコア/モデル情報/設定', {
       セッションID: props.sessionId,
       モデル設定: nextSettings,
@@ -488,7 +507,7 @@ async function handleSaveOnly() {
       errorMessage.value = response?.data?.message || '保存に失敗しました'
       return
     }
-    currentSettings.value = nextSettings;
+    currentSettings.value = { ...currentSettings.value, ...nextSettings };
     loadedFormSettings = buildFormSettings();
     void qAlert('モデル情報を保存しました')
   } catch (error: any) {
@@ -911,7 +930,7 @@ onMounted(() => {
                 <label class="config-panel-label" for="config-task-ai-select">TASK_AI_NAME:</label>
                 <div class="config-panel-control">
                   <select id="config-task-ai-select" v-model="selections.taskAi" class="config-panel-select" @change="handleTaskAiChange">
-                    <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                    <option v-for="ai in taskProviders" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                   </select>
                 </div>
               </div>
@@ -947,7 +966,7 @@ onMounted(() => {
                 <label class="config-panel-label" for="config-team-ai-select">TEAM_AI_NAME:</label>
                 <div class="config-panel-control">
                   <select id="config-team-ai-select" v-model="selections.teamAi" class="config-panel-select" @change="handleTeamAiChange">
-                    <option v-for="ai in codeAiOptions" :key="ai" :value="ai">{{ ai }}</option>
+                    <option v-for="ai in teamProviders" :key="ai" :value="ai">{{ codeAiOptions.includes(ai) ? ai : ai ? ai + "（設定値・一覧外）" : "未設定" }}</option>
                   </select>
                 </div>
               </div>
@@ -981,7 +1000,7 @@ onMounted(() => {
       </div>
       <div class="config-panel-actions">
         <div class="config-panel-actions-edge">
-          <button type="button" class="save" :disabled="loading" @click="handleSaveOnly">保存(json書換)</button>
+          <button type="button" class="save" :disabled="!hasLoadedConfig || loading || browsingCodeBase" @click="handleSaveOnly">保存(json書換)</button>
         </div>
         <div class="config-panel-actions-center">
           <button type="button" @click="handleCancel">キャンセル</button>

@@ -136,7 +136,7 @@ class CodeCommonDefaultsTests(unittest.TestCase):
                 self.assertEqual(raw[key], value)
         self.assertNotIn('openai_key_id', raw)
 
-    def test_settings_routes_save_and_read_agy_without_replacing_the_running_session(self):
+    def test_settings_routes_save_and_read_models_without_replacing_the_running_session(self):
         self.write({'CHAT_AI_NAME': 'gemini_chat', 'gemini_key_id': 'fixture-key',
                     'CODE_ANTIGRAVITY_CLI_MODEL': 'legacy-custom'})
         config = self.load()
@@ -147,7 +147,7 @@ class CodeCommonDefaultsTests(unittest.TestCase):
         env = {**namespace, 'Request': object, 'モデル情報取得リクエスト': object, 'モデル設定リクエスト': object,
                'authenticate': lambda *_: (object(), None), 'require_session_settings': lambda *_: None,
                'require_session_owner': lambda *_: None, 'AIセッション管理': SimpleNamespace(get_session=lambda _: session),
-               '取得_コードベース選択肢': lambda _: {}, 'logger': logging.getLogger(__name__), 're': re,
+               '取得_コードベース選択肢': lambda _: {}, 'logger': logging.getLogger(__name__), 're': re, 'SimpleNamespace': SimpleNamespace,
                'code_provider_order': model_module.code_provider_order, '_backend_local稼働中': lambda _: True}
         for node in ast.parse(routes.read_text(encoding='utf-8')).body:
             if isinstance(node, ast.AsyncFunctionDef) and node.name in ('モデル情報取得', 'モデル情報設定', 'TASKモデル選択肢取得'):
@@ -158,10 +158,18 @@ class CodeCommonDefaultsTests(unittest.TestCase):
                     'CODE_AI4_NAME': 'agy_cli', 'CODE_AI4_MODEL': 'slot-custom', 'CODE_AGY_CLI_MODEL': 'code-custom',
                     'PREDICTION_OPENAI_OAUTH_MODEL': 'prediction-oauth', 'DECISION_OPENAI_OAUTH_MODEL': 'decision-oauth',
                     'LIVE_AI_NAME': 'openai_live', 'LIVE_OPENAI_MODEL': 'fixture-realtime', 'LIVE_OPENAI_VOICE': 'marin'}
+        settings.update({f'{family}_AI_NAME': provider
+                         for family, provider in [('TASK', 'aidiy_pi'), ('TEAM', 'aidiy_hermes')]})
+        settings.update({f'{family}_AI_MODEL_{phase}': f'{family.lower()}-{phase}'
+                         for family in ['TASK', 'TEAM'] for phase in ['plan', 'do', 'check']})
+        self.write({**self.saved(), 'external_setting': 'from another process'})
         request = SimpleNamespace(セッションID='fixture', モデル設定=settings, 再起動要求={}, save=True, リセット=False)
         self.assertEqual(asyncio.run(env['モデル情報設定'](context, request))['status'], 'OK')
         self.assertEqual(session_state['CHAT_GEMINI_AGY_MODEL'], 'stale')
         self.assertNotIn('LIVE_AI_NAME', session_state)
+        self.assertNotIn('TASK_AI_NAME', session_state)
+        self.assertEqual(self.saved()['external_setting'], 'from another process')
+        self.assertEqual({key: self.saved()[key] for key in settings}, settings)
         self.assertEqual(self.saved()['LIVE_AI_NAME'], 'openai_live')
         self.assertEqual(self.saved()['LIVE_OPENAI_MODEL'], 'fixture-realtime')
         self.assertEqual(self.saved()['LIVE_OPENAI_VOICE'], 'marin')
@@ -174,6 +182,18 @@ class CodeCommonDefaultsTests(unittest.TestCase):
         self.assertEqual({key: values[key] for key in settings}, settings)
         self.assertEqual(values['CODE_ANTIGRAVITY_CLI_MODEL'], 'legacy-custom')
         self.assertNotIn('gemini_key_id', values)
+
+        # 別プロセスの保存はCoreを再起動しなくても永続設定APIから見える。
+        self.write({**self.saved(), 'TEAM_AI_MODEL_check': 'new-external'})
+        with patch.dict(sys.modules, {'AIコア.AI判断': fake_decision}):
+            result = asyncio.run(env['モデル情報取得'](context, SimpleNamespace(セッションID='fixture', 保存済み=True)))
+        self.assertEqual(result['data']['モデル設定']['TEAM_AI_MODEL_check'], 'new-external')
+        self.assertEqual(config.get('TEAM_AI_MODEL_check'), 'team-check')
+        request.モデル設定 = {'LIVE_OPENAI_VOICE': 'ash'}
+        self.assertEqual(asyncio.run(env['モデル情報設定'](context, request))['status'], 'OK')
+        self.assertEqual(self.saved()['TEAM_AI_MODEL_check'], 'new-external')
+        self.assertEqual(self.saved()['TASK_AI_MODEL_do'], 'task-do')
+
 
         catalog = model_module.conf_models()
         context.app.conf.models = catalog
