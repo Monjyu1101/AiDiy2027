@@ -83,7 +83,7 @@ def 一覧(要求: T日誌一覧要求 | None = None, 所有者=Depends(_現在�
 
 @router.post("/一覧検索", response_model=ResponseBase)
 def 一覧検索(要求: T日誌一覧検索要求, _=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
-    # Web一覧の見出しだけを共有する。取得・変更・削除・MCP検索の所有者境界は維持する。
+    # Web一覧は日誌と作業の見出しだけを共有する。明細を取得できる所有者境界は維持する。
     return ResponseBase(message="日誌一覧を検索しました。", data=crud.一覧検索(db, 要求))
 
 

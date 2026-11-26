@@ -35,6 +35,7 @@ const 並び列 = ref('日誌日付');
 const 昇順 = ref(false);
 const ページ = ref(1);
 const ページ件数 = 30;
+const 件数表示 = new Intl.NumberFormat('ja-JP');
 const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
 const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
 const 編集条件 = computed(() => {
@@ -57,6 +58,8 @@ const columns: Column[] = [
   { key: '利用者ID', label: '利用者ID' },
   { key: '利用者名', label: '利用者名' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
+  { key: '作業タイトル', label: '作業タイトル', align: 'left', sortable: false },
+  { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
 ];
 const ページ数 = computed(() => Math.max(1, Math.ceil(結果.value.items.length / ページ件数)));
 const 表示行 = computed(() => [...結果.value.items].sort((a, b) => {
@@ -227,6 +230,12 @@ onMounted(() => {
           <template #cell="{ row, column, value }">
             <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID" class="id-link"
               :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
+            <div v-else-if="column.key === '作業タイトル' || column.key === '新規更新ファイル数'" class="work-list">
+              <div v-for="作業 in row.作業一覧" :key="作業.作業ID" class="work-line">
+                <span v-if="column.key === '作業タイトル'" class="work-title" :title="作業.作業タイトル">{{ 作業.作業タイトル }}</span>
+                <span v-else>{{ 作業.新規更新ファイル数 === null ? '未入力' : 件数表示.format(作業.新規更新ファイル数) }}</span>
+              </div>
+            </div>
             <template v-else>{{ value }}</template>
           </template>
         </QTable>
@@ -243,4 +252,9 @@ onMounted(() => {
 .search-panel { min-width: 0; }
 .search-panel .detail-row + .detail-row { margin-top: -1px; }
 .search-input { width: min(100%, 360px); }
+.work-line { display: flex; align-items: center; min-height: 26px; }
+.work-line + .work-line { border-top: 1px solid #e2e8f0; }
+.work-list { display: grid; justify-content: stretch; }
+.work-line > span { width: 100%; }
+.work-title { display: block; overflow: hidden; text-overflow: ellipsis; max-width: min(420px, 75vw); }
 </style>

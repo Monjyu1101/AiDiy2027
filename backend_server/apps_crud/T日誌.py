@@ -54,7 +54,8 @@ def _キーワード一致(語: str):
 
 
 def 一覧(db: Session, 利用者ID: str, 要求: T日誌一覧要求):
-    return _一覧結果(db, _日別一覧(_日付条件(要求, 利用者ID)), 要求)
+    結果, _ = _一覧結果(db, _日別一覧(_日付条件(要求, 利用者ID)), 要求)
+    return 結果
 
 
 def 一覧検索(db: Session, 要求: T日誌一覧検索要求):
@@ -67,14 +68,31 @@ def 一覧検索(db: Session, 要求: T日誌一覧検索要求):
     if 作業条件:
         # 同じ作業で全条件を満たす日を表示し、記録件数は日誌全体の件数を維持する。
         query = query.having(func.max(and_(*作業条件)) == 1)
-    return _一覧結果(db, query, 要求)
+    結果, 日別 = _一覧結果(db, query, 要求)
+    日別 = 日別.cte("diary_list_days")
+    作業行 = select(
+        T日誌作業.日誌日付, T日誌作業.利用者ID, T日誌作業.作業ID,
+        T日誌作業.作業タイトル, T日誌作業.新規更新ファイル数,
+    ).join(日別, and_(
+        T日誌作業.日誌日付 == 日別.c.日誌日付,
+        T日誌作業.利用者ID == 日別.c.利用者ID,
+    )).where(T日誌作業.有効.is_(True), *作業条件).order_by(T日誌作業.作業ID)
+    作業一覧 = {(行["日誌日付"], 行["利用者ID"]): [] for 行 in 結果["items"]}
+    for 日付, 利用者ID, 作業ID, タイトル, 件数 in db.execute(作業行):
+        作業一覧[(日付, 利用者ID)].append({
+            "作業ID": 作業ID, "作業タイトル": タイトル, "新規更新ファイル数": 件数,
+        })
+    for 行 in 結果["items"]:
+        行["作業一覧"] = 作業一覧[(行["日誌日付"], 行["利用者ID"])]
+    return 結果
 
 
 def _一覧結果(db: Session, query, 要求: T日誌一覧要求):
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     limit = get_list_limit(要求)
-    items = db.execute(query.order_by(T日誌作業.日誌日付.desc(), T日誌作業.利用者ID).limit(limit)).mappings()
-    return {"items": [dict(行) for 行 in items], "total": total, "limit": limit}
+    日別 = query.order_by(T日誌作業.日誌日付.desc(), T日誌作業.利用者ID).limit(limit)
+    items = db.execute(日別).mappings()
+    return {"items": [dict(行) for 行 in items], "total": total, "limit": limit}, 日別
 
 
 def 一覧候補(db: Session, 所有者: dict):
