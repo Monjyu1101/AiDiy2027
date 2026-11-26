@@ -81,10 +81,12 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-deadline{display:flex;align-items:center;gap:4px;flex:none;min-height:26px;white-space:nowrap;font:600 11px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:inherit;border:1px solid transparent;border-radius:4px;padding:0;background:transparent;cursor:pointer}
 .sticky-clock{display:block;box-sizing:content-box;padding:0 3px;flex:none}
 .sticky-deadline:hover,.sticky-deadline:focus-visible{border-color:currentColor;opacity:1}
-.sticky-deadline-dialog{width:min(250px,calc(100% - 16px));max-width:none;max-height:calc(100% - 8px);padding:6px;border:1px solid #666;border-radius:5px;background:#fbf8ee;color:#29322e}
+.sticky-deadline-dialog{width:min(250px,calc(100% - 8px));max-width:none;max-height:calc(100% - 8px);padding:6px;border:1px solid #666;border-radius:5px;background:#fbf8ee;color:#29322e}
 .sticky-deadline-dialog::backdrop{background:#0005}
 .sticky-deadline-dialog form{display:grid;gap:4px}
-.sticky-deadline-dialog input{width:100%;min-width:0;font:12px system-ui,sans-serif;min-height:24px;color:#29322e}
+.sticky-deadline-fields{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:3px}
+.sticky-deadline-fields input,.sticky-deadline-fields select{min-width:0;font:12px system-ui,sans-serif;min-height:24px;color:#29322e}
+.sticky-deadline-fields input{width:100%;padding:0 1px}
 .sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
 .sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
 /* 期限到達は付箋の面全体を同系色で脈動。原色は白文字を保てる明るさに抑える。 */

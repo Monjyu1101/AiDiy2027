@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {メモ色} from '../memo/ui/src/メモ編集.mjs';
-import {期限入力表示,期限見出し,期限を変換,期限経過} from '../memo/ui/src/期限表示.mjs';
+import {期限入力表示,期限見出し,期限を変換,期限経過,指定期限を変換,期限の分} from '../memo/ui/src/期限表示.mjs';
 import {自動保存を作成} from '../memo/ui/src/自動保存.mjs';
 
 test('ローカル時刻から変換し、分単位・ちょうど期限到達の判定',()=>{
@@ -14,6 +14,8 @@ test('ローカル時刻から変換し、分単位・ちょうど期限到達�
   const input='2027-01-02T03:04',utc='2027-01-01T18:04:00.000Z';
   assert.equal(期限を変換(input),utc);assert.equal(期限入力表示(utc),input);assert.equal(期限見出し(utc),'01/02 03:04');
   assert.equal(期限経過(utc,Date.parse(utc)-1),false);assert.equal(期限経過(utc,Date.parse(utc)),true);
+  assert.deepEqual(期限の分,['00','15','30','45']);
+  assert.equal(指定期限を変換('2027-01-02','03','04'),null);assert.equal(指定期限を変換('2027-01-02','03','15'),'2027-01-01T18:15:00.000Z');
   assert.equal(期限を変換('2027-02-29T03:04'),null);assert.equal(期限を変換(''),null);
   assert.equal(期限経過(null,Date.parse(utc)),false);
   process.env.TZ='America/New_York';

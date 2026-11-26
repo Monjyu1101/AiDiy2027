@@ -8,7 +8,7 @@ import {自動保存を作成} from './自動保存.mjs';
 import {長押し移動を作成} from './長押し移動.mjs';
 import {貼付ファイル,画像読込} from './画像貼付.mjs';
 import {メモ色} from './メモ編集.mjs';
-import {期限入力表示,期限見出し,期限を変換,期限経過} from './期限表示.mjs';
+import {期限入力表示,期限見出し,指定期限を変換,期限経過,期限の分} from './期限表示.mjs';
 const props=defineProps({api:{type:Function,required:true},initialNew:Boolean,initialSource:String,initialId:String,initialScope:String,onSaved:Function,onNew:Function});
 const native=globalThis.window?.aidiyMemo;
 const state=ref({draft:{タイトル:'',本文:'',色:'yellow'},saving:false,error:'',conflict:false,dirty:false,blankNew:true});
@@ -21,7 +21,9 @@ const ready=ref(false),closing=ref(false),textFormat=ref(false),bootError=ref(''
 const content=ref(),focused=ref(document.hasFocus()),hasBelow=ref(false);
 const due=computed(()=>state.value.draft.期限);
 const dueLabel=computed(()=>期限見出し(due.value));
-const overdue=ref(false),dueDialog=ref(),dueInput=ref(),dueValue=ref('');
+const overdue=ref(false),dueDialog=ref(),dueInput=ref();
+const dueDate=ref(''),dueHour=ref('00'),dueMinute=ref('00');
+const 期限の時=Array.from({length:24},(_,hour)=>String(hour).padStart(2,'0'));
 let dueTimer;
 function checkDeadline(){
  clearTimeout(dueTimer);
@@ -36,14 +38,20 @@ watch(due,checkDeadline);
 function openDeadline(){
  if(!ready.value||closing.value)return;
  inputMove.cancel();
- dueValue.value=期限入力表示(due.value);
+ const existing=期限入力表示(due.value);
+ dueDate.value=existing.slice(0,10);
+ dueHour.value=existing.slice(11,13)||'00';
+ const minute=existing.slice(14,16)||'00';
+ // 過去に設定した端数の分は保存済みの値のまま。変更時だけ新しい分を明示選択する。
+ dueMinute.value=期限の分.includes(minute)?minute:'';
+ dueInput.value.setCustomValidity('');
  dueDialog.value.showModal();
  dueInput.value.focus();
 }
 function closeDeadline(){if(dueDialog.value?.open)dueDialog.value.close();}
 function applyDeadline(clear=false){
  if(!ready.value||closing.value)return;
- const value=clear?null:期限を変換(dueValue.value);
+ const value=clear?null:指定期限を変換(dueDate.value,dueHour.value,dueMinute.value);
  if(!clear&&!value){
   dueInput.value.setCustomValidity('実在する日付と時刻を指定してください。');
   dueInput.value.reportValidity();
@@ -174,7 +182,11 @@ onUnmounted(()=>{clearTimeout(dueTimer);document.removeEventListener('visibility
    </header>
    <dialog ref="dueDialog" class="sticky-deadline-dialog" aria-label="付箋の期限">
     <form @submit.prevent="applyDeadline()">
-     <input ref="dueInput" v-model="dueValue" type="datetime-local" aria-label="期限の日時（ローカル時刻）" required step="60" min="0001-01-01T00:00" max="9999-12-31T23:59" @input="$event.target.setCustomValidity('')">
+     <div class="sticky-deadline-fields" @input="dueInput.setCustomValidity('')">
+      <input ref="dueInput" v-model="dueDate" type="date" aria-label="期限の日付" required min="0001-01-01" max="9999-12-31">
+      <select v-model="dueHour" aria-label="期限の時" required><option v-for="hour in 期限の時" :key="hour" :value="hour">{{hour}}時</option></select>
+      <select v-model="dueMinute" aria-label="期限の分" required><option value="" disabled>分</option><option v-for="minute in 期限の分" :key="minute" :value="minute">{{minute}}分</option></select>
+     </div>
      <div class="sticky-deadline-actions"><button v-if="due" type="button" @click="applyDeadline(true)">解除</button><button type="button" @click="closeDeadline">取消</button><button type="submit" :disabled="closing">保存</button></div>
     </form>
    </dialog>

@@ -21,3 +21,8 @@ export function 期限を変換(value){
 export function 期限経過(value,now=Date.now()){
  return 期限.期限は有効(value)&&Date.parse(value)<=now;
 }
+
+export const 期限の分=Object.freeze(['00','15','30','45']);
+export function 指定期限を変換(date,hour,minute){
+ return 期限の分.includes(minute)?期限を変換(`${date}T${hour}:${minute}`):null;
+}

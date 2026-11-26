@@ -76,11 +76,13 @@ if(process.versions.electron){
    expect(trashButton.nextElementSibling===addButton&&addButton.closest('.sticky-bottom'),'add button is after trash in footer');
    addButton.click();await wait(10);expect(window.addCalls===1,'footer add keeps new memo action');
    dueButton.click();const dueInput=dueDialog.querySelector('input');expect(dueDialog.open,'deadline editor opens');
-   dueInput.value='2000-01-02T03:04';dueInput.dispatchEvent(new Event('input',{bubbles:true}));
+   const setField=(field,value)=>{field.value=value;field.dispatchEvent(new Event('input',{bubbles:true}));field.dispatchEvent(new Event('change',{bubbles:true}));};
+   setField(dueInput,'2000-01-02');setField(dueDialog.querySelector('[aria-label=期限の時]'),'03');
+   const minutes=dueDialog.querySelector('[aria-label=期限の分]');expect([...minutes.options].filter(o=>!o.disabled).map(o=>o.value).join(',')==='00,15,30,45','quarter-hour choices');setField(minutes,'15');
    window.handlers.blur();await wait(10);expect(dueDialog.open,'focus on OS picker does not discard editing');
    dueDialog.querySelector('button[type=submit]').click();await wait(20);
-   expect(dueButton.textContent==='01/02 03:04'&&!dueDialog.open,'local deadline label');
-   expect(window.calls.at(-1).body.期限===new Date('2000-01-02T03:04').toISOString(),'deadline immediately saved as UTC');
+   expect(dueButton.textContent==='01/02 03:15'&&!dueDialog.open,'local deadline label');
+   expect(window.calls.at(-1).body.期限===new Date('2000-01-02T03:15').toISOString(),'deadline immediately saved as UTC');
    expect(document.querySelector('.sticky-note').classList.contains('sticky-overdue'),'overdue note pulses');
    dueButton.click();[...dueDialog.querySelectorAll('button')].find(x=>x.textContent==='解除').click();await wait(20);
    expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue'),'clearing deadline stops pulse and saves');
