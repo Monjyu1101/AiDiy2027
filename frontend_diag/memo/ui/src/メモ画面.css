@@ -78,7 +78,7 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 
 /* 右端の時計は旧「＋」と同じ幅。設定時はその左に日時を表示する。 */
 .sticky-deadline{display:flex;align-items:center;gap:4px;flex:none;min-height:26px;white-space:nowrap;font:600 11px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:inherit;border:1px solid transparent;border-radius:4px;padding:0;background:transparent;cursor:pointer}
-.sticky-deadline-set{padding-inline-start:6px;border-color:color-mix(in srgb,currentColor calc(var(--sticky-deadline-ring,0.36)*100%),transparent)}
+.sticky-deadline-set{padding-inline-start:6px;border-color:color-mix(in srgb,currentColor 36%,transparent)}
 .sticky-clock{display:block;box-sizing:content-box;padding:0 3px;flex:none}
 .sticky-note:not(.sticky-due-soon):not(.sticky-overdue) .sticky-deadline:hover{border-color:currentColor}
 .sticky-deadline:focus-visible{outline:2px solid currentColor;outline-offset:1px}
@@ -90,27 +90,25 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-deadline-fields input{width:100%;padding:0 1px}
 .sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
 .sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
-/* 15分前から、IDEの自動探索と同じ色・速度で光を期限枠だけに回す。 */
+/* 15分前から期限後まで同じ回転を続け、光のない部分は透明にする。 */
 @property --sticky-deadline-angle{syntax:"<angle>";inherits:false;initial-value:0deg}
-.sticky-due-soon .sticky-deadline-set{position:relative}
-.sticky-due-soon .sticky-deadline-set::after{
+:is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set{position:relative;border-color:transparent}
+:is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set::after{
  content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;
- background:conic-gradient(from var(--sticky-deadline-angle),#2c5a5c 0deg,#2c5a5c 200deg,#85e9e9 300deg,#e8ffff 340deg,#2c5a5c 360deg);
+ background:conic-gradient(from var(--sticky-deadline-angle),transparent 0deg 200deg,#85e9e9 300deg,#e8ffff 340deg,transparent 360deg);
  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
  animation:sticky-deadline-orbit 1.6s linear infinite;
 }
 @keyframes sticky-deadline-orbit{to{--sticky-deadline-angle:360deg}}
-/* 到達後は枠の濃さを親から継承し、背景と同じアニメーションで同期する。 */
-@property --sticky-deadline-ring{syntax:"<number>";inherits:true;initial-value:0.36}
 /* 期限到達後も入力欄は透明のまま、最背面の付箋を一枚で光らせる。 */
 .sticky-overdue{animation:sticky-deadline-pulse 2.4s ease-in-out infinite}
 .sticky-overdue .sticky-adhesive{background:transparent}
 @keyframes sticky-deadline-pulse{
- 0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg));--sticky-deadline-ring:0.15}
- 40%,60%{background-color:var(--sticky-glow);--sticky-deadline-ring:1}
+ 0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg))}
+ 40%,60%{background-color:var(--sticky-glow)}
 }
 @media(prefers-reduced-motion:reduce){
- .sticky-due-soon .sticky-deadline-set::after{content:none}
+ :is(.sticky-due-soon,.sticky-overdue) .sticky-deadline-set::after{content:none}
  .sticky-overdue{animation:none}
  .sticky-due-soon .sticky-deadline-set,.sticky-overdue .sticky-deadline-set{border-color:currentColor}
  .sticky-overdue{box-shadow:inset 0 0 0 2px currentColor}

@@ -95,13 +95,18 @@ if(process.versions.electron){
    await orbit.ready;orbit.pause();await orbit.ready;
    orbit.currentTime=0;const gradient=ring().backgroundImage;
    orbit.currentTime=400;
-   expect(gradient.includes('0deg')&&ring().backgroundImage.includes('90deg'),'light advances a quarter turn over 400ms');
+   expect(ring().getPropertyValue('--sticky-deadline-angle')==='90deg','light advances a quarter turn over 400ms');
+   const hasNoTrack=()=>getComputedStyle(dueButton).borderTopColor==='rgba(0, 0, 0, 0)'&&
+    ring().backgroundColor==='rgba(0, 0, 0, 0)'&&!ring().backgroundImage.includes('44, 90, 92');
+   expect((gradient.includes('rgba(0, 0, 0, 0)')||gradient.includes('transparent'))&&hasNoTrack(),'orbit has a transparent track');
    expect(getComputedStyle(noteSurface).backgroundColor===noteBg&&ring().pointerEvents==='none','only the border animates and the clock remains clickable');
    dueButton.click();expect(dueDialog.open,'rotating light does not block deadline editor');
    dueDialog.close();
    await advance(deadline.getTime());
    Date.now=realNow;
-   expect(noteSurface.classList.contains('sticky-overdue')&&ring().content==='none','arrival replaces orbit with overdue pulse');
+   expect(noteSurface.classList.contains('sticky-overdue')&&hasNoTrack(),'overdue track remains transparent');
+   expect(dueButton.getAnimations({subtree:true}).includes(orbit)&&orbit.currentTime===400,'same orbit continues through deadline');
+   orbit.play();
    const pulse=noteSurface.getAnimations()[0];
    pulse.pause();pulse.currentTime=0;const dim=getComputedStyle(noteSurface).backgroundColor;
    pulse.currentTime=1200;expect(getComputedStyle(noteSurface).backgroundColor!==dim,'note background changes across pulse');
@@ -109,7 +114,7 @@ if(process.versions.electron){
     expect(getComputedStyle(layer).backgroundColor==='rgba(0, 0, 0, 0)','only the note paints the pulsing background');
    }
    dueButton.click();[...dueDialog.querySelectorAll('button')].find(x=>x.textContent==='解除').click();await wait(20);
-   expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue'),'clearing deadline stops pulse and saves');
+   expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue')&&ring().content==='none','clearing deadline stops both effects and saves');
    document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
    expect(window.identity?.id==='one.memo.json','created identity reported');
    return 'PASS image paste/drop/base64/replace/remove/scroll and one pastel note, title/body, blank discard, autosave, close flush/bounds, failure/retry, selection/immediate header drag/trash';
