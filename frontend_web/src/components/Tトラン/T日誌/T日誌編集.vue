@@ -7,6 +7,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../../stores/auth';
 import { qConfirm, qMessage } from '../../../utils/qAlert';
+import { 画面遷移先 } from './日誌画面';
 import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
 import type { 日誌, 日誌明細, 日誌記録, 日誌保存, 日誌添付 } from './日誌API';
 import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上限, 添付合計上限 } from './添付';
@@ -30,16 +31,22 @@ const 記録上限 = 30;
 const 行上限 = 100;
 const 明細添付件数上限 = 20;
 const 編集 = computed(() => route.query.モード === '編集' || (!route.query.モード && Boolean(route.query.日誌日付)));
-let 登録直後の日付 = '';
 const 行数 = computed(() => 記録.value.reduce((count, item) => count + item.明細.length, 0));
 const 閉じた = ref(false);
-const 一覧へ = () => router.push({
-  name: 'T日誌一覧',
-  query: {
-    開始日付: route.query.開始日付, 終了日付: route.query.終了日付,
-    件数制限: route.query.件数制限, URLメニュー: route.query.URLメニュー,
-  },
-});
+const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
+const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
+const 一覧へ = () => {
+  if (戻り先.value && router.resolve(戻り先.value).name === 'T日誌一覧') {
+    return router.push(戻り先.value);
+  }
+  return router.push({
+    name: 'T日誌一覧',
+    query: {
+      開始日付: route.query.開始日付, 終了日付: route.query.終了日付,
+      件数制限: route.query.件数制限, URLメニュー: route.query.URLメニュー,
+    },
+  });
+};
 
 function 表示URL(base64: string): string {
   const 形式 = 画像形式(base64);
@@ -57,11 +64,10 @@ function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
     key: ++次のキー, 展開, 作業内容: 行?.作業内容 ?? '', 添付: (行?.添付 ?? []).map(添付を作る), ドラッグ数: 0,
   };
 }
-function 記録を作る(item?: 日誌記録, 展開 = true, 保存前?: 編集記録): 編集記録 {
-  const 保存行 = 保存前?.明細.filter(有効な明細);
+function 記録を作る(item?: 日誌記録, 展開 = true): 編集記録 {
   return {
     key: ++次のキー, 展開, 作業ID: item?.作業ID ?? null, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
-    明細: item ? item.明細.map((行, i) => 行を作る(行, 保存行?.[i]?.展開 ?? false)) : [行を作る()],
+    明細: item ? item.明細.map(行 => 行を作る(行)) : [行を作る()],
   };
 }
 function 有効な明細(行: 編集行) {
@@ -180,13 +186,12 @@ function ダウンロード(行: 編集添付) {
   }
 }
 
-function 日誌を表示(data: 日誌, 展開を維持 = false) {
+function 日誌を表示(data: 日誌) {
   利用者.value = { 利用者ID: data.利用者ID, 利用者名: data.利用者名 };
   日誌日付.value = data.日誌日付;
   更新版.value = data.更新版;
   表示を片付ける();
-  const 保存前 = 展開を維持 ? 記録.value : [];
-  記録.value = data.記録.map((item, i) => 記録を作る(item, 保存前[i]?.展開 ?? (i === 0), 保存前[i]));
+  記録.value = data.記録.map((item, i) => 記録を作る(item, i === 0));
 }
 async function 読み込み() {
   表示を片付ける();
@@ -251,20 +256,14 @@ async function 保存() {
   エラー.value = '';
   操作中.value = true;
   try {
-    const data = await 日誌操作<日誌>(編集.value ? '変更' : '登録', 保存内容());
+    const 更新 = 編集.value;
+    const data = await 日誌操作<日誌>(更新 ? '変更' : '登録', 保存内容());
     if (閉じた.value) return;
-    日誌を表示(data, true);
+    更新版.value = data.更新版;
     未保存.value = false;
     操作中.value = false;
-    if (!編集.value) {
-      登録直後の日付 = data.日誌日付;
-      try {
-        await router.replace({ name: 'T日誌編集', query: { ...route.query, モード: '編集', 日誌日付: data.日誌日付 } });
-      } finally {
-        登録直後の日付 = '';
-      }
-    }
-    void qMessage('日誌を保存しました。');
+    await 一覧へ();
+    void qMessage(更新 ? '日誌を更新しました。' : '日誌を登録しました。');
   } catch (e) {
     エラー.value = エラー表示(e, '日誌の保存に失敗しました。');
   } finally {
@@ -304,10 +303,7 @@ onBeforeRouteLeave(遷移確認);
 onBeforeRouteUpdate((to, from) => (
   to.query.日誌日付 !== from.query.日誌日付 || to.query.モード !== from.query.モード
 ) ? 遷移確認() : true);
-watch(() => [route.query.日誌日付, route.query.モード], ([次の日付, 次のモード]) => {
-  if (登録直後の日付 && 次の日付 === 登録直後の日付 && 次のモード === '編集') return;
-  void 読み込み();
-});
+watch(() => [route.query.日誌日付, route.query.モード], 読み込み);
 onMounted(() => {
   window.addEventListener('beforeunload', ページ離脱);
   void 読み込み();
@@ -322,105 +318,127 @@ onBeforeUnmount(() => {
 <template>
   <div class="page-container">
     <h2 class="page-title">
-      <span>【 T日誌 {{ 編集 ? '編集' : '新規' }} 】</span>
-      <button type="button" class="btn btn-secondary" :disabled="操作中" @click="一覧へ">一覧へ</button>
+      <span class="title-text">【 T日誌 】{{ 編集 ? '編集' : '新規登録' }}</span>
+      <div class="header-actions">
+        <button type="button" class="btn-menu" :disabled="操作中" @click="router.push(メニュー)">メニュー</button>
+        <button v-if="戻り先 && 戻り先 !== メニュー" type="button" class="btn-return"
+          :disabled="操作中" @click="router.push(戻り先)">戻る</button>
+      </div>
     </h2>
-    <p v-if="エラー" role="alert" class="error">{{ エラー }}</p>
-    <button v-if="読込失敗 && route.query.日誌日付" class="btn btn-secondary" :disabled="操作中" @click="読み込み">再読み込み</button>
-    <p v-if="操作中" role="status">処理中…</p>
-    <form v-if="!読込失敗 && 記録.length" class="diary-editor" @submit.prevent="保存">
-      <fieldset :disabled="操作中">
-        <div class="actions diary-header">
-          <label>日誌日付 <input v-model="日誌日付" type="date" required :readonly="編集" @input="変更した"></label>
-          <span>利用者: {{ (利用者 ?? auth.user)?.利用者ID }} {{ (利用者 ?? auth.user)?.利用者名 }}</span>
+    <div class="content editor-content">
+      <section class="section">
+        <div class="toolbar">
+          <button type="button" class="btn btn-secondary" :disabled="操作中" @click="一覧へ">一覧に戻る</button>
+          <button v-if="読込失敗 && route.query.日誌日付" type="button" class="btn btn-primary"
+            :disabled="操作中" @click="読み込み">再読み込み</button>
           <span v-if="未保存" class="dirty" role="status">未保存</span>
+          <span v-if="操作中" role="status">処理中…</span>
         </div>
-        <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`作業 ${i + 1}`">
-          <button type="button" class="fold-toggle" :aria-expanded="item.展開"
-            :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
-            <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
-            <span>作業 {{ i + 1 }}</span>
-            <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
-            <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
-            <span class="fold-count">明細 {{ item.明細.length }}件</span>
-          </button>
-          <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
-            <header class="actions record-heading">
-              <label class="record-project">
-                <span>プロジェクト（フォルダパス）</span>
-                <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
-                  spellcheck="false" @input="変更した">
+        <p v-if="エラー" role="alert" class="message-error">{{ エラー }}</p>
+        <form v-if="!読込失敗 && 記録.length" class="detail-form diary-editor" @submit.prevent="保存">
+          <fieldset :disabled="操作中">
+            <div class="diary-header">
+              <label class="detail-row">
+                <span class="detail-label">日誌日付<span v-if="!編集" class="required-mark">*</span></span>
+                <span class="detail-value">
+                  <input v-model="日誌日付" class="detail-input date-input" type="date" required :readonly="編集" @input="変更した">
+                </span>
               </label>
-              <label class="record-title">
-                <span>作業タイトル</span>
-                <input :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
-                  maxlength="200" aria-required="true" @input="変更した">
-              </label>
-              <label class="record-count">
-                <span>新規・更新ファイル数（自己申告）</span>
-                <input :id="`diary-count-${item.key}`" v-model="item.件数入力" type="text" inputmode="numeric"
-                  maxlength="16" @input="変更した">
-              </label>
-              <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
-            </header>
-            <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
-              <button type="button" class="fold-toggle" :aria-expanded="行.展開"
-                :aria-controls="`diary-line-${行.key}`" @click="行.展開 = !行.展開">
-                <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
-                <span>明細 {{ j + 1 }}</span>
-                <span class="fold-label">{{ 明細見出し(行) }}</span>
-                <span v-if="行.添付.length" class="fold-count">添付 {{ 行.添付.length }}件</span>
-              </button>
-              <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
-                <label>
-                  <span>明細 {{ j + 1 }} 作業内容</span>
-                  <textarea v-model="行.作業内容" rows="3" maxlength="10000" @input="変更した"></textarea>
-                </label>
-                <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }"
-                  @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
-                  @dragleave="添付ドラッグ終了($event, 行)" @drop.prevent.stop="添付をドロップ($event, 行)">
-                  <span>ここにファイルをドロップ（複数可）</span>
-                  <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
-                </label>
-                <ul v-if="行.添付.length" class="attachment-list">
-                  <li v-for="(file, index) in 行.添付" :key="file.key">
-                    <div class="actions attachment">
-                      <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
-                      <button type="button" class="btn btn-secondary" :aria-label="`${file.ファイル名} を外す`"
-                        @click="添付を外す(行, index)">添付を外す</button>
-                    </div>
-                    <img v-if="file.preview" :src="file.preview" :alt="`添付画像: ${file.ファイル名}`" class="preview"
-                      @error="表示URL解除(file)">
-                  </li>
-                </ul>
-                <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
+              <div class="detail-row">
+                <span class="detail-label">利用者</span>
+                <span class="detail-value">{{ (利用者 ?? auth.user)?.利用者ID }} : {{ (利用者 ?? auth.user)?.利用者名 }}</span>
               </div>
             </div>
-            <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
-          </div>
-        </section>
-        <div class="actions">
-          <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
-          <span class="help">添付は明細1行20ファイル、1ファイル5 MiB、日誌全体15 MiBまで。</span>
-        </div>
-        <div class="actions diary-footer">
-          <button type="submit" class="btn btn-primary">保存</button>
-          <button v-if="編集" type="button" class="btn btn-danger" @click="日誌を削除">日誌を削除</button>
-        </div>
-      </fieldset>
-    </form>
+            <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`作業 ${i + 1}`">
+              <button type="button" class="fold-toggle" :aria-expanded="item.展開"
+                :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
+                <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
+                <span>作業 {{ i + 1 }}</span>
+                <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
+                <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
+                <span class="fold-count">明細 {{ item.明細.length }}件</span>
+              </button>
+              <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
+                <header class="actions record-heading">
+                  <label class="record-project">
+                    <span>プロジェクト（フォルダパス）</span>
+                    <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
+                      spellcheck="false" @input="変更した">
+                  </label>
+                  <label class="record-title">
+                    <span>作業タイトル</span>
+                    <input :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
+                      maxlength="200" aria-required="true" @input="変更した">
+                  </label>
+                  <label class="record-count">
+                    <span>新規・更新ファイル数（自己申告）</span>
+                    <input :id="`diary-count-${item.key}`" v-model="item.件数入力" type="text" inputmode="numeric"
+                      maxlength="16" @input="変更した">
+                  </label>
+                  <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
+                </header>
+                <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
+                  <button type="button" class="fold-toggle" :aria-expanded="行.展開"
+                    :aria-controls="`diary-line-${行.key}`" @click="行.展開 = !行.展開">
+                    <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
+                    <span>明細 {{ j + 1 }}</span>
+                    <span class="fold-label">{{ 明細見出し(行) }}</span>
+                    <span v-if="行.添付.length" class="fold-count">添付 {{ 行.添付.length }}件</span>
+                  </button>
+                  <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
+                    <label>
+                      <span>明細 {{ j + 1 }} 作業内容</span>
+                      <textarea v-model="行.作業内容" rows="3" maxlength="10000" @input="変更した"></textarea>
+                    </label>
+                    <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }"
+                      @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
+                      @dragleave="添付ドラッグ終了($event, 行)" @drop.prevent.stop="添付をドロップ($event, 行)">
+                      <span>ここにファイルをドロップ（複数可）</span>
+                      <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
+                    </label>
+                    <ul v-if="行.添付.length" class="attachment-list">
+                      <li v-for="(file, index) in 行.添付" :key="file.key">
+                        <div class="actions attachment">
+                          <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
+                          <button type="button" class="btn btn-secondary" :aria-label="`${file.ファイル名} を外す`"
+                            @click="添付を外す(行, index)">添付を外す</button>
+                        </div>
+                        <img v-if="file.preview" :src="file.preview" :alt="`添付画像: ${file.ファイル名}`" class="preview"
+                          @error="表示URL解除(file)">
+                      </li>
+                    </ul>
+                    <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
+              </div>
+            </section>
+            <div class="actions">
+              <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
+              <span class="help">添付は明細1行20ファイル、1ファイル5 MiB、日誌全体15 MiBまで。</span>
+            </div>
+            <div class="form-buttons">
+              <button type="submit" class="btn btn-success">{{ 編集 ? '更新' : '登録' }}</button>
+              <button v-if="編集" type="button" class="btn btn-danger" @click="日誌を削除">削除</button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    </div>
   </div>
 </template>
 
 <style scoped src="./日誌.css"></style>
 <style scoped>
 .diary-editor > fieldset{display:grid;gap:16px}
-.diary-header,.diary-record,.diary-line{border:1px solid var(--border-color,#c8d0d6);min-width:0}
-.diary-header,.fold-body{padding:12px}
+.diary-record,.diary-line{border:1px solid var(--border-color,#c8d0d6);min-width:0}
+.diary-header{width:fit-content;max-width:100%}
+.diary-header .detail-row + .detail-row{margin-top:-1px}
+.fold-body{padding:12px;background:#fff}
 .fold-body{border-top:1px solid var(--border-color,#c8d0d6);display:grid;gap:10px;min-width:0;justify-items:start}
 .fold-toggle{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px 12px;border:0;
-  color:inherit;background:var(--surface-color,#fff);font:inherit;text-align:left;cursor:pointer}
-.fold-toggle:hover{background:color-mix(in srgb,currentColor 6%,var(--surface-color,#fff))}
+  color:inherit;background:#e1f5fe;font:inherit;text-align:left;cursor:pointer}
+.fold-toggle:hover{background:#d5effa}
 .fold-toggle:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 .fold-toggle > :not(.fold-label){flex:none}
 .fold-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
@@ -434,7 +452,6 @@ onBeforeUnmount(() => {
 .record-count input{width:8em}
 .line-body > label{display:grid;gap:4px}
 textarea{width:100%;resize:vertical}
-.diary-footer{padding-top:8px;border-top:1px solid var(--border-color,#c8d0d6)}
 .preview{max-width:100%;max-height:220px;object-fit:contain}
 .filename{overflow-wrap:anywhere;max-width:100%;text-align:start}
 .attachment{max-width:100%}
