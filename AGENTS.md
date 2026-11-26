@@ -57,7 +57,7 @@
 |----------------|------|--------|------|
 | `frontend_diag` | 環境診断・設定・導入・サービス起動管理（`aidiy_diag`）、付箋メモ（`aidiy_memo`） | 自動・loopback | [AGENTS.md](./frontend_diag/AGENTS.md) |
 | `backend_server` core / apps | core: C系・対応V系・A系・認証・AIコア／apps: M系・T系・V系・S系 | 8091 / 8098 | [AGENTS.md](./backend_server/AGENTS.md) |
-| `backend_tools` | MCP サーバー群（Windows 20 個・Linux / macOS 19 個）と OpenAI / Ollama 互換 Chat Completions | 8095 | [AGENTS.md](./backend_tools/AGENTS.md) |
+| `backend_tools` | MCP サーバー群（Windows 21 個・Linux / macOS 20 個）と OpenAI / Ollama 互換 Chat Completions | 8095 | [AGENTS.md](./backend_tools/AGENTS.md) |
 | `backend_local` | ローカル LLM（OpenAI 互換 Gemma 推論） | 8096 | [AGENTS.md](./backend_local/AGENTS.md) |
 | `backend_taskteam` | AIタスク実行・定期タスク・複数AIエージェントのチーム活動 | 8093 | [AGENTS.md](./backend_taskteam/AGENTS.md) |
 | `command_hermes` | `aidiy_hermes` CLI 基盤 | 常駐なし | [AGENTS.md](./command_hermes/AGENTS.md) |

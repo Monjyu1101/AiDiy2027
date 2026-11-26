@@ -614,6 +614,8 @@ def upsert_codex_backend_tools_config(module: dict) -> bool:
         f'url = "{toml_escape_string(mcp_url)}"',
         "startup_timeout_sec = 60",
     ]
+    if server_name == "aidiy_dialy_control":
+        body_lines.append('env_http_headers = { Authorization = "AIDIY_DIARY_AUTHORIZATION" }')
     if not upsert_toml_table(config_path, table_header, body_lines):
         return False
     return True
@@ -664,6 +666,7 @@ MCP_MODULES = [
             {"server_name": "aidiy_ffmpeg_control",    "sse_url": "http://127.0.0.1:8095/aidiy_ffmpeg_control/sse"},
             {"server_name": "aidiy_notification_sounds","sse_url": "http://127.0.0.1:8095/aidiy_notification_sounds/sse"},
             {"server_name": "aidiy_windows_control",   "sse_url": "http://127.0.0.1:8095/aidiy_windows_control/sse", "platforms": ["win32"]},
+            {"server_name": "aidiy_dialy_control",     "sse_url": "http://127.0.0.1:8095/aidiy_dialy_control/sse"},
             # aidiy_code_agents / aidiy_chat_llms は自前 MCP 群をツールとして利用する
             # （他サーバーが出そろってから接続したい）ため、必ず末尾に並べる。
             {"server_name": "aidiy_code_agents",       "sse_url": "http://127.0.0.1:8095/aidiy_code_agents/sse"},

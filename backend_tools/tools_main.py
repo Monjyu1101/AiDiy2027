@@ -79,7 +79,7 @@ from tools_proc.team_agents import TeamAgents
 from tools_proc import tools_chrome, tools_desktop, tools_db, tools_dev
 from tools_proc import tools_backup, tools_media, tools_obs, tools_ffmpeg
 from tools_proc import tools_notification_sounds, tools_agents, tools_chat
-from tools_proc import tools_task_agents, tools_team_agents
+from tools_proc import tools_diary_control, tools_task_agents, tools_team_agents
 from tools_proc import tools_decisions
 if sys.platform == "win32":
     from tools_proc import tools_windows_control
@@ -127,7 +127,8 @@ def _summarize_arguments(arguments: dict, max_keys: int = 3) -> str:
 
 
 async def _logged_call_tool(self: MCPServer, name: str, arguments: dict, context=None):
-    logger.info("ツール呼び出し: %s / %s (%s)", self.name, name, _summarize_arguments(arguments))
+    要約 = "[日誌引数は非表示]" if self.name == tools_diary_control.NAME else _summarize_arguments(arguments)
+    logger.info("ツール呼び出し: %s / %s (%s)", self.name, name, 要約)
     try:
         return await _original_mcpserver_call_tool(self, name, arguments, context)
     except UnexpectedToolError as exc:
@@ -168,6 +169,7 @@ MOUNT_CA    = os.environ.get("MCP_CA_MOUNT_PATH", "/aidiy_code_agents")
 MOUNT_CL    = os.environ.get("MCP_CL_MOUNT_PATH", "/aidiy_chat_llms")
 MOUNT_DJ    = os.environ.get("MCP_DJ_MOUNT_PATH", "/aidiy_decisions_check")
 MOUNT_TA    = os.environ.get("MCP_TA_MOUNT_PATH", "/aidiy_task_agents")
+MOUNT_DIARY = "/" + tools_diary_control.NAME
 MOUNT_TM    = os.environ.get("MCP_TM_MOUNT_PATH", "/aidiy_team_agents")
 MOUNT_WC    = os.environ.get("MCP_WC_MOUNT_PATH", "/aidiy_windows_control")
 
@@ -277,6 +279,7 @@ mcp_cl = _make_mcp("aidiy_chat_llms")
 mcp_dj = _make_mcp("aidiy_decisions_check")
 mcp_ta = _make_mcp("aidiy_task_agents")
 mcp_tm = _make_mcp("aidiy_team_agents")
+mcp_diary = _make_mcp(tools_diary_control.NAME, instructions=tools_diary_control.DESCRIPTION)
 if sys.platform == "win32":
     mcp_wc = _make_mcp("aidiy_windows_control", instructions=tools_windows_control.DESCRIPTION)
 
@@ -303,6 +306,7 @@ tools_chat.register_tools(mcp_cl, chat_llm)
 # AI判断は lifespan の実行チェック完了後に登録する。
 tools_task_agents.register_tools(mcp_ta, task_agents)
 tools_team_agents.register_tools(mcp_tm, team_agents)
+tools_diary_control.register_tools(mcp_diary)
 if sys.platform == "win32":
     tools_windows_control.register_tools(mcp_wc, winctl)
 
@@ -430,9 +434,9 @@ app = FastAPI(
         "AiDiy MCP サーバー — Chrome DevTools / Desktop Capture / SQLite / PostgreSQL / "
         "Logs / Code Check / Backup / Image Generation / Movie Generation / "
         "Speech-to-Text / Text-to-Speech / OBS Studio / FFmpeg / Code Agents / Chat LLM / "
-        "Decisions Check / Task Agents / Team Agents / Notification Sounds"
+        "Decisions Check / Task Agents / Team Agents / Notification Sounds / Diary Control"
         + (" / Windows Control" if sys.platform == "win32" else "")
-        + f" の {20 if sys.platform == 'win32' else 19} MCP ツールを HTTP POST で直接呼び出せます。\n\n"
+        + f" の {21 if sys.platform == 'win32' else 20} MCP ツールを HTTP POST で直接呼び出せます。\n\n"
         + "加えて OpenAI / Ollama 互換の標準チャットインターフェース "
         "`POST /aidiy_chat_completions/v1/chat/completions` を提供します。\n\n"
         "各 MCP のツール一覧と引数仕様は `GET /{mcp_name}/list` を参照してください。"
@@ -533,6 +537,7 @@ MCP_MAP.update({
     "aidiy_decisions_check":    mcp_dj,
     "aidiy_task_agents":        mcp_ta,
     "aidiy_team_agents":        mcp_tm,
+    tools_diary_control.NAME:    mcp_diary,
 })
 if sys.platform == "win32":
     MCP_MAP["aidiy_windows_control"] = mcp_wc
@@ -570,6 +575,7 @@ app.include_router(tools_chat.create_router(chat_llm))
 app.include_router(tools_decisions.create_router(decisions))
 app.include_router(tools_task_agents.create_router(task_agents))
 app.include_router(tools_team_agents.create_router(team_agents))
+app.include_router(tools_diary_control.create_router())
 if sys.platform == "win32":
     app.include_router(tools_windows_control.create_router(winctl))
 app.include_router(tools_chat.create_completions_router(chat_llm))
@@ -597,6 +603,7 @@ app.mount(MOUNT_CL, _mcp_transport_app(mcp_cl))
 app.mount(MOUNT_DJ, _mcp_transport_app(mcp_dj))
 app.mount(MOUNT_TA, _mcp_transport_app(mcp_ta))
 app.mount(MOUNT_TM, _mcp_transport_app(mcp_tm))
+app.mount(MOUNT_DIARY, _mcp_transport_app(mcp_diary))
 if sys.platform == "win32":
     app.mount(MOUNT_WC, _mcp_transport_app(mcp_wc))
 
@@ -672,6 +679,7 @@ if __name__ == "__main__":
     logger.info(f"ChatLLM              : {base}/aidiy_chat_llms/  SSE:{MOUNT_CL}/sse")
     logger.info(f"DecisionsCheck       : {base}/aidiy_decisions_check/  SSE:{MOUNT_DJ}/sse")
     logger.info(f"TaskAgents           : {base}/aidiy_task_agents/  SSE:{MOUNT_TA}/sse")
+    logger.info(f"DiaryControl         : {base}{MOUNT_DIARY}/  SSE:{MOUNT_DIARY}/sse")
     logger.info(f"TeamAgents           : {base}/aidiy_team_agents/  SSE:{MOUNT_TM}/sse")
     if sys.platform == "win32":
         logger.info(f"WindowsControl       : {base}/aidiy_windows_control/  SSE:{MOUNT_WC}/sse")

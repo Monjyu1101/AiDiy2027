@@ -4,11 +4,15 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from apps_crud import T日誌 as crud
 from apps_schema.common import ResponseBase
-from apps_schema.T日誌 import T日誌一覧要求, T日誌キー, T日誌保存要求, 日誌本文上限
+from apps_schema.T日誌 import (
+    T日誌一覧要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌保存要求,
+    T日誌内容キー, T日誌内容変更要求, T日誌内容登録要求, T日誌検索要求, T日誌キー, 日誌本文上限,
+)
 from deps import get_現在利用者
 
 
@@ -102,3 +106,48 @@ def 削除(要求: T日誌キー, 所有者=Depends(_現在の所有者), db: Se
     if not crud.削除(db, 所有者["利用者ID"], 要求.日付):
         return _見つからない()
     return ResponseBase(message="日誌を削除しました。")
+
+
+@router.post("/検索", response_model=ResponseBase)
+def 検索(要求: T日誌検索要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return ResponseBase(message="日誌を検索しました。", data=crud.検索(db, 所有者["利用者ID"], 要求))
+
+
+def _部分操作(db: Session, 所有者, 要求, 操作: str):
+    try:
+        data = crud.部分操作(db, 所有者, 要求, 操作)
+    except crud.日誌操作エラー as exc:
+        return _NG(exc.コード, str(exc))
+    except ValidationError as exc:
+        return _NG("VALIDATION_ERROR", exc.errors(include_input=False)[0]["msg"])
+    return ResponseBase(message=f"日誌の{操作}が完了しました。", data=data)
+
+
+@router.post("/作業登録", response_model=ResponseBase)
+def 作業登録(要求: T日誌作業登録要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "作業登録")
+
+
+@router.post("/作業変更", response_model=ResponseBase)
+def 作業変更(要求: T日誌作業変更要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "作業変更")
+
+
+@router.post("/作業削除", response_model=ResponseBase)
+def 作業削除(要求: T日誌作業キー, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "作業削除")
+
+
+@router.post("/内容登録", response_model=ResponseBase)
+def 内容登録(要求: T日誌内容登録要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "内容登録")
+
+
+@router.post("/内容変更", response_model=ResponseBase)
+def 内容変更(要求: T日誌内容変更要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "内容変更")
+
+
+@router.post("/内容削除", response_model=ResponseBase)
+def 内容削除(要求: T日誌内容キー, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return _部分操作(db, 所有者, 要求, "内容削除")

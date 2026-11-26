@@ -9,7 +9,7 @@ export const TOOLS_REPRESENTATIVE_BYTE_LIMIT=DIAG_TRANSPORT_BYTE_LIMIT;
 export const BACKUP_REPRESENTATIVE_TIMEOUT_MS=300000;
 // 設定読取5秒 + Core/有効確認各30秒 + Backup5分 + 余裕5秒。
 export const BACKUP_REPRESENTATIVE_RESPONSE_TIMEOUT_MS=370000;
-export const TOOL_IDS=Object.freeze(['aidiy_chrome_devtools','aidiy_desktop_capture','aidiy_sqlite','aidiy_postgres','aidiy_logs','aidiy_code_check','aidiy_backup','aidiy_image_generation','aidiy_movie_generation','aidiy_speech_to_text','aidiy_text_to_speech','aidiy_obs_studio_control','aidiy_ffmpeg_control','aidiy_notification_sounds','aidiy_code_agents','aidiy_chat_llms','aidiy_decisions_check','aidiy_task_agents','aidiy_team_agents','aidiy_windows_control']);
+export const TOOL_IDS=Object.freeze(['aidiy_chrome_devtools','aidiy_desktop_capture','aidiy_sqlite','aidiy_postgres','aidiy_logs','aidiy_code_check','aidiy_backup','aidiy_image_generation','aidiy_movie_generation','aidiy_speech_to_text','aidiy_text_to_speech','aidiy_obs_studio_control','aidiy_ffmpeg_control','aidiy_notification_sounds','aidiy_code_agents','aidiy_chat_llms','aidiy_decisions_check','aidiy_task_agents','aidiy_team_agents','aidiy_dialy_control','aidiy_windows_control']);
 export const DEFAULT_FIELDS=Object.freeze({text_to_speech:['auto_provider','auto_voice'],speech_to_text:['auto_provider'],image_generation:['auto_provider'],movie_generation:['auto_provider','auto_model','auto_aspect_ratio','auto_resolution']});
 const object=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const text=v=>typeof v==='string'&&v.length>0&&v.length<=128&&!/[\x00-\x1f\x7f]/.test(v);

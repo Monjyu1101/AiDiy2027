@@ -12,7 +12,7 @@
 - Codex / Antigravity は Streamable HTTP の `/mcp` へ直接接続する。stdio 接続を選ぶクライアント向けの SSE 変換入口は `backend_tools/mcp_stdio.py`
 - 再利用ロジックは `backend_tools/tools_proc/` に置く
 - `tools_main.py` からは `tools_proc.<module>` として import する
-- `tools_main.py` は MCP SDK 2.x の `MCPServer` インスタンスを Starlette の `Mount` で合成し、`tools_main:app` として uvicorn に渡す。Windows では 20 本、Linux / macOS では 19 本
+- `tools_main.py` は MCP SDK 2.x の `MCPServer` インスタンスを Starlette の `Mount` で合成し、`tools_main:app` として uvicorn に渡す。Windows では 21 本、Linux / macOS では 20 本
 
 ## 起動チェックに失敗したMCPの扱い
 
@@ -120,9 +120,29 @@ print(res.json())  # {"save_path": "..."}
 | `aidiy_decisions_check` | AI判断（Decisions API / OAuth Responses JSON Schema） | `http://127.0.0.1:8095/aidiy_decisions_check/sse` |
 | `aidiy_task_agents` | backend_taskteam の Task API への AIタスク非同期投入、要求/明細状態取得 | `http://127.0.0.1:8095/aidiy_task_agents/sse` |
 | `aidiy_team_agents` | backend_taskteam の Team API への AIチーム依頼投入、依頼/要員状態取得 | `http://127.0.0.1:8095/aidiy_team_agents/sse` |
+| `aidiy_dialy_control` | 本人の日誌検索と作業・明細の登録 / 変更 / 削除（通常ログインの Bearer 必須） | `http://127.0.0.1:8095/aidiy_dialy_control/sse` |
 | `aidiy_windows_control` | Windows環境でComputer Use（computer-use）が利用できない場合の代替機能。Windows でのみ公開するデスクトップ操作制御（マウス/キーボード、ウィンドウ、プロセス、クリップボード、UI Automation） | `http://127.0.0.1:8095/aidiy_windows_control/sse` |
 
-Linux / macOS では `aidiy_windows_control` の import、MCP 登録、REST ルート、SSE マウントを行わない。`GET /` の `mcps` は 19 件で、Windows 操作の URL は 404 を返す。`uiautomation` も Windows だけにインストールする。`_config/AiDiy_mcp.json` はローカル生成設定であり、Windows で `_setup.py` の MCP 設定を実行すると Windows 操作 MCP を追加する。非 Windows で設定を実行すると、以前登録した Windows 操作 MCP をプロジェクト設定と各 CLI 設定から削除する。画面のない Linux 環境では `pyautogui` の初期化失敗を `desktop_capture.py` が保持し、キャプチャ呼び出し時にエラーを返す。
+Linux / macOS では `aidiy_windows_control` の import、MCP 登録、REST ルート、SSE マウントを行わない。`GET /` の `mcps` は 20 件で、Windows 操作の URL は 404 を返す。`uiautomation` も Windows だけにインストールする。`_config/AiDiy_mcp.json` はローカル生成設定であり、Windows で `_setup.py` の MCP 設定を実行すると Windows 操作 MCP を追加する。非 Windows で設定を実行すると、以前登録した Windows 操作 MCP をプロジェクト設定と各 CLI 設定から削除する。画面のない Linux 環境では `pyautogui` の初期化失敗を `desktop_capture.py` が保持し、キャプチャ呼び出し時にエラーを返す。
+
+## T日誌の操作
+
+`aidiy_dialy_control` は Apps の `/apps/T日誌` を使い、Web の T日誌と同じ SQLite に読み書きする。Tools からファイルを直接操作しない。
+
+| ツール | 引数と動作 |
+|---|---|
+| `diary_search` | `開始日付`・`終了日付`（両端を含む）、`キーワード`（作業タイトル、明細本文、添付名の部分一致）、`limit`・`offset`。日付の降順。明細本文は先頭1000文字、添付は名前のみ |
+| `diary_work_create` | `日付`・`記録タイトル`。その日に日誌がなければ作成し、新しい `記録SEQ` を返す |
+| `diary_work_update` | `日付`・`記録SEQ`・`記録タイトル`。作業タイトルだけ変更 |
+| `diary_work_delete` | `日付`・`記録SEQ`。指定作業とその明細を削除。最後の作業を削除しても日誌は残る |
+| `diary_content_create` | `日付`・`記録SEQ`、本文 `内容` または添付（`ファイル名` と `base64内容` の組）。新しい `行SEQ` を返す |
+| `diary_content_update` | `日付`・`記録SEQ`・`行SEQ` と変更項目。省略した本文・添付は維持。添付の2項目を両方空文字にすると添付を解除 |
+| `diary_content_delete` | `日付`・`記録SEQ`・`行SEQ`。指定明細とその添付だけを削除 |
+
+- 日付は `YYYY-MM-DD`。変更・削除の直前に検索して対象の連番を確認する。削除後は同じ日誌内の後続作業、または同じ作業内の後続明細の連番が詰まるため、検索し直す。
+- Tools のセットアップで MCP 接続先が登録される。Apps と Tools を再起動し、MCP クライアントを再接続する。Diag の代表試験は7ツールの一覧だけを確認する。
+- 通常ログインで発行された AiDiy 利用者のアクセストークンを MCP/REST の `Authorization: Bearer …` として送る。利用者IDを引数で指定できない。内部トークン、期限切れ、無効利用者は Apps が拒否する。トークンはツール引数・プロンプトに書かない。
+- Codex のセットアップ設定では、CLI を起動する端末の `AIDIY_DIARY_AUTHORIZATION` を使う（値は `Bearer <アクセストークン>`）。stdio bridge も数字の loopback アドレスの `/aidiy_dialy_control/sse` に接続するときだけ同じ環境変数を使用する。ほかの HTTP/SSE クライアントでは接続設定で Authorization ヘッダーを用意する。
 
 ## 次のユーザー入力予測
 

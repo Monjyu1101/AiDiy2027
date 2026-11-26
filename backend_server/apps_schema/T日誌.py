@@ -32,16 +32,19 @@ class T日誌キー(日誌要求):
     日付: 日誌日付
 
 
-class T日誌一覧要求(日誌要求):
+class 日誌期間要求(日誌要求):
     開始日付: 日誌日付 | None = None
     終了日付: 日誌日付 | None = None
-    件数制限: bool = True
 
     @model_validator(mode="after")
     def _範囲(self) -> Self:
         if self.開始日付 and self.終了日付 and self.開始日付 > self.終了日付:
             raise ValueError("終了日付は開始日付以降を指定してください。")
         return self
+
+
+class T日誌一覧要求(日誌期間要求):
+    件数制限: bool = True
 
 
 class 日誌明細要求(日誌要求):
@@ -103,4 +106,46 @@ class T日誌保存要求(T日誌キー):
                 添付合計 += 添付サイズ
                 if 添付合計 > 日誌添付合計上限:
                     raise ValueError("添付の合計は日誌1件につき15 MiBまでです。")
+        return self
+
+
+class T日誌検索要求(日誌期間要求):
+    キーワード: str = Field(default="", max_length=200)
+    limit: int = Field(default=5, ge=1, le=10)
+    offset: int = Field(default=0, ge=0, le=1_000_000)
+
+
+class T日誌作業キー(T日誌キー):
+    記録SEQ: int = Field(ge=1, le=最大記録数)
+
+
+class T日誌作業登録要求(T日誌キー):
+    記録タイトル: str = Field(min_length=1, max_length=200)
+
+
+class T日誌作業変更要求(T日誌作業キー, T日誌作業登録要求):
+    pass
+
+
+class T日誌内容登録要求(T日誌作業キー):
+    内容: str = Field(default="", max_length=10_000)
+    ファイル名: str = Field(default="", max_length=255)
+    base64内容: str = Field(default="", max_length=4 * ((日誌添付上限 + 2) // 3))
+
+
+class T日誌内容キー(T日誌作業キー):
+    行SEQ: int = Field(ge=1, le=最大明細数)
+
+
+class T日誌内容変更要求(T日誌内容キー):
+    内容: str | None = Field(default=None, max_length=10_000)
+    ファイル名: str | None = Field(default=None, max_length=255)
+    base64内容: str | None = Field(default=None, max_length=4 * ((日誌添付上限 + 2) // 3))
+
+    @model_validator(mode="after")
+    def _変更項目(self) -> Self:
+        if self.内容 is None and self.ファイル名 is None and self.base64内容 is None:
+            raise ValueError("変更する内容または添付を指定してください。")
+        if (self.ファイル名 is None) != (self.base64内容 is None):
+            raise ValueError("添付の変更・解除にはファイル名とBase64内容を両方指定してください。")
         return self

@@ -22,6 +22,7 @@ const 簡単な試験={
  aidiy_ffmpeg_control:['短い無音の処理','ffmpegで0.1秒の無音を生成して破棄します。ファイル保存や音声再生は行いません。'],
  aidiy_notification_sounds:['短い通知音の再生','完了の通知音を1回再生します。音が聞こえるか確認してください。'],
  aidiy_team_agents:['チーム要員一覧の取得','TaskTeamへ接続して要員件数を取得します。依頼は登録・実行しません。'],
+ aidiy_dialy_control:['日誌ツール一覧の取得','日誌ツールの登録を確認します。実際の日誌の読み書きは行いません。'],
  aidiy_windows_control:['ウィンドウ一覧の取得','Windowsのウィンドウ件数を取得します。タイトルは表示せず、マウス・キーボード・ウィンドウを操作しません。'],
 };
 for(const id of ['aidiy_image_generation','aidiy_movie_generation','aidiy_speech_to_text','aidiy_text_to_speech','aidiy_code_agents','aidiy_chat_llms','aidiy_decisions_check','aidiy_task_agents']){

@@ -73,6 +73,8 @@ class McpMessageTests(unittest.TestCase):
                 for name, url in selected:
                     body = (f'url = "{url.removesuffix("/sse")}/mcp"\nstartup_timeout_sec = 60\n' if client == "codex"
                             else f'url = "{url}"\ntype = "sse"\nenabled = true\n')
+                    if client == "codex" and name == "aidiy_dialy_control":
+                        body += 'env_http_headers = { Authorization = "AIDIY_DIARY_AUTHORIZATION" }\n'
                     expected = expected.rstrip() + f"\n\n[mcp_servers.{name}]\n" + body
                 self.assertEqual(path.read_text(encoding="utf-8"), expected)
             self.assertNotIn("Codex の aidiy_", output.getvalue())

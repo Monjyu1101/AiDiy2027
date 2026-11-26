@@ -7,6 +7,7 @@ import sqlite3
 import sys
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack, closing
 from pathlib import Path
 from types import SimpleNamespace
@@ -165,6 +166,69 @@ class 日誌Tests(unittest.TestCase):
             result = self.call("登録", sample())
             self.assertEqual(result.status_code, 413)
             self.assertEqual(result.json()["error"]["code"], "PAYLOAD_TOO_LARGE")
+
+    def test_部分操作_添付維持_連番_所有者境界(self):
+        def run(op, **body):
+            result = self.call(op, {"日付": DATE, **body}).json()
+            self.assertEqual(result["status"], "OK", result)
+            return result["data"]
+
+        self.assertEqual(run("作業登録", 記録タイトル="初回")["記録SEQ"], 1)
+        self.assertEqual(run("作業登録", 記録タイトル="次回")["記録SEQ"], 2)
+        self.assertEqual(run("内容登録", 記録SEQ=2, 内容="先頭")["行SEQ"], 1)
+        self.assertEqual(run("内容登録", 記録SEQ=2, 内容="画像", ファイル名="進捗.png", base64内容=PNG)["行SEQ"], 2)
+        run("作業変更", 記録SEQ=2, 記録タイトル="進捗 100%")
+        run("内容変更", 記録SEQ=2, 行SEQ=2, 内容="確認済み")
+        run("内容削除", 記録SEQ=2, 行SEQ=1)
+        run("作業削除", 記録SEQ=1)
+        denied = self.call("作業削除", {"日付": DATE, "記録SEQ": 1}, user="two").json()
+        self.assertEqual(denied["error"]["code"], "NOT_FOUND")
+        entry = run("取得")["記録"][0]
+        self.assertEqual(entry, {"記録SEQ": 1, "記録タイトル": "進捗 100%", "明細": [
+            {"行SEQ": 1, "内容": "確認済み", "ファイル名": "進捗.png", "base64内容": PNG},
+        ]})
+        run("内容変更", 記録SEQ=1, 行SEQ=1, ファイル名="", base64内容="")
+        self.assertEqual(run("取得")["記録"][0]["明細"][0]["base64内容"], "")
+        run("作業削除", 記録SEQ=1)
+        self.assertEqual(run("取得")["記録"], [])
+        self.assertEqual(run("作業登録", 記録タイトル="再開")["記録SEQ"], 1)
+
+    def test_検索_日付順_キーワード_ページング_添付非公開(self):
+        self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
+        another = sample("2026-11-25")
+        another["記録"][0]["記録タイトル"] = "完了率 100%"
+        self.assertEqual(self.call("登録", another).json()["status"], "OK")
+        for keyword, total in [("レビュー", 2), ("画像.png", 2), ("100%", 1), ("%", 1), ("_", 0)]:
+            r = self.call("検索", {"キーワード": keyword, "limit": 1}).json()
+            self.assertEqual(r["data"]["total"], total, keyword)
+            self.assertNotIn(PNG, json.dumps(r))
+            self.assertNotIn("base64内容", json.dumps(r, ensure_ascii=False))
+        self.assertEqual(self.call("検索", {"offset": 1, "limit": 1}).json()["data"]["items"][0]["日付"], "2026-11-25")
+        self.assertEqual(self.call("検索", {"開始日付": DATE}).json()["data"]["items"][0]["日付"], DATE)
+        self.assertEqual(self.call("検索", {}, user="two").json()["data"]["items"], [])
+        self.assertEqual(self.call("検索", {}, user="internal").status_code, 403)
+
+    def test_部分操作_不正添付と空の新規を保存しない(self):
+        bad = self.call("作業登録", {"日付": DATE, "記録タイトル": "   "}).json()
+        self.assertEqual(bad["error"]["code"], "VALIDATION_ERROR")
+        self.assertEqual(self.call("取得", {"日付": DATE}).json()["error"]["code"], "NOT_FOUND")
+        original = self.call("登録", sample()).json()["data"]
+        bad = self.call("内容変更", {"日付": DATE, "記録SEQ": 1, "行SEQ": 2,
+                                    "ファイル名": "new.png", "base64内容": "SECRET!!!"})
+        self.assertEqual(bad.json()["error"]["code"], "VALIDATION_ERROR")
+        self.assertNotIn("SECRET!!!", bad.text)
+        self.assertEqual(self.call("取得", {"日付": DATE}).json()["data"], original)
+
+    def test_同時に作業を追加しても一日一件で連番を採番(self):
+        def add(number):
+            return self.call("作業登録", {"日付": DATE, "記録タイトル": f"作業{number}"}).json()
+
+        with ThreadPoolExecutor(max_workers=4) as pool:
+            results = list(pool.map(add, range(8)))
+        self.assertEqual(sorted(r["data"]["記録SEQ"] for r in results if r["status"] == "OK"), list(range(1, 9)))
+        listing = self.call("一覧").json()["data"]
+        self.assertEqual(listing["total"], 1)
+        self.assertEqual(listing["items"][0]["記録件数"], 8)
 
     def test_添付容量制限(self):
         for size, count in [(5 * 1024 * 1024 + 1, 1), (4 * 1024 * 1024, 4)]:

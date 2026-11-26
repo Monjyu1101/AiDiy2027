@@ -15,6 +15,7 @@ export const 代表試験 = {
  aidiy_ffmpeg_control: {method:'ffmpeg_run',body:{args_str:'-hide_banner -f lavfi -i anullsrc=r=8000:cl=mono -t 0.1 -f null -',timeout_sec:10},check:r=>r.returncode===0,summary:()=> '0.1秒の無音を処理しました（保存・再生なし）。'},
  aidiy_notification_sounds: {method:'play',body:{notification_type:'完了',scene:'legacy'},check:r=>r.status==='ok'&&r.scene==='legacy'&&r.notification_type==='完了',summary:()=> '通知音の再生処理を受け付けました。音が聞こえたか確認してください。'},
  aidiy_team_agents: {method:'get_member_list',body:{include_disabled:false,request_timeout_sec:10},check:r=>r.status==='OK'&&array(r,'items'),summary:r=>count(r,'items','チーム要員')},
+ aidiy_dialy_control: {method:'list',httpMethod:'GET',body:{},check:r=>array(r,'tools')&&r.tools.some(t=>t.name==='diary_search'),summary:r=>count(r,'tools','日誌ツール')},
  aidiy_windows_control: {method:'list_windows',body:{},check:r=>array(r,'windows'),summary:r=>count(r,'windows','ウィンドウ')},
 };
 // 高コスト・録音・ソース変更・タスク登録を伴うToolは説明APIの疎通だけを確認する。

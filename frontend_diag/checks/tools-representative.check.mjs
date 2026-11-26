@@ -12,6 +12,7 @@ const fixtures={
  aidiy_logs:{logs:{server:[],mcp:[]}},aidiy_code_check:{ok:true},aidiy_backup:{ok:true,batch:false,全件数:0,バックアップ件数:0},
  aidiy_obs_studio_control:{scenes:[]},aidiy_ffmpeg_control:{returncode:0},
  aidiy_notification_sounds:{status:'ok',scene:'legacy',notification_type:'完了'},
+ aidiy_dialy_control:{tools:[{name:"diary_search"}]},
  aidiy_team_agents:{status:'OK',items:[]},aidiy_windows_control:{windows:[]},
 };
 const envelope=tool=>({token:'fixture.jwt',data:{operation:'test',tool}});
@@ -32,10 +33,15 @@ function setup(id,answer,enabled=true){
  }});
  return {bridge,calls};
 }
-test('登録済み20個すべてに試験があり、実行しない試験は説明APIと明記する',()=>{
+test('登録済み21個すべてに試験があり、実行しない試験は説明APIと明記する',()=>{
  assert.deepEqual(Object.keys(Tools代表テスト).sort(),[...TOOL_IDS].sort());
- assert.equal(Object.keys(代表試験).length,19);
+ assert.equal(Object.keys(代表試験).length,20);
  for(const [id,definition] of Object.entries(代表試験))if(definition.httpMethod==='GET'){
+  if(id==='aidiy_dialy_control'){
+   assert.equal(definition.method,'list');
+   assert.match(Tools代表テスト[id].label,/ツール一覧/);
+   continue;
+  }
   assert.equal(definition.method,'docs');
   assert.match(Tools代表テスト[id].label,/説明API/);
  }

@@ -27,6 +27,7 @@ import os
 import sys
 from contextlib import AsyncExitStack
 from typing import Any
+from urllib.parse import urlsplit
 
 _起動元PID = os.getppid()
 
@@ -140,6 +141,20 @@ class BackendMcpBridge:
         self._server_info: types.Implementation | None = None
         self._lock = anyio.Lock()
 
+    def _http_client(self, headers=None, timeout=None, auth=None):
+        from tools_proc.tools_diary_control import NAME, TOKEN_ENV, bearer
+
+        parsed = urlsplit(self.sse_url)
+        credential = bearer({"authorization": os.environ.get(TOKEN_ENV, "")})
+        if (credential and parsed.scheme == "http" and parsed.hostname in {"127.0.0.1", "::1"}
+                and parsed.username is None and parsed.password is None and not parsed.query and not parsed.fragment
+                and parsed.path.rstrip("/") == f"/{NAME}/sse"):
+            return httpx2.AsyncClient(
+                headers={**(headers or {}), "Authorization": credential},
+                timeout=timeout, auth=auth, trust_env=False, follow_redirects=False,
+            )
+        return create_local_http_client(headers=headers, timeout=timeout, auth=auth)
+
     async def aclose(self) -> None:
         async with self._lock:
             await self._close_unlocked()
@@ -161,7 +176,7 @@ class BackendMcpBridge:
                     self.sse_url,
                     timeout=self.http_timeout,
                     sse_read_timeout=self.sse_read_timeout,
-                    httpx_client_factory=create_local_http_client,
+                    httpx_client_factory=self._http_client,
                 )
             )
             session = await self._stack.enter_async_context(ClientSession(read_stream, write_stream))
