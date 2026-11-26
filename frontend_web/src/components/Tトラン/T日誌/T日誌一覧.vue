@@ -36,6 +36,7 @@ const 昇順 = ref(false);
 const ページ = ref(1);
 const ページ件数 = 30;
 const 件数表示 = new Intl.NumberFormat('ja-JP');
+const 利用者表示 = (id: string, name: string) => `${id} : ${name}`;
 const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
 const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
 const 編集条件 = computed(() => {
@@ -55,8 +56,7 @@ const 編集状態 = computed(() => ({
 const 新規日付 = computed(() => 同一日.value ? 開始日付.value : ローカル日付());
 const columns: Column[] = [
   { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
-  { key: '利用者ID', label: '利用者ID' },
-  { key: '利用者名', label: '利用者名' },
+  { key: '利用者ID', label: '利用者' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
   { key: '作業タイトル', label: '作業タイトル', align: 'left', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
@@ -182,7 +182,7 @@ onMounted(() => {
                     <option value="">未指定</option>
                     <option v-if="利用者ID && !候補?.利用者.some(user => user.利用者ID === 利用者ID)" :value="利用者ID">{{ 利用者ID }}</option>
                     <option v-for="user in 候補?.利用者 ?? []" :key="user.利用者ID" :value="user.利用者ID">
-                      {{ user.利用者ID }} : {{ user.利用者名 }}
+                      {{ 利用者表示(user.利用者ID, user.利用者名) }}
                     </option>
                   </select>
                 </span>
@@ -230,6 +230,7 @@ onMounted(() => {
           <template #cell="{ row, column, value }">
             <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID" class="id-link"
               :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
+            <template v-else-if="column.key === '利用者ID'">{{ 利用者表示(row.利用者ID, row.利用者名) }}</template>
             <div v-else-if="column.key === '作業タイトル' || column.key === '新規更新ファイル数'" class="work-list">
               <div v-for="作業 in row.作業一覧" :key="作業.作業ID" class="work-line">
                 <span v-if="column.key === '作業タイトル'" class="work-title" :title="作業.作業タイトル">{{ 作業.作業タイトル }}</span>
