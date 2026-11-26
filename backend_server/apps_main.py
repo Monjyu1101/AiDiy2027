@@ -49,7 +49,7 @@ from apps_router import M商品構成
 from apps_router import V商品構成
 from apps_router import T配車
 from apps_router import T日誌
-from apps_crud.T日誌 import 日誌DB初期化
+from apps_crud.日誌DB import 日誌DB初期化
 from apps_router import V配車
 from apps_router import T生産
 from apps_router import V生産

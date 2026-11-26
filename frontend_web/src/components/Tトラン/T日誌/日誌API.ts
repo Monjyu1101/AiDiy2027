@@ -23,13 +23,13 @@ export interface 日誌記録 {
   新規更新ファイル数: number | null;
   明細: 日誌明細[];
 }
-export interface 日誌 extends 日誌見出し { 記録: 日誌記録[] }
+export interface 日誌 extends 日誌見出し { 記録: 日誌記録[]; 更新版: string }
 export interface 日誌一覧 {
   items: (日誌見出し & { 記録件数: number })[];
   total: number;
   limit: number | null;
 }
-export interface 日誌保存 { 日付: string; 添付形式: "複数"; 記録: 日誌記録[] }
+export interface 日誌保存 { 日付: string; 更新版?: string; 記録: 日誌記録[] }
 type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
 
 export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {

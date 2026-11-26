@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from apps_crud import T日誌 as crud
 from apps_schema.common import ResponseBase
 from apps_schema.T日誌 import (
-    T日誌一覧要求, T日誌取得要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌保存要求,
+    T日誌一覧要求, T日誌変更要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌保存要求,
     T日誌内容キー, T日誌内容変更要求, T日誌内容登録要求, T日誌検索要求, T日誌キー, 日誌本文上限,
 )
 from deps import get_現在利用者
@@ -82,8 +82,8 @@ def 一覧(要求: T日誌一覧要求 | None = None, 所有者=Depends(_現在�
 
 
 @router.post("/取得", response_model=ResponseBase)
-def 取得(要求: T日誌取得要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
-    data = crud.取得(db, 所有者["利用者ID"], 要求.日付, 旧形式も返す=要求.添付形式 is None)
+def 取得(要求: T日誌キー, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    data = crud.更新版付き(crud.取得(db, 所有者["利用者ID"], 要求.日付))
     return ResponseBase(message="日誌を取得しました。", data=data) if data else _見つからない()
 
 
@@ -96,7 +96,7 @@ def 登録(要求: T日誌保存要求, 所有者=Depends(_現在の所有者), 
 
 
 @router.post("/変更", response_model=ResponseBase)
-def 変更(要求: T日誌保存要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+def 変更(要求: T日誌変更要求, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
     try:
         data = crud.保存(db, 所有者, 要求, 新規=False)
     except crud.日誌操作エラー as exc:

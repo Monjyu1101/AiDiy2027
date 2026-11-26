@@ -19,6 +19,7 @@ const router = useRouter();
 const auth = useAuthStore();
 let 次のキー = 0;
 const 日付 = ref('');
+const 更新版 = ref('');
 const 利用者 = ref<{ 利用者ID: string; 利用者名: string } | null>(null);
 const 記録 = ref<編集記録[]>([]);
 const エラー = ref('');
@@ -182,6 +183,7 @@ function ダウンロード(行: 編集添付) {
 function 日誌を表示(data: 日誌, 展開を維持 = false) {
   利用者.value = { 利用者ID: data.利用者ID, 利用者名: data.利用者名 };
   日付.value = data.日付;
+  更新版.value = data.更新版;
   表示を片付ける();
   const 保存前 = 展開を維持 ? 記録.value : [];
   記録.value = data.記録.map((item, i) => 記録を作る(item, 保存前[i]?.展開 ?? (i === 0), 保存前[i]));
@@ -192,6 +194,7 @@ async function 読み込み() {
   未保存.value = 読込失敗.value = false;
   エラー.value = '';
   利用者.value = null;
+  更新版.value = '';
   const query = route.query.日付;
   const 対象日付 = typeof query === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query) ? query : '';
   日付.value = 対象日付 || ローカル日付();
@@ -206,7 +209,7 @@ async function 読み込み() {
   }
   操作中.value = true;
   try {
-    const data = await 日誌操作<日誌>('取得', { 日付: 対象日付, 添付形式: '複数' });
+    const data = await 日誌操作<日誌>('取得', { 日付: 対象日付 });
     if (!閉じた.value) 日誌を表示(data);
   } catch (e) {
     読込失敗.value = true;
@@ -234,7 +237,7 @@ function 保存内容(): 日誌保存 {
     throw new Error(`作業 ${不正件数 + 1} の新規・更新ファイル数は0以上の整数を入力してください。`);
   }
   return {
-    日付: 日付.value, 添付形式: "複数",
+    日付: 日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
     記録: 記録.value.map((item, i) => ({
       記録SEQ: i + 1, 記録タイトル: item.記録タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
       明細: item.明細.filter(有効な明細).map((行, j) => ({

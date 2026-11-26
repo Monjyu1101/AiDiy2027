@@ -108,28 +108,27 @@ def register_tools(mcp):
 
     @mcp.tool()
     async def diary_work_delete(ctx: Context, 日付: str, 記録SEQ: int) -> dict:
-        """指定した作業と配下の全明細を削除する。日誌自体は残る。必ず削除対象を確認してから呼び、後続の操作前に再検索する。"""
+        """指定した作業と配下の全明細を削除する。最後の作業ならその日の日誌もなくなる。必ず削除対象を確認してから呼び、後続の操作前に再検索する。"""
         return await run("diary_work_delete", ctx, 日付=日付, 記録SEQ=記録SEQ)
 
     @mcp.tool()
     async def diary_content_create(
-        ctx: Context, 日付: str, 記録SEQ: int, 内容: str = "", ファイル名: str | None = None, base64内容: str | None = None,
+        ctx: Context, 日付: str, 記録SEQ: int, 内容: str = "",
         添付: list[日誌添付] | None = None,
     ) -> dict:
         """指定した作業に明細を1行追加して行SEQを返す。本文または添付が必要。複数ファイルは添付にファイル名・base64内容の組を並べて指定する。"""
         return await run("diary_content_create", ctx, 日付=日付, 記録SEQ=記録SEQ,
-                         内容=内容, ファイル名=ファイル名, base64内容=base64内容,
+                         内容=内容,
                          添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()
     async def diary_content_update(
         ctx: Context, 日付: str, 記録SEQ: int, 行SEQ: int, 内容: str | None = None,
-        ファイル名: str | None = None, base64内容: str | None = None,
         添付: list[日誌添付] | None = None,
     ) -> dict:
         """指定した明細1行を変更する。省略した項目は維持し、添付一覧指定で置換し、空配列で全添付を外す。"""
         return await run("diary_content_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 行SEQ=行SEQ,
-                         内容=内容, ファイル名=ファイル名, base64内容=base64内容,
+                         内容=内容,
                          添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()

@@ -2,7 +2,7 @@
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 import base64
 from datetime import date
-from typing import Annotated, Literal, Self
+from typing import Annotated, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
 
@@ -66,33 +66,17 @@ class 日誌添付要求(日誌要求):
 
 class 日誌明細項目(日誌要求):
     内容: str | None = Field(default=None, max_length=10_000)
-    ファイル名: str | None = Field(default=None, max_length=255)
-    base64内容: str | None = Field(default=None, max_length=添付データ長上限)
     添付: list[日誌添付要求] | None = Field(default=None, max_length=明細添付件数上限)
-
-    @model_validator(mode="after")
-    def _添付指定(self) -> Self:
-        if self.添付 is not None and (self.ファイル名 is not None or self.base64内容 is not None):
-            raise ValueError("添付一覧と旧形式のファイル名・Base64内容を同時に指定できません。")
-        if (self.ファイル名 is None) != (self.base64内容 is None) or bool(self.ファイル名) != bool(self.base64内容):
-            raise ValueError("ファイル名とBase64内容は両方指定してください。")
-        return self
-
-    def 添付一覧(self) -> list[日誌添付要求]:
-        if self.添付 is not None:
-            return self.添付
-        if self.ファイル名 and self.base64内容:
-            return [日誌添付要求(ファイル名=self.ファイル名, base64内容=self.base64内容)]
-        return []
 
 
 class 日誌明細要求(日誌明細項目):
     行SEQ: int = Field(ge=1, le=最大明細数)
     内容: str = Field(default="", max_length=10_000)
+    添付: list[日誌添付要求] = Field(default_factory=list, max_length=明細添付件数上限)
 
     @model_validator(mode="after")
     def _確認(self) -> Self:
-        if not self.内容.strip() and not self.添付一覧():
+        if not self.内容.strip() and not self.添付:
             raise ValueError("明細には内容または添付ファイルを指定してください。")
         return self
 
@@ -116,11 +100,7 @@ class 日誌記録要求(日誌要求):
         return self
 
 
-class T日誌取得要求(T日誌キー):
-    添付形式: Literal["複数"] | None = None
-
-
-class T日誌保存要求(T日誌取得要求):
+class T日誌保存要求(T日誌キー):
     記録: list[日誌記録要求] = Field(min_length=1, max_length=最大記録数)
 
     @model_validator(mode="after")
@@ -132,7 +112,7 @@ class T日誌保存要求(T日誌取得要求):
         添付合計 = 0
         for 記録 in self.記録:
             for 行 in 記録.明細:
-                for 番号, 添付 in enumerate(行.添付一覧(), 1):
+                for 番号, 添付 in enumerate(行.添付, 1):
                     位置 = f"記録{記録.記録SEQ}・行{行.行SEQ}・添付{番号}"
                     try:
                         添付サイズ = len(base64.b64decode(添付.base64内容, validate=True))
@@ -144,6 +124,10 @@ class T日誌保存要求(T日誌取得要求):
                     if 添付合計 > 日誌添付合計上限:
                         raise ValueError("添付の合計は日誌1件につき15 MiBまでです。")
         return self
+
+
+class T日誌変更要求(T日誌保存要求):
+    更新版: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class T日誌検索要求(日誌期間要求):
@@ -176,6 +160,6 @@ class T日誌内容キー(T日誌作業キー):
 class T日誌内容変更要求(T日誌内容キー, 日誌明細項目):
     @model_validator(mode="after")
     def _変更項目(self) -> Self:
-        if self.内容 is None and self.ファイル名 is None and self.添付 is None:
+        if self.内容 is None and self.添付 is None:
             raise ValueError("変更する内容または添付を指定してください。")
         return self
