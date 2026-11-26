@@ -3,7 +3,7 @@ COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
 Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 -->
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../../stores/auth';
 import { qConfirm, qMessage } from '../../../utils/qAlert';
@@ -11,8 +11,8 @@ import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
 import type { 日誌, 日誌明細, 日誌記録, 日誌保存 } from './日誌API';
 import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上限, 添付合計上限 } from './添付';
 
-type 編集行 = Omit<日誌明細, '行SEQ'> & { key: number; preview: string };
-type 編集記録 = Omit<日誌記録, '記録SEQ' | '明細'> & { key: number; 明細: 編集行[] };
+type 編集行 = Omit<日誌明細, '行SEQ'> & { key: number; 展開: boolean; preview: string };
+type 編集記録 = Omit<日誌記録, '記録SEQ' | '明細'> & { key: number; 展開: boolean; 明細: 編集行[] };
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -46,14 +46,25 @@ function 表示URL(base64: string): string {
   }
   return '';
 }
-function 行を作る(行?: 日誌明細): 編集行 {
+function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
   return {
-    key: ++次のキー, 内容: 行?.内容 ?? '', ファイル名: 行?.ファイル名 ?? '',
+    key: ++次のキー, 展開, 内容: 行?.内容 ?? '', ファイル名: 行?.ファイル名 ?? '',
     base64内容: 行?.base64内容 ?? '', preview: 行?.base64内容 ? 表示URL(行.base64内容) : '',
   };
 }
-function 記録を作る(item?: 日誌記録): 編集記録 {
-  return { key: ++次のキー, 記録タイトル: item?.記録タイトル ?? '', 明細: item ? item.明細.map(行を作る) : [行を作る()] };
+function 記録を作る(item?: 日誌記録, 展開 = true, 保存前?: 編集記録): 編集記録 {
+  const 保存行 = 保存前?.明細.filter(有効な明細);
+  return {
+    key: ++次のキー, 展開, 記録タイトル: item?.記録タイトル ?? '',
+    明細: item ? item.明細.map((行, i) => 行を作る(行, 保存行?.[i]?.展開 ?? false)) : [行を作る()],
+  };
+}
+function 有効な明細(行: 編集行) {
+  return Boolean(行.内容.trim() || 行.base64内容);
+}
+function 明細見出し(行: 編集行) {
+  const 要約 = 行.内容.trim().replace(/\s+/g, ' ');
+  return 要約 || 行.ファイル名 || '未入力';
 }
 function 表示URL解除(行: 編集行) {
   if (行.preview) URL.revokeObjectURL(行.preview);
@@ -138,11 +149,12 @@ function ダウンロード(行: 編集行) {
   }
 }
 
-function 日誌を表示(data: 日誌) {
+function 日誌を表示(data: 日誌, 展開を維持 = false) {
   利用者.value = { 利用者ID: data.利用者ID, 利用者名: data.利用者名 };
   日付.value = data.日付;
   表示を片付ける();
-  記録.value = data.記録.map(記録を作る);
+  const 保存前 = 展開を維持 ? 記録.value : [];
+  記録.value = data.記録.map((item, i) => 記録を作る(item, 保存前[i]?.展開 ?? (i === 0), 保存前[i]));
 }
 async function 読み込み() {
   表示を片付ける();
@@ -174,14 +186,19 @@ async function 読み込み() {
   }
 }
 function 保存内容(): 日誌保存 {
-  if (!日付.value || !記録.value.length || 記録.value.some(item => !item.記録タイトル.trim())) {
-    throw new Error('日付と、各記録のタイトルを入力してください。');
+  if (!日付.value || !記録.value.length) throw new Error('日付と作業を入力してください。');
+  const 未入力 = 記録.value.findIndex(item => !item.記録タイトル.trim());
+  if (未入力 >= 0) {
+    const item = 記録.value[未入力]!;
+    item.展開 = true;
+    void nextTick(() => document.getElementById(`diary-title-${item.key}`)?.focus());
+    throw new Error(`作業 ${未入力 + 1} のタイトルを入力してください。`);
   }
   return {
     日付: 日付.value,
     記録: 記録.value.map((item, i) => ({
       記録SEQ: i + 1, 記録タイトル: item.記録タイトル.trim(),
-      明細: item.明細.filter(行 => 行.内容.trim() || 行.base64内容).map((行, j) => ({
+      明細: item.明細.filter(有効な明細).map((行, j) => ({
         行SEQ: j + 1, 内容: 行.内容, ファイル名: 行.ファイル名, base64内容: 行.base64内容,
       })),
     })),
@@ -194,7 +211,7 @@ async function 保存() {
   try {
     const data = await 日誌操作<日誌>(編集.value ? '変更' : '登録', 保存内容());
     if (閉じた.value) return;
-    日誌を表示(data);
+    日誌を表示(data, true);
     未保存.value = false;
     操作中.value = false;
     if (!編集.value) {
@@ -276,34 +293,53 @@ onBeforeUnmount(() => {
           <span>利用者: {{ (利用者 ?? auth.user)?.利用者ID }} {{ (利用者 ?? auth.user)?.利用者名 }}</span>
           <span v-if="未保存" class="dirty" role="status">未保存</span>
         </div>
-        <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`記録 ${i + 1}`">
-          <header class="actions record-heading">
-            <label class="record-title">
-              <span>記録 {{ i + 1 }} タイトル</span>
-              <input v-model="item.記録タイトル" type="text" maxlength="200" required @input="変更した">
-            </label>
-            <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">記録を外す</button>
-          </header>
-          <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
-            <label>
-              <span>明細 {{ j + 1 }} 内容</span>
-              <textarea v-model="行.内容" rows="3" maxlength="10000" @input="変更した"></textarea>
-            </label>
-            <div class="actions">
-              <label>添付 <input type="file" :aria-label="`記録 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)"></label>
-              <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
+        <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`作業 ${i + 1}`">
+          <button type="button" class="fold-toggle" :aria-expanded="item.展開"
+            :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
+            <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
+            <span>作業 {{ i + 1 }}</span>
+            <span class="fold-label">{{ item.記録タイトル.trim() || 'タイトル未入力' }}</span>
+            <span class="fold-count">明細 {{ item.明細.length }}件</span>
+          </button>
+          <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
+            <header class="actions record-heading">
+              <label class="record-title">
+                <span>作業 {{ i + 1 }} タイトル</span>
+                <input :id="`diary-title-${item.key}`" v-model="item.記録タイトル" type="text"
+                  maxlength="200" aria-required="true" @input="変更した">
+              </label>
+              <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
+            </header>
+            <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
+              <button type="button" class="fold-toggle" :aria-expanded="行.展開"
+                :aria-controls="`diary-line-${行.key}`" @click="行.展開 = !行.展開">
+                <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
+                <span>明細 {{ j + 1 }}</span>
+                <span class="fold-label">{{ 明細見出し(行) }}</span>
+                <span v-if="行.ファイル名" class="fold-count">添付あり</span>
+              </button>
+              <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
+                <label>
+                  <span>明細 {{ j + 1 }} 内容</span>
+                  <textarea v-model="行.内容" rows="3" maxlength="10000" @input="変更した"></textarea>
+                </label>
+                <div class="actions">
+                  <label>添付 <input type="file" :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)"></label>
+                  <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
+                </div>
+                <div v-if="行.ファイル名" class="actions attachment">
+                  <button type="button" class="btn btn-secondary filename" @click="ダウンロード(行)">{{ 行.ファイル名 }} を保存</button>
+                  <button type="button" class="btn btn-secondary" @click="添付を外す(行)">添付を外す</button>
+                </div>
+                <img v-if="行.preview" :src="行.preview" :alt="`添付画像: ${行.ファイル名}`" class="preview"
+                  @error="表示URL解除(行)">
+              </div>
             </div>
-            <div v-if="行.ファイル名" class="actions attachment">
-              <button type="button" class="btn btn-secondary filename" @click="ダウンロード(行)">{{ 行.ファイル名 }} を保存</button>
-              <button type="button" class="btn btn-secondary" @click="添付を外す(行)">添付を外す</button>
-            </div>
-            <img v-if="行.preview" :src="行.preview" :alt="`添付画像: ${行.ファイル名}`" class="preview"
-              @error="表示URL解除(行)">
+            <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
           </div>
-          <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
         </section>
         <div class="actions">
-          <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">記録を追加</button>
+          <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
           <span class="help">添付は1ファイル5 MiB、日誌全体で15 MiBまで。</span>
         </div>
         <div class="actions diary-footer">
@@ -318,12 +354,20 @@ onBeforeUnmount(() => {
 <style scoped src="./日誌.css"></style>
 <style scoped>
 .diary-editor > fieldset{display:grid;gap:16px}
-.diary-header,.diary-record,.diary-line{border:1px solid var(--border-color,#c8d0d6);padding:12px}
-.diary-record,.diary-line{display:grid;gap:10px;justify-items:start;min-width:0}
-.record-heading,.diary-line,.diary-line > label{width:100%}
+.diary-header,.diary-record,.diary-line{border:1px solid var(--border-color,#c8d0d6);min-width:0}
+.diary-header,.fold-body{padding:12px}
+.fold-body{border-top:1px solid var(--border-color,#c8d0d6);display:grid;gap:10px;min-width:0;justify-items:start}
+.fold-toggle{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px 12px;border:0;
+  color:inherit;background:var(--surface-color,#fff);font:inherit;text-align:left;cursor:pointer}
+.fold-toggle:hover{background:color-mix(in srgb,currentColor 6%,var(--surface-color,#fff))}
+.fold-toggle:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+.fold-toggle > :not(.fold-label){flex:none}
+.fold-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
+.fold-count{font-size:.85em}
+.record-heading,.diary-line,.line-body > label{width:100%}
 .record-heading .record-title{flex:1;min-width:min(100%,240px);flex-wrap:wrap}
 .record-title input{flex:1;min-width:100px}
-.diary-line > label{display:grid;gap:4px}
+.line-body > label{display:grid;gap:4px}
 textarea{width:100%;resize:vertical}
 .diary-footer{padding-top:8px;border-top:1px solid var(--border-color,#c8d0d6)}
 .preview{max-width:100%;max-height:220px;object-fit:contain}
