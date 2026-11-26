@@ -8,11 +8,12 @@ import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vu
 import { useAuthStore } from '../../../stores/auth';
 import { qConfirm, qMessage } from '../../../utils/qAlert';
 import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
-import type { 日誌, 日誌明細, 日誌記録, 日誌保存 } from './日誌API';
+import type { 日誌, 日誌明細, 日誌記録, 日誌保存, 日誌添付 } from './日誌API';
 import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上限, 添付合計上限 } from './添付';
 
-type 編集行 = Omit<日誌明細, '行SEQ'> & { key: number; 展開: boolean; preview: string };
-type 編集記録 = Omit<日誌記録, '記録SEQ' | '明細'> & { key: number; 展開: boolean; 明細: 編集行[] };
+type 編集添付 = 日誌添付 & { key: number; preview: string };
+type 編集行 = { key: number; 展開: boolean; 内容: string; 添付: 編集添付[]; ドラッグ数: number };
+type 編集記録 = Omit<日誌記録, '記録SEQ' | '明細' | '新規更新ファイル数'> & { key: number; 展開: boolean; 明細: 編集行[]; 件数入力: string };
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -26,6 +27,7 @@ const 読込失敗 = ref(false);
 const 未保存 = ref(false);
 const 記録上限 = 30;
 const 行上限 = 100;
+const 明細添付件数上限 = 20;
 const 編集 = computed(() => route.query.モード === '編集' || (!route.query.モード && Boolean(route.query.日付)));
 let 登録直後の日付 = '';
 const 行数 = computed(() => 記録.value.reduce((count, item) => count + item.明細.length, 0));
@@ -46,32 +48,35 @@ function 表示URL(base64: string): string {
   }
   return '';
 }
+function 添付を作る(file: 日誌添付): 編集添付 {
+  return { ...file, key: ++次のキー, preview: 表示URL(file.base64内容) };
+}
 function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
   return {
-    key: ++次のキー, 展開, 内容: 行?.内容 ?? '', ファイル名: 行?.ファイル名 ?? '',
-    base64内容: 行?.base64内容 ?? '', preview: 行?.base64内容 ? 表示URL(行.base64内容) : '',
+    key: ++次のキー, 展開, 内容: 行?.内容 ?? '', 添付: (行?.添付 ?? []).map(添付を作る), ドラッグ数: 0,
   };
 }
 function 記録を作る(item?: 日誌記録, 展開 = true, 保存前?: 編集記録): 編集記録 {
   const 保存行 = 保存前?.明細.filter(有効な明細);
   return {
-    key: ++次のキー, 展開, 記録タイトル: item?.記録タイトル ?? '',
+    key: ++次のキー, 展開, 記録タイトル: item?.記録タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
     明細: item ? item.明細.map((行, i) => 行を作る(行, 保存行?.[i]?.展開 ?? false)) : [行を作る()],
   };
 }
 function 有効な明細(行: 編集行) {
-  return Boolean(行.内容.trim() || 行.base64内容);
+  return Boolean(行.内容.trim() || 行.添付.length);
 }
 function 明細見出し(行: 編集行) {
   const 要約 = 行.内容.trim().replace(/\s+/g, ' ');
-  return 要約 || 行.ファイル名 || '未入力';
+  return 要約 || 行.添付[0]?.ファイル名 || '未入力';
 }
-function 表示URL解除(行: 編集行) {
-  if (行.preview) URL.revokeObjectURL(行.preview);
-  行.preview = '';
+function 表示URL解除(file: 編集添付) {
+  if (file.preview) URL.revokeObjectURL(file.preview);
+  file.preview = '';
 }
+function 行の表示URL解除(行: 編集行) { 行.添付.forEach(表示URL解除); }
 function 表示を片付ける() {
-  for (const item of 記録.value) for (const 行 of item.明細) 表示URL解除(行);
+  for (const item of 記録.value) for (const 行 of item.明細) 行の表示URL解除(行);
 }
 function 変更した() { 未保存.value = true; }
 function 記録を追加() {
@@ -82,7 +87,7 @@ function 記録を追加() {
   変更した();
 }
 function 記録を削除(index: number) {
-  for (const 行 of 記録.value[index]!.明細) 表示URL解除(行);
+  for (const 行 of 記録.value[index]!.明細) 行の表示URL解除(行);
   記録.value.splice(index, 1);
   変更した();
 }
@@ -92,40 +97,65 @@ function 行を追加(item: 編集記録) {
   変更した();
 }
 function 行を削除(item: 編集記録, index: number) {
-  表示URL解除(item.明細[index]!);
+  行の表示URL解除(item.明細[index]!);
   item.明細.splice(index, 1);
   変更した();
 }
-function 添付を外す(行: 編集行) {
-  表示URL解除(行);
-  行.ファイル名 = 行.base64内容 = '';
+function 添付を外す(行: 編集行, index: number) {
+  const [file] = 行.添付.splice(index, 1);
+  if (file) 表示URL解除(file);
   変更した();
 }
 
-async function 添付を選ぶ(event: Event, 行: 編集行) {
+function 添付を選ぶ(event: Event, 行: 編集行) {
   const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
+  const files = Array.from(input.files ?? []);
   input.value = '';
-  if (!file || 操作中.value) return;
+  void 添付を追加(files, 行);
+}
+function ファイルドラッグ(event: DragEvent) {
+  return event.dataTransfer?.types.includes('Files') ?? false;
+}
+function 添付ドラッグ開始(event: DragEvent, 行: 編集行) {
+  if (ファイルドラッグ(event) && !操作中.value) 行.ドラッグ数 += 1;
+}
+function 添付ドラッグ終了(event: DragEvent, 行: 編集行) {
+  if (ファイルドラッグ(event)) 行.ドラッグ数 = Math.max(0, 行.ドラッグ数 - 1);
+}
+function 添付ドラッグ中(event: DragEvent) {
+  if (event.dataTransfer && ファイルドラッグ(event)) {
+    event.dataTransfer.dropEffect = 操作中.value ? 'none' : 'copy';
+  }
+}
+function 添付をドロップ(event: DragEvent, 行: 編集行) {
+  行.ドラッグ数 = 0;
+  void 添付を追加(Array.from(event.dataTransfer?.files ?? []), 行);
+}
+
+async function 添付を追加(files: File[], 行: 編集行) {
+  if (!files.length || 操作中.value) return;
   エラー.value = '';
-  const 他の添付サイズ = 記録.value.flatMap(item => item.明細)
-    .filter(item => item.key !== 行.key).reduce((sum, item) => sum + 添付サイズ(item.base64内容), 0);
-  if (!file.size || file.size > 添付上限 || 他の添付サイズ + file.size > 添付合計上限) {
+  if (行.添付.length + files.length > 明細添付件数上限) {
+    エラー.value = `明細1行の添付は${明細添付件数上限}ファイルまでです。`;
+    return;
+  }
+  const 既存サイズ = 記録.value.flatMap(item => item.明細).flatMap(item => item.添付)
+    .reduce((sum, file) => sum + 添付サイズ(file.base64内容), 0);
+  if (files.some(file => !file.size || file.size > 添付上限)
+      || 既存サイズ + files.reduce((sum, file) => sum + file.size, 0) > 添付合計上限) {
     エラー.value = '添付は空でないファイルを選び、1件5 MiB、日誌全体で15 MiB以内にしてください。';
     return;
   }
-  if (Array.from(file.name).length > 255) {
-    エラー.value = 'ファイル名は255文字以内にしてください。';
+  if (files.some(({ name }) => !name.trim() || name === '.' || name === '..' || Array.from(name).length > 255
+      || [...name].some(c => '/\\:'.includes(c) || c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127))) {
+    エラー.value = 'ファイル名は255文字以内で、パスや制御文字を含まない名前にしてください。';
     return;
   }
   操作中.value = true;
   try {
-    const base64 = await 添付を読む(file);
+    const data = await Promise.all(files.map(async file => ({ ファイル名: file.name, base64内容: await 添付を読む(file) })));
     if (閉じた.value) return;
-    表示URL解除(行);
-    行.ファイル名 = file.name;
-    行.base64内容 = base64;
-    行.preview = 表示URL(base64);
+    行.添付.push(...data.map(添付を作る));
     変更した();
   } catch (e) {
     エラー.value = エラー表示(e, '添付の読み込みに失敗しました。');
@@ -133,7 +163,7 @@ async function 添付を選ぶ(event: Event, 行: 編集行) {
     操作中.value = false;
   }
 }
-function ダウンロード(行: 編集行) {
+function ダウンロード(行: 編集添付) {
   try {
     // 保存したファイルは常にダウンロード。HTMLやSVGを同一オリジンで開かない。
     const url = URL.createObjectURL(添付Blob(行.base64内容));
@@ -176,7 +206,7 @@ async function 読み込み() {
   }
   操作中.value = true;
   try {
-    const data = await 日誌操作<日誌>('取得', { 日付: 対象日付 });
+    const data = await 日誌操作<日誌>('取得', { 日付: 対象日付, 添付形式: '複数' });
     if (!閉じた.value) 日誌を表示(data);
   } catch (e) {
     読込失敗.value = true;
@@ -194,12 +224,21 @@ function 保存内容(): 日誌保存 {
     void nextTick(() => document.getElementById(`diary-title-${item.key}`)?.focus());
     throw new Error(`作業 ${未入力 + 1} のタイトルを入力してください。`);
   }
+  const 不正件数 = 記録.value.findIndex(item => item.件数入力.trim() !== '' && (
+    !/^[0-9]+$/.test(item.件数入力.trim()) || !Number.isSafeInteger(Number(item.件数入力))
+  ));
+  if (不正件数 >= 0) {
+    const item = 記録.value[不正件数]!;
+    item.展開 = true;
+    void nextTick(() => document.getElementById(`diary-count-${item.key}`)?.focus());
+    throw new Error(`作業 ${不正件数 + 1} の新規・更新ファイル数は0以上の整数を入力してください。`);
+  }
   return {
-    日付: 日付.value,
+    日付: 日付.value, 添付形式: "複数",
     記録: 記録.value.map((item, i) => ({
-      記録SEQ: i + 1, 記録タイトル: item.記録タイトル.trim(),
+      記録SEQ: i + 1, 記録タイトル: item.記録タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
       明細: item.明細.filter(有効な明細).map((行, j) => ({
-        行SEQ: j + 1, 内容: 行.内容, ファイル名: 行.ファイル名, base64内容: 行.base64内容,
+        行SEQ: j + 1, 内容: 行.内容, 添付: 行.添付.map(({ ファイル名, base64内容 }) => ({ ファイル名, base64内容 })),
       })),
     })),
   };
@@ -299,6 +338,7 @@ onBeforeUnmount(() => {
             <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
             <span>作業 {{ i + 1 }}</span>
             <span class="fold-label">{{ item.記録タイトル.trim() || 'タイトル未入力' }}</span>
+            <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
             <span class="fold-count">明細 {{ item.明細.length }}件</span>
           </button>
           <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
@@ -308,6 +348,11 @@ onBeforeUnmount(() => {
                 <input :id="`diary-title-${item.key}`" v-model="item.記録タイトル" type="text"
                   maxlength="200" aria-required="true" @input="変更した">
               </label>
+              <label class="record-count">
+                <span>新規・更新ファイル数（自己申告）</span>
+                <input :id="`diary-count-${item.key}`" v-model="item.件数入力" type="text" inputmode="numeric"
+                  maxlength="16" @input="変更した">
+              </label>
               <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
             </header>
             <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
@@ -316,23 +361,31 @@ onBeforeUnmount(() => {
                 <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
                 <span>明細 {{ j + 1 }}</span>
                 <span class="fold-label">{{ 明細見出し(行) }}</span>
-                <span v-if="行.ファイル名" class="fold-count">添付あり</span>
+                <span v-if="行.添付.length" class="fold-count">添付 {{ 行.添付.length }}件</span>
               </button>
               <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
                 <label>
                   <span>明細 {{ j + 1 }} 内容</span>
                   <textarea v-model="行.内容" rows="3" maxlength="10000" @input="変更した"></textarea>
                 </label>
-                <div class="actions">
-                  <label>添付 <input type="file" :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)"></label>
-                  <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
-                </div>
-                <div v-if="行.ファイル名" class="actions attachment">
-                  <button type="button" class="btn btn-secondary filename" @click="ダウンロード(行)">{{ 行.ファイル名 }} を保存</button>
-                  <button type="button" class="btn btn-secondary" @click="添付を外す(行)">添付を外す</button>
-                </div>
-                <img v-if="行.preview" :src="行.preview" :alt="`添付画像: ${行.ファイル名}`" class="preview"
-                  @error="表示URL解除(行)">
+                <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }"
+                  @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
+                  @dragleave="添付ドラッグ終了($event, 行)" @drop.prevent.stop="添付をドロップ($event, 行)">
+                  <span>ここにファイルをドロップ（複数可）</span>
+                  <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
+                </label>
+                <ul v-if="行.添付.length" class="attachment-list">
+                  <li v-for="(file, index) in 行.添付" :key="file.key">
+                    <div class="actions attachment">
+                      <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
+                      <button type="button" class="btn btn-secondary" :aria-label="`${file.ファイル名} を外す`"
+                        @click="添付を外す(行, index)">添付を外す</button>
+                    </div>
+                    <img v-if="file.preview" :src="file.preview" :alt="`添付画像: ${file.ファイル名}`" class="preview"
+                      @error="表示URL解除(file)">
+                  </li>
+                </ul>
+                <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
               </div>
             </div>
             <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
@@ -340,7 +393,7 @@ onBeforeUnmount(() => {
         </section>
         <div class="actions">
           <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
-          <span class="help">添付は1ファイル5 MiB、日誌全体で15 MiBまで。</span>
+          <span class="help">添付は明細1行20ファイル、1ファイル5 MiB、日誌全体15 MiBまで。</span>
         </div>
         <div class="actions diary-footer">
           <button type="submit" class="btn btn-primary">保存</button>
@@ -367,11 +420,18 @@ onBeforeUnmount(() => {
 .record-heading,.diary-line,.line-body > label{width:100%}
 .record-heading .record-title{flex:1;min-width:min(100%,240px);flex-wrap:wrap}
 .record-title input{flex:1;min-width:100px}
+.record-count{flex-wrap:wrap}
+.record-count input{width:8em}
 .line-body > label{display:grid;gap:4px}
 textarea{width:100%;resize:vertical}
 .diary-footer{padding-top:8px;border-top:1px solid var(--border-color,#c8d0d6)}
 .preview{max-width:100%;max-height:220px;object-fit:contain}
 .filename{overflow-wrap:anywhere;max-width:100%;text-align:start}
 .attachment{max-width:100%}
+.drop-zone{box-sizing:border-box;padding:12px;border:2px dashed var(--border-color,#8a9ca9);border-radius:6px}
+.drop-zone:focus-within,.drop-zone.drag-active{border-color:#2689b3;background:color-mix(in srgb,#2689b3 12%,transparent)}
+.drop-zone input{max-width:100%}
+.attachment-list{width:100%;list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.attachment-list > li{min-width:0}
 .help,.dirty{font-size:.85em}
 </style>

@@ -56,3 +56,40 @@ class T日誌明細(日誌Base):
     内容: Mapped[str] = mapped_column(Text)
     ファイル名: Mapped[str] = mapped_column(Text)
     base64内容: Mapped[str] = mapped_column(Text)
+
+
+class T日誌添付(日誌Base):
+    __tablename__ = "T日誌添付"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["利用者ID", "日付", "記録SEQ", "行SEQ"],
+            ["T日誌明細.利用者ID", "T日誌明細.日付", "T日誌明細.記録SEQ", "T日誌明細.行SEQ"],
+            ondelete="CASCADE", onupdate="CASCADE",
+        ),
+        CheckConstraint("添付SEQ > 0"),
+    )
+
+    利用者ID: Mapped[str] = mapped_column(Text, primary_key=True)
+    日付: Mapped[str] = mapped_column(Text, primary_key=True)
+    記録SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
+    行SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
+    添付SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
+    ファイル名: Mapped[str] = mapped_column(Text)
+    base64内容: Mapped[str] = mapped_column(Text)
+
+
+class T日誌作業集計(日誌Base):
+    __tablename__ = "T日誌作業集計"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["利用者ID", "日付", "記録SEQ"],
+            ["T日誌記録.利用者ID", "T日誌記録.日付", "T日誌記録.記録SEQ"],
+            ondelete="CASCADE",
+        ),
+        CheckConstraint("新規更新ファイル数 >= 0"),
+    )
+
+    利用者ID: Mapped[str] = mapped_column(Text, primary_key=True)
+    日付: Mapped[str] = mapped_column(Text, primary_key=True)
+    記録SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
+    新規更新ファイル数: Mapped[int] = mapped_column(Integer)

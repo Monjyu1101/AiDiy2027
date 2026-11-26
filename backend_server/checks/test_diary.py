@@ -116,7 +116,7 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
         small = {"日付": DATE, "記録": [{"記録SEQ": 1, "記録タイトル": "差し替え"}]}
         result = self.call("変更", small).json()
-        self.assertEqual(result["data"]["記録"], [{"記録SEQ": 1, "記録タイトル": "差し替え", "明細": []}])
+        self.assertEqual(result["data"]["記録"], [{"記録SEQ": 1, "記録タイトル": "差し替え", "新規更新ファイル数": None, "明細": []}])
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM T日誌明細").fetchone()[0], 0)
         self.assertEqual(self.call("削除", {"日付": DATE}).json()["status"], "OK")
@@ -184,8 +184,9 @@ class 日誌Tests(unittest.TestCase):
         denied = self.call("作業削除", {"日付": DATE, "記録SEQ": 1}, user="two").json()
         self.assertEqual(denied["error"]["code"], "NOT_FOUND")
         entry = run("取得")["記録"][0]
-        self.assertEqual(entry, {"記録SEQ": 1, "記録タイトル": "進捗 100%", "明細": [
-            {"行SEQ": 1, "内容": "確認済み", "ファイル名": "進捗.png", "base64内容": PNG},
+        self.assertEqual(entry, {"記録SEQ": 1, "記録タイトル": "進捗 100%", "新規更新ファイル数": None, "明細": [
+            {"行SEQ": 1, "内容": "確認済み", "ファイル名": "進捗.png", "base64内容": PNG,
+             "添付": [{"ファイル名": "進捗.png", "base64内容": PNG}]},
         ]})
         run("内容変更", 記録SEQ=1, 行SEQ=1, ファイル名="", base64内容="")
         self.assertEqual(run("取得")["記録"][0]["明細"][0]["base64内容"], "")
@@ -229,6 +230,58 @@ class 日誌Tests(unittest.TestCase):
         listing = self.call("一覧").json()["data"]
         self.assertEqual(listing["total"], 1)
         self.assertEqual(listing["items"][0]["記録件数"], 8)
+
+    def test_複数添付と自己申告は並替えと再起動後も維持(self):
+        添付 = [{"ファイル名": "画像.png", "base64内容": PNG}, {"ファイル名": "説明.txt", "base64内容": "YWJj"}]
+        body = {"日付": DATE, "添付形式": "複数", "記録": [
+            {"記録SEQ": 1, "記録タイトル": "先頭", "新規更新ファイル数": None},
+            {"記録SEQ": 2, "記録タイトル": "測定", "新規更新ファイル数": 0, "明細": [
+                {"行SEQ": 1, "内容": "先頭行", "添付": []},
+                {"行SEQ": 2, "内容": "", "添付": 添付},
+            ]},
+        ]}
+        self.assertEqual(self.call("登録", body).json()["status"], "OK")
+        self.assertEqual(self.call("検索", {"キーワード": "説明.txt"}).json()["data"]["total"], 1)
+        self.assertNotIn(PNG, self.call("検索", {}).text)
+        self.assertEqual(self.call("変更", sample()).json()["error"]["code"], "VALIDATION_ERROR")
+        keys = {"日付": DATE, "記録SEQ": 2, "行SEQ": 2}
+        self.assertEqual(self.call("内容変更", {**keys, "内容": "確認済み"}).json()["status"], "OK")
+        self.assertEqual(self.call("内容変更", {**keys, "ファイル名": "", "base64内容": ""}).json()["error"]["code"], "VALIDATION_ERROR")
+        self.assertEqual(self.call("内容削除", {**keys, "行SEQ": 1}).json()["status"], "OK")
+        self.assertEqual(self.call("作業削除", {"日付": DATE, "記録SEQ": 1}).json()["status"], "OK")
+        self.lifecycle.close()
+        self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        data = self.call("取得", {"日付": DATE, "添付形式": "複数"}).json()["data"]
+        self.assertEqual(data["記録"], [
+            {"記録SEQ": 1, "記録タイトル": "測定", "新規更新ファイル数": 0,
+             "明細": [{"行SEQ": 1, "内容": "確認済み", "添付": 添付}]},
+        ])
+        self.assertEqual(self.call("作業変更", {"日付": DATE, "記録SEQ": 1, "記録タイトル": "別名"}).json()["status"], "OK")
+        self.assertEqual(self.call("取得", {"日付": DATE}).json()["data"]["記録"][0]["新規更新ファイル数"], 0)
+        self.assertEqual(self.call("作業変更", {"日付": DATE, "記録SEQ": 1, "記録タイトル": "別名",
+                                              "新規更新ファイル数": None}).json()["status"], "OK")
+        self.assertIsNone(self.call("取得", {"日付": DATE}).json()["data"]["記録"][0]["新規更新ファイル数"])
+        self.assertEqual(self.call("変更", {"日付": DATE, "添付形式": "複数", "記録": [
+            {"記録SEQ": 1, "記録タイトル": "添付を外した"},
+        ]}).json()["status"], "OK")
+
+    def test_旧DBを再作成せず添付を読み出す(self):
+        self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
+        self.lifecycle.close()
+        with closing(sqlite3.connect(self.path)) as db:
+            db.execute("DROP TABLE T日誌添付")
+            db.execute("DROP TABLE T日誌作業集計")
+            db.execute("UPDATE T日誌明細 SET ファイル名 = ?, base64内容 = ? WHERE 行SEQ = 2", ("旧画像.png", PNG))
+            db.commit()
+        self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        response = self.call("取得", {"日付": DATE, "添付形式": "複数"}).json()
+        row = response["data"]["記録"][0]
+        self.assertIsNone(row["新規更新ファイル数"])
+        self.assertEqual(row["明細"][1]["添付"], [{"ファイル名": "旧画像.png", "base64内容": PNG}])
+        for value in [-1, 1.25, True]:
+            result = self.call("作業変更", {"日付": DATE, "記録SEQ": 1, "記録タイトル": "作業",
+                                         "新規更新ファイル数": value})
+            self.assertEqual(result.status_code, 422)
 
     def test_添付容量制限(self):
         for size, count in [(5 * 1024 * 1024 + 1, 1), (4 * 1024 * 1024, 4)]:

@@ -90,3 +90,10 @@ class DiaryControlTests(unittest.IsolatedAsyncioTestCase):
                     content = wire.get("structuredContent") or json.loads(wire["content"][0]["text"])
                     self.assertEqual(content["status"], "OK" if token else "NG")
                 self.assertEqual([r.headers["authorization"] for r in self.calls], ["Bearer aaa.bbb.ccc", "Bearer ddd.eee.fff"])
+                auth = {"Authorization": "Bearer aaa.bbb.ccc"}
+                添付 = [{"ファイル名": "a.txt", "base64内容": "YQ=="}, {"ファイル名": "b.txt", "base64内容": "Yg=="}]
+                result = await client.post("/mcp", json={"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+                    "params": {"name": "diary_content_create", "arguments": {"日付": "2026-11-26", "記録SEQ": 1, "添付": 添付}},
+                }, headers={**headers, **auth})
+                self.assertFalse(result.json()["result"].get("isError", False), result.text)
+                self.assertEqual(json.loads(self.calls[-1].content)["添付"], 添付)

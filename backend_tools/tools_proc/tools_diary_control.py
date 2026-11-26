@@ -8,6 +8,7 @@ from collections.abc import Mapping
 import httpx
 from fastapi import APIRouter, HTTPException, Request
 from mcp.server.mcpserver import Context
+from pydantic import BaseModel, ConfigDict
 from starlette.responses import JSONResponse
 
 NAME = "aidiy_dialy_control"
@@ -28,6 +29,13 @@ _OPERATIONS = {
 _JWT = re.compile(r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
 
 
+class 日誌添付(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    ファイル名: str
+    base64内容: str
+
+
 def bearer(headers: Mapping[str, str] | None) -> str:
     if headers is None:
         return ""
@@ -45,6 +53,13 @@ def _error(code: str, message: str) -> dict:
 async def _call(method: str, payload: dict, authorization: str) -> tuple[int, dict]:
     if not authorization:
         return 401, _error("AUTH_REQUIRED", "日誌の利用にはAiDiyの通常ログインのBearerトークンが必要です。")
+    if method == "diary_work_update" and "自己申告を解除" in payload:
+        payload = dict(payload)
+        解除 = payload.pop("自己申告を解除")
+        if type(解除) is not bool or (解除 and payload.get("新規更新ファイル数") is not None):
+            return 422, _error("VALIDATION_ERROR", "自己申告の解除には true／false を指定し、件数と同時に指定しないでください。")
+        if 解除:
+            payload["新規更新ファイル数"] = None
     try:
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=30) as client:
             response = await client.post(f"http://127.0.0.1:8098/apps/T日誌/{_OPERATIONS[method]}",
@@ -77,14 +92,19 @@ def register_tools(mcp):
                          limit=limit, offset=offset)
 
     @mcp.tool()
-    async def diary_work_create(ctx: Context, 日付: str, 記録タイトル: str) -> dict:
+    async def diary_work_create(ctx: Context, 日付: str, 記録タイトル: str, 新規更新ファイル数: int | None = None) -> dict:
         """指定日に作業を追加して記録SEQを返す。その日の日誌がなければ同時に1件だけ作る。"""
-        return await run("diary_work_create", ctx, 日付=日付, 記録タイトル=記録タイトル)
+        return await run("diary_work_create", ctx, 日付=日付, 記録タイトル=記録タイトル, 新規更新ファイル数=新規更新ファイル数)
 
     @mcp.tool()
-    async def diary_work_update(ctx: Context, 日付: str, 記録SEQ: int, 記録タイトル: str) -> dict:
-        """指定した作業のタイトルだけを変更する。明細は維持する。"""
-        return await run("diary_work_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 記録タイトル=記録タイトル)
+    async def diary_work_update(
+        ctx: Context, 日付: str, 記録SEQ: int, 記録タイトル: str,
+        新規更新ファイル数: int | None = None, 自己申告を解除: bool = False,
+    ) -> dict:
+        """作業のタイトルと任意で自己申告件数を変更する。件数の省略は維持、自己申告を解除=true で未入力に戻す。"""
+        集計 = {"新規更新ファイル数": 新規更新ファイル数} if 新規更新ファイル数 is not None else {}
+        return await run("diary_work_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 記録タイトル=記録タイトル,
+                         自己申告を解除=自己申告を解除, **集計)
 
     @mcp.tool()
     async def diary_work_delete(ctx: Context, 日付: str, 記録SEQ: int) -> dict:
@@ -93,20 +113,24 @@ def register_tools(mcp):
 
     @mcp.tool()
     async def diary_content_create(
-        ctx: Context, 日付: str, 記録SEQ: int, 内容: str = "", ファイル名: str = "", base64内容: str = "",
+        ctx: Context, 日付: str, 記録SEQ: int, 内容: str = "", ファイル名: str | None = None, base64内容: str | None = None,
+        添付: list[日誌添付] | None = None,
     ) -> dict:
-        """指定した作業に明細を1行追加して行SEQを返す。本文または添付が必要。添付はファイル名とBase64内容を組で指定する。"""
+        """指定した作業に明細を1行追加して行SEQを返す。本文または添付が必要。複数ファイルは添付にファイル名・base64内容の組を並べて指定する。"""
         return await run("diary_content_create", ctx, 日付=日付, 記録SEQ=記録SEQ,
-                         内容=内容, ファイル名=ファイル名, base64内容=base64内容)
+                         内容=内容, ファイル名=ファイル名, base64内容=base64内容,
+                         添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()
     async def diary_content_update(
         ctx: Context, 日付: str, 記録SEQ: int, 行SEQ: int, 内容: str | None = None,
         ファイル名: str | None = None, base64内容: str | None = None,
+        添付: list[日誌添付] | None = None,
     ) -> dict:
-        """指定した明細1行を変更する。省略した項目は維持し、添付はファイル名とBase64内容を両方空文字にすると解除する。"""
+        """指定した明細1行を変更する。省略した項目は維持し、添付一覧指定で置換し、空配列で全添付を外す。"""
         return await run("diary_content_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 行SEQ=行SEQ,
-                         内容=内容, ファイル名=ファイル名, base64内容=base64内容)
+                         内容=内容, ファイル名=ファイル名, base64内容=base64内容,
+                         添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()
     async def diary_content_delete(ctx: Context, 日付: str, 記録SEQ: int, 行SEQ: int) -> dict:
@@ -127,8 +151,8 @@ def create_router() -> APIRouter:
             return JSONResponse(result, status_code=status)
         body = bytearray()
         async for chunk in request.stream():
-            if len(body) + len(chunk) > 8 * 1024 * 1024:
-                return JSONResponse(_error("PAYLOAD_TOO_LARGE", "日誌ツールの送信上限（8 MiB）を超えています。"), status_code=413)
+            if len(body) + len(chunk) > 21 * 1024 * 1024:
+                return JSONResponse(_error("PAYLOAD_TOO_LARGE", "日誌ツールの送信上限（21 MiB）を超えています。"), status_code=413)
             body.extend(chunk)
         try:
             payload = json.loads(body)

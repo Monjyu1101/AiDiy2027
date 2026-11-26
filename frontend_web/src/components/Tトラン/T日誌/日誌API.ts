@@ -8,15 +8,19 @@ export interface 日誌見出し {
   利用者ID: string;
   利用者名: string;
 }
+export interface 日誌添付 {
+  ファイル名: string;
+  base64内容: string;
+}
 export interface 日誌明細 {
   行SEQ: number;
   内容: string;
-  ファイル名: string;
-  base64内容: string;
+  添付: 日誌添付[];
 }
 export interface 日誌記録 {
   記録SEQ: number;
   記録タイトル: string;
+  新規更新ファイル数: number | null;
   明細: 日誌明細[];
 }
 export interface 日誌 extends 日誌見出し { 記録: 日誌記録[] }
@@ -25,7 +29,7 @@ export interface 日誌一覧 {
   total: number;
   limit: number | null;
 }
-export interface 日誌保存 { 日付: string; 記録: 日誌記録[] }
+export interface 日誌保存 { 日付: string; 添付形式: "複数"; 記録: 日誌記録[] }
 type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
 
 export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {
