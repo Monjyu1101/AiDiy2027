@@ -71,6 +71,10 @@ if(process.versions.electron){
    window.dispatchEvent(new Event('focus'));await wait(10);expect(getComputedStyle(content).scrollbarWidth==='thin','focus shows scrollbar');expect(!document.querySelector('.sticky-overflow-hint'),'focus hides ellipsis');
    window.dispatchEvent(new Event('blur'));content.scrollTop=content.scrollHeight;content.dispatchEvent(new Event('scroll'));await wait(10);expect(!document.querySelector('.sticky-overflow-hint'),'end of content hides ellipsis');
    const dueButton=document.querySelector('.sticky-deadline'),dueDialog=document.querySelector('.sticky-deadline-dialog');
+   const addButton=document.querySelector('.sticky-add'),trashButton=document.querySelector('.sticky-trash');
+   expect(dueButton.querySelector('.sticky-clock')&&dueButton.parentElement.lastElementChild===dueButton,'clock replaces the heading add button');
+   expect(trashButton.nextElementSibling===addButton&&addButton.closest('.sticky-bottom'),'add button is after trash in footer');
+   addButton.click();await wait(10);expect(window.addCalls===1,'footer add keeps new memo action');
    dueButton.click();const dueInput=dueDialog.querySelector('input');expect(dueDialog.open,'deadline editor opens');
    dueInput.value='2000-01-02T03:04';dueInput.dispatchEvent(new Event('input',{bubbles:true}));
    window.handlers.blur();await wait(10);expect(dueDialog.open,'focus on OS picker does not discard editing');
@@ -112,8 +116,8 @@ if(process.versions.electron){
    const {build}=req('esbuild'),{parse,compileScript}=req('@vue/compiler-sfc');
    const component=path.resolve(__dirname,'../memo/ui/src/メモ画面.vue');
    fs.writeFileSync(path.join(temp,'entry.js'),`import {createApp} from 'vue';import Memo from ${JSON.stringify(component)};
-window.handlers={};window.calls=[];window.closedCalls=0;window.dragCalls=0;
-window.aidiyMemo={getInitialState:async()=>({note:null,sources:[{id:'project:one',名前:'プロジェクト',パス:'/fixture/_AIDIY/aidiy_memo'}],sourceId:'project:one',bounds:{x:0,y:0,width:320,height:260}}),onBounds(fn){window.handlers.bounds=fn},onBlur(fn){window.handlers.blur=fn},onCloseRequested(fn){window.handlers.close=fn},completeClose:async value=>{window.closeResult=value},close:async()=>{window.closedCalls++},setNoteIdentity:async value=>{window.identity=value},beginWindowMove:async()=>{window.dragCalls++;return 'drag-token'},moveWindow:async()=>true,endWindowMove:async()=>true};
+window.handlers={};window.calls=[];window.closedCalls=0;window.dragCalls=0;window.addCalls=0;
+window.aidiyMemo={getInitialState:async()=>({note:null,sources:[{id:'project:one',名前:'プロジェクト',パス:'/fixture/_AIDIY/aidiy_memo'}],sourceId:'project:one',bounds:{x:0,y:0,width:320,height:260}}),onBounds(fn){window.handlers.bounds=fn},onBlur(fn){window.handlers.blur=fn},onCloseRequested(fn){window.handlers.close=fn},completeClose:async value=>{window.closeResult=value},newMemo:async()=>{window.addCalls++;return true},close:async()=>{window.closedCalls++},setNoteIdentity:async value=>{window.identity=value},beginWindowMove:async()=>{window.dragCalls++;return 'drag-token'},moveWindow:async()=>true,endWindowMove:async()=>true};
 createApp(Memo,{api:async(route,{body})=>{window.calls.push({route,body});if(window.failSave)throw Object.assign(Error('合成競合'),{status:409});return {...body,id:body.id||'one.memo.json',保存先:body.保存先,revision:'revision-'+window.calls.length}}}).mount('#app');`);
    fs.writeFileSync(path.join(temp,'index.html'),'<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="app.css"><div id="app"></div><script src="app.js"></script>');
    await build({entryPoints:[path.join(temp,'entry.js')],outfile:path.join(temp,'app.js'),bundle:true,alias:{vue:req.resolve('vue/dist/vue.runtime.esm-bundler.js')},define:{'process.env.NODE_ENV':'"production"',__VUE_OPTIONS_API__:'false',__VUE_PROD_DEVTOOLS__:'false',__VUE_PROD_HYDRATION_MISMATCH_DETAILS__:'false'},plugins:[{name:'vue-sfc',setup(b){b.onLoad({filter:/\.vue$/},async({path:filename})=>{const {descriptor,errors}=parse(fs.readFileSync(filename,'utf8'));if(errors.length)throw errors[0];return {contents:compileScript(descriptor,{id:'memo',inlineTemplate:true}).content,loader:'js',resolveDir:path.dirname(filename)}})}}]});

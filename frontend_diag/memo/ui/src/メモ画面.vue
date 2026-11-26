@@ -168,7 +168,10 @@ onUnmounted(()=>{clearTimeout(dueTimer);document.removeEventListener('visibility
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
-   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move"><input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})"><button type="button" class="sticky-deadline" :class="{'sticky-deadline-set':due}" :aria-label="due ? `付箋の期限を変更: ${dueLabel}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :title="due ? `${期限入力表示(due).replace('T',' ')}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :disabled="!ready||closing" @click="openDeadline"><time v-if="due" :datetime="due">{{dueLabel}}</time><span v-else>期限</span></button><button class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button></header>
+   <header class="sticky-header" title="ドラッグして移動" @pointerdown="move">
+    <input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})">
+    <button type="button" class="sticky-deadline" :aria-label="due ? `付箋の期限を変更: ${dueLabel}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :title="due ? `${期限入力表示(due).replace('T',' ')}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :disabled="!ready||closing" @click="openDeadline"><time v-if="due" :datetime="due">{{dueLabel}}</time><svg class="sticky-clock" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.4 1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+   </header>
    <dialog ref="dueDialog" class="sticky-deadline-dialog" aria-label="付箋の期限">
     <form @submit.prevent="applyDeadline()">
      <input ref="dueInput" v-model="dueValue" type="datetime-local" aria-label="期限の日時（ローカル時刻）" required step="60" min="0001-01-01T00:00" max="9999-12-31T23:59" @input="$event.target.setCustomValidity('')">
@@ -184,9 +187,10 @@ onUnmounted(()=>{clearTimeout(dueTimer);document.removeEventListener('visibility
    <div v-if="imageBusy" class="sticky-save-state" role="status">画像を読み込み中…</div>
    <div v-if="state.error" class="sticky-error" role="alert"><span>{{state.error}} 入力内容は保持しています。</span><div><button type="button" @click="retry">再試行</button><button type="button" @click="copyText">{{copied?'コピー済':'本文をコピー'}}</button></div></div>
    <div v-if="addError" class="sticky-error" role="alert">{{addError}}</div>
-   <div class="sticky-bottom" :title="source" aria-label="付箋の色と保存先">
+   <div class="sticky-bottom" :title="source" aria-label="付箋の色と操作">
     <div class="sticky-palette"><button v-for="value in メモ色" :key="value" type="button" :class="`sticky-${value}`" :aria-label="`${色名[value]}色の付箋`" :aria-pressed="color===value" :disabled="!ready||closing" @click="edit({色:value})"></button></div>
     <span class="sticky-save-state" role="status">{{state.error?'未保存':state.saving?'保存中…':state.dirty?'未保存':''}}</span><button type="button" class="sticky-trash" aria-label="付箋をゴミ箱へ移動" title="ゴミ箱へ移動" :disabled="!ready||closing" @click="trash">🗑</button>
+    <button type="button" class="sticky-add" aria-label="新しい付箋を追加" title="新しい付箋を追加" :disabled="!ready||closing||adding" @pointerdown.stop @click.stop="add">＋</button>
    </div>
   </template>
  </main>
