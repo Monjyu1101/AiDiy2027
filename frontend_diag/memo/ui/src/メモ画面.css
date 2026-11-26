@@ -78,8 +78,10 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 
 /* 右端の時計は旧「＋」と同じ幅。設定時はその左に日時を表示する。 */
 .sticky-deadline{display:flex;align-items:center;gap:4px;flex:none;min-height:26px;white-space:nowrap;font:600 11px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:inherit;border:1px solid transparent;border-radius:4px;padding:0;background:transparent;cursor:pointer}
+.sticky-deadline-set{padding-inline-start:6px;border-color:color-mix(in srgb,currentColor calc(var(--sticky-deadline-ring,0.36)*100%),transparent)}
 .sticky-clock{display:block;box-sizing:content-box;padding:0 3px;flex:none}
-.sticky-deadline:hover,.sticky-deadline:focus-visible{border-color:currentColor;opacity:1}
+.sticky-note:not(.sticky-due-soon):not(.sticky-overdue) .sticky-deadline:hover{border-color:currentColor}
+.sticky-deadline:focus-visible{outline:2px solid currentColor;outline-offset:1px}
 .sticky-deadline-dialog{width:min(250px,calc(100% - 8px));max-width:none;max-height:calc(100% - 8px);padding:6px;border:1px solid #666;border-radius:5px;background:#fbf8ee;color:#29322e}
 .sticky-deadline-dialog::backdrop{background:#0005}
 .sticky-deadline-dialog form{display:grid;gap:4px}
@@ -88,15 +90,23 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-deadline-fields input{width:100%;padding:0 1px}
 .sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
 .sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
-/* 期限到達は最背面の付箋だけで描画。本文・タイトル・のりしろを別色に塗らない。 */
+/* 期限枠の濃さは親から継承し、到達後は背景と同じアニメーションで同期する。 */
+@property --sticky-deadline-ring{syntax:"<number>";inherits:true;initial-value:0.36}
+.sticky-due-soon{animation:sticky-deadline-preview 2.4s ease-in-out infinite}
+@keyframes sticky-deadline-preview{
+ 0%,100%{--sticky-deadline-ring:0.15}
+ 40%,60%{--sticky-deadline-ring:1}
+}
+/* 期限到達後も入力欄は透明のまま、最背面の付箋を一枚で光らせる。 */
 .sticky-overdue{animation:sticky-deadline-pulse 2.4s ease-in-out infinite}
 .sticky-overdue .sticky-adhesive{background:transparent}
-.sticky-overdue .sticky-deadline{border-color:currentColor}
 @keyframes sticky-deadline-pulse{
- 0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg))}
- 40%,60%{background-color:var(--sticky-glow)}
+ 0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg));--sticky-deadline-ring:0.15}
+ 40%,60%{background-color:var(--sticky-glow);--sticky-deadline-ring:1}
 }
 @media(prefers-reduced-motion:reduce){
- .sticky-overdue{animation:none;box-shadow:inset 0 0 0 2px currentColor}
+ .sticky-due-soon,.sticky-overdue{animation:none}
+ .sticky-due-soon .sticky-deadline-set,.sticky-overdue .sticky-deadline-set{border-color:currentColor}
+ .sticky-overdue{box-shadow:inset 0 0 0 2px currentColor}
  .sticky-overdue .sticky-adhesive{background:#00000024}
 }

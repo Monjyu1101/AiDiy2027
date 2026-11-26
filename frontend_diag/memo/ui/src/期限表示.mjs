@@ -18,8 +18,18 @@ export function 期限を変換(value){
  const iso=date.toISOString();
  return 期限入力表示(iso)===value?iso:null;
 }
-export function 期限経過(value,now=Date.now()){
- return 期限.期限は有効(value)&&Date.parse(value)<=now;
+export function 新規期限初期値(now=Date.now()){
+ const next=new Date(now);
+ next.setHours(next.getHours()+1,0,0,0);
+ return 期限入力表示(next.toISOString());
+}
+const 予告時間=15*60*1000;
+export function 期限状態(value,now=Date.now()){
+ if(!期限.期限は有効(value))return {状態:'なし',次の切替:null};
+ const remaining=Date.parse(value)-now;
+ if(remaining<=0)return {状態:'到達',次の切替:null};
+ if(remaining<=予告時間)return {状態:'予告',次の切替:remaining};
+ return {状態:'通常',次の切替:remaining-予告時間};
 }
 
 export const 期限の分=Object.freeze(['00','15','30','45']);

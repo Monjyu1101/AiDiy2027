@@ -8,7 +8,7 @@ import {自動保存を作成} from './自動保存.mjs';
 import {長押し移動を作成} from './長押し移動.mjs';
 import {貼付ファイル,画像読込} from './画像貼付.mjs';
 import {メモ色} from './メモ編集.mjs';
-import {期限入力表示,期限見出し,指定期限を変換,期限経過,期限の分} from './期限表示.mjs';
+import {期限入力表示,期限見出し,指定期限を変換,期限状態,新規期限初期値,期限の分} from './期限表示.mjs';
 const props=defineProps({api:{type:Function,required:true},initialNew:Boolean,initialSource:String,initialId:String,initialScope:String,onSaved:Function,onNew:Function});
 const native=globalThis.window?.aidiyMemo;
 const state=ref({draft:{タイトル:'',本文:'',色:'yellow'},saving:false,error:'',conflict:false,dirty:false,blankNew:true});
@@ -21,24 +21,26 @@ const ready=ref(false),closing=ref(false),textFormat=ref(false),bootError=ref(''
 const content=ref(),focused=ref(document.hasFocus()),hasBelow=ref(false);
 const due=computed(()=>state.value.draft.期限);
 const dueLabel=computed(()=>期限見出し(due.value));
-const overdue=ref(false),dueDialog=ref(),dueInput=ref();
+const duePhase=ref('なし'),dueDialog=ref(),dueInput=ref();
+const dueSoon=computed(()=>duePhase.value==='予告');
+const overdue=computed(()=>duePhase.value==='到達');
+const dueStatusText=computed(()=>overdue.value?'（期限到達）':dueSoon.value?'（期限15分以内）':'');
 const dueDate=ref(''),dueHour=ref('00'),dueMinute=ref('00');
 const 期限の時=Array.from({length:24},(_,hour)=>String(hour).padStart(2,'0'));
 let dueTimer;
 function checkDeadline(){
  clearTimeout(dueTimer);
- if(!due.value){overdue.value=false;return;}
- const now=Date.now();
- overdue.value=期限経過(due.value,now);
- const remaining=Date.parse(due.value)-now;
- // 到達時に再描画し、時計の変更やスリープ復帰にも追従する。
- dueTimer=setTimeout(checkDeadline,remaining>0?Math.min(remaining,60000):60000);
+ const phase=期限状態(due.value);
+ duePhase.value=phase.状態;
+ if(phase.状態==='なし')return;
+ // 予告開始と期限到達の両方で再描画。時計の変更やスリープ復帰にも追従する。
+ dueTimer=setTimeout(checkDeadline,Math.min(phase.次の切替??60000,60000));
 }
 watch(due,checkDeadline);
 function openDeadline(){
  if(!ready.value||closing.value)return;
  inputMove.cancel();
- const existing=期限入力表示(due.value);
+ const existing=期限入力表示(due.value)||新規期限初期値();
  dueDate.value=existing.slice(0,10);
  dueHour.value=existing.slice(11,13)||'00';
  const minute=existing.slice(14,16)||'00';
@@ -171,14 +173,14 @@ onMounted(async()=>{
 onUnmounted(()=>{clearTimeout(dueTimer);document.removeEventListener('visibilitychange',checkDeadline);overflowObserver?.disconnect();window.removeEventListener('focus',focusForm);window.removeEventListener('blur',blurForm);alive=false;inputMove.cancel();dragEnd();model?.dispose();for(const off of unsubscribers)off?.();window.removeEventListener('beforeunload',beforeUnload);window.removeEventListener('blur',blur);});
 </script>
 <template>
- <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused,'sticky-overdue':overdue}]" @pointerdown="resumeInput" @paste="paste" @dragover.prevent @drop="drop">
+ <main class="sticky-note" :class="[`sticky-${color}`,{'sticky-moving':movingInput,'sticky-vivid':color.startsWith('vivid-'),'sticky-focused':focused,'sticky-due-soon':dueSoon,'sticky-overdue':overdue}]" @pointerdown="resumeInput" @paste="paste" @dragover.prevent @drop="drop">
   <div class="sticky-adhesive" aria-hidden="true" @pointerdown="move"></div>
   <div v-if="movingInput" class="sticky-move-marker" role="status">✥ 移動中</div>
   <div v-if="bootError" class="sticky-error" role="alert">{{bootError}}</div>
   <template v-else>
    <header class="sticky-header" title="ドラッグして移動" @pointerdown="move">
     <input class="sticky-title" @pointerdown="inputMove.start" @compositionstart="composing=true;inputMove.cancel()" @compositionend="composing=false" :value="state.draft.タイトル" :readonly="textFormat" :disabled="!ready||closing" aria-label="付箋のタイトル" placeholder="タイトル" maxlength="200" @input="edit({タイトル:$event.target.value})">
-    <button type="button" class="sticky-deadline" :aria-label="due ? `付箋の期限を変更: ${dueLabel}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :title="due ? `${期限入力表示(due).replace('T',' ')}${overdue?'（期限到達）':''}` : '付箋の期限を設定'" :disabled="!ready||closing" @click="openDeadline"><time v-if="due" :datetime="due">{{dueLabel}}</time><svg class="sticky-clock" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.4 1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" class="sticky-deadline" :class="{'sticky-deadline-set':due}" :aria-label="due ? `付箋の期限を変更: ${dueLabel}${dueStatusText}` : '付箋の期限を設定'" :title="due ? `${期限入力表示(due).replace('T',' ')}${dueStatusText}` : '付箋の期限を設定'" :disabled="!ready||closing" @click="openDeadline"><time v-if="due" :datetime="due">{{dueLabel}}</time><svg class="sticky-clock" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.5V8l2.4 1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
    </header>
    <dialog ref="dueDialog" class="sticky-deadline-dialog" aria-label="付箋の期限">
     <form @submit.prevent="applyDeadline()">
