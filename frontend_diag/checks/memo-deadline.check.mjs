@@ -2,6 +2,8 @@
 // Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {メモ色} from '../memo/ui/src/メモ編集.mjs';
 import {期限入力表示,期限見出し,期限を変換,期限経過} from '../memo/ui/src/期限表示.mjs';
 import {自動保存を作成} from '../memo/ui/src/自動保存.mjs';
 
@@ -33,4 +35,27 @@ test('期限を追加・解除して保存キューへ渡し、既存の下書�
  model.edit({期限:null},{defer:true});assert.equal(await model.flush(),true);
  assert.equal(calls[1].body.期限,null);assert.equal(model.snapshot().dirty,false);
  model.dispose();
+});
+
+test('期限の光は11配色で異なり、光っている間も本文のコントラストを保つ',()=>{
+ const css=readFileSync(new URL('../memo/ui/src/メモ画面.css',import.meta.url),'utf8');
+ const colors=new Set();
+ const rgb=hex=>hex.match(/../g).map(channel=>Number.parseInt(channel,16));
+ const luminance=color=>color.reduce((total,v,i)=>{
+  const s=v/255;
+  return total+[0.2126,0.7152,0.0722][i]*(s<=0.04045?s/12.92:((s+0.055)/1.055)**2.4);
+ },0);
+ for(const color of メモ色){
+  const rule=css.split(`.sticky-${color}{--sticky-bg:`)[1]?.split('}')[0];
+  const match=rule?.match(/^#([0-9a-f]{6});--sticky-glow:#([0-9a-f]{6})(?:;--sticky-pulse-base:#([0-9a-f]{6}))?$/);
+  assert.ok(match,color);
+  const [,base,peak,dim=base]=match;colors.add(peak);
+  assert.ok(luminance(rgb(peak))-luminance(rgb(dim))>0.08,color);
+  const text=luminance(rgb(color.startsWith('vivid-')?'ffffff':'29322e'));
+  for(let i=0;i<=10;i++){
+   const background=luminance(rgb(dim).map((v,j)=>v+(rgb(peak)[j]-v)*i/10));
+   assert.ok((Math.max(text,background)+0.05)/(Math.min(text,background)+0.05)>=4.5,color);
+  }
+ }
+ assert.equal(colors.size,メモ色.length);
 });
