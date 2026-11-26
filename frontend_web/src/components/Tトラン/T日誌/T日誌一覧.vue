@@ -58,7 +58,7 @@ const columns: Column[] = [
   { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
   { key: '利用者ID', label: '利用者' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
-  { key: '作業タイトル', label: '作業タイトル', align: 'left', sortable: false },
+  { key: '作業タイトル', label: '作業タイトル', align: 'left', width: 'var(--work-title-width)', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
 ];
 const ページ数 = computed(() => Math.max(1, Math.ceil(結果.value.items.length / ページ件数)));
@@ -247,6 +247,7 @@ onMounted(() => {
 
 <style scoped src="./日誌.css"></style>
 <style scoped>
+.page-container { --work-title-width: clamp(300px, 60vw, 680px); }
 .search-panel {
   width: 570px;
   max-width: 100%;
@@ -296,5 +297,5 @@ onMounted(() => {
 .work-line + .work-line { border-top: 1px solid #e2e8f0; }
 .work-list { display: grid; justify-content: stretch; }
 .work-line > span { width: 100%; }
-.work-title { display: block; overflow: hidden; text-overflow: ellipsis; max-width: min(420px, 75vw); }
+.work-title { display: block; overflow: hidden; text-overflow: ellipsis; max-width: var(--work-title-width); }
 </style>
