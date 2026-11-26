@@ -39,7 +39,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const kind=values.app||defaultKind;
  if(values['project-fixed']&&!['task','team'].includes(kind))throw Error('--project-fixed はTask / Team専用です。');
  if(!['code','live','ide','term','task','team','browser','navi','cpu','git'].includes(kind))throw Error('--app はcode / live / ide / term / task / team / browser / navi / cpu / gitから指定してください。');
- if(values.help&&kind==='git'){console.log('aidiy_git [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--foreground | --wait]');console.log('選択した Git リポジトリを管理します。Core / Tools への接続は不要です。');return;}
+ if(values.help&&kind==='git'){console.log('aidiy_git [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--foreground | --wait]');console.log('引数なしでは、現在のフォルダの Git リポジトリを開きます。作業フォルダを明示した場合は直下のリポジトリも対象です。Core / Tools への接続は不要です。');return;}
  if(values.help&&kind==='cpu'){console.log('aidiy_cpu [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('CPU / GPU / RAMの使用率を小型画面で表示します。Core / Toolsへの接続は不要です。');return;}
  if(values.help&&kind==='browser'){console.log('aidiy_browser [作業フォルダ | --project 作業フォルダ] [--port 番号] [--strict-port] [--new-window] [--foreground | --wait]');console.log('IDE共通のBrowserをElectronで単独起動します。tools接続時にchrome_devtoolsから操作できます。Web版への切り替えは行いません。');return;}
  if(values.help){console.log(`aidiy_${kind} [作業フォルダ | --project 作業フォルダ] [--browser] [--no-open] [--port 番号] [--strict-port]${['task','team','navi'].includes(kind)?'':' [--provider 名前] [--model モデル]'}${['code','browser'].includes(kind)?' [--offline]':''}${kind==='live'?'':' [--new-window]'}${kind==='term'?' [--cli 名前] [--cli-auto-approve]':''} [--foreground | --wait]`);console.log('起動フォルダをプロジェクトにしてElectronで開きます。Codespaces等ではWeb版。ポートは自動割り当て。');console.log('単独ウィンドウの表示後はプロンプトへ戻ります。--foreground / --wait で終了まで待機します。');return;}
@@ -66,7 +66,7 @@ export async function launch(defaultKind='ide',args=process.argv.slice(2)){
  const stop=async()=>{if(stopping)return;stopping=true;lifetime?.dispose();if(desktop?.connected)desktop.disconnect();await app?.close();};
  if(values.cli)lifetime=createCliOwnerLifetime(stop);
  const startDevelopment=kind==='git'?(await import('./aidiy_git/serve.mjs')).startGit:(await import('./server.mjs')).startDevelopment;
- app=await startDevelopment(project,{kind,projectFixed:!!values['project-fixed'],port,strict:values['strict-port'],offline:values.offline,provider,model,cli:values.cli,cliAutoApprove:values['cli-auto-approve'],autoConnect:values.connect,onCliStarted:()=>lifetime?.started(),onCliAbandoned:stop});
+ app=await startDevelopment(project,{kind,...(kind==='git'?{workspace:values.project!==undefined||positionals.length>0}:{}),projectFixed:!!values['project-fixed'],port,strict:values['strict-port'],offline:values.offline,provider,model,cli:values.cli,cliAutoApprove:values['cli-auto-approve'],autoConnect:values.connect,onCliStarted:()=>lifetime?.started(),onCliAbandoned:stop});
  const launcherChild=process.env.AIDIY_LAUNCHER_CHILD==='1'&&!!process.send;
  if(launcherChild)process.once('disconnect',stop);
  const notifyReady=message=>{if(launcherChild){process.removeListener('disconnect',stop);process.send?.({launchReady:true,...message});}};

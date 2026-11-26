@@ -5,11 +5,12 @@
 // https://github.com/monjyu1101/AiDiy2027
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {execFile} from 'node:child_process';
+import {execFile,spawn} from 'node:child_process';
 import {promisify} from 'node:util';
 import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import repository from '../aidiy_git/リポジトリ.cjs';
 import {startGit} from '../aidiy_git/serve.mjs';
 import {createGitPanel,gitToolsOnline} from '../aidiy_git/パネル.mjs';
@@ -142,6 +143,51 @@ test('public CLI entry starts the isolated Git panel without Core or IDE UI depe
  const request=client(app.url,keyOf(html));
  assert.equal((await request('status')).status,200);
  assert.equal((await fetch(new URL('/development/git/github-tabs.js',app.url))).status,200);
+});
+
+const gitLauncher=fileURLToPath(new URL('../aidiy_git/launch.mjs',import.meta.url));
+async function launchGitFixture(t,cwd,args=[]){
+ const child=spawn(process.execPath,[gitLauncher,...args,'--no-open'],{cwd,windowsHide:true,stdio:['ignore','pipe','pipe']});
+ const stopped=once(child,'close');
+ t.after(async()=>{if(child.exitCode===null&&child.signalCode===null)child.kill();await stopped;});
+ const output=await new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>reject(Error('Git fixture did not start')),8000);
+  let text='',errors='';
+  child.stderr.on('data',chunk=>{errors+=chunk;});
+  child.stdout.on('data',chunk=>{text+=chunk;if(/プロジェクト: .*\r?\n/.test(text)){clearTimeout(timer);resolve(text);}});
+  child.on('exit',code=>{clearTimeout(timer);reject(Error(errors||'Git fixture exited: '+code));});
+  child.on('error',error=>{clearTimeout(timer);reject(error);});
+ });
+ return /http:\/\/127\.0\.0\.1:\d+\//.exec(output)[0];
+}
+test('the standalone command opens the current repository root and keeps explicitly selected workspaces',async t=>{
+ const dir=await make(t),root=join(dir,'日本語 Git root');
+ await mkdir(root);await init(root);await set(root,'current.txt','from cwd');
+ const url=await launchGitFixture(t,root);
+ const query=client(url,keyOf(await fetch(url).then(r=>r.text())));
+ assert.equal((await query('status')).result.rows[0].path,'current.txt');
+ const explicit=await launchGitFixture(t,dir,['--project',dir]);
+ const workspace=client(explicit,keyOf(await fetch(explicit).then(r=>r.text())));
+ const result=(await workspace('repositories')).result;
+ assert.equal(result.mode,'workspace');
+ assert.deepEqual(result.repositories.map(item=>item.name),['日本語 Git root']);
+});
+
+test('the standalone command reports missing Git, missing .git, and invalid .git before opening a window',async t=>{
+ const dir=await make(t),root=join(dir,'repo'),nested=join(root,'nested'),emptyPath=join(dir,'empty'),invalid=join(dir,'broken');
+ await mkdir(nested,{recursive:true});await init(root);await mkdir(emptyPath);await mkdir(invalid);
+ await set(invalid,'.git','not a gitdir');
+ const env={...process.env,DISPLAY:':99',CODESPACES:'false'};
+ for(const [cwd,message] of [[dir,/現在のフォルダに \.git がありません/],[nested,/現在のフォルダに \.git がありません/],[invalid,/有効な作業リポジトリ/]]){
+  await assert.rejects(execute(process.execPath,[gitLauncher],{cwd,env,timeout:8000,windowsHide:true}),err=>{
+   assert.equal(err.code,1);assert.match(err.stderr,message);assert.equal(err.stdout,'');return true;
+  });
+ }
+ const noGit=Object.fromEntries(Object.entries(env).filter(([key])=>key.toUpperCase()!=='PATH'));
+ noGit.PATH=emptyPath;
+ await assert.rejects(execute(process.execPath,[gitLauncher],{cwd:root,env:noGit,timeout:8000,windowsHide:true}),err=>{
+  assert.equal(err.code,1);assert.match(err.stderr,/Git が見つかりません。Git を導入してください/);assert.equal(err.stdout,'');return true;
+ });
 });
 
 test('Tools probe checks the same ping as Term and does not gate Git when unavailable',async t=>{

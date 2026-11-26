@@ -91,6 +91,20 @@ async function validateWorkspaceEntry(project,entry,signal){
  }catch{return null;}
 }
 const gitAvailable=async project=>{try{return (await gitWorkspace(project,{first:true})).entries.length>0;}catch{return false;}};
+// 引数なしの単独起動では、現在地以外を暗黙に操作対象へ含めない。
+async function requireGitProject(project,{workspace=false}={}){
+ await git(project,['--version']);
+ const marker=await stat(path.join(project,'.git'));
+ if(marker){
+  if(!await gitRoot(project))throw fail('このフォルダの .git を有効な作業リポジトリとして開けません。');
+  return;
+ }
+ if(workspace){
+  if(await gitAvailable(project))return;
+  throw fail('指定したフォルダまたは直下に Git リポジトリが見つかりません。');
+ }
+ throw fail('現在のフォルダに .git がありません。Git リポジトリのルートで aidiy_git を実行してください。');
+}
 const states=(raw)=>{
  const parts=raw.split('\0'),rows=[];
  for(let i=0;i<parts.length&&parts[i];i++){
@@ -250,4 +264,4 @@ function createRepository(project){
   },
  };
 }
-module.exports={gitAvailable,gitRoot,gitWorkspace,validateWorkspaceEntry,createRepository,githubUrl,pushArguments};
+module.exports={requireGitProject,gitAvailable,gitRoot,gitWorkspace,validateWorkspaceEntry,createRepository,githubUrl,pushArguments};
