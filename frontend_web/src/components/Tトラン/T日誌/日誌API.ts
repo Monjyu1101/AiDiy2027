@@ -31,7 +31,11 @@ export interface 日誌一覧 {
   limit: number | null;
 }
 export interface 日誌保存 { 日誌日付: string; 更新版?: string; 記録: (Omit<日誌記録, "作業ID"> & { 作業ID: number | null })[] }
-type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
+export interface 日誌一覧候補 {
+  利用者: { 利用者ID: string; 利用者名: string }[];
+  プロジェクト: string[];
+}
+type 操作名 = '一覧検索' | '一覧候補' | '取得' | '登録' | '変更' | '削除';
 
 export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {
   const { data } = await apiClient.post<{status: string; message: string; data: T}>('/apps/T日誌/' + 操作, body);

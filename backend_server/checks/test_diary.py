@@ -245,6 +245,38 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(self.call("検索", {}, user="two").json()["data"]["items"], [])
         self.assertEqual(self.call("検索", {}, user="internal").status_code, 403)
 
+    def test_Web一覧検索は利用者横断で同じ作業に条件を適用(self):
+        one = sample()
+        one["記録"][0]["プロジェクト"] = "C:/project-a"
+        one["記録"][1]["プロジェクト"] = "C:/project-b"
+        one["記録"][1]["明細"] = [{"行番号": 1, "作業内容": "別の作業の語 %_"}]
+        two = sample()
+        two["記録"][0]["プロジェクト"] = "D:/project-c"
+        self.assertEqual(self.call("登録", one).json()["status"], "OK")
+        self.assertEqual(self.call("登録", two, user="two").json()["status"], "OK")
+
+        def items(**conditions):
+            result = self.call("一覧検索", {"開始日付": DATE, "終了日付": DATE, **conditions})
+            self.assertEqual(result.status_code, 200, result.text)
+            self.assertNotIn(PNG, result.text)
+            self.assertEqual(result.json()["status"], "OK")
+            return result.json()["data"]["items"]
+
+        self.assertEqual([r["利用者ID"] for r in items()], ["one", "two"])
+        self.assertEqual([r["利用者ID"] for r in items(利用者ID="two")], ["two"])
+        self.assertEqual([r["利用者ID"] for r in items(プロジェクト="D:/project-c", キーワード="画像.png")], ["two"])
+        self.assertEqual(items(プロジェクト="C:/project-a", キーワード="別の作業"), [])
+        self.assertEqual(items(プロジェクト="C:/project-b", キーワード="%_")[0]["記録件数"], 2)
+        self.assertEqual(items(キーワード=PNG), [])
+        self.assertEqual([r["利用者ID"] for r in self.call("一覧").json()["data"]["items"]], ["one"])
+        self.assertEqual(self.call("検索", {"キーワード": "project-c"}).json()["data"]["total"], 0)
+        candidates = self.call("一覧候補").json()["data"]
+        self.assertEqual([r["利用者ID"] for r in candidates["利用者"]], ["one", "two"])
+        self.assertEqual(candidates["プロジェクト"], ["C:/project-a", "C:/project-b", "D:/project-c"])
+        for endpoint in ("一覧検索", "一覧候補"):
+            self.assertEqual(self.call(endpoint, {}, user=None).status_code, 401)
+            self.assertEqual(self.call(endpoint, {}, user="internal").status_code, 403)
+
     def test_部分操作_不正添付と空の新規を保存しない(self):
         bad = self.call("作業登録", {"日誌日付": DATE, "作業タイトル": "   "}).json()
         self.assertEqual(bad["error"]["code"], "VALIDATION_ERROR")

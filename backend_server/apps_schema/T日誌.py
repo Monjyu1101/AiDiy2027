@@ -45,10 +45,6 @@ class 日誌期間要求(日誌要求):
         return self
 
 
-class T日誌一覧要求(日誌期間要求):
-    件数制限: bool = True
-
-
 class 日誌添付要求(日誌要求):
     ファイル名: str = Field(min_length=1, max_length=255)
     base64内容: str = Field(min_length=1, max_length=添付データ長上限)
@@ -91,6 +87,16 @@ def _プロジェクトパス(値: str) -> str:
 最大作業ID = 9_007_199_254_740_991
 日誌作業ID = Annotated[int, Field(ge=1, le=最大作業ID)]
 自己申告件数 = Annotated[int, Field(ge=0, le=9_007_199_254_740_991)]
+
+
+class T日誌一覧要求(日誌期間要求):
+    件数制限: bool = True
+
+
+class T日誌一覧検索要求(T日誌一覧要求):
+    利用者ID: str = Field(default="", max_length=255)
+    プロジェクト: プロジェクトパス = ""
+    キーワード: str = Field(default="", max_length=200)
 
 
 class 日誌記録要求(日誌要求):

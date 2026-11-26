@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from apps_crud import T日誌 as crud
 from apps_schema.common import ResponseBase
 from apps_schema.T日誌 import (
-    T日誌一覧要求, T日誌変更要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌登録要求,
+    T日誌一覧検索要求, T日誌一覧要求, T日誌変更要求, T日誌作業キー, T日誌作業変更要求, T日誌作業登録要求, T日誌登録要求,
     T日誌内容キー, T日誌内容変更要求, T日誌内容登録要求, T日誌検索要求, T日誌キー, 日誌本文上限,
 )
 from deps import get_現在利用者
@@ -79,6 +79,17 @@ def _見つからない():
 def 一覧(要求: T日誌一覧要求 | None = None, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
     data = crud.一覧(db, 所有者["利用者ID"], 要求 or T日誌一覧要求())
     return ResponseBase(message="日誌一覧を取得しました。", data=data)
+
+
+@router.post("/一覧検索", response_model=ResponseBase)
+def 一覧検索(要求: T日誌一覧検索要求, _=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    # Web一覧の見出しだけを共有する。取得・変更・削除・MCP検索の所有者境界は維持する。
+    return ResponseBase(message="日誌一覧を検索しました。", data=crud.一覧検索(db, 要求))
+
+
+@router.post("/一覧候補", response_model=ResponseBase)
+def 一覧候補(所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
+    return ResponseBase(message="日誌一覧の検索候補を取得しました。", data=crud.一覧候補(db, 所有者))
 
 
 @router.post("/取得", response_model=ResponseBase)

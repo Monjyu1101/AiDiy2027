@@ -11,3 +11,16 @@ export function 画面遷移先(router: Router, value: unknown): string {
   const resolved = router.resolve(target);
   return resolved.name && resolved.matched.length ? resolved.fullPath : '';
 }
+
+// プロジェクトパスや検索語を URL に含めず、編集中から一覧へ戻る場合だけ引き継ぐ。
+export function 日誌検索状態(router: Router, 認証利用者ID?: string) {
+  const state = router.options.history.state;
+  const 所有者 = state.日誌検索所有者;
+  const 値 = (value: unknown) => 認証利用者ID && 所有者 === 認証利用者ID && typeof value === 'string' ? value : '';
+  return {
+    日誌検索所有者: 認証利用者ID ?? '',
+    日誌検索利用者: 値(state.日誌検索利用者),
+    日誌検索プロジェクト: 値(state.日誌検索プロジェクト),
+    日誌検索キーワード: 値(state.日誌検索キーワード),
+  };
+}

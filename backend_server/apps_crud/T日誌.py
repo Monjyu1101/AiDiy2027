@@ -4,7 +4,7 @@ from hashlib import sha256
 import json
 from collections.abc import Sequence
 
-from sqlalchemy import delete, func, insert, or_, select, true, update
+from sqlalchemy import and_, delete, func, insert, or_, select, true, update
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
@@ -13,7 +13,7 @@ from core_models import C採番
 
 from apps_crud.utils import create_audit_fields, update_audit_fields
 from apps_models.T日誌 import T日誌作業, T日誌明細
-from apps_schema.T日誌 import T日誌一覧要求, T日誌保存要求, T日誌検索要求, 日誌記録要求, 最大作業ID
+from apps_schema.T日誌 import T日誌一覧検索要求, T日誌一覧要求, T日誌保存要求, T日誌検索要求, 日誌記録要求, 最大作業ID
 from list_controls import get_list_limit
 
 
@@ -21,8 +21,10 @@ def _所有者条件(モデル, 利用者ID: str, 日誌日付: str):
     return (モデル.利用者ID == 利用者ID, モデル.日誌日付 == 日誌日付)
 
 
-def _日付条件(利用者ID: str, 要求):
-    条件 = [T日誌作業.利用者ID == 利用者ID, T日誌作業.有効.is_(True)]
+def _日付条件(要求, 利用者ID: str | None = None):
+    条件 = [T日誌作業.有効.is_(True)]
+    if 利用者ID is not None:
+        条件.append(T日誌作業.利用者ID == 利用者ID)
     if 要求.開始日付:
         条件.append(T日誌作業.日誌日付 >= 要求.開始日付)
     if 要求.終了日付:
@@ -37,12 +39,57 @@ def _日別一覧(条件):
     ).where(*条件).group_by(T日誌作業.利用者ID, T日誌作業.日誌日付)
 
 
+def _キーワード一致(語: str):
+    # JSON配列の名前だけを照合し、Base64の内容は検索・返却しない。
+    添付要素 = func.json_each(T日誌明細.添付).table_valued("value")
+    添付一致 = select(1).select_from(添付要素).where(
+        func.json_extract(添付要素.c.value, '$.ファイル名').icontains(語, autoescape=True),
+    ).correlate(T日誌明細).exists()
+    明細一致 = select(1).where(
+        T日誌明細.作業ID == T日誌作業.作業ID,
+        or_(T日誌明細.作業内容.icontains(語, autoescape=True), 添付一致),
+    ).exists()
+    return or_(T日誌作業.作業タイトル.icontains(語, autoescape=True),
+               T日誌作業.プロジェクト.icontains(語, autoescape=True), 明細一致)
+
+
 def 一覧(db: Session, 利用者ID: str, 要求: T日誌一覧要求):
-    query = _日別一覧(_日付条件(利用者ID, 要求))
+    return _一覧結果(db, _日別一覧(_日付条件(要求, 利用者ID)), 要求)
+
+
+def 一覧検索(db: Session, 要求: T日誌一覧検索要求):
+    query = _日別一覧(_日付条件(要求, 要求.利用者ID or None))
+    作業条件 = []
+    if 要求.プロジェクト:
+        作業条件.append(T日誌作業.プロジェクト == 要求.プロジェクト)
+    if 語 := 要求.キーワード.strip():
+        作業条件.append(_キーワード一致(語))
+    if 作業条件:
+        # 同じ作業で全条件を満たす日を表示し、記録件数は日誌全体の件数を維持する。
+        query = query.having(func.max(and_(*作業条件)) == 1)
+    return _一覧結果(db, query, 要求)
+
+
+def _一覧結果(db: Session, query, 要求: T日誌一覧要求):
     total = db.scalar(select(func.count()).select_from(query.subquery()))
     limit = get_list_limit(要求)
-    items = db.execute(query.order_by(T日誌作業.日誌日付.desc()).limit(limit)).mappings()
+    items = db.execute(query.order_by(T日誌作業.日誌日付.desc(), T日誌作業.利用者ID).limit(limit)).mappings()
     return {"items": [dict(行) for 行 in items], "total": total, "limit": limit}
+
+
+def 一覧候補(db: Session, 所有者: dict):
+    有効 = T日誌作業.有効.is_(True)
+    利用者 = {
+        row.利用者ID: dict(row)
+        for row in db.execute(select(
+            T日誌作業.利用者ID, func.max(T日誌作業.利用者名).label("利用者名"),
+        ).where(有効).group_by(T日誌作業.利用者ID)).mappings()
+    }
+    利用者[所有者["利用者ID"]] = 所有者
+    プロジェクト = db.scalars(select(T日誌作業.プロジェクト).where(
+        有効, T日誌作業.プロジェクト != "",
+    ).distinct().order_by(T日誌作業.プロジェクト))
+    return {"利用者": [利用者[key] for key in sorted(利用者)], "プロジェクト": list(プロジェクト)}
 
 
 def _作業一覧(db: Session, 利用者ID: str, 日誌日付: str):
@@ -175,23 +222,10 @@ def 削除(db: Session, 利用者ID: str, 日誌日付: str) -> bool:
 
 
 def 検索(db: Session, 利用者ID: str, 要求: T日誌検索要求):
-    条件 = _日付条件(利用者ID, 要求)
+    条件 = _日付条件(要求, 利用者ID)
+    日別 = _日別一覧(条件)
     if 語 := 要求.キーワード.strip():
-        # JSON配列の名前だけを照合し、Base64の内容は検索・返却しない。
-        添付要素 = func.json_each(T日誌明細.添付).table_valued("value")
-        添付一致 = select(1).select_from(添付要素).where(
-            func.json_extract(添付要素.c.value, '$.ファイル名').icontains(語, autoescape=True),
-        ).correlate(T日誌明細).exists()
-        明細一致 = select(1).where(
-            T日誌明細.作業ID == T日誌作業.作業ID,
-            or_(T日誌明細.作業内容.icontains(語, autoescape=True), 添付一致),
-        ).exists()
-        日別 = _日別一覧(条件).having(func.max(
-            or_(T日誌作業.作業タイトル.icontains(語, autoescape=True),
-                T日誌作業.プロジェクト.icontains(語, autoescape=True), 明細一致)
-        ) == 1)
-    else:
-        日別 = _日別一覧(条件)
+        日別 = 日別.having(func.max(_キーワード一致(語)) == 1)
     total = db.scalar(select(func.count()).select_from(日別.subquery()))
     items = []
     for 日誌日付, *_ in db.execute(日別.order_by(T日誌作業.日誌日付.desc()).offset(要求.offset).limit(要求.limit)):
