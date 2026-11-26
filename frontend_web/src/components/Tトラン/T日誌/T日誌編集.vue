@@ -12,13 +12,13 @@ import type { 日誌, 日誌明細, 日誌記録, 日誌保存, 日誌添付 } f
 import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上限, 添付合計上限 } from './添付';
 
 type 編集添付 = 日誌添付 & { key: number; preview: string };
-type 編集行 = { key: number; 展開: boolean; 内容: string; 添付: 編集添付[]; ドラッグ数: number };
-type 編集記録 = Omit<日誌記録, '記録SEQ' | '明細' | '新規更新ファイル数'> & { key: number; 展開: boolean; 明細: 編集行[]; 件数入力: string };
+type 編集行 = { key: number; 展開: boolean; 作業内容: string; 添付: 編集添付[]; ドラッグ数: number };
+type 編集記録 = Omit<日誌記録, '作業ID' | '明細' | '新規更新ファイル数'> & { key: number; 展開: boolean; 明細: 編集行[]; 件数入力: string };
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 let 次のキー = 0;
-const 日付 = ref('');
+const 日誌日付 = ref('');
 const 更新版 = ref('');
 const 利用者 = ref<{ 利用者ID: string; 利用者名: string } | null>(null);
 const 記録 = ref<編集記録[]>([]);
@@ -29,7 +29,7 @@ const 未保存 = ref(false);
 const 記録上限 = 30;
 const 行上限 = 100;
 const 明細添付件数上限 = 20;
-const 編集 = computed(() => route.query.モード === '編集' || (!route.query.モード && Boolean(route.query.日付)));
+const 編集 = computed(() => route.query.モード === '編集' || (!route.query.モード && Boolean(route.query.日誌日付)));
 let 登録直後の日付 = '';
 const 行数 = computed(() => 記録.value.reduce((count, item) => count + item.明細.length, 0));
 const 閉じた = ref(false);
@@ -54,21 +54,21 @@ function 添付を作る(file: 日誌添付): 編集添付 {
 }
 function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
   return {
-    key: ++次のキー, 展開, 内容: 行?.内容 ?? '', 添付: (行?.添付 ?? []).map(添付を作る), ドラッグ数: 0,
+    key: ++次のキー, 展開, 作業内容: 行?.作業内容 ?? '', 添付: (行?.添付 ?? []).map(添付を作る), ドラッグ数: 0,
   };
 }
 function 記録を作る(item?: 日誌記録, 展開 = true, 保存前?: 編集記録): 編集記録 {
   const 保存行 = 保存前?.明細.filter(有効な明細);
   return {
-    key: ++次のキー, 展開, 記録タイトル: item?.記録タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
+    key: ++次のキー, 展開, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
     明細: item ? item.明細.map((行, i) => 行を作る(行, 保存行?.[i]?.展開 ?? false)) : [行を作る()],
   };
 }
 function 有効な明細(行: 編集行) {
-  return Boolean(行.内容.trim() || 行.添付.length);
+  return Boolean(行.作業内容.trim() || 行.添付.length);
 }
 function 明細見出し(行: 編集行) {
-  const 要約 = 行.内容.trim().replace(/\s+/g, ' ');
+  const 要約 = 行.作業内容.trim().replace(/\s+/g, ' ');
   return 要約 || 行.添付[0]?.ファイル名 || '未入力';
 }
 function 表示URL解除(file: 編集添付) {
@@ -182,7 +182,7 @@ function ダウンロード(行: 編集添付) {
 
 function 日誌を表示(data: 日誌, 展開を維持 = false) {
   利用者.value = { 利用者ID: data.利用者ID, 利用者名: data.利用者名 };
-  日付.value = data.日付;
+  日誌日付.value = data.日誌日付;
   更新版.value = data.更新版;
   表示を片付ける();
   const 保存前 = 展開を維持 ? 記録.value : [];
@@ -195,9 +195,9 @@ async function 読み込み() {
   エラー.value = '';
   利用者.value = null;
   更新版.value = '';
-  const query = route.query.日付;
+  const query = route.query.日誌日付;
   const 対象日付 = typeof query === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query) ? query : '';
-  日付.value = 対象日付 || ローカル日付();
+  日誌日付.value = 対象日付 || ローカル日付();
   if (!編集.value) {
     記録.value = [記録を作る()];
     return;
@@ -209,7 +209,7 @@ async function 読み込み() {
   }
   操作中.value = true;
   try {
-    const data = await 日誌操作<日誌>('取得', { 日付: 対象日付 });
+    const data = await 日誌操作<日誌>('取得', { 日誌日付: 対象日付 });
     if (!閉じた.value) 日誌を表示(data);
   } catch (e) {
     読込失敗.value = true;
@@ -219,8 +219,8 @@ async function 読み込み() {
   }
 }
 function 保存内容(): 日誌保存 {
-  if (!日付.value || !記録.value.length) throw new Error('日付と作業を入力してください。');
-  const 未入力 = 記録.value.findIndex(item => !item.記録タイトル.trim());
+  if (!日誌日付.value || !記録.value.length) throw new Error('日付と作業を入力してください。');
+  const 未入力 = 記録.value.findIndex(item => !item.作業タイトル.trim());
   if (未入力 >= 0) {
     const item = 記録.value[未入力]!;
     item.展開 = true;
@@ -237,11 +237,11 @@ function 保存内容(): 日誌保存 {
     throw new Error(`作業 ${不正件数 + 1} の新規・更新ファイル数は0以上の整数を入力してください。`);
   }
   return {
-    日付: 日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
+    日誌日付: 日誌日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
     記録: 記録.value.map((item, i) => ({
-      記録SEQ: i + 1, 記録タイトル: item.記録タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
+      作業ID: i + 1, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
       明細: item.明細.filter(有効な明細).map((行, j) => ({
-        行SEQ: j + 1, 内容: 行.内容, 添付: 行.添付.map(({ ファイル名, base64内容 }) => ({ ファイル名, base64内容 })),
+        行番号: j + 1, 作業内容: 行.作業内容, 添付: 行.添付.map(({ ファイル名, base64内容 }) => ({ ファイル名, base64内容 })),
       })),
     })),
   };
@@ -257,9 +257,9 @@ async function 保存() {
     未保存.value = false;
     操作中.value = false;
     if (!編集.value) {
-      登録直後の日付 = data.日付;
+      登録直後の日付 = data.日誌日付;
       try {
-        await router.replace({ name: 'T日誌編集', query: { ...route.query, モード: '編集', 日付: data.日付 } });
+        await router.replace({ name: 'T日誌編集', query: { ...route.query, モード: '編集', 日誌日付: data.日誌日付 } });
       } finally {
         登録直後の日付 = '';
       }
@@ -273,12 +273,12 @@ async function 保存() {
 }
 async function 日誌を削除() {
   if (操作中.value || !編集.value || 読込失敗.value) return;
-  if (!await qConfirm(`${日付.value}の日誌を削除しますか？記録・明細・添付も削除されます。`)) return;
+  if (!await qConfirm(`${日誌日付.value}の日誌を削除しますか？記録・明細・添付も削除されます。`)) return;
   if (閉じた.value || 操作中.value) return;
   エラー.value = '';
   操作中.value = true;
   try {
-    await 日誌操作('削除', { 日付: 日付.value });
+    await 日誌操作('削除', { 日誌日付: 日誌日付.value });
     未保存.value = false;
     操作中.value = false;
     await 一覧へ();
@@ -302,9 +302,9 @@ async function 遷移確認() {
 }
 onBeforeRouteLeave(遷移確認);
 onBeforeRouteUpdate((to, from) => (
-  to.query.日付 !== from.query.日付 || to.query.モード !== from.query.モード
+  to.query.日誌日付 !== from.query.日誌日付 || to.query.モード !== from.query.モード
 ) ? 遷移確認() : true);
-watch(() => [route.query.日付, route.query.モード], ([次の日付, 次のモード]) => {
+watch(() => [route.query.日誌日付, route.query.モード], ([次の日付, 次のモード]) => {
   if (登録直後の日付 && 次の日付 === 登録直後の日付 && 次のモード === '編集') return;
   void 読み込み();
 });
@@ -326,12 +326,12 @@ onBeforeUnmount(() => {
       <button type="button" class="btn btn-secondary" :disabled="操作中" @click="一覧へ">一覧へ</button>
     </h2>
     <p v-if="エラー" role="alert" class="error">{{ エラー }}</p>
-    <button v-if="読込失敗 && route.query.日付" class="btn btn-secondary" :disabled="操作中" @click="読み込み">再読み込み</button>
+    <button v-if="読込失敗 && route.query.日誌日付" class="btn btn-secondary" :disabled="操作中" @click="読み込み">再読み込み</button>
     <p v-if="操作中" role="status">処理中…</p>
     <form v-if="!読込失敗 && 記録.length" class="diary-editor" @submit.prevent="保存">
       <fieldset :disabled="操作中">
         <div class="actions diary-header">
-          <label>日付 <input v-model="日付" type="date" required :readonly="編集" @input="変更した"></label>
+          <label>日誌日付 <input v-model="日誌日付" type="date" required :readonly="編集" @input="変更した"></label>
           <span>利用者: {{ (利用者 ?? auth.user)?.利用者ID }} {{ (利用者 ?? auth.user)?.利用者名 }}</span>
           <span v-if="未保存" class="dirty" role="status">未保存</span>
         </div>
@@ -340,15 +340,20 @@ onBeforeUnmount(() => {
             :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
             <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
             <span>作業 {{ i + 1 }}</span>
-            <span class="fold-label">{{ item.記録タイトル.trim() || 'タイトル未入力' }}</span>
+            <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
             <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
             <span class="fold-count">明細 {{ item.明細.length }}件</span>
           </button>
           <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
             <header class="actions record-heading">
+              <label class="record-project">
+                <span>プロジェクト（フォルダパス）</span>
+                <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
+                  spellcheck="false" @input="変更した">
+              </label>
               <label class="record-title">
-                <span>作業 {{ i + 1 }} タイトル</span>
-                <input :id="`diary-title-${item.key}`" v-model="item.記録タイトル" type="text"
+                <span>作業タイトル</span>
+                <input :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
                   maxlength="200" aria-required="true" @input="変更した">
               </label>
               <label class="record-count">
@@ -368,8 +373,8 @@ onBeforeUnmount(() => {
               </button>
               <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
                 <label>
-                  <span>明細 {{ j + 1 }} 内容</span>
-                  <textarea v-model="行.内容" rows="3" maxlength="10000" @input="変更した"></textarea>
+                  <span>明細 {{ j + 1 }} 作業内容</span>
+                  <textarea v-model="行.作業内容" rows="3" maxlength="10000" @input="変更した"></textarea>
                 </label>
                 <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }"
                   @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
@@ -421,6 +426,8 @@ onBeforeUnmount(() => {
 .fold-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
 .fold-count{font-size:.85em}
 .record-heading,.diary-line,.line-body > label{width:100%}
+.record-heading .record-project{width:100%;flex-wrap:wrap}
+.record-project input{flex:1;min-width:100px}
 .record-heading .record-title{flex:1;min-width:min(100%,240px);flex-wrap:wrap}
 .record-title input{flex:1;min-width:100px}
 .record-count{flex-wrap:wrap}

@@ -11,15 +11,16 @@ class 日誌Base(DeclarativeBase):
 class T日誌作業(日誌Base):
     __tablename__ = "T日誌作業"
     __table_args__ = (
-        CheckConstraint("記録SEQ > 0"),
+        CheckConstraint("作業ID > 0"),
         CheckConstraint("新規更新ファイル数 >= 0"),
     )
 
     利用者ID: Mapped[str] = mapped_column(Text, primary_key=True)
-    日付: Mapped[str] = mapped_column(Text, primary_key=True)
-    記録SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
+    日誌日付: Mapped[str] = mapped_column(Text, primary_key=True)
+    作業ID: Mapped[int] = mapped_column(Integer, primary_key=True)
     利用者名: Mapped[str] = mapped_column(Text)
-    記録タイトル: Mapped[str] = mapped_column(Text)
+    プロジェクト: Mapped[str] = mapped_column(Text)
+    作業タイトル: Mapped[str] = mapped_column(Text)
     新規更新ファイル数: Mapped[int | None] = mapped_column(Integer)
     有効: Mapped[bool] = mapped_column(Boolean, default=True)
     登録日時: Mapped[str] = mapped_column(Text)
@@ -36,17 +37,17 @@ class T日誌明細(日誌Base):
     __tablename__ = "T日誌明細"
     __table_args__ = (
         ForeignKeyConstraint(
-            ["利用者ID", "日付", "記録SEQ"],
-            ["T日誌作業.利用者ID", "T日誌作業.日付", "T日誌作業.記録SEQ"],
+            ["利用者ID", "日誌日付", "作業ID"],
+            ["T日誌作業.利用者ID", "T日誌作業.日誌日付", "T日誌作業.作業ID"],
             ondelete="CASCADE", onupdate="CASCADE",
         ),
-        CheckConstraint("行SEQ > 0"),
+        CheckConstraint("行番号 > 0"),
         CheckConstraint("json_valid(添付) AND json_type(添付) = 'array'"),
     )
 
     利用者ID: Mapped[str] = mapped_column(Text, primary_key=True)
-    日付: Mapped[str] = mapped_column(Text, primary_key=True)
-    記録SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
-    行SEQ: Mapped[int] = mapped_column(Integer, primary_key=True)
-    内容: Mapped[str] = mapped_column(Text)
+    日誌日付: Mapped[str] = mapped_column(Text, primary_key=True)
+    作業ID: Mapped[int] = mapped_column(Integer, primary_key=True)
+    行番号: Mapped[int] = mapped_column(Integer, primary_key=True)
+    作業内容: Mapped[str] = mapped_column(Text)
     添付: Mapped[list[dict[str, str]]] = mapped_column(JSON)

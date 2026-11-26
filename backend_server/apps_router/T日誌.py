@@ -83,7 +83,7 @@ def 一覧(要求: T日誌一覧要求 | None = None, 所有者=Depends(_現在�
 
 @router.post("/取得", response_model=ResponseBase)
 def 取得(要求: T日誌キー, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
-    data = crud.更新版付き(crud.取得(db, 所有者["利用者ID"], 要求.日付))
+    data = crud.更新版付き(crud.取得(db, 所有者["利用者ID"], 要求.日誌日付))
     return ResponseBase(message="日誌を取得しました。", data=data) if data else _見つからない()
 
 
@@ -106,7 +106,7 @@ def 変更(要求: T日誌変更要求, 所有者=Depends(_現在の所有者), 
 
 @router.post("/削除", response_model=ResponseBase)
 def 削除(要求: T日誌キー, 所有者=Depends(_現在の所有者), db: Session = Depends(_日誌DB)):
-    if not crud.削除(db, 所有者["利用者ID"], 要求.日付):
+    if not crud.削除(db, 所有者["利用者ID"], 要求.日誌日付):
         return _見つからない()
     return ResponseBase(message="日誌を削除しました。")
 

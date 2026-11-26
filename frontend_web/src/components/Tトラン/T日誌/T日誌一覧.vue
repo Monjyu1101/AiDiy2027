@@ -18,7 +18,7 @@ const 件数制限 = ref(route.query.件数制限 !== 'false');
 const 結果 = ref<日誌一覧>({ items: [], total: 0, limit: null });
 const 読込中 = ref(false);
 const エラー = ref('');
-const 並び列 = ref('日付');
+const 並び列 = ref('日誌日付');
 const 昇順 = ref(false);
 const ページ = ref(1);
 const ページ件数 = 30;
@@ -29,7 +29,7 @@ const 一覧条件 = computed(() => ({
 }));
 const 新規日付 = computed(() => 開始日付.value && 開始日付.value === 終了日付.value ? 開始日付.value : ローカル日付());
 const columns: Column[] = [
-  { key: '日付', label: '日付', align: 'center', width: '150px' },
+  { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
   { key: '利用者ID', label: '利用者ID' },
   { key: '利用者名', label: '利用者名' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
@@ -81,19 +81,19 @@ onMounted(一覧取得);
           <label><input v-model="件数制限" type="checkbox"> 件数制限</label>
           <button type="submit" class="btn btn-secondary">{{ 読込中 ? '検索中…' : '検索' }}</button>
         </fieldset>
-        <RouterLink :to="{ name: 'T日誌編集', query: { ...一覧条件, モード: '新規', 日付: 新規日付 } }" class="btn btn-primary">新規</RouterLink>
+        <RouterLink :to="{ name: 'T日誌編集', query: { ...一覧条件, モード: '新規', 日誌日付: 新規日付 } }" class="btn btn-primary">新規</RouterLink>
       </form>
       <p v-if="エラー" role="alert" class="error">{{ エラー }}</p>
       <p v-if="結果.limit && 結果.total > 結果.items.length" role="status">
         {{ 結果.total }}件中、先頭{{ 結果.items.length }}件を表示しています。
       </p>
-      <QTable :columns="columns" :rows="表示行" row-key="日付" caption="ログイン中の利用者の日誌"
+      <QTable :columns="columns" :rows="表示行" row-key="日誌日付" caption="ログイン中の利用者の日誌"
         :sort-key="並び列" :sort-order="昇順 ? 'asc' : 'desc'" :total-count="結果.items.length" :total-all="結果.total"
         :current-page="ページ" :total-pages="ページ数" :empty-text="読込中 ? '読み込み中…' : '日誌がありません。'"
         @sort="ソート" @page="ページ = $event">
         <template #cell="{ row, column, value }">
-          <RouterLink v-if="column.key === '日付'" class="id-link"
-            :to="{ name: 'T日誌編集', query: { ...一覧条件, モード: '編集', 日付: row.日付 } }">{{ value }}</RouterLink>
+          <RouterLink v-if="column.key === '日誌日付'" class="id-link"
+            :to="{ name: 'T日誌編集', query: { ...一覧条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
           <template v-else>{{ value }}</template>
         </template>
       </QTable>

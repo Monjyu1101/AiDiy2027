@@ -4,7 +4,7 @@ import axios from 'axios';
 import apiClient from '../../../api/client';
 
 export interface 日誌見出し {
-  日付: string;
+  日誌日付: string;
   利用者ID: string;
   利用者名: string;
 }
@@ -13,13 +13,14 @@ export interface 日誌添付 {
   base64内容: string;
 }
 export interface 日誌明細 {
-  行SEQ: number;
-  内容: string;
+  行番号: number;
+  作業内容: string;
   添付: 日誌添付[];
 }
 export interface 日誌記録 {
-  記録SEQ: number;
-  記録タイトル: string;
+  作業ID: number;
+  プロジェクト: string;
+  作業タイトル: string;
   新規更新ファイル数: number | null;
   明細: 日誌明細[];
 }
@@ -29,7 +30,7 @@ export interface 日誌一覧 {
   total: number;
   limit: number | null;
 }
-export interface 日誌保存 { 日付: string; 更新版?: string; 記録: 日誌記録[] }
+export interface 日誌保存 { 日誌日付: string; 更新版?: string; 記録: 日誌記録[] }
 type 操作名 = '一覧' | '取得' | '登録' | '変更' | '削除';
 
 export async function 日誌操作<T>(操作: 操作名, body: object = {}): Promise<T> {
@@ -42,7 +43,7 @@ export function エラー表示(error: unknown, message: string): string {
   if (axios.isAxiosError(error)) {
     const status = error.response?.status;
     if (status === 413) return '添付ファイルまたは日誌全体の容量が上限を超えています。';
-    if (status === 422) return '入力内容を確認してください。日付・記録・明細の形式または上限に問題があります。';
+    if (status === 422) return '入力内容を確認してください。日誌日付・記録・明細の形式または上限に問題があります。';
     if (status === 403) return '日誌を利用する権限がありません。';
     if (status === 401) return 'ログインし直してください。';
     const data = error.response?.data;

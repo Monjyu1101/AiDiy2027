@@ -87,54 +87,61 @@ def register_tools(mcp):
         ctx: Context, 開始日付: str | None = None, 終了日付: str | None = None,
         キーワード: str = "", limit: int = 5, offset: int = 0,
     ) -> dict:
-        """本人の日誌を日付範囲、タイトル、本文、添付名で検索する。日付はYYYY-MM-DD。本文は先頭1000文字。添付データは返さない。"""
+        """本人の日誌を日付範囲、プロジェクトのフォルダパス、タイトル、本文、添付名で検索する。日付はYYYY-MM-DD。本文は先頭1000文字。添付データは返さない。"""
         return await run("diary_search", ctx, 開始日付=開始日付, 終了日付=終了日付, キーワード=キーワード,
                          limit=limit, offset=offset)
 
     @mcp.tool()
-    async def diary_work_create(ctx: Context, 日付: str, 記録タイトル: str, 新規更新ファイル数: int | None = None) -> dict:
-        """指定日に作業を追加して記録SEQを返す。その日の日誌がなければ同時に1件だけ作る。"""
-        return await run("diary_work_create", ctx, 日付=日付, 記録タイトル=記録タイトル, 新規更新ファイル数=新規更新ファイル数)
+    async def diary_work_create(
+        ctx: Context, 日誌日付: str, 作業タイトル: str,
+        新規更新ファイル数: int | None = None, プロジェクト: str = "",
+    ) -> dict:
+        """指定日に作業を追加して作業IDを返す。その日の日誌がなければ同時に1件だけ作る。"""
+        return await run("diary_work_create", ctx, 日誌日付=日誌日付, 作業タイトル=作業タイトル,
+                         新規更新ファイル数=新規更新ファイル数, プロジェクト=プロジェクト)
 
     @mcp.tool()
     async def diary_work_update(
-        ctx: Context, 日付: str, 記録SEQ: int, 記録タイトル: str,
+        ctx: Context, 日誌日付: str, 作業ID: int, 作業タイトル: str,
         新規更新ファイル数: int | None = None, 自己申告を解除: bool = False,
+        プロジェクト: str | None = None,
     ) -> dict:
-        """作業のタイトルと任意で自己申告件数を変更する。件数の省略は維持、自己申告を解除=true で未入力に戻す。"""
-        集計 = {"新規更新ファイル数": 新規更新ファイル数} if 新規更新ファイル数 is not None else {}
-        return await run("diary_work_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 記録タイトル=記録タイトル,
-                         自己申告を解除=自己申告を解除, **集計)
+        """作業タイトルを変更する。プロジェクトは省略で維持、空文字で解除。自己申告件数は省略で維持、自己申告を解除=true で解除。"""
+        任意項目 = {"新規更新ファイル数": 新規更新ファイル数} if 新規更新ファイル数 is not None else {}
+        if プロジェクト is not None:
+            任意項目["プロジェクト"] = プロジェクト
+        return await run("diary_work_update", ctx, 日誌日付=日誌日付, 作業ID=作業ID, 作業タイトル=作業タイトル,
+                         自己申告を解除=自己申告を解除, **任意項目)
 
     @mcp.tool()
-    async def diary_work_delete(ctx: Context, 日付: str, 記録SEQ: int) -> dict:
+    async def diary_work_delete(ctx: Context, 日誌日付: str, 作業ID: int) -> dict:
         """指定した作業と配下の全明細を削除する。最後の作業ならその日の日誌もなくなる。必ず削除対象を確認してから呼び、後続の操作前に再検索する。"""
-        return await run("diary_work_delete", ctx, 日付=日付, 記録SEQ=記録SEQ)
+        return await run("diary_work_delete", ctx, 日誌日付=日誌日付, 作業ID=作業ID)
 
     @mcp.tool()
     async def diary_content_create(
-        ctx: Context, 日付: str, 記録SEQ: int, 内容: str = "",
+        ctx: Context, 日誌日付: str, 作業ID: int, 作業内容: str = "",
         添付: list[日誌添付] | None = None,
     ) -> dict:
-        """指定した作業に明細を1行追加して行SEQを返す。本文または添付が必要。複数ファイルは添付にファイル名・base64内容の組を並べて指定する。"""
-        return await run("diary_content_create", ctx, 日付=日付, 記録SEQ=記録SEQ,
-                         内容=内容,
+        """指定した作業に明細を1行追加して行番号を返す。本文または添付が必要。複数ファイルは添付にファイル名・base64内容の組を並べて指定する。"""
+        return await run("diary_content_create", ctx, 日誌日付=日誌日付, 作業ID=作業ID,
+                         作業内容=作業内容,
                          添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()
     async def diary_content_update(
-        ctx: Context, 日付: str, 記録SEQ: int, 行SEQ: int, 内容: str | None = None,
+        ctx: Context, 日誌日付: str, 作業ID: int, 行番号: int, 作業内容: str | None = None,
         添付: list[日誌添付] | None = None,
     ) -> dict:
         """指定した明細1行を変更する。省略した項目は維持し、添付一覧指定で置換し、空配列で全添付を外す。"""
-        return await run("diary_content_update", ctx, 日付=日付, 記録SEQ=記録SEQ, 行SEQ=行SEQ,
-                         内容=内容,
+        return await run("diary_content_update", ctx, 日誌日付=日誌日付, 作業ID=作業ID, 行番号=行番号,
+                         作業内容=作業内容,
                          添付=[file.model_dump() for file in 添付] if 添付 is not None else None)
 
     @mcp.tool()
-    async def diary_content_delete(ctx: Context, 日付: str, 記録SEQ: int, 行SEQ: int) -> dict:
+    async def diary_content_delete(ctx: Context, 日誌日付: str, 作業ID: int, 行番号: int) -> dict:
         """指定した明細とその添付だけを削除する。必ず削除対象を確認し、後続の操作前に再検索する。"""
-        return await run("diary_content_delete", ctx, 日付=日付, 記録SEQ=記録SEQ, 行SEQ=行SEQ)
+        return await run("diary_content_delete", ctx, 日誌日付=日誌日付, 作業ID=作業ID, 行番号=行番号)
 
 
 def create_router() -> APIRouter:

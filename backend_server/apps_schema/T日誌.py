@@ -31,7 +31,7 @@ class 日誌要求(BaseModel):
 
 
 class T日誌キー(日誌要求):
-    日付: 日誌日付
+    日誌日付: 日誌日付
 
 
 class 日誌期間要求(日誌要求):
@@ -65,38 +65,46 @@ class 日誌添付要求(日誌要求):
 
 
 class 日誌明細項目(日誌要求):
-    内容: str | None = Field(default=None, max_length=10_000)
+    作業内容: str | None = Field(default=None, max_length=10_000)
     添付: list[日誌添付要求] | None = Field(default=None, max_length=明細添付件数上限)
 
 
 class 日誌明細要求(日誌明細項目):
-    行SEQ: int = Field(ge=1, le=最大明細数)
-    内容: str = Field(default="", max_length=10_000)
+    行番号: int = Field(ge=1, le=最大明細数)
+    作業内容: str = Field(default="", max_length=10_000)
     添付: list[日誌添付要求] = Field(default_factory=list, max_length=明細添付件数上限)
 
     @model_validator(mode="after")
     def _確認(self) -> Self:
-        if not self.内容.strip() and not self.添付:
+        if not self.作業内容.strip() and not self.添付:
             raise ValueError("明細には内容または添付ファイルを指定してください。")
         return self
 
 
+def _プロジェクトパス(値: str) -> str:
+    if any(ord(c) < 32 or ord(c) == 127 for c in 値):
+        raise ValueError("プロジェクト（フォルダパス）に制御文字は指定できません。")
+    return 値
+
+
+プロジェクトパス = Annotated[str, Field(max_length=4096), AfterValidator(_プロジェクトパス)]
 自己申告件数 = Annotated[int, Field(ge=0, le=9_007_199_254_740_991)]
 
 
 class 日誌記録要求(日誌要求):
-    記録SEQ: int = Field(ge=1, le=最大記録数)
-    記録タイトル: str = Field(min_length=1, max_length=200)
+    作業ID: int = Field(ge=1, le=最大記録数)
+    プロジェクト: プロジェクトパス = ""
+    作業タイトル: str = Field(min_length=1, max_length=200)
     新規更新ファイル数: 自己申告件数 | None = None
     明細: list[日誌明細要求] = Field(default_factory=list, max_length=最大明細数)
 
     @model_validator(mode="after")
     def _確認(self) -> Self:
-        self.記録タイトル = self.記録タイトル.strip()
-        if not self.記録タイトル:
-            raise ValueError("記録タイトルを入力してください。")
-        if any(行.行SEQ != 番号 for 番号, 行 in enumerate(self.明細, 1)):
-            raise ValueError("行SEQは明細ごとに1から順に指定してください。")
+        self.作業タイトル = self.作業タイトル.strip()
+        if not self.作業タイトル:
+            raise ValueError("作業タイトルを入力してください。")
+        if any(行.行番号 != 番号 for 番号, 行 in enumerate(self.明細, 1)):
+            raise ValueError("行番号は明細ごとに1から順に指定してください。")
         return self
 
 
@@ -105,15 +113,15 @@ class T日誌保存要求(T日誌キー):
 
     @model_validator(mode="after")
     def _確認(self) -> Self:
-        if any(記録.記録SEQ != 番号 for 番号, 記録 in enumerate(self.記録, 1)):
-            raise ValueError("記録SEQは1から順に指定してください。")
+        if any(記録.作業ID != 番号 for 番号, 記録 in enumerate(self.記録, 1)):
+            raise ValueError("作業IDは1から順に指定してください。")
         if sum(len(記録.明細) for 記録 in self.記録) > 最大明細数:
             raise ValueError("明細は日誌1件につき100行までです。")
         添付合計 = 0
         for 記録 in self.記録:
             for 行 in 記録.明細:
                 for 番号, 添付 in enumerate(行.添付, 1):
-                    位置 = f"記録{記録.記録SEQ}・行{行.行SEQ}・添付{番号}"
+                    位置 = f"記録{記録.作業ID}・行{行.行番号}・添付{番号}"
                     try:
                         添付サイズ = len(base64.b64decode(添付.base64内容, validate=True))
                     except ValueError:
@@ -137,11 +145,12 @@ class T日誌検索要求(日誌期間要求):
 
 
 class T日誌作業キー(T日誌キー):
-    記録SEQ: int = Field(ge=1, le=最大記録数)
+    作業ID: int = Field(ge=1, le=最大記録数)
 
 
 class T日誌作業登録要求(T日誌キー):
-    記録タイトル: str = Field(min_length=1, max_length=200)
+    プロジェクト: プロジェクトパス = ""
+    作業タイトル: str = Field(min_length=1, max_length=200)
     新規更新ファイル数: 自己申告件数 | None = None
 
 
@@ -150,16 +159,16 @@ class T日誌作業変更要求(T日誌作業キー, T日誌作業登録要求):
 
 
 class T日誌内容登録要求(T日誌作業キー, 日誌明細項目):
-    内容: str = Field(default="", max_length=10_000)
+    作業内容: str = Field(default="", max_length=10_000)
 
 
 class T日誌内容キー(T日誌作業キー):
-    行SEQ: int = Field(ge=1, le=最大明細数)
+    行番号: int = Field(ge=1, le=最大明細数)
 
 
 class T日誌内容変更要求(T日誌内容キー, 日誌明細項目):
     @model_validator(mode="after")
     def _変更項目(self) -> Self:
-        if self.内容 is None and self.添付 is None:
+        if self.作業内容 is None and self.添付 is None:
             raise ValueError("変更する内容または添付を指定してください。")
         return self

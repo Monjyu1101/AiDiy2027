@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 
 from apps_models.T日誌 import 日誌Base
 
-現日誌ファイル = "diary_v2.db"
+現日誌ファイル = "diary_v3.db"
 
 
 def 日誌DB初期化() -> Engine:
@@ -38,8 +38,8 @@ def 日誌DB初期化() -> Engine:
             版 = conn.exec_driver_sql("PRAGMA user_version").scalar_one()
             if 版 == 0:
                 日誌Base.metadata.create_all(conn)
-                conn.exec_driver_sql("PRAGMA user_version = 2")
-            elif 版 != 2:
+                conn.exec_driver_sql("PRAGMA user_version = 3")
+            elif 版 != 3:
                 raise RuntimeError("対応していない日誌DBの版です。")
     except Exception:
         db_engine.dispose()

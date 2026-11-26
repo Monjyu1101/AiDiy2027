@@ -41,7 +41,7 @@ class DiaryControlTests(unittest.IsolatedAsyncioTestCase):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app), base_url="http://test") as client:
             with patch.object(diary.httpx, "AsyncClient", side_effect=self.factory):
                 path = f"/{diary.NAME}/diary_work_create"
-                request = {"日付": "2026-11-26", "記録タイトル": "作業"}
+                request = {"日誌日付": "2026-11-26", "作業タイトル": "作業"}
                 response = await client.post(path, json=request)
                 self.assertEqual(response.status_code, 401)
                 response = await client.post(path, json=request, headers=[
@@ -93,7 +93,19 @@ class DiaryControlTests(unittest.IsolatedAsyncioTestCase):
                 auth = {"Authorization": "Bearer aaa.bbb.ccc"}
                 添付 = [{"ファイル名": "a.txt", "base64内容": "YQ=="}, {"ファイル名": "b.txt", "base64内容": "Yg=="}]
                 result = await client.post("/mcp", json={"jsonrpc": "2.0", "id": 7, "method": "tools/call",
-                    "params": {"name": "diary_content_create", "arguments": {"日付": "2026-11-26", "記録SEQ": 1, "添付": 添付}},
+                    "params": {"name": "diary_content_create", "arguments": {"日誌日付": "2026-11-26", "作業ID": 1, "添付": 添付}},
                 }, headers={**headers, **auth})
                 self.assertFalse(result.json()["result"].get("isError", False), result.text)
                 self.assertEqual(json.loads(self.calls[-1].content)["添付"], 添付)
+
+                create = {"日誌日付": "2026-11-26", "作業タイトル": "作業", "プロジェクト": r"C:\作業場所\工程", "新規更新ファイル数": 0}
+                for i, (name, arguments) in enumerate([
+                    ("diary_work_create", create),
+                    ("diary_work_update", {"日誌日付": create["日誌日付"], "作業ID": 1, "作業タイトル": "別名"}),
+                    ("diary_work_update", {"日誌日付": create["日誌日付"], "作業ID": 1, "作業タイトル": "別名", "プロジェクト": ""}),
+                ], 8):
+                    result = await client.post("/mcp", json={"jsonrpc": "2.0", "id": i, "method": "tools/call",
+                        "params": {"name": name, "arguments": arguments},
+                    }, headers={**headers, **auth})
+                    self.assertFalse(result.json()["result"].get("isError", False), result.text)
+                    self.assertEqual(json.loads(self.calls[-1].content), arguments)
