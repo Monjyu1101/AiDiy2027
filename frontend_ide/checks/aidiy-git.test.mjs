@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFile,spawn} from 'node:child_process';
 import {promisify} from 'node:util';
-import {mkdtemp,mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {mkdtemp,mkdir,writeFile,readFile,stat,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -178,11 +178,16 @@ test('the standalone command reports missing Git, missing .git, and invalid .git
  await mkdir(nested,{recursive:true});await init(root);await mkdir(emptyPath);await mkdir(invalid);
  await set(invalid,'.git','not a gitdir');
  const env={...process.env,DISPLAY:':99',CODESPACES:'false'};
- for(const [cwd,message] of [[dir,/現在のフォルダに \.git がありません/],[nested,/現在のフォルダに \.git がありません/],[invalid,/有効な作業リポジトリ/]]){
+ for(const [cwd,message,firstSteps] of [[dir,/現在のフォルダに \.git がありません/,true],[nested,/既存の Git 管理領域/,false],[invalid,/有効な作業リポジトリ/,false]]){
   await assert.rejects(execute(process.execPath,[gitLauncher],{cwd,env,timeout:8000,windowsHide:true}),err=>{
-   assert.equal(err.code,1);assert.match(err.stderr,message);assert.equal(err.stdout,'');return true;
+   assert.equal(err.code,1);assert.match(err.stderr,message);assert.equal(err.stdout,'');
+   if(firstSteps){assert.match(err.stderr,/git init.*aidiy_git/);assert.match(err.stderr,/git clone.*aidiy_git/);}
+   else assert.doesNotMatch(err.stderr,/git init/);
+   return true;
   });
  }
+ await assert.rejects(stat(join(dir,'.git')),err=>err.code==='ENOENT');
+ await assert.rejects(stat(join(nested,'.git')),err=>err.code==='ENOENT');
  const noGit=Object.fromEntries(Object.entries(env).filter(([key])=>key.toUpperCase()!=='PATH'));
  noGit.PATH=emptyPath;
  await assert.rejects(execute(process.execPath,[gitLauncher],{cwd:root,env:noGit,timeout:8000,windowsHide:true}),err=>{

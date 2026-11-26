@@ -99,11 +99,16 @@ async function requireGitProject(project,{workspace=false}={}){
   if(!await gitRoot(project))throw fail('このフォルダの .git を有効な作業リポジトリとして開けません。');
   return;
  }
- if(workspace){
-  if(await gitAvailable(project))return;
-  throw fail('指定したフォルダまたは直下に Git リポジトリが見つかりません。');
- }
- throw fail('現在のフォルダに .git がありません。Git リポジトリのルートで aidiy_git を実行してください。');
+ if(workspace&&await gitAvailable(project))return;
+ const message=workspace?'指定したフォルダまたは直下に Git リポジトリが見つかりません。':'現在のフォルダに .git がありません。';
+ const {code}=await git(project,['rev-parse','--git-dir'],{allowed:[0,128]});
+ if(code===0)throw fail([message,
+  'ここは既存の Git 管理領域です。作業ツリーのルート（.git があるフォルダ）で aidiy_git を実行してください。'
+ ].join('\n'));
+ throw fail([message,
+  '新しく Git 管理を始める場合: 管理したいフォルダで git init を実行し、続けて aidiy_git を実行してください。',
+  '既存のリポジトリを使う場合: 取得済みなら .git があるフォルダへ移動してください。未取得なら git clone で取得し、作成されたフォルダで aidiy_git を実行してください。'
+ ].join('\n'));
 }
 const states=(raw)=>{
  const parts=raw.split('\0'),rows=[];
