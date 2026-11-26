@@ -52,7 +52,7 @@ test('期限の光は11配色で異なり、光っている間も本文のコン
   const match=rule?.match(/^#([0-9a-f]{6});--sticky-glow:#([0-9a-f]{6})(?:;--sticky-pulse-base:#([0-9a-f]{6}))?$/);
   assert.ok(match,color);
   const [,base,peak,dim=base]=match;colors.add(peak);
-  assert.ok(luminance(rgb(peak))-luminance(rgb(dim))>0.08,color);
+  assert.ok(luminance(rgb(peak))-luminance(rgb(dim))>0.12,color);
   const text=luminance(rgb(color.startsWith('vivid-')?'ffffff':'29322e'));
   for(let i=0;i<=10;i++){
    const background=luminance(rgb(dim).map((v,j)=>v+(rgb(peak)[j]-v)*i/10));

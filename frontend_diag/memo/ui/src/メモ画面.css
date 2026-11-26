@@ -4,8 +4,8 @@ html,body,#app{margin:0;width:100%;height:100%;overflow:hidden}*,*::before,*::af
 body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f7e69c}
 .sticky-note{position:relative;width:100%;height:100%;display:flex;flex-direction:column;padding:10px 10px 4px;overflow:hidden;-webkit-app-region:no-drag}
 .sticky-yellow{background:#f7e69c}.sticky-blue{background:#b4deef}.sticky-green{background:#c6e6ad}.sticky-pink{background:#f2c4d1}.sticky-purple{background:#d7c8ec}
-.sticky-title{width:100%;background:transparent;color:inherit;border:0;outline:0;min-height:26px;font-weight:600;font-size:14px;padding-bottom:4px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;flex:none}
-.sticky-text{display:block;width:100%;flex:1;min-height:20px;resize:none;border:0;outline:0;background:transparent;color:inherit;font:14px/1.6 system-ui,sans-serif;padding:0;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-width:thin}
+.sticky-title{width:100%;appearance:none;background:transparent;color:inherit;border:0;outline:0;min-height:26px;font-weight:600;font-size:14px;padding-bottom:4px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;flex:none}
+.sticky-text{display:block;width:100%;appearance:none;flex:1;min-height:20px;resize:none;border:0;outline:0;background:transparent;color:inherit;font:14px/1.6 system-ui,sans-serif;padding:0;white-space:pre-wrap;overflow-wrap:anywhere;scrollbar-width:thin}
 .sticky-text::placeholder{color:#4b554e88}.sticky-text:disabled{opacity:.6}
 .sticky-bottom{display:flex;align-items:center;justify-content:space-between;gap:4px;flex:none;min-height:26px;user-select:none}
 .sticky-palette{display:grid;grid-template-columns:repeat(6,17px);gap:6px;padding:4px 0;visibility:hidden}.sticky-bottom:hover .sticky-palette,.sticky-bottom:focus-within .sticky-palette{visibility:visible}
@@ -46,12 +46,11 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 /* 小さな付箋でも本文領域を確保し、色パレットは下部から重ねて表示。 */
 .sticky-bottom{position:relative;background:inherit}
 .sticky-palette{position:absolute;left:0;bottom:4px;z-index:2;background:inherit;border-radius:4px;padding:4px}
-.sticky-viewport{position:relative;flex:1;min-height:0}
-.sticky-content{height:100%}
+.sticky-viewport{position:relative;flex:1;min-height:0;background:transparent}
+.sticky-content{height:100%;background:transparent}
 .sticky-note:not(.sticky-focused) .sticky-content,.sticky-note:not(.sticky-focused) .sticky-text{scrollbar-width:none}
 .sticky-note:not(.sticky-focused) .sticky-content::-webkit-scrollbar,.sticky-note:not(.sticky-focused) .sticky-text::-webkit-scrollbar{display:none}
-.sticky-overflow-hint{position:absolute;right:0;bottom:0;line-height:18px;padding:0 4px;background:inherit;pointer-events:none;font-weight:700}
-.sticky-viewport{background:inherit}
+.sticky-overflow-hint{position:absolute;right:0;bottom:0;line-height:18px;padding:0 4px;background:transparent;pointer-events:none;font-weight:700}
 
 /* のりしろは1文字幅。左配置時は本文と重ならない余白を確保する。 */
 .sticky-adhesive{position:absolute;top:0;left:0;right:0;height:1em;z-index:1;background:#00000024;cursor:grab;user-select:none}
@@ -64,17 +63,17 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-bottom{position:absolute;left:10px;right:10px;bottom:4px;background:transparent}
 
 /* 下部の行を透明にしても、ホバー時の色パレットは付箋と同じ色で塗り、本文と重ねて見えないようにする。 */
-.sticky-yellow{--sticky-bg:#f7e69c;--sticky-glow:#fffac8}
-.sticky-blue{--sticky-bg:#b4deef;--sticky-glow:#def7ff}
-.sticky-green{--sticky-bg:#c6e6ad;--sticky-glow:#e8ffcf}
-.sticky-pink{--sticky-bg:#f2c4d1;--sticky-glow:#ffe2ef}
-.sticky-purple{--sticky-bg:#d7c8ec;--sticky-glow:#f4e7ff}
-.sticky-vivid-red{--sticky-bg:#c62828;--sticky-glow:#d13442;--sticky-pulse-base:#9d1721}
-.sticky-vivid-blue{--sticky-bg:#1565c0;--sticky-glow:#236bc5;--sticky-pulse-base:#104582}
-.sticky-vivid-green{--sticky-bg:#15803d;--sticky-glow:#1d8242;--sticky-pulse-base:#0a5930}
-.sticky-vivid-orange{--sticky-bg:#c2410c;--sticky-glow:#c84a0c;--sticky-pulse-base:#8e300b}
-.sticky-vivid-purple{--sticky-bg:#7e22ce;--sticky-glow:#9847dd;--sticky-pulse-base:#5d199d}
-.sticky-vivid-cyan{--sticky-bg:#007f8b;--sticky-glow:#057e93;--sticky-pulse-base:#005462}
+.sticky-yellow{--sticky-bg:#f7e69c;--sticky-glow:#fffac8;--sticky-pulse-base:#e4b85c}
+.sticky-blue{--sticky-bg:#b4deef;--sticky-glow:#def7ff;--sticky-pulse-base:#87b9d6}
+.sticky-green{--sticky-bg:#c6e6ad;--sticky-glow:#e8ffcf;--sticky-pulse-base:#9abb76}
+.sticky-pink{--sticky-bg:#f2c4d1;--sticky-glow:#ffe2ef;--sticky-pulse-base:#d496ae}
+.sticky-purple{--sticky-bg:#d7c8ec;--sticky-glow:#f4e7ff;--sticky-pulse-base:#b5a0d2}
+.sticky-vivid-red{--sticky-bg:#c62828;--sticky-glow:#d13442;--sticky-pulse-base:#650c18}
+.sticky-vivid-blue{--sticky-bg:#1565c0;--sticky-glow:#236bc5;--sticky-pulse-base:#0b2b57}
+.sticky-vivid-green{--sticky-bg:#15803d;--sticky-glow:#1d8242;--sticky-pulse-base:#073419}
+.sticky-vivid-orange{--sticky-bg:#c2410c;--sticky-glow:#c84a0c;--sticky-pulse-base:#58200a}
+.sticky-vivid-purple{--sticky-bg:#7e22ce;--sticky-glow:#9847dd;--sticky-pulse-base:#3a1265}
+.sticky-vivid-cyan{--sticky-bg:#007f8b;--sticky-glow:#057e93;--sticky-pulse-base:#003544}
 .sticky-palette{background:var(--sticky-bg,#f7e69c)}
 
 /* 右端の時計は旧「＋」と同じ幅。設定時はその左に日時を表示する。 */
@@ -89,13 +88,15 @@ body{font-family:system-ui,sans-serif;font-size:13px;color:#29322e;background:#f
 .sticky-deadline-fields input{width:100%;padding:0 1px}
 .sticky-deadline-actions{display:flex;justify-content:flex-end;gap:4px}
 .sticky-deadline-actions button{min-height:22px;font:12px system-ui,sans-serif;cursor:pointer}
-/* 期限到達は付箋の面全体を同系色で脈動。原色は白文字を保てる明るさに抑える。 */
-.sticky-overdue{animation:sticky-deadline-pulse 2.8s ease-in-out infinite}
+/* 期限到達は最背面の付箋だけで描画。本文・タイトル・のりしろを別色に塗らない。 */
+.sticky-overdue{animation:sticky-deadline-pulse 2.4s ease-in-out infinite}
+.sticky-overdue .sticky-adhesive{background:transparent}
 .sticky-overdue .sticky-deadline{border-color:currentColor}
 @keyframes sticky-deadline-pulse{
  0%,100%{background-color:var(--sticky-pulse-base,var(--sticky-bg))}
- 50%{background-color:var(--sticky-glow)}
+ 40%,60%{background-color:var(--sticky-glow)}
 }
 @media(prefers-reduced-motion:reduce){
  .sticky-overdue{animation:none;box-shadow:inset 0 0 0 2px currentColor}
+ .sticky-overdue .sticky-adhesive{background:#00000024}
 }

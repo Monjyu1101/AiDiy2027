@@ -84,6 +84,12 @@ if(process.versions.electron){
    expect(dueButton.textContent==='01/02 03:15'&&!dueDialog.open,'local deadline label');
    expect(window.calls.at(-1).body.期限===new Date('2000-01-02T03:15').toISOString(),'deadline immediately saved as UTC');
    expect(document.querySelector('.sticky-note').classList.contains('sticky-overdue'),'overdue note pulses');
+   const noteSurface=document.querySelector('.sticky-overdue'),pulse=noteSurface.getAnimations()[0];
+   pulse.pause();pulse.currentTime=0;const dim=getComputedStyle(noteSurface).backgroundColor;
+   pulse.currentTime=1200;expect(getComputedStyle(noteSurface).backgroundColor!==dim,'note background changes across pulse');
+   for(const layer of noteSurface.querySelectorAll('.sticky-header,.sticky-title,.sticky-viewport,.sticky-content,.sticky-text,.sticky-adhesive')){
+    expect(getComputedStyle(layer).backgroundColor==='rgba(0, 0, 0, 0)','only the note paints the pulsing background');
+   }
    dueButton.click();[...dueDialog.querySelectorAll('button')].find(x=>x.textContent==='解除').click();await wait(20);
    expect(window.calls.at(-1).body.期限===null&&!document.querySelector('.sticky-overdue'),'clearing deadline stops pulse and saves');
    document.querySelector('.sticky-trash').click();await wait(10);expect(window.calls.at(-1).route==='api/メモ/削除','trash removes saved note');expect(window.closedCalls===2,'trash dismisses note');
