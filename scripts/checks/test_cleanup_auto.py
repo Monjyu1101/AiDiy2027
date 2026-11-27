@@ -25,17 +25,19 @@ class CleanupAutoTests(unittest.TestCase):
 
     def test_auto_matches_interactive_a_and_preserves_database(self):
         root = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        database = root / self.module.SQLITE_DB_REL_PATHS[0]
+        home = root / "local-home"
+        database = home / ".aidiy" / "datas" / "core_v20261101.db"
         database.parent.mkdir(parents=True)
         database.write_bytes(b"preserved")
         (root / self.module.BACKEND_PATH / ".venv").mkdir(parents=True)
         with patch.object(self.module, "_read_single_key", side_effect=AssertionError("入力待ち")), \
-                patch.object(self.module, "ask_start_mode", return_value=(True, True)) as start:
+                patch.object(self.module, "ask_start_mode", return_value=(True, True)) as start, \
+                patch.object(Path, "home", return_value=home):
             auto = self.module.collect_cleanup_choices(root, auto=True)
             start.assert_not_called()
             interactive = self.module.collect_cleanup_choices(root)
         self.assertEqual(auto, interactive)
-        self.assertFalse(auto["backend_sqlite"])
+        self.assertNotIn("backend_sqlite", auto)
         self.assertFalse(auto["npm_uninstall"])
         self.assertTrue(auto["backend_envs"][".venv"])
         self.assertEqual(database.read_bytes(), b"preserved")

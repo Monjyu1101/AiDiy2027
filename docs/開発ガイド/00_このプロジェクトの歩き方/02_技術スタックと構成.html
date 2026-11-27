@@ -58,7 +58,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
  データベース
 
  SQLite
- database.db
+ ~/.aidiy/datas/ の3ファイル
 </code></pre>
 
  <div>
@@ -238,8 +238,6 @@ https://github.com/monjyu1101/AiDiy2027 -->
   core_schema/ # C系・A系の Pydantic models（テーブルごとに1ファイル）
   apps_schema/ # M系・T系・V系・S系の Pydantic models（テーブルごとに1ファイル）
 
-  _data/AiDiy/
-   database.db # SQLiteデータベースファイル
   AGENTS.md
 
  frontend_web/ # フロントエンドサーバー
@@ -292,7 +290,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
  <td>Apps API関連のModel・CRUD・Router（M系・T系・V系・S系を担当）</td>
  </tr>
  <tr>
- <td><code>_data/</code></td>
+ <td><code>~/.aidiy/datas/</code></td>
  <td>SQLiteデータベースファイルの格納場所</td>
  </tr>
  <tr>

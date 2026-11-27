@@ -39,10 +39,6 @@ BACKEND_ENV_LIST = [".venv", "venv"] # Python環境: ".venv" または "venv" (u
 # フロントエンド設定
 FRONTEND_PATH = "frontend_web" # フロントエンドフォルダパス
 
-# データベース設定
-DATABASE_TYPE = "sqlite" # "postgresql" or "sqlite"
-SQLITE_DB_REL_PATH = Path("_data/AiDiy/database.db")
-
 # a/auto 指定時に、以降の質問をデフォルト値で自動回答する
 AUTO_MODE = False
 
@@ -308,16 +304,8 @@ def cleanup_server(base_dir):
  else:
  print_info(" temp フォルダはそのまま残します")
 
- # SQLite データベースファイルの削除
- if DATABASE_TYPE.lower() == "sqlite":
- sqlite_db = base_dir / SQLITE_DB_REL_PATH
- if sqlite_db.exists():
- if ask_yes_no(" SQLite データベースを削除しますか？", default="n"):
- if remove_file(sqlite_db, "SQLite データベース"):
- deleted_count += 1
- else:
- print_info(" SQLite データベースはそのまま残します")
- 
+ # ホームの共有DBはクリーンアップ対象外。
+
  if deleted_count > 0:
  print_success(f"バックエンドフォルダのクリーンアップ完了 ({deleted_count}個削除)")
  else:

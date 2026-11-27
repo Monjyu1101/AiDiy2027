@@ -32,7 +32,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 ## 概要
 
 `backend_server` は AiDiy の FastAPI backend です。
-`core_main.py` と `apps_main.py` の 2 サーバーを持ち、それぞれ `_data/AiDiy/core_v20261101.db` と `_data/AiDiy/apps_v20261101.db` を使います。Apps の JWT 利用者照合と C採番だけは Core 側を参照します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261128.db` に保存します。
+`core_main.py` と `apps_main.py` の 2 サーバーを持ち、それぞれ `~/.aidiy/datas/core_v20261101.db` と `~/.aidiy/datas/apps_v20261101.db` を使います。Apps の JWT 利用者照合と C採番だけは Core 側を参照します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261128.db` に保存します。
 
 | エントリ | 役割 | ポート |
 |----------|------|--------|
@@ -85,7 +85,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `apps_router/` | Apps API / V系 / S系 |
 | `AIコア/` | AI provider、WebSocket、Code CLI 連携 |
 | `../_config/` | `AiDiy_key.json` などのプロジェクト共通設定 |
-| `../_data/` | プロジェクト共通 SQLite DB |
+| `~/.aidiy/datas/` | 実行ユーザー共通の Core / Apps / 日誌の SQLite DB |
 | `../_icons/` | プロジェクト共通アイコン |
 | `temp/` | logs、reboot file、一時ファイル |
 

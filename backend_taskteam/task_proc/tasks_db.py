@@ -21,14 +21,18 @@ import json
 import math
 import re
 import sqlite3
+import sys
 from pathlib import Path
 from datetime import datetime, timedelta
 
 _BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_PROJECT_ROOT = Path(_BASE_DIR).parent
-CORE_DATABASE_NAME = json.loads((_PROJECT_ROOT / "scripts" / "業務DB.json").read_text(encoding="utf-8"))["core"]
+_backend_server = str(Path(__file__).resolve().parents[2] / "backend_server")
+if _backend_server not in sys.path:
+    sys.path.append(_backend_server)
+
+from database_paths import database_path
 DEFAULT_CONFIG_PATH = "../_config/AiDiy_key.json"
-DB_PATH = str(_PROJECT_ROOT / "_data" / "AiDiy" / CORE_DATABASE_NAME)
+DB_PATH = str(database_path("core"))
 DB_DIR = os.path.dirname(DB_PATH)
 
 _初期化済み = False

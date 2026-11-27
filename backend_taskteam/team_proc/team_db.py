@@ -12,14 +12,18 @@
 
 from __future__ import annotations
 
-import json
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CORE_DATABASE_NAME = json.loads((PROJECT_ROOT / "scripts" / "業務DB.json").read_text(encoding="utf-8"))["core"]
-DB_PATH = PROJECT_ROOT / "_data" / "AiDiy" / CORE_DATABASE_NAME
+_backend_server = str(Path(__file__).resolve().parents[2] / "backend_server")
+if _backend_server not in sys.path:
+    sys.path.append(_backend_server)
+
+from database_paths import database_path
+
+DB_PATH = database_path("core")
 要員テーブル = "Aチーム要員"
 管理者要員ID = "admin"
 

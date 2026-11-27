@@ -17,11 +17,12 @@ class SqliteDatabaseSelectionTests(unittest.TestCase):
     def test_http_selects_only_current_apps_or_core(self):
         with tempfile.TemporaryDirectory(prefix="AiDiy 日本語 ") as directory:
             root = Path(directory)
-            db_dir = root / "_data" / "AiDiy"
+            db_dir = root / ".aidiy" / "datas"
             db_dir.mkdir(parents=True)
-            old = db_dir / "database.db"
+            old = root / "_data" / "AiDiy" / "core_v20261101.db"
+            old.parent.mkdir(parents=True)
             old.write_bytes(b"do not use")
-            with patch.object(sqlite_query, "ROOT", root):
+            with patch.object(Path, "home", return_value=root):
                 apps = sqlite_query.SqliteQuery()
                 core = apps.for_database("core")
                 self.assertEqual(Path(apps.db_path), db_dir / "apps_v20261101.db")

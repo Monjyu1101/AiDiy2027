@@ -77,22 +77,19 @@ docker_4delete.bat
 - コンテナを停止・削除
 - Dockerイメージを削除
 - SSL証明書を削除
-- データベース（`../_data`）は保持
+- データベース（ホストの `~/.aidiy/datas/`）は保持
 - 次回は`docker_1build.bat`から再構築
 
 現行スクリプトは `aidiy2027*` / `docker-aidiy2027*` / `nginx` イメージの削除を試み、`docker system prune -f`・`docker volume prune -f`・`docker network prune -f` も実行します。**他プロジェクトの停止済みコンテナや未使用資源も対象になり得ます。** `docker_frontend-dist` の削除も試みます。出力の一部を隠しているため、完了表示だけで全削除を判断せず Docker の状態を確認してください。
 
-### パターン3: 完全削除（データベースも削除）
+### パターン3: Docker 環境と一時ファイルの削除（DBは保持）
 
 ```cmd
 rem 1. コンテナとイメージを削除
 docker_4delete.bat
 
-rem 2. データベースを削除
+rem 2. プロジェクトの一時ファイルを削除
 cd ..
-rmdir /s /q _data
-
-rem 3. 一時ファイルを削除
 rmdir /s /q temp
 ```
 
@@ -164,12 +161,9 @@ docker_1build.bat
 rem 停止
 docker_3stop.bat
 
-rem データベースを退避（既存データを使わず新規作成する場合のみ）
-cd ..
-move _data\AiDiy\database.db _data\AiDiy\database.db.backup
+rem 新規DBでやり直す場合は、同じホームを使う他のサービスも停止し、対象DBだけを別の場所へ退避
 
-rem 再起動（新規DB自動作成）
-cd docker
+rem Docker を再起動（退避したDBは現行定義で新規作成）
 docker_2start.bat
 ```
 
@@ -193,11 +187,11 @@ docker_2start.bat
 
 **データ永続化:**
 - `../temp`: ログ・作業ファイル
-- `../_data`: SQLiteデータベース
+- ホストの `~/.aidiy/datas/`: Core / Apps / 日誌の SQLite データベース（コンテナの `/root/.aidiy/datas/` にバインド）
 - `./ssl`: SSL証明書
 - `../_config`: 共通設定をコンテナへ読み取り専用でマウント。必要な設定はホスト側で用意し、コンテナ内からの設定書込はできません。
 - `../_icons`: 共通アイコン
-- `frontend-dist`: ビルド済み Web を nginx と共有する名前付きボリューム。Compose の `aidiy-data` は宣言のみで、DB は上記 `_data` のバインドマウントを使います。
+- `frontend-dist`: ビルド済み Web を nginx と共有する名前付きボリューム。Compose の `aidiy-data` は宣言のみで、DB は上記ホーム配下のバインドマウントを使います。
 
 **コンテナ名:**
 - `aidiy2027`: メインアプリケーション

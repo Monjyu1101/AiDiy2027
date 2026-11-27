@@ -12,16 +12,17 @@ from log_config import get_logger
 logger = get_logger(__name__)
 
 import os
-from database_paths import DB_NAMES
+from database_paths import database_dir, database_path
 from typing import Dict, Optional
 
 
 # backend_server/ を基準にした共有フォルダの既定値。
 # 実体はプロジェクトルート直下へ集約し、各機能はこの相対値から絶対パスを解決する。
 DEFAULT_CONFIG_DIR = '../_config'
-DEFAULT_DATA_DIR = '../_data'
-DEFAULT_CORE_DATABASE_PATH = '../_data/AiDiy/' + DB_NAMES['core']
-DEFAULT_APPS_DATABASE_PATH = '../_data/AiDiy/' + DB_NAMES['apps']
+DEFAULT_DATA_DIR = database_dir().as_posix()
+DEFAULT_CORE_DATABASE_PATH = database_path("core").as_posix()
+DEFAULT_APPS_DATABASE_PATH = database_path("apps").as_posix()
+DEFAULT_DIARY_DATABASE_PATH = database_path("diary").as_posix()
 DEFAULT_ICONS_DIR = '../_icons'
 
 
@@ -46,6 +47,7 @@ class conf_path:
         self.data_path = DEFAULT_DATA_DIR
         self.core_database_path = DEFAULT_CORE_DATABASE_PATH
         self.apps_database_path = DEFAULT_APPS_DATABASE_PATH
+        self.diary_database_path = DEFAULT_DIARY_DATABASE_PATH
         self.icons_path = DEFAULT_ICONS_DIR
 
         # 外部パス一覧 - _AIDIY.md を含むプロジェクト検出
@@ -77,13 +79,10 @@ class conf_path:
 
             # 共有フォルダは backend_server の1階層上（プロジェクトルート）に置く
             self.config_path = self._normalize_path(os.path.join(backend_dir, DEFAULT_CONFIG_DIR))
-            self.data_path = self._normalize_path(os.path.join(backend_dir, DEFAULT_DATA_DIR))
-            self.core_database_path = os.path.abspath(
-                os.path.join(backend_dir, DEFAULT_CORE_DATABASE_PATH)
-            ).replace('\\', '/')
-            self.apps_database_path = os.path.abspath(
-                os.path.join(backend_dir, DEFAULT_APPS_DATABASE_PATH)
-            ).replace('\\', '/')
+            self.data_path = self._normalize_path(DEFAULT_DATA_DIR)
+            self.core_database_path = DEFAULT_CORE_DATABASE_PATH
+            self.apps_database_path = DEFAULT_APPS_DATABASE_PATH
+            self.diary_database_path = DEFAULT_DIARY_DATABASE_PATH
             self.icons_path = self._normalize_path(os.path.join(backend_dir, DEFAULT_ICONS_DIR))
 
             # 外部パス一覧の構築
@@ -153,6 +152,7 @@ __all__ = [
     "DEFAULT_DATA_DIR",
     "DEFAULT_CORE_DATABASE_PATH",
     "DEFAULT_APPS_DATABASE_PATH",
+    "DEFAULT_DIARY_DATABASE_PATH",
     "DEFAULT_ICONS_DIR",
     "conf_path",
 ]

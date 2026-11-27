@@ -11,8 +11,10 @@ services:
     volumes:
       # Mount temp directory for persistent data
       - ../temp:/app/temp
-      # Mount database directory (project root)
-      - ../_data:/app/_data
+      # Share the host user's database directory with the container user.
+      - type: bind
+        source: "${USERPROFILE:-${HOME}}/.aidiy/datas"
+        target: /root/.aidiy/datas
       # Mount shared icons (if needed)
       - ../_icons:/app/_icons
       # Mount config directory for API keys

@@ -44,13 +44,13 @@ cd docker
 
 | ホスト側 | コンテナ内 | 備考 |
 |---------|------------|------|
-| `../_data/` | `/app/_data/` | SQLite DB（書き込み可） |
+| ホストユーザーの `~/.aidiy/datas/` | `/root/.aidiy/datas/` | Core / Apps / 日誌の SQLite DB（書き込み可） |
 | `../_config/` | `/app/_config/` | APIキー設定（read-only） |
 | `../_icons/` | `/app/_icons/` | アプリケーション共通アイコン |
 | `../temp/` | `/app/temp/` | ログ・作業ファイル |
 | named volume `frontend-dist` | `/app/frontend_web/dist`（app）<br>`/usr/share/nginx/html`（nginx, read-only） | イメージ内でビルドした静的ファイルを nginx へ共有する。ホストのフォルダではない |
 
-- ローカル開発と Docker は、どちらもプロジェクトルートの `_data/AiDiy/core_v20261101.db` と `_data/AiDiy/apps_v20261101.db` を使用する。
+- ローカルと Docker は同じホストユーザーの `~/.aidiy/datas/` を使用する。Compose のホストパスは `USERPROFILE`（Windows）を優先し、未設定なら `HOME` を使う。旧 `_data/` はマウントしない。稼働中のローカルサービスと同時に同じDBを使わず、先に停止してから切り替える。
 - `_config` は read-only。設定変更は Docker 外で `_config/AiDiy_key.json` を編集し、コンテナを再起動して反映する。
 
 ## 判断基準

@@ -11,8 +11,8 @@
 ## 基本方針
 
 - アプリは現行スキーマで新規作成した DB を前提とする。
-- `_data/AiDiy/core_v20261101.db` は利用者・権限・採番・会話履歴と Task / Team のデータ、`_data/AiDiy/apps_v20261101.db` は業務マスタ・伝票を持つ。日誌DBは別。Apps の認証照合・採番は Core を参照する。伝票採番は Core で先に確定するため、Apps の保存に失敗すると欠番になる。
-- 破壊的変更のときは `scripts/業務DB.json` の該当側だけを、新しい日付の `core_vyyyymmdd.db` または `apps_vyyyymmdd.db` に変更する。対象だけを新規作成し、旧版や旧 `database.db` はそのまま残す。必要なデータの移行・採番値の整合性確認は別途実施する。
+- `~/.aidiy/datas/core_v20261101.db` は利用者・権限・採番・会話履歴と Task / Team のデータ、`~/.aidiy/datas/apps_v20261101.db` は業務マスタ・伝票を持つ。日誌は同じ保存先の `diary_v20261128.db` に別置きする。3本ともファイル名の正本は `scripts/業務DB.json`。Apps の認証照合・採番は Core を参照する。伝票採番は Core で先に確定するため、Apps の保存に失敗すると欠番になる。
+- 破壊的変更のときは `scripts/業務DB.json` の該当側だけを、新しい日付の `core_vyyyymmdd.db`、`apps_vyyyymmdd.db` または `diary_vyyyymmdd.db` に変更する。対象だけを新規作成し、旧版や旧プロジェクト内の `_data/AiDiy/` はそのまま残す。必要なデータの移行・採番値の整合性確認は別途実施する。
 - 旧テーブル・旧カラムへのフォールバックや、起動時の `ALTER TABLE`、コピー移行、主キー・列順の自動変換を追加しない。
 - スキーマ変更時の DB 再作成は利用者が手動で行う。コード修正・構文確認・テストを理由に、実 DB の削除や再構築を実行しない。
 - `create_all()` と `CREATE TABLE IF NOT EXISTS` は未作成テーブルを作るだけで、既存テーブルの定義を更新しない。

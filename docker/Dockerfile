@@ -62,7 +62,7 @@ COPY --from=frontend-builder /app/frontend_web/dist /app/frontend_web/dist
 COPY --from=frontend-builder /app/frontend_web/public /app/frontend_web/public
 
 # Create necessary directories
-RUN mkdir -p /app/temp /app/_data
+RUN mkdir -p /app/temp && install -d -m 0700 /root/.aidiy/datas
 
 # Expose ports
 # 8090: Frontend

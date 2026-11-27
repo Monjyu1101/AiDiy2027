@@ -143,23 +143,8 @@ https://github.com/monjyu1101/AiDiy2027 -->
  <h2>環境変数管理</h2>
  <p>秘密鍵や接続情報の管理方法です。</p>
 
- <h3>開発環境での設定</h3>
- <pre><code># backend_server/database.py
-SECRET_KEY = "your-secret-key-here" # 開発環境ではOK
-DATABASE_URL = "sqlite:///_data/AiDiy/database.db"</code></pre>
-
- <h3>本番環境での設定</h3>
- <pre><code># .env ファイル（Gitに含めない）
-SECRET_KEY=ランダム生成した強力な秘密鍵
-DATABASE_URL=sqlite:///_data/AiDiy/database.db
-
-# database.py
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-SECRET_KEY = os.getenv("SECRET_KEY")
-DATABASE_URL = os.getenv("DATABASE_URL")</code></pre>
+ <h3>SQLiteの保存先</h3>
+ <p>実行ユーザーの <code>~/.aidiy/datas/</code> にある Core・Apps・日誌の3ファイル（<code>core_v20261101.db</code>、<code>apps_v20261101.db</code>、<code>diary_v20261128.db</code>）を使用します。ファイル名は <code>scripts/業務DB.json</code> で管理し、<code>DATABASE_URL</code> で切り替える実装ではありません。旧プロジェクト内のDBへのフォールバックはありません。</p>
 
  <div>
  <strong>重要 </strong>

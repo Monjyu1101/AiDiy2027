@@ -252,11 +252,20 @@ class SetupProcessesTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             process=proc(10,'python _start.py',name='python.exe')
             process['CreationDate']='2026-10-22T23:00:00'
+            record = Path(root) / 'temp' / 'start_processes' / '10.json'
+            old = Path(root) / '_data' / 'AiDiy' / 'start_processes' / record.name
+            old.parent.mkdir(parents=True)
+            old.write_text(subject.json.dumps(subject.owner_identity(process)), encoding='utf-8')
+            old_contents = old.read_bytes()
+            self.assertEqual(subject.owner_path(root,10), record)
+            self.assertFalse(subject.registered_supervisor(process,root))
             with patch.object(subject.sys,'platform','win32'),patch.object(subject,'snapshot',return_value=[process]),patch.object(subject.os,'getpid',return_value=10):
                 with subject.register_start_owner(root):
+                    self.assertTrue(record.is_file())
                     self.assertTrue(subject.registered_supervisor(process,root))
                     self.assertFalse(subject.registered_supervisor({**process,'CreationDate':'later'},root))
-                self.assertFalse(subject.owner_path(root,10).exists())
+                self.assertFalse(record.exists())
+            self.assertEqual(old.read_bytes(), old_contents)
 
     def test_keep_code_ide_helpers_but_stop_explicit_other_apps(self):
         records = [app(10,'code'), app(20,'ide'), proc(11,'python worker.py',10,'python'),

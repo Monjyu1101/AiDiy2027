@@ -30,7 +30,7 @@ https://github.com/monjyu1101/AiDiy2027 -->
   <li>フロント: <code>8090</code>(Web) / <code>8092</code>(Avatar)</li>
   <li>常駐バックエンドは <code>8091</code>(Core) / <code>8098</code>(Apps) / <code>8095</code>(19 MCP) / <code>8093</code>(AIタスク・AIチーム) / <code>8096</code>(ローカルLLM、既定では未起動) の5サーバー構成。補助として常駐しないCLI <code>command_hermes</code>(<code>aidiy_hermes</code>) もある</li>
   <li>本ガイドは業務画面(C/M/T/V/S/A系)を中心にCore・Apps・Web・Avatarの流れを解説する。MCP/ローカルLLM/AIタスク・AIチームの詳細は各サブプロジェクトの <code>AGENTS.md</code> を参照</li>
-  <li>DB: SQLiteファイル <code>_data/AiDiy/database.db</code></li>
+  <li>DB: SQLiteファイル 実行ユーザーの <code>~/.aidiy/datas/</code> にある Core・Apps・日誌の3ファイル</li>
   <li>マイグレーションツール(Alembic)は使わず、既存DBの差分は起動時の冪等処理で反映する。DB削除はデータを破棄してよい開発環境の最終手段</li>
   </ul>
  </div>
@@ -220,7 +220,7 @@ python _start.py</code></pre>
    <div>SQLite</div>
    <div>必須: <strong>データベース</strong></div>
    <p>Pythonに同梱されているため個別インストール不要です。</p>
-   <small>データファイル: <code>_data\AiDiy\database.db</code></small>
+   <small>データファイル: 実行ユーザーの <code>~/.aidiy/datas/</code> にある Core・Apps・日誌の3ファイル</small>
   </div>
 
   <div>

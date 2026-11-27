@@ -8,20 +8,26 @@
 # https://github.com/monjyu1101/AiDiy2027
 # -------------------------------------------------------------------------
 
-from sqlalchemy import URL, create_engine
+from sqlalchemy import URL, create_engine, event
+from pathlib import Path
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from database_paths import DB_DIR, DB_NAMES
+from database_paths import database_path
 
 # 各プロセスは共通の現行ファイル名だけを使う。旧版へのフォールバックは行わない。
-DB_PATH = str(DB_DIR / DB_NAMES["core"])
-APPS_DB_PATH = str(DB_DIR / DB_NAMES["apps"])
-DB_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = str(database_path("core"))
+APPS_DB_PATH = str(database_path("apps"))
 
 
 def _engine(path):
-    return create_engine(URL.create("sqlite", database=path),
-                         connect_args={"check_same_thread": False, "timeout": 30})
+    db_engine = create_engine(URL.create("sqlite", database=path),
+                              connect_args={"check_same_thread": False, "timeout": 30})
+
+    @event.listens_for(db_engine, "do_connect")
+    def prepare_directory(_dialect, _record, _args, _kwargs):
+        Path(path).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+
+    return db_engine
 
 
 engine = _engine(DB_PATH)

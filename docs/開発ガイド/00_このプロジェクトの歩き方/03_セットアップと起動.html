@@ -80,7 +80,7 @@ git --version</code></pre>
  <strong>補足: SQLiteについて</strong>
  <p>
  本プロジェクトではSQLiteを使用しますが、SQLiteはPythonに<strong>標準で組み込まれている</strong>ため、
- 別途インストールする必要はありません。データベースファイルは <code>_data\AiDiy\database.db</code> に自動生成されます。
+ 別途インストールする必要はありません。データベースファイルは 実行ユーザーの <code>~/.aidiy/datas/</code> にある Core・Apps・日誌の3ファイル として起動時に新規作成されます。
  </p>
  </div>
  </section>
@@ -126,7 +126,7 @@ python _setup.py</code></pre>
  <strong>セットアップ時の注意</strong>
  <ul>
  <li>インターネット接続が必要です（パッケージダウンロードのため）</li>
- <li>SQLiteデータベースは <code>_data\AiDiy\database.db</code> に作成されます</li>
+ <li>SQLiteデータベースは 実行ユーザーの <code>~/.aidiy/datas/</code> にある Core・Apps・日誌の3ファイル として作成されます</li>
  </ul>
  </div>
 

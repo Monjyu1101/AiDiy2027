@@ -18,7 +18,6 @@ from threading import Lock
 from tools_proc.chat_llm import ChatLLM
 from tools_proc.code_agents import CodeAgents
 from tools_proc.prediction_privacy import prediction_private_logs
-from tools_proc.sqlite_query import DB_NAMES
 
 _backend = str(Path(__file__).resolve().parents[2] / "backend_server")
 if _backend not in sys.path:
@@ -26,6 +25,7 @@ if _backend not in sys.path:
 
 from AIコア.AI実行オプション import AI実行オプション
 from AIコア.agy_oauth import agy_oauthコマンド
+from database_paths import database_path
 from 会話履歴パス import normalize_project_path
 from 会話履歴参照 import HISTORY_MAX_TURNS, HISTORY_WINDOW_SECONDS, read_prediction_history
 
@@ -262,7 +262,7 @@ class PredictionLLM:
         result["project_path"] = project
         # DB初期化・履歴APIの登録処理・通常チャットの保存経路は通さない。
         try:
-            history = await asyncio.to_thread(read_prediction_history, self.root / "_data" / "AiDiy" / DB_NAMES["core"], project,
+            history = await asyncio.to_thread(read_prediction_history, database_path("core"), project,
                                               max_turns=HISTORY_MAX_TURNS, max_chars=HISTORY_MAX_CHARS,
                                               now=requested_at, user_only=True, include_latest_reply=True,
                                               session_id=session_id)

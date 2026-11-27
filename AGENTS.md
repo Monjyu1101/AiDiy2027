@@ -68,9 +68,9 @@
 | `frontend_ide` | IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面と単独起動 | 自動 | [AGENTS.md](./frontend_ide/AGENTS.md)、[host](./frontend_ide/host/AGENTS.md)（VS Code 拡張 Code / Live）、[viewer](./frontend_ide/viewer/AGENTS.md)（ファイルAPI・Office表示） |
 | `frontend_channels` | Discord（Hermes / Pi チャット・AIコア Live 音声）と Slack（双子、音声なし）の任意起動 Bot | 待受なし | [AGENTS.md](./frontend_channels/AGENTS.md)、[discord](./frontend_channels/discord/AGENTS.md)、[slack](./frontend_channels/slack/AGENTS.md) |
 
-Core / TaskTeam と Apps は別々の SQLite DB を使用し、現行ファイル名は `scripts/業務DB.json` で管理します。frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分け、Task / Team の `/task/*`・`/team/*` は 8093 へ接続します。
+Core / TaskTeam と Apps は別々の SQLite DB を使用し、日誌も含めて実行ユーザーの `~/.aidiy/datas/` に保存し、現行ファイル名は `scripts/業務DB.json` で管理します。frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分け、Task / Team の `/task/*`・`/team/*` は 8093 へ接続します。
 
-その他のフォルダ：`_config/`（API キー・AI モデル・MCP などの共通設定）、`_data/`（共通 SQLite DB などの永続データ）、`_icons/`（共通アイコン）、`docs/`（開発ガイド・セルフテスト）、`_AIDIY/knowledge/`（HowTo と再利用ナレッジ）、`scripts/`（補助スクリプト）、`docker/`（Docker + nginx 構成）。最小入口は [_AIDIY.md](./_AIDIY.md) と [CLAUDE.md](./CLAUDE.md)、人間向けの紹介資料は [X自己紹介](./frontend_web/public/X自己紹介/index.html) です。
+その他のフォルダ：`_config/`（API キー・AI モデル・MCP などの共通設定）、`_icons/`（共通アイコン）、`docs/`（開発ガイド・セルフテスト）、`_AIDIY/knowledge/`（HowTo と再利用ナレッジ）、`scripts/`（補助スクリプト）、`docker/`（Docker + nginx 構成）。最小入口は [_AIDIY.md](./_AIDIY.md) と [CLAUDE.md](./CLAUDE.md)、人間向けの紹介資料は [X自己紹介](./frontend_web/public/X自己紹介/index.html) です。
 
 ## 業務システムの設計要点
 

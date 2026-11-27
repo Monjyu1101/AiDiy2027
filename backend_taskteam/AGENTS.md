@@ -28,7 +28,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 - Backend: FastAPI + uvicorn、Python 3.13 以上、uv 管理。
 - エントリポイント: `taskteam_main.py`。
 - 起動ポート: `8093` 固定。
-- DB: `_data/AiDiy/core_v20261101.db` を `backend_server` と共有。
+- DB: `~/.aidiy/datas/core_v20261101.db` を `backend_server` と共有。
 - API prefix: `/task` と `/team`。両方とも同じプロセス・同じ OpenAPI に載る。
 - ヘルスチェック: `GET /`、`GET /health`。
 - 認証: `/task/*`、`/team/*`、`POST /task_check_okng` は Bearer トークンが必要。root / health は認証不要。
@@ -257,7 +257,7 @@ Task 状態監視による無進捗タイムアウトは、`準備中`の要求�
 
 ## DB と設定
 
-Task と Team の全 DB モジュールはプロジェクトルートの `_data/AiDiy/core_v20261101.db` を sqlite3 で直接参照します。現行 DDL による新規テーブル作成を前提とし、旧テーブルのコピー・主キー変更・列順補正は行いません。スキーマ変更時は利用者が DB を手動で再作成します。各接続は30秒の timeout / busy timeout、WAL、`synchronous=NORMAL` を使い、複数サーバー・サブプロセスの並行アクセスに備えます。
+Task と Team の全 DB モジュールは実行ユーザーの `~/.aidiy/datas/core_v20261101.db` を sqlite3 で直接参照します。現行 DDL による新規テーブル作成を前提とし、旧テーブルのコピー・主キー変更・列順補正は行いません。スキーマ変更時は利用者が DB を手動で再作成します。各接続は30秒の timeout / busy timeout、WAL、`synchronous=NORMAL` を使い、複数サーバー・サブプロセスの並行アクセスに備えます。
 
 設定はプロジェクトルートの `_config/AiDiy_key.json` と共通 `backend_server/conf/conf_json.py` を参照します。主なキーは次です。
 

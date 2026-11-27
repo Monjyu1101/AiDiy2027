@@ -1,4 +1,5 @@
 {
   "core": "core_v20261101.db",
-  "apps": "apps_v20261101.db"
+  "apps": "apps_v20261101.db",
+  "diary": "diary_v20261128.db"
 }

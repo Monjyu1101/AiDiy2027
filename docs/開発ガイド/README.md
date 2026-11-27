@@ -22,7 +22,7 @@
 - Navi / Term / Code / Live / IDE / Task / Team / Browser の共通 Vue 画面は `frontend_ide/src/`
 - Diag は `frontend_diag`。環境診断に加え、設定・導入操作とサービス起動管理を提供する
 - DB は **SQLite**
-  - `_data/AiDiy/database.db`
+  - `~/.aidiy/datas/`（`core_v20261101.db`、`apps_v20261101.db`、`diary_v20261128.db`）
 - スキーマ変更は **Alembic なし**
   - モデル更新
   - 現行スキーマでの新規作成が前提。旧テーブル・旧カラムの自動移行は行わない

@@ -88,10 +88,6 @@ DEPENDENCY_DIR_NAMES = frozenset(("node_modules", ".venv", "venv", "site-package
 TEMP_TARGET_LABEL = "temp / _temp / .temp / tmp / test / _test / .test"
 CLEANUP_STOP_REQUEST_PATH = BASE_DIR / ".cleanup_stop_request.json"
 
-DATABASE_TYPE = "sqlite"
-SQLITE_DB_REL_PATHS = tuple(Path("_data/AiDiy") / name for name in json.loads(
-    (BASE_DIR / "scripts" / "業務DB.json").read_text(encoding="utf-8")).values())
-
 AUTO_MODE = False
 
 NPM_PACKAGES = [
@@ -651,7 +647,6 @@ def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
         "backend_envs":   {},
         "backend_logs":   None,
         "backend_temp":   None,
-        "backend_sqlite": None,
         "taskteam":       False,
         "taskteam_envs":  {},
         "taskteam_temp":  None,
@@ -710,11 +705,6 @@ def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
                     choices["backend_envs"][env_name] = ask_yes_no(
                         f"  {BACKEND_PATH}/{env_name} を削除しますか？", default="y",
                     )
-            if (
-                DATABASE_TYPE.lower() == "sqlite"
-                and any((base_dir / path).exists() for path in SQLITE_DB_REL_PATHS)
-            ):
-                choices["backend_sqlite"] = ask_yes_no("  現行の Core / Apps データベースを削除しますか？", default="n")
 
     choices["taskteam"] = ask_yes_no("バックエンド(task,team)をクリーンアップしますか？", default="y")
     if choices["taskteam"]:

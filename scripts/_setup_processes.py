@@ -209,7 +209,7 @@ def owner_identity(process):
 
 
 def owner_path(root, pid):
-    return Path(root) / '_data' / 'AiDiy' / 'start_processes' / f'{int(pid)}.json'
+    return Path(root) / 'temp' / 'start_processes' / f'{int(pid)}.json'
 
 
 def registered_supervisor(process, root):

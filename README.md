@@ -321,7 +321,7 @@ cleanup のために新しい Python / Node.js や対象仮想環境は要求し
 - Code / Live の単独画面は `_start.py` の個別起動対象です。VS Code 拡張自体は VS Code から開きます。拡張の設定や対応範囲は Code が `frontend_ide/host/README.md`、Live が `frontend_ide/host/aidiy_live/README.md` を参照してください。
 - Web フロントの AI 画面ルートは **`/AiDiy`** です。
 - Avatar は Electron と Web の両モードがあります。Web モードでは認証情報を `sessionStorage` に保持します。
-- DB ファイルは `_data/AiDiy/core_v20261101.db`（Core・Task / Team）と `_data/AiDiy/apps_v20261101.db`（Apps）です。
+- DB ファイルは `~/.aidiy/datas/core_v20261101.db`（Core・Task / Team）、`~/.aidiy/datas/apps_v20261101.db`（Apps）、`~/.aidiy/datas/diary_v20261128.db`（日誌）です。
 
 ---
 

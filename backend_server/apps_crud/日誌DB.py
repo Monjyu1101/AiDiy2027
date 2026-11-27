@@ -2,20 +2,18 @@
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 """2テーブルの専用DBを初期化する。旧DBにはアクセスしない。"""
 import os
-from pathlib import Path
 
 from sqlalchemy import URL, create_engine, event
 from sqlalchemy.engine import Engine
 
 from apps_models.T日誌 import 日誌Base
 
-現日誌ファイル = "diary_v20261128.db"
+from database_paths import database_path
 
 
 def 日誌DB初期化() -> Engine:
-    場所 = Path.home() / ".aidiy" / "datas"
-    場所.mkdir(mode=0o700, parents=True, exist_ok=True)
-    パス = 場所 / 現日誌ファイル
+    パス = database_path("diary")
+    パス.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     try:
         fd = os.open(パス, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     except FileExistsError:

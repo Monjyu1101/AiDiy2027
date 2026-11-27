@@ -123,22 +123,20 @@ class ComponentCleanupTests(unittest.TestCase):
                 self.assertEqual(caught.exception.code, 1)
                 self.assertNotIn("クリーンアップが完了しました", output.getvalue())
 
-    def test_server_sqlite_is_preserved_unless_explicitly_selected(self):
-        with self.fixture("backend_server") as (module, project, _, _, _):
-            active = [project / path for path in module.SQLITE_DB_REL_PATHS]
+    def test_server_cleanup_never_removes_shared_home_or_legacy_databases(self):
+        with self.fixture("backend_server") as (module, project, home, _, _):
+            shared = home / ".aidiy" / "datas"
             old = project.parent / "_data" / "AiDiy" / "database.db"
-            old.parent.mkdir(parents=True)
-            for path in [*active, old]:
+            names = ("core_v20261101.db", "apps_v20261101.db", "diary_v20261128.db")
+            paths = [*(shared / name for name in names), old]
+            for path in paths:
+                path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(b"fixture database")
-            with patch.object(module, "remove_file", side_effect=AssertionError("delete forbidden")):
-                self.assertTrue(module.cleanup({}))
-                self.assertTrue(module.cleanup({"backend_sqlite": False}))
-            for path in [*active, old]:
+            self.assertNotIn("backend_sqlite", module.collect_choices())
+            self.assertTrue(module.cleanup({}))
+            self.assertTrue(module.cleanup({"backend_sqlite": True}))
+            for path in paths:
                 self.assertEqual(path.read_bytes(), b"fixture database")
-            with patch.object(module, "remove_file", return_value=False) as remove:
-                self.assertFalse(module.cleanup({"backend_sqlite": True}))
-                self.assertEqual([call.args[0] for call in remove.call_args_list], active)
-            self.assertEqual(old.read_bytes(), b"fixture database")
 
     def test_server_logs_failure_returns_false(self):
         with self.fixture("backend_server") as (module, project, _, _, _):

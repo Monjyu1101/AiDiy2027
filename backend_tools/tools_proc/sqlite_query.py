@@ -21,15 +21,19 @@ Core / Apps の現行 SQLite ファイルに対し、AIエージェントが
 - 結果は最大 `max_rows` 件まで返す（デフォルト 200）
 """
 
-import json
 import os
 from pathlib import Path
 import re
 import sqlite3
+import sys
 from typing import Literal, Optional
 
-ROOT = Path(__file__).resolve().parents[2]
-DB_NAMES = json.loads((ROOT / "scripts" / "業務DB.json").read_text(encoding="utf-8"))
+_backend_server = str(Path(__file__).resolve().parents[2] / "backend_server")
+if _backend_server not in sys.path:
+    sys.path.append(_backend_server)
+
+from database_paths import database_path
+
 DatabaseTarget = Literal["core", "apps"]
 
 
@@ -51,7 +55,7 @@ class SqliteQuery:
     }
 
     def __init__(self, db_path: Optional[str] = None, *, database: DatabaseTarget = "apps"):
-        self.db_path = db_path or str(ROOT / "_data" / "AiDiy" / DB_NAMES[database])
+        self.db_path = db_path or str(database_path(database))
 
     def for_database(self, database: DatabaseTarget):
         return self if database == "apps" else SqliteQuery(database=database)

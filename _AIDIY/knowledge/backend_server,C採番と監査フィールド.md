@@ -86,7 +86,7 @@ db.commit()
 ## 確認方法
 
 ```powershell
-sqlite3 _data/AiDiy/core_v20261101.db "SELECT * FROM C採番"
+sqlite3 ~/.aidiy/datas/core_v20261101.db "SELECT * FROM C採番"
 ```
 
 ```powershell

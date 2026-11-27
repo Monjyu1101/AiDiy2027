@@ -12,8 +12,6 @@ from pathlib import Path
 import sys
 import uuid
 
-from tools_proc.sqlite_query import DB_NAMES
-
 _ROOT = Path(__file__).resolve().parents[2]
 _BACKEND = str(_ROOT / "backend_server")
 if _BACKEND not in sys.path:
@@ -22,7 +20,9 @@ if _BACKEND not in sys.path:
 from 会話履歴パス import normalize_project_path
 from 会話履歴記録 import write_history_message
 
-_DATABASE_PATH = _ROOT / "_data" / "AiDiy" / DB_NAMES["core"]
+from database_paths import database_path
+
+_DATABASE_PATH = database_path("core")
 _HISTORY_ERROR = "会話履歴を保存できませんでした。DBの初期化状態を確認してください。"
 
 

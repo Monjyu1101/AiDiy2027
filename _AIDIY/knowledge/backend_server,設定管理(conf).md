@@ -32,15 +32,16 @@ paths.exec_abs_path      # backend_server/ の絶対パス
 paths.exec_abs_root      # プロジェクトルート（1階層上）
 paths.external_root_path # 外部プロジェクト（2階層上、エイリアスリンク用）
 paths.config_path        # プロジェクトルートの _config/
-paths.data_path          # プロジェクトルートの _data/
-paths.core_database_path # _data/AiDiy/core_v20261101.db
-paths.apps_database_path # _data/AiDiy/apps_v20261101.db
+paths.data_path          # 実行ユーザーの ~/.aidiy/datas/
+paths.core_database_path # ~/.aidiy/datas/core_v20261101.db
+paths.apps_database_path # ~/.aidiy/datas/apps_v20261101.db
+paths.diary_database_path # ~/.aidiy/datas/diary_v20261128.db
 paths.icons_path         # プロジェクトルートの _icons/
 ```
 
 `init()` は `__file__` から実行パスを解決し、フォワードスラッシュの絶対パスに正規化します。ディレクトリには末尾 `/` を付け、DB ファイルのパスには付けません。
 
-共有ディレクトリの相対デフォルトは `backend_server/` 基準で、`../_config`、`../_data`、`../_icons` です。コードでは `DEFAULT_CONFIG_DIR`、`DEFAULT_DATA_DIR`、`DEFAULT_CORE_DATABASE_PATH`、`DEFAULT_APPS_DATABASE_PATH`、`DEFAULT_ICONS_DIR` を参照し、DB ファイル名は `scripts/業務DB.json` を正本とします。
+共有ディレクトリの相対デフォルトは `backend_server/` 基準で、`../_config`、`../_icons` です。コードでは `DEFAULT_CONFIG_DIR`、`DEFAULT_DATA_DIR`、`DEFAULT_CORE_DATABASE_PATH`、`DEFAULT_APPS_DATABASE_PATH`、`DEFAULT_DIARY_DATABASE_PATH`、`DEFAULT_ICONS_DIR` を参照し、DB ファイル名は `scripts/業務DB.json` を正本とします。
 
 `_discover_agents_projects()` は `external_root_path` の直下と、その1階層下で `_AIDIY.md` を持つフォルダを探索し、`{フォルダ名: 絶対パス}` の辞書を構築します。
 
