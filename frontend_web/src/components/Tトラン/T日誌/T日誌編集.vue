@@ -371,7 +371,9 @@ onBeforeUnmount(() => {
               </label>
               <label class="detail-row">
                 <span class="detail-label">利用者<span v-if="!編集" class="required-mark">*</span></span>
-                <span v-if="編集" class="detail-value">{{ 利用者?.利用者ID }} : {{ 利用者?.利用者名 }}</span>
+                <span v-if="編集" class="detail-value">
+                  <span class="diary-user-display">{{ 利用者?.利用者ID }} : {{ 利用者?.利用者名 }}</span>
+                </span>
                 <span v-else class="detail-value">
                   <select v-model="選択利用者ID" class="detail-input" required @change="変更した">
                     <option value="" disabled>利用者を選択</option>
@@ -387,15 +389,22 @@ onBeforeUnmount(() => {
               </p>
             </div>
             <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`作業 ${i + 1}`">
-              <button type="button" class="fold-toggle" :aria-expanded="item.展開"
-                :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
-                <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
-                <span>作業 {{ i + 1 }}</span>
-                <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
-                <span v-if="作業時間形式.test(item.時間入力.trim())" class="fold-count">{{ Number(item.時間入力).toFixed(2) }} h</span>
-                <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
-                <span class="fold-count">明細 {{ item.明細.length }}件</span>
-              </button>
+              <div class="fold-bar record-bar">
+                <button type="button" class="fold-toggle" :aria-expanded="item.展開"
+                  :aria-controls="`diary-record-${item.key}`" @click="item.展開 = !item.展開">
+                  <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
+                  <span>作業 {{ i + 1 }}</span>
+                  <template v-if="!item.展開">
+                    <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
+                    <span v-if="作業時間形式.test(item.時間入力.trim())" class="fold-count">{{ Number(item.時間入力).toFixed(2) }} h</span>
+                    <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
+                    <span class="fold-count">明細 {{ item.明細.length }}件</span>
+                  </template>
+                </button>
+                <input v-if="item.展開" :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
+                  :aria-label="`作業 ${i + 1} の作業タイトル`" maxlength="200" placeholder="作業タイトル"
+                  aria-required="true" @input="変更した">
+              </div>
               <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
                 <header class="actions record-heading">
                   <label class="record-project">
@@ -403,15 +412,10 @@ onBeforeUnmount(() => {
                     <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
                       spellcheck="false" @input="変更した">
                   </label>
-                  <label class="record-title">
-                    <span>作業タイトル</span>
-                    <input :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
-                      maxlength="200" aria-required="true" @input="変更した">
-                  </label>
                   <label class="record-hours">
                     <span>作業時間(h)</span>
                     <input :id="`diary-hours-${item.key}`" v-model="item.時間入力" type="text" inputmode="decimal"
-                      placeholder="7.75" @input="変更した">
+                      placeholder="n.nn" @input="変更した">
                   </label>
                   <label class="record-count">
                     <span>新規・更新ファイル数（自己申告）</span>
@@ -421,43 +425,47 @@ onBeforeUnmount(() => {
                   <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
                 </header>
                 <div v-for="(行, j) in item.明細" :key="行.key" class="diary-line">
-                  <button type="button" class="fold-toggle" :aria-expanded="行.展開"
-                    :aria-controls="`diary-line-${行.key}`" @click="行.展開 = !行.展開">
-                    <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
-                    <span>明細 {{ j + 1 }}</span>
-                    <span class="fold-label">{{ 明細見出し(行) }}</span>
-                    <span v-if="行.添付.length" class="fold-count">添付 {{ 行.添付.length }}件</span>
-                  </button>
+                  <div class="fold-bar line-bar">
+                    <button type="button" class="fold-toggle" :aria-expanded="行.展開"
+                      :aria-controls="`diary-line-${行.key}`" @click="行.展開 = !行.展開">
+                      <span aria-hidden="true">{{ 行.展開 ? '▽' : '▶' }}</span>
+                      <span>明細 {{ j + 1 }}</span>
+                      <template v-if="!行.展開">
+                        <span class="fold-label">{{ 明細見出し(行) }}</span>
+                        <span v-if="行.添付.length" class="fold-count">添付 {{ 行.添付.length }}件</span>
+                      </template>
+                    </button>
+                    <textarea v-if="行.展開" v-model="行.作業内容" rows="3" maxlength="10000" placeholder="作業内容"
+                      :aria-label="`作業 ${i + 1} 明細 ${j + 1} の作業内容`" @input="変更した"></textarea>
+                  </div>
                   <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
-                    <label>
-                      <span>明細 {{ j + 1 }} 作業内容</span>
-                      <textarea v-model="行.作業内容" rows="3" maxlength="10000" @input="変更した"></textarea>
-                    </label>
-                    <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }"
-                      @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
-                      @dragleave="添付ドラッグ終了($event, 行)" @drop.prevent.stop="添付をドロップ($event, 行)">
-                      <span>ここにファイルをドロップ（複数可）</span>
-                      <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
-                    </label>
-                    <ul v-if="行.添付.length" class="attachment-list">
-                      <li v-for="(file, index) in 行.添付" :key="file.key">
-                        <div class="actions attachment">
-                          <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
-                          <button type="button" class="btn btn-secondary" :aria-label="`${file.ファイル名} を外す`"
-                            @click="添付を外す(行, index)">添付を外す</button>
-                        </div>
-                        <img v-if="file.preview" :src="file.preview" :alt="`添付画像: ${file.ファイル名}`" class="preview"
-                          @error="表示URL解除(file)">
-                      </li>
-                    </ul>
+                    <div class="line-attachments" :class="{ 'has-attachments': 行.添付.length > 0 }">
+                      <ul v-if="行.添付.length" class="attachment-list">
+                        <li v-for="(file, index) in 行.添付" :key="file.key">
+                          <div class="actions attachment">
+                            <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
+                            <button type="button" class="btn btn-secondary" :aria-label="`${file.ファイル名} を外す`"
+                              @click="添付を外す(行, index)">添付を外す</button>
+                          </div>
+                          <img v-if="file.preview" :src="file.preview" :alt="`添付画像: ${file.ファイル名}`" class="preview"
+                            @error="表示URL解除(file)">
+                        </li>
+                      </ul>
+                      <label class="drop-zone" :class="{ 'drag-active': 行.ドラッグ数 > 0 }" title="ファイルを選択、またはドロップ（複数可）"
+                        @dragenter.prevent="添付ドラッグ開始($event, 行)" @dragover.prevent="添付ドラッグ中"
+                        @dragleave="添付ドラッグ終了($event, 行)" @drop.prevent.stop="添付をドロップ($event, 行)">
+                        <span aria-hidden="true">{{ 行.添付.length ? '＋' : 'ファイルを選択、またはここにドロップ（複数可）' }}</span>
+                        <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
+                      </label>
+                    </div>
                     <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
                   </div>
                 </div>
-                <button type="button" class="btn btn-secondary" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
+                <button type="button" class="btn btn-add-row" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
               </div>
             </section>
             <div class="actions">
-              <button type="button" class="btn btn-secondary" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
+              <button type="button" class="btn btn-add-row" :disabled="記録.length >= 記録上限" @click="記録を追加">作業を追加</button>
               <span class="help">添付は明細1行20ファイル、1ファイル5 MiB、日誌全体15 MiBまで。</span>
             </div>
             <div class="form-buttons">
@@ -473,35 +481,45 @@ onBeforeUnmount(() => {
 
 <style scoped src="./日誌.css"></style>
 <style scoped>
+.diary-editor{--diary-input-height:28px;--diary-fold-bg:#37474f}
 .diary-editor > fieldset{display:grid;gap:16px}
 .diary-record,.diary-line{border:1px solid var(--border-color,#c8d0d6);min-width:0}
 .diary-header{width:fit-content;max-width:100%}
 .diary-header .detail-row + .detail-row{margin-top:-1px}
+.diary-header .detail-label{padding-block:4px}
+.diary-header .detail-input,.record-heading input,.record-bar > input{height:var(--diary-input-height);margin:0;padding-block:0}
+.diary-user-display{display:flex;align-items:center;min-height:var(--diary-input-height);min-width:0;overflow-wrap:anywhere}
 .fold-body{padding:12px;background:#fff}
 .fold-body{border-top:1px solid var(--border-color,#c8d0d6);display:grid;gap:10px;min-width:0;justify-items:start}
+.fold-bar{display:flex;align-items:center;min-width:0;background:var(--diary-fold-bg)}
+.fold-bar > .fold-toggle[aria-expanded="true"]{width:auto;flex:none}
+.record-bar > input{flex:1;min-width:0;margin-inline-end:12px}
 .fold-toggle{display:flex;align-items:center;gap:8px;width:100%;min-width:0;padding:8px 12px;border:0;
-  color:inherit;background:#e1f5fe;font:inherit;text-align:left;cursor:pointer}
-.fold-toggle:hover{background:#d5effa}
+  color:#fff;background:var(--diary-fold-bg);font:inherit;text-align:left;cursor:pointer}
+.fold-toggle:hover{background:#455a64}
 .fold-toggle:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 .fold-toggle > :not(.fold-label){flex:none}
 .fold-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
 .fold-count{font-size:.85em}
-.record-heading,.diary-line,.line-body > label{width:100%}
+.record-heading,.diary-line,.line-attachments{width:100%}
 .record-heading .record-project{width:100%;flex-wrap:wrap}
 .record-project input{flex:1;min-width:100px}
-.record-heading .record-title{flex:1;min-width:min(100%,240px);flex-wrap:wrap}
-.record-title input{flex:1;min-width:100px}
 .record-hours,.record-count{flex-wrap:wrap}
 .record-hours input{width:5.5em}
 .record-count input{width:8em}
-.line-body > label{display:grid;gap:4px}
-textarea{width:100%;resize:vertical}
+.btn-add-row{background:#2563eb;color:#fff}
+.btn-add-row:hover:not(:disabled){background:#1d4ed8}
+.line-bar textarea{flex:1;min-width:0;margin:6px 12px 6px 0;resize:vertical}
 .preview{max-width:100%;max-height:220px;object-fit:contain}
 .filename{overflow-wrap:anywhere;max-width:100%;text-align:start}
 .attachment{max-width:100%}
-.drop-zone{box-sizing:border-box;padding:12px;border:2px dashed var(--border-color,#8a9ca9);border-radius:6px}
+.line-attachments{display:grid;justify-items:center;align-items:start;min-width:0}
+.line-attachments.has-attachments{grid-template-columns:minmax(0,1fr) 20%;gap:8px}
+.drop-zone{position:relative;box-sizing:border-box;display:grid;place-items:center;text-align:center;
+  min-height:44px;max-width:100%;padding:8px;border:2px dashed var(--border-color,#8a9ca9);border-radius:6px}
+.has-attachments .drop-zone{width:100%;min-width:0;padding-inline:0;font-size:20px}
 .drop-zone:focus-within,.drop-zone.drag-active{border-color:#2689b3;background:color-mix(in srgb,#2689b3 12%,transparent)}
-.drop-zone input{max-width:100%}
+.drop-zone input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
 .attachment-list{width:100%;list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .attachment-list > li{min-width:0}
 .help,.dirty{font-size:.85em}
