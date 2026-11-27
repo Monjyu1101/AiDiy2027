@@ -14,7 +14,8 @@
 - `agy` の保存済み Google ログインを使い、API キーや明示的な ADC は子プロセスに渡しません。CLI 自体に別方式の認証が設定されて失敗した場合も、別プロバイダで再実行しません。
 - Diag が OAuth 専用環境で `agy models` を読み、`_AIDIY/aidiy_diag/gemini_agy_models_info.json` へ保存します。この一覧を会話用と Code 用に展開しますが、旧 Antigravity や Gemini API のモデル一覧は混ぜません。未取得時の既定・設定値は利用実績を示しません。
 - Windows の Visual Studio Code 拡張が配置する `%USERPROFILE%\.gemini\bin\agy.exe` も使用できます。Diag は標準導入先以外から検出したバイナリを再導入・削除しません。
-- UTF-8 標準入力と構造化結果を使い、継続時は自分の会話IDを `--conversation` で指定します。旧経路の共有「最後の会話」を参照しません。コアや AI インスタンスを再作成した場合、CLI 側は新規になります。操作なしには `--dangerously-skip-permissions` を追加せず、Code の権限 `full` を明示したときだけ設定します。
+- UTF-8 標準入力と構造化結果を使い、継続時は自分の会話IDを `--conversation` で指定します。旧経路の共有「最後の会話」を参照しません。コアや AI インスタンスを再作成した場合、CLI 側は新規になります。
+- Code の権限は `antigravity_cli` と同じです。`auto` / `full` では `--dangerously-skip-permissions` を付け、`none` では付けません。読取専用の予測や Diag の `agy.exe` 直接起動には、この承認省略を適用しません。
 - [Google 公式：認証](https://antigravity.google/docs/cli/install/) ／ [Google 公式：ヘッドレス実行](https://antigravity.google/docs/cli/headless/)
 
 ## モデルIDの確認

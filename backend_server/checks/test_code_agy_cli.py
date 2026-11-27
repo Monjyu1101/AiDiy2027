@@ -60,12 +60,14 @@ class AgyCliTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(cli.agy_oauthコマンド(env, platform="nt"), str(system))
             self.assertIsNone(cli.agy_oauthコマンド({"PATH": ""}, platform="nt"))
 
-    def test_default_and_none_permissions_do_not_grant_full_access(self):
-        for permissions in ("auto", "none", "full"):
-            cli_agent = cli.CodeAI(AI_NAME="agy_cli", code_permissions=permissions)
-            with patch.object(cli_agent, "_コマンドパス取得", return_value="/fixture/agy"):
-                command = cli_agent._コマンド構築("fixed", 初回=True)
-            self.assertEqual("--dangerously-skip-permissions" in command, permissions == "full")
+    def test_agy_and_antigravity_use_the_same_approval_modes(self):
+        for provider in ("agy_cli", "antigravity_cli"):
+            for permissions, skip in (("auto", True), ("none", False), ("full", True)):
+                with self.subTest(provider=provider, permissions=permissions):
+                    cli_agent = cli.CodeAI(AI_NAME=provider, code_permissions=permissions)
+                    with patch.object(cli_agent, "_コマンドパス取得", return_value="/fixture/agy"):
+                        command = cli_agent._コマンド構築("fixed", 初回=True)
+                    self.assertEqual("--dangerously-skip-permissions" in command, skip)
 
     async def test_readonly_subprocess_uses_plan_deny_rules_and_oauth_stdin(self):
         with tempfile.TemporaryDirectory() as d:

@@ -933,7 +933,7 @@ class CodeAI:
             # 1回分の会話をstdinへ渡し、公式の構造化結果からこの接続専用のIDを取得する。
             # https://antigravity.google/docs/cli/headless/
             common = self._agyコマンド共通(base)
-            if self.code_permissions == "full":
+            if self.code_permissions != "none":
                 common.append("--dangerously-skip-permissions")
             if not 初回 and self._agy会話 and self._agy会話[0] == repo_path:
                 common.extend(["--conversation", self._agy会話[1]])
