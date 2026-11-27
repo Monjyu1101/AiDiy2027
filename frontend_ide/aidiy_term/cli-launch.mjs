@@ -24,9 +24,10 @@ export const CLI_LAUNCHERS = Object.freeze([
   // command_codex をコンパイルした ~/.aidiy/bin/aidiy_codex。Codex CLI と同じ承認・sandbox省略フラグ。
   ['aidiy_codex', 'AiDiy Codex', '--dangerously-bypass-approvals-and-sandbox', '承認・sandbox省略'],
 ].map(([id, name, flag, mode]) => Object.freeze({ id, name, args: Object.freeze(flag ? [flag] : []), mode, autoApproveSupported: true })));
-// Windows の実ファイル用。通常の Antigravity CLI と別の固定IDで、承認を省略しない。
+// Windows の実ファイル用。Antigravity CLI と別の固定IDだが、承認モードは共通。
 export const AGY_EXE_LAUNCHER = Object.freeze({
-  id: 'agy_exe', name: 'agy.exe', args: Object.freeze([]), mode: '通常承認', autoApproveSupported: false,
+  ...CLI_LAUNCHERS.find(item => item.id === 'agy'),
+  id: 'agy_exe', name: 'agy.exe',
 });
 const byId = Object.freeze(Object.fromEntries([...CLI_LAUNCHERS, AGY_EXE_LAUNCHER].map(item => [item.id, item])));
 const npmPackages = Object.freeze({ claude: '@anthropic-ai/claude-code', codex: '@openai/codex', copilot: '@github/copilot', opencode: '@opencode/cli' });
@@ -169,7 +170,10 @@ export async function resolveCliLaunch(id, { autoApprove = false, env = process.
     for (const candidate of new Set(candidates)) {
       if (!await usable(candidate, platform)) continue;
       const executable = await realpath(candidate).catch(() => null);
-      if (validPath(executable)) return { ...definition, executable, args: [], env: { ...env }, autoApprove: false };
+      if (validPath(executable)) return {
+        ...definition, executable, args: autoApprove ? [...definition.args] : [], env: { ...env },
+        autoApprove, mode: autoApprove ? definition.mode : '通常承認',
+      };
     }
     throw Error('agy.exe が見つかりません。導入状況を確認してください。');
   }

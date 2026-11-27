@@ -120,7 +120,7 @@ Code / Live は、これまでどおり単独起動（`aidiy_code` / `aidiy_live
 - `claude`: `--dangerously-skip-permissions`
 - `codex`: `--dangerously-bypass-approvals-and-sandbox`
 - `copilot`: `--yolo`
-- `agy`: `--dangerously-skip-permissions`
+- `agy` / `agy_exe`（後者は Windows の直接起動用）: `--dangerously-skip-permissions`
 - `grok`: `--yolo`
 - `opencode`: `--auto`（明示的なdenyは維持）
 - `aidiy_hermes`: `--yolo`（provider / モデルは指定せず、Hermesの前回選択、未保存なら自動解決）

@@ -500,7 +500,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 
 タイトル欄左側の「ランチャー表示」は、接続中はどのタブからでも使えます。ミニ内の上段にAiDiy6アプリと導入済みHermes、下段に実行ファイルが見つかったClaude / Codex / Copilot / Agy / Grok / OpenCodeを表示します。外部CLIが0件なら下段ごと非表示にし、ある場合はAiDiyと同じ幅のボタンを中央寄せします。更新ボタンは置かず、ミニ表示時・再接続時に存在確認を自動更新します。表示・確認ではCLIを実行せず、インストールやログインも行いません。存在確認は認証成功・動作保証ではありません。
 
-「アプリ起動」で選択中のプロジェクトフォルダを共有します。フォルダ未選択・切断中は起動できません。ミニのアプリ・CLIアイコンは起動確認ダイアログを出さず、1回のクリックで起動します。CLIは同じフォルダを作業ディレクトリとした `aidiy_term` を開き、従来の自動承認モードで対話CLIを開始します（`agy.exe` は通常承認）。プロンプトやモデル引数は付けず、CLI自身の既定モデルと既存ログインを使います。起動成功後の説明はミニに表示せず、失敗時のエラーと処理中の表示は残します。選択中のフォルダと未選択時の案内は引き続き表示します。ファイル変更・コマンド実行が自動承認され、Codexではサンドボックスも解除されるため、信頼できるプロジェクトだけで使用してください。CLIの契約や設定によって利用料金が発生する場合があります。
+「アプリ起動」で選択中のプロジェクトフォルダを共有します。フォルダ未選択・切断中は起動できません。ミニのアプリ・CLIアイコンは起動確認ダイアログを出さず、1回のクリックで起動します。CLIは同じフォルダを作業ディレクトリとした `aidiy_term` を開き、従来の自動承認モードで対話CLIを開始します。プロンプトやモデル引数は付けず、CLI自身の既定モデルと既存ログインを使います。起動成功後の説明はミニに表示せず、失敗時のエラーと処理中の表示は残します。選択中のフォルダと未選択時の案内は引き続き表示します。ファイル変更・コマンド実行が自動承認され、Codexではサンドボックスも解除されるため、信頼できるプロジェクトだけで使用してください。CLIの契約や設定によって利用料金が発生する場合があります。
 
 固定起動定義は `frontend_ide/aidiy_term/cli-launch.mjs` をTermとDiagで共用します（2026-10-20 公式資料確認）。
 
@@ -508,7 +508,7 @@ Liveの応答テキストと1秒以上のWAVを表示し、受信時に認証付
 - Codex: `--dangerously-bypass-approvals-and-sandbox`。[公式CLI参考](https://developers.openai.com/codex/cli/reference/)
 - Copilot: `--yolo`（ツール・パス・URLを含む `--allow-all` 相当）。[GitHub公式参考](https://github.com/github/docs/blob/main/content/copilot/reference/copilot-cli-reference/cli-command-reference.md)
 - Antigravity (`agy`): `--dangerously-skip-permissions`。[公式CLI利用方法](https://antigravity.google/docs/cli/using)
-- `agy.exe`（Windows）: VS Code 拡張の `%USERPROFILE%/.gemini/bin/agy.exe`、PATH、標準配置の順に探し、承認省略の引数を付けずに開きます。標準サイズでは Antigravity CLI と別の項目として表示し、未検出の項目は無効にします。ミニとアイコン表示では、Antigravity CLI が利用可能ならそちらだけを、使えなければ検出済みの `agy.exe` だけを表示します。拡張側の agy.exe だけが PATH にあっても、通常の Antigravity CLI 枠には割り当てません。
+- `agy.exe`（Windows）: VS Code 拡張の `%USERPROFILE%/.gemini/bin/agy.exe`、PATH、標準配置の順に探し、Antigravity CLI と同じ承認省略の引数を付けて開きます。標準サイズでは Antigravity CLI と別の項目として表示し、未検出の項目は無効にします。ミニとアイコン表示では、Antigravity CLI が利用可能ならそちらだけを、使えなければ検出済みの `agy.exe` だけを表示します。拡張側の agy.exe だけが PATH にあっても、通常の Antigravity CLI 枠には割り当てません。
 - Grok: `--yolo`。[xAI公式参考](https://docs.x.ai/build/cli/reference)
 - OpenCode: `--auto`。[公式TUI参考](https://opencode.ai/docs/cli/#tui)、[自動承認の範囲](https://opencode.ai/docs/permissions/#auto-mode)
 - AiDiy Hermes: `--yolo`。ローカルの `command_hermes/cli_main.py` が対応しています。provider / model は渡さず、対話CLIの前回選択、未保存ならHermesの自動解決を使います。PATHまたはユーザーの `~/.local/bin` に配置済みのランチャーが対象です。

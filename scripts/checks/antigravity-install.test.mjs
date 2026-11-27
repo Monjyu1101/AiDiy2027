@@ -17,6 +17,14 @@ test('BAT entry points use the isolated installer, retain asynchronous launch an
   assert.doesNotMatch(all,/antigravity\.google|aidiy_agy_install/);
   assert.match((await bat('_antigravity_cli.bat')).toString(),/call "%~dp0install_antigravity\.bat" \/no-pause/);
 });
+test('BAT uses the same approval flag for standard and extension agy.exe',async()=>{
+  const source=(await bat('_antigravity_cli.bat')).toString();
+  assert.match(source,/if not defined AGY_RUN if exist "%AGY_EXTENSION%" set "AGY_RUN=%AGY_EXTENSION%"/);
+  const flags=source.split(/\r?\n/).filter(line=>line.includes('set "AGY_ARGS='));
+  assert.deepEqual(flags,['set "AGY_ARGS=--dangerously-skip-permissions"']);
+  assert.match(source,/call "%AGY_RUN%" %AGY_ARGS% --model/);
+  assert.match(source,/call "%AGY_RUN%" %AGY_ARGS% %\*/);
+});
 test('official installer invocation has no chained command, cleanup cannot hide its exit code',async()=>{
   const source=(await bat('install_antigravity.bat')).toString();
   const line=source.split(/\r?\n/).find(l=>l.startsWith('cmd.exe '));

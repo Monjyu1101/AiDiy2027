@@ -174,7 +174,7 @@ test('外部CLI SVGの形状・色を維持し、Hermesはlocal PNGのみ配布�
  const notes=await text('LICENSE_ICONS.md');for(const label of ['Copilot','Claude','Codex','Grok','OpenCode','aidiy_hermes','aidiy_pi','aidiy_codex','LobeHub'])assert.ok(notes.includes(label),label);assert.doesNotMatch(notes,/取得・確認待ち|独自仮ピクトグラム/);
 });
 
-test('Windows launcher lists the standard and detected agy.exe separately and starts agy.exe with normal approval',async t=>{
+test('Windows launcher lists the standard and detected agy.exe separately and starts either with the same approval requirement',async t=>{
  const home=await mkdtemp(join(tmpdir(),'diag-agy-'));t.after(()=>rm(home,{recursive:true,force:true}));
  const extensionDir=join(home,'.gemini','bin'),extension=join(extensionDir,'agy.exe');
  const local=join(home,'Local AppData'),standardDir=join(local,'agy','bin'),standard=join(standardDir,'agy.exe');
@@ -185,8 +185,10 @@ test('Windows launcher lists the standard and detected agy.exe separately and st
  await mkdir(extensionDir,{recursive:true});await writeFile(extension,'fixture only');
  result=await catalog();assert.equal(result.agy.利用可能,false);assert.equal(result.agy_exe.利用可能,true);assert.equal(result.agy_exe.名前,'agy.exe');
  assert.equal(f.calls.length,0);assert.doesNotMatch(JSON.stringify(result),/fixture|executable/);
- await f.manager.launch('agy_exe',f.project,false);
- assert.deepEqual(f.calls[0].args.slice(-3),['--cli','agy_exe','--foreground']);
+ assert.equal(result.agy_exe.モード,result.agy.モード);
+ await assert.rejects(f.manager.launch('agy_exe',f.project,false),{status:400});
+ await f.manager.launch('agy_exe',f.project,true);
+ assert.deepEqual(f.calls[0].args.slice(-4),['--cli','agy_exe','--cli-auto-approve','--foreground']);
  await mkdir(standardDir,{recursive:true});await writeFile(standard,'fixture only');
  result=await catalog();assert.equal(result.agy.利用可能,true);assert.equal(result.agy_exe.利用可能,true);
  await f.manager.launch('agy',f.project,true);
@@ -194,6 +196,6 @@ test('Windows launcher lists the standard and detected agy.exe separately and st
  await rm(extensionDir,{recursive:true});
  result=await catalog();assert.equal(result.agy_exe.利用可能,true);
  await rm(standard);
- await assert.rejects(f.manager.launch('agy_exe',f.project,false),{status:503});
+ await assert.rejects(f.manager.launch('agy_exe',f.project,true),{status:503});
  assert.equal(f.calls.length,2);
 });

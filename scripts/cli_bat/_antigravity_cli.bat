@@ -39,17 +39,14 @@ goto SELECT_MODEL
 
 :LAUNCH
 rem Same rule as Diag: the standard agy.exe first, then another agy.exe on PATH.
-rem The VS Code extension agy.exe is not used as Antigravity CLI. It is used only when nothing else exists,
-rem without --dangerously-skip-permissions, like the "agy.exe" launcher in Diag.
+rem The VS Code extension agy.exe is used only when nothing else exists, with the same approval mode.
 set "AGY_EXTENSION=%USERPROFILE%\.gemini\bin\agy.exe"
 set "AGY_RUN="
 set "AGY_ARGS=--dangerously-skip-permissions"
 if exist "%AGY_EXE%" set "AGY_RUN=%AGY_EXE%"
 if not defined AGY_RUN for /f "delims=" %%P in ('where agy.exe 2^>nul') do if not defined AGY_RUN if /I not "%%~fP"=="%AGY_EXTENSION%" set "AGY_RUN=%%~fP"
-if not defined AGY_RUN if exist "%AGY_EXTENSION%" set "AGY_ARGS="
 if not defined AGY_RUN if exist "%AGY_EXTENSION%" set "AGY_RUN=%AGY_EXTENSION%"
 if not defined AGY_RUN goto NOT_INSTALLED
-if not defined AGY_ARGS ECHO Only the VS Code extension agy.exe was found. It runs with normal approval.
 
 if defined MODEL (
     ECHO "%AGY_RUN%" %AGY_ARGS% --model %MODEL% %*
