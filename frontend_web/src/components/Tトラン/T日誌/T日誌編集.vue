@@ -6,8 +6,9 @@ Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full te
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate, useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '../../../stores/auth';
-import { qConfirm, qMessage } from '../../../utils/qAlert';
-import { 日誌検索状態, 画面遷移先 } from './日誌画面';
+import { qConfirm } from '../../../utils/qAlert';
+import { 画面遷移先 } from './日誌画面';
+import { saveReturnMessage } from '../../../utils/listSessionState';
 import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
 import type { 日誌, 日誌明細, 日誌記録, 日誌保存, 日誌添付 } from './日誌API';
 import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上限, 添付合計上限 } from './添付';
@@ -35,20 +36,12 @@ const 行数 = computed(() => 記録.value.reduce((count, item) => count + item.
 const 閉じた = ref(false);
 const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
 const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
-const 一覧へ = () => {
-  const state = 日誌検索状態(router, auth.user?.利用者ID);
-  const 対象 = 戻り先.value ? router.resolve(戻り先.value) : null;
-  if (対象?.name === 'T日誌一覧') {
-    return router.push({ path: 対象.path, query: 対象.query, hash: 対象.hash, state });
-  }
-  return router.push({
-    name: 'T日誌一覧',
-    state,
-    query: {
-      開始日付: route.query.開始日付, 終了日付: route.query.終了日付,
-      件数制限: route.query.件数制限, URLメニュー: route.query.URLメニュー,
-    },
-  });
+const 一覧へ = () => 日誌一覧へ移動();
+const 日誌一覧へ移動 = (message?: string) => {
+  const 戻り先一覧 = 戻り先.value && router.resolve(戻り先.value).name === 'T日誌一覧';
+  const target = 戻り先一覧 ? 戻り先.value : router.resolve({ name: 'T日誌一覧' }).fullPath;
+  if (message) saveReturnMessage(target, message, 'success');
+  return router.push(target);
 };
 
 function 表示URL(base64: string): string {
@@ -275,8 +268,7 @@ async function 保存() {
     更新版.value = data.更新版;
     未保存.value = false;
     操作中.value = false;
-    await 一覧へ();
-    void qMessage(更新 ? '日誌を更新しました。' : '日誌を登録しました。');
+    await 日誌一覧へ移動(更新 ? '日誌を更新しました。' : '日誌を登録しました。');
   } catch (e) {
     エラー.value = エラー表示(e, '日誌の保存に失敗しました。');
   } finally {
@@ -293,8 +285,7 @@ async function 日誌を削除() {
     await 日誌操作('削除', { 日誌日付: 日誌日付.value });
     未保存.value = false;
     操作中.value = false;
-    await 一覧へ();
-    void qMessage('日誌を削除しました。');
+    await 日誌一覧へ移動('日誌を削除しました。');
   } catch (e) {
     エラー.value = エラー表示(e, '日誌の削除に失敗しました。');
   } finally {

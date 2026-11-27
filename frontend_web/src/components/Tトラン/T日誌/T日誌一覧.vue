@@ -9,14 +9,15 @@ import QTable from '../../_share/qTublerFrame.vue';
 import type { Column } from '../../../types/qTubler';
 import { エラー表示, 日誌操作, ローカル日付 } from './日誌API';
 import type { 日誌一覧, 日誌一覧候補 } from './日誌API';
-import { 日付値, 日付範囲を移動, 日誌検索状態, 画面遷移先 } from './日誌画面';
+import { 日付値, 日付範囲を移動, 画面遷移先 } from './日誌画面';
 
+import { consumeReturnMessage, useListSessionState } from '../../../utils/listSessionState';
+import { qMessage } from '../../../utils/qAlert';
 import { useAuthStore } from '../../../stores/auth';
 
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
-const 初期検索状態 = 日誌検索状態(router, auth.user?.利用者ID);
 function 初期日付範囲() {
   const 開始 = 日付値(route.query.開始日付);
   const 終了 = 日付値(route.query.終了日付);
@@ -32,9 +33,9 @@ const 前日 = computed(() => 日付範囲を移動(開始日付.value, '日', -
 const 翌日 = computed(() => 日付範囲を移動(終了日付.value, '日', 1));
 const 翌月 = computed(() => 日付範囲を移動(終了日付.value, '月', 1));
 const 同一日 = computed(() => Boolean(開始日付.value && 開始日付.value === 終了日付.value));
-const 利用者ID = ref(初期検索状態.日誌検索利用者);
-const プロジェクト = ref(初期検索状態.日誌検索プロジェクト);
-const キーワード = ref(初期検索状態.日誌検索キーワード);
+const 利用者ID = ref('');
+const プロジェクト = ref('');
+const キーワード = ref('');
 const 候補 = ref<日誌一覧候補 | null>(null);
 const 候補エラー = ref('');
 const 件数制限 = ref(route.query.件数制限 !== 'false');
@@ -49,22 +50,6 @@ const 件数表示 = new Intl.NumberFormat('ja-JP');
 const 利用者表示 = (id: string, name: string) => `${id} : ${name}`;
 const 作業時間表示 = (時間: number | null) => 時間 === null ? '未入力' : 時間.toFixed(2);
 const ファイル数表示 = (数: number | null) => 数 === null ? '未入力' : 件数表示.format(数);
-const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
-const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
-const 編集条件 = computed(() => {
-  const query = {
-    開始日付: 開始日付.value || undefined, 終了日付: 終了日付.value || undefined,
-    件数制限: String(件数制限.value), URLメニュー: メニュー.value,
-    URL戻り先: 戻り先.value || undefined,
-  };
-  return { ...query, URL戻り先: router.resolve({ path: route.path, query }).fullPath };
-});
-const 編集状態 = computed(() => ({
-  日誌検索所有者: auth.user?.利用者ID ?? '',
-  日誌検索利用者: 利用者ID.value,
-  日誌検索プロジェクト: プロジェクト.value,
-  日誌検索キーワード: キーワード.value,
-}));
 const 新規日付 = computed(() => 同一日.value ? 開始日付.value : ローカル日付());
 const columns = [
   { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
@@ -75,9 +60,65 @@ const columns = [
   { key: '作業時間', label: '作業時間(h)', align: 'right', width: '110px', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
 ] satisfies Column[];
-const 列フィルタ = ref<Record<(typeof columns)[number]['key'], string>>({
+const 空の列条件 = {
   日誌日付: '', 利用者ID: '', 記録件数: '', プロジェクト: '', 作業タイトル: '', 作業時間: '', 新規更新ファイル数: '',
+};
+const 列フィルタ = ref({ ...空の列条件 });
+const { URLメニュー, URL戻り先, 現在URL戻り先, saveListSession, resetOrRestoreListSession } = useListSessionState(route, router, {
+  getState: () => ({
+    認証利用者ID: auth.user?.利用者ID,
+    開始日付: 開始日付.value, 終了日付: 終了日付.value, 件数制限: 件数制限.value,
+    利用者ID: 利用者ID.value, プロジェクト: プロジェクト.value, キーワード: キーワード.value,
+    列フィルタ: 列フィルタ.value, 並び列: 並び列.value, 昇順: 昇順.value, ページ: ページ.value,
+  }),
+  applyState: state => {
+    if (!auth.user?.利用者ID || state.認証利用者ID !== auth.user.利用者ID) return;
+    開始日付.value = 日付値(state.開始日付) || 開始日付.value;
+    終了日付.value = 日付値(state.終了日付) || 終了日付.value;
+    if (typeof state.件数制限 === 'boolean') 件数制限.value = state.件数制限;
+    利用者ID.value = typeof state.利用者ID === 'string' ? state.利用者ID : '';
+    プロジェクト.value = typeof state.プロジェクト === 'string' ? state.プロジェクト : '';
+    キーワード.value = typeof state.キーワード === 'string' ? state.キーワード : '';
+    for (const key of Object.keys(空の列条件) as (keyof typeof 空の列条件)[]) {
+      if (typeof state.列フィルタ?.[key] === 'string') 列フィルタ.value[key] = state.列フィルタ[key];
+    }
+    if (Number.isSafeInteger(state.ページ) && state.ページ >= 1) ページ.value = state.ページ;
+    if (columns.some(column => column.key === state.並び列 && !('sortable' in column && !column.sortable))) {
+      並び列.value = state.並び列;
+      昇順.value = state.昇順 === true;
+    }
+  },
 });
+
+const メニュー = computed(() => 画面遷移先(router, URLメニュー.value) || '/Tトラン');
+const 戻り先 = computed(() => 画面遷移先(router, URL戻り先.value));
+
+function 編集先(モード: '新規' | '編集', 日誌日付: string, 利用者ID?: string) {
+  return {
+    name: 'T日誌編集',
+    query: { モード, 日誌日付, 利用者ID, URLメニュー: メニュー.value, URL戻り先: 現在URL戻り先.value },
+  };
+}
+
+function パネル初期化() {
+  const 範囲 = 初期日付範囲();
+  開始日付.value = 範囲.開始;
+  終了日付.value = 範囲.終了;
+  件数制限.value = route.query.件数制限 !== 'false';
+  利用者ID.value = プロジェクト.value = キーワード.value = '';
+  列フィルタ.value = { ...空の列条件 };
+  並び列.value = '日誌日付';
+  昇順.value = false;
+  ページ.value = 1;
+  resetOrRestoreListSession();
+}
+
+function 表示結果メッセージ() {
+  const result = consumeReturnMessage(route);
+  if (result) void qMessage(result.message, result.type || 'success');
+}
+パネル初期化();
+
 const 列条件 = computed(() => {
   const 条件 = 列フィルタ.value;
   return {
@@ -111,7 +152,7 @@ const 絞込行 = computed(() => {
   });
 });
 const ページ数 = computed(() => Math.max(1, Math.ceil(絞込行.value.length / ページ件数)));
-watch(列条件, () => { ページ.value = 1; });
+watch(列条件, () => { ページ.value = 1; }, { flush: 'sync' });
 const 表示行 = computed(() => [...絞込行.value].sort((a, b) => {
   const key = 並び列.value as keyof typeof a;
   const av = a[key], bv = b[key];
@@ -138,7 +179,7 @@ function 日付を移動(範囲: ReturnType<typeof 日付範囲を移動>) {
 }
 
 let 最新検索 = 0;
-async function 一覧取得() {
+async function 一覧取得(表示ページ = 1) {
   const 検索番号 = ++最新検索;
   エラー.value = '';
   if (!日付値(開始日付.value) || !日付値(終了日付.value)) {
@@ -163,19 +204,18 @@ async function 一覧取得() {
     });
     if (検索番号 !== 最新検索) return;
     結果.value = data;
-    ページ.value = 1;
+    ページ.value = Math.min(表示ページ, ページ数.value);
   } catch (e) {
     if (検索番号 === 最新検索) エラー.value = エラー表示(e, '日誌一覧を取得できませんでした。');
   } finally {
     if (検索番号 === 最新検索) 読込中.value = false;
   }
 }
-watch(() => [route.query.開始日付, route.query.終了日付, route.query.件数制限], () => {
-  const 範囲 = 初期日付範囲();
-  開始日付.value = 範囲.開始;
-  終了日付.value = 範囲.終了;
-  件数制限.value = route.query.件数制限 !== 'false';
-  void 一覧取得();
+watch(() => route.fullPath, () => {
+  if (route.name !== 'T日誌一覧') return;
+  パネル初期化();
+  表示結果メッセージ();
+  void 一覧取得(ページ.value);
 });
 async function 候補取得() {
   候補エラー.value = '';
@@ -186,12 +226,14 @@ async function 候補取得() {
   }
 }
 function 検索() {
+  saveListSession();
   if (候補エラー.value) void 候補取得();
   void 一覧取得();
 }
 onMounted(() => {
+  表示結果メッセージ();
   void 候補取得();
-  void 一覧取得();
+  void 一覧取得(ページ.value);
 });
 </script>
 
@@ -255,13 +297,14 @@ onMounted(() => {
             <button type="submit" class="btn btn-primary" :disabled="読込中">検索</button>
           </div>
           <div class="toolbar-right">
-            <RouterLink :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '新規', 日誌日付: 新規日付 } }"
-              class="btn btn-success">新規</RouterLink>
+            <RouterLink :to="編集先('新規', 新規日付)" custom v-slot="{ href, navigate }">
+              <a :href="href" class="btn btn-success" @click="saveListSession(); navigate($event)">新規</a>
+            </RouterLink>
           </div>
         </form>
         <div class="table-options">
           <label class="checkbox-label">
-            <input v-model="件数制限" type="checkbox" @change="一覧取得">
+            <input v-model="件数制限" type="checkbox" @change="検索">
             件数制限
           </label>
         </div>
@@ -280,8 +323,10 @@ onMounted(() => {
               :aria-label="`${column.label}の列フィルタ`">
           </template>
           <template #cell="{ row, column, value }">
-            <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID" class="id-link"
-              :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
+            <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID"
+              :to="編集先('編集', row.日誌日付, row.利用者ID)" custom v-slot="{ href, navigate }">
+              <a :href="href" class="id-link" @click="saveListSession(); navigate($event)">{{ value }}</a>
+            </RouterLink>
             <span v-else-if="column.key === '利用者ID'" class="user-cell"
               :title="利用者表示(row.利用者ID, row.利用者名)">{{ 利用者表示(row.利用者ID, row.利用者名) }}</span>
             <div v-else-if="column.key === 'プロジェクト' || column.key === '作業タイトル' || column.key === '作業時間' || column.key === '新規更新ファイル数'" class="work-list">
