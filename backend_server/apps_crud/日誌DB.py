@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 
 from apps_models.T日誌 import 日誌Base
 
-現日誌ファイル = "diary_v20261027.db"
+現日誌ファイル = "diary_v20261127.db"
 
 
 def 日誌DB初期化() -> Engine:

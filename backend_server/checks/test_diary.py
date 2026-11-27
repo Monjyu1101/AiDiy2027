@@ -53,7 +53,7 @@ class 日誌Tests(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
         self.home = Path(stack.enter_context(tempfile.TemporaryDirectory()))
-        self.path = self.home / ".aidiy" / "datas" / "diary_v20261027.db"
+        self.path = self.home / ".aidiy" / "datas" / "diary_v20261127.db"
         self.business_path = self.home / "業務.db"
         shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
         stack.callback(shared_engine.dispose)
@@ -362,8 +362,7 @@ class 日誌Tests(unittest.TestCase):
     def test_旧パスだけなら新規作成し_新パスへコピー済みなら記録を使う(self):
         登録 = self.call("登録", sample()).json()["data"]
         self.lifecycle.close()
-        旧パス = self.home / ".aidiy" / "diary" / "diary_v4.db"
-        旧パス.parent.mkdir()
+        旧パス = self.path.with_name("diary_v20261027.db")
         self.path.rename(旧パス)
         旧データ = 旧パス.read_bytes()
 

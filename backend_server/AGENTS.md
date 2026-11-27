@@ -32,7 +32,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 ## 概要
 
 `backend_server` は AiDiy の FastAPI backend です。
-`core_main.py` と `apps_main.py` の 2 サーバーを持ち、業務データは同じ SQLite DB を共有します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261027.db` に保存します。
+`core_main.py` と `apps_main.py` の 2 サーバーを持ち、業務データは同じ SQLite DB を共有します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261127.db` に保存します。
 
 | エントリ | 役割 | ポート |
 |----------|------|--------|
