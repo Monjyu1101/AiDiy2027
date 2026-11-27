@@ -9,11 +9,11 @@ from sqlalchemy.engine import Engine
 
 from apps_models.T日誌 import 日誌Base
 
-現日誌ファイル = "diary_v4.db"
+現日誌ファイル = "diary_v20261027.db"
 
 
 def 日誌DB初期化() -> Engine:
-    場所 = Path.home() / ".aidiy" / "diary"
+    場所 = Path.home() / ".aidiy" / "datas"
     場所.mkdir(mode=0o700, parents=True, exist_ok=True)
     パス = 場所 / 現日誌ファイル
     try:
@@ -35,6 +35,7 @@ def 日誌DB初期化() -> Engine:
 
     try:
         with db_engine.connect().execution_options(diary_write=True) as conn, conn.begin():
+            # ファイル名の日付は保存先の版。コピー済みの v4 と同じスキーマを使う。
             版 = conn.exec_driver_sql("PRAGMA user_version").scalar_one()
             if 版 == 0:
                 日誌Base.metadata.create_all(conn)

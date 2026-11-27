@@ -3,6 +3,7 @@
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 import base64
 import json
+import shutil
 import sqlite3
 import sys
 import tempfile
@@ -52,7 +53,7 @@ class 日誌Tests(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
         self.home = Path(stack.enter_context(tempfile.TemporaryDirectory()))
-        self.path = self.home / ".aidiy" / "diary" / "diary_v4.db"
+        self.path = self.home / ".aidiy" / "datas" / "diary_v20261027.db"
         self.business_path = self.home / "業務.db"
         shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
         stack.callback(shared_engine.dispose)
@@ -343,7 +344,8 @@ class 日誌Tests(unittest.TestCase):
 
     def test_旧DBを読まず新DBを使い_旧形式を拒否(self):
         self.lifecycle.close()
-        old = self.path.with_name("diary.db")
+        old = self.home / ".aidiy" / "diary" / "diary_v4.db"
+        old.parent.mkdir()
         sentinel = b"fixture: this file must not be read or modified"
         old.write_bytes(sentinel)
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
@@ -356,6 +358,27 @@ class 日誌Tests(unittest.TestCase):
             result = self.call("作業変更", {"日誌日付": DATE, "作業ID": 1, "作業タイトル": "作業",
                                          "新規更新ファイル数": value})
             self.assertEqual(result.status_code, 422)
+
+    def test_旧パスだけなら新規作成し_新パスへコピー済みなら記録を使う(self):
+        登録 = self.call("登録", sample()).json()["data"]
+        self.lifecycle.close()
+        旧パス = self.home / ".aidiy" / "diary" / "diary_v4.db"
+        旧パス.parent.mkdir()
+        self.path.rename(旧パス)
+        旧データ = 旧パス.read_bytes()
+
+        self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        self.assertTrue(self.path.is_file())
+        self.assertEqual(self.call("一覧").json()["data"]["items"], [])
+        self.assertEqual(旧パス.read_bytes(), 旧データ)
+        self.lifecycle.close()
+
+        shutil.copyfile(旧パス, self.path)
+        self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"], 登録["記録"])
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone(), (4,))
+        self.assertEqual(旧パス.read_bytes(), 旧データ)
 
     def test_ツール更新後の古い画面保存を拒否(self):
         body = sample()
