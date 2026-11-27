@@ -56,7 +56,7 @@ const 編集状態 = computed(() => ({
 const 新規日付 = computed(() => 同一日.value ? 開始日付.value : ローカル日付());
 const columns: Column[] = [
   { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
-  { key: '利用者ID', label: '利用者' },
+  { key: '利用者ID', label: '利用者', width: 'var(--user-column-width)' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
   { key: '作業タイトル', label: '作業タイトル', align: 'left', width: 'var(--work-title-width)', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
@@ -230,7 +230,8 @@ onMounted(() => {
           <template #cell="{ row, column, value }">
             <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID" class="id-link"
               :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
-            <template v-else-if="column.key === '利用者ID'">{{ 利用者表示(row.利用者ID, row.利用者名) }}</template>
+            <span v-else-if="column.key === '利用者ID'" class="user-cell"
+              :title="利用者表示(row.利用者ID, row.利用者名)">{{ 利用者表示(row.利用者ID, row.利用者名) }}</span>
             <div v-else-if="column.key === '作業タイトル' || column.key === '新規更新ファイル数'" class="work-list">
               <div v-for="作業 in row.作業一覧" :key="作業.作業ID" class="work-line">
                 <span v-if="column.key === '作業タイトル'" class="work-title" :title="作業.作業タイトル">{{ 作業.作業タイトル }}</span>
@@ -248,15 +249,23 @@ onMounted(() => {
 <style scoped src="./日誌.css"></style>
 <style scoped>
 .page-container { --work-title-width: clamp(300px, 60vw, 680px); }
+.section {
+  container-type: inline-size;
+  --search-panel-width: 570px;
+  --search-label-width: 160px;
+  --search-value-padding: 12px;
+  --user-column-width: max(90px, calc(min(var(--search-panel-width), 100cqw) - var(--search-label-width) - 2 * var(--search-value-padding) - 1px));
+}
 .search-panel {
-  width: 570px;
+  width: var(--search-panel-width);
   max-width: 100%;
   min-width: 0;
   font-size: 14px;
 }
 .search-panel .detail-row + .detail-row { margin-top: -1px; }
 /* T生産などの検索欄と同じ寸法。グローバルの入力欄の上下マージンを持ち込まない。 */
-.search-panel .detail-label { white-space: nowrap; }
+.search-panel .detail-label { width: var(--search-label-width); white-space: nowrap; }
+.search-panel .detail-value { padding-inline: var(--search-value-padding); }
 .search-panel .detail-input {
   width: 100%;
   min-width: 0;
@@ -275,8 +284,7 @@ onMounted(() => {
 .day-navigation .btn { width: 28px; height: 28px; padding: 0; }
 
 @media (max-width: 640px) {
-  .search-panel .detail-label { width: 108px; }
-  .search-panel .detail-value { padding-inline: 8px; }
+  .section { --search-label-width: 108px; --search-value-padding: 8px; }
 }
 
 @media (max-width: 465px) {
@@ -298,4 +306,10 @@ onMounted(() => {
 .work-list { display: grid; justify-content: stretch; }
 .work-line > span { width: 100%; }
 .work-title { display: block; overflow: hidden; text-overflow: ellipsis; max-width: var(--work-title-width); }
+.user-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(var(--user-column-width) - 21px);
+}
 </style>
