@@ -407,20 +407,26 @@ onBeforeUnmount(() => {
               </div>
               <div v-show="item.展開" :id="`diary-record-${item.key}`" class="fold-body">
                 <header class="actions record-heading">
-                  <label class="record-project">
-                    <span>プロジェクト（フォルダパス）</span>
-                    <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
-                      spellcheck="false" @input="変更した">
+                  <label class="detail-row record-project">
+                    <span class="detail-label">プロジェクト</span>
+                    <span class="detail-value">
+                      <input v-model="item.プロジェクト" type="text" maxlength="4096" autocomplete="off"
+                        spellcheck="false" @input="変更した">
+                    </span>
                   </label>
-                  <label class="record-hours">
-                    <span>作業時間(h)</span>
-                    <input :id="`diary-hours-${item.key}`" v-model="item.時間入力" type="text" inputmode="decimal"
-                      placeholder="n.nn" @input="変更した">
+                  <label class="detail-row record-hours">
+                    <span class="detail-label">作業時間(h)</span>
+                    <span class="detail-value">
+                      <input :id="`diary-hours-${item.key}`" v-model="item.時間入力" type="text" inputmode="decimal"
+                        placeholder="n.nn" @input="変更した">
+                    </span>
                   </label>
-                  <label class="record-count">
-                    <span>新規・更新ファイル数（自己申告）</span>
-                    <input :id="`diary-count-${item.key}`" v-model="item.件数入力" type="text" inputmode="numeric"
-                      maxlength="16" @input="変更した">
+                  <label class="detail-row record-count">
+                    <span class="detail-label">新規・更新F数</span>
+                    <span class="detail-value">
+                      <input :id="`diary-count-${item.key}`" v-model="item.件数入力" type="text" inputmode="numeric"
+                        maxlength="16" @input="変更した">
+                    </span>
                   </label>
                   <button v-if="記録.length > 1" type="button" class="btn btn-secondary" @click="記録を削除(i)">作業を外す</button>
                 </header>
@@ -437,10 +443,12 @@ onBeforeUnmount(() => {
                     </button>
                     <textarea v-if="行.展開" v-model="行.作業内容" rows="3" maxlength="10000" placeholder="作業内容"
                       :aria-label="`作業 ${i + 1} 明細 ${j + 1} の作業内容`" @input="変更した"></textarea>
+                    <button type="button" class="btn btn-danger btn-remove-line" @click="行を削除(item, j)">明細を外す</button>
                   </div>
                   <div v-show="行.展開" :id="`diary-line-${行.key}`" class="fold-body line-body">
                     <div class="line-attachments" :class="{ 'has-attachments': 行.添付.length > 0 }">
-                      <ul v-if="行.添付.length" class="attachment-list">
+                      <ul v-if="行.添付.length" class="attachment-list" tabindex="0"
+                        :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付一覧`">
                         <li v-for="(file, index) in 行.添付" :key="file.key">
                           <div class="actions attachment">
                             <button type="button" class="btn btn-secondary filename" @click="ダウンロード(file)">{{ file.ファイル名 }} を保存</button>
@@ -458,7 +466,6 @@ onBeforeUnmount(() => {
                         <input type="file" multiple :aria-label="`作業 ${i + 1} 明細 ${j + 1} の添付`" @change="添付を選ぶ($event, 行)">
                       </label>
                     </div>
-                    <button type="button" class="btn btn-secondary" @click="行を削除(item, j)">明細を外す</button>
                   </div>
                 </div>
                 <button type="button" class="btn btn-add-row" :disabled="行数 >= 行上限" @click="行を追加(item)">明細を追加</button>
@@ -502,14 +509,17 @@ onBeforeUnmount(() => {
 .fold-label{flex:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-weight:600}
 .fold-count{font-size:.85em}
 .record-heading,.diary-line,.line-attachments{width:100%}
-.record-heading .record-project{width:100%;flex-wrap:wrap}
-.record-project input{flex:1;min-width:100px}
-.record-hours,.record-count{flex-wrap:wrap}
-.record-hours input{width:5.5em}
-.record-count input{width:8em}
+.record-heading .detail-row{align-items:stretch;gap:0}
+.record-heading .detail-label{width:auto;min-width:0;padding:4px 8px;white-space:nowrap}
+.record-heading .detail-value{padding:4px 6px}
+.record-heading .record-project{flex:1 0 min(100%,240px);min-width:0}
+.record-project input{width:100%}
+.record-hours input{width:4.5em}
+.record-count input{width:5em}
 .btn-add-row{background:#2563eb;color:#fff}
 .btn-add-row:hover:not(:disabled){background:#1d4ed8}
 .line-bar textarea{flex:1;min-width:0;margin:6px 12px 6px 0;resize:vertical}
+.line-bar > .btn-remove-line{flex:none;margin-inline-end:8px;padding:5px 8px;font-size:12px;white-space:nowrap}
 .preview{max-width:100%;max-height:220px;object-fit:contain}
 .filename{overflow-wrap:anywhere;max-width:100%;text-align:start}
 .attachment{max-width:100%}
@@ -520,7 +530,11 @@ onBeforeUnmount(() => {
 .has-attachments .drop-zone{width:100%;min-width:0;padding-inline:0;font-size:20px}
 .drop-zone:focus-within,.drop-zone.drag-active{border-color:#2689b3;background:color-mix(in srgb,#2689b3 12%,transparent)}
 .drop-zone input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-.attachment-list{width:100%;list-style:none;margin:0;padding:0;display:grid;gap:8px}
-.attachment-list > li{min-width:0}
+.attachment-list{box-sizing:border-box;width:100%;min-width:0;list-style:none;margin:0;padding:2px 0 6px;
+  display:flex;align-items:flex-start;gap:8px;overflow-x:auto;overscroll-behavior-inline:contain}
+.attachment-list:focus-visible{outline:2px solid #2689b3;outline-offset:-2px}
+.attachment-list > li{box-sizing:border-box;flex:0 0 min(184px,85%);min-width:0;padding:8px;
+  border:1px solid var(--border-color,#c8d0d6);border-radius:4px}
+.attachment-list .btn{padding:4px 8px;font-size:12px}
 .help,.dirty{font-size:.85em}
 </style>
