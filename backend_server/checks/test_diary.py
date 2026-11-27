@@ -266,9 +266,11 @@ class 日誌Tests(unittest.TestCase):
         all_rows = items()
         self.assertEqual([r["利用者ID"] for r in all_rows], ["one", "two"])
         work = all_rows[0]["作業一覧"]
+        self.assertEqual([w["プロジェクト"] for w in work], ["C:/project-a", "C:/project-b"])
+        self.assertEqual([w["プロジェクト"] for w in all_rows[1]["作業一覧"]], ["D:/project-c", ""])
         self.assertEqual([w["作業タイトル"] for w in work], ["作業メモ", "見出しだけ"])
         self.assertEqual([w["新規更新ファイル数"] for w in work], [0, None])
-        self.assertEqual(set(work[0]), {"作業ID", "作業タイトル", "新規更新ファイル数"})
+        self.assertEqual(set(work[0]), {"作業ID", "プロジェクト", "作業タイトル", "新規更新ファイル数"})
         self.assertEqual(items(プロジェクト="C:/project-b")[0]["作業一覧"], work[1:])
         self.assertEqual([r["利用者ID"] for r in items(利用者ID="two")], ["two"])
         self.assertEqual([r["利用者ID"] for r in items(プロジェクト="D:/project-c", キーワード="画像.png")], ["two"])
