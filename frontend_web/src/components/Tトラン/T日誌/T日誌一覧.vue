@@ -37,6 +37,7 @@ const ページ = ref(1);
 const ページ件数 = 30;
 const 件数表示 = new Intl.NumberFormat('ja-JP');
 const 利用者表示 = (id: string, name: string) => `${id} : ${name}`;
+const ファイル数表示 = (数: number | null) => 数 === null ? '未入力' : 件数表示.format(数);
 const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
 const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
 const 編集条件 = computed(() => {
@@ -54,16 +55,50 @@ const 編集状態 = computed(() => ({
   日誌検索キーワード: キーワード.value,
 }));
 const 新規日付 = computed(() => 同一日.value ? 開始日付.value : ローカル日付());
-const columns: Column[] = [
+const columns = [
   { key: '日誌日付', label: '日誌日付', align: 'center', width: '150px' },
   { key: '利用者ID', label: '利用者', width: 'var(--user-column-width)' },
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
   { key: 'プロジェクト', label: 'プロジェクト', align: 'left', width: 'var(--project-width)', sortable: false },
   { key: '作業タイトル', label: '作業タイトル', align: 'left', width: 'var(--work-title-width)', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
-];
-const ページ数 = computed(() => Math.max(1, Math.ceil(結果.value.items.length / ページ件数)));
-const 表示行 = computed(() => [...結果.value.items].sort((a, b) => {
+] satisfies Column[];
+const 列フィルタ = ref<Record<(typeof columns)[number]['key'], string>>({
+  日誌日付: '', 利用者ID: '', 記録件数: '', プロジェクト: '', 作業タイトル: '', 新規更新ファイル数: '',
+});
+const 列条件 = computed(() => {
+  const 条件 = 列フィルタ.value;
+  return {
+    日誌日付: 条件.日誌日付.trim().toLowerCase(),
+    利用者ID: 条件.利用者ID.trim().toLowerCase(),
+    記録件数: 条件.記録件数.trim(),
+    プロジェクト: 条件.プロジェクト.trim().toLowerCase(),
+    作業タイトル: 条件.作業タイトル.trim().toLowerCase(),
+    新規更新ファイル数: 条件.新規更新ファイル数.trim().replace(/,/g, ''),
+  };
+});
+const 作業フィルタあり = computed(() => {
+  const 条件 = 列条件.value;
+  return Boolean(条件.プロジェクト || 条件.作業タイトル || 条件.新規更新ファイル数);
+});
+const 絞込行 = computed(() => {
+  const 条件 = 列条件.value;
+  return 結果.value.items.flatMap(row => {
+    if (!row.日誌日付.includes(条件.日誌日付) ||
+        !利用者表示(row.利用者ID, row.利用者名).toLowerCase().includes(条件.利用者ID) ||
+        !String(row.記録件数).includes(条件.記録件数)) return [];
+    if (!作業フィルタあり.value) return [row];
+    // 複数の作業列は同じ作業で判定し、タイトルとファイル数が別の行にずれないようにする。
+    const 作業一覧 = row.作業一覧.filter(作業 =>
+      作業.プロジェクト.toLowerCase().includes(条件.プロジェクト) &&
+      作業.作業タイトル.toLowerCase().includes(条件.作業タイトル) &&
+      ファイル数表示(作業.新規更新ファイル数).replace(/,/g, '').includes(条件.新規更新ファイル数));
+    return 作業一覧.length ? [{ ...row, 作業一覧 }] : [];
+  });
+});
+const ページ数 = computed(() => Math.max(1, Math.ceil(絞込行.value.length / ページ件数)));
+watch(列条件, () => { ページ.value = 1; });
+const 表示行 = computed(() => [...絞込行.value].sort((a, b) => {
   const key = 並び列.value as keyof typeof a;
   const av = a[key], bv = b[key];
   const order = typeof av === 'number' && typeof bv === 'number' ? av - bv : String(av).localeCompare(String(bv), 'ja');
@@ -225,9 +260,14 @@ onMounted(() => {
           {{ 結果.total }}件中、先頭{{ 結果.items.length }}件を表示しています。
         </p>
         <QTable :columns="columns" :rows="表示行" row-key="日誌行キー" caption="日誌一覧"
-          :sort-key="並び列" :sort-order="昇順 ? 'asc' : 'desc'" :total-count="結果.items.length" :total-all="結果.total"
+          :sort-key="並び列" :sort-order="昇順 ? 'asc' : 'desc'" :total-count="絞込行.length" :total-all="結果.total"
+          :has-filter="Object.values(列条件).some(Boolean)"
           :current-page="ページ" :total-pages="ページ数" :empty-text="読込中 ? '読み込み中…' : '日誌がありません。'"
           @sort="ソート" @page="ページ = $event">
+          <template #filter="{ column }">
+            <input v-model="列フィルタ[column.key]" class="filter-input" type="text"
+              :aria-label="`${column.label}の列フィルタ`">
+          </template>
           <template #cell="{ row, column, value }">
             <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID" class="id-link"
               :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
@@ -237,7 +277,7 @@ onMounted(() => {
               <div v-for="作業 in row.作業一覧" :key="作業.作業ID" class="work-line">
                 <span v-if="column.key === 'プロジェクト'" class="work-project" :title="作業.プロジェクト">{{ 作業.プロジェクト }}</span>
                 <span v-else-if="column.key === '作業タイトル'" class="work-title" :title="作業.作業タイトル">{{ 作業.作業タイトル }}</span>
-                <span v-else>{{ 作業.新規更新ファイル数 === null ? '未入力' : 件数表示.format(作業.新規更新ファイル数) }}</span>
+                <span v-else>{{ ファイル数表示(作業.新規更新ファイル数) }}</span>
               </div>
             </div>
             <template v-else>{{ value }}</template>
@@ -260,6 +300,20 @@ onMounted(() => {
   --search-label-width: 160px;
   --search-value-padding: 12px;
   --user-column-width: max(90px, calc(min(var(--search-panel-width), 100cqw) - var(--search-label-width) - 2 * var(--search-value-padding) - 1px));
+}
+.list-toolbar { gap: 12px; }
+.list-toolbar .btn { border: 0; }
+.list-toolbar .toolbar-right { display: flex; }
+.table-options .checkbox-label { user-select: none; }
+/* 配車一覧と同じ2段ヘッダー。テーブル名は読み上げ用に残す。 */
+:deep(.common-table caption) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 .search-panel {
   width: var(--search-panel-width);
