@@ -98,7 +98,7 @@ class DiaryControlTests(unittest.IsolatedAsyncioTestCase):
                 self.assertFalse(result.json()["result"].get("isError", False), result.text)
                 self.assertEqual(json.loads(self.calls[-1].content)["添付"], 添付)
 
-                create = {"日誌日付": "2026-11-26", "作業タイトル": "作業", "プロジェクト": r"C:\作業場所\工程", "新規更新ファイル数": 0}
+                create = {"日誌日付": "2026-11-26", "作業タイトル": "作業", "プロジェクト": r"C:\作業場所\工程", "作業時間": 7.75, "新規更新ファイル数": 0}
                 for i, (name, arguments) in enumerate([
                     ("diary_work_create", create),
                     ("diary_work_update", {"日誌日付": create["日誌日付"], "作業ID": 1, "作業タイトル": "別名"}),
@@ -109,3 +109,9 @@ class DiaryControlTests(unittest.IsolatedAsyncioTestCase):
                     }, headers={**headers, **auth})
                     self.assertFalse(result.json()["result"].get("isError", False), result.text)
                     self.assertEqual(json.loads(self.calls[-1].content), arguments)
+                update = {"日誌日付": create["日誌日付"], "作業ID": 1, "作業タイトル": "別名"}
+                result = await client.post("/mcp", json={"jsonrpc": "2.0", "id": 11, "method": "tools/call",
+                    "params": {"name": "diary_work_update", "arguments": {**update, "作業時間を解除": True}},
+                }, headers={**headers, **auth})
+                self.assertFalse(result.json()["result"].get("isError", False), result.text)
+                self.assertEqual(json.loads(self.calls[-1].content), {**update, "作業時間": None})

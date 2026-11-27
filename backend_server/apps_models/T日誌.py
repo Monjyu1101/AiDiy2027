@@ -1,6 +1,6 @@
 # COPYRIGHT (C) 2014-2027 Mitsuo KONDOU and contributors.
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
-from sqlalchemy import JSON, Boolean, CheckConstraint, ForeignKey, Index, Integer, Text
+from sqlalchemy import JSON, Boolean, CheckConstraint, Float, ForeignKey, Index, Integer, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -13,6 +13,7 @@ class T日誌作業(日誌Base):
     __table_args__ = (
         CheckConstraint("作業ID > 0"),
         Index("ix_日誌作業_利用者日付", "利用者ID", "日誌日付"),
+        CheckConstraint("作業時間 BETWEEN 0 AND 99.99 AND round(作業時間, 2) = 作業時間"),
         CheckConstraint("新規更新ファイル数 >= 0"),
     )
 
@@ -22,6 +23,7 @@ class T日誌作業(日誌Base):
     利用者名: Mapped[str] = mapped_column(Text)
     プロジェクト: Mapped[str] = mapped_column(Text)
     作業タイトル: Mapped[str] = mapped_column(Text)
+    作業時間: Mapped[float | None] = mapped_column(Float)
     新規更新ファイル数: Mapped[int | None] = mapped_column(Integer)
     有効: Mapped[bool] = mapped_column(Boolean, default=True)
     登録日時: Mapped[str] = mapped_column(Text)

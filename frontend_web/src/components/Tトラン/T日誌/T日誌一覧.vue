@@ -37,6 +37,7 @@ const ページ = ref(1);
 const ページ件数 = 30;
 const 件数表示 = new Intl.NumberFormat('ja-JP');
 const 利用者表示 = (id: string, name: string) => `${id} : ${name}`;
+const 作業時間表示 = (時間: number | null) => 時間 === null ? '未入力' : 時間.toFixed(2);
 const ファイル数表示 = (数: number | null) => 数 === null ? '未入力' : 件数表示.format(数);
 const メニュー = computed(() => 画面遷移先(router, route.query.URLメニュー) || '/Tトラン');
 const 戻り先 = computed(() => 画面遷移先(router, route.query.URL戻り先));
@@ -61,10 +62,11 @@ const columns = [
   { key: '記録件数', label: '記録件数', align: 'right', width: '100px' },
   { key: 'プロジェクト', label: 'プロジェクト', align: 'left', width: 'var(--project-width)', sortable: false },
   { key: '作業タイトル', label: '作業タイトル', align: 'left', width: 'var(--work-title-width)', sortable: false },
+  { key: '作業時間', label: '作業時間(h)', align: 'right', width: '110px', sortable: false },
   { key: '新規更新ファイル数', label: '新規・更新ファイル数', align: 'right', width: '150px', sortable: false },
 ] satisfies Column[];
 const 列フィルタ = ref<Record<(typeof columns)[number]['key'], string>>({
-  日誌日付: '', 利用者ID: '', 記録件数: '', プロジェクト: '', 作業タイトル: '', 新規更新ファイル数: '',
+  日誌日付: '', 利用者ID: '', 記録件数: '', プロジェクト: '', 作業タイトル: '', 作業時間: '', 新規更新ファイル数: '',
 });
 const 列条件 = computed(() => {
   const 条件 = 列フィルタ.value;
@@ -74,12 +76,13 @@ const 列条件 = computed(() => {
     記録件数: 条件.記録件数.trim(),
     プロジェクト: 条件.プロジェクト.trim().toLowerCase(),
     作業タイトル: 条件.作業タイトル.trim().toLowerCase(),
+    作業時間: 条件.作業時間.trim(),
     新規更新ファイル数: 条件.新規更新ファイル数.trim().replace(/,/g, ''),
   };
 });
 const 作業フィルタあり = computed(() => {
   const 条件 = 列条件.value;
-  return Boolean(条件.プロジェクト || 条件.作業タイトル || 条件.新規更新ファイル数);
+  return Boolean(条件.プロジェクト || 条件.作業タイトル || 条件.作業時間 || 条件.新規更新ファイル数);
 });
 const 絞込行 = computed(() => {
   const 条件 = 列条件.value;
@@ -88,10 +91,11 @@ const 絞込行 = computed(() => {
         !利用者表示(row.利用者ID, row.利用者名).toLowerCase().includes(条件.利用者ID) ||
         !String(row.記録件数).includes(条件.記録件数)) return [];
     if (!作業フィルタあり.value) return [row];
-    // 複数の作業列は同じ作業で判定し、タイトルとファイル数が別の行にずれないようにする。
+    // 複数の作業列は同じ作業で判定し、タイトル・時間・ファイル数が別の行にずれないようにする。
     const 作業一覧 = row.作業一覧.filter(作業 =>
       作業.プロジェクト.toLowerCase().includes(条件.プロジェクト) &&
       作業.作業タイトル.toLowerCase().includes(条件.作業タイトル) &&
+      作業時間表示(作業.作業時間).includes(条件.作業時間) &&
       ファイル数表示(作業.新規更新ファイル数).replace(/,/g, '').includes(条件.新規更新ファイル数));
     return 作業一覧.length ? [{ ...row, 作業一覧 }] : [];
   });
@@ -273,10 +277,11 @@ onMounted(() => {
               :to="{ name: 'T日誌編集', state: 編集状態, query: { ...編集条件, モード: '編集', 日誌日付: row.日誌日付 } }">{{ value }}</RouterLink>
             <span v-else-if="column.key === '利用者ID'" class="user-cell"
               :title="利用者表示(row.利用者ID, row.利用者名)">{{ 利用者表示(row.利用者ID, row.利用者名) }}</span>
-            <div v-else-if="column.key === 'プロジェクト' || column.key === '作業タイトル' || column.key === '新規更新ファイル数'" class="work-list">
+            <div v-else-if="column.key === 'プロジェクト' || column.key === '作業タイトル' || column.key === '作業時間' || column.key === '新規更新ファイル数'" class="work-list">
               <div v-for="作業 in row.作業一覧" :key="作業.作業ID" class="work-line">
                 <span v-if="column.key === 'プロジェクト'" class="work-project" :title="作業.プロジェクト">{{ 作業.プロジェクト }}</span>
                 <span v-else-if="column.key === '作業タイトル'" class="work-title" :title="作業.作業タイトル">{{ 作業.作業タイトル }}</span>
+                <span v-else-if="column.key === '作業時間'">{{ 作業時間表示(作業.作業時間) }}</span>
                 <span v-else>{{ ファイル数表示(作業.新規更新ファイル数) }}</span>
               </div>
             </div>

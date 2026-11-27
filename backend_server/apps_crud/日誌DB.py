@@ -9,7 +9,7 @@ from sqlalchemy.engine import Engine
 
 from apps_models.T日誌 import 日誌Base
 
-現日誌ファイル = "diary_v20261127.db"
+現日誌ファイル = "diary_v20261128.db"
 
 
 def 日誌DB初期化() -> Engine:
@@ -35,12 +35,12 @@ def 日誌DB初期化() -> Engine:
 
     try:
         with db_engine.connect().execution_options(diary_write=True) as conn, conn.begin():
-            # ファイル名の日付は保存先の版。コピー済みの v4 と同じスキーマを使う。
+            # 作業時間を持つ v5 専用。旧DBからの移行は通常起動で行わない。
             版 = conn.exec_driver_sql("PRAGMA user_version").scalar_one()
             if 版 == 0:
                 日誌Base.metadata.create_all(conn)
-                conn.exec_driver_sql("PRAGMA user_version = 4")
-            elif 版 != 4:
+                conn.exec_driver_sql("PRAGMA user_version = 5")
+            elif 版 != 5:
                 raise RuntimeError("対応していない日誌DBの版です。")
     except Exception:
         db_engine.dispose()

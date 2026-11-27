@@ -14,7 +14,7 @@ import { 画像形式, 添付Blob, 添付サイズ, 添付を読む, 添付上�
 
 type 編集添付 = 日誌添付 & { key: number; preview: string };
 type 編集行 = { key: number; 展開: boolean; 作業内容: string; 添付: 編集添付[]; ドラッグ数: number };
-type 編集記録 = Omit<日誌記録, '作業ID' | '明細' | '新規更新ファイル数'> & { key: number; 作業ID: number | null; 展開: boolean; 明細: 編集行[]; 件数入力: string };
+type 編集記録 = Omit<日誌記録, '作業ID' | '明細' | '作業時間' | '新規更新ファイル数'> & { key: number; 作業ID: number | null; 展開: boolean; 明細: 編集行[]; 時間入力: string; 件数入力: string };
 const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
@@ -69,7 +69,7 @@ function 行を作る(行?: 日誌明細, 展開 = !行): 編集行 {
 }
 function 記録を作る(item?: 日誌記録, 展開 = true): 編集記録 {
   return {
-    key: ++次のキー, 展開, 作業ID: item?.作業ID ?? null, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
+    key: ++次のキー, 展開, 作業ID: item?.作業ID ?? null, プロジェクト: item?.プロジェクト ?? '', 作業タイトル: item?.作業タイトル ?? '', 時間入力: item?.作業時間?.toFixed(2) ?? '', 件数入力: item?.新規更新ファイル数?.toString() ?? '',
     明細: item ? item.明細.map(行 => 行を作る(行)) : [行を作る()],
   };
 }
@@ -226,6 +226,8 @@ async function 読み込み() {
     操作中.value = false;
   }
 }
+const 作業時間形式 = /^[0-9]{1,2}(?:\.[0-9]{1,2})?$/;
+
 function 保存内容(): 日誌保存 {
   if (!日誌日付.value || !記録.value.length) throw new Error('日付と作業を入力してください。');
   const 未入力 = 記録.value.findIndex(item => !item.作業タイトル.trim());
@@ -234,6 +236,13 @@ function 保存内容(): 日誌保存 {
     item.展開 = true;
     void nextTick(() => document.getElementById(`diary-title-${item.key}`)?.focus());
     throw new Error(`作業 ${未入力 + 1} のタイトルを入力してください。`);
+  }
+  const 不正時間 = 記録.value.findIndex(item => item.時間入力.trim() !== '' && !作業時間形式.test(item.時間入力.trim()));
+  if (不正時間 >= 0) {
+    const item = 記録.value[不正時間]!;
+    item.展開 = true;
+    void nextTick(() => document.getElementById(`diary-hours-${item.key}`)?.focus());
+    throw new Error(`作業 ${不正時間 + 1} の作業時間(h)は0〜99.99の範囲で、小数第2位まで入力してください。`);
   }
   const 不正件数 = 記録.value.findIndex(item => item.件数入力.trim() !== '' && (
     !/^[0-9]+$/.test(item.件数入力.trim()) || !Number.isSafeInteger(Number(item.件数入力))
@@ -247,7 +256,8 @@ function 保存内容(): 日誌保存 {
   return {
     日誌日付: 日誌日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
     記録: 記録.value.map(item => ({
-      作業ID: item.作業ID, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
+      作業ID: item.作業ID, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(),
+      作業時間: item.時間入力.trim() === '' ? null : Number(item.時間入力), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
       明細: item.明細.filter(有効な明細).map((行, j) => ({
         行番号: j + 1, 作業内容: 行.作業内容, 添付: 行.添付.map(({ ファイル名, base64内容 }) => ({ ファイル名, base64内容 })),
       })),
@@ -358,6 +368,7 @@ onBeforeUnmount(() => {
                 <span aria-hidden="true">{{ item.展開 ? '▽' : '▶' }}</span>
                 <span>作業 {{ i + 1 }}</span>
                 <span class="fold-label">{{ item.作業タイトル.trim() || 'タイトル未入力' }}</span>
+                <span v-if="作業時間形式.test(item.時間入力.trim())" class="fold-count">{{ Number(item.時間入力).toFixed(2) }} h</span>
                 <span v-if="/^[0-9]+$/.test(item.件数入力.trim())" class="fold-count">更新 {{ item.件数入力.trim() }}件</span>
                 <span class="fold-count">明細 {{ item.明細.length }}件</span>
               </button>
@@ -372,6 +383,11 @@ onBeforeUnmount(() => {
                     <span>作業タイトル</span>
                     <input :id="`diary-title-${item.key}`" v-model="item.作業タイトル" type="text"
                       maxlength="200" aria-required="true" @input="変更した">
+                  </label>
+                  <label class="record-hours">
+                    <span>作業時間(h)</span>
+                    <input :id="`diary-hours-${item.key}`" v-model="item.時間入力" type="text" inputmode="decimal"
+                      placeholder="7.75" @input="変更した">
                   </label>
                   <label class="record-count">
                     <span>新規・更新ファイル数（自己申告）</span>
@@ -451,7 +467,8 @@ onBeforeUnmount(() => {
 .record-project input{flex:1;min-width:100px}
 .record-heading .record-title{flex:1;min-width:min(100%,240px);flex-wrap:wrap}
 .record-title input{flex:1;min-width:100px}
-.record-count{flex-wrap:wrap}
+.record-hours,.record-count{flex-wrap:wrap}
+.record-hours input{width:5.5em}
 .record-count input{width:8em}
 .line-body > label{display:grid;gap:4px}
 textarea{width:100%;resize:vertical}

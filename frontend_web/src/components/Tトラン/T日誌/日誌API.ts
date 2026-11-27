@@ -21,6 +21,7 @@ export interface 日誌記録 {
   作業ID: number;
   プロジェクト: string;
   作業タイトル: string;
+  作業時間: number | null;
   新規更新ファイル数: number | null;
   明細: 日誌明細[];
 }
@@ -28,7 +29,7 @@ export interface 日誌 extends 日誌見出し { 記録: 日誌記録[]; 更新
 export interface 日誌一覧 {
   items: (日誌見出し & {
     記録件数: number;
-    作業一覧: Pick<日誌記録, '作業ID' | 'プロジェクト' | '作業タイトル' | '新規更新ファイル数'>[];
+    作業一覧: Pick<日誌記録, '作業ID' | 'プロジェクト' | '作業タイトル' | '作業時間' | '新規更新ファイル数'>[];
   })[];
   total: number;
   limit: number | null;

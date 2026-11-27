@@ -53,7 +53,7 @@ class 日誌Tests(unittest.TestCase):
         stack = ExitStack()
         self.addCleanup(stack.close)
         self.home = Path(stack.enter_context(tempfile.TemporaryDirectory()))
-        self.path = self.home / ".aidiy" / "datas" / "diary_v20261127.db"
+        self.path = self.home / ".aidiy" / "datas" / "diary_v20261128.db"
         self.business_path = self.home / "業務.db"
         shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
         stack.callback(shared_engine.dispose)
@@ -93,7 +93,7 @@ class 日誌Tests(unittest.TestCase):
             明細 = list(db.execute("PRAGMA table_info(T日誌明細)"))
             self.assertEqual([col[1] for col in 作業 if col[5]], ["作業ID"])
             self.assertEqual([col[1] for col in 明細 if col[5]], ["作業ID", "行番号"])
-            self.assertTrue({"プロジェクト", "作業タイトル", "新規更新ファイル数"} <= {col[1] for col in 作業})
+            self.assertTrue({"プロジェクト", "作業タイトル", "作業時間", "新規更新ファイル数"} <= {col[1] for col in 作業})
             self.assertEqual({col[1] for col in 明細 if not col[5]}, {"作業内容", "添付"})
             for table in ("T日誌作業", "T日誌明細"):
                 self.assertEqual(db.execute(f"SELECT count(*) FROM {table}").fetchone()[0], 0)
@@ -122,6 +122,27 @@ class 日誌Tests(unittest.TestCase):
             current = self.call("取得", {"日誌日付": body["日誌日付"]}, user=user).json().get("data") or {}
             body = {**body, "更新版": current.get("更新版", "0" * 64)}
         return self.client.post(PREFIX + operation, headers=headers, json=body)
+
+    def test_作業時間の保存_一覧_検索_未入力とゼロ_検証(self):
+        body = sample()
+        body["記録"][0]["作業時間"] = 7.75
+        body["記録"][1]["作業時間"] = 0
+        for invalid in (-0.01, 100, 7.755, "7.75", True):
+            with self.subTest(invalid=invalid):
+                request = {**body, "記録": [{**body["記録"][0], "作業時間": invalid}]}
+                self.assertEqual(self.call("登録", request).status_code, 422)
+        data = self.call("登録", body).json()["data"]
+        self.assertEqual([work["作業時間"] for work in data["記録"]], [7.75, 0])
+        self.lifecycle.close()
+        self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        self.assertEqual(self.call("一覧検索", {}).json()["data"]["items"][0]["作業一覧"][0]["作業時間"], 7.75)
+        key = {"日誌日付": DATE, "作業ID": data["記録"][0]["作業ID"], "作業タイトル": "作業"}
+        self.assertEqual(self.call("作業変更", key).json()["status"], "OK")
+        self.assertEqual(self.call("検索", {}).json()["data"]["items"][0]["記録"][0]["作業時間"], 7.75)
+        self.assertEqual(self.call("作業変更", {**key, "作業時間": None}).json()["status"], "OK")
+        self.assertIsNone(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"][0]["作業時間"])
+        self.assertEqual(self.call("作業登録", {"日誌日付": DATE, "作業タイトル": "追加", "作業時間": 99.99}).json()["status"], "OK")
+        self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"][-1]["作業時間"], 99.99)
 
     def test_保存と再読込_一覧に添付なし_利用者単位(self):
         payload = sample()
@@ -152,7 +173,7 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(self.call("登録", sample()).json()["status"], "OK")
         small = {"日誌日付": DATE, "記録": [{"作業ID": 10001, "作業タイトル": "差し替え"}]}
         result = self.call("変更", small).json()
-        self.assertEqual(result["data"]["記録"], [{"作業ID": 10001, "作業タイトル": "差し替え", "プロジェクト": "", "新規更新ファイル数": None, "明細": []}])
+        self.assertEqual(result["data"]["記録"], [{"作業ID": 10001, "作業タイトル": "差し替え", "プロジェクト": "", "作業時間": None, "新規更新ファイル数": None, "明細": []}])
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual(db.execute("SELECT count(*) FROM T日誌明細").fetchone()[0], 0)
         self.assertEqual(self.call("削除", {"日誌日付": DATE}).json()["status"], "OK")
@@ -221,7 +242,7 @@ class 日誌Tests(unittest.TestCase):
         denied = self.call("作業削除", {"日誌日付": DATE, "作業ID": 10002}, user="two").json()
         self.assertEqual(denied["error"]["code"], "NOT_FOUND")
         entry = run("取得")["記録"][0]
-        self.assertEqual(entry, {"作業ID": 10002, "作業タイトル": "進捗 100%", "プロジェクト": "", "新規更新ファイル数": None, "明細": [
+        self.assertEqual(entry, {"作業ID": 10002, "作業タイトル": "進捗 100%", "プロジェクト": "", "作業時間": None, "新規更新ファイル数": None, "明細": [
             {"行番号": 1, "作業内容": "確認済み",
              "添付": [{"ファイル名": "進捗.png", "base64内容": PNG}]},
         ]})
@@ -271,7 +292,7 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual([w["プロジェクト"] for w in all_rows[1]["作業一覧"]], ["D:/project-c", ""])
         self.assertEqual([w["作業タイトル"] for w in work], ["作業メモ", "見出しだけ"])
         self.assertEqual([w["新規更新ファイル数"] for w in work], [0, None])
-        self.assertEqual(set(work[0]), {"作業ID", "プロジェクト", "作業タイトル", "新規更新ファイル数"})
+        self.assertEqual(set(work[0]), {"作業ID", "プロジェクト", "作業タイトル", "作業時間", "新規更新ファイル数"})
         self.assertEqual(items(プロジェクト="C:/project-b")[0]["作業一覧"], work[1:])
         self.assertEqual([r["利用者ID"] for r in items(利用者ID="two")], ["two"])
         self.assertEqual([r["利用者ID"] for r in items(プロジェクト="D:/project-c", キーワード="画像.png")], ["two"])
@@ -330,7 +351,7 @@ class 日誌Tests(unittest.TestCase):
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
         data = self.call("取得", {"日誌日付": DATE}).json()["data"]
         self.assertEqual(data["記録"], [
-            {"作業ID": 10002, "作業タイトル": "測定", "プロジェクト": "", "新規更新ファイル数": 0,
+            {"作業ID": 10002, "作業タイトル": "測定", "プロジェクト": "", "作業時間": None, "新規更新ファイル数": 0,
              "明細": [{"行番号": 1, "作業内容": "確認済み", "添付": 添付}]},
         ])
         self.assertEqual(self.call("作業変更", {"日誌日付": DATE, "作業ID": 10002, "作業タイトル": "別名"}).json()["status"], "OK")
@@ -359,11 +380,15 @@ class 日誌Tests(unittest.TestCase):
                                          "新規更新ファイル数": value})
             self.assertEqual(result.status_code, 422)
 
-    def test_旧パスだけなら新規作成し_新パスへコピー済みなら記録を使う(self):
+    def test_旧版を変更せず_互換性のあるコピーだけ使う(self):
         登録 = self.call("登録", sample()).json()["data"]
         self.lifecycle.close()
-        旧パス = self.path.with_name("diary_v20261027.db")
-        self.path.rename(旧パス)
+        旧パス = self.path.with_name("diary_v20261127.db")
+        現行コピー = self.path.read_bytes()
+        self.path.unlink()
+        with closing(sqlite3.connect(旧パス)) as db, db:
+            db.executescript("CREATE TABLE T日誌作業 (作業ID INTEGER PRIMARY KEY);"
+                             "INSERT INTO T日誌作業 VALUES (90000); PRAGMA user_version = 4;")
         旧データ = 旧パス.read_bytes()
 
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
@@ -373,10 +398,14 @@ class 日誌Tests(unittest.TestCase):
         self.lifecycle.close()
 
         shutil.copyfile(旧パス, self.path)
+        with self.assertRaisesRegex(RuntimeError, "対応していない日誌DB"):
+            self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+        self.assertEqual(self.path.read_bytes(), 旧データ)
+        self.path.write_bytes(現行コピー)
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
         self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["data"]["記録"], 登録["記録"])
         with closing(sqlite3.connect(self.path)) as db:
-            self.assertEqual(db.execute("PRAGMA user_version").fetchone(), (4,))
+            self.assertEqual(db.execute("PRAGMA user_version").fetchone(), (5,))
         self.assertEqual(旧パス.read_bytes(), 旧データ)
 
     def test_ツール更新後の古い画面保存を拒否(self):

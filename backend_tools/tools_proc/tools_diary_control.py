@@ -60,6 +60,13 @@ async def _call(method: str, payload: dict, authorization: str) -> tuple[int, di
             return 422, _error("VALIDATION_ERROR", "自己申告の解除には true／false を指定し、件数と同時に指定しないでください。")
         if 解除:
             payload["新規更新ファイル数"] = None
+    if method == "diary_work_update" and "作業時間を解除" in payload:
+        payload = dict(payload)
+        解除 = payload.pop("作業時間を解除")
+        if type(解除) is not bool or (解除 and payload.get("作業時間") is not None):
+            return 422, _error("VALIDATION_ERROR", "作業時間の解除には true／false を指定し、作業時間と同時に指定しないでください。")
+        if 解除:
+            payload["作業時間"] = None
     try:
         async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=30) as client:
             response = await client.post(f"http://127.0.0.1:8098/apps/T日誌/{_OPERATIONS[method]}",
@@ -94,24 +101,26 @@ def register_tools(mcp):
     @mcp.tool()
     async def diary_work_create(
         ctx: Context, 日誌日付: str, 作業タイトル: str,
-        新規更新ファイル数: int | None = None, プロジェクト: str = "",
+        新規更新ファイル数: int | None = None, プロジェクト: str = "", 作業時間: float | None = None,
     ) -> dict:
-        """指定日に作業を追加してC採番で発行した固定の作業IDを返す。その日の日誌がなければ同時に1件だけ作る。"""
+        """指定日に作業を追加してC採番で発行した固定の作業IDを返す。その日の日誌がなければ同時に1件だけ作る。作業時間は時間単位の0〜99.99。"""
         return await run("diary_work_create", ctx, 日誌日付=日誌日付, 作業タイトル=作業タイトル,
-                         新規更新ファイル数=新規更新ファイル数, プロジェクト=プロジェクト)
+                         作業時間=作業時間, 新規更新ファイル数=新規更新ファイル数, プロジェクト=プロジェクト)
 
     @mcp.tool()
     async def diary_work_update(
         ctx: Context, 日誌日付: str, 作業ID: int, 作業タイトル: str,
         新規更新ファイル数: int | None = None, 自己申告を解除: bool = False,
-        プロジェクト: str | None = None,
+        プロジェクト: str | None = None, 作業時間: float | None = None, 作業時間を解除: bool = False,
     ) -> dict:
-        """作業タイトルを変更する。プロジェクトは省略で維持、空文字で解除。自己申告件数は省略で維持、自己申告を解除=true で解除。"""
+        """作業タイトルを変更する。プロジェクトは省略で維持、空文字で解除。自己申告件数は省略で維持、自己申告を解除=true で解除。作業時間は省略で維持、作業時間を解除=true で解除。"""
         任意項目 = {"新規更新ファイル数": 新規更新ファイル数} if 新規更新ファイル数 is not None else {}
+        if 作業時間 is not None:
+            任意項目["作業時間"] = 作業時間
         if プロジェクト is not None:
             任意項目["プロジェクト"] = プロジェクト
         return await run("diary_work_update", ctx, 日誌日付=日誌日付, 作業ID=作業ID, 作業タイトル=作業タイトル,
-                         自己申告を解除=自己申告を解除, **任意項目)
+                         自己申告を解除=自己申告を解除, 作業時間を解除=作業時間を解除, **任意項目)
 
     @mcp.tool()
     async def diary_work_delete(ctx: Context, 日誌日付: str, 作業ID: int) -> dict:

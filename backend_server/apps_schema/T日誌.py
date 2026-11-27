@@ -2,6 +2,7 @@
 # Licensed under "AiDiy 公開利用ライセンス v1.1". See LICENSE for full terms.
 import base64
 from datetime import date
+from decimal import Decimal
 from typing import Annotated, Self
 
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field, model_validator
@@ -89,6 +90,16 @@ def _プロジェクトパス(値: str) -> str:
 自己申告件数 = Annotated[int, Field(ge=0, le=9_007_199_254_740_991)]
 
 
+def _作業時間の桁数(値: float) -> float:
+    十進値 = Decimal(str(値))
+    if 十進値 != 十進値.quantize(Decimal("0.01")):
+        raise ValueError("作業時間(h)は小数第2位まで指定してください。")
+    return 値
+
+
+日誌作業時間 = Annotated[float, Field(ge=0, le=99.99, allow_inf_nan=False), AfterValidator(_作業時間の桁数)]
+
+
 class T日誌一覧要求(日誌期間要求):
     件数制限: bool = True
 
@@ -103,6 +114,7 @@ class 日誌記録要求(日誌要求):
     作業ID: 日誌作業ID | None = None
     プロジェクト: プロジェクトパス = ""
     作業タイトル: str = Field(min_length=1, max_length=200)
+    作業時間: 日誌作業時間 | None = None
     新規更新ファイル数: 自己申告件数 | None = None
     明細: list[日誌明細要求] = Field(default_factory=list, max_length=最大明細数)
 
@@ -168,6 +180,7 @@ class T日誌作業キー(T日誌キー):
 class T日誌作業登録要求(T日誌キー):
     プロジェクト: プロジェクトパス = ""
     作業タイトル: str = Field(min_length=1, max_length=200)
+    作業時間: 日誌作業時間 | None = None
     新規更新ファイル数: 自己申告件数 | None = None
 
 
