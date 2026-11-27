@@ -31,7 +31,7 @@ router = APIRouter(prefix="/apps/V商品", tags=["V商品"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def 商品一覧(request: Optional[schemas.ListRequest] = None,
-             db: Session = Depends(deps.get_db),
+             db: Session = Depends(deps.get_apps_db),
              現在利用者: models.C利用者 = Depends(deps.get_現在利用者)):
     conditions = []
     params = {}
@@ -103,7 +103,7 @@ total = db.execute(text(f"SELECT count(*) FROM M商品 M {where_sql}"), params).
 
 ```python
 @router.post("/最終更新日時")
-def 最終更新日時(db: Session = Depends(deps.get_db),
+def 最終更新日時(db: Session = Depends(deps.get_apps_db),
             現在利用者: models.C利用者 = Depends(deps.get_現在利用者)):
     row = db.execute(text("SELECT MAX(更新日時) as 最終更新日時 FROM M商品")).fetchone()
     return {"status": "OK", "data": {"最終更新日時": row[0]}}

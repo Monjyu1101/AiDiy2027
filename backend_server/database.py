@@ -8,37 +8,38 @@
 # https://github.com/monjyu1101/AiDiy2027
 # -------------------------------------------------------------------------
 
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-import os
+from sqlalchemy import URL, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# backend_server/ を基準にしたデータベース既定値（実体はプロジェクトルート）
-DEFAULT_DATABASE_PATH = "../_data/AiDiy/database.db"
-DB_PATH = os.path.normpath(os.path.join(os.path.dirname(__file__), DEFAULT_DATABASE_PATH))
-DB_DIR = os.path.dirname(DB_PATH)
+from database_paths import DB_DIR, DB_NAMES
 
-# ディレクトリが存在しない場合は作成
-os.makedirs(DB_DIR, exist_ok=True)
+# 各プロセスは共通の現行ファイル名だけを使う。旧版へのフォールバックは行わない。
+DB_PATH = str(DB_DIR / DB_NAMES["core"])
+APPS_DB_PATH = str(DB_DIR / DB_NAMES["apps"])
+DB_DIR.mkdir(parents=True, exist_ok=True)
 
-# SQLiteデータベースのURL
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-# データベースエンジンの作成
-# check_same_thread=False はSQLiteのみで必要
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+def _engine(path):
+    return create_engine(URL.create("sqlite", database=path),
+                         connect_args={"check_same_thread": False, "timeout": 30})
 
-# セッションローカルクラスの作成
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# ベースクラスの作成
+engine = _engine(DB_PATH)
+apps_engine = _engine(APPS_DB_PATH)
+SessionLocal = sessionmaker(autoflush=False, bind=engine)
+AppsSessionLocal = sessionmaker(autoflush=False, bind=apps_engine)
+
 Base = declarative_base()
+AppsBase = declarative_base()
 
-# DBセッション取得用の依存関係関数
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+
+def initialize_core_tables():
+    # AppsがCoreより先に起動する場合も日誌採番のテーブルを用意できるようにする。
+    import core_models
+
+    with engine.begin() as conn:
+        conn.exec_driver_sql("BEGIN IMMEDIATE")
+        Base.metadata.create_all(conn, tables=[
+            core_models.C採番.__table__, core_models.C権限.__table__,
+            core_models.C利用者.__table__, core_models.A会話履歴.__table__,
+        ])

@@ -12,13 +12,14 @@
 
 from __future__ import annotations
 
+import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_DATABASE_PATH = "../_data/AiDiy/database.db"
-DB_PATH = (PROJECT_ROOT / "backend_server" / DEFAULT_DATABASE_PATH).resolve()
+CORE_DATABASE_NAME = json.loads((PROJECT_ROOT / "scripts" / "業務DB.json").read_text(encoding="utf-8"))["core"]
+DB_PATH = PROJECT_ROOT / "_data" / "AiDiy" / CORE_DATABASE_NAME
 要員テーブル = "Aチーム要員"
 管理者要員ID = "admin"
 
@@ -34,7 +35,7 @@ def 接続取得() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
-    # database.db は backend_server / backend_taskteam が同時に触る。
+    # Core DB は backend_server / backend_taskteam が同時に触る。
     # 既定のジャーナルだと書き込み中に読み取りが弾かれて "database is locked" になるため、
     # 読み書きが並行できる WAL にし、ロック待ちも接続の timeout に合わせて長めに取る。
     conn.execute("PRAGMA busy_timeout = 30000")

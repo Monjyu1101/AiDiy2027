@@ -79,7 +79,7 @@ def _expand_target_date(target_date: Optional[str]) -> Dict[str, Optional[str]]:
 
 @router.post("/生産工程一覧", response_model=schemas.ResponseBase)
 def get_daily_processes(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     processes = db.query(models.M生産工程).filter(models.M生産工程.有効 == True).order_by(models.M生産工程.生産工程ID).all()
@@ -102,7 +102,7 @@ def get_daily_processes(
 @router.post("/生産一覧", response_model=schemas.ResponseBase)
 def get_daily_schedules(
     request: Optional[対象日Request] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     target_date = request.対象日付 if request else None
@@ -183,7 +183,7 @@ def get_daily_schedules(
 @router.post("/データ", response_model=schemas.ResponseBase)
 def get_daily_view_data(
     request: Optional[対象日Request] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     processes_response = get_daily_processes(db=db, 現在利用者=現在利用者)
@@ -212,7 +212,7 @@ def get_daily_view_data(
 @router.post("/ドラッグ更新", response_model=schemas.ResponseBase)
 def update_schedule_drag(
     request: 生産ドラッグRequest,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     logger.info("S生産_日表示 ドラッグ更新開始: 生産伝票ID=%s 生産工程ID=%s", request.生産伝票ID, request.生産工程ID)
@@ -287,7 +287,7 @@ def update_schedule_drag(
 @router.post("/リサイズ更新", response_model=schemas.ResponseBase)
 def update_schedule_resize(
     request: 生産リサイズRequest,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     logger.info("S生産_日表示 リサイズ更新開始: 生産伝票ID=%s", request.生産伝票ID)
@@ -347,7 +347,7 @@ def update_schedule_resize(
 @router.post("/最終更新日時", response_model=schemas.ResponseBase)
 def get_display_data_last_modified(
     request: 日付範囲Request,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     if not request.開始日付 or not request.終了日付:

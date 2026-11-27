@@ -18,13 +18,14 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from log_config import get_logger
-from tools_proc.sqlite_query import SqliteQueryError
+from tools_proc.sqlite_query import DatabaseTarget, SqliteQueryError
 from tools_proc.postgres_query import PgQueryError
 
 logger = get_logger(__name__)
 
 
 class SqliteRequest(BaseModel):
+    database: DatabaseTarget = "apps"
     table_name: Optional[str] = None
     where: Optional[str] = None
     sql: Optional[str] = None
@@ -53,28 +54,28 @@ def register_sqlite_tools(mcp_sq, sqlite_q):
     """aidiy_sqlite MCP ツールを mcp_sq インスタンスに登録する"""
 
     @mcp_sq.tool()
-    async def sqlite_list_tables() -> str:
-        """AiDiy DB の全テーブル・VIEW 一覧を返す"""
+    async def sqlite_list_tables(database: DatabaseTarget = "apps") -> str:
+        """選択した DB のテーブル・VIEW 一覧を返す。database は apps（既定）または core。"""
         try:
-            items = await asyncio.to_thread(sqlite_q.list_tables)
+            items = await asyncio.to_thread(sqlite_q.for_database(database).list_tables)
         except SqliteQueryError as e:
             raise ValueError(str(e)) from e
         return json.dumps({"tables": items}, ensure_ascii=False)
 
     @mcp_sq.tool()
-    async def sqlite_describe_table(table_name: str) -> str:
+    async def sqlite_describe_table(table_name: str, database: DatabaseTarget = "apps") -> str:
         """指定テーブルのスキーマ（列・FK・索引・件数）を返す"""
         try:
-            info = await asyncio.to_thread(sqlite_q.describe_table, table_name)
+            info = await asyncio.to_thread(sqlite_q.for_database(database).describe_table, table_name)
         except SqliteQueryError as e:
             raise ValueError(str(e)) from e
         return json.dumps(info, ensure_ascii=False, default=str)
 
     @mcp_sq.tool()
-    async def sqlite_count(table_name: str, where: Optional[str] = None) -> str:
+    async def sqlite_count(table_name: str, where: Optional[str] = None, database: DatabaseTarget = "apps") -> str:
         """件数を返す。where は必要なら SQL の WHERE 節を文字列で渡す（`;` 禁止）"""
         try:
-            info = await asyncio.to_thread(sqlite_q.count, table_name, where)
+            info = await asyncio.to_thread(sqlite_q.for_database(database).count, table_name, where)
         except SqliteQueryError as e:
             raise ValueError(str(e)) from e
         return json.dumps(info, ensure_ascii=False)
@@ -85,6 +86,7 @@ def register_sqlite_tools(mcp_sq, sqlite_q):
         params: Optional[list] = None,
         max_rows: int = 200,
         allow_write: bool = False,
+        database: DatabaseTarget = "apps",
     ) -> str:
         """
         SELECT を実行して行を返す。既定は読み取り専用。
@@ -93,17 +95,17 @@ def register_sqlite_tools(mcp_sq, sqlite_q):
         """
         try:
             result = await asyncio.to_thread(
-                sqlite_q.query, sql, params, max_rows, allow_write
+                sqlite_q.for_database(database).query, sql, params, max_rows, allow_write
             )
         except SqliteQueryError as e:
             raise ValueError(str(e)) from e
         return json.dumps(result, ensure_ascii=False, default=str)
 
     @mcp_sq.tool()
-    async def sqlite_audit_summary(table_name: str, limit: int = 5) -> str:
+    async def sqlite_audit_summary(table_name: str, limit: int = 5, database: DatabaseTarget = "apps") -> str:
         """監査フィールドのあるテーブルの直近 N 件を返す（更新日時 降順）"""
         try:
-            info = await asyncio.to_thread(sqlite_q.audit_summary, table_name, limit)
+            info = await asyncio.to_thread(sqlite_q.for_database(database).audit_summary, table_name, limit)
         except SqliteQueryError as e:
             raise ValueError(str(e)) from e
         return json.dumps(info, ensure_ascii=False, default=str)
@@ -218,6 +220,7 @@ def create_sqlite_router(sqlite_q) -> APIRouter:
             "description": "AiDiy SQLite DB を操作する。テーブル探索・スキーマ確認・件数取得・任意 SQL 実行を提供する。日本語テーブル名・カラム名に対応。",
             "endpoint": "POST /aidiy_sqlite/{method_name}",
             "content_type": "application/json",
+            "database": {"type": "string", "values": ["apps", "core"], "default": "apps", "description": "全メソッド共通のDB選択"},
             "methods": {
                 "list_tables": {
                     "summary": "テーブル・VIEW 一覧取得",
@@ -232,7 +235,7 @@ def create_sqlite_router(sqlite_q) -> APIRouter:
                     "parameters": {
                         "table_name": {"type": "string", "required": True, "description": "テーブル名（日本語可。例: 'C利用者' / 'T配車'）"},
                     },
-                    "example_request": {"table_name": "C利用者"},
+                    "example_request": {"database": "core", "table_name": "C利用者"},
                     "response_fields": {"columns": "列定義配列", "primary_keys": "PK 列名リスト", "foreign_keys": "FK 定義", "indexes": "インデックス", "count": "現在の件数"},
                 },
                 "count": {
@@ -254,7 +257,7 @@ def create_sqlite_router(sqlite_q) -> APIRouter:
                         "max_rows": {"type": "integer", "required": False, "default": 200, "description": "最大取得行数（上限 200）"},
                         "allow_write": {"type": "boolean", "required": False, "default": False, "description": "True で INSERT/UPDATE/DELETE を許可"},
                     },
-                    "example_request": {"sql": "SELECT 利用者ID, 利用者名 FROM C利用者 ORDER BY 利用者ID LIMIT 10"},
+                    "example_request": {"database": "core", "sql": "SELECT 利用者ID, 利用者名 FROM C利用者 ORDER BY 利用者ID LIMIT 10"},
                     "response_fields": {"rows": "行データ配列", "columns": "列名リスト", "row_count": "取得行数"},
                 },
                 "audit_summary": {
@@ -283,27 +286,27 @@ def create_sqlite_router(sqlite_q) -> APIRouter:
         """
         try:
             if method_name == "list_tables":
-                result = await asyncio.to_thread(sqlite_q.list_tables)
+                result = await asyncio.to_thread(sqlite_q.for_database(req.database).list_tables)
                 return {"tables": result}
             elif method_name == "describe_table":
                 if not req.table_name:
                     return {"error": "table_name は必須です"}
-                result = await asyncio.to_thread(sqlite_q.describe_table, req.table_name)
+                result = await asyncio.to_thread(sqlite_q.for_database(req.database).describe_table, req.table_name)
                 return result if isinstance(result, dict) else {"result": result}
             elif method_name == "count":
                 if not req.table_name:
                     return {"error": "table_name は必須です"}
-                result = await asyncio.to_thread(sqlite_q.count, req.table_name, req.where)
+                result = await asyncio.to_thread(sqlite_q.for_database(req.database).count, req.table_name, req.where)
                 return result if isinstance(result, dict) else {"result": result}
             elif method_name == "query":
                 if not req.sql:
                     return {"error": "sql は必須です"}
-                result = await asyncio.to_thread(sqlite_q.query, req.sql, req.params, req.max_rows, req.allow_write)
+                result = await asyncio.to_thread(sqlite_q.for_database(req.database).query, req.sql, req.params, req.max_rows, req.allow_write)
                 return result if isinstance(result, dict) else {"result": result}
             elif method_name == "audit_summary":
                 if not req.table_name:
                     return {"error": "table_name は必須です"}
-                result = await asyncio.to_thread(sqlite_q.audit_summary, req.table_name, req.limit)
+                result = await asyncio.to_thread(sqlite_q.for_database(req.database).audit_summary, req.table_name, req.limit)
                 return result if isinstance(result, dict) else {"result": result}
             else:
                 return {"error": f"未知のメソッド: {method_name}"}

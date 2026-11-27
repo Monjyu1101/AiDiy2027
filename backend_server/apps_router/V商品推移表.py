@@ -67,7 +67,7 @@ class TransitionResponse(schemas.ResponseBase):
 @router.post("/一覧", response_model=TransitionResponse)
 def list_transition(
     request: TransitionRequest,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     current_user: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     try:
@@ -239,7 +239,7 @@ def list_transition(
 @router.post("/最終更新日時", response_model=schemas.ResponseBase)
 def get_transition_last_modified(
     request: 日付範囲Request,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     current_user: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     if not request.開始日付 or not request.終了日付:

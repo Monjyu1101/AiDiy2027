@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 from sqlalchemy import Column, Boolean, Text
-from database import Base
+from database import AppsBase as Base
 
 class M車両(Base):
     """M車両テーブル（車両マスタ）"""

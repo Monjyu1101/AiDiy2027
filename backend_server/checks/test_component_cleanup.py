@@ -125,15 +125,20 @@ class ComponentCleanupTests(unittest.TestCase):
 
     def test_server_sqlite_is_preserved_unless_explicitly_selected(self):
         with self.fixture("backend_server") as (module, project, _, _, _):
-            database = project.parent / "_data" / "AiDiy" / "database.db"
-            database.parent.mkdir(parents=True)
-            database.write_bytes(b"fixture database")
+            active = [project / path for path in module.SQLITE_DB_REL_PATHS]
+            old = project.parent / "_data" / "AiDiy" / "database.db"
+            old.parent.mkdir(parents=True)
+            for path in [*active, old]:
+                path.write_bytes(b"fixture database")
             with patch.object(module, "remove_file", side_effect=AssertionError("delete forbidden")):
                 self.assertTrue(module.cleanup({}))
                 self.assertTrue(module.cleanup({"backend_sqlite": False}))
-            self.assertEqual(database.read_bytes(), b"fixture database")
-            with patch.object(module, "remove_file", return_value=False):
+            for path in [*active, old]:
+                self.assertEqual(path.read_bytes(), b"fixture database")
+            with patch.object(module, "remove_file", return_value=False) as remove:
                 self.assertFalse(module.cleanup({"backend_sqlite": True}))
+                self.assertEqual([call.args[0] for call in remove.call_args_list], active)
+            self.assertEqual(old.read_bytes(), b"fixture database")
 
     def test_server_logs_failure_returns_false(self):
         with self.fixture("backend_server") as (module, project, _, _, _):

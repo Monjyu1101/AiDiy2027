@@ -25,6 +25,11 @@ def get_db():
     finally:
         db.close()
 
+def get_apps_db():
+    with database.AppsSessionLocal() as db:
+        yield db
+
+
 def get_現在利用者(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

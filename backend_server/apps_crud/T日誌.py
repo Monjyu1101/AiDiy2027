@@ -159,7 +159,7 @@ def _明細書込(db: Session, キー: dict, 行, *, 更新=False):
 
 
 def 日誌採番初期化(日誌DB: Engine) -> None:
-    """業務DBを作り直しても、現行の日誌DBにある最大の作業IDを引き継ぐ。"""
+    """Core DB を作り直しても、現行の日誌DBにある最大の作業IDを引き継ぐ。"""
     with 日誌DB.connect().execution_options(diary_write=True) as 日誌接続, 日誌接続.begin():
         最大値 = 日誌接続.scalar(select(func.max(T日誌作業.作業ID))) or 0
         下限 = max(_日誌採番初期値, 最大値)
@@ -175,7 +175,7 @@ def 日誌採番初期化(日誌DB: Engine) -> None:
 
 
 def _作業ID採番(db: Session, 認証情報: dict, 件数: int) -> range:
-    """業務DBのC採番からまとめて払い出す。日誌DBの保存失敗による欠番は再利用しない。"""
+    """Core DB の C採番からまとめて払い出す。日誌DBの保存失敗による欠番は再利用しない。"""
     if not 件数:
         return range(0)
     # 日誌DBに既存のIDがある場合、採番値の手動変更などで衝突しないようにする。

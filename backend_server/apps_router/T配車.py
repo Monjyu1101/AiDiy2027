@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import Optional
 import apps_schema as schemas, apps_crud as crud, deps, apps_models as models
+from core_crud.C採番 import 次の採番値
 MAX_ITEMS = 10000
 
 router = APIRouter(prefix="/apps/T配車", tags=["T配車"])
@@ -20,7 +21,7 @@ router = APIRouter(prefix="/apps/T配車", tags=["T配車"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_T配車(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.T配車)
@@ -56,7 +57,7 @@ def list_T配車(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_T配車(
     request: schemas.T配車Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_T配車(db, request.配車伝票ID)
@@ -72,28 +73,15 @@ def get_T配車(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_T配車(
     request: schemas.T配車Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     # 配車伝票IDが指定されていない場合は自動採番
     if not request.配車伝票ID:
-        採番 = db.query(models.C採番).filter(models.C採番.採番ID == "T配車").first()
-        if not 採番:
-            return schemas.ResponseBase(status="NG", message="採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
-
-        # 次の番号を発番
-        next_number = 採番.最終採番値 + 1
-        配車伝票ID = f"HS{str(next_number).zfill(8)}"  # HS00010001形式
-
-        # 最終採番値を更新
-        採番.最終採番値 = next_number
-        採番.更新日時 = crud.get_current_datetime()
-        採番.更新利用者ID = 現在利用者.利用者ID
-        採番.更新利用者名 = 現在利用者.利用者名
-        採番.更新端末ID = "localhost"
-
-        # requestに採番したIDをセット
-        request.配車伝票ID = 配車伝票ID
+        番号 = 次の採番値("T配車", 現在利用者)
+        if 番号 is None:
+            return schemas.ResponseBase(status="NG", message="有効な採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
+        request.配車伝票ID = f"HS{番号:08d}"
 
     # 重複チェック
     existing = crud.get_T配車(db, request.配車伝票ID)
@@ -116,7 +104,7 @@ def create_T配車(
 def update_T配車(
     request: schemas.T配車Update,
     配車伝票ID: str,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_T配車(db, 配車伝票ID)
@@ -139,7 +127,7 @@ def update_T配車(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_T配車(
     request: schemas.T配車Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_T配車(db, request.配車伝票ID)

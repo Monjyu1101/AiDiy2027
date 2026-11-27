@@ -33,7 +33,7 @@
 | `core_main.py` | C系、A系、認証、files、AIコア |
 | `apps_main.py` | M系、T系、V系、S系 |
 
-core/apps は同じ SQLite DB を共有する。どちらに置くか迷う場合は、認証・共通・AIは core、業務マスタ・業務トランザクションは apps を優先する。
+Core と Apps は別々の SQLite DB を使う。Core または認証は `deps.get_db`、Apps の業務テーブルは `deps.get_apps_db` を使う。どちらに置くか迷う場合は、認証・共通・AIは core、業務マスタ・業務トランザクションは apps を優先する。
 
 ## 基本実装単位
 

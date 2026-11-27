@@ -13,6 +13,8 @@ from sqlalchemy.orm import Session
 import core_schema as schemas, deps, core_models as models, core_crud as crud
 MAX_ITEMS = 10000
 
+from core_crud.C採番 import 次の採番値
+
 router = APIRouter(prefix="/core/C採番", tags=["C採番"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
@@ -129,26 +131,12 @@ def delete_C採番(
 @router.post("/採番", response_model=schemas.ResponseBase)
 def allocate_number(
     request: schemas.C採番Get,
-    db: Session = Depends(deps.get_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     """採番IDから次の番号を発番し、最終採番値を更新"""
-    item = db.query(models.C採番).filter(models.C採番.採番ID == request.採番ID).first()
-    if not item:
-        return schemas.ResponseBase(status="NG", message="指定された採番IDが見つかりません", error={"code": "NOT_FOUND"})
-
-    # 次の番号を計算
-    next_number = item.最終採番値 + 1
-
-    # 最終採番値を更新
-    item.最終採番値 = next_number
-    item.更新日時 = crud.get_current_datetime()
-    item.更新利用者ID = 現在利用者.利用者ID
-    item.更新利用者名 = 現在利用者.利用者名
-    item.更新端末ID = "localhost"
-
-    db.commit()
-    db.refresh(item)
+    next_number = 次の採番値(request.採番ID, 現在利用者)
+    if next_number is None:
+        return schemas.ResponseBase(status="NG", message="有効な採番設定が見つかりません", error={"code": "NOT_FOUND"})
 
     return schemas.ResponseBase(
         status="OK",
@@ -156,7 +144,7 @@ def allocate_number(
         data={
             "採番ID": request.採番ID,
             "発番値": next_number,
-            "最終採番値": item.最終採番値
+            "最終採番値": next_number
         }
     )
 

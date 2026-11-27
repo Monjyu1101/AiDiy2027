@@ -17,7 +17,7 @@ router = APIRouter(prefix="/apps/M車両", tags=["M車両"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M車両(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.M車両)
@@ -37,7 +37,7 @@ def list_M車両(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M車両(
     request: schemas.M車両Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M車両(db, request.車両ID)
@@ -53,7 +53,7 @@ def get_M車両(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M車両(
     request: schemas.M車両Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     existing = crud.get_M車両(db, request.車両ID)
@@ -71,7 +71,7 @@ def create_M車両(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M車両(
     request: schemas.M車両Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M車両(db, request.車両ID)
@@ -103,7 +103,7 @@ def update_M車両(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M車両(
     request: schemas.M車両Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M車両(db, request.車両ID)

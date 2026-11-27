@@ -17,7 +17,7 @@ router = APIRouter(prefix="/apps/M配車区分", tags=["M配車区分"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M配車区分(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.M配車区分)
@@ -37,7 +37,7 @@ def list_M配車区分(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M配車区分(
     request: schemas.M配車区分Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M配車区分(db, request.配車区分ID)
@@ -53,7 +53,7 @@ def get_M配車区分(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M配車区分(
     request: schemas.M配車区分Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     existing = crud.get_M配車区分(db, request.配車区分ID)
@@ -71,7 +71,7 @@ def create_M配車区分(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M配車区分(
     request: schemas.M配車区分Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M配車区分(db, request.配車区分ID)
@@ -101,7 +101,7 @@ def update_M配車区分(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M配車区分(
     request: schemas.M配車区分Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M配車区分(db, request.配車区分ID)

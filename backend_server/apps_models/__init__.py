@@ -8,9 +8,8 @@
 # https://github.com/monjyu1101/AiDiy2027
 # -------------------------------------------------------------------------
 
-from database import Base
+from database import AppsBase as Base
 from core_models.C利用者 import C利用者
-from core_models.C採番 import C採番
 from apps_models.M配車区分 import M配車区分
 from apps_models.M生産区分 import M生産区分
 from apps_models.M生産工程 import M生産工程
@@ -29,7 +28,6 @@ from apps_models.T商品入庫 import T商品入庫
 __all__ = [
     'Base',
     'C利用者',
-    'C採番',
     'M配車区分',
     'M生産区分',
     'M生産工程',

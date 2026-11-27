@@ -23,6 +23,7 @@ import os
 import shutil
 import stat
 import sys
+import json
 import time
 from pathlib import Path
 
@@ -36,7 +37,8 @@ THIS_DIR = Path(__file__).resolve().parent
 BACKEND_DIR = THIS_DIR
 BACKEND_ENV_LIST = [".venv", "venv"]
 DATABASE_TYPE = "sqlite"
-SQLITE_DB_REL_PATH = Path("../_data/AiDiy/database.db")
+SQLITE_DB_REL_PATHS = tuple(Path("../_data/AiDiy") / name for name in json.loads(
+    (THIS_DIR.parent / "scripts" / "業務DB.json").read_text(encoding="utf-8")).values())
 
 AUTO_MODE = False
 
@@ -263,10 +265,12 @@ def cleanup(choices: dict) -> bool:
             print_info("  temp はそのまま残します")
 
     if DATABASE_TYPE.lower() == "sqlite":
-        sqlite_db = BACKEND_DIR / SQLITE_DB_REL_PATH
-        if sqlite_db.exists():
+        for relative in SQLITE_DB_REL_PATHS:
+            sqlite_db = BACKEND_DIR / relative
+            if not sqlite_db.exists():
+                continue
             if choices.get("backend_sqlite") is True:
-                if remove_file(sqlite_db, f"SQLite データベース ({label})"):
+                if remove_file(sqlite_db, f"SQLite データベース ({sqlite_db.name})"):
                     deleted_count += 1
                 else:
                     cleanup_ok = False
@@ -296,8 +300,8 @@ def collect_choices() -> dict | None:
                 choices["backend_envs"][env_name] = ask_yes_no(f"  {env_name} を削除しますか？", default="y")
         if (BACKEND_DIR / "temp").exists():
             choices["backend_temp"] = ask_yes_no("  temp フォルダを削除しますか？", default="y")
-        if DATABASE_TYPE.lower() == "sqlite" and (BACKEND_DIR / SQLITE_DB_REL_PATH).exists():
-            choices["backend_sqlite"] = ask_yes_no("  SQLite データベースを削除しますか？", default="n")
+        if DATABASE_TYPE.lower() == "sqlite" and any((BACKEND_DIR / path).exists() for path in SQLITE_DB_REL_PATHS):
+            choices["backend_sqlite"] = ask_yes_no("  現行の Core / Apps データベースを削除しますか？", default="n")
     return choices
 
 

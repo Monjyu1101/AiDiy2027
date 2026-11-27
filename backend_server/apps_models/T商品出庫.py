@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 from sqlalchemy import Boolean, Column, Integer, Text
-from database import Base
+from database import AppsBase as Base
 
 class T商品出庫(Base):
     """T商品出庫テーブル（商品出庫伝票トランザクション、明細付き）

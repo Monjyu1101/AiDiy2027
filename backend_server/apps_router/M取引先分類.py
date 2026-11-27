@@ -18,7 +18,7 @@ router = APIRouter(prefix="/apps/M取引先分類", tags=["M取引先分類"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M取引先分類(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.M取引先分類)
@@ -39,7 +39,7 @@ def list_M取引先分類(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M取引先分類(
     request: schemas.M取引先分類Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M取引先分類(db, request.取引先分類ID)
@@ -56,7 +56,7 @@ def get_M取引先分類(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M取引先分類(
     request: schemas.M取引先分類Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     existing = crud.get_M取引先分類(db, request.取引先分類ID)
@@ -75,7 +75,7 @@ def create_M取引先分類(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M取引先分類(
     request: schemas.M取引先分類Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M取引先分類(db, request.取引先分類ID)
@@ -108,7 +108,7 @@ def update_M取引先分類(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M取引先分類(
     request: schemas.M取引先分類Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M取引先分類(db, request.取引先分類ID)

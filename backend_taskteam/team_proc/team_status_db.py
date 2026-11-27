@@ -29,7 +29,7 @@ def 接続取得() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
-    # database.db は backend_server / backend_taskteam が同時に触る。
+    # Core DB は backend_server / backend_taskteam が同時に触る。
     # 既定のジャーナルだと書き込み中に読み取りが弾かれて "database is locked" になるため、
     # 読み書きが並行できる WAL にし、ロック待ちも接続の timeout に合わせて長めに取る。
     conn.execute("PRAGMA busy_timeout = 30000")

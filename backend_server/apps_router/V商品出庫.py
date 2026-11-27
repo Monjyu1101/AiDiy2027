@@ -21,7 +21,7 @@ router = APIRouter(prefix="/apps/V商品出庫", tags=["V商品出庫"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_V商品出庫(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     filter_params = {}

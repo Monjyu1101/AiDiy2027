@@ -18,6 +18,7 @@ from threading import Lock
 from tools_proc.chat_llm import ChatLLM
 from tools_proc.code_agents import CodeAgents
 from tools_proc.prediction_privacy import prediction_private_logs
+from tools_proc.sqlite_query import DB_NAMES
 
 _backend = str(Path(__file__).resolve().parents[2] / "backend_server")
 if _backend not in sys.path:
@@ -261,7 +262,7 @@ class PredictionLLM:
         result["project_path"] = project
         # DB初期化・履歴APIの登録処理・通常チャットの保存経路は通さない。
         try:
-            history = await asyncio.to_thread(read_prediction_history, self.root / "_data" / "AiDiy" / "database.db", project,
+            history = await asyncio.to_thread(read_prediction_history, self.root / "_data" / "AiDiy" / DB_NAMES["core"], project,
                                               max_turns=HISTORY_MAX_TURNS, max_chars=HISTORY_MAX_CHARS,
                                               now=requested_at, user_only=True, include_latest_reply=True,
                                               session_id=session_id)

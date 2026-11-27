@@ -19,7 +19,7 @@ if sys.platform == "win32":
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import database, core_crud, core_models
+import database, core_crud
 import threading
 import time
 import auth as token_auth
@@ -42,15 +42,7 @@ from core_router import AIコア
 from core_router import A会話履歴
 
 # テーブル作成（core系のみ）
-database.Base.metadata.create_all(
-    bind=database.engine,
-    tables=[
-        core_models.C採番.__table__,
-        core_models.C権限.__table__,
-        core_models.C利用者.__table__,
-        core_models.A会話履歴.__table__,
-    ]
-)
+database.initialize_core_tables()
 
 app = FastAPI(title="Welcome to AiDiy system")
 

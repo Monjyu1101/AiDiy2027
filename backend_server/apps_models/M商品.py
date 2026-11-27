@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 from sqlalchemy import Column, Boolean, Text
-from database import Base
+from database import AppsBase as Base
 
 class M商品(Base):
     __tablename__ = "M商品"

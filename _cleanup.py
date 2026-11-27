@@ -89,7 +89,8 @@ TEMP_TARGET_LABEL = "temp / _temp / .temp / tmp / test / _test / .test"
 CLEANUP_STOP_REQUEST_PATH = BASE_DIR / ".cleanup_stop_request.json"
 
 DATABASE_TYPE = "sqlite"
-SQLITE_DB_REL_PATH = Path("_data/AiDiy/database.db")
+SQLITE_DB_REL_PATHS = tuple(Path("_data/AiDiy") / name for name in json.loads(
+    (BASE_DIR / "scripts" / "業務DB.json").read_text(encoding="utf-8")).values())
 
 AUTO_MODE = False
 
@@ -711,9 +712,9 @@ def collect_cleanup_choices(base_dir: Path, auto: bool = False) -> dict | None:
                     )
             if (
                 DATABASE_TYPE.lower() == "sqlite"
-                and (base_dir / SQLITE_DB_REL_PATH).exists()
+                and any((base_dir / path).exists() for path in SQLITE_DB_REL_PATHS)
             ):
-                choices["backend_sqlite"] = ask_yes_no("  SQLite データベースを削除しますか？", default="n")
+                choices["backend_sqlite"] = ask_yes_no("  現行の Core / Apps データベースを削除しますか？", default="n")
 
     choices["taskteam"] = ask_yes_no("バックエンド(task,team)をクリーンアップしますか？", default="y")
     if choices["taskteam"]:

@@ -14,7 +14,8 @@ from .conf_model import conf_models
 from .conf_path import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_DATA_DIR,
-    DEFAULT_DATABASE_PATH,
+    DEFAULT_CORE_DATABASE_PATH,
+    DEFAULT_APPS_DATABASE_PATH,
     DEFAULT_ICONS_DIR,
     conf_path,
 )
@@ -28,7 +29,8 @@ __all__ = [
     "conf_models",
     "DEFAULT_CONFIG_DIR",
     "DEFAULT_DATA_DIR",
-    "DEFAULT_DATABASE_PATH",
+    "DEFAULT_CORE_DATABASE_PATH",
+    "DEFAULT_APPS_DATABASE_PATH",
     "DEFAULT_ICONS_DIR",
     "conf_path",
 ]

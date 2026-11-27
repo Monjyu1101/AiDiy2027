@@ -11,7 +11,7 @@
 """
 SQLite クエリモジュール
 
-`_data/AiDiy/database.db` に対し、AIエージェントが
+Core / Apps の現行 SQLite ファイルに対し、AIエージェントが
 **自己検証のため** にスキーマ確認・件数確認・SELECT を行うための
 最小限のツール群を提供する。
 
@@ -21,10 +21,16 @@ SQLite クエリモジュール
 - 結果は最大 `max_rows` 件まで返す（デフォルト 200）
 """
 
+import json
 import os
+from pathlib import Path
 import re
 import sqlite3
-from typing import Any, Optional
+from typing import Literal, Optional
+
+ROOT = Path(__file__).resolve().parents[2]
+DB_NAMES = json.loads((ROOT / "scripts" / "業務DB.json").read_text(encoding="utf-8"))
+DatabaseTarget = Literal["core", "apps"]
 
 
 class SqliteQueryError(Exception):
@@ -35,7 +41,6 @@ class SqliteQueryError(Exception):
 class SqliteQuery:
     """AiDiy の SQLite DB に対する安全なクエリアクセスを提供する"""
 
-    DEFAULT_DB_REL = os.path.join("_data", "AiDiy", "database.db")
     MAX_ROWS_LIMIT = 1000
 
     # 書き込み系 SQL の先頭キーワード
@@ -45,14 +50,11 @@ class SqliteQuery:
         "ATTACH", "DETACH", "VACUUM", "REINDEX",
     }
 
-    def __init__(self, db_path: Optional[str] = None):
-        if db_path:
-            self.db_path = db_path
-        else:
-            # backend_tools/ から親ディレクトリの AiDiy プロジェクトルートを探す
-            here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-            root = os.path.dirname(here)
-            self.db_path = os.path.join(root, self.DEFAULT_DB_REL)
+    def __init__(self, db_path: Optional[str] = None, *, database: DatabaseTarget = "apps"):
+        self.db_path = db_path or str(ROOT / "_data" / "AiDiy" / DB_NAMES[database])
+
+    def for_database(self, database: DatabaseTarget):
+        return self if database == "apps" else SqliteQuery(database=database)
 
     # ------------------------------------------------------------------ #
     # 接続ヘルパ
@@ -62,7 +64,7 @@ class SqliteQuery:
         if not os.path.isfile(self.db_path):
             raise SqliteQueryError(f"DBファイルが見つかりません: {self.db_path}")
         if read_only:
-            uri = f"file:{self.db_path}?mode=ro"
+            uri = Path(self.db_path).absolute().as_uri() + "?mode=ro"
             conn = sqlite3.connect(uri, uri=True, timeout=5.0)
         else:
             conn = sqlite3.connect(self.db_path, timeout=5.0)

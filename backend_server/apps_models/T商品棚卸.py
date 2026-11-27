@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 from sqlalchemy import Boolean, Column, Integer, Text
-from database import Base
+from database import AppsBase as Base
 
 
 class T商品棚卸(Base):

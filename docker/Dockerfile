@@ -55,6 +55,7 @@ COPY --from=backend-builder /usr/local/bin /usr/local/bin
 
 # Copy backend application
 COPY backend_server/ /app/backend_server/
+COPY scripts/業務DB.json /app/scripts/業務DB.json
 
 # Copy built frontend files
 COPY --from=frontend-builder /app/frontend_web/dist /app/frontend_web/dist

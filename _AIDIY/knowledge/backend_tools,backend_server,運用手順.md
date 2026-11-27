@@ -223,7 +223,7 @@ curl -s -X POST http://127.0.0.1:8095/aidiy_chrome_devtools/screenshot \
 
 - Chrome は最初のツール呼び出し時に `_ensure_chrome()` が起動確認する。
 - Chrome は `chrome_sessions.py` が `session` ごとに管理し、複数セッションを並行利用できる。使用後は所有するセッションだけを `close_session` で閉じる。
-- SQLite は `_data/AiDiy/database.db` を対象にする。
+- SQLite は `database: "apps"`（既定）または `database: "core"` で現行ファイルを選ぶ。旧版へのフォールバックはしない。
 - PostgreSQL は `psycopg[binary]` 未導入でもサーバー起動は継続し、PostgreSQL ツール呼び出し時にエラーを返す。
 - Code Check は副作用なしの検査系のみを実行する。build や dev server 起動はしない。
 - `permission_mode="bypassPermissions"` は backend_server 側の AIコードエージェント設定であり、MCP サーバー自身は localhost 制限で守る。

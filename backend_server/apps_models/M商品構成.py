@@ -9,7 +9,7 @@
 # -------------------------------------------------------------------------
 
 from sqlalchemy import Column, Boolean, Text, Float, Integer
-from database import Base
+from database import AppsBase as Base
 
 
 class M商品構成(Base):

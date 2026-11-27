@@ -13,7 +13,7 @@
 - 画面、URL、JSONキー、識別子は日本語を原則とする。DB項目名、API項目名、フロントエンド変数名はできるだけ一致させる。`request`、`query`、`item`、`items`、`total`、`limit` などの一般名は英字のままでよい。
 - 文字コードは UTF-8 固定。ファイル内容も UTF-8 指定で読む。
 - 実装を確認するときは、該当フォルダの `AGENTS.md` を確認したうえで実際のコードを優先する。docs と実装が食い違う場合は、現行実装を確認して「現行実装では」と明記する。
-- DB は現行スキーマでの新規作成が前提。旧テーブル・旧カラムの自動移行や互換フォールバックは行わず、アプリ起動やコード検証で既存 DB を削除・再構築しない（再作成は利用者が手動で行う）。
+- DB は現行スキーマでの新規作成が前提。破壊的なスキーマ変更は該当 DB のファイル名を `_vyyyymmdd.db` で更新する。旧テーブル・旧カラムの自動移行や互換フォールバックは行わず、アプリ起動やコード検証で既存 DB を削除・再構築しない（再作成は利用者が手動で行う）。
 - `npm run build` は日常的な確認手順に含めない。配布物作成、ビルド成果物確認、利用者の明示依頼など、実行理由が明確な場合だけ実行する。
 - `.aidiy_backup/` は `aidiy_backup` MCP の差分バックアップ出力先で、ソースではない。編集・参照の対象にしない。
 
@@ -68,7 +68,7 @@
 | `frontend_ide` | IDE / Term / Browser / Navi / Code / Live / Task / Team / CPU の共通 Vue 画面と単独起動 | 自動 | [AGENTS.md](./frontend_ide/AGENTS.md)、[host](./frontend_ide/host/AGENTS.md)（VS Code 拡張 Code / Live）、[viewer](./frontend_ide/viewer/AGENTS.md)（ファイルAPI・Office表示） |
 | `frontend_channels` | Discord（Hermes / Pi チャット・AIコア Live 音声）と Slack（双子、音声なし）の任意起動 Bot | 待受なし | [AGENTS.md](./frontend_channels/AGENTS.md)、[discord](./frontend_channels/discord/AGENTS.md)、[slack](./frontend_channels/slack/AGENTS.md) |
 
-core / apps / taskteam は同じ SQLite DB（`_data/AiDiy/database.db`）を共有します。frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分け、Task / Team の `/task/*`・`/team/*` は 8093 へ接続します。
+Core / TaskTeam と Apps は別々の SQLite DB を使用し、現行ファイル名は `scripts/業務DB.json` で管理します。frontend_web は Vite proxy で `/core/*` を 8091、`/apps/*` を 8098 へ振り分け、Task / Team の `/task/*`・`/team/*` は 8093 へ接続します。
 
 その他のフォルダ：`_config/`（API キー・AI モデル・MCP などの共通設定）、`_data/`（共通 SQLite DB などの永続データ）、`_icons/`（共通アイコン）、`docs/`（開発ガイド・セルフテスト）、`_AIDIY/knowledge/`（HowTo と再利用ナレッジ）、`scripts/`（補助スクリプト）、`docker/`（Docker + nginx 構成）。最小入口は [_AIDIY.md](./_AIDIY.md) と [CLAUDE.md](./CLAUDE.md)、人間向けの紹介資料は [X自己紹介](./frontend_web/public/X自己紹介/index.html) です。
 

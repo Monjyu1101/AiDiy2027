@@ -25,7 +25,7 @@ class CleanupAutoTests(unittest.TestCase):
 
     def test_auto_matches_interactive_a_and_preserves_database(self):
         root = Path(self.enterContext(tempfile.TemporaryDirectory()))
-        database = root / self.module.SQLITE_DB_REL_PATH
+        database = root / self.module.SQLITE_DB_REL_PATHS[0]
         database.parent.mkdir(parents=True)
         database.write_bytes(b"preserved")
         (root / self.module.BACKEND_PATH / ".venv").mkdir(parents=True)

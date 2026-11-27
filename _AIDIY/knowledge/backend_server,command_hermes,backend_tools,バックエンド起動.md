@@ -105,7 +105,7 @@ Diag は標準入力を停止要求用のパイプとして読み続ける。Web
 ## 起動時処理
 
 - `core_main.py` は C系/A系、`apps_main.py` は M/T/V/S系を担当する。
-- `apps_main.py` は `database.Base.metadata.create_all(... tables=[...])` で apps 系テーブルだけを作る。新規 Model を追加したら tables 配列にも追加する。
+- `apps_main.py` は `database.AppsBase.metadata.create_all(bind=database.apps_engine)` で Apps 専用モデルのテーブルだけを作る。新規 Model は `apps_models/__init__.py` に登録する。
 - `startup_event()` は `apps_crud.init_db_data(db)` で初期データを投入する。旧スキーマの自動移行は行わず、構造変更時は利用者による手動 DB 再作成を前提とする。
 - `backend_taskteam` は `_start.py` では apps 起動後に起動する。単一 lifespan が task の起動・状態監視と team のシミュレーション・起動・状態監視をまとめて開始し、停止時に全タスクをキャンセルする。
 - `backend_taskteam/temp/reboot_taskteam.txt` 検知で統合プロセス全体が終了し、`_start.py` 起動中なら自動再起動される。移行互換として同じ `temp` 内の `reboot_task.txt` / `reboot_team.txt` も受け付けるが、新規運用では `reboot_taskteam.txt` を使う。

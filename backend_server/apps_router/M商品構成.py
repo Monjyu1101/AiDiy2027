@@ -75,7 +75,7 @@ def _validate_master_ids_exist(db: Session, 生産区分ID: str, 生産工程ID:
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M商品構成(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者),
 ):
     商品ID一覧 = crud.get_M商品構成一覧(db)
@@ -96,7 +96,7 @@ def list_M商品構成(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M商品構成(
     request: schemas.M商品構成Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者),
 ):
     item = crud.get_M商品構成(db, request.商品ID)
@@ -113,7 +113,7 @@ def get_M商品構成(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M商品構成(
     request: schemas.M商品構成Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者),
 ):
     error_message = _validate_request(db, request)
@@ -143,7 +143,7 @@ def create_M商品構成(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M商品構成(
     request: schemas.M商品構成Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者),
 ):
     item = crud.get_M商品構成(db, request.商品ID)
@@ -194,7 +194,7 @@ def update_M商品構成(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M商品構成(
     request: schemas.M商品構成Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者),
 ):
     item = crud.get_M商品構成(db, request.商品ID)

@@ -20,7 +20,7 @@ router = APIRouter(prefix="/apps/V配車区分", tags=["V配車区分"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_V配車区分(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     conditions = []

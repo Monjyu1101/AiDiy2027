@@ -54,12 +54,17 @@ class 日誌Tests(unittest.TestCase):
         self.addCleanup(stack.close)
         self.home = Path(stack.enter_context(tempfile.TemporaryDirectory()))
         self.path = self.home / ".aidiy" / "datas" / "diary_v20261128.db"
-        self.business_path = self.home / "業務.db"
-        shared_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
-        stack.callback(shared_engine.dispose)
-        factory = sessionmaker(bind=shared_engine)
-        stack.enter_context(patch.object(database, "engine", shared_engine))
+        self.business_path = self.home / "core_v20261101.db"
+        self.apps_path = self.home / "apps_v20261101.db"
+        core_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.business_path)))
+        apps_engine = create_engine(URL.create("sqlite+pysqlite", database=str(self.apps_path)))
+        stack.callback(core_engine.dispose)
+        stack.callback(apps_engine.dispose)
+        factory = sessionmaker(bind=core_engine)
+        stack.enter_context(patch.object(database, "engine", core_engine))
+        stack.enter_context(patch.object(database, "apps_engine", apps_engine))
         stack.enter_context(patch.object(database, "SessionLocal", factory))
+        stack.enter_context(patch.object(database, "AppsSessionLocal", sessionmaker(bind=apps_engine)))
         stack.enter_context(patch.object(Path, "home", return_value=self.home))
         import apps_main
 
@@ -72,20 +77,54 @@ class 日誌Tests(unittest.TestCase):
         keyring = CoreKeyring(self.home)
         keyring.initialize()
         stack.enter_context(patch.object(auth, "_keyring", keyring))
-        C利用者.__table__.create(shared_engine)
-        C採番.__table__.create(shared_engine)
+        database.initialize_core_tables()
+        database.AppsBase.metadata.create_all(apps_engine)
         with factory.begin() as db:
             for id_, name, active in [("one", "利用者A", True), ("two", "利用者B", True), ("off", "停止中", False)]:
                 db.add(C利用者(利用者ID=id_, 利用者名=name, パスワード="fixture", 権限ID="USER", 有効=active, **create_audit_fields()))
         self.tokens = {name: keyring.issue_normal({"sub": name}) for name in ("one", "two", "off")}
         self.tokens["internal"] = json.loads(keyring.token_path.read_text(encoding="utf-8"))["access_token"]
         self.assertFalse(self.path.exists(), "importだけでは日誌DBを作らない")
-        self.assertFalse(any(name.startswith("T日誌") for name in inspect(shared_engine).get_table_names()))
+        for engine in (core_engine, apps_engine):
+            self.assertFalse(any(name.startswith("T日誌") for name in inspect(engine).get_table_names()))
         self.lifecycle = stack.enter_context(ExitStack())
         self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
         self.assertTrue(self.path.is_file())
         with closing(sqlite3.connect(self.path)) as db:
             self.assertEqual({r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}, {"T日誌作業", "T日誌明細"})
+
+    def test_業務DBを分離してもCore認証と伝票採番が動く(self):
+        from fastapi import FastAPI
+        from core_crud.C採番 import init_C採番_data
+        from core_router import auth as auth_router, C採番 as numbering_router
+
+        with database.SessionLocal() as db:
+            init_C採番_data(db)
+        self.assertEqual(set(inspect(database.engine).get_table_names()), {"C利用者", "C権限", "C採番", "A会話履歴"})
+        self.assertIn("T配車", inspect(database.apps_engine).get_table_names())
+        self.assertNotIn("C採番", inspect(database.apps_engine).get_table_names())
+        self.assertNotIn("C利用者", inspect(database.apps_engine).get_table_names())
+        old_path = self.home / "database.db"
+        old_path.write_bytes(b"legacy: do not read or modify")
+        core = FastAPI()
+        core.include_router(auth_router.router)
+        core.include_router(numbering_router.router)
+        with TestClient(core) as client:
+            login = client.post("/core/auth/ログイン", json={"利用者ID": "one", "パスワード": "fixture"}).json()
+            self.assertEqual(login["status"], "OK", login)
+            bearer = {"Authorization": "Bearer " + login["data"]["access_token"]}
+        body = {"配車開始日時": DATE + " 08:00:00", "配車終了日時": DATE + " 09:00:00", "車両ID": "CAR01"}
+        response = self.client.post("/apps/T配車/登録", json=body, headers=bearer)
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.json()["data"]["配車伝票ID"], "HS00010001")
+        with closing(sqlite3.connect(self.apps_path)) as db:
+            self.assertEqual(db.execute("SELECT 配車伝票ID, 登録利用者ID FROM T配車").fetchone(), ("HS00010001", "one"))
+        with closing(sqlite3.connect(self.business_path)) as db:
+            self.assertEqual(db.execute("SELECT 最終採番値, 更新利用者ID FROM C採番 WHERE 採番ID='T配車'").fetchone(), (10001, "one"))
+        with TestClient(core) as client:
+            response = client.post("/core/C採番/採番", json={"採番ID": "T配車"}, headers=bearer)
+            self.assertEqual(response.json()["data"]["発番値"], 10002)
+        self.assertEqual(old_path.read_bytes(), b"legacy: do not read or modify")
 
     def test_指定項目名とプロジェクトフォルダ(self):
         with closing(sqlite3.connect(self.path)) as db:

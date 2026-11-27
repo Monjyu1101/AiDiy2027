@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from typing import Optional
 import apps_schema as schemas, apps_crud as crud, deps, apps_models as models
+from core_crud.C採番 import 次の採番値
 
 MAX_ITEMS = 10000
 
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/apps/T商品入庫", tags=["T商品入庫"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_T商品入庫(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.T商品入庫).filter(models.T商品入庫.明細SEQ == 0)
@@ -56,7 +57,7 @@ def list_T商品入庫(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_T商品入庫(
     request: schemas.T商品入庫Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     行一覧 = crud.get_T商品入庫(db, request.入庫伝票ID)
@@ -73,24 +74,14 @@ def get_T商品入庫(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_T商品入庫(
     request: schemas.T商品入庫Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     if not request.入庫伝票ID:
-        採番 = db.query(models.C採番).filter(models.C採番.採番ID == "T商品入庫").first()
-        if not 採番:
-            return schemas.ResponseBase(status="NG", message="採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
-
-        next_number = 採番.最終採番値 + 1
-        入庫伝票ID = f"HI{str(next_number).zfill(8)}"
-
-        採番.最終採番値 = next_number
-        採番.更新日時 = crud.get_current_datetime()
-        採番.更新利用者ID = 現在利用者.利用者ID
-        採番.更新利用者名 = 現在利用者.利用者名
-        採番.更新端末ID = "localhost"
-
-        request.入庫伝票ID = 入庫伝票ID
+        番号 = 次の採番値("T商品入庫", 現在利用者)
+        if 番号 is None:
+            return schemas.ResponseBase(status="NG", message="有効な採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
+        request.入庫伝票ID = f"HI{番号:08d}"
 
     existing = crud.get_T商品入庫ヘッダ(db, request.入庫伝票ID)
     if existing:
@@ -109,7 +100,7 @@ def create_T商品入庫(
 def update_T商品入庫(
     request: schemas.T商品入庫Update,
     入庫伝票ID: str,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T商品入庫ヘッダ(db, 入庫伝票ID)
@@ -129,7 +120,7 @@ def update_T商品入庫(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_T商品入庫(
     request: schemas.T商品入庫Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T商品入庫ヘッダ(db, request.入庫伝票ID)

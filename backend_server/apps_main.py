@@ -70,25 +70,7 @@ from apps_router import S生産_日表示
 app = FastAPI(title="Welcome to AiDiy system")
 
 # テーブル作成（apps系のみ）
-database.Base.metadata.create_all(
-    bind=database.engine,
-    tables=[
-        apps_models.M配車区分.__table__,
-        apps_models.M生産区分.__table__,
-        apps_models.M生産工程.__table__,
-        apps_models.M商品分類.__table__,
-        apps_models.M取引先分類.__table__,
-        apps_models.M取引先.__table__,
-        apps_models.M車両.__table__,
-        apps_models.M商品.__table__,
-        apps_models.M商品構成.__table__,
-        apps_models.T配車.__table__,
-        apps_models.T生産.__table__,
-        apps_models.T商品出庫.__table__,
-        apps_models.T商品棚卸.__table__,
-        apps_models.T商品入庫.__table__,
-    ]
-)
+database.AppsBase.metadata.create_all(bind=database.apps_engine)
 
 # CORS設定
 origins = [
@@ -187,12 +169,13 @@ def startup_event():
         app.conf = app_conf
 
     # apps系の初期データ投入
-    db = database.SessionLocal()
+    db = database.AppsSessionLocal()
     try:
         apps_crud.init_db_data(db)
     finally:
         db.close()
 
+    database.initialize_core_tables()
     日誌DB = 日誌DB初期化()
     try:
         日誌採番初期化(日誌DB)

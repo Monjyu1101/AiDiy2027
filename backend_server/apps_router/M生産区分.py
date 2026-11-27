@@ -19,7 +19,7 @@ router = APIRouter(prefix="/apps/M生産区分", tags=["M生産区分"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M生産区分(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.M生産区分)
@@ -40,7 +40,7 @@ def list_M生産区分(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M生産区分(
     request: schemas.M生産区分Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M生産区分(db, request.生産区分ID)
@@ -57,7 +57,7 @@ def get_M生産区分(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M生産区分(
     request: schemas.M生産区分Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     existing = crud.get_M生産区分(db, request.生産区分ID)
@@ -76,7 +76,7 @@ def create_M生産区分(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M生産区分(
     request: schemas.M生産区分Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M生産区分(db, request.生産区分ID)
@@ -113,7 +113,7 @@ def update_M生産区分(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M生産区分(
     request: schemas.M生産区分Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M生産区分(db, request.生産区分ID)

@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from typing import Optional
 import apps_schema as schemas, apps_crud as crud, deps, apps_models as models
+from core_crud.C採番 import 次の採番値
 
 MAX_ITEMS = 10000
 
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/apps/T商品棚卸", tags=["T商品棚卸"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_T商品棚卸(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.T商品棚卸).filter(models.T商品棚卸.明細SEQ == 0)
@@ -56,7 +57,7 @@ def list_T商品棚卸(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_T商品棚卸(
     request: schemas.T商品棚卸Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     行一覧 = crud.get_T商品棚卸(db, request.棚卸伝票ID)
@@ -73,24 +74,14 @@ def get_T商品棚卸(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_T商品棚卸(
     request: schemas.T商品棚卸Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     if not request.棚卸伝票ID:
-        採番 = db.query(models.C採番).filter(models.C採番.採番ID == "T商品棚卸").first()
-        if not 採番:
-            return schemas.ResponseBase(status="NG", message="採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
-
-        next_number = 採番.最終採番値 + 1
-        棚卸伝票ID = f"HT{str(next_number).zfill(8)}"
-
-        採番.最終採番値 = next_number
-        採番.更新日時 = crud.get_current_datetime()
-        採番.更新利用者ID = 現在利用者.利用者ID
-        採番.更新利用者名 = 現在利用者.利用者名
-        採番.更新端末ID = "localhost"
-
-        request.棚卸伝票ID = 棚卸伝票ID
+        番号 = 次の採番値("T商品棚卸", 現在利用者)
+        if 番号 is None:
+            return schemas.ResponseBase(status="NG", message="有効な採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
+        request.棚卸伝票ID = f"HT{番号:08d}"
 
     existing = crud.get_T商品棚卸ヘッダ(db, request.棚卸伝票ID)
     if existing:
@@ -109,7 +100,7 @@ def create_T商品棚卸(
 def update_T商品棚卸(
     request: schemas.T商品棚卸Update,
     棚卸伝票ID: str,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T商品棚卸ヘッダ(db, 棚卸伝票ID)
@@ -129,7 +120,7 @@ def update_T商品棚卸(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_T商品棚卸(
     request: schemas.T商品棚卸Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T商品棚卸ヘッダ(db, request.棚卸伝票ID)

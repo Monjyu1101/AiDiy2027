@@ -17,7 +17,7 @@ router = APIRouter(prefix="/apps/M商品", tags=["M商品"])
 
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_M商品(
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     query = db.query(models.M商品)
@@ -37,7 +37,7 @@ def list_M商品(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_M商品(
     request: schemas.M商品Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M商品(db, request.商品ID)
@@ -53,7 +53,7 @@ def get_M商品(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_M商品(
     request: schemas.M商品Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     existing = crud.get_M商品(db, request.商品ID)
@@ -71,7 +71,7 @@ def create_M商品(
 @router.post("/変更", response_model=schemas.ResponseBase)
 def update_M商品(
     request: schemas.M商品Update,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M商品(db, request.商品ID)
@@ -107,7 +107,7 @@ def update_M商品(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_M商品(
     request: schemas.M商品Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     item = crud.get_M商品(db, request.商品ID)

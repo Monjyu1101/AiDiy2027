@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import Optional
 import apps_schema as schemas, apps_crud as crud, deps, apps_models as models
+from core_crud.C採番 import 次の採番値
 from list_controls import get_list_limit
 
 MAX_ITEMS = 1000
@@ -23,7 +24,7 @@ router = APIRouter(prefix="/apps/T生産", tags=["T生産"])
 @router.post("/一覧", response_model=schemas.ResponseBase)
 def list_T生産(
     request: Optional[schemas.ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     # ヘッダ行（明細SEQ=0）のみで絞り込み
@@ -58,7 +59,7 @@ def list_T生産(
 @router.post("/取得", response_model=schemas.ResponseBase)
 def get_T生産(
     request: schemas.T生産Get,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     行一覧 = crud.get_T生産(db, request.生産伝票ID)
@@ -75,25 +76,15 @@ def get_T生産(
 @router.post("/登録", response_model=schemas.ResponseBase)
 def create_T生産(
     request: schemas.T生産Create,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     # 生産伝票IDが指定されていない場合は自動採番
     if not request.生産伝票ID:
-        採番 = db.query(models.C採番).filter(models.C採番.採番ID == "T生産").first()
-        if not 採番:
-            return schemas.ResponseBase(status="NG", message="採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
-
-        next_number = 採番.最終採番値 + 1
-        生産伝票ID = f"SE{str(next_number).zfill(8)}"
-
-        採番.最終採番値 = next_number
-        採番.更新日時 = crud.get_current_datetime()
-        採番.更新利用者ID = 現在利用者.利用者ID
-        採番.更新利用者名 = 現在利用者.利用者名
-        採番.更新端末ID = "localhost"
-
-        request.生産伝票ID = 生産伝票ID
+        番号 = 次の採番値("T生産", 現在利用者)
+        if 番号 is None:
+            return schemas.ResponseBase(status="NG", message="有効な採番設定が見つかりません", error={"code": "NUMBERING_NOT_FOUND"})
+        request.生産伝票ID = f"SE{番号:08d}"
 
     # 重複チェック（ヘッダ行で確認）
     existing = crud.get_T生産ヘッダ(db, request.生産伝票ID)
@@ -117,7 +108,7 @@ def create_T生産(
 def update_T生産(
     request: schemas.T生産Update,
     生産伝票ID: str,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T生産ヘッダ(db, 生産伝票ID)
@@ -141,7 +132,7 @@ def update_T生産(
 @router.post("/削除", response_model=schemas.ResponseBase)
 def delete_T生産(
     request: schemas.T生産Delete,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     header = crud.get_T生産ヘッダ(db, request.生産伝票ID)
@@ -164,7 +155,7 @@ def delete_T生産(
 @router.post("/払出一覧", response_model=schemas.ResponseBase)
 def list_T生産払出(
     request: Optional[schemas.T生産払出ListRequest] = None,
-    db: Session = Depends(deps.get_db),
+    db: Session = Depends(deps.get_apps_db),
     現在利用者: models.C利用者 = Depends(deps.get_現在利用者)
 ):
     """生産払出一覧（明細行 SEQ>0）をヘッダJOINで取得"""

@@ -32,7 +32,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 ## 概要
 
 `backend_server` は AiDiy の FastAPI backend です。
-`core_main.py` と `apps_main.py` の 2 サーバーを持ち、業務データは同じ SQLite DB を共有します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261128.db` に保存します。
+`core_main.py` と `apps_main.py` の 2 サーバーを持ち、それぞれ `_data/AiDiy/core_v20261101.db` と `_data/AiDiy/apps_v20261101.db` を使います。Apps の JWT 利用者照合と C採番だけは Core 側を参照します。T日誌の作業・明細は Apps 専用の `~/.aidiy/datas/diary_v20261128.db` に保存します。
 
 | エントリ | 役割 | ポート |
 |----------|------|--------|
@@ -111,10 +111,10 @@ Apps:
 
 ## DB と初期化
 
-DB ファイルは `_data/AiDiy/database.db` です。
+現行 DB ファイル名の正本は `scripts/業務DB.json` です。
 `create_all()` は新規テーブル作成には効きますが、既存テーブルのカラム追加・削除・型変更には効きません。
 
-スキーマ変更時の DB 再作成は利用者が手動で行います。起動時は新規テーブル作成と初期データ投入に留め、既存 DB の削除・構造変換は行いません。判断と確認方法は `_AIDIY/knowledge` の手順を参照してください。
+破壊的なスキーマ変更では該当 DB のファイル名を日付版に更新します。起動時は新規テーブル作成と初期データ投入に留め、既存 DB の削除・構造変換は行いません。判断と確認方法は `_AIDIY/knowledge` の手順を参照してください。
 
 ## 設定管理
 
