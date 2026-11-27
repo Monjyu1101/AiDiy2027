@@ -6,6 +6,7 @@ from collections.abc import Sequence
 
 from sqlalchemy import and_, delete, func, insert, or_, select, true, update
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
 
 import database
@@ -15,6 +16,9 @@ from apps_crud.utils import create_audit_fields, update_audit_fields
 from apps_models.T日誌 import T日誌作業, T日誌明細
 from apps_schema.T日誌 import T日誌一覧検索要求, T日誌一覧要求, T日誌保存要求, T日誌検索要求, 日誌記録要求, 最大作業ID
 from list_controls import get_list_limit
+
+_日誌採番ID = "T日誌作業"
+_日誌採番初期値 = 10000
 
 
 def _所有者条件(モデル, 利用者ID: str, 日誌日付: str):
@@ -154,20 +158,35 @@ def _明細書込(db: Session, キー: dict, 行, *, 更新=False):
         db.execute(insert(T日誌明細).values(**キー, **値))
 
 
+def 日誌採番初期化(日誌DB: Engine) -> None:
+    """業務DBを作り直しても、現行の日誌DBにある最大の作業IDを引き継ぐ。"""
+    with 日誌DB.connect().execution_options(diary_write=True) as 日誌接続, 日誌接続.begin():
+        最大値 = 日誌接続.scalar(select(func.max(T日誌作業.作業ID))) or 0
+        下限 = max(_日誌採番初期値, 最大値)
+        with database.SessionLocal.begin() as 採番DB:
+            採番DB.execute(sqlite_insert(C採番).values(
+                採番ID=_日誌採番ID, 最終採番値=下限, 採番備考="日誌作業の採番", 有効=True,
+                **create_audit_fields(),
+            ).on_conflict_do_update(
+                index_elements=[C採番.採番ID],
+                set_={"最終採番値": 下限, **update_audit_fields()},
+                where=C採番.最終採番値 < 下限,
+            ))
+
+
 def _作業ID採番(db: Session, 認証情報: dict, 件数: int) -> range:
     """業務DBのC採番からまとめて払い出す。日誌DBの保存失敗による欠番は再利用しない。"""
     if not 件数:
         return range(0)
-    採番ID = "T日誌作業"
     # 日誌DBに既存のIDがある場合、採番値の手動変更などで衝突しないようにする。
     下限 = db.scalar(select(func.max(T日誌作業.作業ID))) or 0
     with database.SessionLocal.begin() as 採番DB:
         採番DB.execute(sqlite_insert(C採番).values(
-            採番ID=採番ID, 最終採番値=10000, 採番備考="日誌作業の採番", 有効=True,
+            採番ID=_日誌採番ID, 最終採番値=_日誌採番初期値, 採番備考="日誌作業の採番", 有効=True,
             **create_audit_fields(認証情報),
         ).on_conflict_do_nothing(index_elements=[C採番.採番ID]))
         終値 = 採番DB.scalar(update(C採番).where(
-            C採番.採番ID == 採番ID, C採番.有効.is_(True),
+            C採番.採番ID == _日誌採番ID, C採番.有効.is_(True),
             func.max(C採番.最終採番値, 下限) <= 最大作業ID - 件数,
         ).values(
             最終採番値=func.max(C採番.最終採番値, 下限) + 件数,

@@ -50,6 +50,7 @@ from apps_router import V商品構成
 from apps_router import T配車
 from apps_router import T日誌
 from apps_crud.日誌DB import 日誌DB初期化
+from apps_crud.T日誌 import 日誌採番初期化
 from apps_router import V配車
 from apps_router import T生産
 from apps_router import V生産
@@ -192,7 +193,13 @@ def startup_event():
     finally:
         db.close()
 
-    app.state.日誌DB = 日誌DB初期化()
+    日誌DB = 日誌DB初期化()
+    try:
+        日誌採番初期化(日誌DB)
+    except Exception:
+        日誌DB.dispose()
+        raise
+    app.state.日誌DB = 日誌DB
 
     # ベースラインバックアップ実行（並列スレッドで処理）
     def バックアップ並列処理():

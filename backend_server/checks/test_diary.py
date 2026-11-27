@@ -400,10 +400,7 @@ class 日誌Tests(unittest.TestCase):
 
     def test_C採番の値を使い_別日と別利用者でも一意_変更時は維持(self):
         with closing(sqlite3.connect(self.business_path)) as db:
-            fields = ("T日誌作業", 83000, 1, "初期", "sys", "初期", "sys")
-            db.execute("""INSERT INTO C採番
-                (採番ID, 最終採番値, 有効, 登録日時, 登録利用者ID, 更新日時, 更新利用者ID, 登録端末ID, 更新端末ID)
-                VALUES (?, ?, ?, ?, ?, ?, ?, 'fixture', 'fixture')""", fields)
+            db.execute("UPDATE C採番 SET 最終採番値=83000 WHERE 採番ID='T日誌作業'")
             db.commit()
 
         def add(date, user):
@@ -437,6 +434,33 @@ class 日誌Tests(unittest.TestCase):
         disabled = self.call("作業登録", {"日誌日付": DATE, "作業タイトル": "採番なし不可"}).json()
         self.assertEqual(disabled["error"]["code"], "NUMBERING_UNAVAILABLE")
         self.assertEqual(self.call("一覧").json()["data"]["items"][0]["記録件数"], 2)
+
+    def test_業務DBの採番再作成時は現行の日誌DBの最大値を引き継ぐ(self):
+        def 作業登録(日付, 利用者):
+            result = self.call("作業登録", {"日誌日付": 日付, "作業タイトル": "作業"}, user=利用者).json()
+            self.assertEqual(result["status"], "OK", result)
+            return result["data"]["作業ID"]
+
+        self.assertEqual(作業登録(DATE, "one"), 10001)
+        self.assertEqual(作業登録("2026-11-25", "two"), 10002)
+        for SQL, 期待値 in (
+            ("DELETE FROM C採番 WHERE 採番ID='T日誌作業'", (10002, 1)),
+            ("UPDATE C採番 SET 最終採番値=10000 WHERE 採番ID='T日誌作業'", (10002, 1)),
+            ("UPDATE C採番 SET 最終採番値=20000, 有効=0 WHERE 採番ID='T日誌作業'", (20000, 0)),
+        ):
+            self.lifecycle.close()
+            with closing(sqlite3.connect(self.business_path)) as db, db:
+                db.execute(SQL)
+            self.client = self.lifecycle.enter_context(TestClient(self.app, raise_server_exceptions=False))
+            with closing(sqlite3.connect(self.business_path)) as db:
+                self.assertEqual(db.execute(
+                    "SELECT 最終採番値, 有効 FROM C採番 WHERE 採番ID='T日誌作業'"
+                ).fetchone(), 期待値)
+            if SQL.startswith("UPDATE") and 期待値 == (10002, 1):
+                self.assertEqual(作業登録(DATE, "one"), 10003)
+        with closing(sqlite3.connect(self.business_path)) as db, db:
+            db.execute("UPDATE C採番 SET 有効=1 WHERE 採番ID='T日誌作業'")
+        self.assertEqual(作業登録(DATE, "one"), 20001)
 
     def test_添付容量制限(self):
         for size, count in [(5 * 1024 * 1024 + 1, 1), (4 * 1024 * 1024, 4)]:
