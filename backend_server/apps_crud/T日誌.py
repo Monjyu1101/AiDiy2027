@@ -201,10 +201,10 @@ def _作業項目(作業: 日誌記録要求):
     return 作業.model_dump(include={"プロジェクト", "作業タイトル", "作業時間", "新規更新ファイル数"})
 
 
-def _作業登録(db: Session, 認証情報: dict, 日誌日付: str, 作業: 日誌記録要求, 作業ID: int):
+def _作業登録(db: Session, 認証情報: dict, 日誌日付: str, 作業: 日誌記録要求, 作業ID: int, 操作者: dict):
     db.execute(insert(T日誌作業).values(
         作業ID=作業ID, 日誌日付=日誌日付, **認証情報,
-        **create_audit_fields(認証情報), **_作業項目(作業),
+        **create_audit_fields(操作者), **_作業項目(作業),
     ))
     _明細登録(db, 作業ID, 作業)
 
@@ -214,7 +214,8 @@ def _明細登録(db: Session, 作業ID: int, 作業: 日誌記録要求):
         _明細書込(db, {"作業ID": 作業ID, "行番号": 行.行番号}, 行)
 
 
-def 保存(db: Session, 認証情報: dict, 要求: T日誌保存要求, *, 新規: bool):
+def 保存(db: Session, 認証情報: dict, 要求: T日誌保存要求, *, 新規: bool, 操作者: dict | None = None):
+    操作者 = 操作者 or 認証情報
     利用者ID = 認証情報["利用者ID"]
     日誌日付 = 要求.日誌日付
     with db.begin():
@@ -237,16 +238,16 @@ def 保存(db: Session, 認証情報: dict, 要求: T日誌保存要求, *, 新�
         既存ID = {作業.作業ID for 作業 in 旧作業}
         if not 送信ID <= 既存ID:
             raise 日誌操作エラー("この日誌にない作業IDが指定されました。", "VALIDATION_ERROR")
-        新規ID = iter(_作業ID採番(db, 認証情報, len(要求.記録) - len(送信ID)))
+        新規ID = iter(_作業ID採番(db, 操作者, len(要求.記録) - len(送信ID)))
         削除ID = 既存ID - 送信ID
         if 削除ID:
             db.execute(delete(T日誌作業).where(*条件, T日誌作業.作業ID.in_(削除ID)))
         for 作業 in 要求.記録:
             if 作業.作業ID is None:
-                _作業登録(db, 認証情報, 日誌日付, 作業, next(新規ID))
+                _作業登録(db, 認証情報, 日誌日付, 作業, next(新規ID), 操作者)
                 continue
             db.execute(update(T日誌作業).where(*条件, T日誌作業.作業ID == 作業.作業ID).values(
-                **_作業項目(作業), **update_audit_fields(認証情報),
+                **_作業項目(作業), **update_audit_fields(操作者),
             ))
             db.execute(delete(T日誌明細).where(T日誌明細.作業ID == 作業.作業ID))
             _明細登録(db, 作業.作業ID, 作業)
@@ -297,8 +298,9 @@ class 日誌操作エラー(Exception):
         self.コード = コード
 
 
-def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
+def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str, *, 操作者: dict | None = None):
     """固定の作業IDと明細の行番号で、書込ロック内の最新状態を編集する。"""
+    操作者 = 操作者 or 認証情報
     利用者ID = 認証情報["利用者ID"]
     日誌日付 = 要求.日誌日付
     # 読み取りより先に書き込みトランザクションを取得し、同時追加の採番競合を防ぐ。
@@ -312,7 +314,7 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
         ).limit(1)) is not None:
             raise 日誌操作エラー("指定された日付の日誌は無効です。")
         記録 = 現在["記録"] if 現在 else []
-        結果 = {"日誌日付": 日誌日付}
+        結果 = {"日誌日付": 日誌日付, "利用者ID": 利用者ID}
         if 操作 == "作業登録":
             記録.append({"作業タイトル": 要求.作業タイトル, "プロジェクト": 要求.プロジェクト, "作業時間": 要求.作業時間, "新規更新ファイル数": 要求.新規更新ファイル数, "明細": []})
         else:
@@ -352,8 +354,8 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
                 行["行番号"] = j
         保存要求 = T日誌保存要求(日誌日付=日誌日付, 記録=記録) if 記録 else None
         if 操作 == "作業登録":
-            作業ID = _作業ID採番(db, 認証情報, 1).start
-            _作業登録(db, 認証情報, 日誌日付, 保存要求.記録[-1], 作業ID)
+            作業ID = _作業ID採番(db, 操作者, 1).start
+            _作業登録(db, 認証情報, 日誌日付, 保存要求.記録[-1], 作業ID, 操作者)
             return {**結果, "作業ID": 作業ID}
         作業ID = 結果["作業ID"]
         作業条件 = (*_所有者条件(T日誌作業, 利用者ID, 日誌日付), T日誌作業.作業ID == 作業ID)
@@ -362,12 +364,12 @@ def 部分操作(db: Session, 認証情報: dict, 要求, 操作: str):
         if 操作 == "作業変更":
             作業 = next(行 for 行 in 保存要求.記録 if 行.作業ID == 作業ID)
             db.execute(update(T日誌作業).where(*作業条件).values(
-                **_作業項目(作業), **update_audit_fields(認証情報),
+                **_作業項目(作業), **update_audit_fields(操作者),
             ))
         elif 操作 == "作業削除":
             db.execute(delete(T日誌作業).where(*作業条件))
         else:
-            db.execute(update(T日誌作業).where(*作業条件).values(**update_audit_fields(認証情報)))
+            db.execute(update(T日誌作業).where(*作業条件).values(**update_audit_fields(操作者)))
             行番号 = 結果["行番号"]
             行条件 = (*明細条件, T日誌明細.行番号 == 行番号)
             作業明細 = next(行.明細 for 行 in 保存要求.記録 if 行.作業ID == 作業ID)

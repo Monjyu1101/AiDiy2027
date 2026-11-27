@@ -31,7 +31,11 @@ class 日誌要求(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
-class T日誌キー(日誌要求):
+class 日誌利用者要求(日誌要求):
+    利用者ID: str | None = Field(default=None, min_length=1, max_length=255)
+
+
+class T日誌キー(日誌利用者要求):
     日誌日付: 日誌日付
 
 
@@ -167,7 +171,7 @@ class T日誌変更要求(T日誌保存要求):
     更新版: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
-class T日誌検索要求(日誌期間要求):
+class T日誌検索要求(日誌期間要求, 日誌利用者要求):
     キーワード: str = Field(default="", max_length=200)
     limit: int = Field(default=5, ge=1, le=10)
     offset: int = Field(default=0, ge=0, le=1_000_000)

@@ -323,7 +323,7 @@ onMounted(() => {
               :aria-label="`${column.label}の列フィルタ`">
           </template>
           <template #cell="{ row, column, value }">
-            <RouterLink v-if="column.key === '日誌日付' && row.利用者ID === auth.user?.利用者ID"
+            <RouterLink v-if="column.key === '日誌日付'"
               :to="編集先('編集', row.日誌日付, row.利用者ID)" custom v-slot="{ href, navigate }">
               <a :href="href" class="id-link" @click="saveListSession(); navigate($event)">{{ value }}</a>
             </RouterLink>

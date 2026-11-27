@@ -8,7 +8,8 @@ import assert from 'node:assert/strict';
 import {mkdtemp,readFile,readdir,rm,writeFile,mkdir} from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import {runHeadless,OUTPUT_DIRECTORY,STEPS,modelsStep} from '../diag/診断/headless.mjs';
+import {PassThrough} from 'node:stream';
+import {headlessMain,runHeadless,OUTPUT_DIRECTORY,STEPS,modelsStep} from '../diag/診断/headless.mjs';
 const installOnly=STEPS.filter(step=>step.id==='install');
 import {parseArgs} from '../diag/diag_main.mjs';
 
@@ -84,4 +85,24 @@ test('headless passes current installation results and saves missing Ollama with
   const saved=JSON.parse(await readFile(path.join(directory,'ollama_models_info.json'),'utf8'));
   assert.equal(saved.状態,state==='未検出'?'未実施':'OK');assert.equal(saved.chat.件数,calls);
  }
+}));
+
+test('managed headless exits on success without waiting for its parent and cancels on EOF without saving',async()=>folder(async directory=>{
+ const file=path.join(directory,'install_info.json');
+ const options={steps:installOnly,directory,loadEntries:async()=>entries,...quiet};
+ const completed=new PassThrough();
+ assert.equal(await headlessMain({...options,control:completed,probeFn:async entry=>ok(entry)}),0);
+ assert.equal(completed.destroyed,true);
+ await writeFile(file,'previous');
+ const control=new PassThrough();
+ const code=await headlessMain({...options,control,probeFn:async entry=>{
+  if(entry.id==='node'){
+   control.end();
+   await new Promise(resolve=>control.once('end',resolve));
+  }
+  return ok(entry);
+ }});
+ assert.equal(code,130);
+ assert.equal(control.destroyed,true);
+ assert.equal(await readFile(file,'utf8'),'previous');
 }));

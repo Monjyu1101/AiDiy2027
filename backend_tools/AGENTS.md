@@ -45,7 +45,7 @@ AI エージェントは、本書に個別手順や一時的な作業メモを�
 | `aidiy_decisions_check` | AI判断（OpenAI Decisions API / OAuth Responses JSON Schema / FreeAI・Gemini JSON Chat）の共通インターフェース |
 | `aidiy_task_agents` | backend_taskteam の `/task` API への AIタスク非同期投入。`submit`の`task_id`は通常省略し、外部IDを引き継ぐ場合だけ指定。`project_path` / `ai_name` / `ai_model_plan` / `ai_model_do` / `ai_model_check` も通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
 | `aidiy_team_agents` | backend_taskteam の `/team` API への AIチーム依頼投入。`submit`は`Aチーム依頼`を準備開始で登録し、依頼IDは統合サーバーが自動採番。`project_path` / `team_ai_*` / `task_ai_*` は通常省略（null）で、統合サーバーが更新最終レコードの値 → 規定値で補完 |
-| `aidiy_dialy_control` | 通常ログイン利用者本人の日誌検索、作業・明細の登録 / 変更 / 削除（Apps API） |
+| `aidiy_dialy_control` | 指定利用者の日誌検索、作業・明細の登録 / 変更 / 削除（Apps API） |
 | `aidiy_windows_control` | Windows でのみ公開するデスクトップ操作制御（マウス/キーボード、ウィンドウ、プロセス、クリップボード、UI Automation 要素操作） |
 
 `aidiy_chat_llms` は SSE / Streamable HTTP / stdio の 3 トランスポートに対応します。

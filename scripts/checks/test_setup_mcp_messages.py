@@ -9,9 +9,11 @@ import contextlib
 import builtins
 import importlib.util
 import io
+import json
 from pathlib import Path
 import re
 import tempfile
+import tomllib
 import unittest
 from unittest.mock import patch
 
@@ -73,14 +75,37 @@ class McpMessageTests(unittest.TestCase):
                 for name, url in selected:
                     body = (f'url = "{url.removesuffix("/sse")}/mcp"\nstartup_timeout_sec = 60\n' if client == "codex"
                             else f'url = "{url}"\ntype = "sse"\nenabled = true\n')
-                    if client == "codex" and name == "aidiy_dialy_control":
-                        body += 'env_http_headers = { Authorization = "AIDIY_DIARY_AUTHORIZATION" }\n'
                     expected = expected.rstrip() + f"\n\n[mcp_servers.{name}]\n" + body
                 self.assertEqual(path.read_text(encoding="utf-8"), expected)
             self.assertNotIn("Codex の aidiy_", output.getvalue())
             self.assertNotIn("Grok の aidiy_", output.getvalue())
 
-    def test_partial_failure_only_lists_successes_and_continues(self):
+    def test_diary_uses_standard_transport_and_preserves_optional_codex_auth_only_at_same_url(self):
+        with self.execution() as (module, home, _):
+            path = home / ".codex/config.toml"
+            path.parent.mkdir(parents=True)
+            name = "aidiy_dialy_control"
+            sse_url = f"http://127.0.0.1:8095/{name}/sse"
+            mcp_url = f"http://127.0.0.1:8095/{name}/mcp"
+            original = f'[mcp_servers.{name}]\nurl = "{mcp_url}"\nenv_http_headers = {{ Authorization = "AIDIY_DIARY_AUTHORIZATION" }}\n'
+            path.write_text(original, encoding="utf-8")
+            self.assertTrue(module.configure_clients())
+            current = tomllib.loads(path.read_text(encoding="utf-8"))["mcp_servers"][name]
+            self.assertEqual(current, {"url": mcp_url, "startup_timeout_sec": 60,
+                                       "env_http_headers": {"Authorization": "AIDIY_DIARY_AUTHORIZATION"}})
+            for relative, key, expected in (
+                ("project/AiDiy_mcp.json", "mcpServers", {"type": "sse", "url": sse_url}),
+                ("antigravity.json", "mcpServers", {"serverUrl": mcp_url}),
+                ("vscode.json", "servers", {"type": "sse", "url": sse_url}),
+            ):
+                entry = json.loads((home / relative).read_text(encoding="utf-8"))[key][name]
+                self.assertEqual(entry, expected)
+            path.write_text(original.replace(mcp_url, "https://example.invalid/mcp"), encoding="utf-8")
+            self.assertTrue(module.configure_clients())
+            current = tomllib.loads(path.read_text(encoding="utf-8"))["mcp_servers"][name]
+            self.assertEqual(current, {"url": mcp_url, "startup_timeout_sec": 60})
+
+
         with self.execution() as (module, home, output):
             original_write = module.upsert_toml_table
 

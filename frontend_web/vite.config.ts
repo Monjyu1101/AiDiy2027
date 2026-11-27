@@ -34,11 +34,13 @@ export default defineConfig({
         ws: true,  // WebSocketサポートを有効化
       },
       '/apps': {
+        xfwd: true, // 直接接続でだけ許可する内部APIと区別する
         target: `http://127.0.0.1:${PORT_APPS}`,
         changeOrigin: true,
         ws: true,  // WebSocketサポートを有効化
       },
       '/mcp': {
+        xfwd: true, // Tools のローカル内部認証に Web の転送を混ぜない
         target: `http://127.0.0.1:${PORT_TOOLS}`,
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/mcp/, ''),

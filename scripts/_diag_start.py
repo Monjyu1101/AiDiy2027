@@ -130,10 +130,14 @@ def wait_for_exit(process, stopped):
 def terminate(process):
     if process is None or process.poll() is not None:
         return
-    console = load_module('aidiy_diag_console', Path(__file__).with_name('_diag_console.py'))
     try:
-        print('停止要求: Ctrl+C を送信します。')
-        console.interrupt(process)
+        if getattr(process, '_aidiy_headless_pipe', False) is True:
+            print('停止要求: headless 診断を中断します。')
+            process.stdin.close()
+        else:
+            console = load_module('aidiy_diag_console', Path(__file__).with_name('_diag_console.py'))
+            print('停止要求: Ctrl+C を送信します。')
+            console.interrupt(process)
         process.wait(timeout=5)
         return
     except (OSError, subprocess.TimeoutExpired) as error:
@@ -189,13 +193,18 @@ def hidden_commands(module):
 
 
 def start_headless(node):
-    api = subprocess
-    if os.name == 'nt':
-        console = load_module('aidiy_diag_console', Path(__file__).with_name('_diag_console.py'))
-        api = console.ConsoleSubprocess(subprocess)
-    return api.Popen([node, str(ROOT / 'frontend_diag/diag_main.mjs'), '--headless'],
-                     cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                     **({} if os.name == 'nt' else {'start_new_session': True}))
+    windows = os.name == 'nt'
+    if windows:
+        # SW_HIDE 付きの専用コンソールでも表示が一瞬出ることがある。
+        # コンソールは作らず、この子専用の stdin を閉じて停止を伝える。
+        options = {'stdin': subprocess.PIPE, 'creationflags': subprocess.CREATE_NO_WINDOW,
+                   'env': {**os.environ, 'AIDIY_DIAG_HEADLESS_CONTROL_PIPE': '1'}}
+    else:
+        options = {'stdin': subprocess.DEVNULL, 'start_new_session': True}
+    process = subprocess.Popen([node, str(ROOT / 'frontend_diag/diag_main.mjs'), '--headless'],
+                               cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, **options)
+    process._aidiy_headless_pipe = windows
+    return process
 
 
 def launch(module, target, settings):
@@ -329,6 +338,8 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
                     wait_for_exit(process, stopped)
                     if stopped.is_set():
                         return
+                    if process.stdin is not None:
+                        process.stdin.close()
                     output.join(timeout=2)
                     if process.returncode:
                         raise RuntimeError('事前診断に失敗したため Tools の起動を中止しました。')
@@ -378,6 +389,8 @@ def run(module, kind, settings, *, run_id=None, console=None, stopped=None):
         finally:
             console.event('status', state='停止中')
             terminate(process)
+            if getattr(process, '_aidiy_headless_pipe', False) is True:
+                process.stdin.close()
             if output:
                 output.join(timeout=1)
             # 専用窓・ブラウザ・孫プロセスを各フォルダが所有する停止処理で回収する。

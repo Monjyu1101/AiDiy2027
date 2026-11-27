@@ -22,7 +22,22 @@ const auth = useAuthStore();
 let 次のキー = 0;
 const 日誌日付 = ref('');
 const 更新版 = ref('');
-const 利用者 = ref<{ 利用者ID: string; 利用者名: string } | null>(null);
+type 利用者項目 = { 利用者ID: string; 利用者名: string };
+const 利用者 = ref<利用者項目 | null>(null);
+const 選択利用者ID = ref('');
+const 候補 = ref<利用者項目[]>([]);
+const 候補エラー = ref('');
+async function 候補を取得() {
+  候補エラー.value = '';
+  操作中.value = true;
+  try {
+    候補.value = await 日誌操作<利用者項目[]>('利用者候補');
+  } catch (e) {
+    候補エラー.value = エラー表示(e, '利用者の候補を取得できませんでした。');
+  } finally {
+    操作中.value = false;
+  }
+}
 const 記録 = ref<編集記録[]>([]);
 const エラー = ref('');
 const 操作中 = ref(false);
@@ -184,6 +199,7 @@ function ダウンロード(行: 編集添付) {
 
 function 日誌を表示(data: 日誌) {
   利用者.value = { 利用者ID: data.利用者ID, 利用者名: data.利用者名 };
+  選択利用者ID.value = data.利用者ID;
   日誌日付.value = data.日誌日付;
   更新版.value = data.更新版;
   表示を片付ける();
@@ -195,12 +211,16 @@ async function 読み込み() {
   未保存.value = 読込失敗.value = false;
   エラー.value = '';
   利用者.value = null;
+  選択利用者ID.value = auth.user?.利用者ID ?? '';
+  候補.value = [];
+  候補エラー.value = '';
   更新版.value = '';
   const query = route.query.日誌日付;
   const 対象日付 = typeof query === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(query) ? query : '';
   日誌日付.value = 対象日付 || ローカル日付();
   if (!編集.value) {
     記録.value = [記録を作る()];
+    await 候補を取得();
     return;
   }
   if (!対象日付) {
@@ -210,7 +230,8 @@ async function 読み込み() {
   }
   操作中.value = true;
   try {
-    const data = await 日誌操作<日誌>('取得', { 日誌日付: 対象日付 });
+    const 対象ID = typeof route.query.利用者ID === 'string' ? route.query.利用者ID : 選択利用者ID.value;
+    const data = await 日誌操作<日誌>('取得', { 日誌日付: 対象日付, 利用者ID: 対象ID });
     if (!閉じた.value) 日誌を表示(data);
   } catch (e) {
     読込失敗.value = true;
@@ -222,7 +243,7 @@ async function 読み込み() {
 const 作業時間形式 = /^[0-9]{1,2}(?:\.[0-9]{1,2})?$/;
 
 function 保存内容(): 日誌保存 {
-  if (!日誌日付.value || !記録.value.length) throw new Error('日付と作業を入力してください。');
+  if (!日誌日付.value || !選択利用者ID.value || !記録.value.length) throw new Error('日付・利用者・作業を入力してください。');
   const 未入力 = 記録.value.findIndex(item => !item.作業タイトル.trim());
   if (未入力 >= 0) {
     const item = 記録.value[未入力]!;
@@ -247,7 +268,7 @@ function 保存内容(): 日誌保存 {
     throw new Error(`作業 ${不正件数 + 1} の新規・更新ファイル数は0以上の整数を入力してください。`);
   }
   return {
-    日誌日付: 日誌日付.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
+    日誌日付: 日誌日付.value, 利用者ID: 選択利用者ID.value, ...(編集.value ? { 更新版: 更新版.value } : {}),
     記録: 記録.value.map(item => ({
       作業ID: item.作業ID, プロジェクト: item.プロジェクト, 作業タイトル: item.作業タイトル.trim(),
       作業時間: item.時間入力.trim() === '' ? null : Number(item.時間入力), 新規更新ファイル数: item.件数入力.trim() === '' ? null : Number(item.件数入力),
@@ -277,12 +298,12 @@ async function 保存() {
 }
 async function 日誌を削除() {
   if (操作中.value || !編集.value || 読込失敗.value) return;
-  if (!await qConfirm(`${日誌日付.value}の日誌を削除しますか？記録・明細・添付も削除されます。`)) return;
+  if (!await qConfirm(`${日誌日付.value}の ${利用者.value?.利用者名 ?? 選択利用者ID.value} の日誌を削除しますか？記録・明細・添付も削除されます。`)) return;
   if (閉じた.value || 操作中.value) return;
   エラー.value = '';
   操作中.value = true;
   try {
-    await 日誌操作('削除', { 日誌日付: 日誌日付.value });
+    await 日誌操作('削除', { 日誌日付: 日誌日付.value, 利用者ID: 選択利用者ID.value });
     未保存.value = false;
     操作中.value = false;
     await 日誌一覧へ移動('日誌を削除しました。');
@@ -305,9 +326,9 @@ async function 遷移確認() {
 }
 onBeforeRouteLeave(遷移確認);
 onBeforeRouteUpdate((to, from) => (
-  to.query.日誌日付 !== from.query.日誌日付 || to.query.モード !== from.query.モード
+  to.query.日誌日付 !== from.query.日誌日付 || to.query.モード !== from.query.モード || to.query.利用者ID !== from.query.利用者ID
 ) ? 遷移確認() : true);
-watch(() => [route.query.日誌日付, route.query.モード], 読み込み);
+watch(() => [route.query.日誌日付, route.query.モード, route.query.利用者ID], 読み込み);
 onMounted(() => {
   window.addEventListener('beforeunload', ページ離脱);
   void 読み込み();
@@ -348,10 +369,22 @@ onBeforeUnmount(() => {
                   <input v-model="日誌日付" class="detail-input date-input" type="date" required :readonly="編集" @input="変更した">
                 </span>
               </label>
-              <div class="detail-row">
-                <span class="detail-label">利用者</span>
-                <span class="detail-value">{{ (利用者 ?? auth.user)?.利用者ID }} : {{ (利用者 ?? auth.user)?.利用者名 }}</span>
-              </div>
+              <label class="detail-row">
+                <span class="detail-label">利用者<span v-if="!編集" class="required-mark">*</span></span>
+                <span v-if="編集" class="detail-value">{{ 利用者?.利用者ID }} : {{ 利用者?.利用者名 }}</span>
+                <span v-else class="detail-value">
+                  <select v-model="選択利用者ID" class="detail-input" required @change="変更した">
+                    <option value="" disabled>利用者を選択</option>
+                    <option v-if="auth.user && !候補.some(row => row.利用者ID === auth.user?.利用者ID)" :value="auth.user.利用者ID">
+                      {{ auth.user.利用者ID }} : {{ auth.user.利用者名 }}
+                    </option>
+                    <option v-for="row in 候補" :key="row.利用者ID" :value="row.利用者ID">{{ row.利用者ID }} : {{ row.利用者名 }}</option>
+                  </select>
+                </span>
+              </label>
+              <p v-if="候補エラー" role="alert" class="message-error">
+                {{ 候補エラー }} <button type="button" class="btn btn-secondary" @click="候補を取得">再取得</button>
+              </p>
             </div>
             <section v-for="(item, i) in 記録" :key="item.key" class="diary-record" :aria-label="`作業 ${i + 1}`">
               <button type="button" class="fold-toggle" :aria-expanded="item.展開"

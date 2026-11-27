@@ -239,10 +239,45 @@ class 日誌Tests(unittest.TestCase):
         self.assertEqual(self.call("一覧", user="off").status_code, 403)
         self.assertEqual(self.call("一覧", user="internal").status_code, 403)
 
+    def test_Webで他の利用者を選び登録変更削除でき操作者を区別する(self):
+        candidates = self.call("利用者候補", {}).json()["data"]
+        self.assertEqual([row["利用者ID"] for row in candidates], ["one", "two"])
+        self.assertEqual(self.call("登録", {**sample(), "利用者ID": "off"}).status_code, 422)
+        self.assertEqual(self.call("登録", {**sample(), "利用者ID": "missing"}).status_code, 404)
+        original = self.call("登録", {**sample(), "利用者ID": "two"}).json()["data"]
+        self.assertEqual(original["利用者ID"], "two")
+        key = {"日誌日付": DATE, "利用者ID": "two"}
+        self.assertEqual(self.call("取得", key).json()["data"], original)
+        self.assertEqual(self.call("取得", {"日誌日付": DATE}).json()["error"]["code"], "NOT_FOUND")
+        changed = {"更新版": original["更新版"], "記録": original["記録"], **key}
+        changed["記録"][0]["作業タイトル"] = "代理更新"
+        self.assertEqual(self.call("変更", changed).json()["status"], "OK")
+        with closing(sqlite3.connect(self.path)) as db:
+            row = db.execute('SELECT 利用者ID, 登録利用者ID, 更新利用者ID FROM T日誌作業').fetchone()
+            self.assertEqual(row, ("two", "one", "one"))
+        self.assertEqual(self.call("削除", key).json()["status"], "OK")
+
+    def test_内部認証は直接Toolsと対象IDのある七操作に限る(self):
+        headers = {"Authorization": "Bearer " + self.tokens["internal"], "X-AiDiy-Diary": "tools"}
+        local = TestClient(self.app, base_url="http://127.0.0.1:8098", client=("127.0.0.1", 1234))
+        key = {"日誌日付": DATE, "利用者ID": "two"}
+        # setUp の TestClient が既にアプリを起動済み。
+        search = lambda body, h=headers: local.post(PREFIX + "検索", json=body, headers=h)
+        self.assertEqual(search(key, {**headers, "X-Forwarded-For": "127.0.0.1"}).status_code, 403)
+        self.assertEqual(search({}, headers).status_code, 422)
+        self.assertEqual(local.post(PREFIX + "取得", json=key, headers=headers).status_code, 403)
+        result = local.post(PREFIX + "作業登録", json={**key, "作業タイトル": "CLI"}, headers=headers)
+        self.assertEqual(result.json()["status"], "OK", result.text)
+        self.assertEqual(search({"利用者ID": "two"}).json()["data"]["total"], 1)
+        with closing(sqlite3.connect(self.path)) as db:
+            self.assertEqual(db.execute('SELECT 利用者ID, 登録利用者ID FROM T日誌作業').fetchone(),
+                             ("two", "backend_core:code_live"))
+        self.addCleanup(local.close)
+
     def test_入力検証とエラーへの内容非表示(self):
         for payload in [
             sample("2026-02-30"),
-            {**sample(), "利用者ID": "two"},
+            {**sample(), "利用者ID": ""},
             {"日誌日付": DATE, "記録": [{"作業ID": 2, "作業タイトル": "順番"}]},
         ]:
             result = self.call("登録", payload)

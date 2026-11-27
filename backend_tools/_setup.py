@@ -614,8 +614,23 @@ def upsert_codex_backend_tools_config(module: dict) -> bool:
         f'url = "{toml_escape_string(mcp_url)}"',
         "startup_timeout_sec = 60",
     ]
-    if server_name == "aidiy_dialy_control":
-        body_lines.append('env_http_headers = { Authorization = "AIDIY_DIARY_AUTHORIZATION" }')
+    # 追加の認証設定は利用者側の任意設定。接続先が同じ場合に限り、
+    # 既存の環境変数参照を保つ（トークン自体は一切読み込まない）。
+    if tomllib is not None and config_path.is_file():
+        try:
+            existing = tomllib.loads(config_path.read_text(encoding="utf-8-sig"))
+            server = existing.get("mcp_servers", {}).get(server_name, {})
+            if isinstance(server, dict) and server.get("url") == mcp_url:
+                env_headers = server.get("env_http_headers")
+                if isinstance(env_headers, dict) and all(isinstance(value, str) for value in env_headers.values()):
+                    if env_headers:
+                        inline = ", ".join(
+                            f"{json.dumps(key, ensure_ascii=False)} = {json.dumps(value, ensure_ascii=False)}"
+                            for key, value in env_headers.items()
+                        )
+                        body_lines.append(f"env_http_headers = {{ {inline} }}")
+        except (ValueError, OSError, AttributeError):
+            pass
     if not upsert_toml_table(config_path, table_header, body_lines):
         return False
     return True

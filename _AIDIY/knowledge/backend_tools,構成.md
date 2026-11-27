@@ -120,7 +120,7 @@ print(res.json())  # {"save_path": "..."}
 | `aidiy_decisions_check` | AI判断（Decisions API / OAuth Responses JSON Schema） | `http://127.0.0.1:8095/aidiy_decisions_check/sse` |
 | `aidiy_task_agents` | backend_taskteam の Task API への AIタスク非同期投入、要求/明細状態取得 | `http://127.0.0.1:8095/aidiy_task_agents/sse` |
 | `aidiy_team_agents` | backend_taskteam の Team API への AIチーム依頼投入、依頼/要員状態取得 | `http://127.0.0.1:8095/aidiy_team_agents/sse` |
-| `aidiy_dialy_control` | 本人の日誌検索と作業・明細の登録 / 変更 / 削除（通常ログインの Bearer 必須） | `http://127.0.0.1:8095/aidiy_dialy_control/sse` |
+| `aidiy_dialy_control` | 利用者ID指定の日誌検索と作業・明細の登録 / 変更 / 削除 | `http://127.0.0.1:8095/aidiy_dialy_control/sse` |
 | `aidiy_windows_control` | Windows環境でComputer Use（computer-use）が利用できない場合の代替機能。Windows でのみ公開するデスクトップ操作制御（マウス/キーボード、ウィンドウ、プロセス、クリップボード、UI Automation） | `http://127.0.0.1:8095/aidiy_windows_control/sse` |
 
 Linux / macOS では `aidiy_windows_control` の import、MCP 登録、REST ルート、SSE マウントを行わない。`GET /` の `mcps` は 20 件で、Windows 操作の URL は 404 を返す。`uiautomation` も Windows だけにインストールする。`_config/AiDiy_mcp.json` はローカル生成設定であり、Windows で `_setup.py` の MCP 設定を実行すると Windows 操作 MCP を追加する。非 Windows で設定を実行すると、以前登録した Windows 操作 MCP をプロジェクト設定と各 CLI 設定から削除する。画面のない Linux 環境では `pyautogui` の初期化失敗を `desktop_capture.py` が保持し、キャプチャ呼び出し時にエラーを返す。
@@ -139,10 +139,11 @@ Linux / macOS では `aidiy_windows_control` の import、MCP 登録、REST ル�
 | `diary_content_update` | `日誌日付`・`作業ID`・`行番号` と変更項目。省略した本文・添付は維持。`添付` 指定で一覧を置換、空配列で全添付を解除 |
 | `diary_content_delete` | `日誌日付`・`作業ID`・`行番号`。指定明細とその添付だけを削除 |
 
-- 日付は `YYYY-MM-DD`。変更・削除の直前に検索して日誌日付・作業ID・行番号を確認する。作業IDは固定。明細を削除した場合だけ、同じ作業内の後続明細の行番号が詰まる。
+- 日付は `YYYY-MM-DD`。`利用者ID` は対象者。作業・明細の登録で省略すると `admin`、それ以外は指定が必要。変更・削除の直前に検索して利用者ID・日誌日付・作業ID・行番号を確認する。作業IDは固定。明細を削除した場合だけ、同じ作業内の後続明細の行番号が詰まる。
 - Tools のセットアップで MCP 接続先が登録される。Apps と Tools を再起動し、MCP クライアントを再接続する。Diag の代表試験は7ツールの一覧だけを確認する。
-- 通常ログインで発行された AiDiy 利用者のアクセストークンを MCP/REST の `Authorization: Bearer …` として送る。利用者IDを引数で指定できない。内部トークン、期限切れ、無効利用者は Apps が拒否する。トークンはツール引数・プロンプトに書かない。
-- Codex のセットアップ設定では、CLI を起動する端末の `AIDIY_DIARY_AUTHORIZATION` を使う（値は `Bearer <アクセストークン>`）。stdio bridge も数字の loopback アドレスの `/aidiy_dialy_control/sse` に接続するときだけ同じ環境変数を使用する。ほかの HTTP/SSE クライアントでは接続設定で Authorization ヘッダーを用意する。
+- 接続設定は他の MCP と共通。SSE は `/aidiy_dialy_control/sse`、Streamable HTTP は `/aidiy_dialy_control/mcp`。認証ヘッダーを付けないローカル CLI の直接接続では、Tools が Core の生成した内部認証 JSON からトークンを読み、固定のローカル Apps API に送る。トークンは CLI へ渡さず、ログ・応答・設定・プロンプトに書かない。Core・Apps・Tools は同じ AiDiy 環境で起動する。
+- ブラウザー・プロキシ経由のリクエストには内部認証を付けない。必要な場合は通常ログインの認証ヘッダーをクライアントから送る。HTTP/SSE の公開・外部転送は行わない。Vite の Web 転送は転送ヘッダーを付け、Tools の直接接続と区別する。Apps でも内部トークンを受け付けるのは、直接接続で固定の連携ヘッダーを持つ検索・作業・明細の7操作だけ。日誌の対象者と操作主体は区別し、監査項目に操作主体を記録する。
+- `USER_ID_REQUIRED` は対象IDなし、`USER_NOT_FOUND` は対象利用者が存在しない。`AUTH_REQUIRED` は許可された直接接続でも有効な形式の認証ヘッダー付き接続でもない場合。`INTERNAL_AUTH_UNAVAILABLE` は Core の認証情報を読み取れない場合。`APPS_AUTH_REJECTED` は Apps の 401 / 403、`APPS_UNAVAILABLE` は Apps との接続・応答の問題。指定の認証ヘッダーが無効でも、内部認証に切り替えて再試行しない。
 
 ## 次のユーザー入力予測
 

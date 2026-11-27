@@ -133,11 +133,22 @@ export async function runHeadless({steps = STEPS, directory = OUTPUT_DIRECTORY, 
   return failed ? 1 : 0;
 }
 
-// Ctrl+C で実行中の確認を止め、保存せずに終了する。
-export async function headlessMain(options = {}) {
+// 通常は Ctrl+C、Windows の起動管理では専用パイプの EOF で確認を中断する。
+export async function headlessMain({
+  control = process.platform === 'win32' && process.env.AIDIY_DIAG_HEADLESS_CONTROL_PIPE === '1' ? process.stdin : null,
+  ...options
+} = {}) {
   const controller = new AbortController();
   const stop = () => { controller.abort(); cancelProbes(); cancelKeyProbes(); };
   process.once('SIGINT', stop); process.once('SIGTERM', stop);
+  control?.once('end', stop);
+  control?.once('error', stop);
+  control?.resume();
   try { return await runHeadless({...options, signal:controller.signal}); }
-  finally { process.off('SIGINT', stop); process.off('SIGTERM', stop); }
+  finally {
+    control?.off('end', stop);
+    control?.off('error', stop);
+    control?.destroy();
+    process.off('SIGINT', stop); process.off('SIGTERM', stop);
+  }
 }

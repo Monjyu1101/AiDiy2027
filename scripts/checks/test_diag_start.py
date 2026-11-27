@@ -151,8 +151,28 @@ class StartTests(unittest.TestCase):
                     raise RuntimeError('fixture')
                 self.assertIs(folder.subprocess, original)
 
+    def test_windows_headless_uses_no_window_and_stops_via_control_pipe(self):
+        module = load(ROOT / 'scripts/_diag_start.py')
+        with patch.object(module.os, 'name', 'nt'), \
+                patch.object(module.subprocess, 'CREATE_NO_WINDOW', 0x08000000, create=True), \
+                patch.object(module.subprocess, 'Popen') as launch, patch.object(module, 'load_module') as load_helper, \
+                patch('builtins.print'):
+            child = module.start_headless('node.exe')
+            self.assertEqual(launch.call_args.args[0], ['node.exe', str(ROOT / 'frontend_diag/diag_main.mjs'), '--headless'])
+            options = launch.call_args.kwargs
+            self.assertEqual(options['creationflags'], 0x08000000)
+            self.assertEqual(options['stdin'], subprocess.PIPE)
+            self.assertEqual(options['stdout'], subprocess.PIPE)
+            self.assertEqual(options['stderr'], subprocess.STDOUT)
+            self.assertEqual(options['env']['AIDIY_DIAG_HEADLESS_CONTROL_PIPE'], '1')
+            child.poll.return_value = None
+            module.terminate(child)
+            child.stdin.close.assert_called_once_with()
+            child.wait.assert_called_once_with(timeout=5)
+            load_helper.assert_not_called()
+
     @unittest.skipUnless(os.name == 'nt', 'Windows のコンソール可視状態')
-    def test_hidden_headless_has_private_console_and_auxiliary_has_none(self):
+    def test_hidden_headless_and_auxiliary_run_without_a_console(self):
         module = load(ROOT / 'scripts/_diag_start.py')
         helper = load(ROOT / 'scripts/_diag_console.py')
         source = ("import ctypes,json,sys\n"
@@ -173,9 +193,9 @@ class StartTests(unittest.TestCase):
             try:
                 output, error = child.communicate(timeout=5)
                 self.assertEqual(child.returncode, 0)
-                self.assertTrue(child._aidiy_private_console)
+                self.assertTrue(child._aidiy_headless_pipe)
                 result = json.loads(output.decode('utf-8').splitlines()[0])
-                self.assertEqual(result, {'console': True, 'visible': False, 'input': ''})
+                self.assertEqual(result, {'console': False, 'visible': False, 'input': ''})
                 self.assertIn(b'stderr output', output)
                 self.assertIsNone(error)
             finally:
