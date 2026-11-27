@@ -143,7 +143,7 @@ CLI窓のタイトル（ネイティブ窓・画面上部・ブラウザタブ�
 | `codex` | `--dangerously-bypass-approvals-and-sandbox` |
 | `claude` | `--dangerously-skip-permissions --chrome` |
 | `copilot` | `--allow-all-tools` |
-| `agy` | `--dangerously-skip-permissions` |
+| `agy` / `agy.exe` | `--dangerously-skip-permissions` |
 | `grok` | `--yolo` |
 | `aidiy_hermes` | `--yolo` |
 

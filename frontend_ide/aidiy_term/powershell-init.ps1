@@ -52,7 +52,7 @@ Set-PSReadLineKeyHandler -Key Tab -BriefDescription AiDiyCliCompletion -ScriptBl
     $line = ''
     $cursor = 0
     [Microsoft.PowerShell.PSConsoleReadLine]::GetBufferState([ref]$line, [ref]$cursor)
-    if ($cursor -eq $line.Length -and $line -cmatch '^([a-z_]+) *$' -and $global:AiDiyCliOptions.ContainsKey($Matches[1])) {
+    if ($cursor -eq $line.Length -and $line -cmatch '^(agy\.exe|[a-z_]+) *$' -and $global:AiDiyCliOptions.ContainsKey($Matches[1])) {
         [Microsoft.PowerShell.PSConsoleReadLine]::Insert((' ' * [int](-not $line.EndsWith(' '))) + $global:AiDiyCliOptions[$Matches[1]])
         return
     }

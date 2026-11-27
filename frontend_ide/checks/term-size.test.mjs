@@ -110,6 +110,19 @@ test('Term: 内側の領域を原点に補完候補を置き、最後の表示�
  f.props.visible=false;f.state.updateCompletion();assert.equal(f.state.ghostRows.value.length,0);
 });
 
+test('Term: agy.exe の候補は agy と同じ引数を表示する',()=>{
+ const 表示=command=>{
+  const text='PS X> '+command;
+  const line={length:text.length,isWrapped:false,translateToString:()=>text};
+  return completion.termCompletion({type:'normal',baseY:0,cursorY:0,cursorX:text.length,getLine:y=>y===0?line:undefined});
+ };
+ const options=completion.cliCompletions.agy.options;
+ assert.equal(completion.cliCompletions['agy.exe'].options,options);
+ assert.equal(表示('agy'),'agy '+options);
+ assert.equal(表示('agy.exe'),'agy.exe '+options);
+ for(const command of ['agy.exe --help','other.exe','./agy.exe','agy.exe;']) assert.equal(表示(command),'');
+});
+
 test('Term CSS: 高さ240以下だけ案内を畳み、余白なしの内側へfitする',()=>{
  const css=descriptor.styles[0].content,result=compileStyle({source:css,id:'data-v-term',scoped:true});
  assert.deepEqual(result.errors,[]);
