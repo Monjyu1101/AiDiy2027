@@ -254,14 +254,14 @@ onMounted(() => {
               <div class="detail-row date-row">
                 <span class="detail-label">日付範囲</span>
                 <div class="detail-value date-range" role="group" aria-label="日付範囲">
-                  <button type="button" class="btn btn-secondary range-nav" aria-label="前月" title="前月" :disabled="!前月" @click="日付を移動(前月)">＜＜</button>
-                  <button type="button" class="btn btn-secondary range-nav" aria-label="前日" title="前日" :disabled="!前日" @click="日付を移動(前日)">＜</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="前月" title="前月" :disabled="!前月" @click="日付を移動(前月)">&lt;&lt;</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="前日" title="前日" :disabled="!前日" @click="日付を移動(前日)">&lt;</button>
                   <input :value="開始日付" type="date" class="detail-input date-input" aria-label="開始日付"
                     @input="開始日変更">
                   <span class="range-separator">～</span>
                   <input v-model="終了日付" type="date" class="detail-input date-input" aria-label="終了日付">
-                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌日" title="翌日" :disabled="!翌日" @click="日付を移動(翌日)">＞</button>
-                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌月" title="翌月" :disabled="!翌月" @click="日付を移動(翌月)">＞＞</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌日" title="翌日" :disabled="!翌日" @click="日付を移動(翌日)">&gt;</button>
+                  <button type="button" class="btn btn-secondary range-nav" aria-label="翌月" title="翌月" :disabled="!翌月" @click="日付を移動(翌月)">&gt;&gt;</button>
                 </div>
               </div>
               <div class="detail-row">
@@ -397,6 +397,7 @@ onMounted(() => {
   width: auto;
 }
 .range-nav { min-width: 24px; height: 28px; padding: 0 2px; white-space: nowrap; font-size: 12px; }
+.list-toolbar .range-nav { border: 1px solid #8a969e; border-radius: 3px; }
 
 @media (max-width: 640px) {
   .section { --search-label-width: 108px; --search-value-padding: 8px; }
